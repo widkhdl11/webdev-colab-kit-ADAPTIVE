@@ -29,7 +29,10 @@ function walk(dir) {
 const invToSpec = new Map();
 for (const f of specDirs.flatMap(walk).filter((f) => f.endsWith(".md"))) {
   const src = readFileSync(f, "utf-8");
-  if (!/^---[\s\S]*?status:\s*approved[\s\S]*?---/.test(src)) continue;
+  // status 는 frontmatter 의 구조화된 필드다 — 줄 시작 앵커로 값만 본다.
+  // (주석 뒤에 등장하는 'approved' 글자를 값으로 오인하지 않게. retro 2026-08-02)
+  const fm = src.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fm || !/^\s*status:\s*approved\b/m.test(fm[1])) continue;
   for (const m of src.matchAll(/\bINV-[A-Z0-9]+\b/g)) invToSpec.set(m[0], relative(ROOT, f));
 }
 if (invToSpec.size === 0) process.exit(0);

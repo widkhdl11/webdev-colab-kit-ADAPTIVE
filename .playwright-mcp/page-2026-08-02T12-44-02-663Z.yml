@@ -1,0 +1,123 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link [ref=e3] [cursor=pointer]:
+      - /url: /
+    - navigation [ref=e6]:
+      - link "연습하기" [ref=e7] [cursor=pointer]:
+        - /url: /practice
+      - link "도전하기" [ref=e9] [cursor=pointer]:
+        - /url: /challenge
+      - link "함께하기" [ref=e11] [cursor=pointer]:
+        - /url: /course
+      - link "보고 배우기" [ref=e13] [cursor=pointer]:
+        - /url: /learn
+    - navigation [ref=e15]:
+      - navigation [ref=e16]:
+        - link "교수학습용 자료" [ref=e17] [cursor=pointer]:
+          - /url: /resources
+        - link "공지사항 & 이용안내" [ref=e19] [cursor=pointer]:
+          - /url: /info
+      - generic [ref=e23]:
+        - button "KO" [ref=e24] [cursor=pointer]
+        - button "EN" [ref=e26] [cursor=pointer]
+      - link "회원가입" [ref=e27] [cursor=pointer]:
+        - /url: /join
+      - button "로그인" [ref=e28] [cursor=pointer]
+  - navigation:
+    - link "연습하기":
+      - /url: /practice
+    - link "도전하기":
+      - /url: /challenge
+    - link "함께하기":
+      - /url: /course
+    - link "보고 배우기":
+      - /url: /learn
+    - link "교수학습용 자료":
+      - /url: /resources
+    - link "공지사항 & 이용안내":
+      - /url: /info
+  - generic [ref=e30]:
+    - generic [ref=e31]:
+      - text: 모두의 코딩학교 BIKO
+      - generic [ref=e36]:
+        - img "생각한 대로 만드는 세상" [ref=e39]
+        - img "프로그래밍" [ref=e43]
+        - img "첫 도전도 환영해요" [ref=e47]
+      - generic [ref=e49]:
+        - img "프로그래밍을 어디서나 Free" [ref=e52]
+        - img "선생님 친구들과" [ref=e55]
+        - img "BIKO에서 꿈을 펼쳐보세요" [ref=e58]
+    - generic [ref=e59]: Keep on Challenging!
+    - img "연습 문제 비브라스 일러스트" [ref=e64]
+    - heading "코딩이 처음이라면, 연습하기부터!" [level=1] [ref=e68]
+    - generic [ref=e69]: 코딩이 처음이라도 할 수 있어요!다양한 문제 유형을 풀어보면서 같이 코딩을 배워볼까요?
+    - generic [ref=e74]:
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]: STEP 1
+          - generic [ref=e80]:
+            - heading "사고력 키우기" [level=3] [ref=e81]
+            - generic [ref=e83]: 객관식, 주관식, 인터랙티브 문제를 풀어보며컴퓨팅 사고력을 키워보세요.
+            - button "문제 더 보기 >" [ref=e85] [cursor=pointer]
+        - generic [ref=e87]: 예시
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - generic [ref=e92]: STEP 2
+          - generic [ref=e94]:
+            - heading "프로그래밍 연습 문제" [level=3] [ref=e95]
+            - generic [ref=e97]: 프로그래밍 언어를 몰라도 괜찮아요!빈 칸 챌린지 문제를 풀어 보며 텍스트 코딩을 배워보세요.
+            - button "문제 더 보기 >" [ref=e99] [cursor=pointer]
+        - generic [ref=e101]: 예시
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - generic [ref=e106]: STEP 3
+          - generic [ref=e108]:
+            - heading "프로그래밍 실전 문제" [level=3] [ref=e109]
+            - generic [ref=e111]: 코드작성, Output Only 등 다양한 유형의프로그래밍 문제를 풀어보세요.
+            - button "문제 더 보기 >" [ref=e113] [cursor=pointer]
+        - generic [ref=e115]: 예시
+    - generic [ref=e119]:
+      - heading "충분히 연습했다면, 기출문제 도전하기" [level=1] [ref=e120]
+      - generic [ref=e122]:
+        - generic [ref=e123]: 실전 문제 풀이 도전! BIKO에서 배운 코딩 능력으로 국내외 프로그래밍 대회의 기출 문제도 도전해 보세요!
+        - img "도전 문제 비브라스 일러스트" [ref=e125]
+        - button "문제 더 보기 >" [ref=e126] [cursor=pointer]
+    - generic [ref=e131]:
+      - generic [ref=e136]:
+        - img "토론 일러스트" [ref=e137]
+        - heading "더 배우고 싶다면?" [level=1] [ref=e138]
+      - generic [ref=e143]:
+        - generic [ref=e144]:
+          - text: 학교에서 함께하기
+          - generic [ref=e146]: 우리 반 프로그래밍 수업,BIKO로 더 쉽고 간편하게 시작해보세요.
+          - img "그룹 비브라스 일러스트" [ref=e149]
+          - generic [ref=e151]:
+            - button "선생님 수업 개설하기 >" [ref=e152] [cursor=pointer]
+            - button "우리 반 수업 찾기 >" [ref=e153] [cursor=pointer]
+        - generic [ref=e154]:
+          - text: 혼자서 보고배우기
+          - generic [ref=e156]: 주제별, 문제별 해설 영상으로프로그래밍을 쉽게 공부할 수 있어요.
+          - img "개인 학습 비브라스 일러스트" [ref=e159]
+          - button "BIKO 선생님의 해설 영상 보기 >" [ref=e161] [cursor=pointer]
+    - generic [ref=e165]:
+      - img "퍼즐" [ref=e168]
+      - text: BIKO는 대한민국 정보교육의 발전을 위해 헌신하는 정보교사 및 교수진으로 조직된 비브라스 코리아와탄탄한 개발력과 크리에이티브를 바탕으로 글로벌 게임 산업을 선도하는 넥슨이 함께 만들어갑니다.
+      - generic [ref=e171]:
+        - img "Bebras 로고" [ref=e172]
+        - img "x" [ref=e173]
+        - img "넥슨 로고" [ref=e174]
+  - contentinfo [ref=e175]:
+    - generic [ref=e177]:
+      - generic [ref=e178]: 사단법인 한국비버정보교육연합
+      - generic [ref=e180]: "대표자: 김동윤 · 사업자등록번호: 528-82-00412 · 주소: 서울특별시 중구 세종대로 30, F805호 2호(남대문로5가, 신남문빌딩)"
+      - generic [ref=e182]:
+        - text: © 2022 - 2026 |
+        - link "이용약관" [ref=e183] [cursor=pointer]:
+          - /url: /tos
+        - text: "|"
+        - link "개인정보처리방침" [ref=e184] [cursor=pointer]:
+          - /url: /tos/privacy
+        - text: "|"
+        - link "이메일 문의하기" [ref=e185] [cursor=pointer]:
+          - /url: mailto:bebraskorea@gmail.com
+  - alert [ref=e187]

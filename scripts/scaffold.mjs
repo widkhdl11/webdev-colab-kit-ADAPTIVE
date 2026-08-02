@@ -3,7 +3,7 @@
 // 프로젝트는 projects/<프로젝트명>/ 에 생성된다.
 //   node scripts/scaffold.mjs <프로젝트명>   최초 생성(소문자·숫자·하이픈)
 //   node scripts/scaffold.mjs                인자 생략 시 projects/ 아래 프로젝트가 하나면 재생성
-import { mkdirSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync, readdirSync, statSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 const ROOT = process.cwd();
@@ -72,5 +72,14 @@ write("tsconfig.json", JSON.stringify({
 
 write("src/app/main.ts", `console.log("walking skeleton: ${name}");\n`);
 write("index.html", `<!doctype html>\n<html lang="ko"><head><meta charset="utf-8"><title>${name}</title></head>\n<body><div id="app"></div><script type="module" src="./dist/app/main.js"></script></body></html>\n`);
+
+// 킷 정본 스펙 템플릿을 프로젝트로 복사 (정본: docs/references/spec-template.md).
+// 없으면 조용히 건너뛴다 — 스캐폴딩이 정본 유무에 의존해 깨지지 않게.
+const specTemplateSrc = join(ROOT, "docs", "references", "spec-template.md");
+if (existsSync(specTemplateSrc)) {
+  write("docs/specs/_TEMPLATE.md", readFileSync(specTemplateSrc, "utf8"));
+} else {
+  console.log("  건너뜀: docs/specs/_TEMPLATE.md (정본 docs/references/spec-template.md 없음)");
+}
 
 console.log(`\n스캐폴딩 완료: ${BASE}. 검증: node gates/run-gates.mjs`);

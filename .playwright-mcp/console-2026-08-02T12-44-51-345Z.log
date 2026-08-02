@@ -1,0 +1,14 @@
+[     534ms] [INFO] 🌐 i18next is made possible by our own product, Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙 @ https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:9
+[     867ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://www.biko.kr/api/profile:0
+[     921ms] Error: Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at rX (https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:21:107449)
+    at su (https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:21:158490)
+    at uf (https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:21:199180)
+    at https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:21:199025
+    at ud (https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:21:199033)
+    at ue (https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:21:194173)
+    at uG (https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:21:220852)
+    at u$ (https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:21:219066)
+    at uF (https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:21:219410)
+    at https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:21:218695
+[   10539ms] [LOG] Download the Apollo DevTools for a better development experience: %s https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm @ https://www.biko.kr/_next/static/chunks/0bmv2xk500i3t.js?dpl=36a7a1da218c8958:9

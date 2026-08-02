@@ -29,6 +29,40 @@ product ─┬→ spec ─────────┐
 
 ---
 
+## 사용자 여정 — 요청에서 배포까지
+
+위 두 그림(토폴로지 · 파이프라인)은 **엔진 내부**다. 아래는 그 엔진이 매 턴 프론티어를 계산해
+만들어내는 **실제 주행 경로** — 당신 자리에서 "요청하면 뭐가, 그다음 뭐가" 도는 순서다.
+
+```mermaid
+flowchart TD
+  U["당신: '○○ 만들고 싶어'"] --> Q1{"새 프로젝트인가?"}
+  Q1 -->|"아니오 · 기존 PRODUCT.md에 있음"| IMPL
+  Q1 -->|"예"| KO["/kickoff · 인터뷰<br/>projects/&lt;이름&gt; 생성 · ACTIVE 기록<br/>PRODUCT.md 함께 작성 → 동의"]
+  KO --> SU["/setup<br/>하네스 구성 제안·승인<br/>scaffold.mjs → run-gates"]
+  SU --> GRADE{"이 기능 등급은?"}
+  GRADE -->|"빠른 경로 · 승인된 방향·콘텐츠"| IMPL
+  GRADE -->|"정식 · 위험 기능"| SPEC["/spec<br/>불변식 스펙 · 승인"]
+  GRADE -->|"정식 · 새 시각 방향"| DI["/design-interview → 시안<br/>→ /checkpoint 승인 → design-rules approved"]
+  SPEC --> IMPL
+  DI --> IMPL
+  IMPL["구현 · src/ 코딩<br/>편집마다 게이트: FSD·보안·tsc"]
+  IMPL --> QA["qa · 테스트 작성 · 결정론 게이트 자동 clean"]
+  QA --> DONE{"기능 완성?"}
+  DONE -->|"아니오 · 다음 조각"| IMPL
+  DONE -->|"예"| REV["리뷰어 파견 등급별<br/>code · security · ui · test-auditor<br/>→ review.md 사인오프"]
+  REV --> DEP["deploy · 배포+사인오프<br/>review dirty면 차단"]
+  DEP --> WRAP["/wrap-up · PROGRESS 동결<br/>큰 진전이면 /retro"]
+```
+
+- 마름모(판단)는 내(모델)가 CLAUDE.md 등급 규칙으로 내린다. 스킬은 프론티어를 보고 고른다.
+- **여정과 그래프의 연결**: 빈 프로젝트면 `product`가 dirty → 프론티어=product → 나는 kickoff을 고른다.
+  PRODUCT.md가 차면 프론티어가 spec·design으로 내려가고, 그때 /spec·/design-interview를 고른다.
+  즉 이 순서는 선언된 게 아니라 **토폴로지 + 전파에서 파생**된다 — 여정은 결과, 엔진이 원인.
+- 브라우저로 보는 세 뷰 합본(색·분기): claude.ai 아티팩트 `9b1a7269` (실행 그래프 — wama 협업 엔진).
+
+---
+
 ## 검증 트레이스 (실제 실행 출력)
 
 ### 전파 규칙 하나에서 A~D 파생 — `node gates/propagate.mjs --selftest`

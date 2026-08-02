@@ -130,14 +130,20 @@ function markUnitDirty(state, unit) {
 // ── 게이트 에러 파싱 → { cat, relPath, whole } ─────────────────
 function parseGateErrors(text) {
   const out = [];
+  const prefix = `projects/${active}/`;
   for (const line of text.split("\n")) {
     const m = line.match(/^\[([a-z-]+)\/[^\]]+\]\s+(.+)$/);
     if (!m) continue;
     const cat = m[1];
     let p = m[2].split(" — ")[0].split(" ")[0].replace(/:\d+$/, "").split("\\").join("/");
-    const prefix = `projects/${active}/`;
-    if (p.startsWith(prefix)) out.push({ cat, relPath: p.slice(prefix.length), whole: false });
-    else out.push({ cat, relPath: "", whole: true }); // projects/<active> 통째 등 → 노드 파일 귀속 불가
+    const pm = p.match(/^projects\/([^/:]+)/);
+    if (pm) {
+      if (pm[1] !== active) continue;                     // 다른 프로젝트 에러 → 이 그래프와 무관, 무시
+      if (p.startsWith(prefix)) out.push({ cat, relPath: p.slice(prefix.length), whole: false });
+      else out.push({ cat, relPath: "", whole: true });   // projects/<active> 통째(test/FAIL 등)
+    } else {
+      out.push({ cat, relPath: "", whole: true });        // 프로젝트 경로 없는 전역 에러
+    }
   }
   return out;
 }
@@ -146,12 +152,19 @@ function frontmatterOK(cw) {
   const files = matchProduces([cw.frontmatter.path]);
   if (files.length === 0) return true; // 대상 없음 → 막지 않음
   const [k, v] = cw.frontmatter.require.split(":").map((x) => x.trim());
-  const re = new RegExp(`${k}:\\s*${v}`);
+  // 줄 시작 앵커: status 등은 frontmatter 의 구조화된 필드 — 주석 뒤 같은 토큰을 값으로 오인하지 않게. (retro 2026-08-02)
+  const re = new RegExp(`^\\s*${k}:\\s*${v}\\b`, "m");
   return files.every((rel) => {
     const src = readFileSync(join(projDir, rel), "utf-8");
     const fm = src.match(/^---\r?\n([\s\S]*?)\r?\n---/);
     return fm && re.test(fm[1]);
   });
+}
+// exists_nonempty: 파일이 존재하고 비어있지 않아야 clean (예: product=PRODUCT.md). 새 빈 프로젝트에서 필요.
+function existsNonemptyOK(cw) {
+  if (!cw?.exists_nonempty) return true;
+  const files = matchProduces([cw.exists_nonempty]);
+  return files.length > 0 && files.some((rel) => readFileSync(join(projDir, rel), "utf-8").trim().length > 0);
 }
 function gateBlocked(cw, produces, errors) {
   const cats = cw?.gate || [];
@@ -222,7 +235,8 @@ for (const parent of topoSort(GRAPH)) {
     if (!GRAPH[parent].depends_on.every((up) => state[up].status === "clean")) continue;
     const ok = u.signoff
       ? signoffOK(u.signoff)                                            // 비결정론: 마커+basis
-      : frontmatterOK(u.clean_when) && !gateBlocked(u.clean_when, u.produces, gateErrors); // 결정론 게이트
+      : frontmatterOK(u.clean_when) && existsNonemptyOK(u.clean_when)   // 결정론 게이트
+        && !gateBlocked(u.clean_when, u.produces, gateErrors);
     if (!ok) continue;
     state[u.id] = { status: "clean", hash: hashNode(u.produces) };
   }

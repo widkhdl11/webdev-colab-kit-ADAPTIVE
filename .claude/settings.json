@@ -29,7 +29,7 @@
       }
     ],
     "Stop": [
-      { "hooks": [{ "type": "command", "command": "node gates/run-gates.mjs" }] }
+      { "hooks": [{ "type": "command", "command": "node gates/graph-stop.mjs" }] }
     ]
   }
 }

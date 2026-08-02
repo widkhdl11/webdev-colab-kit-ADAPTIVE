@@ -5,10 +5,10 @@
 - 완료: 그래프 엔진 6산출물(graph.mjs · gates/propagate · gates/graph-stop · .claude/agents/qa-classifier ·
   briefing 프론티어 · docs/references/graph-engine.md) 전부 실제 실행으로 검증. CLAUDE.md 7지점 통합.
   사람용 문서 글쓰기 스타일 규칙 추가(CLAUDE.md + 메모리).
-- 멈춘 지점: 그래프 엔진 완결, 배선만 남음 — settings.json Stop 훅 교체(run-gates→graph-stop) 미반영(보호파일→사용자 적용).
-  wama 앱은 이번 세션 손 안 댐: 통계 페이지(pages/stats)는 여전히 미구현(시안 승인됨).
+- 멈춘 지점: 그래프 엔진 **완전 가동** — 배선 3건(settings.json Stop 훅=graph-stop · protect-files 개행 수정 · LESSONS 기록)
+  반영·기능검증 완료. 이후 새 프로젝트용 graph-stop 수정 2건(아래 로그). wama 앱은 미착수: 통계 페이지(pages/stats) 미구현(시안 승인됨).
 - 다음 할 일: 통계 페이지 구현(승인 시안 stats.html → pages/stats: 3탭·꺾은선/막대·드릴다운).
-- 대기 중인 결정: 사용자 반영 대기 3건 — settings.json(run-gates→graph-stop) · protect-files.mjs(개행 정규식 오탐 수정) · docs/LESSONS.md(retro 기록).
+- 대기 중인 결정: 없음. (참고: graph-stop 수정 2건은 GitHub push 이후의 새 변경 — 재push 필요)
 
 ---
 ## 로그 (append-only — 필요할 때만 검색)
@@ -34,6 +34,12 @@
   삼켜 정당한 실행을 오탐 차단 발견 → 문자셋에 \n\r 추가 제안(보호파일, 사용자 반영). 백로그 1건은 트리거 미충족→보류.
 - 미반영(보호파일, 사용자 적용 대기): settings.json Stop 훅(run-gates→graph-stop) · protect-files.mjs 개행 수정 · LESSONS.md 기록.
 - wama 앱: 이번 세션 손 안 댐. 통계 페이지 미구현 그대로.
+- 배선 반영(사용자): settings.json Stop 훅 run-gates→graph-stop · protect-files.mjs 정규식 문자셋에 \n\r · LESSONS.md 기록.
+  반영 후 기능검증: 개행 오탐 패턴 통과 + graph-stop 정상(프론티어=review), 게이트 초록.
+- 새 프로젝트 대비 graph-stop 수정 2건: (1) `existsNonemptyOK` 추가 — clean_when.exists_nonempty(product=PRODUCT.md)를
+  release가 실제 검사(빈 PRODUCT.md면 product dirty 유지, 프론티어=product). 기존엔 미검사라 빈 프로젝트도 product clean 오판.
+  (2) parseGateErrors를 활성 프로젝트로 한정 — run-gates는 전 프로젝트를 훑는데, 다른 프로젝트 에러가 활성 노드를 잘못
+  막던 것 차단(프로젝트명 파싱해 타 프로젝트 에러 무시). 저장소 전체 exit 2 차단은 유지. wama 단일 프로젝트엔 무해(검증됨).
 
 ### 2026-07-28 (데이터 계층 전면 Supabase 전환 + 배포)
 - 출발: "과목 삭제/추가 저장 안 됨" 버그 → 조사 결과 앱 데이터 계층 대부분이 목업+저장없음이고 스키마가 도메인 모델과

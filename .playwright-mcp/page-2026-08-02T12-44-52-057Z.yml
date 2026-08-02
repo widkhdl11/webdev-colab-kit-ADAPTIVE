@@ -1,0 +1,53 @@
+- generic [active] [ref=f6e1]:
+  - banner [ref=f6e2]:
+    - link [ref=f6e3] [cursor=pointer]:
+      - /url: /
+    - navigation [ref=f6e6]:
+      - link "연습하기" [ref=f6e7] [cursor=pointer]:
+        - /url: /practice
+      - link "도전하기" [ref=f6e9] [cursor=pointer]:
+        - /url: /challenge
+      - link "함께하기" [ref=f6e11] [cursor=pointer]:
+        - /url: /course
+      - link "보고 배우기" [ref=f6e13] [cursor=pointer]:
+        - /url: /learn
+    - navigation [ref=f6e15]:
+      - navigation [ref=f6e16]:
+        - link "교수학습용 자료" [ref=f6e17] [cursor=pointer]:
+          - /url: /resources
+        - link "공지사항 & 이용안내" [ref=f6e19] [cursor=pointer]:
+          - /url: /info
+      - generic [ref=f6e23]:
+        - button "KO" [ref=f6e24] [cursor=pointer]
+        - button "EN" [ref=f6e26] [cursor=pointer]
+      - link "회원가입" [ref=f6e27] [cursor=pointer]:
+        - /url: /join
+      - button "로그인" [ref=f6e28] [cursor=pointer]
+  - navigation:
+    - link "연습하기":
+      - /url: /practice
+    - link "도전하기":
+      - /url: /challenge
+    - link "함께하기":
+      - /url: /course
+    - link "보고 배우기":
+      - /url: /learn
+    - link "교수학습용 자료":
+      - /url: /resources
+    - link "공지사항 & 이용안내":
+      - /url: /info
+  - contentinfo [ref=f6e33]:
+    - generic [ref=f6e35]:
+      - generic [ref=f6e36]: 사단법인 한국비버정보교육연합
+      - generic [ref=f6e38]: "대표자: 김동윤 · 사업자등록번호: 528-82-00412 · 주소: 서울특별시 중구 세종대로 30, F805호 2호(남대문로5가, 신남문빌딩)"
+      - generic [ref=f6e40]:
+        - text: © 2022 - 2026 |
+        - link "이용약관" [ref=f6e41] [cursor=pointer]:
+          - /url: /tos
+        - text: "|"
+        - link "개인정보처리방침" [ref=f6e42] [cursor=pointer]:
+          - /url: /tos/privacy
+        - text: "|"
+        - link "이메일 문의하기" [ref=f6e43] [cursor=pointer]:
+          - /url: mailto:bebraskorea@gmail.com
+  - alert [ref=f6e45]

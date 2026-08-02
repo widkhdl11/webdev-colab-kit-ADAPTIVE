@@ -1,0 +1,148 @@
+- generic [active] [ref=f3e1]:
+  - banner [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - link "signal." [ref=f3e4] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=f3e5]: AI·IT 소식에서 신호만 골라 훑는 곳
+  - main [ref=f3e6]:
+    - generic [ref=f3e7]:
+      - heading "오늘의 신호" [level=1] [ref=f3e8]
+      - paragraph [ref=f3e9]: 매일 아침 갱신 · 날짜별로 묶고, 하루 안에서는 점수 순으로 정리합니다.
+    - generic [ref=f3e10]:
+      - group "정렬 방식" [ref=f3e11]:
+        - button "뜨는순" [pressed] [ref=f3e12] [cursor=pointer]
+        - button "최신순" [ref=f3e13] [cursor=pointer]
+      - group "주제 필터" [ref=f3e15]:
+        - button "전체" [pressed] [ref=f3e16] [cursor=pointer]
+        - button "모델" [ref=f3e17] [cursor=pointer]
+        - button "에이전트" [ref=f3e18] [cursor=pointer]
+        - button "MCP" [ref=f3e19] [cursor=pointer]
+        - button "엔지니어링" [ref=f3e20] [cursor=pointer]
+        - button "툴" [ref=f3e21] [cursor=pointer]
+    - region [ref=f3e22]:
+      - generic [ref=f3e23]:
+        - heading "오늘" [level=2] [ref=f3e24]
+        - generic [ref=f3e25]: ·5건
+      - generic [ref=f3e27]:
+        - link "🔥 뜨는 중 에이전트에게 도구를 몇 개까지 쥐여줘야 할까 도구 목록이 길어질수록 모델이 엉뚱한 도구를 고르는 빈도가 늘어난다는 관찰. 설명을 짧게 다듬고 비슷한 기능은 하나로 묶는 쪽이 낫다는 정리. Anthropic 블로그 · 2시간 전 에이전트" [ref=f3e28] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e29]:
+            - generic [ref=f3e30]: 🔥 뜨는 중
+            - heading "에이전트에게 도구를 몇 개까지 쥐여줘야 할까" [level=3] [ref=f3e31]
+            - paragraph [ref=f3e32]: 도구 목록이 길어질수록 모델이 엉뚱한 도구를 고르는 빈도가 늘어난다는 관찰. 설명을 짧게 다듬고 비슷한 기능은 하나로 묶는 쪽이 낫다는 정리.
+          - generic [ref=f3e33]:
+            - generic [ref=f3e34]: Anthropic 블로그 · 2시간 전
+            - generic [ref=f3e35]: 에이전트
+        - link "🔥 뜨는 중 MCP 서버를 처음 붙일 때 자주 막히는 지점 정리 권한 범위, 스키마 검증, 타임아웃 세 군데에서 대부분 막힌다. 각 경우에 로그를 어디부터 봐야 하는지 순서대로 짚어둔 글. GitHub · 4시간 전 MCP 툴" [ref=f3e37] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e38]:
+            - generic [ref=f3e39]: 🔥 뜨는 중
+            - heading "MCP 서버를 처음 붙일 때 자주 막히는 지점 정리" [level=3] [ref=f3e40]
+            - paragraph [ref=f3e41]: 권한 범위, 스키마 검증, 타임아웃 세 군데에서 대부분 막힌다. 각 경우에 로그를 어디부터 봐야 하는지 순서대로 짚어둔 글.
+          - generic [ref=f3e42]:
+            - generic [ref=f3e43]: GitHub · 4시간 전
+            - generic [ref=f3e44]:
+              - generic [ref=f3e45]: MCP
+              - generic [ref=f3e46]: 툴
+        - link "컨텍스트 창이 넓어져도 프롬프트를 줄여야 하는 이유 넣을 수 있는 양과 실제로 활용되는 양은 다르다. 중간 부분의 정보가 묻히는 현상을 어떻게 확인하고 줄일지에 대한 실무 메모. Hacker News · 6시간 전 엔지니어링" [ref=f3e47] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e48]:
+            - heading "컨텍스트 창이 넓어져도 프롬프트를 줄여야 하는 이유" [level=3] [ref=f3e49]
+            - paragraph [ref=f3e50]: 넣을 수 있는 양과 실제로 활용되는 양은 다르다. 중간 부분의 정보가 묻히는 현상을 어떻게 확인하고 줄일지에 대한 실무 메모.
+          - generic [ref=f3e51]:
+            - generic [ref=f3e52]: Hacker News · 6시간 전
+            - generic [ref=f3e53]: 엔지니어링
+        - link "읽은 글 사내 문서 검색에 임베딩 대신 키워드를 먼저 붙여본 후기 벡터 검색부터 도입하기 전에 태그와 키워드 필터로 후보를 좁히는 편이 비용과 정확도 모두에서 나았다는 팀의 기록. 개인 블로그 · 8시간 전 엔지니어링" [ref=f3e55] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e56]: 읽은 글
+          - generic [ref=f3e57]:
+            - heading "사내 문서 검색에 임베딩 대신 키워드를 먼저 붙여본 후기" [level=3] [ref=f3e58]
+            - paragraph [ref=f3e59]: 벡터 검색부터 도입하기 전에 태그와 키워드 필터로 후보를 좁히는 편이 비용과 정확도 모두에서 나았다는 팀의 기록.
+          - generic [ref=f3e60]:
+            - generic [ref=f3e61]: 개인 블로그 · 8시간 전
+            - generic [ref=f3e62]: 엔지니어링
+        - link "코딩 에이전트 평가를 자동화하려다 배운 것 \"통과/실패\"만 세면 실제 품질과 어긋난다. 무엇을 실패로 볼지 정의하는 데 대부분의 시간이 들어갔다는 회고. Hacker News · 9시간 전 에이전트" [ref=f3e64] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e65]:
+            - heading "코딩 에이전트 평가를 자동화하려다 배운 것" [level=3] [ref=f3e66]
+            - paragraph [ref=f3e67]: "\"통과/실패\"만 세면 실제 품질과 어긋난다. 무엇을 실패로 볼지 정의하는 데 대부분의 시간이 들어갔다는 회고."
+          - generic [ref=f3e68]:
+            - generic [ref=f3e69]: Hacker News · 9시간 전
+            - generic [ref=f3e70]: 에이전트
+    - region [ref=f3e72]:
+      - generic [ref=f3e73]:
+        - heading "어제" [level=2] [ref=f3e74]
+        - generic [ref=f3e75]: ·4건
+      - generic [ref=f3e77]:
+        - link "읽은 글 🔥 뜨는 중 오픈소스 모델을 로컬에서 돌릴 때 부딪히는 현실적인 병목 메모리보다 먼저 걸리는 건 대개 입출력과 양자화 설정이었다는 정리. 장비를 늘리기 전에 확인할 항목들. 기술 뉴스레터 · 어제 오후 모델" [ref=f3e78] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e79]: 읽은 글
+          - generic [ref=f3e80]:
+            - generic [ref=f3e81]: 🔥 뜨는 중
+            - heading "오픈소스 모델을 로컬에서 돌릴 때 부딪히는 현실적인 병목" [level=3] [ref=f3e82]
+            - paragraph [ref=f3e83]: 메모리보다 먼저 걸리는 건 대개 입출력과 양자화 설정이었다는 정리. 장비를 늘리기 전에 확인할 항목들.
+          - generic [ref=f3e84]:
+            - generic [ref=f3e85]: 기술 뉴스레터 · 어제 오후
+            - generic [ref=f3e86]: 모델
+        - link "타입 안전한 도구 스키마를 만드는 작은 패턴 스키마 정의 하나에서 런타임 검증과 타입을 함께 끌어내는 방식. 도구가 늘어날수록 손으로 맞추던 부분이 줄어든다. GitHub · 어제 오후 툴 엔지니어링" [ref=f3e88] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e89]:
+            - heading "타입 안전한 도구 스키마를 만드는 작은 패턴" [level=3] [ref=f3e90]
+            - paragraph [ref=f3e91]: 스키마 정의 하나에서 런타임 검증과 타입을 함께 끌어내는 방식. 도구가 늘어날수록 손으로 맞추던 부분이 줄어든다.
+          - generic [ref=f3e92]:
+            - generic [ref=f3e93]: GitHub · 어제 오후
+            - generic [ref=f3e94]:
+              - generic [ref=f3e95]: 툴
+              - generic [ref=f3e96]: 엔지니어링
+        - link "검색 단계를 걷어내고 파일을 통째로 넣어본 팀의 기록 문서 수가 적을 때는 파이프라인을 줄이는 쪽이 유지보수에 유리했다는 이야기. 어느 규모부터 다시 검색이 필요해졌는지도 함께. 개인 블로그 · 어제 오전 엔지니어링" [ref=f3e97] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e98]:
+            - heading "검색 단계를 걷어내고 파일을 통째로 넣어본 팀의 기록" [level=3] [ref=f3e99]
+            - paragraph [ref=f3e100]: 문서 수가 적을 때는 파이프라인을 줄이는 쪽이 유지보수에 유리했다는 이야기. 어느 규모부터 다시 검색이 필요해졌는지도 함께.
+          - generic [ref=f3e101]:
+            - generic [ref=f3e102]: 개인 블로그 · 어제 오전
+            - generic [ref=f3e103]: 엔지니어링
+        - link "읽은 글 MCP의 리소스와 툴, 언제 무엇을 쓰나 읽기만 하면 리소스, 부수효과가 있으면 툴로 나누는 기준을 예제와 함께 설명한다. 애매한 경우의 판단법도 정리. 문서 사이트 · 어제 오전 MCP" [ref=f3e105] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e106]: 읽은 글
+          - generic [ref=f3e107]:
+            - heading "MCP의 리소스와 툴, 언제 무엇을 쓰나" [level=3] [ref=f3e108]
+            - paragraph [ref=f3e109]: 읽기만 하면 리소스, 부수효과가 있으면 툴로 나누는 기준을 예제와 함께 설명한다. 애매한 경우의 판단법도 정리.
+          - generic [ref=f3e110]:
+            - generic [ref=f3e111]: 문서 사이트 · 어제 오전
+            - generic [ref=f3e112]: MCP
+    - region [ref=f3e114]:
+      - generic [ref=f3e115]:
+        - heading "7월 31일 (금)" [level=2] [ref=f3e116]
+        - generic [ref=f3e117]: ·3건
+      - generic [ref=f3e119]:
+        - link "모델을 갈아끼우는 비용을 낮추는 얇은 추상화 층 공급자별 차이를 한 겹으로 감싸되 너무 두껍게 만들지 않는 선을 어디에 둘지에 대한 논의. 실패 사례도 함께 실렸다. Hacker News · 31일 오후 모델 엔지니어링" [ref=f3e120] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e121]:
+            - heading "모델을 갈아끼우는 비용을 낮추는 얇은 추상화 층" [level=3] [ref=f3e122]
+            - paragraph [ref=f3e123]: 공급자별 차이를 한 겹으로 감싸되 너무 두껍게 만들지 않는 선을 어디에 둘지에 대한 논의. 실패 사례도 함께 실렸다.
+          - generic [ref=f3e124]:
+            - generic [ref=f3e125]: Hacker News · 31일 오후
+            - generic [ref=f3e126]:
+              - generic [ref=f3e127]: 모델
+              - generic [ref=f3e128]: 엔지니어링
+        - link "읽은 글 에이전트 로그를 사람이 읽을 수 있게 만드는 법 호출 기록을 그대로 쌓으면 아무도 안 본다. 무엇을 접고 무엇을 펼칠지 정하는 것부터가 관측 가능성의 시작이라는 관점. 개인 블로그 · 31일 오후 에이전트" [ref=f3e129] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e130]: 읽은 글
+          - generic [ref=f3e131]:
+            - heading "에이전트 로그를 사람이 읽을 수 있게 만드는 법" [level=3] [ref=f3e132]
+            - paragraph [ref=f3e133]: 호출 기록을 그대로 쌓으면 아무도 안 본다. 무엇을 접고 무엇을 펼칠지 정하는 것부터가 관측 가능성의 시작이라는 관점.
+          - generic [ref=f3e134]:
+            - generic [ref=f3e135]: 개인 블로그 · 31일 오후
+            - generic [ref=f3e136]: 에이전트
+        - link "새 벤치마크가 나올 때마다 확인하는 세 가지 측정 대상, 재현 조건, 그리고 내 작업과의 거리. 점수표를 그대로 믿기 전에 짚어볼 항목을 짧게 정리했다. 기술 뉴스레터 · 31일 오전 모델" [ref=f3e138] [cursor=pointer]:
+          - /url: article.html
+          - generic [ref=f3e139]:
+            - heading "새 벤치마크가 나올 때마다 확인하는 세 가지" [level=3] [ref=f3e140]
+            - paragraph [ref=f3e141]: 측정 대상, 재현 조건, 그리고 내 작업과의 거리. 점수표를 그대로 믿기 전에 짚어볼 항목을 짧게 정리했다.
+          - generic [ref=f3e142]:
+            - generic [ref=f3e143]: 기술 뉴스레터 · 31일 오전
+            - generic [ref=f3e144]: 모델
+    - button "더 보기" [ref=f3e147] [cursor=pointer]
+  - contentinfo [ref=f3e148]:
+    - generic [ref=f3e149]: signal — 개인용 소식 리더 · 수집된 원문의 저작권은 각 출처에 있습니다.

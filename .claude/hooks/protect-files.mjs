@@ -15,9 +15,9 @@ const cmd = ti.command ?? "";        // Bash
 // bash 명령이 보호 경로에 '쓰기'로 닿는지 (리다이렉트 대상 / sed -i / tee / cp·mv 목적지). 읽기는 허용.
 function bashWritesTo(p) {
   const e = p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?:>>?|\\btee\\b(?:\\s+-a)?)\\s*['"]?[^'"|&;]*${e}`).test(cmd)
-      || new RegExp(`\\bsed\\b[^|;&]*-i[^|;&]*${e}`).test(cmd)
-      || new RegExp(`\\b(?:cp|mv)\\b[^|;&]*${e}`).test(cmd);
+  return new RegExp(`(?:>>?|\\btee\\b(?:\\s+-a)?)\\s*['"]?[^'"|&;\\n\\r]*${e}`).test(cmd)
+      || new RegExp(`\\bsed\\b[^|;&\\n\\r]*-i[^|;&\\n\\r]*${e}`).test(cmd)
+      || new RegExp(`\\b(?:cp|mv)\\b[^|;&\\n\\r]*${e}`).test(cmd);
 }
 const hit = PROTECTED.find(({ p }) => target.includes(p) || bashWritesTo(p));
 if (hit) {

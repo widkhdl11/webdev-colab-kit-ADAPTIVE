@@ -18,6 +18,13 @@ tools: Read, Write, Edit, Glob, Grep, Bash
 - (있으면) style-scout 이 수집한 레퍼런스 프로필
 - 지시받은 화면명과 목적
 
+**첫 시각 방향이면 design-rules.md 가 아직 없다. 정상이다** — 그 문서는 승인의 결과물이라
+아직 승인이 없었을 뿐이다. 없다고 멈추거나 찾아 헤매지 마라. 그때의 근거는:
+`projects/<이름>/docs/design/INTERVIEW.md` 의 "인터뷰 결론"(design-interview 가 사용자와 수렴시킨 확정본)
+\+ style-scout 프로필의 "가져올 것 / 버릴 것". **네 시안이 승인되면 그게 design-rules.md 를 처음 만든다**
+(만드는 건 본체 몫 — 너는 만들지 않는다). 그러니 이 경우엔 네가 정한 값이 사실상 전부 승인 후보다:
+보고의 "새로 제안한 요소"에 사용자가 판단해야 할 것 위주로 추려라.
+
 ## 규칙
 - 산출물: `projects/<이름>/docs/design/mockups/<화면명>.html` — 단일 파일 (Tailwind CDN 허용, 외부 빌드 금지)
 - 비즈니스 로직·API 호출·상태관리 금지. 데이터는 그럴듯한 한국어 더미로 하드코딩

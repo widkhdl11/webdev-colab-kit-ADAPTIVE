@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>signal — 피드 (톤 a: 인디고)</title>
+
+<!--
+  signal / 피드 시안 — 톤 a (인디고, 파랑쪽)
+  근거: docs/design/INTERVIEW.md "인터뷰 결론" 7줄 + docs/design/refs/biko-style.md 가져올것/버릴것 표
+  ─────────────────────────────────────────────────────────────────────
+  feed-a.html 과 feed-b.html 은 아래 "톤 a/b 차이" 3줄(포인트색)을 빼면 완전히 동일하다.
+  레이아웃·밀도·문구·더미데이터는 손대지 않았다 — 색만 비교하기 위해서.
+  ─────────────────────────────────────────────────────────────────────
+  biko 에서 가져온 시그니처: (1) 카드 안 점선 구분선  (2) 알약 필터 칩 줄
+                             (3) 그림자 없이 회색 채움으로 카드 분리  (4) 정보를 뱃지로 압축
+  biko 에서 버린 것: 보라 전면 배경 · 초대형 헤드라인 · 마스코트/3D 이모지 · 제목 한 줄 잘림 · 2차 강조색
+
+  ═════════════════════════════════════════════════════════════════════
+  checkpoint 1차 피드백 반영 (2026-08-02) — 이 파일(톤 a)만 수정. feed-b 는 비교 기록용으로 동결.
+
+  [사용자 피드백 원문]
+   "A가 살짝 더 나은거 같다. 그런데 배경색이 너무 하얘서 눈이 아프다. 살짝 조정해주고,
+    본 글은 흐릿하게 표시되게 해줘"
+   "그리고 이 정보들은 매일 아침마다 갱신된다. 날짜별로 나눠줘"
+
+  [무엇을 어떻게 바꿨나]
+   (0) 배경색 — 본체가 먼저 반영함(feed-a/b/article 공통). 페이지를 #EFEFF5 로 낮추고 카드를
+       그보다 밝게(--surface: #F8F8FC) 뒤집었다. 이번 작업은 그 토큰 구조 위에 덧붙이기만 했다.
+
+   (1) 읽음 상태 — .card 에 `is-read` 수식 클래스를 더했다 (JS 없이 클래스로만 그린 정적 표현).
+       · 카드 채움을 --surface-read 로 내려 페이지 쪽에 가깝게 눕힌다 → 덜 도드라짐
+       · 제목/요약/메타를 한 단계씩 연하게. 단 전부 4.5:1 이상 유지 (아래 :root 주석에 수치)
+         "흐릿하게 = 눌러두는 것"이지 못 읽게 만드는 게 아니다 — 읽은 글도 다시 찾을 수 있어야 한다
+       · '뜨는 중' 뱃지가 읽은 카드에 붙으면 포인트색을 빼고 중립 회색으로 (본 글이 색으로 튀면 안 됨)
+       · 호버하면 안 읽은 카드와 완전히 같은 수준으로 되살아난다 (다시 읽으려는 순간엔 또렷하게)
+       · 12개 중 4개(4·6·9·11번)를 읽음으로. 맨 위 1~2번은 안 읽은 채로 둬서 대비가 한눈에 보이게.
+       · 색만으로 상태를 알리지 않도록 스크린리더 전용 "읽음" 텍스트를 함께 넣었다(.sr-only, 시각 비용 0)
+
+   (2) 날짜별 그룹 — 피드를 `오늘 / 어제 / 7월 31일 (금)` 세 섹션으로 나눴다.
+       · 규칙: **날짜 그룹이 1차, 정렬(뜨는순/최신순)은 그룹 안에서 2차.**
+         "매일 아침 한 묶음씩 들어온다"는 정신 모델이라, 점수가 날짜를 가로질러 섞이면
+         "오늘 뭐 왔지"를 볼 수 없다. 그래서 '뜨는 중' 뱃지도 전역 상위 2개가 아니라
+         **그룹 안에서의 상위**로 붙는다(어제 그룹 첫 카드에도 하나 — 읽은 상태라 중립색 시연을 겸함).
+       · 섹션 헤더는 절제: 13.5px, 메타색 + 굵기로만 위계(큰 제목 금지). 옆에 그날 건수를 작게,
+         남는 폭은 시그니처인 **점선**으로 채웠다.
+       · 카드 문구·데이터는 그대로 재사용. 상대시간 메타만 소속 날짜와 어긋나지 않게 손봤다
+         (어제 그룹 → "어제 오후/오전", 31일 그룹 → "31일 오후/오전").
+       · 부제에 갱신 주기 한 줄을 넣되 구체적 시각·날짜는 단정하지 않았다.
+       · 섹션이 생기면서 제목 계층을 h1(페이지) > h2(날짜) > h3(카드)로 맞췄다.
+       · 정렬 세그먼트 토글과 필터 칩 줄은 위치·구성 그대로 유지.
+
+   [손대지 않은 것] 배경·포인트색·라운드·타이포·최대폭·gap 등 확정 토큰, 카드 레이아웃 언어,
+                    시그니처 3종(점선 구분선 / 알약 칩 줄 / 그림자 없이 면으로 분리)
+  ═════════════════════════════════════════════════════════════════════
+-->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+  :root{
+    /* --- 톤 a/b 차이: 아래 3줄이 전부 --- 톤 a = 인디고(파랑쪽) --- */
+    --accent:      #4F46E5;  /* 정체성/장식: 점, 포커스링, 호버 밑줄 */
+    --accent-ink:  #4F46E5;  /* 글자·흰글자 채움에 쓰는 대비 확보용 */
+    --accent-soft: #E9E8FB;  /* 뱃지 배경 (아주 옅게) */
+    /* --- 여기까지 --- */
+
+    /* 피드백(2026-08-02, 사용자): "배경색이 너무 하얘서 눈이 아프다"
+       → 페이지를 한 단계 낮추고, 카드를 페이지보다 '밝게' 뒤집었다(순백은 아님).
+          눈부심은 줄고 카드 분리는 오히려 뚜렷해진다. biko 는 흰 페이지+회색 카드였지만
+          매일 훑는 리더에는 이 반대가 맞다. */
+    --bg:        #EFEFF5;  /* 페이지 — 라벤더 기 도는 옅은 회색 */
+    --surface:   #F8F8FC;  /* 카드 채움 — 배경보다 한 단계 밝게 */
+    --surface-h: #FDFDFF;  /* 카드 호버 (순백 직전까지만) */
+    --hairline:  #E2E2EC;  /* 헤더 밑선 */
+    --dot:       #C9C9D6;  /* 카드 안 점선 구분선 */
+
+    --text:  #1F2024;  /* 본문 — 순검정 금지(피로감) */
+    --text2: #4A4E55;  /* 요약문 */
+    /* 메타는 biko 원본이 #8A8F95 지만 카드 채움 위에서 2.97:1 이라 접근성 기준 미달 →
+       같은 계열에서 명도만 낮춰 맞췄다. 배경을 낮추면서 한 단계 더 어둡게(#6A6F77→#656A72):
+       회색 페이지 위에서 4.42:1 로 떨어졌기 때문. (승인 확인 포인트) */
+    --meta:  #656A72;
+
+    /* ── 읽음 상태 토큰 (2026-08-02 피드백 "본 글은 흐릿하게") ─────────────
+       기준: 읽은 카드는 '눌러두되 읽을 수는 있게'. 제목·요약·메타 전부 4.5:1 이상을 지킨다.
+       괄호 안은 --surface-read(#F3F3F8) 위에서 계산한 대비값. */
+    --surface-read: #F3F3F8;  /* 읽은 카드 채움 — --bg(#EFEFF5)와 --surface(#F8F8FC) 사이 중간값.
+                                 페이지 쪽으로 눕혀 덜 도드라지게 하되, 카드 경계는 남는다 */
+    /* 2차 피드백(2026-08-02): "흐릿함이 잘 구별이 안된다, 글자가 조금 더 흐릿하면 좋겠는데"
+       → 병목은 제목이었다. 6.74:1 로 가장 진했는데 카드에서 덩어리가 제일 커서 '안 흐릿함'을
+          혼자 결정하고 있었다. 세 값 모두 접근성 바닥(4.5:1) 직전까지 내렸다.
+          제목은 굵기도 700→600 으로 함께 낮춘다(색만으로는 더 내릴 데가 없어서). */
+    --text-read:    #666B73;  /* 읽은 카드 제목  (4.85:1) — 6.74 에서 바닥 직전까지 */
+    --text2-read:   #6A6F77;  /* 읽은 카드 요약  (4.57:1) */
+    --meta-read:    #6A6F77;  /* 읽은 카드 메타  (4.57:1) — 여기가 최저점 */
+    --dot-read:     #D2D2DE;  /* 읽은 카드 점선 구분선 (장식 — 대비 기준 대상 아님) */
+    --tag-read-bg:  #EAEAF2;  /* 읽은 카드 태그 칩 배경 — 밝아진 카드 위에서도 칩이 보이도록 조정 */
+    /* 칩 배경이 카드보다 어두워서, 요약과 같은 색을 쓰면 4.23:1 로 떨어진다(2차 조정 때 발견).
+       칩 안에서만 한 단계 진한 값을 따로 쓴다 — 배경이 다르면 글자색도 따라가야 한다. */
+    --tag-read-ink: #63676F;  /* 읽은 카드 태그 칩 글자 (4.74:1) */
+    --badge-read-bg:  #E7E7EF;  /* 읽은 카드의 '뜨는 중' 뱃지 — 포인트색을 빼고 중립 회색으로 */
+    --badge-read-ink: #585C64;  /* (5.46:1) 이미 본 글이 색으로 튀지 않게 */
+
+    --maxw: 1168px;
+    --r-card: 12px;
+    --r-pill: 999px;
+    --r-img: 8px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ -webkit-text-size-adjust: 100%; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard", "Pretendard Variable", system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap{ max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+
+  /* 눈에는 안 보이지만 스크린리더는 읽는 텍스트 (읽음 상태를 색으로만 알리지 않기 위해) */
+  .sr-only{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+  }
+
+  /* 포커스 스타일은 제거하지 않는다 */
+  a:focus-visible, button:focus-visible{
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* ── 아주 얇은 상단 헤더 (네비 메뉴 없음 — 2페이지짜리 개인용) ───────── */
+  header.top{
+    border-bottom: 1px solid var(--hairline);
+    background: var(--bg);
+    position: sticky; top: 0; z-index: 5;
+  }
+  .top-in{
+    max-width: var(--maxw); margin: 0 auto; padding: 14px 20px;
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  }
+  .logo{
+    font-size: 19px; font-weight: 800; letter-spacing: -0.3px;
+    color: var(--text); text-decoration: none;
+  }
+  .logo .dot{ color: var(--accent); }   /* 포인트색이 닿는 유일한 헤더 요소 */
+  .tagline{ font-size: 13px; color: var(--meta); }
+
+  /* ── 페이지 타이틀: 절제 (초대형 헤드라인 금지) ─────────────────────── */
+  .page-head{ padding: 28px 0 16px; }
+  .page-head h1{
+    margin: 0 0 4px; font-size: 22px; font-weight: 700; letter-spacing: -0.4px;
+  }
+  .page-head p{ margin: 0; font-size: 13px; color: var(--meta); }
+
+  /* ── 컨트롤 줄: 정렬 세그먼트(알약) + 주제 태그 필터 칩 ───────────── */
+  .controls{
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding-bottom: 18px;
+  }
+  .segment{
+    display: inline-flex; gap: 2px; padding: 3px;
+    background: var(--surface); border-radius: var(--r-pill);
+  }
+  .segment button{
+    appearance: none; border: 0; cursor: pointer;
+    font: inherit; font-size: 13px; font-weight: 600;
+    padding: 6px 14px; border-radius: var(--r-pill);
+    background: transparent; color: var(--meta);
+    transition: background .15s ease, color .15s ease;
+  }
+  .segment button:hover{ color: var(--text); }
+  .segment button[aria-pressed="true"]{
+    background: var(--accent-ink); color: #fff;   /* 활성 상태에만 포인트색 */
+  }
+
+  .divider-v{ width:1px; height:20px; background: var(--hairline); }
+
+  .chips-row{ display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-chip{
+    appearance: none; cursor: pointer; font: inherit;
+    font-size: 13px; font-weight: 500;
+    padding: 6px 13px; border-radius: var(--r-pill);
+    background: var(--surface); color: var(--meta);
+    border: 1px solid transparent;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .filter-chip:hover{ background: var(--surface-h); color: var(--text); }
+  .filter-chip[aria-pressed="true"]{
+    background: var(--accent-soft); color: var(--accent-ink);
+    border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+    font-weight: 600;
+  }
+
+  /* ── 날짜 섹션 (매일 아침 갱신 → 날짜가 1차 묶음) ──────────────────────
+     헤더는 절제한다: 13.5px, 메타색 + 굵기로만 위계. 큰 제목 금지.
+     남는 폭은 시그니처인 점선으로 채워 "여기서 하루가 나뉜다"만 조용히 알린다. */
+  .day + .day{ margin-top: 6px; }
+  .day-head{
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 0 12px;
+  }
+  .day-title{
+    margin: 0; font-size: 13.5px; font-weight: 700;
+    letter-spacing: -0.2px; color: var(--meta);
+  }
+  .day-count{ font-size: 12.5px; font-weight: 500; color: var(--meta); }
+  .day-count::before{ content: "·"; margin-right: 6px; }
+  .day-rule{
+    flex: 1 1 auto; height: 0; min-width: 24px;
+    border-top: 1px dotted var(--dot);   /* 시그니처: 점선 */
+  }
+
+  /* ── 카드 3열 그리드 ───────────────────────────────────────────────── */
+  .grid{
+    display: grid; grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 16px; padding-bottom: 22px;
+  }
+  .card{
+    display: flex; flex-direction: column;
+    background: var(--surface);
+    border-radius: var(--r-card);
+    padding: 16px;
+    text-decoration: none; color: inherit;
+    /* 3차 피드백(2026-08-02): "안읽은 카드에 입체감을 살짝 더 주면 될거같은데"
+       → biko 에서 가져왔던 "그림자 없이 면으로만 분리" 규칙을 여기서 수정한다.
+          안 읽은 카드에만 아주 옅은 그림자를 주고, 읽은 카드는 평평하게 둔다(아래 .is-read).
+          그러면 입체감 자체가 "아직 안 봄"의 신호가 되어, 흐릿함과 같은 방향으로 겹쳐 작동한다.
+          두 겹인 이유: 1px 짜리는 카드 경계를 또렷하게, 넓은 쪽은 면을 살짝 띄운다. */
+    box-shadow: 0 1px 2px rgba(31,32,36,.05), 0 4px 10px rgba(31,32,36,.05);
+    transition: background .16s ease, box-shadow .16s ease, transform .16s ease;
+  }
+  .card:hover{
+    background: var(--surface-h);
+    box-shadow: 0 2px 4px rgba(31,32,36,.06), 0 10px 22px rgba(31,32,36,.08);
+    transform: translateY(-1px);
+  }
+  .card:hover .card-title{ color: var(--accent-ink); }
+
+  .card-body{ flex: 1 1 auto; }
+
+  .badge{
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11.5px; font-weight: 700; letter-spacing: -0.1px;
+    padding: 3px 9px; border-radius: var(--r-pill);
+    background: var(--accent-soft); color: var(--accent-ink);
+    margin-bottom: 8px;
+  }
+
+  .card-title{
+    margin: 0 0 8px; font-size: 16px; font-weight: 700;
+    letter-spacing: -0.3px; line-height: 1.45;
+    transition: color .16s ease;
+    /* 제목은 2줄까지 — 한 줄 … 잘림 금지 */
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-sum{
+    margin: 0 0 14px; font-size: 13.5px; line-height: 1.62; color: var(--text2);
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* 시그니처: 카드 안 점선 구분선 */
+  .card-foot{
+    border-top: 1px dotted var(--dot);
+    padding-top: 11px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .meta{ font-size: 12px; color: var(--meta); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tags{ display: flex; gap: 4px; flex-shrink: 0; }
+  .tag{
+    font-size: 11.5px; font-weight: 500; color: var(--meta);
+    background: var(--bg); border-radius: var(--r-pill); padding: 3px 9px;
+  }
+  .card:hover .tag{ background: #fff; }
+
+  /* ── 읽음 상태: .card.is-read ──────────────────────────────────────────
+     "본 글은 흐릿하게" — 카드를 페이지 쪽으로 눕히고 글자를 한 단계씩 연하게.
+     읽을 수 없게 만드는 게 아니라 눌러두는 것이므로 제목·요약·메타 모두 4.5:1 이상을 지킨다.
+     그리고 호버하면 안 읽은 카드와 똑같은 상태로 되살아난다(다시 읽으려는 순간). */
+  /* 읽은 카드는 평평하게 — 입체감을 잃는 것 자체가 "이미 봄"의 신호다 */
+  .card.is-read{ background: var(--surface-read); box-shadow: none; }
+  /* 색만으로는 4.5:1 바닥에 막혀 더 못 내리므로, 굵기까지 함께 낮춰 '흐릿함'을 만든다.
+     굵기는 대비 기준과 무관해서 여기서 얻을 수 있는 여지가 남아 있다. */
+  .card.is-read .card-title{ color: var(--text-read); font-weight: 600; }
+  .card.is-read .card-sum{ color: var(--text2-read); }
+  .card.is-read .meta{ color: var(--meta-read); }
+  .card.is-read .card-foot{ border-top-color: var(--dot-read); }
+  .card.is-read .tag{ background: var(--tag-read-bg); color: var(--tag-read-ink); }
+  /* 이미 본 글이 포인트색으로 튀지 않도록 뱃지도 중립색으로 */
+  .card.is-read .badge{ background: var(--badge-read-bg); color: var(--badge-read-ink); }
+
+  /* 호버 = 완전 복구. 안 읽은 카드와 구분이 사라진다 */
+  .card.is-read:hover{
+    background: var(--surface-h);
+    box-shadow: 0 2px 4px rgba(31,32,36,.06), 0 10px 22px rgba(31,32,36,.08);  /* 입체감도 함께 복구 */
+  }
+  .card.is-read:hover .card-title{ color: var(--accent-ink); font-weight: 700; }
+  .card.is-read:hover .card-sum{ color: var(--text2); }
+  .card.is-read:hover .meta{ color: var(--meta); }
+  .card.is-read:hover .card-foot{ border-top-color: var(--dot); }
+  .card.is-read:hover .tag{ background: #fff; color: var(--meta); }
+  .card.is-read:hover .badge{ background: var(--accent-soft); color: var(--accent-ink); }
+  /* 키보드 이동으로 도달했을 때도 같이 되살아나게 */
+  .card.is-read:focus-visible{ background: var(--surface-h); }
+  .card.is-read:focus-visible .card-title{ color: var(--accent-ink); font-weight: 700; }
+  .card.is-read:focus-visible .card-sum{ color: var(--text2); }
+  .card.is-read:focus-visible .meta{ color: var(--meta); }
+  .card.is-read:focus-visible .badge{ background: var(--accent-soft); color: var(--accent-ink); }
+
+  /* ── 더 보기 ───────────────────────────────────────────────────────── */
+  .more{ display: flex; justify-content: center; padding: 4px 0 56px; }
+  .more button{
+    appearance: none; cursor: pointer; font: inherit;
+    font-size: 14px; font-weight: 600; color: var(--text2);
+    padding: 11px 26px; border-radius: var(--r-pill);
+    background: transparent; border: 1px solid #E3E3EC;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .more button:hover{ background: var(--surface); color: var(--text); border-color: #D8D8E4; }
+
+  footer.bot{
+    border-top: 1px solid var(--hairline);
+    padding: 18px 0 40px; font-size: 12px; color: var(--meta);
+  }
+
+  /* ── 반응형: 데스크톱 우선, 모바일 1열까지 ─────────────────────────── */
+  @media (max-width: 980px){
+    .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+  @media (max-width: 640px){
+    .grid{ grid-template-columns: 1fr; }
+    .page-head{ padding: 20px 0 14px; }
+    .controls{ gap: 10px; }
+    .divider-v{ display: none; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+    .card:hover{ transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="#">signal<span class="dot">.</span></a>
+    <span class="tagline">AI·IT 소식에서 신호만 골라 훑는 곳</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="page-head">
+    <h1>오늘의 신호</h1>
+    <!-- 갱신 주기를 한 줄로. 구체적 시각·날짜는 단정하지 않는다.
+         뒤 문장이 "날짜 1차 · 점수 2차" 규칙을 그대로 설명한다 -->
+    <p>매일 아침 갱신 · 날짜별로 묶고, 하루 안에서는 점수 순으로 정리합니다.</p>
+  </div>
+
+  <!-- 컨트롤 줄: 정렬 세그먼트 토글 + 주제 태그 필터 칩 -->
+  <div class="controls">
+    <div class="segment" role="group" aria-label="정렬 방식">
+      <button type="button" aria-pressed="true">뜨는순</button>
+      <button type="button" aria-pressed="false">최신순</button>
+    </div>
+
+    <span class="divider-v" aria-hidden="true"></span>
+
+    <div class="chips-row" role="group" aria-label="주제 필터">
+      <button type="button" class="filter-chip" aria-pressed="true">전체</button>
+      <button type="button" class="filter-chip" aria-pressed="false">모델</button>
+      <button type="button" class="filter-chip" aria-pressed="false">에이전트</button>
+      <button type="button" class="filter-chip" aria-pressed="false">MCP</button>
+      <button type="button" class="filter-chip" aria-pressed="false">엔지니어링</button>
+      <button type="button" class="filter-chip" aria-pressed="false">툴</button>
+    </div>
+  </div>
+
+  <!-- 카드 12개를 날짜 3그룹으로 나눠 담았다 (오늘 5 / 어제 4 / 31일 3).
+       '뜨는 중' 뱃지는 이제 전역 상위가 아니라 그룹 안에서의 상위에 붙는다.
+       is-read = 이미 본 글 (4·6·9·11번) — 맨 위 1~2번은 안 읽은 채로 둬서 대비가 바로 보이게. -->
+
+  <!-- ── 오늘 ─────────────────────────────────────────────────────────── -->
+  <section class="day" aria-labelledby="day-today">
+    <div class="day-head">
+      <h2 class="day-title" id="day-today">오늘</h2>
+      <span class="day-count">5건</span>
+      <span class="day-rule" aria-hidden="true"></span>
+    </div>
+
+    <div class="grid">
+
+      <a class="card" href="article.html">
+        <div class="card-body">
+          <span class="badge">🔥 뜨는 중</span>
+          <h3 class="card-title">에이전트에게 도구를 몇 개까지 쥐여줘야 할까</h3>
+          <p class="card-sum">도구 목록이 길어질수록 모델이 엉뚱한 도구를 고르는 빈도가 늘어난다는 관찰. 설명을 짧게 다듬고 비슷한 기능은 하나로 묶는 쪽이 낫다는 정리.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">Anthropic 블로그 · 2시간 전</span>
+          <span class="tags"><span class="tag">에이전트</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="article.html">
+        <div class="card-body">
+          <span class="badge">🔥 뜨는 중</span>
+          <h3 class="card-title">MCP 서버를 처음 붙일 때 자주 막히는 지점 정리</h3>
+          <p class="card-sum">권한 범위, 스키마 검증, 타임아웃 세 군데에서 대부분 막힌다. 각 경우에 로그를 어디부터 봐야 하는지 순서대로 짚어둔 글.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">GitHub · 4시간 전</span>
+          <span class="tags"><span class="tag">MCP</span><span class="tag">툴</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="article.html">
+        <div class="card-body">
+          <h3 class="card-title">컨텍스트 창이 넓어져도 프롬프트를 줄여야 하는 이유</h3>
+          <p class="card-sum">넣을 수 있는 양과 실제로 활용되는 양은 다르다. 중간 부분의 정보가 묻히는 현상을 어떻게 확인하고 줄일지에 대한 실무 메모.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">Hacker News · 6시간 전</span>
+          <span class="tags"><span class="tag">엔지니어링</span></span>
+        </div>
+      </a>
+
+      <!-- 읽음 ① — 안 읽은 카드들 사이에 섞어서 대비가 한눈에 보이게 -->
+      <a class="card is-read" href="article.html">
+        <span class="sr-only">읽은 글</span>
+        <div class="card-body">
+          <h3 class="card-title">사내 문서 검색에 임베딩 대신 키워드를 먼저 붙여본 후기</h3>
+          <p class="card-sum">벡터 검색부터 도입하기 전에 태그와 키워드 필터로 후보를 좁히는 편이 비용과 정확도 모두에서 나았다는 팀의 기록.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">개인 블로그 · 8시간 전</span>
+          <span class="tags"><span class="tag">엔지니어링</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="article.html">
+        <div class="card-body">
+          <h3 class="card-title">코딩 에이전트 평가를 자동화하려다 배운 것</h3>
+          <p class="card-sum">"통과/실패"만 세면 실제 품질과 어긋난다. 무엇을 실패로 볼지 정의하는 데 대부분의 시간이 들어갔다는 회고.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">Hacker News · 9시간 전</span>
+          <span class="tags"><span class="tag">에이전트</span></span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ── 어제 ─────────────────────────────────────────────────────────── -->
+  <section class="day" aria-labelledby="day-yesterday">
+    <div class="day-head">
+      <h2 class="day-title" id="day-yesterday">어제</h2>
+      <span class="day-count">4건</span>
+      <span class="day-rule" aria-hidden="true"></span>
+    </div>
+
+    <div class="grid">
+
+      <!-- 읽음 ② — 뱃지가 붙은 채로 읽은 경우. 뱃지도 중립색으로 내려간다 -->
+      <a class="card is-read" href="article.html">
+        <span class="sr-only">읽은 글</span>
+        <div class="card-body">
+          <span class="badge">🔥 뜨는 중</span>
+          <h3 class="card-title">오픈소스 모델을 로컬에서 돌릴 때 부딪히는 현실적인 병목</h3>
+          <p class="card-sum">메모리보다 먼저 걸리는 건 대개 입출력과 양자화 설정이었다는 정리. 장비를 늘리기 전에 확인할 항목들.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">기술 뉴스레터 · 어제 오후</span>
+          <span class="tags"><span class="tag">모델</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="article.html">
+        <div class="card-body">
+          <h3 class="card-title">타입 안전한 도구 스키마를 만드는 작은 패턴</h3>
+          <p class="card-sum">스키마 정의 하나에서 런타임 검증과 타입을 함께 끌어내는 방식. 도구가 늘어날수록 손으로 맞추던 부분이 줄어든다.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">GitHub · 어제 오후</span>
+          <span class="tags"><span class="tag">툴</span><span class="tag">엔지니어링</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="article.html">
+        <div class="card-body">
+          <h3 class="card-title">검색 단계를 걷어내고 파일을 통째로 넣어본 팀의 기록</h3>
+          <p class="card-sum">문서 수가 적을 때는 파이프라인을 줄이는 쪽이 유지보수에 유리했다는 이야기. 어느 규모부터 다시 검색이 필요해졌는지도 함께.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">개인 블로그 · 어제 오전</span>
+          <span class="tags"><span class="tag">엔지니어링</span></span>
+        </div>
+      </a>
+
+      <!-- 읽음 ③ -->
+      <a class="card is-read" href="article.html">
+        <span class="sr-only">읽은 글</span>
+        <div class="card-body">
+          <h3 class="card-title">MCP의 리소스와 툴, 언제 무엇을 쓰나</h3>
+          <p class="card-sum">읽기만 하면 리소스, 부수효과가 있으면 툴로 나누는 기준을 예제와 함께 설명한다. 애매한 경우의 판단법도 정리.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">문서 사이트 · 어제 오전</span>
+          <span class="tags"><span class="tag">MCP</span></span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ── 그 전날 ──────────────────────────────────────────────────────── -->
+  <section class="day" aria-labelledby="day-0731">
+    <div class="day-head">
+      <h2 class="day-title" id="day-0731">7월 31일 (금)</h2>
+      <span class="day-count">3건</span>
+      <span class="day-rule" aria-hidden="true"></span>
+    </div>
+
+    <div class="grid">
+
+      <a class="card" href="article.html">
+        <div class="card-body">
+          <h3 class="card-title">모델을 갈아끼우는 비용을 낮추는 얇은 추상화 층</h3>
+          <p class="card-sum">공급자별 차이를 한 겹으로 감싸되 너무 두껍게 만들지 않는 선을 어디에 둘지에 대한 논의. 실패 사례도 함께 실렸다.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">Hacker News · 31일 오후</span>
+          <span class="tags"><span class="tag">모델</span><span class="tag">엔지니어링</span></span>
+        </div>
+      </a>
+
+      <!-- 읽음 ④ -->
+      <a class="card is-read" href="article.html">
+        <span class="sr-only">읽은 글</span>
+        <div class="card-body">
+          <h3 class="card-title">에이전트 로그를 사람이 읽을 수 있게 만드는 법</h3>
+          <p class="card-sum">호출 기록을 그대로 쌓으면 아무도 안 본다. 무엇을 접고 무엇을 펼칠지 정하는 것부터가 관측 가능성의 시작이라는 관점.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">개인 블로그 · 31일 오후</span>
+          <span class="tags"><span class="tag">에이전트</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="article.html">
+        <div class="card-body">
+          <h3 class="card-title">새 벤치마크가 나올 때마다 확인하는 세 가지</h3>
+          <p class="card-sum">측정 대상, 재현 조건, 그리고 내 작업과의 거리. 점수표를 그대로 믿기 전에 짚어볼 항목을 짧게 정리했다.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">기술 뉴스레터 · 31일 오전</span>
+          <span class="tags"><span class="tag">모델</span></span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <div class="more">
+    <button type="button">더 보기</button>
+  </div>
+
+</main>
+
+<footer class="bot">
+  <div class="wrap">signal — 개인용 소식 리더 · 수집된 원문의 저작권은 각 출처에 있습니다.</div>
+</footer>
+
+</body>
+</html>

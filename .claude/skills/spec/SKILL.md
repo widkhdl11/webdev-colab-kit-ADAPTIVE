@@ -5,6 +5,8 @@ argument-hint: [기능명]
 ---
 # 스펙 — 테스트로 컴파일 가능한 불변식 문서
 활성 프로젝트(루트 ACTIVE)의 projects/<이름>/docs/specs/_TEMPLATE.md 형식으로 projects/<이름>/docs/specs/$ARGUMENTS.md 를 작성한다.
+템플릿 정본은 킷의 docs/references/spec-template.md 다 (스캐폴딩이 새 프로젝트로 복사한다).
+프로젝트에 _TEMPLATE.md 가 없으면 정본을 projects/<이름>/docs/specs/_TEMPLATE.md 로 복사한 뒤 시작한다.
 
 ## 절차
 1. 기능의 "어기면 사고"를 사용자와 함께 나열 → 각각을 불변식 문장으로.
@@ -18,6 +20,16 @@ argument-hint: [기능명]
    사용자에게 승인 요청 → 승인 시 status: approved로 변경
 5. approved 후: rules/tdd.md에 따라 테스트 먼저. spec-coverage 게이트가 추적을 강제한다
 
+## 승인 단위·보류 (구현 가능 단위로 승인)
+- **하나씩 approved.** approved 스펙은 spec-coverage 게이트가 그 INV 전부에 테스트를 요구하고, 게이트는
+  npm test green 도 요구한다 → approved 하면 그 스펙 INV를 다 구현할 때까지 게이트가 닫히지 않는다.
+  그러니 인프라 의존(예: DB·외부 API)이 섞인 스펙은 **구현 가능한 단위로 쪼개** 준비된 것부터 하나씩 approved 한다.
+  여러 스펙을 한꺼번에 approved 하면 all-or-nothing 으로 막힌다.
+- **보류(합의됐으나 아직 구현 못 함)는 `projects/<이름>/docs/specs/planned/` 에 status: draft 로 둔다.**
+  spec 노드 글롭(docs/specs/*.md)은 비재귀라 planned/ 는 안 잡혀 spec 국면을 막지 않는다(spec-coverage 도 draft 는 무시).
+  준비되면 파일을 docs/specs/ 로 옮기고 approved → TDD 착수. 주의: spec 노드가 dirty 면 하류(implement/qa/review)
+  해시가 null 이 돼 완성된 슬라이스의 리뷰 사인오프조차 막힌다 — 그래서 미준비 스펙은 planned/ 로 내린다.
+
 ## 금지
 - 산문 명세 금지 — ID 없는 불변식은 테스트가 참조할 수 없다
-- 사용자 승인 없이 status: approved 변경 금지
+- 사용자 승인 없이 approved 로 변경 금지 (frontmatter status 값)
