@@ -1,20 +1,39 @@
 # PROGRESS.md
 
 ## 현재 상태 (wrap-up이 갱신 — 이 블록만 세션 시작 시 읽힘)
-- 오늘의 목표: "과목 저장 안 됨" 버그 출발 → 데이터 계층 전면 Supabase 전환 + 배포. **달성.**
-- 완료: subject·student·schedule·evaluation·exam 전 엔티티 Supabase CRUD + 4폼 저장(마이그 0005~0008 실DB, 통합테스트
-  17 green). Vercel 배포 = **독립 wama 레포(github widkhdl11/wama, supabase/ gitignore) → Git 자동배포 파이프라인**.
-  봇차단(robots.txt/noindex + Vercel Bot Protection=Challenge). 시크릿 잠금(SUPABASE_TOKEN: apply-migrations 하드닝·
-  protect-secrets 훅·유출無 확인). 버그수정 다수(시간표 과목드롭다운/요일묶음표시·학생삭제UI·평가=수강과목한정·
-  완료판정=수강전과목·tsconfig baseUrl폐기·세션기반 헤더). 리뷰어 3종 반영.
-- 멈춘 지점: 데이터 계층·배포·자동배포 완결. 미구현: **통계 페이지(pages/stats, 시안 승인됨)**. 정적 placeholder 잔존
-  (학생목록 검색·필터·페이지네이션, "다가오는 시험" 카드, 평가표 내보내기).
+- 오늘의 목표: 킷 실행 오케스트레이션을 순차 dispatch → 의존성 그래프 + dirty 전파로 전환. **달성.**
+- 완료: 그래프 엔진 6산출물(graph.mjs · gates/propagate · gates/graph-stop · .claude/agents/qa-classifier ·
+  briefing 프론티어 · docs/references/graph-engine.md) 전부 실제 실행으로 검증. CLAUDE.md 7지점 통합.
+  사람용 문서 글쓰기 스타일 규칙 추가(CLAUDE.md + 메모리).
+- 멈춘 지점: 그래프 엔진 완결, 배선만 남음 — settings.json Stop 훅 교체(run-gates→graph-stop) 미반영(보호파일→사용자 적용).
+  wama 앱은 이번 세션 손 안 댐: 통계 페이지(pages/stats)는 여전히 미구현(시안 승인됨).
 - 다음 할 일: 통계 페이지 구현(승인 시안 stats.html → pages/stats: 3탭·꺾은선/막대·드릴다운).
-- 대기 중인 결정: 없음. (참고: 실배포 시 이메일확인 재활성 · schedule/evaluation student_id 학원검증 미적용(exam RPC만) ·
-  다음 프로젝트부터 Supabase 모던키)
+- 대기 중인 결정: 사용자 반영 대기 3건 — settings.json(run-gates→graph-stop) · protect-files.mjs(개행 정규식 오탐 수정) · docs/LESSONS.md(retro 기록).
 
 ---
 ## 로그 (append-only — 필요할 때만 검색)
+
+### 2026-08-02 (킷: 순차 dispatch → 의존성 그래프 + dirty 전파 전환)
+- 목표: harness가 spec→design→implement→qa를 고정 순차로 돌리던 걸, 재작업 경로를 선언하지 않고
+  dirty 전파에서 파생시키는 그래프 모델(Make/Bazel식)로 전환. 설계 5단계를 사용자 승인받으며 진행 후 구현.
+- 설계 결정: (1) 토폴로지=루트 graph.mjs(공유·정적, 순수 리터럴) / 상태=projects/<이름>/workspace/HANDOFF.md(dirty·hash).
+  (2) 루트=product, spec·design 직교(병렬; spec↔design 조건부 결합은 엣지가 아니라 분류기가 담당).
+  (3) qa=얕은 결정론 게이트(자동 clean), review=깊은 리뷰어 사인오프(마커+basis, 기능-완성 마일스톤에만),
+  deploy.depends_on=[review](review dirty면 배포 차단). 노드 배치 기본값="노드 안", 독립 의존 증명 시 승격.
+- 산출물: graph.mjs(7노드) · gates/propagate.mjs(propagate·topoSort·cycle 검출) ·
+  gates/graph-stop.mjs(게이트→sync→release→HANDOFF, --mark 플래그) · .claude/agents/qa-classifier.md(실패 귀속,
+  충실성 사다리·걸림3 강제승격) · scripts/briefing.mjs 프론티어 한 줄 · docs/references/graph-engine.md(트레이스+사용법).
+- 검증(실제 실행 근거): propagate selftest 시나리오 A~D+cycle green / graph-stop wama 부트스트랩=전부 clean,
+  tsc 깨는 변경→implement dirty 잔존→qa 전파→프론티어=implement / review 사인오프 마커+basis staleness(구현 바뀌면 자동 낡음)
+  / design 거부(status:draft)=sticky dirty+전파, 재승인→clean / --mark 전파·잘못된노드 거부.
+- 발견: --mark만으론 게이트 통과 노드에 비지속(다음 Stop에 도로 clean) → design/spec-level은 프론트매터 거부(status:draft)가
+  sticky 정답(기존 machinery 재사용). qa/review 분리로 "테스트 통과≠리뷰 승인"과 "잦은 리뷰"를 동시 해결.
+- 통합: CLAUDE.md 7지점(세션시작 프론티어 · 재작업 전파 규칙 · 아키텍처 그래프 · 작업등급 연동 · review 사인오프 ·
+  검증실패 분류 · 라우팅). 사람용 문서 글쓰기 스타일 규칙 추가(번역투 금지, AI 문서는 예외).
+- retro: protect-files.mjs 리다이렉트 정규식 `[^'"|&;]*`이 개행을 안 막아, `>파일\n node gates/…`의 다음 줄 gates/까지
+  삼켜 정당한 실행을 오탐 차단 발견 → 문자셋에 \n\r 추가 제안(보호파일, 사용자 반영). 백로그 1건은 트리거 미충족→보류.
+- 미반영(보호파일, 사용자 적용 대기): settings.json Stop 훅(run-gates→graph-stop) · protect-files.mjs 개행 수정 · LESSONS.md 기록.
+- wama 앱: 이번 세션 손 안 댐. 통계 페이지 미구현 그대로.
 
 ### 2026-07-28 (데이터 계층 전면 Supabase 전환 + 배포)
 - 출발: "과목 삭제/추가 저장 안 됨" 버그 → 조사 결과 앱 데이터 계층 대부분이 목업+저장없음이고 스키마가 도메인 모델과

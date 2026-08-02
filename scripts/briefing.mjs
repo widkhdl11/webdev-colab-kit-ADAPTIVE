@@ -3,6 +3,8 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { GRAPH } from "../graph.mjs";
+import { topoSort } from "../gates/propagate.mjs";
 
 const ROOT = process.cwd();
 const read = (p) => (existsSync(join(ROOT, p)) ? readFileSync(join(ROOT, p), "utf-8") : "");
@@ -64,9 +66,24 @@ const total = done + (plan.match(/- \[ \]/g) ?? []).length;
 const backlog = read("docs/references/harness-backlog.md");
 const pendingUpgrades = (backlog.match(/^- \[ \]/gm) ?? []).length;
 
+// 6. 그래프 프론티어 — HANDOFF state 에서 '지금 작업할 노드' 파생(dirty + 상류 clean).
+let frontierLine = "";
+const handoff = read(`${projectDir}/workspace/HANDOFF.md`);
+const jm = handoff.match(/```json\s*([\s\S]*?)```/);
+if (jm) {
+  try {
+    const st = JSON.parse(jm[1]);
+    const fr = topoSort(GRAPH).filter(
+      (n) => st[n]?.status === "dirty" && GRAPH[n].depends_on.every((u) => st[u]?.status === "clean")
+    );
+    frontierLine = fr.length ? fr.join(", ") : "없음 — 전부 clean";
+  } catch { /* 손상 무시 */ }
+}
+
 console.log(`── 세션 브리핑 (${active}) ──`);
 console.log(`▣ 대기 중인 결정: ${pending.length > 0 ? pending.join(" / ") : "없음"}`);
 console.log(`● 게이트: ${gateLight}`);
+if (frontierLine) console.log(`◆ 지금 작업할 노드(프론티어): ${frontierLine}`);
 console.log(`↩ 멈춘 지점: ${stopped}`);
 console.log(`→ 다음 할 일: ${next}`);
 if (principleWarn) console.log(principleWarn);
