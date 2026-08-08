@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "문서 흐름 — 누가 쓰고 누가 읽는가",
+    "subtitle": "하네스의 문서는 대부분 그래프 노드의 produces 다. 그렇지 않은 것과 아무도 안 쓰는 것을 함께 표시한다",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "main",
+        "label": "정상 흐름",
+        "focus": [
+          "product",
+          "specs",
+          "design_rules",
+          "src",
+          "tests",
+          "review"
+        ],
+        "note": "제품 정의가 스펙·디자인으로 갈라지고 구현에서 합류해 리뷰 마커로 봉인된다."
+      },
+      {
+        "id": "gaps",
+        "label": "고아와 유령",
+        "focus": [
+          "tech_stack",
+          "interview",
+          "deploy"
+        ],
+        "note": "findings.md 의 F4·F7·F8 — 그래프가 추적하지 않거나 아무도 만들지 않는 문서."
+      },
+      {
+        "id": "hash",
+        "label": "해시 검증 지점",
+        "focus": [
+          "src",
+          "review",
+          "graph_stop",
+          "handoff"
+        ],
+        "note": "review 마커의 basis 와 graph-stop 의 produces 해시가 낡음을 자동 판정한다."
+      }
+    ],
+    "viewBox": [
+      1120,
+      780
+    ]
+  },
+  "stages": [
+    {
+      "label": "정의"
+    },
+    {
+      "label": "스펙 · 설계"
+    },
+    {
+      "label": "구현 · 검증"
+    },
+    {
+      "label": "판정"
+    },
+    {
+      "label": "상태 · 배포"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "product",
+      "type": "database",
+      "label": "PRODUCT.md",
+      "sublabel": "kickoff 작성",
+      "tag": "graph.mjs:27",
+      "stage": 0,
+      "row": 1
+    },
+    {
+      "id": "tech_stack",
+      "type": "database",
+      "label": "tech-stack.md",
+      "sublabel": "읽는 곳 setup 뿐",
+      "tag": "그래프 밖 · F7",
+      "stage": 0,
+      "row": 3
+    },
+    {
+      "id": "specs",
+      "type": "database",
+      "label": "docs/specs/*.md",
+      "sublabel": "status approved",
+      "tag": "graph.mjs:34",
+      "stage": 1,
+      "row": 0
+    },
+    {
+      "id": "interview",
+      "type": "database",
+      "label": "INTERVIEW.md",
+      "sublabel": "취향 상담 결론",
+      "tag": "그래프 밖 · F8",
+      "stage": 1,
+      "row": 2
+    },
+    {
+      "id": "design_rules",
+      "type": "security",
+      "label": "design-rules.md",
+      "sublabel": "status approved",
+      "tag": "봉인 신호",
+      "stage": 1,
+      "row": 4
+    },
+    {
+      "id": "src",
+      "type": "database",
+      "label": "src/**",
+      "sublabel": "구현 산출물",
+      "tag": "graph.mjs:63",
+      "stage": 2,
+      "row": 3
+    },
+    {
+      "id": "tests",
+      "type": "database",
+      "label": "*.test.ts",
+      "sublabel": "tsx 는 미포함",
+      "tag": "F10",
+      "stage": 2,
+      "row": 1
+    },
+    {
+      "id": "run_gates",
+      "type": "security",
+      "label": "run-gates",
+      "sublabel": "결정론 판정",
+      "tag": "settings:28",
+      "stage": 3,
+      "row": 0
+    },
+    {
+      "id": "graph_stop",
+      "type": "security",
+      "label": "graph-stop",
+      "sublabel": "해시 · 전파",
+      "tag": "settings:32",
+      "stage": 3,
+      "row": 2
+    },
+    {
+      "id": "review",
+      "type": "security",
+      "label": "review.md",
+      "sublabel": "passed + basis",
+      "tag": "봉인 · 해시 검증",
+      "stage": 3,
+      "row": 4
+    },
+    {
+      "id": "handoff",
+      "type": "database",
+      "label": "HANDOFF.md",
+      "sublabel": "브리핑이 읽음",
+      "tag": "자동 생성",
+      "stage": 4,
+      "row": 1
+    },
+    {
+      "id": "deploy",
+      "type": "database",
+      "label": "deploy.md",
+      "sublabel": "만드는 곳 없음",
+      "tag": "유령 · F4",
+      "stage": 4,
+      "row": 3
+    }
+  ],
+  "flows": [
+    {
+      "id": "product-specs",
+      "from": "product",
+      "to": "specs",
+      "label": "제품 정의",
+      "variant": "emphasis"
+    },
+    {
+      "id": "product-design",
+      "from": "product",
+      "to": "design_rules",
+      "label": "제품 정의",
+      "variant": "default"
+    },
+    {
+      "id": "interview-design",
+      "from": "interview",
+      "to": "design_rules",
+      "label": "시안 근거",
+      "variant": "dashed"
+    },
+    {
+      "id": "specs-tests",
+      "from": "specs",
+      "to": "tests",
+      "label": "INV 참조",
+      "variant": "emphasis",
+      "channelX": 400,
+      "route": "vertical-channel"
+    },
+    {
+      "id": "design-src",
+      "from": "design_rules",
+      "to": "src",
+      "label": "BEFORE_UI 허용",
+      "variant": "security",
+      "channelX": 450,
+      "route": "vertical-channel"
+    },
+    {
+      "id": "src-gates",
+      "from": "src",
+      "to": "run_gates",
+      "label": "정적 검사",
+      "variant": "emphasis",
+      "channelX": 660,
+      "route": "vertical-channel",
+      "toSide": "bottom"
+    },
+    {
+      "id": "tests-gates",
+      "from": "tests",
+      "to": "run_gates",
+      "label": "npm test",
+      "variant": "default",
+      "channelX": 610,
+      "route": "vertical-channel"
+    },
+    {
+      "id": "gates-stop",
+      "from": "run_gates",
+      "to": "graph_stop",
+      "label": "에러 카테고리",
+      "variant": "security"
+    },
+    {
+      "id": "src-review",
+      "from": "src",
+      "to": "review",
+      "label": "basis 해시",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "stop-handoff",
+      "from": "graph_stop",
+      "to": "handoff",
+      "label": "dirty 상태",
+      "variant": "emphasis"
+    },
+    {
+      "id": "review-deploy",
+      "from": "review",
+      "to": "deploy",
+      "label": "사인오프 대기",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "봉인과 해시 검증",
+      "items": [
+        "design-rules.md — status: approved 가 UI 구현 허용 신호 (run-gates.mjs:204-212)",
+        "specs/*.md — status: approved 여야 spec 노드 clean (graph.mjs:36)",
+        "review.md — status: passed + basis 해시가 구현과 일치해야 clean (graph-stop.mjs:179-188)",
+        "produces 내용 해시로 변경 감지 (graph-stop.mjs:66-72)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "findings.md 대응",
+      "items": [
+        "F4 deploy.md — 요구만 있고 만드는 절차가 없다 (graph.mjs:93)",
+        "F7 tech-stack.md — setup 이 쓰고 setup 이 읽는다. 어느 노드의 produces 도 아님",
+        "F8 INTERVIEW.md — drafter 가 읽지만 design produces 에 없다",
+        "F10 tests — 글롭이 .test.ts 만 잡아 .test.tsx 4개가 qa 밖에 있다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "그림에 없는 문서",
+      "items": [
+        "PROGRESS.md · DECISIONS.md · LESSONS.md — 사람이 읽는 기록, 게이트 판정에 미참여",
+        "harness-backlog.md — briefing.mjs:66 이 개수만 읽는다",
+        "mockups/*.html — design/page-designer produces 의 나머지 절반"
+      ]
+    }
+  ]
+}

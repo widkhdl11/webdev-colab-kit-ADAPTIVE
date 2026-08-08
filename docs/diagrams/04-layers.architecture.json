@@ -1,0 +1,316 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "컨텍스트 계층 — 항상 로드되는 것과 조건부로 로드되는 것",
+    "subtitle": "CLAUDE.md · 규칙 · 스킬 · 서브에이전트 · 훅이 언제 무엇을 근거로 들어오는가",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "always",
+        "label": "항상 로드",
+        "focus": [
+          "hooks",
+          "claude_md",
+          "briefing",
+          "gates",
+          "graph"
+        ],
+        "note": "훅·게이트는 모델 밖에서 강제된다. CLAUDE.md 는 매 세션 컨텍스트에 들어온다."
+      },
+      {
+        "id": "conditional",
+        "label": "조건부 로드",
+        "focus": [
+          "skills",
+          "rules",
+          "subagents",
+          "project_docs"
+        ],
+        "note": "규칙은 경로 매칭, 스킬은 설명 매칭·슬래시, 서브에이전트는 본체 파견이 트리거다."
+      },
+      {
+        "id": "gap",
+        "label": "빠진 층",
+        "focus": [
+          "claude_md",
+          "glossary"
+        ],
+        "note": "CLAUDE.md 가 세션 시작 시 읽으라고 지시하는 GLOSSARY.md 는 레포에 없다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "hooks",
+      "type": "security",
+      "label": "훅 6개",
+      "sublabel": ".claude/settings.json",
+      "tag": "항상 · 모델 밖",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "claude_md",
+      "type": "backend",
+      "label": "CLAUDE.md",
+      "sublabel": "협업 규칙 · 라우팅",
+      "tag": "항상 · 컨텍스트",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "briefing",
+      "type": "external",
+      "label": "세션 브리핑",
+      "sublabel": "scripts/briefing.mjs",
+      "tag": "SessionStart",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "gates",
+      "type": "security",
+      "label": "게이트 4개",
+      "sublabel": "gates/*.mjs",
+      "tag": "편집·턴 종료",
+      "pos": [
+        300,
+        190
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "graph",
+      "type": "cloud",
+      "label": "graph.mjs",
+      "sublabel": "토폴로지 + HANDOFF",
+      "tag": "훅이 갱신",
+      "pos": [
+        560,
+        115
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "skills",
+      "type": "frontend",
+      "label": "스킬 10개",
+      "sublabel": ".claude/skills/",
+      "tag": "설명 매칭 · 슬래시",
+      "pos": [
+        300,
+        330
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "rules",
+      "type": "database",
+      "label": "규칙 7개",
+      "sublabel": ".claude/rules/",
+      "tag": "paths 매칭 시",
+      "pos": [
+        300,
+        490
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "subagents",
+      "type": "messagebus",
+      "label": "서브에이전트 7개",
+      "sublabel": ".claude/agents/",
+      "tag": "본체가 파견",
+      "pos": [
+        560,
+        330
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "project_docs",
+      "type": "database",
+      "label": "프로젝트 문서",
+      "sublabel": "PRODUCT · specs · design-rules",
+      "tag": "필요할 때만",
+      "pos": [
+        820,
+        330
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "glossary",
+      "type": "external",
+      "label": "GLOSSARY.md",
+      "sublabel": "레포에 없음",
+      "tag": "유령 참조",
+      "pos": [
+        40,
+        490
+      ],
+      "size": [
+        160,
+        68
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "모델 밖에서 항상 실행",
+      "wraps": [
+        "hooks",
+        "briefing",
+        "gates",
+        "graph"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "조건부 로드 — 트리거가 있을 때만",
+      "wraps": [
+        "skills",
+        "subagents",
+        "project_docs",
+        "rules"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "hook-briefing",
+      "from": "hooks",
+      "to": "briefing",
+      "label": "SessionStart",
+      "variant": "security",
+      "labelDx": 30
+    },
+    {
+      "id": "hook-gates",
+      "from": "hooks",
+      "to": "gates",
+      "label": "PostToolUse · Stop",
+      "variant": "security"
+    },
+    {
+      "id": "gates-graph",
+      "from": "gates",
+      "to": "graph",
+      "label": "전파 · HANDOFF",
+      "variant": "security"
+    },
+    {
+      "id": "claude-skills",
+      "from": "claude_md",
+      "to": "skills",
+      "label": "절차 진입점",
+      "variant": "emphasis",
+      "labelDx": 30
+    },
+    {
+      "id": "claude-rules",
+      "from": "claude_md",
+      "to": "rules",
+      "label": "paths 매칭",
+      "variant": "dashed"
+    },
+    {
+      "id": "claude-glossary",
+      "from": "claude_md",
+      "to": "glossary",
+      "label": "대상 파일 없음",
+      "variant": "security",
+      "labelDy": 30
+    },
+    {
+      "id": "skills-agents",
+      "from": "skills",
+      "to": "subagents",
+      "label": "파견",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agents-docs",
+      "from": "subagents",
+      "to": "project_docs",
+      "variant": "default"
+    },
+    {
+      "id": "docs-gates",
+      "from": "project_docs",
+      "to": "gates",
+      "label": "승인 프론트매터",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "로드 트리거 [CONFIRMED]",
+      "items": [
+        "훅 — .claude/settings.json:9-34 의 이벤트/matcher (모델이 못 끈다)",
+        "규칙 — 파일 상단 paths 프론트매터 (7개 중 6개, design-drafting.md 만 없음)",
+        "스킬 — description 이 트리거. goal·scaffold·status 는 disable-model-invocation: true",
+        "서브에이전트 — 본체가 파견할 때만. tools 로 권한이 좁혀진다",
+        "서브에이전트 → 프로젝트 문서 — 읽기 전용 근거 (tools 에 Write 없음: code/security/ui-reviewer, test-auditor, qa-classifier, style-scout)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "빈칸",
+      "items": [
+        "GLOSSARY.md — CLAUDE.md 가 세션 시작 시 읽으라 지시하지만 레포에 없다",
+        "goal · status · scaffold — CLAUDE.md 에 언급이 없어 README 를 봐야 존재를 안다 (F1-F3)",
+        "design-drafting.md — paths 가 없어 자동 로드 조건이 선언돼 있지 않다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "검증 대상 [INFERRED]",
+      "items": [
+        "스킬 설명 매칭이 실제로 언제 발화하는지 — 실행 로그 없이는 확인 불가",
+        "규칙 paths 매칭 시점 — 편집 직전인지 세션 중 1회인지 파일로는 알 수 없다",
+        "조건부 층의 실제 토큰 비용 — 측정 안 함"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,13 @@
 node_modules/
 dist/
+# Next 빌드 산출물. .env 를 무시하면서 그것을 구워 넣은 결과물을 안 무시하면 소용이 없다 —
+# NEXT_PUBLIC_* 는 클라 청크에 인라인되고 서버 전용 값도 .next/server/ 에 남는다.
+.next/
+*.tsbuildinfo
 devserver.log
+# archify 산출물. IR(.json)이 소스이고 HTML은 장당 ~630KB 재생성물이다:
+#   node bin/archify.mjs deliver <type> docs/diagrams/<file>.json docs/diagrams/<file>.html --quality showcase
+docs/diagrams/*.html
 .env
 .env.*
 !.env.example

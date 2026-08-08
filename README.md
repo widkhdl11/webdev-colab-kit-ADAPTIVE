@@ -1,7 +1,12 @@
 # webdev-collab-kit v2
 
+![실행 그래프 — product → spec·design → implement → qa → review → deploy](docs/diagrams/00-workflow-share-card.png)
+
 Claude Code 대화형 위에서 사용자와 함께 웹사이트를 만드는 협업 세션 킷.
 **오케스트레이터는 사용자다.** 모델은 설득(.md), 코드는 판정(게이트·훅).
+
+구조를 먼저 보려면 → **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** (2분) ·
+그림 4장은 [docs/diagrams/](docs/diagrams/) 의 `.json` 을 `archify deliver` 로 열면 인터랙티브 HTML 이 나온다.
 
 ## 시작
 

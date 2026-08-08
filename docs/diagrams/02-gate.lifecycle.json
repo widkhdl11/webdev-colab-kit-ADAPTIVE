@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "노드 상태 수명주기 — dirty에서 clean까지",
+    "subtitle": "graph.mjs 의 clean_when 4종과 graph-stop.mjs 의 release 절차가 만드는 상태 전이",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "happy",
+        "label": "정상 해제",
+        "focus": [
+          "bootstrap",
+          "dirty",
+          "release_check",
+          "clean"
+        ],
+        "note": "상류 clean + 프론트매터 + 게이트 에러 0 이면 그 턴에 dirty 가 풀린다."
+      },
+      {
+        "id": "recover",
+        "label": "차단과 복구",
+        "focus": [
+          "gate_fail",
+          "dirty"
+        ],
+        "note": "게이트 실패는 위반을 고치면 같은 노드로 돌아온다. 거부(status: draft)는 사람이 프론트매터를 되돌리는 수동 전이라 이 그림에 없다."
+      },
+      {
+        "id": "signoff",
+        "label": "사인오프와 낡음",
+        "focus": [
+          "signoff_wait",
+          "clean",
+          "stale_basis"
+        ],
+        "note": "review·deploy 는 마커로만 clean 이 되고, basis 해시가 어긋나면 자동으로 낡는다."
+      }
+    ],
+    "viewBox": [
+      1040,
+      720
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "노드 상태"
+    },
+    {
+      "id": "blocked",
+      "label": "차단 · 대기"
+    },
+    {
+      "id": "recovery",
+      "label": "되돌림"
+    },
+    {
+      "id": "terminal",
+      "label": "종료"
+    }
+  ],
+  "states": [
+    {
+      "id": "bootstrap",
+      "lane": "main",
+      "col": 0,
+      "type": "start",
+      "label": "미기록",
+      "sublabel": "HANDOFF 에 없음",
+      "step": "01",
+      "tag": "graph-stop.mjs:96"
+    },
+    {
+      "id": "dirty",
+      "lane": "main",
+      "col": 1,
+      "type": "active",
+      "label": "dirty",
+      "sublabel": "재작업 대상",
+      "step": "02",
+      "tag": "propagate.mjs"
+    },
+    {
+      "id": "release_check",
+      "lane": "main",
+      "col": 2,
+      "type": "decision",
+      "label": "release 판정",
+      "sublabel": "Stop 훅마다",
+      "step": "03",
+      "tag": "graph-stop.mjs:232"
+    },
+    {
+      "id": "clean",
+      "lane": "main",
+      "col": 3,
+      "type": "active",
+      "label": "clean",
+      "sublabel": "해시 저장",
+      "step": "04",
+      "tag": "graph-stop.mjs:241"
+    },
+    {
+      "id": "deployed",
+      "lane": "main",
+      "col": 4,
+      "type": "success",
+      "label": "deployed",
+      "sublabel": "도달 경로 없음",
+      "step": "05",
+      "tag": "F4"
+    },
+    {
+      "id": "gate_fail",
+      "lane": "blocked",
+      "col": 0,
+      "type": "failure",
+      "label": "게이트 실패",
+      "sublabel": "exit 2 · 차단",
+      "tag": "run-gates.mjs:281"
+    },
+    {
+      "id": "signoff_wait",
+      "lane": "blocked",
+      "col": 1,
+      "type": "waiting",
+      "label": "사인오프 대기",
+      "sublabel": "마커 없음",
+      "tag": "graph-stop.mjs:180"
+    },
+    {
+      "id": "stale_basis",
+      "lane": "terminal",
+      "col": 1,
+      "type": "failure",
+      "label": "낡음",
+      "sublabel": "basis 불일치",
+      "tag": "graph-stop.mjs:187"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t_boot",
+      "from": "bootstrap",
+      "to": "dirty",
+      "variant": "default",
+      "route": "straight"
+    },
+    {
+      "id": "t_check",
+      "from": "dirty",
+      "to": "release_check",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "t_clean",
+      "from": "release_check",
+      "to": "clean",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "t_gatefail",
+      "from": "release_check",
+      "to": "gate_fail",
+      "label": "게이트 에러",
+      "variant": "security"
+    },
+    {
+      "id": "t_recover",
+      "from": "gate_fail",
+      "to": "dirty",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t_signoff",
+      "from": "release_check",
+      "to": "signoff_wait",
+      "label": "마커 필요",
+      "variant": "dashed"
+    },
+    {
+      "id": "t_passed",
+      "from": "signoff_wait",
+      "to": "clean",
+      "variant": "default"
+    },
+    {
+      "id": "t_stale",
+      "from": "clean",
+      "to": "stale_basis",
+      "label": "해시 변경",
+      "variant": "security",
+      "route": "right-channel",
+      "channelX": 640,
+      "labelDx": 60
+    },
+    {
+      "id": "t_reroll",
+      "from": "stale_basis",
+      "to": "dirty",
+      "variant": "dashed",
+      "route": "left-channel",
+      "channelX": 180,
+      "fromSide": "left"
+    },
+    {
+      "id": "t_deploy",
+      "from": "clean",
+      "to": "deployed",
+      "variant": "dashed",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "clean 이 되는 조건 4종",
+      "items": [
+        "exists_nonempty — 파일 존재 + 내용 있음 (product)",
+        "frontmatter — status: approved (spec · design/page-designer)",
+        "gate — 해당 카테고리 에러가 produces 에 0건 (implement · qa · schema-designer)",
+        "signoff — 마커 + basis 해시 일치 (review · deploy)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "자동으로 다시 dirty 가 되는 사건",
+      "items": [
+        "produces 내용 해시 변경 → 자기+자식+하류 (graph-stop.mjs:216-222)",
+        "상류가 dirty → 하류 전부 (propagate.mjs)",
+        "basis 불일치 → review 낡음 (graph-stop.mjs:187)",
+        "거부(status: draft)는 재작업·재승인 전까지 sticky"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "검증 대상 [INFERRED]",
+      "items": [
+        "거부(status: draft)는 자동 트리거가 없는 수동 전이 — 그래서 상태로 그리지 않았다 (CLAUDE.md:85)",
+        "deployed 상태는 현재 도달 불가 (findings F4)",
+        "--mark 수동 dirty 는 게이트 통과 노드에선 비지속 (graph-engine.md:115)"
+      ]
+    }
+  ]
+}
