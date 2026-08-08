@@ -1,11 +1,11 @@
 # 08. deploy — 배포 사인오프 (현재 진입 경로 없음)
 
 ## Purpose
-배포를 그래프의 마지막 노드로 두어, 리뷰가 낡은 상태에서는 배포가 불가능하게 만든다. `depends_on: ["review"]` 자체가 강제 마감 장치다 [(graph.mjs:89-95)](graph.mjs#L89-L95).
+배포를 그래프의 마지막 노드로 두어, 리뷰가 낡은 상태에서는 배포가 불가능하게 만든다. `depends_on: ["review"]` 자체가 강제 마감 장치다 [(graph.mjs:89-95)](../../graph.mjs#L89-L95).
 
 ## Entry condition
-review 가 clean 이고 deploy 가 dirty 일 때 프론티어가 된다 [(graph.mjs:92)](graph.mjs#L92).
-현재 signal 프로젝트가 정확히 이 상태다 — [HANDOFF.md:3](projects/signal/workspace/HANDOFF.md#L3) 의 프론티어가 `deploy` 다.
+review 가 clean 이고 deploy 가 dirty 일 때 프론티어가 된다 [(graph.mjs:92)](../../graph.mjs#L92).
+현재 signal 프로젝트가 정확히 이 상태다 — [HANDOFF.md:3](../../projects/signal/workspace/HANDOFF.md#L3) 의 프론티어가 `deploy` 다.
 
 ## What it does
 파일로 확인할 수 있는 절차가 **없다.** 그래프는 `workspace/deploy.md` 에 `status: deployed` 와 `basis` 를 요구하지만, 그 파일을 만들라고 지시하는 스킬·서브에이전트·규칙·문서가 레포에 하나도 없다 (findings F4).
@@ -13,7 +13,7 @@ graph-stop 은 프론티어가 사인오프 노드일 때 필요한 값만 안�
 ```
 ↳ deploy 사인오프 대기: workspace/deploy.md 에 'status: deployed' + 'basis: <해시>' 기록 시 clean
 ```
-[(graph-stop.mjs:259-263)](gates/graph-stop.mjs#L259-L263)
+[(graph-stop.mjs:259-263)](../../gates/graph-stop.mjs#L259-L263)
 
 ## Skills and tools
 | name | when | evidence |
@@ -33,11 +33,11 @@ graph-stop 은 프론티어가 사인오프 노드일 때 필요한 값만 안�
 | `projects/<이름>/workspace/deploy.md` | **주인 없음** — 어떤 절차도 이 파일을 만들지 않는다 | deploy 노드 clean 판정 |
 
 ## Gate
-`clean_when: { signoff: { marker: "workspace/deploy.md", require: "status: deployed", basis_of: "implement" } }` [(graph.mjs:94)](graph.mjs#L94).
-review 와 같은 판정 로직을 쓴다 — 마커 존재 + 문구 일치 + basis 해시가 현재 `src/**` 와 동일 [(graph-stop.mjs:179-188)](gates/graph-stop.mjs#L179-L188).
+`clean_when: { signoff: { marker: "workspace/deploy.md", require: "status: deployed", basis_of: "implement" } }` [(graph.mjs:94)](../../graph.mjs#L94).
+review 와 같은 판정 로직을 쓴다 — 마커 존재 + 문구 일치 + basis 해시가 현재 `src/**` 와 동일 [(graph-stop.mjs:179-188)](../../gates/graph-stop.mjs#L179-L188).
 
 ## Failure path
-- review 가 dirty 면 deploy 는 상류 조건에서 걸려 release 자체가 시도되지 않는다 [(graph-stop.mjs:235)](gates/graph-stop.mjs#L235).
+- review 가 dirty 면 deploy 는 상류 조건에서 걸려 release 자체가 시도되지 않는다 [(graph-stop.mjs:235)](../../gates/graph-stop.mjs#L235).
 - 구현이 바뀌면 basis 불일치로 deploy 도 낡는다(재배포 강제).
 - 배포 실패 자체를 기록하는 자리는 없다.
 

@@ -1,19 +1,19 @@
 # 11. qa-classifier — 실패를 어느 층에 귀속시킬 것인가
 
 ## Purpose
-검증 실패를 `spec / design / impl` 중 한 레벨로 귀속한다. **라우팅하지 않는다** — "어느 노드를 dirty 로 마크할지"만 정하고, 재작업 범위는 전파가 파생한다 [(qa-classifier.md:6-7)](.claude/agents/qa-classifier.md#L6-L7).
+검증 실패를 `spec / design / impl` 중 한 레벨로 귀속한다. **라우팅하지 않는다** — "어느 노드를 dirty 로 마크할지"만 정하고, 재작업 범위는 전파가 파생한다 [(qa-classifier.md:6-7)](../../.claude/agents/qa-classifier.md#L6-L7).
 
 ## Entry condition
-qa(테스트·spec-coverage) 또는 review(리뷰어 지적)가 실패했을 때. 그래프에는 `on_fail_diagnose: "qa-classifier"` 로 선언돼 있고, 이건 "어디로 갈지"가 아니라 "무엇을 진단할지"다 [(graph.mjs:73-76)](graph.mjs#L73-L76).
-graph-stop 이 신호만 출력한다 — 파견은 모델·사용자의 행동이다 [(graph-stop.mjs:252-256)](gates/graph-stop.mjs#L252-L256).
+qa(테스트·spec-coverage) 또는 review(리뷰어 지적)가 실패했을 때. 그래프에는 `on_fail_diagnose: "qa-classifier"` 로 선언돼 있고, 이건 "어디로 갈지"가 아니라 "무엇을 진단할지"다 [(graph.mjs:73-76)](../../graph.mjs#L73-L76).
+graph-stop 이 신호만 출력한다 — 파견은 모델·사용자의 행동이다 [(graph-stop.mjs:252-256)](../../gates/graph-stop.mjs#L252-L256).
 
 ## What it does
-아래에서 위로 올라가는 **충실성 사다리**를 타고, 처음으로 상류에 불충실한 층에서 멈춘다 [(qa-classifier.md:14-27)](.claude/agents/qa-classifier.md#L14-L27).
+아래에서 위로 올라가는 **충실성 사다리**를 타고, 처음으로 상류에 불충실한 층에서 멈춘다 [(qa-classifier.md:14-27)](../../.claude/agents/qa-classifier.md#L14-L27).
 1. 코드가 spec·design 에 충실한가? 아니면 → **impl-level**.
 2. (코드 무죄) 설계가 요구를 충족하는가? 아니면 → **design-level**.
 3. (설계 무죄) 요구/스펙 자체가 정합한가? 아니면 → **spec-level**.
 
-출력은 세 필드 고정 [(qa-classifier.md:34-40)](.claude/agents/qa-classifier.md#L34-L40):
+출력은 세 필드 고정 [(qa-classifier.md:34-40)](../../.claude/agents/qa-classifier.md#L34-L40):
 ```
 { level: <spec-level | design-level | impl-level>,
   reason: <한 문장>,
@@ -27,7 +27,7 @@ graph-stop 이 신호만 출력한다 — 파견은 모델·사용자의 행동�
 | `node gates/graph-stop.mjs --mark <node>` | 파일 변경 없이 강제 dirty (저수준 프리미티브) | [CONFIRMED: .claude/agents/qa-classifier.md:70-71] |
 | 프론트매터 '거부' | 게이트 통과 노드에 dirty 를 지속시키는 방법 | [CONFIRMED: .claude/agents/qa-classifier.md:58-67] |
 
-도구는 `Read, Grep, Glob` 뿐 — 판정만 하고 아무것도 고치지 않는다 [(qa-classifier.md:4)](.claude/agents/qa-classifier.md#L4).
+도구는 `Read, Grep, Glob` 뿐 — 판정만 하고 아무것도 고치지 않는다 [(qa-classifier.md:4)](../../.claude/agents/qa-classifier.md#L4).
 
 ## Documents read
 | document | purpose | required? |
@@ -46,11 +46,11 @@ graph-stop 이 신호만 출력한다 — 파견은 모델·사용자의 행동�
 | (판정 후 본체가) `docs/design/design-rules.md` frontmatter → `status: draft` | design-level 거부 | design 노드 dirty 유지 |
 
 ## Gate
-이 단계는 게이트가 아니다. 다만 **강제 승격** 규칙이 하나 걸린다: `spec-level` 이거나 evidence 가 위험 표면(인증·결제·권한·격리 INV·security)에 닿으면 등급과 무관하게 사용자에게 먼저 보고한다 [(qa-classifier.md:42-46)](.claude/agents/qa-classifier.md#L42-L46), [(CLAUDE.md:87-88)](CLAUDE.md#L87-L88).
+이 단계는 게이트가 아니다. 다만 **강제 승격** 규칙이 하나 걸린다: `spec-level` 이거나 evidence 가 위험 표면(인증·결제·권한·격리 INV·security)에 닿으면 등급과 무관하게 사용자에게 먼저 보고한다 [(qa-classifier.md:42-46)](../../.claude/agents/qa-classifier.md#L42-L46), [(CLAUDE.md:87-88)](../../CLAUDE.md#L87-L88).
 
 ## Failure path
-- 판정이 틀렸을 경우의 복구 장치는 "수렴"이다 — 남은 문제는 재실행 후 다음 검증이 다시 잡는다 [(qa-classifier.md:27)](.claude/agents/qa-classifier.md#L27).
-- `--mark` 만으로는 게이트가 통과하는 노드에서 dirty 가 유지되지 않는다. 그래서 레벨별로 프론트매터 '거부'를 쓴다 [(qa-classifier.md:58-61)](.claude/agents/qa-classifier.md#L58-L61).
+- 판정이 틀렸을 경우의 복구 장치는 "수렴"이다 — 남은 문제는 재실행 후 다음 검증이 다시 잡는다 [(qa-classifier.md:27)](../../.claude/agents/qa-classifier.md#L27).
+- `--mark` 만으로는 게이트가 통과하는 노드에서 dirty 가 유지되지 않는다. 그래서 레벨별로 프론트매터 '거부'를 쓴다 [(qa-classifier.md:58-61)](../../.claude/agents/qa-classifier.md#L58-L61).
 
 ## Exit condition
 `{level, reason, evidence}` 가 반환되고, 본체가 그 레벨에 맞는 행동(코드 수정 또는 승인 취소)을 수행한 상태.
