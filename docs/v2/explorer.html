@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>하네스 탐색기 — 단계·게이트·문서</title>
+<style>
+/* --faint 는 제일 흐린 글자색이다. 2026-08-09 브라우저 실측으로 두 값 다 교체했다 —
+   이전 값(라이트 #8b93a2 / 다크 #6b7484)은 4.5:1 에 못 미쳤다(3.01~3.84).
+   지금 값의 최저: 라이트 4.66:1(--bg 위) · 다크 4.80:1(--surface 위). */
+:root{--bg:#f4f6fa;--surface:#fff;--panel:#fbfcfe;--ink:#171a21;--muted:#59616f;--faint:#676f80;
+--accent:#3651b5;--accent-soft:#e8ecfb;--bad:#b4342f;--bad-soft:#fbeceb;--ok:#1d7a4d;
+--border:#e3e6ee;--strong:#cfd5e4;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+--sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#0c0f15;--surface:#141922;--panel:#111621;--ink:#e6eaf1;
+--muted:#98a2b3;--faint:#7c8698;--accent:#8397e6;--accent-soft:#1c2438;--bad:#e8837d;--bad-soft:#2a1a1a;
+--ok:#5cc48d;--border:#222836;--strong:#333c4e}}
+:root[data-theme=light]{--bg:#f4f6fa;--surface:#fff;--panel:#fbfcfe;--ink:#171a21;--muted:#59616f;
+--faint:#676f80;--accent:#3651b5;--accent-soft:#e8ecfb;--bad:#b4342f;--bad-soft:#fbeceb;--ok:#1d7a4d;
+--border:#e3e6ee;--strong:#cfd5e4}
+:root[data-theme=dark]{--bg:#0c0f15;--surface:#141922;--panel:#111621;--ink:#e6eaf1;--muted:#98a2b3;
+--faint:#7c8698;--accent:#8397e6;--accent-soft:#1c2438;--bad:#e8837d;--bad-soft:#2a1a1a;--ok:#5cc48d;
+--border:#222836;--strong:#333c4e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;font-size:15px}
+header{padding:22px 26px 0;max-width:1280px;margin:0 auto}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding:0 26px;max-width:1280px;margin:0 auto}
+.tab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);
+font:inherit;font-size:14px;padding:9px 14px;cursor:pointer;margin-bottom:-1px}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1280px;margin:0 auto;padding:18px 26px 60px}
+.panelrow{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+@media(max-width:1080px){.panelrow{grid-template-columns:1fr}}
+.canvaswrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;overflow-x:auto}
+.canvas{width:100%;min-width:720px;height:auto;display:block}
+.node rect{fill:var(--surface);stroke:var(--strong);stroke-width:1.5;transition:.12s}
+.node{cursor:pointer}
+.node:hover rect,.node:focus rect{stroke:var(--accent);stroke-width:2.5;fill:var(--accent-soft);outline:none}
+.node.sel rect{stroke:var(--accent);stroke-width:2.5;fill:var(--accent-soft)}
+.node.bad rect{stroke:var(--bad)}
+.node.bad:hover rect,.node.bad.sel rect{fill:var(--bad-soft);stroke:var(--bad)}
+.nl{text-anchor:middle;font:600 14px var(--mono);fill:var(--ink)}
+.ns{text-anchor:middle;font:11.5px var(--sans);fill:var(--muted)}
+.edge{fill:none;stroke:var(--strong);stroke-width:1.6}
+.edge.bad{stroke:var(--bad);opacity:.75}
+.edge.dash{stroke-dasharray:4 4;opacity:.5}
+.arh{fill:var(--strong)}
+.el{text-anchor:middle;font:11px var(--sans);fill:var(--faint)}
+aside{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:sticky;top:14px}
+aside h2{font-size:16px;margin:0 0 2px;font-family:var(--mono)}
+aside .lead{color:var(--accent);font-size:13px;margin:0 0 12px;font-weight:600}
+aside h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);
+margin:16px 0 5px;font-weight:700}
+aside p{margin:0 0 8px;font-size:13.5px}
+aside ul{margin:0;padding-left:17px;font-size:13.5px}
+aside li{margin-bottom:4px}
+.hint{color:var(--faint);font-size:13px}
+code{font-family:var(--mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.warn{background:var(--bad-soft);border-left:3px solid var(--bad);padding:9px 12px;border-radius:0 6px 6px 0;
+font-size:13px;margin:12px 0 0}
+.chip{display:inline-block;font:11.5px var(--mono);background:var(--accent-soft);color:var(--accent);
+padding:2px 8px;border-radius:20px;margin:0 4px 4px 0}
+.chip.none{background:transparent;color:var(--faint);border:1px dashed var(--strong)}
+.filelist{list-style:none;padding:0;margin:0}
+.filelist li{margin-bottom:7px}
+.filelist code{display:inline-block;margin-bottom:1px}
+.filelist span{display:block;color:var(--muted);font-size:12.5px;line-height:1.45}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.card h2{font-size:16px;margin:0 0 10px}
+.card p{margin:0 0 9px;font-size:14px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+th{color:var(--faint);font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+tbody tr:last-child td{border-bottom:0}
+.docgroup{margin-bottom:20px}
+.docgroup h3{font-size:13.5px;margin:0 0 8px;color:var(--accent);font-weight:700}
+.docitem{border-left:2px solid var(--border);padding:2px 0 2px 12px;margin-bottom:9px}
+.docitem b{font-family:var(--mono);font-size:13px;font-weight:600}
+.docitem p{margin:1px 0 0;color:var(--muted);font-size:13px}
+.themebtn{position:fixed;top:14px;right:16px;background:var(--surface);border:1px solid var(--border);
+color:var(--muted);border-radius:8px;padding:6px 11px;font:inherit;font-size:12.5px;cursor:pointer;z-index:5}
+.hidden{display:none}
+a{color:var(--accent)}
+</style></head><body>
+<button class="themebtn" id="tb">테마</button>
+<header>
+  <h1>하네스 탐색기</h1>
+  <p class="sub">노드를 클릭하면 그 단계가 무엇을 하고, 어떤 파일을 읽고 만드는지 옆에 뜬다.
+  사실(만드는 파일 · clean 조건 · 의존)은 <code>graph.mjs</code> 에서 직접 읽어 생성했다 —
+  <code>node scripts/build-explorer.mjs</code></p>
+</header>
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" data-t="flow" aria-selected="true">실행 경로</button>
+  <button class="tab" role="tab" data-t="gate" aria-selected="false">게이트와 상태</button>
+  <button class="tab" role="tab" data-t="docs" aria-selected="false">문서</button>
+  <button class="tab" role="tab" data-t="actors" aria-selected="false">단계별로 누가 불리나</button>
+</div>
+<main>
+
+<section id="p-flow">
+  <div class="panelrow">
+    <div class="canvaswrap"><svg viewBox="0 0 1160 300" class="canvas">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" class="arh"/></marker></defs>
+    <path d="M210 161 H230 V91 H250" class="edge" marker-end="url(#ar)"/><path d="M210 161 H230 V231 H250" class="edge" marker-end="url(#ar)"/><path d="M400 91 H425 V161 H450" class="edge" marker-end="url(#ar)"/><path d="M400 231 H425 V161 H450" class="edge" marker-end="url(#ar)"/><path d="M600 161 H630" class="edge" marker-end="url(#ar)"/><path d="M780 161 H810" class="edge" marker-end="url(#ar)"/><path d="M960 161 H990" class="edge" marker-end="url(#ar)"/>
+    <g class="node" data-id="product" tabindex="0" role="button" aria-label="product — 무엇을 만들지 정하는 단계">
+      <rect x="60" y="130" width="150" height="62" rx="9"/>
+      <text x="135" y="155" class="nl">product</text>
+      <text x="135" y="175" class="ns">무엇을 만들지 정한다</text>
+    </g><g class="node" data-id="spec" tabindex="0" role="button" aria-label="spec — 어기면 사고 나는 규칙을 테스트가 읽을 수 있게 적는 단계">
+      <rect x="250" y="60" width="150" height="62" rx="9"/>
+      <text x="325" y="85" class="nl">spec</text>
+      <text x="325" y="105" class="ns">어기면 사고 나는 규칙</text>
+    </g><g class="node" data-id="design" tabindex="0" role="button" aria-label="design — 화면 모양과 데이터 모양을 정하는 단계">
+      <rect x="250" y="200" width="150" height="62" rx="9"/>
+      <text x="325" y="225" class="nl">design</text>
+      <text x="325" y="245" class="ns">화면과 데이터의 모양</text>
+    </g><g class="node" data-id="implement" tabindex="0" role="button" aria-label="implement — 정해진 규칙과 화면을 코드로 옮기는 단계">
+      <rect x="450" y="130" width="150" height="62" rx="9"/>
+      <text x="525" y="155" class="nl">implement</text>
+      <text x="525" y="175" class="ns">규칙과 화면을 코드로</text>
+    </g><g class="node" data-id="qa" tabindex="0" role="button" aria-label="qa — 사람 판단 없이 자동으로 확인하는 단계">
+      <rect x="630" y="130" width="150" height="62" rx="9"/>
+      <text x="705" y="155" class="nl">qa</text>
+      <text x="705" y="175" class="ns">자동 검사로 확인</text>
+    </g><g class="node" data-id="review" tabindex="0" role="button" aria-label="review — 사람(에이전트)이 읽고 판단하는 단계">
+      <rect x="810" y="130" width="150" height="62" rx="9"/>
+      <text x="885" y="155" class="nl">review</text>
+      <text x="885" y="175" class="ns">에이전트가 읽고 판단</text>
+    </g><g class="node" data-id="deploy" tabindex="0" role="button" aria-label="deploy — 배포. 그런데 어떻게 하는지 적힌 데가 없다">
+      <rect x="990" y="130" width="150" height="62" rx="9"/>
+      <text x="1065" y="155" class="nl">deploy</text>
+      <text x="1065" y="175" class="ns">배포 — 절차가 없다</text>
+    </g>
+  </svg></div>
+    <aside id="d-flow"><p class="hint">노드를 클릭하세요.</p></aside>
+  </div>
+</section>
+
+<section id="p-gate" class="hidden">
+  <div class="card">
+    <h2>게이트가 뭔가</h2>
+    <p>게이트는 <b>턴이 끝날 때마다 자동으로 도는 검사</b>다. 사람이 부르지 않는다 — <code>.claude/settings.json</code> 에 등록돼 있어서 저절로 돈다.</p><p>하는 일은 두 가지뿐이다. <b>①</b> 코드와 문서를 훑어 규칙 위반을 찾는다(레이어를 거꾸로 import 했나, 타입 에러가 있나, 테스트가 깨졌나…). <b>②</b> 위반이 0건인 단계에 <b>clean 도장</b>을 찍는다. 하나라도 걸리면 안 찍는다.</p><p>그래서 "게이트가 막았다"는 말은 정확히는 <b>"clean 도장을 안 찍어 줬다"</b>는 뜻이다. 도장이 없으면 그 단계는 dirty 로 남고, 거기에 기대는 아래 단계는 아예 시작도 못 한다.</p>
+    <h3 style="font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 6px">언제 도나</h3>
+    <table><tbody><tr><td style="white-space:nowrap"><b>파일을 편집한 직후</b></td><td style="white-space:nowrap"><code>run-gates.mjs --quick</code></td><td>빠른 것만 — 레이어·보안·디자인 승인. 타입 검사와 테스트는 비싸서 건너뛴다</td></tr><tr><td style="white-space:nowrap"><b>턴이 끝날 때</b></td><td style="white-space:nowrap"><code>graph-stop.mjs</code> → <code>run-gates.mjs</code></td><td>전부 다. 그다음 해시를 비교해 상태를 고치고 HANDOFF.md 에 적는다</td></tr><tr><td style="white-space:nowrap"><b>도구를 쓰기 직전</b></td><td style="white-space:nowrap">보호 훅 3개</td><td>게이트는 아니지만 같이 도는 것 — 시크릿 유출·보호 파일 수정·위험 명령을 아예 막는다</td></tr></tbody></table>
+    <h3 style="font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 6px">검사 종류 6가지</h3>
+    <table><tbody><tr><td style="white-space:nowrap"><code>fsd</code></td><td>레이어를 거꾸로 import 하거나, 같은 층의 남의 슬라이스를 부르는 것</td></tr><tr><td style="white-space:nowrap"><code>security</code></td><td>eval · innerHTML · 코드에 박아 넣은 시크릿 · SQL search_path 미고정</td></tr><tr><td style="white-space:nowrap"><code>tsc</code></td><td>타입 에러</td></tr><tr><td style="white-space:nowrap"><code>design</code></td><td>승인 안 받고 화면부터 만드는 것 (design/BEFORE_UI)</td></tr><tr><td style="white-space:nowrap"><code>test</code></td><td>npm test 실패</td></tr><tr><td style="white-space:nowrap"><code>spec-coverage</code></td><td>승인된 스펙의 규칙에 그걸 확인하는 테스트가 없는 것</td></tr></tbody></table>
+  </div>
+  <div class="panelrow">
+    <div class="canvaswrap"><svg viewBox="0 0 1030 300" class="canvas">
+    <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" class="arh"/></marker></defs>
+    <path d="M210 71 H250" class="edge" marker-end="url(#ar2)"/>
+      <text x="230" y="32" class="el">위쪽이 다 clean</text>
+    <path d="M400 71 H440" class="edge" marker-end="url(#ar2)"/>
+      <text x="420" y="32" class="el">턴 끝</text>
+    <path d="M590 71 H630" class="edge" marker-end="url(#ar2)"/>
+      <text x="610" y="32" class="el">위반 0건</text>
+    <path d="M780 71 H820" class="edge" marker-end="url(#ar2)"/>
+      <text x="800" y="32" class="el">마커 기록</text>
+    <path d="M515 102 V175" class="edge bad" marker-end="url(#ar2)"/>
+      <text x="521" y="138.5" class="el" text-anchor="start">위반 발견</text>
+    <path d="M705 102 V175" class="edge bad" marker-end="url(#ar2)"/>
+      <text x="711" y="138.5" class="el" text-anchor="start">사람이 내림</text>
+    <path d="M895 102 V175" class="edge bad" marker-end="url(#ar2)"/>
+      <text x="901" y="138.5" class="el" text-anchor="start">해시 어긋남</text>
+    <path d="M440 206 H420 V275 H135 V102" class="edge dash" marker-end="url(#ar2)"/><path d="M630 206 H610 V275 H135 V102" class="edge dash" marker-end="url(#ar2)"/><path d="M820 206 H800 V275 H135 V102" class="edge dash" marker-end="url(#ar2)"/>
+    <text x="135" y="292" class="el">되돌아가는 길 셋 — 전부 dirty 로</text>
+    <g class="node " data-state="dirty" tabindex="0" role="button" aria-label="dirty — 아직 안 됐거나, 됐다가 낡은 상태">
+      <rect x="60" y="40" width="150" height="62" rx="9"/>
+      <text x="135" y="65" class="nl">dirty</text>
+      <text x="135" y="85" class="ns">아직 안 됐거나 낡음</text>
+    </g><g class="node " data-state="frontier" tabindex="0" role="button" aria-label="프론티어 — 지금 손댈 수 있는 단계">
+      <rect x="250" y="40" width="150" height="62" rx="9"/>
+      <text x="325" y="65" class="nl">프론티어</text>
+      <text x="325" y="85" class="ns">지금 손댈 수 있는 단계</text>
+    </g><g class="node " data-state="judging" tabindex="0" role="button" aria-label="검사 — clean 도장을 찍을지 보는 순간">
+      <rect x="440" y="40" width="150" height="62" rx="9"/>
+      <text x="515" y="65" class="nl">검사</text>
+      <text x="515" y="85" class="ns">도장을 찍을지 본다</text>
+    </g><g class="node " data-state="clean" tabindex="0" role="button" aria-label="clean — 도장 찍힘. 아래 단계가 열린다">
+      <rect x="630" y="40" width="150" height="62" rx="9"/>
+      <text x="705" y="65" class="nl">clean</text>
+      <text x="705" y="85" class="ns">찍힘. 아래가 열린다</text>
+    </g><g class="node " data-state="signed_off" tabindex="0" role="button" aria-label="사인오프 — 사람이 도장을 찍어야 하는 두 단계 (review · deploy)">
+      <rect x="820" y="40" width="150" height="62" rx="9"/>
+      <text x="895" y="65" class="nl">사인오프</text>
+      <text x="895" y="85" class="ns">사람이 도장을 찍는 둘</text>
+    </g><g class="node bad" data-state="gate_error" tabindex="0" role="button" aria-label="게이트 에러 — 위반이 잡혀서 도장을 못 받음">
+      <rect x="440" y="175" width="150" height="62" rx="9"/>
+      <text x="515" y="200" class="nl">게이트 에러</text>
+      <text x="515" y="220" class="ns">위반이 잡혀 도장 없음</text>
+    </g><g class="node bad" data-state="rejected" tabindex="0" role="button" aria-label="승인 취소 — 사람이 status 를 draft 로 내림">
+      <rect x="630" y="175" width="150" height="62" rx="9"/>
+      <text x="705" y="200" class="nl">승인 취소</text>
+      <text x="705" y="220" class="ns">사람이 draft 로 내림</text>
+    </g><g class="node bad" data-state="stale" tabindex="0" role="button" aria-label="낡음 — 아무도 안 건드렸는데 저절로 무효가 됨">
+      <rect x="820" y="175" width="150" height="62" rx="9"/>
+      <text x="895" y="200" class="nl">낡음</text>
+      <text x="895" y="220" class="ns">코드가 바뀌어 무효</text>
+    </g>
+  </svg></div>
+    <aside id="d-gate"><p class="hint">상태를 클릭하세요.</p></aside>
+  </div>
+</section>
+
+<section id="p-docs" class="hidden">
+  <div class="card"><h2>이 하네스가 다루는 문서</h2>
+  <p>어디에 사는지로 묶었다. ⚠ 표시는 <a href="findings.md">findings</a> 에 올라간 것.</p></div>
+  <div class="card docgroup"><h3>루트 (킷 전체 공용)</h3>
+    <div class="docitem"><b>CLAUDE.md</b><p>협업 규칙. 매 세션 자동으로 붙는 유일한 문서다. 작업 등급·리뷰어 파견 규칙·어떤 문서를 언제 읽을지가 여기 있다.</p></div><div class="docitem"><b>ACTIVE</b><p>지금 어느 프로젝트를 작업 중인지 한 줄. 브리핑·게이트·graph-stop 이 전부 이 파일을 먼저 읽는다.</p></div><div class="docitem"><b>GLOSSARY.md</b><p>⚠ CLAUDE.md:97 이 세션마다 읽으라고 하는데 <b>이 파일은 없다</b> (findings F-01).</p></div><div class="docitem"><b>README.md</b><p>사람용 진입점. 스킬·규칙·훅 어디서도 참조하지 않는다 (findings F-07).</p></div><div class="docitem"><b>graph.mjs</b><p>무엇이 무엇에 기대는지만 적힌 객체. 실행 코드는 한 줄도 없다.</p></div>
+  </div><div class="card docgroup"><h3>docs/references/ (필요할 때만 읽는 참고서)</h3>
+    <div class="docitem"><b>graph-engine.md</b><p>그래프·전파·프론티어가 어떻게 도는지 설명한 문서.</p></div><div class="docitem"><b>modeling-checklist.md</b><p>엔티티 설계할 때 걸릴 만한 것 8가지. kickoff 에서는 얕게, spec 에서는 깊게 훑는다.</p></div><div class="docitem"><b>spec-template.md</b><p>스펙 문서 형식의 원본. 새 프로젝트로 복사해서 쓴다.</p></div><div class="docitem"><b>harness-backlog.md</b><p>아직 반영 안 한 하네스 개선 항목. 브리핑이 개수를 세어 알려 준다.</p></div><div class="docitem"><b>architectures/README.md</b><p>새 스택을 채택할 때 돌려야 할 체크리스트.</p></div><div class="docitem"><b>architectures/nextjs-fsd.md · vite-fsd.md</b><p>검증된 프로젝트 구조 프로파일. 경로가 아니라 이름으로만 불려서 고아로 오해받기 쉽다 (findings F-08).</p></div>
+  </div><div class="card docgroup"><h3>projects/&lt;이름&gt;/docs/ (제품 정의)</h3>
+    <div class="docitem"><b>PRODUCT.md</b><p>무엇을 만들지. 필수 기능·비범위·페이지·기술 결정. 이게 바뀌면 아래 전부 다시 한다.</p></div><div class="docitem"><b>specs/*.md</b><p>어기면 사고 나는 규칙을 INV-ID 붙여 적은 것. status: approved 여야 게이트가 통과시킨다.</p></div><div class="docitem"><b>specs/planned/</b><p>합의는 됐지만 아직 못 만드는 스펙 대기실. 게이트가 이 폴더는 안 본다 — 그래서 진행을 막지 않는다.</p></div><div class="docitem"><b>design/design-rules.md</b><p>checkpoint 로 승인된 시각 기준이 쌓이는 곳. status: approved 여야 화면 작업이 허용된다.</p></div><div class="docitem"><b>design/mockups/*.html</b><p>버려도 싼 정적 시안. 코드로 만들기 전에 여기서 방향을 잡는다.</p></div><div class="docitem"><b>design/INTERVIEW.md</b><p>디자인 취향 상담 기록. 과정 보관용이라 그래프가 추적하지 않는다 (findings F-15).</p></div><div class="docitem"><b>tech-stack.md</b><p>합의한 기술 스택. 어느 노드의 산출물도 아니라 바뀌어도 재작업이 안 잡힌다 (findings F-13).</p></div>
+  </div><div class="card docgroup"><h3>projects/&lt;이름&gt;/workspace/ (과정 기록)</h3>
+    <div class="docitem"><b>HANDOFF.md</b><p>그래프 상태(어디가 dirty 인지)와 해시. graph-stop 이 자동으로 쓴다. 손으로 고치지 않는다.</p></div><div class="docitem"><b>PROGRESS.md</b><p>사람이 읽는 현재 상태 5줄. wrap-up 이 쓰고 다음 세션 브리핑이 읽는다.</p></div><div class="docitem"><b>DECISIONS.md</b><p>트레이드오프가 있었던 결정을 한 줄씩. 왜 그렇게 했는지 나중에 찾으려고.</p></div><div class="docitem"><b>review.md</b><p>리뷰 통과 도장. status: passed + basis 해시. 이 파일이 곧 판정 근거다.</p></div><div class="docitem"><b>deploy.md</b><p>⚠ 배포 도장. 그래프가 요구하지만 <b>아직 한 번도 만들어진 적이 없고</b> 쓰는 법도 안 적혀 있다 (findings F-02).</p></div>
+  </div>
+</section>
+
+<section id="p-actors" class="hidden">
+  <div class="card"><h2>단계별로 누가 불리나</h2>
+  <p>스킬 10개와 서브에이전트 7개가 <b>어느 단계에서</b> 등장하는지. 빈 칸은 정말로 아무것도 없다는 뜻이다.</p></div>
+  <div class="card"><table>
+    <thead><tr><th>단계</th><th>스킬</th><th>서브에이전트</th><th>비고</th></tr></thead>
+    <tbody><tr><td><code>product</code></td><td><span class="chip">kickoff</span><span class="chip">setup</span></td><td><span class="chip none">없음</span></td><td style="color:var(--muted);font-size:12.5px">goal 스킬은 사용자가 직접 불러 PRODUCT.md 와 대조할 때 쓴다</td></tr><tr><td><code>spec</code></td><td><span class="chip">spec</span></td><td><span class="chip none">없음</span></td><td style="color:var(--muted);font-size:12.5px">spec/SKILL.md:19 가 spec-auditor 를 "있으면"이라고 언급하는데 이 레포엔 없다</td></tr><tr><td><code>design</code></td><td><span class="chip">design-interview</span><span class="chip">checkpoint</span></td><td><span class="chip">style-scout</span><span class="chip">design-drafter</span></td><td style="color:var(--muted);font-size:12.5px">style-scout 은 Playwright 가 붙어 있을 때만 — 아니면 사용자에게 스크린샷을 요청한다</td></tr><tr><td><code>implement</code></td><td><span class="chip none">없음</span></td><td><span class="chip none">없음</span></td><td style="color:var(--muted);font-size:12.5px">전용 스킬도 에이전트도 없다. 대신 편집하는 경로에 맞춰 .claude/rules/ 6개가 자동으로 붙는다</td></tr><tr><td><code>qa</code></td><td><span class="chip none">없음</span></td><td><span class="chip">qa-classifier</span><span class="chip">test-auditor</span></td><td style="color:var(--muted);font-size:12.5px">test-auditor 는 정식 경로에서만. qa 의 clean 조건에는 안 들어 있어서 건너뛰어도 통과한다</td></tr><tr><td><code>review</code></td><td><span class="chip none">없음</span></td><td><span class="chip">code-reviewer</span><span class="chip">security-reviewer</span><span class="chip">ui-reviewer</span><span class="chip">test-auditor</span><span class="chip">qa-classifier</span></td><td style="color:var(--muted);font-size:12.5px">빠른 경로면 code-reviewer 하나(UI면 ui-reviewer). 보안 표면에 닿을 때만 security-reviewer 추가</td></tr><tr><td><code>deploy</code></td><td><span class="chip none">없음</span></td><td><span class="chip none">없음</span></td><td style="color:var(--muted);font-size:12.5px">아무것도 없다 (findings F-02)</td></tr></tbody>
+  </table></div>
+  <div class="card"><h2>단계에 안 묶인 것</h2><table><tbody>
+  <tr><td style="white-space:nowrap"><b>사용자만 부를 수 있는 스킬</b></td><td><span class="chip">goal</span><span class="chip">status</span><span class="chip">scaffold</span></td></tr><tr><td style="white-space:nowrap"><b>국면과 상관없이</b></td><td><span class="chip">wrap-up (세션 끝)</span><span class="chip">retro (구조적 빈칸을 발견했을 때)</span></td></tr>
+  </tbody></table></div>
+</section>
+
+</main>
+<script>
+const DETAIL = {"product":{"label":"product","한줄":"무엇을 만들지 정하는 단계","설명":"사용자와 대화해 제품 정의를 PRODUCT.md 한 파일에 못 박는다. 이게 있어야 \"이건 범위 밖인데요\"라고 말할 근거가 생긴다. 그래프의 맨 위라 여기가 바뀌면 아래 전부를 다시 해야 한다.","위쪽":null,"아래쪽":["spec","design"],"들어가는조건":"루트 ACTIVE 파일이 프로젝트 이름을 가리키고, 그 폴더가 실제로 있어야 한다. 없으면 graph-stop 이 아무 일도 안 하고 그냥 끝난다.","읽는파일":[["ACTIVE","지금 어느 프로젝트를 작업 중인지 (한 줄)"],["CLAUDE.md","협업 규칙. 매 세션 자동으로 붙는다"],["docs/references/modeling-checklist.md","엔티티가 나올 때만, 얕게"]],"만드는파일":["docs/PRODUCT.md"],"자식":null,"clean조건":["<code>docs/PRODUCT.md</code> 가 있고 비어 있지 않으면"],"실패하면":"인터뷰가 안 끝나면 파일이 비어 있고, product 가 계속 dirty 라 아래 6개 노드도 전부 dirty 로 남는다. 막히는 게 아니라 진도가 안 나간다.","쓰는사람":["kickoff 스킬","setup 스킬","goal 스킬(사용자 호출)"],"주의":"게이트는 파일이 비었는지만 본다. 필수·비범위가 텅 비어 있어도 clean 이 내려간다.","문서":"stages/01-product.md"},"spec":{"label":"spec","한줄":"어기면 사고 나는 규칙을 테스트가 읽을 수 있게 적는 단계","설명":"결제·인증·권한·동시성처럼 틀리면 사고가 나는 기능에만 쓴다. 규칙 하나하나에 INV-D1 같은 ID를 붙이는 게 핵심이다 — ID가 없으면 테스트가 그 규칙을 가리킬 수 없고, 그러면 지켜졌는지 확인할 방법도 없다.","위쪽":["product"],"아래쪽":["implement"],"들어가는조건":"product 가 clean. 그리고 그 기능이 위험한 기능이어야 한다 — 단순 화면·콘텐츠에는 쓰지 않는다.","읽는파일":[["projects/<이름>/docs/PRODUCT.md","어느 기능이 위험한지"],["docs/references/spec-template.md","스펙 형식의 원본"],["docs/references/modeling-checklist.md","데이터 모델이면 깊게 훑는다"]],"만드는파일":["docs/specs/*.md"],"자식":null,"clean조건":["<code>docs/specs/*.md</code> 가 <b>전부</b> <code>status: approved</code> 이면","게이트 <b>spec-coverage</b> 에러가 0건이면"],"실패하면":"draft 가 하나라도 있으면 spec 이 dirty 라 implement 아래가 전부 막힌다. 그래서 아직 못 만들 스펙은 planned/ 폴더에 내려 둔다 — 그 폴더는 게이트가 안 본다.","쓰는사람":["spec 스킬","qa-classifier (spec 잘못이라고 판단되면 여기를 draft 로 내림)"],"주의":"docs/specs/ 에 파일이 하나도 없으면 검사할 게 없어서 그냥 통과한다. 스펙을 한 장도 안 쓴 프로젝트와 다 쓰고 승인받은 프로젝트가 구별되지 않는다.","문서":"stages/02-spec.md"},"design":{"label":"design","한줄":"화면 모양과 데이터 모양을 정하는 단계","설명":"자기가 만드는 파일은 없고 자식 둘을 묶기만 한다. page-designer 는 화면(시안 → 승인 → design-rules.md), schema-designer 는 데이터(마이그레이션·엔티티 모델). 둘 다 통과해야 design 이 통과한다. spec 과는 서로 상관없이 따로 간다.","위쪽":["product"],"아래쪽":["implement"],"들어가는조건":"product 가 clean. 그리고 이 화면이 '새 방향'인지 '이미 승인된 것의 반복'인지 먼저 판단한다 — 애매하면 새 방향으로 본다.","읽는파일":[["projects/<이름>/docs/PRODUCT.md","페이지 목록·디자인 요구"],[".claude/rules/design-drafting.md","시안 먼저 만드는 절차. 자동으로 안 붙으니 이름을 불러야 읽힌다"],["projects/<이름>/docs/design/design-rules.md","지금까지 승인된 시각 기준. 첫 화면이면 아직 없는 게 정상"],["projects/<이름>/docs/design/INTERVIEW.md","첫 방향일 때 시안의 근거"]],"만드는파일":null,"자식":[{"name":"design/page-designer","한줄":"화면 쪽 — 시안을 만들고 승인받아 design-rules.md 를 확정","주의":"design-rules.md 가 아예 없으면 검사할 게 없어서 그냥 통과한다","produces":["docs/design/design-rules.md","docs/design/mockups/*.html"],"clean":["<code>docs/design/design-rules.md</code> 가 <b>전부</b> <code>status: approved</code> 이면"]},{"name":"design/schema-designer","한줄":"데이터 쪽 — 마이그레이션과 엔티티 모델","주의":"signal 은 model.ts 가 아니라 model/ 폴더를 써서 찾는 파일이 0개다 → 늘 통과 (findings F-12)","produces":["supabase/migrations/*.sql","src/entities/*/model.ts"],"clean":["게이트 <b>fsd · security</b> 에러가 0건이면"]}],"clean조건":["(조건 없음)"],"실패하면":"지적이 나오면 코드가 아니라 시안을 버리고 다시 만든다. design-rules.md 를 draft 로 내리면 아래가 전부 dirty 가 된다.","쓰는사람":["design-interview 스킬","style-scout 에이전트","design-drafter 에이전트","checkpoint 스킬"],"주의":"design-rules.md 가 아예 없어도 page-designer 는 통과한다. 실제로 막아 주는 건 그래프가 아니라 design/BEFORE_UI 게이트다.","문서":"stages/03-design.md"},"implement":{"label":"implement","한줄":"정해진 규칙과 화면을 코드로 옮기는 단계","설명":"spec 과 design 이 여기서 만난다. 그래프에서 위쪽이 둘인 노드는 여기뿐이다. 이 단계가 만든 코드의 해시가 나중에 review·deploy 사인오프의 기준(basis)이 된다.","위쪽":["spec","design"],"아래쪽":["qa"],"들어가는조건":"spec 과 design 이 둘 다 clean. 승인된 스펙이 있으면 테스트를 먼저 쓴다. pages/widgets 를 만들려면 design-rules.md 가 승인돼 있어야 한다.","읽는파일":[["projects/<이름>/docs/specs/*.md","지켜야 할 규칙과 시나리오"],["projects/<이름>/docs/design/design-rules.md","화면 작업이면 필수"],[".claude/rules/*.md","편집하는 경로에 맞는 규칙이 자동으로 붙는다"]],"만드는파일":["src/**"],"자식":null,"clean조건":["게이트 <b>fsd · security · tsc · design</b> 에러가 0건이면"],"실패하면":"게이트 에러가 남으면 graph-stop 이 exit 2 로 막고 \"새 기능 금지, 위반만 수정\"을 띄운다. 에러는 30건까지만 보여 준다.","쓰는사람":["전용 스킬 없음","code-reviewer (review 단계에서 이 코드를 읽는다)","qa-classifier"],"주의":"코드를 한 글자만 고쳐도 해시가 바뀌어서 review·deploy 사인오프가 저절로 낡는다.","문서":"stages/04-implement.md"},"qa":{"label":"qa","한줄":"사람 판단 없이 자동으로 확인하는 단계","설명":"테스트를 돌리고, 승인된 스펙의 규칙마다 테스트가 있는지 확인한다. 자동 검사만 하므로 통과하면 턴마다 저절로 clean 이 된다. 실패하면 qa-classifier 가 '누구 잘못인지'를 정한다.","위쪽":["implement"],"아래쪽":["review"],"들어가는조건":"implement 가 clean. 테스트는 TDD 순서상 구현보다 먼저 쓰이는데, 그래프에서 qa 가 implement 아래인 건 쓰는 순서가 아니라 확인하는 순서라서 그렇다.","읽는파일":[["projects/<이름>/docs/specs/*.md","승인된 스펙의 INV 목록"],["실패 로그 · 바뀐 diff","분류기가 판단할 재료"]],"만드는파일":["src/**/*.test.ts","tests/**"],"자식":null,"clean조건":["게이트 <b>test · spec-coverage</b> 에러가 0건이면"],"실패하면":"graph-stop 이 \"분류기 필요\"라고 알려 준다. qa-classifier 가 impl / design / spec 중 하나를 고르고, --mark 로 그 노드를 dirty 로 찍는다. 어디까지 다시 할지는 전파가 알아서 정한다.","쓰는사람":["qa-classifier 에이전트","test-auditor 에이전트","전용 스킬 없음"],"주의":"커버리지 검사는 테스트 텍스트에 INV-D2 같은 글자가 들어 있나만 본다. 그 테스트가 진짜 그 규칙을 확인하는지는 안 본다 — 그래서 test-auditor 가 따로 있다.","문서":"stages/05-qa.md"},"review":{"label":"review","한줄":"사람(에이전트)이 읽고 판단하는 단계","설명":"컴파일러와 자동 검사가 못 잡는 걸 잡는다 — 도메인 로직이 엉뚱한 층에 있다든지, 승인된 디자인과 다르다든지. 판단이라 자동으로 매길 수 없어서, 리뷰어를 돌린 다음 결과를 마커 파일에 손으로 적어야 한다.","위쪽":["qa"],"아래쪽":["deploy"],"들어가는조건":"qa 가 clean. 그리고 기능이 완성된 시점이어야 한다 — 개발 중에 매번 돌리지 않는다.","읽는파일":[["projects/<이름>/src/**","리뷰 대상 코드"],[".claude/rules/*.md","code-reviewer·ui-reviewer 의 판단 기준"],["projects/<이름>/docs/design/design-rules.md","ui-reviewer 의 판단 기준"],["projects/<이름>/docs/specs/*.md","security-reviewer 가 제일 먼저 보는 것 — 서버에서 막아야 할 규칙이 클라이언트에만 있는지"]],"만드는파일":["workspace/review.md"],"자식":null,"clean조건":["<code>workspace/review.md</code> 에 <code>status: passed</code> + <code>implement</code> 의 현재 해시와 같은 <code>basis</code> 가 있으면"],"실패하면":"지적이 나오면 qa-classifier 가 레벨을 정한다. spec 잘못이거나 인증·결제·권한에 닿으면 등급과 상관없이 사용자에게 먼저 알려야 한다.","쓰는사람":["code-reviewer","security-reviewer","ui-reviewer","test-auditor","qa-classifier"],"주의":"리뷰어를 진짜 돌렸는지 확인하는 장치가 없다. 마커에 status 와 맞는 basis 만 손으로 써넣어도 통과한다.","문서":"stages/06-review.md"},"deploy":{"label":"deploy","한줄":"배포. 그런데 어떻게 하는지 적힌 데가 없다","설명":"그래프의 마지막 노드다. 존재 이유가 자기가 뭘 하느냐보다 무엇을 막느냐에 있다 — review 에 기대고 있어서, 리뷰가 안 끝났거나 낡았으면 배포가 막힌다. 배포 직전에 코드 한 줄만 고쳐도 다시 막힌다.","위쪽":["review"],"아래쪽":[],"들어가는조건":"review 가 clean.","읽는파일":[["projects/<이름>/workspace/HANDOFF.md","지금 basis 해시 (graph-stop 이 알려 준다)"],["projects/<이름>/docs/PRODUCT.md","어디에 배포하기로 했는지"]],"만드는파일":["workspace/deploy.md"],"자식":null,"clean조건":["<code>workspace/deploy.md</code> 에 <code>status: deployed</code> + <code>implement</code> 의 현재 해시와 같은 <code>basis</code> 가 있으면"],"실패하면":"배포 실패했을 때 뭘 해야 하는지, 롤백을 어디 적는지 정해진 데가 없다. 그래프에는 실패 상태 자체가 없다 — clean 아니면 dirty 뿐이다.","쓰는사람":["없음 — 스킬도 에이전트도 스크립트도 없다"],"주의":"status: deployed 를 언제 어떻게 쓰는지 설명하는 문서가 레포 전체에 0건이다 (findings F-02). 지금 이 레포의 프론티어가 바로 여기다.","문서":"stages/07-deploy.md"}};
+const STATES = [{"id":"dirty","label":"dirty","한줄":"아직 안 됐거나, 됐다가 낡은 상태","짧은줄":"아직 안 됐거나 낡음","설명":"기본값이다. 그래프에 있는데 상태 기록에 없으면 dirty 로 채운다. 해시가 바뀌어도, 위쪽이 dirty 가 돼도 여기로 온다.","근거":"graph-stop.mjs:97"},{"id":"frontier","label":"프론티어","한줄":"지금 손댈 수 있는 단계","짧은줄":"지금 손댈 수 있는 단계","설명":"dirty 인데 위쪽은 전부 clean 인 노드. 어디에도 적혀 있지 않고 매 턴 계산해서 나온다. 세션 브리핑의 '지금 작업할 노드'가 이거다.","근거":"graph-stop.mjs:102"},{"id":"judging","label":"검사","한줄":"clean 도장을 찍을지 보는 순간","짧은줄":"도장을 찍을지 본다","설명":"노드마다 조건이 다르다. 파일이 있나만 보는 것, 프론트매터 글자를 보는 것, 게이트 에러 수를 세는 것, 마커와 해시를 보는 것 — 네 종류다.","근거":"graph-stop.mjs:236"},{"id":"clean","label":"clean","한줄":"도장 찍힘. 아래 단계가 열린다","짧은줄":"찍힘. 아래가 열린다","설명":"clean 이 되는 순간 그 단계가 만든 파일들의 해시가 함께 기록된다. 다음 턴에 이 해시와 비교해서 바뀐 걸 찾아낸다.","근거":"graph-stop.mjs:241"},{"id":"signed_off","label":"사인오프","한줄":"사람이 도장을 찍어야 하는 두 단계 (review · deploy)","짧은줄":"사람이 도장을 찍는 둘","설명":"게이트로는 못 여는 노드다. 마커 파일에 status 와 basis 해시를 적어야 clean 이 된다. basis 는 구현 코드의 해시라, 코드가 바뀌면 저절로 어긋난다.","근거":"graph-stop.mjs:179"},{"id":"gate_error","label":"게이트 에러","한줄":"위반이 잡혀서 도장을 못 받음","짧은줄":"위반이 잡혀 도장 없음","kind":"bad","설명":"그 단계가 만드는 파일에 걸린 위반이 1건이라도 있으면 clean 이 안 내려간다. 위반만 고치면 다음 턴에 다시 검사한다.","근거":"graph-stop.mjs:169"},{"id":"rejected","label":"승인 취소","한줄":"사람이 status 를 draft 로 내림","짧은줄":"사람이 draft 로 내림","kind":"bad","설명":"리뷰나 테스트에서 '설계가 틀렸다'거나 '스펙이 틀렸다'고 판단되면 해당 문서를 draft 로 내린다. 그러면 그 노드와 아래 전부가 dirty 가 된다.","근거":"graph-stop.mjs:156"},{"id":"stale","label":"낡음","한줄":"아무도 안 건드렸는데 저절로 무효가 됨","짧은줄":"코드가 바뀌어 무효","kind":"bad","설명":"마커의 basis 가 지금 구현 해시와 다르면 사인오프가 무효다. 사람이 아무것도 안 해도 코드가 바뀌면 일어난다 — 이게 review·deploy 를 특별하게 만든다.","근거":"graph-stop.mjs:187"}];
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+// 테마
+const tb = $("#tb");
+tb.onclick = () => {
+  const cur = document.documentElement.dataset.theme
+    || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.documentElement.dataset.theme = cur === "dark" ? "light" : "dark";
+};
+
+// 탭
+$$(".tab").forEach((t) => t.onclick = () => {
+  $$(".tab").forEach((x) => x.setAttribute("aria-selected", String(x === t)));
+  ["flow", "gate", "docs", "actors"].forEach((k) => $("#p-" + k).classList.toggle("hidden", k !== t.dataset.t));
+});
+
+const list = (xs) => xs.length ? "<ul>" + xs.map((x) => "<li>" + x + "</li>").join("") + "</ul>" : "<p class=hint>없음</p>";
+const chips = (xs) => xs && xs.length ? xs.map((x) => '<span class="chip">' + x + "</span>").join("") : '<span class="chip none">없음</span>';
+
+function showNode(id) {
+  const d = DETAIL[id];
+  let h = "<h2>" + d.label + "</h2><p class=lead>" + d.한줄 + "</p><p>" + d.설명 + "</p>";
+  h += "<h3>들어가는 조건</h3><p>" + d.들어가는조건 + "</p>";
+  h += "<h3>위 · 아래</h3><p>" +
+    (d.위쪽 ? "위: " + chips(d.위쪽) : "위: <span class=chip>없음 (그래프의 뿌리)</span>") + "<br>" +
+    (d.아래쪽.length ? "아래: " + chips(d.아래쪽) : "아래: <span class=chip>없음 (마지막)</span>") + "</p>";
+  h += "<h3>읽는 파일</h3><ul class=filelist>" +
+    d.읽는파일.map(([f, w]) => "<li><code>" + f + "</code><span>" + w + "</span></li>").join("") + "</ul>";
+  h += "<h3>만드는 파일</h3>";
+  h += d.만드는파일
+    ? "<ul class=filelist>" + d.만드는파일.map((f) => "<li><code>" + f + "</code></li>").join("") +
+      "</ul><p class=hint style='font-size:12px'>projects/&lt;이름&gt;/ 기준 경로다 (graph.mjs:17)</p>"
+    : "<p class=hint>없음 — 자식 둘을 묶기만 한다</p>";
+  if (d.자식) {
+    h += "<h3>자식 둘</h3>";
+    d.자식.forEach((c) => {
+      h += "<div class=docitem><b>" + c.name + "</b><p>" + c.한줄 + "</p>" +
+        "<p style='font-size:12.5px'>만드는 파일: " + c.produces.map((p) => "<code>" + p + "</code>").join(" ") + "</p>" +
+        "<p style='font-size:12.5px'>통과 조건: " + c.clean.join(" · ") + "</p>" +
+        (c.주의 ? "<p style='font-size:12.5px;color:var(--bad)'>⚠ " + c.주의 + "</p>" : "") + "</div>";
+    });
+  }
+  h += "<h3>언제 clean 이 되나</h3>" + list(d.clean조건);
+  h += "<h3>실패하면</h3><p>" + d.실패하면 + "</p>";
+  h += "<h3>여기서 불리는 것</h3><p>" + chips(d.쓰는사람) + "</p>";
+  if (d.주의) h += "<div class=warn>⚠ " + d.주의 + "</div>";
+  h += "<h3>자세히</h3><p><a href='" + d.문서 + "'>" + d.문서 + "</a></p>";
+  $("#d-flow").innerHTML = h;
+  $$("#p-flow .node").forEach((n) => n.classList.toggle("sel", n.dataset.id === id));
+}
+function showState(id) {
+  const s = STATES.find((x) => x.id === id);
+  $("#d-gate").innerHTML = "<h2>" + s.label + "</h2><p class=lead>" + s.한줄 + "</p><p>" + s.설명 +
+    "</p><h3>근거</h3><p><code>" + s.근거 + "</code></p>";
+  $$("#p-gate .node").forEach((n) => n.classList.toggle("sel", n.dataset.state === id));
+}
+const bind = (sel, fn, attr) => $$(sel).forEach((n) => {
+  const go = () => fn(n.dataset[attr]);
+  n.onclick = go;
+  n.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } };
+});
+bind("#p-flow .node", showNode, "id");
+bind("#p-gate .node", showState, "state");
+showNode("product");
+showState("dirty");
+</script></body></html>

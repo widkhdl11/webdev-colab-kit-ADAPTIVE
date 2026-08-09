@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "노드 상태 — dirty 에서 clean 까지, 그리고 되돌아가는 길",
+    "subtitle": "graph.mjs 와 gates/ 에서만 도출 · 승인 취소와 해시 노후화를 상태로 포함",
+    "output": "docs/v2/diagrams/02-gate.html",
+    "viewBox": [1040, 720],
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "forward", "label": "앞으로 가는 길", "focus": ["dirty", "frontier", "judging", "clean"], "note": "상류가 전부 clean 이라야 프론티어가 된다. 판정은 clean_when 하나로만 이뤄진다." },
+      { "id": "signoff", "label": "사인오프 두 노드", "focus": ["clean", "signoff_wait", "signed_off", "stale"], "note": "review·deploy 는 게이트가 아니라 마커로 clean 된다. basis 가 어긋나면 스스로 낡는다." },
+      { "id": "backward", "label": "되돌아가는 길", "focus": ["gate_error", "rejected", "stale", "dirty"], "note": "되돌리는 방법은 셋뿐이다 — 게이트 에러, 승인 취소, 해시 불일치. 전부 dirty 로 돌아간다." }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "노드 상태 주 궤도" },
+    { "id": "blocked", "label": "차단 · 대기" },
+    { "id": "recovery", "label": "사람이 일으키는 되돌림" },
+    { "id": "terminal", "label": "자동 노후화" }
+  ],
+  "states": [
+    { "id": "dirty", "type": "start", "label": "dirty", "sublabel": "hash: null", "lane": "main", "col": 0, "step": "01", "tag": "graph-stop:97" },
+    { "id": "frontier", "type": "active", "label": "프론티어", "sublabel": "상류 전부 clean", "lane": "main", "col": 1, "step": "02", "tag": "graph-stop:102" },
+    { "id": "judging", "type": "decision", "label": "release 판정", "sublabel": "clean_when", "lane": "main", "col": 2, "step": "03", "tag": "graph-stop:236" },
+    { "id": "clean", "type": "success", "label": "clean", "sublabel": "hash 기록", "lane": "main", "col": 3, "step": "04", "tag": "graph-stop:241" },
+    { "id": "signed_off", "type": "success", "label": "사인오프", "sublabel": "마커 + basis", "lane": "main", "col": 4, "step": "05", "tag": "graph-stop:179" },
+    { "id": "gate_error", "type": "failure", "label": "게이트 에러", "sublabel": "produces 에 위반", "lane": "blocked", "col": 0, "tag": "graph-stop:169" },
+    { "id": "rejected", "type": "failure", "label": "승인 취소", "sublabel": "status: draft", "lane": "recovery", "col": 1, "tag": "graph-stop:156" },
+    { "id": "signoff_wait", "type": "waiting", "label": "마커 대기", "sublabel": "review · deploy", "lane": "blocked", "col": 2, "tag": "graph-stop:181" },
+    { "id": "stale", "type": "failure", "label": "낡음", "sublabel": "basis 불일치", "lane": "terminal", "col": 1, "tag": "graph-stop:187" }
+  ],
+  "transitions": [
+    { "from": "judging", "to": "gate_error", "label": "위반 발견", "variant": "security", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "from": "gate_error", "to": "frontier", "label": "위반만 수정", "variant": "dashed", "route": "bottom-channel", "channelY": 380 },
+    { "from": "clean", "to": "rejected", "label": "사람이 내림", "variant": "security", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "from": "rejected", "to": "dirty", "label": "하류까지 전파", "variant": "dashed", "route": "bottom-channel", "channelY": 600 },
+    { "from": "clean", "to": "signoff_wait", "label": "게이트로는 못 여는 두 노드", "variant": "default" },
+    { "from": "signoff_wait", "to": "signed_off", "label": "마커 기록", "variant": "emphasis", "route": "straight", "fromSide": "top", "toSide": "bottom" },
+    { "from": "signed_off", "to": "stale", "label": "구현 해시 변경", "variant": "security", "route": "right-channel", "labelDy": 42 },
+    { "from": "stale", "to": "dirty", "label": "자동으로", "variant": "dashed", "route": "bottom-channel", "channelY": 650 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "앞으로 가는 길 — 판정은 하나뿐", "items": [
+      "dirty 가 기본값이다. 그래프에 있는데 상태에 없으면 dirty 로 백필된다 (graph-stop.mjs:96-99)",
+      "프론티어 = dirty 인데 위쪽은 다 clean. 적혀 있는 값이 아니라 그때그때 계산해서 나오는 값이다 (graph-stop.mjs:102-105)",
+      "판정은 세 조건을 다 만족해야 내려간다 — 프론트매터 · exists_nonempty · 게이트 에러 0 (graph-stop.mjs:236-239)",
+      "clean 이 되는 순간 produces 의 내용 해시가 함께 기록된다. 그 해시가 다음 턴의 변경 감지 기준이다 (graph-stop.mjs:241, 217-222)"
+    ]},
+    { "dot": "rose", "title": "되돌아가는 길은 셋뿐이다", "items": [
+      "① 게이트 에러 — produces 에 걸린 카테고리 에러가 1건이라도 있으면 clean 이 안 내려간다 (graph-stop.mjs:169-176)",
+      "② 승인 취소 — 프론트매터가 `status: approved` 가 아니게 되면 검사를 통과하지 못한다 (graph-stop.mjs:154-161)",
+      "③ 해시 불일치 — 마커의 basis 가 implement 의 현재 해시와 다르면 사인오프가 저절로 낡는다 (graph-stop.mjs:187)",
+      "①②는 사람이 고쳐야 풀리고, ③은 사람이 아무것도 안 해도 발생한다. 이 차이가 review·deploy 를 특별하게 만든다"
+    ]},
+    { "dot": "violet", "title": "승인 취소를 왜 상태로 넣었나 (1차는 뺐다)", "items": [
+      "gates/graph-stop.mjs:156 은 `^\\s*status:\\s*approved\\b`  인지만 본다 — 그게 아닌 상태도 게이트가 실제로 마주치는 상태다",
+      "누가 그렇게 만들었는지(사람이 내렸든 도구가 바꿨든)는 게이트가 알지도 못하고 상관도 안 한다",
+      "빼 놓으면 clean 이 한 방향으로만 흐르는 것처럼 보인다. 실제로는 승인 하나 내려가면 아래가 전부 dirty 가 된다",
+      "[INFERRED] `status: draft` 라는 구체 값은 gates/ 가 아니라 CLAUDE.md:79 · spec/SKILL.md:28 에 있다. 게이트는 'approved 가 아님'만 안다"
+    ]},
+    { "dot": "amber", "title": "이 그림에 없는 것 (§R3 생략 원장)", "items": [
+      "deploy 차단 — review 가 dirty 면 deploy 가 막히는 것은 한 노드의 상태가 아니라 노드 사이의 의존이다 (graph.mjs:92). 00-workflow 쪽 일",
+      "design 의 부모 집계 상태 — 자식 둘이 다 clean 이라야 부모 clean (graph-stop.mjs:244-246). 레인 자리가 3칸뿐이라 뺐다",
+      "qa-classifier 의 --mark 진입 (graph-stop.mjs:193-206) — 되돌림 경로 셋과 결과가 같아서(dirty 전파) 카드로만 남겼다",
+      "해시 변경 감지로 인한 dirty (graph-stop.mjs:217-222) — '낡음'과 결과가 같아 한 상태로 합쳤다",
+      "게이트 카테고리 6종(fsd · security · tsc · design · test · spec-coverage)의 개별 상태 — 판정에서는 구분되지 않는다"
+    ]},
+    { "dot": "emerald", "title": "상태 근거 (전량)", "items": [
+      "[CONFIRMED: gates/graph-stop.mjs:97] dirty 백필 · [CONFIRMED: gates/graph-stop.mjs:102] 프론티어 파생",
+      "[CONFIRMED: gates/graph-stop.mjs:236] release 판정 · [CONFIRMED: gates/graph-stop.mjs:241] clean + hash 기록",
+      "[CONFIRMED: gates/graph-stop.mjs:179] signoffOK · [CONFIRMED: gates/graph-stop.mjs:181] 마커가 없으면 false",
+      "[CONFIRMED: gates/graph-stop.mjs:169] gateBlocked · [CONFIRMED: gates/graph-stop.mjs:156] approved 정규식 · [CONFIRMED: gates/graph-stop.mjs:187] basis 비교",
+      "[INFERRED] 레인 이름(주 궤도 · 차단 · 되돌림 · 노후화)은 레포에 적힌 게 아니라, 판정 코드의 갈래를 보고 내가 묶은 것이다"
+    ]}
+  ]
+}

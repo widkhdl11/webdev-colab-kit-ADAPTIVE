@@ -7,7 +7,10 @@ dist/
 devserver.log
 # archify 산출물. IR(.json)이 소스이고 HTML은 장당 ~630KB 재생성물이다:
 #   node bin/archify.mjs deliver <type> docs/diagrams/<file>.json docs/diagrams/<file>.html --quality showcase
-docs/diagrams/*.html
+# docs/ 아래 어느 단계의 diagrams/ 든 같은 규칙 (docs/diagrams/ · docs/v2/diagrams/ · 다음 차수도)
+docs/**/diagrams/*.html
+# 예외: explorer.html 은 archify 산출물이 아니라 graph.mjs 에서 생성하는 300줄짜리 진입점이라 커밋한다
+#   node scripts/build-explorer.mjs
 .env
 .env.*
 !.env.example

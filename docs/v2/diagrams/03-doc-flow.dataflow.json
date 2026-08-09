@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "문서 흐름 — 누가 쓰고 누가 읽는가",
+    "subtitle": "실재하는 문서만 · 승인 프론트매터와 해시 사인오프를 구분 · 고아와 유령을 표시",
+    "output": "docs/v2/diagrams/03-doc-flow.html",
+    "viewBox": [1120, 780],
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "happy", "label": "정상 문서 경로", "focus": ["claude_md", "active", "product_md", "spec_md", "design_rules"], "note": "CLAUDE.md → ACTIVE 가 가리키는 프로젝트 → PRODUCT.md → 단계 산출물." },
+      { "id": "verify", "label": "검증 지점 두 종류", "focus": ["spec_md", "design_rules", "review_md", "handoff"], "note": "프론트매터 승인과 basis 해시는 서로 다른 판정이다. 하나는 문자열, 하나는 내용 해시." },
+      { "id": "anomaly", "label": "고아와 유령", "focus": ["readme", "glossary"], "note": "GLOSSARY.md 는 지시받지만 없다(유령). README.md 는 있지만 아무도 읽지 않는다(고아)." }
+    ]
+  },
+  "stages": [
+    { "label": "항상 로드" },
+    { "label": "지시 대상" },
+    { "label": "제품 정의" },
+    { "label": "단계 산출물" },
+    { "label": "런타임 상태" }
+  ],
+  "nodes": [
+    { "id": "claude_md", "type": "frontend", "label": "CLAUDE.md", "sublabel": "협업 규칙", "stage": 0, "row": 1, "tag": "항상 로드" },
+    { "id": "readme", "type": "external", "label": "README.md", "sublabel": "루트", "stage": 0, "row": 3, "tag": "고아" },
+    { "id": "active", "type": "database", "label": "ACTIVE", "sublabel": "signal", "stage": 1, "row": 1, "tag": "포인터" },
+    { "id": "glossary", "type": "external", "label": "GLOSSARY.md", "sublabel": "부재", "stage": 1, "row": 3, "tag": "유령" },
+    { "id": "product_md", "type": "database", "label": "PRODUCT.md", "sublabel": "docs/", "stage": 2, "row": 2, "tag": "graph.mjs:27" },
+    { "id": "spec_md", "type": "database", "label": "specs/*.md", "sublabel": "불변식", "stage": 3, "row": 0, "tag": "graph.mjs:34" },
+    { "id": "design_rules", "type": "database", "label": "design-rules.md", "sublabel": "시각 기준", "stage": 3, "row": 2, "tag": "graph.mjs:47" },
+    { "id": "review_md", "type": "database", "label": "review.md", "sublabel": "workspace/", "stage": 3, "row": 4, "tag": "graph.mjs:85" },
+    { "id": "handoff", "type": "messagebus", "label": "HANDOFF.md", "sublabel": "dirty 상태", "stage": 4, "row": 2, "tag": "graph-stop:107" }
+  ],
+  "flows": [
+    { "id": "f_active", "from": "claude_md", "to": "active", "label": "활성 지시", "variant": "emphasis", "route": "straight", "labelDy": -30 },
+    { "id": "f_ghost", "from": "claude_md", "to": "glossary", "label": "읽기 지시", "classification": "대상 없음", "variant": "security" },
+    { "id": "f_product", "from": "active", "to": "product_md", "label": "포인터 해석", "variant": "emphasis" },
+    { "id": "f_spec", "from": "product_md", "to": "spec_md", "label": "spec", "variant": "emphasis", "route": "vertical-channel", "channelX": 600, "labelSegment": 1 },
+    { "id": "f_design", "from": "product_md", "to": "design_rules", "label": "design", "variant": "emphasis", "route": "straight", "labelDy": -32 },
+    { "id": "f_fm_spec", "from": "spec_md", "to": "handoff", "label": "승인", "variant": "security", "route": "vertical-channel", "channelX": 815 },
+    { "id": "f_fm_design", "from": "design_rules", "to": "handoff", "label": "승인", "variant": "security", "route": "straight" },
+    { "id": "f_basis", "from": "review_md", "to": "handoff", "label": "해시", "variant": "dashed", "route": "vertical-channel", "channelX": 895 }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "확인하는 방법이 두 가지다 — 섞으면 안 된다", "items": [
+      "프론트매터 승인: 파일 안의 문자열 `status: approved` 를 정규식으로 확인 (graph-stop.mjs:154-161)",
+      "해시 사인오프: 마커의 `basis` 가 implement 의 내용 해시와 같아야 한다 (graph-stop.mjs:179-188)",
+      "차이의 결과 — 문자열은 사람이 고치면 그대로 유지되지만, 해시는 구현이 바뀌는 순간 저절로 어긋난다",
+      "그래서 review·deploy 만 '자동으로 낡는' 노드다. spec·design 은 사람이 내려야 낡는다"
+    ]},
+    { "dot": "rose", "title": "고아와 유령 (A-2 findings)", "items": [
+      "유령 — GLOSSARY.md: CLAUDE.md:97 이 세션마다 읽으라고 지시하는데 파일이 없다 (F-01, 심각도 높음)",
+      "고아 — README.md: 스킬·규칙·훅·CLAUDE.md 어디서도 참조하지 않는다 (F-07, 심각도 낮음)",
+      "오판 주의: .claude/rules/domain-layers.md · shared.md 는 참조가 0이지만 `paths:` 로 자동 로드된다 — 고아가 아니다 (F-08)",
+      "오판 주의: architectures/nextjs-fsd.md · vite-fsd.md 는 경로가 아니라 이름으로 지목된다 (setup/SKILL.md:18)"
+    ]},
+    { "dot": "amber", "title": "이 그림에 없는 것 (§R3 생략 원장)", "items": [
+      "docs/references/ 4종(graph-engine · modeling-checklist · spec-template · harness-backlog)과 architectures/ 3종 — 04-layers 그림 쪽 일",
+      "workspace/PROGRESS.md · DECISIONS.md — SessionStart 브리핑이 HANDOFF 와 함께 읽지만(briefing.mjs:36,71) 노드 상한으로 뺐다",
+      "docs/design/mockups/*.html · INTERVIEW.md · docs/tech-stack.md · docs/specs/_TEMPLATE.md · specs/planned/",
+      "workspace/deploy.md — 그래프가 요구하지만 아직 존재하지 않고 절차 문서도 없다 (findings F-02). 없는 파일을 노드로 그리지 않았다",
+      "docs/LESSONS.md — retro 스킬이 쓰고 읽지만 실행 그래프 밖이라 뺐다 (retro/SKILL.md:24)"
+    ]},
+    { "dot": "cyan", "title": "노드 근거 (전량)", "items": [
+      "[CONFIRMED: CLAUDE.md:36] ACTIVE 가 활성 프로젝트를 가리킨다 · [CONFIRMED: CLAUDE.md:97] GLOSSARY.md 읽기 지시",
+      "[CONFIRMED: graph.mjs:27] PRODUCT.md · [CONFIRMED: graph.mjs:34] specs/*.md · [CONFIRMED: graph.mjs:47] design-rules.md · [CONFIRMED: graph.mjs:85] review.md",
+      "[CONFIRMED: gates/graph-stop.mjs:107] HANDOFF.md 기록 지점 · [CONFIRMED: gates/graph-stop.mjs:29] 경로",
+      "[CONFIRMED: gates/graph-stop.mjs:154-161] 프론트매터 판정 · [CONFIRMED: gates/graph-stop.mjs:179-188] basis 해시 판정",
+      "[CONFIRMED: README.md 존재] · README.md 를 가리키는 참조 0건은 docs/v2/reference/references.md 전수에서 확인",
+      "[INFERRED] 단계 구분(항상 로드 · 지시 대상 · 제품 정의 · 단계 산출물 · 런타임 상태)은 레포에 적힌 게 아니라 내가 읽고 나눈 것이다"
+    ]}
+  ]
+}

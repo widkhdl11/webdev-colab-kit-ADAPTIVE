@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "단계별로 누가 불리나 — 스킬 10 · 서브에이전트 7",
+    "subtitle": "빈 칸은 정말로 아무것도 없다는 뜻이다. implement 와 deploy 가 그렇다",
+    "output": "docs/v2/diagrams/04-layers.html",
+    "viewBox": [1400, 440],
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/widkhdl11/webdev-colab-kit-GRAPH",
+      "revision": "7ba317b99e8da88a62094ee012a4ca9f3431cb88"
+    },
+    "views": [
+      { "id": "crowded", "label": "제일 붐비는 곳 — design", "focus": ["design", "a_design_s", "a_design_a"], "note": "스킬 2 + 에이전트 2. 시안을 먼저 만들고 승인받는 절차가 통째로 여기 있다." },
+      { "id": "empty", "label": "아무도 없는 곳", "focus": ["implement", "deploy"], "note": "implement 는 규칙 자동 로드로 버티고, deploy 는 정말 아무것도 없다 — findings F-02." },
+      { "id": "shared", "label": "두 단계에 걸친 것", "focus": ["qa", "review", "a_qa", "a_review"], "note": "qa-classifier 와 test-auditor 는 qa 와 review 양쪽에서 불린다." }
+    ]
+  },
+  "components": [
+    { "id": "product", "type": "backend", "label": "product", "sublabel": "무엇을 만들지", "pos": [40, 70], "size": [140, 64], "tag": "스킬 2",
+      "sources": [{ "path": "graph.mjs", "line": 25, "label": "노드 선언" }] },
+    { "id": "spec", "type": "backend", "label": "spec", "sublabel": "위험한 규칙", "pos": [210, 70], "size": [130, 64], "tag": "스킬 1",
+      "sources": [{ "path": "graph.mjs", "line": 32, "label": "노드 선언" }] },
+    { "id": "design", "type": "backend", "label": "design", "sublabel": "화면·데이터 모양", "pos": [370, 70], "size": [270, 64], "tag": "스킬2 에이전트2",
+      "sources": [{ "path": "graph.mjs", "line": 43, "label": "노드 선언" }] },
+    { "id": "implement", "type": "external", "label": "implement", "sublabel": "코드로 옮기기", "pos": [670, 70], "size": [150, 64], "tag": "전용 없음",
+      "sources": [{ "path": "graph.mjs", "line": 61, "label": "노드 선언" }] },
+    { "id": "qa", "type": "backend", "label": "qa", "sublabel": "자동 확인", "pos": [850, 70], "size": [140, 64], "tag": "에이전트 2",
+      "sources": [{ "path": "graph.mjs", "line": 69, "label": "노드 선언" }] },
+    { "id": "review", "type": "backend", "label": "review", "sublabel": "읽고 판단", "pos": [1020, 70], "size": [140, 64], "tag": "에이전트 5",
+      "sources": [{ "path": "graph.mjs", "line": 83, "label": "노드 선언" }] },
+    { "id": "deploy", "type": "external", "label": "deploy", "sublabel": "배포", "pos": [1190, 70], "size": [140, 64], "tag": "아무것도 없음",
+      "sources": [{ "path": "graph.mjs", "line": 91, "label": "노드 선언" }] },
+
+    { "id": "a_product", "type": "frontend", "label": "kickoff · setup", "sublabel": "요구 정리 → 구성", "pos": [40, 250], "size": [140, 80],
+      "sources": [{ "path": ".claude/skills/kickoff/SKILL.md", "line": 3, "label": "description" }, { "path": ".claude/skills/setup/SKILL.md", "line": 3, "label": "description" }] },
+    { "id": "a_spec", "type": "frontend", "label": "spec", "sublabel": "INV 를 문서로", "pos": [210, 250], "size": [130, 80],
+      "sources": [{ "path": ".claude/skills/spec/SKILL.md", "line": 3, "label": "description" }] },
+    { "id": "a_design_s", "type": "frontend", "label": "design-interview", "sublabel": "상담 · checkpoint", "pos": [370, 250], "size": [130, 80],
+      "sources": [{ "path": ".claude/skills/design-interview/SKILL.md", "line": 3, "label": "description" }, { "path": ".claude/skills/checkpoint/SKILL.md", "line": 3, "label": "description" }] },
+    { "id": "a_design_a", "type": "messagebus", "label": "design-drafter", "sublabel": "시안 · style-scout", "pos": [510, 250], "size": [130, 80],
+      "sources": [{ "path": ".claude/rules/design-drafting.md", "line": 25, "end_line": 27, "label": "파견 순서" }] },
+    { "id": "a_qa", "type": "messagebus", "label": "qa-classifier", "sublabel": "귀속 · test-auditor", "pos": [850, 250], "size": [140, 80],
+      "sources": [{ "path": ".claude/agents/qa-classifier.md", "line": 3, "label": "description" }, { "path": ".claude/agents/test-auditor.md", "line": 3, "label": "description" }] },
+    { "id": "a_review", "type": "messagebus", "label": "리뷰어 3종", "sublabel": "code·security·ui", "pos": [1020, 250], "size": [140, 80],
+      "sources": [{ "path": "CLAUDE.md", "line": 77, "end_line": 80, "label": "등급별 파견 규칙" }] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "그래프 노드 7개 (흐름은 explorer 또는 00-workflow 에서)", "wraps": ["product", "spec", "design", "implement", "qa", "review", "deploy"] },
+    { "kind": "region", "label": "그 단계에서 불리는 것", "wraps": ["a_product", "a_spec", "a_design_s", "a_design_a", "a_qa", "a_review"] }
+  ],
+  "connections": [
+    { "id": "c_product", "from": "product", "to": "a_product", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c_spec", "from": "spec", "to": "a_spec", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c_design_s", "from": "design", "to": "a_design_s", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c_design_a", "from": "design", "to": "a_design_a", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c_qa", "from": "qa", "to": "a_qa", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c_review", "from": "review", "to": "a_review", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "빈 칸이 이 그림의 요점이다", "items": [
+      "implement — 전용 스킬도 서브에이전트도 없다. 대신 편집하는 경로에 맞춰 .claude/rules/ 6개가 자동으로 붙는다 (paths: 프론트매터)",
+      "deploy — 스킬 0 · 서브에이전트 0 · 스크립트 0. 배포를 어떻게 하라는 안내가 레포 어디에도 없다 (findings F-02)",
+      "그런데 지금 이 레포의 프론티어가 바로 deploy 다. 아무도 안 알려 주는 자리에 멈춰 있다는 뜻이다",
+      "대비 — design 에는 스킬 2 + 에이전트 2 가 몰려 있고, 규칙 파일(design-drafting.md)까지 따로 있다"
+    ]},
+    { "dot": "cyan", "title": "두 단계에 걸쳐 불리는 것", "items": [
+      "qa-classifier — qa 테스트 실패뿐 아니라 review 의 리뷰어 지적도 입력으로 받는다 (.claude/agents/qa-classifier.md:10)",
+      "test-auditor — 테스트 작성 후 감사. 정식 경로의 review 마일스톤에서 부른다 (CLAUDE.md:78)",
+      "리뷰어 수는 등급에 따라 다르다 — 빠른 경로면 code-reviewer 하나(UI 면 ui-reviewer), 보안 표면에 닿을 때만 security-reviewer 추가 (CLAUDE.md:79-80)",
+      "리뷰어 4종 모두 읽기 전용이다(tools: Read, Grep, Glob). 고치지 않고 지적만 한다"
+    ]},
+    { "dot": "violet", "title": "단계에 안 묶인 것", "items": [
+      "사용자만 부를 수 있는 스킬 3개 — goal · status · scaffold. `disable-model-invocation: true` 라 모델이 알아서 못 부른다",
+      "그 셋을 이름으로 부르는 곳은 README.md:31 한 줄뿐이다. CLAUDE.md 에는 없어서 세션 중에는 존재를 알 길이 없다 (findings F-16)",
+      "wrap-up — 세션을 끝낼 때. retro — 구조적인 빈칸을 발견했을 때",
+      "spec-auditor — spec/SKILL.md:19 가 \"있으면\"이라고 언급하지만 이 레포에 없다"
+    ]},
+    { "dot": "amber", "title": "이 그림에 없는 것 (§R3 생략 원장)", "items": [
+      "단계 사이의 흐름 화살표 — 여기는 '누가 불리나'만 다룬다. product 에서 spec·design 이 갈라지는 구조는 00-workflow 와 explorer 에 있다",
+      "문서가 컨텍스트에 붙는 계기(경로 일치 · 설명 매칭 · 사용자 호출 · 본문 지목) — 이전 판의 주제였는데 Claude Code 동작 설명에 가까워 runtime.md 로 옮겼다",
+      "훅 6개와 게이트 — 단계에 묶이지 않고 턴마다 돈다. runtime.md §1~§4",
+      "docs/references/ 7개 · .claude/rules/ 7개의 개별 노드 — reference/ 의 생성 목록에 전량 있다",
+      "checkpoint · style-scout 은 자리가 좁아 위 노드의 sublabel 로 합쳤다 — 각각 독립된 스킬·에이전트다"
+    ]},
+    { "dot": "emerald", "title": "근거 (전량)", "items": [
+      "[CONFIRMED: graph.mjs:25, 32, 43, 61, 69, 83, 91] 노드 7개 선언",
+      "[CONFIRMED: .claude/skills/*/SKILL.md:3] 각 스킬의 description — 어느 국면에서 부르는지가 여기 적혀 있다",
+      "[CONFIRMED: .claude/rules/design-drafting.md:25-27] style-scout → design-drafter 파견 순서",
+      "[CONFIRMED: CLAUDE.md:77-80] 등급별 리뷰어 파견 규칙 · [CONFIRMED: CLAUDE.md:78] test-auditor",
+      "[CONFIRMED: .claude/agents/qa-classifier.md:10] 리뷰어 지적도 분류기 입력이다",
+      "[INFERRED] '어느 단계에서 불리나'라는 매핑 자체는 레포에 표로 적혀 있지 않다 — 각 스킬·에이전트의 description 과 CLAUDE.md 절차를 읽고 내가 묶은 것이다"
+    ]}
+  ]
+}

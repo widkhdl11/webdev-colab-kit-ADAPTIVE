@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "하네스 주 실행 경로",
+    "subtitle": "graph.mjs 의존성 그래프 · 자동 게이트 · 매 턴 dirty 전파 (webdev-colab-kit)",
+    "output": "docs/v2/diagrams/00-workflow.html",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "define", "label": "무엇을 만들지 정한다", "focus": ["product", "spec", "design"], "note": "product 하나에서 spec 과 design 이 직교로 갈라진다. 둘 다 clean 이라야 implement 가 열린다." },
+      { "id": "build-verify", "label": "구현과 얕은 검증", "focus": ["implement", "qa", "run_gates"], "note": "결정론 게이트가 매 턴 clean 을 내린다. 실패는 분류기가 레벨로 귀속한다." },
+      { "id": "signoff", "label": "사인오프와 배포 차단", "focus": ["review", "deploy", "graph_stop", "handoff"], "note": "review·deploy 는 게이트가 아니라 마커로 clean 된다. basis 해시가 어긋나면 자동으로 낡는다." }
+    ]
+  },
+  "lanes": [
+    { "id": "plan", "label": "정의" },
+    { "id": "design", "label": "디자인" },
+    { "id": "build", "label": "구축" },
+    { "id": "signoff", "label": "사인오프" },
+    { "id": "runtime", "label": "자동 게이트 · 런타임" }
+  ],
+  "phases": [
+    { "id": "ph_define", "label": "정의", "fromCol": 0, "toCol": 1 },
+    { "id": "ph_build", "label": "구축 + 검증", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "ph_release", "label": "사인오프", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["product", "spec", "implement", "qa", "review", "deploy"],
+  "nodes": [
+    { "id": "product", "lane": "plan", "col": 0, "type": "frontend", "label": "product", "sublabel": "PRODUCT.md", "tag": "graph.mjs:25" },
+    { "id": "spec", "lane": "plan", "col": 1, "type": "backend", "label": "spec", "sublabel": "불변식 INV", "tag": "graph.mjs:32" },
+    { "id": "design", "lane": "design", "col": 0, "type": "backend", "label": "design", "sublabel": "집계 · 자식 2", "tag": "graph.mjs:43" },
+    { "id": "implement", "lane": "build", "col": 2, "type": "backend", "label": "implement", "sublabel": "둘의 합류점", "tag": "graph.mjs:61" },
+    { "id": "qa", "lane": "build", "col": 3, "type": "backend", "label": "qa", "sublabel": "얕은 검증", "tag": "graph.mjs:69" },
+    { "id": "review", "lane": "signoff", "col": 4, "type": "security", "label": "review", "sublabel": "마커 사인오프", "tag": "graph.mjs:83" },
+    { "id": "deploy", "lane": "signoff", "col": 5, "type": "cloud", "label": "deploy", "sublabel": "review 가 막는다", "tag": "graph.mjs:91" },
+    { "id": "run_gates", "lane": "runtime", "col": 2, "type": "security", "label": "run-gates", "sublabel": "fsd·security·tsc", "tag": "settings.json:28" },
+    { "id": "graph_stop", "lane": "runtime", "col": 4, "type": "messagebus", "label": "graph-stop", "sublabel": "전파 · release", "tag": "settings.json:32" },
+    { "id": "handoff", "lane": "runtime", "col": 5, "type": "database", "label": "HANDOFF.md", "sublabel": "dirty · 프론티어", "tag": "graph-stop.mjs:29" }
+  ],
+  "edges": [
+    { "from": "product", "to": "spec" },
+    { "from": "product", "to": "design", "label": "직교", "route": "drop", "fromSide": "bottom", "toSide": "top", "labelDy": 11 },
+    { "from": "spec", "to": "implement", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "design", "to": "implement", "fromSide": "right", "toSide": "left" },
+    { "from": "implement", "to": "qa" },
+    { "from": "qa", "to": "review", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "review", "to": "deploy", "variant": "emphasis" },
+    { "from": "implement", "to": "run_gates", "label": "clean 조건", "variant": "security", "role": "branch", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "run_gates", "to": "graph_stop", "label": "에러 수집" },
+    { "from": "graph_stop", "to": "handoff", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "주 경로 — 왜 이 순서인가", "items": [
+      "product 하나가 루트다. 여기가 바뀌면 하류 전부 dirty (graph.mjs:24)",
+      "spec 과 design 은 서로 의존하지 않는다 — 둘 다 product 에서만 파생 (graph.mjs:33, 44)",
+      "implement 는 spec 과 design 이 모두 clean 이라야 열린다 (graph.mjs:62)",
+      "deploy 는 review 에 의존한다 → review 가 dirty 면 배포가 막힌다 (graph.mjs:92)",
+      "다음 할 일은 어디에도 안 적혀 있다. dirty 전파에서 나온다 (graph.mjs:3-7)"
+    ]},
+    { "dot": "rose", "title": "게이트 — 무엇이 무엇을 막는가", "items": [
+      "run-gates 는 편집마다(PostToolUse, --quick) 돌고, graph-stop 이 매 턴 전량 실행한다 (graph-stop.mjs:210)",
+      "결정론 게이트로 clean: implement(fsd·security·tsc·design) · qa(test·spec-coverage) · design/schema-designer(fsd·security)",
+      "마커로 clean: review(status: passed) · deploy(status: deployed) — 리뷰어 판단은 자동으로 매길 수 없다",
+      "basis 는 implement 의 내용 해시다. 구현이 바뀌면 사인오프가 자동으로 낡는다 (graph.mjs:86, 94)",
+      "qa 실패 시 qa-classifier 가 spec/design/impl 레벨로 귀속하고 --mark 로 노드를 dirty 로 찍는다. 라우팅은 하지 않는다 (graph.mjs:73-76, graph-stop.mjs:193)"
+    ]},
+    { "dot": "amber", "title": "이 그림에 없는 것 (§R3 생략 원장)", "items": [
+      "design 의 병렬 자식 2개 — page-designer(graph.mjs:46) · schema-designer(graph.mjs:53). 둘 다 clean 이라야 design clean. 노드 개수 제한 때문에 뺐고 카드에 남겼다",
+      "qa-classifier 노드 — 자리가 다 차서 실패 레인을 넣으면 화살표가 서로 겹친다. 위 카드에 근거와 함께 남겼다",
+      "spec-coverage 게이트 노드 — run-gates 가 내부에서 실행한다 (run-gates.mjs:273)",
+      "PreToolUse 보호 훅 3개(protect-secrets · protect-files · block-danger)와 SessionStart 브리핑 (settings.json:11-30)",
+      "다시 하러 되돌아가는 화살표 — 되돌아가는 건 화살표가 아니라 규칙이다(위가 dirty 면 아래 전부). 화살표로 그리면 있지도 않은 경로가 있어 보인다",
+      "스킬 10 · 서브에이전트 7 · 규칙 7 — 04-layers 그림 쪽 일",
+      "qa → run-gates 엣지 — implement 쪽 하나만 그려 게이트 관계를 대표시켰다. qa 의 clean_when 은 위 카드에 있다"
+    ]},
+    { "dot": "cyan", "title": "노드 근거 (전량)", "items": [
+      "[CONFIRMED: graph.mjs:25] product · [CONFIRMED: graph.mjs:32] spec · [CONFIRMED: graph.mjs:43] design",
+      "[CONFIRMED: graph.mjs:61] implement · [CONFIRMED: graph.mjs:69] qa · [CONFIRMED: graph.mjs:83] review · [CONFIRMED: graph.mjs:91] deploy",
+      "[CONFIRMED: .claude/settings.json:28] run-gates (PostToolUse) · [CONFIRMED: .claude/settings.json:32] graph-stop (Stop)",
+      "[CONFIRMED: gates/graph-stop.mjs:29] HANDOFF.md 경로 · [CONFIRMED: gates/graph-stop.mjs:107] 기록 지점",
+      "[INFERRED] 레인 구분(정의 · 디자인 · 구축 · 사인오프 · 런타임)은 레포에 적힌 게 아니다 — depends_on 순서와 훅 위치를 보고 내가 나눈 것이다",
+      "[INFERRED] 'run-gates → graph-stop 에러 수집' 화살표 방향 — 호출은 graph-stop 이 run-gates 를 spawn 하는 반대 방향이다(graph-stop.mjs:210). 데이터 흐름 기준으로 그렸다"
+    ]}
+  ]
+}
