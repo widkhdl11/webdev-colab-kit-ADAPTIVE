@@ -1,5 +1,6 @@
 import { dayKey } from "@/shared/lib/datetime";
-import type { Article, ArticleListItem, ArticleTag } from "../model/types";
+import type { ArticleListItem, ArticleTag } from "../model/types";
+import { compareForRanking } from "./ranking";
 
 /**
  * 피드 목록을 고르는 규칙.
@@ -37,20 +38,25 @@ export function filterByTag<T extends ArticleListItem>(
   return articles.filter((a) => a.tags.includes(tag));
 }
 
+/**
+ * 정렬 (ingestion-ranking INV-R3): 같은 데이터·같은 조회시각이면 **항상 같은 순서**다.
+ *
+ * '뜨는순'은 랭킹 비교자를 그대로 쓴다(점수 → 발행시각 → id).
+ * '최신순'도 마지막에 id 로 가른다 — 여기서 0 을 돌려주면 동률 항목의 순서가
+ * 정렬 구현에 맡겨지고, 새로고침마다 순서가 흔들려 훑기를 방해한다.
+ */
 export function sortArticles<T extends ArticleListItem>(
   articles: readonly T[],
   mode: SortMode,
 ): T[] {
-  const compare =
-    mode === "trending"
-      ? (a: T, b: T) => b.score - a.score
-      : (a: T, b: T) =>
-          Date.parse(b.publishedAt) - Date.parse(a.publishedAt);
-  // 동점이면 최신이 먼저 — 매일 새로 들어온 묶음을 보는 화면이라 순서가 흔들리지 않게.
-  return [...articles].sort(
-    (a, b) =>
-      compare(a, b) || Date.parse(b.publishedAt) - Date.parse(a.publishedAt),
-  );
+  if (mode === "trending") return [...articles].sort(compareForRanking);
+
+  return [...articles].sort((a, b) => {
+    const at = Date.parse(a.publishedAt) || 0;
+    const bt = Date.parse(b.publishedAt) || 0;
+    if (at !== bt) return bt - at;
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
 }
 
 /** 날짜별로 묶는다. 그룹은 최신 날짜부터, 그룹 안 순서는 받은 그대로 둔다(정렬은 2차). */

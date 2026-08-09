@@ -15,8 +15,10 @@ function article(overrides: Partial<Article> = {}): Article {
     id: "a",
     title: "제목",
     summary: "요약",
+    sourceExcerpt: null,
     summaryPoints: [],
     contentHtml: "<p>본문</p>",
+    sourceId: "test-source",
     sourceName: "테스트 출처",
     sourceUrl: "https://example.com/a",
     publishedAt: "2026-08-05T00:00:00.000Z",
@@ -101,5 +103,113 @@ describe("ArticleView — 요약 유무에 따른 구획선 전제 (design-rules
     expect(html).toContain("AI 요약");
     // 이때는 메타 줄 다음이 원문이 아니므로 선택자가 안 맞고, .prose 의 점선이 살아난다
     expect(nextAfterMetaRow(html)?.className).toBe(styles.aiSummary);
+  });
+});
+
+describe("ArticleView — INV-S1 요약과 무관하게 원문·출처를 항상 준다", () => {
+  it("INV-S1 (S12): 요약이 있어도 원문 본문과 출처 링크가 함께 있다", () => {
+    const html = renderToStaticMarkup(
+      <ArticleView
+        article={article({ summary: "요약문", summaryPoints: ["항목"] })}
+        nowIso={NOW}
+      />,
+    );
+    expect(html).toContain("요약문");
+    expect(html).toContain("본문"); // contentHtml
+    expect(html).toContain('href="https://example.com/a"');
+  });
+
+  it("INV-S1 (S12) 실패경로: 요약이 없어도 원문과 출처는 그대로 나온다", () => {
+    // 요약은 표시용 파생 정보다. 정확성의 근거는 언제나 원문과 출처 링크다 —
+    // 요약 유무가 원문 렌더를 좌우하면 요약 실패가 곧 "읽을 수 없는 글"이 된다.
+    const html = renderToStaticMarkup(
+      <ArticleView
+        article={article({ summary: "", summaryPoints: [] })}
+        nowIso={NOW}
+      />,
+    );
+    expect(html).toContain("본문");
+    expect(html).toContain('href="https://example.com/a"');
+  });
+
+  it("INV-S1: 요약이 원문을 대체하지 않는다 — 원문 영역이 조건부가 아니다", () => {
+    // 변이 확인용: 원문 렌더를 요약 유무에 매달면 둘 중 하나가 반드시 깨진다.
+    for (const summary of ["요약문", ""]) {
+      const html = renderToStaticMarkup(
+        <ArticleView article={article({ summary, summaryPoints: [] })} nowIso={NOW} />,
+      );
+      expect(html).toContain("출처에서 가져온 원문입니다");
+    }
+  });
+});
+
+describe("ArticleView — 원문을 안 주는 출처", () => {
+  it("본문이 비면 '아래는 원문입니다'를 띄우지 않는다", () => {
+    // 2026-08-09 실제 수집에서 나온 상태 — HN·OpenAI 피드 둘 다 본문을 안 준다.
+    // 안내만 남고 아래가 비어 있으면 화면이 거짓말을 한다.
+    const html = renderToStaticMarkup(
+      <ArticleView article={article({ contentHtml: "" })} nowIso={NOW} />,
+    );
+    expect(html).not.toContain("아래는 출처에서 가져온 원문입니다");
+    expect(html).toContain("원문 전문을 제공하지 않습니다");
+  });
+
+  it("공백뿐인 본문도 없는 것으로 본다", () => {
+    const html = renderToStaticMarkup(
+      <ArticleView article={article({ contentHtml: "   \n  " })} nowIso={NOW} />,
+    );
+    expect(html).toContain("원문 전문을 제공하지 않습니다");
+  });
+
+  it("INV-S1: 본문이 없어도 출처 링크는 그대로 있다", () => {
+    // 원문이 없을수록 출처 링크가 유일한 경로다.
+    const html = renderToStaticMarkup(
+      <ArticleView article={article({ contentHtml: "" })} nowIso={NOW} />,
+    );
+    expect(html).toContain('href="https://example.com/a"');
+  });
+});
+
+describe("ArticleView — INV-S2 요약 대체 표시", () => {
+  it("INV-S2 (S19): AI 요약이 없으면 출처 요약글을 보여준다", () => {
+    const html = renderToStaticMarkup(
+      <ArticleView
+        article={article({ summary: "", sourceExcerpt: "출처가 준 소개글이다." })}
+        nowIso={NOW}
+      />,
+    );
+    expect(html).toContain("출처가 준 소개글이다.");
+  });
+
+  it("INV-S2 (S19): 그때 'AI 요약'이라고 부르지 않는다", () => {
+    // 라벨이 값과 어긋나면 화면이 거짓말을 한다.
+    const html = renderToStaticMarkup(
+      <ArticleView
+        article={article({ summary: "", sourceExcerpt: "출처가 준 소개글이다." })}
+        nowIso={NOW}
+      />,
+    );
+    expect(html).not.toContain("AI 요약");
+    expect(html).toContain("출처가 준 요약");
+  });
+
+  it("INV-S2: AI 요약이 있으면 그것을 쓰고 AI 라고 알린다", () => {
+    const html = renderToStaticMarkup(
+      <ArticleView
+        article={article({ summary: "AI 가 만든 요약", sourceExcerpt: "출처 글" })}
+        nowIso={NOW}
+      />,
+    );
+    expect(html).toContain("AI 요약");
+    expect(html).toContain("AI 가 만든 요약");
+    expect(html).not.toContain("출처 글");
+  });
+
+  it("INV-S2 실패경로: 둘 다 없으면 요약 박스를 그리지 않는다", () => {
+    const html = renderToStaticMarkup(
+      <ArticleView article={article({ summary: "", sourceExcerpt: null })} nowIso={NOW} />,
+    );
+    expect(html).not.toContain("AI 요약");
+    expect(html).not.toContain("출처가 준 요약");
   });
 });

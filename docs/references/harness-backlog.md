@@ -108,6 +108,20 @@
        원인이 포매팅인지 승인 누락인지 즉시 보이게. (gates 보호 — 제안만)
   - 근거: 이번 세션. spec 승인 복귀 과정에서 관찰.
 
+- [ ] **protect-secrets 훅이 `.env.example` 까지 막는다** (2026-08-09)
+  - 지금: `protect-secrets.mjs:12` 의 정규식 `\.env(\.[\w.-]+)?\b` 이 `.env.example` 에도 걸린다.
+    읽기 명령(`grep`·`cat` 등)이 같이 있으면 차단이라, **값이 하나도 없는 견본 파일**을 못 읽는다.
+    `.gitignore` 는 `!.env.example` 로 일부러 추적하는 파일인데 훅과 서로 반대 말을 한다.
+    같은 이유로 `git check-ignore ... | grep` 같은 무해한 파이프라인도 막힌다.
+  - 관찰: signal 의 `.env.example` 을 만들고 추적 여부를 확인하려다 두 번 막힘. 회피는
+    파이프라인에서 파일명을 빼고 `git status` 로 대신 확인 — 값싸다.
+  - 보류 이유: **보안 훅을 느슨하게 하는 변경**이라 값싼 회피가 있는 동안은 손대지 않는다.
+    과차단은 안전한 방향의 실패다(NO_INNERHTML 을 보수 유지한 것과 같은 판단).
+  - **승격 트리거**: 2번째 프로젝트에서 재현되거나, 회피가 안 되는 자리(예: `.env.example` 을
+    읽어야 하는 스킬·스크립트)가 생기면 → 정규식에 견본 파일 예외
+    (`.env.example`·`.env.sample`·`.env.template` 는 통과). **차단 자체는 유지하고 예외만 좁게.**
+  - 근거: 이번 세션. hooks 보호 — 제안만.
+
 ## 졸업 (반영됨 → LESSONS.md로)
 
 - [x] **spec 템플릿 킷 정본화** (2026-08-02) → docs/references/spec-template.md 신설 + scaffold.mjs 복사 배선.

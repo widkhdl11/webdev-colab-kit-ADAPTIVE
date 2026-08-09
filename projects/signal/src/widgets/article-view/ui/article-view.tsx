@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Article } from "@/entities/article";
+import { displaySummary, type Article } from "@/entities/article";
 import { ArticleBody, safeSourceUrl } from "@/features/content-render";
 import { MarkReadOnView } from "@/features/read-state";
 import { relativeTime } from "@/shared/lib/datetime";
@@ -13,6 +13,8 @@ interface Props {
 export function ArticleView({ article, nowIso }: Props) {
   const sourceHref = safeSourceUrl(article.sourceUrl);
   const when = relativeTime(article.publishedAt, nowIso);
+  // AI 요약 → 없으면 출처가 준 요약글 (INV-S2). 고르는 규칙은 entities 한 곳에 있다.
+  const summary = displaySummary(article);
 
   return (
     <main className={styles.read}>
@@ -41,15 +43,21 @@ export function ArticleView({ article, nowIso }: Props) {
         </span>
       </div>
 
-      {/* 요약은 신뢰 경계 밖이다 — 원문과 분리하고, 자동 생성이라는 사실을 문구로 드러낸다.
-          생성에 실패했으면 박스 자체를 그리지 않는다(빈 박스가 더 나쁜 정보다). */}
-      {article.summary !== "" ? (
-        <section className={styles.aiSummary} aria-label="AI 요약">
+      {/* 요약은 신뢰 경계 밖이다 — 원문과 분리하고, 어디서 온 글인지 문구로 드러낸다.
+          AI 요약이 없으면 출처가 준 요약글을 대신 보여준다(INV-S2). 둘 다 없으면
+          박스 자체를 그리지 않는다(빈 박스가 더 나쁜 정보다).
+          **라벨을 값에 맞춰야 한다** — 출처 글을 "AI 요약"이라고 붙이면 표시가 거짓이 된다. */}
+      {summary !== null ? (
+        <section
+          className={styles.aiSummary}
+          aria-label={summary.isAi ? "AI 요약" : "출처가 준 요약"}
+        >
           <span className={styles.aiLabel}>
-            <span aria-hidden="true">✨</span> AI 요약
+            <span aria-hidden="true">{summary.isAi ? "✨" : "❞"}</span>{" "}
+            {summary.isAi ? "AI 요약" : "출처가 준 요약"}
           </span>
-          <p>{article.summary}</p>
-          {article.summaryPoints.length > 0 ? (
+          <p>{summary.text}</p>
+          {summary.isAi && article.summaryPoints.length > 0 ? (
             <ul>
               {article.summaryPoints.map((point) => (
                 <li key={point}>{point}</li>
@@ -57,15 +65,27 @@ export function ArticleView({ article, nowIso }: Props) {
             </ul>
           ) : null}
           <p className={styles.caveat}>
-            요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을
-            읽어주세요.
+            {summary.isAi
+              ? "요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을 읽어주세요."
+              : "출처가 제공한 소개글입니다. 자세한 내용은 원문을 읽어주세요."}
           </p>
         </section>
       ) : null}
 
+      {/* 원문을 안 주는 출처가 있다 — RSS 가 제목·링크만 주는 경우다(2026-08-09 실측: HN·OpenAI 둘 다).
+          그때도 "아래는 원문입니다"를 띄우면 그 아래가 비어 있어 화면이 거짓말을 한다.
+          없으면 없다고 말하고 출처로 보낸다. */}
       <article className={styles.prose}>
-        <p className={styles.sourceNote}>아래는 출처에서 가져온 원문입니다.</p>
-        <ArticleBody html={article.contentHtml} />
+        {article.contentHtml.trim() !== "" ? (
+          <>
+            <p className={styles.sourceNote}>아래는 출처에서 가져온 원문입니다.</p>
+            <ArticleBody html={article.contentHtml} />
+          </>
+        ) : (
+          <p className={styles.sourceNote}>
+            이 출처는 원문 전문을 제공하지 않습니다. 아래 링크로 출처에서 읽어 주세요.
+          </p>
+        )}
       </article>
 
       <div className={styles.foot}>

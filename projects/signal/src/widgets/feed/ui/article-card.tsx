@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ArticleListItem } from "@/entities/article";
+import { displaySummary, type ArticleListItem } from "@/entities/article";
 import { relativeTime } from "@/shared/lib/datetime";
 import { sourceMark } from "../lib/source-mark";
 import styles from "./feed.module.css";
@@ -17,6 +17,10 @@ interface Props {
 // 읽음 기록은 여기서 하지 않는다 — 상세가 실제로 뜬 시점에 features/read-state 가 찍는다.
 // 클릭 시점에 찍으면 이동이 실패했을 때 읽지도 않은 글이 흐릿해진다.
 export function ArticleCard({ article, isRead, nowIso }: Props) {
+  // AI 요약이 없으면 출처가 준 요약글 (INV-S2). 어느 쪽을 고를지는 entities 가 정한다 —
+  // 카드와 상세가 각자 판단하면 두 화면이 다른 글을 보여주는 날이 온다.
+  const summary = displaySummary(article);
+
   return (
     <Link
       className={isRead ? `${styles.card} ${styles.isRead}` : styles.card}
@@ -32,7 +36,9 @@ export function ArticleCard({ article, isRead, nowIso }: Props) {
           </span>
         ) : null}
         <h3 className={styles.cardTitle}>{article.title}</h3>
-        <p className={styles.cardSummary}>{article.summary}</p>
+        {summary !== null ? (
+          <p className={styles.cardSummary}>{summary.text}</p>
+        ) : null}
       </div>
 
       <div className={styles.cardFoot}>
