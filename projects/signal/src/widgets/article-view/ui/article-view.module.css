@@ -1,0 +1,623 @@
+/* 소식 상세. 근거: docs/design/design-rules.md + mockups/article.html (2026-08-02 승인)
+   이 화면의 값어치는 "편하게 읽기" — 읽기 컬럼 704px, 줄높이 1.78. */
+
+.read {
+  max-width: var(--readw);
+  margin: 0 auto;
+  padding: 0 var(--space-20);
+}
+
+.back {
+  display: inline-block;
+  margin: 24px 0 var(--space-20);
+  font-size: var(--fs-ui);
+  font-weight: 600;
+  color: var(--meta);
+  text-decoration: none;
+  transition: color 0.15s ease;
+  scroll-margin-top: 72px;
+}
+
+.back:hover {
+  color: var(--accent);
+}
+
+/* 페이지 제목은 포인트색이다 (design-rules 2026-08-08).
+   이 화면에는 h1 이 둘 — 우리가 붙인 이 제목과, 출처가 원문 안에 쓴 h1.
+   강등으로 풀지 않기로 했으므로 색으로 가른다: 우리가 붙인 것 = 포인트색 / 출처가 쓴 것 = 먹색.
+   --accent on --bg = 5.49:1 (28px/800 이라 여유가 크다). */
+.title {
+  margin: 0 0 var(--space-12);
+  font-size: var(--fs-art-title);
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.7px;
+  color: var(--accent);
+  word-break: keep-all;
+}
+
+/* 메타 줄 — 시그니처 점선을 상세에서도 이어간다 */
+.metaRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-10);
+  padding-bottom: 18px;
+  border-bottom: 1px dotted var(--dot);
+}
+
+.who {
+  font-size: var(--fs-ui);
+  color: var(--meta);
+}
+
+.who strong {
+  color: var(--text2);
+  font-weight: 600;
+}
+
+.tags {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.tag {
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  color: var(--meta);
+  background: var(--surface);
+  border-radius: var(--r-pill);
+  padding: var(--space-4) var(--space-12);
+}
+
+/* ── AI 요약 ───────────────────────────────────────────────────────────
+   요약은 신뢰 경계 밖이다(원문이 진실). 원문과 시각적으로 분리하고 라벨과
+   주의 문구로 그 사실을 드러낸다. */
+
+.aiSummary {
+  margin: 24px 0 var(--space-8);
+  background: var(--surface);
+  border-left: 4px solid var(--accent); /* 포인트색은 얇은 선까지만 */
+  border-radius: var(--r-card);
+  /* 요약 본문이 16px 로 커지면서 시안도 여백을 함께 키웠다(18/20) */
+  padding: 18px var(--space-20);
+}
+
+.aiLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: var(--fs-chip);
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: var(--space-4) var(--space-10);
+  border-radius: var(--r-pill);
+  margin-bottom: var(--space-10);
+}
+
+/* 요약 본문은 16px (design-rules 2026-08-06 (2)). 상세에서 실제로 읽는 문장이라
+   "본문 16px 이상" 하한을 지킨다. 원문(17px)과 1px 차이밖에 안 나므로 위계는
+   면(--surface)·색(--text2)·왼쪽 포인트선·줄높이 1.70 이 함께 나른다. */
+.aiSummary p {
+  margin: 0 0 var(--space-8);
+  font-size: var(--fs-title);
+  line-height: 1.7;
+  color: var(--text2);
+  word-break: keep-all;
+}
+
+/* Tailwind Preflight 가 ol·ul 의 list-style 을 지운다 — 여기서 되살리지 않으면
+   점도 번호도 안 보인다(마커 색만 정해둔 죽은 규칙이 된다). */
+.aiSummary ul {
+  margin: 0;
+  padding-left: var(--space-20);
+  list-style: disc outside;
+}
+
+.aiSummary li {
+  font-size: var(--fs-title);
+  line-height: 1.7;
+  color: var(--text2);
+  margin-bottom: var(--space-4);
+  word-break: keep-all;
+}
+
+.aiSummary li::marker {
+  color: var(--meta);
+}
+
+.aiSummary li:last-child {
+  margin-bottom: 0;
+}
+
+.caveat {
+  margin: var(--space-12) 0 0;
+  padding-top: var(--space-10);
+  border-top: 1px dotted var(--dot);
+  font-size: var(--fs-meta);
+  color: var(--meta);
+}
+
+/* ── 원문 본문 ─────────────────────────────────────────────────────────
+   여기 스타일이 있는 태그 = sanitize 화이트리스트(content-safety.md)를 통과하는 태그.
+   ArticleBody 가 만든 마크업을 감싸서 후손 선택자로 그린다. */
+
+/* 원문 시작을 구획선으로 선언한다 (design-rules 2026-08-08).
+   요약이 끝나고 원문이 시작되는 자리가 여백으로만 표시되고 있었다. 시그니처인 점선을
+   한 줄 그어 "여기서부터는 우리가 쓴 게 아니다"를 경계가 나르게 한다.
+   아래쪽에는 두지 않는다 — 위아래를 다 막으면 안내문이 상자에 갇히고,
+   이 화면은 이미 점선을 여러 곳(메타 줄·요약 주의문구·h1·hr)에서 쓰고 있어 과해진다. */
+.prose {
+  border-top: 1px dotted var(--dot);
+  padding: 24px 0 var(--space-8);
+}
+
+/* 요약이 없으면 점선이 두 줄로 겹친다. AI 요약 박스는 조건부이고(생성 실패 시 안 그린다)
+   그때 .prose 는 메타 줄의 바로 다음 형제가 되는데, 메타 줄은 이미 아래에 점선을 갖고 있다.
+   선이 둘 나란히 서면 실수처럼 보인다 — 그 경우엔 메타 줄의 선이 이미 경계 노릇을 한다. */
+.metaRow + .prose {
+  border-top: 0;
+}
+
+.sourceNote {
+  /* 표지판 역할이 됐으므로 굵기를 한 칸 올리고 아래 여백을 키워 본문과 떼어놓는다.
+     크기·색은 그대로 둔다(12px/--meta) — 읽는 문장이 아니라 안내다. */
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--meta);
+  margin: 0 0 24px;
+}
+
+.prose p {
+  margin: 0 0 1.15em;
+  font-size: var(--fs-prose);
+  line-height: 1.78;
+  color: var(--text);
+  word-break: keep-all; /* 한국어 어절 단위 줄바꿈 */
+}
+
+/* ── 원문 제목 h1~h6 (design-rules 2026-08-06 (2)) ────────────────────────
+   크기는 20 / 17 두 값만 쓰고 위계는 굵기·색·위 여백이 만든다("단계를 늘리지 말고 굵기로").
+   원문 h1 은 페이지 제목(28px)과 경쟁하지 않게 h2 와 같은 크기로 누르고, 굵기 800 +
+   시그니처 점선 밑선으로 "구획의 시작"만 알린다.
+   h3~h6 은 본문과 같은 17px 이다 — 17 아래로 내리면 제목이 본문보다 작아져 위계가 뒤집힌다.
+   그래서 굵은 문장과 헷갈리지 않도록 위 여백을 문단 간격보다 확실히 넓게 잡았다. */
+/* 원문 안의 상위 제목(h1·h2)에는 왼쪽 세로선을 단다 (design-rules 2026-08-08).
+   페이지 제목이 포인트색으로 갈라지는 것과 짝을 이루는 레이아웃 쪽 신호로,
+   훑을 때 원문 내부 구조가 왼쪽 리듬으로 보인다.
+
+   선은 본문 칼럼 **바깥으로 내민다**(margin-left: -16px). 안쪽으로 들여쓰면 제목이 본문보다
+   오른쪽에서 시작해 위계가 뒤집혀 보인다. 내밀면 선만 밖에 서고 글자는 본문과 같은 자리에서
+   시작한다(2px 선 + 14px = 16px). .read 의 좌우 padding 이 20px 이라 화면 밖으로 나가지 않는다.
+
+   요약 박스의 왼쪽 선과 헷갈리면 안 되므로 색도 두께도 다르게 잡았다:
+     요약 박스 = --accent 4px (우리가 만든 것) / 원문 제목 = --dot 2px (출처가 쓴 것)
+   h3~h6 에는 두지 않는다 — 깊어질수록 장식이 줄어드는 쪽이 자연스럽다. */
+.prose h1 {
+  margin: 2.4em 0 0.8em -16px;
+  padding-left: var(--space-14);
+  padding-bottom: var(--space-10);
+  border-left: 2px solid var(--dot);
+  border-bottom: 1px dotted var(--dot);
+  font-size: var(--fs-prose-h2);
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  line-height: 1.45;
+  color: var(--text);
+  word-break: keep-all;
+}
+
+/* 내밀기는 **본문 칼럼 최상위에서만** 성립한다. h1·h2 는 후손 선택자라 원문이 제목을
+   인용문·목록·표 안에 넣으면 거기서도 걸리는데(sanitize 가 그 중첩을 통과시킨다),
+   그 자리에서는 전부 어긋난다: 인용문은 이미 --dot 4px 왼쪽 선이 있어 2px 선이 붙으면
+   6px 실선처럼 보이고, 목록에서는 마커 영역을 파고들고, 표 셀에서는 가로 스크롤 껍데기의
+   overflow 에 잘린다. 중첩 문맥에서는 선을 접는다 — 거기서는 이미 부모가 구획을 나르고 있다. */
+.prose blockquote :is(h1, h2),
+.prose li :is(h1, h2),
+.prose td :is(h1, h2),
+.prose th :is(h1, h2) {
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
+}
+
+.prose h2 {
+  margin: 2.1em 0 0.75em -16px;
+  padding-left: var(--space-14);
+  border-left: 2px solid var(--dot);
+  font-size: var(--fs-prose-h2);
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.45;
+  color: var(--text);
+  word-break: keep-all;
+}
+
+.prose h3 {
+  margin: 2em 0 0.6em;
+  font-size: var(--fs-prose);
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: keep-all;
+}
+
+.prose h4 {
+  margin: 1.8em 0 0.5em;
+  font-size: var(--fs-prose);
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: keep-all;
+}
+
+/* h4~h6 은 굵기가 같고 색만 다르다 — 600 아래(500)는 본문 400 과 붙어 제목으로 안 읽힌다.
+   --text → --text2 → --meta 는 이 사이트가 이미 쓰는 사다리다. */
+.prose h5 {
+  margin: 1.6em 0 0.45em;
+  font-size: var(--fs-prose);
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  line-height: 1.5;
+  color: var(--text2);
+  word-break: keep-all;
+}
+
+.prose h6 {
+  margin: 1.5em 0 0.4em;
+  font-size: var(--fs-prose);
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  line-height: 1.5;
+  color: var(--meta);
+  word-break: keep-all;
+}
+
+/* Preflight 의 list-style:none 복구. 중첩 2단계까지 모양을 달리한다. */
+.prose ul {
+  margin: 0 0 1.15em;
+  padding-left: var(--space-22);
+  list-style: disc outside;
+}
+
+.prose ol {
+  margin: 0 0 1.15em;
+  padding-left: var(--space-22);
+  list-style: decimal outside;
+}
+
+.prose ul ul {
+  list-style-type: circle;
+}
+
+.prose ol ol {
+  list-style-type: lower-alpha;
+}
+
+.prose li {
+  font-size: var(--fs-prose);
+  line-height: 1.78;
+  color: var(--text);
+  margin-bottom: 0.45em;
+  word-break: keep-all;
+}
+
+.prose li::marker {
+  color: var(--meta);
+}
+
+/* 중첩 목록은 바깥 목록의 아래 여백을 물려받지 않는다 */
+.prose li > ul,
+.prose li > ol {
+  margin: 0.45em 0 0;
+}
+
+/* li 안에 p 가 들어오는 원문 대비 */
+.prose li > p {
+  margin: 0 0 0.5em;
+}
+
+.prose li > p:last-child {
+  margin-bottom: 0;
+}
+
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s ease;
+}
+
+.prose a:hover {
+  text-decoration-color: var(--accent);
+}
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.87em;
+  background: var(--sunken);
+  border-radius: var(--r-inline);
+  padding: var(--space-2) var(--space-6);
+  color: var(--code-ink);
+}
+
+.prose pre {
+  margin: 0 0 1.3em;
+  scroll-margin-top: 72px;
+  background: var(--sunken);
+  border-radius: var(--r-img);
+  padding: var(--space-16);
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre;
+}
+
+.prose blockquote {
+  margin: 0 0 1.3em;
+  padding: var(--space-2) 0 var(--space-2) var(--space-16);
+  border-left: 4px solid var(--dot);
+  color: var(--text2);
+}
+
+.prose blockquote p {
+  /* color 를 선언하면 blockquote 의 --text2 가 상속되지 못한다 —
+     inherit 이라야 "인용은 한 칸 내린 색" 규칙이 살아난다 */
+  color: inherit;
+  margin: 0 0 0.6em;
+  font-size: var(--fs-title);
+  line-height: 1.75;
+}
+
+.prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.prose figure {
+  margin: 1.5em 0 1.4em;
+}
+
+.prose figure > :first-child {
+  margin-top: 0;
+}
+
+/* 원문에서 온 이미지는 본문 칸을 넘지 않게 (로드 실패·과대 이미지의 레이아웃 붕괴 방지)
+   + 도착 전에 자리를 비워둔다 (design-rules 2026-08-08). height:auto 만 있으면 로드 전 높이가
+   0 이라 이미지가 뜨는 순간 아래 글이 통째로 밀린다.
+
+   자리 예약은 두 갈래로 나눠 맡긴다:
+     · 원문이 width·height 를 들고 온 이미지 → **브라우저 기본 동작에 맡긴다.** 그 속성이
+       로드 전 상자를 정한다(sanitize 가 조건을 통과시킨 값만 남긴다 — content-safety INV-D2).
+     · 안 들고 온 이미지 → 아래 규칙이 16:9 로 임시 예약한다.
+
+   처음엔 한 줄(`aspect-ratio: auto 16/9`)로 두 경우를 덮으려 했는데, 그러면 **작성자 선언이
+   치수에서 온 값을 덮는지**에 답이 걸린다(캐스케이드에서 표현 힌트와 작성자 스타일의 우열).
+   이번 세션에 브라우저가 없어 실측하지 못했고, 선택자를 갈라두면 어느 해석이 맞든 결과가
+   같아진다. 답을 몰라도 되게 만드는 쪽을 골랐다.
+
+   `display: block` 은 장식이 아니라 예약의 전제다 — 인라인이 되면 폭이 칼럼을 안 채워
+   예약 높이가 같이 줄어든다. */
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--r-img);
+  background: var(--surface);
+}
+
+.prose img:not([width]):not([height]) {
+  aspect-ratio: 16 / 9;
+}
+
+.prose figcaption {
+  margin-top: var(--space-8);
+  font-size: var(--fs-meta);
+  color: var(--meta);
+  text-align: center;
+  word-break: keep-all;
+}
+
+/* ── 표 ── 읽기 컬럼(704px)을 넘길 수 있어 껍데기에서 가둔다.
+   [data-table-scroll] 은 ArticleBody 가 끼워 넣는다(원문에는 class 를 못 붙인다).
+   가로 스크롤이 마우스로만 닿으면 안 되므로 그쪽에서 tabindex·role 도 함께 준다. */
+.prose [data-table-scroll] {
+  margin: 1.6em 0 1.5em;
+  /* 새로 포커스 대상이 된 자리 — sticky 헤더 밑에 깔리면 포커스 링이 안 보인다 */
+  scroll-margin-top: 72px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--r-img);
+}
+
+.prose table {
+  width: 100%;
+  /* 이보다 좁아지면 한글이 글자 단위로 부서진다 */
+  min-width: 480px;
+  margin: 0;
+  border-collapse: collapse;
+  font-size: var(--fs-title);
+  line-height: 1.6;
+}
+
+/* 헤더 면은 --surface. --sunken 을 쓰면 대비가 4.35:1 로 미달이고
+   면이 어두워 표가 코드 블록처럼 보인다 */
+.prose thead {
+  background: var(--surface);
+}
+
+.prose th {
+  /* 원문에 class 를 붙일 수 없어 열별 정렬은 불가능하다 */
+  text-align: left;
+  font-weight: 700;
+  color: var(--text);
+  padding: var(--space-10) var(--space-14);
+  /* 머리글이 접히면 표가 읽기 어려워진다 */
+  white-space: nowrap;
+  border-bottom: 1px dotted var(--dot);
+}
+
+.prose td {
+  padding: var(--space-10) var(--space-14);
+  color: var(--text);
+  border-bottom: 1px dotted var(--dot);
+  word-break: keep-all;
+}
+
+.prose tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.prose table code {
+  font-size: 0.85em;
+}
+
+/* ── 구획선 ── 이 사이트의 구분선은 전부 점선이라 실선 hr 만 이물감이 생긴다 */
+.prose hr {
+  margin: 2.4em 0;
+  border: 0;
+  border-top: 1px dotted var(--dot);
+  height: 0;
+}
+
+/* ── 문장 안의 표식들 ────────────────────────────────────────────────────
+   Preflight 가 강조 태그도 리셋하므로 명시한다. */
+.prose strong,
+.prose b {
+  font-weight: 700;
+  color: inherit;
+}
+
+.prose em,
+.prose i {
+  font-style: italic;
+}
+
+/* 원문이 직접 친 형광펜. 2차 강조색 금지라 노랑을 못 쓰고 포인트 소프트면을 빌린다.
+   글자를 --accent 로 하면 링크로 오인되므로 --text 그대로 둔다. */
+.prose mark {
+  background: var(--accent-soft);
+  color: var(--text);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--r-inline);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* 이 화면에서 밑줄 + 포인트색은 링크의 표식이다 —
+   u 는 글자색을 두고 밑줄만 눕혀 "링크 아님"을 구분한다 */
+.prose u {
+  text-decoration: underline;
+  text-decoration-color: var(--dot);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.prose s {
+  color: var(--meta);
+  text-decoration-color: var(--meta);
+}
+
+/* 문장에 딸린 덧말 — 본문이 아니라 부속이라 16px 하한 대상이 아니다 */
+.prose small {
+  font-size: var(--fs-body);
+  color: var(--text2);
+}
+
+.prose sub,
+.prose sup {
+  font-size: var(--fs-meta);
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+.prose sup {
+  top: -0.5em;
+}
+
+.prose sub {
+  bottom: -0.25em;
+}
+
+/* span 에는 일부러 아무 스타일도 주지 않는다 — sanitize 가 class·style 을 버려
+   빈 껍데기로 남으므로, 효과를 주면 원문이 의도하지 않은 강조가 생긴다 */
+
+/* ── 하단: 출처 원문 링크 ─────────────────────────────────────────────── */
+
+.foot {
+  margin-top: 32px;
+  padding-top: var(--space-20);
+  border-top: 1px dotted var(--dot);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-14);
+  padding-bottom: 56px;
+}
+
+.note {
+  font-size: var(--fs-xs);
+  color: var(--meta);
+}
+
+.sourceButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  padding: var(--space-12) var(--space-20);
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  text-decoration: none;
+  transition:
+    filter 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.sourceButton:hover {
+  filter: brightness(1.08);
+  box-shadow: var(--shadow-btn-h);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .title {
+    font-size: 23px;
+  }
+  /* 모바일 본문 16px. h3~h6 은 본문과 같은 크기이므로 함께 내린다
+     (굵기·색으로 만든 위계는 그대로 유지된다) */
+  .prose p,
+  .prose li,
+  .prose h3,
+  .prose h4,
+  .prose h5,
+  .prose h6 {
+    font-size: var(--fs-title);
+  }
+  .foot {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sourceButton:hover {
+    transform: none;
+  }
+}

@@ -44,6 +44,124 @@ describe("sanitizeArticleHtml (content-safety spec)", () => {
   });
 });
 
+// ── 이미지 치수 (INV-D2, 2026-08-08 추가 · S10/S11) ─────────────────────────
+// 이 스펙에서 화이트리스트가 "속성 이름만 본다"에서 "값도 본다"로 넘어온 첫 자리다.
+// 통과 조건은 둘 다 있고 둘 다 양의 정수 — 하나라도 어긋나면 둘 다 뺀다.
+//
+// ⚠ 아래 실패경로들은 그냥 두면 알리바이가 된다: width/height 를 애초에 허용하지 않아도
+//    전부 통과한다(없는 속성은 "제거된 것"과 구별되지 않는다). 그래서 S10(보존)이
+//    이 묶음의 진짜 앵커다 — 숫자 검증을 지우면 S11 이, 허용을 지우면 S10 이 빨개진다.
+//    (구현 후 두 변이를 실제로 돌려 확인했다)
+describe("sanitizeArticleHtml 이미지 치수 (content-safety S10/S11/S12)", () => {
+  const src = 'src="https://ex.com/a.png"';
+
+  // 단언에 `/width=/` 대신 `/\bwidth\b/` 를 쓰는 이유: width·height 는 sanitize-html 의
+  // nonBooleanAttributes 라, 값이 undefined 로 새면 `=` 없이 ` width` 로만 출력된다.
+  // `=` 를 요구하면 그 구현을 못 잡는다. src·alt 값에 이 단어가 없어 오탐 위험도 없다.
+  function hasNoDimensions(out: string) {
+    expect(out).not.toMatch(/\bwidth\b/);
+    expect(out).not.toMatch(/\bheight\b/);
+  }
+
+  it("S10: width·height 가 둘 다 양의 정수면 보존한다 (자리 예약이 가능해진다)", () => {
+    const out = sanitizeArticleHtml(`<img ${src} width="704" height="300">`);
+    expect(out).toMatch(/width="704"/);
+    expect(out).toMatch(/height="300"/);
+  });
+
+  // 아래는 전부 "둘 다 제거". 이미지 자체는 남는다 — 치수가 틀렸다고 그림을 버리지 않는다.
+  const bad: ReadonlyArray<readonly [string, string]> = [
+    ["숫자가 아님", 'width="abc" height="300"'],
+    ["음수", 'width="-1" height="300"'],
+    ["정수가 아님", 'width="704.5" height="300"'],
+    ["height 쪽이 깨짐", 'width="704" height="abc"'],
+    ["width 만 있음 — 하나로는 비율을 못 구한다", 'width="704"'],
+    ["height 만 있음", 'height="300"'],
+    ["빈 값 (앵커는 height 쪽 — width 는 라이브러리가 알아서 지운다)", 'width="" height="300"'],
+    ["단위가 붙음 (px 는 HTML 속성 문법이 아니다)", 'width="704px" height="300px"'],
+    ["공백으로 위장", 'width=" 704 " height="300"'],
+
+    // ── 아래는 전부 양의 정수다. 정수 검사만으로는 못 잡는 자리. ──
+    ["비율이 세로로 극단 (로드 전 거대한 빈 공간이 생긴다)", 'width="1" height="99999"'],
+    ["비율이 가로로 극단", 'width="99999" height="1"'],
+    // 비율 상한을 [10, ∞) 어디에나 둬도 통과하던 구멍을 막는다. 상한 바로 바깥값이라
+    // MAX_RATIO 를 11 로만 올려도 이 줄이 빨개진다.
+    ["비율이 상한 바로 밖 (10.0025:1)", 'width="400" height="4001"'],
+    // 절대 상한 (조건 4). 비율은 1:1 이라 비율 가드가 침묵하는 자리다.
+    ["절대 상한 바로 밖", 'width="20001" height="20001"'],
+    ["실측값일 수 없는 자릿수", 'width="99999999999999999999" height="99999999999999999999"'],
+
+    // ⚠ 이 줄이 있어야 "0 거부"가 처음으로 실제 검증된다.
+    //    `width="0" height="300"` 으로는 안 된다 — 300/0 = Infinity > 10 이라 **비율 가드가
+    //    대신 잡아서**, 정수 검사를 /^[0-9]+$/ 로 풀어도 green 으로 살아남는다(알리바이).
+    //    0 쌍은 0/0 = NaN 이고 NaN > 10 은 false 라 비율 가드가 침묵한다 → 정수 검사가 유일한 방벽.
+    ["0 쌍 — 비율 가드가 침묵하는 자리", 'width="0" height="0"'],
+    ["0 (비율 가드가 대신 잡는 자리)", 'width="0" height="300"'],
+  ];
+
+  it.each(bad)("S11(실패경로): %s → width·height 를 둘 다 제거한다", (_label, attrs) => {
+    const out = sanitizeArticleHtml(`<img ${src} ${attrs} alt="설명">`);
+    hasNoDimensions(out);
+    // 그림과 나머지 속성은 살아 있어야 한다 — 치수가 틀렸다고 그림을 버리지 않는다
+    expect(out).toMatch(/<img/);
+    expect(out).toMatch(/src="https:\/\/ex\.com\/a\.png"/);
+    expect(out).toMatch(/alt="설명"/);
+  });
+
+  it("S12: 절대 상한 경계값(20000)은 보존한다", () => {
+    const out = sanitizeArticleHtml(`<img ${src} width="20000" height="20000">`);
+    expect(out).toMatch(/width="20000"/);
+    expect(out).toMatch(/height="20000"/);
+  });
+
+  it("S12: 비율 상한 경계값(정확히 10:1)은 보존한다 — 긴 스크린샷을 통째로 버리지 않는다", () => {
+    // 경계 '안쪽'이 아니라 경계 그 자리다(구현이 `>` 비교라 포함).
+    // 그래서 `>` 를 `>=` 로 바꾸는 변이를 이 줄이 잡는다.
+    const out = sanitizeArticleHtml(`<img ${src} width="400" height="4000">`);
+    expect(out).toMatch(/width="400"/);
+    expect(out).toMatch(/height="4000"/);
+  });
+
+  it("치수를 안 들고 온 이미지는 손대지 않는다 (없는 것은 위반이 아니다)", () => {
+    // 출력 전체를 고정한다 — 속성을 날조하거나 잃는 구현을 전부 잡는다.
+    // (이 한 개만 정확 비교로 둔다. 전부 이렇게 가면 속성 순서에 묶여 부서진다)
+    expect(sanitizeArticleHtml(`<img ${src} alt="설명">`)).toBe(
+      '<img src="https://ex.com/a.png" alt="설명" />',
+    );
+  });
+
+  it("값 검사는 img 의 치수에만 건다 — 다른 태그의 width 는 이름 단계에서 걸린다", () => {
+    // "값까지 보는 속성은 이 둘뿐"이라는 이 확장의 경계 자체를 못 박는다.
+    const td = sanitizeArticleHtml('<table><tbody><tr><td width="500">x</td></tr></tbody></table>');
+    expect(td).not.toMatch(/\bwidth\b/);
+    expect(td).toMatch(/<td>x<\/td>/);
+    const p = sanitizeArticleHtml('<p width="1">x</p>');
+    expect(p).toBe("<p>x</p>");
+  });
+
+  it("INV-D2 는 그대로다: 치수가 멀쩡해도 on* 과 style 은 여전히 제거된다", () => {
+    const out = sanitizeArticleHtml(
+      `<img ${src} width="704" height="300" onerror="alert(1)" style="position:fixed">`,
+    );
+    expect(out).toMatch(/width="704"/);
+    expect(out).toMatch(/height="300"/); // 쌍이 온전히 살아남는 것까지 본다
+    expect(out).not.toMatch(/onerror/i);
+    expect(out).not.toMatch(/style=/i);
+  });
+
+  // 자리 예약(aspect-ratio)이 붙으면서 생긴 자리다: 스킴이 거부돼 src 를 잃은 이미지가
+  // 껍데기로 남으면 **영원히 안 채워지는 회색 상자**가 화면에 보인다.
+  // 치수 없는 이미지의 예약은 언젠가 그림으로 채워지지만 이 자리는 그렇지 않다.
+  it("src 를 잃은 이미지는 태그째 사라진다 (빈 상자를 남기지 않는다)", () => {
+    expect(sanitizeArticleHtml('<img src="data:image/png;base64,AAAA" alt="x">')).toBe("");
+    expect(sanitizeArticleHtml('<img alt="x">')).toBe("");
+    // 주변 내용은 잃지 않는다
+    expect(sanitizeArticleHtml('<p>앞</p><img src="javascript:alert(1)"><p>뒤</p>')).toBe(
+      "<p>앞</p><p>뒤</p>",
+    );
+  });
+});
+
 // 보안 회귀 방지 (리뷰 지적): sanitize 는 stored XSS 를 막는 유일한 방벽이라,
 // 설정 한 줄만 바꿔도(화이트리스트에 iframe·data:·style 추가 등) 조용히 XSS 가 되살아난다.
 // 아래는 "이런 벡터는 반드시 막혀야 한다"를 못박아 회귀를 잡는다. 모두 현재 구현에서 통과(green).

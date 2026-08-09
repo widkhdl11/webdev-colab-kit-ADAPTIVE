@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>signal — 원문 본문 타이포 확장 시안</title>
+
+<!--
+  signal / 소식 상세 · 원문 본문 타이포 확장 시안
+  ─────────────────────────────────────────────────────────────────────────────
+  근거: docs/design/design-rules.md (2026-08-02 + 2026-08-06 블록)
+        docs/design/mockups/article.html (2026-08-02 승인 — 이 시안은 그 언어를 그대로 물려받는다)
+        docs/specs/content-safety.md INV-D2 (sanitize 화이트리스트)
+        src/features/content-render/lib/sanitize.ts ALLOWED_TAGS (실제 통과 태그 목록)
+
+  왜 이 시안이 필요한가
+  ─────────────────────
+  sanitize 가 통과시키는 태그가 현재 .prose 에 정의된 스타일보다 넓다.
+  h1 · h3~h6 · table 계열 · hr · mark · small · sub · sup · u · s · span 은 값이 없어서
+  Tailwind Preflight 리셋 그대로 나온다 (h3 가 본문보다 작고 굵기도 없음, 표는 선도 여백도 없음).
+  design-rules 63행이 "크기 단계를 늘리지 말라"고 못박고 있어 구현이 값을 발명할 수 없다.
+  → 여기서 값을 정하고 checkpoint 로 승인받는다.
+
+  이 시안이 승인을 요청하는 것 (두 덩어리)
+  ─────────────────────────────────────
+  ① AI 요약 박스 본문 15px → 16px (사용자 결정)
+     ui-layers 의 "본문 16px 이상" 하한을 지키기 위해서다. 원문이 17px 이라 1px 차이밖에 안 남으므로
+     위계는 크기가 아니라 면(--surface) · 색(--text2) · 왼쪽 포인트선 · 줄높이 질감으로 유지한다.
+  ② 원문 본문의 나머지 태그 렌더 값 (아래 CSS 각 항목 주석에 근거를 달았다)
+
+  지킨 제약
+  ─────────
+  · 크기 단계를 늘리지 않았다. 쓴 값은 전부 기존 단계 안 — 20 / 17 / 16 / 15 / 13.5 / 12
+  · 색 · 라운드 · 그림자는 토큰만. 새 토큰은 --r-inline 하나 (아래 :root 주석 참고)
+  · 텍스트 대비 최저 4.75:1 유지 (상세 화면의 현재 최저값). 계산값은 :root 아래 표에 전부 적었다
+  · 순백 배경 없음, 포인트색은 링크 · mark · AI 라벨 · 요약 박스 왼쪽 선까지만
+  · 점선(--dot)은 hr · 표 행 구분 · 원문 h1 밑선에 이어 썼다 (시그니처)
+
+  중요 — 원문 본문에는 class 를 쓸 수 없다
+  ─────────────────────────────────────
+  sanitize 의 allowedAttributes 가 a(href/target/rel) · img(src/alt/title) 외 모든 속성을 버린다.
+  즉 원문에서 온 마크업에는 class 도 style 도 남지 않는다. 따라서 .prose 안의 스타일은
+  전부 "태그 선택자"로만 성립해야 한다 (예: 표의 숫자 열을 오른쪽 정렬하는 것은 불가능하다).
+  예외는 우리 렌더 계층이 직접 끼워 넣는 껍데기뿐 — .tableScroll 이 그 경우다.
+-->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+  :root{
+    /* ── 색 · 형태 · 타이포: tokens.css 와 동일 값 (시안이라 인라인으로 복사) ── */
+    --bg:        #EFEFF5;
+    --surface:   #F8F8FC;
+    --surface-h: #FDFDFF;
+    --sunken:    #E5E5EE;
+    --code-ink:  #33353C;
+    --hairline:  #E2E2EC;
+    --dot:       #C9C9D6;
+
+    --text:  #1F2024;
+    --text2: #4A4E55;
+    --meta:  #656A72;
+
+    --accent:      #4F46E5;
+    --accent-soft: #E9E8FB;
+    --on-accent:   #FFFFFF;
+
+    --maxw:  1168px;
+    --readw: 704px;
+    --r-card:  12px;
+    --r-pill:  999px;
+    --r-img:   8px;
+    --r-focus: 6px;
+
+    /* ★ 새 토큰 제안 (1개)
+       --r-inline : 글 흐름 안에 박히는 인라인 칩의 라운드. code 와 mark 가 같이 쓴다.
+       지금 article-view.module.css 에서 code 라운드가 6px 로 하드코딩돼 있는데,
+       mark 가 들어오면서 같은 값이 두 군데가 된다. 토큰 규칙(색·라운드 하드코딩 금지)상
+       이름을 줘야 할 시점이다. 값은 기존 code 와 동일한 6px — 보이는 것은 안 바뀐다. */
+    --r-inline: 6px;
+
+    --font-sans: "Pretendard Variable", "Pretendard", system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+    --fs-art-title: 28px;
+    --fs-prose-h2:  20px;
+    --fs-prose:     17px;
+    --fs-title:     16px;
+    --fs-body:      15px;
+    --fs-btn:       14px;
+    --fs-sm:        13.5px;
+    --fs-ui:        13px;
+    --fs-xs:        12.5px;
+    --fs-meta:      12px;
+    --fs-chip:      11.5px;
+  }
+
+  /* ═══ 대비 실측 (WCAG 상대휘도로 계산) ══════════════════════════════════════
+     제약: 상세 화면의 현재 최저 4.75:1 밑으로 내려가지 않는다.
+
+     [원문 본문]
+       --text   #1F2024 on --bg      #EFEFF5   14.21:1   p · h1~h4 · td · u · sub/sup · strong/em
+       --text2  #4A4E55 on --bg      #EFEFF5    7.30:1   h5 · small · blockquote
+       --meta   #656A72 on --bg      #EFEFF5    4.75:1   h6 · s · figcaption · li::marker  ← 최저 (기존 최저와 동일)
+       --accent #4F46E5 on --bg      #EFEFF5    5.49:1   링크 · 페이지 제목(2026-08-08 추가)
+       --text   #1F2024 on --accent-soft #E9E8FB 13.49:1  mark
+       --text   #1F2024 on --surface #F8F8FC   15.36:1   표 헤더(th)
+       --code-ink #33353C on --sunken #E5E5EE   9.78:1   인라인 code (design-rules 기록값)
+       --text   #1F2024 on --sunken  #E5E5EE   13.00:1   코드 블록 본문
+
+     [AI 요약 박스 — 면이 --surface 라 원문보다 오히려 여유가 있다]
+       --text2  #4A4E55 on --surface #F8F8FC    7.89:1   요약 본문 · 목록
+       --meta   #656A72 on --surface #F8F8FC    5.14:1   주의 문구
+       --accent #4F46E5 on --accent-soft        5.21:1   "AI 요약" 라벨
+
+     ⚠ 쓰면 안 되는 조합 (계산해보고 뺀 것)
+       --meta   #656A72 on --sunken  #E5E5EE    4.35:1   미달.
+       → 그래서 표 헤더 배경을 --sunken(코드 면)이 아니라 --surface(밝은 면)로 잡았다.
+         표 헤더는 작고 흐려지기 쉬운 자리라 색도 --meta 가 아니라 --text 로 올렸다.
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  *{ box-sizing: border-box; }
+  html{ -webkit-text-size-adjust: 100%; }
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--fs-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* ★ 승인된 시안(feed-a.html · article.html)에서 고친 것 — 여기서 값이 바뀐다.
+     기존 규칙은 이 자리에 `border-radius: var(--r-focus)` 를 두고 있었는데,
+     a:focus-visible 의 명시도(0,1,1)가 .card(0,1,0)·알약 버튼을 이겨서
+     **키보드 포커스가 닿는 순간 카드가 12px→6px, 알약 버튼이 999px→6px 로 각지게 변했다.**
+     design-rules 94~95행("호버·포커스에서 완전 복구… 키보드 이동도 같다")과 정면으로 어긋난다.
+     → border-radius 를 빼면 아웃라인이 각 요소 자신의 라운드를 따라간다. 라운드가 없는
+       인라인 텍스트 링크는 원래대로 사각 아웃라인이 나오고, 그게 정상이다.
+     (2026-08-06 ui-reviewer 지적. 시안 두 장도 같은 결함을 갖고 있어 그대로 두면 다음 화면이 물려받는다) */
+  a:focus-visible,
+  button:focus-visible,
+  [tabindex]:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ── 헤더 / 읽기 컬럼 / 제목 / 메타: article.html 승인분 그대로 ─────────── */
+  header.top{
+    border-bottom: 1px solid var(--hairline);
+    background: var(--bg);
+    position: sticky; top: 0; z-index: 5;
+  }
+  .top-in{
+    max-width: var(--maxw); margin: 0 auto; padding: 14px 20px;
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  }
+  .logo{ font-size: 19px; font-weight: 800; letter-spacing: -0.3px; color: var(--text); text-decoration: none; }
+  .logo .dot{ color: var(--accent); }
+  .tagline{ font-size: var(--fs-ui); color: var(--meta); }
+
+  .read{ max-width: var(--readw); margin: 0 auto; padding: 0 20px; }
+
+  .back{
+    display: inline-block; margin: 24px 0 20px;
+    font-size: var(--fs-ui); font-weight: 600; color: var(--meta); text-decoration: none;
+    transition: color .15s ease;
+    scroll-margin-top: 72px;
+  }
+  .back:hover{ color: var(--accent); }
+
+  /* ★ 2026-08-08 변경 — 페이지 제목을 포인트색으로.
+     이 화면에는 h1 이 둘이다: 우리가 붙인 페이지 제목과, 출처가 원문 안에 쓴 h1.
+     강등(h1→h2)으로 풀지 않기로 했으므로 **눈으로 갈라지게** 만든다.
+     "우리가 붙인 것 = 포인트색 / 출처가 쓴 것 = 먹색" 이 이 화면의 규칙이 된다.
+
+     ⚠ design-rules 51행("포인트색은 면적을 최소로 — 활성 상태·뱃지·로고 점·링크 정도")을
+        넓히는 결정이다. 승인되면 그 문서에 명시해야 한다. 안 적으면 다음 화면이
+        "제목은 포인트색"을 통째로 물려받는다.
+     대비: --accent #4F46E5 on --bg #EFEFF5 = 5.49:1 (28px/800 이라 여유가 크다) */
+  .art-title{
+    margin: 0 0 12px;
+    font-size: var(--fs-art-title); font-weight: 800; line-height: 1.35; letter-spacing: -0.7px;
+    color: var(--accent);
+    word-break: keep-all;
+  }
+  .art-meta{
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding-bottom: 18px;
+    border-bottom: 1px dotted var(--dot);
+  }
+  .art-meta .who{ font-size: var(--fs-ui); color: var(--meta); }
+  .art-meta .who strong{ color: var(--text2); font-weight: 600; }
+  .art-tags{ display: flex; gap: 6px; }
+  .tag{
+    font-size: var(--fs-meta); font-weight: 500; color: var(--meta);
+    background: var(--surface); border-radius: var(--r-pill); padding: 4px 12px;
+  }
+
+  /* ═══ ① AI 요약 박스 — 본문 15px → 16px ═══════════════════════════════════
+     사용자 결정. ui-layers 의 "본문 16px 이상" 하한을 요약 박스도 지킨다
+     (design-rules 77행의 예외는 "카드 요약 13.5px" 하나뿐이고, 그건 목록 미리보기라서다.
+      상세의 요약 박스는 미리보기가 아니라 실제로 읽는 문장이므로 예외에 해당하지 않는다).
+
+     문제: 원문 본문이 17px 이라 이제 1px 차이밖에 안 난다. 크기로는 더 이상 구분이 안 된다.
+     그래서 위계를 크기에서 다른 축으로 옮겼다 — 아래 네 가지가 같이 작동한다.
+       (1) 면   : 요약은 --surface(페이지보다 밝은 카드면), 원문은 페이지 배경 위 맨몸
+       (2) 색   : 요약 --text2, 원문 --text. 원문이 더 진하다 = 원문이 본체다
+       (3) 형태 : 라운드 12px + 왼쪽 4px 포인트선 + 라벨 알약. 원문에는 이런 테두리가 없다
+       (4) 질감 : 줄높이 1.70 (원문은 1.78). 요약은 조금 더 조여 "블록"으로 읽히고,
+                  원문은 벌려 "흐름"으로 읽힌다
+     ⇒ 확인 포인트: 이 네 가지로 요약과 원문이 충분히 갈라져 보이는지. */
+  .ai-sum{
+    margin: 24px 0 8px;
+    background: var(--surface);
+    border-left: 4px solid var(--accent);   /* 포인트색은 얇은 선까지만 (면적 최소) */
+    border-radius: var(--r-card);
+    padding: 18px 20px;
+  }
+  .ai-sum .label{
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: var(--fs-chip); font-weight: 700; letter-spacing: -0.1px;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 4px 10px; border-radius: var(--r-pill);
+    margin-bottom: 10px;
+  }
+  .ai-sum p{
+    margin: 0 0 8px;
+    font-size: var(--fs-title);            /* 15px → 16px */
+    line-height: 1.70;
+    color: var(--text2);
+    word-break: keep-all;
+  }
+  /* ③ 요약 박스 안 목록도 점이 보여야 한다.
+     Preflight 의 list-style:none 을 복구한다 — 지금 구현은 이게 빠져 있어 점이 안 보인다. */
+  .ai-sum ul{
+    margin: 0; padding-left: 20px;
+    list-style: disc outside;
+  }
+  .ai-sum li{
+    font-size: var(--fs-title);            /* 15px → 16px */
+    line-height: 1.70;
+    color: var(--text2);
+    margin-bottom: 4px;
+    word-break: keep-all;
+  }
+  .ai-sum li::marker{ color: var(--meta); }   /* 마커는 절제 — 글자보다 뒤로 */
+  .ai-sum li:last-child{ margin-bottom: 0; }
+  .ai-sum .caveat{
+    margin: 12px 0 0; padding-top: 10px;
+    border-top: 1px dotted var(--dot);
+    font-size: var(--fs-meta); color: var(--meta);
+    line-height: 1.6;
+  }
+
+  /* ═══ ② 원문 본문 ═════════════════════════════════════════════════════════
+     아래 선택자 집합 = sanitize 화이트리스트 전체. 여기 없는 태그는 원문에 와도 태그째 버려진다.
+     원칙(design-rules 63행): 크기 단계를 늘리지 않는다. 위계는 굵기 · 색 · 여백으로 만든다. */
+  /* ★ 2026-08-08 변경 — 원문 시작을 구획선으로 선언한다.
+     지금까지 "아래는 출처에서 가져온 원문입니다" 는 그냥 작은 회색 한 줄이라
+     요약 박스가 끝나고 원문이 시작되는 자리가 여백으로만 표시됐다.
+     시그니처인 점선을 여기 한 줄 그어 "여기서부터는 내가 쓴 게 아니다" 를 경계가 나르게 한다.
+     아래쪽에는 선을 두지 않는다 — 위아래를 다 막으면 안내문이 상자에 갇히고,
+     이 화면은 이미 점선을 여러 곳(메타 줄·요약 주의문구·h1·hr)에서 쓰고 있어 과해진다. */
+  .prose{
+    border-top: 1px dotted var(--dot);
+    padding: 24px 0 8px;
+  }
+  /* ⚠ 요약이 없을 때 점선이 두 줄로 겹치는 것을 막는다.
+     AI 요약 박스는 조건부다 — 생성에 실패하면 그리지 않는다(빈 박스가 더 나쁜 정보다).
+     그때 .prose 는 메타 줄의 바로 다음 형제가 되는데, 메타 줄은 이미 아래에 점선을 갖고 있다.
+     선이 둘 나란히 서면 실수처럼 보인다. 요약이 없으면 메타 줄의 선이 이미 경계 노릇을
+     하고 있으므로 여기서는 선을 뺀다. (이 시안은 요약이 있는 상태만 그리므로 화면에는 안 나온다) */
+  .art-meta + .prose{ border-top: 0; }
+  .prose > :first-child{ margin-top: 0; }   /* 첫 요소가 제목이어도 위가 뜨지 않게 */
+
+  .prose > .src-note{
+    /* 표지판 역할이 됐으므로 굵기를 한 칸 올리고 아래 여백을 키워 본문과 떼어놓는다.
+       크기·색은 그대로 둔다(12px/--meta) — 이건 읽는 문장이 아니라 안내다. */
+    font-size: var(--fs-meta); font-weight: 600; color: var(--meta); margin: 0 0 24px;
+  }
+
+  /* ── 문단 ── 승인분 그대로 (17px / 1.78 / keep-all) */
+  .prose p{
+    margin: 0 0 1.15em;
+    font-size: var(--fs-prose); line-height: 1.78; color: var(--text);
+    word-break: keep-all;
+  }
+
+  /* ── 제목 h1~h6 ────────────────────────────────────────────────────────────
+     여기가 이 시안의 핵심 판단이다. 크기 단계를 새로 만들지 않고 6단계를 만들어야 한다.
+
+     쓴 축은 세 가지 — 굵기(800/700/600) · 색(text→text2→meta) · 위 여백(넓을수록 상위).
+     크기는 딱 두 값만 쓴다: 20px(h1·h2) / 17px(h3~h6, 본문과 동일).
+
+       h1  20 / 800  --text   + 밑에 점선          ← 원문 안의 최상위 구획
+       h2  20 / 700  --text                        ← 승인분 유지 (값 안 건드림)
+       h3  17 / 700  --text
+       h4  17 / 600  --text
+       h5  17 / 600  --text2
+       h6  17 / 600  --meta
+
+     · h1 을 20px 로 눌러 h2 와 같은 크기로 둔 이유:
+       페이지 제목(h1.art-title 28px)은 우리가 붙인 것이고, 원문 안의 h1 은 출처가 쓴 것이다.
+       원문 h1 이 28px 로 나오면 "이 글의 제목이 둘"처럼 보인다. 크기를 h2 와 같이 두고
+       굵기 800 + 시그니처 점선 밑선으로만 "구획의 시작"임을 알린다. 점선을 여기 쓴 건
+       hr 과 같은 언어라 원문 안에서 일관되게 읽히기 때문이다.
+       (대안: h1 을 22px 로 두어 h2 와 벌리는 안. 22 는 "피드 제목" 단계라 상세 화면에는 없던 값이고,
+        상세에서 28 과 20 사이에 단계를 하나 더 여는 셈이 되어 63행에 걸린다. 그래서 안 골랐다.)
+
+     · h3~h6 을 본문과 같은 17px 로 둔 이유:
+       17 아래 단계는 16 → 15 인데, 제목이 본문보다 작아지는 건 위계가 뒤집히는 것이다.
+       17 위로 새 단계를 열면 63행 위반. 남는 길은 "같은 크기에서 굵기와 색으로 나누기"뿐이다.
+       실제로 h4 이하가 나오는 원문은 드물고, 나와도 깊이 표시만 되면 된다.
+
+     · h4·h5·h6 이 굵기 600 으로 같고 색만 다른 이유:
+       600 아래로 더 내리면 500 인데, 500 은 본문(400)과 거의 붙어 제목으로 안 읽힌다.
+       그래서 세 번째 축을 색으로 열었다. --text → --text2 → --meta 는 이 사이트가
+       이미 쓰고 있는 사다리(제목→요약→메타)라 새 언어가 아니다.
+
+     ⚠ 위험: 17px/600 제목은 굵은 문장과 헷갈릴 수 있다. 위 여백을 본문 문단 간격보다
+        확실히 넓게 잡아 "새로 시작한다"는 신호를 여백이 나르게 했다. → 확인 포인트 */
+  /* ★ 2026-08-08 변경 — 원문 안의 상위 제목(h1·h2)에 왼쪽 세로선.
+     페이지 제목이 포인트색으로 갈라지는 것과 짝을 이루는 레이아웃 쪽 신호다.
+     "출처가 쓴 구획"에 세로선이 서서, 훑을 때 원문 내부 구조가 왼쪽 리듬으로 보인다.
+
+     선을 **본문 칼럼 바깥으로 내민다**(margin-left: -16px). 안쪽으로 들여쓰면 제목이
+     본문보다 오른쪽에서 시작해 위계가 뒤집혀 보인다. 내밀면 세로선만 밖에 서고
+     글자는 본문과 정확히 같은 자리에서 시작한다 (2px 선 + 14px = 16px).
+     .read 의 좌우 padding 이 20px 이라 16px 내밀어도 화면 밖으로 나가지 않는다.
+
+     요약 박스의 왼쪽 선과 헷갈리면 안 되므로 **색도 두께도 다르게** 잡았다:
+       요약 박스 = --accent 4px (우리가 만든 것, 포인트색)
+       원문 제목 = --dot   2px (출처가 쓴 것, 절제된 구분선)
+     h3~h6 에는 두지 않는다. 깊이가 깊어질수록 장식이 줄어드는 쪽이 자연스럽다. */
+  .prose h1{
+    margin: 2.4em 0 .8em -16px;
+    padding-left: 14px;
+    padding-bottom: 10px;
+    border-left: 2px solid var(--dot);
+    border-bottom: 1px dotted var(--dot);
+    font-size: var(--fs-prose-h2); font-weight: 800;
+    letter-spacing: -0.4px; line-height: 1.45; color: var(--text);
+    word-break: keep-all;
+  }
+  /* ⚠ 내밀기는 본문 칼럼 최상위에서만 성립한다. h1·h2 는 후손 선택자라 원문이 제목을
+     인용문·목록·표 안에 넣으면 거기서도 걸리는데(sanitize 가 그 중첩을 통과시킨다),
+     인용문은 이미 --dot 4px 왼쪽 선이 있어 2px 선이 붙으면 6px 실선처럼 보이고,
+     표 셀에서는 가로 스크롤 껍데기의 overflow 에 잘린다. 중첩 문맥에서는 선을 접는다.
+     (이 시안에는 중첩 사례가 없어 화면으로는 안 보인다 — ui-reviewer 가 MED 로 잡은 자리) */
+  .prose blockquote :is(h1, h2),
+  .prose li :is(h1, h2),
+  .prose td :is(h1, h2),
+  .prose th :is(h1, h2){ margin-left: 0; padding-left: 0; border-left: 0; }
+
+  .prose h2{
+    margin: 2.1em 0 .75em -16px;
+    padding-left: 14px;
+    border-left: 2px solid var(--dot);
+    font-size: var(--fs-prose-h2); font-weight: 700;
+    letter-spacing: -0.4px; line-height: 1.45; color: var(--text);
+    word-break: keep-all;
+  }
+  .prose h3{
+    margin: 2em 0 .6em;
+    font-size: var(--fs-prose); font-weight: 700;
+    letter-spacing: -0.2px; line-height: 1.5; color: var(--text);
+    word-break: keep-all;
+  }
+  .prose h4{
+    margin: 1.8em 0 .5em;
+    font-size: var(--fs-prose); font-weight: 600;
+    letter-spacing: -0.2px; line-height: 1.5; color: var(--text);
+    word-break: keep-all;
+  }
+  .prose h5{
+    margin: 1.6em 0 .45em;
+    font-size: var(--fs-prose); font-weight: 600;
+    letter-spacing: -0.2px; line-height: 1.5; color: var(--text2);
+    word-break: keep-all;
+  }
+  .prose h6{
+    margin: 1.5em 0 .4em;
+    font-size: var(--fs-prose); font-weight: 600;
+    letter-spacing: -0.2px; line-height: 1.5; color: var(--meta);
+    word-break: keep-all;
+  }
+
+  /* ── ③ 목록 ── Preflight 의 list-style:none 을 복구한다 ────────────────────
+     지금 구현은 마커 색만 정해두고 list-style 을 되살리지 않아 점도 번호도 안 보인다.
+     중첩 단계는 원문이 알아서 파고들 수 있으므로 2단계까지 모양을 다르게 정해둔다
+     (ul: disc → circle, ol: decimal → lower-alpha). 마커 색은 --meta 로 절제 —
+     마커가 글자보다 튀면 목록이 장식처럼 보인다. */
+  .prose ul{ margin: 0 0 1.15em; padding-left: 22px; list-style: disc outside; }
+  .prose ol{ margin: 0 0 1.15em; padding-left: 22px; list-style: decimal outside; }
+  .prose ul ul{ list-style-type: circle; }
+  .prose ol ol{ list-style-type: lower-alpha; }
+  .prose li{
+    font-size: var(--fs-prose); line-height: 1.78; color: var(--text);
+    margin-bottom: .45em; word-break: keep-all;
+  }
+  .prose li::marker{ color: var(--meta); }
+  .prose li > ul, .prose li > ol{ margin: .45em 0 0; }   /* 중첩 목록은 아래 여백을 물려받지 않는다 */
+  .prose li > p{ margin: 0 0 .5em; }                      /* li 안에 p 가 들어오는 원문 대비 */
+  .prose li > p:last-child{ margin-bottom: 0; }
+
+  /* ── 링크 ── 승인분 그대로 */
+  .prose a{
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);
+    text-underline-offset: 3px;
+    transition: text-decoration-color .15s ease;
+  }
+  .prose a:hover{ text-decoration-color: var(--accent); }
+
+  /* ── 강조 ── Preflight 가 리셋하므로 명시한다.
+     em 은 한글에 진짜 이탤릭이 없어 브라우저가 기울여 그린다(합성 기울임). 자획이 상해 보이는
+     폰트도 있어서, 기울임 + 색은 그대로 두고 굵기는 건드리지 않는 선에서 최소로만 쓴다. */
+  .prose strong, .prose b{ font-weight: 700; color: inherit; }
+  .prose em, .prose i{ font-style: italic; }
+
+  /* ── u / s ── 링크와 혼동되지 않게 ────────────────────────────────────────
+     u 는 밑줄인데, 이 화면에서 밑줄 + 포인트색은 링크의 표식이다. 그래서 u 는 글자색을
+     그대로 두고 밑줄만 --dot 으로 눕혀 "링크 아님"을 색으로 구분한다.
+     s(취소선)는 지워진 내용이므로 --meta 로 한 단계 내린다 (4.75:1, 하한 유지). */
+  .prose u{
+    text-decoration: underline;
+    text-decoration-color: var(--dot);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .prose s{
+    color: var(--meta);
+    text-decoration-color: var(--meta);
+  }
+
+  /* ── mark ── 원문이 직접 친 형광펜.
+     2차 강조색을 두지 않는다는 규칙이 있어 노랑을 쓸 수 없다. 이미 있는 "포인트색 소프트 면"
+     (--accent-soft, 뱃지 배경)을 그대로 빌린다. 글자는 --accent 가 아니라 --text 로 둔다 —
+     포인트색 글자로 만들면 링크로 오인된다. 13.49:1. */
+  .prose mark{
+    background: var(--accent-soft);
+    color: var(--text);
+    padding: 2px 4px;
+    border-radius: var(--r-inline);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;   /* 두 줄에 걸쳐도 양 끝이 둥글게 */
+  }
+
+  /* ── small ── 본문 안의 작은 덧말.
+     15px(기존 단계) + --text2. --meta 로 내리면 12px 대 자리들과 뭉치고 하한에 붙는다.
+     작고 흐린 자리가 위험하다는 걸 감안해 색은 한 칸만 내렸다 (7.30:1). */
+  .prose small{ font-size: var(--fs-body); color: var(--text2); }
+
+  /* ── sub / sup ── 12px(기존 단계, --fs-meta). line-height:0 으로 줄 높이를 밀지 않게 */
+  .prose sub, .prose sup{
+    font-size: var(--fs-meta);
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  .prose sup{ top: -0.5em; }
+  .prose sub{ bottom: -0.25em; }
+
+  /* ── span ── 일부러 아무 스타일도 주지 않는다.
+     sanitize 가 class·style 을 전부 버리므로 원문의 span 은 의미를 잃은 빈 껍데기로 남는다.
+     여기에 시각 효과를 주면 원문이 의도하지 않은 강조가 생긴다. 통과만 시키고 그대로 둔다. */
+
+  /* ── 인라인 code / 코드 블록 ── 승인분 유지. 라운드만 새 토큰으로 */
+  .prose code{
+    font-family: var(--font-mono);
+    font-size: .87em;
+    background: var(--sunken);
+    border-radius: var(--r-inline);
+    padding: 2px 6px;
+    color: var(--code-ink);
+  }
+  /* pre 는 가로 스크롤이 생긴다 → 마우스로만 닿으면 접근성 실패.
+     tabindex="0" 으로 키보드 포커스를 받게 한다 (표 껍데기와 같은 이유). */
+  .prose pre{
+    margin: 0 0 1.3em;
+    background: var(--sunken);
+    border-radius: var(--r-img);
+    padding: 16px;
+    overflow-x: auto;
+  }
+  .prose pre code{
+    background: none; padding: 0; border-radius: 0;
+    font-size: var(--fs-sm); line-height: 1.65; color: var(--text);
+    white-space: pre;
+  }
+
+  /* ── 인용 ── 승인분 유지 */
+  .prose blockquote{
+    margin: 0 0 1.3em;
+    padding: 2px 0 2px 16px;
+    border-left: 4px solid var(--dot);
+    color: var(--text2);
+  }
+  .prose blockquote p{ margin: 0 0 .6em; font-size: var(--fs-title); line-height: 1.75; color: inherit; }
+  .prose blockquote > :last-child{ margin-bottom: 0; }
+
+  /* ── hr ── 시그니처인 점선을 그대로 쓴다.
+     이 사이트에서 "구획을 나누는 선"은 이미 점선이다(카드 안 구분선, 메타 줄 밑, 상세 발치).
+     원문의 hr 만 실선으로 나오면 우리 화면 안에서 이물감이 생긴다. 굵기·색 모두 --dot. */
+  .prose hr{
+    margin: 2.4em 0;
+    border: 0;
+    border-top: 1px dotted var(--dot);
+    height: 0;
+  }
+
+  /* ── 표 ─────────────────────────────────────────────────────────────────────
+     표는 읽기 컬럼 704px 을 넘길 수 있다. 페이지가 가로로 밀리면 안 되므로 껍데기에서 가둔다.
+     · .tableScroll 은 sanitize 결과에 없는 요소다 — html-react-parser 단계에서 우리 렌더 계층이
+       table 을 감싸 넣어야 한다 (원문에 class 를 붙일 수 없으므로 껍데기 쪽에 붙인다).
+     · overflow-x: auto 인 영역은 마우스 휠·드래그로만 닿으면 키보드 사용자가 표의 오른쪽을
+       영영 못 본다. tabindex="0" 으로 포커스를 받게 하고, role="region" + aria-label 로
+       "여기 뭔가 있다"를 스크린리더에도 알린다. 포커스 링은 지우지 않는다.
+     · 선은 거의 쓰지 않는다는 규칙(64행)을 지켜 세로줄은 아예 없고, 가로 구분만 점선으로 둔다.
+     · 헤더 면은 --surface. --sunken(코드 면)을 쓰면 --meta 가 4.35:1 로 미달이고,
+       면이 어두워 표가 코드 블록처럼 보인다.
+     · 셀 글자는 16px. 본문 17px 그대로면 열이 넓어져 가로 스크롤이 상시로 생긴다.
+       16 은 기존 단계이고 "본문 16px 이상" 하한도 지킨다. */
+  .prose .tableScroll{
+    margin: 1.6em 0 1.5em;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--r-img);
+  }
+  .prose table{
+    width: 100%;
+    min-width: 480px;              /* 이보다 좁아지면 한글이 글자 단위로 부서진다 */
+    margin: 0;
+    border-collapse: collapse;
+    font-size: var(--fs-title);
+    line-height: 1.6;
+  }
+  .prose thead{ background: var(--surface); }
+  .prose th{
+    text-align: left;              /* 원문에 class 를 붙일 수 없어 열별 정렬은 불가능하다 */
+    font-weight: 700;
+    color: var(--text);
+    padding: 10px 14px;
+    white-space: nowrap;           /* 머리글이 두 줄로 접히면 표가 읽기 어려워진다 */
+    border-bottom: 1px dotted var(--dot);
+  }
+  .prose td{
+    padding: 10px 14px;
+    color: var(--text);
+    border-bottom: 1px dotted var(--dot);
+    word-break: keep-all;
+  }
+  .prose tbody tr:last-child td{ border-bottom: 0; }
+  .prose table code{ font-size: .85em; }
+
+  /* ── 그림 ── 승인분 유지. 원문 이미지는 본문 칸을 넘지 않는다 */
+  .prose figure{ margin: 1.5em 0 1.4em; }
+  .prose figure > :first-child{ margin-top: 0; }
+  /* ★ 2026-08-08 변경 — 이미지가 뜨기 전에 자리를 미리 비운다.
+     지금까지는 height:auto 만 있어 로드 전 높이가 0 이었다. 이미지가 도착하는 순간
+     아래 글이 통째로 밀린다(레이아웃 시프트).
+
+     예약을 두 갈래로 나눈다:
+       · 원문이 width·height 를 들고 왔으면 → **브라우저 기본 동작에 맡긴다**(아래 규칙이 안 걸린다)
+       · 안 들고 왔으면                    → 16:9 로 임시로 자리를 잡는다
+
+     ⚠ 처음엔 `.prose img{ aspect-ratio: auto 16/9 }` 한 줄로 두 경우를 덮으려 했는데,
+       그러면 **작성자 선언이 치수에서 온 값을 덮는지**에 결과가 걸린다(캐스케이드에서
+       표현 힌트와 작성자 스타일의 우열). 실측 없이 단정할 수 없어 선택자를 갈랐다 —
+       이렇게 두면 어느 해석이 맞든 결과가 같다. 다음에 이 파일을 물려받는 화면도 이 형태로.
+
+     display:block 은 장식이 아니라 예약의 전제다(인라인이 되면 폭이 칼럼을 안 채운다). */
+  .prose img{
+    display: block; max-width: 100%; height: auto;
+    border-radius: var(--r-img);
+    background: var(--surface);
+  }
+  .prose img:not([width]):not([height]){ aspect-ratio: 16 / 9; }
+  .prose figcaption{
+    margin-top: 8px; font-size: var(--fs-meta); color: var(--meta); text-align: center;
+    line-height: 1.6; word-break: keep-all;
+  }
+
+  /* ── 하단: 승인분 그대로 ── */
+  .art-foot{
+    margin-top: 32px; padding-top: 20px;
+    border-top: 1px dotted var(--dot);
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    padding-bottom: 56px;
+  }
+  .art-foot .note{ font-size: var(--fs-xs); color: var(--meta); }
+  .btn-src{
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: var(--fs-btn); font-weight: 600;
+    padding: 12px 20px; border-radius: var(--r-pill);
+    background: var(--accent); color: var(--on-accent); text-decoration: none;
+    transition: filter .15s ease, box-shadow .15s ease, transform .15s ease;
+  }
+  .btn-src:hover{ filter: brightness(1.08); box-shadow: 0 2px 10px rgba(31,32,36,.09); transform: translateY(-1px); }
+
+  footer.bot{
+    border-top: 1px solid var(--hairline);
+    padding: 18px 0 40px; font-size: var(--fs-meta); color: var(--meta);
+  }
+  footer.bot .wrap{ max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+
+  /* 시안 안내용 주석 라벨 — 실제 구현에는 없다 */
+  .spec-note{
+    max-width: var(--readw); margin: 0 auto; padding: 0 20px;
+    font-size: var(--fs-xs); color: var(--meta);
+  }
+  .spec-note code{
+    font-family: var(--font-mono); font-size: 11.5px;
+    background: var(--sunken); color: var(--code-ink);
+    border-radius: var(--r-inline); padding: 2px 6px;
+  }
+
+  @media (max-width: 640px){
+    .art-title{ font-size: 23px; }
+    /* 모바일 본문 16px (design-rules 71행 "16 … 모바일 본문"). 제목 h3~h6 도 본문과 같이 내린다 */
+    .prose p, .prose li, .prose h3, .prose h4, .prose h5, .prose h6{ font-size: var(--fs-title); }
+    .prose small{ font-size: var(--fs-body); }
+    .art-foot{ flex-direction: column; align-items: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+    .btn-src:hover{ transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="feed-a.html">signal<span class="dot">.</span></a>
+    <span class="tagline">AI·IT 소식에서 신호만 골라 훑는 곳</span>
+  </div>
+</header>
+
+<main class="read">
+
+  <a class="back" href="feed-a.html">← 피드로</a>
+
+  <h1 class="art-title">도구를 늘리기 전에 호출 로그부터 본다</h1>
+
+  <div class="art-meta">
+    <span class="who"><strong>Anthropic 블로그</strong> · 3시간 전</span>
+    <span class="art-tags">
+      <span class="tag">에이전트</span>
+      <span class="tag">툴</span>
+      <span class="tag">운영</span>
+    </span>
+  </div>
+
+  <!-- ① AI 요약 — 본문 16px. 원문(17px)과 1px 차이지만 면·색·형태·줄높이로 갈린다 -->
+  <section class="ai-sum" aria-label="AI 요약">
+    <span class="label">✨ AI 요약</span>
+    <p>도구를 더 붙일수록 에이전트가 똑똑해질 것 같지만, 선택지가 늘어난 만큼 잘못 고르는 일도 함께 늘어난다. 늘리기 전에 지금 도구가 실제로 어떻게 쓰이는지부터 세어보자는 이야기.</p>
+    <ul>
+      <li>비슷한 일을 하는 도구가 여러 개면 모델이 고민을 시작한다 — 묶을 수 있으면 묶는다</li>
+      <li>도구 설명은 길게 쓰는 것보다 무엇을 안 하는지 적는 쪽이 효과가 컸다</li>
+      <li>호출 로그를 며칠만 모아도 안 쓰이는 도구가 금방 드러난다</li>
+    </ul>
+    <p class="caveat">요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을 읽어주세요.</p>
+  </section>
+
+  <!-- ② 원문 본문 — sanitize 화이트리스트 전체를 한 장에 늘어놓았다 -->
+  <article class="prose">
+    <p class="src-note">아래는 출처에서 가져온 원문입니다.</p>
+
+    <p>에이전트를 만들다 보면 자연스럽게 도구를 하나씩 더 붙이게 된다. 검색이 필요하니 검색 도구, 파일을 읽어야 하니 읽기 도구, 그리고 어느새 목록이 화면을 넘어간다. 그런데 도구를 붙일 때마다 기대만큼 결과가 좋아지지는 않는다.</p>
+
+    <!-- 원문 안의 h1. 페이지 제목(28px)과 경쟁하지 않게 20px 로 눌렀고, 굵기 800 + 점선 밑선으로 구획을 표시 -->
+    <h1>1부 — 도구가 많아지면 생기는 일</h1>
+
+    <p>모델 입장에서 도구 목록은 결국 프롬프트의 일부다. 도구가 스무 개라면 스무 개의 설명이 매 요청마다 함께 들어간다. 문제는 길이만이 아니다. 설명이 서로 비슷하면 경계가 흐려지고, 모델은 그 흐린 경계에서 판단을 내려야 한다.</p>
+
+    <h2>선택지가 늘면 무슨 일이 생기나</h2>
+
+    <p>사람에게는 사소해 보이는 겹침이 모델에게는 매번 다시 풀어야 하는 문제로 남는다. 자주 보이는 경우는 대략 세 가지다.</p>
+
+    <ul>
+      <li><code>search_docs</code> 와 <code>find_file</code> 처럼 이름만 다르고 하는 일이 겹치는 경우
+        <ul>
+          <li>둘 중 하나만 문서화가 잘 되어 있으면 그쪽으로 쏠린다</li>
+          <li>쏠린 쪽이 정답이 아니어도 로그를 보기 전까지는 드러나지 않는다</li>
+        </ul>
+      </li>
+      <li>같은 대상을 다루는데 인자 모양만 다른 도구가 나란히 있는 경우</li>
+      <li>거의 안 쓰이지만 "혹시 몰라서" 남겨둔 도구</li>
+    </ul>
+
+    <p>정리 순서를 정해두면 손이 덜 간다.</p>
+
+    <ol>
+      <li>호출 로그를 모아 현황을 본다
+        <ol>
+          <li>도구별 호출 수</li>
+          <li>실패한 호출의 비율</li>
+        </ol>
+      </li>
+      <li>겹치는 도구를 합친다</li>
+      <li>남은 도구의 설명에 경계를 적는다</li>
+    </ol>
+
+    <h3>겹침은 이름이 아니라 결과로 판단한다</h3>
+
+    <p>이름이 달라도 같은 것을 돌려주는 도구는 겹친 것이다. 반대로 이름이 비슷해도 돌려주는 모양이 다르면 합치면 안 된다. 판단 기준을 호출 결과에 두면 논쟁이 짧아진다.</p>
+
+    <h4>합칠 때의 신호</h4>
+
+    <p>두 도구의 설명을 다듬은 뒤에도 모델이 계속 헷갈린다면, 그건 두 도구가 실제로 하나여야 한다는 신호일 수 있다.</p>
+
+    <h5>합치지 말아야 할 때</h5>
+
+    <p>권한 범위가 다르면 합치지 않는다. 읽기 전용 도구와 쓰기 도구를 한 이름으로 묶으면, 모델이 실수했을 때 되돌릴 수 없는 쪽으로 실수한다.</p>
+
+    <h6>부록 — 이름 짓기 메모</h6>
+
+    <p>동사로 시작하고, 대상은 하나만 담는다. <code>get_user_and_orders</code> 같은 이름이 나오면 대개 도구가 두 개여야 한다는 뜻이다.</p>
+
+    <hr>
+
+    <h2>호출 로그를 세어본 결과</h2>
+
+    <p>2주치 호출을 모아 도구별로 세었다. 상위 세 개가 전체 호출의 대부분을 차지했고, 하위 도구들은 거의 불리지 않았다.</p>
+
+    <!-- 좁은 표: 읽기 컬럼 안에 들어간다. 그래도 껍데기는 똑같이 씌운다 (원문 폭을 예측할 수 없으므로) -->
+    <div class="tableScroll" role="region" aria-label="도구별 호출 요약 표 — 좌우로 스크롤할 수 있습니다" tabindex="0">
+      <table>
+        <thead>
+          <tr>
+            <th>도구</th>
+            <th>호출 수</th>
+            <th>실패율</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>search_docs</code></td>
+            <td>1,284</td>
+            <td>3.1%</td>
+          </tr>
+          <tr>
+            <td><code>read_file</code></td>
+            <td>903</td>
+            <td>1.2%</td>
+          </tr>
+          <tr>
+            <td><code>find_file</code></td>
+            <td>47</td>
+            <td>28.9%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>열이 많은 표는 읽기 컬럼을 넘어간다. 이럴 때 페이지가 통째로 밀리지 않고 표만 좌우로 움직이는지 확인해보자. <small>표 안을 한 번 클릭하거나 Tab 으로 들어간 뒤 좌우 화살표로도 움직인다.</small></p>
+
+    <!-- 넓은 표: 6열 + 머리글 nowrap → 704px 컬럼을 넘겨 가로 스크롤이 실제로 생긴다.
+         키보드로도 닿아야 하므로 tabindex="0" + role="region" + aria-label -->
+    <div class="tableScroll" role="region" aria-label="도구별 상세 지표 표 — 좌우로 스크롤할 수 있습니다" tabindex="0">
+      <table>
+        <thead>
+          <tr>
+            <th>도구 이름</th>
+            <th>분류</th>
+            <th>호출 수</th>
+            <th>실패율</th>
+            <th>평균 지연</th>
+            <th>마지막 호출</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>search_docs</code></td>
+            <td>읽기</td>
+            <td>1,284</td>
+            <td>3.1%</td>
+            <td>412ms</td>
+            <td>2026-08-05</td>
+            <td>유지</td>
+          </tr>
+          <tr>
+            <td><code>read_file</code></td>
+            <td>읽기</td>
+            <td>903</td>
+            <td>1.2%</td>
+            <td>96ms</td>
+            <td>2026-08-05</td>
+            <td>유지</td>
+          </tr>
+          <tr>
+            <td><code>find_file</code></td>
+            <td>읽기</td>
+            <td>47</td>
+            <td>28.9%</td>
+            <td>388ms</td>
+            <td>2026-07-29</td>
+            <td>검색 도구와 합칠 후보</td>
+          </tr>
+          <tr>
+            <td><code>write_note</code></td>
+            <td>쓰기</td>
+            <td>112</td>
+            <td>0.9%</td>
+            <td>154ms</td>
+            <td>2026-08-04</td>
+            <td>권한이 달라 유지</td>
+          </tr>
+          <tr>
+            <td><code>legacy_export</code></td>
+            <td>내보내기</td>
+            <td>2</td>
+            <td>50.0%</td>
+            <td>1,930ms</td>
+            <td>2026-06-11</td>
+            <td>제거 예정</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <blockquote>
+      <p>도구를 하나 더 만들기 전에, 지금 있는 도구 중 무엇을 지울 수 있는지 먼저 본다. 지울 게 없다면 대개 설명이 부족한 것이지 도구가 부족한 게 아니다.</p>
+      <p>— 내부 회고 메모에서</p>
+    </blockquote>
+
+    <h2>설명은 짧게, 대신 경계를 적는다</h2>
+
+    <p>도구 설명을 길게 쓰면 잘 고를 것 같지만, 실제로 도움이 된 건 "이 도구가 무엇을 하지 않는지"를 한 줄 넣는 쪽이었다.</p>
+
+    <pre tabindex="0"><code>{
+  name: "search_docs",
+  description:
+    "사내 문서에서 키워드로 검색한다. " +
+    "코드 파일은 다루지 않는다 — 그건 search_code 를 쓴다.",
+  input: {
+    query: { type: "string" },
+    limit: { type: "number", default: 10 }
+  }
+}</code></pre>
+
+    <!-- ⚠ 이 이미지는 시안용 편법이다 — 실제 화면에서는 이렇게 못 나온다.
+         sanitize 의 allowedSchemes 는 http·https·mailto 뿐이라 `data:` src 는 속성째 제거된다(INV-D2).
+         즉 여기 보이는 것은 "원문 이미지가 왔을 때의 figure/img/figcaption 모양"을 보여주려고
+         시안에서만 쓴 것이고, 운영에서는 출처의 https 이미지 URL 이 들어온다.
+         (2026-08-06 상세 구현 때도 같은 이유로 승인 시안의 data: 이미지를 코드에서 뺐다 — PROGRESS 기록)
+         → 이 시안을 근거로 구현할 때 data: 를 허용하는 쪽으로 가면 안 된다. -->
+    <figure>
+      <img
+        src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='704' height='300' viewBox='0 0 704 300'><rect width='704' height='300' fill='%23EDEDF4'/><rect x='72' y='212' width='72' height='40' rx='4' fill='%23D3D4E0'/><rect x='168' y='156' width='72' height='96' rx='4' fill='%23D3D4E0'/><rect x='264' y='100' width='72' height='152' rx='4' fill='%23C9C9DA'/><rect x='360' y='176' width='72' height='76' rx='4' fill='%23D3D4E0'/><rect x='456' y='228' width='72' height='24' rx='4' fill='%23D3D4E0'/><rect x='552' y='240' width='72' height='12' rx='4' fill='%23D3D4E0'/><text x='352' y='62' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%234A4E55'>원문에 포함된 이미지 (도구별 호출 빈도)</text></svg>"
+        alt="도구별 호출 빈도를 나타낸 막대그래프. 가운데 도구가 가장 높고 오른쪽으로 갈수록 낮아진다"
+        width="704" height="300">
+      <figcaption>도구별 호출 빈도를 세어보면 대개 상위 몇 개가 대부분을 차지한다.</figcaption>
+    </figure>
+
+    <h3>원문이 문장 안에서 쓰는 표식들</h3>
+
+    <p>원문에는 문장 안쪽을 꾸미는 태그도 섞여 들어온다. 여기 한 줄에 모아 보면 이렇다. 이 문단에서 <strong>가장 중요한 건 굵은 글자</strong>이고, <em>기울인 글자</em>는 강조가 한 단계 약하다. 출처가 직접 형광펜을 친 <mark>이 부분</mark>은 소프트 포인트면으로 받고, <u>밑줄만 그은 부분</u>은 링크와 헷갈리지 않도록 밑줄 색을 눕혔다. <s>취소선이 그어진 문장</s>은 한 단계 흐려진다. <span>span 은 sanitize 를 지나면 속성이 모두 사라지므로 아무 효과도 주지 않는다.</span></p>
+
+    <p>수식이나 단위가 섞이면 위첨자·아래첨자도 온다. 물 분자는 H<sub>2</sub>O 이고, 이번 달 호출은 약 10<sup>5</sup> 회였다. <small>이 문장처럼 덧붙임은 한 단계 작게 나온다 — 다만 본문 하한을 지켜 15px 까지만 내려간다.</small></p>
+
+    <p>줄바꿈이 원문에 직접 들어오는 경우도 있다.<br>이 줄은 <code>br</code> 로 넘어온 줄이다.</p>
+
+    <p>관련해서 도구 스키마를 다루는 방식은 <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener noreferrer">Model Context Protocol 문서</a>에도 비슷한 관점으로 정리되어 있다.</p>
+  </article>
+
+  <div class="art-foot">
+    <span class="note">원문의 저작권은 출처에 있습니다.</span>
+    <a class="btn-src" href="https://www.anthropic.com/" target="_blank" rel="noopener noreferrer">출처에서 원문 보기 ↗</a>
+  </div>
+
+  <p class="spec-note">
+    이 페이지는 시안입니다. 위 본문에는 sanitize 화이트리스트의 모든 태그가 한 번씩 들어 있습니다 —
+    <code>p</code> <code>br</code> <code>hr</code> <code>h1</code> <code>h2</code> <code>h3</code>
+    <code>h4</code> <code>h5</code> <code>h6</code> <code>ul</code> <code>ol</code> <code>li</code>
+    <code>blockquote</code> <code>pre</code> <code>code</code> <code>strong</code> <code>em</code>
+    <code>u</code> <code>s</code> <code>mark</code> <code>small</code> <code>sub</code> <code>sup</code>
+    <code>a</code> <code>img</code> <code>figure</code> <code>figcaption</code> <code>table</code>
+    <code>thead</code> <code>tbody</code> <code>tr</code> <code>th</code> <code>td</code> <code>span</code>
+  </p>
+
+</main>
+
+<footer class="bot">
+  <div class="wrap">signal — 개인용 소식 리더 · 수집된 원문의 저작권은 각 출처에 있습니다.</div>
+</footer>
+
+</body>
+</html>

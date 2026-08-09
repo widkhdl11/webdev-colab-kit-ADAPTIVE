@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>signal — 카드 가독성 비교안 (현재 / A / B / C)</title>
+
+<!--
+  signal / 카드 밀도·가독성 비교 시안 (2026-08-06)
+
+  사용자 피드백: "카드 가독성 높일 방법이 있나? 너무 글자글자글자~ 한 느낌"
+
+  승인된 방향(design-rules.md 2026-08-02)은 그대로 두고, 카드 내부의 밀도만 만진다.
+  색·라운드·포인트색·시그니처 3종·읽음 규칙은 손대지 않았다 — 비교 대상이 아니다.
+
+  같은 카드 3장을 네 번 반복한다. 문구·데이터가 같아야 밀도 차이만 보인다.
+  ───────────────────────────────────────────────────────────────────────
+  현재 : 지금 구현된 그대로 (기준선)
+  A    : 숨 쉴 곳 — 요약 3줄→2줄, 카드 안쪽 여백 16→20, 어절 단위 줄바꿈
+  B    : A + 출처 표식 — 메타 줄 출처 앞에 이니셜 원. 훑을 때 눈이 걸리는 지점
+  C    : A + 위계 벌리기 — 제목 16→17, 요약 줄높이↑ + 한 단계 연하게(4.5:1 유지)
+  ───────────────────────────────────────────────────────────────────────
+  공통으로 들어간 것(A·B·C): word-break: keep-all
+    → 지금 카드에는 이게 없어서 한국어가 어절 중간에서 잘린다.
+      "에이전트에게 도구를 몇 개까지 쥐여줘야" / "할까" 처럼 끊기는 것이 밀도 체감을 키운다.
+      상세 본문(article.html)에는 이미 들어가 있던 규칙이다.
+-->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --bg:        #EFEFF5;
+    --surface:   #F8F8FC;
+    --surface-h: #FDFDFF;
+    --hairline:  #E2E2EC;
+    --dot:       #C9C9D6;
+    --text:  #1F2024;
+    --text2: #4A4E55;
+    --meta:  #656A72;
+    --accent:      #4F46E5;
+    --accent-soft: #E9E8FB;
+
+    --surface-read: #F3F3F8;
+    --text-read:    #666B73;
+    --text2-read:   #6A6F77;
+    --meta-read:    #6A6F77;
+    --dot-read:     #D2D2DE;
+    --tag-read-bg:  #EAEAF2;
+    --tag-read-ink: #63676F;
+
+    --maxw: 1168px;
+    --r-card: 12px;
+    --r-pill: 999px;
+  }
+
+  *{ box-sizing: border-box; }
+  body{
+    margin:0; background: var(--bg); color: var(--text);
+    font-family: "Pretendard Variable", "Pretendard", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  }
+  .wrap{ max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+
+  .sr-only{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+  }
+
+  header.top{ border-bottom: 1px solid var(--hairline); background: var(--bg); }
+  .top-in{ max-width: var(--maxw); margin:0 auto; padding: 14px 20px; display:flex; align-items:baseline; gap:10px; }
+  .logo{ font-size:19px; font-weight:800; letter-spacing:-0.3px; }
+  .logo .dot{ color: var(--accent); }
+  .tagline{ font-size:13px; color: var(--meta); }
+
+  .intro{ padding: 28px 0 8px; }
+  .intro h1{ margin:0 0 6px; font-size:22px; font-weight:700; letter-spacing:-0.4px; }
+  .intro p{ margin:0; font-size:13.5px; color: var(--meta); max-width: 720px; line-height:1.7; }
+
+  /* ── 비교 섹션 헤더 ────────────────────────────────────────────────── */
+  .variant{ padding: 22px 0 4px; }
+  .v-head{ display:flex; align-items:baseline; gap:10px; padding: 12px 0 14px; flex-wrap: wrap; }
+  .v-name{
+    margin:0; font-size:13.5px; font-weight:700; color: var(--text);
+    background: var(--accent-soft); color: var(--accent);
+    padding: 4px 12px; border-radius: var(--r-pill);
+  }
+  .v-desc{ font-size:13px; color: var(--meta); }
+  .v-rule{ flex:1 1 auto; height:0; min-width:24px; border-top:1px dotted var(--dot); }
+
+  .grid{
+    display:grid; grid-template-columns: repeat(3, minmax(0,1fr));
+    gap:16px; padding-bottom: 10px;
+  }
+
+  /* ── 기준선: 지금 구현된 카드 ──────────────────────────────────────── */
+  .card{
+    display:flex; flex-direction:column;
+    background: var(--surface); border-radius: var(--r-card);
+    padding: 16px; text-decoration:none; color:inherit;
+    box-shadow: 0 1px 2px rgba(31,32,36,.05), 0 4px 10px rgba(31,32,36,.05);
+    transition: background .16s ease, box-shadow .16s ease, transform .16s ease;
+  }
+  .card:hover{
+    background: var(--surface-h);
+    box-shadow: 0 2px 4px rgba(31,32,36,.06), 0 10px 22px rgba(31,32,36,.08);
+    transform: translateY(-1px);
+  }
+  .card-body{ flex:1 1 auto; }
+  .badge{
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:11.5px; font-weight:700; padding:4px 10px; border-radius: var(--r-pill);
+    background: var(--accent-soft); color: var(--accent); margin-bottom:8px;
+  }
+  .card-title{
+    margin:0 0 8px; font-size:16px; font-weight:700; letter-spacing:-0.3px; line-height:1.45;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .card-sum{
+    margin:0 0 14px; font-size:13.5px; line-height:1.62; color: var(--text2);
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .card-foot{
+    border-top:1px dotted var(--dot); padding-top:12px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .meta{ font-size:12px; color: var(--meta); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tags{ display:flex; gap:4px; flex-shrink:0; }
+  .tag{
+    font-size:11.5px; font-weight:500; color: var(--meta);
+    background: var(--bg); border-radius: var(--r-pill); padding:4px 10px;
+  }
+  .card:hover .tag{ background:#fff; }
+  .card:hover .card-title{ color: var(--accent); }
+
+  /* 읽음 (세 안 모두 동일 규칙 — 비교 대상 아님) */
+  .card.is-read{ background: var(--surface-read); box-shadow:none; }
+  .card.is-read .card-title{ color: var(--text-read); font-weight:600; }
+  .card.is-read .card-sum{ color: var(--text2-read); }
+  .card.is-read .meta{ color: var(--meta-read); }
+  .card.is-read .card-foot{ border-top-color: var(--dot-read); }
+  .card.is-read .tag{ background: var(--tag-read-bg); color: var(--tag-read-ink); }
+
+  /* ══ A : 숨 쉴 곳 ═══════════════════════════════════════════════════
+     텍스트의 '양'을 줄인다. 요약을 3줄에서 2줄로 자르고 여백을 키운다.
+     카드가 낮아져 한 화면에 들어오는 카드 수는 거의 그대로다. */
+  .v-a .card{ padding: 20px; }
+  .v-a .card-title{ margin-bottom: 10px; word-break: keep-all; }
+  .v-a .card-sum{
+    -webkit-line-clamp: 2;
+    margin-bottom: 16px;
+    word-break: keep-all;
+  }
+  .v-a .card-foot{ padding-top: 14px; }
+
+  /* ══ B : A + 출처 표식 ══════════════════════════════════════════════
+     글자를 줄이는 대신 눈이 걸릴 지점을 만든다. 출처 이름 앞 이니셜 원.
+     색은 회색 계열만 쓴다 — 포인트색은 '아직 안 본 것'에만(design-rules). */
+  .v-b .card{ padding: 20px; }
+  .v-b .card-title{ margin-bottom: 10px; word-break: keep-all; }
+  .v-b .card-sum{ -webkit-line-clamp: 2; margin-bottom: 16px; word-break: keep-all; }
+  .v-b .card-foot{ padding-top: 14px; }
+  .v-b .meta{ display:inline-flex; align-items:center; gap:7px; }
+  .v-b .src-mark{
+    flex-shrink:0;
+    width:20px; height:20px; border-radius: var(--r-pill);
+    background: var(--bg); color: var(--meta);
+    font-size:10.5px; font-weight:700; letter-spacing:-0.2px;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .v-b .card:hover .src-mark{ background:#fff; }
+  .v-b .card.is-read .src-mark{ background: var(--tag-read-bg); color: var(--tag-read-ink); }
+
+  /* ══ C : A + 위계 벌리기 ════════════════════════════════════════════
+     제목이 먼저 읽히고 요약은 배경으로 물러나게 한다.
+     요약 색 #55595F 는 카드(#F8F8FC) 위에서 6.42:1 — 하한 여유 있음. */
+  .v-c .card{ padding: 20px; }
+  .v-c .card-title{
+    font-size:17px; line-height:1.42; margin-bottom: 10px; word-break: keep-all;
+  }
+  .v-c .card-sum{
+    -webkit-line-clamp: 2;
+    font-size:13.5px; line-height:1.72;
+    color:#5B6068;
+    margin-bottom: 16px;
+    word-break: keep-all;
+  }
+  .v-c .card-foot{ padding-top: 14px; }
+
+  footer.bot{ border-top:1px solid var(--hairline); margin-top: 32px; padding: 18px 0 48px; font-size:12px; color: var(--meta); }
+
+  @media (max-width: 980px){ .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 640px){ .grid{ grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } .card:hover{ transform:none; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="feed-a.html" style="color:inherit;text-decoration:none">signal<span class="dot">.</span></a>
+    <span class="tagline">카드 가독성 비교안</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="intro">
+    <h1>카드 가독성 — 세 가지 안</h1>
+    <p>
+      같은 카드 3장을 네 번 반복합니다. 문구와 데이터가 같으니 <strong>밀도 차이만</strong> 보입니다.
+      색·라운드·포인트색·읽음 규칙은 승인된 그대로 두었습니다. 가운데 카드는 읽은 상태입니다.
+    </p>
+  </div>
+
+  <!-- ── 기준선 ────────────────────────────────────────────────────── -->
+  <section class="variant">
+    <div class="v-head">
+      <h2 class="v-name">현재</h2>
+      <span class="v-desc">지금 구현된 그대로 · 요약 3줄 · 안쪽 여백 16px · 어절 단위 줄바꿈 없음</span>
+      <span class="v-rule"></span>
+    </div>
+    <div class="grid">
+      <a class="card" href="#">
+        <div class="card-body">
+          <span class="badge">🔥 뜨는 중</span>
+          <h3 class="card-title">에이전트에게 도구를 몇 개까지 쥐여줘야 할까</h3>
+          <p class="card-sum">도구 목록이 길어질수록 모델이 엉뚱한 도구를 고르는 빈도가 늘어난다는 관찰. 설명을 짧게 다듬고 비슷한 기능은 하나로 묶는 쪽이 낫다는 정리.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">Anthropic 블로그 · 2시간 전</span>
+          <span class="tags"><span class="tag">에이전트</span></span>
+        </div>
+      </a>
+      <a class="card is-read" href="#">
+        <span class="sr-only">읽은 글</span>
+        <div class="card-body">
+          <h3 class="card-title">사내 문서 검색에 임베딩 대신 키워드를 먼저 붙여본 후기</h3>
+          <p class="card-sum">벡터 검색부터 도입하기 전에 태그와 키워드 필터로 후보를 좁히는 편이 비용과 정확도 모두에서 나았다는 팀의 기록.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">개인 블로그 · 8시간 전</span>
+          <span class="tags"><span class="tag">엔지니어링</span></span>
+        </div>
+      </a>
+      <a class="card" href="#">
+        <div class="card-body">
+          <h3 class="card-title">MCP 서버를 처음 붙일 때 자주 막히는 지점 정리</h3>
+          <p class="card-sum">권한 범위, 스키마 검증, 타임아웃 세 군데에서 대부분 막힌다. 각 경우에 로그를 어디부터 봐야 하는지 순서대로 짚어둔 글.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">GitHub · 4시간 전</span>
+          <span class="tags"><span class="tag">MCP</span><span class="tag">툴</span></span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── A ─────────────────────────────────────────────────────────── -->
+  <section class="variant v-a">
+    <div class="v-head">
+      <h2 class="v-name">A · 숨 쉴 곳</h2>
+      <span class="v-desc">요약 3줄 → 2줄 · 안쪽 여백 20px · 어절 단위 줄바꿈. 글자 양 자체를 줄인다</span>
+      <span class="v-rule"></span>
+    </div>
+    <div class="grid">
+      <a class="card" href="#">
+        <div class="card-body">
+          <span class="badge">🔥 뜨는 중</span>
+          <h3 class="card-title">에이전트에게 도구를 몇 개까지 쥐여줘야 할까</h3>
+          <p class="card-sum">도구 목록이 길어질수록 모델이 엉뚱한 도구를 고르는 빈도가 늘어난다는 관찰. 설명을 짧게 다듬고 비슷한 기능은 하나로 묶는 쪽이 낫다는 정리.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">Anthropic 블로그 · 2시간 전</span>
+          <span class="tags"><span class="tag">에이전트</span></span>
+        </div>
+      </a>
+      <a class="card is-read" href="#">
+        <span class="sr-only">읽은 글</span>
+        <div class="card-body">
+          <h3 class="card-title">사내 문서 검색에 임베딩 대신 키워드를 먼저 붙여본 후기</h3>
+          <p class="card-sum">벡터 검색부터 도입하기 전에 태그와 키워드 필터로 후보를 좁히는 편이 비용과 정확도 모두에서 나았다는 팀의 기록.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">개인 블로그 · 8시간 전</span>
+          <span class="tags"><span class="tag">엔지니어링</span></span>
+        </div>
+      </a>
+      <a class="card" href="#">
+        <div class="card-body">
+          <h3 class="card-title">MCP 서버를 처음 붙일 때 자주 막히는 지점 정리</h3>
+          <p class="card-sum">권한 범위, 스키마 검증, 타임아웃 세 군데에서 대부분 막힌다. 각 경우에 로그를 어디부터 봐야 하는지 순서대로 짚어둔 글.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">GitHub · 4시간 전</span>
+          <span class="tags"><span class="tag">MCP</span><span class="tag">툴</span></span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── B ─────────────────────────────────────────────────────────── -->
+  <section class="variant v-b">
+    <div class="v-head">
+      <h2 class="v-name">B · 출처 표식</h2>
+      <span class="v-desc">A + 출처 이름 앞에 이니셜 원. 훑을 때 눈이 걸리는 지점을 하나 만든다</span>
+      <span class="v-rule"></span>
+    </div>
+    <div class="grid">
+      <a class="card" href="#">
+        <div class="card-body">
+          <span class="badge">🔥 뜨는 중</span>
+          <h3 class="card-title">에이전트에게 도구를 몇 개까지 쥐여줘야 할까</h3>
+          <p class="card-sum">도구 목록이 길어질수록 모델이 엉뚱한 도구를 고르는 빈도가 늘어난다는 관찰. 설명을 짧게 다듬고 비슷한 기능은 하나로 묶는 쪽이 낫다는 정리.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="src-mark" aria-hidden="true">An</span>Anthropic 블로그 · 2시간 전</span>
+          <span class="tags"><span class="tag">에이전트</span></span>
+        </div>
+      </a>
+      <a class="card is-read" href="#">
+        <span class="sr-only">읽은 글</span>
+        <div class="card-body">
+          <h3 class="card-title">사내 문서 검색에 임베딩 대신 키워드를 먼저 붙여본 후기</h3>
+          <p class="card-sum">벡터 검색부터 도입하기 전에 태그와 키워드 필터로 후보를 좁히는 편이 비용과 정확도 모두에서 나았다는 팀의 기록.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="src-mark" aria-hidden="true">개</span>개인 블로그 · 8시간 전</span>
+          <span class="tags"><span class="tag">엔지니어링</span></span>
+        </div>
+      </a>
+      <a class="card" href="#">
+        <div class="card-body">
+          <h3 class="card-title">MCP 서버를 처음 붙일 때 자주 막히는 지점 정리</h3>
+          <p class="card-sum">권한 범위, 스키마 검증, 타임아웃 세 군데에서 대부분 막힌다. 각 경우에 로그를 어디부터 봐야 하는지 순서대로 짚어둔 글.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="src-mark" aria-hidden="true">Gi</span>GitHub · 4시간 전</span>
+          <span class="tags"><span class="tag">MCP</span><span class="tag">툴</span></span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── C ─────────────────────────────────────────────────────────── -->
+  <section class="variant v-c">
+    <div class="v-head">
+      <h2 class="v-name">C · 위계 벌리기</h2>
+      <span class="v-desc">A + 제목 16 → 17px · 요약 줄높이 1.72 · 요약을 한 단계 연하게. 제목이 먼저 읽힌다</span>
+      <span class="v-rule"></span>
+    </div>
+    <div class="grid">
+      <a class="card" href="#">
+        <div class="card-body">
+          <span class="badge">🔥 뜨는 중</span>
+          <h3 class="card-title">에이전트에게 도구를 몇 개까지 쥐여줘야 할까</h3>
+          <p class="card-sum">도구 목록이 길어질수록 모델이 엉뚱한 도구를 고르는 빈도가 늘어난다는 관찰. 설명을 짧게 다듬고 비슷한 기능은 하나로 묶는 쪽이 낫다는 정리.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">Anthropic 블로그 · 2시간 전</span>
+          <span class="tags"><span class="tag">에이전트</span></span>
+        </div>
+      </a>
+      <a class="card is-read" href="#">
+        <span class="sr-only">읽은 글</span>
+        <div class="card-body">
+          <h3 class="card-title">사내 문서 검색에 임베딩 대신 키워드를 먼저 붙여본 후기</h3>
+          <p class="card-sum">벡터 검색부터 도입하기 전에 태그와 키워드 필터로 후보를 좁히는 편이 비용과 정확도 모두에서 나았다는 팀의 기록.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">개인 블로그 · 8시간 전</span>
+          <span class="tags"><span class="tag">엔지니어링</span></span>
+        </div>
+      </a>
+      <a class="card" href="#">
+        <div class="card-body">
+          <h3 class="card-title">MCP 서버를 처음 붙일 때 자주 막히는 지점 정리</h3>
+          <p class="card-sum">권한 범위, 스키마 검증, 타임아웃 세 군데에서 대부분 막힌다. 각 경우에 로그를 어디부터 봐야 하는지 순서대로 짚어둔 글.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta">GitHub · 4시간 전</span>
+          <span class="tags"><span class="tag">MCP</span><span class="tag">툴</span></span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="bot">
+  <div class="wrap">signal — 카드 가독성 비교안 · 승인되면 design-rules.md 에 블록을 덧붙이고 구현에 반영합니다.</div>
+</footer>
+
+</body>
+</html>

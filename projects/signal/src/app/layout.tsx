@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
+// 토큰이 먼저다 — 전역 스타일이 var(--...) 로 이 값을 쓴다.
+import "@/shared/ui/tokens.css";
 import "./globals.css";
 import { AppProviders } from "@/shared/providers/app-providers";
+import { SiteFooter, SiteHeader } from "@/widgets/site-chrome";
 
 export const metadata: Metadata = {
   title: "signal",
@@ -12,7 +15,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <body>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+        </AppProviders>
       </body>
     </html>
   );

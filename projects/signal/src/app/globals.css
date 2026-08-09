@@ -1,3 +1,57 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 전역 바탕. 화면별 스타일은 각 슬라이스의 *.module.css 에 둔다. */
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 포커스 스타일은 제거하지 않는다.
+   border-radius 를 여기서 주면 안 된다 — a:focus-visible 의 명시도가 컴포넌트 클래스를
+   이겨서, 포커스가 닿는 순간 카드가 12px→6px, 알약 버튼이 999px→6px 로 각지게 변한다.
+   design-rules 의 "호버·포커스에서 완전 복구(키보드 이동도 같다)"와 정면으로 어긋난다.
+   빼두면 아웃라인이 각 요소 자신의 라운드를 따라간다.
+   [tabindex] 는 원문 안의 가로 스크롤 영역(표·코드 블록)용 — 링이 없으면 포커스가 어디 있는지 모른다. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 눈에는 안 보이지만 스크린리더는 읽는 텍스트.
+   읽음 같은 상태를 색으로만 알리지 않기 위해 쓴다. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

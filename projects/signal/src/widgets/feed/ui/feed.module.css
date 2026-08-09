@@ -1,0 +1,464 @@
+/* 피드 화면. 근거: docs/design/design-rules.md (2026-08-02 승인) + mockups/feed-a.html
+   색·라운드·그림자는 전부 토큰. 여기서 새 값을 만들지 않는다. */
+
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--space-20);
+}
+
+/* ── 페이지 타이틀: 절제 (초대형 헤드라인 금지) ───────────────────────── */
+
+.pageHead {
+  padding: var(--space-28) 0 var(--space-16);
+}
+
+.pageHead h1 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.pageHead p {
+  margin: 0;
+  font-size: var(--fs-ui);
+  color: var(--meta);
+}
+
+/* ── 컨트롤 줄: 정렬 세그먼트(알약) + 주제 태그 필터 칩 ───────────────── */
+
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+  padding-bottom: 18px;
+}
+
+.segment {
+  display: inline-flex;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface);
+  border-radius: var(--r-pill);
+}
+
+.segment button {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-ui);
+  font-weight: 600;
+  padding: var(--space-6) var(--space-14);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--meta);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.segment button:hover {
+  color: var(--text);
+}
+
+/* 활성 상태에만 포인트색이 닿는다 */
+.segment button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.dividerV {
+  width: 1px;
+  height: 20px;
+  background: var(--hairline);
+}
+
+.chipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.filterChip {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-ui);
+  font-weight: 500;
+  padding: var(--space-6) var(--space-12);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--meta);
+  border: 1px solid transparent;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.filterChip:hover {
+  background: var(--surface-h);
+  color: var(--text);
+}
+
+.filterChip[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-ring);
+  font-weight: 600;
+}
+
+/* ── 날짜 섹션 (매일 아침 갱신 → 날짜가 1차 묶음) ─────────────────────
+   헤더는 절제한다: 메타색 + 굵기로만 위계. 남는 폭은 시그니처인 점선으로. */
+
+.day + .day {
+  margin-top: var(--space-6);
+}
+
+/* 헤더가 sticky 라, 키보드로 이동해 온 요소가 헤더 밑에 깔리지 않게 자리를 비워둔다.
+   포커스 링이 안 보이면 "포커스에서 완전 복구" 규칙이 화면에서 사라진다. */
+.day,
+.card {
+  scroll-margin-top: 72px;
+}
+
+.dayHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) 0 var(--space-12);
+}
+
+.dayTitle {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: var(--meta);
+}
+
+.dayCount {
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--meta);
+}
+
+.dayCount::before {
+  content: "·";
+  margin-right: var(--space-6);
+}
+
+.dayRule {
+  flex: 1 1 auto;
+  height: 0;
+  min-width: 24px;
+  border-top: 1px dotted var(--dot);
+}
+
+/* ── 카드 3열 그리드 ─────────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+  padding-bottom: var(--space-22);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  padding: var(--space-20);
+  text-decoration: none;
+  color: inherit;
+  /* 입체감은 "아직 안 봄"의 신호다 — 읽은 카드에서는 뺀다(.isRead) */
+  box-shadow: var(--shadow-card);
+  transition:
+    background 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.card:hover {
+  background: var(--surface-h);
+  box-shadow: var(--shadow-card-h);
+  transform: translateY(-1px);
+}
+
+.card:hover .cardTitle {
+  color: var(--accent);
+}
+
+.cardBody {
+  flex: 1 1 auto;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--fs-chip);
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  padding: var(--space-4) var(--space-10);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-bottom: var(--space-8);
+}
+
+.cardTitle {
+  margin: 0 0 var(--space-10);
+  font-size: var(--fs-title);
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  line-height: 1.45;
+  transition: color 0.16s ease;
+  word-break: keep-all; /* 한국어를 어절 중간에서 끊지 않는다 */
+  /* 제목은 2줄까지 — 한 줄 … 잘림 금지 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 요약은 2줄까지 — 3줄이면 카드 절반이 회색 덩어리가 된다 */
+.cardSummary {
+  margin: 0 0 var(--space-16);
+  font-size: var(--fs-sm);
+  line-height: 1.62;
+  color: var(--text2);
+  word-break: keep-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 시그니처: 카드 안 점선 구분선 */
+.cardFoot {
+  border-top: 1px dotted var(--dot);
+  padding-top: var(--space-14);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-10);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  font-size: var(--fs-meta);
+  color: var(--meta);
+}
+
+/* 훑을 때 눈이 걸리는 지점. 색은 쓰지 않는다 — 포인트색은 "아직 안 본 것" 전용 */
+.sourceMark {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-pill);
+  background: var(--tag-bg);
+  color: var(--meta);
+  font-size: var(--fs-mark);
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.16s ease;
+}
+
+.metaText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tags {
+  display: flex;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.tag {
+  font-size: var(--fs-chip);
+  font-weight: 500;
+  color: var(--meta);
+  background: var(--tag-bg);
+  border-radius: var(--r-pill);
+  padding: var(--space-4) var(--space-10);
+}
+
+.card:hover .tag,
+.card:hover .sourceMark {
+  background: var(--tag-bg-h);
+}
+
+/* ── 읽음 상태 ────────────────────────────────────────────────────────
+   흐릿하게 = 눌러두는 것이지 못 읽게 만드는 게 아니다.
+   색만으로는 4.5:1 바닥에 막히므로 제목은 굵기까지 함께 낮춘다. */
+
+.isRead {
+  background: var(--surface-read);
+  box-shadow: none;
+}
+
+.isRead .cardTitle {
+  color: var(--text-read);
+  font-weight: 600;
+}
+
+.isRead .cardSummary {
+  color: var(--text2-read);
+}
+
+.isRead .meta {
+  color: var(--meta-read);
+}
+
+.isRead .cardFoot {
+  border-top-color: var(--dot-read);
+}
+
+.isRead .tag,
+.isRead .sourceMark {
+  background: var(--tag-read-bg);
+  color: var(--tag-read-ink);
+}
+
+/* 이미 본 글이 포인트색으로 튀지 않게 — 색은 "아직 안 본 것"에만 쓴다 */
+.isRead .badge {
+  background: var(--badge-read-bg);
+  color: var(--badge-read-ink);
+}
+
+/* 호버·포커스 = 완전 복구. 다시 읽으려는 순간에는 또렷해야 한다 */
+.isRead:hover,
+.isRead:focus-visible {
+  background: var(--surface-h);
+  box-shadow: var(--shadow-card-h);
+}
+
+.isRead:hover .cardTitle,
+.isRead:focus-visible .cardTitle {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.isRead:hover .cardSummary,
+.isRead:focus-visible .cardSummary {
+  color: var(--text2);
+}
+
+.isRead:hover .meta,
+.isRead:focus-visible .meta {
+  color: var(--meta);
+}
+
+.isRead:hover .cardFoot,
+.isRead:focus-visible .cardFoot {
+  border-top-color: var(--dot);
+}
+
+.isRead:hover .tag,
+.isRead:focus-visible .tag,
+.isRead:hover .sourceMark,
+.isRead:focus-visible .sourceMark {
+  background: var(--tag-bg-h);
+  color: var(--meta);
+}
+
+.isRead:hover .badge,
+.isRead:focus-visible .badge {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ── 더 보기 · 빈 상태 ───────────────────────────────────────────────── */
+
+.more {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-4) 0 56px;
+}
+
+.more button {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  color: var(--text2);
+  padding: var(--space-12) var(--space-28);
+  border-radius: var(--r-pill);
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.more button:hover {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-soft-h);
+}
+
+/* 다 불러왔을 때. disabled 대신 aria-disabled 를 쓰는 이유: disabled 버튼은 포커스를 잃어
+   키보드 사용자가 페이지 맨 위로 되던져진다. 여기 머문 채로 상태만 바뀌어야 한다. */
+.more button[aria-disabled="true"] {
+  cursor: default;
+  color: var(--meta);
+}
+
+.more button[aria-disabled="true"]:hover {
+  background: transparent;
+  color: var(--meta);
+  border-color: var(--border-soft);
+}
+
+/* 필터 결과가 0건일 때의 유일한 문장 — 목록 미리보기가 아니라 본문이라 본문 크기를 쓴다 */
+.empty {
+  padding: 56px var(--space-20);
+  text-align: center;
+  font-size: var(--fs-body);
+  color: var(--meta);
+}
+
+/* ── 반응형: 데스크톱 우선, 모바일 1열까지 ───────────────────────────── */
+
+@media (max-width: 980px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .pageHead {
+    padding: var(--space-20) 0 var(--space-14);
+  }
+  .controls {
+    gap: var(--space-10);
+  }
+  .dividerV {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:hover {
+    transform: none;
+  }
+}
