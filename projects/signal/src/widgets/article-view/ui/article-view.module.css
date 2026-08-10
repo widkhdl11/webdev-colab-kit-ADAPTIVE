@@ -36,7 +36,8 @@
   word-break: keep-all;
 }
 
-/* 메타 줄 — 시그니처 점선을 상세에서도 이어간다 */
+/* 메타 줄 — 시그니처 점선을 상세에서도 이어간다.
+   원문 제목 병기 줄도 이 안에 산다(design-rules 2026-08-10). */
 .metaRow {
   display: flex;
   align-items: center;
@@ -44,6 +45,24 @@
   gap: var(--space-10);
   padding-bottom: 18px;
   border-bottom: 1px dotted var(--dot);
+}
+
+/* 원문 제목 병기 (INV-S6). 읽는 문장이 아니라 대조용 참고라 메타 크기·색을 쓴다.
+   `.prose` 밖이라 본문 문단 규칙에 눌리지 않는다.
+
+   메타 줄 안에서 **한 줄을 통째로 차지한다**(flex-basis 100%). 출처·시각 옆에 이어 붙이면
+   원문 제목이 길 때 그 줄이 어디서 시작하는지 안 보이고, 태그 칩과 섞여 무엇이 무엇인지
+   갈리지 않는다. 여백은 메타 줄의 gap(10px)이 준다 — 여기에 margin 을 또 주면 둘이 더해진다. */
+.originalTitle {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--meta);
+  line-height: 1.5;
+  /* 이 줄엔 한국어 라벨이 섞여 있다. keep-all 이 없으면 "원문 제목:" 이 음절에서 끊긴다.
+     긴 영문 토큰이 칼럼을 넘는 것은 overflow-wrap 이 맡는다(word-break: break-word 는 옛 별칭). */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .who {
@@ -132,6 +151,7 @@
   margin-bottom: 0;
 }
 
+.aiSummary p.caveat,
 .caveat {
   margin: var(--space-12) 0 0;
   padding-top: var(--space-10);
@@ -161,6 +181,7 @@
   border-top: 0;
 }
 
+.prose p.sourceNote,
 .sourceNote {
   /* 표지판 역할이 됐으므로 굵기를 한 칸 올리고 아래 여백을 키워 본문과 떼어놓는다.
      크기·색은 그대로 둔다(12px/--meta) — 읽는 문장이 아니라 안내다. */

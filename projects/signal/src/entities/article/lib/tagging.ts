@@ -50,6 +50,16 @@ export function tagsFromText(title: string, body = ""): ArticleTag[] {
 }
 
 /**
+ * 태그명 정규화 — DB unique(normalized_name) 가 유일성을 판정하는 값이다 (INV-T2).
+ *
+ * 도메인 규칙이라 여기 둔다. 어댑터에 인라인으로 있으면 `.toLowerCase()` 한 조각을 지워도
+ * 아무 테스트가 안 깨지고, 'MCP' 와 'mcp' 가 각각 생겨 필터가 쪼개진다.
+ */
+export function normalizeTagName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+/**
  * 규칙이 고른 것과 AI 가 고른 것을 합친다 (INV-T3).
  *
  * 목록 밖은 버린다 — AI 가 '블록체인' 을 고르면 그 태그가 새로 생겨 필터가 늘어난다.

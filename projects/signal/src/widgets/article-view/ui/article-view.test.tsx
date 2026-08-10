@@ -14,6 +14,7 @@ function article(overrides: Partial<Article> = {}): Article {
   return {
     id: "a",
     title: "제목",
+    titleKo: null,
     summary: "요약",
     sourceExcerpt: null,
     summaryPoints: [],
@@ -211,5 +212,98 @@ describe("ArticleView — INV-S2 요약 대체 표시", () => {
     );
     expect(html).not.toContain("AI 요약");
     expect(html).not.toContain("출처가 준 요약");
+  });
+});
+
+describe("ArticleView — 제목 (INV-S6) · 핵심 항목 (INV-S7)", () => {
+  it("INV-S6 (S23): 번역 제목을 보여주고 원문 제목을 함께 남긴다", () => {
+    const html = renderToStaticMarkup(
+      <ArticleView
+        article={article({ title: "Anthropic ships X", titleKo: "앤트로픽이 X를 내놨다" })}
+        nowIso={NOW}
+      />,
+    );
+    // "html 어딘가에 있다"로는 부족하다 — h1 에 영어, 아래 줄에 번역문이 가도 통과한다.
+    // INV-S6 이 요구하는 건 "번역문을 보여주고 원문을 **함께**"라 자리를 고정해야 한다.
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    expect(doc.querySelector("h1")?.textContent).toBe("앤트로픽이 X를 내놨다");
+
+    const orig = doc.querySelector(`.${styles.originalTitle}`);
+    expect(orig?.textContent).toContain("Anthropic ships X");
+    expect(orig?.textContent).toContain("원문 제목");
+    // 원문 줄에 번역문이 섞여 있으면 위아래가 뒤바뀐 것이다.
+    expect(orig?.textContent).not.toContain("앤트로픽이");
+  });
+
+  it("INV-S6: 원문 제목은 메타 줄 안에 있다 (design-rules 2026-08-10 승인)", () => {
+    // 자리를 고정하지 않으면 "어딘가에 있다"만 검증하게 된다. 승인된 것은 **자리**다 —
+    // 제목 바로 밑이 아니라 출처·시각과 같은 묶음. 밖으로 되돌리면 여기서 빨간불이 켜진다.
+    // 이 줄은 메타 줄의 자식이므로 `.metaRow + .prose`(요약 없을 때 점선 겹침 방지)는
+    // 번역 유무와 무관하게 그대로 성립한다 — 아래 테스트가 그걸 따로 붙든다.
+    const html = renderToStaticMarkup(
+      <ArticleView
+        article={article({ title: "Anthropic ships X", titleKo: "앤트로픽이 X를 내놨다" })}
+        nowIso={NOW}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const orig = doc.querySelector(`.${styles.originalTitle}`);
+    expect(orig).not.toBeNull();
+    expect(orig!.parentElement?.className).toBe(styles.metaRow);
+  });
+
+  it("번역이 있어도 요약 없는 화면의 점선 전제가 유지된다", () => {
+    // 병기 줄을 메타 줄 밖에 두면 이 조합에서 .metaRow 다음 형제가 그 줄이 되어
+    // `.metaRow + .prose` 가 안 맞고 점선이 두 줄로 겹친다(design-rules 2026-08-08).
+    const html = renderToStaticMarkup(
+      <ArticleView
+        article={article({
+          title: "Anthropic ships X",
+          titleKo: "앤트로픽이 X를 내놨다",
+          summary: "",
+          sourceExcerpt: null,
+        })}
+        nowIso={NOW}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    expect(doc.querySelector(`.${styles.metaRow}`)?.nextElementSibling?.className).toBe(
+      styles.prose,
+    );
+  });
+
+  it("INV-S6 실패경로: 번역이 없으면 원문 제목만 보여준다(같은 문장을 두 번 쓰지 않는다)", () => {
+    const html = renderToStaticMarkup(
+      <ArticleView article={article({ title: "Only English", titleKo: null })} nowIso={NOW} />,
+    );
+    expect(html).toContain("Only English");
+    expect(html).not.toContain("원문 제목");
+  });
+
+  it("INV-S7: AI 요약이면 핵심 항목을 렌더한다", () => {
+    const html = renderToStaticMarkup(
+      <ArticleView
+        article={article({ summary: "AI 요약문", summaryPoints: ["첫째 항목", "둘째 항목"] })}
+        nowIso={NOW}
+      />,
+    );
+    expect(html).toContain("첫째 항목");
+    expect(html).toContain("둘째 항목");
+  });
+
+  it("INV-S7 (S26) 실패경로: 출처 글을 보여줄 때는 핵심 항목을 렌더하지 않는다", () => {
+    // 요약만 지워지고 summary_points 가 남은 항목이 실제로 있다(마이그레이션 0003).
+    const html = renderToStaticMarkup(
+      <ArticleView
+        article={article({
+          summary: "",
+          sourceExcerpt: "출처가 준 글",
+          summaryPoints: ["남아 있는 항목"],
+        })}
+        nowIso={NOW}
+      />,
+    );
+    expect(html).toContain("출처가 준 요약");
+    expect(html).not.toContain("남아 있는 항목");
   });
 });

@@ -11,8 +11,10 @@ import { toListItemRow, toStoredArticle, type StoredArticleListItem } from "./ro
  */
 
 /** 목록에서 안 뽑는 컬럼이 하나 있다: `content_html`. 목록은 본문을 실어 나르지 않는다. */
-const LIST_COLUMNS =
-  "id, original_url, title, summary, source_excerpt, summary_points, source_id, source_name, published_at, item_tag(tag(name))";
+// 테스트가 붙들 수 있게 내보낸다 — select 에서 컬럼 하나가 빠져도 조용히 null 이 되므로
+// (title_ko 를 빼면 번역을 다 만들고도 화면이 전부 영어가 된다) 목록을 고정해 둔다.
+export const LIST_COLUMNS =
+  "id, original_url, title, title_ko, summary, source_excerpt, summary_points, source_id, source_name, published_at, item_tag(tag(name))";
 
 const DETAIL_COLUMNS = `${LIST_COLUMNS}, content_html`;
 

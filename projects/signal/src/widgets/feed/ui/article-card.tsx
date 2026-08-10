@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { displaySummary, type ArticleListItem } from "@/entities/article";
+import { displaySummary, displayTitle, type ArticleListItem } from "@/entities/article";
 import { relativeTime } from "@/shared/lib/datetime";
 import { sourceMark } from "../lib/source-mark";
 import styles from "./feed.module.css";
@@ -20,6 +20,7 @@ export function ArticleCard({ article, isRead, nowIso }: Props) {
   // AI 요약이 없으면 출처가 준 요약글 (INV-S2). 어느 쪽을 고를지는 entities 가 정한다 —
   // 카드와 상세가 각자 판단하면 두 화면이 다른 글을 보여주는 날이 온다.
   const summary = displaySummary(article);
+  const title = displayTitle(article);
 
   return (
     <Link
@@ -35,7 +36,7 @@ export function ArticleCard({ article, isRead, nowIso }: Props) {
             <span aria-hidden="true">🔥</span> 뜨는 중
           </span>
         ) : null}
-        <h3 className={styles.cardTitle}>{article.title}</h3>
+        <h3 className={styles.cardTitle}>{title.text}</h3>
         {summary !== null ? (
           <p className={styles.cardSummary}>{summary.text}</p>
         ) : null}

@@ -10,14 +10,19 @@ import type { Source } from "@/entities/source";
  */
 
 /**
- * 요약 재시도 후보 (INV-S3).
+ * 후처리(요약·제목 번역) 대상 (INV-S3·S6).
  *
- * 실제 대상은 `summary` 가 비어 있고 **근거가 있는** 것뿐이다. 근거는 본문 또는 출처 요약글 —
- * 제목만 주고 요약시키면 모델이 지어낸다(INV-S1 위반).
+ * **두 작업의 조건이 다르다** — 한 후보 목록에서 항목마다 갈린다:
+ *   - 요약: `summary` 가 비어 있고 **근거(본문 또는 출처 요약글)가 있을 때만**.
+ *     제목만 주고 요약시키면 모델이 지어낸다(INV-S1 위반).
+ *   - 제목 번역: `title_ko` 가 비어 있으면 한다. **근거가 없어도 한다** —
+ *     번역의 근거는 제목 자신이다. 이걸 요약과 같은 조건으로 묶으면 본문도 요약글도 없는
+ *     항목(HN 링크 글 다수)이 영어 제목으로 영영 남는다.
  */
-export interface SummaryCandidate {
+export interface EnrichCandidate {
   id: string;
   title: string;
+  titleKo: string | null;
   contentHtml: string;
   sourceExcerpt: string | null;
   summary: string | null;
@@ -30,10 +35,24 @@ export interface ExtractionCandidate {
   url: string;
 }
 
-/** 요약 결과. 태그 분류를 같이 받는다 (INV-T3) — 호출을 두 번 하면 비용도 두 배다. */
-export interface SummaryResult {
+/**
+ * 후처리 결과. 요약·핵심 항목·태그·번역 제목을 **한 번의 호출로 같이 받는다** —
+ * 나눠 부르면 비용이 배로 늘고, 같은 근거를 두 번 보내게 된다 (INV-T3·S6·S7).
+ */
+export interface EnrichResult {
+  /** 요약. 요청하지 않았거나 실패하면 빈 문자열. */
   summary: string;
+  /** 요약의 핵심 항목 (INV-S7). 요약이 없으면 빈 배열이어야 한다. */
+  points: string[];
   tags: string[];
+  /** 한국어 제목 (INV-S6). 요청하지 않았거나 실패하면 null. */
+  titleKo: string | null;
+}
+
+/** 항목마다 무엇이 필요한지. 둘 다 false 면 부르지 않는다. */
+export interface EnrichNeeds {
+  needSummary: boolean;
+  needTitle: boolean;
 }
 
 export interface IngestPorts {
@@ -47,16 +66,24 @@ export interface IngestPorts {
   extractContent(url: string): Promise<string>;
   saveContent(id: string, contentHtml: string): Promise<void>;
 
-  /** 요약 재시도 후보를 가져온다. 최종 판정은 파이프라인이 다시 한다. */
-  listSummaryCandidates(): Promise<SummaryCandidate[]>;
-  /** 요약·태그 생성 (Claude). 서버에서만 부른다 — 키가 클라이언트로 가면 INV-S4 위반이다. */
-  summarize(input: {
-    title: string;
-    /** 근거. 본문이 있으면 본문, 없으면 출처 요약글. 빈 값으로는 부르지 않는다. */
-    evidence: string;
-  }): Promise<SummaryResult>;
-  /** 요약과 태그를 함께 저장한다. 태그는 목록 안의 것만 온다 (INV-T3). */
-  saveSummary(id: string, summary: string, tags: string[]): Promise<void>;
+  /** 후처리 후보를 가져온다. 무엇이 필요한지의 최종 판정은 파이프라인이 다시 한다. */
+  listEnrichCandidates(): Promise<EnrichCandidate[]>;
+  /** 요약·항목·태그·제목 번역 (Claude). 서버에서만 부른다 — 키가 나가면 INV-S4 위반이다. */
+  enrich(
+    input: {
+      title: string;
+      /** 근거. 본문이 있으면 본문, 없으면 출처 요약글. 요약이 필요 없으면 빈 값일 수 있다. */
+      evidence: string;
+    } & EnrichNeeds,
+  ): Promise<EnrichResult>;
+  /**
+   * 만들어진 것만 저장한다. 주지 않은 필드는 건드리지 않는다 —
+   * 번역만 성공하고 요약이 실패한 항목의 `summary` 를 덮으면 재시도 신호가 사라진다(INV-S3).
+   */
+  saveEnrichment(
+    id: string,
+    patch: { summary?: string; points?: string[]; tags?: string[]; titleKo?: string },
+  ): Promise<void>;
 }
 
 export interface SourceReport {
@@ -89,4 +116,6 @@ export interface IngestReport {
     /** 근거가 없어 아예 시도하지 않은 건수 (INV-S3). 실패와 구분한다 — 재시도해도 소용없다. */
     skippedNoEvidence: number;
   };
+  /** 제목 번역 (INV-S6). 요약과 같은 호출에서 처리되지만 조건이 달라 따로 센다. */
+  titles: StageReport;
 }

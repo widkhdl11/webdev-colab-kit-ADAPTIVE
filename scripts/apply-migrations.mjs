@@ -79,7 +79,9 @@ if (!token) {
   process.exit(1);
 }
 
-const files = process.argv.slice(2).length > 0 ? process.argv.slice(2) : DEFAULT;
+// 위에서 파싱한 `names` 를 쓴다. 여기서 argv 를 다시 읽으면 `--project signal` 이 파일명으로
+// 섞여 `--project.sql` 을 열려다 죽는다 — 문서에 적힌 사용법이 그대로 실패한다.
+const files = names.length > 0 ? names : DEFAULT;
 
 async function runSql(sql) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {

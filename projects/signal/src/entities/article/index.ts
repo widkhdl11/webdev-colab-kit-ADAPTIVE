@@ -31,5 +31,7 @@ export { toListItemRow, toStoredArticle } from "./api/row";
 export type { StoredArticleListItem } from "./api/row";
 export { displaySummary } from "./lib/display-summary";
 export type { DisplaySummary } from "./lib/display-summary";
+export { displayTitle } from "./lib/display-title";
+export type { DisplayTitle } from "./lib/display-title";
 export { sourceExcerpt } from "./lib/excerpt";
-export { mergeTags, tagsFromText } from "./lib/tagging";
+export { mergeTags, normalizeTagName, tagsFromText } from "./lib/tagging";

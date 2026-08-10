@@ -20,6 +20,7 @@ const rowSchema = z.object({
   id: z.string().min(1),
   original_url: z.string().min(1),
   title: z.string().min(1),
+  title_ko: z.string().nullable().optional(),
   summary: z.string().nullable().optional(),
   source_excerpt: z.string().nullable().optional(),
   summary_points: z.array(z.string()).nullable().optional(),
@@ -55,6 +56,8 @@ function common(raw: unknown) {
   return {
     id: r.id,
     title: r.title,
+    // 원문 제목과 다른 칸이다 (INV-S6). 없으면 null 로 두고 화면이 원문으로 떨어진다.
+    titleKo: r.title_ko ?? null,
     summary: r.summary ?? "",
     sourceExcerpt: r.source_excerpt ?? null,
     summaryPoints: r.summary_points ?? [],

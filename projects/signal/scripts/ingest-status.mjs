@@ -33,6 +33,7 @@ async function count(table, query = "", col = "id") {
 }
 
 const total = await count("item");
+const withTitleKo = await count("item", "&title_ko=not.is.null");
 const withSummary = await count("item", "&summary=not.is.null");
 const withExcerpt = await count("item", "&source_excerpt=not.is.null&source_excerpt=neq.");
 const withBody = await count("item", "&content_html=neq.");
@@ -44,6 +45,7 @@ const pct = (n) => (total === 0 ? "0%" : `${Math.round((n / total) * 100)}%`);
 const line = (label, n) => console.log(`  ${String(n).padStart(4)} / ${total}  ${pct(n).padStart(4)}  ${label}`);
 
 console.log(`item 총 ${total}건`);
+line("한국어 제목 있음 (title_ko)", withTitleKo);
 line("AI 요약 있음 (summary)", withSummary);
 line("출처 요약글 있음 (source_excerpt)", withExcerpt);
 line("본문 있음 (content_html)", withBody);

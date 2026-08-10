@@ -103,54 +103,108 @@ async function runExtraction(ports: IngestPorts): Promise<IngestReport["extracti
   return result;
 }
 
-async function runSummaries(ports: IngestPorts): Promise<IngestReport["summaries"]> {
-  const result = {
+/**
+ * 요약·핵심 항목·제목 번역을 채운다 (INV-S3·S6·S7).
+ *
+ * 한 항목에 대해 **호출은 한 번**이고, 그 안에서 무엇을 요청할지가 갈린다. 요약은 근거가
+ * 있어야 하지만 번역은 제목 자체가 근거라 근거 없는 항목도 번역한다 — 둘을 같은 조건으로
+ * 묶으면 본문도 요약글도 없는 항목이 영어 제목으로 영영 남는다.
+ */
+async function runEnrichment(
+  ports: IngestPorts,
+): Promise<Pick<IngestReport, "summaries" | "titles">> {
+  const summaries = {
     attempted: 0,
     succeeded: 0,
     failed: 0,
     skippedNoEvidence: 0,
     error: null as string | null,
   };
+  const titles = { attempted: 0, succeeded: 0, failed: 0, error: null as string | null };
 
   let candidates;
   try {
-    candidates = await ports.listSummaryCandidates();
+    candidates = await ports.listEnrichCandidates();
   } catch (e) {
-    // 요약 단계가 통째로 죽어도 이미 끝난 적재는 유효하다.
-    return { ...result, error: errorText(e) };
+    // 이 단계가 통째로 죽어도 이미 끝난 적재는 유효하다.
+    const error = errorText(e);
+    return { summaries: { ...summaries, error }, titles: { ...titles, error } };
   }
 
   for (const item of candidates) {
-    // 재생성 조건을 여기서 다시 판정한다 (INV-S3). 조회 계층이 골라 준 것을 그대로 믿으면
-    // 그 필터를 지워도 아무 테스트가 안 깨진다 — 규칙이 우리 코드에 없는 셈이 된다.
-    if (item.summary !== null && item.summary.trim() !== "") continue;
-
-    // 근거가 없으면 **부르지 않는다** (INV-S3). 제목만 주면 모델이 지어낸다(INV-S1 위반).
-    // 실패와 따로 센다 — 재시도해도 소용없는 것과 다시 해볼 만한 것은 다른 이야기다.
+    // 조건을 여기서 다시 판정한다. 조회 계층이 골라 준 것을 그대로 믿으면 그 필터를 지워도
+    // 아무 테스트가 안 깨진다 — 규칙이 우리 코드에 없는 셈이 된다.
     const evidence = item.contentHtml.trim() || (item.sourceExcerpt ?? "").trim();
-    if (evidence === "") {
-      result.skippedNoEvidence += 1;
-      continue;
-    }
+    const summaryMissing = (item.summary ?? "").trim() === "";
+    const needTitle = (item.titleKo ?? "").trim() === "";
+    const needSummary = summaryMissing && evidence !== "";
 
-    result.attempted += 1;
+    // 근거가 없어 요약을 포기한 건 실패와 따로 센다 — 재시도해도 소용없다 (INV-S3).
+    if (summaryMissing && evidence === "") summaries.skippedNoEvidence += 1;
+    if (!needSummary && !needTitle) continue;
+
+    if (needSummary) summaries.attempted += 1;
+    if (needTitle) titles.attempted += 1;
+
+    // "만들었다"이지 "저장했다"가 아니다 — 저장은 뒤에서 실패할 수 있다.
+    let summaryReady = false;
+    let titleReady = false;
+    // 빈 값으로 이미 실패를 센 것을 기억한다 — 저장이 그 뒤에 죽어도 두 번 세지 않는다.
+    let summaryCounted = false;
+    let titleCounted = false;
     try {
-      const { summary, tags } = await ports.summarize({ title: item.title, evidence });
-      // 빈 요약을 저장하면 다음 주기의 재시도 조건(summary 비어 있음)에서 빠져나가
-      // 영영 요약 없는 항목이 된다. 실패로 두고 남긴다.
-      if (summary.trim() === "") {
-        result.failed += 1;
-        continue;
+      const out = await ports.enrich({
+        title: item.title,
+        evidence,
+        needSummary,
+        needTitle,
+      });
+
+      const patch: {
+        summary?: string;
+        points?: string[];
+        tags?: string[];
+        titleKo?: string;
+      } = {};
+
+      if (needSummary) {
+        // 빈 요약을 저장하면 다음 주기의 재시도 조건에서 빠져나가 영영 요약 없는 항목이 된다.
+        const text = out.summary.trim();
+        if (text === "") {
+          summaries.failed += 1;
+          summaryCounted = true;
+        } else {
+          patch.summary = text;
+          patch.points = out.points;
+          patch.tags = out.tags;
+          summaryReady = true;
+        }
       }
-      await ports.saveSummary(item.id, summary, tags);
-      result.succeeded += 1;
+      if (needTitle) {
+        const ko = (out.titleKo ?? "").trim();
+        if (ko === "") {
+          titles.failed += 1;
+          titleCounted = true;
+        } else {
+          patch.titleKo = ko;
+          titleReady = true;
+        }
+      }
+
+      // 저장할 게 없으면 부르지 않는다 — 빈 update 는 왕복만 늘린다.
+      if (!summaryReady && !titleReady) continue;
+      await ports.saveEnrichment(item.id, patch);
+      if (summaryReady) summaries.succeeded += 1;
+      if (titleReady) titles.succeeded += 1;
     } catch {
-      // 저장하지 않는다 — summary 가 비어 있어야 다음 주기에 다시 잡힌다 (INV-S2).
-      result.failed += 1;
+      // 저장하지 않는다 — 비어 있어야 다음 주기에 다시 잡힌다 (INV-S2).
+      // 이미 빈 값으로 실패를 센 쪽은 두 번 세지 않는다.
+      if (needSummary && !summaryCounted) summaries.failed += 1;
+      if (needTitle && !titleCounted) titles.failed += 1;
     }
   }
 
-  return result;
+  return { summaries, titles };
 }
 
 export async function runIngest(params: {
@@ -166,12 +220,16 @@ export async function runIngest(params: {
     reports.push(await ingestSource(source, ports, now));
   }
 
-  // 순서가 규칙이다: 적재 → 본문 추출 → 요약.
-  // 추출이 요약보다 앞이어야 이번 주기에 채운 본문이 곧바로 요약 근거가 된다.
+  // 순서가 규칙이다: 적재 → 본문 추출 → 후처리(요약·번역).
+  // 추출이 앞이어야 이번 주기에 채운 본문이 곧바로 요약 근거가 된다.
+  const extraction = await runExtraction(ports);
+  const { summaries, titles } = await runEnrichment(ports);
+
   return {
     sources: reports,
     failedSources: reports.filter((r) => r.error !== null).map((r) => r.sourceId),
-    extraction: await runExtraction(ports),
-    summaries: await runSummaries(ports),
+    extraction,
+    summaries,
+    titles,
   };
 }

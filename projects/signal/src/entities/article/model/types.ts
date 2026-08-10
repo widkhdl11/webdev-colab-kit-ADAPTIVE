@@ -13,7 +13,15 @@ export type ArticleTag = (typeof ARTICLE_TAGS)[number];
 
 export interface Article {
   id: string;
+  /** 출처가 준 원문 제목. **번역문으로 덮지 않는다** (INV-S6) — 원문이 진실이다. */
   title: string;
+  /**
+   * 한국어로 옮긴 제목 (INV-S6). 아직 없거나 번역이 실패하면 null.
+   *
+   * 화면이 직접 고르지 않고 `displayTitle` 을 거친다 — 카드와 상세가 각자 판단하면
+   * 두 화면이 다른 제목을 보여준다.
+   */
+  titleKo: string | null;
   /** AI 가 만든 요약. 원문이 진실이고 요약은 신뢰 경계 밖이다 — 없으면 빈 문자열. */
   summary: string;
   /**

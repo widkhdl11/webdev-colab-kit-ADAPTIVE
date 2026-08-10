@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { displaySummary, type Article } from "@/entities/article";
+import { displaySummary, displayTitle, type Article } from "@/entities/article";
 import { ArticleBody, safeSourceUrl } from "@/features/content-render";
 import { MarkReadOnView } from "@/features/read-state";
 import { relativeTime } from "@/shared/lib/datetime";
@@ -15,6 +15,7 @@ export function ArticleView({ article, nowIso }: Props) {
   const when = relativeTime(article.publishedAt, nowIso);
   // AI 요약 → 없으면 출처가 준 요약글 (INV-S2). 고르는 규칙은 entities 한 곳에 있다.
   const summary = displaySummary(article);
+  const title = displayTitle(article);
 
   return (
     <main className={styles.read}>
@@ -25,7 +26,7 @@ export function ArticleView({ article, nowIso }: Props) {
         <span aria-hidden="true">←</span> 피드로
       </Link>
 
-      <h1 className={styles.title}>{article.title}</h1>
+      <h1 className={styles.title}>{title.text}</h1>
 
       <div className={styles.metaRow}>
         <span className={styles.who}>
@@ -41,6 +42,20 @@ export function ArticleView({ article, nowIso }: Props) {
             </span>
           ))}
         </span>
+        {/* 원문 제목을 함께 남긴다 (INV-S6) — 번역이 틀렸을 때 대조할 것이 있어야 한다.
+            번역이 없으면 원문이 이미 제목 자리에 있으므로 이 줄은 렌더되지 않는다.
+            **메타 줄 안에 둔다** (design-rules 2026-08-10 승인) — 제목 바로 밑에 붙이면
+            우리가 붙인 제목과 한 덩어리로 보인다. 여기서는 출처·시각과 같은 묶음,
+            즉 "이 글에 딸린 참고 정보" 쪽에 선다. */}
+        {title.original !== null ? (
+          <p className={styles.originalTitle}>
+            {/* `lang` 을 걸지 않는다: 원문이 영어라는 보장이 없고(출처가 늘면 더 그렇다),
+                틀린 lang 은 스크린리더 발음을 잘못 바꾼다. 안 걸면 html lang="ko" 를 물려받는다.
+                라벨까지 en 으로 감싸면 "원문 제목:" 이 영어로 읽힌다.
+                라벨은 뺄 수 없다 — 제목에서 떨어져 나온 만큼 이 줄이 무엇인지는 라벨만 나른다. */}
+            원문 제목: {title.original}
+          </p>
+        ) : null}
       </div>
 
       {/* 요약은 신뢰 경계 밖이다 — 원문과 분리하고, 어디서 온 글인지 문구로 드러낸다.
@@ -57,10 +72,10 @@ export function ArticleView({ article, nowIso }: Props) {
             {summary.isAi ? "AI 요약" : "출처가 준 요약"}
           </span>
           <p>{summary.text}</p>
-          {summary.isAi && article.summaryPoints.length > 0 ? (
+          {summary.points.length > 0 ? (
             <ul>
-              {article.summaryPoints.map((point) => (
-                <li key={point}>{point}</li>
+              {summary.points.map((point, i) => (
+                <li key={`${i}-${point}`}>{point}</li>
               ))}
             </ul>
           ) : null}

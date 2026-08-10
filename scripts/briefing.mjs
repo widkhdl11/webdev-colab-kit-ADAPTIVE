@@ -33,7 +33,10 @@ if (existsSync(specsDir)) {
     if (/status:\s*draft/.test(read(join(SPECS_REL, f)))) pending.push(`스펙 승인 대기: ${f}`);
   }
 }
-const progress = read(PROGRESS);
+// wrap-up 은 필드를 `- **멈춘 지점**: …` 꼴로 쓴다. 굵기 표시를 걷어내고 읽는다 —
+// 이걸 안 하면 `멈춘 지점:` 정규식이 `멈춘 지점**:` 을 못 맞춰 **PROGRESS 에 다 적혀 있는데도
+// 브리핑이 "기록 없음"이라고 말한다**(2026-08-10 발견: 그동안 조용히 그랬다).
+const progress = read(PROGRESS).split("**").join("");
 const pendingBlock = progress.match(/대기 중인 결정:\s*(.+)/);
 if (pendingBlock && !/없음/.test(pendingBlock[1])) pending.push(pendingBlock[1].trim());
 

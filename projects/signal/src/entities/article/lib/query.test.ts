@@ -18,6 +18,7 @@ function article(
   return {
     id,
     title: id,
+    titleKo: null,
     summary: "",
     sourceExcerpt: null,
     summaryPoints: [],

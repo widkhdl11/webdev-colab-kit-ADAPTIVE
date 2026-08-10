@@ -135,3 +135,42 @@ describe("0002_source_excerpt.sql — INV-S2 출처 요약글", () => {
     expect(body2).not.toMatch(/drop\s+/);
   });
 });
+
+const sql0003 = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/0003_title_ko.sql"),
+  "utf8",
+);
+const body0003 = sql0003
+  .split("\n")
+  .filter((line) => !line.trimStart().startsWith("--"))
+  .join("\n")
+  .toLowerCase();
+
+describe("0003_title_ko.sql — INV-S6 제목 번역", () => {
+  it("INV-S6 (S23): 번역문은 title 과 **다른 컬럼**이다", () => {
+    expect(body0003).toMatch(/add column if not exists title_ko/);
+    // title 을 바꾸는 문장이 있으면 원문을 덮는다는 뜻이다 — 그게 INV-S6 위반이다.
+    // `set` 바로 뒤만 보면 `set summary = null, title = title_ko` 를 놓친다.
+    // `title_ko =` 는 밑줄 때문에 이 정규식에 안 걸린다.
+    expect(body0003).not.toMatch(/(^|[\s,(])title\s*=/m);
+    expect(body0003).not.toMatch(/alter column title\b/);
+  });
+
+  it("INV-S6 (S24): 번역 후보 인덱스는 근거 조건을 걸지 않는다", () => {
+    // 요약 인덱스(0002)와 갈리는 지점이다. 여기에 content_html/source_excerpt 조건을 넣으면
+    // 본문도 요약글도 없는 항목이 영어 제목으로 영영 남는다.
+    const idx = body0003.slice(body0003.indexOf("item_untranslated_idx"));
+    const stmt = idx.slice(0, idx.indexOf(";"));
+    expect(stmt).toMatch(/where\s+title_ko is null/);
+    expect(stmt).not.toMatch(/content_html/);
+    expect(stmt).not.toMatch(/source_excerpt/);
+  });
+
+  it("마이그레이션에 조건 없는 파괴적 문장이 없다 (재실행 안전)", () => {
+    // 이 스크립트는 이름을 안 주면 폴더의 .sql 을 전부 다시 적용한다. 조건 없는
+    // UPDATE/DELETE 가 파일에 남아 있으면 다음에 전부 돌리는 순간 데이터가 날아간다.
+    // 요약 초기화는 2026-08-10 에 손으로 한 번 실행했고 주석으로만 남겼다.
+    const destructive = body0003.match(/^\s*(update|delete)\s[\s\S]*?;/gm) ?? [];
+    expect(destructive).toEqual([]);
+  });
+});

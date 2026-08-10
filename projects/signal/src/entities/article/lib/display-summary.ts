@@ -14,16 +14,24 @@ export interface DisplaySummary {
   text: string;
   /** true 면 AI 가 만든 것. false 면 출처가 준 글이다. */
   isAi: boolean;
+  /**
+   * 핵심 항목 (INV-S7). **AI 요약일 때만 채워진다.**
+   *
+   * 출처 글을 보여주는 경우에 항목이 딸려 나가면 누가 쓴 것인지가 섞인다. 화면이
+   * `isAi && points.length > 0` 을 각자 판단하지 않게 여기서 정해 준다.
+   */
+  points: string[];
 }
 
 export function displaySummary(
-  article: Pick<ArticleListItem, "summary" | "sourceExcerpt">,
+  article: Pick<ArticleListItem, "summary" | "sourceExcerpt" | "summaryPoints">,
 ): DisplaySummary | null {
   const ai = (article.summary ?? "").trim();
-  if (ai !== "") return { text: ai, isAi: true };
+  if (ai !== "") return { text: ai, isAi: true, points: article.summaryPoints ?? [] };
 
   const excerpt = (article.sourceExcerpt ?? "").trim();
-  if (excerpt !== "") return { text: excerpt, isAi: false };
+  // 항목은 비워서 내보낸다 — 요약만 지워지고 summary_points 가 남은 항목이 실제로 있다.
+  if (excerpt !== "") return { text: excerpt, isAi: false, points: [] };
 
   // 둘 다 없으면 아무것도 그리지 않는다 — 빈 박스가 없는 것보다 나쁘다.
   return null;

@@ -27,6 +27,7 @@ function stored(
   return {
     id,
     title: `제목 ${id}`,
+    titleKo: null,
     summary: "",
     sourceExcerpt: null,
     summaryPoints: [],

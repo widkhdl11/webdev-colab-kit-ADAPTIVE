@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>signal — 요약 없는 카드 · 원문 제목 병기 (A/B/C 비교안)</title>
+
+<!--
+  signal / 비교 시안 (2026-08-10)
+
+  이미 화면에 나가 있는데 design-rules.md 에 근거가 없는 두 자리를 확인받는다.
+  새 시각 방향이 아니라 승인된 언어 안의 마감이라, 색·라운드·시그니처·읽음 규칙은
+  손대지 않았다. 값은 전부 src/shared/ui/tokens.css 에서 그대로 옮겼다.
+
+  ── 자리 ①: 요약이 없는 카드 ──────────────────────────────────────────
+  displaySummary 가 null 을 돌려주면(AI 요약도 출처 요약글도 없음) 카드에서 요약 문단이
+  통째로 빠진다. .cardBody 가 flex:1 1 auto 라 점선 발이 카드 바닥에 붙고, 그리드가
+  같은 행을 같은 높이로 늘리므로 제목 아래가 빈칸으로 남는다. 지금 101건 중 9건이 이 상태.
+
+    A  지금 그대로 — 발이 바닥에 붙어 행 안에서 점선이 한 줄로 맞는다
+    B  요약이 없을 때만 제목 3줄 허용 — 잘렸던 제목이 펴져 빈칸을 실제 정보로 메운다
+    C  한 줄 안내 문장 — 빈칸은 사라지지만 9개 카드에 같은 문장이 반복된다
+
+  ── 자리 ②: 상세의 원문 제목 병기 줄 ──────────────────────────────────
+  제목을 한국어로 번역해 보여주므로(INV-S6) 원문을 대조할 자리가 필요하다.
+  번역이 없으면 원문이 이미 h1 에 있으므로 이 줄은 렌더되지 않는다.
+
+    A  지금 그대로 — 포인트색 h1 바로 밑에 "원문 제목: …" 12px 메타
+    B  라벨 없이 원문만
+    C  메타 줄로 내린다 — 제목 밑을 비우고 출처·시각과 같은 묶음에 둔다
+
+  ── 일부러 안 건드린 것 ────────────────────────────────────────────────
+  · 포커스 아웃라인에 라운드를 주지 않는다 (2026-08-06 review 에서 고친 결함.
+    시안에 되살리면 다음 화면이 물려받는다)
+  · 요약이 있는 카드는 세 안 모두 동일하다 — 달라지는 건 요약이 없을 때뿐이다
+-->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+  /* ── 토큰 (tokens.css 그대로) ─────────────────────────────────────── */
+  :root{
+    --bg:           #EFEFF5;
+    --surface:      #F8F8FC;
+    --surface-h:    #FDFDFF;
+    --surface-read: #F3F3F8;
+    --hairline:     #E2E2EC;
+    --dot:          #C9C9D6;
+
+    --text:  #1F2024;
+    --text2: #4A4E55;
+    --meta:  #656A72;
+
+    --accent:      #4F46E5;
+    --accent-soft: #E9E8FB;
+    --on-accent:   #FFFFFF;
+
+    --tag-bg:   var(--bg);
+    --tag-bg-h: #FFFFFF;
+
+    --maxw:  1168px;
+    --readw: 704px;
+    --gap:   16px;
+
+    --r-card: 12px;
+    --r-pill: 999px;
+
+    --shadow-card:   0 1px 2px rgba(31,32,36,.05), 0 4px 10px rgba(31,32,36,.05);
+    --shadow-card-h: 0 2px 4px rgba(31,32,36,.06), 0 10px 22px rgba(31,32,36,.08);
+  }
+
+  *{ box-sizing: border-box; }
+  body{
+    margin:0; background: var(--bg); color: var(--text);
+    font-family: "Pretendard Variable", "Pretendard", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  }
+  .wrap{ max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+  .sr-only{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+  }
+
+  /* ── 시안 안내용 껍데기 (제품 화면 아님) ──────────────────────────── */
+  header.top{ border-bottom: 1px solid var(--hairline); background: var(--bg); }
+  .top-in{ max-width: var(--maxw); margin:0 auto; padding: 14px 20px; display:flex; align-items:baseline; gap:10px; }
+  .logo{ font-size:19px; font-weight:800; letter-spacing:-0.3px; }
+  .logo .dot{ color: var(--accent); }
+  .tagline{ font-size:13px; color: var(--meta); }
+
+  .intro{ padding: 28px 0 4px; }
+  .intro h1{ margin:0 0 8px; font-size:22px; font-weight:700; letter-spacing:-0.4px; }
+  .intro p{ margin:0 0 6px; font-size:13.5px; color: var(--meta); max-width: 760px; line-height:1.7; }
+
+  .place{ padding: 30px 0 0; }
+  .place > h2{
+    margin:0 0 4px; font-size:20px; font-weight:800; letter-spacing:-0.3px;
+    padding-top: 22px; border-top: 1px dotted var(--dot);
+  }
+  .place > p{ margin:0 0 4px; font-size:13.5px; color: var(--meta); max-width: 760px; line-height:1.7; }
+
+  .v-head{ display:flex; align-items:baseline; gap:10px; padding: 20px 0 12px; flex-wrap: wrap; }
+  .v-name{
+    margin:0; font-size:13.5px; font-weight:700;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 4px 12px; border-radius: var(--r-pill);
+  }
+  .v-desc{ font-size:13px; color: var(--meta); }
+  .v-rule{ flex:1 1 auto; height:0; min-width:24px; border-top:1px dotted var(--dot); }
+
+  /* ── 피드 카드 (feed.module.css 그대로) ───────────────────────────── */
+  .grid{
+    display:grid; grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: var(--gap); padding-bottom: 8px;
+  }
+  .card{
+    display:flex; flex-direction:column;
+    background: var(--surface); border-radius: var(--r-card);
+    padding: 20px; text-decoration:none; color:inherit;
+    box-shadow: var(--shadow-card);
+    transition: background .16s ease, box-shadow .16s ease, transform .16s ease;
+  }
+  .card:hover{
+    background: var(--surface-h); box-shadow: var(--shadow-card-h);
+    transform: translateY(-1px);
+  }
+  .card:hover .card-title{ color: var(--accent); }
+  .card-body{ flex:1 1 auto; }
+  .badge{
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:11.5px; font-weight:700; letter-spacing:-0.1px;
+    padding:4px 10px; border-radius: var(--r-pill);
+    background: var(--accent-soft); color: var(--accent); margin-bottom:8px;
+  }
+  .card-title{
+    margin:0 0 10px; font-size:16px; font-weight:700; letter-spacing:-0.3px; line-height:1.45;
+    word-break: keep-all;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .card-sum{
+    margin:0 0 16px; font-size:13.5px; line-height:1.62; color: var(--text2);
+    word-break: keep-all;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .card-foot{
+    border-top:1px dotted var(--dot); padding-top:14px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .meta{ display:flex; align-items:center; gap:8px; min-width:0; font-size:12px; color: var(--meta); }
+  .mark{
+    flex-shrink:0; width:20px; height:20px; border-radius: var(--r-pill);
+    background: var(--tag-bg); color: var(--meta);
+    font-size:10.5px; font-weight:700; letter-spacing:-0.2px;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .meta-text{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tags{ display:flex; gap:4px; flex-shrink:0; }
+  .tag{
+    font-size:11.5px; font-weight:500; color: var(--meta);
+    background: var(--tag-bg); border-radius: var(--r-pill); padding:4px 10px;
+  }
+  .card:hover .tag, .card:hover .mark{ background: var(--tag-bg-h); }
+
+  /* B안: 요약이 없을 때만 제목을 3줄까지 편다 */
+  .no-sum-b .card-title{ -webkit-line-clamp:3; }
+
+  /* C안: 요약 자리에 한 줄 안내. 요약 문단과 같은 크기·여백을 쓰되 색을 한 칸 내린다 */
+  .card-sum-none{
+    margin:0 0 16px; font-size:13.5px; line-height:1.62; color: var(--meta);
+    word-break: keep-all;
+  }
+
+  /* ── 상세 화면 상단 (article-view.module.css 그대로) ──────────────── */
+  .read{ max-width: var(--readw); margin: 0 auto; padding: 0 20px; }
+  .read-frame{
+    background: var(--bg); border-radius: var(--r-card);
+    padding: 8px 0 20px; margin-bottom: 4px;
+  }
+  .back{
+    display:inline-block; margin: 24px 0 20px;
+    font-size:13px; font-weight:600; color: var(--meta); text-decoration:none;
+  }
+  .art-title{
+    margin:0 0 12px; font-size:28px; font-weight:800; line-height:1.35;
+    letter-spacing:-0.7px; color: var(--accent); word-break: keep-all;
+  }
+  /* A안: 제목 바로 밑, 라벨 있음. 위 여백 -6px 은 .art-title 의 12px 과 겹쳐 실제 6px */
+  .orig{
+    margin: -6px 0 12px; font-size:12px; color: var(--meta); line-height:1.5;
+    word-break: keep-all; overflow-wrap: anywhere;
+  }
+  .meta-row{
+    display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+    padding-bottom:18px; border-bottom:1px dotted var(--dot);
+  }
+  .who{ font-size:13px; color: var(--meta); }
+  .who strong{ color: var(--text2); font-weight:600; }
+  .row-tags{ display:flex; gap:6px; }
+  .row-tag{
+    font-size:12px; font-weight:500; color: var(--meta);
+    background: var(--surface); border-radius: var(--r-pill); padding:4px 12px;
+  }
+  /* C안: 메타 줄 안에서 한 줄을 통째로 차지한다(flex-basis:100%) */
+  .orig-in-row{
+    flex: 1 0 100%; margin:0; font-size:12px; color: var(--meta); line-height:1.5;
+    word-break: keep-all; overflow-wrap: anywhere;
+  }
+  .ai-box{
+    margin: 24px 0 8px; background: var(--surface);
+    border-left: 4px solid var(--accent); border-radius: var(--r-card);
+    padding: 18px 20px;
+  }
+  .ai-label{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11.5px; font-weight:700; letter-spacing:-0.1px;
+    color: var(--accent); background: var(--accent-soft);
+    padding:4px 10px; border-radius: var(--r-pill); margin-bottom:10px;
+  }
+  .ai-box p{ margin:0; font-size:16px; line-height:1.7; color: var(--text2); word-break: keep-all; }
+
+  /* 포커스: 각 요소 자신의 라운드를 따라간다 — 여기에 border-radius 를 주지 않는다 */
+  a:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (max-width: 980px){ .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 640px){ .grid{ grid-template-columns: 1fr; } .art-title{ font-size:23px; } }
+  @media (prefers-reduced-motion: reduce){ .card:hover{ transform:none; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <span class="logo">signal<span class="dot">.</span></span>
+    <span class="tagline">비교 시안 — 제품 화면 아님</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="intro">
+    <h1>요약 없는 카드 · 원문 제목 병기</h1>
+    <p>
+      둘 다 이미 화면에 나가 있는데 design-rules.md 에 승인 기록이 없다. 색·라운드·시그니처·읽음
+      규칙은 그대로 두고 이 두 자리만 A·B·C 로 나눠 그렸다. 고른 안을 design-rules 에 한 블록으로 남긴다.
+    </p>
+  </section>
+
+  <!-- ══ 자리 ① 요약 없는 카드 ══════════════════════════════════════ -->
+  <section class="place">
+    <h2>① 요약이 없는 카드</h2>
+    <p>
+      각 줄의 <strong>가운데·오른쪽 카드에 요약이 없다</strong>. 가운데는 제목이 길어 2줄에서 잘리는
+      경우, 오른쪽은 제목이 짧은 경우다 — 짧은 제목에서도 답이 되는지 같이 본다.
+      왼쪽(요약 있는 카드)은 세 안이 완전히 같다.
+    </p>
+
+    <!-- A ─ 지금 그대로 -->
+    <div class="v-head">
+      <span class="v-name">A · 지금 그대로</span>
+      <span class="v-desc">발이 카드 바닥에 붙어 행 안에서 점선이 한 줄로 맞는다. 제목 아래는 빈칸</span>
+      <span class="v-rule"></span>
+    </div>
+    <div class="grid">
+      <a class="card" href="#">
+        <div class="card-body">
+          <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+          <h3 class="card-title">오픈AI, 개발자용 에이전트 도구 묶음을 공개했다</h3>
+          <p class="card-sum">한 번의 호출로 도구를 이어 붙이는 실행기와 평가 도구가 함께 나왔다. 기존 API 를 쓰던 코드는 그대로 둬도 된다.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="mark" aria-hidden="true">Op</span><span class="meta-text">OpenAI · 3시간 전</span></span>
+          <span class="tags"><span class="tag">에이전트</span><span class="tag">API</span></span>
+        </div>
+      </a>
+      <a class="card" href="#">
+        <div class="card-body">
+          <h3 class="card-title">허깅페이스가 공개한 오픈소스 모델이 주요 벤치마크 상위권에 오르면서 상업적 이용을 제한하는 라이선스 조항을 두고 논쟁이 불붙었다</h3>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="mark" aria-hidden="true">He</span><span class="meta-text">Hacker News · 5시간 전</span></span>
+          <span class="tags"><span class="tag">오픈소스</span></span>
+        </div>
+      </a>
+      <a class="card" href="#">
+        <div class="card-body">
+          <h3 class="card-title">GPT-5.1 코덱스 맥스</h3>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="mark" aria-hidden="true">He</span><span class="meta-text">Hacker News · 어제</span></span>
+          <span class="tags"><span class="tag">모델</span></span>
+        </div>
+      </a>
+    </div>
+
+    <!-- B ─ 제목 3줄 -->
+    <div class="v-head">
+      <span class="v-name">B · 요약 없을 때만 제목 3줄</span>
+      <span class="v-desc">잘렸던 제목이 펴져 빈칸을 실제 정보로 메운다. 제목이 짧으면 여전히 빈다(오른쪽)</span>
+      <span class="v-rule"></span>
+    </div>
+    <div class="grid">
+      <a class="card" href="#">
+        <div class="card-body">
+          <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+          <h3 class="card-title">오픈AI, 개발자용 에이전트 도구 묶음을 공개했다</h3>
+          <p class="card-sum">한 번의 호출로 도구를 이어 붙이는 실행기와 평가 도구가 함께 나왔다. 기존 API 를 쓰던 코드는 그대로 둬도 된다.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="mark" aria-hidden="true">Op</span><span class="meta-text">OpenAI · 3시간 전</span></span>
+          <span class="tags"><span class="tag">에이전트</span><span class="tag">API</span></span>
+        </div>
+      </a>
+      <a class="card no-sum-b" href="#">
+        <div class="card-body">
+          <h3 class="card-title">허깅페이스가 공개한 오픈소스 모델이 주요 벤치마크 상위권에 오르면서 상업적 이용을 제한하는 라이선스 조항을 두고 논쟁이 불붙었다</h3>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="mark" aria-hidden="true">He</span><span class="meta-text">Hacker News · 5시간 전</span></span>
+          <span class="tags"><span class="tag">오픈소스</span></span>
+        </div>
+      </a>
+      <a class="card no-sum-b" href="#">
+        <div class="card-body">
+          <h3 class="card-title">GPT-5.1 코덱스 맥스</h3>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="mark" aria-hidden="true">He</span><span class="meta-text">Hacker News · 어제</span></span>
+          <span class="tags"><span class="tag">모델</span></span>
+        </div>
+      </a>
+    </div>
+
+    <!-- C ─ 한 줄 안내 -->
+    <div class="v-head">
+      <span class="v-name">C · 한 줄 안내</span>
+      <span class="v-desc">요약 자리에 같은 크기(13.5px)·한 칸 내린 색으로 문장 하나. 같은 문장이 여러 카드에 반복된다</span>
+      <span class="v-rule"></span>
+    </div>
+    <div class="grid">
+      <a class="card" href="#">
+        <div class="card-body">
+          <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+          <h3 class="card-title">오픈AI, 개발자용 에이전트 도구 묶음을 공개했다</h3>
+          <p class="card-sum">한 번의 호출로 도구를 이어 붙이는 실행기와 평가 도구가 함께 나왔다. 기존 API 를 쓰던 코드는 그대로 둬도 된다.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="mark" aria-hidden="true">Op</span><span class="meta-text">OpenAI · 3시간 전</span></span>
+          <span class="tags"><span class="tag">에이전트</span><span class="tag">API</span></span>
+        </div>
+      </a>
+      <a class="card" href="#">
+        <div class="card-body">
+          <h3 class="card-title">허깅페이스가 공개한 오픈소스 모델이 주요 벤치마크 상위권에 오르면서 상업적 이용을 제한하는 라이선스 조항을 두고 논쟁이 불붙었다</h3>
+          <p class="card-sum-none">요약을 준비하지 못했습니다.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="mark" aria-hidden="true">He</span><span class="meta-text">Hacker News · 5시간 전</span></span>
+          <span class="tags"><span class="tag">오픈소스</span></span>
+        </div>
+      </a>
+      <a class="card" href="#">
+        <div class="card-body">
+          <h3 class="card-title">GPT-5.1 코덱스 맥스</h3>
+          <p class="card-sum-none">요약을 준비하지 못했습니다.</p>
+        </div>
+        <div class="card-foot">
+          <span class="meta"><span class="mark" aria-hidden="true">He</span><span class="meta-text">Hacker News · 어제</span></span>
+          <span class="tags"><span class="tag">모델</span></span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ══ 자리 ② 원문 제목 병기 ══════════════════════════════════════ -->
+  <section class="place">
+    <h2>② 상세의 원문 제목 병기</h2>
+    <p>
+      제목을 한국어로 번역해 보여주므로(INV-S6) 번역이 틀렸을 때 대조할 원문이 있어야 한다.
+      번역이 없는 소식에서는 이 줄이 아예 안 나온다 — 원문이 이미 제목 자리에 있기 때문이다.
+      아래 셋은 <strong>같은 소식</strong>이고 원문 제목을 두는 자리만 다르다.
+    </p>
+
+    <div class="v-head">
+      <span class="v-name">A · 지금 그대로</span>
+      <span class="v-desc">제목 바로 밑, "원문 제목:" 라벨 + 원문. 12px 메타색</span>
+      <span class="v-rule"></span>
+    </div>
+    <div class="read-frame"><div class="read">
+      <a class="back" href="#"><span aria-hidden="true">←</span> 피드로</a>
+      <h1 class="art-title">오픈AI, 개발자용 에이전트 도구 묶음을 공개했다</h1>
+      <p class="orig">원문 제목: Introducing the Agent Toolkit for Developers</p>
+      <div class="meta-row">
+        <span class="who"><strong>OpenAI</strong> · 3시간 전</span>
+        <span class="row-tags"><span class="row-tag">에이전트</span><span class="row-tag">API</span></span>
+      </div>
+      <section class="ai-box">
+        <span class="ai-label"><span aria-hidden="true">✨</span> AI 요약</span>
+        <p>한 번의 호출로 도구를 이어 붙이는 실행기와 평가 도구가 함께 나왔다.</p>
+      </section>
+    </div></div>
+
+    <div class="v-head">
+      <span class="v-name">B · 라벨 없이 원문만</span>
+      <span class="v-desc">반복되는 "원문 제목:" 을 뺀다. 대신 이 줄이 원문인지 부제인지가 문맥에만 기댄다</span>
+      <span class="v-rule"></span>
+    </div>
+    <div class="read-frame"><div class="read">
+      <a class="back" href="#"><span aria-hidden="true">←</span> 피드로</a>
+      <h1 class="art-title">오픈AI, 개발자용 에이전트 도구 묶음을 공개했다</h1>
+      <p class="orig">Introducing the Agent Toolkit for Developers</p>
+      <div class="meta-row">
+        <span class="who"><strong>OpenAI</strong> · 3시간 전</span>
+        <span class="row-tags"><span class="row-tag">에이전트</span><span class="row-tag">API</span></span>
+      </div>
+      <section class="ai-box">
+        <span class="ai-label"><span aria-hidden="true">✨</span> AI 요약</span>
+        <p>한 번의 호출로 도구를 이어 붙이는 실행기와 평가 도구가 함께 나왔다.</p>
+      </section>
+    </div></div>
+
+    <div class="v-head">
+      <span class="v-name">C · 메타 줄로 내린다</span>
+      <span class="v-desc">제목 밑을 비워 h1 이 홀로 서고, 원문은 출처·시각과 같은 묶음(점선 위)에 들어간다</span>
+      <span class="v-rule"></span>
+    </div>
+    <div class="read-frame"><div class="read">
+      <a class="back" href="#"><span aria-hidden="true">←</span> 피드로</a>
+      <h1 class="art-title">오픈AI, 개발자용 에이전트 도구 묶음을 공개했다</h1>
+      <div class="meta-row">
+        <span class="who"><strong>OpenAI</strong> · 3시간 전</span>
+        <span class="row-tags"><span class="row-tag">에이전트</span><span class="row-tag">API</span></span>
+        <p class="orig-in-row">원문 제목: Introducing the Agent Toolkit for Developers</p>
+      </div>
+      <section class="ai-box">
+        <span class="ai-label"><span aria-hidden="true">✨</span> AI 요약</span>
+        <p>한 번의 호출로 도구를 이어 붙이는 실행기와 평가 도구가 함께 나왔다.</p>
+      </section>
+    </div></div>
+  </section>
+
+  <div style="height:56px"></div>
+</div>
+
+</body>
+</html>

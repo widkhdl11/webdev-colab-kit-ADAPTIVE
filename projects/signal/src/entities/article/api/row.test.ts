@@ -13,7 +13,8 @@ const row = {
   id: "11111111-1111-1111-1111-111111111111",
   canonical_url: "https://ex.com/a",
   original_url: "https://ex.com/a?utm_source=rss",
-  title: "제목",
+  title: "English title",
+  title_ko: "한국어 제목",
   summary: "요약",
   summary_points: ["항목1", "항목2"],
   content_html: "<p>본문</p>",
@@ -29,7 +30,7 @@ describe("toStoredArticle — 조회 경계", () => {
     const a = toStoredArticle(row);
     expect(a).not.toBeNull();
     expect(a?.id).toBe(row.id);
-    expect(a?.title).toBe("제목");
+    expect(a?.title).toBe("English title");
     expect(a?.sourceId).toBe("anthropic-news");
     expect(a?.contentHtml).toBe("<p>본문</p>");
     expect(a?.tags).toEqual(["MCP", "모델"]);
@@ -96,12 +97,42 @@ describe("toListItemRow — 목록 투영", () => {
     const a = toListItemRow(listRow);
     expect(a).not.toBeNull();
     expect("contentHtml" in (a as object)).toBe(false);
-    expect(a?.title).toBe("제목");
+    expect(a?.title).toBe("English title");
   });
 
   it("본문이 섞여 와도 목록 모양에는 안 싣는다", () => {
     // 쿼리에서 컬럼을 실수로 넣어도 클라이언트로 새어 나가지 않게 한 겹 더 막는다.
     const a = toListItemRow(row);
     expect("contentHtml" in (a as object)).toBe(false);
+  });
+});
+
+describe("toStoredArticle — 제목 (INV-S6 / S23)", () => {
+  it("title_ko 를 도메인으로 옮긴다 — 원문 title 은 그대로 둔다", () => {
+    // 이 매핑이 없으면 번역을 다 만들어 놓고도 화면은 전부 영어다.
+    // 다른 테스트들은 도메인 객체를 손으로 만들어 쓰므로 이 경로를 지나지 않는다.
+    const a = toStoredArticle(row);
+    expect(a?.titleKo).toBe("한국어 제목");
+    expect(a?.title).toBe("English title");
+  });
+
+  it("title_ko 가 없는 행은 null 로 온다 (화면이 원문으로 폴백한다)", () => {
+    const a = toStoredArticle({ ...row, title_ko: null });
+    expect(a?.titleKo).toBeNull();
+    const b = toStoredArticle({ ...row, title_ko: undefined });
+    expect(b?.titleKo).toBeNull();
+  });
+
+  it("목록 투영에도 title_ko 가 실린다 (피드 카드가 쓴다)", () => {
+    expect(toListItemRow(row)?.titleKo).toBe("한국어 제목");
+  });
+});
+
+describe("조회 컬럼 목록 — 빠지면 조용히 null 이 된다", () => {
+  it("INV-S6 (S23): 목록 select 에 title_ko 가 있다", async () => {
+    const { LIST_COLUMNS } = await import("./queries");
+    expect(LIST_COLUMNS).toContain("title_ko");
+    // 목록은 본문을 실어 나르지 않는다 (직렬화 비용).
+    expect(LIST_COLUMNS).not.toContain("content_html");
   });
 });
