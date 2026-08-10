@@ -11,6 +11,7 @@ import {
 } from "@/entities/article";
 import type { Source } from "@/entities/source";
 import { extractArticleHtml } from "../lib/extract-content";
+import { EVIDENCE_ONLY, ROLE, TITLE_RULE, summaryRules } from "../model/prompt-text";
 import { parseFeedXml } from "../lib/parse-feed";
 import { upsertBatches } from "../lib/upsert-rows";
 import type {
@@ -206,23 +207,12 @@ export function createIngestPorts(): IngestPorts {
         needSummary ? '"tags": ["..."]' : null,
       ].filter((line): line is string => line !== null);
 
-      const rules = [
-        "너는 AI·IT 소식을 한국어로 옮기고 요약한다. 읽는 사람은 영어를 읽지 못한다.",
-        "**주어진 글에 없는 내용을 지어내지 않는다.** 근거가 얇으면 얇은 만큼만 쓴다.",
-      ];
-      if (needTitle) {
-        rules.push(
-          "제목은 자연스러운 한국어로 옮긴다. 제품·회사·기술 이름은 원어를 그대로 둔다" +
-            "(예: Claude, MCP, GPU). 이미 한국어면 그대로 돌려준다.",
-        );
-      }
-      if (needSummary) {
-        rules.push(
-          "요약은 네다섯 문장. 무엇이 새로운지 → 왜 중요한지 순으로 쓰고, 한계나 조건이 있으면 덧붙인다.",
-          "핵심 항목(points)은 두세 개. 요약에서 가장 중요한 사실을 한 줄씩, 각 40자 안팎으로 끊어 쓴다.",
-          `태그는 다음 목록에서만 고른다: ${ARTICLE_TAGS.join(", ")}. 해당 없으면 빈 배열.`,
-        );
-      }
+      // 말투·요약 방식은 model/prompt-text.ts 에 있다 — 고칠 일이 있으면 거기만 열면 된다.
+      // **아래 마지막 줄(출력 형식)만 여기 남는다**: 키 이름이 어긋나면 파싱이 전부 실패하고,
+      // 그 실패는 조용하다(빈 결과로 돌아가 매 주기 재시도만 반복된다).
+      const rules = [ROLE, EVIDENCE_ONLY];
+      if (needTitle) rules.push(TITLE_RULE);
+      if (needSummary) rules.push(...summaryRules(ARTICLE_TAGS));
       rules.push(`출력은 JSON 하나: {${wanted.join(", ")}}. 다른 말은 쓰지 않는다.`);
 
       const res = await anthropic.messages.create(
@@ -252,8 +242,24 @@ export function createIngestPorts(): IngestPorts {
         .join("\n")
         .trim();
 
+      // 토큰은 **응답을 어떻게 쓰든 상관없이** 담는다 — 파싱에 실패해도 요금은 이미 나갔고,
+      // 그 경우가 바로 보고서에서 봐야 할 자리다(호출은 늘었는데 성공은 안 느는 상태).
+      // 캐시 필드는 캐싱을 안 쓰면 응답에 없다 — 없으면 0.
+      const usage = {
+        inputTokens: res.usage.input_tokens,
+        outputTokens: res.usage.output_tokens,
+        cacheReadTokens: res.usage.cache_read_input_tokens ?? 0,
+        cacheWriteTokens: res.usage.cache_creation_input_tokens ?? 0,
+      };
+
       // JSON 이 아니면 빈 값으로 돌려보낸다 — 파이프라인이 실패로 세고 다음 주기에 다시 한다.
-      const empty: EnrichResult = { summary: "", points: [], tags: [], titleKo: null };
+      const empty: EnrichResult = {
+        summary: "",
+        points: [],
+        tags: [],
+        titleKo: null,
+        usage,
+      };
 
       // 잘린 응답은 파싱이 우연히 성공할 수도 있어서(닫는 중괄호가 앞쪽에 있으면) 먼저 거른다.
       // 여기서 안 거르면 반쪽짜리 요약이 저장돼 다음 주기 재시도 대상에서 빠진다(INV-S3).
@@ -270,6 +276,7 @@ export function createIngestPorts(): IngestPorts {
           points: summary === "" ? [] : strings(parsed.points).map((p) => p.trim()).filter(Boolean),
           tags: strings(parsed.tags),
           titleKo: typeof parsed.titleKo === "string" ? parsed.titleKo.trim() || null : null,
+          usage,
         };
       } catch {
         return empty;

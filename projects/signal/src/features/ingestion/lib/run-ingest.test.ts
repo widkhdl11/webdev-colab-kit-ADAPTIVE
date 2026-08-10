@@ -12,6 +12,9 @@ import type { EnrichCandidate, ExtractionCandidate, IngestPorts } from "./ports"
 
 const NOW = new Date("2026-08-09T05:00:00.000Z");
 
+/** 가짜 호출 하나가 쓴 토큰. 값 자체는 뜻이 없고 합계가 맞는지만 본다. */
+const USAGE = { inputTokens: 100, outputTokens: 20, cacheReadTokens: 0, cacheWriteTokens: 0 };
+
 const source = (id: string): Source => ({
   id,
   name: id,
@@ -39,6 +42,7 @@ function makePorts(over: Partial<IngestPorts> = {}): IngestPorts {
       points: ["항목"],
       tags: ["MCP"],
       titleKo: "한국어 제목",
+      usage: USAGE,
     })),
     saveEnrichment: vi.fn(async () => {}),
     ...over,
@@ -212,7 +216,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
       listEnrichCandidates: vi.fn(async () => [candidate("a", null), candidate("b", null)]),
       enrich: vi.fn(async ({ title }) => {
         if (title.endsWith("a")) throw new Error("timeout");
-        return { summary: "b 의 요약", points: [], tags: [], titleKo: null };
+        return { summary: "b 의 요약", points: [], tags: [], titleKo: null, usage: USAGE };
       }),
       saveEnrichment: vi.fn(async (id) => {
         saved.push(id);
@@ -242,7 +246,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
     // 빈 문자열을 저장하면 S3 의 재시도 조건에서 빠져나가 영원히 요약 없는 항목이 된다.
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [candidate("a", null)]),
-      enrich: vi.fn(async () => ({ summary: "   ", points: [], tags: [], titleKo: null })),
+      enrich: vi.fn(async () => ({ summary: "   ", points: [], tags: [], titleKo: null, usage: USAGE })),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
     expect(vi.mocked(ports.saveEnrichment)).not.toHaveBeenCalled();
@@ -257,6 +261,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
         points: ["항목1", "항목2"],
         tags: ["MCP"],
         titleKo: null,
+        usage: USAGE,
       })),
     });
     await runIngest({ sources: [], ports, now: NOW });
@@ -323,7 +328,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
   it("INV-S6 실패경로: 공백뿐인 번역이 오면 저장하지 않는다 (다음 주기에 다시 잡히게)", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [cand()]),
-      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "   " })),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "   ", usage: USAGE })),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
     expect(vi.mocked(ports.saveEnrichment)).not.toHaveBeenCalled();
@@ -350,7 +355,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
   it("INV-S3: 번역만 성공하면 summary 는 패치에 없다 (재시도 신호를 지우지 않는다)", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [cand({ contentHtml: "<p>본문</p>" })]),
-      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역" })),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역", usage: USAGE })),
     });
     await runIngest({ sources: [], ports, now: NOW });
     const patch = vi.mocked(ports.saveEnrichment).mock.calls[0][1];
@@ -361,7 +366,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
   it("실패를 두 번 세지 않는다: 빈 요약 + 저장 실패", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [cand({ contentHtml: "<p>본문</p>" })]),
-      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역" })),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역", usage: USAGE })),
       saveEnrichment: vi.fn(async () => {
         throw new Error("DB 거부");
       }),
@@ -497,6 +502,7 @@ describe("runIngest — INV-T3 태그는 요약과 함께 저장된다", () => {
         points: [],
         tags: ["MCP", "툴"],
         titleKo: null,
+        usage: USAGE,
       })),
     });
     await runIngest({ sources: [], ports, now: NOW });
@@ -519,5 +525,94 @@ describe("runIngest — INV-T3 태그는 요약과 함께 저장된다", () => {
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
     expect(report.summaries.failed).toBe(1);
+  });
+});
+
+// 개발용 계측 — 불변식이 아니라 "이상한 게 있으면 눈에 띄게" 하는 숫자다.
+// 그래서 검증도 규칙이 아니라 **합계가 실제 호출과 어긋나지 않는지**를 본다.
+describe("runIngest — 토큰 사용량 보고", () => {
+  const item = (id: string) => ({
+    id,
+    title: `제목 ${id}`,
+    titleKo: `번역 ${id}`,
+    contentHtml: `<p>본문 ${id}</p>`,
+    sourceExcerpt: null,
+    summary: null,
+  });
+
+  it("실패한 호출의 토큰도 합계에 들어간다", async () => {
+    // 여기가 이 계측의 존재 이유다. 성공 분기에서만 세면 "요약은 하나도 안 늘었는데
+    // 요금만 나간 주기"가 보고서에서 사라진다 — 정확히 그때 알아야 하는데.
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [item("a")]),
+      enrich: vi.fn(async () => ({
+        summary: "", // 빈 요약 = 실패로 처리된다
+        points: [],
+        tags: [],
+        titleKo: null,
+        usage: { inputTokens: 4000, outputTokens: 12, cacheReadTokens: 0, cacheWriteTokens: 0 },
+      })),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+
+    expect(report.summaries.succeeded).toBe(0);
+    expect(report.summaries.failed).toBe(1);
+    expect(report.usage.calls).toBe(1);
+    expect(report.usage.inputTokens).toBe(4000);
+    expect(report.usage.outputTokens).toBe(12);
+  });
+
+  it("여러 건이면 합산하고, 한 건의 최대 입력을 따로 남긴다", async () => {
+    // 합계만 보면 "한 항목의 근거가 비정상적으로 컸다"와 "고르게 늘었다"가 구분되지 않는다.
+    const sizes: Record<string, number> = { a: 300, b: 9000 };
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [item("a"), item("b")]),
+      enrich: vi.fn(async ({ title }) => ({
+        summary: "요약문",
+        points: [],
+        tags: [],
+        titleKo: null,
+        usage: {
+          inputTokens: sizes[title.slice(-1)] ?? 0,
+          outputTokens: 10,
+          cacheReadTokens: 5,
+          cacheWriteTokens: 7,
+        },
+      })),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+
+    expect(report.usage.calls).toBe(2);
+    expect(report.usage.inputTokens).toBe(9300);
+    expect(report.usage.outputTokens).toBe(20);
+    expect(report.usage.cacheReadTokens).toBe(10);
+    expect(report.usage.cacheWriteTokens).toBe(14);
+    expect(report.usage.maxInputTokens).toBe(9000);
+  });
+
+  it("호출이 던지면 그 건은 세지 않는다 (받은 적 없는 토큰을 지어내지 않는다)", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [item("a")]),
+      enrich: vi.fn(async () => {
+        throw new Error("timeout");
+      }),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+
+    expect(report.summaries.failed).toBe(1);
+    expect(report.usage.calls).toBe(0);
+    expect(report.usage.inputTokens).toBe(0);
+  });
+
+  it("부를 일이 없으면 전부 0 이다", async () => {
+    const report = await runIngest({ sources: [], ports: makePorts(), now: NOW });
+    expect(report.usage).toEqual({
+      calls: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+      maxInputTokens: 0,
+    });
   });
 });

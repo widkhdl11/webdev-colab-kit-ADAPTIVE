@@ -36,6 +36,21 @@ export interface ExtractionCandidate {
 }
 
 /**
+ * 호출 한 번이 쓴 토큰. **개발용 계측이라 불변식이 아니다** — 이 값으로 무엇을 막지 않는다.
+ *
+ * 왜 결과에 같이 싣나: 요약이 실패해도 요금은 이미 나갔다. 실패를 세는 곳과 토큰을 세는 곳이
+ * 갈리면 "다 실패했는데 돈은 나갔다"가 보고서 어디에도 안 남는다.
+ */
+export interface EnrichUsage {
+  inputTokens: number;
+  outputTokens: number;
+  /** 캐시에서 읽은 입력 토큰(원가의 약 1/10). */
+  cacheReadTokens: number;
+  /** 캐시에 새로 쓴 입력 토큰(원가의 약 1.25배). */
+  cacheWriteTokens: number;
+}
+
+/**
  * 후처리 결과. 요약·핵심 항목·태그·번역 제목을 **한 번의 호출로 같이 받는다** —
  * 나눠 부르면 비용이 배로 늘고, 같은 근거를 두 번 보내게 된다 (INV-T3·S6·S7).
  */
@@ -47,6 +62,8 @@ export interface EnrichResult {
   tags: string[];
   /** 한국어 제목 (INV-S6). 요청하지 않았거나 실패하면 null. */
   titleKo: string | null;
+  /** 이 호출이 쓴 토큰. **빈 결과를 돌려줄 때도 채운다** — 실패해도 요금은 나갔다. */
+  usage: EnrichUsage;
 }
 
 /** 항목마다 무엇이 필요한지. 둘 다 false 면 부르지 않는다. */
@@ -106,6 +123,25 @@ export interface StageReport {
   error: string | null;
 }
 
+/**
+ * 이 한 바퀴가 쓴 토큰 (개발용 계측).
+ *
+ * 무엇을 막는 값이 아니라 **이상한 것을 눈에 띄게 하는 값**이다. 보는 법:
+ *   - `calls` 는 늘었는데 요약 성공이 안 늘면 → 실패에 돈을 쓰고 있다
+ *   - `maxInputTokens` 만 크게 튀면 → 어떤 항목의 근거가 비정상적으로 크다
+ *   - `cacheReadTokens` 가 계속 0 이면 → 프롬프트 캐싱이 안 걸리고 있다
+ */
+export interface UsageReport {
+  /** enrich 호출 횟수. **실패한 호출도 센다** — 실패해도 요금은 나갔다. */
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  /** 한 호출이 쓴 최대 입력 토큰. 합계가 멀쩡해도 여기가 튀면 한 건이 범인이다. */
+  maxInputTokens: number;
+}
+
 export interface IngestReport {
   sources: SourceReport[];
   /** 실패한 소스 id — 한눈에 보라고 따로 뽑는다. */
@@ -118,4 +154,6 @@ export interface IngestReport {
   };
   /** 제목 번역 (INV-S6). 요약과 같은 호출에서 처리되지만 조건이 달라 따로 센다. */
   titles: StageReport;
+  /** 토큰 사용량 (개발용). 불변식이 아니라 관찰용이다. */
+  usage: UsageReport;
 }

@@ -82,6 +82,17 @@
 
 - **원문 표시** = sanitize 후 렌더(화이트리스트 + html-react-parser). dangerouslySetInnerHTML 금지. → content-safety.md
 - **수집·중복·요약·랭킹** = docs/specs/planned/ingestion-ranking.md (INV-C/R/S/T) — 설계 합의됨, Supabase 프로비저닝 시 활성화(approved)
+- **무엇을 모으고 무엇을 보여줄지** = docs/specs/content-selection.md (INV-F/P/O/L)
+  _(2026-08-10 신설·사용자 승인. 계기는 실제 데이터를 며칠 돌려 본 뒤의 지적 — "가져온 글이
+  대부분 뉴스이고 그마저 중요한 정보가 아니다." 위 ⑰ 성공 기준의 첫 줄이 **적합성**인데
+  그걸 정하는 규칙이 코드에 없었다: 소스가 둘뿐이고, 점수가 시간감쇠 × 소스 weight 라
+  **글의 내용이 계산에 들어가지 않는다.** 이 스펙이 메우는 것은 셋 — 주제 밖 글 거르기 ·
+  출처를 실제 발행처로 · 소스를 두 층(매일 훑기/깊게 읽기)으로. 파일은 아직 `status: draft` 인데
+  미승인이 아니라 순서다 — approved 로 두면 테스트가 없어 게이트가 닫힌다. TDD 시작과 함께 바꾼다)_
+- **키워드와 갈래** = docs/specs/planned/keywords-and-kinds.md (INV-K/KD/G) — 설계 합의됨, 보류
+  _(2026-08-10. 지금 태그는 고정 5개라 새로 생긴 개념을 담지 못한다. 분류(안 변함)와
+  키워드(글마다 생성·누적)를 갈라 둘 다 두는 설계. 마이그레이션 + 화면 토글 + 시안 한 바퀴가
+  함께 필요해 구현 단위가 달라 파킹했다)_
 
 ## 데이터 모델 (얕은 스캔 — 깊게는 /spec에서)
 

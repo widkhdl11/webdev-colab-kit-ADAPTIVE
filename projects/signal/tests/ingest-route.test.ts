@@ -12,6 +12,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  */
 // 타입을 붙여 둔다 — 안 붙이면 빈 배열이 never[] 로 굳어 나중 케이스가 컴파일되지 않는다.
 type Report = import("@/features/ingestion").IngestReport;
+/** 이 파일은 라우트만 본다 — 토큰 합계는 run-ingest.test.ts 가 검증한다. */
+const NO_USAGE = {
+  calls: 0,
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheReadTokens: 0,
+  cacheWriteTokens: 0,
+  maxInputTokens: 0,
+};
+
 type IngestArgs = Parameters<(typeof import("@/features/ingestion"))["runIngest"]>[0];
 
 const runIngest = vi.fn(async (_params: IngestArgs): Promise<Report> => ({
@@ -20,6 +30,7 @@ const runIngest = vi.fn(async (_params: IngestArgs): Promise<Report> => ({
   extraction: { attempted: 0, succeeded: 0, failed: 0, error: null },
   summaries: { attempted: 0, succeeded: 0, failed: 0, skippedNoEvidence: 0, error: null },
   titles: { attempted: 0, succeeded: 0, failed: 0, error: null },
+  usage: NO_USAGE,
 }));
 
 vi.mock("@/features/ingestion", () => ({
@@ -86,6 +97,7 @@ describe("POST /api/ingest — 인가", () => {
       extraction: { attempted: 0, succeeded: 0, failed: 0, error: null },
       summaries: { attempted: 0, succeeded: 0, failed: 0, skippedNoEvidence: 0, error: null },
       titles: { attempted: 0, succeeded: 0, failed: 0, error: null },
+      usage: NO_USAGE,
     });
     const res = await post({ authorization: "Bearer cron-secret-test" });
     expect(res.status).toBe(200);

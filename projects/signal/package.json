@@ -10,7 +10,8 @@
     "ingest:status": "node scripts/ingest-status.mjs",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "count:tokens": "tsx scripts/count-prompt-tokens.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

@@ -112,7 +112,7 @@ async function runExtraction(ports: IngestPorts): Promise<IngestReport["extracti
  */
 async function runEnrichment(
   ports: IngestPorts,
-): Promise<Pick<IngestReport, "summaries" | "titles">> {
+): Promise<Pick<IngestReport, "summaries" | "titles" | "usage">> {
   const summaries = {
     attempted: 0,
     succeeded: 0,
@@ -121,6 +121,14 @@ async function runEnrichment(
     error: null as string | null,
   };
   const titles = { attempted: 0, succeeded: 0, failed: 0, error: null as string | null };
+  const usage = {
+    calls: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheReadTokens: 0,
+    cacheWriteTokens: 0,
+    maxInputTokens: 0,
+  };
 
   let candidates;
   try {
@@ -128,7 +136,7 @@ async function runEnrichment(
   } catch (e) {
     // 이 단계가 통째로 죽어도 이미 끝난 적재는 유효하다.
     const error = errorText(e);
-    return { summaries: { ...summaries, error }, titles: { ...titles, error } };
+    return { summaries: { ...summaries, error }, titles: { ...titles, error }, usage };
   }
 
   for (const item of candidates) {
@@ -159,6 +167,15 @@ async function runEnrichment(
         needSummary,
         needTitle,
       });
+
+      // 결과를 어떻게 쓰든 먼저 센다 — 아래에서 빈 요약으로 실패 처리되는 호출도
+      // 요금은 나갔다. 여기가 아니라 성공 분기에서 세면 "실패에만 돈이 나간 주기"가 안 보인다.
+      usage.calls += 1;
+      usage.inputTokens += out.usage.inputTokens;
+      usage.outputTokens += out.usage.outputTokens;
+      usage.cacheReadTokens += out.usage.cacheReadTokens;
+      usage.cacheWriteTokens += out.usage.cacheWriteTokens;
+      usage.maxInputTokens = Math.max(usage.maxInputTokens, out.usage.inputTokens);
 
       const patch: {
         summary?: string;
@@ -204,7 +221,7 @@ async function runEnrichment(
     }
   }
 
-  return { summaries, titles };
+  return { summaries, titles, usage };
 }
 
 export async function runIngest(params: {
@@ -223,7 +240,7 @@ export async function runIngest(params: {
   // 순서가 규칙이다: 적재 → 본문 추출 → 후처리(요약·번역).
   // 추출이 앞이어야 이번 주기에 채운 본문이 곧바로 요약 근거가 된다.
   const extraction = await runExtraction(ports);
-  const { summaries, titles } = await runEnrichment(ports);
+  const { summaries, titles, usage } = await runEnrichment(ports);
 
   return {
     sources: reports,
@@ -231,5 +248,6 @@ export async function runIngest(params: {
     extraction,
     summaries,
     titles,
+    usage,
   };
 }
