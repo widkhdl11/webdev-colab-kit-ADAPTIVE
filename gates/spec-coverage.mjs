@@ -51,7 +51,11 @@ if (existsSync(projectsDir)) {
 const testFiles = testRoots
   .flatMap((d) => walk(d))
   .filter((f) => /\.(test|spec)\.(ts|tsx|js)$/.test(f));
-const testText = testFiles.map((f) => readFileSync(f, "utf-8")).join("\n");
+// 주석 속 INV 문자열은 테스트가 아니다 — 몇 달 전 다른 목적으로 쓴 주석이 새 스펙의 불변식을
+// 조용히 면제한 적이 있다(2026-08-09 INV-C5). 걷어내고 센다. (retro 2026-08-10)
+const stripComments = (s) =>
+  s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+const testText = testFiles.map((f) => stripComments(readFileSync(f, "utf-8"))).join("\n");
 
 const missing = [...invToSpec.entries()].filter(([inv]) => !testText.includes(inv));
 if (missing.length > 0) {

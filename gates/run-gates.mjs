@@ -167,6 +167,39 @@ for (const projDir of projectDirs) {
       );
 }
 
+// 1''') SQL 재실행 안전: apply-migrations 는 --all 로 폴더의 .sql 을 전부 다시 적용한다(새 DB·리셋에서 필요).
+//       조건(where) 없는 UPDATE/DELETE/TRUNCATE 가 파일에 남아 있으면 그때 데이터가 지워진다.
+//       일회성 데이터 정정은 파일이 아니라 손으로 한 번 + 주석으로. (retro 2026-08-10, rules/supabase.md)
+//       의도한 전역 변경이면 그 줄이나 바로 윗줄에 `-- gate:allow-unconditional` 을 남긴다.
+for (const projDir of projectDirs) {
+  for (const file of walk(join(projDir, "supabase")).filter((f) => f.endsWith(".sql"))) {
+    const src = readFileSync(file, "utf-8");
+    // 주석과 함수 본문($$…$$)은 같은 길이의 공백으로 — 오프셋이 보존돼야 줄번호를 원본에서 찾는다.
+    // 함수 본문은 마이그레이션 실행 시점의 문장이 아니라 런타임 문장이라 제외한다.
+    const code = src
+      .replace(/--[^\n]*/g, (m) => " ".repeat(m.length))
+      .replace(/\$\$[\s\S]*?\$\$/g, (m) => " ".repeat(m.length));
+    const lines = src.split("\n");
+    // 문장 단위로 자른 뒤 '문장이 그 낱말로 시작하는가'만 본다.
+    // 낱말만 찾으면 `for update`·`before update on` 같은 절이 걸린다(오탐 3건 실측).
+    let at = 0;
+    for (const stmt of code.split(";")) {
+      const start = at;
+      at += stmt.length + 1;
+      if (!/^\s*(?:update|delete\s+from|truncate)\b/i.test(stmt)) continue;
+      if (/\bwhere\b/i.test(stmt)) continue;
+      const line = code.slice(0, start + stmt.search(/\S/)).split("\n").length;
+      const near = [lines[line - 2] ?? "", lines[line - 1] ?? ""].join("\n");
+      if (/gate:allow-unconditional/i.test(near)) continue;
+      errors.push(
+        `[security/SQL_UNCONDITIONAL_WRITE] ${relative(ROOT, file)}:${line} — 조건(where) 없는 파괴적 문장. ` +
+          `apply-migrations --all 로 다시 적용되면 데이터가 지워진다. 일회성 정정은 파일이 아니라 손으로 한 번 + 주석으로 (rules/supabase.md)`,
+      );
+    }
+  }
+}
+
+
 function isNextProject(projDir) {
   return ["ts", "js", "mjs"].some((ext) =>
     existsSync(join(projDir, `next.config.${ext}`)),

@@ -8,8 +8,13 @@
 // 사용(토큰은 셸이 아니라 OS 사용자 환경변수로 미리 설정된 상태여야 함):
 //   node scripts/apply-migrations.mjs --project signal 0001_init
 //   node scripts/apply-migrations.mjs --project wama 0005_subject 0006_student_schedule ...
+//   node scripts/apply-migrations.mjs --project signal --all      ← 새 DB·리셋에서 전부 적용할 때만
 //   --project 를 빼면 루트 ACTIVE 파일이 가리키는 프로젝트를 쓴다.
-//   마이그레이션 이름을 빼면 그 프로젝트의 supabase/migrations/*.sql 을 이름순으로 전부 적용한다.
+//
+// 이름도 --all 도 없으면 아무것도 적용하지 않고 멈춘다. 예전엔 이름을 빼면 폴더 전체를 적용했는데,
+// 그게 사고 경로였다 — 파일에 조건 없는 UPDATE/DELETE 가 하나라도 남아 있으면 "습관적으로 전부 돌리기"가
+// 데이터를 지운다(2026-08-10 회고). --all 은 남겨 둔다: 새 DB·리셋에서는 전부 적용이 실제로 필요하고,
+// 그때 안전한지는 파일 쪽에서 보장해야 한다 (rules/supabase.md 마이그레이션 절).
 //
 // 프로젝트 ref 는 SUPABASE_PROJECT_REF 환경변수 우선. 프로젝트마다 다른 Supabase 를 쓰므로
 // 기본값에 기대면 **다른 프로젝트의 DB 에 마이그레이션을 쏘게 된다** — 그래서 ref 는
@@ -30,11 +35,14 @@ const KNOWN_REFS = {
 
 const argv = process.argv.slice(2);
 let project = null;
+let applyAll = false;
 const names = [];
 for (let i = 0; i < argv.length; i += 1) {
   if (argv[i] === "--project" || argv[i] === "-p") {
     project = argv[i + 1];
     i += 1;
+  } else if (argv[i] === "--all") {
+    applyAll = true;
   } else {
     names.push(argv[i]);
   }
@@ -55,10 +63,29 @@ if (!existsSync(MIGRATIONS_DIR)) {
   process.exit(1);
 }
 
-// 인자로 이름을 안 주면 폴더의 것을 이름순으로 전부. 순서 의존이라 파일명 번호가 순서다.
-const DEFAULT = readdirSync(MIGRATIONS_DIR)
+// --all 일 때만 폴더의 것을 이름순으로 전부. 순서 의존이라 파일명 번호가 순서다.
+const ALL = readdirSync(MIGRATIONS_DIR)
   .filter((f) => f.endsWith(".sql"))
   .sort();
+
+// 무엇을 적용할지부터 정한다 — 인자 실수는 토큰 없이도 바로 알려줘야 한다.
+// 위에서 파싱한 `names` 를 쓴다. 여기서 argv 를 다시 읽으면 `--project signal` 이 파일명으로
+// 섞여 `--project.sql` 을 열려다 죽는다 — 문서에 적힌 사용법이 그대로 실패한다.
+let files;
+if (names.length > 0) {
+  files = names;
+} else if (applyAll) {
+  files = ALL;
+  console.log(`--all: ${ALL.length}개를 이름순으로 전부 적용한다 (${ALL.join(", ")})`);
+} else {
+  console.error(
+    "적용할 마이그레이션 이름을 주세요 (예: 0004_keywords).\n" +
+      `프로젝트 '${project}' 의 폴더에 있는 것: ${ALL.length ? ALL.join(", ") : "없음"}\n` +
+      "전부 다시 적용하려면 --all 을 명시하세요 — 조건 없는 UPDATE/DELETE 가 파일에 있으면\n" +
+      "그 순간 데이터가 지워집니다 (rules/supabase.md 마이그레이션 절).",
+  );
+  process.exit(1);
+}
 
 // 토큰은 환경변수에서만. 파일(.env)은 절대 읽지 않는다.
 const token = process.env.SUPABASE_TOKEN;
@@ -78,10 +105,6 @@ if (!token) {
   );
   process.exit(1);
 }
-
-// 위에서 파싱한 `names` 를 쓴다. 여기서 argv 를 다시 읽으면 `--project signal` 이 파일명으로
-// 섞여 `--project.sql` 을 열려다 죽는다 — 문서에 적힌 사용법이 그대로 실패한다.
-const files = names.length > 0 ? names : DEFAULT;
 
 async function runSql(sql) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
