@@ -27,6 +27,7 @@ function article(
     sourceUrl: "https://example.com",
     publishedAt,
     tags,
+    officialBasis: "none",
     score,
     isTrending: false,
   };

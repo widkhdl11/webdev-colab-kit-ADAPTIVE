@@ -24,6 +24,7 @@ function article(overrides: Partial<Article> = {}): Article {
     sourceUrl: "https://example.com/a",
     publishedAt: "2026-08-05T00:00:00.000Z",
     tags: ["모델"],
+    officialBasis: "none",
     score: 10,
     isTrending: false,
     ...overrides,

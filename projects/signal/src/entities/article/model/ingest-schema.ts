@@ -3,7 +3,9 @@ import { canonicalizeUrl } from "../lib/canonical-url";
 import { sourceExcerpt } from "../lib/excerpt";
 import { tagsFromText } from "../lib/tagging";
 import { normalizePublishedAt } from "../lib/published-at";
-import { ARTICLE_TAGS, type ArticleTag } from "./types";
+import { publisherFromUrl } from "../lib/publisher";
+import { isOfficialByUrl, type SubjectSiteLike } from "../lib/official";
+import { ARTICLE_TAGS, type ArticleTag, type OfficialBasis } from "./types";
 
 /**
  * 외부 피드 항목 → 적재할 모양. ingestion-ranking INV-C3 강제 지점.
@@ -29,6 +31,12 @@ export interface IngestContext {
   fetchedAt: Date;
   sourceId: string;
   sourceName: string;
+  /**
+   * 공식 `byUrl` 판정에 쓰는 자리 목록 (INV-O3). 설정파일(entities/source)에서 온다.
+   *
+   * 인자로 받는 이유는 레이어 규칙이다 — entities 끼리는 서로 import 하지 않는다.
+   */
+  subjectSites: readonly SubjectSiteLike[];
 }
 
 /** 적재 직전의 항목. id 는 DB 가 만든다(정규화 URL 이 유일성 키다 — INV-C1). */
@@ -46,6 +54,11 @@ export interface FeedItemDraft {
   sourceId: string;
   sourceName: string;
   tags: ArticleTag[];
+  /**
+   * 적재 시점에 정할 수 있는 근거는 주소뿐이다 (INV-O3). 내용 근거(`byContent`)는
+   * 요약 단계에서 붙으므로 여기서는 `byUrl` 아니면 `none` 이다.
+   */
+  officialBasis: OfficialBasis;
 }
 
 /** 피드가 준 카테고리 + 제목·요약글 키워드. 둘 다 목록 안에서만 (INV-T3). */
@@ -100,8 +113,11 @@ export function parseFeedItem(
     publishedAt: published.publishedAt,
     publishedAtIsFallback: published.isFallback,
     sourceId: ctx.sourceId,
-    sourceName: ctx.sourceName,
+    // 화면에 보이는 출처는 실제 발행처다 — 못 뽑으면 수집 소스 이름으로 되돌아간다(INV-O1).
+    sourceName: publisherFromUrl(originalUrl) ?? ctx.sourceName,
     // 규칙으로 미리 붙인다. AI 분류는 요약 단계에서 합쳐진다 (INV-T3).
     tags: mergeRuleTags(knownTags(parsed.data.tags), title, asString(parsed.data.summary)),
+    // 모델을 거치지 않는다 (INV-O3). 여기서 못 정한 것은 none 이고, 내용 근거는 나중에 붙는다.
+    officialBasis: isOfficialByUrl(originalUrl, ctx.subjectSites) ? "byUrl" : "none",
   };
 }

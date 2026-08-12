@@ -15,6 +15,9 @@ type Report = import("@/features/ingestion").IngestReport;
 /** 이 파일은 라우트만 본다 — 토큰 합계는 run-ingest.test.ts 가 검증한다. */
 const NO_USAGE = {
   calls: 0,
+  topicCalls: 0,
+  topicInputTokens: 0,
+  topicOutputTokens: 0,
   inputTokens: 0,
   outputTokens: 0,
   cacheReadTokens: 0,
@@ -24,12 +27,15 @@ const NO_USAGE = {
 
 type IngestArgs = Parameters<(typeof import("@/features/ingestion"))["runIngest"]>[0];
 
+const NO_TOPIC_FILTER = { attempted: 0, alreadyKnown: 0, filtered: 0, filteredTitles: [], failedOpen: 0 };
+
 const runIngest = vi.fn(async (_params: IngestArgs): Promise<Report> => ({
   sources: [],
   failedSources: [],
-  extraction: { attempted: 0, succeeded: 0, failed: 0, error: null },
-  summaries: { attempted: 0, succeeded: 0, failed: 0, skippedNoEvidence: 0, error: null },
-  titles: { attempted: 0, succeeded: 0, failed: 0, error: null },
+  topicFilter: NO_TOPIC_FILTER,
+  extraction: { attempted: 0, succeeded: 0, failed: 0, failedUrls: [], error: null },
+  summaries: { attempted: 0, succeeded: 0, failed: 0, skippedNoEvidence: 0, failedTitles: [], error: null },
+  titles: { attempted: 0, succeeded: 0, failed: 0, failedTitles: [], error: null },
   usage: NO_USAGE,
 }));
 
@@ -94,9 +100,10 @@ describe("POST /api/ingest — 인가", () => {
     runIngest.mockResolvedValueOnce({
       sources: [],
       failedSources: ["hn-frontpage"],
-      extraction: { attempted: 0, succeeded: 0, failed: 0, error: null },
-      summaries: { attempted: 0, succeeded: 0, failed: 0, skippedNoEvidence: 0, error: null },
-      titles: { attempted: 0, succeeded: 0, failed: 0, error: null },
+      topicFilter: NO_TOPIC_FILTER,
+      extraction: { attempted: 0, succeeded: 0, failed: 0, failedUrls: [], error: null },
+      summaries: { attempted: 0, succeeded: 0, failed: 0, skippedNoEvidence: 0, failedTitles: [], error: null },
+      titles: { attempted: 0, succeeded: 0, failed: 0, failedTitles: [], error: null },
       usage: NO_USAGE,
     });
     const res = await post({ authorization: "Bearer cron-secret-test" });

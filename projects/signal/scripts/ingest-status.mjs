@@ -58,6 +58,14 @@ const taggedItems = new Set(links.map((r) => r.item_id)).size;
 line("태그가 붙은 항목", taggedItems);
 console.log(`\n태그 연결 ${itemTags}건 / 태그 종류 ${tags}개`);
 
+// 공식 표시 (INV-O2). 두 근거를 **따로** 센다 — 합쳐 세면 모델 판단이 몇 건인지 안 보이고,
+// 그 수가 갑자기 튀는 것이 곧 모델이 헛짚고 있다는 신호다.
+const byUrl = await count("item", "&official_basis=eq.byUrl");
+const byContent = await count("item", "&official_basis=eq.byContent");
+console.log("");
+line("공식 — 주소 근거 (byUrl)", byUrl);
+line("공식 — 내용 근거 (byContent)", byContent);
+
 // 소스별로도 나눠 본다 — 한쪽 소스만 비어 있는 상태를 총합은 감춘다.
 const bySource = await fetch(`${url}/rest/v1/item?select=source_id,summary,content_html`, { headers });
 if (bySource.ok) {

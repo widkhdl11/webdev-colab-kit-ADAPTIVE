@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { toOfficialBasis } from "../lib/official";
 import { ARTICLE_TAGS, type ArticleTag, type StoredArticle } from "../model/types";
 
 /**
@@ -27,6 +28,9 @@ const rowSchema = z.object({
   content_html: z.string().nullable().optional(),
   source_id: z.string().min(1),
   source_name: z.string().nullable().optional(),
+  // 모르는 값이 와도 행을 버리지 않는다 — 표시 하나 때문에 소식이 사라지면 안 된다.
+  // 값의 판정은 toOfficialBasis 가 한다(모르는 값 → none).
+  official_basis: z.unknown().optional(),
   published_at: z.string().min(1),
   item_tag: tagJoin,
 });
@@ -67,6 +71,7 @@ function common(raw: unknown) {
     sourceUrl: r.original_url,
     publishedAt: new Date(ms).toISOString(),
     tags: knownTags(r.item_tag),
+    officialBasis: toOfficialBasis(r.official_basis),
     contentHtml: r.content_html ?? "",
   };
 }

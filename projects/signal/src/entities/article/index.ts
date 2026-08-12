@@ -1,8 +1,9 @@
-export { ARTICLE_TAGS, toListItem } from "./model/types";
+export { ARTICLE_TAGS, OFFICIAL_BASES, toListItem } from "./model/types";
 export type {
   Article,
   ArticleListItem,
   ArticleTag,
+  OfficialBasis,
   StoredArticle,
 } from "./model/types";
 export {
@@ -35,3 +36,12 @@ export { displayTitle } from "./lib/display-title";
 export type { DisplayTitle } from "./lib/display-title";
 export { sourceExcerpt } from "./lib/excerpt";
 export { mergeTags, normalizeTagName, tagsFromText } from "./lib/tagging";
+export { publisherFromUrl } from "./lib/publisher";
+export {
+  hostFromUrl,
+  isOfficialByUrl,
+  nextOfficialBasis,
+  persistsOnReingest,
+  toOfficialBasis,
+} from "./lib/official";
+export type { SubjectSiteLike } from "./lib/official";

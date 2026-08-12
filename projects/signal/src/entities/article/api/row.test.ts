@@ -53,6 +53,21 @@ describe("toStoredArticle — 조회 경계", () => {
     expect(a?.summaryPoints).toEqual([]);
   });
 
+  it("INV-O2: 공식 여부의 근거를 그대로 옮긴다", () => {
+    expect(toStoredArticle({ ...row, official_basis: "byUrl" })?.officialBasis).toBe("byUrl");
+    expect(toStoredArticle({ ...row, official_basis: "byContent" })?.officialBasis).toBe(
+      "byContent",
+    );
+  });
+
+  it("INV-O2 (CS9) 실패경로: 컬럼이 없거나 모르는 값이면 none 으로 떨어진다", () => {
+    // 모르는 값을 그대로 통과시키면 화면이 판단 못 하는 상태를 그리게 된다.
+    // 없는 쪽(마이그레이션 전)도 같다 — 표시가 안 붙는 게 안전한 기본값이다.
+    expect(toStoredArticle(row)?.officialBasis).toBe("none");
+    expect(toStoredArticle({ ...row, official_basis: "byGuess" })?.officialBasis).toBe("none");
+    expect(toStoredArticle({ ...row, official_basis: null })?.officialBasis).toBe("none");
+  });
+
   it("모르는 태그는 버리고 아는 것만 남긴다", () => {
     const a = toStoredArticle({
       ...row,

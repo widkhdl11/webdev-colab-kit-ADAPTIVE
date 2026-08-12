@@ -11,6 +11,21 @@ export const ARTICLE_TAGS = [
 
 export type ArticleTag = (typeof ARTICLE_TAGS)[number];
 
+/**
+ * 공식 발표인지의 **근거** (content-selection INV-O2).
+ *
+ * "공식이다/아니다" 두 값으로 두지 않는 이유가 이 스펙의 요지다:
+ *   - `byUrl` — 원문 주소가 그 주체의 도메인. 기계가 대조한 것이라 확실하다(INV-O3).
+ *   - `byContent` — 글 내용을 보고 모델이 판단한 것. **틀릴 수 있다.**
+ *   - `none` — 판단 근거가 없다. 표시하지 않는다.
+ *
+ * 둘을 한 값으로 합치면 모델 판단이 주소 근거와 같은 확실성으로 보이고,
+ * 모델이 틀린 날 사용자가 그대로 믿는다.
+ */
+export const OFFICIAL_BASES = ["none", "byUrl", "byContent"] as const;
+
+export type OfficialBasis = (typeof OFFICIAL_BASES)[number];
+
 export interface Article {
   id: string;
   /** 출처가 준 원문 제목. **번역문으로 덮지 않는다** (INV-S6) — 원문이 진실이다. */
@@ -50,6 +65,13 @@ export interface Article {
   /** 발행 시각(ISO). 날짜 그룹과 최신순 정렬의 기준. */
   publishedAt: string;
   tags: ArticleTag[];
+  /**
+   * 공식 발표 여부의 근거 (INV-O2). 화면은 `byUrl` 과 `byContent` 를 **다른 표시로** 그린다.
+   *
+   * 파생값이 아니라 저장된 값이다 — `byUrl` 은 적재 때 주소로 정하고(INV-O3),
+   * `byContent` 는 요약 단계에서 모델이 정한다.
+   */
+  officialBasis: OfficialBasis;
   /**
    * 랭킹 점수. '뜨는순' 정렬의 기준값이다.
    *

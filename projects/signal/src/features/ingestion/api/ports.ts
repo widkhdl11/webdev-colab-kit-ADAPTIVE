@@ -7,12 +7,15 @@ import { anthropicApiKey } from "@/shared/api/server-env";
 import {
   ARTICLE_TAGS,
   normalizeTagName,
+  toOfficialBasis,
   type FeedItemDraft,
 } from "@/entities/article";
 import type { Source } from "@/entities/source";
 import { extractArticleHtml } from "../lib/extract-content";
-import { EVIDENCE_ONLY, ROLE, TITLE_RULE, summaryRules } from "../model/prompt-text";
+import { DATA_BOUNDARY, TOPIC_SCOPE } from "../model/prompt-text";
+import { buildEnrichPrompt } from "../lib/build-enrich-prompt";
 import { parseFeedXml } from "../lib/parse-feed";
+import { topicVerdict } from "../lib/topic-verdict";
 import { upsertBatches } from "../lib/upsert-rows";
 import type {
   EnrichCandidate,
@@ -30,6 +33,8 @@ import type {
 
 const FETCH_TIMEOUT_MS = 15_000;
 const SUMMARY_TIMEOUT_MS = 30_000;
+/** 주제 판정은 제목 하나만 보내는 짧은 호출이라 요약보다 짧게 잡는다. */
+const TOPIC_TIMEOUT_MS = 15_000;
 /** 한 번에 처리할 최대 건수. 첫 수집에서 수백 건을 한꺼번에 부르면 비용·시간이 튄다. */
 const BATCH = 10;
 /** 요약에 넘길 근거의 최대 길이. 본문 전체를 넣으면 토큰만 낭비된다. */
@@ -98,6 +103,51 @@ export function createIngestPorts(): IngestPorts {
   }
 
   return {
+    async judgeTopic(title: string) {
+      anthropic ??= new Anthropic({ apiKey: anthropicApiKey() });
+
+      const res = await anthropic.messages.create(
+        {
+          model: "claude-sonnet-5",
+          // "yes"/"no" 한 단어만 받으면 되지만 **모델은 그 앞에 생각을 한다.**
+          // 5 로 잡았더니 5토큰을 전부 thinking 블록에 쓰고 텍스트가 0글자로 왔다
+          // (2026-08-12 실측: stop=max_tokens, blocks=["thinking"]). 그러면 판정이
+          // 매번 실패로 떨어져 필터가 통째로 죽는다. 생각을 끝낸 응답은 32토큰이었다.
+          max_tokens: 200,
+          system:
+            `- ${TOPIC_SCOPE}\n- 제목만 보고 판단한다.\n- ${DATA_BOUNDARY}\n` +
+            `- 출력은 "yes" 또는 "no" 한 단어뿐. 다른 말은 쓰지 않는다.`,
+          // 제목도 남의 글이다 — 감싸지 않으면 제목에 심은 지시로 주제 필터를 통과할 수 있다.
+          messages: [{ role: "user", content: `<자료 종류="제목">\n${title}\n</자료>` }],
+        },
+        { timeout: TOPIC_TIMEOUT_MS },
+      );
+
+      // 판정 자체는 순수 함수가 한다 (topic-verdict) — 여기 인라인으로 두는 동안
+      // 테스트가 하나도 없었고, 그래서 잘린 응답 경로를 아무도 못 봤다.
+      const verdict = topicVerdict({
+        stopReason: res.stop_reason,
+        text: res.content
+          .filter((b): b is Anthropic.TextBlock => b.type === "text")
+          .map((b) => b.text)
+          .join(""),
+      });
+
+      // 판정을 못 했으면 **던진다.** 여기서 true 를 돌려주면 결과는 같지만(통과) 리포트에
+      // 아무것도 안 남아, 판정이 매 주기 전부 실패해도 "거른 건수 0"으로 정상처럼 보인다.
+      // 파이프라인은 이 예외를 failedOpen 으로 세고 그대로 통과시킨다 (INV-F3).
+      if (verdict === "unjudged") throw new Error(`주제 판정 실패 (stop=${res.stop_reason})`);
+      return {
+        onTopic: verdict === "on",
+        usage: {
+          inputTokens: res.usage.input_tokens,
+          outputTokens: res.usage.output_tokens,
+          cacheReadTokens: res.usage.cache_read_input_tokens ?? 0,
+          cacheWriteTokens: res.usage.cache_creation_input_tokens ?? 0,
+        },
+      };
+    },
+
     async fetchFeed(source: Source) {
       // 타임아웃이 없으면 소스 하나가 응답을 안 줄 때 Cron 이 통째로 매달린다.
       const res = await fetch(source.feedUrl, {
@@ -106,6 +156,17 @@ export function createIngestPorts(): IngestPorts {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return parseFeedXml(await res.text());
+    },
+
+    async listKnownUrls(canonicalUrls: string[]) {
+      if (canonicalUrls.length === 0) return [];
+      // 한 번에 묻는다. 항목마다 물으면 소스당 50회 왕복이 되고, 그건 아끼려던 것보다 비싸다.
+      const { data, error } = await db
+        .from("item")
+        .select("canonical_url")
+        .in("canonical_url", canonicalUrls);
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((r) => r.canonical_url as string);
     },
 
     async upsertItems(items: FeedItemDraft[]) {
@@ -178,7 +239,7 @@ export function createIngestPorts(): IngestPorts {
       //   - 번역(INV-S6): title_ko 가 비어 있는 것. **근거는 안 본다** — 번역의 근거는 제목이다.
       const { data, error } = await db
         .from("item")
-        .select("id, title, title_ko, content_html, source_excerpt, summary")
+        .select("id, title, title_ko, content_html, source_excerpt, summary, official_basis")
         .or(
           "title_ko.is.null," +
             "and(summary.is.null,or(content_html.neq.,source_excerpt.not.is.null))",
@@ -193,27 +254,22 @@ export function createIngestPorts(): IngestPorts {
         contentHtml: (r.content_html as string) ?? "",
         sourceExcerpt: (r.source_excerpt as string | null) ?? null,
         summary: (r.summary as string | null) ?? null,
+        // 모르는 값은 none 으로 떨어뜨린다 — 여기서 통과시키면 화면이 판단 못 하는 값을 그린다.
+        officialBasis: toOfficialBasis(r.official_basis),
       }));
     },
 
     async enrich({ title, evidence, needSummary, needTitle }): Promise<EnrichResult> {
       anthropic ??= new Anthropic({ apiKey: anthropicApiKey() });
 
-      // 필요한 것만 요청한다. 근거 없는 항목은 제목만 오므로 요약을 시키면 지어낸다(INV-S1).
-      const wanted = [
-        needTitle ? '"titleKo": "한국어로 옮긴 제목"' : null,
-        needSummary ? '"summary": "요약문"' : null,
-        needSummary ? '"points": ["핵심 항목", "..."]' : null,
-        needSummary ? '"tags": ["..."]' : null,
-      ].filter((line): line is string => line !== null);
-
-      // 말투·요약 방식은 model/prompt-text.ts 에 있다 — 고칠 일이 있으면 거기만 열면 된다.
-      // **아래 마지막 줄(출력 형식)만 여기 남는다**: 키 이름이 어긋나면 파싱이 전부 실패하고,
-      // 그 실패는 조용하다(빈 결과로 돌아가 매 주기 재시도만 반복된다).
-      const rules = [ROLE, EVIDENCE_ONLY];
-      if (needTitle) rules.push(TITLE_RULE);
-      if (needSummary) rules.push(...summaryRules(ARTICLE_TAGS));
-      rules.push(`출력은 JSON 하나: {${wanted.join(", ")}}. 다른 말은 쓰지 않는다.`);
+      // 항목마다 필요한 지시만 조립한다 (INV-P1) — 조립 자체는 순수 함수라 여기서 직접
+      // 검증하지 않는다(build-enrich-prompt.test.ts 가 한다).
+      const prompt = buildEnrichPrompt({
+        title,
+        evidence: evidence.slice(0, EVIDENCE_LIMIT),
+        needSummary,
+        needTitle,
+      });
 
       const res = await anthropic.messages.create(
         {
@@ -223,15 +279,8 @@ export function createIngestPorts(): IngestPorts {
           // JSON 껍데기까지 넣다 잘리고, 잘리면 닫는 중괄호가 없어 파싱이 실패한다.
           // 그러면 title_ko 가 계속 null 이라 **같은 항목이 매 주기 같은 자리에서 다시 잘린다.**
           max_tokens: needSummary ? 1400 : 500,
-          system: rules.map((r) => `- ${r}`).join("\n"),
-          messages: [
-            {
-              role: "user",
-              content: needSummary
-                ? `제목: ${title}\n\n글:\n${evidence.slice(0, EVIDENCE_LIMIT)}`
-                : `제목: ${title}`,
-            },
-          ],
+          system: prompt.system,
+          messages: [{ role: "user", content: prompt.user }],
         },
         { timeout: SUMMARY_TIMEOUT_MS },
       );
@@ -258,6 +307,8 @@ export function createIngestPorts(): IngestPorts {
         points: [],
         tags: [],
         titleKo: null,
+        // 응답을 못 읽었으면 공식 여부도 모른다 — 모르는 것은 false 다 (INV-O2 CS9).
+        officialByContent: false,
         usage,
       };
 
@@ -276,6 +327,9 @@ export function createIngestPorts(): IngestPorts {
           points: summary === "" ? [] : strings(parsed.points).map((p) => p.trim()).filter(Boolean),
           tags: strings(parsed.tags),
           titleKo: typeof parsed.titleKo === "string" ? parsed.titleKo.trim() || null : null,
+          // `true` 하나만 참으로 친다. 문자열 "true"·1 을 받아 주면 모델이 형식을 흘릴 때
+          // 공식 표시가 조용히 늘어난다 — 틀린 쪽으로 기울면 안 되는 값이다(INV-O2).
+          officialByContent: parsed.official === true,
           usage,
         };
       } catch {
@@ -297,6 +351,8 @@ export function createIngestPorts(): IngestPorts {
       if (patch.summary !== undefined) row.summary = patch.summary;
       if (patch.points !== undefined) row.summary_points = patch.points;
       if (patch.titleKo !== undefined) row.title_ko = patch.titleKo;
+      // 파이프라인이 "덮어도 되는 경우"에만 실어 보낸다 (INV-O2) — 여기서 다시 판단하지 않는다.
+      if (patch.officialBasis !== undefined) row.official_basis = patch.officialBasis;
 
       const { error } = await db.from("item").update(row).eq("id", id);
       if (error) throw new Error(error.message);

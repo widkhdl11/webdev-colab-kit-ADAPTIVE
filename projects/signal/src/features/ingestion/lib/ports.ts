@@ -1,4 +1,4 @@
-import type { FeedItemDraft } from "@/entities/article";
+import type { FeedItemDraft, OfficialBasis } from "@/entities/article";
 import type { Source } from "@/entities/source";
 
 /**
@@ -26,6 +26,11 @@ export interface EnrichCandidate {
   contentHtml: string;
   sourceExcerpt: string | null;
   summary: string | null;
+  /**
+   * 지금 저장돼 있는 공식 근거 (INV-O2). 모델 판단을 쓸지 말지가 이 값으로 갈린다 —
+   * 이미 `byUrl` 이면 덮지 않는다. 안 들고 오면 그 판단을 파이프라인이 할 수 없다.
+   */
+  officialBasis: OfficialBasis;
 }
 
 /** 본문이 없어 추출을 시도할 항목 (INV-S5). */
@@ -62,6 +67,11 @@ export interface EnrichResult {
   tags: string[];
   /** 한국어 제목 (INV-S6). 요청하지 않았거나 실패하면 null. */
   titleKo: string | null;
+  /**
+   * 글 내용으로 본 공식 발표 여부 (INV-O2 의 `byContent`). **주소 근거와는 다른 값이다** —
+   * 이건 모델 판단이라 틀릴 수 있고, 요청하지 않았거나 응답에 없으면 false 다.
+   */
+  officialByContent: boolean;
   /** 이 호출이 쓴 토큰. **빈 결과를 돌려줄 때도 채운다** — 실패해도 요금은 나갔다. */
   usage: EnrichUsage;
 }
@@ -75,6 +85,24 @@ export interface EnrichNeeds {
 export interface IngestPorts {
   /** 소스 하나의 피드를 읽는다. 실패하면 던진다 — 격리는 파이프라인이 한다. */
   fetchFeed(source: Source): Promise<unknown[]>;
+  /**
+   * 제목만 보고 주제(AI·IT) 안인지 정한다 (INV-F1). 요약·본문추출보다 먼저, 적재 전에 부른다.
+   * 실패하면 던진다 — 거르지 않고 통과시키는 판단은 파이프라인이 한다(INV-F3).
+   *
+   * 토큰을 같이 돌려주는 이유: 이 호출도 요금이 나간다. 요약만 세면 계측이
+   * 파이프라인의 절반을 못 본다 — 판정이 70건씩 도는 주기가 보고서에서 안 보인다.
+   */
+  judgeTopic(title: string): Promise<{ onTopic: boolean; usage: EnrichUsage }>;
+  /**
+   * 준 주소 중 **이미 적재돼 있는 것**을 돌려준다.
+   *
+   * 주제 판정을 새 항목에만 하려고 쓴다. 이미 있는 항목은 주제 밖으로 판정돼도 DB 에서
+   * 사라지지 않으므로(INV-F2 는 "적재하지 않는다"이지 "지운다"가 아니다) 그 호출은
+   * 요금만 쓰고 아무 효과가 없다. OpenAI 아카이브는 최신 50건이 매 주기 같다.
+   *
+   * 실패하면 던진다 — 파이프라인이 "전부 새 항목"으로 보고 판정한다(모르면 판정하는 쪽).
+   */
+  listKnownUrls(canonicalUrls: string[]): Promise<string[]>;
   /** canonical_url 기준 upsert (INV-C1). 새로 넣은 게 아니라 처리한 건수를 돌려준다. */
   upsertItems(items: FeedItemDraft[]): Promise<number>;
   /** 본문이 비어 있는 항목을 가져온다 (INV-S5). */
@@ -99,7 +127,13 @@ export interface IngestPorts {
    */
   saveEnrichment(
     id: string,
-    patch: { summary?: string; points?: string[]; tags?: string[]; titleKo?: string },
+    patch: {
+      summary?: string;
+      points?: string[];
+      tags?: string[];
+      titleKo?: string;
+      officialBasis?: OfficialBasis;
+    },
   ): Promise<void>;
 }
 
@@ -118,6 +152,7 @@ export interface SourceReport {
 export interface StageReport {
   attempted: number;
   succeeded: number;
+  /** **목록 길이에서 나온다** — 세는 곳과 적는 곳이 갈리면 한쪽만 고치는 날 보고서가 틀린다. */
   failed: number;
   /** 그 단계 자체가 죽은 경우. 앞 단계 결과는 그대로 남는다. */
   error: string | null;
@@ -134,6 +169,13 @@ export interface StageReport {
 export interface UsageReport {
   /** enrich 호출 횟수. **실패한 호출도 센다** — 실패해도 요금은 나갔다. */
   calls: number;
+  /**
+   * 주제 판정 호출 횟수와 토큰. 요약과 **합치지 않는다** — 합치면 어느 쪽이 튀는지 안 보인다.
+   * 판정은 건당 작지만 건수가 많고(소스당 최대 50건), 요약은 반대다.
+   */
+  topicCalls: number;
+  topicInputTokens: number;
+  topicOutputTokens: number;
   inputTokens: number;
   outputTokens: number;
   cacheReadTokens: number;
@@ -142,18 +184,57 @@ export interface UsageReport {
   maxInputTokens: number;
 }
 
+/**
+ * 주제 판정 (INV-F1·F2·F3).
+ *
+ * 실패(failedOpen)는 filtered 에 안 들어간다 — 실패는 "거르지 않음"으로 처리되기 때문이다.
+ * 조용히 삼키면 판정 호출이 매 주기 죽어도 아무 데도 안 보인다.
+ */
+export interface TopicFilterReport {
+  /** 실제로 모델에 물어본 건수. 이미 적재된 항목은 여기 안 들어간다. */
+  attempted: number;
+  /**
+   * 이미 적재돼 있어 판정을 건너뛴 건수.
+   *
+   * 따로 세는 이유: 이게 없으면 "판정 2건"이 **새 글이 2건뿐인 것**인지
+   * **필터가 죽은 것**인지 구별되지 않는다.
+   */
+  alreadyKnown: number;
+  /** 주제 밖으로 판정돼 적재하지 않은 건수. */
+  filtered: number;
+  /** 걸러진 항목의 제목 — 오판을 알아챌 유일한 방법이다(INV-F2). */
+  filteredTitles: string[];
+  /** 판정 호출이 실패해 거르지 않고 통과시킨 건수(INV-F3). */
+  failedOpen: number;
+}
+
 export interface IngestReport {
   sources: SourceReport[];
   /** 실패한 소스 id — 한눈에 보라고 따로 뽑는다. */
   failedSources: string[];
+  /** 주제 판정 (INV-F1·F2·F3). */
+  topicFilter: TopicFilterReport;
   /** 본문 추출 (INV-S5). */
-  extraction: StageReport;
+  extraction: StageReport & {
+    /**
+     * 추출에 실패한 원문 주소. 후보에는 제목이 없어서 주소로 남긴다.
+     *
+     * 건수만 남기면 같은 사이트가 매 주기 403 을 돌려줘도 "실패 1"만 반복된다 —
+     * 소스 목록을 손볼 근거가 보고서에 안 남는다.
+     */
+    failedUrls: string[];
+  };
   summaries: StageReport & {
     /** 근거가 없어 아예 시도하지 않은 건수 (INV-S3). 실패와 구분한다 — 재시도해도 소용없다. */
     skippedNoEvidence: number;
+    /** 요약에 실패한 항목의 제목. 걸러진 제목을 남기는 것(INV-F2)과 같은 이유다. */
+    failedTitles: string[];
   };
   /** 제목 번역 (INV-S6). 요약과 같은 호출에서 처리되지만 조건이 달라 따로 센다. */
-  titles: StageReport;
+  titles: StageReport & {
+    /** 번역에 실패한 항목의 **원문** 제목. */
+    failedTitles: string[];
+  };
   /** 토큰 사용량 (개발용). 불변식이 아니라 관찰용이다. */
   usage: UsageReport;
 }

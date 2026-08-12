@@ -1,3 +1,4 @@
+import { persistsOnReingest } from "@/entities/article";
 import type { FeedItemDraft } from "@/entities/article";
 
 /**
@@ -36,6 +37,9 @@ export function upsertBatches(items: FeedItemDraft[], nowIso: string): UpsertRow
 
     if (item.contentHtml.trim() !== "") row.content_html = item.contentHtml;
     if ((item.sourceExcerpt ?? "").trim() !== "") row.source_excerpt = item.sourceExcerpt;
+    // 어떤 근거를 다시 실을지는 entities 가 정한다 (INV-O2) — 여기와 후처리 두 곳에
+    // 조건문으로 흩어져 있으면 한쪽만 고치는 날 조용히 어긋난다.
+    if (persistsOnReingest(item.officialBasis)) row.official_basis = item.officialBasis;
 
     const shape = Object.keys(row).sort().join(",");
     const bucket = byShape.get(shape);

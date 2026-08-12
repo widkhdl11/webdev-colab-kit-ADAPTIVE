@@ -14,12 +14,17 @@ const NOW = new Date("2026-08-09T05:00:00.000Z");
 
 /** 가짜 호출 하나가 쓴 토큰. 값 자체는 뜻이 없고 합계가 맞는지만 본다. */
 const USAGE = { inputTokens: 100, outputTokens: 20, cacheReadTokens: 0, cacheWriteTokens: 0 };
+/** 주제 판정 한 번이 쓴 토큰. 요약과 다른 값을 써야 합계가 섞였을 때 드러난다. */
+const TOPIC_USAGE = { inputTokens: 7, outputTokens: 3, cacheReadTokens: 0, cacheWriteTokens: 0 };
+/** 판정 결과를 포트 모양으로 감싼다. */
+const verdict = (onTopic: boolean) => ({ onTopic, usage: TOPIC_USAGE });
 
 const source = (id: string): Source => ({
   id,
   name: id,
   weight: 1,
   feedUrl: `https://ex.com/${id}.xml`,
+  tier: "daily",
 });
 
 const feedItem = (n: string) => ({
@@ -32,6 +37,8 @@ const feedItem = (n: string) => ({
 function makePorts(over: Partial<IngestPorts> = {}): IngestPorts {
   return {
     fetchFeed: vi.fn(async () => []),
+    judgeTopic: vi.fn(async () => verdict(true)),
+    listKnownUrls: vi.fn(async () => [] as string[]),
     upsertItems: vi.fn(async (items) => items.length),
     listExtractionCandidates: vi.fn(async () => [] as ExtractionCandidate[]),
     extractContent: vi.fn(async () => "<p>추출된 본문</p>"),
@@ -42,7 +49,7 @@ function makePorts(over: Partial<IngestPorts> = {}): IngestPorts {
       points: ["항목"],
       tags: ["MCP"],
       titleKo: "한국어 제목",
-      usage: USAGE,
+      officialByContent: false, usage: USAGE,
     })),
     saveEnrichment: vi.fn(async () => {}),
     ...over,
@@ -160,6 +167,116 @@ describe("runIngest — INV-C4 한 소스의 실패가 다른 소스를 막지 �
   });
 });
 
+describe("runIngest — INV-F1·F2·F3 주제 선별", () => {
+  it("INV-F1 (CS1): 주제 판정은 제목만 보고, 추출·요약 후보 조회보다 먼저 불린다", async () => {
+    const order: string[] = [];
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("cocktail")]),
+      judgeTopic: vi.fn(async (title: string) => {
+        order.push(`판정:${title}`);
+        return verdict(true);
+      }),
+      listExtractionCandidates: vi.fn(async () => {
+        order.push("추출후보조회");
+        return [];
+      }),
+      listEnrichCandidates: vi.fn(async () => {
+        order.push("요약후보조회");
+        return [];
+      }),
+    });
+
+    await runIngest({ sources: [source("s")], ports, now: NOW });
+
+    // 인자가 문자열 하나뿐이라는 것 자체가 "본문이 안 들어간다"는 증거다.
+    expect(vi.mocked(ports.judgeTopic).mock.calls[0]).toEqual(["제목 cocktail"]);
+    expect(order[0]).toBe("판정:제목 cocktail");
+    expect(order.indexOf("판정:제목 cocktail")).toBeLessThan(order.indexOf("추출후보조회"));
+  });
+
+  it("INV-F1 (CS2): 주제 밖으로 판정된 항목에는 요약·추출을 시도하지 않는다", async () => {
+    // listExtractionCandidates·listEnrichCandidates 를 실제로 저장된 것에서 유도한다 —
+    // 고정값을 돌려주면 "적재 안 됐으니 후보에도 없다"는 걸 이 테스트가 증명하지 못한다.
+    const stored: FeedItemDraft[] = [];
+    const extractCalls: string[] = [];
+    const enrichCalls: string[] = [];
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("cocktail"), feedItem("ok")]),
+      judgeTopic: vi.fn(async (title: string) => verdict(!title.includes("cocktail"))),
+      upsertItems: vi.fn(async (items) => {
+        stored.push(...items);
+        return items.length;
+      }),
+      listExtractionCandidates: vi.fn(async () =>
+        stored.map((i) => ({ id: i.canonicalUrl, url: i.canonicalUrl })),
+      ),
+      extractContent: vi.fn(async (url: string) => {
+        extractCalls.push(url);
+        return "<p>본문</p>";
+      }),
+      listEnrichCandidates: vi.fn(async () =>
+        stored.map((i) => ({
+          id: i.canonicalUrl,
+          title: i.title,
+          titleKo: "번역됨",
+          contentHtml: "<p>본문</p>",
+          sourceExcerpt: null,
+          summary: null,
+          officialBasis: "none" as const,
+        })),
+      ),
+      enrich: vi.fn(async ({ title }) => {
+        enrichCalls.push(title);
+        return { summary: "", points: [], tags: [], titleKo: null, officialByContent: false, usage: USAGE };
+      }),
+    });
+
+    await runIngest({ sources: [source("s")], ports, now: NOW });
+
+    expect(stored.map((i) => i.canonicalUrl)).toEqual(["https://ex.com/ok"]);
+    expect(extractCalls).toEqual(["https://ex.com/ok"]);
+    expect(enrichCalls).toEqual(["제목 ok"]);
+  });
+
+  it("INV-F2 (CS3): 주제 밖 항목은 적재하지 않고, 건수와 제목을 리포트에 남긴다", async () => {
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [
+        feedItem("off1"),
+        feedItem("off2"),
+        feedItem("on1"),
+        feedItem("on2"),
+        feedItem("on3"),
+      ]),
+      judgeTopic: vi.fn(async (title: string) => verdict(!title.includes("off"))),
+    });
+
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+
+    expect(report.sources[0].stored).toBe(3);
+    expect(report.topicFilter.attempted).toBe(5);
+    expect(report.topicFilter.filtered).toBe(2);
+    expect(report.topicFilter.filteredTitles).toHaveLength(2);
+    expect(report.topicFilter.filteredTitles).toEqual(
+      expect.arrayContaining(["제목 off1", "제목 off2"]),
+    );
+  });
+
+  it("INV-F3 (CS4) 실패경로: 판정 호출이 실패하면 거르지 않고 적재한다", async () => {
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("x")]),
+      judgeTopic: vi.fn(async () => {
+        throw new Error("timeout");
+      }),
+    });
+
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+
+    expect(report.sources[0].stored).toBe(1);
+    expect(report.topicFilter.filtered).toBe(0);
+    expect(report.topicFilter.failedOpen).toBe(1);
+  });
+});
+
 describe("runIngest — INV-S2·S3 요약", () => {
   const candidate = (id: string, summary: string | null): EnrichCandidate => ({
     id,
@@ -169,6 +286,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
     contentHtml: `<p>본문 ${id}</p>`,
     sourceExcerpt: null,
     summary,
+    officialBasis: "none" as const,
   });
 
   it("INV-S3 (S11): 요약이 이미 있는 항목은 다시 부르지 않는다", async () => {
@@ -202,7 +320,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
     // 트림을 지우면 공백 본문이 근거가 돼 제목만 보고 지어내게 된다(INV-S1 위반).
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "a", title: "제목", titleKo: "번역됨", contentHtml: "   ", sourceExcerpt: null, summary: null },
+        { id: "a", title: "제목", titleKo: "번역됨", contentHtml: "   ", sourceExcerpt: null, summary: null, officialBasis: "none" as const },
       ]),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
@@ -216,7 +334,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
       listEnrichCandidates: vi.fn(async () => [candidate("a", null), candidate("b", null)]),
       enrich: vi.fn(async ({ title }) => {
         if (title.endsWith("a")) throw new Error("timeout");
-        return { summary: "b 의 요약", points: [], tags: [], titleKo: null, usage: USAGE };
+        return { summary: "b 의 요약", points: [], tags: [], titleKo: null, officialByContent: false, usage: USAGE };
       }),
       saveEnrichment: vi.fn(async (id) => {
         saved.push(id);
@@ -246,7 +364,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
     // 빈 문자열을 저장하면 S3 의 재시도 조건에서 빠져나가 영원히 요약 없는 항목이 된다.
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [candidate("a", null)]),
-      enrich: vi.fn(async () => ({ summary: "   ", points: [], tags: [], titleKo: null, usage: USAGE })),
+      enrich: vi.fn(async () => ({ summary: "   ", points: [], tags: [], titleKo: null, officialByContent: false, usage: USAGE })),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
     expect(vi.mocked(ports.saveEnrichment)).not.toHaveBeenCalled();
@@ -261,7 +379,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
         points: ["항목1", "항목2"],
         tags: ["MCP"],
         titleKo: null,
-        usage: USAGE,
+        officialByContent: false, usage: USAGE,
       })),
     });
     await runIngest({ sources: [], ports, now: NOW });
@@ -294,6 +412,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
     contentHtml: "",
     sourceExcerpt: null,
     summary: null,
+    officialBasis: "none" as const,
     ...over,
   });
 
@@ -328,7 +447,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
   it("INV-S6 실패경로: 공백뿐인 번역이 오면 저장하지 않는다 (다음 주기에 다시 잡히게)", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [cand()]),
-      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "   ", usage: USAGE })),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "   ", officialByContent: false, usage: USAGE })),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
     expect(vi.mocked(ports.saveEnrichment)).not.toHaveBeenCalled();
@@ -355,7 +474,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
   it("INV-S3: 번역만 성공하면 summary 는 패치에 없다 (재시도 신호를 지우지 않는다)", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [cand({ contentHtml: "<p>본문</p>" })]),
-      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역", usage: USAGE })),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역", officialByContent: false, usage: USAGE })),
     });
     await runIngest({ sources: [], ports, now: NOW });
     const patch = vi.mocked(ports.saveEnrichment).mock.calls[0][1];
@@ -366,7 +485,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
   it("실패를 두 번 세지 않는다: 빈 요약 + 저장 실패", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [cand({ contentHtml: "<p>본문</p>" })]),
-      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역", usage: USAGE })),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역", officialByContent: false, usage: USAGE })),
       saveEnrichment: vi.fn(async () => {
         throw new Error("DB 거부");
       }),
@@ -420,7 +539,7 @@ describe("runIngest — INV-S5 본문 추출", () => {
         throw new Error("후보 조회 실패");
       }),
       listEnrichCandidates: vi.fn(async () => [
-        { id: "s", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨" },
+        { id: "s", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨", officialBasis: "none" as const },
       ]),
     });
     const report = await runIngest({ sources: [source("s")], ports, now: NOW });
@@ -451,7 +570,7 @@ describe("runIngest — INV-S3 근거가 없으면 요약하지 않는다", () =
     // 제목만 주고 요약시키면 모델이 지어낸다 — INV-S1 위반이다.
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "a", title: "Dithered QR Codes", contentHtml: "", sourceExcerpt: null, summary: null, titleKo: "번역됨" },
+        { id: "a", title: "Dithered QR Codes", contentHtml: "", sourceExcerpt: null, summary: null, titleKo: "번역됨", officialBasis: "none" as const },
       ]),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
@@ -470,7 +589,7 @@ describe("runIngest — INV-S3 근거가 없으면 요약하지 않는다", () =
           title: "제목",
           contentHtml: "",
           sourceExcerpt: "OpenAI 가 새 평가 결과를 공개했다.",
-          summary: null, titleKo: "번역됨",
+          summary: null, titleKo: "번역됨", officialBasis: "none" as const,
         },
       ]),
     });
@@ -483,7 +602,7 @@ describe("runIngest — INV-S3 근거가 없으면 요약하지 않는다", () =
   it("INV-S3: 본문이 있으면 본문을 근거로 쓴다 (요약글보다 낫다)", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "a", title: "제목", contentHtml: "<p>긴 본문</p>", sourceExcerpt: "짧은 요약글", summary: null, titleKo: "번역됨" },
+        { id: "a", title: "제목", contentHtml: "<p>긴 본문</p>", sourceExcerpt: "짧은 요약글", summary: null, titleKo: "번역됨", officialBasis: "none" as const },
       ]),
     });
     await runIngest({ sources: [], ports, now: NOW });
@@ -495,14 +614,14 @@ describe("runIngest — INV-T3 태그는 요약과 함께 저장된다", () => {
   it("INV-T3 (S21): AI 가 고른 태그를 요약과 같이 넘긴다", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "a", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨" },
+        { id: "a", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨", officialBasis: "none" as const },
       ]),
       enrich: vi.fn(async () => ({
         summary: "요약문",
         points: [],
         tags: ["MCP", "툴"],
         titleKo: null,
-        usage: USAGE,
+        officialByContent: false, usage: USAGE,
       })),
     });
     await runIngest({ sources: [], ports, now: NOW });
@@ -517,7 +636,7 @@ describe("runIngest — INV-T3 태그는 요약과 함께 저장된다", () => {
     // 조용히 넘기면 이 항목은 다음 주기에 요약 후보가 아니라서 태그를 붙일 기회가 없다.
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "a", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨" },
+        { id: "a", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨", officialBasis: "none" as const },
       ]),
       saveEnrichment: vi.fn(async () => {
         throw new Error("태그 저장 실패");
@@ -538,6 +657,7 @@ describe("runIngest — 토큰 사용량 보고", () => {
     contentHtml: `<p>본문 ${id}</p>`,
     sourceExcerpt: null,
     summary: null,
+    officialBasis: "none" as const,
   });
 
   it("실패한 호출의 토큰도 합계에 들어간다", async () => {
@@ -550,6 +670,7 @@ describe("runIngest — 토큰 사용량 보고", () => {
         points: [],
         tags: [],
         titleKo: null,
+        officialByContent: false,
         usage: { inputTokens: 4000, outputTokens: 12, cacheReadTokens: 0, cacheWriteTokens: 0 },
       })),
     });
@@ -572,6 +693,7 @@ describe("runIngest — 토큰 사용량 보고", () => {
         points: [],
         tags: [],
         titleKo: null,
+        officialByContent: false,
         usage: {
           inputTokens: sizes[title.slice(-1)] ?? 0,
           outputTokens: 10,
@@ -608,11 +730,346 @@ describe("runIngest — 토큰 사용량 보고", () => {
     const report = await runIngest({ sources: [], ports: makePorts(), now: NOW });
     expect(report.usage).toEqual({
       calls: 0,
+      topicCalls: 0,
+      topicInputTokens: 0,
+      topicOutputTokens: 0,
       inputTokens: 0,
       outputTokens: 0,
       cacheReadTokens: 0,
       cacheWriteTokens: 0,
       maxInputTokens: 0,
     });
+  });
+});
+
+/**
+ * 공식 여부의 근거 — content-selection INV-O2.
+ *
+ * 주소 근거(byUrl)는 적재 때 순수 함수가 정하고(INV-O3), 여기서 다루는 것은 **내용 근거**다.
+ * 규칙은 둘: 모델이 공식이라고 하면 `byContent` 로 남기고, **이미 주소 근거가 있으면 건드리지
+ * 않는다.** 덮으면 기계가 확인한 사실이 모델 판단으로 격하된다.
+ */
+describe("runIngest — INV-O2 공식 여부의 근거", () => {
+  const cand = (over: Partial<EnrichCandidate> = {}): EnrichCandidate => ({
+    id: "a",
+    title: "제목",
+    titleKo: "번역됨",
+    contentHtml: "<p>본문</p>",
+    sourceExcerpt: null,
+    summary: null,
+    officialBasis: "none" as const,
+    ...over,
+  });
+
+  const enrichWith = (officialByContent: boolean) =>
+    vi.fn(async () => ({
+      summary: "요약문",
+      points: [],
+      tags: [],
+      titleKo: null,
+      officialByContent,
+      usage: USAGE,
+    }));
+
+  it("INV-O2: 모델이 공식이라고 하면 byContent 로 남긴다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [cand()]),
+      enrich: enrichWith(true),
+    });
+    await runIngest({ sources: [], ports, now: NOW });
+    expect(vi.mocked(ports.saveEnrichment).mock.calls[0][1]).toMatchObject({
+      officialBasis: "byContent",
+    });
+  });
+
+  it("INV-O2 (CS9) 실패경로: 모델이 공식이라고 하지 않으면 아무것도 쓰지 않는다", async () => {
+    // 여기서 "none" 을 써 버리면 다음 주기의 주소 근거까지 덮을 수 있다.
+    // 안 쓴다 = 컬럼 기본값 그대로 남는다.
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [cand()]),
+      enrich: enrichWith(false),
+    });
+    await runIngest({ sources: [], ports, now: NOW });
+    const patch = vi.mocked(ports.saveEnrichment).mock.calls[0][1];
+    expect(patch).not.toHaveProperty("officialBasis");
+  });
+
+  it("INV-O2: 주소 근거가 이미 있으면 모델 판단으로 덮지 않는다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [cand({ officialBasis: "byUrl" })]),
+      enrich: enrichWith(true),
+    });
+    await runIngest({ sources: [], ports, now: NOW });
+    expect(vi.mocked(ports.saveEnrichment).mock.calls[0][1]).not.toHaveProperty("officialBasis");
+  });
+
+  it("INV-O2 실패경로: 요약이 비면 공식 판정도 쓰지 않는다", async () => {
+    // 2026-08-12 정정. 처음엔 "요약이 비어도 공식 판정만으로 저장한다"로 만들었는데,
+    // **같은 근거를 주고도 요약을 못 만든 응답의 공식 판단은 믿을 이유가 약하다**(리뷰 지적).
+    // 안 써도 잃는 게 없다 — 그 항목은 summary 가 비어 있어 다음 주기에 다시 잡힌다.
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [cand()]),
+      enrich: vi.fn(async () => ({
+        summary: "",
+        points: [],
+        tags: [],
+        titleKo: null,
+        officialByContent: true,
+        usage: USAGE,
+      })),
+    });
+    await runIngest({ sources: [], ports, now: NOW });
+    expect(vi.mocked(ports.saveEnrichment)).not.toHaveBeenCalled();
+  });
+
+  it("INV-O2 (CS2 연계): 번역만 하는 항목에는 공식 판정을 요청하지 않는다", async () => {
+    // 근거(본문·출처 요약글)가 없으면 공식 여부도 지어내게 된다 — 요약과 같은 조건이다.
+    // 번역은 성공시킨다 — 저장 자체가 안 일어나면 "안 실렸다"를 증명하지 못한다.
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [
+        cand({ titleKo: null, contentHtml: "", sourceExcerpt: null }),
+      ]),
+      enrich: vi.fn(async () => ({
+        summary: "",
+        points: [],
+        tags: [],
+        titleKo: "번역",
+        officialByContent: true,
+        usage: USAGE,
+      })),
+    });
+    await runIngest({ sources: [], ports, now: NOW });
+    expect(vi.mocked(ports.enrich).mock.calls[0][0].needSummary).toBe(false);
+    expect(vi.mocked(ports.saveEnrichment).mock.calls[0][1]).toEqual({ titleKo: "번역" });
+  });
+});
+
+/**
+ * 실패한 항목이 무엇인지 리포트에 남긴다.
+ *
+ * 건수만 남기면 같은 항목이 매 주기 조용히 실패해도 보고서는 "실패 1"만 반복한다 —
+ * 주제 판정이 걸러진 제목을 남기는 것(INV-F2)과 같은 이유다. 실제 수집에서
+ * 요약 1건·번역 1건이 실패했는데 어느 항목인지 알 방법이 없었다(2026-08-12).
+ */
+describe("runIngest — 실패한 항목을 지목한다", () => {
+  const cand = (id: string, over: Partial<EnrichCandidate> = {}): EnrichCandidate => ({
+    id,
+    title: `제목 ${id}`,
+    titleKo: null,
+    contentHtml: `<p>본문 ${id}</p>`,
+    sourceExcerpt: null,
+    summary: null,
+    officialBasis: "none" as const,
+    ...over,
+  });
+
+  it("요약이 빈 값으로 돌아오면 그 항목의 제목이 남는다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [cand("a"), cand("b")]),
+      enrich: vi.fn(async ({ title }) => ({
+        summary: title.endsWith("a") ? "" : "요약문",
+        points: [],
+        tags: [],
+        titleKo: "번역",
+        officialByContent: false,
+        usage: USAGE,
+      })),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.summaries.failedTitles).toEqual(["제목 a"]);
+    // 성공한 항목이 섞여 들어오면 목록이 거짓말을 한다.
+    expect(report.summaries.failedTitles).not.toContain("제목 b");
+  });
+
+  it("호출 자체가 죽으면 요약·번역 양쪽 목록에 남는다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [cand("a")]),
+      enrich: vi.fn(async () => {
+        throw new Error("timeout");
+      }),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.summaries.failedTitles).toEqual(["제목 a"]);
+    expect(report.titles.failedTitles).toEqual(["제목 a"]);
+  });
+
+  it("건수와 목록이 어긋나지 않는다", async () => {
+    // 세는 곳과 적는 곳이 따로면 한쪽만 고치는 날 보고서가 조용히 틀린다.
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [cand("a"), cand("b"), cand("c")]),
+      enrich: vi.fn(async ({ title }) => ({
+        summary: title.endsWith("c") ? "요약문" : "",
+        points: [],
+        tags: [],
+        titleKo: title.endsWith("a") ? "" : "번역",
+        officialByContent: false,
+        usage: USAGE,
+      })),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.summaries.failed).toBe(report.summaries.failedTitles.length);
+    expect(report.titles.failed).toBe(report.titles.failedTitles.length);
+    expect(report.summaries.failedTitles.sort()).toEqual(["제목 a", "제목 b"]);
+    expect(report.titles.failedTitles).toEqual(["제목 a"]);
+  });
+
+  it("추출은 제목이 없으니 주소를 남긴다", async () => {
+    const ports = makePorts({
+      listExtractionCandidates: vi.fn(async () => [
+        { id: "a", url: "https://ex.com/a" },
+        { id: "b", url: "https://ex.com/b" },
+      ]),
+      extractContent: vi.fn(async (u: string) => {
+        if (u.endsWith("a")) throw new Error("HTTP 403");
+        return "<p>본문</p>";
+      }),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.extraction.failedUrls).toEqual(["https://ex.com/a"]);
+    expect(report.extraction.failed).toBe(1);
+  });
+
+  it("실패가 없으면 목록도 비어 있다", async () => {
+    const report = await runIngest({ sources: [], ports: makePorts(), now: NOW });
+    expect(report.summaries.failedTitles).toEqual([]);
+    expect(report.titles.failedTitles).toEqual([]);
+    expect(report.extraction.failedUrls).toEqual([]);
+  });
+});
+
+describe("runIngest — 적재가 실패해도 판정 기록은 남는다 (INV-F2)", () => {
+  it("upsert 가 던져도 걸러낸 제목과 건수가 리포트에 남는다", async () => {
+    // 여기서 리포트가 사라지면 하필 DB 가 흔들린 주기에 "무엇을 걸렀나"를 못 본다.
+    // 판정 호출은 이미 나갔으므로 요금도 이미 썼다 — 기록만 없어지는 셈이다.
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("cocktail"), feedItem("ok")]),
+      judgeTopic: vi.fn(async (title: string) => verdict(!title.includes("cocktail"))),
+      upsertItems: vi.fn(async () => {
+        throw new Error("DB 거부");
+      }),
+    });
+
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+
+    expect(report.sources[0].error).toContain("DB 거부");
+    expect(report.topicFilter.attempted).toBe(2);
+    expect(report.topicFilter.filtered).toBe(1);
+    expect(report.topicFilter.filteredTitles).toEqual(["제목 cocktail"]);
+  });
+});
+
+/**
+ * 이미 적재된 항목은 다시 판정하지 않는다 (INV-F1 의 목적은 "적재하지 않는다"다).
+ *
+ * OpenAI 아카이브는 최신 50건이 매 주기 같다. 판정이 실제로 돌기 시작한 뒤로는
+ * 그 50건이 매번 다시 호출돼 요금만 나갔다 — 이미 있는 항목은 판정 결과가 off 로 나와도
+ * DB 에서 사라지지 않으므로 그 호출은 아무 효과가 없다.
+ */
+describe("runIngest — 이미 아는 항목은 판정하지 않는다", () => {
+  it("이미 적재된 주소는 judgeTopic 을 부르지 않는다", async () => {
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("old"), feedItem("new")]),
+      listKnownUrls: vi.fn(async () => ["https://ex.com/old"]),
+    });
+
+    await runIngest({ sources: [source("s")], ports, now: NOW });
+
+    const judged = vi.mocked(ports.judgeTopic).mock.calls.map((c) => c[0]);
+    expect(judged).toEqual(["제목 new"]);
+  });
+
+  it("이미 아는 항목도 적재는 한다 (본문·요약글이 새로 올 수 있다)", async () => {
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("old"), feedItem("new")]),
+      listKnownUrls: vi.fn(async () => ["https://ex.com/old"]),
+    });
+
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+
+    const upserted = vi.mocked(ports.upsertItems).mock.calls[0][0].map((i) => i.canonicalUrl);
+    expect(upserted.sort()).toEqual(["https://ex.com/new", "https://ex.com/old"]);
+    expect(report.sources[0].stored).toBe(2);
+  });
+
+  it("건너뛴 건수를 리포트에 남긴다", async () => {
+    // 남기지 않으면 "판정 2건"이 "새 글이 2건뿐"인지 "필터가 죽었는지" 구별되지 않는다.
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("a"), feedItem("b"), feedItem("c")]),
+      listKnownUrls: vi.fn(async () => ["https://ex.com/a", "https://ex.com/b"]),
+    });
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+    expect(report.topicFilter.attempted).toBe(1);
+    expect(report.topicFilter.alreadyKnown).toBe(2);
+  });
+
+  it("실패경로: 조회가 실패하면 전부 새 항목으로 보고 판정한다", async () => {
+    // 여기서 던지면 그 소스의 수집이 통째로 죽는다. 모르면 판정하는 쪽이 안전하다 —
+    // 돈은 더 쓰지만 새 글을 놓치지 않는다.
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("a"), feedItem("b")]),
+      listKnownUrls: vi.fn(async () => {
+        throw new Error("DB 조회 실패");
+      }),
+    });
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+    expect(vi.mocked(ports.judgeTopic)).toHaveBeenCalledTimes(2);
+    expect(report.sources[0].error).toBeNull();
+    expect(report.topicFilter.alreadyKnown).toBe(0);
+  });
+
+  it("주제 밖으로 걸러진 것과 이미 아는 것은 다른 칸이다", async () => {
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("known"), feedItem("cocktail"), feedItem("ok")]),
+      listKnownUrls: vi.fn(async () => ["https://ex.com/known"]),
+      judgeTopic: vi.fn(async (title: string) => verdict(!title.includes("cocktail"))),
+    });
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+    expect(report.topicFilter).toMatchObject({
+      attempted: 2,
+      filtered: 1,
+      filteredTitles: ["제목 cocktail"],
+      alreadyKnown: 1,
+    });
+    // 걸러진 것만 빠진다 — 이미 아는 항목은 적재 대상으로 남는다.
+    expect(report.sources[0].stored).toBe(2);
+  });
+});
+
+describe("runIngest — 주제 판정 토큰도 센다", () => {
+  it("판정 호출의 토큰이 요약과 **다른 칸**에 쌓인다", async () => {
+    // 합치면 어느 쪽이 튀는지 안 보인다. 판정은 건당 작고 건수가 많고, 요약은 반대다.
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("a"), feedItem("b")]),
+    });
+
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+
+    expect(report.usage.topicCalls).toBe(2);
+    expect(report.usage.topicInputTokens).toBe(TOPIC_USAGE.inputTokens * 2);
+    expect(report.usage.topicOutputTokens).toBe(TOPIC_USAGE.outputTokens * 2);
+    // 요약 칸에는 섞이지 않는다.
+    expect(report.usage.calls).toBe(0);
+    expect(report.usage.inputTokens).toBe(0);
+  });
+
+  it("판정을 건너뛴 항목은 토큰도 안 쓴다", async () => {
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("a"), feedItem("b")]),
+      listKnownUrls: vi.fn(async () => ["https://ex.com/a", "https://ex.com/b"]),
+    });
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+    expect(report.usage.topicCalls).toBe(0);
+    expect(report.usage.topicInputTokens).toBe(0);
+  });
+
+  it("적재가 실패해도 이미 쓴 판정 토큰은 보고에 남는다", async () => {
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("a")]),
+      upsertItems: vi.fn(async () => {
+        throw new Error("DB 거부");
+      }),
+    });
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+    expect(report.usage.topicCalls).toBe(1);
   });
 });

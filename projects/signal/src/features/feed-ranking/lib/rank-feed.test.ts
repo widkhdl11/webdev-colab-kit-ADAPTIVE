@@ -12,8 +12,8 @@ import { rankFeed } from "./rank-feed";
 const NOW = new Date("2026-08-09T12:00:00.000Z");
 
 const SOURCES = [
-  { id: "hi", name: "높은 곳", weight: 2, feedUrl: "https://ex.com/hi.xml" },
-  { id: "lo", name: "낮은 곳", weight: 1, feedUrl: "https://ex.com/lo.xml" },
+  { id: "hi", name: "높은 곳", weight: 2, feedUrl: "https://ex.com/hi.xml", tier: "daily" as const },
+  { id: "lo", name: "낮은 곳", weight: 1, feedUrl: "https://ex.com/lo.xml", tier: "daily" as const },
 ];
 const weightOf = sourceWeightLookup(SOURCES);
 
@@ -37,6 +37,7 @@ function stored(
     sourceUrl: `https://ex.com/${id}`,
     publishedAt: new Date(NOW.getTime() - hoursAgo * 3600_000).toISOString(),
     tags,
+    officialBasis: "none",
   };
 }
 

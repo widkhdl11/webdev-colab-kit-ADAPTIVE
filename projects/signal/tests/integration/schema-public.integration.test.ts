@@ -47,6 +47,25 @@ describe("스키마가 실제로 올라갔는지", () => {
   });
 });
 
+describe("INV-O2 — 공식 여부의 근거", () => {
+  it("INV-O2: official_basis 컬럼이 실제로 올라가 있다", async () => {
+    // SQL 텍스트 검사(schema-contract)는 파일만 본다 — 마이그레이션을 안 돌렸으면 그쪽은
+    // 통과하는데 화면은 조회에서 죽는다. 그 간극을 여기서 잡는다.
+    const { error } = await anon.from("item").select("official_basis").limit(1);
+    expect(error, error?.message).toBeNull();
+  });
+
+  it("INV-O2: 기존 항목의 기본값은 none 이다", async () => {
+    const { data, error } = await anon.from("item").select("official_basis").limit(50);
+    expect(error).toBeNull();
+    // null 이 섞여 있으면 기본값 없이 컬럼만 추가된 것이다.
+    expect((data ?? []).every((r) => r.official_basis !== null)).toBe(true);
+    for (const r of data ?? []) {
+      expect(["none", "byUrl", "byContent"]).toContain(r.official_basis);
+    }
+  });
+});
+
 describe("INV-R1 — 점수는 DB 에 없다", () => {
   it("INV-R1 (S6): score 컬럼을 고르면 에러가 난다", async () => {
     const { error } = await anon.from("item").select("score").limit(1);

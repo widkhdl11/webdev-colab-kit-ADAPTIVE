@@ -197,6 +197,15 @@
   flex: 1 1 auto;
 }
 
+/* 제목 위 뱃지 줄 — '뜨는 중' 과 공식 표시가 나란히 선다 (design-rules 2026-08-11) */
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -208,7 +217,44 @@
   border-radius: var(--r-pill);
   background: var(--accent-soft);
   color: var(--accent);
-  margin-bottom: var(--space-8);
+}
+
+/* ── 공식 표시 두 종류 (INV-O2) ───────────────────────────────────────
+   확실성 차이를 나르는 것은 문구다. 색은 쓸 수 없다 — 포인트색은 "아직 안 본 것"
+   전용이고, 두 번째 강조색은 만들지 않기로 했다. 형태는 거들기만 한다. */
+.official,
+.claimed {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--fs-chip);
+  letter-spacing: -0.1px;
+  padding: var(--space-4) var(--space-10);
+  border-radius: var(--r-pill);
+}
+
+.official {
+  background: var(--tag-bg);
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* 점선은 이 화면의 시그니처(카드 안 구분선·날짜 줄)라 이물감이 적다.
+   border 가 아니라 outline 인 이유: border 는 상자를 1px 키워서 시안이 짝수 규칙을
+   어기는 홀수 패딩(3/9px)으로 되돌려 놨었다. outline 은 레이아웃에 영향이 없어
+   두 알약의 바깥 크기가 같아진다 (ui-layers "간격은 짝수"). */
+.claimed {
+  background: transparent;
+  color: var(--meta);
+  font-weight: 500;
+  outline: 1px dashed var(--dot);
+  /* -1px 은 간격이 아니라 1px 헤어라인의 자리다 (ui-layers "간격은 짝수" 예외) */
+  outline-offset: -1px;
+  /* 문구가 두 줄로 접히면 알약 형태와 '뜨는 중'과의 높이 정렬이 깨진다 */
+  white-space: nowrap;
+}
+
+.card:hover .official {
+  background: var(--tag-bg-h);
 }
 
 .cardTitle {
@@ -340,6 +386,17 @@
   color: var(--badge-read-ink);
 }
 
+/* 공식 표시도 같은 규칙으로 눌러 둔다 (뱃지 중립화) */
+.isRead .official {
+  background: var(--tag-read-bg);
+  color: var(--tag-read-ink);
+}
+
+.isRead .claimed {
+  outline-color: var(--dot-read);
+  color: var(--meta-read);
+}
+
 /* 호버·포커스 = 완전 복구. 다시 읽으려는 순간에는 또렷해야 한다 */
 .isRead:hover,
 .isRead:focus-visible {
@@ -380,6 +437,18 @@
 .isRead:focus-visible .badge {
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+.isRead:hover .official,
+.isRead:focus-visible .official {
+  background: var(--tag-bg-h);
+  color: var(--text);
+}
+
+.isRead:hover .claimed,
+.isRead:focus-visible .claimed {
+  outline-color: var(--dot);
+  color: var(--meta);
 }
 
 /* ── 더 보기 · 빈 상태 ───────────────────────────────────────────────── */

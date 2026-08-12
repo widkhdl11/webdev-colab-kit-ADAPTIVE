@@ -174,3 +174,43 @@ describe("0003_title_ko.sql — INV-S6 제목 번역", () => {
     expect(destructive).toEqual([]);
   });
 });
+
+const sql0004 = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/0004_official_basis.sql"),
+  "utf8",
+);
+const body0004 = sql0004
+  .split("\n")
+  .filter((line) => !line.trimStart().startsWith("--"))
+  .join("\n")
+  .toLowerCase();
+
+describe("0004_official_basis.sql — INV-O2 공식 여부의 근거", () => {
+  it("INV-O2: 근거를 담는 컬럼이 있고 기본값은 none 이다", () => {
+    // 기본값이 없으면 기존 101건이 null 이 되고, 그때 화면이 그리는 것은
+    // "판단 못 함"이 아니라 undefined 다.
+    expect(body0004).toMatch(/add column if not exists official_basis text/);
+    expect(body0004).toMatch(/default 'none'/);
+  });
+
+  it("INV-O2: 세 값 밖은 DB 가 막는다", () => {
+    // 앱 경계(row.ts)도 모르는 값을 none 으로 떨어뜨리지만 그건 읽는 쪽 방어라,
+    // 잘못된 값이 **들어가는** 것 자체는 못 막는다.
+    const check = body0004.slice(body0004.indexOf("add constraint"));
+    expect(check).toMatch(/check\s*\(official_basis in \('none', 'byurl', 'bycontent'\)\)/);
+  });
+
+  it("INV-O2: boolean 한 칸으로 합치지 않는다", () => {
+    // is_official 같은 칸이 생기면 모델 판단과 주소 근거가 같은 값이 된다 — 그게 이 스펙이 막는 것이다.
+    expect(body0004).not.toMatch(/is_official/);
+  });
+
+  it("다시 적용해도 안전하다 (--all 로 전부 돌릴 때)", () => {
+    // add constraint 는 if not exists 를 지원하지 않아, drop 이 앞에 없으면 두 번째 실행에서 죽는다.
+    expect(body0004.indexOf("drop constraint if exists")).toBeLessThan(
+      body0004.indexOf("add constraint"),
+    );
+    const destructive = body0004.match(/^\s*(update|delete)\s[\s\S]*?;/gm) ?? [];
+    expect(destructive).toEqual([]);
+  });
+});

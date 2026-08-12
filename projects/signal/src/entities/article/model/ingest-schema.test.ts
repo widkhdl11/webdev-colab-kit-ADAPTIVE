@@ -18,7 +18,7 @@ const ok = {
 
 describe("parseFeedItem — INV-C3 외부 응답 경계", () => {
   it("INV-C3: 통과한 항목은 정규화된 값으로 나온다", () => {
-    const item = parseFeedItem(ok, { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S" });
+    const item = parseFeedItem(ok, { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S", subjectSites: [] });
     expect(item).not.toBeNull();
     // 여기서 나오는 값이 그대로 적재된다 — 경계에서 한 번만 검증한다는 규칙(domain-layers).
     expect(item?.canonicalUrl).toBe("https://ex.com/a"); // INV-C2 를 통과한 값
@@ -35,6 +35,7 @@ describe("parseFeedItem — INV-C3 외부 응답 경계", () => {
       fetchedAt: FETCHED_AT,
       sourceId: "s",
       sourceName: "S",
+      subjectSites: [],
     });
     expect(item).not.toBeNull();
     expect(item?.publishedAt).toBe(FETCHED_AT.toISOString());
@@ -46,6 +47,7 @@ describe("parseFeedItem — INV-C3 외부 응답 경계", () => {
       fetchedAt: FETCHED_AT,
       sourceId: "s",
       sourceName: "S",
+      subjectSites: [],
     });
     // 태그는 필수가 아니다 — 하나가 이상하다고 기사를 통째로 버리면 피드가 빈다.
     expect(item?.tags).toEqual(["MCP"]);
@@ -54,7 +56,7 @@ describe("parseFeedItem — INV-C3 외부 응답 경계", () => {
   it("INV-C3: 요약글·본문이 없으면 빈 값으로 (필수가 아니다)", () => {
     const item = parseFeedItem(
       { title: "제목", link: "https://ex.com/a", pubDate: ok.pubDate },
-      { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S" },
+      { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S", subjectSites: [] },
     );
     // 요약글은 "없음"을 null 로 표현한다 — 빈 문자열이면 "있는데 비었다"와 구별이 안 되고,
     // INV-S3 의 "근거가 있나" 판정이 흐려진다.
@@ -65,7 +67,7 @@ describe("parseFeedItem — INV-C3 외부 응답 경계", () => {
   it("INV-S2: 출처 요약글을 정리해 싣는다", () => {
     const item = parseFeedItem(
       { ...ok, summary: "<p>OpenAI 가 새 평가 결과를 공개했다.</p>" },
-      { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S" },
+      { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S", subjectSites: [] },
     );
     expect(item?.sourceExcerpt).toBe("OpenAI 가 새 평가 결과를 공개했다.");
   });
@@ -78,22 +80,64 @@ describe("parseFeedItem — INV-C3 외부 응답 경계", () => {
           '<p>Article URL: <a href="https://ex.com/x">https://ex.com/x</a></p>' +
           '<p>Comments URL: <a href="https://news.ycombinator.com/item?id=1">c</a></p>',
       },
-      { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S" },
+      { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S", subjectSites: [] },
     );
     expect(item?.sourceExcerpt).toBeNull();
+  });
+
+  it("INV-O1 (CS6): 출처는 수집 소스 이름이 아니라 원문 주소의 발행처다", () => {
+    const item = parseFeedItem(
+      { ...ok, link: "https://techcrunch.com/2026/08/09/x" },
+      { fetchedAt: FETCHED_AT, sourceId: "hn-frontpage", sourceName: "Hacker News", subjectSites: [] },
+    );
+    expect(item?.sourceName).toBe("Techcrunch");
+  });
+
+  it("INV-O1 (CS7) 실패경로: 발행처를 못 뽑으면 수집 소스 이름으로 되돌아간다", () => {
+    const item = parseFeedItem(
+      { ...ok, link: "http://localhost/x" },
+      { fetchedAt: FETCHED_AT, sourceId: "hn-frontpage", sourceName: "Hacker News", subjectSites: [] },
+    );
+    expect(item?.sourceName).toBe("Hacker News");
+  });
+
+  it("INV-O2·O3 (CS10): 원문 주소가 주체 도메인이면 byUrl 로 적재된다", () => {
+    const item = parseFeedItem(
+      { ...ok, link: "https://www.anthropic.com/news/x" },
+      {
+        fetchedAt: FETCHED_AT,
+        sourceId: "hn-frontpage",
+        sourceName: "Hacker News",
+        subjectSites: [{ host: "anthropic.com", pathPrefix: "/news/" }],
+      },
+    );
+    expect(item?.officialBasis).toBe("byUrl");
+  });
+
+  it("INV-O2 (CS9) 실패경로: 주체 도메인이 아니면 none 이다 (모델이 나중에 정한다)", () => {
+    const item = parseFeedItem(
+      { ...ok, link: "https://techcrunch.com/2026/08/09/x" },
+      {
+        fetchedAt: FETCHED_AT,
+        sourceId: "hn-frontpage",
+        sourceName: "Hacker News",
+        subjectSites: [{ host: "anthropic.com", pathPrefix: "/news/" }],
+      },
+    );
+    expect(item?.officialBasis).toBe("none");
   });
 
   it("INV-T3: 제목 키워드로 태그가 미리 붙는다", () => {
     const item = parseFeedItem(
       { ...ok, title: "Real-time MCP interceptor", tags: [] },
-      { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S" },
+      { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S", subjectSites: [] },
     );
     expect(item?.tags).toContain("MCP");
   });
 
   describe("실패 경로 — 버린다", () => {
     const parse = (raw: unknown) =>
-      parseFeedItem(raw, { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S" });
+      parseFeedItem(raw, { fetchedAt: FETCHED_AT, sourceId: "s", sourceName: "S", subjectSites: [] });
 
     it("INV-C3 (S3) 실패경로: 제목이 없으면 버린다", () => {
       expect(parse({ ...ok, title: undefined })).toBeNull();

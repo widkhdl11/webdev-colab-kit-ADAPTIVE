@@ -18,6 +18,7 @@ import { loadEnvConfig } from "@next/env";
 import { ARTICLE_TAGS } from "../src/entities/article/model/types";
 import {
   EVIDENCE_ONLY,
+  OFFICIAL_RULE,
   ROLE,
   TITLE_RULE,
   summaryRules,
@@ -69,11 +70,12 @@ function currentSystem(needSummary: boolean, needTitle: boolean): string {
     needSummary ? '"summary": "요약문"' : null,
     needSummary ? '"points": ["핵심 항목", "..."]' : null,
     needSummary ? '"tags": ["..."]' : null,
+    needSummary ? '"official": true|false' : null,
   ].filter((l): l is string => l !== null);
 
   const rules = [ROLE, EVIDENCE_ONLY];
   if (needTitle) rules.push(TITLE_RULE);
-  if (needSummary) rules.push(...summaryRules(ARTICLE_TAGS));
+  if (needSummary) rules.push(...summaryRules(ARTICLE_TAGS), OFFICIAL_RULE);
   rules.push(`출력은 JSON 하나: {${wanted.join(", ")}}. 다른 말은 쓰지 않는다.`);
   return rules.map((r) => `- ${r}`).join("\n");
 }
@@ -88,8 +90,9 @@ const DRAFT_RULES = [
   "아래 목록에 같은 뜻이 있으면 그 표현을 쓴다. 목록은 표기를 맞추라고 주는 것이지 범위를 제한하는 게 아니다 — 목록에 없는 새 개념이면 반드시 새로 만든다.",
   "갈래는 뉴스·정보·스킬/툴 중에서 고른다. 해당하면 여러 개를 골라도 된다.",
   "이 글이 AI·IT 소식인지 판정한다. 아니면 그렇다고 알린다.",
-  "원문 주소의 발행처가 이 소식의 주체이거나, 내용이 '〜가 공식 발표했다'이면 공식 여부를 알린다.",
 ];
+// 공식 표시는 2026-08-11 에 스펙(INV-O2)으로 확정돼 여기서 뺐다 — 이제 currentSystem 이
+// OFFICIAL_RULE 로 싣는다. 초안에 남겨 두면 이미 내는 비용을 "추가 비용"으로 두 번 센다.
 
 function draftSystem(keywords: string[]): string {
   const wanted = [
@@ -100,7 +103,6 @@ function draftSystem(keywords: string[]): string {
     '"keywords": ["..."]',
     '"kinds": ["뉴스"|"정보"|"스킬툴"]',
     '"onTopic": true|false',
-    '"official": "none"|"byUrl"|"byContent"',
   ];
   const rules = [
     ROLE,

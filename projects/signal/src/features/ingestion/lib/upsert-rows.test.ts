@@ -16,6 +16,7 @@ function draft(over: Partial<FeedItemDraft> = {}): FeedItemDraft {
     publishedAt: "2026-08-09T00:00:00.000Z",
     publishedAtIsFallback: false,
     tags: [],
+    officialBasis: "none",
     ...over,
   };
 }
@@ -73,6 +74,19 @@ describe("upsertBatches", () => {
         expect(Object.keys(row)).not.toContain("title_ko");
       }
     }
+  });
+
+  it("INV-O2: 주소 근거는 적재할 때마다 다시 싣는다", () => {
+    // 주소에서 기계적으로 나오는 값이라 매번 같다 — 다시 실어도 덮어쓸 게 없다.
+    const [batch] = upsertBatches([draft({ officialBasis: "byUrl" })], NOW);
+    expect(batch![0]!.official_basis).toBe("byUrl");
+  });
+
+  it("INV-O2 실패경로: none 은 페이로드에 넣지 않는다 (내용 근거를 지우면 안 된다)", () => {
+    // 여기서 "none" 을 실으면 재수집이 **모델이 붙인 byContent 를 매 주기 지운다.**
+    // 그 항목은 화면에서 공식 표시가 붙었다 사라졌다 한다.
+    const [batch] = upsertBatches([draft({ officialBasis: "none" })], NOW);
+    expect(Object.keys(batch![0]!)).not.toContain("official_basis");
   });
 
   it("컬럼 구성이 다른 항목은 다른 배치로 나뉜다", () => {

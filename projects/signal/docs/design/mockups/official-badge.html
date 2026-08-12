@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>공식 표시 두 종류 — A/B/C 비교안 (signal)</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    />
+    <style>
+      /* ─────────────────────────────────────────────────────────────────
+         공식 표시 두 종류(INV-O2) 비교안.
+         근거: docs/design/design-rules.md — 승인된 언어를 그대로 물려받고
+         **새 요소는 공식 표시뿐**이다. 카드·메타 줄·태그칩은 손대지 않았다.
+
+         물려받지 않은 것: 포커스 아웃라인 라운드(2026-08-06 정정으로 없앤 값).
+         승인된 옛 시안 두 장에 남아 있는 결함이라 여기서 다시 들이지 않는다.
+         ───────────────────────────────────────────────────────────────── */
+
+      :root {
+        --bg: #efeff5;
+        --surface: #f8f8fc;
+        --surface-h: #fdfdff;
+        --surface-read: #f3f3f8;
+        --hairline: #e2e2ec;
+        --dot: #c9c9d6;
+
+        --text: #1f2024;
+        --text2: #4a4e55;
+        --meta: #656a72;
+
+        --text-read: #666b73;
+        --text2-read: #6a6f77;
+        --meta-read: #6a6f77;
+        --dot-read: #d2d2de;
+        --tag-read-bg: #eaeaf2;
+        --tag-read-ink: #63676f;
+        --badge-read-bg: #e7e7ef;
+        --badge-read-ink: #585c64;
+
+        --accent: #4f46e5;
+        --accent-soft: #e9e8fb;
+
+        --tag-bg: var(--bg);
+        --tag-bg-h: #ffffff;
+
+        --r-card: 12px;
+        --r-pill: 999px;
+
+        --shadow-card:
+          0 1px 2px rgba(31, 32, 36, 0.05), 0 4px 10px rgba(31, 32, 36, 0.05);
+        --shadow-card-h:
+          0 2px 4px rgba(31, 32, 36, 0.06), 0 10px 22px rgba(31, 32, 36, 0.08);
+
+        --maxw: 1168px;
+        --gap: 16px;
+
+        --fs-h1: 22px;
+        --fs-title: 16px;
+        --fs-body: 15px;
+        --fs-sm: 13.5px;
+        --fs-ui: 13px;
+        --fs-xs: 12.5px;
+        --fs-meta: 12px;
+        --fs-chip: 11.5px;
+        --fs-mark: 10.5px;
+
+        --font-sans:
+          "Pretendard Variable", "Pretendard", system-ui, -apple-system,
+          "Apple SD Gothic Neo", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        font-size: var(--fs-body);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 20px 56px;
+      }
+
+      /* ── 비교안 안내 (시안 전용 — 실제 화면에는 없다) ─────────────────── */
+
+      .sheetHead {
+        padding: 28px 0 8px;
+      }
+
+      .sheetHead h1 {
+        margin: 0 0 4px;
+        font-size: var(--fs-h1);
+        font-weight: 700;
+        letter-spacing: -0.4px;
+      }
+
+      .sheetHead p {
+        margin: 0;
+        font-size: var(--fs-ui);
+        color: var(--meta);
+        line-height: 1.7;
+      }
+
+      .optionHead {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 32px 0 4px;
+      }
+
+      .optionHead h2 {
+        margin: 0;
+        font-size: var(--fs-sm);
+        font-weight: 700;
+        letter-spacing: -0.2px;
+        color: var(--meta);
+      }
+
+      .optionHead .rule {
+        flex: 1 1 auto;
+        height: 0;
+        min-width: 24px;
+        border-top: 1px dotted var(--dot);
+      }
+
+      .optionNote {
+        margin: 0 0 14px;
+        font-size: var(--fs-xs);
+        color: var(--meta);
+        line-height: 1.75;
+      }
+
+      .optionNote b {
+        color: var(--text2);
+        font-weight: 600;
+      }
+
+      /* ── 카드 (승인분 그대로) ──────────────────────────────────────────── */
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--gap);
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border-radius: var(--r-card);
+        padding: 20px;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: var(--shadow-card);
+        transition:
+          background 0.16s ease,
+          box-shadow 0.16s ease,
+          transform 0.16s ease;
+      }
+
+      .card:hover {
+        background: var(--surface-h);
+        box-shadow: var(--shadow-card-h);
+        transform: translateY(-1px);
+      }
+
+      .card:hover .cardTitle {
+        color: var(--accent);
+      }
+
+      .cardBody {
+        flex: 1 1 auto;
+      }
+
+      .badgeRow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: var(--fs-chip);
+        font-weight: 700;
+        letter-spacing: -0.1px;
+        padding: 4px 10px;
+        border-radius: var(--r-pill);
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .cardTitle {
+        margin: 0 0 10px;
+        font-size: var(--fs-title);
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        line-height: 1.45;
+        transition: color 0.16s ease;
+        word-break: keep-all;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .cardSummary {
+        margin: 0 0 16px;
+        font-size: var(--fs-sm);
+        line-height: 1.62;
+        color: var(--text2);
+        word-break: keep-all;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .cardFoot {
+        border-top: 1px dotted var(--dot);
+        padding-top: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        font-size: var(--fs-meta);
+        color: var(--meta);
+      }
+
+      .sourceMark {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: var(--r-pill);
+        background: var(--tag-bg);
+        color: var(--meta);
+        font-size: var(--fs-mark);
+        font-weight: 700;
+        letter-spacing: -0.2px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.16s ease;
+      }
+
+      .metaText {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tags {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+
+      .tag {
+        font-size: var(--fs-chip);
+        font-weight: 500;
+        color: var(--meta);
+        background: var(--tag-bg);
+        border-radius: var(--r-pill);
+        padding: 4px 10px;
+      }
+
+      .card:hover .tag,
+      .card:hover .sourceMark {
+        background: var(--tag-bg-h);
+      }
+
+      /* 읽음 */
+      .isRead {
+        background: var(--surface-read);
+        box-shadow: none;
+      }
+      .isRead .cardTitle {
+        color: var(--text-read);
+        font-weight: 600;
+      }
+      .isRead .cardSummary {
+        color: var(--text2-read);
+      }
+      .isRead .meta {
+        color: var(--meta-read);
+      }
+      .isRead .cardFoot {
+        border-top-color: var(--dot-read);
+      }
+      .isRead .tag,
+      .isRead .sourceMark {
+        background: var(--tag-read-bg);
+        color: var(--tag-read-ink);
+      }
+      .isRead .badge {
+        background: var(--badge-read-bg);
+        color: var(--badge-read-ink);
+      }
+
+      /* ═══════════════════════════════════════════════════════════════════
+         새 요소: 공식 표시 두 종류
+         공통 규칙 — 포인트색을 쓰지 않는다(피드에서 색은 "아직 안 본 것" 전용),
+         2차 강조색을 만들지 않는다, 색으로만 가르지 않는다(문구·형태가 함께 나른다).
+         ═══════════════════════════════════════════════════════════════════ */
+
+      /* ── A안: 메타 줄, 출처 이름 뒤 — 채움 vs 테두리 ────────────────── */
+
+      .aOfficial,
+      .aClaimed {
+        flex-shrink: 0;
+        font-size: var(--fs-chip);
+        line-height: 1;
+        padding: 3px 8px;
+        border-radius: var(--r-pill);
+        white-space: nowrap;
+      }
+
+      /* 주소 근거 = 채운 알약. 태그칩과 같은 면을 쓰되 글자색·굵기로 갈린다 */
+      .aOfficial {
+        background: var(--tag-bg);
+        color: var(--text);
+        font-weight: 700;
+      }
+
+      /* 내용 근거 = 채우지 않고 테두리만. 무게가 한 단계 낮다 */
+      .aClaimed {
+        background: transparent;
+        color: var(--meta);
+        font-weight: 500;
+        border: 1px dashed var(--dot);
+        padding: 2px 7px;
+      }
+
+      .card:hover .aOfficial {
+        background: var(--tag-bg-h);
+      }
+      .isRead .aOfficial {
+        background: var(--tag-read-bg);
+        color: var(--tag-read-ink);
+      }
+      .isRead .aClaimed {
+        border-color: var(--dot-read);
+        color: var(--meta-read);
+      }
+
+      /* ── B안: 제목 위 뱃지 줄 — 문구 길이 + 채움 vs 점선 테두리 ──────── */
+
+      .bOfficial,
+      .bClaimed {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: var(--fs-chip);
+        letter-spacing: -0.1px;
+        padding: 4px 10px;
+        border-radius: var(--r-pill);
+      }
+
+      .bOfficial {
+        background: var(--tag-bg);
+        color: var(--text);
+        font-weight: 700;
+      }
+
+      .bClaimed {
+        background: transparent;
+        color: var(--meta);
+        font-weight: 500;
+        border: 1px dashed var(--dot);
+        padding: 3px 9px;
+      }
+
+      .card:hover .bOfficial {
+        background: var(--tag-bg-h);
+      }
+      .isRead .bOfficial {
+        background: var(--tag-read-bg);
+        color: var(--tag-read-ink);
+      }
+      .isRead .bClaimed {
+        border-color: var(--dot-read);
+        color: var(--meta-read);
+      }
+
+      /* ── C안: 무게를 다르게 — 확실한 것만 뱃지, 추정은 메타 줄 글자 ──── */
+
+      .cOfficial {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: var(--fs-chip);
+        font-weight: 700;
+        letter-spacing: -0.1px;
+        padding: 4px 10px;
+        border-radius: var(--r-pill);
+        background: var(--tag-bg);
+        color: var(--text);
+      }
+
+      .card:hover .cOfficial {
+        background: var(--tag-bg-h);
+      }
+      .isRead .cOfficial {
+        background: var(--tag-read-bg);
+        color: var(--tag-read-ink);
+      }
+
+      /* 내용 근거는 뱃지를 만들지 않는다 — 메타 줄 문장에 한 조각으로 붙는다 */
+      .cClaimed {
+        font-weight: 600;
+        color: var(--text2);
+      }
+      .isRead .cClaimed {
+        color: var(--text2-read);
+      }
+
+      @media (max-width: 980px) {
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 640px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .card:hover {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="sheetHead">
+        <h1>공식 표시 두 종류 — 비교안</h1>
+        <p>
+          같은 카드 여섯 장을 세 가지 방식으로 그렸습니다. 카드·메타 줄·태그 칩은 승인된 그대로이고,
+          <b>새로 생긴 것은 공식 표시뿐</b>입니다.<br />
+          두 종류는 근거가 다릅니다 — <b>주소 근거</b>(원문 주소가 그 회사 도메인, 기계가 대조)와
+          <b>내용 근거</b>(글 내용을 보고 AI 가 판단). 뒤엣것은 틀릴 수 있어서 같은 확실성으로 보이면 안 됩니다.<br />
+          포인트색(인디고)은 못 씁니다 — 이 화면에서 색은 "아직 안 본 것"의 신호입니다. 초록 체크 같은
+          두 번째 강조색도 만들지 않기로 되어 있어, 셋 다 <b>문구와 형태</b>로 가릅니다.
+        </p>
+      </div>
+
+      <!-- ══════════════ A안 ══════════════ -->
+      <div class="optionHead">
+        <h2>A안 — 출처 이름 바로 뒤에 (메타 줄)</h2>
+        <span class="rule"></span>
+      </div>
+      <p class="optionNote">
+        공식 여부는 <b>출처에 대한 판단</b>이니 출처 이름 옆이 제자리라는 생각.
+        주소 근거는 <b>채운 알약</b>, 내용 근거는 <b>점선 테두리만</b>.<br />
+        · 걱정했던 것과 다른 결과: 표시가 들어가도 <b>메타 줄이 새로 잘리지는 않았습니다</b>
+        (1280~380px 전 구간 실측). 3번 카드의 긴 출처 이름이 잘리는 건 세 안 모두 같고
+        공식 표시와 무관한 기존 현상입니다.<br />
+        · 대신 남는 것: 표시가 태그 칩과 <b>같은 면·같은 알약</b>이라, 1번 카드처럼
+        한 줄에 알약이 셋 서면 무엇이 태그이고 무엇이 공식 표시인지 형태로는 안 갈립니다.
+      </p>
+      <div class="grid">
+        <!-- 1. 안읽음 · 주소근거 · 뜨는 중 동시 -->
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+            </div>
+            <h3 class="cardTitle">Claude Code 의 자동 모드가 기본값으로 켜집니다</h3>
+            <p class="cardSummary">
+              앤트로픽이 자동 모드를 기본으로 바꿨습니다. 승인 절차가 줄어드는 대신 되돌리기 기록이
+              함께 들어갑니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic</span>
+              <span class="aOfficial">공식<span class="sr-only"> — 원문 주소가 Anthropic 도메인입니다</span></span>
+              <span class="metaText">· 3시간 전</span>
+            </span>
+            <span class="tags"><span class="tag">에이전트</span></span>
+          </div>
+        </a>
+
+        <!-- 2. 안읽음 · 내용근거 -->
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">구글이 새 추론 모델을 공개했다고 밝혔다</h3>
+            <p class="cardSummary">
+              기사에 따르면 구글이 어제 새 모델을 발표했습니다. 벤치마크 수치와 공개 시점이 함께
+              언급됐습니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Te</span>
+              <span class="metaText">TechCrunch</span>
+              <span class="aClaimed">공식?<span class="sr-only"> — 글 내용을 보고 AI 가 공식 발표로 판단했습니다</span></span>
+              <span class="metaText">· 5시간 전</span>
+            </span>
+            <span class="tags"><span class="tag">모델</span></span>
+          </div>
+        </a>
+
+        <!-- 3. 안읽음 · 근거 없음 · 긴 출처 이름 (메타 줄 압박) -->
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">벡터 임베딩을 직접 만들어 본 기록</h3>
+            <p class="cardSummary">
+              작은 모델로 임베딩을 만들며 겪은 문제를 정리했습니다. 토큰 길이와 정규화가 결과를 크게
+              바꿨습니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Si</span>
+              <span class="metaText">Simon Willison's Weblog · 어제</span>
+            </span>
+            <span class="tags"
+              ><span class="tag">엔지니어링</span><span class="tag">+1</span></span
+            >
+          </div>
+        </a>
+
+        <!-- 4. 읽음 · 주소근거 -->
+        <a class="card isRead" href="#">
+          <span class="sr-only">읽은 글</span>
+          <div class="cardBody">
+            <h3 class="cardTitle">OpenAI 가 개발자 도구 묶음을 정리했습니다</h3>
+            <p class="cardSummary">
+              흩어져 있던 SDK 를 하나로 합치고 이름을 바꿨습니다. 기존 코드는 당분간 그대로
+              동작합니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Op</span>
+              <span class="metaText">OpenAI</span>
+              <span class="aOfficial">공식<span class="sr-only"> — 원문 주소가 OpenAI 도메인입니다</span></span>
+              <span class="metaText">· 어제</span>
+            </span>
+            <span class="tags"><span class="tag">툴</span></span>
+          </div>
+        </a>
+
+        <!-- 5. 안읽음 · 주소근거 · 요약 없음 -->
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">MCP 커넥터 규격 0.4 초안</h3>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic</span>
+              <span class="aOfficial">공식<span class="sr-only"> — 원문 주소가 Anthropic 도메인입니다</span></span>
+              <span class="metaText">· 어제</span>
+            </span>
+            <span class="tags"><span class="tag">MCP</span></span>
+          </div>
+        </a>
+
+        <!-- 6. 안읽음 · 내용근거 · 태그 2개 -->
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">메타가 사내 코딩 도구를 외부에 연다고 한다</h3>
+            <p class="cardSummary">
+              내부에서만 쓰던 도구를 공개한다는 소식입니다. 적용 범위와 일정은 아직 정해지지
+              않았습니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Ha</span>
+              <span class="metaText">Hacker News</span>
+              <span class="aClaimed">공식?<span class="sr-only"> — 글 내용을 보고 AI 가 공식 발표로 판단했습니다</span></span>
+              <span class="metaText">· 2일 전</span>
+            </span>
+            <span class="tags"><span class="tag">툴</span></span>
+          </div>
+        </a>
+      </div>
+
+      <!-- ══════════════ B안 ══════════════ -->
+      <div class="optionHead">
+        <h2>B안 — 제목 위 뱃지 줄에 ('뜨는 중' 과 나란히)</h2>
+        <span class="rule"></span>
+      </div>
+      <p class="optionNote">
+        자리가 넓어 <b>말을 길게 쓸 수 있습니다</b> — "공식 발표" 와 "공식 발표라고 함" 처럼
+        문구만으로도 확실성 차이가 읽힙니다. 형태도 채움 vs 점선으로 갈립니다.<br />
+        · 메타 줄을 안 건드리므로 <b>폭 문제에서 자유롭습니다</b>(전 구간 잘림 0건).<br />
+        · 눈여겨볼 것: 첫째 카드처럼 <b>'뜨는 중' 과 나란히 서면 줄이 두 조각</b>이 되고,
+        포인트색 옆이라 공식 표시가 한 단계 눌려 보입니다. 카드 제목이 그만큼 아래로 내려갑니다.
+      </p>
+      <div class="grid">
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+              <span class="bOfficial">공식 발표<span class="sr-only"> — 원문 주소가 Anthropic 도메인입니다</span></span>
+            </div>
+            <h3 class="cardTitle">Claude Code 의 자동 모드가 기본값으로 켜집니다</h3>
+            <p class="cardSummary">
+              앤트로픽이 자동 모드를 기본으로 바꿨습니다. 승인 절차가 줄어드는 대신 되돌리기 기록이
+              함께 들어갑니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 3시간 전</span>
+            </span>
+            <span class="tags"><span class="tag">에이전트</span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="bClaimed">공식 발표라고 함<span class="sr-only"> — 글 내용을 보고 AI 가 판단했습니다</span></span>
+            </div>
+            <h3 class="cardTitle">구글이 새 추론 모델을 공개했다고 밝혔다</h3>
+            <p class="cardSummary">
+              기사에 따르면 구글이 어제 새 모델을 발표했습니다. 벤치마크 수치와 공개 시점이 함께
+              언급됐습니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Te</span>
+              <span class="metaText">TechCrunch · 5시간 전</span>
+            </span>
+            <span class="tags"><span class="tag">모델</span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">벡터 임베딩을 직접 만들어 본 기록</h3>
+            <p class="cardSummary">
+              작은 모델로 임베딩을 만들며 겪은 문제를 정리했습니다. 토큰 길이와 정규화가 결과를 크게
+              바꿨습니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Si</span>
+              <span class="metaText">Simon Willison's Weblog · 어제</span>
+            </span>
+            <span class="tags"
+              ><span class="tag">엔지니어링</span><span class="tag">+1</span></span
+            >
+          </div>
+        </a>
+
+        <a class="card isRead" href="#">
+          <span class="sr-only">읽은 글</span>
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="bOfficial">공식 발표<span class="sr-only"> — 원문 주소가 OpenAI 도메인입니다</span></span>
+            </div>
+            <h3 class="cardTitle">OpenAI 가 개발자 도구 묶음을 정리했습니다</h3>
+            <p class="cardSummary">
+              흩어져 있던 SDK 를 하나로 합치고 이름을 바꿨습니다. 기존 코드는 당분간 그대로
+              동작합니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Op</span>
+              <span class="metaText">OpenAI · 어제</span>
+            </span>
+            <span class="tags"><span class="tag">툴</span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="bOfficial">공식 발표<span class="sr-only"> — 원문 주소가 Anthropic 도메인입니다</span></span>
+            </div>
+            <h3 class="cardTitle">MCP 커넥터 규격 0.4 초안</h3>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 어제</span>
+            </span>
+            <span class="tags"><span class="tag">MCP</span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="bClaimed">공식 발표라고 함<span class="sr-only"> — 글 내용을 보고 AI 가 판단했습니다</span></span>
+            </div>
+            <h3 class="cardTitle">메타가 사내 코딩 도구를 외부에 연다고 한다</h3>
+            <p class="cardSummary">
+              내부에서만 쓰던 도구를 공개한다는 소식입니다. 적용 범위와 일정은 아직 정해지지
+              않았습니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Ha</span>
+              <span class="metaText">Hacker News · 2일 전</span>
+            </span>
+            <span class="tags"><span class="tag">툴</span></span>
+          </div>
+        </a>
+      </div>
+
+      <!-- ══════════════ C안 ══════════════ -->
+      <div class="optionHead">
+        <h2>C안 — 무게를 다르게 (확실한 것만 뱃지, 추정은 메타 줄 문장으로)</h2>
+        <span class="rule"></span>
+      </div>
+      <p class="optionNote">
+        A·B 는 둘 다 뱃지라 <b>모양만 조금 다른 같은 급</b>으로 보일 수 있습니다.
+        C 는 아예 급을 나눕니다 — 주소 근거만 뱃지를 갖고, 내용 근거는 메타 줄 문장에
+        <b>"공식 발표로 보임"</b> 한 조각으로 붙습니다.<br />
+        · 실측에서 <b>유일하게 새 잘림을 만든 안</b>입니다. 3열이 좁아지는 981~1000px 구간에서
+        2·6번 카드의 그 문구가 잘려 <b>"공식 발표로 보…"</b> 로 끝납니다 — 뜻이 훼손되는 잘림이라
+        채택하려면 문구를 줄이거나 자리를 옮겨야 합니다.<br />
+        · 눈여겨볼 것: 훑을 때 <b>뱃지가 붙은 카드만 눈에 걸립니다.</b> 그게 목적이면 맞고,
+        내용 근거도 알아채야 한다면 너무 약할 수 있습니다.
+      </p>
+      <div class="grid">
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+              <span class="cOfficial">공식<span class="sr-only"> — 원문 주소가 Anthropic 도메인입니다</span></span>
+            </div>
+            <h3 class="cardTitle">Claude Code 의 자동 모드가 기본값으로 켜집니다</h3>
+            <p class="cardSummary">
+              앤트로픽이 자동 모드를 기본으로 바꿨습니다. 승인 절차가 줄어드는 대신 되돌리기 기록이
+              함께 들어갑니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 3시간 전</span>
+            </span>
+            <span class="tags"><span class="tag">에이전트</span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">구글이 새 추론 모델을 공개했다고 밝혔다</h3>
+            <p class="cardSummary">
+              기사에 따르면 구글이 어제 새 모델을 발표했습니다. 벤치마크 수치와 공개 시점이 함께
+              언급됐습니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Te</span>
+              <span class="metaText">
+                TechCrunch · <span class="cClaimed">공식 발표로 보임</span> · 5시간 전
+              </span>
+            </span>
+            <span class="tags"><span class="tag">모델</span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">벡터 임베딩을 직접 만들어 본 기록</h3>
+            <p class="cardSummary">
+              작은 모델로 임베딩을 만들며 겪은 문제를 정리했습니다. 토큰 길이와 정규화가 결과를 크게
+              바꿨습니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Si</span>
+              <span class="metaText">Simon Willison's Weblog · 어제</span>
+            </span>
+            <span class="tags"
+              ><span class="tag">엔지니어링</span><span class="tag">+1</span></span
+            >
+          </div>
+        </a>
+
+        <a class="card isRead" href="#">
+          <span class="sr-only">읽은 글</span>
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="cOfficial">공식<span class="sr-only"> — 원문 주소가 OpenAI 도메인입니다</span></span>
+            </div>
+            <h3 class="cardTitle">OpenAI 가 개발자 도구 묶음을 정리했습니다</h3>
+            <p class="cardSummary">
+              흩어져 있던 SDK 를 하나로 합치고 이름을 바꿨습니다. 기존 코드는 당분간 그대로
+              동작합니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Op</span>
+              <span class="metaText">OpenAI · 어제</span>
+            </span>
+            <span class="tags"><span class="tag">툴</span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="cOfficial">공식<span class="sr-only"> — 원문 주소가 Anthropic 도메인입니다</span></span>
+            </div>
+            <h3 class="cardTitle">MCP 커넥터 규격 0.4 초안</h3>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 어제</span>
+            </span>
+            <span class="tags"><span class="tag">MCP</span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">메타가 사내 코딩 도구를 외부에 연다고 한다</h3>
+            <p class="cardSummary">
+              내부에서만 쓰던 도구를 공개한다는 소식입니다. 적용 범위와 일정은 아직 정해지지
+              않았습니다.
+            </p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Ha</span>
+              <span class="metaText">
+                Hacker News · <span class="cClaimed">공식 발표로 보임</span> · 2일 전
+              </span>
+            </span>
+            <span class="tags"><span class="tag">툴</span></span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </body>
+</html>
