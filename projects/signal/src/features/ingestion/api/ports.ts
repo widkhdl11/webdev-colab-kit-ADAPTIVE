@@ -10,11 +10,15 @@ import {
   toOfficialBasis,
   type FeedItemDraft,
 } from "@/entities/article";
+import { getSourceWeight } from "@/entities/source";
 import type { Source } from "@/entities/source";
+import { ENRICH_BATCH, ENRICH_POOL, MAX_FETCH_BYTES } from "../lib/budgets";
+import { fenceData } from "../lib/data-fence";
 import { extractArticleHtml } from "../lib/extract-content";
 import { DATA_BOUNDARY, TOPIC_SCOPE } from "../model/prompt-text";
 import { buildEnrichPrompt } from "../lib/build-enrich-prompt";
 import { parseFeedXml } from "../lib/parse-feed";
+import { pickEnrichTargets } from "../lib/pick-enrich-targets";
 import { topicVerdict } from "../lib/topic-verdict";
 import { upsertBatches } from "../lib/upsert-rows";
 import type {
@@ -35,10 +39,89 @@ const FETCH_TIMEOUT_MS = 15_000;
 const SUMMARY_TIMEOUT_MS = 30_000;
 /** 주제 판정은 제목 하나만 보내는 짧은 호출이라 요약보다 짧게 잡는다. */
 const TOPIC_TIMEOUT_MS = 15_000;
-/** 한 번에 처리할 최대 건수. 첫 수집에서 수백 건을 한꺼번에 부르면 비용·시간이 튄다. */
-const BATCH = 10;
 /** 요약에 넘길 근거의 최대 길이. 본문 전체를 넣으면 토큰만 낭비된다. */
 const EVIDENCE_LIMIT = 20_000;
+
+/** 후보 풀에서 받아 오는 세 칸. 본문은 여기서 안 받는다 — 한 건이 2만 자다. */
+interface PoolRow {
+  id: unknown;
+  published_at: unknown;
+  source_id: unknown;
+}
+
+/**
+ * 넓게 받은 후보 풀에서 이번 주기에 처리할 id 를 고른다 (INV-R2 와 같은 점수).
+ *
+ * 추출·요약 두 단계가 **같은 함수를 쓴다** — 다른 기준을 쓰면 본문을 채운 항목과
+ * 요약할 항목이 어긋나 예산이 서로를 못 쓴다.
+ */
+function pickFromPool(pool: readonly PoolRow[]): string[] {
+  return pickEnrichTargets({
+    pool: pool.map((r) => ({
+      id: r.id as string,
+      publishedAt: r.published_at as string,
+      sourceId: r.source_id as string,
+    })),
+    now: new Date(),
+    weightOf: getSourceWeight,
+    limit: ENRICH_BATCH,
+  });
+}
+
+/**
+ * 응답 본문을 **바이트 상한까지만** 읽는다 (2026-08-13 보안 리뷰).
+ *
+ * `res.text()` 는 서버가 주는 만큼 다 받는다. 타임아웃 15초 안에 수백 MB 를 흘려보내면
+ * 함수가 메모리로 죽고, 그다음 JSDOM 파싱은 동기라 더 나쁘다. 공격이 필요한 것도 아니다 —
+ * 소스 14곳 중 하나가 큰 파일을 주기만 해도 같은 일이 난다.
+ *
+ * 넘치면 던진다. 잘라서 파싱하면 깨진 HTML·XML 에서 엉뚱한 결과가 나오고, 그게 조용히
+ * 본문으로 저장된다 — "실패했다"가 "이상한 걸 저장했다"보다 낫다.
+ */
+async function readTextCapped(res: Response, limit = MAX_FETCH_BYTES): Promise<string> {
+  const declared = Number(res.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > limit) {
+    throw new Error(`응답이 너무 크다 (${declared} > ${limit} 바이트)`);
+  }
+  if (!res.body) return res.text();
+
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.byteLength;
+      if (received > limit) {
+        // 남은 것을 계속 받지 않는다 — 상한을 둔 이유가 사라진다.
+        await reader.cancel();
+        throw new Error(`응답이 너무 크다 (${limit} 바이트 초과)`);
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const merged = new Uint8Array(received);
+  let at = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, at);
+    at += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
+
+/**
+ * `.in("id", ids)` 는 순서를 보장하지 않는다.
+ *
+ * 그대로 두면 어렵게 매긴 우선순위가 두 번째 조회에서 사라져, 시간 예산에 걸려 중간에
+ * 멈추는 날 **어느 것이 처리됐는지가 우연**이 된다. 없는 id 는 조용히 빠진다.
+ */
+function orderByIds<T extends { id: unknown }>(rows: readonly T[], ids: readonly string[]): T[] {
+  const byId = new Map(rows.map((r) => [r.id as string, r]));
+  return ids.map((id) => byId.get(id)).filter((r): r is T => r !== undefined);
+}
 
 export function createIngestPorts(): IngestPorts {
   const db = serverSupabase();
@@ -118,7 +201,9 @@ export function createIngestPorts(): IngestPorts {
             `- ${TOPIC_SCOPE}\n- 제목만 보고 판단한다.\n- ${DATA_BOUNDARY}\n` +
             `- 출력은 "yes" 또는 "no" 한 단어뿐. 다른 말은 쓰지 않는다.`,
           // 제목도 남의 글이다 — 감싸지 않으면 제목에 심은 지시로 주제 필터를 통과할 수 있다.
-          messages: [{ role: "user", content: `<자료 종류="제목">\n${title}\n</자료>` }],
+          // 요약 프롬프트와 같은 경계를 쓴다 — 여기만 감싸기만 하면 제목에 심은
+          // `</자료>` 로 판정 지시를 덮어쓸 수 있다(주제 밖 글을 통과시키는 길).
+          messages: [{ role: "user", content: fenceData("제목", title) }],
         },
         { timeout: TOPIC_TIMEOUT_MS },
       );
@@ -155,7 +240,7 @@ export function createIngestPorts(): IngestPorts {
         headers: { accept: "application/rss+xml, application/atom+xml, application/xml, text/xml" },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return parseFeedXml(await res.text());
+      return parseFeedXml(await readTextCapped(res));
     },
 
     async listKnownUrls(canonicalUrls: string[]) {
@@ -194,14 +279,25 @@ export function createIngestPorts(): IngestPorts {
     },
 
     async listExtractionCandidates(): Promise<ExtractionCandidate[]> {
-      const { data, error } = await db
+      // 요약 후보와 **같은 기준으로 고른다** (2026-08-13 리뷰). 여기만 최신순으로 두면
+      // 두 단계가 서로 다른 항목에 예산을 쓴다 — 본문을 채운 항목은 요약 후보에 못 들고,
+      // 요약할 항목은 근거가 없어 건너뛰어진다(skippedNoEvidence).
+      const { data: pool, error: poolError } = await db
         .from("item")
-        .select("id, original_url")
+        .select("id, published_at, source_id")
         .eq("content_html", "")
         .order("published_at", { ascending: false })
-        .limit(BATCH);
+        .limit(ENRICH_POOL);
+      if (poolError) throw new Error(poolError.message);
+      if (!pool || pool.length === 0) return [];
+
+      const targetIds = pickFromPool(pool);
+      const { data, error } = await db.from("item").select("id, original_url").in("id", targetIds);
       if (error) throw new Error(error.message);
-      return (data ?? []).map((r) => ({ id: r.id as string, url: r.original_url as string }));
+      return orderByIds(data ?? [], targetIds).map((r) => ({
+        id: r.id as string,
+        url: r.original_url as string,
+      }));
     },
 
     async extractContent(url: string) {
@@ -220,7 +316,7 @@ export function createIngestPorts(): IngestPorts {
       const type = res.headers.get("content-type") ?? "";
       // PDF·이미지를 추출기에 넣어 봐야 시간만 쓴다.
       if (!type.includes("html")) throw new Error(`HTML 이 아님 (${type.split(";")[0]})`);
-      return extractArticleHtml(await res.text(), url);
+      return extractArticleHtml(await readTextCapped(res), url);
     },
 
     async saveContent(id: string, contentHtml: string) {
@@ -237,17 +333,32 @@ export function createIngestPorts(): IngestPorts {
       //     근거 없는 항목이 최신 10건을 채워 그 주기의 요약이 0건이 되고, 다음 주기에도
       //     같은 10건이 뽑혀 영원히 굶는다.
       //   - 번역(INV-S6): title_ko 가 비어 있는 것. **근거는 안 본다** — 번역의 근거는 제목이다.
+      const CANDIDATE_FILTER =
+        "title_ko.is.null,and(summary.is.null,or(content_html.neq.,source_excerpt.not.is.null))";
+
+      // 1단계: **랭킹에 필요한 세 칸만** 넓게 받는다.
+      // 본문까지 이만큼 받으면 한 건이 2만 자라 응답이 수 MB 가 된다.
+      // 자르는 기준(발행시각)과 고르는 기준(점수)이 다르므로 풀은 넓어야 한다 — budgets.ts 참고.
+      const { data: pool, error: poolError } = await db
+        .from("item")
+        .select("id, published_at, source_id")
+        .or(CANDIDATE_FILTER)
+        .order("published_at", { ascending: false })
+        .limit(ENRICH_POOL);
+      if (poolError) throw new Error(poolError.message);
+      if (!pool || pool.length === 0) return [];
+
+      // 2단계: 그중 점수 상위 ENRICH_BATCH 건만 본문까지 받는다.
+      // 발행시각순으로만 자르면 자주 올리는 매체 하나가 그 주기의 요약 예산을 다 먹는다
+      // (2026-08-13 실측: 요약 후보 10건이 전부 한 매체였다).
+      const targetIds = pickFromPool(pool);
+
       const { data, error } = await db
         .from("item")
         .select("id, title, title_ko, content_html, source_excerpt, summary, official_basis")
-        .or(
-          "title_ko.is.null," +
-            "and(summary.is.null,or(content_html.neq.,source_excerpt.not.is.null))",
-        )
-        .order("published_at", { ascending: false })
-        .limit(BATCH);
+        .in("id", targetIds);
       if (error) throw new Error(error.message);
-      return (data ?? []).map((r) => ({
+      return orderByIds(data ?? [], targetIds).map((r) => ({
         id: r.id as string,
         title: (r.title as string) ?? "",
         titleKo: (r.title_ko as string | null) ?? null,

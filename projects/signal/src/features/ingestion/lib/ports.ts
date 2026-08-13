@@ -156,6 +156,18 @@ export interface StageReport {
   failed: number;
   /** 그 단계 자체가 죽은 경우. 앞 단계 결과는 그대로 남는다. */
   error: string | null;
+  /**
+   * 개별 항목이 실패한 **이유** — 서로 다른 것만 모은다.
+   *
+   * 왜 필요한가: 2026-08-13 실행에서 요약 10건이 전부 실패했는데 리포트에는 제목만 남아,
+   * 원인(크레딧 소진, HTTP 400)을 알아내려고 API 를 직접 찔러야 했다. 배포된 Cron 에서는
+   * 터미널이 없어 더 나쁘다. 같은 이유가 10번 반복되면 한 줄이면 되므로 중복은 접는다 —
+   * 어느 **항목**이 실패했는지는 failedTitles·failedUrls 가 이미 들고 있다.
+   *
+   * 개수(5개)와 **한 줄 길이(200자)** 를 둘 다 막는다 — 남의 서버가 준 헤더나 DB 오류에
+   * 응답 본문이 실리면 한 줄이 수 KB 가 되고, 그게 Cron 응답과 로그에 그대로 남는다.
+   */
+  failureReasons: string[];
 }
 
 /**
@@ -200,6 +212,20 @@ export interface TopicFilterReport {
    * **필터가 죽은 것**인지 구별되지 않는다.
    */
   alreadyKnown: number;
+  /**
+   * 소스 설정이 판정을 안 걸어서(`needsTopicCheck: false`) 그냥 통과시킨 건수 (INV-F4).
+   *
+   * 따로 세는 이유는 alreadyKnown 과 같다: 이게 없으면 "판정 2건 중 0건 걸러냄"이
+   * **새 글이 2건뿐인 것**인지 **300건을 판정 없이 통과시킨 것**인지 구별되지 않는다.
+   */
+  notChecked: number;
+  /**
+   * 판정 호출이 실패한 이유 — 서로 다른 것만 (StageReport.failureReasons 와 같은 규칙).
+   *
+   * INV-F3 이 실패를 **통과**로 처리하므로, 이유가 안 남으면 필터가 통째로 죽은 주기가
+   * "0건 걸러냄"으로 정상처럼 보인다. failedOpen 은 건수만 말하지 왜인지는 말하지 않는다.
+   */
+  failureReasons: string[];
   /** 주제 밖으로 판정돼 적재하지 않은 건수. */
   filtered: number;
   /** 걸러진 항목의 제목 — 오판을 알아챌 유일한 방법이다(INV-F2). */
@@ -237,4 +263,25 @@ export interface IngestReport {
   };
   /** 토큰 사용량 (개발용). 불변식이 아니라 관찰용이다. */
   usage: UsageReport;
+  /** 시간 예산 (2026-08-13 리뷰). */
+  budget: BudgetReport;
+}
+
+/**
+ * 시간 예산 때문에 건너뛴 것.
+ *
+ * 왜 리포트에 남기나: 예산 가드가 없으면 Vercel 이 함수를 죽여 **응답 자체가 없다** —
+ * 그날의 실패 이유도 토큰 계측도 안 남고 요금만 나간다. 가드를 넣었으니 이제 응답은 오는데,
+ * 건너뛴 것을 안 적으면 이번엔 "뒤쪽 소스가 매일 0건"이 **새 글이 없는 것**으로 보인다.
+ * `alreadyKnown`·`notChecked` 를 따로 세는 이유와 같다.
+ */
+export interface BudgetReport {
+  /** 하나라도 건너뛰었는가. */
+  exhausted: boolean;
+  /** 손도 못 댄 소스 id. 이 목록이 매 주기 같으면 소스 순서나 예산을 손볼 때다. */
+  skippedSources: string[];
+  /** 건너뛴 본문 추출 건수. */
+  skippedExtractions: number;
+  /** 건너뛴 후처리(요약·번역) 건수. */
+  skippedEnrichments: number;
 }

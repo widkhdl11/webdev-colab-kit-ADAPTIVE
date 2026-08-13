@@ -14,5 +14,7 @@ docs/**/diagrams/*.html
 .env
 .env.*
 !.env.example
+# vercel CLI 가 만드는 로컬 연결 정보(프로젝트 id·조직 id). `vercel env pull` 은 여기로 .env 도 받는다.
+.vercel/
 # projects/
 supabase/**

@@ -24,6 +24,7 @@ describe("Source — INV-L1 소스마다 층을 둔다", () => {
       name: "daily",
       weight: 1.4,
       feedUrl: "https://ex.com/daily.xml",
+      needsTopicCheck: true,
       tier: "daily",
     };
     const deepSource: Source = {
@@ -31,6 +32,7 @@ describe("Source — INV-L1 소스마다 층을 둔다", () => {
       name: "deep",
       weight: 0.8,
       feedUrl: "https://ex.com/deep.xml",
+      needsTopicCheck: true,
       tier: "deep",
     };
     // 값이 같으면 이 테스트는 "층이 조회값에 반영된다"를 증명하지 못한다.
@@ -39,6 +41,59 @@ describe("Source — INV-L1 소스마다 층을 둔다", () => {
     const weightOf = sourceWeightLookup([dailySource, deepSource]);
     expect(weightOf("d")).toBe(dailySource.weight);
     expect(weightOf("p")).toBe(deepSource.weight);
+  });
+});
+
+/**
+ * 목록 자체의 모양 검사 (2026-08-13 리뷰).
+ *
+ * SUBJECT_SITES 는 "믿는 값일수록 모양은 검사해야 한다"며 4종을 검사하는데 정작 SOURCES 는
+ * `tier` 만 보고 있었다. 2곳 → 14곳으로 7배가 된 목록이라 한 줄 오타가 조용히 지나간다.
+ * 여기서 잡는 실패는 전부 **에러가 안 나는 종류**다 — 그 소스만 매일 0건이 되거나,
+ * 적재된 글의 출처·weight 조회가 뒤섞이거나, 피드 맨 뒤로 영구히 밀린다.
+ */
+describe("SOURCES — 목록의 모양", () => {
+  it("id 가 유일하다 — 겹치면 같은 소스를 두 번 받고 weight 조회가 뒤섞인다", () => {
+    const ids = SOURCES.map((s) => s.id);
+    expect(new Set(ids).size, ids.join(", ")).toBe(ids.length);
+  });
+
+  it("feedUrl 이 유일하고 https 로 파싱된다 — 오타 한 글자면 그 소스가 매일 404 다", () => {
+    const urls = SOURCES.map((s) => s.feedUrl);
+    expect(new Set(urls).size).toBe(urls.length);
+    for (const s of SOURCES) {
+      // `new URL` 은 던진다 — 오타가 문법을 깨는 종류면 여기서 걸린다.
+      expect(new URL(s.feedUrl).protocol, s.id).toBe("https:");
+    }
+  });
+
+  it("weight 가 양수이고 기준표 범위 안이다 — 0 이나 음수면 그 소스 글이 피드에서 사라진다", () => {
+    for (const s of SOURCES) {
+      expect(s.weight, s.id).toBeGreaterThan(0);
+      // 파일 머리의 기준표가 정한 범위(0.9~1.6). 벗어나면 기준표부터 고쳐야 한다.
+      expect(s.weight, s.id).toBeLessThanOrEqual(1.6);
+      expect(s.weight, s.id).toBeGreaterThanOrEqual(0.8);
+    }
+  });
+
+  it("이름이 비어 있지 않다 — 카드의 출처 자리가 빈칸이 된다", () => {
+    for (const s of SOURCES) expect(s.name.trim(), s.id).not.toBe("");
+  });
+
+  it("INV-F4: 주제 판정을 거는 소스가 정확히 어디인지 못 박는다", () => {
+    // 강제 위치가 **소스 설정**이라 파이프라인 테스트로는 못 잡는다. 이 두 줄을 false 로
+    // 바꾸면 판정이 전 소스에서 0건이 되고(투구게 글이 다시 들어온다), 반대로 14곳을 전부
+    // true 로 바꾸면 실측 29분짜리 판정이 부활해 Vercel 상한에서 잘린다.
+    // 값이 바뀌면 사람이 한 번 더 판단하라는 뜻의 테스트다.
+    expect(
+      SOURCES.filter((s) => s.needsTopicCheck)
+        .map((s) => s.id)
+        .sort(),
+    ).toEqual(["geeknews", "hn-frontpage"]);
+  });
+
+  it("소스 개수를 못 박는다 — 목록이 통째로 줄어드는 변경을 알아채야 한다", () => {
+    expect(SOURCES).toHaveLength(14);
   });
 });
 

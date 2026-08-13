@@ -2,6 +2,12 @@ import { nextOfficialBasis, parseFeedItem } from "@/entities/article";
 import type { FeedItemDraft, OfficialBasis } from "@/entities/article";
 import { SUBJECT_SITES } from "@/entities/source";
 import type { Source } from "@/entities/source";
+import {
+  INGEST_BUDGET_MS,
+  MAX_FAILURE_REASON_LENGTH,
+  MAX_FAILURE_REASONS,
+  TOPIC_CONCURRENCY,
+} from "./budgets";
 import type { IngestPorts, IngestReport, SourceReport, TopicFilterReport } from "./ports";
 
 /**
@@ -12,6 +18,21 @@ import type { IngestPorts, IngestReport, SourceReport, TopicFilterReport } from 
  */
 
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+/**
+ * 실패 이유를 목록에 담되 **같은 것은 한 번만** 담는다.
+ *
+ * 상한을 두는 이유: 이유가 항목마다 다른 날(주소가 섞인 메시지 등) 리포트가 통째로
+ * 실패 목록이 된다. Cron 응답 본문은 로그에도 남으므로 무한정 키우지 않는다.
+ *
+ * **개수와 길이를 둘 다 막는다** (2026-08-13 리뷰): 개수만 막으면 절반이다 —
+ * 남의 서버가 준 `content-type` 헤더나 DB 오류 메시지에 응답 본문이 실리면 한 줄이 수 KB 가 된다.
+ */
+function noteFailure(into: string[], e: unknown): void {
+  const reason = errorText(e).slice(0, MAX_FAILURE_REASON_LENGTH);
+  if (into.length >= MAX_FAILURE_REASONS || into.includes(reason)) return;
+  into.push(reason);
+}
 
 /**
  * 한 소스에서 한 번에 가져갈 최대 건수.
@@ -43,10 +64,33 @@ export interface TopicUsage {
   outputTokens: number;
 }
 
+/** 동시 판정 건수는 budgets.ts 가 정한다 (테스트가 값을 못 박는 자리). */
+export { TOPIC_CONCURRENCY };
+
 async function filterByTopic(
   items: FeedItemDraft[],
   ports: IngestPorts,
+  needsTopicCheck: boolean,
 ): Promise<{ kept: FeedItemDraft[]; report: TopicFilterReport; usage: TopicUsage }> {
+  // INV-F4: 주제가 안 섞이는 소스(AI 전용 피드)에는 판정을 걸지 않는다.
+  // 건너뛴 건수는 반드시 남긴다 — 안 남기면 "0건 걸러냄"이 새 글이 없는 것인지
+  // 판정 없이 통과시킨 것인지 구별되지 않는다(alreadyKnown 을 따로 세는 이유와 같다).
+  if (!needsTopicCheck) {
+    return {
+      kept: items,
+      report: {
+        attempted: 0,
+        alreadyKnown: 0,
+        notChecked: items.length,
+        failureReasons: [],
+        filtered: 0,
+        filteredTitles: [],
+        failedOpen: 0,
+      },
+      usage: { calls: 0, inputTokens: 0, outputTokens: 0 },
+    };
+  }
+
   // 이미 적재된 항목은 판정하지 않는다. 주제 밖으로 나와도 DB 에서 사라지지 않으므로
   // (INV-F2 는 "적재하지 않는다"이지 "지운다"가 아니다) 그 호출은 요금만 쓴다.
   // 조회가 실패하면 전부 새 항목으로 본다 — 모르면 판정하는 쪽이 안전하다.
@@ -63,30 +107,48 @@ async function filterByTopic(
   let attempted = 0;
   let alreadyKnown = 0;
   let failedOpen = 0;
+  const failureReasons: string[] = [];
 
-  for (const item of items) {
-    if (known.has(item.canonicalUrl)) {
-      // 판정은 건너뛰지만 적재는 한다 — 본문·출처 요약글이 새로 올 수 있다.
-      alreadyKnown += 1;
-      kept.push(item);
-      continue;
-    }
+  // 판정 결과를 **입력 순서 그대로** 담는다. 도착 순서로 담으면 빠른 응답이 앞으로 와서
+  // 최신순 정렬이 무너진다(MAX_ITEMS_PER_SOURCE 로 자를 때 어느 것이 잘리는지가 바뀐다).
+  //
+  // 기본값은 **통과(true)** 다 (INV-F3: 모르면 거르지 않는다). 채우지 않은 구멍이 남으면
+  // `undefined` = 거짓 = "주제 밖"이 되어, 있지도 않은 판정이 리포트에 제목까지 달고 남는다.
+  const decisions = new Array<boolean>(items.length).fill(true);
 
-    attempted += 1;
-    let onTopic: boolean;
-    try {
-      const verdict = await ports.judgeTopic(item.title);
-      onTopic = verdict.onTopic;
-      // 실패한 호출에도 요금은 나갔지만 그건 예외 경로라 토큰을 받을 길이 없다.
-      // 성공한 호출만이라도 세면 "판정에 얼마나 쓰는가"는 보인다.
-      usage.calls += 1;
-      usage.inputTokens += verdict.usage.inputTokens;
-      usage.outputTokens += verdict.usage.outputTokens;
-    } catch {
-      onTopic = true; // INV-F3: 판정이 실패하면 거르지 않는다.
-      failedOpen += 1;
-    }
-    if (onTopic) kept.push(item);
+  for (let start = 0; start < items.length; start += TOPIC_CONCURRENCY) {
+    const chunk = items.slice(start, start + TOPIC_CONCURRENCY);
+    await Promise.all(
+      chunk.map(async (item, offset) => {
+        const at = start + offset;
+        if (known.has(item.canonicalUrl)) {
+          // 판정은 건너뛰지만 적재는 한다 — 본문·출처 요약글이 새로 올 수 있다.
+          alreadyKnown += 1;
+          decisions[at] = true;
+          return;
+        }
+
+        attempted += 1;
+        try {
+          const verdict = await ports.judgeTopic(item.title);
+          decisions[at] = verdict.onTopic;
+          // 실패한 호출에도 요금은 나갔지만 그건 예외 경로라 토큰을 받을 길이 없다.
+          // 성공한 호출만이라도 세면 "판정에 얼마나 쓰는가"는 보인다.
+          usage.calls += 1;
+          usage.inputTokens += verdict.usage.inputTokens;
+          usage.outputTokens += verdict.usage.outputTokens;
+        } catch (e) {
+          decisions[at] = true; // INV-F3: 판정이 실패하면 거르지 않는다.
+          failedOpen += 1;
+          // 통과시키되 **조용히는 아니다** — 이유가 없으면 필터가 죽은 주기가 정상으로 보인다.
+          noteFailure(failureReasons, e);
+        }
+      }),
+    );
+  }
+
+  for (const [at, item] of items.entries()) {
+    if (decisions[at]) kept.push(item);
     else filteredTitles.push(item.title);
   }
 
@@ -96,6 +158,8 @@ async function filterByTopic(
     report: {
       attempted,
       alreadyKnown,
+      notChecked: 0,
+      failureReasons,
       filtered: filteredTitles.length,
       filteredTitles,
       failedOpen,
@@ -108,11 +172,25 @@ function mergeTopicFilterReports(reports: TopicFilterReport[]): TopicFilterRepor
     (acc, r) => ({
       attempted: acc.attempted + r.attempted,
       alreadyKnown: acc.alreadyKnown + r.alreadyKnown,
+      notChecked: acc.notChecked + r.notChecked,
+      // 소스마다 다른 이유가 나올 수 있다. 합칠 때도 중복은 접고 상한을 지킨다.
+      failureReasons: [...new Set([...acc.failureReasons, ...r.failureReasons])].slice(
+        0,
+        MAX_FAILURE_REASONS,
+      ),
       filtered: acc.filtered + r.filtered,
       filteredTitles: [...acc.filteredTitles, ...r.filteredTitles],
       failedOpen: acc.failedOpen + r.failedOpen,
     }),
-    { attempted: 0, alreadyKnown: 0, filtered: 0, filteredTitles: [] as string[], failedOpen: 0 },
+    {
+      attempted: 0,
+      alreadyKnown: 0,
+      notChecked: 0,
+      failureReasons: [] as string[],
+      filtered: 0,
+      filteredTitles: [] as string[],
+      failedOpen: 0,
+    },
   );
 }
 
@@ -127,6 +205,8 @@ async function ingestSource(
   let topicFilter: TopicFilterReport = {
     attempted: 0,
     alreadyKnown: 0,
+    notChecked: 0,
+    failureReasons: [],
     filtered: 0,
     filteredTitles: [],
     failedOpen: 0,
@@ -151,7 +231,7 @@ async function ingestSource(
       .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
       .slice(0, MAX_ITEMS_PER_SOURCE);
 
-    const filtered = await filterByTopic(unique, ports);
+    const filtered = await filterByTopic(unique, ports, source.needsTopicCheck);
     topicFilter = filtered.report;
     topicUsage = filtered.usage;
     const { kept } = filtered;
@@ -182,11 +262,15 @@ async function ingestSource(
  * 요약보다 **먼저** 돈다: 여기서 채워진 본문이 곧 요약의 근거가 되기 때문이다.
  * 실패는 항목 단위로 격리한다 — OpenAI 원문은 403 이고(2026-08-09 실측) 그건 정상 경로다.
  */
-async function runExtraction(ports: IngestPorts): Promise<IngestReport["extraction"]> {
+async function runExtraction(
+  ports: IngestPorts,
+  budget: Budget,
+): Promise<IngestReport["extraction"]> {
   // 실패는 세지 않고 **적는다** — 건수는 목록 길이에서 나온다(둘이 갈리면 보고서가 조용히 틀린다).
   const failedUrls: string[] = [];
+  const failureReasons: string[] = [];
   const result = { attempted: 0, succeeded: 0, error: null as string | null };
-  const done = () => ({ ...result, failed: failedUrls.length, failedUrls });
+  const done = () => ({ ...result, failed: failedUrls.length, failedUrls, failureReasons });
 
   let candidates;
   try {
@@ -196,6 +280,12 @@ async function runExtraction(ports: IngestPorts): Promise<IngestReport["extracti
   }
 
   for (const item of candidates) {
+    // 예산이 떨어지면 **멈추고 리포트를 돌려준다.** 계속 가면 Vercel 이 함수를 죽여
+    // 응답 본문이 통째로 사라진다 — 지금까지의 실패 이유·토큰 계측이 다 날아간다.
+    if (budget.exhausted()) {
+      budget.skippedExtractions += candidates.length - result.attempted;
+      break;
+    }
     result.attempted += 1;
     try {
       const html = await ports.extractContent(item.url);
@@ -203,12 +293,14 @@ async function runExtraction(ports: IngestPorts): Promise<IngestReport["extracti
       // 그건 맞다(사이트가 고쳐질 수 있다). 다만 저장할 것은 없다.
       if (html.trim() === "") {
         failedUrls.push(item.url);
+        noteFailure(failureReasons, new Error("추출 결과가 비어 있음"));
         continue;
       }
       await ports.saveContent(item.id, html);
       result.succeeded += 1;
-    } catch {
+    } catch (e) {
       failedUrls.push(item.url);
+      noteFailure(failureReasons, e);
     }
   }
 
@@ -222,7 +314,10 @@ async function runExtraction(ports: IngestPorts): Promise<IngestReport["extracti
  * 있어야 하지만 번역은 제목 자체가 근거라 근거 없는 항목도 번역한다 — 둘을 같은 조건으로
  * 묶으면 본문도 요약글도 없는 항목이 영어 제목으로 영영 남는다.
  */
-async function runEnrichment(ports: IngestPorts): Promise<{
+async function runEnrichment(
+  ports: IngestPorts,
+  budget: Budget,
+): Promise<{
   summaries: IngestReport["summaries"];
   titles: IngestReport["titles"];
   /** 주제 판정 칸은 여기서 채우지 않는다 — 이 함수는 후처리만 본다. */
@@ -234,12 +329,14 @@ async function runEnrichment(ports: IngestPorts): Promise<{
     succeeded: 0,
     skippedNoEvidence: 0,
     failedTitles: [] as string[],
+    failureReasons: [] as string[],
     error: null as string | null,
   };
   const titles = {
     attempted: 0,
     succeeded: 0,
     failedTitles: [] as string[],
+    failureReasons: [] as string[],
     error: null as string | null,
   };
   const usage = {
@@ -268,7 +365,14 @@ async function runEnrichment(ports: IngestPorts): Promise<{
     return { ...r, summaries: { ...r.summaries, error }, titles: { ...r.titles, error } };
   }
 
-  for (const item of candidates) {
+  for (const [index, item] of candidates.entries()) {
+    // 예산이 떨어지면 멈춘다 (runExtraction 과 같은 이유). 후보는 점수순이라
+    // 남는 것은 항상 **점수가 낮은 쪽**이고, 다음 주기에 다시 잡힌다.
+    if (budget.exhausted()) {
+      budget.skippedEnrichments += candidates.length - index;
+      break;
+    }
+
     // 조건을 여기서 다시 판정한다. 조회 계층이 골라 준 것을 그대로 믿으면 그 필터를 지워도
     // 아무 테스트가 안 깨진다 — 규칙이 우리 코드에 없는 셈이 된다.
     const evidence = item.contentHtml.trim() || (item.sourceExcerpt ?? "").trim();
@@ -359,28 +463,76 @@ async function runEnrichment(ports: IngestPorts): Promise<{
       await ports.saveEnrichment(item.id, patch);
       if (summaryReady) summaries.succeeded += 1;
       if (titleReady) titles.succeeded += 1;
-    } catch {
+    } catch (e) {
       // 저장하지 않는다 — 비어 있어야 다음 주기에 다시 잡힌다 (INV-S2).
       // 이미 빈 값으로 실패를 센 쪽은 두 번 세지 않는다.
-      if (needSummary && !summaryCounted) summaries.failedTitles.push(item.title);
-      if (needTitle && !titleCounted) titles.failedTitles.push(item.title);
+      if (needSummary && !summaryCounted) {
+        summaries.failedTitles.push(item.title);
+        noteFailure(summaries.failureReasons, e);
+      }
+      if (needTitle && !titleCounted) {
+        titles.failedTitles.push(item.title);
+        noteFailure(titles.failureReasons, e);
+      }
     }
   }
 
   return done();
 }
 
+/**
+ * 이 한 바퀴에 남은 시간 (2026-08-13 리뷰).
+ *
+ * 왜 필요한가: 단계가 전부 순차라 최악치가 Vercel 상한(300초)을 넘는다 —
+ * 피드 14곳×15초 + 판정 실측 125초 + 추출 10×15초 + 요약 10×30초. 넘기면 함수가 죽고
+ * **응답 본문이 없다.** 이 파이프라인이 애써 모은 실패 이유·토큰 계측이 제일 필요한 날
+ * 하나도 안 남고, 요금만 나간 상태가 된다.
+ *
+ * 시계를 주입받는 이유: 테스트가 실제로 4분을 기다릴 수는 없다. 논리 시각(`now`)과 섞지
+ * 않는 것도 중요하다 — `now` 는 발행시각 계산용 고정값이라 흐르지 않는다.
+ */
+interface Budget {
+  exhausted(): boolean;
+  skippedSources: string[];
+  skippedExtractions: number;
+  skippedEnrichments: number;
+}
+
 export async function runIngest(params: {
   sources: readonly Source[];
   ports: IngestPorts;
   now: Date;
+  /** 한 바퀴에 쓸 수 있는 시간. 기본값은 budgets.ts. */
+  budgetMs?: number;
+  /** 흐르는 시계. 기본은 `Date.now`. 테스트만 바꾼다. */
+  monotonicNow?: () => number;
 }): Promise<IngestReport> {
-  const { sources, ports, now } = params;
+  const {
+    sources,
+    ports,
+    now,
+    budgetMs = INGEST_BUDGET_MS,
+    monotonicNow = () => Date.now(),
+  } = params;
+
+  const deadline = monotonicNow() + budgetMs;
+  const budget: Budget = {
+    exhausted: () => monotonicNow() >= deadline,
+    skippedSources: [],
+    skippedExtractions: 0,
+    skippedEnrichments: 0,
+  };
 
   const reports: SourceReport[] = [];
   const topicFilterReports: TopicFilterReport[] = [];
   const topicUsage: TopicUsage = { calls: 0, inputTokens: 0, outputTokens: 0 };
   for (const source of sources) {
+    // 예산이 떨어지면 남은 소스는 손대지 않는다. **건너뛴 것은 반드시 남긴다** —
+    // 안 남기면 뒤쪽 소스가 매일 0건인 것이 "그 소스에 새 글이 없다"로 보인다.
+    if (budget.exhausted()) {
+      budget.skippedSources.push(source.id);
+      continue;
+    }
     // 소스마다 독립 실행 (INV-C4). 하나가 죽어도 루프는 계속 돈다.
     const result = await ingestSource(source, ports, now);
     reports.push(result.report);
@@ -392,8 +544,8 @@ export async function runIngest(params: {
 
   // 순서가 규칙이다: 주제 선별 → 적재 → 본문 추출 → 후처리(요약·번역).
   // 추출이 앞이어야 이번 주기에 채운 본문이 곧바로 요약 근거가 된다.
-  const extraction = await runExtraction(ports);
-  const { summaries, titles, usage } = await runEnrichment(ports);
+  const extraction = await runExtraction(ports, budget);
+  const { summaries, titles, usage } = await runEnrichment(ports, budget);
 
   return {
     sources: reports,
@@ -407,6 +559,16 @@ export async function runIngest(params: {
       topicCalls: topicUsage.calls,
       topicInputTokens: topicUsage.inputTokens,
       topicOutputTokens: topicUsage.outputTokens,
+    },
+    budget: {
+      // 무엇 하나라도 건너뛰었으면 참이다. 시각만 남기면 읽는 사람이 계산해야 한다.
+      exhausted:
+        budget.skippedSources.length > 0 ||
+        budget.skippedExtractions > 0 ||
+        budget.skippedEnrichments > 0,
+      skippedSources: budget.skippedSources,
+      skippedExtractions: budget.skippedExtractions,
+      skippedEnrichments: budget.skippedEnrichments,
     },
   };
 }

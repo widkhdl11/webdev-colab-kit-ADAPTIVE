@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { FeedItemDraft } from "@/entities/article";
 import type { Source } from "@/entities/source";
-import { MAX_ITEMS_PER_SOURCE, runIngest } from "./run-ingest";
+import { MAX_ITEMS_PER_SOURCE, TOPIC_CONCURRENCY, runIngest } from "./run-ingest";
 import type { EnrichCandidate, ExtractionCandidate, IngestPorts } from "./ports";
 
 /**
@@ -24,6 +24,8 @@ const source = (id: string): Source => ({
   name: id,
   weight: 1,
   feedUrl: `https://ex.com/${id}.xml`,
+  // 기본 픽스처는 판정을 건다 — 기존 INV-F1·F2·F3 테스트가 전부 이 전제 위에 있다.
+  needsTopicCheck: true,
   tier: "daily",
 });
 
@@ -1071,5 +1073,353 @@ describe("runIngest — 주제 판정 토큰도 센다", () => {
     });
     const report = await runIngest({ sources: [source("s")], ports, now: NOW });
     expect(report.usage.topicCalls).toBe(1);
+  });
+});
+
+/**
+ * 판정을 **동시에** 보낸다.
+ *
+ * 왜 테스트가 필요한가: 순차 루프로도 결과는 똑같이 나온다. 달라지는 건 걸리는 시간뿐이라
+ * 다른 테스트가 전부 green 인 채로 조용히 순차로 되돌아갈 수 있다. 실측이 건당 3.8초라
+ * 소스 14곳의 첫 수집이 29분이 되고, Vercel 은 300초에서 함수를 끊는다 —
+ * 그러면 배열 앞쪽 소스만 적재되고 뒤쪽은 매일 통째로 빠진다(에러 없이).
+ */
+describe("runIngest — INV-F1 판정은 동시에 나간다", () => {
+  it("앞 건의 답을 기다렸다가 다음 건을 보내지 않는다", async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => Array.from({ length: 8 }, (_, i) => feedItem(`c${i}`))),
+      judgeTopic: vi.fn(async () => {
+        inFlight += 1;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((r) => setTimeout(r, 0));
+        inFlight -= 1;
+        return verdict(true);
+      }),
+    });
+    await runIngest({ sources: [source("s")], ports, now: NOW });
+    expect(maxInFlight).toBeGreaterThan(1);
+  });
+
+  it("INV-F1 (CS15): 한꺼번에 다 보내지는 않는다 — 동시 건수에 상한이 있다", async () => {
+    // 상한이 없으면 소스 하나가 50건을 한 번에 던져 429(요청 과다)를 맞는다.
+    // INV-F3 때문에 판정 실패는 **통과**로 처리되므로, 그 순간 필터가 조용히 열린다.
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => Array.from({ length: TOPIC_CONCURRENCY * 3 }, (_, i) => feedItem(`c${i}`))),
+      judgeTopic: vi.fn(async () => {
+        inFlight += 1;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((r) => setTimeout(r, 0));
+        inFlight -= 1;
+        return verdict(true);
+      }),
+    });
+    await runIngest({ sources: [source("s")], ports, now: NOW });
+    // `toBeLessThanOrEqual(TOPIC_CONCURRENCY)` 는 자기 자신을 기준으로 삼는 단언이라
+    // 상한을 100 으로 키워도 통과한다(항목이 50건이라 50 ≤ 100). 정확한 값을 요구한다.
+    expect(maxInFlight).toBe(TOPIC_CONCURRENCY);
+    // 상한 자체가 조용히 커지는 것은 budgets.test.ts 가 값을 못 박아 잡는다.
+  });
+
+  it("동시에 보내도 적재 순서는 피드 순서 그대로다", async () => {
+    // 순서가 섞이면 MAX_ITEMS_PER_SOURCE 로 자를 때 최신순 정렬이 무너진다.
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => Array.from({ length: 6 }, (_, i) => feedItem(`c${i}`))),
+      judgeTopic: vi.fn(async (title: string) => {
+        // 뒤 항목일수록 빨리 답한다 — 도착 순서로 적재하면 뒤집힌다.
+        const n = Number(title.replace(/\D/g, ""));
+        await new Promise((r) => setTimeout(r, (6 - n) * 2));
+        return verdict(true);
+      }),
+    });
+    await runIngest({ sources: [source("s")], ports, now: NOW });
+    const stored = vi.mocked(ports.upsertItems).mock.calls[0]![0]!;
+    expect(stored.map((i) => i.title)).toEqual(["제목 c0", "제목 c1", "제목 c2", "제목 c3", "제목 c4", "제목 c5"]);
+  });
+});
+
+/**
+ * INV-F4 — 판정을 거는 소스는 소스 설정이 정한다.
+ *
+ * AI 전용 피드(AI타임스·TechCrunch AI 섹션·DeepMind 블로그 등)에 "이거 AI 글 맞아?"를
+ * 묻는 것은 답이 정해진 질문에 건당 3.8초와 요금을 쓰는 일이다. 주제가 섞이는 소스
+ * (Hacker News·GeekNews)에만 건다.
+ */
+describe("runIngest — INV-F4 판정을 거는 소스는 설정이 정한다", () => {
+  it("INV-F4 (CS13): needsTopicCheck 가 false 인 소스는 judgeTopic 을 부르지 않고 전부 적재한다", async () => {
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("a"), feedItem("b")]),
+    });
+    const report = await runIngest({
+      sources: [{ ...source("ai-only"), needsTopicCheck: false }],
+      ports,
+      now: NOW,
+    });
+    expect(ports.judgeTopic).not.toHaveBeenCalled();
+    expect(report.sources[0]!.stored).toBe(2);
+  });
+
+  it("INV-F4 (CS14) 실패경로: needsTopicCheck 가 true 인 소스는 판정한다 — 플래그를 무시하지 않는다", async () => {
+    // 위 케이스만 있으면 "판정을 통째로 없앴다"도 통과한다.
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("a"), feedItem("cocktail")]),
+      judgeTopic: vi.fn(async (title: string) => verdict(!title.includes("cocktail"))),
+    });
+    const report = await runIngest({
+      sources: [{ ...source("mixed"), needsTopicCheck: true }],
+      ports,
+      now: NOW,
+    });
+    expect(ports.judgeTopic).toHaveBeenCalledTimes(2);
+    expect(report.sources[0]!.stored).toBe(1);
+  });
+
+  it("판정을 건너뛴 건수를 리포트에 남긴다 (notChecked)", async () => {
+    // 이게 없으면 "판정 2건 중 0건 걸러냄"이 **새 글이 2건뿐인 것**인지
+    // **300건을 판정 없이 통과시킨 것**인지 구별되지 않는다. alreadyKnown 을 따로 세는 이유와 같다.
+    const ports = makePorts({
+      fetchFeed: vi.fn(async (s: Source) =>
+        s.id === "ai-only" ? [feedItem("x"), feedItem("y"), feedItem("z")] : [feedItem("a")],
+      ),
+    });
+    const report = await runIngest({
+      sources: [
+        { ...source("ai-only"), needsTopicCheck: false },
+        { ...source("mixed"), needsTopicCheck: true },
+      ],
+      ports,
+      now: NOW,
+    });
+    expect(report.topicFilter.notChecked).toBe(3);
+    expect(report.topicFilter.attempted).toBe(1);
+  });
+});
+
+/**
+ * 실패한 **이유**를 리포트에 남긴다.
+ *
+ * 2026-08-13 실행에서 요약·번역이 10건 전부 실패했는데 리포트에는 제목만 남아,
+ * 원인(Anthropic 크레딧 소진, HTTP 400)을 알아내는 데 API 를 직접 찔러 봐야 했다.
+ * 배포된 Cron 에서는 터미널이 없어 더 나쁘다 — 이유가 안 남으면 Vercel 로그를 뒤져야 한다.
+ *
+ * 이유는 **서로 다른 것만** 모은다. 같은 이유로 10건이 실패하면 한 줄이면 된다
+ * (실패한 제목은 이미 따로 남는다).
+ */
+describe("runIngest — 실패 이유를 남긴다", () => {
+  it("요약이 실패하면 그 이유가 리포트에 남는다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [
+        { id: "1", title: "T1", titleKo: null, contentHtml: "<p>근거</p>", sourceExcerpt: null, summary: null, officialBasis: "none" as const },
+      ]),
+      enrich: vi.fn(async () => {
+        throw new Error("400 크레딧 잔액이 부족합니다");
+      }),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.summaries.failureReasons).toContain("400 크레딧 잔액이 부족합니다");
+  });
+
+  it("같은 이유로 여러 건이 실패해도 한 번만 남는다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () =>
+        ["1", "2", "3"].map((id) => ({
+          id, title: `T${id}`, titleKo: null, contentHtml: "<p>근거</p>",
+          sourceExcerpt: null, summary: null, officialBasis: "none" as const,
+        })),
+      ),
+      enrich: vi.fn(async () => {
+        throw new Error("같은 오류");
+      }),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.summaries.failureReasons).toEqual(["같은 오류"]);
+    // 제목은 그대로 3건 다 남는다 — 어느 항목이 실패했는지는 여전히 알아야 한다.
+    expect(report.summaries.failedTitles).toHaveLength(3);
+  });
+
+  it("판정이 실패하면 그 이유도 남는다 (INV-F3 는 통과시키지만 조용히는 아니다)", async () => {
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("a")]),
+      judgeTopic: vi.fn(async () => {
+        throw new Error("주제 판정 실패 (stop=max_tokens)");
+      }),
+    });
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+    expect(report.topicFilter.failedOpen).toBe(1);
+    expect(report.topicFilter.failureReasons).toContain("주제 판정 실패 (stop=max_tokens)");
+  });
+
+  it("본문 추출이 실패해도 이유가 남는다", async () => {
+    const ports = makePorts({
+      listExtractionCandidates: vi.fn(async () => [{ id: "1", url: "https://ex.com/a" }]),
+      extractContent: vi.fn(async () => {
+        throw new Error("HTTP 403");
+      }),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.extraction.failureReasons).toContain("HTTP 403");
+  });
+});
+
+describe("runIngest — 번역 실패 이유도 남는다", () => {
+  it("호출이 죽으면 요약뿐 아니라 **번역** 목록에도 이유가 남는다", async () => {
+    // noteFailure(titles.failureReasons, e) 한 줄을 지워도 전 스위트가 green 이었다.
+    // 네 단계(요약·판정·추출·번역) 중 번역만 이유가 비는 상태다.
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [
+        {
+          id: "1",
+          title: "Title",
+          titleKo: null,
+          contentHtml: "<p>본문</p>",
+          sourceExcerpt: null,
+          summary: null,
+          officialBasis: "none" as const,
+        },
+      ]),
+      enrich: vi.fn(async () => {
+        throw new Error("credit balance too low");
+      }),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.titles.failureReasons).toEqual(["credit balance too low"]);
+    expect(report.summaries.failureReasons).toEqual(["credit balance too low"]);
+  });
+
+  it("실패 이유는 개수와 **한 줄 길이**를 둘 다 막는다", async () => {
+    // 개수만 막으면 절반이다 — 남의 서버가 준 헤더에 응답 본문이 실리면 한 줄이 수 KB 가 된다.
+    const long = "x".repeat(5_000);
+    const ports = makePorts({
+      listExtractionCandidates: vi.fn(async () =>
+        Array.from({ length: 8 }, (_, i) => ({ id: `${i}`, url: `https://ex.com/${i}` })),
+      ),
+      extractContent: vi.fn(async (url: string) => {
+        throw new Error(`${url} ${long}`);
+      }),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.extraction.failureReasons).toHaveLength(5);
+    for (const reason of report.extraction.failureReasons) {
+      expect(reason.length).toBeLessThanOrEqual(200);
+    }
+  });
+});
+
+describe("runIngest — 한 청크 안에서 일부만 실패해도 나머지 판정은 살아 있다", () => {
+  it("INV-F3 (CS16) 실패경로: 8건 중 1건이 죽어도 나머지 7건의 판정 결과가 그대로 쓰인다", async () => {
+    // 청크 단위로 try 를 올리면(개별 try/catch 제거) 이 케이스에서만 깨진다:
+    // 한 건의 타임아웃이 같은 청크의 주제 밖 글까지 통과시켜 버린다(INV-F2 가 막으려던 상태).
+    const items = Array.from({ length: 8 }, (_, i) => feedItem(`c${i}`));
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => items),
+      judgeTopic: vi.fn(async (title: string) => {
+        if (title === "제목 c3") throw new Error("timeout");
+        if (title === "제목 c5") return verdict(false);
+        return verdict(true);
+      }),
+    });
+    const report = await runIngest({ sources: [source("s")], ports, now: NOW });
+
+    expect(report.topicFilter.attempted).toBe(8);
+    expect(report.topicFilter.failedOpen).toBe(1);
+    // 실패한 c3 은 통과(INV-F3), 주제 밖인 c5 는 **여전히** 걸러진다.
+    expect(report.topicFilter.filtered).toBe(1);
+    expect(report.topicFilter.filteredTitles).toEqual(["제목 c5"]);
+    expect(report.sources[0]!.stored).toBe(7);
+    // 실패한 호출은 토큰을 못 받으므로 성공한 7건만 센다.
+    expect(report.usage.topicCalls).toBe(7);
+    expect(report.topicFilter.failureReasons).toEqual(["timeout"]);
+  });
+});
+
+describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)", () => {
+  /**
+   * 예산이 없으면 함수가 죽어 **응답 본문이 통째로 사라진다** — 실패 이유도 토큰 계측도
+   * 안 남고 요금만 나간다. 시계를 주입해 실제로 기다리지 않고 확인한다.
+   */
+  /**
+   * 처음 `freeCalls` 번은 0 을 주고 그 뒤로는 `jumpMs` 로 건너뛴다.
+   * **첫 호출은 마감 시각 계산에 쓰인다** — 그다음부터가 루프의 예산 확인이다.
+   */
+  const clockAfter = (freeCalls: number, jumpMs: number) => {
+    let calls = 0;
+    return () => (calls++ < freeCalls ? 0 : jumpMs);
+  };
+
+  it("예산이 떨어지면 남은 소스를 건너뛰고 **리포트를 정상 반환**한다", async () => {
+    const ports = makePorts({ fetchFeed: vi.fn(async () => [feedItem("a")]) });
+    const report = await runIngest({
+      sources: [source("s1"), source("s2"), source("s3")],
+      ports,
+      now: NOW,
+      budgetMs: 1000,
+      // 마감 계산 1 + s1 확인 1 = 2번까지만 예산 안이다.
+      monotonicNow: clockAfter(2, 5000),
+    });
+
+    expect(report.sources.map((r) => r.sourceId)).toEqual(["s1"]);
+    expect(report.budget.skippedSources).toEqual(["s2", "s3"]);
+    expect(report.budget.exhausted).toBe(true);
+    // 던지지 않는다 — 여기까지 왔다는 것 자체가 리포트가 돌아왔다는 뜻이다.
+    expect(report.failedSources).toEqual([]);
+  });
+
+  it("예산이 떨어지면 후처리도 멈추고 건너뛴 건수를 남긴다", async () => {
+    const candidates = Array.from({ length: 4 }, (_, i) => ({
+      id: `${i}`,
+      title: `Title ${i}`,
+      titleKo: null,
+      contentHtml: "<p>본문</p>",
+      sourceExcerpt: null,
+      summary: null,
+      officialBasis: "none" as const,
+    }));
+    const ports = makePorts({ listEnrichCandidates: vi.fn(async () => candidates) });
+    const report = await runIngest({
+      sources: [],
+      ports,
+      now: NOW,
+      budgetMs: 1000,
+      // 마감 계산 1 + 후처리 2건 확인 = 3번까지 예산 안. 나머지 2건은 건너뛴다.
+      monotonicNow: clockAfter(3, 5000),
+    });
+
+    // 건너뛴 것은 반드시 센다 — 안 세면 "요약 2건"이 후보가 2건인 것으로 보인다.
+    expect(report.budget.skippedEnrichments).toBeGreaterThan(0);
+    expect(report.summaries.succeeded + report.budget.skippedEnrichments).toBe(4);
+    expect(report.budget.exhausted).toBe(true);
+  });
+
+  it("예산이 넉넉하면 아무것도 건너뛰지 않는다 — 가드가 평소에 끼어들지 않는다", async () => {
+    const ports = makePorts({ fetchFeed: vi.fn(async () => [feedItem("a")]) });
+    const report = await runIngest({
+      sources: [source("s1"), source("s2")],
+      ports,
+      now: NOW,
+      monotonicNow: () => 0,
+    });
+    expect(report.budget).toEqual({
+      exhausted: false,
+      skippedSources: [],
+      skippedExtractions: 0,
+      skippedEnrichments: 0,
+    });
+    expect(report.sources).toHaveLength(2);
+  });
+
+  it("기본 예산이 걸려 있다 — budgetMs 를 안 주면 무제한이 되면 안 된다", async () => {
+    // 인자를 깜빡하면 가드가 사라지는 구조면 안 된다.
+    const ports = makePorts({ fetchFeed: vi.fn(async () => [feedItem("a")]) });
+    const report = await runIngest({
+      sources: [source("s1"), source("s2")],
+      ports,
+      now: NOW,
+      // 기본 예산(240초)을 훌쩍 넘긴 시각을 준다.
+      monotonicNow: clockAfter(2, 999_999),
+    });
+    expect(report.budget.skippedSources).toEqual(["s2"]);
   });
 });

@@ -65,7 +65,9 @@ const started = Date.now();
 let res;
 try {
   res = await fetch(target, {
-    method: "POST",
+    // Vercel Cron 이 부르는 메서드와 같아야 한다 — 여기서 성공한 것이 배포에서도 성공한다는
+    // 뜻이 되려면 같은 길을 타야 한다. 라우트도 GET 하나만 내보낸다.
+    method: "GET",
     headers: { authorization: `Bearer ${secret}` },
     // 소스가 늘면 오래 걸린다. 라우트의 maxDuration(300초)보다 넉넉히 잡는다.
     signal: AbortSignal.timeout(600_000),
@@ -96,25 +98,32 @@ for (const r of report.sources) {
 }
 console.log(
   `  주제 판정   ${topicFilter.attempted}건 중 ${topicFilter.filtered}건 걸러냄 · 판정 실패 ${topicFilter.failedOpen}` +
-    ` · 이미 아는 항목 ${topicFilter.alreadyKnown}건은 건너뜀`,
+    ` · 이미 아는 항목 ${topicFilter.alreadyKnown}건은 건너뜀` +
+    // INV-F4: 안 찍으면 "0건 걸러냄"이 새 글이 없는 것인지 판정 없이 다 통과시킨 것인지 모른다.
+    ` · 판정 안 거는 소스 ${topicFilter.notChecked}건`,
 );
 for (const title of topicFilter.filteredTitles) console.log(`      걸러냄: ${plain(title)}`);
+// 실패 이유를 안 찍으면 "판정 실패 11" 이 크레딧 소진인지 타임아웃인지 알 수 없다.
+for (const why of topicFilter.failureReasons ?? []) console.log(`      실패 이유: ${plain(why)}`);
 console.log(
   `  본문 추출   시도 ${extraction.attempted} · 성공 ${extraction.succeeded} · 실패 ${extraction.failed}` +
     (extraction.error ? ` · ${plain(extraction.error)}` : ""),
 );
 // 실패한 항목을 지목한다 — 건수만 보면 같은 항목이 매 주기 조용히 실패해도 알 수 없다.
 for (const url of extraction.failedUrls) console.log(`      실패: ${plain(url)}`);
+for (const why of extraction.failureReasons ?? []) console.log(`      실패 이유: ${plain(why)}`);
 console.log(
   `  요약        시도 ${summaries.attempted} · 성공 ${summaries.succeeded} · 실패 ${summaries.failed} · 근거없음 ${summaries.skippedNoEvidence}` +
     (summaries.error ? ` · ${plain(summaries.error)}` : ""),
 );
 for (const title of summaries.failedTitles) console.log(`      실패: ${plain(title)}`);
+for (const why of summaries.failureReasons ?? []) console.log(`      실패 이유: ${plain(why)}`);
 console.log(
   `  제목 번역   시도 ${titles.attempted} · 성공 ${titles.succeeded} · 실패 ${titles.failed}` +
     (titles.error ? ` · ${plain(titles.error)}` : ""),
 );
 for (const title of titles.failedTitles) console.log(`      실패: ${plain(title)}`);
+for (const why of titles.failureReasons ?? []) console.log(`      실패 이유: ${plain(why)}`);
 console.log(
   `  토큰(후처리) 호출 ${usage.calls} · 입력 ${usage.inputTokens} · 출력 ${usage.outputTokens} · 한 건 최대 입력 ${usage.maxInputTokens}`,
 );
@@ -122,6 +131,17 @@ console.log(
 console.log(
   `  토큰(판정)   호출 ${usage.topicCalls} · 입력 ${usage.topicInputTokens} · 출력 ${usage.topicOutputTokens}`,
 );
+// 시간 예산에 걸려 건너뛴 것. 안 찍으면 뒤쪽 소스가 매일 0건인 것이
+// "그 소스에 새 글이 없다"로 보인다 — notChecked 를 따로 찍는 이유와 같다.
+const budget = report.budget;
+if (budget?.exhausted) {
+  console.log(
+    `  ⏱ 시간 예산 소진 — 건너뜀: 소스 ${budget.skippedSources.length} · 본문추출 ${budget.skippedExtractions} · 후처리 ${budget.skippedEnrichments}`,
+  );
+  if (budget.skippedSources.length > 0) {
+    console.log(`      건너뛴 소스: ${budget.skippedSources.map(plain).join(", ")}`);
+  }
+}
 if (report.failedSources.length > 0) {
   console.log(`  실패한 소스: ${report.failedSources.map(plain).join(", ")}`);
 }

@@ -1,4 +1,5 @@
 import { ARTICLE_TAGS } from "@/entities/article";
+import { fenceData } from "./data-fence";
 import {
   DATA_BOUNDARY,
   EVIDENCE_ONLY,
@@ -48,9 +49,10 @@ export function buildEnrichPrompt(input: EnrichPromptInput): EnrichPrompt {
 
   // 제목도 근거도 남의 글이라 **둘 다** 자료로 감싼다. 제목만 보내는 항목에서 감싸지 않으면
   // 제목에 심은 지시가 그대로 통한다(번역 결과가 곧 카드에 보이는 글자다).
+  // `fenceData` 가 안쪽의 `</자료` 를 무해화한다 — 감싸기만 하면 자료가 자기 경계를 닫는다.
   const user = needSummary
-    ? `<자료 종류="제목">\n${title}\n</자료>\n\n<자료 종류="본문">\n${evidence}\n</자료>`
-    : `<자료 종류="제목">\n${title}\n</자료>`;
+    ? `${fenceData("제목", title)}\n\n${fenceData("본문", evidence)}`
+    : fenceData("제목", title);
 
   return { system: rules.map((r) => `- ${r}`).join("\n"), user };
 }
