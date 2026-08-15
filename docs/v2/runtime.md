@@ -2,7 +2,7 @@
 
 [stages/](stages/) 7장은 **그래프 노드**를 설명한다. 이 문서는 그 노드들을 **밀고 가는 쪽** — 훅 · 게이트 · 분류기 — 을 설명한다.
 
-둘을 나눈 이유가 있다. [graph.mjs](../../graph.mjs) 는 그냥 객체 하나라서 **아무것도 실행하지 않는다** ([graph.mjs:13-14](../../graph.mjs#L13-L14)).
+둘을 나눈 이유가 있다. [graph.mjs](../../graph.mjs) 는 그냥 객체 하나라서 **아무것도 실행하지 않는다** ([graph.mjs:29-31](../../graph.mjs#L29-L31)).
 거기엔 "무엇이 무엇에 기대는지"만 적혀 있고, 그걸 읽어서 상태를 실제로 바꾸는 건 전부 여기 나오는 스크립트다.
 
 ## 한눈에
@@ -81,21 +81,21 @@ Bash 쪽도 막는다 — 리다이렉트(`>`·`>>`), `tee`, `sed -i`, `cp`/`mv`
 
 | 카테고리 | 무엇을 잡나 | `--quick` 에서 |
 |---|---|---|
-| `fsd/UPWARD_IMPORT` · `fsd/CROSS_SLICE` | 아래 레이어가 위를 부르거나, 같은 층의 남의 슬라이스를 부르는 것 ([:120-130](../../gates/run-gates.mjs#L120-L130)) | 돈다 |
-| `security/*` 4종 | eval · innerHTML · 코드에 박아 넣은 시크릿 · document.write ([:37-58](../../gates/run-gates.mjs#L37-L58)) | 돈다 |
-| `security/DEFINER_SEARCH_PATH` | SQL `security definer` 함수가 `search_path` 를 안 고정한 것 ([:163-167](../../gates/run-gates.mjs#L163-L167)) | 돈다 |
-| `design/BEFORE_UI` | 승인 안 받고 화면부터 만드는 것 ([:213-225](../../gates/run-gates.mjs#L213-L225)) | **돈다** — 편집 즉시 막아야 하니까 |
-| `tsc/*` | 타입 에러 ([:232-253](../../gates/run-gates.mjs#L232-L253)) | 건너뛴다 |
-| `test/FAIL` | `npm test` 실패 ([:255-270](../../gates/run-gates.mjs#L255-L270)) | 건너뛴다 |
+| `fsd/UPWARD_IMPORT` · `fsd/CROSS_SLICE` | 아래 레이어가 위를 부르거나, 같은 층의 남의 슬라이스를 부르는 것 (`app`·`shared` 는 슬라이스가 없어 교차 검사 제외) ([:124-135](../../gates/run-gates.mjs#L124-L135)) | 돈다 |
+| `security/*` 4종 | eval · innerHTML · 코드에 박아 넣은 시크릿 · document.write ([:41-62](../../gates/run-gates.mjs#L41-L62)) | 돈다 |
+| `security/DEFINER_SEARCH_PATH` | SQL `security definer` 함수가 `search_path` 를 안 고정한 것 ([:168-172](../../gates/run-gates.mjs#L168-L172)) | 돈다 |
+| `design/BEFORE_UI` | 승인 안 받고 화면부터 만드는 것 ([:455-468](../../gates/run-gates.mjs#L455-L468)) | **돈다** — 편집 즉시 막아야 하니까 |
+| `tsc/*` | 타입 에러 ([:481-503](../../gates/run-gates.mjs#L481-L503)) | 건너뛴다 |
+| `test/FAIL` | `npm test` 실패 ([:510-528](../../gates/run-gates.mjs#L510-L528)) | 건너뛴다 |
 | `spec-coverage/MISSING_TEST` | approved 스펙의 INV 에 테스트가 없는 것 ([spec-coverage.mjs:57-60](../../gates/spec-coverage.mjs#L57-L60)) | 건너뛴다 |
 
 **알아 둘 것 셋**
 
-1. **`src/` 가 아직 없으면 통째로 건너뛰고 exit 0** ([:30-35](../../gates/run-gates.mjs#L30-L35)) — 스캐폴드 전 빈 레포에서 같은 실패가 턴마다 다시 뜨는 걸 막으려고
-2. **에러는 30건까지만 찍는다** ([:284](../../gates/run-gates.mjs#L284)) — 31건째부터는 소리 없이 잘린다
-3. **`design/BEFORE_UI` 의 Next 예외** — 라우트 화면(`page.*`)이 **딱 한 장이면 '워킹 스켈레톤'으로 보고 그냥 넘어간다** ([:197-202](../../gates/run-gates.mjs#L197-L202)). App Router 는 `page.*` 없이는 라우트가 404 라, 이 예외가 없으면 배포 확인용 스켈레톤조차 못 만든다
+1. **`src/` 가 아직 없으면 통째로 건너뛰고 exit 0** ([:34-39](../../gates/run-gates.mjs#L34-L39)) — 스캐폴드 전 빈 레포에서 같은 실패가 턴마다 다시 뜨는 걸 막으려고
+2. **에러는 30건까지만 찍는다** ([:553](../../gates/run-gates.mjs#L553)) — 31건째부터는 소리 없이 잘린다
+3. **`design/BEFORE_UI` 의 Next 예외** — 라우트 화면(`page.*`)이 **딱 한 장이면 '워킹 스켈레톤'으로 보고 그냥 넘어간다** ([:439-444](../../gates/run-gates.mjs#L439-L444)). App Router 는 `page.*` 없이는 라우트가 404 라, 이 예외가 없으면 배포 확인용 스켈레톤조차 못 만든다
 
-SQL `DEFINER` 검사는 `create or replace` 를 감안해 **함수 이름별로 마지막 정의만** 본다 ([:136](../../gates/run-gates.mjs#L136)) — 옛날 정의 때문에 헛경고가 뜨지 않게.
+SQL `DEFINER` 검사는 `create or replace` 를 감안해 **함수 이름별로 마지막 정의만** 본다 ([:141](../../gates/run-gates.mjs#L141)) — 옛날 정의 때문에 헛경고가 뜨지 않게.
 
 ## 4. 턴 끝 — `graph-stop.mjs`
 
@@ -169,4 +169,4 @@ SQL `DEFINER` 검사는 `create or replace` 를 감안해 **함수 이름별로 
 - **`briefing.mjs` 의 순서 경고는 글자를 맞춰 보는 방식이다.** "다음 할 일" 문장을 `또는`·`→`·`then` 으로 자르고 맨 앞만 본다 ([:52](../../scripts/briefing.mjs#L52)). 말 순서가 다르면 헛경고가 뜨거나 놓치는지 확인 안 했다. `[INFERRED]`
 - **`protect-files.mjs` 를 우회할 수 있는지 확인 안 했다.** 리다이렉트·`tee`·`sed -i`·`cp`/`mv` 는 잡지만 `python -c`·`node -e` 로 파일을 쓰는 건 규칙에 없다. `[INFERRED]`
 - **훅 자체가 죽으면 어떻게 되는지 확인 안 했다.** 셋 다 걸리면 `exit 2` 로 막지만, 훅 스크립트가 잘못된 입력으로 크래시하면 막는 쪽인지 통과시키는 쪽인지 파일만 봐서는 알 수 없었다. `[INFERRED]`
-- **`run-gates` 의 30건 자르기**([:284](../../gates/run-gates.mjs#L284))**가 실제로 일어난 적 있는지** 확인 안 했다. 일어나면 31건째부터의 위반이 소리 없이 사라진다. `[INFERRED]`
+- **`run-gates` 의 30건 자르기**([:553](../../gates/run-gates.mjs#L553))**가 실제로 일어난 적 있는지** 확인 안 했다. 일어나면 31건째부터의 위반이 소리 없이 사라진다. `[INFERRED]`

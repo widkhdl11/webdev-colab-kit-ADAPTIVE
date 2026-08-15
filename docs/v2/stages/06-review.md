@@ -1,22 +1,22 @@
 # 06. review
 
-**깊은 검증.** 리뷰어의 판단은 사람이 읽고 판단하는 일이라 게이트로 자동 판정이 안 된다 ([graph.mjs:79-80](../../../graph.mjs#L79-L80)).
+**깊은 검증.** 리뷰어의 판단은 사람이 읽고 판단하는 일이라 게이트로 자동 판정이 안 된다 ([graph.mjs:100-101](../../../graph.mjs#L100-L101)).
 그래서 `signoff` 라는 다른 종류의 `clean_when` 을 쓰는 두 노드 중 하나다.
 
 ## Purpose
 
 컴파일러와 정적 게이트가 못 잡는 것 — 도메인 로직의 위치, 신뢰 경계, 승인된 디자인과의 불일치 — 을 사람(에이전트)이 읽어서 잡는다.
-없으면 깨지는 것: `deploy` 가 `review` 에 의존하므로([graph.mjs:92](../../../graph.mjs#L92)) **review 가 dirty 인 동안 배포가 차단된다.** 리뷰를 건너뛰면 배포도 못 한다.
+없으면 깨지는 것: `deploy` 가 `review` 에 의존하므로([graph.mjs:129](../../../graph.mjs#L129)) **review 가 dirty 인 동안 배포가 차단된다.** 리뷰를 건너뛰면 배포도 못 한다.
 
 ## Entry condition
 
 | 조건 | 어디서 막나 |
 |---|---|
-| `qa` 가 clean | [graph.mjs:84](../../../graph.mjs#L84) `depends_on: ["qa"]` |
+| `qa` 가 clean | [graph.mjs:105](../../../graph.mjs#L105) `depends_on: ["qa"]` |
 | **기능-완성 마일스톤**에 도달 | [CLAUDE.md:75](../../../CLAUDE.md#L75) — "깊은 리뷰는 이 기능-완성 마일스톤에만 파견한다(잦은 리뷰 방지)" |
 
 프론티어에 올라와도 **저절로 진행되지 않는다.** 게이트가 아니라 마커를 기다리는 노드라, 사람이 리뷰어를 파견하고 결과를 기록해야 움직인다.
-개발 중에는 dirty 로 남아 밀린 리뷰가 프론티어에 그대로 보인다 ([graph.mjs:82](../../../graph.mjs#L82)).
+개발 중에는 dirty 로 남아 밀린 리뷰가 프론티어에 그대로 보인다 ([graph.mjs:103](../../../graph.mjs#L103)).
 
 ## What it does
 
@@ -57,13 +57,13 @@
 
 | document | ownership | consumed by |
 |---|---|---|
-| `projects/<이름>/workspace/review.md` | review 의 produces ([graph.mjs:85](../../../graph.mjs#L85)) | [graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L179-L188) `signoffOK` |
+| `projects/<이름>/workspace/review.md` | review 의 produces ([graph.mjs:106](../../../graph.mjs#L106)) | [graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L179-L188) `signoffOK` |
 
 이 파일은 **산출물이자 판정 근거**다. 다른 노드들은 산출물을 만들고 게이트가 따로 판정하지만, review 는 산출물 자체가 판정이다.
 
 ## Gate
 
-**조건**: `signoff: { marker: "workspace/review.md", require: "status: passed", basis_of: "implement" }` ([graph.mjs:86](../../../graph.mjs#L86))
+**조건**: `signoff: { marker: "workspace/review.md", require: "status: passed", basis_of: "implement" }` ([graph.mjs:116](../../../graph.mjs#L116))
 
 세 가지를 **전부** 만족해야 clean 이다 ([graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L179-L188)):
 
@@ -72,7 +72,7 @@
 3. `basis:` 값이 **implement 의 현재 내용 해시와 같다** ([:187](../../../gates/graph-stop.mjs#L187))
 
 **3번이 이 노드에서 제일 중요한 대목이다.** 다른 모든 판정은 "지금 상태가 조건을 만족하나"를 묻지만, basis 비교는 "**이 승인이 무엇에 대한 승인이었나**"를 묻는다.
-구현이 한 글자라도 바뀌면 해시가 달라져 사인오프가 저절로 낡는다 — 리뷰를 다시 해야 한다 ([graph.mjs:81](../../../graph.mjs#L81)).
+구현이 한 글자라도 바뀌면 해시가 달라져 사인오프가 저절로 낡는다 — 리뷰를 다시 해야 한다 ([graph.mjs:102](../../../graph.mjs#L102)).
 
 **사인오프 노드는 변경 감지에서 제외된다** ([graph-stop.mjs:218](../../../gates/graph-stop.mjs#L218)) — 마커 파일을 고쳐도 그것 때문에 dirty 가 되지는 않는다. 낡는 건 오직 basis 가 어긋날 때뿐이다.
 

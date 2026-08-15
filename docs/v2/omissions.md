@@ -26,9 +26,9 @@
 
 | 뺀 것 | 이유 | 어디에 글로 남았나 |
 |---|---|---|
-| `design` 의 병렬 자식 2개 — page-designer([graph.mjs:46](../../graph.mjs#L46)) · schema-designer([graph.mjs:53](../../graph.mjs#L53)) | 노드 상한 8–12. 둘을 넣으면 12를 넘고 컬럼이 포화된다 | 그림의 "게이트" 카드 · [00-workflow.workflow.json](diagrams/00-workflow.workflow.json) `cards[1]` |
-| `qa-classifier` 노드 ([graph.mjs:76](../../graph.mjs#L76)) | 컬럼 0–5가 전부 차서 실패 레인을 넣으면 엣지가 교차한다(`composition/proper-crossing` 실측) | 그림의 "게이트" 카드에 `--mark` 동작까지 서술 |
-| `spec-coverage` 게이트 노드 | [run-gates.mjs:273](../../gates/run-gates.mjs#L273) 이 내부에서 실행한다 — 별도 층이 아니다 | 그림의 "게이트" 카드 + **[runtime.md](runtime.md) §3 표** |
+| `design` 의 병렬 자식 2개 — page-designer([graph.mjs:62](../../graph.mjs#L62)) · schema-designer([graph.mjs:69](../../graph.mjs#L69)) | 노드 상한 8–12. 둘을 넣으면 12를 넘고 컬럼이 포화된다 | 그림의 "게이트" 카드 · [00-workflow.workflow.json](diagrams/00-workflow.workflow.json) `cards[1]` |
+| `qa-classifier` 노드 ([graph.mjs:97](../../graph.mjs#L97)) | 컬럼 0–5가 전부 차서 실패 레인을 넣으면 엣지가 교차한다(`composition/proper-crossing` 실측) | 그림의 "게이트" 카드에 `--mark` 동작까지 서술 |
+| `spec-coverage` 게이트 노드 | [run-gates.mjs:536](../../gates/run-gates.mjs#L536) 이 내부에서 실행한다 — 별도 층이 아니다 | 그림의 "게이트" 카드 + **[runtime.md](runtime.md) §3 표** |
 | PreToolUse 보호 훅 3개 · SessionStart 브리핑 | 실행 그래프를 전진시키지 않는다 | **[runtime.md](runtime.md) §1·§2** + [04-layers](diagrams/04-layers.architecture.json) 에 층으로 있음 |
 | **재작업 역방향 엣지** | 제약이 아니라 **의도적 배제**. 전파는 엣지가 아니라 규칙이다(상류 dirty → 하류 전부, [graph.mjs:6](../../graph.mjs#L6)). 엣지로 그리면 있지도 않은 경로가 있는 것처럼 보인다 | 그림의 "주 경로" 카드 · [02-gate.lifecycle.json](diagrams/02-gate.lifecycle.json) 이 상태 전이로 표현 |
 | `qa → run-gates` 엣지 | 게이트 관계를 `implement` 쪽 하나로 대표시켰다 | 그림의 "게이트" 카드에 qa 의 `clean_when` 명시 |
@@ -41,14 +41,14 @@
 | `workspace/PROGRESS.md` · `DECISIONS.md` | 노드 상한. 브리핑이 HANDOFF 와 함께 읽는다([briefing.mjs:36](../../scripts/briefing.mjs#L36), [:71](../../scripts/briefing.mjs#L71)) | 그림의 "생략 원장" 카드 |
 | `docs/references/` 4종 + `architectures/` 3종 | 단계 산출물이 아니라 참고 자산이다 | [04-layers.architecture.json](diagrams/04-layers.architecture.json) 에 `refs` 층으로 있음 |
 | `docs/design/mockups/*.html` · `INTERVIEW.md` · `docs/tech-stack.md` · `docs/specs/_TEMPLATE.md` · `specs/planned/` | 노드 상한 | 그림의 "생략 원장" 카드 |
-| **`workspace/deploy.md`** | 그래프가 요구하지만([graph.mjs:93](../../graph.mjs#L93)) **아직 존재하지 않는다.** 없는 파일을 노드로 그리지 않았다(§R1) | [findings.md](findings.md) **F-02** — 절차 문서도 없다는 사실까지 |
+| **`workspace/deploy.md`** | 그래프가 요구하지만([graph.mjs:130](../../graph.mjs#L130)) **아직 존재하지 않는다.** 없는 파일을 노드로 그리지 않았다(§R1) | [findings.md](findings.md) **F-02** — 절차 문서도 없다는 사실까지 |
 | `docs/LESSONS.md` | retro 스킬이 쓰고 읽지만([retro/SKILL.md:24](../../.claude/skills/retro/SKILL.md#L24)) 실행 그래프 밖이다 | 그림의 "생략 원장" 카드 |
 
 ## 02-gate — 노드 상태 라이프사이클
 
 | 뺀 것 | 이유 | 어디에 글로 남았나 |
 |---|---|---|
-| `deploy` 차단 상태 | 한 노드의 상태가 아니라 **노드 사이의 의존**이다([graph.mjs:92](../../graph.mjs#L92)) | [00-workflow.workflow.json](diagrams/00-workflow.workflow.json) 의 `review → deploy` 엣지 |
+| `deploy` 차단 상태 | 한 노드의 상태가 아니라 **노드 사이의 의존**이다([graph.mjs:129](../../graph.mjs#L129)) | [00-workflow.workflow.json](diagrams/00-workflow.workflow.json) 의 `review → deploy` 엣지 |
 | `design` 부모 집계 상태 (자식 둘 다 clean 이라야 부모 clean, [graph-stop.mjs:244-246](../../gates/graph-stop.mjs#L244-L246)) | 렌더러 제약 — `main`/`terminal` 외 레인은 **한 밴드를 공유**해 칸이 3개뿐이다(실측: `States ... share one band`) | 그림의 "생략 원장" 카드 |
 | `--mark` 진입 ([graph-stop.mjs:193-206](../../gates/graph-stop.mjs#L193-L206)) | 되돌림 경로 셋과 **결과가 같다**(dirty 전파) — 상태를 늘려도 정보가 안 는다 | 그림의 "생략 원장" 카드 |
 | 해시 변경 감지 dirty ([graph-stop.mjs:217-222](../../gates/graph-stop.mjs#L217-L222)) | `낡음(stale)` 과 결과가 같아 한 상태로 합쳤다 | 그림의 "생략 원장" 카드 |

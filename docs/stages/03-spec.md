@@ -4,7 +4,7 @@
 결제·인증·권한·동시성·시변 상태처럼 어기면 사고가 나는 기능의 약속을 테스트가 참조할 수 있는 ID 붙은 불변식으로 고정한다. 없으면 "무엇을 지켜야 하는가"가 코드 리뷰어의 기억에만 남는다.
 
 ## Entry condition
-product 가 clean 이고 spec 이 dirty 일 때 프론티어가 된다 [(graph.mjs:32-33)](../../graph.mjs#L32-L33). design 과는 직교라 서로를 기다리지 않는다.
+product 가 clean 이고 spec 이 dirty 일 때 프론티어가 된다 [(graph.mjs:48-49)](../../graph.mjs#L48-L49). design 과는 직교라 서로를 기다리지 않는다.
 착수 신호는 두 가지: PRODUCT.md 에 "(스펙 필요: …)" 플래그가 있거나 [(kickoff/SKILL.md:27-29)](../../.claude/skills/kickoff/SKILL.md#L27-L29), 위험 기능 구현 직전이거나 [(CLAUDE.md:60)](../../CLAUDE.md#L60).
 
 ## What it does
@@ -19,7 +19,7 @@ product 가 clean 이고 spec 이 dirty 일 때 프론티어가 된다 [(graph.m
 | name | when | evidence |
 |---|---|---|
 | `spec` 스킬 (`/spec <기능명>`) | 위험 기능 구현 전 | [CONFIRMED: .claude/skills/spec/SKILL.md:1-5] |
-| `gates/spec-coverage.mjs` | approved 스펙의 INV마다 참조 테스트 존재 검사 | [CONFIRMED: graph.mjs:37] |
+| `gates/spec-coverage.mjs` | approved 스펙의 INV마다 참조 테스트 존재 검사 | [CONFIRMED: graph.mjs:53] |
 | `.claude/rules/tdd.md` | approved 이후 테스트 먼저 | [CONFIRMED: .claude/rules/tdd.md:7-8] |
 | `spec-auditor` 서브에이전트 | 있으면 감사 — **이 레포에는 없다** | [CONFIRMED: .claude/agents/ 에 부재] |
 
@@ -37,7 +37,7 @@ product 가 clean 이고 spec 이 dirty 일 때 프론티어가 된다 [(graph.m
 | `projects/<이름>/docs/specs/planned/*.md` | spec 스킬 — 합의됐으나 미구현 | 사람. spec 노드 글롭이 비재귀라 판정에서 제외된다 |
 
 ## Gate
-두 조건이 **모두** 걸린다 [(graph.mjs:35-38)](../../graph.mjs#L35-L38):
+두 조건이 **모두** 걸린다 [(graph.mjs:51-54)](../../graph.mjs#L51-L54):
 1. `frontmatter: docs/specs/*.md 가 status: approved` — 구현은 [graph-stop.mjs:150-162](../../gates/graph-stop.mjs#L150-L162), 줄 시작 앵커로 프론트매터 블록만 본다.
 2. `gate: ["spec-coverage"]` — approved 스펙의 모든 `INV-*` 를 참조하는 테스트가 있어야 한다 [(spec-coverage.mjs:29-60)](../../gates/spec-coverage.mjs#L29-L60).
 

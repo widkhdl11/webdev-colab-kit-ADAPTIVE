@@ -31,12 +31,34 @@ Stop 훅이 턴을 막을지 정할 때 다르게 취급된다.
 
 | 게이트 성격 | 예 | 턴 차단 |
 |---|---|---|
-| `completion` — "끝내기 전에 있어야 한다" | `spec-coverage` (approved 스펙의 INV 테스트) | owner 가 dirty/rework 면 **안 막는다**. 하류가 이미 다 막혀 있어 중복이다 |
+| `completion` — "끝내기 전에 있어야 한다" | `spec-coverage` (approved 스펙의 INV 테스트) · `tsc-notrun` · `test-notrun` | owner 가 dirty·rework·n/a 면 **안 막는다**. 하류가 이미 다 막혀 있어 중복이다 |
 | `precondition` — "시작하기 전에 승인받아야 한다" | `design` (BEFORE_UI) | 기본은 **막는다**. 하류 차단은 노드 상태일 뿐 파일 쓰기를 못 막아 이게 유일한 저지선이다. 단 owner 가 rework 면 안 막는다 |
 | 목록에 없음 | `fsd`·`security`·`tsc`·`test`·`risk-surface` | 어디서 나든 **무조건 막는다** — 처방된 상태가 아니라 아무 데서나 나는 위반이다 |
 
 낮춰도 강제력은 그대로다. 노드는 여전히 dirty/rework, 하류는 그대로 차단, 프론티어도 그 노드를 계속
 가리킨다. 허용되는 건 **턴을 끝내는 것 하나**이고, 낮췄다는 사실은 매 턴 `⚠ [graph/EXPECTED]` 로 찍힌다.
+
+### 검사가 안 돈 것은 통과가 아니다 (2026-08-16)
+
+노드를 clean 으로 내리는 판정은 "그 카테고리 에러가 0건인가" 하나다(`gates/graph-stop.mjs` 의 `gateBlocked`).
+그래서 **아무것도 안 돌아서 0건인 것과 다 통과해서 0건인 것이 구별되지 않는다.**
+
+tsconfig.json 이 없으면 `npx tsc` 는 실행되지 않고, `scripts.test` 가 없으면 테스트가 실행되지 않는다.
+예전에는 둘 다 조용히 건너뛰어져서, 타입 검사도 테스트도 없는 프로젝트가 `implement`·`qa` 를
+매 턴 자동 clean 으로 통과시켰다. 실측했다 — 그런 프로젝트를 두고 게이트를 돌리면
+`게이트 통과 (139개 파일, 3개 프로젝트)` 가 그대로 찍혔다.
+
+지금은 안 돈 검사를 전용 카테고리의 에러로 낸다.
+
+| 카테고리 | 언제 | 어느 노드를 막나 |
+|---|---|---|
+| `tsc-notrun/NO_TSCONFIG` | `tsconfig.json` 없음 | `implement` |
+| `test-notrun/NO_TEST_SCRIPT` | `package.json` 에 `scripts.test` 없음 | `qa` |
+
+두 카테고리는 해당 노드의 `clean_when.gate` 에 들어 있어 **그 노드가 clean 이 안 되고**,
+`GATE_KIND` 에 `completion` 으로 등록돼 있어 **턴은 막지 않는다** — 설정을 붙일지 n/a 로 선언할지는
+사용자 결정이고, 물어보려면 턴이 끝나야 한다. 통과 메시지도 무엇을 돌렸는지 말한다:
+`게이트 통과 (138개 파일, 2개 프로젝트 · tsc 2/2 · test 2/2)`.
 
 ### n/a — 이번 작업엔 해당 없음
 `n/a` 는 "이번 작업에는 이 노드가 해당 없음"이라는 판단이다. 하류를 막지 않고 프론티어에도 안 뜬다

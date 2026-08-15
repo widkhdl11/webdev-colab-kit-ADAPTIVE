@@ -1,11 +1,11 @@
 # 04. design — 시각 방향과 데이터 구조 (집계 노드)
 
 ## Purpose
-화면의 시각 언어와 데이터 스키마를 코드보다 먼저 확정한다. 이 노드는 자체 산출물이 없는 **집계 노드**로, 자식 둘(`page-designer`·`schema-designer`)이 모두 clean 이라야 clean 이다 [(graph.mjs:44-58)](../../graph.mjs#L44-L58).
+화면의 시각 언어와 데이터 스키마를 코드보다 먼저 확정한다. 이 노드는 자체 산출물이 없는 **집계 노드**로, 자식 둘(`page-designer`·`schema-designer`)이 모두 clean 이라야 clean 이다 [(graph.mjs:57-74)](../../graph.mjs#L57-L74).
 
 ## Entry condition
-product 가 clean 이고 design 이 dirty 일 때 [(graph.mjs:44)](../../graph.mjs#L44). spec 과 직교라 병행 가능하다.
-UI 작업 자체를 시작하려면 게이트가 먼저 막는다 — `design/BEFORE_UI` 는 승인된 design-rules.md 없이 `pages`/`widgets`(Next 프로젝트면 두 번째 `page.*`)에 파일이 생기면 에러를 낸다 [(run-gates.mjs:182-226)](../../gates/run-gates.mjs#L182-L226).
+product 가 clean 이고 design 이 dirty 일 때 [(graph.mjs:60)](../../graph.mjs#L60). spec 과 직교라 병행 가능하다.
+UI 작업 자체를 시작하려면 게이트가 먼저 막는다 — `design/BEFORE_UI` 는 승인된 design-rules.md 없이 `pages`/`widgets`(Next 프로젝트면 두 번째 `page.*`)에 파일이 생기면 에러를 낸다 [(run-gates.mjs:418-468)](../../gates/run-gates.mjs#L418-L468).
 
 ## What it does
 **page-designer 쪽 (새 시각 방향일 때)** [(rules/design-drafting.md:20-45)](../../.claude/rules/design-drafting.md#L20-L45)
@@ -17,7 +17,7 @@ UI 작업 자체를 시작하려면 게이트가 먼저 막는다 — `design/BE
 
 **이미 승인된 방향의 반복 화면이면** 시안을 건너뛰고 design-rules.md 를 근거로 바로 구현한다 [(rules/design-drafting.md:10-12)](../../.claude/rules/design-drafting.md#L10-L12).
 
-**schema-designer 쪽**: `supabase/migrations/*.sql` 과 `src/entities/*/model.ts` 를 만든다. 판정은 fsd·security 게이트 [(graph.mjs:53-57)](../../graph.mjs#L53-L57).
+**schema-designer 쪽**: `supabase/migrations/*.sql` 과 `src/entities/*/model.ts` 를 만든다. 판정은 fsd·security 게이트 [(graph.mjs:69-72)](../../graph.mjs#L69-L72).
 
 ## Skills and tools
 | name | when | evidence |
@@ -48,7 +48,7 @@ UI 작업 자체를 시작하려면 게이트가 먼저 막는다 — `design/BE
 자식 둘이 각각 판정되고, 부모는 자식이 전부 clean 일 때만 clean 이다 [(graph-stop.mjs:243-247)](../../gates/graph-stop.mjs#L243-L247).
 - `page-designer`: `design-rules.md` 프론트매터가 `status: approved`.
 - `schema-designer`: `fsd`·`security` 게이트 에러 0건.
-- 별도로 `design/BEFORE_UI` 가 implement 쪽에서 UI 착수를 막는다 [(run-gates.mjs:213-226)](../../gates/run-gates.mjs#L213-L226).
+- 별도로 `design/BEFORE_UI` 가 implement 쪽에서 UI 착수를 막는다 [(run-gates.mjs:455-468)](../../gates/run-gates.mjs#L455-L468).
 
 ## Failure path
 - 리뷰/테스트 실패가 `design-level` 로 판정되면 `design-rules.md` 를 `status: draft` 로 되돌린다(설계 거부) → design 이 dirty 로 남고 하류 전부 전파 [(qa-classifier.md:64-65)](../../.claude/agents/qa-classifier.md#L64-L65).

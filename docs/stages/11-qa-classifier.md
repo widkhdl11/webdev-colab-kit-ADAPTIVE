@@ -4,7 +4,7 @@
 검증 실패를 `spec / design / impl` 중 한 레벨로 귀속한다. **라우팅하지 않는다** — "어느 노드를 dirty 로 마크할지"만 정하고, 재작업 범위는 전파가 파생한다 [(qa-classifier.md:6-7)](../../.claude/agents/qa-classifier.md#L6-L7).
 
 ## Entry condition
-qa(테스트·spec-coverage) 또는 review(리뷰어 지적)가 실패했을 때. 그래프에는 `on_fail_diagnose: "qa-classifier"` 로 선언돼 있고, 이건 "어디로 갈지"가 아니라 "무엇을 진단할지"다 [(graph.mjs:73-76)](../../graph.mjs#L73-L76).
+qa(테스트·spec-coverage) 또는 review(리뷰어 지적)가 실패했을 때. 그래프에는 `on_fail_diagnose: "qa-classifier"` 로 선언돼 있고, 이건 "어디로 갈지"가 아니라 "무엇을 진단할지"다 [(graph.mjs:94-97)](../../graph.mjs#L94-L97).
 graph-stop 이 신호만 출력한다 — 파견은 모델·사용자의 행동이다 [(graph-stop.mjs:252-256)](../../gates/graph-stop.mjs#L252-L256).
 
 ## What it does

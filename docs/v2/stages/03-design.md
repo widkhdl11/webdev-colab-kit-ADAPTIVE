@@ -1,6 +1,6 @@
 # 03. design
 
-`product` 에서만 파생되는 두 노드 중 나머지. **자체 산출물이 없는 집계 노드**다 — 자식 둘이 모두 clean 이라야 clean 이 된다 ([graph.mjs:42](../../../graph.mjs#L42)).
+`product` 에서만 파생되는 두 노드 중 나머지. **자체 산출물이 없는 집계 노드**다 — 자식 둘이 모두 clean 이라야 clean 이 된다 ([graph.mjs:58](../../../graph.mjs#L58)).
 
 이 그래프에서 `parallel` 을 가진 유일한 노드다.
 
@@ -19,7 +19,7 @@ design
 
 | 조건 | 어디서 막나 |
 |---|---|
-| `product` 가 clean | [graph.mjs:44](../../../graph.mjs#L44) `depends_on: ["product"]` |
+| `product` 가 clean | [graph.mjs:60](../../../graph.mjs#L60) `depends_on: ["product"]` |
 | **새 시각 방향**인가 반복인가의 판단 | [design-drafting.md:10-18](../../../.claude/rules/design-drafting.md#L10-L18) — 애매하면 새 방향으로 본다 |
 
 `design-drafting.md` 는 **`paths:` 프론트매터가 없다.** 경로를 편집해도 자동으로 붙지 않고, [CLAUDE.md:23](../../../CLAUDE.md#L23)·[:59](../../../CLAUDE.md#L59) 가 이름을 부를 때만 로드된다. 규칙 7개 중 유일한 예외다 ([04-layers 그림](../diagrams/04-layers.architecture.json) 참조).
@@ -60,9 +60,9 @@ design
 
 | document | ownership | consumed by |
 |---|---|---|
-| `docs/design/design-rules.md` | page-designer produces ([graph.mjs:47](../../../graph.mjs#L47)) | [run-gates.mjs:204-212](../../../gates/run-gates.mjs#L204-L212) `designApproved` · [ui-layers.md:9-10](../../../.claude/rules/ui-layers.md#L9-L10) · ui-reviewer |
+| `docs/design/design-rules.md` | page-designer produces ([graph.mjs:63](../../../graph.mjs#L63)) | [run-gates.mjs:446-454](../../../gates/run-gates.mjs#L446-L454) `designApproved` · [ui-layers.md:9-10](../../../.claude/rules/ui-layers.md#L9-L10) · ui-reviewer |
 | `docs/design/mockups/*.html` | page-designer produces | 사람 (checkpoint 확인용) |
-| `supabase/migrations/*.sql` · `src/entities/*/model.ts` | schema-designer produces ([graph.mjs:54](../../../graph.mjs#L54)) | run-gates fsd·security · security-reviewer |
+| `supabase/migrations/*.sql` · `src/entities/*/model.ts` | schema-designer produces ([graph.mjs:70](../../../graph.mjs#L70)) | run-gates fsd·security · security-reviewer |
 | `docs/design/INTERVIEW.md` | 상담 과정 보관 — **produces 가 아니다** | design-drafter |
 
 ## Gate
@@ -71,14 +71,14 @@ design
 
 | 자식 | clean_when | 판정 |
 |---|---|---|
-| page-designer | `frontmatter: design-rules.md 가 status: approved` ([graph.mjs:50](../../../graph.mjs#L50)) | 문자열 정규식 ([graph-stop.mjs:156](../../../gates/graph-stop.mjs#L156)) |
-| schema-designer | `gate: ["fsd", "security"]` ([graph.mjs:55](../../../graph.mjs#L55)) | 정적 검사 에러 0건 |
+| page-designer | `frontmatter: design-rules.md 가 status: approved` ([graph.mjs:66](../../../graph.mjs#L66)) | 문자열 정규식 ([graph-stop.mjs:156](../../../gates/graph-stop.mjs#L156)) |
+| schema-designer | `gate: ["fsd", "security"]` ([graph.mjs:71](../../../graph.mjs#L71)) | 정적 검사 에러 0건 |
 
 **부모 집계**: 자식 둘이 다 clean 이라야 design clean. 하나라도 dirty 면 부모 dirty ([graph-stop.mjs:244-246](../../../gates/graph-stop.mjs#L244-L246)).
 집계는 자식 처리 **직후** 확정된다 — 하류(implement)가 같은 턴에 이걸 보고 판정하기 때문이다 ([graph-stop.mjs:243](../../../gates/graph-stop.mjs#L243)).
 
-**별도 게이트 `design/BEFORE_UI`**: `src/{pages,widgets}` 에 파일이 생겼는데 design-rules.md 가 approved 가 아니면 차단 ([run-gates.mjs:213-226](../../../gates/run-gates.mjs#L213-L226)).
-Next 프로젝트는 `src/app/**/page.*` 를 화면으로 보되, **라우트가 1장이면 워킹 스켈레톤으로 보고 넘어간다** ([run-gates.mjs:197-202](../../../gates/run-gates.mjs#L197-L202)).
+**별도 게이트 `design/BEFORE_UI`**: `src/{pages,widgets}` 에 파일이 생겼는데 design-rules.md 가 approved 가 아니면 차단 ([run-gates.mjs:455-468](../../../gates/run-gates.mjs#L455-L468)).
+Next 프로젝트는 `src/app/**/page.*` 를 화면으로 보되, **라우트가 1장이면 워킹 스켈레톤으로 보고 넘어간다** ([run-gates.mjs:439-444](../../../gates/run-gates.mjs#L439-L444)).
 
 > ⚠ **page-designer 는 design-rules.md 가 아예 없어도 clean 이 된다** — 프론트매터 검사가 볼 파일이 하나도 없으면 그냥 통과시키기 때문이다 ([graph-stop.mjs:153](../../../gates/graph-stop.mjs#L153)). 실제 사고를 막는 것은 그래프가 아니라 `design/BEFORE_UI` 게이트다. 그 게이트가 화면 위치를 못 알아보는 스택에서는 강제가 소리 없이 사라진다 — [setup/SKILL.md:22-25](../../../.claude/skills/setup/SKILL.md#L22-L25) 가 이미 경고하는 구멍이다 ([findings F-03](../findings.md)).
 
@@ -96,8 +96,8 @@ page-designer 의 `design-rules.md` 가 `status: approved` **이고** schema-des
 
 ## Unverified
 
-- **schema-designer 의 절차 문서를 못 찾았다.** 자식으로 선언되고 produces·clean_when 도 있지만([graph.mjs:53-56](../../../graph.mjs#L53-L56)), 누가 언제 어떻게 마이그레이션과 엔티티 모델을 만드는지 안내하는 스킬·규칙이 없다. page-designer 쪽은 규칙·스킬·에이전트가 4개나 붙어 있는 것과 대조된다. `[INFERRED]`
+- **schema-designer 의 절차 문서를 못 찾았다.** 자식으로 선언되고 produces·clean_when 도 있지만([graph.mjs:69-72](../../../graph.mjs#L69-L72)), 누가 언제 어떻게 마이그레이션과 엔티티 모델을 만드는지 안내하는 스킬·규칙이 없다. page-designer 쪽은 규칙·스킬·에이전트가 4개나 붙어 있는 것과 대조된다. `[INFERRED]`
 - **`docs/design/INTERVIEW.md` 는 어느 노드의 produces 도 아니다.** [design-interview/SKILL.md:27](../../../.claude/skills/design-interview/SKILL.md#L27) 이 "과정 보관"이라고 성격을 규정하지만, 그래프가 추적하지 않으므로 이 파일이 바뀌어도 아무 노드가 dirty 가 되지 않는다. 의도인지 누락인지 확인 못 했다. `[INFERRED]`
 - **대비 4.5:1 실측을 강제하는 게이트가 없다.** [design-drafting.md:32-34](../../../.claude/rules/design-drafting.md#L32-L34) 가 "안 재면 미달인 채로 승인된다"고 경고하지만, 검사하는 코드는 못 찾았다. `ui-reviewer` 가 읽어서 판단할 뿐이다. `[INFERRED]`
 - **`tokens.css` 는 produces 목록에 없다.** [design-drafting.md:44](../../../.claude/rules/design-drafting.md#L44) 가 갱신을 지시하지만 `src/shared/ui/tokens.css` 는 page-designer 의 produces 가 아니라 `implement` 의 `src/**` 에 잡힌다. 디자인 산출물이 구현 노드의 해시에 섞이는 셈인데, 의도인지 확인 못 했다. `[INFERRED]`
-- Next 프로젝트의 "라우트 1장 예외"([run-gates.mjs:197-202](../../../gates/run-gates.mjs#L197-L202))가 실제로 어떤 경우에 과차단·과통과를 만드는지 직접 돌려 보지는 않았다. `[INFERRED]`
+- Next 프로젝트의 "라우트 1장 예외"([run-gates.mjs:439-444](../../../gates/run-gates.mjs#L439-L444))가 실제로 어떤 경우에 과차단·과통과를 만드는지 직접 돌려 보지는 않았다. `[INFERRED]`

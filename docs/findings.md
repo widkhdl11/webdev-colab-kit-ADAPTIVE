@@ -54,7 +54,7 @@
 ## 2. 읽는다고 선언됐지만 아무도 쓰지 않는 문서 (유령 참조)
 
 ### F4. `workspace/deploy.md` — 만드는 절차가 어디에도 없다 【높음】
-- 요구하는 쪽: [graph.mjs:91-95](../graph.mjs#L91-L95)
+- 요구하는 쪽: [graph.mjs:128-132](../graph.mjs#L128-L132)
   ```js
   deploy: { depends_on: ["review"], produces: ["workspace/deploy.md"],
     clean_when: { signoff: { marker: "workspace/deploy.md", require: "status: deployed", basis_of: "implement" } } }
@@ -88,7 +88,7 @@
 
 ### F8. `projects/<이름>/docs/design/INTERVIEW.md` — 그래프 밖 【중간】
 - 생성: [.claude/skills/design-interview/SKILL.md](../.claude/skills/design-interview/SKILL.md), 소비: [.claude/agents/design-drafter.md:23](../.claude/agents/design-drafter.md#L23) ("첫 시각 방향이면 이게 근거").
-- `design/page-designer`의 produces는 `docs/design/design-rules.md`와 `docs/design/mockups/*.html`뿐([graph.mjs:46-51](../graph.mjs#L46-L51)) → INTERVIEW.md만 바뀌면 design 노드는 계속 clean이다.
+- `design/page-designer`의 produces는 `docs/design/design-rules.md`와 `docs/design/mockups/*.html`뿐([graph.mjs:62-68](../graph.mjs#L62-L68)) → INTERVIEW.md만 바뀌면 design 노드는 계속 clean이다.
 - F7·F8은 엄밀히는 "아무도 안 읽는 문서"가 아니라 **그래프가 추적하지 않는 승인 산출물**이다. 같은 증상(변경이 재작업을 유발하지 않음)이라 함께 둔다.
 
 ### 알려진 예외
@@ -109,14 +109,14 @@ SessionStart→`scripts/briefing.mjs`, PreToolUse×3→`.claude/hooks/*.mjs`, Po
 위 F4와 같은 항목. 게이트 관점에서 보면 "아무도 만들지 않는 마커 파일 + 아무도 쓰지 않는 `status: deployed` 문자열"을 판정 근거로 삼고 있다.
 
 ### F9. `design/schema-designer` — 매칭 파일 0개라 판정이 공회전 【중간】
-- 조건: [graph.mjs:53-56](../graph.mjs#L53-L56) — produces `supabase/migrations/*.sql`, `src/entities/*/model.ts`, clean_when `gate: ["fsd","security"]`.
+- 조건: [graph.mjs:69-72](../graph.mjs#L69-L72) — produces `supabase/migrations/*.sql`, `src/entities/*/model.ts`, clean_when `gate: ["fsd","security"]`.
 - signal에는 둘 다 0건이다. `projects/signal/src/entities/article/`에 있는 건 `index.ts`와 `lib/query.ts`이고 `model.ts`는 없다.
 - [gates/graph-stop.mjs:66-72](../gates/graph-stop.mjs#L66-L72) `hashNode`는 매칭 0이면 `null`을 돌려주고, [:169-176](../gates/graph-stop.mjs#L169-L176) `gateBlocked`도 매칭할 경로가 없으니 절대 막지 않는다 → 이 노드는 **무조건 clean**.
 - 증거: [projects/signal/workspace/HANDOFF.md:24](../projects/signal/workspace/HANDOFF.md#L24) → `"design/schema-designer": { "status": "clean", "hash": null }`.
 - 이게 곧바로 사고는 아니다(엔티티가 없는 프로젝트라면 맞는 상태다). 다만 `model.ts`라는 파일명 규약을 쓰지 않는 프로젝트에서는 스키마 설계가 그래프에서 통째로 사라진다.
 
 ### F10. `qa` 노드 글롭이 `.test.tsx`를 잡지 못한다 【높음】
-- 조건: [graph.mjs:71](../graph.mjs#L71) — `produces: ["src/**/*.test.ts", "tests/**"]`.
+- 조건: [graph.mjs:89](../graph.mjs#L89) — `produces: ["src/**/*.test.ts", "tests/**"]`.
 - [gates/graph-stop.mjs:32-43](../gates/graph-stop.mjs#L32-L43)의 `globToRegex`를 그대로 복제해 실측한 결과:
   ```
   src/**/*.test.ts  vs  src/a/b.test.ts                    -> true

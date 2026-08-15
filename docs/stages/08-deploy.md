@@ -1,10 +1,10 @@
 # 08. deploy — 배포 사인오프 (현재 진입 경로 없음)
 
 ## Purpose
-배포를 그래프의 마지막 노드로 두어, 리뷰가 낡은 상태에서는 배포가 불가능하게 만든다. `depends_on: ["review"]` 자체가 강제 마감 장치다 [(graph.mjs:89-95)](../../graph.mjs#L89-L95).
+배포를 그래프의 마지막 노드로 두어, 리뷰가 낡은 상태에서는 배포가 불가능하게 만든다. `depends_on: ["review"]` 자체가 강제 마감 장치다 [(graph.mjs:126-132)](../../graph.mjs#L126-L132).
 
 ## Entry condition
-review 가 clean 이고 deploy 가 dirty 일 때 프론티어가 된다 [(graph.mjs:92)](../../graph.mjs#L92).
+review 가 clean 이고 deploy 가 dirty 일 때 프론티어가 된다 [(graph.mjs:129)](../../graph.mjs#L129).
 현재 signal 프로젝트가 정확히 이 상태다 — [HANDOFF.md:3](../../projects/signal/workspace/HANDOFF.md#L3) 의 프론티어가 `deploy` 다.
 
 ## What it does
@@ -33,7 +33,7 @@ graph-stop 은 프론티어가 사인오프 노드일 때 필요한 값만 안�
 | `projects/<이름>/workspace/deploy.md` | **주인 없음** — 어떤 절차도 이 파일을 만들지 않는다 | deploy 노드 clean 판정 |
 
 ## Gate
-`clean_when: { signoff: { marker: "workspace/deploy.md", require: "status: deployed", basis_of: "implement" } }` [(graph.mjs:94)](../../graph.mjs#L94).
+`clean_when: { signoff: { marker: "workspace/deploy.md", require: "status: deployed", basis_of: "implement" } }` [(graph.mjs:131)](../../graph.mjs#L131).
 review 와 같은 판정 로직을 쓴다 — 마커 존재 + 문구 일치 + basis 해시가 현재 `src/**` 와 동일 [(graph-stop.mjs:179-188)](../../gates/graph-stop.mjs#L179-L188).
 
 ## Failure path

@@ -1,6 +1,6 @@
 # 02. spec
 
-`product` 에서만 파생되는 두 노드 중 하나. `design` 과 **직교**다 — 서로 의존하지 않는다 ([graph.mjs:33](../../../graph.mjs#L33)).
+`product` 에서만 파생되는 두 노드 중 하나. `design` 과 **직교**다 — 서로 의존하지 않는다 ([graph.mjs:47](../../../graph.mjs#L47)).
 
 ## Purpose
 
@@ -12,7 +12,7 @@
 
 | 조건 | 어디서 막나 |
 |---|---|
-| `product` 가 clean | [graph.mjs:33](../../../graph.mjs#L33) `depends_on: ["product"]` · [graph-stop.mjs:235](../../../gates/graph-stop.mjs#L235) 이 상류 clean 아니면 판정 자체를 건너뜀 |
+| `product` 가 clean | [graph.mjs:49](../../../graph.mjs#L49) `depends_on: ["product"]` · [graph-stop.mjs:235](../../../gates/graph-stop.mjs#L235) 이 상류 clean 아니면 판정 자체를 건너뜀 |
 | 기능이 결제·인증·권한·동시성이거나 시변·파생 상태 | [CLAUDE.md:60](../../../CLAUDE.md#L60) · [spec/SKILL.md:3](../../../.claude/skills/spec/SKILL.md#L3) |
 
 **단순 UI/콘텐츠 기능에는 들어가지 않는다** ([spec/SKILL.md:3](../../../.claude/skills/spec/SKILL.md#L3)).
@@ -48,13 +48,13 @@
 
 | document | ownership | consumed by |
 |---|---|---|
-| `projects/<이름>/docs/specs/*.md` | spec 노드의 produces ([graph.mjs:34](../../../graph.mjs#L34)) | [spec-coverage.mjs:30-37](../../../gates/spec-coverage.mjs#L30-L37) · test-auditor · security-reviewer · qa-classifier |
+| `projects/<이름>/docs/specs/*.md` | spec 노드의 produces ([graph.mjs:50](../../../graph.mjs#L50)) | [spec-coverage.mjs:30-37](../../../gates/spec-coverage.mjs#L30-L37) · test-auditor · security-reviewer · qa-classifier |
 | `projects/<이름>/docs/specs/planned/*.md` | 보류 스펙 (draft 고정) | **아무도** — 글롭이 비재귀라 게이트가 못 본다 |
 | `projects/<이름>/docs/specs/_TEMPLATE.md` | 프로젝트 로컬 템플릿 | spec 스킬 |
 
 ## Gate
 
-**조건 두 개를 모두 만족해야 한다** ([graph.mjs:35-38](../../../graph.mjs#L35-L38)):
+**조건 두 개를 모두 만족해야 한다** ([graph.mjs:51-54](../../../graph.mjs#L51-L54)):
 
 1. `frontmatter: { path: "docs/specs/*.md", require: "status: approved" }` — 매칭되는 **모든** 파일이 approved 여야 한다 ([graph-stop.mjs:157](../../../gates/graph-stop.mjs#L157) `files.every`)
 2. `gate: ["spec-coverage"]` — approved 스펙의 모든 `INV-*` 를 참조하는 테스트가 있어야 한다 ([spec-coverage.mjs:56-60](../../../gates/spec-coverage.mjs#L56-L60))
@@ -77,7 +77,7 @@
 ## Exit condition
 
 `docs/specs/*.md`(비재귀, `_` 제외) 가 전부 `status: approved` **이고** approved 스펙의 모든 INV 를 참조하는 테스트가 존재한다
-→ spec clean. `design` 도 clean 이면 프론티어가 `implement` 로 이동한다 ([graph.mjs:62](../../../graph.mjs#L62)).
+→ spec clean. `design` 도 clean 이면 프론티어가 `implement` 로 이동한다 ([graph.mjs:78](../../../graph.mjs#L78)).
 
 ## Unverified
 

@@ -1,20 +1,20 @@
 # 07. deploy
 
-그래프의 종착 노드. 하류가 없다 ([graph.mjs:91-95](../../../graph.mjs#L91-L95)).
+그래프의 종착 노드. 하류가 없다 ([graph.mjs:126-132](../../../graph.mjs#L126-L132)).
 `review` 와 같은 `signoff` 방식으로 clean 되는 두 노드 중 나머지다.
 
 **이 레포의 현재 프론티어가 여기다** — [projects/signal/workspace/PROGRESS.md:7](../../../projects/signal/workspace/PROGRESS.md#L7) 이 "`deploy` 는 아직 손대지 않았다(`workspace/deploy.md` 없음)"라고 기록하고 있다.
 
 ## Purpose
 
-배포를 **review 뒤에 강제로 세운다.** [graph.mjs:89-90](../../../graph.mjs#L89-L90) 이 목적을 직접 적어 놓았다 — "review 에 의존 → review dirty 면 배포 차단(강제 마감)".
+배포를 **review 뒤에 강제로 세운다.** [graph.mjs:126-127](../../../graph.mjs#L126-L127) 이 목적을 직접 적어 놓았다 — "review 에 의존 → review dirty 면 배포 차단(강제 마감)".
 없으면 깨지는 것: 리뷰를 건너뛴 코드가 배포될 수 있다. 이 노드의 존재 이유는 자기가 무엇을 하느냐가 아니라 **무엇을 막느냐**다.
 
 ## Entry condition
 
 | 조건 | 어디서 막나 |
 |---|---|
-| `review` 가 clean | [graph.mjs:92](../../../graph.mjs#L92) `depends_on: ["review"]` · [graph-stop.mjs:235](../../../gates/graph-stop.mjs#L235) |
+| `review` 가 clean | [graph.mjs:129](../../../graph.mjs#L129) `depends_on: ["review"]` · [graph-stop.mjs:235](../../../gates/graph-stop.mjs#L235) |
 
 review 가 dirty 인 동안은 프론티어에 오르지도 못한다. 그리고 review 는 implement 해시가 바뀌면 저절로 낡으므로,
 **배포 직전에 코드를 한 줄 고치면 배포가 다시 막힌다.** 이게 이 그래프에서 유일하게 강제되는 마감이다.
@@ -49,13 +49,13 @@ review 가 dirty 인 동안은 프론티어에 오르지도 못한다. 그리고
 
 | document | ownership | consumed by |
 |---|---|---|
-| `projects/<이름>/workspace/deploy.md` | deploy 의 produces ([graph.mjs:93](../../../graph.mjs#L93)) | [graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L179-L188) `signoffOK` — **이것뿐이다** |
+| `projects/<이름>/workspace/deploy.md` | deploy 의 produces ([graph.mjs:130](../../../graph.mjs#L130)) | [graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L179-L188) `signoffOK` — **이것뿐이다** |
 
 **이 파일은 현재 어느 프로젝트에도 존재하지 않는다.** 그래프가 요구하는 유일한 산출물인데 아직 한 번도 만들어진 적이 없다.
 
 ## Gate
 
-**조건**: `signoff: { marker: "workspace/deploy.md", require: "status: deployed", basis_of: "implement" }` ([graph.mjs:94](../../../graph.mjs#L94))
+**조건**: `signoff: { marker: "workspace/deploy.md", require: "status: deployed", basis_of: "implement" }` ([graph.mjs:131](../../../graph.mjs#L131))
 
 판정 로직은 review 와 **완전히 같은 함수**를 쓴다 ([graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L179-L188)) — 마커 존재 + 프론트매터 문자열 + basis 해시 일치.
 다른 것은 `require` 값(`status: deployed`)과 마커 경로뿐이다.

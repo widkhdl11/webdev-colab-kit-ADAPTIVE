@@ -1,6 +1,6 @@
 # 01. product
 
-그래프의 루트 노드. 다른 모든 노드가 직간접으로 여기에 의존한다 ([graph.mjs:26](../../../graph.mjs#L26) `depends_on: []`).
+그래프의 루트 노드. 다른 모든 노드가 직간접으로 여기에 의존한다 ([graph.mjs:42](../../../graph.mjs#L42) `depends_on: []`).
 
 ## Purpose
 
@@ -50,13 +50,13 @@ PRODUCT.md 없이 구현을 시작하는 것을 막는 게이트는 없다 — �
 
 | document | ownership | consumed by |
 |---|---|---|
-| `projects/<이름>/docs/PRODUCT.md` | product 노드의 유일한 produces ([graph.mjs:27](../../../graph.mjs#L27)) | spec · design (둘 다 `depends_on: ["product"]`) · goal 스킬 · setup 스킬 |
+| `projects/<이름>/docs/PRODUCT.md` | product 노드의 유일한 produces ([graph.mjs:43](../../../graph.mjs#L43)) | spec · design (둘 다 `depends_on: ["product"]`) · goal 스킬 · setup 스킬 |
 | 루트 `ACTIVE` | kickoff 0단계 | [briefing.mjs:15](../../../scripts/briefing.mjs#L15) · [graph-stop.mjs:23](../../../gates/graph-stop.mjs#L23) · run-gates |
 | `projects/<이름>/workspace/DECISIONS.md` | 트레이드오프가 있던 결정만 한 줄 ([kickoff/SKILL.md:24](../../../.claude/skills/kickoff/SKILL.md#L24)) | 사람 (그래프 노드 아님) |
 
 ## Gate
 
-**조건**: `clean_when: { exists_nonempty: "docs/PRODUCT.md" }` ([graph.mjs:28](../../../graph.mjs#L28))
+**조건**: `clean_when: { exists_nonempty: "docs/PRODUCT.md" }` ([graph.mjs:44](../../../graph.mjs#L44))
 
 **통과 경로**: 파일이 존재하고 `.trim().length > 0` 이면 clean ([graph-stop.mjs:164-168](../../../gates/graph-stop.mjs#L164-L168)).
 빈 파일은 통과하지 못한다 — 이 판정은 대상이 0개일 때 **거짓**을 반환한다. (같은 파일의 `frontmatterOK` 는 반대로 참을 반환한다 — [findings F-03](../findings.md))
@@ -71,12 +71,12 @@ PRODUCT.md 없이 구현을 시작하는 것을 막는 게이트는 없다 — �
 - 인터뷰가 끝나지 않으면 파일이 비어 있고 → product dirty → 하류 전부 dirty. 정지가 아니라 **정체**다.
 - `ACTIVE` 가 가리키는 디렉터리가 없으면 graph-stop 이 통째로 skip 한다 ([graph-stop.mjs:25-28](../../../gates/graph-stop.mjs#L25-L28)) — 이 경우 그래프 상태 자체가 갱신되지 않는다. 게이트 실패와 다른 종류의 침묵이다.
 - 질문 총량 10개를 넘기면 남은 것은 가정 처리 후 기록 ([kickoff/SKILL.md:34](../../../.claude/skills/kickoff/SKILL.md#L34)).
-- **product 를 나중에 고치면** 전파 규칙에 따라 spec·design·implement·qa·review·deploy 가 전부 dirty 가 된다 ([graph.mjs:24](../../../graph.mjs#L24), [propagate.mjs:87-92](../../../gates/propagate.mjs#L87-L92)).
+- **product 를 나중에 고치면** 전파 규칙에 따라 spec·design·implement·qa·review·deploy 가 전부 dirty 가 된다 ([graph.mjs:6](../../../graph.mjs#L6), [propagate.mjs:87-92](../../../gates/propagate.mjs#L87-L92)).
 
 ## Exit condition
 
 `projects/<active>/docs/PRODUCT.md` 가 존재하고 공백이 아니다 → 다음 턴 Stop 훅에서 product 가 clean 이 되고,
-프론티어가 `spec` 과 `design` 으로 **동시에** 이동한다(둘 다 product 에만 의존하므로 — [graph.mjs:33](../../../graph.mjs#L33), [:44](../../../graph.mjs#L44)).
+프론티어가 `spec` 과 `design` 으로 **동시에** 이동한다(둘 다 product 에만 의존하므로 — [graph.mjs:49](../../../graph.mjs#L49), [:60](../../../graph.mjs#L60)).
 
 ## Unverified
 

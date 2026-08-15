@@ -29,9 +29,15 @@ projects/<이름>/
 
 1. **`pages` 제거는 하지 않는다.** `LAYERS`는 전역(모든 프로젝트 공유)이라 건드리면 다른 프로젝트가 깨진다.
    Next 프로젝트는 그냥 **`src/pages`를 안 만들면 된다** (빈 레이어는 위반 아님).
-2. **app 루트 파일은 각각 '슬라이스'로 취급된다** → `src/app/layout.tsx`가 `src/app/providers.tsx`를
-   import하면 `fsd/CROSS_SLICE` 위반. **프로바이더·클라이언트 래퍼는 `shared`로 내린다**
-   (`@/shared/providers/...`). app→shared는 하향 의존이라 허용.
+2. **app·shared 안에서는 폴더를 가로질러 import해도 된다** (2026-08-16 반영). FSD 정의상 이 두 레이어는
+   슬라이스가 없고 세그먼트만 있어서, 게이트가 `CROSS_SLICE`를 적용하지 않는다.
+   `src/app/layout.tsx` → `src/app/providers.tsx`, `shared/api` → `shared/config` 둘 다 통과한다.
+   - **상향 import는 그대로 막힌다** — `shared`가 `entities`를 부르면 `fsd/UPWARD_IMPORT`. 레이어 사이
+     방향 규칙은 이 예외와 무관하다.
+   - `widgets`·`features`·`entities`는 예외가 아니다. 그 레이어들끼리는 여전히 슬라이스를 가로지를 수 없고,
+     공유할 것은 아래 레이어로 내린다.
+   - 반영 전에는 프로바이더를 `shared`로 내려 우회했다. 이제 그럴 필요가 없지만, **이미 내려간 것을
+     되돌릴 이유도 없다** — app→shared는 어차피 허용되는 하향 의존이다.
 3. **`dangerouslySetInnerHTML` / `.innerHTML` 은 보안 게이트가 원천 차단**(NO_INNERHTML).
    외부/수집 HTML을 그대로 렌더해야 하면 이 방식 불가 — sanitize 후 React 요소로 파싱하거나
    iframe 등 대안. (해당 기능 스펙에서 확정)
@@ -61,6 +67,6 @@ projects/<이름>/
 
 ## 미해결(킷 개선 백로그 후보)
 
-- 게이트 CROSS_SLICE가 canonical FSD와 달리 `app`·`shared`도 슬라이스로 봄 → app/shared는 슬라이스
-  예외가 맞다(FSD 정의상 무슬라이스). 지금은 shared로 내려 우회. 추후 게이트에 레이어 예외 검토.
+- ~~게이트 CROSS_SLICE가 canonical FSD와 달리 `app`·`shared`도 슬라이스로 봄~~ → 2026-08-16 반영
+  (위 게이트 함의 2).
 - ~~design/BEFORE_UI 트리거에 `src/app` 라우트 페이지 포함 검토~~ → 2026-08-02 반영 (위 게이트 함의 4).

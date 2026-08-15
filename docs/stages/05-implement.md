@@ -1,17 +1,17 @@
 # 05. implement — spec과 design이 합류하는 곳
 
 ## Purpose
-승인된 스펙과 승인된 시각 기준을 코드로 옮긴다. 그래프에서 유일하게 상류가 둘인 노드로, 여기서 두 직교 갈래가 만난다 [(graph.mjs:61-65)](../../graph.mjs#L61-L65).
+승인된 스펙과 승인된 시각 기준을 코드로 옮긴다. 그래프에서 유일하게 상류가 둘인 노드로, 여기서 두 직교 갈래가 만난다 [(graph.mjs:76-83)](../../graph.mjs#L76-L83).
 
 ## Entry condition
-`depends_on: ["spec", "design"]` — **둘 다 clean** 이어야 프론티어가 된다 [(graph.mjs:62)](../../graph.mjs#L62). release 판정도 상류 clean 을 먼저 확인한다 [(graph-stop.mjs:235)](../../gates/graph-stop.mjs#L235).
-UI 레이어에 손대려면 추가로 `design-rules.md` 가 `status: approved` 여야 한다 — 아니면 편집 즉시 `design/BEFORE_UI` 로 막힌다 [(run-gates.mjs:213-226)](../../gates/run-gates.mjs#L213-L226).
+`depends_on: ["spec", "design"]` — **둘 다 clean** 이어야 프론티어가 된다 [(graph.mjs:78)](../../graph.mjs#L78). release 판정도 상류 clean 을 먼저 확인한다 [(graph-stop.mjs:235)](../../gates/graph-stop.mjs#L235).
+UI 레이어에 손대려면 추가로 `design-rules.md` 가 `status: approved` 여야 한다 — 아니면 편집 즉시 `design/BEFORE_UI` 로 막힌다 [(run-gates.mjs:455-468)](../../gates/run-gates.mjs#L455-L468).
 
 ## What it does
 1. 구현 전 한 문단 요약 → 동의 → 시작 [(CLAUDE.md:16)](../../CLAUDE.md#L16).
 2. 이번 diff가 닿는 표면을 먼저 열거하고 표면마다 절차를 정한다 [(CLAUDE.md:69-95)](../../CLAUDE.md#L69-L95).
 3. approved 스펙이 있는 기능은 **테스트 먼저**, red 출력을 보여준 뒤 구현 [(rules/tdd.md:7-9)](../../.claude/rules/tdd.md#L7-L9).
-4. FSD 6레이어 안에서 아래 방향 import 만 [(run-gates.mjs:109-131)](../../gates/run-gates.mjs#L109-L131).
+4. FSD 6레이어 안에서 아래 방향 import 만 [(run-gates.mjs:113-136)](../../gates/run-gates.mjs#L113-L136).
 5. UI 레이어는 design-rules.md 기준 + 접근성·토큰 규칙을 따른다 [(rules/ui-layers.md:7-17)](../../.claude/rules/ui-layers.md#L7-L17).
 6. 편집할 때마다 PostToolUse 훅이 `run-gates --quick` 를 돌려 위반을 즉시 되돌려준다 [(.claude/settings.json:25-30)](../../.claude/settings.json#L25-L30).
 
@@ -37,12 +37,13 @@ UI 레이어에 손대려면 추가로 `design-rules.md` 가 `status: approved` 
 | `src/shared/ui/tokens.css` | 디자인 토큰 (design 국면 산출물이지만 src 아래) | UI 구현 |
 
 ## Gate
-`clean_when: { gate: ["fsd", "security", "tsc", "design"] }` [(graph.mjs:64)](../../graph.mjs#L64) — `src/**` 경로에 그 카테고리 에러가 0건이어야 한다.
-- `fsd/UPWARD_IMPORT` — 하위 레이어가 상위를 import [(run-gates.mjs:120-123)](../../gates/run-gates.mjs#L120-L123)
-- `fsd/CROSS_SLICE` — 같은 레이어의 다른 슬라이스 import [(run-gates.mjs:124-130)](../../gates/run-gates.mjs#L124-L130)
-- `security/*` — eval·innerHTML·하드코딩 시크릿·document.write [(run-gates.mjs:37-58)](../../gates/run-gates.mjs#L37-L58)
-- `tsc/*` — `npx tsc --noEmit` [(run-gates.mjs:232-254)](../../gates/run-gates.mjs#L232-L254)
-- `design/BEFORE_UI` — 승인 없는 UI 착수 [(run-gates.mjs:221-225)](../../gates/run-gates.mjs#L221-L225)
+`clean_when: { gate: ["fsd", "security", "tsc", "tsc-notrun", "design"] }` [(graph.mjs:82)](../../graph.mjs#L82) — `src/**` 경로에 그 카테고리 에러가 0건이어야 한다.
+- `fsd/UPWARD_IMPORT` — 하위 레이어가 상위를 import [(run-gates.mjs:124-127)](../../gates/run-gates.mjs#L124-L127)
+- `fsd/CROSS_SLICE` — 같은 레이어의 다른 슬라이스 import [(run-gates.mjs:128-135)](../../gates/run-gates.mjs#L128-L135). `app`·`shared` 는 FSD 정의상 슬라이스가 없어 이 검사에서 빠진다 [(run-gates.mjs:14-17)](../../gates/run-gates.mjs#L14-L17)
+- `security/*` — eval·innerHTML·하드코딩 시크릿·document.write [(run-gates.mjs:41-62)](../../gates/run-gates.mjs#L41-L62)
+- `tsc/*` — `npx tsc --noEmit` [(run-gates.mjs:481-503)](../../gates/run-gates.mjs#L481-L503)
+- `tsc-notrun/NO_TSCONFIG` — `tsconfig.json` 이 없어 타입 검사가 **아예 안 돌았음** [(run-gates.mjs:504-509)](../../gates/run-gates.mjs#L504-L509). 에러 0건이 "검사했다"를 뜻하지 않으므로 안 돈 것을 따로 받는다 — 이게 없으면 타입 검사 없는 프로젝트의 implement 가 자동 clean 이 된다. 턴은 막지 않는다(GATE_KIND 낮춤)
+- `design/BEFORE_UI` — 승인 없는 UI 착수 [(run-gates.mjs:455-468)](../../gates/run-gates.mjs#L455-L468)
 
 통과하면 그 턴의 release 에서 clean + 해시 저장 [(graph-stop.mjs:236-241)](../../gates/graph-stop.mjs#L236-L241). 실패하면 Stop 훅이 `exit 2` 로 차단하고 "새 기능 금지, 위반만 수정" 을 주입한다 [(graph-stop.mjs:266-269)](../../gates/graph-stop.mjs#L266-L269).
 
@@ -56,6 +57,6 @@ UI 레이어에 손대려면 추가로 `design-rules.md` 가 `status: approved` 
 
 ## Unverified
 - **"한 문단 요약 → 동의" 절차** — 코드로 강제되지 않는 서술 규칙이다. [INFERRED]
-- **표면별 절차 판단** — 어느 표면에 닿는지와 표면마다 걸 절차는 모델의 판단이고 기록되지 않는다. 단 위험 표면(인증·결제·권한·동시성)만은 risk-surface 게이트가 코드에서 직접 감지한다. [INFERRED / 위험 표면은 CONFIRMED: run-gates.mjs:203-358]
+- **표면별 절차 판단** — 어느 표면에 닿는지와 표면마다 걸 절차는 모델의 판단이고 기록되지 않는다. 단 위험 표면(인증·결제·권한·동시성)만은 risk-surface 게이트가 코드에서 직접 감지한다. [INFERRED / 위험 표면은 CONFIRMED: run-gates.mjs:208-410]
 - **테스트 먼저(red→green) 순서** — tdd 규칙은 문서일 뿐, 게이트는 최종 green 만 본다. [INFERRED]
 - **`src/**` 해시가 테스트 파일까지 포함한다** — 테스트를 고쳐도 implement 가 dirty 가 된다. 의도인지 부작용인지는 파일로 판단할 수 없다 (findings F10 과 짝을 이룬다). [INFERRED]

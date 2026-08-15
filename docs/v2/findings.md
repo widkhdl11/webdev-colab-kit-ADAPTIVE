@@ -45,7 +45,7 @@
 ## F-02 · `deploy` 사인오프를 어떻게 기록하는지 절차 문서가 없다
 
 - **어느 검사에서 나왔나**: 아무도 세팅하지 않는 상태를 참조하는 게이트 조건
-- **사실**: [graph.mjs:94](../../graph.mjs#L94) 가 `deploy` 를 `signoff: { marker: "workspace/deploy.md", require: "status: deployed" }` 로 clean 판정한다. `deployed` 라는 문자열은 `CLAUDE.md`·`.claude/`·`docs/references/`·`gates/`·`scripts/` 어디에도 없다. 대비되게 `review` 쪽은 [CLAUDE.md:72](../../CLAUDE.md#L72) 와 [graph-engine.md:114](../references/graph-engine.md#L114) 에 절차가 있다. **현재 이 레포의 프론티어가 `deploy` 다.**
+- **사실**: [graph.mjs:131](../../graph.mjs#L131) 가 `deploy` 를 `signoff: { marker: "workspace/deploy.md", require: "status: deployed" }` 로 clean 판정한다. `deployed` 라는 문자열은 `CLAUDE.md`·`.claude/`·`docs/references/`·`gates/`·`scripts/` 어디에도 없다. 대비되게 `review` 쪽은 [CLAUDE.md:72](../../CLAUDE.md#L72) 와 [graph-engine.md:114](../references/graph-engine.md#L114) 에 절차가 있다. **현재 이 레포의 프론티어가 `deploy` 다.**
 - **심각도**: **중간** — *다른 장치가 막아 준다*: [gates/graph-stop.mjs:259-262](../../gates/graph-stop.mjs#L259-L262) 가 사인오프 노드가 프론티어일 때 무엇을 쓸지 런타임에 출력한다. 절차 문서는 없지만 완전히 막히지는 않는다.
 - **재현**:
   ```
@@ -56,8 +56,8 @@
 ## F-03 · 볼 파일이 없을 때 `frontmatter` 는 통과시키고 `exists_nonempty` 는 막는다 — 둘이 정반대다
 
 - **어느 검사에서 나왔나**: 아무도 세팅하지 않는 상태를 참조하는 게이트 조건
-- **사실**: [gates/graph-stop.mjs:153](../../gates/graph-stop.mjs#L153) `if (files.length === 0) return true; // 대상 없음 → 막지 않음`. 따라서 `design/page-designer` 의 clean 조건([graph.mjs:50](../../graph.mjs#L50))은 `docs/design/design-rules.md` 가 **아예 없을 때도 통과**한다. 같은 파일 [167행](../../gates/graph-stop.mjs#L167)의 `exists_nonempty` 는 반대로 0개면 거짓이다.
-- **심각도**: **중간** — *다른 장치가 막아 준다*: [gates/run-gates.mjs:213-225](../../gates/run-gates.mjs#L213-L225) 의 `design/BEFORE_UI` 가 UI 파일 작업을 별도로 차단한다. 그 게이트가 화면 위치를 못 알아보는 스택에서는 등급이 높음으로 올라간다 — 이 위험은 [setup/SKILL.md:22-25](../../.claude/skills/setup/SKILL.md#L22-L25) 가 이미 경고하고 있다("강제가 조용히 사라지거나").
+- **사실**: [gates/graph-stop.mjs:153](../../gates/graph-stop.mjs#L153) `if (files.length === 0) return true; // 대상 없음 → 막지 않음`. 따라서 `design/page-designer` 의 clean 조건([graph.mjs:66](../../graph.mjs#L66))은 `docs/design/design-rules.md` 가 **아예 없을 때도 통과**한다. 같은 파일 [167행](../../gates/graph-stop.mjs#L167)의 `exists_nonempty` 는 반대로 0개면 거짓이다.
+- **심각도**: **중간** — *다른 장치가 막아 준다*: [gates/run-gates.mjs:455-468](../../gates/run-gates.mjs#L455-L468) 의 `design/BEFORE_UI` 가 UI 파일 작업을 별도로 차단한다. 그 게이트가 화면 위치를 못 알아보는 스택에서는 등급이 높음으로 올라간다 — 이 위험은 [setup/SKILL.md:22-25](../../.claude/skills/setup/SKILL.md#L22-L25) 가 이미 경고하고 있다("강제가 조용히 사라지거나").
 - **재현**:
   ```
   sed -n '150,153p;164,168p' gates/graph-stop.mjs
@@ -176,13 +176,13 @@
 ## F-11 · `qa` 노드 글롭이 `.test.tsx` 를 잡지 못한다
 
 - **어느 검사에서 나왔나**: 아무도 세팅하지 않는 상태를 참조하는 게이트 조건
-- **사실**: [graph.mjs:71](../../graph.mjs#L71) 의 `produces: ["src/**/*.test.ts", "tests/**"]` 를 [graph-stop.mjs:32-43](../../gates/graph-stop.mjs#L32-L43) 의 `globToRegex` 로 변환하면 `/^src\/.*[^/]*\.test\.ts$/` 다. 실측:
+- **사실**: [graph.mjs:89](../../graph.mjs#L89) 의 `produces: ["src/**/*.test.ts", "tests/**"]` 를 [graph-stop.mjs:32-43](../../gates/graph-stop.mjs#L32-L43) 의 `globToRegex` 로 변환하면 `/^src\/.*[^/]*\.test\.ts$/` 다. 실측:
   ```
   src/**/*.test.ts  vs  src/entities/article/lib/query.test.ts             -> true
   src/**/*.test.ts  vs  src/features/content-render/ui/article-body.test.tsx -> false
   ```
   signal 의 테스트 9개 중 **3개가 `.tsx`** 다 — `article-body.test.tsx` · `mark-read-on-view.test.tsx` · `article-view.test.tsx`. `tests/` 디렉터리는 signal 에 없다.
-- **심각도**: **중간** — *정상 경로에서 닿지만 다른 장치가 막아 준다*. `.tsx` 테스트도 implement 의 `src/**` 에는 잡히므로([graph.mjs:63](../../graph.mjs#L63)) implement 가 dirty → 전파로 qa 도 dirty 가 된다. 결과적으로 재검증은 일어난다. 다만 qa 가 clean 될 때 기록하는 해시가 `.tsx` 를 덮지 않아, **qa 자체의 변경 감지는 영구히 세 파일을 못 본다.**
+- **심각도**: **중간** — *정상 경로에서 닿지만 다른 장치가 막아 준다*. `.tsx` 테스트도 implement 의 `src/**` 에는 잡히므로([graph.mjs:79](../../graph.mjs#L79)) implement 가 dirty → 전파로 qa 도 dirty 가 된다. 결과적으로 재검증은 일어난다. 다만 qa 가 clean 될 때 기록하는 해시가 `.tsx` 를 덮지 않아, **qa 자체의 변경 감지는 영구히 세 파일을 못 본다.**
   > 1차는 이 항목을 **높음**으로 매겼다. 등급을 내린 이유는 위의 `src/**` 전파 경로 때문이다. 사실 관계는 1차와 같다.
 - **재현**:
   ```
@@ -193,7 +193,7 @@
 ## F-12 · `design/schema-designer` 가 매칭 파일 0개라 무조건 clean 이 된다
 
 - **어느 검사에서 나왔나**: 아무도 세팅하지 않는 상태를 참조하는 게이트 조건
-- **사실**: [graph.mjs:54](../../graph.mjs#L54) 의 produces 는 `supabase/migrations/*.sql` 와 `src/entities/*/model.ts` 다. signal 에는 `supabase/` 디렉터리가 없고, 엔티티는 `src/entities/article/model/types.ts` — **`model.ts` 가 아니라 `model/` 디렉터리**다. 글롭 실측 결과 매칭 0개.
+- **사실**: [graph.mjs:70](../../graph.mjs#L70) 의 produces 는 `supabase/migrations/*.sql` 와 `src/entities/*/model.ts` 다. signal 에는 `supabase/` 디렉터리가 없고, 엔티티는 `src/entities/article/model/types.ts` — **`model.ts` 가 아니라 `model/` 디렉터리**다. 글롭 실측 결과 매칭 0개.
   → [graph-stop.mjs:66-72](../../gates/graph-stop.mjs#L66-L72) `hashNode` 가 `null` 을 돌려주고, [:169-176](../../gates/graph-stop.mjs#L169-L176) `gateBlocked` 도 막을 경로가 없다 → **무조건 clean**.
 - **심각도**: **중간** — *다른 장치가 막아 준다*: 엔티티 코드 자체는 implement 의 `src/**` 에서 `fsd`·`security` 게이트로 검사된다. 사라지는 것은 **design 국면의 승인 흐름**이지 코드 검사가 아니다.
 - **재현**:
@@ -221,7 +221,7 @@
 ## F-15 · `INTERVIEW.md` 가 그래프 밖에 있다
 
 - **어느 검사에서 나왔나**: 그래프가 추적하지 않는 승인 산출물
-- **사실**: [design-interview/SKILL.md:18](../../.claude/skills/design-interview/SKILL.md#L18) 이 만들고 [design-drafter.md:23](../../.claude/agents/design-drafter.md#L23) 이 "첫 시각 방향이면 이게 근거"라며 읽는다. 그런데 `design/page-designer` 의 produces 는 [graph.mjs:47](../../graph.mjs#L47) 의 `design-rules.md` 와 `mockups/*.html` 뿐이다 → INTERVIEW.md 만 바뀌면 design 노드는 계속 clean 이다.
+- **사실**: [design-interview/SKILL.md:18](../../.claude/skills/design-interview/SKILL.md#L18) 이 만들고 [design-drafter.md:23](../../.claude/agents/design-drafter.md#L23) 이 "첫 시각 방향이면 이게 근거"라며 읽는다. 그런데 `design/page-designer` 의 produces 는 [graph.mjs:63](../../graph.mjs#L63) 의 `design-rules.md` 와 `mockups/*.html` 뿐이다 → INTERVIEW.md 만 바뀌면 design 노드는 계속 clean 이다.
 - **심각도**: **낮음** — *닿아도 산출물이 틀리지 않는다*. [design-interview/SKILL.md:27](../../.claude/skills/design-interview/SKILL.md#L27) 이 이 파일을 "**과정 보관**"으로 성격을 못 박고, 확정 기준은 checkpoint 승인 후 design-rules.md 에 기록된다고 명시한다 → 추적 대상이 아닌 것이 **의도로 보인다.**
   > 1차는 **중간**으로 매겼다. 위 27행의 성격 규정을 근거로 낮음으로 내렸다.
 - **재현**: `sed -n '18p;27p' .claude/skills/design-interview/SKILL.md; grep -n "INTERVIEW" graph.mjs`

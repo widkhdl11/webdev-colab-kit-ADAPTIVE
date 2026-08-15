@@ -4,7 +4,7 @@
 "무엇을 만드는가"를 한 문서로 고정한다. 이 노드가 비어 있으면 그래프의 모든 하류(spec·design·implement·qa·review·deploy)가 dirty로 남아 어떤 작업도 근거를 갖지 못한다.
 
 ## Entry condition
-`docs/PRODUCT.md` 가 없거나 비어 있으면 product 는 dirty이고, 상류가 없으므로(`depends_on: []`) 곧바로 프론티어가 된다 [(graph.mjs:25-29)](../../graph.mjs#L25-L29).
+`docs/PRODUCT.md` 가 없거나 비어 있으면 product 는 dirty이고, 상류가 없으므로(`depends_on: []`) 곧바로 프론티어가 된다 [(graph.mjs:41-45)](../../graph.mjs#L41-L45).
 [CLAUDE.md:9](../../CLAUDE.md#L9) 는 이 상태에서 `kickoff` 스킬로 시작하라고 지시한다.
 
 ## What it does
@@ -39,7 +39,7 @@
 | `ACTIVE` | kickoff | briefing · graph-stop · run-gates |
 
 ## Gate
-`clean_when: { exists_nonempty: "docs/PRODUCT.md" }` [(graph.mjs:28)](../../graph.mjs#L28).
+`clean_when: { exists_nonempty: "docs/PRODUCT.md" }` [(graph.mjs:44)](../../graph.mjs#L44).
 판정 구현은 [graph-stop.mjs:164-168](../../gates/graph-stop.mjs#L164-L168) — 파일이 매칭되고 내용이 비어 있지 않으면 clean.
 - 통과: product clean → 프론티어가 spec·design 으로 내려간다.
 - 실패: product dirty 유지 → 전 하류 dirty [(propagate.mjs)](../../gates/propagate.mjs).
