@@ -4,9 +4,9 @@
 
 - **오늘의 목표**(2026-08-15): 하네스 V3 마무리 — 백로그 "정상 절차 중 게이트가 턴 자체를 막는다" 닫기 + 보호층 정비 → **달성**. signal 제품 작업 없음.
 - **완료**: ① **노드 상태 `rework` + `GATE_KIND`** — 그래프가 처방한 상태에서 비롯된 게이트 실패는 턴을 안 막는다(완료형 `spec-coverage` 는 owner 가 dirty/rework 면, 선행형 `design` 은 rework 일 때만). rework 는 "clean 인 노드를 `--mark`" 로 파생 → 승인 이력 없는 노드는 rework 가 못 돼 BEFORE_UI 구멍이 안 생긴다. 픽스처 6종 + selftest 4종 확인. **덤: 승인 즉시 `approved` 로 적어도 되게 됐다**(문서-사실 불일치 소멸) ② **wrap-up 이 미룬 작업을 `workspace/BACKLOG.md` 로 분리**, 브리핑이 건수 표시 ③ **보호층**: `graph.mjs` 를 훅 목록에 추가 · `bashWritesTo` 에 `rm` · settings deny 에 `.claude/hooks/` Edit·Write · README 에 "킷 폴더에서 열어라" ④ LESSONS 1건, 하네스 백로그 1건 졸업 + 2건 신설(11→13)
-- **멈춘 지점**: 킷 레포 **미커밋 58개 파일**. 커밋 여부는 사용자 판단. **이 세션 전체를 상위 폴더(`dev/`)에서 열어 훅·게이트·Stop 훅이 하나도 안 실린 채로 작업했다** — 산출물은 픽스처로 검증했지만 보호는 없는 상태였다(백로그 신설 항목). signal 제품은 그대로 프론티어 `deploy`.
-- **다음 할 일**: **킷 폴더(`webdeb-colab-kit-ADAPTIVE`)에서 세션을 열고** CROSS_SLICE 의 app·shared 예외를 반영하자(백로그 트리거 충족, `run-gates.mjs` 한 곳) — 그 전에 킷 변경 58개를 먼저 커밋하는 쪽도 좋다
-- **대기 중인 결정**: ⓪ **킷 변경 58개 파일 커밋 여부** ① **Vercel 배포는 사용자가 직접**(push → Root Directory `projects/signal` → 환경변수 5개) ② **좁힌 `TOPIC_SCOPE` 를 되돌릴지** — 실행이 답을 냈다: "DeepSeek V4 Pro 0813"·"Shade Map"·"Delta" 가 걸러졌고 "Squeak 6.1·Briar 류가 통과하는가"의 답은 **아니오**. 2026-08-12 에 넓혔던 방향의 반대라 남겨 뒀다 ③ **`rm -r <디렉터리>` 를 막게 `block-danger` 를 넓힐지** — 넓히면 `rm -r node_modules` 같은 정상 작업도 매번 막힌다 (제품 백로그 6건은 `workspace/BACKLOG.md`, 하네스 13건은 `docs/references/harness-backlog.md`)
+- **멈춘 지점**: 없음. 킷 변경은 전부 커밋됐다(`6ad0198` 57파일 + `83f1016` 문서 2파일). signal 제품은 그대로 프론티어 `deploy`. **주의**: 2026-08-15 세션 전체와 08-16 첫 세션 모두 상위 폴더(`dev/`)에서 열려 훅·게이트·Stop 훅이 하나도 안 실린 상태였다 — 백로그 항목의 2번째 관찰이라 승격 트리거가 충족됐다(`dev/.claude/settings.json` 안).
+- **다음 할 일**: CROSS_SLICE 의 app·shared 예외 반영(백로그 트리거 충족, `run-gates.mjs` 의 같은-레이어 검사 한 곳 — `fromLayer` 가 `app`·`shared` 면 건너뛴다). 게이트 파일이라 **킷 폴더에서 연 세션**에서 한다
+- **대기 중인 결정**: ⓪ **`dev/.claude/settings.json` 로 킷 보호를 올릴지** — 트리거는 충족됐고 대가는 `dev/` 아래 전 프로젝트에 걸리는 전역 훅 하나가 느는 것 ① **Vercel 배포는 사용자가 직접**(push → Root Directory `projects/signal` → 환경변수 5개) ② **좁힌 `TOPIC_SCOPE` 를 되돌릴지** — 실행이 답을 냈다: "DeepSeek V4 Pro 0813"·"Shade Map"·"Delta" 가 걸러졌고 "Squeak 6.1·Briar 류가 통과하는가"의 답은 **아니오**. 2026-08-12 에 넓혔던 방향의 반대라 남겨 뒀다 ③ **`rm -r <디렉터리>` 를 막게 `block-danger` 를 넓힐지** — 넓히면 `rm -r node_modules` 같은 정상 작업도 매번 막힌다 (제품 백로그 6건은 `workspace/BACKLOG.md`, 하네스 13건은 `docs/references/harness-backlog.md`)
 
 ## 로그
 
