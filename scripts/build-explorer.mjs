@@ -175,8 +175,10 @@ const STATES = [
     설명: "게이트로는 못 여는 노드다. 마커 파일에 status 와 basis 해시를 적어야 clean 이 된다. basis 는 구현 코드의 해시라, 코드가 바뀌면 저절로 어긋난다.", 근거: "graph-stop.mjs:179" },
   { id: "gate_error", label: "게이트 에러", 한줄: "위반이 잡혀서 도장을 못 받음", 짧은줄: "위반이 잡혀 도장 없음", kind: "bad",
     설명: "그 단계가 만드는 파일에 걸린 위반이 1건이라도 있으면 clean 이 안 내려간다. 위반만 고치면 다음 턴에 다시 검사한다.", 근거: "graph-stop.mjs:169" },
-  { id: "rejected", label: "승인 취소", 한줄: "사람이 status 를 draft 로 내림", 짧은줄: "사람이 draft 로 내림", kind: "bad",
-    설명: "리뷰나 테스트에서 '설계가 틀렸다'거나 '스펙이 틀렸다'고 판단되면 해당 문서를 draft 로 내린다. 그러면 그 노드와 아래 전부가 dirty 가 된다.", 근거: "graph-stop.mjs:156" },
+  { id: "rework", label: "rework", 한줄: "통과했던 판정이 취소됨", 짧은줄: "통과했다가 취소됨", kind: "bad",
+    설명: "리뷰·테스트가 '설계가 틀렸다', '스펙이 틀렸다'고 판단하면 그 노드를 mark 한다. clean 이던 노드를 mark 하면 dirty 가 아니라 rework 가 된다 — 아래를 막는 것도, 프론티어에 뜨는 것도 dirty 와 똑같고, 다른 건 하나뿐이다: 승인을 다시 받아야 푸는 실패는 턴을 막지 않는다. 재승인은 턴을 끝내야 받을 수 있어서다.", 근거: "graph-stop.mjs:273" },
+  { id: "na", label: "n/a", 한줄: "이번 작업엔 해당 없는 단계", 짧은줄: "이번엔 해당 없음",
+    설명: "사유 한 줄과 함께 선언한다(--na). 아래를 막지 않고 프론티어에도 안 뜬다. 판단이라 틀릴 수 있어서, 산출물이 생기거나 위쪽이 바뀌거나 risk-surface 가 위험을 잡으면 기계가 취소한다. review 는 n/a 로 둘 수 없다.", 근거: "graph-stop.mjs:108" },
   { id: "stale", label: "낡음", 한줄: "아무도 안 건드렸는데 저절로 무효가 됨", 짧은줄: "코드가 바뀌어 무효", kind: "bad",
     설명: "마커의 basis 가 지금 구현 해시와 다르면 사인오프가 무효다. 사람이 아무것도 안 해도 코드가 바뀌면 일어난다 — 이게 review·deploy 를 특별하게 만든다.", 근거: "graph-stop.mjs:187" },
 ];
@@ -210,6 +212,7 @@ const DOCS = [
   { g: "projects/&lt;이름&gt;/workspace/ (과정 기록)", items: [
     ["HANDOFF.md", "그래프 상태(어디가 dirty 인지)와 해시. graph-stop 이 자동으로 쓴다. 손으로 고치지 않는다."],
     ["PROGRESS.md", "사람이 읽는 현재 상태 5줄. wrap-up 이 쓰고 다음 세션 브리핑이 읽는다."],
+    ["BACKLOG.md", "지금 안 하기로 미룬 작업. wrap-up 이 쌓고 브리핑은 미결 건수만 띄운다 — 현재 상태 5줄이 길어지지 않게 파일을 갈랐다."],
     ["DECISIONS.md", "트레이드오프가 있었던 결정을 한 줄씩. 왜 그렇게 했는지 나중에 찾으려고."],
     ["review.md", "리뷰 통과 도장. status: passed + basis 해시. 이 파일이 곧 판정 근거다."],
     ["deploy.md", "⚠ 배포 도장. 그래프가 요구하지만 <b>아직 한 번도 만들어진 적이 없고</b> 쓰는 법도 안 적혀 있다 (findings F-02)."],
@@ -339,7 +342,7 @@ function flowSvg() {
 
 // ── SVG: 상태 ──
 const SPOS = { dirty: [60, 40], frontier: [250, 40], judging: [440, 40], clean: [630, 40], signed_off: [820, 40],
-               gate_error: [440, 175], rejected: [630, 175], stale: [820, 175] };
+               na: [60, 175], gate_error: [440, 175], rework: [630, 175], stale: [820, 175] };
 function stateSvg() {
   const box = (s) => {
     const [x, y] = SPOS[s.id];
@@ -375,10 +378,11 @@ function stateSvg() {
     ${h("judging", "clean", "위반 0건")}
     ${h("clean", "signed_off", "마커 기록")}
     ${down("judging", "gate_error", "위반 발견")}
-    ${down("clean", "rejected", "사람이 내림")}
+    ${down("clean", "rework", "mark 로 취소")}
     ${down("signed_off", "stale", "해시 어긋남")}
-    ${back("gate_error")}${back("rejected")}${back("stale")}
-    <text x="${SPOS.dirty[0] + NW / 2}" y="292" class="el">되돌아가는 길 셋 — 전부 dirty 로</text>
+    ${down("dirty", "na", "--na 선언")}
+    ${back("gate_error")}${back("rework")}${back("stale")}
+    <text x="${SPOS.dirty[0] + NW / 2}" y="292" class="el">되돌아가는 길 셋 — 전부 dirty 계열로</text>
     ${STATES.map(box).join("")}
   </svg>`;
 }

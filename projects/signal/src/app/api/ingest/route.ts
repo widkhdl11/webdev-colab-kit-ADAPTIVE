@@ -14,6 +14,9 @@ import { createIngestPorts, runIngest } from "@/features/ingestion";
  * 길이 갈리면 로컬 성공이 배포 성공을 뜻하지 않게 된다. tests/ingest-route.test.ts 가 붙든다.
  *
  * GET 이지만 캐시되지 않는다(`force-dynamic`). 캐시된 응답은 Cron 로그에도 안 남는다.
+ *
+ * risk-surface-exempt: auth CRON_SECRET 공유 비밀 한 겹. 사용자 계정·세션·토큰 발급이 없는 제품이다(PRODUCT: 로그인 없음)
+ * risk-surface-exempt: authz 역할·권한 모델이 없다. 판정은 "이 비밀을 아는가" 하나뿐이고 그 규칙은 아래 15줄이 전부다
  */
 
 export const dynamic = "force-dynamic";

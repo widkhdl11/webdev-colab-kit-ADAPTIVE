@@ -7,184 +7,239 @@ count: 10
 ## checkpoint
 
 - path: `.claude/skills/checkpoint/SKILL.md`
-- line_count: 16
+- line_count: 15
 - allowed-tools: null
 - disable-model-invocation: null
 - argument-hint: null
-- description_word_count: 33
+- description_word_count: 44
+- frontmatter_warnings: (empty)
 - description (verbatim):
 
-> 페이지나 주요 UI 컴포넌트를 처음 만들기 시작할 때, 또는 사용자가 "일단 ~까지만 만들어서 보여줘"라고 할 때 사용. 대표 결과물 하나를 먼저 제출해 시각적 방향 승인을 받는 절차. 이미 승인된 방향의 반복 작업에는 불필요.
+> 시각 방향이 어긋났을 때 버리는 양을 결과물 1개로 줄이는 절차 — 대표 하나만 먼저 제출해 방향을 확인받는다. 신호는 새 페이지·주요 UI를 처음 만들 때, 또는 사용자가 "일단 ~까지만 만들어서 보여줘"라고 할 때. 승인된 방향의 반복이거나 되돌리는 비용이 작으면 확인 없이 바로 구현하는 편이 낫다.
 
 - referenced_paths:
-  - `projects/<이름>/docs/design/design-rules.md` — exists: null (glob/placeholder)
+  - L7 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
+  - L12 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
 
 ## design-interview
 
 - path: `.claude/skills/design-interview/SKILL.md`
-- line_count: 88
+- line_count: 90
 - allowed-tools: null
 - disable-model-invocation: null
 - argument-hint: null
-- description_word_count: 38
+- description_word_count: 47
+- frontmatter_warnings: (empty)
 - description (verbatim):
 
-> 새 시각 방향의 화면을 만들기 전, 디자인 취향을 깊게 상담할 때 사용. 빈 질문이 아니라 선택지·예시가 채워진 양식을 문서 반복으로 수렴시킨다. 결론은 시안(design-drafter)의 입력이 되고, 승인 후 design-rules.md 로 확정된다. 이미 승인된 방향의 반복 화면에는 쓰지 않는다(빠른 경로)
+> 말로는 수렴하지 않는 시각 취향을, 선택지·예시가 채워진 양식의 반복으로 좁히는 상담 절차. 결론은 시안(design-drafter)의 입력이 되고 승인 후 design-rules.md 로 확정된다. 신호는 design-rules 로 커버되지 않는 새 레이아웃 언어. 레퍼런스가 이미 있거나 "알아서 무난하게"면 상담을 압축하거나 건너뛰고 시안부터 뽑는 편이 빠르고, 승인된 방향의 반복 화면에는 쓰지 않는다
 
 - referenced_paths:
-  - `projects/<이름>/docs/design/design-rules.md` — exists: null (glob/placeholder)
-  - `projects/<이름>/docs/design/INTERVIEW.md` — exists: null (glob/placeholder)
-  - `projects/<이름>/docs/design/mockups/<화면>.html` — exists: null (glob/placeholder)
+  - L15 `rules/design-drafting.md` — suffix-match — → `.claude/rules/design-drafting.md`
+  - L18 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
+  - L21 `projects/<이름>/docs/design/INTERVIEW.md` — dynamic — 판정 안 함
+  - L28 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L30 `projects/<이름>/docs/design/INTERVIEW.md` — dynamic — 판정 안 함
+  - L31 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
+  - L36 `projects/<이름>/docs/design/mockups/<화면>.html` — dynamic — 판정 안 함
+  - L38 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
+  - L38 `tokens.css` — bare-filename — → `projects/signal/src/shared/ui/tokens.css`, `projects/wama/src/shared/ui/tokens.css`
+  - L42 `rules/design-drafting.md` — suffix-match — → `.claude/rules/design-drafting.md`
+  - L50 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
+  - L54 `INTERVIEW.md` — bare-filename — → `projects/signal/docs/design/INTERVIEW.md`, `projects/wama/docs/design/INTERVIEW.md`
+  - L81 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
 
 ## goal
 
 - path: `.claude/skills/goal/SKILL.md`
-- line_count: 21
+- line_count: 20
 - allowed-tools: Read, Edit
 - disable-model-invocation: true
 - argument-hint: [목표 내용 — 비우면 현재 목표 확인]
 - description_word_count: 4
+- frontmatter_warnings: (empty)
 - description (verbatim):
 
 > 세션 목표를 설정하거나 확인한다
 
 - referenced_paths:
-  - `projects/$` — exists: null (glob/placeholder)
-  - `ACTIVE` — exists: true
-  - `projects/<이름>/docs/` — exists: null (glob/placeholder)
-  - `projects/<이름>/workspace/PROGRESS.md` — exists: null (glob/placeholder)
+  - L10 `projects/$` — dynamic — 판정 안 함
+  - L10 `workspace/PROGRESS.md` — project-relative — → `projects/signal/workspace/PROGRESS.md`, `projects/wama/workspace/PROGRESS.md`
+  - L10 `ACTIVE` — bare-filename — → `ACTIVE`
+  - L16 `projects/<이름>/docs/` — dynamic — 판정 안 함
+  - L16 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L19 `projects/<이름>/workspace/PROGRESS.md` — dynamic — 판정 안 함
 
 ## kickoff
 
 - path: `.claude/skills/kickoff/SKILL.md`
-- line_count: 37
+- line_count: 36
 - allowed-tools: null
 - disable-model-invocation: null
 - argument-hint: null
-- description_word_count: 33
+- description_word_count: 59
+- frontmatter_warnings: (empty)
 - description (verbatim):
 
-> 사용자가 새 웹사이트나 기능을 "만들고 싶다"고 말했는데 활성 프로젝트가 없거나 PRODUCT.md가 비어있거나 해당 내용이 없을 때 사용. 대화 인터뷰로 요구를 구체화해 PRODUCT.md를 함께 작성하는 절차. 이미 PRODUCT.md에 있는 작업의 구현 요청에는 사용하지 않는다.
+> "무엇을 만들지"가 아직 합의되지 않은 상태를 푸는 인터뷰 — 사용자 머릿속 그림을 PRODUCT.md 라는 합의문으로 옮긴다. 신호는 활성 프로젝트가 없거나 PRODUCT.md가 비어 있거나 요청한 내용이 거기 없는 것. 사용자가 만들 것을 이미 구체적으로 말했으면 인터뷰를 돌리지 말고 받아적어 PRODUCT.md로 만들고 확인만 받는다 — 아는 것을 다시 묻는 게 이 절차의 실패다. 이미 PRODUCT.md에 있는 작업의 구현 요청에는 쓰지 않는다.
 
 - referenced_paths:
-  - `projects/<이름>/` — exists: null (glob/placeholder)
-  - `ACTIVE` — exists: true
-  - `projects/<이름>/workspace/` — exists: null (glob/placeholder)
-  - `projects/<이름>/docs/PRODUCT.md` — exists: null (glob/placeholder)
-  - `projects/<이름>/workspace/DECISIONS.md` — exists: null (glob/placeholder)
-  - `docs/references/modeling-checklist.md` — exists: true
+  - L8 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L9 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L13 `projects/<이름>/` — dynamic — 판정 안 함
+  - L13 `ACTIVE` — bare-filename — → `ACTIVE`
+  - L14 `projects/<이름>/workspace/` — dynamic — 판정 안 함
+  - L14 `projects/<이름>/docs/` — dynamic — 판정 안 함
+  - L15 `projects/<이름>/docs/PRODUCT.md` — dynamic — 판정 안 함
+  - L21 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L22 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L24 `projects/<이름>/workspace/DECISIONS.md` — dynamic — 판정 안 함
+  - L25 `docs/references/modeling-checklist.md` — repo-path — exists: true
+  - L28 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L30 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L35 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L36 `projects/<이름>/docs/PRODUCT.md` — dynamic — 판정 안 함
 
 ## retro
 
 - path: `.claude/skills/retro/SKILL.md`
-- line_count: 28
+- line_count: 27
 - allowed-tools: null
 - disable-model-invocation: null
 - argument-hint: null
-- description_word_count: 31
+- description_word_count: 51
+- frontmatter_warnings: (empty)
 - description (verbatim):
 
-> 기능 완성 후, 반복 실수가 있을 때, 구조적 하네스 결함(물어볼 자리가 없던 빈칸)을 1회라도 발견했을 때, 또는 사용자가 회고를 요청할 때 사용. 판단 실수·재량적 예외는 빼고 구조적 빈칸만 하네스에 반영하는 절차.
+> 같은 실수가 구조적으로 재발하지 않게 하네스 자체를 고치는 절차 — 사람의 주의력 대신 규칙·게이트가 막게 만든다. 신호는 하네스에 "물어볼 자리가 없던 빈칸"을 발견했을 때(1회로 충분), 기능 완성 직후, 사용자가 회고를 요청할 때. 판단 실수나 사용자가 의도한 일회성 예외는 몇 번이든 반영 대상이 아니다 — 규칙으로 박으면 사용자의 예외 낼 권리를 뺏는다.
 
 - referenced_paths:
-  - `gates/` — exists: true
-  - `CLAUDE.md` — exists: true
-  - `docs/references/spec-template.md` — exists: true
-  - `docs/references/modeling-checklist.md` — exists: true
-  - `docs/LESSONS.md` — exists: true
-  - `docs/references/harness-backlog.md` — exists: true
+  - L17 `gates/` — repo-path — exists: true
+  - L19 `CLAUDE.md` — bare-filename — → `CLAUDE.md`
+  - L21 `docs/references/spec-template.md` — repo-path — exists: true
+  - L22 `docs/references/modeling-checklist.md` — repo-path — exists: true
+  - L24 `docs/LESSONS.md` — repo-path — exists: true
+  - L25 `CLAUDE.md` — bare-filename — → `CLAUDE.md`
+  - L26 `docs/references/harness-backlog.md` — repo-path — exists: true
+  - L27 `LESSONS.md` — bare-filename — → `docs/LESSONS.md`
 
 ## scaffold
 
 - path: `.claude/skills/scaffold/SKILL.md`
-- line_count: 13
+- line_count: 12
 - allowed-tools: Bash
 - disable-model-invocation: true
 - argument-hint: null
 - description_word_count: 9
+- frontmatter_warnings: (empty)
 - description (verbatim):
 
 > 프로젝트 골격(FSD 6레이어 + tsconfig + 워킹 스켈레톤)을 생성한다
 
 - referenced_paths:
-  - `projects/<프로젝트명>/` — exists: null (glob/placeholder)
-  - `scripts/scaffold.mjs` — exists: true
-  - `gates/run-gates.mjs` — exists: true
+  - L8 `projects/<프로젝트명>/` — dynamic — 판정 안 함
+  - L9 `scripts/scaffold.mjs` — repo-path — exists: true
+  - L10 `projects/` — repo-path — exists: true
+  - L10 `scripts/scaffold.mjs` — repo-path — exists: true
+  - L12 `gates/run-gates.mjs` — repo-path — exists: true
 
 ## setup
 
 - path: `.claude/skills/setup/SKILL.md`
-- line_count: 61
+- line_count: 60
 - allowed-tools: null
 - disable-model-invocation: null
 - argument-hint: null
-- description_word_count: 29
+- description_word_count: 44
+- frontmatter_warnings: (empty)
 - description (verbatim):
 
-> kickoff로 PRODUCT.md가 승인된 직후 사용. 프로젝트 특성에 맞춰 하네스 구성(rules, 서브에이전트, 게이트 규칙)을 제안하고 사용자 승인 후 생성한 뒤, 스캐폴딩을 실행하는 절차. 킷 기본 구성이 충분하면 아무것도 만들지 않는다.
+> PRODUCT.md의 결정에서 파생되는 프로젝트 고유 구성(rules·서브에이전트·게이트 규칙)만 골라 만들고 스캐폴딩까지 잇는 절차 — 기본 구성으로 이미 덮이는 것을 또 만들면 진실이 갈라지기 때문에 판정 기준이 따로 있다. 신호는 PRODUCT.md가 막 승인돼 아직 골격이 없는 상태. 킷 기본 구성이 충분하면 아무것도 만들지 않고 스캐폴딩만 한다.
 
 - referenced_paths:
-  - `projects/<이름>/docs/PRODUCT.md` — exists: null (glob/placeholder)
-  - `projects/<이름>/workspace/DECISIONS.md` — exists: null (glob/placeholder)
-  - `projects/<이름>/docs/tech-stack.md` — exists: null (glob/placeholder)
-  - `docs/references/architectures/` — exists: true
-  - `scripts/scaffold.mjs` — exists: true
-  - `ACTIVE` — exists: true
-  - `projects/<프로젝트명>/` — exists: null (glob/placeholder)
-  - `gates/run-gates.mjs` — exists: true
-  - `gates/` — exists: true
-  - `projects/*/src/shared/api/**` — exists: null (glob/placeholder)
+  - L6 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L9 `projects/<이름>/docs/PRODUCT.md` — dynamic — 판정 안 함
+  - L9 `projects/<이름>/workspace/DECISIONS.md` — dynamic — 판정 안 함
+  - L13 `projects/<이름>/docs/tech-stack.md` — dynamic — 판정 안 함
+  - L16 `package.json` — bare-filename — → `projects/signal/package.json`, `projects/wama/package.json`
+  - L18 `docs/references/architectures/` — repo-path — exists: true
+  - L19 `tech-stack.md` — bare-filename — → `projects/signal/docs/tech-stack.md`
+  - L22 `../../../docs/references/architectures/README.md` — relative-link — → `docs/references/architectures/README.md` exists: true
+  - L22 `architectures/README.md` — suffix-match — → `docs/references/architectures/README.md`
+  - L26 `scripts/scaffold.mjs` — repo-path — exists: true
+  - L26 `projects/<프로젝트명>/` — dynamic — 판정 안 함
+  - L26 `ACTIVE` — bare-filename — → `ACTIVE`
+  - L27 `gates/run-gates.mjs` — repo-path — exists: true
+  - L27 `tech-stack.md` — bare-filename — → `projects/signal/docs/tech-stack.md`
+  - L27 `package.json` — bare-filename — → `projects/signal/package.json`, `projects/wama/package.json`
+  - L45 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L47 `gates/` — repo-path — exists: true
+  - L51 `architectures/README.md` — suffix-match — → `docs/references/architectures/README.md`
+  - L57 `rules/supabase.md` — suffix-match — → `.claude/rules/supabase.md`
+  - L57 `projects/*/src/shared/api/**` — dynamic — 판정 안 함
 
 ## spec
 
 - path: `.claude/skills/spec/SKILL.md`
-- line_count: 36
+- line_count: 42
 - allowed-tools: null
 - disable-model-invocation: null
 - argument-hint: [기능명]
-- description_word_count: 28
+- description_word_count: 51
+- frontmatter_warnings: (empty)
 - description (verbatim):
 
-> 결제·인증·권한·동시성, 또는 시간에 따라 변하는 상태·파생 속성처럼 어기면 사고가 나는 기능의 구현 전에 사용. 사용자와 인터뷰하며 불변식 중심의 스펙 문서를 작성하고 승인받는 절차. 단순 UI/콘텐츠 기능에는 사용하지 않는다.
+> 어기면 사고가 나는 규칙을 테스트가 참조할 수 있는 문장(불변식)으로 고정하는 절차 — 사고는 나중에 조용히 나기 때문에 코드보다 먼저 판정 기준이 있어야 한다. 신호는 인증·세션·결제·권한·동시성, 시간에 따라 변하거나 다른 값에서 파생되는 상태. 이 하한선은 risk-surface 게이트가 기계로 강제한다(스펙 frontmatter 의 surfaces 로 커버를 판정). 되돌리는 비용이 작은 단순 UI/콘텐츠에는 쓰지 않는다.
 
 - referenced_paths:
-  - `ACTIVE` — exists: true
-  - `projects/<이름>/docs/specs/_TEMPLATE.md` — exists: null (glob/placeholder)
-  - `projects/<이름>/docs/specs/$ARGUMENTS.md` — exists: null (glob/placeholder)
-  - `docs/references/spec-template.md` — exists: true
-  - `docs/references/modeling-checklist.md` — exists: true
-  - `projects/<이름>/docs/specs/planned/` — exists: null (glob/placeholder)
-  - `docs/specs/*.md` — exists: null (glob/placeholder)
-  - `docs/specs/` — exists: false
+  - L7 `projects/<이름>/docs/specs/_TEMPLATE.md` — dynamic — 판정 안 함
+  - L7 `projects/<이름>/docs/specs/$ARGUMENTS.md` — dynamic — 판정 안 함
+  - L7 `ACTIVE` — bare-filename — → `ACTIVE`
+  - L8 `docs/references/spec-template.md` — repo-path — exists: true
+  - L9 `projects/<이름>/docs/specs/_TEMPLATE.md` — dynamic — 판정 안 함
+  - L14 `docs/references/modeling-checklist.md` — repo-path — exists: true
+  - L21 `rules/tdd.md` — suffix-match — → `.claude/rules/tdd.md`
+  - L27 `docs/references/graph-engine.md` — repo-path — exists: true
+  - L35 `projects/<이름>/docs/specs/planned/` — dynamic — 판정 안 함
+  - L36 `docs/specs/*.md` — dynamic — 판정 안 함
+  - L37 `docs/specs/` — project-relative — → `projects/signal/docs/specs/`, `projects/wama/docs/specs/`
 
 ## status
 
 - path: `.claude/skills/status/SKILL.md`
-- line_count: 11
+- line_count: 10
 - allowed-tools: Read
 - disable-model-invocation: true
 - argument-hint: null
 - description_word_count: 6
+- frontmatter_warnings: (empty)
 - description (verbatim):
 
 > 현재 프로젝트 상태 브리핑을 다시 본다
 
 - referenced_paths:
-  - `scripts/briefing.mjs` — exists: true
+  - L8 `scripts/briefing.mjs` — repo-path — exists: true
 
 ## wrap-up
 
 - path: `.claude/skills/wrap-up/SKILL.md`
-- line_count: 16
+- line_count: 49
 - allowed-tools: null
 - disable-model-invocation: null
 - argument-hint: null
-- description_word_count: 21
+- description_word_count: 41
+- frontmatter_warnings: (empty)
 - description (verbatim):
 
-> 사용자가 "오늘은 여기까지", "정리하자"라고 하거나 세션을 끝내려는 신호를 보일 때 사용. /wrap-up으로 직접 호출도 가능. 다음 세션이 이어받도록 상태를 동결하는 절차.
+> 다음 세션의 브리핑 재료를 만드는 절차 — 여기 안 적힌 것은 다음 세션에 존재하지 않는다. 신호는 사용자가 "오늘은 여기까지"·"정리하자"라고 하거나 세션을 끝내려는 기색. /wrap-up 으로 직접 호출도 가능. 남길 것이 한 줄뿐인 작업이면 다섯 필드를 억지로 채우지 말고 한 줄로 동결한다.
 
 - referenced_paths:
-  - `projects/<이름>/workspace/PROGRESS.md` — exists: null (glob/placeholder)
-  - `projects/<이름>/docs/` — exists: null (glob/placeholder)
-  - `projects/<이름>/workspace/` — exists: null (glob/placeholder)
+  - L6 `projects/<이름>/workspace/PROGRESS.md` — dynamic — 판정 안 함
+  - L11 `BACKLOG.md` — bare-filename — → `projects/signal/workspace/BACKLOG.md`
+  - L13 `BACKLOG.md` — bare-filename — → `projects/signal/workspace/BACKLOG.md`
+  - L16 `projects/<이름>/workspace/BACKLOG.md` — dynamic — 판정 안 함
+  - L27 `docs/references/harness-backlog.md` — repo-path — exists: true
+  - L38 `docs/references/harness-backlog.md` — repo-path — exists: true
+  - L46 `BACKLOG.md` — bare-filename — → `projects/signal/workspace/BACKLOG.md`
+  - L48 `projects/<이름>/docs/` — dynamic — 판정 안 함
+  - L48 `projects/<이름>/workspace/` — dynamic — 판정 안 함

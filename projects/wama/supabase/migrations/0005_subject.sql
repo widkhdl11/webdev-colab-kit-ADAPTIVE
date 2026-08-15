@@ -28,4 +28,5 @@ from academy a
 cross join (values
   ('초등 수학'), ('수학(공통)'), ('미적분'), ('확률과 통계'), ('기하'), ('심화 문제풀이')
 ) as s(name)
+-- risk-surface-exempt: concurrency 초기 과목 시드. on conflict 는 마이그레이션 재실행 안전용이며 경합하는 쓰기 경로가 아니다
 on conflict (academy_id, name) do nothing;

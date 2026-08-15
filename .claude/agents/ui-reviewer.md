@@ -1,6 +1,6 @@
 ---
 name: ui-reviewer
-description: UI 구현 완료 시 디자인 일관성과 접근성 검토.
+description: 승인된 design-rules와 접근성 기준에서 벗어난 곳을 찾는다 — 기준 문서가 있어야 판정이 취향 싸움이 되지 않는다. 승인된 방향에서 벗어나는 시각 변경(새 컴포넌트·레이아웃·토큰)에 파견한다. design-rules 안에서 반복되는 화면에는 지적할 기준 위반이 거의 없다.
 tools: Read, Grep, Glob
 ---
 

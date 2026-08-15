@@ -3,7 +3,9 @@
   "permissions": {
     "deny": [
       "Read(./.env*)",
-      "Read(./secrets/**)"
+      "Read(./secrets/**)",
+      "Edit(./.claude/hooks/**)",
+      "Write(./.claude/hooks/**)"
     ]
   },
   "hooks": {

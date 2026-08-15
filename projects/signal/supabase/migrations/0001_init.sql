@@ -75,6 +75,7 @@ create index if not exists item_tag_tag_id_idx on public.item_tag (tag_id);
 -- 로그인이 없는 사이트라 읽기는 전부 공개다. 쓰기는 정책을 만들지 않는다 —
 -- RLS 가 켜져 있고 insert/update 정책이 없으면 publishable 키로는 쓸 수 없다.
 -- 수집은 서버에서 secret 키로 돈다 (INV-S4).
+-- risk-surface-exempt: authz 역할·사용자가 없는 사이트다. 인가 규칙은 "읽기 전부 공개 + 쓰기 정책 없음" 두 줄이 전부고 아래에 그대로 적혀 있다. 쓰기 정책을 하나라도 추가하면 이 예외는 무효 — 그때 /spec 으로 불변식부터 쓴다
 alter table public.item enable row level security;
 alter table public.tag enable row level security;
 alter table public.item_tag enable row level security;

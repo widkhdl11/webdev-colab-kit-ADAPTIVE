@@ -49,7 +49,7 @@ product 가 clean 이고 spec 이 dirty 일 때 프론티어가 된다 [(graph.m
 ## Failure path
 - INV 커버리지 실패 → 테스트를 먼저 쓴다(tdd 규칙). 이건 qa 실패가 아니라 spec 노드 자신의 게이트다.
 - 검증 실패가 "요구 자체의 모순"으로 판정되면(qa-classifier 가 `spec-level`) 해당 스펙을 `status: draft` 로 되돌린다 — 승인 취소라 재작업+재승인 전까지 dirty 가 유지된다 [(qa-classifier.md:62-63)](../../.claude/agents/qa-classifier.md#L62-L63).
-- `spec-level` 판정은 등급과 무관하게 사용자에게 먼저 보고한다 [(CLAUDE.md:88)](../../CLAUDE.md#L88).
+- `spec-level` 판정은 작업 크기와 무관하게 사용자에게 먼저 보고한다 [(CLAUDE.md:136)](../../CLAUDE.md#L136).
 
 ## Exit condition
 `docs/specs/*.md`(비재귀)의 모든 파일이 `status: approved` 이고, 그 INV를 참조하는 테스트가 하나 이상 있어 spec-coverage 가 0건인 상태.

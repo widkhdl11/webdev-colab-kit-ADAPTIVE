@@ -39,11 +39,11 @@ tools: Read, Grep, Glob
 ```
 이 출력의 level 에 해당하는 노드만 dirty로 마크된다. 그 외엔 아무 지시도 하지 마라.
 
-## 강제 승격 (걸림 3) — 등급보다 우선
-판정 후, 다음이면 **자동 처리하지 말고 사용자에게 보고**하라(빠른 경로여도):
+## 강제 승격 (걸림 3) — 다른 판단보다 우선
+판정 후, 다음이면 **자동 처리하지 말고 사용자에게 보고**하라(작업이 아무리 작아 보여도):
 - level == spec-level, 또는
 - evidence가 위험 표면에 닿음: 인증·결제·권한·격리 INV·security 게이트.
-이유: 중요한 실패는 사용자가 봐야 한다. 그 외(impl-level·비위험 표면)는 호출자의 등급 정책을 따른다.
+이유: 중요한 실패는 사용자가 봐야 한다. 그 외(impl-level·비위험 표면)는 호출자가 정한 진행 방식을 따른다.
 
 ## 판정 예시 (wama 실제 이력 — 이 논리를 고정한다)
 - **impl**: create_exam RPC가 student의 학원 소속 검증 누락 → 격리 INV 테스트 실패. 스펙은 격리를
@@ -59,10 +59,17 @@ tools: Read, Grep, Glob
 결정론 게이트가 통과하는 노드는 `--mark`만으론 다음 Stop에 도로 clean 된다. 그래서 레벨별로
 '거부'를 남겨 재작업이 끝날 때까지 dirty가 유지되게 한다(전부 기존 machinery 재사용):
 
-- **spec-level**   → 해당 스펙 프론트매터를 `status: draft`로 되돌린다(요구 거부).
+- **spec-level**   → 해당 스펙 프론트매터를 `status: draft`로 되돌린다(요구 거부)
+  **+ `node gates/graph-stop.mjs --mark spec "<거부 사유>"`**.
   → 승인 취소로 spec이 dirty로 남고 하류로 전파. 재작업 후 재승인하면 clean.
-- **design-level** → design-rules.md 프론트매터를 `status: draft`로 되돌린다(설계 거부).
+- **design-level** → design-rules.md 프론트매터를 `status: draft`로 되돌린다(설계 거부)
+  **+ `node gates/graph-stop.mjs --mark design "<거부 사유>"`**.
   → design이 dirty로 남고 하류로 전파. 재작업 후 재승인하면 clean.
+
+**파일만 고치고 마크를 빠뜨리지 않는다.** 파일 수정만으로도 해시가 바뀌어 dirty가 되지만, 그건 그냥
+dirty지 `rework`가 아니다. clean이던 노드를 mark해야 rework가 되고, rework여야 재승인을 받으러 가는
+턴을 끝낼 수 있다 — 아니면 `design/BEFORE_UI`가 매 턴을 막아서 승인을 받을 방법이 없다. 사유는 그대로
+HANDOFF와 다음 세션 브리핑에 남는다.
 - **impl-level**   → evidence 위치의 코드를 고친다. 실패한 qa 테스트/리뷰어가 이미 그 검증을
   dirty로 잡고 있으니(review는 basis 불일치로도 유지), 코드 수정→재검증으로 해소된다. 별도 마크 불필요.
 

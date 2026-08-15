@@ -8,15 +8,21 @@ count: 7
 
 - load_condition: null
 - path_scope: null
-- bytes: 4060
-- line_count: 52
+- bytes: 4374
+- line_count: 54
+- frontmatter_warnings: (empty)
 - referenced_paths:
-  - `CLAUDE.md` — exists: true
-  - `projects/<이름>/docs/design/design-rules.md` — exists: null (glob/placeholder)
-  - `projects/<이름>/docs/design/mockups/<화면명>.html` — exists: null (glob/placeholder)
-  - `scripts/preview.mjs` — exists: true
-  - `projects/<이름>/src/shared/ui/tokens.css` — exists: null (glob/placeholder)
-  - `projects/<이름>/src/` — exists: null (glob/placeholder)
+  - L8 `CLAUDE.md` — bare-filename — → `CLAUDE.md`
+  - L11 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
+  - L13 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L15 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L30 `projects/<이름>/docs/design/mockups/<화면명>.html` — dynamic — 판정 안 함
+  - L31 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L33 `scripts/preview.mjs` — repo-path — exists: true
+  - L39 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L43 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
+  - L47 `projects/<이름>/src/shared/ui/tokens.css` — dynamic — 판정 안 함
+  - L48 `projects/<이름>/src/` — dynamic — 판정 안 함
 
 ## .claude/rules/domain-layers.md
 
@@ -25,9 +31,10 @@ count: 7
   - `projects/*/src/entities/**`
   - `projects/*/src/features/**`
 - bytes: 648
-- line_count: 12
+- line_count: 11
+- frontmatter_warnings: (empty)
 - referenced_paths:
-  - `projects/<이름>/docs/specs/` — exists: null (glob/placeholder)
+  - L11 `projects/<이름>/docs/specs/` — dynamic — 판정 안 함
 
 ## .claude/rules/shared.md
 
@@ -35,7 +42,8 @@ count: 7
 - path_scope: 
   - `projects/*/src/shared/**`
 - bytes: 418
-- line_count: 9
+- line_count: 8
+- frontmatter_warnings: (empty)
 - referenced_paths: (none)
 
 ## .claude/rules/supabase-wama.md
@@ -44,19 +52,25 @@ count: 7
 - path_scope: 
   - `projects/wama/src/shared/api/**`
 - bytes: 803
-- line_count: 15
+- line_count: 14
+- frontmatter_warnings: (empty)
 - referenced_paths:
-  - `.claude/rules/supabase.md` — exists: true
+  - L8 `.claude/rules/supabase.md` — repo-path — exists: true
 
 ## .claude/rules/supabase.md
 
 - load_condition: path-match
 - path_scope: 
   - `projects/*/src/shared/api/**`
-- bytes: 1263
-- line_count: 19
+  - `projects/*/supabase/**`
+- bytes: 2331
+- line_count: 30
+- frontmatter_warnings: (empty)
 - referenced_paths:
-  - `projects/<이름>` — exists: null (glob/placeholder)
+  - L10 `projects/<이름>` — dynamic — 판정 안 함
+  - L10 `supabase-wama.md` — bare-filename — → `.claude/rules/supabase-wama.md`
+  - L21 `projects/<이름>/supabase/migrations/*.sql` — dynamic — 판정 안 함
+  - L23 `scripts/apply-migrations.mjs` — repo-path — exists: true
 
 ## .claude/rules/tdd.md
 
@@ -64,11 +78,15 @@ count: 7
 - path_scope: 
   - `projects/*/src/**`
   - `projects/*/tests/**`
-- bytes: 1206
-- line_count: 16
+  - `projects/*/workspace/review.md`
+- bytes: 3786
+- line_count: 44
+- frontmatter_warnings: (empty)
 - referenced_paths:
-  - `projects/<이름>/docs/specs/` — exists: null (glob/placeholder)
-  - `projects/<이름>/tests/` — exists: null (glob/placeholder)
+  - L10 `projects/<이름>/docs/specs/` — dynamic — 판정 안 함
+  - L16 `projects/<이름>/tests/` — dynamic — 판정 안 함
+  - L18 `tests/` — project-relative — → `projects/signal/tests/`, `projects/wama/tests/`
+  - L42 `workspace/review.md` — project-relative — → `projects/signal/workspace/review.md`
 
 ## .claude/rules/ui-layers.md
 
@@ -78,6 +96,50 @@ count: 7
   - `projects/*/src/pages/**`
   - `projects/*/src/widgets/**`
 - bytes: 1321
-- line_count: 17
+- line_count: 16
+- frontmatter_warnings: (empty)
 - referenced_paths:
-  - `projects/<이름>/docs/design/design-rules.md` — exists: null (glob/placeholder)
+  - L9 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
+  - L10 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
+
+## CLAUDE.md (always loaded)
+
+- load_condition: always
+- line_count: 181
+- referenced_paths:
+  - L1 `CLAUDE.md` — bare-filename — → `CLAUDE.md`
+  - L10 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L11 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L18 `PRODUCT.md` — bare-filename — → `projects/signal/docs/PRODUCT.md`, `projects/wama/docs/PRODUCT.md`
+  - L20 `graph.mjs` — bare-filename — → `graph.mjs`
+  - L21 `docs/references/graph-engine.md` — repo-path — exists: true
+  - L22 `gates/graph-stop.mjs` — repo-path — exists: true
+  - L25 `docs/references/graph-engine.md` — repo-path — exists: true
+  - L27 `gates/graph-stop.mjs` — repo-path — exists: true
+  - L29 `graph.mjs` — bare-filename — → `graph.mjs`
+  - L31 `docs/references` — repo-path — exists: true
+  - L33 `.claude/rules` — repo-path — exists: true
+  - L33 `CLAUDE.md` — bare-filename — → `CLAUDE.md`
+  - L75 `.claude/rules/` — repo-path — exists: true
+  - L76 `projects/<이름>/` — dynamic — 판정 안 함
+  - L76 `src/` — project-relative — → `projects/signal/src/`, `projects/wama/src/`
+  - L76 `docs/` — repo-path — exists: true
+  - L77 `projects/<이름>/` — dynamic — 판정 안 함
+  - L77 `workspace/` — project-relative — → `projects/signal/workspace/`, `projects/wama/workspace/`
+  - L77 `docs/` — repo-path — exists: true
+  - L77 `ACTIVE` — bare-filename — → `ACTIVE`
+  - L79 `docs/references/graph-engine.md` — repo-path — exists: true
+  - L79 `HANDOFF.md` — bare-filename — → `projects/signal/workspace/HANDOFF.md`, `projects/wama/workspace/HANDOFF.md`
+  - L106 `.claude/rules/design-drafting.md` — repo-path — exists: true
+  - L117 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
+  - L118 `.claude/rules/design-drafting.md` — repo-path — exists: true
+  - L119 `projects/<이름>/docs/specs/` — dynamic — 판정 안 함
+  - L124 `docs/references/modeling-checklist.md` — repo-path — exists: true
+  - L125 `projects/<이름>/workspace/DECISIONS.md` — dynamic — 판정 안 함
+  - L125 `docs/LESSONS.md` — repo-path — exists: true
+  - L126 `docs/references/graph-engine.md` — repo-path — exists: true
+  - L130 `projects/<이름>/workspace/PROGRESS.md` — dynamic — 판정 안 함
+  - L131 `projects/<이름>/workspace/BACKLOG.md` — dynamic — 판정 안 함
+  - L137 `workspace/review.md` — project-relative — → `projects/signal/workspace/review.md`
+  - L165 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L180 `GLOSSARY.md` — bare-filename — → **(레포에 동명 파일 없음)**

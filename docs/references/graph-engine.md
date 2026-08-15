@@ -7,12 +7,60 @@
 > 상류가 dirty → 그에 의존하는 하류가 전부 dirty. 실행기는 dirty 노드를 상류부터 재실행하고,
 > 완료 게이트가 통과하면 dirty를 해제한다. "다음에 어디로"는 어디에도 없다.
 
+## 노드 상태 넷 — dirty · clean · rework · n/a
+
+### rework — 통과했던 판정이 취소된 것
+하류를 막는 것도, 프론티어에 뜨는 것도 `dirty` 와 똑같다. 갈리는 자리는 **하나뿐**이다:
+Stop 훅이 턴을 막을지 정할 때 다르게 취급된다.
+
+- 선언: `node gates/graph-stop.mjs --mark <노드> "<사유 한 줄>"` — **상태를 선언하지 않는다.**
+  지금 `clean` 인 노드를 mark 하면 rework, 이미 dirty 면 dirty 다. 판별 재료가 이미 상태에 있어서
+  따로 기록할 게 없고, "한 번도 승인 안 받은 것"이 rework 로 둔갑할 수도 없다.
+- 하류는 rework 가 아니라 dirty 로 전파된다 — 하류는 거부된 게 아니라 상류가 흔들려 다시 하는 것이다.
+- 해제: 따로 없다. release 조건(프론트매터·게이트)을 채우면 다른 상태와 똑같이 clean 으로 풀린다.
+- 재작업 중에 그 노드의 파일을 고쳐도 rework 는 유지된다(해시 변경이 dirty 로 되돌리지 않는다).
+  안 그러면 재작업하는 행위 자체가 거부 사실을 지운다.
+
+**왜 필요한가.** 강제력이 두 겹이다 — ① 노드가 dirty 인 동안 하류가 못 간다 ② 게이트 실패면 턴이 안 끝난다.
+문제는 ②가 ①을 푸는 길까지 막을 때다. `design-rules` 를 draft 로 내리면 그래프는 "디자인으로 돌아가라"고
+처방하는데 `design/BEFORE_UI` 게이트는 같은 상태를 위반으로 본다. 푸는 유일한 길인 **사용자 승인**은
+턴을 끝내야 도달하는데 그 턴이 안 끝난다. 실제로 3번 관찰됐고(2026-08-06·08-10·08-11) 2번은 회피했다 —
+한 번은 게이트가 막으려던 바로 그 일(임의로 approved 로 되돌리기)을 할 뻔했다.
+
+판정은 `graph.mjs` 의 `GATE_KIND` 가 한다:
+
+| 게이트 성격 | 예 | 턴 차단 |
+|---|---|---|
+| `completion` — "끝내기 전에 있어야 한다" | `spec-coverage` (approved 스펙의 INV 테스트) | owner 가 dirty/rework 면 **안 막는다**. 하류가 이미 다 막혀 있어 중복이다 |
+| `precondition` — "시작하기 전에 승인받아야 한다" | `design` (BEFORE_UI) | 기본은 **막는다**. 하류 차단은 노드 상태일 뿐 파일 쓰기를 못 막아 이게 유일한 저지선이다. 단 owner 가 rework 면 안 막는다 |
+| 목록에 없음 | `fsd`·`security`·`tsc`·`test`·`risk-surface` | 어디서 나든 **무조건 막는다** — 처방된 상태가 아니라 아무 데서나 나는 위반이다 |
+
+낮춰도 강제력은 그대로다. 노드는 여전히 dirty/rework, 하류는 그대로 차단, 프론티어도 그 노드를 계속
+가리킨다. 허용되는 건 **턴을 끝내는 것 하나**이고, 낮췄다는 사실은 매 턴 `⚠ [graph/EXPECTED]` 로 찍힌다.
+
+### n/a — 이번 작업엔 해당 없음
+`n/a` 는 "이번 작업에는 이 노드가 해당 없음"이라는 판단이다. 하류를 막지 않고 프론티어에도 안 뜬다
+(그 점에서 clean 과 같다). clean 과 다른 점은 **한 일이 없다는 것**이라, HANDOFF·브리핑에 사유가 같이 남는다.
+
+- 선언: `node gates/graph-stop.mjs --na <노드> "<사유 한 줄>"` — 사유 없으면 거부한다.
+- 해제: `node gates/graph-stop.mjs --na-clear <노드>` (해제 = 다시 할 일이 생긴 것 → dirty + 전파)
+- `review` 는 n/a 불가(`graph.mjs` 의 `na_allowed: false`). 리뷰어 구성은 조절 대상이지만 리뷰의 존재는 아니다.
+
+n/a 는 판단이라 틀릴 수 있다. **생략 판단은 모델이 하고, 생략이 틀렸다는 감지는 기계가 한다** — 세 경우에 자동 취소된다:
+
+| 취소 조건 | 뜻 |
+|---|---|
+| 그 노드의 produces 해시가 바뀜 | 해당 없다던 산출물이 실제로 생겼다 |
+| 상류가 dirty 가 됨(전파) | 판단의 전제가 바뀌었다 |
+| `risk-surface` 게이트가 위험 패턴을 잡음 | spec 의 n/a 는 즉시 dirty — 위험 표면이 실제로 닿았다 |
+
 ## 파일
 | 파일 | 역할 |
 |---|---|
-| `graph.mjs` | 토폴로지 선언(순수 리터럴). depends_on·produces·clean_when. 라우팅 없음 |
+| `graph.mjs` | 토폴로지 선언(순수 리터럴). depends_on·produces·clean_when + `GATE_KIND`(게이트 성격·owner). 라우팅 없음 |
 | `gates/propagate.mjs` | 전파 엔진: propagate·topoSort·descendants·cycle 검출 |
-| `gates/graph-stop.mjs` | Stop 오케스트레이터: 게이트→sync(해시감지·전파)→release(dirty해제)→HANDOFF. `--mark <node>` 수동 마크 |
+| `gates/graph-stop.mjs` | Stop 오케스트레이터: 게이트→sync(해시감지·전파)→release(dirty해제)→n/a 자동취소→HANDOFF→차단 판정. `--mark <노드> "<사유>"`(clean 이면 rework), `--na`/`--na-clear` |
+| `gates/run-gates.mjs` | 결정론 게이트. 그중 `risk-surface` 는 위험 표면(auth·payment·authz·concurrency) 진입을 잡아 스펙을 요구하고, spec 의 n/a 를 취소시킨다 |
 | `.claude/agents/qa-classifier.md` | 검증 실패를 spec/design/impl로 귀속(판정만, 라우팅 X) |
 | `projects/<이름>/workspace/HANDOFF.md` | 런타임 상태(dirty·hash). 자동 생성 |
 | `scripts/briefing.mjs` | 세션 시작 시 프론티어(지금 작업할 노드) 표시 |
@@ -40,22 +88,23 @@ flowchart TD
   Q1 -->|"아니오 · 기존 PRODUCT.md에 있음"| IMPL
   Q1 -->|"예"| KO["/kickoff · 인터뷰<br/>projects/&lt;이름&gt; 생성 · ACTIVE 기록<br/>PRODUCT.md 함께 작성 → 동의"]
   KO --> SU["/setup<br/>하네스 구성 제안·승인<br/>scaffold.mjs → run-gates"]
-  SU --> GRADE{"이 기능 등급은?"}
-  GRADE -->|"빠른 경로 · 승인된 방향·콘텐츠"| IMPL
-  GRADE -->|"정식 · 위험 기능"| SPEC["/spec<br/>불변식 스펙 · 승인"]
-  GRADE -->|"정식 · 새 시각 방향"| DI["/design-interview → 시안<br/>→ /checkpoint 승인 → design-rules approved"]
+  SU --> SURF{"이번 diff가 닿는 표면은?"}
+  SURF -->|"승인된 방향·콘텐츠 — 위험 표면 없음"| IMPL
+  SURF -->|"인증·결제·권한·동시성<br/>(risk-surface 게이트가 강제)"| SPEC["/spec<br/>불변식 스펙 · 승인"]
+  SURF -->|"새 시각 방향"| DI["/design-interview → 시안<br/>→ /checkpoint 승인 → design-rules approved"]
   SPEC --> IMPL
   DI --> IMPL
   IMPL["구현 · src/ 코딩<br/>편집마다 게이트: FSD·보안·tsc"]
   IMPL --> QA["qa · 테스트 작성 · 결정론 게이트 자동 clean"]
   QA --> DONE{"기능 완성?"}
   DONE -->|"아니오 · 다음 조각"| IMPL
-  DONE -->|"예"| REV["리뷰어 파견 등급별<br/>code · security · ui · test-auditor<br/>→ review.md 사인오프"]
+  DONE -->|"예"| REV["닿은 표면의 리뷰어만 파견<br/>code · security · ui · test-auditor<br/>→ review.md 사인오프"]
   REV --> DEP["deploy · 배포+사인오프<br/>review dirty면 차단"]
   DEP --> WRAP["/wrap-up · PROGRESS 동결<br/>큰 진전이면 /retro"]
 ```
 
-- 마름모(판단)는 내(모델)가 CLAUDE.md 등급 규칙으로 내린다. 스킬은 프론티어를 보고 고른다.
+- 마름모(판단)는 내(모델)가 CLAUDE.md 의 표면별 판단으로 내린다. 표면은 여러 개가 동시에 켜질 수 있고,
+  각 표면의 절차는 독립이다(하나가 무겁다고 나머지가 무거워지지 않는다). 스킬은 프론티어를 보고 고른다.
 - **여정과 그래프의 연결**: 빈 프로젝트면 `product`가 dirty → 프론티어=product → 나는 kickoff을 고른다.
   PRODUCT.md가 차면 프론티어가 spec·design으로 내려가고, 그때 /spec·/design-interview를 고른다.
   즉 이 순서는 선언된 게 아니라 **토폴로지 + 전파에서 파생**된다 — 여정은 결과, 엔진이 원인.
@@ -94,6 +143,18 @@ design 거부 후:  design=dirty implement=dirty qa=dirty review=dirty deploy=di
 ```
 거부는 승인 취소라 **재작업+재승인 전까지 sticky** — 기존 프론트매터 machinery 재사용.
 
+### n/a — 생략과 자동 취소 (2026-08-13 실행 확인)
+```
+--na spec "승인된 방향의 카피 교체뿐 — 위험 표면 없음"
+  → 프론티어: review        (spec 을 가리키지 않는다. implement·qa 는 그대로 진행)
+  → 브리핑:   ○ n/a(이번 작업엔 해당 없음): spec(승인된 방향의 카피 교체뿐 — 위험 표면 없음)
+--na review "리뷰 생략"     → 거부: review 는 n/a 로 둘 수 없다
+auth.signInWithPassword 등장 → ↩ spec n/a 취소 — risk-surface 가 위험 패턴 1건. 프론티어=spec, exit 2
+approved 스펙(surfaces:[auth]) + INV 테스트 작성 → spec=clean, 프론티어=review, deploy 는 계속 차단
+```
+`--selftest` 에도 같은 규칙이 들어 있다: 사유 없는 n/a 거부 · review 거부 · n/a 는 하류를 안 막음 ·
+상류 dirty 면 n/a 취소 · 자식이 전부 n/a 면 부모도 n/a.
+
 ### review 사인오프 + basis staleness
 ```
 ① 마커(status:passed + basis=구현해시) 작성 → review=clean, 프론티어=deploy
@@ -111,8 +172,12 @@ design 거부 후:  design=dirty implement=dirty qa=dirty review=dirty deploy=di
   - design-level → design-rules `status: draft`(거부).
   - spec-level → 해당 스펙 `status: draft`(거부).
   - 강제 승격: spec-level이거나 위험 표면(인증·결제·권한·격리 INV·security)이면 사용자에게 보고 후.
-- **리뷰 통과 기록**: `workspace/review.md`에 `status: passed` + `basis: <graph-stop이 안내한 해시>`.
+- **리뷰 통과 기록**: `workspace/review.md`에 `status: passed` + `basis: <graph-stop이 안내한 해시>`
+  + `reviewers: [실제로 돌린 리뷰어]`. 코드에 auth·payment·authz 표면이 있으면 `security-reviewer`가
+  그 목록에 있어야 사인오프가 된다(게이트 감지와 대조). graph-stop이 매 턴 막힌 이유를 그대로 말해준다.
 - **강제 dirty(파일 변경 없이)**: `node gates/graph-stop.mjs --mark <node>` (게이트 통과 노드엔 비지속 — 거부를 쓸 것).
+- **이번 작업엔 해당 없는 노드**: `node gates/graph-stop.mjs --na <node> "<사유>"`.
+  사유는 필수고, 위 표의 세 조건 중 하나라도 걸리면 기계가 자동으로 취소한다. 되돌리기는 `--na-clear <node>`.
 
 ## 배선
 - `PostToolUse`: `run-gates --quick` (편집 즉시 위반 차단) — 유지.

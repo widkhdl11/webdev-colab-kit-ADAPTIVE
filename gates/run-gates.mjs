@@ -200,6 +200,210 @@ for (const projDir of projectDirs) {
 }
 
 
+// 1'''') 위험 표면: 사고가 나는 코드는 스펙 없이 들어오지 않는다.
+//   문서의 "위험 기능 구현 전 스펙 먼저"는 지켜지면 좋은 문장일 뿐이라 확률적으로 새어나간다.
+//   여기서 기계로 잡는다 — 인증/결제/권한/동시성 패턴이 코드에 등장했는데 그 표면을 커버하는
+//   approved 스펙이 없으면 exit 2.
+//   커버 판정: projects/<이름>/docs/specs/*.md 중 status: approved 이고 frontmatter 의
+//   surfaces: [auth, payment, authz, concurrency] 에 해당 표면이 들어 있는 스펙이 하나라도 있으면 통과.
+//   오탐 예외: 파일 어딘가에 `risk-surface-exempt: <표면> <사유>` 주석을 남기면 그 파일의 그 표면은
+//   통과하되 stderr 에 warning 을 남긴다(조용히 통과 없음). 사유가 없으면 예외로 인정하지 않는다.
+const RISK_SURFACES = {
+  auth: {
+    label: "인증/세션",
+    rules: [
+      { rule: "SUPABASE_AUTH", re: /\bauth\.(signIn[A-Za-z]*|signUp|signOut|admin|getUser|getSession|setSession|refreshSession|exchangeCodeForSession|verifyOtp|resetPasswordForEmail|updateUser|onAuthStateChange)\b/, what: "Supabase auth 호출" },
+      { rule: "SIGNIN_CALL", re: /\b(signIn[A-Za-z]*|signUp|signOut)\s*\(/, what: "로그인/가입/로그아웃 호출" },
+      { rule: "COOKIE", re: /\bdocument\.cookie\b|['"]Set-Cookie['"]|\bcookies\s*\(\s*\)/, what: "쿠키 직접 처리" },
+      { rule: "TOKEN", re: /\b(access_token|refresh_token|id_token|session_token|sessionToken|Bearer|bearer)\b|\bjwt\b/i, what: "토큰/세션 값 처리" },
+    ],
+  },
+  payment: {
+    label: "결제",
+    rules: [
+      { rule: "PAYMENT_ID", re: /\b(payments?|checkout|billing|invoice|refunds?|stripe|tosspayments|iamport|portone|paypal|merchant_uid)\b/i, what: "결제 관련 식별자" },
+    ],
+  },
+  authz: {
+    label: "권한/인가",
+    rules: [
+      { rule: "RLS_POLICY", re: /\bcreate\s+policy\b|\brow\s+level\s+security\b|\bauth\.uid\s*\(\s*\)/i, what: "RLS 정책 / auth.uid()" },
+      { rule: "GRANT", re: /\bgrant\s+(select|insert|update|delete|all)\b|\brevoke\s+(select|insert|update|delete|all)\b/i, what: "권한 부여/회수" },
+      { rule: "ROLE_CHECK", re: /\b(is_?admin|isAdmin|has_?permission|hasPermission|user_?role|userRole|app_metadata|authoriz(?:e|ation)|unauthorized|forbidden)\b/i, what: "역할/인가 판정" },
+      { rule: "ROLE_LITERAL", re: /\brole\s*[:=]\s*['"](admin|owner|teacher|staff|member|manager)['"]/i, what: "역할 값 하드코딩" },
+    ],
+  },
+  concurrency: {
+    label: "동시성/시변 상태",
+    rules: [
+      // `for update` 는 두 뜻이다: select 의 행 잠금(위험 표면)과 create policy/trigger 의 대상 지정(아님).
+      // 낱말만 찾으면 RLS 정책이 전부 걸린다(실측 5건) — SQL_UNCONDITIONAL_WRITE 가 겪은 것과 같은 오탐.
+      { rule: "ROW_LOCK", re: /\bfor\s+update\b(?!\s+(?:to|using|with)\b)|\block\s+table\b|\bisolation\s+level\b|\bserializable\b|\bpg_advisory(?:_xact)?_lock\b/i, not: /\bcreate\s+(?:policy|trigger|rule)\b/i, what: "행/테이블 잠금·격리수준" },
+      { rule: "TXN", re: /\bbegin\s*;|\bcommit\s*;|\brollback\s*;/i, what: "명시적 트랜잭션" },
+      { rule: "UPSERT", re: /\.upsert\s*\(|\bon\s+conflict\b/i, what: "upsert / on conflict 경합" },
+      { rule: "DERIVED_TRIGGER", re: /\bcreate\s+(?:or\s+replace\s+)?trigger\b/i, what: "트리거로 파생 상태 갱신" },
+    ],
+  },
+};
+const SURFACE_KEYS = Object.keys(RISK_SURFACES);
+
+// 스펙 frontmatter 의 surfaces 를 읽는다. 인라인(`surfaces: [auth, authz]`)과
+// 블록(`surfaces:` 다음 줄부터 `- auth`) 두 표기 모두 받는다.
+function specSurfaces(fmText) {
+  const m = fmText.match(/^[ \t]*surfaces:[ \t]*(.*)$/m);
+  if (!m) return [];
+  const inline = m[1].trim();
+  // 값 뒤에 붙는 주석(`surfaces: [auth, authz]  # 왜`)을 값으로 먹으면 마지막 항목이 통째로 어긋난다.
+  const clean = (s) => s.split(",").map((x) => x.trim().replace(/['"]/g, "")).filter((x) => /^[a-z-]+$/.test(x));
+  const br = inline.match(/^\[([^\]]*)\]/);
+  if (br) return clean(br[1]);
+  if (inline && !inline.startsWith("#")) return clean(inline.split("#")[0]);
+  const rest = fmText.slice(fmText.indexOf(m[0]) + m[0].length).split("\n").slice(1);
+  const out = [];
+  for (const line of rest) {
+    const li = line.match(/^[ \t]*-[ \t]*([A-Za-z-]+)/);
+    if (!li) break;
+    out.push(li[1]);
+  }
+  return out;
+}
+// projects/<이름>/docs/specs/*.md (비재귀, '_' 접두 제외) 중 approved 스펙이 커버하는 표면 집합.
+// 비재귀인 이유: 그래프의 spec 노드 글롭(docs/specs/*.md)과 같은 범위를 봐야 planned/ 의 보류 스펙이
+// 게이트를 열어버리지 않는다.
+function approvedSurfaces(projDir) {
+  const dir = join(projDir, "docs", "specs");
+  const covered = new Map(); // surface -> 스펙 경로
+  let entries;
+  try { entries = readdirSync(dir); } catch { return covered; }
+  for (const name of entries) {
+    if (!name.endsWith(".md") || name.startsWith("_")) continue;
+    const p = join(dir, name);
+    try { if (!statSync(p).isFile()) continue; } catch { continue; }
+    const fm = readFileSync(p, "utf-8").match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (!fm || !/^\s*status:\s*approved\b/m.test(fm[1])) continue;
+    for (const s of specSurfaces(fm[1])) if (!covered.has(s)) covered.set(s, relative(ROOT, p));
+  }
+  return covered;
+}
+// 파일 단위 예외 주석: `risk-surface-exempt: <표면> <사유>` (//, --, /* */, <!-- --> 어디든).
+function exemptions(src) {
+  const out = new Map(); // surface -> 사유
+  for (const m of src.matchAll(/risk-surface-exempt:[ \t]*([A-Za-z-]+)[ \t]*([^\n*]*)/g)) {
+    const surface = m[1];
+    const reason = (m[2] ?? "").replace(/-->|\*\//g, "").trim();
+    if (reason) out.set(surface, reason);
+  }
+  return out;
+}
+// 주석은 근거가 아니다 — 코드 줄만 본다. (예외 주석 자체가 패턴에 걸리는 것도 여기서 막힌다)
+function stripLineComment(line, isSql) {
+  return isSql ? line.split("--")[0] : line.split("//")[0].replace(/^\s*\*.*$/, "");
+}
+
+// ── 예외의 만료: 전제가 깨지면 예외가 스스로 풀려야 한다 ────────────────
+// authz 예외는 대개 "이 프로젝트엔 인가 모델이랄 게 없다"를 근거로 삼는다.
+// 그런데 쓰기 정책(insert/update/delete, 또는 for 절 없는 = 전체 허용)이 하나라도 생기면
+// 그 순간부터 "누가 무엇을 쓸 수 있는가"라는 인가 규칙이 실제로 존재한다 — 예외의 전제가 거짓이 된다.
+// 사람이 주석을 읽고 기억해서 푸는 것은 강제가 아니므로, 이 조건만 기계가 본다.
+//   for select                          → 읽기 전용 → 전제 유지
+//   for insert/update/delete/all, for 없음 → 쓰기 가능 → authz 예외 무효
+function writePolicyIn(projDir) {
+  for (const file of walk(join(projDir, "supabase")).filter((f) => f.endsWith(".sql"))) {
+    const src = readFileSync(file, "utf-8");
+    const lines = src.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const t = stripLineComment(lines[i], true);
+      const m = t.match(/\bcreate\s+policy\b(.*)$/i);
+      if (!m) continue;
+      // `for` 절은 정책 선언 다음 줄에 오기도 한다(줄바꿈 서식). 선언부 몇 줄을 이어 붙여 본다.
+      const decl = [m[1], ...lines.slice(i + 1, i + 4).map((l) => stripLineComment(l, true))].join(" ");
+      const forClause = decl.match(/\bfor\s+(select|insert|update|delete|all)\b/i);
+      if (forClause && forClause[1].toLowerCase() === "select") continue;   // 읽기 전용
+      return { rel: relative(ROOT, file).split("\\").join("/"), line: i + 1, kind: forClause ? forClause[1].toLowerCase() : "all(for 절 없음)" };
+    }
+  }
+  return null;
+}
+
+const riskWarnings = [];
+// 프로젝트별로 '코드에 실제로 존재하는 위험 표면'을 모은다 — 스펙이 커버했든 예외를 달았든 상관없이.
+// 이건 차단용이 아니라 신고용이다: graph-stop 이 review 사인오프에서 "이 표면인데 리뷰어가 없다"를
+// 판정하려면 표면 목록이 게이트 밖으로 나가야 한다.
+const detectedByProject = new Map();
+for (const projDir of projectDirs) {
+  const label = relative(ROOT, projDir).split("\\").join("/");
+  const covered = approvedSurfaces(projDir);
+  // 표면 -> 예외를 무효로 만드는 사실 (있으면 그 표면의 예외 주석은 warning 이 아니라 error)
+  const expired = new Map();
+  const wp = covered.has("authz") ? null : writePolicyIn(projDir);
+  if (wp) expired.set("authz", `쓰기 정책이 존재한다(${wp.rel}:${wp.line} — for ${wp.kind}). ` +
+    `"인가 모델이 없다"는 예외의 전제가 깨졌다 — 누가 무엇을 쓸 수 있는지가 이제 규칙이다`);
+  const scanFiles = [
+    ...walk(join(projDir, "src")).filter((f) => /\.(ts|tsx|js|jsx|mjs)$/.test(f)),
+    ...walk(join(projDir, "supabase")).filter((f) => f.endsWith(".sql")),
+  ];
+  // surface -> [{rel, line, what, rule}]  (예외 처리 후 남은 것만)
+  const hits = new Map(SURFACE_KEYS.map((s) => [s, []]));
+  const detected = new Set();
+  for (const file of scanFiles) {
+    const src = readFileSync(file, "utf-8");
+    if (!/risk-surface|auth|payment|role|upsert|conflict|token|cookie|policy|trigger|lock|commit|grant/i.test(src)) continue;
+    const rel = relative(ROOT, file).split("\\").join("/");
+    const isSql = file.endsWith(".sql");
+    const exempt = exemptions(src);
+    // \r 를 남기면 JS 정규식의 `.` 이 \r 을 안 먹어 `^\s*\*.*$`(블록 주석 줄) 판정이 빗나간다 —
+    // CRLF 파일에서 주석 속 'ON CONFLICT' 가 실제로 걸렸다.
+    const lines = src.split(/\r?\n/);
+    const seen = new Set(); // 파일당 (표면) 1건만 — 같은 파일에서 수십 줄이 걸려도 신호는 하나다
+    for (let i = 0; i < lines.length; i++) {
+      const t = stripLineComment(lines[i], isSql);
+      if (!t.trim()) continue;
+      for (const [surface, def] of Object.entries(RISK_SURFACES)) {
+        if (seen.has(surface)) continue;
+        for (const { rule, re, not, what } of def.rules) {
+          if (!re.test(t) || (not && not.test(t))) continue;
+          seen.add(surface);
+          detected.add(surface);
+          if (covered.has(surface)) break;              // 스펙이 커버 → 조용히 통과
+          if (exempt.has(surface) && expired.has(surface)) {
+            // 예외는 살아 있는데 그 전제가 깨졌다 → 통과시키지 않는다. 이게 "예외의 만료"다.
+            errors.push(
+              `[risk-surface/EXPIRED_EXEMPT] ${rel}:${i + 1} — ${def.label}(${what})의 예외가 만료됐다. ` +
+                `예외 사유: "${exempt.get(surface)}". 그런데 ${expired.get(surface)}. ` +
+                `이제 /spec 으로 불변식을 쓰고 스펙 frontmatter 에 surfaces: [${surface}] 를 적는다 — ` +
+                `예외 주석을 고쳐 다는 것으로는 통과하지 않는다.`,
+            );
+            break;
+          }
+          if (exempt.has(surface)) {
+            riskWarnings.push(
+              `⚠ [risk-surface/EXEMPT] ${rel}:${i + 1} — ${def.label}(${what}) 예외 처리됨: ${exempt.get(surface)}. ` +
+                `예외는 스펙을 대신하지 않는다 — 이 판단이 틀리면 사고는 그대로 난다.`,
+            );
+            break;
+          }
+          hits.get(surface).push({ rel, line: i + 1, what, rule });
+          break;
+        }
+      }
+    }
+  }
+  if (detected.size > 0) detectedByProject.set(label, [...detected]);
+  for (const [surface, list] of hits) {
+    if (list.length === 0) continue;
+    const def = RISK_SURFACES[surface];
+    const head = list[0];
+    const more = list.slice(1, 3).map((h) => `      · ${h.rel}:${h.line} — ${h.what}`).join("\n");
+    errors.push(
+      `[risk-surface/${surface.toUpperCase()}] ${head.rel}:${head.line} — ${def.label} 표면 진입(${head.what}). ` +
+        `${label}/docs/specs/ 에 이 표면을 커버하는 스펙이 없다(status: approved + frontmatter surfaces 에 '${surface}'). ` +
+        `구현 전에 /spec 으로 불변식부터 쓴다. 오탐이면 그 파일에 \`risk-surface-exempt: ${surface} <사유>\` 주석.` +
+        (more ? `\n${more}` : "") +
+        (list.length > 3 ? `\n      · 외 ${list.length - 3}건` : ""),
+    );
+  }
+}
+
 function isNextProject(projDir) {
   return ["ts", "js", "mjs"].some((ext) =>
     existsSync(join(projDir, `next.config.${ext}`)),
@@ -310,6 +514,12 @@ if (!QUICK) {
   if (sc.status !== 0)
     errors.push(...(sc.stderr ?? "").trim().split("\n").filter(Boolean));
 }
+
+// 위험 표면 예외는 통과시키되 매번 보이게 남긴다 — 예외가 쌓여 아무도 모르게 방벽이 사라지는 걸 막는다.
+for (const w of riskWarnings) console.error(w);
+// 감지된 표면 신고(차단 아님). graph-stop 이 review 사인오프 판정에 쓴다.
+for (const [label, surfaces] of detectedByProject)
+  console.log(`ℹ [risk-surface/DETECTED] ${label} — ${surfaces.join(", ")}`);
 
 if (errors.length > 0) {
   console.error(

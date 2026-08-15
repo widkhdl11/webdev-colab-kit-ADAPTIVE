@@ -15,9 +15,10 @@
 1. `projects/*/src` 전체를 순회하며 보안 정규식 4종을 라인 단위로 검사한다 [(run-gates.mjs:37-58, 102-107)](../../gates/run-gates.mjs#L37-L58).
 2. import 를 파싱해 FSD 레이어 순위(app>pages>widgets>features>entities>shared)를 위반하는 상향 import 와 같은 레이어 교차 슬라이스 import 를 잡는다 [(run-gates.mjs:109-131)](../../gates/run-gates.mjs#L109-L131).
 3. `supabase/**.sql` 에서 `security definer` 함수가 `set search_path = ''` 를 고정했는지 본다. 같은 함수명은 **마지막 정의만** 판정한다 [(run-gates.mjs:135-168)](../../gates/run-gates.mjs#L135-L168).
-4. UI 착수 감지: `pages`/`widgets` 에 파일이 생기거나 Next 프로젝트에서 `page.*` 가 2장째가 되면, 승인된 design-rules.md 가 없을 때 `design/BEFORE_UI` 를 낸다 [(run-gates.mjs:182-226)](../../gates/run-gates.mjs#L182-L226).
-5. `--quick` 이 아니면 추가로 `npx tsc --noEmit`, `npm test --silent`, `spec-coverage.mjs` 를 돌린다 [(run-gates.mjs:228-279)](../../gates/run-gates.mjs#L228-L279).
-6. 에러가 있으면 최대 30건을 stderr 로 출력하고 `exit 2` [(run-gates.mjs:281-287)](../../gates/run-gates.mjs#L281-L287).
+4. **위험 표면 감지(risk-surface)**: `src/**` 와 `supabase/**.sql` 에서 인증·결제·권한·동시성 패턴을 찾는다. 걸린 표면을 커버하는 approved 스펙(frontmatter `surfaces:`)이 그 프로젝트에 없으면 차단한다. 파일 단위 예외 주석 `risk-surface-exempt: <표면> <사유>` 는 통과시키되 ⚠ 로 남긴다 — 사유 없는 예외는 인정하지 않는다. 예외의 전제가 기계로 검사 가능하면 그것도 본다: authz 예외가 걸린 프로젝트에 쓰기 정책(`create policy … for insert/update/delete`, 또는 `for` 절 없음)이 생기면 `EXPIRED_EXEMPT` 로 차단한다 — 주석을 고쳐 다는 것으로는 통과하지 않고 스펙이 필요하다 [(run-gates.mjs:203-358)](../../gates/run-gates.mjs#L203-L358).
+5. UI 착수 감지: `pages`/`widgets` 에 파일이 생기거나 Next 프로젝트에서 `page.*` 가 2장째가 되면, 승인된 design-rules.md 가 없을 때 `design/BEFORE_UI` 를 낸다 [(run-gates.mjs:182-226)](../../gates/run-gates.mjs#L182-L226).
+6. `--quick` 이 아니면 추가로 `npx tsc --noEmit`, `npm test --silent`, `spec-coverage.mjs` 를 돌린다 [(run-gates.mjs:228-279)](../../gates/run-gates.mjs#L228-L279).
+7. 위험 표면 예외(⚠)를 stderr 로 먼저 남기고, 에러가 있으면 최대 30건을 stderr 로 출력하고 `exit 2` [(run-gates.mjs:281-287)](../../gates/run-gates.mjs#L281-L287).
 
 ## Skills and tools
 | name | when | evidence |

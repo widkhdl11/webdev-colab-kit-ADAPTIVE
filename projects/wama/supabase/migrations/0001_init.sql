@@ -126,6 +126,7 @@ begin
   return new;
 end $$;
 
+-- risk-surface-exempt: concurrency 이 트리거는 파생 상태 갱신이 아니라 INV-A8(작성자 불변·academy 서버 강제) 강제 장치 — 실제 표면은 authz 이고 auth-isolation.md 가 커버한다
 create trigger evaluation_guard_trg
   before insert or update on evaluation
   for each row execute function evaluation_guard();

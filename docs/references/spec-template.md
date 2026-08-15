@@ -1,6 +1,10 @@
 ---
 feature: (기능명)
 status: draft        # draft → (spec-auditor 감사) → 사람 승인 후 approved. approved 전 구현 금지
+surfaces: []         # 이 스펙이 커버하는 위험 표면: auth · payment · authz · concurrency 중 해당하는 것만
+                     # 게이트(risk-surface)가 읽는다 — 코드에 그 표면의 패턴이 등장하면
+                     # 여기 그 표면을 적은 approved 스펙이 하나는 있어야 통과한다.
+                     # 커버하지 않는 표면을 적으면 방벽이 열린다. 실제로 불변식을 쓴 표면만 적을 것.
 ---
 # (기능명) 스펙
 

@@ -8,7 +8,7 @@ product 가 clean 이고 design 이 dirty 일 때 [(graph.mjs:44)](../../graph.m
 UI 작업 자체를 시작하려면 게이트가 먼저 막는다 — `design/BEFORE_UI` 는 승인된 design-rules.md 없이 `pages`/`widgets`(Next 프로젝트면 두 번째 `page.*`)에 파일이 생기면 에러를 낸다 [(run-gates.mjs:182-226)](../../gates/run-gates.mjs#L182-L226).
 
 ## What it does
-**page-designer 쪽 (새 시각 방향일 때 — 정식 경로)** [(rules/design-drafting.md:20-45)](../../.claude/rules/design-drafting.md#L20-L45)
+**page-designer 쪽 (새 시각 방향일 때)** [(rules/design-drafting.md:20-45)](../../.claude/rules/design-drafting.md#L20-L45)
 1. `design-interview` 스킬로 취향 상담 — 빈 질문 대신 선택지가 채워진 양식을 반복 갱신 [(design-interview/SKILL.md:17-23)](../../.claude/skills/design-interview/SKILL.md#L17-L23).
 2. 레퍼런스 URL 이 있고 Playwright 가 연결됐으면 `style-scout` 파견 (미연결이면 위임 금지, 스크린샷 요청) [(style-scout.md:13-17)](../../.claude/agents/style-scout.md#L13-L17).
 3. `design-drafter` 가 `docs/design/mockups/<화면>.html` 정적 시안을 만든다 [(design-drafter.md:29)](../../.claude/agents/design-drafter.md#L29).

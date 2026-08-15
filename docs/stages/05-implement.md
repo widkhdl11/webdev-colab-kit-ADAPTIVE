@@ -9,7 +9,7 @@ UI 레이어에 손대려면 추가로 `design-rules.md` 가 `status: approved` 
 
 ## What it does
 1. 구현 전 한 문단 요약 → 동의 → 시작 [(CLAUDE.md:16)](../../CLAUDE.md#L16).
-2. 작업 등급을 먼저 정한다(빠른 경로 / 정식 경로) [(CLAUDE.md:42-56)](../../CLAUDE.md#L42-L56).
+2. 이번 diff가 닿는 표면을 먼저 열거하고 표면마다 절차를 정한다 [(CLAUDE.md:69-95)](../../CLAUDE.md#L69-L95).
 3. approved 스펙이 있는 기능은 **테스트 먼저**, red 출력을 보여준 뒤 구현 [(rules/tdd.md:7-9)](../../.claude/rules/tdd.md#L7-L9).
 4. FSD 6레이어 안에서 아래 방향 import 만 [(run-gates.mjs:109-131)](../../gates/run-gates.mjs#L109-L131).
 5. UI 레이어는 design-rules.md 기준 + 접근성·토큰 규칙을 따른다 [(rules/ui-layers.md:7-17)](../../.claude/rules/ui-layers.md#L7-L17).
@@ -56,6 +56,6 @@ UI 레이어에 손대려면 추가로 `design-rules.md` 가 `status: approved` 
 
 ## Unverified
 - **"한 문단 요약 → 동의" 절차** — 코드로 강제되지 않는 서술 규칙이다. [INFERRED]
-- **작업 등급 판정** — 빠른/정식 경로 선택은 모델의 판단이고 기록되지 않는다. [INFERRED]
+- **표면별 절차 판단** — 어느 표면에 닿는지와 표면마다 걸 절차는 모델의 판단이고 기록되지 않는다. 단 위험 표면(인증·결제·권한·동시성)만은 risk-surface 게이트가 코드에서 직접 감지한다. [INFERRED / 위험 표면은 CONFIRMED: run-gates.mjs:203-358]
 - **테스트 먼저(red→green) 순서** — tdd 규칙은 문서일 뿐, 게이트는 최종 green 만 본다. [INFERRED]
 - **`src/**` 해시가 테스트 파일까지 포함한다** — 테스트를 고쳐도 implement 가 dirty 가 된다. 의도인지 부작용인지는 파일로 판단할 수 없다 (findings F10 과 짝을 이룬다). [INFERRED]

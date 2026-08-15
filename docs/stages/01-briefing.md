@@ -15,9 +15,10 @@ Claude Code 의 `SessionStart` 이벤트. 훅 선언은 [.claude/settings.json:1
 5. `PROGRESS.md` 에서 "멈춘 지점"·"다음 할 일"을 파싱한다 [(briefing.mjs:45-46)](../../scripts/briefing.mjs#L45-L46).
 6. 원칙 가드: "다음 할 일"의 1순위가 데이터 계층인데 화면 대안이 함께 있으면 순서 경보를 붙인다 [(briefing.mjs:48-58)](../../scripts/briefing.mjs#L48-L58).
 7. `PRODUCT.md` 의 `- [x]`/`- [ ]` 개수로 필수 기능 진행률을 센다 [(briefing.mjs:61-63)](../../scripts/briefing.mjs#L61-L63).
-8. `harness-backlog.md` 의 미결 항목 수를 센다 [(briefing.mjs:66-67)](../../scripts/briefing.mjs#L66-L67).
-9. `HANDOFF.md` 의 JSON 상태를 읽어 **프론티어**(dirty이면서 상류가 전부 clean인 노드)를 파생한다 [(briefing.mjs:69-81)](../../scripts/briefing.mjs#L69-L81).
-10. 위 항목을 8줄 이내로 출력한다 [(briefing.mjs:83-91)](../../scripts/briefing.mjs#L83-L91).
+8. `harness-backlog.md` 의 미결 항목 수를 센다 [(briefing.mjs:70-72)](../../scripts/briefing.mjs#L70-L72).
+9. 활성 프로젝트의 `workspace/BACKLOG.md` 에서 미룬 항목(`- [ ]`) 수를 센다 [(briefing.mjs:74-79)](../../scripts/briefing.mjs#L74-L79). 본문은 읽지 않는다 — 개수만 본다.
+10. `HANDOFF.md` 의 JSON 상태를 읽어 **프론티어**(dirty이면서 상류가 전부 clean인 노드)를 파생한다 [(briefing.mjs:81-99)](../../scripts/briefing.mjs#L81-L99).
+11. 위 항목을 출력한다 — 고정 5줄 + 해당할 때만 붙는 줄(⚠ 위험표면 예외·n/a·순서 경보·진행률·백로그·하네스 승격) [(briefing.mjs:101-112)](../../scripts/briefing.mjs#L101-L112).
 
 ## Skills and tools
 | name | when | evidence |
@@ -33,6 +34,7 @@ Claude Code 의 `SessionStart` 이벤트. 훅 선언은 [.claude/settings.json:1
 | `ACTIVE` | 활성 프로젝트 이름 | 예 — 없으면 브리핑이 안내만 하고 끝난다 |
 | `projects/<이름>/workspace/HANDOFF.md` | dirty/clean 상태 → 프론티어 | 아니오 — 없거나 깨지면 프론티어 줄만 생략 |
 | `projects/<이름>/workspace/PROGRESS.md` | 멈춘 지점 · 다음 할 일 · 대기 결정 | 아니오 — 없으면 "(기록 없음)" |
+| `projects/<이름>/workspace/BACKLOG.md` | 미룬 작업 건수 (wrap-up 이 쌓는다) | 아니오 — 없거나 0건이면 줄 자체를 생략 |
 | `projects/<이름>/docs/PRODUCT.md` | 필수 기능 진행률 | 아니오 — 체크박스가 없으면 줄 자체를 생략 |
 | `projects/<이름>/docs/specs/*.md` | `status: draft` = 승인 대기 | 아니오 |
 | `docs/references/harness-backlog.md` | 보류된 하네스 승격 건수 | 아니오 — 0건이면 침묵 |
@@ -49,7 +51,7 @@ Claude Code 의 `SessionStart` 이벤트. 훅 선언은 [.claude/settings.json:1
 
 ## Failure path
 - `ACTIVE` 없음 / `projects/<이름>/` 없음 → "활성 프로젝트 없음 — kickoff로 시작하세요" 출력 후 `exit 0` [(briefing.mjs:17-21)](../../scripts/briefing.mjs#L17-L21). 세션은 정상 진행되고, 다음 단계는 `product`(kickoff)가 된다.
-- `HANDOFF.md` 의 JSON 이 손상 → `catch` 로 무시하고 프론티어 줄만 빠진다 [(briefing.mjs:80)](../../scripts/briefing.mjs#L80). 다음 Stop 훅에서 `graph-stop` 이 백필로 재부트스트랩한다 [(gates/graph-stop.mjs:95-99)](../../gates/graph-stop.mjs#L95-L99).
+- `HANDOFF.md` 의 JSON 이 손상 → `catch` 로 무시하고 프론티어 줄만 빠진다 [(briefing.mjs:98)](../../scripts/briefing.mjs#L98). 다음 Stop 훅에서 `graph-stop` 이 백필로 재부트스트랩한다 [(gates/graph-stop.mjs:95-99)](../../gates/graph-stop.mjs#L95-L99).
 - `run-gates` 가 실패해도 브리핑은 계속된다 — 신호등만 "실패"로 바뀐다.
 
 ## Exit condition

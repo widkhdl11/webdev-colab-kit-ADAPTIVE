@@ -1,47 +1,608 @@
 {
   "generated_by": "scripts/extract-harness.mjs",
+  "out_dir": "docs/reference",
   "root": ".",
+  "reference_kinds": {
+    "repo-path": "레포 루트 기준으로 해석됨. exists 가 true/false 로 확정",
+    "relative-link": "./ 또는 ../ 로 시작 — 문서 위치 기준으로 해석. exists 확정",
+    "project-relative": "루트엔 없지만 projects/<이름>/ 아래에 있음. exists=null (표기 기준이 다름)",
+    "suffix-match": "짧은 표기. 경로 꼬리로 실재 파일과 일치 (rules/tdd.md → .claude/rules/tdd.md). exists=null",
+    "bare-filename": "디렉터리 없는 파일명. matches 에 레포 전역 동명 파일 목록. exists=null",
+    "dynamic": "글롭·<자리표시자>·$변수 포함 → 존재 판정 불가. exists=null",
+    "unresolved": "어느 기준으로도 해석 실패 (예시 문장일 수 있음). exists=null — 사람이 line 을 보고 판정",
+    "external": "URL. exists=null"
+  },
+  "reference_stats": {
+    "dynamic": 67,
+    "suffix-match": 7,
+    "bare-filename": 58,
+    "project-relative": 9,
+    "repo-path": 44,
+    "relative-link": 1
+  },
+  "dropped_candidates": [
+    {
+      "from": ".claude/skills/checkpoint/SKILL.md",
+      "line": 10,
+      "token": "레이아웃/색/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/checkpoint/SKILL.md",
+      "line": 13,
+      "token": "design/BEFORE_UI",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/design-interview/SKILL.md",
+      "line": 37,
+      "token": "승인/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/design-interview/SKILL.md",
+      "line": 57,
+      "token": "<프로젝트/화면명>",
+      "reason": "파일 참조 아님 (kind=dynamic, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/design-interview/SKILL.md",
+      "line": 61,
+      "token": "화면/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/design-interview/SKILL.md",
+      "line": 74,
+      "token": "URL/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/design-interview/SKILL.md",
+      "line": 79,
+      "token": "브랜드/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/design-interview/SKILL.md",
+      "line": 84,
+      "token": "섹션/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/kickoff/SKILL.md",
+      "line": 17,
+      "token": "①목적/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/kickoff/SKILL.md",
+      "line": 19,
+      "token": "정적/SPA",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/kickoff/SKILL.md",
+      "line": 19,
+      "token": "없음/Supabase",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/kickoff/SKILL.md",
+      "line": 20,
+      "token": "함/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/kickoff/SKILL.md",
+      "line": 20,
+      "token": "호스팅/Vercel",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/kickoff/SKILL.md",
+      "line": 23,
+      "token": "모르겠다/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/kickoff/SKILL.md",
+      "line": 25,
+      "token": "엔티티/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/retro/SKILL.md",
+      "line": 10,
+      "token": "잘못된/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/retro/SKILL.md",
+      "line": 18,
+      "token": "rules/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/setup/SKILL.md",
+      "line": 16,
+      "token": "scaffold/npm",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/setup/SKILL.md",
+      "line": 28,
+      "token": "스킬/rules",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/setup/SKILL.md",
+      "line": 45,
+      "token": "mockups/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/spec/SKILL.md",
+      "line": 16,
+      "token": "참/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/spec/SKILL.md",
+      "line": 18,
+      "token": "Given/When/Then",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/spec/SKILL.md",
+      "line": 36,
+      "token": "planned/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/spec/SKILL.md",
+      "line": 37,
+      "token": "implement/qa/review",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/spec/SKILL.md",
+      "line": 38,
+      "token": "planned/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/wrap-up/SKILL.md",
+      "line": 10,
+      "token": "DB/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/skills/wrap-up/SKILL.md",
+      "line": 22,
+      "token": "끝나면/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/skills/wrap-up/SKILL.md",
+      "line": 47,
+      "token": "PRODUCT/DECISIONS",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/agents/code-reviewer.md",
+      "line": 8,
+      "token": "컴파일러/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/agents/code-reviewer.md",
+      "line": 11,
+      "token": "critical/high/medium/low",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/agents/design-drafter.md",
+      "line": 47,
+      "token": "생성/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/agents/qa-classifier.md",
+      "line": 23,
+      "token": "요구/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/agents/qa-classifier.md",
+      "line": 32,
+      "token": "모순/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/agents/qa-classifier.md",
+      "line": 71,
+      "token": "design/BEFORE_UI",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/agents/qa-classifier.md",
+      "line": 73,
+      "token": "테스트/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/agents/security-reviewer.md",
+      "line": 16,
+      "token": "HTML/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/agents/style-scout.md",
+      "line": 9,
+      "token": "HTML/CSS",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/agents/style-scout.md",
+      "line": 34,
+      "token": "다크/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/agents/style-scout.md",
+      "line": 35,
+      "token": "제목/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/agents/style-scout.md",
+      "line": 36,
+      "token": "빽빽/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/agents/style-scout.md",
+      "line": 37,
+      "token": "각/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/agents/style-scout.md",
+      "line": 39,
+      "token": "프로젝트>/docs/design/refs/<사이트>-<화면>.png",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/agents/test-auditor.md",
+      "line": 10,
+      "token": "Given/When/Then",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/agents/test-auditor.md",
+      "line": 11,
+      "token": "INV/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/design-drafting.md",
+      "line": 3,
+      "token": "화면/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/rules/design-drafting.md",
+      "line": 12,
+      "token": "카드/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/rules/design-drafting.md",
+      "line": 30,
+      "token": "-a/-b",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/design-drafting.md",
+      "line": 44,
+      "token": "톤/색/형태/타이포/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/rules/design-drafting.md",
+      "line": 45,
+      "token": "design/BEFORE_UI",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/design-drafting.md",
+      "line": 46,
+      "token": "pages/widgets",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/supabase.md",
+      "line": 13,
+      "token": "RPC/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/supabase.md",
+      "line": 14,
+      "token": "shared/api",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/supabase.md",
+      "line": 18,
+      "token": "연결/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": ".claude/rules/supabase.md",
+      "line": 19,
+      "token": "entities/features",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/tdd.md",
+      "line": 30,
+      "token": "<\\/div><article/",
+      "reason": "파일 참조 아님 (kind=dynamic, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/ui-layers.md",
+      "line": 8,
+      "token": "features/entities",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/ui-layers.md",
+      "line": 10,
+      "token": "pages/widgets",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/ui-layers.md",
+      "line": 10,
+      "token": "design/BEFORE_UI",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/ui-layers.md",
+      "line": 13,
+      "token": "width/height",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": ".claude/rules/ui-layers.md",
+      "line": 15,
+      "token": "색/radius/shadow",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 26,
+      "token": "n/a",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 27,
+      "token": "n/a",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 29,
+      "token": "n/a",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 30,
+      "token": "테스트/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 33,
+      "token": "에이전트/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 50,
+      "token": "dirty/clean",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 94,
+      "token": "시변/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 105,
+      "token": "design/BEFORE_UI",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 110,
+      "token": "두껍게/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 113,
+      "token": "qa/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 117,
+      "token": "UI/",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 119,
+      "token": "시변/",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 124,
+      "token": "깊게=/spec",
+      "reason": "한글 산문 (A/B 표기)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 164,
+      "token": "qa/review",
+      "reason": "파일 참조 아님 (kind=unresolved, 확장자 없음·미해석)"
+    },
+    {
+      "from": "CLAUDE.md",
+      "line": 174,
+      "token": "라이브러리/API",
+      "reason": "한글 산문 (A/B 표기)"
+    }
+  ],
   "skills": [
     {
       "name": "checkpoint",
-      "description": "페이지나 주요 UI 컴포넌트를 처음 만들기 시작할 때, 또는 사용자가 \"일단 ~까지만 만들어서 보여줘\"라고 할 때 사용. 대표 결과물 하나를 먼저 제출해 시각적 방향 승인을 받는 절차. 이미 승인된 방향의 반복 작업에는 불필요.",
-      "description_word_count": 33,
+      "description": "시각 방향이 어긋났을 때 버리는 양을 결과물 1개로 줄이는 절차 — 대표 하나만 먼저 제출해 방향을 확인받는다. 신호는 새 페이지·주요 UI를 처음 만들 때, 또는 사용자가 \"일단 ~까지만 만들어서 보여줘\"라고 할 때. 승인된 방향의 반복이거나 되돌리는 비용이 작으면 확인 없이 바로 구현하는 편이 낫다.",
+      "description_word_count": 44,
       "allowed-tools": null,
       "disable-model-invocation": null,
       "argument-hint": null,
       "path": ".claude/skills/checkpoint/SKILL.md",
-      "line_count": 16,
+      "line_count": 15,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<이름>/docs/design/design-rules.md",
-          "dynamic": true,
+          "line": 7,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "projects/<이름>/docs/design/design-rules.md",
+          "line": 12,
+          "kind": "dynamic",
           "exists": null
         }
       ]
     },
     {
       "name": "design-interview",
-      "description": "새 시각 방향의 화면을 만들기 전, 디자인 취향을 깊게 상담할 때 사용. 빈 질문이 아니라 선택지·예시가 채워진 양식을 문서 반복으로 수렴시킨다. 결론은 시안(design-drafter)의 입력이 되고, 승인 후 design-rules.md 로 확정된다. 이미 승인된 방향의 반복 화면에는 쓰지 않는다(빠른 경로)",
-      "description_word_count": 38,
+      "description": "말로는 수렴하지 않는 시각 취향을, 선택지·예시가 채워진 양식의 반복으로 좁히는 상담 절차. 결론은 시안(design-drafter)의 입력이 되고 승인 후 design-rules.md 로 확정된다. 신호는 design-rules 로 커버되지 않는 새 레이아웃 언어. 레퍼런스가 이미 있거나 \"알아서 무난하게\"면 상담을 압축하거나 건너뛰고 시안부터 뽑는 편이 빠르고, 승인된 방향의 반복 화면에는 쓰지 않는다",
+      "description_word_count": 47,
       "allowed-tools": null,
       "disable-model-invocation": null,
       "argument-hint": null,
       "path": ".claude/skills/design-interview/SKILL.md",
-      "line_count": 88,
+      "line_count": 90,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
+          "path": "rules/design-drafting.md",
+          "line": 15,
+          "kind": "suffix-match",
+          "exists": null,
+          "matches": [
+            ".claude/rules/design-drafting.md"
+          ]
+        },
+        {
           "path": "projects/<이름>/docs/design/design-rules.md",
-          "dynamic": true,
+          "line": 18,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<이름>/docs/design/INTERVIEW.md",
-          "dynamic": true,
+          "line": 21,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "design-rules.md",
+          "line": 28,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
+          "path": "projects/<이름>/docs/design/INTERVIEW.md",
+          "line": 30,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "projects/<이름>/docs/design/design-rules.md",
+          "line": 31,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<이름>/docs/design/mockups/<화면>.html",
-          "dynamic": true,
+          "line": 36,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "projects/<이름>/docs/design/design-rules.md",
+          "line": 38,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "tokens.css",
+          "line": 38,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/src/shared/ui/tokens.css",
+            "projects/wama/src/shared/ui/tokens.css"
+          ]
+        },
+        {
+          "path": "rules/design-drafting.md",
+          "line": 42,
+          "kind": "suffix-match",
+          "exists": null,
+          "matches": [
+            ".claude/rules/design-drafting.md"
+          ]
+        },
+        {
+          "path": "projects/<이름>/docs/design/design-rules.md",
+          "line": 50,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "INTERVIEW.md",
+          "line": 54,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/INTERVIEW.md",
+            "projects/wama/docs/design/INTERVIEW.md"
+          ]
+        },
+        {
+          "path": "projects/<이름>/docs/design/design-rules.md",
+          "line": 81,
+          "kind": "dynamic",
           "exists": null
         }
       ]
@@ -54,111 +615,259 @@
       "disable-model-invocation": "true",
       "argument-hint": "[목표 내용 — 비우면 현재 목표 확인]",
       "path": ".claude/skills/goal/SKILL.md",
-      "line_count": 21,
+      "line_count": 20,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/$",
-          "dynamic": true,
+          "line": 10,
+          "kind": "dynamic",
           "exists": null
+        },
+        {
+          "path": "workspace/PROGRESS.md",
+          "line": 10,
+          "kind": "project-relative",
+          "exists": null,
+          "resolves_under": [
+            "projects/signal/workspace/PROGRESS.md",
+            "projects/wama/workspace/PROGRESS.md"
+          ]
         },
         {
           "path": "ACTIVE",
-          "dynamic": false,
-          "exists": true
+          "line": 10,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "ACTIVE"
+          ]
         },
         {
           "path": "projects/<이름>/docs/",
-          "dynamic": true,
+          "line": 16,
+          "kind": "dynamic",
           "exists": null
         },
         {
+          "path": "PRODUCT.md",
+          "line": 16,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/PRODUCT.md",
+            "projects/wama/docs/PRODUCT.md"
+          ]
+        },
+        {
           "path": "projects/<이름>/workspace/PROGRESS.md",
-          "dynamic": true,
+          "line": 19,
+          "kind": "dynamic",
           "exists": null
         }
       ]
     },
     {
       "name": "kickoff",
-      "description": "사용자가 새 웹사이트나 기능을 \"만들고 싶다\"고 말했는데 활성 프로젝트가 없거나 PRODUCT.md가 비어있거나 해당 내용이 없을 때 사용. 대화 인터뷰로 요구를 구체화해 PRODUCT.md를 함께 작성하는 절차. 이미 PRODUCT.md에 있는 작업의 구현 요청에는 사용하지 않는다.",
-      "description_word_count": 33,
+      "description": "\"무엇을 만들지\"가 아직 합의되지 않은 상태를 푸는 인터뷰 — 사용자 머릿속 그림을 PRODUCT.md 라는 합의문으로 옮긴다. 신호는 활성 프로젝트가 없거나 PRODUCT.md가 비어 있거나 요청한 내용이 거기 없는 것. 사용자가 만들 것을 이미 구체적으로 말했으면 인터뷰를 돌리지 말고 받아적어 PRODUCT.md로 만들고 확인만 받는다 — 아는 것을 다시 묻는 게 이 절차의 실패다. 이미 PRODUCT.md에 있는 작업의 구현 요청에는 쓰지 않는다.",
+      "description_word_count": 59,
       "allowed-tools": null,
       "disable-model-invocation": null,
       "argument-hint": null,
       "path": ".claude/skills/kickoff/SKILL.md",
-      "line_count": 37,
+      "line_count": 36,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
+          "path": "PRODUCT.md",
+          "line": 8,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/PRODUCT.md",
+            "projects/wama/docs/PRODUCT.md"
+          ]
+        },
+        {
+          "path": "PRODUCT.md",
+          "line": 9,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/PRODUCT.md",
+            "projects/wama/docs/PRODUCT.md"
+          ]
+        },
+        {
           "path": "projects/<이름>/",
-          "dynamic": true,
+          "line": 13,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "ACTIVE",
-          "dynamic": false,
-          "exists": true
+          "line": 13,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "ACTIVE"
+          ]
         },
         {
           "path": "projects/<이름>/workspace/",
-          "dynamic": true,
+          "line": 14,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "projects/<이름>/docs/",
+          "line": 14,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<이름>/docs/PRODUCT.md",
-          "dynamic": true,
+          "line": 15,
+          "kind": "dynamic",
           "exists": null
         },
         {
+          "path": "PRODUCT.md",
+          "line": 21,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/PRODUCT.md",
+            "projects/wama/docs/PRODUCT.md"
+          ]
+        },
+        {
+          "path": "PRODUCT.md",
+          "line": 22,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/PRODUCT.md",
+            "projects/wama/docs/PRODUCT.md"
+          ]
+        },
+        {
           "path": "projects/<이름>/workspace/DECISIONS.md",
-          "dynamic": true,
+          "line": 24,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "docs/references/modeling-checklist.md",
-          "dynamic": false,
+          "line": 25,
+          "kind": "repo-path",
           "exists": true
+        },
+        {
+          "path": "PRODUCT.md",
+          "line": 28,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/PRODUCT.md",
+            "projects/wama/docs/PRODUCT.md"
+          ]
+        },
+        {
+          "path": "PRODUCT.md",
+          "line": 30,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/PRODUCT.md",
+            "projects/wama/docs/PRODUCT.md"
+          ]
+        },
+        {
+          "path": "PRODUCT.md",
+          "line": 35,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/PRODUCT.md",
+            "projects/wama/docs/PRODUCT.md"
+          ]
+        },
+        {
+          "path": "projects/<이름>/docs/PRODUCT.md",
+          "line": 36,
+          "kind": "dynamic",
+          "exists": null
         }
       ]
     },
     {
       "name": "retro",
-      "description": "기능 완성 후, 반복 실수가 있을 때, 구조적 하네스 결함(물어볼 자리가 없던 빈칸)을 1회라도 발견했을 때, 또는 사용자가 회고를 요청할 때 사용. 판단 실수·재량적 예외는 빼고 구조적 빈칸만 하네스에 반영하는 절차.",
-      "description_word_count": 31,
+      "description": "같은 실수가 구조적으로 재발하지 않게 하네스 자체를 고치는 절차 — 사람의 주의력 대신 규칙·게이트가 막게 만든다. 신호는 하네스에 \"물어볼 자리가 없던 빈칸\"을 발견했을 때(1회로 충분), 기능 완성 직후, 사용자가 회고를 요청할 때. 판단 실수나 사용자가 의도한 일회성 예외는 몇 번이든 반영 대상이 아니다 — 규칙으로 박으면 사용자의 예외 낼 권리를 뺏는다.",
+      "description_word_count": 51,
       "allowed-tools": null,
       "disable-model-invocation": null,
       "argument-hint": null,
       "path": ".claude/skills/retro/SKILL.md",
-      "line_count": 28,
+      "line_count": 27,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "gates/",
-          "dynamic": false,
+          "line": 17,
+          "kind": "repo-path",
           "exists": true
         },
         {
           "path": "CLAUDE.md",
-          "dynamic": false,
-          "exists": true
+          "line": 19,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "CLAUDE.md"
+          ]
         },
         {
           "path": "docs/references/spec-template.md",
-          "dynamic": false,
+          "line": 21,
+          "kind": "repo-path",
           "exists": true
         },
         {
           "path": "docs/references/modeling-checklist.md",
-          "dynamic": false,
+          "line": 22,
+          "kind": "repo-path",
           "exists": true
         },
         {
           "path": "docs/LESSONS.md",
-          "dynamic": false,
+          "line": 24,
+          "kind": "repo-path",
           "exists": true
         },
         {
+          "path": "CLAUDE.md",
+          "line": 25,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "CLAUDE.md"
+          ]
+        },
+        {
           "path": "docs/references/harness-backlog.md",
-          "dynamic": false,
+          "line": 26,
+          "kind": "repo-path",
           "exists": true
+        },
+        {
+          "path": "LESSONS.md",
+          "line": 27,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "docs/LESSONS.md"
+          ]
         }
       ]
     },
@@ -170,136 +879,295 @@
       "disable-model-invocation": "true",
       "argument-hint": null,
       "path": ".claude/skills/scaffold/SKILL.md",
-      "line_count": 13,
+      "line_count": 12,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<프로젝트명>/",
-          "dynamic": true,
+          "line": 8,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "scripts/scaffold.mjs",
-          "dynamic": false,
+          "line": 9,
+          "kind": "repo-path",
+          "exists": true
+        },
+        {
+          "path": "projects/",
+          "line": 10,
+          "kind": "repo-path",
+          "exists": true
+        },
+        {
+          "path": "scripts/scaffold.mjs",
+          "line": 10,
+          "kind": "repo-path",
           "exists": true
         },
         {
           "path": "gates/run-gates.mjs",
-          "dynamic": false,
+          "line": 12,
+          "kind": "repo-path",
           "exists": true
         }
       ]
     },
     {
       "name": "setup",
-      "description": "kickoff로 PRODUCT.md가 승인된 직후 사용. 프로젝트 특성에 맞춰 하네스 구성(rules, 서브에이전트, 게이트 규칙)을 제안하고 사용자 승인 후 생성한 뒤, 스캐폴딩을 실행하는 절차. 킷 기본 구성이 충분하면 아무것도 만들지 않는다.",
-      "description_word_count": 29,
+      "description": "PRODUCT.md의 결정에서 파생되는 프로젝트 고유 구성(rules·서브에이전트·게이트 규칙)만 골라 만들고 스캐폴딩까지 잇는 절차 — 기본 구성으로 이미 덮이는 것을 또 만들면 진실이 갈라지기 때문에 판정 기준이 따로 있다. 신호는 PRODUCT.md가 막 승인돼 아직 골격이 없는 상태. 킷 기본 구성이 충분하면 아무것도 만들지 않고 스캐폴딩만 한다.",
+      "description_word_count": 44,
       "allowed-tools": null,
       "disable-model-invocation": null,
       "argument-hint": null,
       "path": ".claude/skills/setup/SKILL.md",
-      "line_count": 61,
+      "line_count": 60,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
+          "path": "PRODUCT.md",
+          "line": 6,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/PRODUCT.md",
+            "projects/wama/docs/PRODUCT.md"
+          ]
+        },
+        {
           "path": "projects/<이름>/docs/PRODUCT.md",
-          "dynamic": true,
+          "line": 9,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<이름>/workspace/DECISIONS.md",
-          "dynamic": true,
+          "line": 9,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<이름>/docs/tech-stack.md",
-          "dynamic": true,
+          "line": 13,
+          "kind": "dynamic",
           "exists": null
         },
         {
+          "path": "package.json",
+          "line": 16,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/package.json",
+            "projects/wama/package.json"
+          ]
+        },
+        {
           "path": "docs/references/architectures/",
-          "dynamic": false,
+          "line": 18,
+          "kind": "repo-path",
           "exists": true
+        },
+        {
+          "path": "tech-stack.md",
+          "line": 19,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/tech-stack.md"
+          ]
+        },
+        {
+          "path": "../../../docs/references/architectures/README.md",
+          "line": 22,
+          "kind": "relative-link",
+          "resolved_to": "docs/references/architectures/README.md",
+          "exists": true
+        },
+        {
+          "path": "architectures/README.md",
+          "line": 22,
+          "kind": "suffix-match",
+          "exists": null,
+          "matches": [
+            "docs/references/architectures/README.md"
+          ]
         },
         {
           "path": "scripts/scaffold.mjs",
-          "dynamic": false,
-          "exists": true
-        },
-        {
-          "path": "ACTIVE",
-          "dynamic": false,
+          "line": 26,
+          "kind": "repo-path",
           "exists": true
         },
         {
           "path": "projects/<프로젝트명>/",
-          "dynamic": true,
+          "line": 26,
+          "kind": "dynamic",
           "exists": null
         },
         {
+          "path": "ACTIVE",
+          "line": 26,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "ACTIVE"
+          ]
+        },
+        {
           "path": "gates/run-gates.mjs",
-          "dynamic": false,
+          "line": 27,
+          "kind": "repo-path",
           "exists": true
+        },
+        {
+          "path": "tech-stack.md",
+          "line": 27,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/tech-stack.md"
+          ]
+        },
+        {
+          "path": "package.json",
+          "line": 27,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/package.json",
+            "projects/wama/package.json"
+          ]
+        },
+        {
+          "path": "design-rules.md",
+          "line": 45,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
         },
         {
           "path": "gates/",
-          "dynamic": false,
+          "line": 47,
+          "kind": "repo-path",
           "exists": true
         },
         {
+          "path": "architectures/README.md",
+          "line": 51,
+          "kind": "suffix-match",
+          "exists": null,
+          "matches": [
+            "docs/references/architectures/README.md"
+          ]
+        },
+        {
+          "path": "rules/supabase.md",
+          "line": 57,
+          "kind": "suffix-match",
+          "exists": null,
+          "matches": [
+            ".claude/rules/supabase.md"
+          ]
+        },
+        {
           "path": "projects/*/src/shared/api/**",
-          "dynamic": true,
+          "line": 57,
+          "kind": "dynamic",
           "exists": null
         }
       ]
     },
     {
       "name": "spec",
-      "description": "결제·인증·권한·동시성, 또는 시간에 따라 변하는 상태·파생 속성처럼 어기면 사고가 나는 기능의 구현 전에 사용. 사용자와 인터뷰하며 불변식 중심의 스펙 문서를 작성하고 승인받는 절차. 단순 UI/콘텐츠 기능에는 사용하지 않는다.",
-      "description_word_count": 28,
+      "description": "어기면 사고가 나는 규칙을 테스트가 참조할 수 있는 문장(불변식)으로 고정하는 절차 — 사고는 나중에 조용히 나기 때문에 코드보다 먼저 판정 기준이 있어야 한다. 신호는 인증·세션·결제·권한·동시성, 시간에 따라 변하거나 다른 값에서 파생되는 상태. 이 하한선은 risk-surface 게이트가 기계로 강제한다(스펙 frontmatter 의 surfaces 로 커버를 판정). 되돌리는 비용이 작은 단순 UI/콘텐츠에는 쓰지 않는다.",
+      "description_word_count": 51,
       "allowed-tools": null,
       "disable-model-invocation": null,
       "argument-hint": "[기능명]",
       "path": ".claude/skills/spec/SKILL.md",
-      "line_count": 36,
+      "line_count": 42,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
-          "path": "ACTIVE",
-          "dynamic": false,
-          "exists": true
-        },
-        {
           "path": "projects/<이름>/docs/specs/_TEMPLATE.md",
-          "dynamic": true,
+          "line": 7,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<이름>/docs/specs/$ARGUMENTS.md",
-          "dynamic": true,
+          "line": 7,
+          "kind": "dynamic",
           "exists": null
         },
         {
+          "path": "ACTIVE",
+          "line": 7,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "ACTIVE"
+          ]
+        },
+        {
           "path": "docs/references/spec-template.md",
-          "dynamic": false,
+          "line": 8,
+          "kind": "repo-path",
           "exists": true
         },
         {
+          "path": "projects/<이름>/docs/specs/_TEMPLATE.md",
+          "line": 9,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
           "path": "docs/references/modeling-checklist.md",
-          "dynamic": false,
+          "line": 14,
+          "kind": "repo-path",
+          "exists": true
+        },
+        {
+          "path": "rules/tdd.md",
+          "line": 21,
+          "kind": "suffix-match",
+          "exists": null,
+          "matches": [
+            ".claude/rules/tdd.md"
+          ]
+        },
+        {
+          "path": "docs/references/graph-engine.md",
+          "line": 27,
+          "kind": "repo-path",
           "exists": true
         },
         {
           "path": "projects/<이름>/docs/specs/planned/",
-          "dynamic": true,
+          "line": 35,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "docs/specs/*.md",
-          "dynamic": true,
+          "line": 36,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "docs/specs/",
-          "dynamic": false,
-          "exists": false
+          "line": 37,
+          "kind": "project-relative",
+          "exists": null,
+          "resolves_under": [
+            "projects/signal/docs/specs/",
+            "projects/wama/docs/specs/"
+          ]
         }
       ]
     },
@@ -311,38 +1179,89 @@
       "disable-model-invocation": "true",
       "argument-hint": null,
       "path": ".claude/skills/status/SKILL.md",
-      "line_count": 11,
+      "line_count": 10,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "scripts/briefing.mjs",
-          "dynamic": false,
+          "line": 8,
+          "kind": "repo-path",
           "exists": true
         }
       ]
     },
     {
       "name": "wrap-up",
-      "description": "사용자가 \"오늘은 여기까지\", \"정리하자\"라고 하거나 세션을 끝내려는 신호를 보일 때 사용. /wrap-up으로 직접 호출도 가능. 다음 세션이 이어받도록 상태를 동결하는 절차.",
-      "description_word_count": 21,
+      "description": "다음 세션의 브리핑 재료를 만드는 절차 — 여기 안 적힌 것은 다음 세션에 존재하지 않는다. 신호는 사용자가 \"오늘은 여기까지\"·\"정리하자\"라고 하거나 세션을 끝내려는 기색. /wrap-up 으로 직접 호출도 가능. 남길 것이 한 줄뿐인 작업이면 다섯 필드를 억지로 채우지 말고 한 줄로 동결한다.",
+      "description_word_count": 41,
       "allowed-tools": null,
       "disable-model-invocation": null,
       "argument-hint": null,
       "path": ".claude/skills/wrap-up/SKILL.md",
-      "line_count": 16,
+      "line_count": 49,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<이름>/workspace/PROGRESS.md",
-          "dynamic": true,
+          "line": 6,
+          "kind": "dynamic",
           "exists": null
         },
         {
+          "path": "BACKLOG.md",
+          "line": 11,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/workspace/BACKLOG.md"
+          ]
+        },
+        {
+          "path": "BACKLOG.md",
+          "line": 13,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/workspace/BACKLOG.md"
+          ]
+        },
+        {
+          "path": "projects/<이름>/workspace/BACKLOG.md",
+          "line": 16,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "docs/references/harness-backlog.md",
+          "line": 27,
+          "kind": "repo-path",
+          "exists": true
+        },
+        {
+          "path": "docs/references/harness-backlog.md",
+          "line": 38,
+          "kind": "repo-path",
+          "exists": true
+        },
+        {
+          "path": "BACKLOG.md",
+          "line": 46,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/workspace/BACKLOG.md"
+          ]
+        },
+        {
           "path": "projects/<이름>/docs/",
-          "dynamic": true,
+          "line": 48,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<이름>/workspace/",
-          "dynamic": true,
+          "line": 48,
+          "kind": "dynamic",
           "exists": null
         }
       ]
@@ -356,7 +1275,7 @@
   "subagents": [
     {
       "name": "code-reviewer",
-      "description": "기능 구현 완료 시 코드 품질 리뷰. 도메인 로직 위치, 네이밍, 중복, 엣지 케이스, 성능 낭비를 검토.",
+      "description": "게이트는 문법을 보고 이 리뷰어는 의미를 본다 — 도메인 로직 위치, 네이밍, 중복, 엣지 케이스, 성능 낭비. 도메인 로직·상태 관리가 바뀐 diff의 기능 완성 시점에 파견한다. 카피·토큰 교체처럼 로직이 그대로인 변경에는 읽을 것이 없다.",
       "tools": [
         "Read",
         "Grep",
@@ -364,23 +1283,26 @@
       ],
       "writable_files_declared": null,
       "path": ".claude/agents/code-reviewer.md",
-      "line_count": 13,
+      "line_count": 12,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<프로젝트명>/src/",
-          "dynamic": true,
+          "line": 6,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": ".claude/rules/",
-          "dynamic": false,
+          "line": 6,
+          "kind": "repo-path",
           "exists": true
         }
       ]
     },
     {
       "name": "design-drafter",
-      "description": "새 시각 방향의 화면을 코드로 만들기 전에 정적 HTML 시안을 먼저 뽑을 때 위임. 이미 승인된 방향의 반복(빠른 경로)에는 쓰지 않는다. 비즈니스 로직 없이 화면만 그린다",
+      "description": "구현물을 버리며 반복하는 대신 버려도 싼 정적 HTML 시안으로 시각 방향을 반복하기 위한 위임. 신호는 design-rules로 커버되지 않는 새 레이아웃 언어. 승인된 방향의 반복 화면이거나 되돌리는 비용이 작으면 시안 없이 바로 구현하는 편이 낫다. 비즈니스 로직 없이 화면만 그린다",
       "tools": [
         "Read",
         "Write",
@@ -391,31 +1313,129 @@
       ],
       "writable_files_declared": null,
       "path": ".claude/agents/design-drafter.md",
-      "line_count": 55,
+      "line_count": 54,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<이름>/docs/design/design-rules.md",
-          "dynamic": true,
+          "line": 14,
+          "kind": "dynamic",
           "exists": null
+        },
+        {
+          "path": "projects/<이름>/docs/design/design-rules.md",
+          "line": 17,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "design-rules.md",
+          "line": 21,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
         },
         {
           "path": "projects/<이름>/docs/design/INTERVIEW.md",
-          "dynamic": true,
+          "line": 23,
+          "kind": "dynamic",
           "exists": null
+        },
+        {
+          "path": "design-rules.md",
+          "line": 24,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
         },
         {
           "path": "projects/<이름>/docs/design/mockups/<화면명>.html",
-          "dynamic": true,
+          "line": 29,
+          "kind": "dynamic",
           "exists": null
         },
         {
+          "path": "design-rules.md",
+          "line": 32,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
+          "path": "design-rules.md",
+          "line": 34,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
+          "path": "design-rules.md",
+          "line": 36,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
           "path": "projects/<이름>/docs/design/mockups/<화면명>-a.html",
-          "dynamic": true,
+          "line": 39,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "design-rules.md",
+          "line": 40,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
+          "path": "design-rules.md",
+          "line": 48,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
+          "path": "design-rules.md",
+          "line": 49,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
+          "path": "projects/<이름>/docs/design/design-rules.md",
+          "line": 53,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<이름>/src/",
-          "dynamic": true,
+          "line": 54,
+          "kind": "dynamic",
           "exists": null
         }
       ]
@@ -430,38 +1450,94 @@
       ],
       "writable_files_declared": null,
       "path": ".claude/agents/qa-classifier.md",
-      "line_count": 73,
+      "line_count": 79,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "graph.mjs",
-          "dynamic": false,
-          "exists": true
+          "line": 7,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "graph.mjs"
+          ]
         },
         {
           "path": "projects/<이름>/docs/specs",
-          "dynamic": true,
+          "line": 12,
+          "kind": "dynamic",
           "exists": null
         },
         {
+          "path": "design-rules.md",
+          "line": 12,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
           "path": "supabase/migrations/0007_exam.sql",
-          "dynamic": false,
-          "exists": false
+          "line": 51,
+          "kind": "project-relative",
+          "exists": null,
+          "resolves_under": [
+            "projects/wama/supabase/migrations/0007_exam.sql"
+          ]
+        },
+        {
+          "path": "entities/evaluation/model.ts",
+          "line": 54,
+          "kind": "suffix-match",
+          "exists": null,
+          "matches": [
+            "projects/wama/src/entities/evaluation/model.ts"
+          ]
         },
         {
           "path": "docs/specs/auth-isolation.md",
-          "dynamic": false,
-          "exists": false
+          "line": 56,
+          "kind": "project-relative",
+          "exists": null,
+          "resolves_under": [
+            "projects/wama/docs/specs/auth-isolation.md"
+          ]
         },
         {
           "path": "gates/graph-stop.mjs",
-          "dynamic": false,
+          "line": 63,
+          "kind": "repo-path",
+          "exists": true
+        },
+        {
+          "path": "design-rules.md",
+          "line": 65,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
+          "path": "gates/graph-stop.mjs",
+          "line": 66,
+          "kind": "repo-path",
+          "exists": true
+        },
+        {
+          "path": "gates/graph-stop.mjs",
+          "line": 77,
+          "kind": "repo-path",
           "exists": true
         }
       ]
     },
     {
       "name": "security-reviewer",
-      "description": "기능 구현 완료 시 보안 리뷰. 입력 검증, 인가, 신뢰 경계, 민감 정보 노출 경로를 검토.",
+      "description": "정적 게이트가 못 잡는 보안 맥락을 본다 — 검증 없이 쓰이는 입력, 인가 결함, 신뢰 경계, 민감 정보가 흐르는 경로. 사용자 입력·인가·시크릿·세션을 만진 diff에 파견한다. 그 표면에 닿지 않은 변경에는 판정할 근거가 없다.",
       "tools": [
         "Read",
         "Grep",
@@ -469,22 +1545,35 @@
       ],
       "writable_files_declared": null,
       "path": ".claude/agents/security-reviewer.md",
-      "line_count": 19,
+      "line_count": 18,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<프로젝트명>/src/",
-          "dynamic": true,
+          "line": 6,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<프로젝트명>/docs/specs/",
-          "dynamic": true,
+          "line": 6,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": ".claude/rules/supabase.md",
-          "dynamic": false,
+          "line": 12,
+          "kind": "repo-path",
           "exists": true
+        },
+        {
+          "path": "supabase-wama.md",
+          "line": 15,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            ".claude/rules/supabase-wama.md"
+          ]
         }
       ]
     },
@@ -506,18 +1595,40 @@
       ],
       "writable_files_declared": null,
       "path": ".claude/agents/style-scout.md",
-      "line_count": 52,
+      "line_count": 51,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
+          "path": "design-rules.md",
+          "line": 10,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
+          "path": "design-rules.md",
+          "line": 11,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
           "path": "projects/<",
-          "dynamic": true,
+          "line": 39,
+          "kind": "dynamic",
           "exists": null
         }
       ]
     },
     {
       "name": "test-auditor",
-      "description": "테스트 작성 완료 후 테스트가 실제로 스펙을 검증하는지 감사.",
+      "description": "\"이 테스트를 지워도 잘못된 구현이 통과하는가\"를 묻는다 — 통과하는 테스트는 그것만으로 검증의 증거가 아니기 때문이다. 스펙 INV를 검증하는 테스트를 새로 쓴 뒤에 파견한다. 기존 테스트에 변화가 없으면 감사할 것도 없다.",
       "tools": [
         "Read",
         "Grep",
@@ -525,18 +1636,20 @@
       ],
       "writable_files_declared": null,
       "path": ".claude/agents/test-auditor.md",
-      "line_count": 12,
+      "line_count": 11,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<이름>/docs/specs/",
-          "dynamic": true,
+          "line": 6,
+          "kind": "dynamic",
           "exists": null
         }
       ]
     },
     {
       "name": "ui-reviewer",
-      "description": "UI 구현 완료 시 디자인 일관성과 접근성 검토.",
+      "description": "승인된 design-rules와 접근성 기준에서 벗어난 곳을 찾는다 — 기준 문서가 있어야 판정이 취향 싸움이 되지 않는다. 승인된 방향에서 벗어나는 시각 변경(새 컴포넌트·레이아웃·토큰)에 파견한다. design-rules 안에서 반복되는 화면에는 지적할 기준 위반이 거의 없다.",
       "tools": [
         "Read",
         "Grep",
@@ -544,16 +1657,19 @@
       ],
       "writable_files_declared": null,
       "path": ".claude/agents/ui-reviewer.md",
-      "line_count": 15,
+      "line_count": 14,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": ".claude/rules/ui-layers.md",
-          "dynamic": false,
+          "line": 9,
+          "kind": "repo-path",
           "exists": true
         },
         {
           "path": "projects/<이름>/docs/design/design-rules.md",
-          "dynamic": true,
+          "line": 10,
+          "kind": "dynamic",
           "exists": null
         }
       ]
@@ -566,6 +1682,8 @@
       "type": "command",
       "command": "node scripts/briefing.mjs",
       "target_file": "scripts/briefing.mjs",
+      "target_resolved": "scripts/briefing.mjs",
+      "target_dynamic": false,
       "target_exists": true,
       "configured_in": ".claude/settings.json"
     },
@@ -575,6 +1693,8 @@
       "type": "command",
       "command": "node .claude/hooks/protect-secrets.mjs",
       "target_file": ".claude/hooks/protect-secrets.mjs",
+      "target_resolved": ".claude/hooks/protect-secrets.mjs",
+      "target_dynamic": false,
       "target_exists": true,
       "configured_in": ".claude/settings.json"
     },
@@ -584,6 +1704,8 @@
       "type": "command",
       "command": "node .claude/hooks/protect-files.mjs",
       "target_file": ".claude/hooks/protect-files.mjs",
+      "target_resolved": ".claude/hooks/protect-files.mjs",
+      "target_dynamic": false,
       "target_exists": true,
       "configured_in": ".claude/settings.json"
     },
@@ -593,6 +1715,8 @@
       "type": "command",
       "command": "node .claude/hooks/block-danger.mjs",
       "target_file": ".claude/hooks/block-danger.mjs",
+      "target_resolved": ".claude/hooks/block-danger.mjs",
+      "target_dynamic": false,
       "target_exists": true,
       "configured_in": ".claude/settings.json"
     },
@@ -602,6 +1726,8 @@
       "type": "command",
       "command": "node gates/run-gates.mjs --quick",
       "target_file": "gates/run-gates.mjs",
+      "target_resolved": "gates/run-gates.mjs",
+      "target_dynamic": false,
       "target_exists": true,
       "configured_in": ".claude/settings.json"
     },
@@ -611,46 +1737,111 @@
       "type": "command",
       "command": "node gates/graph-stop.mjs",
       "target_file": "gates/graph-stop.mjs",
+      "target_resolved": "gates/graph-stop.mjs",
+      "target_dynamic": false,
       "target_exists": true,
       "configured_in": ".claude/settings.json"
     }
   ],
+  "hook_files_on_disk": [
+    ".claude/hooks/block-danger.mjs",
+    ".claude/hooks/protect-files.mjs",
+    ".claude/hooks/protect-secrets.mjs"
+  ],
+  "hook_files_unregistered": [],
+  "settings_parse_errors": [],
   "rules": [
     {
       "path": ".claude/rules/design-drafting.md",
       "path_scope": null,
       "load_condition": null,
-      "bytes": 4060,
-      "line_count": 52,
+      "bytes": 4374,
+      "line_count": 54,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "CLAUDE.md",
-          "dynamic": false,
-          "exists": true
+          "line": 8,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "CLAUDE.md"
+          ]
         },
         {
           "path": "projects/<이름>/docs/design/design-rules.md",
-          "dynamic": true,
+          "line": 11,
+          "kind": "dynamic",
           "exists": null
+        },
+        {
+          "path": "design-rules.md",
+          "line": 13,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
+          "path": "design-rules.md",
+          "line": 15,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
         },
         {
           "path": "projects/<이름>/docs/design/mockups/<화면명>.html",
-          "dynamic": true,
+          "line": 30,
+          "kind": "dynamic",
           "exists": null
         },
         {
+          "path": "design-rules.md",
+          "line": 31,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
           "path": "scripts/preview.mjs",
-          "dynamic": false,
+          "line": 33,
+          "kind": "repo-path",
           "exists": true
         },
         {
+          "path": "design-rules.md",
+          "line": 39,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            "projects/signal/docs/design/design-rules.md",
+            "projects/wama/docs/design/design-rules.md"
+          ]
+        },
+        {
+          "path": "projects/<이름>/docs/design/design-rules.md",
+          "line": 43,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
           "path": "projects/<이름>/src/shared/ui/tokens.css",
-          "dynamic": true,
+          "line": 47,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<이름>/src/",
-          "dynamic": true,
+          "line": 48,
+          "kind": "dynamic",
           "exists": null
         }
       ]
@@ -663,11 +1854,13 @@
       ],
       "load_condition": "path-match",
       "bytes": 648,
-      "line_count": 12,
+      "line_count": 11,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<이름>/docs/specs/",
-          "dynamic": true,
+          "line": 11,
+          "kind": "dynamic",
           "exists": null
         }
       ]
@@ -679,7 +1872,8 @@
       ],
       "load_condition": "path-match",
       "bytes": 418,
-      "line_count": 9,
+      "line_count": 8,
+      "frontmatter_warnings": [],
       "referenced_paths": []
     },
     {
@@ -689,11 +1883,13 @@
       ],
       "load_condition": "path-match",
       "bytes": 803,
-      "line_count": 15,
+      "line_count": 14,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": ".claude/rules/supabase.md",
-          "dynamic": false,
+          "line": 8,
+          "kind": "repo-path",
           "exists": true
         }
       ]
@@ -701,16 +1897,40 @@
     {
       "path": ".claude/rules/supabase.md",
       "path_scope": [
-        "projects/*/src/shared/api/**"
+        "projects/*/src/shared/api/**",
+        "projects/*/supabase/**"
       ],
       "load_condition": "path-match",
-      "bytes": 1263,
-      "line_count": 19,
+      "bytes": 2331,
+      "line_count": 30,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<이름>",
-          "dynamic": true,
+          "line": 10,
+          "kind": "dynamic",
           "exists": null
+        },
+        {
+          "path": "supabase-wama.md",
+          "line": 10,
+          "kind": "bare-filename",
+          "exists": null,
+          "matches": [
+            ".claude/rules/supabase-wama.md"
+          ]
+        },
+        {
+          "path": "projects/<이름>/supabase/migrations/*.sql",
+          "line": 21,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "scripts/apply-migrations.mjs",
+          "line": 23,
+          "kind": "repo-path",
+          "exists": true
         }
       ]
     },
@@ -718,21 +1938,44 @@
       "path": ".claude/rules/tdd.md",
       "path_scope": [
         "projects/*/src/**",
-        "projects/*/tests/**"
+        "projects/*/tests/**",
+        "projects/*/workspace/review.md"
       ],
       "load_condition": "path-match",
-      "bytes": 1206,
-      "line_count": 16,
+      "bytes": 3786,
+      "line_count": 44,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<이름>/docs/specs/",
-          "dynamic": true,
+          "line": 10,
+          "kind": "dynamic",
           "exists": null
         },
         {
           "path": "projects/<이름>/tests/",
-          "dynamic": true,
+          "line": 16,
+          "kind": "dynamic",
           "exists": null
+        },
+        {
+          "path": "tests/",
+          "line": 18,
+          "kind": "project-relative",
+          "exists": null,
+          "resolves_under": [
+            "projects/signal/tests/",
+            "projects/wama/tests/"
+          ]
+        },
+        {
+          "path": "workspace/review.md",
+          "line": 42,
+          "kind": "project-relative",
+          "exists": null,
+          "resolves_under": [
+            "projects/signal/workspace/review.md"
+          ]
         }
       ]
     },
@@ -745,22 +1988,301 @@
       ],
       "load_condition": "path-match",
       "bytes": 1321,
-      "line_count": 17,
+      "line_count": 16,
+      "frontmatter_warnings": [],
       "referenced_paths": [
         {
           "path": "projects/<이름>/docs/design/design-rules.md",
-          "dynamic": true,
+          "line": 9,
+          "kind": "dynamic",
+          "exists": null
+        },
+        {
+          "path": "projects/<이름>/docs/design/design-rules.md",
+          "line": 10,
+          "kind": "dynamic",
           "exists": null
         }
       ]
     }
   ],
+  "claude_md": {
+    "path": "CLAUDE.md",
+    "line_count": 181,
+    "load_condition": "always",
+    "referenced_paths": [
+      {
+        "path": "CLAUDE.md",
+        "line": 1,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": [
+          "CLAUDE.md"
+        ]
+      },
+      {
+        "path": "PRODUCT.md",
+        "line": 10,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": [
+          "projects/signal/docs/PRODUCT.md",
+          "projects/wama/docs/PRODUCT.md"
+        ]
+      },
+      {
+        "path": "PRODUCT.md",
+        "line": 11,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": [
+          "projects/signal/docs/PRODUCT.md",
+          "projects/wama/docs/PRODUCT.md"
+        ]
+      },
+      {
+        "path": "PRODUCT.md",
+        "line": 18,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": [
+          "projects/signal/docs/PRODUCT.md",
+          "projects/wama/docs/PRODUCT.md"
+        ]
+      },
+      {
+        "path": "graph.mjs",
+        "line": 20,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": [
+          "graph.mjs"
+        ]
+      },
+      {
+        "path": "docs/references/graph-engine.md",
+        "line": 21,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "gates/graph-stop.mjs",
+        "line": 22,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "docs/references/graph-engine.md",
+        "line": 25,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "gates/graph-stop.mjs",
+        "line": 27,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "graph.mjs",
+        "line": 29,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": [
+          "graph.mjs"
+        ]
+      },
+      {
+        "path": "docs/references",
+        "line": 31,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": ".claude/rules",
+        "line": 33,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "CLAUDE.md",
+        "line": 33,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": [
+          "CLAUDE.md"
+        ]
+      },
+      {
+        "path": ".claude/rules/",
+        "line": 75,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "projects/<이름>/",
+        "line": 76,
+        "kind": "dynamic",
+        "exists": null
+      },
+      {
+        "path": "src/",
+        "line": 76,
+        "kind": "project-relative",
+        "exists": null,
+        "resolves_under": [
+          "projects/signal/src/",
+          "projects/wama/src/"
+        ]
+      },
+      {
+        "path": "docs/",
+        "line": 76,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "projects/<이름>/",
+        "line": 77,
+        "kind": "dynamic",
+        "exists": null
+      },
+      {
+        "path": "workspace/",
+        "line": 77,
+        "kind": "project-relative",
+        "exists": null,
+        "resolves_under": [
+          "projects/signal/workspace/",
+          "projects/wama/workspace/"
+        ]
+      },
+      {
+        "path": "docs/",
+        "line": 77,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "ACTIVE",
+        "line": 77,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": [
+          "ACTIVE"
+        ]
+      },
+      {
+        "path": "docs/references/graph-engine.md",
+        "line": 79,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "HANDOFF.md",
+        "line": 79,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": [
+          "projects/signal/workspace/HANDOFF.md",
+          "projects/wama/workspace/HANDOFF.md"
+        ]
+      },
+      {
+        "path": ".claude/rules/design-drafting.md",
+        "line": 106,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "projects/<이름>/docs/design/design-rules.md",
+        "line": 117,
+        "kind": "dynamic",
+        "exists": null
+      },
+      {
+        "path": ".claude/rules/design-drafting.md",
+        "line": 118,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "projects/<이름>/docs/specs/",
+        "line": 119,
+        "kind": "dynamic",
+        "exists": null
+      },
+      {
+        "path": "docs/references/modeling-checklist.md",
+        "line": 124,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "projects/<이름>/workspace/DECISIONS.md",
+        "line": 125,
+        "kind": "dynamic",
+        "exists": null
+      },
+      {
+        "path": "docs/LESSONS.md",
+        "line": 125,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "docs/references/graph-engine.md",
+        "line": 126,
+        "kind": "repo-path",
+        "exists": true
+      },
+      {
+        "path": "projects/<이름>/workspace/PROGRESS.md",
+        "line": 130,
+        "kind": "dynamic",
+        "exists": null
+      },
+      {
+        "path": "projects/<이름>/workspace/BACKLOG.md",
+        "line": 131,
+        "kind": "dynamic",
+        "exists": null
+      },
+      {
+        "path": "workspace/review.md",
+        "line": 137,
+        "kind": "project-relative",
+        "exists": null,
+        "resolves_under": [
+          "projects/signal/workspace/review.md"
+        ]
+      },
+      {
+        "path": "design-rules.md",
+        "line": 165,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": [
+          "projects/signal/docs/design/design-rules.md",
+          "projects/wama/docs/design/design-rules.md"
+        ]
+      },
+      {
+        "path": "GLOSSARY.md",
+        "line": 180,
+        "kind": "bare-filename",
+        "exists": null,
+        "matches": []
+      }
+    ]
+  },
   "graph": {
     "file": "graph.mjs",
     "exports": [
+      "GATE_KIND",
       "GRAPH"
     ],
-    "line_count": 97,
+    "line_count": 150,
     "node_count": 7,
     "nodes": [
       {
@@ -777,6 +2299,7 @@
         ],
         "parallel_children": null,
         "on_fail_diagnose": null,
+        "na_allowed": null,
         "extra_fields": []
       },
       {
@@ -802,6 +2325,7 @@
         ],
         "parallel_children": null,
         "on_fail_diagnose": null,
+        "na_allowed": null,
         "extra_fields": []
       },
       {
@@ -847,6 +2371,7 @@
           }
         ],
         "on_fail_diagnose": null,
+        "na_allowed": null,
         "extra_fields": []
       },
       {
@@ -871,6 +2396,7 @@
         ],
         "parallel_children": null,
         "on_fail_diagnose": null,
+        "na_allowed": null,
         "extra_fields": []
       },
       {
@@ -893,6 +2419,7 @@
         ],
         "parallel_children": null,
         "on_fail_diagnose": "qa-classifier",
+        "na_allowed": null,
         "extra_fields": []
       },
       {
@@ -907,7 +2434,15 @@
           "signoff": {
             "marker": "workspace/review.md",
             "require": "status: passed",
-            "basis_of": "implement"
+            "basis_of": "implement",
+            "reviewers_field": "reviewers",
+            "require_reviewer": {
+              "security-reviewer": [
+                "auth",
+                "payment",
+                "authz"
+              ]
+            }
           }
         },
         "clean_when_kinds": [
@@ -915,6 +2450,7 @@
         ],
         "parallel_children": null,
         "on_fail_diagnose": null,
+        "na_allowed": false,
         "extra_fields": []
       },
       {
@@ -937,9 +2473,11 @@
         ],
         "parallel_children": null,
         "on_fail_diagnose": null,
+        "na_allowed": null,
         "extra_fields": []
       }
     ],
+    "produces_resolved_against": "projects/<이름>/ (graph.mjs:17 주석 근거)",
     "edge_kinds": [
       "depends_on",
       "parallel"
@@ -953,9 +2491,15 @@
     "propagation": {
       "declared_in_graph_mjs": false,
       "routing_fields_present": false,
-      "implementation_files": [
+      "gate_files_scanned": [
+        "gates/graph-stop.mjs",
         "gates/propagate.mjs",
-        "gates/graph-stop.mjs"
+        "gates/run-gates.mjs",
+        "gates/spec-coverage.mjs"
+      ],
+      "graph_consumers": [
+        "gates/graph-stop.mjs",
+        "gates/propagate.mjs"
       ],
       "rules_found_in_implementation": {
         "exports": [
@@ -964,6 +2508,8 @@
           "topoSort",
           "descendants",
           "markDirty",
+          "markRework",
+          "markNa",
           "propagate",
           "recomputeParents"
         ]
