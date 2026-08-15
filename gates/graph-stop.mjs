@@ -12,10 +12,10 @@
 // 상태·재작업 경로는 어디에도 선언 안 한다 — 전부 전파에서 파생(graph.mjs + propagate.mjs).
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from "node:fs";
-import { join, relative, basename, dirname } from "node:path";
-import { GRAPH, GATE_KIND } from "../graph.mjs";
-import { topLevel, childrenOf, propagate, descendants, recomputeParents, markDirty, markRework, markNa, topoSort, isSatisfied, isPending } from "./propagate.mjs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { basename, dirname, join, relative } from "node:path";
+import { GATE_KIND, GRAPH } from "../graph.mjs";
+import { childrenOf, descendants, isPending, isSatisfied, markDirty, markNa, markRework, propagate, recomputeParents, topLevel, topoSort } from "./propagate.mjs";
 
 const ROOT = process.cwd();
 
@@ -421,7 +421,8 @@ function downgradeReason(cat) {
   const def = GATE_KIND[cat];
   if (!def) return null;                                   // 목록에 없는 카테고리는 무조건 차단
   const st = state[def.owner]?.status;
-  if (def.kind === "completion" && isPending(st))
+  if (def.kind === "completion" && (isPending(st) || st === "na"))
+
     return `${def.owner} 가 아직 안 끝났고(${st}) 그래서 하류가 이미 전부 막혀 있다 — 턴 차단은 중복이다`;
   if (def.kind === "precondition" && st === "rework")
     return `${def.owner} 가 rework(${state[def.owner]?.reason ?? "사유 없음"}) — 재승인은 턴을 끝내야 받는다`;

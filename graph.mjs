@@ -77,7 +77,9 @@ export const GRAPH = {
   implement: {
     depends_on: ["spec", "design"],
     produces: ["src/**"],
-    clean_when: { gate: ["fsd", "security", "tsc", "design"] }, // design = BEFORE_UI
+    // clean_when: { gate: ["fsd", "security", "tsc", "design"] }, // design = BEFORE_UI
+    // tsc-notrun = 타입 검사가 아예 안 돌았음(tsconfig 없음). '에러 0건'이 '검사했다'를 뜻하지 않는다.
+    clean_when: { gate: ["fsd", "security", "tsc", "tsc-notrun", "design"] }, // design = BEFORE_UI
   },
 
   // ── 얕은 검증. 결정론 게이트 → 매 턴 자동 clean(빠른 루프). ──
@@ -85,7 +87,10 @@ export const GRAPH = {
   qa: {
     depends_on: ["implement"],
     produces: ["src/**/*.test.ts", "tests/**"],
-    clean_when: { gate: ["test", "spec-coverage"] },
+    // clean_when: { gate: ["test", "spec-coverage"] },
+    // test-notrun = 테스트가 아예 안 돌았음(scripts.test 없음). 테스트 0개는 '전부 통과'로 보인다.
+    clean_when: { gate: ["test", "test-notrun", "spec-coverage"] },
+
     // on_fail_diagnose 는 '어디로 갈지'가 아니라 '무엇을 진단할지'다. 분류기(qa-classifier)는
     // 실패(qa 테스트든 review 리뷰어든)를 spec/design/impl 레벨로 귀속해 해당 노드에 mark 만 찍는다.
     // 재작업 경로는 그 mark 에서 전파로 파생된다 — 여기엔 목적지가 없다.
@@ -144,7 +149,13 @@ export const GRAPH = {
 //
 // owner = 그 게이트가 검사하는 승인·산출물을 소유한 노드. clean_when.gate 를 가진 노드가 아니다 —
 //   design/BEFORE_UI 는 implement.clean_when 에 걸려 있지만 원인은 design 의 승인 상태다.
+
 export const GATE_KIND = {
   "spec-coverage": { kind: "completion", owner: "spec" },
   design: { kind: "precondition", owner: "design" },
+  // 검사가 안 돌았다는 신고. 노드는 막되(clean_when 에 들어 있다) 턴은 막지 않는다 —
+  // 설정을 붙이든 n/a 로 선언하든 그건 사용자 결정이고, 물어보려면 턴이 끝나야 한다.
+  "tsc-notrun": { kind: "completion", owner: "implement" },
+  "test-notrun": { kind: "completion", owner: "qa" },
 };
+

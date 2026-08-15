@@ -11,6 +11,10 @@ const PROJECTS = join(ROOT, "projects");
 const QUICK = process.argv.includes("--quick");
 const LAYERS = ["app", "pages", "widgets", "features", "entities", "shared"];
 const rank = new Map(LAYERS.map((l, i) => [l, i]));
+// FSD 정의상 app 과 shared 는 슬라이스가 없고 세그먼트만 있다. 이 두 레이어 안에서는
+// 폴더를 가로지르는 import 가 정상이므로 CROSS_SLICE 를 적용하지 않는다.
+// (UPWARD_IMPORT 는 그대로 적용된다 — 레이어 사이 방향 규칙은 별개다.)
+const SLICELESS_LAYERS = new Set(["app", "shared"]);
 
 // 전제 검사: projects/<이름>/src 가 아직 없으면 '검사 대상 없음' → 실패가 아니라 skip(통과).
 // 스캐폴드 이전 빈 레포에서 매 Stop 훅마다 실패가 재주입되는 루프를 방지한다.
@@ -123,6 +127,7 @@ for (const projDir of projectDirs) {
         );
       else if (
         rank.get(toLayer) === rank.get(fromLayer) &&
+        !SLICELESS_LAYERS.has(fromLayer) &&
         sliceOf(relSrc) !== sliceOf(relative(SRC, target))
       )
         errors.push(
@@ -462,11 +467,19 @@ for (const projDir of projectDirs) {
   }
 }
 
+// 검사가 '안 돈 것'과 '통과한 것'은 다르다. 설정이 없으면 tsc·테스트는 조용히 건너뛰어졌고,
+// 그러면 그 카테고리 에러가 0건이라 graph-stop 이 implement·qa 를 clean 으로 내려 버린다
+// (판정은 '에러가 있나' 하나뿐 — gates/graph-stop.mjs 의 gateBlocked).
+// 그래서 안 돈 검사를 전용 카테고리의 에러로 남긴다. 그 노드는 clean 이 안 되고,
+// 턴 자체는 GATE_KIND 의 낮춤 규칙이 막지 않게 해 준다(graph.mjs).
+let ranTsc = 0;
+let ranTest = 0;
 if (!QUICK) {
   // 2) 프로젝트별 tsc + 테스트 (각 프로젝트 디렉터리를 cwd로)
   for (const projDir of projectDirs) {
     const label = relative(ROOT, projDir);
     if (existsSync(join(projDir, "tsconfig.json"))) {
+      ranTsc++;
       const r = spawnSync("npx", ["tsc", "--noEmit", "--pretty", "false"], {
         cwd: projDir,
         encoding: "utf-8",
@@ -488,11 +501,19 @@ if (!QUICK) {
         }
         if (!found) errors.push(`[tsc/FAIL] ${label}: ${out.slice(0, 300)}`);
       }
+    } else {
+      errors.push(
+        `[tsc-notrun/NO_TSCONFIG] ${label} — tsconfig.json 이 없어 타입 검사가 아예 돌지 않았다. ` +
+          `검사 안 함은 통과가 아니다: tsconfig.json 을 두거나, 타입 검사가 필요 없는 프로젝트면 implement 를 n/a 로 선언해라.`,
+      );
     }
     const pkgPath = join(projDir, "package.json");
+    let testable = false;
     if (existsSync(pkgPath)) {
       const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
       if (pkg.scripts?.test) {
+        testable = true;
+        ranTest++;
         const t = spawnSync("npm", ["test", "--silent"], {
           cwd: projDir,
           encoding: "utf-8",
@@ -505,6 +526,11 @@ if (!QUICK) {
           );
       }
     }
+    if (!testable)
+      errors.push(
+        `[test-notrun/NO_TEST_SCRIPT] ${label} — package.json 에 scripts.test 가 없어 테스트가 아예 돌지 않았다. ` +
+          `검사 안 함은 통과가 아니다: 테스트를 붙이거나, 이번 작업에 qa 가 해당 없으면 n/a 로 선언해라.`,
+      );
   }
   // 3) 스펙 커버리지: approved 스펙의 모든 INV는 테스트가 참조해야 한다
   const sc = spawnSync("node", [join(ROOT, "gates", "spec-coverage.mjs")], {
@@ -528,6 +554,12 @@ if (errors.length > 0) {
   );
   process.exit(2);
 }
+// 무엇을 '돌렸는지'까지 말한다 — 통과 메시지가 검사 범위를 숨기면 안 돌린 것과 구별이 안 된다.
+const n = projectDirs.length;
 console.log(
-  `게이트 통과 (${fileCount}개 파일, ${projectDirs.length}개 프로젝트${QUICK ? ", quick" : ""})`,
+  `게이트 통과 (${fileCount}개 파일, ${n}개 프로젝트` +
+    (QUICK
+      ? ", quick — tsc·test 는 안 돌림"
+      : ` · tsc ${ranTsc}/${n} · test ${ranTest}/${n}`) +
+    `)`,
 );
