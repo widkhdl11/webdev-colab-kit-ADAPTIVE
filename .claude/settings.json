@@ -16,11 +16,11 @@
       { "matcher": "Bash|PowerShell",
   "hooks": [{ "type": "command", "command": "node .claude/hooks/protect-secrets.mjs" }] },
       {
-        "matcher": "Edit|Write|MultiEdit|Bash",
+        "matcher": "Edit|Write|MultiEdit|Bash|PowerShell",
         "hooks": [{ "type": "command", "command": "node .claude/hooks/protect-files.mjs" }]
       },
       {
-        "matcher": "Bash",
+        "matcher": "Bash|PowerShell",
         "hooks": [{ "type": "command", "command": "node .claude/hooks/block-danger.mjs" }]
       }
     ],
