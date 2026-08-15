@@ -2,13 +2,25 @@
 
 ## 현재 상태
 
-- **오늘의 목표**(2026-08-15): 하네스 V3 마무리 — 백로그 "정상 절차 중 게이트가 턴 자체를 막는다" 닫기 + 보호층 정비 → **달성**. signal 제품 작업 없음.
-- **완료**: ① **노드 상태 `rework` + `GATE_KIND`** — 그래프가 처방한 상태에서 비롯된 게이트 실패는 턴을 안 막는다(완료형 `spec-coverage` 는 owner 가 dirty/rework 면, 선행형 `design` 은 rework 일 때만). rework 는 "clean 인 노드를 `--mark`" 로 파생 → 승인 이력 없는 노드는 rework 가 못 돼 BEFORE_UI 구멍이 안 생긴다. 픽스처 6종 + selftest 4종 확인. **덤: 승인 즉시 `approved` 로 적어도 되게 됐다**(문서-사실 불일치 소멸) ② **wrap-up 이 미룬 작업을 `workspace/BACKLOG.md` 로 분리**, 브리핑이 건수 표시 ③ **보호층**: `graph.mjs` 를 훅 목록에 추가 · `bashWritesTo` 에 `rm` · settings deny 에 `.claude/hooks/` Edit·Write · README 에 "킷 폴더에서 열어라" ④ LESSONS 1건, 하네스 백로그 1건 졸업 + 2건 신설(11→13)
-- **멈춘 지점**: 없음. 킷 변경은 전부 커밋됐다(`6ad0198` 57파일 + `83f1016` 문서 2파일). signal 제품은 그대로 프론티어 `deploy`. **주의**: 2026-08-15 세션 전체와 08-16 첫 세션 모두 상위 폴더(`dev/`)에서 열려 훅·게이트·Stop 훅이 하나도 안 실린 상태였다 — 백로그 항목의 2번째 관찰이라 승격 트리거가 충족됐다(`dev/.claude/settings.json` 안).
-- **다음 할 일**: CROSS_SLICE 의 app·shared 예외 반영(백로그 트리거 충족, `run-gates.mjs` 의 같은-레이어 검사 한 곳 — `fromLayer` 가 `app`·`shared` 면 건너뛴다). 게이트 파일이라 **킷 폴더에서 연 세션**에서 한다
-- **대기 중인 결정**: ⓪ **`dev/.claude/settings.json` 로 킷 보호를 올릴지** — 트리거는 충족됐고 대가는 `dev/` 아래 전 프로젝트에 걸리는 전역 훅 하나가 느는 것 ① **Vercel 배포는 사용자가 직접**(push → Root Directory `projects/signal` → 환경변수 5개) ② **좁힌 `TOPIC_SCOPE` 를 되돌릴지** — 실행이 답을 냈다: "DeepSeek V4 Pro 0813"·"Shade Map"·"Delta" 가 걸러졌고 "Squeak 6.1·Briar 류가 통과하는가"의 답은 **아니오**. 2026-08-12 에 넓혔던 방향의 반대라 남겨 뒀다 ③ **`rm -r <디렉터리>` 를 막게 `block-danger` 를 넓힐지** — 넓히면 `rm -r node_modules` 같은 정상 작업도 매번 막힌다 (제품 백로그 6건은 `workspace/BACKLOG.md`, 하네스 13건은 `docs/references/harness-backlog.md`)
+- **오늘의 목표**(2026-08-16): CROSS_SLICE 의 app·shared 예외 반영 → **달성**. 그 과정에서 보호 구멍 2건과 문서 참조 썩음이 드러나 같이 닫았다. signal 제품 작업 없음.
+- **완료**: ① **CROSS_SLICE 에 app·shared 예외** — FSD 정의상 무슬라이스 레이어. 실측: 같은 임시 파일에 옛 판본 3건 → 새 판본 1건(entities만), 상향 import 는 그대로 잡힘 ② **"검사 안 됨"을 그래프가 받게** — tsconfig·scripts.test 가 없으면 tsc·테스트가 조용히 건너뛰어져 `implement`·`qa` 가 자동 clean 이 됐다. `tsc-notrun`·`test-notrun` 신설 → 노드는 막고 턴은 안 막는다(GATE_KIND completion). 통과 메시지도 `· tsc 2/2 · test 2/2` 로 범위를 말한다 ③ **훅 보호가 Windows 에서 대부분 죽어 있었다** — 경로 구분자 불일치로 5개 중 4개가 Edit/Write 에서 무효, PowerShell 은 등록·패턴 양쪽 다 비어 있었다(주 셸인데). 셋 다 고치고 `scripts/check-hooks.mjs` 신설(13건 실패 → 56/56) ④ **문서 줄 참조 148개**를 코드와 하나씩 대조해 교정 + 오늘 변경으로 틀려진 문장 6곳 ⑤ 커밋 4개(`62641d7`·`da955e7`·`8253dc6`·`4d973f4`)
+- **멈춘 지점**: 없음. 다만 **signal 의 review 가 낡은 것이 드러났다** — `6ad0198 "리팩토링"` 이 `src/app/api/ingest/route.ts` 를 바꿨는데 그 세션은 상위 폴더에서 열려 Stop 훅이 안 돌았고, HANDOFF 가 옛 해시를 들고 있어 review 가 통과 상태로 남아 있었다. 리뷰받은 코드와 지금 코드가 다른 채로 배포 직전까지 가 있었던 것. 프론티어가 `deploy` → `review` 로 되돌아왔고 배포는 막혔다.
+- **다음 할 일**: `route.ts` 의 diff 를 `security-reviewer` 에 파견하고(위험 표면이라 그래프가 이 리뷰어를 요구한다), 통과하면 `workspace/review.md` 에 `status: passed` + `basis: d43269656730` + `reviewers:` 를 기록한다 → 그 뒤 deploy 가 열린다
+- **대기 중인 결정**: ⓪ **`dev/.claude/settings.json` 로 킷 보호를 올릴지** — 오늘 그 대가가 실제로 드러났다(무방비 세션 때문에 리뷰가 낡은 채로 남았다). 더 싼 대안도 있다: `dev/` 루트에 경고 문서 한 장(지금 경고는 킷 폴더 안에 있어 상위에서 열면 안 읽힌다) ① **Vercel 배포는 사용자가 직접**(push → Root Directory `projects/signal` → 환경변수 5개) ② **좁힌 `TOPIC_SCOPE` 를 되돌릴지** — 실행이 답을 냈다: "DeepSeek V4 Pro 0813"·"Shade Map"·"Delta" 가 걸러졌고 "Squeak 6.1·Briar 류가 통과하는가"의 답은 **아니오**. 2026-08-12 에 넓혔던 방향의 반대라 남겨 뒀다 ③ **bash `rm -r <디렉터리>` 를 막을지** — PowerShell 쪽(재귀 강제 삭제)은 오늘 막았고 bash 쪽만 남았다. 넓히면 `rm -r node_modules` 같은 정상 작업도 매번 막힌다 (제품 백로그 6건은 `workspace/BACKLOG.md`, 하네스 14건은 `docs/references/harness-backlog.md`)
 
 ## 로그
+
+### 2026-08-16 (킷 하네스 — signal 제품 작업 없음)
+
+- **게이트 실패 4건이 코드 위반이 아니라 환경이었다**: `node_modules` 가 두 프로젝트 다 없어 `npx tsc` 가 Windows 의 엉뚱한 `tsc` 로 잡히고 `vitest` 를 못 찾았다. `npm ci` 두 번으로 복구. **이걸 조사하다 반대 방향의 더 위험한 구멍을 봤다** — 실패는 소리라도 냈지만, 설정이 없어서 검사를 건너뛰는 경우는 소리가 없다.
+- **CROSS_SLICE 예외**: 옛 판본과 새 판본을 같은 임시 파일에 돌려 대조했다(옛 판본은 `git show HEAD:` 로 꺼내 스크래치패드에서 실행). 3건 → 1건, 상향 import 는 양쪽 다 잡힘. 임시 파일 전부 정리.
+- **"검사 안 됨"은 "통과"와 구별되지 않았다**: 노드 판정이 `gateBlocked` 하나뿐이라 "그 카테고리 에러가 0건인가"만 본다. tsconfig 도 테스트도 없는 프로젝트를 두고 돌리면 `게이트 통과 (139개 파일, 3개 프로젝트)` 가 그대로 찍혔다. `tsc-notrun`·`test-notrun` 을 만들어 `implement`·`qa` 의 `clean_when` 에 넣고, `GATE_KIND` 에 completion 으로 등록해 턴은 안 막게 했다. 격리된 임시 프로젝트로 양방향 확인(설정 없음 → 둘 다 dirty / 붙임 → 둘 다 clean, 프론티어 review 로 이동).
+- **훅이 있다는 것이 훅이 돈다는 뜻은 아니었다**: `graph.mjs` 편집은 막히는데 같은 세션에서 `gates/run-gates.mjs` 편집이 다섯 번 다 통과한 게 이상해서 훅을 읽었다. `target.includes("gates/")` 가 Windows 경로(`...\gates\...`)와 안 맞아, 보호 5개 중 슬래시가 든 4개가 Edit/Write 에서 전부 죽어 있었다. 고친 뒤에도 절반이었다 — **PowerShell 은 등록·패턴 양쪽 다 비어 있었다**(이 환경의 주 셸인데). cmdlet 이름이 `rm`·`cp`·`mv` 와 다르고 경로도 백슬래시라 등록만 고쳐선 안 걸린다.
+- **`scripts/check-hooks.mjs` 신설**: 훅이 (1) 실제로 막는지 가짜 PreToolUse 입력으로 확인하고 (2) 닿아야 할 도구에 등록됐는지 `settings.json` 에서 확인한다. 보호 목록은 훅에서 직접 읽는다 — 베껴 두면 항목이 늘 때 검사에서 조용히 빠진다. 음성 대조 포함. 13건 실패 → 56/56.
+- **검사기도 내가 짠 것이라 그 통과에서 멈추지 않았다**: 실제 도구로 `Set-Content gates/__probe.mjs` 를 찔러 차단을 확인했고, 그 과정에서 **검사기가 백슬래시 경우를 빠뜨린 것**이 드러나 케이스를 추가했다(46 → 56건).
+- **문서 줄 참조 148개 교정**: `run-gates.mjs` 58개는 risk-surface 블록이 커지며 200줄 넘게 밀려 있었고(`design/BEFORE_UI` 를 L213-225 라 적었는데 실제 L455-468), `graph.mjs` 80개는 오늘 변경과 무관하게 이전부터 어긋나 있었다(`implement.clean_when` 을 L64 라 했는데 실제 L82). 일괄 이동이 아니라 문장과 코드를 하나씩 대조했다 — 같은 옛 번호가 문서마다 다른 것을 가리키고 있었다. 오늘 변경으로 사실이 틀려진 문장 6곳도 고쳤다.
+- **되돌아온 리뷰**: Stop 훅이 다시 도는 세션이 되자 `implement` 해시가 기록된 basis 와 다른 게 드러났다(`366d51f3b423` ≠ `d43269656730`). `6ad0198` 이 `route.ts` 를 바꿨는데 그 세션은 상위 폴더에서 열려 Stop 훅이 안 돌았고, HANDOFF 가 옛 해시를 든 채 review 가 통과 상태로 남아 있었다. **리뷰받은 코드와 지금 코드가 다른 채로 배포 직전까지 가 있었다.**
+- **내가 만든 실수 5개** (기록해 둔다): 줄 이동을 일괄 +4 로 계산(옛 126 이후는 +5) · CROSS_SLICE 범위 끝 처리 조건을 좁게 걸어 한 케이스 누락 · `graph-engine.md` 오타 · 패치 제안에서 `cmdPosix` 로 bash 매칭 의미를 바꿔 오탐 가능성을 만듦(사용자가 지적) · "안 보이던 층"이라는 부정확한 표현(사용자가 지적). 앞의 셋은 검증 중에 스스로 잡혔고, 뒤의 둘은 사용자가 잡았다.
 
 ### 2026-08-15 (하네스 V3 마무리 — signal 제품 작업 없음)
 
