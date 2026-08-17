@@ -230,7 +230,7 @@ function signoffCheck(so, detectedSurfaces) {
   const bm = fm[1].match(/basis:\s*(\w+)/);
   const want = hashNode(GRAPH[so.basis_of].produces);
   if (!bm || bm[1] !== want)
-    return { ok: false, why: bm ? `basis 불일치 (기록 ${bm[1]} ≠ 현재 ${want}) — 구현이 바뀌었으니 다시 봐야 한다` : "basis 없음" };
+    return { ok: false, why: bm ? `basis 불일치 (기록 ${bm[1]} ≠ 현재 ${want}) —  산출물이 바뀌었으니 다시 봐야 한다(주석·공백도 해시에 들어간다)` : "basis 없음" };
   if (so.reviewers_field) {
     const reviewers = fmList(fm[1], so.reviewers_field);
     if (reviewers === null || reviewers.length === 0)

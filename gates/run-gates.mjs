@@ -330,6 +330,15 @@ function writePolicyIn(projDir) {
   return null;
 }
 
+// ── 만료 규칙이 선언된 표면 ──────────────────────────────────────
+// 값은 "무엇이 생기면 이 예외가 풀리는가"를 사람 말로 적은 것 — 경고 문장에 그대로 들어간다.
+// 여기 없는 표면은 만료 검사가 아예 없다는 뜻이고, 경고가 그 사실을 밝힌다.
+// (한 군데 두는 이유: scripts/check-exempt-expiry.mjs 가 이 목록을 읽어 경고와 대조한다.
+//  베껴 두면 표면이 늘 때 검사에서 조용히 빠진다 — check-hooks 와 같은 이유)
+const EXPIRY_RULES = {
+  authz: "supabase 마이그레이션에 쓰기 정책(insert·update·delete·for 절 없음)이 생기면",
+};
+
 const riskWarnings = [];
 // 프로젝트별로 '코드에 실제로 존재하는 위험 표면'을 모은다 — 스펙이 커버했든 예외를 달았든 상관없이.
 // 이건 차단용이 아니라 신고용이다: graph-stop 이 review 사인오프에서 "이 표면인데 리뷰어가 없다"를
@@ -380,10 +389,14 @@ for (const projDir of projectDirs) {
             );
             break;
           }
-          if (exempt.has(surface)) {
+           if (exempt.has(surface)) {
+            const expiryRule = EXPIRY_RULES[surface];
             riskWarnings.push(
               `⚠ [risk-surface/EXEMPT] ${rel}:${i + 1} — ${def.label}(${what}) 예외 처리됨: ${exempt.get(surface)}. ` +
-                `예외는 스펙을 대신하지 않는다 — 이 판단이 틀리면 사고는 그대로 난다.`,
+                `예외는 스펙을 대신하지 않는다 — 이 판단이 틀리면 사고는 그대로 난다. ` +
+                (expiryRule
+                  ? `${expiryRule} 이 예외는 자동으로 만료된다.`
+                  : `이 표면에는 만료 검사가 없다 — 전제가 깨져도 예외는 그대로 살아 있으니 사람이 지켜봐야 한다.`),
             );
             break;
           }

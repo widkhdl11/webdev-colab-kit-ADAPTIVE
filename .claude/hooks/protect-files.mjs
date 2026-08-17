@@ -31,10 +31,29 @@ function shellWritesTo(p) {
       || hits(new RegExp(`\\b(?:rm|cp|mv)\\b[^|;&\\n\\r]*${e}`))
       || hits(new RegExp(`\\b(?:Set-Content|Add-Content|Clear-Content|Out-File|New-Item|Remove-Item|Move-Item|Copy-Item)\\b[^|;\\n\\r]*${e}`, "i"));
 }
+// `rm -r <디렉터리>` 로 보호 파일의 부모 디렉터리를 통째로(또는 끝 슬래시 없이) 지우면
+// 개별 파일명이 명령에 안 보여 위 shellWritesTo 판정을 피해간다(2026-08-15 발견,
+// 예: `rm -r .claude/`·`rm -r gates`). 명령을 토큰으로 갈라 rm 의 인자가 PROTECTED
+// 항목 자신이거나 그 조상 디렉터리인지 직접 대조한다.
+function rmRecursiveDirHit() {
+  for (const sub of cmdPosix.split(/&&|;|\|/)) {
+    const m = sub.match(/\brm\s+(-[a-zA-Z]+(?:\s+-[a-zA-Z]+)*)\s+(.+)/);
+    if (!m || !/r/i.test(m[1]) || /f/i.test(m[1])) continue;   // -f 조합은 block-danger 가 별도로 잡는다
+    const args = m[2].trim().split(/\s+/).map((a) => a.replace(/^['"]|['"]$/g, "").replace(/\/+$/, ""));
+    for (const arg of args) {
+      for (const entry of PROTECTED) {
+        const pDir = entry.p.replace(/\/$/, "");
+        if (arg && (arg === pDir || entry.p.startsWith(`${arg}/`))) return entry;
+      }
+    }
+  }
+  return null;
+}
+
+
 // const hit = PROTECTED.find(({ p }) => target.includes(p) || bashWritesTo(p));
 const targetPosix = target.split("\\").join("/");
-const hit = PROTECTED.find(({ p }) => targetPosix.includes(p) || shellWritesTo(p));
-if (hit) {
+const hit = PROTECTED.find(({ p }) => targetPosix.includes(p) || shellWritesTo(p)) || rmRecursiveDirHit();if (hit) {
   console.error(`보호 파일(${hit.p}) 수정 시도. ${hit.why}. 내용을 제안하고 사용자에게 요청하라.`);
   process.exit(2);
 }

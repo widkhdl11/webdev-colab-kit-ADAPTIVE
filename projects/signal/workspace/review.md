@@ -1,6 +1,7 @@
 ---
 status: passed
-basis: 366d51f3b423
+basis: d43269656730
+reviewers: [security-reviewer]
 ---
 # review — signal
 
@@ -386,3 +387,29 @@ GET 전환은 검사 위치·방식을 그대로 옮겼다. 시크릿이 쿼리�
   개인용이라 잠금은 두지 않았고, 그런 성질이 있다는 것만 남긴다.
 - `maxDuration = 300` 이 Hobby 상한이라는 근거가 저장소 안에 없다(주석만 있다). 배포 시
   프로젝트 설정에서 한 번 확인할 것.
+
+---
+
+## 2026-08-17 — ingest route 예외 주석 진위 검증
+
+- **범위**: `src/app/api/ingest/route.ts` 에 `risk-surface-exempt`(auth·authz) 주석 2줄만 추가된
+  diff(커밋 6ad0198, "리팩토링"). `git diff` 로 실제 인가 로직(27~47행)은 안 바뀐 것을 먼저 확인했다.
+  위험 표면(auth·authz) 예외라 security-reviewer 파견.
+- **테스트**: 구현 변경 없음 — 실행 근거 해당 없음.
+- **리뷰어**: security-reviewer.
+
+### security-reviewer
+- 결론: **예외 주석 2줄, 코드/제품 현황과 일치.**
+- "로그인 없음" — `docs/PRODUCT.md` 14행("로그인·회원 개념 없음")·59행(비범위 목록)이 뒷받침.
+- "역할·권한 모델 없음" — `src/` 전체에서 role/permission/authz 매치는 전부 무관(ARIA `role`·LLM
+  프롬프트 `ROLE`·API 필드명 `role: "user"`). `supabase/migrations/0001_init.sql` 의 RLS 도
+  읽기 전부 `using (true)`, insert/update 정책 없음 — DB 층에도 역할 분기가 없다.
+  쓰기는 service_role 키로 RLS 우회.
+- "이 라우트가 유일한 판정 진입점" — signal 프로젝트에 `route.ts` 는 이 파일 하나뿐,
+  `middleware.ts` 없음(node_modules 안의 것 제외).
+- 사소한 부정확: 주석은 "아래 15줄"이라 하는데 실제 `GET` 함수는 21줄(순수 판정 로직은 7줄) —
+  지적할 정도는 아니라고 판단해 반영 안 함.
+
+### 범위 밖 지적(반영 안 함)
+- `!==` 문자열 비교(34행, 기존 코드)가 이론적으로 타이밍 공격에 취약 — 개인용·Cron 전용 경로라
+  실질 위험 낮음. 이번 diff(주석 추가) 대상이 아니라 별도 백로그로만 남긴다.

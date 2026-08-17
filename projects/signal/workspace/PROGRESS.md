@@ -2,13 +2,44 @@
 
 ## 현재 상태
 
-- **오늘의 목표**(2026-08-16): CROSS_SLICE 의 app·shared 예외 반영 → **달성**. 그 과정에서 보호 구멍 2건과 문서 참조 썩음이 드러나 같이 닫았고, 회고로 2건을 하네스에 반영했다. signal 제품 작업 없음.
-- **완료**: ① **CROSS_SLICE 에 app·shared 예외** — FSD 정의상 무슬라이스 레이어. 실측: 같은 임시 파일에 옛 판본 3건 → 새 판본 1건(entities만), 상향 import 는 그대로 잡힘 ② **"검사 안 됨"을 그래프가 받게** — tsconfig·scripts.test 가 없으면 tsc·테스트가 조용히 건너뛰어져 `implement`·`qa` 가 자동 clean 이 됐다. `tsc-notrun`·`test-notrun` 신설 → 노드는 막고 턴은 안 막는다(GATE_KIND completion). 통과 메시지도 `· tsc 2/2 · test 2/2` 로 범위를 말한다 ③ **훅 보호가 Windows 에서 대부분 죽어 있었다** — 경로 구분자 불일치로 5개 중 4개가 Edit/Write 에서 무효, PowerShell 은 등록·패턴 양쪽 다 비어 있었다(주 셸인데). 셋 다 고치고 `scripts/check-hooks.mjs` 신설(13건 실패 → 56/56) ④ **문서 줄 참조 148개**를 코드와 하나씩 대조해 교정 + 오늘 변경으로 틀려진 문장 6곳 ⑤ **회고 2건 반영** — CLAUDE.md 에 "보호 파일 패치를 넘길 때는 적용 전/후로 갈리는 검사를 같이 준다"(사용자가 코드를 안 읽어도 판정할 수 있어야 한다) · `scripts/check-doc-refs.mjs` 신설. 훅 자동 검사는 사용자 판단으로 보류(하네스를 만드는 중이라 `.claude/` 편집마다 2초는 손해) ⑥ 커밋 6개(`62641d7`·`da955e7`·`8253dc6`·`4d973f4`·`ddedfb8`·`1af0ab7`)
-- **멈춘 지점**: 없음. 다만 **signal 의 review 가 낡은 것이 드러났다** — `6ad0198 "리팩토링"` 이 `src/app/api/ingest/route.ts` 를 바꿨는데 그 세션은 상위 폴더에서 열려 Stop 훅이 안 돌았고, HANDOFF 가 옛 해시를 들고 있어 review 가 통과 상태로 남아 있었다. 리뷰받은 코드와 지금 코드가 다른 채로 배포 직전까지 가 있었던 것. 프론티어가 `deploy` → `review` 로 되돌아왔고 배포는 막혔다.
-- **다음 할 일**: `route.ts` 의 diff 를 `security-reviewer` 에 파견하고(위험 표면이라 그래프가 이 리뷰어를 요구한다), 통과하면 `workspace/review.md` 에 `status: passed` + `basis: d43269656730` + `reviewers:` 를 기록한다 → 그 뒤 deploy 가 열린다
-- **대기 중인 결정**: ⓪' **LESSONS.md 2건 붙여넣기** — 회고에서 승인됐는데 보호 파일이라 내가 못 쓴다. 본문은 2026-08-16 회고 대화에 있고, 없어도 harness-backlog 졸업 기록에 같은 내용이 남아 있다(생략 가능) ⓪ **`dev/.claude/settings.json` 로 킷 보호를 올릴지** — 오늘 그 대가가 실제로 드러났다(무방비 세션 때문에 리뷰가 낡은 채로 남았다). 더 싼 대안도 있다: `dev/` 루트에 경고 문서 한 장(지금 경고는 킷 폴더 안에 있어 상위에서 열면 안 읽힌다) ① **Vercel 배포는 사용자가 직접**(push → Root Directory `projects/signal` → 환경변수 5개) ② **좁힌 `TOPIC_SCOPE` 를 되돌릴지** — 실행이 답을 냈다: "DeepSeek V4 Pro 0813"·"Shade Map"·"Delta" 가 걸러졌고 "Squeak 6.1·Briar 류가 통과하는가"의 답은 **아니오**. 2026-08-12 에 넓혔던 방향의 반대라 남겨 뒀다 ③ **bash `rm -r <디렉터리>` 를 막을지** — PowerShell 쪽(재귀 강제 삭제)은 오늘 막았고 bash 쪽만 남았다. 넓히면 `rm -r node_modules` 같은 정상 작업도 매번 막힌다 (제품 백로그 6건은 `workspace/BACKLOG.md`, 하네스 15건은 `docs/references/harness-backlog.md`)
+- **오늘의 목표**(2026-08-17, 이어진 세션): 낡은 review 를 실제로 풀고, 어제 미룬 하네스 결정들(게이트 메시지 패치·킷 보호 확장·bash `rm -r`)까지 처리 → **달성**. Vercel 배포만 사용자 몫으로 남았다.
+- **완료**: ① **review 사인오프** — security-reviewer 가 `route.ts` 의 예외 주석 2줄(auth·authz)을 PRODUCT.md·RLS 정책·코드 검색과 대조해 전부 사실과 일치함을 확인. `workspace/review.md` 에 `status: passed` + `basis: d43269656730` + `reviewers: [security-reviewer]` 기록 → 프론티어가 `deploy` 로 이동 ② **게이트 메시지 패치 2건 적용** — 예외 경고가 만료 여부를 스스로 밝히고(`EXPIRY_RULES`), basis 불일치 메시지가 "산출물이 바뀌었으니"로 정정. 검사 `check-exempt-expiry`·`check-basis-message` 통과 ③ **킷 보호를 `dev/` 상위 폴더까지 확장** — `dev/.claude/settings.json` + `dev/.claude/hooks/protect-kit.mjs` 신설, 이 킷(`webdeb-colab-kit-ADAPTIVE`) 경로만 겨냥해서 다른 킷(GRAPH)·무관한 프로젝트는 안 막음. 검사 `check-dev-kit-protection`(6케이스) 통과 ④ **bash `rm -r <디렉터리>` 보호** — `protect-files.mjs` 에 `rmRecursiveDirHit` 추가. 검증 중 `rm -r gates`(슬래시 없이)도 기존에 안 막히던 걸 추가로 발견해 같이 닫음. 검사 `check-rm-dir-protection`(6케이스) 통과 ⑤ **LESSONS.md 6건 반영** — 2026-08-16 회고 2건 + 이번 세션 발견 3건 + 경고 문구 1건. 사용자가 붙여넣는 과정에서 편집기가 들여쓰기를 지우고 `CLAUDE.md`·`&&`·`_TEMPLATE.md` 를 훼손해 전체 파일을 클립보드로 복구(내용은 git diff 로 동일함을 확인) ⑥ `harness-backlog.md` 정리 — 미결 17건 → 13건(4건 졸업)
+- **멈춘 지점**: 없음. `review` clean, `deploy` 만 남았다(사용자 직접).
+- **다음 할 일**: Vercel 배포(push → Root Directory `projects/signal` → 환경변수 5개) → `workspace/deploy.md` 에 `status: deployed` + `basis: d43269656730` 기록.
+- **대기 중인 결정**: ① **Vercel 배포는 사용자가 직접**(push → Root Directory `projects/signal` → 환경변수 5개) ② **좁힌 `TOPIC_SCOPE` 를 되돌릴지** — 실행이 답을 냈다: "DeepSeek V4 Pro 0813"·"Shade Map"·"Delta" 가 걸러졌고 "Squeak 6.1·Briar 류가 통과하는가"의 답은 **아니오**. 2026-08-12 에 넓혔던 방향의 반대라 남겨 뒀다 (제품 백로그 7건은 `workspace/BACKLOG.md`, 하네스 13건은 `docs/references/harness-backlog.md`, 하네스 다이어그램 3장은 `docs/references/diagrams/`)
 
 ## 로그
+
+### 2026-08-17 (이어진 세션 — review 통과·하네스 결정 4건 반영)
+
+- **review 사인오프**: 직전 세션이 분석만 하고 멈췄던 자리(예외 주석 2줄의 진위)를 security-reviewer 에
+  실제로 파견. PRODUCT.md("로그인 없음")·RLS 정책(읽기 전부 공개, 쓰기 정책 없음)·코드 검색(role/permission
+  매치 전무) 세 갈래로 대조해 "예외 주석이 코드/제품 현황과 일치한다"는 결론. `review.md` 에 basis
+  `d43269656730` 로 기록해 review 를 clean 으로 만들었다.
+- **미뤄뒀던 하네스 결정 4건을 순서대로 처리**: 게이트 메시지 패치(사용자가 보호 파일에 직접 붙여넣고
+  검사로 확인) → LESSONS.md 반영(2회 훼손 → 클립보드 복구로 해결) → 킷 보호 dev/ 확장(사용자가 "이 킷에만"
+  으로 범위 좁힘, 6케이스 검증) → bash `rm -r` 보호("보호 대상 디렉터리만 겨냥"으로 결정, 검증 중 `rm -r gates`
+  슬래시 누락 구멍도 추가 발견).
+- **보호 파일 패치는 전부 같은 패턴으로 처리**: 적용 전 실패·적용 후 통과하는 검사 스크립트를 먼저 준비
+  → 사용자가 직접 파일에 붙여넣음 → 검사로 확인. 4건(게이트 메시지 2 + 훅 2) 전부 이 순서를 따랐고,
+  CLAUDE.md 의 보호 파일 규칙("적용 전에 실패하고 적용 후에 통과하는 검사를 같이 준다")이 실제로 걸린 사례다.
+- **LESSONS.md 붙여넣기 편집기 문제**: 사용자가 쓰는 편집기가 마크다운을 렌더링했다 다시 텍스트로
+  뽑는 과정에서 기존 항목 전체의 들여쓰기를 지우고 `CLAUDE.md`→링크·`&&`→`&amp;&amp;`·`_TEMPLATE.md`→
+  `TEMPLATE.md` 로 훼손했다(2군데는 실제 내용 손상). `git show HEAD:docs/LESSONS.md` 로 훼손 전 원본을
+  가져와 새 항목을 붙인 전체 파일을 클립보드에 복사해 통째로 교체하는 방식으로 해결. 첫 시도는
+  Bash에서 `powershell.exe`(구버전)를 거쳐 클립보드 자체가 한글 깨짐 — pwsh 7 전용 PowerShell 도구로
+  바꿔서 해결.
+
+### 2026-08-17 (엔지니어링 분석만 — 코드·문서 변경 없음, 커밋 없음)
+
+- **낡은 review 의 정체**: 프론티어가 `review` 를 가리켜 사인오프부터 하려 했는데, 먼저 diff 를 열어 보니 지난 사인오프(`366d51f3b423`) 이후 `src/` 변경이 주석 3줄뿐이었다. `GET` 핸들러 본문은 그대로다. basis 해시는 `src/**` 파일 원문을 그대로 sha256 에 넣으므로 주석·공백도 지문을 바꾼다. 그래프 주석은 의도를 "구현이 바뀌면"이라 적었지만 실제 판정은 "바이트가 바뀌면"이다 — 넓은 쪽으로 어긋나 있다(진짜 변경을 놓치진 않고, 동작이 안 바뀐 변경에도 걸린다).
+- **그런데 이번 건은 오작동이 아니다**: `risk-surface-exempt` 주석은 소스 안 주석으로만 존재한다(게이트가 소스 텍스트를 정규식으로 훑는다). 즉 **하네스가 "주석만 바뀌는 src 편집"을 스스로 만들어내고**, 그렇게 만들어진 주석의 내용이 "이 위험 표면에 스펙을 안 쓴다"는 보안 판정이다. 주석을 해시에서 빼는 방향으로 고치면 바로 그 3줄이 리뷰 없이 통과하게 된다.
+- **예외 만료의 사각지대(이번 세션의 핵심 발견)**: 만료 판정은 맵 하나이고 키가 `authz` 뿐이다 — `auth`·`payment`·`concurrency` 예외는 어떤 사실이 생겨도 안 풀린다. 그 하나뿐인 근거도 `supabase/**.sql` 의 `create policy` 만 읽는다. signal 의 정책 3개는 전부 `for select` 라 만료가 안 걸리는데, 실제 쓰기 경로는 스스로 "RLS 를 우회한다"고 적어 둔 secret 키 클라이언트다. **인가 판정은 존재하고 위치가 DB 가 아니라 라우트의 `Bearer` 비교 한 줄인데, 만료 기계는 SQL 만 보므로 이 자리를 구조적으로 못 본다.**
+- **사용자가 범위를 좁혔다**: "일단 엔지니어링만, 작업은 안 하는 거야" — security-reviewer 파견도 주석 수정도 하지 않았다. 이후 요청은 전부 "지금 이 에이전트가 어떻게 굴러가는지 시각적으로"였다.
+- **다이어그램 3장**(archify, 스크래치패드): ① 한 턴의 배선 — PreToolUse 3개 → PostToolUse 가 게이트를 `--quick` 으로 → Stop 훅이 같은 게이트를 전체로 재실행 → 해시 비교 → HANDOFF ② 그래프 7노드와 의존 관계 + 판단 3자리(표면 선택·n/a·리뷰어 구성)와 자리마다 붙은 되받이 ③ dirty·clean·rework·n/a 전이. 전부 showcase 검증 9/9·0 경고. **렌더 결과를 눈으로 확인하지는 않았다** — 좌표·겹침·라벨 간격 검사만 돌렸다.
+- **첫 그림은 질문에 답하지 못했다**: 사용자가 "내가 생각한 그래프 + 상황 판단인지 모르겠다"고 했고 맞는 지적이었다. 1장은 기계 층(훅·게이트)만 그렸고 그래프도 판단 자리도 없었다. 그래서 2·3장을 추가했다. **하나의 그림이 두 층을 다 담지 못한다는 것 자체가 이 하네스의 구조다** — 기계 층과 그래프 층이 분리돼 있다.
+- **archify 기하 제약**(다음에 쓸 때를 위해): workflow 는 열 좌표가 고정이라 같은 레인에서 1↔2(80px)·3↔4(70px) 는 노드가 겹친다 — `viewBox` 를 키워도 레이아웃은 안 늘어난다. lifecycle 은 phase 5칸·event 3칸·outcome 3칸이고 레인 id `main`/`terminal` 이 밴드를 고정한다. architecture 는 `pos: [x,y]` 자유 배치라 토폴로지에 가장 편했다. 1장은 첫 판이 25건 실패 → 레인 순서 재배치와 폭 조정으로 0 까지 내렸다.
+- **보호 훅 오탐 1건**(하네스 관찰): PROGRESS 를 bash 로 갱신하려 했더니 명령문 한 줄에 `rm` 과 판정 레이어 경로가 같이 들어 있어 "보호 파일 쓰기 시도"로 차단됐다. 실제로는 문서 본문 텍스트였다. Edit 도구로 우회했다 — 훅이 명령 문자열만 보고 대상 파일을 안 보기 때문이다.
 
 ### 2026-08-16 (킷 하네스 — signal 제품 작업 없음)
 
