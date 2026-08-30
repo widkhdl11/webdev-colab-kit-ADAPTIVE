@@ -2,11 +2,11 @@
 
 ## 현재 상태
 
-- **오늘의 목표**(2026-08-17, 이어진 세션): 낡은 review 를 실제로 풀고, 어제 미룬 하네스 결정들(게이트 메시지 패치·킷 보호 확장·bash `rm -r`)까지 처리 → **달성**. Vercel 배포만 사용자 몫으로 남았다.
-- **완료**: ① **review 사인오프** — security-reviewer 가 `route.ts` 의 예외 주석 2줄(auth·authz)을 PRODUCT.md·RLS 정책·코드 검색과 대조해 전부 사실과 일치함을 확인. `workspace/review.md` 에 `status: passed` + `basis: d43269656730` + `reviewers: [security-reviewer]` 기록 → 프론티어가 `deploy` 로 이동 ② **게이트 메시지 패치 2건 적용** — 예외 경고가 만료 여부를 스스로 밝히고(`EXPIRY_RULES`), basis 불일치 메시지가 "산출물이 바뀌었으니"로 정정. 검사 `check-exempt-expiry`·`check-basis-message` 통과 ③ **킷 보호를 `dev/` 상위 폴더까지 확장** — `dev/.claude/settings.json` + `dev/.claude/hooks/protect-kit.mjs` 신설, 이 킷(`webdeb-colab-kit-ADAPTIVE`) 경로만 겨냥해서 다른 킷(GRAPH)·무관한 프로젝트는 안 막음. 검사 `check-dev-kit-protection`(6케이스) 통과 ④ **bash `rm -r <디렉터리>` 보호** — `protect-files.mjs` 에 `rmRecursiveDirHit` 추가. 검증 중 `rm -r gates`(슬래시 없이)도 기존에 안 막히던 걸 추가로 발견해 같이 닫음. 검사 `check-rm-dir-protection`(6케이스) 통과 ⑤ **LESSONS.md 6건 반영** — 2026-08-16 회고 2건 + 이번 세션 발견 3건 + 경고 문구 1건. 사용자가 붙여넣는 과정에서 편집기가 들여쓰기를 지우고 `CLAUDE.md`·`&&`·`_TEMPLATE.md` 를 훼손해 전체 파일을 클립보드로 복구(내용은 git diff 로 동일함을 확인) ⑥ `harness-backlog.md` 정리 — 미결 17건 → 13건(4건 졸업)
-- **멈춘 지점**: 없음. `review` clean, `deploy` 만 남았다(사용자 직접).
-- **다음 할 일**: Vercel 배포(push → Root Directory `projects/signal` → 환경변수 5개) → `workspace/deploy.md` 에 `status: deployed` + `basis: d43269656730` 기록.
-- **대기 중인 결정**: ① **Vercel 배포는 사용자가 직접**(push → Root Directory `projects/signal` → 환경변수 5개) ② **좁힌 `TOPIC_SCOPE` 를 되돌릴지** — 실행이 답을 냈다: "DeepSeek V4 Pro 0813"·"Shade Map"·"Delta" 가 걸러졌고 "Squeak 6.1·Briar 류가 통과하는가"의 답은 **아니오**. 2026-08-12 에 넓혔던 방향의 반대라 남겨 뒀다 (제품 백로그 7건은 `workspace/BACKLOG.md`, 하네스 13건은 `docs/references/harness-backlog.md`, 하네스 다이어그램 3장은 `docs/references/diagrams/`)
+- **오늘의 목표**(2026-08-17): 낡은 review 를 풀고 미뤄둔 하네스 결정 4건까지 처리 → **달성**. 커밋 `ce8072a` 푸시 완료.
+- **완료**: **review 가 clean 이 됐다** — security-reviewer 가 `route.ts` 예외 주석 2줄(auth·authz)을 PRODUCT.md·RLS 정책·코드 검색 세 갈래로 대조해 사실과 일치함을 확인, `review.md` 에 `basis: d43269656730` + `reviewers: [security-reviewer]` 기록 → 프론티어가 `deploy` 로 이동. 하네스 4건도 사용자가 직접 적용하고 검사로 확인했다(게이트 경고 문구 2건 · `dev/` 상위 킷 보호 신설 · bash `rm -r <보호 디렉터리>` 차단). LESSONS.md 6건 반영, harness-backlog 4건 졸업(미결 17→13).
+- **멈춘 지점**: 없음. `review` clean, `deploy` 하나만 남았다.
+- **다음 할 일**: Vercel 배포(push → Root Directory `projects/signal` → 환경변수 5개) → `workspace/deploy.md` 에 `status: deployed` + `basis: d43269656730` 기록. 배포를 더 미루면 대신 **카드 태그 노출·상세 공식 표시**(시안 한 바퀴 필요, BACKLOG)가 다음 할 일이 된다.
+- **대기 중인 결정**: ① **Vercel 배포를 지금 할지** — 사용자가 직접 해야 하는 단계다(위 "다음 할 일") ② **좁힌 `TOPIC_SCOPE` 를 되돌릴지** — 실행이 답을 냈다: "DeepSeek V4 Pro 0813"·"Shade Map"·"Delta" 가 걸러졌고 "Squeak 6.1·Briar 류가 통과하는가"의 답은 **아니오**. 2026-08-12 에 넓혔던 방향의 반대라 남겨 뒀다 (제품 백로그 7건 `workspace/BACKLOG.md` · 하네스 13건 `docs/references/harness-backlog.md`)
 
 ## 로그
 
