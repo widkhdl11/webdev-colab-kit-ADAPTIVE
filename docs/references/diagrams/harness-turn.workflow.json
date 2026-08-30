@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "한 턴이 굴러가는 길",
+    "subtitle": "훅이 게이트를 부르고, 게이트 결과가 그래프 상태가 된다",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "fix-here",
+        "label": "고치려는 곳",
+        "focus": [
+          "quick",
+          "detect",
+          "expire"
+        ],
+        "note": "risk-surface 는 run-gates.mjs 안의 한 블록이다. 편집 직후와 턴 종료 때 두 번 돈다."
+      },
+      {
+        "id": "edit-time",
+        "label": "편집할 때",
+        "focus": [
+          "edit",
+          "pre",
+          "denied",
+          "quick"
+        ],
+        "note": "편집이 적용되기 전에 훅이 막고, 적용된 직후에 게이트가 돈다."
+      },
+      {
+        "id": "turn-end",
+        "label": "턴이 끝날 때",
+        "focus": [
+          "end",
+          "stop",
+          "prop",
+          "handoff"
+        ],
+        "note": "Stop 훅만이 상태를 갱신한다. 이게 안 돌면 HANDOFF 가 옛 값으로 남는다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "turn",
+      "label": "내가 하는 일"
+    },
+    {
+      "id": "hook",
+      "label": "훅 — settings.json 이 배선"
+    },
+    {
+      "id": "graph",
+      "label": "상태 — graph-stop · propagate"
+    },
+    {
+      "id": "gate",
+      "label": "판정 — gates/run-gates.mjs"
+    },
+    {
+      "id": "blocked",
+      "label": "막힌 결과",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "before",
+      "label": "편집 전",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "after",
+      "label": "편집 직후",
+      "fromCol": 2,
+      "toCol": 3
+    },
+    {
+      "id": "closing",
+      "label": "턴 종료",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "groups": [
+    {
+      "id": "onerun",
+      "label": "run-gates.mjs 한 번의 실행",
+      "lane": "gate",
+      "fromCol": 2,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "edit",
+    "pre",
+    "quick",
+    "end",
+    "stop",
+    "prop",
+    "handoff"
+  ],
+  "nodes": [
+    {
+      "id": "edit",
+      "lane": "turn",
+      "col": 0,
+      "type": "frontend",
+      "label": "파일을 고친다",
+      "sublabel": "Edit · Write",
+      "width": 92,
+      "height": 56
+    },
+    {
+      "id": "end",
+      "lane": "turn",
+      "col": 3,
+      "type": "external",
+      "label": "턴을 끝낸다",
+      "sublabel": "답변을 마칠 때",
+      "width": 110,
+      "height": 56
+    },
+    {
+      "id": "pre",
+      "lane": "hook",
+      "col": 1,
+      "type": "security",
+      "label": "PreToolUse",
+      "sublabel": "protect-files 외 2개",
+      "tag": "편집 전",
+      "width": 120,
+      "height": 68
+    },
+    {
+      "id": "stop",
+      "lane": "hook",
+      "col": 4,
+      "type": "security",
+      "label": "Stop 훅",
+      "sublabel": "graph-stop.mjs",
+      "tag": "전체 재실행",
+      "width": 120,
+      "height": 68
+    },
+    {
+      "id": "quick",
+      "lane": "gate",
+      "col": 2,
+      "type": "backend",
+      "label": "게이트 한 바퀴",
+      "sublabel": "fsd · tsc · test",
+      "width": 96,
+      "height": 68
+    },
+    {
+      "id": "detect",
+      "lane": "gate",
+      "col": 3,
+      "type": "backend",
+      "label": "위험 표면 탐지",
+      "sublabel": "소스를 줄 단위로",
+      "width": 96,
+      "height": 68
+    },
+    {
+      "id": "expire",
+      "lane": "gate",
+      "col": 5,
+      "type": "security",
+      "label": "예외 만료 판정",
+      "sublabel": "create policy 만",
+      "tag": "고칠 곳",
+      "width": 104,
+      "height": 68
+    },
+    {
+      "id": "prop",
+      "lane": "graph",
+      "col": 4,
+      "type": "backend",
+      "label": "해시 비교",
+      "sublabel": "바뀐 노드와 하류",
+      "width": 96,
+      "height": 56
+    },
+    {
+      "id": "handoff",
+      "lane": "graph",
+      "col": 5,
+      "type": "database",
+      "label": "HANDOFF.md",
+      "sublabel": "상태 · 프론티어",
+      "width": 96,
+      "height": 56
+    },
+    {
+      "id": "denied",
+      "lane": "blocked",
+      "col": 1,
+      "type": "security",
+      "label": "편집 거부",
+      "sublabel": "gates · 훅 · graph",
+      "width": 120,
+      "height": 56
+    },
+    {
+      "id": "stuck",
+      "lane": "blocked",
+      "col": 5,
+      "type": "security",
+      "label": "막힌다",
+      "sublabel": "턴 종료 거부",
+      "width": 104,
+      "height": 56
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-edit-pre",
+      "from": "edit",
+      "to": "pre",
+      "label": "적용 전에",
+      "variant": "security"
+    },
+    {
+      "id": "e-pre-denied",
+      "from": "pre",
+      "to": "denied",
+      "label": "exit 2",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "e-pre-quick",
+      "from": "pre",
+      "to": "quick",
+      "label": "PostToolUse",
+      "variant": "emphasis",
+      "labelDx": -10
+    },
+    {
+      "id": "e-quick-detect",
+      "from": "quick",
+      "to": "detect",
+      "variant": "default"
+    },
+    {
+      "id": "e-detect-expire",
+      "from": "detect",
+      "to": "expire",
+      "label": "예외 주석",
+      "variant": "default"
+    },
+    {
+      "id": "e-expire-stuck",
+      "from": "expire",
+      "to": "stuck",
+      "label": "만료",
+      "variant": "security",
+      "role": "error",
+      "labelDy": 14
+    },
+    {
+      "id": "e-quick-end",
+      "from": "quick",
+      "to": "end",
+      "label": "에러 0",
+      "variant": "emphasis",
+      "role": "branch",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "e-end-stop",
+      "from": "end",
+      "to": "stop",
+      "label": "Stop 훅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-stop-prop",
+      "from": "stop",
+      "to": "prop",
+      "label": "결과를 받아",
+      "variant": "emphasis",
+      "labelDy": 14
+    },
+    {
+      "id": "e-prop-handoff",
+      "from": "prop",
+      "to": "handoff",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "누가 언제 부르는가",
+      "items": [
+        "훅은 전부 .claude/settings.json 에 배선돼 있다",
+        "PreToolUse — 편집이 적용되기 전에 세 개가 돈다",
+        "PostToolUse — Edit·Write 뒤에 run-gates --quick",
+        "Stop — 턴이 끝날 때 graph-stop.mjs 하나",
+        "graph-stop 이 run-gates 를 전체 모드로 다시 부른다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "risk-surface 가 사는 자리",
+      "items": [
+        "run-gates.mjs 안의 한 블록이다 (별도 파일이 아니다)",
+        "--quick 에서도 돈다 — 편집 즉시 차단할 수 있다",
+        "탐지: src 의 ts 와 supabase 의 sql 을 줄 단위로",
+        "예외: 파일 아무 데나 risk-surface-exempt 주석",
+        "만료: 지금은 authz 하나뿐, create policy 만 본다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "고칠 때 걸리는 것",
+      "items": [
+        "gates/ 는 보호 파일이라 내가 직접 못 고친다",
+        "패치를 만들어 넘기면 사용자가 적용한다",
+        "적용 전 실패 · 적용 후 통과하는 검사를 같이 준다",
+        "Stop 훅이 안 돌면 HANDOFF 가 옛 상태로 남는다",
+        "review 가 dirty 면 deploy 노드가 막힌다"
+      ]
+    }
+  ]
+}

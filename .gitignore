@@ -18,3 +18,5 @@ docs/**/diagrams/*.html
 .vercel/
 # projects/
 supabase/**
+# Playwright MCP 가 세션 중에 남기는 것(스크린샷·콘솔 로그·스냅숏). 검증 흔적이지 산출물이 아니다.
+.playwright-mcp/

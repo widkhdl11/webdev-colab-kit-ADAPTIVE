@@ -1,8 +1,12 @@
 # 하네스 구조 지도 (2차 — 따로 조사한 판)
 
-1차([docs/ARCHITECTURE.md](../ARCHITECTURE.md))를 안 보고 같은 레포를 다시 조사해 만든 것이다.
+1차(`docs/ARCHITECTURE.md` 외 27파일)를 안 보고 같은 레포를 다시 조사해 만든 것이다.
 다시 쓰는 게 목적이 아니라 **두 번의 답이 어디서 달라지는지 보려고** 그랬다. 답이 갈린 자리가 곧 레포에 쓰여 있어서가 아니라 내가 짐작해서 채운 자리다.
 비교한 결과는 [diff-report.md](diff-report.md) 에 있다.
+
+> **1차 파일은 2026-08-30 에 지웠다.** 비교가 끝나 산출물(diff-report)만 남기면 됐는데 재료 두 벌이
+> 같이 낡고 있었다. 필요하면 `git show 89517dc:docs/ARCHITECTURE.md` 로 꺼낸다.
+> 이 문서 묶음(`docs/v2/`)이 지금 쓰는 유일한 하네스 지도다.
 
 ## 먼저 볼 것 — [explorer.html](explorer.html)
 
@@ -13,6 +17,21 @@
 (`node scripts/build-explorer.mjs`). 손으로 베껴 두면 graph.mjs 가 바뀔 때 문서만 조용히 낡기 때문이다.
 
 아래는 같은 내용을 글로 정리한 것이다.
+
+## 다시 만드는 명령
+
+`reference/` 아홉 개와 `explorer.html` 은 손으로 쓴 게 아니라 레포에서 뽑아낸 것이다.
+스킬·훅·서브에이전트를 추가했으면 다시 돌린다.
+
+```
+node scripts/extract-harness.mjs --out docs/v2/reference   # reference/ 9개
+node scripts/build-explorer.mjs                            # explorer.html
+node scripts/check-docs.mjs docs/v2                        # 링크가 실재하는지
+node scripts/check-doc-refs.mjs                            # 줄 번호가 밀렸는지
+```
+
+`--out` 을 빼면 예전 자리인 `docs/reference/` 에 쓴다 — 그 디렉터리는 2026-08-30 에 지웠으니
+붙이는 것을 잊으면 아무도 안 읽는 두 번째 벌이 다시 생긴다.
 
 ## 이 하네스가 푸는 문제
 

@@ -1,0 +1,357 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "무엇을 건드리는지 보고, 그만큼만 다시 한다",
+    "subtitle": "화면만 고치면 화면만 · 로그인을 건드리면 스펙부터 · 잘못 건너뛰면 기계가 되돌린다",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "depth",
+        "label": "어디까지 할지 정하는 길",
+        "focus": [
+          "ask",
+          "surfaces",
+          "attach",
+          "skip",
+          "impl",
+          "pick"
+        ],
+        "note": "요청 한 줄에서 '어디까지 다시 할지'가 정해지는 주 경로."
+      },
+      {
+        "id": "floor",
+        "label": "그냥 못 지나가는 자리",
+        "focus": [
+          "attach",
+          "risk",
+          "pick",
+          "signoff"
+        ],
+        "note": "건너뛰기로 판단했는데 그게 틀렸을 때 기계가 막는 두 자리."
+      },
+      {
+        "id": "scope",
+        "label": "다시 할 곳",
+        "focus": [
+          "impl",
+          "prop",
+          "front"
+        ],
+        "note": "다시 할 범위를 내가 정하지 않는다 — 바뀐 파일에서 기계가 계산한다."
+      }
+    ],
+    "viewBox": [
+      1000,
+      800
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "요청"
+        },
+        "backend": {
+          "label": "내가 정하는 것"
+        },
+        "frontend": {
+          "label": "실제로 하는 일"
+        },
+        "security": {
+          "label": "기계가 막는 것"
+        },
+        "database": {
+          "label": "그래프 상태"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "req",
+      "label": "요청"
+    },
+    {
+      "id": "judge",
+      "label": "내가 정하는 것"
+    },
+    {
+      "id": "run",
+      "label": "실제로 하는 일"
+    },
+    {
+      "id": "floor",
+      "label": "잘못 정하면 막는 것",
+      "variant": "exception"
+    },
+    {
+      "id": "state",
+      "label": "그래프 상태"
+    }
+  ],
+  "phases": [
+    {
+      "id": "intake",
+      "label": "무엇을 건드리나",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "depth",
+      "label": "어디까지 할 것인가",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "close",
+      "label": "정한 만큼 만들고 마무리",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "groups": [
+    {
+      "id": "judgment",
+      "label": "내가 정하는 세 가지",
+      "lane": "judge",
+      "fromCol": 1,
+      "toCol": 5,
+      "variant": "emphasis"
+    },
+    {
+      "id": "backstop",
+      "label": "잘못 정하면 바로 아래에서 막힌다",
+      "lane": "floor",
+      "fromCol": 2,
+      "toCol": 5,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "ask",
+    "surfaces",
+    "attach",
+    "skip",
+    "impl",
+    "pick"
+  ],
+  "nodes": [
+    {
+      "id": "ask",
+      "lane": "req",
+      "col": 1,
+      "type": "external",
+      "label": "사용자 요청",
+      "sublabel": "이 페이지 이렇게 고쳐줘",
+      "width": 190
+    },
+    {
+      "id": "surfaces",
+      "lane": "judge",
+      "col": 1,
+      "type": "backend",
+      "label": "무엇을 건드리는지 본다",
+      "sublabel": "화면 · 데이터 · 로그인 · 계산 · 글자",
+      "tag": "고치기 전에 말하고 동의받는다",
+      "width": 190
+    },
+    {
+      "id": "skip",
+      "lane": "judge",
+      "col": 3,
+      "type": "backend",
+      "label": "안 건드린 건 건너뛴다",
+      "sublabel": "왜 건너뛰는지 한 줄 남긴다",
+      "tag": "리뷰는 건너뛸 수 없다",
+      "width": 190
+    },
+    {
+      "id": "pick",
+      "lane": "judge",
+      "col": 5,
+      "type": "backend",
+      "label": "리뷰어",
+      "sublabel": "건드린 것만",
+      "tag": "하나씩",
+      "width": 92
+    },
+    {
+      "id": "attach",
+      "lane": "run",
+      "col": 2,
+      "type": "frontend",
+      "label": "건드린 것마다 정한다",
+      "sublabel": "로그인은 스펙부터 · 새 화면은 시안부터",
+      "tag": "작업 전체에 등급을 안 매긴다",
+      "width": 190
+    },
+    {
+      "id": "impl",
+      "lane": "run",
+      "col": 4,
+      "type": "frontend",
+      "label": "정한 만큼만 만든다",
+      "sublabel": "안 건드린 곳의 절차는 안 돈다",
+      "width": 190
+    },
+    {
+      "id": "risk",
+      "lane": "floor",
+      "col": 2,
+      "type": "security",
+      "label": "risk-surface 게이트",
+      "sublabel": "로그인·결제 코드인데 스펙 없으면 막는다",
+      "tag": "건너뛰기도 취소한다",
+      "width": 190
+    },
+    {
+      "id": "signoff",
+      "lane": "floor",
+      "col": 5,
+      "type": "security",
+      "label": "리뷰 기록",
+      "sublabel": "정말 돌렸나",
+      "tag": "빠지면 거부",
+      "width": 92
+    },
+    {
+      "id": "prop",
+      "lane": "state",
+      "col": 3,
+      "type": "database",
+      "label": "다시 할 곳 계산",
+      "sublabel": "바뀐 것 아래만 다시 dirty",
+      "tag": "범위를 내가 안 정한다",
+      "width": 190
+    },
+    {
+      "id": "front",
+      "lane": "state",
+      "col": 5,
+      "type": "database",
+      "label": "프론티어",
+      "sublabel": "다음 할 일",
+      "width": 92
+    }
+  ],
+  "edges": [
+    {
+      "id": "ask-surfaces",
+      "from": "ask",
+      "to": "surfaces",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "drop"
+    },
+    {
+      "id": "surfaces-attach",
+      "from": "surfaces",
+      "to": "attach",
+      "variant": "emphasis"
+    },
+    {
+      "id": "attach-skip",
+      "from": "attach",
+      "to": "skip",
+      "variant": "emphasis"
+    },
+    {
+      "id": "skip-impl",
+      "from": "skip",
+      "to": "impl",
+      "variant": "emphasis"
+    },
+    {
+      "id": "impl-pick",
+      "from": "impl",
+      "to": "pick",
+      "variant": "emphasis"
+    },
+    {
+      "id": "impl-prop",
+      "from": "impl",
+      "to": "prop",
+      "label": "파일이 바뀌면 다시 계산",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "auto",
+      "labelSegment": 2,
+      "labelDy": 20
+    },
+    {
+      "id": "attach-risk",
+      "from": "attach",
+      "to": "risk",
+      "label": "로그인·결제면 스펙 먼저",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "drop",
+      "labelDy": 11
+    },
+    {
+      "id": "pick-signoff",
+      "from": "pick",
+      "to": "signoff",
+      "label": "안 돌렸으면 통과 안 된다",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "drop",
+      "labelDy": 65
+    },
+    {
+      "id": "signoff-front",
+      "from": "signoff",
+      "to": "front",
+      "variant": "default",
+      "role": "return",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "drop"
+    },
+    {
+      "id": "prop-front",
+      "from": "prop",
+      "to": "front",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "옛 방식 — 작업 하나에 등급을 매겼다",
+      "items": [
+        "요청이 오면 먼저 '이건 무거운 작업'이라고 등급을 붙였다",
+        "등급이 높으면 디자인·설계·리뷰가 통째로 다시 돌았다",
+        "'가볍다'고 잡으면 위험한 부분까지 그냥 지나갔다",
+        "그래서 늘 너무 많이 하거나 너무 적게 했다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "지금 — 건드린 것마다 따로 정한다",
+      "items": [
+        "이번 수정이 무엇을 건드리는지 먼저 적는다",
+        "건드린 것마다 필요한 절차를 따로 붙인다",
+        "안 건드린 것에는 아무 절차도 붙이지 않는다",
+        "결제 화면의 글자 하나 고치는 건 결제를 건드린 게 아니다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "잘못 건너뛰면 기계가 되돌린다",
+      "items": [
+        "파일이 바뀌면 내용 해시가 달라져 다시 dirty 가 된다",
+        "위쪽이 dirty 면 그걸 쓰는 아래쪽도 전부 dirty 가 된다",
+        "로그인·결제 코드가 잡히면 건너뛰기가 즉시 취소된다",
+        "리뷰는 건너뛰겠다는 선언 자체가 막혀 있다"
+      ]
+    }
+  ]
+}

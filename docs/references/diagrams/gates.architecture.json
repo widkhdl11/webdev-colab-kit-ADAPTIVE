@@ -1,0 +1,369 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "게이트 다섯이 각각 무엇을 보고 무엇을 막나",
+    "subtitle": "언제 도나 → 무엇을 보나 → 그래서 턴이 막히나",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "when",
+        "label": "언제 도나",
+        "focus": [
+          "edit",
+          "quick",
+          "endturn",
+          "full"
+        ],
+        "note": "내가 부르는 게 아니라 훅이 부른다. 편집할 때 한 번, 턴 끝에 한 번."
+      },
+      {
+        "id": "what",
+        "label": "무엇을 보나",
+        "focus": [
+          "fsd",
+          "risk",
+          "beforeui",
+          "speccov",
+          "notrun"
+        ],
+        "note": "다섯 카테고리. 각각 보는 것이 다르고 막는 시점도 다르다."
+      },
+      {
+        "id": "block",
+        "label": "턴이 막히나",
+        "focus": [
+          "kind",
+          "stop",
+          "notice"
+        ],
+        "note": "기본은 차단이다. 다만 턴을 끝내야만 풀리는 실패는 안내로 낮춘다."
+      }
+    ],
+    "viewBox": [
+      1100,
+      580
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "내가 하는 일"
+        },
+        "backend": {
+          "label": "훅이 부르는 검사"
+        },
+        "security": {
+          "label": "게이트 카테고리"
+        },
+        "cloud": {
+          "label": "턴이 막힌다"
+        },
+        "messagebus": {
+          "label": "안내로 낮춤"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "edit",
+      "type": "external",
+      "label": "파일을 고친다",
+      "sublabel": "Edit · Write",
+      "pos": [
+        70,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "quick",
+      "type": "backend",
+      "label": "편집 직후 검사",
+      "sublabel": "PostToolUse 훅 · --quick",
+      "pos": [
+        270,
+        108
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "tag": "tsc·테스트는 뺀다"
+    },
+    {
+      "id": "endturn",
+      "type": "external",
+      "label": "턴을 끝낸다",
+      "sublabel": "Stop 훅",
+      "pos": [
+        70,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "full",
+      "type": "backend",
+      "label": "턴 끝 전체 검사",
+      "sublabel": "graph-stop 이 같은 게이트를 다시",
+      "pos": [
+        270,
+        438
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "tag": "tsc·테스트까지"
+    },
+    {
+      "id": "fsd",
+      "type": "security",
+      "label": "fsd · security · tsc · test",
+      "sublabel": "레이어 위반 · 위험 코드 · 타입 · 테스트",
+      "pos": [
+        530,
+        60
+      ],
+      "size": [
+        210,
+        66
+      ],
+      "tag": "어디서 나든 무조건 차단"
+    },
+    {
+      "id": "risk",
+      "type": "security",
+      "label": "risk-surface",
+      "sublabel": "로그인·결제·권한·동시성 패턴을 코드에서 찾는다",
+      "pos": [
+        530,
+        152
+      ],
+      "size": [
+        210,
+        66
+      ],
+      "tag": "덮는 스펙 없으면 차단"
+    },
+    {
+      "id": "beforeui",
+      "type": "security",
+      "label": "design/BEFORE_UI",
+      "sublabel": "화면을 만드는데 design-rules 가 미승인",
+      "pos": [
+        530,
+        244
+      ],
+      "size": [
+        210,
+        66
+      ],
+      "tag": "시작 전 승인을 강제"
+    },
+    {
+      "id": "speccov",
+      "type": "security",
+      "label": "spec-coverage",
+      "sublabel": "승인된 스펙의 INV 마다 그걸 참조하는 테스트",
+      "pos": [
+        530,
+        336
+      ],
+      "size": [
+        210,
+        66
+      ],
+      "tag": "끝내기 전 완료를 요구"
+    },
+    {
+      "id": "notrun",
+      "type": "security",
+      "label": "tsc-notrun · test-notrun",
+      "sublabel": "설정이 없어 검사가 아예 안 돌았다",
+      "pos": [
+        530,
+        428
+      ],
+      "size": [
+        210,
+        66
+      ],
+      "tag": "안 함은 통과가 아니다"
+    },
+    {
+      "id": "stop",
+      "type": "cloud",
+      "label": "턴이 안 끝난다",
+      "sublabel": "새 기능 금지 · 위반만 수정",
+      "pos": [
+        820,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kind",
+      "type": "backend",
+      "label": "이 실패가 턴을 막아야 하나",
+      "sublabel": "카테고리 성격 + 승인을 쥔 노드 상태",
+      "pos": [
+        820,
+        240
+      ],
+      "size": [
+        190,
+        76
+      ]
+    },
+    {
+      "id": "notice",
+      "type": "messagebus",
+      "label": "안내만 · 턴은 끝난다",
+      "sublabel": "하류는 그대로 막혀 있다",
+      "pos": [
+        820,
+        390
+      ],
+      "size": [
+        180,
+        66
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "게이트가 내는 실패 카테고리",
+      "wraps": [
+        "fsd",
+        "risk",
+        "beforeui",
+        "speccov",
+        "notrun"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "edit-quick",
+      "from": "edit",
+      "to": "quick",
+      "variant": "emphasis"
+    },
+    {
+      "id": "endturn-full",
+      "from": "endturn",
+      "to": "full",
+      "variant": "emphasis"
+    },
+    {
+      "id": "quick-gates",
+      "from": "quick",
+      "to": "fsd",
+      "label": "편집마다",
+      "variant": "emphasis"
+    },
+    {
+      "id": "full-gates",
+      "from": "full",
+      "to": "notrun",
+      "label": "턴 끝에 다시",
+      "variant": "emphasis",
+      "labelDy": -34
+    },
+    {
+      "id": "fsd-stop",
+      "from": "fsd",
+      "to": "stop",
+      "label": "무조건",
+      "variant": "security"
+    },
+    {
+      "id": "risk-stop",
+      "from": "risk",
+      "to": "stop",
+      "label": "무조건",
+      "variant": "security"
+    },
+    {
+      "id": "beforeui-kind",
+      "from": "beforeui",
+      "to": "kind",
+      "variant": "default"
+    },
+    {
+      "id": "speccov-kind",
+      "from": "speccov",
+      "to": "kind",
+      "variant": "default"
+    },
+    {
+      "id": "notrun-kind",
+      "from": "notrun",
+      "to": "kind",
+      "variant": "default"
+    },
+    {
+      "id": "kind-stop",
+      "from": "kind",
+      "to": "stop",
+      "label": "풀 수 있는 상태면 막는다",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "kind-notice",
+      "from": "kind",
+      "to": "notice",
+      "label": "턴을 끝내야 풀리면 낮춘다",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "무조건 막는 셋",
+      "items": [
+        "fsd — 레이어를 거슬러 import 했다",
+        "security — 위험한 코드 패턴이 그대로 들어왔다",
+        "risk-surface — 로그인·결제·권한·동시성 코드인데 그걸 덮는 승인된 스펙이 없다",
+        "이것들은 그래프가 시킨 상태에서 나온 게 아니라 아무 데서나 나는 위반이다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "낮출 수 있는 둘",
+      "items": [
+        "선행조건형(design/BEFORE_UI) — 시작하기 전에 승인이 있어야 한다",
+        "완료형(spec-coverage · notrun) — 끝내기 전에 있어야 한다",
+        "왜 낮추나: 승인은 턴을 끝내야 받을 수 있는데, 그 게이트가 턴을 막으면 푸는 유일한 길이 닫힌다",
+        "낮춰도 노드는 dirty 그대로다 — 진행이 아니라 '턴 종료'만 허용된다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "검사 안 함과 통과를 가른 이유",
+      "items": [
+        "판정은 '그 카테고리 에러가 0건인가' 하나뿐이다",
+        "tsconfig 가 없으면 tsc 는 조용히 건너뛰고, 에러 0건이라 clean 이 된다",
+        "테스트가 0개면 '전부 통과'로 보인다",
+        "그래서 안 돈 검사를 전용 실패로 남긴다 — 노드는 막되 턴은 막지 않는다"
+      ]
+    }
+  ]
+}

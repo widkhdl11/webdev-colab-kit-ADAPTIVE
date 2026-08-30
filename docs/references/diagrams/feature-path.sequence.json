@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "기능 하나가 처음부터 끝까지 가는 길",
+    "subtitle": "누가 무엇을 언제 하는지 — 세션이 열리고 닫힐 때까지 한 번",
+    "quality_profile": "showcase",
+    "viewBox": [
+      900,
+      960
+    ],
+    "views": [
+      {
+        "id": "decide",
+        "label": "만들기 전에 정하는 것",
+        "focus": [
+          "user",
+          "me",
+          "docs"
+        ],
+        "note": "무엇을 건드리는지 말하고 동의를 받은 뒤에야 파일을 만진다."
+      },
+      {
+        "id": "build",
+        "label": "만들면서 걸리는 것",
+        "focus": [
+          "me",
+          "gate"
+        ],
+        "note": "편집할 때마다 게이트가 돈다. 사람이 부르는 게 아니라 훅이 부른다."
+      },
+      {
+        "id": "close",
+        "label": "턴과 세션을 닫는 법",
+        "focus": [
+          "me",
+          "gate",
+          "graph",
+          "docs"
+        ],
+        "note": "턴이 끝날 때 상태가 갱신되고, 세션이 끝날 때 다음 세션의 재료가 남는다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "평범한 호출"
+        },
+        "emphasis": {
+          "label": "꼭 지나는 자리"
+        },
+        "security": {
+          "label": "위험 표면"
+        },
+        "dashed": {
+          "label": "세션 마감"
+        },
+        "return": {
+          "label": "돌아오는 답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "순서를 정하는 사람"
+    },
+    {
+      "id": "me",
+      "type": "backend",
+      "label": "나 (에이전트)",
+      "sublabel": "판단하고 만든다"
+    },
+    {
+      "id": "docs",
+      "type": "database",
+      "label": "문서",
+      "sublabel": "PRODUCT · 스펙 · 규칙"
+    },
+    {
+      "id": "gate",
+      "type": "security",
+      "label": "게이트",
+      "sublabel": "훅이 자동으로 부른다"
+    },
+    {
+      "id": "graph",
+      "type": "messagebus",
+      "label": "그래프 상태",
+      "sublabel": "HANDOFF.md"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 245,
+      "label": "세션이 열린다"
+    },
+    {
+      "from": 260,
+      "to": 500,
+      "label": "만들기 전에 정한다"
+    },
+    {
+      "from": 515,
+      "to": 625,
+      "label": "정한 만큼 만든다"
+    },
+    {
+      "from": 640,
+      "to": 855,
+      "label": "턴과 세션을 닫는다"
+    }
+  ],
+  "messages": [
+    {
+      "id": "brief",
+      "from": "graph",
+      "to": "me",
+      "y": 190,
+      "label": "브리핑 — 다음 할 일",
+      "variant": "return"
+    },
+    {
+      "id": "ask",
+      "from": "user",
+      "to": "me",
+      "y": 232,
+      "label": "이 기능 만들어줘",
+      "variant": "default"
+    },
+    {
+      "id": "propose",
+      "from": "me",
+      "to": "user",
+      "y": 285,
+      "label": "건드리는 것 + 절차",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agree",
+      "from": "user",
+      "to": "me",
+      "y": 322,
+      "label": "동의",
+      "variant": "return"
+    },
+    {
+      "id": "product",
+      "from": "me",
+      "to": "docs",
+      "y": 365,
+      "label": "PRODUCT.md",
+      "variant": "default"
+    },
+    {
+      "id": "spec",
+      "from": "me",
+      "to": "docs",
+      "y": 405,
+      "label": "스펙(불변식)",
+      "variant": "security"
+    },
+    {
+      "id": "draft",
+      "from": "me",
+      "to": "user",
+      "y": 447,
+      "label": "시안 보여주기",
+      "variant": "emphasis"
+    },
+    {
+      "id": "approve",
+      "from": "user",
+      "to": "docs",
+      "y": 487,
+      "label": "승인 → status: approved",
+      "variant": "return"
+    },
+    {
+      "id": "edit",
+      "from": "me",
+      "to": "gate",
+      "y": 540,
+      "label": "src 편집",
+      "variant": "default"
+    },
+    {
+      "id": "quick",
+      "from": "gate",
+      "to": "me",
+      "y": 580,
+      "label": "편집마다 검사가 돈다",
+      "variant": "security"
+    },
+    {
+      "id": "test",
+      "from": "me",
+      "to": "gate",
+      "y": 618,
+      "label": "테스트 작성",
+      "variant": "default"
+    },
+    {
+      "id": "endturn",
+      "from": "me",
+      "to": "graph",
+      "y": 668,
+      "label": "턴을 끝낸다",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync",
+      "from": "gate",
+      "to": "graph",
+      "y": 706,
+      "label": "해시 비교",
+      "variant": "default"
+    },
+    {
+      "id": "frontier",
+      "from": "graph",
+      "to": "me",
+      "y": 745,
+      "label": "프론티어: review",
+      "variant": "return"
+    },
+    {
+      "id": "review",
+      "from": "me",
+      "to": "docs",
+      "y": 788,
+      "label": "review.md 기록",
+      "variant": "security"
+    },
+    {
+      "id": "wrapup",
+      "from": "me",
+      "to": "user",
+      "y": 830,
+      "label": "wrap-up 5줄",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "me",
+      "from": 185,
+      "to": 838,
+      "type": "backend"
+    },
+    {
+      "participant": "docs",
+      "from": 360,
+      "to": 495,
+      "type": "database"
+    },
+    {
+      "participant": "gate",
+      "from": 535,
+      "to": 715,
+      "type": "security"
+    },
+    {
+      "participant": "graph",
+      "from": 660,
+      "to": 752,
+      "type": "messagebus"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "만들기 전에 반드시 지나는 곳",
+      "items": [
+        "무엇을 건드리는지 말하고 동의를 받는다 — 이게 없으면 시작하지 않는다",
+        "로그인·결제·권한을 건드리면 스펙이 먼저 있어야 한다",
+        "새 화면이면 시안을 먼저 보여주고 승인을 받는다",
+        "승인은 파일의 `status: approved` 한 줄로 남는다 — 게이트가 그 줄을 읽는다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "내가 부르지 않는데 도는 것",
+      "items": [
+        "파일을 고칠 때마다 훅이 게이트를 부른다 (tsc·테스트는 빼고 빠르게)",
+        "턴이 끝날 때 같은 게이트를 전부 다시 돌린다",
+        "그때 파일 내용 해시를 예전 값과 비교해 무엇이 바뀌었는지 찾는다",
+        "바뀐 노드의 아래쪽을 전부 dirty 로 만들고 HANDOFF.md 에 적는다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "여기 안 적히면 다음 세션에 없다",
+      "items": [
+        "HANDOFF.md — 기계가 쓴다. 노드 상태와 해시",
+        "PROGRESS.md — 내가 쓴다. 다섯 줄(목표·완료·멈춘 지점·다음 할 일·대기 결정)",
+        "BACKLOG.md — 미룬 것. 브리핑은 건수만 센다",
+        "DECISIONS.md — 왜 그렇게 정했는지"
+      ]
+    }
+  ]
+}

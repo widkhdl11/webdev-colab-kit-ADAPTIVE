@@ -49,7 +49,14 @@ export const GRAPH = {
     depends_on: ["product"],
     produces: ["docs/specs/*.md"],
     clean_when: {
-      frontmatter: { path: "docs/specs/*.md", require: "status: approved" },
+      // skip_when: 파일이 "나는 아직 활성 계약이 아니다"라고 스스로 선언하면 이 노드를 막지 않는다.
+      //   보류 스펙을 docs/specs/planned/ 로 옮겨 감추던 관례를 대신한다 — 위치로 상태를 표시하면
+      //   활성화할 때 파일이 움직이고, 그 위치를 가리키던 문장들이 조용히 낡는다(2026-08-30 실측 3건).
+      //   ★ 값이 require 값으로 시작하면 안 된다: 검사식의 \b 가 하이픈을 단어 경계로 봐서
+      //     'status: approved-deferred' 가 'status: approved' 검사를 통과한다. 그래서 parked 다.
+      //   parked 는 run-gates 의 approvedSurfaces(approved 만 본다)에 안 걸리므로 위험 표면 커버가
+      //   되지 못한다 — 위험 스펙을 미루면 그 코드의 편집이 차단된다. 미루기는 도망이 아니라 막다른 길이다.
+      frontmatter: { path: "docs/specs/*.md", require: "status: approved", skip_when: "status: parked" },
       gate: ["spec-coverage"], // approved INV 마다 참조 테스트 존재
     },
   },

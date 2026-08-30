@@ -25,12 +25,21 @@ const PROGRESS = `${projectDir}/workspace/PROGRESS.md`;
 const PRODUCT = `${projectDir}/docs/PRODUCT.md`;
 const SPECS_REL = `${projectDir}/docs/specs`;
 
-// 1. 대기 중인 결정
+// 1. 대기 중인 결정 (+ 보류 스펙 건수)
+// status 는 frontmatter 의 구조화된 필드다 — 본문에 같은 글자가 나와도 값으로 오인하지 않게
+// 블록을 먼저 떼고 줄 시작 앵커로 본다(다른 판정기 셋이 이미 그렇게 한다. retro 2026-08-02).
 const pending = [];
+let parkedSpecs = 0;
 const specsDir = join(ROOT, projectDir, "docs", "specs");
 if (existsSync(specsDir)) {
   for (const f of readdirSync(specsDir).filter((f) => f.endsWith(".md") && !f.startsWith("_"))) {
-    if (/status:\s*draft/.test(read(join(SPECS_REL, f)))) pending.push(`스펙 승인 대기: ${f}`);
+    const fm = read(join(SPECS_REL, f)).match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (!fm) continue;
+    if (/^\s*status:\s*draft\b/m.test(fm[1])) pending.push(`스펙 승인 대기: ${f}`);
+    // parked = 승인은 됐지만 지금 만들 계약은 아닌 스펙. 대기 중인 '결정'이 아니므로 위 목록에 넣지 않는다 —
+    // 대신 건수만 띄운다. 폴더(planned/)로 감추던 때는 아무 데도 안 보여서, 활성화된 뒤에도
+    // 그 사실을 아무도 모른 채 낡은 참조가 남았다(2026-08-30 실측 3건).
+    else if (/^\s*status:\s*parked\b/m.test(fm[1])) parkedSpecs++;
   }
 }
 // wrap-up 은 필드를 `- **멈춘 지점**: …` 꼴로 쓴다. 굵기 표시를 걷어내고 읽는다 —
@@ -115,5 +124,7 @@ console.log(`↩ 멈춘 지점: ${stopped}`);
 console.log(`→ 다음 할 일: ${next}`);
 if (principleWarn) console.log(principleWarn);
 if (total > 0) console.log(`▤ 필수 기능 진행: ${done}/${total}`);
+if (parkedSpecs > 0)
+  console.log(`◇ 보류 스펙(status: parked): ${parkedSpecs}건 — 합의는 됐고 지금 만들 계약이 아닌 것 (${SPECS_REL})`);
 if (deferred > 0) console.log(`▦ 백로그(미룬 것): ${deferred}건 (${BACKLOG})`);
 if (pendingUpgrades > 0) console.log(`⚙ 보류된 하네스 승격: ${pendingUpgrades}건 (docs/references/harness-backlog.md)`);

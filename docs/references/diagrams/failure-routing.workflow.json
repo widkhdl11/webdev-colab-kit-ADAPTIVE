@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "검증이 실패했을 때 어디로 되돌아가나",
+    "subtitle": "실패한 자리를 고치면 원인이 남는다 — 그래서 어느 층 탓인지부터 정한다",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "attribute",
+        "label": "어느 층 탓인가",
+        "focus": [
+          "fail",
+          "classify",
+          "specL",
+          "designL",
+          "implL"
+        ],
+        "note": "판정은 셋 중 하나다. 분류기는 판정만 하고 어디로 갈지는 정하지 않는다."
+      },
+      {
+        "id": "mark",
+        "label": "찍어야 풀린다",
+        "focus": [
+          "classify",
+          "mark",
+          "prop"
+        ],
+        "note": "파일만 고치고 끝내면 HANDOFF 가 옛 프론티어를 들고 있다."
+      }
+    ],
+    "viewBox": [
+      1060,
+      760
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "실패가 들어온다"
+        },
+        "backend": {
+          "label": "판정과 마크"
+        },
+        "security": {
+          "label": "spec 레벨"
+        },
+        "frontend": {
+          "label": "design 레벨"
+        },
+        "messagebus": {
+          "label": "impl 레벨"
+        },
+        "database": {
+          "label": "그래프 상태"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "specLane",
+      "label": "spec 탓이면"
+    },
+    {
+      "id": "flow",
+      "label": "판정과 마크"
+    },
+    {
+      "id": "designLane",
+      "label": "design 탓이면"
+    },
+    {
+      "id": "out",
+      "label": "impl 탓이면 · 재작업 범위",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "label": "무엇이 실패했나",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "p2",
+      "label": "어느 층 탓인가",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p3",
+      "label": "찍고 전파한다",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "fail",
+    "classify",
+    "designL",
+    "mark",
+    "prop"
+  ],
+  "nodes": [
+    {
+      "id": "fail",
+      "lane": "flow",
+      "col": 0,
+      "type": "external",
+      "label": "검증 실패",
+      "sublabel": "테스트 · 리뷰",
+      "width": 92
+    },
+    {
+      "id": "classify",
+      "lane": "flow",
+      "col": 2,
+      "type": "backend",
+      "label": "어느 층 탓인가",
+      "sublabel": "명백하면 바로 · 헷갈리면 분류기",
+      "tag": "판정만 · 어디로 갈지는 안 정한다",
+      "width": 190
+    },
+    {
+      "id": "mark",
+      "lane": "flow",
+      "col": 4,
+      "type": "backend",
+      "label": "--mark 로 찍는다",
+      "sublabel": "clean 이었으면 rework · 아니면 dirty",
+      "tag": "사유 한 줄이 없으면 이유가 사라진다",
+      "width": 190
+    },
+    {
+      "id": "specL",
+      "lane": "specLane",
+      "col": 3,
+      "type": "security",
+      "label": "규칙 자체가 틀렸다",
+      "sublabel": "스펙을 status: draft 로 되돌린다",
+      "width": 190
+    },
+    {
+      "id": "designL",
+      "lane": "designLane",
+      "col": 3,
+      "type": "frontend",
+      "label": "시각 기준이 틀렸다",
+      "sublabel": "design-rules 를 status: draft 로",
+      "width": 190
+    },
+    {
+      "id": "implL",
+      "lane": "out",
+      "col": 3,
+      "type": "messagebus",
+      "label": "코드만 틀렸다",
+      "sublabel": "실패한 자리를 고치면 끝",
+      "tag": "이미 dirty 라 찍을 것 없다",
+      "width": 190
+    },
+    {
+      "id": "prop",
+      "lane": "out",
+      "col": 5,
+      "type": "database",
+      "label": "전파",
+      "sublabel": "하류 전부",
+      "width": 92
+    }
+  ],
+  "edges": [
+    {
+      "id": "fail-classify",
+      "from": "fail",
+      "to": "classify",
+      "variant": "emphasis"
+    },
+    {
+      "id": "classify-spec",
+      "from": "classify",
+      "to": "specL",
+      "variant": "security",
+      "role": "branch",
+      "fromSide": "top",
+      "toSide": "left",
+      "route": "auto",
+      "channelX": 270
+    },
+    {
+      "id": "classify-design",
+      "from": "classify",
+      "to": "designL",
+      "variant": "emphasis"
+    },
+    {
+      "id": "classify-impl",
+      "from": "classify",
+      "to": "implL",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "route": "auto",
+      "via": [
+        [
+          300,
+          491
+        ]
+      ]
+    },
+    {
+      "id": "spec-mark",
+      "from": "specL",
+      "to": "mark",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "top",
+      "route": "auto",
+      "channelX": 530
+    },
+    {
+      "id": "design-mark",
+      "from": "designL",
+      "to": "mark",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "route": "auto",
+      "channelX": 530
+    },
+    {
+      "id": "impl-prop",
+      "from": "implL",
+      "to": "prop",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "mark-prop",
+      "from": "mark",
+      "to": "prop",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "왜 어느 층 탓인지부터 정하나",
+      "items": [
+        "실패한 자리를 고치면 원인은 그대로 남아 같은 실패가 다시 난다",
+        "테스트가 깨진 곳은 코드인데, 틀린 것은 규칙일 수 있다",
+        "분류기(qa-classifier)는 판정만 한다 — 어디로 갈지는 전파가 정한다",
+        "원인이 한눈에 명백하면(오타·널 체크) 분류기를 안 불러도 된다. 통과 의례가 아니다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "파일만 고치고 끝내면 안 되는 이유",
+      "items": [
+        "스펙을 draft 로 되돌려도 그래프는 모른다 — HANDOFF 가 옛 프론티어를 들고 있다",
+        "그 상태에서 재작업 순서를 손으로 추론하다 거꾸로 간 적이 있다 (2026-08-06)",
+        "`--mark <노드> \"<사유>\"` 까지 찍어야 rework 로 잡힌다",
+        "rework 로 잡혀야 재승인을 받을 턴을 끝낼 수 있다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "혼자 정하면 안 되는 것",
+      "items": [
+        "spec 레벨 판정은 사용자에게 먼저 보고한다",
+        "로그인·결제·권한·격리 불변식에 닿아도 먼저 보고한다",
+        "나머지는 프론티어를 따라 그냥 진행해도 된다",
+        "사용자가 '내가 볼게' 하면 그 자리에서 멈춘다"
+      ]
+    }
+  ]
+}

@@ -176,10 +176,21 @@ function frontmatterOK(cw) {
   const [k, v] = cw.frontmatter.require.split(":").map((x) => x.trim());
   // 줄 시작 앵커: status 등은 frontmatter 의 구조화된 필드 — 주석 뒤 같은 토큰을 값으로 오인하지 않게. (retro 2026-08-02)
   const re = new RegExp(`^\\s*${k}:\\s*${v}\\b`, "m");
+  // skip_when: 파일이 "나는 아직 활성 계약이 아니다"라고 선언하면 그 파일은 이 노드를 막지 않는다.
+  // 보류 스펙(status: parked)이 그것이다 — 폴더로 감추는 대신 파일 안에 적는다(graph.mjs 주석 참조).
+  // 건너뛰는 것은 '이 노드를 막는가'뿐이다: risk-surface 커버 판정은 run-gates 가 따로 하고
+  // approved 만 인정하므로, parked 로는 위험 표면을 통과시킬 수 없다.
+  let skipRe = null;
+  if (cw.frontmatter.skip_when) {
+    const [sk, sv] = cw.frontmatter.skip_when.split(":").map((x) => x.trim());
+    skipRe = new RegExp(`^\\s*${sk}:\\s*${sv}\\b`, "m");
+  }
   return files.every((rel) => {
     const src = readFileSync(join(projDir, rel), "utf-8");
     const fm = src.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-    return fm && re.test(fm[1]);
+    if (!fm) return false;
+    if (skipRe && skipRe.test(fm[1])) return true; // 보류 선언 → 이 노드를 막지 않는다
+    return re.test(fm[1]);
   });
 }
 // exists_nonempty: 파일이 존재하고 비어있지 않아야 clean (예: product=PRODUCT.md). 새 빈 프로젝트에서 필요.

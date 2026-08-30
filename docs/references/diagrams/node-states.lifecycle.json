@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "노드 하나의 상태가 어떻게 바뀌는가",
+    "subtitle": "dirty · clean · rework · n/a — 무엇이 옮기고, 누가 옮기는가",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "to-clean",
+        "label": "clean 이 되는 길",
+        "focus": [
+          "dirty",
+          "three",
+          "clean",
+          "down"
+        ],
+        "note": "clean 을 내리는 방법은 세 가지뿐이다. 내가 선언해서 내릴 수는 없다."
+      },
+      {
+        "id": "my-call",
+        "label": "내가 선언하는 것",
+        "focus": [
+          "na",
+          "rework"
+        ],
+        "note": "둘 다 사유 한 줄이 있어야 한다. 그 사유가 HANDOFF 와 브리핑에 그대로 남는다."
+      },
+      {
+        "id": "machine-undo",
+        "label": "기계가 되돌리는 것",
+        "focus": [
+          "cancel",
+          "back",
+          "clean"
+        ],
+        "note": "생략 판단은 내가 하고, 그 판단이 틀렸다는 감지는 기계가 한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "노드 상태 — 한 노드의 일생"
+    },
+    {
+      "id": "judge",
+      "label": "내가 선언하는 것 (사유 한 줄 필수)"
+    },
+    {
+      "id": "terminal",
+      "label": "기계가 되돌리는 것"
+    }
+  ],
+  "states": [
+    {
+      "id": "dirty",
+      "type": "start",
+      "label": "dirty",
+      "sublabel": "아직 못 끝냈다",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "프론티어에 뜬다"
+    },
+    {
+      "id": "three",
+      "type": "decision",
+      "label": "clean 내리는 법",
+      "sublabel": "게이트 · 프론트매터 · 사인오프",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "세 가지뿐"
+    },
+    {
+      "id": "clean",
+      "type": "success",
+      "label": "clean",
+      "sublabel": "하류가 열린다",
+      "lane": "main",
+      "col": 2,
+      "step": "03"
+    },
+    {
+      "id": "down",
+      "type": "success",
+      "label": "하류 진행",
+      "sublabel": "다음 노드로",
+      "lane": "main",
+      "col": 4,
+      "step": "04"
+    },
+    {
+      "id": "na",
+      "type": "waiting",
+      "label": "n/a",
+      "sublabel": "이번 작업엔 해당 없음",
+      "lane": "judge",
+      "col": 0,
+      "tag": "내 판단"
+    },
+    {
+      "id": "rework",
+      "type": "failure",
+      "label": "rework",
+      "sublabel": "통과했던 걸 거부",
+      "lane": "judge",
+      "col": 1,
+      "tag": "--mark"
+    },
+    {
+      "id": "cancel",
+      "type": "failure",
+      "label": "n/a 자동 취소",
+      "sublabel": "산출물 · 상류 · risk-surface",
+      "lane": "terminal",
+      "col": 0
+    },
+    {
+      "id": "back",
+      "type": "failure",
+      "label": "다시 dirty",
+      "sublabel": "재작업 전까지 하류 차단",
+      "lane": "terminal",
+      "col": 1
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-dirty-three",
+      "from": "dirty",
+      "to": "three",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "t-three-clean",
+      "from": "three",
+      "to": "clean",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "t-clean-down",
+      "from": "clean",
+      "to": "down",
+      "label": "하류가 열린다",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "t-three-na",
+      "from": "three",
+      "to": "na",
+      "label": "해당 없다고 선언",
+      "variant": "dashed"
+    },
+    {
+      "id": "t-clean-rework",
+      "from": "clean",
+      "to": "rework",
+      "label": "통과를 거부",
+      "variant": "security"
+    },
+    {
+      "id": "t-na-cancel",
+      "from": "na",
+      "to": "cancel",
+      "label": "판단이 틀리면",
+      "variant": "security"
+    },
+    {
+      "id": "t-cancel-back",
+      "from": "cancel",
+      "to": "back",
+      "variant": "security"
+    },
+    {
+      "id": "t-rework-back",
+      "from": "rework",
+      "to": "back",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "clean 을 내리는 방법은 셋뿐",
+      "items": [
+        "게이트 — 해당 카테고리 에러가 0건",
+        "프론트매터 — 산출물에 status: approved",
+        "사인오프 마커 — review·deploy 만, basis 해시와 함께",
+        "내가 '됐다'고 선언해서 내릴 방법은 없다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "내가 선언하는 두 가지",
+      "items": [
+        "n/a — 이번 작업엔 이 노드가 해당 없다",
+        "rework — 통과했던 판정을 거부한다 (--mark)",
+        "둘 다 사유 한 줄이 없으면 기록이 안 남는다",
+        "review 는 n/a 가 아예 안 된다 (na_allowed: false)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "rework 가 dirty 와 다른 점은 하나",
+      "items": [
+        "하류를 막는 것도, 프론티어에 뜨는 것도 dirty 와 같다",
+        "다른 건 하나뿐 — 선행 조건 게이트가 턴을 막지 않는다",
+        "재승인은 턴을 끝내야 받는데, 게이트가 막으면 길이 닫힌다",
+        "그래서 한 번도 승인 못 받은 노드는 rework 가 될 수 없다"
+      ]
+    }
+  ]
+}

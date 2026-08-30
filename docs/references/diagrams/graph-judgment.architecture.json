@@ -1,0 +1,402 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "그래프와 판단이 들어가는 자리",
+    "subtitle": "순서는 기계가 파생하고, 판단은 정해진 세 자리에만 있다",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1160,
+      620
+    ],
+    "views": [
+      {
+        "id": "topology",
+        "label": "그래프 구조",
+        "focus": [
+          "product",
+          "spec",
+          "design",
+          "implement",
+          "qa",
+          "review",
+          "deploy"
+        ],
+        "note": "노드 7개와 의존 관계가 전부다. 분기도 목적지 필드도 없다."
+      },
+      {
+        "id": "my-calls",
+        "label": "내가 판단하는 자리",
+        "focus": [
+          "surface",
+          "na",
+          "reviewers"
+        ],
+        "note": "세 자리뿐이다. 순서와 재작업 범위는 판단 대상이 아니다."
+      },
+      {
+        "id": "machine-floor",
+        "label": "기계가 되받는 하한선",
+        "focus": [
+          "riskgate",
+          "cancel",
+          "secreq"
+        ],
+        "note": "판단마다 되받이가 하나씩 붙어 있다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "product",
+      "type": "database",
+      "label": "product",
+      "sublabel": "docs/PRODUCT.md",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        128,
+        60
+      ]
+    },
+    {
+      "id": "spec",
+      "type": "security",
+      "label": "spec",
+      "sublabel": "불변식 · approved",
+      "pos": [
+        230,
+        50
+      ],
+      "size": [
+        128,
+        60
+      ]
+    },
+    {
+      "id": "design",
+      "type": "frontend",
+      "label": "design",
+      "sublabel": "집계 노드 · 자식 둘",
+      "pos": [
+        230,
+        210
+      ],
+      "size": [
+        128,
+        60
+      ]
+    },
+    {
+      "id": "implement",
+      "type": "backend",
+      "label": "implement",
+      "sublabel": "src/**",
+      "pos": [
+        420,
+        130
+      ],
+      "size": [
+        128,
+        60
+      ]
+    },
+    {
+      "id": "qa",
+      "type": "backend",
+      "label": "qa",
+      "sublabel": "테스트 · 커버리지",
+      "pos": [
+        600,
+        130
+      ],
+      "size": [
+        128,
+        60
+      ]
+    },
+    {
+      "id": "review",
+      "type": "security",
+      "label": "review",
+      "sublabel": "사인오프 마커",
+      "pos": [
+        780,
+        130
+      ],
+      "size": [
+        128,
+        60
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "cloud",
+      "label": "deploy",
+      "sublabel": "review clean 이라야",
+      "pos": [
+        960,
+        130
+      ],
+      "size": [
+        128,
+        60
+      ]
+    },
+    {
+      "id": "surface",
+      "type": "external",
+      "label": "닿는 표면 고르기",
+      "sublabel": "절차를 표면마다",
+      "tag": "내 판단",
+      "pos": [
+        420,
+        330
+      ],
+      "size": [
+        128,
+        68
+      ]
+    },
+    {
+      "id": "na",
+      "type": "external",
+      "label": "n/a 선언",
+      "sublabel": "이번엔 해당 없음",
+      "tag": "내 판단",
+      "pos": [
+        600,
+        330
+      ],
+      "size": [
+        128,
+        68
+      ]
+    },
+    {
+      "id": "reviewers",
+      "type": "external",
+      "label": "리뷰어 구성",
+      "sublabel": "닿은 표면으로",
+      "tag": "내 판단",
+      "pos": [
+        780,
+        330
+      ],
+      "size": [
+        128,
+        68
+      ]
+    },
+    {
+      "id": "riskgate",
+      "type": "security",
+      "label": "risk-surface",
+      "sublabel": "얇게 못 가게 막는다",
+      "pos": [
+        420,
+        470
+      ],
+      "size": [
+        128,
+        60
+      ]
+    },
+    {
+      "id": "cancel",
+      "type": "security",
+      "label": "n/a 자동 취소",
+      "sublabel": "세 경우에 되돌린다",
+      "pos": [
+        600,
+        470
+      ],
+      "size": [
+        128,
+        60
+      ]
+    },
+    {
+      "id": "secreq",
+      "type": "security",
+      "label": "사인오프 거부",
+      "sublabel": "리뷰어가 빠지면",
+      "pos": [
+        780,
+        470
+      ],
+      "size": [
+        128,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "그래프 — 순서와 재작업 범위는 기계가 파생한다",
+      "wraps": [
+        "product",
+        "spec",
+        "design",
+        "implement",
+        "qa",
+        "review",
+        "deploy"
+      ],
+      "pad": 22
+    },
+    {
+      "kind": "security-group",
+      "label": "판단이 틀리면 기계가 되받는다",
+      "wraps": [
+        "riskgate",
+        "cancel",
+        "secreq"
+      ],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-p-spec",
+      "from": "product",
+      "to": "spec",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-p-design",
+      "from": "product",
+      "to": "design",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-spec-impl",
+      "from": "spec",
+      "to": "implement",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-design-impl",
+      "from": "design",
+      "to": "implement",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-impl-qa",
+      "from": "implement",
+      "to": "qa",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-qa-review",
+      "from": "qa",
+      "to": "review",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-review-deploy",
+      "from": "review",
+      "to": "deploy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-surface-impl",
+      "from": "surface",
+      "to": "implement",
+      "label": "절차를 정한다",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "route": "straight"
+    },
+    {
+      "id": "c-surface-risk",
+      "from": "surface",
+      "to": "riskgate",
+      "label": "얇게 가려 하면",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight",
+      "labelDy": 24
+    },
+    {
+      "id": "c-na-qa",
+      "from": "na",
+      "to": "qa",
+      "label": "노드를 건너뛴다",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "route": "straight"
+    },
+    {
+      "id": "c-na-cancel",
+      "from": "na",
+      "to": "cancel",
+      "label": "판단이 틀리면",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight",
+      "labelDy": 24
+    },
+    {
+      "id": "c-rev-review",
+      "from": "reviewers",
+      "to": "review",
+      "label": "누구를 부를지",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "route": "straight"
+    },
+    {
+      "id": "c-rev-sec",
+      "from": "reviewers",
+      "to": "secreq",
+      "label": "보안 표면인데 빠지면",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "판단이 없는 자리",
+      "items": [
+        "다음에 뭘 할지 — 프론티어가 파생한다",
+        "재작업 범위 — dirty 전파가 정한다",
+        "clean 판정 — 게이트 · 프론트매터 · 사인오프",
+        "graph.mjs 에 분기도 목적지 필드도 없다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "판단이 있는 세 자리",
+      "items": [
+        "이번 diff 가 닿는 표면 → 표면마다 절차를 건다",
+        "n/a — 이번 작업엔 이 노드가 해당 없다",
+        "리뷰어 구성 — 닿지 않은 표면의 리뷰어는 안 부른다",
+        "qa 실패를 분류기에 맡길지는 순수 판단이다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "되받이는 판단마다 하나씩",
+      "items": [
+        "위험 표면인데 스펙이 없으면 편집이 막힌다",
+        "n/a 는 산출물·상류·risk-surface 로 자동 취소된다",
+        "보안 표면인데 security-reviewer 가 없으면 거부",
+        "생략 판단은 내가, 틀렸다는 감지는 기계가 한다"
+      ]
+    }
+  ]
+}
