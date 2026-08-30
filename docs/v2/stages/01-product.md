@@ -58,11 +58,11 @@ PRODUCT.md 없이 구현을 시작하는 것을 막는 게이트는 없다 — �
 
 **조건**: `clean_when: { exists_nonempty: "docs/PRODUCT.md" }` ([graph.mjs:44](../../../graph.mjs#L44))
 
-**통과 경로**: 파일이 존재하고 `.trim().length > 0` 이면 clean ([graph-stop.mjs:164-168](../../../gates/graph-stop.mjs#L164-L168)).
+**통과 경로**: 파일이 존재하고 `.trim().length > 0` 이면 clean ([graph-stop.mjs:164-168](../../../gates/graph-stop.mjs#L187-L191)).
 빈 파일은 통과하지 못한다 — 이 판정은 대상이 0개일 때 **거짓**을 반환한다. (같은 파일의 `frontmatterOK` 는 반대로 참을 반환한다 — [findings F-03](../findings.md))
 
 **실패 경로**: clean 이 안 내려가면 product 가 dirty 로 남고, 프론티어는 계속 product 다.
-하류는 [graph-stop.mjs:235](../../../gates/graph-stop.mjs#L235) 에서 `depends_on` 이 clean 이 아니라 아예 판정 대상이 되지 않는다.
+하류는 [graph-stop.mjs:235](../../../gates/graph-stop.mjs#L258) 에서 `depends_on` 이 clean 이 아니라 아예 판정 대상이 되지 않는다.
 
 **내용 심사는 없다.** 게이트는 "비어 있지 않음"만 본다 — 필수/비범위가 채워졌는지, 기술 결정이 기록됐는지는 검사하지 않는다.
 
@@ -84,4 +84,4 @@ PRODUCT.md 없이 구현을 시작하는 것을 막는 게이트는 없다 — �
 - **PRODUCT.md 의 내부 구조**(필수·비범위·페이지·기술 결정 절)를 강제하는 스키마나 템플릿을 못 찾았다. `docs/references/` 에 `spec-template.md` 는 있으나 product 용 템플릿은 없다. `[INFERRED]`
 - **setup 스킬로 넘어가는 전이가 그래프에 없다.** setup 은 스캐폴딩(파일 생성)을 하지만 어떤 노드의 produces 도 아니다 — 그래프 밖 절차다. 어느 노드가 setup 완료를 요구하는지 파일에서 확인 못 했다. `[INFERRED]`
 - kickoff 이 `projects/<이름>/` 을 만든 뒤 `ACTIVE` 를 쓰는 순서가 실제로 강제되는지(스크립트 검사) 확인 못 했다. [kickoff/SKILL.md:13](../../../.claude/skills/kickoff/SKILL.md#L13) 의 서술뿐이다. `[INFERRED]`
-- 두 프로젝트(`signal`·`wama`)가 동시에 존재하지만 `ACTIVE` 는 하나만 가리킨다. 비활성 프로젝트의 product 노드가 어떻게 다뤄지는지 — graph-stop 은 활성 프로젝트만 본다([graph-stop.mjs:24](../../../gates/graph-stop.mjs#L24))는 것까지는 확인했으나, 비활성 프로젝트의 게이트 에러가 무시되는 근거([graph-stop.mjs:141](../../../gates/graph-stop.mjs#L141))와 spec-coverage 가 **전 프로젝트**를 훑는 것([spec-coverage.mjs:9-14](../../../gates/spec-coverage.mjs#L9-L14))이 서로 다른 방침이다. 이 비대칭이 의도인지 확인 못 했다. `[INFERRED]`
+- 두 프로젝트(`signal`·`wama`)가 동시에 존재하지만 `ACTIVE` 는 하나만 가리킨다. 비활성 프로젝트의 product 노드가 어떻게 다뤄지는지 — graph-stop 은 활성 프로젝트만 본다([graph-stop.mjs:24](../../../gates/graph-stop.mjs#L24))는 것까지는 확인했으나, 비활성 프로젝트의 게이트 에러가 무시되는 근거([graph-stop.mjs:141](../../../gates/graph-stop.mjs#L164))와 spec-coverage 가 **전 프로젝트**를 훑는 것([spec-coverage.mjs:9-14](../../../gates/spec-coverage.mjs#L9-L14))이 서로 다른 방침이다. 이 비대칭이 의도인지 확인 못 했다. `[INFERRED]`

@@ -248,10 +248,13 @@ review                clean → dirty
 
 ```
 ℹ [risk-surface/DETECTED] projects/signal — auth, authz, concurrency
+ℹ [risk-surface/AT] projects/signal — auth@projects/signal/src/app/api/ingest/route.ts:34,
+   authz@projects/signal/src/app/api/ingest/route.ts:34,
+   concurrency@projects/signal/src/features/ingestion/api/ports.ts:149
 ```
 
-signal 에는 예전부터 `CRON_SECRET` 을 비교하는 `Bearer` 토큰 코드와 RLS 정책이 있고,
-그게 매번 감지된다. 사인오프 검사는 그 감지 결과를 쓰므로, **이 프로젝트에서는 어떤 diff 든
+`AT` 줄이 어디서 걸렸는지 말해 준다 — signal 에는 예전부터 `CRON_SECRET` 을 비교하는 `Bearer`
+토큰 코드와 RLS 정책이 있고, 그게 매번 감지된다. 사인오프 검사는 그 감지 결과를 쓰므로, **이 프로젝트에서는 어떤 diff 든
 `reviewers:` 에 `security-reviewer` 가 없으면 review 가 clean 이 되지 않는다.**
 
 기록하면 끝난다.

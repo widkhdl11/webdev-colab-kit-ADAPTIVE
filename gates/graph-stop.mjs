@@ -112,6 +112,29 @@ function naList(state) {
 function reworkList(state) {
   return topLevel(GRAPH).filter((n) => state[n].status === "rework").map((n) => `${n}(${state[n].reason ?? "사유 없음"})`);
 }
+// n/a 취소 감지 — n/a 는 '이번 작업엔 해당 없음'이라는 판단이다. 전파(markDirty)는 그 판단을 사유째 덮어쓴다.
+// 덮였다는 사실이 어디에도 안 뜨면 다음 세션은 그 노드가 원래부터 dirty 였다고 읽는다 — 사유는 이미 지워졌다.
+function naSnapshot(state) {
+  return new Map(
+    Object.keys(state)
+      .filter((id) => state[id]?.status === "n/a")
+      .map((id) => [id, state[id].reason ?? "사유 없음"]),
+  );
+}
+// before 이후 n/a 가 아니게 된 노드를 알린다. 취소는 이미 일어난 뒤다 — 여기서 하는 일은 보고뿐이다.
+function reportNaCancelled(before, state, cause) {
+  let n = 0;
+  for (const [id, why] of before) {
+    if (state[id]?.status === "n/a") continue;
+    console.error(
+      `↩ ${id} n/a 취소 → 지금 ${state[id]?.status ?? "없음"} (사유였던 것: ${why}) — ${cause}. ` +
+        `생략 판단의 전제가 바뀌었다: 그대로 작업하거나, 여전히 해당 없으면 --na 로 다시 선언한다.`,
+    );
+    n++;
+  }
+  return n;
+}
+
 function persist(state) {
   if (!existsSync(dirname(HANDOFF))) mkdirSync(dirname(HANDOFF), { recursive: true });
   const f = frontier(state);
@@ -251,7 +274,7 @@ function signoffCheck(so, detectedSurfaces) {
       if (touched.length > 0 && !reviewers.includes(reviewer))
         return {
           ok: false,
-          why: `코드에 ${touched.join("·")} 표면이 있는데 ${so.reviewers_field} 에 ${reviewer} 가 없다 ` +
+          why: `코드에 ${touched.map((s) => `${s}(${detectedSurfaces.get(s)})`).join("·")} 표면이 있는데 ${so.reviewers_field} 에 ${reviewer} 가 없다 ` +
             `(기록: ${reviewers.join(", ")}). 파견하고 결과를 적거나, 표면이 사라졌으면 그때 다시 사인오프한다`,
         };
     }
@@ -260,28 +283,43 @@ function signoffCheck(so, detectedSurfaces) {
 }
 
 // ── 수동 마크 모드: 분류기/사용자가 파일 변경 없이 노드를 dirty 로 (그 뒤 전파) ──
-//    사용: node gates/graph-stop.mjs --mark <spec|design|implement|...> ["<사유 한 줄>"]
+//    사용: node gates/graph-stop.mjs --mark <spec|design|design/page-designer|...> ["<사유 한 줄>"]
 //    분류기가 판정한 level 을 이걸로 찍으면, 재작업 범위는 전파가 파생한다.
 //
 //    dirty 냐 rework 냐는 선언하지 않는다 — 지금 상태에서 파생한다.
 //    clean 인 노드를 mark = 통과했던 판정을 취소하는 것(rework) / 이미 dirty 인 노드를 mark = 그대로 dirty.
 //    그래서 "한 번도 승인 안 받은 것"은 rework 가 될 수 없고, 선행 게이트가 그대로 막는다.
+//
+//    집계 노드(design)는 자식 이름으로도 찍을 수 있다 — `--mark design/page-designer "시안 대비 미달"`.
+//    부모로 찍으면 markRework 가 자식 전부에 같은 사유를 복사하므로, 시안 하나가 거부됐을 뿐인데
+//    손대지 않은 schema-designer 에까지 그 사유가 붙고 그쪽도 재승인을 받아야 풀린다.
+//    자식으로 찍으면 형제는 clean 인 채로 남고, 부모 상태는 recomputeParents 가 집계로 파생한다
+//    (부모를 손으로 선언하지 않는다 — 자식이 전부 rework 면 부모도 rework, 하나라도 dirty 면 dirty).
+const markable = [...topLevel(GRAPH), ...topLevel(GRAPH).flatMap((n) => childrenOf(GRAPH, n))];
 const markIdx = process.argv.indexOf("--mark");
 if (markIdx !== -1) {
   const node = process.argv[markIdx + 1];
   const reason = process.argv.slice(markIdx + 2).join(" ").trim();
-  if (!topLevel(GRAPH).includes(node)) {
-    console.error(`--mark: 알 수 없는 노드 '${node}'. 후보: ${topLevel(GRAPH).join(", ")}`);
+  if (!markable.includes(node)) {
+    console.error(`--mark: 알 수 없는 노드 '${node}'. 후보: ${markable.join(", ")}`);
     process.exit(1);
   }
   const s = loadState();
+  const naBefore = naSnapshot(s);
+  const parent = unitParent(node);
   const wasClean = s[node]?.status === "clean";
-  if (wasClean) markRework(s, node, reason, GRAPH);         // 자신 + 병렬 자식
+  if (wasClean) markRework(s, node, reason, GRAPH);         // 자신 + (톱레벨이면) 병렬 자식
   else markDirty(s, node, GRAPH);
-  for (const d of descendants(node, GRAPH)) markDirty(s, d, GRAPH);  // 하류는 거부된 게 아니라 상류가 흔들린 것
+  if (node !== parent) recomputeParents(s, GRAPH);          // 자식만 찍었으면 부모는 집계로 파생
+  for (const d of descendants(parent, GRAPH)) markDirty(s, d, GRAPH);  // 하류는 거부된 게 아니라 상류가 흔들린 것
   persist(s);
   const fr = frontier(s);
   console.log(`● mark(${node}) → ${wasClean ? "rework" : "dirty"} 전파. 프론티어: ${fr.length ? fr.join(", ") : "없음"}`);
+  if (node !== parent) {
+    const sib = childrenOf(GRAPH, parent).filter((c) => c !== node).map((c) => `${c}=${s[c]?.status}`);
+    console.log(`  ↳ ${parent} = ${s[parent]?.status} (자식 집계). 형제는 그대로: ${sib.join(", ") || "없음"}`);
+  }
+  reportNaCancelled(naBefore, s, `--mark ${node} 의 하류 전파가 덮었다`);
   if (wasClean && !reason)
     console.log(`  ↳ 사유가 비었다 — 몇 턴 뒤엔 왜 취소됐는지 아무도 근거를 못 댄다: --mark ${node} "<사유 한 줄>"`);
   process.exit(0);
@@ -331,13 +369,23 @@ const gateErrors = parseGateErrors(gateOut);
 // run-gates 출력은 이 프로세스가 캡처하므로, 통과했어도 예외 줄만은 그대로 올려보낸다.
 for (const line of gateOut.split("\n")) if (line.startsWith("⚠")) console.log(line);
 // 게이트가 신고한 '코드에 존재하는 위험 표면' — review 사인오프 판정에 쓴다(활성 프로젝트 것만).
-const detectedSurfaces = new Set();
+// 두 줄을 읽는다: DETECTED 는 표면 이름, AT 는 `표면@파일:줄`. 이름 줄만 있는 옛 게이트에서도
+// 판정은 그대로 돌고 위치만 '위치 미상'이 된다 — 이름 줄에 위치를 섞으면 그 호환이 깨진다.
+const detectedSurfaces = new Map();
 for (const line of gateOut.split("\n")) {
-  const m = line.match(/^ℹ \[risk-surface\/DETECTED\]\s+(\S+)\s+—\s+(.+)$/);
-  if (m && m[1].split("/")[1] === active) for (const s of m[2].split(",")) detectedSurfaces.add(s.trim());
+  const m = line.match(/^ℹ \[risk-surface\/(?:DETECTED|AT)\]\s+(\S+)\s+—\s+(.+)$/);
+  if (!m || m[1].split("/")[1] !== active) continue;   // 다른 프로젝트 신고 → 이 그래프와 무관
+  for (const item of m[2].split(",")) {
+    const [name, at] = item.trim().split("@");
+    if (!name) continue;
+    if (!detectedSurfaces.has(name)) detectedSurfaces.set(name, at || "위치 미상");
+    else if (at && detectedSurfaces.get(name) === "위치 미상") detectedSurfaces.set(name, at);
+  }
 }
 
 const state = loadState();
+// 이번 턴이 시작될 때 살아 있던 n/a 판단. 아래 전파가 이걸 지우면 3.6 이 알린다.
+const naBefore = naSnapshot(state);
 
 // 2) sync: 해시 변경 감지 → 전파 (사인오프 마커는 변경-트리거 아님 → 제외)
 const changed = [];
@@ -387,7 +435,15 @@ if (riskErrors.length > 0 && isSatisfied(state.spec.status)) {
           `위험 표면이 실제로 닿았으므로 스펙은 생략 대상이 아니다. /spec 으로 불변식부터 쓴다.`
       : `↩ spec → dirty — risk-surface 가 위험 패턴 ${riskErrors.length}건을 잡았다(스펙 없이 위험 표면 진입). /spec 으로 불변식부터 쓴다.`,
   );
+  naBefore.delete("spec");   // 위 메시지가 이 취소를 이미 보고했다 — 3.6 에서 두 번 말하지 않는다
 }
+
+// 3.6) n/a 취소 알림 — 취소 자체는 위(sync 전파·3.5)에서 이미 일어났다. 여기서 막는 건 '조용히' 뿐이다.
+reportNaCancelled(
+  naBefore,
+  state,
+  changed.length ? `${changed.join(", ")} 산출물이 바뀌어 전파됐다` : "상류 상태가 바뀌어 전파됐다",
+);
 
 // 4) 저장
 persist(state);
@@ -417,6 +473,9 @@ for (const n of topLevel(GRAPH)) {
     need.push(`'${so.reviewers_field}: [실제로 돌린 리뷰어]'${req.length ? ` — 이 코드는 ${req.join("·")} 를 포함해야 한다` : ""}`);
   }
   console.log(`     ${so.marker} 에 ${need.join(" + ")} 기록 시 clean`);
+  // 어디서 감지됐는지까지 말한다 — 표면 이름만 주면 "그게 어디 있는데"부터 다시 찾아야 한다.
+  if (detectedSurfaces.size)
+    console.log(`     감지된 위험 표면: ${[...detectedSurfaces].map(([s, at]) => `${s} @ ${at}`).join(" · ")}`);
 }
 
 // 6) 남은 게이트 에러 → 차단 여부 판정

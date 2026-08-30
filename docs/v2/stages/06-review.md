@@ -30,7 +30,7 @@
 1. 리뷰어를 파견한다. 각 리뷰어는 **판단 기준이 되는 문서를 먼저 읽는다** — 문서에 없는 취향은 지적하지 않는다 ([code-reviewer.md:6-7](../../../.claude/agents/code-reviewer.md#L6-L7) · [ui-reviewer.md:9-11](../../../.claude/agents/ui-reviewer.md#L9-L11))
 2. 지적이 나오면 `qa-classifier` 로 레벨을 귀속한다 — 분류기는 qa 실패뿐 아니라 **리뷰어 지적도** 입력으로 받는다 ([qa-classifier.md:10](../../../.claude/agents/qa-classifier.md#L10))
 3. 통과하면 `workspace/review.md` 에 `status: passed` + `basis: <해시>` 를 기록한다 ([CLAUDE.md:72-73](../../../CLAUDE.md#L72-L73))
-4. **basis 값은 지어내지 않는다** — graph-stop 이 프론티어 안내에서 출력해 준다 ([graph-stop.mjs:259-262](../../../gates/graph-stop.mjs#L259-L262))
+4. **basis 값은 지어내지 않는다** — graph-stop 이 프론티어 안내에서 출력해 준다 ([graph-stop.mjs:467-478](../../../gates/graph-stop.mjs#L467-L478))
 
 ## Skills and tools
 
@@ -57,7 +57,7 @@
 
 | document | ownership | consumed by |
 |---|---|---|
-| `projects/<이름>/workspace/review.md` | review 의 produces ([graph.mjs:106](../../../graph.mjs#L106)) | [graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L179-L188) `signoffOK` |
+| `projects/<이름>/workspace/review.md` | review 의 produces ([graph.mjs:106](../../../graph.mjs#L106)) | [graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L202-L211) `signoffOK` |
 
 이 파일은 **산출물이자 판정 근거**다. 다른 노드들은 산출물을 만들고 게이트가 따로 판정하지만, review 는 산출물 자체가 판정이다.
 
@@ -65,16 +65,16 @@
 
 **조건**: `signoff: { marker: "workspace/review.md", require: "status: passed", basis_of: "implement" }` ([graph.mjs:116](../../../graph.mjs#L116))
 
-세 가지를 **전부** 만족해야 clean 이다 ([graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L179-L188)):
+세 가지를 **전부** 만족해야 clean 이다 ([graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L202-L211)):
 
-1. 마커 파일이 존재한다 — 없으면 즉시 false ([:181](../../../gates/graph-stop.mjs#L181))
-2. 프론트매터에 `status: passed` 가 있다 ([:185](../../../gates/graph-stop.mjs#L185))
-3. `basis:` 값이 **implement 의 현재 내용 해시와 같다** ([:187](../../../gates/graph-stop.mjs#L187))
+1. 마커 파일이 존재한다 — 없으면 즉시 false ([:181](../../../gates/graph-stop.mjs#L204))
+2. 프론트매터에 `status: passed` 가 있다 ([:185](../../../gates/graph-stop.mjs#L208))
+3. `basis:` 값이 **implement 의 현재 내용 해시와 같다** ([:187](../../../gates/graph-stop.mjs#L210))
 
 **3번이 이 노드에서 제일 중요한 대목이다.** 다른 모든 판정은 "지금 상태가 조건을 만족하나"를 묻지만, basis 비교는 "**이 승인이 무엇에 대한 승인이었나**"를 묻는다.
 구현이 한 글자라도 바뀌면 해시가 달라져 사인오프가 저절로 낡는다 — 리뷰를 다시 해야 한다 ([graph.mjs:102](../../../graph.mjs#L102)).
 
-**사인오프 노드는 변경 감지에서 제외된다** ([graph-stop.mjs:218](../../../gates/graph-stop.mjs#L218)) — 마커 파일을 고쳐도 그것 때문에 dirty 가 되지는 않는다. 낡는 건 오직 basis 가 어긋날 때뿐이다.
+**사인오프 노드는 변경 감지에서 제외된다** ([graph-stop.mjs:218](../../../gates/graph-stop.mjs#L241)) — 마커 파일을 고쳐도 그것 때문에 dirty 가 되지는 않는다. 낡는 건 오직 basis 가 어긋날 때뿐이다.
 
 ## Failure path
 
@@ -94,4 +94,4 @@
 - **등급(정식/빠른) 판정이 어디에도 안 남는다.** [CLAUDE.md:41-55](../../../CLAUDE.md#L41-L55) 가 등급을 나누고 파견 규모를 다르게 정하지만, 어느 등급으로 진행했는지 적을 자리가 마커에 없다. 다음 세션은 리뷰가 얼마나 깊었는지 모른다. `[INFERRED]`
 - **`basis_of: "implement"` 는 implement 의 produces(`src/**`) 해시다.** 테스트 파일도 `src/**` 에 포함되므로 테스트만 고쳐도 basis 가 바뀌어 재리뷰가 강제되는 것으로 보인다 ([04-implement.md](04-implement.md) 의 같은 항목 참조). 직접 돌려 보지는 않았다. `[INFERRED]`
 - **`workspace/review.md` 의 형식 템플릿을 못 찾았다.** 필요한 필드는 `status` 와 `basis` 뿐인 것으로 보이나(정규식이 그 둘만 본다), 무엇을 지적했고 어떻게 해소했는지 기록하는 규약이 있는지 확인 못 했다. `[INFERRED]`
-- **`signoffOK` 는 매칭된 첫 파일만 읽는다** ([graph-stop.mjs:182](../../../gates/graph-stop.mjs#L182) `files[0]`). `workspace/review.md` 는 단일 파일이라 문제되지 않지만, 글롭이 여러 파일을 잡는 마커였다면 나머지가 무시된다. 현재 구성에서 문제가 되지 않음만 확인했다. `[INFERRED]`
+- **`signoffOK` 는 매칭된 첫 파일만 읽는다** ([graph-stop.mjs:182](../../../gates/graph-stop.mjs#L205) `files[0]`). `workspace/review.md` 는 단일 파일이라 문제되지 않지만, 글롭이 여러 파일을 잡는 마커였다면 나머지가 무시된다. 현재 구성에서 문제가 되지 않음만 확인했다. `[INFERRED]`

@@ -358,7 +358,7 @@ for (const projDir of projectDirs) {
   ];
   // surface -> [{rel, line, what, rule}]  (예외 처리 후 남은 것만)
   const hits = new Map(SURFACE_KEYS.map((s) => [s, []]));
-  const detected = new Set();
+  const detected = new Map();   // 표면 → 처음 감지된 위치(파일:줄). graph-stop 이 사인오프 안내에 그대로 쓴다
   for (const file of scanFiles) {
     const src = readFileSync(file, "utf-8");
     if (!/risk-surface|auth|payment|role|upsert|conflict|token|cookie|policy|trigger|lock|commit|grant/i.test(src)) continue;
@@ -377,7 +377,7 @@ for (const projDir of projectDirs) {
         for (const { rule, re, not, what } of def.rules) {
           if (!re.test(t) || (not && not.test(t))) continue;
           seen.add(surface);
-          detected.add(surface);
+          if (!detected.has(surface)) detected.set(surface, `${rel}:${i + 1}`);
           if (covered.has(surface)) break;              // 스펙이 커버 → 조용히 통과
           if (exempt.has(surface) && expired.has(surface)) {
             // 예외는 살아 있는데 그 전제가 깨졌다 → 통과시키지 않는다. 이게 "예외의 만료"다.
@@ -406,6 +406,7 @@ for (const projDir of projectDirs) {
       }
     }
   }
+  // [표면, 위치] 쌍으로 넘긴다. 신고 줄의 형식은 아래에서 정한다 — 이름 줄과 위치 줄로 나눠 낸다.
   if (detected.size > 0) detectedByProject.set(label, [...detected]);
   for (const [surface, list] of hits) {
     if (list.length === 0) continue;
@@ -557,8 +558,13 @@ if (!QUICK) {
 // 위험 표면 예외는 통과시키되 매번 보이게 남긴다 — 예외가 쌓여 아무도 모르게 방벽이 사라지는 걸 막는다.
 for (const w of riskWarnings) console.error(w);
 // 감지된 표면 신고(차단 아님). graph-stop 이 review 사인오프 판정에 쓴다.
-for (const [label, surfaces] of detectedByProject)
-  console.log(`ℹ [risk-surface/DETECTED] ${label} — ${surfaces.join(", ")}`);
+// 이름 줄과 위치 줄을 따로 낸다. 이름 줄에 위치를 섞으면 그걸 읽는 옛 graph-stop 이 표면 이름을
+// "authz@경로:줄" 로 통째로 읽어 require_reviewer 대조에 실패한다 — security-reviewer 요구가
+// 조용히 사라진다(2026-08-30 실측). 줄을 나누면 옛 판본은 AT 줄을 그냥 무시한다.
+for (const [label, entries] of detectedByProject) {
+  console.log(`ℹ [risk-surface/DETECTED] ${label} — ${entries.map(([s]) => s).join(", ")}`);
+  console.log(`ℹ [risk-surface/AT] ${label} — ${entries.map(([s, at]) => `${s}@${at}`).join(", ")}`);
+}
 
 if (errors.length > 0) {
   console.error(

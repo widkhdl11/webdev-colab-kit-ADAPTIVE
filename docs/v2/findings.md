@@ -46,7 +46,7 @@
 
 - **어느 검사에서 나왔나**: 아무도 세팅하지 않는 상태를 참조하는 게이트 조건
 - **사실**: [graph.mjs:131](../../graph.mjs#L131) 가 `deploy` 를 `signoff: { marker: "workspace/deploy.md", require: "status: deployed" }` 로 clean 판정한다. `deployed` 라는 문자열은 `CLAUDE.md`·`.claude/`·`docs/references/`·`gates/`·`scripts/` 어디에도 없다. 대비되게 `review` 쪽은 [CLAUDE.md:72](../../CLAUDE.md#L72) 와 [graph-engine.md:114](../references/graph-engine.md#L114) 에 절차가 있다. **현재 이 레포의 프론티어가 `deploy` 다.**
-- **심각도**: **중간** — *다른 장치가 막아 준다*: [gates/graph-stop.mjs:259-262](../../gates/graph-stop.mjs#L259-L262) 가 사인오프 노드가 프론티어일 때 무엇을 쓸지 런타임에 출력한다. 절차 문서는 없지만 완전히 막히지는 않는다.
+- **심각도**: **중간** — *다른 장치가 막아 준다*: [gates/graph-stop.mjs:467-478](../../gates/graph-stop.mjs#L467-L478) 가 사인오프 노드가 프론티어일 때 무엇을 쓸지 런타임에 출력한다. 절차 문서는 없지만 완전히 막히지는 않는다.
 - **재현**:
   ```
   grep -rn "deployed" CLAUDE.md .claude docs/references gates scripts    # 0건
@@ -56,8 +56,8 @@
 ## F-03 · 볼 파일이 없을 때 `frontmatter` 는 통과시키고 `exists_nonempty` 는 막는다 — 둘이 정반대다
 
 - **어느 검사에서 나왔나**: 아무도 세팅하지 않는 상태를 참조하는 게이트 조건
-- **사실**: [gates/graph-stop.mjs:153](../../gates/graph-stop.mjs#L153) `if (files.length === 0) return true; // 대상 없음 → 막지 않음`. 따라서 `design/page-designer` 의 clean 조건([graph.mjs:66](../../graph.mjs#L66))은 `docs/design/design-rules.md` 가 **아예 없을 때도 통과**한다. 같은 파일 [167행](../../gates/graph-stop.mjs#L167)의 `exists_nonempty` 는 반대로 0개면 거짓이다.
-- **심각도**: **중간** — *다른 장치가 막아 준다*: [gates/run-gates.mjs:455-468](../../gates/run-gates.mjs#L455-L468) 의 `design/BEFORE_UI` 가 UI 파일 작업을 별도로 차단한다. 그 게이트가 화면 위치를 못 알아보는 스택에서는 등급이 높음으로 올라간다 — 이 위험은 [setup/SKILL.md:22-25](../../.claude/skills/setup/SKILL.md#L22-L25) 가 이미 경고하고 있다("강제가 조용히 사라지거나").
+- **사실**: [gates/graph-stop.mjs:153](../../gates/graph-stop.mjs#L176) `if (files.length === 0) return true; // 대상 없음 → 막지 않음`. 따라서 `design/page-designer` 의 clean 조건([graph.mjs:66](../../graph.mjs#L66))은 `docs/design/design-rules.md` 가 **아예 없을 때도 통과**한다. 같은 파일 [167행](../../gates/graph-stop.mjs#L190)의 `exists_nonempty` 는 반대로 0개면 거짓이다.
+- **심각도**: **중간** — *다른 장치가 막아 준다*: [gates/run-gates.mjs:455-468](../../gates/run-gates.mjs#L456-L469) 의 `design/BEFORE_UI` 가 UI 파일 작업을 별도로 차단한다. 그 게이트가 화면 위치를 못 알아보는 스택에서는 등급이 높음으로 올라간다 — 이 위험은 [setup/SKILL.md:22-25](../../.claude/skills/setup/SKILL.md#L22-L25) 가 이미 경고하고 있다("강제가 조용히 사라지거나").
 - **재현**:
   ```
   sed -n '150,153p;164,168p' gates/graph-stop.mjs
@@ -194,7 +194,7 @@
 
 - **어느 검사에서 나왔나**: 아무도 세팅하지 않는 상태를 참조하는 게이트 조건
 - **사실**: [graph.mjs:70](../../graph.mjs#L70) 의 produces 는 `supabase/migrations/*.sql` 와 `src/entities/*/model.ts` 다. signal 에는 `supabase/` 디렉터리가 없고, 엔티티는 `src/entities/article/model/types.ts` — **`model.ts` 가 아니라 `model/` 디렉터리**다. 글롭 실측 결과 매칭 0개.
-  → [graph-stop.mjs:66-72](../../gates/graph-stop.mjs#L66-L72) `hashNode` 가 `null` 을 돌려주고, [:169-176](../../gates/graph-stop.mjs#L169-L176) `gateBlocked` 도 막을 경로가 없다 → **무조건 clean**.
+  → [graph-stop.mjs:66-72](../../gates/graph-stop.mjs#L66-L72) `hashNode` 가 `null` 을 돌려주고, [:169-176](../../gates/graph-stop.mjs#L192-L199) `gateBlocked` 도 막을 경로가 없다 → **무조건 clean**.
 - **심각도**: **중간** — *다른 장치가 막아 준다*: 엔티티 코드 자체는 implement 의 `src/**` 에서 `fsd`·`security` 게이트로 검사된다. 사라지는 것은 **design 국면의 승인 흐름**이지 코드 검사가 아니다.
 - **재현**:
   ```

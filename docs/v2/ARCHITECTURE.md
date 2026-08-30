@@ -91,7 +91,7 @@ product ─┬→ spec ────┐
 | **F-01** | [CLAUDE.md:97](../../CLAUDE.md#L97) 이 세션마다 읽으라고 하는 `GLOSSARY.md` 가 레포에 없다 | **높음** — 매번 마주치는데 없다는 걸 알려 주는 장치가 없다 |
 | **F-06①** | "새 페이지 만들어줘" 한마디에 `checkpoint` 와 `design-interview` 가 둘 다 걸린다. 순서를 정해 주는 규칙 파일은 자동으로 안 붙는다 | **높음** — 받쳐 줄 장치가 자동으로 안 붙는다 |
 | **F-02** | `deploy` 사인오프(`status: deployed`)를 어떻게 쓰는지 알려 주는 문서가 한 곳도 없다. **지금 프론티어가 deploy 다** | 중간 — graph-stop 이 돌면서 알려 준다 |
-| **F-03** | 프론트매터 검사가 **검사할 파일이 하나도 없으면 그냥 통과시킨다** ([graph-stop.mjs:153](../../gates/graph-stop.mjs#L153)) → `design-rules.md` 가 아예 없어도 page-designer 가 clean | 중간 — `design/BEFORE_UI` 가 따로 막아 준다 |
+| **F-03** | 프론트매터 검사가 **검사할 파일이 하나도 없으면 그냥 통과시킨다** ([graph-stop.mjs:153](../../gates/graph-stop.mjs#L176)) → `design-rules.md` 가 아예 없어도 page-designer 가 clean | 중간 — `design/BEFORE_UI` 가 따로 막아 준다 |
 | **F-11** | `qa` 가 찾는 패턴 `src/**/*.test.ts` 가 **`.test.tsx` 를 못 잡는다.** signal 테스트 9개 중 3개가 `.tsx` | 중간 — implement 의 `src/**` 가 대신 잡아 전파된다 |
 | **F-12** | `design/schema-designer` 가 찾는 파일이 하나도 없어서 **늘 통과한다.** signal 은 `model.ts` 가 아니라 `model/` 폴더를 쓴다 | 중간 — 코드 검사는 implement 에서 한다 |
 | **F-13** | `tech-stack.md` 가 어느 노드의 `produces` 에도 없다 → 기술 결정을 바꿔도 다시 할 범위가 안 잡힌다 | 중간 |
@@ -108,7 +108,7 @@ product ─┬→ spec ────┐
 
 전체 목록은 [omissions.md](omissions.md). 요약하면:
 
-- **1차가 뺐던 `거부(status: draft)` 를 이번엔 넣었다.** [graph-stop.mjs:156](../../gates/graph-stop.mjs#L156) 이 `approved` 인지 보니까, 그게 아닌 상태도 게이트가 실제로 겪는 상태다. 빼 놓으면 clean 이 한 방향으로만 흐르는 것처럼 보인다.
+- **1차가 뺐던 `거부(status: draft)` 를 이번엔 넣었다.** [graph-stop.mjs:156](../../gates/graph-stop.mjs#L179) 이 `approved` 인지 보니까, 그게 아닌 상태도 게이트가 실제로 겪는 상태다. 빼 놓으면 clean 이 한 방향으로만 흐르는 것처럼 보인다.
 - **다시 하러 되돌아가는 화살표는 일부러 안 그렸다.** 되돌아가는 건 화살표가 아니라 규칙이다 — 화살표로 그리면 있지도 않은 경로가 있는 것처럼 보인다.
 - 노드 개수 제한과 자리 부족 때문에 뺀 것: `qa-classifier`(00-workflow) · `design` 의 자식 2개(00-workflow) · `design` 의 집계 상태(02-gate, 레인 자리가 3칸뿐) · `PROGRESS.md`·`DECISIONS.md`(03-doc-flow) · `checkpoint`·`style-scout`(04-layers, 옆 노드에 합침).
 - **04-layers 는 주제를 바꿨다.** 이전엔 "문서가 언제 컨텍스트에 붙나"였는데 Claude Code 동작 설명에 가까워서, 그 내용은 [runtime.md](runtime.md) 로 옮기고 "내 스킬·에이전트가 어느 단계에서 불리나"로 다시 그렸다.

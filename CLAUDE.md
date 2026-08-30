@@ -22,7 +22,9 @@
 - 통과했던 판정을 거부할 때는 사유와 함께 mark한다: `node gates/graph-stop.mjs --mark <노드> "<사유 한 줄>"`.
   clean이던 노드를 mark하면 `rework`가 된다(아직 승인 못 받은 노드는 그냥 dirty). rework는 하류를 막는 것도
   프론티어에 뜨는 것도 dirty와 같고, 다른 건 하나뿐이다 — 재승인처럼 **턴을 끝내야 풀리는 게이트 실패가
-  턴을 막지 않는다**. 상세: docs/references/graph-engine.md
+  턴을 막지 않는다**. `design`처럼 자식이 있는 노드는 거부된 자식만 찍는다
+  (`--mark design/page-designer "<사유>"`) — 부모로 찍으면 사유가 자식 전부에 복사돼 손대지 않은
+  `schema-designer`까지 재승인을 기다린다. 상세: docs/references/graph-engine.md
 - 이번 작업에 해당 없는 노드는 사유와 함께 n/a로 선언한다:
   `node gates/graph-stop.mjs --na <노드> "<사유 한 줄>"`. n/a는 프론티어에 뜨지 않아 매 턴 지적받지 않는다.
   판단이 틀리면 기계가 취소한다 — 산출물이 생기거나, 상류가 바뀌거나, risk-surface 게이트가 위험 패턴을

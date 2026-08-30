@@ -17,6 +17,11 @@ Stop 훅이 턴을 막을지 정할 때 다르게 취급된다.
   지금 `clean` 인 노드를 mark 하면 rework, 이미 dirty 면 dirty 다. 판별 재료가 이미 상태에 있어서
   따로 기록할 게 없고, "한 번도 승인 안 받은 것"이 rework 로 둔갑할 수도 없다.
 - 하류는 rework 가 아니라 dirty 로 전파된다 — 하류는 거부된 게 아니라 상류가 흔들려 다시 하는 것이다.
+- **집계 노드(design)는 자식 이름으로 찍는다**: `--mark design/page-designer "시안 색 대비 미달"`.
+  부모로 찍으면 사유가 자식 전부에 복사돼서, 시안 하나가 거부됐을 뿐인데 손대지 않은 `schema-designer`
+  까지 그 사유를 달고 재승인을 기다린다. 자식으로 찍으면 형제는 clean 그대로고 부모 상태는
+  집계로 파생된다(자식이 전부 rework 면 부모도 rework, 하나라도 순수 dirty 면 dirty).
+  하류 전파는 어느 쪽으로 찍든 **부모 기준**이다 — `implement` 는 `design` 에 의존하지 자식에 의존하지 않는다.
 - 해제: 따로 없다. release 조건(프론트매터·게이트)을 채우면 다른 상태와 똑같이 clean 으로 풀린다.
 - 재작업 중에 그 노드의 파일을 고쳐도 rework 는 유지된다(해시 변경이 dirty 로 되돌리지 않는다).
   안 그러면 재작업하는 행위 자체가 거부 사실을 지운다.
@@ -76,13 +81,25 @@ n/a 는 판단이라 틀릴 수 있다. **생략 판단은 모델이 하고, 생
 | 상류가 dirty 가 됨(전파) | 판단의 전제가 바뀌었다 |
 | `risk-surface` 게이트가 위험 패턴을 잡음 | spec 의 n/a 는 즉시 dirty — 위험 표면이 실제로 닿았다 |
 
+**취소되면 한 줄이 뜬다.** 전파(`markDirty`)는 노드를 `{status:"dirty", hash:null}` 로 통째로 덮어써서
+사유까지 지운다. 취소는 옳지만 조용하면 다음 세션은 그 노드가 원래부터 dirty 였다고 읽는다 — 근거가 이미 없다.
+
+```
+↩ deploy n/a 취소 → 지금 dirty (사유였던 것: 배포는 다른 에이전트가 맡는다) — implement 산출물이
+  바뀌어 전파됐다. 생략 판단의 전제가 바뀌었다: 그대로 작업하거나, 여전히 해당 없으면 --na 로 다시 선언한다.
+```
+
+취소 경로가 둘이라 두 자리에서 찍는다 — `--mark` 의 하류 전파, 파이프라인의 해시 변경 전파(3.6).
+`risk-surface` 로 인한 spec 취소는 3.5 가 따로 말하므로 3.6 에서 두 번 말하지 않는다.
+n/a 가 그대로 유지된 턴에는 아무 말도 안 한다.
+
 ## 파일
 | 파일 | 역할 |
 |---|---|
 | `graph.mjs` | 토폴로지 선언(순수 리터럴). depends_on·produces·clean_when + `GATE_KIND`(게이트 성격·owner). 라우팅 없음 |
 | `gates/propagate.mjs` | 전파 엔진: propagate·topoSort·descendants·cycle 검출 |
-| `gates/graph-stop.mjs` | Stop 오케스트레이터: 게이트→sync(해시감지·전파)→release(dirty해제)→n/a 자동취소→HANDOFF→차단 판정. `--mark <노드> "<사유>"`(clean 이면 rework), `--na`/`--na-clear` |
-| `gates/run-gates.mjs` | 결정론 게이트. 그중 `risk-surface` 는 위험 표면(auth·payment·authz·concurrency) 진입을 잡아 스펙을 요구하고, spec 의 n/a 를 취소시킨다 |
+| `gates/graph-stop.mjs` | Stop 오케스트레이터: 게이트→sync(해시감지·전파)→release(dirty해제)→n/a 자동취소·알림→HANDOFF→차단 판정. `--mark <노드|부모/자식> "<사유>"`(clean 이면 rework), `--na`/`--na-clear` |
+| `gates/run-gates.mjs` | 결정론 게이트. 그중 `risk-surface` 는 위험 표면(auth·payment·authz·concurrency) 진입을 잡아 스펙을 요구하고, spec 의 n/a 를 취소시킨다. 감지 결과는 두 줄로 신고한다 — `DETECTED`(표면 이름) 와 `AT`(`표면@파일:줄`) |
 | `.claude/agents/qa-classifier.md` | 검증 실패를 spec/design/impl로 귀속(판정만, 라우팅 X) |
 | `projects/<이름>/workspace/HANDOFF.md` | 런타임 상태(dirty·hash). 자동 생성 |
 | `scripts/briefing.mjs` | 세션 시작 시 프론티어(지금 작업할 노드) 표시 |
@@ -197,7 +214,9 @@ approved 스펙(surfaces:[auth]) + INV 테스트 작성 → spec=clean, 프론�
 - **리뷰 통과 기록**: `workspace/review.md`에 `status: passed` + `basis: <graph-stop이 안내한 해시>`
   + `reviewers: [실제로 돌린 리뷰어]`. 코드에 auth·payment·authz 표면이 있으면 `security-reviewer`가
   그 목록에 있어야 사인오프가 된다(게이트 감지와 대조). graph-stop이 매 턴 막힌 이유를 그대로 말해준다.
-- **강제 dirty(파일 변경 없이)**: `node gates/graph-stop.mjs --mark <node>` (게이트 통과 노드엔 비지속 — 거부를 쓸 것).
+- **강제 dirty(파일 변경 없이)**: `node gates/graph-stop.mjs --mark <node> "<사유>"` (clean 이던 노드면 rework).
+  `design` 처럼 자식이 있는 노드는 `--mark design/page-designer` 로 거부된 자식만 찍는다 — 형제까지
+  같은 사유로 재승인을 기다리게 만들지 않는다.
 - **이번 작업엔 해당 없는 노드**: `node gates/graph-stop.mjs --na <node> "<사유>"`.
   사유는 필수고, 위 표의 세 조건 중 하나라도 걸리면 기계가 자동으로 취소한다. 되돌리기는 `--na-clear <node>`.
 

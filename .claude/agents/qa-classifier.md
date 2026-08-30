@@ -63,8 +63,12 @@ tools: Read, Grep, Glob
   **+ `node gates/graph-stop.mjs --mark spec "<거부 사유>"`**.
   → 승인 취소로 spec이 dirty로 남고 하류로 전파. 재작업 후 재승인하면 clean.
 - **design-level** → design-rules.md 프론트매터를 `status: draft`로 되돌린다(설계 거부)
-  **+ `node gates/graph-stop.mjs --mark design "<거부 사유>"`**.
+  **+ `node gates/graph-stop.mjs --mark design/page-designer "<거부 사유>"`**.
   → design이 dirty로 남고 하류로 전파. 재작업 후 재승인하면 clean.
+  **자식 이름으로 찍는다.** `design`은 자식 둘(`page-designer`=시안·design-rules,
+  `schema-designer`=마이그레이션·엔티티 모델)의 집계다. 부모로 찍으면 사유가 자식 전부에 복사돼
+  손대지 않은 쪽까지 재승인을 기다린다. 스키마가 원인이면 `--mark design/schema-designer`.
+  둘 다면 부모로 찍는다. 부모 상태는 어느 쪽이든 집계로 파생되고, 하류 전파도 그대로다.
 
 **파일만 고치고 마크를 빠뜨리지 않는다.** 파일 수정만으로도 해시가 바뀌어 dirty가 되지만, 그건 그냥
 dirty지 `rework`가 아니다. clean이던 노드를 mark해야 rework가 되고, rework여야 재승인을 받으러 가는

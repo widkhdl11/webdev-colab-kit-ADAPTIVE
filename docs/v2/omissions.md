@@ -13,7 +13,7 @@
 
 1차가 뺐던 그 상태를 [02-gate.lifecycle.json](diagrams/02-gate.lifecycle.json) 에 **`rejected` 로 넣었다.**
 
-판단 근거: [gates/graph-stop.mjs:156](../../gates/graph-stop.mjs#L156) 이 `^\s*status:\s*approved\b` 를 검사한다.
+판단 근거: [gates/graph-stop.mjs:156](../../gates/graph-stop.mjs#L179) 이 `^\s*status:\s*approved\b` 를 검사한다.
 `approved` 가 아닌 상태도 게이트가 실제로 마주치는 상태라는 뜻이다. 누가 그렇게 만들었는지(사람이 내렸든 도구가 바꿨든)는
 게이트가 알지도 못하고 상관도 안 한다. 이걸 빼 놓으면 그림만 보는 사람은 clean 이 한 방향으로만 흐른다고 믿게 된다.
 
@@ -28,7 +28,7 @@
 |---|---|---|
 | `design` 의 병렬 자식 2개 — page-designer([graph.mjs:62](../../graph.mjs#L62)) · schema-designer([graph.mjs:69](../../graph.mjs#L69)) | 노드 상한 8–12. 둘을 넣으면 12를 넘고 컬럼이 포화된다 | 그림의 "게이트" 카드 · [00-workflow.workflow.json](diagrams/00-workflow.workflow.json) `cards[1]` |
 | `qa-classifier` 노드 ([graph.mjs:97](../../graph.mjs#L97)) | 컬럼 0–5가 전부 차서 실패 레인을 넣으면 엣지가 교차한다(`composition/proper-crossing` 실측) | 그림의 "게이트" 카드에 `--mark` 동작까지 서술 |
-| `spec-coverage` 게이트 노드 | [run-gates.mjs:536](../../gates/run-gates.mjs#L536) 이 내부에서 실행한다 — 별도 층이 아니다 | 그림의 "게이트" 카드 + **[runtime.md](runtime.md) §3 표** |
+| `spec-coverage` 게이트 노드 | [run-gates.mjs:536](../../gates/run-gates.mjs#L537) 이 내부에서 실행한다 — 별도 층이 아니다 | 그림의 "게이트" 카드 + **[runtime.md](runtime.md) §3 표** |
 | PreToolUse 보호 훅 3개 · SessionStart 브리핑 | 실행 그래프를 전진시키지 않는다 | **[runtime.md](runtime.md) §1·§2** + [04-layers](diagrams/04-layers.architecture.json) 에 층으로 있음 |
 | **재작업 역방향 엣지** | 제약이 아니라 **의도적 배제**. 전파는 엣지가 아니라 규칙이다(상류 dirty → 하류 전부, [graph.mjs:6](../../graph.mjs#L6)). 엣지로 그리면 있지도 않은 경로가 있는 것처럼 보인다 | 그림의 "주 경로" 카드 · [02-gate.lifecycle.json](diagrams/02-gate.lifecycle.json) 이 상태 전이로 표현 |
 | `qa → run-gates` 엣지 | 게이트 관계를 `implement` 쪽 하나로 대표시켰다 | 그림의 "게이트" 카드에 qa 의 `clean_when` 명시 |
@@ -49,10 +49,10 @@
 | 뺀 것 | 이유 | 어디에 글로 남았나 |
 |---|---|---|
 | `deploy` 차단 상태 | 한 노드의 상태가 아니라 **노드 사이의 의존**이다([graph.mjs:129](../../graph.mjs#L129)) | [00-workflow.workflow.json](diagrams/00-workflow.workflow.json) 의 `review → deploy` 엣지 |
-| `design` 부모 집계 상태 (자식 둘 다 clean 이라야 부모 clean, [graph-stop.mjs:244-246](../../gates/graph-stop.mjs#L244-L246)) | 렌더러 제약 — `main`/`terminal` 외 레인은 **한 밴드를 공유**해 칸이 3개뿐이다(실측: `States ... share one band`) | 그림의 "생략 원장" 카드 |
-| `--mark` 진입 ([graph-stop.mjs:193-206](../../gates/graph-stop.mjs#L193-L206)) | 되돌림 경로 셋과 **결과가 같다**(dirty 전파) — 상태를 늘려도 정보가 안 는다 | 그림의 "생략 원장" 카드 |
-| 해시 변경 감지 dirty ([graph-stop.mjs:217-222](../../gates/graph-stop.mjs#L217-L222)) | `낡음(stale)` 과 결과가 같아 한 상태로 합쳤다 | 그림의 "생략 원장" 카드 |
-| 게이트 카테고리 6종의 개별 상태 | 판정에서 구분되지 않는다 — `gateBlocked` 는 카테고리 일치 여부만 본다([graph-stop.mjs:169-176](../../gates/graph-stop.mjs#L169-L176)) | 그림의 "생략 원장" 카드 |
+| `design` 부모 집계 상태 (자식 둘 다 clean 이라야 부모 clean, [graph-stop.mjs:244-246](../../gates/graph-stop.mjs#L267-L269)) | 렌더러 제약 — `main`/`terminal` 외 레인은 **한 밴드를 공유**해 칸이 3개뿐이다(실측: `States ... share one band`) | 그림의 "생략 원장" 카드 |
+| `--mark` 진입 ([graph-stop.mjs:193-206](../../gates/graph-stop.mjs#L216-L229)) | 되돌림 경로 셋과 **결과가 같다**(dirty 전파) — 상태를 늘려도 정보가 안 는다 | 그림의 "생략 원장" 카드 |
+| 해시 변경 감지 dirty ([graph-stop.mjs:217-222](../../gates/graph-stop.mjs#L240-L245)) | `낡음(stale)` 과 결과가 같아 한 상태로 합쳤다 | 그림의 "생략 원장" 카드 |
+| 게이트 카테고리 6종의 개별 상태 | 판정에서 구분되지 않는다 — `gateBlocked` 는 카테고리 일치 여부만 본다([graph-stop.mjs:169-176](../../gates/graph-stop.mjs#L192-L199)) | 그림의 "생략 원장" 카드 |
 
 ## 04-layers — 단계별로 누가 불리나
 

@@ -77,23 +77,23 @@ Bash 쪽도 막는다 — 리다이렉트(`>`·`>>`), `tee`, `sed -i`, `cp`/`mv`
 
 ## 3. 편집 직후 / 턴 끝 — `run-gates.mjs`
 
-**두 번 돈다.** 편집할 때마다 `--quick` 으로([settings.json:28](../../.claude/settings.json#L28)), 턴이 끝날 때 graph-stop 이 전량으로([graph-stop.mjs:210](../../gates/graph-stop.mjs#L210)).
+**두 번 돈다.** 편집할 때마다 `--quick` 으로([settings.json:28](../../.claude/settings.json#L28)), 턴이 끝날 때 graph-stop 이 전량으로([graph-stop.mjs:210](../../gates/graph-stop.mjs#L233)).
 
 | 카테고리 | 무엇을 잡나 | `--quick` 에서 |
 |---|---|---|
 | `fsd/UPWARD_IMPORT` · `fsd/CROSS_SLICE` | 아래 레이어가 위를 부르거나, 같은 층의 남의 슬라이스를 부르는 것 (`app`·`shared` 는 슬라이스가 없어 교차 검사 제외) ([:124-135](../../gates/run-gates.mjs#L124-L135)) | 돈다 |
 | `security/*` 4종 | eval · innerHTML · 코드에 박아 넣은 시크릿 · document.write ([:41-62](../../gates/run-gates.mjs#L41-L62)) | 돈다 |
 | `security/DEFINER_SEARCH_PATH` | SQL `security definer` 함수가 `search_path` 를 안 고정한 것 ([:168-172](../../gates/run-gates.mjs#L168-L172)) | 돈다 |
-| `design/BEFORE_UI` | 승인 안 받고 화면부터 만드는 것 ([:455-468](../../gates/run-gates.mjs#L455-L468)) | **돈다** — 편집 즉시 막아야 하니까 |
-| `tsc/*` | 타입 에러 ([:481-503](../../gates/run-gates.mjs#L481-L503)) | 건너뛴다 |
-| `test/FAIL` | `npm test` 실패 ([:510-528](../../gates/run-gates.mjs#L510-L528)) | 건너뛴다 |
+| `design/BEFORE_UI` | 승인 안 받고 화면부터 만드는 것 ([:455-468](../../gates/run-gates.mjs#L456-L469)) | **돈다** — 편집 즉시 막아야 하니까 |
+| `tsc/*` | 타입 에러 ([:481-503](../../gates/run-gates.mjs#L482-L504)) | 건너뛴다 |
+| `test/FAIL` | `npm test` 실패 ([:510-528](../../gates/run-gates.mjs#L511-L529)) | 건너뛴다 |
 | `spec-coverage/MISSING_TEST` | approved 스펙의 INV 에 테스트가 없는 것 ([spec-coverage.mjs:57-60](../../gates/spec-coverage.mjs#L57-L60)) | 건너뛴다 |
 
 **알아 둘 것 셋**
 
 1. **`src/` 가 아직 없으면 통째로 건너뛰고 exit 0** ([:34-39](../../gates/run-gates.mjs#L34-L39)) — 스캐폴드 전 빈 레포에서 같은 실패가 턴마다 다시 뜨는 걸 막으려고
-2. **에러는 30건까지만 찍는다** ([:553](../../gates/run-gates.mjs#L553)) — 31건째부터는 소리 없이 잘린다
-3. **`design/BEFORE_UI` 의 Next 예외** — 라우트 화면(`page.*`)이 **딱 한 장이면 '워킹 스켈레톤'으로 보고 그냥 넘어간다** ([:439-444](../../gates/run-gates.mjs#L439-L444)). App Router 는 `page.*` 없이는 라우트가 404 라, 이 예외가 없으면 배포 확인용 스켈레톤조차 못 만든다
+2. **에러는 30건까지만 찍는다** ([:553](../../gates/run-gates.mjs#L554)) — 31건째부터는 소리 없이 잘린다
+3. **`design/BEFORE_UI` 의 Next 예외** — 라우트 화면(`page.*`)이 **딱 한 장이면 '워킹 스켈레톤'으로 보고 그냥 넘어간다** ([:439-444](../../gates/run-gates.mjs#L440-L445)). App Router 는 `page.*` 없이는 라우트가 404 라, 이 예외가 없으면 배포 확인용 스켈레톤조차 못 만든다
 
 SQL `DEFINER` 검사는 `create or replace` 를 감안해 **함수 이름별로 마지막 정의만** 본다 ([:141](../../gates/run-gates.mjs#L141)) — 옛날 정의 때문에 헛경고가 뜨지 않게.
 
@@ -113,21 +113,21 @@ SQL `DEFINER` 검사는 `create or replace` 를 감안해 **함수 이름별로 
 
 | 함수 | 무엇을 보나 | 볼 파일이 하나도 없으면 |
 |---|---|---|
-| `frontmatterOK` [:150](../../gates/graph-stop.mjs#L150) | 찾은 파일이 **전부** `status: <값>` 인가 | **그냥 통과시킨다** ← [findings F-03](findings.md) |
-| `existsNonemptyOK` [:164](../../gates/graph-stop.mjs#L164) | 파일이 있고 비어 있지 않은가 | 막는다 |
-| `gateBlocked` [:169](../../gates/graph-stop.mjs#L169) | 카테고리가 맞고 에러 경로가 produces 패턴에 걸리나 | 안 막는다 |
-| `signoffOK` [:179](../../gates/graph-stop.mjs#L179) | 마커가 있고, 문구가 맞고, **basis 해시가 지금 것과 같은가** | 막는다 |
+| `frontmatterOK` [:150](../../gates/graph-stop.mjs#L173) | 찾은 파일이 **전부** `status: <값>` 인가 | **그냥 통과시킨다** ← [findings F-03](findings.md) |
+| `existsNonemptyOK` [:164](../../gates/graph-stop.mjs#L187) | 파일이 있고 비어 있지 않은가 | 막는다 |
+| `gateBlocked` [:169](../../gates/graph-stop.mjs#L192) | 카테고리가 맞고 에러 경로가 produces 패턴에 걸리나 | 안 막는다 |
+| `signoffOK` [:179](../../gates/graph-stop.mjs#L202) | 마커가 있고, 문구가 맞고, **basis 해시가 지금 것과 같은가** | 막는다 |
 
 **파일 찾는 패턴이 판정을 좌우한다.** `globToRegex` ([:32-43](../../gates/graph-stop.mjs#L32-L43)) 가 `**` 는 `.*` 로, `*` 는 `[^/]*` 로 바꾼다.
 그리고 `_` 로 시작하는 파일은 아예 후보에서 빠진다 ([:58](../../gates/graph-stop.mjs#L58)) — `_TEMPLATE.md` 가 spec 을 막지 않게.
 이 두 장치가 엉뚱하게 걸린 게 [findings F-11](findings.md)(`.test.tsx` 를 못 잡음)과 [F-12](findings.md)(`model.ts` 를 못 잡음)다.
 
-**자식이 있는 노드는 자식을 처리한 바로 그 자리에서 결과를 확정한다** ([:243-246](../../gates/graph-stop.mjs#L243-L246)) — 같은 턴 안에서 아래쪽(implement)이 그 값을 보고 판단하기 때문이다.
+**자식이 있는 노드는 자식을 처리한 바로 그 자리에서 결과를 확정한다** ([graph-stop.mjs:418-420](../../gates/graph-stop.mjs#L418-L420)) — 같은 턴 안에서 아래쪽(implement)이 그 값을 보고 판단하기 때문이다.
 
-**손으로 dirty 찍기**: `node gates/graph-stop.mjs --mark <노드>` ([:190-206](../../gates/graph-stop.mjs#L190-L206)).
+**손으로 dirty 찍기**: `node gates/graph-stop.mjs --mark <노드>` ([:190-206](../../gates/graph-stop.mjs#L213-L229)).
 파일을 안 고치고도 노드를 dirty 로 만들고 전파시킨다. 분류기 판단을 반영하는 통로다.
 
-**다른 프로젝트의 게이트 에러는 무시한다** ([:141](../../gates/graph-stop.mjs#L141)) — 활성 프로젝트만 본다.
+**다른 프로젝트의 게이트 에러는 무시한다** ([:141](../../gates/graph-stop.mjs#L164)) — 활성 프로젝트만 본다.
 그런데 `spec-coverage` 는 **전 프로젝트**를 훑는다 ([spec-coverage.mjs:9-14](../../gates/spec-coverage.mjs#L9-L14)). 두 방침이 서로 다르다 (아래 참조).
 
 ## 5. qa-classifier — 판단만 하고 갈 곳은 안 정한다
@@ -159,14 +159,14 @@ SQL `DEFINER` 검사는 `create or replace` 를 감안해 **함수 이름별로 
 
 **바로 보고해야 하는 경우**: `spec-level` 이거나 위험한 데(인증·결제·권한·격리 INV·security)에 닿으면 **등급과 상관없이 사용자에게 먼저 알린다** ([CLAUDE.md:88](../../CLAUDE.md#L88)).
 
-파견은 자동이 아니다. graph-stop 이 **알려 주기만 한다** ([graph-stop.mjs:254-256](../../gates/graph-stop.mjs#L254-L256)):
+파견은 자동이 아니다. graph-stop 이 **알려 주기만 한다** ([graph-stop.mjs:453-454](../../gates/graph-stop.mjs#L453-L454)):
 > ↩ qa dirty + 검증 실패 — 분류기(qa-classifier) 필요
 
 ## 파일에서 확인 못 한 것
 
-- **분류기가 *왜* 그렇게 판단했는지 아무 데도 안 남는다.** `--mark` 는 HANDOFF 의 상태값만 바꾼다 ([graph-stop.mjs:200-202](../../gates/graph-stop.mjs#L200-L202)). 다음 세션은 dirty 라는 것만 알고 이유는 모른다. `[INFERRED]`
-- **활성 프로젝트를 다루는 방침이 갈린다.** graph-stop 은 활성만 보고([:24](../../gates/graph-stop.mjs#L24)) 게이트 에러도 활성 것만 거르는데([:141](../../gates/graph-stop.mjs#L141)) `spec-coverage` 는 전 프로젝트를 훑는다. 안 쓰는 프로젝트의 INV 누락이 지금 프로젝트를 막는지 직접 돌려 보지 않았다. `[INFERRED]`
+- **분류기가 *왜* 그렇게 판단했는지 아무 데도 안 남는다.** `--mark` 는 HANDOFF 의 상태값만 바꾼다 ([graph-stop.mjs:200-202](../../gates/graph-stop.mjs#L223-L225)). 다음 세션은 dirty 라는 것만 알고 이유는 모른다. `[INFERRED]`
+- **활성 프로젝트를 다루는 방침이 갈린다.** graph-stop 은 활성만 보고([:24](../../gates/graph-stop.mjs#L24)) 게이트 에러도 활성 것만 거르는데([:141](../../gates/graph-stop.mjs#L164)) `spec-coverage` 는 전 프로젝트를 훑는다. 안 쓰는 프로젝트의 INV 누락이 지금 프로젝트를 막는지 직접 돌려 보지 않았다. `[INFERRED]`
 - **`briefing.mjs` 의 순서 경고는 글자를 맞춰 보는 방식이다.** "다음 할 일" 문장을 `또는`·`→`·`then` 으로 자르고 맨 앞만 본다 ([:52](../../scripts/briefing.mjs#L52)). 말 순서가 다르면 헛경고가 뜨거나 놓치는지 확인 안 했다. `[INFERRED]`
 - **`protect-files.mjs` 를 우회할 수 있는지 확인 안 했다.** 리다이렉트·`tee`·`sed -i`·`cp`/`mv` 는 잡지만 `python -c`·`node -e` 로 파일을 쓰는 건 규칙에 없다. `[INFERRED]`
 - **훅 자체가 죽으면 어떻게 되는지 확인 안 했다.** 셋 다 걸리면 `exit 2` 로 막지만, 훅 스크립트가 잘못된 입력으로 크래시하면 막는 쪽인지 통과시키는 쪽인지 파일만 봐서는 알 수 없었다. `[INFERRED]`
-- **`run-gates` 의 30건 자르기**([:553](../../gates/run-gates.mjs#L553))**가 실제로 일어난 적 있는지** 확인 안 했다. 일어나면 31건째부터의 위반이 소리 없이 사라진다. `[INFERRED]`
+- **`run-gates` 의 30건 자르기**([:553](../../gates/run-gates.mjs#L554))**가 실제로 일어난 적 있는지** 확인 안 했다. 일어나면 31건째부터의 위반이 소리 없이 사라진다. `[INFERRED]`

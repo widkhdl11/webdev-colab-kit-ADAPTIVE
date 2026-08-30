@@ -14,7 +14,7 @@
 
 | 조건 | 어디서 막나 |
 |---|---|
-| `review` 가 clean | [graph.mjs:129](../../../graph.mjs#L129) `depends_on: ["review"]` · [graph-stop.mjs:235](../../../gates/graph-stop.mjs#L235) |
+| `review` 가 clean | [graph.mjs:129](../../../graph.mjs#L129) `depends_on: ["review"]` · [graph-stop.mjs:235](../../../gates/graph-stop.mjs#L258) |
 
 review 가 dirty 인 동안은 프론티어에 오르지도 못한다. 그리고 review 는 implement 해시가 바뀌면 저절로 낡으므로,
 **배포 직전에 코드를 한 줄 고치면 배포가 다시 막힌다.** 이게 이 그래프에서 유일하게 강제되는 마감이다.
@@ -23,7 +23,7 @@ review 가 dirty 인 동안은 프론티어에 오르지도 못한다. 그리고
 
 **절차 문서가 없다.** 확인된 것은 두 가지뿐이다:
 
-1. graph-stop 이 프론티어 안내에서 **무엇을 써야 하는지** 출력한다 ([graph-stop.mjs:259-262](../../../gates/graph-stop.mjs#L259-L262)):
+1. graph-stop 이 프론티어 안내에서 **무엇을 써야 하는지** 출력한다 ([graph-stop.mjs:467-478](../../../gates/graph-stop.mjs#L467-L478)):
    `deploy 사인오프 대기: workspace/deploy.md 에 'status: deployed' + 'basis: <해시>' 기록 시 clean`
 2. 배포 대상(안 함 / 정적 호스팅 / Vercel)은 kickoff 의 기술 질문에서 정해져 PRODUCT.md 에 기록된다 ([kickoff/SKILL.md:20-21](../../../.claude/skills/kickoff/SKILL.md#L20-L21))
 
@@ -49,7 +49,7 @@ review 가 dirty 인 동안은 프론티어에 오르지도 못한다. 그리고
 
 | document | ownership | consumed by |
 |---|---|---|
-| `projects/<이름>/workspace/deploy.md` | deploy 의 produces ([graph.mjs:130](../../../graph.mjs#L130)) | [graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L179-L188) `signoffOK` — **이것뿐이다** |
+| `projects/<이름>/workspace/deploy.md` | deploy 의 produces ([graph.mjs:130](../../../graph.mjs#L130)) | [graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L202-L211) `signoffOK` — **이것뿐이다** |
 
 **이 파일은 현재 어느 프로젝트에도 존재하지 않는다.** 그래프가 요구하는 유일한 산출물인데 아직 한 번도 만들어진 적이 없다.
 
@@ -57,7 +57,7 @@ review 가 dirty 인 동안은 프론티어에 오르지도 못한다. 그리고
 
 **조건**: `signoff: { marker: "workspace/deploy.md", require: "status: deployed", basis_of: "implement" }` ([graph.mjs:131](../../../graph.mjs#L131))
 
-판정 로직은 review 와 **완전히 같은 함수**를 쓴다 ([graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L179-L188)) — 마커 존재 + 프론트매터 문자열 + basis 해시 일치.
+판정 로직은 review 와 **완전히 같은 함수**를 쓴다 ([graph-stop.mjs:179-188](../../../gates/graph-stop.mjs#L202-L211)) — 마커 존재 + 프론트매터 문자열 + basis 해시 일치.
 다른 것은 `require` 값(`status: deployed`)과 마커 경로뿐이다.
 
 > ⚠ **`status: deployed` 를 언제 어떻게 기록하는지 설명하는 문서가 이 레포에 없다.**
@@ -71,7 +71,7 @@ review 가 dirty 인 동안은 프론티어에 오르지도 못한다. 그리고
 
 - `review` 가 dirty 가 되면 deploy 도 dirty 로 전파된다 ([propagate.mjs:87-92](../../../gates/propagate.mjs#L87-L92)) — 배포 후 코드를 고치면 사인오프가 무효가 된다
 - 배포에 실패했을 때 무엇을 하는지, 롤백을 어디에 기록하는지 정해진 곳이 없다. 그래프에는 실패 상태가 없다 — `deploy` 는 clean 이거나 dirty 뿐이다
-- `--mark deploy` 로 수동 dirty 는 가능하다 ([graph-stop.mjs:193-206](../../../gates/graph-stop.mjs#L193-L206))
+- `--mark deploy` 로 수동 dirty 는 가능하다 ([graph-stop.mjs:193-206](../../../gates/graph-stop.mjs#L216-L229))
 
 ## Exit condition
 
