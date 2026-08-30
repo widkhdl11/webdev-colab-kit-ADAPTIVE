@@ -1,0 +1,64 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node 'c:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\.codex\\hooks\\protect-secrets.mjs'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node 'c:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\.codex\\hooks\\protect-files.mjs'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node 'c:\\Users\\PC\\Desktop\\dev\\webdeb-colab-kit-ADAPTIVE\\.codex\\hooks\\block-danger.mjs'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node gates/run-gates.mjs --quick"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/briefing.mjs"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node gates/graph-stop.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}
