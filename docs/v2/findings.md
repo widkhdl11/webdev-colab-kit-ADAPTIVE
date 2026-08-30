@@ -34,7 +34,7 @@
 ## F-01 · 세션마다 읽으라고 지시하는 `GLOSSARY.md` 가 없다
 
 - **어느 검사에서 나왔나**: 유령 참조 (읽는다고 선언됐으나 대상 부재)
-- **사실**: [CLAUDE.md:97](../../CLAUDE.md#L97) 이 `Read GLOSSARY.md at session start to resolve Korean paraphrases` 라고 지시한다. 레포에 `GLOSSARY.md` 는 없다.
+- **사실**: [CLAUDE.md:97](../../CLAUDE.md#L103) 이 `Read GLOSSARY.md at session start to resolve Korean paraphrases` 라고 지시한다. 레포에 `GLOSSARY.md` 는 없다.
 - **심각도**: **높음** — *정상 경로에서 반드시 닿는다*(모든 세션 시작) + *두 번째 안전장치가 없다*(파일 없다는 걸 알려 주는 훅·게이트가 없어 조용히 건너뛴다).
 - **재현**:
   ```
@@ -45,7 +45,7 @@
 ## F-02 · `deploy` 사인오프를 어떻게 기록하는지 절차 문서가 없다
 
 - **어느 검사에서 나왔나**: 아무도 세팅하지 않는 상태를 참조하는 게이트 조건
-- **사실**: [graph.mjs:131](../../graph.mjs#L131) 가 `deploy` 를 `signoff: { marker: "workspace/deploy.md", require: "status: deployed" }` 로 clean 판정한다. `deployed` 라는 문자열은 `CLAUDE.md`·`.claude/`·`docs/references/`·`gates/`·`scripts/` 어디에도 없다. 대비되게 `review` 쪽은 [CLAUDE.md:72](../../CLAUDE.md#L72) 와 [graph-engine.md:114](../references/graph-engine.md#L114) 에 절차가 있다. **현재 이 레포의 프론티어가 `deploy` 다.**
+- **사실**: [graph.mjs:131](../../graph.mjs#L131) 가 `deploy` 를 `signoff: { marker: "workspace/deploy.md", require: "status: deployed" }` 로 clean 판정한다. `deployed` 라는 문자열은 `CLAUDE.md`·`.claude/`·`docs/references/`·`gates/`·`scripts/` 어디에도 없다. 대비되게 `review` 쪽은 [CLAUDE.md:72](../../CLAUDE.md#L78) 와 [graph-engine.md:114](../references/graph-engine.md#L114) 에 절차가 있다. **현재 이 레포의 프론티어가 `deploy` 다.**
 - **심각도**: **중간** — *다른 장치가 막아 준다*: [gates/graph-stop.mjs:467-478](../../gates/graph-stop.mjs#L467-L478) 가 사인오프 노드가 프론티어일 때 무엇을 쓸지 런타임에 출력한다. 절차 문서는 없지만 완전히 막히지는 않는다.
 - **재현**:
   ```
@@ -79,7 +79,7 @@
 
 - **어느 검사에서 나왔나**: 설명이 30단어 미만인 스킬
 - **사실**: 어절 수(공백 분할) 기준 30 미만은 6개다 — goal(4) · status(6) · scaffold(9) · wrap-up(21) · spec(28) · setup(29). 그중 **goal · status · scaffold 는 `disable-model-invocation: true`** 라 모델이 알아서 부르지 않는다([goal/SKILL.md](../../.claude/skills/goal/SKILL.md) · [status/SKILL.md](../../.claude/skills/status/SKILL.md) · [scaffold/SKILL.md](../../.claude/skills/scaffold/SKILL.md)) → 트리거 강도가 따질 필요가 없다. 실제로 문제되는 건 wrap-up · spec · setup.
-- **심각도**: **spec 은 중간** — *정상 경로에서 닿고 다른 장치가 있다*: [CLAUDE.md:60](../../CLAUDE.md#L60) 이 위험 기능 앞에서 스펙을 요구하는 별도 규칙을 두고 있어 스킬 설명만으로 호출 여부가 정해지지 않는다. **wrap-up · setup 은 낮음** — 사용자가 명시적으로 부르는 국면이라 산출물이 틀리지 않는다.
+- **심각도**: **spec 은 중간** — *정상 경로에서 닿고 다른 장치가 있다*: [CLAUDE.md:60](../../CLAUDE.md#L66) 이 위험 기능 앞에서 스펙을 요구하는 별도 규칙을 두고 있어 스킬 설명만으로 호출 여부가 정해지지 않는다. **wrap-up · setup 은 낮음** — 사용자가 명시적으로 부르는 국면이라 산출물이 틀리지 않는다.
 - **[INFERRED] 기준 자체의 한계**: "30단어"는 공백 분할 어절 수로 쟀다. 한국어는 조사가 붙어 한 어절에 담기는 정보량이 영어 단어와 다르므로, **이 임계값이 한국어 설명에 그대로 유효한지는 파일에서 확인할 수 없다.** 글자 수를 병기한다(goal 17자 · status 21자 · scaffold 44자 · wrap-up 99자 · spec 128자 · setup 138자).
 - **재현**:
   ```
@@ -105,7 +105,7 @@
 **② `wrap-up` ↔ `retro` — 심각도 중간**
 - [wrap-up/SKILL.md:3](../../.claude/skills/wrap-up/SKILL.md#L3) "'오늘은 여기까지', '정리하자'… 세션을 끝내려는 신호"
 - [retro/SKILL.md:3](../../.claude/skills/retro/SKILL.md#L3) "기능 완성 후, 반복 실수가 있을 때… 사용자가 회고를 요청할 때"
-- "오늘 마무리하면서 정리 좀 하자"류 문장에 둘 다 성립한다. [CLAUDE.md:67-68](../../CLAUDE.md#L67-L68) 이 "wrap-up 먼저, 큰 진전이면 retro 제안"이라는 순서를 주지만 **그 순서가 설명 안에 없다.**
+- "오늘 마무리하면서 정리 좀 하자"류 문장에 둘 다 성립한다. [CLAUDE.md:67-68](../../CLAUDE.md#L73-L74) 이 "wrap-up 먼저, 큰 진전이면 retro 제안"이라는 순서를 주지만 **그 순서가 설명 안에 없다.**
 - **심각도 중간** — 닿지만 CLAUDE.md(항상 로드)가 순서를 잡아 준다.
 
 **③ `setup` ↔ `scaffold` — 심각도 낮음**

@@ -22,7 +22,7 @@ design
 | `product` 가 clean | [graph.mjs:60](../../../graph.mjs#L60) `depends_on: ["product"]` |
 | **새 시각 방향**인가 반복인가의 판단 | [design-drafting.md:10-18](../../../.claude/rules/design-drafting.md#L10-L18) — 애매하면 새 방향으로 본다 |
 
-`design-drafting.md` 는 **`paths:` 프론트매터가 없다.** 경로를 편집해도 자동으로 붙지 않고, [CLAUDE.md:23](../../../CLAUDE.md#L23)·[:59](../../../CLAUDE.md#L59) 가 이름을 부를 때만 로드된다. 규칙 7개 중 유일한 예외다 ([04-layers 그림](../diagrams/04-layers.architecture.json) 참조).
+`design-drafting.md` 는 **`paths:` 프론트매터가 없다.** 경로를 편집해도 자동으로 붙지 않고, [CLAUDE.md:23](../../../CLAUDE.md#L23)·[:59](../../../CLAUDE.md#L65) 가 이름을 부를 때만 로드된다. 규칙 7개 중 유일한 예외다 ([04-layers 그림](../diagrams/04-layers.architecture.json) 참조).
 
 ## What it does
 
@@ -85,7 +85,7 @@ Next 프로젝트는 `src/app/**/page.*` 를 화면으로 보되, **라우트가
 ## Failure path
 
 - 시안이 어긋나면 **코드가 아니라 시안을 버리며 반복**한다. drafter 에 원문 그대로 재위임 ([design-drafting.md:37-38](../../../.claude/rules/design-drafting.md#L37-L38))
-- 검증 실패가 **design-level** 로 귀속되면 `design-rules.md` 를 `status: draft` 로 내린다(거부) → page-designer dirty → design dirty → implement 이하 전부 dirty ([CLAUDE.md:86](../../../CLAUDE.md#L86))
+- 검증 실패가 **design-level** 로 귀속되면 `design-rules.md` 를 `status: draft` 로 내린다(거부) → page-designer dirty → design dirty → implement 이하 전부 dirty ([CLAUDE.md:86](../../../CLAUDE.md#L92))
 - Playwright 미연결 상태에서 style-scout 을 위임하는 것은 **금지**다 ([style-scout.md:3](../../../.claude/agents/style-scout.md#L3))
 - 승인 전에 나머지 화면을 "미리" 만들어두지 않는다 ([checkpoint/SKILL.md:15](../../../.claude/skills/checkpoint/SKILL.md#L15))
 

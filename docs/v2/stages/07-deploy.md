@@ -62,7 +62,7 @@ review 가 dirty 인 동안은 프론티어에 오르지도 못한다. 그리고
 
 > ⚠ **`status: deployed` 를 언제 어떻게 기록하는지 설명하는 문서가 이 레포에 없다.**
 > `deployed` 라는 문자열을 `CLAUDE.md` · `.claude/` · `docs/references/` · `gates/` · `scripts/` 전체에서 찾으면 **0건**이다.
-> 대비되게 review 쪽은 [CLAUDE.md:72-73](../../../CLAUDE.md#L72-L73) 과 [graph-engine.md:114](../../references/graph-engine.md#L114) 에 절차가 있다.
+> 대비되게 review 쪽은 [CLAUDE.md:72-73](../../../CLAUDE.md#L78-L79) 과 [graph-engine.md:114](../../references/graph-engine.md#L114) 에 절차가 있다.
 > 이것이 [findings F-02](../findings.md) 다 (심각도 **중간** — graph-stop 의 런타임 안내가 있어 완전히 막히지는 않는다).
 
 **basis 가 implement 를 가리킨다.** 배포한 것은 빌드 산출물인데 사인오프의 근거는 소스 해시다 — 둘 사이의 대응을 검증하는 장치는 없다.
@@ -81,7 +81,7 @@ review 가 dirty 인 동안은 프론티어에 오르지도 못한다. 그리고
 ## Unverified
 
 - **배포 절차 전체가 미확인이다.** 무엇을 빌드하고, 어디에 올리고, 성공을 어떻게 확인하는지 — 어느 파일에서도 못 찾았다. 이 문서의 `What it does` 가 2줄인 것은 요약이 아니라 **정말로 그것뿐**이기 때문이다. `[INFERRED]`
-- **배포 사인오프를 누가 하는지 정해져 있지 않다.** review 는 [CLAUDE.md:77-80](../../../CLAUDE.md#L77-L80) 이 리뷰어 파견 규칙으로 "누가"를 정하지만, deploy 에는 대응하는 규칙이 없다.
+- **배포 사인오프를 누가 하는지 정해져 있지 않다.** review 는 [CLAUDE.md:77-80](../../../CLAUDE.md#L83-L86) 이 리뷰어 파견 규칙으로 "누가"를 정하지만, deploy 에는 대응하는 규칙이 없다.
 - **빌드 산출물과 basis 의 대응이 검증되지 않는다.** `basis_of: "implement"` 는 `src/**` 해시다. 그 소스로 만든 번들이 실제로 배포됐는지 확인하는 장치는 없다. `[INFERRED]`
 - **`scripts/apply-migrations.mjs` 가 배포 파이프라인의 일부인지 확인 안 했다.** 파일을 읽지 않았고, 어느 노드의 produces 도 아니며 훅에도 등록돼 있지 않다. `[INFERRED]`
 - **롤백·재배포 상태가 그래프에 없다.** deploy 는 이진 상태(clean/dirty)다. 배포 실패와 미배포가 구별되지 않는다. `[INFERRED]`

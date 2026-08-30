@@ -149,7 +149,7 @@ SQL `DEFINER` 검사는 `create or replace` 를 감안해 **함수 이름별로 
 
 **위쪽 말을 안 지킨 첫 칸에서 멈춘다. 여러 칸이 의심돼도 하나만 고른다.**
 
-고른 뒤에 할 일 ([CLAUDE.md:85-87](../../CLAUDE.md#L85-L87)):
+고른 뒤에 할 일 ([CLAUDE.md:85-87](../../CLAUDE.md#L91-L93)):
 
 | 판단 | 하는 일 |
 |---|---|
@@ -157,7 +157,7 @@ SQL `DEFINER` 검사는 `create or replace` 를 감안해 **함수 이름별로 
 | design | `design-rules.md` 를 `status: draft` 로 내린다 (거부) |
 | spec | 해당 스펙을 `status: draft` 로 내린다 (거부) |
 
-**바로 보고해야 하는 경우**: `spec-level` 이거나 위험한 데(인증·결제·권한·격리 INV·security)에 닿으면 **등급과 상관없이 사용자에게 먼저 알린다** ([CLAUDE.md:88](../../CLAUDE.md#L88)).
+**바로 보고해야 하는 경우**: `spec-level` 이거나 위험한 데(인증·결제·권한·격리 INV·security)에 닿으면 **등급과 상관없이 사용자에게 먼저 알린다** ([CLAUDE.md:88](../../CLAUDE.md#L94)).
 
 파견은 자동이 아니다. graph-stop 이 **알려 주기만 한다** ([graph-stop.mjs:453-454](../../gates/graph-stop.mjs#L453-L454)):
 > ↩ qa dirty + 검증 실패 — 분류기(qa-classifier) 필요

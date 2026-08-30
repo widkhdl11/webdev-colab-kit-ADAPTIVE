@@ -17,7 +17,7 @@
 `approved` 가 아닌 상태도 게이트가 실제로 마주치는 상태라는 뜻이다. 누가 그렇게 만들었는지(사람이 내렸든 도구가 바꿨든)는
 게이트가 알지도 못하고 상관도 안 한다. 이걸 빼 놓으면 그림만 보는 사람은 clean 이 한 방향으로만 흐른다고 믿게 된다.
 
-다만 `status: draft` 라는 **구체적인 값**은 gates/ 가 아니라 [CLAUDE.md:79](../../CLAUDE.md#L79) 와
+다만 `status: draft` 라는 **구체적인 값**은 gates/ 가 아니라 [CLAUDE.md:79](../../CLAUDE.md#L85) 와
 [spec/SKILL.md:28](../../.claude/skills/spec/SKILL.md#L28) 에 있다. 게이트는 "approved 가 아님"만 안다 → `[INFERRED]` 로 표시했다.
 
 ---
@@ -67,7 +67,7 @@
 | 문서가 컨텍스트에 붙는 네 가지 계기 | 주제를 바꾸면서 통째로 옮겼다 | **[runtime.md](runtime.md)** |
 | `docs/references/` 7개 · `.claude/rules/` 7개의 개별 노드 | 층 단위로 묶었다 | [reference/references.md](reference/references.md) · [reference/rules.md](reference/rules.md) |
 | `docs/LESSONS.md` · `README.md` · `GLOSSARY.md` | 층 소속이 아니라 문서다 | [03-doc-flow.dataflow.json](diagrams/03-doc-flow.dataflow.json) · [findings.md](findings.md) F-01 · F-07 |
-| MCP 서버 (Context7 · Playwright) | [CLAUDE.md:95](../../CLAUDE.md#L95) 와 [style-scout](../../.claude/agents/style-scout.md) 이 전제하지만 **이 레포에 설정 파일이 없다** — 없는 것을 그리지 않았다(§R1) | 이 표 |
+| MCP 서버 (Context7 · Playwright) | [CLAUDE.md:95](../../CLAUDE.md#L101) 와 [style-scout](../../.claude/agents/style-scout.md) 이 전제하지만 **이 레포에 설정 파일이 없다** — 없는 것을 그리지 않았다(§R1) | 이 표 |
 | `.claude/commands/` 층 | **디렉터리 자체가 없다** | [findings.md](findings.md) **F-04** |
 
 ---

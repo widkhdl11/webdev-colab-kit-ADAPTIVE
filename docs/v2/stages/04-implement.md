@@ -19,7 +19,7 @@
 ## What it does
 
 1. approved 스펙이 있으면 **시나리오를 테스트로 먼저** 쓰고, 실행해서 **red 를 출력으로 보여준다** → 구현 → green ([tdd.md:9-10](../../../.claude/rules/tdd.md#L9-L10)). "구현 후 끼워 맞춘 테스트는 알리바이지 검증이 아니다"
-2. FSD 6레이어 안에 배치한다 — `app · pages · widgets · features · entities · shared`, import 는 아래 방향만 ([run-gates.mjs:12](../../../gates/run-gates.mjs#L12) · [CLAUDE.md:32](../../../CLAUDE.md#L32))
+2. FSD 6레이어 안에 배치한다 — `app · pages · widgets · features · entities · shared`, import 는 아래 방향만 ([run-gates.mjs:12](../../../gates/run-gates.mjs#L12) · [CLAUDE.md:32](../../../CLAUDE.md#L34))
 3. 레이어별 규칙은 **경로를 편집하는 순간 자동으로 붙는다** (`paths:` 프론트매터):
    - [domain-layers.md](../../../.claude/rules/domain-layers.md) → `src/entities/**` · `src/features/**`
    - [ui-layers.md](../../../.claude/rules/ui-layers.md) → `src/app/**` · `src/pages/**` · `src/widgets/**`
@@ -81,7 +81,7 @@
 
 - 게이트 실패가 남으면 graph-stop 이 exit 2 로 차단하고 "새 기능 금지, 위반만 수정"을 출력한다 ([graph-stop.mjs:510-511](../../../gates/graph-stop.mjs#L510-L511) · [run-gates.mjs:550-555](../../../gates/run-gates.mjs#L551-L556))
 - 에러는 최대 30건까지만 출력된다 ([run-gates.mjs:553](../../../gates/run-gates.mjs#L554)) — 31건째부터는 소리 없이 잘린다
-- 검증 실패가 **impl-level** 로 귀속되면 지목된 위치의 코드를 고친다. 이미 실패한 qa/review 가 dirty 로 잡고 있으므로 별도 마크가 필요 없다 ([CLAUDE.md:85](../../../CLAUDE.md#L85))
+- 검증 실패가 **impl-level** 로 귀속되면 지목된 위치의 코드를 고친다. 이미 실패한 qa/review 가 dirty 로 잡고 있으므로 별도 마크가 필요 없다 ([CLAUDE.md:85](../../../CLAUDE.md#L91))
 - **구현이 바뀌면 review·deploy 의 `basis` 가 어긋난다** → 사인오프가 자동으로 낡는다 ([graph-stop.mjs:187](../../../gates/graph-stop.mjs#L210))
 
 ## Exit condition
@@ -92,7 +92,7 @@
 ## Unverified
 
 - **implement 와 qa 의 produces 가 겹친다.** implement 는 `src/**`, qa 는 `src/**/*.test.ts` 와 `tests/**` 다 ([graph.mjs:79](../../../graph.mjs#L79)·[:89](../../../graph.mjs#L89)). 테스트 파일 하나를 고치면 두 노드의 해시가 동시에 바뀌어 둘 다 dirty 가 되는 것으로 보이나, 직접 돌려 보지는 않았다. 그 경우 implement 가 dirty 가 되면 basis 도 바뀌어 사인오프가 낡는다 — 테스트만 고쳐도 재리뷰가 강제되는 셈이다. `[INFERRED]`
-- **`any` 금지를 검사하는 코드를 못 찾았다.** [CLAUDE.md:32](../../../CLAUDE.md#L32) 가 "TypeScript strict, any 금지"라고 쓰지만 run-gates 에 해당 규칙이 없다. `tsconfig.json` 의 `noImplicitAny` 로 잡히는 범위와 명시적 `any` 는 다르다. `[INFERRED]`
+- **`any` 금지를 검사하는 코드를 못 찾았다.** [CLAUDE.md:32](../../../CLAUDE.md#L34) 가 "TypeScript strict, any 금지"라고 쓰지만 run-gates 에 해당 규칙이 없다. `tsconfig.json` 의 `noImplicitAny` 로 잡히는 범위와 명시적 `any` 는 다르다. `[INFERRED]`
 - **`tokens.css` 하드코딩 금지**([ui-layers.md:15](../../../.claude/rules/ui-layers.md#L15))**를 검사하는 게이트가 없다.** 색·radius·shadow 하드코딩은 ui-reviewer 가 읽어서 판단할 뿐이다. `[INFERRED]`
 - FSD 검사는 `@/` 와 `.` 로 시작하는 import 만 해석한다 ([run-gates.mjs:94-98](../../../gates/run-gates.mjs#L94-L98)). 절대경로나 tsconfig paths 별칭을 쓰면 레이어 위반이 검사를 빠져나가는지 확인 안 했다. `[INFERRED]`
 - run-gates 는 `projects/*/src` 를 **전부** 스캔한다 ([run-gates.mjs:21-33](../../../gates/run-gates.mjs#L21-L33)). 비활성 프로젝트의 위반이 활성 프로젝트의 implement 를 막는지 — [graph-stop.mjs:141](../../../gates/graph-stop.mjs#L164) 이 다른 프로젝트 에러를 걸러내므로 막지 않을 것으로 보이나, 직접 돌려 보지는 않았다. `[INFERRED]`

@@ -13,7 +13,7 @@
 | 조건 | 어디서 막나 |
 |---|---|
 | `product` 가 clean | [graph.mjs:49](../../../graph.mjs#L49) `depends_on: ["product"]` · [graph-stop.mjs:235](../../../gates/graph-stop.mjs#L258) 이 상류 clean 아니면 판정 자체를 건너뜀 |
-| 기능이 결제·인증·권한·동시성이거나 시변·파생 상태 | [CLAUDE.md:60](../../../CLAUDE.md#L60) · [spec/SKILL.md:3](../../../.claude/skills/spec/SKILL.md#L3) |
+| 기능이 결제·인증·권한·동시성이거나 시변·파생 상태 | [CLAUDE.md:60](../../../CLAUDE.md#L66) · [spec/SKILL.md:3](../../../.claude/skills/spec/SKILL.md#L3) |
 
 **단순 UI/콘텐츠 기능에는 들어가지 않는다** ([spec/SKILL.md:3](../../../.claude/skills/spec/SKILL.md#L3)).
 그런데 그 판단을 강제하는 게이트는 없다 — 위험 기능인지 아닌지는 사람이 정한다. `[INFERRED]`
@@ -71,8 +71,8 @@
 
 - 여러 스펙을 한꺼번에 approved 하면 all-or-nothing 으로 막힌다 → 구현 가능한 단위로 쪼개 하나씩 ([spec/SKILL.md:23-27](../../../.claude/skills/spec/SKILL.md#L23-L27))
 - 미준비 스펙은 `planned/` 에 draft 로 내려 국면을 막지 않게 한다 ([spec/SKILL.md:28-31](../../../.claude/skills/spec/SKILL.md#L28-L31))
-- 검증 실패가 **spec-level** 로 귀속되면 해당 스펙을 `status: draft` 로 내린다(거부). 재작업+재승인 전까지 dirty 유지 ([CLAUDE.md:85-87](../../../CLAUDE.md#L85-L87))
-- spec-level 판정은 **등급 무관 사용자에게 먼저 보고**해야 한다 ([CLAUDE.md:88](../../../CLAUDE.md#L88))
+- 검증 실패가 **spec-level** 로 귀속되면 해당 스펙을 `status: draft` 로 내린다(거부). 재작업+재승인 전까지 dirty 유지 ([CLAUDE.md:85-87](../../../CLAUDE.md#L91-L93))
+- spec-level 판정은 **등급 무관 사용자에게 먼저 보고**해야 한다 ([CLAUDE.md:88](../../../CLAUDE.md#L94))
 
 ## Exit condition
 

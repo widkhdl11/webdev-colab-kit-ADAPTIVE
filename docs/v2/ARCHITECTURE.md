@@ -88,7 +88,7 @@ product ─┬→ spec ────┐
 
 | ID | 무슨 일인가 | 등급 |
 |---|---|---|
-| **F-01** | [CLAUDE.md:97](../../CLAUDE.md#L97) 이 세션마다 읽으라고 하는 `GLOSSARY.md` 가 레포에 없다 | **높음** — 매번 마주치는데 없다는 걸 알려 주는 장치가 없다 |
+| **F-01** | [CLAUDE.md:97](../../CLAUDE.md#L103) 이 세션마다 읽으라고 하는 `GLOSSARY.md` 가 레포에 없다 | **높음** — 매번 마주치는데 없다는 걸 알려 주는 장치가 없다 |
 | **F-06①** | "새 페이지 만들어줘" 한마디에 `checkpoint` 와 `design-interview` 가 둘 다 걸린다. 순서를 정해 주는 규칙 파일은 자동으로 안 붙는다 | **높음** — 받쳐 줄 장치가 자동으로 안 붙는다 |
 | **F-02** | `deploy` 사인오프(`status: deployed`)를 어떻게 쓰는지 알려 주는 문서가 한 곳도 없다. **지금 프론티어가 deploy 다** | 중간 — graph-stop 이 돌면서 알려 준다 |
 | **F-03** | 프론트매터 검사가 **검사할 파일이 하나도 없으면 그냥 통과시킨다** ([graph-stop.mjs:153](../../gates/graph-stop.mjs#L176)) → `design-rules.md` 가 아예 없어도 page-designer 가 clean | 중간 — `design/BEFORE_UI` 가 따로 막아 준다 |
