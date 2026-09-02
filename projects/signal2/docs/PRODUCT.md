@@ -127,7 +127,7 @@
 ## ⑥ 합의된 스펙 — 전부 `status: parked` 다
 
 설계는 합의됐고 지금 만들 계약이 아니라는 뜻이다. 코드가 0줄인 상태에서 `approved` 로 두면
-`spec-coverage` 게이트가 INV 전부의 테스트를 요구한다. 착수할 때 **파일을 옮기지 않고 한 단어만**
+승인된 스펙은 불변식마다 테스트가 요구된다. 착수할 때 **파일을 옮기지 않고 한 단어만**
 `approved` 로 바꾼다.
 
 - **원문 표시** = sanitize 후 렌더(화이트리스트 + html-react-parser). dangerouslySetInnerHTML 금지. → content-safety.md

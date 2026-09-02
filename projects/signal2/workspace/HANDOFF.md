@@ -7,11 +7,11 @@
 {
   "product": {
     "status": "clean",
-    "hash": "42ec6f80204d"
+    "hash": "2d05df078f98"
   },
   "spec": {
     "status": "clean",
-    "hash": "3d0527efd957"
+    "hash": "19ff00ca5389"
   },
   "design": {
     "status": "clean",
