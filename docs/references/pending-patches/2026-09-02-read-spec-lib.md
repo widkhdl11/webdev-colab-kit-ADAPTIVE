@@ -72,6 +72,24 @@ surfaces : auth · payment · authz · concurrency → 모르는 값은 커버�
 `{status, surfaces}` 가 같다는 것이 실측으로 확인됐다(2026-09-02, 차이 0건). 스펙이 추가되면
 붙이기 전에 `node scripts/check-read-spec.mjs --diff` 를 다시 돌린다.
 
+## 신규 파일 둘은 완성본이 레포에 있다 — 복사만 하면 된다
+
+```
+docs/references/pending-patches/v3.2-gates-lib/frontmatter.mjs  →  gates/lib/frontmatter.mjs
+docs/references/pending-patches/v3.2-gates-lib/read-spec.mjs    →  gates/lib/read-spec.mjs
+```
+
+**터미널(Claude Code 밖)에서:**
+
+```bash
+mkdir -p gates/lib
+cp docs/references/pending-patches/v3.2-gates-lib/frontmatter.mjs gates/lib/
+cp docs/references/pending-patches/v3.2-gates-lib/read-spec.mjs   gates/lib/
+```
+
+Claude Code 안에서는 안 된다 — protect-files 훅이 `gates/` 로 쓰는 명령을 막는다.
+그게 이 패치를 사람이 붙이는 이유다. 아래 두 절은 그 파일들의 내용이니 대조용으로만 보면 된다.
+
 ## 파일 1 — `gates/lib/frontmatter.mjs` (신규)
 
 ```js
@@ -172,51 +190,74 @@ export function readSpec(file) {
 
 ## 파일 3 — `gates/spec-coverage.mjs` (수정)
 
-`^\s*status:\s*approved\b` 직접 파싱을 `readSpec` 경유로 바꾼다.
+**① 5번째 줄 `import { join, relative } from "node:path";` 바로 아래에 한 줄 넣는다.**
 
-```diff
-+import { readSpec } from "./lib/read-spec.mjs";
-+
- for (const f of specDirs.flatMap(walk).filter((f) => f.endsWith(".md"))) {
-   const src = readFileSync(f, "utf-8");
--  // status 는 frontmatter 의 구조화된 필드다 — 줄 시작 앵커로 값만 본다.
--  const fm = src.match(/^---\r?\n([\s\S]*?)\r?\n---/);
--  if (!fm || !/^\s*status:\s*approved\b/m.test(fm[1])) continue;
-+  const spec = readSpec(f);
-+  for (const p of spec.problems) console.error(`⚠ [spec/VOCAB] ${relative(ROOT, f)} — ${p}`);
-+  if (spec.status !== "approved") continue;
-   for (const m of src.matchAll(/^[ \t]*-[ \t]+(INV-[A-Z0-9]+)[ \t]*:/gm)) invToSpec.set(m[1], relative(ROOT, f));
- }
+```js
+import { readSpec } from "./lib/read-spec.mjs";
 ```
 
-INV 정의 앵커 카운팅은 그대로 둔다 — `docs-contract.md` 에 등재된 정식 규약이다.
+**② 아래 다섯 줄(현재 30~35줄쯤, `const invToSpec = new Map();` 다음 블록)을 찾아서**
+
+```js
+for (const f of specDirs.flatMap(walk).filter((f) => f.endsWith(".md"))) {
+  const src = readFileSync(f, "utf-8");
+  // status 는 frontmatter 의 구조화된 필드다 — 줄 시작 앵커로 값만 본다.
+  // (주석 뒤에 등장하는 'approved' 글자를 값으로 오인하지 않게. retro 2026-08-02)
+  const fm = src.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fm || !/^\s*status:\s*approved\b/m.test(fm[1])) continue;
+```
+
+**이렇게 바꾼다:**
+
+```js
+for (const f of specDirs.flatMap(walk).filter((f) => f.endsWith(".md"))) {
+  const src = readFileSync(f, "utf-8");
+  // status·surfaces 는 lib/read-spec.mjs 한 자리에서 읽는다. 어휘를 벗어난 값은
+  // 더 엄격한 쪽(draft)으로 떨어지고, throw 하지 않고 경고만 남긴다.
+  const spec = readSpec(f);
+  for (const p of spec.problems) console.error(`⚠ [spec/VOCAB] ${relative(ROOT, f)} — ${p}`);
+  if (spec.status !== "approved") continue;
+```
+
+그다음 줄(`for (const m of src.matchAll(...)` 로 시작하는 INV 정의 앵커 카운팅)은 **그대로 둔다** —
+`docs-contract.md` 에 등재된 정식 규약이다.
 
 ## 파일 4 — `gates/run-gates.mjs` (수정)
 
-`specSurfaces()` 를 지우고 커버 판정을 `readSpec` 경유로 바꾼다. `covered` 를 만드는 자리에서:
-
-```diff
-+import { readSpec } from "./lib/read-spec.mjs";
--
--function specSurfaces(fmText) { …통째로 삭제… }
-```
-
-커버 집합을 만들던 자리(스펙 폴더를 훑어 `status: approved` 인 것의 surfaces 를 모으는 곳)를
-아래로 바꾼다:
+**① 파일 맨 위 import 줄들 아래에 한 줄 넣는다.**
 
 ```js
-const covered = new Set();
-for (const f of specFiles) {
-  const spec = readSpec(f);
-  for (const p of spec.problems) riskWarnings.push(`⚠ [spec/VOCAB] ${relative(ROOT, f)} — ${p}`);
-  if (spec.status !== "approved") continue;
-  for (const s of spec.surfaces) covered.add(s);
-}
+import { readSpec } from "./lib/read-spec.mjs";
 ```
 
-`designApproved()` 는 스펙이 아니므로 `readSpec` 을 쓰지 않는다. 다만 자체 정규식 대신
-`frontmatterText()` + `fmField()` 를 쓰도록 바꾸면 frontmatter 떼기 로직이 한 자리로 모인다
-(선택 사항 — 판정은 바뀌지 않는다).
+**② `function specSurfaces(fmText) { … }` 를 통째로 지운다.** 바로 위의 주석 두 줄
+(`// 스펙 frontmatter 의 surfaces 를 읽는다. …`)도 같이 지운다. 현재 255~274줄쯤이고,
+`const SURFACE_KEYS = Object.keys(RISK_SURFACES);` 다음부터 `function approvedSurfaces` 앞까지다.
+
+**③ `approvedSurfaces()` 안의 두 줄을 바꾼다.** 찾을 것:
+
+```js
+    const fm = readFileSync(p, "utf-8").match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (!fm || !/^\s*status:\s*approved\b/m.test(fm[1])) continue;
+    for (const s of specSurfaces(fm[1])) if (!covered.has(s)) covered.set(s, relative(ROOT, p));
+```
+
+바꿀 것:
+
+```js
+    const spec = readSpec(p);
+    for (const q of spec.problems) riskWarnings.push(`⚠ [spec/VOCAB] ${relative(ROOT, p)} — ${q}`);
+    if (spec.status !== "approved") continue;
+    for (const s of spec.surfaces) if (!covered.has(s)) covered.set(s, relative(ROOT, p));
+```
+
+`readFileSync` 를 더 이상 안 쓰지만 그 위의 `statSync` 검사와 `_` 접두 건너뛰기는 **그대로 둔다** —
+비재귀 범위와 템플릿 제외는 그래프의 `spec` 노드 글롭과 맞춘 것이라 이 패치의 범위가 아니다.
+
+> `riskWarnings` 가 그 시점에 선언돼 있는지 확인할 것. 안 돼 있으면 `console.error` 로 바꿔도 된다 —
+> 판정은 안 바뀌고 경고를 어디에 싣느냐만 다르다.
+
+`designApproved()` 는 스펙이 아니므로 `readSpec` 을 쓰지 않는다. 그대로 둔다.
 
 ## 붙인 뒤 확인
 
