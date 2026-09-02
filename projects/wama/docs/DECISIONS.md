@@ -94,7 +94,7 @@ birth_date+grade_offset, schedule teacher, academy_id 기본값 current_academy_
 결정들: 읽기(list/get)=도메인 타입 반환+실패 시 빈결과+console.error, 쓰기=Result 반환+폼 에러 표시.
 파생 필드(학년·수강과목·평가상태)는 학생 단일행 아니라 schedule/evaluation에서 계산(N+1 없이 학원단위 배치쿼리).
 schedule/evaluation의 subject는 여전히 자유 문자열(FK 없음). 편집 라우트에 엔티티 id 부여(evaluate/:evalId/edit,
-score/:examId/edit) → 위젯 editHref→editHrefFor(id). 마이그레이션은 scripts/apply-migrations.mjs(Management API)로 적용.
+score/:examId/edit) → 위젯 editHref→editHrefFor(id). 마이그레이션은 Management API 로 적용(적용 도구는 킷에 있다).
 검증: 통합테스트 17개(INV-A1~A8 + subject·exam 격리) green, 유닛 10, tsc·gates·build green. 리뷰어 3종 반영
 (빈점수 0저장 버그·과목 조용한 재할당·시간표 부분실패 중복·보조쿼리 로그 수정). 시연은 빈 DB에서 추가해가며 시작.
 
@@ -109,6 +109,6 @@ tsconfig baseUrl는 TS5.9에서 폐기 에러 → 제거(paths만으로 @/\* 해
 SSO는 관람자까지 로그인벽으로 막음. 프론트 차단과 별개로 anon 키가 공개라 봇이 Supabase 직격 가능 → 백엔드는 CAPTCHA/이메일확인이 실방어선.
 
 2026-07-28 | 프로젝트 관리 토큰(Management API 강력키) 다층 잠금 + 다음 프로젝트부터 Supabase 모던키 |
-"노출되면 조직 전체 위험" → 절대 방지 요청. apply-migrations를 환경변수 전용(파일 미독·값 미출력)·hooks/protect-secrets.mjs
+"노출되면 조직 전체 위험" → 절대 방지 요청. 마이그레이션 적용을 환경변수 전용(파일 미독·값 미출력)으로 하고 시크릿 보호 훅
 (환경변수 파일 read·토큰 참조·env 덤프 차단)·settings Read(deny) | 과거 커밋/히스토리 유출無 확인(이번 세션 노출 없었음).
 현행 wama는 legacy anon 유지(동작·지원됨), 신규 프로젝트는 publishable/secret 기본(메모리 supabase-modern-keys).

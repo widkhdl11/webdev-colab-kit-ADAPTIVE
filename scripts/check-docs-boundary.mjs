@@ -48,6 +48,9 @@ const HARNESS_REFS = [
   { re: /\b(run-gates|graph-stop|spec-coverage|propagate|graph)\.mjs\b/, what: "게이트 파일명" },
   { re: /\b(run-gates|graph-stop|spec-coverage)\b/, what: "게이트 이름" },
   { re: /\b(BEFORE_UI|NO_INNERHTML|risk-surface)\b/, what: "게이트 규칙 이름" },
+  // 킷 스크립트는 이름으로 막는다. `scripts/` 를 통째로 막으면 프로젝트 자기 스크립트가 오탐된다
+  // (signal2 DECISIONS 가 자기 `scripts/*.mjs` 를 가리킨다).
+  { re: /\b(briefing|scaffold|preview|apply-migrations|build-explorer|extract-harness|remap-doc-refs|check-[\w-]+)\.mjs\b/, what: "킷 스크립트 이름" },
   { re: /(^|[\s(`"'])\.claude\//, what: "하네스 설정 경로" },
   { re: /\bworkspace\//, what: "과정 기록 경로" },
   { re: /^[ \t]*basis:/, what: "사인오프 해시 필드" },   // 줄 맨 앞 — CSS flex-basis 오탐 방지
