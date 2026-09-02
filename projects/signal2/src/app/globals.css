@@ -1,0 +1,56 @@
+@import "tailwindcss";
+@import "../shared/ui/tokens.css";
+
+/* 화면 높이를 채우고 푸터를 바닥에 붙여 둔다.
+ * 내용이 짧으면 푸터가 본문을 따라 위로 올라와 화면 가운데에 떠 있게 되는데,
+ * 그러면 "여기가 끝"이 아니라 "덜 그려졌다"로 읽힌다. 404·빈 상태에서 특히 그렇다. */
+body {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 눈에는 안 보이지만 스크린리더는 읽는 텍스트.
+ * 상태를 색으로만 알리지 않기 위한 자리라 시각 비용이 0 이어야 한다. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 포커스 스타일은 제거하지 않는다.
+ *
+ * **여기에 border-radius 를 주지 않는다.** 전에 `border-radius: 6px` 을 함께 뒀더니
+ * 이 선택자의 명시도가 카드를 이겨서, 키보드 포커스가 닿는 순간 카드가 12px→6px,
+ * 알약 버튼이 999px→6px 로 각지게 변했다. "호버·포커스에서 완전 복구"와 정면으로 어긋난다.
+ * 빼면 아웃라인이 각 요소 자신의 라운드를 따라간다. */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 640px 아래에서는 조작이 화면 아래 고정 줄로 내려간다(한손 조작).
+ * 그 줄이 마지막 내용과 푸터를 가리지 않게 여기서 자리를 비워 둔다 —
+ * 화면마다 고정 줄의 내용이 다르지만(메인 76px · 상세 68px) 비우는 자리는 큰 쪽으로 맞춘다.
+ *
+ * **고정 줄이 있는 화면에서만 비운다.** 폭만 보고 무조건 비웠더니 고정 줄이 없는 404 에서
+ * 푸터 아래에 78px 짜리 빈 띠가 생겼다. 표식은 고정 줄을 그리는 요소가 직접 단다
+ * (`data-dock` — CSS 모듈 이름은 해시되므로 전역에서 대조할 수 없다). */
+@media (max-width: 640px) {
+  body:has([data-dock]) {
+    padding-bottom: calc(var(--dock-h) + env(safe-area-inset-bottom));
+  }
+}

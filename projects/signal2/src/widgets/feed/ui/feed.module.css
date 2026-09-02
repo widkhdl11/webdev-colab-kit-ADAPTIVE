@@ -1,0 +1,564 @@
+/* 피드 화면. 승인된 시안 mockups/feed-a.html · feed-card-density.html(A+B) ·
+ * official-badge.html(B안) 을 옮긴 것이고, 값의 근거는 docs/design/design-rules.md 다.
+ *
+ * 시안과 일부러 다르게 간 곳은 홀수 패딩뿐이다 — ui-layers 의 "간격은 짝수" 규칙에 맞춰
+ * 반올림했다(시안 3/9/11px → 4/10/12px). design-rules 본문은 이 값들을 규정하지 않는다.
+ */
+
+/* ── 페이지 머리 ─────────────────────────────────────────────────────── */
+
+.pageHead {
+  padding: 28px 0 var(--space-16);
+}
+
+.pageHead h1 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.pageHead p {
+  margin: 0;
+  font-size: var(--fs-ui);
+  color: var(--meta);
+}
+
+/* ── 컨트롤 줄: 정렬 세그먼트 ────────────────────────────────────────
+ * 뱃지 키워드 줄은 아직 없다. 붙으면 이 줄 아래에 두 번째 줄로 선다(design-rules 2026-08-27). */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+  padding-bottom: 18px;
+}
+
+.segment {
+  display: inline-flex;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface);
+  border-radius: var(--r-pill);
+}
+
+.segButton {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-ui);
+  font-weight: 600;
+  padding: var(--space-6) var(--space-14);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--meta);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.segButton:hover {
+  color: var(--text);
+}
+
+/* 활성 상태에만 포인트색이 닿는다. */
+.segButton[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ── 날짜 그룹 ───────────────────────────────────────────────────────
+ * 헤더는 절제한다. 남는 폭은 시그니처인 점선으로 채워 "여기서 하루가 나뉜다"만 조용히 알린다. */
+
+.day + .day {
+  margin-top: var(--space-6);
+}
+
+.dayHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) 0 var(--space-12);
+  /* sticky 헤더가 키보드 포커스를 덮지 않게. */
+  scroll-margin-top: 72px;
+}
+
+.dayTitle {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: var(--meta);
+}
+
+.dayCount {
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--meta);
+}
+
+.dayCount::before {
+  content: "·";
+  margin-right: var(--space-6);
+}
+
+.dayRule {
+  flex: 1 1 auto;
+  height: 0;
+  min-width: var(--space-24);
+  border-top: 1px dotted var(--dot);
+}
+
+/* ── 카드 그리드 ─────────────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+  padding-bottom: 22px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  padding: var(--space-20);
+  text-decoration: none;
+  color: inherit;
+  scroll-margin-top: 72px;
+  /* 입체감은 "아직 안 봄"의 신호다 — 읽은 카드에서 뺀다. */
+  box-shadow: var(--shadow-card);
+  transition:
+    background 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.card:hover {
+  background: var(--surface-h);
+  box-shadow: var(--shadow-card-h);
+  transform: translateY(-1px);
+}
+
+.card:hover .cardTitle {
+  color: var(--accent);
+}
+
+.cardBody {
+  flex: 1 1 auto;
+  /* 키워드 줄을 점선 발 바로 위에 붙이기 위한 세로 축.
+   * 아래 .cardKeywords 의 margin-top: auto 가 남는 세로 공간을 전부 먹는다. */
+  display: flex;
+  flex-direction: column;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--fs-chip);
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  padding: var(--space-4) var(--space-10);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* 공식 표시 두 종류. 색으로 가르지 않는다 — 문구가 확실성을 나르고 형태가 거든다.
+ * 주소 근거는 기계가 도메인을 대조한 것이고, 내용 근거는 모델 판단이라 틀릴 수 있다. */
+.official,
+.claimed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--fs-chip);
+  letter-spacing: -0.1px;
+  padding: var(--space-4) var(--space-10);
+  border-radius: var(--r-pill);
+}
+
+.official {
+  background: var(--tag-bg);
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* border 대신 outline 을 쓴다. 짝수 패딩을 지키면서 시안과 같은 바깥 상자(26.4px)를 얻는
+ * 방법이다 — outline 은 레이아웃을 밀지 않아 border 가 차지하던 1px 자리에 그대로 그려진다. */
+.claimed {
+  background: transparent;
+  color: var(--meta);
+  font-weight: 500;
+  outline: 1px dashed var(--dot);
+  outline-offset: -1px;
+}
+
+.cardTitle {
+  margin: 0 0 var(--space-10);
+  font-size: var(--fs-title);
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  line-height: 1.45;
+  transition: color 0.16s ease;
+  /* 한국어가 어절 중간에서 끊기면 밀도 체감이 커진다. */
+  word-break: keep-all;
+  /* 제목은 2줄까지 — 한 줄 … 잘림은 금지다. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardSummary {
+  margin: 0 0 var(--space-16);
+  font-size: var(--fs-sm);
+  line-height: 1.62;
+  color: var(--text2);
+  word-break: keep-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 키워드 칩 줄 — 메타 줄이 아니라 요약 아래 별도 줄이다(2026-08-27 승인).
+ * 카드가 한 줄 두꺼워지는 대가를 지는 대신, 제목을 하나하나 해석하지 않아도
+ * 무슨 내용인지 가늠할 수 있다. 부수 소득으로 메타 줄의 폭 압박이 풀렸다. */
+.cardKeywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  /* 점선 발 바로 위에 고정한다. 요약이 없는 카드에서 키워드가 제목 밑으로 딸려 올라가면
+   * 같은 행의 카드끼리 줄이 안 맞는다 — 빈칸은 제목과 키워드 사이에 남겨야
+   * "요약이 없다"가 그대로 보이고(2026-08-10 승인), 키워드는 어느 카드에서나 같은 자리에 선다. */
+  margin-top: auto;
+  margin-bottom: var(--space-14);
+}
+
+.cardKeyword {
+  display: inline-flex;
+  align-items: center;
+  height: var(--kw-card-chip-h);
+  padding: 0 var(--space-8);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-chip);
+  font-weight: 500;
+}
+
+/* 두 축을 색으로 가른다. 인디고에서 가져오지 않는다 — 포인트색은 "아직 안 본 것" 전용이라
+ * 거기서 빌리면 두 뜻이 섞인다. 두 면의 명도비가 1.00 이라 밝기는 같고 색상만 갈린다. */
+.kwField {
+  background: var(--kw-field-bg);
+  color: var(--kw-field-ink);
+}
+
+.kwKind {
+  background: var(--kw-kind-bg);
+  color: var(--kw-kind-ink);
+}
+
+/* +N 은 두 축에 걸쳐 있어 축 색을 안 쓴다. */
+.kwOverflow {
+  background: var(--tag-bg);
+  color: var(--meta);
+}
+
+/* 시그니처: 카드 안 점선 구분선 */
+.cardFoot {
+  border-top: 1px dotted var(--dot);
+  padding-top: var(--space-14);
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  font-size: var(--fs-meta);
+  color: var(--meta);
+}
+
+/* 출처 이름을 줄인 표식. 색은 쓰지 않는다 — 포인트색은 "아직 안 본 것" 전용이다. */
+.sourceMark {
+  flex-shrink: 0;
+  width: var(--space-20);
+  height: var(--space-20);
+  border-radius: var(--r-pill);
+  background: var(--tag-bg);
+  color: var(--meta);
+  font-size: var(--fs-mark);
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.16s ease;
+}
+
+.metaText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card:hover .sourceMark {
+  background: var(--tag-bg-h);
+}
+
+/* ── 읽음 ────────────────────────────────────────────────────────────
+ * 흐릿하게 = 눌러두는 것이지 못 읽게 만드는 게 아니다. 전부 4.5:1 이상을 지키고,
+ * 색만으로는 바닥에 막혀서 제목은 굵기까지 함께 낮춘다. */
+
+/* **복합 선택자여야 한다**(`.card.isRead` = 0,2,0).
+ * 한 클래스로 두면 `.card`(0,1,0)와 명시도가 같아 순서가 판정을 대신하고,
+ * 파일 아래쪽에 `.card` 규칙이 하나만 더 생기면(미디어쿼리는 관례상 끝에 붙는다)
+ * 읽은 카드의 면이 조용히 죽는다. 이 레포에서 같은 모양으로 두 번 났다
+ * (2026-08-31 켠 뱃지 색 · 2026-09-01 「더 보기」). */
+.card.isRead {
+  background: var(--surface-read);
+  box-shadow: none;
+}
+
+.isRead .cardTitle {
+  color: var(--text-read);
+  font-weight: 600;
+}
+
+.isRead .cardSummary {
+  color: var(--text2-read);
+}
+
+.isRead .meta {
+  color: var(--meta-read);
+}
+
+.isRead .cardFoot {
+  border-top-color: var(--dot-read);
+}
+
+.isRead .sourceMark {
+  background: var(--tag-read-bg);
+  color: var(--tag-read-ink);
+}
+
+/* 읽은 카드에서는 두 축이 하나로 내려앉는다. 축 구분을 남기려면 "뱃지 중립화"에
+ * 예외를 열어야 해서 열지 않았다. 호버·포커스에서 함께 복구된다. */
+.isRead .cardKeyword {
+  background: var(--tag-read-bg);
+  color: var(--tag-read-ink);
+}
+
+/* 이미 본 글이 색으로 튀지 않게 뱃지도 중립색으로 내려간다. */
+.isRead .badge {
+  background: var(--badge-read-bg);
+  color: var(--badge-read-ink);
+}
+
+.isRead .official {
+  background: var(--tag-read-bg);
+  color: var(--tag-read-ink);
+}
+
+.isRead .claimed {
+  outline-color: var(--dot-read);
+  color: var(--meta-read);
+}
+
+/* 호버·포커스 = 완전 복구. 다시 읽으려는 순간에는 또렷해야 한다. */
+.isRead:hover,
+.isRead:focus-visible {
+  background: var(--surface-h);
+  box-shadow: var(--shadow-card-h);
+}
+
+.isRead:hover .cardTitle,
+.isRead:focus-visible .cardTitle {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.isRead:hover .cardSummary,
+.isRead:focus-visible .cardSummary {
+  color: var(--text2);
+}
+
+.isRead:hover .meta,
+.isRead:focus-visible .meta {
+  color: var(--meta);
+}
+
+.isRead:hover .cardFoot,
+.isRead:focus-visible .cardFoot {
+  border-top-color: var(--dot);
+}
+
+.isRead:hover .sourceMark,
+.isRead:focus-visible .sourceMark {
+  background: var(--tag-bg-h);
+  color: var(--meta);
+}
+
+.isRead:hover .kwField,
+.isRead:focus-visible .kwField {
+  background: var(--kw-field-bg);
+  color: var(--kw-field-ink);
+}
+
+.isRead:hover .kwKind,
+.isRead:focus-visible .kwKind {
+  background: var(--kw-kind-bg);
+  color: var(--kw-kind-ink);
+}
+
+.isRead:hover .kwOverflow,
+.isRead:focus-visible .kwOverflow {
+  background: var(--tag-bg);
+  color: var(--meta);
+}
+
+.isRead:hover .badge,
+.isRead:focus-visible .badge {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.isRead:hover .official,
+.isRead:focus-visible .official {
+  background: var(--tag-bg-h);
+  color: var(--text);
+}
+
+.isRead:hover .claimed,
+.isRead:focus-visible .claimed {
+  outline-color: var(--dot);
+  color: var(--meta);
+}
+
+/* ── 목록을 늘리는 버튼 ──────────────────────────────────────────────
+ * 다 불러온 뒤에도 사라지지 않는다. 버튼이 사라지면 키보드 사용자는 방금 불러온
+ * 카드가 아니라 페이지 맨 위로 되던져진다. */
+
+.more {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-4) 0 var(--space-56);
+}
+
+.moreButton {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-btn);
+  font-weight: 600;
+  color: var(--text2);
+  padding: var(--space-12) 26px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/* 누를 수 없는 것은 호버에 반응하지 않는다.
+ *
+ * 호버 뒤에 원래 값을 **다시 적는** 방법(`:hover { background: transparent }`)도 같은 일을
+ * 하지만, 그건 기본값을 두 번 적는 것이라 기본값이 다른 곳(미디어쿼리)에서 바뀌면 조용히
+ * 틀린 값이 된다. 상세의 `.navButton` 이 정확히 그렇게 깨졌다. 레포 안에서 방법을 하나로 모은다. */
+.moreButton:not([aria-disabled="true"]):hover {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-soft-h);
+}
+
+.moreButton[aria-disabled="true"] {
+  cursor: default;
+  color: var(--meta);
+}
+
+/* ── 빈 상태 ─────────────────────────────────────────────────────────
+ * 문장 한 줄만. 일러스트·아이콘·재시도 버튼을 두지 않는다 — 화면이 사건처럼 보이면 과하다. */
+
+.empty {
+  margin: 0;
+  padding: var(--space-56) 0;
+  text-align: center;
+  font-size: var(--fs-body);
+  color: var(--meta);
+}
+
+/* ── 반응형: 데스크톱 우선, 모바일 1열까지 ───────────────────────────── */
+
+@media (max-width: 980px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .pageHead {
+    padding: var(--space-20) 0 var(--space-14);
+  }
+
+  /* 한손 조작 — 정렬을 엄지가 닿는 화면 아래로 내린다.
+   * 「더 보기」는 여기 안 넣는다: 다 읽고 나서 한 번 누르는 것이라 본문 끝이 제자리다.
+   * 키워드 필터도 안 넣는다: 한 번 고르면 한동안 안 바꾼다.
+   * 이 줄이 마지막 내용을 가리지 않게 body 에 아래 여백을 준다(app/globals.css). */
+  .controls {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    gap: var(--space-8);
+    background: var(--surface);
+    border-top: 1px solid var(--hairline);
+    padding: var(--space-12) var(--space-16)
+      calc(var(--space-12) + env(safe-area-inset-bottom));
+  }
+
+  .segment {
+    background: var(--bg);
+  }
+
+  /* 데스크톱 세그먼트는 33px 인데 그건 마우스가 겨냥하는 값이라 엄지에는 안 통한다. */
+  .segButton {
+    min-height: var(--touch-min);
+    padding: 0 18px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .segButton,
+  .moreButton,
+  .cardTitle,
+  .sourceMark {
+    transition: none;
+  }
+  .card:hover {
+    transform: none;
+  }
+}

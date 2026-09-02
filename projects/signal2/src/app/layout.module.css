@@ -1,0 +1,59 @@
+/* 화면 껍데기. 상단 헤더는 아주 얇게, 네비 메뉴는 두지 않는다(2페이지짜리 개인용). */
+
+.top {
+  border-bottom: 1px solid var(--hairline);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.topInner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--space-14) var(--space-20);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-10);
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-size: var(--fs-logo);
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* 포인트색이 닿는 유일한 헤더 요소. */
+.logoDot {
+  color: var(--accent);
+}
+
+.tagline {
+  font-size: var(--fs-ui);
+  color: var(--meta);
+}
+
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--space-20);
+  width: 100%;
+}
+
+/* 남는 세로 공간을 본문이 가져간다 — 푸터는 바닥에 남는다.
+ * min-height 를 따로 주는 이유는 내용이 한 줄뿐일 때(404·빈 상태) 헤더와 푸터가
+ * 붙어 보이지 않게 하려는 것이다. */
+.main {
+  flex: 1 0 auto;
+  min-height: 60dvh;
+}
+
+.bottom {
+  border-top: 1px solid var(--hairline);
+  padding: 18px 0 var(--space-40);
+  font-size: var(--fs-meta);
+  color: var(--meta);
+}

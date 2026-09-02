@@ -1,0 +1,2529 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>뱃지 키워드 줄 — 색 2안(B 채택) · 카드 밀도 · 상세 (signal)</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    />
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════
+     뱃지 키워드 줄 시안 — 입력: docs/design/INTERVIEW-badge-row.md "✅ 최종 확정"
+                             + docs/design/design-rules.md (승인분 전부)
+
+     물려받은 것: 라이트 톤 · 라벤더 회색 페이지 · 밝은 카드 · 알약 · 점선 시그니처 ·
+     타이포 단계(새로 만들지 않았다) · 포커스 아웃라인에 라운드 없음(2026-08-06 (2) 정정) ·
+     "색은 아직 안 본 것에만"(카드) / "활성 상태에 포인트색"(컨트롤).
+
+     ───────────────────────────────────────────────────────────────────────
+     0) 2026-08-27 checkpoint 결정 — 이 판에 반영한 것 (세 가지)
+     ───────────────────────────────────────────────────────────────────────
+     (1) **0건 뱃지의 취소선을 숫자에서 뱃지 전체(이름 + 숫자)로 옮겼다.**
+         숫자에만 걸었더니 확대했을 때 `코딩 0` 이 `코딩 θ` 로 읽혔다 — 빗금 친 0 이
+         "다 봤다"가 아니라 다른 글자로 보인다. 스크린리더용 텍스트는 그대로 뒀고
+         **글자색도 안 내렸다.** 눕힌 것은 선 색뿐이다(자세한 근거는 CSS `.is-zero::after` 주석).
+     (2) **B안(색상 차) 채택.** A안은 두 면의 명도비가 1.11 이라 나란히 있어야만 갈리고,
+         카드에 뱃지가 두세 개만 붙으면 어느 쪽이 분야인지 알 수 없다.
+         **A안 섹션은 지우지 않고 남겼다** — 이 레포는 비교안을 남긴다
+         (mockups/official-badge.html 이 A/B/C 를 남기고 design-rules 가 "B 채택"을 가리킨다).
+     (3) **기본 노출 상한 16 → 24.** 부족한 8개는 분야 축의 **예상 이름**으로 채웠다
+         (실측 이름 16개는 그대로 뒀다). 다만 아래 (라) 를 보라 —
+         **24 로 올려도 1168px 에서는 여전히 아무것도 안 잘린다(브라우저 실측).**
+
+     ───────────────────────────────────────────────────────────────────────
+     0-2) tokens.css 로 옮길 최종 값 — **채택안(B) 기준.** 그대로 복사해 쓰면 된다
+     ───────────────────────────────────────────────────────────────────────
+       /* 뱃지 키워드 줄 — 두 축 색 (B안 채택) */
+       --kw-field-bg: #d8e4ee;
+       --kw-field-bg-h: #c8dbea;
+       --kw-field-ink: #26323b;
+       --kw-field-zero-ink: #4c5860;
+       --kw-kind-bg: #eee0d4;
+       --kw-kind-bg-h: #e6d2c2;
+       --kw-kind-ink: #3b322a;
+       --kw-kind-zero-ink: #605649;
+
+       /* 뱃지 키워드 줄 — 형태·간격 (두 안이 같은 값이라 채택과 무관하다) */
+       --kw-badge-h: 26px;
+       --kw-row-gap: 6px;
+       --kw-card-chip-h: 22px;
+       --kw-detail-chip-h: 24px;
+
+     · A안 값(#d7d7e8 계열)은 **옮기지 않는다.** 비채택이라 `.optA` 스코프 안에만 남아 있다.
+     · **0건 취소선에는 색 토큰을 새로 만들지 않았다.** 선은 `currentColor` 를 55% 로 눕혀 쓴다
+       (`background: currentColor; opacity: .55`). 축·호버·읽음 중립화를 자동으로 따라가서
+       색을 여덟 개 더 정의할 필요가 없다. 면 위에 깔렸을 때의 환산값만 참고로 적어 둔다 —
+       분야 0건 선 ≈ #8b97a0, 사건종류 0건 선 ≈ #a09488.
+     · 이 시안의 `--kw-strike-inset` 은 토큰이 아니다. 선 길이를 알약 좌우 패딩에 맞추려고
+       쓴 값이고, 구현에서는 그 칩의 padding 값을 그대로 쓰면 된다.
+
+     ───────────────────────────────────────────────────────────────────────
+     1) 새로 추가한 토큰
+     ───────────────────────────────────────────────────────────────────────
+     두 축(분야 / 사건종류)을 면 색으로 가른다. 인디고(--accent)에서 가져오지 않았고,
+     2차 강조색도 아니다 — --tag-bg(#efeff5) 의 이웃에서 채도를 낮게 잡은 면이다.
+     A안 / B안이 같은 이름에 다른 값을 넣는다(.optA / .optB 로 스코프).
+
+     **B안이 채택됐으므로 `:root` 기본값도 B 값으로 맞췄다.** A안 값은 `.optA` 안에만 남는다.
+
+     | 토큰                    | A안 값(비채택) | B안 값(채택) | 쓰임                        |
+     | ---------------------- | -------- | -------- | --------------------------------- |
+     | --kw-field-bg          | #d7d7e8  | #d8e4ee  | 분야 뱃지 면                      |
+     | --kw-field-bg-h        | #cbcbe1  | #c8dbea  | 분야 뱃지 호버 면                 |
+     | --kw-field-ink         | #2b2e36  | #26323b  | 분야 뱃지 글자                    |
+     | --kw-field-zero-ink    | #4f535c  | #4c5860  | 분야 뱃지 0건 글자                |
+     | --kw-kind-bg           | #e2e2ed  | #eee0d4  | 사건종류 뱃지 면                  |
+     | --kw-kind-bg-h         | #d9d9e7  | #e6d2c2  | 사건종류 뱃지 호버 면             |
+     | --kw-kind-ink          | #33363e  | #3b322a  | 사건종류 뱃지 글자                |
+     | --kw-kind-zero-ink     | #575b64  | #605649  | 사건종류 뱃지 0건 글자            |
+     | --kw-badge-h           | 26px     | 26px     | 뱃지 줄 알약 높이(2줄 클램프 근거)|
+     | --kw-row-gap           | 6px      | 6px      | 뱃지 사이 간격                    |
+     | --kw-card-chip-h       | 22px     | 22px     | 카드 뱃지 알약 높이               |
+     | --kw-detail-chip-h     | 24px     | 24px     | 상세 뱃지 알약 높이               |
+
+     새로 만들지 않은 것(기존 토큰 재사용):
+     · 켜진 뱃지 = --accent-soft 면 + --accent 글자 + --accent-ring 테두리 (지금 필터 칩과 같다)
+     · 읽은 카드의 뱃지 = --tag-read-bg / --tag-read-ink (뱃지 중립화 규칙 그대로)
+     · 카드의 +N 뱃지 = --tag-bg / --meta (두 축에 걸쳐 있어 축 색을 안 쓴다)
+     · 타이포: 뱃지 줄 13px(--fs-ui) · 카드 뱃지 11.5px(--fs-chip) · 상세 뱃지 12px(--fs-meta)
+       — 전부 이미 있는 단계다
+
+     ───────────────────────────────────────────────────────────────────────
+     2) 두 안이 무엇이 다른가
+     ───────────────────────────────────────────────────────────────────────
+     · A안 = 명도 차. 두 색이 같은 라벤더 회색 계열이고 밝기만 다르다.
+       분야가 한 단계 눌러 앉고(어두운 면), 사건종류가 그 위에 뜬다(밝은 면).
+       두 면의 명도비 1.11 — 나란히 있어야 갈린다. → **비채택.**
+     · B안 = 색상 차. 두 색의 명도비가 1.00(같은 밝기)이고 색상만 다르다.
+       분야가 청회색, 사건종류가 모래빛 회색. 떨어져 있어도 갈리지만,
+       지금 팔레트에 없던 **따뜻한 색상**이 하나 들어온다. → **채택 (2026-08-27 checkpoint).**
+
+     ───────────────────────────────────────────────────────────────────────
+     3) 대비값 — **브라우저 실측이 아니라 CSS 값 계산이다.** 실측은 본체가 따로 한다
+     ───────────────────────────────────────────────────────────────────────
+     텍스트 조합 (안읽음/읽음 × 호버 × 분야/사건종류 × 0건의 곱):
+
+     | 조합                                   | A안   | B안   |
+     | -------------------------------------- | ----- | ----- |
+     | 분야 글자 on 면                        | 9.55  | 10.15 |
+     | 분야 글자 on 호버 면                   | 8.51  |  9.23 |
+     | 분야 0건 글자 on 면                    | 5.42  |  5.66 |
+     | 분야 0건 글자 on 호버 면               | 4.83  |  5.15 |
+     | 사건종류 글자 on 면                    | 9.40  |  9.70 |
+     | 사건종류 글자 on 호버 면               | 8.65  |  8.57 |
+     | 사건종류 0건 글자 on 면                | 5.29  |  5.56 |
+     | 사건종류 0건 글자 on 호버 면           | 4.87  |  4.91 |
+
+     두 안 공통(기존 토큰 조합이라 새 하한이 생기지 않는다):
+     · 켜진 뱃지 --accent on --accent-soft ......... 5.21
+     · 읽은 카드 뱃지 --tag-read-ink on --tag-read-bg  4.74
+     · 카드 +N 뱃지 --meta on --tag-bg ............. 4.75
+     · 전체 칩 --meta on --surface ................. 5.14
+     · 세그먼트 켜짐 --on-accent on --accent ....... 6.29
+     · 더 보기 --text2 on --bg ..................... 7.30
+
+     **이 시안의 최저값은 4.74**(읽은 카드의 뱃지) — 기존 하한 4.57 을 안 내린다.
+     새 요소 중 최저는 A안 "분야 0건 + 호버" 4.83.
+
+     면 색은 텍스트가 아니라 4.5:1 대상이 아니다. 참고로 면이 바탕에서 얼마나 떨어지는지:
+
+     | 면                        | 페이지(#efeff5) 위 | 카드(#f8f8fc) 위 |
+     | ------------------------- | ------------------ | ---------------- |
+     | 지금 태그 칩(--tag-bg)    | —                  | 1.08             |
+     | A 분야 #d7d7e8            | 1.24               | 1.34             |
+     | A 사건종류 #e2e2ed        | 1.12               | 1.21             |
+     | B 분야 #d8e4ee            | 1.13               | 1.22             |
+     | B 사건종류 #eee0d4        | 1.13               | 1.22             |
+
+     → 네 면 모두 지금 태그 칩(1.08)보다 바탕에서 더 떨어진다. "지금 칩 5개보다 더 눈에 띄게"는
+       면 대비 + 글자 굵기(500→600) + 크기(13px) 세 가지가 같이 만든다.
+
+     ───────────────────────────────────────────────────────────────────────
+     4) 승인된 전역 기준과 부딪힐 수 있는 자리 — **여기 적어만 둔다(고치지 않았다)**
+     ───────────────────────────────────────────────────────────────────────
+     (가) design-rules "상태 규칙"은 읽은 카드의 뱃지에서 색을 뺀다. 그대로 따랐더니
+          **읽은 카드에서는 두 축이 안 갈린다**(둘 다 --tag-read-bg 하나로 내려앉는다).
+          호버·포커스에서 축 색이 복구된다. 축 구분을 읽은 카드에서도 유지하려면
+          "중립화" 규칙에 예외를 하나 열어야 한다 — 이 시안은 열지 않았다.
+     (나) 켠 뱃지는 --accent 로 덮이므로 **켜져 있는 동안 그 뱃지의 축 색이 사라진다.**
+          맨 앞으로 끌어올려지니 헷갈릴 자리는 아니지만, 축이 색으로만 전해지는 설계라
+          같이 봐야 한다. (지금 필터 칩의 활성 처리를 그대로 쓴 결과다)
+     (다) 축이 색으로만 전해지면 색각 차이가 있는 사람에게는 두 축이 하나로 보인다.
+          이 시안은 **모든 뱃지에 스크린리더용 "분야 " / "사건종류 " 접두사**를 넣어
+          화면을 못 보는 경우는 덮었지만, 화면은 보되 색이 안 갈리는 경우는 못 덮는다.
+          범례(아래 회색 줄)를 실제 화면에도 둘지가 확인 포인트다.
+     (라) **상한을 24 로 올렸는데도 1168px 에서는 접힘이 아무것도 안 가린다.**
+          checkpoint 에서 "16 은 2줄에 다 들어가니 24 로 올리면 접힘이 실제로 자른다"고 정했는데,
+          24개를 그려 넣고 브라우저에서 재보니 **24개가 그대로 2줄에 들어간다**(1168px 실측:
+          첫 줄 14개 · 둘째 줄 10개, 가려진 것 0개). 둘째 줄에 아직 **329px** — 이 이름들 기준으로
+          **뱃지 네 개쯤** — 이 남는다. 그러니 1168px 에서 접힘이 뜻을 가지려면 상한이
+          **29개쯤**은 돼야 한다. (24 로 올린 것 자체는 손해가 아니다. 아래 폭에서는 이미 자른다.)
+
+          접힘이 실제로 자르는 폭 — 24개 기준 브라우저 실측:
+
+          | 폭 | 뱃지 줄 폭 | 보임 | 가림 |
+          | --- | --- | --- | --- |
+          | 1440px / 1168px | 1096px | 24 | **0** |
+          |  980px | 908px | 22 | 2 |
+          |  900px | 828px | 19 | 5 |
+          |  640px | 568px | 14 | 10 |
+          |  480px(좁은 상자) | 488px | 12 | 12 |
+          |  380px | 308px | 7 | 17 |
+
+          그래서 **폭 480px 좁은 상자를 그대로 뒀다** — 모바일에서 접힘이 어떻게 자르는지는
+          여전히 이 상자에서만 보인다. 상한은 키워드가 DB 에 며칠 쌓인 뒤 실물로 다시 정하는 게 맞다.
+          "더 보기" 라벨에 숨은 개수를 안 적은 것도 같은 이유다 — 위 표대로 몇 개가 가려질지는
+          화면 폭이 정하고, 정적 시안이 숫자를 박으면 폭이 바뀔 때 화면이 거짓말을 한다.
+
+     (바) **분야 뱃지 24개 중 8개는 실측이 아니라 예상 이름이다.** 상한을 24 로 올리면서
+          690건 실측에서 나온 분야 이름 10개로는 모자라 8개를 새로 지었다(사건종류 6개는
+          원래부터 실물 0건이라 전부 예상이었다). **실측 이름과 예상 이름을 섞어 두고 표시가 없으면
+          다음 사람이 전부 실측으로 읽는다.** 그래서 지어낸 8개는 줄 끝에 몰아 두고 범례 줄에
+          이름을 그대로 적었다. 새 시각 요소를 만들어 표시하지는 않았다 — 시안에만 있는 표식을
+          더하면 그게 디자인의 일부로 읽힌다.
+     (마) 카드에서 키워드 뱃지가 별도 줄로 내려가면 **메타 줄이 비워진다.**
+          2026-08-11 블록의 폭 실측표("메타 줄은 이미 꽉 찼다")가 가리키던 문제가
+          이 변경으로 풀린다 — 그 블록이 "칩을 다른 줄로 내려야 한다"고 적어 둔 그 길이다.
+
+     회색 작은 글씨(.probe)와 섹션 제목은 **시안 설명이라 실제 화면에는 없다.**
+    ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <style>
+      :root {
+        /* ── 승인된 토큰 (tokens.css 에서 그대로) ─────────────────────── */
+        --bg: #efeff5;
+        --surface: #f8f8fc;
+        --surface-h: #fdfdff;
+        --surface-read: #f3f3f8;
+        --hairline: #e2e2ec;
+        --dot: #c9c9d6;
+
+        --text: #1f2024;
+        --text2: #4a4e55;
+        --meta: #656a72;
+
+        --text-read: #666b73;
+        --text2-read: #6a6f77;
+        --meta-read: #6a6f77;
+        --dot-read: #d2d2de;
+        --tag-read-bg: #eaeaf2;
+        --tag-read-ink: #63676f;
+        --badge-read-bg: #e7e7ef;
+        --badge-read-ink: #585c64;
+
+        --accent: #4f46e5;
+        --accent-soft: #e9e8fb;
+        --accent-ring: rgba(79, 70, 229, 0.22);
+        --on-accent: #ffffff;
+
+        --tag-bg: var(--bg);
+        --tag-bg-h: #ffffff;
+        --border-soft: #e3e3ec;
+        --border-soft-h: #d8d8e4;
+
+        --r-card: 12px;
+        --r-pill: 999px;
+        --r-inline: 6px;
+
+        --shadow-card:
+          0 1px 2px rgba(31, 32, 36, 0.05), 0 4px 10px rgba(31, 32, 36, 0.05);
+        --shadow-card-h:
+          0 2px 4px rgba(31, 32, 36, 0.06), 0 10px 22px rgba(31, 32, 36, 0.08);
+
+        --maxw: 1168px;
+        --gap: 16px;
+
+        --fs-art-title: 28px;
+        --fs-h1: 22px;
+        --fs-title: 16px;
+        --fs-body: 15px;
+        --fs-btn: 14px;
+        --fs-sm: 13.5px;
+        --fs-ui: 13px;
+        --fs-xs: 12.5px;
+        --fs-meta: 12px;
+        --fs-chip: 11.5px;
+        --fs-mark: 10.5px;
+
+        --font-sans:
+          "Pretendard Variable", "Pretendard", system-ui, -apple-system,
+          "Apple SD Gothic Neo", sans-serif;
+
+        /* ── 새 토큰: 형태·간격 (두 안 공통) ──────────────────────────── */
+        --kw-badge-h: 26px;
+        --kw-row-gap: 6px;
+        --kw-card-chip-h: 22px;
+        --kw-detail-chip-h: 24px;
+
+        /* ── 새 토큰: 두 축 색 — 기본값을 채택안(B)으로 바꿨다 ──────────
+           2026-08-27 checkpoint 에서 B안이 채택돼, 아래 A/B 스코프에 안 걸리는 자리
+           (범례 스와치 등)가 채택값을 쓰도록 기본값을 B로 맞췄다. tokens.css 로
+           옮길 값이 이 블록 그대로다. */
+        --kw-field-bg: #d8e4ee;
+        --kw-field-bg-h: #c8dbea;
+        --kw-field-ink: #26323b;
+        --kw-field-zero-ink: #4c5860;
+        --kw-kind-bg: #eee0d4;
+        --kw-kind-bg-h: #e6d2c2;
+        --kw-kind-ink: #3b322a;
+        --kw-kind-zero-ink: #605649;
+      }
+
+      /* A안 — 명도 차: 같은 라벤더 회색 계열, 분야가 한 단계 눌러 앉는다.
+         **비채택.** 비교 근거로 남겨 둔 값이다 — tokens.css 로 옮기지 않는다. */
+      .optA {
+        --kw-field-bg: #d7d7e8;
+        --kw-field-bg-h: #cbcbe1;
+        --kw-field-ink: #2b2e36;
+        --kw-field-zero-ink: #4f535c;
+        --kw-kind-bg: #e2e2ed;
+        --kw-kind-bg-h: #d9d9e7;
+        --kw-kind-ink: #33363e;
+        --kw-kind-zero-ink: #575b64;
+      }
+
+      /* B안 — 색상 차: 밝기는 같고(명도비 1.00) 색상만 다르다.
+         **채택 (2026-08-27 checkpoint).** :root 기본값과 같은 값이다. */
+      .optB {
+        --kw-field-bg: #d8e4ee;
+        --kw-field-bg-h: #c8dbea;
+        --kw-field-ink: #26323b;
+        --kw-field-zero-ink: #4c5860;
+        --kw-kind-bg: #eee0d4;
+        --kw-kind-bg-h: #e6d2c2;
+        --kw-kind-ink: #3b322a;
+        --kw-kind-zero-ink: #605649;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        font-size: var(--fs-body);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* 포커스 스타일에 border-radius 를 주지 않는다 — 2026-08-06 (2) 에서 뺀 값이다.
+         넣으면 포커스 순간 알약이 각지게 변한다. */
+      a:focus-visible,
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 20px 56px;
+      }
+
+      /* ── 시안 설명 (실제 화면에는 없다) ──────────────────────────────── */
+
+      .sheetHead {
+        padding: 28px 0 8px;
+      }
+      .sheetHead h1 {
+        margin: 0 0 4px;
+        font-size: var(--fs-h1);
+        font-weight: 700;
+        letter-spacing: -0.4px;
+      }
+      .sheetHead p {
+        margin: 0;
+        font-size: var(--fs-ui);
+        color: var(--meta);
+        line-height: 1.7;
+      }
+      .sheetHead b,
+      .optionNote b,
+      .probe b {
+        color: var(--text2);
+        font-weight: 600;
+      }
+
+      .sectionHead {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 40px 0 6px;
+      }
+      .sectionHead h2 {
+        margin: 0;
+        font-size: var(--fs-h1);
+        font-weight: 700;
+        letter-spacing: -0.4px;
+      }
+      .sectionHead .rule {
+        flex: 1 1 auto;
+        height: 0;
+        min-width: 24px;
+        border-top: 1px dotted var(--dot);
+      }
+
+      .optionHead {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 28px 0 4px;
+      }
+      .optionHead h2 {
+        margin: 0;
+        font-size: var(--fs-sm);
+        font-weight: 700;
+        letter-spacing: -0.2px;
+        color: var(--meta);
+      }
+      .optionHead .rule {
+        flex: 1 1 auto;
+        height: 0;
+        min-width: 24px;
+        border-top: 1px dotted var(--dot);
+      }
+
+      .optionNote {
+        margin: 0 0 14px;
+        font-size: var(--fs-xs);
+        color: var(--meta);
+        line-height: 1.75;
+      }
+
+      .stateHead {
+        margin: 26px 0 10px;
+        font-size: var(--fs-xs);
+        font-weight: 700;
+        color: var(--meta);
+        letter-spacing: -0.2px;
+      }
+      .board > .stateHead:first-child {
+        margin-top: 0;
+      }
+
+      .probe {
+        margin: 10px 0 0;
+        font-size: var(--fs-xs);
+        color: var(--meta);
+        line-height: 1.8;
+      }
+      .probeDim {
+        color: var(--meta);
+      }
+      .probe code {
+        font-size: var(--fs-meta);
+        background: var(--tag-bg);
+        border-radius: var(--r-inline);
+        padding: 2px 6px;
+        color: var(--text2);
+      }
+
+      .swatch {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: var(--r-pill);
+        vertical-align: -1px;
+      }
+      .sw-field {
+        background: var(--kw-field-bg);
+      }
+      .sw-kind {
+        background: var(--kw-kind-bg);
+      }
+
+      .board {
+        background: var(--bg);
+        padding: 20px;
+        border-radius: var(--r-card);
+        outline: 1px dotted var(--dot);
+        outline-offset: -1px;
+      }
+
+      /* ── 컨트롤 줄 (승인분 그대로 + 세그먼트 이름만 바뀜) ─────────────── */
+
+      .controls {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding-bottom: 12px;
+      }
+
+      .segment {
+        display: inline-flex;
+        gap: 2px;
+        padding: 4px;
+        background: var(--surface);
+        border-radius: var(--r-pill);
+      }
+
+      .segment button {
+        appearance: none;
+        border: 0;
+        cursor: pointer;
+        font: inherit;
+        font-size: var(--fs-ui);
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: var(--r-pill);
+        background: transparent;
+        color: var(--meta);
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
+      }
+      .segment button:hover {
+        color: var(--text);
+      }
+      .segment button[aria-pressed="true"] {
+        background: var(--accent);
+        color: var(--on-accent);
+      }
+
+      .dividerV {
+        width: 1px;
+        height: 20px;
+        background: var(--hairline);
+      }
+
+      .filterChip {
+        appearance: none;
+        cursor: pointer;
+        font: inherit;
+        font-size: var(--fs-ui);
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: var(--r-pill);
+        background: var(--surface);
+        color: var(--meta);
+        border: 1px solid transparent;
+        transition:
+          background 0.15s ease,
+          color 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .filterChip:hover {
+        background: var(--surface-h);
+        color: var(--text);
+      }
+      .filterChip[aria-pressed="true"] {
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-color: var(--accent-ring);
+        font-weight: 600;
+      }
+
+      /* ══════════════════════════════════════════════════════════════════
+         새 요소: 뱃지 키워드 줄 (세그먼트 줄 아래 새 줄)
+         ══════════════════════════════════════════════════════════════════ */
+
+      .kwRow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--kw-row-gap);
+        /* 접힘이 overflow:hidden 이라 포커스 아웃라인(2px + offset 2px)이 잘린다.
+           안쪽 여백으로 자리를 만들고 같은 값만큼 바깥으로 당겨 정렬을 지킨다. */
+        padding: 4px;
+        margin: -4px;
+      }
+
+      /* 접힘 2줄(잠정) — 가로 스크롤을 쓰지 않으므로 세로로 자른다.
+         26px 알약 두 줄 + 줄 사이 6px + 아웃라인 자리 8px */
+      .kwRow.is-collapsed {
+        max-height: calc(var(--kw-badge-h) * 2 + var(--kw-row-gap) + 8px);
+        overflow: hidden;
+      }
+
+      .kwBadge {
+        appearance: none;
+        border: 0;
+        cursor: pointer;
+        font: inherit;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: var(--kw-badge-h);
+        padding: 0 10px;
+        border-radius: var(--r-pill);
+        font-size: var(--fs-ui);
+        font-weight: 600;
+        letter-spacing: -0.2px;
+        white-space: nowrap;
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
+      }
+
+      .kwCount {
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* 두 축을 면 색으로 가른다 */
+      .kw-field {
+        background: var(--kw-field-bg);
+        color: var(--kw-field-ink);
+      }
+      .kw-field:hover,
+      .kw-field.is-hover {
+        background: var(--kw-field-bg-h);
+      }
+      .kw-kind {
+        background: var(--kw-kind-bg);
+        color: var(--kw-kind-ink);
+      }
+      .kw-kind:hover,
+      .kw-kind.is-hover {
+        background: var(--kw-kind-bg-h);
+      }
+
+      /* 안 읽은 수 0 — 자리는 지키고 누르는 것도 된다.
+         "흐리게"를 색으로만 밀면 4.5:1 바닥에 닿으므로 굵기를 600→500 으로 같이 내린다. */
+      .kwBadge.is-zero {
+        font-weight: 500;
+      }
+      .kw-field.is-zero {
+        color: var(--kw-field-zero-ink);
+      }
+      .kw-kind.is-zero {
+        color: var(--kw-kind-zero-ink);
+      }
+
+      /* 2026-08-27 checkpoint 결정 — 취소선을 숫자에서 **뱃지 전체(이름 + 숫자)** 로 옮겼다.
+         숫자에만 걸었더니 확대했을 때 `코딩 0` 이 `코딩 θ` 로 읽혔다. 빗금 친 0 은
+         "다 봤다"가 아니라 **다른 글자**로 보인다. 이름까지 가로지르면 지워진 줄로 읽힌다.
+
+         · `text-decoration: line-through` 를 알약(inline-flex)에 걸면 **선이 두 토막 난다.**
+           flex 항목마다 따로 그려져 이름과 숫자 사이 6px 간격이 비고, 숫자 위의 짧은 선은
+           여전히 0 안에 갇혀 θ 로 보인다. 실제로 그려서 확인하고 가상요소로 바꿨다.
+         · 그래서 **가상요소로 한 줄을 그린다** — 이름 시작부터 숫자 끝까지 끊기지 않는다.
+         · 선 색은 글자색에서 한 단계 눕혔다(`currentColor` 55%). 글자색 그대로면
+           이름을 가로지르는 선이 글자보다 진해 보인다. **선은 장식이라 4.5:1 대상이 아니다** —
+           design-rules 2026-08-11 이 공식 표시의 점선 테두리를 두고 이미 같은 판단을 했다.
+         · **글자색은 안 건드렸다.** 취소선을 넣으면서 글자를 더 흐리게 만들지 않는다
+           (0건 글자 대비는 바뀌기 전 값 그대로다).
+         · 스크린리더용 텍스트(`, 안 읽은 글 없음 — 전체 N건`)는 **그대로 뒀다.**
+           선은 시각 신호뿐이라 화면을 못 보면 안 전해진다.
+         · 카드 뱃지·상세 뱃지에는 **숫자를 안 붙이므로 0건 상태 자체가 없다.** 그래도 규칙은
+           세 칩에 공통으로 걸어 뒀다 — 나중에 0건이 생기면 선 길이만 알약 좌우 패딩에 맞추면 된다
+           (`--kw-strike-inset`. 토큰이 아니라 시안 안에서 길이를 맞추는 값이고,
+           구현에서는 그 칩의 padding 값을 그대로 쓰면 된다). */
+      .is-zero {
+        position: relative;
+        --kw-strike-inset: 10px;
+      }
+      .detailKwChip.is-zero {
+        --kw-strike-inset: 12px;
+      }
+      .is-zero::after {
+        content: "";
+        position: absolute;
+        left: var(--kw-strike-inset);
+        right: var(--kw-strike-inset);
+        top: 50%;
+        height: 1px;
+        background: currentColor;
+        opacity: 0.55;
+        pointer-events: none;
+      }
+
+      /* 켜진 뱃지 — 활성 상태에 포인트색이 닿는다(지금 필터 칩과 같은 처리).
+         테두리를 border 로 주면 알약이 26px→28px 로 커져 줄이 흔들리므로 inset 그림자로 그린다. */
+      .kwBadge.is-on,
+      .kwBadge.is-on:hover {
+        background: var(--accent-soft);
+        color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent-ring);
+        font-weight: 600;
+      }
+      .kwBadge.is-on .kwCount {
+        font-weight: 600;
+      }
+
+      .kwMoreWrap {
+        padding-top: 10px;
+      }
+
+      .chipsRow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      /* 시안 전용 — 접힘이 실제로 자르는 모습을 좁은 폭에서 보여주는 상자 */
+      .narrow {
+        max-width: 480px;
+      }
+
+      .kwMore {
+        appearance: none;
+        cursor: pointer;
+        font: inherit;
+        font-size: var(--fs-ui);
+        font-weight: 600;
+        color: var(--text2);
+        padding: 6px 16px;
+        border-radius: var(--r-pill);
+        background: transparent;
+        border: 1px solid var(--border-soft);
+        transition:
+          background 0.15s ease,
+          border-color 0.15s ease,
+          color 0.15s ease;
+      }
+      .kwMore:hover {
+        background: var(--surface);
+        color: var(--text);
+        border-color: var(--border-soft-h);
+      }
+
+      /* ── 카드 (승인분 그대로) ─────────────────────────────────────────── */
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--gap);
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border-radius: var(--r-card);
+        padding: 20px;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: var(--shadow-card);
+        transition:
+          background 0.16s ease,
+          box-shadow 0.16s ease,
+          transform 0.16s ease;
+      }
+      .card:hover,
+      .card.is-hover {
+        background: var(--surface-h);
+        box-shadow: var(--shadow-card-h);
+        transform: translateY(-1px);
+      }
+      .card:hover .cardTitle,
+      .card.is-hover .cardTitle {
+        color: var(--accent);
+      }
+
+      .cardBody {
+        flex: 1 1 auto;
+      }
+
+      .badgeRow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: var(--fs-chip);
+        font-weight: 700;
+        letter-spacing: -0.1px;
+        padding: 4px 10px;
+        border-radius: var(--r-pill);
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .official {
+        display: inline-flex;
+        align-items: center;
+        font-size: var(--fs-chip);
+        font-weight: 700;
+        letter-spacing: -0.1px;
+        padding: 4px 10px;
+        border-radius: var(--r-pill);
+        background: var(--tag-bg);
+        color: var(--text);
+      }
+      .card:hover .official,
+      .card.is-hover .official {
+        background: var(--tag-bg-h);
+      }
+
+      .cardTitle {
+        margin: 0 0 10px;
+        font-size: var(--fs-title);
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        line-height: 1.45;
+        transition: color 0.16s ease;
+        word-break: keep-all;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .cardSummary {
+        margin: 0 0 16px;
+        font-size: var(--fs-sm);
+        line-height: 1.62;
+        color: var(--text2);
+        word-break: keep-all;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      /* 새 자리: 제목·요약 아래, 메타 줄 위.
+         .cardBody 밖에 두어야 요약이 없는 카드에서도 점선 발 바로 위에 붙는다. */
+      .cardKw {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin: 0 0 12px;
+      }
+
+      .cardKwChip {
+        display: inline-flex;
+        align-items: center;
+        height: var(--kw-card-chip-h);
+        padding: 0 10px;
+        border-radius: var(--r-pill);
+        font-size: var(--fs-chip);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      /* 카드 뱃지에는 숫자를 안 붙인다 — 건수는 줄 전체의 집계값이라 카드에서는 뜻이 없다 */
+      .cardKwChip.kw-field {
+        background: var(--kw-field-bg);
+        color: var(--kw-field-ink);
+      }
+      .cardKwChip.kw-kind {
+        background: var(--kw-kind-bg);
+        color: var(--kw-kind-ink);
+      }
+      /* +N 은 두 축에 걸쳐 있어 축 색을 쓰지 않는다 */
+      .cardKwChip.kw-rest {
+        background: var(--tag-bg);
+        color: var(--meta);
+      }
+      .card:hover .cardKwChip.kw-rest,
+      .card.is-hover .cardKwChip.kw-rest {
+        background: var(--tag-bg-h);
+      }
+
+      .cardFoot {
+        border-top: 1px dotted var(--dot);
+        padding-top: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        font-size: var(--fs-meta);
+        color: var(--meta);
+      }
+
+      .sourceMark {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: var(--r-pill);
+        background: var(--tag-bg);
+        color: var(--meta);
+        font-size: var(--fs-mark);
+        font-weight: 700;
+        letter-spacing: -0.2px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.16s ease;
+      }
+
+      .metaText {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tags {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+
+      .tag {
+        font-size: var(--fs-chip);
+        font-weight: 500;
+        color: var(--meta);
+        background: var(--tag-bg);
+        border-radius: var(--r-pill);
+        padding: 4px 10px;
+      }
+
+      .card:hover .tag,
+      .card:hover .sourceMark,
+      .card.is-hover .tag,
+      .card.is-hover .sourceMark {
+        background: var(--tag-bg-h);
+      }
+
+      /* ── 읽음 ─────────────────────────────────────────────────────────── */
+
+      .isRead {
+        background: var(--surface-read);
+        box-shadow: none;
+      }
+      .isRead .cardTitle {
+        color: var(--text-read);
+        font-weight: 600;
+      }
+      .isRead .cardSummary {
+        color: var(--text2-read);
+      }
+      .isRead .meta {
+        color: var(--meta-read);
+      }
+      .isRead .cardFoot {
+        border-top-color: var(--dot-read);
+      }
+      .isRead .tag,
+      .isRead .sourceMark {
+        background: var(--tag-read-bg);
+        color: var(--tag-read-ink);
+      }
+      .isRead .badge {
+        background: var(--badge-read-bg);
+        color: var(--badge-read-ink);
+      }
+      .isRead .official {
+        background: var(--tag-read-bg);
+        color: var(--tag-read-ink);
+      }
+      /* 뱃지 중립화 — 두 축 색이 하나로 내려앉는다("색은 아직 안 본 것에만") */
+      .isRead .cardKwChip {
+        background: var(--tag-read-bg);
+        color: var(--tag-read-ink);
+      }
+
+      /* 호버·포커스 = 완전 복구 */
+      .isRead:hover,
+      .isRead:focus-visible,
+      .isRead.is-hover {
+        background: var(--surface-h);
+        box-shadow: var(--shadow-card-h);
+      }
+      .isRead:hover .cardTitle,
+      .isRead:focus-visible .cardTitle,
+      .isRead.is-hover .cardTitle {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .isRead:hover .cardSummary,
+      .isRead:focus-visible .cardSummary,
+      .isRead.is-hover .cardSummary {
+        color: var(--text2);
+      }
+      .isRead:hover .meta,
+      .isRead:focus-visible .meta,
+      .isRead.is-hover .meta {
+        color: var(--meta);
+      }
+      .isRead:hover .cardFoot,
+      .isRead:focus-visible .cardFoot,
+      .isRead.is-hover .cardFoot {
+        border-top-color: var(--dot);
+      }
+      .isRead:hover .tag,
+      .isRead:focus-visible .tag,
+      .isRead.is-hover .tag,
+      .isRead:hover .sourceMark,
+      .isRead:focus-visible .sourceMark,
+      .isRead.is-hover .sourceMark {
+        background: var(--tag-bg-h);
+        color: var(--meta);
+      }
+      .isRead:hover .badge,
+      .isRead:focus-visible .badge,
+      .isRead.is-hover .badge {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .isRead:hover .official,
+      .isRead:focus-visible .official,
+      .isRead.is-hover .official {
+        background: var(--tag-bg-h);
+        color: var(--text);
+      }
+      .isRead:hover .cardKwChip.kw-field,
+      .isRead:focus-visible .cardKwChip.kw-field,
+      .isRead.is-hover .cardKwChip.kw-field {
+        background: var(--kw-field-bg);
+        color: var(--kw-field-ink);
+      }
+      .isRead:hover .cardKwChip.kw-kind,
+      .isRead:focus-visible .cardKwChip.kw-kind,
+      .isRead.is-hover .cardKwChip.kw-kind {
+        background: var(--kw-kind-bg);
+        color: var(--kw-kind-ink);
+      }
+      .isRead:hover .cardKwChip.kw-rest,
+      .isRead:focus-visible .cardKwChip.kw-rest,
+      .isRead.is-hover .cardKwChip.kw-rest {
+        background: var(--tag-bg-h);
+        color: var(--meta);
+      }
+
+      /* ── 상세 (폭이 넉넉하므로 접지 않는다) ───────────────────────────── */
+
+      .detail {
+        max-width: 704px;
+        padding: 24px 0 8px;
+      }
+      .detailTitle {
+        margin: 0 0 14px;
+        font-size: var(--fs-art-title);
+        font-weight: 800;
+        letter-spacing: -0.6px;
+        line-height: 1.35;
+        color: var(--accent);
+        word-break: keep-all;
+      }
+      .detailMeta {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        font-size: var(--fs-meta);
+        color: var(--meta);
+        padding-bottom: 14px;
+        border-bottom: 1px dotted var(--dot);
+      }
+      .metaLine {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .detailKw {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-top: 14px;
+      }
+      .detailKwChip {
+        display: inline-flex;
+        align-items: center;
+        height: var(--kw-detail-chip-h);
+        padding: 0 12px;
+        border-radius: var(--r-pill);
+        font-size: var(--fs-meta);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .detailKwChip.kw-field {
+        background: var(--kw-field-bg);
+        color: var(--kw-field-ink);
+      }
+      .detailKwChip.kw-kind {
+        background: var(--kw-kind-bg);
+        color: var(--kw-kind-ink);
+      }
+
+      /* ── 반응형 (승인분 그대로) ───────────────────────────────────────── */
+
+      @media (max-width: 980px) {
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 640px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .dividerV {
+          display: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .card:hover,
+        .card.is-hover {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="sheetHead">
+        <h1>뱃지 키워드 줄 — 시안</h1>
+        <p>
+          지금 피드의 <b>고정 5개 칩 줄을 뱃지 줄로 교체</b>합니다. 새 탭은 만들지 않습니다.<br />
+          줄 구성은 <b>① 세그먼트 + 전체 칩</b> / <b>② 뱃지 줄</b>(그 아래 새 줄)이고,
+          두 축(<b>분야</b> / <b>사건종류</b>)을 <b>면 색</b>으로 가릅니다.
+          그 색을 A·B 두 방향으로 그렸고, <b>B안이 채택됐습니다</b>(2026-08-27). A안은 비교 근거로 남겨 뒀습니다
+          — 인디고(포인트색)는 "아직 안 본 것" 전용이라 여기서 쓰지 않았습니다.<br />
+          <b>분야</b> 이름은 앞 10개가 690건 실측에서 실제로 나온 것이고, <b>줄 끝 8개는 예상 이름</b>입니다
+          (상한을 24로 올리면서 실측 이름이 모자라 지어냈습니다). <b>사건종류</b> 6개는 아직 실물이 0건이라
+          전부 <b>예상 이름</b>입니다. 창 3일 · 노출 2건 이상 · <b>상한 24개</b> · 접힘 2줄은 전부 <b>잠정값</b>입니다.<br />
+          회색 작은 글씨와 ①②③④ 제목은 <b>시안 설명이라 실제 화면에는 없습니다.</b>
+        </p>
+      </div>
+
+      <div class="sectionHead">
+        <h2>섹션 1 — 뱃지 줄 색 2안 (B 채택)</h2>
+        <span class="rule"></span>
+      </div>
+
+      <!-- ══════════════ A안 ══════════════ -->
+      <div class="optionHead">
+        <h2>A안 — 명도 차 (같은 라벤더 회색, 밝기로 가른다) (비채택 — 두 축이 안 갈림, 명도비 1.11)</h2>
+        <span class="rule"></span>
+      </div>
+      <p class="optionNote">
+        두 색이 <b>지금 팔레트 안</b>에 있습니다. 분야가 한 단계 눌러 앉은 어두운 면, 사건종류가 그 위에 뜬 밝은 면입니다.<br />
+        · 새 색상이 하나도 안 들어옵니다 — 지금 화면과 이물감이 가장 적습니다.<br />
+        · 대신 두 면의 명도비가 <b>1.11</b> 이라 <b>나란히 있을 때만 갈립니다.</b> 카드에 뱃지가 두세 개만 붙으면
+        (섹션 3의 마지막 카드) 어느 쪽이 분야인지 알기 어렵습니다.<br />
+        · 분야가 더 어두워서 <b>수가 많은 쪽이 더 무겁게</b> 보입니다 — 줄 전체가 진해집니다.<br />
+        · <b>비채택입니다(2026-08-27).</b> 아래 화면은 지운 게 아니라 <b>비교 근거로 남겨 둔 것</b>입니다 —
+        무엇을 왜 안 골랐는지가 나중에 다시 필요해집니다.
+      </p>
+
+      <section class="optA board">
+        <h3 class="stateHead">① 기본 — 접힌 2줄 + 더 보기</h3>
+        <div class="controls">
+          <div class="segment" role="group" aria-label="정렬 방식">
+            <button type="button" aria-pressed="true">핫이슈</button>
+            <button type="button" aria-pressed="false">최신</button>
+          </div>
+          <span class="dividerV" aria-hidden="true"></span>
+          <button type="button" class="filterChip" aria-pressed="true">전체</button>
+        </div>
+        <div class="kwBlock">
+          <div class="kwRow is-collapsed" role="group" aria-label="키워드 뱃지">
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">AI 모델</span><span class="kwCount">12<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">규제</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">보안</span><span class="kwCount">6<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">오픈소스</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 5건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">반도체</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">투자</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">이미지 생성</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">로보틱스</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">프론트엔드</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">MCP</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">소송</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">사건사고</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">음성 합성</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">데이터센터</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">자율주행</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">추천 시스템</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">의료 AI</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">검색</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">번역</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">교육</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+          </div>
+          <div class="kwMoreWrap">
+            <button type="button" class="kwMore" aria-expanded="false">더 보기</button>
+          </div>
+        </div>
+        <p class="probe">
+          <span class="swatch sw-field" aria-hidden="true"></span> 분야 18개
+          <span class="probeDim">— 앞 10개(<b>에이전트 · AI 모델 · 코딩 · 보안 · 오픈소스 · 반도체 · 이미지 생성 · 로보틱스 · 프론트엔드 · MCP</b>)는
+          690건 <b>실측</b> 이름, 줄 끝 8개(<b>음성 합성 · 데이터센터 · 자율주행 · 추천 시스템 · 의료 AI · 검색 · 번역 · 교육</b>)는
+          <b>예상</b> 이름입니다 — 상한을 24로 올리면서 실측 이름이 모자라 지어낸 것들입니다</span>
+          <br />
+          <span class="swatch sw-kind" aria-hidden="true"></span> 사건종류 6개
+          <span class="probeDim">— 아직 실물 0건이라 <b>전부 예상</b> 이름입니다</span>
+          <br />
+          <span class="probeDim">창 3일 <b>잠정</b> · 노출 2건 이상 <b>잠정</b> · 상한 24개 <b>잠정</b> · 접힘 2줄 <b>잠정</b></span>
+        </p>
+        <p class="probe">
+          숫자는 <b>안 읽은 글 수</b>입니다. <b>자리와 순서는 전체 건수로 고정</b>이라
+          <code>코딩</code>(안 읽음 0 · 전체 7건)이 <code>규제</code>(4건)보다 앞에 그대로 서 있습니다 —
+          읽었다고 줄이 다시 배열되지 않습니다.<br />
+          상한을 <b>16 → 24</b> 로 올렸습니다. 그런데 재보니 <b>1168px 에서는 24개도 2줄에 그대로 들어갑니다</b> —
+          첫 줄 14개 · 둘째 줄 10개로 <b>가려지는 것이 0개</b>이고, 둘째 줄에 아직 <b>329px</b>(뱃지 네 개쯤)이 남습니다.
+          이 폭에서 "더 보기"가 뜻을 가지려면 상한이 <b>29개쯤</b>은 돼야 합니다.<br />
+          <b>좁아지면 바로 잘립니다</b> — 같은 24개가 980px 에서 2개, 900px 에서 5개, 640px 에서 10개,
+          380px 에서 17개가 가려집니다. 접힘이 실제로 자르는 모습은 바로 아래 좁은 상자로 봐 주세요.
+        </p>
+
+        <h3 class="stateHead">①-2 접힘이 실제로 자르는 모습 — 폭 480px(모바일)로 좁힌 상자</h3>
+        <div class="narrow">
+          <div class="kwBlock">
+            <div class="kwRow is-collapsed" role="group" aria-label="키워드 뱃지">
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">AI 모델</span><span class="kwCount">12<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">규제</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">보안</span><span class="kwCount">6<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">오픈소스</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 5건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">반도체</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">투자</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">이미지 생성</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">로보틱스</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">프론트엔드</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">MCP</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">소송</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">사건사고</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">음성 합성</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">데이터센터</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">자율주행</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">추천 시스템</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">의료 AI</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">검색</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">번역</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">교육</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            </div>
+            <div class="kwMoreWrap">
+              <button type="button" class="kwMore" aria-expanded="false">더 보기</button>
+            </div>
+          </div>
+        </div>
+        <p class="probe">
+          이 상자는 폭 480px 입니다 — 24개 중 <b>12개가 보이고 12개가 가려집니다</b>(<code>프론트엔드</code>부터).
+          <span class="probeDim">(창을 480px 아래로 좁히면 이 상자도 같이 좁아져서 더 많이 가려집니다.)</span><br />
+          <b>"더 보기" 라벨에 개수를 안 적었습니다.</b> 몇 개가 가려질지는 화면 폭이 정하는데
+          — 같은 24개가 1168px 에서는 0개, 900px 에서 5개, 여기 480px 에서 12개, 380px 에서 17개가 가려집니다 —
+          숫자를 박아 두면 폭이 바뀔 때 화면이 거짓말을 합니다.
+        </p>
+
+        <h3 class="stateHead">② 펼친 모습 — 더 보기를 누른 뒤</h3>
+        <div class="kwBlock">
+          <div class="kwRow" role="group" aria-label="키워드 뱃지">
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">AI 모델</span><span class="kwCount">12<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">규제</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">보안</span><span class="kwCount">6<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">오픈소스</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 5건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">반도체</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">투자</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">이미지 생성</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">로보틱스</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">프론트엔드</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">MCP</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">소송</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">사건사고</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">음성 합성</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">데이터센터</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">자율주행</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">추천 시스템</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">의료 AI</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">검색</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">번역</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">교육</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+          </div>
+          <div class="kwMoreWrap">
+            <button type="button" class="kwMore" aria-expanded="true">접기</button>
+          </div>
+        </div>
+        <p class="probe">
+          앞 5개(<code>에이전트 · AI 모델 · 출시 · 코딩 · 규제</code>)가
+          <b>'뜨는 중' 카드에 달린 뱃지</b>이고, 그 뒤부터 건수순입니다.
+          펼치면 <b>24개가 전부</b> 나옵니다 — 줄 끝 8개(<code>음성 합성</code>부터)가 위 범례에서 말한
+          <b>예상 이름</b>입니다.
+        </p>
+
+        <h3 class="stateHead">③ 켜진 뱃지 — 줄 맨 앞으로 끌어올린다</h3>
+        <div class="controls">
+          <div class="segment" role="group" aria-label="정렬 방식">
+            <button type="button" aria-pressed="true">핫이슈</button>
+            <button type="button" aria-pressed="false">최신</button>
+          </div>
+          <span class="dividerV" aria-hidden="true"></span>
+          <button type="button" class="filterChip" aria-pressed="false">전체</button>
+        </div>
+        <div class="kwBlock">
+          <div class="kwRow is-collapsed" role="group" aria-label="키워드 뱃지">
+            <button type="button" class="kwBadge kw-field is-on" aria-pressed="true">
+              <span class="sr-only">분야 </span><span class="kwName">AI 모델</span><span class="kwCount">12<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">규제</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">보안</span><span class="kwCount">6<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">오픈소스</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 5건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">반도체</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">투자</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">이미지 생성</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">로보틱스</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">프론트엔드</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">MCP</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">소송</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">사건사고</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">음성 합성</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">데이터센터</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">자율주행</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">추천 시스템</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">의료 AI</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">검색</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">번역</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">교육</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+          </div>
+          <div class="kwMoreWrap">
+            <button type="button" class="kwMore" aria-expanded="false">더 보기</button>
+          </div>
+        </div>
+        <p class="probe">
+          켠 뱃지에는 <b>포인트색</b>이 닿습니다 — 축 색이 아니라 "지금 켜져 있음"의 표시입니다
+          (지금 필터 칩과 같은 처리). 켜진 동안 <code>전체</code> 칩은 꺼집니다.
+        </p>
+
+        <h3 class="stateHead">④ 호버 — 정적 샘플 (<code>:hover</code> 는 캡처가 안 되므로 클래스로 박아 둔 줄입니다)</h3>
+        <div class="kwBlock">
+          <div class="kwRow" role="group" aria-label="키워드 뱃지 호버 샘플">
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-hover" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-hover" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero is-hover" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero is-hover" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+          </div>
+        </div>
+        <p class="probe">
+          쌍으로 놓았습니다 — 왼쪽이 평소, 오른쪽이 호버. 마지막 두 쌍은 <b>0건 뱃지의 호버</b>입니다
+          (<code>코딩</code>·<code>벤치마크</code>). 0건은 색이 아니라 <b>글자 굵기 600→500</b> 으로
+          한 칸 내려앉고, 색은 4.5:1 하한 위에서만 움직입니다.<br />
+          <b>취소선은 이름과 숫자를 한 줄로 가로지릅니다</b>(2026-08-27 변경). 숫자에만 걸었더니
+          확대했을 때 <code>코딩 0</code> 이 <code>코딩 θ</code> 로 읽혔습니다 — 빗금 친 0 은 "다 봤다"가 아니라
+          다른 글자로 보입니다. <b>선만 한 단계 눕혔고 글자색은 그대로</b>입니다.
+        </p>
+      </section>
+
+      <!-- ══════════════ B안 ══════════════ -->
+      <div class="optionHead">
+        <h2>B안 — 색상 차 (밝기는 같고 색상만 다르다) ← 채택</h2>
+        <span class="rule"></span>
+      </div>
+      <p class="optionNote">
+        두 면의 명도비가 <b>1.00</b>, 즉 <b>밝기가 정확히 같고 색상만</b> 다릅니다. 분야가 청회색, 사건종류가 모래빛 회색입니다.<br />
+        · <b>떨어져 있어도 갈립니다.</b> 카드에 뱃지가 두 개만 붙어도 축이 읽힙니다.<br />
+        · 대가: 지금 팔레트에 없던 <b>따뜻한 색상</b>이 하나 들어옵니다. 페이지가 라벤더 기 도는 회색이라
+        모래빛이 옆에 서면 화면 전체의 색 온도가 살짝 갈라집니다 — 이 대가를 받아들이는 쪽으로 정해졌습니다.<br />
+        · 채도는 둘 다 아주 낮게 잡아 "강조색"으로 읽히지 않게 했습니다(2차 강조색 금지 규칙 유지).<br />
+        · <b>이 안이 채택됐습니다(2026-08-27 checkpoint).</b> tokens.css 로 옮길 값은 이 안의 색입니다
+        (목록은 이 파일 머리 주석의 <code>0-2</code> 블록에 그대로 적어 뒀습니다).
+      </p>
+
+      <section class="optB board">
+        <h3 class="stateHead">① 기본 — 접힌 2줄 + 더 보기</h3>
+        <div class="controls">
+          <div class="segment" role="group" aria-label="정렬 방식">
+            <button type="button" aria-pressed="true">핫이슈</button>
+            <button type="button" aria-pressed="false">최신</button>
+          </div>
+          <span class="dividerV" aria-hidden="true"></span>
+          <button type="button" class="filterChip" aria-pressed="true">전체</button>
+        </div>
+        <div class="kwBlock">
+          <div class="kwRow is-collapsed" role="group" aria-label="키워드 뱃지">
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">AI 모델</span><span class="kwCount">12<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">규제</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">보안</span><span class="kwCount">6<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">오픈소스</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 5건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">반도체</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">투자</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">이미지 생성</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">로보틱스</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">프론트엔드</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">MCP</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">소송</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">사건사고</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">음성 합성</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">데이터센터</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">자율주행</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">추천 시스템</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">의료 AI</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">검색</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">번역</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">교육</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+          </div>
+          <div class="kwMoreWrap">
+            <button type="button" class="kwMore" aria-expanded="false">더 보기</button>
+          </div>
+        </div>
+        <p class="probe">
+          <span class="swatch sw-field" aria-hidden="true"></span> 분야 18개
+          <span class="probeDim">— 앞 10개(<b>에이전트 · AI 모델 · 코딩 · 보안 · 오픈소스 · 반도체 · 이미지 생성 · 로보틱스 · 프론트엔드 · MCP</b>)는
+          690건 <b>실측</b> 이름, 줄 끝 8개(<b>음성 합성 · 데이터센터 · 자율주행 · 추천 시스템 · 의료 AI · 검색 · 번역 · 교육</b>)는
+          <b>예상</b> 이름입니다 — 상한을 24로 올리면서 실측 이름이 모자라 지어낸 것들입니다</span>
+          <br />
+          <span class="swatch sw-kind" aria-hidden="true"></span> 사건종류 6개
+          <span class="probeDim">— 아직 실물 0건이라 <b>전부 예상</b> 이름입니다</span>
+          <br />
+          <span class="probeDim">창 3일 <b>잠정</b> · 노출 2건 이상 <b>잠정</b> · 상한 24개 <b>잠정</b> · 접힘 2줄 <b>잠정</b></span>
+        </p>
+        <p class="probe">
+          숫자는 <b>안 읽은 글 수</b>입니다. <b>자리와 순서는 전체 건수로 고정</b>이라
+          <code>코딩</code>(안 읽음 0 · 전체 7건)이 <code>규제</code>(4건)보다 앞에 그대로 서 있습니다 —
+          읽었다고 줄이 다시 배열되지 않습니다.<br />
+          상한을 <b>16 → 24</b> 로 올렸습니다. 그런데 재보니 <b>1168px 에서는 24개도 2줄에 그대로 들어갑니다</b> —
+          첫 줄 14개 · 둘째 줄 10개로 <b>가려지는 것이 0개</b>이고, 둘째 줄에 아직 <b>329px</b>(뱃지 네 개쯤)이 남습니다.
+          이 폭에서 "더 보기"가 뜻을 가지려면 상한이 <b>29개쯤</b>은 돼야 합니다.<br />
+          <b>좁아지면 바로 잘립니다</b> — 같은 24개가 980px 에서 2개, 900px 에서 5개, 640px 에서 10개,
+          380px 에서 17개가 가려집니다. 접힘이 실제로 자르는 모습은 바로 아래 좁은 상자로 봐 주세요.
+        </p>
+
+        <h3 class="stateHead">①-2 접힘이 실제로 자르는 모습 — 폭 480px(모바일)로 좁힌 상자</h3>
+        <div class="narrow">
+          <div class="kwBlock">
+            <div class="kwRow is-collapsed" role="group" aria-label="키워드 뱃지">
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">AI 모델</span><span class="kwCount">12<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">규제</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">보안</span><span class="kwCount">6<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">오픈소스</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 5건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">반도체</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">투자</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">이미지 생성</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">로보틱스</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">프론트엔드</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">MCP</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">소송</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">사건사고</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">음성 합성</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">데이터센터</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">자율주행</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">추천 시스템</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">의료 AI</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">검색</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">번역</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">교육</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            </div>
+            <div class="kwMoreWrap">
+              <button type="button" class="kwMore" aria-expanded="false">더 보기</button>
+            </div>
+          </div>
+        </div>
+        <p class="probe">
+          이 상자는 폭 480px 입니다 — 24개 중 <b>12개가 보이고 12개가 가려집니다</b>(<code>프론트엔드</code>부터).
+          <span class="probeDim">(창을 480px 아래로 좁히면 이 상자도 같이 좁아져서 더 많이 가려집니다.)</span><br />
+          <b>"더 보기" 라벨에 개수를 안 적었습니다.</b> 몇 개가 가려질지는 화면 폭이 정하는데
+          — 같은 24개가 1168px 에서는 0개, 900px 에서 5개, 여기 480px 에서 12개, 380px 에서 17개가 가려집니다 —
+          숫자를 박아 두면 폭이 바뀔 때 화면이 거짓말을 합니다.
+        </p>
+
+        <h3 class="stateHead">② 펼친 모습 — 더 보기를 누른 뒤</h3>
+        <div class="kwBlock">
+          <div class="kwRow" role="group" aria-label="키워드 뱃지">
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">AI 모델</span><span class="kwCount">12<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">규제</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">보안</span><span class="kwCount">6<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">오픈소스</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 5건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">반도체</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">투자</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">이미지 생성</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">로보틱스</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">프론트엔드</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">MCP</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">소송</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">사건사고</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">음성 합성</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">데이터센터</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">자율주행</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">추천 시스템</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">의료 AI</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">검색</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">번역</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">교육</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+          </div>
+          <div class="kwMoreWrap">
+            <button type="button" class="kwMore" aria-expanded="true">접기</button>
+          </div>
+        </div>
+        <p class="probe">
+          앞 5개(<code>에이전트 · AI 모델 · 출시 · 코딩 · 규제</code>)가
+          <b>'뜨는 중' 카드에 달린 뱃지</b>이고, 그 뒤부터 건수순입니다.
+          펼치면 <b>24개가 전부</b> 나옵니다 — 줄 끝 8개(<code>음성 합성</code>부터)가 위 범례에서 말한
+          <b>예상 이름</b>입니다.
+        </p>
+
+        <h3 class="stateHead">③ 켜진 뱃지 — 줄 맨 앞으로 끌어올린다</h3>
+        <div class="controls">
+          <div class="segment" role="group" aria-label="정렬 방식">
+            <button type="button" aria-pressed="true">핫이슈</button>
+            <button type="button" aria-pressed="false">최신</button>
+          </div>
+          <span class="dividerV" aria-hidden="true"></span>
+          <button type="button" class="filterChip" aria-pressed="false">전체</button>
+        </div>
+        <div class="kwBlock">
+          <div class="kwRow is-collapsed" role="group" aria-label="키워드 뱃지">
+            <button type="button" class="kwBadge kw-field is-on" aria-pressed="true">
+              <span class="sr-only">분야 </span><span class="kwName">AI 모델</span><span class="kwCount">12<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">규제</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">보안</span><span class="kwCount">6<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">오픈소스</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 5건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">반도체</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">투자</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">이미지 생성</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">로보틱스</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">프론트엔드</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">MCP</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">소송</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">사건사고</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">음성 합성</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">데이터센터</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">자율주행</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">추천 시스템</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">의료 AI</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">검색</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">번역</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">교육</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+          </div>
+          <div class="kwMoreWrap">
+            <button type="button" class="kwMore" aria-expanded="false">더 보기</button>
+          </div>
+        </div>
+        <p class="probe">
+          켠 뱃지에는 <b>포인트색</b>이 닿습니다 — 축 색이 아니라 "지금 켜져 있음"의 표시입니다
+          (지금 필터 칩과 같은 처리). 켜진 동안 <code>전체</code> 칩은 꺼집니다.
+        </p>
+
+        <h3 class="stateHead">④ 호버 — 정적 샘플 (<code>:hover</code> 는 캡처가 안 되므로 클래스로 박아 둔 줄입니다)</h3>
+        <div class="kwBlock">
+          <div class="kwRow" role="group" aria-label="키워드 뱃지 호버 샘플">
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-hover" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-hover" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero is-hover" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero is-hover" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+          </div>
+        </div>
+        <p class="probe">
+          쌍으로 놓았습니다 — 왼쪽이 평소, 오른쪽이 호버. 마지막 두 쌍은 <b>0건 뱃지의 호버</b>입니다
+          (<code>코딩</code>·<code>벤치마크</code>). 0건은 색이 아니라 <b>글자 굵기 600→500</b> 으로
+          한 칸 내려앉고, 색은 4.5:1 하한 위에서만 움직입니다.<br />
+          <b>취소선은 이름과 숫자를 한 줄로 가로지릅니다</b>(2026-08-27 변경). 숫자에만 걸었더니
+          확대했을 때 <code>코딩 0</code> 이 <code>코딩 θ</code> 로 읽혔습니다 — 빗금 친 0 은 "다 봤다"가 아니라
+          다른 글자로 보입니다. <b>선만 한 단계 눕혔고 글자색은 그대로</b>입니다.
+        </p>
+      </section>
+
+      <div class="sectionHead">
+        <h2>섹션 2 — 세그먼트 이름</h2>
+        <span class="rule"></span>
+      </div>
+      <p class="optionNote">
+        <code>뜨는순 / 최신순</code> → <b>핫이슈 / 최신</b>. 기본은 <b>핫이슈</b>가 켜진 상태입니다.
+        <b>글자만 바뀌고 동작은 그대로</b>입니다 — 두 쪽 다 같은 글 전부를 보여주고 날짜 묶음 안에서 순서만 다릅니다.
+        세그먼트 줄과 <code>전체</code> 칩이 한 줄, 뱃지 줄은 그 아래 새 줄입니다.
+      </p>
+      <div class="board">
+        <h3 class="stateHead">지금</h3>
+        <div class="controls">
+          <div class="segment" role="group" aria-label="정렬 방식">
+            <button type="button" aria-pressed="true">뜨는순</button>
+            <button type="button" aria-pressed="false">최신순</button>
+          </div>
+          <span class="dividerV" aria-hidden="true"></span>
+          <div class="chipsRow" role="group" aria-label="주제 필터">
+            <button type="button" class="filterChip" aria-pressed="true">전체</button>
+            <button type="button" class="filterChip" aria-pressed="false">모델</button>
+            <button type="button" class="filterChip" aria-pressed="false">에이전트</button>
+            <button type="button" class="filterChip" aria-pressed="false">툴</button>
+            <button type="button" class="filterChip" aria-pressed="false">엔지니어링</button>
+            <button type="button" class="filterChip" aria-pressed="false">인프라</button>
+          </div>
+        </div>
+
+        <h3 class="stateHead">바꾼 뒤 — 세그먼트 줄 + 전체 칩이 한 줄, 뱃지 줄은 아래 새 줄</h3>
+        <div class="optA">
+          <div class="controls">
+            <div class="segment" role="group" aria-label="정렬 방식">
+              <button type="button" aria-pressed="true">핫이슈</button>
+              <button type="button" aria-pressed="false">최신</button>
+            </div>
+            <span class="dividerV" aria-hidden="true"></span>
+            <button type="button" class="filterChip" aria-pressed="true">전체</button>
+          </div>
+          <div class="kwBlock">
+            <div class="kwRow is-collapsed" role="group" aria-label="키워드 뱃지">
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">에이전트</span><span class="kwCount">18<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">AI 모델</span><span class="kwCount">12<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">출시</span><span class="kwCount">11<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">코딩</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 7건</span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">규제</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">보안</span><span class="kwCount">6<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">오픈소스</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 5건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">반도체</span><span class="kwCount">4<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">투자</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">이미지 생성</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind is-zero" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">벤치마크</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 3건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">로보틱스</span><span class="kwCount">3<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">프론트엔드</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">MCP</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">소송</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-kind" aria-pressed="false">
+              <span class="sr-only">사건종류 </span><span class="kwName">사건사고</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">음성 합성</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">데이터센터</span><span class="kwCount">2<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">자율주행</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">추천 시스템</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">의료 AI</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">검색</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            <button type="button" class="kwBadge kw-field is-zero" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">번역</span><span class="kwCount">0</span><span class="sr-only">, 안 읽은 글 없음 — 전체 2건</span>
+            </button>
+            <button type="button" class="kwBadge kw-field" aria-pressed="false">
+              <span class="sr-only">분야 </span><span class="kwName">교육</span><span class="kwCount">1<span class="sr-only">건 안 읽음</span></span>
+            </button>
+            </div>
+            <div class="kwMoreWrap">
+              <button type="button" class="kwMore" aria-expanded="false">더 보기</button>
+            </div>
+          </div>
+        </div>
+        <p class="probe">
+          <code>전체</code> 칩에는 <b>숫자를 안 붙입니다</b> — 그 숫자는 "오늘 안 읽은 소식 몇 건"이 되어
+          화면 전체를 덮는 하나의 숫자가 됩니다(INV-N5 가 막으려던 것). 개별 뱃지의 숫자는
+          "수십 개 중 무엇을 누를지" 고르는 정보라 성격이 다릅니다.
+        </p>
+      </div>
+
+      <div class="sectionHead">
+        <h2>섹션 3 — 카드 밀도</h2>
+        <span class="rule"></span>
+      </div>
+      <p class="optionNote">
+        같은 카드 여섯 장입니다. 순서대로 —
+        <b>1</b> 뜨는 중 · 뱃지 4개 / <b>2</b> 뱃지 5개(<code>+1</code> 로 접힘) /
+        <b>3</b> 요약 없음 / <b>4</b> 읽은 카드 / <b>5</b> 읽은 카드 + 호버(정적) /
+        <b>6</b> 공식 표시가 붙은 카드.<br />
+        뱃지는 <b>제목·요약 아래, 메타 줄 위</b>의 별도 줄이고 <b>숫자를 안 붙입니다</b>.
+        키워드가 별도 줄로 내려가면서 <b>메타 줄에서 태그 칩이 빠졌습니다</b> —
+        2026-08-11 블록이 "메타 줄은 이미 꽉 찼다"고 적어 둔 자리가 이 변경으로 비워집니다.
+      </p>
+
+      <h3 class="stateHead">뱃지 줄 있음 — A안 색 (비채택)</h3>
+      <div class="optA">
+        <div class="grid">
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+            </div>
+            <h3 class="cardTitle">앤트로픽이 에이전트 스킬 규격을 공개했습니다</h3>
+            <p class="cardSummary">도구 설명을 파일로 떼어내 재사용하는 방식입니다. 기존 도구 정의는 그대로 두고 이름만 참조하면 됩니다.</p>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>에이전트</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>AI 모델</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>출시</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>오픈소스</span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 3시간 전</span>
+            </span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">엔비디아 차세대 가속기, 공급 계약이 먼저 알려졌다</h3>
+            <p class="cardSummary">발표 전에 공급 물량이 알려지며 경쟁사 주가가 움직였습니다. 규제 당국이 계약 구조를 들여다본다는 이야기도 나왔습니다.</p>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>반도체</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>AI 모델</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>투자</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>규제</span>
+            <span class="cardKwChip kw-rest">+1<span class="sr-only">개 더: 소송</span></span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Re</span>
+              <span class="metaText">Reuters · 5시간 전</span>
+            </span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">MCP 커넥터 규격 0.4 초안</h3>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>MCP</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>프론트엔드</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>출시</span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 어제</span>
+            </span>
+          </div>
+        </a>
+
+        <a class="card isRead" href="#">
+          <span class="sr-only">읽은 글</span>
+          <div class="cardBody">
+            <h3 class="cardTitle">오픈소스 패키지 저장소에서 자격증명 탈취 코드가 발견됐습니다</h3>
+            <p class="cardSummary">설치 스크립트에 숨어 있던 코드가 환경변수를 외부로 보냈습니다. 영향 범위와 조치 방법이 함께 공지됐습니다.</p>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>보안</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>코딩</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>사건사고</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>오픈소스</span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Th</span>
+              <span class="metaText">The Verge · 어제</span>
+            </span>
+          </div>
+        </a>
+
+        <a class="card isRead is-hover" href="#">
+          <span class="sr-only">읽은 글</span>
+          <div class="cardBody">
+            <h3 class="cardTitle">오픈소스 패키지 저장소에서 자격증명 탈취 코드가 발견됐습니다</h3>
+            <p class="cardSummary">설치 스크립트에 숨어 있던 코드가 환경변수를 외부로 보냈습니다. 영향 범위와 조치 방법이 함께 공지됐습니다.</p>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>보안</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>코딩</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>사건사고</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>오픈소스</span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Th</span>
+              <span class="metaText">The Verge · 어제</span>
+            </span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="official">공식 발표<span class="sr-only"> — 원문 주소가 anthropic.com 도메인입니다</span></span>
+            </div>
+            <h3 class="cardTitle">로봇 팔 제어 모델에 시리즈 B 투자가 들어왔습니다</h3>
+            <p class="cardSummary">실내 작업용 제어 모델을 만드는 곳입니다. 공개된 시연 영상에서 물건을 집는 성공률이 함께 나왔습니다.</p>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>로보틱스</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>투자</span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 2일 전</span>
+            </span>
+          </div>
+        </a>
+        </div>
+      </div>
+
+      <h3 class="stateHead">뱃지 줄 있음 — B안 색 ← 채택</h3>
+      <div class="optB">
+        <div class="grid">
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+            </div>
+            <h3 class="cardTitle">앤트로픽이 에이전트 스킬 규격을 공개했습니다</h3>
+            <p class="cardSummary">도구 설명을 파일로 떼어내 재사용하는 방식입니다. 기존 도구 정의는 그대로 두고 이름만 참조하면 됩니다.</p>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>에이전트</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>AI 모델</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>출시</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>오픈소스</span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 3시간 전</span>
+            </span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">엔비디아 차세대 가속기, 공급 계약이 먼저 알려졌다</h3>
+            <p class="cardSummary">발표 전에 공급 물량이 알려지며 경쟁사 주가가 움직였습니다. 규제 당국이 계약 구조를 들여다본다는 이야기도 나왔습니다.</p>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>반도체</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>AI 모델</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>투자</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>규제</span>
+            <span class="cardKwChip kw-rest">+1<span class="sr-only">개 더: 소송</span></span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Re</span>
+              <span class="metaText">Reuters · 5시간 전</span>
+            </span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">MCP 커넥터 규격 0.4 초안</h3>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>MCP</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>프론트엔드</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>출시</span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 어제</span>
+            </span>
+          </div>
+        </a>
+
+        <a class="card isRead" href="#">
+          <span class="sr-only">읽은 글</span>
+          <div class="cardBody">
+            <h3 class="cardTitle">오픈소스 패키지 저장소에서 자격증명 탈취 코드가 발견됐습니다</h3>
+            <p class="cardSummary">설치 스크립트에 숨어 있던 코드가 환경변수를 외부로 보냈습니다. 영향 범위와 조치 방법이 함께 공지됐습니다.</p>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>보안</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>코딩</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>사건사고</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>오픈소스</span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Th</span>
+              <span class="metaText">The Verge · 어제</span>
+            </span>
+          </div>
+        </a>
+
+        <a class="card isRead is-hover" href="#">
+          <span class="sr-only">읽은 글</span>
+          <div class="cardBody">
+            <h3 class="cardTitle">오픈소스 패키지 저장소에서 자격증명 탈취 코드가 발견됐습니다</h3>
+            <p class="cardSummary">설치 스크립트에 숨어 있던 코드가 환경변수를 외부로 보냈습니다. 영향 범위와 조치 방법이 함께 공지됐습니다.</p>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>보안</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>코딩</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>사건사고</span>
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>오픈소스</span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Th</span>
+              <span class="metaText">The Verge · 어제</span>
+            </span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="official">공식 발표<span class="sr-only"> — 원문 주소가 anthropic.com 도메인입니다</span></span>
+            </div>
+            <h3 class="cardTitle">로봇 팔 제어 모델에 시리즈 B 투자가 들어왔습니다</h3>
+            <p class="cardSummary">실내 작업용 제어 모델을 만드는 곳입니다. 공개된 시연 영상에서 물건을 집는 성공률이 함께 나왔습니다.</p>
+          </div>
+          <div class="cardKw">
+            <span class="cardKwChip kw-field"><span class="sr-only">분야 </span>로보틱스</span>
+            <span class="cardKwChip kw-kind"><span class="sr-only">사건종류 </span>투자</span>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 2일 전</span>
+            </span>
+          </div>
+        </a>
+        </div>
+      </div>
+
+      <h3 class="stateHead">뱃지 줄 없음 — 지금 (비교용, 메타 줄에 태그 칩 2개 + <code>+N</code>)</h3>
+      <div>
+        <div class="grid">
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+            </div>
+            <h3 class="cardTitle">앤트로픽이 에이전트 스킬 규격을 공개했습니다</h3>
+            <p class="cardSummary">도구 설명을 파일로 떼어내 재사용하는 방식입니다. 기존 도구 정의는 그대로 두고 이름만 참조하면 됩니다.</p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 3시간 전</span>
+            </span>
+            <span class="tags"><span class="tag">에이전트</span><span class="tag">+3<span class="sr-only">개 더</span></span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">엔비디아 차세대 가속기, 공급 계약이 먼저 알려졌다</h3>
+            <p class="cardSummary">발표 전에 공급 물량이 알려지며 경쟁사 주가가 움직였습니다. 규제 당국이 계약 구조를 들여다본다는 이야기도 나왔습니다.</p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Re</span>
+              <span class="metaText">Reuters · 5시간 전</span>
+            </span>
+            <span class="tags"><span class="tag">반도체</span><span class="tag">+4<span class="sr-only">개 더</span></span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <h3 class="cardTitle">MCP 커넥터 규격 0.4 초안</h3>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 어제</span>
+            </span>
+            <span class="tags"><span class="tag">MCP</span><span class="tag">+2<span class="sr-only">개 더</span></span></span>
+          </div>
+        </a>
+
+        <a class="card isRead" href="#">
+          <span class="sr-only">읽은 글</span>
+          <div class="cardBody">
+            <h3 class="cardTitle">오픈소스 패키지 저장소에서 자격증명 탈취 코드가 발견됐습니다</h3>
+            <p class="cardSummary">설치 스크립트에 숨어 있던 코드가 환경변수를 외부로 보냈습니다. 영향 범위와 조치 방법이 함께 공지됐습니다.</p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Th</span>
+              <span class="metaText">The Verge · 어제</span>
+            </span>
+            <span class="tags"><span class="tag">보안</span><span class="tag">+3<span class="sr-only">개 더</span></span></span>
+          </div>
+        </a>
+
+        <a class="card isRead is-hover" href="#">
+          <span class="sr-only">읽은 글</span>
+          <div class="cardBody">
+            <h3 class="cardTitle">오픈소스 패키지 저장소에서 자격증명 탈취 코드가 발견됐습니다</h3>
+            <p class="cardSummary">설치 스크립트에 숨어 있던 코드가 환경변수를 외부로 보냈습니다. 영향 범위와 조치 방법이 함께 공지됐습니다.</p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">Th</span>
+              <span class="metaText">The Verge · 어제</span>
+            </span>
+            <span class="tags"><span class="tag">보안</span><span class="tag">+3<span class="sr-only">개 더</span></span></span>
+          </div>
+        </a>
+
+        <a class="card" href="#">
+          <div class="cardBody">
+            <div class="badgeRow">
+              <span class="official">공식 발표<span class="sr-only"> — 원문 주소가 anthropic.com 도메인입니다</span></span>
+            </div>
+            <h3 class="cardTitle">로봇 팔 제어 모델에 시리즈 B 투자가 들어왔습니다</h3>
+            <p class="cardSummary">실내 작업용 제어 모델을 만드는 곳입니다. 공개된 시연 영상에서 물건을 집는 성공률이 함께 나왔습니다.</p>
+          </div>
+          <div class="cardFoot">
+            <span class="meta">
+              <span class="sourceMark" aria-hidden="true">An</span>
+              <span class="metaText">Anthropic · 2일 전</span>
+            </span>
+            <span class="tags"><span class="tag">로보틱스</span><span class="tag">+1<span class="sr-only">개 더</span></span></span>
+          </div>
+        </a>
+        </div>
+      </div>
+      <p class="probe">
+        <b>4번과 5번을 나란히 보세요</b> — 읽은 카드에서는 뱃지가 하나의 중립색으로 내려앉고
+        (그래서 <b>읽은 카드에서는 두 축이 안 갈립니다</b>), 호버에서 축 색이 그대로 복구됩니다.
+        이건 design-rules 의 "뱃지 중립화"를 그대로 따른 결과입니다 — 축 구분을 읽은 카드에서도
+        남기려면 그 규칙에 예외를 열어야 해서, 이 시안은 열지 않고 <b>확인 포인트로 남겼습니다</b>.
+      </p>
+      <p class="probe">
+        <b>6번 카드</b>는 제목 위 뱃지 줄(뜨는 중 · 공식 발표)과 새 키워드 줄이 <b>한 카드에 같이 있는</b> 모습입니다.
+        둘은 자리가 다르고(위 / 아래), 공식 표시는 채운 알약 + 굵기 700, 키워드는 축 색 + 굵기 500 이라 형태로도 갈립니다.
+      </p>
+
+      <div class="sectionHead">
+        <h2>섹션 4 — 상세 화면 (뱃지 전부)</h2>
+        <span class="rule"></span>
+      </div>
+      <p class="optionNote">
+        상세는 폭이 넉넉하므로 <b>접지 않고 전부</b> 보여줍니다. 자리는 메타 줄 아래,
+        시그니처인 점선 한 줄 뒤입니다. 크기는 기존 <b>상세 태그 칩 단계 12px</b> 그대로라 새 단계가 생기지 않습니다.
+      </p>
+      <h3 class="stateHead">A안 색 (비채택)</h3>
+      <div class="optA detail">
+        <div class="badgeRow">
+          <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+          <span class="official">공식 발표<span class="sr-only"> — 원문 주소가 anthropic.com 도메인입니다</span></span>
+        </div>
+        <h3 class="detailTitle">앤트로픽이 에이전트 스킬 규격을 공개했습니다</h3>
+        <div class="detailMeta">
+          <span class="metaLine">
+            <span class="sourceMark" aria-hidden="true">An</span>
+            Anthropic · 3시간 전
+          </span>
+          <span class="metaLine">원문 제목: Introducing Agent Skills</span>
+        </div>
+        <div class="detailKw" role="group" aria-label="이 소식의 키워드">
+          <span class="detailKwChip kw-field"><span class="sr-only">분야 </span>에이전트</span>
+          <span class="detailKwChip kw-field"><span class="sr-only">분야 </span>AI 모델</span>
+          <span class="detailKwChip kw-field"><span class="sr-only">분야 </span>MCP</span>
+          <span class="detailKwChip kw-field"><span class="sr-only">분야 </span>오픈소스</span>
+          <span class="detailKwChip kw-field"><span class="sr-only">분야 </span>코딩</span>
+          <span class="detailKwChip kw-kind"><span class="sr-only">사건종류 </span>출시</span>
+          <span class="detailKwChip kw-kind"><span class="sr-only">사건종류 </span>벤치마크</span>
+        </div>
+      </div>
+      <h3 class="stateHead">B안 색 ← 채택</h3>
+      <div class="optB detail">
+        <div class="badgeRow">
+          <span class="badge"><span aria-hidden="true">🔥</span> 뜨는 중</span>
+          <span class="official">공식 발표<span class="sr-only"> — 원문 주소가 anthropic.com 도메인입니다</span></span>
+        </div>
+        <h3 class="detailTitle">앤트로픽이 에이전트 스킬 규격을 공개했습니다</h3>
+        <div class="detailMeta">
+          <span class="metaLine">
+            <span class="sourceMark" aria-hidden="true">An</span>
+            Anthropic · 3시간 전
+          </span>
+          <span class="metaLine">원문 제목: Introducing Agent Skills</span>
+        </div>
+        <div class="detailKw" role="group" aria-label="이 소식의 키워드">
+          <span class="detailKwChip kw-field"><span class="sr-only">분야 </span>에이전트</span>
+          <span class="detailKwChip kw-field"><span class="sr-only">분야 </span>AI 모델</span>
+          <span class="detailKwChip kw-field"><span class="sr-only">분야 </span>MCP</span>
+          <span class="detailKwChip kw-field"><span class="sr-only">분야 </span>오픈소스</span>
+          <span class="detailKwChip kw-field"><span class="sr-only">분야 </span>코딩</span>
+          <span class="detailKwChip kw-kind"><span class="sr-only">사건종류 </span>출시</span>
+          <span class="detailKwChip kw-kind"><span class="sr-only">사건종류 </span>벤치마크</span>
+        </div>
+      </div>
+      <p class="probe">
+        상세는 <b>여는 순간 읽음이 되는</b> 화면이라 안 읽음/읽음 구분이 없습니다.
+        제목이 포인트색인 것은 "우리가 붙인 제목"의 표시이고(2026-08-08), 원문 제목은 메타 줄 안에 먹색으로 남습니다.
+      </p>
+    </div>
+  </body>
+</html>

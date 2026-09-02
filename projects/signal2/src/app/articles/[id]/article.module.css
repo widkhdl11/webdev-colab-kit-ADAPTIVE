@@ -1,0 +1,331 @@
+/* 소식 상세 — 1-A 범위. 원문 본문(prose)은 아직 없다.
+ *
+ * 여기 있는 값은 전부 design-rules.md 로 승인된 것이다:
+ * 읽기 컬럼 704px · 페이지 제목은 포인트색(우리가 붙인 것) · 원문 제목은 메타 줄 안 ·
+ * AI 요약 박스는 16px + 왼쪽 4px 포인트선 + 줄높이 1.70.
+ */
+
+.read {
+  max-width: 704px;
+  margin: 0 auto;
+  padding: var(--space-32) 0 var(--space-56);
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: var(--space-24);
+  font-size: var(--fs-ui);
+  color: var(--meta);
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--text);
+}
+
+/* 포인트색은 "우리가 붙인 것"의 표식이다 — 먹색이면 출처가 쓴 것.
+ * 대비 --accent on --bg = 5.49:1 (링크가 이미 쓰던 조합이라 새 하한이 없다). */
+.title {
+  margin: 0 0 var(--space-16);
+  font-size: var(--fs-art-title);
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  line-height: 1.35;
+  color: var(--accent);
+  word-break: keep-all;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-10);
+  padding-bottom: var(--space-16);
+  border-bottom: 1px dotted var(--dot);
+  font-size: var(--fs-meta);
+  color: var(--meta);
+}
+
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.sourceMark {
+  flex-shrink: 0;
+  width: var(--space-20);
+  height: var(--space-20);
+  border-radius: var(--r-pill);
+  background: var(--tag-bg);
+  color: var(--meta);
+  font-size: var(--fs-mark);
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 원문 제목은 출처가 쓴 것이라 제목 묶음이 아니라 메타 줄에 둔다.
+ * 메타 줄 안에서 한 줄을 통째로 차지한다 — 여백은 메타 줄의 gap 이 준다. */
+.originalTitle {
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+.originalTitleLabel {
+  font-weight: 600;
+}
+
+/* ── 키워드 (2026-08-27 승인: "상세는 전부 보여준다") ────────────────
+ * 카드는 4개까지만 보여주고 +N 으로 접지만 여기는 폭이 넉넉해서 접을 이유가 없다.
+ * 알약 언어는 카드와 같고 높이만 한 단계 크다. 축 색은 카드와 같은 토큰을 쓴다 —
+ * 두 화면에서 같은 키워드가 다른 색이면 색이 축을 뜻한다는 규칙이 깨진다. */
+.keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin: var(--space-16) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.keyword {
+  display: inline-flex;
+  align-items: center;
+  height: var(--kw-detail-chip-h);
+  padding: 0 var(--space-10);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-meta);
+  font-weight: 500;
+}
+
+.kwField {
+  background: var(--kw-field-bg);
+  color: var(--kw-field-ink);
+}
+
+.kwKind {
+  background: var(--kw-kind-bg);
+  color: var(--kw-kind-ink);
+}
+
+/* AI 요약 박스 — 원문과 크기가 1px 차이라 위계를 면·색·형태·질감 네 축으로 나른다. */
+.summaryBox {
+  margin: var(--space-24) 0 0;
+  padding: var(--space-16) var(--space-20);
+  background: var(--surface);
+  border-radius: var(--r-card);
+  border-left: 4px solid var(--accent);
+}
+
+.summaryLabel {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: var(--space-10);
+  padding: var(--space-2) var(--space-10);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-chip);
+  font-weight: 700;
+}
+
+.summaryText {
+  margin: 0;
+  font-size: var(--fs-title);
+  line-height: 1.7;
+  color: var(--text2);
+  word-break: keep-all;
+}
+
+.summaryNote {
+  margin: var(--space-10) 0 0;
+  font-size: var(--fs-meta);
+  color: var(--meta);
+}
+
+/* 원문으로 보내는 자리. 본문 전문이 없을 때 이 링크가 유일한 경로다. */
+.outbound {
+  margin-top: var(--space-32);
+  padding-top: var(--space-16);
+  border-top: 1px dotted var(--dot);
+  font-size: var(--fs-body);
+}
+
+.outboundLink {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── 이전 글 / 다음 글 (2026-09-01 승인) ─────────────────────────────
+ * 순서는 피드에 보이던 것 그대로고 날짜 경계를 넘어간다.
+ * 형태가 알약이 아니라 카드 라운드인 이유: 두 줄짜리 제목이 들어가는데
+ * 알약이면 세로가 늘어져 버튼으로 안 읽힌다. */
+.readNav {
+  display: flex;
+  gap: var(--space-12);
+  margin-top: var(--space-40);
+  padding-top: var(--space-24);
+  border-top: 1px dotted var(--dot);
+}
+
+/* 활성 쪽은 <a>, 비활성 쪽은 <button> 이다(page.tsx 의 이유 참고).
+ * 버튼은 글꼴을 안 물려받으므로 여기서 맞춰 준다 — 안 하면 비활성 쪽만 시스템 폰트로 뜬다. */
+.navButton {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  font: inherit;
+  appearance: none;
+  padding: var(--space-14) 18px;
+  border-radius: var(--r-card);
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  text-decoration: none;
+  color: var(--text2);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+/* **복합 선택자여야 한다**(`.readNav .navPrev` = 0,2,0).
+ * 한 클래스로 두면 아래 미디어쿼리의 `.navButton { align-items: center }`(0,1,0)가
+ * 뒤에 온다는 이유로 이겨서, 좁은 화면에서 화살표는 좌·우를 가리키는데 글자는 둘 다
+ * 가운데로 몰린다. 승인 시안(article-nav-and-mobile-dock.html:676)도 dock 안에서
+ * 명시도를 올려 좌/우를 지킨다. 이 레포에서 같은 모양의 사고가 세 번 났다. */
+.readNav .navPrev {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.readNav .navNext {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.navRole {
+  font-size: var(--fs-meta);
+  color: var(--meta);
+}
+
+/* 제목을 같이 보여준다 — 「다음 글 →」만 있으면 누르기 전에 무엇인지 모른다.
+ * 2줄까지, 어절 단위로 끊는다(카드 제목과 같은 규칙). */
+.navTitle {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text2);
+  word-break: keep-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 누를 수 없는 것은 호버에 반응하지 않는다 — 점선 하나로 "안 눌린다"를 버티게 하면 안 된다.
+ *
+ * 「더 보기」·뱃지 토글은 호버 뒤에 원래 값을 **다시 적어서**(`:hover { background: transparent }`)
+ * 같은 일을 하는데, 여기서는 그 방법이 틀린다: 640px 아래에서 `.navButton` 의 배경이
+ * `--bg` 로 바뀌므로 "원래 값"이 화면 폭에 따라 다르다. 아예 안 걸리게 두면 그 문제가 없다. */
+.navButton:not([aria-disabled="true"]):hover {
+  background: var(--surface);
+  border-color: var(--border-soft-h);
+}
+
+.navButton:not([aria-disabled="true"]):hover .navTitle {
+  color: var(--accent);
+}
+
+/* 끝에 닿아도 없애지 않는다. 점선은 이미 「공식 발표라고 함」이 쓰는 표식이라 새 언어가 아니다. */
+.navButton[aria-disabled="true"] {
+  border-style: dashed;
+  cursor: default;
+}
+
+.navButton[aria-disabled="true"] .navTitle {
+  color: var(--meta);
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navButton {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .title {
+    font-size: var(--fs-art-title-sm);
+  }
+
+  /* 한손 조작 — 글 이동을 엄지가 닿는 화면 아래로 내린다.
+   * 자리를 비우는 것은 body 가 한다(app/globals.css). */
+  .readNav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    margin-top: 0;
+    padding: var(--space-12) var(--space-16)
+      calc(var(--space-12) + env(safe-area-inset-bottom));
+    gap: var(--space-8);
+    background: var(--surface);
+    border-top: 1px solid var(--hairline);
+  }
+
+  /* 좁은 화면에서는 제목을 뺀다 — 두 줄짜리 제목 둘이 들어가면 줄이 화면의 3분의 1이 된다.
+     역할 글자만 남기고 터치 영역을 44px 로 맞춘다. */
+  .navButton {
+    min-height: var(--touch-min);
+    justify-content: center;
+    align-items: center;
+    padding: 0 var(--space-14);
+    border-radius: var(--r-pill);
+    background: var(--bg);
+  }
+
+  .navRole {
+    font-size: var(--fs-btn);
+    font-weight: 600;
+    color: var(--text2);
+  }
+
+  /* **눈에서만 감춘다.** `display: none` 이면 링크의 접근 이름이 「다음 글 →」뿐이 되는데,
+     제목을 같이 보여주는 이유("누르기 전에 무엇인지 모른다")는 화면을 못 보는 사람에게
+     더 세게 걸린다. sr-only 와 같은 방식으로 화면에서만 뺀다. */
+  .navTitle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* 끝에 닿았을 때는 역할 대신 이유를 보여준다 — 좁은 화면에서 「다음 글 →」만 남으면
+     왜 안 눌리는지 알 방법이 점선 테두리뿐이다. */
+  .navButton[aria-disabled="true"] .navRole {
+    display: none;
+  }
+
+  /* 위 sr-only 처리를 풀어 화면에 되돌린다 — 좁은 화면에서 역할 글자만 남으면
+     왜 안 눌리는지 알 방법이 점선 테두리뿐이다. */
+  .navButton[aria-disabled="true"] .navTitle {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    font-size: var(--fs-btn);
+    font-weight: 500;
+    color: var(--meta);
+  }
+}

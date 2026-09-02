@@ -1,0 +1,212 @@
+/* 상단 키워드 뱃지 줄 — design-rules.md 2026-08-27 / 08-30 / 08-31 블록. */
+
+.wrap {
+  padding-bottom: 18px;
+}
+
+/* 접힘은 2줄이다. 가로 스크롤을 안 쓰는 이유는 마우스로만 닿는 자리가 생기기 때문이고,
+ * 세로로 자르면 같은 문제가 반대 방향으로 생긴다 — 그래서 넘친 뱃지를 재서 inert 로 닫는다. */
+.list {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  overflow: hidden;
+  max-height: calc(var(--kw-badge-h) * 2 + var(--space-6));
+}
+
+/* **복합 선택자여야 한다**(`.list.expanded` = 0,2,0).
+ * 한 클래스로 두면 아래 미디어쿼리의 `.list`(0,1,0)가 **뒤에 온다는 이유로** 이겨서
+ * 좁은 화면에서 「더 보기」가 눌러도 안 펴진다. 2026-08-31 에 켠 뱃지 색이 같은 모양으로
+ * 죽었던 자리다 — 명시도를 같게 두면 순서가 판정을 대신한다. */
+.list.expanded {
+  max-height: none;
+}
+
+.badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: var(--kw-badge-h);
+  padding: 0 var(--space-12);
+  border-radius: var(--r-pill);
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-ui);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+/* 두 축을 색으로 가른다. 인디고에서 가져오지 않는다 — 포인트색은 "아직 안 본 것" 전용이다.
+ * 두 면의 명도비가 1.00 이라 밝기는 같고 색상으로만 갈린다. */
+.field {
+  background: var(--kw-field-bg);
+  color: var(--kw-field-ink);
+}
+
+/* 켠 뱃지에는 안 걸린다(0,3,0 이라 `.badge.on` 0,2,0 과 순서로 다투지 않는다). */
+.field:not(.on):hover {
+  background: var(--kw-field-bg-h);
+}
+
+.kind {
+  background: var(--kw-kind-bg);
+  color: var(--kw-kind-ink);
+}
+
+.kind:not(.on):hover {
+  background: var(--kw-kind-bg-h);
+}
+
+.all {
+  background: var(--surface);
+  color: var(--meta);
+}
+
+.all:hover {
+  background: var(--surface-h);
+  color: var(--text);
+}
+
+/* 켜진 표시. **복합 선택자여야 한다**(`.badge.on` = 0,2,0).
+ * 한 클래스로 줄이면 뒤에 오는 .field/.kind(0,1,0)가 이겨서 포인트색이 안 입혀진다 —
+ * 2026-08-31 리뷰가 실제로 잡은 결함이다. 켜진 동안에는 축 색이 덮여 사라지는 것이 맞다:
+ * 그 순간 뱃지가 나르는 것은 축이 아니라 "지금 켜져 있음"이다. */
+.badge.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-ring);
+}
+
+/* 켠 뱃지는 호버에 반응하지 않는다. 예전에는 `.badge.on:hover` 에 `--accent-soft` 를
+ * **다시 적어서** 아래 축 호버를 눌렀는데, 그건 기본값을 두 번 적는 것이라 켜짐 면을
+ * 다른 곳에서 바꾸면 호버만 옛 색으로 남는다. 축 호버 쪽을 배타로 만들어 떼어낸다. */
+
+/* 0건 — 색만으로 흐리게 하면 하한에 부딪히므로 굵기도 같이 내린다.
+ *
+ * **`:not(.on)` 이 붙어야 한다.** 이 세 규칙은 `.badge.on`(0,2,0)과 명시도가 같고 뒤에 있어서,
+ * 없으면 0건 뱃지를 켰을 때 포인트색이 축 0건 색에 져서 사라진다(실측: `#605649` 가 남았다).
+ * 켜짐의 세 신호 중 글자가 죽으면 남는 것은 면(밝기 1.07:1)과 22% 투명도 링뿐이라
+ * 켜짐이 색상으로만 전해진다 — 2026-08-31 에 고친 것과 정확히 같은 사고의 0건 변종이다.
+ * 명시도를 올리는 대신 서로 배타로 만들어 **순서에서 아예 떼어낸다.** */
+.zero:not(.on) {
+  font-weight: 500;
+}
+
+.field.zero:not(.on) {
+  color: var(--kw-field-zero-ink);
+}
+
+.kind.zero:not(.on) {
+  color: var(--kw-kind-zero-ink);
+}
+
+/* 취소선을 뱃지 전체에 가로지른다. text-decoration 을 안 쓰는 이유는 두 가지다:
+ *   숫자에만 걸면 `코딩 0` 이 `코딩 θ` 로 보이고,
+ *   알약 전체에 걸면 inline-flex 라 항목마다 따로 그려져 두 토막이 난다.
+ * 색은 currentColor 를 눕혀 쓴다 — 축·호버·읽음을 자동으로 따라가서 색 토큰이 안 늘어난다.
+ * 선은 장식이라 4.5:1 대상이 아니고, 대신 글자색은 안 내린다. */
+.zero::after {
+  content: "";
+  position: absolute;
+  left: var(--space-12);
+  right: var(--space-12);
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* 켠 키워드가 집계에 없어서 세운 칩. 흐리기는 0건과 같지만 **취소선은 안 그린다** —
+ * 취소선은 「다 읽었다」의 표식이고 이 칩은 읽을 것이 아예 없는 것이라, 같은 표식을 쓰면
+ * 두 상태가 한 모양이 된다. 낭독 문구도 갈라 둔다(컴포넌트). */
+.absent:not(.on) {
+  font-weight: 500;
+}
+
+.field.absent:not(.on) {
+  color: var(--kw-field-zero-ink);
+}
+
+.kind.absent:not(.on) {
+  color: var(--kw-kind-zero-ink);
+}
+
+/* 접힘 밖으로 밀려난 뱃지. inert 가 포인터·포커스·읽기를 다 닫지만,
+ * 옛 브라우저를 위해 tabindex 도 같이 내린다(컴포넌트에서). */
+.hidden {
+  visibility: hidden;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding-top: var(--space-8);
+}
+
+/* 넘친 것이 0이어도 없애지 않는다 — 사라지면 포커스가 문서 맨 위로 떨어진다.
+ * 피드 「더 보기」가 쓰는 처리와 같은 말투다. */
+.toggle {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-ui);
+  font-weight: 600;
+  color: var(--text2);
+  height: var(--kw-badge-h);
+  padding: 0 var(--space-12);
+  border-radius: var(--r-pill);
+  background: transparent;
+  border: 1px solid var(--border-soft);
+}
+
+/* 「더 보기」와 같은 방법으로 통일한다 — 원래 값을 다시 적지 않고 아예 안 걸리게 둔다.
+ * 이 줄은 아래 640px 블록에서 이미 크기를 재정의하고 있어, 거기에 배경 한 줄만 더 손대면
+ * "복구 방식"이 조용히 틀린 값이 되는 자리다. */
+.toggle:not([aria-disabled="true"]):hover {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-soft-h);
+}
+
+.toggle[aria-disabled="true"] {
+  cursor: default;
+  color: var(--meta);
+  border-style: dashed;
+}
+
+@media (max-width: 640px) {
+  /* 한손 조작 — 뱃지도 누르는 것이다.
+   *
+   * 전에는 세로 여백만 6px 씩 넓히고 `min-height` 를 --kw-badge-h(26px)로 뒀다. 그런데
+   * `font: inherit` 로 body 의 line-height 1.6 을 물려받아 글자 줄이 20.8px 이고,
+   * 여기에 여백 12px 을 더하면 32.8px 이다 — 26px 은 물지도 않았고, 결과는 문서가
+   * "엄지에는 안 통한다"고 판정한 그 33px 이었다. 여백 비용만 내고 터치 이득이 없었다.
+   * 하한을 --touch-min 으로 올려 선언한 목표에 실제로 닿게 한다. */
+  .badge,
+  .toggle {
+    height: auto;
+    min-height: var(--touch-min);
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-6);
+  }
+
+  /* 접힘 2줄. 위와 **같은 근거에서 뽑는다** — 예전 식은 줄 높이를 38px 로 가정해서
+   * 2줄이 71.6px 만 쓰고 아래 10.4px 이 빈 채로 남았다(가려진 뱃지는 visibility: hidden
+   * 이라 눈에는 여백만 보인다). 줄 높이가 바뀌면 이 값도 같이 따라와야 맞다. */
+  .list {
+    max-height: calc(var(--touch-min) * 2 + var(--space-6));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge,
+  .toggle {
+    transition: none;
+  }
+}

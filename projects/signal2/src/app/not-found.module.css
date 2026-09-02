@@ -1,0 +1,16 @@
+.box {
+  padding: var(--space-56) 0;
+  text-align: center;
+}
+
+.line {
+  margin: 0 0 var(--space-12);
+  font-size: var(--fs-body);
+  color: var(--meta);
+}
+
+.back {
+  font-size: var(--fs-body);
+  color: var(--accent);
+  font-weight: 600;
+}
