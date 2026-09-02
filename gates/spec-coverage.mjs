@@ -33,8 +33,8 @@ for (const f of specDirs.flatMap(walk).filter((f) => f.endsWith(".md"))) {
   // (주석 뒤에 등장하는 'approved' 글자를 값으로 오인하지 않게. retro 2026-08-02)
   const fm = src.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!fm || !/^\s*status:\s*approved\b/m.test(fm[1])) continue;
-  for (const m of src.matchAll(/\bINV-[A-Z0-9]+\b/g)) invToSpec.set(m[0], relative(ROOT, f));
-}
+  for (const m of src.matchAll(/^[ \t]*-[ \t]+(INV-[A-Z0-9]+)[ \t]*:/gm)) invToSpec.set(m[1], relative(ROOT, f));
+  }
 if (invToSpec.size === 0) process.exit(0);
 
 // 테스트 탐색 루트: projects/<이름>/src 와 projects/<이름>/tests

@@ -554,7 +554,69 @@ if (!QUICK) {
   if (sc.status !== 0)
     errors.push(...(sc.stderr ?? "").trim().split("\n").filter(Boolean));
 }
-
+// ── 프론트매터를 근거로 판정하는 파일: 모호한 입력과 외래 마커를 거부한다 ────────
+//
+// 게이트는 프론트매터를 정규식 한 줄로 읽는다. 같은 키가 두 번 나오면 해석이 키마다 갈린다:
+//   status   → `/^\s*status:\s*approved\b/m.test()` 라 **한 줄이라도** approved 면 승인으로 읽는다(순서 무관).
+//   surfaces → `fmText.match()` 라 **첫 줄만** 읽고 나머지는 버린다.
+// 2026-08-31 에 실제로 났다 — ingestion-ranking.md 아래쪽의 `surfaces: [concurrency]` 를
+// 위에 넣은 `surfaces: []` 가 덮었고 아무 신호도 없었다. YAML 사양에서도 중복 키는 오류다.
+// 판정을 바꾸는 게 아니라 '어느 줄을 읽었는지 모르는 상태'를 통과시키지 않는다.
+//
+// 사인오프 마커(review·deploy)는 "이 프로젝트의 이 코드를 봤다"는 기록인데 파일 안에 어느
+// 프로젝트인지가 없다. 그래서 workspace/ 를 복사하면 남의 사인오프가 그대로 따라온다
+// (2026-08-31 signal2: status: passed · basis · reviewers 720줄이 통째로 이사 왔다).
+// 대조할 출처는 있다 — 파일이 놓인 경로다. 같은 프로젝트 안에서 지어낸 사인오프는 여전히 못 잡는다.
+function frontmatterOf(file) {
+  try {
+    return readFileSync(file, "utf-8").match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+function dupKeys(fmText) {
+  const seen = new Map();
+  for (const line of fmText.split("\n")) {
+    const m = line.match(/^[ \t]*([A-Za-z_][\w-]*):/);
+    if (m) seen.set(m[1], (seen.get(m[1]) ?? 0) + 1);
+  }
+  return [...seen].filter(([, c]) => c > 1).map(([k, c]) => `${k}(${c}줄)`);
+}
+for (const projDir of projectDirs) {
+  const projName = relative(PROJECTS, projDir);
+  const judged = [];
+  const specDir = join(projDir, "docs", "specs");
+  try {
+    for (const f of readdirSync(specDir))
+      if (f.endsWith(".md") && !f.startsWith("_") && statSync(join(specDir, f)).isFile())
+        judged.push(join(specDir, f));
+  } catch {}
+  for (const rel of [["docs", "design", "design-rules.md"], ["workspace", "review.md"], ["workspace", "deploy.md"]]) {
+    const f = join(projDir, ...rel);
+    if (existsSync(f)) judged.push(f);
+  }
+  for (const f of judged) {
+    const fm = frontmatterOf(f);
+    if (fm === null) continue; // frontmatter 부재는 여기서 안 본다 — 그래프(graph-stop)가 판정한다
+    const dup = dupKeys(fm);
+    if (dup.length)
+      errors.push(
+        `[frontmatter/DUPLICATE_KEY] ${relative(ROOT, f)} — 같은 키가 두 줄 이상이다: ${dup.join(", ")}. ` +
+          `게이트는 한 줄만 읽는데 어느 줄인지가 키마다 다르다(status 는 한 줄이라도 approved 면 승인, surfaces 는 첫 줄만). ` +
+          `한 줄만 남기고 나머지는 지우거나 frontmatter 밖 이력으로 옮겨라.`,
+      );
+    if (!/[\\/]workspace[\\/](review|deploy)\.md$/.test(f)) continue;
+    const owner = fm.match(/^[ \t]*project:[ \t]*(\S+)/m)?.[1];
+    if (owner !== projName)
+      errors.push(
+        `[signoff/FOREIGN_MARKER] ${relative(ROOT, f)} — ` +
+          (owner ? `project: ${owner} 라고 적혀 있는데 ` : "project: 가 없는데 ") +
+          `이 마커는 ${projName} 의 것이다. 사인오프는 이 프로젝트의 이 코드를 봤다는 기록이라 ` +
+          `다른 프로젝트에서 복사해 오면 안 된다. 여기서 실제로 리뷰/배포했으면 'project: ${projName}' 을 ` +
+          `적고, 아니면 파일을 지워라.`,
+      );
+  }
+}
 // 위험 표면 예외는 통과시키되 매번 보이게 남긴다 — 예외가 쌓여 아무도 모르게 방벽이 사라지는 걸 막는다.
 for (const w of riskWarnings) console.error(w);
 // 감지된 표면 신고(차단 아님). graph-stop 이 review 사인오프 판정에 쓴다.
@@ -575,8 +637,12 @@ if (errors.length > 0) {
 }
 // 무엇을 '돌렸는지'까지 말한다 — 통과 메시지가 검사 범위를 숨기면 안 돌린 것과 구별이 안 된다.
 const n = projectDirs.length;
+// 스택 판정도 같이 찍는다 — 게이트가 무엇을 가정하고 돌았는지 안 보이면 오판정이 조용히 지나간다.
+// 여기 찍히는 건 게이트의 판정(next.config.* 존재) 하나다. scaffold 는 docs/tech-stack.md 의
+// architectures/<이름>.md 링크로 따로 판정하므로, 이 줄이 둘의 일치까지 보장하지는 않는다.
+const profiles = projectDirs.map((p) => `${relative(PROJECTS, p)}=${isNextProject(p) ? "nextjs-fsd" : "vite-fsd"}`);
 console.log(
-  `게이트 통과 (${fileCount}개 파일, ${n}개 프로젝트` +
+  `게이트 통과 (${fileCount}개 파일, ${n}개 프로젝트: ${profiles.join(", ")}` +
     (QUICK
       ? ", quick — tsc·test 는 안 돌림"
       : ` · tsc ${ranTsc}/${n} · test ${ranTest}/${n}`) +
