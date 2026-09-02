@@ -84,7 +84,7 @@ const pendingUpgrades = (backlog.match(/^- \[ \]/gm) ?? []).length;
 //      본문은 안 읽는다 — 항목 형식이 바뀌어도 안 깨지고, 표시는 harness-backlog·PRODUCT 와 같은 `- [ ]` 다.
 //      미룬 것을 PROGRESS "대기 중인 결정"에 쌓으면 그 블록이 세션마다 길어져 다섯 줄이 뭉개진다(파일을 가른 이유).
 //      경로를 projectDir(=join) 로 조립하지 않는다 — 윈도우에서 `projects\signal/workspace/…` 처럼 섞여 찍힌다.
-const BACKLOG = `projects/${active}/workspace/BACKLOG.md`;
+const BACKLOG = `projects/${active}/docs/BACKLOG.md`;
 const deferred = (read(BACKLOG).match(/^- \[ \]/gm) ?? []).length;
 
 // 6. 그래프 프론티어 — HANDOFF state 에서 '지금 작업할 노드' 파생(dirty + 상류 clean).

@@ -2,9 +2,9 @@
 feature: 원문 렌더 보안 (content rendering safety)
 status: parked
 surfaces: []
-# 보안 스펙이지만 게이트가 아는 위험 표면은 auth·payment·authz·concurrency 넷뿐이고
+# 보안 스펙이지만 위험 표면 어휘는 auth·payment·authz·concurrency 넷뿐이고
 # XSS/신뢰 경계는 그중 어디에도 없다. 커버하지 않는 표면을 적으면 방벽이 열리므로 비워 둔다.
-# 이 스펙의 강제는 게이트 NO_INNERHTML(dangerouslySetInnerHTML 차단)과 테스트가 맡는다.
+# 이 스펙의 강제는 dangerouslySetInnerHTML 금지와 테스트가 맡는다.
 ---
 
 # 원문 렌더 보안 스펙

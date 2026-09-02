@@ -69,5 +69,5 @@ UI 스택과 별개로, "자동 수집 + 원문 표시"가 필요로 하는 것.
 - **골격**: 바닐라 vite 스켈레톤 → Next App Router 스켈레톤(`src/app/layout.tsx`·`page.tsx`)
 - **설정**: `next.config.ts`, Next용 `tsconfig.json`, (Tailwind 채택 시) `postcss`·`tailwind.config`
 - **빈** `src/pages`: 생성 안 함/제거 (Next 라우팅은 src/app)
-- **참고(안 함)**: scaffold.mjs에 Next 변형을 넣는 건 킷 개선 백로그로 — 지금은 signal만 손봄
+- **참고(안 함)**: 킷 스캐폴딩에 Next 변형을 넣는 건 킷 개선 백로그로 — 지금은 signal만 손봄
 

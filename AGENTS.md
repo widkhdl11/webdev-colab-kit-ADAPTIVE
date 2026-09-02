@@ -17,6 +17,14 @@
 - 구현 전: 무엇을 어디에 만들지 한 문단 요약 → 동의 → 시작
 - PRODUCT.md의 비범위 기능은 요청받아도 먼저 지적. 필수에 없는 기능 임의 추가 금지
 - 결정이 내려지면 즉시 문서 갱신. 대화와 문서가 다르면 문서가 우선
+- **문서를 만들거나 고치기 전에 두 가지를 묻는다.** ① 하네스를 다른 것으로 바꿔도 이 내용이
+  표기만 바꿔 살아남나(→ `projects/<이름>/docs/`) 버리고 새 하네스가 다시 만드나(→ `workspace/` 또는 킷)
+  ② 기계가 값으로 읽나(정해진 자리에만) 사람이 산문으로 읽나(본문 아무 데나).
+  **하네스 자신에 대한 사정(게이트 이름·정규식·파싱 순서·노드 글롭)은 프로젝트 docs 에 적지 않는다** —
+  킷의 docs/LESSONS.md·docs/references/ 로 간다. 결정의 근거로 필요하면 구현 이름 없이
+  무슨 일이 일어나는지로 적는다("승인된 스펙은 불변식마다 테스트가 요구된다").
+  기계가 읽는 자리의 전체 목록은 docs/references/docs-contract.md 이고, 거기 없는 파싱을
+  게이트에 추가하려면 그 문서에 먼저 등재한다
 - 재작업 범위를 선언하지 마라. 무엇을 바꾸면 무엇을 다시 하는지는 dirty 전파가 정한다(graph.mjs).
   되돌아갈 때 경로를 임의로 정하지 말고 프론티어를 따른다 (상세: docs/references/graph-engine.md)
 - 통과했던 판정을 거부할 때는 사유와 함께 mark한다: `node gates/graph-stop.mjs --mark <노드> "<사유 한 줄>"`.
@@ -125,13 +133,15 @@ Phase별·파일별로 정리한 보고서는 **내가 한 일의 구조**지 �
   예외는 영구가 아니다 — 사유의 전제가 깨지면 게이트가 예외를 만료시킨다. ("인가 모델이 없다"고 적은 authz
   예외는 그 프로젝트에 쓰기 정책이 하나라도 생기는 순간 무효가 되고, 주석을 고쳐 달아도 통과하지 않는다)
 - 데이터 모델(엔티티·필드) 설계 시: docs/references/modeling-checklist.md (얕게=kickoff, 깊게=/spec)
-- 과거 결정의 이유: projects/<이름>/workspace/DECISIONS.md / 반복 실수 패턴: docs/LESSONS.md
+- 과거 결정의 이유: projects/<이름>/docs/DECISIONS.md / 반복 실수 패턴: docs/LESSONS.md
 - 실행 그래프·프론티어·재작업 전파·검증 실패 분류: docs/references/graph-engine.md
+- 프로젝트 docs 에서 기계가 읽는 것의 전체 목록(스펙 frontmatter 세 필드와 그 어휘·INV 정의 앵커·
+  design-rules status·경로 규약): docs/references/docs-contract.md
 
 ## 세션 종료 시
 
 - wrap-up 스킬로 projects/<이름>/workspace/PROGRESS.md "현재 상태"를 갱신한다 (5개 필드, 10줄 이내)
-- **미룬 작업은 projects/<이름>/workspace/BACKLOG.md 로 뺀다** — PROGRESS의 "대기 중인 결정"은 사용자 승인 대기 전용이다.
+- **미룬 작업은 projects/<이름>/docs/BACKLOG.md 로 뺀다** — PROGRESS의 "대기 중인 결정"은 사용자 승인 대기 전용이다.
   미룬 것을 거기 쌓으면 블록이 세션마다 길어져 브리핑이 읽어 주는 다섯 줄이 뭉개진다. 브리핑은 미결 건수만 띄운다(0건이면 침묵)
 - 큰 진전이 있었으면 retro 스킬을 제안한다
 

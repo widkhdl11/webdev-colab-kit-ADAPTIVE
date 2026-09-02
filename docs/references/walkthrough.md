@@ -278,7 +278,7 @@ reviewers: [ui-reviewer, security-reviewer]
 
 ### 세션 끝
 
-`PROGRESS.md` 의 다섯 줄을 갱신하고, 미룬 것은 `BACKLOG.md` 로 뺀다.
+`PROGRESS.md` 의 다섯 줄을 갱신하고, 미룬 것은 `docs/BACKLOG.md` 로 뺀다.
 **여기 안 적힌 것은 다음 세션에 존재하지 않는다** — 다음 세션의 브리핑은 이 파일들만 읽는다.
 
 ---

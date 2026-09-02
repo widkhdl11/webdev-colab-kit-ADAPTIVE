@@ -3,6 +3,7 @@
 // 스펙은 모든 projects/*/docs/specs 에서 읽고, 테스트는 projects/*/src 와 projects/*/tests 에서 찾는다.
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { readSpec } from "./lib/read-spec.mjs";
 
 const ROOT = process.cwd();
 const PROJECTS = join(ROOT, "projects");
@@ -30,9 +31,11 @@ const invToSpec = new Map();
 for (const f of specDirs.flatMap(walk).filter((f) => f.endsWith(".md"))) {
   const src = readFileSync(f, "utf-8");
   // status 는 frontmatter 의 구조화된 필드다 — 줄 시작 앵커로 값만 본다.
-  // (주석 뒤에 등장하는 'approved' 글자를 값으로 오인하지 않게. retro 2026-08-02)
-  const fm = src.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!fm || !/^\s*status:\s*approved\b/m.test(fm[1])) continue;
+  // status·surfaces 는 lib/read-spec.mjs 한 자리에서 읽는다. 어휘를 벗어난 값은
+  // 더 엄격한 쪽(draft)으로 떨어지고, throw 하지 않고 경고만 남긴다.
+  const spec = readSpec(f);
+  for (const p of spec.problems) console.error(`⚠ [spec/VOCAB] ${relative(ROOT, f)} — ${p}`);
+  if (spec.status !== "approved") continue;
   for (const m of src.matchAll(/^[ \t]*-[ \t]+(INV-[A-Z0-9]+)[ \t]*:/gm)) invToSpec.set(m[1], relative(ROOT, f));
   }
 if (invToSpec.size === 0) process.exit(0);
