@@ -125,7 +125,7 @@ Phase별·파일별로 정리한 보고서는 **내가 한 일의 구조**지 �
   예외는 영구가 아니다 — 사유의 전제가 깨지면 게이트가 예외를 만료시킨다. ("인가 모델이 없다"고 적은 authz
   예외는 그 프로젝트에 쓰기 정책이 하나라도 생기는 순간 무효가 되고, 주석을 고쳐 달아도 통과하지 않는다)
 - 데이터 모델(엔티티·필드) 설계 시: docs/references/modeling-checklist.md (얕게=kickoff, 깊게=/spec)
-- 과거 결정의 이유: projects/<이름>/workspace/DECISIONS.md / 반복 실수 패턴: docs/LESSONS.md
+- 과거 결정의 이유: projects/<이름>/docs/DECISIONS.md / 반복 실수 패턴: docs/LESSONS.md
 - 실행 그래프·프론티어·재작업 전파·검증 실패 분류: docs/references/graph-engine.md
 
 ## 세션 종료 시

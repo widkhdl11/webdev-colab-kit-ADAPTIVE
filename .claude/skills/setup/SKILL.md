@@ -6,7 +6,7 @@ description: PRODUCT.md의 결정에서 파생되는 프로젝트 고유 구성(
 목표: PRODUCT.md의 결정에서 파생되는 프로젝트 고유 구성만 추가한다. 기본 구성은 건드리지 않는다.
 
 ## 절차
-1. projects/<이름>/docs/PRODUCT.md와 projects/<이름>/workspace/DECISIONS.md를 읽고 프로젝트 고유 요소를 추린다
+1. projects/<이름>/docs/PRODUCT.md와 projects/<이름>/docs/DECISIONS.md를 읽고 프로젝트 고유 요소를 추린다
 2. 각 요소에 "구성 추가가 필요한가"를 아래 기준으로 판정
 3. 추가할 것을 근거와 함께 제안 — 항목마다 "왜 기본 구성으로 부족한가" 한 줄 필수
 4. 항목별로 사용자 승인 (일괄 승인 요청 금지). 승인된 것만 생성

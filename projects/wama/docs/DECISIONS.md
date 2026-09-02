@@ -2,6 +2,10 @@
 
 형식: 날짜 | 결정 | 근거 | 대안과 기각 이유
 
+이 파일은 사람이 읽는 기록이다 — 게이트도 스크립트도 여기를 읽지 않는다.
+스펙의 승인 여부(`status`)와 위험 표면(`surfaces`)은 각 스펙 파일의 frontmatter가 원본이다.
+기계가 읽는 자리의 전체 목록은 킷의 `docs/references/docs-contract.md` 에 있다.
+
 2026-07-21 | 프레임워크: Vite + SPA + FSD (Next.js 대신) | 로그인 뒤 내부 CRUD 대시보드라
 SSR/SEO 불필요. 하네스 프리셋과 정합해 scaffold·gates·rules 재작업 없이 시작 |
 대안 Next.js 기각 — 프리셋 교체 비용(App Router app/ ↔ FSD 레이어 충돌 정리, 게이트 재작성)이
