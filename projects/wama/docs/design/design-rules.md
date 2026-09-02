@@ -4,8 +4,8 @@ status: approved
 # wama 디자인 기준
 checkpoint 승인: 2026-07-21 · 대표 화면: 학원생 목록 (projects/wama/mockups/student-list.html)
 
-이 문서는 승인된 시각 언어의 단일 진실. UI 구현은 이걸 근거로 하고, 게이트(design/BEFORE_UI)가
-이 파일의 status: approved 를 확인해 pages/widgets 작업을 허용한다. 방향을 바꾸려면 checkpoint 재승인.
+이 문서는 승인된 시각 언어의 단일 진실. UI 구현은 이걸 근거로 하고, 이 파일이
+status: approved 여야 pages/widgets 작업이 허용된다. 방향을 바꾸려면 checkpoint 재승인.
 
 ## 시각 언어
 - 무드: **신뢰 기반 + 약간 친근** (차분·정돈된 실무 도구, 딱딱하지 않게)
