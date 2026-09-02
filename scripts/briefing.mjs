@@ -63,12 +63,19 @@ const next = progress.match(/다음 할 일:\s*(.+)/)?.[1]?.trim() ?? "(기록 �
 // "다음 할 일"의 첫 옵션이 데이터 계층인데 화면 대안이 함께 적혀 있으면(= 재량적 순서),
 // 순서가 원칙과 어긋날 수 있으니 경보한다. DB가 유일 단계면(화면 언급 없음) 발화하지 않는다.
 // 이 가드는 순서만 본다 — 화면 국면의 완료 여부까지 판정하지 않으니, 경보 시 사람이 확인한다.
-const firstOption = next.split(/또는|→|then/i)[0];
-const dataRe = /\b(DB|Supabase|RLS|migration|스키마|schema|마이그레이션|데이터 ?계층)\b/i;
+// 무엇이 먼저 적혔는지로 판정한다. 예전에는 `또는|→|then` 으로 잘라 첫 조각만 봤는데,
+// 구분자가 없는 문장에서는 첫 조각이 곧 문장 전체라 **둘이 같이 언급되기만 하면** 순서와
+// 무관하게 떴다. 2026-09-02 에 "화면 먼저, Supabase 는 그 뒤다"라고 적었더니 경고가 떴다 —
+// 원칙을 지킨 문장을 원칙 위반이라고 말하는 검사는 무시하는 법부터 가르친다.
+// `\b` 는 ASCII 낱말 경계라 한글 앞뒤에서는 절대 안 맞는다 — 예전 판에서 `스키마`·`마이그레이션`·
+// `데이터 계층` 세 낱말이 죽어 있었고(영문만 걸렸다) 아무도 몰랐다. 한글은 경계 없이 그대로 찾는다.
+const dataRe = /(\b(DB|Supabase|RLS|migration|schema)\b|스키마|마이그레이션|데이터 ?계층)/i;
 const uiRe = /(화면|페이지|page|UI|시안|디자인|mockup)/i;
+const dataAt = next.search(dataRe);
+const uiAt = next.search(uiRe);
 const principleWarn =
-  dataRe.test(firstOption) && uiRe.test(next)
-    ? "⚠ 순서 점검: '다음 할 일' 1순위가 데이터 계층인데 화면 대안이 함께 있음 — 원칙은 화면(디자인) 먼저. 화면 국면이 남았다면 순서를 뒤집을 것."
+  dataAt >= 0 && uiAt >= 0 && dataAt < uiAt
+    ? "⚠ 순서 점검: '다음 할 일'에 데이터 계층이 화면보다 먼저 적혀 있다 — 원칙은 화면(디자인) 먼저. 화면 국면이 남았다면 순서를 뒤집을 것."
     : "";
 
 // 5. 좌표

@@ -45,5 +45,5 @@ projects/<이름>/docs/BACKLOG.md 에 append 한다 (파일이 없으면 아래 
 ## 순서
 PROGRESS "현재 상태" 갱신 → BACKLOG.md 갱신(미룬 것 append + 닫힌 것 `- [x]`) → 상세 내역을 PROGRESS
 하단 로그에 날짜와 함께 append → 대화 중 결정됐는데 문서에 없는 것 점검(PRODUCT/DECISIONS 반영 —
-PRODUCT는 projects/<이름>/docs/, DECISIONS는 projects/<이름>/workspace/) → 한 문단 요약 보고 후 종료.
+PRODUCT는 projects/<이름>/docs/, DECISIONS는 projects/<이름>/docs/) → 한 문단 요약 보고 후 종료.
 브리핑(SessionStart)이 이 블록을 읽는다 — 여기 안 적힌 것은 다음 세션에 없는 것이다.
