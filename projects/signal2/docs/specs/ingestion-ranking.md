@@ -1,19 +1,12 @@
 ---
 feature: 수집·중복제거·요약·랭킹 (ingestion & ranking)
 status: parked
-# ↑ 값은 반드시 이 줄에 붙여 쓴다. 게이트(spec-coverage·graph-stop)가 `^\s*status:\s*approved`
-#   로 판정하므로, 포매터가 값을 다음 줄로 내리면 approved 인데도 draft 로 읽힌다.
-#   긴 설명을 같은 줄에 달면 실제로 그렇게 접힌다 — 이력은 아래 주석에 따로 둔다.
-# surfaces 는 아래에 이미 선언돼 있다(concurrency) — 두 번 적지 않는다. 게이트의 specSurfaces 는
-#   frontmatter 에서 처음 만난 surfaces 줄 하나만 읽으므로, 위에 또 적으면 아래 선언이 무시된다.
-# signal2 로 옮기며 approved → parked. 설계는 그대로 물려받되 코드가 0줄이라
-#   approved 로 두면 spec-coverage 가 INV 전부의 테스트를 요구한다. 착수할 때 한 단어만 바꾼다.
+# signal2 로 옮기며 approved → parked. 설계는 그대로 물려받되 코드가 0줄이다.
+#   착수할 때 한 단어만 바꾼다.
 # 이력:
 #   2026-08-02 설계 합의 완료. 다만 INV 절반이 Supabase 에 기대고 있어 구현할 수 없어서
-#              docs/specs/planned/ 에 파킹했다(합의 철회가 아니라 보류). 그 폴더는
-#              spec 노드 글롭(docs/specs/*.md, 비재귀)에 안 잡혀 게이트가 안 봤다.
-#              ※ 이 폴더 관례는 2026-08-30 에 `status: parked` 로 대체됐다 — 위치로 상태를
-#                표시하면 활성화할 때 파일이 움직이고 그 위치를 가리키던 문장이 낡는다.
+#              보류했다(합의 철회가 아니다). 보류를 폴더 위치로 표시하던 관례는
+#              2026-08-30 에 `status: parked` 로 대체됐다.
 #   2026-08-09 사용자가 signal 용 Supabase 프로젝트를 만들면서 활성화. 활성화 전에 정하기로
 #              표시해 둔 열린 질문 하나를 닫고(INV-R5 + S16·S17) 여기로 옮겨 승인.
 #   2026-08-09 실제 수집을 돌려 보고 확장(사용자 승인): INV-S5(본문 추출) · INV-T3(태그 부여) 신설,

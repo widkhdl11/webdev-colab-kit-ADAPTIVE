@@ -2,15 +2,16 @@
 feature: (기능명)
 status: draft        # 값 셋: draft → (감사) → 사람 승인 후 approved. approved 전 구현 금지
                      #   parked = 승인은 됐지만 지금 만들 계약은 아님. 파일을 옮기지 말고 이 값으로 둔다
-                     #   (spec 노드를 안 막고, 브리핑이 건수를 띄운다. 준비되면 approved 로 한 단어만 바꾼다)
-                     #   ★ parked 는 위험 표면 커버로 인정되지 않는다 — 인증·결제·권한·동시성 스펙을
-                     #     parked 로 미루면 그 표면 코드의 편집이 차단된다
-                     #   ★ status: approved-… 형태의 값을 새로 만들지 마라. 검사식의 \b 가 하이픈을
-                     #     단어 경계로 봐서 approved 로 오인된다
+                     #   (준비되면 approved 로 한 단어만 바꾼다)
+                     #   parked 는 위험 표면 커버로 인정되지 않는다 — 인증·결제·권한·동시성 스펙을
+                     #   parked 로 미루면 그 표면 코드의 편집이 차단된다
 surfaces: []         # 이 스펙이 커버하는 위험 표면: auth · payment · authz · concurrency 중 해당하는 것만
-                     # 게이트(risk-surface)가 읽는다 — 코드에 그 표면의 패턴이 등장하면
-                     # 여기 그 표면을 적은 approved 스펙이 하나는 있어야 통과한다.
-                     # 커버하지 않는 표면을 적으면 방벽이 열린다. 실제로 불변식을 쓴 표면만 적을 것.
+                     # 코드에 그 표면의 패턴이 등장하면 여기 그 표면을 적은 approved 스펙이
+                     # 하나는 있어야 한다. 커버하지 않는 표면을 적으면 방벽이 열린다 —
+                     # 실제로 불변식을 쓴 표면만 적을 것.
+                     #
+                     # 이 세 필드가 frontmatter 에 허용된 전부다. 값의 어휘와 표기 규칙은
+                     # 킷의 docs/references/docs-contract.md 가 정본이다.
 ---
 # (기능명) 스펙
 
@@ -18,9 +19,8 @@ surfaces: []         # 이 스펙이 커버하는 위험 표면: auth · payment
   이건 킷 정본 스펙 템플릿이다. 새 프로젝트를 스캐폴딩하면
   projects/<이름>/docs/specs/_TEMPLATE.md 로 복사된다 (원본: docs/references/spec-template.md).
   실제 스펙은 이 파일을 복사해 projects/<이름>/docs/specs/<기능명>.md 로 쓴다.
-  ─ 이 파일과 사본(_TEMPLATE)이 게이트에 안 걸리는 이유는 **이름이 아니라 frontmatter 의 `status: draft`** 다.
-    spec-coverage 에 밑줄 접두 예외는 없다(2026-08-10 확인) — `_` 를 붙였다고 면제되지 않으니
-    approved 로 바꾸지 않는 것이 유일한 방벽이다.
+  ─ 이 파일과 사본(_TEMPLATE)이 검사에 안 걸리는 이유는 **이름이 아니라 frontmatter 의 `status: draft`** 다.
+    파일명 앞의 `_` 는 아무것도 면제하지 않는다 — approved 로 바꾸지 않는 것이 유일한 방벽이다.
 
   ▶ 고도화 규칙: 스펙을 쓰다 "여기 물어봤어야 했다"는 빈칸을 발견하면 retro에서 이 정본
     (docs/references/spec-template.md)을 보강한다. 특정 프로젝트 사본만 고치지 말 것 —
@@ -64,7 +64,7 @@ surfaces: []         # 이 스펙이 커버하는 위험 표면: auth · payment
 
 ## 시나리오 — 각각 어느 불변식을 검증하는지 ID 참조 (불변식마다 실패 경로 1개 이상)
 
-<!-- Given/When/Then. 정상 경로 + 실패(거부) 경로. 테스트 설명문에 INV ID를 넣어야 spec-coverage가 추적한다. -->
+<!-- Given/When/Then. 정상 경로 + 실패(거부) 경로. 테스트 설명문에 INV ID를 넣어야 추적된다. -->
 
 - S1 (INV-X1): Given ... / When ... / Then ...
 - S1b (INV-X1, 실패경로): Given ... / When ... / Then 거부 / 무시 / 변화 없음.

@@ -1,10 +1,17 @@
 ---
 feature: (기능명)
-status: draft        # draft → (spec-auditor 감사) → 사람 승인 후 approved. approved 전 구현 금지
+status: draft        # 값 셋: draft → (감사) → 사람 승인 후 approved. approved 전 구현 금지
+                     #   parked = 승인은 됐지만 지금 만들 계약은 아님. 파일을 옮기지 말고 이 값으로 둔다
+                     #   (준비되면 approved 로 한 단어만 바꾼다)
+                     #   parked 는 위험 표면 커버로 인정되지 않는다 — 인증·결제·권한·동시성 스펙을
+                     #   parked 로 미루면 그 표면 코드의 편집이 차단된다
 surfaces: []         # 이 스펙이 커버하는 위험 표면: auth · payment · authz · concurrency 중 해당하는 것만
-                     # 게이트(risk-surface)가 읽는다 — 코드에 그 표면의 패턴이 등장하면
-                     # 여기 그 표면을 적은 approved 스펙이 하나는 있어야 통과한다.
-                     # 커버하지 않는 표면을 적으면 방벽이 열린다. 실제로 불변식을 쓴 표면만 적을 것.
+                     # 코드에 그 표면의 패턴이 등장하면 여기 그 표면을 적은 approved 스펙이
+                     # 하나는 있어야 한다. 커버하지 않는 표면을 적으면 방벽이 열린다 —
+                     # 실제로 불변식을 쓴 표면만 적을 것.
+                     #
+                     # 이 세 필드가 frontmatter 에 허용된 전부다. 값의 어휘와 표기 규칙은
+                     # 킷의 docs/references/docs-contract.md 가 정본이다.
 ---
 # (기능명) 스펙
 
