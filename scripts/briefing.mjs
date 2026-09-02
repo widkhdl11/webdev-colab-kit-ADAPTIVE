@@ -128,3 +128,24 @@ if (parkedSpecs > 0)
   console.log(`◇ 보류 스펙(status: parked): ${parkedSpecs}건 — 합의는 됐고 지금 만들 계약이 아닌 것 (${SPECS_REL})`);
 if (deferred > 0) console.log(`▦ 백로그(미룬 것): ${deferred}건 (${BACKLOG})`);
 if (pendingUpgrades > 0) console.log(`⚙ 보류된 하네스 승격: ${pendingUpgrades}건 (docs/references/harness-backlog.md)`);
+
+// 7. 미커밋 작업 — 남의 미완 작업 위에서 새 작업을 시작하면 diff 가 한 덩어리가 된다.
+//    (2026-09-02: v3.2 착수 시 미커밋 192개가 있었고 그중 둘이 그 작업이 고칠 게이트 파일이었다.
+//     브리핑은 침묵했다 — git status 를 안 쳤으면 남의 작업과 섞인 채로 커밋했다)
+//    소음을 막으려고 임계값을 둔다: 보호 파일이 걸렸거나 건수가 많을 때만 띄운다.
+//    판정 레이어가 미커밋인 것은 건수와 무관하게 알린다 — 그 상태에서 낸 패치는 기준선이 없다.
+{
+  const st = spawnSync("git", ["status", "--porcelain"], { cwd: ROOT, encoding: "utf-8" });
+  const lines = (st.stdout ?? "").split("\n").filter(Boolean);
+  const path = (l) => l.slice(3).split(" -> ").pop().split("\\").join("/").replace(/^"|"$/g, "");
+  const guarded = lines.filter((l) =>
+    /^(gates\/|graph\.mjs|\.claude\/(hooks|settings)|docs\/LESSONS\.md)/.test(path(l)),
+  );
+  if (guarded.length > 0)
+    console.log(
+      `✎ 미커밋 ${lines.length}건 — 그중 판정 레이어 ${guarded.length}건: ${guarded.slice(0, 3).map(path).join(", ")}` +
+        `${guarded.length > 3 ? " 외" : ""}. 새 작업 전에 커밋할지 정할 것 (기준선이 없으면 내 diff 가 남의 작업과 섞인다)`,
+    );
+  else if (lines.length >= 30)
+    console.log(`✎ 미커밋 ${lines.length}건 — 새 작업 전에 커밋할지 정할 것 (git status)`);
+}

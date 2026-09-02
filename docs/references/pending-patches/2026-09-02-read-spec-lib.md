@@ -72,23 +72,11 @@ surfaces : auth · payment · authz · concurrency → 모르는 값은 커버�
 `{status, surfaces}` 가 같다는 것이 실측으로 확인됐다(2026-09-02, 차이 0건). 스펙이 추가되면
 붙이기 전에 `node scripts/check-read-spec.mjs --diff` 를 다시 돌린다.
 
-## 신규 파일 둘은 완성본이 레포에 있다 — 복사만 하면 된다
-
-```
-docs/references/pending-patches/v3.2-gates-lib/frontmatter.mjs  →  gates/lib/frontmatter.mjs
-docs/references/pending-patches/v3.2-gates-lib/read-spec.mjs    →  gates/lib/read-spec.mjs
-```
-
-**터미널(Claude Code 밖)에서:**
-
-```bash
-mkdir -p gates/lib
-cp docs/references/pending-patches/v3.2-gates-lib/frontmatter.mjs gates/lib/
-cp docs/references/pending-patches/v3.2-gates-lib/read-spec.mjs   gates/lib/
-```
-
-Claude Code 안에서는 안 된다 — protect-files 훅이 `gates/` 로 쓰는 명령을 막는다.
-그게 이 패치를 사람이 붙이는 이유다. 아래 두 절은 그 파일들의 내용이니 대조용으로만 보면 된다.
+> **적용 완료 (2026-09-02).** 붙인 뒤 판정: `check-read-spec` 8/8 · `run-gates` 기준선과 동일.
+>
+> 복사용으로 뒀던 `v3.2-gates-lib/` 폴더는 지웠다 — 살아 있는 `gates/lib/` 와 같은 코드가 두 벌
+> 있으면 한쪽만 고치고 고쳤다고 믿게 된다. 아래 두 절의 코드 펜스가 최초 판본의 기록이고,
+> **지금 유효한 것은 `gates/lib/` 다.** 고칠 일이 생기면 거기를 고친다.
 
 ## 파일 1 — `gates/lib/frontmatter.mjs` (신규)
 

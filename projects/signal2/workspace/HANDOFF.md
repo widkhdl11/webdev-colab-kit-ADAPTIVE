@@ -7,11 +7,11 @@
 {
   "product": {
     "status": "clean",
-    "hash": "80184ffff06d"
+    "hash": "08458f3559ee"
   },
   "spec": {
     "status": "clean",
-    "hash": "f853747c3b6c"
+    "hash": "6552234e8679"
   },
   "design": {
     "status": "clean",
@@ -19,7 +19,7 @@
   },
   "design/page-designer": {
     "status": "clean",
-    "hash": "71f584f1753a"
+    "hash": "362e995c712c"
   },
   "design/schema-designer": {
     "status": "clean",
@@ -35,7 +35,7 @@
   },
   "review": {
     "status": "clean",
-    "hash": "2849f28abd4e"
+    "hash": "e364d160811e"
   },
   "deploy": {
     "status": "dirty",
