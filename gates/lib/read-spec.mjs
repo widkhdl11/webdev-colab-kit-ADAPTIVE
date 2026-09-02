@@ -26,7 +26,7 @@ export function readSpecText(src, slug = "") {
 
   const rawStatus = fmField(fmText, "status") ?? "";
   let status = "draft";
-  if (rawStatus === "") problems.push("status 필드가 없다 → draft 로 본다");
+  if (rawStatus === "") problems.push("status 값이 비어 있다(다음 줄로 접혔을 수 있다) → draft 로 본다");
   else if (SPEC_STATUS.includes(rawStatus)) status = rawStatus;
   else problems.push(`status 값 '${rawStatus}' 은 등재된 어휘가 아니다 → draft 로 본다`);
 
