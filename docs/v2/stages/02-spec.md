@@ -82,6 +82,6 @@
 ## Unverified
 
 - **`spec-auditor` 서브에이전트가 이 레포에 없다.** [spec/SKILL.md:19](../../../.claude/skills/spec/SKILL.md#L19) 가 "있으면 감사"라는 조건부로 언급하지만 `.claude/agents/` 7개에 없다. 조건부 표현이라 [findings](../findings.md) 의 "유령 참조"로 올리지는 않았다 — 판단 기준을 어디에 두느냐에 따라 갈릴 자리다. `[INFERRED]`
-- **`INV-` 라는 ID 규약이 어디서 정의되는지 확인 못 했다.** [spec-coverage.mjs:36](../../../gates/spec-coverage.mjs#L36) 의 정규식 `\bINV-[A-Z0-9]+\b` 가 사실상 유일한 정의다. `spec-template.md` 를 읽지 않아 형식 명세가 따로 있는지 모른다. `[INFERRED]`
+- **`INV-` ID 의 형식은 `docs/references/spec-template.md:60-63` 이 정하고, 게이트가 그 형식을 강제한다.** [spec-coverage.mjs:36](../../../gates/spec-coverage.mjs#L36) 의 정규식 `/^[ \t]*-[ \t]+(INV-[A-Z0-9]+)[ \t]*:/gm` 은 **줄 맨 앞의 목록 항목 `- INV-X:` 만** 정의로 센다. 2026-08-31 이전에는 `\bINV-[A-Z0-9]+\b` 로 파일 전체를 훑어서, 다른 스펙을 가리키는 문장 한 줄("badge-keywords.md 의 INV-B1 이 …")도 테스트 요구를 만들었다 — 실측으로 signal2 스펙 5개에서 75개를 요구하는데 실제 정의는 60개였다(패치: `docs/references/pending-patches/2026-08-31-inv-definition-anchor.md`, 검사: `scripts/check-inv-anchor.mjs`).
 - **`status: approved` 로 바꾸는 행위에 승인 흔적이 남지 않는다.** [spec/SKILL.md:35](../../../.claude/skills/spec/SKILL.md#L35) 가 "사용자 승인 없이 approved 로 변경 금지"라고 쓰지만, 누가 언제 승인했는지 파일에 남기는 규칙은 못 찾았다. `[INFERRED]`
 - **spec-coverage 는 활성 프로젝트만이 아니라 전 프로젝트를 훑는다** ([spec-coverage.mjs:9-14](../../../gates/spec-coverage.mjs#L9-L14)). 반면 graph-stop 은 활성 프로젝트만 본다 ([graph-stop.mjs:24](../../../gates/graph-stop.mjs#L24)). 비활성 프로젝트의 INV 누락이 활성 프로젝트의 spec 노드를 막는지 — 코드상 [graph-stop.mjs:141](../../../gates/graph-stop.mjs#L164) 이 다른 프로젝트 에러를 무시하므로 막지 않을 것으로 보이나, 직접 돌려 보지는 않았다. `[INFERRED]`

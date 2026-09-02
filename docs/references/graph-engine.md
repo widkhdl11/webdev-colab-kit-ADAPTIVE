@@ -211,9 +211,13 @@ approved 스펙(surfaces:[auth]) + INV 테스트 작성 → spec=clean, 프론�
   - design-level → design-rules `status: draft`(거부).
   - spec-level → 해당 스펙 `status: draft`(거부).
   - 강제 승격: spec-level이거나 위험 표면(인증·결제·권한·격리 INV·security)이면 사용자에게 보고 후.
-- **리뷰 통과 기록**: `workspace/review.md`에 `status: passed` + `basis: <graph-stop이 안내한 해시>`
-  + `reviewers: [실제로 돌린 리뷰어]`. 코드에 auth·payment·authz 표면이 있으면 `security-reviewer`가
-  그 목록에 있어야 사인오프가 된다(게이트 감지와 대조). graph-stop이 매 턴 막힌 이유를 그대로 말해준다.
+- **리뷰 통과 기록**: `workspace/review.md`에 `project: <프로젝트명>` + `status: passed`
+  + `basis: <graph-stop이 안내한 해시>` + `reviewers: [실제로 돌린 리뷰어]`.
+  코드에 auth·payment·authz 표면이 있으면 `security-reviewer`가 그 목록에 있어야 사인오프가 된다
+  (게이트 감지와 대조). graph-stop이 매 턴 막힌 이유를 그대로 말해준다.
+  `project:` 는 마커가 이 프로젝트 것인지를 게이트가 대조하는 값이다 — 없거나 다른 이름이면
+  `signoff/FOREIGN_MARKER` 로 막힌다. 다른 프로젝트의 `workspace/` 를 복사하면 남의 사인오프가
+  통째로 따라오는 일이 실제로 있었다(2026-08-31).
 - **강제 dirty(파일 변경 없이)**: `node gates/graph-stop.mjs --mark <node> "<사유>"` (clean 이던 노드면 rework).
   `design` 처럼 자식이 있는 노드는 `--mark design/page-designer` 로 거부된 자식만 찍는다 — 형제까지
   같은 사유로 재승인을 기다리게 만들지 않는다.

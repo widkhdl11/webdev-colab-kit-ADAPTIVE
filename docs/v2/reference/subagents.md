@@ -13,7 +13,7 @@ count: 7
 - frontmatter_warnings: (empty)
 - description (verbatim):
 
-> 기능 구현 완료 시 코드 품질 리뷰. 도메인 로직 위치, 네이밍, 중복, 엣지 케이스, 성능 낭비를 검토.
+> 게이트는 문법을 보고 이 리뷰어는 의미를 본다 — 도메인 로직 위치, 네이밍, 중복, 엣지 케이스, 성능 낭비. 도메인 로직·상태 관리가 바뀐 diff의 기능 완성 시점에 파견한다. 카피·토큰 교체처럼 로직이 그대로인 변경에는 읽을 것이 없다.
 
 - referenced_paths:
   - L6 `projects/<프로젝트명>/src/` — dynamic — 판정 안 함
@@ -28,29 +28,29 @@ count: 7
 - frontmatter_warnings: (empty)
 - description (verbatim):
 
-> 새 시각 방향의 화면을 코드로 만들기 전에 정적 HTML 시안을 먼저 뽑을 때 위임. 이미 승인된 방향의 반복(빠른 경로)에는 쓰지 않는다. 비즈니스 로직 없이 화면만 그린다
+> 구현물을 버리며 반복하는 대신 버려도 싼 정적 HTML 시안으로 시각 방향을 반복하기 위한 위임. 신호는 design-rules로 커버되지 않는 새 레이아웃 언어. 승인된 방향의 반복 화면이거나 되돌리는 비용이 작으면 시안 없이 바로 구현하는 편이 낫다. 비즈니스 로직 없이 화면만 그린다
 
 - referenced_paths:
   - L14 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
   - L17 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
-  - L21 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L21 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
   - L23 `projects/<이름>/docs/design/INTERVIEW.md` — dynamic — 판정 안 함
-  - L24 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L24 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
   - L29 `projects/<이름>/docs/design/mockups/<화면명>.html` — dynamic — 판정 안 함
-  - L32 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
-  - L34 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
-  - L36 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L32 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L34 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L36 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
   - L39 `projects/<이름>/docs/design/mockups/<화면명>-a.html` — dynamic — 판정 안 함
-  - L40 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
-  - L48 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
-  - L49 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L40 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L48 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L49 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
   - L53 `projects/<이름>/docs/design/design-rules.md` — dynamic — 판정 안 함
   - L54 `projects/<이름>/src/` — dynamic — 판정 안 함
 
 ## qa-classifier
 
 - path: `.claude/agents/qa-classifier.md`
-- line_count: 72
+- line_count: 83
 - tools: Read, Grep, Glob
 - writable_files_declared: null
 - frontmatter_warnings: (empty)
@@ -61,12 +61,14 @@ count: 7
 - referenced_paths:
   - L7 `graph.mjs` — bare-filename — → `graph.mjs`
   - L12 `projects/<이름>/docs/specs` — dynamic — 판정 안 함
-  - L12 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L12 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
   - L51 `supabase/migrations/0007_exam.sql` — project-relative — → `projects/wama/supabase/migrations/0007_exam.sql`
   - L54 `entities/evaluation/model.ts` — suffix-match — → `projects/wama/src/entities/evaluation/model.ts`
   - L56 `docs/specs/auth-isolation.md` — project-relative — → `projects/wama/docs/specs/auth-isolation.md`
-  - L64 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
-  - L70 `gates/graph-stop.mjs` — repo-path — exists: true
+  - L63 `gates/graph-stop.mjs` — repo-path — exists: true
+  - L65 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L66 `gates/graph-stop.mjs` — repo-path — exists: true
+  - L81 `gates/graph-stop.mjs` — repo-path — exists: true
 
 ## security-reviewer
 
@@ -77,7 +79,7 @@ count: 7
 - frontmatter_warnings: (empty)
 - description (verbatim):
 
-> 기능 구현 완료 시 보안 리뷰. 입력 검증, 인가, 신뢰 경계, 민감 정보 노출 경로를 검토.
+> 정적 게이트가 못 잡는 보안 맥락을 본다 — 검증 없이 쓰이는 입력, 인가 결함, 신뢰 경계, 민감 정보가 흐르는 경로. 사용자 입력·인가·시크릿·세션을 만진 diff에 파견한다. 그 표면에 닿지 않은 변경에는 판정할 근거가 없다.
 
 - referenced_paths:
   - L6 `projects/<프로젝트명>/src/` — dynamic — 판정 안 함
@@ -97,8 +99,8 @@ count: 7
 > 사용자가 레퍼런스 URL 을 줬을 때 사이트 스타일을 정찰. 새 시각 방향을 잡기 전 참고용. Playwright MCP 연결 시에만 위임할 것 (미연결 시 위임 금지 — 대신 사용자에게 스크린샷 요청)
 
 - referenced_paths:
-  - L10 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
-  - L11 `design-rules.md` — bare-filename — → `projects/signal/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L10 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
+  - L11 `design-rules.md` — bare-filename — → `projects/signal2/docs/design/design-rules.md`, `projects/wama/docs/design/design-rules.md`
   - L39 `projects/<` — dynamic — 판정 안 함
 
 ## test-auditor
@@ -110,7 +112,7 @@ count: 7
 - frontmatter_warnings: (empty)
 - description (verbatim):
 
-> 테스트 작성 완료 후 테스트가 실제로 스펙을 검증하는지 감사.
+> "이 테스트를 지워도 잘못된 구현이 통과하는가"를 묻는다 — 통과하는 테스트는 그것만으로 검증의 증거가 아니기 때문이다. 스펙 INV를 검증하는 테스트를 새로 쓴 뒤에 파견한다. 기존 테스트에 변화가 없으면 감사할 것도 없다.
 
 - referenced_paths:
   - L6 `projects/<이름>/docs/specs/` — dynamic — 판정 안 함
@@ -124,7 +126,7 @@ count: 7
 - frontmatter_warnings: (empty)
 - description (verbatim):
 
-> UI 구현 완료 시 디자인 일관성과 접근성 검토.
+> 승인된 design-rules와 접근성 기준에서 벗어난 곳을 찾는다 — 기준 문서가 있어야 판정이 취향 싸움이 되지 않는다. 승인된 방향에서 벗어나는 시각 변경(새 컴포넌트·레이아웃·토큰)에 파견한다. design-rules 안에서 반복되는 화면에는 지적할 기준 위반이 거의 없다.
 
 - referenced_paths:
   - L9 `.claude/rules/ui-layers.md` — repo-path — exists: true

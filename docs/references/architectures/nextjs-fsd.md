@@ -18,8 +18,11 @@ projects/<이름>/
     features/  기능 단위
     entities/  도메인 모델
     shared/    api · ui · lib · providers   ← 클라이언트 프로바이더는 여기
-  next.config.ts · next-env.d.ts · tsconfig.json · postcss.config.mjs · tailwind.config.ts
+  next.config.ts · next-env.d.ts · tsconfig.json · postcss.config.mjs · vitest.config.ts
 ```
+
+- **`tailwind.config.ts` 는 없다** (Tailwind 4 부터). 설정은 CSS 안에서 `@theme` 로 한다.
+  v3 습관대로 이 파일을 만들면 아무도 안 읽는 설정이 되고, 거기를 고친 사람은 왜 안 먹는지 못 찾는다.
 
 - **`pages` 레이어 없음** — 라우팅은 `src/app`에 통일(App Router). Next는 `src/app`을 라우팅 루트로 인식.
 
@@ -52,16 +55,31 @@ projects/<이름>/
 
 ## 설정 요령
 
-- **tsconfig**: `jsx: preserve`, `moduleResolution: bundler`, `plugins: [{name:next}]`, `noEmit: true`,
-  `paths: {"@/*": ["./src/*"]}`. include에 `next-env.d.ts`.
+- **tsconfig**: `jsx: react-jsx`, `moduleResolution: bundler`, `plugins: [{name:next}]`, `noEmit: true`,
+  `paths: {"@/*": ["./src/*"]}`. include에 `next-env.d.ts` · `.next/types/**` · `.next/dev/types/**`.
+  - **`jsx` 는 `preserve` 가 아니다** (Next 16 부터). `preserve` 로 두면 첫 `next build` 가
+    "mandatory changes" 라며 tsconfig 를 말없이 고쳐 놓는다 — 손으로 쓴 설정이 바로 낡는다.
+  - **`baseUrl` 은 쓰지 않는다.** TypeScript 7 에서 삭제된 옵션이라(TS5102) 남아 있으면
+    `tsc --noEmit` 이 첫 줄에서 깨진다. `paths` 는 tsconfig 파일 위치 기준으로 해석되므로
+    `baseUrl` 없이 그대로 쓴다.
+  - (둘 다 2026-08-31 실측: 스캐폴딩 산출물로 install → tsc → test → build 를 돌려 확인)
 - **next-env.d.ts 수동 생성**: 게이트가 `next build` 없이 `tsc --noEmit`만 돌리므로, Next 타입 참조용
   `next-env.d.ts`(`/// <reference types="next" />` 2줄)를 손으로 둔다 → 빌드 없이 타입체크 통과.
 - **테스트**: Vitest + `@vitejs/plugin-react` + `jsdom`. 게이트는 `npm test`(vitest run) 실행.
+  - 설정 파일은 **`vitest.config.mts`** (`.ts` 아님). Next 프로젝트의 package.json 에는
+    `"type": "module"` 이 없어서 `.ts` 로 두면 Vite 가 CommonJS 로 읽고 ESM 문법에 경고를 낸다.
+  - **jsdom 은 29 로 고정.** 30 은 Node `^24.15.0` 이상을 요구해서 그 아래에서는 설치 때
+    EBADENGINE 경고가 난다. Node 를 24.15+ 로 올리면 30 으로 올려도 된다.
 
 ## 기본 라이브러리
 
 - 서버 상태: **TanStack Query** (Supabase 조회 캐싱)
-- 스타일: **Tailwind + shadcn/ui**(Radix) — `cn` 헬퍼(`clsx`+`tailwind-merge`)를 `shared/lib`
+- 스타일: **Tailwind 4 + shadcn/ui**(Radix) — `cn` 헬퍼(`clsx`+`tailwind-merge`)를 `shared/lib`
+  - Tailwind 4 설치는 v3 와 다르다: 패키지가 `tailwindcss` + **`@tailwindcss/postcss`** 둘이고,
+    **autoprefixer 를 안 쓴다**(v4 가 직접 처리). `globals.css` 는 `@import "tailwindcss";` 한 줄 —
+    v3 의 `@tailwind base/components/utilities` 세 줄이 아니다.
+    (2026-08-31 공식 설치 문서 확인. `scripts/scaffold.mjs` 가 이 형식으로 만들고
+    `scripts/check-scaffold-profile.mjs` 가 형식을 검사한다)
 - 검증: **Zod** (신뢰 경계에서 응답 파싱 — supabase 규칙과 연결)
 - 배포: **Vercel** (+ Vercel Cron으로 스케줄 작업)
 

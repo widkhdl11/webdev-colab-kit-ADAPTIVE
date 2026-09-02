@@ -3,8 +3,6 @@
 그래프의 종착 노드. 하류가 없다 ([graph.mjs:126-132](../../../graph.mjs#L126-L132)).
 `review` 와 같은 `signoff` 방식으로 clean 되는 두 노드 중 나머지다.
 
-**이 레포의 현재 프론티어가 여기다** — [projects/signal/workspace/PROGRESS.md:7](../../../projects/signal/workspace/PROGRESS.md#L7) 이 "`deploy` 는 아직 손대지 않았다(`workspace/deploy.md` 없음)"라고 기록하고 있다.
-
 ## Purpose
 
 배포를 **review 뒤에 강제로 세운다.** [graph.mjs:126-127](../../../graph.mjs#L126-L127) 이 목적을 직접 적어 놓았다 — "review 에 의존 → review dirty 면 배포 차단(강제 마감)".

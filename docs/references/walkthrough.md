@@ -7,11 +7,17 @@
 아래 상태 JSON과 명령 출력은 `graph.mjs` · `gates/graph-stop.mjs` · `gates/propagate.mjs` ·
 `gates/run-gates.mjs` 를 읽고 그 규칙대로 적은 것이다. 출발 상태와 브리핑은 2026-08-30 세션의 실제 값이다.
 
+> **`projects/signal/` 은 2026-08-31 에 레포에서 지웠다** (하네스로 처음부터 다시 만들어 보려고 —
+> 지금 자리는 `projects/signal2/`). 아래의 경로 · 해시 · 파일명은 전부 **지워지기 전 signal 의 값**이고,
+> 지금 디스크에서는 찾을 수 없다. 그대로 두는 이유는 이 문서가 하네스 설명이 아니라 **실제로 돌아간
+> 세션 하나의 기록**이기 때문이다 — 이름만 바꾸면 해시와 경로가 아무것도 안 가리키는 거짓이 된다.
+> 원본을 꺼내려면 `git show ccc8edc:projects/signal/workspace/HANDOFF.md` (signal 이 마지막으로 남아 있던 커밋).
+
 ---
 
-## 출발점 — 지금 signal 의 상태
+## 출발점 — 그때 signal 의 상태
 
-`projects/signal/workspace/HANDOFF.md` 에 실제로 이렇게 들어 있다.
+`projects/signal/workspace/HANDOFF.md` 에 이렇게 들어 있었다.
 
 ```
 프론티어(지금 작업할 노드, 파생값): 없음 — 전부 clean

@@ -144,7 +144,7 @@ Phase별·파일별로 정리한 보고서는 **내가 한 일의 구조**지 �
 ## 기능 완성 시 — review 노드 사인오프
 
 리뷰어 통과 = 그래프의 `review` 노드를 clean으로 만드는 것. 통과하면 `workspace/review.md`에
-`status: passed` + `basis: <해시>` + `reviewers: [실제로 돌린 리뷰어]`를 기록한다(무엇이 모자란지는
+`project: <프로젝트명>` + `status: passed` + `basis: <해시>` + `reviewers: [실제로 돌린 리뷰어]`를 기록한다(무엇이 모자란지는
 graph-stop이 매 턴 알려준다). 구현이 바뀌면 basis 불일치로 review가 자동으로 낡는다(재리뷰 강제).
 review가 dirty인 동안 `deploy`는 차단된다.
 
