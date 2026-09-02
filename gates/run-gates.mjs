@@ -5,6 +5,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
+import { readSpec } from "./lib/read-spec.mjs";
 
 const ROOT = process.cwd();
 const PROJECTS = join(ROOT, "projects");
@@ -252,26 +253,7 @@ const RISK_SURFACES = {
 };
 const SURFACE_KEYS = Object.keys(RISK_SURFACES);
 
-// 스펙 frontmatter 의 surfaces 를 읽는다. 인라인(`surfaces: [auth, authz]`)과
-// 블록(`surfaces:` 다음 줄부터 `- auth`) 두 표기 모두 받는다.
-function specSurfaces(fmText) {
-  const m = fmText.match(/^[ \t]*surfaces:[ \t]*(.*)$/m);
-  if (!m) return [];
-  const inline = m[1].trim();
-  // 값 뒤에 붙는 주석(`surfaces: [auth, authz]  # 왜`)을 값으로 먹으면 마지막 항목이 통째로 어긋난다.
-  const clean = (s) => s.split(",").map((x) => x.trim().replace(/['"]/g, "")).filter((x) => /^[a-z-]+$/.test(x));
-  const br = inline.match(/^\[([^\]]*)\]/);
-  if (br) return clean(br[1]);
-  if (inline && !inline.startsWith("#")) return clean(inline.split("#")[0]);
-  const rest = fmText.slice(fmText.indexOf(m[0]) + m[0].length).split("\n").slice(1);
-  const out = [];
-  for (const line of rest) {
-    const li = line.match(/^[ \t]*-[ \t]*([A-Za-z-]+)/);
-    if (!li) break;
-    out.push(li[1]);
-  }
-  return out;
-}
+
 // projects/<이름>/docs/specs/*.md (비재귀, '_' 접두 제외) 중 approved 스펙이 커버하는 표면 집합.
 // 비재귀인 이유: 그래프의 spec 노드 글롭(docs/specs/*.md)과 같은 범위를 봐야 planned/ 의 보류 스펙이
 // 게이트를 열어버리지 않는다.
@@ -284,9 +266,10 @@ function approvedSurfaces(projDir) {
     if (!name.endsWith(".md") || name.startsWith("_")) continue;
     const p = join(dir, name);
     try { if (!statSync(p).isFile()) continue; } catch { continue; }
-    const fm = readFileSync(p, "utf-8").match(/^---\r?\n([\s\S]*?)\r?\n---/);
-    if (!fm || !/^\s*status:\s*approved\b/m.test(fm[1])) continue;
-    for (const s of specSurfaces(fm[1])) if (!covered.has(s)) covered.set(s, relative(ROOT, p));
+    const spec = readSpec(p);
+    for (const q of spec.problems) riskWarnings.push(`⚠ [spec/VOCAB] ${relative(ROOT, p)} — ${q}`);
+    if (spec.status !== "approved") continue;
+    for (const s of spec.surfaces) if (!covered.has(s)) covered.set(s, relative(ROOT, p));
   }
   return covered;
 }
@@ -420,6 +403,65 @@ for (const projDir of projectDirs) {
         (more ? `\n${more}` : "") +
         (list.length > 3 ? `\n      · 외 ${list.length - 3}건` : ""),
     );
+  }
+}
+
+// ── 1''''') docs 경계: 프로젝트 docs/ 는 하네스를 몰라야 한다 ─────────────────
+//   v3.2 목표 — 이전이 projects/<이름>/docs/ 복사 + docs-contract.md 전달로 끝나야 한다.
+//   그러려면 docs/ 안에 하네스만 아는 필드도, 하네스 구현을 가리키는 문장도 없어야 한다.
+//
+//   **이 검사는 하한선이다.** 문자열만 보므로 구현 이름이 없는 하네스 서술("적으면 방벽이
+//   그만큼 열린다")은 못 잡는다. 문장 단위 판정은 사람이 한다 — docs-contract.md 참조.
+//   반대로 결정의 근거로 쓰인 서술("승인된 스펙은 불변식마다 테스트가 요구된다")은
+//   프로젝트 지식이라 일부러 통과시킨다. 금지하는 것은 구현의 '이름'뿐이다.
+const SPEC_FM_FIELDS = ["feature", "status", "surfaces"];
+const HARNESS_REFS = [
+  { re: /\bgates\//, what: "게이트 경로" },
+  { re: /\b(run-gates|graph-stop|spec-coverage|propagate|graph)\.mjs\b/, what: "게이트 파일명" },
+  { re: /\b(run-gates|graph-stop|spec-coverage)\b/, what: "게이트 이름" },
+  { re: /\b(BEFORE_UI|NO_INNERHTML|risk-surface)\b/, what: "게이트 규칙 이름" },
+  { re: /(^|[\s(`"'])\.claude\//, what: "하네스 설정 경로" },
+  { re: /\bworkspace\//, what: "과정 기록 경로" },
+  // 줄 맨 앞 앵커 — 넓게 두면 CSS 의 flex-basis 가 걸린다(mockup 실측 2건).
+  { re: /^[ \t]*basis:/, what: "사인오프 해시 필드" },
+];
+
+for (const projDir of projectDirs) {
+  const docsDir = join(projDir, "docs");
+  if (!existsSync(docsDir)) continue;
+  for (const f of walk(docsDir)) {
+    if (!/\.(md|html|css|txt|json|ya?ml)$/i.test(f)) continue;
+    const rel = relative(ROOT, f);
+    const src = readFileSync(f, "utf-8");
+
+    // 검사 b — 하네스 구현 참조
+    src.split("\n").forEach((line, i) => {
+      for (const { re, what } of HARNESS_REFS) {
+        if (!re.test(line)) continue;
+        errors.push(
+          `[docs-boundary/HARNESS_REF] ${rel}:${i + 1} — ${what}이 프로젝트 docs 에 있다. ` +
+            `docs/ 는 하네스를 바꿔도 그대로 넘어가는 폴더다 — 하네스 사정은 킷(docs/LESSONS.md · ` +
+            `docs/references/)으로 옮기고, 결정의 근거로 필요하면 구현 이름 없이 무슨 일이 ` +
+            `일어나는지로 적는다.`,
+        );
+        break;   // 한 줄에 여러 패턴이 걸려도 한 번만 신고한다
+      }
+    });
+
+    // 검사 a — 스펙 frontmatter 필드 화이트리스트
+    if (!/[\\/]docs[\\/]specs[\\/][^\\/]+\.md$/.test(rel)) continue;
+    const fm = src.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (!fm) continue;
+    for (const line of fm[1].split("\n")) {
+      // 줄 맨 앞에서 시작하는 것만 필드다 — 들여쓴 줄과 `#` 주석은 값의 연속이다.
+      const m = line.match(/^([A-Za-z_][\w-]*):/);
+      if (!m || SPEC_FM_FIELDS.includes(m[1])) continue;
+      errors.push(
+        `[docs-boundary/FRONTMATTER_FIELD] ${rel} — frontmatter 에 '${m[1]}' 필드가 있다. ` +
+          `허용된 것은 ${SPEC_FM_FIELDS.join("·")} 뿐이다(docs/references/docs-contract.md). ` +
+          `기계가 읽는 값을 늘리려면 그 문서에 먼저 등재한다.`,
+      );
+    }
   }
 }
 
