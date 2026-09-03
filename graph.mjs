@@ -164,5 +164,9 @@ export const GATE_KIND = {
   // 설정을 붙이든 n/a 로 선언하든 그건 사용자 결정이고, 물어보려면 턴이 끝나야 한다.
   "tsc-notrun": { kind: "completion", owner: "implement" },
   "test-notrun": { kind: "completion", owner: "qa" },
+  // 보류(escalation)로 올라간 항목에서 나온 실패. **owner 를 보지 않는다** — 이 실패를 푸는 것은
+  // 사람의 결정이고, 결정을 받으려면 턴이 끝나야 한다. 그래서 owner 상태와 무관하게 낮춘다.
+  // 낮춰도 강제력은 그대로다: 막힌 노드는 자기 산출물이 없어 여전히 dirty 이고 하류도 막혀 있다.
+  pending: { kind: "escalated", owner: null },
 };
 

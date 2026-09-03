@@ -124,11 +124,26 @@ ok("A2", "graph-stop  세 번째 kind(escalated) 분기가 있다",
    /kind\s*===\s*"escalated"/.test(src("gates/graph-stop.mjs")), "downgradeReason 에 분기가 없다");
 
 // A3 — run-gates 가 열린 보류 항목을 출력한다
+// A4 — 그런데 --quick 에서는 안 낸다. **이게 없으면 아무것도 편집할 수 없게 된다.**
+//      PostToolUse 훅이 편집마다 `run-gates --quick` 을 돌리고 exit 2 면 편집을 막는데,
+//      보류는 사라지는 종류가 아니라서 한 건만 열려 있어도 편집이 영구히 막힌다.
+//      보류를 닫아서 푸는 것조차 편집이라 막힌다 — 2026-09-03 에 실제로 그렇게 됐다.
+//      **A3 과 A4 는 같은 코드의 반대 방향이다.** A3 만 있으면 "신고는 되는데 아무것도 못 고치는"
+//      상태가 통과한다. 보류는 코드 위반이 아니라 그래프 층의 사정이므로 편집 훅에는 안 나가야 한다.
 {
-  const g = spawnSync(process.execPath, [join(ROOT, "gates", "run-gates.mjs")], { cwd: ROOT, encoding: "utf-8" });
-  const out = `${g.stdout ?? ""}${g.stderr ?? ""}`;
-  ok("A3", "run-gates   열린 보류 항목이 게이트 출력에 나타난다",
-     /\[pending\//.test(out), "출력에 [pending/…] 줄이 없다");
+  const full = spawnSync(process.execPath, [join(ROOT, "gates", "run-gates.mjs")], { cwd: ROOT, encoding: "utf-8" });
+  const quick = spawnSync(process.execPath, [join(ROOT, "gates", "run-gates.mjs"), "--quick"], { cwd: ROOT, encoding: "utf-8" });
+  const txt = (r) => `${r.stdout ?? ""}${r.stderr ?? ""}`;
+  const open = readPendingText(
+    existsSync(join(ROOT, "projects", (src("ACTIVE") || "").trim(), "workspace", "PENDING.md"))
+      ? readFileSync(join(ROOT, "projects", (src("ACTIVE") || "").trim(), "workspace", "PENDING.md"), "utf-8") : "",
+  ).items.length;
+
+  ok("A3", `run-gates   열린 보류 ${open}건이 전체 실행의 출력에 나타난다`,
+     open === 0 || /\[pending\//.test(txt(full)), "출력에 [pending/…] 줄이 없다");
+  ok("A4", "run-gates   --quick 에서는 보류를 신고하지 않는다(편집이 막히면 안 된다)",
+     !/\[pending\//.test(txt(quick)) && quick.status !== 2,
+     `--quick exit=${quick.status} · pending 줄 ${txt(quick).split("\n").filter((l) => /\[pending\//.test(l)).length}개`);
 }
 
 // S1 — 리포트 발행이 던져도 흐른다. 안 던지면 정상 발행된다(양방향).

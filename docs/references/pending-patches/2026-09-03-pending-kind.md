@@ -200,9 +200,15 @@ safeEmit(() => {
 //    **graph.mjs 가 먼저 붙어 있어야 한다** — 목록에 없는 카테고리는 무조건 차단이기 때문이다.
 //    읽는 것은 줄 맨 앞 `blocks:` 하나뿐이고 나머지 본문은 파싱하지 않는다.
 //
+//    **--quick(편집 훅)에서는 신고하지 않는다.** PostToolUse 훅이 편집마다 `--quick` 을 돌리고
+//    exit 2 면 편집을 막는데, 보류는 저절로 사라지는 종류가 아니라서 한 건만 열려 있어도
+//    편집이 영구히 막힌다. 보류를 닫아서 푸는 것조차 편집이라 같이 막힌다(2026-09-03 실측).
+//    보류는 코드 위반이 아니라 그래프 층의 사정이므로 편집 훅에 나갈 것이 아니다.
+//
 //    **projectDirs 를 쓰지 않는다.** 그 목록은 `src/` 가 있는 폴더만 세는데, 킥오프만 끝나고
 //    코드가 아직 없는 프로젝트에도 보류 항목은 생긴다. 그때 조용히 건너뛰면 보류가 있는데
 //    게이트에는 안 보이는 상태가 된다(dry run 에서 실제로 그랬다).
+if (!QUICK) {
 const pendingRoot = join(ROOT, "projects");
 const pendingDirs = existsSync(pendingRoot)
   ? readdirSync(pendingRoot).map((n) => join(pendingRoot, n)).filter((p) => existsSync(join(p, "workspace", "PENDING.md")))
@@ -229,6 +235,7 @@ for (const projDir of pendingDirs) {
         (it.blocks.length ? ` (막는 노드: ${it.blocks.join("·")})` : " (막는 노드 없음)"),
     );
 }
+}          // ← if (!QUICK) 를 닫는다
 
 if (errors.length > 0) {
 ```
@@ -238,11 +245,13 @@ if (errors.length > 0) {
 ## 붙은 뒤 확인
 
 ```
-node scripts/check-pending-kind.mjs
+node scripts/check-pending-kind.mjs        → 11/11
+node gates/run-gates.mjs --quick           → exit 0 (보류 신고 없음)
+node gates/run-gates.mjs                   → 열린 보류가 있으면 exit 2 (정상)
 ```
 
-붙기 전 **7/10**(A1·A2·A3 실패), 붙은 뒤 **10/10**. 그 밖의 숫자가 나오면 붙이다 만 것이다.
-셋 중 몇 개가 붙었는지는 A1·A2·A3 이 각각 알려준다.
+붙기 전 **8/11**(A1·A2·A3 실패, A4 는 신고 자체가 없어 통과), 붙은 뒤 **11/11**.
+그 밖의 숫자가 나오면 붙이다 만 것이고, 어느 파일이 빠졌는지는 A1~A4 가 각각 알려준다.
 
 기존 검사도 그대로여야 한다: `check-read-policy` 9/9 · `check-read-spec` 8/8 ·
 `check-docs-boundary` 7/7 · `check-mirror-sync` 5/5 · `check-handover-rehearsal` 3/3.
@@ -250,3 +259,15 @@ node scripts/check-pending-kind.mjs
 **붙은 뒤 `run-gates` 단독 실행은 열린 보류가 있는 동안 exit 2 가 된다.** 이건 정상이다 —
 보류는 안 끝난 조건이고, 턴을 막지 않는 것은 `graph-stop` 이 낮춰서 하는 일이다.
 "게이트 통과"라는 문장의 뜻이 그만큼 바뀌므로 알고 있어야 한다.
+**`--quick` 은 그대로 exit 0 이어야 한다.** 거기서 exit 2 가 나면 편집이 전부 막힌다.
+
+## 붙이다 막혔을 때 빠져나오는 길
+
+부분 적용 상태에서 턴이 막히면(`run-gates` 만 붙은 상태 등) 그것을 푸는 유일한 길은 보호 파일
+편집이고, 그건 사용자만 할 수 있다. **그동안 세션은 같은 차단 메시지를 반복한다** — 2026-09-03 에
+실제로 그렇게 됐다. 조합표가 "턴이 막힌다"까지는 예측했지만 세션이 못 쓰게 되는 것까지는 안 적혀 있었다.
+
+빠져나오는 길은 둘이고, 둘 다 사용자가 파일 하나를 고치는 일이다.
+
+- **앞으로**: 빠진 파일을 마저 붙인다(권장 순서상 `graph.mjs` 가 빠져 있을 가능성이 높다).
+- **뒤로**: `run-gates.mjs` 에 넣은 블록을 다시 뺀다. 나머지 둘은 입력이 없어 무해하므로 그대로 둬도 된다.

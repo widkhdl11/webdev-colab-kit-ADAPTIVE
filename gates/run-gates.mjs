@@ -670,6 +670,43 @@ for (const [label, entries] of detectedByProject) {
   console.log(`ℹ [risk-surface/AT] ${label} — ${entries.map(([s, at]) => `${s}@${at}`).join(", ")}`);
 }
 
+
+// ── 보류 항목: `## 열린 항목` 아래의 것을 게이트 실패로 낸다.
+//    실행을 막지 않는 것은 graph-stop 이 GATE_KIND 로 낮춰서 하는 일이고, 여기서는 신고만 한다.
+//    **graph.mjs 가 먼저 붙어 있어야 한다** — 목록에 없는 카테고리는 무조건 차단이기 때문이다.
+//    읽는 것은 줄 맨 앞 `blocks:` 하나뿐이고 나머지 본문은 파싱하지 않는다.
+//
+//    **projectDirs 를 쓰지 않는다.** 그 목록은 `src/` 가 있는 폴더만 세는데, 킥오프만 끝나고
+//    코드가 아직 없는 프로젝트에도 보류 항목은 생긴다. 그때 조용히 건너뛰면 보류가 있는데
+//    게이트에는 안 보이는 상태가 된다(dry run 에서 실제로 그랬다).
+if (!QUICK) {
+  const pendingRoot = join(ROOT, "projects");
+  const pendingDirs = existsSync(pendingRoot)
+    ? readdirSync(pendingRoot).map((n) => join(pendingRoot, n)).filter((p) => existsSync(join(p, "workspace", "PENDING.md")))
+    : [];
+  for (const projDir of pendingDirs) {
+    const pendingFile = join(projDir, "workspace", "PENDING.md");
+    const pendingLabel = relative(ROOT, projDir).split("\\").join("/");
+    const openItems = [];
+    let inOpen = false, item = null;
+    const flushItem = () => { if (item) openItems.push(item); item = null; };
+    for (const raw of readFileSync(pendingFile, "utf-8").replace(/\r\n/g, "\n").split("\n")) {
+      const head = raw.match(/^##\s+(.*)$/);
+      if (head) { flushItem(); inOpen = /열린/.test(head[1]); continue; }
+      if (!inOpen) continue;
+      const title = raw.match(/^-\s+\*\*(.+?)\*\*/);
+      if (title) { flushItem(); item = { title: title[1].trim(), blocks: [] }; continue; }
+      const blk = raw.match(/^[ \t]*blocks:[ \t]*(.*)$/);
+      if (blk && item) item.blocks.push(...blk[1].split(",").map((x) => x.trim()).filter(Boolean));
+    }
+    flushItem();
+    for (const it of openItems)
+      errors.push(
+        `[pending/BLOCKED] ${pendingLabel}/workspace/PENDING.md — ${it.title}` +
+          (it.blocks.length ? ` (막는 노드: ${it.blocks.join("·")})` : " (막는 노드 없음)"),
+      );
+  }
+}
 if (errors.length > 0) {
   console.error(
     `게이트 실패 ${errors.length}건. 새 기능 추가 금지, 아래 위반만 수정:\n` +
@@ -690,3 +727,5 @@ console.log(
       : ` · tsc ${ranTsc}/${n} · test ${ranTest}/${n}`) +
     `)`,
 );
+
+
