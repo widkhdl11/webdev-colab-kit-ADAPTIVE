@@ -133,6 +133,53 @@ cpSync(join(ROOT, "docs", "references", "docs-contract.md"), join(dir, "docs-con
   for (const r of rows) console.log(`     ${r.same ? "·" : "≠"} ${r.name.padEnd(28)} ${r.status.padEnd(9)} [${r.surfaces.join(",")}]`);
 }
 
+// ── R2b: 정책 규칙 복원 ───────────────────────────────────────────────────────
+//
+// 정책 규칙은 **사람 판단의 기록**이라 잃으면 복원할 수 없다. 스펙과 같은 이유로 docs 계층에
+// 두었으니, 이전이 폴더 복사로 끝나는지도 스펙과 같은 방식으로 확인한다.
+//
+// 규칙이 0건인 프로젝트는 이 검사를 건너뛴다 — 아직 아무 판단도 쌓이지 않은 것이지
+// 유실이 아니다. 다만 **한 프로젝트라도 규칙이 있으면** 그 복원은 반드시 본다.
+{
+  // 계약 7절이 정한 네 필드 중 기계가 판정에 쓰는 셋만 본다.
+  const readPolicyFields = (s) => ({
+    id: s.match(/^[ \t]*id:[ \t]*(.*)$/m)?.[1].trim() ?? "",
+    scope: (s.match(/^[ \t]*scope:[ \t]*(.*)$/m)?.[1] ?? "").trim(),
+    status: s.match(/^[ \t]*status:[ \t]*(.*)$/m)?.[1].trim() ?? "",
+  });
+  const samePolicy = (a, b) => a.id === b.id && a.scope === b.scope && a.status === b.status;
+
+  const rows = [];
+  for (const p of projects) {
+    const polDir = join(dir, p, "docs", "policy");
+    if (!existsSync(polDir)) continue;
+    for (const f of readdirSync(polDir).filter((n) => n.endsWith(".md") && n !== "README.md")) {
+      const copied = readPolicyFields(readFileSync(join(polDir, f), "utf-8"));
+      const origin = readPolicyFields(readFileSync(join(ROOT, "projects", p, "docs", "policy", f), "utf-8"));
+      rows.push({ name: `${p}/${f.replace(/\.md$/, "")}`, ...copied, same: samePolicy(copied, origin) });
+    }
+  }
+
+  // **프로브를 먼저 돌린다.** 지금 프로젝트에 규칙이 0건이라 아래 대조는 아무것도 안 볼 수 있는데,
+  // 그러면 "규칙이 유실돼도 통과"와 "볼 게 없어서 통과"가 겉으로 같아진다.
+  // 심은 불일치가 잡히고 같은 것끼리는 안 잡히는 것까지 봐야 이 검사가 살아 있다는 근거가 된다.
+  const RULE = (over = "") =>
+    `---\nid: sample\nscope: [api]\nstatus: confirmed\nlast_applied:\n---\n\n본문.\n`.replace("status: confirmed", over || "status: confirmed");
+  const a = readPolicyFields(RULE());
+  const planted = readPolicyFields(RULE("status: provisional"));
+  ok("R2b-프로브", "심은 불일치를 잡고, 같은 것끼리는 안 잡는다",
+    samePolicy(a, a) === true && samePolicy(a, planted) === false,
+    `같음=${samePolicy(a, a)} 다름감지=${!samePolicy(a, planted)}`);
+
+  if (rows.length === 0) {
+    console.log("     · 정책 규칙 0건 — 아직 쌓인 판단이 없다(유실이 아니다). 대조는 건너뛰고 프로브만 돌았다");
+  } else {
+    const bad = rows.filter((r) => !r.same);
+    ok("R2b", `정책 규칙 복원 (규칙 ${rows.length}건)`, bad.length === 0, bad.length ? `${bad.length}건 불일치` : "");
+    for (const r of rows) console.log(`     ${r.same ? "·" : "≠"} ${r.name.padEnd(28)} ${r.status.padEnd(12)} ${r.scope}`);
+  }
+}
+
 // ── R3: 자립 ─────────────────────────────────────────────────────────────────
 {
   const needs = [];
