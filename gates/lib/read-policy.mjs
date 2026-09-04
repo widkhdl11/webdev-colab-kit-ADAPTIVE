@@ -16,7 +16,7 @@ import { basename } from "node:path";
 import { frontmatterText, fmField, fmList, dupKeys } from "./frontmatter.mjs";
 
 export const POLICY_STATUS = ["confirmed", "provisional"];
-export const POLICY_SCOPES = ["ui", "data-model", "api", "copy"];
+export const POLICY_SCOPES = ["ui", "data-model", "api", "copy", "harness"];
 
 /**
  * 파일 내용에서 읽는다. 테스트·대조용으로 따로 열어 둔다.

@@ -707,6 +707,77 @@ if (!QUICK) {
       );
   }
 }
+
+// ── 결정층: 승격 미처리 · last_applied 미기록 (전체 실행 전용)
+//    이 게이트는 쓰지 않는다 — 승격도 사이클 마감도 판단이 필요한 쓰기라 사람과 에이전트가 한다.
+//    여기서 하는 일은 "처리 안 된 것이 대장에 남아 있다"를 신고하는 데까지다.
+//
+//    **lib 이 없거나 던져도 게이트가 죽지 않는다.** 부분 적용 상태에서 여기가 죽으면
+//    편집도 턴 종료도 막힌다(2026-09-03 P3 에서 실제로 세션이 갇혔다). 건너뛴 것은 ⚠ 로
+//    남기고, 붙었는지 여부는 scripts/check-cycle-policy.mjs 가 판정한다.
+if (!QUICK) {
+  let cyclePolicy = null;
+  try { cyclePolicy = await import("./lib/cycle-policy.mjs"); } catch { /* 미적용 */ }
+  if (!cyclePolicy) {
+    console.error("⚠ [cycle/SKIP] gates/lib/cycle-policy.mjs 가 없다 — 승격 미처리·last_applied 검사를 건너뛴다.");
+  } else {
+    try {
+      const cycleRoot = join(ROOT, "projects");
+      const cycleDirs = existsSync(cycleRoot)
+        ? readdirSync(cycleRoot).map((n) => join(cycleRoot, n)).filter((p) => existsSync(join(p, "workspace")))
+        : [];
+      for (const projDir of cycleDirs) {
+        const label = relative(ROOT, projDir).split("\\").join("/");
+
+        // ① 승격 미처리 — 2회 이상 쌓였는데 규칙도 안 되고 no-auto 사유도 없는 항목.
+        const ledger = join(projDir, "workspace", "DECISION_CANDIDATES.md");
+        if (existsSync(ledger)) {
+          const { items } = cyclePolicy.readCandidatesText(readFileSync(ledger, "utf-8"));
+          const { mustHandle, unreadable } = cyclePolicy.promotionPending(items);
+          for (const it of mustHandle)
+            errors.push(
+              `[promotion/UNPROCESSED] ${label}/workspace/DECISION_CANDIDATES.md — '${it.title}' 이 ` +
+                `${it.seen.length}개 사이클(${it.seen.join(", ")})에서 나왔는데 처리가 안 됐다. ` +
+                `규칙으로 올리고 대장에서 빼거나, no-auto 에 사유를 적어라`,
+            );
+          // 어휘를 못 읽는 항목은 승격 자체가 불가능하다 — 실패시키지 않고 알린다.
+          // (실패 방향은 언제나 승격하지 않는 쪽이다)
+          for (const it of unreadable)
+            console.error(
+              `⚠ [promotion/UNREADABLE] ${label}/workspace/DECISION_CANDIDATES.md — '${it.title}' 은 ` +
+                `${it.seen.length}회인데 scope 를 못 읽어(${it.badScope.join(", ") || "값 없음"}) 승격 대상이 못 된다.`,
+            );
+        }
+
+        // ② last_applied 미기록 — 로그가 근거로 인용한 규칙 파일에 그 사이클이 안 적혀 있다.
+        //    위생 판정(오래 안 쓰인 규칙 걷어내기)은 이 값이 실제로 쌓여야 만들 수 있다.
+        const logDir = join(projDir, "workspace", "logs");
+        if (existsSync(logDir)) {
+          for (const lf of readdirSync(logDir).filter((n) => /^DECISION_LOG\..+\.md$/.test(n))) {
+            const cid = lf.replace(/^DECISION_LOG\./, "").replace(/\.md$/, "");
+            for (const id of cyclePolicy.readLogCitations(readFileSync(join(logDir, lf), "utf-8"))) {
+              const found = [join(projDir, "docs", "policy", `${id}.md`), join(ROOT, "docs", "references", "policy", `${id}.md`)]
+                .find((p) => existsSync(p));
+              if (!found) {
+                errors.push(`[cycle/LAST_APPLIED] ${label}/workspace/logs/${lf} — 근거로 적힌 규칙 '${id}' 의 파일이 없다`);
+                continue;
+              }
+              const cur = (readFileSync(found, "utf-8").match(/^last_applied:[ \t]*(.*)$/m)?.[1] ?? "").trim();
+              if (!cur.split(",").map((x) => x.trim()).includes(cid))
+                errors.push(
+                  `[cycle/LAST_APPLIED] ${relative(ROOT, found).split("\\").join("/")} — ` +
+                    `${lf} 가 이 규칙을 근거로 썼는데 last_applied 에 '${cid}' 가 없다(현재: ${cur || "비어 있음"})`,
+                );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error(`⚠ [cycle/SKIP] 결정층 검사가 던졌다 — ${e.message}. 나머지 게이트는 그대로 판정한다.`);
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error(
     `게이트 실패 ${errors.length}건. 새 기능 추가 금지, 아래 위반만 수정:\n` +

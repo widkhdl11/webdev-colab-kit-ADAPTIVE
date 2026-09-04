@@ -258,9 +258,16 @@ ok("G", "중복         같은 사이클이 두 번 적혀도 1회로 센다",
 {
   const active = (existsSync(join(ROOT, "ACTIVE")) ? readFileSync(join(ROOT, "ACTIVE"), "utf-8") : "").trim();
   const pf = join(ROOT, "projects", active, "workspace", "PENDING.md");
+  // 훅이 **돌기는 하는지**를 먼저 본다. 문법 오류면 아무 줄도 안 나오는데,
+  // 그 상태와 "배선이 안 됐다"는 출력이 똑같아 보인다 — 2026-09-04 에 실제로 헷갈렸다.
+  // (닫는 `});` 한 줄이 빠져 훅 전체가 죽어 있었고, K 는 "배선 없음"이라고만 말했다)
+  let stopBroken = null;
   const runStop = () => {
     const r = spawnSync(process.execPath, [join(ROOT, "gates", "graph-stop.mjs")], { cwd: ROOT, encoding: "utf-8" });
-    return (r.stdout ?? "") + "\n" + (r.stderr ?? "");
+    const out = (r.stdout ?? "") + "\n" + (r.stderr ?? "");
+    const syntax = out.match(/^\s*(\w*(?:Syntax|Reference|Type)Error: .+)$/m);
+    if (syntax && !/\[cycle\//.test(out)) stopBroken = syntax[1];
+    return out;
   };
   if (!existsSync(pf)) {
     ok("K", "훅 배선     상한이 Stop 훅에서 발동한다", false, `PENDING.md 를 못 찾았다 (${pf})`);
@@ -286,9 +293,11 @@ ok("G", "중복         같은 사이클이 두 번 적혀도 1회로 센다",
     if (!restored) console.error(`✗✗ PENDING.md 복원 실패 — 손으로 되돌려야 한다: ${pf}`);
     quiet = /\[cycle\/CLOSE\]/.test(runStop());
     ok("K", `훅 배선     보류를 상한(${CAP})까지 심으면 훅이 사이클 종료를 알리고, 되돌리면 안 알린다`,
-       fired === true && quiet === false && restored,
-       `심었을 때=${fired} / 되돌린 뒤=${quiet} / 복원=${restored}` +
-         (quiet === true ? " — 조건 1 이 이미 성립해 있으면 이 항목은 판정할 수 없다" : ""));
+       fired === true && quiet === false && restored && !stopBroken,
+       stopBroken
+         ? `Stop 훅이 아예 못 돈다 — ${stopBroken}  (배선 이전 문제다. \`node --check gates/graph-stop.mjs\` 로 확인)`
+         : `심었을 때=${fired} / 되돌린 뒤=${quiet} / 복원=${restored}` +
+           (quiet === true ? " — 조건 1 이 이미 성립해 있으면 이 항목은 판정할 수 없다" : ""));
   }
 }
 

@@ -17,6 +17,13 @@ import { basename, dirname, join, relative } from "node:path";
 import { GATE_KIND, GRAPH } from "../graph.mjs";
 import { childrenOf, descendants, isPending, isSatisfied, markDirty, markNa, markRework, propagate, recomputeParents, topLevel, topoSort } from "./propagate.mjs";
 
+
+
+// 사이클 판정 lib. 없으면(부분 적용) 아래에서 옛 판정으로 떨어진다 —
+// 여기서 던지면 훅이 죽고 차단 판정(6단계)에 영영 도달하지 못한다.
+let cyclePolicy = null;
+try { cyclePolicy = await import("./lib/cycle-policy.mjs"); } catch { /* 미적용 */ }
+
 const ROOT = process.cwd();
 
 // ── 활성 프로젝트 (없으면 스캐폴드 전 → skip, exit 0) ──────────────
@@ -480,14 +487,17 @@ function readPendingText(src, knownNodes = []) {
   flush();
   return { items, blocked: new Set(items.flatMap((i) => i.blocks)), problems };
 }
-function safeEmit(fn) {
+// 이 훅은 사이클을 닫지 않는다. 종료 조건을 판정하고 알리기만 한다 — 리포트를 쓰는 것도
+// CYCLE.md 의 줄을 옮기는 것도 무엇을 적을지 판단해야 하는 쓰기라 사이클 마감 절차가 한다.
+function noticeCycle(fn) {
   try { fn(); return true; }
   catch (e) {
-    console.error(`⚠ [cycle/REPORT] 리포트 발행 실패 — ${e.message}. 차단 판정은 그대로 진행한다.`);
+    console.error(`⚠ [cycle/NOTICE] 사이클 종료 판정 실패 — ${e.message}. 차단 판정은 그대로 진행한다.`);
     return false;
   }
 }
-safeEmit(() => {
+
+noticeCycle(() => {
   const pf = join(projDir, "workspace", "PENDING.md");
   if (!existsSync(pf)) return;
   const { items, blocked, problems } = readPendingText(readFileSync(pf, "utf-8"), Object.keys(GRAPH));
@@ -495,16 +505,19 @@ safeEmit(() => {
   if (items.length === 0) return;
   console.error(`⚠ [cycle/PENDING] 열린 보류 ${items.length}건 — 실행을 막지 않는다. 막힌 노드: ${[...blocked].join("·") || "없음"}`);
 
-  // 조기 종료 조건 1 — 프론티어의 **모든** 노드가 보류에 막혔나.
-  // 프론티어가 비어 있으면 닫지 않는다(그건 조건 2, 그래프 종단이 판정한다).
-  if (f.length === 0 || !f.every((n) => blocked.has(n))) return;
+  // 종료 판정은 gates/lib/cycle-policy.mjs 한 자리에 있다. 조건은 둘이다 —
+  // 프론티어가 전부 보류에 막혔거나, 열린 보류가 상한에 닿았거나.
+  // lib 이 아직 안 붙었으면 옛 판정(조건 1만)으로 떨어진다. 그때는 상한을 안 본다.
+  const verdict = cyclePolicy
+    ? cyclePolicy.closeVerdict({ frontier: f, blocked, openCount: items.length })
+    : { close: f.length > 0 && f.every((n) => blocked.has(n)), reason: "조건 1(상한 검사 없음 — cycle-policy 미적용)" };
+  if (!verdict.close) return;
 
   const cf = join(projDir, "workspace", "CYCLE.md");
   const cid = existsSync(cf) ? (readFileSync(cf, "utf-8").match(/^-\s+`([^`]+)`/m)?.[1] ?? "") : "";
   if (!cid) return;
-  console.error(`⚠ [cycle/CLOSE] 사이클 ${cid} 종료 조건 1 성립 — 프론티어(${f.join(", ")})가 전부 보류에 막혔다.`);
-  console.error(`   리포트를 workspace/reports/CYCLE_REPORT.${cid}.md 에 발행하고 CYCLE.md 의 그 줄을 닫힌 사이클로 옮긴다.`);
-});
+  console.error(`⚠ [cycle/CLOSE] 사이클 ${cid} 종료 조건 성립 — ${verdict.reason}.`);
+  console.error(`   이 훅은 알리기만 한다. 리포트(workspace/reports/CYCLE_REPORT.${cid}.md) 발행과 CYCLE.md 의 줄 이동은 사이클 마감 절차가 한다.`);
 
 const rw = reworkList(state);
 if (rw.length) console.log(`  ↳ rework(통과했다가 취소됨): ${rw.join(", ")}`);
