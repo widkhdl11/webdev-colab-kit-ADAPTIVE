@@ -240,14 +240,24 @@ if (slug) {
   const r = judge(projDir);
   estimates = r.estimates;
 
-  ok("I1", `스펙 전부 status: draft (스펙 ${r.specs.length}건)`,
-    r.specs.length > 0 && r.approved.length === 0 && r.dupKeys.length === 0,
-    r.specs.length === 0 ? "스펙이 0건 — 판정이 아무것도 안 봤다"
-      : r.approved.length ? `draft 아님: ${r.approved.map((s) => `${s.name}(${s.status || "값 없음"})`).join(", ")}`
-      : r.dupKeys.length ? `키 중복: ${r.dupKeys.map((s) => `${s.name}(${s.dup.join(",")})`).join(", ")}` : "");
+  // I1·I2·I5 는 **들여오기 직후에만** 뜻이 있다. 그 뒤 사람이 스펙을 승인하고 표면을 적고
+  // 골격을 만드는 것이 정상 진행이라, 같은 조건을 계속 들고 있으면 영구 빨간불이 된다.
+  // --built 일 때는 판정 대신 지금 상태를 보고한다 — 그리고 그 사실을 요약에 적어,
+  // "전부 초록"이 "들여오기가 깨끗했다"로 잘못 읽히지 않게 한다.
+  if (BUILT) {
+    const dist = r.specs.map((x) => `${x.name.replace(/.md$/, "")}(${x.status || "값 없음"}${x.surfaces.length ? " " + x.surfaces.join(",") : ""})`);
+    ok("I1", `스펙 상태 (스펙 ${r.specs.length}건) — 들여오기 이후라 판정 대상이 아니다`, true, dist.join(" · "));
+    ok("I2", "표면 표기 — 들여오기 이후라 판정 대상이 아니다(승인할 때 사람이 적는다)", true);
+  } else {
+    ok("I1", `스펙 전부 status: draft (스펙 ${r.specs.length}건)`,
+      r.specs.length > 0 && r.approved.length === 0 && r.dupKeys.length === 0,
+      r.specs.length === 0 ? "스펙이 0건 — 판정이 아무것도 안 봤다"
+        : r.approved.length ? `draft 아님: ${r.approved.map((s) => `${s.name}(${s.status || "값 없음"})`).join(", ")}`
+        : r.dupKeys.length ? `키 중복: ${r.dupKeys.map((s) => `${s.name}(${s.dup.join(",")})`).join(", ")}` : "");
 
-  ok("I2", "스펙 전부 surfaces: []", r.withSurfaces.length === 0,
-    r.withSurfaces.map((s) => `${s.name}[${s.surfaces.join(",")}]`).join(", "));
+    ok("I2", "스펙 전부 surfaces: []", r.withSurfaces.length === 0,
+      r.withSurfaces.map((s) => `${s.name}[${s.surfaces.join(",")}]`).join(", "));
+  }
 
   ok("I3", `[추정 — 확인 필요] ${r.estimates}건 (docs 파일 ${r.scanned}개)`, true,
     "이 숫자가 리포트 지표의 원본이다 — 손으로 적지 않는다");
