@@ -27,7 +27,10 @@
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
-        "hooks": [{ "type": "command", "command": "node gates/run-gates.mjs --quick" }]
+        "hooks": [
+          { "type": "command", "command": "node gates/run-gates.mjs --quick" },          
+          { "type": "command", "command": "node scripts/check-hooks-on-edit.mjs" }
+          ]
       }
     ],
     "Stop": [
