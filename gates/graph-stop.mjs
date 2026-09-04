@@ -179,6 +179,21 @@ function markUnitDirty(state, unit) {
   }
 }
 
+// 다른 프로젝트에서 난 에러. 이 그래프의 판정(release · n/a 취소 · qa 안내)에는 쓰지 않는다 —
+// 6단계 차단 판정에만 쓴다. 안 쓰면 "실패는 있는데 파싱 0건"이 되어 낮춤 규칙이 닿지 못하고,
+// 사람의 결정으로만 풀리는 보류가 턴을 영영 막는다(2026-09-04 study-mate 들여오기에서 실제로 났다).
+function parseForeignErrors(text) {
+  const out = [];
+  for (const line of text.split("\n")) {
+    const m = line.match(/^\[([a-z-]+)\/[^\]]+\]\s+(.+)$/);
+    if (!m) continue;
+    const p = m[2].split(" — ")[0].split(" ")[0].split("\\").join("/");
+    const pm = p.match(/^projects\/([^/:]+)/);
+    if (pm && pm[1] !== active) out.push({ cat: m[1], project: pm[1] });
+  }
+  return out;
+}
+
 // ── 게이트 에러 파싱 → { cat, relPath, whole } ─────────────────
 function parseGateErrors(text) {
   const out = [];
@@ -372,6 +387,7 @@ if (naClearIdx !== -1) {
 const g = spawnSync("node", [join(ROOT, "gates", "run-gates.mjs")], { cwd: ROOT, encoding: "utf-8" });
 const gateOut = (g.stdout ?? "") + "\n" + (g.stderr ?? "");
 const gateErrors = parseGateErrors(gateOut);
+const foreignErrors = parseForeignErrors(gateOut);
 // 위험 표면 예외(⚠)는 게이트를 통과시키지만 여기서 삼키면 아무도 모르게 방벽이 사라진다.
 // run-gates 출력은 이 프로세스가 캡처하므로, 통과했어도 예외 줄만은 그대로 올려보낸다.
 for (const line of gateOut.split("\n")) if (line.startsWith("⚠")) console.log(line);
@@ -571,11 +587,20 @@ function downgradeReason(cat) {
 }
 if (g.status === 2) {
   const byCat = new Map();                                  // 카테고리 → 낮출 사유(없으면 null = 차단)
-  for (const e of gateErrors) if (!byCat.has(e.cat)) byCat.set(e.cat, downgradeReason(e.cat));
+  // 다른 프로젝트의 에러: GATE_KIND 에 있는 카테고리만 낮춘다. 거기 있다는 것은 "그래프가 처방한
+  // 상태에서 비롯된 실패"라는 뜻이고, 그 판정은 **그 프로젝트의** 노드 상태로 해야 하는데 이
+  // 그래프는 활성 프로젝트 것이라 판정할 근거가 없다. 목록에 없는 카테고리(fsd·security·tsc·
+  // test·risk-surface)는 아무 데서나 나는 위반이라 지금처럼 어디서 나든 막는다.
+  for (const e of foreignErrors) {
+    if (byCat.has(e.cat)) continue;
+    byCat.set(e.cat, GATE_KIND[e.cat]
+      ? `${e.project} 의 그래프 상태에서 비롯된 실패다 — 이 그래프의 노드 상태로는 판정할 수 없고, 푸는 것도 그 프로젝트에서 한다`
+      : null);
+  }  
   const blocking = [...byCat].filter(([, why]) => !why).map(([c]) => c);
   const lowered = [...byCat].filter(([, why]) => why);
   // 에러를 하나도 못 파싱했으면 판정할 근거가 없다 → 예전처럼 막는다(모르면 막는 쪽).
-  if (gateErrors.length === 0 || blocking.length > 0) {
+  if ((gateErrors.length === 0 && foreignErrors.length === 0) || blocking.length > 0) {
     for (const [cat, why] of lowered)
       console.error(`⚠ [graph/EXPECTED] ${cat} 은 처방된 상태에서 비롯됐다(${why}). 이번 차단의 이유는 ${blocking.join("·") || "파싱 불가"} 다.`);
     console.error("게이트 실패가 남아 있다 — 새 기능 금지, 위반만 수정 (run-gates 출력 참조).");
