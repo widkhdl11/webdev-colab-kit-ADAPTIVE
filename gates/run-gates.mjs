@@ -778,6 +778,37 @@ if (!QUICK) {
   }
 }
 
+
+// ── 두 벌 동기화: 킷 규칙 문서(CLAUDE.md·스킬)의 Claude 쪽과 Codex 쪽이 어긋났나. (전체 실행 전용)
+//    판정은 scripts/check-mirror-sync.mjs 한 자리에 있다 — 여기서 로직을 베끼지 않고 그것을 돌린다.
+//    베끼면 치환 사전이 늘 때 한쪽만 늘고, 게이트와 검사가 다른 답을 낸다.
+//
+//    **--quick 에 넣지 않는다.** 편집마다 돌면 CLAUDE.md 를 고치는 순간 두 벌이 어긋난 상태가
+//    되고, 그걸 푸는 유일한 길인 AGENTS.md 편집이 같은 게이트에 막힌다 — 게이트가 막으려던
+//    일이 게이트 때문에 일어난다(2026-09-03 에 보류 신고로 같은 함정을 한 번 밟았다).
+//
+//    검사기가 없거나 못 돌면 죽지 않고 ⚠ 로 건너뛴다. 부분 적용 상태가 편집을 막지 않게.
+if (!QUICK) {
+  const mirrorCheck = join(ROOT, "scripts", "check-mirror-sync.mjs");
+  if (!existsSync(mirrorCheck)) {
+    console.error("⚠ [mirror/SKIP] scripts/check-mirror-sync.mjs 가 없다 — 두 벌 동기화 검사를 건너뛴다.");
+  } else {
+    // **--repo-only 로 부른다.** 그냥 부르면 검사기가 자기 프로브까지 돌리는데, 그중 하나가
+    // run-gates 를 부른다 — 게이트→검사→게이트로 서로를 부르며 끝나지 않는다.
+    // --repo-only 는 두 벌 대조만 하고 아무것도 실행하지 않는다.
+    const mr = spawnSync(process.execPath, [mirrorCheck, "--repo-only"], { cwd: ROOT, encoding: "utf-8" });
+    const mout = (mr.stdout ?? "") + "\n" + (mr.stderr ?? "");
+    if (mr.status === null) {
+      console.error("⚠ [mirror/SKIP] 두 벌 동기화 검사가 실행되지 않았다 — 나머지 게이트는 그대로 판정한다.");
+    } else if (mr.status !== 0) {
+      // 검사기가 낸 줄을 그대로 올린다 — 어느 파일 몇 번째 줄인지가 그 줄에 있다.
+      const drift = mout.split("\n").filter((l) => l.trim().startsWith("[mirror/"));
+      if (drift.length) for (const line of drift) errors.push(line.trim());
+      else errors.push("[mirror/DRIFT] 두 벌 동기화 검사가 실패했는데 이유 줄이 없다 — 'node scripts/check-mirror-sync.mjs' 로 직접 본다");
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error(
     `게이트 실패 ${errors.length}건. 새 기능 추가 금지, 아래 위반만 수정:\n` +

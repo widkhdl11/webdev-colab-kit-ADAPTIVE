@@ -29,10 +29,11 @@
 //
 // 사용: node scripts/check-mirror-sync.mjs
 // 프로브는 전부 임시 디렉터리에서 돈다 — 이 레포의 파일은 하나도 건드리지 않는다.
+// (D 도 그렇다. 진짜 AGENTS.md 를 심었다 되돌리게 짰다가 중간에 끊기면 손상이 남는 것을 겪었다)
 // C 항목만 이 레포를 읽는다(읽기만 한다).
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
@@ -241,35 +242,42 @@ const ok = (id, what, pass, note = "") => results.push({ id, what, pass, note })
 //    판정이 맞아도 아무도 안 부르면 손으로 돌릴 때만 도는 검사다 — 수동 도구는 아무도 안 알려준다.
 //    (2026-09-04 교훈: 판정이 옳은가와 그 판정이 불리는가는 다른 질문이다)
 //
-//    **여기만 이 레포의 파일을 건드린다.** AGENTS.md 에 한 줄 심었다 되돌린다.
-//    되돌리기는 finally 에서 하고 바이트 단위로 확인한다. 실패하면 경로와 함께 크게 알린다.
-//    run-gates 전체 실행이 두 번 돌아 15초쯤 걸린다 — 이 검사가 느려진 이유가 이것이다.
+//    **이 레포의 파일을 건드리지 않는다.** 처음에는 진짜 AGENTS.md 에 한 줄 심었다 되돌리게
+//    짰는데, run-gates 가 두 번 도는 15초 동안 창을 닫거나 Ctrl+C 를 누르면 finally 가 안 돌아
+//    그 줄이 그대로 남았다. 그다음 실행은 더럽혀진 파일을 '원본'으로 읽어서 **복원 성공이라고
+//    보고하면서 손상을 보존했다** — 2026-09-04 에 실제로 그렇게 됐고, 붙기 전에도 붙은 뒤에도
+//    4/6 이 나와 패치가 안 붙은 것처럼 보였다.
+//    그래서 게이트를 임시 레포에서 돌린다. run-gates 는 ROOT 를 cwd 로 잡으므로,
+//    cwd 만 픽스처로 주면 그 안의 CLAUDE.md·AGENTS.md·scripts/ 를 본다.
 {
-  const mirrorFile = join(ROOT, "AGENTS.md");
-  const reported = () => {
-    const r = spawnSync(process.execPath, [join(ROOT, "gates", "run-gates.mjs")], { cwd: ROOT, encoding: "utf-8" });
+  const realGate = join(ROOT, "gates", "run-gates.mjs");
+  const selfPath = fileURLToPath(import.meta.url);
+  const dir = fixture();
+  mkdirSync(join(dir, "scripts"), { recursive: true });
+  copyFileSync(selfPath, join(dir, "scripts", "check-mirror-sync.mjs"));
+  // run-gates 는 projects/<이름>/src 가 없으면 '검사 대상 없음'으로 보고 **일찍 끝난다.**
+  // 그러면 두 벌 대조 블록까지 아예 도달하지 않아, 배선이 있어도 없는 것처럼 보인다.
+  // (2026-09-04: 이걸 안 넣어서 D 가 붙은 뒤에도 false 를 냈다)
+  mkdirSync(join(dir, "projects", "probe", "src", "shared"), { recursive: true });
+  writeFileSync(join(dir, "projects", "probe", "src", "shared", "x.ts"), "export const x = 1;\n");
+
+  const runIn = (extra = []) => {
+    const r = spawnSync(process.execPath, [realGate, ...extra], { cwd: dir, encoding: "utf-8" });
     return /\[mirror\/DRIFT\]/.test((r.stdout ?? "") + "\n" + (r.stderr ?? ""));
   };
-  if (!existsSync(mirrorFile)) {
-    ok("D", "게이트 배선  심은 어긋남을 run-gates 가 신고한다", false, "AGENTS.md 가 없다");
-  } else {
-    const before = readFileSync(mirrorFile, "utf-8");
-    let caught = null, clean = null, restored = false;
-    try {
-      writeFileSync(mirrorFile, before + "\n검사가 심은 줄 — 곧 지운다.\n", "utf-8");
-      caught = reported();
-    } catch (e) {
-      caught = `예외: ${e.message}`;
-    } finally {
-      writeFileSync(mirrorFile, before, "utf-8");
-      restored = readFileSync(mirrorFile, "utf-8") === before;
-    }
-    if (!restored) console.error(`✗✗ AGENTS.md 복원 실패 — 손으로 되돌려야 한다: ${mirrorFile}`);
-    clean = reported();
-    ok("D", "게이트 배선  심은 어긋남을 run-gates 가 신고하고, 되돌리면 안 한다",
-       caught === true && clean === false && restored,
-       `심었을 때=${caught} / 되돌린 뒤=${clean} / 복원=${restored}`);
-  }
+  const mirrorPath = join(dir, "AGENTS.md");
+  const pristine = readFileSync(mirrorPath, "utf-8");
+
+  const clean = runIn();                                        // 어긋남 없음 → 신고 없어야
+  writeFileSync(mirrorPath, pristine + "\n미러에만 있는 줄.\n");
+  const caught = runIn();                                       // 어긋남 있음 → 신고해야
+  const quiet = runIn(["--quick"]);                             // 편집 훅 경로에서는 안 돌아야
+  rmSync(dir, { recursive: true, force: true });
+
+  ok("D", "게이트 배선  심은 어긋남을 run-gates 가 신고하고, 없으면·--quick 이면 안 한다",
+     caught === true && clean === false && quiet === false,
+     `현행=${clean} / 심었을 때=${caught} / --quick=${quiet}` +
+       (caught === false ? " — 게이트에 배선이 안 됐다(패치 미적용)" : ""));
 }
 
 let failed = 0;
