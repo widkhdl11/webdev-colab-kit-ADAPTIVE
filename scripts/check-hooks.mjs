@@ -13,7 +13,7 @@
 //
 // 사용: node scripts/check-hooks.mjs   (실패 시 exit 2)
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -193,6 +193,107 @@ if (orphans.length)
   record(caught === true && clean === true,
     "파싱 프로브 — 심은 SyntaxError 를 잡고, 고치면 통과시킨다",
     `깨진 파일=${caught === true ? "잡음" : "못 잡음"} / 멀쩡한 파일=${clean === true ? "통과" : "막힘"}`);
+}
+
+// ── ④ 자동 실행 배선 검사 ──────────────────────────────────────
+// 훅이 막을 줄 알고 등록도 됐고 파싱도 되면, 남는 질문은 하나다 — **이 검사기를 누가 부르나.**
+// 2026-08-16 부터 2026-09-04 까지 답은 "사람이 생각나면"이었다. 그동안 보호가 조용히 깨진 것을
+// 한참 뒤에 발견한 일이 실제로 있었다. `.claude/` 를 편집하면 자동으로 돌게 배선한다.
+{
+  const NEEDED_TOOLS = ["Edit", "Write", "MultiEdit"];
+  const ON_EDIT = "scripts/check-hooks-on-edit.mjs";
+
+  // 판정은 한 자리에 둔다 — 아래 프로브가 이 함수를 그대로 쓴다.
+  // 프로브가 자기 사본을 검사하면 실제로 도는 판정은 아무도 안 밟는다(check-where-it-runs).
+  const wiredTools = (settingsText) => {
+    const cfg = JSON.parse(settingsText);
+    const tools = new Set();
+    for (const entry of cfg.hooks?.PostToolUse ?? [])
+      for (const h of entry.hooks ?? [])
+        if (/check-hooks-on-edit\.mjs/.test(h.command ?? ""))
+          for (const t of (entry.matcher ?? "").split("|").map((s) => s.trim()).filter(Boolean))
+            tools.add(t);
+    return tools;
+  };
+
+  // W1 — 배선이 실제로 있나. 패치 적용 전에는 여기서 실패한다.
+  let have = new Set();
+  try {
+    have = wiredTools(readFileSync(SETTINGS, "utf-8"));
+  } catch (e) {
+    record(false, "자동 실행 배선 — settings.json 을 읽지 못했다", String(e.message).slice(0, 80));
+  }
+  const missing = NEEDED_TOOLS.filter((t) => !have.has(t));
+  record(
+    existsSync(join(ROOT, ON_EDIT)) && missing.length === 0,
+    `자동 실행 배선 — PostToolUse 가 ${ON_EDIT} 를 부른다`,
+    !existsSync(join(ROOT, ON_EDIT))
+      ? `${ON_EDIT} 가 없다`
+      : missing.length === 0
+        ? `[${[...have].join(", ")}]`
+        : `빠진 도구: ${missing.join(", ")} — 그 도구로 .claude/ 를 고치면 검사가 안 돈다`,
+  );
+
+  // W2 — 심은 위반을 잡는가. 배선을 지운 사본으로 같은 판정을 돌린다.
+  // "배선 있음"과 "판정이 아예 안 돌았다"는 겉이 같다.
+  {
+    const wired = { hooks: { PostToolUse: [{ matcher: "Edit|Write|MultiEdit",
+      hooks: [{ type: "command", command: `node ${ON_EDIT}` }] }] } };
+    const stripped = { hooks: { PostToolUse: [{ matcher: "Edit|Write|MultiEdit",
+      hooks: [{ type: "command", command: "node gates/run-gates.mjs --quick" }] }] } };
+    const yes = wiredTools(JSON.stringify(wired));
+    const no = wiredTools(JSON.stringify(stripped));
+    record(
+      NEEDED_TOOLS.every((t) => yes.has(t)) && no.size === 0,
+      "배선 프로브 — 배선을 지운 설정을 실패로 잡고, 붙은 설정은 통과시킨다",
+      `배선 있음=${yes.size}개 도구 / 배선 없음=${no.size}개 도구`,
+    );
+  }
+
+  // W3·W4 는 on-edit 을 실제로 돌리고, on-edit 은 이 검사기를 다시 부른다.
+  // 중첩 실행에서는 건너뛴다 — 안 그러면 서로를 부르며 끝나지 않는다.
+  if (process.env.CHECK_HOOKS_NESTED === "1") {
+    console.log("\nℹ 중첩 실행 — 실행 프로브(W3·W4)는 건너뛴다. 배선 판정 자체는 위에서 돌았다.");
+  } else if (!existsSync(join(ROOT, ON_EDIT))) {
+    record(false, "실행 프로브 — 건너뜀", `${ON_EDIT} 가 없다`);
+  } else {
+    const runOnEdit = (filePath, cwd) => {
+      const r = spawnSync(process.execPath, [join(ROOT, ON_EDIT)], {
+        input: JSON.stringify({ tool_name: "Edit", tool_input: { file_path: filePath } }),
+        encoding: "utf-8",
+        cwd,
+      });
+      return { code: r.status, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
+    };
+
+    // W3 — 경로로 가른다. 프로젝트 소스는 조용히 통과하고, `.claude/` 는 실제로 검사를 돌린다.
+    const outside = runOnEdit(join(ROOT, "projects", "signal2", "src", "app", "page.tsx"), ROOT);
+    const inside = runOnEdit(join(ROOT, ".claude", "rules", "__probe__.md"), ROOT);
+    // 보는 것은 **어디로 갈랐나**지 검사 결과가 아니다. 안쪽 실행의 종료 코드까지 여기서 요구하면
+    // 다른 항목이 실패한 날 이 항목도 같이 빨개져서, 갈라주는 일 자체가 깨졌는지가 안 보인다.
+    record(
+      outside.code === 0 && outside.out.trim() === "" && /check-hooks/.test(inside.out),
+      "실행 프로브 — .claude/ 밖은 조용히 통과, .claude/ 안은 검사를 돌린다",
+      `밖: 코드 ${outside.code}/출력 ${outside.out.trim().length}자 · 안: ${/check-hooks/.test(inside.out) ? `검사 돌았다(코드 ${inside.code})` : "검사 안 돌았다"}`,
+    );
+
+    // W4 — 검사가 실패했을 때 조용히 통과하지 않는가. 임시 레포를 cwd 로 둬서 실패를 만든다.
+    // 실제 파일을 건드렸다 되돌리지 않는다 — 되돌리기가 끊기면 손상이 남는다(2026-09-04).
+    const probeRepo = join(tmpdir(), `check-hooks-onedit-${process.pid}`);
+    let fail = { code: null, out: "" };
+    try {
+      mkdirSync(join(probeRepo, ".claude"), { recursive: true });
+      writeFileSync(join(probeRepo, ".claude", "settings.json"), "{}", "utf-8");
+      fail = runOnEdit(join(probeRepo, ".claude", "settings.json"), probeRepo);
+    } finally {
+      try { rmSync(probeRepo, { recursive: true, force: true }); } catch { /* 지워지면 됐다 */ }
+    }
+    record(
+      fail.code === 2,
+      "실패 전달 프로브 — check-hooks 가 실패하면 on-edit 이 종료 코드 2 로 올린다",
+      fail.code === 2 ? "" : `종료 코드 ${fail.code} — 실패를 삼켰다`,
+    );
+  }
 }
 
 // ── 결과 ──────────────────────────────────────────────────────

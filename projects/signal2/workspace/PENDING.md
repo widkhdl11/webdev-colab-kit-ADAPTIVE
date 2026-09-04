@@ -9,7 +9,13 @@
 
 **이 파일에 항목은 손으로 들어온다.** 게이트는 여기 있는 것을 읽어 신고하고, 종료 조건을 판정한다.
 
-## 열린 항목 (`signal2-20260903-1`)
+## 열린 항목 (`signal2-20260904-1`)
+
+- **P5 · `check-hooks` 자동 실행 배선 패치 적용** — `.claude/settings.json` 이라 사용자가 붙인다.
+  `docs/references/pending-patches/2026-09-04-check-hooks-auto.md`. 고치는 곳은 `PostToolUse` 의
+  `hooks` 배열 한 자리뿐이다. 붙기 전 61/62(exit 2) · 붙은 뒤 62/62(exit 0) 로 판정한다.
+  **아무 노드도 막지 않는다** — 안 붙어도 편집과 턴 종료는 그대로 돌아가고, 손으로 돌리는
+  `check-hooks` 만 빨간불로 남는다.
 
 ## 닫힌 항목
 
