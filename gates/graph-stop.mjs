@@ -518,6 +518,7 @@ noticeCycle(() => {
   if (!cid) return;
   console.error(`⚠ [cycle/CLOSE] 사이클 ${cid} 종료 조건 성립 — ${verdict.reason}.`);
   console.error(`   이 훅은 알리기만 한다. 리포트(workspace/reports/CYCLE_REPORT.${cid}.md) 발행과 CYCLE.md 의 줄 이동은 사이클 마감 절차가 한다.`);
+});
 
 const rw = reworkList(state);
 if (rw.length) console.log(`  ↳ rework(통과했다가 취소됨): ${rw.join(", ")}`);
