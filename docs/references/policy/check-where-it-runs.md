@@ -2,7 +2,7 @@
 id: check-where-it-runs
 scope: [harness]
 status: provisional
-last_applied: signal2-20260903-2
+last_applied: signal2-20260903-2, signal2-20260904-1
 ---
 
 검사를 짤 때 **그 코드가 실제로 불리는 자리**를 먼저 세고, 그 자리마다 한 번씩 돌려 본다.

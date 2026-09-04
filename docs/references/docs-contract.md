@@ -194,9 +194,9 @@ status: approved
 ```yaml
 ---
 id: <파일명과 같은 식별자>
-scope: [ui, data-model, api, copy 중 해당하는 것만]
+scope: [ui, data-model, api, copy, harness 중 해당하는 것만]
 status: confirmed | provisional
-last_applied: <cycle-id 또는 비움>
+last_applied: <cycle-id, 쉼표로 나열 · 비워도 된다>
 ---
 ```
 
@@ -205,7 +205,7 @@ last_applied: <cycle-id 또는 비움>
 | `id` | 예 | 규칙 식별자. 결정 로그가 이 값으로 규칙을 가리킨다 |
 | `scope` | 예 | 이 규칙이 근거가 되는 영역 |
 | `status` | 예 | 이 규칙이 지금 유효한가 |
-| `last_applied` | 예 | 마지막으로 근거로 쓴 사이클. 위생 판정(오래 안 쓰인 규칙)에 쓴다 |
+| `last_applied` | 예 | 근거로 쓴 사이클 **전부**. 쉼표로 나열한다 — 사이클마다 로그가 따로 남고, 그 로그가 인용한 규칙이 목록에 없으면 게이트가 실패한다(`[cycle/LAST_APPLIED]`). 위생 판정(오래 안 쓰인 규칙)에 쓴다 |
 
 **본문은 파싱하지 않는다.** 읽는 쪽에 통째로 넘어간다. 본문에서 값을 긁어내는 규약을
 추가하지 않는다 — 5절이 `DECISIONS.md` 에서 접은 것과 같은 이유다.

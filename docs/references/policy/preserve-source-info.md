@@ -2,7 +2,7 @@
 id: preserve-source-info
 scope: [data-model]
 status: confirmed
-last_applied: signal2-20260903-2
+last_applied: signal2-20260903-2, signal2-20260904-1
 ---
 
 파일이나 외부에서 들어온 것을 다룰 때, **원본이 들고 온 정보를 버리지 않는 쪽**을 기본값으로 한다.
