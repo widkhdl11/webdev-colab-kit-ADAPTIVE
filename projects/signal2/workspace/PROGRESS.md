@@ -4,9 +4,9 @@
 
 - **오늘의 목표**: v3.3 을 검증하고 어긋난 데를 고친다 → **검증 완료 · 수정은 보호 파일 패치만 남음**. 제품 코드는 안 건드렸다
 - **완료**: 검사 8종을 직접 돌려 숫자 전부 확인(PROGRESS 기록과 일치) → 규약↔코드 어긋남 **7건** 발견 → 사용자 결정 셋을 받아 전부 처리. ① 승격 판정·종료 판정을 `gates/lib/cycle-policy.mjs` 로 빼고 게이트·훅·검사가 같은 자리를 부르게 함(검사가 자기 사본을 검사하던 상태를 끝냄) ② 보류 상한 `PENDING_CAP=5` 를 lib 한 자리에 두고 훅 종료 판정에 조건 추가 ③ 훅은 "알리기만" 하도록 이름·문구 정정 ④ 계약 7절에 중복 키 등재 + 어휘 대조 검사(I) 신설 ⑤ `last_applied` 기록 경로를 게이트로 강제(값 3건 쌓임) ⑥ `scope` 어휘에 `harness` 추가 + 로그 16줄·후보 4건 재라벨 ⑦ P4 를 닫힌 항목으로 이동. 신설 검사 `check-cycle-policy`(13항목, 게이트·훅 배선까지 실제로 밟음). **승격 루프가 처음으로 끝까지 돌아 `check-where-it-runs` 가 provisional 로 승격됐다**
-- **멈춘 지점**: 자리를 옮기느라 멈췄다. **보호 파일 패치 4개가 미적용**이다 — `docs/references/pending-patches/2026-09-03-v3.3-verify-cycle-policy.md`. 패치 코드는 `gates/` 사본에 붙여 이 레포로 돌려 봤고(승격 신고·상한 발동 양방향 확인), 적용 자체만 남았다. 브랜치 `v3.3-decision-layer`, 태그 안 붙임·main 미병합. 사이클이 둘 열려 있다(`signal2-20260903-1`·`-2`)
-- **다음 할 일**: **패치를 ②→①→③④ 순서로 적용하고 `node scripts/check-read-policy.mjs`(8/10→10/10)·`node scripts/check-cycle-policy.mjs`(10/13→13/13)로 확인한 뒤, 전 검사 통과 상태를 커밋하고 v3.3 태그를 붙인다.** 그다음 회고(P2 강등 후보·LESSONS 반영). 제품 작업(상세 화면 원문 본문 타이포)은 그다음이다
-- **대기 중인 결정**: ① CLAUDE.md 가 198→206줄 — 총량 동결 규칙상 같은 분량의 강등 후보를 함께 내야 하는데 아직 안 냈다(보류 P2) ② v3.3 태그를 어느 커밋에 붙일지 ③ `feed.tsx` 의 건수 표시 셋이 `keywords-and-kinds.md` INV-N5 와 반대 방향인데 코드를 뺄지 스펙에 예외를 적을지
+- **멈춘 지점**: 자리를 옮기느라 멈췄다. **보호 파일 패치 4개가 미적용**이다 — [패치 문서](../../../docs/references/pending-patches/2026-09-03-v3.3-verify-cycle-policy.md). 패치 코드는 `gates/` 사본에 붙여 이 레포로 돌려 봤고(승격 신고·상한 발동 양방향 확인), 적용 자체만 남았다. 브랜치 `v3.3-decision-layer`, 태그 안 붙임·main 미병합. 사이클이 둘 열려 있다([CYCLE.md](CYCLE.md) — `signal2-20260903-1`·`-2`)
+- **다음 할 일**: **보호 파일 패치를 ②→①→③④ 순서로 적용한다** — [패치 문서](../../../docs/references/pending-patches/2026-09-03-v3.3-verify-cycle-policy.md). 붙었는지는 [check-read-policy](../../../scripts/check-read-policy.mjs)(8/10→10/10)와 [check-cycle-policy](../../../scripts/check-cycle-policy.mjs)(10/13→13/13)로 판정한다. 통과하면 그 상태를 커밋하고 v3.3 태그를 붙인다. 그다음 회고(P2 강등 후보·LESSONS 반영). 제품 작업(상세 화면 원문 본문 타이포)은 그다음이다
+- **대기 중인 결정**:  ① CLAUDE.md 가 198→206줄 — 총량 동결 규칙상 같은 분량의 강등 후보를 함께 내야 하는데 아직 안 냈다(보류 P2) ② v3.3 태그를 어느 커밋에 붙일지 ③ `feed.tsx` 의 건수 표시 셋이 `keywords-and-kinds.md` INV-N5 와 반대 방향인데 코드를 뺄지 스펙에 예외를 적을지
 
 ## 로그
 
