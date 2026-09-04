@@ -27,7 +27,18 @@ function walk(dir) {
   return out;
 }
 
+// INV id 는 스펙 파일 안에서만 고유하다. 프로젝트가 둘 이상이면 다른 프로젝트가 같은 id
+// (INV-A1 등)를 쓰는 것이 정상이라, 테스트를 전부 한 덩어리로 합쳐 이름만 찾으면 **남의
+// 프로젝트 테스트가 내 불변식을 덮는다.** 2026-09-04 에 실제로 그랬다 — 새 프로젝트의 승인된
+// 스펙 불변식 넷이 테스트 0개인 채로 다른 프로젝트의 동명 테스트에 덮여 통과했다.
+// 그래서 키에 프로젝트를 붙이고, 테스트 본문도 프로젝트별로 나눠 본다.
+const projectOf = (p) => {
+  const m = relative(ROOT, p).split("\\").join("/").match(/^projects\/([^/]+)\//);
+  return m ? m[1] : "";
+};
+const KEY = (proj, inv) => `${proj}\u0000${inv}`;
 const invToSpec = new Map();
+
 for (const f of specDirs.flatMap(walk).filter((f) => f.endsWith(".md"))) {
   const src = readFileSync(f, "utf-8");
   // status 는 frontmatter 의 구조화된 필드다 — 줄 시작 앵커로 값만 본다.
@@ -36,8 +47,8 @@ for (const f of specDirs.flatMap(walk).filter((f) => f.endsWith(".md"))) {
   const spec = readSpec(f);
   for (const p of spec.problems) console.error(`⚠ [spec/VOCAB] ${relative(ROOT, f)} — ${p}`);
   if (spec.status !== "approved") continue;
-  for (const m of src.matchAll(/^[ \t]*-[ \t]+(INV-[A-Z0-9]+)[ \t]*:/gm)) invToSpec.set(m[1], relative(ROOT, f));
-  }
+  for (const m of src.matchAll(/^[ \t]*-[ \t]+(INV-[A-Z0-9]+)[ \t]*:/gm)) invToSpec.set(KEY(projectOf(f), m[1]), relative(ROOT, f)); 
+}
 if (invToSpec.size === 0) process.exit(0);
 
 // 테스트 탐색 루트: projects/<이름>/src 와 projects/<이름>/tests
@@ -58,12 +69,19 @@ const testFiles = testRoots
 // 조용히 면제한 적이 있다(2026-08-09 INV-C5). 걷어내고 센다. (retro 2026-08-10)
 const stripComments = (s) =>
   s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
-const testText = testFiles.map((f) => stripComments(readFileSync(f, "utf-8"))).join("\n");
+const textByProject = new Map();
+for (const f of testFiles) {
+  const k = projectOf(f);
+  textByProject.set(k, (textByProject.get(k) ?? "") + "\n" + stripComments(readFileSync(f, "utf-8")));
+}
 
-const missing = [...invToSpec.entries()].filter(([inv]) => !testText.includes(inv));
+const missing = [...invToSpec.entries()].filter(([key]) => {
+  const [proj, inv] = key.split("\u0000");
+  return !(textByProject.get(proj) ?? "").includes(inv);
+});
 if (missing.length > 0) {
-  for (const [inv, spec] of missing)
-    console.error(`[spec-coverage/MISSING_TEST] ${spec} — ${inv}를 검증하는 테스트가 없다. 구현 전에 테스트부터 (rules/tdd.md)`);
+  for (const [key, spec] of missing)
+    console.error(`[spec-coverage/MISSING_TEST] ${spec} — ${key.split("\u0000")[1]}를 검증하는 테스트가 없다. 구현 전에 테스트부터 (rules/tdd.md)`);
   process.exit(2);
 }
 process.exit(0);
