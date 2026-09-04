@@ -212,9 +212,15 @@ ok("G", "중복         같은 사이클이 두 번 적혀도 1회로 센다",
       }
     }
   }
-  ok("I", `현행         후보 ${items.length}건(미처리 ${pend.mustHandle.length}) · 로그 인용 ${citedTotal}건이 규칙 파일과 맞는다`,
-     items.length > 0 && pend.mustHandle.length === 0 && missing.length === 0,
-     missing.join(" / ") || "후보 대장을 못 읽었거나 미처리가 남아 있다");
+  // 후보 0건은 두 가지일 수 있다 — 대장을 못 읽었거나, 아직 아무 판단도 안 쌓인 새 프로젝트거나.
+  // 파서가 도는지는 S2·D·F·G 가 픽스처로 이미 본다. 그래서 여기서는 **0건을 실패로 세지 않고**
+  // 대조를 건너뛰었다고 말한다. 0건을 실패로 두면 새 프로젝트를 열 때마다 이 검사가 빨간불이
+  // 되고, 빨간불이 상수가 되면 아무도 안 본다 (2026-09-04: study-mate 를 열자마자 그렇게 됐다).
+  const nothingToCompare = items.length === 0 && citedTotal === 0;
+  ok("I", `현행         후보 ${items.length}건(미처리 ${pend.mustHandle.length}) · 로그 인용 ${citedTotal}건이 규칙 파일과 맞는다` +
+       (nothingToCompare ? `  ('${active}' 는 아직 쌓인 판단이 없다 — 대조는 건너뛰고 픽스처 항목이 파서를 본다)` : ""),
+     pend.mustHandle.length === 0 && missing.length === 0,
+     missing.join(" / ") || "미처리 후보가 남아 있다");
 }
 
 // ── J: 판정 동등 (lib vs 사본)

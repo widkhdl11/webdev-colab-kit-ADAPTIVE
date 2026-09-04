@@ -31,7 +31,8 @@
 // 프로브는 전부 임시 디렉터리에서 돈다 — 이 레포의 파일은 하나도 건드리지 않는다.
 // (심었다 되돌리는 방식은 중간에 끊기면 더럽혀진 파일이 원본으로 읽힌다)
 //
-// 사용: node scripts/check-intake.mjs [slug]
+// 사용: node scripts/check-intake.mjs [slug] [--built]
+//       --built 는 "이 프로젝트는 이미 짓기 시작했다"는 선언이다(I5 의 방향이 뒤집힌다).
 
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
@@ -40,6 +41,8 @@ import { tmpdir } from "node:os";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const slug = process.argv.slice(2).find((a) => !a.startsWith("--"));
+// --built: 이 프로젝트는 들여오기가 끝나고 이미 짓기 시작했다. I5 의 방향이 뒤집힌다.
+const BUILT = process.argv.includes("--built");
 
 const REQUIRED_DOCS = ["PRODUCT.md", "design/design-rules.md", "DECISIONS.md", "BACKLOG.md"];
 const REQUIRED_WORKSPACE = [
@@ -252,8 +255,17 @@ if (slug) {
   ok("I4", "docs 에 소스·하네스 경로 참조 0건", r.pathRefs.length === 0,
     r.pathRefs.length ? `${r.pathRefs.length}건:\n     ${r.pathRefs.join("\n     ")}` : "");
 
-  ok("I5", "src/ 부재 (v1 경계 — 코드는 옮기지 않는다)", r.hasSrc === false,
-    r.hasSrc ? `projects/${slug}/src 가 있다 — 게이트가 이 프로젝트 트리 전체를 매번 보게 된다` : "");
+  // 들여오기 직후에는 src/ 가 없어야 한다. 그 뒤 그 프로젝트를 짓기 시작하면 src/ 가 생기는 것이
+  // 정상이라, 그때는 이 항목이 영구 빨간불이 된다 — 빨간불이 상수가 되면 아무도 안 본다.
+  // 그래서 국면을 인자로 받는다. 기계가 알아서 판정하지 않는 이유는, 판정할 신호가 프로젝트
+  // 문서에 있어야 하는데 그 폴더는 하네스를 몰라야 하기 때문이다.
+  if (BUILT)
+    ok("I5", `src/ 존재 (들여오기 이후 — 짓는 중이라 정상)`, true,
+      r.hasSrc ? "" : "아직 골격이 없다. 들여오기 직후 상태라면 --built 없이 돌려라");
+  else
+    ok("I5", "src/ 부재 (v1 경계 — 코드는 옮기지 않는다)", r.hasSrc === false,
+      r.hasSrc ? `projects/${slug}/src 가 있다 — 게이트가 이 프로젝트 트리 전체를 매번 보게 된다. ` +
+        `이 프로젝트를 이미 짓기 시작했다면 --built 를 붙여 돌린다` : "");
 
   ok("I6", "필수 산출물 (docs 4종 · workspace 5종)", r.missing.length === 0,
     r.missing.length ? `없음: ${r.missing.join(", ")}` : "");
