@@ -23,6 +23,9 @@
 // **S1 과 S2 가 각도가 다른 두 그물이다.** S1 은 "셀 것을 제대로 세나", S2 는 "세고도
 // 멈춰야 할 때 멈추나". S1 만 있으면 시각 정체성이 2회 쌓였을 때 조용히 규칙이 된다.
 //
+// 승격 **판정을 실제로 부르는 자리**는 gates/lib/cycle-policy.mjs 이고 그쪽은
+// scripts/check-cycle-policy.mjs 가 본다. 이 검사는 판정의 모양(어휘·구역·중복·형식)을 본다.
+//
 // 사용: node scripts/check-promotion.mjs
 // 파일을 만들지 않는다 — 전부 문자열로 돌린다. F 만 이 레포를 읽는다(읽기만 한다).
 
@@ -32,8 +35,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-// 정책 규칙과 같은 어휘. 정본은 docs/references/docs-contract.md 7절.
-const POLICY_SCOPES = ["ui", "data-model", "api", "copy"];
+// 정책 규칙과 같은 어휘. 정본은 docs/references/docs-contract.md 7절이고,
+// 코드에서 그 어휘를 들고 있는 자리는 gates/lib/read-policy.mjs 하나다.
+// **여기 베껴 두지 않는다** — 베끼면 어휘가 늘 때 이 검사만 옛 어휘로 판정한다
+// (2026-09-03: `harness` 를 등재했을 때 실제로 이 자리가 뒤처졌다).
+const { POLICY_SCOPES } = await import(new URL("../gates/lib/read-policy.mjs", import.meta.url));
 const PROMOTE_AT = 2;   // 1회짜리는 승격하지 않는다 — 우연일 수 있다.
 
 /**

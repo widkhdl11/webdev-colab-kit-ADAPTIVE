@@ -1,8 +1,8 @@
 ---
 id: open-for-extension
-scope: [data-model, api]
+scope: [data-model, api, harness]
 status: confirmed
-last_applied:
+last_applied: signal2-20260903-1
 ---
 
 트레이드오프가 크지 않으면, 당장 단순한 선택보다 **나중에 넓힐 수 있는 선택**을 한다.

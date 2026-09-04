@@ -42,16 +42,18 @@ const LIB = join(ROOT, "gates", "lib", "read-policy.mjs");
 
 // ── 판정 기준. docs-contract.md 7절과 같은 값이어야 한다.
 const POLICY_STATUS = ["confirmed", "provisional"];
-const POLICY_SCOPES = ["ui", "data-model", "api", "copy"];
+const POLICY_SCOPES = ["ui", "data-model", "api", "copy", "harness"];
 
 // ── 신 파서: 붙었으면 그걸 쓰고, 없으면 같은 로직의 사본을 쓴다.
 //    사본이 있어야 패치가 붙기 전에도 B~H 를 돌릴 수 있다(A 만 실패한다).
 let readPolicyText;
+let libScopes = null;          // lib 이 실제로 들고 있는 어휘. I 가 계약 문서와 이것을 대조한다.
 let libApplied = false;
 if (existsSync(LIB)) {
   try {
     const mod = await import(new URL("../gates/lib/read-policy.mjs", import.meta.url));
     readPolicyText = mod.readPolicyText;
+    libScopes = mod.POLICY_SCOPES ?? null;
     libApplied = typeof readPolicyText === "function";
   } catch { /* 사본으로 떨어진다 */ }
 }
@@ -210,6 +212,28 @@ ok("A", "lib 존재     gates/lib/read-policy.mjs 가 import 된다", libApplied
     }
   }
   ok("H", `현행         이 레포의 규칙 파일 ${n}개가 전부 읽힌다`, bad.length === 0, bad.join(" / "));
+}
+
+// ── I: 계약 문서와 코드의 scope 어휘가 같은가.
+//    어휘는 세 자리에 산다 — 계약 문서 7절, gates/lib/read-policy.mjs, 이 검사의 사본.
+//    셋이 갈라지면 "등재는 했는데 코드는 모르는 값"이 조용히 생기고, 그 값을 쓴 규칙은
+//    버려진다(버려지면 그 scope 의 결정이 사람에게 올라간다 — 아무도 이유를 모른 채).
+{
+  const doc = readFileSync(join(ROOT, "docs", "references", "docs-contract.md"), "utf-8").split("\r\n").join("\n");
+  const sec = doc.split("### `scope` 어휘")[1] ?? "";
+  const listed = [];
+  for (const line of sec.split("\n")) {
+    if (/^###?\s/.test(line)) break;                       // 다음 절에서 멈춘다
+    const m = line.match(/^\|\s*`([a-z-]+)`\s*\|/);
+    if (m) listed.push(m[1]);
+  }
+  // **사본이 아니라 lib 이 실제로 들고 있는 어휘와 대조한다.** 사본과 비교하면 lib 이
+  // 옛 어휘를 들고 있어도 초록불이 뜬다 — 그러면 이 항목이 지키려는 것을 못 지킨다.
+  const code = libScopes ?? POLICY_SCOPES;
+  const same = listed.length > 0 &&
+    listed.length === code.length && listed.every((v) => code.includes(v));
+  ok("I", `어휘 대조    계약 문서 7절과 ${libScopes ? "lib" : "사본"}의 scope 목록이 같다 (${listed.join("·") || "표를 못 읽음"})`,
+     same, `문서=[${listed}] 코드=[${code}]`);
 }
 
 let failed = 0;
