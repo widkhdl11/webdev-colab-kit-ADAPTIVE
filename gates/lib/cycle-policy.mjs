@@ -1,0 +1,110 @@
+// 결정층(사이클)의 판정이 사는 한 자리. 게이트·Stop 훅·검사 스크립트가 전부 여기서 읽는다.
+//
+// 왜 lib 로 빼나: v3.3 을 만들 때 승격 판정과 종료 판정이 검사 스크립트 안에만 있었다.
+// 그러면 검사가 자기 사본을 검사한다 — 실제로 도는 코드는 아무도 안 밟는다.
+// (승격 후보 대장의 "검사는 그 코드가 실제로 도는 자리에서 돌려 본다")
+//
+// **파일을 읽지 않는다. 문자열을 받고 판정을 돌려준다.** 픽스처로 프로브하기 위해서다.
+// **쓰지 않는다.** 승격도 사이클 마감도 판단이 필요한 쓰기라 사람과 에이전트가 한다 —
+// 여기서 하는 일은 "처리 안 된 것이 남아 있다"를 신고하는 데까지다.
+
+import { POLICY_SCOPES } from "./read-policy.mjs";
+
+// 열린 보류 항목 수의 상한. 닿으면 사이클을 조기 종료한다.
+// 숫자가 문서 산문에도 적혀 있으면 두 자리가 조용히 어긋난다 — 값은 여기 하나뿐이다.
+export const PENDING_CAP = 5;
+
+// 같은 유형이 몇 번 쌓이면 규칙이 되는가. 1회짜리는 우연일 수 있어 승격하지 않는다.
+export const PROMOTE_AT = 2;
+
+/**
+ * 사이클을 닫을 때인가.
+ *   frontier   지금 작업할 노드 목록
+ *   blocked    보류 항목이 막는 노드 (Set 또는 배열)
+ *   openCount  열린 보류 항목 수
+ * 반환 { close, reason }
+ */
+export function closeVerdict({ frontier = [], blocked = new Set(), openCount = 0 } = {}) {
+  const b = blocked instanceof Set ? blocked : new Set(blocked);
+  // 조건 1 — 프론티어의 모든 노드가 보류에 막혔다.
+  // 프론티어가 비면 여기서 닫지 않는다: 그건 그래프 종단(조건 2)이고 판정하는 자리가 다르다.
+  if (frontier.length > 0 && frontier.every((n) => b.has(n)))
+    return { close: true, reason: `조건 1 — 프론티어(${frontier.join(", ")})가 전부 보류에 막혔다` };
+  // 조건 1' — 보류가 상한에 닿았다. 그쯤 되면 남은 작업 대부분이 곧 보류에 걸리고,
+  // 리포트의 보류 목록이 한 화면을 넘으면 비동기 검토가 다시 병목이 된다.
+  if (openCount >= PENDING_CAP)
+    return { close: true, reason: `조건 1' — 열린 보류가 상한에 닿았다(${openCount}/${PENDING_CAP})` };
+  return { close: false, reason: null };
+}
+
+/**
+ * 승격 후보 대장 읽기. `## 후보` 아래의 항목만 세고, 줄 맨 앞의 scope/seen/no-auto 만 읽는다.
+ * 나머지 본문은 파싱하지 않는다.
+ */
+export function readCandidatesText(src) {
+  const items = [];
+  let inSection = false, cur = null;
+  const flush = () => { if (cur) items.push(cur); cur = null; };
+  for (const raw of String(src).replace(/\r\n/g, "\n").split("\n")) {
+    const h = raw.match(/^##\s+(.*)$/);
+    if (h) { flush(); inSection = h[1].trim() === "후보"; continue; }
+    if (!inSection) continue;
+    const t = raw.match(/^-\s+\*\*(.+?)\*\*/);
+    if (t) { flush(); cur = { title: t[1].trim(), scope: [], badScope: [], seen: [], noAuto: null }; continue; }
+    if (!cur) continue;
+    const sc = raw.match(/^[ \t]*scope:[ \t]*(.*)$/);
+    if (sc) {
+      for (const v of sc[1].replace(/^\[|\]$/g, "").split(",").map((x) => x.trim()).filter(Boolean))
+        (POLICY_SCOPES.includes(v) ? cur.scope : cur.badScope).push(v);
+      continue;
+    }
+    const se = raw.match(/^[ \t]*seen:[ \t]*(.*)$/);
+    if (se) {
+      // 횟수는 세지 않고 사이클 이름을 모은다. 같은 사이클이 두 번 적혀도 1회다.
+      for (const v of se[1].split(",").map((x) => x.trim()).filter(Boolean))
+        if (!cur.seen.includes(v)) cur.seen.push(v);
+      continue;
+    }
+    const na = raw.match(/^[ \t]*no-auto:[ \t]*(.*)$/);
+    if (na) { cur.noAuto = na[1].trim() || "(사유 없음)"; continue; }
+  }
+  flush();
+  return { items };
+}
+
+/**
+ * 처리되지 않은 채 대장에 남은 항목.
+ *   mustHandle  승격 조건을 다 갖췄다 — 규칙으로 올리거나 no-auto 사유를 달아야 한다
+ *   unreadable  2회 이상인데 scope 를 못 읽어 승격할 수 없다 — 신고만 하고 실패시키지 않는다
+ *
+ * 실패 방향은 승격하지 않는 쪽이다(잘못 승격된 규칙은 그 뒤 모든 결정의 근거가 되고,
+ * 승격이 한 사이클 늦는 것은 그냥 한 사이클 늦는 것이다). 그래서 이 함수는 승격하지 않는다.
+ */
+export function promotionPending(items) {
+  const mustHandle = [], unreadable = [];
+  for (const it of items) {
+    if (it.seen.length < PROMOTE_AT) continue;   // 1회짜리 — 대장에 그대로 둔다
+    if (it.noAuto) continue;                     // 사유가 달렸다 — 처리된 것이다
+    if (it.scope.length === 0) unreadable.push(it);
+    else mustHandle.push(it);
+  }
+  return { mustHandle, unreadable };
+}
+
+/**
+ * 결정 로그의 `근거` 열에서 규칙 id 를 걷는다(표의 마지막 열).
+ * `NEW`(커버 규칙 없음)와 `HUMAN`(사람 개입)은 규칙이 아니다.
+ */
+export function readLogCitations(src) {
+  const ids = new Set();
+  for (const raw of String(src).replace(/\r\n/g, "\n").split("\n")) {
+    if (!raw.startsWith("|")) continue;
+    const cells = raw.split("|").slice(1, -1).map((c) => c.trim());
+    if (cells.length < 2) continue;
+    const last = cells[cells.length - 1].split("`").join("").trim();
+    if (!last || last === "NEW" || last === "HUMAN" || last === "근거") continue;
+    for (const v of last.split(",").map((x) => x.trim()).filter(Boolean))
+      if (/^[a-z0-9][a-z0-9-]*$/.test(v)) ids.add(v);
+  }
+  return ids;
+}

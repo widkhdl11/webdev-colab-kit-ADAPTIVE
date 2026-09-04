@@ -670,6 +670,145 @@ for (const [label, entries] of detectedByProject) {
   console.log(`ℹ [risk-surface/AT] ${label} — ${entries.map(([s, at]) => `${s}@${at}`).join(", ")}`);
 }
 
+
+// ── 보류 항목: `## 열린 항목` 아래의 것을 게이트 실패로 낸다.
+//    실행을 막지 않는 것은 graph-stop 이 GATE_KIND 로 낮춰서 하는 일이고, 여기서는 신고만 한다.
+//    **graph.mjs 가 먼저 붙어 있어야 한다** — 목록에 없는 카테고리는 무조건 차단이기 때문이다.
+//    읽는 것은 줄 맨 앞 `blocks:` 하나뿐이고 나머지 본문은 파싱하지 않는다.
+//
+//    **projectDirs 를 쓰지 않는다.** 그 목록은 `src/` 가 있는 폴더만 세는데, 킥오프만 끝나고
+//    코드가 아직 없는 프로젝트에도 보류 항목은 생긴다. 그때 조용히 건너뛰면 보류가 있는데
+//    게이트에는 안 보이는 상태가 된다(dry run 에서 실제로 그랬다).
+if (!QUICK) {
+  const pendingRoot = join(ROOT, "projects");
+  const pendingDirs = existsSync(pendingRoot)
+    ? readdirSync(pendingRoot).map((n) => join(pendingRoot, n)).filter((p) => existsSync(join(p, "workspace", "PENDING.md")))
+    : [];
+  for (const projDir of pendingDirs) {
+    const pendingFile = join(projDir, "workspace", "PENDING.md");
+    const pendingLabel = relative(ROOT, projDir).split("\\").join("/");
+    const openItems = [];
+    let inOpen = false, item = null;
+    const flushItem = () => { if (item) openItems.push(item); item = null; };
+    for (const raw of readFileSync(pendingFile, "utf-8").replace(/\r\n/g, "\n").split("\n")) {
+      const head = raw.match(/^##\s+(.*)$/);
+      if (head) { flushItem(); inOpen = /열린/.test(head[1]); continue; }
+      if (!inOpen) continue;
+      const title = raw.match(/^-\s+\*\*(.+?)\*\*/);
+      if (title) { flushItem(); item = { title: title[1].trim(), blocks: [] }; continue; }
+      const blk = raw.match(/^[ \t]*blocks:[ \t]*(.*)$/);
+      if (blk && item) item.blocks.push(...blk[1].split(",").map((x) => x.trim()).filter(Boolean));
+    }
+    flushItem();
+    for (const it of openItems)
+      errors.push(
+        `[pending/BLOCKED] ${pendingLabel}/workspace/PENDING.md — ${it.title}` +
+          (it.blocks.length ? ` (막는 노드: ${it.blocks.join("·")})` : " (막는 노드 없음)"),
+      );
+  }
+}
+
+// ── 결정층: 승격 미처리 · last_applied 미기록 (전체 실행 전용)
+//    이 게이트는 쓰지 않는다 — 승격도 사이클 마감도 판단이 필요한 쓰기라 사람과 에이전트가 한다.
+//    여기서 하는 일은 "처리 안 된 것이 대장에 남아 있다"를 신고하는 데까지다.
+//
+//    **lib 이 없거나 던져도 게이트가 죽지 않는다.** 부분 적용 상태에서 여기가 죽으면
+//    편집도 턴 종료도 막힌다(2026-09-03 P3 에서 실제로 세션이 갇혔다). 건너뛴 것은 ⚠ 로
+//    남기고, 붙었는지 여부는 scripts/check-cycle-policy.mjs 가 판정한다.
+if (!QUICK) {
+  let cyclePolicy = null;
+  try { cyclePolicy = await import("./lib/cycle-policy.mjs"); } catch { /* 미적용 */ }
+  if (!cyclePolicy) {
+    console.error("⚠ [cycle/SKIP] gates/lib/cycle-policy.mjs 가 없다 — 승격 미처리·last_applied 검사를 건너뛴다.");
+  } else {
+    try {
+      const cycleRoot = join(ROOT, "projects");
+      const cycleDirs = existsSync(cycleRoot)
+        ? readdirSync(cycleRoot).map((n) => join(cycleRoot, n)).filter((p) => existsSync(join(p, "workspace")))
+        : [];
+      for (const projDir of cycleDirs) {
+        const label = relative(ROOT, projDir).split("\\").join("/");
+
+        // ① 승격 미처리 — 2회 이상 쌓였는데 규칙도 안 되고 no-auto 사유도 없는 항목.
+        const ledger = join(projDir, "workspace", "DECISION_CANDIDATES.md");
+        if (existsSync(ledger)) {
+          const { items } = cyclePolicy.readCandidatesText(readFileSync(ledger, "utf-8"));
+          const { mustHandle, unreadable } = cyclePolicy.promotionPending(items);
+          for (const it of mustHandle)
+            errors.push(
+              `[promotion/UNPROCESSED] ${label}/workspace/DECISION_CANDIDATES.md — '${it.title}' 이 ` +
+                `${it.seen.length}개 사이클(${it.seen.join(", ")})에서 나왔는데 처리가 안 됐다. ` +
+                `규칙으로 올리고 대장에서 빼거나, no-auto 에 사유를 적어라`,
+            );
+          // 어휘를 못 읽는 항목은 승격 자체가 불가능하다 — 실패시키지 않고 알린다.
+          // (실패 방향은 언제나 승격하지 않는 쪽이다)
+          for (const it of unreadable)
+            console.error(
+              `⚠ [promotion/UNREADABLE] ${label}/workspace/DECISION_CANDIDATES.md — '${it.title}' 은 ` +
+                `${it.seen.length}회인데 scope 를 못 읽어(${it.badScope.join(", ") || "값 없음"}) 승격 대상이 못 된다.`,
+            );
+        }
+
+        // ② last_applied 미기록 — 로그가 근거로 인용한 규칙 파일에 그 사이클이 안 적혀 있다.
+        //    위생 판정(오래 안 쓰인 규칙 걷어내기)은 이 값이 실제로 쌓여야 만들 수 있다.
+        const logDir = join(projDir, "workspace", "logs");
+        if (existsSync(logDir)) {
+          for (const lf of readdirSync(logDir).filter((n) => /^DECISION_LOG\..+\.md$/.test(n))) {
+            const cid = lf.replace(/^DECISION_LOG\./, "").replace(/\.md$/, "");
+            for (const id of cyclePolicy.readLogCitations(readFileSync(join(logDir, lf), "utf-8"))) {
+              const found = [join(projDir, "docs", "policy", `${id}.md`), join(ROOT, "docs", "references", "policy", `${id}.md`)]
+                .find((p) => existsSync(p));
+              if (!found) {
+                errors.push(`[cycle/LAST_APPLIED] ${label}/workspace/logs/${lf} — 근거로 적힌 규칙 '${id}' 의 파일이 없다`);
+                continue;
+              }
+              const cur = (readFileSync(found, "utf-8").match(/^last_applied:[ \t]*(.*)$/m)?.[1] ?? "").trim();
+              if (!cur.split(",").map((x) => x.trim()).includes(cid))
+                errors.push(
+                  `[cycle/LAST_APPLIED] ${relative(ROOT, found).split("\\").join("/")} — ` +
+                    `${lf} 가 이 규칙을 근거로 썼는데 last_applied 에 '${cid}' 가 없다(현재: ${cur || "비어 있음"})`,
+                );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error(`⚠ [cycle/SKIP] 결정층 검사가 던졌다 — ${e.message}. 나머지 게이트는 그대로 판정한다.`);
+    }
+  }
+}
+
+
+// ── 두 벌 동기화: 킷 규칙 문서(CLAUDE.md·스킬)의 Claude 쪽과 Codex 쪽이 어긋났나. (전체 실행 전용)
+//    판정은 scripts/check-mirror-sync.mjs 한 자리에 있다 — 여기서 로직을 베끼지 않고 그것을 돌린다.
+//    베끼면 치환 사전이 늘 때 한쪽만 늘고, 게이트와 검사가 다른 답을 낸다.
+//
+//    **--quick 에 넣지 않는다.** 편집마다 돌면 CLAUDE.md 를 고치는 순간 두 벌이 어긋난 상태가
+//    되고, 그걸 푸는 유일한 길인 AGENTS.md 편집이 같은 게이트에 막힌다 — 게이트가 막으려던
+//    일이 게이트 때문에 일어난다(2026-09-03 에 보류 신고로 같은 함정을 한 번 밟았다).
+//
+//    검사기가 없거나 못 돌면 죽지 않고 ⚠ 로 건너뛴다. 부분 적용 상태가 편집을 막지 않게.
+if (!QUICK) {
+  const mirrorCheck = join(ROOT, "scripts", "check-mirror-sync.mjs");
+  if (!existsSync(mirrorCheck)) {
+    console.error("⚠ [mirror/SKIP] scripts/check-mirror-sync.mjs 가 없다 — 두 벌 동기화 검사를 건너뛴다.");
+  } else {
+    // **--repo-only 로 부른다.** 그냥 부르면 검사기가 자기 프로브까지 돌리는데, 그중 하나가
+    // run-gates 를 부른다 — 게이트→검사→게이트로 서로를 부르며 끝나지 않는다.
+    // --repo-only 는 두 벌 대조만 하고 아무것도 실행하지 않는다.
+    const mr = spawnSync(process.execPath, [mirrorCheck, "--repo-only"], { cwd: ROOT, encoding: "utf-8" });
+    const mout = (mr.stdout ?? "") + "\n" + (mr.stderr ?? "");
+    if (mr.status === null) {
+      console.error("⚠ [mirror/SKIP] 두 벌 동기화 검사가 실행되지 않았다 — 나머지 게이트는 그대로 판정한다.");
+    } else if (mr.status !== 0) {
+      // 검사기가 낸 줄을 그대로 올린다 — 어느 파일 몇 번째 줄인지가 그 줄에 있다.
+      const drift = mout.split("\n").filter((l) => l.trim().startsWith("[mirror/"));
+      if (drift.length) for (const line of drift) errors.push(line.trim());
+      else errors.push("[mirror/DRIFT] 두 벌 동기화 검사가 실패했는데 이유 줄이 없다 — 'node scripts/check-mirror-sync.mjs' 로 직접 본다");
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error(
     `게이트 실패 ${errors.length}건. 새 기능 추가 금지, 아래 위반만 수정:\n` +
@@ -690,3 +829,5 @@ console.log(
       : ` · tsc ${ranTsc}/${n} · test ${ranTest}/${n}`) +
     `)`,
 );
+
+

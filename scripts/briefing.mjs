@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 세션 브리핑 — SessionStart 훅과 /status가 호출. 사람과 Claude가 같은 그림으로 시작한다.
 import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { join, posix } from "node:path";
 import { spawnSync } from "node:child_process";
 import { GRAPH } from "../graph.mjs";
 import { topoSort, isSatisfied, isPending } from "../gates/propagate.mjs";
@@ -45,7 +45,36 @@ if (existsSync(specsDir)) {
 // wrap-up 은 필드를 `- **멈춘 지점**: …` 꼴로 쓴다. 굵기 표시를 걷어내고 읽는다 —
 // 이걸 안 하면 `멈춘 지점:` 정규식이 `멈춘 지점**:` 을 못 맞춰 **PROGRESS 에 다 적혀 있는데도
 // 브리핑이 "기록 없음"이라고 말한다**(2026-08-10 발견: 그동안 조용히 그랬다).
-const progress = read(PROGRESS).split("**").join("");
+// PROGRESS 는 편집기에서도 읽는 파일이라 파일 참조를 마크다운 링크로 적는다
+// (`[패치 문서](../../../docs/references/...)`). 링크 대상은 **문서 위치 기준**이라
+// 터미널에 그대로 찍으면 `../../../` 가 무엇 기준인지 안 보이고 복사해도 안 열린다.
+// 그래서 여기서 레포 루트 기준 경로로 바꿔 찍는다 — 편집기에서는 클릭되고,
+// 터미널에서는 그대로 열 수 있는 경로가 된다. 링크가 없으면 아무것도 안 바뀐다.
+// 외부 URL 과 문서 내 앵커(#)는 경로가 아니므로 글자만 남긴다.
+// **경로를 먼저 `/` 로 통일한다.** projectDir 이 join() 산물이라 Windows 에서
+// `projects\signal2/workspace/PROGRESS.md` 처럼 섞여 있고, 그대로 세면 `projects\signal2` 가
+// 한 조각으로 잡혀 `../` 하나를 덜 먹는다(문서의 링크는 맞는데 브리핑만 엉뚱한 데를 가리킨다).
+const PROGRESS_POSIX = PROGRESS.split("\\").join("/");
+const PROGRESS_DIR = PROGRESS_POSIX.slice(0, PROGRESS_POSIX.lastIndexOf("/"));
+const unlinkRefs = (s) =>
+  s.replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, (_whole, text, href) =>
+    /^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith("#")
+      ? text
+      : posix.normalize(posix.join(PROGRESS_DIR, href.split("#")[0])));
+const progressRaw = read(PROGRESS);
+const progress = unlinkRefs(progressRaw.split("**").join(""));
+
+// "현재 상태" 블록의 링크는 브리핑이 읽어 주는 다섯 줄에 그대로 실린다. 대상이 사라지면
+// 없는 경로를 가리키면서 있는 것처럼 보인다 — 이 레포가 줄 번호 참조로 이미 여러 번 겪은
+// 형태다. 그래서 여기서만 존재를 확인한다(로그 절은 안 본다 — 과거 기록은 낡는 게 정상이다).
+const stateBlock = progressRaw.split("## 현재 상태")[1]?.split("## 로그")[0] ?? "";
+const deadRefs = [];
+for (const m of stateBlock.matchAll(/\[[^\]]*\]\(([^)\s]+)\)/g)) {
+  const href = m[1];
+  if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith("#")) continue;
+  const target = posix.normalize(posix.join(PROGRESS_DIR, href.split("#")[0]));
+  if (!existsSync(join(ROOT, target))) deadRefs.push(target);
+}
 const pendingBlock = progress.match(/대기 중인 결정:\s*(.+)/);
 if (pendingBlock && !/없음/.test(pendingBlock[1])) pending.push(pendingBlock[1].trim());
 
@@ -130,6 +159,8 @@ if (naLine) console.log(`○ n/a(이번 작업엔 해당 없음): ${naLine}`);
 console.log(`↩ 멈춘 지점: ${stopped}`);
 console.log(`→ 다음 할 일: ${next}`);
 if (principleWarn) console.log(principleWarn);
+if (deadRefs.length > 0)
+  console.log(`⚠ 위 줄이 가리키는 파일이 없다: ${deadRefs.join(" · ")} — PROGRESS 의 링크가 낡았다.`);
 if (total > 0) console.log(`▤ 필수 기능 진행: ${done}/${total}`);
 if (parkedSpecs > 0)
   console.log(`◇ 보류 스펙(status: parked): ${parkedSpecs}건 — 합의는 됐고 지금 만들 계약이 아닌 것 (${SPECS_REL})`);

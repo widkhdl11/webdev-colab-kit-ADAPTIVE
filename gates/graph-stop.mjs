@@ -17,6 +17,13 @@ import { basename, dirname, join, relative } from "node:path";
 import { GATE_KIND, GRAPH } from "../graph.mjs";
 import { childrenOf, descendants, isPending, isSatisfied, markDirty, markNa, markRework, propagate, recomputeParents, topLevel, topoSort } from "./propagate.mjs";
 
+
+
+// 사이클 판정 lib. 없으면(부분 적용) 아래에서 옛 판정으로 떨어진다 —
+// 여기서 던지면 훅이 죽고 차단 판정(6단계)에 영영 도달하지 못한다.
+let cyclePolicy = null;
+try { cyclePolicy = await import("./lib/cycle-policy.mjs"); } catch { /* 미적용 */ }
+
 const ROOT = process.cwd();
 
 // ── 활성 프로젝트 (없으면 스캐폴드 전 → skip, exit 0) ──────────────
@@ -454,6 +461,65 @@ if (state.qa.status === "dirty" && gateErrors.some((e) => ["test", "spec-coverag
   console.log("↩ qa dirty + 검증 실패 — 분류기(qa-classifier) 필요: 실패를 spec/design/impl 레벨로 귀속해 해당 노드 mark-dirty.");
 }
 console.log(`● HANDOFF 갱신 (${relative(ROOT, HANDOFF)}). 프론티어: ${f.length ? f.join(", ") : "없음(전부 clean)"}`);
+// 4.5) 사이클 종료 판정과 리포트 발행
+//
+// **persist 뒤에 둔다.** 여기서 죽으면 HANDOFF 가 안 써진다.
+// **그리고 자체 try/catch 로 감싼다.** 이 훅에는 최상위 try/catch 가 없어서, 여기서 던지면
+// 훅이 죽고 6단계(차단 판정, exit 2)에 영영 도달하지 못한다 — 막아야 할 게이트 실패를
+// 안 막는 쪽으로 실패한다. 이 레포의 원칙은 "모르면 막는 쪽"이므로 그 방향은 허용하지 않는다.
+// 리포트가 안 나가는 것은 불편이고, 차단이 안 되는 것은 사고다.
+function readPendingText(src, knownNodes = []) {
+  const items = [], problems = [];
+  let open = false, cur = null;
+  const flush = () => { if (cur) items.push(cur); cur = null; };
+  for (const raw of src.replace(/\r\n/g, "\n").split("\n")) {
+    const h = raw.match(/^##\s+(.*)$/);
+    if (h) { flush(); open = /열린/.test(h[1]); continue; }
+    if (!open) continue;
+    const t = raw.match(/^-\s+\*\*(.+?)\*\*/);
+    if (t) { flush(); cur = { title: t[1].trim(), blocks: [] }; continue; }
+    const b = raw.match(/^[ \t]*blocks:[ \t]*(.*)$/);
+    if (b && cur) for (const v of b[1].split(",").map((x) => x.trim()).filter(Boolean)) {
+      if (knownNodes.length === 0 || knownNodes.includes(v)) cur.blocks.push(v);
+      else problems.push(`'${cur.title}' 의 blocks 값 '${v}' 은 그래프에 없는 노드다 → 그 값만 버린다`);
+    }
+  }
+  flush();
+  return { items, blocked: new Set(items.flatMap((i) => i.blocks)), problems };
+}
+// 이 훅은 사이클을 닫지 않는다. 종료 조건을 판정하고 알리기만 한다 — 리포트를 쓰는 것도
+// CYCLE.md 의 줄을 옮기는 것도 무엇을 적을지 판단해야 하는 쓰기라 사이클 마감 절차가 한다.
+function noticeCycle(fn) {
+  try { fn(); return true; }
+  catch (e) {
+    console.error(`⚠ [cycle/NOTICE] 사이클 종료 판정 실패 — ${e.message}. 차단 판정은 그대로 진행한다.`);
+    return false;
+  }
+}
+
+noticeCycle(() => {
+  const pf = join(projDir, "workspace", "PENDING.md");
+  if (!existsSync(pf)) return;
+  const { items, blocked, problems } = readPendingText(readFileSync(pf, "utf-8"), Object.keys(GRAPH));
+  for (const p of problems) console.error(`⚠ [cycle/PENDING] ${p}`);
+  if (items.length === 0) return;
+  console.error(`⚠ [cycle/PENDING] 열린 보류 ${items.length}건 — 실행을 막지 않는다. 막힌 노드: ${[...blocked].join("·") || "없음"}`);
+
+  // 종료 판정은 gates/lib/cycle-policy.mjs 한 자리에 있다. 조건은 둘이다 —
+  // 프론티어가 전부 보류에 막혔거나, 열린 보류가 상한에 닿았거나.
+  // lib 이 아직 안 붙었으면 옛 판정(조건 1만)으로 떨어진다. 그때는 상한을 안 본다.
+  const verdict = cyclePolicy
+    ? cyclePolicy.closeVerdict({ frontier: f, blocked, openCount: items.length })
+    : { close: f.length > 0 && f.every((n) => blocked.has(n)), reason: "조건 1(상한 검사 없음 — cycle-policy 미적용)" };
+  if (!verdict.close) return;
+
+  const cf = join(projDir, "workspace", "CYCLE.md");
+  const cid = existsSync(cf) ? (readFileSync(cf, "utf-8").match(/^-\s+`([^`]+)`/m)?.[1] ?? "") : "";
+  if (!cid) return;
+  console.error(`⚠ [cycle/CLOSE] 사이클 ${cid} 종료 조건 성립 — ${verdict.reason}.`);
+  console.error(`   이 훅은 알리기만 한다. 리포트(workspace/reports/CYCLE_REPORT.${cid}.md) 발행과 CYCLE.md 의 줄 이동은 사이클 마감 절차가 한다.`);
+});
+
 const rw = reworkList(state);
 if (rw.length) console.log(`  ↳ rework(통과했다가 취소됨): ${rw.join(", ")}`);
 const na = naList(state);
@@ -490,6 +556,11 @@ for (const n of topLevel(GRAPH)) {
 function downgradeReason(cat) {
   const def = GATE_KIND[cat];
   if (!def) return null;                                   // 목록에 없는 카테고리는 무조건 차단
+  // 세 번째 kind — owner 를 보지 않는다. 위 두 kind 는 owner 노드의 상태로 판정하지만
+  // 보류는 owner 가 없다(사람의 결정을 기다리는 것이지 어느 노드가 덜 끝난 게 아니다).
+  if (def.kind === "escalated")
+    return "보류로 올라간 항목이라 사람의 결정을 기다린다 — 결정을 받으려면 턴이 끝나야 한다";
+    
   const st = state[def.owner]?.status;
   if (def.kind === "completion" && (isPending(st) || st === "na"))
 
@@ -513,7 +584,7 @@ if (g.status === 2) {
   // 남은 실패가 전부 처방된 것 → 턴은 끝낸다. 조용히 넘기지 않는다: 매 턴 ⚠ 로 찍는다(risk-surface 예외와 같은 취급).
   for (const [cat, why] of lowered)
     console.error(`⚠ [graph/EXPECTED] ${cat} 실패가 남았지만 턴은 막지 않는다 — ${why}.`);
-  console.error(
+    console.error(
     `   하류는 그대로 막혀 있다. 다음에 할 일: ${f.length ? f.join(", ") : "없음"} — 진행이 아니라 턴 종료만 허용된 것이다.`,
   );
 }

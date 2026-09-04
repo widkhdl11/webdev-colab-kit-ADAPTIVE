@@ -32,10 +32,20 @@ spec 노드가 안 끝난 동안에는 턴을 막지 않는다 — 하류(implem
   (턴은 끝낼 수 있다 — 위 참조).
   그러니 인프라 의존(예: DB·외부 API)이 섞인 스펙은 **구현 가능한 단위로 쪼개** 준비된 것부터 하나씩 approved 한다.
   여러 스펙을 한꺼번에 approved 하면 all-or-nothing 으로 막힌다.
-- **보류(합의됐으나 아직 구현 못 함)는 `projects/<이름>/docs/specs/planned/` 에 status: draft 로 둔다.**
-  spec 노드 글롭(docs/specs/*.md)은 비재귀라 planned/ 는 안 잡혀 spec 국면을 막지 않는다(spec-coverage 도 draft 는 무시).
-  준비되면 파일을 docs/specs/ 로 옮기고 approved → TDD 착수. 주의: spec 노드가 dirty 면 하류(implement/qa/review)
-  해시가 null 이 돼 완성된 슬라이스의 리뷰 사인오프조차 막힌다 — 그래서 미준비 스펙은 planned/ 로 내린다.
+- **보류(합의됐으나 아직 구현 못 함)는 `docs/specs/` 에 그대로 두고 `status: parked` 로 적는다.**
+  파일을 옮기지 않는다. graph.mjs 의 `skip_when: "status: parked"` 가 그 파일만 spec 노드 판정에서
+  빼므로 spec 국면이 막히지 않는다(spec-coverage 도 approved 만 본다).
+  준비되면 **한 단어만** `approved` 로 바꾸고 TDD 착수 — 경로가 안 바뀌니 그 스펙을 가리키던 문장들이 안 낡는다.
+  세션 브리핑이 `◇ 보류 스펙: N건` 으로 띄우므로 잊히지 않는다.
+  주의: spec 노드가 dirty 면 하류(implement/qa/review) 해시가 null 이 돼 완성된 슬라이스의 리뷰
+  사인오프조차 막힌다 — 그래서 미준비 스펙은 draft 로 두지 말고 parked 로 내린다.
+  - **`parked` 로는 위험 표면을 덮을 수 없다.** risk-surface 게이트는 `status: approved` 만 커버로
+    인정한다. 인증·결제·권한·동시성 스펙을 parked 로 미루면 그 표면 코드의 편집이 차단된다 —
+    미루기는 도망이 아니라 막다른 길이다. 미룰 수 있는 건 위험 표면이 아닌 스펙뿐이다.
+  - **`status: approved-…` 형태의 새 값을 만들지 마라.** 검사식이 `status:\s*approved\b` 인데
+    `\b` 가 하이픈을 단어 경계로 봐서 `approved-deferred` 같은 값이 승인으로 통과한다(실측).
+  - 옛 관례였던 `docs/specs/planned/` 폴더는 더 쓰지 않는다. 이미 그 폴더를 쓰는 프로젝트는
+    그대로 둬도 동작한다(비재귀 스캔이라 안 잡힌다). 새로 만들지만 않으면 된다.
 
 ## 금지
 - 산문 명세 금지 — ID 없는 불변식은 테스트가 참조할 수 없다
