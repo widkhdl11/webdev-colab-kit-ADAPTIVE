@@ -22,6 +22,7 @@
 //   A  오탐 없음  치환만 다른 쌍은 어긋남이 아니다
 //   B  짝 검사    한쪽에만 있는 스킬 폴더를 잡는다
 //   C  현행       이 레포의 두 벌이 지금 어긋나 있지 않다             ← 고치기 전 실패 / 고친 뒤 통과
+//   D  게이트 배선 심은 어긋남을 run-gates 전체 실행이 신고한다      ← 편입 패치 전 실패
 //
 // **S1·S2 가 이 파일의 핵심이다.** "어긋남 0건"이라는 보고와 "검사가 아예 안 돌았다"는
 // 겉으로 같다. 위반을 일부러 심어 잡히는 것을 보지 않으면 둘을 구분할 수 없다.
@@ -30,6 +31,7 @@
 // 프로브는 전부 임시 디렉터리에서 돈다 — 이 레포의 파일은 하나도 건드리지 않는다.
 // C 항목만 이 레포를 읽는다(읽기만 한다).
 
+import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -141,6 +143,21 @@ export function checkRepo(root) {
   return errors;
 }
 
+// ── 게이트에서 부르는 경로 (`--repo-only`) ─────────────────────────────
+// 이 레포의 두 벌만 대조하고 끝낸다. 프로브를 안 돌리는 이유가 둘이다.
+//
+//   ① **프로브 D 가 run-gates 를 부른다.** 게이트가 프로브까지 돌리면 게이트→검사→게이트로
+//      서로를 부르며 끝나지 않는다. 실제로 패치를 사본에 붙여 돌려 보고 나서야 드러났다
+//      (2026-09-04). 배선 프로브를 넣는 순간 검사와 게이트는 서로를 부를 수 있게 된다.
+//   ② 게이트가 알아야 하는 것은 "지금 두 벌이 어긋났나"뿐이다. 검사기 자신이 건강한가는
+//      다른 질문이고, 그건 사람이 이 스크립트를 직접 돌릴 때 본다.
+if (process.argv.includes("--repo-only")) {
+  const errs = checkRepo(ROOT);
+  for (const e of errs) console.error(e);
+  console.log(`check-mirror-sync --repo-only: 어긋남 ${errs.length}건`);
+  process.exit(errs.length > 0 ? 1 : 0);
+}
+
 // ────────────────────────────────────────────────────────────────────────
 // 프로브 — 검사가 실제로 그 경로를 밟는지 본다
 // ────────────────────────────────────────────────────────────────────────
@@ -216,6 +233,42 @@ const ok = (id, what, pass, note = "") => results.push({ id, what, pass, note })
     for (const e of errs.slice(0, 40)) console.error(`  ${e}`);
     if (errs.length > 40) console.error(`  … 그리고 ${errs.length - 40}건 더`);
     console.error("");
+  }
+}
+
+// ── D: 게이트 배선 — 어긋남을 심으면 run-gates 가 신고하는가.
+//    S1·S2·C 는 "판정이 옳은가"를 보고, D 는 "그 판정을 게이트가 부르는가"를 본다.
+//    판정이 맞아도 아무도 안 부르면 손으로 돌릴 때만 도는 검사다 — 수동 도구는 아무도 안 알려준다.
+//    (2026-09-04 교훈: 판정이 옳은가와 그 판정이 불리는가는 다른 질문이다)
+//
+//    **여기만 이 레포의 파일을 건드린다.** AGENTS.md 에 한 줄 심었다 되돌린다.
+//    되돌리기는 finally 에서 하고 바이트 단위로 확인한다. 실패하면 경로와 함께 크게 알린다.
+//    run-gates 전체 실행이 두 번 돌아 15초쯤 걸린다 — 이 검사가 느려진 이유가 이것이다.
+{
+  const mirrorFile = join(ROOT, "AGENTS.md");
+  const reported = () => {
+    const r = spawnSync(process.execPath, [join(ROOT, "gates", "run-gates.mjs")], { cwd: ROOT, encoding: "utf-8" });
+    return /\[mirror\/DRIFT\]/.test((r.stdout ?? "") + "\n" + (r.stderr ?? ""));
+  };
+  if (!existsSync(mirrorFile)) {
+    ok("D", "게이트 배선  심은 어긋남을 run-gates 가 신고한다", false, "AGENTS.md 가 없다");
+  } else {
+    const before = readFileSync(mirrorFile, "utf-8");
+    let caught = null, clean = null, restored = false;
+    try {
+      writeFileSync(mirrorFile, before + "\n검사가 심은 줄 — 곧 지운다.\n", "utf-8");
+      caught = reported();
+    } catch (e) {
+      caught = `예외: ${e.message}`;
+    } finally {
+      writeFileSync(mirrorFile, before, "utf-8");
+      restored = readFileSync(mirrorFile, "utf-8") === before;
+    }
+    if (!restored) console.error(`✗✗ AGENTS.md 복원 실패 — 손으로 되돌려야 한다: ${mirrorFile}`);
+    clean = reported();
+    ok("D", "게이트 배선  심은 어긋남을 run-gates 가 신고하고, 되돌리면 안 한다",
+       caught === true && clean === false && restored,
+       `심었을 때=${caught} / 되돌린 뒤=${clean} / 복원=${restored}`);
   }
 }
 

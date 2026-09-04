@@ -13,7 +13,8 @@
 //
 // 사용: node scripts/check-hooks.mjs   (실패 시 exit 2)
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
@@ -144,6 +145,55 @@ const orphans = readdirSync(HOOK_DIR)
   .filter((f) => !reg.has(f));
 if (orphans.length)
   console.log(`ℹ settings.json 에 등록되지 않은 훅: ${orphans.join(", ")} — 있어도 안 돈다`);
+
+// ── ③ 파싱 검사 ────────────────────────────────────────────────
+// 훅이 '막을 줄 알고' '등록도 됐어도', 그 파일이 파싱조차 안 되면 아무 일도 안 일어난다.
+// 2026-09-04: graph-stop.mjs 에 패치를 손으로 붙이다 닫는 `});` 한 줄이 빠져 파일 전체가
+// SyntaxError 였다. Stop 훅이 매 턴 죽었는데 — 훅이 죽은 것과 훅이 할 일이 없던 것은
+// 출력이 똑같아 보인다. 그 상태로 커밋까지 됐다.
+//
+// 대상은 settings.json 이 실제로 부르는 스크립트 + 킷의 판정 파일 전부다.
+// 목록을 손으로 적지 않고 설정에서 뽑는다 — 베껴 두면 훅이 늘 때 검사에서 조용히 빠진다.
+{
+  const parses = (file) =>
+    spawnSync(process.execPath, ["--check", file], { encoding: "utf-8" }).status === 0;
+
+  const invoked = new Set();
+  if (existsSync(SETTINGS)) {
+    for (const m of readFileSync(SETTINGS, "utf-8").matchAll(/node\s+([^\s"']+\.mjs)/g))
+      invoked.add(m[1].split("\\").join("/"));
+  }
+  const kitFiles = ["graph.mjs"];
+  for (const dir of ["gates", join("gates", "lib")])
+    if (existsSync(join(ROOT, dir)))
+      for (const f of readdirSync(join(ROOT, dir)).filter((n) => n.endsWith(".mjs")))
+        kitFiles.push(`${dir.split("\\").join("/")}/${f}`);
+
+  const targets = [...new Set([...invoked, ...kitFiles])].sort();
+  const broken = targets.filter((t) => existsSync(join(ROOT, t)) && !parses(join(ROOT, t)));
+  const missing = targets.filter((t) => !existsSync(join(ROOT, t)));
+
+  record(broken.length === 0 && missing.length === 0 && targets.length > 0,
+    `파싱 — 훅이 부르는 스크립트와 킷 판정 파일 ${targets.length}개가 전부 파싱된다`,
+    [...broken.map((b) => `${b}: SyntaxError`), ...missing.map((m) => `${m}: 파일 없음`)].join(" / ")
+      || (targets.length === 0 ? "대상이 하나도 안 잡혔다 — 목록 뽑기가 깨졌다" : ""));
+
+  // 프로브 — 일부러 깨진 파일을 만들어 이 판정이 실제로 잡는지 본다.
+  // "0건 통과"와 "검사가 안 돌았다"는 겉이 같다.
+  const probe = join(tmpdir(), `check-hooks-probe-${process.pid}.mjs`);
+  let caught = null, clean = null;
+  try {
+    writeFileSync(probe, "export function x() {\n", "utf-8");     // 닫는 괄호 없음
+    caught = !parses(probe);
+    writeFileSync(probe, "export function x() {}\n", "utf-8");
+    clean = parses(probe);
+  } finally {
+    try { rmSync(probe, { force: true }); } catch { /* 지워지면 됐다 */ }
+  }
+  record(caught === true && clean === true,
+    "파싱 프로브 — 심은 SyntaxError 를 잡고, 고치면 통과시킨다",
+    `깨진 파일=${caught === true ? "잡음" : "못 잡음"} / 멀쩡한 파일=${clean === true ? "통과" : "막힘"}`);
+}
 
 // ── 결과 ──────────────────────────────────────────────────────
 console.log("");
