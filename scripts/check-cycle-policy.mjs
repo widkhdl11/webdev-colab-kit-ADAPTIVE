@@ -23,7 +23,7 @@
 //   H  로그 인용    근거 열에서 규칙 id 만 걷는다(NEW·HUMAN 은 아니다)       ← 붙기 전후 통과
 //   I  현행         이 레포의 대장·로그·규칙 파일이 대조된다                 ← 붙기 전후 통과
 //   J  판정 동등    lib 과 검사 안 사본이 같은 픽스처에서 같은 답을 낸다     ← 붙은 뒤 의미 있음
-//   K  훅 배선     보류를 상한까지 심으면 Stop 훅이 종료를 알리고, 되돌리면 안 알린다 ← 붙기 전 실패
+//   K  훅 배선     임시 레포에서 보류를 상한까지 늘리면 Stop 훅이 종료를 알린다     ← 붙기 전 실패
 //
 // **S1 과 C 가 각도가 다른 두 그물이다.** C 는 "막혔을 때 닫나"를 보고 S1 은 "안 막혔어도
 // 상한이면 닫나"를 본다. C 만 있으면 상한 조건을 통째로 지워도 검사가 초록불이다.
@@ -32,9 +32,12 @@
 // 돌린다. 판정이 맞아도 게이트에 배선이 안 됐으면 아무도 그 판정을 부르지 않는다.
 //
 // 사용: node scripts/check-cycle-policy.mjs
-// B 만 파일을 만든다(projects/__probe__/). finally 로 반드시 지운다.
+// **이 레포의 파일을 건드리지 않는다.** B 는 projects/__probe__/ 를 만들었다 finally 로 지우고,
+// K 는 임시 레포를 만들어 거기서 훅을 돌린다 — 실제 PENDING.md 를 늘렸다 되돌리게 짰다가
+// 끊기면 손상이 남는 것을 미러 검사에서 먼저 겪었다(2026-09-04, docs/LESSONS.md).
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -255,50 +258,51 @@ ok("G", "중복         같은 사이클이 두 번 적혀도 1회로 센다",
 //    S1 은 판정 함수가 옳은지 보고, K 는 훅이 그 함수를 부르는지 본다. 판정이 맞아도
 //    훅이 안 부르면 상한은 없는 것과 같다 — v3.3 에서 실제로 그 상태였다.
 //    PENDING.md 를 잠깐 늘렸다 되돌린다. 되돌리기는 finally 에서 하고, 실패하면 크게 알린다.
+// **이 레포의 파일을 건드리지 않는다.** 처음에는 진짜 PENDING.md 를 늘렸다 되돌리게 짰는데,
+// 같은 형태를 미러 검사에서 먼저 겪었다 — 훅이 도는 동안 끊기면 되돌리기가 안 돌고, 그다음
+// 실행은 더럽혀진 파일을 '원본'으로 읽어 **복원 성공이라고 보고하면서 손상을 보존한다**
+// (2026-09-04, docs/LESSONS.md). graph-stop 도 ROOT 를 cwd 로 잡으므로 cwd 만 픽스처로 준다.
 {
-  const active = (existsSync(join(ROOT, "ACTIVE")) ? readFileSync(join(ROOT, "ACTIVE"), "utf-8") : "").trim();
-  const pf = join(ROOT, "projects", active, "workspace", "PENDING.md");
   // 훅이 **돌기는 하는지**를 먼저 본다. 문법 오류면 아무 줄도 안 나오는데,
   // 그 상태와 "배선이 안 됐다"는 출력이 똑같아 보인다 — 2026-09-04 에 실제로 헷갈렸다.
   // (닫는 `});` 한 줄이 빠져 훅 전체가 죽어 있었고, K 는 "배선 없음"이라고만 말했다)
   let stopBroken = null;
-  const runStop = () => {
-    const r = spawnSync(process.execPath, [join(ROOT, "gates", "graph-stop.mjs")], { cwd: ROOT, encoding: "utf-8" });
+  const runStopIn = (dir) => {
+    const r = spawnSync(process.execPath, [join(ROOT, "gates", "graph-stop.mjs")], { cwd: dir, encoding: "utf-8" });
     const out = (r.stdout ?? "") + "\n" + (r.stderr ?? "");
     const syntax = out.match(/^\s*(\w*(?:Syntax|Reference|Type)Error: .+)$/m);
     if (syntax && !/\[cycle\//.test(out)) stopBroken = syntax[1];
     return out;
   };
-  if (!existsSync(pf)) {
-    ok("K", "훅 배선     상한이 Stop 훅에서 발동한다", false, `PENDING.md 를 못 찾았다 (${pf})`);
-  } else {
-    const before = readFileSync(pf, "utf-8");
-    let fired = null, quiet = null, restored = false;
-    try {
-      // `## 열린 항목` 바로 아래에 상한만큼 심는다 — 현재 몇 건인지 셀 필요가 없다.
-      // blocks: 를 안 적으므로 아무 노드도 막지 않는다(조건 1 과 섞이지 않는다).
-      const dummies = Array.from({ length: CAP }, (_, i) => `\n- **PROBE${i + 1} · 상한 프로브** — 검사가 곧 지운다.\n`).join("");
-      const lines = before.split("\n");
-      const at = lines.findIndex((l) => /^##\s+.*열린/.test(l));
-      if (at === -1) throw new Error("`## 열린 항목` 머리글을 못 찾았다");
-      lines.splice(at + 1, 0, dummies);
-      writeFileSync(pf, lines.join("\n"), "utf-8");
-      fired = /\[cycle\/CLOSE\]/.test(runStop());
-    } catch (e) {
-      fired = `예외: ${e.message}`;
-    } finally {
-      writeFileSync(pf, before, "utf-8");
-      restored = readFileSync(pf, "utf-8") === before;
-    }
-    if (!restored) console.error(`✗✗ PENDING.md 복원 실패 — 손으로 되돌려야 한다: ${pf}`);
-    quiet = /\[cycle\/CLOSE\]/.test(runStop());
-    ok("K", `훅 배선     보류를 상한(${CAP})까지 심으면 훅이 사이클 종료를 알리고, 되돌리면 안 알린다`,
-       fired === true && quiet === false && restored && !stopBroken,
-       stopBroken
-         ? `Stop 훅이 아예 못 돈다 — ${stopBroken}  (배선 이전 문제다. \`node --check gates/graph-stop.mjs\` 로 확인)`
-         : `심었을 때=${fired} / 되돌린 뒤=${quiet} / 복원=${restored}` +
-           (quiet === true ? " — 조건 1 이 이미 성립해 있으면 이 항목은 판정할 수 없다" : ""));
-  }
+  // 최소 픽스처 레포. graph-stop 이 보는 것만 넣는다.
+  // src/ 를 넣는 이유: 없으면 게이트가 '검사 대상 없음'으로 일찍 끝난다.
+  const mkFixture = (openCount) => {
+    const dir = mkdtempSync(join(tmpdir(), "cycle-policy-"));
+    mkdirSync(join(dir, "projects", "probe", "workspace"), { recursive: true });
+    mkdirSync(join(dir, "projects", "probe", "src", "shared"), { recursive: true });
+    writeFileSync(join(dir, "ACTIVE"), "probe\n");
+    writeFileSync(join(dir, "projects", "probe", "src", "shared", "x.ts"), "export const x = 1;\n");
+    // blocks: 를 안 적으므로 아무 노드도 막지 않는다 — 조건 1 과 섞이지 않고 상한만 본다.
+    const items = Array.from({ length: openCount }, (_, i) => `- **P${i + 1} · 프로브**\n\n`).join("");
+    writeFileSync(join(dir, "projects", "probe", "workspace", "PENDING.md"),
+      `# 보류\n\n## 열린 항목\n\n${items}## 닫힌 항목\n`);
+    writeFileSync(join(dir, "projects", "probe", "workspace", "CYCLE.md"),
+      "# 사이클\n\n## 열린 사이클\n\n- `probe-1` — 프로브\n\n## 닫힌 사이클\n");
+    return dir;
+  };
+  const closes = (openCount) => {
+    const dir = mkFixture(openCount);
+    try { return /\[cycle\/CLOSE\]/.test(runStopIn(dir)); }
+    finally { rmSync(dir, { recursive: true, force: true }); }
+  };
+
+  const fired = closes(CAP);          // 상한에 닿으면 닫는다고 알려야
+  const quiet = closes(CAP - 1);      // 하나 모자라면 안 알려야
+  ok("K", `훅 배선     보류를 상한(${CAP})까지 심으면 훅이 사이클 종료를 알리고, ${CAP - 1}건이면 안 알린다`,
+     fired === true && quiet === false && !stopBroken,
+     stopBroken
+       ? `Stop 훅이 아예 못 돈다 — ${stopBroken}  (배선 이전 문제다. \`node --check gates/graph-stop.mjs\` 로 확인)`
+       : `${CAP}건=${fired} / ${CAP - 1}건=${quiet}` + (fired === false ? " — 훅이 상한을 안 본다(패치 미적용)" : ""));
 }
 
 let failed = 0;
