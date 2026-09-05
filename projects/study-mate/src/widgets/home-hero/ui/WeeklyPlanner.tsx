@@ -73,6 +73,7 @@ export function WeeklyPlanner({
                   <div
                     className={styles.block}
                     key={b.key}
+                    title={`${b.title} · ${hourMinute(b.startsAt)}`}
                     style={{ "--fill": highlightVar(b.color) } as CSSProperties}
                   >
                     <b>{b.title}</b>

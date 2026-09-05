@@ -5,7 +5,7 @@ import { StatusBadge } from "@/shared/ui/status-badge/StatusBadge";
 import { Tag } from "@/shared/ui/tag/Tag";
 import type { Highlight } from "@/shared/ui/highlight";
 import { formatSlots, relativeDay } from "@/shared/lib/schedule";
-import type { PostSummary } from "@/entities/post";
+import { placeLabel, type PostSummary } from "@/entities/post";
 import styles from "./post-card.module.css";
 
 /**
@@ -29,7 +29,7 @@ export function PostCard({ post, color }: { post: PostSummary; color: Highlight 
         <p className={styles.meta}>
           <span>
             <PinIcon />
-            {study.region}
+            {placeLabel(study)}
           </span>
           <span>
             <ClockIcon />

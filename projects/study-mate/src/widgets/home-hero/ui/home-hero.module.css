@@ -152,11 +152,19 @@
   background: var(--fill);
 }
 
+/*
+ * 시안의 블록 제목은 짧았지만(「토익 새벽반」) 실제 스터디 이름은 길다
+ * (「토익 900 목표 새벽반」). 한 줄로 자르면 46px 자리에 89px 글자가 들어가 절반이
+ * 사라져서 무슨 스터디인지 못 읽는다. 세 줄까지 준다 — 시드에 있는 가장 긴 이름
+ * (「토익 900 목표 새벽반」)이 세 줄에 다 들어간다. 그보다 길면 title 로 전체를 준다.
+ * (읽어 주는 기계에는 언제나 전체가 간다 — 자르는 것은 눈에 보이는 것뿐이다)
+ */
 .block b {
-  display: block;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: keep-all;
 }
 
 .block time {

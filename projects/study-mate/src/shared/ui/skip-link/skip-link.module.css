@@ -1,0 +1,18 @@
+/* 키보드로 오는 사람이 헤더를 건너뛰고 본문으로 갈 수 있게. 보일 때만 자리를 차지한다 */
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+}
+
+.skip:focus {
+  left: var(--space-16);
+  top: var(--space-16);
+  z-index: 200;
+  background: var(--hl-yellow);
+  color: var(--ink);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: var(--space-12) var(--space-18);
+  font-weight: 700;
+}
