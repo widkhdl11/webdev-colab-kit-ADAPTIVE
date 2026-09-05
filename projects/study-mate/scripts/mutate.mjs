@@ -5,8 +5,9 @@
 //       node scripts/mutate.mjs --restore        원래대로 되돌린다(마이그레이션 재적용)
 //       node scripts/mutate.mjs --list           변이 목록
 //
-// 되돌리기는 `supabase db reset --local` 이 아니라 정책을 바꾸는 마이그레이션(0002 · 0004)을
-// 순서대로 다시 적용하는 것으로 한다 — 전부 create or replace / grant 라서 그것만으로 원상 복구된다.
+// 되돌리기는 `supabase db reset --local` 이 아니라 정책·함수를 다시 정의하는 마이그레이션을
+// 순서대로 다시 적용하는 것으로 한다(목록은 아래 RESTORE_MIGRATIONS) — 전부
+// create or replace / grant / drop if exists 라서 그것만으로 원상 복구된다.
 
 import { Client } from "pg";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -46,6 +47,87 @@ assertLocal(DB_URL, "데이터베이스");
 
 /** 변이 이름 → 무엇을 무력화하는가 + 그것을 붙들어야 할 테스트 */
 const MUTATIONS = {
+  // ── 0010 이 만든 강제 장치 셋 ──────────────────────────────────────────
+  "a7-no-profile-trigger": {
+    holds: "INV-A7 — 계정을 만들면 프로필이 함께 생긴다",
+    // 트리거를 떼면 계정만 생긴다. 옛 코드가 남기던 상태가 바로 이것이다.
+    sql: `drop trigger if exists on_auth_user_created on auth.users;`,
+    // 트리거는 0010 이 다시 만든다 — 복구 목록에 0010 이 있으므로 undo 가 따로 필요 없다.
+  },
+  "a7-username-any-length": {
+    holds: "INV-A7 — 이름 길이 규칙을 데이터베이스가 지킨다",
+    // 제약을 떼면 앱을 안 거친 가입이 아무 길이나 넣는다.
+    sql: `alter table public.profiles drop constraint if exists profiles_username_length;`,
+  },
+  "a7-blank-username": {
+    holds: "INV-A7 — 빈 이름과 공백뿐인 이름도 가입을 막지 않는다",
+    // 씻는 자리를 뺀다. 그러면 빈 문자열은 길이 0 이라 제약에 걸려 **가입 자체가 거절되고**,
+    // 전각 공백은 길이 1 이라 통과해 **빈 줄로 뜨는 사용자**가 생긴다. 두 방향으로 깨진다.
+    sql: `
+      create or replace function private.profile_username_from_meta(p_id uuid, p_meta jsonb)
+      returns text language sql immutable set search_path = '' as $fn$
+        select left(coalesce(p_meta ->> 'username', '회원' || left(p_id::text, 8)), 20);
+      $fn$;`,
+  },
+  "z12-expose-invoker-wrapper": {
+    holds: "INV-Z12 — 노출된 스키마에 새 판정 통로가 생기면 걸린다",
+    // **definer 가 아니다.** anon 에게 private 실행 권한이 있으므로(정책이 그 권한으로
+    // 평가된다) 껍데기 하나면 문이 다시 열린다 — 안쪽 함수가 정책을 안 지나므로 답도
+    // 정확히 나온다. 2026-09-05 실측: 이 껍데기를 심으니 비로그인 호출이 200 + 판정값.
+    sql: `
+      create or replace function public.can_read_members(p_study_id uuid, p_user_id uuid)
+      returns boolean language sql stable as $fn$
+        select private.is_study_member(p_study_id, p_user_id);
+      $fn$;`,
+    undo: `drop function if exists public.can_read_members(uuid, uuid);`,
+  },
+  "z12-expose-new-definer": {
+    holds: "INV-Z12 — 노출된 스키마에 새 판정 통로가 생기면 걸린다",
+    // 이름 목록에 **없는** 이름이다. 이름을 세는 검사는 이걸 못 보고 구조 검사만 본다 —
+    // 그래서 구조 검사에 자기 홀더가 생긴다.
+    sql: `
+      create or replace function public.member_check(p_study_id uuid, p_user_id uuid)
+      returns boolean language sql stable security definer set search_path = '' as $fn$
+        select exists (select 1 from public.participants
+                        where study_id = p_study_id and user_id = p_user_id and status = 'accepted');
+      $fn$;`,
+    undo: `drop function if exists public.member_check(uuid, uuid);`,
+  },
+  "z12-expose-via-composite": {
+    holds: "INV-Z12 — 노출된 스키마에 새 판정 통로가 생기면 걸린다",
+    // 구조 검사의 "행 인자는 계산 컬럼이라 면제"를 노린다. 그 면제가 성립하는 것은
+    // **인자가 딱 하나이고 그것이 공개 테이블의 행 타입일 때**뿐이다 — 지어낸 복합 타입은
+    // 읽을 행이 없으므로 JSON 으로 만들어 보내면 그만이다.
+    sql: `
+      drop type if exists public.member_q cascade;
+      create type public.member_q as (study_id uuid, user_id uuid);
+      create or replace function public.member_check2(q public.member_q)
+      returns boolean language sql stable security definer set search_path = '' as $fn$
+        select exists (select 1 from public.participants
+                        where study_id = (q).study_id and user_id = (q).user_id
+                          and status = 'accepted');
+      $fn$;`,
+    undo: `
+      drop function if exists public.member_check2(public.member_q);
+      drop type if exists public.member_q cascade;`,
+  },
+  "z12-expose-helper": {
+    holds: "INV-Z12 — 인가 판정 함수가 API 에 노출되지 않는다",
+    // 문을 도로 연다. **함수 본문은 그대로다** — 답이 틀려지는 것이 아니라
+    // 아무나 물을 수 있게 되는 것이 이 변이가 만드는 상태다.
+    sql: `
+      create or replace function public.is_study_member(p_study_id uuid, p_user_id uuid) returns boolean
+      language sql stable security definer set search_path = '' as $fn$
+        select exists (
+          select 1 from public.participants
+           where study_id = p_study_id and user_id = p_user_id and status = 'accepted'
+        );
+      $fn$;`,
+    // 0010 의 drop 이 다시 지운다. PostgREST 의 스키마 캐시는 이 설치에 걸린 DDL 감시
+    // 이벤트 트리거(pgrst_ddl_watch · pgrst_drop_watch)가 심고 지울 때 각각 깨운다 —
+    // 확인했다. 이 도구에 없는 필드(`after` 같은)를 적어 두면 아무 일도 안 하면서
+    // 무언가 한 것처럼 읽히므로 적지 않는다.
+  },
   "z8-participants-columns": {
     holds: "INV-Z8 (S7) — 호스트가 자기 참여 행의 user_id 를 남으로 바꿀 수 없다",
     sql: `grant update on public.participants to authenticated;`,
@@ -65,7 +147,7 @@ const MUTATIONS = {
     undo: `
       drop policy if exists chatpart_read_member on public.chat_participants;
       create policy chatpart_read_member on public.chat_participants for select
-        using (public.is_chat_member(chat_id, (select auth.uid())));`,
+        using (private.is_chat_member(chat_id, (select auth.uid())));`,
   },
   "z8-posts-columns": {
     holds: "INV-Z9 — 이미 쓴 모집글을 남의 스터디로 옮길 수 없다",
@@ -104,22 +186,22 @@ const MUTATIONS = {
   "p9-invoker-count": {
     holds: "INV-P9 — 파생값은 누가 묻든 같은 답을 준다",
     sql: `
-      create or replace function public.study_accepted_count(p_study_id uuid) returns integer
+      create or replace function private.study_accepted_count(p_study_id uuid) returns integer
       language sql stable set search_path = '' as $fn$
         select count(*)::integer from public.participants
          where study_id = p_study_id and status = 'accepted';
       $fn$;
-      create or replace function public.study_is_recruiting(p_study_id uuid) returns boolean
+      create or replace function private.study_is_recruiting(p_study_id uuid) returns boolean
       language sql stable set search_path = '' as $fn$
         select s.closed_at is null and s.deleted_at is null
-           and public.study_accepted_count(s.id) < s.max_participants
+           and private.study_accepted_count(s.id) < s.max_participants
           from public.studies s where s.id = p_study_id;
       $fn$;`,
   },
   "p9-drop-status-filter": {
     holds: "INV-P9 — 세는 것은 '수락된' 참여자다 (대기 중인 사람이 아니라)",
     sql: `
-      create or replace function public.study_accepted_count(p_study_id uuid) returns integer
+      create or replace function private.study_accepted_count(p_study_id uuid) returns integer
       language sql stable security definer set search_path = '' as $fn$
         select count(*)::integer from public.participants where study_id = p_study_id;
       $fn$;`,
@@ -260,10 +342,10 @@ const MUTATIONS = {
     // 같은 공식이 데이터베이스에 두 벌 있다(함수 쌍 · 계산 컬럼 쌍). 계산 컬럼 쪽만
     // 붙들려 있어서, RPC 쪽의 `deleted_at is null` 을 지워도 전부 초록불이었다.
     sql: `
-      create or replace function public.study_is_recruiting(p_study_id uuid) returns boolean
+      create or replace function private.study_is_recruiting(p_study_id uuid) returns boolean
       language sql stable security definer set search_path = '' as $fn$
         select s.closed_at is null
-           and public.study_accepted_count(s.id) < s.max_participants
+           and private.study_accepted_count(s.id) < s.max_participants
           from public.studies s where s.id = p_study_id;
       $fn$;`,
   },
@@ -346,12 +428,12 @@ const MUTATIONS = {
     holds: "INV-P6 — 마감일이 지나도 study_is_recruiting 은 참으로 답한다",
     // 같은 조항의 다른 한 벌. 두 벌이 따로 있으니 변이도 따로 있어야 한다.
     sql: `
-      create or replace function public.study_is_recruiting(p_study_id uuid) returns boolean
+      create or replace function private.study_is_recruiting(p_study_id uuid) returns boolean
       language sql stable security definer set search_path = '' as $fn$
         select s.closed_at is null
            and s.deleted_at is null
            and (s.recruit_until is null or s.recruit_until >= current_date)
-           and public.study_accepted_count(s.id) < s.max_participants
+           and private.study_accepted_count(s.id) < s.max_participants
           from public.studies s where s.id = p_study_id;
       $fn$;`,
   },
@@ -452,7 +534,7 @@ const MUTATIONS = {
       drop policy if exists participants_read on public.participants;
       create policy participants_read on public.participants for select
         using (user_id = (select auth.uid())
-               or public.is_study_host(study_id, (select auth.uid())));`,
+               or private.is_study_host(study_id, (select auth.uid())));`,
   },
   "z11-members-wide-open": {
     holds: "INV-Z11 (S13) — 관계 없는 사람에게는 하나도 안 보인다",
@@ -466,8 +548,8 @@ const MUTATIONS = {
       drop policy if exists participants_read on public.participants;
       create policy participants_read on public.participants for select
         using (user_id = (select auth.uid())
-               or public.is_study_host(study_id, (select auth.uid()))
-               or public.is_study_member(study_id, (select auth.uid())));`,
+               or private.is_study_host(study_id, (select auth.uid()))
+               or private.is_study_member(study_id, (select auth.uid())));`,
   },
 };
 
@@ -522,7 +604,7 @@ select
              p.prosecdef, coalesce(p.proacl::text, '-'), md5(p.prosrc)),
            E'\n' order by n.nspname, p.proname, pg_get_function_identity_arguments(p.oid))
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-     where n.nspname = 'public'), '')
+     where n.nspname in ('public', 'private')), '')
   || E'\n' ||
   coalesce((select string_agg(format('grant %s.%s %s %s %s',
              table_schema, table_name, grantee, privilege_type, col),
@@ -542,7 +624,7 @@ select
       from pg_trigger t
       join pg_class c on c.oid = t.tgrelid
       join pg_namespace n on n.oid = c.relnamespace
-     where n.nspname = 'public' and not t.tgisinternal), '')
+     where n.nspname in ('public', 'auth') and not t.tgisinternal), '')
   || E'\n' ||
   coalesce((select string_agg(format('constraint %s.%s %s', c.relname, con.conname, pg_get_constraintdef(con.oid)),
            E'\n' order by c.relname, con.conname)
@@ -606,15 +688,66 @@ const RESTORE_MIGRATIONS = [
   // 0009 는 0008 의 순위 함수를 **덮어쓴다**(무한 날짜 가지가 붙는다). 순서대로 적용되므로
   // 이 줄이 0008 뒤에 있어야 복구가 최신 본체로 끝난다.
   "0009_recruit_until_finite.sql",
+  // **0010 은 반드시 맨 뒤다.** 위의 0002·0004 는 판정 함수를 `public` 에 다시 만들고
+  // 정책을 그쪽으로 다시 걸어 놓는다 — 0010 이 뒤따라 돌아야 그 함수들이 다시 지워지고
+  // 정책이 `private` 을 가리킨다. 순서를 바꾸면 복구가 끝난 자리에 S4 의 구멍이 도로 열린다.
+  "0010_signup_profile_and_private_helpers.sql",
 ];
 
 /**
  * 복구. `undo` 를 가진 변이는 그것까지 실행한다 — 0001 에만 있는 정책처럼 위 목록으로는
  * 되돌아오지 않는 것들이다. `undo` 가 틀려도 조용히 넘어가지 않는다(지문 대조가 잡는다).
  */
+/**
+ * 복구를 시작하기 전에 심는 껍데기 함수 **하나**.
+ *
+ * **왜 필요한가**: 복구는 옛 마이그레이션을 다시 트는데, 0002·0004 의 정책 정의가
+ * `public.is_study_host` 를 이름으로 가리킨다. 그 함수를 만드는 것은 0001 뿐이고 0001 은
+ * 재적용이 안전하지 않다(컬럼 이름이 바뀌었다). 0010 이 그 함수를 지웠으므로 복구 두 번째
+ * 줄에서 "함수가 없다"로 죽는다 — 실제로 죽었다.
+ *
+ * **하나뿐인 이유**: 나머지 여섯은 복구 목록 안에서 진짜 본문으로 다시 만들어진다
+ * (`study_accepted_count`·`study_is_recruiting`·`study_is_visible`·`study_accepts_applications`
+ * 는 0002 가, `is_study_member` 는 0004 가). `is_chat_member` 는 복구 목록의 어느 파일도
+ * 부르지 않는다. 그래서 껍데기가 필요한 것은 `is_study_host` 하나다.
+ *
+ * **본문이 아니라 존재만 필요하다.** 정책 DDL 은 이름과 인자만 맞으면 만들어지고, 이
+ * 함수는 목록 맨 뒤의 0010 이 다시 지운다. 진짜 판정을 베껴 적지 않는 이유는 정본이
+ * 세 곳이 되면 언젠가 한 곳만 고쳐지기 때문이다.
+ *
+ * **중간에 죽으면 어떻게 되나**: 아래 `restore` 가 전부를 트랜잭션 하나로 묶으므로
+ * 아무것도 안 남는다. 묶기 전에는 0002 가 지나간 뒤에 죽으면 판정 함수 다섯이 **진짜
+ * 본문 그대로** public 에 남았다 — 껍데기가 연 것이 아니라 0002 가 연 것이라, 껍데기를
+ * 아무리 안전하게 만들어도 그 상태는 못 막았다.
+ *
+ * (`create or replace` 는 반환 타입을 못 바꾸므로 타입은 원본과 같아야 한다.)
+ */
+const RESTORE_PRELUDE = `
+create or replace function public.is_study_host(p_study_id uuid, p_user_id uuid) returns boolean
+language sql immutable as $stub$ select false $stub$;
+`;
+
+/**
+ * 복구가 끝난 자리를 **복구 자신이 확인한다.**
+ *
+ * 지문 대조로는 이것을 못 잡는다 — mutation-run 은 기준선 지문을 뜨기 전에 복구를 먼저
+ * 돌리므로, 순서가 틀린 복구는 매번 같은(틀린) 상태를 만들고 그 상태가 기준선이 된다.
+ * 그러면 이후 모든 복구가 「일치」로 나온다. 손으로 `--restore` 만 돌린 사람에게는
+ * 대조할 원본조차 없다.
+ *
+ * 이 한 줄이 셋을 동시에 잡는다 — 0010 이 목록 맨 뒤가 아닌 경우 · 껍데기가 남은 경우 ·
+ * 목록이 낡아 0010 이 빠진 경우.
+ */
+const RESTORE_ASSERT = `
+select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public'
+   and p.proname = any(array['is_study_host','is_chat_member','is_study_member',
+                             'study_is_visible','study_accepts_applications',
+                             'study_accepted_count','study_is_recruiting'])
+`;
+
 async function restore(name) {
   const dir = join(HERE, "..", "supabase", "migrations");
-  for (const f of RESTORE_MIGRATIONS) await query(readFileSync(join(dir, f), "utf-8"));
 
   // **이름을 안 주면 등록된 undo 를 전부 돌린다.** 예전에는 하나도 안 돌면서 「복구 완료」를
   // 찍었다 — 손으로 심어 보고 파일 머리에 적힌 대로 되돌리면, 0001 에만 있는 정책을 건드리는
@@ -623,7 +756,34 @@ async function restore(name) {
   const undos = name
     ? [MUTATIONS[name]?.undo].filter(Boolean)
     : Object.values(MUTATIONS).map((m) => m.undo).filter(Boolean);
-  for (const u of undos) await query(u);
+  // **데이터베이스 쪽 복구는 트랜잭션 하나다.** 어디서 죽든 껍데기도, 반쯤 걸린 정책도
+  // 남지 않고 복구 전 상태로 되돌아간다. 복구 목록의 파일에는 트랜잭션 밖에서만 되는 문장
+  // (`create index concurrently`·`vacuum`·`alter system`·`alter publication`)이 없다 —
+  // 그런 문장이 들어오면 이 묶음이 바로 죽으므로 조용히 어긋나지는 않는다.
+  const c = new Client({ connectionString: DB_URL });
+  await c.connect();
+  try {
+    await c.query("begin");
+    await c.query(RESTORE_PRELUDE);
+    for (const f of RESTORE_MIGRATIONS) await c.query(readFileSync(join(dir, f), "utf-8"));
+    for (const u of undos) await c.query(u);
+
+    const leftover = await c.query(RESTORE_ASSERT);
+    if (leftover.rowCount > 0) {
+      throw new Error(
+        "복구가 끝났는데 판정 함수가 public 에 남아 있다: " +
+          leftover.rows.map((r) => r.proname).join(", ") +
+          "\n  RESTORE_MIGRATIONS 에서 0010 이 맨 뒤인지 본다 — 0002·0004 가 이 함수들을" +
+          " public 에 다시 만들고, 0010 이 뒤따라 돌아야 지워진다.",
+      );
+    }
+    await c.query("commit");
+  } catch (e) {
+    await c.query("rollback").catch(() => {});
+    throw e;
+  } finally {
+    await c.end();
+  }
 
   // 소스 파일을 바꾸는 변이는 **이름과 무관하게 전부** 되돌린다. 이름을 준 호출이 파일을
   // 건드리지 않으면, 크래시 뒤 `--restore <이름>` 으로 되돌린 사람은 파일이 변이된 채로
@@ -667,7 +827,7 @@ async function restore(name) {
     process.exit(1);
   }
 
-  return { files: RESTORE_MIGRATIONS.length, undos: undos.length, sources: files };
+  return { migrations: RESTORE_MIGRATIONS.length, undos: undos.length, sources: files };
 }
 
 const arg = process.argv[2];
@@ -694,7 +854,7 @@ if (!arg || arg === "--list") {
   // 사람이 원본과 대조할 수 있게 한다.
   const fp = `${(await query(FINGERPRINT_SQL)).rows[0].fingerprint}\n${fileFingerprint()}`;
   console.log(
-    `복구 완료 (마이그레이션 ${r.files}개 재적용 + undo ${r.undos}개 + 소스 ${r.sources}개) — 지문 ` +
+    `복구 완료 (껍데기 1 + 마이그레이션 ${r.migrations}개 재적용 + undo ${r.undos}개 + 소스 ${r.sources}개) — 지문 ` +
       createHash("sha256").update(fp).digest("hex").slice(0, 12),
   );
 } else {

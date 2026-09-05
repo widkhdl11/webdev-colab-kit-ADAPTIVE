@@ -49,26 +49,31 @@ export async function signUpAction(
   if (username.length > 20) return { ok: false, message: "이름은 20자까지 쓸 수 있습니다" };
 
   const supabase = await createServerSupabase();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  // 이름은 가입 요청에 실어 보낸다. **여기서 프로필을 만들지 않는다** — 계정 행이 들어오는
+  // 그 트랜잭션에서 데이터베이스 트리거가 만든다(0010). 앱이 만들던 때는 "가입 직후에
+  // 세션이 있다"에 기대고 있었고, 이메일 확인이 켜지면 그 전제가 깨져 프로필 없는 계정이
+  // 남았다. 길이 하한은 아래 폼 검사와 profiles_username_length 제약 양쪽에 있다.
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { username } },
+  });
   if (error) {
     // 비밀번호 규칙 같은 것은 그대로 보여 준다 — 고칠 수 있는 정보다.
     return { ok: false, message: error.message };
   }
   if (!data.user) return { ok: false, message: "가입하지 못했습니다. 잠시 뒤 다시 시도해 주세요" };
 
-  // 프로필은 본인만 만들 수 있다(profiles_insert_own). 방금 만들어진 세션으로 넣는다.
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .insert({ id: data.user.id, username });
-
-  if (profileError) {
-    // 계정은 생겼는데 프로필이 없으면 화면 곳곳에서 이름이 빈다. 조용히 넘기지 않는다.
-    return {
-      ok: false,
-      message: `계정은 만들어졌지만 프로필 저장에 실패했습니다: ${profileError.message}`,
-    };
-  }
-
+  // **`data.session` 이 null 인 경우를 여기서 안 가른다 — 아직 못 가른다.**
+  // 이메일 확인이 켜져 있으면 `signUp` 은 사용자만 만들고 세션 없이 돌아온다(이 파일이
+  // 고친 그 경우다). 그때 그대로 `next` 로 보내면 보호 경로에서 프록시가 곧바로 로그인
+  // 화면으로 되돌리고, 사용자는 "가입했는데 로그인 화면"만 본다. **프로필은 이제 생기지만
+  // (INV-A7) 사람에게는 여전히 막힌 것으로 보인다.**
+  //
+  // 제대로 가르려면 "메일함을 확인하세요"를 띄울 자리가 화면에 있어야 하는데, 지금
+  // `ActionResult` 의 성공 갈래에는 문구가 없고 폼도 실패만 그린다. 화면을 만드는 것은
+  // 이 diff 의 범위 밖이라 `docs/BACKLOG.md` 의 이메일 확인 항목에 붙였다.
+  // 지금 설정은 `enable_confirmations = false` 라 이 가지가 안 돈다.
   redirect(next);
 }
 

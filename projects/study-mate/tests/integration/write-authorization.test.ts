@@ -7,6 +7,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { chatRoomQuery, myChatsQuery } from "@/entities/chat/api/chat-select";
 import {
+  API_URL,
+  PUBLISHABLE,
   admin,
   anonClient,
   acceptedMember,
@@ -748,5 +750,217 @@ describe("INV-Z11: 참여자 명단을 볼 수 있는 사람은 셋뿐이다", (
     // 자기 행 하나만 남는다 — 자기가 강퇴됐다는 사실은 본인이 알아야 한다
     expect(after.data).toHaveLength(1);
     expect(after.data?.[0]?.user_id).toBe(m.id);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INV-Z12 — 인가 판정 함수는 API 표면에 없다
+//
+// 판정 함수들은 정책 안에서 같은 테이블을 다시 읽어도 되도록 `security definer` 로
+// 만든 것이다. 즉 **정책을 지나지 않는 것이 이 함수들의 존재 이유**다. 그런 함수가
+// 노출된 스키마에 있으면 PostgREST 가 통째로 RPC 로 열고, 그 문에는 정책이 없다.
+//
+// 2026-09-05 실측: `POST /rest/v1/rpc/is_study_member` 가 비로그인에게 200 + false 를
+// 답했다. 한 명씩 물으면 INV-Z11 이 셋으로 제한한 명단이 그대로 재구성된다.
+//
+// **노출된 스키마는 하나가 아니다.** `supabase/config.toml` 의 `schemas` 가 둘을 연다.
+// 아래 검사들은 그 둘을 다 두드린다 — 하나만 보면 다른 쪽에 만든 함수가 안 걸린다.
+// ═══════════════════════════════════════════════════════════════════════════
+const EXPOSED_SCHEMAS = ["public", "graphql_public"] as const;
+const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
+
+describe("INV-Z12: 인가 판정 함수는 요청으로 부를 수 없다", () => {
+  /**
+   * 공개 키로 RPC 를 두드리고 상태 코드를 돌려준다.
+   *
+   * **인자를 실어 보내는 것이 중요하다.** PostgREST 는 함수가 없을 때와 본문의 키로
+   * 인자를 못 맞출 때 둘 다 404(PGRST202)를 낸다. 빈 본문으로 두드리면 **노출된 함수도
+   * 404 를 답한다**(2026-09-05 실측) — 그러면 이 검사는 노출을 감지하지 못하면서
+   * 언제나 초록불이 된다. 실제로 그 상태로 한 번 커밋될 뻔했다.
+   */
+  async function callRpc(
+    schema: string,
+    name: string,
+    args: Record<string, unknown>,
+  ): Promise<number> {
+    const res = await fetch(API_URL + "/rest/v1/rpc/" + name, {
+      method: "POST",
+      headers: {
+        apikey: PUBLISHABLE,
+        Authorization: "Bearer " + PUBLISHABLE,
+        "Content-Type": "application/json",
+        "Content-Profile": schema,
+      },
+      body: JSON.stringify(args),
+    });
+    return res.status;
+  }
+
+  /** `private` 스키마의 함수와 그 인자 이름을 데이터베이스에서 읽는다. */
+  async function privateFunctions(): Promise<{ name: string; args: string[] }[]> {
+    const c = await rawClient();
+    try {
+      const r = await c.query(
+        "select p.proname as name, coalesce(p.proargnames, '{}') as args" +
+          " from pg_proc p join pg_namespace n on n.oid = p.pronamespace" +
+          " where n.nspname = 'private' order by 1",
+      );
+      return r.rows.map((x) => ({ name: x.name as string, args: x.args as string[] }));
+    } finally {
+      await c.end();
+    }
+  }
+
+  it("INV-Z12 (S14): private 의 판정 함수는 어느 노출 스키마에도 없다", async () => {
+    // **이름을 손으로 안 적는다.** 적으면 오타가 404 를 받아 통과하고, 여덟 번째가
+    // 생겼을 때 목록에 넣는 것을 잊으면 그 줄이 조용히 아무것도 안 하게 된다.
+    const fns = await privateFunctions();
+    expect(fns.map((f) => f.name)).toEqual([
+      "is_chat_member",
+      "is_study_host",
+      "is_study_member",
+      "profile_username_from_meta",
+      "study_accepted_count",
+      "study_accepts_applications",
+      "study_is_recruiting",
+      "study_is_visible",
+    ]);
+
+    const open: string[] = [];
+    for (const f of fns) {
+      // 인자 이름을 데이터베이스에서 읽어 실어 보낸다. 값은 아무 uuid 나 되지만
+      // **키 이름이 맞아야** 404 가 "그런 함수 없음"을 뜻한다.
+      const args = Object.fromEntries(f.args.map((a) => [a, ZERO_UUID]));
+      for (const schema of EXPOSED_SCHEMAS) {
+        if ((await callRpc(schema, f.name, args)) !== 404) open.push(schema + "." + f.name);
+      }
+    }
+    expect(open, "RPC 로 열려 있다: " + open.join(", ")).toEqual([]);
+  });
+
+  it("INV-Z12: 이 두드리기가 노출을 실제로 감지할 수 있다", async () => {
+    // **반대 절반.** 위 검사가 전부 404 인 것은, 두드리는 방법이 틀려서 언제나 404 여도
+    // 똑같이 보인다. 그래서 **열려 있다고 알고 있는 함수 하나**를 같은 방법으로 두드려
+    // 404 가 아닌 것을 확인한다. 이게 실패하면 위 검사는 알리바이다.
+    const status = await callRpc("public", "increment_post_views", { p_post_id: ZERO_UUID });
+    expect(status, "노출된 함수마저 404 다 — 두드리는 방법이 틀렸다").not.toBe(404);
+  });
+
+  it("INV-Z12: 그래도 화면이 읽는 계산 컬럼은 살아 있다", async () => {
+    // 노출을 끊은 것과 기능을 끊은 것은 다르다. 앞의 검사만 보면 전부 깨뜨린 상태도 통과한다.
+    const row = await anonClient()
+      .from("studies")
+      .select("id, accepted_count, recruiting")
+      .eq("id", studyId)
+      .single();
+    expect(row.error, "계산 컬럼이 같이 죽었다: " + row.error?.message).toBeNull();
+    expect(row.data).toMatchObject({ id: studyId, accepted_count: 2, recruiting: true });
+  });
+
+  it("INV-Z12: 노출된 스키마에 새 판정 통로가 생기면 여기서 걸린다", async () => {
+    // 위 검사는 **지금 있는 함수들**이 안 열려 있는지만 본다. 다음에 추가되는 것은
+    // 구조로 물어야 걸린다.
+    //
+    // 무엇을 통로로 보나:
+    //   · 노출된 스키마에 있고
+    //   · 함수이고 — 프로시저는 반환 타입이 없어서 아래 트리거 조건에 조용히 걸러진다
+    //   · 트리거를 반환하지 않고 (PostgREST 가 안 연다)
+    //   · **definer 이거나, private 의 판정 함수를 부르거나** — 뒤쪽이 핵심이다.
+    //     anon 에게 private 실행 권한이 있으므로 invoker 껍데기 하나면 문이 다시 열린다
+    //     (2026-09-05 실측: 껍데기를 심으니 비로그인 호출이 200 + 판정값을 받았다).
+    //   · 인자가 **행 하나**가 아닌 것. 계산 컬럼(`recruiting(studies)`)은 부르려면 그 행을
+    //     이미 읽을 수 있어야 하고 그 읽기에 정책이 걸리므로 통로가 아니다. 다만 그 면제는
+    //     **인자가 딱 하나이고 그것이 공개 테이블의 행 타입일 때**만 성립한다 —
+    //     `f(studies, uuid)` 는 계산 컬럼이 아니고, 행은 지어내서 보내면 그만이다.
+    const c = await rawClient();
+    try {
+      const r = await c.query(
+        "select n.nspname as schema, p.proname as name" +
+          " from pg_proc p join pg_namespace n on n.oid = p.pronamespace" +
+          " where n.nspname = any($1)" +
+          "   and p.prokind = 'f'" +
+          "   and coalesce(pg_get_function_result(p.oid), '') <> 'trigger'" +
+          "   and (p.prosecdef or p.prosrc like '%private.%')" +
+          "   and not (p.pronargs = 1 and exists (" +
+          "         select 1 from pg_type ty" +
+          "           join pg_class rel on rel.oid = ty.typrelid" +
+          "           join pg_namespace rn on rn.oid = rel.relnamespace" +
+          "          where ty.oid = p.proargtypes[0] and ty.typtype = 'c'" +
+          "            and rn.nspname = 'public' and rel.relkind in ('r', 'v', 'm')))" +
+          " order by 1, 2",
+        [[...EXPOSED_SCHEMAS]],
+      );
+      const found = r.rows.map((x) => x.schema + "." + x.name);
+
+      // **정확히 같기를 요구하지 않는다.** 그러면 보류(P9)를 풀어 이 함수를 옮기는 날
+      // 보안을 강화한 diff 가 검사를 깨뜨리고, 그건 사람에게 "검사를 고쳐 통과시키자"를
+      // 가르친다. 여기서는 **모르는 것이 있는가**만 묻는다.
+      expect(found.filter((n) => n !== "public.increment_post_views")).toEqual([]);
+    } finally {
+      await c.end();
+    }
+  });
+
+  it("INV-Z12: 알고 열어 둔 통로는 하나이고, 그 이름이 여기 적혀 있다", async () => {
+    // 위 검사가 허용하는 이름을 **별도 단언으로** 고정한다. 두 가지(모르는 통로가 없다 ·
+    // 아는 통로가 무엇인가)를 한 단언에 묶으면 어느 쪽이 깨졌는지 못 가른다.
+    //
+    // `increment_post_views` 는 앱이 PostgREST 로 부르므로 private 으로 옮기면 앱도 못
+    // 부른다. "조회수를 누가 어떻게 올리나"를 정해야 풀리는 문제라 보류 P9 에서
+    // **"그대로 두고 배포한다"로 정했다.** 그 결정이 여기 적혀 있다는 것이 기록이다.
+    const c = await rawClient();
+    try {
+      const r = await c.query(
+        "select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace" +
+          " where n.nspname = 'public' and p.proname = 'increment_post_views'",
+      );
+      expect(r.rowCount, "P9 가 풀렸으면 위 검사의 예외 이름도 같이 지운다").toBe(1);
+    } finally {
+      await c.end();
+    }
+  });
+
+  it("INV-Z12: 다른 노출 스키마에는 마이그레이션이 함수를 만들 수 없다", async () => {
+    // 노출 스키마가 둘인데(`config.toml` 의 `schemas`) 위 구조 검사는 둘 다 훑는다.
+    // 그렇다면 `graphql_public` 쪽에 판정 함수를 심는 변이가 있어야 그 훑기가 붙들리는데,
+    // **심을 수가 없다** — 그 스키마는 `supabase_admin` 소유라 마이그레이션이 쓰는
+    // `postgres` 역할이 함수를 못 만든다(2026-09-05 실측: permission denied).
+    //
+    // 그래서 변이 대신 **그 사실 자체**를 붙든다. 이 통로가 닫혀 있는 이유가 "아무도 안
+    // 하기 때문"이 아니라 "권한이 없기 때문"이라는 것이 여기 적혀 있어야, 언젠가 소유권이
+    // 바뀌면 그때 이 줄이 판단을 요구한다.
+    const c = await rawClient();
+    try {
+      const r = await c.query(
+        "select has_schema_privilege(current_user, 'graphql_public', 'CREATE') as can",
+      );
+      expect(r.rows[0].can, "graphql_public 에 만들 수 있게 됐다 — 그쪽 변이를 등록해야 한다").toBe(
+        false,
+      );
+    } finally {
+      await c.end();
+    }
+  });
+
+  it("INV-Z12: 노출된 스키마의 뷰는 소유자 권한으로 돌지 않는다", async () => {
+    // 뷰도 통로다. postgres 소유의 뷰를 만들면 그 조회가 소유자 권한으로 돌아 밑 테이블의
+    // 정책을 지나지 않고, PostgREST 는 그것을 테이블처럼 연다. INV-Z11 의 행동 검사는
+    // 전부 `participants` **테이블**을 읽으므로 그 상태에서도 전부 초록불로 남는다.
+    // 지금 뷰가 0개라 단언은 빈 목록이지만, 생기는 날 이 줄이 판단을 요구한다.
+    const c = await rawClient();
+    try {
+      const r = await c.query(
+        "select n.nspname || '.' || c.relname as v" +
+          " from pg_class c join pg_namespace n on n.oid = c.relnamespace" +
+          " where n.nspname = any($1) and c.relkind in ('v', 'm')" +
+          "   and coalesce((select option_value from pg_options_to_table(c.reloptions)" +
+          "                  where option_name = 'security_invoker'), 'off') <> 'true'" +
+          " order by 1",
+        [[...EXPOSED_SCHEMAS]],
+      );
+      expect(r.rows.map((x) => x.v)).toEqual([]);
+    } finally {
+      await c.end();
+    }
   });
 });

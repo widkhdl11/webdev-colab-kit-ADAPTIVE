@@ -10,6 +10,7 @@ import {
   admin,
   anonClient,
   apply,
+  askAsRole,
   chatIdOf,
   createStudy,
   createUser,
@@ -251,16 +252,19 @@ describe("INV-P6: 모집 상태는 저장되지 않고 파생된다", () => {
     }
   });
 
+  // 아래 둘은 `askAsRole` 이 아니라 슈퍼유저 직결로 함수를 부른다. **일부러 그렇다** —
+  // 여기서 보는 것은 "누가 묻느냐"가 아니라 "닫으면/차면 값이 바뀌느냐"이고, 그 축은
+  // 화자와 무관하다. 화자별 비교는 아래 INV-P9 describe 가 따로 한다.
   it("INV-P6(S6): 호스트가 닫으면 인원이 그대로여도 모집 중이 아니다", async () => {
     const study = await createStudy(host.id, { max_participants: 5 });
     const c = await rawClient();
     try {
-      const before = await c.query("select public.study_is_recruiting($1) as v", [study]);
+      const before = await c.query("select private.study_is_recruiting($1) as v", [study]);
       expect(before.rows[0].v).toBe(true);
 
       await admin.from("studies").update({ closed_at: new Date().toISOString() }).eq("id", study);
 
-      const after = await c.query("select public.study_is_recruiting($1) as v", [study]);
+      const after = await c.query("select private.study_is_recruiting($1) as v", [study]);
       expect(after.rows[0].v).toBe(false);
     } finally {
       await c.end();
@@ -271,7 +275,7 @@ describe("INV-P6: 모집 상태는 저장되지 않고 파생된다", () => {
     const study = await createStudy(host.id, { max_participants: 2 });
     const c = await rawClient();
     try {
-      expect((await c.query("select public.study_is_recruiting($1) as v", [study])).rows[0].v)
+      expect((await c.query("select private.study_is_recruiting($1) as v", [study])).rows[0].v)
         .toBe(true);
 
       await apply(study, members[0].id);
@@ -280,7 +284,7 @@ describe("INV-P6: 모집 상태는 저장되지 않고 파생된다", () => {
       // closed_at 은 여전히 비어 있다. 그런데도 모집 중이 아니다 — 파생값이기 때문이다.
       const { data } = await admin.from("studies").select("closed_at").eq("id", study).single();
       expect(data!.closed_at).toBeNull();
-      expect((await c.query("select public.study_is_recruiting($1) as v", [study])).rows[0].v)
+      expect((await c.query("select private.study_is_recruiting($1) as v", [study])).rows[0].v)
         .toBe(false);
     } finally {
       await c.end();
@@ -479,26 +483,28 @@ describe("INV-P9: 수락 인원과 모집 상태는 누가 묻든 같은 답을 
     const waiting = await createUser("p9-waiting");
     await apply(s, waiting.id);
 
-    const asHost = await h.client.rpc("study_is_recruiting", { p_study_id: s });
-    const asAnon = await anonClient().rpc("study_is_recruiting", { p_study_id: s });
-    const countHost = await h.client.rpc("study_accepted_count", { p_study_id: s });
-    const countAnon = await anonClient().rpc("study_accepted_count", { p_study_id: s });
+    // 0010 부터 이 함수들은 API 에 안 열려 있다. "누가 묻든 같은 답"은 그대로 확인해야
+    // 하므로 역할만 바꿔 가며 묻는다 — 판정이 부르는 사람에 따라 갈리는지가 이 검사의 내용이다.
+    const asAuth = await askAsRole("authenticated", "select private.study_is_recruiting($1) as v", [s], h.id);
+    const asAnon = await askAsRole("anon", "select private.study_is_recruiting($1) as v", [s]);
+    const countAuth = await askAsRole("authenticated", "select private.study_accepted_count($1) as v", [s], h.id);
+    const countAnon = await askAsRole("anon", "select private.study_accepted_count($1) as v", [s]);
 
-    expect(countHost.data).toBe(2); // 대기 중인 한 명은 안 센다
-    expect(countAnon.data).toBe(2); // 고치기 전에는 0 이었다
-    expect(asHost.data).toBe(false);
-    expect(asAnon.data).toBe(false); // 고치기 전에는 true 였다
+    expect(countAuth).toBe(2); // 대기 중인 한 명은 안 센다
+    expect(countAnon).toBe(2); // 고치기 전에는 0 이었다
+    expect(asAuth).toBe(false);
+    expect(asAnon).toBe(false); // 고치기 전에는 true 였다
   });
 
   it("INV-P9 (반대 절반): 자리가 남았으면 로그인하지 않은 연결도 모집중으로 답한다", async () => {
     const h = await createUser("p9-host2");
     const s = await createStudy(h.id, { max_participants: 5 });
 
-    const countAnon = await anonClient().rpc("study_accepted_count", { p_study_id: s });
-    const asAnon = await anonClient().rpc("study_is_recruiting", { p_study_id: s });
+    const countAnon = await askAsRole("anon", "select private.study_accepted_count($1) as v", [s]);
+    const asAnon = await askAsRole("anon", "select private.study_is_recruiting($1) as v", [s]);
 
-    expect(countAnon.data).toBe(1); // 호스트 자신
-    expect(asAnon.data).toBe(true);
+    expect(countAnon).toBe(1); // 호스트 자신
+    expect(asAnon).toBe(true);
   });
 
   it("INV-P9 (S12): 파생값을 열었다고 참여자 명단이 열린 것은 아니다", async () => {
@@ -507,9 +513,9 @@ describe("INV-P9: 수락 인원과 모집 상태는 누가 묻든 같은 답을 
     const s = await createStudy(h.id, { max_participants: 5 });
     await acceptedMember(s, m.id);
 
-    // 수는 보인다
-    const count = await anonClient().rpc("study_accepted_count", { p_study_id: s });
-    expect(count.data).toBe(2);
+    // 수는 보인다 — 계산 컬럼으로도, 판정 함수로도
+    const count = await askAsRole("anon", "select private.study_accepted_count($1) as v", [s]);
+    expect(count).toBe(2);
 
     // 그런데 행은 안 보인다
     const rows = await anonClient().from("participants").select("user_id").eq("study_id", s);
@@ -641,8 +647,8 @@ describe("INV-P6: 지워진 스터디는 모집 중이 아니다", () => {
     const h = await createUser("p6rpc-host");
     const s = await createStudy(h.id, { max_participants: 5 });
 
-    const before = await h.client.rpc("study_is_recruiting", { p_study_id: s });
-    expect(before.data).toBe(true);
+    const before = await askAsRole("authenticated", "select private.study_is_recruiting($1) as v", [s], h.id);
+    expect(before).toBe(true);
 
     const { error } = await h.client
       .from("studies")
@@ -656,14 +662,14 @@ describe("INV-P6: 지워진 스터디는 모집 중이 아니다", () => {
     // **인원과 닫은 시각을 같이 고정한다**(S7-1 의 "인원도 닫은 시각도 그대로인데 답이 바뀐다").
     // 계산 컬럼 쪽 검사에는 이 보강이 있는데 여기 없으면, 삭제할 때 closed_at 을 같이 채우는
     // 구현이 왔을 때 이 검사만 초록불로 남는다.
-    const count = await h.client.rpc("study_accepted_count", { p_study_id: s });
-    expect(count.data, "삭제가 인원까지 바꿨다").toBe(1);
+    const count = await askAsRole("authenticated", "select private.study_accepted_count($1) as v", [s], h.id);
+    expect(count, "삭제가 인원까지 바꿨다").toBe(1);
     const closed = await h.client.from("studies").select("closed_at").eq("id", s).single();
     expect(closed.data!.closed_at, "삭제가 닫은 시각을 같이 채웠다").toBeNull();
 
-    const after = await h.client.rpc("study_is_recruiting", { p_study_id: s });
+    const after = await askAsRole("authenticated", "select private.study_is_recruiting($1) as v", [s], h.id);
     // null 이 아니라 **거짓**이어야 한다 — 행 선택 조건이 바뀌어 값이 안 나오는 것과 다르다.
-    expect(after.data).toBe(false);
+    expect(after).toBe(false);
   });
 });
 
@@ -701,8 +707,8 @@ describe("INV-P6: 마감일은 모집 상태가 아니다", () => {
 
   it("INV-P6: 마감일이 지나도 study_is_recruiting 은 참으로 답한다", async () => {
     const { h, s } = await studyWithPastDeadline("p6dl-host2");
-    const r = await h.client.rpc("study_is_recruiting", { p_study_id: s });
-    expect(r.data).toBe(true);
+    const r = await askAsRole("authenticated", "select private.study_is_recruiting($1) as v", [s], h.id);
+    expect(r).toBe(true);
   });
 
   it("INV-P4: 마감일이 지난 스터디도 신청과 수락이 그대로 지나간다", async () => {
