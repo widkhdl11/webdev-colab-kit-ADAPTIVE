@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Container } from "@/shared/ui/container/Container";
 import { BellIcon } from "@/shared/ui/icon/Icon";
-import { ButtonLink } from "@/shared/ui/button/Button";
+import { Button, ButtonLink } from "@/shared/ui/button/Button";
+import { signOutAction } from "@/features/auth";
 import styles from "./site-header.module.css";
 
 /**
@@ -53,6 +54,13 @@ export function SiteHeader({
               <ButtonLink href="/profile" size="sm">
                 내 프로필
               </ButtonLink>
+              {/* 로그아웃은 상태를 바꾸므로 링크가 아니라 폼이다 — 미리 가져오기나
+                  주소 공유로 남의 세션이 끊기지 않는다 */}
+              <form action={signOutAction}>
+                <Button size="sm" type="submit">
+                  로그아웃
+                </Button>
+              </form>
             </>
           ) : (
             <ButtonLink href="/login" size="sm">

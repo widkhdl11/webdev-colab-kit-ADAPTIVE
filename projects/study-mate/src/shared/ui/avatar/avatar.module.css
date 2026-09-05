@@ -1,0 +1,14 @@
+/* 괘선 채움 + 2px 잉크 테두리 + 이니셜. 형광펜을 사람 식별색으로 번지게 하지 않는다 */
+.avatar {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  border: var(--bd);
+  background: var(--rule);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--ink);
+}

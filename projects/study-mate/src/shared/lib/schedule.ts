@@ -49,3 +49,63 @@ export function relativeDay(iso: string, now: Date = new Date()): string {
   if (months < 12) return `${months}개월 전`;
   return `${Math.floor(days / 365)}년 전`;
 }
+
+/** "2026-09-21" → "2026년 9월 21일". 값이 없으면 빈 문자열 */
+export function formatDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+}
+
+/** "9월 3일" — 연도가 필요 없는 자리(올린 날짜 등) */
+export function formatMonthDay(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+}
+
+/** 시작일–종료일과 몇 주인지. 한쪽만 있으면 있는 쪽만 적는다 */
+export function formatPeriod(startsOn: string | null, endsOn: string | null): string {
+  const from = formatDate(startsOn);
+  const to = formatDate(endsOn);
+  if (!from && !to) return "정하지 않음";
+  if (from && !to) return `${from}부터`;
+  if (!from && to) return `${to}까지`;
+
+  const weeks = Math.round(
+    (new Date(endsOn as string).getTime() - new Date(startsOn as string).getTime()) /
+      (7 * 86_400_000),
+  );
+  return weeks > 0 ? `${from} – ${to} (${weeks}주)` : `${from} – ${to}`;
+}
+
+/** "매주 화·목 20:00 – 22:00". 시각이 여럿이면 요일마다 따로 적는다 */
+export function formatSlotsLong(
+  slots: readonly { weekday: number; startsAt: string; endsAt: string }[],
+): string {
+  if (slots.length === 0) return "정하지 않음";
+
+  const spans = new Set(slots.map((s) => `${hourMinute(s.startsAt)} – ${hourMinute(s.endsAt)}`));
+  const sorted = [...slots].sort(
+    (a, b) => a.weekday - b.weekday || a.startsAt.localeCompare(b.startsAt),
+  );
+
+  if (spans.size === 1) {
+    const days = [...new Set(sorted.map((s) => WEEKDAY_NAMES[s.weekday]))].join("·");
+    return `매주 ${days} ${[...spans][0]}`;
+  }
+  return sorted
+    .map((s) => `${WEEKDAY_NAMES[s.weekday]} ${hourMinute(s.startsAt)} – ${hourMinute(s.endsAt)}`)
+    .join(" · ");
+}
+
+/** 오늘부터 며칠 남았는가. 지났으면 음수 */
+export function daysUntil(iso: string | null, now: Date = new Date()): number | null {
+  if (!iso) return null;
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return null;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((then.getTime() - today.getTime()) / 86_400_000);
+}

@@ -42,6 +42,8 @@ export type StudySummary = {
   readonly filled: number;
   /** 모집 중 = 호스트가 닫지 않았고 + 수락 인원 < 정원 (INV-P6) */
   readonly recruiting: boolean;
+  /** 언제까지 신청을 받는가. 「마감 임박순」의 기준이고, 비어 있으면 기한 없음 */
+  readonly recruitUntil: string | null;
   readonly slots: readonly Slot[];
 };
 

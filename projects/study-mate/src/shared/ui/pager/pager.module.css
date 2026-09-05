@@ -1,0 +1,35 @@
+.pager {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-8);
+  margin: 36px 0 var(--space-8);
+}
+
+.pager a,
+.pager span {
+  min-width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  font-weight: 700;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  background: var(--paper);
+}
+
+.pager a:hover {
+  background: var(--rule);
+}
+
+.current {
+  background: var(--ink) !important;
+  color: var(--paper);
+}
+
+/* 갈 수 없는 방향은 링크가 아니라 글자다 — 눌러도 아무 일이 없는 링크를 두지 않는다 */
+.disabled {
+  color: var(--ink-weak);
+  border-style: dashed;
+}

@@ -50,6 +50,8 @@ const STUDIES = [
     mode: "hybrid",
     capacity: 5,
     until: 12,
+    starts: 16,
+    weeks: 8,
     slots: [
       [2, "20:00", "22:00"],
       [4, "20:00", "22:00"],
@@ -70,6 +72,8 @@ const STUDIES = [
     mode: "online",
     capacity: 6,
     until: 6,
+    starts: 8,
+    weeks: 2,
     slots: [
       [1, "21:00", "22:30"],
       [2, "21:00", "22:30"],
@@ -93,6 +97,8 @@ const STUDIES = [
     mode: "offline",
     capacity: 6,
     until: 20,
+    starts: 22,
+    weeks: 12,
     slots: [
       [1, "06:30", "08:00"],
       [3, "06:30", "08:00"],
@@ -114,6 +120,8 @@ const STUDIES = [
     mode: "offline",
     capacity: 8,
     until: 30,
+    starts: 33,
+    weeks: 8,
     slots: [[6, "10:00", "12:00"]],
     members: ["jiwon"],
     views: 51,
@@ -131,6 +139,8 @@ const STUDIES = [
     mode: "online",
     capacity: 4,
     until: 9,
+    starts: 11,
+    weeks: 6,
     slots: [[3, "20:00", "22:00"]],
     members: ["yuna", "minseo", "sora"],
     views: 96,
@@ -148,6 +158,8 @@ const STUDIES = [
     mode: "online",
     capacity: 10,
     until: 45,
+    starts: 47,
+    weeks: 4,
     slots: [
       [1, "07:30", "08:00"],
       [2, "07:30", "08:00"],
@@ -214,6 +226,8 @@ async function main() {
         meeting_mode: s.mode,
         max_participants: s.capacity,
         recruit_until: iso(s.until),
+        starts_on: iso(s.starts),
+        ends_on: iso(s.starts + s.weeks * 7),
       })
       .select("id")
       .single();

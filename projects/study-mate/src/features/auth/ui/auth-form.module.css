@@ -1,0 +1,77 @@
+/* 인증 2장 — 상세·작업 언어의 좁은 변형 (docs/IA.md 「화면 언어는 세 종류뿐이다」) */
+.page {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 56px 0 var(--space-64);
+}
+
+.title {
+  font-size: clamp(28px, 4.2vw, 38px);
+}
+
+.sub {
+  margin-top: var(--space-10);
+  font-size: 16px;
+  color: var(--ink-weak);
+}
+
+.card {
+  margin-top: var(--space-26);
+  padding: 28px var(--space-24);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-6);
+  margin-bottom: var(--space-18);
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.field input {
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: 13px var(--space-14);
+}
+
+.field input::placeholder {
+  color: var(--ink-weak);
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--ink-weak);
+}
+
+.error {
+  margin-bottom: var(--space-18);
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--hl-coral);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: var(--space-12) var(--space-14);
+}
+
+.foot {
+  margin-top: var(--space-20);
+  padding-top: var(--space-18);
+  border-top: 2px dotted var(--rule);
+  font-size: 15px;
+  color: var(--ink-weak);
+}
+
+.foot a {
+  font-weight: 700;
+  color: var(--ink);
+  border-bottom: 2px solid var(--ink);
+}

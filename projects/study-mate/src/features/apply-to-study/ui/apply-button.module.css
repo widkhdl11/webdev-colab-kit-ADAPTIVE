@@ -1,0 +1,16 @@
+.wrap {
+  display: grid;
+  gap: var(--space-10);
+}
+
+/* 실패 문구. 색만으로 말하지 않게 글자로도 "신청하지 못했습니다"가 들어간다 */
+.error {
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--hl-coral);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: var(--space-10) var(--space-14);
+}

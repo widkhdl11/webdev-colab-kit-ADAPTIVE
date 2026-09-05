@@ -14,18 +14,21 @@ export function ChipLink({
   href,
   color,
   selected = false,
+  neutral = false,
   children,
 }: {
   href: string;
   color: Highlight;
   selected?: boolean;
+  /** 「전체」처럼 어느 카테고리도 아닌 칩. 형광펜을 의미 밖으로 넓히지 않으려고 괘선색을 쓴다 */
+  neutral?: boolean;
   children: ReactNode;
 }) {
   return (
     <Link
       href={href}
       className={styles.chip}
-      style={fill(color)}
+      style={neutral ? ({ "--fill": "var(--rule)" } as CSSProperties) : fill(color)}
       aria-current={selected ? "true" : undefined}
     >
       <span className={styles.swatch} aria-hidden="true" />
