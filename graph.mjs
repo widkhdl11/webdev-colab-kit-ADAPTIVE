@@ -71,6 +71,12 @@ export const GRAPH = {
         clean_when: {
           // ↓ 이 신호를 기존 design/BEFORE_UI 게이트가 이미 읽어 UI 구현을 허용한다
           frontmatter: { path: "docs/design/design-rules.md", require: "status: approved" },
+          // 시안이 0장인 승인은 승인으로 치지 않는다. approved 하나만으로는 "새 방향인가
+          // 반복인가"를 가르지 못한다 — 그 신호는 design-rules.md 가 시안 루프의 결과물일
+          // 때만 맞고, 들여오기가 다른 저장소에서 승인을 가져오면 시안 0장인 새 프로젝트가
+          // "이미 승인된 방향의 반복"으로 통과한다(2026-09-05 study-mate 에서 실제로 났다).
+          // 화면이 없는 프로젝트는 --na 로 선언한다 — 조용히 통과하는 것과 구분되어야 한다.
+          exists_nonempty: "docs/design/mockups/*.html",
         },
       },
       "schema-designer": {
