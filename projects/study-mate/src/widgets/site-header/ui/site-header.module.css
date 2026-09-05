@@ -1,0 +1,110 @@
+/* 헤더 — design-rules 「치수」: 높이 72px, sticky, 아래쪽 2px 잉크 테두리 */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: var(--paper);
+  border-bottom: var(--bd);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-26);
+  min-height: var(--header-h);
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.1;
+  padding: 0 var(--space-2);
+  background: linear-gradient(transparent 70%, var(--hl-yellow) 70%);
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-22);
+}
+
+.nav a {
+  font-size: 16px;
+  font-weight: 600;
+  padding: var(--space-4) var(--space-2);
+  border-bottom: 2px solid transparent;
+}
+
+.nav a:hover {
+  border-bottom-color: var(--ink);
+}
+
+.nav a[aria-current="page"] {
+  font-weight: 700;
+  border-bottom-color: var(--ink);
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+}
+
+.iconBtn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+}
+
+.iconBtn:hover {
+  background: var(--rule);
+}
+
+.dot {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 var(--space-4);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--hl-coral);
+  border: 2px solid var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/*
+ * 모바일 헤더 — design-rules 가 "아직 안 정한 것"으로 남겨 둔 자리다.
+ * 640px 아래에서 네비를 감추는 대신 **헤더 아래 한 줄로 내린다.** 햄버거를 고르지 않은
+ * 이유는 이 서비스의 주 메뉴가 둘뿐이라, 두 개를 감추려고 여는 동작을 하나 더 만들면
+ * 발견까지의 손이 늘기 때문이다. 하단 탭은 로그인 뒤 화면이 늘어난 다음에 다시 본다.
+ */
+@media (max-width: 640px) {
+  .inner {
+    gap: var(--space-12);
+    flex-wrap: wrap;
+    padding-bottom: var(--space-8);
+  }
+
+  .logo {
+    font-size: 22px;
+  }
+
+  .nav {
+    order: 3;
+    width: 100%;
+    gap: var(--space-18);
+    padding-top: var(--space-8);
+    border-top: 2px dotted var(--rule);
+  }
+}

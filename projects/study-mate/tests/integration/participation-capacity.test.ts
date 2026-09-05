@@ -1,10 +1,22 @@
-// 근거 스펙: docs/specs/participation-capacity.md (INV-P1 ~ INV-P7)
+// 근거 스펙: docs/specs/participation-capacity.md (INV-P1 ~ INV-P9)
 //
 // 전부 실제 로컬 Postgres 에 붙어서 돈다. 이 불변식들의 강제 위치가 데이터베이스라서다 —
 // 제약·트리거가 실제로 거부하는지는 거부당해 봐야 안다.
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { admin, createStudy, createUser, cleanupUsers, rawClient, type TestUser } from "./helpers";
+import {
+  accept,
+  acceptedMember,
+  admin,
+  anonClient,
+  apply,
+  chatIdOf,
+  createStudy,
+  createUser,
+  cleanupUsers,
+  rawClient,
+  type TestUser,
+} from "./helpers";
 
 let host: TestUser;
 let members: TestUser[];
@@ -24,19 +36,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await cleanupUsers(created);
 });
-
-/** 신청 → 수락. 관리자 연결로 하므로 정책이 아니라 트리거만 판정한다. */
-async function apply(studyId: string, userId: string) {
-  const { error } = await admin.from("participants").insert({ study_id: studyId, user_id: userId });
-  if (error) throw new Error(error.message);
-}
-async function accept(studyId: string, userId: string) {
-  return admin
-    .from("participants")
-    .update({ status: "accepted" })
-    .eq("study_id", studyId)
-    .eq("user_id", userId);
-}
 
 describe("INV-P1: 수락된 참여자 수는 정원을 넘지 않는다", () => {
   it("INV-P1(실패경로 S1): 정원이 찬 스터디에 한 명 더 수락하면 거부한다", async () => {
@@ -352,5 +351,171 @@ describe("INV-P7: 참여자 상태는 결과를 전부 표현하고, 끝난 상�
           .eq("user_id", members[0].id)
       ).error,
     ).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2026-09-05 (2) 리뷰 개정 — INV-P8 · INV-P9
+//
+// 앞의 검사들은 전부 rawClient()(슈퍼유저 직결)로 돈다. 그래서 행 수준 접근 정책을 안 타고,
+// **파생값이 묻는 사람마다 다른 답을 준다는 것**을 볼 수 없었다. 아래 INV-P9 는 일부러
+// 로그인하지 않은 공개 키 연결로 같은 질문을 한다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("INV-P8: 채팅방 구성원은 참가 상태에서 파생된다 — 양쪽 방향으로", () => {
+  it("INV-P8 (S9): 강퇴되면 채팅 구성원에서 빠지고 대화를 더는 못 읽는다", async () => {
+    const h = await createUser("p8-host");
+    const m = await createUser("p8-member");
+    created.push(h.id, m.id);
+
+    const s = await createStudy(h.id, { max_participants: 5 });
+    const chatId = await chatIdOf(s);
+    await acceptedMember(s, m.id);
+
+    // 들어가 있는 것을 먼저 확인한다 — 부재만 보는 검사는 절반이다
+    const inChat = await admin
+      .from("chat_participants")
+      .select("id")
+      .eq("chat_id", chatId)
+      .eq("user_id", m.id);
+    expect(inChat.data).toHaveLength(1);
+
+    // 나가기 전에 남긴 말 하나
+    await admin.from("chat_messages").insert({ chat_id: chatId, sender_id: m.id, content: "안녕" });
+
+    await admin
+      .from("participants")
+      .update({ status: "kicked" })
+      .eq("study_id", s)
+      .eq("user_id", m.id);
+
+    const afterKick = await admin
+      .from("chat_participants")
+      .select("id")
+      .eq("chat_id", chatId)
+      .eq("user_id", m.id);
+    expect(afterKick.data).toHaveLength(0);
+
+    // 실제로 못 읽는다
+    const read = await m.client.from("chat_messages").select("id").eq("chat_id", chatId);
+    expect(read.data).toHaveLength(0);
+
+    // 그리고 못 쓴다
+    const write = await m.client
+      .from("chat_messages")
+      .insert({ chat_id: chatId, sender_id: m.id, content: "아직 있다" });
+    expect(write.error).not.toBeNull();
+
+    // 남긴 말은 그대로 있다 — INV-Z6 과 같은 결
+    const left = await admin.from("chat_messages").select("id").eq("chat_id", chatId).eq("sender_id", m.id);
+    expect(left.data).toHaveLength(1);
+  });
+
+  it("INV-P8 (S10): 스스로 탈퇴해도 같은 결과가 된다", async () => {
+    const h = await createUser("p8-host2");
+    const m = await createUser("p8-leaver");
+    created.push(h.id, m.id);
+
+    const s = await createStudy(h.id, { max_participants: 5 });
+    const chatId = await chatIdOf(s);
+    await acceptedMember(s, m.id);
+
+    const before = await admin
+      .from("chat_participants")
+      .select("id")
+      .eq("chat_id", chatId)
+      .eq("user_id", m.id);
+    expect(before.data).toHaveLength(1);
+
+    // 본인이 자기 손으로 나간다 — 공개 키 연결로
+    const { error } = await m.client
+      .from("participants")
+      .update({ status: "withdrawn" })
+      .eq("study_id", s)
+      .eq("user_id", m.id);
+    expect(error).toBeNull();
+
+    const after = await admin
+      .from("chat_participants")
+      .select("id")
+      .eq("chat_id", chatId)
+      .eq("user_id", m.id);
+    expect(after.data).toHaveLength(0);
+  });
+
+  it("INV-P8: 대기 중인 신청자는 애초에 채팅방에 들어가지 않는다", async () => {
+    const h = await createUser("p8-host3");
+    const w = await createUser("p8-waiting");
+    created.push(h.id, w.id);
+
+    const s = await createStudy(h.id, { max_participants: 5 });
+    const chatId = await chatIdOf(s);
+    await apply(s, w.id);
+
+    const inChat = await admin
+      .from("chat_participants")
+      .select("id")
+      .eq("chat_id", chatId)
+      .eq("user_id", w.id);
+    expect(inChat.data).toHaveLength(0);
+
+    // 수락하면 들어간다 (부재 → 존재 쌍을 한 테스트 안에서 본다)
+    await accept(s, w.id);
+    const afterAccept = await admin
+      .from("chat_participants")
+      .select("id")
+      .eq("chat_id", chatId)
+      .eq("user_id", w.id);
+    expect(afterAccept.data).toHaveLength(1);
+  });
+});
+
+describe("INV-P9: 수락 인원과 모집 상태는 누가 묻든 같은 답을 준다", () => {
+  it("INV-P9 (S11): 정원이 꽉 찬 스터디를 로그인하지 않은 연결이 물어도 마감으로 답한다", async () => {
+    const h = await createUser("p9-host");
+    const m1 = await createUser("p9-m1");
+    created.push(h.id, m1.id);
+
+    // 정원 2 = 호스트 + 한 명이면 꽉 찬다
+    const s = await createStudy(h.id, { max_participants: 2 });
+    await acceptedMember(s, m1.id);
+
+    const asHost = await h.client.rpc("study_is_recruiting", { p_study_id: s });
+    const asAnon = await anonClient().rpc("study_is_recruiting", { p_study_id: s });
+    const countHost = await h.client.rpc("study_accepted_count", { p_study_id: s });
+    const countAnon = await anonClient().rpc("study_accepted_count", { p_study_id: s });
+
+    expect(countHost.data).toBe(2);
+    expect(countAnon.data).toBe(2); // 고치기 전에는 0 이었다
+    expect(asHost.data).toBe(false);
+    expect(asAnon.data).toBe(false); // 고치기 전에는 true 였다
+  });
+
+  it("INV-P9 (반대 절반): 자리가 남았으면 로그인하지 않은 연결도 모집중으로 답한다", async () => {
+    const h = await createUser("p9-host2");
+    created.push(h.id);
+    const s = await createStudy(h.id, { max_participants: 5 });
+
+    const countAnon = await anonClient().rpc("study_accepted_count", { p_study_id: s });
+    const asAnon = await anonClient().rpc("study_is_recruiting", { p_study_id: s });
+
+    expect(countAnon.data).toBe(1); // 호스트 자신
+    expect(asAnon.data).toBe(true);
+  });
+
+  it("INV-P9 (S12): 파생값을 열었다고 참여자 명단이 열린 것은 아니다", async () => {
+    const h = await createUser("p9-host3");
+    const m = await createUser("p9-m");
+    created.push(h.id, m.id);
+    const s = await createStudy(h.id, { max_participants: 5 });
+    await acceptedMember(s, m.id);
+
+    // 수는 보인다
+    const count = await anonClient().rpc("study_accepted_count", { p_study_id: s });
+    expect(count.data).toBe(2);
+
+    // 그런데 행은 안 보인다
+    const rows = await anonClient().from("participants").select("user_id").eq("study_id", s);
+    expect(rows.data).toHaveLength(0);
   });
 });

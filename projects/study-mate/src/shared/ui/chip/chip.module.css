@@ -1,0 +1,57 @@
+/* 형광펜 칩 — 선택되면 색으로 채워지고 스와치 점이 종이색으로 뒤집힌다 */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  padding: var(--space-10) 15px;
+  border: var(--bd);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.swatch {
+  width: var(--space-12);
+  height: var(--space-12);
+  border-radius: var(--r-pill);
+  border: 2px solid var(--ink);
+  background: var(--fill, var(--rule));
+  flex: none;
+}
+
+.chip:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.chip[aria-pressed="true"],
+.chip[aria-current="true"] {
+  background: var(--fill);
+  font-weight: 700;
+  box-shadow: var(--shadow);
+}
+
+.chip[aria-pressed="true"] .swatch,
+.chip[aria-current="true"] .swatch {
+  background: var(--paper);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-10);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition: none;
+  }
+
+  .chip:hover {
+    transform: none;
+  }
+}

@@ -1,0 +1,33 @@
+/* 상태 배지 — 점이 붙은 알약. 카테고리 라벨(사각)과 모양으로 갈린다 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 13px;
+  border: var(--bd);
+  border-radius: var(--r-pill);
+  color: var(--ink);
+}
+
+.dot {
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--r-pill);
+  background: var(--ink);
+}
+
+.open {
+  background: var(--hl-mint);
+}
+
+.closed {
+  background: var(--hl-coral);
+}
+
+.lg {
+  font-size: 15px;
+  padding: 9px var(--space-16);
+}

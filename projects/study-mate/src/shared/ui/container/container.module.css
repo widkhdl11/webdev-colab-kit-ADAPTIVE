@@ -1,0 +1,13 @@
+/* 중앙 정렬 컨테이너 — design-rules 「치수」: 최대 1120px, 좌우 24px(모바일 18px) */
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--space-24);
+}
+
+@media (max-width: 600px) {
+  .wrap {
+    padding: 0 var(--space-18);
+  }
+}

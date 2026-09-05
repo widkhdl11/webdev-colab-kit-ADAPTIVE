@@ -1,0 +1,39 @@
+/* 카드 — design-rules 「형태와 깊이」: 종이 + 2px 테두리 + 큰 둥근 모서리 + 소프트 섀도우 */
+.card {
+  background: var(--paper);
+  border: var(--bd);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+
+/* 카드 전체가 링크일 때만 들어 올린다 */
+.linked {
+  display: block;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.linked:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+
+.body {
+  padding: var(--space-20);
+}
+
+/* 카드 내부 구분은 점선 괘선 */
+.divider {
+  border: 0;
+  border-top: 2px dotted var(--rule);
+  margin: var(--space-16) 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .linked {
+    transition: none;
+  }
+
+  .linked:hover {
+    transform: none;
+  }
+}

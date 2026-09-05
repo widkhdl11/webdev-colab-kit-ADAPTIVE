@@ -1,0 +1,62 @@
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-10);
+  margin-bottom: var(--space-14);
+}
+
+.title {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+/* 두 줄에서 자른다 — 카드 높이가 제목 길이에 끌려다니지 않게 */
+.desc {
+  margin-top: var(--space-8);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-weak);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  margin-top: var(--space-12);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8) var(--space-14);
+  font-size: 14px;
+  color: var(--ink-weak);
+}
+
+.meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.stats {
+  display: flex;
+  gap: var(--space-16);
+  font-size: 14px;
+  color: var(--ink-weak);
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-variant-numeric: tabular-nums;
+}

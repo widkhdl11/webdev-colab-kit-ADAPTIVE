@@ -5,7 +5,17 @@
 // 않고 데이터베이스를 직접 부르는 것이 정확히 INV-Z5 가 말하는 우회 경로다.
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { admin, anonClient, createStudy, createUser, cleanupUsers, rawClient, type TestUser } from "./helpers";
+import {
+  admin,
+  anonClient,
+  apply,
+  chatIdOf,
+  createStudy,
+  createUser,
+  cleanupUsers,
+  rawClient,
+  type TestUser,
+} from "./helpers";
 
 let host: TestUser;
 let stranger: TestUser;
@@ -339,5 +349,220 @@ describe("INV-Z7: 파일 저장소의 삭제·수정은 올린 사람만", () =>
 
     const { data } = await admin.storage.from("avatars").list(host.id);
     expect(data?.map((f) => f.name)).toContain("avatar.txt");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2026-09-05 (2) 리뷰 개정 — INV-Z8 · INV-Z9 · INV-Z10
+//
+// 이 블록이 잡는 것은 앞의 검사들이 구조적으로 못 잡는 종류다. 앞의 표현식 검사는
+// "조건이 통째로 사라진 정책"을 잡지만, **조건은 있는데 지켜야 할 열을 안 붙드는 정책**은
+// 그대로 통과시킨다. 아래 셋이 정확히 그 자리다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("INV-Z8: 소유·소속을 나타내는 열은 갱신으로 바뀌지 않는다", () => {
+  it("INV-Z8 (S7): 호스트가 자기 참여 행의 user_id 를 남으로 바꿀 수 없다", async () => {
+    // 이것이 왜 위험한가: participants_update_host 의 조건은 study_id 만 본다. user_id 가
+    // 요청이 보낸 값 그대로 들어가면, 호스트 판정을 **통과한 채로 판정의 대상이 바뀐다** —
+    // 신청한 적 없는 사람이 멤버가 되고 트리거가 이어서 채팅방에 넣는다.
+    const victim = await createUser("z8-victim");
+    created.push(victim.id);
+
+    const s = await createStudy(host.id, { max_participants: 5 });
+    const { data: own } = await admin
+      .from("participants")
+      .select("id")
+      .eq("study_id", s)
+      .eq("user_id", host.id)
+      .single();
+
+    const { error } = await host.client
+      .from("participants")
+      .update({ user_id: victim.id })
+      .eq("id", own!.id as string);
+
+    expect(error).not.toBeNull();
+    expect(error?.code).toBe("42501"); // 정책이 아니라 열 권한이 막는다
+
+    // 거부만 보지 않는다 — 실제로 안 바뀌었는지 다시 읽는다
+    const { data: after } = await admin
+      .from("participants")
+      .select("user_id")
+      .eq("id", own!.id as string)
+      .single();
+    expect(after!.user_id).toBe(host.id);
+
+    // 피해자는 이 스터디의 채팅방에도 없다
+    const chatId = await chatIdOf(s);
+    const { data: inChat } = await admin
+      .from("chat_participants")
+      .select("id")
+      .eq("chat_id", chatId)
+      .eq("user_id", victim.id);
+    expect(inChat).toHaveLength(0);
+  });
+
+  it("INV-Z8 (S8): 멤버가 자기 채팅 참여 행의 chat_id 를 남의 방으로 바꿀 수 없다", async () => {
+    const other = await createStudy(stranger.id, { max_participants: 5 });
+    const otherChat = await chatIdOf(other);
+
+    // 남의 방에 메시지를 하나 남겨 둔다 — 옮겨 갔다면 이게 보였을 것이다
+    await admin.from("chat_messages").insert({
+      chat_id: otherChat,
+      sender_id: stranger.id,
+      content: "남의 방 대화",
+    });
+
+    const myChat = await chatIdOf(studyId);
+    const { data: mine } = await admin
+      .from("chat_participants")
+      .select("id")
+      .eq("chat_id", myChat)
+      .eq("user_id", member.id)
+      .single();
+
+    const { error } = await member.client
+      .from("chat_participants")
+      .update({ chat_id: otherChat })
+      .eq("id", mine!.id as string);
+
+    expect(error).not.toBeNull();
+    expect(error?.code).toBe("42501");
+
+    const { data: after } = await admin
+      .from("chat_participants")
+      .select("chat_id")
+      .eq("id", mine!.id as string)
+      .single();
+    expect(after!.chat_id).toBe(myChat);
+
+    // 그리고 남의 방 대화는 여전히 안 보인다
+    const { data: msgs } = await member.client
+      .from("chat_messages")
+      .select("id")
+      .eq("chat_id", otherChat);
+    expect(msgs).toHaveLength(0);
+  });
+
+  it("INV-Z8 (S9, 반대 절반): 마지막으로 읽은 시각은 본인이 갱신할 수 있다", async () => {
+    // 열 권한이 갱신을 통째로 막아 버려서 위 둘이 통과한 것이 아님을 보인다.
+    const myChat = await chatIdOf(studyId);
+    const stamp = new Date().toISOString();
+
+    const { error } = await member.client
+      .from("chat_participants")
+      .update({ last_read_at: stamp })
+      .eq("chat_id", myChat)
+      .eq("user_id", member.id);
+
+    expect(error).toBeNull();
+
+    const { data: after } = await admin
+      .from("chat_participants")
+      .select("last_read_at")
+      .eq("chat_id", myChat)
+      .eq("user_id", member.id)
+      .single();
+    expect(after!.last_read_at).not.toBeNull();
+  });
+});
+
+describe("INV-Z9: 모집글을 만들 수 있는 것은 그 스터디의 호스트뿐이다", () => {
+  it("INV-Z9 (S10, 실패경로): 호스트가 아닌 사람이 남의 스터디에 모집글을 붙일 수 없다", async () => {
+    const { error } = await stranger.client
+      .from("posts")
+      .insert({ author_id: stranger.id, study_id: studyId, title: "가로채기", content: "본문" });
+
+    expect(error).not.toBeNull();
+    expect(error?.code).toBe("42501");
+
+    const { data: posts } = await admin.from("posts").select("id").eq("author_id", stranger.id);
+    expect(posts).toHaveLength(0);
+  });
+
+  it("INV-Z9 (반대 절반): 호스트는 자기 스터디에 모집글을 쓸 수 있다", async () => {
+    const s = await createStudy(host.id);
+    const { data, error } = await host.client
+      .from("posts")
+      .insert({ author_id: host.id, study_id: s, title: "2기 모집", content: "본문" })
+      .select("id")
+      .single();
+
+    expect(error).toBeNull();
+    expect(data?.id).toBeTruthy();
+  });
+
+  it("INV-Z9 (INV-Z8 과 함께): 이미 쓴 모집글을 남의 스터디로 옮길 수 없다", async () => {
+    const other = await createStudy(stranger.id);
+    const { error } = await host.client
+      .from("posts")
+      .update({ study_id: other })
+      .eq("id", postId);
+
+    expect(error).not.toBeNull();
+    expect(error?.code).toBe("42501");
+
+    const { data: after } = await admin.from("posts").select("study_id").eq("id", postId).single();
+    expect(after!.study_id).toBe(studyId);
+  });
+});
+
+describe("INV-Z10: 지워진 것으로 표시된 스터디는 새로운 쓰기를 받지 않는다", () => {
+  it("INV-Z10 (S11): 지워진 스터디의 대기 신청은 수락되지 않는다", async () => {
+    const s = await createStudy(host.id, { max_participants: 5 });
+    const applicant = await createUser("z10-applicant");
+    created.push(applicant.id);
+    await apply(s, applicant.id);
+
+    await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
+
+    const { error } = await host.client
+      .from("participants")
+      .update({ status: "accepted" })
+      .eq("study_id", s)
+      .eq("user_id", applicant.id);
+
+    expect(error).not.toBeNull();
+
+    const { data: after } = await admin
+      .from("participants")
+      .select("status")
+      .eq("study_id", s)
+      .eq("user_id", applicant.id)
+      .single();
+    expect(after!.status).toBe("pending");
+  });
+
+  it("INV-Z10: 지워진 스터디에는 새 신청도 들어가지 않는다", async () => {
+    const s = await createStudy(host.id, { max_participants: 5 });
+    await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
+
+    const { error } = await stranger.client
+      .from("participants")
+      .insert({ study_id: s, user_id: stranger.id });
+
+    expect(error).not.toBeNull();
+  });
+
+  it("INV-Z10: 지워진 스터디의 모집글은 목록에 나오지 않는다 — 호스트에게는 보인다", async () => {
+    const s = await createStudy(host.id);
+    const { data: p } = await admin
+      .from("posts")
+      .insert({ author_id: host.id, study_id: s, title: "곧 지워질 스터디", content: "본문" })
+      .select("id")
+      .single();
+
+    // 지우기 전에는 지나가던 사람에게도 보인다 (검사할 대상이 실제로 있다)
+    const before = await anonClient().from("posts").select("id").eq("id", p!.id as string);
+    expect(before.data).toHaveLength(1);
+
+    await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
+
+    const after = await anonClient().from("posts").select("id").eq("id", p!.id as string);
+    expect(after.data).toHaveLength(0);
+
+    // 호스트는 자기 것을 지워진 뒤에도 본다 — INV-Z6 과 같은 결
+    const mine = await host.client.from("posts").select("id").eq("id", p!.id as string);
+    expect(mine.data).toHaveLength(1);
   });
 });

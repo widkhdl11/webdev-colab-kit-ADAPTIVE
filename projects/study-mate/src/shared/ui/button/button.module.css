@@ -1,0 +1,73 @@
+/* 버튼 — design-rules 「잉크 행동 규칙」: 주 행동은 잉크 채움 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
+  padding: 13px var(--space-22);   /* 13px 은 시안 실측값(홀수 1회성) */
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  background: var(--paper);
+  color: var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.ink {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.ink:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+.outline:hover {
+  background: var(--rule);
+  transform: translateY(-2px);
+}
+
+/* 신청 상태 3종 — 대기 중은 점선(아직 확정 아님), 참여 중은 민트 채움 */
+.wait {
+  border-style: dashed;
+  background: var(--paper);
+}
+
+.joined {
+  background: var(--hl-mint);
+}
+
+.sm {
+  padding: var(--space-10) var(--space-16);
+  font-size: 15px;
+}
+
+.lg {
+  padding: var(--space-16) var(--space-26);
+  font-size: 17px;
+}
+
+.block {
+  width: 100%;
+}
+
+.btn:disabled {
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+
+  .ink:hover,
+  .outline:hover {
+    transform: none;
+  }
+}

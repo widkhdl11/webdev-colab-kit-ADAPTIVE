@@ -3,3 +3,4 @@
 export { decideRouteAccess, type RouteAccess } from "./model/route-access";
 export { readVerifiedUser, type VerifiedUser } from "./model/verified-user";
 export { NO_SESSION_MESSAGE, requireSession } from "./model/require-session";
+export { currentUser } from "./api/current-user";

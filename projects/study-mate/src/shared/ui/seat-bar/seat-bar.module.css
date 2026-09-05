@@ -1,0 +1,48 @@
+/* 좌석 바 — design-rules 「형태와 의미」. 트랙은 괘선 채움 + 2px 테두리, 완전 둥글게 */
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-10);
+  margin-bottom: var(--space-8);
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-weak);
+}
+
+.count {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  height: 14px;
+  border: var(--bd);
+  border-radius: var(--r-pill);
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--hl-mint);
+}
+
+.closed {
+  background: var(--hl-coral);
+}
+
+/* 상세 화면의 큰 변형 */
+.lg .bar {
+  height: 18px;
+}
+
+.lg .count {
+  font-size: 17px;
+}

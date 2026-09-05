@@ -1,0 +1,59 @@
+.section {
+  padding: var(--space-64) 0;
+}
+
+.tight {
+  padding: 40px 0;
+}
+
+.flush {
+  padding-top: 0;
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-16);
+  margin-bottom: var(--space-26);
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: clamp(24px, 3.4vw, 32px);
+}
+
+.sub {
+  margin-top: var(--space-6);
+  font-size: 15px;
+  color: var(--ink-weak);
+}
+
+.more {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: 15px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: var(--space-2);
+}
+
+/* 카드 그리드 — 모바일 1열, 660px 2열, 1000px 3열 (design-rules 「치수」) */
+.grid {
+  display: grid;
+  gap: var(--gap-grid);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 660px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .grid3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

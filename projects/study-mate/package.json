@@ -9,7 +9,8 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:integration": "node scripts/with-local-supabase.mjs npx vitest run --config vitest.integration.config.mts",
-    "db:reset": "npx supabase db reset --local"
+    "db:reset": "npx supabase db reset --local",
+    "test:mutation": "node scripts/with-local-supabase.mjs node scripts/mutation-run.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.5",

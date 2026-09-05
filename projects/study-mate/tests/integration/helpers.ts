@@ -78,7 +78,8 @@ export async function createStudy(
       title: "테스트 스터디",
       description: "본문",
       category_id: "it",
-      region: "온라인",
+      region_code: "seoul",
+      meeting_mode: "online",
       max_participants: 3,
       ...overrides,
     })
@@ -95,7 +96,54 @@ export async function rawClient(): Promise<Client> {
   return c;
 }
 
-/** 테스트가 만든 것을 지운다. 조건 없는 삭제가 아니라 id 목록으로만 지운다. */
+/** 신청을 넣는다(대기 상태). 절차가 다섯 곳에 흩어져 있던 것을 여기로 모았다. */
+export async function apply(studyId: string, userId: string): Promise<void> {
+  const { error } = await admin.from("participants").insert({ study_id: studyId, user_id: userId });
+  if (error) throw new Error(`신청 생성 실패: ${error.message}`);
+}
+
+/**
+ * 신청을 수락한다. **결과를 그대로 돌려준다** — 던지지 않는 이유는 "거부되는지"를 보는
+ * 테스트가 여럿이라, 그쪽이 error 를 직접 읽어야 하기 때문이다.
+ */
+export async function accept(studyId: string, userId: string) {
+  return admin
+    .from("participants")
+    .update({ status: "accepted" })
+    .eq("study_id", studyId)
+    .eq("user_id", userId);
+}
+
+/** 신청 → 수락까지 한 번에. 「이미 참여 중인 사람」이 필요한 테스트의 준비물. */
+export async function acceptedMember(studyId: string, userId: string): Promise<void> {
+  await apply(studyId, userId);
+  const { error } = await accept(studyId, userId);
+  if (error) throw new Error(`수락 실패: ${error.message}`);
+}
+
+/** 그 스터디의 채팅방 id. 스터디를 만들 때 트리거가 하나 만들어 둔다. */
+export async function chatIdOf(studyId: string): Promise<string> {
+  const { data, error } = await admin.from("chats").select("id").eq("study_id", studyId).single();
+  if (error || !data) throw new Error(`채팅방을 못 찾았다: ${error?.message}`);
+  return data.id as string;
+}
+
+/**
+ * 테스트가 만든 것을 지운다. 조건 없는 삭제가 아니라 id 목록으로만 지운다.
+ *
+ * 실패를 삼키지 않는다 — 사용자가 남으면 프로필·스터디·참여자·채팅이 cascade 로 안 지워진
+ * 채 쌓이고, 다음 실행이 그 위에서 돈다. 그러면 이번 코드와 무관한 빨간불/초록불이 나온다.
+ */
 export async function cleanupUsers(ids: string[]): Promise<void> {
-  for (const id of ids) await admin.auth.admin.deleteUser(id).catch(() => undefined);
+  const failed: string[] = [];
+  for (const id of ids) {
+    const { error } = await admin.auth.admin.deleteUser(id);
+    if (error) failed.push(`${id}: ${error.message}`);
+  }
+  if (failed.length > 0) {
+    throw new Error(
+      `테스트 사용자 정리 실패 ${failed.length}건 — 남은 데이터가 다음 실행의 판정을 바꾼다: ` +
+        failed.join(" / "),
+    );
+  }
 }

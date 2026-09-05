@@ -1,0 +1,16 @@
+/*
+ * 카테고리 라벨 — 사각(둥글기 8px). design-rules 「색이 겹치면 모양으로 가른다」:
+ * 민트·코랄은 카테고리와 모집 상태에 겹쳐 쓰이므로 색이 아니라 모양이 둘을 가른다.
+ */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px var(--space-10);   /* 7px 은 시안 실측값 */
+  border: var(--bd);
+  border-radius: var(--r-tag);
+  background: var(--fill);
+  color: var(--ink);              /* 글자는 항상 잉크 — 형광펜 위 대비 7.26:1 이상 */
+}
