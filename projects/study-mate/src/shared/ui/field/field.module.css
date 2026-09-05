@@ -1,0 +1,117 @@
+/* 폼 — 상세·작업 언어의 좁은 변형 (docs/IA.md). 라벨은 항상 있고 숨기지 않는다 */
+.field {
+  display: grid;
+  gap: var(--space-6);
+  margin-bottom: var(--space-18);
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.required {
+  color: var(--ink-weak);
+  font-weight: 600;
+}
+
+.control {
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: 13px var(--space-14);
+  width: 100%;
+}
+
+.control::placeholder {
+  color: var(--ink-weak);
+}
+
+textarea.control {
+  min-height: 180px;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+select.control {
+  appearance: none;
+  -webkit-appearance: none;
+  font-weight: 600;
+  cursor: pointer;
+  padding-right: 40px;
+}
+
+.selectWrap {
+  position: relative;
+  display: block;
+}
+
+.selectWrap::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.hint {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-weak);
+}
+
+/* 여러 칸이 한 줄에 오는 자리(기간·시간) */
+.row {
+  display: grid;
+  gap: var(--space-12);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 560px) {
+  .row2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .row3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.section {
+  margin-top: var(--space-26);
+  padding-top: var(--space-20);
+  border-top: 2px dotted var(--rule);
+}
+
+.sectionTitle {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: var(--space-6);
+}
+
+.sectionHint {
+  font-size: 13px;
+  color: var(--ink-weak);
+  margin-bottom: var(--space-16);
+}
+
+/* 실패 문구. 색만으로 말하지 않게 글자로도 무엇이 안 됐는지 적는다 */
+.error {
+  margin-bottom: var(--space-18);
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--hl-coral);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: var(--space-12) var(--space-14);
+}

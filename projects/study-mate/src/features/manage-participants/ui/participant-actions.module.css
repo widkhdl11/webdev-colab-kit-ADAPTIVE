@@ -1,0 +1,21 @@
+.wrap {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.error {
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--hl-coral);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: var(--space-8) var(--space-12);
+}

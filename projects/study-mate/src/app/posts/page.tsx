@@ -83,7 +83,7 @@ export default async function PostsPage({
         </Container>
       </main>
 
-      <SiteFooter />
+      <SiteFooter signedIn={user !== null} />
     </>
   );
 }

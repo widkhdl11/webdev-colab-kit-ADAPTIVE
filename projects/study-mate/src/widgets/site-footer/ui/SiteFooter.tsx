@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Container } from "@/shared/ui/container/Container";
 import styles from "./site-footer.module.css";
 
-export function SiteFooter() {
+export function SiteFooter({ signedIn = false }: { signedIn?: boolean }) {
   return (
     <footer className={styles.footer}>
       <Container>
@@ -15,7 +15,11 @@ export function SiteFooter() {
             <Link href="/about">서비스 소개</Link>
             <Link href="/posts">모집글 찾기</Link>
             <Link href="/studies/create">스터디 개설</Link>
-            <Link href="/login">로그인</Link>
+            {signedIn ? (
+              <Link href="/chats">채팅방</Link>
+            ) : (
+              <Link href="/login">로그인</Link>
+            )}
           </nav>
         </div>
         {/* 제품 원칙 5「정직한 데모」— 없는 실적을 꾸며내지 않는다 */}

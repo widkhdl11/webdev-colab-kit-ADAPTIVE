@@ -1,4 +1,4 @@
-// 근거 스펙: docs/specs/write-authorization.md (INV-Z1 ~ INV-Z7)
+// 근거 스펙: docs/specs/write-authorization.md (INV-Z1 ~ INV-Z11)
 //
 // **여기서 쓰는 연결은 전부 공개 키다.** 그 키는 브라우저 번들에도 들어가는 값이라,
 // 이 연결로 할 수 있는 일이 곧 "아무나 할 수 있는 일"이다. 서버 코드를 한 줄도 거치지
@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   admin,
   anonClient,
+  acceptedMember,
   apply,
   chatIdOf,
   createStudy,
@@ -564,5 +565,85 @@ describe("INV-Z10: 지워진 것으로 표시된 스터디는 새로운 쓰기�
     // 호스트는 자기 것을 지워진 뒤에도 본다 — INV-Z6 과 같은 결
     const mine = await host.client.from("posts").select("id").eq("id", p!.id as string);
     expect(mine.data).toHaveLength(1);
+  });
+});
+
+describe("INV-Z11: 참여자 명단을 볼 수 있는 사람은 셋뿐이다", () => {
+  it("INV-Z11 (S12): 수락된 멤버는 같은 스터디의 수락된 사람들을 본다 — 대기·거절은 못 본다", async () => {
+    const h = await createUser("z11-host");
+    const m1 = await createUser("z11-member1");
+    const m2 = await createUser("z11-member2");
+    const waiting = await createUser("z11-waiting");
+    const refused = await createUser("z11-refused");
+    created.push(h.id, m1.id, m2.id, waiting.id, refused.id);
+
+    const s = await createStudy(h.id, { max_participants: 8 });
+    await acceptedMember(s, m1.id);
+    await acceptedMember(s, m2.id);
+    await apply(s, waiting.id);
+    await apply(s, refused.id);
+    await admin
+      .from("participants")
+      .update({ status: "rejected" })
+      .eq("study_id", s)
+      .eq("user_id", refused.id);
+
+    const { data } = await m1.client.from("participants").select("user_id, status").eq("study_id", s);
+    const seen = (data ?? []).map((r) => r.user_id as string);
+
+    // 수락된 셋(호스트 + 멤버 둘)이 보인다
+    expect(seen).toContain(h.id);
+    expect(seen).toContain(m1.id);
+    expect(seen).toContain(m2.id);
+
+    // 대기 중인 사람과 거절당한 사람은 안 보인다 — "거절당했다"는 그 사람과 호스트 사이의 일이다
+    expect(seen).not.toContain(waiting.id);
+    expect(seen).not.toContain(refused.id);
+    expect(data).toHaveLength(3);
+
+    // 호스트는 전부 본다 (반대 절반 — 정책이 통째로 닫혀서 위가 통과한 것이 아니다)
+    const asHost = await h.client.from("participants").select("user_id").eq("study_id", s);
+    expect(asHost.data).toHaveLength(5);
+  });
+
+  it("INV-Z11 (S13, 실패경로): 아무 관계 없는 로그인 사용자에게는 하나도 안 보인다", async () => {
+    const h = await createUser("z11-host2");
+    const m = await createUser("z11-member3");
+    created.push(h.id, m.id);
+
+    const s = await createStudy(h.id, { max_participants: 5 });
+    await acceptedMember(s, m.id);
+
+    const { data } = await stranger.client.from("participants").select("user_id").eq("study_id", s);
+    expect(data).toHaveLength(0);
+
+    // 로그인하지 않은 연결도 마찬가지 — 수만 파생 함수로 나간다(INV-P9)
+    const asAnon = await anonClient().from("participants").select("user_id").eq("study_id", s);
+    expect(asAnon.data).toHaveLength(0);
+  });
+
+  it("INV-Z11: 강퇴된 사람은 남은 멤버 명단을 더는 못 본다", async () => {
+    const h = await createUser("z11-host3");
+    const m = await createUser("z11-kicked");
+    const other = await createUser("z11-other");
+    created.push(h.id, m.id, other.id);
+
+    const s = await createStudy(h.id, { max_participants: 5 });
+    await acceptedMember(s, m.id);
+    await acceptedMember(s, other.id);
+
+    const before = await m.client.from("participants").select("user_id").eq("study_id", s);
+    expect(before.data).toHaveLength(3);
+
+    await admin
+      .from("participants")
+      .update({ status: "kicked" })
+      .eq("study_id", s)
+      .eq("user_id", m.id);
+
+    const after = await m.client.from("participants").select("user_id").eq("study_id", s);
+    // 자기 행 하나만 남는다 — 자기가 강퇴됐다는 사실은 본인이 알아야 한다
+    expect(after.data).toHaveLength(1);
+    expect(after.data?.[0]?.user_id).toBe(m.id);
   });
 });

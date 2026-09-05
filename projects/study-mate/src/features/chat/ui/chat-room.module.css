@@ -1,0 +1,138 @@
+/* 상세 언어에 실시간 목록이 얹힌 것 (docs/IA.md 「화면 언어는 세 종류뿐이다」) */
+.room {
+  display: grid;
+  gap: var(--space-14);
+  margin-top: var(--space-20);
+}
+
+/* 연결 상태는 색이 아니라 글자로 말한다 */
+.live {
+  font-size: 13px;
+  color: var(--ink-weak);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.live::before {
+  content: "";
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--r-pill);
+  border: 2px solid var(--ink);
+  background: var(--rule);
+}
+
+.live[data-state="실시간"]::before {
+  background: var(--hl-mint);
+}
+
+.live[data-state="끊김"]::before {
+  background: var(--hl-coral);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-10);
+  min-height: 320px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: var(--space-18);
+  background: var(--paper);
+  border: var(--bd);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+
+.empty {
+  font-size: 15px;
+  color: var(--ink-weak);
+  text-align: center;
+  padding: var(--space-44) 0;
+}
+
+.day {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-weak);
+  margin: var(--space-16) 0 var(--space-10);
+  font-variant-numeric: tabular-nums;
+}
+
+.bubbleRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-8);
+  margin-bottom: var(--space-8);
+}
+
+.mine {
+  flex-direction: row-reverse;
+}
+
+.bubble {
+  max-width: min(70ch, 78%);
+  border: var(--bd);
+  border-radius: var(--r-card);
+  padding: var(--space-10) var(--space-14);
+  background: var(--paper);
+}
+
+/* 내 말은 형광펜이 아니라 괘선 채움이다 — 형광펜은 카테고리·모집 상태 전용 */
+.mine .bubble {
+  background: var(--rule);
+}
+
+.sender {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-weak);
+  margin-bottom: var(--space-2);
+}
+
+.text {
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.time {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-weak);
+  font-variant-numeric: tabular-nums;
+}
+
+.composer {
+  display: flex;
+  gap: var(--space-10);
+  align-items: center;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: 13px var(--space-14);
+}
+
+.input::placeholder {
+  color: var(--ink-weak);
+}
+
+.error {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--hl-coral);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: var(--space-10) var(--space-14);
+}

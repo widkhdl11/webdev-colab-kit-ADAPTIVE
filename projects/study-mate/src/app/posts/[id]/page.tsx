@@ -41,7 +41,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
         />
       </main>
 
-      <SiteFooter />
+      <SiteFooter signedIn={user !== null} />
     </>
   );
 }

@@ -1,0 +1,15 @@
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-44) 0 var(--space-64);
+}
+
+.title {
+  font-size: clamp(28px, 4.2vw, 38px);
+}
+
+.sub {
+  margin-top: var(--space-10);
+  font-size: 16px;
+  color: var(--ink-weak);
+}

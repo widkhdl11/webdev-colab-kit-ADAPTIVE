@@ -14,20 +14,24 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" className={jua.variable}>
-      <head>
+      <body>
         {/*
-          Pretendard 는 구글 폰트에 없어 CDN 스타일시트로 받는다. 승인된 시안 3장이
-          쓰던 것과 같은 출처·같은 버전이다(가변 폰트 동적 서브셋).
+          Pretendard 는 구글 폰트에 없어 CDN 스타일시트로 받는다. 승인된 시안 3장이 쓰던 것과
+          같은 출처·같은 버전이다(가변 폰트 동적 서브셋).
+
+          **여기에 <head> 를 직접 쓰지 않는다.** 루트 레이아웃에 손으로 <head> 를 넣었더니
+          문서 전체의 하이드레이션이 조용히 죽었다 — 오류도 경고도 없이 클라이언트 컴포넌트가
+          하나도 안 붙어서, 실시간 채팅이 영영 "연결 중"이었고 폼의 실패 문구도 안 나왔다.
+          (2026-09-05: 브라우저에서 React 가 붙은 노드가 0개인 것으로 드러났다)
+          React 가 이 <link> 들을 알아서 head 로 올린다.
         */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
         <link
           rel="stylesheet"
-          as="style"
-          crossOrigin=""
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
-      </head>
-      <body>{children}</body>
+        {children}
+      </body>
     </html>
   );
 }

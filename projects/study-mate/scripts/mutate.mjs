@@ -5,8 +5,8 @@
 //       node scripts/mutate.mjs --restore        원래대로 되돌린다(마이그레이션 재적용)
 //       node scripts/mutate.mjs --list           변이 목록
 //
-// 되돌리기는 `supabase db reset --local` 이 아니라 0002 를 다시 적용하는 것으로 한다 —
-// 0002 가 전부 create or replace / grant 라서 그것만으로 원상 복구된다.
+// 되돌리기는 `supabase db reset --local` 이 아니라 정책을 바꾸는 마이그레이션(0002 · 0004)을
+// 순서대로 다시 적용하는 것으로 한다 — 전부 create or replace / grant 라서 그것만으로 원상 복구된다.
 
 import { Client } from "pg";
 import { readFileSync } from "node:fs";
@@ -124,6 +124,29 @@ const MUTATIONS = {
       create policy participants_apply_self on public.participants for insert
         with check (user_id = (select auth.uid()) and status = 'pending');`,
   },
+  "z11-members-hidden": {
+    holds: "INV-Z11 (S12) — 수락된 멤버는 같은 스터디의 수락된 사람들을 본다",
+    sql: `
+      drop policy if exists participants_read on public.participants;
+      create policy participants_read on public.participants for select
+        using (user_id = (select auth.uid())
+               or public.is_study_host(study_id, (select auth.uid())));`,
+  },
+  "z11-members-wide-open": {
+    holds: "INV-Z11 (S13) — 관계 없는 사람에게는 하나도 안 보인다",
+    sql: `
+      drop policy if exists participants_read on public.participants;
+      create policy participants_read on public.participants for select using (true);`,
+  },
+  "z11-pending-leaks": {
+    holds: "INV-Z11 — 대기·거절 행은 멤버에게 새지 않는다",
+    sql: `
+      drop policy if exists participants_read on public.participants;
+      create policy participants_read on public.participants for select
+        using (user_id = (select auth.uid())
+               or public.is_study_host(study_id, (select auth.uid()))
+               or public.is_study_member(study_id, (select auth.uid())));`,
+  },
 };
 
 async function run(sql) {
@@ -144,8 +167,12 @@ if (!arg || arg === "--list") {
 }
 
 if (arg === "--restore") {
-  await run(readFileSync(join(HERE, "..", "supabase", "migrations", "0002_review_fixes.sql"), "utf-8"));
-  console.log("복구 완료 (0002 재적용)");
+  // 정책을 바꾸는 마이그레이션을 순서대로 다시 적용한다. 0002 만 돌리면 0004 가 넓힌
+  // 참여자 조회 정책이 되돌아오지 않아 다음 변이의 판정이 틀어진다.
+  for (const file of ["0002_review_fixes.sql", "0004_member_visibility.sql"]) {
+    await run(readFileSync(join(HERE, "..", "supabase", "migrations", file), "utf-8"));
+  }
+  console.log("복구 완료 (0002 · 0004 재적용)");
   process.exit(0);
 }
 

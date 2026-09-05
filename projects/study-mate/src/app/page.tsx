@@ -100,7 +100,7 @@ export default async function HomePage() {
         </Section>
       </main>
 
-      <SiteFooter />
+      <SiteFooter signedIn={user !== null} />
     </>
   );
 }
