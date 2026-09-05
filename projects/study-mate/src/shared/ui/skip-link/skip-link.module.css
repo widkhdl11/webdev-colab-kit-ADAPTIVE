@@ -9,7 +9,7 @@
   left: var(--space-16);
   top: var(--space-16);
   z-index: 200;
-  background: var(--hl-yellow);
+  background: var(--paper);
   color: var(--ink);
   border: var(--bd);
   border-radius: var(--r-btn);

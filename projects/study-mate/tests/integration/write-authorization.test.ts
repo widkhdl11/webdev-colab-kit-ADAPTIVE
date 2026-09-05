@@ -5,6 +5,7 @@
 // 않고 데이터베이스를 직접 부르는 것이 정확히 INV-Z5 가 말하는 우회 경로다.
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { chatRoomQuery, myChatsQuery } from "@/entities/chat/api/chat-select";
 import {
   admin,
   anonClient,
@@ -13,7 +14,7 @@ import {
   chatIdOf,
   createStudy,
   createUser,
-  cleanupUsers,
+  cleanupCreatedUsers,
   rawClient,
   type TestUser,
 } from "./helpers";
@@ -23,13 +24,11 @@ let stranger: TestUser;
 let member: TestUser;
 let studyId: string;
 let postId: string;
-const created: string[] = [];
 
 beforeAll(async () => {
   host = await createUser("z-host");
   stranger = await createUser("z-stranger");
   member = await createUser("z-member");
-  created.push(host.id, stranger.id, member.id);
 
   studyId = await createStudy(host.id, { max_participants: 5 });
   await admin.from("participants").insert({ study_id: studyId, user_id: member.id });
@@ -48,7 +47,7 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  await cleanupUsers(created);
+  await cleanupCreatedUsers();
 });
 
 describe("INV-Z5: 애플리케이션을 우회한 직접 접근에도 인가가 유지된다", () => {
@@ -183,6 +182,45 @@ describe("INV-Z2: 신청을 수락·거절·강퇴하는 것은 호스트만", (
     expect(data!.status).toBe("pending");
   });
 
+  it("INV-Z2(실패경로): 대기 중인 신청자가 자기 신청을 스스로 수락할 수 없다", async () => {
+    // 위 S2 와 다른 경로다. 저기서는 **남의 행**이라 `participants_update_self` 의 using 이
+    // 먼저 막는다. 여기서는 자기 행이라 using 을 지나가고, 남는 강제 위치는 그 정책의
+    // with check 에 있는 `status = 'withdrawn'` 하나뿐이다 — 그 조건만 빼면
+    // 신청자가 호스트 승인 없이 스스로 멤버가 된다.
+    const s = await createStudy(host.id, { max_participants: 5 });
+    await admin.from("participants").insert({ study_id: s, user_id: stranger.id });
+
+    const { error } = await stranger.client
+      .from("participants")
+      .update({ status: "accepted" })
+      .eq("study_id", s)
+      .eq("user_id", stranger.id);
+
+    // **무엇이 막았는지**까지 본다. 「안 바뀌었다」도 정책 말고 다른 이유로 일어난다 —
+    // 0002 의 `grant update (status)` 를 되돌리면 열 권한이 대신 막고, 결과만 보는
+    // 단언은 그대로 초록불이다. 둘 다 42501 이라 코드로는 못 가른다.
+    expect(error).not.toBeNull();
+    expect(error!.message).toContain("row-level security");
+
+    const { data } = await admin
+      .from("participants")
+      .select("status")
+      .eq("study_id", s)
+      .eq("user_id", stranger.id)
+      .single();
+    expect(data!.status).toBe("pending");
+
+    // 채팅방에도 안 들어갔다. 수락을 보고 트리거가 넣기 때문에, 여기까지 봐야
+    // "멤버가 되지 않았다"가 된다 — 상태 한 칸만 보면 트리거 쪽 경로가 안 보인다.
+    const chatId = await chatIdOf(s);
+    const { data: joined } = await admin
+      .from("chat_participants")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .eq("user_id", stranger.id);
+    expect(joined).toHaveLength(0);
+  });
+
   it("INV-Z2(반대 절반): 호스트는 수락할 수 있다", async () => {
     const s = await createStudy(host.id, { max_participants: 5 });
     await admin.from("participants").insert({ study_id: s, user_id: stranger.id });
@@ -218,6 +256,16 @@ describe("INV-Z2: 신청을 수락·거절·강퇴하는 것은 호스트만", (
       .eq("study_id", s)
       .eq("user_id", member.id);
     expect(error).toBeNull();
+
+    // 결과를 다시 읽는다. 정책을 통째로 지우면 using 이 걸러 **0행이 갱신되고**
+    // PostgREST 는 오류를 안 낸다 — 「error 가 null 이다」만 보면 그 상태가 초록불이다.
+    const { data } = await admin
+      .from("participants")
+      .select("status")
+      .eq("study_id", s)
+      .eq("user_id", member.id)
+      .single();
+    expect(data!.status).toBe("withdrawn");
   });
 });
 
@@ -367,7 +415,6 @@ describe("INV-Z8: 소유·소속을 나타내는 열은 갱신으로 바뀌지 �
     // 요청이 보낸 값 그대로 들어가면, 호스트 판정을 **통과한 채로 판정의 대상이 바뀐다** —
     // 신청한 적 없는 사람이 멤버가 되고 트리거가 이어서 채팅방에 넣는다.
     const victim = await createUser("z8-victim");
-    created.push(victim.id);
 
     const s = await createStudy(host.id, { max_participants: 5 });
     const { data: own } = await admin
@@ -512,7 +559,6 @@ describe("INV-Z10: 지워진 것으로 표시된 스터디는 새로운 쓰기�
   it("INV-Z10 (S11): 지워진 스터디의 대기 신청은 수락되지 않는다", async () => {
     const s = await createStudy(host.id, { max_participants: 5 });
     const applicant = await createUser("z10-applicant");
-    created.push(applicant.id);
     await apply(s, applicant.id);
 
     await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
@@ -568,6 +614,66 @@ describe("INV-Z10: 지워진 것으로 표시된 스터디는 새로운 쓰기�
   });
 });
 
+describe("INV-Z6 (S5): 스터디를 지워도 멤버의 대화는 화면에서 사라지지 않는다", () => {
+  // 여기서 검사하는 것은 정책이 아니라 **화면이 보내는 질의**다. 정책은 계약을 지키고
+  // 있었는데(방·메시지 그대로), 목록 질의가 `study:studies!inner(...)` 로 조인해서 지워진
+  // 스터디의 방을 멤버에게서 떨어뜨렸다 — 방이 목록에서 사라지고 주소로도 404 였다.
+  // 그래서 조회 코드가 실제로 쓰는 **질의 조각을 그대로** 부른다. 여기서 질의를 다시
+  // 조립하면(select 문자열만 공유하고 필터는 다시 적으면) 이 검사는 절반만 붙든다.
+
+  it("INV-Z6 (S5): 호스트가 지운 뒤에도 멤버의 채팅방 목록에 그 방이 남는다", async () => {
+    const h = await createUser("z6-host");
+    const m = await createUser("z6-member");
+    const m2 = await createUser("z6-member2");
+
+    const s = await createStudy(h.id, { max_participants: 5 });
+    await acceptedMember(s, m.id);
+    await acceptedMember(s, m2.id); // 스펙 S5 의 Given 은 「수락된 멤버 2명」이다
+    const chatId = await chatIdOf(s);
+    await admin
+      .from("chat_messages")
+      .insert({ chat_id: chatId, sender_id: m.id, content: "지워지기 전 대화" });
+
+    type ListRow = {
+      chat: { id: string; study_id: string; study: Record<string, unknown> | null };
+    };
+    const listOf = async () =>
+      (await myChatsQuery(m.client, m.id)).data as unknown as ListRow[] | null;
+
+    const before = (await listOf()) ?? [];
+    // 필터가 없으면 방 하나가 멤버 수만큼 나온다 — 행 수가 그것을 붙든다.
+    expect(before).toHaveLength(1);
+    expect(before[0].chat.id).toBe(chatId);
+    expect(before[0].chat.study).toEqual({
+      id: s,
+      title: "테스트 스터디",
+      category_id: "it",
+      accepted_count: 3,
+    });
+
+    await h.client.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
+
+    // 스터디는 정말 안 보인다 — 방이 남은 것이 「삭제가 안 먹었다」 때문이 아님을 보인다
+    const gone = await m.client.from("studies").select("id").eq("id", s);
+    expect(gone.data).toHaveLength(0);
+
+    const after = (await listOf()) ?? [];
+    expect(after).toHaveLength(1);
+    expect(after[0].chat.id).toBe(chatId);
+    expect(after[0].chat.study_id).toBe(s); // 스터디 id 는 방에 있어서 여전히 온다
+    expect(after[0].chat.study).toBeNull(); // 스터디 자체는 안 보인다
+
+    // 방 하나를 여는 질의도 같다. 객체 전체를 봐서 임베드가 통째로 빠지는 것도 잡는다 —
+    // 화면은 이 embed 의 유무로 「지워졌다」를 판정한다.
+    const one = await chatRoomQuery(m.client, chatId);
+    expect(one.data).toEqual({ id: chatId, study_id: s, study: null });
+
+    // 그리고 대화가 그대로 읽힌다 — 계약의 본문이 이것이다
+    const msgs = await m.client.from("chat_messages").select("content").eq("chat_id", chatId);
+    expect((msgs.data ?? []).map((x) => x.content)).toContain("지워지기 전 대화");
+  });
+});
+
 describe("INV-Z11: 참여자 명단을 볼 수 있는 사람은 셋뿐이다", () => {
   it("INV-Z11 (S12): 수락된 멤버는 같은 스터디의 수락된 사람들을 본다 — 대기·거절은 못 본다", async () => {
     const h = await createUser("z11-host");
@@ -575,7 +681,6 @@ describe("INV-Z11: 참여자 명단을 볼 수 있는 사람은 셋뿐이다", (
     const m2 = await createUser("z11-member2");
     const waiting = await createUser("z11-waiting");
     const refused = await createUser("z11-refused");
-    created.push(h.id, m1.id, m2.id, waiting.id, refused.id);
 
     const s = await createStudy(h.id, { max_participants: 8 });
     await acceptedMember(s, m1.id);
@@ -609,7 +714,6 @@ describe("INV-Z11: 참여자 명단을 볼 수 있는 사람은 셋뿐이다", (
   it("INV-Z11 (S13, 실패경로): 아무 관계 없는 로그인 사용자에게는 하나도 안 보인다", async () => {
     const h = await createUser("z11-host2");
     const m = await createUser("z11-member3");
-    created.push(h.id, m.id);
 
     const s = await createStudy(h.id, { max_participants: 5 });
     await acceptedMember(s, m.id);
@@ -626,7 +730,6 @@ describe("INV-Z11: 참여자 명단을 볼 수 있는 사람은 셋뿐이다", (
     const h = await createUser("z11-host3");
     const m = await createUser("z11-kicked");
     const other = await createUser("z11-other");
-    created.push(h.id, m.id, other.id);
 
     const s = await createStudy(h.id, { max_participants: 5 });
     await acceptedMember(s, m.id);

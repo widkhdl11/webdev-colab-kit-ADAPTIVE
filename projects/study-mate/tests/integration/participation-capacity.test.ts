@@ -13,14 +13,13 @@ import {
   chatIdOf,
   createStudy,
   createUser,
-  cleanupUsers,
+  cleanupCreatedUsers,
   rawClient,
   type TestUser,
 } from "./helpers";
 
 let host: TestUser;
 let members: TestUser[];
-const created: string[] = [];
 
 beforeAll(async () => {
   host = await createUser("host");
@@ -30,11 +29,10 @@ beforeAll(async () => {
     createUser("member3"),
     createUser("member4"),
   ]);
-  created.push(host.id, ...members.map((m) => m.id));
 }, 60_000);
 
 afterAll(async () => {
-  await cleanupUsers(created);
+  await cleanupCreatedUsers();
 });
 
 describe("INV-P1: 수락된 참여자 수는 정원을 넘지 않는다", () => {
@@ -366,7 +364,6 @@ describe("INV-P8: 채팅방 구성원은 참가 상태에서 파생된다 — �
   it("INV-P8 (S9): 강퇴되면 채팅 구성원에서 빠지고 대화를 더는 못 읽는다", async () => {
     const h = await createUser("p8-host");
     const m = await createUser("p8-member");
-    created.push(h.id, m.id);
 
     const s = await createStudy(h.id, { max_participants: 5 });
     const chatId = await chatIdOf(s);
@@ -414,7 +411,6 @@ describe("INV-P8: 채팅방 구성원은 참가 상태에서 파생된다 — �
   it("INV-P8 (S10): 스스로 탈퇴해도 같은 결과가 된다", async () => {
     const h = await createUser("p8-host2");
     const m = await createUser("p8-leaver");
-    created.push(h.id, m.id);
 
     const s = await createStudy(h.id, { max_participants: 5 });
     const chatId = await chatIdOf(s);
@@ -446,7 +442,6 @@ describe("INV-P8: 채팅방 구성원은 참가 상태에서 파생된다 — �
   it("INV-P8: 대기 중인 신청자는 애초에 채팅방에 들어가지 않는다", async () => {
     const h = await createUser("p8-host3");
     const w = await createUser("p8-waiting");
-    created.push(h.id, w.id);
 
     const s = await createStudy(h.id, { max_participants: 5 });
     const chatId = await chatIdOf(s);
@@ -474,18 +469,22 @@ describe("INV-P9: 수락 인원과 모집 상태는 누가 묻든 같은 답을 
   it("INV-P9 (S11): 정원이 꽉 찬 스터디를 로그인하지 않은 연결이 물어도 마감으로 답한다", async () => {
     const h = await createUser("p9-host");
     const m1 = await createUser("p9-m1");
-    created.push(h.id, m1.id);
 
     // 정원 2 = 호스트 + 한 명이면 꽉 찬다
     const s = await createStudy(h.id, { max_participants: 2 });
     await acceptedMember(s, m1.id);
+
+    // 대기 중인 신청을 하나 끼워 둔다 — 세는 것이 '수락된' 사람인지를 여기서 가른다.
+    // 이게 없으면 상태 조건을 통째로 빼도 수가 그대로여서 아무도 못 알아챈다.
+    const waiting = await createUser("p9-waiting");
+    await apply(s, waiting.id);
 
     const asHost = await h.client.rpc("study_is_recruiting", { p_study_id: s });
     const asAnon = await anonClient().rpc("study_is_recruiting", { p_study_id: s });
     const countHost = await h.client.rpc("study_accepted_count", { p_study_id: s });
     const countAnon = await anonClient().rpc("study_accepted_count", { p_study_id: s });
 
-    expect(countHost.data).toBe(2);
+    expect(countHost.data).toBe(2); // 대기 중인 한 명은 안 센다
     expect(countAnon.data).toBe(2); // 고치기 전에는 0 이었다
     expect(asHost.data).toBe(false);
     expect(asAnon.data).toBe(false); // 고치기 전에는 true 였다
@@ -493,7 +492,6 @@ describe("INV-P9: 수락 인원과 모집 상태는 누가 묻든 같은 답을 
 
   it("INV-P9 (반대 절반): 자리가 남았으면 로그인하지 않은 연결도 모집중으로 답한다", async () => {
     const h = await createUser("p9-host2");
-    created.push(h.id);
     const s = await createStudy(h.id, { max_participants: 5 });
 
     const countAnon = await anonClient().rpc("study_accepted_count", { p_study_id: s });
@@ -506,7 +504,6 @@ describe("INV-P9: 수락 인원과 모집 상태는 누가 묻든 같은 답을 
   it("INV-P9 (S12): 파생값을 열었다고 참여자 명단이 열린 것은 아니다", async () => {
     const h = await createUser("p9-host3");
     const m = await createUser("p9-m");
-    created.push(h.id, m.id);
     const s = await createStudy(h.id, { max_participants: 5 });
     await acceptedMember(s, m.id);
 
@@ -517,5 +514,207 @@ describe("INV-P9: 수락 인원과 모집 상태는 누가 묻든 같은 답을 
     // 그런데 행은 안 보인다
     const rows = await anonClient().from("participants").select("user_id").eq("study_id", s);
     expect(rows.data).toHaveLength(0);
+  });
+});
+
+describe("INV-P9: 화면이 실제로 읽는 것은 계산 컬럼이다", () => {
+  // 같은 파생 계산이 데이터베이스에 네 벌 있다 — 함수 쌍(study_accepted_count·
+  // study_is_recruiting)과 계산 컬럼 쌍(accepted_count(studies)·recruiting(studies)).
+  // **위 describe 는 앞의 둘만 부르는데, 화면 코드는 뒤의 둘만 쓴다.**
+  // 그래서 계산 컬럼에서 강제 장치를 빼는 변이가 전부 초록불이었다.
+
+  it("INV-P9 (S11, 화면 경로): 꽉 찬 스터디를 로그인하지 않은 연결이 계산 컬럼으로 물어도 마감으로 답한다", async () => {
+    const h = await createUser("p9c-host");
+    const m1 = await createUser("p9c-m1");
+
+    const s = await createStudy(h.id, { max_participants: 2 });
+    await acceptedMember(s, m1.id);
+
+    const waiting = await createUser("p9c-waiting");
+    await apply(s, waiting.id); // 대기 중인 사람은 인원에 안 들어간다
+
+    const asHost = await h.client
+      .from("studies")
+      .select("accepted_count, recruiting")
+      .eq("id", s)
+      .single();
+    const asAnon = await anonClient()
+      .from("studies")
+      .select("accepted_count, recruiting")
+      .eq("id", s)
+      .single();
+
+    expect(asHost.data).toEqual({ accepted_count: 2, recruiting: false });
+    // 묻는 사람이 달라도 답이 같아야 한다. 계산 컬럼이 부르는 사람의 시야로 읽으면
+    // 여기가 0 · true 로 갈라진다 — 목록 화면의 「모집중」 배지가 그 값으로 그려진다.
+    expect(asAnon.data).toEqual({ accepted_count: 2, recruiting: false });
+  });
+
+  it("INV-P9 (반대 절반, 화면 경로): 자리가 남았으면 계산 컬럼도 모집중으로 답한다", async () => {
+    const h = await createUser("p9c-host2");
+    const s = await createStudy(h.id, { max_participants: 5 });
+
+    const asAnon = await anonClient()
+      .from("studies")
+      .select("accepted_count, recruiting")
+      .eq("id", s)
+      .single();
+
+    expect(asAnon.data).toEqual({ accepted_count: 1, recruiting: true }); // 호스트 자신
+  });
+
+});
+
+// **이것도 자기 describe 다.** 위 describe(INV-P9) 안에 두면 이 검사의 전체 이름이
+// 이름표 둘을 동시에 달아, INV-P6 변이의 「잡혔다」와 INV-P9 변이의 「잡혔다」가
+// 같은 검사 하나에서 나온다 — 판정이 무엇을 잡았는지 못 가른다.
+describe("INV-P6: 화면이 읽는 계산 컬럼도 같은 규칙으로 파생된다", () => {
+  it("INV-P6 (S6, 화면 경로): 호스트가 닫으면 계산 컬럼도 마감으로 답한다", async () => {
+    const h = await createUser("p6c-host");
+    const s = await createStudy(h.id, { max_participants: 5 }); // 자리는 남아 있다
+
+    const before = await anonClient()
+      .from("studies")
+      .select("accepted_count, recruiting")
+      .eq("id", s)
+      .single();
+    expect(before.data).toEqual({ accepted_count: 1, recruiting: true });
+
+    await h.client.from("studies").update({ closed_at: new Date().toISOString() }).eq("id", s);
+
+    // 자리는 여전히 남았는데도 마감이다 — 닫은 것은 사람이다. 목록의 「모집중만」 필터와
+    // 카드의 배지가 이 값 하나로 갈린다.
+    const after = await anonClient()
+      .from("studies")
+      .select("accepted_count, recruiting")
+      .eq("id", s)
+      .single();
+    expect(after.data).toEqual({ accepted_count: 1, recruiting: false });
+  });
+
+});
+
+// **describe 를 따로 뺐다.** 판정기는 실패한 테스트의 전체 이름(describe 제목 + it 제목)에
+// 이름표를 찾는다. 위 describe 안에 두면 이 검사의 전체 이름에 INV-P9 가 섞여, INV-P9 변이가
+// 이 INV-P6 검사만 깨뜨려도 「INV-P9 를 담은 테스트가 잡았다」로 보고된다.
+describe("INV-P6: 지워진 스터디는 모집 중이 아니다", () => {
+  // 2026-09-05 에 INV-P6 의 공식에 「그리고 지워지지 않았다」를 넣으면서 이름표를 여기로 옮겼다.
+  // 그전에는 INV-P9(「누가 묻든 같은 답」)를 달고 있었는데, 이것은 「지워졌으면 거짓」이라
+  // 성질이 다르다.
+  //
+  // **같은 공식이 데이터베이스에 두 벌 있다** — 화면이 읽는 계산 컬럼(recruiting(studies))과
+  // 함수 쌍(study_is_recruiting). 아래 둘이 그 두 벌을 각각 누른다. 한 벌만 누르면 다른 벌에서
+  // 조건을 지워도 전부 초록불이다(실제로 그랬다).
+  it("INV-P6 (S7-1): 지워진 스터디는 계산 컬럼도 모집 중이 아니라고 답한다", async () => {
+    const h = await createUser("p6c-host3");
+    const s = await createStudy(h.id, { max_participants: 5 });
+
+    const before = await h.client
+      .from("studies")
+      .select("accepted_count, closed_at, recruiting")
+      .eq("id", s)
+      .single();
+    // 인원 1 은 호스트다 — 개설과 동시에 수락된 참여자가 된다(INV-P4).
+    expect(before.data).toEqual({ accepted_count: 1, closed_at: null, recruiting: true });
+
+    const { error } = await h.client
+      .from("studies")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", s);
+    expect(error, "삭제 표시가 정책에 막혔다").toBeNull();
+
+    // 지워진 스터디는 호스트에게만 보인다(INV-Z6). 그 호스트 화면에서도 모집 중이면 안 된다 —
+    // 「다시 열기」 같은 것이 이 값으로 갈린다.
+    //
+    // **인원과 닫은 시각을 같이 고정한다**(S7-1 의 "인원도 닫은 시각도 그대로인데 답이 바뀐다").
+    // recruiting 만 보면, 삭제할 때 closed_at 을 같이 채우는 구현이 와도 통과한다 — 그때
+    // 거짓으로 만든 것은 삭제 조건이 아니라 닫은 시각이고, INV-P6 의 새 가지는 죽어 있다.
+    const after = await h.client
+      .from("studies")
+      .select("accepted_count, closed_at, recruiting")
+      .eq("id", s)
+      .single();
+    expect(after.data).toEqual({ accepted_count: 1, closed_at: null, recruiting: false });
+  });
+
+  it("INV-P6 (S7-1, 함수 쌍): 지워진 스터디는 study_is_recruiting 도 거짓으로 답한다", async () => {
+    const h = await createUser("p6rpc-host");
+    const s = await createStudy(h.id, { max_participants: 5 });
+
+    const before = await h.client.rpc("study_is_recruiting", { p_study_id: s });
+    expect(before.data).toBe(true);
+
+    const { error } = await h.client
+      .from("studies")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", s);
+    expect(error, "삭제 표시가 정책에 막혔다").toBeNull();
+
+    // 이 함수는 security definer 라 정책을 지나지 않는다. 그래서 「안 보인다」가 대신
+    // 막아 주지 않고, 삭제 조건이 본문에 있어야만 거짓이 된다.
+    //
+    // **인원과 닫은 시각을 같이 고정한다**(S7-1 의 "인원도 닫은 시각도 그대로인데 답이 바뀐다").
+    // 계산 컬럼 쪽 검사에는 이 보강이 있는데 여기 없으면, 삭제할 때 closed_at 을 같이 채우는
+    // 구현이 왔을 때 이 검사만 초록불로 남는다.
+    const count = await h.client.rpc("study_accepted_count", { p_study_id: s });
+    expect(count.data, "삭제가 인원까지 바꿨다").toBe(1);
+    const closed = await h.client.from("studies").select("closed_at").eq("id", s).single();
+    expect(closed.data!.closed_at, "삭제가 닫은 시각을 같이 채웠다").toBeNull();
+
+    const after = await h.client.rpc("study_is_recruiting", { p_study_id: s });
+    // null 이 아니라 **거짓**이어야 한다 — 행 선택 조건이 바뀌어 값이 안 나오는 것과 다르다.
+    expect(after.data).toBe(false);
+  });
+});
+
+// INV-P6 의 2026-09-05 조항: **모집 마감일은 모집 상태에 들어가지 않는다.**
+// 마감일은 호스트가 적어 둔 목표이고 모집을 닫는 것은 호스트다(`closed_at`).
+//
+// 이 조항이 스펙·0008 주석·화면 목록 문서 셋에 적혀 있었는데 붙드는 검사가 하나도 없었다 —
+// 다른 검사의 스터디는 전부 마감일이 비어 있어서, 파생값에 `recruit_until >= current_date` 를
+// 더해도 아무 검사가 안 깨졌다. 「마감 임박」이라는 말을 읽고 모집 상태에 배선하는 것이
+// 정확히 이 조항이 막으려는 것이다.
+describe("INV-P6: 마감일은 모집 상태가 아니다", () => {
+  /** 어제가 마감일인 스터디. 데이터베이스가 보는 오늘을 기준으로 만든다. */
+  async function studyWithPastDeadline(username: string) {
+    const pg = await rawClient();
+    let yesterday: string;
+    try {
+      yesterday = (await pg.query("select (current_date - 1)::text as d")).rows[0].d as string;
+    } finally {
+      await pg.end();
+    }
+    const h = await createUser(username);
+    const s = await createStudy(h.id, { max_participants: 5, recruit_until: yesterday });
+    return { h, s };
+  }
+
+  it("INV-P6: 마감일이 지나도 계산 컬럼은 모집 중이라고 답한다", async () => {
+    const { s } = await studyWithPastDeadline("p6dl-host");
+    const row = await anonClient()
+      .from("studies")
+      .select("accepted_count, recruiting")
+      .eq("id", s)
+      .single();
+    expect(row.data).toEqual({ accepted_count: 1, recruiting: true });
+  });
+
+  it("INV-P6: 마감일이 지나도 study_is_recruiting 은 참으로 답한다", async () => {
+    const { h, s } = await studyWithPastDeadline("p6dl-host2");
+    const r = await h.client.rpc("study_is_recruiting", { p_study_id: s });
+    expect(r.data).toBe(true);
+  });
+
+  it("INV-P4: 마감일이 지난 스터디도 신청과 수락이 그대로 지나간다", async () => {
+    // 파생값만 보면 절반이다. 마감일 검사가 **쓰기 경로**(정원 트리거)에 들어가도
+    // 위 둘은 초록불이다 — 그때 사용자는 「모집중」을 보고 신청했다가 거부당한다.
+    const { h, s } = await studyWithPastDeadline("p6dl-host3");
+    const applicant = await createUser("p6dl-apply");
+    await apply(s, applicant.id);
+    const accepted = await accept(s, applicant.id);
+    expect(accepted.error, "마감일이 지났다고 수락이 막혔다").toBeNull();
+
+    const row = await h.client.from("studies").select("accepted_count").eq("id", s).single();
+    expect(row.data!.accepted_count).toBe(2);
   });
 });

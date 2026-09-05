@@ -9,12 +9,40 @@
 // 순서대로 다시 적용하는 것으로 한다 — 전부 create or replace / grant 라서 그것만으로 원상 복구된다.
 
 import { Client } from "pg";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+
+// **이 도구는 인가를 일부러 무력화한다.** 손으로 부르는 사용법이 파일 머리에 적혀 있는데,
+// 환경에 원격 SUPABASE_DB_URL 이 들어 있으면 그 원격에 「아무나 읽는다」 정책을 심는다.
+//
+// **문자열 패턴으로는 못 가린다.** 전에는 `@127.0.0.1:` 이 문자열 어디에든 있으면 통과했는데,
+// URL 문법에서 호스트를 정하는 것은 **마지막** `@` 뒤다:
+//   postgresql://postgres:postgres@127.0.0.1:54322@evil.com/postgres
+// 이 값은 옛 검사를 통과하고 실제로는 evil.com 에 붙는다. 그래서 파싱해서 호스트만 본다.
+const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
+/** 비밀번호를 통째로 가린다. 마지막 `@` 앞이 전부 userinfo 다. */
+const maskUrl = (u) => u.replace(/\/\/[^/]*@/, "//***@");
+function assertLocal(url, what) {
+  let host;
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    host = null;
+  }
+  if (host === null || !LOCAL_HOSTS.has(host)) {
+    console.error(
+      `이 도구는 정책을 일부러 무력화한다. ${what}는 로컬에만 붙인다.` +
+        "\n  지금 가리키는 곳: " + maskUrl(url),
+    );
+    process.exit(1);
+  }
+}
+assertLocal(DB_URL, "데이터베이스");
 
 /** 변이 이름 → 무엇을 무력화하는가 + 그것을 붙들어야 할 테스트 */
 const MUTATIONS = {
@@ -24,7 +52,20 @@ const MUTATIONS = {
   },
   "z8-chatpart-columns": {
     holds: "INV-Z8 (S8) — 멤버가 chat_id 를 남의 방으로 바꿀 수 없다",
-    sql: `grant update on public.chat_participants to authenticated;`,
+    // **열 권한만 열어서는 이 구멍이 안 열린다.** 열 권한을 통째로 준 뒤 실제로 눌러 보면
+    // 여전히 42501 이 나오는데, 막고 있는 것은 갱신된 **새 행**에 다시 걸리는 읽기 정책
+    // `chatpart_read_member` 다(is_chat_member 가 남의 방에 대해 거짓). 실측으로 확인했다.
+    // 그래서 강제 위치가 둘이고, 하나만 걷어 낸 변이는 "아무도 안 붙들고 있다"가 아니라
+    // "아무것도 무력화하지 못했다" 였다 — 그 둘은 결과가 같아 보여서 위험하다.
+    sql: `
+      grant update on public.chat_participants to authenticated;
+      drop policy if exists chatpart_read_member on public.chat_participants;
+      create policy chatpart_read_member on public.chat_participants for select using (true);`,
+    // 읽기 정책은 0001 에만 있어 기본 복구 목록으로는 안 돌아온다.
+    undo: `
+      drop policy if exists chatpart_read_member on public.chat_participants;
+      create policy chatpart_read_member on public.chat_participants for select
+        using (public.is_chat_member(chat_id, (select auth.uid())));`,
   },
   "z8-posts-columns": {
     holds: "INV-Z9 — 이미 쓴 모집글을 남의 스터디로 옮길 수 없다",
@@ -82,6 +123,287 @@ const MUTATIONS = {
       language sql stable security definer set search_path = '' as $fn$
         select count(*)::integer from public.participants where study_id = p_study_id;
       $fn$;`,
+  },
+  "z2-self-accept": {
+    holds: "INV-Z2 — 대기 중인 신청자가 자기 신청을 스스로 수락할 수 없다",
+    // 자기 행이라 using 은 지나간다. 막는 것은 with check 의 status 조건 하나뿐이라,
+    // 그것만 빼면 신청자가 호스트 승인 없이 멤버가 되고 트리거가 채팅방까지 넣어 준다.
+    sql: `
+      drop policy if exists participants_update_self on public.participants;
+      create policy participants_update_self on public.participants for update
+        using (user_id = (select auth.uid()))
+        with check (user_id = (select auth.uid()));`,
+    // 이 정책은 0001 에만 있다 — 기본 복구 목록(0002·0004)이 안 되돌린다.
+    undo: `
+      drop policy if exists participants_update_self on public.participants;
+      create policy participants_update_self on public.participants for update
+        using (user_id = (select auth.uid()))
+        with check (user_id = (select auth.uid()) and status = 'withdrawn');`,
+  },
+  "p9-invoker-computed": {
+    holds: "INV-P9 — 화면이 실제로 읽는 계산 컬럼도 누가 묻든 같은 답을 준다",
+    // 화면은 rpc 쌍이 아니라 계산 컬럼 쌍을 쓴다. 여기서 definer 를 빼면 로그인하지 않은
+    // 연결이 참여자 행을 못 읽어 인원이 0 으로 답하고, 마감된 스터디가 모집중으로 보인다.
+    sql: `
+      create or replace function public.accepted_count(public.studies) returns integer
+      language sql stable set search_path = '' as $fn$
+        select count(*)::integer from public.participants
+         where study_id = $1.id and status = 'accepted';
+      $fn$;`,
+  },
+  "p6-computed-drops-deleted": {
+    holds: "INV-P6 — 지워진 스터디는 계산 컬럼도 모집 중이 아니라고 답한다",
+    sql: `
+      create or replace function public.recruiting(public.studies) returns boolean
+      language sql stable security definer set search_path = '' as $fn$
+        select $1.closed_at is null
+           and public.accepted_count($1) < $1.max_participants;
+      $fn$;`,
+  },
+  "z2-drop-self-update": {
+    holds: "INV-Z2 — 본인의 탈퇴는 본인이 할 수 있다 (반대 절반)",
+    // 정책이 통째로 사라지면 using 이 걸러 0행이 갱신되고 PostgREST 는 오류를 안 낸다.
+    // 그래서 「error 가 null 이다」만 보는 단언은 이것을 못 잡는다 — 결과를 다시 읽어야 한다.
+    sql: `drop policy if exists participants_update_self on public.participants;`,
+    undo: `
+      drop policy if exists participants_update_self on public.participants;
+      create policy participants_update_self on public.participants for update
+        using (user_id = (select auth.uid()))
+        with check (user_id = (select auth.uid()) and status = 'withdrawn');`,
+  },
+  "p9-computed-drops-status-filter": {
+    holds: "INV-P9 — 화면이 읽는 계산 컬럼도 '수락된' 사람만 센다",
+    sql: `
+      create or replace function public.accepted_count(public.studies) returns integer
+      language sql stable security definer set search_path = '' as $fn$
+        select count(*)::integer from public.participants where study_id = $1.id;
+      $fn$;`,
+  },
+  "p6-computed-drops-closed": {
+    holds: "INV-P6 — 호스트가 닫으면 계산 컬럼도 모집 중이 아니다",
+    // 화면의 「모집중」 배지와 목록의 「모집중만」 필터가 이 값 하나로 갈린다.
+    sql: `
+      create or replace function public.recruiting(public.studies) returns boolean
+      language sql stable security definer set search_path = '' as $fn$
+        select $1.deleted_at is null
+           and public.accepted_count($1) < $1.max_participants;
+      $fn$;`,
+  },
+  "deadline-order-inside-embed": {
+    holds: "「마감 임박순」이 실제로 마감일 순서로 나온다 (화면 목록 문서)",
+    tag: "마감 임박순",
+    // **소스 파일을 바꾸는 변이다.** 이 결함은 데이터베이스가 아니라 조회 코드에 있었고,
+    // 오류를 안 내고 그럴듯한 순서를 낸다. 손으로 한 번 확인했다는 것은 다음 사람에게
+    // 안 남는다 — 그것이 이 도구를 만든 이유다.
+    file: {
+      path: "src/entities/post/api/post-order.ts",
+      find: `{ column: "study_deadline_rank", options: { ascending: true } }`,
+      replace: `{ column: "recruit_until", options: { referencedTable: "study", ascending: true } }`,
+    },
+  },
+  "deadline-rank-dropped": {
+    holds: "「마감 임박순」의 순위를 조회 코드가 실제로 건다 (화면 목록 문서)",
+    tag: "마감 임박순",
+    // 정렬 키를 통째로 빼면 남는 것은 tiebreak(id) 뿐이다. 준비물의 id 를 손으로 줘서
+    // 그때 반드시 틀린 순서가 나오게 해 뒀다(list-order.test.ts) — 안 그러면 uuid 운으로
+    // 맞는 순서가 나와 「아무도 안 붙들고 있다」로 보고된다.
+    //
+    // **replace 는 깨끗한 소스에 없는 문장이어야 한다.** 처음엔 여기에 다른 정렬 키를
+    // 적었는데 그것은 표에 원래 있는 줄이라, 복구가 손대지 않은 그 줄까지 바꿔 놓고
+    // 「복구 완료」를 찍었다. 아래 복구·심기의 개수 검사가 그래서 생겼다.
+    file: {
+      path: "src/entities/post/api/post-order.ts",
+      find: `  deadline: [{ column: "study_deadline_rank", options: { ascending: true } }],\n`,
+      replace: `  deadline: [],\n`,
+    },
+  },
+  "deadline-rank-constant": {
+    holds: "「마감 임박순」의 순위를 데이터베이스가 실제로 계산한다 (화면 목록 문서)",
+    tag: "마감 임박순",
+    // 앞의 둘은 조회 코드 쪽이다. 이것은 같은 규칙의 **데이터베이스 쪽** — 순위 함수가
+    // 늘 0 을 답하면 정렬 키는 걸려 있는데 순서가 안 갈린다.
+    sql: `
+      create or replace function public.study_deadline_rank(public.posts) returns integer
+      language sql stable set search_path = '' as $fn$ select 0; $fn$;`,
+  },
+  "deadline-rank-off-by-one": {
+    holds: "「마감 임박순」에서 오늘 마감인 것은 아직 안 지났다 (화면 목록 문서)",
+    tag: "마감 임박순",
+    // 경계 하나만 민다(`>=` → `>`). 오늘이 마감일인 스터디가 「지났다」 덩어리로 넘어간다.
+    // 준비물에 오늘 날짜가 없으면 이 변이는 어떤 검사도 못 깨뜨린다.
+    sql: `
+      create or replace function public.study_deadline_rank(public.posts) returns integer
+      language sql stable set search_path = '' as $fn$
+        select case
+                 when u.d is null         then 2000000
+                 when u.d > current_date  then least(u.d - current_date, 999999)
+                 else                          2000001 + least(current_date - u.d, 999998)
+               end
+        from (select public.study_recruit_until($1) as d) u;
+      $fn$;`,
+  },
+  "sort-whitelist-dropped": {
+    holds: "주소창의 아무 값이 정렬 키가 되지 않는다",
+    tag: "정렬 화이트리스트",
+    // 화이트리스트를 단언으로 바꾼다. 임의 컬럼이 `.order()` 로 가지지는 않는다 —
+    // 정렬 표의 **키**로만 쓰이기 때문이다. 그리고 `post-query.ts` 의 되돌림이 붙은 뒤로는
+    // 500 도 안 난다(그 되돌림은 `sort-fallback-dropped` 가 따로 붙든다). 그러니 이 변이가
+    // 실제로 깨뜨리는 것은 「주소창의 값이 어휘 안으로 좁혀진다」는 약속 하나다.
+    file: {
+      path: "src/entities/post/api/post-order.ts",
+      find: `  return SORTS.includes(value as Sort) ? (value as Sort) : "latest";`,
+      replace: `  return value as Sort;`,
+    },
+  },
+  "p6-rpc-drops-deleted": {
+    holds: "INV-P6 — 지워진 스터디는 함수 쌍에서도 모집 중이 아니다",
+    // 같은 공식이 데이터베이스에 두 벌 있다(함수 쌍 · 계산 컬럼 쌍). 계산 컬럼 쪽만
+    // 붙들려 있어서, RPC 쪽의 `deleted_at is null` 을 지워도 전부 초록불이었다.
+    sql: `
+      create or replace function public.study_is_recruiting(p_study_id uuid) returns boolean
+      language sql stable security definer set search_path = '' as $fn$
+        select s.closed_at is null
+           and public.study_accepted_count(s.id) < s.max_participants
+          from public.studies s where s.id = p_study_id;
+      $fn$;`,
+  },
+  "sort-fallback-dropped": {
+    holds: "정렬 화이트리스트가 뚫려도 질의는 최신순으로 떨어진다",
+    tag: "정렬 화이트리스트",
+    // 화이트리스트 뒤의 두 번째 방벽. 이 되돌림이 없으면 어휘 밖의 값이 undefined 를
+    // 순회하다 목록 화면 전체가 500 이 된다 — 로그인 없이 누구나 낼 수 있는 500 이다.
+    file: {
+      path: "src/entities/post/api/post-query.ts",
+      find: `  for (const key of SORT_ORDER[query.sort ?? "latest"] ?? SORT_ORDER.latest) {`,
+      replace: `  for (const key of SORT_ORDER[query.sort ?? "latest"]) {`,
+    },
+  },
+  "deadline-rank-off-by-one-lenient": {
+    holds: "「마감 임박순」에서 어제 마감은 이미 지났다 (화면 목록 문서)",
+    tag: "마감 임박순",
+    // 경계를 반대 방향으로 민다. `deadline-rank-off-by-one` 은 오늘을 뒤로 보내고,
+    // 이것은 어제를 앞으로 끌어온다 — 「오늘 자정까지는 봐 준다」로 읽은 코드의 모양이다.
+    // 미는 방향이 하나뿐이면 26/26 이라는 숫자가 이 구멍을 못 본다.
+    sql: `
+      create or replace function public.study_deadline_rank(public.posts) returns integer
+      language sql stable set search_path = '' as $fn$
+        select case
+                 when u.d is null                then 2000000
+                 when u.d = 'infinity'::date     then 999999
+                 when u.d = '-infinity'::date    then 2999999
+                 when u.d >= current_date - 1    then least(u.d - current_date, 999999)
+                 else                                 2000001 + least(current_date - u.d, 999998)
+               end
+        from (select public.study_recruit_until($1) as d) u;
+      $fn$;`,
+  },
+  "deadline-rank-uncapped": {
+    holds: "「마감 임박순」의 띠가 겹치지 않는다 (화면 목록 문서)",
+    tag: "마감 임박순",
+    // 상한을 자르는 least 를 뺀다. 아주 먼 미래의 마감일이 「지난 마감일」 띠의 숫자
+    // 범위로 넘어가, 아직 오지도 않은 마감일이 목록의 꼬리에 붙는다.
+    // 주석이 "least 가 겹치지 않는 것을 보장한다"고 선언한 장치라 검사 밖에 두지 않는다.
+    sql: `
+      create or replace function public.study_deadline_rank(public.posts) returns integer
+      language sql stable set search_path = '' as $fn$
+        select case
+                 when u.d is null                then 2000000
+                 when u.d = 'infinity'::date     then 999999
+                 when u.d = '-infinity'::date    then 2999999
+                 when u.d >= current_date        then (u.d - current_date)
+                 else                                 2000001 + (current_date - u.d)
+               end
+        from (select public.study_recruit_until($1) as d) u;
+      $fn$;`,
+  },
+  "recruit-until-allows-infinity": {
+    holds: "무한한 마감일은 데이터베이스가 거부한다",
+    tag: "달력에 있는 날짜",
+    // 제약을 뗀다. 무한값이 들어오면 순위 함수의 뺄셈이 죽어 목록이 통째로 500 이 되는데,
+    // 0009 의 안전 실패 가지가 그 뒤를 받친다 — 그래서 이 변이가 깨뜨리는 것은
+    // 「거부한다」는 약속이지 목록의 생존이 아니다.
+    sql: `alter table public.studies drop constraint if exists studies_recruit_until_finite;`,
+    undo: `
+      alter table public.studies drop constraint if exists studies_recruit_until_finite;
+      alter table public.studies add constraint studies_recruit_until_finite
+        check (recruit_until is null
+               or (recruit_until > '-infinity'::date and recruit_until < 'infinity'::date));`,
+  },
+  "p6-computed-adds-deadline": {
+    holds: "INV-P6 — 마감일이 지나도 계산 컬럼은 모집 중이라고 답한다",
+    // **넣는 변이다.** 보통 변이는 강제 장치를 빼는데, 이 조항이 금지하는 것은
+    // 「마감일을 모집 상태에 넣는 것」이라 빼는 방향으로는 어길 수 없다.
+    sql: `
+      create or replace function public.recruiting(public.studies) returns boolean
+      language sql stable security definer set search_path = '' as $fn$
+        select $1.closed_at is null
+           and $1.deleted_at is null
+           and ($1.recruit_until is null or $1.recruit_until >= current_date)
+           and public.accepted_count($1) < $1.max_participants;
+      $fn$;`,
+  },
+  "p6-rpc-adds-deadline": {
+    holds: "INV-P6 — 마감일이 지나도 study_is_recruiting 은 참으로 답한다",
+    // 같은 조항의 다른 한 벌. 두 벌이 따로 있으니 변이도 따로 있어야 한다.
+    sql: `
+      create or replace function public.study_is_recruiting(p_study_id uuid) returns boolean
+      language sql stable security definer set search_path = '' as $fn$
+        select s.closed_at is null
+           and s.deleted_at is null
+           and (s.recruit_until is null or s.recruit_until >= current_date)
+           and public.study_accepted_count(s.id) < s.max_participants
+          from public.studies s where s.id = p_study_id;
+      $fn$;`,
+  },
+  "p4-deadline-blocks-accept": {
+    holds: "INV-P4 — 마감일이 지난 스터디도 신청과 수락이 그대로 지나간다",
+    // 파생값이 아니라 **쓰기 경로**에 마감일을 넣는다. 파생값 쪽만 붙들면 이 모양이
+    // 빠져나가고, 그때 사용자는 「모집중」을 보고 신청했다가 거부당한다.
+    sql: `
+      create or replace function public.enforce_study_capacity() returns trigger
+      language plpgsql security definer set search_path = '' as $fn$
+      declare
+        v_max smallint; v_accepted integer; v_closed timestamptz;
+        v_deleted timestamptz; v_until date;
+      begin
+        if new.status <> 'accepted' then return new; end if;
+        select max_participants, closed_at, deleted_at, recruit_until
+          into v_max, v_closed, v_deleted, v_until
+          from public.studies where id = new.study_id for update;
+        if not found then
+          raise exception '스터디를 찾을 수 없어 수락할 수 없습니다 (INV-P4)' using errcode = 'check_violation';
+        end if;
+        if v_deleted is not null then
+          raise exception '지워진 스터디에는 참여자를 수락할 수 없습니다 (INV-Z10)' using errcode = 'check_violation';
+        end if;
+        if v_closed is not null then
+          raise exception '모집이 마감된 스터디에는 참여자를 수락할 수 없습니다 (INV-P4)' using errcode = 'check_violation';
+        end if;
+        if v_until is not null and v_until < current_date then
+          raise exception '모집 마감일이 지났습니다 (INV-P4)' using errcode = 'check_violation';
+        end if;
+        select count(*) into v_accepted
+          from public.participants where study_id = new.study_id and status = 'accepted';
+        if v_accepted > v_max then
+          raise exception '정원을 넘겨 수락할 수 없습니다: 정원 %, 수락 % (INV-P1)', v_max, v_accepted
+            using errcode = 'check_violation';
+        end if;
+        return new;
+      end;
+      $fn$;`,
+  },
+  "local-guard-by-prefix": {
+    holds: "통합 스위트는 로컬에만 붙는다",
+    tag: "로컬",
+    // 판정을 파싱에서 문자열 패턴으로 되돌린다. `http://localhost:54321@evil.com` 이
+    // 통과하게 되는데, 그 요청에는 secret 키가 실린다.
+    // 이 파일은 줄끝이 CRLF 다. 여러 줄을 find 로 잡으면 개행이 안 맞아 못 찾으므로
+    // **한 줄만** 잡는다(그 한 줄이 파일에서 유일하다).
+    file: {
+      path: "tests/integration/helpers.ts",
+      find: `    if (u.username || u.password) return url.startsWith("postgresql://") && LOCAL_HOSTS.has(u.hostname);`,
+      replace: `    if (u.username || u.password) return /(127\\.0\\.0\\.1|localhost)/.test(url);`,
+    },
   },
   "z9-any-study": {
     holds: "INV-Z9 (S10) — 호스트가 아닌 사람은 남의 스터디에 모집글을 못 붙인다",
@@ -149,38 +471,292 @@ const MUTATIONS = {
   },
 };
 
-async function run(sql) {
+/**
+ * 변이가 가리키는 불변식 ID — `holds` 에 적힌 첫 `INV-XX` 를 그대로 쓴다.
+ *
+ * 따로 한 번 더 적지 않는 이유는 둘이 갈라지기 때문이다. 이 ID 는 장식이 아니라 판정의
+ * 절반이다 — mutation-run.mjs 는 "빨간불이 났는가"만 보지 않고 "**그 INV 를 이름에 담은\n* 테스트가** 빨간불이 났는가"를 본다. 그래서 ID 가 없는 변이는 판정할 근거가 없고,
+ * 목록을 내주기 전에 여기서 멈춘다.
+ */
+const INV_ID = /INV-[A-Z]\d+/;
+
+/**
+ * 판정에 쓸 이름표. 기본은 holds 에 적힌 첫 INV ID 이고, tag 를 적으면 그것이 이긴다.
+ *
+ * tag 가 필요한 이유: 붙들어야 할 규칙이 전부 스펙 불변식인 것은 아니다. 「마감 임박순」은
+ * 화면 목록 문서가 정한 규칙이라 INV ID 가 없는데, ID 를 요구하면 **판정 대상이 될 수 없어서
+ * 검사 밖에 남는다** — 그러면 이 도구는 스펙이 있는 것만 지키고 나머지는 조용히 놓친다.
+ */
+const invOf = (m) => m.tag ?? INV_ID.exec(m.holds)?.[0];
+
+const nameless = Object.entries(MUTATIONS)
+  .filter(([, m]) => !invOf(m))
+  .map(([name]) => name);
+if (nameless.length > 0) {
+  console.error(
+    `이름표가 없는 변이: ${nameless.join(", ")}\n` +
+      "  판정이 '실패한 테스트 이름이 그 이름표를 담는가' 이므로, 이름표가 없으면 판정할 수 없다.\n" +
+      "  holds 에 INV ID 를 적거나 tag 를 붙인다.",
+  );
+  process.exit(1);
+}
+
+/**
+ * 강제 장치의 지문 — 정책 · 함수 본문 · 권한 · 트리거 · 제약 · 행 수준 접근 켜짐 여부를
+ * 한 덩어리 문자열로 뽑는다.
+ *
+ * 왜 필요한가: `--restore` 는 마이그레이션을 다시 적용할 뿐이고, **다시 적용했다는 것과
+ * 원래대로 돌아왔다는 것은 다르다.** 변이가 건드린 것을 어느 마이그레이션도 다시 정의하지
+ * 않으면 복구는 아무 오류 없이 실패하고, 그 뒤에 도는 변이들은 전부 망가진 데이터베이스
+ * 위에서 판정된다. 지문을 변이 전후로 비교하면 그 조용한 실패가 소리를 낸다.
+ */
+const FINGERPRINT_SQL = `
+select
+  coalesce((select string_agg(format('policy %s.%s %s [%s] using(%s) check(%s)',
+             schemaname, tablename, policyname, cmd, coalesce(qual, '-'), coalesce(with_check, '-')),
+           E'\n' order by schemaname, tablename, policyname)
+      from pg_policies where schemaname in ('public', 'storage', 'realtime')), '')
+  || E'\n' ||
+  coalesce((select string_agg(format('func %s.%s(%s) definer=%s acl=%s src=%s',
+             n.nspname, p.proname, pg_get_function_identity_arguments(p.oid),
+             p.prosecdef, coalesce(p.proacl::text, '-'), md5(p.prosrc)),
+           E'\n' order by n.nspname, p.proname, pg_get_function_identity_arguments(p.oid))
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'), '')
+  || E'\n' ||
+  coalesce((select string_agg(format('grant %s.%s %s %s %s',
+             table_schema, table_name, grantee, privilege_type, col),
+           E'\n' order by table_schema, table_name, grantee, privilege_type, col)
+      from (
+        select table_schema::text, table_name::text, grantee::text, privilege_type::text, '*'::text as col
+          from information_schema.role_table_grants
+         where table_schema in ('public', 'storage') and grantee in ('anon', 'authenticated')
+        union all
+        select table_schema::text, table_name::text, grantee::text, privilege_type::text, column_name::text
+          from information_schema.column_privileges
+         where table_schema in ('public', 'storage') and grantee in ('anon', 'authenticated')
+      ) g), '')
+  || E'\n' ||
+  coalesce((select string_agg(format('trigger %s.%s %s', c.relname, t.tgname, md5(pg_get_triggerdef(t.oid))),
+           E'\n' order by c.relname, t.tgname)
+      from pg_trigger t
+      join pg_class c on c.oid = t.tgrelid
+      join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and not t.tgisinternal), '')
+  || E'\n' ||
+  coalesce((select string_agg(format('constraint %s.%s %s', c.relname, con.conname, pg_get_constraintdef(con.oid)),
+           E'\n' order by c.relname, con.conname)
+      from pg_constraint con
+      join pg_class c on c.oid = con.conrelid
+      join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public'), '')
+  || E'\n' ||
+  coalesce((select string_agg(format('rls %s %s', c.relname, c.relrowsecurity), E'\n' order by c.relname)
+      from pg_class c join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind = 'r'), '')
+  || E'\n' ||
+  -- 강제 장치는 아니지만 **다음 판정을 바꾸는 것**이라 같이 본다. 뒷정리가 실패해 사용자가
+  -- 남으면 다음 변이가 그 위에서 돌고, 그 오염은 정책 지문에는 안 잡힌다.
+  (select format('users %s', count(*)) from auth.users)
+  as fingerprint
+`;
+
+/**
+ * 소스 파일을 바꾸는 변이의 **파일 지문**. 데이터베이스 지문과 같은 자리에 붙는다.
+ *
+ * 없으면 파일 변이에는 ④(복구 확인)가 통째로 비어 있게 된다 — 데이터베이스는 안 건드리므로
+ * SQL 지문이 되돌아왔든 아니든 항상 같고, 그래서 판정 쪽이 「복구됐다」로 읽는다.
+ */
+function fileFingerprint() {
+  const lines = [];
+  for (const [name, m] of Object.entries(MUTATIONS)) {
+    if (!m.file) continue;
+    const target = join(HERE, "..", m.file.path);
+    const cur = readFileSync(target, "utf-8");
+    lines.push(
+      `file ${name} ${m.file.path} ${createHash("sha256").update(cur).digest("hex").slice(0, 16)}`,
+    );
+  }
+  return lines.sort().join("\n");
+}
+
+async function query(sql) {
   const c = new Client({ connectionString: DB_URL });
   await c.connect();
   try {
-    await c.query(sql);
+    return await c.query(sql);
   } finally {
     await c.end();
   }
 }
 
+/**
+ * 기본 복구 — 정책·권한·함수를 다시 정의하는 마이그레이션을 순서대로 다시 적용한다.
+ *
+ * 전부 다 돌리지 않는 이유: **0001 은 재적용 안전하지 않다.** 0002 가 `studies.region` 을
+ * `region_code` 로 바꿨기 때문에 0001 의 `create index ... (region)` 이 없는 컬럼을 가리켜
+ * 죽는다. 그래서 여기 목록은 손으로 고른 것이고, 손으로 고른 목록은 낡는다 —
+ * 그것을 믿지 않기 위해 mutation-run.mjs 가 변이 전후의 지문을 대조한다.
+ */
+const RESTORE_MIGRATIONS = [
+  "0002_review_fixes.sql",
+  "0004_member_visibility.sql",
+  "0007_deadline_sort.sql",
+  "0008_deadline_rank.sql",
+  // 0009 는 0008 의 순위 함수를 **덮어쓴다**(무한 날짜 가지가 붙는다). 순서대로 적용되므로
+  // 이 줄이 0008 뒤에 있어야 복구가 최신 본체로 끝난다.
+  "0009_recruit_until_finite.sql",
+];
+
+/**
+ * 복구. `undo` 를 가진 변이는 그것까지 실행한다 — 0001 에만 있는 정책처럼 위 목록으로는
+ * 되돌아오지 않는 것들이다. `undo` 가 틀려도 조용히 넘어가지 않는다(지문 대조가 잡는다).
+ */
+async function restore(name) {
+  const dir = join(HERE, "..", "supabase", "migrations");
+  for (const f of RESTORE_MIGRATIONS) await query(readFileSync(join(dir, f), "utf-8"));
+
+  // **이름을 안 주면 등록된 undo 를 전부 돌린다.** 예전에는 하나도 안 돌면서 「복구 완료」를
+  // 찍었다 — 손으로 심어 보고 파일 머리에 적힌 대로 되돌리면, 0001 에만 있는 정책을 건드리는
+  // 변이(z2-self-accept · z8-chatpart-columns)가 심긴 채 남고 그 상태가 「복구됨」으로 보였다.
+  // undo 는 전부 정책을 지웠다 다시 만드는 문장이라 몇 번 돌려도 같은 곳에 수렴한다.
+  const undos = name
+    ? [MUTATIONS[name]?.undo].filter(Boolean)
+    : Object.values(MUTATIONS).map((m) => m.undo).filter(Boolean);
+  for (const u of undos) await query(u);
+
+  // 소스 파일을 바꾸는 변이는 **이름과 무관하게 전부** 되돌린다. 이름을 준 호출이 파일을
+  // 건드리지 않으면, 크래시 뒤 `--restore <이름>` 으로 되돌린 사람은 파일이 변이된 채로
+  // 남은 것을 모른 채 「복구 완료」를 본다. 되돌리기는 멱등이라 전부 도는 것이 안전하다.
+  // **두 바퀴로 돈다.** 한 바퀴에서 「자기 것 되돌리고 바로 자기 것 검사」를 하면, 목록에서
+  // 뒤에 있는 변이가 아직 심긴 상태로 앞 변이의 개수가 세어진다. 같은 파일을 건드리는 변이가
+  // 둘 이상이고 서로의 줄이 겹치면 멀쩡한 복구가 「복구 실패」로 죽는다.
+  let files = 0;
+  for (const m of Object.values(MUTATIONS)) {
+    if (!m.file) continue;
+    const target = join(HERE, "..", m.file.path);
+    const cur = readFileSync(target, "utf-8");
+    if (!cur.includes(m.file.replace)) continue;
+    writeFileSync(target, cur.split(m.file.replace).join(m.file.find));
+    files += 1;
+  }
+
+  // **읽어서 확인한다.** 조건부 no-op 는 「되돌릴 것이 없었다」와 「되돌릴 문장을 못 찾았다」를
+  // 구분하지 못한다 — 포매터가 그 줄을 건드리기만 해도 조용히 후자가 된다.
+  //
+  // 개수까지 세는 이유: 되돌리기는 replace 를 **전부** find 로 바꾼다. 그래서 replace 가
+  // 깨끗한 소스에 원래 있던 문장이면, 복구가 손대지 않은 줄까지 바꿔 놓고 「복구 완료」를
+  // 찍는다. 2026-09-05 에 실제로 났다 — 정렬 키 둘 중 하나가 다른 하나로 덮여서, 기준선이
+  // 빨간불인 채로 변이 판정이 시작될 뻔했다. 있음/없음만 보면 그 상태가 그대로 통과한다.
+  for (const [n, m] of Object.entries(MUTATIONS)) {
+    if (!m.file) continue;
+    const cur = readFileSync(join(HERE, "..", m.file.path), "utf-8");
+    const found = cur.split(m.file.find).length - 1;
+    const left = cur.split(m.file.replace).length - 1;
+    if (found === 1 && left === 0) continue;
+    // 원인이 둘인데 처방이 다르다. 뭉뚱그리면 안내가 틀린 쪽을 가리킨다.
+    console.error(
+      found === 0 && left === 0
+        ? `복구 실패: ${n} 이 바꿀 문장을 ${m.file.path} 에서 못 찾았다 — 변이가 낡았다.\n` +
+            "  고칠 곳은 소스가 아니라 이 파일의 find 문자열이다."
+        : `복구 실패: ${n} 의 ${m.file.path} 가 깨끗한 모양이 아니다 ` +
+            `(원래 문장 ${found}건 · 변이 문장 ${left}건 — 각각 1건과 0건이어야 한다).\n` +
+            "  변이의 replace 가 깨끗한 소스에도 있는 문장이면 복구가 멀쩡한 줄까지 바꾼다.\n" +
+            "  손으로 되돌린 뒤 다시 돌린다(git checkout 이 가장 빠르다).",
+    );
+    process.exit(1);
+  }
+
+  return { files: RESTORE_MIGRATIONS.length, undos: undos.length, sources: files };
+}
+
 const arg = process.argv[2];
 
 if (!arg || arg === "--list") {
-  for (const [name, m] of Object.entries(MUTATIONS)) console.log(`${name.padEnd(26)} ${m.holds}`);
-  process.exit(0);
-}
-
-if (arg === "--restore") {
-  // 정책을 바꾸는 마이그레이션을 순서대로 다시 적용한다. 0002 만 돌리면 0004 가 넓힌
-  // 참여자 조회 정책이 되돌아오지 않아 다음 변이의 판정이 틀어진다.
-  for (const file of ["0002_review_fixes.sql", "0004_member_visibility.sql"]) {
-    await run(readFileSync(join(HERE, "..", "supabase", "migrations", file), "utf-8"));
+  for (const [name, m] of Object.entries(MUTATIONS)) {
+    console.log(`${name.padEnd(26)} ${invOf(m).padEnd(7)} ${m.holds}`);
   }
-  console.log("복구 완료 (0002 · 0004 재적용)");
-  process.exit(0);
-}
+} else if (arg === "--list-json") {
+  // `file` 은 소스 파일을 바꾸는 변이인가다. 그런 변이는 데이터베이스 지문을 안 건드리므로,
+  // 판정 쪽이 이것을 모르면 「강제 장치를 하나도 안 바꿨다」로 잘못 읽는다.
+  // mutation-run.mjs 가 읽는 자리. 사람이 읽는 --list 의 칸 나눔에 기대지 않는다.
+  const list = Object.entries(MUTATIONS).map(([name, m]) => ({ name, inv: invOf(m), holds: m.holds, file: Boolean(m.file) }));
+  console.log(JSON.stringify(list));
+} else if (arg === "--fingerprint") {
+  const r = await query(FINGERPRINT_SQL);
+  const full = `${r.rows[0].fingerprint}\n${fileFingerprint()}`;
+  // 마지막 줄에 요약 해시를 같이 낸다 — --restore 가 찍는 값과 같은 자리에서 만난다.
+  console.log(full + `\nsha256 ${createHash("sha256").update(full).digest("hex").slice(0, 12)}`);
+} else if (arg === "--restore") {
+  // 이름을 주면 그 변이의 undo 만, 안 주면 전부 돌린다.
+  const r = await restore(process.argv[3]);
+  // 「복구 완료」라는 말만으로는 보고이지 근거가 아니다. 지문 요약을 같이 찍어
+  // 사람이 원본과 대조할 수 있게 한다.
+  const fp = `${(await query(FINGERPRINT_SQL)).rows[0].fingerprint}\n${fileFingerprint()}`;
+  console.log(
+    `복구 완료 (마이그레이션 ${r.files}개 재적용 + undo ${r.undos}개 + 소스 ${r.sources}개) — 지문 ` +
+      createHash("sha256").update(fp).digest("hex").slice(0, 12),
+  );
+} else {
+  const mutation = MUTATIONS[arg];
+  if (!mutation) {
+    console.error(`모르는 변이: ${arg}. --list 로 목록을 본다.`);
+    process.exit(1);
+  }
+  if (mutation.sql) await query(mutation.sql);
+  if (mutation.file) {
+    const target = join(HERE, "..", mutation.file.path);
+    const cur = readFileSync(target, "utf-8");
 
-const mutation = MUTATIONS[arg];
-if (!mutation) {
-  console.error(`모르는 변이: ${arg}. --list 로 목록을 본다.`);
-  process.exit(1);
-}
+    // **심기 전에 검사한다.** 아래 둘은 복구도 검사하지만, 거기서 걸리면 작업 트리가 이미
+    // 망가진 뒤라 안내가 「git checkout」이 된다. 심기 전에 보면 한 글자도 안 쓰고 거절된다.
+    const found = cur.split(mutation.file.find).length - 1;
+    if (found !== 1) {
+      // **`found === 0` 의 원인은 둘이고 처방이 정반대다.** 변이가 낡은 것일 수도 있고,
+      // 다른 파일 변이가 아직 심긴 채라 그 줄이 지금 다른 모양인 것일 수도 있다
+      // (변이 둘의 find 가 겹치면 실제로 그렇게 된다). 뒤엣것에 "find 를 고쳐라"라고
+      // 안내하면 멀쩡한 변이를 망친다 — 그래서 파일을 한 번 훑어 범인을 지목한다.
+      const culprit =
+        found === 0
+          ? Object.entries(MUTATIONS).find(
+              ([n, other]) =>
+                n !== arg && other.file?.path === mutation.file.path && cur.includes(other.file.replace),
+            )?.[0]
+          : undefined;
+      console.error(
+        `${arg}: 바꿀 문장이 ${mutation.file.path} 에 ${found}건이다 — 1건이어야 한다.` +
+          (culprit
+            ? ` ${culprit} 가 아직 심긴 채다 — 먼저 \`node scripts/mutate.mjs --restore\` 로 되돌린다.`
+            : found === 0
+              ? " 변이가 낡았다 — 고칠 곳은 소스가 아니라 이 파일의 find 문자열이다."
+              : " 같은 문장이 여럿이라 어디를 바꾸는지 정해지지 않는다."),
+      );
+      process.exit(1);
+    }
 
-await run(mutation.sql);
-console.log(`변이 심음: ${arg}\n  이것을 붙들어야 할 검사: ${mutation.holds}`);
+    // **지금이 트리가 깨끗하다고 방금 확인된 순간이다.** 그러니 이 변이 하나가 아니라
+    // 모든 파일 변이의 replace 를 여기서 한 번에 훑는다 — 비용이 0 이고, 한 번도 심어 본 적
+    // 없는 변이의 잘못된 정의도 이때 드러난다.
+    for (const [n, m] of Object.entries(MUTATIONS)) {
+      if (!m.file || !cur.includes(m.file.replace)) continue;
+      console.error(
+        `${n}: 바꿔 넣을 문장이 깨끗한 소스(${m.file.path})에 이미 있다.` +
+          " 복구는 그 문장을 전부 되돌리므로 손대지 않은 줄까지 바뀐다 — replace 를 소스에 없는 문장으로 고친다.",
+      );
+      process.exit(1);
+    }
+
+    // 변이 둘의 find 가 서로 겹치는 경우(하나가 다른 하나의 부분 문자열)는 여기서 안 본다.
+    // 한 번에 하나만 심고 그 사이에 복구가 돌며, 복구가 **깨끗한 상태에서** 모든 변이의
+    // 개수를 다시 세기 때문이다. 겹쳐서 심긴 상태는 위 `culprit` 가지가 이름을 대며 막는다.
+    writeFileSync(target, cur.split(mutation.file.find).join(mutation.file.replace));
+
+    // **디스크에서 다시 읽는다.** 방금 만든 문자열을 보면 위에서 `found === 1` 을 확인한
+    // 이상 언제나 참이라, 확인처럼 생겼지만 아무것도 확인하지 않는다(쓰기 실패도 못 본다).
+    if (!readFileSync(target, "utf-8").includes(mutation.file.replace)) {
+      console.error(`${arg}: 심었는데 바꾼 문장이 파일에 없다.`);
+      process.exit(1);
+    }
+  }
+  console.log(`변이 심음: ${arg}\n  이것을 붙들어야 할 검사: ${mutation.holds}`);
+}

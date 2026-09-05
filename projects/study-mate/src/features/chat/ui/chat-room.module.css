@@ -79,7 +79,7 @@
   background: var(--paper);
 }
 
-/* 내 말은 형광펜이 아니라 괘선 채움이다 — 형광펜은 카테고리·모집 상태 전용 */
+/* 내 말은 형광펜이 아니라 괘선 채움이다 — 형광펜의 뜻은 design-rules 「형광펜 코딩 규칙」 */
 .mine .bubble {
   background: var(--rule);
 }

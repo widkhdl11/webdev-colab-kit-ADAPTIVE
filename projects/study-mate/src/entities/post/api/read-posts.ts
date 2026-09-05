@@ -1,24 +1,6 @@
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
 import type { MeetingMode, PostSummary } from "../model/post-summary";
-
-/**
- * 카드가 필요로 하는 것만 고른다.
- *
- * `accepted_count` · `recruiting` · `likes_count` · `is_latest_for_study` 는 컬럼이 아니라
- * **데이터베이스가 계산해 주는 값**이다(0002 · 0003 마이그레이션). 저장하지 않는 이유는
- * INV-P2·P6 이고, 여기서 세지 않는 이유는 참여자 행이 공개가 아니기 때문이다 —
- * 그래서 수만 내주는 함수를 거친다(INV-P9).
- */
-const CARD_COLUMNS = `
-  id, title, summary, created_at, views_count, likes_count,
-  study:studies!inner(
-    id, category_id, region_code, location_detail, meeting_mode,
-    max_participants, recruit_until, accepted_count, recruiting,
-    category:categories!inner(name),
-    region:regions!inner(name),
-    slots:study_sessions(weekday, starts_at)
-  )
-`;
+import { postsQuery, type PostQuery } from "./post-query";
 
 type Row = {
   id: string;
@@ -68,34 +50,10 @@ function toSummary(row: Row): PostSummary {
   };
 }
 
-/** 목록 정렬 셋. 「마감 임박순」의 기준은 모집 마감일이다 (docs/IA.md) */
-export const SORTS = ["latest", "deadline", "likes"] as const;
-export type Sort = (typeof SORTS)[number];
-
-export const SORT_LABEL: Readonly<Record<Sort, string>> = {
-  latest: "최신순",
-  deadline: "마감 임박순",
-  likes: "좋아요순",
-};
-
-export function toSort(value: string | undefined): Sort {
-  return SORTS.includes(value as Sort) ? (value as Sort) : "latest";
-}
-
-export type PostQuery = {
-  /** 제목·요약 부분 일치 */
-  readonly q?: string;
-  /** 대분류 아이디. 비어 있으면 전체 */
-  readonly categories?: readonly string[];
-  readonly regionCode?: string;
-  /** true 면 온라인 진행만 */
-  readonly onlineOnly?: boolean;
-  readonly openOnly?: boolean;
-  readonly sort?: Sort;
-  /** 1부터 */
-  readonly page?: number;
-  readonly perPage?: number;
-};
+// 정렬 어휘는 post-order.ts, 질의는 post-query.ts 가 원본이다. 여기서는 다시 내보내기만 한다 —
+// 배럴(entities/post/index.ts)이 내보내는 것과 겹치는 만큼만 둔다.
+export { SORTS, SORT_LABEL, toSort, type Sort } from "./post-order";
+export { type PostQuery } from "./post-query";
 
 export type PostPage = {
   readonly posts: readonly PostSummary[];
@@ -104,11 +62,6 @@ export type PostPage = {
   readonly perPage: number;
   readonly pageCount: number;
 };
-
-/** PostgREST 의 패턴 문법에서 뜻을 갖는 글자를 없앤다 — 검색어가 필터를 깨지 않게 */
-function safePattern(q: string): string {
-  return q.replace(/[%_,()]/g, " ").trim();
-}
 
 /**
  * 모집글 목록. **스터디마다 가장 최근 한 장만** 나온다 (docs/IA.md).
@@ -121,34 +74,9 @@ export async function readPosts(query: PostQuery = {}): Promise<PostPage> {
   const sort = query.sort ?? "latest";
 
   const supabase = await createServerSupabase();
-  let q = supabase
-    .from("posts")
-    .select(CARD_COLUMNS, { count: "exact" })
-    .eq("is_latest_for_study", true);
-
-  if (query.q) {
-    const pattern = safePattern(query.q);
-    if (pattern) q = q.or(`title.ilike.%${pattern}%,summary.ilike.%${pattern}%`);
-  }
-  if (query.categories && query.categories.length > 0) {
-    q = q.in("study.category_id", [...query.categories]);
-  }
-  if (query.regionCode) q = q.eq("study.region_code", query.regionCode);
-  if (query.onlineOnly) q = q.in("study.meeting_mode", ["online", "hybrid"]);
-  if (query.openOnly) q = q.eq("study.recruiting", true);
-
-  if (sort === "latest") q = q.order("created_at", { ascending: false });
-  else if (sort === "likes") q = q.order("likes_count", { ascending: false });
-  else {
-    // 마감일이 없는 스터디는 "기한 없음"이라 임박 목록의 끝으로 보낸다.
-    q = q.order("recruit_until", {
-      referencedTable: "study",
-      ascending: true,
-      nullsFirst: false,
-    });
-  }
-  q = q.order("id", { ascending: true }); // 같은 값일 때 순서를 고정한다
-
+  // 질의는 `post-query.ts` 가 만든다 — 통합 검사가 **같은 함수**를 불러 눌러 본다.
+  // 정렬만 상수로 공유하면, 이 파일이 그 상수를 안 쓰게 되어도 검사는 초록불이다.
+  const q = postsQuery(supabase, { ...query, sort });
   const from = (page - 1) * perPage;
   const { data, error, count } = await q.range(from, from + perPage - 1);
 

@@ -71,13 +71,13 @@ svg{display:block}
 :focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:6px}
 
 .skip{position:absolute;left:-9999px;top:0}
-.skip:focus{left:16px;top:16px;z-index:200;background:var(--hl-yellow);color:var(--ink);
+.skip:focus{left:16px;top:16px;z-index:200;background:var(--paper);color:var(--ink);
   border:var(--bd);border-radius:var(--r-btn);padding:12px 18px;font-weight:700}
 
 .wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding:0 24px}
 @media (max-width:600px){.wrap{padding:0 18px}}
 
-/* 형광 밑줄 - 일반 강조는 굵기 + 형광 밑줄로 (형광 색면은 카테고리·상태 전용) */
+/* 형광 밑줄 - 일반 강조는 굵기 + 형광 밑줄로 (형광 색면의 뜻은 design-rules 「형광펜 코딩 규칙」) */
 .mark{background:linear-gradient(transparent 58%,var(--hl-yellow) 58%);font-weight:700}
 
 .h-display{font-family:var(--font-display);font-weight:400;line-height:1.28;letter-spacing:-.01em}
@@ -118,7 +118,8 @@ svg{display:block}
 .btn-wait{border-style:dashed;background:var(--paper)}   /* 신청함·대기 중 */
 .btn-joined{background:var(--hl-mint)}                   /* 참여 중 */
 
-/* == 카테고리 라벨(사각) / 상태 배지(알약+점) - 모양으로 의미를 가른다 ====== */
+/* == 뜻마다 모양이 다르다 - design-rules 「색이 겹치면 모양으로 가른다」 =========
+   카테고리=사각 라벨 / 모집 상태=알약+점 / 안 읽음=점 없는 숫자 알약 */
 .tag{display:inline-flex;align-items:center;font-size:13px;font-weight:700;line-height:1;
   padding:7px 10px;border:var(--bd);border-radius:var(--r-tag);color:var(--ink)}
 .t-sky{background:var(--hl-sky)}

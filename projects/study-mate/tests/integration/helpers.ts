@@ -24,12 +24,52 @@ if (!PUBLISHABLE || !SECRET) {
   );
 }
 
+// **여기서도 로컬을 강제한다.** 변이 도구는 `SUPABASE_DB_URL` 이 원격이면 거부하는데,
+// 통합 스위트가 실제로 쓰기를 보내는 곳은 `API_URL` + secret 키와 `DB_URL` 슈퍼유저 직결
+// **둘 다**다. 하나만 막으면 "변이는 로컬에 심고 사용자·모집글은 원격에 만드는" 조합이
+// 축만 바꿔서 그대로 남는다.
+//
+// **문자열 패턴으로는 못 가린다.** URL 문법에서 호스트를 정하는 것은 마지막 `@` 뒤라,
+// `http://localhost:54321@evil.com` 은 「localhost 로 시작한다」를 통과하고 실제로는
+// evil.com 에 붙는다 — 그 요청에 secret 키가 실린다. 그래서 파싱해서 호스트만 본다.
+const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
+
+export function isLocalUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    // userinfo 가 있으면 그 자체로 거절한다. 로컬 접속에 사용자 정보가 URL 에 있을 이유가
+    // 없고, 있는 순간 호스트가 어디인지 눈으로 읽기 어려워진다.
+    if (u.username || u.password) return url.startsWith("postgresql://") && LOCAL_HOSTS.has(u.hostname);
+    return LOCAL_HOSTS.has(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+for (const [what, url] of [
+  ["Supabase API", API_URL],
+  ["데이터베이스", DB_URL],
+] as const) {
+  if (!isLocalUrl(url)) {
+    throw new Error(`통합 테스트는 로컬에만 붙는다. ${what}가 가리키는 곳: ${url.replace(/\/\/[^/]*@/, "//***@")}`);
+  }
+}
+
 /** 정책을 우회하는 관리자 연결. 준비물을 만들 때만 쓴다 — 판정에는 쓰지 않는다. */
 export const admin: SupabaseClient = createClient(API_URL, SECRET, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
 export type TestUser = { id: string; email: string; client: SupabaseClient };
+
+/**
+ * 이 실행이 만든 사용자 id 장부. `createUser` 가 **사용자를 만든 직후** 적는다.
+ *
+ * 부르는 쪽이 적게 하면 만드는 것과 적는 것 사이가 벌어진다 — 사용자 다섯을 만든 뒤
+ * 한꺼번에 적는 자리가 실제로 둘 있었고, 셋째에서 던지면 앞의 둘이 데이터베이스에
+ * 영원히 남았다. 남은 사용자는 다음 실행의 판정을 바꾼다.
+ */
+const ledger: string[] = [];
 
 /**
  * 실제 사용자를 만들고 **공개 키로 로그인한** 연결을 준다.
@@ -47,6 +87,7 @@ export async function createUser(username: string): Promise<TestUser> {
     email_confirm: true,
   });
   if (error || !data.user) throw new Error(`사용자 생성 실패: ${error?.message}`);
+  ledger.push(data.user.id); // 이 아래에서 던져도 지워진다
 
   const { error: pErr } = await admin.from("profiles").insert({ id: data.user.id, username });
   if (pErr) throw new Error(`프로필 생성 실패: ${pErr.message}`);
@@ -129,18 +170,25 @@ export async function chatIdOf(studyId: string): Promise<string> {
 }
 
 /**
- * 테스트가 만든 것을 지운다. 조건 없는 삭제가 아니라 id 목록으로만 지운다.
+ * 이 파일이 만든 사용자를 전부 지운다. 조건 없는 삭제가 아니라 장부의 id 로만 지운다.
  *
  * 실패를 삼키지 않는다 — 사용자가 남으면 프로필·스터디·참여자·채팅이 cascade 로 안 지워진
  * 채 쌓이고, 다음 실행이 그 위에서 돈다. 그러면 이번 코드와 무관한 빨간불/초록불이 나온다.
  */
-export async function cleanupUsers(ids: string[]): Promise<void> {
+export async function cleanupCreatedUsers(): Promise<void> {
+  // 장부가 유일한 목록이다. 부르는 쪽이 따로 배열을 들고 있으면 그 배열은 검증되지 않는
+  // 장식이 되고(적는 것을 빠뜨려도 아무 일도 안 일어난다) 언젠가 조용히 낡는다.
+  const targets = [...new Set(ledger)];
+  ledger.length = 0;
+
   const failed: string[] = [];
-  for (const id of ids) {
+  for (const id of targets) {
     const { error } = await admin.auth.admin.deleteUser(id);
     if (error) failed.push(`${id}: ${error.message}`);
   }
   if (failed.length > 0) {
+    // 못 지운 것은 장부에 되돌려 둔다 — 다음 호출이 다시 시도한다.
+    ledger.push(...failed.map((f) => f.split(":")[0]));
     throw new Error(
       `테스트 사용자 정리 실패 ${failed.length}건 — 남은 데이터가 다음 실행의 판정을 바꾼다: ` +
         failed.join(" / "),
