@@ -81,7 +81,10 @@ function toMember(row: ParticipantRow, hostId: string): Member {
 }
 
 /** 없거나 안 보이면 null. 지워진 스터디는 호스트에게만 보인다(조회 정책) */
-export async function readStudyPage(studyId: string): Promise<StudyPage | null> {
+export async function readStudyPage(
+  studyId: string,
+  userId: string | null,
+): Promise<StudyPage | null> {
   const supabase = await createServerSupabase();
 
   const { data, error } = await supabase
@@ -132,11 +135,16 @@ export async function readStudyPage(studyId: string): Promise<StudyPage | null> 
     .eq("study_id", studyId)
     .maybeSingle();
 
-  const { data: me } = await supabase
-    .from("participants")
-    .select("status")
-    .eq("study_id", studyId)
-    .maybeSingle();
+  // **사용자로 거른다.** 0004 가 참여자 조회를 넓힌 뒤로 멤버에게는 여러 줄이 보이고,
+  // 안 거르면 `maybeSingle()` 이 오류를 내며 null 이 되어 **탈퇴 버튼이 사라진다.**
+  const me = userId
+    ? await supabase
+        .from("participants")
+        .select("status")
+        .eq("study_id", studyId)
+        .eq("user_id", userId)
+        .maybeSingle()
+    : { data: null };
 
   const members = participants
     .filter((p) => p.status === "accepted")
@@ -168,6 +176,6 @@ export async function readStudyPage(studyId: string): Promise<StudyPage | null> 
     members,
     applicants: participants.filter((p) => p.status === "pending"),
     chatId: (chat?.id as string | undefined) ?? null,
-    myStatus: (me?.status as ParticipationStatus | undefined) ?? null,
+    myStatus: (me.data?.status as ParticipationStatus | undefined) ?? null,
   };
 }

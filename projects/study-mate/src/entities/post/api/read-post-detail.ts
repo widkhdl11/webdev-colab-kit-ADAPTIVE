@@ -67,7 +67,10 @@ const toPerson = (row: ProfileRow | null) =>
  * 상세 화면 한 장. **없으면 null** 이고 오류가 아니다 — 지워진 스터디의 모집글은
  * 조회 정책이 감추므로(INV-Z10) "없다"와 "안 보인다"가 화면에서 같아야 한다.
  */
-export async function readPostDetail(postId: string): Promise<PostDetail | null> {
+export async function readPostDetail(
+  postId: string,
+  userId: string | null,
+): Promise<PostDetail | null> {
   const supabase = await createServerSupabase();
 
   const { data, error } = await supabase
@@ -82,19 +85,30 @@ export async function readPostDetail(postId: string): Promise<PostDetail | null>
   const row = data as unknown as Row;
   const s = row.study;
 
-  // 지금 이 사람이 이 스터디와 어떤 사이인지. 자기 참여 행만 보이므로(접근 정책)
-  // 로그인하지 않았으면 아무것도 안 나온다.
-  const { data: mine } = await supabase
-    .from("participants")
-    .select("status")
-    .eq("study_id", s.id)
-    .maybeSingle();
+  // 지금 이 사람이 이 스터디와 어떤 사이인지.
+  //
+  // **반드시 사용자로 걸러야 한다.** "정책이 내 행만 보여준다"에 기대면 안 된다 —
+  // 0004 가 「수락된 멤버는 같은 스터디의 수락된 행을 본다」로 넓히면서 그 가정이 깨졌고,
+  // 그 순간 이 질의가 여러 줄을 받아 `maybeSingle()` 이 오류를 내며 null 이 됐다.
+  // 결과는 조용했다 — **이미 참여 중인 멤버에게 "참가 신청" 버튼이 보였다.**
+  const mine = userId
+    ? await supabase
+        .from("participants")
+        .select("status")
+        .eq("study_id", s.id)
+        .eq("user_id", userId)
+        .maybeSingle()
+    : { data: null };
 
-  const { data: liked } = await supabase
-    .from("likes")
-    .select("id")
-    .eq("post_id", postId)
-    .maybeSingle();
+  // 좋아요도 같다 — 이 글의 좋아요는 누구나 보이므로 내 것만 집어야 한다.
+  const liked = userId
+    ? await supabase
+        .from("likes")
+        .select("id")
+        .eq("post_id", postId)
+        .eq("user_id", userId)
+        .maybeSingle()
+    : { data: null };
 
   return {
     id: row.id,
@@ -105,8 +119,8 @@ export async function readPostDetail(postId: string): Promise<PostDetail | null>
     viewsCount: row.views_count,
     likesCount: row.likes_count,
     author: toPerson(row.author),
-    likedByMe: liked !== null,
-    myParticipation: (mine?.status as PostDetail["myParticipation"]) ?? null,
+    likedByMe: liked.data !== null,
+    myParticipation: (mine.data?.status as PostDetail["myParticipation"]) ?? null,
     study: {
       id: s.id,
       title: s.title,

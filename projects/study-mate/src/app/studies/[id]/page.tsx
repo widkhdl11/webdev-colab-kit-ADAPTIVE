@@ -15,7 +15,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
 
   const user = await currentUser();
-  const study = await readStudyPage(id);
+  const study = await readStudyPage(id, user?.id ?? null);
   if (!study) notFound();
 
   const unread = user ? await readUnreadNotificationCount() : 0;
@@ -76,6 +76,6 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const study = await readStudyPage(id).catch(() => null);
+  const study = await readStudyPage(id, null).catch(() => null);
   return { title: study ? `${study.title} — Study Mate` : "스터디를 찾을 수 없습니다 — Study Mate" };
 }

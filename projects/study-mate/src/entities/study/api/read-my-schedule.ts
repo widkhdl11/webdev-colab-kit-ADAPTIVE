@@ -34,14 +34,16 @@ function flatten(rows: readonly Row[]): ScheduledSlot[] {
 /**
  * 내가 참여 중인 스터디의 모임 일정.
  *
- * 내 참여 행만 읽으므로 접근 정책이 그대로 통과시킨다 — 남의 참여 기록은 여기서도 안 보인다.
+ * **사용자로 거른다.** 0004 가 참여자 조회를 넓힌 뒤로 "내가 속한 스터디의 수락된 행"이
+ * 전부 보이므로, 안 거르면 멤버 4명짜리 스터디의 모임 시간이 플래너에 네 번 그려진다.
  * 지워진 스터디는 `studies!inner` 조인이 걸러 낸다(조회 정책이 감춘다).
  */
-export async function readMySchedule(): Promise<readonly ScheduledSlot[]> {
+export async function readMySchedule(userId: string): Promise<readonly ScheduledSlot[]> {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from("participants")
     .select("study:studies!inner(id, title, category_id, slots:study_sessions(weekday, starts_at))")
+    .eq("user_id", userId)
     .eq("status", "accepted");
 
   if (error) throw new Error(`내 일정을 읽지 못했다: ${error.message}`);

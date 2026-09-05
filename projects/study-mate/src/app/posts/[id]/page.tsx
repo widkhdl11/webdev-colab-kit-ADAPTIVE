@@ -15,7 +15,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   const { id } = await params;
 
   const user = await currentUser();
-  const post = await readPostDetail(id);
+  const post = await readPostDetail(id, user?.id ?? null);
 
   // 없는 글과 지워진 스터디의 글이 화면에서 같아야 한다 — 지워졌다는 사실 자체가
   // 정보이기 때문이다(INV-Z10 은 그 글을 조회에서 감춘다).
@@ -48,7 +48,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const post = await readPostDetail(id).catch(() => null);
+  const post = await readPostDetail(id, null).catch(() => null);
   if (!post) return { title: "모집글을 찾을 수 없습니다 — Study Mate" };
   return {
     title: `${post.title} — Study Mate`,

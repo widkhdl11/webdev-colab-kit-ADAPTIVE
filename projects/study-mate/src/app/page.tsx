@@ -37,7 +37,7 @@ export default async function HomePage() {
     user ? readUnreadNotificationCount() : Promise.resolve(0),
   ]);
 
-  const mine = user ? await readMySchedule() : [];
+  const mine = user ? await readMySchedule(user.id) : [];
   const usingSample = mine.length === 0;
   const slots = usingSample ? await readSampleSchedule(4) : mine;
 
