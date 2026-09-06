@@ -18,16 +18,25 @@ import {
 import { WEEKDAY_NAMES } from "@/shared/lib/schedule";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { createStudyAction } from "../api/create-study";
+import type { CreatedStudy } from "../api/insert-study";
+import {
+  CAPACITY_MAX,
+  CAPACITY_MIN,
+  LOCATION_MAX,
+  MEETING_MODES,
+  MEETING_MODE_LABEL,
+  SLOT_ROWS,
+  SUMMARY_MAX,
+  TITLE_MAX,
+} from "../model/limits";
 import styles from "./create-study.module.css";
 
-const MODES = [
-  { value: "offline", label: "오프라인" },
-  { value: "online", label: "온라인" },
-  { value: "hybrid", label: "온라인 병행" },
-] as const;
-
-/** 모임 일정 세 줄. 더 필요하면 만든 뒤 수정 화면에서 늘린다 */
-const SLOT_ROWS = [0, 1, 2];
+/**
+ * 상한과 어휘는 `model/limits.ts` 에서 온다 — 서버가 보는 값과 같은 자리다.
+ * 전에는 이 파일이 숫자와 목록을 다시 적고 있어서, 서버 상한을 낮추면 입력창만
+ * 옛 값을 받는 상태가 됐다 (2026-09-06 code-reviewer).
+ */
+const SLOT_INDEXES = Array.from({ length: SLOT_ROWS }, (_, i) => i);
 
 export function CreateStudyForm({
   categories,
@@ -36,7 +45,7 @@ export function CreateStudyForm({
   categories: readonly Category[];
   regions: readonly Region[];
 }) {
-  const [result, submit, pending] = useActionState<ActionResult<string> | null, FormData>(
+  const [result, submit, pending] = useActionState<ActionResult<CreatedStudy> | null, FormData>(
     createStudyAction,
     null,
   );
@@ -47,14 +56,14 @@ export function CreateStudyForm({
         {result && !result.ok ? <FormError message={result.message} /> : null}
 
         <Field id="title" label="스터디 이름" required>
-          <TextInput id="title" name="title" required maxLength={60} placeholder="예: 토익 900 목표 새벽반" />
+          <TextInput id="title" name="title" required maxLength={TITLE_MAX} placeholder="예: 토익 900 목표 새벽반" />
         </Field>
 
         <Field id="summary" label="한 줄 소개" hint="목록 카드에 이 문장이 나옵니다.">
           <TextInput
             id="summary"
             name="summary"
-            maxLength={80}
+            maxLength={SUMMARY_MAX}
             placeholder="무엇을 어떻게 하는 스터디인지 한 문장으로"
           />
         </Field>
@@ -95,9 +104,9 @@ export function CreateStudyForm({
           <FieldRow>
             <Field id="meetingMode" label="진행 방식" required>
               <Select id="meetingMode" name="meetingMode" defaultValue="offline">
-                {MODES.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
+                {MEETING_MODES.map((m) => (
+                  <option key={m} value={m}>
+                    {MEETING_MODE_LABEL[m]}
                   </option>
                 ))}
               </Select>
@@ -111,7 +120,7 @@ export function CreateStudyForm({
               <TextInput
                 id="locationDetail"
                 name="locationDetail"
-                maxLength={60}
+                maxLength={LOCATION_MAX}
                 placeholder="예: 강남 역삼역 스터디카페"
               />
             </Field>
@@ -125,8 +134,8 @@ export function CreateStudyForm({
                 id="capacity"
                 name="capacity"
                 type="number"
-                min={2}
-                max={100}
+                min={CAPACITY_MIN}
+                max={CAPACITY_MAX}
                 defaultValue={5}
                 required
               />
@@ -154,7 +163,7 @@ export function CreateStudyForm({
           title="모임 일정"
           hint="요일과 시간이 홈의 주간 플래너에 그대로 그려집니다. 나중에 수정에서 늘릴 수 있습니다."
         >
-          {SLOT_ROWS.map((i) => (
+          {SLOT_INDEXES.map((i) => (
             <FieldRow key={i} columns={3}>
               <Field id={`weekday${i}`} label={`${i + 1}번째 요일`}>
                 <Select id={`weekday${i}`} name={`weekday${i}`} defaultValue="">

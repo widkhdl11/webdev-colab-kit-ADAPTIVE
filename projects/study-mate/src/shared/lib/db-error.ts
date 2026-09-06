@@ -19,7 +19,20 @@ type DbError = { readonly code?: string; readonly message?: string };
  */
 export function dbErrorMessage(what: string, error: DbError): string {
   // 우리가 지은 문장(트리거·검사 제약). 사용자가 읽으라고 쓴 것이다.
-  if (error.code === "P0001" || error.code === "23514") {
+  //
+  // **`23514` 를 통째로 통과시키지 않는다.** 트리거의 `raise exception … using
+  // errcode = 'check_violation'` 은 우리가 한국어로 쓴 문장이지만, **표의 CHECK 제약이
+  // 걸릴 때는 같은 코드로 PostgreSQL 이 지은 영어 문장이 온다** —
+  // `new row for relation "studies" violates check constraint "studies_recruit_until_finite"`.
+  // 그걸 통과시키면 제약 이름·표 이름이 폼 하나로 새 나가고, 그것이 바로 이 함수가
+  // 막겠다고 적어 둔 것이다 (2026-09-06 security-reviewer · code-reviewer).
+  //
+  // 둘을 가르는 값이 코드에는 없으므로 **문장의 모양으로 가른다.** PostgreSQL 이 짓는
+  // 제약 위반 문장은 언제나 `violates check constraint` 를 담는다.
+  const ours =
+    error.code === "P0001" ||
+    (error.code === "23514" && !/violates check constraint/i.test(error.message ?? ""));
+  if (ours) {
     return error.message ?? `${what}하지 못했습니다`;
   }
   // 원인은 남기되 화면에는 안 보낸다.

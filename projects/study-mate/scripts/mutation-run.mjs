@@ -49,8 +49,11 @@ function fingerprint() {
  * 화면 출력에서 정규식으로 숫자를 긁지 않는다 — 뒷정리 실패 메시지와 테스트 실패 메시지가
  * 같은 stdout 에 섞여 나오고, 그 섞임이 원래 판정을 오염시킨 원인이었다.
  */
-function runSuite(tag) {
+function runSuite(tag, suite = "integration") {
   const out = join(WORK, `${tag}.json`);
+  // 유닛 변이는 기본 설정(vitest.config)으로 돈다. 통합 설정으로 돌리면 서버 액션의
+  // 검사가 한 건도 안 들어와서, 잡을 검사가 있는 변이도 「빠져나갔다」로 보고된다.
+  const config = suite === "unit" ? [] : ["--config", "vitest.integration.config.mts"];
   // vitest 를 `npx.cmd` 로 부르지 않는다 — 이 Node 는 `.cmd` 를 spawn 하면 EINVAL 로
   // 거절하고, 그때 status 는 null 이 된다. 예전 판정(`status !== 0`)에서 null 은 참이라
   // **테스트가 한 번도 안 돈 채로 변이 전부가 「빨간불 ✔」로 보고됐다.**
@@ -60,8 +63,7 @@ function runSuite(tag) {
     [
       join(ROOT, "node_modules", "vitest", "vitest.mjs"),
       "run",
-      "--config",
-      "vitest.integration.config.mts",
+      ...config,
       "--reporter=json",
       `--outputFile=${out}`,
     ],
@@ -118,7 +120,7 @@ if (unknown.length > 0) {
 }
 
 // ── ① 기준선 ────────────────────────────────────────────────────────────
-console.log("기준선 확인 중 — 변이 없이 통합 테스트를 한 번 돌린다.");
+console.log("기준선 확인 중 — 변이 없이 스위트를 한 번씩 돌린다.");
 // 앞선 실행이 복구 실패로 멈췄으면 데이터베이스에 변이가 심긴 채 남는다. 그 상태에서 지문을
 // 뜨면 **망가진 것이 기준선이 되고 이후 모든 복구가 「일치」로 나온다** — 그리고 그때 안
 // 잡히는 것이 정확히 이 도구가 찾으려는 것(빠져나간 변이)이다. 그래서 복구부터 돌리고 뜬다.
@@ -128,7 +130,19 @@ if (preRestore.status !== 0) {
   process.exit(1);
 }
 const baseFp = fingerprint();
-const base = runSuite("baseline");
+
+// 이번에 돌릴 변이가 쓰는 스위트만 기준선을 잡는다. 유닛 변이만 고르고 돌릴 때
+// 통합 스위트 한 바퀴(데이터베이스 왕복)를 헛돌지 않게.
+const SUITES = [...new Set(targets.map((m) => m.suite ?? "integration"))];
+const bases = SUITES.map((suite) => ({ suite, r: runSuite(`baseline-${suite}`, suite) }));
+const base = {
+  ok: bases.every((b) => b.r.ok),
+  reason: bases.find((b) => !b.r.ok)?.r.reason ?? null,
+  failed: bases.flatMap((b) => b.r.failed),
+  hookErrors: bases.flatMap((b) => b.r.hookErrors),
+  status: bases.find((b) => b.r.status !== 0)?.r.status ?? 0,
+  total: bases.reduce((n, b) => n + b.r.total, 0),
+};
 
 if (!base.ok) {
   console.error(`기준선을 판정할 수 없다: ${base.reason}`);
@@ -196,7 +210,7 @@ for (const m of targets) {
   // 무력화가 안 된 변이에 스위트를 다 돌리는 것은 순수한 낭비다 — 결과를 안 본다.
   const r = changedNothing
     ? { ok: true, status: 0, failed: [], hookErrors: [], total: 0 }
-    : runSuite(m.name);
+    : runSuite(m.name, m.suite ?? "integration");
 
   // 복구가 먼저다. 판정을 계산하다 죽어도 데이터베이스는 원래대로여야 한다.
   const undone = node(["--restore", m.name], { stdio: "inherit" });

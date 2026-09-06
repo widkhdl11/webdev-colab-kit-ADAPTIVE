@@ -8,6 +8,8 @@ import { Button } from "@/shared/ui/button/Button";
 import { hourMinute } from "@/shared/lib/schedule";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { sendMessageAction } from "../api/chat-actions";
+// 상한은 model/limits.ts 에서 온다 — 서버가 보는 값과 같은 자리다(2026-09-06 code-reviewer).
+import { MESSAGE_MAX } from "../model/limits";
 import styles from "./chat-room.module.css";
 
 /** "2026-09-05T21:03:11Z" → "21:03" */
@@ -196,7 +198,7 @@ export function ChatRoomView({
           id="content"
           name="content"
           type="text"
-          maxLength={2000}
+          maxLength={MESSAGE_MAX}
           required
           autoComplete="off"
           placeholder="메시지를 입력하세요"

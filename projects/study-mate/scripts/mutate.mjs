@@ -762,6 +762,298 @@ const MUTATIONS = {
                or private.is_study_host(study_id, (select auth.uid()))
                or private.is_study_member(study_id, (select auth.uid())));`,
   },
+
+  // ── 서버 액션의 가드·판정 (유닛 스위트) ────────────────────────────────
+  // 2026-09-06 에 붙인 검사들이 실제로 무엇을 붙드는지 보는 변이다. 그 전까지 이 네 파일
+  // (액션 다섯)에는 검사가 0개였고, requireSession 을 통째로 빼도 전 스위트가 초록불이었다.
+  //
+  // **suite 를 unit 으로 적는다.** 여기서 붙드는 것은 데이터베이스가 아니라 우리가 보내는
+  // 문장과 가드의 유무라, 통합 스위트에는 이것을 볼 검사가 아예 없다 — 통합으로 돌리면
+  // 「빠져나갔다」가 나오는데 그건 잡을 검사가 없다는 뜻이 아니라 안 돌렸다는 뜻이다.
+  //
+  // **조립 안의 가드와 액션 파일의 호출부를 따로 찍는다.** 앞의 것만 있으면 액션 파일이
+  // make*() 에 가짜 판독기를 끼우도록 바뀌어도 전부 초록불이다 — 세션 가드가 프로덕션
+  // 경로에서만 빠지는 상태가 만점으로 나온다 (2026-09-06 code-reviewer · test-auditor).
+
+  "apply-guard-dropped": {
+    holds: "INV-A4 — 참가 신청은 세션이 없으면 아무것도 쓰지 않는다",
+    suite: "unit",
+    file: {
+      path: "src/features/apply-to-study/api/insert-application.ts",
+      find: `  const guarded = requireSession(readUser, (user, studyId: string) =>`,
+      replace: `  const guarded = requireSession((async () => ({ id: "00000000-0000-4000-8000-000000000000" })), (user, studyId: string) =>`,
+    },
+  },
+  "apply-action-unguarded": {
+    holds: "INV-A4 — 배포되는 신청 액션이 가드를 거친다",
+    suite: "unit",
+    file: {
+      path: "src/features/apply-to-study/api/apply.ts",
+      find: `const guarded = makeApply();`,
+      replace: `const guarded = makeApply((async () => ({ id: "00000000-0000-4000-8000-000000000000" })));`,
+    },
+  },
+  "apply-revalidate-dropped": {
+    holds: "신청이 성공하면 그 모집글 화면의 캐시를 지운다",
+    tag: "캐시를 지운다",
+    suite: "unit",
+    file: {
+      path: "src/features/apply-to-study/api/insert-application.ts",
+      find: `    if (result.ok) deps.revalidate("/posts", form.get("postId"));`,
+      replace: `    if (result.ok && false) deps.revalidate("/posts", form.get("postId"));`,
+    },
+  },
+  "apply-study-id-dropped": {
+    holds: "신청 행에 어느 스터디인지가 실제로 담긴다",
+    tag: "정확히 세 칸",
+    suite: "unit",
+    // study_id 를 빼면 not null 위반으로 기능이 100% 죽는데, user_id 만 보는 단언은 초록불이다.
+    file: {
+      path: "src/features/apply-to-study/api/insert-application.ts",
+      find: `    .insert({ study_id: studyId, user_id: user.id, status: "pending" });`,
+      replace: `    .insert({ user_id: user.id, status: "pending" });`,
+    },
+  },
+  "apply-db-error-swallowed": {
+    holds: "23505·42501 이 아닌 거부도 실패로 돌려주고 원문을 화면에 안 보낸다",
+    tag: "원문을 화면으로 보내지 않는다",
+    suite: "unit",
+    file: {
+      path: "src/features/apply-to-study/api/insert-application.ts",
+      find: `    return { ok: false, message: dbErrorMessage("신청", error) };`,
+      replace: `    return { ok: true, value: null };`,
+    },
+  },
+
+  "manage-guard-dropped": {
+    holds: "INV-A4 — 참여 상태 변경은 세션이 없으면 아무것도 쓰지 않는다",
+    suite: "unit",
+    file: {
+      path: "src/features/manage-participants/api/change-status.ts",
+      find: `  const guarded = requireSession(readUser, (user, input: Parameters<typeof changeStatus>[1]) =>`,
+      replace: `  const guarded = requireSession((async () => ({ id: "00000000-0000-4000-8000-000000000000" })), (user, input: Parameters<typeof changeStatus>[1]) =>`,
+    },
+  },
+  "manage-action-unguarded": {
+    holds: "INV-A4 — 배포되는 상태 변경 액션이 가드를 거친다",
+    suite: "unit",
+    file: {
+      path: "src/features/manage-participants/api/manage.ts",
+      find: `const guarded = makeChangeParticipation();`,
+      replace: `const guarded = makeChangeParticipation((async () => ({ id: "00000000-0000-4000-8000-000000000000" })));`,
+    },
+  },
+  "manage-zero-rows-ok": {
+    holds: "정책이 걸러 0행이 갱신된 것을 성공으로 보고하지 않는다",
+    tag: "0행",
+    suite: "unit",
+    file: {
+      path: "src/features/manage-participants/api/change-status.ts",
+      find: `  if (!data || data.length === 0) {`,
+      replace: `  if (data && data.length < 0) {`,
+    },
+  },
+  "manage-db-error-swallowed": {
+    holds: "트리거가 지은 한국어 문장을 삼키지 않는다 (정원 초과·지워진 스터디·끝난 신청)",
+    tag: "P0001",
+    suite: "unit",
+    // 이 액션이 받는 오류의 대부분이 P0001 이다. 삼키면 호스트는 「수락했습니다」를 보고
+    // 신청자는 영원히 안 들어온다 (2026-09-06 test-auditor: 이 갈래에 검사가 0건이었다).
+    file: {
+      path: "src/features/manage-participants/api/change-status.ts",
+      find: `  if (error) return { ok: false, message: dbErrorMessage(ACTION_NOUN[next], error) };`,
+      replace: `  if (error) return { ok: true, value: null };`,
+    },
+  },
+  "manage-withdraw-anyone": {
+    holds: "남을 대신 탈퇴시킬 수 없다",
+    tag: "대신 탈퇴",
+    suite: "unit",
+    file: {
+      path: "src/features/manage-participants/api/change-status.ts",
+      find: `  if (next === "withdrawn" && targetUserId !== user.id) {`,
+      replace: `  if (next === "__nevermatches__" && targetUserId !== user.id) {`,
+    },
+  },
+  "manage-transition-open": {
+    holds: "INV-P7 — 목록에 없는 전이는 거부한다",
+    suite: "unit",
+    file: {
+      path: "src/features/manage-participants/api/change-status.ts",
+      find: `  if (!ALLOWED.includes(next)) return { ok: false, message: "할 수 없는 동작입니다" };`,
+      replace: `  if (ALLOWED.includes(next) && false) return { ok: false, message: "할 수 없는 동작입니다" };`,
+    },
+  },
+
+  "chat-guard-dropped": {
+    holds: "INV-A4 — 메시지 보내기는 세션이 없으면 아무것도 쓰지 않는다",
+    suite: "unit",
+    file: {
+      path: "src/features/chat/api/send-message.ts",
+      find: `  const guarded = requireSession(readUser, (user, input: { chatId: string; content: string }) =>`,
+      replace: `  const guarded = requireSession((async () => ({ id: "00000000-0000-4000-8000-000000000000" })), (user, input: { chatId: string; content: string }) =>`,
+    },
+  },
+  "chat-action-unguarded": {
+    holds: "INV-A4 — 배포되는 메시지 액션이 가드를 거친다",
+    suite: "unit",
+    file: {
+      path: "src/features/chat/api/chat-actions.ts",
+      find: `const guardedSend = makeSendMessage();`,
+      replace: `const guardedSend = makeSendMessage((async () => ({ id: "00000000-0000-4000-8000-000000000000" })));`,
+    },
+  },
+  "markread-action-unguarded": {
+    holds: "INV-A4 — 배포되는 읽음 표시 액션이 가드를 거친다",
+    suite: "unit",
+    file: {
+      path: "src/features/chat/api/chat-actions.ts",
+      find: `const guardedRead = makeMarkRead();`,
+      replace: `const guardedRead = makeMarkRead((async () => ({ id: "00000000-0000-4000-8000-000000000000" })));`,
+    },
+  },
+  "chat-length-loosened": {
+    holds: "메시지 길이 상한 2000 이 실제로 걸린다",
+    tag: "길이 상한 2000",
+    suite: "unit",
+    // **MAX_SAFE_INTEGER 로 늘리지 않는다.** 그러면 검사의 repeat 이 RangeError 를 던져서
+    // 단언이 아니라 문자열 생성 실패로 빨간불이 난다 — 판정이 거짓이 된다
+    // (2026-09-06 test-auditor). 실제로 일어날 모양(상한이 슬쩍 늘어남)으로 찍는다.
+    file: {
+      path: "src/features/chat/model/limits.ts",
+      find: `export const MESSAGE_MAX = 2000;`,
+      replace: `export const MESSAGE_MAX = 20000;`,
+    },
+  },
+  "chat-db-error-swallowed": {
+    holds: "42501 이 아닌 거부를 삼키지 않는다 — 삼키면 화면은 보냈다고 하고 메시지는 사라진다",
+    tag: "삼키지 않는다",
+    suite: "unit",
+    file: {
+      path: "src/features/chat/api/send-message.ts",
+      find: `    return { ok: false, message: dbErrorMessage("보내기", error) };`,
+      replace: `    return { ok: true, value: null };`,
+    },
+  },
+  "markread-any-user": {
+    holds: "읽음 표시는 이 방의 나만 민다",
+    tag: "이 방의 나",
+    suite: "unit",
+    file: {
+      path: "src/features/chat/api/mark-read.ts",
+      find: `    .eq("user_id", user.id);`,
+      replace: `    .eq("chat_id", chatId + "");`,
+    },
+  },
+  "markread-frozen-clock": {
+    holds: "INV-Z8 — 읽음 표시가 미는 값은 지금 시각이다",
+    suite: "unit",
+    // 1970년으로 고정되면 안 읽은 배지가 영원히 안 지워진다. 키만 보는 단언은 초록불이다.
+    file: {
+      path: "src/features/chat/api/mark-read.ts",
+      find: `  now: () => string = () => new Date().toISOString(),`,
+      replace: `  now: () => string = () => "1970-01-01T00:00:00.000Z",`,
+    },
+  },
+
+  "study-guard-dropped": {
+    holds: "INV-A4 — 스터디 개설은 세션이 없으면 아무것도 쓰지 않는다",
+    suite: "unit",
+    file: {
+      path: "src/features/create-study/api/insert-study.ts",
+      find: `  return requireSession(readUser, (user, form: FormData) =>`,
+      replace: `  return requireSession((async () => ({ id: "00000000-0000-4000-8000-000000000000" })), (user, form: FormData) =>`,
+    },
+  },
+  "study-action-unguarded": {
+    holds: "INV-A4 — 배포되는 개설 액션이 가드를 거친다",
+    suite: "unit",
+    file: {
+      path: "src/features/create-study/api/create-study.ts",
+      find: `const guarded = makeCreateStudy();`,
+      replace: `const guarded = makeCreateStudy((async () => ({ id: "00000000-0000-4000-8000-000000000000" })));`,
+    },
+  },
+  "study-capacity-drifts": {
+    holds: "스터디 정원의 상한이 데이터베이스와 같은 숫자다",
+    tag: "정원의 경계",
+    suite: "unit",
+    // 무한대가 아니라 **슬쩍 늘어나는** 모양으로 찍는다. 데이터베이스는 100 에서 거부한다.
+    file: {
+      path: "src/features/create-study/model/limits.ts",
+      find: `export const CAPACITY_MAX = 100;`,
+      replace: `export const CAPACITY_MAX = 1000;`,
+    },
+  },
+  "study-mode-hardcoded": {
+    holds: "고른 진행 방식이 그대로 저장된다",
+    tag: "진행 방식",
+    suite: "unit",
+    file: {
+      path: "src/features/create-study/api/insert-study.ts",
+      find: `      meeting_mode: meetingMode,`,
+      replace: `      meeting_mode: "offline",`,
+    },
+  },
+  "study-recruit-until-dropped": {
+    holds: "모집 마감일이 실제로 저장된다 — 마감 임박순 정렬의 유일한 원천이다",
+    tag: "열두 칸",
+    suite: "unit",
+    file: {
+      path: "src/features/create-study/api/insert-study.ts",
+      find: `      recruit_until: formText(form, "recruitUntil"),`,
+      replace: `      recruit_until: null,`,
+    },
+  },
+  "study-host-from-elsewhere": {
+    holds: "INV-Z4 — 스터디의 호스트는 세션에서 온다",
+    suite: "unit",
+    file: {
+      path: "src/features/create-study/api/insert-study.ts",
+      find: `      host_id: user.id,`,
+      replace: `      host_id: "00000000-0000-4000-8000-000000000000",`,
+    },
+  },
+  "study-raw-error-leaked": {
+    holds: "데이터베이스 원문을 화면으로 보내지 않는다 (제약 이름·표 이름 노출)",
+    tag: "원문을 화면으로 보내지 않는다",
+    suite: "unit",
+    file: {
+      path: "src/features/create-study/api/insert-study.ts",
+      find: `  if (error) return { ok: false, message: dbErrorMessage("스터디 개설", error) };`,
+      replace: '  if (error) return { ok: false, message: "스터디를 만들지 못했습니다: " + error.message };',
+    },
+  },
+  "study-slots-first-row-only": {
+    holds: "모임 일정 세 줄을 끝까지 읽는다",
+    tag: "끝까지 읽는다",
+    suite: "unit",
+    file: {
+      path: "src/features/create-study/model/slots.ts",
+      find: `  for (let i = 0; i < SLOT_ROWS; i += 1) {`,
+      replace: `  for (let i = 0; i < 1; i += 1) {`,
+    },
+  },
+  "study-slots-time-order-open": {
+    holds: "끝 시각이 시작 시각보다 뒤여야 한다",
+    tag: "끝 시각이",
+    suite: "unit",
+    file: {
+      path: "src/features/create-study/model/slots.ts",
+      find: `    if (endsAt <= startsAt) {`,
+      replace: `    if (endsAt < "") {`,
+    },
+  },
+  "profile-revalidate-dropped": {
+    holds: "프로필 저장이 성공하면 프로필 화면 둘을 다시 받게 한다",
+    tag: "다시 받게 한다",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-profile/api/save-profile.ts",
+      find: `    if (result.ok) deps.revalidatePaths("/profile", "/profile/edit");`,
+      replace: `    if (result.ok && false) deps.revalidatePaths("/profile", "/profile/edit");`,
+    },
+  }
 };
 
 /**
@@ -1188,7 +1480,16 @@ if (!arg || arg === "--list") {
   // `file` 은 소스 파일을 바꾸는 변이인가다. 그런 변이는 데이터베이스 지문을 안 건드리므로,
   // 판정 쪽이 이것을 모르면 「강제 장치를 하나도 안 바꿨다」로 잘못 읽는다.
   // mutation-run.mjs 가 읽는 자리. 사람이 읽는 --list 의 칸 나눔에 기대지 않는다.
-  const list = Object.entries(MUTATIONS).map(([name, m]) => ({ name, inv: invOf(m), holds: m.holds, file: Boolean(m.file) }));
+  // `suite` 는 이 변이를 어느 스위트가 붙드는가다. 유닛 변이(서버 액션의 가드·판정)를
+  // 통합 스위트로 돌리면 그 스위트에는 붙들 검사가 아예 없어서 「빠져나갔다」가 나온다 —
+  // 잡히지 않은 것과 잘못된 스위트를 돌린 것은 겉이 같다.
+  const list = Object.entries(MUTATIONS).map(([name, m]) => ({
+    name,
+    inv: invOf(m),
+    holds: m.holds,
+    file: Boolean(m.file),
+    suite: m.suite ?? "integration",
+  }));
   console.log(JSON.stringify(list));
 } else if (arg === "--fingerprint") {
   const r = await query(FINGERPRINT_SQL);

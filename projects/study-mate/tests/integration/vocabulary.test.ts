@@ -89,4 +89,34 @@ describe("어휘 두 벌이 데이터베이스와 같은지", () => {
     expect(unionValues(postSummarySource, "MeetingMode")).toEqual(expectedMode);
     expect(unionValues(studySource, "MeetingMode")).toEqual(expectedMode);
   });
+
+  it("쓰기를 실제로 막는 목록도 같은 어휘다 — 읽기용 union 만 봐서는 안 된다", async () => {
+    // 위 검사들은 **읽기용 타입**만 본다. 실제로 데이터베이스 쓰기를 막는 목록은 다른
+    // 자리에 있고, 그것들은 2026-09-06 까지 이 대조 밖에 있었다 (code-reviewer):
+    //   · features/create-study/model/limits.ts 의 MEETING_MODES — 개설 폼과 서버가 함께 본다
+    //   · features/manage-participants/model/transitions.ts 의 ALLOWED — 버튼과 서버가 함께 본다
+    const { readFileSync } = await import("node:fs");
+    const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf-8");
+
+    const constValues = (source: string, name: string): string[] => {
+      const m = new RegExp(`export const ${name} = \\[([^\\]]+)\\]`).exec(source);
+      expect(m, `${name} 을 소스에서 찾지 못했다`).not.toBeNull();
+      return [...(m as RegExpExecArray)[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]).sort();
+    };
+
+    const limitsSource = read("../../src/features/create-study/model/limits.ts");
+    const transitionsSource = read("../../src/features/manage-participants/model/transitions.ts");
+
+    expect(
+      constValues(limitsSource, "MEETING_MODES"),
+      "개설 폼이 보내는 진행 방식이 데이터베이스 어휘와 다르다",
+    ).toEqual(["hybrid", "offline", "online"]);
+
+    // ALLOWED 는 다섯 중 넷이다 — pending 만 빠진다(신청을 만드는 것은 다른 액션이고,
+    // 되돌아가는 전이는 없다: INV-P7).
+    expect(
+      constValues(transitionsSource, "ALLOWED"),
+      "화면이 시킬 수 있는 전이 목록이 데이터베이스 어휘와 다르다",
+    ).toEqual(["accepted", "kicked", "rejected", "withdrawn"]);
+  });
 });

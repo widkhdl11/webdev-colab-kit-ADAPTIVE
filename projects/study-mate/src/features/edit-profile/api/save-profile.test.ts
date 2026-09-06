@@ -270,9 +270,28 @@ describe("프로필 저장", () => {
 
   it("INV-E6: 세션이 없으면 데이터베이스에 손도 안 댄다", async () => {
     const db = 가짜DB();
-    const 액션 = makeSaveProfile(async () => null, db.factory);
+    const 지우기 = vi.fn();
+    const 액션 = makeSaveProfile(async () => null, {
+      createSupabase: db.factory,
+      revalidatePaths: 지우기,
+    });
 
     await expect(액션(폼())).resolves.toEqual({ ok: false, message: NO_SESSION_MESSAGE });
     expect(db.보낸것).toEqual([]);
+    expect(지우기).not.toHaveBeenCalled();
+  });
+
+  it("저장에 성공하면 프로필 화면 둘을 다시 받게 한다", async () => {
+    const db = 가짜DB();
+    const 지우기 = vi.fn();
+    const 액션 = makeSaveProfile(async () => 나, {
+      createSupabase: db.factory,
+      revalidatePaths: 지우기,
+    });
+
+    await expect(액션(폼())).resolves.toEqual({ ok: true, value: null });
+    // 이 단언이 없으면 캐시 지우기를 통째로 지워도 초록불이다 — 프로필은 저장됐는데
+    // 화면은 옛 이름을 보여 주는 상태가 아무 신호 없이 만들어진다.
+    expect(지우기).toHaveBeenCalledWith("/profile", "/profile/edit");
   });
 });

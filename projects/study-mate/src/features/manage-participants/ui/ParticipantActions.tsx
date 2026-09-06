@@ -4,16 +4,12 @@ import { useActionState } from "react";
 import { Button } from "@/shared/ui/button/Button";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { changeParticipationAction } from "../api/manage";
+// 전이 목록과 라벨은 `model/transitions.ts` 에서 온다 — 서버가 보는 목록과 같은 자리다.
+// 전에는 이 파일이 같은 union 을 손으로 다시 적고 있어서, 목록이 갈리면 런타임에만
+// 드러났다 (2026-09-06 code-reviewer). 서버 파일(`api/change-status.ts`)을 값으로
+// import 할 수는 없다 — 이 파일은 클라이언트 컴포넌트고 그러면 `next/headers` 가 딸려 온다.
+import { BUTTON_LABEL as LABEL, type Transition } from "../model/transitions";
 import styles from "./participant-actions.module.css";
-
-type Transition = "accepted" | "rejected" | "kicked" | "withdrawn";
-
-const LABEL: Readonly<Record<Transition, string>> = {
-  accepted: "수락",
-  rejected: "거절",
-  kicked: "내보내기",
-  withdrawn: "탈퇴하기",
-};
 
 /**
  * 한 사람에 대해 할 수 있는 일 한두 개. 각 버튼이 자기 폼을 갖는다 —

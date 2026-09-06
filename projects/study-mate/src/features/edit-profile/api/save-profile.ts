@@ -6,7 +6,9 @@
 
 import { randomUUID } from "node:crypto";
 import { currentUser, requireSession } from "@/entities/session";
+import { revalidatePath } from "next/cache";
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
+import type { PathDeps } from "@/shared/lib/action-deps";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { dbErrorMessage } from "@/shared/lib/db-error";
 import { formText } from "@/shared/lib/form-text";
@@ -116,11 +118,32 @@ export async function saveProfile(
 }
 
 /** 세션 가드를 붙인 것 (INV-E6·INV-A4). 액션 파일이 이것을 한 번 부른다 */
+const DEFAULT_DEPS: PathDeps = {
+  createSupabase: createServerSupabase,
+  revalidatePaths: (...paths) => {
+    for (const p of paths) revalidatePath(p);
+  },
+};
+
+/**
+ * 세션 확인 뒤로 본체를 감추고, 성공하면 프로필 화면들을 다시 받게 한다.
+ *
+ * **캐시 지우기를 액션 파일이 아니라 여기 둔다.** 액션 파일에 두면 그 두 줄을 지워도
+ * 전 스위트가 초록불이다 — 프로필은 저장됐는데 화면은 옛 이름을 보여 주는 상태가
+ * 아무 신호 없이 만들어진다 (2026-09-06 code-reviewer).
+ */
 export function makeSaveProfile(
   readUser: typeof currentUser = currentUser,
-  createSupabase: typeof createServerSupabase = createServerSupabase,
+  deps: PathDeps = DEFAULT_DEPS,
 ) {
-  return requireSession(readUser, (user, form: FormData) =>
-    saveProfile(user, form, createSupabase),
+  const guarded = requireSession(readUser, (user, form: FormData) =>
+    saveProfile(user, form, deps.createSupabase),
   );
+  return async (form: FormData) => {
+    const result = await guarded(form);
+    // 같은 자리에 머물지 않고 프로필 화면으로 돌아가는데, 그 화면이 방금 고친 값을
+    // 보여 줘야 한다. 다른 화면들(모집글 상세의 작성자 이름 등)도 같은 값을 그린다.
+    if (result.ok) deps.revalidatePaths("/profile", "/profile/edit");
+    return result;
+  };
 }
