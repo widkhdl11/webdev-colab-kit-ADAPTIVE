@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import styles from "./button.module.css";
 
 /** 잉크 채움(주 행동) · 테두리(보조) · 점선(확정 전) · 민트 채움(완료된 상태) */
@@ -22,16 +22,22 @@ type Shared = {
   children: ReactNode;
 };
 
+/**
+ * `ref` 를 받는 이유: 눌러서 화면이 바뀌는 자리(삭제의 두 단계 확인)에서 **초점을 따라
+ * 옮겨야** 하기 때문이다. 안 옮기면 초점이 `document.body` 로 떨어져서, 화면을 보면서
+ * 키보드만 쓰는 사용자는 Tab 을 문서 처음부터 다시 눌러야 한다 (2026-09-06 ui-reviewer).
+ */
 export function Button({
   tone = "outline",
   size = "md",
   block = false,
   className,
   children,
+  ref,
   ...rest
-}: Shared & ButtonHTMLAttributes<HTMLButtonElement>) {
+}: Shared & ButtonHTMLAttributes<HTMLButtonElement> & { ref?: Ref<HTMLButtonElement> }) {
   return (
-    <button className={classNames(tone, size, block, className)} {...rest}>
+    <button ref={ref} className={classNames(tone, size, block, className)} {...rest}>
       {children}
     </button>
   );

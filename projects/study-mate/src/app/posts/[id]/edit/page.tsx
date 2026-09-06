@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { readUnreadNotificationCount } from "@/entities/notification";
 import { readPostForEdit } from "@/entities/post";
 import { currentUser } from "@/entities/session";
+import { DeletePostPanel } from "@/features/delete-post";
 import { EditPostForm } from "@/features/edit-post";
 import { FormPage } from "@/shared/ui/form-page";
 import { SkipLink } from "@/shared/ui/skip-link/SkipLink";
@@ -42,6 +43,15 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
           sub="고친 내용은 저장하는 즉시 목록과 상세 화면에 나옵니다."
         >
           <EditPostForm post={post} />
+          {/*
+            삭제는 수정 폼과 **다른 폼**이고 카드 밖이다 — 승인된 시각 기준의 「파괴적
+            행동」 규칙이 「그 대상을 다루는 화면의 맨 아래, 주 폼과 분리된 블록」으로 정했다.
+            여기 도달했다는 것은 이미 「내가 쓴 글이고 그 스터디가 살아 있다」가 판정된
+            뒤다(위 `readPostForEdit` + `notFound`). **다만 그 판정은 인가가 아니다** —
+            서버 액션은 이 화면을 안 거치고도 부를 수 있으므로, 실제로 막는 것은
+            `requireSession` + 액션의 작성자 좁히기 + 삭제 정책 셋이다.
+          */}
+          <DeletePostPanel postId={post.id} />
         </FormPage>
       </main>
 

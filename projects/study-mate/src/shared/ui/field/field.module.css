@@ -118,6 +118,21 @@ select.control {
 
 /* 성공 문구. 실패와 같은 슬롯이라 **여백이 같다** — 두 벌이 되면 같은 자리의 두 문구가
    다르게 앉는다. 뜻이 반대인 것은 색(형광펜 대신 종이)과 테두리가 말한다 */
+/* 되묻는 문구. 위 둘과 **같은 슬롯·같은 여백**이고, 실패(형광펜)도 성공(종이·평범한 굵기)도
+   아닌 세 번째다 — 종이 바탕에 굵은 글자. 셋이 한 파일에 있는 이유는 `.error`·`.notice` 를
+   붙여 둔 이유와 같다: 슬롯 여백을 고치는 날 셋이 같이 움직여야 한다 (2026-09-06 ui-reviewer) */
+.confirm {
+  margin-bottom: var(--space-18);
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: var(--space-12) var(--space-14);
+}
+
 .notice {
   margin-bottom: var(--space-18);
   font-size: 14px;

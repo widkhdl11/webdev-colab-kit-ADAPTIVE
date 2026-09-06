@@ -310,6 +310,77 @@ describe("INV-Z3: 모집글을 고치거나 지우는 것은 작성자만", () =
     expect(data).toBeNull();
   });
 
+  // 삭제도 갱신과 같은 전제 위에 있다 — 「거부는 오류가 아니라 0행」. 앱은 그 0행을
+  // 보고 "지울 수 있는 모집글이 아닙니다"를 세운다.
+  it("INV-Z3(실패경로·삭제): 남의 글은 삭제도 오류가 아니라 0행으로 온다", async () => {
+    const { data, error } = await stranger.client
+      .from("posts")
+      .delete()
+      .eq("id", postId)
+      .eq("author_id", stranger.id)
+      .select("study_id")
+      .maybeSingle();
+
+    expect(error).toBeNull();
+    expect(data).toBeNull();
+    // 반대 절반 — 실제로 안 지워졌다
+    const { data: still } = await admin.from("posts").select("id").eq("id", postId).maybeSingle();
+    expect(still).not.toBeNull();
+  });
+
+  // **필터가 아니라 정책이 막는 모양.** 위 검사는 `.eq("author_id", stranger.id)` 가 이미
+  // 행을 0개로 만들어서 정책이 평가될 기회조차 없었다 — 앱이 밟는 경로와 같아 값어치는
+  // 있지만, 「정책에 걸린 행도 0행으로 온다」는 여전히 아무도 안 잰다
+  // (2026-09-06 test-auditor). 여기서는 필터가 그 행을 맞히고 정책만 막는다.
+  it("INV-Z3(실패경로·삭제): 정책이 막은 행도 오류가 아니라 0행으로 온다", async () => {
+    const { data, error } = await stranger.client
+      .from("posts")
+      .delete()
+      .eq("id", postId)
+      .select("study_id")
+      .maybeSingle();
+
+    expect(error).toBeNull();
+    expect(data).toBeNull();
+    const { data: still } = await admin.from("posts").select("id").eq("id", postId).maybeSingle();
+    expect(still).not.toBeNull();
+  });
+
+  // **삭제의 반대 절반.** 이것이 없으면 `posts_delete_author` 를 `using (false)` 로 바꾸거나
+  // 통째로 지워도 통합 스위트가 전부 초록불이다 — 그 상태의 제품은 **작성자가 자기 글을
+  // 못 지운다**(화면은 "지울 수 있는 모집글이 아닙니다"만 계속 낸다). 스펙이 S4·S9·S20b 로
+  // 세 번 요구한 「정책이 전부를 막아 버려서 통과한 것이 아님을 보인다」가 삭제에만 빠져
+  // 있었다 (2026-09-06 test-auditor · security-reviewer).
+  //
+  // 뒤 검사들이 `postId` 를 쓰므로 **이 검사 전용 글을 새로 만들어 지운다.**
+  it("INV-Z3(반대 절반·삭제): 작성자는 자기 글을 지우고, 지운 행을 돌려받는다", async () => {
+    const { data: 새글, error: 만들기 } = await host.client
+      .from("posts")
+      .insert({ author_id: host.id, study_id: studyId, title: "지울 글", content: "본문" })
+      .select("id")
+      .single();
+    expect(만들기).toBeNull();
+
+    const { data, error } = await host.client
+      .from("posts")
+      .delete()
+      .eq("id", (새글 as { id: string }).id)
+      .eq("author_id", host.id)
+      .select("study_id")
+      .maybeSingle();
+
+    expect(error).toBeNull();
+    // 앱이 리다이렉트 목적지로 쓰는 값이 실물에서도 이 모양인 것을 여기서 굳힌다
+    expect(data).toEqual({ study_id: studyId });
+
+    const { data: gone } = await admin
+      .from("posts")
+      .select("id")
+      .eq("id", (새글 as { id: string }).id)
+      .maybeSingle();
+    expect(gone).toBeNull();
+  });
+
   it("INV-Z3(반대 절반): 작성자의 같은 요청은 고친 행을 돌려준다", async () => {
     const { data, error } = await host.client
       .from("posts")

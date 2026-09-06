@@ -73,7 +73,11 @@ export function StudyDetailView({
    * 잉크 버튼을 둘 쌓지 않는다 — 둘 다 주 행동이면 어느 것도 주 행동이 아니다.
    * (2026-09-06 사람 결정 · design-rules 「잉크 행동 규칙」)
    */
-  const writePostFirst = isHost && !study.hasPosts;
+  // **모집 중일 때만 주 행동으로 올린다.** 삭제가 생기기 전에는 `hasPosts` 가 true → false
+  // 로 갈 길이 없었다. 이제 마감했거나 정원이 찬 스터디의 마지막 모집글을 지울 수 있는데,
+  // 그 상태에서 「모집글 쓰기」를 잉크로 올리면 **눌러도 못 쓴다** — 작성 화면의 목록이
+  // 모집 중인 스터디만 보여 주기 때문이다(INV-Z14). (2026-09-06 code-reviewer)
+  const writePostFirst = isHost && !study.hasPosts && study.recruiting;
 
   return (
     <Container>

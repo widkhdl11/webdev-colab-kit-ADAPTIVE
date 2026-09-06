@@ -124,6 +124,21 @@ export function FormError({ message }: { message: string }) {
  * 이동도 포커스 이동도 없어서 이 속성이 없으면 무슨 일이 일어났는지 알 방법이 없다.
  * 실패가 `alert`(끼어든다) 이고 성공이 `status`(끝나면 읽는다) 인 것도 급함의 차이 그대로다.
  */
+/**
+ * 되묻는 문구(「정말 지웁니다」). 실패도 성공도 아닌 세 번째 슬롯이라 형광펜을 안 쓴다 —
+ * 승인된 「파괴적 행동」 규칙이 색 대신 두 단계로 막기로 했기 때문이다.
+ *
+ * `role="alert"` 인 이유: 눌러서 나타나는 것이라 페이지 이동도 없고, 이것이 없으면
+ * 화면을 안 보는 사용자는 무엇이 바뀌었는지 알 방법이 없다.
+ */
+export function FormConfirm({ children }: { children: ReactNode }) {
+  return (
+    <p className={styles.confirm} role="alert">
+      {children}
+    </p>
+  );
+}
+
 export function FormNotice({ children }: { children: ReactNode }) {
   return (
     <p className={styles.notice} role="status">

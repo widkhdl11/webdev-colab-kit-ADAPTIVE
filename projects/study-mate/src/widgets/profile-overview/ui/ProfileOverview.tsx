@@ -26,8 +26,9 @@ const STATUS_LABEL: Readonly<Record<MyParticipation["status"], string>> = {
  * 참여 중=민트 채움, 대기 중=점선 테두리(아직 확정 아님). 버튼이 아니라 표시라서
  * 버튼 컴포넌트를 쓰지 않고 같은 값만 가져온다.
  *
- * **거절됨은 승인된 표현이 없다.** 색도 형태도 주지 않고 글자로만 적는다 — 지금 지어내면
- * 승인 안 된 넷째 표현이 화면에 굳는다. 보류로 올려 둔 자리다.
+ * **거절됨에 클래스를 안 주는 것이 승인된 표현이다** — 색도 형태도 주지 않고 약한 잉크
+ * 글자로만 적고, 목록에서 빼지도 않는다. 거절에 색을 주면 화면이 그 줄을 강조하는데
+ * 거절은 사용자가 다시 볼 일이 없는 정보다 (design-rules 2026-09-06 (2), 사람 결정).
  */
 const STATUS_CLASS: Readonly<Record<MyParticipation["status"], string | undefined>> = {
   pending: styles.waiting,

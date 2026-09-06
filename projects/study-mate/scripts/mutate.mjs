@@ -1187,6 +1187,146 @@ const MUTATIONS = {
       replace: '  redirect(`/posts/${String(form.get("postId"))}`);',
     },
   },
+  // ── 모집글 삭제 (유닛 스위트) ──────────────────────────────────────────
+  // 삭제도 갱신과 실패 모양이 같다 — 조건에 안 맞으면 오류 없이 0행이다.
+
+  // 삭제 정책 자체의 변이 둘. 지금까지 `posts_delete_author` 에는 변이가 하나도 없었다 —
+  // 코드 주석이 「인가의 주인은 정책」이라고 적어 둔 그 주인 쪽이 판정 밖에 있었다
+  // (2026-09-06 test-auditor).
+  "z3-posts-delete-blocked": {
+    holds: "INV-Z3 — 작성자가 자기 글을 지울 수 있다 (정책이 전부 막아 버려서 통과한 것이 아니다)",
+    tag: "반대 절반·삭제",
+    sql: `drop policy if exists posts_delete_author on public.posts;
+      create policy posts_delete_author on public.posts for delete using (false);`,
+    // **undo 를 손으로 적는다.** `posts_delete_author` 는 0001 에만 있고 그 파일은
+    // RESTORE_MIGRATIONS 에 없다 — 마이그레이션 재적용만으로는 안 돌아온다. 도구가
+    // 지문 대조로 그 자리에서 잡았다 (2026-09-06).
+    undo: `drop policy if exists posts_delete_author on public.posts;
+      create policy posts_delete_author on public.posts for delete
+        using (author_id = (select auth.uid()));`,
+  },
+  "z3-posts-delete-open": {
+    holds: "INV-Z3 — 남의 모집글은 지울 수 없다",
+    tag: "남이 지워도",
+    sql: `drop policy if exists posts_delete_author on public.posts;
+      create policy posts_delete_author on public.posts for delete using (true);`,
+    // **undo 를 손으로 적는다.** `posts_delete_author` 는 0001 에만 있고 그 파일은
+    // RESTORE_MIGRATIONS 에 없다 — 마이그레이션 재적용만으로는 안 돌아온다. 도구가
+    // 지문 대조로 그 자리에서 잡았다 (2026-09-06).
+    undo: `drop policy if exists posts_delete_author on public.posts;
+      create policy posts_delete_author on public.posts for delete
+        using (author_id = (select auth.uid()));`,
+  },
+
+  "delete-post-guard-dropped": {
+    holds: "INV-A4 — 모집글 삭제는 세션이 없으면 아무것도 지우지 않는다",
+    suite: "unit",
+    file: {
+      path: "src/features/delete-post/api/remove-post.ts",
+      find: `  const guarded = requireSession(readUser, (user, form: FormData) =>`,
+      replace: `  const guarded = requireSession((async () => ({ id: "00000000-0000-4000-8000-000000000000" })), (user, form: FormData) =>`,
+    },
+  },
+  "delete-post-action-unguarded": {
+    holds: "INV-A4 — 배포되는 모집글 삭제 액션이 가드를 거친다",
+    suite: "unit",
+    file: {
+      path: "src/features/delete-post/api/delete-post.ts",
+      find: `const guarded = makeRemovePost();`,
+      replace: `const guarded = makeRemovePost((async () => ({ id: "00000000-0000-4000-8000-000000000000" })));`,
+    },
+  },
+  "delete-post-any-author": {
+    holds: "INV-Z3 — 삭제 대상을 「내가 쓴 글」로 좁히는 조건이 실제로 걸린다",
+    tag: "지울 대상을",
+    suite: "unit",
+    file: {
+      path: "src/features/delete-post/api/remove-post.ts",
+      find: `    .eq("author_id", user.id)`,
+      replace: `    .eq("id", postId) // 변이: 작성자 좁히기 제거`,
+    },
+  },
+  "delete-post-author-from-form": {
+    holds: "INV-Z4 — 누구의 글인지는 폼이 아니라 세션이 정한다 (삭제)",
+    tag: "INV-Z4(삭제)",
+    suite: "unit",
+    // `delete-post-any-author` 와 find 가 같지만 갈래가 다르다 — 저것은 좁히기가 통째로
+    // 사라지는 것이고 이것은 **폼 값이 인가에 쓰이는** 것이다. find 를 한 줄로 두는 이유는
+    // 작업 트리가 CRLF 라 줄을 걸치면 깨끗한 소스에서도 안 맞기 때문이다.
+    file: {
+      path: "src/features/delete-post/api/remove-post.ts",
+      find: `    .eq("author_id", user.id)`,
+      replace: `    .eq("author_id", (form.get("authorId") as string) ?? user.id)`,
+    },
+  },
+  "delete-post-zero-rows-ok": {
+    holds: "INV-Z3 — 0행이 지워진 것을 성공으로 보고하지 않는다 (삭제)",
+    tag: "실패경로·삭제",
+    suite: "unit",
+    file: {
+      path: "src/features/delete-post/api/remove-post.ts",
+      find: `    return { ok: false, message: "지울 수 있는 모집글이 아닙니다. 내가 쓴 글인지 확인해 주세요" };`,
+      replace: `    return { ok: true, value: postId };`,
+    },
+  },
+  "delete-post-destination-from-form": {
+    holds: "삭제 후 목적지·캐시 경로가 데이터베이스가 돌려준 값이다",
+    // 이름표는 **검사 이름**에 있어야 한다. 주석에만 있는 문구를 골랐다가 「엉뚱한 빨간불」로
+    // 잡혔다 — 빨간불은 났는데 그 이름표를 담은 검사가 없었다 (2026-09-06).
+    tag: "돌려준 스터디를 값으로 준다",
+    suite: "unit",
+    file: {
+      path: "src/features/delete-post/api/remove-post.ts",
+      find: `  return { ok: true, value: { postId: row.id, studyId: row.study_id } };`,
+      replace: `  return { ok: true, value: { postId, studyId: String(form.get("studyId") ?? postId) } };`,
+    },
+  },
+  "delete-post-revalidate-dropped": {
+    holds: "모집글을 지우면 그 글이 나오던 화면 다섯을 다시 받게 한다",
+    tag: "지운 뒤에 그 글이 나오던",
+    suite: "unit",
+    file: {
+      path: "src/features/delete-post/api/remove-post.ts",
+      find: `    if (result.ok) {`,
+      replace: `    if (result.ok && false) {`,
+    },
+  },
+
+  "delete-post-no-id-filter": {
+    holds: "INV-Z3 — 어느 글을 지우는지가 실제로 걸린다",
+    tag: "지울 대상을",
+    suite: "unit",
+    // 이 줄을 빼면 그 사람의 **모집글 전부**가 지워진다. 되돌릴 수 없는 동작이라
+    // 형제 갈래(작성자 좁히기)에만 변이가 있던 것을 짝 맞춘다 (2026-09-06 test-auditor).
+    file: {
+      path: "src/features/delete-post/api/remove-post.ts",
+      find: `    .eq("id", postId)`,
+      replace: `    .eq("author_id", user.id) // 변이: 글 좁히기 제거`,
+    },
+  },
+  "delete-post-redirect-from-form": {
+    holds: "삭제 후 목적지가 폼 값이 아니라 데이터베이스가 돌려준 스터디다",
+    tag: "돌려준 스터디로 보낸다",
+    suite: "unit",
+    file: {
+      path: "src/features/delete-post/api/delete-post.ts",
+      find: '  redirect(`/studies/${result.value.studyId}`);',
+      replace: '  redirect(`/studies/${String(form.get("studyId"))}`);',
+    },
+  },
+  "delete-post-confirm-skipped": {
+    holds: "삭제는 한 번 눌러서 실행되지 않는다 — 두 단계 확인이 유일한 방벽이다",
+    tag: "제출할 자리가 아예 없다",
+    suite: "unit",
+    // 승인된 시각 기준이 「실수로 지워지는 것을 막는 것은 색이 아니라 두 번 누르게 하는
+    // 것」이라고 정했다. 이 삼항을 끄면 첫 화면에 제출 폼이 그대로 나온다.
+    file: {
+      path: "src/features/delete-post/ui/DeletePostPanel.tsx",
+      find: `      {confirming ? (`,
+      replace: `      {true ? (`,
+    },
+  },
+
   "edit-post-limits-unbounded": {
     holds: "모집글의 길이 상한이 실제로 걸린다 — 작성과 수정이 같은 값을 본다",
     tag: "길이 상한",
