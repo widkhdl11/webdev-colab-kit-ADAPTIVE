@@ -110,7 +110,11 @@ create trigger on_auth_user_created
 -- 올라가는 데이터베이스에는 있을 수 있다 — 구멍이 열려 있던 동안 가입한 계정들이다.
 --
 -- **지워진 계정은 빼고 메운다.** `auth.users` 에는 소프트 삭제된 계정이 행으로 남는데,
--- 그것까지 메우면 `profiles_read` 가 무조건 참이라 「지운 계정인데 명단에 있다」가 된다.
+-- 그것까지 메우면 지운 계정의 프로필이 되살아난다.
+--
+-- (이 자리에 원래는 "`profiles_read` 가 무조건 참이라 명단에 그대로 뜬다"고 적혀 있었다.
+--  0011 이 그 정책을 관계 기반으로 좁혔으므로 그 문장은 더 이상 맞지 않는다. 조건 자체는
+--  여전히 옳다 — 좁아진 정책 아래에서도 지운 계정이 스터디를 열었으면 그 프로필이 보인다.)
 insert into public.profiles (id, username)
 select u.id, private.profile_username_from_meta(u.id, u.raw_user_meta_data)
   from auth.users u

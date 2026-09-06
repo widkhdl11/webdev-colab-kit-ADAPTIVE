@@ -63,6 +63,18 @@ export function StudyDetailView({
   applicantActionsFor?: (member: Member) => ReactNode;
   leaveAction?: ReactNode;
 }) {
+  /**
+   * 지금 이 화면에서 무엇이 주 행동(잉크 채움)인가.
+   *
+   * 모집글이 없는 스터디는 **아무도 찾을 수 없다** — 목록은 모집글로 만들어지기 때문이다.
+   * 그 상태를 푸는 것은 호스트뿐이고 행동은 하나뿐이라, 그때는 「모집글 쓰기」가 주 행동이다.
+   * 모집글이 한 장이라도 있으면 그 일은 끝났으므로 「채팅방 들어가기」로 돌아간다.
+   *
+   * 잉크 버튼을 둘 쌓지 않는다 — 둘 다 주 행동이면 어느 것도 주 행동이 아니다.
+   * (2026-09-06 사람 결정 · design-rules 「잉크 행동 규칙」)
+   */
+  const writePostFirst = isHost && !study.hasPosts;
+
   return (
     <Container>
       <nav className={styles.crumb} aria-label="현재 위치">
@@ -166,7 +178,12 @@ export function StudyDetailView({
             <CardDivider />
 
             {study.chatId ? (
-              <ButtonLink href={`/chats/${study.chatId}`} tone="ink" size="lg" block>
+              <ButtonLink
+                href={`/chats/${study.chatId}`}
+                tone={writePostFirst ? "outline" : "ink"}
+                size="lg"
+                block
+              >
                 채팅방 들어가기
               </ButtonLink>
             ) : (
@@ -174,6 +191,24 @@ export function StudyDetailView({
                 채팅방은 이 스터디의 멤버에게만 열립니다.
               </p>
             )}
+
+            {isHost ? (
+              <div className={styles.hostAction}>
+                <ButtonLink
+                  href={`/posts/create?study=${study.id}`}
+                  tone={writePostFirst ? "ink" : "outline"}
+                  size="lg"
+                  block
+                >
+                  모집글 쓰기
+                </ButtonLink>
+                {writePostFirst ? (
+                  <p className={styles.note}>
+                    모집글을 올려야 목록에서 이 스터디를 만날 수 있습니다.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             {leaveAction ? <div className={styles.leave}>{leaveAction}</div> : null}
           </Card>

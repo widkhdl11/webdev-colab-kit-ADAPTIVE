@@ -284,3 +284,62 @@ describe("마감일은 달력에 있는 날짜다", () => {
     }
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 목록 필터 — 주소창에서 온 코드가 질의를 깨지 않는다
+//
+// 카테고리·지역 코드는 `?category=it&region=seoul` 로 들어온다. **지금은 안 깨진다** —
+// supabase-js 가 `.in()`·`.eq()` 의 값을 감싸서 넘기기 때문이다(2026-09-06 실측:
+// `it)` · `it,design` · `it),(design` · `%` · `*` · 따옴표 · 역슬래시 전부 오류 없이 빈 결과).
+//
+// **그래서 이 검사는 지금의 방벽이 아니라 회귀를 붙든다.** 누가 이 자리를 문자열로 이어
+// 붙이게 바꾸면(예: `.or()` 로 옮기면) 쉼표가 든 값에서 실제로 파싱이 깨지고, 그때 아래
+// 목록의 `it,design` 이 잡는다. 실제로 깨지는 자리가 하나 있고 그건 검색어다 —
+// `or()` 에 이어 붙는 유일한 값이라 `safePattern` 이 쉼표를 지운다.
+//
+// 이 검사가 질의를 손으로 조립하지 않고 `postsQuery` 를 부르는 이유는 위와 같다:
+// 조회 코드가 바뀌어도 손으로 만든 질의는 초록불이다.
+// ═══════════════════════════════════════════════════════════════════════════
+describe("목록 필터 — 주소창에서 온 코드", () => {
+  const BROKEN = ["it)", "it,design", "it),(design", "%", "IT", "it seoul", "a".repeat(33)];
+
+  it("필터 코드: 모양이 틀린 카테고리 코드는 오류가 아니라 '아무것도 없음'이 된다", async () => {
+    for (const evil of BROKEN) {
+      const { data, error } = await postsQuery(anonClient(), { q: PREFIX, categories: [evil] });
+      expect(error, `${JSON.stringify(evil)} 에서 오류가 났다: ${error?.message}`).toBeNull();
+      expect(data ?? [], `${JSON.stringify(evil)} 가 무언가를 돌려줬다`).toHaveLength(0);
+    }
+  });
+
+  it("필터 코드: 모양이 틀린 지역 코드도 같다", async () => {
+    for (const evil of BROKEN) {
+      const { data, error } = await postsQuery(anonClient(), { q: PREFIX, regionCode: evil });
+      expect(error, `${JSON.stringify(evil)} 에서 오류가 났다: ${error?.message}`).toBeNull();
+      expect(data ?? [], `${JSON.stringify(evil)} 가 무언가를 돌려줬다`).toHaveLength(0);
+    }
+  });
+
+  it("검색어의 쉼표는 실제로 파싱을 깬다 — safePattern 이 그것을 지운다", async () => {
+    // 위 값들과 달리 **이건 진짜로 깨진다.** 검색어만 필터 문자열로 이어 붙기 때문이다.
+    // 지우기 전 값을 그대로 넣으면 PGRST100 이 난다(실측). 지나온 값은 안 난다.
+    const { error } = await postsQuery(anonClient(), { q: `${PREFIX},깨뜨리기` });
+    expect(error, "safePattern 을 지났는데도 파싱이 깨졌다").toBeNull();
+  });
+
+  it("반대 절반: 제대로 된 코드는 그대로 거른다", async () => {
+    // 이게 없으면 「전부 아무것도 없음」으로 바꿔도 위 둘이 통과한다.
+    const hit = await postsQuery(anonClient(), { q: PREFIX, categories: ["it"] });
+    expect(hit.error).toBeNull();
+    expect((hit.data ?? []).length, "이 검사가 넣은 여덟이 안 나온다").toBeGreaterThan(0);
+
+    // 어휘에 **있지만** 안 맞는 코드는 빈 결과다 — 「모양이 틀린 것」과 결과가 같아야
+    // 잘못된 링크가 조용히 더 많은 것을 보여주지 않는다.
+    const miss = await postsQuery(anonClient(), { q: PREFIX, categories: ["language"] });
+    expect(miss.error).toBeNull();
+    expect(miss.data ?? []).toHaveLength(0);
+
+    const region = await postsQuery(anonClient(), { q: PREFIX, regionCode: "seoul" });
+    expect(region.error).toBeNull();
+    expect((region.data ?? []).length).toBeGreaterThan(0);
+  });
+});

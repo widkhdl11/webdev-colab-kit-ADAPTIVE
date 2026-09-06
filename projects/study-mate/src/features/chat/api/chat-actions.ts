@@ -5,7 +5,8 @@
 //           docs/specs/write-authorization.md (INV-Z4 · Z8) ·
 //           docs/specs/participation-capacity.md (INV-P8 — 멤버만 읽고 쓴다)
 
-import { revalidatePath } from "next/cache";
+import { dbErrorMessage } from "@/shared/lib/db-error";
+import { revalidateEntityPath } from "@/shared/lib/revalidate-entity";
 import { currentUser, requireSession } from "@/entities/session";
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
 import type { ActionResult } from "@/shared/lib/action-result";
@@ -36,7 +37,7 @@ async function insertMessage(
     if (error.code === "42501") {
       return { ok: false, message: "이 방의 멤버가 아니라 메시지를 보낼 수 없습니다" };
     }
-    return { ok: false, message: `보내지 못했습니다: ${error.message}` };
+    return { ok: false, message: dbErrorMessage("보내기", error) };
   }
 
   return { ok: true, value: null };
@@ -57,7 +58,7 @@ async function touchLastRead(
     .eq("chat_id", chatId)
     .eq("user_id", user.id);
 
-  if (error) return { ok: false, message: `읽음 표시에 실패했습니다: ${error.message}` };
+  if (error) return { ok: false, message: dbErrorMessage("읽음 표시", error) };
   return { ok: true, value: null };
 }
 
@@ -70,7 +71,7 @@ export async function sendMessageAction(
 ): Promise<ActionResult<null>> {
   const chatId = String(form.get("chatId") ?? "");
   const result = await guardedSend({ chatId, content: String(form.get("content") ?? "") });
-  if (result.ok && chatId) revalidatePath(`/chats/${chatId}`);
+  if (result.ok) revalidateEntityPath("/chats", chatId);
   return result;
 }
 

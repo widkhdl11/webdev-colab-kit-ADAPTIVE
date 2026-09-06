@@ -47,3 +47,20 @@ Supabase 클라이언트는 `shared/api/supabase/`). `[코드에서 확인]`
 Supabase URL · 공개 키(publishable), AI 키, 스토리지 버킷 이름 둘. `[문서에서 확인]`
 **서버 전용 비밀 키를 쓰는 코드는 없다** — 서버에서도 공개 키로 접근한다. `[코드에서 확인]`
 이것이 인가 스펙의 전제이므로 `write-authorization` 스펙과 함께 읽어야 한다.
+
+로컬 개발용 두 개(`NEXT_PUBLIC_SUPABASE_URL` · `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`)는
+`npm run env:local` 이 `.env.local` 로 만들어 준다. 값을 레포에 적어 두지 않는 이유는
+적힌 키가 언젠가 진짜 키로 바뀌어 커밋되기 때문이다. `[코드에서 확인]`
+
+### 배포할 때 넣는 것 — `NEXT_PUBLIC_SITE_URL` (2026-09-06)
+
+로그인 리다이렉트의 목적지 오리진이다(예: `https://study-mate.example`).
+
+- **안 넣어도 앱은 돈다.** 그때는 요청의 Host 헤더에서 오리진을 받고, 미들웨어가 그 응답에
+  `Cache-Control: no-store` 를 달아 공유 캐시로 새는 길을 막는다(INV-A1). 넣으면 앞단이
+  Host 를 정규화하지 않는 배포에서도 목적지가 흔들리지 않는다.
+- **빌드하는 환경에 넣어야 한다.** `NEXT_PUBLIC_` 이 붙은 값은 Next 가 빌드할 때 코드에
+  값으로 박아 넣는다. 호스팅의 런타임 환경변수로만 넣으면 미들웨어에서는 여전히 비어 있다 —
+  그 상태를 알 수 있게 시작 시 경고 한 줄이 남는다(`middleware.ts`).
+- `.env.example` 을 두지 않은 이유는 이 레포의 권한 설정이 `.env*` 쓰기를 막기 때문이다.
+  그래서 이름과 조건이 여기 적혀 있다.

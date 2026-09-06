@@ -4,6 +4,7 @@
 // 이 연결로 할 수 있는 일이 곧 "아무나 할 수 있는 일"이다. 서버 코드를 한 줄도 거치지
 // 않고 데이터베이스를 직접 부르는 것이 정확히 INV-Z5 가 말하는 우회 경로다.
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { chatRoomQuery, myChatsQuery } from "@/entities/chat/api/chat-select";
 import {
@@ -614,6 +615,90 @@ describe("INV-Z10: 지워진 것으로 표시된 스터디는 새로운 쓰기�
     const mine = await host.client.from("posts").select("id").eq("id", p!.id as string);
     expect(mine.data).toHaveLength(1);
   });
+
+});
+
+/**
+ * INV-Z14 — 새 모집글은 「모집 중」인 스터디에만 붙는다.
+ *
+ * 갈래 셋을 **따로** 본다(지워짐 · 닫힘 · 정원 참). 하나로 묶으면 그중 하나만 붙들려 있어도
+ * 「잡혔다」가 나오고 나머지는 아무도 안 붙드는데 숫자는 만점이 된다 — 2026-09-06 에 프로필
+ * 가시성에서 실제로 그랬다(`.claude/rules/tdd.md`).
+ *
+ * 앱이 실제로 보내는 다섯 칸(summary 포함)으로 넣는다 — 유닛 검사는 「무엇을 보내는가」를
+ * 보고 여기서는 「그 값이 정책을 지나는가」를 본다. 칸이 다르면 그 사이가 빈다.
+ */
+describe("INV-Z14: 새 모집글은 모집 중인 스터디에만 붙는다", () => {
+  const 모집글 = (studyId: string, title: string) => ({
+    author_id: host.id,
+    study_id: studyId,
+    title,
+    summary: null,
+    content: "본문",
+  });
+
+  it("INV-Z14 (S21, 실패경로): 호스트가 모집을 닫은 스터디에는 새 모집글이 안 들어간다", async () => {
+    const s = await createStudy(host.id);
+    await admin.from("studies").update({ closed_at: new Date().toISOString() }).eq("id", s);
+
+    const { error } = await host.client.from("posts").insert(모집글(s, "닫은 뒤에 쓴 글"));
+
+    expect(error).not.toBeNull();
+    const { data: rows } = await admin.from("posts").select("id").eq("study_id", s);
+    expect(rows).toHaveLength(0);
+  });
+
+  it("INV-Z14 (S21b, 실패경로): 호스트가 지운 스터디에도 안 들어간다", async () => {
+    const s = await createStudy(host.id);
+    await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
+
+    const { error } = await host.client.from("posts").insert(모집글(s, "지운 뒤에 쓴 글"));
+
+    expect(error).not.toBeNull();
+    const { data: rows } = await admin.from("posts").select("id").eq("study_id", s);
+    expect(rows).toHaveLength(0);
+  });
+
+  it("INV-Z14 (S21c, 실패경로): 정원이 다 찬 스터디에도 안 들어간다", async () => {
+    // 정원 2 = 호스트 + 한 명. 한 명을 수락하면 「모집중」이 꺼진다.
+    const s = await createStudy(host.id, { max_participants: 2 });
+    const member = await createUser("z14-member");
+    await acceptedMember(s, member.id);
+
+    const { error } = await host.client.from("posts").insert(모집글(s, "정원이 찬 뒤에 쓴 글"));
+
+    expect(error).not.toBeNull();
+    const { data: rows } = await admin.from("posts").select("id").eq("study_id", s);
+    expect(rows).toHaveLength(0);
+  });
+
+  it("INV-Z14 (S21d, 반대 절반): 모집 중인 스터디에는 그대로 들어간다", async () => {
+    const s = await createStudy(host.id, { max_participants: 5 });
+
+    const { error } = await host.client.from("posts").insert(모집글(s, "모집 중에 쓴 글"));
+
+    expect(error).toBeNull();
+    const { data: rows } = await admin.from("posts").select("id").eq("study_id", s);
+    expect(rows).toHaveLength(1);
+  });
+
+  it("INV-Z14: 정원이 찼다가 한 명이 나가면 다시 쓸 수 있다", async () => {
+    const s = await createStudy(host.id, { max_participants: 2 });
+    const member = await createUser("z14-leaver");
+    await acceptedMember(s, member.id);
+
+    const 찼을때 = await host.client.from("posts").insert(모집글(s, "찼을 때"));
+    expect(찼을때.error).not.toBeNull();
+
+    await admin
+      .from("participants")
+      .update({ status: "withdrawn" })
+      .eq("study_id", s)
+      .eq("user_id", member.id);
+
+    const 나간뒤 = await host.client.from("posts").insert(모집글(s, "한 명이 나간 뒤"));
+    expect(나간뒤.error).toBeNull();
+  });
 });
 
 describe("INV-Z6 (S5): 스터디를 지워도 멤버의 대화는 화면에서 사라지지 않는다", () => {
@@ -811,14 +896,16 @@ describe("INV-Z12: 인가 판정 함수는 요청으로 부를 수 없다", () =
     }
   }
 
-  it("INV-Z12 (S14): private 의 판정 함수는 어느 노출 스키마에도 없다", async () => {
+  it("INV-Z12 (S20): private 의 판정 함수는 어느 노출 스키마에도 없다", async () => {
     // **이름을 손으로 안 적는다.** 적으면 오타가 404 를 받아 통과하고, 여덟 번째가
     // 생겼을 때 목록에 넣는 것을 잊으면 그 줄이 조용히 아무것도 안 하게 된다.
     const fns = await privateFunctions();
     expect(fns.map((f) => f.name)).toEqual([
+      "chat_topic_uuid",
       "is_chat_member",
       "is_study_host",
       "is_study_member",
+      "profile_is_visible",
       "profile_username_from_meta",
       "study_accepted_count",
       "study_accepts_applications",
@@ -846,7 +933,7 @@ describe("INV-Z12: 인가 판정 함수는 요청으로 부를 수 없다", () =
     expect(status, "노출된 함수마저 404 다 — 두드리는 방법이 틀렸다").not.toBe(404);
   });
 
-  it("INV-Z12: 그래도 화면이 읽는 계산 컬럼은 살아 있다", async () => {
+  it("INV-Z12 (S20b): 그래도 화면이 읽는 계산 컬럼은 살아 있다", async () => {
     // 노출을 끊은 것과 기능을 끊은 것은 다르다. 앞의 검사만 보면 전부 깨뜨린 상태도 통과한다.
     const row = await anonClient()
       .from("studies")
@@ -962,5 +1049,384 @@ describe("INV-Z12: 인가 판정 함수는 요청으로 부를 수 없다", () =
     } finally {
       await c.end();
     }
+  });
+
+  it("INV-Z12 (반대 절반): 그 질의가 실제로 뷰를 집어낸다", async () => {
+    // 위 검사는 지금 빈 목록을 단언한다. **빈 목록은 「없다」와 「이 질의가 아무것도 못 본다」를
+    // 구분하지 못한다** — `pg_options_to_table` 이나 `relkind` 조건이 틀어져 영원히 0행을 내도
+    // 아무도 모른다. 그래서 뷰를 하나 심어 보고 되감는다(`list-order.test.ts` 가 제약을
+    // 트랜잭션 안에서만 떼는 것과 같은 방식).
+    const c = await rawClient();
+    try {
+      await c.query("begin");
+      await c.query("create view public.__z12_probe as select 1 as one");
+      const seen = await c.query(
+        "select n.nspname || '.' || c.relname as v" +
+          " from pg_class c join pg_namespace n on n.oid = c.relnamespace" +
+          " where n.nspname = any($1) and c.relkind in ('v', 'm')" +
+          "   and coalesce((select option_value from pg_options_to_table(c.reloptions)" +
+          "                  where option_name = 'security_invoker'), 'off') <> 'true'" +
+          " order by 1",
+        [[...EXPOSED_SCHEMAS]],
+      );
+      expect(
+        seen.rows.map((x) => x.v),
+        "심은 뷰를 못 집어냈다 — 위 검사는 감지할 수 없는 상태로 초록불이었다",
+      ).toContain("public.__z12_probe");
+
+      // 그리고 `security_invoker` 를 켠 뷰는 안 집어내야 한다. 이게 없으면 조건을
+      // 「노출 스키마의 뷰 전부」로 넓혀도 위가 통과하고, 그러면 안전한 뷰까지 걸린다.
+      await c.query("alter view public.__z12_probe set (security_invoker = true)");
+      const after = await c.query(
+        "select n.nspname || '.' || c.relname as v" +
+          " from pg_class c join pg_namespace n on n.oid = c.relnamespace" +
+          " where n.nspname = any($1) and c.relkind in ('v', 'm')" +
+          "   and coalesce((select option_value from pg_options_to_table(c.reloptions)" +
+          "                  where option_name = 'security_invoker'), 'off') <> 'true'" +
+          " order by 1",
+        [[...EXPOSED_SCHEMAS]],
+      );
+      expect(
+        after.rows.map((x) => x.v),
+        "invoker 로 켠 뷰까지 걸린다 — 조건이 너무 넓다",
+      ).not.toContain("public.__z12_probe");
+    } finally {
+      await c.query("rollback").catch(() => {});
+      await c.end();
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INV-Z13 — 프로필은 볼 이유가 있는 사람에게만 보인다
+//
+// 이 describe 는 **제 준비물을 스스로 만든다.** 위쪽 테스트들이 공유 studyId 의 상태를
+// 바꾸므로(모집 닫기·소프트 삭제), 가시성처럼 그 상태에 답이 달린 검사를 얹으면
+// 실행 순서가 판정을 바꾼다.
+// ═══════════════════════════════════════════════════════════════════════════
+describe("INV-Z13: 프로필은 볼 이유가 있는 사람에게만 보인다", () => {
+  let zHost: TestUser;      // 스터디를 열고 모집글도 쓴 사람 — ②③
+  let zMemberA: TestUser;   // 수락된 멤버 — ④-1
+  let zMemberB: TestUser;   // 또 다른 수락된 멤버
+  let zPending: TestUser;   // 대기 중인 신청자
+  let zPending2: TestUser;  // 또 다른 대기 중인 신청자
+  let zKicked: TestUser;    // 강퇴됐지만 대화에 메시지를 남긴 사람 — ④-2
+  let zLoner: TestUser;     // 아무것도 안 한 사람 — 어느 갈래에도 안 걸린다
+  let zOutsider: TestUser;  // 그 스터디와 무관한 로그인 사용자
+  let zStudyId: string;
+
+  /** 그 프로필이 이 연결에 보이는가. 정책이 막으면 행이 없는 것과 같은 모양으로 나온다. */
+  async function sees(viewer: { from: SupabaseClient["from"] } | SupabaseClient, targetId: string) {
+    const { data, error } = await (viewer as SupabaseClient)
+      .from("profiles")
+      .select("id, username")
+      .eq("id", targetId)
+      .maybeSingle();
+    if (error) throw new Error(`프로필 조회가 오류로 끝났다(막힌 것과 다르다): ${error.message}`);
+    return data !== null;
+  }
+
+  beforeAll(async () => {
+    zHost = await createUser("z13-host");
+    zMemberA = await createUser("z13-mem-a");
+    zMemberB = await createUser("z13-mem-b");
+    zPending = await createUser("z13-pending");
+    zPending2 = await createUser("z13-pending2");
+    zKicked = await createUser("z13-kicked");
+    zLoner = await createUser("z13-loner");
+    zOutsider = await createUser("z13-outsider");
+
+    zStudyId = await createStudy(zHost.id, { max_participants: 10 });
+    await acceptedMember(zStudyId, zMemberA.id);
+    await acceptedMember(zStudyId, zMemberB.id);
+    await apply(zStudyId, zPending.id);
+    await apply(zStudyId, zPending2.id);
+
+    // 강퇴 전에 말을 남긴다 — 강퇴가 메시지를 지우지 않는다는 것이 INV-Z6 의 계약이다.
+    await acceptedMember(zStudyId, zKicked.id);
+    const chatId = await chatIdOf(zStudyId);
+    const { error: mErr } = await admin
+      .from("chat_messages")
+      .insert({ chat_id: chatId, sender_id: zKicked.id, content: "먼저 갑니다" });
+    if (mErr) throw new Error(`메시지 생성 실패: ${mErr.message}`);
+    const { error: kErr } = await admin
+      .from("participants")
+      .update({ status: "kicked" })
+      .eq("study_id", zStudyId)
+      .eq("user_id", zKicked.id);
+    if (kErr) throw new Error(`강퇴 실패: ${kErr.message}`);
+
+    await admin
+      .from("posts")
+      .insert({ author_id: zHost.id, study_id: zStudyId, title: "z13 모집", content: "본문" });
+  }, 60_000);
+
+  describe("① 본인", () => {
+    it("INV-Z13 ①: 아무것도 안 한 사람도 자기 프로필은 읽는다", async () => {
+      expect(await sees(zLoner.client, zLoner.id)).toBe(true);
+    });
+  });
+
+  describe("②③ 공개한 사람 — 스터디를 열었거나 모집글을 썼다", () => {
+    it("INV-Z13 (S14): 비로그인도 호스트 겸 작성자의 프로필을 읽는다", async () => {
+      // 이것이 좁히면 깨지는 자리다 — /posts/<id> 는 보호 경로가 아니고 그 화면이
+      // "누가 여는 스터디인가"를 그린다.
+      expect(await sees(anonClient(), zHost.id)).toBe(true);
+    });
+
+    it("호스트의 소개·지역·관심분야까지 함께 읽힌다 — 화면이 그 열들을 그린다", async () => {
+      const { data } = await anonClient()
+        .from("profiles")
+        .select("username, bio, region, interest_category")
+        .eq("id", zHost.id)
+        .maybeSingle();
+      expect(data).not.toBeNull();
+      expect(Object.keys(data!).sort()).toEqual(["bio", "interest_category", "region", "username"]);
+    });
+
+    it("INV-Z13 ②: 스터디가 지워지면 호스트도 그 갈래로는 안 보인다 — 가시성 정의를 그대로 쓴다", async () => {
+      const solo = await createUser("z13-gone-host");
+      const goneStudy = await createStudy(solo.id);
+      expect(await sees(anonClient(), solo.id)).toBe(true); // 지우기 전
+      await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", goneStudy);
+      expect(await sees(anonClient(), solo.id)).toBe(false); // 지운 뒤
+      expect(await sees(solo.client, solo.id)).toBe(true); // 본인은 ① 로 여전히 보인다
+    });
+  });
+
+  describe("③ 모집글의 작성자 — 호스트와 갈리는 경우", () => {
+    // **이 상태는 앱 경로로 못 만든다.** `posts_insert_author` 가 작성자에게 그 스터디의
+    // 호스트일 것을 요구하고(0010), 열 권한이 `study_id` 갱신을 막는다(INV-Z8). 그래서
+    // 오늘 작성자는 언제나 호스트이고, ③ 이 참이면 ② 도 반드시 참이다.
+    //
+    // **그래도 ③ 을 따로 붙드는 이유:** 계약이 ②③ 을 따로 적었고(INV-Z13), 호스트가 아닌
+    // 사람이 모집글을 쓰게 되는 날 ③ 이 유일한 근거가 된다. 이 검사를 쓰기 전에는
+    // ③ 만 지우는 diff 를 아무도 못 잡았다 — 변이가 ②③ 을 함께 빼서 ② 덕에 「잡혔다」로
+    // 나왔기 때문이다. 그래서 준비물을 정책 밖(admin)에서 만든다.
+    let zAuthorOnly: TestUser;
+
+    beforeAll(async () => {
+      zAuthorOnly = await createUser("z13-author");
+      const { error } = await admin.from("posts").insert({
+        author_id: zAuthorOnly.id,
+        study_id: zStudyId,
+        title: "호스트가 아닌 사람이 쓴 모집글",
+        content: "본문",
+      });
+      if (error) throw new Error(`모집글 생성 실패: ${error.message}`);
+    }, 30_000);
+
+    it("INV-Z13 ③ (S14b): 비로그인도 모집글 작성자의 프로필을 읽는다 — 호스트가 아니어도", async () => {
+      expect(await sees(anonClient(), zAuthorOnly.id)).toBe(true);
+    });
+
+    it("그 사람은 ②④ 어느 갈래에도 안 걸린다 — 위 검사가 ③ 만 붙든다는 근거", async () => {
+      // 이것이 없으면 위 검사는 다른 갈래 덕에 통과할 수 있고, 그러면 ③ 을 지워도 초록불이다.
+      const { data: asHost } = await admin.from("studies").select("id").eq("host_id", zAuthorOnly.id);
+      expect(asHost, "스터디를 열었다면 ② 로도 보인다").toEqual([]);
+      const { data: asPart } = await admin.from("participants").select("study_id").eq("user_id", zAuthorOnly.id);
+      expect(asPart, "참여 행이 있으면 ④-1 로도 보인다").toEqual([]);
+      const { data: asSender } = await admin.from("chat_messages").select("id").eq("sender_id", zAuthorOnly.id);
+      expect(asSender, "메시지가 있으면 ④-2 로도 보인다").toEqual([]);
+    });
+  });
+  describe("④-1 관계 — INV-Z11 이 보여 주기로 정한 참여자 행의 주인", () => {
+    it("INV-Z13 ④-1 (S16): 수락된 멤버는 같은 스터디의 다른 수락된 멤버를 읽는다", async () => {
+      expect(await sees(zMemberA.client, zMemberB.id)).toBe(true);
+    });
+
+    it("호스트는 대기 중인 신청자의 프로필을 읽는다 — 수락 화면이 그것을 그린다", async () => {
+      expect(await sees(zHost.client, zPending.id)).toBe(true);
+    });
+
+    it("INV-Z13 (S17, 실패경로): 대기 중인 신청자는 다른 신청자를 못 읽는다", async () => {
+      // INV-Z11 이 그 참여 행을 안 보여 주므로 프로필도 안 딸려 온다.
+      expect(await sees(zPending.client, zPending2.id)).toBe(false);
+    });
+
+    it("INV-Z13 (실패경로): 수락된 멤버도 대기 중인 신청자는 못 읽는다", async () => {
+      expect(await sees(zMemberA.client, zPending.id)).toBe(false);
+    });
+
+    it("INV-Z13 (실패경로): 무관한 로그인 사용자는 멤버를 못 읽는다", async () => {
+      expect(await sees(zOutsider.client, zMemberA.id)).toBe(false);
+    });
+  });
+
+  describe("④-2 관계 — 내가 읽을 수 있는 대화의 보낸 사람", () => {
+    it("INV-Z13 ④-2 (S18): 강퇴된 사람의 옛 메시지가 남은 방에서 그 이름이 보인다", async () => {
+      // ④-1 로는 안 잡힌다: 강퇴된 참여 행은 status='kicked' 라 남은 멤버에게 안 보인다.
+      // 그것을 여기서 함께 단언한다 — 안 그러면 이 검사가 무엇 덕에 통과하는지 안 갈린다.
+      const { data: row } = await zMemberA.client
+        .from("participants")
+        .select("user_id")
+        .eq("study_id", zStudyId)
+        .eq("user_id", zKicked.id)
+        .maybeSingle();
+      expect(row, "강퇴 행이 멤버에게 보이면 이 검사는 ④-1 덕에 통과한다").toBeNull();
+
+      expect(await sees(zMemberA.client, zKicked.id)).toBe(true);
+    });
+
+    it("INV-Z13 (S19, 실패경로): 그 대화에 없는 사람은 같은 프로필을 못 읽는다", async () => {
+      expect(await sees(zOutsider.client, zKicked.id)).toBe(false);
+      expect(await sees(anonClient(), zKicked.id)).toBe(false);
+    });
+  });
+
+  describe("④-1 은 participants_read 와 같은 문장이어야 한다", () => {
+    // 0011 은 이 계약을 주석과 데이터베이스 코멘트에 두 번 적어 놓았는데 강제하는 것이
+    // 없었다. 두 벌이 어긋나는 날 프로필이 명단보다 넓어지거나(새고) 좁아지는데(이름이
+    // 빈칸이 되는데), **위의 행동 검사들은 그것을 못 본다** — 새로 생긴 갈래를 밟는
+    // 준비물이 없기 때문이다. 그래서 표현식 자체를 대조한다(INV-Z5 검사와 같은 방식).
+
+    /** 괄호 깊이 0 에서만 `OR` 로 가른다. 통째로 감싼 바깥 괄호는 먼저 벗긴다. */
+    function topLevelOr(expr: string): string[] {
+      let e = expr.trim();
+      while (e.startsWith("(") && e.endsWith(")")) {
+        let d = 0;
+        let wrapsAll = true;
+        for (let i = 0; i < e.length; i++) {
+          if (e[i] === "(") d++;
+          else if (e[i] === ")") d--;
+          if (d === 0 && i < e.length - 1) { wrapsAll = false; break; }
+        }
+        if (!wrapsAll) break;
+        e = e.slice(1, -1).trim();
+      }
+      const parts: string[] = [];
+      let depth = 0;
+      let last = 0;
+      for (let i = 0; i < e.length; i++) {
+        if (e[i] === "(") depth++;
+        else if (e[i] === ")") depth--;
+        else if (depth === 0 && e.startsWith(" OR ", i)) {
+          parts.push(e.slice(last, i));
+          i += 3;
+          last = i + 1;
+        }
+      }
+      parts.push(e.slice(last));
+      return parts.map((p) => p.trim()).filter(Boolean);
+    }
+
+    /**
+     * 두 표현식을 같은 모양으로 만든다. 정책은 데이터베이스가 다시 적어 준 문장이고
+     * 함수는 내가 쓴 원문이라, 괄호와 형변환과 공백이 다르다 — 그 셋만 지운다.
+     * 판정 자체(어떤 컬럼과 어떤 함수)는 그대로 남으므로 조건이 바뀌면 안 맞는다.
+     */
+    function canon(sql: string): string {
+      return sql
+        .replace(/--[^\n]*/g, " ")
+        .replace(/\s+/g, "")
+        .replace(/\(SELECTauth\.uid\(\)ASuid\)/gi, "p_viewer_id")
+        .replace(/::[a-z_]+/gi, "")
+        .replace(/[()]/g, "")
+        .toLowerCase();
+    }
+
+    it("INV-Z13 ④-1: 참여자 명단의 판정 셋이 프로필 판정 함수에도 그대로 있다", async () => {
+      const pg = await rawClient();
+      try {
+        const pol = await pg.query(
+          "select qual from pg_policies where schemaname=$1 and tablename=$2 and policyname=$3",
+          ["public", "participants", "participants_read"],
+        );
+        const fn = await pg.query(
+          "select prosrc from pg_proc p join pg_namespace n on n.oid=p.pronamespace" +
+            " where n.nspname=$1 and p.proname=$2",
+          ["private", "profile_is_visible"],
+        );
+        expect(pol.rows[0]?.qual, "participants_read 가 없다").toBeTruthy();
+        expect(fn.rows[0]?.prosrc, "private.profile_is_visible 이 없다").toBeTruthy();
+
+        const branches = topLevelOr(pol.rows[0].qual as string);
+        expect(
+          branches.length,
+          "participants_read 의 갈래 수가 바뀌었다 — profile_is_visible 의 ④-1 도 같이 봐야 한다",
+        ).toBe(3);
+
+        // 정책은 `auth.uid()`·맨 컬럼을 쓰고 함수는 `p_viewer_id`·`pt.` 를 쓴다. 그 둘만 맞춘다.
+        const body = canon(fn.rows[0].prosrc as string);
+        for (const b of branches) {
+          // **컬럼 이름을 먼저 맞추고 나서 정규화한다.** 순서를 바꾸면 공백이 지워진 뒤라
+          // 단어 경계가 안 먹는다 — `is_study_host(study_id` 가 한 낱말로 붙어 버려서 치환이
+          // 조용히 아무것도 안 하고, 그러면 검사가 「없다」로 빨간불이 된다(실제로 그랬다).
+          const wanted = canon(
+            b
+              .replace(/\buser_id\b/g, "pt.user_id")
+              .replace(/\bstudy_id\b/g, "pt.study_id")
+              .replace(/\bstatus\b/g, "pt.status"),
+          );
+          expect(body, `참여자 명단의 판정이 프로필 쪽에 없다: ${b}`).toContain(wanted);
+        }
+      } finally {
+        await pg.end();
+      }
+    });
+
+    it("반대 절반: 아무 문장이나 통과하지는 않는다", async () => {
+      // 위 검사가 무엇이든 「들어 있다」로 통과하면 대조가 아니다. 실제로 없는 판정을
+      // 하나 지어서 안 걸리는 것을 본다.
+      const pg = await rawClient();
+      try {
+        const fn = await pg.query(
+          "select prosrc from pg_proc p join pg_namespace n on n.oid=p.pronamespace" +
+            " where n.nspname=$1 and p.proname=$2",
+          ["private", "profile_is_visible"],
+        );
+        const body = canon(fn.rows[0].prosrc as string);
+        expect(body).not.toContain(canon("private.is_study_admin(pt.study_id, p_viewer_id)"));
+      } finally {
+        await pg.end();
+      }
+    });
+  });
+  describe("명부를 긁을 수 없다 — 이 불변식이 실제로 막는 것", () => {
+    it("INV-Z13 (S15, 실패경로): 비로그인은 아무 관계 없는 사람의 프로필을 못 읽는다", async () => {
+      expect(await sees(anonClient(), zLoner.id)).toBe(false);
+    });
+
+    it("INV-Z13 (S15, 실패경로): 로그인한 사람도 마찬가지다", async () => {
+      expect(await sees(zOutsider.client, zLoner.id)).toBe(false);
+    });
+
+    it("INV-Z13: 필터 없이 통째로 긁으면 공개한 사람들만 나온다", async () => {
+      // **이것이 원래 뚫려 있던 모양이다** — 필터 없는 select 하나로 회원 명부 전체가 나왔다.
+      const { data, error } = await anonClient().from("profiles").select("id");
+      expect(error).toBeNull();
+      const ids = new Set((data ?? []).map((r) => r.id as string));
+      expect(ids.has(zHost.id), "스터디를 연 사람은 공개다").toBe(true);
+      for (const [name, u] of [
+        ["아무것도 안 한 사람", zLoner],
+        ["대기 중인 신청자", zPending],
+        ["수락된 멤버", zMemberA],
+        ["강퇴된 사람", zKicked],
+      ] as const) {
+        expect(ids.has(u.id), `${name}의 프로필이 명부 긁기에 나왔다`).toBe(false);
+      }
+    });
+
+    it("INV-Z13 (S15, 실패경로): 골라서 물어도 같다 — 행 상한에 잘려 통과한 것이 아니다", async () => {
+      // 위 검사에는 필터도 range 도 없어서 `max_rows`(config.toml 의 1000)가 조용히 자른다.
+      // 프로필이 그보다 많아지면 정책을 `using (true)` 로 열어 놔도 뒤쪽이 잘려
+      // 「안 나왔다」로 통과한다. 다섯을 이름으로 집어 오면 상한이 안 걸린다.
+      const targets = [zHost, zLoner, zPending, zMemberA, zKicked] as const;
+      const { data, error } = await anonClient()
+        .from("profiles")
+        .select("id")
+        .in("id", targets.map((u) => u.id));
+      expect(error).toBeNull();
+      const ids = new Set((data ?? []).map((r) => r.id as string));
+      expect(ids.has(zHost.id), "스터디를 연 사람은 공개다").toBe(true);
+      for (const [name, u] of [
+        ["아무것도 안 한 사람", zLoner],
+        ["대기 중인 신청자", zPending],
+        ["수락된 멤버", zMemberA],
+        ["강퇴된 사람", zKicked],
+      ] as const) {
+        expect(ids.has(u.id), `${name}의 프로필이 나왔다`).toBe(false);
+      }
+    });
   });
 });

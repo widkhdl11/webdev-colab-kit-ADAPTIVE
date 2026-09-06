@@ -80,6 +80,15 @@ export function FormSection({
   );
 }
 
+/**
+ * 제출 버튼이 앉는 자리. 「위쪽과 점선으로 가르고 26/20 띄운다」는 규칙이 네 파일에 각각
+ * 적혀 있었다(2026-09-06 ui-reviewer) — `.section` 과 폼 둘의 `.actions` 와 스터디 상세의
+ * `.block`. 폼 쪽 두 벌을 여기로 모은다. 다음 폼이 세 번째 치수를 부르지 않게.
+ */
+export function FormActions({ children }: { children: ReactNode }) {
+  return <div className={styles.section}>{children}</div>;
+}
+
 export function FormError({ message }: { message: string }) {
   return (
     <p className={styles.error} role="alert">

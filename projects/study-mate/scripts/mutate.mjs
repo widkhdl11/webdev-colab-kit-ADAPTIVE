@@ -45,6 +45,71 @@ function assertLocal(url, what) {
 }
 assertLocal(DB_URL, "데이터베이스");
 
+// ── INV-Z13 판정 함수의 갈래 다섯 ──────────────────────────────────────
+//
+// 갈래 하나만 빼는 변이가 다섯이다. 본문을 다섯 번 베껴 적는 대신 여기서 조립한다 —
+// 베껴 적으면 원본이 바뀔 때 다섯 곳을 다 고쳐야 하고, 하나를 빠뜨리면 그 변이만
+// 「낡았다」로 멈춘다(안전한 실패지만 손질이 는다). md5 도 한 자리에만 적는다.
+//
+// **갈래마다 변이를 따로 두는 이유가 여기서 가장 중요한 부분이다.** 전에는 ②③ 을 함께
+// 빼는 변이 하나였다. 그러면 ② 를 붙드는 검사가 빨간불을 내고 판정이 「잡혔다」로
+// 나오는데, **③ 만 지우는 diff 는 아무도 안 잡으면서 숫자는 그대로다.** 갈래를 묶으면
+// 묶인 것 중 하나만 붙들려도 전부 붙들린 것처럼 보인다.
+//
+// **그래서 tag 를 손으로 적는다.** 기본 이름표는 holds 의 첫 `INV-XX` 인데 그건 다섯 다
+// `INV-Z13` 이라, 갈래 하나가 깨지면 다섯 변이가 전부 「잡혔다」로 보고된다. 검사 이름에도
+// 같은 문자열이 들어 있어야 판정이 성립한다.
+const Z13_BODY_MD5 = "6f8b8c77b85136720e7294ea308b08b2";
+
+const Z13_BRANCHES = {
+  // ① 본인
+  self: "p_profile_id = p_viewer_id",
+  // ② 볼 수 있는 스터디의 호스트
+  host: `exists (
+            select 1 from public.studies s
+             where s.host_id = p_profile_id and private.study_is_visible(s.id, p_viewer_id)
+          )`,
+  // ③ 볼 수 있는 모집글의 작성자
+  author: `exists (
+            select 1 from public.posts p
+             where p.author_id = p_profile_id and private.study_is_visible(p.study_id, p_viewer_id)
+          )`,
+  // ④-1 INV-Z11 이 보여 주기로 정한 참여자 행의 주인
+  relation: `exists (
+            select 1 from public.participants pt
+             where pt.user_id = p_profile_id
+               and (
+                 pt.user_id = p_viewer_id
+                 or private.is_study_host(pt.study_id, p_viewer_id)
+                 or (pt.status = 'accepted' and private.is_study_member(pt.study_id, p_viewer_id))
+               )
+          )`,
+  // ④-2 내가 읽을 수 있는 대화에서 메시지를 보낸 사람
+  sender: `exists (
+            select 1 from public.chat_messages m
+             where m.sender_id = p_profile_id
+               and private.is_chat_member(m.chat_id, p_viewer_id)
+          )`,
+};
+
+/** 갈래 하나를 뺀 판정 함수를 심는 변이 조각. guard 가 원본 본문의 해시를 대조한다. */
+function z13Without(drop) {
+  if (!(drop in Z13_BRANCHES)) throw new Error(`Z13_BRANCHES 에 없는 갈래: ${drop}`);
+  const kept = Object.entries(Z13_BRANCHES)
+    .filter(([k]) => k !== drop)
+    .map(([, v]) => v);
+  // 전부 빠지면 `select ;` 가 되어 조용히 문법 오류로 죽는다. 그 전에 여기서 멈춘다.
+  if (kept.length === 0) throw new Error("갈래를 전부 뺐다");
+  return {
+    guard: { schema: "private", fn: "profile_is_visible", md5: Z13_BODY_MD5 },
+    sql: `
+      create or replace function private.profile_is_visible(p_profile_id uuid, p_viewer_id uuid)
+      returns boolean language sql stable security definer set search_path = '' as $fn$
+        select ${kept.join("\n          or ")};
+      $fn$;`,
+  };
+}
+
 /** 변이 이름 → 무엇을 무력화하는가 + 그것을 붙들어야 할 테스트 */
 const MUTATIONS = {
   // ── 0010 이 만든 강제 장치 셋 ──────────────────────────────────────────
@@ -127,6 +192,95 @@ const MUTATIONS = {
     // 이벤트 트리거(pgrst_ddl_watch · pgrst_drop_watch)가 심고 지울 때 각각 깨운다 —
     // 확인했다. 이 도구에 없는 필드(`after` 같은)를 적어 두면 아무 일도 안 하면서
     // 무언가 한 것처럼 읽히므로 적지 않는다.
+  },
+  // ── 0011 이 만든 강제 장치 (INV-Z13) ──────────────────────────────────
+  // 갈래를 하나씩 빼는 다섯은 본문을 통째로 다시 적는다(z13Without). 갈래 하나를 빼는 것이
+  // 그 변이의 내용이라 다른 방법이 없고, guard 가 원본 본문의 해시를 대조해서 원본이 바뀐
+  // 뒤에 낡은 본문을 심는 것을 막는다.
+  "z13-profiles-read-open": {
+    holds: "INV-Z13 — 프로필은 볼 이유가 있는 사람에게만 보인다",
+    // 원래 뚫려 있던 모양 그대로. 필터 없는 select 하나로 회원 명부 전체가 나온다.
+    sql: `
+      drop policy if exists profiles_read on public.profiles;
+      create policy profiles_read on public.profiles for select using (true);`,
+    // 0011 이 복구 목록에 있으므로 정책이 다시 걸린다.
+  },
+  "z13-logged-in-only": {
+    holds: "INV-Z13 (S14) — 발견은 로그인 앞에 있다: 비로그인도 호스트·작성자를 읽는다",
+    // 좁히는 쪽으로 틀린 경우. 「로그인한 사람만」은 명부 긁기를 막지만
+    // **공개 모집글 상세에서 누가 여는 스터디인지가 빈칸이 된다.**
+    sql: `
+      drop policy if exists profiles_read on public.profiles;
+      create policy profiles_read on public.profiles for select
+      using ((select auth.uid()) is not null);`,
+  },
+  "z13-drop-self-branch": {
+    tag: "INV-Z13 ①",
+    holds: "INV-Z13 ① — 자기 프로필은 아무 관계가 없어도 읽는다",
+    ...z13Without("self"),
+  },
+  "z13-drop-host-branch": {
+    tag: "INV-Z13 ②",
+    holds: "INV-Z13 ② — 볼 수 있는 스터디의 호스트는 비로그인에게도 보인다",
+    ...z13Without("host"),
+  },
+  "z13-drop-author-branch": {
+    tag: "INV-Z13 ③",
+    holds: "INV-Z13 ③ — 볼 수 있는 모집글의 작성자는 비로그인에게도 보인다",
+    ...z13Without("author"),
+  },
+  "z13-drop-relation-branch": {
+    tag: "INV-Z13 ④-1",
+    holds: "INV-Z13 ④-1 — INV-Z11 이 보여 주는 참여자 행의 주인은 프로필도 보인다",
+    ...z13Without("relation"),
+  },
+  "z13-drop-sender-branch": {
+    tag: "INV-Z13 ④-2",
+    holds: "INV-Z13 ④-2 — 강퇴된 사람의 옛 메시지에서 이름이 빈칸이 되지 않는다",
+    ...z13Without("sender"),
+  },
+  // ── 0012 가 만든 강제 장치 (INV-P8 실시간) ────────────────────────────
+  "p8-topic-shape-loose": {
+    holds: "INV-P8 (실시간) — 주제 이름이 uuid 모양일 때만 통과한다",
+    // 0012 이전의 조건 그대로. 길이 36 과 글자 종류만 봐서 대시 36개도 통과하고,
+    // 그 뒤의 ::uuid 형변환이 정책 평가 중에 죽는다.
+    sql: `
+      drop policy if exists chat_broadcast_read on realtime.messages;
+      create policy chat_broadcast_read on realtime.messages for select to authenticated
+      using (
+        realtime.topic() ~ '^chat:[0-9a-fA-F-]{36}$'
+        and private.is_chat_member(
+              substring(realtime.topic() from 6)::uuid,
+              (select auth.uid())
+            )
+      );`,
+    // 0012 가 복구 목록에 있으므로 정책이 다시 걸린다.
+  },
+  "p8-topic-no-shape-check": {
+    tag: "INV-P8",
+    holds: "INV-P8 (실시간) — 모양이 아닌 주제는 오류가 아니라 null 이다",
+    // 0013 이 만든 안전장치를 뺀다. 모양을 안 보고 바로 형변환하면 대시 36개짜리 주제에서
+    // 예외가 나고, 그 예외가 정책 평가 중에 난다 — 구독이 오류로 끝나고 아무나 그것을 낼 수 있다.
+    sql: `
+      create or replace function private.chat_topic_uuid(p_topic text)
+      returns uuid language sql immutable set search_path = '' as $fn$
+        select substring(p_topic from 6)::uuid;
+      $fn$;`,
+    // 0013 이 복구 목록에 있으므로 함수가 다시 만들어진다.
+  },
+  "p8-topic-case-sensitive": {
+    tag: "INV-P8",
+    holds: "INV-P8 (실시간) — 표기가 갈려도 같은 대화를 가리킨다",
+    // `~*` 를 `~` 로 되돌린다. 대문자로 주제를 만든 클라이언트가 구독을 못 하게 되는데,
+    // 이 변이를 쓰기 전에는 그 상태가 초록불이었다 — 검사가 연산자를 자기 손으로 넣었다.
+    sql: `
+      create or replace function private.chat_topic_uuid(p_topic text)
+      returns uuid language sql immutable set search_path = '' as $fn$
+        select case
+                 when p_topic ~ '^chat:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+                   then substring(p_topic from 6)::uuid
+               end;
+      $fn$;`,
   },
   "z8-participants-columns": {
     holds: "INV-Z8 (S7) — 호스트가 자기 참여 행의 user_id 를 남으로 바꿀 수 없다",
@@ -270,6 +424,22 @@ const MUTATIONS = {
         select $1.deleted_at is null
            and public.accepted_count($1) < $1.max_participants;
       $fn$;`,
+  },
+  "filter-code-concatenated": {
+    holds: "주소창에서 온 카테고리 코드가 질의를 깨지 않는다 (화면 목록 문서)",
+    tag: "필터 코드",
+    // **이 변이가 없으면 그 검사 둘이 아무것도 안 붙든다.** 오늘 카테고리·지역 코드는
+    // `.in()`·`.eq()` 를 지나므로 supabase-js 가 값을 감싸서 넘기고, 그래서 무엇을 넣어도
+    // 안 깨진다 — 검사 스스로 「지금의 방벽이 아니라 회귀를 붙든다」고 적어 놓았다.
+    // 그 주장이 판정 결과가 되려면 되살릴 회귀가 실제로 있어야 한다.
+    //
+    // 여기서는 값을 필터 문자열로 **이어 붙이게** 바꾼다. 그러면 쉼표가 든 값
+    // (`it,design`)이 논리 트리를 깨서 PGRST100 이 난다.
+    file: {
+      path: "src/entities/post/api/post-query.ts",
+      find: `    q = q.in("study.category_id", [...query.categories]);`,
+      replace: `    q = q.or(query.categories.map((c) => \`study.category_id.eq.\${c}\`).join(","));`,
+    },
   },
   "deadline-order-inside-embed": {
     holds: "「마감 임박순」이 실제로 마감일 순서로 나온다 (화면 목록 문서)",
@@ -528,6 +698,16 @@ const MUTATIONS = {
       create policy participants_apply_self on public.participants for insert
         with check (user_id = (select auth.uid()) and status = 'pending');`,
   },
+  "z14-post-insert-not-recruiting": {
+    holds: "INV-Z14 — 모집 중이 아닌 스터디에는 새 모집글이 안 들어간다",
+    sql: `
+      drop policy if exists posts_insert_author on public.posts;
+      create policy posts_insert_author on public.posts for insert
+        with check (
+          author_id = (select auth.uid())
+          and private.is_study_host(study_id, (select auth.uid()))
+        );`,
+  },
   "z11-members-hidden": {
     holds: "INV-Z11 (S12) — 수락된 멤버는 같은 스터디의 수락된 사람들을 본다",
     sql: `
@@ -662,13 +842,48 @@ function fileFingerprint() {
   return lines.sort().join("\n");
 }
 
-async function query(sql) {
+async function query(sql, params) {
   const c = new Client({ connectionString: DB_URL });
   await c.connect();
   try {
-    return await c.query(sql);
+    return await c.query(sql, params);
   } finally {
     await c.end();
+  }
+}
+
+/**
+ * **본문을 통째로 다시 적는 변이가 낡는 것을 막는다.**
+ *
+ * 판정 함수의 본문 전체를 심는 변이는, 원본이 나중에 조건을 하나 더 얻으면 「낡은 본문 +
+ * 의도한 한 줄」을 심는다. 그때 빨간불이 변이 때문인지 되돌아간 본문 때문인지 안 갈린다 —
+ * 변이는 하나를 무력화한다고 적혀 있는데 실제로는 둘을 무력화한 상태가 된다.
+ *
+ * 그래서 심기 전에 원본 본문의 해시를 대조하고, 다르면 **심지 않고 멈춘다.**
+ * 고칠 곳은 원본이 아니라 변이의 sql 과 이 해시다.
+ */
+async function assertBodyFresh(name, guard) {
+  const r = await query(
+    "select md5(p.prosrc) as md5 from pg_proc p join pg_namespace n on n.oid = p.pronamespace" +
+      " where n.nspname = $1 and p.proname = $2",
+    [guard.schema, guard.fn],
+  );
+  if (r.rowCount !== 1) {
+    console.error(
+      `변이 ${name} 의 대조 대상 ${guard.schema}.${guard.fn} 을 못 찾았다(${r.rowCount}건).` +
+        "\n  이름이 바뀌었거나 데이터베이스가 복구 전 상태다.",
+    );
+    process.exit(1);
+  }
+  if (r.rows[0].md5 !== guard.md5) {
+    console.error(
+      `변이 ${name} 이 낡았다 — ${guard.schema}.${guard.fn} 의 본문이 바뀌었다.` +
+        `\n  등록된 해시: ${guard.md5}\n  지금 해시:   ${r.rows[0].md5}` +
+        "\n  이 변이는 본문을 통째로 다시 적는다. 지금 심으면 의도한 한 줄 말고" +
+        " **바뀐 부분까지 되돌린 상태**가 되고, 빨간불의 원인이 갈리지 않는다." +
+        "\n  고칠 곳은 원본이 아니라 이 변이의 sql 과 guard.md5 다.",
+    );
+    process.exit(1);
   }
 }
 
@@ -692,6 +907,20 @@ const RESTORE_MIGRATIONS = [
   // 정책을 그쪽으로 다시 걸어 놓는다 — 0010 이 뒤따라 돌아야 그 함수들이 다시 지워지고
   // 정책이 `private` 을 가리킨다. 순서를 바꾸면 복구가 끝난 자리에 S4 의 구멍이 도로 열린다.
   "0010_signup_profile_and_private_helpers.sql",
+  // 0011 은 0010 뒤여야 한다 — 판정 함수가 private.study_is_visible 등을 부르므로
+  // 그 함수들이 이미 있어야 만들어진다. 그리고 profiles_read 를 다시 거는 것도 여기다.
+  "0011_profile_visibility.sql",
+  // 0012 는 0010 뒤여야 한다 — 0010 이 chat_broadcast_read 를 느슨한 조건으로 다시 걸고,
+  // 0012 가 뒤따라 돌아야 그 조건이 uuid 모양으로 좁혀진다.
+  "0012_topic_shape.sql",
+  // 0013 은 0012 뒤여야 한다 — 0012 가 정규식을 정책 안에 직접 쓰고, 0013 이 그것을
+  // private.chat_topic_uuid 로 옮겨 담는다. 순서를 바꾸면 복구가 끝난 자리에 「모양 검사와
+  // 형변환이 and 로 묶인」 옛 조건이 남는다. 인덱스 셋도 여기서 다시 만들어진다.
+  "0013_profile_lookup_index_and_topic_order.sql",
+  // 0014 는 0010 뒤여야 한다 — 0010 이 posts_insert_author 를 「작성자 + 호스트」 두 조건으로
+  // 다시 걸고, 0014 가 뒤따라 돌아야 거기에 「모집 중인 스터디」가 더해진다(INV-Z14).
+  // 빠뜨리면 복구가 끝난 자리에 2026-09-06 에 닫은 구멍이 도로 열린 채로 남는다.
+  "0014_post_insert_requires_recruiting_study.sql",
 ];
 
 /**
@@ -739,11 +968,55 @@ language sql immutable as $stub$ select false $stub$;
  * 목록이 낡아 0010 이 빠진 경우.
  */
 const RESTORE_ASSERT = `
-select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+select p.proname as what from pg_proc p join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public'
    and p.proname = any(array['is_study_host','is_chat_member','is_study_member',
                              'study_is_visible','study_accepts_applications',
                              'study_accepted_count','study_is_recruiting'])
+union all
+-- 같은 함정이 프로필 조회 정책에도 있다. 0011 이 목록에서 빠지거나 0010 앞으로 가면
+-- **복구가 끝난 자리에 회원 명부가 도로 열린 채로 남는다**(INV-Z13). 이름이 아니라
+-- 판정 함수를 부르는지로 본다 — 'true' 만 보면 다른 모양으로 넓힌 것을 놓친다.
+select '프로필 조회 정책이 판정 함수를 안 부른다 (INV-Z13)' as what
+ where not exists (
+   select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'profiles_read'
+      and strpos(qual, 'profile_is_visible') > 0
+ )
+union all
+-- 실시간 주제 정규식도 같은 함정이다. 0012 가 목록에서 빠지거나 0010 앞으로 가면
+-- 복구가 끝난 자리에 느슨한 조건이 도로 남는다. strpos 로 보는 이유는 like 의
+-- 밑줄이 아무 글자나 먹어서 이 패턴을 헐겁게 만들기 때문이다.
+select '실시간 주제 정규식이 느슨한 채로 남아 있다 (0012)' as what
+ where exists (
+   select 1 from pg_policies
+    where schemaname = 'realtime' and tablename = 'messages' and policyname = 'chat_broadcast_read'
+      and strpos(qual, '[0-9a-fA-F-]{36}') > 0
+ )
+union all
+-- 0013 이 목록에서 빠지거나 0012 앞으로 가면 복구가 끝난 자리에 「모양 검사와 형변환이
+-- and 로 묶인」 옛 조건이 남는다. 그 상태는 평가 순서가 뒤집히는 날 정책 평가 중에 오류를 낸다.
+select '실시간 주제 검사가 chat_topic_uuid 를 안 거친다 (0013)' as what
+ where not exists (
+   select 1 from pg_policies
+    where schemaname = 'realtime' and tablename = 'messages' and policyname = 'chat_broadcast_read'
+      and strpos(qual, 'chat_topic_uuid') > 0
+ )
+union all
+-- 0014 가 목록에서 빠지거나 0010 앞으로 가면, 복구가 끝난 자리에 「모집 중이 아닌 스터디에도
+-- 새 모집글이 들어가는」 상태가 도로 남는다(INV-Z14). 정책의 with check 에 그 판정이 있는지로 본다.
+select '모집글 삽입 정책이 모집 중인지를 안 본다 (INV-Z14, 0014)' as what
+ where not exists (
+   select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'posts' and policyname = 'posts_insert_author'
+      and strpos(with_check, 'study_is_recruiting') > 0
+ )
+union all
+-- 인덱스 셋도 0013 이 만든다. 없으면 비로그인 프로필 조회가 세 표를 통째로 훑는다
+-- (실측: 1103 ms → 9 ms).
+select '프로필 판정이 거는 조건에 인덱스가 없다 (0013): ' || i as what
+  from unnest(array['posts_author_idx','chat_messages_sender_idx','studies_host_all_idx']) i
+ where not exists (select 1 from pg_indexes where schemaname = 'public' and indexname = i)
 `;
 
 async function restore(name) {
@@ -771,10 +1044,10 @@ async function restore(name) {
     const leftover = await c.query(RESTORE_ASSERT);
     if (leftover.rowCount > 0) {
       throw new Error(
-        "복구가 끝났는데 판정 함수가 public 에 남아 있다: " +
-          leftover.rows.map((r) => r.proname).join(", ") +
-          "\n  RESTORE_MIGRATIONS 에서 0010 이 맨 뒤인지 본다 — 0002·0004 가 이 함수들을" +
-          " public 에 다시 만들고, 0010 이 뒤따라 돌아야 지워진다.",
+        "복구가 끝났는데 열린 채로 남은 것이 있다: " +
+          leftover.rows.map((r) => r.what).join(", ") +
+          "\n  RESTORE_MIGRATIONS 의 순서를 본다 — 0002·0004 가 판정 함수를 public 에 다시" +
+          " 만들므로 0010 이 그 뒤여야 하고, 0011(프로필 조회 정책)이 0010 뒤여야 한다.",
       );
     }
     await c.query("commit");
@@ -863,6 +1136,7 @@ if (!arg || arg === "--list") {
     console.error(`모르는 변이: ${arg}. --list 로 목록을 본다.`);
     process.exit(1);
   }
+  if (mutation.guard) await assertBodyFresh(arg, mutation.guard);
   if (mutation.sql) await query(mutation.sql);
   if (mutation.file) {
     const target = join(HERE, "..", mutation.file.path);

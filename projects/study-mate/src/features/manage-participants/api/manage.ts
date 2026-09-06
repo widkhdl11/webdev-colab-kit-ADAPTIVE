@@ -5,7 +5,8 @@
 //           docs/specs/participation-capacity.md (INV-P1 · P4 · P7 · P8) ·
 //           docs/specs/auth-session.md (INV-A4)
 
-import { revalidatePath } from "next/cache";
+import { dbErrorMessage } from "@/shared/lib/db-error";
+import { revalidateEntityPath } from "@/shared/lib/revalidate-entity";
 import { currentUser, requireSession } from "@/entities/session";
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
 import type { ActionResult } from "@/shared/lib/action-result";
@@ -49,12 +50,8 @@ async function changeStatus(
     .eq("user_id", targetUserId)
     .select("id");
 
-  if (error) {
-    if (error.code === "23514" || error.message.includes("check_violation")) {
-      return { ok: false, message: `${MESSAGE[next]}할 수 없습니다: ${error.message}` };
-    }
-    return { ok: false, message: `${MESSAGE[next]}하지 못했습니다: ${error.message}` };
-  }
+  // 데이터베이스가 지은 문장은 그대로, 나머지는 덮고 서버 로그로 보낸다(db-error.ts).
+  if (error) return { ok: false, message: dbErrorMessage(MESSAGE[next], error) };
 
   // **0행 갱신은 오류가 아니다.** 정책이 걸러 내면 조용히 아무것도 안 바뀐다 —
   // 그걸 성공으로 보고하면 화면이 "됐다"고 말하고 실제로는 그대로다.
@@ -78,6 +75,6 @@ export async function changeParticipationAction(
     next: String(form.get("next") ?? "") as Transition,
   });
 
-  if (result.ok && studyId) revalidatePath(`/studies/${studyId}`);
+  if (result.ok) revalidateEntityPath("/studies", studyId);
   return result;
 }

@@ -6,11 +6,18 @@
 
 import { HOME_PATH } from "@/entities/session/model/route-access";
 
-/** 눈에 안 보이는 글자(개행·탭·NUL 등)가 하나라도 섞였는가 */
+/**
+ * 눈에 안 보이는 글자(개행·탭·NUL 등)가 하나라도 섞였는가.
+ *
+ * C1 구역(U+0080~U+009F)도 본다. 유니코드가 제어문자로 분류하는 것이 C0 와 C1 둘인데
+ * 처음에는 C0 만 봤다. 이 값은 헤더의 `Location` 에 실리고, 그 헤더를 latin-1 로 쓰는
+ * 자리에서 C1 은 한 바이트 제어문자가 된다.
+ */
 function hasControlChar(value: string): boolean {
   for (const ch of value) {
     const code = ch.codePointAt(0) ?? 0;
     if (code < 0x20 || code === 0x7f) return true;
+    if (code >= 0x80 && code <= 0x9f) return true;
   }
   return false;
 }

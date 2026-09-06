@@ -48,6 +48,9 @@ export type PostQuery = {
   readonly perPage?: number;
 };
 
+// 카테고리·지역 코드에는 검증을 두지 않는다 — `.in()`·`.eq()` 의 값은 문자열로 이어 붙지
+// 않는다(실측). 이어 붙는 값은 아래 검색어 하나뿐이고 그것을 이 함수가 막는다.
+// 두었다가 뺀 경위와 근거: `docs/DECISIONS.md` 2026-09-06.
 /** PostgREST 의 패턴 문법에서 뜻을 갖는 글자를 없앤다 — 검색어가 필터를 깨지 않게 */
 export function safePattern(q: string): string {
   return q.replace(/[%_,()]/g, " ").trim();

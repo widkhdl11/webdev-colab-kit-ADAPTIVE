@@ -3,7 +3,8 @@
 // 참가 신청. 근거 스펙: docs/specs/participation-capacity.md (INV-P4·P7) ·
 // docs/specs/auth-session.md (INV-A4) · docs/specs/write-authorization.md (INV-Z4·Z8)
 
-import { revalidatePath } from "next/cache";
+import { dbErrorMessage } from "@/shared/lib/db-error";
+import { revalidateEntityPath } from "@/shared/lib/revalidate-entity";
 import { currentUser, requireSession } from "@/entities/session";
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
 import type { ActionResult } from "@/shared/lib/action-result";
@@ -33,7 +34,7 @@ async function insertApplication(
     if (error.code === "23505") return { ok: false, message: "이미 신청한 스터디입니다" };
     if (error.code === "42501")
       return { ok: false, message: "지금은 신청할 수 없는 스터디입니다" };
-    return { ok: false, message: `신청하지 못했습니다: ${error.message}` };
+    return { ok: false, message: dbErrorMessage("신청", error) };
   }
 
   return { ok: true, value: null };
@@ -57,6 +58,6 @@ export async function applyToStudyAction(
   const postId = String(form.get("postId") ?? "");
 
   const result = await guarded(studyId);
-  if (result.ok && postId) revalidatePath(`/posts/${postId}`);
+  if (result.ok) revalidateEntityPath("/posts", postId);
   return result;
 }

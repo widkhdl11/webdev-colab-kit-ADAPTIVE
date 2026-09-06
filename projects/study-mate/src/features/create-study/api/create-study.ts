@@ -7,20 +7,16 @@ import { redirect } from "next/navigation";
 import { currentUser, requireSession } from "@/entities/session";
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
 import type { ActionResult } from "@/shared/lib/action-result";
-
-/** 폼에서 온 값 하나를 다듬는다. 빈 문자열은 "안 적음"이라 null 이다 */
-const text = (form: FormData, key: string): string | null => {
-  const v = String(form.get(key) ?? "").trim();
-  return v === "" ? null : v;
-};
+import { dbErrorMessage } from "@/shared/lib/db-error";
+import { formText } from "@/shared/lib/form-text";
 
 /** 폼이 보내는 모임 일정 세 줄. 요일과 시작·끝이 다 있는 줄만 쓴다 */
 function readSlots(form: FormData): { weekday: number; starts_at: string; ends_at: string }[] {
   const out: { weekday: number; starts_at: string; ends_at: string }[] = [];
   for (let i = 0; i < 3; i += 1) {
     const weekday = Number.parseInt(String(form.get(`weekday${i}`) ?? ""), 10);
-    const startsAt = text(form, `startsAt${i}`);
-    const endsAt = text(form, `endsAt${i}`);
+    const startsAt = formText(form, `startsAt${i}`);
+    const endsAt = formText(form, `endsAt${i}`);
     if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) continue;
     if (!startsAt || !endsAt) continue;
     out.push({ weekday, starts_at: startsAt, ends_at: endsAt });
@@ -32,10 +28,10 @@ async function insertStudy(
   user: { readonly id: string },
   form: FormData,
 ): Promise<ActionResult<string>> {
-  const title = text(form, "title");
-  const description = text(form, "description");
-  const categoryId = text(form, "categoryId");
-  const regionCode = text(form, "regionCode");
+  const title = formText(form, "title");
+  const description = formText(form, "description");
+  const categoryId = formText(form, "categoryId");
+  const regionCode = formText(form, "regionCode");
   const capacity = Number.parseInt(String(form.get("capacity") ?? ""), 10);
   const meetingMode = String(form.get("meetingMode") ?? "offline");
 
@@ -50,8 +46,8 @@ async function insertStudy(
     return { ok: false, message: "진행 방식을 골라 주세요" };
   }
 
-  const startsOn = text(form, "startsOn");
-  const endsOn = text(form, "endsOn");
+  const startsOn = formText(form, "startsOn");
+  const endsOn = formText(form, "endsOn");
   if (startsOn && endsOn && endsOn < startsOn) {
     return { ok: false, message: "끝나는 날이 시작하는 날보다 앞설 수 없습니다" };
   }
@@ -65,16 +61,16 @@ async function insertStudy(
     .insert({
       host_id: user.id,
       title,
-      summary: text(form, "summary"),
+      summary: formText(form, "summary"),
       description,
       category_id: categoryId,
       region_code: regionCode,
-      location_detail: text(form, "locationDetail"),
+      location_detail: formText(form, "locationDetail"),
       meeting_mode: meetingMode,
       max_participants: capacity,
       starts_on: startsOn,
       ends_on: endsOn,
-      recruit_until: text(form, "recruitUntil"),
+      recruit_until: formText(form, "recruitUntil"),
     })
     .select("id")
     .single();
@@ -94,7 +90,7 @@ async function insertStudy(
     if (slotError) {
       return {
         ok: false,
-        message: `스터디는 만들어졌지만 모임 일정을 저장하지 못했습니다: ${slotError.message}. 스터디 수정에서 다시 넣어 주세요.`,
+        message: `${dbErrorMessage("스터디는 만들어졌지만 모임 일정 저장", slotError)} 스터디 수정에서 다시 넣어 주세요.`,
       };
     }
   }

@@ -724,3 +724,79 @@ describe("INV-P6: 마감일은 모집 상태가 아니다", () => {
     expect(row.data!.accepted_count).toBe(2);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INV-P8 (실시간) — 주제 이름의 모양을 보고 나서 형변환한다
+//
+// **여기서 무엇을 붙드는지가 0013 으로 바뀌었다.** 전에는 정책 표현식에서 정규식을 떼어
+// 내 혼자 돌렸다. 그 검사에는 구멍이 둘 있었다.
+//
+//   · 비교 연산자를 정책이 아니라 검사가 정했다(`~*` 를 손으로 썼다). 그래서 정책의
+//     `~*` 를 `~` 로 되돌려도 「대문자 표기가 막혔다」 단언이 그대로 통과했다 —
+//     대소문자를 안 가린다는 결정이 검증 밖에 있었다.
+//   · 정작 막으려던 사고(모양이 틀린 주제에서 형변환이 정책 평가 중에 예외를 던지는 것)를
+//     한 번도 재현하지 않았다. `and` 의 평가 순서는 보장되지 않으므로, 순서를 바꾸는
+//     diff 는 이 검사를 전부 통과한 채로 원래 결함을 되살린다.
+//
+// 0013 이 모양 검사와 형변환을 `private.chat_topic_uuid` 한 함수에 묶어서 예외가 날
+// 자리를 없앴다. 그래서 이제 **그 함수를 직접 부른다** — 정규식도 연산자도 베껴 적지
+// 않고, 함수가 실제로 무엇을 돌려주는지를 본다. 정책이 그 함수를 거치는지는 따로 본다.
+// ═══════════════════════════════════════════════════════════════════════════
+describe("INV-P8 (실시간): 주제 이름이 uuid 모양일 때만 통과한다", () => {
+  it("INV-P8: 모양이 아닌 주제는 오류가 아니라 null 이다 — 정책 평가 중에 죽지 않는다", async () => {
+    const pg = await rawClient();
+    try {
+      const ask = async (topic: string) =>
+        (await pg.query("select private.chat_topic_uuid($1) as v", [topic])).rows[0].v as string | null;
+
+      // 이것이 0012 이전 조건(`[0-9a-fA-F-]{36}`)을 통과하던 값이다. 통과하면 그 뒤의
+      // `::uuid` 형변환이 정책 평가 중에 죽었다. **오류가 아니라 null 이어야 한다** —
+      // 이 줄이 예외를 던지면 그 사고가 그대로 돌아온 것이다.
+      expect(await ask("chat:" + "-".repeat(36)), "대시 36개가 통과했다").toBeNull();
+      expect(await ask("chat:" + "a".repeat(36)), "대시 없는 36글자가 통과했다").toBeNull();
+      expect(await ask("chat:3f2504e0-4f89-41d3-9a0c-0305e82c330"), "35글자가 통과했다").toBeNull();
+      expect(await ask("chat:3f2504e0_4f89_41d3_9a0c_0305e82c3301"), "밑줄 구분자가 통과했다").toBeNull();
+      expect(await ask("other:3f2504e0-4f89-41d3-9a0c-0305e82c3301"), "접두사가 달라도 통과했다").toBeNull();
+      expect(await ask("chat:3f2504e0-4f89-41d3-9a0c-0305e82c3301x"), "뒤에 더 붙여도 통과했다").toBeNull();
+
+      // 반대 절반. 이게 없으면 함수를 「언제나 null」로 바꿔도 위가 전부 통과하고,
+      // 그러면 아무도 대화를 못 받는 상태가 초록불이 된다.
+      const real = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
+      expect(await ask("chat:" + real), "진짜 uuid 가 막혔다").toBe(real);
+    } finally {
+      await pg.end();
+    }
+  });
+
+  it("INV-P8: 표기가 갈려도 같은 대화를 가리킨다 — 대소문자로 인가가 갈리지 않는다", async () => {
+    // **이 단언이 이제 함수의 것이다.** 전에는 검사가 `~*` 를 손으로 넣어서, 정책을
+    // 대소문자 가리는 쪽으로 되돌려도 초록불이었다.
+    const pg = await rawClient();
+    try {
+      const ask = async (topic: string) =>
+        (await pg.query("select private.chat_topic_uuid($1) as v", [topic])).rows[0].v as string | null;
+      const real = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
+      expect(await ask("chat:" + real.toUpperCase()), "대문자 표기가 막혔다").toBe(real);
+    } finally {
+      await pg.end();
+    }
+  });
+
+  it("INV-P8: 정책이 그 함수를 거친다 — 형변환을 정책 안으로 되돌리면 잡힌다", async () => {
+    // 위 둘은 함수만 본다. 정책이 함수를 안 부르고 예전처럼 직접 형변환하면 위 둘은
+    // 그대로 초록불이고 사고는 돌아온다. 그래서 강제 위치가 그 함수인지를 따로 묻는다.
+    const pg = await rawClient();
+    try {
+      const r = await pg.query(
+        "select qual from pg_policies where schemaname = 'realtime'" +
+          " and tablename = 'messages' and policyname = 'chat_broadcast_read'",
+      );
+      expect(r.rowCount, "chat_broadcast_read 정책이 없다").toBe(1);
+      const qual = r.rows[0].qual as string;
+      expect(qual, "정책이 chat_topic_uuid 를 안 거친다").toContain("chat_topic_uuid");
+      expect(qual, "정책 안에 형변환이 남아 있다 — 평가 순서에 기대는 모양이다").not.toContain("::uuid");
+    } finally {
+      await pg.end();
+    }
+  });
+});

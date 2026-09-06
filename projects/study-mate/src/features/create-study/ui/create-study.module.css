@@ -3,8 +3,3 @@
   padding: 28px var(--space-24);
 }
 
-.actions {
-  margin-top: var(--space-26);
-  padding-top: var(--space-20);
-  border-top: 2px dotted var(--rule);
-}

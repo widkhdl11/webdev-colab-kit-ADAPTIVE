@@ -37,6 +37,14 @@ export type StudyPage = {
   readonly applicants: readonly Member[];
   /** 채팅방 id. 멤버가 아니면 null 이다(접근 정책) */
   readonly chatId: string | null;
+  /**
+   * 이 스터디를 가리키는 모집글이 하나라도 있나. 화면이 「지금 해야 할 일」을 정하는 데 쓴다 —
+   * 모집글이 없으면 아무도 이 스터디를 찾을 수 없으므로 그것을 푸는 행동이 주 행동이다
+   * (2026-09-06 사람 결정 · design-rules 「잉크 행동 규칙」).
+   *
+   * 개수가 아니라 유무만 둔다. 개수는 화면이 안 쓰고, 두면 다음 사람이 그것으로 판단을 만든다.
+   */
+  readonly hasPosts: boolean;
   /** 지금 이 사람의 상태 */
   readonly myStatus: ParticipationStatus | null;
 };
@@ -135,6 +143,16 @@ export async function readStudyPage(
     .eq("study_id", studyId)
     .maybeSingle();
 
+  // 한 건만 있으면 되므로 세지 않고 첫 행이 있는지만 본다.
+  // 조회 정책이 감추는 모집글은 여기에도 안 온다 — 그게 맞다. 보이지 않는 글은 「이 스터디를
+  // 찾을 수 있다」의 근거가 못 된다.
+  const { data: anyPost } = await supabase
+    .from("posts")
+    .select("id")
+    .eq("study_id", studyId)
+    .limit(1)
+    .maybeSingle();
+
   // **사용자로 거른다.** 0004 가 참여자 조회를 넓힌 뒤로 멤버에게는 여러 줄이 보이고,
   // 안 거르면 `maybeSingle()` 이 오류를 내며 null 이 되어 **탈퇴 버튼이 사라진다.**
   const me = userId
@@ -176,6 +194,7 @@ export async function readStudyPage(
     members,
     applicants: participants.filter((p) => p.status === "pending"),
     chatId: (chat?.id as string | undefined) ?? null,
+    hasPosts: anyPost !== null,
     myStatus: (me.data?.status as ParticipationStatus | undefined) ?? null,
   };
 }

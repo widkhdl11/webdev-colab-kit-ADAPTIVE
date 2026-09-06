@@ -1,0 +1,23 @@
+.card {
+  margin-top: var(--space-26);
+  padding: 28px var(--space-24);
+}
+
+/*
+ * 스터디가 하나도 없을 때 카드 안의 **유일한 내용이자 화면의 주 메시지**다. 메타가 아니라
+ * 본문이므로 design-rules 의 「본문 17px 고정」과 잉크 색을 따른다 — 처음엔 이름이 같은
+ * study-detail 의 `.empty`(15px·약한 잉크)를 그대로 가져왔는데, 그쪽은 진짜 메타다.
+ */
+.empty {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+/*
+ * 점선 괘선을 안 쓴다. 폼에서 그 선의 뜻은 「입력칸들 ↔ 제출」인데, 빈 상태에는 가를
+ * 입력칸이 없다.
+ */
+.emptyActions {
+  margin-top: var(--space-20);
+}

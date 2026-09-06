@@ -1,7 +1,8 @@
 # HANDOFF.md — 그래프 런타임 상태 (graph-stop.mjs 가 자동 갱신 — 손으로 편집 금지)
 
 # 토폴로지는 루트 graph.mjs. 여기는 dirty/hash 상태만 담는다(학습·이유는 LESSONS/DECISIONS).
-# 프론티어(지금 작업할 노드, 파생값): deploy
+# 프론티어(지금 작업할 노드, 파생값): 없음 — 전부 clean
+# n/a(이번 작업엔 해당 없음): deploy(배포처 결정이 그대로다 — '배포 안 하고 로컬에서만 본다'(사이클 study-mate-20260905-5). 배포할 곳이 생기면 산출물이 생기면서 기계가 취소한다)
 
 ```json
 {
@@ -11,7 +12,7 @@
   },
   "spec": {
     "status": "clean",
-    "hash": "ab080633336c"
+    "hash": "8b0049501f76"
   },
   "design": {
     "status": "clean",
@@ -19,27 +20,28 @@
   },
   "design/page-designer": {
     "status": "clean",
-    "hash": "0b99a9c6df8e"
+    "hash": "f8bb8252b8be"
   },
   "design/schema-designer": {
     "status": "clean",
-    "hash": "f2969370e307"
+    "hash": "e2d46acce633"
   },
   "implement": {
     "status": "clean",
-    "hash": "6a8485886662"
+    "hash": "32963ff31e41"
   },
   "qa": {
     "status": "clean",
-    "hash": "9f6d4932e95c"
+    "hash": "e0484b34f251"
   },
   "review": {
     "status": "clean",
-    "hash": "a94492a4812b"
+    "hash": "b8f2be788ea7"
   },
   "deploy": {
-    "status": "dirty",
-    "hash": null
+    "status": "n/a",
+    "hash": null,
+    "reason": "배포처 결정이 그대로다 — '배포 안 하고 로컬에서만 본다'(사이클 study-mate-20260905-5). 배포할 곳이 생기면 산출물이 생기면서 기계가 취소한다"
   }
 }
 ```

@@ -8,6 +8,7 @@ import { Card } from "@/shared/ui/card/Card";
 import {
   Field,
   FieldRow,
+  FormActions,
   FormError,
   FormSection,
   Select,
@@ -175,11 +176,11 @@ export function CreateStudyForm({
           ))}
         </FormSection>
 
-        <div className={styles.actions}>
+        <FormActions>
           <Button tone="ink" size="lg" block type="submit" disabled={pending}>
             {pending ? "만드는 중…" : "스터디 만들기"}
           </Button>
-        </div>
+        </FormActions>
       </form>
     </Card>
   );

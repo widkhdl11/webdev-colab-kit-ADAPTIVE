@@ -104,10 +104,56 @@ describe("handleRequest — 불변식의 강제 위치", () => {
     expect(response.cookies.get("sb-auth-token")?.value).toBe("갱신된값");
   });
 
+  it("INV-A1 (S1c): 리다이렉트는 공유 캐시에 저장되지 않는다", async () => {
+    // 이 응답은 **세션에 따라 갈린다** — 같은 경로가 비로그인에게는 리다이렉트고
+    // 로그인한 사람에게는 화면이다. 공유 캐시가 저장하면 남의 판정이 다른 사람에게
+    // 나가고, 목적지 오리진이 요청 Host 에서 온 값이면 그 오리진까지 같이 나간다.
+    const response = await handleRequest(요청("/studies/123"), sourceOf(null));
+
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
   it("INV-A1: GET 이 아닌 요청은 303 으로 보낸다 — 307 은 폼 본문을 로그인 경로로 재전송한다", async () => {
     const response = await handleRequest(요청("/studies/123", "POST"), sourceOf(null));
 
     expect(response.status).toBe(303);
+  });
+});
+
+describe("사이트 주소를 정해 두면 목적지를 요청에서 안 받는다", () => {
+  // SITE_ORIGIN 은 모듈을 읽을 때 한 번 계산된다. 그래서 환경변수를 세운 뒤
+  // **모듈을 다시 읽어야** 그 값이 반영된다 — stubEnv 만으로는 이미 계산된 값이 그대로다.
+  async function 미들웨어With(siteUrl: string | undefined) {
+    vi.resetModules();
+    if (siteUrl === undefined) vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
+    else vi.stubEnv("NEXT_PUBLIC_SITE_URL", siteUrl);
+    return (await import("./middleware")).handleRequest;
+  }
+
+  it("INV-A1 (S1d): 정해 두면 요청 Host 가 목적지에 안 실린다", async () => {
+    const run = await 미들웨어With("https://study-mate.example");
+    const response = await run(new NextRequest("http://evil.example/studies/123"), sourceOf(null));
+
+    expect(목적지(response)).toBe("https://study-mate.example/login");
+    expect(목적지(response), "요청 Host 가 목적지에 실렸다").not.toContain("evil.example");
+  });
+
+  it("INV-A1 (S1e): 안 정해 두면 예전처럼 요청 오리진을 쓴다 — 그래서 캐시 금지가 기본 방어다", async () => {
+    // 반대 절반. 이게 없으면 「늘 고정 오리진」으로 바꿔도 위가 통과하고,
+    // 로컬에서 포트를 바꾼 순간 로그인이 다른 곳으로 간다.
+    const run = await 미들웨어With(undefined);
+    const response = await run(new NextRequest("http://localhost:3100/studies/123"), sourceOf(null));
+
+    expect(목적지(response)).toBe("http://localhost:3100/login");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("INV-A1: URL 이 아닌 값을 넣으면 무시하고 요청 오리진으로 떨어진다 — 500 이 되지 않는다", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const run = await 미들웨어With("study-mate.example"); // 스킴이 없다
+    const response = await run(new NextRequest("http://localhost:3100/studies/123"), sourceOf(null));
+
+    expect(목적지(response)).toBe("http://localhost:3100/login");
   });
 });
 
