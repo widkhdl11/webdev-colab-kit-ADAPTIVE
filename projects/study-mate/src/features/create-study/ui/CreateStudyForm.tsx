@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import type { Category } from "@/entities/category";
 import type { Region } from "@/entities/region";
 import { Button } from "@/shared/ui/button/Button";
-import { Card } from "@/shared/ui/card/Card";
+import { FormCard } from "@/shared/ui/form-page";
 import {
   Field,
   FieldRow,
@@ -29,7 +29,6 @@ import {
   SUMMARY_MAX,
   TITLE_MAX,
 } from "../model/limits";
-import styles from "./create-study.module.css";
 
 /**
  * 상한과 어휘는 `model/limits.ts` 에서 온다 — 서버가 보는 값과 같은 자리다.
@@ -51,7 +50,7 @@ export function CreateStudyForm({
   );
 
   return (
-    <Card className={styles.card}>
+    <FormCard>
       <form action={submit}>
         {result && !result.ok ? <FormError message={result.message} /> : null}
 
@@ -191,6 +190,6 @@ export function CreateStudyForm({
           </Button>
         </FormActions>
       </form>
-    </Card>
+    </FormCard>
   );
 }

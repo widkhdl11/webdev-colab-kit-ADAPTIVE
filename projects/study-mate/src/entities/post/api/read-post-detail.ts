@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
+import { throwDbError } from "@/shared/lib/db-error";
 import type { MeetingMode } from "../model/post-summary";
 import type { PostDetail } from "../model/post-detail";
 
@@ -6,7 +7,7 @@ const DETAIL_COLUMNS = `
   id, title, summary, content, created_at, views_count, likes_count, author_id,
   author:profiles!posts_author_id_fkey(id, username, bio, region, interest_category),
   study:studies!inner(
-    id, host_id, title, summary, description,
+    id, host_id, title, summary, description, deleted_at,
     category_id, region_code, location_detail, meeting_mode,
     max_participants, starts_on, ends_on, recruit_until,
     accepted_count, recruiting,
@@ -38,6 +39,7 @@ type Row = {
   study: {
     id: string;
     host_id: string;
+    deleted_at: string | null;
     title: string;
     summary: string | null;
     description: string;
@@ -79,7 +81,10 @@ export async function readPostDetail(
     .eq("id", postId)
     .maybeSingle();
 
-  if (error) throw new Error(`모집글을 읽지 못했다: ${error.message}`);
+  // **원문을 문구에 담지 않는다.** 이 한 줄만 `db-error.ts` 의 계약 밖에 있었다 —
+  // uuid 가 아닌 주소로 들어오면 Postgres 가 `invalid input syntax for type uuid: "<보낸 값>"`
+  // 을 돌려주고 그 문장이 그대로 실려 나갔다(2026-09-06 security-reviewer).
+  if (error) throwDbError("모집글 상세", error);
   if (!data) return null;
 
   const row = data as unknown as Row;
@@ -119,6 +124,7 @@ export async function readPostDetail(
     viewsCount: row.views_count,
     likesCount: row.likes_count,
     author: toPerson(row.author),
+    authorId: row.author_id,
     likedByMe: liked.data !== null,
     myParticipation: (mine.data?.status as PostDetail["myParticipation"]) ?? null,
     study: {
@@ -144,6 +150,7 @@ export async function readPostDetail(
       })),
       host: toPerson(s.host),
       hostId: s.host_id,
+      deleted: s.deleted_at !== null,
     },
   };
 }

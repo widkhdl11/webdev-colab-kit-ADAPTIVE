@@ -1053,7 +1053,152 @@ const MUTATIONS = {
       find: `    if (result.ok) deps.revalidatePaths("/profile", "/profile/edit");`,
       replace: `    if (result.ok && false) deps.revalidatePaths("/profile", "/profile/edit");`,
     },
-  }
+  },
+
+  // ── 모집글 수정 (유닛 스위트) ──────────────────────────────────────────
+  // 갱신은 삽입과 실패 모양이 다르다. 삽입은 정책이 거부하면 오류가 오는데, **갱신은
+  // 조건에 안 맞으면 오류 없이 0행이 온다** — 그래서 「남의 글을 고치려 했다」가 조용한
+  // 성공으로 보고될 수 있는 자리가 여기 하나 더 있다.
+
+  "edit-post-guard-dropped": {
+    holds: "INV-A4 — 모집글 수정은 세션이 없으면 아무것도 쓰지 않는다",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-post/api/update-post.ts",
+      find: `  const guarded = requireSession(readUser, (user, form: FormData) =>`,
+      replace: `  const guarded = requireSession((async () => ({ id: "00000000-0000-4000-8000-000000000000" })), (user, form: FormData) =>`,
+    },
+  },
+  "edit-post-action-unguarded": {
+    holds: "INV-A4 — 배포되는 모집글 수정 액션이 가드를 거친다",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-post/api/edit-post.ts",
+      find: `const guarded = makeUpdatePost();`,
+      replace: `const guarded = makeUpdatePost((async () => ({ id: "00000000-0000-4000-8000-000000000000" })));`,
+    },
+  },
+  "edit-post-any-author": {
+    holds: "INV-Z3 — 갱신 대상을 「내가 쓴 글」로 좁히는 조건이 실제로 걸린다",
+    suite: "unit",
+    // 이 줄을 빼도 정책이 두 번째 방벽으로 남지만, 그때 사용자가 보는 것은 우리가 지은
+    // 문장이 아니라 고정 문구다. 그리고 방벽이 하나 줄었다는 것을 아무도 안 본다.
+    file: {
+      path: "src/features/edit-post/api/update-post.ts",
+      // **find·replace 는 한 줄로 적는다.** 이 레포는 작업 트리가 CRLF 인데(core.autocrlf)
+      // 여기 적는 문자열은 LF 라, 줄을 걸치면 깨끗한 소스에서도 안 맞는다 — 도구는 그것을
+      // 「변이가 낡았다」로 보고하고, 고칠 곳을 소스라고 잘못 가리키게 된다.
+      //
+      // **replace 가 깨끗한 소스에 이미 있는 문장이어도 안 된다.** 되돌리기는 replace 를
+      // 전부 find 로 바꾸므로, 처음에 `.eq("id", postId)` 로 적었더니 복구가 바로 위의
+      // 멀쩡한 줄까지 바꿔 놓았다(도구가 그 자리에서 잡았다).
+      find: `    .eq("author_id", user.id)`,
+      replace: `    .eq("id", postId) // 변이: 작성자 좁히기 제거`,
+    },
+  },
+  "edit-post-zero-rows-ok": {
+    holds: "INV-Z3 — 0행이 갱신된 것을 성공으로 보고하지 않는다",
+    tag: "0행",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-post/api/update-post.ts",
+      // 한 줄로 적는 이유는 위 `edit-post-any-author` 와 같다.
+      // 조건이 아니라 **돌려주는 값**을 바꾼다 — 조건만 끄면 그다음 줄이 null 에서 `.id` 를
+      // 읽어 TypeError 를 던지고, 그때 빨간불은 단언이 붙들어서가 아니라 터져서 난 것이다.
+      find: `    return { ok: false, message: "고칠 수 있는 모집글이 아닙니다. 내가 쓴 글인지 확인해 주세요" };`,
+      replace: `    return { ok: true, value: postId };`,
+    },
+  },
+  "edit-post-carries-study": {
+    holds: "INV-Z8 — 갱신에 스터디·작성자를 싣지 않는다",
+    tag: "정확히 세 칸",
+    suite: "unit",
+    // 실으면 데이터베이스의 열 단위 갱신 권한(title·summary·content) 밖이라 요청이 통째로
+    // 거부된다 — 화면은 그대로인데 수정이 100% 죽는다.
+    file: {
+      path: "src/features/edit-post/api/update-post.ts",
+      find: `    .update({ title, summary, content })`,
+      replace: `    .update({ title, summary, content, study_id: form.get("studyId") })`,
+    },
+  },
+  "edit-post-revalidate-dropped": {
+    holds: "모집글 수정이 성공하면 고친 값이 나오는 화면 넷을 다시 받게 한다 — 하나만 빠져도 잡힌다",
+    tag: "다시 받게",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-post/api/update-post.ts",
+      find: '    if (result.ok) deps.revalidatePaths(`/posts/${result.value}`, "/posts", "/profile", "/");',
+      replace: '    if (result.ok) deps.revalidatePaths(`/posts/${result.value}`, "/posts", "/profile");',
+    },
+  },
+  "edit-post-reader-any-author": {
+    holds: "INV-Z3 — 수정 화면 판독기가 「내가 쓴 글」로 좁힌다",
+    tag: "내가 쓴 글",
+    suite: "unit",
+    file: {
+      path: "src/entities/post/api/read-post-for-edit.ts",
+      find: `    .eq("author_id", userId)`,
+      replace: `    .eq("id", postId) // 변이: 작성자 좁히기 제거`,
+    },
+  },
+  "edit-post-reader-shows-deleted": {
+    holds: "INV-Z10 — 지워진 스터디의 모집글은 수정 화면도 안 연다",
+    tag: "지워진 스터디",
+    suite: "unit",
+    file: {
+      path: "src/entities/post/api/read-post-for-edit.ts",
+      find: `    .is("study.deleted_at", null)`,
+      replace: `    .eq("id", postId) // 변이: 지워진 스터디 필터 제거`,
+    },
+  },
+  "edit-post-value-from-form": {
+    holds: "성공 값이 폼의 id 가 아니라 데이터베이스가 돌려준 id 다",
+    tag: "돌려준 id",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-post/api/update-post.ts",
+      find: `  return { ok: true, value: (data as { id: string }).id };`,
+      replace: `  return { ok: true, value: postId };`,
+    },
+  },
+  "edit-post-author-from-form": {
+    holds: "INV-Z4 — 누구의 글인지는 폼이 아니라 세션이 정한다",
+    tag: "폼이 아니라 세션",
+    suite: "unit",
+    // `edit-post-any-author` 와 find 가 같지만 갈래가 다르다 — 저것은 좁히기가 통째로
+    // 사라지는 것이고 이것은 **폼 값이 인가에 쓰이는** 것이다. 이 변이가 없을 때는
+    // 구현에 폼의 작성자 필드를 읽는 코드가 아예 없어서, INV-Z4 검사의 단언 둘이
+    // 「그런 개념이 없다」로 자동 만족돼 있었다 (2026-09-06 test-auditor).
+    file: {
+      path: "src/features/edit-post/api/update-post.ts",
+      find: `    .eq("author_id", user.id)`,
+      replace: `    .eq("author_id", (form.get("authorId") as string) ?? user.id)`,
+    },
+  },
+  "edit-post-redirect-from-form": {
+    holds: "성공 후 목적지가 폼 값이 아니라 데이터베이스가 돌려준 id 다",
+    tag: "데이터베이스가 돌려준 글",
+    suite: "unit",
+    // 이 변이를 등록하기 전에는 가짜가 폼과 **같은 id** 를 돌려주고 있어서, 목적지를 폼
+    // 값으로 바꿔도 단언이 그대로 통과했다 (2026-09-06 security-reviewer).
+    file: {
+      path: "src/features/edit-post/api/edit-post.ts",
+      find: '  redirect(`/posts/${result.value}`);',
+      replace: '  redirect(`/posts/${String(form.get("postId"))}`);',
+    },
+  },
+  "edit-post-limits-unbounded": {
+    holds: "모집글의 길이 상한이 실제로 걸린다 — 작성과 수정이 같은 값을 본다",
+    tag: "길이 상한",
+    suite: "unit",
+    // 상한이 한 자리에 있으므로 이 변이는 작성·수정 양쪽 검사를 동시에 빨간불로 만들어야
+    // 한다. 한쪽만 빨간불이면 다른 쪽이 숫자를 손으로 복사하고 있다는 뜻이다.
+    file: {
+      path: "src/entities/post/model/limits.ts",
+      find: `export const TITLE_MAX = 80;`,
+      replace: `export const TITLE_MAX = 800000;`,
+    },
+  },
 };
 
 /**

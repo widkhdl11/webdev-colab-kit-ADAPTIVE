@@ -6,7 +6,7 @@ import type { ProfileCard } from "@/entities/profile";
 import type { Region } from "@/entities/region";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { Button, ButtonLink } from "@/shared/ui/button/Button";
-import { Card } from "@/shared/ui/card/Card";
+import { FormCard } from "@/shared/ui/form-page";
 import {
   Field,
   FormActions,
@@ -35,7 +35,7 @@ export function EditProfileForm({
   );
 
   return (
-    <Card className={styles.card}>
+    <FormCard>
       <form action={submit}>
         {result && !result.ok ? <FormError message={result.message} /> : null}
         {result?.ok ? <FormNotice>저장했습니다.</FormNotice> : null}
@@ -106,6 +106,6 @@ export function EditProfileForm({
           </ButtonLink>
         </FormActions>
       </form>
-    </Card>
+    </FormCard>
   );
 }

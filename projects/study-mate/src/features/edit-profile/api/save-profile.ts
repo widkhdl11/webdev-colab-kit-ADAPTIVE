@@ -6,9 +6,8 @@
 
 import { randomUUID } from "node:crypto";
 import { currentUser, requireSession } from "@/entities/session";
-import { revalidatePath } from "next/cache";
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
-import type { PathDeps } from "@/shared/lib/action-deps";
+import { defaultPathDeps, type PathDeps } from "@/shared/lib/action-deps";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { dbErrorMessage } from "@/shared/lib/db-error";
 import { formText } from "@/shared/lib/form-text";
@@ -117,14 +116,6 @@ export async function saveProfile(
   return { ok: true, value: null };
 }
 
-/** 세션 가드를 붙인 것 (INV-E6·INV-A4). 액션 파일이 이것을 한 번 부른다 */
-const DEFAULT_DEPS: PathDeps = {
-  createSupabase: createServerSupabase,
-  revalidatePaths: (...paths) => {
-    for (const p of paths) revalidatePath(p);
-  },
-};
-
 /**
  * 세션 확인 뒤로 본체를 감추고, 성공하면 프로필 화면들을 다시 받게 한다.
  *
@@ -134,7 +125,7 @@ const DEFAULT_DEPS: PathDeps = {
  */
 export function makeSaveProfile(
   readUser: typeof currentUser = currentUser,
-  deps: PathDeps = DEFAULT_DEPS,
+  deps: PathDeps = defaultPathDeps,
 ) {
   const guarded = requireSession(readUser, (user, form: FormData) =>
     saveProfile(user, form, deps.createSupabase),

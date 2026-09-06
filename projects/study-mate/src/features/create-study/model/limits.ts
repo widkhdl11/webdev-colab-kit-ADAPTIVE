@@ -26,7 +26,7 @@ export const MEETING_MODE_LABEL: Readonly<Record<MeetingModeValue, string>> = {
 
 /**
  * 글자 수 상한. **스키마에 길이 제약이 없어 서버의 이 값이 유일한 강제 위치다**
- * — 자매 화면인 모집글 작성(`features/create-post/model/limits.ts`)은 서버에서
+ * — 자매 화면인 모집글 작성(`entities/post/model/limits.ts`)은 서버에서
  * 막는데 개설 폼만 열려 있었다 (2026-09-06 code-reviewer).
  */
 export const TITLE_MAX = 60;

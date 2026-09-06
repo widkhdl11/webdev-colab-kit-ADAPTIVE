@@ -12,7 +12,7 @@ import type { ActionResult } from "@/shared/lib/action-result";
 import { dbErrorMessage } from "@/shared/lib/db-error";
 import { formText } from "@/shared/lib/form-text";
 import { canonicalUuid } from "@/shared/lib/uuid";
-import { CONTENT_MAX, SUMMARY_MAX, TITLE_MAX } from "../model/limits";
+import { validatePostText } from "@/entities/post/model/limits";
 
 /**
  * 모집글 한 편을 만든다.
@@ -35,17 +35,9 @@ export async function insertPost(
   const summary = formText(form, "summary");
 
   if (!studyId) return { ok: false, message: "어느 스터디의 모집글인지 골라 주세요" };
-  if (!title) return { ok: false, message: "모집글 제목을 적어 주세요" };
-  if (title.length > TITLE_MAX) {
-    return { ok: false, message: `제목은 ${TITLE_MAX}자까지 적을 수 있습니다` };
-  }
-  if (summary && summary.length > SUMMARY_MAX) {
-    return { ok: false, message: `한 줄 소개는 ${SUMMARY_MAX}자까지 적을 수 있습니다` };
-  }
-  if (!content) return { ok: false, message: "모집글 내용을 적어 주세요" };
-  if (content.length > CONTENT_MAX) {
-    return { ok: false, message: `내용은 ${CONTENT_MAX}자까지 적을 수 있습니다` };
-  }
+  // 글칸 셋의 규칙은 엔티티가 갖는다 — 수정 액션이 부르는 것과 같은 함수다.
+  const invalid = validatePostText({ title, summary, content });
+  if (invalid) return { ok: false, message: invalid };
 
   const supabase = await createSupabase();
   const { data, error } = await supabase

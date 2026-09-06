@@ -86,11 +86,17 @@ export function PostDetailView({
   post,
   state,
   applyAction,
+  authorAction,
 }: {
   post: PostDetail;
   state: ApplyState;
   /** 신청 버튼 자리. 무엇을 보여줄지는 화면이 정하고 여기서는 자리만 낸다 */
   applyAction: ReactNode;
+  /**
+   * 작성자에게만 보이는 자리(모집글 수정). **여기서 판정하지 않는다** — 「내가 쓴 글인가」는
+   * 세션을 보는 판단이라 화면이 하고, 위젯은 자리만 낸다. `applyAction` 과 같은 규약이다.
+   */
+  authorAction?: ReactNode;
 }) {
   const { study } = post;
   const color = categoryColor(study.categoryId);
@@ -164,18 +170,26 @@ export function PostDetailView({
 
           <div className={styles.foot}>
             {/*
-              시안은 여기를 누를 수 있는 버튼으로 그렸는데 좋아요 기능이 아직 없다.
-              누를 수 없는 것을 버튼처럼 그리면 눌러 보고 나서야 알게 되므로,
-              기능이 붙기 전까지는 조회수와 같은 모양의 숫자로 둔다.
+              숫자 둘을 한 덩어리로 묶는다. 전에는 `space-between` 이 좋아요와 조회를 양
+              끝으로 밀고 있었는데, 작성자에게만 나오는 「수정」이 붙으면 그 배치가 사람에
+              따라 달라진다 — 남이 볼 때와 내가 볼 때 같은 숫자가 다른 자리에 앉는다.
             */}
-            <p className={styles.stats}>
-              <HeartIcon size={16} />
-              좋아요 {post.likesCount}
-            </p>
-            <p className={styles.stats}>
-              <EyeIcon size={16} />
-              조회 {post.viewsCount}
-            </p>
+            <div className={styles.statGroup}>
+              {/*
+                시안은 여기를 누를 수 있는 버튼으로 그렸는데 좋아요 기능이 아직 없다.
+                누를 수 없는 것을 버튼처럼 그리면 눌러 보고 나서야 알게 되므로,
+                기능이 붙기 전까지는 조회수와 같은 모양의 숫자로 둔다.
+              */}
+              <p className={styles.stats}>
+                <HeartIcon size={16} />
+                좋아요 {post.likesCount}
+              </p>
+              <p className={styles.stats}>
+                <EyeIcon size={16} />
+                조회 {post.viewsCount}
+              </p>
+            </div>
+            {authorAction}
           </div>
         </article>
 

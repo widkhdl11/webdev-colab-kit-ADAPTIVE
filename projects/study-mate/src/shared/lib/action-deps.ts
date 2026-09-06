@@ -1,4 +1,5 @@
-import type { createServerSupabase } from "@/shared/api/supabase/server-client";
+import { revalidatePath } from "next/cache";
+import { createServerSupabase } from "@/shared/api/supabase/server-client";
 import type { revalidateEntityPath } from "@/shared/lib/revalidate-entity";
 
 /**
@@ -26,4 +27,15 @@ export type ReadDeps = Pick<ActionDeps, "createSupabase">;
 export type PathDeps = {
   readonly createSupabase: ActionDeps["createSupabase"];
   readonly revalidatePaths: (...paths: string[]) => void;
+};
+
+/**
+ * `PathDeps` 의 프로덕션 값. **한 자리에만 둔다** — 바이트까지 같은 닫힘 함수가 폼 액션마다
+ * 한 벌씩 생기고 있었다(2026-09-06 code-reviewer). 이 파일이 타입을 모은 것과 같은 이유다.
+ */
+export const defaultPathDeps: PathDeps = {
+  createSupabase: createServerSupabase,
+  revalidatePaths: (...paths) => {
+    for (const p of paths) revalidatePath(p);
+  },
 };

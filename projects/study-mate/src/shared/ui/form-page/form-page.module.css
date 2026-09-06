@@ -19,3 +19,11 @@
   font-size: 16px;
   color: var(--ink-weak);
 }
+
+/* 폼 카드 — 제목과의 간격 26, 안쪽 여백 28/24. 폼 다섯 장이 각각 들고 있던 값이다.
+   `--space-28` 은 이 값이 다섯 벌이 된 뒤에 만들었다 — 「일회성은 px 허용」의 일회성이
+   더는 아니다 (2026-09-06 ui-reviewer) */
+.card {
+  margin-top: var(--space-26);
+  padding: var(--space-28) var(--space-24);
+}

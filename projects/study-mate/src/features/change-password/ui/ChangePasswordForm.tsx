@@ -3,11 +3,10 @@
 import { useActionState } from "react";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { Button, ButtonLink } from "@/shared/ui/button/Button";
-import { Card } from "@/shared/ui/card/Card";
+import { FormCard } from "@/shared/ui/form-page";
 import { Field, FormActions, FormError, FormNotice, TextInput } from "@/shared/ui/field/Field";
 import { changePasswordAction } from "../api/change-password-action";
 import type { PasswordChanged } from "../api/change-password";
-import styles from "./change-password.module.css";
 
 export function ChangePasswordForm() {
   const [result, submit, pending] = useActionState<ActionResult<PasswordChanged> | null, FormData>(
@@ -16,7 +15,7 @@ export function ChangePasswordForm() {
   );
 
   return (
-    <Card className={styles.card}>
+    <FormCard>
       <form action={submit}>
         {result && !result.ok ? <FormError message={result.message} /> : null}
         {/* **끊었다고 단언하지 않는다.** 끊기가 실패했는데 성공 문구가 그대로 나가면,
@@ -71,6 +70,6 @@ export function ChangePasswordForm() {
           </ButtonLink>
         </FormActions>
       </form>
-    </Card>
+    </FormCard>
   );
 }

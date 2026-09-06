@@ -113,16 +113,11 @@
   border-top: 2px dotted var(--rule);
 }
 
-.likes {
+/* 좋아요·조회를 한 덩어리로. 오른쪽 끝은 작성자에게만 나오는 「수정」 자리다 */
+.statGroup {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-8);
-  font-size: 15px;
-  font-weight: 700;
-  border: var(--bd);
-  border-radius: var(--r-pill);
-  padding: var(--space-10) var(--space-18);
-  background: var(--paper);
+  gap: var(--space-20);
 }
 
 .stats {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { Button } from "@/shared/ui/button/Button";
-import { Card } from "@/shared/ui/card/Card";
+import { FormCard } from "@/shared/ui/form-page";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { signInAction, signUpAction } from "../api/auth-actions";
 import styles from "./auth-form.module.css";
@@ -47,7 +47,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next: string }) {
       <h1 className={`h-display ${styles.title}`}>{copy.title}</h1>
       <p className={styles.sub}>{copy.sub}</p>
 
-      <Card className={styles.card}>
+      <FormCard>
         <form action={submit}>
           {/* 돌아갈 곳. 이 값은 주소창에서 오므로 서버가 다시 판정한다 (INV-A6) */}
           <input type="hidden" name="next" value={next} />
@@ -107,7 +107,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next: string }) {
         <p className={styles.foot}>
           {copy.footText} <Link href={copy.footHref}>{copy.footLink}</Link>
         </p>
-      </Card>
+      </FormCard>
     </div>
   );
 }

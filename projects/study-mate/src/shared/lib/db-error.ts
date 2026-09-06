@@ -61,9 +61,26 @@ export function throwDbError(what: string, error: DbError): never {
  *
  * "안 보인다"로 떨어뜨리지 않고 던지는 이유: 그러면 고장이 「지워진 스터디」로 그려진다.
  *
+ * **로그에도 값은 안 찍는다 — 키와 타입만 찍는다.** 진단에 필요한 것이 「어느 키가
+ * 빠졌나 · 무엇이 들어왔나」이지 내용이 아니고, 여기 오는 행에는 사람이 쓴 글이 통째로
+ * 들어 있다(모집글 본문은 4000자까지다). 값을 찍으면 사용자가 쓴 글이 서버 로그에 쌓인다
+ * (2026-09-06 security-reviewer).
+ *
  * @param where 어느 행에서 났는지 (로그로만 나간다)
  */
 export function throwShapeError(what: string, where: string, embed: unknown): never {
-  console.error(`[db] ${what} 임베드의 모양이 다르다 at=${where} row=${JSON.stringify(embed)}`);
+  console.error(`[db] ${what} 임베드의 모양이 다르다 at=${where} shape=${shapeOf(embed)}`);
   throw new Error(`${what}을(를) 읽지 못했다`);
+}
+
+/** 값 대신 모양. 한 겹 안까지 들어간다 — 어긋나는 자리가 대개 임베드 안이다 */
+function shapeOf(value: unknown, depth = 2): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return depth > 0 ? `[${shapeOf(value[0], depth - 1)}]` : "[…]";
+  if (typeof value !== "object") return typeof value;
+  if (depth === 0) return "{…}";
+  const inner = Object.entries(value as Record<string, unknown>)
+    .map(([k, v]) => `${k}:${shapeOf(v, depth - 1)}`)
+    .join(", ");
+  return `{${inner}}`;
 }

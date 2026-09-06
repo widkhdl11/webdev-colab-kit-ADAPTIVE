@@ -15,11 +15,6 @@
   color: var(--ink-weak);
 }
 
-.card {
-  margin-top: var(--space-26);
-  padding: 28px var(--space-24);
-}
-
 .field {
   display: grid;
   gap: var(--space-6);

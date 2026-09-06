@@ -3,12 +3,11 @@ import { readUnreadNotificationCount } from "@/entities/notification";
 import { currentUser } from "@/entities/session";
 import { readPostableStudies } from "@/entities/study";
 import { CreatePostForm } from "@/features/create-post";
-import { Container } from "@/shared/ui/container/Container";
+import { FormPage } from "@/shared/ui/form-page";
 import { SkipLink } from "@/shared/ui/skip-link/SkipLink";
 import { canonicalUuid } from "@/shared/lib/uuid";
 import { SiteFooter } from "@/widgets/site-footer";
 import { SiteHeader } from "@/widgets/site-header";
-import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "모집글 쓰기 — Study Mate" };
 
@@ -36,18 +35,12 @@ export default async function CreatePostPage({
       <SiteHeader signedIn={user !== null} unreadCount={unread} />
 
       <main id="main">
-        <Container>
-          <div className={styles.page}>
-            <h1 className={`h-display ${styles.title}`}>모집글 쓰기</h1>
-            <p className={styles.sub}>
-              올리면 목록에 바로 나오고, 읽은 사람이 여기서 참가를 신청합니다.
-            </p>
-            <CreatePostForm
-              studies={studies}
-              defaultStudyId={canonicalUuid(study) ?? undefined}
-            />
-          </div>
-        </Container>
+        <FormPage
+          title="모집글 쓰기"
+          sub="올리면 목록에 바로 나오고, 읽은 사람이 여기서 참가를 신청합니다."
+        >
+          <CreatePostForm studies={studies} defaultStudyId={canonicalUuid(study) ?? undefined} />
+        </FormPage>
       </main>
 
       <SiteFooter signedIn={user !== null} />

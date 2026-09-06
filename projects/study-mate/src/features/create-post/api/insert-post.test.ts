@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { createServerSupabase } from "@/shared/api/supabase/server-client";
 import { NO_SESSION_MESSAGE } from "@/entities/session";
-import { CONTENT_MAX, SUMMARY_MAX, TITLE_MAX } from "../model/limits";
+import { CONTENT_MAX, SUMMARY_MAX, TITLE_MAX } from "@/entities/post/model/limits";
 import { insertPost, makeCreatePost } from "./insert-post";
 
 const 사용자 = { id: "11111111-1111-4111-8111-111111111111" };
@@ -111,7 +111,7 @@ describe("모집글 작성 액션", () => {
 
   // **문구에 숫자를 박는다.** 검사가 같은 상수를 import 해서 상대적으로만 보면
   // `TITLE_MAX = 80` 을 800000 으로 바꿔도 전부 초록불이다 — 상한이 조용히 사라진다.
-  it("길이 상한을 넘기면 거부하고, 딱 맞으면 통과시킨다 — 제목 80 · 소개 80 · 내용 4000", async () => {
+  it("길이 상한(작성)을 넘기면 거부하고, 딱 맞으면 통과시킨다 — 제목 80 · 소개 80 · 내용 4000", async () => {
     const db = 가짜DB();
 
     await expect(insertPost(사용자, 폼({ title: "가".repeat(TITLE_MAX + 1) }), db.factory)).resolves.toEqual(

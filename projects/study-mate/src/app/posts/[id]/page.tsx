@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { readUnreadNotificationCount } from "@/entities/notification";
-import { applyState, countPostView, readPostDetail } from "@/entities/post";
+import { applyState, canEditPost, countPostView, readPostDetail } from "@/entities/post";
 import { currentUser } from "@/entities/session";
 import { ApplyButton } from "@/features/apply-to-study";
+import { ButtonLink } from "@/shared/ui/button/Button";
 import { SkipLink } from "@/shared/ui/skip-link/SkipLink";
 import { PostDetailView } from "@/widgets/post-detail";
 import { SiteFooter } from "@/widgets/site-footer";
@@ -25,6 +26,9 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   await countPostView(id);
 
   const state = applyState(post, user?.id ?? null);
+  // **이 링크가 인가는 아니다.** 링크를 지워도 주소를 치면 그 화면이 열리고, 거기서
+  // 판정하는 것은 수정 화면의 판독기와 갱신 정책이다 (INV-Z3).
+  const iCanEdit = canEditPost(post, user?.id ?? null);
 
   return (
     <>
@@ -37,6 +41,13 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
           state={state}
           applyAction={
             <ApplyButton state={state} studyId={post.study.id} postId={post.id} />
+          }
+          authorAction={
+            iCanEdit ? (
+              <ButtonLink href={`/posts/${post.id}/edit`} size="sm">
+                모집글 수정
+              </ButtonLink>
+            ) : null
           }
         />
       </main>

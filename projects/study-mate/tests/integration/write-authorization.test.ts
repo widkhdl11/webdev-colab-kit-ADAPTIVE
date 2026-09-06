@@ -292,6 +292,36 @@ describe("INV-Z3: 모집글을 고치거나 지우는 것은 작성자만", () =
       .eq("id", postId);
     expect(error).toBeNull();
   });
+
+  // **수정 액션의 실패 설계 전체가 이 한 줄 위에 서 있다** — 「거부는 오류가 아니라 0행」.
+  // 그것을 주장하는 것이 유닛의 가짜 데이터베이스뿐이었다(2026-09-06 test-auditor).
+  // 실제로 오류가 온다면 사용자는 "고칠 수 있는 모집글이 아닙니다"가 아니라
+  // "잠시 뒤 다시 시도해 주세요"를 읽는다 — 그 상태에서도 유닛은 전부 초록불이다.
+  it("INV-Z3(실패경로): 남의 글은 오류가 아니라 0행으로 온다 — 앱이 세우는 문구의 근거", async () => {
+    const { data, error } = await stranger.client
+      .from("posts")
+      .update({ title: "가로챈 제목" })
+      .eq("id", postId)
+      .eq("author_id", stranger.id)
+      .select("id")
+      .maybeSingle();
+
+    expect(error).toBeNull();
+    expect(data).toBeNull();
+  });
+
+  it("INV-Z3(반대 절반): 작성자의 같은 요청은 고친 행을 돌려준다", async () => {
+    const { data, error } = await host.client
+      .from("posts")
+      .update({ title: "작성자가 같은 체인으로 고침" })
+      .eq("id", postId)
+      .eq("author_id", host.id)
+      .select("id")
+      .maybeSingle();
+
+    expect(error).toBeNull();
+    expect(data).toEqual({ id: postId });
+  });
 });
 
 describe("INV-Z4: 인가 판정의 근거는 데이터베이스가 아는 현재 사용자다", () => {
