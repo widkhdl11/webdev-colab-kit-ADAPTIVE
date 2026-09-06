@@ -22,6 +22,19 @@ if (!SECRET) {
   process.exit(1);
 }
 
+// **로컬이 아니면 여기서 멈춘다.** 이 스크립트는 시크릿 키로 돌아 접근 정책 밖에 있고,
+// 4절이 기존 행을 갱신한다. `npm run db:seed` 는 `with-local-supabase.mjs` 가 주소를
+// 로컬로 못 박아 주지만, 이 파일을 직접 돌리면 그 보호가 없다 — 키가 있다는 것만으로는
+// 어느 데이터베이스인지 알 수 없다.
+const LOCAL_HOSTS = ["127.0.0.1", "localhost", "[::1]"];
+for (const [name, url] of [["SUPABASE_URL", API_URL], ["SUPABASE_DB_URL", DB_URL]]) {
+  const host = new URL(url).hostname;
+  if (!LOCAL_HOSTS.includes(host)) {
+    console.error(`시드는 로컬에만 넣는다. ${name} 의 호스트가 ${host} 다.`);
+    process.exit(1);
+  }
+}
+
 const admin = createClient(API_URL, SECRET, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
@@ -199,19 +212,28 @@ async function main() {
     if (error) throw new Error(`계정 생성 실패(${p.key}): ${error.message}`);
     ids[p.key] = data.user.id;
 
-    const { error: pErr } = await admin.from("profiles").insert({
-      id: data.user.id,
-      username: p.username,
-      region: p.region,
-      interest_category: p.interest,
-      bio: null,
-    });
+    // **insert 가 아니라 upsert 다.** 0010 부터 계정이 생기는 그 트랜잭션에서 트리거가
+    // 프로필을 같이 만든다(INV-A7). insert 로 두면 시드가 첫 사람에서 기본 키 중복으로
+    // 죽는다 — 2026-09-06 에 실제로 그렇게 멈췄다. 트리거가 없는 데이터베이스에서도
+    // 돌아야 하므로 update 가 아니라 upsert 로 둔다.
+    const { error: pErr } = await admin.from("profiles").upsert(
+      {
+        id: data.user.id,
+        username: p.username,
+        region: p.region,
+        interest_category: p.interest,
+        bio: null,
+      },
+      { onConflict: "id" },
+    );
     if (pErr) throw new Error(`프로필 생성 실패(${p.key}): ${pErr.message}`);
   }
   console.log(`사람 ${PEOPLE.length}명`);
 
   // 3) 스터디 · 일정 · 참여자 · 모집글 · 좋아요
   let posts = 0;
+  /** 이번 실행이 만든 모집글. 4절이 이 목록 밖은 건드리지 않는다 */
+  const seededPostIds = [];
   for (const [i, s] of STUDIES.entries()) {
     const { data: study, error } = await admin
       .from("studies")
@@ -265,6 +287,7 @@ async function main() {
       .select("id")
       .single();
     posts += 1;
+    seededPostIds.push(post.id);
 
     if (s.likes.length > 0) {
       await admin
@@ -276,16 +299,17 @@ async function main() {
 
   // 4) created_at 은 기본값이 now() 라 관리 API 로는 못 바꾼다. 목록 정렬이 한 덩어리로
   //    보이지 않게 직접 뒤로 민다.
+  //
+  //    **대상은 이번 실행이 만든 모집글뿐이다.** 전에는 `select id from public.posts` 로
+  //    표 전체를 훑어 uuid 순으로 다시 썼다 — 손으로 만들어 둔 확인용 모집글까지 목록
+  //    순서를 잃었다. 시드가 자기가 넣지 않은 행을 건드릴 이유가 없다.
   const pg = new Client({ connectionString: DB_URL });
   await pg.connect();
   try {
-    const { rows } = await pg.query(
-      `select id from public.posts order by id`,
-    );
-    for (const [i, r] of rows.entries()) {
+    for (const [i, id] of seededPostIds.entries()) {
       await pg.query(`update public.posts set created_at = now() - ($1 || ' days')::interval where id = $2`, [
         String(i + 1),
-        r.id,
+        id,
       ]);
     }
   } finally {

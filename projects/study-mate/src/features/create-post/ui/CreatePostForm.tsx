@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import type { HostedStudy } from "@/entities/study";
+import type { PostableStudy } from "@/entities/study";
 import { Button, ButtonLink } from "@/shared/ui/button/Button";
 import { Card } from "@/shared/ui/card/Card";
 import {
@@ -21,7 +21,7 @@ export function CreatePostForm({
   studies,
   defaultStudyId,
 }: {
-  studies: readonly HostedStudy[];
+  studies: readonly PostableStudy[];
   defaultStudyId?: string;
 }) {
   const [result, submit, pending] = useActionState<ActionResult<string> | null, FormData>(

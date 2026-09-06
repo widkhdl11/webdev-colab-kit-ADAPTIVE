@@ -26,3 +26,31 @@ export function dbErrorMessage(what: string, error: DbError): string {
   console.error(`[db] ${what} 실패 code=${error.code ?? "?"} message=${error.message ?? ""}`);
   return `${what}하지 못했습니다. 잠시 뒤 다시 시도해 주세요`;
 }
+
+/**
+ * 조회가 실패했을 때 던지는 짝. **원문을 문구에 담지 않는다** — 위 `dbErrorMessage` 와
+ * 같은 이유고, 그 규칙이 조회 함수마다 따로 복사되던 것을 한자리로 모은 것이다.
+ *
+ * 액션이 아니라 조회에 쓴다. 액션은 실패를 값으로 돌려주지만(`ActionResult`), 조회는
+ * 화면을 그릴 재료가 없는 상태라 던져서 오류 경계로 보내는 편이 맞다.
+ *
+ * @param what 무엇을 읽으려다 실패했는지 ("내 신청 현황" 처럼)
+ */
+export function throwDbError(what: string, error: DbError): never {
+  console.error(`[db] ${what} 조회 실패 code=${error.code ?? "?"} message=${error.message ?? ""}`);
+  throw new Error(`${what}을(를) 읽지 못했다`);
+}
+
+/**
+ * 임베드 응답의 모양이 어긋났을 때. **행 원문을 문구에 담지 않는다** — 개발 서버의 오류
+ * 오버레이에는 그대로 뜨고, 나중에 `error.tsx` 가 `error.message` 를 그리면 화면에도 나간다.
+ * 원문은 로그로만 간다.
+ *
+ * "안 보인다"로 떨어뜨리지 않고 던지는 이유: 그러면 고장이 「지워진 스터디」로 그려진다.
+ *
+ * @param where 어느 행에서 났는지 (로그로만 나간다)
+ */
+export function throwShapeError(what: string, where: string, embed: unknown): never {
+  console.error(`[db] ${what} 임베드의 모양이 다르다 at=${where} row=${JSON.stringify(embed)}`);
+  throw new Error(`${what}을(를) 읽지 못했다`);
+}

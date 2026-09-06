@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { readUnreadNotificationCount } from "@/entities/notification";
 import { currentUser } from "@/entities/session";
-import { readMyHostedStudies } from "@/entities/study";
+import { readPostableStudies } from "@/entities/study";
 import { CreatePostForm } from "@/features/create-post";
 import { Container } from "@/shared/ui/container/Container";
 import { SkipLink } from "@/shared/ui/skip-link/SkipLink";
@@ -26,7 +26,7 @@ export default async function CreatePostPage({
   const user = await currentUser();
   const { study } = await searchParams;
   const [studies, unread] = await Promise.all([
-    user ? readMyHostedStudies(user.id) : Promise.resolve([]),
+    user ? readPostableStudies(user.id) : Promise.resolve([]),
     user ? readUnreadNotificationCount() : Promise.resolve(0),
   ]);
 

@@ -9,9 +9,10 @@ function initial(name: string): string {
  * 사람 자리. 이름이 옆에 늘 같이 나오므로 이 자체는 장식이다 —
  * 읽어 주는 기계에는 두 번 말하지 않는다.
  */
-export function Avatar({ name }: { name: string }) {
+export function Avatar({ name, size = "md" }: { name: string; size?: "md" | "lg" }) {
+  const classes = size === "lg" ? `${styles.avatar} ${styles.lg}` : styles.avatar;
   return (
-    <span className={styles.avatar} aria-hidden="true">
+    <span className={classes} aria-hidden="true">
       {initial(name)}
     </span>
   );

@@ -1,0 +1,145 @@
+/* 상세·작업 언어를 물려받는다 — 본문이 세로로 쌓이고, 각 구역은 제목 + 목록이다 */
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-44) 0 var(--space-16);
+}
+
+.name {
+  font-size: clamp(28px, 4.2vw, 42px);
+}
+
+.meta {
+  margin-top: var(--space-6);
+  font-size: 16px;
+  color: var(--ink-weak);
+}
+
+/* 사람이 쓴 본문이라 줄바꿈을 지키고, 공백 없는 긴 문자열이 칸을 넘지 않게 한다
+   (스터디 설명이 같은 성격이고 같은 두 줄을 갖고 있다) */
+.bio {
+  margin: 0 0 var(--space-8);
+  max-width: 68ch;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.block {
+  padding: var(--space-34) 0 0;
+}
+
+.block:last-of-type {
+  padding-bottom: var(--space-64);
+}
+
+/* 화면 안 구역 제목은 상세 언어의 값이다(19px Pretendard 굵게) — 주아체는 화면 제목까지 */
+.blockTitle {
+  margin: 0 0 var(--space-16);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.empty {
+  font-size: 16px;
+  color: var(--ink-weak);
+}
+
+.empty a {
+  color: var(--ink);
+  font-weight: 700;
+  border-bottom: 2px solid var(--ink);
+}
+
+/* 카드 — 「내가 만든 스터디」 */
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-10);
+  margin-bottom: var(--space-12);
+}
+
+.cardTitle {
+  margin: 0 0 var(--space-16);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+/* 줄 목록 — 「내 신청 현황」·「내가 쓴 모집글」.
+   카드 그리드로 만들지 않는 이유는 한 줄이 판단 재료를 하나(상태 또는 반응)만 담기
+   때문이다. 빈 카드 두 장이 나란히 서면 여백만 커진다 */
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 2px solid var(--rule);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6) var(--space-16);
+  padding: var(--space-16) 0;
+  border-bottom: 2px solid var(--rule);
+}
+
+/* 밑줄은 늘 자리를 차지한다 — hover 에서 생겼다 없어지면 그때마다 줄이 2px 밀린다 */
+.rowTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+
+a.rowTitle:hover {
+  border-bottom-color: var(--ink);
+}
+
+/* 지워져서 갈 곳이 없는 줄. 색으로만 말하지 않는다 — 제목 자리의 글자가
+   「지워진 스터디」로 바뀌어 있다 */
+.gone {
+  color: var(--ink-weak);
+  font-weight: 400;
+}
+
+.rowMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: 14px;
+  color: var(--ink-weak);
+}
+
+/* 신청 상태 — 승인된 「신청 상태 3종」의 값을 그대로 가져온다(버튼과 같은 채움·테두리·
+   둥글기). 모집 상태의 알약(999px)과 둥글기가 달라 형태가 겹치지 않는다.
+   거절됨에는 클래스를 주지 않는다 — 승인된 표현이 없다 */
+.waiting,
+.joined {
+  padding: var(--space-2) var(--space-10);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.waiting {
+  border-style: dashed;
+  background: var(--paper);
+}
+
+.joined {
+  background: var(--hl-mint);
+}

@@ -1,0 +1,11 @@
+.missing {
+  padding: var(--space-44) 0 var(--space-64);
+  font-size: 16px;
+  color: var(--ink-weak);
+}
+
+.missingTitle {
+  margin: 0 0 var(--space-12);
+  font-size: clamp(28px, 4.2vw, 42px);
+  color: var(--ink);
+}

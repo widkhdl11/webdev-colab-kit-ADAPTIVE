@@ -25,3 +25,6 @@ export {
   type StudyDetail,
 } from "./model/post-detail";
 export { countPostView, readPostDetail } from "./api/read-post-detail";
+// 판독기 인자를 뺀 시그니처로 내보낸다 — `entities/study/api/public.ts` 와 같은 이유
+export { readMyPosts } from "./api/public";
+export type { MyPost } from "./api/read-my-posts";
