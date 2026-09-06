@@ -115,3 +115,16 @@ select.control {
   border-radius: var(--r-btn);
   padding: var(--space-12) var(--space-14);
 }
+
+/* 성공 문구. 실패와 같은 슬롯이라 **여백이 같다** — 두 벌이 되면 같은 자리의 두 문구가
+   다르게 앉는다. 뜻이 반대인 것은 색(형광펜 대신 종이)과 테두리가 말한다 */
+.notice {
+  margin-bottom: var(--space-18);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: var(--space-12) var(--space-14);
+}

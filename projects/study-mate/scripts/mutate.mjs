@@ -708,6 +708,37 @@ const MUTATIONS = {
           and private.is_study_host(study_id, (select auth.uid()))
         );`,
   },
+  "e3-write-path-any": {
+    // 이름표를 손으로 적는다 — 아바타 정책의 조건 슬롯이 여섯이라 기본 이름표(INV-E3)로는
+    // 어느 갈래가 깨졌는지 판정이 못 가른다
+    tag: "INV-E3(경로",
+    holds: "INV-E3(경로) — 아바타는 자기 아이디 폴더 아래에만 올라간다",
+    sql: `
+      drop policy if exists avatars_write_self on storage.objects;
+      create policy avatars_write_self on storage.objects for insert
+        with check (bucket_id = 'avatars' and owner_id = (select auth.uid())::text);`,
+  },
+  "e4-bucket-any-mime": {
+    tag: "INV-E4(형식",
+    holds: "INV-E4(형식) — 아바타 버킷은 이미지라고 신고된 것만 받는다",
+    sql: `update storage.buckets set allowed_mime_types = null where id = 'avatars';`,
+  },
+  "e4-bucket-any-size": {
+    tag: "INV-E4(크기",
+    holds: "INV-E4(크기) — 아바타 버킷은 정해진 크기까지만 받는다",
+    sql: `update storage.buckets set file_size_limit = null where id = 'avatars';`,
+  },
+  "e5-drop-region-fkey": {
+    holds: "INV-E5 — 프로필의 지역은 고정 목록의 값이거나 비어 있다",
+    sql: `alter table public.profiles drop constraint if exists profiles_region_fkey;`,
+  },
+  "e3-read-list-open": {
+    holds: "INV-E7 — 아바타 목록은 자기 것만 보인다(폴더 이름이 곧 회원 id 명부다)",
+    sql: `
+      drop policy if exists avatars_read on storage.objects;
+      create policy avatars_read on storage.objects for select
+        using (bucket_id = 'avatars');`,
+  },
   "z11-members-hidden": {
     holds: "INV-Z11 (S12) — 수락된 멤버는 같은 스터디의 수락된 사람들을 본다",
     sql: `
@@ -817,6 +848,16 @@ select
       from pg_class c join pg_namespace n on n.oid = c.relnamespace
      where n.nspname = 'public' and c.relkind = 'r'), '')
   || E'\n' ||
+  -- **버킷 설정도 강제 장치다.** 아바타의 허용 형식·크기 상한은 정책이 아니라 버킷 행에
+  -- 있어서(INV-E4), 여기 안 넣으면 그것을 지운 변이가 「강제 장치를 하나도 안 바꿨다」로
+  -- 판정된다 — 실제로는 방벽 하나가 통째로 사라진 상태인데 판정 불가로 조용히 넘어간다
+  -- (2026-09-06 실측).
+  coalesce((select string_agg(format('bucket %s public=%s size=%s mime=%s',
+             id, public, coalesce(file_size_limit::text, '-'),
+             coalesce(array_to_string(allowed_mime_types, ','), '-')),
+           E'\n' order by id)
+      from storage.buckets), '')
+  || E'\n' ||
   -- 강제 장치는 아니지만 **다음 판정을 바꾸는 것**이라 같이 본다. 뒷정리가 실패해 사용자가
   -- 남으면 다음 변이가 그 위에서 돌고, 그 오염은 정책 지문에는 안 잡힌다.
   (select format('users %s', count(*)) from auth.users)
@@ -921,6 +962,11 @@ const RESTORE_MIGRATIONS = [
   // 다시 걸고, 0014 가 뒤따라 돌아야 거기에 「모집 중인 스터디」가 더해진다(INV-Z14).
   // 빠뜨리면 복구가 끝난 자리에 2026-09-06 에 닫은 구멍이 도로 열린 채로 남는다.
   "0014_post_insert_requires_recruiting_study.sql",
+  // 0015 는 0001 이 만든 아바타 정책 넷을 다시 쓰고(경로 판정 · 목록 제한), 버킷 제한과
+  // 지역 외래 키를 건다. 목록에 없으면 이 파일이 건드리는 것을 무력화한 변이가 복구되지
+  // 않아 지문이 어긋나고, 그 뒤의 변이가 전부 오염된 데이터베이스에서 판정된다.
+  // 전부 `drop … if exists` + 조건 있는 update 라 다시 돌려도 결과가 같다.
+  "0015_profile_editing.sql",
 ];
 
 /**
@@ -982,6 +1028,35 @@ select '프로필 조회 정책이 판정 함수를 안 부른다 (INV-Z13)' as 
    select 1 from pg_policies
     where schemaname = 'public' and tablename = 'profiles' and policyname = 'profiles_read'
       and strpos(qual, 'profile_is_visible') > 0
+ )
+union all
+-- 아바타 정책의 경로 판정(INV-E3). 0015 가 목록에서 빠지면 복구가 끝난 자리에
+-- 「남의 폴더를 차지할 수 있는」 상태가 도로 남는다.
+select '아바타 쓰기 정책이 경로를 안 본다 (INV-E3)' as what
+ where not exists (
+   select 1 from pg_policies
+    where schemaname = 'storage' and policyname = 'avatars_write_self'
+      and strpos(with_check, 'foldername') > 0
+ )
+union all
+-- 아바타 조회 정책의 목록 제한. 빠지면 회원 id 명부가 도로 열린다.
+select '아바타 조회 정책이 목록을 안 막는다' as what
+ where not exists (
+   select 1 from pg_policies
+    where schemaname = 'storage' and policyname = 'avatars_read'
+      and strpos(qual, 'owner_id') > 0
+ )
+union all
+-- 버킷의 형식·크기 제한(INV-E4)과 지역 외래 키(INV-E5).
+select '아바타 버킷에 형식·크기 제한이 없다 (INV-E4)' as what
+ where not exists (
+   select 1 from storage.buckets
+    where id = 'avatars' and file_size_limit is not null and allowed_mime_types is not null
+ )
+union all
+select '지역 외래 키가 없다 (INV-E5)' as what
+ where not exists (
+   select 1 from pg_constraint where conname = 'profiles_region_fkey'
  )
 union all
 -- 실시간 주제 정규식도 같은 함정이다. 0012 가 목록에서 빠지거나 0010 앞으로 가면

@@ -51,7 +51,7 @@ export function ProfileOverview({
   return (
     <>
       <header className={styles.head}>
-        <Avatar name={profile.username} size="lg" />
+        <Avatar name={profile.username} src={profile.avatarUrl} size="lg" />
         <div>
           <h1 className={`h-display ${styles.name}`}>{profile.username}</h1>
           {meta.length > 0 ? <p className={styles.meta}>{meta.join(" · ")}</p> : null}
@@ -59,6 +59,19 @@ export function ProfileOverview({
       </header>
 
       {profile.bio ? <p className={styles.bio}>{profile.bio}</p> : null}
+
+      {/* 링크 둘을 그냥 나란히 두면 읽어 주는 기계가 「프로필 수정 비밀번호 변경」을
+          한 덩어리로 읽는다 */}
+      <nav className={styles.actions} aria-label="내 계정">
+        <ul>
+          <li>
+            <Link href="/profile/edit">프로필 수정</Link>
+          </li>
+          <li>
+            <Link href="/profile/password">비밀번호 변경</Link>
+          </li>
+        </ul>
+      </nav>
 
       <section className={styles.block}>
         <h2 className={styles.blockTitle}>내가 만든 스터디</h2>

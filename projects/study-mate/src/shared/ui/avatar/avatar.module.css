@@ -1,23 +1,29 @@
-/* 괘선 채움 + 2px 잉크 테두리 + 이니셜. 형광펜을 사람 식별색으로 번지게 하지 않는다 */
+/* 괘선 채움 + 2px 잉크 테두리 + 이니셜. 형광펜을 사람 식별색으로 번지게 하지 않는다.
+   크기는 컴포넌트가 `--avatar-size` 로 내려 준다 — 픽셀 값을 CSS 와 이미지 속성 두 곳에
+   적으면 한쪽만 고치는 날 줄 흔들림이 되돌아온다 */
 .avatar {
+  position: relative;
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: var(--avatar-size, 44px);
+  height: var(--avatar-size, 44px);
   border-radius: var(--r-pill);
   border: var(--bd);
   background: var(--rule);
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 16px;
+  font-size: calc(var(--avatar-size, 44px) * 0.36);
   color: var(--ink);
+  overflow: hidden;
 }
 
-/* 프로필 화면의 머리처럼 사람이 화면의 주인공인 자리. 크기는 승인된 시각 기준이 정하지
-   않은 값이라 여기서 정한다 — 밖에서 자손 선택자로 덮으면 명시도가 같아 CSS 가 실린
-   순서에 따라 이겼다 졌다 한다 */
-.lg {
-  width: 72px;
-  height: 72px;
-  font-size: 26px;
+/* 사진은 이니셜 **위에** 얹는다. 로드에 실패하면 아래의 이니셜이 그대로 보인다.
+   비율이 다른 사진은 원형 안을 채우도록 잘라 넣는다 */
+.photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  object-fit: cover;
 }

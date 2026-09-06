@@ -391,16 +391,28 @@ describe("INV-Z7: 파일 저장소의 삭제·수정은 올린 사람만", () =>
   });
 
   it("INV-Z7(실패경로 S6): 남이 올린 파일을 지울 수 없다", async () => {
-    const path = `${host.id}/avatar.txt`;
+    // 준비물은 **진짜 이미지**여야 한다 — 2026-09-06 에 INV-E4 가 버킷에 형식 제한을
+    // 걸면서, 형식 없는 blob 은 여기 도착하기 전에 거부된다. 이 검사의 주제는 형식이
+    // 아니라 「남이 올린 것을 지울 수 있나」라서 준비물만 바꾼다.
+    const path = `${host.id}/avatar.png`;
+    const png = Uint8Array.from(
+      atob(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      ),
+      (c) => c.charCodeAt(0),
+    );
     const up = await host.client.storage
       .from("avatars")
-      .upload(path, new Blob(["hi"]), { upsert: true });
+      .upload(path, new Blob([png], { type: "image/png" }), {
+        contentType: "image/png",
+        upsert: true,
+      });
     expect(up.error).toBeNull();
 
     await stranger.client.storage.from("avatars").remove([path]);
 
     const { data } = await admin.storage.from("avatars").list(host.id);
-    expect(data?.map((f) => f.name)).toContain("avatar.txt");
+    expect(data?.map((f) => f.name)).toContain("avatar.png");
   });
 });
 

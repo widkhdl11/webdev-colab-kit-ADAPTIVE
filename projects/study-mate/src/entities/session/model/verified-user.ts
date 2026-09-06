@@ -1,7 +1,17 @@
 // 세션 판정은 검증된 클레임으로만 한다.
 // 근거: docs/specs/auth-session.md — INV-A3
 
-export type VerifiedUser = { readonly id: string };
+export type VerifiedUser = {
+  readonly id: string;
+  /**
+   * 검증된 토큰이 담고 있으면 함께 온다. **폼에서 온 값이 아니다** — 비밀번호 변경이
+   * 「현재 비밀번호」를 확인할 때 이 값을 쓰는데, 그 자리를 폼에서 받으면 남의 계정으로
+   * 확인을 통과시키고 내 세션의 비밀번호를 바꾸는 조합이 열린다 (INV-C1 의 신뢰 경계).
+   *
+   * 없을 수도 있다 — 토큰에 이메일이 없는 계정 종류가 있고, 그때는 부르는 쪽이 멈춘다.
+   */
+  readonly email?: string;
+};
 
 /**
  * 세션을 읽는 두 경로를 **둘 다** 드러내는 포트.
@@ -19,7 +29,7 @@ export type VerifiedUser = { readonly id: string };
  */
 export type SessionSource = {
   readonly getClaims: () => Promise<{
-    readonly data: { readonly claims: { readonly sub?: unknown } } | null;
+    readonly data: { readonly claims: { readonly sub?: unknown; readonly email?: unknown } } | null;
     readonly error: unknown;
   }>;
   readonly getSession: () => Promise<unknown>;
@@ -46,5 +56,8 @@ export async function readVerifiedUser(
   const sub = result.data.claims.sub;
   if (typeof sub !== "string" || sub.length === 0) return null;
 
-  return { id: sub };
+  // 이메일은 있으면 싣고 없으면 안 싣는다. 여기서 판정에 쓰지 않으므로 없다고 비로그인이
+  // 되지는 않는다 — 그 값이 필요한 기능이 스스로 멈춘다.
+  const email = result.data.claims.email;
+  return typeof email === "string" && email.length > 0 ? { id: sub, email } : { id: sub };
 }

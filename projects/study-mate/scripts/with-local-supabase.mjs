@@ -27,6 +27,11 @@ const env = {
   SUPABASE_DB_URL: s.DB_URL,
   SUPABASE_PUBLISHABLE_KEY: s.PUBLISHABLE_KEY ?? s.ANON_KEY,
   SUPABASE_SECRET_KEY: s.SECRET_KEY ?? s.SERVICE_ROLE_KEY,
+  // **앱이 읽는 이름으로도 같이 넣는다.** 통합 검사가 프로덕션 클라이언트 팩토리를
+  // 그대로 부를 수 있어야 한다 — 안 그러면 그 팩토리는 어느 검사에서도 안 돌고,
+  // 쿠키를 만지는 것으로 바꿔치기해도 아무것도 안 깨진다(2026-09-06 test-auditor).
+  NEXT_PUBLIC_SUPABASE_URL: s.API_URL,
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: s.PUBLISHABLE_KEY ?? s.ANON_KEY,
 };
 
 const r = spawnSync(process.argv[2], process.argv.slice(3), { stdio: "inherit", env, shell: true });

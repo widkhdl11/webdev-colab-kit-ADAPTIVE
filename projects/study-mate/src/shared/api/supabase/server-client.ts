@@ -4,13 +4,12 @@
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { readSupabaseConfig } from "./config";
 
-export class SupabaseConfigMissingError extends Error {
-  constructor(missing: readonly string[]) {
-    super(`Supabase 설정이 없어 데이터를 읽을 수 없다. 비어 있는 항목: ${missing.join(", ")}`);
-    this.name = "SupabaseConfigMissingError";
-  }
-}
+// 설정 읽기와 오류 클래스의 정본은 `config.ts` 다 — 같은 여덟 줄이 네 클라이언트에
+// 복사돼 있었고, 변수 이름이 바뀌거나 옛 키 이름 대체를 한쪽에만 넣는 날 다른 화면은
+// 다 도는데 한 화면만 죽는 모양이었다. 여기서 다시 내보내 기존 import 는 그대로 둔다.
+export { SupabaseConfigMissingError } from "./config";
 
 /**
  * 설정이 없으면 **던진다.** 미들웨어의 판정 클라이언트는 설정이 없을 때 전원을
@@ -18,14 +17,7 @@ export class SupabaseConfigMissingError extends Error {
  * 돌려주면 "권한이 없어서 안 보인다"와 "설정이 없어서 안 보인다"가 구분되지 않는다.
  */
 export async function createServerSupabase(): Promise<SupabaseClient> {
-  const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-  const missing = [
-    projectUrl ? null : "NEXT_PUBLIC_SUPABASE_URL",
-    publishableKey ? null : "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-  ].filter((name): name is string => name !== null);
-  if (!projectUrl || !publishableKey) throw new SupabaseConfigMissingError(missing);
+  const { projectUrl, publishableKey } = readSupabaseConfig();
 
   const store = await cookies();
 

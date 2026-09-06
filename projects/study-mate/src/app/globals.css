@@ -2,3 +2,11 @@
 
 /* 토큰·리셋은 tailwind 다음에 온다 — 겹치는 자리(margin·font)에서 승인된 시각 기준이 이긴다 */
 @import "../shared/ui/tokens.css";
+
+/* 폼 화면이 그릴 것이 없을 때의 한 줄. 라우트마다 모듈 CSS 를 하나씩 만들 만큼의
+   내용이 아니라서 여기 둔다 */
+.form-missing {
+  padding: var(--space-26) 0 0;
+  font-size: 16px;
+  color: var(--ink-weak);
+}

@@ -1,3 +1,4 @@
+import { cloneElement, isValidElement, type ReactElement } from "react";
 import type { ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import type { InputHTMLAttributes } from "react";
 import styles from "./field.module.css";
@@ -19,15 +20,32 @@ export function Field({
   required?: boolean;
   children: ReactNode;
 }) {
+  // **힌트를 입력칸에 실제로 붙인다.** 전에는 `id` 만 만들어 두고 아무도 안 가리켰다 —
+  // 눈으로는 힌트가 보이지만 읽어 주는 기계에는 없는 글이었고, 그래서 「PNG·1MB까지」 같은
+  // 제한을 업로드가 실패한 뒤에야 알게 됐다(2026-09-06 ui-reviewer, 백로그에 열려 있던 건).
+  //
+  // 자식을 그냥 두지 않고 복제해 넘기는 이유는, 부르는 자리 열두 곳이 각각
+  // `aria-describedby` 를 적게 하면 그중 하나를 빠뜨리는 날 아무도 안 잡기 때문이다.
+  const hintId = hint ? `${id}-hint` : undefined;
+  const described =
+    hintId && isValidElement(children)
+      ? cloneElement(children as ReactElement<{ "aria-describedby"?: string }>, {
+          "aria-describedby":
+            [(children.props as { "aria-describedby"?: string })["aria-describedby"], hintId]
+              .filter(Boolean)
+              .join(" ") || undefined,
+        })
+      : children;
+
   return (
     <div className={styles.field}>
       <label className={styles.label} htmlFor={id}>
         {label}
         {required ? null : <span className={styles.required}> (선택)</span>}
       </label>
-      {children}
+      {described}
       {hint ? (
-        <p className={styles.hint} id={`${id}-hint`}>
+        <p className={styles.hint} id={hintId}>
           {hint}
         </p>
       ) : null}
@@ -93,6 +111,23 @@ export function FormError({ message }: { message: string }) {
   return (
     <p className={styles.error} role="alert">
       {message}
+    </p>
+  );
+}
+
+/**
+ * 성공 문구. 실패와 **같은 슬롯**이라 여백도 같은 값을 쓴다 — 뜻이 반대인 것은 색과
+ * 테두리가 말한다.
+ *
+ * `role="status"` 인 이유: 화면을 안 보는 사용자에게 이 앱의 성공 문구가 처음 생겼다.
+ * 특히 비밀번호 변경의 「다른 기기의 로그인은 끊었습니다」는 보안 결과 통지인데, 페이지
+ * 이동도 포커스 이동도 없어서 이 속성이 없으면 무슨 일이 일어났는지 알 방법이 없다.
+ * 실패가 `alert`(끼어든다) 이고 성공이 `status`(끝나면 읽는다) 인 것도 급함의 차이 그대로다.
+ */
+export function FormNotice({ children }: { children: ReactNode }) {
+  return (
+    <p className={styles.notice} role="status">
+      {children}
     </p>
   );
 }

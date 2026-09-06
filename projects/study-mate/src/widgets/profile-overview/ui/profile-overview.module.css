@@ -143,3 +143,27 @@ a.rowTitle:hover {
 .joined {
   background: var(--hl-mint);
 }
+
+/* 프로필 수정·비밀번호 변경으로 가는 길. 버튼이 아니라 링크다 — 이 화면의 주 행동이
+   아니고, 잉크 버튼을 여기 두면 아래 카드들과 강조가 다툰다 */
+.actions {
+  margin-top: var(--space-8);
+}
+
+.actions ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  /* 눌러서 가는 본문 링크다 — 메타가 아니므로 본문 하한(16px)을 따른다 */
+  font-size: 16px;
+}
+
+.actions a {
+  color: var(--ink);
+  font-weight: 700;
+  border-bottom: 2px solid var(--ink);
+  text-decoration: none;
+}

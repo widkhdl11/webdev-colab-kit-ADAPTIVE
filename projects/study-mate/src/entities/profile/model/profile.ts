@@ -6,9 +6,10 @@
  * 타입이 「내 것」이라고 말하면 나중에 「내 것일 때만 맞는 필드」(편집 가능 여부 같은 것)를
  * 붙이는 사람이 잘못된 전제를 물려받는다.
  *
- * **`avatar_url` 은 없다.** 그 값을 채우는 길이 아직 없고(업로드는 `/profile/edit` 과 함께
- * 온다), 화면은 승인된 시각 기준의 아바타(괘선 채움 + 이니셜)를 쓴다. 안 쓰는 칸을 읽으면
- * 다음 사람은 그것이 그려진다고 믿는다.
+ * **사진은 주소로 온다.** 데이터베이스에 담긴 것은 버킷 안의 경로이고(`<id>/avatar.png`),
+ * 주소는 읽는 쪽이 만든다 — 전체 주소를 담으면 프로젝트 주소가 데이터에 박혀 다른 환경에서
+ * 깨진 그림이 된다. 아직 안 올린 사람은 null 이고, 그때 화면은 승인된 아바타(괘선 채움 +
+ * 이니셜)를 그린다.
  */
 export type ProfileCard = {
   readonly id: string;
@@ -18,6 +19,8 @@ export type ProfileCard = {
   readonly regionCode: string | null;
   /** 코드에 해당하는 지역이 목록에 없으면 null — 코드를 대신 그리지 않는다 */
   readonly regionName: string | null;
+  /** 공개 버킷의 전체 주소. 아직 안 올렸으면 null */
+  readonly avatarUrl: string | null;
   readonly interestCategoryId: string | null;
   readonly interestCategoryName: string | null;
 };

@@ -1,0 +1,21 @@
+/* 폼은 상세·작업 언어의 좁은 변형이다 — 기존 폼 세 장이 쓰는 값과 같다 */
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-44) 0 var(--space-64);
+}
+
+.head {
+  padding-bottom: var(--space-8);
+}
+
+/* 38px — 폼·인증 화면의 제목 크기. 42px 은 상세·목록 값이다 */
+.title {
+  font-size: clamp(28px, 4.2vw, 38px);
+}
+
+.sub {
+  margin-top: var(--space-10);
+  font-size: 16px;
+  color: var(--ink-weak);
+}

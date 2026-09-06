@@ -12,7 +12,7 @@
   },
   "spec": {
     "status": "clean",
-    "hash": "8b0049501f76"
+    "hash": "6aace872dffe"
   },
   "design": {
     "status": "clean",
@@ -20,23 +20,23 @@
   },
   "design/page-designer": {
     "status": "clean",
-    "hash": "f8bb8252b8be"
+    "hash": "76a470affe54"
   },
   "design/schema-designer": {
     "status": "clean",
-    "hash": "e2d46acce633"
+    "hash": "0e148b07101e"
   },
   "implement": {
     "status": "clean",
-    "hash": "9594da5c2598"
+    "hash": "d60b83d0eefe"
   },
   "qa": {
     "status": "clean",
-    "hash": "96688a27dc7a"
+    "hash": "3fc916713d7e"
   },
   "review": {
     "status": "clean",
-    "hash": "e6501e41f51b"
+    "hash": "9ed1e2999ef3"
   },
   "deploy": {
     "status": "n/a",

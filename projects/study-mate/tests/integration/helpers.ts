@@ -61,7 +61,13 @@ export const admin: SupabaseClient = createClient(API_URL, SECRET, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-export type TestUser = { id: string; email: string; client: SupabaseClient };
+export type TestUser = {
+  id: string;
+  email: string;
+  /** 비밀번호 변경 검사가 「현재 비밀번호」로 쓴다 */
+  password: string;
+  client: SupabaseClient;
+};
 
 /**
  * 이 실행이 만든 사용자 id 장부. `createUser` 가 **사용자를 만든 직후** 적는다.
@@ -118,7 +124,7 @@ export async function createUser(username: string): Promise<TestUser> {
   const { error: sErr } = await client.auth.signInWithPassword({ email, password });
   if (sErr) throw new Error(`로그인 실패: ${sErr.message}`);
 
-  return { id: data.user.id, email, client };
+  return { id: data.user.id, email, password, client };
 }
 
 /** 로그인하지 않은 공개 키 연결 — "지나가던 아무나". */
