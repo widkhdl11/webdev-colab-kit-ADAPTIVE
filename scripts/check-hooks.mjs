@@ -15,7 +15,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 
 const ROOT = process.cwd();
 const HOOK_DIR = join(ROOT, ".claude", "hooks");
@@ -24,6 +24,14 @@ const hookPath = (n) => join(HOOK_DIR, n);
 
 const results = [];
 const record = (ok, name, detail) => results.push({ ok, name, detail });
+
+// **--wiring-only** — 훅을 실제로 돌리는 프로브를 건너뛰고 정적 판정만 한다
+// (배선·등록·파싱). `gates/run-gates.mjs` 가 이 모드로 부른다.
+//
+// 왜 모드를 따로 두나: 실행 프로브는 훅 프로세스를 오십 번 넘게 띄운다. 전체 게이트가
+// 매번 그걸 하면 느려서 결국 게이트에서 빠지고, 그러면 「훅이 살아 있나」를 다시 아무도
+// 안 보게 된다. 정적 판정만으로도 2026-09-06 의 사고(상대 경로라 통째로 죽음)는 잡힌다.
+const WIRING_ONLY = process.argv.includes("--wiring-only");
 
 // ── ① 실행 검사 ────────────────────────────────────────────────
 // 훅을 실제로 돌린다. 종료 코드 2 = 차단, 0 = 통과.
@@ -36,10 +44,12 @@ function runHook(file, toolInput, toolName) {
   return { code: r.status, msg: (r.stderr ?? "").trim() };
 }
 function expectBlocked(file, toolInput, toolName, label) {
+  if (WIRING_ONLY) return;
   const { code, msg } = runHook(file, toolInput, toolName);
   record(code === 2, `${file} 차단: ${label}`, code === 2 ? msg.slice(0, 60) : `종료 코드 ${code} — 통과시켰다`);
 }
 function expectAllowed(file, toolInput, toolName, label) {
+  if (WIRING_ONLY) return;
   const { code, msg } = runHook(file, toolInput, toolName);
   record(code === 0, `${file} 통과: ${label}`, code === 0 ? "" : `종료 코드 ${code} — ${msg.slice(0, 60)}`);
 }
@@ -52,8 +62,13 @@ function protectedPaths() {
   return [...block[1].matchAll(/p:\s*"([^"]+)"/g)].map((m) => m[1]);
 }
 
-const paths = protectedPaths();
-console.log(`보호 대상 ${paths.length}개를 protect-files.mjs 에서 읽었다: ${paths.join(", ")}\n`);
+// --wiring-only 에서는 훅 **소스**를 안 읽는다. 이 모드가 답해야 할 질문은 하나다 —
+// 「설정에 걸린 훅이 어느 폴더에서도 돌 수 있나」. 훅이 무엇을 막는지는 실행 프로브의 몫이고,
+// 여기서 소스를 파싱하면 훅 파일이 없거나 낡은 저장소에서 **검사가 죽어 버려** 정작 배선
+// 판정에 도달하지 못한다(2026-09-06: 판정기의 심은-위반 프로브가 그래서 안 잡혔다).
+const paths = WIRING_ONLY ? [] : protectedPaths();
+if (!WIRING_ONLY)
+  console.log(`보호 대상 ${paths.length}개를 protect-files.mjs 에서 읽었다: ${paths.join(", ")}\n`);
 
 for (const p of paths) {
   // 디렉터리 항목("gates/")은 그 아래 파일로 찔러 본다.
@@ -110,13 +125,39 @@ const NEEDS = {
   },
 };
 
+/**
+ * 훅 명령에서 스크립트 파일명만 뽑는다.
+ *
+ * **명령 문자열의 모양을 가정하지 않는다.** 전에는 `command.split("/").pop()` 이었는데,
+ * 2026-09-06 에 훅 명령이 상대 경로에서 **따옴표로 감싼 절대 경로**로 바뀌면서 깨졌다:
+ *
+ * ```
+ * node "C:/.../.claude/hooks/protect-secrets.mjs"
+ *   split("/").pop()  →  protect-secrets.mjs"      ← 따옴표가 붙어 이름이 안 맞는다
+ * ```
+ *
+ * 그래서 훅 셋이 멀쩡히 도는데 **"등록되지 않았다 — 있어도 안 돈다"로 보고했다.**
+ * 검사가 틀린 방향으로 시끄러운 것은 조용히 꺼진 것보다는 낫지만, 둘 다 판정을 못 하게 한다.
+ *
+ * 이제 `.mjs`(또는 `.js`·`.cjs`)로 끝나는 조각을 찾아서 그 basename 을 쓴다 —
+ * 따옴표·역슬래시·인자(`--quick`)가 붙어도 같은 답이 나온다.
+ */
+function hookScriptName(command) {
+  for (const raw of String(command ?? "").split(/\s+/)) {
+    const token = raw.replace(/^["']|["']$/g, "");
+    if (!/\.(mjs|cjs|js)$/.test(token)) continue;
+    return token.split(/[/\\]/).pop();
+  }
+  return "";
+}
+
 function registeredTools() {
   const cfg = JSON.parse(readFileSync(SETTINGS, "utf-8"));
   const map = new Map(); // 훅 파일명 → 등록된 도구 집합
   for (const entries of Object.values(cfg.hooks ?? {}))
     for (const entry of entries)
       for (const h of entry.hooks ?? []) {
-        const file = (h.command ?? "").split("/").pop();
+        const file = hookScriptName(h.command);
         if (!file) continue;
         const tools = (entry.matcher ?? "").split("|").map((t) => t.trim()).filter(Boolean);
         if (!map.has(file)) map.set(file, new Set());
@@ -125,7 +166,84 @@ function registeredTools() {
   return map;
 }
 
+/**
+ * 훅 명령의 스크립트 경로가 **작업 폴더와 무관하게** 풀리는가.
+ *
+ * 세션의 작업 폴더는 `projects/<이름>` 으로 옮겨간다 — `npm` 명령 하나면 그렇게 된다.
+ * 명령이 상대 경로면 그 순간 Node 가 MODULE_NOT_FOUND 로 죽고, **훅 실패는 non-blocking 이라
+ * 도구는 그대로 실행된다.** 시크릿·보호 파일·위험 명령 차단과 편집 게이트와 Stop 훅이
+ * 한꺼번에 조용히 꺼지는데 겉모습이 똑같다.
+ *
+ * 2026-09-06 에 실제로 한 세션이 통째로 그 상태였고, 화면에 뜬 오류 줄을 사람이 알아봐서
+ * 잡혔다. 그것 말고는 알아차릴 방법이 없었다 — 그래서 이 검사가 생겼다.
+ *
+ * @param cfg 파싱된 settings.json (프로브가 지어낸 것을 넣을 수 있게 인자로 받는다)
+ */
+function unresolvableHooks(cfg) {
+  const bad = [];
+  for (const entries of Object.values(cfg.hooks ?? {}))
+    for (const entry of entries)
+      for (const h of entry.hooks ?? []) {
+        const cmd = String(h.command ?? "");
+        const token = cmd
+          .split(/\s+/)
+          .map((t) => t.replace(/^["']|["']$/g, ""))
+          .find((t) => /\.(mjs|cjs|js)$/.test(t));
+        if (!token) continue;
+        // 절대 경로이고 그 파일이 실제로 있어야 한다. 상대 경로는 작업 폴더가 바뀌는 순간 깨진다.
+        if (!isAbsolute(token) || !existsSync(token)) bad.push({ cmd, token });
+      }
+  return bad;
+}
+
+console.log("\n── 배선 검사 (경로가 어느 폴더에서도 풀리는가) ──");
+{
+  const cfg = JSON.parse(readFileSync(SETTINGS, "utf-8"));
+  const bad = unresolvableHooks(cfg);
+  record(
+    bad.length === 0,
+    "훅 명령이 작업 폴더와 무관하게 풀린다",
+    bad.length === 0
+      ? `${Object.values(cfg.hooks ?? {}).flat().length}개 등록 전부 절대 경로`
+      : bad.map((b) => `${b.token} — 상대 경로거나 그 파일이 없다`).join(" · "),
+  );
+
+  // 위반을 일부러 심어 잡히는 것을 본다. 「위반 0건」과 「검사가 안 돌았다」는 겉이 같다.
+  const planted = unresolvableHooks({
+    hooks: { PreToolUse: [{ hooks: [{ command: "node .claude/hooks/protect-files.mjs" }] }] },
+  });
+  const clean = unresolvableHooks({
+    hooks: { PreToolUse: [{ hooks: [{ command: `node "${hookPath("protect-files.mjs")}"` }] }] },
+  });
+  record(
+    planted.length === 1 && clean.length === 0,
+    "배선 프로브 — 상대 경로를 실패로 잡고, 절대 경로는 통과시킨다",
+    `상대=${planted.length}건 잡음 / 절대=${clean.length}건`,
+  );
+}
+
 console.log("\n── 등록 검사 (.claude/settings.json) ──");
+
+// 이름 뽑기 프로브 — 명령 모양이 바뀌어도 같은 답이 나오는가.
+// 2026-09-06 에 이것이 없어서, 상대 경로가 따옴표 친 절대 경로로 바뀌자 파일명에 따옴표가
+// 붙었고 훅 셋이 **멀쩡히 도는데 "안 돈다"로** 보고됐다. 네 모양을 전부 확인한다.
+{
+  const cases = [
+    ["상대 경로", "node .claude/hooks/protect-files.mjs", "protect-files.mjs"],
+    ["따옴표 친 절대 경로", 'node "C:/x/y/.claude/hooks/protect-files.mjs"', "protect-files.mjs"],
+    ["역슬래시", 'node "C:\\x\\y\\.claude\\hooks\\protect-files.mjs"', "protect-files.mjs"],
+    ["인자가 붙은 것", 'node "C:/x/gates/run-gates.mjs" --quick', "run-gates.mjs"],
+  ];
+  const wrong = cases.filter(([, cmd, want]) => hookScriptName(cmd) !== want);
+  record(
+    wrong.length === 0,
+    "이름 뽑기 — 명령 모양이 달라도 같은 파일명이 나온다",
+    wrong.length === 0
+      ? `${cases.length}가지 모양`
+      : wrong.map(([what, cmd]) => `${what} → ${JSON.stringify(hookScriptName(cmd))}`).join(" · "),
+  );
+}
+
 const reg = registeredTools();
 for (const [file, { tools, why }] of Object.entries(NEEDS)) {
   const have = reg.get(file) ?? new Set();
@@ -252,7 +370,9 @@ if (orphans.length)
 
   // W3·W4 는 on-edit 을 실제로 돌리고, on-edit 은 이 검사기를 다시 부른다.
   // 중첩 실행에서는 건너뛴다 — 안 그러면 서로를 부르며 끝나지 않는다.
-  if (process.env.CHECK_HOOKS_NESTED === "1") {
+  if (WIRING_ONLY) {
+    console.log("\nℹ --wiring-only — 훅을 실제로 돌리는 프로브는 건너뛴다. 정적 판정은 위에서 다 돌았다.");
+  } else if (process.env.CHECK_HOOKS_NESTED === "1") {
     console.log("\nℹ 중첩 실행 — 실행 프로브(W3·W4)는 건너뛴다. 배선 판정 자체는 위에서 돌았다.");
   } else if (!existsSync(join(ROOT, ON_EDIT))) {
     record(false, "실행 프로브 — 건너뜀", `${ON_EDIT} 가 없다`);
