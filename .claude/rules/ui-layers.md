@@ -3,6 +3,14 @@ paths:
   - "projects/*/src/app/**"
   - "projects/*/src/pages/**"
   - "projects/*/src/widgets/**"
+  # 화면은 위 세 레이어에만 있지 않다. FSD 에서 features/entities 의 `ui/` 와 shared/ui 가
+  # 폼·버튼·필드를 들고 있고, 접근성·토큰·간격 규칙이 가장 자주 깨지는 자리가 거기다.
+  # 2026-09-06 study-mate 의 ui-reviewer 지적 셋(성공 알림 라이브 리전·힌트 연결·파일 칸 크기)이
+  # 전부 이 밖이라 편집 시점에 규칙이 도착하지 않았다. `ui/` 폴더만 집어서 넓힌다 —
+  # features/entities 전체를 넣으면 도메인 로직 파일에도 UI 규칙이 뜬다.
+  - "projects/*/src/features/*/ui/**"
+  - "projects/*/src/entities/*/ui/**"
+  - "projects/*/src/shared/ui/**"
 ---
 # UI 레이어 규칙
 - 비즈니스 규칙 금지 — 판단은 features/entities에서 가져오고 여기선 조합·표시만
