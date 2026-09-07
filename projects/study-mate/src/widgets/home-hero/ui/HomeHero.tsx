@@ -1,5 +1,6 @@
 import { Container } from "@/shared/ui/container/Container";
 import { ButtonLink } from "@/shared/ui/button/Button";
+import { Eyebrow } from "@/shared/ui/eyebrow/Eyebrow";
 import { ArrowRightIcon, CalendarIcon, CheckIcon } from "@/shared/ui/icon/Icon";
 import { WeeklyPlanner, type PlannerBlock } from "./WeeklyPlanner";
 import styles from "./home-hero.module.css";
@@ -33,10 +34,10 @@ export function HomeHero({
     <section className={styles.hero}>
       <Container className={styles.grid}>
         <div>
-          <p className={styles.eyebrow}>
+          <Eyebrow>
             <CalendarIcon />
             함께 성장하는 스터디 문화
-          </p>
+          </Eyebrow>
 
           <h1 className={`h-display ${styles.title}`}>
             이번 주,

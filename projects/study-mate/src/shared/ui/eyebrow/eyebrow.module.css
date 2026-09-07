@@ -1,0 +1,12 @@
+/* 랜딩 언어의 여는 표 — 승인된 시안 `home.html` 의 `.hero-eyebrow` 값 그대로 */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: 14px;
+  font-weight: 700;
+  border: var(--bd);
+  border-radius: var(--r-pill);
+  padding: var(--space-8) var(--space-14);
+  margin-bottom: var(--space-20);
+}

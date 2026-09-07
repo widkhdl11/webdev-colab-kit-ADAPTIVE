@@ -1,0 +1,112 @@
+/*
+ * 소개 — 랜딩 언어(히어로 + 섹션 쌓기)를 홈에서 물려받는다(docs/IA.md 「화면 언어는 세
+ * 종류뿐이다」). 여는 표(`Eyebrow`)와 닫는 칸(`CtaCard`)은 공용 컴포넌트로 같은 값을
+ * 나눠 쓰고, 히어로 패딩·제목 크기·부제 크기와 행간도 랜딩 원본과 같은 값이다.
+ *
+ * 홈과 다른 값은 둘뿐이고 둘 다 아래에 이유를 적었다 — 히어로가 1열이라는 것(오른쪽
+ * 주간 플래너가 홈 전용 장치다)과 부제 폭 46ch.
+ *
+ * 산문 블록에는 `word-break: keep-all` 을 건다. 없으면 한글 어절이 줄 끝에서 글자
+ * 단위로 끊긴다 — 「스터디를 찾다 / 가 이야기를」로 나온 것을 브라우저에서 봤다.
+ */
+.hero {
+  padding: 56px 0 var(--space-20);
+}
+
+.title {
+  font-size: clamp(34px, 5vw, 54px);
+}
+
+.sub {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  margin-top: var(--space-18);
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--ink-weak);
+  /* 랜딩 언어의 34ch 보다 넓다 — 오른쪽 플래너가 없어 히어로가 1열이고, 이 문단이
+     화면의 첫 설명이라 34ch 로는 여섯 줄이 된다. 나머지 값은 랜딩 그대로다 */
+  max-width: 46ch;
+}
+
+/* 카드 안 제목·구역 제목 — 승인된 시안 `home.html` 의 `.card-title` 값이고,
+   `post-card.module.css` 의 `.title`·`profile-overview` 의 `.blockTitle` 과 같은 값이다 */
+.cardTitle,
+.stepTitle,
+.careTitle {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+.cardBody {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  margin-top: var(--space-10);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink-weak);
+}
+
+/* 네 걸음 — 숫자가 순서를 말하므로 목록도 ol 이다. 카드로 두르지 않는 이유는 이것이
+   카드 넷이 아니라 한 줄기라서다 */
+.steps {
+  display: grid;
+  gap: var(--space-24);
+  max-width: 62ch;
+}
+
+.step {
+  display: flex;
+  gap: var(--space-16);
+  align-items: flex-start;
+}
+
+.stepNo {
+  flex: none;
+  width: var(--space-34);
+  height: var(--space-34);
+  display: grid;
+  place-items: center;
+  border: var(--bd);
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cares {
+  display: grid;
+  gap: var(--space-24);
+  max-width: 62ch;
+}
+
+.care {
+  border-top: 2px dotted var(--rule);
+  padding-top: var(--space-20);
+}
+
+.notes {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  display: grid;
+  gap: var(--space-12);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink-weak);
+}
+
+.notes li {
+  display: flex;
+  gap: var(--space-12);
+}
+
+.notes li::before {
+  content: "";
+  flex: none;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  margin-top: var(--space-10);
+}

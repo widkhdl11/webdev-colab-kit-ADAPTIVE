@@ -1,0 +1,27 @@
+/* 랜딩 언어의 닫는 칸 — design-rules 「레이아웃」 */
+.cta {
+  padding: var(--space-48) var(--space-28);
+  text-align: center;
+}
+
+.title {
+  font-size: clamp(26px, 3.6vw, 38px);
+  /* 좁은 화면에서 한글 어절이 글자 단위로 끊기는 것을 막는다 — 홈의 「…사람은요?」도
+     소개의 「…볼까요?」도 그 자리에서 끊겼다. 어절 하나가 칸보다 길면 그때는 끊는다 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.sub {
+  margin-top: var(--space-14);
+  font-size: 16px;
+  color: var(--ink-weak);
+}
+
+.actions {
+  margin-top: var(--space-26);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+  justify-content: center;
+}

@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "node scripts/with-local-supabase.mjs npx vitest run --config vitest.integration.config.mts",
     "db:reset": "npx supabase db reset --local",

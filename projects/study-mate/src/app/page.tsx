@@ -4,15 +4,14 @@ import { readLatestPosts } from "@/entities/post";
 import { currentUser } from "@/entities/session";
 import { readMySchedule, readSampleSchedule, type ScheduledSlot } from "@/entities/study";
 import { ButtonLink } from "@/shared/ui/button/Button";
-import { Card } from "@/shared/ui/card/Card";
 import { ChipLink, ChipRow } from "@/shared/ui/chip/Chip";
+import { CtaCard } from "@/shared/ui/cta-card/CtaCard";
 import { Section, SectionHead } from "@/shared/ui/section/Section";
 import { HomeHero, type PlannerBlock } from "@/widgets/home-hero";
 import { PostGrid } from "@/widgets/post-grid";
 import { SiteFooter } from "@/widgets/site-footer";
 import { SiteHeader } from "@/widgets/site-header";
 import { SkipLink } from "@/shared/ui/skip-link/SkipLink";
-import styles from "./page.module.css";
 
 // 발견 화면이라 로그인 없이 열린다. 다만 위쪽 플래너는 "지금 누구인가"에 따라 달라지므로
 // 요청마다 새로 그린다 — 캐시하면 남의 일정이 보인다.
@@ -83,20 +82,20 @@ export default async function HomePage() {
         </Section>
 
         <Section flush>
-          <Card className={styles.cta}>
-            <h2 className={`h-display ${styles.ctaTitle}`}>이번 주 빈칸, 같이 채울 사람은요?</h2>
-            <p className={styles.ctaSub}>
-              찾는 스터디가 없다면 직접 열어도 됩니다. 모집글 한 장이면 시작입니다.
-            </p>
-            <div className={styles.ctaActions}>
-              <ButtonLink href="/studies/create" tone="ink" size="lg">
-                스터디 만들기
-              </ButtonLink>
-              <ButtonLink href="/posts" size="lg">
-                먼저 둘러보기
-              </ButtonLink>
-            </div>
-          </Card>
+          {/* 「잉크 행동 규칙」— 이 화면에서 해야 할 일은 만드는 쪽이다. 찾는 쪽은 위쪽
+              히어로와 섹션 둘이 이미 맡고 있어서, 닫는 칸까지 같은 곳을 가리키면
+              한 화면이 같은 행동을 세 번 권한다 */}
+          <CtaCard
+            title="이번 주 빈칸, 같이 채울 사람은요?"
+            sub="찾는 스터디가 없다면 직접 열어도 됩니다. 모집글 한 장이면 시작입니다."
+          >
+            <ButtonLink href="/studies/create" tone="ink" size="lg">
+              스터디 만들기
+            </ButtonLink>
+            <ButtonLink href="/posts" size="lg">
+              먼저 둘러보기
+            </ButtonLink>
+          </CtaCard>
         </Section>
       </main>
 
