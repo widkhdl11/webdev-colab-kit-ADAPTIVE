@@ -22,16 +22,19 @@ import type { CreatedStudy } from "../api/insert-study";
 import {
   CAPACITY_MAX,
   CAPACITY_MIN,
+  DESCRIPTION_MAX,
   LOCATION_MAX,
   MEETING_MODES,
   MEETING_MODE_LABEL,
   SLOT_ROWS,
   SUMMARY_MAX,
   TITLE_MAX,
-} from "../model/limits";
+} from "@/entities/study/model/limits";
 
 /**
- * 상한과 어휘는 `model/limits.ts` 에서 온다 — 서버가 보는 값과 같은 자리다.
+ * 상한과 어휘는 `entities/study/model/limits.ts` 에서 온다 — 서버가 보는 값과 같은 자리다.
+ * **수정 폼도 같은 자리를 본다** — 기능끼리는 import 할 수 없어서 개설 기능 안에 두면
+ * 수정 폼이 값을 손으로 복사하게 된다 (2026-09-07).
  * 전에는 이 파일이 숫자와 목록을 다시 적고 있어서, 서버 상한을 낮추면 입력창만
  * 옛 값을 받는 상태가 됐다 (2026-09-06 code-reviewer).
  */
@@ -68,7 +71,7 @@ export function CreateStudyForm({
         </Field>
 
         <Field id="description" label="설명" required hint="누구와 무엇을 어떻게 할지 적어 주세요.">
-          <TextArea id="description" name="description" required placeholder="" />
+          <TextArea id="description" name="description" required maxLength={DESCRIPTION_MAX} />
         </Field>
 
         <FormSection title="분류와 장소">
@@ -160,7 +163,7 @@ export function CreateStudyForm({
 
         <FormSection
           title="모임 일정"
-          hint="요일과 시간이 홈의 주간 플래너에 그대로 그려집니다. 나중에 수정에서 늘릴 수 있습니다."
+          hint="요일과 시간이 홈의 주간 플래너에 그대로 그려집니다. 비워 둔 줄은 나중에 수정에서 채울 수 있습니다."
         >
           {SLOT_INDEXES.map((i) => (
             <FieldRow key={i} columns={3}>
@@ -174,10 +177,10 @@ export function CreateStudyForm({
                   ))}
                 </Select>
               </Field>
-              <Field id={`startsAt${i}`} label="시작">
+              <Field id={`startsAt${i}`} label={`${i + 1}번째 시작`}>
                 <TextInput id={`startsAt${i}`} name={`startsAt${i}`} type="time" />
               </Field>
-              <Field id={`endsAt${i}`} label="끝">
+              <Field id={`endsAt${i}`} label={`${i + 1}번째 끝`}>
                 <TextInput id={`endsAt${i}`} name={`endsAt${i}`} type="time" />
               </Field>
             </FieldRow>

@@ -1,24 +1,15 @@
 // 스터디 개설의 본체와 조립. 근거 스펙: docs/specs/auth-session.md (INV-A4) ·
-// docs/specs/write-authorization.md (INV-Z4 · Z8) · participation-capacity.md (INV-P3)
+// docs/specs/write-authorization.md (INV-Z4 · Z8 · Z15) · participation-capacity.md (INV-P3)
 //
 // "use server" 파일과 나눠 둔 이유는 features/create-post/api/insert-post.ts 와 같다.
 
 import { currentUser, requireSession } from "@/entities/session";
+import { readSlots } from "@/entities/study/model/slots";
+import { readStudyFields } from "@/entities/study/model/study-form";
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
 import type { ReadDeps } from "@/shared/lib/action-deps";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { dbErrorMessage } from "@/shared/lib/db-error";
-import { formText } from "@/shared/lib/form-text";
-import {
-  CAPACITY_MAX,
-  CAPACITY_MIN,
-  DESCRIPTION_MAX,
-  LOCATION_MAX,
-  MEETING_MODES,
-  SUMMARY_MAX,
-  TITLE_MAX,
-} from "../model/limits";
-import { readSlots } from "../model/slots";
 
 const DEFAULT_DEPS: ReadDeps = { createSupabase: createServerSupabase };
 
@@ -34,47 +25,9 @@ export async function insertStudy(
   form: FormData,
   createSupabase: typeof createServerSupabase = createServerSupabase,
 ): Promise<ActionResult<CreatedStudy>> {
-  const title = formText(form, "title");
-  const description = formText(form, "description");
-  const categoryId = formText(form, "categoryId");
-  const regionCode = formText(form, "regionCode");
-  const summary = formText(form, "summary");
-  const locationDetail = formText(form, "locationDetail");
-  const capacity = Number.parseInt(String(form.get("capacity") ?? ""), 10);
-  const meetingMode = String(form.get("meetingMode") ?? "offline");
-
-  if (!title) return { ok: false, message: "스터디 이름을 적어 주세요" };
-  if (title.length > TITLE_MAX) {
-    return { ok: false, message: `스터디 이름은 ${TITLE_MAX}자까지 적을 수 있습니다` };
-  }
-  if (summary && summary.length > SUMMARY_MAX) {
-    return { ok: false, message: `한 줄 소개는 ${SUMMARY_MAX}자까지 적을 수 있습니다` };
-  }
-  if (!description) return { ok: false, message: "어떤 스터디인지 설명을 적어 주세요" };
-  if (description.length > DESCRIPTION_MAX) {
-    return { ok: false, message: `설명은 ${DESCRIPTION_MAX}자까지 적을 수 있습니다` };
-  }
-  if (locationDetail && locationDetail.length > LOCATION_MAX) {
-    return { ok: false, message: `장소는 ${LOCATION_MAX}자까지 적을 수 있습니다` };
-  }
-  if (!categoryId) return { ok: false, message: "카테고리를 골라 주세요" };
-  if (!regionCode) return { ok: false, message: "지역을 골라 주세요" };
-  if (!Number.isInteger(capacity) || capacity < CAPACITY_MIN || capacity > CAPACITY_MAX) {
-    return {
-      ok: false,
-      message: `정원은 ${CAPACITY_MIN}명에서 ${CAPACITY_MAX}명 사이로 정해 주세요`,
-    };
-  }
-  if (!(MEETING_MODES as readonly string[]).includes(meetingMode)) {
-    return { ok: false, message: "진행 방식을 골라 주세요" };
-  }
-
-  const startsOn = formText(form, "startsOn");
-  const endsOn = formText(form, "endsOn");
-  // 데이터베이스 제약은 ends_on >= starts_on 이다 — 하루짜리 스터디는 정상이다.
-  if (startsOn && endsOn && endsOn < startsOn) {
-    return { ok: false, message: "끝나는 날이 시작하는 날보다 앞설 수 없습니다" };
-  }
+  // 칸의 규칙은 엔티티가 갖는다 — 수정 액션이 부르는 것과 같은 함수다.
+  const read = readStudyFields(form);
+  if (!read.ok) return { ok: false, message: read.message };
 
   // **일정을 데이터베이스에 가기 전에 본다.** 스터디를 먼저 만들고 나면 일정 실패를
   // 되돌릴 수 없고, 그때 나오는 것은 PostgreSQL 이 지은 영어 제약 위반 문장이다.
@@ -87,20 +40,7 @@ export async function insertStudy(
   // 접근 정책도 host_id = auth.uid() 를 요구하므로 여기서 틀리면 데이터베이스가 거부한다.
   const { data, error } = await supabase
     .from("studies")
-    .insert({
-      host_id: user.id,
-      title,
-      summary,
-      description,
-      category_id: categoryId,
-      region_code: regionCode,
-      location_detail: locationDetail,
-      meeting_mode: meetingMode,
-      max_participants: capacity,
-      starts_on: startsOn,
-      ends_on: endsOn,
-      recruit_until: formText(form, "recruitUntil"),
-    })
+    .insert({ host_id: user.id, ...read.fields })
     .select("id")
     .single();
 
@@ -121,7 +61,7 @@ export async function insertStudy(
     // 스터디는 이미 만들어졌다. 없던 일로 되돌릴 수는 없으므로(되돌리기도 쓰기라서 또
     // 실패할 수 있다) **성공으로 돌려주되 무엇이 빠졌는지를 같이 들려 보낸다.**
     if (slotError) {
-      return { ok: true, value: { id, slotError: dbErrorMessage("모임 일정 저장", slotError) } };
+      return { ok: true, value: { id, slotError: dbErrorMessage("모임 일정을 저장", slotError) } };
     }
   }
 

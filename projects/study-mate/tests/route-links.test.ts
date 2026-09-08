@@ -112,6 +112,7 @@ describe("화면이 들고 있는 경로는 있는 라우트를 가리킨다", (
       "/profile/password",
       "/signup",
       "/studies/[id]",
+      "/studies/[id]/edit",
       "/studies/create",
     ]);
   });

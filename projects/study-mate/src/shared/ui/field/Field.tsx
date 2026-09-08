@@ -107,7 +107,12 @@ export function FormActions({ children }: { children: ReactNode }) {
   return <div className={styles.section}>{children}</div>;
 }
 
-export function FormError({ message }: { message: string }) {
+/**
+ * 실패 문구. `message` 가 `ReactNode` 인 이유는 문장 안에 갈 곳을 링크로 넣는 자리가
+ * 생겼기 때문이다 — 「어디에서 다시 하라」를 위치로 말하면 화면 폭에 따라 틀린 말이 된다
+ * (2026-09-07 ui-reviewer).
+ */
+export function FormError({ message }: { message: ReactNode }) {
   return (
     <p className={styles.error} role="alert">
       {message}

@@ -6,6 +6,8 @@
 // 검사는 같은 슬라이스 안에서 원본을 직접 import 한다 — 여기를 거치지 않는다.
 
 import { readMyParticipations as readMyParticipationsImpl } from "./read-my-participations";
+import { readStudyForEdit as readStudyForEditImpl } from "./read-study-for-edit";
+import type { EditableStudy } from "./read-study-for-edit";
 import type { MyParticipation } from "./read-my-participations";
 import {
   readMyStudies as readMyStudiesImpl,
@@ -24,4 +26,8 @@ export function readMyStudies(userId: string): Promise<readonly MyStudy[]> {
 
 export function readMyParticipations(userId: string): Promise<readonly MyParticipation[]> {
   return readMyParticipationsImpl(userId);
+}
+
+export function readStudyForEdit(studyId: string, userId: string): Promise<EditableStudy | null> {
+  return readStudyForEditImpl(studyId, userId);
 }

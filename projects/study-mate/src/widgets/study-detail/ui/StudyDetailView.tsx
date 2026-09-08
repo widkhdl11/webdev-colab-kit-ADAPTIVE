@@ -1,8 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { categoryColor } from "@/entities/category";
-import { MEETING_MODE_LABEL } from "@/entities/post";
-import type { Member, StudyPage } from "@/entities/study";
+import { MEETING_MODE_LABEL, type Member, type StudyPage } from "@/entities/study";
 import { Avatar } from "@/shared/ui/avatar/Avatar";
 import { ButtonLink } from "@/shared/ui/button/Button";
 import { Card, CardDivider } from "@/shared/ui/card/Card";
@@ -211,6 +210,11 @@ export function StudyDetailView({
                     모집글을 올려야 목록에서 이 스터디를 만날 수 있습니다.
                   </p>
                 ) : null}
+                {/* 잉크 버튼은 한 패널에 하나다 — 수정은 언제나 테두리다.
+                    이 화면에서 스터디를 고치러 가는 문은 여기 하나뿐이다 */}
+                <ButtonLink href={`/studies/${study.id}/edit`} size="lg" block>
+                  스터디 수정
+                </ButtonLink>
               </div>
             ) : null}
 

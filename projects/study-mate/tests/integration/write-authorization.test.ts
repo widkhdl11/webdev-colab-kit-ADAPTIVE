@@ -1022,6 +1022,7 @@ describe("INV-Z12: 인가 판정 함수는 요청으로 부를 수 없다", () =
       "profile_username_from_meta",
       "study_accepted_count",
       "study_accepts_applications",
+      "study_is_editable",
       "study_is_recruiting",
       "study_is_visible",
     ]);
@@ -1541,5 +1542,226 @@ describe("INV-Z13: 프로필은 볼 이유가 있는 사람에게만 보인다",
         expect(ids.has(u.id), `${name}의 프로필이 나왔다`).toBe(false);
       }
     });
+  });
+});
+
+/**
+ * INV-Z15 — 스터디를 고치는 것은 호스트만. INV-Z16 — 지워진 스터디는 더 안 고쳐진다.
+ *
+ * **갈래를 따로 본다.** 스터디 행 자신과 딸린 요일·시간은 **강제 장치가 다르다** —
+ * 앞은 `studies_update_host` 정책이고 뒤는 `study_sessions` 의 삽입·삭제 정책이다.
+ * 한 검사로 묶으면 뒤쪽이 통째로 열려 있어도 「잡혔다」가 나온다. 2026-09-07 이전에
+ * 실제로 뒤쪽이 열려 있었다 — 그 정책들이 부르던 `private.is_study_host` 는 삭제 표시를
+ * 안 본다.
+ */
+describe("INV-Z15: 스터디를 고치는 것은 그 스터디의 호스트만", () => {
+  it("INV-Z15(실패경로 S22): 호스트가 아닌 사람의 갱신은 아무것도 안 바꾼다", async () => {
+    const s = await createStudy(host.id, { title: "원래 이름", max_participants: 5 });
+
+    await stranger.client
+      .from("studies")
+      .update({ title: "가로챈 이름", max_participants: 2 })
+      .eq("id", s);
+
+    const { data } = await admin
+      .from("studies")
+      .select("title, max_participants")
+      .eq("id", s)
+      .single();
+    expect(data!.title).toBe("원래 이름");
+    expect(data!.max_participants).toBe(5);
+  });
+
+  // **앱이 실제로 보내는 열한 칸을 그대로 싣는다.** 두 칸만 시험하면 `0002` 의 갱신 권한
+  // 목록에서 나머지를 빼도 전부 초록불인데, 그 상태의 제품은 **수정 화면의 저장이 100%
+  // 실패한다** — `readStudyFields` 는 언제나 열한 칸을 통째로 싣고, 열 권한은 정책보다
+  // 앞에서 요청을 통째로 떨어뜨린다 (2026-09-07 test-auditor).
+  it("INV-Z15(반대 절반 S22b): 호스트 자신은 앱이 보내는 열한 칸 전부로 갱신에 성공한다", async () => {
+    const s = await createStudy(host.id, { title: "원래 이름", max_participants: 5 });
+
+    const 열한칸 = {
+      title: "고친 이름",
+      summary: "고친 한 줄",
+      description: "고친 설명",
+      category_id: "language",
+      region_code: "busan",
+      location_detail: "서면역 카페",
+      meeting_mode: "hybrid",
+      max_participants: 7,
+      starts_on: "2026-10-01",
+      ends_on: "2026-12-31",
+      recruit_until: "2026-09-30",
+    };
+    const { error } = await host.client.from("studies").update(열한칸).eq("id", s);
+    expect(error).toBeNull();
+
+    const { data } = await admin
+      .from("studies")
+      .select(Object.keys(열한칸).join(", "))
+      .eq("id", s)
+      .single();
+    expect(data).toMatchObject(열한칸);
+  });
+
+  it("INV-Z15(실패경로 S22c): 호스트도 스터디를 남에게 넘길 수 없다", async () => {
+    const s = await createStudy(host.id);
+
+    // 열 단위 갱신 권한이 정책보다 **앞에서** 판정한다 — `host_id` 가 목록에 없으므로
+    // 요청이 통째로 거부되고, 같이 실은 제목도 안 바뀐다.
+    const { error } = await host.client
+      .from("studies")
+      .update({ title: "넘기면서 제목도", host_id: stranger.id })
+      .eq("id", s);
+    expect(error).not.toBeNull();
+
+    const { data } = await admin.from("studies").select("host_id, title").eq("id", s).single();
+    expect(data!.host_id).toBe(host.id);
+    expect(data!.title).toBe("테스트 스터디");
+  });
+
+  // **넣기와 지우기를 갈라 둔다.** 강제 장치가 정책 두 개로 따로 있으므로, 한 검사에
+  // 묶으면 지우기 정책이 통째로 열려도 넣기 쪽 단언이 대신 빨간불을 내서 변이 판정이
+  // 「잡혔다」가 된다 (2026-09-07 test-auditor · security-reviewer).
+  it("INV-Z15(실패경로 S22d): 남은 그 스터디에 요일·시간을 못 넣는다", async () => {
+    const s = await createStudy(host.id);
+
+    const ins = await stranger.client
+      .from("study_sessions")
+      .insert({ study_id: s, weekday: 3, starts_at: "10:00", ends_at: "12:00" });
+    expect(ins.error).not.toBeNull();
+
+    const { data: after } = await admin.from("study_sessions").select("id").eq("study_id", s);
+    expect(after).toHaveLength(0);
+  });
+
+  it("INV-Z15(실패경로 S22e): 남은 그 스터디의 요일·시간을 못 지운다", async () => {
+    const s = await createStudy(host.id);
+    const { data: slot } = await admin
+      .from("study_sessions")
+      .insert({ study_id: s, weekday: 1, starts_at: "19:00", ends_at: "21:00" })
+      .select("id")
+      .single();
+
+    await stranger.client.from("study_sessions").delete().eq("id", slot!.id as string);
+    const { data: after } = await admin.from("study_sessions").select("id").eq("study_id", s);
+    expect(after).toHaveLength(1);
+  });
+
+  it("INV-Z15(반대 절반): 호스트는 자기 스터디의 요일·시간을 넣고 지운다", async () => {
+    const s = await createStudy(host.id);
+
+    const ins = await host.client
+      .from("study_sessions")
+      .insert({ study_id: s, weekday: 2, starts_at: "20:00", ends_at: "22:00" })
+      .select("id")
+      .single();
+    expect(ins.error).toBeNull();
+
+    const del = await host.client.from("study_sessions").delete().eq("id", ins.data!.id as string);
+    expect(del.error).toBeNull();
+
+    const { data: after } = await admin.from("study_sessions").select("id").eq("study_id", s);
+    expect(after).toHaveLength(0);
+  });
+});
+
+describe("INV-Z16: 지워진 것으로 표시된 스터디는 더 이상 갱신되지 않는다", () => {
+  async function deletedStudy(): Promise<string> {
+    const s = await createStudy(host.id, { title: "지워질 스터디", max_participants: 5 });
+    await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
+    return s;
+  }
+
+  it("INV-Z16(실패경로 S23): 지워진 스터디는 호스트도 못 고친다", async () => {
+    const s = await deletedStudy();
+
+    await host.client.from("studies").update({ title: "되살아난 이름" }).eq("id", s);
+
+    const { data } = await admin.from("studies").select("title").eq("id", s).single();
+    expect(data!.title).toBe("지워질 스터디");
+  });
+
+  it("INV-Z16(실패경로 S23b): 되살리는 경로가 없다", async () => {
+    const s = await deletedStudy();
+
+    await host.client.from("studies").update({ deleted_at: null }).eq("id", s);
+
+    const { data } = await admin.from("studies").select("deleted_at").eq("id", s).single();
+    expect(data!.deleted_at).not.toBeNull();
+  });
+
+  it("INV-Z16(실패경로 S23c): 지워진 스터디에 요일·시간을 못 넣는다", async () => {
+    const s = await createStudy(host.id);
+    await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
+
+    const ins = await host.client
+      .from("study_sessions")
+      .insert({ study_id: s, weekday: 5, starts_at: "07:00", ends_at: "08:00" });
+    expect(ins.error).not.toBeNull();
+
+    const { data: after } = await admin.from("study_sessions").select("id").eq("study_id", s);
+    expect(after).toHaveLength(0);
+  });
+
+  it("INV-Z16(실패경로 S23f): 지워진 스터디의 요일·시간을 못 지운다", async () => {
+    const s = await createStudy(host.id);
+    const { data: slot } = await admin
+      .from("study_sessions")
+      .insert({ study_id: s, weekday: 4, starts_at: "07:00", ends_at: "08:00" })
+      .select("id")
+      .single();
+    await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
+
+    await host.client.from("study_sessions").delete().eq("id", slot!.id as string);
+    const { data: after } = await admin.from("study_sessions").select("id").eq("study_id", s);
+    expect(after).toHaveLength(1);
+  });
+
+  // INV-Z17 — 0017 이 쓰기만 좁히고 조회는 `using (true)` 로 남겨 둔 것을 0018 이 닫는다.
+  it("INV-Z17(실패경로 S24): 지워진 스터디의 요일·시간은 비로그인에게 안 보인다", async () => {
+    const s = await createStudy(host.id);
+    await admin
+      .from("study_sessions")
+      .insert({ study_id: s, weekday: 2, starts_at: "20:00", ends_at: "22:00" });
+    await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
+
+    const { data } = await anonClient().from("study_sessions").select("id").eq("study_id", s);
+    expect(data).toHaveLength(0);
+  });
+
+  it("INV-Z17(반대 절반 S24b): 지워지지 않은 스터디의 요일·시간은 비로그인에게 보인다", async () => {
+    const s = await createStudy(host.id);
+    await admin
+      .from("study_sessions")
+      .insert({ study_id: s, weekday: 3, starts_at: "10:00", ends_at: "12:00" });
+
+    // 정책이 조회를 통째로 막아 버려서 위 검사가 통과한 것이 아님을 보인다
+    const { data } = await anonClient().from("study_sessions").select("id").eq("study_id", s);
+    expect(data).toHaveLength(1);
+  });
+
+  it("INV-Z17(반대 절반 S24c): 호스트는 자기가 지운 스터디의 요일·시간을 계속 본다", async () => {
+    const s = await createStudy(host.id);
+    await admin
+      .from("study_sessions")
+      .insert({ study_id: s, weekday: 4, starts_at: "07:00", ends_at: "08:00" });
+    await admin.from("studies").update({ deleted_at: new Date().toISOString() }).eq("id", s);
+
+    // 「볼 수 있는가」는 호스트에게 참이다 (INV-Z11) — 좁히는 것과 뺏는 것은 다르다
+    const { data } = await host.client.from("study_sessions").select("id").eq("study_id", s);
+    expect(data).toHaveLength(1);
+  });
+
+  it("INV-Z16(반대 절반 S23d): 삭제 자신은 갱신이므로 통과해야 한다", async () => {
+    const s = await createStudy(host.id);
+
+    const { error } = await host.client
+      .from("studies")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", s);
+    expect(error).toBeNull();
+
+    const { data } = await admin.from("studies").select("deleted_at").eq("id", s).single();
+    expect(data!.deleted_at).not.toBeNull();
   });
 });

@@ -698,6 +698,109 @@ const MUTATIONS = {
       create policy participants_apply_self on public.participants for insert
         with check (user_id = (select auth.uid()) and status = 'pending');`,
   },
+  // -- 스터디 수정의 경계 (INV-Z15 · Z16, 0017) ----------------------------
+  // 갈래마다 따로 둔다. 스터디 행과 딸린 요일·시간은 **강제 장치가 다르므로**, 한 변이로
+  // 묶으면 뒤쪽이 통째로 열려 있어도 앞쪽 검사 덕에 「잡혔다」가 나온다.
+
+  "z15-studies-update-any-host": {
+    holds: "INV-Z15 — 남의 스터디는 못 고친다",
+    // 이름표를 S22 로 좁힌다. `INV-Z15` 로 두면 요일·시간 갈래(S22d)의 검사가 잡아도
+    // 「잡혔다」가 나와서, 스터디 행 쪽이 통째로 열린 상태를 못 가른다.
+    tag: "S22)",
+    sql: `
+      drop policy if exists studies_update_host on public.studies;
+      create policy studies_update_host on public.studies for update
+        using (deleted_at is null) with check (true);`,
+  },
+  "z15-sessions-write-any-host": {
+    holds: "INV-Z15 — 남의 스터디에는 요일·시간을 못 넣는다",
+    tag: "S22d",
+    sql: `
+      drop policy if exists sessions_write_host on public.study_sessions;
+      create policy sessions_write_host on public.study_sessions for insert
+        with check (true);`,
+  },
+  // 지우기 정책만 여는 변이가 없었다 — 넣기 쪽 변이 하나로 두 정책을 함께 판정하고 있었다
+  // (2026-09-07 security-reviewer · test-auditor). 이름표도 따로 단다.
+  "z15-sessions-del-any-host": {
+    holds: "INV-Z15 — 남의 스터디의 요일·시간을 못 지운다",
+    tag: "S22e",
+    sql: `
+      drop policy if exists sessions_del_host on public.study_sessions;
+      create policy sessions_del_host on public.study_sessions for delete
+        using (true);`,
+  },
+  "z16-studies-update-deleted": {
+    holds: "INV-Z16 — 지워진 스터디는 더 이상 갱신되지 않는다 (되살리기 포함)",
+    tag: "S23)",
+    sql: `
+      drop policy if exists studies_update_host on public.studies;
+      create policy studies_update_host on public.studies for update
+        using (host_id = (select auth.uid())) with check (host_id = (select auth.uid()));`,
+  },
+  "z16-with-check-blocks-delete": {
+    holds: "INV-Z16 — 삭제 자신은 갱신이므로 통과해야 한다 (반대 절반)",
+    // **이것이 「막는 것」과 「너무 막는 것」을 가르는 자리다.** 조건을 with check 에 넣으면
+    // 지워진 스터디의 갱신도 막히지만 **삭제 자신도 같이 막힌다** — 실패경로 검사 셋은
+    // 전부 초록불인 채로 제품에서는 스터디를 아무도 못 지우게 된다.
+    tag: "S23d",
+    sql: `
+      drop policy if exists studies_update_host on public.studies;
+      create policy studies_update_host on public.studies for update
+        using (host_id = (select auth.uid()) and deleted_at is null)
+        with check (host_id = (select auth.uid()) and deleted_at is null);`,
+  },
+  // 0017 이전의 상태 그대로다. `private.is_study_host` 는 삭제 표시를 아예 안 본다.
+  // **넣기와 지우기를 갈라 둔다** — 한 변이로 둘을 함께 되돌리면 그중 하나만 붙들려 있어도
+  // 「잡혔다」가 나온다 (2026-09-07 test-auditor).
+  "z16-sessions-write-ignores-deleted": {
+    holds: "INV-Z16 — 지워진 스터디에 요일·시간을 못 넣는다",
+    tag: "S23c",
+    sql: `
+      drop policy if exists sessions_write_host on public.study_sessions;
+      create policy sessions_write_host on public.study_sessions for insert
+        with check (private.is_study_host(study_id, (select auth.uid())));`,
+  },
+  "z16-sessions-del-ignores-deleted": {
+    holds: "INV-Z16 — 지워진 스터디의 요일·시간을 못 지운다",
+    tag: "S23f",
+    sql: `
+      drop policy if exists sessions_del_host on public.study_sessions;
+      create policy sessions_del_host on public.study_sessions for delete
+        using (private.is_study_host(study_id, (select auth.uid())));`,
+  },
+
+  "z17-sessions-read-open": {
+    holds: "INV-Z17 — 지워진 스터디의 요일·시간은 그 스터디를 볼 수 있는 사람에게만 보인다",
+    tag: "S24)",
+    // 0018 이전의 상태 그대로다. 조회만 열려 있으면 제목·설명은 안 나가도
+    // **스터디 id 와 모이는 요일·시각**은 비로그인에게 통째로 나간다.
+    sql: `
+      drop policy if exists sessions_read on public.study_sessions;
+      create policy sessions_read on public.study_sessions for select using (true);`,
+  },
+  "z17-sessions-read-logged-in-only": {
+    holds: "INV-Z17(반대 절반) — 좁히는 것과 뺏는 것은 다르다",
+    tag: "S24b",
+    // 「지워진 것을 감춘다」를 「로그인한 사람만 본다」로 잘못 좁힌 상태. 실패경로 검사는
+    // 그대로 초록불인데, 그 제품은 **비로그인에게 모집글의 요일·시간이 통째로 사라진다.**
+    sql: `
+      drop policy if exists sessions_read on public.study_sessions;
+      create policy sessions_read on public.study_sessions for select
+        using ((select auth.uid()) is not null);`,
+  },
+  "z17-sessions-read-hides-from-host": {
+    holds: "INV-Z17(반대 절반) — 호스트는 자기가 지운 스터디의 요일·시간을 계속 본다",
+    tag: "S24c",
+    // 「안 지워졌을 것」만 보면 호스트 갈래가 빠진다. INV-Z11 이 정한 「호스트는 자기가 지운
+    // 스터디의 명단과 모집글을 계속 본다」와 어긋나고, 수정 화면의 판독기도 빈 일정을 받는다.
+    sql: `
+      drop policy if exists sessions_read on public.study_sessions;
+      create policy sessions_read on public.study_sessions for select
+        using (exists (select 1 from public.studies s
+                        where s.id = study_id and s.deleted_at is null));`,
+  },
+
   "z14-post-insert-not-recruiting": {
     holds: "INV-Z14 — 모집 중이 아닌 스터디에는 새 모집글이 안 들어간다",
     sql: `
@@ -980,7 +1083,7 @@ const MUTATIONS = {
     suite: "unit",
     // 무한대가 아니라 **슬쩍 늘어나는** 모양으로 찍는다. 데이터베이스는 100 에서 거부한다.
     file: {
-      path: "src/features/create-study/model/limits.ts",
+      path: "src/entities/study/model/limits.ts",
       find: `export const CAPACITY_MAX = 100;`,
       replace: `export const CAPACITY_MAX = 1000;`,
     },
@@ -990,9 +1093,10 @@ const MUTATIONS = {
     tag: "진행 방식",
     suite: "unit",
     file: {
-      path: "src/features/create-study/api/insert-study.ts",
-      find: `      meeting_mode: meetingMode,`,
-      replace: `      meeting_mode: "offline",`,
+      // 칸 조립은 개설·수정이 함께 보는 entities/study/model/study-form.ts 로 옮겼다 (2026-09-07).
+      path: "src/entities/study/model/study-form.ts",
+      find: `      meeting_mode: meetingMode as MeetingMode,`,
+      replace: `      meeting_mode: "offline" as MeetingMode,`,
     },
   },
   "study-recruit-until-dropped": {
@@ -1000,8 +1104,8 @@ const MUTATIONS = {
     tag: "열두 칸",
     suite: "unit",
     file: {
-      path: "src/features/create-study/api/insert-study.ts",
-      find: `      recruit_until: formText(form, "recruitUntil"),`,
+      path: "src/entities/study/model/study-form.ts",
+      find: `      recruit_until: recruitUntil,`,
       replace: `      recruit_until: null,`,
     },
   },
@@ -1010,8 +1114,8 @@ const MUTATIONS = {
     suite: "unit",
     file: {
       path: "src/features/create-study/api/insert-study.ts",
-      find: `      host_id: user.id,`,
-      replace: `      host_id: "00000000-0000-4000-8000-000000000000",`,
+      find: `    .insert({ host_id: user.id, ...read.fields })`,
+      replace: `    .insert({ host_id: "00000000-0000-4000-8000-000000000000", ...read.fields })`,
     },
   },
   "study-raw-error-leaked": {
@@ -1029,8 +1133,8 @@ const MUTATIONS = {
     tag: "끝까지 읽는다",
     suite: "unit",
     file: {
-      path: "src/features/create-study/model/slots.ts",
-      find: `  for (let i = 0; i < SLOT_ROWS; i += 1) {`,
+      path: "src/entities/study/model/slots.ts",
+      find: `  for (let i = 0; i < SLOT_ROWS_MAX; i += 1) {`,
       replace: `  for (let i = 0; i < 1; i += 1) {`,
     },
   },
@@ -1039,7 +1143,7 @@ const MUTATIONS = {
     tag: "끝 시각이",
     suite: "unit",
     file: {
-      path: "src/features/create-study/model/slots.ts",
+      path: "src/entities/study/model/slots.ts",
       find: `    if (endsAt <= startsAt) {`,
       replace: `    if (endsAt < "") {`,
     },
@@ -1059,6 +1163,293 @@ const MUTATIONS = {
   // 갱신은 삽입과 실패 모양이 다르다. 삽입은 정책이 거부하면 오류가 오는데, **갱신은
   // 조건에 안 맞으면 오류 없이 0행이 온다** — 그래서 「남의 글을 고치려 했다」가 조용한
   // 성공으로 보고될 수 있는 자리가 여기 하나 더 있다.
+
+  "study-slots-reads-form-rows-only": {
+    holds: "서버가 폼의 기본 줄 수를 넘는 일정 줄도 읽는다",
+    tag: "기본 줄 수를 넘는 줄도 읽는다",
+    suite: "unit",
+    // 이 값을 `SLOT_ROWS` 로 되돌리면 **수정 화면에 보이던 넷째 줄이 제출과 동시에 사라진다**
+    // — 수정은 「보낸 줄이 곧 전부」라 안 읽힌 줄은 지워진 줄이 된다.
+    file: {
+      path: "src/entities/study/model/slots.ts",
+      find: `  for (let i = 0; i < SLOT_ROWS_MAX; i += 1) {`,
+      replace: `  for (let i = 0; i < SLOT_ROWS; i += 1) {`,
+    },
+  },
+  "study-slot-rows-clamped": {
+    holds: "수정 폼이 저장된 일정보다 적은 줄을 그리지 않는다",
+    tag: "그만큼 늘린다",
+    suite: "unit",
+    file: {
+      path: "src/entities/study/model/slots.ts",
+      find: `  return Math.min(SLOT_ROWS_MAX, Math.max(SLOT_ROWS, savedCount));`,
+      replace: `  return SLOT_ROWS;`,
+    },
+  },
+
+  // -- 스터디 수정 (유닛 스위트) ------------------------------------------
+  // 모집글 수정과 실패 모양이 같다(0행은 오류가 아니다). 다른 것은 **일정이 딸려 있다**는
+  // 것이고, 그래서 「본문은 저장됐는데 일정만 못 바꾼」 갈래가 하나 더 있다.
+
+  "edit-study-guard-dropped": {
+    holds: "INV-A4 — 스터디 수정은 세션이 없으면 아무것도 쓰지 않는다",
+    tag: "세션이 없으면 데이터베이스에 손도 대지 않고",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `  const guarded = requireSession(readUser, (user, form: FormData) =>`,
+      replace: `  const guarded = requireSession((async () => ({ id: "00000000-0000-4000-8000-000000000000" })), (user, form: FormData) =>`,
+    },
+  },
+  "edit-study-action-unguarded": {
+    holds: "INV-A4 — 배포되는 스터디 수정 액션이 가드를 거친다",
+    tag: "세션이 없으면 데이터베이스에 손도 대지 않고",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-study/api/edit-study.ts",
+      find: `const guarded = makeUpdateStudy();`,
+      replace: `const guarded = makeUpdateStudy((async () => ({ id: "00000000-0000-4000-8000-000000000000" })));`,
+    },
+  },
+  "edit-study-any-host": {
+    holds: "INV-Z15 — 갱신 대상을 「내가 여는 스터디」로 좁히는 조건이 실제로 걸린다",
+    tag: "「내가 여는 스터디」로 좁힌다",
+    suite: "unit",
+    // find·replace 를 한 줄로 두는 이유는 모집글 쪽과 같다 — 작업 트리가 CRLF 라
+    // 줄을 걸치면 깨끗한 소스에서도 안 맞는다.
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `    .eq("host_id", user.id)`,
+      replace: `    .eq("id", studyId) // 변이: 호스트 좁히기 제거`,
+    },
+  },
+  "edit-study-host-from-form": {
+    holds: "INV-Z4 — 누구의 스터디인지는 폼이 아니라 세션이 정한다",
+    tag: "폼이 아니라 세션이 정한다",
+    suite: "unit",
+    // 위 변이와 find 가 같지만 갈래가 다르다 — 저것은 좁히기가 통째로 사라지는 것이고
+    // 이것은 **폼 값이 인가에 쓰이는** 것이다.
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `    .eq("host_id", user.id)`,
+      replace: `    .eq("host_id", (form.get("hostId") as string) ?? user.id)`,
+    },
+  },
+  "edit-study-zero-rows-ok": {
+    holds: "INV-Z15 — 0행이 갱신된 것을 성공으로 보고하지 않는다",
+    tag: "0행이 오고",
+    suite: "unit",
+    // 조건이 아니라 **돌려주는 문구**를 바꾼다 — 조건만 끄면 그다음 줄이 null 에서 `.id` 를
+    // 읽어 TypeError 를 던지고, 그때 빨간불은 단언이 붙들어서가 아니라 터져서 난 것이다.
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `  if (!data) {`,
+      replace: `  if (!data) { return { ok: true, value: { id: studyId, slotError: null, slotsWiped: false } };`,
+    },
+  },
+  "edit-study-carries-host": {
+    holds: "INV-Z15 — 갱신에 호스트를 싣지 않는다",
+    tag: "정확히 열한 칸",
+    suite: "unit",
+    // 실으면 데이터베이스의 열 단위 갱신 권한 밖이라 요청이 통째로 거부된다 —
+    // 화면은 그대로인데 수정이 100% 죽는다.
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `    .update(read.fields)`,
+      replace: `    .update({ ...read.fields, host_id: form.get("hostId") })`,
+    },
+  },
+  "edit-study-revalidate-dropped": {
+    holds: "스터디 수정이 성공하면 고친 값이 나오는 화면 다섯을 다시 받게 한다 — 하나만 빠져도 잡힌다",
+    tag: "다시 받게",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: '      deps.revalidatePaths(`/studies/${result.value.id}`, "/posts", "/profile", "/", "/chats");',
+      replace: '      deps.revalidatePaths(`/studies/${result.value.id}`, "/posts", "/profile", "/chats");',
+    },
+  },
+  "edit-study-value-from-form": {
+    holds: "성공 값이 폼의 id 가 아니라 데이터베이스가 돌려준 id 다",
+    tag: "돌려준 id 를 값으로 준다",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `    value: { id: (data as { id: string }).id, slotError: sync.error, slotsWiped: sync.wiped },`,
+      replace: `    value: { id: studyId, slotError: sync.error, slotsWiped: sync.wiped },`,
+    },
+  },
+  "edit-study-slots-wipe-all": {
+    holds: "모임 일정은 바뀐 줄만 건드린다 — 통째로 갈아치우지 않는다",
+    tag: "지우지도 넣지도 않는다",
+    suite: "unit",
+    // 통째로 갈아치우면 **안 건드린 줄까지 지워졌다가 다시 들어간다.** 그 사이에 넣기가
+    // 실패하면 손대지도 않은 일정이 사라진다 — 이 변이가 없으면 그 상태가 초록불이다.
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `  const { toDelete, toInsert } = diffSlots((data ?? []) as SlotRow[], next);`,
+      replace: `  const toDelete = (data ?? []) as SlotRow[]; const toInsert = [...next];`,
+    },
+  },
+  "edit-study-slot-error-swallowed": {
+    holds: "일정 저장이 실패한 것을 조용히 성공으로 읽지 않는다",
+    tag: "무엇이 안 됐는지 같이 온다",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `  const sync = await syncSlots(supabase, studyId, slots.slots);`,
+      replace: `  await syncSlots(supabase, studyId, slots.slots); const sync = { error: null, wiped: false };`,
+    },
+  },
+  // 아래 넷은 이번 리뷰가 「아무도 안 붙들고 있다」고 지목한 갈래들이다 (2026-09-07).
+  "edit-study-slots-read-unscoped": {
+    holds: "일정을 읽을 때 그 스터디로 좁힌다",
+    tag: "일정을 읽을 때 그 스터디로 좁힌다",
+    suite: "unit",
+    // 조회 정책이 `using (true)` 라, 안 좁히면 **데이터베이스의 모든 스터디 일정**이
+    // 돌아오고 그것이 그대로 지울 목록이 된다.
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      // **replace 는 깨끗한 소스에 없는 문장이어야 한다.** 있으면 복구 패스(replace→find)가
+      // 손대지도 않은 줄을 바꿔 놓는다 — 2026-09-07 에 이 파일에서 실제로 났다.
+      find: `    .eq("study_id", studyId);`,
+      replace: `    .not("id", "is", null); // 변이: 스터디 좁히기 제거`,
+    },
+  },
+  "edit-study-slots-delete-unscoped": {
+    holds: "일정을 지울 때도 그 스터디로 좁힌다 — 겹쳐 건 방벽이다",
+    tag: "일정을 지울 때도 그 스터디로 좁힌다",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `      .eq("study_id", studyId)`,
+      replace: `      .not("id", "is", null) // 변이: 스터디 좁히기 제거`,
+    },
+  },
+  "edit-study-slots-insert-first": {
+    holds: "일정은 지우기가 넣기보다 먼저 나간다 — 유일 제약이 요일·시작 시각만 보기 때문이다",
+    tag: "지우기가 넣기보다 먼저 나간다",
+    suite: "unit",
+    // 순서를 뒤집으면 **끝 시각만 바꾼 줄이 영영 안 바뀐다** — 옛 줄이 남아 있어
+    // `study_sessions_unique` 에 걸리고, 거기서 반환하므로 지우기는 아예 안 돈다.
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `  if (toDelete.length > 0) {`,
+      replace: `  if (toInsert.length > 0) {
+    await supabase.from("study_sessions").insert(toInsert.map((s) => ({ ...s, study_id: studyId })));
+  }
+  if (toDelete.length > 0) {`,
+    },
+  },
+  "edit-study-slot-delete-error-swallowed": {
+    holds: "일정 지우기가 실패하면 거기서 멈춘다",
+    tag: "넣기는 안 나간다",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `    if (delError) return { error: dbErrorMessage("모임 일정을 저장", delError), wiped: false };`,
+      replace: `    void delError;`,
+    },
+  },
+  "edit-study-slots-wiped-hidden": {
+    holds: "지우기까지 끝난 뒤 넣기가 실패한 것을 「일정은 그대로」로 말하지 않는다",
+    tag: "지워진 상태라는 것을 값이 말한다",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-study/api/update-study.ts",
+      find: `      return { error: dbErrorMessage("모임 일정을 저장", insError), wiped: toDelete.length > 0 };`,
+      replace: `      return { error: dbErrorMessage("모임 일정을 저장", insError), wiped: false };`,
+    },
+  },
+  "study-form-date-shape-loose": {
+    holds: "날짜 셋의 모양을 보고 통과시킨다",
+    tag: "어느 칸인지 말하고 멈춘다",
+    suite: "unit",
+    // 안 보면 적힌 그대로 Postgres 로 가고, 그 오류 문장이 값을 되비쳐 로그에 찍힌다 —
+    // 값 안의 줄바꿈이 살아 있으므로 로그 한 줄을 지어낼 수 있다.
+    file: {
+      path: "src/entities/study/model/study-form.ts",
+      find: `    if (value && !DATE_SHAPE.test(value)) {`,
+      replace: `    if (false && value && !DATE_SHAPE.test(value)) {`,
+    },
+  },
+  "study-slot-time-shape-loose": {
+    holds: "시각의 모양을 보고 통과시킨다",
+    tag: "HH:MM 모양이 아니면",
+    suite: "unit",
+    // 모양을 안 보면 `"9:00"` 이 통과하고, 아래 글자 순서 비교가 뒤집혀 정상 값이
+    // 「끝이 시작보다 앞선다」로 거부된다. 아무 값이나 통과하는 갈래에서는 수정 경로가
+    // 지우기를 끝낸 뒤에 데이터베이스에서 거부돼 **있던 일정이 사라진다.**
+    file: {
+      path: "src/entities/study/model/slots.ts",
+      find: `    if (!TIME_SHAPE.test(startsAt) || !TIME_SHAPE.test(endsAt)) {`,
+      replace: `    if (false) {`,
+    },
+  },
+  "edit-study-reader-drops-recruit-until": {
+    holds: "수정 화면 판독기가 폼이 채우는 칸을 하나도 빠뜨리지 않는다",
+    tag: "하나도 빠뜨리지 않고 묻는다",
+    suite: "unit",
+    // 안 읽은 칸은 폼에서 빈칸이 되고, 수정은 「보낸 것이 곧 전부」라
+    // **손대지 않은 모집 마감일이 저장과 동시에 지워진다.**
+    file: {
+      path: "src/entities/study/api/read-study-for-edit.ts",
+      find: `meeting_mode, max_participants, starts_on, ends_on, recruit_until, accepted_count,`,
+      replace: `meeting_mode, max_participants, starts_on, ends_on, accepted_count,`,
+    },
+  },
+  "edit-study-form-fixed-rows": {
+    holds: "수정 폼이 저장된 일정만큼 줄을 그린다",
+    tag: "그만큼 늘려 그린다",
+    suite: "unit",
+    // 저장된 줄보다 적게 그리면 안 그려진 줄은 제출에 안 실리고, 서버는 「보낸 줄이 곧
+    // 전부」로 읽어 그 줄을 지운다 — 화면에 안 보인 것이 저장과 동시에 사라진다.
+    file: {
+      path: "src/features/edit-study/ui/EditStudyForm.tsx",
+      find: `  return Array.from({ length: slotFormRows(slots.length) }, (_, i) => {`,
+      replace: `  return Array.from({ length: 3 }, (_, i) => {`,
+    },
+  },
+  "edit-study-form-no-study-id": {
+    holds: "수정 폼이 어느 스터디를 고치는지 숨은 칸으로 싣는다",
+    tag: "숨은 칸으로 싣는다",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-study/ui/EditStudyForm.tsx",
+      find: `        <input type="hidden" name="studyId" value={study.id} />`,
+      replace: `        <input type="hidden" name="studyIdX" value={study.id} />`,
+    },
+  },
+  "edit-study-form-capacity-floor-constant": {
+    holds: "INV-P3 — 정원 입력칸의 하한이 지금 참여 인원이다",
+    tag: "하한이 지금 참여 인원이다",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-study/ui/EditStudyForm.tsx",
+      find: `  const floor = capacityFloor(study.filled);`,
+      replace: `  const floor = CAPACITY_MIN;`,
+    },
+  },
+  "edit-study-reader-any-host": {
+    holds: "INV-Z15 — 수정 화면 판독기가 「내가 여는 스터디」로 좁힌다",
+    tag: "「내가 여는 스터디」로 좁혀서 묻는다",
+    suite: "unit",
+    file: {
+      path: "src/entities/study/api/read-study-for-edit.ts",
+      find: `    .eq("host_id", userId)`,
+      replace: `    .eq("id", studyId) // 변이: 호스트 좁히기 제거`,
+    },
+  },
+  "edit-study-reader-shows-deleted": {
+    holds: "INV-Z16 — 지워진 스터디는 수정 화면도 안 연다",
+    tag: "지워진 스터디는 수정 화면도",
+    suite: "unit",
+    file: {
+      path: "src/entities/study/api/read-study-for-edit.ts",
+      find: `    .is("deleted_at", null)`,
+      replace: `    .eq("id", studyId) // 변이: 삭제 표시 필터 제거`,
+    },
+  },
 
   "edit-post-guard-dropped": {
     holds: "INV-A4 — 모집글 수정은 세션이 없으면 아무것도 쓰지 않는다",
@@ -1544,6 +1935,15 @@ const RESTORE_MIGRATIONS = [
   // 않아 지문이 어긋나고, 그 뒤의 변이가 전부 오염된 데이터베이스에서 판정된다.
   // 전부 `drop … if exists` + 조건 있는 update 라 다시 돌려도 결과가 같다.
   "0015_profile_editing.sql",
+  // 0017 은 0010 뒤여야 한다 — 0010 이 sessions_write_host·sessions_del_host 를 「호스트인가」
+  // 하나로 다시 걸고, 0017 이 뒤따라 돌아야 그것이 「호스트이고 안 지워졌는가」로 좁혀진다.
+  // 빠뜨리면 복구가 끝난 자리에 INV-Z16 의 구멍이 도로 열린 채로 남고, 그 뒤의 변이가
+  // 전부 그 상태에서 판정된다.
+  "0017_study_edit_guard.sql",
+  // 0018 은 0001 이 만든 sessions_read 를 다시 쓴다(`using (true)` → 「볼 수 있는 사람만」).
+  // 목록에 없으면 그 정책을 무력화한 변이가 안 돌아오고, 그 뒤의 변이가 전부 요일·시간이
+  // 통째로 열린 데이터베이스에서 판정된다.
+  "0018_sessions_read_scope.sql",
 ];
 
 /**

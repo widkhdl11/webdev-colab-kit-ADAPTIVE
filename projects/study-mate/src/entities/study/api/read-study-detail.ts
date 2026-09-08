@@ -1,4 +1,5 @@
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
+import { throwDbError } from "@/shared/lib/db-error";
 import type { MeetingMode, ParticipationStatus, Person } from "../model/study";
 
 export type Member = {
@@ -101,7 +102,10 @@ export async function readStudyPage(
     .eq("id", studyId)
     .maybeSingle();
 
-  if (error) throw new Error(`스터디를 읽지 못했다: ${error.message}`);
+  // **원문을 문구에 안 담는다** — 같은 슬라이스의 다른 판독기와 같은 처리다.
+  // 담으면 잘못된 주소 하나로 데이터베이스가 지은 문장(보낸 값이 그대로 되비친다)이
+  // 개발 오버레이와 로그로 나간다 (2026-09-07 security-reviewer).
+  if (error) throwDbError("스터디", error);
   if (!data) return null;
 
   const s = data as unknown as {

@@ -93,7 +93,7 @@ describe("어휘 두 벌이 데이터베이스와 같은지", () => {
   it("쓰기를 실제로 막는 목록도 같은 어휘다 — 읽기용 union 만 봐서는 안 된다", async () => {
     // 위 검사들은 **읽기용 타입**만 본다. 실제로 데이터베이스 쓰기를 막는 목록은 다른
     // 자리에 있고, 그것들은 2026-09-06 까지 이 대조 밖에 있었다 (code-reviewer):
-    //   · features/create-study/model/limits.ts 의 MEETING_MODES — 개설 폼과 서버가 함께 본다
+    //   · entities/study/model/limits.ts 의 MEETING_MODES — 개설·수정 폼과 서버가 함께 본다
     //   · features/manage-participants/model/transitions.ts 의 ALLOWED — 버튼과 서버가 함께 본다
     const { readFileSync } = await import("node:fs");
     const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf-8");
@@ -104,7 +104,7 @@ describe("어휘 두 벌이 데이터베이스와 같은지", () => {
       return [...(m as RegExpExecArray)[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]).sort();
     };
 
-    const limitsSource = read("../../src/features/create-study/model/limits.ts");
+    const limitsSource = read("../../src/entities/study/model/limits.ts");
     const transitionsSource = read("../../src/features/manage-participants/model/transitions.ts");
 
     expect(
