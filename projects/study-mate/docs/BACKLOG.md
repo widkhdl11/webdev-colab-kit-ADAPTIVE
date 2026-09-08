@@ -326,7 +326,7 @@
 ### 검사(테스트)의 빈칸
 
 - [ ] **조립 함수 두 개가 아직 옛 모양이다** (2026-09-06, code-reviewer) — `makeCreatePost`·`makeChangePassword` 가 위치 인자를 받는다. 나머지 여섯은 `shared/lib/action-deps.ts` 의 `ActionDeps`/`ReadDeps`/`PathDeps` 로 맞췄다. `makeChangePassword` 는 `createVerifier`/`createSession` 이 나뉜 것 자체가 INV-C2 라 이름을 접으면 안 되고, 별도 타입으로 두되 같은 정본에서 파생시키는 것이 맞다 · 되살릴 조건: 그 둘을 다시 손댈 때
-- [ ] **`study_sessions` 의 제약 둘을 통합 검사가 안 본다** (2026-09-06, security-reviewer·test-auditor) — 앱(`create-study/model/slots.ts`)이 시간 순서와 중복을 먼저 거르게 됐지만, **데이터베이스가 실제로 거부하는지**는 아무도 안 본다(`study_sessions_time_order`·`study_sessions_unique`). 앱의 검사가 사라져도 데이터가 안 깨진다는 근거가 없다 · 되살릴 조건: 다음 검사 보강 국면
+- [ ] **`study_sessions` 의 제약 둘을 통합 검사가 안 본다** (2026-09-06, security-reviewer·test-auditor) — 앱(`entities/study/model/slots.ts` — 2026-09-07 에 여기로 옮겼다)이 시간 순서·중복·시각 모양을 먼저 거르게 됐지만, **데이터베이스가 실제로 거부하는지**는 아무도 안 본다(`study_sessions_time_order`·`study_sessions_unique`). 앱의 검사가 사라져도 데이터가 안 깨진다는 근거가 없다 · 되살릴 조건: 다음 검사 보강 국면
 - [ ] **`db.테이블` 단언이 「쓰기 전에 아무것도 안 읽는다」를 우연처럼 고정한다** (2026-09-06, test-auditor) — 다섯 검사가 `toEqual(["participants"])` 식으로 표 접촉의 전체 순열을 박는다. 지금은 그것이 실제 설계 의도지만(서버 판정을 안 한다) 검사 이름에 안 적혀 있어서, 조회 하나를 앞에 붙이는 리팩터링이 들어오면 계약이 안 깨졌는데 빨간불이 난다 · 되살릴 조건: 그 액션들에 읽기가 필요해질 때
 - [ ] **`db-error.ts` 의 `23514` 판정이 문장 모양에 기댄다** (2026-09-06) — PostgreSQL 의 제약 위반 문장(`violates check constraint`)과 우리 트리거의 한국어 문장을 코드로는 못 가르므로 문장으로 가른다. 더 확실한 길은 제약 이름 → 한국어 문구 표를 두는 것이다 · 되살릴 조건: 새 검사 제약을 추가할 때
 
