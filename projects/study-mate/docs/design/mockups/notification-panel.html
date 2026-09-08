@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>알림 패널 · Study Mate 시안</title>
+
+<!--
+  시안(mockup) — Study Mate · 알림 패널
+  근거: projects/study-mate/docs/design/design-rules.md (status: approved)
+       projects/study-mate/docs/design/INTERVIEW.md 「6. 결론」(2026-09-08, 사람이 정한 넷)
+
+  · head · 헤더 · 푸터 · 공통 컴포넌트 CSS 는 승인된 시안 home.html 에서 그대로 가져왔다.
+    (아래 첫 <style> 블록은 home.html 23~207 행과 바이트까지 같다. 새로 짓지 않았다.)
+  · 비즈니스 로직·API·상태관리 없음. 자바스크립트도 없다 — 열림/닫힘은 각 블록을
+    이미 열린 모습으로 그려서 보여 준다.
+  · 이 시안이 처음 정하는 것: **떠 있는 면(패널)**. 승인된 세 언어(랜딩·목록·상세)는
+    전부 종이 위에 세로로 쌓이는 화면이라 뜬 면이 하나도 없었다.
+    새로 정한 값은 두 번째 <style> 블록에 「[새로 정함]」으로 표시했다.
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+
+<style>
+/* == 토큰: design-rules.md 「색」「형태와 깊이」「레이아웃」 그대로 ============ */
+:root{
+  --paper:#fcfaf6;          /* 종이 - 모든 면의 바탕. 2026-09-05 피드백("배경 살짝 옅게")으로 #f9f7f3 에서 +3 밝게. 따뜻함(R-B=6)은 그대로 두고 밝기만 올렸다 */
+  --rule:#ebe6dd;           /* 괘선 - 구분선·점선·트랙 */
+  --ink:#262019;            /* 잉크 - 텍스트·2px 테두리·주 버튼 채움 */
+  --ink-weak:#6f6656;       /* 약한 잉크 - 보조 텍스트·메타 (종이 위에서만 쓴다) */
+
+  --hl-yellow:#ffe24d;      /* 자격증/시험 */
+  --hl-mint:#5fe0bd;        /* 자기계발 · 모집중 */
+  --hl-coral:#ff8f7a;       /* 취미/라이프 · 마감 */
+  --hl-lavender:#c3b4ff;    /* 외국어 */
+  --hl-sky:#86c5ff;         /* IT/개발 */
+  --hl-orange:#ffb45c;      /* 학업/입시 */
+  --hl-lime:#b8e06a;        /* 비즈니스/금융 */
+  --hl-pink:#ff9ec4;        /* 디자인 */
+
+  --font-display:"Jua","Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-body:"Pretendard Variable",Pretendard,Geist,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,sans-serif;
+
+  --maxw:1120px;            /* 중앙 정렬 컨테이너 (새로 정한 값) */
+  --header-h:72px;          /* 헤더 높이 (새로 정한 값) */
+  --gap-grid:20px;          /* 카드 그리드 간격 (새로 정한 값) */
+  --r-card:18px;            /* 카드 - 큰 둥근 모서리 */
+  --r-btn:12px;             /* 버튼·태그 - 중간 둥글기 */
+  --r-tag:8px;
+  --bd:2px solid var(--ink);/* 테두리 우선(2px) */
+  --shadow:0 6px 16px rgba(80,66,44,.10);       /* 순검정 그림자 금지 -> 따뜻한 갈색 */
+  --shadow-lift:0 12px 26px rgba(80,66,44,.18);
+}
+
+/* == 리셋 ================================================================= */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--font-body);font-size:17px;line-height:1.7;   /* 본문 17px / 1.7 고정 */
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,p,dd,figure{margin:0}
+ul,ol,dl{margin:0;padding:0;list-style:none}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+svg{display:block}
+.num{font-variant-numeric:tabular-nums}                            /* 수치는 고정폭 숫자 */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* 포커스 - 제거하지 않는다 */
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:6px}
+
+.skip{position:absolute;left:-9999px;top:0}
+.skip:focus{left:16px;top:16px;z-index:200;background:var(--paper);color:var(--ink);
+  border:var(--bd);border-radius:var(--r-btn);padding:12px 18px;font-weight:700}
+
+.wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding:0 24px}
+@media (max-width:600px){.wrap{padding:0 18px}}
+
+/* 형광 밑줄 - 일반 강조는 굵기 + 형광 밑줄로 (형광 색면의 뜻은 design-rules 「형광펜 코딩 규칙」) */
+.mark{background:linear-gradient(transparent 58%,var(--hl-yellow) 58%);font-weight:700}
+
+.h-display{font-family:var(--font-display);font-weight:400;line-height:1.28;letter-spacing:-.01em}
+
+/* == 헤더 (3장 공통) ====================================================== */
+.site-header{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:var(--bd)}
+.header-inner{display:flex;align-items:center;gap:26px;min-height:var(--header-h)}
+.logo{font-family:var(--font-display);font-size:26px;line-height:1.1;padding:0 2px;
+  background:linear-gradient(transparent 70%,var(--hl-yellow) 70%)}
+.site-nav{display:flex;gap:22px}
+.site-nav a{font-size:16px;font-weight:600;padding:4px 2px;border-bottom:2px solid transparent}
+.site-nav a:hover{border-bottom-color:var(--ink)}
+.site-nav a[aria-current="page"]{font-weight:700;border-bottom-color:var(--ink)}
+.header-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.icon-btn{position:relative;width:44px;height:44px;display:grid;place-items:center;
+  background:var(--paper);border:var(--bd);border-radius:var(--r-btn)}
+.icon-btn:hover{background:var(--rule)}
+.icon-dot{position:absolute;top:-7px;right:-7px;min-width:21px;height:21px;padding:0 4px;
+  display:grid;place-items:center;border-radius:999px;background:var(--hl-coral);
+  border:2px solid var(--ink);font-size:11px;font-weight:700;line-height:1;color:var(--ink)}
+@media (max-width:640px){
+  .site-nav{display:none}   /* 모바일 네비 패턴은 아직 정하지 않았다 - 확인 포인트 */
+  .header-inner{gap:12px}
+  .logo{font-size:22px}
+}
+
+/* == 버튼 ================================================================= */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-weight:700;font-size:16px;line-height:1.2;padding:13px 22px;
+  border:var(--bd);border-radius:var(--r-btn);background:var(--paper);color:var(--ink);
+  transition:transform .12s ease,box-shadow .12s ease,background .12s ease}
+.btn-ink{background:var(--ink);color:var(--paper)}      /* 잉크 행동 규칙 - 주 행동 */
+.btn-ink:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift)}
+.btn-outline:hover{background:var(--rule);transform:translateY(-2px)}
+.btn-sm{padding:10px 16px;font-size:15px}
+.btn-lg{padding:16px 26px;font-size:17px}
+.btn-block{width:100%}
+.btn-wait{border-style:dashed;background:var(--paper)}   /* 신청함·대기 중 */
+.btn-joined{background:var(--hl-mint)}                   /* 참여 중 */
+
+/* == 뜻마다 모양이 다르다 - design-rules 「색이 겹치면 모양으로 가른다」 =========
+   카테고리=사각 라벨 / 모집 상태=알약+점 / 안 읽음=점 없는 숫자 알약 */
+.tag{display:inline-flex;align-items:center;font-size:13px;font-weight:700;line-height:1;
+  padding:7px 10px;border:var(--bd);border-radius:var(--r-tag);color:var(--ink)}
+.t-sky{background:var(--hl-sky)}
+.t-pink{background:var(--hl-pink)}
+.t-lavender{background:var(--hl-lavender)}
+.t-lime{background:var(--hl-lime)}
+.t-yellow{background:var(--hl-yellow)}
+.t-orange{background:var(--hl-orange)}
+.t-coral{background:var(--hl-coral)}
+.t-mint{background:var(--hl-mint)}
+
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;line-height:1;
+  padding:7px 13px;border:var(--bd);border-radius:999px;color:var(--ink)}
+.badge .dot{width:8px;height:8px;border-radius:999px;background:var(--ink)}
+.badge-open{background:var(--hl-mint)}
+.badge-closed{background:var(--hl-coral)}
+.badge-lg{font-size:15px;padding:9px 16px}
+
+/* == 형광펜 칩 (카테고리 필터) ============================================ */
+.chip{display:inline-flex;align-items:center;gap:9px;font-size:15px;font-weight:600;line-height:1;
+  padding:10px 15px;border:var(--bd);border-radius:999px;background:var(--paper);color:var(--ink);
+  transition:transform .12s ease,box-shadow .12s ease,background .12s ease}
+.chip .sw{width:12px;height:12px;border-radius:999px;border:2px solid var(--ink);background:var(--c,var(--rule));flex:none}
+.chip:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.chip[aria-pressed="true"]{background:var(--c);font-weight:700;box-shadow:var(--shadow)}
+.chip[aria-pressed="true"] .sw{background:var(--paper)}
+.chips-row{display:flex;flex-wrap:wrap;gap:10px}
+
+/* == 카드 ================================================================= */
+.card{background:var(--paper);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--shadow)}
+a.card{display:block;transition:transform .14s ease,box-shadow .14s ease}
+a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
+.card-body{padding:20px}
+.divider{border:0;border-top:2px dotted var(--rule);margin:16px 0}   /* 카드 내부 구분은 점선 괘선 */
+.card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.card-title{font-size:19px;font-weight:700;line-height:1.45;letter-spacing:-.01em}
+.card-desc{margin-top:8px;font-size:15px;line-height:1.65;color:var(--ink-weak);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-meta{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px 14px;font-size:14px;color:var(--ink-weak)}
+.card-meta span{display:inline-flex;align-items:center;gap:6px}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+.stats{display:flex;gap:16px;font-size:14px;color:var(--ink-weak)}
+.stat{display:inline-flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+
+.grid{display:grid;gap:var(--gap-grid);grid-template-columns:1fr}   /* 모바일 1열 */
+@media (min-width:660px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:1000px){.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* == 좌석 바 - 완전히 둥글게 ============================================== */
+.seat-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.seat-label{font-size:13px;font-weight:700;color:var(--ink-weak)}
+.seat-count{font-size:14px;font-weight:700}
+.bar{height:14px;border:var(--bd);border-radius:999px;background:var(--rule);overflow:hidden}
+.bar-fill{display:block;height:100%;border-radius:999px;background:var(--hl-mint)}
+.bar-fill.is-closed{background:var(--hl-coral)}
+.seat-lg .bar{height:18px}
+.seat-lg .seat-count{font-size:17px}
+
+/* == 섹션 ================================================================= */
+.section{padding:64px 0}
+.section-tight{padding:40px 0}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+.section-title{font-size:clamp(24px,3.4vw,32px)}
+.section-sub{margin-top:6px;font-size:15px;color:var(--ink-weak)}
+.link-more{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:700;
+  border-bottom:2px solid var(--ink);padding-bottom:2px}
+
+/* == 시안 전용 주석 상자 (제품 UI 아님) =================================== */
+.note{border:2px dashed var(--ink);border-radius:14px;padding:18px 20px;background:var(--paper)}
+.note-label{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;
+  border:var(--bd);border-radius:999px;padding:5px 11px;margin-bottom:12px}
+.note p{font-size:14px;line-height:1.65;color:var(--ink-weak)}
+
+/* == 푸터 ================================================================= */
+.site-footer{border-top:var(--bd);margin-top:24px;padding:34px 0 44px}
+.footer-inner{display:flex;flex-wrap:wrap;gap:18px 32px;align-items:flex-end;justify-content:space-between}
+.footer-logo{font-family:var(--font-display);font-size:22px}
+.footer-tag{font-size:15px;color:var(--ink-weak)}
+.footer-nav{display:flex;flex-wrap:wrap;gap:18px;font-size:15px;font-weight:600}
+.footer-nav a{border-bottom:2px solid transparent}
+.footer-nav a:hover{border-bottom-color:var(--ink)}
+.footer-note{margin-top:22px;padding-top:18px;border-top:2px dotted var(--rule);
+  font-size:14px;color:var(--ink-weak)}
+</style>
+<style>
+/* ===========================================================================
+   notification-panel.html 전용
+   여기 있는 값 중 design-rules.md 에 없는 것은 「[새로 정함]」으로 표시했다.
+   표시 없는 것은 승인된 값(카드 18px · 2px 잉크 테두리 · 점선 괘선 · 따뜻한 갈색
+   그림자 · 형광펜 코딩 규칙)을 그대로 옮긴 것이다.
+   =========================================================================== */
+
+/* -- 승인된 결정을 뒤늦게 반영 -------------------------------------------
+   복사해 온 home.html 의 헤더 CSS 는 2026-09-05 「모바일 헤더」 결정 이전 것이라
+   640px 아래에서 네비를 감춘다(display:none). 그 뒤 확정된 것은 「네비를 헤더 아래
+   한 줄로 내린다」이고 구현(src/widgets/site-header/ui/site-header.module.css)이
+   그 모양이다. 시안이 옛 모양을 들고 있으면 안 되므로 여기서 되돌린다. */
+@media (max-width:640px){
+  .header-inner{flex-wrap:wrap;padding-bottom:8px}
+  .site-nav{display:flex;order:3;width:100%;gap:18px;padding-top:8px;
+    border-top:2px dotted var(--rule)}
+}
+
+/* -- 패널이 열린 동안의 종 버튼 ------------------------------------------
+   [새로 정함] aria-expanded="true" 이면 괘선으로 채운다. hover 와 같은 채움이라
+   새 톤을 만들지 않는다. 아이콘(잉크)/괘선 = 12.97:1. */
+.icon-btn[aria-expanded="true"]{background:var(--rule)}
+
+/* == 떠 있는 면 ============================================================
+   [새로 정함] 이 시안이 처음 만드는 언어다.
+   - 테두리: 2px 잉크 - 「테두리 우선」 그대로. 뜬 면이라고 테두리를 빼지 않는다
+   - 둥글기: 18px - 카드와 같은 값. 패널은 「떠 있는 카드」지 새 부품이 아니다
+   - 그림자: --shadow-lift (0 12px 26px rgba(80,66,44,.18))
+     승인된 두 그림자 중 큰 쪽이다. 새 값을 만들지 않았다. 작은 쪽(--shadow, .10)은
+     종이에 붙어 있는 카드의 값이라, 실제로 들려 있는 면에는 약하다
+   - 바깥을 덮는 어두운 막(스크림)은 두지 않는다. 드롭다운은 바깥을 가리지 않는다 -
+     인터뷰에서 서랍(C)·모달(D)을 안 고른 것과 같은 근거다 */
+:root{
+  --shadow-float:var(--shadow-lift);  /* 이름만 다른 별칭. 값은 승인된 것 그대로 */
+  --panel-w:360px;                    /* [새로 정함] 인터뷰 4 */
+  --panel-gap:8px;                    /* [새로 정함] 헤더 아래 띄움 */
+}
+
+.notif-anchor{position:relative;display:inline-flex}
+
+/* 종 버튼(44px) 아래 -> 헤더 아래쪽 테두리까지 16px, 거기서 8px 더 띄운다 = 24px */
+.notif-drop{position:absolute;top:calc(100% + 24px);right:0;z-index:80}
+
+.notif{
+  width:var(--panel-w);
+  display:flex;flex-direction:column;
+  max-height:70vh;                       /* 넘치면 목록만 스크롤된다 */
+  background:var(--paper);
+  border:var(--bd);
+  border-radius:var(--r-card);
+  box-shadow:var(--shadow-float);
+  overflow:hidden;                       /* 둥근 모서리 안으로 목록을 자른다 */
+}
+
+/* -- 머리 ---------------------------------------------------------------- */
+.notif-head{
+  flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px 16px;background:var(--paper);
+  border-bottom:2px dotted var(--rule);   /* 카드 내부 구분은 점선 괘선 */
+}
+/* 「알림」은 작은 UI 글자다 - 주아체는 디스플레이에만이므로 Pretendard 굵게 */
+.notif-title{font-size:18px;font-weight:800;letter-spacing:-.01em}
+
+/* [새로 정함] 패널 머리의 작은 테두리 버튼. .btn-sm(15px / 10·16)보다 한 단 작다 */
+.notif-readall{
+  font-size:14px;font-weight:700;line-height:1;padding:8px 12px;
+  border:var(--bd);border-radius:var(--r-btn);
+  background:var(--paper);color:var(--ink);
+}
+.notif-readall:hover{background:var(--rule)}
+/* [새로 정함] 비활성 톤 - design-rules 에 없던 자리다. 새 색을 만들지 않고
+   테두리만 잉크에서 괘선으로 내리고 글자는 약한 잉크(종이 위 5.43:1)로 둔다. */
+.notif-readall:disabled{border-color:var(--rule);color:var(--ink-weak);cursor:not-allowed}
+
+/* -- 목록 ---------------------------------------------------------------- */
+.notif-list{
+  margin:0;padding:0;list-style:none;
+  overflow-y:auto;
+  overscroll-behavior:contain;   /* [새로 정함] 패널 끝에서 뒤 페이지가 밀리지 않게 */
+}
+.notif-list>li+li{border-top:2px dotted var(--rule)}
+
+/* [새로 정함] 줄의 여백 14/14, 왼쪽은 띠 4px + 12px = 16px */
+.n-row{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:14px 14px 14px 0;
+  background:var(--paper);
+  border-left:4px solid transparent;   /* 읽은 줄도 띠 자리를 남긴다 - 안 남기면 목록이 흔들린다 */
+}
+/* 인터뷰 결론 2 - 안 읽음 = 왼쪽 4px 코랄 세로 띠. 점도 색면도 쓰지 않는다.
+
+   [확인 필요] 코랄/종이 = 2.13:1 이다. 글자가 아니라 대비 하한은 3:1(비텍스트)인데
+   그것도 못 넘는다. 코랄이 형광펜이라 밝기가 종이에 가깝기 때문이고, 색을 바꾸면
+   「안 읽음은 코랄」이 깨진다. 그래서 이 시안은 안 읽음을 **셋으로** 말한다:
+   (1) 코랄 띠 (2) 문장이 잉크색 + 굵게 (3) 낭독기용 「안 읽음」 글자(.sr-only).
+   색만으로 구분하지 않으므로 정보는 전달되지만, 띠 하나만 놓고 보면 하한 미달이다.
+   띠에 잉크 윤곽을 두르거나 폭을 키우는 것은 사람이 정한 「4px 코랄 세로 띠」를
+   바꾸는 일이라 시안에서 임의로 하지 않았다 - 승인 때 같이 봐 주셔야 한다. */
+.n-row.is-unread{border-left-color:var(--hl-coral)}
+
+.n-link{flex:1 1 auto;min-width:0;display:block;padding-left:12px;color:inherit}
+/* 링크가 없는 줄(스터디가 지워짐) - 같은 자리를 쓰되 누를 수 없다 */
+.n-dead{flex:1 1 auto;min-width:0;display:block;padding-left:12px;cursor:default}
+
+.n-text{font-size:15px;line-height:1.55;font-weight:400;color:var(--ink-weak)}
+.n-row.is-unread .n-text{font-weight:600;color:var(--ink)}
+/* 스터디 제목은 읽은 줄에서도 잉크로 남는다 - 여기까지 흐려지면 어느 스터디인지
+   훑을 수 없다. 읽음/안 읽음은 띠와 나머지 문장의 무게가 가른다 */
+.n-text b{font-weight:700;color:var(--ink)}
+.n-time{margin-top:3px;font-size:13px;line-height:1.4;color:var(--ink-weak)}
+
+/* 만지면 살아난다 - 배경을 괘선으로 채우고 그 줄 글자를 전부 잉크로 올린다.
+   약한 잉크를 괘선 위에 두면 4.55:1 로 하한에 딱 붙으므로 색을 같이 올린다.
+   (hover 색은 computed-style 훑기가 못 잡는다 - 손으로 계산했다: 잉크/괘선 12.97:1) */
+.n-row:has(.n-link:hover){background:var(--rule)}
+.n-row:has(.n-link:hover) .n-text,
+.n-row:has(.n-link:hover) .n-time{color:var(--ink)}
+
+/* 포커스 링은 3px 잉크 실선 그대로. 다만 줄이 패널 폭에 꽉 차서 바깥 3px offset 이
+   패널 테두리 밖으로 잘리므로, 패널 안 줄에서만 안쪽(-3px)으로 넣는다 */
+.n-link:focus-visible,.n-dead:focus-visible{
+  outline:3px solid var(--ink);outline-offset:-3px;border-radius:6px}
+
+/* -- 링크 없는 줄 --------------------------------------------------------
+   [새로 정함] 문장은 그대로 남기고 스터디 이름에만 2px 잉크 취소선을 긋는다.
+   다이어리에서 끝난 줄에 줄을 긋는 것과 같은 어휘고, 색을 죽이지 않으므로 대비가
+   그대로다(잉크/종이 15.46:1). 낭독기에는 취소선이 안 읽히므로 아래 안내 문구가
+   같은 뜻을 글자로 맡는다. hover 에 아무 반응이 없는 것도 신호다. */
+.n-dead .n-name{font-weight:700;color:var(--ink);text-decoration:line-through;
+  text-decoration-thickness:2px;text-decoration-color:var(--ink)}
+.n-sep{padding:0 6px}
+
+/* -- 삭제(x) -------------------------------------------------------------
+   [새로 정함] 줄마다 테두리 상자가 뜨면 목록이 시끄러워지므로 기본은 테두리 없음.
+   hover·focus 에서만 2px 잉크 테두리가 나타난다. 마우스를 올려야 나타나는 방식이
+   아니다 - 아이콘 자체는 항상 보인다(터치에서도 누를 수 있다). */
+.n-del{
+  flex:none;width:34px;height:34px;margin-top:-2px;
+  display:grid;place-items:center;
+  border:2px solid transparent;border-radius:var(--r-btn);
+  background:transparent;color:var(--ink-weak);
+}
+.n-del:hover{border-color:var(--ink);background:var(--paper);color:var(--ink)}
+.n-del:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+/* -- 빈 상태 -------------------------------------------------------------
+   [새로 정함] 점선 괘선 원 + 종. 아바타(실선 2px + 괘선 채움)와 형태로 갈린다 */
+.notif-empty{padding:38px 24px 42px;text-align:center}
+.notif-empty-icon{width:56px;height:56px;margin:0 auto 14px;display:grid;place-items:center;
+  border:2px dashed var(--rule);border-radius:999px;color:var(--ink-weak)}
+.notif-empty h3{font-size:16px;font-weight:700}
+.notif-empty p{margin-top:6px;font-size:14px;line-height:1.6;color:var(--ink-weak)}
+
+/* == 시안 껍데기 (제품 UI 아님) ============================================ */
+.mock-head{padding:44px 0 6px}
+.mock-title{font-size:clamp(28px,4vw,42px)}
+.mock-sub{margin-top:16px;font-size:16px;line-height:1.7;color:var(--ink-weak);max-width:66ch}
+.block{padding:34px 0}
+.block+.block{border-top:2px dotted var(--rule)}
+.block-head{margin-bottom:20px}
+.block-no{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;
+  border:var(--bd);border-radius:var(--r-tag);padding:4px 9px;margin-bottom:10px}
+.block-title{font-size:23px;font-weight:800;letter-spacing:-.01em}
+.block-desc{margin-top:8px;font-size:15px;line-height:1.7;color:var(--ink-weak);max-width:70ch}
+
+/* 화면 조각 - 이 점선 틀은 제품에 없다. 「이만큼이 화면」이라는 표시일 뿐이다 */
+.stage{position:relative;overflow:hidden;background:var(--paper);
+  border:2px dashed var(--rule);border-radius:var(--r-card)}
+.stage .site-header{position:static}
+.stage-tall{height:760px}
+.stage-short{height:470px}
+.stage-back{padding:26px 0 0}
+.stage-back-title{font-size:22px;margin-bottom:16px}
+
+/* 블록 1 에서만 패널 높이를 픽셀로 묶는다 - 조각 안에서는 70vh 가 창 크기를 따라가
+   캡처마다 달라진다. 제품 값은 위 .notif 의 max-height:70vh 다 */
+.stage-tall .notif{max-height:640px}
+
+/* 나란히 놓는 자리(블록 2·4)에서는 패널만 흐름에 둔다 */
+.panel-row{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start}
+.panel-flow{position:static;box-shadow:var(--shadow-float)}
+
+/* 모바일 흉내 - iframe 없이 폭 고정 래퍼로 그린다 */
+.device{width:375px;max-width:100%;overflow:hidden;background:var(--paper);
+  border:var(--bd);border-radius:22px;box-shadow:var(--shadow)}
+.device .site-header{position:static;border-bottom:var(--bd)}
+.device .wrap{padding:0 18px}
+.device .header-inner{flex-wrap:wrap;gap:12px;min-height:auto;padding:10px 18px 8px}
+.device .logo{font-size:22px}
+.device .site-nav{display:flex;order:3;width:100%;gap:18px;padding-top:8px;
+  border-top:2px dotted var(--rule)}
+/* 640px 아래: 같은 카드가 폭만 화면 가득이 된다. 좌우 12px 만 남긴다 */
+.notif-full{position:static;width:auto;margin:8px 12px 16px;max-height:none;
+  box-shadow:var(--shadow-float)}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+
+<!-- ===== 공통 헤더 (승인된 시안 3장과 동일) =============================
+     이 헤더의 종은 **닫힌 상태**다(aria-expanded="false").
+     열린 모습은 아래 각 블록의 화면 조각 안에 있다. -->
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="logo" href="./home.html">Study Mate</a>
+
+    <nav class="site-nav" aria-label="주요 메뉴">
+      <a href="./posts.html">모집글 찾기</a>
+      <a href="#">스터디 개설</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="icon-btn" type="button" aria-label="알림, 안 읽음 3개"
+              aria-haspopup="dialog" aria-expanded="false">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="icon-dot num" aria-hidden="true">3</span>
+      </button>
+      <a class="btn btn-outline btn-sm" href="#">내 프로필</a>
+      <button class="btn btn-outline btn-sm" type="button">로그아웃</button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="wrap mock-head">
+    <h1 class="h-display mock-title">알림 패널 시안</h1>
+    <p class="mock-sub">
+      승인된 세 언어(랜딩·목록·상세)는 전부 종이 위에 세로로 쌓이는 화면이라 떠 있는 면이
+      하나도 없었습니다. 이 시안이 그 언어를 처음 만듭니다. 한 페이지에 같은 부품의 다섯
+      상태를 세로로 늘어놓았고, 자바스크립트는 쓰지 않았습니다 — 각 블록이 이미 열린 모습입니다.
+    </p>
+  </section>
+
+  <!-- =====================================================================
+       상태 1 — 패널이 열린 기본 상태
+       ===================================================================== -->
+  <section class="wrap block">
+    <div class="block-head">
+      <p class="block-no">상태 1</p>
+      <h2 class="block-title">패널이 열린 기본 상태</h2>
+      <p class="block-desc">
+        안 읽음 3줄 + 읽음 3줄. 알림 다섯 종류(신청·수락·거절·강퇴·나감)가 한 번씩 나옵니다.
+        패널은 종 바로 아래, 헤더 아래쪽 테두리에서 8px 떨어져 뜨고 폭은 360px 입니다.
+        뒤 화면은 어둡게 덮지 않습니다 — 드롭다운은 바깥을 가리지 않습니다.
+      </p>
+    </div>
+
+    <div class="stage stage-tall">
+
+      <!-- 헤더 조각. 페이지에 banner 랜드마크가 둘이 되지 않도록 header/nav 대신 div 다 -->
+      <div class="site-header">
+        <div class="wrap header-inner">
+          <a class="logo" href="./home.html">Study Mate</a>
+          <div class="site-nav">
+            <a href="./posts.html">모집글 찾기</a>
+            <a href="#">스터디 개설</a>
+          </div>
+
+          <div class="header-actions">
+            <div class="notif-anchor">
+              <button class="icon-btn" type="button" id="bell-1"
+                      aria-label="알림, 안 읽음 3개"
+                      aria-haspopup="dialog" aria-expanded="true" aria-controls="notif-1">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                <span class="icon-dot num" aria-hidden="true">3</span>
+              </button>
+
+              <!-- ========================================================
+                   role 은 dialog 다. menu 가 아니다.
+                   (1) menu 의 자식은 menuitem 이어야 하는데, 한 줄 안에 「줄 전체
+                       링크」와 「삭제」 둘이 들어간다. menuitem 안에 또 다른
+                       조작 요소를 넣을 수 없다.
+                   (2) menu 항목은 누르면 끝나는 「명령」이고, 여기 있는 것은 읽는
+                       콘텐츠(문장 + 시각)다.
+                   (3) 머리에 제목과 「전체 읽음」이 있고 목록이 스크롤된다. 메뉴가
+                       아니라 작은 창의 구조다.
+                   포커스가 패널 안에 갇히므로(인터뷰 4) aria-modal="true" 를 붙인다.
+                   ** aria-modal 은 실제로 열려 있는 하나에만 붙인다. 이 시안은 같은
+                      부품의 다섯 상태를 한 페이지에 늘어놓은 것이라 나머지 블록에는
+                      안 붙였다. **
+                   ======================================================== -->
+              <div class="notif notif-drop" role="dialog" id="notif-1"
+                   aria-modal="true" aria-labelledby="notif-1-title">
+
+                <div class="notif-head">
+                  <h3 class="notif-title" id="notif-1-title">알림</h3>
+                  <button class="notif-readall" type="button">전체 읽음</button>
+                </div>
+
+                <ul class="notif-list">
+
+                  <li>
+                    <div class="n-row is-unread">
+                      <a class="n-link" href="./post-detail.html">
+                        <span class="sr-only">안 읽음. </span>
+                        <p class="n-text"><b>토익 900 뿌시기</b>에 새 참가 신청이 왔습니다</p>
+                        <p class="n-time num">3분 전</p>
+                      </a>
+                      <button class="n-del" type="button" aria-label="알림 삭제: 토익 900 뿌시기에 새 참가 신청이 왔습니다">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+                      </button>
+                    </div>
+                  </li>
+
+                  <li>
+                    <div class="n-row is-unread">
+                      <a class="n-link" href="./post-detail.html">
+                        <span class="sr-only">안 읽음. </span>
+                        <p class="n-text"><b>알고리즘 스터디</b> 참가가 수락되었습니다</p>
+                        <p class="n-time num">1시간 전</p>
+                      </a>
+                      <button class="n-del" type="button" aria-label="알림 삭제: 알고리즘 스터디 참가가 수락되었습니다">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+                      </button>
+                    </div>
+                  </li>
+
+                  <li>
+                    <div class="n-row is-unread">
+                      <a class="n-link" href="./post-detail.html">
+                        <span class="sr-only">안 읽음. </span>
+                        <p class="n-text"><b>새벽 코딩</b>에서 내보내졌습니다</p>
+                        <p class="n-time">어제</p>
+                      </a>
+                      <button class="n-del" type="button" aria-label="알림 삭제: 새벽 코딩에서 내보내졌습니다">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+                      </button>
+                    </div>
+                  </li>
+
+                  <li>
+                    <div class="n-row">
+                      <a class="n-link" href="./post-detail.html">
+                        <p class="n-text"><b>토익 900 뿌시기</b>에서 한 명이 나갔습니다</p>
+                        <p class="n-time num">3일 전</p>
+                      </a>
+                      <button class="n-del" type="button" aria-label="알림 삭제: 토익 900 뿌시기에서 한 명이 나갔습니다">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+                      </button>
+                    </div>
+                  </li>
+
+                  <!-- 「거절됨」은 색도 형태도 주지 않는다(design-rules 2026-09-06).
+                       목록에서 빼지도 않는다. 다른 줄과 같은 모양으로 그냥 앉아 있다 -->
+                  <li>
+                    <div class="n-row">
+                      <a class="n-link" href="./post-detail.html">
+                        <p class="n-text"><b>독서모임</b> 참가가 거절되었습니다</p>
+                        <p class="n-time num">6일 전</p>
+                      </a>
+                      <button class="n-del" type="button" aria-label="알림 삭제: 독서모임 참가가 거절되었습니다">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+                      </button>
+                    </div>
+                  </li>
+
+                  <!-- 7일이 넘으면 상대 표기 대신 날짜 -->
+                  <li>
+                    <div class="n-row">
+                      <a class="n-link" href="./post-detail.html">
+                        <p class="n-text"><b>디자인 포트폴리오 스터디</b>에 새 참가 신청이 왔습니다</p>
+                        <p class="n-time num">9월 1일</p>
+                      </a>
+                      <button class="n-del" type="button" aria-label="알림 삭제: 디자인 포트폴리오 스터디에 새 참가 신청이 왔습니다">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+                      </button>
+                    </div>
+                  </li>
+
+                </ul>
+              </div>
+            </div>
+
+            <a class="btn btn-outline btn-sm" href="#">내 프로필</a>
+            <button class="btn btn-outline btn-sm" type="button">로그아웃</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 패널 뒤에 깔린 화면. 어둡게 덮지 않으므로 그대로 보인다 -->
+      <div class="stage-back">
+        <div class="wrap">
+          <h3 class="h-display stage-back-title">이번 주 새로 열린 스터디</h3>
+          <div class="grid">
+            <a class="card" href="./post-detail.html">
+              <div class="card-body">
+                <div class="card-top">
+                  <span class="tag t-yellow">자격증/시험</span>
+                  <span class="badge badge-open"><i class="dot" aria-hidden="true"></i>모집중</span>
+                </div>
+                <h4 class="card-title">토익 900 뿌시기 · 아침 6시 인증</h4>
+                <p class="card-desc">매일 아침 6시에 파트별 문제를 풀고 인증 사진을 남깁니다. 3주 뒤 정기 시험이 목표예요.</p>
+                <hr class="divider">
+                <div class="seat-head"><span class="seat-label">참여 인원</span><span class="seat-count num">4 / 6</span></div>
+                <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="4" aria-label="정원 6명 중 4명 참여"><span class="bar-fill" style="width:66%"></span></div>
+              </div>
+            </a>
+
+            <a class="card" href="./post-detail.html">
+              <div class="card-body">
+                <div class="card-top">
+                  <span class="tag t-sky">IT/개발</span>
+                  <span class="badge badge-open"><i class="dot" aria-hidden="true"></i>모집중</span>
+                </div>
+                <h4 class="card-title">알고리즘 스터디 · 주 3회 문제 풀이</h4>
+                <p class="card-desc">월·수·금 저녁에 두 문제씩 풀고 풀이를 서로 리뷰합니다. 코딩 테스트 준비반이에요.</p>
+                <hr class="divider">
+                <div class="seat-head"><span class="seat-label">참여 인원</span><span class="seat-count num">5 / 8</span></div>
+                <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="8" aria-valuenow="5" aria-label="정원 8명 중 5명 참여"><span class="bar-fill" style="width:62%"></span></div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       상태 2 — 링크가 없는 줄
+       ===================================================================== -->
+  <section class="wrap block">
+    <div class="block-head">
+      <p class="block-no">상태 2</p>
+      <h2 class="block-title">링크가 없는 줄 — 스터디가 지워졌을 때</h2>
+      <p class="block-desc">
+        문장은 그대로 남고, 스터디 이름에만 잉크 취소선이 그어집니다. 시각 옆에
+        「지워진 스터디예요. 열 수 없습니다」가 붙고, 마우스를 올려도 줄이 반응하지 않습니다.
+        마크업도 링크가 아니라 그냥 요소입니다(<code>a href</code> 를 쓰지 않았습니다).
+        아래 세 줄 중 마지막이 비교용으로 둔 평범한 줄입니다.
+      </p>
+    </div>
+
+    <div class="panel-row">
+      <div class="notif panel-flow" role="dialog" aria-labelledby="notif-2-title">
+        <div class="notif-head">
+          <h3 class="notif-title" id="notif-2-title">알림</h3>
+          <button class="notif-readall" type="button">전체 읽음</button>
+        </div>
+
+        <ul class="notif-list">
+          <li>
+            <div class="n-row is-unread">
+              <div class="n-dead">
+                <span class="sr-only">안 읽음. </span>
+                <p class="n-text"><span class="n-name">주말 러닝 크루</span> 참가가 수락되었습니다</p>
+                <p class="n-time">2시간 전<span class="n-sep" aria-hidden="true">·</span>지워진 스터디예요. 열 수 없습니다</p>
+              </div>
+              <button class="n-del" type="button" aria-label="알림 삭제: 주말 러닝 크루 참가가 수락되었습니다">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+              </button>
+            </div>
+          </li>
+
+          <li>
+            <div class="n-row">
+              <div class="n-dead">
+                <p class="n-text"><span class="n-name">영어 회화 모임</span>에서 한 명이 나갔습니다</p>
+                <p class="n-time">5일 전<span class="n-sep" aria-hidden="true">·</span>지워진 스터디예요. 열 수 없습니다</p>
+              </div>
+              <button class="n-del" type="button" aria-label="알림 삭제: 영어 회화 모임에서 한 명이 나갔습니다">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+              </button>
+            </div>
+          </li>
+
+          <li>
+            <div class="n-row">
+              <a class="n-link" href="./post-detail.html">
+                <p class="n-text"><b>알고리즘 스터디</b> 참가가 수락되었습니다</p>
+                <p class="n-time num">5일 전</p>
+              </a>
+              <button class="n-del" type="button" aria-label="알림 삭제: 알고리즘 스터디 참가가 수락되었습니다">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+              </button>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="note" style="max-width:38ch">
+        <p class="note-label">왜 취소선인가</p>
+        <p>
+          색을 죽이면 두 가지가 깨집니다. 문장을 약한 잉크로 내리면 「읽음」과 구분이
+          사라지고, 더 흐린 색을 새로 만들면 대비 하한(4.5:1)에 걸립니다. 취소선은
+          색을 건드리지 않으면서 「이건 이제 없다」를 형태로 말합니다 — 다이어리에서
+          끝난 줄에 줄을 긋는 것과 같은 어휘입니다.
+        </p>
+        <p style="margin-top:10px">
+          낭독기는 취소선을 읽지 않으므로, 같은 뜻을 시각 옆 안내 문구가 글자로 맡습니다.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       상태 3 — 안 읽은 것이 없는 상태
+       ===================================================================== -->
+  <section class="wrap block">
+    <div class="block-head">
+      <p class="block-no">상태 3</p>
+      <h2 class="block-title">안 읽은 것이 없는 상태</h2>
+      <p class="block-desc">
+        종 옆에 코랄 숫자 알약이 없고, 「전체 읽음」은 비활성입니다. 왼쪽 4px 띠 자리는
+        비어 있어도 그대로 남습니다 — 없애면 읽음/안 읽음이 섞였을 때 문장 시작점이
+        줄마다 어긋납니다.
+      </p>
+    </div>
+
+    <div class="stage stage-short">
+      <div class="site-header">
+        <div class="wrap header-inner">
+          <a class="logo" href="./home.html">Study Mate</a>
+          <div class="site-nav">
+            <a href="./posts.html">모집글 찾기</a>
+            <a href="#">스터디 개설</a>
+          </div>
+
+          <div class="header-actions">
+            <div class="notif-anchor">
+              <button class="icon-btn" type="button"
+                      aria-label="알림, 안 읽은 알림 없음"
+                      aria-haspopup="dialog" aria-expanded="true" aria-controls="notif-3">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              </button>
+
+              <div class="notif notif-drop" role="dialog" id="notif-3" aria-labelledby="notif-3-title">
+                <div class="notif-head">
+                  <h3 class="notif-title" id="notif-3-title">알림</h3>
+                  <!-- disabled 를 쓴다(aria-disabled 가 아니라). 안 읽은 것이 없다는
+                       사실은 종 옆 숫자 없음과 목록이 이미 말하므로, 이 버튼에 포커스가
+                       가지 않아도 잃는 정보가 없다 -->
+                  <button class="notif-readall" type="button" disabled>전체 읽음</button>
+                </div>
+
+                <ul class="notif-list">
+                  <li>
+                    <div class="n-row">
+                      <a class="n-link" href="./post-detail.html">
+                        <p class="n-text"><b>알고리즘 스터디</b> 참가가 수락되었습니다</p>
+                        <p class="n-time num">2일 전</p>
+                      </a>
+                      <button class="n-del" type="button" aria-label="알림 삭제: 알고리즘 스터디 참가가 수락되었습니다">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+                      </button>
+                    </div>
+                  </li>
+                  <li>
+                    <div class="n-row">
+                      <a class="n-link" href="./post-detail.html">
+                        <p class="n-text"><b>독서모임</b> 참가가 거절되었습니다</p>
+                        <p class="n-time num">4일 전</p>
+                      </a>
+                      <button class="n-del" type="button" aria-label="알림 삭제: 독서모임 참가가 거절되었습니다">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+                      </button>
+                    </div>
+                  </li>
+                  <li>
+                    <div class="n-row">
+                      <a class="n-link" href="./post-detail.html">
+                        <p class="n-text"><b>토익 900 뿌시기</b>에서 한 명이 나갔습니다</p>
+                        <p class="n-time num">8월 29일</p>
+                      </a>
+                      <button class="n-del" type="button" aria-label="알림 삭제: 토익 900 뿌시기에서 한 명이 나갔습니다">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+                      </button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <a class="btn btn-outline btn-sm" href="#">내 프로필</a>
+            <button class="btn btn-outline btn-sm" type="button">로그아웃</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       상태 4 — 빈 상태
+       ===================================================================== -->
+  <section class="wrap block">
+    <div class="block-head">
+      <p class="block-no">상태 4</p>
+      <h2 class="block-title">알림이 하나도 없을 때</h2>
+      <p class="block-desc">
+        머리는 그대로 두고(패널이 갑자기 다른 물건이 되지 않게) 목록 자리에 문구가 들어갑니다.
+        점선 괘선 원 안의 종은 아바타(실선 2px 테두리 + 괘선 채움)와 형태로 갈립니다.
+      </p>
+    </div>
+
+    <div class="panel-row">
+      <div class="notif panel-flow" role="dialog" aria-labelledby="notif-4-title">
+        <div class="notif-head">
+          <h3 class="notif-title" id="notif-4-title">알림</h3>
+          <button class="notif-readall" type="button" disabled>전체 읽음</button>
+        </div>
+
+        <div class="notif-empty">
+          <p class="notif-empty-icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          </p>
+          <h4>아직 알림이 없습니다</h4>
+          <p>참가 신청이 오거나 신청 결과가 정해지면 여기에 쌓입니다.</p>
+        </div>
+      </div>
+
+      <div class="note" style="max-width:38ch">
+        <p class="note-label">확인해 주세요</p>
+        <p>
+          설명 문구를 「참가 신청이 오거나 신청 결과가 정해지면 여기에 쌓입니다」로 썼습니다.
+          알림 다섯 종류를 하나로 묶은 말이라 강퇴·나감이 문장에 안 들어갑니다.
+          다섯을 다 적으면 길어져서, 사용자가 가장 자주 받을 둘만 골랐습니다.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       상태 5 — 모바일 (640px 아래)
+       ===================================================================== -->
+  <section class="wrap block">
+    <div class="block-head">
+      <p class="block-no">상태 5</p>
+      <h2 class="block-title">모바일 — 같은 카드가 폭만 화면 가득</h2>
+      <p class="block-desc">
+        시트도 모달도 서랍도 아닙니다. 같은 드롭다운이 좌우 12px 만 남기고 넓어집니다.
+        헤더는 승인된 모바일 헤더 그대로 네비가 아래 한 줄로 내려갑니다.
+        아래 틀은 375px 폭 래퍼로 흉내 낸 것입니다(iframe 을 쓰지 않았습니다).
+        로그아웃 버튼은 이 시안이 정하는 것이 아니라 생략했습니다.
+      </p>
+    </div>
+
+    <div class="device">
+      <div class="site-header">
+        <div class="wrap header-inner">
+          <a class="logo" href="./home.html">Study Mate</a>
+          <div class="header-actions">
+            <button class="icon-btn" type="button"
+                    aria-label="알림, 안 읽음 2개"
+                    aria-haspopup="dialog" aria-expanded="true" aria-controls="notif-5">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              <span class="icon-dot num" aria-hidden="true">2</span>
+            </button>
+            <a class="btn btn-outline btn-sm" href="#">내 프로필</a>
+          </div>
+          <div class="site-nav">
+            <a href="./posts.html">모집글 찾기</a>
+            <a href="#">스터디 개설</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 실제로는 헤더에 붙어 뜨는 absolute 면이다. 이 흉내 틀에서는 위치 관계
+           (헤더 아래 8px · 좌우 12px)를 그대로 보이게 흐름에 두었다 -->
+      <div class="notif notif-full" role="dialog" id="notif-5" aria-labelledby="notif-5-title">
+        <div class="notif-head">
+          <h3 class="notif-title" id="notif-5-title">알림</h3>
+          <button class="notif-readall" type="button">전체 읽음</button>
+        </div>
+
+        <ul class="notif-list">
+          <li>
+            <div class="n-row is-unread">
+              <a class="n-link" href="./post-detail.html">
+                <span class="sr-only">안 읽음. </span>
+                <p class="n-text"><b>토익 900 뿌시기</b>에 새 참가 신청이 왔습니다</p>
+                <p class="n-time num">3분 전</p>
+              </a>
+              <button class="n-del" type="button" aria-label="알림 삭제: 토익 900 뿌시기에 새 참가 신청이 왔습니다">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+              </button>
+            </div>
+          </li>
+          <li>
+            <div class="n-row is-unread">
+              <a class="n-link" href="./post-detail.html">
+                <span class="sr-only">안 읽음. </span>
+                <p class="n-text"><b>새벽 코딩</b>에서 내보내졌습니다</p>
+                <p class="n-time">어제</p>
+              </a>
+              <button class="n-del" type="button" aria-label="알림 삭제: 새벽 코딩에서 내보내졌습니다">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+              </button>
+            </div>
+          </li>
+          <li>
+            <div class="n-row">
+              <div class="n-dead">
+                <p class="n-text"><span class="n-name">주말 러닝 크루</span> 참가가 거절되었습니다</p>
+                <p class="n-time">5일 전<span class="n-sep" aria-hidden="true">·</span>지워진 스터디예요. 열 수 없습니다</p>
+              </div>
+              <button class="n-del" type="button" aria-label="알림 삭제: 주말 러닝 크루 참가가 거절되었습니다">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+              </button>
+            </div>
+          </li>
+          <li>
+            <div class="n-row">
+              <a class="n-link" href="./post-detail.html">
+                <p class="n-text"><b>독서모임</b> 참가가 거절되었습니다</p>
+                <p class="n-time num">6일 전</p>
+              </a>
+              <button class="n-del" type="button" aria-label="알림 삭제: 독서모임 참가가 거절되었습니다">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+              </button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       이 시안이 새로 정한 것 (승인되면 design-rules.md 로 간다)
+       ===================================================================== -->
+  <section class="wrap block">
+    <div class="note">
+      <p class="note-label">이 시안이 새로 정한 것</p>
+      <p>
+        <b>떠 있는 면</b> — 2px 잉크 테두리 · 둥글기 18px(카드와 같음) ·
+        그림자는 승인된 큰 쪽 <code>0 12px 26px rgba(80,66,44,.18)</code>.
+        새 색도 새 그림자 값도 만들지 않았습니다. 바깥을 덮는 어두운 막은 없습니다.
+      </p>
+      <p style="margin-top:10px">
+        <b>패널 안 줄</b> — 여백 14/14, 왼쪽은 띠 4px + 12px = 16px.
+        줄 사이는 2px 점선 괘선(카드 내부 구분 규칙 그대로). 머리도 같은 점선으로 갈립니다.
+      </p>
+      <p style="margin-top:10px">
+        <b>링크 없는 줄</b> — 스터디 이름에 2px 잉크 취소선 + 「지워진 스터디예요.
+        열 수 없습니다」 + hover 무반응 + <code>a href</code> 아님.
+      </p>
+      <p style="margin-top:10px">
+        <b>삭제(×)</b> — 기본은 테두리 없이 아이콘만(항상 보입니다), 마우스를 올리거나
+        포커스가 가면 2px 잉크 테두리가 나타납니다. 인터뷰 결론대로 한 번에 지워지고
+        확인 단계가 없습니다.
+      </p>
+      <p style="margin-top:10px">
+        <b>비활성 톤</b> — 「전체 읽음」이 비활성이면 테두리만 잉크에서 괘선으로 내리고
+        글자는 약한 잉크입니다. design-rules 에 비활성 톤이 없어서 이 시안이 처음 정합니다.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== 공통 푸터 (승인된 시안 3장과 동일) ===== -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-inner">
+      <div>
+        <p class="footer-logo">Study Mate</p>
+        <p class="footer-tag">함께 성장하는 스터디 문화</p>
+      </div>
+      <nav class="footer-nav" aria-label="푸터 메뉴">
+        <a href="#">서비스 소개</a>
+        <a href="./posts.html">모집글 찾기</a>
+        <a href="#">스터디 개설</a>
+        <a href="#">로그인</a>
+      </nav>
+    </div>
+    <p class="footer-note">
+      개인 포트폴리오로 만든 데모입니다. 화면에 보이는 스터디·사용자·수치는 모두 예시 데이터입니다.
+    </p>
+  </div>
+</footer>
+</body>
+</html>

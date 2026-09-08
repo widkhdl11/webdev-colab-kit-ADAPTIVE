@@ -1730,6 +1730,500 @@ const MUTATIONS = {
       replace: `export const TITLE_MAX = 800000;`,
     },
   },
+
+  // ── 알림 (INV-N1 ~ INV-N5) ────────────────────────────────────────────
+  //
+  // 강제 위치가 다섯 자리로 흩어져 있다 — 조회 정책 · 삽입 정책의 **부재** · 트리거의
+  // 수신자 판정 · 갱신/삭제 정책 · 열 단위 갱신 권한. 자리마다 따로 무력화한다.
+  // 묶으면 하나가 붙들리는 것으로 다섯이 붙들린 것처럼 보인다.
+
+  "n1-notifications-read-open": {
+    holds: "INV-N1 — 알림은 받는 사람만 본다",
+    tag: "그 스터디의 호스트여도",
+    sql: `drop policy if exists notifications_read_own on public.notifications;
+      create policy notifications_read_own on public.notifications for select using (true);`,
+    // 이 정책은 0001 에만 있다 — 복구 목록의 마이그레이션 재적용으로는 안 돌아온다.
+    undo: `drop policy if exists notifications_read_own on public.notifications;
+      create policy notifications_read_own on public.notifications for select
+        using (user_id = (select auth.uid()));`,
+  },
+
+  "n2-notifications-insert-open": {
+    holds: "INV-N2 — 알림은 사람이 만들 수 없다",
+    tag: "자기 앞으로도 알림을 못 넣는다",
+    // **계약이 「정책이 없다」이므로 변이는 정책을 하나 더한다.** 없는 것을 무력화하는
+    // 유일한 방법이 그것이다 — 빠뜨린 것과 일부러 안 둔 것은 겉이 같아서, 다음 사람이
+    // "삽입이 안 되네" 하고 이 정책을 만들어 넣는 것이 실제로 일어날 수 있는 변경이다.
+    sql: `create policy notifications_insert_any on public.notifications for insert
+        to authenticated with check (true);`,
+    undo: `drop policy if exists notifications_insert_any on public.notifications;`,
+  },
+
+  "n3-notify-swap-recipient": {
+    holds: "INV-N3 — 알림은 사건의 상대방에게 간다",
+    tag: "수락하면 알림은 신청자에게",
+    // **수락 갈래 하나만** 바꿈. 셋을 묶으면 하나가 붙들리는 것으로 셋이 붙들린 것처럼
+    // 보고된다 — 실제로 강퇴 갈래는 검사가 0개였는데 이 변이가 「잡혔다」로 나왔다
+    // (2026-09-08 test-auditor). 정책은 하나도 안 어기는데 그 안에 남의 일이 들어 있다.
+    guard: { schema: "public", fn: "notify_participation", md5: "eed8e875f764b06ab959f13f50d8b28a" },
+    sql: `      create or replace function public.notify_participation() returns trigger
+      language plpgsql security definer set search_path = '' as $fn$
+      declare
+        v_host  uuid;
+        v_title text;
+        v_type  text;
+        v_to    uuid;
+      begin
+        select host_id, title into v_host, v_title
+          from public.studies where id = new.study_id;
+        if not found then
+          return new;
+        end if;
+
+        if tg_op = 'INSERT' then
+          if new.status <> 'pending' then
+            return new;
+          end if;
+          v_type := 'participation_requested';
+          v_to   := v_host;
+        else
+          if new.status = old.status then
+            return new;
+          end if;
+          case new.status
+            when 'accepted'  then v_type := 'participation_accepted';  v_to := v_host;
+            when 'rejected'  then v_type := 'participation_rejected';  v_to := new.user_id;
+            when 'kicked'    then v_type := 'participation_kicked';    v_to := new.user_id;
+            when 'withdrawn' then v_type := 'participation_withdrawn'; v_to := v_host;
+            else return new;
+          end case;
+        end if;
+
+        if v_to = new.user_id and tg_op = 'UPDATE' and new.status = 'withdrawn' then
+          return new;
+        end if;
+
+        insert into public.notifications (user_id, type, title, reference_type, reference_id)
+          values (v_to, v_type, v_title, 'study', new.study_id);
+
+        return new;
+      end;
+      $fn$;`,
+  },
+
+  "n3-notify-host-selfjoin": {
+    holds: "INV-N3 — 스터디를 만든 호스트에게 자기 소식이 가지 않는다",
+    tag: "호스트 자신이 accepted 로",
+    // 스터디 생성 트리거가 호스트를 accepted 참여자로 넣는다(0001). 그 갈래를 안 건너뛰면
+    // 스터디를 만들 때마다 「참가가 수락되었습니다」가 자기 앞으로 하나씩 쌓인다.
+    guard: { schema: "public", fn: "notify_participation", md5: "eed8e875f764b06ab959f13f50d8b28a" },
+    sql: `      create or replace function public.notify_participation() returns trigger
+      language plpgsql security definer set search_path = '' as $fn$
+      declare
+        v_host  uuid;
+        v_title text;
+        v_type  text;
+        v_to    uuid;
+      begin
+        select host_id, title into v_host, v_title
+          from public.studies where id = new.study_id;
+        if not found then
+          return new;
+        end if;
+
+        if tg_op = 'INSERT' then
+          if new.status = 'pending' then
+            v_type := 'participation_requested';
+            v_to   := v_host;
+          else
+            v_type := 'participation_accepted';
+            v_to   := new.user_id;
+          end if;
+        else
+          if new.status = old.status then
+            return new;
+          end if;
+          case new.status
+            when 'accepted'  then v_type := 'participation_accepted';  v_to := new.user_id;
+            when 'rejected'  then v_type := 'participation_rejected';  v_to := new.user_id;
+            when 'kicked'    then v_type := 'participation_kicked';    v_to := new.user_id;
+            when 'withdrawn' then v_type := 'participation_withdrawn'; v_to := v_host;
+            else return new;
+          end case;
+        end if;
+
+        if v_to = new.user_id and tg_op = 'UPDATE' and new.status = 'withdrawn' then
+          return new;
+        end if;
+
+        insert into public.notifications (user_id, type, title, reference_type, reference_id)
+          values (v_to, v_type, v_title, 'study', new.study_id);
+
+        return new;
+      end;
+      $fn$;`,
+  },
+
+  "n4-notifications-update-open": {
+    holds: "INV-N4 — 남의 알림을 읽음으로 바꿀 수 없다",
+    tag: "남의 알림은 읽음으로",
+    sql: `drop policy if exists notifications_update_own on public.notifications;
+      create policy notifications_update_own on public.notifications for update
+        using (true) with check (true);`,
+    undo: `drop policy if exists notifications_update_own on public.notifications;
+      create policy notifications_update_own on public.notifications for update
+        using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));`,
+  },
+
+  "n4-notifications-delete-open": {
+    holds: "INV-N4 — 남의 알림을 지울 수 없다",
+    tag: "남의 알림은 못 지운다",
+    sql: `drop policy if exists notifications_delete_own on public.notifications;
+      create policy notifications_delete_own on public.notifications for delete using (true);`,
+    undo: `drop policy if exists notifications_delete_own on public.notifications;
+      create policy notifications_delete_own on public.notifications for delete
+        using (user_id = (select auth.uid()));`,
+  },
+
+  "n3-notify-kick-to-host": {
+    holds: "INV-N3 — 강퇴 알림은 강퇴당한 사람에게 간다",
+    tag: "강퇴도 그 사람에게",
+    // 강퇴 갈래만 뒤집는다. 그러면 강퇴당한 사람은 아무 소식도 못 받고, 호스트 앞으로
+    // 「내보내졌습니다」가 쌓인다 — 자기 알림 안에 남의 일이 들어 있는 상태다.
+    guard: { schema: "public", fn: "notify_participation", md5: "eed8e875f764b06ab959f13f50d8b28a" },
+    sql: `      create or replace function public.notify_participation() returns trigger
+      language plpgsql security definer set search_path = '' as $fn$
+      declare
+        v_host  uuid;
+        v_title text;
+        v_type  text;
+        v_to    uuid;
+      begin
+        select host_id, title into v_host, v_title
+          from public.studies where id = new.study_id;
+        if not found then
+          return new;
+        end if;
+
+        if tg_op = 'INSERT' then
+          if new.status <> 'pending' then
+            return new;
+          end if;
+          v_type := 'participation_requested';
+          v_to   := v_host;
+        else
+          if new.status = old.status then
+            return new;
+          end if;
+          case new.status
+            when 'accepted'  then v_type := 'participation_accepted';  v_to := new.user_id;
+            when 'rejected'  then v_type := 'participation_rejected';  v_to := new.user_id;
+            when 'kicked'    then v_type := 'participation_kicked';    v_to := v_host;
+            when 'withdrawn' then v_type := 'participation_withdrawn'; v_to := v_host;
+            else return new;
+          end case;
+        end if;
+
+        if v_to = new.user_id and tg_op = 'UPDATE' and new.status = 'withdrawn' then
+          return new;
+        end if;
+
+        insert into public.notifications (user_id, type, title, reference_type, reference_id)
+          values (v_to, v_type, v_title, 'study', new.study_id);
+
+        return new;
+      end;
+      $fn$;`,
+  },
+
+  "n3-notify-withdraw-to-self": {
+    holds: "INV-N3 — 탈퇴 알림은 호스트에게 간다",
+    tag: "멤버가 스스로 나가면 알림은 호스트에게",
+    guard: { schema: "public", fn: "notify_participation", md5: "eed8e875f764b06ab959f13f50d8b28a" },
+    sql: `      create or replace function public.notify_participation() returns trigger
+      language plpgsql security definer set search_path = '' as $fn$
+      declare
+        v_host  uuid;
+        v_title text;
+        v_type  text;
+        v_to    uuid;
+      begin
+        select host_id, title into v_host, v_title
+          from public.studies where id = new.study_id;
+        if not found then
+          return new;
+        end if;
+
+        if tg_op = 'INSERT' then
+          if new.status <> 'pending' then
+            return new;
+          end if;
+          v_type := 'participation_requested';
+          v_to   := v_host;
+        else
+          if new.status = old.status then
+            return new;
+          end if;
+          case new.status
+            when 'accepted'  then v_type := 'participation_accepted';  v_to := new.user_id;
+            when 'rejected'  then v_type := 'participation_rejected';  v_to := new.user_id;
+            when 'kicked'    then v_type := 'participation_kicked';    v_to := new.user_id;
+            when 'withdrawn' then v_type := 'participation_withdrawn'; v_to := new.user_id;
+            else return new;
+          end case;
+        end if;
+
+        if v_to = new.user_id and tg_op = 'UPDATE' and new.status = 'withdrawn' then
+          return new;
+        end if;
+
+        insert into public.notifications (user_id, type, title, reference_type, reference_id)
+          values (v_to, v_type, v_title, 'study', new.study_id);
+
+        return new;
+      end;
+      $fn$;`,
+  },
+
+  "n3-notify-no-selfwithdraw-skip": {
+    holds: "INV-N3 — 호스트가 스스로 나가면 자기에게 알림이 안 간다",
+    tag: "스스로 나가면 알림이 안 생긴다",
+    // 건너뛰는 블록을 통째로 뺀다.
+    guard: { schema: "public", fn: "notify_participation", md5: "eed8e875f764b06ab959f13f50d8b28a" },
+    sql: `      create or replace function public.notify_participation() returns trigger
+      language plpgsql security definer set search_path = '' as $fn$
+      declare
+        v_host  uuid;
+        v_title text;
+        v_type  text;
+        v_to    uuid;
+      begin
+        select host_id, title into v_host, v_title
+          from public.studies where id = new.study_id;
+        if not found then
+          return new;
+        end if;
+
+        if tg_op = 'INSERT' then
+          if new.status <> 'pending' then
+            return new;
+          end if;
+          v_type := 'participation_requested';
+          v_to   := v_host;
+        else
+          if new.status = old.status then
+            return new;
+          end if;
+          case new.status
+            when 'accepted'  then v_type := 'participation_accepted';  v_to := new.user_id;
+            when 'rejected'  then v_type := 'participation_rejected';  v_to := new.user_id;
+            when 'kicked'    then v_type := 'participation_kicked';    v_to := new.user_id;
+            when 'withdrawn' then v_type := 'participation_withdrawn'; v_to := v_host;
+            else return new;
+          end case;
+        end if;
+
+        insert into public.notifications (user_id, type, title, reference_type, reference_id)
+          values (v_to, v_type, v_title, 'study', new.study_id);
+
+        return new;
+      end;
+      $fn$;`,
+  },
+
+  "n2-notify-invoker": {
+    holds: "INV-N2 — 알림을 만드는 것은 security definer 트리거뿐이다",
+    tag: "참가 신청은 알림 행을 실제로 만든다",
+    // **`security definer` 만 뺀다.** 그러면 트리거가 호출자 권한으로 돌고, 알림 표에는
+    // 삽입 정책이 없으므로 42501 이 난다 — 트리거가 실패하면서 **참여자 삽입 자체가
+    // 롤백된다.** 그 상태의 제품은 참가 신청·수락·거절·강퇴·탈퇴가 전부 죽는다.
+    // 관리 연결로만 넣는 검사는 RLS 를 우회해서 이 갈래를 절대 못 본다.
+    guard: { schema: "public", fn: "notify_participation", md5: "eed8e875f764b06ab959f13f50d8b28a" },
+    sql: `      create or replace function public.notify_participation() returns trigger
+      language plpgsql set search_path = '' as $fn$
+      declare
+        v_host  uuid;
+        v_title text;
+        v_type  text;
+        v_to    uuid;
+      begin
+        select host_id, title into v_host, v_title
+          from public.studies where id = new.study_id;
+        if not found then
+          return new;
+        end if;
+
+        if tg_op = 'INSERT' then
+          if new.status <> 'pending' then
+            return new;
+          end if;
+          v_type := 'participation_requested';
+          v_to   := v_host;
+        else
+          if new.status = old.status then
+            return new;
+          end if;
+          case new.status
+            when 'accepted'  then v_type := 'participation_accepted';  v_to := new.user_id;
+            when 'rejected'  then v_type := 'participation_rejected';  v_to := new.user_id;
+            when 'kicked'    then v_type := 'participation_kicked';    v_to := new.user_id;
+            when 'withdrawn' then v_type := 'participation_withdrawn'; v_to := v_host;
+            else return new;
+          end case;
+        end if;
+
+        if v_to = new.user_id and tg_op = 'UPDATE' and new.status = 'withdrawn' then
+          return new;
+        end if;
+
+        insert into public.notifications (user_id, type, title, reference_type, reference_id)
+          values (v_to, v_type, v_title, 'study', new.study_id);
+
+        return new;
+      end;
+      $fn$;`,
+  },
+
+  "n8-count-ignores-read": {
+    holds: "INV-N8 — 종 옆 숫자는 안 읽은 것만 센다",
+    tag: "세는 조건은 「읽은 시각이 비어 있다」다",
+    suite: "unit",
+    // 세는 쪽의 조건을 뺀다. 숫자가 읽은 것까지 세어, 패널을 열기 전 화면이
+    // 「숫자 3, 열면 안 읽음 0」이 된다 — INV-N8 의 위반 문장 그대로다.
+    file: {
+      path: "src/entities/notification/api/read-unread-count.ts",
+      find: "      .is(\"read_at\", null);",
+      replace: "      ;",
+    },
+  },
+
+  "n8-reader-oldest-first": {
+    holds: "INV-N8 — 목록은 최근 것부터 담는다",
+    tag: "안 읽은 것부터 담는다",
+    suite: "unit",
+    // 시간 정렬을 뒤집는다. 알림이 100개가 넘는 사람에게 **가장 오래된 100줄**이
+    // 나가고 새 알림이 패널에서 사라진다.
+    file: {
+      path: "src/entities/notification/api/read-my-notifications.ts",
+      find: "    .order(\"created_at\", { ascending: false })",
+      replace: "    .order(\"created_at\", { ascending: true })",
+    },
+  },
+
+  "n5-markall-sends-more-columns": {
+    holds: "INV-N5 — 전체 읽음이 보내는 값도 read_at 하나뿐이다",
+    tag: "안 읽은 것만 대상이고",
+    suite: "unit",
+    // 열을 하나 얹는다. 0019 의 열 권한이 요청을 통째로 거부해서 「전체 읽음」이
+    // 영영 실패하는데, 화면에는 「잠시 뒤 다시」로만 보인다.
+    file: {
+      path: "src/features/manage-notifications/api/notification-ops.ts",
+      find: "    .update({ read_at: new Date().toISOString() })\n    .is(\"read_at\", null);",
+      replace: "    .update({ read_at: new Date().toISOString(), type: \"x\" })\n    .is(\"read_at\", null);",
+    },
+  },
+
+  "n6-sentence-tail-wrong": {
+    holds: "INV-N6 — 거절 알림은 거절되었다고 적는다",
+    tag: "종류마다 무엇이라고 적는지",
+    suite: "unit",
+    // 거절의 꼬리말을 수락으로 바꿔 둔다. 「서로 다르다」만 보는 검사로는 안 걸린다.
+    file: {
+      path: "src/entities/notification/model/notification.ts",
+      find: "  participation_rejected: \" 참가가 거절되었습니다\",",
+      replace: "  participation_rejected: \" 참가가 수락되었습니다.\",",
+    },
+  },
+
+  "n4-bell-form-key-drift": {
+    holds: "INV-N4 — 패널이 보내는 폼 칸 이름과 액션이 읽는 이름이 같다",
+    tag: "액션이 실제로 읽는 칸 이름으로",
+    suite: "unit",
+    // 칸 이름을 바꾼다. 패널 검사는 진짜 상수를 쓰고 액션 검사는 문자열을 쓰므로
+    // 한쪽이 빨간불이 된다 — 그게 이 상수를 뽑아낸 이유다.
+    file: {
+      path: "src/features/manage-notifications/model/fields.ts",
+      find: "export const NOTIFICATION_ID_FIELD = \"notificationId\";",
+      replace: "export const NOTIFICATION_ID_FIELD = \"id\";",
+    },
+  },
+
+  // ── 알림 화면·액션 (INV-N5 · INV-N7 · INV-N8) ─────────────────────────
+  //
+  // 위 일곱은 데이터베이스 쪽 강제 장치다. 아래 다섯은 앱 쪽 자리 — 판독기가 링크를
+  // 정하는 곳, 패널이 그 값을 지키는 곳, 액션이 헤더를 다시 그리게 하는 곳.
+
+  "n7-reader-links-everything": {
+    holds: "INV-N7 — 지금 안 보이는 스터디에는 링크를 안 건다",
+    tag: "보이는 스터디를 가리킬 때만",
+    suite: "unit",
+    // 지워진 스터디를 가리키는 알림에도 주소가 붙는다. 누르지 않아도 미리 가져오기가
+    // 404 를 만드는 상태다.
+    file: {
+      path: "src/entities/notification/api/read-my-notifications.ts",
+      find: "    const 보인다 = 스터디를가리킨다 && lookup.ok && lookup.visible.has(row.reference_id as string);",
+      replace: "    const 보인다 = 스터디를가리킨다;",
+    },
+  },
+
+  "n7-panel-links-dead-row": {
+    holds: "INV-N7 — 주소가 없는 줄은 링크로 그리지 않는다",
+    tag: "주소가 없는 줄은 링크가 아니다",
+    suite: "unit",
+    // 판독기가 「주소 없음」을 돌려줘도 화면이 링크로 그린다. 강제 위치가 둘이라
+    // 판독기 변이와 따로 둔다 — 묶으면 한쪽만 붙들려도 둘 다 잡힌 것처럼 보인다.
+    file: {
+      path: "src/widgets/site-header/ui/NotificationBell.tsx",
+      find: "          <div className={styles.dead}>{문장}</div>",
+      replace: "          <Link className={styles.link} href=\"/\">{문장}</Link>",
+    },
+  },
+
+  "n8-badge-ignores-list": {
+    holds: "INV-N8 — 종 옆 숫자는 패널이 그리는 안 읽음 줄에서 나온다",
+    tag: "숫자가 패널이 그리는 안 읽음 줄 수와 같아진다",
+    suite: "unit",
+    // 숫자가 목록과 무관하게 서버 값에 고정된다. 읽음 처리를 해도 안 줄어든다 —
+    // 「패널은 비었는데 숫자는 3」이 정확히 이 상태다.
+    file: {
+      path: "src/widgets/site-header/ui/NotificationBell.tsx",
+      find: "  const unread = items === null ? unreadCount : countUnread(items);",
+      replace: "  const unread = unreadCount;",
+    },
+  },
+
+  "n8-action-skips-revalidate": {
+    holds: "INV-N8 — 알림을 바꾸면 헤더를 다시 그리게 한다",
+    tag: "헤더를 다시 그리게 한다",
+    suite: "unit",
+    // 액션은 성공하는데 헤더가 옛 숫자를 들고 남는다. 다른 화면으로 넘어가야 맞춰진다.
+    file: {
+      path: "src/features/manage-notifications/api/notification-ops.ts",
+      find: "      if (result.ok) deps.revalidateHeader();",
+      replace: "      if (!result.ok) deps.revalidateHeader();",
+    },
+  },
+
+  "n5-mark-read-sends-more-columns": {
+    holds: "INV-N5 — 읽음 처리가 보내는 값은 read_at 하나뿐이다",
+    tag: "보내는 값은 read_at 하나뿐이다",
+    suite: "unit",
+    // 읽음 처리에 다른 열을 얹는다. 0019 의 열 권한이 요청을 통째로 거부하므로 제품은
+    // 「읽음 처리가 안 되는」 상태가 되는데, 그 실패는 화면에서 「잠시 뒤 다시」로만 보인다.
+    file: {
+      path: "src/features/manage-notifications/api/notification-ops.ts",
+      find: "    .update({ read_at: new Date().toISOString() })\n    .eq(\"id\", id)",
+      replace: "    .update({ read_at: new Date().toISOString(), type: \"x\" })\n    .eq(\"id\", id)",
+    },
+  },
+
+  "n5-notifications-columns": {
+    holds: "INV-N5 — 만들어진 알림의 내용은 바뀌지 않는다",
+    tag: "종류를 못 바꾼다",
+    // 0019 가 좁힌 것을 도로 연다. 접근 정책은 그대로인데(받는 사람만 본다) 그 판정을
+    // 통과한 갱신이 type·title 을 요청이 보낸 값으로 바꾼다.
+    sql: `grant update on public.notifications to authenticated;`,
+  },
 };
 
 /**
@@ -1944,6 +2438,10 @@ const RESTORE_MIGRATIONS = [
   // 목록에 없으면 그 정책을 무력화한 변이가 안 돌아오고, 그 뒤의 변이가 전부 요일·시간이
   // 통째로 열린 데이터베이스에서 판정된다.
   "0018_sessions_read_scope.sql",
+  // 0019 는 0001·0002 가 열어 둔 알림 표의 갱신 권한을 read_at 한 열로 좁힌다. 목록에
+  // 없으면 `n5-notifications-columns` 가 심은 「표 전체 갱신」이 안 돌아오고, 그 뒤의
+  // 변이가 전부 알림을 마음대로 고칠 수 있는 데이터베이스에서 판정된다.
+  "0019_notification_update_scope.sql",
 ];
 
 /**

@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { Container } from "@/shared/ui/container/Container";
-import { BellIcon } from "@/shared/ui/icon/Icon";
 import { Button, ButtonLink } from "@/shared/ui/button/Button";
 import { signOutAction } from "@/features/auth";
+import { NotificationBell } from "./NotificationBell";
 import styles from "./site-header.module.css";
 
 /**
- * 모든 화면의 머리. 알림은 별도 페이지가 없고(IA.md) 종 아이콘에 패널이 달린다 —
- * 패널 자체는 로그인 뒤 화면을 만들 때 붙인다.
+ * 모든 화면의 머리. 알림은 별도 페이지가 없고(IA.md) 종 아이콘에 패널이 달린다.
+ *
+ * **종 옆 숫자를 여기서 그리지 않는다.** 서버가 센 값을 패널에 넘기고, 패널이 목록을
+ * 불러온 뒤로는 그 목록에서 센 값이 숫자가 된다(INV-N8) — 숫자와 화면이 따로 놀 자리를
+ * 없애려는 것이다.
  */
 export function SiteHeader({
   signedIn = false,
@@ -37,20 +40,7 @@ export function SiteHeader({
         <div className={styles.actions}>
           {signedIn ? (
             <>
-              <Link
-                className={styles.iconBtn}
-                href="/profile"
-                aria-label={
-                  unreadCount > 0 ? `알림, 안 읽음 ${unreadCount}개` : "알림, 안 읽은 알림 없음"
-                }
-              >
-                <BellIcon />
-                {unreadCount > 0 ? (
-                  <span className={`${styles.dot} num`} aria-hidden="true">
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
-                ) : null}
-              </Link>
+              <NotificationBell unreadCount={unreadCount} />
               <ButtonLink href="/profile" size="sm">
                 내 프로필
               </ButtonLink>

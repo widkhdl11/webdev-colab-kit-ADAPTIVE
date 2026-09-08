@@ -1,0 +1,269 @@
+/*
+ * 알림 패널 — design-rules 「2026-09-08 확정 — 알림 패널: 떠 있는 면」.
+ * 값의 정본은 그 문서이고 여기는 그것을 그린다.
+ */
+
+.anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+/* 열려 있는 동안 종 버튼을 괘선으로 채운다 — hover 와 같은 채움이라 새 톤이 없다 */
+.anchor button[aria-expanded="true"] {
+  background: var(--rule);
+}
+
+.panel {
+  position: absolute;
+  /* 종 버튼(44px) 아래 → 헤더 아래쪽 테두리까지, 거기서 8px 더 띄운다 */
+  top: calc(100% + var(--space-24));
+  right: 0;
+  z-index: 80;
+  /* 폭 360px. 좁은 화면에서는 같은 카드가 폭만 줄어 화면에 맞는다 —
+     시트도 전체 화면도 만들지 않는다(여는 방식을 하나만 배우게 한다). */
+  width: min(360px, calc(100vw - var(--space-24)));
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  background: var(--paper);
+  border: var(--bd);
+  border-radius: var(--r-card);
+  /* 승인된 그림자 둘 중 큰 쪽. 새 값을 만들지 않는다 */
+  box-shadow: var(--shadow-lift);
+  overflow: hidden;
+}
+
+.panel:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-14) var(--space-16);
+  background: var(--paper);
+  /* 카드 내부 구분은 점선 괘선 */
+  border-bottom: 2px dotted var(--rule);
+}
+
+/* 「알림」은 작은 UI 글자다 — 주아체는 디스플레이에만 */
+.title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.readAll {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  padding: var(--space-8) var(--space-12);
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.readAll:hover:not(:disabled) {
+  background: var(--rule);
+}
+
+/* 비활성 톤 — 새 색을 만들지 않고 테두리만 괘선으로 내린다 */
+.readAll:disabled {
+  border-color: var(--rule);
+  color: var(--ink-weak);
+  cursor: not-allowed;
+}
+
+.state {
+  padding: var(--space-16);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-weak);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  /* 패널 끝까지 스크롤했을 때 뒤 페이지가 밀리지 않게 */
+  overscroll-behavior: contain;
+}
+
+.list > li + li {
+  border-top: 2px dotted var(--rule);
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  padding: var(--space-14) var(--space-14) var(--space-14) 0;
+  background: var(--paper);
+  /* 읽은 줄도 띠 자리를 남긴다 — 안 남기면 문장 시작점이 줄마다 어긋난다 */
+  border-left: 4px solid transparent;
+}
+
+.isUnread {
+  border-left-color: var(--hl-coral);
+}
+
+.link,
+.dead {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block;
+  padding-left: var(--space-12);
+}
+
+.link {
+  color: inherit;
+}
+
+.dead {
+  cursor: default;
+}
+
+.text {
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--ink-weak);
+}
+
+.isUnread .text {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* 스터디 이름은 읽은 줄에서도 잉크다 — 여기까지 흐려지면 어느 스터디인지 훑을 수 없다 */
+.name {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 누를 수 없는 줄: 이름에만 취소선. 색은 그대로라 대비가 안 떨어진다 */
+.dead .name {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--ink);
+}
+
+.time {
+  margin-top: var(--space-4);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-weak);
+}
+
+.sep {
+  padding: 0 var(--space-6);
+}
+
+/* 만지면 배경이 괘선으로 채워지고 그 줄 글자가 전부 잉크로 올라간다 —
+   약한 잉크를 괘선 위에 두면 4.55:1 로 하한에 딱 붙는다 */
+.row:has(.link:hover) {
+  background: var(--rule);
+}
+
+.row:has(.link:hover) .text,
+.row:has(.link:hover) .time {
+  color: var(--ink);
+}
+
+/* 줄이 패널 폭에 꽉 차서 바깥 offset 이 패널 테두리 밖에서 잘린다 → 안쪽으로 */
+.link:focus-visible,
+.dead:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: -3px;
+  /* 전역 :focus-visible 과 같은 6px. 카드·태그의 둥글기가 아니라 포커스 링의 값이다 */
+  border-radius: 6px;
+}
+
+/* 줄마다 테두리 상자가 뜨면 목록이 시끄러워지므로 기본은 테두리 없음.
+   아이콘 자체는 항상 보인다 — 마우스를 올려야 나타나면 터치에서 못 누른다 */
+.del {
+  flex: none;
+  width: var(--space-34);
+  height: var(--space-34);
+  margin-top: -2px;
+  display: grid;
+  place-items: center;
+  border: 2px solid transparent;
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--ink-weak);
+}
+
+.del:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.del:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* 점선 괘선 원 + 종. 아바타(실선 2px + 괘선 채움)와 형태로 갈린다 */
+.empty {
+  /* 시안 값 그대로. 아래가 더 넓은 비대칭이 시안의 판단이다 */
+  padding: 38px var(--space-24) 42px;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto var(--space-14);
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--rule);
+  border-radius: var(--r-pill);
+  color: var(--ink-weak);
+}
+
+.empty h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.empty p {
+  margin-top: var(--space-6);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-weak);
+}
+
+
+/*
+ * 좁은 화면 — 패널을 **헤더 폭에 맞춘다.**
+ *
+ * 여기서 `.anchor` 의 `position: relative` 를 뗀다. 그러면 패널이 자리를 잡는 기준이
+ * 종 버튼이 아니라 sticky 인 헤더가 되고, 좌우를 12px 로 물릴 수 있다.
+ *
+ * **안 떼면 화면 왼쪽으로 잘려 나간다.** 640px 아래에서는 헤더가 두 줄로 접히면서 종
+ * 버튼이 화면 오른쪽 끝에 안 붙는데, 패널은 그 버튼의 오른쪽 끝에 맞춰 왼쪽으로 360px 를
+ * 뻗는다. 390px 화면에서 실제로 왼쪽 끝이 -203px 였다 — 가로 스크롤도 안 생기므로
+ * (화면 밖 왼쪽은 스크롤을 만들지 않는다) 잘린 것을 아무도 못 본다. 2026-09-08 브라우저 실측.
+ */
+@media (max-width: 640px) {
+  .anchor {
+    position: static;
+  }
+
+  .panel {
+    /* 10px 인 것은 이 자리의 기준이 헤더의 **안쪽** 상자라 아래 테두리 2px 이 안 들어가기
+       때문이다. 8px 로 두면 실제 틈이 6px 이 되어 데스크톱(8px)과 안 맞는다 */
+    top: calc(100% + var(--space-10));
+    left: var(--space-12);
+    right: var(--space-12);
+    width: auto;
+  }
+}

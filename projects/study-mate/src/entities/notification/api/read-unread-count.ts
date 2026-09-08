@@ -7,9 +7,11 @@ import { createServerSupabase } from "@/shared/api/supabase/server-client";
  * 헤더 하나 때문에 화면 전체가 죽지 않게 여기서는 실패를 0 으로 접는다 —
  * 안 읽은 알림이 없는 것과 못 읽은 것의 차이가 화면에서 같아도 잃는 것이 없다.
  */
-export async function readUnreadNotificationCount(): Promise<number> {
+export async function readUnreadNotificationCount(
+  createSupabase: typeof createServerSupabase = createServerSupabase,
+): Promise<number> {
   try {
-    const supabase = await createServerSupabase();
+    const supabase = await createSupabase();
     const { count, error } = await supabase
       .from("notifications")
       .select("id", { count: "exact", head: true })

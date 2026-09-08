@@ -37,6 +37,28 @@ export function formatSlots(slots: readonly Slot[]): string {
   return sorted.map((s) => `${WEEKDAY_NAMES[s.weekday]} ${hourMinute(s.startsAt)}`).join(" · ");
 }
 
+/**
+ * "3분 전" 처럼 오늘 안의 시각까지 적는다. `relativeDay` 를 감싸는 것이라 어휘가 갈리지
+ * 않는다 — 하루가 넘어가면 그쪽 문장("어제" · "3일 전")이 그대로 나온다.
+ *
+ * **알림에 이 함수를 쓰는 이유**는 오늘 온 것이 대부분이라서다. `relativeDay` 만 쓰면
+ * 방금 온 알림과 아침에 온 알림이 둘 다 "오늘"이 되어, 목록의 순서 말고는 새것을 가릴
+ * 방법이 없다.
+ */
+export function relativeTime(iso: string, now: Date = new Date()): string {
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return "";
+  const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
+  // 미래 시각(시계 어긋남)은 "방금"으로 접는다 — "-3분 전"을 보여 주지 않는다
+  if (seconds < 60) return "방금";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}분 전`;
+  if (seconds < 86_400) return `${Math.floor(seconds / 3600)}시간 전`;
+  // 이레까지는 「어제」·「3일 전」이 지금과의 거리를 그대로 말해 준다. 그 뒤로는 「9일 전」이
+  // 날짜보다 덜 읽히므로 날짜로 바꾼다 — 해가 바뀌면 연도까지 적는다(승인 시안의 규칙).
+  if (seconds < 7 * 86_400) return relativeDay(iso, now);
+  return then.getFullYear() === now.getFullYear() ? formatMonthDay(iso) : formatDate(iso);
+}
+
 /** "2일 전" 처럼 대략만 적는다. 목록에서 정확한 초는 읽는 사람에게 쓸모가 없다. */
 export function relativeDay(iso: string, now: Date = new Date()): string {
   const then = new Date(iso);
