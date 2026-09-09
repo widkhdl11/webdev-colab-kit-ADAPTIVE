@@ -24,11 +24,18 @@
   border-bottom: 2px solid var(--ink);
 }
 
+/*
+ * `min-height` 는 이름표가 칩일 때(31px = 글자 13 + 세로 여백 14 + 테두리 4)와 아닐 때
+ * 이 줄의 높이가 같게 만든다. 안 두면 칩 없는 카드의 아래 줄들이 18px 위에서 시작해
+ * 같은 행의 두 카드가 어긋난다 — 알림 패널이 「읽은 줄도 투명한 띠 자리를 남긴다」로
+ * 이미 한 번 판정한 것과 같은 현상이다. 32px 은 간격을 짝수로 두는 규칙에 맞춘 값이다.
+ */
 .cardTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-10);
+  min-height: 32px;
   margin-bottom: var(--space-12);
 }
 

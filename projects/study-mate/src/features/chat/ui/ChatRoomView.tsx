@@ -112,7 +112,11 @@ export function ChatRoomView({
                       id: row.id,
                       senderId: row.sender_id,
                       // 실시간 알림에는 보낸 사람 이름이 없다. 새로고침하면 채워진다.
-                      senderName: row.sender_id === myId ? "나" : "멤버",
+                      // **자리표시 문자열을 넣지 않는다** — 「멤버」를 넣으면 자기 이름을
+                      // 「멤버」로 지은 사람과 화면에서 같아진다. 모르는 것은 null 로 두고
+                      // 아래에서 이름 줄 자체를 안 그린다(시각 기준 「이름을 모르면 이름
+                      // 줄을 안 그린다」).
+                      senderName: null,
                       content: row.content,
                       createdAt: row.created_at,
                     },
@@ -176,7 +180,20 @@ export function ChatRoomView({
               {showDay ? <p className={styles.day}>{day}</p> : null}
               <div className={mine ? `${styles.bubbleRow} ${styles.mine}` : styles.bubbleRow}>
                 <div className={styles.bubble}>
-                  {!mine ? <p className={styles.sender}>{m.senderName}</p> : null}
+                  {/* **내 것인지 남의 것인지를 낭독기에도 말한다.** 눈으로는 자리(오른쪽)와
+                      채움(괘선)이 말하지만 둘 다 소리에 안 실린다. 전에는 남의 말풍선에
+                      항상 이름 줄이 있어서 그 줄의 유무가 소리로 된 신호였는데, 이름을
+                      모르는 경우에 그 줄을 없애면서 그 신호가 같이 사라졌다.
+                      **이름 칸이 아니라 방향을 말하는 자리다** — 사용자는 이 글자 뒤에만
+                      글자를 넣을 수 있어서 흉내가 안 된다
+                      (2026-09-09 ui-reviewer · security-reviewer) */}
+                  <span className="sr-only">{mine ? "내가 보낸 메시지. " : "받은 메시지. "}</span>
+                  {/* 내 말풍선은 자리로 이미 갈리므로 이름을 안 쓴다. 남의 말풍선은
+                      이름을 알 때만 쓴다 — 모를 때 제품이 그 자리에 글자를 넣으면 그
+                      글자와 같은 이름을 지을 수 있다 */}
+                  {!mine && m.senderName !== null ? (
+                    <p className={styles.sender}>{m.senderName}</p>
+                  ) : null}
                   <p className={styles.text}>{m.content}</p>
                 </div>
                 <time className={styles.time} dateTime={m.createdAt}>

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { categoryColor } from "@/entities/category";
 import { readMyChats } from "@/entities/chat";
 import { readUnreadNotificationCount } from "@/entities/notification";
 import { currentUser } from "@/entities/session";
@@ -8,11 +7,10 @@ import { Container } from "@/shared/ui/container/Container";
 import { CardBody, CardLink } from "@/shared/ui/card/Card";
 import { CardGrid } from "@/shared/ui/section/Section";
 import { SkipLink } from "@/shared/ui/skip-link/SkipLink";
-import { Tag } from "@/shared/ui/tag/Tag";
 import { relativeDay } from "@/shared/lib/schedule";
 import { SiteFooter } from "@/widgets/site-footer";
 import { SiteHeader } from "@/widgets/site-header";
-import { DELETED_STUDY } from "./copy";
+import { StudyChip } from "./StudyChip";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "채팅방 — Study Mate" };
@@ -50,10 +48,9 @@ export default async function ChatsPage() {
                 <CardLink key={room.id} href={`/chats/${room.id}`}>
                   <CardBody>
                     <div className={styles.cardTop}>
-                      {/* 스터디가 안 보이면 이름도 색도 없다 — 대체 색을 꾸며 내지 않는다 */}
-                      <Tag color={categoryColor(room.study.available ? room.study.categoryId : null)}>
-                        {room.study.available ? room.study.title : DELETED_STUDY}
-                      </Tag>
+                      {/* 스터디가 안 보이면 이름도 색도 없다 — 대체 색을 꾸며 내지 않는다.
+                          모양까지 갈리는 자리라 컴포넌트가 갖는다(StudyChip) */}
+                      <StudyChip study={room.study} />
                       {room.unread > 0 ? (
                         <span className={`${styles.unread} num`}>
                           <span className="sr-only">안 읽음 </span>
@@ -64,17 +61,20 @@ export default async function ChatsPage() {
                     <p className={styles.last}>
                       {room.lastMessage ?? "아직 대화가 없습니다."}
                     </p>
-                    <p className={styles.meta}>
-                      {/* 스터디가 안 보이면 인원을 셀 수 없다. 0명이라고 적으면 거짓말이고,
-                          「지워진 스터디」는 위 태그가 이미 말하므로 여기서 되풀이하지 않는다 */}
-                      {room.study.available ? (
-                        <>
-                          멤버 <span className="num">{room.study.memberCount}</span>명
-                          {room.lastMessageAt ? " · " : ""}
-                        </>
-                      ) : null}
-                      {room.lastMessageAt ? relativeDay(room.lastMessageAt) : ""}
-                    </p>
+                    {/* 스터디가 안 보이면 인원을 셀 수 없다. 0명이라고 적으면 거짓말이고,
+                        「지워진 스터디」는 위 이름표가 이미 말하므로 여기서 되풀이하지 않는다.
+                        **둘 다 없으면 줄을 안 그린다** — 빈 `p` 만 남으면 위 여백만 남는다 */}
+                    {room.study.available || room.lastMessageAt ? (
+                      <p className={styles.meta}>
+                        {room.study.available ? (
+                          <>
+                            멤버 <span className="num">{room.study.memberCount}</span>명
+                            {room.lastMessageAt ? " · " : ""}
+                          </>
+                        ) : null}
+                        {room.lastMessageAt ? relativeDay(room.lastMessageAt) : ""}
+                      </p>
+                    ) : null}
                   </CardBody>
                 </CardLink>
               ))}

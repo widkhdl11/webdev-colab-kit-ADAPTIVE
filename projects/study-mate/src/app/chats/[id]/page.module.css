@@ -8,7 +8,15 @@
   flex-wrap: wrap;
 }
 
+/*
+ * **링크 글자는 잉크다.** 안 그러면 이 줄에서 이름과 제품이 쓴 말이 픽셀로 같아진다 —
+ * 줄 전체가 약한 잉크이고 밑줄은 hover 에서만 들어오므로, 정지 상태에서
+ * `「지워진 스터디」라는 이름의 스터디` 와 `진짜 지워진 스터디` 가 구별되지 않았다.
+ * 새 값을 만들지 않는다 — 시각 기준이 이미 「이름은 잉크, 제품이 대신 쓰는 말은
+ * 굵기 400 · 약한 잉크」로 정해 둔 그 대비다.
+ */
 .crumb a {
+  color: var(--ink);
   border-bottom: 2px solid transparent;
 }
 
@@ -19,10 +27,6 @@
 
 .head {
   padding: var(--space-16) 0 var(--space-8);
-}
-
-.title {
-  font-size: clamp(24px, 3.6vw, 34px);
 }
 
 .sub {

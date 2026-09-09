@@ -24,6 +24,14 @@ export const CHAT_LIST_SELECT = `last_read_at,
 export const CHAT_ROOM_SELECT = "id, study_id, study:studies(id, title, category_id, accepted_count)";
 
 /**
+ * 방 하나의 메시지. **여기 있는 이유가 위 둘과 같다** — 이 문자열이 바뀌면 로직은
+ * 그대로인 채 화면만 조용히 달라진다. `sender:profiles(username)` 을 빼면 모든 행에
+ * `sender` 키가 없어져 **모든 메시지의 이름 줄이 사라지는데**, 판독기 검사의 가짜는
+ * select 를 안 보므로 그것만으로는 안 잡힌다 (2026-09-09 test-auditor).
+ */
+export const CHAT_MESSAGES_SELECT = "id, sender_id, content, created_at, sender:profiles(username)";
+
+/**
  * 내가 들어가 있는 방들.
  *
  * `user_id` 필터는 **인가가 아니라 중복 제거**다 — 조회 정책(`chatpart_read_member`)이
@@ -37,4 +45,17 @@ export function myChatsQuery(db: SupabaseClient, sessionUserId: string) {
 /** 방 하나. 멤버가 아니면 정책이 행을 안 준다. */
 export function chatRoomQuery(db: SupabaseClient, chatId: string) {
   return db.from("chats").select(CHAT_ROOM_SELECT).eq("id", chatId).maybeSingle();
+}
+
+/**
+ * 방 하나의 메시지. 최근 것부터 받아 화면이 뒤집는다 — 「최근 N개」를 자르려면
+ * 정렬이 내림차순이어야 한다.
+ */
+export function chatMessagesQuery(db: SupabaseClient, chatId: string, limit: number) {
+  return db
+    .from("chat_messages")
+    .select(CHAT_MESSAGES_SELECT)
+    .eq("chat_id", chatId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
 }

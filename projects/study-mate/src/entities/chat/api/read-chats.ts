@@ -1,5 +1,6 @@
+import { throwDbError, throwShapeError } from "@/shared/lib/db-error";
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
-import { chatRoomQuery, myChatsQuery } from "./chat-select";
+import { chatMessagesQuery, chatRoomQuery, myChatsQuery } from "./chat-select";
 
 /**
  * 방이 딸린 스터디. **넷이 다 같은 하나에서 나온다** — 스터디 행이 보이는가.
@@ -41,7 +42,7 @@ export type ChatRoom = {
  *
  * 모양이 어긋나면 **던진다.** "안 보인다"로 떨어뜨리면 고장을 「지워진 스터디」로 그리게 된다.
  */
-function toChatStudy(
+export function toChatStudy(
   studyId: string,
   embed: { id: string; title: string; category_id: string; accepted_count: number } | null,
 ): ChatStudy {
@@ -53,12 +54,9 @@ function toChatStudy(
     typeof embed.title === "string" &&
     typeof embed.category_id === "string" &&
     typeof embed.accepted_count === "number";
-  if (!ok) {
-    throw new Error(
-      `스터디 임베드의 모양이 다르다(방 ${studyId}): ${JSON.stringify(embed)} — ` +
-        "계산 컬럼 이름이 바뀌었는지 본다",
-    );
-  }
+  // 행 원문을 문구에 담지 않는다 — 개발 오버레이와 `error.tsx` 에 그대로 나간다.
+  // 로그에도 값이 아니라 모양만 간다(2026-09-09 security-reviewer).
+  if (!ok) throwShapeError("채팅방의 스터디", studyId, embed);
 
   return {
     available: true,
@@ -72,7 +70,14 @@ function toChatStudy(
 export type ChatMessage = {
   readonly id: string;
   readonly senderId: string | null;
-  readonly senderName: string;
+  /**
+   * 보낸 사람이 스스로 붙인 이름. **모르면 `null` 이고, 제품이 대신 쓴 글자를 넣지 않는다.**
+   * 넣으면 그 글자와 같은 이름을 지을 수 있어서(이름은 20자, 공백·제어문자만 거른다)
+   * 화면에서 제품이 말한 것과 사람이 지은 이름이 같아진다.
+   * 모르는 상태를 화면이 어떻게 그리는지는 화면이 정한다 — 시각 기준 「이름을 모르면
+   * 이름 줄을 안 그린다」.
+   */
+  readonly senderName: string | null;
   readonly content: string;
   readonly createdAt: string;
 };
@@ -95,7 +100,8 @@ export async function readMyChats(userId: string): Promise<readonly ChatRoom[]> 
   // 스터디 id 는 방 자체에 있으므로(chats.study_id) 스터디를 못 읽어도 방은 온전하다.
   const { data, error } = await myChatsQuery(supabase, userId);
 
-  if (error) throw new Error(`채팅방 목록을 읽지 못했다: ${error.message}`);
+  // 오류 문구에 데이터베이스 메시지를 담지 않는다 — `error.tsx` 가 그리면 화면에 나간다.
+  if (error) throwDbError("채팅방 목록", error);
 
   const rows = (data ?? []) as unknown as {
     last_read_at: string | null;
@@ -139,6 +145,30 @@ export async function readMyChats(userId: string): Promise<readonly ChatRoom[]> 
   return rooms.sort((a, b) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? ""));
 }
 
+/**
+ * 보낸 사람 임베드 → 이름 또는 null.
+ *
+ * **모양이 어긋나면 던진다.** `m.sender?.username ?? null` 로 두면 세 경우가 한 값으로
+ * 뭉개진다 — ① 프로필 행이 없다(정상) ② PostgREST 가 관계를 배열로 풀어 준다
+ * ③ select 키가 바뀌어 `sender` 가 아예 안 온다. ②③에서는 **모든 메시지의 이름 줄이
+ * 조용히 사라지고**, 화면은 그것을 「아직 이름을 모른다」로 그린다 — 새로고침해도
+ * 안 채워지는데 곧 채워질 것처럼 보인다. `toChatStudy` 가 스터디 임베드에 대해
+ * 막는 것과 같은 실패다. (2026-09-09 code-reviewer)
+ */
+function senderNameOf(row: { id: string; sender?: { username: string } | null }): string | null {
+  // ③ **키가 아예 없는 것을 「이름이 없다」로 접지 않는다.** 접으면 select 에서
+  // `sender:profiles(username)` 한 조각을 지우는 변경이 모든 이름 줄을 지우면서
+  // 아무 검사도 안 깨뜨린다 (2026-09-09 test-auditor).
+  if (!("sender" in row)) throwShapeError("보낸 사람", row.id, row);
+
+  const sender = row.sender;
+  if (sender === null || sender === undefined) return null;
+  if (typeof sender !== "object" || typeof sender.username !== "string") {
+    throwShapeError("보낸 사람", row.id, sender);
+  }
+  return sender.username;
+}
+
 export type ChatRoomPage = {
   readonly id: string;
   readonly study: ChatStudy;
@@ -146,13 +176,19 @@ export type ChatRoomPage = {
 };
 
 /** 방 하나와 최근 메시지. 멤버가 아니면 null 이다(접근 정책이 방부터 안 보여준다) */
-export async function readChatRoom(chatId: string, limit = 100): Promise<ChatRoomPage | null> {
-  const supabase = await createServerSupabase();
+export async function readChatRoom(
+  chatId: string,
+  limit = 100,
+  // 판독기를 인자로 받는 이유는 알림 판독기와 같다 — 이 함수는 요청 맥락(쿠키)에 붙어
+  // 있어서 노드 검사에서 그냥은 못 부른다. 기본값이 있으므로 화면은 그대로 쓴다.
+  createSupabase: typeof createServerSupabase = createServerSupabase,
+): Promise<ChatRoomPage | null> {
+  const supabase = await createSupabase();
 
   // 목록과 같은 이유로 스터디는 바깥 조인이다 — 스터디가 지워져도 방은 열려야 한다(INV-Z6).
   const { data: chat, error } = await chatRoomQuery(supabase, chatId);
 
-  if (error) throw new Error(`채팅방을 읽지 못했다: ${error.message}`);
+  if (error) throwDbError("채팅방", error);
   if (!chat) return null;
 
   const room = chat as unknown as {
@@ -161,24 +197,25 @@ export async function readChatRoom(chatId: string, limit = 100): Promise<ChatRoo
     study: { id: string; title: string; category_id: string; accepted_count: number } | null;
   };
 
-  const { data: rows } = await supabase
-    .from("chat_messages")
-    .select("id, sender_id, content, created_at, sender:profiles(username)")
-    .eq("chat_id", chatId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  // **오류를 안 보면 고장이 「아직 대화가 없습니다」로 그려진다.** 위 방 질의와 같은
+  // 판단이다 — 못 읽은 것을 「없다」로 접으면 대화가 있는 방이 빈 방으로 보인다.
+  const { data: rows, error: messagesError } = await chatMessagesQuery(supabase, chatId, limit);
+
+  if (messagesError) throwDbError("채팅방의 대화", messagesError);
 
   const messages = ((rows ?? []) as unknown as {
     id: string;
     sender_id: string | null;
     content: string;
     created_at: string;
-    sender: { username: string } | null;
+    sender?: { username: string } | null;
   }[])
     .map((m) => ({
       id: m.id,
       senderId: m.sender_id,
-      senderName: m.sender?.username ?? "나간 멤버",
+      // 프로필 행이 없으면(계정이 지워진 뒤) 이름이 없다. 자리표시 문자열을 넣지 않는다 —
+      // 위 타입 주석 참고.
+      senderName: senderNameOf(m),
       content: m.content,
       createdAt: m.created_at,
     }))

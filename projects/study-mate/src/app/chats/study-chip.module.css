@@ -1,0 +1,13 @@
+/*
+ * 제품이 이름 칸에 쓰는 말. 시각 기준 「이름 칸에 제품이 들어가면 이름의 모양을 벗는다」—
+ * 배경도 테두리도 안쪽 여백도 없다. 칩이 있다는 것 자체가 「이 글자는 사람이 지었다」는
+ * 표시라, 사용자가 글자로 흉내 낼 수 없는 자리가 그 모양이다.
+ */
+.gone {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ink-weak);
+}

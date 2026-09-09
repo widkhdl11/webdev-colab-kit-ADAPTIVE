@@ -9,6 +9,7 @@ import { SkipLink } from "@/shared/ui/skip-link/SkipLink";
 import { SiteFooter } from "@/widgets/site-footer";
 import { SiteHeader } from "@/widgets/site-header";
 import { DELETED_STUDY } from "../copy";
+import { StudyHeading } from "../StudyHeading";
 import styles from "./page.module.css";
 
 // 대화는 요청마다 새로 그린다. 캐시하면 남의 방 내용이 보인다.
@@ -37,7 +38,10 @@ export default async function ChatRoomPage({ params }: { params: Promise<{ id: s
           <nav className={styles.crumb} aria-label="현재 위치">
             <Link href="/chats">채팅방</Link>
             <span aria-hidden="true">/</span>
-            {/* 안 보이는 스터디의 상세는 열리지 않는다 — 404 로 가는 링크를 주지 않는다 */}
+            {/* 안 보이는 스터디의 상세는 열리지 않는다 — 404 로 가는 링크를 주지 않는다.
+                이 칸에서 이름과 제품 글자를 가르는 것은 **잉크색**이다(위 css 의 `.crumb a`).
+                「누를 수 없는 줄」의 취소선·안내 문구는 여기 없다 — 그 규칙 이름을 빌려
+                오면 실제보다 넓게 말하게 된다 (2026-09-09 ui-reviewer · security-reviewer) */}
             {room.study.available ? (
               <Link href={`/studies/${room.study.id}`}>{room.study.title}</Link>
             ) : (
@@ -46,9 +50,7 @@ export default async function ChatRoomPage({ params }: { params: Promise<{ id: s
           </nav>
 
           <div className={styles.head}>
-            <h1 className={`h-display ${styles.title}`}>
-              {room.study.available ? room.study.title : DELETED_STUDY}
-            </h1>
+            <StudyHeading study={room.study} />
             <p className={styles.sub}>
               {room.study.available ? (
                 <>
