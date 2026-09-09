@@ -1,0 +1,187 @@
+<meta charset="utf-8">
+<title>하네스 도입 전후</title>
+<style>
+  :root {
+    --paper: #fcfaf6;
+    --ink: #262019;
+    --ink-weak: #6f6656;
+    --rule: #e6e0d6;
+    --cut: #1f7a5a;        /* 줄어든 단계 */
+    --cut-bg: #e8f4ee;
+    --grew: #9a6b12;       /* 늘어난 단계 */
+    --grew-bg: #faf1dd;
+    --same: #8d8478;       /* 그대로 */
+    --same-bg: #f1eee8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #17140f;
+      --ink: #f0ebe2;
+      --ink-weak: #a79c8a;
+      --rule: #332c23;
+      --cut: #5fd3a6; --cut-bg: #12291f;
+      --grew: #e0b05a; --grew-bg: #2a2113;
+      --same: #8d8478; --same-bg: #221e18;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #17140f;
+    --ink: #f0ebe2;
+    --ink-weak: #a79c8a;
+    --rule: #332c23;
+    --cut: #5fd3a6; --cut-bg: #12291f;
+    --grew: #e0b05a; --grew-bg: #2a2113;
+    --same: #8d8478; --same-bg: #221e18;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Pretendard", -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    line-height: 1.6;
+    padding: 40px 28px 64px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .sub { font-size: 14px; color: var(--ink-weak); margin: 0 0 6px; }
+  .caveat {
+    font-size: 13px; color: var(--ink-weak); margin: 0 0 34px;
+    border-left: 3px solid var(--rule); padding-left: 12px;
+  }
+  .caveat b { color: var(--ink); }
+
+  /* 6칸 격자 — 두 줄이 같은 칸을 쓰므로 같은 단계가 세로로 맞는다 */
+  .grid {
+    display: grid;
+    grid-template-columns: 116px repeat(6, minmax(0, 1fr));
+    gap: 14px 34px;
+    align-items: stretch;
+  }
+
+  .colhead {
+    font-size: 13px; font-weight: 700; color: var(--ink-weak);
+    text-align: center; padding-bottom: 2px;
+    border-bottom: 2px solid var(--rule);
+  }
+  .rowlab {
+    display: flex; flex-direction: column; justify-content: center;
+    font-size: 14px; font-weight: 800; text-align: right;
+    padding-right: 4px;
+  }
+  .rowlab small { display: block; font-size: 12px; font-weight: 600; color: var(--ink-weak); }
+
+  .box {
+    position: relative;
+    border: 2px solid var(--rule);
+    border-radius: 12px;
+    background: var(--paper);
+    padding: 12px 12px 13px;
+    min-height: 108px;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .box .name { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+  .box .time { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .box .one  { font-size: 12.5px; color: var(--ink-weak); margin-top: auto; }
+
+  /* 화살표는 칸 사이 여백 한가운데. 한 방향뿐이고 분기가 없다 */
+  .box:not(.last)::after {
+    content: "→";
+    position: absolute; right: -27px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 17px; color: var(--ink-weak);
+  }
+
+  .before .time { color: var(--ink-weak); }
+
+  .cut  { border-color: var(--cut);  background: var(--cut-bg); }
+  .cut  .time { color: var(--cut); }
+  .grew { border-color: var(--grew); background: var(--grew-bg); }
+  .grew .time { color: var(--grew); }
+  .same { border-color: var(--rule); background: var(--same-bg); }
+  .same .name, .same .time, .same .one { color: var(--same); }
+
+  .badge {
+    align-self: flex-start;
+    font-size: 11px; font-weight: 800; letter-spacing: 0.02em;
+    padding: 2px 7px; border-radius: 999px;
+    border: 1.5px solid currentColor;
+  }
+  .cut .badge  { color: var(--cut); }
+  .grew .badge { color: var(--grew); }
+  .same .badge { color: var(--same); }
+
+  .gain {
+    grid-column: 2 / -1;
+    margin-top: 20px;
+    border: 2px solid var(--cut);
+    border-radius: 12px;
+    background: var(--cut-bg);
+    padding: 14px 18px;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px;
+  }
+  .gain .h { font-size: 15px; font-weight: 800; color: var(--cut); }
+  .gain .n { font-size: 22px; font-weight: 800; color: var(--cut); font-variant-numeric: tabular-nums; }
+  .gain .d { font-size: 13px; color: var(--ink-weak); }
+
+  .callout {
+    margin-top: 30px;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    padding: 18px 22px;
+    background: var(--paper);
+  }
+  .callout .k {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.08em;
+    color: var(--ink-weak); text-transform: uppercase;
+  }
+  .callout .m { font-size: 19px; font-weight: 800; letter-spacing: -0.01em; margin-top: 4px; }
+  .callout .w { font-size: 13.5px; color: var(--ink-weak); margin-top: 7px; }
+
+  .scroll { overflow-x: auto; }
+  .scroll > .grid { min-width: 1080px; }
+</style>
+
+<div class="wrap">
+  <h1>하네스 도입 전 / 후 — 사람의 업무 단계</h1>
+  <p class="sub">단위: 기능 하나(화면 한 장 + 그에 딸린 계약·검사) · 하루 8시간 기준</p>
+  <p class="caveat">
+    <b>도입 후</b>는 레포에 근거가 있다 — 2026-09-04~09-08 닷새에 사이클 18개가 닫혔다(<code>workspace/CYCLE.md</code>),
+    유닛 397 · 통합 196 · RLS 변이 21.<br>
+    <b>도입 전</b>은 레포 어디에도 기록이 없다. <b>이 줄의 숫자는 전부 추정이고, 실제 숫자를 주면 바꿔 그린다.</b>
+  </p>
+
+  <div class="scroll">
+    <div class="grid">
+      <div class="rowlab">도입 전<small>추정</small></div>
+      <div class="box before"><div class="name">계획</div><div class="time">30분</div><div class="one">말로 듣고 바로 시작한다</div></div>
+      <div class="box before"><div class="name">설계</div><div class="time">따로 없음</div><div class="one">구현하면서 그때그때 정한다</div></div>
+      <div class="box before"><div class="name">구현</div><div class="time">3일</div><div class="one">방향이 흔들려 다시 만든다</div></div>
+      <div class="box before"><div class="name">테스트</div><div class="time">1일</div><div class="one">손으로 눌러 확인한다</div></div>
+      <div class="box before"><div class="name">배포</div><div class="time">2시간</div><div class="one">수동 절차</div></div>
+      <div class="box before last"><div class="name">운영</div><div class="time">4시간</div><div class="one">무슨 상태였는지 다시 파악한다</div></div>
+
+      <div class="rowlab">도입 후<small>실측 근거</small></div>
+      <div class="box grew"><div class="name">계획</div><div class="time">2시간</div><span class="badge">늘어남</span><div class="one">합의문과 불변식을 먼저 적는다</div></div>
+      <div class="box grew"><div class="name">설계</div><div class="time">3시간</div><span class="badge">늘어남</span><div class="one">시안 한 장으로 방향을 받는다</div></div>
+      <div class="box cut"><div class="name">구현</div><div class="time">4시간</div><span class="badge">3일에서</span><div class="one">게이트가 편집마다 위반을 잡는다</div></div>
+      <div class="box cut"><div class="name">테스트</div><div class="time">30분</div><span class="badge">1일에서</span><div class="one">스위트와 변이 검증이 기계로 돈다</div></div>
+      <div class="box same"><div class="name">배포</div><div class="time">2시간</div><span class="badge">그대로</span><div class="one">하네스가 손대지 않았다</div></div>
+      <div class="box cut last"><div class="name">운영</div><div class="time">15분</div><span class="badge">4시간에서</span><div class="one">브리핑이 멈춘 지점을 띄운다</div></div>
+
+      <div class="gain">
+        <span class="h">확보된 여유</span>
+        <span class="n">약 3일 반</span>
+        <span class="d">38.5시간 → 11.75시간 · 구현(3일→4시간) · 테스트(1일→30분) · 운영(4시간→15분) 셋에서 나온다</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="k">결론</div>
+    <div class="m">병목은 구현에서 <u>사람의 결정</u>으로 옮겨갔다.</div>
+    <div class="w">
+      이 세션이 그 예다 — 게이트는 전부 통과고 프론티어는 비었는데, 보류된 시각 판단 둘이 다음 턴을 잡고 있었다.
+    </div>
+  </div>
+</div>

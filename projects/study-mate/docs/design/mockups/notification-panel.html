@@ -319,7 +319,7 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
 .n-row.is-unread .n-text{font-weight:600;color:var(--ink)}
 /* 스터디 제목은 읽은 줄에서도 잉크로 남는다 - 여기까지 흐려지면 어느 스터디인지
    훑을 수 없다. 읽음/안 읽음은 띠와 나머지 문장의 무게가 가른다 */
-.n-text b{font-weight:700;color:var(--ink)}
+.n-text b,.n-text .n-name{font-weight:700;color:var(--ink)}
 .n-time{margin-top:3px;font-size:13px;line-height:1.4;color:var(--ink-weak)}
 
 /* 만지면 살아난다 - 배경을 괘선으로 채우고 그 줄 글자를 전부 잉크로 올린다.
@@ -345,8 +345,9 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
 
 /* -- 삭제(x) -------------------------------------------------------------
    [새로 정함] 줄마다 테두리 상자가 뜨면 목록이 시끄러워지므로 기본은 테두리 없음.
-   hover·focus 에서만 2px 잉크 테두리가 나타난다. 마우스를 올려야 나타나는 방식이
-   아니다 - 아이콘 자체는 항상 보인다(터치에서도 누를 수 있다). */
+   hover 에서만 2px 잉크 테두리가 나타난다. 키보드 초점은 포커스 링이 맡는다 - 테두리를
+   겹치면 두 겹이 된다. 마우스를 올려야 나타나는 방식이 아니다 - 아이콘 자체는 항상
+   보인다(터치에서도 누를 수 있다). */
 .n-del{
   flex:none;width:34px;height:34px;margin-top:-2px;
   display:grid;place-items:center;
@@ -507,10 +508,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
                     <div class="n-row is-unread">
                       <a class="n-link" href="./post-detail.html">
                         <span class="sr-only">안 읽음. </span>
-                        <p class="n-text"><b>토익 900 뿌시기</b>에 새 참가 신청이 왔습니다</p>
+                        <p class="n-text">「<b>토익 900 뿌시기</b>」에 새 참가 신청이 왔습니다</p>
                         <p class="n-time num">3분 전</p>
                       </a>
-                      <button class="n-del" type="button" aria-label="알림 삭제: 토익 900 뿌시기에 새 참가 신청이 왔습니다">
+                      <button class="n-del" type="button" aria-label="알림 삭제: 「토익 900 뿌시기」에 새 참가 신청이 왔습니다">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
                       </button>
                     </div>
@@ -520,10 +521,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
                     <div class="n-row is-unread">
                       <a class="n-link" href="./post-detail.html">
                         <span class="sr-only">안 읽음. </span>
-                        <p class="n-text"><b>알고리즘 스터디</b> 참가가 수락되었습니다</p>
+                        <p class="n-text">「<b>알고리즘 스터디</b>」 참가가 수락되었습니다</p>
                         <p class="n-time num">1시간 전</p>
                       </a>
-                      <button class="n-del" type="button" aria-label="알림 삭제: 알고리즘 스터디 참가가 수락되었습니다">
+                      <button class="n-del" type="button" aria-label="알림 삭제: 「알고리즘 스터디」 참가가 수락되었습니다">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
                       </button>
                     </div>
@@ -533,10 +534,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
                     <div class="n-row is-unread">
                       <a class="n-link" href="./post-detail.html">
                         <span class="sr-only">안 읽음. </span>
-                        <p class="n-text"><b>새벽 코딩</b>에서 내보내졌습니다</p>
+                        <p class="n-text">「<b>새벽 코딩</b>」에서 내보내졌습니다</p>
                         <p class="n-time">어제</p>
                       </a>
-                      <button class="n-del" type="button" aria-label="알림 삭제: 새벽 코딩에서 내보내졌습니다">
+                      <button class="n-del" type="button" aria-label="알림 삭제: 「새벽 코딩」에서 내보내졌습니다">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
                       </button>
                     </div>
@@ -545,10 +546,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
                   <li>
                     <div class="n-row">
                       <a class="n-link" href="./post-detail.html">
-                        <p class="n-text"><b>토익 900 뿌시기</b>에서 한 명이 나갔습니다</p>
+                        <p class="n-text">「<b>토익 900 뿌시기</b>」에서 한 명이 나갔습니다</p>
                         <p class="n-time num">3일 전</p>
                       </a>
-                      <button class="n-del" type="button" aria-label="알림 삭제: 토익 900 뿌시기에서 한 명이 나갔습니다">
+                      <button class="n-del" type="button" aria-label="알림 삭제: 「토익 900 뿌시기」에서 한 명이 나갔습니다">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
                       </button>
                     </div>
@@ -559,10 +560,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
                   <li>
                     <div class="n-row">
                       <a class="n-link" href="./post-detail.html">
-                        <p class="n-text"><b>독서모임</b> 참가가 거절되었습니다</p>
+                        <p class="n-text">「<b>독서모임</b>」 참가가 거절되었습니다</p>
                         <p class="n-time num">6일 전</p>
                       </a>
-                      <button class="n-del" type="button" aria-label="알림 삭제: 독서모임 참가가 거절되었습니다">
+                      <button class="n-del" type="button" aria-label="알림 삭제: 「독서모임」 참가가 거절되었습니다">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
                       </button>
                     </div>
@@ -572,10 +573,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
                   <li>
                     <div class="n-row">
                       <a class="n-link" href="./post-detail.html">
-                        <p class="n-text"><b>디자인 포트폴리오 스터디</b>에 새 참가 신청이 왔습니다</p>
+                        <p class="n-text">「<b>디자인 포트폴리오 스터디</b>」에 새 참가 신청이 왔습니다</p>
                         <p class="n-time num">9월 1일</p>
                       </a>
-                      <button class="n-del" type="button" aria-label="알림 삭제: 디자인 포트폴리오 스터디에 새 참가 신청이 왔습니다">
+                      <button class="n-del" type="button" aria-label="알림 삭제: 「디자인 포트폴리오 스터디」에 새 참가 신청이 왔습니다">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
                       </button>
                     </div>
@@ -657,10 +658,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
             <div class="n-row is-unread">
               <div class="n-dead">
                 <span class="sr-only">안 읽음. </span>
-                <p class="n-text"><span class="n-name">주말 러닝 크루</span> 참가가 수락되었습니다</p>
+                <p class="n-text">「<span class="n-name">주말 러닝 크루</span>」 참가가 수락되었습니다</p>
                 <p class="n-time">2시간 전<span class="n-sep" aria-hidden="true">·</span>지워진 스터디예요. 열 수 없습니다</p>
               </div>
-              <button class="n-del" type="button" aria-label="알림 삭제: 주말 러닝 크루 참가가 수락되었습니다">
+              <button class="n-del" type="button" aria-label="알림 삭제: 「주말 러닝 크루」 참가가 수락되었습니다">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
               </button>
             </div>
@@ -669,10 +670,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
           <li>
             <div class="n-row">
               <div class="n-dead">
-                <p class="n-text"><span class="n-name">영어 회화 모임</span>에서 한 명이 나갔습니다</p>
+                <p class="n-text">「<span class="n-name">영어 회화 모임</span>」에서 한 명이 나갔습니다</p>
                 <p class="n-time">5일 전<span class="n-sep" aria-hidden="true">·</span>지워진 스터디예요. 열 수 없습니다</p>
               </div>
-              <button class="n-del" type="button" aria-label="알림 삭제: 영어 회화 모임에서 한 명이 나갔습니다">
+              <button class="n-del" type="button" aria-label="알림 삭제: 「영어 회화 모임」에서 한 명이 나갔습니다">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
               </button>
             </div>
@@ -681,10 +682,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
           <li>
             <div class="n-row">
               <a class="n-link" href="./post-detail.html">
-                <p class="n-text"><b>알고리즘 스터디</b> 참가가 수락되었습니다</p>
+                <p class="n-text">「<b>알고리즘 스터디</b>」 참가가 수락되었습니다</p>
                 <p class="n-time num">5일 전</p>
               </a>
-              <button class="n-del" type="button" aria-label="알림 삭제: 알고리즘 스터디 참가가 수락되었습니다">
+              <button class="n-del" type="button" aria-label="알림 삭제: 「알고리즘 스터디」 참가가 수락되었습니다">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
               </button>
             </div>
@@ -751,10 +752,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
                   <li>
                     <div class="n-row">
                       <a class="n-link" href="./post-detail.html">
-                        <p class="n-text"><b>알고리즘 스터디</b> 참가가 수락되었습니다</p>
+                        <p class="n-text">「<b>알고리즘 스터디</b>」 참가가 수락되었습니다</p>
                         <p class="n-time num">2일 전</p>
                       </a>
-                      <button class="n-del" type="button" aria-label="알림 삭제: 알고리즘 스터디 참가가 수락되었습니다">
+                      <button class="n-del" type="button" aria-label="알림 삭제: 「알고리즘 스터디」 참가가 수락되었습니다">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
                       </button>
                     </div>
@@ -762,10 +763,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
                   <li>
                     <div class="n-row">
                       <a class="n-link" href="./post-detail.html">
-                        <p class="n-text"><b>독서모임</b> 참가가 거절되었습니다</p>
+                        <p class="n-text">「<b>독서모임</b>」 참가가 거절되었습니다</p>
                         <p class="n-time num">4일 전</p>
                       </a>
-                      <button class="n-del" type="button" aria-label="알림 삭제: 독서모임 참가가 거절되었습니다">
+                      <button class="n-del" type="button" aria-label="알림 삭제: 「독서모임」 참가가 거절되었습니다">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
                       </button>
                     </div>
@@ -773,10 +774,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
                   <li>
                     <div class="n-row">
                       <a class="n-link" href="./post-detail.html">
-                        <p class="n-text"><b>토익 900 뿌시기</b>에서 한 명이 나갔습니다</p>
+                        <p class="n-text">「<b>토익 900 뿌시기</b>」에서 한 명이 나갔습니다</p>
                         <p class="n-time num">8월 29일</p>
                       </a>
-                      <button class="n-del" type="button" aria-label="알림 삭제: 토익 900 뿌시기에서 한 명이 나갔습니다">
+                      <button class="n-del" type="button" aria-label="알림 삭제: 「토익 900 뿌시기」에서 한 명이 나갔습니다">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
                       </button>
                     </div>
@@ -881,10 +882,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
             <div class="n-row is-unread">
               <a class="n-link" href="./post-detail.html">
                 <span class="sr-only">안 읽음. </span>
-                <p class="n-text"><b>토익 900 뿌시기</b>에 새 참가 신청이 왔습니다</p>
+                <p class="n-text">「<b>토익 900 뿌시기</b>」에 새 참가 신청이 왔습니다</p>
                 <p class="n-time num">3분 전</p>
               </a>
-              <button class="n-del" type="button" aria-label="알림 삭제: 토익 900 뿌시기에 새 참가 신청이 왔습니다">
+              <button class="n-del" type="button" aria-label="알림 삭제: 「토익 900 뿌시기」에 새 참가 신청이 왔습니다">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
               </button>
             </div>
@@ -893,10 +894,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
             <div class="n-row is-unread">
               <a class="n-link" href="./post-detail.html">
                 <span class="sr-only">안 읽음. </span>
-                <p class="n-text"><b>새벽 코딩</b>에서 내보내졌습니다</p>
+                <p class="n-text">「<b>새벽 코딩</b>」에서 내보내졌습니다</p>
                 <p class="n-time">어제</p>
               </a>
-              <button class="n-del" type="button" aria-label="알림 삭제: 새벽 코딩에서 내보내졌습니다">
+              <button class="n-del" type="button" aria-label="알림 삭제: 「새벽 코딩」에서 내보내졌습니다">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
               </button>
             </div>
@@ -904,10 +905,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
           <li>
             <div class="n-row">
               <div class="n-dead">
-                <p class="n-text"><span class="n-name">주말 러닝 크루</span> 참가가 거절되었습니다</p>
+                <p class="n-text">「<span class="n-name">주말 러닝 크루</span>」 참가가 거절되었습니다</p>
                 <p class="n-time">5일 전<span class="n-sep" aria-hidden="true">·</span>지워진 스터디예요. 열 수 없습니다</p>
               </div>
-              <button class="n-del" type="button" aria-label="알림 삭제: 주말 러닝 크루 참가가 거절되었습니다">
+              <button class="n-del" type="button" aria-label="알림 삭제: 「주말 러닝 크루」 참가가 거절되었습니다">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
               </button>
             </div>
@@ -915,10 +916,10 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
           <li>
             <div class="n-row">
               <a class="n-link" href="./post-detail.html">
-                <p class="n-text"><b>독서모임</b> 참가가 거절되었습니다</p>
+                <p class="n-text">「<b>독서모임</b>」 참가가 거절되었습니다</p>
                 <p class="n-time num">6일 전</p>
               </a>
-              <button class="n-del" type="button" aria-label="알림 삭제: 독서모임 참가가 거절되었습니다">
+              <button class="n-del" type="button" aria-label="알림 삭제: 「독서모임」 참가가 거절되었습니다">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
               </button>
             </div>
@@ -948,9 +949,19 @@ a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
         열 수 없습니다」 + hover 무반응 + <code>a href</code> 아님.
       </p>
       <p style="margin-top:10px">
-        <b>삭제(×)</b> — 기본은 테두리 없이 아이콘만(항상 보입니다), 마우스를 올리거나
-        포커스가 가면 2px 잉크 테두리가 나타납니다. 인터뷰 결론대로 한 번에 지워지고
-        확인 단계가 없습니다.
+        <b>삭제(×)</b> — 기본은 테두리 없이 아이콘만(항상 보입니다), 마우스를 올리면
+        2px 잉크 테두리가 나타납니다. 키보드 초점은 포커스 링(3px 잉크 실선)이 맡습니다 —
+        테두리를 겹치면 두 겹이 됩니다. 인터뷰 결론대로 한 번에 지워지고 확인 단계가
+        없습니다.
+      </p>
+      <p style="margin-top:10px">
+        <b>남이 쓴 글자</b> — 스터디 이름은 호스트가 자유롭게 정한 값이고 그 뒤는 제품이
+        쓴 말입니다. 굵기만으로는 안 갈리므로(안 읽은 줄에서는 700 대 600) 이름을
+        낫표 「」로 두릅니다. 낫표가 굵게 <b>밖</b>에 있는 것은 「누를 수 없는 줄」의
+        취소선이 이름에만 걸리게 하려는 것입니다 — 안 읽은 줄에서 낫표와 이름을 가르는
+        신호는 아닙니다(둘 다 잉크입니다). <b>호스트가 제목에 적어 넣은 낫표는 그릴 때
+        겹낫표 『』로 바뀝니다</b> — 그래야 두름을 흉내 낼 수 없습니다.
+        <b>2026-09-09 추가.</b>
       </p>
       <p style="margin-top:10px">
         <b>비활성 톤</b> — 「전체 읽음」이 비활성이면 테두리만 잉크에서 괘선으로 내리고

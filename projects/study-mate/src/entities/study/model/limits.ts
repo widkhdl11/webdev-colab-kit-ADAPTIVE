@@ -25,9 +25,23 @@ export const MEETING_MODE_LABEL: Readonly<Record<MeetingModeValue, string>> = {
 };
 
 /**
- * 글자 수 상한. **스키마에 길이 제약이 없어 서버의 이 값이 유일한 강제 위치다**
- * — 자매 화면인 모집글 작성(`entities/post/model/limits.ts`)은 서버에서
- * 막는데 개설 폼만 열려 있었다 (2026-09-06 code-reviewer).
+ * 글자 수 상한.
+ *
+ * **`TITLE_MAX` 는 데이터베이스의 `studies_title_length`
+ * (`supabase/migrations/0020_study_title_length.sql`)와 같은 숫자여야 한다.** 이 값이
+ * 참가 사건에서 트리거를 타고 남의 알림 행으로 복사되므로, 폼을 안 지나는 갱신도 같은
+ * 상한을 받아야 한다 — 2026-09-09 에 내렸다. 앱만 넓히면 데이터베이스가 거부하고,
+ * 앱만 좁히면 이유 없이 못 만드는 스터디가 생긴다.
+ *
+ * **두 값이 같은지를 붙드는 자리가 어디인지 알고 쓴다.** 이 상수를 바꾸면 오프라인
+ * 검사가 잡는다(`features/edit-study/api/update-study.test.ts` 가 오류 문구에 숫자를
+ * 박아 뒀다). 반대로 **스키마의 60 만 바꾸면 `npm test` 는 전부 초록불이다** —
+ * 그쪽은 `tests/integration/study-title-length.test.ts` 만 붙들고 있고, 그 스위트는
+ * 로컬 데이터베이스가 떠 있어야 돌아서 게이트에 안 섞인다 (2026-09-09 test-auditor).
+ *
+ * **나머지 셋은 아직 서버의 이 값이 유일한 강제 위치다** — 자매 화면인 모집글 작성
+ * (`entities/post/model/limits.ts`)은 서버에서 막는데 개설 폼만 열려 있었다
+ * (2026-09-06 code-reviewer).
  */
 export const TITLE_MAX = 60;
 export const SUMMARY_MAX = 80;

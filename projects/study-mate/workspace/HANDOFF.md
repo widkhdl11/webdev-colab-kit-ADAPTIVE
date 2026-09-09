@@ -20,23 +20,23 @@
   },
   "design/page-designer": {
     "status": "clean",
-    "hash": "964c88440ed7"
+    "hash": "5cdb058c8a81"
   },
   "design/schema-designer": {
     "status": "clean",
-    "hash": "8ef9c6db2011"
+    "hash": "f8c0f2135974"
   },
   "implement": {
     "status": "clean",
-    "hash": "81d5e02a85ed"
+    "hash": "6bf8e2aeb0a0"
   },
   "qa": {
     "status": "clean",
-    "hash": "97539cafdf13"
+    "hash": "1b5cc0641253"
   },
   "review": {
     "status": "clean",
-    "hash": "ed32a7f3e8cd"
+    "hash": "9e87e864c94b"
   },
   "deploy": {
     "status": "n/a",

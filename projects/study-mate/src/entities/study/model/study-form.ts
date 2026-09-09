@@ -57,7 +57,10 @@ export function readStudyFields(
   const meetingMode = String(form.get("meetingMode") ?? "offline");
 
   if (!title) return { ok: false, message: "스터디 이름을 적어 주세요" };
-  if (title.length > TITLE_MAX) {
+  // **글자 수를 코드포인트로 센다.** `String.length` 는 UTF-16 단위라 이모지 하나를 둘로
+  // 세고, 그러면 데이터베이스(`char_length`)와 다른 숫자가 된다 — 「60자까지」라고 말해
+  // 놓고 30자에서 막힌다 (2026-09-09 code-reviewer).
+  if ([...title].length > TITLE_MAX) {
     return { ok: false, message: `스터디 이름은 ${TITLE_MAX}자까지 적을 수 있습니다` };
   }
   if (summary && summary.length > SUMMARY_MAX) {

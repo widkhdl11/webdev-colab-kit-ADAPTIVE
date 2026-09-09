@@ -303,3 +303,268 @@ describe("여닫기", () => {
     );
   });
 });
+
+describe("지운 뒤 초점 (design-rules.md 2026-09-08 (2))", () => {
+  /**
+   * **이 검사를 지우면 초점이 문서 맨 앞으로 떨어지는 것을 아무도 못 잡는다.** 패널이
+   * `aria-modal` 로 Tab 을 가두고 있어서, 그 상태의 다음 Tab 은 방금 지운 자리가 아니라
+   * 목록 맨 위로 되돌아온다 — 화면을 보면서 키보드만 쓰는 사용자에게는 여럿을 연달아
+   * 지우는 일이 매번 목록을 처음부터 훑는 일이 된다.
+   */
+  it("지우면 초점이 다음 줄의 삭제 단추로 간다", async () => {
+    await 그리기();
+    await 열기();
+
+    await act(async () => {
+      const b = 줄()[0].querySelector("button") as HTMLButtonElement;
+      b.focus(); // jsdom 의 click() 은 초점을 안 옮긴다 — 안 주면 패널이 쥔 채라 검사가 헛돈다
+      b.click();
+    });
+
+    // n1 이 빠지고 n2 가 첫 줄이 된다. 초점은 그 줄의 삭제 단추다
+    expect(줄()).toHaveLength(2);
+    expect(document.activeElement).toBe(줄()[0].querySelector("button"));
+    expect(document.activeElement?.getAttribute("aria-label")).toContain("알고리즘 스터디");
+  });
+
+  it("맨 아랫줄을 지우면 다음 줄이 없으므로 이전 줄로 간다", async () => {
+    await 그리기();
+    await 열기();
+
+    await act(async () => {
+      const b = 줄()[2].querySelector("button") as HTMLButtonElement;
+      b.focus();
+      b.click();
+    });
+
+    expect(줄()).toHaveLength(2);
+    expect(document.activeElement).toBe(줄()[1].querySelector("button"));
+    expect(document.activeElement?.getAttribute("aria-label")).toContain("알고리즘 스터디");
+  });
+
+  it("마지막 하나를 지우면 갈 줄이 없으므로 패널이 초점을 받는다", async () => {
+    액션.load.mockImplementationOnce(async () => ({ ok: true, value: [목록[0]] }));
+    await 그리기(1);
+    await 열기();
+
+    await act(async () => {
+      const b = 줄()[0].querySelector("button") as HTMLButtonElement;
+      b.focus(); // 안 주면 패널이 초점을 쥔 채라 「패널로 옮겼다」가 저절로 참이 된다
+      b.click();
+    });
+
+    expect(줄()).toHaveLength(0);
+    expect(document.activeElement).toBe(container.querySelector('[role="dialog"]'));
+  });
+
+  /**
+   * **브라우저는 `disabled` 가 된 요소의 초점을 뺏는다.** 액션이 도는 동안 `busy` 로 이
+   * 단추가 꺼지므로, 실패해서 다시 켜져도 초점은 이미 문서 맨 앞에 있다. 그 상태에서
+   * Tab 을 누르면 가둠이 「처음도 마지막도 패널도 아니다」로 판단해 통과시켜서 초점이
+   * 패널 밖으로 샌다 — `aria-modal` 로 「이 안이 전부」라고 말해 둔 채로.
+   *
+   * **jsdom 은 이 blur 를 구현하지 않는다.** 그래서 손으로 흉내 내지 않으면 이 검사는
+   * 고친 것을 빼도 통과한다 (2026-09-09 code-reviewer 가 잡았다).
+   */
+  it("삭제가 실패하면 줄이 남고, 뺏긴 초점이 누른 단추로 돌아온다", async () => {
+    let 실패시키기: () => void = () => {};
+    액션.remove.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          실패시키기 = () =>
+            resolve({ ok: false, message: "알림을 지우지 못했습니다" });
+        }),
+    );
+    await 그리기();
+    await 열기();
+
+    const 누른단추 = 줄()[0].querySelector("button") as HTMLButtonElement;
+    await act(async () => {
+      누른단추.focus();
+      누른단추.click();
+    });
+
+    // 액션이 도는 동안이다. 브라우저가 여기서 초점을 뺏는 것을 손으로 흉내 낸다 —
+    // `blur()` 는 이미 비활성인 요소에 jsdom 에서 안 먹으므로 초점을 다른 데로 옮긴다
+    expect(누른단추.disabled).toBe(true);
+    (container.querySelector('[role="dialog"]') as HTMLElement).focus();
+    expect(document.activeElement).not.toBe(누른단추);
+
+    await act(async () => {
+      실패시키기();
+    });
+
+    expect(줄()).toHaveLength(3);
+    expect(document.activeElement).toBe(줄()[0].querySelector("button"));
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("못했습니다");
+  });
+
+  it("「전체 읽음」을 누르면 그 단추가 꺼지므로 초점이 패널로 온다", async () => {
+    await 그리기(2);
+    await 열기();
+
+    const 전체 = 버튼("전체 읽음") as HTMLButtonElement;
+    await act(async () => {
+      전체.focus();
+      전체.click();
+    });
+
+    // 안 읽은 것이 0이 되어 이 단추는 영구 비활성이다 — 초점을 안 옮기면 문서 맨 앞에 남는다
+    expect(버튼("전체 읽음")?.disabled).toBe(true);
+    expect(document.activeElement).toBe(container.querySelector('[role="dialog"]'));
+  });
+
+  it("액션이 결과 없이 깨져도 단추가 다시 켜지고 화면이 그 사실을 말한다", async () => {
+    액션.remove.mockImplementationOnce(async () => {
+      throw new Error("network");
+    });
+    await 그리기();
+    await 열기();
+
+    await act(async () => {
+      (줄()[0].querySelector("button") as HTMLButtonElement).click();
+    });
+
+    // 안 풀면 패널의 단추가 전부 영구 비활성이 되고 오류도 안 뜬다 — 죽은 화면이다
+    expect(줄()).toHaveLength(3);
+    expect((줄()[0].querySelector("button") as HTMLButtonElement).disabled).toBe(false);
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("연결에 문제");
+  });
+
+  it("목록 불러오기가 결과 없이 깨져도 「불러오는 중」에서 안 멈춘다", async () => {
+    액션.load.mockImplementationOnce(async () => {
+      throw new Error("network");
+    });
+    await 그리기();
+    await 열기();
+
+    expect(container.textContent).not.toContain("불러오는 중");
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("연결에 문제");
+  });
+
+  it("지운 사실이 낭독기로 간다 — 줄이 사라지는 것은 눈에만 보인다", async () => {
+    await 그리기();
+    await 열기();
+
+    const 알림자리 = () => container.querySelector('[role="status"]');
+    // 패널이 열리는 순간부터 자리가 있어야 한다. 지운 뒤에 만들어 넣으면 안 읽힌다
+    expect(알림자리()).not.toBeNull();
+    expect(알림자리()?.textContent).toBe("");
+
+    await act(async () => {
+      (줄()[0].querySelector("button") as HTMLButtonElement).click();
+    });
+    expect(알림자리()?.textContent).toContain("남은 알림 2개");
+
+    // **문구가 매번 바뀌어야 둘째 삭제부터도 읽힌다** — 같은 문자열이면 라이브 영역의
+    // 내용이 안 바뀌어서 낭독기가 아무 말도 안 한다
+    await act(async () => {
+      (줄()[0].querySelector("button") as HTMLButtonElement).click();
+    });
+    expect(알림자리()?.textContent).toContain("남은 알림 1개");
+  });
+
+  it("닫았다 열면 지난번에 지운 말이 남아 있지 않다", async () => {
+    await 그리기();
+    await 열기();
+
+    await act(async () => {
+      (줄()[0].querySelector("button") as HTMLButtonElement).click();
+    });
+    expect(container.querySelector('[role="status"]')?.textContent).toContain("남은 알림");
+
+    await act(async () => {
+      종().click(); // 닫는다
+    });
+    await 열기();
+
+    // 안 비우면 지금 목록과 아무 상관 없는 옛 수가 라이브 영역에 담긴 채로 뜬다
+    expect(container.querySelector('[role="status"]')?.textContent).toBe("");
+  });
+});
+
+describe("남이 쓴 글자와 제품이 쓴 글자 (design-rules.md 2026-09-09)", () => {
+  // 목록의 첫 줄은 `participation_requested` 라 꼬리말이 「에 새 참가 신청이 왔습니다」다.
+  const 문장 = () => 줄()[0].querySelector("p") as HTMLParagraphElement;
+  const 이름 = () => 줄()[0].querySelector("b") as HTMLElement;
+
+  it("제목은 낫표 안에 있고, 낫표는 굵게 밖에 있다", async () => {
+    await 그리기();
+    await 열기();
+
+    expect(이름().textContent).toBe("토익 900 뿌시기");
+    expect(문장().textContent).toBe("「토익 900 뿌시기」에 새 참가 신청이 왔습니다");
+
+    // **글자만 보면 안 된다.** 낫표를 이름과 같은 클래스로 감싸도 위 두 단언은 그대로
+    // 통과하는데, 그러면 낫표가 이름과 같은 무게·색이 되고 「누를 수 없는 줄」의 취소선도
+    // 낫표까지 번진다. 그래서 노드로 본다 (2026-09-09 test-auditor).
+    expect(문장().firstChild?.nodeType).toBe(Node.TEXT_NODE);
+    expect(문장().firstChild?.textContent).toBe("「");
+    expect(이름().nextSibling?.textContent).toBe("」");
+    // 이름 말고 다른 요소로 감싼 것이 없다
+    expect(문장().querySelectorAll("*").length).toBe(1);
+    // 이름이 `.name` 을 잃으면 취소선 규칙이 조용히 사라진다
+    expect(이름().className).toBe(줄()[1].querySelector("b")?.className);
+  });
+
+  it("제목이 제품 안내문을 흉내 내도 어디까지가 남의 글자인지 보인다", async () => {
+    액션.load.mockResolvedValueOnce({
+      ok: true,
+      value: [{ ...목록[0], title: "[안내] 계정 확인이 필요합니다" }],
+    });
+    await 그리기();
+    await 열기();
+
+    // 낫표가 없으면 「[안내] 계정 확인이 필요합니다에 새 참가 신청이 왔습니다」가 되어
+    // 앞 문장이 제품이 보낸 안내처럼 읽힌다 (2026-09-08 security-reviewer).
+    expect(문장().textContent).toBe("「[안내] 계정 확인이 필요합니다」에 새 참가 신청이 왔습니다");
+  });
+
+  // **제목 안에 낫표를 넣어 두름을 흉내 내는 경우.** 안 읽은 줄에서는 제품 낫표(600)와
+  // 제목 안 낫표(700)가 눈으로 안 갈리므로, 화면이 안쪽 기호를 겹낫표로 바꿔야 한다
+  // (2026-09-09 security-reviewer · ui-reviewer 가 같은 자리를 지적했다).
+  it("제목 안의 낫표는 겹낫표로 바뀌어 제품이 그린 낫표와 안 겹친다", async () => {
+    액션.load.mockResolvedValueOnce({
+      ok: true,
+      value: [{ ...목록[0], title: "모임」 참가가 수락되었습니다. 「스터디" }],
+    });
+    await 그리기();
+    await 열기();
+
+    expect(문장().textContent).toBe(
+      "「모임』 참가가 수락되었습니다. 『스터디」에 새 참가 신청이 왔습니다",
+    );
+    // 제품이 그린 낫표는 문장 전체에 딱 두 개다
+    expect((문장().textContent?.match(/[「」]/g) ?? []).length).toBe(2);
+  });
+
+  // **자르지 않는 것이 이 결정의 반대 절반이다.** 길이는 값이 들어오는 자리에서 막았고
+  // (`studies_title_length`), 화면은 저장된 값을 그대로 그린다(INV-N6).
+  it("상한만큼 긴 제목도 화면에서 안 잘린다", async () => {
+    const 긴제목 = "가".repeat(60);
+    액션.load.mockResolvedValueOnce({ ok: true, value: [{ ...목록[0], title: 긴제목 }] });
+    await 그리기();
+    await 열기();
+
+    expect(이름().textContent).toBe(긴제목);
+    expect(문장().textContent).toBe(`「${긴제목}」에 새 참가 신청이 왔습니다`);
+  });
+
+  it("삭제 단추의 이름도 같은 문장을 쓴다", async () => {
+    await 그리기();
+    await 열기();
+
+    // 눈으로 보이는 문장과 낭독기가 읽는 이름이 갈리면, 지우기 전에 무엇을 지우는지
+    // 확인하는 두 경로가 서로 다른 것을 말한다.
+    const 삭제 = 줄()[0].querySelector("button") as HTMLButtonElement;
+    expect(삭제.getAttribute("aria-label")).toBe(
+      "알림 삭제: 「토익 900 뿌시기」에 새 참가 신청이 왔습니다",
+    );
+
+    // 누를 수 없는 줄도 같은 조립을 지난다 — 갈래를 따로 두면 한쪽만 고쳐진다
+    const 죽은줄삭제 = 줄()[1].querySelector("button") as HTMLButtonElement;
+    expect(죽은줄삭제.getAttribute("aria-label")).toBe(
+      "알림 삭제: 「알고리즘 스터디」 참가가 수락되었습니다",
+    );
+  });
+});

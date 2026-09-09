@@ -581,6 +581,98 @@ const MUTATIONS = {
         check (recruit_until is null
                or (recruit_until > '-infinity'::date and recruit_until < 'infinity'::date));`,
   },
+  // ── 스터디 제목의 모양 (0020) ──────────────────────────────────────────
+  //
+  // 제약 하나에 갈래가 넷 들어 있다(상한 · 하한 · 공백뿐 · 제어문자) + 사본 쪽에 하나 더.
+  // 통째로 떼면 검사 여럿이 한꺼번에 빨간불이 나는데, 그 빨간불은 갈래 하나하나가
+  // 붙들려 있다는 증거가 못 된다. 갈래마다 따로 무력화하고 이름표도 따로 단다.
+  //
+  // **이름표에 숫자를 쓰지 않는다** — 검사 이름이 `${TITLE_MAX}자는…` 템플릿이라
+  // 앱 상수를 건드리는 변이를 돌리면 이름의 숫자가 같이 바뀐다.
+  "study-title-upper-widened": {
+    holds: "스터디 제목의 상한이 앱과 같은 값이다",
+    tag: "들어가고",
+    sql: `alter table public.studies drop constraint if exists studies_title_length;
+      alter table public.studies add constraint studies_title_length
+        check (char_length(title) between 1 and 61 and btrim(title) <> '');`,
+  },
+  // 하한(1자) 변이는 없다 — 제약이 하한을 따로 안 적는다. `btrim(title) <> ''` 가
+  // 빈 문자열까지 덮으므로 갈래가 아니라 한 갈래다(2026-09-09 변이 검증에서 드러났다).
+  "study-title-allows-blank": {
+    holds: "공백뿐인 제목도 데이터베이스가 거부한다",
+    tag: "공백뿐인",
+    // 길이만 보는 옛 모양으로 되돌린다. `char_length('   ')` 는 3이라 통과한다.
+    sql: `alter table public.studies drop constraint if exists studies_title_length;
+      alter table public.studies add constraint studies_title_length
+        check (char_length(title) between 1 and 60);`,
+  },
+  "study-title-allows-control": {
+    holds: "제어문자가 든 제목은 데이터베이스가 거부한다",
+    tag: "제어문자",
+    sql: `alter table public.studies drop constraint if exists studies_title_no_control;`,
+  },
+  "notifications-title-uncapped": {
+    holds: "알림에 실린 제목도 같은 상한을 받는다",
+    tag: "알림에 실린",
+    // 사본 쪽 제약이다. 원본이 좁아진 뒤로 트리거가 이것에 걸릴 일은 없지만, 떼면
+    // 「지금 이후로」라는 단서 없이 상한을 말할 수 없게 된다.
+    sql: `alter table public.notifications drop constraint if exists notifications_title_length;`,
+  },
+
+  // ── 남이 쓴 글자 두르기 (design-rules 2026-09-09) ──────────────────────
+  //
+  // 시각 결정이라 스펙 INV 가 없다. 이름표는 검사 이름 조각을 쓴다.
+  "quote-marks-removed": {
+    holds: "알림 문장이 남이 쓴 제목을 낫표로 두른다",
+    tag: "제품 안내문을 흉내",
+    suite: "unit",
+    file: {
+      path: "src/widgets/site-header/ui/NotificationBell.tsx",
+      find: `        {open}`,
+      replace: `        {""}`,
+    },
+  },
+  "quote-inside-bold": {
+    holds: "낫표는 굵게 밖에 있다 — 취소선이 이름에만 걸리는 근거다",
+    tag: "굵게 밖에",
+    suite: "unit",
+    file: {
+      path: "src/widgets/site-header/ui/NotificationBell.tsx",
+      find: `        <b className={styles.name}>{body}</b>`,
+      replace: `        <b className={styles.name}>{open + body + close}</b>`,
+    },
+  },
+  "quote-inner-kept": {
+    holds: "두른 글자 안에서는 같은 기호가 안 나온다",
+    tag: "겹낫표로",
+    suite: "unit",
+    // 안쪽 기호를 그대로 두면 호스트가 제목으로 제품의 경계를 흉내 낼 수 있다.
+    file: {
+      path: "src/shared/lib/quote.ts",
+      find: `    body: text.replace(/[「」]/g, (c) => INNER[c] ?? c),`,
+      replace: `    body: text,`,
+    },
+  },
+  "quote-truncates": {
+    holds: "화면은 저장된 제목을 자르지 않는다 (INV-N6)",
+    tag: "안 잘린다",
+    suite: "unit",
+    file: {
+      path: "src/widgets/site-header/ui/NotificationBell.tsx",
+      find: `        <b className={styles.name}>{body}</b>`,
+      replace: `        <b className={styles.name}>{body.slice(0, 20)}</b>`,
+    },
+  },
+  "quote-aria-unquoted": {
+    holds: "낭독기가 읽는 이름과 보이는 문장이 같은 조립을 지난다",
+    tag: "삭제 단추의 이름",
+    suite: "unit",
+    file: {
+      path: "src/widgets/site-header/ui/NotificationBell.tsx",
+      find: '          aria-label={`알림 삭제: ${quoteUserText(subject)}${tail}`}',
+      replace: '          aria-label={`알림 삭제: ${subject}${tail}`}',
+    },
+  },
   "p6-computed-adds-deadline": {
     holds: "INV-P6 — 마감일이 지나도 계산 컬럼은 모집 중이라고 답한다",
     // **넣는 변이다.** 보통 변이는 강제 장치를 빼는데, 이 조항이 금지하는 것은
@@ -2442,6 +2534,11 @@ const RESTORE_MIGRATIONS = [
   // 없으면 `n5-notifications-columns` 가 심은 「표 전체 갱신」이 안 돌아오고, 그 뒤의
   // 변이가 전부 알림을 마음대로 고칠 수 있는 데이터베이스에서 판정된다.
   "0019_notification_update_scope.sql",
+  // 0020 은 스터디 제목의 제약 셋과 알림 사본의 제약 하나를 건다. 목록에 있어야 그 넷을
+  // 무력화한 변이가 **파일 하나에서** 되돌아온다 — undo 에 손으로 옮겨 적으면 0020 을
+  // 고치는 날 복구가 옛 값으로 되돌려 놓고, 그 사실이 「복구 실패」로만 보인다.
+  // 전부 `drop … if exists` + `add constraint` 라 다시 돌려도 결과가 같다.
+  "0020_study_title_length.sql",
 ];
 
 /**

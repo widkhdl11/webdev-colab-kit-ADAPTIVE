@@ -206,6 +206,14 @@
   color: var(--ink);
 }
 
+/* 비활성 톤 — 「그 단추가 가진 선을 한 단계 내린다」. 「전체 읽음」은 내릴 테두리가
+   있어서 테두리가 내려가고, 이 단추는 아이콘밖에 없어서 아이콘이 내려간다.
+   새 색을 만들지 않는다 — 둘 다 승인된 토큰이다 */
+.del:disabled {
+  color: var(--rule);
+  cursor: not-allowed;
+}
+
 .del:focus-visible {
   outline: 3px solid var(--ink);
   outline-offset: 2px;
