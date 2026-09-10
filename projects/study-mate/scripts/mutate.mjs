@@ -619,6 +619,182 @@ const MUTATIONS = {
     sql: `alter table public.notifications drop constraint if exists notifications_title_length;`,
   },
 
+  // ── 메시지 행에서 무엇을 사람이 정하나 (0021 · INV-M1~M5) ─────────────
+  // 강제 장치 하나마다 변이 하나다. 갈래를 묶어 빼면 그중 하나만 붙들려 있어도
+  // 「잡혔다」가 나오고, 나머지는 아무도 안 붙드는데 숫자는 만점이 된다.
+  "chat-insert-grant-open": {
+    holds: "요청이 created_at 을 실을 수 없다",
+    tag: "created_at 을 실은",
+    // 열 목록을 통째로 없애 표 전체에 삽입 권한을 준다 — 0021 이전 상태다.
+    sql: `revoke insert on public.chat_messages from authenticated;
+      grant insert on public.chat_messages to authenticated;`,
+  },
+  "chat-insert-grant-allows-id": {
+    holds: "요청이 메시지 id 를 정할 수 없다",
+    tag: "id 를 직접 지정한",
+    // created_at 은 그대로 막고 id 만 연다. 위 변이와 갈래가 다르다 —
+    // 「시각을 못 정한다」와 「id 를 못 정한다」는 서로 다른 검사가 붙들어야 한다.
+    sql: `revoke insert on public.chat_messages from authenticated;
+      grant insert (id, chat_id, sender_id, content) on public.chat_messages to authenticated;`,
+  },
+  "chat-insert-grant-drops-content": {
+    holds: "허용된 열 셋은 그대로 들어간다",
+    tag: "허용된 열 셋만",
+    // 반대 절반이다. 열을 지나치게 좁히면 채팅이 아예 안 되는데, 거부 경로만 보는
+    // 검사는 그 상태에서도 전부 초록불이다.
+    sql: `revoke insert on public.chat_messages from authenticated;
+      grant insert (chat_id, sender_id) on public.chat_messages to authenticated;`,
+  },
+  "chat-insert-policy-open": {
+    holds: "방 멤버가 아니면 삽입이 거부된다",
+    tag: "방 멤버가 아니면",
+    // 권한과 정책은 다른 층이다. 열을 좁히다 정책을 지워도 위 세 변이는 안 잡는다.
+    sql: `drop policy if exists messages_send_member on public.chat_messages;
+      create policy messages_send_member on public.chat_messages for insert
+        with check (sender_id = (select auth.uid()));`,
+  },
+  "chat-content-uncapped": {
+    holds: "메시지 본문의 상한이 앱과 같은 값이다",
+    // 이름표에 숫자를 안 넣는다 — `chat-length-loosened` 변이가 상한 자체를 바꾸면
+    // 검사 이름의 숫자도 같이 바뀌어 이름표가 안 맞는다(2026-09-10 실측: 「2000자는」으로
+    // 뒀더니 검사는 제대로 빨간불이 났는데 판정이 「엉뚱한 빨간불」로 나왔다).
+    tag: "한 글자 넘기면",
+    sql: `alter table public.chat_messages drop constraint if exists chat_messages_content_length;
+      alter table public.chat_messages add constraint chat_messages_content_length
+        check (char_length(content) <= 20000 and btrim(content) <> '');`,
+  },
+  "chat-content-allows-blank": {
+    holds: "공백뿐인 본문도 데이터베이스가 거부한다",
+    tag: "공백만으로 된",
+    // 길이만 보는 모양으로 되돌린다. `char_length('   ')` 는 3이라 통과한다.
+    sql: `alter table public.chat_messages drop constraint if exists chat_messages_content_length;
+      alter table public.chat_messages add constraint chat_messages_content_length
+        check (char_length(content) <= 2000);`,
+  },
+  "chat-content-allows-control": {
+    holds: "제어문자가 든 본문은 데이터베이스가 거부한다",
+    tag: "줄바꿈이 든",
+    sql: `alter table public.chat_messages drop constraint if exists chat_messages_content_no_control;`,
+  },
+  "chat-content-newline-only": {
+    holds: "줄바꿈 말고 다른 제어문자도 거부된다",
+    tag: "다른 제어문자도",
+    // 「제어문자를 막는다」를 「줄바꿈만 막는다」로 좁힌다. 줄바꿈 검사 하나만 있으면
+    // 이 변이가 그대로 빠져나간다.
+    sql: `alter table public.chat_messages drop constraint if exists chat_messages_content_no_control;
+      alter table public.chat_messages add constraint chat_messages_content_no_control
+        check (content !~ E'\n');`,
+  },
+  "chat-content-rejects-everything": {
+    holds: "평범한 한 줄은 그대로 들어간다",
+    tag: "평범한 한 줄은",
+    // 반대 절반. 제약을 「전부 거부」로 잘못 써도 위 셋은 초록불이다.
+    //
+    // **`not valid` 로 건다.** 그냥 걸면 이미 들어 있는 행이 전부 위반이라 `add constraint`
+    // 자체가 서고, 그러면 「변이를 심지 못했다」로 판정 불가가 된다 — 검사가 무엇을
+    // 붙들고 있는지가 아니라 데이터베이스에 무엇이 남아 있었는지가 결과를 정하게 된다
+    // (2026-09-10 실측). `not valid` 는 기존 행을 안 보고 새 삽입에만 건다.
+    sql: `alter table public.chat_messages drop constraint if exists chat_messages_content_no_control;
+      alter table public.chat_messages add constraint chat_messages_content_no_control
+        check (content ~ '^$') not valid;`,
+  },
+  "chat-insert-grant-allows-created-at": {
+    holds: "요청이 created_at 을 실을 수 없다",
+    tag: "created_at 을 실은",
+    // 표 전체를 여는 변이(`chat-insert-grant-open`)와 갈래가 다르다 — 이건 열 목록에
+    // 한 열만 더한다. 목록을 손대는 변경이 통째로 여는 것보다 훨씬 흔하다.
+    sql: `revoke insert on public.chat_messages from authenticated;
+      grant insert (chat_id, sender_id, content, created_at) on public.chat_messages to authenticated;`,
+  },
+  "chat-insert-anon-restored": {
+    holds: "비로그인에는 삽입 권한이 없다",
+    tag: "권한에 대고",
+    // **행동으로는 못 잡는 변이다.** 삽입 정책이 `sender_id = auth.uid()` 를 보는데
+    // 비로그인은 그 값이 null 이라 정책이 대신 거부한다. 권한 목록을 직접 묻는 검사만
+    // 이것을 붙든다.
+    sql: `grant insert (chat_id, sender_id, content) on public.chat_messages to anon;`,
+    undo: `revoke insert on public.chat_messages from anon;`,
+  },
+  "chat-content-allows-wide-blank": {
+    holds: "눈에 안 보이는 다른 공백만으로 된 본문도 거부된다",
+    tag: "눈에 안 보이는 다른 공백",
+    // `btrim` 으로 되돌린다. 인자 하나짜리 `btrim` 은 U+0020 만 자르므로 전각 공백·
+    // 줄바꿈 없는 공백·BOM 으로만 된 본문이 통과한다(0010 이 이름에서 실측한 함정).
+    sql: `alter table public.chat_messages drop constraint if exists chat_messages_content_length;
+      alter table public.chat_messages add constraint chat_messages_content_length
+        check (char_length(content) <= 2000 and btrim(content) <> '');`,
+  },
+  "chat-messages-update-privilege-restored": {
+    holds: "이 표에 갱신·삭제 권한이 남아 있지 않다",
+    tag: "갱신·삭제 권한이",
+    // 오늘 동작을 안 바꾸는 방벽이라 행동 검사로는 못 잰다 — 권한 목록 단언만 잡는다.
+    sql: `grant update, delete on public.chat_messages to authenticated;`,
+    undo: `revoke update, delete on public.chat_messages from anon, authenticated;`,
+  },
+
+  "chat-read-stamp-skips-existing": {
+    holds: "두 번째 읽음 표시는 시각을 앞으로 민다",
+    tag: "앞으로 민다",
+    // 「이미 값이 있으면 그대로 둔다」. 첫 읽음은 통과하고 그 뒤로 시각이 멈춘다 —
+    // 그 방은 한 번 읽은 뒤로 새 메시지가 영원히 안 읽음으로 남는다. 위 둘과 갈래가
+    // 다르므로 이름표도 따로 단다.
+    sql: `create or replace function public.stamp_chat_read_at() returns trigger
+      language plpgsql set search_path = '' as $fn$
+      begin
+        new.last_read_at := pg_catalog.coalesce(old.last_read_at, pg_catalog.now());
+        return new;
+      end;
+      $fn$;`,
+  },
+  "chat-read-stamp-dropped": {
+    holds: "읽음 시각을 데이터베이스가 찍는다",
+    tag: "미래를 실어도",
+    // 트리거를 떼면 앱이 보낸 값이 그대로 저장된다 — 지금 앱은 null 을 보내므로
+    // last_read_at 이 null 이 되고, 그 방의 모든 메시지가 안 읽음으로 보인다.
+    sql: `drop trigger if exists chat_participants_stamp_read on public.chat_participants;`,
+  },
+  "chat-read-stamp-conditional": {
+    holds: "앱이 보내는 자리 표시로 눌러도 시각이 찍힌다",
+    // 이름표가 **null 로 누르는 검사**다. 미래 시각을 실은 검사는 이 변이를 못 잡는다 —
+    // 그쪽은 값이 달라지므로 좁힌 조건을 그대로 통과한다.
+    tag: "자리 표시",
+    // 「값이 달라졌을 때만 찍는다」로 좁힌다. 앱이 보내는 값이 null 이고 아직 안 읽은
+    // 방의 저장된 값도 null 이라, 아무 일도 안 하는 갈래를 지나는 것이 **모든 방의 첫
+    // 읽음**이다 — 읽어도 값이 null 로 남아 그 방 전체가 영원히 안 읽음으로 보인다.
+    sql: `create or replace function public.stamp_chat_read_at() returns trigger
+      language plpgsql set search_path = '' as $fn$
+      begin
+        if new.last_read_at is distinct from old.last_read_at then
+          new.last_read_at := pg_catalog.now();
+        end if;
+        return new;
+      end;
+      $fn$;`,
+  },
+  "chat-messages-update-open": {
+    holds: "저장된 메시지는 고칠 수 없다",
+    // 이름표가 S5 가 아니라 **정책 목록 검사(S5c)** 다. 0021 이 갱신 권한을 거둔 뒤로
+    // S5 는 「오류가 왔거나 0행」을 보므로, 정책만 열리면 42501 이 와서 그대로 통과한다.
+    // 이 변이를 붙드는 것은 「정책은 읽기와 넣기 둘뿐이다」 하나다.
+    tag: "읽기와 넣기 둘뿐이다",
+    // INV-M5 를 지키는 것은 「정책이 없음」이다. 없음은 눈에 안 보이므로, 나중에 메시지
+    // 수정 기능을 만들며 이 한 줄을 더하면 규칙이 소리 없이 사라진다.
+    sql: `drop policy if exists messages_edit_own on public.chat_messages;
+      create policy messages_edit_own on public.chat_messages for update
+        using (sender_id = (select auth.uid())) with check (sender_id = (select auth.uid()));`,
+    // **undo 를 손으로 적는다.** 이 변이가 만드는 것은 0021 이 만들지 않는 정책이라
+    // 마이그레이션 재적용으로는 안 없어진다 — INV-M5 를 지키는 것이 「없음」이기 때문이다.
+    undo: `drop policy if exists messages_edit_own on public.chat_messages;`,
+  },
+  "chat-messages-delete-open": {
+    holds: "저장된 메시지는 지울 수 없다",
+    tag: "읽기와 넣기 둘뿐이다",
+    sql: `drop policy if exists messages_delete_own on public.chat_messages;
+      create policy messages_delete_own on public.chat_messages for delete
+        using (sender_id = (select auth.uid()));`,
+    undo: `drop policy if exists messages_delete_own on public.chat_messages;`,
+  },
+
   // ── 남이 쓴 글자 두르기 (design-rules 2026-09-09) ──────────────────────
   //
   // 시각 결정이라 스펙 INV 가 없다. 이름표는 검사 이름 조각을 쓴다.
@@ -1140,14 +1316,53 @@ const MUTATIONS = {
       replace: `    .eq("chat_id", chatId + "");`,
     },
   },
-  "markread-frozen-clock": {
-    holds: "INV-Z8 — 읽음 표시가 미는 값은 지금 시각이다",
+  "chat-control-guard-dropped": {
+    holds: "제어문자가 든 본문은 앱이 먼저 거부한다",
+    tag: "제어문자가 든 본문은",
     suite: "unit",
-    // 1970년으로 고정되면 안 읽은 배지가 영원히 안 지워진다. 키만 보는 단언은 초록불이다.
+    // 판정을 지우면 본문이 그대로 데이터베이스로 가고, 제약이 23514 로 거부한 것을
+    // dbErrorMessage 가 「잠시 뒤 다시 시도해 주세요」로 덮는다 — 다시 시도해도 절대
+    // 성공하지 않는데 문구는 기다리라고 한다.
+    file: {
+      path: "src/features/chat/api/send-message.ts",
+      find: `  if (hasControlChars(content)) {`,
+      replace: `  if (false && hasControlChars(content)) {`,
+    },
+  },
+  "chat-control-guard-rejects-all": {
+    holds: "제어문자가 아닌 특수문자는 그대로 보낸다",
+    tag: "제어문자가 아닌 특수문자",
+    suite: "unit",
+    // 반대 절반. 판정을 「전부 거부」로 잘못 써도 위 변이가 붙드는 검사는 초록불이다.
+    file: {
+      path: "src/features/chat/api/send-message.ts",
+      find: `  if (hasControlChars(content)) {`,
+      replace: `  if (content.length > 0) {`,
+    },
+  },
+  "chat-length-code-units": {
+    holds: "길이를 코드 포인트로 센다",
+    tag: "코드 포인트로 센다",
+    suite: "unit",
+    // UTF-16 코드 단위로 되돌린다. 이모지 하나가 2로 세져서, 스키마의 char_length 가
+    // 받아 줄 메시지를 앱이 먼저 막는다.
+    file: {
+      path: "src/features/chat/api/send-message.ts",
+      find: `  if ([...content].length > MESSAGE_MAX) {`,
+      replace: `  if (content.length > MESSAGE_MAX) {`,
+    },
+  },
+
+  // 옛 변이(`markread-frozen-clock`)는 앱이 시계를 갖고 있을 때의 것이었다 — 기본 시계를
+  // 1970년으로 고정했다. 0021 부터 앱은 시각을 아예 안 만들고 데이터베이스가 찍으므로
+  // (INV-M2), 고정할 시계가 없다. 대신 **앱이 다시 시각을 만드는 것**이 변이다.
+  "markread-app-clock": {
+    holds: "INV-M2 — 읽음 시각을 앱이 만들지 않는다",
+    suite: "unit",
     file: {
       path: "src/features/chat/api/mark-read.ts",
-      find: `  now: () => string = () => new Date().toISOString(),`,
-      replace: `  now: () => string = () => "1970-01-01T00:00:00.000Z",`,
+      find: `const STAMPED_BY_DB = null;`,
+      replace: `const STAMPED_BY_DB = new Date().toISOString();`,
     },
   },
 
@@ -2539,6 +2754,15 @@ const RESTORE_MIGRATIONS = [
   // 고치는 날 복구가 옛 값으로 되돌려 놓고, 그 사실이 「복구 실패」로만 보인다.
   // 전부 `drop … if exists` + `add constraint` 라 다시 돌려도 결과가 같다.
   "0020_study_title_length.sql",
+  // 0021 은 메시지 표의 열 단위 삽입 권한 · 본문 제약 둘 · 읽음 시각 트리거를 건다.
+  // 목록에 있어야 그 넷을 무력화한 변이가 **파일 하나에서** 되돌아온다. 전부
+  // `revoke`+`grant` · `drop … if exists`+`add constraint` · `create or replace` ·
+  // `drop trigger`+`create trigger` 라 다시 돌려도 결과가 같다.
+  //
+  // **0021 이 새로 만들지 않는 것은 여기서 안 돌아온다** — INV-M5 를 지키는 것은
+  // 「갱신·삭제 정책이 없음」이고, 없는 것은 재적용으로 다시 없어지지 않는다.
+  // 그 자리를 여는 변이 둘은 undo 를 따로 들고 있다.
+  "0021_chat_message_integrity.sql",
 ];
 
 /**
@@ -2601,6 +2825,39 @@ select '프로필 조회 정책이 판정 함수를 안 부른다 (INV-Z13)' as 
     where schemaname = 'public' and tablename = 'profiles' and policyname = 'profiles_read'
       and strpos(qual, 'profile_is_visible') > 0
  )
+union all
+-- 0021 이 목록에서 빠지면 복구가 끝난 자리에 **메시지 삽입이 통째로 열린 채로** 남고
+-- (INV-M1) 그 뒤의 모든 변이가 그 데이터베이스에서 판정된다. 열 이름으로 보지 않고
+-- 「표 단위 INSERT 가 남아 있나」로 본다 — 열 목록이 넓어지는 모양을 다 덮는다.
+select '메시지 삽입 권한이 열 단위로 안 좁혀져 있다 (INV-M1, 0021)' as what
+ where exists (
+   select 1 from information_schema.table_privileges
+    where table_schema = 'public' and table_name = 'chat_messages'
+      and grantee in ('anon', 'authenticated') and privilege_type = 'INSERT'
+ )
+union all
+-- 갱신·삭제 권한도 같이 본다(INV-M5). 정책이 없어 오늘 손해는 없지만, 복구가 이것을
+-- 안 되돌리면 「수정 정책 한 줄이 열 전부를 연다」는 상태로 그 뒤 변이가 판정된다.
+select '메시지 표에 갱신·삭제 권한이 남아 있다 (INV-M5, 0021)' as what
+ where exists (
+   select 1 from information_schema.table_privileges
+    where table_schema = 'public' and table_name = 'chat_messages'
+      and grantee in ('anon', 'authenticated') and privilege_type in ('UPDATE', 'DELETE')
+ )
+union all
+-- 읽음 시각 트리거(INV-M2). 없으면 앱이 보내는 null 이 그대로 저장돼 모든 방이
+-- 「전부 안 읽음」이 된다.
+select '읽음 시각 트리거가 없다 (INV-M2, 0021)' as what
+ where not exists (
+   select 1 from pg_trigger
+    where tgname = 'chat_participants_stamp_read' and not tgisinternal
+ )
+union all
+-- 본문 제약 둘(INV-M3 · INV-M4).
+select '메시지 본문 제약이 빠졌다 (INV-M3·M4, 0021)' as what
+ where (select count(*) from pg_constraint
+         where conrelid = 'public.chat_messages'::regclass
+           and conname in ('chat_messages_content_length', 'chat_messages_content_no_control')) <> 2
 union all
 -- 아바타 정책의 경로 판정(INV-E3). 0015 가 목록에서 빠지면 복구가 끝난 자리에
 -- 「남의 폴더를 차지할 수 있는」 상태가 도로 남는다.

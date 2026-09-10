@@ -5,7 +5,6 @@ import { makeMarkRead, touchLastRead } from "./mark-read";
 
 const 사용자 = { id: "11111111-1111-4111-8111-111111111111" };
 const 방 = "22222222-2222-4222-8222-222222222222";
-const 시각 = "2026-09-06T00:00:00.000Z";
 
 /**
  * 데이터베이스 대신 쓰는 가짜. .eq() 는 몇 번이든 이어 붙을 수 있고 await 이 결과를
@@ -62,17 +61,26 @@ describe("읽음 표시 액션", () => {
     expect(db.호출).not.toHaveBeenCalled();
   });
 
-  it("INV-Z8(앱 쪽 절반): SET 절에 담는 것은 last_read_at 하나뿐이고 값은 지금 시각이다", async () => {
+  it("INV-Z8(앱 쪽 절반): SET 절에 담는 것은 last_read_at 하나뿐이다", async () => {
     const db = 가짜DB();
 
     await expect(액션으로(db, 사용자)(방)).resolves.toEqual({ ok: true, value: null });
     expect(db.테이블).toEqual(["chat_participants"]);
-    expect(db.보낸것).toEqual([{ last_read_at: expect.any(String) }]);
-    // **값도 본다.** 키만 보면 기본 시계를 1970년으로 고정한 변이도 초록불인데, 그러면
-    // 안 읽은 배지가 영원히 안 지워진다 (2026-09-06 test-auditor).
-    const 밀린시간 = Date.now() - Date.parse(String(db.보낸것[0]?.last_read_at));
-    expect(밀린시간).toBeGreaterThanOrEqual(0);
-    expect(밀린시간).toBeLessThan(5000);
+    expect(db.보낸것).toEqual([{ last_read_at: null }]);
+  });
+
+  it("INV-M2(앱 쪽 절반): 앱은 시각을 만들지 않는다 — 자리만 보내고 값은 데이터베이스가 넣는다", async () => {
+    const db = 가짜DB();
+
+    await 액션으로(db, 사용자)(방);
+
+    // **`null` 인 것 자체가 판정이다.** 여기 무슨 시각이든 실리면 그 값은 앱 서버 시계에서
+    // 온 것이고, 안 읽은 수를 가르는 반대편(chat_messages.created_at)은 데이터베이스
+    // 시계다. 두 시계가 어긋나면 오류 없이 틀린 숫자가 나온다 (INV-M2, 0021 의 트리거).
+    //
+    // 옛 검사는 「값이 지금 시각 근처인가」를 봤는데, 그 단언은 앱이 시각을 만드는 것을
+    // 전제로 한다 — 지금은 만드는 것 자체가 위반이다.
+    expect(db.보낸것[0]?.last_read_at).toBeNull();
   });
 
   it("대상은 「이 방의 나」다 — user_id 조건이 빠지면 방 전체의 읽음 시각을 민다", async () => {
@@ -88,14 +96,6 @@ describe("읽음 표시 액션", () => {
       ]),
     );
     expect(db.필터).toHaveLength(2);
-  });
-
-  it("미는 값은 주입한 시계에서 온다", async () => {
-    const db = 가짜DB();
-
-    await touchLastRead(사용자, 방, db.createSupabase, () => 시각);
-
-    expect(db.보낸것[0]).toEqual({ last_read_at: 시각 });
   });
 
   it("방을 모르면 데이터베이스를 부르지 않는다", async () => {

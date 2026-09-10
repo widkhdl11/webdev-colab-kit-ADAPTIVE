@@ -74,9 +74,13 @@ describe("메시지 보내기 액션", () => {
     expect(JSON.stringify(db.보낸것[0])).not.toContain(남);
   });
 
-  it("길이 상한 2000 자가 실제로 걸린다 — 스키마에 제약이 없어 여기가 유일한 강제 위치다", async () => {
+  it("길이 상한 2000 자가 실제로 걸린다 — 스키마(0021)와 같은 숫자여야 한다", async () => {
     // **숫자를 박는다.** 상수를 import 해서 상대적으로만 보면 MESSAGE_MAX 를 20000 으로
     // 옮겨도 양쪽이 같이 움직여 전부 초록불이다 (2026-09-06 test-auditor).
+    //
+    // 2026-09-10: 강제 위치가 하나 더 생겼다(0021 의 `chat_messages_content_length`).
+    // 여기가 여전히 필요한 이유는 문구다 — 제약이 거부하면 나오는 것이 영어 원문이라
+    // 화면에 그대로 못 내보낸다.
     const { db, 액션 } = 준비();
 
     await expect(액션(폼({ content: "가".repeat(2001) }))).resolves.toEqual({
@@ -90,6 +94,41 @@ describe("메시지 보내기 액션", () => {
       ok: true,
       value: null,
     });
+  });
+
+  it("INV-M3(앱 쪽 절반): 길이를 코드 포인트로 센다 — 스키마의 char_length 와 같은 단위다", async () => {
+    // `content.length` 는 UTF-16 코드 단위라 이모지 하나가 2로 세진다. 스키마의
+    // `char_length` 는 코드 포인트다. 앱이 코드 단위로 세면 이모지 1001개짜리 메시지를
+    // **앱만** 막고, 「두 자리가 같은 숫자다」가 경계에서 참이 아니게 된다
+    // (2026-09-10 code-reviewer).
+    const { db, 액션 } = 준비();
+
+    // 코드 포인트로는 1500자, UTF-16 코드 단위로는 3000자다.
+    await expect(액션(폼({ content: "🙂".repeat(1500) }))).resolves.toEqual({ ok: true, value: null });
+    expect(db.호출).toHaveBeenCalled();
+  });
+
+  it("INV-M4(앱 쪽 절반): 제어문자가 든 본문은 데이터베이스에 안 보내고 읽을 수 있는 문구로 거부한다", async () => {
+    // **없으면 고칠 수 없는 오류가 반복된다.** `trim()` 은 양끝만 깎으므로 본문 가운데의
+    // 제어문자는 그대로 데이터베이스로 가고, 제약이 23514 로 거부하면 `dbErrorMessage` 가
+    // 영어 원문을 덮어 「잠시 뒤 다시 시도해 주세요」를 돌려준다 — 다시 시도해도 절대
+    // 성공하지 않는데 문구는 기다리라고 한다 (2026-09-10 code-reviewer).
+    const { db, 액션 } = 준비();
+
+    // 탭(U+0009). 스프레드시트 셀을 복사해 붙여 넣으면 그대로 남는 글자다.
+    await expect(액션(폼({ content: "앞\u0009뒤" }))).resolves.toEqual({
+      ok: false,
+      message: "메시지에 넣을 수 없는 글자가 있습니다",
+    });
+    expect(db.호출, "제어문자가 든 본문이 데이터베이스까지 갔다").not.toHaveBeenCalled();
+  });
+
+  it("INV-M4(반대 절반): 제어문자가 아닌 특수문자는 그대로 보낸다", async () => {
+    // 이 짝이 없으면 판정을 「전부 거부」로 바꾼 변이도 초록불이다.
+    const { db, 액션 } = 준비();
+
+    await expect(액션(폼({ content: "3 < 5 & 「낫표」 🙂" }))).resolves.toEqual({ ok: true, value: null });
+    expect(db.보낸것[0]?.content).toBe("3 < 5 & 「낫표」 🙂");
   });
 
   it("공백만 보내면 거부하고, 보내는 값은 앞뒤 공백이 잘린 것이다", async () => {
