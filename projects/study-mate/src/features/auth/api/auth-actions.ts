@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createServerSupabase } from "@/shared/api/supabase/server-client";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { safeNextPath } from "../model/safe-next";
+import { hasBidiFormatting, hasControlChars, hasVisibleContent } from "@/shared/lib/text";
 
 /**
  * 왜 실패했는지 사람의 말로. **어느 쪽이 틀렸는지는 말하지 않는다** —
@@ -47,6 +48,20 @@ export async function signUpAction(
     return { ok: false, message: "이름·이메일·비밀번호를 모두 입력해 주세요" };
   }
   if (username.length > 20) return { ok: false, message: "이름은 20자까지 쓸 수 있습니다" };
+  // **가입에서 이 검사가 빠지면 가입이 통째로 실패한다.** 프로필은 계정 행이 들어오는 그
+  // 트랜잭션에서 트리거가 만들므로(0010), 이름이 `profiles` 의 제약에 걸리면 **계정 생성이
+  // 함께 되감긴다.** 그때 사용자가 보는 것은 제약이 낸 영어 원문이고, 무엇을 고쳐야 하는지
+  // 알 방법이 없다 — 그리고 다시 눌러도 같은 결과다.
+  //
+  // 위의 `!username` 은 이것을 못 잡는다: `trim()` 은 전각 공백도 폭 없는 공백도 안 자른다.
+  // 범위는 `profiles_username_no_control`(0015) · `profiles_username_visible` ·
+  // `profiles_username_no_bidi`(0022) 와 같아야 한다.
+  if (!hasVisibleContent(username)) {
+    return { ok: false, message: "이름·이메일·비밀번호를 모두 입력해 주세요" };
+  }
+  if (hasControlChars(username) || hasBidiFormatting(username)) {
+    return { ok: false, message: "화면에 안 보이는 글자가 섞여 있습니다. 붙여 넣지 말고 직접 입력해 주세요" };
+  }
 
   const supabase = await createServerSupabase();
   // 이름은 가입 요청에 실어 보낸다. **여기서 프로필을 만들지 않는다** — 계정 행이 들어오는

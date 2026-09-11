@@ -118,7 +118,7 @@ describe("메시지 보내기 액션", () => {
     // 탭(U+0009). 스프레드시트 셀을 복사해 붙여 넣으면 그대로 남는 글자다.
     await expect(액션(폼({ content: "앞\u0009뒤" }))).resolves.toEqual({
       ok: false,
-      message: "메시지에 넣을 수 없는 글자가 있습니다",
+      message: "화면에 안 보이는 글자가 섞여 있습니다. 붙여 넣지 말고 직접 입력해 주세요",
     });
     expect(db.호출, "제어문자가 든 본문이 데이터베이스까지 갔다").not.toHaveBeenCalled();
   });

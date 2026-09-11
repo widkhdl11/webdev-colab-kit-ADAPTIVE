@@ -9,6 +9,7 @@
 // 그 매핑이 두 벌이 되고, 열이 하나 늘 때 한쪽만 고쳐진다.
 
 import { formText } from "@/shared/lib/form-text";
+import { hasBidiFormatting, hasControlChars, hasVisibleContent } from "@/shared/lib/text";
 import {
   CAPACITY_MAX,
   CAPACITY_MIN,
@@ -56,21 +57,34 @@ export function readStudyFields(
   const capacity = Number.parseInt(String(form.get("capacity") ?? ""), 10);
   const meetingMode = String(form.get("meetingMode") ?? "offline");
 
-  if (!title) return { ok: false, message: "스터디 이름을 적어 주세요" };
+  // **판정 순서는 세 자리(제목·이름·메시지)가 같다** — 보이는 내용 → 길이 → 제어문자 →
+  // 서식 문자. 2026-09-11 까지 여기만 순서가 달라서, 「전각 공백 + RLO」에 이 화면은
+  // 「쓸 수 없는 글자가 있습니다」를, 프로필 화면은 「이름을 적어 주세요」를 줬다.
+  // 앞쪽 문구는 막다른 길이다 — 칸이 비어 보이는데 지울 글자를 찾으라고 말한다.
+  if (!title || !hasVisibleContent(title)) {
+    return { ok: false, message: "스터디 이름을 적어 주세요" };
+  }
   // **글자 수를 코드포인트로 센다.** `String.length` 는 UTF-16 단위라 이모지 하나를 둘로
   // 세고, 그러면 데이터베이스(`char_length`)와 다른 숫자가 된다 — 「60자까지」라고 말해
   // 놓고 30자에서 막힌다 (2026-09-09 code-reviewer).
   if ([...title].length > TITLE_MAX) {
     return { ok: false, message: `스터디 이름은 ${TITLE_MAX}자까지 적을 수 있습니다` };
   }
-  if (summary && summary.length > SUMMARY_MAX) {
+  // **제목에는 이 판정이 아예 없었다** (2026-09-11). 길이만 보고 넘겼으므로 제어문자가
+  // 든 제목은 데이터베이스까지 가서 영어 원문으로 거부됐고, 화면에는 「잠시 뒤 다시 시도해
+  // 주세요」가 떴다 — 다시 시도해도 절대 성공하지 않는다. 채팅과 프로필은 같은 짝을 이미
+  // 갖고 있었다. 강제 위치는 0020·0022 의 제약이고 여기는 문구를 위한 자리다.
+  if (hasControlChars(title) || hasBidiFormatting(title)) {
+    return { ok: false, message: "화면에 안 보이는 글자가 섞여 있습니다. 붙여 넣지 말고 직접 입력해 주세요" };
+  }
+  if (summary && [...summary].length > SUMMARY_MAX) {
     return { ok: false, message: `한 줄 소개는 ${SUMMARY_MAX}자까지 적을 수 있습니다` };
   }
   if (!description) return { ok: false, message: "어떤 스터디인지 설명을 적어 주세요" };
-  if (description.length > DESCRIPTION_MAX) {
+  if ([...description].length > DESCRIPTION_MAX) {
     return { ok: false, message: `설명은 ${DESCRIPTION_MAX}자까지 적을 수 있습니다` };
   }
-  if (locationDetail && locationDetail.length > LOCATION_MAX) {
+  if (locationDetail && [...locationDetail].length > LOCATION_MAX) {
     return { ok: false, message: `장소는 ${LOCATION_MAX}자까지 적을 수 있습니다` };
   }
   if (!categoryId) return { ok: false, message: "카테고리를 골라 주세요" };

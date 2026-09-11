@@ -29,17 +29,7 @@ export function isAvatarType(type: string): type is (typeof AVATAR_TYPES)[number
   return (AVATAR_TYPES as readonly string[]).includes(type);
 }
 
-/**
- * 이름에 제어문자가 섞였나. 데이터베이스의 `profiles_username_no_control` 과 같은 판정이고,
- * **강제 위치는 그쪽이다** — 여기는 사용자가 읽을 수 있는 문구를 주기 위한 자리다.
- * 제약이 거부하면 나오는 것은 영어 원문이라 화면에 그대로 내보낼 수 없다.
- */
-export function hasControlChars(name: string): boolean {
-  for (const ch of name) {
-    const code = ch.codePointAt(0) ?? 0;
-    // 정규식 대신 코드 포인트로 센다 — 제어문자를 정규식 리터럴에 적으면 그 글자가 소스에
-    // 그대로 박혀서, 파일을 옮기거나 붙여 넣는 과정에 조용히 사라진다(2026-09-06 실측).
-    if (code < 0x20 || code === 0x7f) return true;
-  }
-  return false;
-}
+// 저장 전 글자 판정(제어문자·양방향 서식 문자·보이는 내용)은 `@/shared/lib/text` 에 있다.
+// **여기서 다시 내보내지 않는다** — 재수출은 재분기를 못 막는다. 한 줄만 고쳐 이 파일에
+// 자체 구현을 두면 부르는 쪽도 검사도 한 글자 안 바뀌고, 2026-09-11 에 실제로 났던
+// 「판정이 두 벌이고 범위가 다르다」가 그대로 재현된다. 부르는 쪽이 shared 를 직접 가져온다.

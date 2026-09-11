@@ -619,6 +619,129 @@ const MUTATIONS = {
     sql: `alter table public.notifications drop constraint if exists notifications_title_length;`,
   },
 
+  // ── 사람이 쓴 글자가 제 자리에 머문다 (0022 · INV-T1~T3) ────────────────
+  //
+  // **강제 장치 하나마다 변이 하나다.** 열 넷 × 판정 둘이라 여덟이고, 묶어서 빼면 그중
+  // 하나만 붙들려 있어도 「잡혔다」가 나온다.
+  "username-visible-dropped": {
+    holds: "INV-T1 — 보이지 않는 글자만으로 된 이름이 거부된다",
+    tag: "보이지 않는 글자만으로 된 이름",
+    sql: `alter table public.profiles drop constraint if exists profiles_username_visible;`,
+  },
+  "title-visible-dropped": {
+    holds: "INV-T1 — 보이지 않는 글자만으로 된 제목이 거부된다",
+    tag: "제목에도 같은 판정이",
+    sql: `alter table public.studies drop constraint if exists studies_title_visible;`,
+  },
+  "content-visible-dropped": {
+    holds: "INV-T1 — 보이지 않는 글자만으로 된 본문이 거부된다",
+    tag: "폭 없는 글자까지 넓어졌다",
+    sql: `alter table public.chat_messages drop constraint if exists chat_messages_content_visible;`,
+  },
+  "notification-visible-dropped": {
+    holds: "INV-T1 — 알림 행의 제목에도 같은 판정이 걸린다",
+    tag: "INV-T1 (S5)",
+    sql: `alter table public.notifications drop constraint if exists notifications_title_visible;`,
+  },
+  "username-bidi-dropped": {
+    holds: "INV-T2 — 서식 문자가 든 이름이 거부된다",
+    tag: "이름과 본문에도 같은 판정이",
+    sql: `alter table public.profiles drop constraint if exists profiles_username_no_bidi;`,
+  },
+  "title-bidi-dropped": {
+    holds: "INV-T2 — 서식 문자가 든 제목이 거부된다",
+    tag: "부류 전체가 막힌다",
+    sql: `alter table public.studies drop constraint if exists studies_title_no_bidi;`,
+  },
+  "content-bidi-dropped": {
+    holds: "INV-T2 — 서식 문자가 든 본문이 거부된다",
+    tag: "이름과 본문에도 같은 판정이",
+    sql: `alter table public.chat_messages drop constraint if exists chat_messages_content_no_bidi;`,
+  },
+  "notification-bidi-dropped": {
+    holds: "INV-T2 — 알림 행의 제목에도 서식 문자 금지가 걸린다",
+    tag: "INV-T2 (S5)",
+    sql: `alter table public.notifications drop constraint if exists notifications_title_no_bidi;`,
+  },
+
+  // **떼는 것 말고 좁히는 것.** 위 여덟은 제약을 통째로 없애므로 아무 검사나 하나면 잡힌다.
+  // 아래 둘은 **집합만 되돌린다** — 판정이 그 자리에 그대로 있어서, 집합을 붙들지 않는
+  // 검사는 전부 초록불이다.
+  "visible-set-narrowed-to-space": {
+    holds: "INV-T1 — 지우는 집합이 폭 없는 글자까지 덮는다 (0021 수준으로 되돌리기)",
+    tag: "제목에도 같은 판정이",
+    // `[[:space:]]` + BOM 만 보던 0021 의 모양이다. U+200B·U+2060·U+180E 가 빠져나간다.
+    sql: `alter table public.studies drop constraint if exists studies_title_visible;
+      alter table public.studies add constraint studies_title_visible
+        check (regexp_replace(title, '[[:space:]]|' || chr(65279), '', 'g') <> '');`,
+  },
+  "bidi-narrowed-to-rlo": {
+    holds: "INV-T2 — 서식 문자를 부류로 막는다 (실측에서 깬 한 자만 막기로 되돌리기)",
+    tag: "부류 전체가 막힌다",
+    // **이 변이가 이 사이클의 핵심이다.** 한글 제목으로만 재면 낫표 경계를 깨는 것은
+    // U+202E 하나뿐이라 「깬 것만 막자」가 합리적으로 보인다. 그 구멍은 히브리어 제목
+    // 하나로 열린다(2026-09-11 실측). 이것을 잡는 검사가 없으면 그 되돌림을 아무도 못 막는다.
+    sql: `alter table public.studies drop constraint if exists studies_title_no_bidi;
+      alter table public.studies add constraint studies_title_no_bidi
+        check (title !~ ('[' || chr(8238) || ']'));`,
+  },
+  "bidi-bans-zwj": {
+    holds: "INV-T2 — ZWJ 는 금지 목록에 없다 (가족 이모지가 그것으로 이어진다)",
+    tag: "보통 이름과 이모지가 든 이름은 들어간다",
+    // 반대 방향의 변이다 — **넓히는 쪽**. 목록에 ZWJ 를 더하면 위 검사들은 전부 그대로
+    // 통과하는데 정상 메시지가 막힌다. 반대 절반이 없으면 아무도 못 잡는다.
+    sql: `alter table public.profiles drop constraint if exists profiles_username_no_bidi;
+      alter table public.profiles add constraint profiles_username_no_bidi
+        check (username !~ ('[' || chr(8206) || chr(8207) || chr(8205) || chr(8234) || '-'
+                                || chr(8238) || chr(8294) || '-' || chr(8297) || ']'));`,
+  },
+
+  // ── 앱 층 — 데이터베이스와 범위가 같아야 한다 ──────────────────────────
+  "app-control-range-narrowed": {
+    holds: "INV-T2 — 앱의 제어문자 범위가 데이터베이스와 같다",
+    tag: "C1 구역",
+    suite: "unit",
+    // 2026-09-11 까지 이름 쪽이 실제로 이 모양이었다. C1 구역이 빠진다.
+    file: {
+      path: "src/shared/lib/text.ts",
+      find: `    if (code < 0x20 || code === 0x7f || (code >= 0x80 && code <= 0x9f)) return true;`,
+      replace: `    if (code < 0x20 || code === 0x7f) return true;`,
+    },
+  },
+  "app-visible-uses-trim": {
+    holds: "INV-T1 — 앱의 「내용이 있나」가 trim 이 아니다",
+    tag: "보이지 않는 글자만으로 된 값",
+    suite: "unit",
+    // `trim()` 은 양끝만 보고, JS 의 공백 집합에는 폭 없는 글자가 없다.
+    file: {
+      path: "src/shared/lib/text.ts",
+      find: `  return text.replace(보이지않는글자, "") !== "";`,
+      replace: `  return text.trim() !== "";`,
+    },
+  },
+  "app-bidi-blind": {
+    holds: "INV-T2 — 앱도 서식 문자를 본다",
+    tag: "열 자를 전부 본다",
+    suite: "unit",
+    file: {
+      path: "src/shared/lib/text.ts",
+      find: `  for (const ch of text) if (양방향서식.has(ch)) return true;`,
+      replace: `  for (const ch of text) if (false && 양방향서식.has(ch)) return true;`,
+    },
+  },
+  "notification-name-not-isolated": {
+    holds: "INV-T3 — 알림 줄의 제목이 방향 격리 안에 있다",
+    tag: "방향 격리 안에 있다",
+    suite: "unit",
+    // `<b>` 로 되돌린다. 보이는 것은 똑같고(굵기는 `.name` 이 준다) 바뀌는 것은
+    // 제목 안의 서식 문자가 문단 끝까지 간다는 것뿐이다 — 눈으로는 안 보이는 되돌림이다.
+    file: {
+      path: "src/widgets/site-header/ui/NotificationBell.tsx",
+      find: `        <bdi className={styles.name}>{body}</bdi>`,
+      replace: `        <b className={styles.name}>{body}</b>`,
+    },
+  },
+
   // ── 메시지 행에서 무엇을 사람이 정하나 (0021 · INV-M1~M5) ─────────────
   // 강제 장치 하나마다 변이 하나다. 갈래를 묶어 빼면 그중 하나만 붙들려 있어도
   // 「잡혔다」가 나오고, 나머지는 아무도 안 붙드는데 숫자는 만점이 된다.
@@ -814,8 +937,8 @@ const MUTATIONS = {
     suite: "unit",
     file: {
       path: "src/widgets/site-header/ui/NotificationBell.tsx",
-      find: `        <b className={styles.name}>{body}</b>`,
-      replace: `        <b className={styles.name}>{open + body + close}</b>`,
+      find: `        <bdi className={styles.name}>{body}</bdi>`,
+      replace: `        <bdi className={styles.name}>{open + body + close}</bdi>`,
     },
   },
   "quote-inner-kept": {
@@ -835,8 +958,8 @@ const MUTATIONS = {
     suite: "unit",
     file: {
       path: "src/widgets/site-header/ui/NotificationBell.tsx",
-      find: `        <b className={styles.name}>{body}</b>`,
-      replace: `        <b className={styles.name}>{body.slice(0, 20)}</b>`,
+      find: `        <bdi className={styles.name}>{body}</bdi>`,
+      replace: `        <bdi className={styles.name}>{body.slice(0, 20)}</bdi>`,
     },
   },
   "quote-aria-unquoted": {
@@ -2763,6 +2886,10 @@ const RESTORE_MIGRATIONS = [
   // 「갱신·삭제 정책이 없음」이고, 없는 것은 재적용으로 다시 없어지지 않는다.
   // 그 자리를 여는 변이 둘은 undo 를 따로 들고 있다.
   "0021_chat_message_integrity.sql",
+  // 0022 는 순서에 걸리는 것이 없다 — 네 표에 제약만 더한다. 여기 없으면 이 제약들을
+  // 떼는 변이가 복구되지 않고, 그 뒤의 변이는 전부 오염된 데이터베이스에서 판정된다
+  // (2026-09-11 에 실제로 멈췄다 — 지문 대조가 잡았다).
+  "0022_text_display_integrity.sql",
 ];
 
 /**

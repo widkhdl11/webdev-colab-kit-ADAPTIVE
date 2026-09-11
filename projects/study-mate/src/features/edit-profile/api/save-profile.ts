@@ -11,11 +11,11 @@ import { defaultPathDeps, type PathDeps } from "@/shared/lib/action-deps";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { dbErrorMessage } from "@/shared/lib/db-error";
 import { formText } from "@/shared/lib/form-text";
+import { hasBidiFormatting, hasControlChars, hasVisibleContent } from "@/shared/lib/text";
 import {
   AVATAR_EXTENSION,
   AVATAR_MAX_LABEL,
   USERNAME_MAX,
-  hasControlChars,
   isAvatarType,
 } from "../model/limits";
 
@@ -47,13 +47,27 @@ export async function saveProfile(
   const region = formText(form, "region");
   const interest = formText(form, "interest");
 
-  if (!username) return { ok: false, message: "이름을 적어 주세요" };
+  // **판정 순서는 세 자리(이름·제목·메시지)가 같다** — 보이는 내용 → 길이 → 제어문자 →
+  // 서식 문자. 같은 값에 화면마다 다른 설명이 나가면 한쪽은 막다른 길이 된다
+  // (2026-09-11 code-reviewer). 강제 위치는 전부 데이터베이스이고 여기는 문구를 위한 자리다.
+  //
+  // `!username` 은 보이지 않는 이름을 못 잡는다 — `formText` 의 `trim()` 은 전각 공백도
+  // 폭 없는 공백도 안 자른다. 그런 이름은 멤버 목록에서 폭 0px 로 그려진다(실측).
+  if (!username || !hasVisibleContent(username)) {
+    return { ok: false, message: "이름을 적어 주세요" };
+  }
   if ([...username].length > USERNAME_MAX) {
     return { ok: false, message: `이름은 ${USERNAME_MAX}자까지 쓸 수 있습니다` };
   }
-  // 강제 위치는 `profiles_username_no_control` 이다. 여기서 먼저 막는 이유는 그 제약이
-  // 거부할 때 나오는 것이 영어 원문이라 화면에 그대로 내보낼 수 없어서다.
-  if (hasControlChars(username)) return { ok: false, message: "이름에 쓸 수 없는 글자가 있습니다" };
+  // 제어문자(0015)와 양방향 서식 문자(INV-T2). **문구가 다음에 할 일을 준다** — 이 값들은
+  // 화면에서 안 보이므로 「글자가 있습니다」만 말하면 지울 대상을 못 찾는다.
+  if (hasControlChars(username) || hasBidiFormatting(username)) {
+    return { ok: false, message: "화면에 안 보이는 글자가 섞여 있습니다. 붙여 넣지 말고 직접 입력해 주세요" };
+  }
+  // **`bio` 는 일부러 안 본다.** 여러 줄 입력창이라 줄바꿈이 정상 입력이고, 이 스펙이 고른
+  // 네 열에도 안 들어간다(자기 `<p>` 안에 혼자 그려져서 제품 글자와 문단을 안 나눈다).
+  // 여기에 `hasControlChars(bio)` 를 붙이면 줄바꿈 있는 소개가 통째로 막힌다.
+  // 길이 상한이 없다는 것은 따로 백로그에 있다.
 
   const picked = form.get("avatar");
   const file = picked instanceof File && picked.name !== "" ? picked : null;

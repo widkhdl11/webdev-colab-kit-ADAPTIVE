@@ -486,7 +486,7 @@ describe("지운 뒤 초점 (design-rules.md 2026-09-08 (2))", () => {
 describe("남이 쓴 글자와 제품이 쓴 글자 (design-rules.md 2026-09-09)", () => {
   // 목록의 첫 줄은 `participation_requested` 라 꼬리말이 「에 새 참가 신청이 왔습니다」다.
   const 문장 = () => 줄()[0].querySelector("p") as HTMLParagraphElement;
-  const 이름 = () => 줄()[0].querySelector("b") as HTMLElement;
+  const 이름 = () => 줄()[0].querySelector("bdi") as HTMLElement;
 
   it("제목은 낫표 안에 있고, 낫표는 굵게 밖에 있다", async () => {
     await 그리기();
@@ -504,7 +504,34 @@ describe("남이 쓴 글자와 제품이 쓴 글자 (design-rules.md 2026-09-09)
     // 이름 말고 다른 요소로 감싼 것이 없다
     expect(문장().querySelectorAll("*").length).toBe(1);
     // 이름이 `.name` 을 잃으면 취소선 규칙이 조용히 사라진다
-    expect(이름().className).toBe(줄()[1].querySelector("b")?.className);
+    expect(이름().className).toBe(줄()[1].querySelector("bdi")?.className);
+  });
+
+  // INV-T3 (S7) — `docs/specs/text-display-integrity.md`
+  it("INV-T3 (S7): 제목은 방향 격리 안에 있다 — 서식 문자가 낫표 경계를 못 넘는다", async () => {
+    await 그리기();
+    await 열기();
+
+    // **`<bdi>` 는 기본이 `unicode-bidi: isolate` 라서, 제목 안의 서식 문자가 만든 방향
+    // 계산이 그 요소에서 닫힌다.** 안 감싸면 U+202E 하나가 문단 끝까지 가서 시각 순서가
+    // 「꼬리말」제목 으로 뒤집힌다 — 2026-09-11 에 Chromium 에서 재서 확인했다.
+    //
+    // **여기서 재는 것은 태그뿐이다.** jsdom 은 배치를 안 하므로 뒤집힘 자체를 못 본다.
+    // 뒤집힘을 실제로 본 것은 브라우저 측정이고, 그 측정이 이 태그를 고른 근거다.
+    // 그래서 이 검사는 「그 근거가 코드에서 안 사라졌나」를 붙든다.
+    expect(이름().tagName).toBe("BDI");
+
+    // **INV-T2 가 있는데도 이것이 따로 필요한 이유**: 알림의 제목은 사건 시점의 사본이라
+    // (0002 의 트리거) 0022 의 제약이 생기기 전에 복사된 행은 원본을 고쳐도 안 바뀐다.
+    const RLO = String.fromCodePoint(0x202e);
+    액션.load.mockResolvedValueOnce({
+      ok: true,
+      value: [{ ...목록[0], title: `${RLO}토익 900` }],
+    });
+    await 그리기();
+    await 열기();
+    expect(이름().tagName).toBe("BDI");
+    expect(이름().textContent).toBe(`${RLO}토익 900`);
   });
 
   it("제목이 제품 안내문을 흉내 내도 어디까지가 남의 글자인지 보인다", async () => {

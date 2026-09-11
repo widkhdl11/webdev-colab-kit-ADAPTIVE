@@ -138,6 +138,44 @@ describe("INV-A7: 계정과 프로필은 함께 생긴다", () => {
     }
   });
 
+  it("INV-A7 · INV-T1 · INV-T2: 보이지 않는 글자와 서식 문자가 든 이름도 가입을 막지 않는다", async () => {
+    // **0022 가 세운 제약이 여기서 가입을 통째로 깰 수 있다.** 프로필은 계정 행이 들어오는
+    // 그 트랜잭션에서 트리거가 만들므로, 이름이 제약에 걸리면 예외가 **계정 생성까지**
+    // 되돌린다. 위 「빈 이름과 공백뿐인 이름」 검사가 지키는 것과 같은 규칙이고,
+    // 0022 가 지우는 집합을 넓혔으니 씻는 쪽도 같이 넓어져야 한다.
+    //
+    // 이 검사가 없으면 **0022 를 올리는 것만으로 가입 경로에 구멍이 난다** — 유닛도
+    // 통합도 전부 초록불인 채로.
+    const 글자 = (cp: number) => String.fromCodePoint(cp);
+    const 씻겨야 = [
+      ["U+200B 폭 없는 공백만", 글자(0x200b)],
+      ["U+2060 단어 이음만", 글자(0x2060)],
+      ["U+180E 몽골 모음 구분만", 글자(0x180e)],
+      ["U+200D ZWJ 만", 글자(0x200d)],
+      ["섞인 보이지 않는 글자", 글자(0x3000) + 글자(0x200b) + 글자(0xfeff)],
+    ] as const;
+    for (const [what, value] of 씻겨야) {
+      const id = await createAccount({ username: value });
+      expect(await usernameOf(id), `${what}: 지어진 이름이 아니다`).toBe(`회원${id.slice(0, 8)}`);
+    }
+
+    // 서식 문자는 **지우고 나머지를 쓴다** — 통째로 버리면 이름이 사라진다.
+    const 서식 = [
+      ["RLO 섞임", 글자(0x202e) + "지원", "지원"],
+      ["RLE 섞임", 글자(0x202b) + "하늘", "하늘"],
+      ["LRM 섞임", "김" + 글자(0x200e) + "하늘", "김하늘"],
+    ] as const;
+    for (const [what, value, expected] of 서식) {
+      const id = await createAccount({ username: value });
+      expect(await usernameOf(id), what).toBe(expected);
+    }
+
+    // **자르고 나서 판정해야 한다.** 앞이 전부 폭 없는 글자면 20자로 자른 뒤에 보이는
+    // 글자가 하나도 안 남는다 — 판정을 자르기 전에 하면 여기서 가입이 깨진다.
+    const id = await createAccount({ username: 글자(0x200c).repeat(25) + "지원" });
+    expect(await usernameOf(id), "자른 뒤에 보이는 글자가 없는 경우").toBe(`회원${id.slice(0, 8)}`);
+  });
+
   it("INV-A7: 이름 길이 규칙은 앱이 아니라 데이터베이스가 지킨다", async () => {
     // 20자 하한이 회원가입 폼에만 있으면, 앱을 안 거친 가입이 그 규칙을 통째로 건너뛴다.
     const id = await createAccount({ username: "가".repeat(50) });
