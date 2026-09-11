@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { categoryColor, readTopCategories } from "@/entities/category";
 import { readUnreadNotificationCount } from "@/entities/notification";
 import { readLatestPosts } from "@/entities/post";
@@ -6,9 +7,15 @@ import { readMySchedule, readSampleSchedule, type ScheduledSlot } from "@/entiti
 import { ButtonLink } from "@/shared/ui/button/Button";
 import { ChipLink, ChipRow } from "@/shared/ui/chip/Chip";
 import { CtaCard } from "@/shared/ui/cta-card/CtaCard";
+import { ErrorBoundary } from "@/shared/ui/error-boundary/ErrorBoundary";
 import { Section, SectionHead } from "@/shared/ui/section/Section";
 import { HomeHero, type PlannerBlock } from "@/widgets/home-hero";
 import { PostGrid } from "@/widgets/post-grid";
+// 배럴을 안 지난다 — 그 이유는 `widgets/post-grid/index.ts` 에 있다
+import {
+  RecommendedSection,
+  RecommendedSectionPending,
+} from "@/widgets/post-grid/ui/RecommendedSection";
 import { SiteFooter } from "@/widgets/site-footer";
 import { SiteHeader } from "@/widgets/site-header";
 import { SkipLink } from "@/shared/ui/skip-link/SkipLink";
@@ -80,6 +87,19 @@ export default async function HomePage() {
           />
           <PostGrid posts={posts} empty="아직 열린 스터디가 없습니다. 첫 스터디를 만들어 보세요." />
         </Section>
+
+        {/* 추천은 모델을 기다리므로 **여기만 나중에 채워진다** (INV-G5). 이 경계 밖의
+            구역들은 모델과 무관하게 먼저 그려지고, 모델이 느리거나 죽어도 홈은 뜬다.
+            자리 표시가 카드와 비슷한 높이를 차지해서, 채워질 때 아래가 크게 안 밀린다.
+
+            **경계가 둘인 이유**: 지연 경계는 던져진 약속만 잡는다. 후보를 읽다 던지면
+            그 오류는 위로 계속 올라가 홈 전체를 죽인다 — 그래서 오류 경계가 바깥에 있다.
+            추천은 곁다리라 실패하면 그 구역만 조용히 없어지는 편이 낫다 */}
+        <ErrorBoundary label="recommend" fallback={null}>
+          <Suspense fallback={<RecommendedSectionPending />}>
+            <RecommendedSection />
+          </Suspense>
+        </ErrorBoundary>
 
         <Section flush>
           {/* 「잉크 행동 규칙」— 이 화면에서 해야 할 일은 만드는 쪽이다. 찾는 쪽은 위쪽

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import type { PostableStudy } from "@/entities/study";
 import { Button, ButtonLink } from "@/shared/ui/button/Button";
 import { FormCard } from "@/shared/ui/form-page";
@@ -14,6 +14,8 @@ import {
 } from "@/shared/ui/field/Field";
 import type { ActionResult } from "@/shared/lib/action-result";
 import { createPostAction } from "../api/create-post";
+import { DraftAssistant } from "./DraftAssistant";
+import { applyDraft } from "../model/draft";
 import { CONTENT_MAX, SUMMARY_MAX, TITLE_MAX } from "@/entities/post/model/limits";
 import styles from "./create-post.module.css";
 
@@ -34,6 +36,10 @@ export function CreatePostForm({
   // 않는다) React 는 그것을 정상 종료로 본다. 수정 폼은 `defaultValue` 가 있어 옛 값으로
   // 되돌아가는 데 그치지만 **작성 폼은 빈칸이 된다** — 본문 4000자가 통째로 사라진다
   // (2026-09-06 브라우저 실측 · code-reviewer).
+  // 고른 스터디도 상태로 둔다 — 초안 도우미가 「지금 무엇을 골랐나」를 알아야 하고,
+  // 안 골랐으면 요청 자체를 안 낸다.
+  const [studyId, setStudyId] = useState("");
+  const titleRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
@@ -80,7 +86,13 @@ export function CreatePostForm({
               : "내가 만든 스터디 중 모집 중인 것만 나옵니다."
           }
         >
-          <Select id="studyId" name="studyId" required defaultValue={preselected}>
+          <Select
+            id="studyId"
+            name="studyId"
+            required
+            value={studyId === "" ? (preselected ?? "") : studyId}
+            onChange={(e) => setStudyId(e.target.value)}
+          >
             <option value="" disabled>
               고르기
             </option>
@@ -92,8 +104,27 @@ export function CreatePostForm({
           </Select>
         </Field>
 
+        {/* 초안 도우미는 폼 안의 **보조 장치**다(docs/IA.md). 고른 스터디 바로 아래에
+            두는 이유는 그것이 이 도우미가 읽는 유일한 근거이기 때문이다 —
+            무엇을 보고 쓴 초안인지가 자리로 드러난다.
+            **초안은 「적용」을 눌러야 아래 칸에 들어간다** (INV-G9) */}
+        <DraftAssistant
+          studyId={studyId === "" ? (preselected ?? "") : studyId}
+          onApply={(draft) => {
+            // 무엇을 덮어쓸지는 `model/draft.ts` 가 정한다 — 화면은 결과를 나눠 담기만 한다
+            const next = applyDraft({ title, summary, content }, draft);
+            setTitle(next.title);
+            setSummary(next.summary);
+            setContent(next.content);
+            // **초점을 첫 칸으로 옮긴다.** 누른 버튼이 사라지므로 안 옮기면 초점이 문서
+            // 맨 앞으로 떨어진다. 소리 쪽은 도우미가 `role="status"` 로 알린다
+            titleRef.current?.focus();
+          }}
+        />
+
         <Field id="title" label="제목" required>
           <TextInput
+            ref={titleRef}
             id="title"
             name="title"
             required

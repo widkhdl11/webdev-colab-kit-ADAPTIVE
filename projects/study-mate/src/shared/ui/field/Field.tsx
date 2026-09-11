@@ -1,5 +1,5 @@
 import { cloneElement, isValidElement, type ReactElement } from "react";
-import type { ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { Ref, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import type { InputHTMLAttributes } from "react";
 import styles from "./field.module.css";
 
@@ -53,8 +53,15 @@ export function Field({
   );
 }
 
-export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={styles.control} />;
+/**
+ * `ref` 를 받는 이유는 `Button` 과 같다 — 눌러서 화면이 바뀌는 자리에서 **초점을 따라
+ * 옮겨야** 한다. 모집글 작성의 초안 도우미가 「적용」 뒤 첫 칸으로 초점을 보낸다.
+ */
+export function TextInput({
+  ref,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) {
+  return <input ref={ref} {...props} className={styles.control} />;
 }
 
 export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {

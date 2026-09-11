@@ -1,0 +1,82 @@
+/*
+ * 초안 도우미는 폼 안의 **보조 장치**다(docs/IA.md). 그래서 주 폼과 같은 무게로 그리지 않는다.
+ *
+ * **점선 「상자」를 안 쓴다.** 처음엔 `2px dashed var(--rule)` 로 둘렀는데, 이 앱에서 그
+ * 조합은 이미 뜻이 배정돼 있다 — 승인된 시각 기준의 「대기 중(아직 확정 아님)」과
+ * 「비활성」이고, 실제 쓰임 셋(일정 없는 빈 칸 · 빈 상태 아이콘 · 갈 수 없는 방향)도 전부
+ * 「없음·못 감」이다. 기호에 다섯 번째 뜻을 붙이는 일이었다(2026-09-10 ui-reviewer).
+ *
+ * 지금은 폼이 이미 쓰는 하위 블록 처리를 그대로 쓴다 — 위 점선 괘선 한 줄
+ * (`shared/ui/field` 의 `.section` 과 같은 값). 승인된 기준의 「카드 내부 구분은 점선 괘선」이고,
+ * 같은 폼의 행동 줄이 이미 그 모양이라 도우미가 폼의 한 칸으로 앉는다.
+ */
+.box {
+  margin-top: var(--space-26);
+  padding-top: var(--space-20);
+  border-top: 2px dotted var(--rule);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sub {
+  margin-top: var(--space-6);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-weak);
+  max-width: 46ch;
+}
+
+.hint {
+  margin-top: var(--space-12);
+  font-size: 15px;
+  color: var(--ink-weak);
+}
+
+.preview {
+  margin-top: var(--space-16);
+  padding-top: var(--space-16);
+  /* 카드 내부 구분은 점선 괘선이다 — 앱의 다른 내부 구분선과 같은 값 */
+  border-top: 2px dotted var(--rule);
+}
+
+.previewNote {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: var(--space-12);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-8) var(--space-16);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.fields dt {
+  font-weight: 700;
+  color: var(--ink-weak);
+}
+
+/* 초안 본문은 줄바꿈이 있는 글이다 — 그대로 보여야 사용자가 무엇이 들어갈지 안다 */
+.content {
+  white-space: pre-wrap;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+  flex-wrap: wrap;
+}

@@ -12,14 +12,17 @@
     "db:reset": "npx supabase db reset --local",
     "test:mutation": "node scripts/with-local-supabase.mjs node scripts/mutation-run.mjs",
     "db:seed": "node scripts/with-local-supabase.mjs node scripts/seed.mjs",
-    "env:local": "node scripts/with-local-supabase.mjs node scripts/write-env-local.mjs"
+    "env:local": "node scripts/with-local-supabase.mjs node scripts/write-env-local.mjs",
+    "test:mutation:js": "node scripts/mutate-js.mjs"
   },
   "dependencies": {
+    "@google/genai": "^2.21.0",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
     "next": "^16.3.3",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
