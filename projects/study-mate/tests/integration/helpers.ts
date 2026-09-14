@@ -34,9 +34,31 @@ if (!PUBLISHABLE || !SECRET) {
 // evil.com 에 붙는다 — 그 요청에 secret 키가 실린다. 그래서 파싱해서 호스트만 본다.
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
 
+/**
+ * **`new URL()` 이 읽는 호스트도 진짜 호스트가 아니다.**
+ *
+ * 데이터베이스 주소에서 실제로 어디에 붙을지 정하는 것은 `pg` 이고, 그 접속 문자열
+ * 파서(`pg-connection-string`)는 **질의 매개변수를 URL 의 호스트 위에 덮어쓴다.**
+ * 설치된 사본에서 실측했다(2026-09-11):
+ *
+ *   postgresql://postgres:postgres@127.0.0.1:54322/postgres?host=evil.example&port=5432
+ *     new URL(...).hostname → "127.0.0.1"     (아래 검사를 통과한다)
+ *     pg 가 실제로 붙는 곳   → evil.example:5432
+ *
+ * 위 주석이 「파싱해서 호스트만 본다」로 닫았다고 선언한 구멍과 **같은 부류가 한 칸 아래에
+ * 남아 있었다**(2026-09-11 security-reviewer). 그 연결에는 슈퍼유저 자격이 실린다.
+ *
+ * 그래서 호스트를 정하는 매개변수가 붙어 있으면 그 값이 로컬이든 아니든 **거부한다** —
+ * 「질의의 host 도 로컬인지 본다」로 가면 `hostaddr`·중복 키·대소문자마다 같은 판단을
+ * 다시 해야 하고, 그 판단은 pg 가 하지 우리가 하지 않는다. 나머지 매개변수(`sslmode` 등)는
+ * 호스트를 안 바꾸므로 그대로 통과한다.
+ */
+const HOST_DECIDING_PARAMS = new Set(["host", "hostaddr", "port"]);
+
 export function isLocalUrl(url: string): boolean {
   try {
     const u = new URL(url);
+    if ([...u.searchParams.keys()].some((k) => HOST_DECIDING_PARAMS.has(k.toLowerCase()))) return false;
     // userinfo 가 있으면 더 엄한 검사를 건다 — 데이터베이스 접속(postgresql://)에만 허용하고
     // 그때도 호스트가 로컬이어야 한다. 사용자 정보가 URL 에 있으면 호스트가 어디인지
     // 눈으로 읽기 어려워지기 때문이다.

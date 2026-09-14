@@ -43,6 +43,18 @@ let 듣는채널: RealtimeChannel;
 /** 이 채널로 들어온 `new_message` 방송의 payload 장부. */
 const 받은것: unknown[] = [];
 
+/**
+ * 화면이 그대로 믿고 그리는 모양 그대로 지어낸 행 — 0021 이 막는 것을 전부 어긴다.
+ * **검사 둘이 같은 값을 봐야 하므로 여기 둔다**: S-B4 가 쏘고, S-B5 가 표에 안 남았는지 본다.
+ * `sender_id` 는 사용자가 생긴 뒤에야 아는 값이라 `beforeAll` 에서 채운다.
+ */
+const 지어낸행 = {
+  id: "00000000-0000-4000-8000-000000000000",
+  sender_id: "",
+  content: "\n".repeat(50) + "지어낸 메시지",
+  created_at: "2099-01-01T00:00:00.000Z",
+};
+
 /** 실시간 연결에 로그인 토큰을 실어 준다. 안 실으면 private 주제에 못 붙는다. */
 async function 토큰실기(client: SupabaseClient): Promise<void> {
   const { data } = await client.auth.getSession();
@@ -75,6 +87,8 @@ beforeAll(async () => {
   const studyId = await createStudy(sender.id);
   await acceptedMember(studyId, listener.id);
   chatId = await chatIdOf(studyId);
+
+  지어낸행.sender_id = sender.id;
 
   await 토큰실기(sender.client);
   await 토큰실기(listener.client);
@@ -167,7 +181,13 @@ describe("실시간 방송에 클라이언트가 쓸 수 있나", () => {
   it("S-B4: 멤버가 직접 쏜 방송은 남의 화면에 안 닿는다", async () => {
     받은것.length = 0;
 
-    const 쏘는채널 = sender.client.channel(`chat:${chatId}`, { config: { private: true } });
+    // **`ack: true` 를 준다.** 없으면 아래 `send()` 의 `await` 는 소켓에 밀어 넣고 바로
+    // 끝나서 「서버가 받았다」는 뜻이 아니다 — 그러면 「지어낸 것을 먼저 보냈다」는 전제가
+    // 서버 기준으로는 안 선다(2026-09-11 test-auditor). 판정의 근거로는 여전히 안 쓰고
+    // (거부돼도 `ok` 가 올 수 있다) 빨간불 메시지에만 싣는다.
+    const 쏘는채널 = sender.client.channel(`chat:${chatId}`, {
+      config: { private: true, broadcast: { ack: true } },
+    });
     await new Promise<void>((resolve, reject) => {
       const 포기 = setTimeout(() => reject(new Error("보내는 쪽 구독이 안 붙었다")), 20_000);
       쏘는채널.subscribe((status) => {
@@ -178,13 +198,6 @@ describe("실시간 방송에 클라이언트가 쓸 수 있나", () => {
       });
     });
 
-    // 화면이 그대로 믿고 그리는 모양 그대로 지어낸다 — 0021 이 막는 것을 전부 어긴다.
-    const 지어낸행 = {
-      id: "00000000-0000-4000-8000-000000000000",
-      sender_id: sender.id,
-      content: "\n".repeat(50) + "지어낸 메시지",
-      created_at: "2099-01-01T00:00:00.000Z",
-    };
     const 결과 = await 쏘는채널.send({
       type: "broadcast",
       event: "new_message",
@@ -193,18 +206,68 @@ describe("실시간 방송에 클라이언트가 쓸 수 있나", () => {
 
     // **`send` 의 답을 판정의 근거로 삼지 않는다.** 거부돼도 `ok` 가 올 수 있다 —
     // 방송은 답을 기다리지 않는 경로다. 기록만 하고, 판정은 듣는 쪽으로 한다.
-    await 기다린다(3_000);
-    expect(받은것, `보내는 쪽이 받은 답: ${결과}`).toEqual([]);
+    //
+    // **시계로 판정하지 않는다.** 예전에는 3초를 기다리고 「아무것도 안 왔다」를 봤는데,
+    // 전달이 4초 걸리는 실행에서는 **막힌 것과 아직 안 온 것이 같은 초록불**이다
+    // (2026-09-11 test-auditor). 대신 지어낸 방송 **다음에** 진짜 메시지를 하나 넣고,
+    // 그 진짜가 도착할 때까지 기다린다 — 진짜가 왔다는 것은 이 구독으로 방송이 실제로
+    // 흐르고 있다는 뜻이고, 그 시점까지 지어낸 것이 안 왔으면 **막혔다**는 뜻이다.
+    // 기다리는 시간이 길어져도 판정은 안 바뀐다.
+    const 뒤에보낸진짜 = `경계 표시 ${Date.now()}`;
+    const { error: 진짜오류 } = await admin
+      .from("chat_messages")
+      .insert({ chat_id: chatId, sender_id: sender.id, content: 뒤에보낸진짜 });
+    expect(진짜오류).toBeNull();
+
+    const 진짜인가 = (p: unknown) =>
+      (p as { record?: { content?: string } }).record?.content === 뒤에보낸진짜;
+
+    const 끝 = Date.now() + 20_000;
+    while (Date.now() < 끝 && !받은것.some(진짜인가)) await 기다린다(50);
+
+    // 진짜가 끝내 안 왔으면 **판정을 하지 않는다** — 길이 죽은 채로 「아무것도 안 왔다」를
+    // 초록불로 읽는 것이 이 파일에서 가장 나쁜 결과다.
+    expect(받은것.some(진짜인가), "뒤에 보낸 진짜 메시지가 안 왔다 — 이 검사의 전제가 안 선다").toBe(
+      true,
+    );
+
+    // **표시 메시지가 오자마자 끝내면 10ms 뒤에 온 지어낸 것을 못 본다.** 두 경로(클라이언트
+    // 직통 · 표 삽입 → 복제 → 방송)의 도착 **순서**는 보장된 것이 아니라 실측된 차이일 뿐이라
+    // 유예를 조금 더 준다. **이 유예가 판정의 하한이 아니라는 점이 예전 3초와 다르다** —
+    // 전달이 아무리 느려도 표시 메시지를 기다리는 쪽이 먼저 성립하고, 유예는 그 뒤에 붙는다.
+    await 기다린다(500);
+
+    expect(
+      받은것.filter((p) => !진짜인가(p)),
+      `지어낸 방송이 남의 화면에 닿았다. 보내는 쪽이 받은 답: ${결과}`,
+    ).toEqual([]);
 
     await sender.client.removeChannel(쏘는채널);
   });
 
-  it("S-B5: 지어낸 행은 저장도 안 됐다 — 방송 경로가 표를 안 지난다", async () => {
-    const r = await admin
+  it("S-B5: 지어낸 방송은 표에 행을 하나도 안 남겼다", async () => {
+    // **예전에는 지어낸 id 로만 물었다.** 그 id 를 표에 넣는 경로는 제품에도 검사에도 없어서
+    // `realtime.messages` 를 활짝 열어도 이 검사는 초록불이었다 — 지워도 통과하는 구현이
+    // 하나도 안 늘어나는 검사였다(2026-09-11 test-auditor).
+    //
+    // 지금 보는 것은 **방송이 쏜 값이 표에 닿았나**다. id 와 본문 둘 다로 묻는다.
+    const 지어낸것 = await admin
+      .from("chat_messages")
+      .select("id, content")
+      .eq("chat_id", chatId)
+      .or(`id.eq.${지어낸행.id},content.eq.${JSON.stringify(지어낸행.content)}`);
+
+    expect(지어낸것.error?.message ?? null).toBeNull();
+    expect(지어낸것.data, "지어낸 행이 표에 남았다").toEqual([]);
+
+    // **그리고 요청이 정한 시각을 단 행이 없다.** `created_at` 은 요청이 못 정하는 값인데
+    // (0021 의 열 단위 삽입 권한), 방송으로 들어온 값이 표에 닿으면 그 사실이 깨진다.
+    const 미래 = await admin
       .from("chat_messages")
       .select("id")
-      .eq("id", "00000000-0000-4000-8000-000000000000");
+      .eq("chat_id", chatId)
+      .gt("created_at", "2090-01-01T00:00:00.000Z");
 
-    expect(r.data).toEqual([]);
+    expect(미래.data, "요청이 정한 시각을 단 행이 표에 있다").toEqual([]);
   });
 });

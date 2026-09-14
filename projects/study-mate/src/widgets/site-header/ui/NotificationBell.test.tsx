@@ -534,6 +534,69 @@ describe("남이 쓴 글자와 제품이 쓴 글자 (design-rules.md 2026-09-09)
     expect(이름().textContent).toBe(`${RLO}토익 900`);
   });
 
+  // INV-T3 (S7, CSS 쪽 절반) — `docs/specs/text-display-integrity.md`
+  it("INV-T3 (S7): 방향 격리가 CSS 한 줄로 꺼져 있지 않다", async () => {
+    // **위 검사는 태그만 본다.** 태그가 `<bdi>` 그대로여도 저자 스타일이 `unicode-bidi` 를
+    // 건드리면 격리가 꺼지고, 브라우저에서는 `<b>` 였을 때와 똑같이 낫표 경계가 뒤집힌다.
+    // 그런데 **jsdom 은 배치를 안 하므로 그리는 검사로는 원리상 못 잡는다**
+    // (2026-09-11 test-auditor). 그래서 규칙 본문을 읽는다.
+    //
+    // `<bdi>` 의 격리는 사용자 에이전트 스타일시트의 `unicode-bidi: isolate` 가 준다.
+    // 저자 스타일이 그 속성을 건드리면 그것이 이긴다.
+    //
+    // **보는 범위가 세 번 넓어졌다**(같은 감사):
+    //   `1` 파일 하나가 아니라 `src` 아래 CSS 전부 — 다른 파일에 `bdi { ... }` 를 적으면
+    //       알림 줄의 그 요소도 맞는다
+    //   `2` `.name` 이 든 고르개뿐 아니라 **`bdi` 요소를 맞히는 고르개**도
+    //   `3` 금지 속성에 `all` 을 더한다 — `all: unset` 한 줄이 `unicode-bidi` 를
+    //       `normal` 로 되돌리는데 속성 이름이 안 보인다
+    //
+    // **부모 쪽 `direction` 은 여기서 안 본다.** 격리 요소의 방향을 바깥이 정하는 것은
+    // 정상 동작이고(`<bdi>` 는 자기 **안**의 계산을 닫는다), 금지하면 화면 전체를 RTL 로
+    // 만드는 정상 기능이 막힌다. 여기서 막는 것은 **격리 자체를 끄는 선언**이다.
+    const { readFileSync, readdirSync } = await import("node:fs");
+    const { join } = await import("node:path");
+
+    const CSS파일들: string[] = [];
+    const 훑는다 = (디렉터리: string) => {
+      for (const e of readdirSync(디렉터리, { withFileTypes: true })) {
+        const 경로 = join(디렉터리, e.name);
+        if (e.isDirectory()) 훑는다(경로);
+        else if (e.name.endsWith(".css")) CSS파일들.push(경로);
+      }
+    };
+    훑는다("src");
+
+    // **파일이 0건이면 이 검사는 아무것도 안 보고 초록불이 된다.** 그 상태와
+    // 「위반이 0건이다」는 겉이 같다.
+    expect(CSS파일들.length, "CSS 파일을 하나도 못 찾았다 — 이 검사가 아무것도 안 보고 있다").toBeGreaterThan(3);
+
+    const 걸린것: string[] = [];
+    let 본규칙수 = 0;
+
+    for (const 파일 of CSS파일들) {
+      // 주석을 먼저 지운다 — 설명 문장에 든 속성 이름을 규칙으로 읽으면 안 된다.
+      const 본문 = readFileSync(파일, "utf-8").replace(/\/\*[\s\S]*?\*\//g, "");
+
+      for (const [, 고르개, 선언] of 본문.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+        // `.name` 을 담은 고르개(`.dead .name` 처럼 앞에 붙은 것도 같은 요소를 맞힌다)
+        // 또는 `bdi` 요소를 맞히는 고르개.
+        const 맞히나 =
+          /(^|[\s,>+~])\.name(?![\w-])/.test(고르개) || /(^|[\s,>+~(])bdi(?![\w-])/.test(고르개);
+        if (!맞히나) continue;
+
+        본규칙수 += 1;
+        const 나쁜속성 = 선언.match(/(^|[\s;])(unicode-bidi|all)\s*:/);
+        if (나쁜속성) {
+          걸린것.push(`${파일} — ${고르개.trim()} 에 ${나쁜속성[2]} 선언이 있다`);
+        }
+      }
+    }
+
+    expect(본규칙수, "`.name` 도 `bdi` 도 맞히는 규칙을 하나도 못 찾았다").toBeGreaterThan(0);
+    expect(걸린것, "방향 격리를 끄는 선언이 있다").toEqual([]);
+  });
+
   it("제목이 제품 안내문을 흉내 내도 어디까지가 남의 글자인지 보인다", async () => {
     액션.load.mockResolvedValueOnce({
       ok: true,

@@ -26,14 +26,48 @@ const DB_URL = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@12
 //   postgresql://postgres:postgres@127.0.0.1:54322@evil.com/postgres
 // 이 값은 옛 검사를 통과하고 실제로는 evil.com 에 붙는다. 그래서 파싱해서 호스트만 본다.
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
+/**
+ * **그리고 `new URL()` 이 읽는 호스트도 진짜 호스트가 아니다.**
+ *
+ * 실제로 어디에 붙을지 정하는 것은 `pg` 이고, 그 접속 문자열 파서(`pg-connection-string`)는
+ * **질의 매개변수를 URL 의 호스트 위에 덮어쓴다.** 설치된 사본에서 실측했다(2026-09-11):
+ *
+ *   postgresql://postgres:postgres@127.0.0.1:54322/postgres?host=evil.example&port=5432
+ *     new URL(...).hostname → "127.0.0.1"     (이 검사를 통과한다)
+ *     pg 가 실제로 붙는 곳   → evil.example:5432
+ *
+ * 위 주석이 「파싱해서 호스트만 본다」로 닫았다고 선언한 구멍과 **같은 부류가 한 칸 아래에
+ * 남아 있었다**(2026-09-11 security-reviewer). 그 연결로 이 도구가 보내는 것은
+ * `drop policy` · `create policy ... using (true)` · `grant` 처럼 **인가를 일부러 무력화하는
+ * 문장들**이다.
+ *
+ * 그래서 호스트를 정하는 매개변수가 붙어 있으면 그 값이 로컬이든 아니든 **거부한다** —
+ * 「질의의 host 도 로컬인지 본다」로 가면 `hostaddr`·중복 키·대소문자마다 같은 판단을
+ * 다시 해야 하고, 그 판단은 pg 가 하지 내가 하지 않는다. 나머지 매개변수(`sslmode` 등)는
+ * 호스트를 안 바꾸므로 그대로 통과한다.
+ */
+const HOST_DECIDING_PARAMS = new Set(["host", "hostaddr", "port"]);
 /** 비밀번호를 통째로 가린다. 마지막 `@` 앞이 전부 userinfo 다. */
 const maskUrl = (u) => u.replace(/\/\/[^/]*@/, "//***@");
 function assertLocal(url, what) {
-  let host;
+  let host = null;
+  let 호스트를바꾸는매개변수 = [];
   try {
-    host = new URL(url).hostname;
+    const u = new URL(url);
+    host = u.hostname;
+    호스트를바꾸는매개변수 = [...u.searchParams.keys()].filter((k) =>
+      HOST_DECIDING_PARAMS.has(k.toLowerCase()),
+    );
   } catch {
     host = null;
+  }
+  if (호스트를바꾸는매개변수.length > 0) {
+    console.error(
+      `이 도구는 정책을 일부러 무력화한다. ${what} 주소에 호스트를 바꾸는 매개변수가 있다` +
+        ` (${호스트를바꾸는매개변수.join(", ")}) — 이 값은 URL 의 호스트를 덮어쓴다.` +
+        "\n  지금 가리키는 곳: " + maskUrl(url),
+    );
+    process.exit(1);
   }
   if (host === null || !LOCAL_HOSTS.has(host)) {
     console.error(
@@ -59,6 +93,54 @@ assertLocal(DB_URL, "데이터베이스");
 // **그래서 tag 를 손으로 적는다.** 기본 이름표는 holds 의 첫 `INV-XX` 인데 그건 다섯 다
 // `INV-Z13` 이라, 갈래 하나가 깨지면 다섯 변이가 전부 「잡혔다」로 보고된다. 검사 이름에도
 // 같은 문자열이 들어 있어야 판정이 성립한다.
+// ── 0022 의 네 열 — 제약 본문을 한 자리에서 조립한다 ──────────────────
+//
+// **네 열을 똑같이 고치는 변이**가 있어야 「열끼리 서로 대 보기만 하는」 검사의 빈틈이
+// 드러난다(2026-09-11 test-auditor). 본문을 네 번 베껴 적으면 0022 가 바뀔 때 네 곳을
+// 다 고쳐야 하고, 하나를 빠뜨리면 그 변이만 조용히 낡는다 — 그래서 여기서 만든다.
+const T_COLS = [
+  ["profiles", "username"],
+  ["studies", "title"],
+  ["chat_messages", "content"],
+  ["notifications", "title"],
+];
+
+/** 0022 의 지우는 집합. 옵션으로 **한 조각만** 뺀다 — 갈래를 묶지 않는다. */
+const VISIBLE_SET = ({ dropLocaleSpaces = false, tagEnd = 917631 } = {}) =>
+  [
+    `'[[:space:]]'`,
+    dropLocaleSpaces ? null : `|| '|[' || chr(160) || chr(8199) || chr(8239) || ']'`,
+    `|| '|' || chr(1564)`,
+    `|| '|' || chr(6158)`,
+    `|| '|[' || chr(8203) || '-' || chr(8205) || ']'`,
+    `|| '|[' || chr(8288) || '-' || chr(8292) || ']'`,
+    `|| '|' || chr(10240)`,
+    `|| '|[' || chr(4447) || chr(4448) || chr(12644) || chr(65440) || ']'`,
+    `|| '|' || chr(65279)`,
+    `|| '|[' || chr(917504) || '-' || chr(${tagEnd}) || ']'`,
+  ]
+    .filter(Boolean)
+    .join("\n             ");
+
+const VISIBLE_ALL = (opts) =>
+  T_COLS.map(
+    ([t, c]) => `alter table public.${t} drop constraint if exists ${t}_${c}_visible;
+      alter table public.${t} add constraint ${t}_${c}_visible
+        check (regexp_replace(${c}, ${VISIBLE_SET(opts)}, '', 'g') <> '');`,
+  ).join("\n      ");
+
+/** 0022 의 금지 목록. `dropAlm` 은 U+061C 한 자만 뺀다. */
+const BIDI_SET = ({ dropAlm = false } = {}) =>
+  `'[' || ${dropAlm ? "" : "chr(1564) || "}chr(8206) || chr(8207) || chr(8234) || '-' || chr(8238)
+              || chr(8294) || '-' || chr(8297) || ']'`;
+
+const BIDI_ALL = (opts) =>
+  T_COLS.map(
+    ([t, c]) => `alter table public.${t} drop constraint if exists ${t}_${c}_no_bidi;
+      alter table public.${t} add constraint ${t}_${c}_no_bidi
+        check (${c} !~ (${BIDI_SET(opts)}));`,
+  ).join("\n      ");
+
 const Z13_BODY_MD5 = "6f8b8c77b85136720e7294ea308b08b2";
 
 const Z13_BRANCHES = {
@@ -645,7 +727,9 @@ const MUTATIONS = {
   },
   "username-bidi-dropped": {
     holds: "INV-T2 — 서식 문자가 든 이름이 거부된다",
-    tag: "이름과 본문에도 같은 판정이",
+    // S4d 를 이름용·본문용으로 쪼개면서 이름표도 갈랐다 — 하나로 두면 어느 갈래가 깨졌는지
+    // 판정이 못 가른다(2026-09-11).
+    tag: "S4d, 이름",
     sql: `alter table public.profiles drop constraint if exists profiles_username_no_bidi;`,
   },
   "title-bidi-dropped": {
@@ -655,7 +739,7 @@ const MUTATIONS = {
   },
   "content-bidi-dropped": {
     holds: "INV-T2 — 서식 문자가 든 본문이 거부된다",
-    tag: "이름과 본문에도 같은 판정이",
+    tag: "S4d, 본문",
     sql: `alter table public.chat_messages drop constraint if exists chat_messages_content_no_bidi;`,
   },
   "notification-bidi-dropped": {
@@ -740,6 +824,281 @@ const MUTATIONS = {
       find: `        <bdi className={styles.name}>{body}</bdi>`,
       replace: `        <b className={styles.name}>{body}</b>`,
     },
+  },
+
+  // **한 열만 좁히는 변이 둘.** 위의 「떼는 것」 여덟은 아무 검사나 하나면 잡히고,
+  // `visible-set-narrowed-to-space` · `bidi-narrowed-to-rlo` 는 **제목 한 열**만 좁힌다.
+  // 이 스펙의 문제 진술은 「같은 종류의 값이 열마다 다르게 처리된다」이므로, **다른 열을
+  // 좁히는 변이**가 있어야 그 재발을 붙드는 검사가 실제로 도는지 알 수 있다.
+  // 2026-09-11 까지 아래 둘이 없었고, 그래서 이름 제약을 좁혀도 알림 제약을 되돌려도
+  // 전부 초록불이었다(test-auditor).
+  "username-bidi-narrowed-to-isolates": {
+    holds: "INV-T2 — 이름 제약도 부류 열두 자를 전부 막는다",
+    tag: "열두 자가 네 열에서",
+    // U+2066–2069(격리 넷)만 남긴다. RLO·RLE·LRM·PDF·ALM 이 이름으로 들어온다.
+    sql: `alter table public.profiles drop constraint if exists profiles_username_no_bidi;
+      alter table public.profiles add constraint profiles_username_no_bidi
+        check (username !~ ('[' || chr(8294) || '-' || chr(8297) || ']'));`,
+  },
+  // **네 열을 똑같이 고치는 변이 둘.** 한 열만 좁히는 변이(`username-bidi-narrowed-to-isolates`
+  // 등)는 열끼리 대 보는 검사가 잡는다. 그런데 **넷을 같은 모양으로 고치면 그 대조가 통과한다**
+  // — 서로 같기 때문이다(2026-09-11 test-auditor). 그래서 제약 본문이 **절대 기준**과도
+  // 같은지 보는 단언을 뒀고, 아래 둘이 그 단언을 붙든다.
+  //
+  // 본문을 네 번 베껴 적지 않고 여기서 조립한다 — 베껴 적으면 0022 가 바뀔 때 네 곳을
+  // 다 고쳐야 하고, 하나를 빠뜨리면 그 변이만 조용히 낡는다.
+  "visible-set-drops-locale-spaces-everywhere": {
+    holds: "INV-T1 — 네 열의 지우는 집합이 글자까지 같다 (로케일 방어)",
+    tag: "지우는 집합이 같은 글자다",
+    // U+00A0·U+2007·U+202F 를 **네 곳에서 같이** 뺀다. 로컬 ctype 에서는 `[[:space:]]` 가
+    // 대신 물어서 **값으로 재는 검사가 하나도 안 깨진다.** 0022 가 「배포처에서도 걸린다는
+    // 근거가 없어서 명시한다」고 적어 둔 그 방벽이 통째로 사라지는데 화면상 아무 일도 없다.
+    sql: VISIBLE_ALL({ dropLocaleSpaces: true }),
+  },
+  "visible-tag-range-shortened-everywhere": {
+    holds: "INV-T1 — 네 열의 지우는 집합이 글자까지 같다 (태그 문자 끝)",
+    tag: "지우는 집합이 같은 글자다",
+    // 태그 문자 구역의 끝을 U+E007F 에서 U+E0060 으로 **네 곳에서 같이** 줄인다.
+    // 행렬이 고른 태그 문자는 U+E0020 하나라 값으로는 원리상 안 잡힌다.
+    sql: VISIBLE_ALL({ tagEnd: 917600 }),
+  },
+  "bidi-narrowed-everywhere": {
+    holds: "INV-T2 — 네 열의 금지 목록이 글자까지 같다",
+    tag: "금지 목록이 같은 글자다",
+    // U+061C 를 **네 곳에서 같이** 뺀다. 그 한 자는 제어문자도 공백도 아니고 지우는 집합
+    // 쪽에서는 다른 제약이 물 수도 있어서, 열끼리 대 보는 검사로는 안 잡힌다.
+    sql: BIDI_ALL({ dropAlm: true }),
+  },
+  "username-visible-tag-range-shortened": {
+    holds: "INV-T1 — 네 열의 지우는 집합이 글자까지 같다",
+    tag: "지우는 집합이 같은 글자다",
+    // **값으로 재는 검사로는 원리상 안 잡히는 되돌림이다.** 태그 문자 구역의 끝을
+    // U+E007F 에서 U+E0060 으로 줄인다 — 위 행렬이 고른 값은 U+E0020 이라 여전히
+    // 지워지고, 네 열의 답이 하나도 안 갈린다. 갈리는 것은 **내가 안 고른 값**뿐이고,
+    // 그것을 말할 수 있는 것은 제약 본문을 서로 대 보는 검사뿐이다.
+    sql: `alter table public.profiles drop constraint if exists profiles_username_visible;
+      alter table public.profiles add constraint profiles_username_visible
+        check (regexp_replace(username,
+                 '[[:space:]]'
+                   || '|[' || chr(160) || chr(8199) || chr(8239) || ']'
+                   || '|' || chr(1564)
+                   || '|' || chr(6158)
+                   || '|[' || chr(8203) || '-' || chr(8205) || ']'
+                   || '|[' || chr(8288) || '-' || chr(8292) || ']'
+                   || '|' || chr(10240)
+                   || '|[' || chr(4447) || chr(4448) || chr(12644) || chr(65440) || ']'
+                   || '|' || chr(65279)
+                   || '|[' || chr(917504) || '-' || chr(917600) || ']',
+                 '', 'g') <> '');`,
+  },
+  "notification-visible-narrowed-to-space": {
+    holds: "INV-T1 — 알림 제목의 지우는 집합도 폭 없는 글자까지 덮는다",
+    tag: "스물여섯이 네 열에서",
+    // 0021 수준(`[[:space:]]` + BOM)으로 되돌린다. 알림 열은 U+3000 한 값으로만 재고
+    // 있었는데 그 값은 `[[:space:]]` 에도 들어 있어서, 이 되돌림이 안 잡혔다.
+    sql: `alter table public.notifications drop constraint if exists notifications_title_visible;
+      alter table public.notifications add constraint notifications_title_visible
+        check (regexp_replace(title, '[[:space:]]|' || chr(65279), '', 'g') <> '');`,
+  },
+
+  // ── 앱 층 **호출 자리** — 판정이 그 자리에 실제로 걸려 있나 ─────────────
+  //
+  // 위 셋은 `src/shared/lib/text.ts` 의 **판정 자체**를 무력화한다. 아래 여섯은 그
+  // 판정을 **부르는 자리**를 하나씩 지운다 — 판정은 멀쩡한데 아무도 안 부르는 상태다.
+  //
+  // **이 여섯이 2026-09-11 까지 전부 빠져나갔다**(test-auditor). 호출을 통째로 지워도
+  // 데이터베이스 제약이 같은 값을 대신 거부하므로 통합 검사가 안 갈리고, 유닛 쪽에는
+  // 붙드는 검사가 한 건도 없었다. 바뀌는 것은 **사용자가 보는 문구** 하나인데, 그것이
+  // 이 판정이 있는 유일한 이유다 — 제약까지 가면 「잠시 뒤 다시 시도해 주세요」가 뜨고
+  // 다시 시도해도 절대 성공하지 않는다.
+  //
+  // **갈래마다 변이를 따로 둔다.** 「보이는 내용」과 「서식 문자」를 함께 지우면 둘 중
+  // 하나만 붙들려 있어도 「잡혔다」가 나온다.
+  "app-username-visible-uncalled": {
+    holds: "INV-T1 — 이름 저장이 「보이는 내용이 있나」를 본다",
+    tag: "보이지 않는 글자만으로 된 이름은 데이터베이스에",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-profile/api/save-profile.ts",
+      find: `  if (!username || !hasVisibleContent(username)) {`,
+      replace: `  if (!username) {`,
+    },
+  },
+  "app-username-bidi-uncalled": {
+    holds: "INV-T2 — 이름 저장이 서식 문자를 본다",
+    tag: "양방향 서식 문자가 든 이름은",
+    suite: "unit",
+    // 제어문자 쪽은 남긴다 — 갈래를 묶으면 그쪽 검사 하나로 이 변이가 「잡혔다」가 된다.
+    file: {
+      path: "src/features/edit-profile/api/save-profile.ts",
+      find: `  if (hasControlChars(username) || hasBidiFormatting(username)) {`,
+      replace: `  if (hasControlChars(username)) {`,
+    },
+  },
+  "app-title-visible-uncalled": {
+    holds: "INV-T1 — 제목 읽기가 「보이는 내용이 있나」를 본다",
+    tag: "보이지 않는 글자만으로 된 제목은",
+    suite: "unit",
+    file: {
+      path: "src/entities/study/model/study-form.ts",
+      find: `  if (!title || !hasVisibleContent(title)) {`,
+      replace: `  if (!title) {`,
+    },
+  },
+  "app-title-bidi-uncalled": {
+    holds: "INV-T2 — 제목 읽기가 서식 문자를 본다",
+    tag: "양방향 서식 문자가 든 제목은",
+    suite: "unit",
+    file: {
+      path: "src/entities/study/model/study-form.ts",
+      find: `  if (hasControlChars(title) || hasBidiFormatting(title)) {`,
+      replace: `  if (hasControlChars(title)) {`,
+    },
+  },
+  "app-content-visible-uncalled": {
+    holds: "INV-T1 — 메시지 보내기가 「보이는 내용이 있나」를 본다",
+    tag: "보이지 않는 글자만으로 된 본문은",
+    suite: "unit",
+    // **`content === ""` 로 좁힌다** — 통째로 지우면 「공백만 보내면 거부한다」가 빨간불을
+    // 내서, 폭 없는 글자를 붙드는 검사가 없어도 「잡혔다」가 된다. 0021 수준으로 되돌리는
+    // 모양이 이것이다.
+    file: {
+      path: "src/features/chat/api/send-message.ts",
+      find: `  if (!hasVisibleContent(content)) {`,
+      replace: `  if (content === "") {`,
+    },
+  },
+  "app-content-bidi-uncalled": {
+    holds: "INV-T2 — 메시지 보내기가 서식 문자를 본다",
+    tag: "양방향 서식 문자가 든 본문은",
+    suite: "unit",
+    file: {
+      path: "src/features/chat/api/send-message.ts",
+      find: `  if (hasControlChars(content) || hasBidiFormatting(content)) {`,
+      replace: `  if (hasControlChars(content) || false) {`,
+    },
+  },
+
+  // **판정 순서를 바꾸는 변이 셋.** 블록 자리를 통째로 옮기는 대신 한 줄로 같은 결과를
+  // 만든다 — 「보이는 내용이 없다」가 서식 문자가 든 값을 **안 잡고 넘기게** 하면, 그 값은
+  // 아래 서식 문자 블록까지 내려가 문구가 바뀐다. 나머지 값의 답은 하나도 안 바뀐다.
+  //
+  // 가르는 값은 U+061C 하나뿐이다 — 지우는 집합과 금지 목록에 **둘 다** 든 글자가 그것뿐이라서.
+  // 그 값이 검사 목록에 없으면 이 변이가 통째로 빠져나간다(2026-09-11 test-auditor).
+  "app-username-bidi-wins-order": {
+    holds: "INV-T1 — 이름은 「적어 주세요」 판정이 서식 문자보다 먼저다",
+    tag: "두 판정에 다 걸리는 이름은",
+    suite: "unit",
+    file: {
+      path: "src/features/edit-profile/api/save-profile.ts",
+      find: `  if (!username || !hasVisibleContent(username)) {`,
+      replace: `  if (!username || (!hasBidiFormatting(username) && !hasVisibleContent(username))) {`,
+    },
+  },
+  "app-title-bidi-wins-order": {
+    holds: "INV-T1 — 제목은 「적어 주세요」 판정이 서식 문자보다 먼저다",
+    tag: "두 판정에 다 걸리는 제목은",
+    suite: "unit",
+    file: {
+      path: "src/entities/study/model/study-form.ts",
+      find: `  if (!title || !hasVisibleContent(title)) {`,
+      replace: `  if (!title || (!hasBidiFormatting(title) && !hasVisibleContent(title))) {`,
+    },
+  },
+  "app-content-bidi-wins-order": {
+    holds: "INV-T1 — 본문은 「적어 주세요」 판정이 서식 문자보다 먼저다",
+    tag: "두 판정에 다 걸리는 본문은",
+    suite: "unit",
+    file: {
+      path: "src/features/chat/api/send-message.ts",
+      find: `  if (!hasVisibleContent(content)) {`,
+      replace: `  if (!hasBidiFormatting(content) && !hasVisibleContent(content)) {`,
+    },
+  },
+
+  // **넓히는 쪽 변이.** 위 변이들은 전부 판정을 좁히거나 없앤다. 이것은 한 글자만
+  // 넓히는데, 넓어지는 그 한 글자가 U+0020 이라 **띄어쓰기가 든 이름·제목·메시지를
+  // 앱이 전부 거부한다** — 이 제품의 정상 입력 거의 전부다. 2026-09-11 까지 이 방향을
+  // 붙드는 검사가 한 건도 없었다(test-auditor).
+  "app-control-range-widened": {
+    holds: "INV-T2 — 앱의 제어문자 범위가 U+0020 을 안 삼킨다",
+    tag: "U+0020 보통 공백은 제어문자가 아니다",
+    suite: "unit",
+    file: {
+      path: "src/shared/lib/text.ts",
+      find: `    if (code < 0x20 || code === 0x7f || (code >= 0x80 && code <= 0x9f)) return true;`,
+      replace: `    if (code <= 0x20 || code === 0x7f || (code >= 0x80 && code <= 0x9f)) return true;`,
+    },
+  },
+
+  // **태그는 그대로 두고 CSS 한 줄로 격리를 끄는 변이.** `<bdi>` 의 격리는 사용자
+  // 에이전트 스타일시트의 `unicode-bidi: isolate` 가 주는 것이라, 저자 스타일이 그
+  // 속성을 건드리면 그것이 이긴다. 태그를 보는 검사는 전부 초록불인데 브라우저에서는
+  // `<b>` 였을 때와 똑같이 낫표 경계가 뒤집힌다 — jsdom 은 배치를 안 하므로 그리는
+  // 검사로는 원리상 못 잡는다(2026-09-11 test-auditor).
+  "notification-name-bidi-unset-by-css": {
+    holds: "INV-T3 — 방향 격리가 CSS 로 꺼져 있지 않다",
+    tag: "방향 격리가 CSS 한 줄로",
+    suite: "unit",
+    file: {
+      path: "src/widgets/site-header/ui/notification-bell.module.css",
+      find: `.name {
+  font-weight: 700;`,
+      replace: `.name {
+  unicode-bidi: normal;
+  font-weight: 700;`,
+    },
+  },
+
+  // **태그를 그대로 둔 채 격리를 끄는 길이 셋이다.** 위 변이는 속성 이름이 보이는 한 줄만
+  // 심는다. 아래 둘은 **이름이 안 보이거나 파일이 다른** 길이고, 2026-09-11 까지 둘 다
+  // 아무도 안 붙들었다(test-auditor).
+  "notification-name-all-unset": {
+    holds: "INV-T3 — `all` 한 줄로도 방향 격리가 안 꺼진다",
+    tag: "방향 격리가 CSS 한 줄로",
+    suite: "unit",
+    // `all: unset` 은 `unicode-bidi` 를 `normal` 로 되돌린다. 속성 이름이 안 보이므로
+    // 「`unicode-bidi` 가 있나」만 보는 검사는 초록불이다.
+    file: {
+      path: "src/widgets/site-header/ui/notification-bell.module.css",
+      find: `.name {
+  font-weight: 700;`,
+      replace: `.name {
+  all: unset;
+  font-weight: 700;`,
+    },
+  },
+  "bdi-unset-in-global-css": {
+    holds: "INV-T3 — 다른 파일에서도 방향 격리를 못 끈다",
+    tag: "방향 격리가 CSS 한 줄로",
+    suite: "unit",
+    // 알림 줄의 요소를 **그 파일 밖에서** 맞힌다. 모듈 CSS 한 장만 읽는 검사는 못 본다.
+    file: {
+      path: "src/app/globals.css",
+      find: `.form-missing {`,
+      replace: `bdi {
+  unicode-bidi: normal;
+}
+
+.form-missing {`,
+    },
+  },
+
+  // ── 실시간 방송에 클라이언트가 쓸 수 있나 (0006 → 0012 · INV-M1~M5) ─────
+  //
+  // **이 변이가 없어서 그 검사 파일 전체에 변이가 0건이었다**(2026-09-11 test-auditor).
+  // 방 화면은 실시간으로 온 행을 검증 없이 목록에 넣으므로, 0021 의 제약 전부가 그
+  // 경로에는 안 걸린다. 오늘 안 새는 이유는 `realtime.messages` 에 **쓰기 정책이 없다**는
+  // 사실 하나뿐이고, 그 사실은 `for insert` 한 줄로 사라진다.
+  "realtime-broadcast-insert-open": {
+    holds: "INV-M1 — 클라이언트가 실시간 주제로 직접 못 쏜다",
+    tag: "남의 화면에 안 닿는다",
+    // **undo 를 손으로 적는다.** 이 정책은 어느 마이그레이션도 만들지 않으므로
+    // 마이그레이션 재적용만으로는 안 사라진다.
+    sql: `drop policy if exists chat_broadcast_write on realtime.messages;
+      create policy chat_broadcast_write on realtime.messages for insert to authenticated
+        with check (true);`,
+    undo: `drop policy if exists chat_broadcast_write on realtime.messages;`,
   },
 
   // ── 메시지 행에서 무엇을 사람이 정하나 (0021 · INV-M1~M5) ─────────────
@@ -1046,6 +1405,29 @@ const MUTATIONS = {
       path: "tests/integration/helpers.ts",
       find: `    if (u.username || u.password) return url.startsWith("postgresql://") && LOCAL_HOSTS.has(u.hostname);`,
       replace: `    if (u.username || u.password) return /(127\\.0\\.0\\.1|localhost)/.test(url);`,
+    },
+  },
+  "local-guard-ignores-query-host": {
+    holds: "통합 스위트는 로컬에만 붙는다 — 질의 매개변수도 본다",
+    tag: "질의 매개변수가 호스트를 덮어쓰는",
+    // **`new URL().hostname` 이 로컬이어도 pg 는 다른 곳에 붙는다.** 접속 문자열 파서가
+    // 질의 매개변수를 URL 의 호스트 위에 덮어쓴다(2026-09-11 실측 · security-reviewer).
+    // 이 한 줄을 지우면 `?host=evil.example` 이 통과하고, 그 연결에 슈퍼유저 자격이 실린다.
+    file: {
+      path: "tests/integration/helpers.ts",
+      find: `    if ([...u.searchParams.keys()].some((k) => HOST_DECIDING_PARAMS.has(k.toLowerCase()))) return false;`,
+      replace: `    if (false) return false;`,
+    },
+  },
+  "local-guard-rejects-any-query": {
+    holds: "호스트를 안 바꾸는 매개변수는 그대로 통과한다",
+    tag: "호스트를 안 바꾸는 매개변수",
+    // 반대 방향 — **넓히는 쪽**. 질의가 하나라도 있으면 거부하게 만들면 위 검사는 전부
+    // 통과하는데 `?sslmode=disable` 같은 멀쩡한 주소가 막힌다.
+    file: {
+      path: "tests/integration/helpers.ts",
+      find: `    if ([...u.searchParams.keys()].some((k) => HOST_DECIDING_PARAMS.has(k.toLowerCase()))) return false;`,
+      replace: `    if ([...u.searchParams.keys()].length > 0) return false;`,
     },
   },
   "z9-any-study": {
@@ -1446,10 +1828,14 @@ const MUTATIONS = {
     // 판정을 지우면 본문이 그대로 데이터베이스로 가고, 제약이 23514 로 거부한 것을
     // dbErrorMessage 가 「잠시 뒤 다시 시도해 주세요」로 덮는다 — 다시 시도해도 절대
     // 성공하지 않는데 문구는 기다리라고 한다.
+    // **2026-09-11 에 이 줄이 바뀌었는데 find 가 안 따라가 변이가 낡아 있었다.** 그동안
+    // 이 변이는 「복구 실패」로 스위트 전체를 멈추게 했고, 제어문자 판정을 붙드는 검사는
+    // 아무도 안 재고 있었다. **제어문자 갈래만 지운다** — 서식 문자까지 같이 지우면
+    // 그쪽 검사 하나로 이 변이가 「잡혔다」가 된다.
     file: {
       path: "src/features/chat/api/send-message.ts",
-      find: `  if (hasControlChars(content)) {`,
-      replace: `  if (false && hasControlChars(content)) {`,
+      find: `  if (hasControlChars(content) || hasBidiFormatting(content)) {`,
+      replace: `  if (hasBidiFormatting(content)) {`,
     },
   },
   "chat-control-guard-rejects-all": {
@@ -1459,7 +1845,7 @@ const MUTATIONS = {
     // 반대 절반. 판정을 「전부 거부」로 잘못 써도 위 변이가 붙드는 검사는 초록불이다.
     file: {
       path: "src/features/chat/api/send-message.ts",
-      find: `  if (hasControlChars(content)) {`,
+      find: `  if (hasControlChars(content) || hasBidiFormatting(content)) {`,
       replace: `  if (content.length > 0) {`,
     },
   },
@@ -2970,6 +3356,28 @@ select '메시지 표에 갱신·삭제 권한이 남아 있다 (INV-M5, 0021)' 
    select 1 from information_schema.table_privileges
     where table_schema = 'public' and table_name = 'chat_messages'
       and grantee in ('anon', 'authenticated') and privilege_type in ('UPDATE', 'DELETE')
+ )
+union all
+-- **실시간 방송의 쓰기 정책**(INV-M1). "realtime.messages" 에 읽기 정책만 있다는 **사실**이
+-- 「클라이언트가 남의 방 화면에 아무 행이나 밀어 넣지 못한다」를 지키는 전부다 — 방 화면은
+-- 방송으로 온 행을 검증 없이 그리므로 0021·0022 의 제약이 그 경로에는 하나도 안 걸린다.
+--
+-- 이 정책을 만드는 마이그레이션이 없어서, 유일한 제거 수단이 변이에 손으로 적은 "undo"
+-- 한 줄이다. **그 줄에 오타가 나거나 누가 지우면 「복구 완료」가 그대로 찍힌다**
+-- (2026-09-11 security-reviewer). 여기서 보면 그 조용한 실패가 소리를 낸다.
+select '실시간 방송에 쓰기 정책이 남아 있다 (INV-M1)' as what
+ where exists (
+   select 1 from pg_policies
+    where schemaname = 'realtime' and tablename = 'messages' and cmd <> 'SELECT'
+ )
+union all
+-- 같은 이유로 **정책** 쪽도 본다. 위 권한 검사는 "grant" 만 보는데, 메시지 수정·삭제를
+-- 여는 변이는 정책을 만든다("messages_edit_own" 등). 그쪽은 undo 로만 사라진다.
+select '메시지 표에 갱신·삭제 정책이 남아 있다 (INV-M5)' as what
+ where exists (
+   select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'chat_messages'
+      and cmd in ('UPDATE', 'DELETE')
  )
 union all
 -- 읽음 시각 트리거(INV-M2). 없으면 앱이 보내는 null 이 그대로 저장돼 모든 방이
