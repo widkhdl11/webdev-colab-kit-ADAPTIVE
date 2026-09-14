@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/graph-stop.mjs, graph.mjs
+//
 // check-foreign-gate-errors.mjs — 활성 프로젝트가 아닌 곳의 실패가 턴을 어떻게 다루는지 검사한다.
 //
 // 무엇을 지키는 검사인가:

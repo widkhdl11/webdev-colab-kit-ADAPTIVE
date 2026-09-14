@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/run-gates.mjs
+//
 // check-frontmatter-guards.mjs — run-gates 가 (1) 프론트매터의 중복 키와
 // (2) 다른 프로젝트에서 복사돼 온 사인오프 마커를 거부하는지 검사한다.
 //

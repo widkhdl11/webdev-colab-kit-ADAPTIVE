@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// @check-role: standing
+//
 // check-client-server-import.mjs — 클라이언트 번들에 서버 전용 모듈이 딸려 들어가는지 정적으로 본다.
 //
 // 무엇을 막는 검사인가:

@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/lib/cycle-policy.mjs
+//
 // check-promotion.mjs — 승격 루프가 계약대로 도는지 검사한다.
 //
 // 무엇을 지키는 검사인가:

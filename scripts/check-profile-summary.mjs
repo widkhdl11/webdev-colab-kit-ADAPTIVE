@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/run-gates.mjs
+//
 // check-profile-summary.mjs — 게이트 통과 요약 줄이 프로젝트별 스택 판정을 찍는지 검사한다.
 //
 // 왜 필요한가: 게이트는 스택마다 규칙이 갈리는 자리에서 `isNextProject()`(next.config.* 존재)로

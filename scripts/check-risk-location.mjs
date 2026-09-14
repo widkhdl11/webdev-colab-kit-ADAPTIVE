@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/run-gates.mjs, gates/graph-stop.mjs
+//
 // check-risk-location.mjs — 위험 표면이 '어디서' 감지됐는지가 메시지에 남는지 검사한다.
 //
 // 왜 필요한가: review 사인오프가 거부될 때 지금은 "코드에 authz 표면이 있는데 security-reviewer 가 없다"

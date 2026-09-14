@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: .claude/hooks/protect-files.mjs
+//
 // 검사 대상: .claude/hooks/protect-files.mjs 의 `rm -r <디렉터리>` 처리.
 //
 // 배경: protect-files 는 보호 경로 '문자열'이 명령에 있어야 잡는다. `rm -r .claude/` 에는

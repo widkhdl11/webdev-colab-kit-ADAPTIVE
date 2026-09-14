@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// @check-role: standing
+//
 // check-handover-rehearsal.mjs — v3.2 의 완료 기준을 실제로 리허설한다.
 //
 // 완료 상태: **이전 = projects/<이름>/docs/ 복사 + docs/references/docs-contract.md 전달.**

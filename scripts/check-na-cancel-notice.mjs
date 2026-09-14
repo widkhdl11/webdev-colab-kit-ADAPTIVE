@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/graph-stop.mjs, gates/propagate.mjs
+//
 // check-na-cancel-notice.mjs — n/a 판단이 전파에 덮여 취소될 때 그 사실이 화면에 뜨는지 검사한다.
 //
 // 왜 필요한가: markDirty 는 노드를 { status:"dirty", hash:null } 로 통째로 덮어쓴다(gates/propagate.mjs).

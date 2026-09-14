@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: pending
+// @check-backlog: 문서에 박힌 줄 번호 참조가 조용히 썩는다
+//
 // check-docs.mjs — 문서의 인용 링크를 기계로 검사한다 (§R2).
 //
 // 왜 있나: 1차 아키텍처 문서는 인용 203건이 렌더러에서 전부 깨졌다. 원인은 단순하다 —

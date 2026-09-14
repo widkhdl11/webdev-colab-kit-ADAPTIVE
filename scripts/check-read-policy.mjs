@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/lib/read-policy.mjs
+//
 // check-read-policy.mjs — 결정 규칙 frontmatter 를 읽는 자리가 gates/lib/read-policy.mjs
 // 하나로 모였는지, 그리고 그 실패 방향이 계약대로인지 검사한다.
 //

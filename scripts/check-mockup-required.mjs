@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/graph-stop.mjs, graph.mjs
+//
 // check-mockup-required.mjs — 시안 0장인 승인이 design 노드를 통과시키는지 검사한다.
 //
 // 무엇을 지키는 검사인가:

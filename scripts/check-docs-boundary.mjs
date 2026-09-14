@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/run-gates.mjs
+//
 // check-docs-boundary.mjs — 프로젝트 docs/ 와 하네스 사이의 경계 검사(a·b)가 붙었는지,
 // 붙은 뒤에도 멀쩡한 문서를 막지 않는지를 검사한다.
 //

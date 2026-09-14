@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// @check-role: standing
+//
 // check-hooks-on-edit.mjs — `.claude/` 아래를 편집했을 때만 check-hooks 를 돌린다.
 //
 // 왜 (2026-08-16 관찰 · 2026-09-04 트리거 발동): `check-hooks` 는 도구는 있고 트리거가 없었다.

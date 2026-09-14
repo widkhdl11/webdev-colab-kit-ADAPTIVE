@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: manual
+// @check-why-manual: 판정이 아니라 문서의 줄 참조가 지금 무엇을 가리키는지 목록으로 보여주는 도구다 — 고칠 때 remap-doc-refs 와 짝으로 쓴다
+//
 // check-doc-refs.mjs — 문서에 박힌 줄 참조가 어떤 코드를 가리키는지 보여준다.
 //
 // 왜 필요한가 (2026-08-16): 문서의 `파일#Lnn` 참조 148개가 코드와 어긋나 있었다.

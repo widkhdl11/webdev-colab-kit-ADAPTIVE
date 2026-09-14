@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/graph-stop.mjs, gates/run-gates.mjs
+//
 // check-parked-status.mjs — 보류 스펙 상태(status: parked)가 제대로 붙었는지 검사한다.
 //
 // 왜 필요한가: 이 패치는 보호 파일 둘(graph.mjs · gates/graph-stop.mjs)을 사용자가 직접 붙인다.

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// @check-role: standing
+//
 // check-hooks.mjs — 보호 훅이 '있는지'가 아니라 '실제로 막는지'를 검사한다.
 //
 // 왜 필요한가 (2026-08-16): protect-files 가 `target.includes("gates/")` 로 판정하는데

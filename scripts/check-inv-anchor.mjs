@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/spec-coverage.mjs
+//
 // check-inv-anchor.mjs — spec-coverage 가 "정의한 불변식"만 요구하는지 검사한다.
 //
 // 왜 필요한가: 지금 gates/spec-coverage.mjs 는 스펙 파일 **전체**에서 `INV-` 로 시작하는 글자를

@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: scripts/scaffold.mjs
+//
 // scaffold.mjs 가 아키텍처 프로파일별로 맞는 골격을 만드는지 검사한다.
 //
 // 왜 필요한가: 게이트는 "이미 있는 파일"을 검사하지, "스캐폴딩이 무엇을 안 만들었나"는 못 본다.

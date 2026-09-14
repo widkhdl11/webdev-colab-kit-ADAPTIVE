@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: manual
+// @check-why-manual: 검사 대상이 레포 밖(상위 폴더 dev/.claude/)이라 이 레포의 게이트가 그 변화를 볼 수 없다
+//
 // 검사 대상: dev/.claude/settings.json + dev/.claude/hooks/protect-kit.mjs
 //
 // 배경: 이 킷(webdeb-colab-kit-ADAPTIVE) 자체의 .claude/settings.json은 세션을 킷 폴더

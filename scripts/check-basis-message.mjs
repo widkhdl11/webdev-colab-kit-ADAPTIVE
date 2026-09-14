@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/graph-stop.mjs
+//
 // basis 불일치 메시지가 아는 것보다 많이 말하지 않는지 검사한다.
 //
 // 왜 있나: basis 해시는 `src/**` 파일의 원문 바이트로 계산된다. 그래서 기계가 아는 것은

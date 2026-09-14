@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/graph-stop.mjs, gates/run-gates.mjs
+//
 // check-pending-kind.mjs — 보류(escalation)가 턴을 막지 않으면서 하류는 그대로 막는지,
 // 그리고 리포트 발행이 실패해도 차단 판정에 반드시 도달하는지 검사한다.
 //

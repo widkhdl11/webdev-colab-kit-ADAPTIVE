@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/lib/read-spec.mjs, gates/lib/frontmatter.mjs
+//
 // check-read-spec.mjs — 스펙 frontmatter 를 읽는 자리를 gates/lib/ 하나로 모으는 패치가
 // 붙었는지, 붙은 뒤에도 판정이 그대로인지를 검사한다.
 //

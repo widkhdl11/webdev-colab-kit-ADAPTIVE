@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// @check-role: standing
+//
 // check-cycle-policy.mjs — 사이클 종료 판정과 승격 미처리 신고가 계약대로 도는지 검사한다.
 //
 // 무엇을 지키는 검사인가:

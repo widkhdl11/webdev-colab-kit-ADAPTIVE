@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// @check-role: standing
+//
 // check-mirror-sync.mjs — 킷 규칙 문서의 두 벌이 어긋났는지 검사한다.
 //
 // 무엇을 지키는 검사인가:

@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/graph-stop.mjs, gates/propagate.mjs
+//
 // check-mark-child.mjs — `--mark` 가 집계 노드(design)의 자식을 직접 찍을 수 있는지 검사한다.
 //
 // 왜 필요한가: 지금은 `--mark design` 밖에 못 쓴다. 그러면 markRework 가 자식 전부에 같은 사유를

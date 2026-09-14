@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// @check-role: standing
+//
 // check-intake.mjs — intake 산출물이 계약대로 나왔는지 판정한다.
 //
 // 무엇을 지키는 검사인가:

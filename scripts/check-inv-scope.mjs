@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// @check-role: on-change
+// @check-guards: gates/spec-coverage.mjs
+//
 // check-inv-scope.mjs — 불변식 커버 판정이 프로젝트를 가르는지 검사한다.
 //
 // 무엇을 지키는 검사인가:
