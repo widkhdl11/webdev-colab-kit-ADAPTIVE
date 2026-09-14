@@ -44,11 +44,19 @@ async function readCandidates() {
  * 파이프라인과 갈릴 수 있고, 그러면 로그가 실제로 일어난 일과 다른 말을 한다.
  *
  * **누가 요청했는지는 안 찍는다.** 갈래를 가르려는 것이지 사람을 보려는 것이 아니다.
+ *
+ * **로그가 결과를 못 바꾼다.** 찍다가 던지면 성공한 추천이 실패로 뒤집힌다 — 콘솔을 갈아
+ * 끼운 실행(로그 수집기)에서 실제로 가능한 일이다(2026-09-14 security-reviewer).
+ * 관찰하려고 넣은 줄이 관찰 대상을 망가뜨리는 모양이라 여기서 삼킨다.
  */
 function logBranch(outcome: RecommendOutcome): void {
   if (process.env.NODE_ENV !== "development") return;
-  const reason = outcome.reason === null ? "" : ` (${outcome.reason})`;
-  console.info(`[recommend] ${outcome.kind}${reason} · 그린 것 ${outcome.posts.length}건`);
+  try {
+    const reason = outcome.reason === null ? "" : ` (${outcome.reason})`;
+    console.info(`[recommend] ${outcome.kind}${reason} · 그린 것 ${outcome.posts.length}건`);
+  } catch {
+    // 삼킨다. 여기서 할 수 있는 것이 로그뿐인데 그 로그가 방금 실패했다.
+  }
 }
 
 export async function recommendForHome(): Promise<RecommendOutcome> {

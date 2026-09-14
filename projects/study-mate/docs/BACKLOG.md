@@ -11,6 +11,27 @@
 
 ## 미결
 
+- [ ] **환경변수 금지어 정규식이 이름 두 개만 본다** (2026-09-14, security-reviewer · Low) —
+  `env-names.test.ts:74` 의 검사는 허용 목록 자체를 다시 훑어 「목록이 조용히 넓어지는 것」을
+  막는 장치인데, 보는 것이 `SERVICE_ROLE` 과 `SECRET` 둘뿐이다 · `SUPABASE_SERVICE_KEY`·
+  `SUPABASE_ADMIN_KEY` 같은 이름은 그냥 지난다 · **완전히 뚫린 것은 아니다** — 첫 검사(집합이
+  정확히 같은가)가 이름이 하나만 늘어도 빨간불을 내서 사람을 부른다. 그러니 손해는
+  「둘째 방벽의 몫이 이름 두 개에 대해서만 성립한다」까지다 ·
+  고치면 조각 조립 방식은 그대로 두고 `SERVICE|ADMIN|PRIVATE` 계열로 넓힌다. **넓힌 뒤
+  `SUPABASE_SERVICE_KEY` 를 일부러 허용 목록에 넣어 빨간불을 한 번 보는 항목을 같이 둔다** ·
+  되살릴 조건: 허용 목록에 이름이 또 늘 때, 또는 서버 전용 키가 새로 생길 때
+
+- [ ] **환경변수 스캐너가 읽는 모양 둘만 본다 — 구조 분해로 읽으면 안 걸린다** (2026-09-14,
+  security-reviewer · Low) — `env-names.test.ts:54-55` 는 `process.env.NAME` 과
+  `process.env["NAME"]` 두 모양만 훑는다 · `const { SUPABASE_SERVICE_ROLE_KEY } = process.env`
+  나 `const e = process.env; e.X` 로 읽으면 **이름이 목록에 안 잡히고 검사는 초록불이다** ·
+  INV-G2 가 「행동으로 못 재는 방벽이라 목록을 직접 묻는다」로 이 검사에 무게를 실어 뒀는데,
+  묻는 방식에 빠져나갈 모양이 남아 있다 ·
+  고치면 `process.env` 가 나오는 줄 중 아는 모양이 아닌 것을 따로 모아 「알 수 없는 읽기 모양이
+  0건이다」를 단언한다 — 이름을 못 읽어도 **모양이 새로 생긴 것**은 잡힌다 ·
+  확인은 `const { A } = process.env` 한 줄을 `src/` 에 심어 빨간불을 보는 것 ·
+  되살릴 조건: 위 항목을 고칠 때 같이, 또는 환경변수를 읽는 자리가 늘 때
+
 - [ ] **`notifications.title` 만 제어문자 제약이 없다** (2026-09-11, security-reviewer) —
   `profiles_username_no_control`(0015:154) · `studies_title_no_control`(0020:50) ·
   `chat_messages_content_no_control`(0021:92) 은 있는데 `notifications` 에는 없다 ·

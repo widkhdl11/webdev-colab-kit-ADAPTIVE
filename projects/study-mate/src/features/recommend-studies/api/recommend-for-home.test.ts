@@ -188,6 +188,21 @@ describe("운영에서는 아무것도 안 찍는다", () => {
   });
 });
 
+describe("로그가 결과를 못 바꾼다", () => {
+  it("찍다가 던져도 추천은 그대로 돌아온다 — 관찰하려고 넣은 줄이 관찰 대상을 망가뜨리면 안 된다", async () => {
+    // 콘솔을 갈아 끼운 실행(로그 수집기)에서 실제로 가능한 모양이다
+    // (2026-09-14 security-reviewer).
+    info.mockImplementation(() => {
+      throw new Error("로그 수집기가 아프다");
+    });
+
+    await expect(recommendForHome()).resolves.toMatchObject({
+      kind: "model",
+      reason: null,
+    });
+  });
+});
+
 describe("로그는 요청자를 안 남긴다", () => {
   it("사용자 식별자가 찍히는 줄에 없다", async () => {
     const user = nextUser();

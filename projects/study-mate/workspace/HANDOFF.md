@@ -27,15 +27,15 @@
   },
   "implement": {
     "status": "clean",
-    "hash": "d7c2578f0283"
+    "hash": "531ab1178dad"
   },
   "qa": {
     "status": "clean",
-    "hash": "8820196318ef"
+    "hash": "fc237674ac29"
   },
   "review": {
     "status": "clean",
-    "hash": "61e15025f4c3"
+    "hash": "75c9f789507e"
   },
   "deploy": {
     "status": "dirty",
