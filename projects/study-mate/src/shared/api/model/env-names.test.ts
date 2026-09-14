@@ -22,12 +22,18 @@ const SRC = join(import.meta.dirname, "..", "..", "..");
  * 셋은 브라우저에도 들어가는 공개 값이고(`NEXT_PUBLIC_` 접두가 그 표시다),
  * 하나는 **서버 전용 AI 키**다. **데이터베이스에 붙는 비밀 키는 여기 없다** —
  * 그것이 `write-authorization.md` 가 전제로 삼는 사실이다.
+ *
+ * `NODE_ENV` 는 자격이 아니라 **지금이 개발 중인가**를 가르는 값이고, 실행 환경이 정한다.
+ * 2026-09-14 에 추천이 어느 갈래로 갔는지 개발 중에만 찍으려고 들어왔다
+ * (`features/recommend-studies/api/recommend-for-home.ts`). 이 목록에 이름이 늘면
+ * 빨간불이 나는 것이 이 검사의 의도이고, 그래서 사람이 한 번 보고 여기 적었다.
  */
 const ALLOWED = new Set([
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
   "NEXT_PUBLIC_SITE_URL",
   "GEMINI_API_KEY",
+  "NODE_ENV",
 ]);
 
 function walk(dir: string): string[] {

@@ -31,6 +31,26 @@ async function readCandidates() {
   }
 }
 
+/**
+ * 어느 갈래로 갔는지 개발 중에만 한 줄 찍는다.
+ *
+ * **화면 문구는 그대로 둔다.** 규칙 순서로 떨어지는 길이 넷인데 화면은 둘로만 갈리고,
+ * 그렇게 덮는 것은 의도다 — 사용자에게 내부 사정을 안 보인다(`model/section-copy.ts`).
+ * 문제는 **만드는 사람도 못 갈랐다**는 것이다: 2026-09-11 에 「AI 추천이 안 나온다」를
+ * 쫓느라 데이터베이스를 직접 뒤졌고, 실제 원인은 근거 0건이었는데 화면만 봐서는
+ * 비로그인·후보 0건·모델 실패와 구별이 안 됐다.
+ *
+ * **판단을 다시 하지 않고 결과만 읽는다** — 여기서 갈래를 새로 계산하면 그 계산이
+ * 파이프라인과 갈릴 수 있고, 그러면 로그가 실제로 일어난 일과 다른 말을 한다.
+ *
+ * **누가 요청했는지는 안 찍는다.** 갈래를 가르려는 것이지 사람을 보려는 것이 아니다.
+ */
+function logBranch(outcome: RecommendOutcome): void {
+  if (process.env.NODE_ENV !== "development") return;
+  const reason = outcome.reason === null ? "" : ` (${outcome.reason})`;
+  console.info(`[recommend] ${outcome.kind}${reason} · 그린 것 ${outcome.posts.length}건`);
+}
+
 export async function recommendForHome(): Promise<RecommendOutcome> {
   const user = await currentUser();
 
@@ -47,8 +67,11 @@ export async function recommendForHome(): Promise<RecommendOutcome> {
       : readEvidence(user.id),
   ]);
 
-  return recommend(
+  const outcome = await recommend(
     { userId: user?.id ?? null, evidence, candidates: posts },
     { model: geminiModel, reuse: recommendationReuse },
   );
+
+  logBranch(outcome);
+  return outcome;
 }
