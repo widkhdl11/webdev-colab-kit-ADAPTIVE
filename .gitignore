@@ -25,3 +25,5 @@ supabase/**
 projects/*/report/state.json
 projects/*/report/request.json
 projects/*/report/*.jsonl
+# probe 가 남기는 스크린샷 — 관측 기록이라 매 실행마다 쌓인다
+projects/*/report/probe/

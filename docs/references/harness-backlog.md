@@ -1081,7 +1081,10 @@
   `scripts/check-registry.mjs` 의 `on-change` + `@check-guards` 구조 위에 얹는다. 신규 부품을
   `contract` 없이 등록하면 게이트가 막는다. 닿는 표면은 게이트 스크립트뿐이다(인증·결제·시각
   방향 해당 없음). 절차는 검사 자신의 프로브(위반을 심어 잡히는지) + 완료 시 code-reviewer 하나,
-  시안·spec 은 생략
+  시안·spec 은 생략 · **2026-09-15 트리거 발동**: `scripts/check-probe.mjs` 가 생겨 계약 테스트를
+  가진 부품이 둘이 됐다(`check-report` → report-dashboard 스킬, `check-probe` → `scripts/probe.mjs`).
+  둘째는 이미 `@check-role: on-change` + `@check-guards: scripts/probe.mjs` 로 배선돼 있다 —
+  남은 것은 이 배선을 부품마다 손으로 다는 대신 바인딩 파일에서 읽어 오는 일이다
 
 - [ ] **intake 가 들여온 프로젝트에 대시보드를 안 세운다** (2026-09-14) — `report-dashboard` 는
   1회성 설치 스킬이고 지금은 사람이 따로 불러야 한다. 들여오기는 이미 `projects/<slug>/docs/` 와

@@ -1,0 +1,13 @@
+{
+  "name": "webdeb-colab-kit",
+  "private": true,
+  "type": "module",
+  "description": "하네스(킷) 자체의 도구가 쓰는 의존성만 둔다. 프로젝트 코드의 의존성은 projects/<이름>/package.json 이다.",
+  "scripts": {
+    "probe": "node scripts/probe.mjs",
+    "check:probe": "node scripts/check-probe.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}
