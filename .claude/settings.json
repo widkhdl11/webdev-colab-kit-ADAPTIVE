@@ -10,31 +10,105 @@
   },
   "hooks": {
     "SessionStart": [
-      { "hooks": [{ "type": "command", "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/scripts/briefing.mjs\"" }] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/scripts/briefing.mjs\""
+          }
+        ]
+      }
     ],
     "PreToolUse": [
-      { "matcher": "Bash|PowerShell",
-  "hooks": [{ "type": "command", "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/protect-secrets.mjs\"" }] },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/protect-secrets.mjs\""
+          }
+        ]
+      },
       {
         "matcher": "Edit|Write|MultiEdit|Bash|PowerShell",
-        "hooks": [{ "type": "command", "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/protect-files.mjs\"" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/protect-files.mjs\""
+          }
+        ]
       },
       {
         "matcher": "Bash|PowerShell",
-        "hooks": [{ "type": "command", "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/block-danger.mjs\"" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/block-danger.mjs\""
+          }
+        ]
+      },
+      {
+        "matcher": "Task|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/report-subagent.mjs\""
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/gates/run-gates.mjs\" --quick" },          
-          { "type": "command", "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/scripts/check-hooks-on-edit.mjs\"" }
-          ]
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/gates/run-gates.mjs\" --quick"
+          },
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/scripts/check-hooks-on-edit.mjs\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|Bash|PowerShell|Task|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/report-activity.mjs\""
+          }
+        ]
+      },
+      {
+        "matcher": "Task|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/report-subagent.mjs\""
+          }
+        ]
       }
     ],
     "Stop": [
-      { "hooks": [{ "type": "command", "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/gates/graph-stop.mjs\"" }] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/gates/graph-stop.mjs\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/report-subagent.mjs\""
+          }
+        ]
+      }
     ]
   }
 }

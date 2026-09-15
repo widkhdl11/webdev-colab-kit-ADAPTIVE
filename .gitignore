@@ -20,3 +20,8 @@ docs/**/diagrams/*.html
 supabase/**
 # Playwright MCP 가 세션 중에 남기는 것(스크린샷·콘솔 로그·스냅숏). 검증 흔적이지 산출물이 아니다.
 .playwright-mcp/
+
+# 진행 대시보드의 과정 기록 (설치물인 workflow.json·index.html·render.mjs 는 커밋한다)
+projects/*/report/state.json
+projects/*/report/request.json
+projects/*/report/*.jsonl

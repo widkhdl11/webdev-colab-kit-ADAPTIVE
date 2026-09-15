@@ -150,6 +150,7 @@ Phase별·파일별로 정리한 보고서는 **내가 한 일의 구조**지 �
 - 데이터 모델(엔티티·필드) 설계 시: docs/references/modeling-checklist.md (얕게=kickoff, 깊게=/spec)
 - 과거 결정의 이유: projects/<이름>/docs/DECISIONS.md / 반복 실수 패턴: docs/LESSONS.md
 - 실행 그래프·프론티어·재작업 전파·검증 실패 분류: docs/references/graph-engine.md
+- 하네스의 목표 구조·생성 루프 조건(①~⑤)·작업 순서: docs/references/harness-design.md — **정본이다.** 백로그·대기열이 쓰는 ①~⑤·「필터」·「책임 표」·「판단 지점」은 여기 정의를 가리킨다. 구조나 순서를 바꾸는 결정이 있을 때만 사람이 갱신한다 — 모델이 고치지 않는다
 - 프로젝트 docs 에서 기계가 읽는 것의 전체 목록(스펙 frontmatter 세 필드와 그 어휘·INV 정의 앵커·
   design-rules status·경로 규약): docs/references/docs-contract.md
 

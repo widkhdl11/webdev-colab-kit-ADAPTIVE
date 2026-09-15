@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>작업 대시보드</title>
+<style>
+  /* 색은 전부 대비 4.5:1 이상을 만족하도록 고른다. 바꿀 때는 기준 문서를 먼저 본다:
+     docs/references/devtool-ui-standards.md */
+  :root {
+    --bg:#ffffff; --panel:#f6f7f9; --panel-2:#eceff3; --line:#d3d9e2;
+    --fg:#14171c;            /* on --bg 15.8:1 */
+    --dim:#4c5462;           /* on --bg 8.2:1 */
+    --accent:#1b4fd8;        /* on --bg 7.4:1 */
+    --accent-bg:#e6ecfd; --on-accent:#ffffff;
+    --live:#0f6b39;          /* on --bg 6.4:1 */
+    --live-bg:#e3f4ea;
+    --warn:#8a4b00;          /* on --bg 7.1:1 */
+    --warn-bg:#fbeedd;
+    --focus:#1b4fd8;
+    --r:8px;
+    --side:300px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0e1116; --panel:#161a21; --panel-2:#1d232c; --line:#2c3441;
+      --fg:#e9edf4; --dim:#a7b1c0;
+      --accent:#86abff; --accent-bg:#1a2440; --on-accent:#0e1116;
+      --live:#5cd08c; --live-bg:#12291d;
+      --warn:#e6a64d; --warn-bg:#2b2013;
+      --focus:#86abff;
+    }
+  }
+  * { box-sizing:border-box; }
+  /* 스크롤바는 내용이 아니라 장치다. 기본 스크롤바는 두껍고 대비가 세서 옆 칸의 글자보다
+     먼저 눈에 들어온다 — 얇게 깔고, 손이 가면 진해지게 한다. 너비 0 으로 숨기지는 않는다:
+     숨기면 "더 있다"는 유일한 신호가 사라진다. */
+  * { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--line); border-radius:999px; border:2px solid transparent; background-clip:padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--dim); background-clip:padding-box; }
+  ::-webkit-scrollbar-corner { background:transparent; }
+  body {
+    margin:0; background:var(--bg); color:var(--fg);
+    font:14px/1.6 "Pretendard","Inter",-apple-system,"Segoe UI",system-ui,sans-serif;
+  }
+  :focus-visible { outline:3px solid var(--focus); outline-offset:2px; border-radius:4px; }
+  h2 { font-size:14px; margin:0 0 10px; font-weight:650; }
+  /* 지도 자연 폭이 962px 이라, 이보다 좁으면 지도 칸 안에 가로 스크롤바가 생긴다.
+     1400 − 페이지 좌우 44 − gap 16 − 우측 열 300 = 왼쪽 1040px 이라 지도가 통째로 들어간다. */
+  .wrap { max-width:1400px; margin:0 auto; padding:20px 22px 60px; }
+  .cols { display:flex; gap:16px; align-items:flex-start; }
+  .main { flex:1; min-width:0; }
+  /* sticky 요소가 뷰포트보다 높으면 아랫부분이 화면 밖에 영영 남는다(스크롤해도 안 올라온다).
+     200% 확대에서 바로 재현되므로 열 안쪽에서 스크롤한다. */
+  .side {
+    width:var(--side); flex:none; position:sticky; top:20px; display:grid; gap:12px;
+    max-height:calc(100vh - 40px); overflow-y:auto;
+  }
+  section { margin-bottom:22px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:16px 18px; }
+  .muted { color:var(--dim); }
+  .row { display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+  .pill {
+    font-size:13px; padding:2px 10px; border-radius:999px;
+    background:var(--panel-2); color:var(--dim); border:1px solid var(--line);
+  }
+  .pill.on { background:var(--live-bg); color:var(--live); border-color:var(--live); }
+  .pill.wait { background:var(--warn-bg); color:var(--warn); border-color:var(--warn); }
+  .pill.node { background:var(--accent-bg); color:var(--accent); border-color:var(--accent); }
+
+  /* ── 요청 층 ─────────────────────────────────────────── */
+  .req-text { font-size:15px; font-weight:600; line-height:1.5; margin:0 0 10px; }
+  .reason {
+    background:var(--warn-bg); color:var(--warn); border:1px solid var(--warn);
+    border-radius:var(--r); padding:10px 12px; margin-bottom:12px; font-size:13px;
+  }
+
+  /* 단계 띠 — items 의 배열 순서가 시작 시점에 정한 작업 순서다. 목록이 아니라 가로 띠로
+     그리는 이유가 그것이다: 순서가 화면에 없으면 "무엇을 어떤 순서로"가 안 읽힌다.
+     칸 폭은 창 1024px 에서 여섯 칸이 우측 열과 함께 들어가도록 잡았다 — 띠가 쓸 수 있는
+     폭은 629px 이고(1024 − 페이지 44 − gap 16 − 우측 열 300 − 카드 18*2 − 띠 6*2),
+     칸 6*84 + 화살표 5*10 + gap 10*4 + 안쪽 여백 12 = 606px 다. 여기를 키우면 그 기준이 깨진다. */
+  /* 링이 3px 실선 + 2px 띄움이라 칸 바깥으로 5px 가 필요한데, overflow-x:auto 를 주면
+     세로도 잘리는 상자가 된다. 그래서 안쪽 여백을 6px 주고 음수 margin 으로 되돌린다. */
+  .strip { display:flex; align-items:stretch; gap:4px; list-style:none; margin:12px -6px 0; padding:6px; overflow-x:auto; }
+  .strip .cell {
+    flex:1 1 0; min-width:84px; border:1px solid var(--line); border-radius:var(--r);
+    background:var(--bg); padding:8px 10px; display:flex; flex-direction:column; gap:3px;
+    text-align:left; font:inherit; color:inherit; cursor:pointer;
+  }
+  .strip .cell .idx { font-size:12px; color:var(--dim); font-variant-numeric:tabular-nums; }
+  .strip .cell .lab {
+    font-size:13px; font-weight:600; line-height:1.35;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .strip .cell .meta { font-size:12px; color:var(--dim); margin-top:auto; }
+  .strip .cell.done { background:var(--panel-2); }
+  .strip .cell.done .lab { color:var(--dim); }
+  .strip .cell.cur { border-color:var(--accent); border-width:2px; background:var(--accent-bg); }
+  .strip .cell.cur .meta { color:var(--accent); }
+  /* opacity 로 흐리게 하면 글자와 배경이 함께 섞여 --dim 글자의 실제 대비가 3.1:1 로
+     떨어진다(기준 1절 위반). 「아직」은 점선 테두리와 ☐ 라벨로만 구분한다. */
+  .strip .cell.todo { border-style:dashed; background:var(--panel-2); }
+  .strip .cell.todo .lab { color:var(--dim); }
+  .strip .cell.over { border-color:var(--warn); }
+  .strip .cell .over-tag {
+    font-size:12px; color:var(--warn); background:var(--warn-bg);
+    border:1px solid var(--warn); border-radius:999px; padding:0 8px; align-self:flex-start;
+  }
+  .strip .arw { flex:none; align-self:center; color:var(--dim); font-size:12px; width:10px; text-align:center; }
+
+  .outside { margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+  .outside ul { list-style:none; margin:6px 0 0; padding:0; display:grid; gap:2px; }
+  .outside li { display:flex; gap:10px; font-size:13px; padding:4px 8px; }
+  .outside li .t { color:var(--dim); margin-left:auto; font-variant-numeric:tabular-nums; flex:none; }
+  .outside li .during { color:var(--dim); }
+
+  /* ── 서브에이전트 ────────────────────────────────────── */
+  .agents { display:grid; grid-template-columns:repeat(auto-fill,minmax(228px,1fr)); gap:8px; }
+  .agent { border:1px solid var(--line); border-radius:var(--r); padding:10px 12px; background:var(--bg); }
+  .agent.run { border-color:var(--live); background:var(--live-bg); }
+  .agent .nm { font-weight:600; font-size:13px; }
+  .agent .brief { color:var(--dim); font-size:13px; margin-top:4px; word-break:break-word; }
+
+  /* ── 지도 ────────────────────────────────────────────── */
+  /* 지도를 화면 폭에 맞춰 줄이면 노드 글자가 13px 아래로 떨어진다(기준 2절 위반).
+     그래서 줄이지 않고, 넘칠 때만 이 칸 안에서 가로로 스크롤한다. */
+  #map { overflow-x:auto; }
+  #map svg { display:block; }
+  .n-box { fill:var(--panel-2); stroke:var(--line); stroke-width:1.5; }
+  .n-box.current { fill:var(--accent); stroke:var(--accent); stroke-width:3; }
+  .n-box.blocked { fill:var(--warn); stroke:var(--warn); stroke-width:3; stroke-dasharray:6 4; }
+  .n-label { font-size:13px; font-weight:600; fill:var(--fg); }
+  .n-label.invert { fill:var(--on-accent); }
+  .n-sub { font-size:12px; fill:var(--dim); }
+  .n-sub.invert { fill:var(--on-accent); }
+  .n-hit { cursor:pointer; }
+  .n-hit:focus-visible .n-box { stroke:var(--focus); stroke-width:3; }
+  .edge { fill:none; stroke:var(--line); stroke-width:1.6; }
+  .child-box { fill:var(--bg); stroke:var(--line); stroke-width:1.2; }
+
+  /* ── 요약 박스 (항상) ────────────────────────────────── */
+  #summary dl { margin:0; display:grid; gap:9px; }
+  #summary dt { font-size:12px; color:var(--dim); font-weight:600; }
+  #summary dd { margin:2px 0 0; font-size:13px; word-break:break-word; }
+  #summary .big { font-size:14px; font-weight:600; }
+  #summary ul.notes { list-style:none; margin:0; padding:0; display:grid; gap:3px; }
+  #summary ul.notes li {
+    font-size:13px; padding:4px 8px; border-radius:6px;
+    background:var(--warn-bg); color:var(--warn); border:1px solid var(--warn);
+  }
+  #summary ul.notes li.none { background:none; color:var(--dim); border-color:transparent; padding-left:0; }
+
+  /* ── 패널 (스킬 · 지연 진단이 같은 자리를 쓴다) ──────── */
+  #panel { border:1px solid var(--line); border-radius:var(--r); background:var(--panel); padding:14px 16px; }
+  #panel[hidden] { display:none; }
+  #panel h3 { margin:0; font-size:14px; }
+  #panel .close { float:right; background:none; border:1px solid var(--line); border-radius:6px;
+                  color:var(--dim); font-size:12px; padding:2px 8px; cursor:pointer; }
+  #panel ul { list-style:none; margin:10px 0 0; padding:0; display:grid; gap:3px; }
+  #panel li { font-size:13px; padding:4px 8px; border-radius:6px; display:flex; gap:8px; align-items:baseline; }
+  #panel li.run { background:var(--live-bg); color:var(--live); font-weight:650; }
+  #panel .sep { margin-top:12px; border-top:1px solid var(--line); padding-top:10px; }
+  #panel .agg { margin-top:10px; display:grid; gap:8px; }
+  #panel .agg .k { font-size:12px; color:var(--dim); font-weight:600; }
+  #panel .agg .val { font-size:13px; }
+  #panel .agg .sub { font-size:12px; color:var(--dim); font-variant-numeric:tabular-nums; }
+
+  /* ── 피드 ────────────────────────────────────────────── */
+  details { border:1px solid var(--line); border-radius:var(--r); background:var(--panel); margin-bottom:5px; }
+  summary { cursor:pointer; padding:9px 12px; display:flex; align-items:center; gap:12px; list-style:none; font-size:13px; }
+  summary::-webkit-details-marker { display:none; }
+  .t { color:var(--dim); font-variant-numeric:tabular-nums; flex:none; width:60px; font-size:13px; }
+  .what { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .acts { border-top:1px solid var(--line); padding:8px 12px; display:grid; gap:2px; }
+  .act { display:flex; gap:10px; font-size:13px; color:var(--dim); }
+  .act b { color:var(--fg); font-weight:500; min-width:80px; flex:none; }
+  .act .path { overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+               font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:12px; }
+  .empty { color:var(--dim); padding:18px; text-align:center; font-size:13px; }
+
+  /* 우측 열은 1024px 에서도 그대로 있는다(요약 박스는 항상 보여야 한다).
+     좁아지면 아래로 내려간다 — 옆에 두면 본문이 눌려 글자 크기 기준을 어긴다. */
+  @media (max-width:860px) { .cols { flex-direction:column; } .side { width:100%; position:static; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="cols">
+    <div class="main">
+      <section id="request-layer" aria-label="요청"></section>
+      <section aria-label="서브에이전트">
+        <h2>서브에이전트</h2>
+        <div class="agents" id="agents"></div>
+      </section>
+      <section aria-label="작업 흐름 지도">
+        <h2>작업 흐름</h2>
+        <div id="map"></div>
+      </section>
+      <section aria-label="활동 피드">
+        <h2>활동</h2>
+        <div id="feed"></div>
+      </section>
+    </div>
+    <aside class="side">
+      <div class="card" id="summary" aria-label="요약"></div>
+      <div id="panel" hidden role="dialog" aria-label="상세 패널"></div>
+    </aside>
+  </div>
+</div>
+
+<script type="module">
+import {
+  ESC as esc, fmtDuration, fmtTime, layout, nodeState, nodePanel, subagentView, feedRows,
+  requestView, itemStrip, summaryBox, delayDiagnosis, reportConfig,
+} from "./render.mjs";
+
+const POLL_MS = 4000;
+const $ = (id) => document.getElementById(id);
+
+async function getJson(path, fallback) {
+  try { const r = await fetch(`${path}?t=${Date.now()}`); return r.ok ? await r.json() : fallback; }
+  catch { return fallback; }
+}
+async function getJsonl(path) {
+  try {
+    const r = await fetch(`${path}?t=${Date.now()}`);
+    if (!r.ok) return [];
+    return (await r.text()).split(/\r?\n/).filter((l) => l.trim())
+      .flatMap((l) => { try { return [JSON.parse(l)]; } catch { return []; } });
+  } catch { return []; }
+}
+
+// 열린 패널은 하나뿐이다: { kind: "node" | "delay", id }
+let selected = null;
+let lastMapKey = "";
+let lastPanelKey = "";
+const openRows = new Set();
+let data = {};
+let cfg = null;
+
+/**
+ * 4초마다 innerHTML 을 갈아끼우면 포커스를 들고 있던 노드가 통째로 사라진다 — Tab 으로
+ * 어딘가에 가 있어도 4초 뒤 처음으로 돌아간다. 그래서 다시 그리기 전에 지금 초점이 있는
+ * 것의 식별자를 적어 두고, 그린 뒤 같은 것을 찾아 초점을 돌려준다.
+ */
+function keepFocus(draw) {
+  const el = document.activeElement;
+  const key = el && el !== document.body
+    ? el.dataset?.item ? `item:${el.dataset.item}`
+      : el.dataset?.node ? `node:${el.dataset.node}`
+        : el.id ? `id:${el.id}` : null
+    : null;
+  draw();
+  if (!key) return;
+  const [kind, value] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)];
+  const sel = kind === "item" ? `[data-item="${CSS.escape(value)}"]`
+    : kind === "node" ? `[data-node="${CSS.escape(value)}"]` : `#${CSS.escape(value)}`;
+  document.querySelector(sel)?.focus?.();
+}
+
+async function tick() {
+  const [workflow, state, request, transitions, activity, subagents, history, config] = await Promise.all([
+    getJson("workflow.json", { nodes: [], edges: [], skills: [], agents: [] }),
+    getJson("state.json", null),
+    getJson("request.json", null),
+    getJsonl("transitions.jsonl"),
+    getJsonl("activity.jsonl"),
+    getJsonl("subagents.jsonl"),
+    getJsonl("requests-history.jsonl"),
+    getJson("config.json", {}),
+  ]);
+  data = { workflow, state, request, transitions, activity, subagents, history };
+  cfg = reportConfig(config);
+
+  keepFocus(() => {
+    drawRequest();
+    drawAgents();
+    drawMap();
+    drawSummary();
+    drawPanel();
+    drawFeed();
+  });
+}
+
+function drawRequest() {
+  const { request, transitions, history, state } = data;
+  const el = $("request-layer");
+  if (!request) {
+    const last = history[history.length - 1];
+    el.innerHTML = `<div class="card">${
+      last ? `<p class="req-text">완료 — ${esc(last.request)}</p>
+              <div class="row"><span class="pill">${esc(last.status)}</span>
+              <span class="muted">항목 ${requestView(last, transitions, state).done}/${last.items.length}</span></div>`
+           : `<p class="muted">열린 요청이 없다</p>`
+    }</div>`;
+    return;
+  }
+  const v = requestView(request, transitions, state);
+  const strip = itemStrip(request, transitions, Date.now(), cfg);
+  const waiting = v.waiting;
+
+  const cells = strip.cells.map((c, i) => {
+    const mark = c.state === "done" ? "✓" : c.state === "current" ? "▸" : "☐";
+    const aria = `${i + 1}번 ${c.label} — ${c.stateLabel}${c.over ? " · 오래 걸리는 중" : ""} · 걸린 시간 ${fmtDuration(c.ms)}`;
+    return `${i > 0 ? `<li class="arw" aria-hidden="true">→</li>` : ""}
+      <li><button class="cell ${c.state === "done" ? "done" : c.state === "current" ? "cur" : "todo"}${c.over ? " over" : ""}"
+          data-item="${esc(c.label)}" title="${esc(c.label)}" aria-label="${esc(aria)}">
+        <span class="idx">${i + 1}</span>
+        <span class="lab">${esc(c.label)}</span>
+        ${c.over ? `<span class="over-tag">오래 걸리는 중</span>` : ""}
+        <span class="meta">${mark} ${esc(c.stateLabel)} · ${fmtDuration(c.ms)}</span>
+      </button></li>`;
+  }).join("");
+
+  el.innerHTML = `<div class="card">
+    ${waiting ? `<div class="reason"><b>${esc(request.status)}</b> — ${esc(request.status_reason ?? "")}</div>` : ""}
+    <p class="req-text">${esc(request.request)}</p>
+    <div class="row">
+      <span class="pill ${waiting ? "wait" : "on"}">${esc(request.status)}</span>
+      <span class="pill">${v.done}/${v.total} 완료</span>
+      <span class="pill">${esc(request.source === "spec" ? request.spec_path : "직접 적음")}</span>
+    </div>
+    <ol class="strip" aria-label="작업 순서 ${strip.cells.length}단계">${cells}</ol>
+    <div class="outside">
+      <b>시킨 것 밖의 일</b>
+      ${v.outside.length === 0
+        ? `<span class="muted"> 없음</span>`
+        : `<ul>${v.outside.map((o) => `<li><span>${esc(o.label)}</span>
+             ${o.during.length ? `<span class="during">— ${esc(o.during.join(", "))} 중</span>` : ""}
+             <span class="t">${fmtDuration(o.ms)} · ${o.count}회</span></li>`).join("")}</ul>`}
+    </div>
+  </div>`;
+
+  el.querySelectorAll("[data-item]").forEach((b) => {
+    b.addEventListener("click", () => { selected = { kind: "delay", id: b.dataset.item }; drawPanel(true); });
+  });
+}
+
+function drawAgents() {
+  const view = subagentView(data.workflow, data.subagents);
+  $("agents").innerHTML = view.length === 0
+    ? `<p class="empty">등록된 서브에이전트가 없다</p>`
+    : view.map((a) => `<div class="agent ${a.running ? "run" : ""}" tabindex="0" role="group"
+        aria-label="${esc(a.name)} — ${esc(a.label)}">
+        <div class="row"><span class="nm">${esc(a.name)}</span>
+          <span class="pill ${a.running ? "on" : ""}">${esc(a.label)}</span>
+          ${a.running ? `<span class="muted">${fmtDuration(a.elapsedMs)}</span>` : ""}</div>
+        ${a.running && a.brief ? `<div class="brief">${esc(a.brief)}</div>` : ""}
+      </div>`).join("");
+}
+
+function drawMap() {
+  const { workflow, state } = data;
+  const L = layout(workflow);
+  const key = JSON.stringify([L.width, L.height, state?.current_node, (state?.blockers ?? []).length]);
+  if (key === lastMapKey) return;
+  lastMapKey = key;
+
+  const box = (n) => {
+    const st = nodeState(n, state);
+    const inv = st.kind !== "idle" ? " invert" : "";
+    const label = `${n.label} — ${st.label || "아직 안 함"}`;
+    return `<g class="n-hit" tabindex="0" role="button" aria-label="${esc(label)}" data-node="${esc(n.id)}">
+      <rect class="n-box ${st.kind}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="8"></rect>
+      <text class="n-label${inv}" x="${n.x + n.w / 2}" y="${n.children.length ? n.y + 19 : n.y + n.h / 2 + 1}"
+            text-anchor="middle" dominant-baseline="middle">${esc(n.label)}</text>
+      ${st.label ? `<text class="n-sub${inv}" x="${n.x + n.w / 2}" y="${n.children.length ? n.y + 19 : n.y + n.h / 2 + 16}"
+            text-anchor="middle">${esc(st.label)}</text>` : ""}
+      ${n.children.map((c) => `<rect class="child-box" x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" rx="6"></rect>
+        <text class="n-sub" x="${c.x + c.w / 2}" y="${c.y + c.h / 2 + 1}" text-anchor="middle"
+              dominant-baseline="middle">${esc(c.label)}</text>`).join("")}
+    </g>`;
+  };
+
+  $("map").innerHTML = `<svg viewBox="0 0 ${L.width} ${L.height}" width="${L.width}" height="${L.height}"
+      role="img" aria-label="파이프라인 노드 ${L.nodes.length}개">
+    ${L.edges.map((e) => `<path class="edge" d="${e.d}"></path>`).join("")}
+    ${L.nodes.map(box).join("")}
+  </svg>`;
+
+  $("map").querySelectorAll("[data-node]").forEach((g) => {
+    const open = () => { selected = { kind: "node", id: g.dataset.node }; drawPanel(true); };
+    g.addEventListener("click", open);
+    g.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); open(); }
+    });
+  });
+}
+
+function drawSummary() {
+  const s = summaryBox(data, Date.now(), cfg);
+  const e = s.elapsed;
+  const line = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+  $("summary").innerHTML = `<h2>요약</h2><dl>
+    ${line("목표", s.goal ? esc(s.goal) : `<span class="muted">기록 없음</span>`)}
+    ${line("요청", s.request ? `<span class="big">${esc(s.request)}</span>` : `<span class="muted">열린 요청이 없다</span>`)}
+    ${line("지금", esc(s.nowLine))}
+    ${line("지금까지", [
+      e.sinceStartMs !== null ? fmtDuration(e.sinceStartMs) : null,
+      `${e.done}/${e.total} 완료`,
+      e.nodeDwellMs !== null ? `이 자리에서 ${fmtDuration(e.nodeDwellMs)}` : null,
+    ].filter(Boolean).join(" · "))}
+    ${line("눈여겨볼 것", `<ul class="notes">${s.notes.length === 0
+      ? `<li class="none">없음</li>`
+      : s.notes.map((n) => `<li tabindex="0">${esc(n.text)}</li>`).join("")}</ul>`)}
+    ${line("메모", `<span class="muted">${esc(s.brief)}</span>`)}
+  </dl>`;
+}
+
+function drawPanel(justOpened = false) {
+  const el = $("panel");
+  if (!selected) { el.hidden = true; lastPanelKey = ""; return; }
+  const html = selected.kind === "node" ? nodePanelHtml(selected.id) : delayPanelHtml(selected.id);
+  if (!html) { el.hidden = true; selected = null; lastPanelKey = ""; return; }
+  el.hidden = false;
+  // 열린 것이 무엇인지 이름으로도 말한다 — 내용이 둘인데 이름이 "상세" 하나면
+  // 스크린리더로는 무엇이 열렸는지 제목까지 읽어야 안다.
+  el.setAttribute("aria-label", selected.kind === "node" ? `${selected.id} 노드 상세` : `${selected.id} — 왜 오래 걸리나`);
+  const key = `${selected.kind}:${selected.id}:${html}`;
+  if (key !== lastPanelKey) {
+    lastPanelKey = key;
+    el.innerHTML = `<button class="close" id="panel-close" aria-label="패널 닫기">Esc 닫기</button>${html}`;
+    $("panel-close").addEventListener("click", () => { selected = null; drawPanel(); });
+  }
+  // 열린 직후에만 초점을 옮긴다. 패널은 DOM 상 본문 뒤라, 안 옮기면 Tab 으로 거기 닿기까지
+  // 지도와 피드를 전부 지나야 한다. 갱신할 때마다 옮기면 반대로 초점을 뺏는다.
+  if (justOpened) { el.tabIndex = -1; el.focus(); }
+}
+
+function nodePanelHtml(id) {
+  const p = nodePanel(data.workflow, data.state, id);
+  if (!p) return null;
+  const item = (s) => `<li class="${s === p.runningSkill ? "run" : ""}">
+    <span>${esc(s)}</span>${s === p.runningSkill ? `<span class="pill on">실행 중</span>` : ""}</li>`;
+  return `
+    <h3>${esc(p.label)}</h3>
+    <div class="row" style="margin-top:6px">
+      <span class="pill ${p.status.kind === "current" ? "node" : p.status.kind === "blocked" ? "wait" : ""}">
+        ${esc(p.status.label || "지금 여기 아님")}</span>
+      ${p.sinceMs !== null ? `<span class="muted">${fmtDuration(p.sinceMs)}</span>` : ""}
+    </div>
+    ${p.now ? `<p class="muted" style="font-size:13px;margin:8px 0 0">${esc(p.now)}</p>` : ""}
+    <ul>${p.skills.length ? p.skills.map(item).join("") : `<li class="muted">이 노드에 묶인 스킬 없음</li>`}</ul>
+    <div class="sep"><b style="font-size:13px">항상 쓰는 것</b>
+      <ul>${p.alwaysSkills.map(item).join("")}</ul></div>`;
+}
+
+// 지연 진단 — 집계와 사유를 나란히 놓을 뿐, 원인을 판정하지 않는다.
+function delayPanelHtml(label) {
+  if (!data.request) return null;
+  const d = delayDiagnosis(label, data, Date.now(), cfg);
+  const blk = (k, v) => `<div><div class="k">${k}</div><div class="val">${v}</div></div>`;
+  const pct = d.derived.ratio === null ? "—" : `${Math.round(d.derived.ratio * 100)}%`;
+  return `
+    <h3>왜 오래 걸리나</h3>
+    <p class="muted" style="font-size:13px;margin:6px 0 0">${esc(label)} · 걸린 시간 ${fmtDuration(d.dwellMs)}</p>
+    <div class="agg">
+      ${blk("1. 검사에서 되돌아온 횟수 <span class=\"sub\">(이 구간 전체)</span>", d.failures.length === 0 ? `<span class="muted">0건</span>`
+        : `${d.failures.length}건 <span class="sub">${d.failures.map((f) => `${esc(f.result)} ${fmtTime(f.at)}`).join(" · ")}</span>`)}
+      ${blk("2. 중간에 끼어든 일", d.derived.rows.length === 0 ? `<span class="muted">없음</span>`
+        : `${fmtDuration(d.derived.totalMs)} · 걸린 시간의 ${pct}
+           <div class="sub">${d.derived.rows.map((r) => `${esc(r.label)} ${fmtDuration(r.ms)}`).join(" · ")}</div>`)}
+      ${blk("3. 답을 기다린 시간", d.blocked.known === "none" ? `<span class="muted">기록 없음</span>`
+        : `${d.blocked.ms === 0 ? "0초" : fmtDuration(d.blocked.ms)}${d.blocked.known === "partial"
+            ? ` <span class="sub">(+기록 없는 구간 ${fmtDuration(d.blocked.unknownMs)})</span>` : ""}`)}
+      ${blk("4. 아무 기록도 없던 시간", !d.gaps.known ? `<span class="muted">기록 없음 — 활동 훅이 안 붙어 있다</span>`
+        : d.gaps.rows.length === 0 ? `<span class="muted">없음</span>`
+        : `${d.gaps.rows.length}번 <span class="sub">${d.gaps.rows.map((g) => `${fmtTime(new Date(g.from).toISOString())}~${fmtTime(new Date(g.to).toISOString())} (${fmtDuration(g.ms)})`).join(" · ")}</span>`)}
+      ${blk("5. 서브에이전트", d.agents.length === 0 ? `<span class="muted">없음</span>`
+        : d.agents.map((a) => `${esc(a.name)} ${fmtDuration(a.ms)}${a.running ? " (실행 중)" : ""}`).join("<br>"))}
+      ${blk("6. 에이전트가 적어 둔 이유", d.reason ? esc(d.reason) : `<span class="muted">기록 없음</span>`)}
+    </div>`;
+}
+
+function drawFeed() {
+  document.querySelectorAll("#feed details[open]").forEach((d) => openRows.add(d.dataset.at));
+  document.querySelectorAll("#feed details:not([open])").forEach((d) => openRows.delete(d.dataset.at));
+  const rows = feedRows(data.transitions, data.activity);
+  $("feed").innerHTML = rows.length === 0
+    ? `<p class="empty">아직 기록된 전환이 없다</p>`
+    : rows.map((r) => `<details data-at="${esc(r.at)}"${openRows.has(r.at) ? " open" : ""}>
+        <summary>
+          <span class="t">${fmtTime(r.at)}</span>
+          <span class="what">${esc(r.now)}</span>
+          <span class="pill ${r.to_node === null ? "" : "node"}">${esc(r.to_node ?? "지도 밖")}</span>
+          ${r.result ? `<span class="pill on">${esc(r.result)}</span>` : ""}
+          <span class="t" style="width:auto">${fmtDuration(r.dwell_ms)}</span>
+        </summary>
+        <div class="acts">${r.activity.length === 0
+          ? `<div class="act">이 사이에 기록된 활동 없음</div>`
+          : r.activity.map((a) => `<div class="act"><span class="t">${fmtTime(a.at)}</span>
+             <b>${esc(a.tool)}</b><span class="path">${esc(a.target)}</span></div>`).join("")}</div>
+      </details>`).join("");
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && selected) { selected = null; drawPanel(); }
+});
+
+tick();
+setInterval(tick, POLL_MS);
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "note": "노드↔스킬 바인딩. 형식 정본은 docs/references/docs-contract.md 9절. 스킬 문서는 이 관계를 모른다 — 스킬이 노드 id 를 알면 노드 구성이 다른 하네스로 옮길 수 없다.",
+  "bindings": [
+    { "node": "product", "skill": "kickoff", "contract": null },
+    { "node": "product", "skill": "intake", "contract": null },
+    { "node": "product", "skill": "setup", "contract": null },
+    { "node": "spec", "skill": "spec", "contract": null },
+    { "node": "design/page-designer", "skill": "design-interview", "contract": null },
+    { "node": "design/page-designer", "skill": "checkpoint", "contract": null },
+    { "node": "implement", "skill": "scaffold", "contract": null },
+    { "node": "all", "skill": "goal", "contract": null },
+    { "node": "all", "skill": "status", "contract": null },
+    { "node": "all", "skill": "wrap-up", "contract": null },
+    { "node": "all", "skill": "retro", "contract": null },
+    { "node": "all", "skill": "report-dashboard", "contract": null }
+  ]
+}
