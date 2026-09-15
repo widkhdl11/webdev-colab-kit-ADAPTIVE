@@ -1,17 +1,65 @@
 {
-  "note": "노드↔스킬 바인딩. 형식 정본은 docs/references/docs-contract.md 9절. 스킬 문서는 이 관계를 모른다 — 스킬이 노드 id 를 알면 노드 구성이 다른 하네스로 옮길 수 없다.",
+  "note": "노드↔스킬 바인딩. 형식 정본은 docs/references/docs-contract.md 8절. 스킬 문서는 이 관계를 모른다 — 스킬이 노드 id 를 알면 노드 구성이 다른 하네스로 옮길 수 없다. contract 는 셋 중 하나다: 검사 경로 / \"none: <사유>\" / \"pending: <백로그 항목 조각>\". contract 가 경로인 스킬은 그 디렉터리가 바뀐 턴에 그 검사가 자동으로 돈다.",
   "bindings": [
-    { "node": "product", "skill": "kickoff", "contract": null },
-    { "node": "product", "skill": "intake", "contract": null },
-    { "node": "product", "skill": "setup", "contract": null },
-    { "node": "spec", "skill": "spec", "contract": null },
-    { "node": "design/page-designer", "skill": "design-interview", "contract": null },
-    { "node": "design/page-designer", "skill": "checkpoint", "contract": null },
-    { "node": "implement", "skill": "scaffold", "contract": null },
-    { "node": "all", "skill": "goal", "contract": null },
-    { "node": "all", "skill": "status", "contract": null },
-    { "node": "all", "skill": "wrap-up", "contract": null },
-    { "node": "all", "skill": "retro", "contract": null },
-    { "node": "all", "skill": "report-dashboard", "contract": null }
+    {
+      "node": "product",
+      "skill": "kickoff",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "product",
+      "skill": "intake",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "product",
+      "skill": "setup",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "spec",
+      "skill": "spec",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "design/page-designer",
+      "skill": "design-interview",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "design/page-designer",
+      "skill": "checkpoint",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "implement",
+      "skill": "scaffold",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "all",
+      "skill": "goal",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "all",
+      "skill": "status",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "all",
+      "skill": "wrap-up",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "all",
+      "skill": "retro",
+      "contract": "pending: 계약 테스트 규약"
+    },
+    {
+      "node": "all",
+      "skill": "report-dashboard",
+      "contract": "scripts/check-report.mjs"
+    }
   ]
 }

@@ -1,5 +1,14 @@
 #!/usr/bin/env node
-// @check-role: standing
+// @check-role: on-change
+// @check-guards: docs/references/node-skills.json, graph.mjs
+//
+//   이 검사가 도는 자리는 둘이다. 위 두 파일이 바뀔 때(여기 적힌 배선), 그리고
+//   report-dashboard 스킬 디렉터리가 바뀔 때 — 그쪽 배선은 바인딩 파일의
+//   `contract` 가 들고 있다(docs/references/node-skills.json). 같은 지도를 두 벌
+//   두지 않으려고 여기에 스킬 디렉터리를 다시 적지 않는다.
+//
+//   전에는 `standing` 이라고 선언돼 있었는데, 등록부가 호출처로 인정한 것은 SKILL.md 에
+//   이 파일 이름이 적혀 있다는 사실뿐이었다 — 실제로는 한 번도 안 돌았다(2026-09-15 실측).
 //
 // check-report.mjs — report-dashboard 스킬의 계약 테스트.
 //
@@ -379,32 +388,64 @@ const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathT
   const ids = new Set(DERIVED.nodes.map((n) => n.id));
   const dirs = skillDirs();
   const exists = (rel) => existsSync(join(ROOT, rel));
+  const backlogText = (() => {
+    try {
+      return readFileSync(join(ROOT, "docs", "references", "harness-backlog.md"), "utf-8");
+    } catch {
+      return "";
+    }
+  })();
+  const backlogHas = (frag) => backlogText.includes(frag);
+  const opts = { nodeIds: ids, skillDirs: dirs, fileExists: exists, backlogHas };
 
   check("9 읽기", bindingsReadError === null && BINDINGS.length > 0,
     `바인딩 ${BINDINGS.length}줄을 읽었다`,
     `바인딩을 못 읽었다: ${bindingsReadError ?? "bindings 가 비었다"}`);
 
-  const errs = bindingErrors(BINDINGS, { nodeIds: ids, skillDirs: dirs, fileExists: exists });
+  const errs = bindingErrors(BINDINGS, opts);
   check("9 현행", errs.length === 0,
     `스킬 ${dirs.length}개가 전부 바인딩에 있고, 낡은 줄이 없다`,
     `바인딩이 낡았다: ${errs.join(" / ")}`);
 
   // 심은 위반 셋 — 각각 다른 각도다. 하나만 심으면 나머지 두 그물의 구멍을 못 본다.
   const dropped = BINDINGS.filter((b) => b.skill !== "spec");
-  check("9 프로브(미등장)", bindingErrors(dropped, { nodeIds: ids, skillDirs: dirs, fileExists: exists }).some((e) => e.includes("안 올라온 스킬")),
+  check("9 프로브(미등장)", bindingErrors(dropped, opts).some((e) => e.includes("안 올라온 스킬")),
     "바인딩에서 스킬 하나를 빼면 미등장으로 잡는다", "스킬을 빼도 통과했다 — 미등장 검사가 무효다");
 
   const staleNode = [...BINDINGS, { node: "no-such-node", skill: "spec", contract: null }];
-  check("9 프로브(낡은 노드)", bindingErrors(staleNode, { nodeIds: ids, skillDirs: dirs, fileExists: exists }).some((e) => e.includes("워크플로우에 없다")),
+  check("9 프로브(낡은 노드)", bindingErrors(staleNode, opts).some((e) => e.includes("워크플로우에 없다")),
     "없는 노드를 가리키는 줄을 잡는다", "없는 노드를 가리켜도 통과했다");
 
   const staleSkill = [...BINDINGS, { node: "qa", skill: "no-such-skill", contract: null }];
-  check("9 프로브(낡은 스킬)", bindingErrors(staleSkill, { nodeIds: ids, skillDirs: dirs, fileExists: exists }).some((e) => e.includes("디렉터리가 없다")),
+  check("9 프로브(낡은 스킬)", bindingErrors(staleSkill, opts).some((e) => e.includes("디렉터리가 없다")),
     "없는 스킬을 가리키는 줄을 잡는다", "없는 스킬을 가리켜도 통과했다");
 
   const badContract = [...BINDINGS, { node: "qa", skill: "spec", contract: "scripts/nope.mjs" }];
-  check("9 프로브(빈 계약)", bindingErrors(badContract, { nodeIds: ids, skillDirs: dirs, fileExists: exists }).some((e) => e.includes("contract")),
+  check("9 프로브(없는 계약 경로)", bindingErrors(badContract, opts).some((e) => e.includes("경로에 파일이 없다")),
     "없는 계약 테스트 경로를 잡는다", "없는 계약 경로가 통과했다");
+
+  // contract 어휘 — null 이 제일 위험한 값이다. 「아직 없다」와 「필요 없다」가 같은 글자면
+  // 무엇이 빠졌는지 셀 수가 없다. 그래서 넷을 각각 심어 본다.
+  const nullContract = [...BINDINGS, { node: "qa", skill: "spec", contract: null }];
+  check("9 프로브(빈 계약)", bindingErrors(nullContract, opts).some((e) => e.includes("구별이 안 된다")),
+    "contract 가 비어 있는 줄을 잡는다 — 셋 중 하나를 고르게 한다", "빈 contract 가 통과했다");
+
+  const bareNone = [...BINDINGS, { node: "qa", skill: "spec", contract: "none:" }];
+  check("9 프로브(사유 없는 none)", bindingErrors(bareNone, opts).some((e) => e.includes("이름만 바뀐 null")),
+    "사유 없는 none 을 잡는다", "사유 없는 면제가 통과했다 — 어휘가 null 의 새 이름이 된다");
+
+  const barePending = [...BINDINGS, { node: "qa", skill: "spec", contract: "pending:" }];
+  check("9 프로브(근거 없는 pending)", bindingErrors(barePending, opts).some((e) => e.includes("어느 백로그 항목")),
+    "근거 없는 pending 을 잡는다", "근거 없는 pending 이 통과했다");
+
+  const lostPending = [...BINDINGS, { node: "qa", skill: "spec", contract: "pending: 있지도 않은 백로그 항목" }];
+  check("9 프로브(사라진 백로그)", bindingErrors(lostPending, opts).some((e) => e.includes("없다 — 미룬 이유")),
+    "백로그에 없는 항목을 가리키는 pending 을 잡는다", "사라진 백로그 항목을 가리켜도 통과했다");
+
+  const okVocab = [...BINDINGS, { node: "qa", skill: "spec", contract: "none: 문서만 읽는 절차라 자동 판정할 산출물이 없다" }];
+  check("9 어휘(정상)", bindingErrors(okVocab, opts).length === 0,
+    "사유가 붙은 none 은 그대로 통과한다 — 어휘가 통과 불가능한 관문이 아니다",
+    `사유가 붙은 none 이 막혔다: ${bindingErrors(okVocab, opts).join(" / ")}`);
 
   // 스킬이 workflow.json 까지 실리는가. 화면에 **어떻게** 보이는지는 11~13 항목이 본다 —
   // 기본 화면에는 안 보이고 패널에만 보이는 것이 지금 기준이다.

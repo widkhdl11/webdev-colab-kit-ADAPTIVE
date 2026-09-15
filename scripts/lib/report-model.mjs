@@ -66,7 +66,24 @@ export function deriveWorkflow(GRAPH, bindings = []) {
  *   낡은 줄  바인딩이 없는 노드나 없는 스킬을 가리킨다
  *   빈 계약  contract 가 null 이 아닌데 그 경로에 파일이 없다
  */
-export function bindingErrors(bindings, { nodeIds: ids, skillDirs, fileExists }) {
+// `contract` 값의 어휘 셋. 이 자리에서 제일 위험한 값은 `null` 이었다 —
+// 「아직 안 만들었다」와 「필요 없다」가 같은 글자라서, 열두 줄이 전부 null 인 동안
+// 무엇이 빠진 것인지 아무도 셀 수 없었다. 그래서 셋 중 하나를 반드시 고르게 한다.
+//
+//   "scripts/check-x.mjs"        계약 테스트가 있다 (그 파일이 실제로 있어야 한다)
+//   "none: <사유>"               필요 없다 (사유가 있어야 한다)
+//   "pending: <백로그 항목 조각>" 필요한데 아직 없다 (그 항목이 백로그에 있어야 한다)
+//
+// 형식 정본: docs/references/docs-contract.md 8절
+export function parseContract(v) {
+  if (typeof v !== "string" || v.trim() === "") return { kind: "missing", reason: "" };
+  const s = v.trim();
+  const m = /^(none|pending)\s*:\s*(.*)$/.exec(s);
+  if (!m) return { kind: "path", path: s, reason: "" };
+  return { kind: m[1], reason: m[2].trim() };
+}
+
+export function bindingErrors(bindings, { nodeIds: ids, skillDirs, fileExists, backlogHas }) {
   const errors = [];
   const bound = new Set();
   bindings.forEach((b, i) => {
@@ -82,10 +99,24 @@ export function bindingErrors(bindings, { nodeIds: ids, skillDirs, fileExists })
     if (!skillDirs.includes(b.skill)) {
       errors.push(`${at} 의 skill(${b.skill}) 디렉터리가 없다 — 낡은 줄이다`);
     }
-    if (b.contract !== null && b.contract !== undefined) {
-      if (typeof b.contract !== "string" || !fileExists(b.contract)) {
-        errors.push(`${at} 의 contract(${b.contract}) 경로에 파일이 없다`);
-      }
+    const c = parseContract(b.contract);
+    if (c.kind === "missing") {
+      errors.push(
+        `${at}(${b.skill}) 의 contract 가 비어 있다 — 「아직 없다」인지 「필요 없다」인지 구별이 안 된다. ` +
+          `검사 경로 / "none: <사유>" / "pending: <백로그 항목 조각>" 셋 중 하나를 적는다`,
+      );
+    } else if (c.kind === "path") {
+      if (!fileExists(c.path)) errors.push(`${at}(${b.skill}) 의 contract(${c.path}) 경로에 파일이 없다`);
+    } else if (c.reason === "") {
+      errors.push(
+        c.kind === "none"
+          ? `${at}(${b.skill}) 의 contract 가 "none" 인데 사유가 없다 — 사유 없는 면제는 이름만 바뀐 null 이다`
+          : `${at}(${b.skill}) 의 contract 가 "pending" 인데 근거가 없다 — 어느 백로그 항목이 이걸 들고 있는지 적는다`,
+      );
+    } else if (c.kind === "pending" && typeof backlogHas === "function" && !backlogHas(c.reason)) {
+      errors.push(
+        `${at}(${b.skill}) 가 가리킨 백로그 항목 '${c.reason}' 가 docs/references/harness-backlog.md 에 없다 — 미룬 이유가 어디에도 안 남아 있다`,
+      );
     }
   });
   const missing = skillDirs.filter((d) => !bound.has(d));

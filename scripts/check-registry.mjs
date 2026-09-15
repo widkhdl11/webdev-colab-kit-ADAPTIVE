@@ -40,6 +40,7 @@ import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
+import { parseContract } from "./lib/report-model.mjs";
 
 const SELF = fileURLToPath(import.meta.url);
 const argv = process.argv.slice(2);
@@ -116,6 +117,34 @@ function parseDecl(src) {
     whyManual: pick("check-why-manual"),
     backlog: pick("check-backlog"),
   };
+}
+
+// 바뀐 파일 목록에 이 대상이 걸리는가. 파일이면 그 파일, 디렉터리면 그 아래 아무것이나.
+// 경로 조각 경계로 본다 — 부분 문자열로 보면 `skills/report` 가 `skills/report-dashboard` 를
+// 잡는다(같은 뿌리의 실수가 이 레포에서 세 번 났다. docs/LESSONS.md 2026-09-06).
+function touched(changed, target) {
+  const t = String(target).split("\\").join("/").replace(/\/+$/, "");
+  return changed.some(
+    (c) =>
+      c === t ||
+      c.startsWith(`${t}/`) ||
+      // git 은 통째로 새로 생긴 디렉터리를 파일마다 적지 않고 `?? .claude/skills/새스킬/` 한 줄로
+      // 접어서 준다. 그 줄을 안 펴면 **새로 추가된 스킬이 영영 안 걸린다** — 정작 제일 확인이
+      // 필요한 순간이 그때다 (2026-09-15 프로브에서 이 모양으로 두 항목이 빨간불이 났다).
+      (c.endsWith("/") && t.startsWith(c)),
+  );
+}
+
+function readBindings() {
+  try {
+    return JSON.parse(readFileSync(join(ROOT, "docs", "references", "node-skills.json"), "utf-8")).bindings ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function skillDirsOf(skill) {
+  return CALLER_TREES.map((seg) => [...seg, skill].join("/")).filter((d) => existsSync(join(ROOT, d)));
 }
 
 function changedFiles() {
@@ -204,6 +233,81 @@ function audit() {
   return { errors, pendings, byRole, entries };
 }
 
+// ── 프로브: 스킬 부품의 배선.
+//    바인딩 파일의 contract 가 곧 배선이다. 여기서 확인하는 것은 셋이다 —
+//    ① 계약 테스트를 가진 스킬을 고치면 그 검사가 **실제로 돌고** 실패가 올라온다
+//    ② pending 인 스킬을 고치면 막힌다 (미루기는 손대기 전까지만 유효하다)
+//    ③ 아무것도 안 고치면 둘 다 조용하다 — 있기만 해도 터지면 그건 배선이 아니라 상수 경고다
+//    픽스처는 진짜 git 레포로 만든다. 바뀐 파일을 git 으로 읽으므로, 흉내 낸 목록으로는
+//    "이 검사가 실제로 쓰는 경로"를 안 밟는다.
+function probeSkillWiring() {
+  const root = join(tmpdir(), `registry-wiring-${process.pid}`);
+  rmSync(root, { recursive: true, force: true });
+  const put = (rel, body) => {
+    const p = join(root, rel);
+    mkdirSync(dirname(p), { recursive: true });
+    writeFileSync(p, body, "utf-8");
+  };
+  const git = (...args) => spawnSync("git", args, { cwd: root, encoding: "utf-8" });
+
+  mkdirSync(root, { recursive: true });
+  git("init", "-q");
+  put("docs/references/harness-backlog.md", "# 백로그\n- [ ] 실제로 있는 항목\n");
+  put(
+    "scripts/check-alpha.mjs",
+    "#!/usr/bin/env node\n// @check-role: manual\n// @check-why-manual: 프로브 픽스처다\n" +
+      'console.log("FAIL  심은 실패 — 이 줄이 올라와야 검사가 실제로 돈 것이다");\nprocess.exitCode = 1;\n',
+  );
+  for (const s of ["alpha", "beta", "gamma"]) put(`.claude/skills/${s}/SKILL.md`, `# ${s}\n`);
+  put(
+    "docs/references/node-skills.json",
+    JSON.stringify(
+      {
+        bindings: [
+          { node: "all", skill: "alpha", contract: "scripts/check-alpha.mjs" },
+          { node: "all", skill: "beta", contract: "pending: 실제로 있는 항목" },
+          { node: "all", skill: "gamma", contract: "none: 문서만 읽는 절차라 판정할 산출물이 없다" },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const run = () => {
+    const r = spawnSync(process.execPath, [SELF, "--root", root, "--changed"], {
+      encoding: "utf-8",
+      env: { ...process.env, HARNESS_CHECK_NESTED: "" },
+    });
+    return (r.stdout ?? "") + "\n" + (r.stderr ?? "");
+  };
+
+  // ①② 전부 새 파일이라 git 이 보기에 전부 바뀐 상태다.
+  const dirty = run();
+  // ③ 커밋하면 바뀐 것이 없다.
+  git("add", "-A");
+  git("-c", "user.email=probe@example.com", "-c", "user.name=probe", "commit", "-qm", "fixture");
+  const clean = run();
+
+  const cases = [
+    ["계약 테스트가 돈다", dirty.includes("[registry/ON-CHANGE] check-alpha.mjs") && dirty.includes("심은 실패"),
+      "계약 테스트를 가진 스킬을 고치면 그 검사가 실제로 돌고 실패 줄이 올라온다"],
+    ["pending 확정 강제", dirty.includes("[registry/PENDING-TOUCHED] beta"),
+      "pending 인 스킬을 고치면 막힌다"],
+    ["none 은 안 막는다", !dirty.includes("gamma"),
+      "사유가 붙은 none 은 고쳐도 막지 않는다"],
+    ["안 고치면 조용", !clean.includes("PENDING-TOUCHED") && !clean.includes("check-alpha.mjs"),
+      "아무것도 안 고친 턴에는 둘 다 조용하다"],
+  ];
+  let bad = 0;
+  for (const [name, ok, why] of cases) {
+    console.log(`${ok ? "✓" : "✗"} 스킬 배선 ${name} — ${ok ? why : `안 됐다 (${why})`}`);
+    if (!ok) bad += 1;
+  }
+  rmSync(root, { recursive: true, force: true });
+  return bad;
+}
+
 // ── 프로브: 위반을 일부러 심어 잡히는지 본다.
 //    "위반 0건"이라는 보고와 검사가 아예 안 돈 것은 겉이 같다(2026-09-02).
 function probe() {
@@ -271,6 +375,8 @@ function probe() {
   console.log(`${guardOk ? "✓" : "✗"} 재귀 빗장 — HARNESS_CHECK_NESTED=1 이면 --changed 가 선언 대조까지만 한다`);
   if (!guardOk) bad += 1;
 
+  bad += probeSkillWiring();
+
   rmSync(dir, { recursive: true, force: true });
   rmSync(clean, { recursive: true, force: true });
   console.log(bad === 0 ? "\n프로브 통과 — 심은 위반이 전부 잡히고 멀쩡한 것은 안 잡힌다." : `\n프로브 실패 ${bad}건.`);
@@ -288,24 +394,50 @@ if (WITH_CHANGED) {
   if (changed === null) {
     console.error("⚠ [registry/SKIP-CHANGED] git 을 못 불러서 바뀐 파일을 모른다 — on-change 검사는 안 돌린다.");
   } else {
-    for (const e of entries) {
-      if (e.role !== "on-change") continue;
-      if (!e.guards.some((g) => changed.includes(g))) continue;
-      const r = spawnSync(process.execPath, [join(ROOT, "scripts", e.name)], {
+    const runCheck = (name) => {
+      if (ranOnChange.includes(name)) return; // 같은 검사를 두 자리가 가리켜도 한 번만 돈다
+      const r = spawnSync(process.execPath, [join(ROOT, "scripts", name)], {
         cwd: ROOT,
         encoding: "utf-8",
         // 이 아래로 내려가는 게이트는 등록부를 선언 대조까지만 돌린다 (위 NESTED 설명 참고).
         env: { ...process.env, HARNESS_CHECK_NESTED: "1" },
         timeout: 180_000,
       });
-      ranOnChange.push(e.name);
+      ranOnChange.push(name);
       if (r.status !== 0) {
         const lines = ((r.stdout ?? "") + "\n" + (r.stderr ?? ""))
           .split("\n")
-          .filter((l) => l.includes("✗"))
+          .filter((l) => l.includes("✗") || l.trim().startsWith("FAIL"))
           .map((l) => l.trim());
-        if (lines.length) for (const l of lines.slice(0, 5)) errors.push(`[registry/ON-CHANGE] ${e.name}: ${l.replace(/^✗\s*/, "")}`);
-        else errors.push(`[registry/ON-CHANGE] ${e.name} 이 실패했다 — 'node scripts/${e.name}' 로 직접 본다`);
+        if (lines.length) for (const l of lines.slice(0, 5)) errors.push(`[registry/ON-CHANGE] ${name}: ${l.replace(/^✗\s*/, "")}`);
+        else errors.push(`[registry/ON-CHANGE] ${name} 이 실패했다 — 'node scripts/${name}' 로 직접 본다`);
+      }
+    };
+
+    // ① 스크립트 부품: 검사 자신이 `@check-guards` 로 무엇을 지키는지 선언한다.
+    for (const e of entries) {
+      if (e.role !== "on-change") continue;
+      if (!e.guards.some((g) => touched(changed, g))) continue;
+      runCheck(e.name);
+    }
+
+    // ② 스킬 부품: 배선을 부품마다 손으로 달지 않고 선언 파일 한 자리에서 읽는다
+    //    (docs-contract 8절). 스킬은 파일 여럿이 같이 맞아야 도는 물건이라 디렉터리 단위로 본다.
+    for (const b of readBindings()) {
+      if (typeof b?.skill !== "string") continue;
+      const dirs = skillDirsOf(b.skill);
+      if (!dirs.some((d) => touched(changed, d))) continue;
+      const c = parseContract(b.contract);
+      if (c.kind === "pending") {
+        // 미루기는 손대기 전까지만 유효하다. 고치는 턴에도 pending 이면, 그 스킬은
+        // 계약 테스트 없이 계속 바뀌면서 "곧 만든다"는 문장만 들고 있게 된다.
+        errors.push(
+          `[registry/PENDING-TOUCHED] ${b.skill} — 이 스킬을 고쳤는데 contract 가 아직 'pending: ${c.reason}' 이다. ` +
+            `고치는 턴에는 계약 테스트 경로나 "none: <사유>" 로 확정한다 (docs/references/node-skills.json)`,
+        );
+      } else if (c.kind === "path") {
+        const name = c.path.split("/").pop();
+        if (existsSync(join(ROOT, c.path))) runCheck(name);
       }
     }
   }
