@@ -5,11 +5,19 @@ surfaces: []
 ---
 # 저장되는 글자의 표시 무결성 스펙
 
-이 제품에서 **한 사람이 쓴 글자가 다른 사람의 화면에 나가는 자리는 넷**이다 — 사용자 이름
+이 제품에서 **한 사람이 쓴 글자가 다른 사람의 화면에 나가는 자리는 다섯**이다 — 사용자 이름
 (`profiles.username`) · 스터디 제목(`studies.title`) · 채팅 본문(`chat_messages.content`) ·
-알림에 복사된 제목(`notifications.title`). 네 자리는 전부 **제품이 쓴 글자 옆에** 놓인다.
-이름은 멤버 목록의 다른 이름들 사이에, 제목은 알림 문장의 낫표 안에, 본문은 다른 사람의
-말풍선 위아래에.
+알림에 복사된 제목(`notifications.title`) · 모집글 제목(`posts.title`). 다섯 자리는 전부
+**제품이 쓴 글자 옆에** 놓인다. 이름은 멤버 목록의 다른 이름들 사이에, 제목은 알림 문장의
+낫표 안에, 본문은 다른 사람의 말풍선 위아래에, 모집글 제목은 브라우저 탭 제목에서 제품
+이름과 한 문자열 안에.
+
+**모집글 제목이 다섯 번째로 들어온 경위**(2026-09-15, P17 결정). 이 스펙을 승인할 때
+`posts.title` 은 빠져 있었다. 그런데 `src/app/posts/[id]/page.tsx` 의 `generateMetadata` 가
+`` `${post.title} — Study Mate` `` 를 탭 제목으로 만든다 — INV-T2 가 막으려는 모양 그대로고,
+거기엔 `<bdi>` 를 걸 요소조차 없다(탭 제목은 요소가 아니라 문자열이다). 그리고 `posts` 에는
+앱에도 데이터베이스에도 이 부류의 판정이 하나도 없어서, 제목에 제어문자가 섞이면
+「잠시 뒤 다시 시도해 주세요」가 뜨고 다시 시도해도 절대 성공하지 않는다.
 
 **그래서 어기면 사고가 나는 규칙은 「길이」가 아니라 「제 자리에 머무는가」다.** 지금까지
 세운 제약(길이 · 제어문자 · 공백)은 전부 이 규칙의 한 조각이었는데, 조각마다 따로 정해져서
@@ -106,8 +114,8 @@ INV-T3 가 따로 맡는다. 둘 다 필요한 이유는 알림의 제목이 **�
 - INV-T1: **저장되는 사람의 글자에는 보이는 내용이 하나는 있어야 한다.**
   공백류와 폭 없는 글자를 전부 지운 나머지가 비어 있으면 안 된다.
   (강제 위치: DB 제약 — `profiles_username_visible` · `studies_title_visible` ·
-  `chat_messages_content_visible` · `notifications_title_visible`. 앱 쪽은 문구를 위한
-  자리이고 판정은 `src/shared/lib/text.ts` 하나에서 나온다)
+  `chat_messages_content_visible` · `notifications_title_visible` · `posts_title_visible`.
+  앱 쪽은 문구를 위한 자리이고 판정은 `src/shared/lib/text.ts` 하나에서 나온다)
 
   지우는 집합은 `[[:space:]]` + U+180E + U+200B–U+200D + U+2060 + U+FEFF 다.
   `[[:space:]]` 에 U+2028·U+2029 가 들어 있으므로 줄 구분자만으로 된 값도 여기서 걸린다 —
@@ -124,8 +132,8 @@ INV-T3 가 따로 맡는다. 둘 다 필요한 이유는 알림의 제목이 **�
 - INV-T2: **양방향 서식 문자는 저장되지 않는다.**
   U+200E · U+200F · U+202A–U+202E · U+2066–U+2069 열 자다.
   (강제 위치: DB 제약 — `profiles_username_no_bidi` · `studies_title_no_bidi` ·
-  `chat_messages_content_no_bidi` · `notifications_title_no_bidi`. 앱 쪽은 같은 판정을
-  `src/shared/lib/text.ts` 에서 먼저 본다)
+  `chat_messages_content_no_bidi` · `notifications_title_no_bidi` · `posts_title_no_bidi`.
+  앱 쪽은 같은 판정을 `src/shared/lib/text.ts` 에서 먼저 본다)
 
   **부류 전체를 막는 근거는 실측 ③ 이다** — 어느 한 자가 경계를 깨는지는 그 문자가 아니라
   값의 내용이 정하고, 값의 내용은 쓰는 사람이 정한다.
@@ -142,8 +150,14 @@ INV-T3 가 따로 맡는다. 둘 다 필요한 이유는 알림의 제목이 **�
 
 - INV-T3: **제품이 쓴 글자와 사람이 쓴 글자가 한 문단에 있으면, 사람이 쓴 쪽은 방향 격리
   안에 있다.**
-  (강제 위치: 알림 줄의 제목을 `<bdi>` 로 감싼다 —
-  `src/widgets/site-header/ui/NotificationBell.tsx`)
+  (강제 위치 둘 — ① 알림 줄의 제목을 `<bdi>` 로 감싼다:
+  `src/widgets/site-header/ui/NotificationBell.tsx` ② 모집글 탭 제목은 사람이 쓴 제목을
+  U+2068(FSI)과 U+2069(PDI) 사이에 둔다: `src/app/posts/[id]/page.tsx` 의 `generateMetadata`)
+
+  **탭 제목에 `<bdi>` 를 못 쓰는 이유는 그것이 요소가 아니라 문자열이기 때문이다.** 브라우저가
+  탭에 그리는 것은 `<title>` 안의 글자뿐이라 감쌀 자리가 없다. 같은 일을 하는 문자가
+  FSI–PDI 한 쌍이고, 이것은 **제품이 쓰는 글자**다 — INV-T2 가 막는 것은 사람이 쓴 값에
+  그 문자가 **저장되는** 것이지 제품이 경계를 그리려고 쓰는 것이 아니다.
 
   **INV-T2 가 있는데도 이것이 따로 필요한 이유는 알림의 제목이 사본이기 때문이다.**
   참가 사건의 트리거가 그때의 제목을 `notifications` 행으로 복사하므로, 제약이 생기기
@@ -197,6 +211,22 @@ INV-T3 가 따로 맡는다. 둘 다 필요한 이유는 알림의 제목이 **�
   U+0080–9F 를 안 보는데 `[[:cntrl:]]` 는 본다.
 - **S7 (INV-T3)**: Given 알림 한 줄 / When 제목이 `<bdi>` 로 감싸인다 / Then 그 요소가
   방향 격리를 갖는다 — `<b>` 로 되돌리면 빨간불이 난다.
+- **S8 (INV-T1, 모집글 제목)**: Given 작성자의 공개 키 연결 / When 모집글 제목을 U+3000
+  한 자로 직접 갱신한다 / Then 거부된다.
+- **S8b (INV-T1, 모집글 제목, 반대 절반)**: Given 같은 연결 / When 제목을 `토익 스터디 모집`
+  으로 갱신한다 / Then 들어간다 — 이 검사가 없으면 제약을 「항상 거부」로 바꿔도 S8 이
+  통과한다.
+- **S9 (INV-T2, 모집글 제목)**: Given 같은 연결 / When 제목 앞에 U+202E 를 붙여 갱신한다 /
+  Then 거부된다.
+- **S9b (INV-T2, 모집글 제목, 반대 절반)**: Given 같은 연결 / When 제목을 히브리어
+  `לימוד` 로 갱신한다 / Then 들어간다 — 오른쪽-왼쪽 글자 자체를 막는 구현이면 여기서
+  빨간불이 난다.
+- **S10 (INV-T3, 탭 제목)**: Given 모집글 상세의 `generateMetadata` / When 제목이
+  `לימוד` 인 글의 탭 제목을 만든다 / Then 사람이 쓴 제목이 U+2068 과 U+2069 사이에 있고
+  제품 이름은 그 밖에 있다 — 격리를 빼면 빨간불이 난다.
+- **S10b (INV-T3, 탭 제목, 반대 절반)**: Given 같은 자리 / When 제목이 한글이다 /
+  Then 격리 문자를 뺀 탭 제목이 `<제목> — Study Mate` 그대로다 — 격리가 사람이 읽는
+  글자를 바꾸지 않는다.
 
 ## 비범위
 
