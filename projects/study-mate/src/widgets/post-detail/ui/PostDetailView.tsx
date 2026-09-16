@@ -86,12 +86,18 @@ export function PostDetailView({
   post,
   state,
   applyAction,
+  likeAction,
   authorAction,
 }: {
   post: PostDetail;
   state: ApplyState;
   /** 신청 버튼 자리. 무엇을 보여줄지는 화면이 정하고 여기서는 자리만 낸다 */
   applyAction: ReactNode;
+  /**
+   * 좋아요 자리. `applyAction` 과 같은 규약이다 — 「로그인했는가」는 세션을 보는 판단이라
+   * 화면이 하고, 위젯은 자리만 낸다. 안 넘기면 예전처럼 숫자만 그린다.
+   */
+  likeAction?: ReactNode;
   /**
    * 작성자에게만 보이는 자리(모집글 수정). **여기서 판정하지 않는다** — 「내가 쓴 글인가」는
    * 세션을 보는 판단이라 화면이 하고, 위젯은 자리만 낸다. `applyAction` 과 같은 규약이다.
@@ -176,14 +182,16 @@ export function PostDetailView({
             */}
             <div className={styles.statGroup}>
               {/*
-                시안은 여기를 누를 수 있는 버튼으로 그렸는데 좋아요 기능이 아직 없다.
-                누를 수 없는 것을 버튼처럼 그리면 눌러 보고 나서야 알게 되므로,
-                기능이 붙기 전까지는 조회수와 같은 모양의 숫자로 둔다.
+                시안이 그린 「누를 수 있는 좋아요」가 2026-09-16 에 붙었다. 자리를 넘겨받지
+                못한 화면(비로그인 등)은 예전처럼 조회수와 같은 모양의 숫자로 둔다 —
+                누를 수 없는 것을 버튼처럼 그리면 눌러 보고 나서야 알게 된다.
               */}
-              <p className={styles.stats}>
-                <HeartIcon size={16} />
-                좋아요 {post.likesCount}
-              </p>
+              {likeAction ?? (
+                <p className={styles.stats}>
+                  <HeartIcon size={16} />
+                  좋아요 {post.likesCount}
+                </p>
+              )}
               <p className={styles.stats}>
                 <EyeIcon size={16} />
                 조회 {post.viewsCount}

@@ -3,6 +3,7 @@ import { readUnreadNotificationCount } from "@/entities/notification";
 import { applyState, canEditPost, countPostView, readPostDetail } from "@/entities/post";
 import { currentUser } from "@/entities/session";
 import { ApplyButton } from "@/features/apply-to-study";
+import { LikeButton } from "@/features/like-post";
 import { ButtonLink } from "@/shared/ui/button/Button";
 import { SkipLink } from "@/shared/ui/skip-link/SkipLink";
 import { PostDetailView } from "@/widgets/post-detail";
@@ -41,6 +42,14 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
           state={state}
           applyAction={
             <ApplyButton state={state} studyId={post.study.id} postId={post.id} />
+          }
+          likeAction={
+            <LikeButton
+              postId={post.id}
+              count={post.likesCount}
+              likedByMe={post.likedByMe}
+              signedIn={user !== null}
+            />
           }
           authorAction={
             iCanEdit ? (

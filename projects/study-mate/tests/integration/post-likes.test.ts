@@ -1,12 +1,18 @@
 // 근거 스펙: docs/specs/post-likes.md (INV-L1 · INV-L2 · INV-L3 · INV-L4 · INV-L5) ·
-//            supabase/migrations/0024_post_likes.sql
+//            0001_init.sql (likes 표 · likes_unique · on delete cascade · 정책 셋) ·
+//            0002_review_fixes.sql:148 (likes_count(posts) 계산 함수)
+//
+// **여기 있는 계약은 전부 이미 구현돼 있던 것이다.** 2026-09-16 까지 그것을 확인하는 검사가
+// 하나도 없었다 — 구현이 있다는 것과 그것이 계약이라는 것은 다르다. 검사가 없으면 다음
+// 사람이 「좋아요순 정렬이 느리다」는 이유로 `posts.likes_count` 열을 더해도 아무것도
+// 빨갛게 되지 않는다.
 //
 // **여기서 판정하는 쓰기는 전부 공개 키 연결로 보낸다.** 그 키는 브라우저 번들에도 들어가는
 // 값이라, 이 연결로 할 수 있는 일이 곧 「아무나 할 수 있는 일」이다. 서버 액션의 검사는
 // 이 경로에 없다 — 정책이 막는지를 묻는 것이므로 그것이 맞다.
 //
 // 개수는 **세는 쪽**으로 정해져 있다(스펙 「정해야 할 것」). 그래서 이 파일의 개수 확인은
-// 전부 `post_likes` 를 직접 세고, 어딘가에 쌓인 숫자를 읽지 않는다.
+// 전부 `likes` 를 직접 세고, 어딘가에 쌓인 숫자를 읽지 않는다.
 
 import type { Client } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -32,7 +38,7 @@ async function 모집글만들기(): Promise<string> {
 /** 좋아요 행을 **직접** 센다. 쌓아 둔 숫자를 읽지 않는 것이 INV-L2 의 요구다. */
 async function 개수(id = postId): Promise<number> {
   const { count, error } = await admin
-    .from("post_likes")
+    .from("likes")
     .select("*", { count: "exact", head: true })
     .eq("post_id", id);
   if (error) throw new Error(`개수 조회 실패: ${error.message}`);
@@ -40,10 +46,10 @@ async function 개수(id = postId): Promise<number> {
 }
 
 const 누르기 = (who: TestUser, id = postId, as = who.id) =>
-  who.client.from("post_likes").insert({ post_id: id, user_id: as });
+  who.client.from("likes").insert({ post_id: id, user_id: as });
 
 const 취소 = (who: TestUser, id = postId, whose = who.id) =>
-  who.client.from("post_likes").delete().eq("post_id", id).eq("user_id", whose);
+  who.client.from("likes").delete().eq("post_id", id).eq("user_id", whose);
 
 beforeAll(async () => {
   작성자 = await createUser("좋아요작성자");
@@ -100,7 +106,7 @@ describe("INV-L2 — 개수는 좋아요 행에서 파생된다", () => {
     expect(await 개수()).toBe(2);
 
     // 앱을 안 거치고 행 하나를 지운다. 숫자를 어딘가에 쌓아 두는 구현이면 여기서 2 가 나온다.
-    await db.query("delete from public.post_likes where post_id = $1 and user_id = $2", [postId, 작성자.id]);
+    await db.query("delete from public.likes where post_id = $1 and user_id = $2", [postId, 작성자.id]);
     expect(await 개수()).toBe(1);
     await 취소(다른사람);
   });
@@ -143,7 +149,7 @@ describe("INV-L3 — 자기 좋아요만 만들고 지운다", () => {
 
   it("S4d: 로그인하지 않은 연결은 거부된다", async () => {
     const { error } = await anonClient()
-      .from("post_likes")
+      .from("likes")
       .insert({ post_id: postId, user_id: 다른사람.id });
     expect(error).not.toBeNull();
     expect(await 개수()).toBe(0);

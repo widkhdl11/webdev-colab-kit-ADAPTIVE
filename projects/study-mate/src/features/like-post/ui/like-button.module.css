@@ -1,0 +1,69 @@
+.form {
+  display: inline-grid;
+  gap: var(--space-6);
+}
+
+/*
+  비로그인일 때의 모양. 옆의 「조회 N」과 글자 크기·색·간격을 맞춘다 —
+  누를 수 없는 것은 누를 수 있는 것처럼 보이면 안 된다.
+*/
+.plain {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-size: 15px;
+  color: var(--ink-weak);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+  누를 수 있을 때. 같은 자리·같은 글자 크기를 유지하되 테두리로 「누를 수 있다」를 말한다.
+  숫자는 tabular-nums 라 1 자리가 2 자리로 늘어도 옆의 조회수가 안 밀린다.
+*/
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink-weak);
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  border: var(--bd);
+  border-radius: var(--r-btn);
+  padding: var(--space-6) var(--space-10);
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+/* 눌린 상태. 색만으로 말하지 않게 테두리 안쪽을 채워 형태로도 달라진다 */
+.button[data-liked="on"] {
+  background: var(--hl-coral);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/*
+  초점 테두리를 지우지 않는다. 키보드로 다니는 사람에게 지금 어디에 있는지를
+  말해 주는 유일한 표시다.
+*/
+.button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* 실패 문구. 색만으로 말하지 않게 글자로도 이유가 들어간다 */
+.error {
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 700;
+  color: var(--ink);
+}
