@@ -149,7 +149,27 @@ if (jm) {
   } catch { /* 손상 무시 */ }
 }
 
+// 6.5. 기록된 지금 위치 — 프론티어와 **다른 것**이다.
+//      프론티어는 「다음에 해야 할 노드」(그래프에서 파생)이고, 이 줄은 「마지막으로 기록된
+//      내가 있던 자리」(report/state.json)다. 둘이 어긋나면 기록이 멈춘 것이고, 그 어긋남이
+//      보이는 자리가 여기 말고는 없다 — 화면(대시보드)은 켜 놓은 사람만 본다.
+//      result 는 마지막 전환 줄에서 읽는다(state 에는 없는 필드다).
+let placeLine = "";
+try {
+  const st = JSON.parse(read(`${projectDir}/report/state.json`));
+  const rows = read(`${projectDir}/report/transitions.jsonl`)
+    .split("\n").map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  // 판정에는 **언제**를 같이 붙인다. 날짜 없이 「마지막 판정 통과」만 있으면 며칠 전 판정이
+  // 방금 난 것처럼 읽힌다 — 실제로 여기 붙는 값은 대개 옛 줄이다(자동 기록의 result 는 null).
+  const resultRow = [...rows].reverse().find((r) => r.result) ?? null;
+  const where = st.current_node ?? `그래프 밖(${st.off_graph ?? "사유 없음"})`;
+  placeLine =
+    `▶ 기록된 지금 위치: ${where} · ${st.task ?? "task 없음"} — ${st.now ?? "기록 없음"}` +
+    (resultRow ? ` · 마지막 판정 ${resultRow.result}(${String(resultRow.at).slice(5, 10)}, ${resultRow.task})` : "");
+} catch { /* 대시보드를 안 깐 프로젝트 — 조용히 넘어간다 */ }
+
 console.log(`── 세션 브리핑 (${active}) ──`);
+if (placeLine) console.log(placeLine);
 console.log(`▣ 대기 중인 결정: ${pending.length > 0 ? pending.join(" / ") : "없음"}`);
 console.log(`● 게이트: ${gateLight}`);
 for (const l of riskExempt) console.log(l);

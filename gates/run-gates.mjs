@@ -628,6 +628,30 @@ if (!QUICK) {
   if (sc.status !== 0)
     errors.push(...(sc.stderr ?? "").trim().split("\n").filter(Boolean));
 }
+
+
+// 기록 규약: 전환·상태·요청이 규약을 지키는가. (전체 실행 전용)
+//    판정은 scripts/check-measurement-gap.mjs 한 자리에 있다.
+//    기록은 매 턴의 일이라 여기 있다 — on-change 로 두면 기록이 멈춘 턴에는 아무도 안 본다.
+//    --quick 에 넣지 않는다: 편집마다 볼 것이 아니고, 턴 끝에 한 번이면 충분하다.
+if (!QUICK) {
+  const recordCheck = join(ROOT, "scripts", "check-measurement-gap.mjs");
+  if (!existsSync(recordCheck)) {
+    console.error("⚠ [record/SKIP] scripts/check-measurement-gap.mjs 가 없다 — 기록 규약 검사를 건너뛴다.");
+  } else {
+    const rr2 = spawnSync(process.execPath, [recordCheck], { cwd: ROOT, encoding: "utf-8" });
+    const rout2 = (rr2.stdout ?? "") + "\n" + (rr2.stderr ?? "");
+    if (rr2.status === null) {
+      console.error("⚠ [record/SKIP] 기록 규약 검사가 실행되지 않았다 — 나머지 게이트는 그대로 판정한다.");
+    } else if (rr2.status !== 0) {
+      const bad2 = rout2.split("\n").filter((l) => l.trim().startsWith("[record/")).map((l) => l.trim());
+      if (bad2.length) for (const line of bad2) errors.push(line);
+      else errors.push("[record/FAIL] 기록 규약 검사가 실패했는데 이유 줄이 없다 — 'node scripts/check-measurement-gap.mjs' 로 직접 본다");
+    }
+  }
+}
+
+
 // ── 프론트매터를 근거로 판정하는 파일: 모호한 입력과 외래 마커를 거부한다 ────────
 //
 // 게이트는 프론트매터를 정규식 한 줄로 읽는다. 같은 키가 두 번 나오면 해석이 키마다 갈린다:

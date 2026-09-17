@@ -24,6 +24,7 @@ supabase/**
 # 진행 대시보드의 과정 기록 (설치물인 workflow.json·index.html·render.mjs 는 커밋한다)
 projects/*/report/state.json
 projects/*/report/request.json
+projects/*/report/turn-hashes.json
 projects/*/report/*.jsonl
 # probe 가 남기는 스크린샷 — 관측 기록이라 매 실행마다 쌓인다
 projects/*/report/probe/

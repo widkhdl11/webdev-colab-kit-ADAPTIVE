@@ -478,6 +478,8 @@ if (state.qa.status === "dirty" && gateErrors.some((e) => ["test", "spec-coverag
 }
 console.log(`● HANDOFF 갱신 (${relative(ROOT, HANDOFF)}). 프론티어: ${f.length ? f.join(", ") : "없음(전부 clean)"}`);
 
+try { const { recordTurnTransition } = await import("../scripts/turn-transition.mjs"); const t = recordTurnTransition(Object.fromEntries(allUnits().filter((u) => !u.signoff).map((u) => [u.id, hashNode(u.produces)]))); if (t) console.log(`* transition: ${t.from_node ?? "(start)"} -> ${t.to_node ?? "(off-graph)"}`); } catch {}
+
 // 계측이 멈췄으면 한 줄 신고한다. 막지 않는다 — 그래프 밖 작업이나 문서만 고치는 턴에는
 // 전환이 없는 것이 정상이다. 판단은 scripts/measurement-gap.mjs 가 하고 여기서는 찍기만 한다.
 // try/catch 로 감싸는 이유는 아래 4.5 절과 같다 — 이 훅에는 최상위 try/catch 가 없어서

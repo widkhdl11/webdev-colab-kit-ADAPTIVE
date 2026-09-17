@@ -18,6 +18,7 @@ import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync, rmS
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateRequest, frozenItemsErrors, itemsFromSpec } from "./lib/request-model.mjs";
+import { progressResidue } from "./lib/record-rules.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -95,10 +96,25 @@ export function update(dir, mutate) {
 }
 
 /** 요청을 끝내고 이력으로 옮긴다. request.json 은 지운다(열린 요청 없음). */
-export function finish(dir, { status, reason }) {
+/**
+ * 요청을 끝낸다.
+ *
+ * **끝내기 전에 PROGRESS 를 본다.** 「마감 내용인가」는 기계가 못 세지만 「**앞 요청의 랩업이
+ * 그대로 남아 있나**」는 셀 수 있고, 이 검사의 목적이 그것이다(잔재 검사). 요청이 닫히는
+ * 순간이 그것을 볼 수 있는 마지막 자리다 — 지나가면 이력에 「완료」로 박히고 아무도 안 본다.
+ *
+ * @param progressPath 대조할 PROGRESS. 안 주면 `<dir>/../workspace/PROGRESS.md` 다. 파일이
+ *                     없으면 검사하지 않는다 — 없는 파일을 근거로 요청을 못 닫게 하지 않는다.
+ */
+export function finish(dir, { status, reason, progressPath }) {
   const p = paths(dir);
   const req = readJson(p.request);
   if (!req) throw new Error(`열린 요청이 없다 (${p.request}).`);
+  const pp = progressPath ?? join(dir, "..", "workspace", "PROGRESS.md");
+  if (existsSync(pp)) {
+    const leftover = progressResidue(readFileSync(pp, "utf-8"), req);
+    if (leftover) throw new Error(`${leftover}\n  대조한 파일: ${pp}`);
+  }
   const done = { ...req, status, status_reason: reason ?? req.status_reason ?? null, ended_at: new Date().toISOString() };
   const errors = validateRequest(done);
   if (errors.length > 0) throw new Error(errors.join("\n"));

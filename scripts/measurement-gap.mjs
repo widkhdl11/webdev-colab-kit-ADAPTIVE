@@ -25,7 +25,10 @@
 //   그래서 임계를 넘을 때만 뜬다.
 //
 // 쓰는 법 (라이브러리):
-//   import { 계측격차, 격차신고줄 } from "./measurement-gap.mjs";
+//   import { measureGap, gapLine, reportMeasurementGap } from "./measurement-gap.mjs";
+//
+// 식별자는 ASCII 로 쓴다. 이 파일은 `gates/graph-stop.mjs` 가 부르는데, 보호 파일에 사람이
+// 손으로 붙여 넣는 줄에서 한글 이름이 실제로 깨진 적이 있다(2026-09-17).
 //
 // 쓰는 법 (직접):
 //   node scripts/measurement-gap.mjs [프로젝트슬러그]
@@ -39,7 +42,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** 활동 몇 줄이 쌓이도록 전환이 0건이면 신고하나. 한 턴 분량(수십 줄)보다 넉넉히 위에 둔다. */
-export const 기본임계 = 60;
+export const DEFAULT_THRESHOLD = 60;
 
 /** JSONL 한 덩어리를 객체 배열로. 깨진 줄은 조용히 버린다 — 관측 도구가 관측 대상을 죽이면 안 된다. */
 export function jsonl(text) {
@@ -55,23 +58,23 @@ export function jsonl(text) {
 /**
  * 계측 격차를 센다. **순수 함수다** — 파일도 시계도 안 본다.
  *
- * @param 활동  activity.jsonl 의 줄들 (각 줄에 `at`)
- * @param 전환  transitions.jsonl 의 줄들 (각 줄에 `at`)
- * @returns { 신고, 활동수, 마지막전환 }
- *          `활동수` 는 **마지막 전환 이후** 쌓인 활동 줄 수다. 전환이 한 줄도 없으면 전부.
+ * @param activity     activity.jsonl 의 줄들 (각 줄에 `at`)
+ * @param transitions  transitions.jsonl 의 줄들 (각 줄에 `at`)
+ * @returns { shouldReport, activityCount, lastTransition }
+ *          `activityCount` 는 **마지막 전환 이후** 쌓인 활동 줄 수다. 전환이 한 줄도 없으면 전부.
  */
-export function 계측격차(활동, 전환, { 임계 = 기본임계 } = {}) {
-  const 시각 = (r) => Date.parse(r?.at ?? "");
-  const 전환시각 = 전환.map(시각).filter(Number.isFinite);
+export function measureGap(activity, transitions, { threshold = DEFAULT_THRESHOLD } = {}) {
+  const toTime = (r) => Date.parse(r?.at ?? "");
+  const transitionTimes = transitions.map(toTime).filter(Number.isFinite);
   // **마지막 줄이 아니라 제일 늦은 시각을 쓴다.** 줄 순서는 덧붙이기 순서라 정렬이 보장되지
   // 않는데, 마지막 줄을 믿으면 옛 시각 줄 하나가 뒤에 붙는 순간 격차가 통째로 사라진다.
-  const 마지막전환 = 전환시각.length ? Math.max(...전환시각) : null;
-  const 활동수 = 활동.filter((r) => {
-    const t = 시각(r);
+  const lastTransition = transitionTimes.length ? Math.max(...transitionTimes) : null;
+  const activityCount = activity.filter((r) => {
+    const t = toTime(r);
     if (!Number.isFinite(t)) return false;
-    return 마지막전환 === null ? true : t > 마지막전환;
+    return lastTransition === null ? true : t > lastTransition;
   }).length;
-  return { 신고: 활동수 >= 임계, 활동수, 마지막전환 };
+  return { shouldReport: activityCount >= threshold, activityCount, lastTransition };
 }
 
 /**
@@ -79,13 +82,13 @@ export function 계측격차(활동, 전환, { 임계 = 기본임계 } = {}) {
  *
  * **무엇을 하라고 같이 적는다.** 격차만 알리면 읽는 쪽이 「그래서 뭘 하라고」에서 멈춘다.
  */
-export function 격차신고줄(격차) {
-  if (!격차?.신고) return null;
-  const 언제 = 격차.마지막전환 === null
+export function gapLine(gap) {
+  if (!gap?.shouldReport) return null;
+  const whenText = gap.lastTransition === null
     ? "전환 줄이 한 번도 없다"
-    : `마지막 전환 ${new Date(격차.마지막전환).toISOString().slice(0, 16).replace("T", " ")} 이후`;
+    : `마지막 전환 ${new Date(gap.lastTransition).toISOString().slice(0, 16).replace("T", " ")} 이후`;
   return (
-    `✎ 계측 멈춤 — ${언제} 활동 ${격차.활동수}줄이 쌓였는데 전환 기록은 0건이다. ` +
+    `✎ 계측 멈춤 — ${whenText} 활동 ${gap.activityCount}줄이 쌓였는데 전환 기록은 0건이다. ` +
     `노드별 체류 시간이 안 나오고, 그 집계가 설계도 대기열(③·④)의 착공 신호다. ` +
     `지금 어디인지 남겨라: node scripts/report-note.mjs --node <노드> --task <식별자> --now "<한 줄>" --item "<항목>"`
   );
@@ -99,40 +102,32 @@ export function 격차신고줄(격차) {
  * 오늘치 45줄만 잡혀 임계에 못 미쳤다. 계측이 오래 멈출수록 안 잡히는 셈이라 정확히
  * 거꾸로다. 격차는 마지막 전환 이후로 세므로 옛 파일을 같이 읽어도 과하게 세지 않는다.
  */
-export function 활동전부(dir) {
+export function readAllActivity(dir) {
   if (!existsSync(dir)) return [];
   const names = readdirSync(dir).filter((n) => /^activity(-\d{4}-\d{2}-\d{2})?\.jsonl$/.test(n));
   return names.flatMap((n) => jsonl(readFileSync(join(dir, n), "utf-8")));
 }
 
 /** 활성 프로젝트(또는 넘긴 슬러그)의 기록을 읽어 신고줄을 만든다. 읽을 수 없으면 `null`. */
-export function 격차신고(slug) {
+export function reportMeasurementGap(slug) {
   try {
     const active = slug || (existsSync(join(ROOT, "ACTIVE")) ? readFileSync(join(ROOT, "ACTIVE"), "utf-8").trim() : "");
     if (!active) return null;
     const dir = join(ROOT, "projects", active, "report");
-    const 읽기 = (name) => (existsSync(join(dir, name)) ? jsonl(readFileSync(join(dir, name), "utf-8")) : []);
-    const 활동 = 활동전부(dir);
+    const readRows = (name) => (existsSync(join(dir, name)) ? jsonl(readFileSync(join(dir, name), "utf-8")) : []);
+    const activity = readAllActivity(dir);
     // 기록이 아예 없는 프로젝트(대시보드를 안 깐 곳)에서는 아무 말도 안 한다.
-    if (활동.length === 0) return null;
-    return 격차신고줄(계측격차(활동, 읽기("transitions.jsonl")));
+    if (activity.length === 0) return null;
+    return gapLine(measureGap(activity, readRows("transitions.jsonl")));
   } catch {
     return null;   // 관측 도구는 관측 대상을 죽이지 않는다
   }
 }
 
-/**
- * `격차신고` 의 ASCII 이름. **패치로 붙이는 줄은 이것을 쓴다.**
- *
- * 이 레포는 내부 식별자에 한글을 쓰는데, 보호 파일에 사람이 손으로 붙여 넣는 줄에서는
- * 그게 실제로 깨졌다(2026-09-17). 붙여넣는 자리만 ASCII 로 두면 그 실패가 사라진다.
- */
-export const reportMeasurementGap = 격차신고;
-
 // **직접 실행일 때만 찍는다.** 파일 이름 꼬리로 재면 계약 테스트(`check-measurement-gap.mjs`)도
 // 같은 꼬리를 가져서, 불러오기만 해도 한 줄이 튀어나온다 — 실제로 그랬다. 경로를 비교한다.
-const 직접실행 = Boolean(process.argv[1]) && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
-if (직접실행) {
-  const line = 격차신고(process.argv[2]);
+const isDirectRun = Boolean(process.argv[1]) && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
+if (isDirectRun) {
+  const line = reportMeasurementGap(process.argv[2]);
   console.log(line ?? "계측 격차 없음");
 }
