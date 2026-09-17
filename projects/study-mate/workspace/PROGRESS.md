@@ -3,9 +3,9 @@
 ## 현재 상태
 
 - **오늘의 목표**: 좋아요 실전 투입을 끝내고(리뷰 사인오프 → 기능 승인) 하네스 1단계를 닫는다 → **달성**
-- **완료**: 좋아요 승인·[사인오프](review.md)(리뷰어 넷, 지적 13건 중 11 닫고 2는 백로그) · 조회수 정의를 스펙으로([post-view-count.md](../docs/specs/post-view-count.md) INV-V1) · 설계도 닫힌 목록 5번 완료 표기 · [첫 투입 판정](INTERVENTIONS.md)(개입 4회 = 정당 2 + 하네스 기인 2) · 계측 격차 신고 도구([measurement-gap.mjs](../../../scripts/measurement-gap.mjs), 계약 테스트 22항목) · 커밋 6건
+- **완료**: 좋아요 승인·[사인오프](review.md)(리뷰어 넷, 지적 13건 중 11 닫고 2는 백로그) · 조회수 정의를 스펙으로([post-view-count.md](../docs/specs/post-view-count.md) INV-V1) · 설계도 닫힌 목록 5번 완료 표기 · [첫 투입 판정](INTERVENTIONS.md)(개입 4회 = 정당 2 + 하네스 기인 2) · 계측 격차 신고 도구([measurement-gap.mjs](../../../scripts/measurement-gap.mjs), 계약 테스트 22항목) **배선까지 완료** — 훅 출력에 실제로 뜨는 것과 전환을 찍으면 조용해지는 것 둘 다 확인 · 커밋 8건
 - **멈춘 지점**: 없음. 열린 사이클 없음([CYCLE.md](CYCLE.md))
-- **다음 할 일**: [계측 패치](../../../docs/references/pending-patches/2026-09-17-measurement-gap.md)를 `gates/graph-stop.mjs` 에 붙이고(사용자 작업, 네 줄) `node scripts/check-measurement-gap.mjs --require-wiring` 가 0 이 되는지 본 뒤, 사용자가 알려 줄 **2단계** 내용을 받아 시작한다
+- **다음 할 일**: 사용자가 알려 줄 **2단계** 내용을 받아 시작한다. 1단계(설계도 닫힌 목록 다섯)는 전부 닫혔고 계측도 살아 있다 — 이제 노드별 체류 시간이 쌓이므로 대기열(③ 왕복 속도·④ 실험 공간)의 착공 신호를 실제로 볼 수 있다
 - **대기 중인 결정**: 넷 — ① 배포 시점(두 번째 투입과 함께) ② 무료 등급 하루 20건 ③ 삭제 단추의 키보드 초점 테두리 ④ 하네스 도입 전/후 다이어그램의 「도입 전」 숫자
 
 ## 로그
