@@ -3,7 +3,8 @@
 // report-request.mjs — 요청 층을 기록하는 **유일한** 자리.
 //
 //   시작:      --start --task <식별자> --request "<사람이 시킨 문장 원문>"
-//                      ( --spec <스펙 경로> | --items "항목1|항목2|..." ) [--goal "<왜 하는지 한 줄>"]
+//                      ( --spec <스펙 경로> | --items "항목1|항목2|..." )
+//                      [--goal "<왜 하는지 한 줄>"] [--title "<한 줄 제목 40자 이내>"]
 //   항목 완료: --done <item-id>
 //   상태 변경: --status "승인 대기" --reason "<사유>"     (되돌리기: --status "진행 중")
 //   끝내기:    --finish 완료            /  --finish 중단 --reason "<사유>"
@@ -49,7 +50,7 @@ const paths = (dir) => ({
 });
 
 /** 새 요청을 연다. 이미 열린 요청이 있으면 거부한다 — 현재 요청은 하나뿐이다. */
-export function start(dir, { task, request, items, specPath, goal = null }) {
+export function start(dir, { task, request, items, specPath, goal = null, title = null }) {
   mkdirSync(dir, { recursive: true });
   const p = paths(dir);
   const open = readJson(p.request);
@@ -58,6 +59,9 @@ export function start(dir, { task, request, items, specPath, goal = null }) {
   }
   const req = {
     task,
+    // 제목은 **시작할 때 확정된다**(사람이 확인한 뒤 여기 들어온다). 안 주면 null 이고,
+    // 화면은 원문 앞 40자를 대신 쓴다 — "아직 확인 못 받았다"와 "제목이 이것이다"는 다르다.
+    title: title || null,
     request,
     goal: goal || null,
     source: specPath ? "spec" : "manual",
@@ -86,6 +90,11 @@ export function update(dir, mutate) {
   const after = JSON.parse(JSON.stringify(before));
   mutate(after);
 
+  // 제목도 시작 시점에 얼어붙는다. 진행 중에 바뀌면 화면 맨 위 한 줄과 이력의 제목이
+  // 갈라지고, "무슨 요청이었나"를 나중에 대조할 기준이 사라진다.
+  if ((before.title ?? null) !== (after.title ?? null)) {
+    throw new Error(`request.title 은 시작 후 안 바뀐다 (${before.title ?? "없음"} → ${after.title ?? "없음"})`);
+  }
   const frozen = frozenItemsErrors(before.items, after.items);
   if (frozen.length > 0) throw new Error(frozen.join("\n"));
   const errors = validateRequest(after);
@@ -136,7 +145,7 @@ if (resolve(process.argv[1] ?? "") === resolve(fileURLToPath(import.meta.url))) 
       const specArg = arg("spec");
       const itemsArg = arg("items");
       if (!task || !request || (!specArg && !itemsArg)) {
-        console.error('사용: --start --task <식별자> --request "<원문>" (--spec <경로> | --items "a|b|c") [--goal "<왜>"]');
+        console.error('사용: --start --task <식별자> --request "<원문>" (--spec <경로> | --items "a|b|c") [--goal "<왜>"] [--title "<제목>"]');
         process.exit(2);
       }
       let items;
@@ -155,8 +164,9 @@ if (resolve(process.argv[1] ?? "") === resolve(fileURLToPath(import.meta.url))) 
         items = itemsArg.split("|").map((s, i) => ({ id: `I${i + 1}`, label: s.trim(), done: false }))
           .filter((it) => it.label !== "");
       }
-      const req = start(dir, { task, request, items, specPath, goal: arg("goal") ?? null });
+      const req = start(dir, { task, request, items, specPath, goal: arg("goal") ?? null, title: arg("title") ?? null });
       console.log(`요청 시작: ${req.task} · ${req.source} · 항목 ${req.items.length}개`);
+      console.log(`  제목: ${req.title ?? "(확정 전 — 화면은 원문 앞 40자를 쓴다)"}`);
       for (const it of req.items) console.log(`  ☐ ${it.id} ${it.label}`);
     } else if (arg("done")) {
       const id = arg("done");

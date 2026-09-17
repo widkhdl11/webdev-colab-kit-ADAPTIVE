@@ -7,6 +7,8 @@
 //
 // 외부 라이브러리를 쓰지 않는다. 지도는 workflow.json 을 읽어 SVG 를 직접 그린다.
 
+import { LABEL, TERM, FMT, RESULT_TEXT, NODE_LABEL } from "./ui-vocab.mjs";
+
 export const ESC = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 // ── 시간 표기 ───────────────────────────────────────────────────────────
@@ -351,78 +353,229 @@ export function itemStrip(request, transitions, until = Date.now(), cfg = DEFAUL
 }
 
 /**
- * 요약 박스가 그리는 값. **문장을 새로 만들지 않는다** — 기록 파일의 필드를 고정 템플릿에
- * 끼워 넣을 뿐이다. 특이사항 조건은 아래 여덟 개로 고정이고, 여기 없는 줄은 넣지 않는다.
+ * 이번 화면이 무엇에 대한 것인가. 세 가지뿐이고, 화면의 첫 두 절이 이 값으로 갈린다.
+ *
+ *   request  열린 요청이 있고 제품 단계에 있다 — 시킨 일을 하는 중
+ *   kit      제품 단계가 아니다(current_node 가 null) — 하네스 자신을 고치는 중
+ *   product  제품 단계에 있는데 열린 요청이 없다 — 요청을 닫고 이어서 일하는 중
+ *   none     state.json 이 아직 없다
+ *
+ * 세 번째가 있는 이유: 요청을 닫은 직후에도 일은 계속되는데, 그 상태를 요청 작업으로
+ * 그리면 화면 맨 위가 **이미 끝난 요청**을 지금 하는 일이라고 말한다.
  */
-export function summaryBox(data, until = Date.now(), cfg = DEFAULT_REPORT_CONFIG) {
+export function workKind(data) {
+  const state = data?.state;
+  if (!state) return "none";
+  if (state.current_node === null) return "kit";
+  return data?.request ? "request" : "product";
+}
+
+export const TITLE_MAX = 40;
+
+/** 요청을 대표하는 한 줄. title 이 확정 전이면 원문 앞 40자가 그 자리를 대신한다. */
+export function requestTitle(request) {
+  if (!request) return "";
+  const t = typeof request.title === "string" ? request.title.trim() : "";
+  if (t !== "") return t;
+  return String(request.request ?? "").slice(0, TITLE_MAX);
+}
+
+/** 단계 표기. 한글 라벨에 id 를 괄호로 병기한다 — 표에 없는 id 는 기록된 이름을 쓴다. */
+export function stageLabel(workflow, nodeId) {
+  if (!nodeId) return TERM.stage_none;
+  const node = (workflow?.nodes ?? []).find((n) => n.id === nodeId);
+  return FMT.stage(NODE_LABEL[nodeId] ?? node?.label ?? nodeId, nodeId);
+}
+
+/** 마지막 활동 이후 흐른 시간(ms). 활동 기록이 하나도 없으면 null 이다 — 훅 미설치와 조용함은 다르다. */
+function idleMs(activity, until) {
+  const last = [...(activity ?? [])].map((a) => Date.parse(a.at)).filter(Number.isFinite).sort((a, b) => a - b).pop();
+  return last === undefined ? null : until - last;
+}
+
+/**
+ * B-1 「지금」. 화면 맨 위가 답하는 것은 "지금 뭐 하나" 하나뿐이고, **모든 값에 라벨이 붙는다.**
+ *
+ * 돌려주는 줄 하나: { key, label, value, fromRecord }
+ *   fromRecord 가 참이면 값 안에 기록 파일의 문장(요청 원문·now·항목 이름)이 섞여 있다.
+ *   검사는 그 줄의 값에서 내부 용어를 찾지 않는다 — 사람이 적은 문장을 화면이 고쳐 쓰지 않는다.
+ */
+export function nowRows(data, until = Date.now(), cfg = DEFAULT_REPORT_CONFIG) {
+  const { state, request, workflow, transitions = [], activity = [] } = data ?? {};
+  const kind = workKind(data);
+  const rows = [];
+  const push = (key, label, value, fromRecord = false) => rows.push({ key, label, value, fromRecord });
+
+  if (kind === "none") {
+    push("now_doing", LABEL.now_doing, TERM.no_record);
+    return { kind, rows };
+  }
+
+  const nowText = state.now ?? "";
+  if (kind === "request") {
+    push("now_doing", LABEL.now_doing, FMT.doing(requestTitle(request), nowText), true);
+    push("work_kind", LABEL.work_kind, TERM.kind_request);
+  } else if (kind === "kit") {
+    push("now_doing", LABEL.now_doing, FMT.doing(state.off_graph ?? "", nowText), true);
+    push("work_kind", LABEL.work_kind, TERM.kind_kit);
+  } else {
+    push("now_doing", LABEL.now_doing, nowText, true);
+    push("work_kind", LABEL.work_kind, TERM.kind_product);
+  }
+
+  push("stage", LABEL.stage, kind === "kit" ? TERM.stage_none : stageLabel(workflow, state.current_node));
+  push("stage_dwell", LABEL.stage_dwell, state.since ? fmtDuration(Math.max(0, until - Date.parse(state.since))) : TERM.no_record);
+
+  // 「항목 진행」은 **열린 요청이 있을 때만** 만든다. 요청이 없을 때 0/0 을 적으면
+  // "아무것도 안 했다"로 읽히는데, 사실은 셀 대상이 없는 것이다.
+  if (request) {
+    const v = requestView(request, transitions, state, until);
+    push("item_progress", LABEL.item_progress, FMT.itemProgress(v.done, v.total, v.currentItem), true);
+  }
+
+  const statusText = request ? String(request.status ?? TERM.running) : TERM.running;
+  const idle = idleMs(activity, until);
+  const idleOver = idle !== null && isGap(idle, cfg);
+  push("status", LABEL.status, idleOver ? FMT.idleSuffix(statusText, Math.floor(idle / 60000)) : statusText);
+
+  return { kind, rows };
+}
+
+/**
+ * B-2 「진행」. 열린 요청이 있으면 단계 띠와 요청 밖 작업, 없으면 왜 띠가 없는지 한 줄.
+ *
+ * 띠를 그릴지의 기준은 작업 종류가 아니라 **열린 요청이 있나**다. 하네스를 고치는 중에도
+ * 요청이 열려 있으면 그 요청의 항목은 여전히 봐야 한다.
+ */
+export function progressView(data, until = Date.now(), cfg = DEFAULT_REPORT_CONFIG) {
+  const { request, transitions = [], state } = data ?? {};
+  if (!request) {
+    return {
+      kind: "none",
+      message: workKind(data) === "kit" ? TERM.strip_none_kit : TERM.strip_none_product,
+      cells: [], outside: [], thresholdMin: cfg.dwell_threshold_min,
+    };
+  }
+  const strip = itemStrip(request, transitions, until, cfg);
+  const v = requestView(request, transitions, state, until);
+  return { kind: "strip", message: null, cells: strip.cells, outside: v.outside, thresholdMin: strip.thresholdMin };
+}
+
+/**
+ * B-3 「특이사항」. 조건에 하나도 해당하지 않으면 **빈 배열**이고, 화면은 절 자체를 안 그린다 —
+ * "없음"이라고 적힌 절은 자리만 차지하고 아무것도 안 알려 준다.
+ *
+ * 조건 번호는 옛 요약 박스에서 이어진다. 4번(제품 단계 아님)은 여기 없다 — B-1 의
+ * 「작업 종류」가 같은 것을 이미 말하고, 두 자리가 같은 말을 하면 한쪽을 고칠 때 다른 쪽이 남는다.
+ */
+export function noticeRows(data, until = Date.now(), cfg = DEFAULT_REPORT_CONFIG) {
   const { state, request, transitions = [], activity = [], subagents = [] } = data ?? {};
-  const v = request ? requestView(request, transitions, state, until) : null;
-  const strip = request ? itemStrip(request, transitions, until, cfg) : null;
-  const notes = [];
+  const rows = [];
+  // tone 은 색만 가르는 것이 아니다. 「검사가 통과했다」와 「요청이 열려 있지 않다」는
+  // 사람이 손쓸 일이 아니라 상황 설명인데, 경고색으로 그리면 멀쩡한 상태가 문제로 읽힌다.
+  // 어느 줄이 손쓸 일인지는 데이터로 정해 두고 화면은 그것을 따른다.
+  const INFO_CODES = [5, 9];
+  const push = (code, label, value, fromRecord = false) =>
+    rows.push({ code, label, value, fromRecord, tone: INFO_CODES.includes(code) ? "info" : "warn" });
 
   // 1) 승인 대기·중단
-  if (v?.waiting) {
-    notes.push({ code: 1, text: `${request.status} — ${request.status_reason ?? ""}` });
+  if (request && (request.status === "승인 대기" || request.status === "중단")) {
+    push(1, LABEL.status_reason, `${request.status} — ${request.status_reason ?? ""}`, true);
   }
   // 2) 사람 입력 대기
-  for (const b of state?.blockers ?? []) notes.push({ code: 2, text: `답을 기다리는 중: ${b.label}` });
+  for (const b of state?.blockers ?? []) push(2, LABEL.blocker, b.label, true);
   // 3) 요청 밖 작업
-  if (v && v.outside.length > 0) {
-    const sum = v.outside.reduce((s, o) => s + o.ms, 0);
-    notes.push({ code: 3, text: `시킨 것 밖의 일 ${v.outside.length}건 · ${fmtDuration(sum)}` });
-  }
-  // 4) 그래프 밖
-  if (state && state.current_node === null) {
-    notes.push({ code: 4, text: `지도에 없는 일 · ${state.off_graph ?? ""}` });
+  if (request) {
+    const v = requestView(request, transitions, state, until);
+    if (v.outside.length > 0) {
+      push(3, LABEL.derived, FMT.derived(v.outside.length, fmtDuration(v.outside.reduce((s, o) => s + o.ms, 0))));
+    }
   }
   // 5) 최근 검사 결과
   const withResult = [...transitions].filter((t) => t.result).sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
   const lastResult = withResult[withResult.length - 1];
-  if (lastResult) notes.push({ code: 5, text: `방금 끝난 검사: ${lastResult.result} (${fmtTime(lastResult.at)})` });
-  // 6) 실행 중 서브에이전트. 등록 목록(workflow.agents)이 아니라 **기록된 이벤트**를 센다 —
+  if (lastResult) {
+    push(5, LABEL.last_result, FMT.lastResult(RESULT_TEXT[lastResult.result] ?? lastResult.result, fmtTime(lastResult.at)), true);
+  }
+  // 6) 실행 중 서브에이전트. 등록 목록이 아니라 **기록된 이벤트**를 센다 —
   //    등록에 없는 에이전트가 돌고 있으면 그것도 지금 돌고 있는 것이다.
   const openAgents = new Set();
   for (const e of [...subagents].sort((a, b) => Date.parse(a.at) - Date.parse(b.at))) {
     if (e.event === "start") openAgents.add(e.agent);
     else if (e.event === "end") openAgents.delete(e.agent);
   }
-  if (openAgents.size > 0) notes.push({ code: 6, text: `서브에이전트 실행 중 ${openAgents.size}개` });
-  // 7) 활동 공백. 활동 기록이 **하나도 없으면** 세지 않는다 — 그건 3층(훅)이 안 붙은 상태고,
+  if (openAgents.size > 0) push(6, LABEL.subagent, FMT.agentsRunning(openAgents.size));
+  // 7) 활동 공백. 활동 기록이 **하나도 없으면** 세지 않는다 — 그건 훅이 안 붙은 상태고,
   //    "조용하다"와 "관찰 장치가 꺼져 있다"는 다르다.
-  const lastAct = [...activity].map((a) => Date.parse(a.at)).filter(Number.isFinite).sort((a, b) => a - b).pop();
-  if (lastAct !== undefined && isGap(until - lastAct, cfg)) {
-    notes.push({ code: 7, text: `${Math.floor((until - lastAct) / 60000)}분째 아무 기록 없음` });
+  const idle = idleMs(activity, until);
+  if (idle !== null && isGap(idle, cfg)) push(7, LABEL.no_activity, FMT.idleFor(Math.floor(idle / 60000)));
+  // 8) 항목이 임계보다 오래 걸리는 중
+  if (request) {
+    const strip = itemStrip(request, transitions, until, cfg);
+    const over = strip.cells.find((c) => c.over);
+    if (over) push(8, LABEL.dwell, FMT.overDwell(over.label, fmtDuration(over.ms), strip.thresholdMin), true);
   }
-  // 8) 항목 체류가 임계를 넘음
-  const over = strip?.cells.find((c) => c.over);
-  if (over) {
-    notes.push({ code: 8, text: `${over.label} — ${fmtDuration(over.ms)}째 (기준 ${strip.thresholdMin}분)` });
-  }
+  // 9) 제품 단계에 있는데 열린 요청이 없다. **표시만 한다** — 잘못된 상태가 아니라
+  //    "지금 화면이 항목 진행을 못 보여 주는 이유"다.
+  if (workKind(data) === "product") push(9, LABEL.open_request, TERM.open_request_absent);
 
-  // 「지금」은 제일 크게 읽히는 한 줄이라 틀린 이름을 적으면 안 된다. 요청 밖 작업 중이면
-  // 그 사실과 직전 항목을 같이 준다 — 직전 항목만 적으면 이미 떠난 자리를 지금이라고 말한다.
-  const nowText = state?.now ?? "";
-  const outsideNow = v && v.current !== null && v.current !== v.currentItem ? v.current : null;
-  const nowLine = !state ? "기록 없음"
-    : state.current_node === null
-      ? `지도에 없는 일 · ${state.off_graph ?? ""} — ${nowText}`
-      : outsideNow
-        ? `시킨 것 밖: ${outsideNow} (하던 항목 ${v.currentItem ?? "없음"}) — ${nowText}`
-        : `${v?.currentItem ?? "항목 없음"} — ${nowText}`;
+  return rows;
+}
 
+/**
+ * B-6 요약 박스. 「지금」과 겹치는 줄은 여기 없다 — 같은 값을 두 자리에 두면 한쪽이 낡는다.
+ * 남는 것은 셋: 목표, 요청 원문(펼쳐야 보인다), 브리프 자리.
+ */
+export function summaryRows(data) {
+  const request = data?.request ?? null;
+  return [
+    { key: "goal", label: LABEL.goal, value: request?.goal ?? null, fromRecord: true, fallback: TERM.no_record },
+    { key: "request_text", label: LABEL.request_text, value: request?.request ?? null, fromRecord: true, fallback: TERM.no_open_request, foldable: true },
+    { key: "brief", label: LABEL.brief, value: null, fromRecord: false, fallback: TERM.not_installed },
+  ];
+}
+
+/**
+ * B-4 서브에이전트 절. 실행 중인 것이 하나라도 있으면 펼치고 실행 중을 위로 올린다.
+ * 전부 대기면 접힌 제목에 개수만 — 일곱 줄이 늘 펼쳐져 있으면 그 절이 화면의 주인이 된다.
+ */
+export function subagentSection(workflow, events, until = Date.now()) {
+  const rows = subagentView(workflow, events, until);
+  const running = rows.filter((a) => a.running);
   return {
-    goal: request?.goal ?? null,
-    request: request?.request ?? null,
-    nowLine,
-    elapsed: {
-      sinceStartMs: request?.started_at ? Math.max(0, until - Date.parse(request.started_at)) : null,
-      done: v?.done ?? 0,
-      total: v?.total ?? 0,
-      nodeDwellMs: state?.since ? Math.max(0, until - Date.parse(state.since)) : null,
-    },
-    notes,
-    brief: "아직 없음",
+    rows: [...running, ...rows.filter((a) => !a.running)],
+    runningCount: running.length,
+    open: running.length > 0,
+    title: LABEL.sec_subagents,
+    summary: running.length > 0 ? FMT.agentsRunning(running.length) : FMT.allIdle(rows.length),
   };
+}
+
+/**
+ * B-5 지도. 제품 단계 흐름은 그대로 두고, 그 **밖**에 상자 하나를 따로 놓는다.
+ *
+ * 이 상자는 렌더 요소일 뿐이다 — graph.mjs 에도 게이트에도 바인딩 파일에도 이런 것은 없다.
+ * 제품 단계가 아닐 때(current_node 가 null) 이 상자가 현재 자리처럼 강조되고 제품 단계는
+ * 전부 저채도가 된다. 그 반대면 상자가 저채도다.
+ */
+export const OFF_BOX_W = 236;
+export function mapView(workflow, state) {
+  const L = layout(workflow);
+  const off = state != null && state.current_node === null;
+  return {
+    ...L,
+    dimmed: off,
+    offBox: { x: PAD, y: L.height + 8, w: OFF_BOX_W, h: 40, label: TERM.box_kit, current: off },
+    width: Math.max(L.width, PAD * 2 + OFF_BOX_W),
+    height: L.height + 58,
+  };
+}
+
+/** 피드 한 줄의 단계 표기. 제품 단계가 아닌 줄은 하네스 수리로 적는다. */
+export function feedStageText(row) {
+  const dwell = fmtDuration(row?.dwell_ms ?? 0);
+  if (!row?.to_node) return FMT.feedKit(dwell);
+  return FMT.feedStage(NODE_LABEL[row.to_node] ?? row.to_node, dwell);
 }
 
 /**

@@ -13,6 +13,15 @@
 //   나간 것을 목록에 추가하는 순간 안 나간 것이 되기 때문이다. 그래서 파생 판별은
 //   사람의 판단도 에이전트의 판단도 아니고 "시작 목록에 있었나"의 기계 대조다.
 
+/**
+ * 요청 제목의 길이 한도.
+ *
+ * 브라우저는 `scripts/lib` 를 못 읽으므로 자산 쪽 `render.mjs` 에도 같은 값이 있다.
+ * 두 벌이 갈라지면 기록은 받아들이는데 화면은 자르는(또는 그 반대의) 상태가 되므로,
+ * 계약 테스트가 두 값이 같은지 대조한다.
+ */
+export const TITLE_MAX = 40;
+
 export const REQUEST_STATUS = ["진행 중", "승인 대기", "완료", "중단"];
 export const REQUEST_SOURCE = ["spec", "manual"];
 
@@ -51,6 +60,16 @@ export function validateRequest(req) {
     errors.push("request.goal 이 없다 — 목표를 모르면 null 을 적는다(빠뜨림과 구별해야 한다)");
   } else if (req.goal !== null && !isNonEmptyString(req.goal)) {
     errors.push("request.goal 은 한 줄 문자열이거나 null 이다");
+  }
+  // title — 요청을 대표하는 한 줄. **없어도 된다**: 확정 전에는 화면이 원문 앞 40자를
+  // 대신 쓴다. 길이를 막는 이유는 화면 맨 위 한 줄이 이것으로 채워지기 때문이다 —
+  // 두 줄로 넘어가면 그 자리가 더는 "한눈에 읽는 한 줄"이 아니다.
+  if (req.title !== undefined && req.title !== null) {
+    if (!isNonEmptyString(req.title)) {
+      errors.push("request.title 은 한 줄 문자열이거나 null 이다(모르면 아예 적지 않는다)");
+    } else if ([...req.title].length > TITLE_MAX) {
+      errors.push(`request.title 은 ${TITLE_MAX}자 이내다 (지금 ${[...req.title].length}자)`);
+    }
   }
   if (!isIso(req.started_at)) errors.push("request.started_at 이 ISO8601 로 안 읽힌다");
   if (req.ended_at !== null && req.ended_at !== undefined && !isIso(req.ended_at)) {

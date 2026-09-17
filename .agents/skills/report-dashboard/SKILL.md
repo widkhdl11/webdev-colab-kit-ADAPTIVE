@@ -32,12 +32,16 @@ argument-hint: [프로젝트 slug]
 node scripts/report-request.mjs --start --task <식별자> --request "<사람이 시킨 문장 원문>" \
      --items "항목1|항목2|항목3"          # 스펙이 있으면 --spec <스펙 경로>
      --goal "<왜 하는지 한 줄>"           # 스펙·Intent 에 목표가 있으면 옮긴다. 없으면 생략
+     --title "<한 줄 제목 40자 이내>"     # 사람에게 확인받은 제목. 확인 전이면 생략
 node scripts/report-request.mjs --done I2
 node scripts/report-request.mjs --status "승인 대기" --reason "결제 중 새 스펙 발견"
 node scripts/report-request.mjs --finish 완료
 ```
 
 - `--request` 는 **사람이 쓴 문장 그대로** 적는다. 요약하거나 고쳐 쓰지 않는다.
+- `--title` 은 화면 맨 위 한 줄을 대표하는 제목이다. 요청 문장에서 제안하고 **사람이 확인한
+  뒤에** 적는다. 확인 전이면 생략하고, 화면은 원문 앞 40자를 대신 쓴다. 원문은 그대로 남는다 —
+  제목은 원문을 바꾸는 것이 아니라 대표하는 것이다. `items` 처럼 시작 후에는 안 바뀐다.
 - `--goal` 은 "왜"다("무엇"인 `--request` 와 다른 칸이다). 스펙이나 `Intent.md` 에 목표 절이
   있으면 거기서 옮기고, 없으면 사람이 말한 한 줄을 적는다. **요청 문장에서 지어내지 않는다** —
   없으면 생략하고, 화면은 「기록 없음」으로 그린다.
@@ -112,7 +116,8 @@ node scripts/report-note.mjs --off-graph "킷 스크립트 수정" --task <식�
 ## 설치 절차
 
 0. **slug 확인** — 인자로 받거나 루트 `ACTIVE` 를 읽는다. `projects/<slug>/` 가 없으면 멈추고 묻는다.
-1. **자산 복사** — `assets/index.html` 과 `assets/render.mjs` 를 `projects/<slug>/report/` 로 복사한다.
+1. **자산 복사** — `assets/index.html` · `assets/render.mjs` · `assets/ui-vocab.mjs` 셋을
+   `projects/<slug>/report/` 로 복사한다.
    정본은 이 스킬의 `assets/` 이고 `report/` 쪽은 사본이다. 둘이 갈라지면 계약 테스트가 잡는다 —
    고칠 때는 정본을 고치고 다시 설치한다.
 2. **1층 생성** — `node scripts/export-workflow.mjs <slug>`
@@ -124,7 +129,8 @@ node scripts/report-note.mjs --off-graph "킷 스크립트 수정" --task <식�
    `scripts/report-note.mjs` 의 `seed()` 가 이 일을 한다.
 4. **훅 등록은 사용자에게 넘긴다** — 아래 「훅은 내가 붙이지 않는다」 참고.
 5. **`.gitignore` 에 기록 파일 제외** — `projects/<slug>/report/*.jsonl` 과 `state.json` 은 과정
-   기록이라 커밋하지 않는다. `workflow.json` · `index.html` · `render.mjs` · `config.json` 은 커밋한다.
+   기록이라 커밋하지 않는다. `workflow.json` · `index.html` · `render.mjs` · `ui-vocab.mjs` ·
+   `config.json` 은 커밋한다.
 6. **검사** — `node scripts/check-report.mjs --project <slug>` 가 전부 통과해야 끝난 것이다.
 7. **띄워 보기** — `node scripts/report-serve.mjs --project <slug>`
 
@@ -151,6 +157,23 @@ node scripts/report-note.mjs --off-graph "킷 스크립트 수정" --task <식�
 - **대시보드 렌더링·갱신 경로에 LLM 호출이 없다.**
 - **`state.json` 에 산문을 쓰지 않는다.** `now` 는 80자 한 줄이다.
 - **원본 프로젝트 코드를 건드리지 않는다.** 산출물은 `report/` 안과 `.gitignore` 한 줄뿐이다.
+
+## 화면 기준 — 읽는 순서와 어휘
+
+화면은 **사람이 묻는 순서**로 놓인다: 지금 뭐 하나 → 어디까지 왔나 → 막힌 것 있나 → 나머지.
+절 순서는 「지금」·「진행」·「특이사항」이 먼저고, 서브에이전트·파이프라인 지도·활동 피드는
+접힌 절이다(서브에이전트는 실행 중인 것이 있으면 자동으로 펼쳐진다).
+
+규칙 둘이 렌더 전체에 걸린다.
+
+1. **모든 값에 라벨이 붙는다.** 값만 있는 칸도, 점(·)으로 이어 붙인 무라벨 나열도 없다.
+   그래서 `render.mjs` 의 절 함수들은 문자열이 아니라 `{ label, value }` 줄의 배열을 돌려준다.
+2. **화면에 나가는 말은 `assets/ui-vocab.mjs` 에서만 온다.** 하네스 내부 용어는 화면에
+   나오지 않는다. 문구가 어색하면 고칠 자리는 그 파일 한 곳이고, 화면 코드를 읽을 일이 없다.
+
+계약 테스트가 둘 다 전수로 본다(24·25절) — 어휘표 밖의 라벨이나 내부 용어가 화면 문자열로
+나가면 잡힌다. 기록 파일에서 실려 온 값(요청 원문·`now`·항목 이름)은 그 규칙 밖이다:
+사람이 적은 문장을 화면이 고쳐 쓰지 않는다.
 
 ## 화면 기준
 

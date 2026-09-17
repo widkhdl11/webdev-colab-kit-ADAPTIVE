@@ -78,13 +78,19 @@ const skillDirs = () => {
   }
 };
 const DERIVED = deriveWorkflow(GRAPH, BINDINGS);
+const RENDER_EXPORTS = await import(pathToFileURL(join(ASSETS, "render.mjs")).href);
 const {
   layout: layoutRef, nodeState: nodeStateRef, nodePanel: nodePanelRef,
   subagentView: subagentViewRef, requestView: requestViewRef,
-  itemStrip: itemStripRef, summaryBox: summaryBoxRef, delayDiagnosis: delayDiagnosisRef,
+  itemStrip: itemStripRef, delayDiagnosis: delayDiagnosisRef,
   reportConfig: reportConfigRef, DEFAULT_REPORT_CONFIG, itemIntervals: itemIntervalsRef,
-} = await import(pathToFileURL(join(ASSETS, "render.mjs")).href);
-const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathToFileURL(join(ROOT, "scripts", "lib", "request-model.mjs")).href);
+  nowRows: nowRowsRef, progressView: progressViewRef, noticeRows: noticeRowsRef,
+  summaryRows: summaryRowsRef, subagentSection: subagentSectionRef,
+  mapView: mapViewRef, feedStageText: feedStageTextRef,
+} = RENDER_EXPORTS;
+// 화면 어휘표. 검사는 이 표를 **정답지로** 쓴다 — 화면에 나간 라벨이 여기 없으면 위반이다.
+const { ALL_LABELS, INTERNAL_TERMS, TERM: VOCAB_TERM } = await import(pathToFileURL(join(ASSETS, "ui-vocab.mjs")).href);
+const { validateRequest, frozenItemsErrors, itemsFromSpec, TITLE_MAX: TITLE_MAX_MODEL } = await import(pathToFileURL(join(ROOT, "scripts", "lib", "request-model.mjs")).href);
 
 // ── 1. workflow.json 이 그래프 선언과 맞는가 ─────────────────────────────
 {
@@ -223,7 +229,9 @@ const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathT
   }
 
   if (INSTALLED) {
-    for (const name of ["index.html", "render.mjs"]) {
+    // 새 자산을 여기 안 적으면 그 파일만 조용히 안 대조된다 — 「검사가 없다」가
+    // 「통과」로 보이는 그 모양이다(훅 하나가 빠져 있던 2026-09-15 와 같은 자리).
+    for (const name of ["index.html", "render.mjs", "ui-vocab.mjs"]) {
       const a = join(ASSETS, name), b = join(REPORT, name);
       if (!existsSync(b)) { bad(`4 사본(${name})`, `설치본이 없다: ${b}`); continue; }
       check(`4 사본(${name})`, readFileSync(a, "utf-8") === readFileSync(b, "utf-8"),
@@ -766,11 +774,11 @@ const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathT
   const cfg = DEFAULT_REPORT_CONFIG;
 
   check("16 초과", itemStripRef(over.request, over.transitions, now, cfg).cells[0].over === true
-        && summaryBoxRef(over, now, cfg).notes.some((n) => n.code === 8 && n.text.includes("기준 30분")),
-    "임계를 넘으면 칸에 초과 표시가 붙고 요약 특이사항에 8번 줄이 뜬다",
+        && noticeRowsRef(over, now, cfg).some((n) => n.code === 8 && n.value.includes("기준 30분")),
+    "임계를 넘으면 칸에 초과 표시가 붙고 특이사항에 8번 줄이 뜬다",
     "임계를 넘었는데 표시가 없다");
   check("16 프로브(미만)", itemStripRef(under.request, under.transitions, now, cfg).cells[0].over === false
-        && !summaryBoxRef(under, now, cfg).notes.some((n) => n.code === 8),
+        && !noticeRowsRef(under, now, cfg).some((n) => n.code === 8),
     "임계 미만이면 초과 표시도 8번 줄도 없다", "임계 미만인데 초과 표시가 떴다");
 
   const loose = reportConfigRef({ dwell_threshold_min: 60 });
@@ -898,7 +906,7 @@ const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathT
     "사유는 지금 항목의 것이다 — 지난 항목 패널에는 안 붙는다", "지난 항목 패널에 지금 사유가 붙었다");
 }
 
-// ── 18. 요약 박스 — 특이사항 조건 여덟이 각각 단독으로 뜨는가 ─────────────
+// ── 18. 특이사항 — 조건 일곱이 각각 단독으로 뜨는가 ───────────────────────
 {
   const now = Date.now();
   const iso = (min) => new Date(now - min * 60000).toISOString();
@@ -906,7 +914,7 @@ const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathT
     workflow: DERIVED,
     state: { session_id: "s", current_node: "implement", task: "T", now: "구현 중", since: iso(3), blockers: [], skill: null, delay_reason: null },
     request: {
-      task: "T", request: "좋아요 기능을 추가해 줘", goal: null, source: "manual", spec_path: null,
+      task: "T", title: null, request: "좋아요 기능을 추가해 줘", goal: null, source: "manual", spec_path: null,
       items: [{ id: "I1", label: "버튼 붙이기", done: false }],
       status: "진행 중", status_reason: null, started_at: iso(5), ended_at: null,
     },
@@ -915,22 +923,22 @@ const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathT
     subagents: [], history: [],
   };
   const clone = (f) => { const d = JSON.parse(JSON.stringify(quiet)); d.workflow = DERIVED; f(d); return d; };
-  const codes = (d) => summaryBoxRef(d, now, DEFAULT_REPORT_CONFIG).notes.map((n) => n.code).sort((a, b) => a - b);
+  const codes = (d) => noticeRowsRef(d, now, DEFAULT_REPORT_CONFIG).map((n) => n.code).sort((a, b) => a - b);
 
   // 이 바탕이 "아무 조건도 없음"인 것은 **기본 임계에서 멀기 때문**이다(활동 1분 전 · 체류 5분).
-  // 기본값이 그보다 빡빡해지면 아래 여덟 케이스가 전부 7·8번을 같이 켜서 단독성이 무너진다.
+  // 기본값이 그보다 빡빡해지면 아래 케이스가 전부 7·8번을 같이 켜서 단독성이 무너진다.
   // 그때 무엇이 깨졌는지 바로 알도록 전제를 먼저 찍는다.
   check("18 바탕 전제", DEFAULT_REPORT_CONFIG.activity_gap_min > 1 && DEFAULT_REPORT_CONFIG.dwell_threshold_min > 5,
     "바탕(활동 1분 전 · 체류 5분)이 기본 임계에서 충분히 멀다 — 아래 단독성이 여기 기댄다",
     `기본 임계가 바탕에 너무 가깝다: ${JSON.stringify(DEFAULT_REPORT_CONFIG)} — 아래 「조건 N 만」이 무너진다`);
-  check("18 없음", summaryBoxRef(quiet, now, DEFAULT_REPORT_CONFIG).notes.length === 0,
-    "아무 조건도 없으면 특이사항이 비어 있다(화면은 '없음')", `조건 없이 특이사항이 떴다: ${JSON.stringify(codes(quiet))}`);
+  check("18 없음", noticeRowsRef(quiet, now, DEFAULT_REPORT_CONFIG).length === 0,
+    "아무 조건도 없으면 특이사항이 빈 배열이다(화면은 절 자체를 안 그린다)",
+    `조건 없이 특이사항이 떴다: ${JSON.stringify(codes(quiet))}`);
 
   const cases = [
     [1, (d) => { d.request.status = "승인 대기"; d.request.status_reason = "제목 범위를 정해 주세요"; }],
     [2, (d) => { d.state.blockers = [{ id: "q1", label: "제목 범위" }]; }],
     [3, (d) => { d.transitions.push({ at: iso(4), from_node: "implement", to_node: "implement", task: "T", now: "n", result: null, item: "끼어든 일", blockers: [] }); }],
-    [4, (d) => { d.state.current_node = null; d.state.off_graph = "킷 손보는 중"; }],
     [5, (d) => { d.transitions[0].result = "통과"; }],
     [6, (d) => { d.subagents = [{ at: iso(2), event: "start", agent: "code-reviewer", brief: "b" }]; }],
     [7, (d) => { d.activity = [{ at: iso(40), tool: "Edit", target: "a.ts", session_id: "s" }]; }],
@@ -942,42 +950,49 @@ const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathT
       `조건 ${code} 만 심으면 그 줄 하나만 뜬다`, `조건 ${code} 을 심었는데 뜬 줄이 ${JSON.stringify(got)} 다`);
   }
 
+  // 옛 4번(제품 단계가 아님)은 특이사항에서 빠졌다. 화면 맨 위의 「작업 종류」가 같은 것을
+  // 이미 말하기 때문이다 — 두 자리가 같은 말을 하면 한쪽을 고칠 때 다른 쪽이 남는다.
+  const offGraph = clone((d) => { d.state.current_node = null; d.state.off_graph = "킷 손보는 중"; });
+  check("18 제품 단계 아님", codes(offGraph).length === 0,
+    "제품 단계가 아닌 것은 더는 특이사항이 아니다 — 「지금」의 작업 종류가 말한다",
+    `제품 단계가 아니라고 특이사항이 떴다: ${JSON.stringify(codes(offGraph))}`);
+
+  // 9번은 심어서 만드는 것이 아니라 **요청을 닫으면** 생기는 상태다(제품 단계 + 열린 요청 없음).
+  const noReq = clone((d) => { d.request = null; d.transitions = []; });
+  check("18 조건 9", JSON.stringify(codes(noReq)) === JSON.stringify([9]),
+    "제품 단계인데 열린 요청이 없으면 그 사실이 특이사항에 한 줄 뜬다(표시만)",
+    `요청을 닫았는데 뜬 줄이 ${JSON.stringify(codes(noReq))} 다`);
+
   // 번호만 보면 문장 안의 숫자·이름은 아무도 안 본다. 합계가 틀려도, 분 계산이 틀려도,
-  // 엉뚱한 blocker 이름이 들어가도 전부 통과한다. 그래서 값이 실린 줄은 글자로 대조한다.
-  const textOf = (d, code) => (summaryBoxRef(d, now, DEFAULT_REPORT_CONFIG).notes.find((n) => n.code === code)?.text ?? "");
+  // 엉뚱한 대기 항목 이름이 들어가도 전부 통과한다. 그래서 값이 실린 줄은 글자로 대조한다.
+  const rowOf = (d, code) => noticeRowsRef(d, now, DEFAULT_REPORT_CONFIG).find((n) => n.code === code) ?? { label: "", value: "" };
   const outside = clone((d) => {
     d.transitions.push({ at: iso(4), from_node: "implement", to_node: "implement", task: "T", now: "n", result: null, item: "끼어든 일", blockers: [] });
   });
-  check("18 3번 문장", textOf(outside, 3) === "시킨 것 밖의 일 1건 · 4분",
-    "3번 줄이 건수와 합계 시간을 정확히 적는다", `3번 줄이 다르다: ${textOf(outside, 3)}`);
-  check("18 7번 문장", textOf(clone((d) => { d.activity = [{ at: iso(40), tool: "Edit", target: "a", session_id: "s" }]; }), 7) === "40분째 아무 기록 없음",
-    "7번 줄의 분 계산이 맞다", `7번 줄이 다르다: ${textOf(clone((d) => { d.activity = [{ at: iso(40), tool: "Edit", target: "a", session_id: "s" }]; }), 7)}`);
-  check("18 2번 문장", textOf(clone((d) => { d.state.blockers = [{ id: "q1", label: "제목 범위" }]; }), 2) === "답을 기다리는 중: 제목 범위",
-    "2번 줄이 그 blocker 의 label 을 적는다", "2번 줄에 엉뚱한 이름이 들어갔다");
+  const r3 = rowOf(outside, 3);
+  check("18 3번 줄", r3.label === "요청 밖 작업" && r3.value === "1건 · 4분",
+    "3번 줄이 라벨과 함께 건수·합계 시간을 정확히 적는다", `3번 줄이 다르다: ${r3.label} / ${r3.value}`);
+  const r7 = rowOf(clone((d) => { d.activity = [{ at: iso(40), tool: "Edit", target: "a", session_id: "s" }]; }), 7);
+  check("18 7번 줄", r7.label === "활동 없음" && r7.value === "40분",
+    "7번 줄의 분 계산이 맞다", `7번 줄이 다르다: ${r7.label} / ${r7.value}`);
+  const r2 = rowOf(clone((d) => { d.state.blockers = [{ id: "q1", label: "제목 범위" }]; }), 2);
+  check("18 2번 줄", r2.label === "대기 항목" && r2.value === "제목 범위",
+    "2번 줄이 그 대기 항목의 label 을 적는다", `2번 줄에 엉뚱한 이름이 들어갔다: ${r2.value}`);
+  const r5 = rowOf(clone((d) => { d.transitions[0].result = "통과"; }), 5);
+  check("18 5번 줄", r5.label === "최근 검사 결과" && r5.value.startsWith("검사 통과 ("),
+    "5번 줄이 '통과' 를 화면 말인 '검사 통과' 로 바꿔 적는다", `5번 줄이 다르다: ${r5.value}`);
 
-  // 「지금」의 요청 밖 가지 — 제일 크게 읽히는 한 줄이라 틀린 이름을 적으면 안 된다.
-  const outLine = summaryBoxRef(outside, now, DEFAULT_REPORT_CONFIG).nowLine;
-  check("18 지금(요청 밖)", outLine.startsWith("시킨 것 밖: 끼어든 일") && outLine.includes("하던 항목 버튼 붙이기"),
-    "요청 밖으로 나가 있으면 '지금' 줄이 그 사실과 직전 항목을 같이 준다",
-    `요청 밖인데 '지금' 줄이 이미 떠난 항목을 말한다: ${outLine}`);
+  // 손쓸 일과 상황 설명을 화면이 같은 색으로 그리면 멀쩡한 상태가 문제로 읽힌다.
+  const tone = (d, code) => noticeRowsRef(d, now, DEFAULT_REPORT_CONFIG).find((n) => n.code === code)?.tone;
+  check("18 색 구분", tone(clone((d) => { d.transitions[0].result = "통과"; }), 5) === "info"
+        && tone(noReq, 9) === "info"
+        && tone(clone((d) => { d.state.blockers = [{ id: "q1", label: "x" }]; }), 2) === "warn",
+    "검사 결과·열린 요청 없음은 알려 주는 줄이고, 대기 항목은 손쓸 줄이다",
+    "손쓸 줄과 알려 주는 줄이 같은 색으로 그려진다 — 멀쩡한 상태가 문제로 읽힌다");
 
-  const s = summaryBoxRef(quiet, now, DEFAULT_REPORT_CONFIG);
-  check("18 goal 없음", s.goal === null && s.brief === "아직 없음",
-    "goal 이 null 이면 그대로 null 을 돌려주고(화면은 '기록 없음') 메모는 '아직 없음'이다",
-    `goal/메모가 안 맞는다: ${JSON.stringify([s.goal, s.brief])}`);
-  check("18 goal 있음", summaryBoxRef(clone((d) => { d.request.goal = "인기 글을 고르려는 것"; }), now, DEFAULT_REPORT_CONFIG).goal === "인기 글을 고르려는 것",
-    "goal 이 있으면 원문 그대로 실린다(요약하지 않는다)", "goal 이 안 실린다");
-  check("18 지금", s.nowLine.includes("버튼 붙이기") && s.nowLine.includes("구현 중"),
-    "'지금' 은 현재 항목과 now 를 붙여 준다", `'지금' 줄이 안 맞는다: ${s.nowLine}`);
-  check("18 그래프 밖", summaryBoxRef(clone((d) => { d.state.current_node = null; d.state.off_graph = "킷"; }), now, DEFAULT_REPORT_CONFIG).nowLine.startsWith("지도에 없는 일 · 킷"),
-    "지도 밖이면 '지금' 줄이 무슨 일인지로 시작한다", "그래프 밖 표기가 안 된다");
-  check("18 경과", s.elapsed.done === 0 && s.elapsed.total === 1
-        && Math.round(s.elapsed.sinceStartMs / 60000) === 5 && Math.round(s.elapsed.nodeDwellMs / 60000) === 3,
-    "경과 칸이 시작 경과 5분(started_at)과 노드 체류 3분(since)을 각각 제 출처에서 읽는다",
-    `경과 값이 다르다: ${JSON.stringify(s.elapsed)} — 5분·3분이라야 한다(둘을 바꿔 읽으면 3·5가 된다)`);
-  check("18 프로브(훅 미설치)", summaryBoxRef(clone((d) => { d.activity = []; }), now, DEFAULT_REPORT_CONFIG).notes.every((n) => n.code !== 7),
+  check("18 프로브(훅 미설치)", noticeRowsRef(clone((d) => { d.activity = []; }), now, DEFAULT_REPORT_CONFIG).every((n) => n.code !== 7),
     "활동 기록이 아예 없으면 '활동 없음'을 띄우지 않는다(훅이 안 붙은 것과 조용한 것은 다르다)",
-    "활동 기록이 하나도 없는데 '활동 없음 n분'이 떴다");
+    "활동 기록이 하나도 없는데 '활동 없음'이 떴다");
 }
 
 // ── 19. 화면 배치 — 요약은 항상, 패널은 하나 ─────────────────────────────
@@ -1000,8 +1015,6 @@ const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathT
     `패널이 한 자리를 나눠 쓰지 않는다 (자리 ${panelEls} · 삼항 ${split})`);
   check("19 프로브(선택 자리 하나)", (html.match(/let selected/g) ?? []).length === 1,
     "열린 패널을 담는 변수가 하나뿐이다 — 둘을 동시에 담을 자리가 없다", "선택 상태를 담는 자리가 여럿이다");
-  check("19 Tab", /<li tabindex="0">/.test(html),
-    "특이사항 줄이 Tab 순회에 들어간다", "특이사항 줄에 초점이 안 간다");
 }
 
 // ── 20. goal · delay_reason · 전환 blockers 스키마 ───────────────────────
@@ -1177,13 +1190,13 @@ const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathT
     const dense = [];
     for (let m = 60; m >= 10; m -= 5) dense.push({ at: iso(m), tool: "Edit", target: "a", session_id: "s" });
     const exact = dataOf(items, tr, { activity: dense });
-    const box = summaryBoxRef(exact, now, cfg).notes.some((n) => n.code === 7);
+    const box = noticeRowsRef(exact, now, cfg).some((n) => n.code === 7);
     const gaps = delayDiagnosisRef("하나", exact, now, cfg).gaps.rows;
     check("22 M4", box === true && gaps.length === 1 && Math.round(gaps[0].ms / 60000) === 10,
-      "정확히 임계(10분)만큼 끊긴 구간을 요약 박스와 지연 진단이 둘 다 공백으로 센다",
-      `같은 설정을 두 칸이 다르게 읽는다: 요약 ${box} · 패널 ${JSON.stringify(gaps.map((g) => Math.round(g.ms / 60000)))}`);
+      "정확히 임계(10분)만큼 끊긴 구간을 특이사항과 지연 진단이 둘 다 공백으로 센다",
+      `같은 설정을 두 칸이 다르게 읽는다: 특이사항 ${box} · 패널 ${JSON.stringify(gaps.map((g) => Math.round(g.ms / 60000)))}`);
     const under = dataOf(items, tr, { activity: [...dense, { at: iso(4), tool: "Edit", target: "a", session_id: "s" }] });
-    check("22 프로브(임계 미만)", summaryBoxRef(under, now, cfg).notes.every((n) => n.code !== 7)
+    check("22 프로브(임계 미만)", noticeRowsRef(under, now, cfg).every((n) => n.code !== 7)
           && delayDiagnosisRef("하나", under, now, cfg).gaps.rows.length === 0,
       "임계에 못 미치는 간격(5분·4분)만 있으면 두 칸 다 조용하다", "임계 미만인데 공백으로 셌다");
   }
@@ -1248,6 +1261,286 @@ const { validateRequest, frozenItemsErrors, itemsFromSpec } = await import(pathT
   const rows4 = parseJsonl(readFileSync(join(dir, "transitions.jsonl"), "utf-8")).rows;
   check("23 프로브(해소)", rows4[rows4.length - 1].blockers.length === 0,
     "빈 배열을 명시하면 해소로 기록된다", "해소가 기록되지 않는다");
+}
+
+// ── 24~33. 화면 재구성 v3 — 읽는 순서·라벨 필수·화면 어휘 ─────────────────
+//
+// 이 묶음이 지키는 것은 하나다: **화면에 나간 말이 사람의 말인가.**
+// 틀렸을 때의 증상이 에러가 아니라 「값이 라벨 없이 점으로 이어진 줄」이나
+// 「하네스 내부 용어가 그대로 적힌 칸」이라서, 보고 있어도 틀린 줄을 모른다.
+// 그래서 렌더가 문자열이 아니라 **라벨 달린 줄의 배열**을 돌려주게 하고 여기서 전수로 본다.
+
+// 아래 항목들이 공유하는 바탕 셋. 킷 작업 · 요청 작업 · 요청 없는 제품 작업이다.
+const V3 = (() => {
+  const now = Date.now();
+  const iso = (m) => new Date(now - m * 60000).toISOString();
+  const base = { workflow: DERIVED, subagents: [], history: [], activity: [{ at: iso(1), tool: "Edit", target: "a.ts", session_id: "s" }] };
+  const kit = {
+    ...base,
+    state: { session_id: "s", current_node: null, task: "T", now: "어휘표 설계", since: iso(42), blockers: [], skill: null, delay_reason: null, off_graph: "킷 — 대시보드 재구성" },
+    request: null, transitions: [],
+  };
+  const request = {
+    ...base,
+    state: { session_id: "s", current_node: "implement", task: "T", now: "버튼 붙이는 중", since: iso(12), blockers: [], skill: null, delay_reason: null },
+    request: {
+      task: "T", title: "게시글 좋아요", request: "③으로 투입: '게시글 좋아요' (또는 같은 크기의 DB+API+UI 기능). 개입 횟수를 셀 것",
+      goal: "인기 글을 고르려는 것", source: "manual", spec_path: null,
+      items: [{ id: "I1", label: "테이블", done: true }, { id: "I2", label: "API", done: false }, { id: "I3", label: "버튼", done: false }],
+      status: "진행 중", status_reason: null, started_at: iso(60), ended_at: null,
+    },
+    transitions: [
+      { at: iso(60), from_node: null, to_node: "implement", task: "T", now: "시작", result: null, item: "테이블", blockers: [] },
+      { at: iso(20), from_node: "implement", to_node: "implement", task: "T", now: "API", result: "통과", item: "API", blockers: [] },
+    ],
+  };
+  const product = {
+    ...request, request: null,
+    state: { ...request.state, current_node: "deploy", now: "커밋 대기", since: iso(5) },
+  };
+  return { now, iso, kit, request, product, all: [kit, request, product] };
+})();
+
+/** 한 상태가 화면에 내보내는 **라벨 달린 줄 전부**. 세 절이 이것 말고 다른 문자열을 안 만든다. */
+const v3Rows = (d) => [
+  ...nowRowsRef(d, V3.now, DEFAULT_REPORT_CONFIG).rows,
+  ...noticeRowsRef(d, V3.now, DEFAULT_REPORT_CONFIG),
+  ...summaryRowsRef(d),
+];
+
+// ── 24. 라벨 필수 ───────────────────────────────────────────────────────
+{
+  // 판정기를 먼저 세우고, 진짜 화면과 **심은 위반** 둘 다에 같은 것을 먹인다.
+  // 판정기를 진짜에만 쓰면 "위반 0건"과 "검사가 안 돌았다"가 겉으로 같다.
+  const unlabeled = (rows) => rows.filter((r) => typeof r.label !== "string" || r.label.trim() === "" || !ALL_LABELS.includes(r.label));
+
+  const bad24 = V3.all.flatMap((d) => unlabeled(v3Rows(d)).map((r) => `${r.label}=${r.value}`));
+  check("24 라벨", bad24.length === 0,
+    `세 상태의 모든 줄이 어휘표의 라벨을 달고 나온다 (검사한 줄 ${V3.all.reduce((s, d) => s + v3Rows(d).length, 0)}개)`,
+    `라벨이 없거나 어휘표 밖인 줄이 있다: ${bad24.join(" / ")}`);
+
+  const planted = [{ label: "", value: "그래프 밖 · 이 단계 42분 · 진행 중" }, { label: "지도 밖", value: "x" }];
+  check("24 프로브(무라벨)", unlabeled(planted).length === 2,
+    "라벨이 빈 줄과 어휘표 밖 라벨을 둘 다 잡는다", "심은 무라벨 줄이 통과했다 — 이 항목은 무효다");
+
+  // 옛 화면의 무라벨 한 줄(「지금」 요약 문장)이 아직 있으면 이 검사를 우회한다.
+  check("24 옛 요약 없음", RENDER_EXPORTS.summaryBox === undefined,
+    "라벨 없이 문장 하나를 만들던 옛 요약 함수가 없어졌다",
+    "summaryBox 가 아직 있다 — 라벨 없는 문장이 화면에 남을 길이 열려 있다");
+}
+
+// ── 25. 화면 어휘표 밖의 말이 없다 ───────────────────────────────────────
+{
+  // 기록에서 실려 온 값(요청 원문·now·항목 이름)은 대상이 아니다 — 사람이 적은 문장을
+  // 화면이 고쳐 쓰지 않는다. 그래서 줄마다 fromRecord 를 들고 다니고, 여기서 그것으로 가른다.
+  const internal = (rows) => rows.flatMap((r) => {
+    const text = `${r.label ?? ""} ${r.fromRecord ? "" : r.value ?? ""}`;
+    return INTERNAL_TERMS.filter((t) => text.includes(t)).map((t) => `${t} @ ${r.label}:${r.value}`);
+  });
+
+  const bad25 = V3.all.flatMap((d) => internal(v3Rows(d)));
+  check("25 내부 용어", bad25.length === 0,
+    "세 상태 어디에도 하네스 내부 용어가 화면 문자열로 나가지 않는다",
+    `내부 용어가 화면에 나갔다: ${bad25.join(" / ")}`);
+
+  const planted = [{ label: "현재 단계", value: "지도 밖 · 42분", fromRecord: false }];
+  check("25 프로브(내부 용어)", internal(planted).length > 0,
+    "심은 내부 용어를 잡는다", "심은 내부 용어가 통과했다 — 이 항목은 무효다");
+
+  const exempt = [{ label: "지금 하는 일", value: "킷 — 그래프 밖 정리 — 어쩌고", fromRecord: true }];
+  check("25 프로브(기록은 예외)", internal(exempt).length === 0,
+    "사람이 적어 둔 문장에 같은 말이 들어 있어도 위반이 아니다(화면이 만든 말만 본다)",
+    "기록에서 실려 온 문장까지 위반으로 셌다 — 그러면 아무 요청도 못 그린다");
+
+  // 어휘표 자신도 대상이다. 표가 오염되면 위의 전수 검사가 통째로 눈을 감는다.
+  const tableBad = [...ALL_LABELS, ...Object.values(VOCAB_TERM)]
+    .flatMap((s) => INTERNAL_TERMS.filter((t) => s.includes(t)).map((t) => `${t} @ ${s}`));
+  check("25 어휘표 자신", tableBad.length === 0,
+    "어휘표에 적힌 말 자체에 내부 용어가 없다", `어휘표가 내부 용어를 담고 있다: ${tableBad.join(" / ")}`);
+}
+
+// ── 26. 킷 작업 · 제품 작업 — 행 구성과 지도의 파이프라인 밖 상자 ──────────
+{
+  const kitNow = nowRowsRef(V3.kit, V3.now, DEFAULT_REPORT_CONFIG);
+  const keys = kitNow.rows.map((r) => r.key);
+  check("26 킷 행", kitNow.kind === "kit" && JSON.stringify(keys) === JSON.stringify(["now_doing", "work_kind", "stage", "stage_dwell", "status"]),
+    "제품 단계가 아니면 「항목 진행」 없이 다섯 줄로 그린다(0/0 같은 값을 안 만든다)",
+    `킷 작업 행이 다르다: ${JSON.stringify(keys)}`);
+  const stageRow = kitNow.rows.find((r) => r.key === "stage");
+  check("26 킷 단계", stageRow.value === VOCAB_TERM.stage_none,
+    "「현재 단계」가 왜 없는지까지 적는다", `단계 칸이 다르다: ${stageRow.value}`);
+
+  const m = mapViewRef(DERIVED, V3.kit.state);
+  check("26 상자 강조", m.offBox.current === true && m.dimmed === true,
+    "제품 단계가 아니면 「파이프라인 밖」 상자가 강조되고 제품 단계는 저채도가 된다",
+    `상자 강조가 안 맞는다: ${JSON.stringify([m.offBox.current, m.dimmed])}`);
+  const m2 = mapViewRef(DERIVED, V3.request.state);
+  check("26 프로브(반대)", m2.offBox.current === false && m2.dimmed === false,
+    "제품 단계에 있으면 상자가 저채도다(둘이 동시에 강조되지 않는다)",
+    "제품 단계인데 파이프라인 밖 상자가 같이 강조된다");
+  check("26 지도 폭", m.width <= 980,
+    `상자를 더해도 지도 폭이 ${m.width}px — 창 1024px 에서 가로 스크롤 없이 들어간다`,
+    `상자를 더했더니 ${m.width}px 로 넘친다 (기준: docs/references/devtool-ui-standards.md 6절)`);
+
+  const pNow = nowRowsRef(V3.product, V3.now, DEFAULT_REPORT_CONFIG);
+  check("26 제품 작업", pNow.kind === "product"
+        && pNow.rows.find((r) => r.key === "work_kind").value === VOCAB_TERM.kind_product
+        && !pNow.rows.some((r) => r.key === "item_progress"),
+    "제품 단계인데 열린 요청이 없으면 그 사실을 「작업 종류」에 적고 항목 진행은 안 만든다",
+    `요청 없는 제품 작업의 행이 다르다: ${JSON.stringify(pNow.rows.map((r) => [r.key, r.value]))}`);
+
+  const pProg = progressViewRef(V3.product, V3.now, DEFAULT_REPORT_CONFIG);
+  const kProg = progressViewRef(V3.kit, V3.now, DEFAULT_REPORT_CONFIG);
+  check("26 띠 없음", pProg.kind === "none" && kProg.kind === "none"
+        && kProg.message === VOCAB_TERM.strip_none_kit && pProg.message === VOCAB_TERM.strip_none_product,
+    "띠를 못 그리는 두 경우가 서로 다른 이유를 적는다(왜 없는지가 달라서 문구도 다르다)",
+    `띠 없음 문구가 다르다: ${JSON.stringify([kProg.message, pProg.message])}`);
+}
+
+// ── 27. 요청 작업 — 제목이 대표하고, 없으면 원문 앞 40자 ──────────────────
+{
+  const v = nowRowsRef(V3.request, V3.now, DEFAULT_REPORT_CONFIG);
+  const doing = v.rows.find((r) => r.key === "now_doing").value;
+  check("27 제목 대표", v.kind === "request" && doing.startsWith("게시글 좋아요 —"),
+    "열린 요청이 있으면 맨 윗줄을 제목이 대표한다(원문이 아니라)",
+    `맨 윗줄이 제목으로 시작하지 않는다: ${doing}`);
+  check("27 항목 진행", v.rows.find((r) => r.key === "item_progress").value === "1/3 완료 · 현재 항목: API",
+    "항목 진행이 완료 수와 지금 항목을 같이 적는다",
+    `항목 진행이 다르다: ${v.rows.find((r) => r.key === "item_progress").value}`);
+
+  const noTitle = JSON.parse(JSON.stringify(V3.request));
+  noTitle.workflow = DERIVED;
+  noTitle.request.title = null;
+  const doing2 = nowRowsRef(noTitle, V3.now, DEFAULT_REPORT_CONFIG).rows.find((r) => r.key === "now_doing").value;
+  const head40 = [...V3.request.request.request].slice(0, 40).join("");
+  check("27 제목 없음", doing2.startsWith(head40),
+    `제목이 확정 전이면 원문 앞 40자가 그 자리를 대신한다`,
+    `대역이 안 맞는다: ${doing2}`);
+  check("27 프로브(안 자름)", head40.length === 40 && V3.request.request.request.length > 40,
+    "이 바탕의 원문이 40자보다 길다 — 안 그러면 위 항목이 아무것도 안 본다",
+    "바탕 원문이 짧아서 자르기가 확인되지 않는다");
+
+  // 요약 박스는 원문을 그대로 들고 있다. 제목이 대표한다고 원문을 고쳐 쓰지 않는다.
+  const sum = summaryRowsRef(V3.request);
+  check("27 원문 보존", sum.find((r) => r.key === "request_text").value === V3.request.request.request,
+    "요약 박스의 요청 원문은 자르지도 고치지도 않는다", "요청 원문이 화면에서 바뀌었다");
+}
+
+// ── 28. 특이사항 절은 조건이 있을 때만 나타난다 ──────────────────────────
+{
+  const html = readFileSync(join(ASSETS, "index.html"), "utf-8");
+  check("28 절 숨김", /function drawNotice\(\)[\s\S]{0,400}rows\.length === 0[\s\S]{0,80}hidden = true/.test(html),
+    "특이사항 조건이 하나도 없으면 화면이 절 자체를 지운다('없음'이라고 안 쓴다)",
+    "특이사항이 비어도 절을 그린다 — 자리만 차지하고 아무것도 안 알려 준다");
+  check("28 Tab", /<li tabindex="0"/.test(html),
+    "특이사항 줄이 Tab 순회에 들어간다", "특이사항 줄에 초점이 안 간다");
+}
+
+// ── 29. 서브에이전트 접힘 절 ─────────────────────────────────────────────
+{
+  // 에이전트 목록의 출처는 workflow(=바인딩 파일이 아니라 .claude/agents 의 실제 파일)다.
+  // DERIVED 에는 그 목록이 없으므로(설치 때 붙는다) 여기서는 이름 셋짜리 바탕을 만든다 —
+  // 이 항목이 보는 것은 목록의 출처가 아니라 접힘 규칙이다(출처는 12절이 본다).
+  const AGENTS = { nodes: [], edges: [], skills: [], agents: [{ name: "a-one" }, { name: "a-two" }, { name: "a-three" }] };
+  const idle = subagentSectionRef(AGENTS, []);
+  check("29 전부 대기", idle.open === false && idle.summary === `전부 대기 (${idle.rows.length})` && idle.rows.length > 0,
+    `전부 대기면 접힌 채로 개수만 말한다 (${idle.summary})`,
+    `전부 대기인데 접힘/제목이 다르다: ${JSON.stringify([idle.open, idle.summary])}`);
+
+  const name = AGENTS.agents[0].name;
+  const running = subagentSectionRef(AGENTS, [{ at: new Date(V3.now - 60000).toISOString(), event: "start", agent: name, brief: "b" }], V3.now);
+  check("29 실행 중", running.open === true && running.rows[0].name === name && running.rows[0].running,
+    "하나라도 실행 중이면 펼치고 그것을 맨 위로 올린다",
+    `실행 중인데 안 펼쳐지거나 순서가 그대로다: ${JSON.stringify([running.open, running.rows[0].name])}`);
+  check("29 프로브(개수)", running.summary === "실행 중 1개",
+    "펼쳤을 때의 제목은 실행 중 개수를 말한다", `제목이 다르다: ${running.summary}`);
+}
+
+// ── 30. 피드 줄의 단계 표기 ──────────────────────────────────────────────
+{
+  check("30 피드 단계", feedStageTextRef({ to_node: "implement", dwell_ms: 42 * 60000 }) === "구현 단계 · 머문 시간 42분",
+    "피드 줄이 단계를 한글 라벨과 머문 시간으로 적는다",
+    `피드 단계 표기가 다르다: ${feedStageTextRef({ to_node: "implement", dwell_ms: 42 * 60000 })}`);
+  check("30 피드 킷", feedStageTextRef({ to_node: null, dwell_ms: 90 * 60000 }) === "하네스 수리 · 머문 시간 1시간 30분",
+    "제품 단계가 아닌 줄은 하네스 수리로 적는다(기록의 null 을 화면 말로 바꾼다)",
+    `킷 줄 표기가 다르다: ${feedStageTextRef({ to_node: null, dwell_ms: 90 * 60000 })}`);
+  const html = readFileSync(join(ASSETS, "index.html"), "utf-8");
+  check("30 프로브(옛 표기)", !/지도 밖/.test(html),
+    "화면 코드에 옛 표기('지도 밖')가 남아 있지 않다", "화면 코드가 아직 옛 표기를 쓴다");
+}
+
+// ── 31. 요약 박스에 「지금」과 겹치는 줄이 없다 ───────────────────────────
+{
+  const sumKeys = summaryRowsRef(V3.request).map((r) => r.key);
+  check("31 세 줄", JSON.stringify(sumKeys) === JSON.stringify(["goal", "request_text", "brief"]),
+    "요약 박스에 남는 것은 목표·요청 원문·브리프 셋뿐이다", `요약 박스 줄이 다르다: ${JSON.stringify(sumKeys)}`);
+
+  const nowLabels = new Set(nowRowsRef(V3.request, V3.now, DEFAULT_REPORT_CONFIG).rows.map((r) => r.label));
+  const dup = summaryRowsRef(V3.request).map((r) => r.label).filter((l) => nowLabels.has(l));
+  check("31 중복 없음", dup.length === 0,
+    "요약 박스와 「지금」이 같은 줄을 두 번 말하지 않는다", `두 자리에 같은 줄이 있다: ${dup.join(", ")}`);
+  check("31 프로브(겹침 감지)", [...nowLabels].filter((l) => nowLabels.has(l)).length > 0,
+    "겹침 판정이 실제로 라벨을 비교한다(비어 있지 않다)", "비교할 라벨이 없어 위 항목이 무효다");
+}
+
+// ── 32. request.json 의 title ────────────────────────────────────────────
+{
+  const base = {
+    task: "T", request: "무언가 해 줘", goal: null, source: "manual", spec_path: null,
+    items: [{ id: "I1", label: "하나", done: false }],
+    status: "진행 중", status_reason: null, started_at: new Date().toISOString(), ended_at: null,
+  };
+  const errs = (patch) => validateRequest({ ...base, ...patch });
+  check("32 없어도 됨", errs({}).length === 0 && errs({ title: null }).length === 0,
+    "title 은 없어도 되고 null 이어도 된다(확정 전 상태가 있다)", `title 없는 요청이 거부됐다: ${errs({}).join(" / ")}`);
+  check("32 40자", errs({ title: "가".repeat(40) }).length === 0,
+    "40자까지는 받는다", `40자 제목이 거부됐다: ${errs({ title: "가".repeat(40) }).join(" / ")}`);
+  check("32 프로브(41자)", errs({ title: "가".repeat(41) }).some((e) => e.includes("40자")),
+    "41자는 거부한다 — 화면 맨 위 한 줄이 두 줄로 넘어가면 그 자리가 한 줄이 아니게 된다",
+    "41자 제목이 통과했다");
+  check("32 프로브(빈 문자열)", errs({ title: "   " }).length > 0,
+    "공백뿐인 제목은 거부한다(모르면 아예 안 적는다)", "공백 제목이 통과했다");
+
+  check("32 한도 두 벌", TITLE_MAX_MODEL === RENDER_EXPORTS.TITLE_MAX,
+    `제목 한도가 기록 쪽과 화면 쪽에서 같다 (${TITLE_MAX_MODEL}자)`,
+    `한도가 갈라졌다: 기록 ${TITLE_MAX_MODEL} vs 화면 ${RENDER_EXPORTS.TITLE_MAX} — 기록은 받는데 화면은 자르는 상태가 된다`);
+
+  // 시작 후에는 안 바뀐다(②a). items 와 같은 규칙이고, 막는 자리도 같다.
+  const dir = tmp("report-title-");
+  const reqMod = await import(pathToFileURL(join(ROOT, "scripts", "report-request.mjs")).href);
+  reqMod.start(dir, { task: "T", request: "무언가 해 줘", items: [{ id: "I1", label: "하나", done: false }], title: "짧은 제목" });
+  let blocked = "";
+  try { reqMod.update(dir, (r) => { r.title = "바꾼 제목"; }); } catch (e) { blocked = e.message; }
+  check("32 프로브(제목 고정)", blocked.includes("시작 후 안 바뀐다"),
+    "시작 뒤에 제목을 바꾸려 하면 거부한다", `제목이 시작 후에 바뀌었다 (막은 메시지: ${blocked || "없음"})`);
+  const saved = JSON.parse(readFileSync(join(dir, "request.json"), "utf-8"));
+  check("32 기록됨", saved.title === "짧은 제목",
+    "시작할 때 준 제목이 request.json 에 실린다", `제목이 기록되지 않았다: ${JSON.stringify(saved.title)}`);
+}
+
+// ── 33. 「파이프라인 밖」 상자가 실행 그래프로 새지 않았다 ─────────────────
+{
+  // 이 상자는 렌더 요소일 뿐이다. 노드로 새면 그래프가 없는 경로를 있다고 말하게 되고,
+  // dirty 전파와 프론티어가 그 없는 노드를 기다린다.
+  const leaks = (text) => [VOCAB_TERM.box_kit, "off-box", "offBox"].filter((t) => text.includes(t));
+  const guarded = [
+    join(ROOT, "graph.mjs"),
+    join(ROOT, "docs", "references", "node-skills.json"),
+    ...readdirSync(join(ROOT, "gates")).filter((f) => f.endsWith(".mjs")).map((f) => join(ROOT, "gates", f)),
+  ];
+  const found = guarded.flatMap((f) => leaks(readFileSync(f, "utf-8")).map((t) => `${t} @ ${f.slice(ROOT.length + 1)}`));
+  check("33 안 샘", found.length === 0,
+    `실행 그래프·바인딩·게이트 ${guarded.length}개 어디에도 화면 상자가 없다`,
+    `화면 상자가 실행 그래프 쪽으로 샜다: ${found.join(" / ")}`);
+  check("33 프로브(샘 감지)", leaks(`const n = { id: "x", label: "${VOCAB_TERM.box_kit}" };`).length > 0,
+    "심은 유출을 잡는다", "심은 유출이 통과했다 — 이 항목은 무효다");
+
+  // 바인딩이 가리키는 노드가 전부 그래프에 있는지도 같이 본다 — 상자를 바인딩에만 적는
+  // 방법으로도 같은 사고가 난다.
+  const graphIds = new Set(DERIVED.nodes.map((n) => n.id));
+  const strayed = BINDINGS.flatMap((b) => (b.nodes ?? []).filter((n) => n !== "all" && !graphIds.has(n)));
+  check("33 바인딩", strayed.length === 0,
+    "바인딩이 그래프에 없는 자리를 가리키지 않는다", `그래프에 없는 자리를 가리킨다: ${strayed.join(", ")}`);
 }
 
 // ── 보고 ────────────────────────────────────────────────────────────────
