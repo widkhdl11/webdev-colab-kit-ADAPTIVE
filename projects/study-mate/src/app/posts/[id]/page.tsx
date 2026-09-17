@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { readUnreadNotificationCount } from "@/entities/notification";
-import { applyState, canEditPost, countPostView, readPostDetail } from "@/entities/post";
+import { applyState, canEditPost, readPostDetail } from "@/entities/post";
 import { currentUser } from "@/entities/session";
+import { ViewCounter } from "@/features/count-post-view";
 import { ApplyButton } from "@/features/apply-to-study";
 import { LikeButton } from "@/features/like-post";
 import { ButtonLink } from "@/shared/ui/button/Button";
@@ -24,7 +25,10 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   if (!post) notFound();
 
   const unread = user ? await readUnreadNotificationCount() : 0;
-  await countPostView(id);
+
+  // **조회 집계는 여기서 안 한다.** 본문에서 부르면 화면을 다시 그릴 때마다 또 세어진다 —
+  // 좋아요를 누를 때마다 조회수가 1 오르던 것이 그 때문이었다. 세는 자리는 아래
+  // `<ViewCounter />` 이고, 같은 방문의 두 번째 호출은 그쪽 가드가 흡수한다 (INV-V1).
 
   const state = applyState(post, user?.id ?? null);
   // **이 링크가 인가는 아니다.** 링크를 지워도 주소를 치면 그 화면이 열리고, 거기서
@@ -34,6 +38,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   return (
     <>
       <SkipLink />
+      <ViewCounter postId={id} />
       <SiteHeader signedIn={user !== null} unreadCount={unread} current="posts" />
 
       <main id="main">
