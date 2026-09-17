@@ -12,7 +12,6 @@
 // 상태·재작업 경로는 어디에도 선언 안 한다 — 전부 전파에서 파생(graph.mjs + propagate.mjs).
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { reportMeasurementGap } from "../scripts/measurement-gap.mjs";
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 import { GATE_KIND, GRAPH } from "../graph.mjs";
@@ -483,8 +482,7 @@ console.log(`● HANDOFF 갱신 (${relative(ROOT, HANDOFF)}). 프론티어: ${f.
 // 전환이 없는 것이 정상이다. 판단은 scripts/measurement-gap.mjs 가 하고 여기서는 찍기만 한다.
 // try/catch 로 감싸는 이유는 아래 4.5 절과 같다 — 이 훅에는 최상위 try/catch 가 없어서
 // 여기서 던지면 6단계(차단 판정, exit 2)에 영영 도달하지 못한다.
-try { const gap = reportMeasurementGap(); if (gap) console.log(gap); } catch { /* 신고가 차단을 막으면 안 된다 */ }
-
+try { const { reportMeasurementGap } = await import("../scripts/measurement-gap.mjs"); const gap = reportMeasurementGap(); if (gap) console.log(gap); } catch {}
 // 4.5) 사이클 종료 판정과 리포트 발행
 //
 // **persist 뒤에 둔다.** 여기서 죽으면 HANDOFF 가 안 써진다.
