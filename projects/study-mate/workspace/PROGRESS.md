@@ -2,11 +2,11 @@
 
 ## 현재 상태
 
-- **오늘의 목표**: 하네스 닫힌 목록을 비우고(계약 테스트 배선 · ② probe) 실전 투입 한 바퀴를 돌린다 → **거의 달성**. 남은 것은 통합 테스트 실행뿐
-- **완료**: ② probe([scripts/probe.mjs](../../../scripts/probe.mjs), 계약 테스트 22/22) · 계약 테스트 배선(`contract` 값이 곧 배선 — 그전까지 `check-report` 는 **한 번도 안 돌고 있었다**) · P17 닫음(`posts.title` 이 표시 무결성 스펙의 다섯 번째 자리로) · 좋아요 토글 액션과 단추(유닛 9/9 · 변이 3종 전부 빨간불 확인) · [설계도](../../../docs/references/harness-design.md) 닫힌 목록 2·4번 완료
-- **멈춘 지점**: 좋아요 **통합 테스트 12개를 한 번도 못 돌렸다** — Docker 가 꺼져 있어 로컬 Supabase 에 못 붙는다. 이 12개가 이번 작업의 핵심이다(기존 DB 계약의 첫 검사). 코드와 테스트는 다 있고 실행만 남았다
-- **다음 할 일**: Docker Desktop 을 켜고 `cd projects/study-mate && npm run test:integration` 으로 [좋아요 통합 테스트](../tests/integration/post-likes.test.ts) 12개를 돌린다 — 통과하면 화면에서 실제로 눌러 보고(`npm run dev` + `node scripts/probe.mjs`) 리뷰 사인오프
-- **대기 중인 결정**: 다섯 — ① **배포 시점**(좋아요 승인 후 두 번째 투입으로 정해졌다, `deploy` 는 n/a) ② 무료 등급 하루 20건 ③ 삭제 단추의 키보드 초점 테두리 ④ 하네스 도입 전/후 다이어그램의 「도입 전」 숫자 ⑤ `block-danger.mjs` 에 `git commit` 차단 줄을 넣을지 · 그리고 [LESSONS 블록 셋](../../../docs/references/pending-patches/2026-09-15-lessons-append.md)을 `docs/LESSONS.md` 에 붙이는 것(보호 파일이라 사람이 붙인다)
+- **오늘의 목표**: 좋아요 실전 투입 한 바퀴를 끝낸다(리뷰 사인오프 → 기능 승인) → **달성**
+- **완료**: 통합 테스트 11개 통과(기존 DB 계약의 첫 검사) · 리뷰어 넷 파견, 지적 11건 전부 닫음 · `review` clean([사인오프](review.md)) · **좋아요 기능 승인** · 조회수 정의를 스펙으로 세움([post-view-count.md](../docs/specs/post-view-count.md), INV-V1) · 검사 근거: 유닛 70파일 637건 · 통합 17파일 271건 · 게이트 통과 · 심은 변이 9종 전부 빨간불
+- **멈춘 지점**: 없음. 좋아요는 닫혔다
+- **다음 할 일**: 두 번째 투입을 고른다(배포는 그때 같이 정하기로 돼 있다). 시작 전 **계측을 먼저 고친다** — `transitions.jsonl` 이 2026-09-15 이후 비어 있어서 이번 투입의 체류 시간이 「기록 없음」이고, 설계도 대기열(③·④)의 착공 신호가 그 집계다
+- **대기 중인 결정**: 넷 — ① 배포 시점(두 번째 투입과 함께) ② 무료 등급 하루 20건 ③ 삭제 단추의 키보드 초점 테두리 ④ 하네스 도입 전/후 다이어그램의 「도입 전」 숫자 · 그리고 [회귀 범위 LESSONS 블록](../../../docs/references/pending-patches/2026-09-17-lessons-regression-scope.md)을 `docs/LESSONS.md` 에 붙이는 것(보호 파일이라 사람이 붙인다)
 
 ## 로그
 
