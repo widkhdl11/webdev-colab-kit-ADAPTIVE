@@ -9,7 +9,7 @@ import {
 import { Avatar } from "@/shared/ui/avatar/Avatar";
 import { Card, CardDivider } from "@/shared/ui/card/Card";
 import { Container } from "@/shared/ui/container/Container";
-import { EyeIcon, HeartIcon } from "@/shared/ui/icon/Icon";
+import { EyeIcon } from "@/shared/ui/icon/Icon";
 import { SeatBar } from "@/shared/ui/seat-bar/SeatBar";
 import { StatusBadge } from "@/shared/ui/status-badge/StatusBadge";
 import { Tag } from "@/shared/ui/tag/Tag";
@@ -95,9 +95,10 @@ export function PostDetailView({
   applyAction: ReactNode;
   /**
    * 좋아요 자리. `applyAction` 과 같은 규약이다 — 「로그인했는가」는 세션을 보는 판단이라
-   * 화면이 하고, 위젯은 자리만 낸다. 안 넘기면 예전처럼 숫자만 그린다.
+   * 화면이 하고, 위젯은 자리만 낸다. **비로그인일 때 숫자만 그리는 것도 그 자리 안에서
+   * 한다**(`LikeButton` 이 `signedIn` 으로 가른다) — 그래서 여기에 대체 모양이 없다.
    */
-  likeAction?: ReactNode;
+  likeAction: ReactNode;
   /**
    * 작성자에게만 보이는 자리(모집글 수정). **여기서 판정하지 않는다** — 「내가 쓴 글인가」는
    * 세션을 보는 판단이라 화면이 하고, 위젯은 자리만 낸다. `applyAction` 과 같은 규약이다.
@@ -181,17 +182,8 @@ export function PostDetailView({
               따라 달라진다 — 남이 볼 때와 내가 볼 때 같은 숫자가 다른 자리에 앉는다.
             */}
             <div className={styles.statGroup}>
-              {/*
-                시안이 그린 「누를 수 있는 좋아요」가 2026-09-16 에 붙었다. 자리를 넘겨받지
-                못한 화면(비로그인 등)은 예전처럼 조회수와 같은 모양의 숫자로 둔다 —
-                누를 수 없는 것을 버튼처럼 그리면 눌러 보고 나서야 알게 된다.
-              */}
-              {likeAction ?? (
-                <p className={styles.stats}>
-                  <HeartIcon size={16} />
-                  좋아요 {post.likesCount}
-                </p>
-              )}
+              {/* 시안이 그린 「누를 수 있는 좋아요」가 2026-09-16 에 붙었다 */}
+              {likeAction}
               <p className={styles.stats}>
                 <EyeIcon size={16} />
                 조회 {post.viewsCount}

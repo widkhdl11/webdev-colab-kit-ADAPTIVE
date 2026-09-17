@@ -107,7 +107,12 @@ const ledger: string[] = [];
  * 이 연결로 할 수 있는 일이 곧 "아무나 할 수 있는 일"이다.
  */
 export async function createUser(username: string): Promise<TestUser> {
-  const email = `${username}-${randomUUID().slice(0, 8)}@example.test`;
+  // 이메일 앞부분에는 ASCII 만 남긴다. 이름은 화면에 뜨는 값이라 한글이 정상이지만,
+  // 그대로 넣으면 계정 생성이 "Unable to validate email address" 로 거부된다 —
+  // 원인이 이름에 있다는 게 메시지에 안 보여서 찾는 데 시간이 걸린다.
+  // 이름 자체는 아래 user_metadata 로 손대지 않고 넘어간다.
+  const 이메일앞 = username.replace(/[^A-Za-z0-9._-]/g, "") || "user";
+  const email = `${이메일앞}-${randomUUID().slice(0, 8)}@example.test`;
   const password = randomUUID();
 
   // 이름은 계정 메타데이터로 넘긴다. **여기서 프로필을 따로 만들지 않는다** —

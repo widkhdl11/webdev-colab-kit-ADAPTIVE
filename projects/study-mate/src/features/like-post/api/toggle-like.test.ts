@@ -1,5 +1,9 @@
 // 근거 스펙: docs/specs/post-likes.md (INV-L1 멱등 · INV-L3 자기 것만)
 //
+// **이 파일의 describe 에는 INV 번호를 안 붙인다.** 커버리지 게이트는 테스트 이름의 INV
+// 번호를 세는데, 두 INV 의 강제 위치는 데이터베이스다 — 여기에 번호를 달면 통합 파일을
+// 통째로 지워도 「덮였다」로 세어진다(2026-09-16 test-auditor).
+//
 // **여기서 보는 것은 계약이 아니라 「화면이 옳은 것을 보는가」다.** 누가 무엇을 쓸 수 있는지는
 // 데이터베이스 정책이 판정하고 그 판정은 `tests/integration/post-likes.test.ts` 가 붙든다.
 // 이 파일이 붙드는 것은 그 위층 — 토글이 상태를 뒤집는가, 같은 요청이 두 번 와도 결과가
@@ -18,7 +22,16 @@ const USER = { id: "22222222-2222-4222-8222-222222222222" };
  * 그 위에서 도는 토글의 분기다. 정책이 거부하는지는 이 파일이 물을 수 없다(흉내가 거부하면
  * 흉내가 거부한 것이다). 그래서 거부는 `error` 를 그대로 돌려주는 갈래로만 다룬다.
  */
-function fakeDb(rows: { post_id: string; user_id: string }[], opts: { insertError?: { code: string } } = {}) {
+function fakeDb(
+  rows: { post_id: string; user_id: string }[],
+  opts: {
+    insertError?: { code: string };
+    /** 조회 자체가 실패하는 경우. 이 갈래가 없으면 실패를 삼키는 코드도 전부 초록이다. */
+    selectError?: { code: string; message: string };
+    /** 취소가 거부되는 경우. 없으면 delete 의 실패 처리를 통째로 지워도 초록이다. */
+    deleteError?: { code: string; message: string };
+  } = {},
+) {
   const calls = { insert: 0, delete: 0 };
   const client = {
     from(table: string) {
@@ -30,10 +43,13 @@ function fakeDb(rows: { post_id: string; user_id: string }[], opts: { insertErro
               return {
                 eq(_c2: string, v2: string) {
                   return {
-                    maybeSingle: async () => ({
-                      data: rows.find((r) => r.post_id === v1 && r.user_id === v2) ?? null,
-                      error: null,
-                    }),
+                    maybeSingle: async () =>
+                      opts.selectError
+                        ? { data: null, error: opts.selectError }
+                        : {
+                            data: rows.find((r) => r.post_id === v1 && r.user_id === v2) ?? null,
+                            error: null,
+                          },
                   };
                 },
               };
@@ -52,6 +68,7 @@ function fakeDb(rows: { post_id: string; user_id: string }[], opts: { insertErro
             eq(_c1: string, v1: string) {
               return {
                 async eq(_c2: string, v2: string) {
+                  if (opts.deleteError) return { error: opts.deleteError };
                   const i = rows.findIndex((r) => r.post_id === v1 && r.user_id === v2);
                   if (i >= 0) rows.splice(i, 1);
                   return { error: null };
@@ -68,7 +85,7 @@ function fakeDb(rows: { post_id: string; user_id: string }[], opts: { insertErro
 
 const createSupabase = (db: ReturnType<typeof fakeDb>) => async () => db.client as never;
 
-describe("INV-L1 — 토글은 상태를 뒤집고, 두 번 와도 결과가 같다", () => {
+describe("토글은 상태를 뒤집고, 두 번 와도 결과가 같다", () => {
   it("누른 적이 없으면 넣는다", async () => {
     const db = fakeDb([]);
     const r = await toggleLike(USER, POST, createSupabase(db));
@@ -107,7 +124,7 @@ describe("INV-L1 — 토글은 상태를 뒤집고, 두 번 와도 결과가 같
   });
 });
 
-describe("INV-L3 — 세션이 없으면 아무것도 안 쓴다", () => {
+describe("세션이 없으면 아무것도 안 쓴다", () => {
   it("로그인하지 않았으면 쓰기 자체가 안 일어난다", async () => {
     const db = fakeDb([]);
     const run = makeToggleLike(async () => null, {
@@ -157,5 +174,42 @@ describe("성공하면 화면을 다시 그리게 한다", () => {
     form.set("postId", POST);
     await run(form);
     expect(revalidate).not.toHaveBeenCalled();
+  });
+});
+
+describe("데이터베이스가 거부하면 실패로 돌려준다", () => {
+  it("조회가 실패하면 취소하려던 요청이 누름으로 뒤집히지 않는다", async () => {
+    // **이 갈래가 없으면 실패를 삼키는 코드가 초록이다.** 조회 실패를 「안 눌렀음」으로
+    // 읽으면 insert 로 가고, 그 insert 는 23505 를 삼켜 `liked: true` 를 돌려준다 —
+    // 사용자는 취소를 눌렀는데 눌린 상태가 돌아오고 실패는 아무 데도 안 뜬다.
+    const db = fakeDb([{ post_id: POST, user_id: USER.id }], {
+      selectError: { code: "08006", message: "connection failure" },
+    });
+    const r = await toggleLike(USER, POST, createSupabase(db));
+    expect(r.ok).toBe(false);
+    expect(db.calls.insert).toBe(0);
+    expect(db.calls.delete).toBe(0);
+    expect(db.rows).toHaveLength(1); // 행은 그대로다
+  });
+
+  it("취소가 거부 아닌 이유로 실패해도 실패로 돌려준다", async () => {
+    // **42501 검사만으로는 아래 일반 갈래를 아무도 안 붙든다** — 실제로 그 줄을 지워도
+    // 전부 초록이었다. 거부가 아닌 실패(연결 끊김 등)를 따로 봐야 두 갈래가 다 붙들린다.
+    const db = fakeDb([{ post_id: POST, user_id: USER.id }], {
+      deleteError: { code: "08006", message: "connection failure" },
+    });
+    const r = await toggleLike(USER, POST, createSupabase(db));
+    expect(r.ok).toBe(false);
+    expect(db.rows).toHaveLength(1);
+  });
+
+  it("취소가 거부되면 실패로 돌려준다", async () => {
+    const db = fakeDb([{ post_id: POST, user_id: USER.id }], {
+      deleteError: { code: "42501", message: "denied" },
+    });
+    const r = await toggleLike(USER, POST, createSupabase(db));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.message).toBe("지금은 좋아요를 취소할 수 없습니다");
+    expect(db.rows).toHaveLength(1);
   });
 });

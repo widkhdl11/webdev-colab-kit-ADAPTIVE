@@ -35,32 +35,50 @@
   cursor: pointer;
 }
 
+/* 테두리 있는 단추의 hover 는 괘선 채움이다 — 공용 버튼·칩과 같은 말을 쓴다 */
 .button:hover:not(:disabled) {
+  background: var(--rule);
   color: var(--ink);
 }
 
-/* 눌린 상태. 색만으로 말하지 않게 테두리 안쪽을 채워 형태로도 달라진다 */
+/*
+  눌린 상태.
+
+  **형광펜 색으로 칠하지 않는다.** design-rules 의 형광펜 코딩 규칙은 8색을 카테고리·
+  모집 상태·안 읽음 개수·내 참여 상태 넷에만 쓰기로 못 박아 뒀고, 「내가 좋아요를 눌렀다」는
+  그 넷이 아니다. 코랄로 칠하면 같은 화면에서 코랄이 두 뜻을 진다 — 마감된 모집글을
+  좋아요 누른 사람의 화면에는 코랄 「마감」 배지와 코랄 좋아요 단추가 나란히 뜬다.
+  (같은 이유로 삭제 단추에도 코랄을 안 줬다.)
+
+  그래서 승인된 어휘 안에서 말한다: 글자를 진한 잉크로 올리고 굵기를 700 으로,
+  테두리도 잉크로 바꿔 **색 말고 굵기·테두리로도 갈린다**.
+*/
 .button[data-liked="on"] {
-  background: var(--hl-coral);
+  border-color: var(--ink);
   color: var(--ink);
   font-weight: 700;
 }
 
 .button:disabled {
-  cursor: progress;
-  opacity: 0.6;
+  cursor: default;
+  opacity: 0.7;
 }
 
 /*
-  초점 테두리를 지우지 않는다. 키보드로 다니는 사람에게 지금 어디에 있는지를
-  말해 주는 유일한 표시다.
+  초점 테두리는 전역 `:focus-visible`(3px 잉크 + 3px offset)을 그대로 쓴다.
+  여기서 다시 선언하면 이 단추만 얇아진다 — 실제로 2px 로 덮어쓰고 있었다.
 */
-.button:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
+
+/*
+  실패 문구. 색만으로 말하지 않게 글자로도 이유가 들어간다.
+  **자리는 실패 전부터 있다** — 지운 뒤에 라이브 영역을 만들어 넣으면 낭독기가
+  새로 생긴 영역을 안 읽는 경우가 있다(같은 이유가 NotificationBell 에도 적혀 있다).
+  그래서 빈 문자열일 때는 여백만 죽인다.
+*/
+.error:empty {
+  display: none;
 }
 
-/* 실패 문구. 색만으로 말하지 않게 글자로도 이유가 들어간다 */
 .error {
   font-size: 14px;
   line-height: 1.6;

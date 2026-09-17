@@ -41,18 +41,28 @@ export async function toggleLike(
 
   const supabase = await createSupabase();
 
-  // 지금 눌러 둔 것이 있는지 본다. 이 조회와 아래 쓰기 사이에 남이 끼어들 수 있는데,
-  // 그 경우도 결과는 「한 번 누른 것」으로 수렴한다 — insert 는 23505 를 삼키고,
-  // delete 는 없는 행을 지워도 오류가 아니다.
-  const { data: mine } = await supabase
+  // 지금 눌러 둔 것이 있는지 본다. 두 요청이 **모두 조회를 먼저 마치면** 결과는
+  // 「한 번 누른 것」으로 수렴한다 — insert 는 23505 를 삼키고, delete 는 없는 행을
+  // 지워도 오류가 아니다. (뒤에 온 조회가 앞의 insert 를 본 경우는 취소로 가고,
+  // 그때 최종 상태가 0 인 것은 두 번 누른 것과 같아서 옳다)
+  //
+  // **조회 실패를 삼키면 안 된다.** 여기서 error 를 버리면 실패가 「안 눌렀음」으로 읽혀
+  // 취소하려던 요청이 insert 로 가고, 그 insert 는 23505 를 삼켜 `liked: true` 를
+  // 돌려준다 — 사용자는 취소를 눌렀는데 눌린 상태가 돌아오고 실패는 아무 데도 안 뜬다.
+  const { data: mine, error: readError } = await supabase
     .from("likes")
     .select("id")
     .eq("post_id", postId)
     .eq("user_id", user.id)
     .maybeSingle();
+  if (readError) return { ok: false, message: dbErrorMessage("좋아요", readError) };
 
   if (mine) {
     const { error } = await supabase.from("likes").delete().eq("post_id", postId).eq("user_id", user.id);
+    // 거부 사유를 사람의 말로 옮기는 갈래는 넣는 쪽과 같은 모양으로 둔다
+    // (`apply-to-study/api/insert-application.ts`). 한쪽만 가르면 같은 거부가
+    // 누를 때와 취소할 때 다른 말로 나온다.
+    if (error?.code === "42501") return { ok: false, message: "지금은 좋아요를 취소할 수 없습니다" };
     if (error) return { ok: false, message: dbErrorMessage("좋아요 취소", error) };
     return { ok: true, value: { liked: false } };
   }

@@ -19,32 +19,39 @@ import styles from "./like-button.module.css";
  * 그러면 두 사람이 동시에 누른 순간 화면의 숫자가 서버와 갈라지고, 그 상태는 새로고침
  * 전까지 아무도 모른다. 액션이 성공하면 `revalidate` 가 이 화면을 다시 그린다.
  */
-export function LikeButton({
-  postId,
-  count,
-  likedByMe,
-  signedIn,
-}: {
+type Props = {
   postId: string;
   count: number;
   likedByMe: boolean;
   signedIn: boolean;
-}) {
+};
+
+export function LikeButton(props: Props) {
+  if (!props.signedIn) {
+    return (
+      <p className={styles.plain}>
+        <HeartIcon size={16} />
+        좋아요 {props.count}
+      </p>
+    );
+  }
+
+  // **서버가 새 값을 내려주면 옛 액션 결과를 버린다.** `useActionState` 의 결과는 다음
+  // 제출 전까지 남는다. 그냥 두면 다른 탭에서 취소한 뒤 이 화면이 다시 그려져도 하트는
+  // 켜진 채 개수만 0 으로 내려오고, 그 어긋남이 하드 새로고침 전까지 유지된다.
+  // `key` 가 서버 값이 바뀌는 순간 아래 컴포넌트를 새로 만들어 훅 상태를 리셋한다 —
+  // 그래서 훅이 이 바깥이 아니라 `LikeForm` 안에 있어야 한다.
+  return <LikeForm key={`${props.postId}:${props.likedByMe}:${props.count}`} {...props} />;
+}
+
+function LikeForm({ postId, count, likedByMe }: Props) {
   const [result, submit, pending] = useActionState<ActionResult<LikeToggled> | null, FormData>(
     toggleLikeAction,
     null,
   );
 
-  if (!signedIn) {
-    return (
-      <p className={styles.plain}>
-        <HeartIcon size={16} />
-        좋아요 {count}
-      </p>
-    );
-  }
-
-  // 서버가 방금 돌려준 상태가 있으면 그것이 최신이다. 없으면 이 화면을 그릴 때의 값.
+  // 이 컴포넌트가 사는 동안의 최신값은 액션 결과다. 서버 값이 바뀌면 위의 `key` 가
+  // 이 컴포넌트째로 갈아 치우므로 여기서 둘을 비교할 필요가 없다.
   const liked = result?.ok ? result.value.liked : likedByMe;
 
   return (
@@ -60,11 +67,14 @@ export function LikeButton({
         <HeartIcon size={16} />
         좋아요 {count}
       </button>
-      {result && !result.ok ? (
-        <span role="status" className={styles.error}>
-          {result.message}
-        </span>
-      ) : null}
+      {/*
+        실패 문구는 **자리를 항상 지킨다.** 실패한 순간에 이 요소를 만들어 넣으면 낭독기가
+        새로 생긴 라이브 영역을 안 읽는 경우가 있다(같은 이유가 NotificationBell 에 적혀
+        있다). 사용자가 한 행동이 실패한 것이므로 `status` 가 아니라 `alert` 다.
+      */}
+      <span role="alert" className={styles.error}>
+        {result && !result.ok ? result.message : ""}
+      </span>
     </form>
   );
 }
