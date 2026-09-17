@@ -121,6 +121,14 @@ export function 격차신고(slug) {
   }
 }
 
+/**
+ * `격차신고` 의 ASCII 이름. **패치로 붙이는 줄은 이것을 쓴다.**
+ *
+ * 이 레포는 내부 식별자에 한글을 쓰는데, 보호 파일에 사람이 손으로 붙여 넣는 줄에서는
+ * 그게 실제로 깨졌다(2026-09-17). 붙여넣는 자리만 ASCII 로 두면 그 실패가 사라진다.
+ */
+export const reportMeasurementGap = 격차신고;
+
 // **직접 실행일 때만 찍는다.** 파일 이름 꼬리로 재면 계약 테스트(`check-measurement-gap.mjs`)도
 // 같은 꼬리를 가져서, 불러오기만 해도 한 줄이 튀어나온다 — 실제로 그랬다. 경로를 비교한다.
 const 직접실행 = Boolean(process.argv[1]) && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));

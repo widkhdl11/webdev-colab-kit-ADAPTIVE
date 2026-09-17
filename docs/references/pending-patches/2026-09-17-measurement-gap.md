@@ -39,8 +39,12 @@ import { createHash } from "node:crypto";
 뒤에 다른 import 들이 이어지는데, **그 묶음 맨 끝**에 이 줄을 더합니다:
 
 ```js
-import { 격차신고 } from "../scripts/measurement-gap.mjs";
+import { reportMeasurementGap } from "../scripts/measurement-gap.mjs";
 ```
+
+> **붙여넣는 줄에는 한글 식별자를 안 씁니다.** 이 레포는 내부 이름에 한글을 쓰지만,
+> 2026-09-17 에 이 패치를 붙이다 그 줄이 깨졌습니다. 그래서 붙여넣는 두 줄만 ASCII 입니다
+> (`reportMeasurementGap` 은 모듈이 내보내는 같은 함수의 ASCII 이름입니다).
 
 ### ② `HANDOFF 갱신` 을 찍는 줄 **바로 아래**
 
@@ -53,11 +57,17 @@ console.log(`● HANDOFF 갱신 (${relative(ROOT, HANDOFF)}). 프론티어: ${f.
 그 줄 **다음에** 이 블록을 넣습니다:
 
 ```js
-// 계측이 멈췄으면 한 줄 신고한다. **막지 않는다** — 그래프 밖 작업이나 문서만 고치는 턴에는
+// 계측이 멈췄으면 한 줄 신고한다. 막지 않는다 — 그래프 밖 작업이나 문서만 고치는 턴에는
 // 전환이 없는 것이 정상이다. 판단은 scripts/measurement-gap.mjs 가 하고 여기서는 찍기만 한다.
 // try/catch 로 감싸는 이유는 아래 4.5 절과 같다 — 이 훅에는 최상위 try/catch 가 없어서
 // 여기서 던지면 6단계(차단 판정, exit 2)에 영영 도달하지 못한다.
-try { const 격차 = 격차신고(); if (격차) console.log(격차); } catch { /* 계측 신고가 차단을 막으면 안 된다 */ }
+try { const gap = reportMeasurementGap(); if (gap) console.log(gap); } catch { /* 신고가 차단을 막으면 안 된다 */ }
+```
+
+주석이 부담되면 **마지막 한 줄만** 붙여도 똑같이 동작합니다:
+
+```js
+try { const gap = reportMeasurementGap(); if (gap) console.log(gap); } catch {}
 ```
 
 ## 적용 전후 판정 — 코드를 안 읽어도 됩니다

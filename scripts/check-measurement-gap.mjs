@@ -142,8 +142,10 @@ const 활동줄 = (n, 시작 = 0) => Array.from({ length: n }, (_, i) => ({ at: 
 {
   const p = join(ROOT, "gates", "graph-stop.mjs");
   const src = existsSync(p) ? readFileSync(p, "utf-8") : "";
-  const 부름 = /measurement-gap\.mjs/.test(src) && /격차신고/.test(src);
-  const 감쌈 = /try\s*{[^}]*격차신고[\s\S]{0,400}?catch/.test(src);
+  // 한글 이름과 ASCII 이름 둘 다 받는다 — 패치는 ASCII 쪽을 쓴다(붙여넣다 깨진 적이 있다).
+  const 부르는이름 = /(격차신고|reportMeasurementGap)/;
+  const 부름 = /measurement-gap\.mjs/.test(src) && 부르는이름.test(src);
+  const 감쌈 = /try\s*{[^}]*(격차신고|reportMeasurementGap)[\s\S]{0,400}?catch/.test(src);
   const 패치문서 = join(ROOT, "docs", "references", "pending-patches", "2026-09-17-measurement-gap.md");
   const 미루기유효 = existsSync(패치문서);
   const 배선요구 = process.argv.includes("--require-wiring");
