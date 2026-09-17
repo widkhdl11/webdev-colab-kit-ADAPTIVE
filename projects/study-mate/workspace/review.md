@@ -1,7 +1,7 @@
 ---
 project: study-mate
 status: passed
-basis: ef1a31778214
+basis: 85b35c2e498d
 reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 ---
 
@@ -13,6 +13,10 @@ reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 >
 > 앞선 사인오프(추천 갈래 로그 `-20260914-1`, 눈에 안 보이는 글자 `-20260911-1`)는 이 파일의
 > git 이력에 있다.
+>
+> **`basis` 를 한 번 다시 적었다** (`ef1a31778214` → `85b35c2e498d`). 커밋하면서 git 이 일부
+> 파일을 CRLF 로 바꿔 해시가 달라졌고, 줄바꿈을 빼고 비교하니 내용은 같았다 — 리뷰한 산출물과
+> 지금 산출물이 같다는 것을 확인하고 다시 적은 것이다. 코드는 한 줄도 안 바뀌었다.
 
 ## 이번 diff 가 무엇인가
 
