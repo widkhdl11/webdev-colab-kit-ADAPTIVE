@@ -2,13 +2,38 @@
 
 ## 현재 상태
 
-- **오늘의 목표**: 대시보드를 데이터 파일 순서가 아니라 **사람이 묻는 순서**로 다시 놓고, 값마다 라벨을 달고, 하네스 내부 용어를 화면에서 걷어낸다 → **달성**(조건부 수용)
-- **완료**: 절 순서 재배치(지금→진행→특이사항→접힘 절) · 화면 말의 정본 [ui-vocab.mjs](../../../.claude/skills/report-dashboard/assets/ui-vocab.mjs) 신설 · 렌더가 문자열 대신 `{label, value, fromRecord}` 줄을 돌려주게 바꿈(옛 `summaryBox` 제거) · 작업 종류 셋으로 분리(제품 요청/하네스 수리/열린 요청 없는 제품 작업) · `request.json` 에 `title`(40자, 시작 시점 고정) · 지도에 「파이프라인 밖」 상자(그래프에는 없음) · [check-report](../../../scripts/check-report.mjs) 24~33절 추가(심은 위반 포함) **218/218** · 사이클 닫고 [리포트](reports/CYCLE_REPORT.study-mate-20260917-1.md) 발행
-- **멈춘 지점**: 없음. 열린 사이클 없음([CYCLE.md](CYCLE.md)). 커밋 완료(`b8dffcf`·`8ab6436`·`ae38edb`), 워킹트리 깨끗
+- **오늘의 목표**: study-mate 가 아니라 **별건** — NoTrace 크롬 확장 프로그램의 개인정보 처리방침을 GitHub Pages 로 무료 배포하고, 문서가 실제 코드와 맞는지 대조한다 → **달성**
+- **완료**: 레포 [widkhdl11/notrace-privacy](https://github.com/widkhdl11/notrace-privacy) 신설·Pages 켬 → https://widkhdl11.github.io/notrace-privacy/ (한/영/일 한 페이지, 응답 200 확인) · `manifest.json` 권한 5개와 문서 3항 설명이 일치함을 코드로 확인 · 어긋난 세 곳 정정(`storage.session` 의 도메인 임시 저장 누락 · sync 의 `reviewDismissed` 누락 · 결제 4항을 「향후 제공 시」 조건문으로 — v0.8-free 는 `PAYMENTS_ENABLED=false` 라 외부 통신 코드가 0)
+- **멈춘 지점**: 없음. 열린 사이클 없음([CYCLE.md](CYCLE.md)). study-mate 는 손대지 않았고(워킹트리 깨끗, 프론티어 `deploy` 그대로), 별건 작업물은 `C:\Users\PC\Desktop\dev\notrace-privacy\` 에 있다
 - **다음 할 일**: 사용자가 알려 줄 **2단계** 내용을 받아 시작한다. (제품 쪽 프론티어는 `deploy` 하나인데 대기 중인 결정 ①에 묶여 있다)
 - **대기 중인 결정**: 여섯 — ① 배포 시점(두 번째 투입과 함께) ② 무료 등급 하루 20건 ③ 삭제 단추의 키보드 초점 테두리 ④ 하네스 도입 전/후 다이어그램의 「도입 전」 숫자 ⑤ `scripts/build-explorer.mjs` 의 한글 **데이터 키**(설명:·근거: 164개)도 ASCII 로 바꿀지 ⑥ **대시보드 화면에서 마음에 안 든 부분이 어디인가** — "다 마음에 드는 건 아니지만 일단은 됐어"로 수용했는데 내용이 기록에 없다. 안 들으면 다음에 같은 자리를 다시 만든다
 
 ## 로그
+
+### 2026-09-18 (둘째) — 별건: NoTrace 개인정보 처리방침 배포, 그리고 문서를 코드와 대조했다
+
+study-mate 와 무관한 작업이다. 다른 확장 프로그램(NoTrace)의 개인정보 처리방침을 크롬 웹스토어에
+낼 주소가 필요했다. 사용자가 완성된 HTML 본문을 그대로 줬으므로 만들 것을 정하는 단계는 없었고,
+공개 저장소 하나에 `index.html` 을 올려 GitHub Pages 로 띄우는 일이 전부였다. 무료다 — 공개
+저장소의 Pages 는 한도를 넘어도 과금이 아니라 제한으로 대응하고, 이 사이트는 파일 하나 14KB 다.
+
+**본문을 그대로 올리지 않은 것이 이번의 실질이다.** 사용자가 `manifest.json` 을 줘서 권한 목록을
+대조할 수 있었는데, 권한 다섯 개는 문서와 정확히 맞았지만 **코드가 하는 일 세 가지가 문서에
+없었다.** ① `background.js:196` 이 소급 삭제 진행률을 `storage.session` 에 쓰면서 도메인 이름을
+담는다 — 문서 2항은 "sync 와 local 에만 저장한다"고 단정하고 있었다. ② `popup.js:467` 의
+`reviewDismissed` 가 sync 에 하나 더 저장된다 — "목록과 켜기/끄기 **만**"이 거짓이 된다.
+③ 4항이 ExtensionPay 와 통신한다고 단정하는데, `config.js` 의 `PAYMENTS_ENABLED=false` 라
+그 코드 경로가 아예 실행되지 않고 `ExtPay.js` 는 폴더에 없다.
+
+세 번째는 사용자에게 물었다(선택: 「향후 제공 시」 조건문). 앞의 둘은 사실 정정이라 바로 고쳤다.
+**문서와 코드를 나란히 놓고 보지 않았으면 셋 다 안 보였을 것들이다** — 셋 다 "코드가 문서보다
+조금 더 한다" 쪽이고, 심사에서 문제가 되는 방향이 정확히 그쪽이다.
+
+확인한 사실 하나는 문서를 그대로 뒷받침했다: `fetch`·`XMLHttpRequest`·`WebSocket`·`sendBeacon`
+전 파일 0건. "외부로 보내지 않는다"는 1항은 추정이 아니라 확인된 문장이다.
+
+남는 조건부 작업 하나는 NoTrace 레포의 README 에 적어 뒀다 — study-mate 의 BACKLOG 에 넣으면
+다른 제품의 일이 섞인다.
 
 ### 2026-09-18 — 화면을 읽는 순서로 놓고, 화면의 말을 한 자리에 모았다
 
