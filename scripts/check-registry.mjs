@@ -116,7 +116,26 @@ function parseDecl(src) {
       .filter(Boolean),
     whyManual: pick("check-why-manual"),
     backlog: pick("check-backlog"),
+    noProbe: pick("check-no-probe"),
   };
+}
+
+/**
+ * 이 검사에 **위반을 일부러 심어 잡히는 것을 보는 항목**이 있는가.
+ *
+ * 왜 세나: 「위반 0건」과 「검사가 아예 안 돌았다」는 출력이 같다. 두 번 겪었다 —
+ * 2026-09-02 에 표면 패턴을 스캔 대상 밖 파일에 심고 "방벽이 열렸다"로 읽을 뻔했고,
+ * 2026-09-19 에는 승인된 불변식 셋을 붙든다고 적힌 검사가 실제로는 마이그레이션 다섯 개를
+ * 아예 안 보고 있었다(라벨은 붙어 있었다). 둘 다 검사를 읽어야만 알 수 있었다.
+ *
+ * 세는 방법은 이름이다 — 이 레포의 계약 테스트는 그런 항목에 「프로브」라는 이름을 단다.
+ * 이름을 세는 것은 느슨하지만, 느슨한 채로 **있다/없다**는 가른다. 무엇을 심었는지까지
+ * 기계가 판정할 수는 없다(그건 검사를 다시 만드는 일이다).
+ */
+function hasProbe(src) {
+  // 이 레포가 쓰는 말은 둘이다 — 항목 이름에 「프로브」를 달거나, 본문에 「심어/심으면」으로 적는다.
+  // 둘 다 인정한다. 한쪽만 세면 멀쩡한 검사가 빨간불이 나고, 그러면 규칙이 아니라 문체 검사가 된다.
+  return /프로브|심어|심으면|심은 |심는다|--probe\b/.test(src);
 }
 
 // 바뀐 파일 목록에 이 대상이 걸리는가. 파일이면 그 파일, 디렉터리면 그 아래 아무것이나.
@@ -162,10 +181,13 @@ function audit() {
   const scriptsDir = join(ROOT, "scripts");
   const errors = [];
   const pendings = [];
+  const noProbes = [];
+  // 이번 턴에 손댄 파일. git 이 없으면 null 이고, 그때는 아무것도 막지 않는다.
+  const changed = changedFiles();
   const byRole = { standing: 0, "on-change": 0, manual: 0, pending: 0 };
   // 검사 스크립트가 없는 폴더에서는 판정할 것이 없다 — 조용히 통과한다.
   // (픽스처 레포에서 게이트가 돌 때 여기 걸리면, 이 등록부가 남의 검사를 깨뜨린다)
-  if (!existsSync(scriptsDir)) return { errors: [], pendings, byRole, entries: [] };
+  if (!existsSync(scriptsDir)) return { errors: [], pendings, noProbes, byRole, entries: [] };
 
   const files = readdirSync(scriptsDir)
     .filter((n) => /^check-.*\.mjs$/.test(n))
@@ -178,7 +200,8 @@ function audit() {
   const entries = [];
   for (const name of files) {
     const path = join(scriptsDir, name);
-    const d = parseDecl(readFileSync(path, "utf-8"));
+    const src = readFileSync(path, "utf-8");
+    const d = parseDecl(src);
     const callers = callerFiles.filter((cf) => cf !== path && (callerText.get(cf) || "").includes(name));
     entries.push({ name, ...d, callers });
 
@@ -193,6 +216,27 @@ function audit() {
       continue;
     }
     byRole[d.role] += 1;
+
+    // 매번 도는 검사는 **자기가 살아 있다는 것**까지 보여야 한다 (2026-09-19, 두 번째).
+    // manual·pending 은 사람이 결과를 읽는 자리라 제외한다.
+    //
+    // **옛 검사를 한꺼번에 막지 않는다.** 스물 몇 개를 하루에 못 고치고, 전부 오류로 띄우면
+    // 상수가 된 경고가 되어 아무도 안 본다(배선 대기와 같은 이유). 대신 **손대는 순간** 막는다 —
+    // 미루기는 그 파일을 고치기 전까지만 유효하다. 고치러 들어간 사람이 그 자리에서 낸다.
+    if ((d.role === "standing" || d.role === "on-change") && !hasProbe(src) && !d.noProbe) {
+      const line =
+        `scripts/${name} — 위반을 일부러 심어 잡히는지 보는 항목이 없다. ` +
+        `「위반 0건」과 「검사가 안 돌았다」는 출력이 같아서, 이 검사가 지금 무엇이든 붙들고 ` +
+        `있는지 파일을 읽어야만 안다. 프로브 항목을 넣거나, 넣을 수 없으면 ` +
+        `'// @check-no-probe: <사유>' 한 줄로 왜 못 넣는지 남긴다`;
+      // `touched` 를 쓴다 — git 은 통째로 새로 생긴 디렉터리를 `?? scripts/` 한 줄로 접어 준다.
+      // 문자열 포함으로 보면 그 접힌 줄을 못 펴서, 새로 만든 검사가 영영 안 걸린다.
+      if (changed !== null && touched(changed, `scripts/${name}`)) {
+        errors.push(`[registry/NO-PROBE] ${line}`);
+      } else {
+        noProbes.push(`scripts/${name}`);
+      }
+    }
 
     if (d.role === "standing" && callers.length === 0) {
       errors.push(
@@ -230,7 +274,7 @@ function audit() {
       }
     }
   }
-  return { errors, pendings, byRole, entries };
+  return { errors, pendings, noProbes, byRole, entries };
 }
 
 // ── 프로브: 스킬 부품의 배선.
@@ -257,6 +301,18 @@ function probeSkillWiring() {
     "scripts/check-alpha.mjs",
     "#!/usr/bin/env node\n// @check-role: manual\n// @check-why-manual: 프로브 픽스처다\n" +
       'console.log("FAIL  심은 실패 — 이 줄이 올라와야 검사가 실제로 돈 것이다");\nprocess.exitCode = 1;\n',
+  );
+  // 프로브 의무화(2026-09-19)를 보는 둘. 하나는 확인 항목이 없고, 하나는 있다 —
+  // 양쪽을 다 둬야 「언제나 막는」 구현과 「아무것도 안 막는」 구현을 둘 다 가른다.
+  put(
+    "scripts/check-delta.mjs",
+    "#!/usr/bin/env node\n// @check-role: on-change\n// @check-guards: docs/references/harness-backlog.md\n" +
+      'console.log("확인 항목이 하나도 없는 검사");\n',
+  );
+  put(
+    "scripts/check-eps.mjs",
+    "#!/usr/bin/env node\n// @check-role: on-change\n// @check-guards: docs/references/harness-backlog.md\n" +
+      'console.log("프로브: 위반을 심어 잡히는지 본다");\n',
   );
   for (const s of ["alpha", "beta", "gamma"]) put(`.claude/skills/${s}/SKILL.md`, `# ${s}\n`);
   put(
@@ -298,6 +354,12 @@ function probeSkillWiring() {
       "사유가 붙은 none 은 고쳐도 막지 않는다"],
     ["안 고치면 조용", !clean.includes("PENDING-TOUCHED") && !clean.includes("check-alpha.mjs"),
       "아무것도 안 고친 턴에는 둘 다 조용하다"],
+    ["프로브 의무 — 손댄 검사", dirty.includes("[registry/NO-PROBE] scripts/check-delta.mjs"),
+      "확인 항목이 없는 검사를 고친 턴에는 막는다"],
+    ["프로브 의무 — 있으면 통과", !dirty.includes("check-eps.mjs"),
+      "확인 항목이 있는 검사는 고쳐도 안 막는다 (언제나 막는 구현이 아니다)"],
+    ["프로브 의무 — 안 고치면 건수만", !clean.includes("[registry/NO-PROBE]") && clean.includes("프로브 없는 검사"),
+      "안 고친 턴에는 오류가 아니라 건수로만 알린다 (옛 검사를 한꺼번에 막지 않는다)"],
   ];
   let bad = 0;
   for (const [name, ok, why] of cases) {
@@ -385,7 +447,7 @@ function probe() {
 
 if (PROBE) probe();
 
-const { errors, pendings, byRole, entries } = audit();
+const { errors, pendings, noProbes, byRole, entries } = audit();
 
 // ── --changed: 바뀐 하네스 파일을 지키는 on-change 검사를 실제로 돌린다.
 const ranOnChange = [];
@@ -446,6 +508,14 @@ if (WITH_CHANGED) {
 if (pendings.length) {
   console.error(`▦ 배선 대기 ${pendings.length}건 (상시로 올려야 하는데 아직 아무도 안 부른다):`);
   for (const p of pendings) console.error(`  · ${p}`);
+}
+
+// 건수만 알린다. 막는 것은 **그 파일을 손댄 턴**뿐이다(위 audit 의 NO-PROBE 참고).
+if (noProbes.length) {
+  console.error(
+    `▦ 프로브 없는 검사 ${noProbes.length}건 (위반을 심어 잡히는지 보는 항목이 없다 — 고치러 들어가는 턴에 막힌다):`,
+  );
+  console.error(`  · ${noProbes.join(", ")}`);
 }
 
 if (errors.length) {

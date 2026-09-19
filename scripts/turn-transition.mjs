@@ -51,6 +51,40 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 /** 편집으로 치는 툴. 읽기·검색은 「무엇을 고쳤나」가 아니라서 사유가 되지 못한다. */
 const EDIT_TOOLS = new Set(["Edit", "Write", "NotebookEdit", "MultiEdit"]);
 
+/**
+ * **기록 폴더** — 진행 대시보드의 설치본과 과정 기록이다. 여기 있는 파일은 「무엇을 만들었나」가
+ * 아니라 「무엇을 했다고 적었나」라서, 이것이 바뀌었다고 제품 단계가 움직인 것이 아니다.
+ * 프로젝트 폴더 기준 상대경로로 본다.
+ *
+ * 2026-09-18: 대시보드 설치본을 갱신한 턴이 `implement` 로 찍혔다. 지금 노드 해시는 이 폴더를
+ * 아예 안 본다(어느 노드의 produces 글롭도 여기 안 닿는다) — 그런데 사인오프 노드 둘은
+ * `workspace/` 를 내놓는다. 그것이 해시 대상에 들어오는 날 같은 오판이 조용히 돌아온다.
+ */
+export const RECORD_DIRS = ["report/", "workspace/"];
+
+/** 프로젝트 기준 상대경로가 기록 폴더 안인가. */
+export function isRecordPath(rel) {
+  const s = String(rel ?? "").split("\\").join("/").replace(/^\/+/, "");
+  return RECORD_DIRS.some((d) => s.startsWith(d));
+}
+
+/**
+ * 내놓는 것이 **전부** 기록 폴더 안인 단위. 주 노드 후보에서 뺀다 — 기록이 바뀐 것을
+ * 제품 단계가 움직인 것으로 읽으면 화면이 살아 있는 채로 틀린다.
+ */
+export function recordOnlyUnits(graph = GRAPH) {
+  const out = new Set();
+  const consider = (id, produces) => {
+    const list = Array.isArray(produces) ? produces : [];
+    if (list.length > 0 && list.every(isRecordPath)) out.add(id);
+  };
+  for (const [id, def] of Object.entries(graph)) {
+    if (def.parallel) for (const [c, cdef] of Object.entries(def.parallel)) consider(`${id}/${c}`, cdef.produces);
+    else consider(id, def.produces);
+  }
+  return out;
+}
+
 /** 손 기록이 없을 때 쓰는 값. 스키마가 `task`·`now` 에 빈 값을 허용하지 않아서 null 을 못 쓴다. */
 export const NO_RECORD = { task: "기록-없음", now: "훅 자동 기록 — 손 기록 없음" };
 
@@ -81,9 +115,11 @@ export function unitOrder(graph = GRAPH) {
  * 직전 스냅샷이 없으면(첫 실행) 빈 목록이다 — 「처음 본 것」과 「방금 바뀐 것」은 다르고,
  * 그 둘을 섞으면 설치 직후에 가짜 전환 한 줄이 생긴다.
  */
-export function changedUnits(currentHashes, prevHashes) {
+export function changedUnits(currentHashes, prevHashes, ignored = recordOnlyUnits()) {
   if (!prevHashes) return [];
-  return Object.keys(currentHashes).filter((id) => (currentHashes[id] ?? null) !== (prevHashes[id] ?? null));
+  return Object.keys(currentHashes)
+    .filter((id) => !ignored.has(id))
+    .filter((id) => (currentHashes[id] ?? null) !== (prevHashes[id] ?? null));
 }
 
 /**
@@ -131,6 +167,37 @@ export function kitEdits(activity, since, root = ROOT) {
   return out;
 }
 
+/**
+ * 이번 턴에 고친 **프로젝트 파일**을 기록 폴더 안/밖으로 가른다. `kitEdits` 와 짝이다 —
+ * 저쪽은 레포 루트 쪽을 보고 그래프 밖 사유를 만들고, 이쪽은 「제품을 건드렸나」를 가른다.
+ *
+ * 활동 기록이 없으면(훅 미설치) 둘 다 빈 배열이고, 그러면 아래 규칙은 아무것도 안 바꾼다 —
+ * 모르는 것을 근거로 위치를 지우지 않는다.
+ */
+export function projectEdits(activity, since, slug, root = ROOT) {
+  const cutoff = Date.parse(since ?? "");
+  const prefix = `projects/${String(slug ?? "").trim()}/`;
+  const record = [];
+  const product = [];
+  for (const r of activity) {
+    if (!EDIT_TOOLS.has(r?.tool)) continue;
+    const t = Date.parse(r?.at ?? "");
+    if (Number.isFinite(cutoff) && !(t > cutoff)) continue;
+    const rel = shortPath(r?.target, root);
+    if (!rel.startsWith(prefix)) continue;
+    const inProject = rel.slice(prefix.length);
+    (isRecordPath(inProject) ? record : product).push(inProject);
+  }
+  return { record, product };
+}
+
+/** 기록 폴더만 고친 턴의 사유 한 줄. 「킷 —」과 달리 이쪽은 프로젝트 안이다. */
+export function makeRecordReason(files) {
+  const names = (files ?? []).map((p) => String(p ?? "").trim()).filter(Boolean);
+  if (names.length === 0) return null;
+  return names.length === 1 ? `기록 — ${names[0]}` : `기록 — ${names[0]} 외 ${names.length - 1}개`;
+}
+
 /** 그래프 밖 사유 한 줄. 고친 것이 없으면 `null` 이고, 부르는 쪽이 「미기재」로 적는다. */
 export function makeReason(files) {
   const names = (files ?? []).map((p) => String(p ?? "").trim()).filter(Boolean);
@@ -144,10 +211,14 @@ export function makeReason(files) {
  *
  * @returns 기록할 것이 없으면 `null`. 있으면 `note()` 에 그대로 넘길 수 있는 객체.
  */
-export function decide({ currentHashes, prevHashes, order, state, lastTransition, kitFiles = [] }) {
+export function decide({ currentHashes, prevHashes, order, state, lastTransition, kitFiles = [], edits = { record: [], product: [] } }) {
   if (!prevHashes) return null;                       // 첫 실행 — 스냅샷만 남기고 기록은 안 한다
   const changed = changedUnits(currentHashes, prevHashes);
-  const node = changed.length > 0 ? mainNode(changed, order) : null;
+  // 이번 턴에 손댄 프로젝트 파일이 **전부** 기록 폴더 안이면 제품 단계는 안 움직인 것이다.
+  // 해시가 바뀌어 있더라도 그 변화는 이번 턴 것이 아니다 — 앞 턴의 변화가 늦게 잡힌 것이고,
+  // 그것을 지금 위치로 쓰면 이번 턴의 한 줄 설명이 엉뚱한 노드에 붙는다(2026-09-18 실측).
+  const recordOnlyTurn = edits.record.length > 0 && edits.product.length === 0;
+  const node = !recordOnlyTurn && changed.length > 0 ? mainNode(changed, order) : null;
   const currentNode = state?.current_node ?? null;
 
   // 같은 자리에 머무는 턴은 줄을 안 늘린다. 체류 시간은 줄 **사이의 간격**이라,
@@ -156,9 +227,11 @@ export function decide({ currentHashes, prevHashes, order, state, lastTransition
 
   // 그래프 밖으로 나왔다고 판정하려면 근거가 있어야 한다. 아무것도 안 고친 턴
   // (읽기만 한 턴·질문만 한 턴)은 위치가 바뀐 것이 아니다.
-  if (node === null && kitFiles.length === 0) return null;
+  if (node === null && kitFiles.length === 0 && !recordOnlyTurn) return null;
 
-  const reason = node === null ? (makeReason(kitFiles) ?? "미기재") : null;
+  const reason = node === null
+    ? (makeReason(kitFiles) ?? (recordOnlyTurn ? makeRecordReason(edits.record) : null) ?? "미기재")
+    : null;
   return {
     node: node,
     // 의미 필드는 손 기록이 적은 현재 값을 그대로 싣는다. 훅이 지어내면 화면의 설명이
@@ -216,6 +289,7 @@ export function recordTurnTransition(currentHashes, { slug, root = ROOT, now = n
       state,
       lastTransition: rows[rows.length - 1] ?? null,
       kitFiles: kitEdits(readAllActivity(dir), snap?.at ?? null, root),
+      edits: projectEdits(readAllActivity(dir), snap?.at ?? null, active, root),
     });
     if (toWrite) written = note(dir, toWrite);
   } finally {

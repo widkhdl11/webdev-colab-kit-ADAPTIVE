@@ -36,6 +36,7 @@ import { seed, note } from "./report-note.mjs";
 import {
   unitOrder, changedUnits, mainNode, kitEdits, makeReason, decide, shortPath,
   recordTurnTransition, SNAPSHOT_FILE, NO_RECORD,
+  RECORD_DIRS, isRecordPath, recordOnlyUnits, projectEdits, makeRecordReason,
 } from "./turn-transition.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -261,6 +262,71 @@ const order = unitOrder();
       ].join("\n"),
     );
   }
+}
+
+// ── H. 기록 폴더 — 적은 것이 바뀐 것을 만든 것이 바뀐 것으로 읽지 않는다 ──
+//
+//   2026-09-18 실측: 대시보드 설치본을 갱신한 턴이 `implement` 로 찍혔다. 이 고장은 조용하다 —
+//   화면이 살아 있는 채로 엉뚱한 노드를 가리키고, 그 턴의 한 줄 설명이 거기 붙는다.
+//   그래서 「무시한다」와 「무시하지 않는다」를 양쪽 다 심는다. 한쪽만 보면 「언제나 무시」인
+//   구현이 절반을 통과하고, 그건 제품 작업이 아예 기록되지 않는 것이라 더 나쁘다.
+{
+  verdict("H1", RECORD_DIRS.includes("report/") && RECORD_DIRS.includes("workspace/"),
+    "기록 폴더는 report/ 와 workspace/ 둘이다", RECORD_DIRS.join(", "));
+  verdict("H2", isRecordPath("report/render.mjs") && isRecordPath("workspace/PROGRESS.md"),
+    "기록 폴더 안의 경로를 기록으로 본다");
+  verdict("H3", !isRecordPath("reports/x.md") && !isRecordPath("src/report/a.ts"),
+    "이름이 비슷한 다른 폴더는 기록이 아니다 — 접두만 같은 것을 같이 묶으면 제품 파일이 사라진다");
+
+  const units = recordOnlyUnits(GRAPH);
+  verdict("H4", units.has("review") && units.has("deploy"),
+    "내놓는 것이 전부 기록 폴더 안인 단위는 주 노드 후보가 아니다", [...units].join(", "));
+  verdict("H5", !units.has("implement") && !units.has("qa") && !units.has("spec"),
+    "제품을 내놓는 단위는 그 목록에 없다 — 있으면 제품 작업이 통째로 안 찍힌다");
+
+  const ignored = new Set(["review"]);
+  verdict("H6", changedUnits({ review: "h2", implement: "h1" }, { review: "h1", implement: "h1" }, ignored).length === 0,
+    "무시 대상만 바뀐 턴은 바뀐 단위가 없다");
+  verdict("H7", changedUnits({ review: "h2", implement: "h2" }, { review: "h1", implement: "h1" }, ignored)
+    .join() === "implement",
+    "같은 턴에 제품도 바뀌었으면 그것은 그대로 잡는다 — 위 항목이 전부를 지우는 것이 아니다");
+
+  const acts = [
+    { at: "2026-09-18T02:00:00Z", tool: "Edit", target: `${ROOT}/projects/fx/report/render.mjs` },
+    { at: "2026-09-18T02:01:00Z", tool: "Edit", target: `${ROOT}/projects/fx/workspace/PROGRESS.md` },
+    { at: "2026-09-18T02:02:00Z", tool: "Read", target: `${ROOT}/projects/fx/src/a.ts` },
+    { at: "2026-09-18T02:03:00Z", tool: "Edit", target: `${ROOT}/projects/other/src/b.ts` },
+  ];
+  const split = projectEdits(acts, "2026-09-18T01:00:00Z", "fx", ROOT);
+  verdict("H8", split.record.length === 2 && split.product.length === 0,
+    "기록 폴더 편집만 있는 턴을 그렇게 가른다", JSON.stringify(split));
+  verdict("H9", projectEdits([...acts, { at: "2026-09-18T02:04:00Z", tool: "Edit", target: `${ROOT}/projects/fx/src/a.ts` }],
+    "2026-09-18T01:00:00Z", "fx", ROOT).product.length === 1,
+    "같은 턴에 제품 파일을 고쳤으면 그쪽으로 샌다 — 가르기가 한쪽으로만 쏠리지 않는다");
+  verdict("H10", split.product.length === 0 && !split.record.some((p) => p.includes("other")),
+    "다른 프로젝트의 편집은 이 프로젝트의 것이 아니다");
+
+  const state = { current_node: "implement", task: "T", now: "설치본 갱신" };
+  const base = { order, state, lastTransition: { item: null }, kitFiles: [] };
+  const hashMoved = { currentHashes: { implement: "h2" }, prevHashes: { implement: "h1" } };
+
+  const recordTurn = decide({ ...base, ...hashMoved, edits: { record: ["report/render.mjs"], product: [] } });
+  verdict("H11", recordTurn?.node === null && recordTurn?.offGraph === "기록 — report/render.mjs",
+    "기록 폴더만 고친 턴은 해시가 바뀌어 있어도 제품 단계로 안 찍는다 — 파이프라인 밖으로 적는다",
+    `node=${recordTurn?.node} 사유=${recordTurn?.offGraph}`);
+  verdict("H12", makeRecordReason(["report/a.mjs", "workspace/b.md"]) === "기록 — report/a.mjs 외 1개",
+    "사유 한 줄은 첫 파일과 나머지 개수로 적는다", makeRecordReason(["report/a.mjs", "workspace/b.md"]));
+
+  const mixedTurn = decide({ ...base, ...hashMoved, state: { ...state, current_node: null },
+    edits: { record: ["report/render.mjs"], product: ["src/a.ts"] } });
+  verdict("H13", mixedTurn?.node === "implement",
+    "제품 파일을 같이 고친 턴은 그대로 그 노드로 찍는다 — 기록 한 줄이 제품 작업을 가리지 않는다",
+    `node=${mixedTurn?.node}`);
+
+  const noActivity = decide({ ...base, ...hashMoved, state: { ...state, current_node: null } });
+  verdict("H14", noActivity?.node === "implement",
+    "활동 기록이 없으면(훅 미설치) 옛 동작 그대로다 — 모르는 것을 근거로 위치를 지우지 않는다",
+    `node=${noActivity?.node}`);
 }
 
 console.log(failed === 0 ? "\n계약 테스트 통과" : `\n실패 ${failed}건`);
