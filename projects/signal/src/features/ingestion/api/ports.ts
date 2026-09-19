@@ -15,6 +15,7 @@ import {
   MAX_FETCH_BYTES,
 } from "../lib/budgets";
 import { fenceData } from "../lib/data-fence";
+import { fetchPublic } from "../lib/fetch-public";
 import { keywordEvidence } from "../lib/keyword-evidence";
 import { extractArticleHtml } from "../lib/extract-content";
 import { buildEnrichPrompt } from "../lib/build-enrich-prompt";
@@ -37,7 +38,8 @@ import type {
 } from "../lib/ports";
 
 /**
- * 포트의 실제 구현 — 바깥 세계에 닿는 곳은 전부 여기다.
+ * 포트의 실제 구현 — 바깥 세계에 닿는 곳은 전부 여기다. 다만 **네트워크 요청은 이 파일이
+ * 직접 부르지 않는다** — `lib/fetch-public.ts` 의 문 하나를 지난다(INV-IA5·INV-IA6).
  *
  * 파이프라인(`runIngest`)은 이 파일을 몰라도 되고, 그래서 격리 규칙(INV-C4·S2·S5)을
  * 실제 서버 없이 확인할 수 있다. 이 파일 자체는 통합 테스트와 실제 수집에서 검증된다.
@@ -255,7 +257,7 @@ export function createIngestPorts(): IngestPorts {
 
     async fetchFeed(source: Source) {
       // 타임아웃이 없으면 소스 하나가 응답을 안 줄 때 Cron 이 통째로 매달린다.
-      const res = await fetch(source.feedUrl, {
+      const res = await fetchPublic(source.feedUrl, {
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         headers: { accept: "application/rss+xml, application/atom+xml, application/xml, text/xml" },
       });
@@ -318,9 +320,8 @@ export function createIngestPorts(): IngestPorts {
     async extractContent(url: string) {
       // 브라우저처럼 보이는 헤더를 준다 — 봇 차단이 흔해서 기본 UA 로는 403 이 많다.
       // (2026-08-09 실측: OpenAI 는 이래도 403 이다. 그건 정상 실패로 둔다 — INV-S5.)
-      const res = await fetch(url, {
+      const res = await fetchPublic(url, {
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        redirect: "follow",
         headers: {
           "user-agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
