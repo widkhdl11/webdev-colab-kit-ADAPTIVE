@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>글이 걸러지는 조건 — 게이트 10개 · signal</title>
+    <!--
+      수집 게이트 지도 (2026-08-15 코드를 읽어 손으로 그린 것).
+
+      ※ 이 파일은 코드에서 생성하지 않는다. 코드를 읽어 자동으로 그려지는 그림과 달라서,
+        코드가 바뀌면 여기는 같이 안 바뀐다. 고칠 때는 아래 대조표의 파일들을 다시 열어 볼 것.
+
+      대조 대상 (게이트 순서대로):
+        1  src/features/ingestion/api/ports.ts        fetchFeed
+        2  src/features/ingestion/lib/parse-feed.ts   parseFeedXml
+        3  src/entities/article/model/ingest-schema.ts parseFeedItem
+        4  src/entities/article/lib/canonical-url.ts  canonicalizeUrl
+        5  src/features/ingestion/lib/run-ingest.ts   dedupeByCanonicalUrl
+        6  src/features/ingestion/lib/run-ingest.ts   MAX_ITEMS_PER_SOURCE
+        7  src/entities/source/model/sources.ts       needsTopicCheck
+        8  src/features/ingestion/lib/run-ingest.ts   filterByTopic / listKnownUrls
+        9  src/features/ingestion/model/prompt-text.ts TOPIC_SCOPE
+           src/features/ingestion/lib/topic-verdict.ts topicVerdict
+        10 src/features/ingestion/api/ports.ts        upsertItems
+
+      보기: 파일을 그냥 더블클릭하면 된다 (바깥에서 아무것도 안 받아온다).
+           브라우저 도구로 검증할 때만 http 로 서빙한다 — Playwright 가 file: 을 막는다:
+             node scripts/preview.mjs --dir projects/signal/docs 4390
+             → http://localhost:4390/pipeline-gates.html
+    -->
+    <style>
+      /* ── 최소 리셋 ── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+      }
+      img,
+      svg {
+        max-width: 100%;
+      }
+
+      /* ── 색 ──
+         signal 의 승인된 토큰을 가져왔다 (src/shared/ui/tokens.css, 2026-08-02 checkpoint).
+         페이지가 어둡고 카드가 밝은 명암, 포인트색은 인디고 하나.
+         의미색 둘만 더했다: 항목이 사라지는 자리(rust) · 판정을 건너뛰는 자리(회색). */
+      :root {
+        --bg: #efeff5;
+        --surface: #f8f8fc;
+        --surface-2: #f3f3f8;
+        --sunken: #e5e5ee;
+        --hairline: #e2e2ec;
+        --rule: #cfcfdd;
+
+        --text: #1f2024;
+        --text2: #4a4e55;
+        --meta: #656a72;
+        /* 코드 면(--sunken)은 카드보다 어두워서 글자색을 따로 둔다 — tokens.css 의 --code-ink 와
+           같은 이유다. 안 나누면 --meta 가 --sunken 위에서 4.35:1 로 떨어진다(2026-08-16 실측). */
+        --code-ink: #33353c;
+        --meta-on-sunken: #585d66;
+
+        --accent: #4f46e5;
+        --accent-soft: #e9e8fb;
+        --accent-ink: #4038c4;
+
+        --drop: #a63c22;
+        --drop-soft: #f9eae5;
+        --skip: #6b6f78;
+        --skip-soft: #eaeaf1;
+
+        --shadow: 0 1px 2px rgba(31, 32, 36, 0.05), 0 4px 10px rgba(31, 32, 36, 0.05);
+
+        --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system,
+          "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #16161c;
+          --surface: #1e1e26;
+          --surface-2: #262630;
+          --sunken: #2c2c37;
+          --hairline: #2f2f3a;
+          --rule: #43434f;
+
+          --text: #e8e8ef;
+          --text2: #c0c3cc;
+          --meta: #969ca7;
+          --code-ink: #dcdfe7;
+          --meta-on-sunken: #9ba1ac;
+
+          --accent: #a5a0f5;
+          --accent-soft: #2e2c50;
+          --accent-ink: #bcb8ff;
+
+          --drop: #f3a288;
+          --drop-soft: #3a2620;
+          --skip: #a2a7b1;
+          --skip-soft: #2b2b34;
+
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+      }
+
+      :root[data-theme="dark"] {
+        --bg: #16161c;
+        --surface: #1e1e26;
+        --surface-2: #262630;
+        --sunken: #2c2c37;
+        --hairline: #2f2f3a;
+        --rule: #43434f;
+
+        --text: #e8e8ef;
+        --text2: #c0c3cc;
+        --meta: #969ca7;
+        --code-ink: #dcdfe7;
+        --meta-on-sunken: #9ba1ac;
+
+        --accent: #a5a0f5;
+        --accent-soft: #2e2c50;
+        --accent-ink: #bcb8ff;
+
+        --drop: #f3a288;
+        --drop-soft: #3a2620;
+        --skip: #a2a7b1;
+        --skip-soft: #2b2b34;
+
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.7;
+        word-break: keep-all;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .wrap {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 56px 22px 96px;
+        display: flex;
+        flex-direction: column;
+        gap: 48px;
+      }
+
+      .masthead {
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: var(--meta);
+      }
+      h1 {
+        font-size: 34px;
+        font-weight: 750;
+        letter-spacing: -0.022em;
+        line-height: 1.24;
+        text-wrap: balance;
+        margin: 0;
+      }
+      .lede {
+        font-size: 16.5px;
+        color: var(--text2);
+        max-width: 64ch;
+        margin: 0;
+      }
+
+      section {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      h2 {
+        font-size: 21px;
+        font-weight: 700;
+        letter-spacing: -0.014em;
+        margin: 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      p {
+        margin: 0;
+        max-width: 68ch;
+      }
+      .muted {
+        color: var(--text2);
+      }
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.885em;
+        background: var(--sunken);
+        /* 색을 물려받지 않는다 — 물려받으면 --meta 인 문단 안에서 4.35:1 로 떨어진다. */
+        color: var(--code-ink);
+        padding: 1.5px 5px;
+        border-radius: 6px;
+        word-break: break-all;
+      }
+      strong {
+        font-weight: 680;
+      }
+
+      /* ── 그림 ── */
+      figure {
+        margin: 0;
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+        padding: 20px 18px 14px;
+        box-shadow: var(--shadow);
+        overflow-x: auto;
+      }
+      figure svg {
+        display: block;
+        width: 100%;
+        min-width: 720px;
+        height: auto;
+        color: var(--text);
+        font-family: var(--font-sans);
+      }
+      figcaption {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--hairline);
+        font-size: 13px;
+        color: var(--meta);
+        line-height: 1.6;
+        min-width: 720px;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 20px;
+      }
+      .legend i {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-style: normal;
+        color: var(--text2);
+      }
+      .swatch {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        flex: none;
+      }
+      .swatch.drop {
+        background: var(--drop);
+      }
+      .swatch.skip {
+        background: var(--skip);
+      }
+      .swatch.merge {
+        background: var(--accent);
+      }
+
+      svg .spine {
+        stroke: currentColor;
+        stroke-width: 1.5;
+        opacity: 0.25;
+      }
+      svg .grpline {
+        stroke: currentColor;
+        stroke-width: 1;
+        opacity: 0.18;
+      }
+      svg .cond {
+        fill: var(--sunken);
+        stroke: none;
+      }
+      svg .n-drop {
+        fill: var(--drop);
+      }
+      svg .n-skip {
+        fill: var(--skip);
+      }
+      svg .n-merge {
+        fill: var(--accent);
+      }
+      svg .arm-drop {
+        stroke: var(--drop);
+        stroke-width: 1.4;
+        fill: none;
+      }
+      svg .arm-skip {
+        stroke: var(--skip);
+        stroke-width: 1.4;
+        fill: none;
+        opacity: 0.75;
+      }
+      svg .arm-merge {
+        stroke: var(--accent);
+        stroke-width: 1.4;
+        fill: none;
+      }
+      svg .t-grp {
+        fill: var(--meta);
+        font-size: 10.5px;
+        letter-spacing: 0.11em;
+      }
+      svg .t-name {
+        fill: currentColor;
+        font-size: 13px;
+        font-weight: 650;
+      }
+      svg .t-file {
+        fill: var(--meta);
+        font-size: 10.5px;
+        font-family: var(--font-mono);
+      }
+      svg .t-cond {
+        fill: currentColor;
+        font-size: 11.5px;
+        font-family: var(--font-mono);
+      }
+      svg .t-out-drop {
+        fill: var(--drop);
+        font-size: 12px;
+        font-weight: 650;
+      }
+      svg .t-out-skip {
+        fill: var(--skip);
+        font-size: 12px;
+        font-weight: 650;
+      }
+      svg .t-out-merge {
+        fill: var(--accent-ink);
+        font-size: 12px;
+        font-weight: 650;
+      }
+      svg .t-out-sub {
+        fill: var(--meta);
+        font-size: 10.5px;
+      }
+      svg .t-num {
+        fill: var(--surface);
+        font-size: 10px;
+        font-weight: 700;
+        font-family: var(--font-mono);
+      }
+      svg #a-drop path {
+        fill: var(--drop);
+      }
+      svg #a-skip path {
+        fill: var(--skip);
+      }
+      svg #a-merge path {
+        fill: var(--accent);
+      }
+
+      /* ── 상세 ── */
+      .gates {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        background: var(--hairline);
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .gate {
+        background: var(--surface);
+        padding: 17px 19px;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .gate .top {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .gate .no {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--surface);
+        background: var(--drop);
+        border-radius: 999px;
+        width: 19px;
+        height: 19px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        align-self: center;
+      }
+      .gate.skip .no {
+        background: var(--skip);
+      }
+      .gate.merge .no {
+        background: var(--accent);
+      }
+      .gate .nm {
+        font-size: 15px;
+        font-weight: 680;
+      }
+      .gate .fp {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--meta);
+        word-break: break-all;
+      }
+      pre {
+        margin: 0;
+        background: var(--sunken);
+        border-radius: 8px;
+        padding: 11px 13px;
+        overflow-x: auto;
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        line-height: 1.62;
+        color: var(--text);
+      }
+      pre .cmt {
+        color: var(--meta-on-sunken);
+      }
+      .outs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 22px;
+        font-size: 13px;
+      }
+      .out {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .out b {
+        font-size: 11px;
+        font-family: var(--font-mono);
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        flex: none;
+      }
+      .out.fail b {
+        color: var(--drop);
+      }
+      .out.pass b {
+        color: var(--accent-ink);
+      }
+      .out span {
+        color: var(--text2);
+      }
+
+      .callout {
+        border: 1px solid var(--rule);
+        background: var(--surface-2);
+        border-radius: 12px;
+        padding: 17px 19px;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+      .callout .label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--meta);
+        font-weight: 600;
+      }
+      .callout p {
+        color: var(--text2);
+        font-size: 14px;
+      }
+
+      .note {
+        font-size: 13px;
+        color: var(--meta);
+        border-top: 1px solid var(--rule);
+        padding-top: 18px;
+        max-width: 70ch;
+      }
+
+      @media (max-width: 600px) {
+        h1 {
+          font-size: 27px;
+        }
+        .wrap {
+          padding: 40px 16px 72px;
+          gap: 40px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="masthead">
+        <div class="eyebrow">projects / signal · 2026-08-15 코드 기준</div>
+        <h1>글이 걸러지는 조건 — 게이트 10개</h1>
+        <p class="lede">
+          RSS 항목 하나가 DB에 앉기까지 열 번 판정을 받는다. 그중 <strong>모델이 답하는 건 아홉
+          번째 하나뿐</strong>이고, 나머지 아홉은 전부 코드에 적힌 조건이다.
+        </p>
+      </header>
+
+      <section>
+        <figure>
+          <svg
+            viewBox="0 0 800 968"
+            role="img"
+            aria-label="수집 게이트 열 개. 피드 읽기 단계에서 HTTP 응답과 XML 파싱, 항목 검증 단계에서 제목과 주소, 목록 다듬기 단계에서 배치 내 중복과 소스당 50건 상한, 선별 판정 단계에서 소스 설정과 이미 아는 주소와 모델 판정, 적재 단계에서 DB 유일성이 각각 조건을 건다. 각 게이트마다 파일과 조건과 탈락 시 결과가 붙어 있다."
+          >
+            <defs>
+              <marker id="a-drop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" />
+              </marker>
+              <marker id="a-skip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" />
+              </marker>
+              <marker id="a-merge" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" />
+              </marker>
+            </defs>
+
+            <line class="spine" x1="40" y1="66" x2="40" y2="904" />
+
+            <!-- ── A. 피드를 읽는다 ── -->
+            <text class="t-grp" x="64" y="26">A · 피드를 읽는다 — 소스 단위로 실패한다</text>
+            <line class="grpline" x1="64" y1="34" x2="790" y2="34" />
+
+            <circle class="n-drop" cx="40" cy="66" r="10" />
+            <text class="t-num" x="40" y="70" text-anchor="middle">1</text>
+            <text class="t-name" x="64" y="58">HTTP 응답</text>
+            <text class="t-file" x="64" y="74">ingestion/api/ports.ts › fetchFeed</text>
+            <rect class="cond" x="64" y="82" width="404" height="24" rx="6" />
+            <text class="t-cond" x="74" y="99">!res.ok · 15초 초과 · 2MB 초과</text>
+            <line class="arm-drop" x1="476" y1="94" x2="520" y2="94" marker-end="url(#a-drop)" />
+            <text class="t-out-drop" x="530" y="90">그 소스가 통째로 빈다</text>
+            <text class="t-out-sub" x="530" y="105">error 칸에 남는다 · 나머지 13곳은 계속</text>
+
+            <circle class="n-drop" cx="40" cy="144" r="10" />
+            <text class="t-num" x="40" y="148" text-anchor="middle">2</text>
+            <text class="t-name" x="64" y="136">XML 파싱</text>
+            <text class="t-file" x="64" y="152">ingestion/lib/parse-feed.ts › parseFeedXml</text>
+            <rect class="cond" x="64" y="160" width="404" height="24" rx="6" />
+            <text class="t-cond" x="74" y="177">parser.parse(xml) 가 던지면 return []</text>
+            <line class="arm-drop" x1="476" y1="172" x2="520" y2="172" marker-end="url(#a-drop)" />
+            <text class="t-out-drop" x="530" y="168">그 소스가 0건</text>
+            <text class="t-out-sub" x="530" y="183">실패로 안 잡힌다 — 조용한 0건</text>
+
+            <!-- ── B. 항목을 검증한다 ── -->
+            <text class="t-grp" x="64" y="216">B · 항목을 검증한다 — 여기가 신뢰 경계다</text>
+            <line class="grpline" x1="64" y1="224" x2="790" y2="224" />
+
+            <circle class="n-drop" cx="40" cy="256" r="10" />
+            <text class="t-num" x="40" y="260" text-anchor="middle">3</text>
+            <text class="t-name" x="64" y="248">제목</text>
+            <text class="t-file" x="64" y="264">entities/article/model/ingest-schema.ts › parseFeedItem</text>
+            <rect class="cond" x="64" y="272" width="404" height="24" rx="6" />
+            <text class="t-cond" x="74" y="289">title.trim() === "" → return null</text>
+            <line class="arm-drop" x1="476" y1="284" x2="520" y2="284" marker-end="url(#a-drop)" />
+            <text class="t-out-drop" x="530" y="280">버린다</text>
+            <text class="t-out-sub" x="530" y="295">dropped 숫자만 · 어떤 글인지는 안 남는다</text>
+
+            <circle class="n-drop" cx="40" cy="334" r="10" />
+            <text class="t-num" x="40" y="338" text-anchor="middle">4</text>
+            <text class="t-name" x="64" y="326">원문 주소</text>
+            <text class="t-file" x="64" y="342">entities/article/lib/canonical-url.ts › canonicalizeUrl</text>
+            <rect class="cond" x="64" y="350" width="404" height="24" rx="6" />
+            <text class="t-cond" x="74" y="367">스킴 ≠ http/https · new URL() 실패 · host 빔</text>
+            <line class="arm-drop" x1="476" y1="362" x2="520" y2="362" marker-end="url(#a-drop)" />
+            <text class="t-out-drop" x="530" y="358">버린다</text>
+            <text class="t-out-sub" x="530" y="373">유일성 키가 없으면 중복 판정이 불가능하다</text>
+
+            <!-- ── C. 목록을 다듬는다 ── -->
+            <text class="t-grp" x="64" y="406">C · 목록을 다듬는다 — 아무 숫자도 안 남는 구간</text>
+            <line class="grpline" x1="64" y1="414" x2="790" y2="414" />
+
+            <circle class="n-drop" cx="40" cy="446" r="10" />
+            <text class="t-num" x="40" y="450" text-anchor="middle">5</text>
+            <text class="t-name" x="64" y="438">배치 안 중복</text>
+            <text class="t-file" x="64" y="454">ingestion/lib/run-ingest.ts › dedupeByCanonicalUrl</text>
+            <rect class="cond" x="64" y="462" width="404" height="24" rx="6" />
+            <text class="t-cond" x="74" y="479">Map.set(url, item) — 같은 키면 뒤가 앞을 덮음</text>
+            <line class="arm-drop" x1="476" y1="474" x2="520" y2="474" marker-end="url(#a-drop)" />
+            <text class="t-out-drop" x="530" y="470">앞엣것이 사라진다</text>
+            <text class="t-out-sub" x="530" y="485">안 센다</text>
+
+            <circle class="n-drop" cx="40" cy="524" r="10" />
+            <text class="t-num" x="40" y="528" text-anchor="middle">6</text>
+            <text class="t-name" x="64" y="516">소스당 상한</text>
+            <text class="t-file" x="64" y="532">run-ingest.ts › MAX_ITEMS_PER_SOURCE = 50</text>
+            <rect class="cond" x="64" y="540" width="404" height="24" rx="6" />
+            <text class="t-cond" x="74" y="557">발행시각 내림차순 → .slice(0, 50)</text>
+            <line class="arm-drop" x1="476" y1="552" x2="520" y2="552" marker-end="url(#a-drop)" />
+            <text class="t-out-drop" x="530" y="548">51번째부터 잘린다</text>
+            <text class="t-out-sub" x="530" y="563">안 센다</text>
+
+            <!-- ── D. 선별 판정 ── -->
+            <text class="t-grp" x="64" y="596">D · 선별 판정 — 세 번 갈린 뒤에야 모델을 부른다</text>
+            <line class="grpline" x1="64" y1="604" x2="790" y2="604" />
+
+            <circle class="n-skip" cx="40" cy="636" r="10" />
+            <text class="t-num" x="40" y="640" text-anchor="middle">7</text>
+            <text class="t-name" x="64" y="628">소스 설정</text>
+            <text class="t-file" x="64" y="644">entities/source/model/sources.ts › needsTopicCheck</text>
+            <rect class="cond" x="64" y="652" width="404" height="24" rx="6" />
+            <text class="t-cond" x="74" y="669">needsTopicCheck === false → 호출 자체를 안 함</text>
+            <line class="arm-skip" x1="476" y1="664" x2="520" y2="664" marker-end="url(#a-skip)" />
+            <text class="t-out-skip" x="530" y="660">판정 없이 전부 통과</text>
+            <text class="t-out-sub" x="530" y="675">notChecked · 지금은 14곳 전부 true</text>
+
+            <circle class="n-skip" cx="40" cy="714" r="10" />
+            <text class="t-num" x="40" y="718" text-anchor="middle">8</text>
+            <text class="t-name" x="64" y="706">이미 아는 주소</text>
+            <text class="t-file" x="64" y="722">run-ingest.ts › filterByTopic + ports.listKnownUrls</text>
+            <rect class="cond" x="64" y="730" width="404" height="24" rx="6" />
+            <text class="t-cond" x="74" y="747">known.has(item.canonicalUrl)</text>
+            <line class="arm-skip" x1="476" y1="742" x2="520" y2="742" marker-end="url(#a-skip)" />
+            <text class="t-out-skip" x="530" y="738">판정 없이 통과</text>
+            <text class="t-out-sub" x="530" y="753">alreadyKnown · 264초 → 13.3초를 만든 자리</text>
+
+            <circle class="n-drop" cx="40" cy="792" r="10" />
+            <text class="t-num" x="40" y="796" text-anchor="middle">9</text>
+            <text class="t-name" x="64" y="784">모델 판정 — 유일하게 모델이 답한다</text>
+            <text class="t-file" x="64" y="800">model/prompt-text.ts › TOPIC_SCOPE + lib/topic-verdict.ts</text>
+            <rect class="cond" x="64" y="808" width="404" height="24" rx="6" />
+            <text class="t-cond" x="74" y="825">첫 낱말 no → off · yes → on · 그 외 → unjudged</text>
+            <line class="arm-drop" x1="476" y1="820" x2="520" y2="820" marker-end="url(#a-drop)" />
+            <text class="t-out-drop" x="530" y="816">off 일 때만 버린다</text>
+            <text class="t-out-sub" x="530" y="831">filtered + 제목까지 남는다 · unjudged 는 통과</text>
+
+            <!-- ── E. 적재 ── -->
+            <text class="t-grp" x="64" y="864">E · 적재 — 여기서는 버리지 않는다</text>
+            <line class="grpline" x1="64" y1="872" x2="790" y2="872" />
+
+            <circle class="n-merge" cx="40" cy="904" r="10" />
+            <text class="t-num" x="40" y="908" text-anchor="middle">10</text>
+            <text class="t-name" x="64" y="896">DB 유일성</text>
+            <text class="t-file" x="64" y="912">ingestion/api/ports.ts › upsertItems</text>
+            <rect class="cond" x="64" y="920" width="404" height="24" rx="6" />
+            <text class="t-cond" x="74" y="937">upsert(rows, { onConflict: "canonical_url" })</text>
+            <line class="arm-merge" x1="476" y1="932" x2="520" y2="932" marker-end="url(#a-merge)" />
+            <text class="t-out-merge" x="530" y="928">덮어쓴다</text>
+            <text class="t-out-sub" x="530" y="943">빈 값인 칸은 빼고 보내 기존 본문을 지킨다</text>
+          </svg>
+
+          <figcaption>
+            <div class="legend">
+              <i><span class="swatch drop"></span>항목이 사라진다</i>
+              <i><span class="swatch skip"></span>통과하지만 판정을 건너뛴다</i>
+              <i><span class="swatch merge"></span>버리지 않고 합친다</i>
+            </div>
+          </figcaption>
+        </figure>
+      </section>
+
+      <section>
+        <h2>조건 그대로</h2>
+        <p class="muted">위 그림의 조건을 줄인 것 없이 옮겼다. 주석은 코드에 있는 그대로다.</p>
+
+        <div class="gates">
+          <div class="gate">
+            <div class="top">
+              <span class="no">1</span>
+              <span class="nm">HTTP 응답</span>
+              <span class="fp">features/ingestion/api/ports.ts › fetchFeed</span>
+            </div>
+            <pre>const res = await fetch(source.feedUrl, {
+  signal: AbortSignal.timeout(15_000),
+  headers: { accept: "application/rss+xml, …" },
+});
+if (!res.ok) throw new Error(`HTTP ${res.status}`);
+return parseFeedXml(await readTextCapped(res));  <span class="cmt">// 2MB 넘으면 던진다</span></pre>
+            <div class="outs">
+              <div class="out fail"><b>탈락</b><span>그 소스가 통째로 빈다. 리포트 <code>error</code> 칸에 이유가 남고 나머지 13곳은 계속 돈다.</span></div>
+            </div>
+          </div>
+
+          <div class="gate">
+            <div class="top">
+              <span class="no">2</span>
+              <span class="nm">XML 파싱</span>
+              <span class="fp">features/ingestion/lib/parse-feed.ts › parseFeedXml</span>
+            </div>
+            <pre>try {
+  doc = parser.parse(xml);
+} catch {
+  return [];        <span class="cmt">// 던지지 않는다 — 소스 격리가 여기서 무너지면 안 된다</span>
+}</pre>
+            <div class="outs">
+              <div class="out fail"><b>탈락</b><span>그 소스의 항목이 0건이 된다. <strong>실패로는 안 잡힌다</strong> — 새 글이 없는 날과 구별되지 않는다.</span></div>
+            </div>
+          </div>
+
+          <div class="gate">
+            <div class="top">
+              <span class="no">3</span>
+              <span class="nm">제목</span>
+              <span class="fp">entities/article/model/ingest-schema.ts › parseFeedItem</span>
+            </div>
+            <pre>const title = asString(parsed.data.title).trim();
+if (title === "") return null;</pre>
+            <div class="outs">
+              <div class="out fail"><b>탈락</b><span>버린다. 예외를 던지지 않는다 — 한 항목 때문에 그 소스 수집이 죽으면 안 된다.</span></div>
+            </div>
+          </div>
+
+          <div class="gate">
+            <div class="top">
+              <span class="no">4</span>
+              <span class="nm">원문 주소</span>
+              <span class="fp">entities/article/lib/canonical-url.ts › canonicalizeUrl</span>
+            </div>
+            <pre>const scheme = urlScheme(cleanUrlInput(raw));
+if (scheme === null || !["http", "https"].includes(scheme)) return null;
+try { url = new URL(cleaned); } catch { return null; }
+if (url.hostname === "") return null;
+
+<span class="cmt">// 통과하면 정규화한다 — hash 제거 · utm_* 등 추적 파라미터 제거</span>
+<span class="cmt">// · 트레일링 슬래시 정리(루트는 남김) · 파라미터 없으면 물음표까지 제거</span></pre>
+            <div class="outs">
+              <div class="out fail"><b>탈락</b><span>버린다. 이 값이 DB의 유일성 키라, 못 만들면 중복 판정 자체가 불가능하다.</span></div>
+              <div class="out pass"><b>통과</b><span>원본 주소는 따로 보존한다 — 파라미터를 지운 주소가 404인 출처가 있다.</span></div>
+            </div>
+          </div>
+
+          <div class="gate">
+            <div class="top">
+              <span class="no">5</span>
+              <span class="nm">배치 안 중복</span>
+              <span class="fp">features/ingestion/lib/run-ingest.ts › dedupeByCanonicalUrl</span>
+            </div>
+            <pre>const byUrl = new Map&lt;string, FeedItemDraft&gt;();
+for (const item of items) byUrl.set(item.canonicalUrl, item);
+return [...byUrl.values()];   <span class="cmt">// 뒤에 온 것이 최신이므로 뒤를 남긴다</span></pre>
+            <div class="outs">
+              <div class="out fail"><b>탈락</b><span>앞엣것이 조용히 사라진다. <strong>안 센다.</strong></span></div>
+            </div>
+          </div>
+
+          <div class="gate">
+            <div class="top">
+              <span class="no">6</span>
+              <span class="nm">소스당 상한</span>
+              <span class="fp">run-ingest.ts › MAX_ITEMS_PER_SOURCE = 50</span>
+            </div>
+            <pre>dedupeByCanonicalUrl(drafts)
+  .sort((a, b) =&gt; Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+  .slice(0, MAX_ITEMS_PER_SOURCE);</pre>
+            <div class="outs">
+              <div class="out fail"><b>탈락</b><span>51번째부터. <strong>안 센다.</strong> OpenAI 피드가 아카이브 1,115건을 통째로 주기 때문에 있는 상한이다.</span></div>
+            </div>
+          </div>
+
+          <div class="gate skip">
+            <div class="top">
+              <span class="no">7</span>
+              <span class="nm">소스 설정</span>
+              <span class="fp">entities/source/model/sources.ts › needsTopicCheck</span>
+            </div>
+            <pre>if (!needsTopicCheck) {
+  return { kept: items, report: { …, notChecked: items.length } };
+}</pre>
+            <div class="outs">
+              <div class="out pass"><b>통과</b><span>판정 없이 전부 통과시키고 건수를 <code>notChecked</code> 로 남긴다. <strong>지금은 14곳 전부 true</strong>라 이 경로가 안 돈다.</span></div>
+            </div>
+          </div>
+
+          <div class="gate skip">
+            <div class="top">
+              <span class="no">8</span>
+              <span class="nm">이미 아는 주소</span>
+              <span class="fp">run-ingest.ts › filterByTopic · ports.ts › listKnownUrls</span>
+            </div>
+            <pre>let known = new Set&lt;string&gt;();
+try {
+  known = new Set(await ports.listKnownUrls(items.map(i =&gt; i.canonicalUrl)));
+} catch {
+  known = new Set();      <span class="cmt">// 조회 실패 시 전부 새 항목으로 본다</span>
+}
+
+if (known.has(item.canonicalUrl)) {
+  alreadyKnown += 1;
+  decisions[at] = true;   <span class="cmt">// 판정은 건너뛰지만 적재는 한다</span>
+  return;
+}</pre>
+            <div class="outs">
+              <div class="out pass"><b>통과</b><span>이미 적재된 글은 주제 밖으로 나와도 DB에서 사라지지 않으니, 물으면 요금만 나간다. 이 한 줄이 판정 264초를 13.3초로 줄였다.</span></div>
+            </div>
+          </div>
+
+          <div class="gate">
+            <div class="top">
+              <span class="no">9</span>
+              <span class="nm">모델 판정</span>
+              <span class="fp">model/prompt-text.ts › TOPIC_SCOPE · lib/topic-verdict.ts › topicVerdict</span>
+            </div>
+            <pre><span class="cmt">// 모델에 보내는 것: 제목만. 본문도 요약글도 안 보낸다.</span>
+<span class="cmt">// 기준(TOPIC_SCOPE): 두 가지를 모두 만족해야 통과</span>
+<span class="cmt">//   ① 소재 — AI·IT 소식인가</span>
+<span class="cmt">//   ② 쓸모 — 읽고 나서 쓸 것이 남는가</span>
+<span class="cmt">//   둘 다 따져도 판단이 서지 않으면 통과시킨다</span>
+
+if (res.stopReason === "max_tokens") return "unjudged";
+const first = res.text.trim().toLowerCase().split(/[^a-z]+/).filter(Boolean)[0];
+if (first === "no")  return "off";       <span class="cmt">// ← 여기서만 버린다</span>
+if (first === "yes") return "on";
+return "unjudged";                        <span class="cmt">// 형식이 깨진 응답도 통과 쪽</span></pre>
+            <div class="outs">
+              <div class="out fail"><b>탈락</b><span><code>off</code> 일 때만. <code>filtered</code> 숫자와 <strong>제목까지</strong> 리포트에 남는다.</span></div>
+              <div class="out pass"><b>통과</b><span><code>unjudged</code> 와 호출 예외는 통과시키고 <code>failedOpen</code> 으로 따로 센다 — 모르면 안 거른다.</span></div>
+            </div>
+          </div>
+
+          <div class="gate merge">
+            <div class="top">
+              <span class="no">10</span>
+              <span class="nm">DB 유일성</span>
+              <span class="fp">features/ingestion/api/ports.ts › upsertItems</span>
+            </div>
+            <pre>db.from("item").upsert(batch, { onConflict: "canonical_url" })</pre>
+            <div class="outs">
+              <div class="out pass"><b>합침</b><span>같은 주소면 새 행을 안 만들고 덮어쓴다. 빈 값인 칸은 아예 빼고 보내서, 재수집이 직전 주기에 채운 본문을 지우지 않게 한다.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>기준을 바꾸고 싶을 때</h2>
+        <div class="callout">
+          <span class="label">features/ingestion/model/prompt-text.ts › TOPIC_SCOPE</span>
+          <p>
+            게이트 9의 기준 문장은 여기 하나다. <code>build-topic-prompt.ts</code>(조립)와
+            <code>topic-verdict.ts</code>(응답 읽기)는 안 건드려도 된다. 스펙의 "열린 값"이라
+            이 문장을 고쳐도 INV-F1~F4 는 안 바뀐다 — 재승인 절차가 안 붙는다.
+          </p>
+          <p>
+            고친 뒤에는 <code>npm run check:topic</code> 으로 <strong>사용자가 직접 판정한 11건</strong>이
+            그대로 갈리는지 실제 모델에 물어본다. 유닛 테스트는 기준의 옳고 그름을 못 잡는다.
+            오판이 나오면 그 제목을 <code>scripts/check-topic.ts</code> 의 목록에 추가한다 —
+            목록이 늘수록 다음 수정이 안전해진다.
+          </p>
+          <p>
+            <strong>주의 셋:</strong> ① 판정은 제목만 본다 — 제목에 신호가 없는 글은 문장을
+            아무리 고쳐도 못 가른다. ② 이미 적재된 글은 게이트 8이 판정에서 빼므로
+            <strong>앞으로 오는 글에만</strong> 적용된다. ③ <code>TOPIC_SCOPE</code> 안에
+            줄바꿈을 넣지 않는다 — 조립이 지시를 <code>\n</code> 으로 나누므로 뒤 문장이 별개
+            지시처럼 읽힌다.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2>덧붙임 — 항목이 아니라 태그가 걸러지는 자리</h2>
+        <div class="callout">
+          <span class="label">ports.ts › attachTagsBatch</span>
+          <p>
+            <code>ARTICLE_TAGS.includes(t)</code> — 고정 5개
+            (<code>모델 · 에이전트 · MCP · 엔지니어링 · 툴</code>) 목록 밖 이름은 조용히 버려진다.
+            규칙으로 붙인 태그와 모델이 고른 태그가 <strong>둘 다</strong> 이 필터를 거친다.
+            뱃지 키워드가 아직 DB에 안 들어가는 이유가 이 한 줄이다.
+          </p>
+        </div>
+      </section>
+
+      <p class="note">
+        게이트 1~10은 <strong>항목이 DB에 앉기 전</strong>의 조건이다. 그 뒤 본문 추출·요약은 거르는
+        게 아니라 <strong>순서를 정하는</strong> 단계라 여기 넣지 않았다 — 거기서 빠진 항목은
+        버려지는 게 아니라 다음 주기로 밀린다.
+      </p>
+
+      <p class="note">
+        이 파일은 2026-08-15 의 코드를 읽어 <strong>손으로</strong> 그린 것이라, 코드가 바뀌면 같이
+        안 바뀐다. 대조할 파일 목록은 이 파일 <code>&lt;head&gt;</code> 의 주석에 있다.
+      </p>
+    </div>
+  </body>
+</html>
