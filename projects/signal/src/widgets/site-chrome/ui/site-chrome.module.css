@@ -1,0 +1,50 @@
+/* 상단 헤더는 아주 얇게. 네비 메뉴는 두지 않는다(2페이지짜리 개인용). */
+
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.topInner {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-10);
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--space-14) var(--space-20);
+}
+
+.logo {
+  font-size: var(--fs-logo);
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* 포인트색이 닿는 유일한 헤더 요소 */
+.logoDot {
+  color: var(--accent);
+}
+
+.tagline {
+  font-size: var(--fs-ui);
+  color: var(--meta);
+}
+
+.footer {
+  border-top: 1px solid var(--hairline);
+  padding: 18px 0 40px;
+  font-size: var(--fs-meta);
+  color: var(--meta);
+}
+
+.footerInner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--space-20);
+}

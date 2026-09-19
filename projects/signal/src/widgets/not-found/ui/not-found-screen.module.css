@@ -1,0 +1,29 @@
+/* 404. design-rules 의 빈 상태 언어를 그대로 물려받는다 —
+   문장 한 줄 · 메타색 · 중앙 정렬 · 넉넉한 위아래 여백. 일러스트나 큰 숫자는 두지 않는다.
+   (풍부한 오류 화면은 design-rules "아직 안 정한 것"에 남아 있다. 여기서 발명하지 않는다) */
+
+.wrap {
+  max-width: var(--readw);
+  margin: 0 auto;
+  padding: 0 var(--space-20) 56px;
+  text-align: center;
+}
+
+.message {
+  margin: 56px 0 var(--space-20);
+  font-size: var(--fs-body);
+  color: var(--meta);
+  word-break: keep-all;
+}
+
+.back {
+  display: inline-block;
+  font-size: var(--fs-ui);
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.back:hover {
+  text-decoration: underline;
+}

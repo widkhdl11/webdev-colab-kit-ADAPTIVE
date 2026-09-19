@@ -1,0 +1,161 @@
+/* 개발자용 파이프라인 대시보드. 시각 방향을 새로 잡지 않는다(2026-08-17 결정) —
+   기존 토큰만 쓰는 최소 표/리스트다. 색·라운드·그림자는 하드코딩하지 않는다. */
+
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--space-28) var(--space-20);
+}
+
+.pageHead h1 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-h1);
+  font-weight: 700;
+}
+
+.pageHead p {
+  margin: 0 0 var(--space-20);
+  font-size: var(--fs-ui);
+  color: var(--meta);
+}
+
+.budgetDetail {
+  margin: 0 0 var(--space-20);
+  font-size: var(--fs-xs);
+  color: var(--meta);
+}
+
+.empty {
+  color: var(--meta);
+  font-size: var(--fs-body);
+  text-align: center;
+  padding: 56px var(--space-20);
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-12);
+  margin-bottom: var(--space-28);
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: var(--space-12) var(--space-14);
+}
+
+.stat dt {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-xs);
+  color: var(--meta);
+}
+
+.stat dd {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.statSub {
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--meta);
+}
+
+/* --accent 는 이 사이트에서 "활성·링크·뜨는 중"으로 이미 뜻이 정해진 색이다(design-rules.md).
+   경고·오류에 재사용하면 뜻이 화면마다 달라진다 — 색이 아니라 굵기로만 표시한다. */
+.warn {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+  margin-bottom: var(--space-28);
+}
+
+.table caption {
+  text-align: left;
+  font-size: var(--fs-ui);
+  font-weight: 700;
+  margin-bottom: var(--space-12);
+  color: var(--text);
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--space-8) var(--space-12);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.table th {
+  color: var(--meta);
+  font-weight: 600;
+}
+
+.table tr.selected {
+  background: var(--accent-soft);
+}
+
+.table a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.table a:hover {
+  text-decoration: underline;
+}
+
+.errorCell {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.drilldown h2 {
+  font-size: var(--fs-prose-h2);
+  margin: 0 0 var(--space-12);
+}
+
+.itemList {
+  list-style: none;
+  margin: 0 0 var(--space-20);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.itemList li {
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+}
+
+/* Tailwind preflight 가 a 의 color·text-decoration 을 inherit 로 리셋한다 — .table a 와
+   같은 규칙을 안 주면 이 링크는 일반 텍스트처럼 보인다(2026-08-17 리뷰). */
+.itemList a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.itemList a:hover {
+  text-decoration: underline;
+}
+
+.itemMeta {
+  color: var(--meta);
+  font-size: var(--fs-xs);
+}
+
+.filteredTitles {
+  margin: 0;
+  padding-left: var(--space-20);
+  color: var(--text2);
+  font-size: var(--fs-sm);
+}
