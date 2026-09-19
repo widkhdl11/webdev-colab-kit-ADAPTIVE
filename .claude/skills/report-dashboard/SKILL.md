@@ -47,7 +47,8 @@ node scripts/report-request.mjs --finish 완료
   없으면 생략하고, 화면은 「기록 없음」으로 그린다.
 - `--spec` 을 주면 항목이 그 스펙의 **불변식**에서 자동으로 온다.
 - **`--items` 의 순서가 곧 작업 순서다.** 화면의 단계 띠가 이 순서를 그대로 그린다. 시작할 때
-  순서를 정해 적고, 확신이 없으면 질문 목록에 올리되 기록은 한다 — 순서 없는 기록은 없다.
+  순서를 어떻게 잡을지는 되돌리기 싼 결정이라 물어서 정하지 않는다 — 정해서 적는다.
+  순서 없는 기록은 없다.
   시작 후 재배열은 항목 추가와 똑같이 거부된다.
 - **시작 후 항목은 못 바꾼다.** 새로 생긴 일은 항목이 아니라 전환의 `--item` 에 적고,
   그러면 화면이 「요청 밖 작업」으로 분류한다. 나간 것을 목록에 넣으면 안 나간 것이 되므로,
@@ -113,6 +114,26 @@ node scripts/report-note.mjs --off-graph "킷 스크립트 수정" --task <식�
 `--now` 는 **80자 이내 한 줄**이다. 산문 보고를 쓰는 자리가 아니다 — 넘으면 기록이 거부된다.
 `--result` 는 task 가 끝나는 전환에만 채운다(`통과`·`반려`·`실패`). 그 외에는 비운다.
 
+## escalate 등급 결정에는 결정 카드를 같이 쓴다
+
+되돌리기 비싼 결정(스펙 승인·사인오프·범위 결정·새 시각 방향)을 채팅으로 올릴 때,
+**같은 턴에** 결정 카드와 근거 본문을 같이 기록한다. 등급의 정의는
+`docs/references/decision-layer.md` 2절에 있다:
+
+```
+node scripts/report-decision.mjs --ask --id <사이클id-d연번> --task <식별자> \
+  --options "착수해|아니" --what "…" --why "…" --visible "…" --risk "…" \
+  --not-doing "…" [--also-fixing "…"] --done-when "문장1|문장2" \
+  --details-ref "…" --detail-file <근거 본문 md>
+node scripts/report-note.mjs --blocker "<같은 id>=<무엇을>" --node … --task … --now "…"
+```
+
+답이 오면 같은 턴에 `--answer "<사람이 고른 말>"` 로 닫고 `--clear-blockers` 로 대기를 푼다.
+
+칸을 채우는 말은 **사용자 말이어야 한다** — 파일 경로·규칙 번호·단계 이름·라이브러리 이름은
+카드에 안 쓰고 근거 본문에만 쓴다. 기계가 판정하므로 어기면 기록이 거부된다.
+사소한 판단은 카드 없이 그냥 진행한다. 규약: `docs/references/report-contract.md` 12절.
+
 ## 설치 절차
 
 0. **slug 확인** — 인자로 받거나 루트 `ACTIVE` 를 읽는다. `projects/<slug>/` 가 없으면 멈추고 묻는다.
@@ -124,13 +145,17 @@ node scripts/report-note.mjs --off-graph "킷 스크립트 수정" --task <식�
 2'. **임계값 파일** — `projects/<slug>/report/config.json` 을 기본값으로 만든다:
    `{ "dwell_threshold_min": 30, "activity_gap_min": 10 }` (뜻은 report-contract 11절).
    없어도 화면은 기본값으로 돌지만, 파일이 있어야 프로젝트가 값을 바꿀 자리를 안다.
+2''. **금지 표현 표** — `assets/decision-vocab.json` 을 `projects/<slug>/report/` 로 복사한다.
+   **이미 있으면 덮지 않는다** — 설치본이 정본이고 사람이 한 줄씩 늘리는 파일이라, 재설치가
+   늘린 줄을 지우면 아무도 다시 안 늘린다. 이 표는 커밋한다.
 3. **2층 초기값** — `state.json` 과 빈 `transitions.jsonl` · `activity.jsonl` 을 만든다.
    빈 파일을 미리 만드는 이유는 첫 전환 전의 `fetch` 가 404 로 화면을 깨뜨리지 않게 하려는 것이다.
    `scripts/report-note.mjs` 의 `seed()` 가 이 일을 한다.
 4. **훅 등록은 사용자에게 넘긴다** — 아래 「훅은 내가 붙이지 않는다」 참고.
 5. **`.gitignore` 에 기록 파일 제외** — `projects/<slug>/report/*.jsonl` 과 `state.json` 은 과정
    기록이라 커밋하지 않는다. `workflow.json` · `index.html` · `render.mjs` · `ui-vocab.mjs` ·
-   `config.json` 은 커밋한다.
+   `config.json` · `decision-vocab.json` 은 커밋한다. `decision.json` 과
+   `decision-detail.md` 는 과정 기록이라 커밋하지 않는다.
 6. **검사** — `node scripts/check-report.mjs --project <slug>` 가 전부 통과해야 끝난 것이다.
 7. **띄워 보기** — `node scripts/report-serve.mjs --project <slug>`
 
@@ -191,7 +216,10 @@ node scripts/report-note.mjs --off-graph "킷 스크립트 수정" --task <식�
 **그럴듯한 화면**이라서 — 노드가 엉뚱한 데서 빛나거나 체류 시간이 조용히 틀리거나 활동 줄이
 그냥 안 쌓인다 — "위반 0건"과 "검사가 안 돌았다"를 눈으로 구별할 수 없다.
 
-## 확신이 없으면 정하지 말고 물어라
+## 규약이 없는 자리는 등급으로 가른다
 
-설치 중에 규약이 안 정해진 자리를 만나면 임의로 정하지 말고 질문 목록에 올린다. 이 화면은
-사람이 보고 대신 믿는 물건이라, 틀린 채로 돌아가면 틀렸다는 사실 자체가 안 보인다.
+설치 중에 규약이 안 정해진 자리를 만나면 되돌리는 비용으로 가른다. 파일 이름·문구·검사 구성처럼
+되돌리기 싼 것은 실무 표준으로 정하고 로그에 남긴다. 화면이 무엇을 말하는지를 바꾸는 것 —
+어느 값을 어느 칸에 넣을지, 무엇을 「요청 밖」으로 볼지 — 은 되돌리기 비싸므로 결정 카드로
+올린다(올려도 나머지 설치는 계속 간다). 이 화면은 사람이 보고 대신 믿는 물건이라, 틀린 채로
+돌아가면 틀렸다는 사실 자체가 안 보인다.

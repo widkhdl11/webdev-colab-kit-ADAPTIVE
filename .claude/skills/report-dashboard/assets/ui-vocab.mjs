@@ -29,6 +29,8 @@ export const LABEL = {
   work_kind: "작업 종류",
   stage: "현재 단계",
   stage_dwell: "이 단계에 머문 시간",
+  // 단계가 없는 작업(제품 파이프라인 밖)에서는 「단계」라고 부를 것이 없다.
+  work_dwell: "이 작업에 머문 시간",
   item_progress: "항목 진행",
   status: "상태",
 
@@ -42,6 +44,18 @@ export const LABEL = {
   dwell: "머문 시간",
   open_request: "열린 요청",
 
+  // B-0 결정 카드 — 왼쪽 열의 말. 예시 카드에서 사용자가 직접 고른 문구다.
+  decide: "결정해 주세요",
+  d_what: "무엇을",
+  d_why: "왜",
+  d_visible: "사용자에게 보이는 변화",
+  d_risk: "위험한 부분과 대비",
+  d_not_doing: "안 하는 것",
+  d_also: "같이 고치는 것",
+  d_done_when: "끝나면 확인할 것",
+  d_details: "자세히",
+  answered: "방금 답한 결정",
+
   // B-6 요약 박스
   goal: "목표",
   request_text: "요청 원문",
@@ -51,12 +65,13 @@ export const LABEL = {
 /** 값 칸에 쓰는 **고정 문구**. 기록에서 실려 오는 값과 달리 이쪽은 렌더가 만드는 말이다. */
 export const TERM = {
   kind_request: "제품 요청",
-  kind_kit: "하네스 수리 (제품 파이프라인에 속하지 않음)",
+  // 들여오기·문서 병합처럼 고치는 일이 아닌 것도 여기 찍힌다 — 「수리」로 부르면 그것들이 빠진다.
+  kind_kit: "제품 파이프라인 밖 작업",
   kind_product: "제품 작업 (열린 요청 없음)",
 
-  // 지도의 「파이프라인 밖」 상자와 피드 줄이 쓰는 이름. 작업 종류 행과 괄호 안이 다른 것은
-  // 행에서는 "왜 단계가 없나"를 설명해야 하고, 상자 안에서는 짧아야 하기 때문이다.
-  box_kit: "하네스 수리 (제품 파이프라인 밖)",
+  // 지도의 상자와 피드 줄이 쓰는 이름. 작업 종류 행과 같은 말을 쓴다 —
+  // 같은 것을 두 이름으로 부르면 화면 안에서 대조가 안 된다.
+  box_kit: "제품 파이프라인 밖 작업",
 
   stage_none: "없음 — 제품 단계가 아니라서",
   strip_none_kit: "제품 파이프라인 밖 작업이라 단계 띠가 없습니다.",
@@ -66,6 +81,9 @@ export const TERM = {
   none: "없음",
   no_record: "기록 없음",
   not_installed: "미설치",
+  // 결정 카드가 열려 있으면 대기 항목의 값은 카드의 「무엇을」과 같은 문장이다.
+  // 같은 화면에서 두 번 읽게 하지 않고, 어디를 보면 되는지만 가리킨다.
+  decision_wait: "결정 카드 답 대기",
   no_open_request: "없음",
   open_request_absent: "없음 — 제품 작업 중",
 
@@ -73,6 +91,9 @@ export const TERM = {
   item_doing: "하는 중",
   item_todo: "아직 안 함",
   item_over: "오래 걸리는 중",
+
+  // 결정 카드 — 답은 화면에서 받지 않는다. 입력칸을 두면 그 순간 화면이 읽기 전용이 아니다.
+  answer_in_chat: "답은 채팅에서 말씀해 주세요",
 
   expand: "펼치기",
   all_idle: "전부 대기",
@@ -117,11 +138,13 @@ export const FMT = {
   idleFor: (min) => `${min}분`,
   /** 특이사항 — 항목이 오래 걸림 */
   overDwell: (item, duration, thresholdMin) => `${item} — ${duration} (기준 ${thresholdMin}분)`,
+  /** 특이사항 — 방금 답한 결정 (다음 결정이 열리거나 24시간이 지나면 사라진다) */
+  answeredDecision: (what, answer) => `${what} — ${answer}`,
   /** 접힌 서브에이전트 절 제목 */
   allIdle: (count) => `${TERM.all_idle} (${count})`,
   /** 피드 줄의 단계 표기 */
   feedStage: (label, dwell) => `${label} 단계 · 머문 시간 ${dwell}`,
-  feedKit: (dwell) => `하네스 수리 · 머문 시간 ${dwell}`,
+  feedKit: (dwell) => `제품 파이프라인 밖 작업 · 머문 시간 ${dwell}`,
   /** 요청 밖 작업 한 줄 — 값 둘이 이어지지만 둘 다 제 라벨을 달고 있다 */
   outsideCount: (count) => `횟수 ${count}회`,
   outsideDuring: (items) => `하던 항목 ${items.join(", ")}`,

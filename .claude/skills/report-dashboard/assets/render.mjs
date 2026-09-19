@@ -393,6 +393,62 @@ function idleMs(activity, until) {
   return last === undefined ? null : until - last;
 }
 
+/** 답한 결정이 특이사항에 남아 있는 시간. 지나면 사라진다. */
+export const ANSWERED_NOTICE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * B-0 「결정 카드」. 열린 결정이 없으면 `null` 이고 화면은 절 자체를 안 그린다.
+ *
+ * 이 절이 「지금」보다 위에 오는 이유는 하나다 — 결정이 열려 있는 동안 사람이 할 일은
+ * 진행 상황을 보는 것이 아니라 답하는 것이다. 아래에 두면 답할 것이 있는데도 화면은
+ * 「지금 하는 일」부터 읽힌다.
+ *
+ * **카드의 문장은 기록에 적힌 그대로 나간다.** 렌더가 줄이거나 고쳐 쓰지 않는다 —
+ * 그것을 하려면 모델을 불러야 하고, 그 순간 화면에 LLM 이 끼어든다.
+ */
+export function decisionCard(data) {
+  const d = data?.decision ?? null;
+  if (!d || d.status !== "대기") return null;
+
+  const rows = [
+    { key: "decide", label: LABEL.decide, value: (d.answer_options ?? []).map((o) => `"${o}"`).join(" 또는 "), fromRecord: true },
+    { key: "d_what", label: LABEL.d_what, value: d.what, fromRecord: true },
+    { key: "d_why", label: LABEL.d_why, value: d.why, fromRecord: true },
+    { key: "d_visible", label: LABEL.d_visible, value: d.visible_change, fromRecord: true },
+    { key: "d_risk", label: LABEL.d_risk, value: d.risk_and_guard, fromRecord: true },
+    { key: "d_not_doing", label: LABEL.d_not_doing, value: d.not_doing, fromRecord: true },
+  ];
+  // 「같이 고치는 것」이 없으면 줄을 안 만든다. 빈칸을 그리면 "없다"와 "안 적었다"가 같아 보인다.
+  if (d.also_fixing !== null && d.also_fixing !== undefined && d.also_fixing !== "") {
+    rows.push({ key: "d_also", label: LABEL.d_also, value: d.also_fixing, fromRecord: true });
+  }
+
+  return {
+    id: d.id,
+    rows,
+    doneWhenLabel: LABEL.d_done_when,
+    doneWhen: [...(d.done_when ?? [])],
+    detailsLabel: LABEL.d_details,
+    detailsRef: d.details_ref,
+    note: TERM.answer_in_chat,
+  };
+}
+
+/**
+ * 방금 답한 결정 한 줄. 열린 결정이 있거나, 답한 지 24시간이 지났으면 `null` 이다.
+ * 특이사항의 info 줄로 한 번 뜨고 사라진다 — 답한 것이 계속 남으면 화면이 과거를 쌓는다.
+ */
+export function answeredDecisionRow(data, until = Date.now()) {
+  const open = data?.decision ?? null;
+  if (open && open.status === "대기") return null;
+  const history = data?.decisionsHistory ?? [];
+  const last = history[history.length - 1];
+  if (!last || last.status !== "답변됨") return null;
+  const at = Date.parse(last.answered_at);
+  if (!Number.isFinite(at) || until - at > ANSWERED_NOTICE_MS) return null;
+  return { label: LABEL.answered, value: FMT.answeredDecision(last.what, last.answer) };
+}
+
 /**
  * B-1 「지금」. 화면 맨 위가 답하는 것은 "지금 뭐 하나" 하나뿐이고, **모든 값에 라벨이 붙는다.**
  *
@@ -424,7 +480,9 @@ export function nowRows(data, until = Date.now(), cfg = DEFAULT_REPORT_CONFIG) {
   }
 
   push("stage", LABEL.stage, kind === "kit" ? TERM.stage_none : stageLabel(workflow, state.current_node));
-  push("stage_dwell", LABEL.stage_dwell, state.since ? fmtDuration(Math.max(0, until - Date.parse(state.since))) : TERM.no_record);
+  // 단계가 없는 작업에서는 라벨이 바뀐다 — 없는 것에 머물렀다고 쓰지 않는다. 키는 그대로다.
+  push("stage_dwell", kind === "kit" ? LABEL.work_dwell : LABEL.stage_dwell,
+    state.since ? fmtDuration(Math.max(0, until - Date.parse(state.since))) : TERM.no_record);
 
   // 「항목 진행」은 **열린 요청이 있을 때만** 만든다. 요청이 없을 때 0/0 을 적으면
   // "아무것도 안 했다"로 읽히는데, 사실은 셀 대상이 없는 것이다.
@@ -474,16 +532,25 @@ export function noticeRows(data, until = Date.now(), cfg = DEFAULT_REPORT_CONFIG
   // tone 은 색만 가르는 것이 아니다. 「검사가 통과했다」와 「요청이 열려 있지 않다」는
   // 사람이 손쓸 일이 아니라 상황 설명인데, 경고색으로 그리면 멀쩡한 상태가 문제로 읽힌다.
   // 어느 줄이 손쓸 일인지는 데이터로 정해 두고 화면은 그것을 따른다.
-  const INFO_CODES = [5, 9];
+  const INFO_CODES = [0, 5, 9];
   const push = (code, label, value, fromRecord = false) =>
     rows.push({ code, label, value, fromRecord, tone: INFO_CODES.includes(code) ? "info" : "warn" });
 
+  // 0) 방금 답한 결정. 다음 결정이 열리거나 24시간이 지나면 이 줄은 사라진다.
+  const answered = answeredDecisionRow(data, until);
+  if (answered) push(0, answered.label, answered.value, true);
   // 1) 승인 대기·중단
   if (request && (request.status === "승인 대기" || request.status === "중단")) {
     push(1, LABEL.status_reason, `${request.status} — ${request.status_reason ?? ""}`, true);
   }
   // 2) 사람 입력 대기
-  for (const b of state?.blockers ?? []) push(2, LABEL.blocker, b.label, true);
+  // 카드가 열려 있으면 대기 항목의 값은 카드의 「무엇을」과 같은 문장이라, 같은 화면에서
+  // 두 번 읽게 된다. 그때는 어디를 보면 되는지만 가리킨다.
+  const cardOpen = (data?.decision ?? null) !== null;
+  for (const b of state?.blockers ?? []) {
+    if (cardOpen) push(2, LABEL.blocker, TERM.decision_wait);
+    else push(2, LABEL.blocker, b.label, true);
+  }
   // 3) 요청 밖 작업
   if (request) {
     const v = requestView(request, transitions, state, until);
@@ -528,11 +595,13 @@ export function noticeRows(data, until = Date.now(), cfg = DEFAULT_REPORT_CONFIG
  */
 export function summaryRows(data) {
   const request = data?.request ?? null;
+  // 값이 없는 행은 그리지 않는다. 「기록 없음」 세 줄이 나란히 서면 요약 박스가
+  // 아무것도 안 알려 주면서 자리만 차지한다 — 없는 것은 안 보이는 것으로 족하다.
   return [
     { key: "goal", label: LABEL.goal, value: request?.goal ?? null, fromRecord: true, fallback: TERM.no_record },
     { key: "request_text", label: LABEL.request_text, value: request?.request ?? null, fromRecord: true, fallback: TERM.no_open_request, foldable: true },
     { key: "brief", label: LABEL.brief, value: null, fromRecord: false, fallback: TERM.not_installed },
-  ];
+  ].filter((r) => typeof r.value === "string" && r.value.trim() !== "");
 }
 
 /**
@@ -571,7 +640,7 @@ export function mapView(workflow, state) {
   };
 }
 
-/** 피드 한 줄의 단계 표기. 제품 단계가 아닌 줄은 하네스 수리로 적는다. */
+/** 피드 한 줄의 단계 표기. 제품 단계가 아닌 줄은 제품 파이프라인 밖 작업으로 적는다. */
 export function feedStageText(row) {
   const dwell = fmtDuration(row?.dwell_ms ?? 0);
   if (!row?.to_node) return FMT.feedKit(dwell);

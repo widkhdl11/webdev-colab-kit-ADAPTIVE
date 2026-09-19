@@ -91,6 +91,8 @@ const {
 // 화면 어휘표. 검사는 이 표를 **정답지로** 쓴다 — 화면에 나간 라벨이 여기 없으면 위반이다.
 const { ALL_LABELS, INTERNAL_TERMS, TERM: VOCAB_TERM } = await import(pathToFileURL(join(ASSETS, "ui-vocab.mjs")).href);
 const { validateRequest, frozenItemsErrors, itemsFromSpec, TITLE_MAX: TITLE_MAX_MODEL } = await import(pathToFileURL(join(ROOT, "scripts", "lib", "request-model.mjs")).href);
+const { validateDecision, blockerLinkErrors, parseVocab, FIELD_MAX } = await import(pathToFileURL(join(ROOT, "scripts", "lib", "decision-model.mjs")).href);
+const { decisionCard: decisionCardRef, answeredDecisionRow: answeredDecisionRowRef } = RENDER_EXPORTS;
 
 // ── 1. workflow.json 이 그래프 선언과 맞는가 ─────────────────────────────
 {
@@ -1461,7 +1463,7 @@ const v3Rows = (d) => [
   check("30 피드 단계", feedStageTextRef({ to_node: "implement", dwell_ms: 42 * 60000 }) === "구현 단계 · 머문 시간 42분",
     "피드 줄이 단계를 한글 라벨과 머문 시간으로 적는다",
     `피드 단계 표기가 다르다: ${feedStageTextRef({ to_node: "implement", dwell_ms: 42 * 60000 })}`);
-  check("30 피드 킷", feedStageTextRef({ to_node: null, dwell_ms: 90 * 60000 }) === "하네스 수리 · 머문 시간 1시간 30분",
+  check("30 피드 킷", feedStageTextRef({ to_node: null, dwell_ms: 90 * 60000 }) === "제품 파이프라인 밖 작업 · 머문 시간 1시간 30분",
     "제품 단계가 아닌 줄은 하네스 수리로 적는다(기록의 null 을 화면 말로 바꾼다)",
     `킷 줄 표기가 다르다: ${feedStageTextRef({ to_node: null, dwell_ms: 90 * 60000 })}`);
   const html = readFileSync(join(ASSETS, "index.html"), "utf-8");
@@ -1472,8 +1474,19 @@ const v3Rows = (d) => [
 // ── 31. 요약 박스에 「지금」과 겹치는 줄이 없다 ───────────────────────────
 {
   const sumKeys = summaryRowsRef(V3.request).map((r) => r.key);
-  check("31 세 줄", JSON.stringify(sumKeys) === JSON.stringify(["goal", "request_text", "brief"]),
-    "요약 박스에 남는 것은 목표·요청 원문·브리프 셋뿐이다", `요약 박스 줄이 다르다: ${JSON.stringify(sumKeys)}`);
+  const SUM_KEYS = ["goal", "request_text", "brief"];
+  check("31 자리", sumKeys.every((k) => SUM_KEYS.includes(k)),
+    "요약 박스가 쓰는 자리는 목표·요청 원문·브리프 셋뿐이다", `요약 박스 줄이 다르다: ${JSON.stringify(sumKeys)}`);
+
+  // 값이 없는 행은 그리지 않는다. 「기록 없음」이 세 줄 나란히 서면 요약 박스가 아무것도
+  // 안 알려 주면서 자리만 차지한다. 판정기를 먼저 세우고 진짜와 심은 것 둘 다에 먹인다.
+  const empty = (rows) => rows.filter((r) => typeof r.value !== "string" || r.value.trim() === "");
+  check("31 빈 행 없음", empty(summaryRowsRef(V3.request)).length === 0,
+    "값이 없는 행은 요약 박스에 안 나온다", `값 없는 행이 그려졌다: ${JSON.stringify(empty(summaryRowsRef(V3.request)).map((r) => r.key))}`);
+  check("31 프로브(빈 값 심기)", !summaryRowsRef({ ...V3.request, request: { ...V3.request.request, goal: null } }).some((r) => r.key === "goal"),
+    "목표를 비워 두면 그 줄이 사라진다 — 위 항목이 실제로 값을 본다", "값을 비웠는데도 줄이 그려졌다");
+  check("31 프로브(값 있으면 남음)", summaryRowsRef(V3.request).some((r) => r.key === "goal"),
+    "값이 있으면 그 줄은 그대로 있다 — 거르기가 전부를 지우는 것이 아니다", "값이 있는데도 줄이 사라졌다");
 
   const nowLabels = new Set(nowRowsRef(V3.request, V3.now, DEFAULT_REPORT_CONFIG).rows.map((r) => r.label));
   const dup = summaryRowsRef(V3.request).map((r) => r.label).filter((l) => nowLabels.has(l));
@@ -1541,6 +1554,219 @@ const v3Rows = (d) => [
   const strayed = BINDINGS.flatMap((b) => (b.nodes ?? []).filter((n) => n !== "all" && !graphIds.has(n)));
   check("33 바인딩", strayed.length === 0,
     "바인딩이 그래프에 없는 자리를 가리키지 않는다", `그래프에 없는 자리를 가리킨다: ${strayed.join(", ")}`);
+}
+
+// ── 34~40. 결정 카드 — 승인 요청을 사용자 말로 ────────────────────────────
+//
+// 이 카드의 증상도 에러가 아니라 **그럴듯한 화면**이다. 카드가 하네스 말로 채워져 있어도
+// 화면은 멀쩡히 그려지고, 사람은 그 카드를 읽다가 포기할 뿐 아무 신호도 안 뜬다.
+// 그래서 항목마다 위반을 심어 잡히는 것까지 본다.
+
+/** 규약을 지키는 카드 한 벌. 사용자가 문구를 직접 고친 예시 그대로다 — 이것이 기준이다. */
+const OK_CARD = {
+  id: "signal2-20260918-1-d1",
+  task: "prose",
+  asked_at: "2026-09-18T01:00:00.000Z",
+  answer_options: ["착수해", "아니"],
+  what: "기사 상세에 원문 본문을 보여준다",
+  why: "지금은 본문 칸이 비어 있다",
+  visible_change: "기사 화면에 본문이 생긴다. 위험한 링크는 보이지 않는다",
+  risk_and_guard: "외부 사이트의 HTML을 그대로 쓰면 위험하다.\n위험한 부분을 걸러낸 뒤 넣고, 보안 검토를 거친다",
+  not_doing: "기사 수집기, 본문 번역",
+  also_fixing: "원문 링크의 주소 검사 (원래 있던 허점)",
+  done_when: ["본문이 보인다", "위험한 링크가 차단된다", "보안 검토를 통과했다"],
+  details_ref: "projects/signal2/report/decision-detail.md",
+  status: "대기",
+  answer: null,
+  answered_at: null,
+};
+const VOCAB = parseVocab(JSON.parse(readFileSync(join(ASSETS, "decision-vocab.json"), "utf-8"))).vocab;
+const card = (over = {}) => ({ ...OK_CARD, ...over });
+const rejects = (over, what) => validateDecision(card(over), VOCAB).some((e) => e.includes(what));
+
+// ── 34. 스키마 — 빠진 칸·긴 줄·모자란 판정 항목 ────────────────────────────
+{
+  check("34 기준 카드", validateDecision(OK_CARD, VOCAB).length === 0,
+    "사용자가 고른 예시 카드가 그대로 통과한다",
+    `기준으로 삼은 카드가 거부됐다: ${validateDecision(OK_CARD, VOCAB).join(" / ")}`);
+
+  const missing = { ...OK_CARD };
+  delete missing.why;
+  check("34 프로브(칸 누락)", validateDecision(missing, VOCAB).some((e) => e.includes("why")),
+    "칸이 빠지면 거부한다", "빠진 칸이 통과했다");
+
+  check("34 프로브(60자 초과)", rejects({ what: "가".repeat(FIELD_MAX + 1) }, `${FIELD_MAX}자를 넘는다`),
+    `${FIELD_MAX}자를 넘는 칸은 거부한다 — 첫 세 칸만 읽고 답한다는 전제가 거기서 깨진다`,
+    "긴 칸이 통과했다");
+  check("34 경계(60자)", validateDecision(card({ what: "가".repeat(FIELD_MAX) }), VOCAB).length === 0,
+    `${FIELD_MAX}자 그 자리는 받는다(경계는 포함이다)`, "경계값을 거부했다");
+
+  check("34 프로브(판정 1개)", rejects({ done_when: ["본문이 보인다"] }, "2~5개"),
+    "끝나면 확인할 것이 하나뿐이면 거부한다 — 그건 판정이 아니라 선언이다", "한 개짜리가 통과했다");
+  check("34 프로브(판정 6개)", rejects({ done_when: Array(6).fill("본문이 보인다") }, "2~5개"),
+    "여섯 개가 넘으면 거부한다 — 그건 작업 계획서다", "여섯 개가 통과했다");
+
+  check("34 프로브(고를 것 하나)", rejects({ answer_options: ["착수해"] }, "2~4개"),
+    "고를 것이 하나뿐이면 거부한다 — 고르는 것이 아니다", "선택지 하나가 통과했다");
+  check("34 프로브(두 줄 초과)", rejects({ risk_and_guard: "한 줄\n두 줄\n세 줄" }, "2줄까지다"),
+    "위험한 부분과 대비가 세 줄이면 거부한다", "세 줄이 통과했다");
+  check("34 프로브(id 모양)", rejects({ id: "signal2-20260918-1" }, "연번"),
+    "사이클 id 를 그대로 쓰면 거부한다 — 한 사이클에 카드가 여럿일 수 있다", "사이클 id 가 그대로 통과했다");
+  check("34 프로브(답 없이 답변됨)", rejects({ status: "답변됨" }, "answer 가 비었다"),
+    "답변됨인데 답이 비어 있으면 거부한다", "빈 답이 통과했다");
+  check("34 프로브(고를 수 없는 답)", validateDecision(card({ status: "답변됨", answer: "나중에", answered_at: OK_CARD.asked_at }), VOCAB)
+        .some((e) => e.includes("고를 수 있는 값이 아니다")),
+    "고를 수 있는 값이 아닌 답은 거부한다", "엉뚱한 답이 통과했다");
+}
+
+// ── 35. 금지 표현 — 표에 적힌 말이 카드에 들어오면 거부 ────────────────────
+{
+  check("35 프로브(씻다)", rejects({ visible_change: "외부 HTML을 씻어서 넣는다" }, "씻다"),
+    "「씻어서」를 심으면 잡는다 — 표에는 사전형으로 적혀 있어도 활용형에서 걸린다",
+    "「씻어서」가 통과했다");
+  check("35 프로브(구멍)", rejects({ also_fixing: "원문 링크의 구멍" }, "구멍"),
+    "「구멍」을 심으면 잡는다", "「구멍」이 통과했다");
+  check("35 프로브(닿는다)", rejects({ why: "이 변경이 보안에 닿는다" }, "닿는다"),
+    "「닿는다」를 심으면 잡는다", "「닿는다」가 통과했다");
+  check("35 대체 표현", validateDecision(card({ visible_change: "위험한 부분을 걸러낸 뒤 넣는다" }), VOCAB).length === 0,
+    "대체 표현(걸러내다)은 그대로 통과한다 — 금지가 아니라 바꿔 쓰라는 표다", "대체 표현이 거부됐다");
+  check("35 표 모양", parseVocab({ banned: "아님" }).errors.length > 0,
+    "표의 모양이 틀리면 빈 표로 넘어가지 않고 오류다 — 조용히 통과하면 방벽이 열린다",
+    "망가진 표가 그냥 통과했다");
+}
+
+// ── 36. 끝나면 확인할 것은 완결 문장이다 ──────────────────────────────────
+{
+  check("36 프로브(점으로 이음)", rejects({ done_when: ["본문 보임 · 이상한 링크 차단", "보안 검토를 통과했다"] }, "점(·)"),
+    "점으로 이어 붙인 조각은 거부한다", "점으로 이은 조각이 통과했다");
+  check("36 프로브(명사 조각)", rejects({ done_when: ["본문 보임", "보안 검토를 통과했다"] }, "완결 문장이 아니다"),
+    "점이 없어도 명사 조각이면 거부한다 — 「…다」로 끝나야 한다", "명사 조각이 통과했다");
+}
+
+// ── 37. 본문 칸에 하네스의 말이 없다 (자세히 보는 곳에는 있어도 된다) ───────
+{
+  check("37 프로브(경로)", rejects({ what: "src/app/page.tsx 에 본문을 넣는다" }, "경로"),
+    "본문 칸의 파일 경로를 잡는다", "경로가 통과했다");
+  check("37 프로브(파일 이름)", rejects({ what: "render.mjs 를 고친다" }, "파일 이름"),
+    "경로 없이 파일 이름만 적어도 잡는다", "파일 이름이 통과했다");
+  check("37 프로브(규칙 번호)", rejects({ why: "INV-D6 이 비어 있다" }, "규칙 번호"),
+    "규칙 번호를 잡는다", "규칙 번호가 통과했다");
+  check("37 프로브(단계 이름)", rejects({ not_doing: "deploy 는 안 한다" }, "단계 이름"),
+    "실행 그래프의 단계 이름을 잡는다", "단계 이름이 통과했다");
+  check("37 자세히는 예외", validateDecision(OK_CARD, VOCAB).length === 0 && OK_CARD.details_ref.includes("/"),
+    "자세히 보는 곳(details_ref)의 경로는 그대로 받는다 — 거기가 경로를 적는 자리다",
+    "details_ref 의 경로까지 거부했다");
+  check("37 오탐 안 함", validateDecision(card({ not_doing: "찬성/반대 투표, 본문 번역" }), VOCAB).length === 0,
+    "한국어 문장의 「찬성/반대」는 경로로 보지 않는다 — ASCII 로만 된 것만 경로다",
+    "한국어 사선 표기를 경로로 잘못 잡았다");
+}
+
+// ── 38. 화면 — 카드가 맨 위, 「지금」이 그 아래 ────────────────────────────
+{
+  const html = readFileSync(join(ASSETS, "index.html"), "utf-8");
+  const iDecision = html.indexOf('id="decision-sec"');
+  const iNow = html.indexOf('id="now-sec"');
+  check("38 자리", iDecision > 0 && iNow > iDecision,
+    "결정 카드 자리가 「지금」 절보다 위에 있다 — 답할 것이 있으면 그게 먼저다",
+    `카드와 「지금」의 자리가 뒤집혔거나 없다 (카드 ${iDecision} · 지금 ${iNow})`);
+
+  const v = decisionCardRef({ decision: OK_CARD });
+  check("38 라벨:값", v !== null && v.rows.every((r) => typeof r.label === "string" && r.label !== "" && r.value),
+    "카드의 모든 칸이 라벨과 값을 갖는다(라벨 필수 원칙)", "라벨이나 값이 빈 칸이 있다");
+  check("38 어휘표", v !== null && v.rows.every((r) => ALL_LABELS.includes(r.label))
+        && ALL_LABELS.includes(v.doneWhenLabel) && ALL_LABELS.includes(v.detailsLabel),
+    "카드의 라벨이 전부 화면 어휘표 안에 있다", "어휘표 밖의 라벨이 카드에 있다");
+  check("38 답은 채팅에서", v !== null && v.note === VOCAB_TERM.answer_in_chat && !/id="decision-sec"[\s\S]{0,4000}<(input|textarea|form)\b/.test(html),
+    "카드에 입력칸이 없고 「답은 채팅에서」 한 줄이 붙는다 — 화면은 읽기 전용이다",
+    "카드에 입력칸이 있거나 안내 한 줄이 없다");
+  check("38 프로브(닫힌 결정)", decisionCardRef({ decision: { ...OK_CARD, status: "답변됨", answer: "착수해" } }) === null
+        && decisionCardRef({}) === null,
+    "열린 결정이 없으면 카드를 안 그린다 — 답한 카드가 화면에 남지 않는다", "닫힌 결정에도 카드가 그려진다");
+  check("38 프로브(같이 고치는 것 없음)", decisionCardRef({ decision: card({ also_fixing: null }) }).rows.every((r) => r.key !== "d_also"),
+    "「같이 고치는 것」이 없으면 그 줄을 안 만든다 — 빈칸은 「없다」와 「안 적었다」를 구별 못 한다",
+    "빈 줄이 그려진다");
+  check("38 펼침 유지", /const wasOpen = el\.querySelector\("details"\)\?\.open === true;/.test(html)
+        && /<details\$\{wasOpen \? " open" : ""\}>/.test(html),
+    "펼쳐 둔 「자세히」가 4초 뒤 다시 그릴 때도 펼쳐진 채로 남는다",
+    "다시 그리면 「자세히」가 저절로 닫힌다 — 읽는 중에 닫히면 화면이 손을 무시하는 것이다");
+  check("38 그대로 나감", decisionCardRef({ decision: OK_CARD }).rows.find((r) => r.key === "d_what").value === OK_CARD.what,
+    "카드의 문장이 기록에 적힌 그대로 화면에 나간다(렌더가 고쳐 쓰지 않는다)", "렌더가 문장을 고쳐 썼다");
+}
+
+// ── 39. 답변 처리 — 이력으로 옮기고 카드와 근거 본문을 비운다 ──────────────
+{
+  const dir = tmp("report-dec-");
+  const decMod = await import(pathToFileURL(join(ROOT, "scripts", "report-decision.mjs")).href);
+  writeFileSync(join(dir, "decision-vocab.json"), readFileSync(join(ASSETS, "decision-vocab.json"), "utf-8"));
+
+  let refusedNoDetail = false;
+  try { decMod.ask(dir, card(), ""); } catch { refusedNoDetail = true; }
+  check("39 쌍 규칙", refusedNoDetail && !existsSync(join(dir, "decision.json")),
+    "근거 본문 없이 카드만 쓰려 하면 거부하고, 카드도 안 남는다 — 둘은 같은 턴에 쌍으로 기록한다",
+    "근거 본문 없이 카드가 만들어졌다");
+
+  decMod.ask(dir, card(), "# 근거\n합의문 본문");
+  check("39 쌍 기록", existsSync(join(dir, "decision.json")) && existsSync(join(dir, "decision-detail.md")),
+    "카드와 근거 본문이 같이 쓰인다", "둘 중 하나가 안 쓰였다");
+
+  let refusedTwo = false;
+  try { decMod.ask(dir, card({ id: "signal2-20260918-1-d2" }), "또 다른 근거"); } catch { refusedTwo = true; }
+  check("39 하나뿐", refusedTwo, "열린 결정이 있으면 새 결정을 거부한다", "결정 둘이 동시에 열렸다");
+
+  const closed = decMod.answer(dir, "착수해");
+  const hist = parseJsonl(readFileSync(join(dir, "decisions-history.jsonl"), "utf-8")).rows;
+  check("39 이력", hist.length === 1 && hist[0].answer === "착수해" && hist[0].detail.includes("합의문 본문")
+        && !existsSync(join(dir, "decision.json")) && !existsSync(join(dir, "decision-detail.md")),
+    "답하면 이력에 근거 본문까지 한 줄로 실려 가고, 카드와 본문 파일은 비워진다",
+    `이력 이동이 안 맞는다 (이력 ${hist.length}줄)`);
+
+  const row = answeredDecisionRowRef({ decision: null, decisionsHistory: hist }, Date.parse(closed.answered_at) + 1000);
+  check("39 특이사항", row !== null && row.value.includes(OK_CARD.what) && row.value.includes("착수해")
+        && ALL_LABELS.includes(row.label),
+    "답한 직후 특이사항에 「방금 답한 결정」 한 줄이 뜬다", "답한 결정이 특이사항에 안 뜬다");
+  check("39 프로브(24시간 뒤)", answeredDecisionRowRef({ decision: null, decisionsHistory: hist },
+        Date.parse(closed.answered_at) + 25 * 3600 * 1000) === null,
+    "하루가 지나면 그 줄은 사라진다 — 답한 것이 계속 쌓이지 않는다", "답한 줄이 계속 남는다");
+  check("39 프로브(다음 결정)", answeredDecisionRowRef({ decision: OK_CARD, decisionsHistory: hist },
+        Date.parse(closed.answered_at) + 1000) === null,
+    "다음 결정이 열리면 그 줄은 사라진다", "새 결정이 열려도 옛 줄이 남는다");
+}
+
+// ── 40. 대기 항목 연동 — 결정이 열려 있으면 사람 대기 상태다 ────────────────
+{
+  const withBlocker = { blockers: [{ id: OK_CARD.id, label: OK_CARD.what }] };
+  check("40 연동", blockerLinkErrors(OK_CARD, withBlocker).length === 0,
+    "열린 결정에 같은 이름의 대기 항목이 있으면 통과한다", "제대로 물린 연동을 거부했다");
+  check("40 프로브(항목 없음)", blockerLinkErrors(OK_CARD, { blockers: [] }).some((e) => e.includes("대기 항목이 없다")),
+    "결정이 열려 있는데 대기 항목이 없으면 잡는다 — 화면이 사람 대기 상태로 안 보인다",
+    "대기 항목 없는 열린 결정이 통과했다");
+  check("40 프로브(이름 다름)", blockerLinkErrors(OK_CARD, { blockers: [{ id: OK_CARD.id, label: "딴 것" }] })
+        .some((e) => e.includes("이름이")),
+    "대기 항목의 이름이 카드의 「무엇을」과 다르면 잡는다", "다른 이름이 통과했다");
+  check("40 프로브(남은 항목)", blockerLinkErrors(null, withBlocker).some((e) => e.includes("남아 있다")),
+    "카드는 닫혔는데 대기 항목만 남으면 잡는다 — 화면이 영영 사람을 기다린다",
+    "남은 대기 항목이 통과했다");
+  check("40 쓰는 자리", !readFileSync(join(ROOT, "scripts", "report-decision.mjs"), "utf-8").includes("state.json\""),
+    "결정 기록 스크립트는 state.json 을 쓰지 않는다 — 그 파일을 쓰는 자리는 하나뿐이다",
+    "결정 기록이 state.json 을 직접 쓴다");
+}
+
+// ── 41. 단계가 없는 작업의 말 · 카드가 열린 동안의 대기 항목 ─────────────
+{
+  const rowOfKey = (d, key) => nowRowsRef(d, V3.now, DEFAULT_REPORT_CONFIG).rows.find((r) => r.key === key);
+  check("41 단계 없음", rowOfKey(V3.kit, "stage_dwell").label === "이 작업에 머문 시간",
+    "단계가 없는 작업에서는 「이 단계에」라고 부르지 않는다", `라벨이 다르다: ${rowOfKey(V3.kit, "stage_dwell").label}`);
+  check("41 프로브(단계 있음)", rowOfKey(V3.request, "stage_dwell").label === "이 단계에 머문 시간",
+    "단계가 있으면 그대로 「이 단계에」다 — 위 항목이 상태를 실제로 가른다", "단계가 있는데도 작업 표기를 썼다");
+
+  const blocked = { ...V3.request, state: { ...V3.request.state, blockers: [{ id: "c1", label: "아주 긴 카드 문장이 그대로 복사된 값" }] } };
+  const code2 = (d) => noticeRowsRef(d, V3.now, DEFAULT_REPORT_CONFIG).find((n) => n.code === 2);
+  check("41 카드 열림", code2({ ...blocked, decision: { id: "c1", status: "대기", what: "아주 긴 카드 문장이 그대로 복사된 값" } })?.value === "결정 카드 답 대기",
+    "카드가 열려 있으면 대기 항목은 카드 문장을 되풀이하지 않고 가리키기만 한다",
+    "대기 항목이 카드의 문장을 그대로 한 번 더 적는다");
+  check("41 프로브(카드 없음)", code2(blocked)?.value === "아주 긴 카드 문장이 그대로 복사된 값",
+    "카드가 없으면 대기 항목의 값은 적힌 그대로다 — 위 항목이 카드 유무를 실제로 본다",
+    "카드가 없는데도 값을 바꿔 적었다");
 }
 
 // ── 보고 ────────────────────────────────────────────────────────────────
