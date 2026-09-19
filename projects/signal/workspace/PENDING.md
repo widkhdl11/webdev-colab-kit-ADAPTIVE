@@ -5,7 +5,7 @@
 `docs/references/decision-layer.md` 2절.
 
 - 항목은 `## 열린 항목` 아래의 것만 센다. 답이 오면 `- **P2 · 수집이 가져올 수 있는 주소를 제한하는 두 조항을 승인할지**
-  blocks: spec
+  blocks: spec, review
   `ingest-auth.md` 에 INV-IA5(목적지는 공개 인터넷의 http·https 주소만)와
   INV-IA6(돌려보내기를 따라갈 때마다 다시 판정)을 더했고, 구현과 검사 열한 개가 같이 들어갔다.
   **안 막는 것이 하나 있고 그것이 승인에서 물을 부분이다** — 겉이 공개인 이름이 내부 주소로
