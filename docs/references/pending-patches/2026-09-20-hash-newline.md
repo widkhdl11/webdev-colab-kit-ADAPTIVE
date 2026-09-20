@@ -1,5 +1,12 @@
 # 2026-09-20 — 산출물 해시에서 줄바꿈을 정규화한다
 
+> **적용 완료 (2026-09-20).** `node scripts/check-hash-newline.mjs` 가 4/4 로 끝난다.
+>
+> **아래 「기준선 다시 잡기」는 이번에는 하지 않았다.** 그 단계는 *내용이 안 바뀌었는데*
+> 해시만 달라졌을 때 쓰는 것인데, 같은 날 수집 목적지 제한이 들어가면서 `src/` 가 실제로
+> 바뀌었다. 지금 `review` 가 낡은 것은 재는 자가 바뀌어서가 아니라 **구현이 바뀌어서**다.
+> 승인이 오면 그때 새 해시로 사인오프를 적는다.
+
 보호 파일 **하나**를 고친다: `gates/graph-stop.mjs` 의 `hashNode`.
 검사 스크립트(`scripts/check-hash-newline.mjs`)는 보호 파일이 아니라 이미 붙어 있다.
 
@@ -71,6 +78,8 @@ function hashNode(produces) {
 **해시 함수가 바뀌므로 지금 기록돼 있는 값들과 전부 어긋난다.** 파일 내용은 하나도 안 바뀌었지만
 기계는 그것을 모른다. 그대로 두면 `implement` 가 dirty 로 잡히고 `review` 가 `basis` 불일치로 낡는다.
 
+0. `node gates/run-gates.mjs --quick` 이 exit 0 인지 본다. **그냥 돌리면 열린 결정 때문에
+   exit 2 가 나오는데 그것은 실패가 아니다** — 사람 답 대기 표시다.
 1. `node gates/graph-stop.mjs` 를 한 번 돌린다. 게이트 조건이 그대로 통과하는 노드는 새 해시로
    다시 clean 이 된다.
 2. 출력이 안내하는 새 `implement` 해시를 `projects/signal/workspace/review.md` 의 `basis:` 에 적는다.

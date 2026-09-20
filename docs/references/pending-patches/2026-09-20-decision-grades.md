@@ -1,5 +1,8 @@
 # 2026-09-20 — 결정 등급표를 코드로 (살림 판단 = 자동 결정)
 
+> **적용 완료 (2026-09-20).** `node scripts/check-decision-grade.mjs` 가 8/8 로 끝난다.
+> 아래는 무엇을 왜 붙였는지의 기록이다.
+
 보호 파일 **하나**를 고친다: `gates/lib/cycle-policy.mjs` 에 등급표와 판정 함수를 더한다.
 검사 스크립트(`scripts/check-decision-grade.mjs`)는 보호 파일이 아니라 이미 붙어 있다.
 
@@ -94,8 +97,17 @@ export function gradeOf(area) {
 
 ```
 node scripts/check-decision-grade.mjs     # 8/8 통과
-node gates/run-gates.mjs                  # 게이트 통과 (기존 그대로)
+node gates/run-gates.mjs --quick          # exit 0 · pending 줄 없음
 ```
+
+> **`run-gates` 는 열린 결정이 있으면 exit 2 로 끝나고 `[pending/BLOCKED]` 줄을 낸다.**
+> 그것은 실패가 아니라 **사람 답 대기 표시**다(세 번째 kind — `escalated`). 붙이기 전에도
+> 같은 줄이 나온다. 이 패치가 그 숫자를 바꾸지 않는다.
+>
+> 편집이 막히는지 보려면 편집 훅이 실제로 부르는 것을 돌린다:
+> `node gates/run-gates.mjs --quick` → **exit 0 이고 `pending` 줄이 없어야** 한다.
+> 보류는 사라지는 종류가 아니라서, 여기 나오면 한 건만 열려 있어도 편집이 영구히 막힌다.
+
 
 ## 부분 적용
 

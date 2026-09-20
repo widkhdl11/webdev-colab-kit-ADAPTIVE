@@ -70,14 +70,24 @@ function matchProduces(produces) {
 }
 
 // ── 해시: produces 내용 sha256 (파일 없으면 null) ────────────────
+// **줄바꿈은 정규화해서 뜬다.** core.autocrlf=true 라 같은 내용이 디스크에서 CRLF, 저장소에서
+// LF 다. 바이트 그대로 뜨면 checkout 한 번에 해시가 바뀌고, 아무도 아무것도 안 고쳤는데
+// 사인오프가 basis 불일치로 낡는다.
+// 이진 파일은 그대로 둔다 — 앞 8000바이트에 NUL 이 있으면 이진으로 본다(git 의 판정과 같다).
+function normalizeForHash(buf) {
+  if (buf.subarray(0, 8000).includes(0)) return buf;
+  return Buffer.from(buf.toString("utf-8").split("\r\n").join("\n"), "utf-8");
+}
 function hashNode(produces) {
   const files = matchProduces(produces).sort();
   if (files.length === 0) return null;
   const h = createHash("sha256");
-  for (const rel of files) h.update(rel + "\0" + readFileSync(join(projDir, rel)));
+  for (const rel of files) {
+    h.update(rel + "\0");
+    h.update(normalizeForHash(readFileSync(join(projDir, rel))));
+  }
   return h.digest("hex").slice(0, 12);
 }
-
 // clean 추적 단위: 톱레벨 노드 + 병렬 자식(부모 design 은 집계라 제외).
 // signoff = 비결정론 사인오프 노드(review·deploy)는 마커로 clean, 변경감지에선 제외.
 function allUnits() {
