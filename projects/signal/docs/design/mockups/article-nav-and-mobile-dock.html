@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>signal — 상세 하단 글 이동 + 모바일 하단 고정 줄 (시안)</title>
+
+    <!--
+      signal / 화면 요소 둘 추가 — 2026-08-31 (2)
+      ═══════════════════════════════════════════════════════════════════════
+      근거: 사용자 요구
+        ① "매일 부담없이 가볍게 AI 이슈를 파악" · "한눈에 최근 이슈가 무엇이 있나 파악"
+        ② "폰으로 볼 때 한손으로 간편하게"
+        ③ "이전 피드, 다음 피드는 상세페이지에서만 동작. 메인은 더보기로 하루 전날 것을 본다"
+
+      **뒤집는 승인 결정이 없다.** 이 시안은 design-rules 에 없던 요소 둘을 더할 뿐이다:
+        · 상세 화면 하단의 이전 글 / 다음 글
+        · 모바일(640px 아래) 하단 고정 조작 줄
+
+      그대로 두는 것:
+        · 2026-08-02 「날짜 그룹」 — 메인은 여전히 여러 날을 이어 붙인다
+        · 2026-08-06 「목록을 늘리는 버튼」 — 「더 보기」는 그대로고 다 불러온 뒤에도 안 사라진다
+          바뀌는 건 한 번에 불러오는 양뿐이다: 카드 9장 → 하루치.
+          그 양은 design-rules 가 정한 적이 없다(구현이 고른 값).
+          부수 효과: 날짜 옆 건수가 화면의 카드 수와 항상 일치한다 —
+          그룹이 잘린 채로 그려지는 일이 없어진다.
+        · 색·형태·타이포·카드 언어·뱃지 키워드 줄 — 전부 그대로. 새로 만든 색이 없다.
+      ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
+    />
+    <style>
+      :root {
+        /* 승인된 토큰 — src/shared/ui/tokens.css 에서 그대로 */
+        --bg: #efeff5;
+        --surface: #f8f8fc;
+        --surface-h: #fdfdff;
+        --surface-read: #f3f3f8;
+        --hairline: #e2e2ec;
+        --dot: #c9c9d6;
+
+        --text: #1f2024;
+        --text2: #4a4e55;
+        --meta: #656a72;
+
+        --text-read: #666b73;
+        --text2-read: #6a6f77;
+        --meta-read: #6a6f77;
+        --dot-read: #d2d2de;
+        --tag-read-bg: #eaeaf2;
+        --tag-read-ink: #63676f;
+        --badge-read-bg: #e7e7ef;
+        --badge-read-ink: #585c64;
+
+        --accent: #4f46e5;
+        --accent-soft: #e9e8fb;
+        --accent-ring: rgba(79, 70, 229, 0.22);
+        --on-accent: #ffffff;
+
+        --tag-bg: var(--bg);
+        --tag-bg-h: #ffffff;
+        --border-soft: #e3e3ec;
+        --border-soft-h: #d8d8e4;
+
+        --r-card: 12px;
+        --r-pill: 999px;
+
+        --shadow-card: 0 1px 2px rgba(31, 32, 36, 0.05),
+          0 4px 10px rgba(31, 32, 36, 0.05);
+
+        --maxw: 1168px;
+        --gap: 16px;
+
+        --fs-art-title: 28px;
+        --fs-h1: 22px;
+        --fs-title: 16px;
+        --fs-body: 15px;
+        --fs-btn: 14px;
+        --fs-sm: 13.5px;
+        --fs-ui: 13px;
+        --fs-xs: 12.5px;
+        --fs-meta: 12px;
+        --fs-chip: 11.5px;
+        --fs-mark: 10.5px;
+
+        --kw-field-bg: #d8e4ee;
+        --kw-field-ink: #26323b;
+        --kw-kind-bg: #eee0d4;
+        --kw-kind-ink: #3b322a;
+        --kw-badge-h: 26px;
+
+        /* 새 값 후보 — 색은 하나도 안 만든다. 높이 둘뿐이다.
+           --dock-h-feed  : 정렬 세그먼트 한 줄 (44 버튼 + 8 감싸는 여백 + 24 위아래) = 76
+           --dock-h-read  : 글 이동 한 줄       (44 버튼             + 24 위아래) = 68 */
+        --dock-h-feed: 76px;
+        --dock-h-read: 68px;
+        --touch-min: 44px;
+
+        --font-sans: "Pretendard Variable", "Pretendard", system-ui,
+          -apple-system, "Apple SD Gothic Neo", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #e6e6ee;
+        color: var(--text);
+        font-family: var(--font-sans);
+        font-size: var(--fs-body);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      }
+      a:focus-visible,
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      /* ── 시안 껍데기(설명. 실제 화면 아님) ────────────────────────── */
+      .sheet {
+        max-width: 1360px;
+        margin: 0 auto;
+        padding: 32px 20px 80px;
+      }
+      .sheetHead h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+      .sheetHead p {
+        margin: 0 0 8px;
+        font-size: var(--fs-sm);
+        color: var(--text2);
+        max-width: 84ch;
+      }
+      .panelHead {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 40px 0 14px;
+      }
+      .panelHead h2 {
+        margin: 0;
+        font-size: var(--fs-btn);
+        font-weight: 700;
+        color: var(--meta);
+        white-space: nowrap;
+      }
+      .panelHead .rule {
+        flex: 1 1 auto;
+        height: 0;
+        border-top: 1px dotted var(--dot);
+      }
+      .note {
+        margin: 12px 0 0;
+        font-size: var(--fs-ui);
+        color: var(--text2);
+        max-width: 90ch;
+      }
+      .note b {
+        color: var(--text);
+      }
+      .frame {
+        background: var(--bg);
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(31, 32, 36, 0.06),
+          0 12px 28px rgba(31, 32, 36, 0.09);
+      }
+      .phones {
+        display: flex;
+        gap: 28px;
+        flex-wrap: wrap;
+      }
+      .phoneWrap h3 {
+        margin: 0 0 10px;
+        font-size: var(--fs-ui);
+        font-weight: 600;
+        color: var(--meta);
+      }
+
+      /* ── 실제 화면 ────────────────────────────────────────────────── */
+      .top {
+        border-bottom: 1px solid var(--hairline);
+        background: var(--bg);
+      }
+      .topIn {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 14px 20px;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .logo {
+        font-size: 19px;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+        color: var(--text);
+        text-decoration: none;
+      }
+      .logo span {
+        color: var(--accent);
+      }
+      .tagline {
+        font-size: var(--fs-ui);
+        color: var(--meta);
+      }
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      /* 상세 — 승인된 언어 그대로(읽기 컬럼 704px, 제목은 포인트색) */
+      .read {
+        max-width: 704px;
+        margin: 0 auto;
+        padding: 32px 0 56px;
+      }
+      .back {
+        display: inline-block;
+        margin-bottom: 24px;
+        font-size: var(--fs-ui);
+        color: var(--meta);
+        text-decoration: none;
+      }
+      .readTitle {
+        margin: 0 0 16px;
+        font-size: var(--fs-art-title);
+        font-weight: 800;
+        letter-spacing: -0.6px;
+        line-height: 1.35;
+        color: var(--accent);
+        word-break: keep-all;
+      }
+      .metaRow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 16px;
+        border-bottom: 1px dotted var(--dot);
+        font-size: var(--fs-meta);
+        color: var(--meta);
+      }
+      .srcMark {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: var(--r-pill);
+        background: var(--tag-bg);
+        color: var(--meta);
+        font-size: var(--fs-mark);
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .source {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .origTitle {
+        flex-basis: 100%;
+      }
+      .origTitle b {
+        font-weight: 600;
+      }
+      .sumBox {
+        margin: 24px 0 0;
+        padding: 16px 20px;
+        background: var(--surface);
+        border-radius: var(--r-card);
+        border-left: 4px solid var(--accent);
+      }
+      .sumLabel {
+        display: inline-flex;
+        margin-bottom: 10px;
+        padding: 2px 10px;
+        border-radius: var(--r-pill);
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: var(--fs-chip);
+        font-weight: 700;
+      }
+      .sumText {
+        margin: 0;
+        font-size: var(--fs-title);
+        line-height: 1.7;
+        color: var(--text2);
+        word-break: keep-all;
+      }
+      .outbound {
+        margin-top: 32px;
+        padding-top: 16px;
+        border-top: 1px dotted var(--dot);
+        font-size: var(--fs-body);
+      }
+      .outbound a {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      /* ★ 새로 정하는 것 ① — 상세 하단 글 이동 ─────────────────────── */
+      .readNav {
+        display: flex;
+        gap: 12px;
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px dotted var(--dot);
+      }
+      .navBtn {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 14px 18px;
+        border-radius: var(--r-card);
+        background: transparent;
+        border: 1px solid var(--border-soft);
+        text-decoration: none;
+        color: var(--text2);
+        font: inherit;
+      }
+      .navBtn:hover {
+        background: var(--surface);
+        border-color: var(--border-soft-h);
+      }
+      .navBtn:hover .navTitle {
+        color: var(--accent);
+      }
+      .navPrev {
+        align-items: flex-start;
+        text-align: left;
+      }
+      .navNext {
+        align-items: flex-end;
+        text-align: right;
+      }
+      .navRole {
+        font-size: var(--fs-meta);
+        color: var(--meta);
+      }
+      /* 제목을 보여준다 — "다음 글"만 있으면 누르기 전에 무엇인지 모른다.
+         2줄까지, 어절 단위로 끊는다(카드 제목과 같은 규칙). */
+      .navTitle {
+        font-size: var(--fs-sm);
+        font-weight: 600;
+        line-height: 1.45;
+        color: var(--text2);
+        word-break: keep-all;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      /* 사라지지 않는다 — 없애면 키보드 포커스가 문서 맨 위로 떨어진다.
+         「더 보기」가 2026-08-06 에 쓴 처리와 같은 말투. */
+      .navBtn[aria-disabled="true"] {
+        cursor: default;
+        border-style: dashed;
+      }
+      .navBtn[aria-disabled="true"] .navTitle {
+        color: var(--meta);
+        font-weight: 500;
+      }
+      .navBtn[aria-disabled="true"]:hover {
+        background: transparent;
+        border-color: var(--border-soft);
+      }
+      .navBtn[aria-disabled="true"]:hover .navTitle {
+        color: var(--meta);
+      }
+
+      /* ── 폰 ───────────────────────────────────────────────────────── */
+      .phone {
+        width: 390px;
+        height: 720px;
+        position: relative;
+        overflow: hidden;
+        background: var(--bg);
+        border-radius: 22px;
+        box-shadow: 0 1px 2px rgba(31, 32, 36, 0.06),
+          0 12px 28px rgba(31, 32, 36, 0.09);
+      }
+      .phoneScroll {
+        position: absolute;
+        inset: 0;
+        overflow-y: auto;
+      }
+      .phoneFeed .phoneScroll {
+        bottom: var(--dock-h-feed);
+      }
+      .phoneRead .phoneScroll {
+        bottom: var(--dock-h-read);
+      }
+      .phone .wrap {
+        padding: 0 16px;
+      }
+      .phone .read {
+        padding: 20px 0 32px;
+      }
+      .phone .readTitle {
+        font-size: 23px;
+      }
+      .phone .readNav {
+        display: none;
+      }
+
+      .dayHead {
+        padding: 20px 0 12px;
+      }
+      .dayHead h1 {
+        margin: 0 0 4px;
+        font-size: var(--fs-h1);
+        font-weight: 700;
+        letter-spacing: -0.4px;
+      }
+      .dayHead p {
+        margin: 0;
+        font-size: var(--fs-ui);
+        color: var(--meta);
+      }
+      .dayRowHead {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0 12px;
+      }
+      .dayTitle {
+        margin: 0;
+        font-size: var(--fs-sm);
+        font-weight: 700;
+        color: var(--meta);
+      }
+      .dayCount {
+        font-size: var(--fs-xs);
+        color: var(--meta);
+      }
+      .dayRule {
+        flex: 1 1 auto;
+        height: 0;
+        border-top: 1px dotted var(--dot);
+      }
+      .kwRow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-bottom: 18px;
+        align-items: center;
+      }
+      .kwBadge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: var(--kw-badge-h);
+        padding: 0 12px;
+        border-radius: var(--r-pill);
+        font-size: var(--fs-ui);
+        font-weight: 600;
+        border: 0;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .kwField {
+        background: var(--kw-field-bg);
+        color: var(--kw-field-ink);
+      }
+      .kwKind {
+        background: var(--kw-kind-bg);
+        color: var(--kw-kind-ink);
+      }
+      .kwAll {
+        background: var(--accent-soft);
+        color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent-ring);
+      }
+      .kwMore {
+        background: transparent;
+        color: var(--meta);
+        outline: 1px dashed var(--dot);
+        outline-offset: -1px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--gap);
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border-radius: var(--r-card);
+        padding: 20px;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: var(--shadow-card);
+      }
+      .badgeRow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: var(--fs-chip);
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: var(--r-pill);
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .official {
+        display: inline-flex;
+        align-items: center;
+        font-size: var(--fs-chip);
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: var(--r-pill);
+        background: var(--tag-bg);
+        color: var(--text);
+      }
+      .cardTitle {
+        margin: 0 0 10px;
+        font-size: var(--fs-title);
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        line-height: 1.45;
+        word-break: keep-all;
+      }
+      .cardSum {
+        margin: 0 0 16px;
+        font-size: var(--fs-sm);
+        line-height: 1.62;
+        color: var(--text2);
+        word-break: keep-all;
+      }
+      .cardKw {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 14px;
+      }
+      .cardKwChip {
+        font-size: var(--fs-chip);
+        font-weight: 500;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 8px;
+        border-radius: var(--r-pill);
+      }
+      .cardFoot {
+        border-top: 1px dotted var(--dot);
+        padding-top: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        font-size: var(--fs-meta);
+        color: var(--meta);
+      }
+      .moreWrap {
+        display: flex;
+        justify-content: center;
+        padding: 4px 0 32px;
+      }
+      .moreBtn {
+        appearance: none;
+        cursor: pointer;
+        font: inherit;
+        font-size: var(--fs-btn);
+        font-weight: 600;
+        color: var(--text2);
+        min-height: var(--touch-min);
+        padding: 0 26px;
+        border-radius: var(--r-pill);
+        background: transparent;
+        border: 1px solid var(--border-soft);
+      }
+
+      /* ★ 새로 정하는 것 ② — 모바일 하단 고정 줄 ───────────────────── */
+      .dock {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--surface);
+        border-top: 1px solid var(--hairline);
+        padding: 12px 16px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        /* 실제 구현에서는 아래 여백에 env(safe-area-inset-bottom) 을 더한다. */
+      }
+      .dock .segment {
+        display: inline-flex;
+        gap: 2px;
+        padding: 4px;
+        background: var(--bg);
+        border-radius: var(--r-pill);
+      }
+      /* 누르는 것은 전부 44px 이상. 데스크톱 세그먼트는 33px 인데 그건 마우스가
+         겨냥하는 것이고, 엄지로 누르는 자리에는 안 통한다. */
+      .dock .segment button {
+        appearance: none;
+        border: 0;
+        cursor: pointer;
+        font: inherit;
+        font-size: var(--fs-ui);
+        font-weight: 600;
+        min-height: var(--touch-min);
+        padding: 0 18px;
+        border-radius: var(--r-pill);
+        background: transparent;
+        color: var(--meta);
+        display: inline-flex;
+        align-items: center;
+      }
+      .dock .segment button[aria-pressed="true"] {
+        background: var(--accent);
+        color: var(--on-accent);
+      }
+      .dockSpacer {
+        flex: 1 1 auto;
+      }
+      .dockNav {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+      }
+      .dockNav .navBtn {
+        min-height: var(--touch-min);
+        justify-content: center;
+        padding: 0 14px;
+        background: var(--bg);
+        border-radius: var(--r-pill);
+        font-size: var(--fs-btn);
+        font-weight: 600;
+      }
+      .dockNav .navBtn span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .dockNav .navPrev {
+        align-items: flex-start;
+      }
+      .dockNav .navNext {
+        align-items: flex-end;
+      }
+
+      .qa {
+        margin-top: 20px;
+        padding: 16px 18px;
+        background: var(--surface);
+        border-radius: var(--r-card);
+        border-left: 4px solid var(--accent);
+      }
+      .qa h3 {
+        margin: 0 0 8px;
+        font-size: var(--fs-btn);
+        font-weight: 700;
+      }
+      .qa ol {
+        margin: 0;
+        padding-left: 20px;
+        font-size: var(--fs-ui);
+        color: var(--text2);
+      }
+      .qa li {
+        margin-bottom: 10px;
+      }
+      .qa li:last-child {
+        margin-bottom: 0;
+      }
+      .qa b {
+        color: var(--text);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="sheet">
+      <div class="sheetHead">
+        <h1>상세 하단 글 이동 + 모바일 하단 고정 줄</h1>
+        <p>
+          <b>뒤집는 결정이 없습니다.</b> 메인은 지금처럼 여러 날을 이어 붙이고
+          「더 보기」로 늘립니다 — 한 번에 불러오는 양만 카드 9장에서 하루치로 바뀝니다.
+          그 양은 design-rules 가 정한 적이 없습니다(제가 구현하며 9로 고른 값).
+        </p>
+        <p>
+          <b>부수 효과 하나가 좋습니다</b> — 날짜 옆 건수(<code>어제 · 5건</code>)가
+          화면의 카드 수와 항상 맞습니다. 지금은 9장에서 끊겨 「5건」인데 3장만 보이는
+          그룹이 생깁니다.
+        </p>
+        <p>
+          새로 정하는 것은 둘뿐이고 <b>새로 만든 색이 하나도 없습니다.</b>
+        </p>
+      </div>
+
+      <!-- ══ ① 상세 하단 글 이동 (데스크톱) ═══════════════════════════ -->
+      <div class="panelHead">
+        <h2>① 상세 화면 하단 — 이전 글 / 다음 글 (데스크톱)</h2>
+        <span class="rule"></span>
+      </div>
+
+      <div class="frame">
+        <header class="top">
+          <div class="topIn">
+            <a class="logo" href="#">signal<span>.</span></a>
+            <span class="tagline">AI·IT 소식에서 신호만 골라 훑는 곳</span>
+          </div>
+        </header>
+
+        <div class="wrap">
+          <article class="read">
+            <a class="back" href="#">← 피드로 돌아가기</a>
+            <h1 class="readTitle">MCP 서버를 처음 붙일 때 자주 막히는 지점 정리</h1>
+
+            <div class="metaRow">
+              <span class="source"><span class="srcMark">Gi</span>GitHub</span>
+              <span>4시간 전</span>
+              <span class="origTitle"
+                ><b>원문 제목: </b>Common MCP server pitfalls</span
+              >
+            </div>
+
+            <div class="sumBox">
+              <span class="sumLabel">AI 요약</span>
+              <p class="sumText">
+                권한 범위, 스키마 검증, 타임아웃 세 군데에서 대부분 막힌다. 각 경우에
+                로그를 어디부터 봐야 하는지 순서대로 짚어둔 글.
+              </p>
+            </div>
+
+            <div class="outbound">
+              <a href="#">GitHub에서 원문 읽기</a>
+            </div>
+
+            <!-- ★ 새 요소 -->
+            <nav class="readNav" aria-label="글 이동">
+              <a class="navBtn navPrev" href="#">
+                <span class="navRole">← 이전 글</span>
+                <span class="navTitle"
+                  >에이전트에게 도구를 몇 개까지 쥐여줘야 할까</span
+                >
+              </a>
+              <a class="navBtn navNext" href="#">
+                <span class="navRole">다음 글 →</span>
+                <span class="navTitle">새 추론 모델을 공개했습니다</span>
+              </a>
+            </nav>
+          </article>
+        </div>
+      </div>
+
+      <p class="note">
+        <b>피드에 보이던 순서를 그대로 따라갑니다.</b> 「이전」은 피드에서 위에 있던 글,
+        「다음」은 아래에 있던 글입니다 — 정렬(핫이슈/최신)을 바꾸면 이 순서도 같이
+        바뀝니다. 날짜 경계는 넘어갑니다(오늘 마지막 글의 「다음」은 어제 첫 글).
+      </p>
+      <p class="note">
+        <b>제목을 같이 보여줍니다.</b> 「다음 글 →」만 있으면 누르기 전에 무엇인지
+        모릅니다. 2줄까지 잘라 쓰고 어절 단위로 끊습니다(카드 제목과 같은 규칙).
+      </p>
+
+      <div class="panelHead">
+        <h2>① 끝에 닿았을 때 — 없애지 않고 점선으로 남긴다</h2>
+        <span class="rule"></span>
+      </div>
+
+      <div class="frame">
+        <div class="wrap">
+          <article class="read" style="padding: 28px 0 32px">
+            <nav class="readNav" style="margin-top: 0; border-top: 0; padding-top: 0" aria-label="글 이동">
+              <a class="navBtn navPrev" href="#">
+                <span class="navRole">← 이전 글</span>
+                <span class="navTitle">새 벤치마크가 나올 때마다 확인하는 세 가지</span>
+              </a>
+              <a class="navBtn navNext" aria-disabled="true">
+                <span class="navRole">다음 글 →</span>
+                <span class="navTitle">마지막 글입니다</span>
+              </a>
+            </nav>
+          </article>
+        </div>
+      </div>
+
+      <p class="note">
+        버튼을 없애면 키보드 포커스가 문서 맨 위로 떨어집니다 — 「더 보기」가
+        2026-08-06 에 <code>aria-disabled</code> 로 남긴 것과 같은 이유입니다.
+        점선 테두리는 이미 「공식 발표라고 함」이 쓰는 표식이라 새 언어가 아닙니다.
+      </p>
+
+      <!-- ══ ② 모바일 하단 고정 줄 ════════════════════════════════════ -->
+      <div class="panelHead">
+        <h2>② 모바일 390px — 화면마다 고정 줄에 담기는 것이 다르다</h2>
+        <span class="rule"></span>
+      </div>
+
+      <div class="phones">
+        <div class="phoneWrap">
+          <h3>메인 — 정렬만</h3>
+          <div class="phone phoneFeed">
+            <div class="phoneScroll">
+              <header class="top">
+                <div class="topIn"><a class="logo" href="#">signal<span>.</span></a></div>
+              </header>
+              <div class="wrap">
+                <div class="dayHead">
+                  <h1>오늘의 신호</h1>
+                  <p>매일 아침 갱신 · 날짜별로 묶습니다.</p>
+                </div>
+                <div class="kwRow">
+                  <button type="button" class="kwBadge kwAll">전체</button>
+                  <button type="button" class="kwBadge kwField">AI 모델 <b>12</b></button>
+                  <button type="button" class="kwBadge kwField">에이전트 <b>9</b></button>
+                  <button type="button" class="kwBadge kwKind">출시 <b>7</b></button>
+                  <button type="button" class="kwBadge kwMore">더 보기</button>
+                </div>
+
+                <div class="dayRowHead">
+                  <h2 class="dayTitle">오늘</h2>
+                  <span class="dayCount">· 6건</span>
+                  <span class="dayRule"></span>
+                </div>
+
+                <div class="grid">
+                  <a class="card" href="#">
+                    <div class="badgeRow">
+                      <span class="badge">🔥 뜨는 중</span>
+                      <span class="official">공식 발표</span>
+                    </div>
+                    <h3 class="cardTitle">에이전트에게 도구를 몇 개까지 쥐여줘야 할까</h3>
+                    <p class="cardSum">
+                      도구 목록이 길어질수록 모델이 엉뚱한 도구를 고르는 빈도가 늘어난다.
+                    </p>
+                    <div class="cardKw">
+                      <span class="cardKwChip kwField">에이전트</span>
+                      <span class="cardKwChip kwKind">실험</span>
+                    </div>
+                    <div class="cardFoot">
+                      <span class="meta"
+                        ><span class="srcMark">An</span>Anthropic · 2시간 전</span
+                      >
+                    </div>
+                  </a>
+
+                  <a class="card" href="#">
+                    <div class="badgeRow"><span class="badge">🔥 뜨는 중</span></div>
+                    <h3 class="cardTitle">MCP 서버를 처음 붙일 때 자주 막히는 지점 정리</h3>
+                    <p class="cardSum">
+                      권한 범위, 스키마 검증, 타임아웃 세 군데에서 대부분 막힌다.
+                    </p>
+                    <div class="cardKw">
+                      <span class="cardKwChip kwField">MCP</span>
+                      <span class="cardKwChip kwKind">가이드</span>
+                    </div>
+                    <div class="cardFoot">
+                      <span class="meta"
+                        ><span class="srcMark">Gi</span>GitHub · 4시간 전</span
+                      >
+                    </div>
+                  </a>
+                </div>
+
+                <div class="moreWrap">
+                  <button type="button" class="moreBtn">더 보기 · 어제 5건</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="dock">
+              <div class="segment" role="group" aria-label="정렬 방식">
+                <button type="button" aria-pressed="true">핫이슈</button>
+                <button type="button" aria-pressed="false">최신</button>
+              </div>
+              <span class="dockSpacer"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="phoneWrap">
+          <h3>상세 — 글 이동</h3>
+          <div class="phone phoneRead">
+            <div class="phoneScroll">
+              <header class="top">
+                <div class="topIn"><a class="logo" href="#">signal<span>.</span></a></div>
+              </header>
+              <div class="wrap">
+                <article class="read">
+                  <a class="back" href="#">← 피드로 돌아가기</a>
+                  <h1 class="readTitle">MCP 서버를 처음 붙일 때 자주 막히는 지점 정리</h1>
+                  <div class="metaRow">
+                    <span class="source"><span class="srcMark">Gi</span>GitHub</span>
+                    <span>4시간 전</span>
+                    <span class="origTitle"
+                      ><b>원문 제목: </b>Common MCP server pitfalls</span
+                    >
+                  </div>
+                  <div class="sumBox">
+                    <span class="sumLabel">AI 요약</span>
+                    <p class="sumText">
+                      권한 범위, 스키마 검증, 타임아웃 세 군데에서 대부분 막힌다.
+                      각 경우에 로그를 어디부터 봐야 하는지 순서대로 짚어둔 글.
+                    </p>
+                  </div>
+                  <div class="outbound"><a href="#">GitHub에서 원문 읽기</a></div>
+                </article>
+              </div>
+            </div>
+
+            <div class="dock">
+              <nav class="dockNav" aria-label="글 이동">
+                <a class="navBtn navPrev" href="#"><span>← 이전 글</span></a>
+                <a class="navBtn navNext" href="#"><span>다음 글 →</span></a>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">
+        <b>고정 줄에는 그 화면에서 반복해서 쓰는 것만 둡니다.</b> 메인에서는
+        정렬(핫이슈/최신)뿐입니다 — 「더 보기」는 다 읽고 나서 한 번 누르는 것이라
+        본문 끝에 그대로 둡니다. 상세에서는 글 이동입니다.
+        키워드 필터는 한 번 고르면 한동안 안 바꾸므로 두 화면 모두 위에 남깁니다.
+      </p>
+      <p class="note">
+        <b>대가는 세로 76px / 68px 입니다</b>(390×720 화면의 11%·9%).
+        누르는 것은 전부 44px 이상입니다 — 데스크톱 세그먼트는 33px 인데 그건 마우스가
+        겨냥하는 값이라 엄지에는 안 통합니다.
+        <b>640px 아래에서만 켭니다</b> — 데스크톱에 띠를 깔면 카드 세로 공간만 줄어듭니다.
+      </p>
+      <p class="note">
+        <b>모바일 「더 보기」에 넘어올 날의 건수를 적었습니다</b>(<code>더 보기 · 어제 5건</code>).
+        하루씩 불러오게 되니 무엇이 올지 말해 줄 수 있습니다. 다 불러오면
+        「모두 불러왔습니다」로 바뀌고 <code>aria-disabled</code> 가 됩니다(기존 규칙 그대로).
+      </p>
+
+      <div class="qa">
+        <h3>승인 전에 답이 필요한 것</h3>
+        <ol>
+          <li>
+            <b>상세의 이전/다음이 날짜를 넘어가도 되나요?</b> 지금은 넘어갑니다 —
+            오늘 마지막 글의 「다음」은 어제 첫 글입니다. 안 넘기면 그날 마지막 글에서
+            멈추고 피드로 돌아가야 합니다.
+          </li>
+          <li>
+            <b>키워드 뱃지의 숫자는 최근 3일 집계입니다.</b> 메인이 여러 날을 이어
+            붙이므로 아까 걱정했던 어긋남은 작아졌지만, 처음 열었을 때는 오늘치만
+            보이는데 뱃지는 3일치를 셉니다. 그대로 둘지, 줄 끝에 「최근 3일」을 적을지
+            정해 주세요.
+          </li>
+          <li>
+            <b>카드에 키워드 칩 줄이 들어왔습니다.</b> 2026-08-27 결정대로 메타 줄이
+            아니라 요약 아래 별도 줄입니다. 1-A 구현에는 아직 없던 줄이라 여기서
+            처음 보시게 됩니다.
+          </li>
+        </ol>
+      </div>
+    </div>
+  </body>
+</html>
