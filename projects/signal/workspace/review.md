@@ -1,8 +1,8 @@
 ---
 project: signal
 status: passed
-basis: 2d5ce0c198fb
-reviewers: [code-reviewer, security-reviewer, ui-reviewer, test-auditor]
+basis: 57c5fe9b9537
+reviewers: [security-reviewer]
 ---
 # review — signal
 
@@ -1141,4 +1141,14 @@ code-reviewer 를 다시 파견**했다.
   주석에서 드러나지만 기계는 `status` 줄만 본다. 결정 카드 `signal-20260920-2-d1` 로 올렸고,
   답이 오기 전까지 이 상태라는 것을 여기 적어 둔다.
 
-> 사인오프는 아직 아니다. 이 절은 검토 기록이고, `status: passed` 는 승인이 온 뒤에 적는다.
+### 사인오프 (2026-09-20)
+
+**승인 받았다** — 결정 카드 `signal-20260920-2-d1`, 사용자 답 「승인한다」.
+`basis` 를 `57c5fe9b9537` 로 기록한다.
+
+`reviewers` 에 `security-reviewer` 하나만 적는다. **셋을 뺀 것도 판단이라 이유를 적는다** —
+화면이 안 바뀌어 시각 검토가 읽을 것이 없고, 도메인 로직이 아니라 신뢰 경계 하나라
+코드 검토가 볼 자리가 보안 검토와 겹치며, 검사는 변이 여섯을 심어 직접 확인했다.
+
+> 앞선 사인오프(2026-09-19)의 `reviewers` 넷은 그때 돌린 목록이고, 이 줄은 **이번 변경분**에
+> 대해 실제로 돌린 것을 적는 자리다. 그때 것을 남겨 두면 안 돌린 검토가 돌린 것으로 읽힌다.
