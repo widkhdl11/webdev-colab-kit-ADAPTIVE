@@ -200,3 +200,32 @@ if (budget?.exhausted) {
 if (report.failedSources.length > 0) {
   console.log(`  실패한 소스: ${report.failedSources.map(plain).join(", ")}`);
 }
+
+// 하루 요금 상한 (ingest-chaining-budget INV-CB8). 안 찍으면 상한에 걸린 날이
+// "요약 0건·키워드 0건"으로만 보여서 글이 없던 날과 구별되지 않는다.
+const cost = report.cost;
+if (cost) {
+  console.log(
+    `  요금        오늘 $${Number(cost.spentUsd).toFixed(3)} / 상한 $${cost.capUsd}` +
+      (cost.capped ? " · ⛔ 상한에 닿아 본문·요약·번역·키워드를 멈췄다" : "") +
+      // 둘을 한 칸에 섞으면 조회가 깨진 날이 돈을 다 쓴 날처럼 보인다.
+      (cost.lookupFailed ? " · ⚠ 오늘 합계를 못 읽어 상한에 닿은 것으로 봤다" : ""),
+  );
+} else {
+  console.log("  요금        칸 없음 — 상한이 없던 시절의 배포이거나 마이그레이션 0010 이 안 갔다");
+}
+
+// 이어달리기 (INV-CB1~CB5). `needed` 가 참인데 `dispatched` 가 거짓이면 이유는 둘뿐이다 —
+// 목적지 설정이 없거나, 길이 상한에 닿았거나. 안 찍으면 그 둘과 "보냈는데 안 닿았다"가
+// 전부 "다음 바퀴가 안 돌았다"로 보인다.
+const chain = report.chain;
+if (chain) {
+  const where = chain.needed
+    ? chain.dispatched
+      ? "다음 호출을 보냈다"
+      : "⚠ 보낼 데가 없다 — 목적지 설정이 없거나 길이 상한(20)에 닿았다"
+    : "남은 일이 없어 안 보냈다";
+  console.log(`  이어달리기  ${chain.index}번째 바퀴 · ${where}`);
+} else {
+  console.log("  이어달리기  칸 없음 — 이어달리기가 없던 시절의 배포다");
+}

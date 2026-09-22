@@ -11,6 +11,7 @@
     "keywords": "tsx scripts/keywords.ts",
     "ingest": "node scripts/ingest.mjs",
     "ingest:status": "node scripts/ingest-status.mjs",
+    "runs": "node scripts/ingest-runs.mjs",
     "badges": "node scripts/badge-distribution.mjs",
     "kinds": "node scripts/kind-audit.mjs",
     "hot-issue": "node scripts/hot-issue-log.mjs",

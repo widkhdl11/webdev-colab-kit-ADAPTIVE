@@ -407,7 +407,10 @@ describe("GET /api/ingest — 이어달리기", () => {
     runIngest.mockImplementation(async () => REPORT);
 
     await call({ authorization: `Bearer ${SECRET}` });
-    expect(sendChainRequest).not.toHaveBeenCalled();
+    // 보내는 자리는 항상 한 번 지나가되 **보낼 것이 null** 이다 — 그래야 응답의
+    // `chain.dispatched` 를 한 자리에서 채울 수 있다. 실제로 나가는 요청은 없다
+    // (chaining.test.ts 가 null 이면 fetch 를 안 부르는 것을 붙든다).
+    expect(sendChainRequest).toHaveBeenCalledWith(null);
   });
 
   it("인가에 실패하면 이어달리기까지 못 간다 — 남이 체인을 시작시킬 수 없다", async () => {
@@ -418,5 +421,58 @@ describe("GET /api/ingest — 이어달리기", () => {
     const res = await call({ authorization: "Bearer wrong-value" }, "http://localhost/api/ingest?chain=2");
     expect(res.status).toBe(401);
     expect(sendChainRequest).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * 응답에 이어달리기 결과를 싣는다 (2026-09-22).
+ *
+ * 왜: 실제 배포에서 다음 바퀴가 안 돌았는데, 리포트만 봐서는 **"부를 데가 없어 안 했다"와
+ * "불렀는데 안 닿았다"가 같은 모양**이라 원인을 좁히지 못했다. 고칠 자리는 설정과
+ * 네트워크로 전혀 다르다. 요금 상한을 리포트에 남기는 이유(INV-CB8)와 같은 자리다.
+ */
+describe("GET /api/ingest — 응답의 chain 칸", () => {
+  const SELF = "https://signal.example.com";
+  const exhausted: Report = { ...REPORT, budget: { ...NO_BUDGET, exhausted: true } };
+
+  it("보냈으면 dispatched 가 참이고 몇 번째인지도 남는다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", SELF);
+    runIngest.mockImplementation(async () => exhausted);
+
+    const res = await call({ authorization: `Bearer ${SECRET}` }, "http://localhost/api/ingest?chain=3");
+    const body = (await res.json()) as { chain: { index: number; needed: boolean; dispatched: boolean } };
+    expect(body.chain).toEqual({ index: 3, needed: true, dispatched: true });
+  });
+
+  it("보낼 데가 없으면 needed 는 참인데 dispatched 가 거짓이다 — 이게 설정 문제의 신호다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", "");
+    runIngest.mockImplementation(async () => exhausted);
+
+    const res = await call({ authorization: `Bearer ${SECRET}` });
+    const body = (await res.json()) as { chain: { needed: boolean; dispatched: boolean } };
+    expect(body.chain.needed).toBe(true);
+    expect(body.chain.dispatched).toBe(false);
+  });
+
+  it("남은 일이 없으면 needed 가 거짓이다 — 위와 구별된다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", SELF);
+    runIngest.mockImplementation(async () => REPORT);
+
+    const res = await call({ authorization: `Bearer ${SECRET}` });
+    const body = (await res.json()) as { chain: { needed: boolean; dispatched: boolean } };
+    expect(body.chain.needed).toBe(false);
+    expect(body.chain.dispatched).toBe(false);
+  });
+
+  it("리포트의 나머지 칸은 그대로 실려 나간다 — chain 을 덧붙이느라 덮어쓰지 않는다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    runIngest.mockImplementation(async () => exhausted);
+    const res = await call({ authorization: `Bearer ${SECRET}` });
+    const body = (await res.json()) as Report;
+    expect(body.budget.exhausted).toBe(true);
+    expect(body.cost).toEqual(NO_COST);
   });
 });

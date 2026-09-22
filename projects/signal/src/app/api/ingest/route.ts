@@ -73,17 +73,31 @@ export async function GET(request: Request) {
   // 저장(saveIngestRunReport) **뒤에** 부르는 것이 중요하다 — 다음 호출이 오늘 쓴 돈을
   // 저장된 기록에서 읽기 때문이다(INV-CB6). 먼저 부르면 이 바퀴 지출이 안 보인 채로
   // 다음 바퀴가 상한을 잰다.
-  if (shouldChain(report)) {
-    await sendChainRequest(
-      buildChainRequest({
-        baseUrl: selfBaseUrl(),
-        secret: expected,
-        chainIndex,
-      }),
-    );
-  }
+  const willChain = shouldChain(report);
+  const chainRequest = willChain
+    ? buildChainRequest({ baseUrl: selfBaseUrl(), secret: expected, chainIndex })
+    : null;
+  await sendChainRequest(chainRequest);
 
   // 실패가 있어도 200 이다 — 일부 소스가 죽는 건 정상 경로다(INV-C4).
   // 무엇이 실패했는지는 본문에 담아 Cron 로그에서 보이게 한다.
-  return NextResponse.json(report);
+  //
+  // `chain` 을 같이 싣는 이유는 요금 상한을 리포트에 남기는 이유와 같다 (INV-CB8 의 취지):
+  // 안 남기면 **"부를 데가 없어 안 했다"와 "불렀는데 안 닿았다"가 같은 모양이 된다.**
+  // 둘 다 "다음 바퀴가 안 돌았다"로만 보이는데, 고칠 자리는 설정과 네트워크로 전혀 다르다.
+  // 2026-09-22 에 실제로 그 구별이 안 돼서 원인을 좁히지 못했다.
+  return NextResponse.json({
+    ...report,
+    chain: {
+      /** 이번이 몇 번째 호출인가 (1 = 예약 실행이 시작한 첫 바퀴). */
+      index: chainIndex,
+      /** 시간이 떨어져 남은 일이 있었나 — 이어달릴 이유가 있었나. */
+      needed: willChain,
+      /**
+       * 실제로 요청을 만들어 보냈나. `needed` 가 참인데 이것이 거짓이면 이유는 둘뿐이다 —
+       * 목적지 설정이 없거나(INV-CB2), 길이 상한에 닿았거나(INV-CB5).
+       */
+      dispatched: chainRequest !== null,
+    },
+  });
 }
