@@ -31,6 +31,35 @@ const usageSchema = z.object({
   cacheReadTokens: z.number(),
   cacheWriteTokens: z.number(),
   maxInputTokens: z.number(),
+  // 단계별 소요 시간 (2026-09-22). **옛 행에는 없다** — 이 칸이 생기기 전에 쌓인 실행이
+  // 1,800건 있고, 필수로 두면 그 행들이 전부 파싱에 걸려 화면이 "실행 없음"으로 떨어진다.
+  stageMs: z
+    .object({
+      feedMs: z.number(),
+      topicMs: z.number(),
+      storeMs: z.number(),
+      hotIssueMs: z.number(),
+      extractionMs: z.number(),
+      enrichmentMs: z.number(),
+      keywordsMs: z.number(),
+    })
+    .nullish(),
+  // 2026-09-22 에 생긴 칸들. 옛 행에는 없다 — 필수로 두면 1,800개 넘는 옛 행이
+  // 전부 파싱에 걸려 화면이 "실행 없음"으로 떨어진다.
+  hotIssueCalls: z.number().nullish(),
+  hotIssueInputTokens: z.number().nullish(),
+  hotIssueOutputTokens: z.number().nullish(),
+  keywordCalls: z.number().nullish(),
+  keywordInputTokens: z.number().nullish(),
+  keywordOutputTokens: z.number().nullish(),
+  models: z
+    .object({
+      topic: z.string(),
+      hotIssue: z.string(),
+      enrich: z.string(),
+      keywords: z.string(),
+    })
+    .nullish(),
 });
 
 const budgetSchema = z.object({
@@ -39,6 +68,22 @@ const budgetSchema = z.object({
   skippedTopicChecks: z.number(),
   skippedExtractions: z.number(),
   skippedEnrichments: z.number(),
+  // 이 둘이 빠져 있어서 **키워드 단계가 3주간 통째로 안 돌아간 것이 화면 어디에도 안 떴다**
+  // (2026-09-22). 리포트에는 처음부터 있었고 여기서 안 읽었을 뿐이다.
+  // 옛 행에는 없을 수 있어 `nullish` 다 — 위 stageMs 와 같은 이유.
+  skippedKeywords: z.boolean().nullish(),
+  skippedHotIssue: z.boolean().nullish(),
+});
+
+/**
+ * 요금 상한 판정 (INV-CB8). 옛 행에는 칸 자체가 없어서 `nullish` 다 —
+ * 위 `stageMs` 와 같은 이유이고, 없는 것은 아래에서 `null` 로 못 박는다.
+ */
+const costSchema = z.object({
+  capUsd: z.number(),
+  spentUsd: z.number(),
+  capped: z.boolean(),
+  lookupFailed: z.boolean(),
 });
 
 const rowSchema = z.object({
@@ -48,6 +93,7 @@ const rowSchema = z.object({
   usage: usageSchema,
   sources: z.array(sourceStatSchema),
   budget: budgetSchema,
+  cost: costSchema.nullish(),
 });
 
 /** 못 믿을 행은 버린다(null) — 대시보드가 던지는 대신 "실행 없음"으로 떨어진다. */
@@ -59,8 +105,26 @@ export function toIngestRunRecord(raw: unknown): IngestRunRecord | null {
     id: r.id,
     startedAt: r.started_at,
     elapsedMs: r.elapsed_ms,
-    budget: r.budget,
-    usage: r.usage,
+    // 없는 칸은 **`null` 로 못 박는다.** `undefined` 로 두면 화면이 "값이 없다"와
+    // "이 실행에는 그 칸이 아예 없었다"를 같은 것으로 보게 되고, 옛 행과 새 행이 섞인
+    // 목록에서 그 차이가 그대로 사라진다.
+    cost: r.cost ?? null,
+    budget: {
+      ...r.budget,
+      skippedKeywords: r.budget.skippedKeywords ?? null,
+      skippedHotIssue: r.budget.skippedHotIssue ?? null,
+    },
+    usage: {
+      ...r.usage,
+      stageMs: r.usage.stageMs ?? null,
+      hotIssueCalls: r.usage.hotIssueCalls ?? null,
+      hotIssueInputTokens: r.usage.hotIssueInputTokens ?? null,
+      hotIssueOutputTokens: r.usage.hotIssueOutputTokens ?? null,
+      keywordCalls: r.usage.keywordCalls ?? null,
+      keywordInputTokens: r.usage.keywordInputTokens ?? null,
+      keywordOutputTokens: r.usage.keywordOutputTokens ?? null,
+      models: r.usage.models ?? null,
+    },
     sources: r.sources,
   };
 }

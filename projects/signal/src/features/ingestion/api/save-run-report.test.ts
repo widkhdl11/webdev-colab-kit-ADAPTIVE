@@ -48,6 +48,27 @@ const NO_USAGE = {
   cacheReadTokens: 0,
   cacheWriteTokens: 0,
   maxInputTokens: 0,
+  stageMs: {
+    feedMs: 0,
+    topicMs: 0,
+    storeMs: 0,
+    hotIssueMs: 0,
+    extractionMs: 0,
+    enrichmentMs: 0,
+    keywordsMs: 0,
+  },
+  hotIssueCalls: 0,
+  hotIssueInputTokens: 0,
+  hotIssueOutputTokens: 0,
+  keywordCalls: 0,
+  keywordInputTokens: 0,
+  keywordOutputTokens: 0,
+  models: {
+    topic: "claude-haiku-4-5",
+    hotIssue: "claude-sonnet-5",
+    enrich: "claude-sonnet-5",
+    keywords: "claude-haiku-4-5",
+  },
 };
 
 const NO_TOPIC_USAGE = { calls: 0, inputTokens: 0, outputTokens: 0 };
@@ -82,6 +103,7 @@ function report(over: Partial<IngestReport> = {}): IngestReport {
     usage: NO_USAGE,
     enrichUsageBySource: {},
   keywords: null,
+    hotIssue: null,
     budget: {
       exhausted: false,
       skippedSources: [],
@@ -89,7 +111,10 @@ function report(over: Partial<IngestReport> = {}): IngestReport {
       skippedExtractions: 0,
       skippedEnrichments: 0,
     skippedKeywords: false,
+      skippedHotIssue: false,
     },
+    // 요금 상한은 이 파일의 관심사가 아니다 — 안 걸린 평소 상태로 채운다.
+    cost: { capUsd: 10, spentUsd: 0, capped: false, lookupFailed: false },
     ...over,
   };
 }
@@ -181,6 +206,7 @@ describe("saveIngestRunReport", () => {
       skippedExtractions: 0,
       skippedEnrichments: 0,
     skippedKeywords: false,
+      skippedHotIssue: false,
     };
     await saveIngestRunReport({
       runId: "run-1",

@@ -117,6 +117,12 @@
   font-weight: 700;
 }
 
+/* 단계별 소요 시간 절의 제목. 드릴다운 제목과 같은 크기를 쓴다 — 같은 층의 제목이다. */
+.sectionTitle {
+  font-size: var(--fs-prose-h2);
+  margin: 0 0 var(--space-12);
+}
+
 .drilldown h2 {
   font-size: var(--fs-prose-h2);
   margin: 0 0 var(--space-12);

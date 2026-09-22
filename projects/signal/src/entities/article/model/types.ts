@@ -1,3 +1,5 @@
+import type { ArticleKind, Gate } from "../lib/hot-issue";
+
 /** 수집된 소식 한 건. 피드·상세가 공유하는 도메인 모델. */
 
 /**
@@ -111,6 +113,21 @@ export interface Article {
    */
   officialBasis: OfficialBasis;
   /**
+   * 문 배정 (hot-issue.md INV-H1). `gate1` 이면 핫이슈, `null` 이면 판정을 못 받았거나
+   * 문턱을 못 넘었다.
+   *
+   * **`score`·`isTrending` 과 달리 저장된 값이다** — 모델 판정이라 다시 물으면 다른 값이
+   * 나올 수 있고 요금도 다시 나간다(INV-H2).
+   */
+  gate: Gate | null;
+  /**
+   * 글의 종류 (hot-issue.md INV-G1). 한 글이 둘 다일 수 있고, 비어 있을 수도 있다.
+   *
+   * **화면 자리를 정하는 데 쓰는 것은 `tool` 하나다** (INV-G3). 비어 있어도 그 글은
+   * 소식에 선다 — 종류로 거르면 갈 곳 없는 글이 조용히 사라진다.
+   */
+  kinds: ArticleKind[];
+  /**
    * 랭킹 점수. '뜨는순' 정렬의 기준값이다.
    *
    * **저장된 값이 아니다** (ingestion-ranking INV-R1). 시간감쇠 × 소스 weight 로
@@ -124,6 +141,15 @@ export interface Article {
    * 정해진다. 그래서 태그 필터를 걸어도 이 값은 안 바뀐다.
    */
   isTrending: boolean;
+  /**
+   * 이슈성 (hot-issue.md INV-N3) — **핫이슈 자리의 순서**를 정하는 값이다.
+   *
+   * `score` 와 마찬가지로 저장하지 않고 조회 시점에 계산한다(INV-H2). 지금은 교차 발행처
+   * 수가 항상 1 이라 `score` 와 값이 같은데, **같은 값을 두 칸에 두는 것이 요점이다** —
+   * 같은 사건 묶기가 붙어 그 수가 1 을 넘는 날 이 칸만 달라지고 핫이슈 순서가 따라 바뀐다.
+   * 한 칸으로 합치면 그날 아무것도 안 바뀌고, 그 사실을 아무도 모른다(2026-09-21 리뷰).
+   */
+  issueScore: number;
 }
 
 /**
@@ -133,9 +159,10 @@ export interface Article {
  * 구조적 타이핑에서 `Article` 이 그냥 대입돼, 조회 결과를 그대로 저장하는 한 줄이
  * 조용히 컴파일된다 (ArticleListItem 이 본문에 대해 쓰는 것과 같은 장치).
  */
-export type StoredArticle = Omit<Article, "score" | "isTrending"> & {
+export type StoredArticle = Omit<Article, "score" | "isTrending" | "issueScore"> & {
   score?: never;
   isTrending?: never;
+  issueScore?: never;
 };
 
 /**

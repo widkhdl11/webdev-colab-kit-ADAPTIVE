@@ -5,7 +5,12 @@ import { serverSupabase } from "@/shared/api/supabase-server";
 // entities/ingest-run 이 정의한 저장 모양을 그대로 쓴다 — 여기서 따로 인터페이스를
 // 다시 선언하면 이름·필드가 두 곳에서 갈릴 수 있고, 어긋나도 컴파일은 통과한다
 // (row.ts 의 zod 파싱만 실행 시점에 조용히 "실행 없음"으로 떨어뜨린다). 2026-08-17 리뷰.
-import type { IngestRunBudget, IngestRunSourceStat, IngestRunUsage } from "@/entities/ingest-run";
+import type {
+  IngestRunBudget,
+  IngestRunCost,
+  IngestRunSourceStat,
+  IngestRunUsage,
+} from "@/entities/ingest-run";
 import type { IngestReport } from "../lib/ports";
 
 /**
@@ -100,6 +105,9 @@ export async function saveIngestRunReport(params: {
   }
   const usage: IngestRunUsage = report.usage;
   const budget: IngestRunBudget = report.budget;
+  // 상한에 걸렸다는 것과 그때의 합계 (INV-CB8). 안 남기면 리포트에서 "그날 글이 없었다"와
+  // "상한에 걸렸다"가 같은 모양이 된다.
+  const cost: IngestRunCost = report.cost;
 
   const { error } = await db.from("ingest_run").insert({
     id: runId,
@@ -108,6 +116,7 @@ export async function saveIngestRunReport(params: {
     usage,
     sources,
     budget,
+    cost,
   });
   if (error) throw new Error(error.message);
 }

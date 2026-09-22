@@ -37,3 +37,18 @@ export function supabaseSecretKey(): string {
 export function anthropicApiKey(): string {
   return required("ANTHROPIC_API_KEY", process.env.ANTHROPIC_API_KEY);
 }
+
+/**
+ * 이어달리기가 다음 호출을 보낼 **우리 배포 주소** (ingest-chaining-budget INV-CB1·CB2).
+ *
+ * 다른 값들과 달리 **없어도 던지지 않는다.** 이 값이 없으면 이어달리기를 하지 않고
+ * 한 호출만 돌고 정상으로 끝내는 것이 규칙이라(INV-CB2), 여기서 던지면 설정을 빠뜨린
+ * 환경에서 수집 자체가 죽는다.
+ *
+ * 요청 헤더의 호스트로 대신 추측하지 않는다 — 그건 남이 보낸 값이고, 그 주소로 가는
+ * 요청에는 우리 시크릿이 실린다. 설정을 빠뜨린 것이 곧 "아무 데나 부른다"가 되면 안 된다.
+ */
+export function selfBaseUrl(): string | undefined {
+  const value = process.env.INGEST_BASE_URL;
+  return typeof value === "string" && value.trim() !== "" ? value : undefined;
+}

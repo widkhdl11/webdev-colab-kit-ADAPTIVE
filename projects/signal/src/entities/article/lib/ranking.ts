@@ -56,10 +56,34 @@ export interface Rankable {
  * 마지막 id 단계가 있어야 "같은 데이터면 항상 같은 순서"가 성립한다.
  * 앞 두 단계가 동률일 때 0 을 돌려주면 순서가 엔진의 정렬 구현에 맡겨진다.
  */
+/** 이슈성 순 비교에 필요한 최소 필드. */
+export interface IssueRankable {
+  id: string;
+  issueScore: number;
+  publishedAt: string;
+}
+
 export function compareForRanking(a: Rankable, b: Rankable): number {
   if (a.score !== b.score) return b.score - a.score;
 
   // 못 읽는 발행시각은 0 으로 눌러 비교를 결정적으로 만든다(NaN 비교는 전부 false).
+  const at = Date.parse(a.publishedAt) || 0;
+  const bt = Date.parse(b.publishedAt) || 0;
+  if (at !== bt) return bt - at;
+
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+/**
+ * 이슈성 순 비교자 (hot-issue.md INV-N3) — 이슈성 내림차순 → 발행시각 → id.
+ *
+ * `compareForRanking` 과 **같은 모양이되 보는 칸이 다르다.** 둘을 하나로 합치지 않는 이유가
+ * 그것이다: 지금은 두 값이 같지만(교차 발행처 수가 항상 1), 같은 사건 묶기가 붙는 날
+ * 이슈성만 달라져야 한다. 합쳐 두면 그날 핫이슈 순서가 조용히 안 바뀐다.
+ */
+export function compareByIssue(a: IssueRankable, b: IssueRankable): number {
+  if (a.issueScore !== b.issueScore) return b.issueScore - a.issueScore;
+
   const at = Date.parse(a.publishedAt) || 0;
   const bt = Date.parse(b.publishedAt) || 0;
   if (at !== bt) return bt - at;

@@ -87,7 +87,7 @@ if (!res.ok) {
 }
 
 const report = JSON.parse(text);
-const { topicFilter, extraction, summaries, titles, keywords, usage } = report;
+const { topicFilter, extraction, summaries, titles, keywords, hotIssue, usage } = report;
 
 console.log(`수집 완료 (${seconds}초)`);
 for (const r of report.sources) {
@@ -105,6 +105,26 @@ console.log(
 for (const title of topicFilter.filteredTitles) console.log(`      걸러냄: ${plain(title)}`);
 // 실패 이유를 안 찍으면 "판정 실패 11" 이 크레딧 소진인지 타임아웃인지 알 수 없다.
 for (const why of topicFilter.failureReasons ?? []) console.log(`      실패 이유: ${plain(why)}`);
+// 핫이슈 판정은 적재 바로 다음 단계다(2026-09-20). **잘린 건수를 반드시 찍는다** —
+// 매일 상한에 부딪혀 잘려 나가는데 화면에는 정상으로 보이면, 기준이 느슨한지 상한이
+// 있으나 마나인지를 구별할 방법이 없다(hot-issue.md INV-N4).
+// 단계가 통째로 안 돈 경우(`hotIssue === null`)도 반드시 남긴다 — 안 찍으면 "0건 뽑힘"과 같아진다.
+if (hotIssue === null || hotIssue === undefined) {
+  console.log("  핫이슈 판정  단계를 건너뜀 (시간 예산 소진)");
+} else {
+  console.log(
+    `  핫이슈 판정  물어봄 ${hotIssue.attempted} · 저장 ${hotIssue.succeeded} · 실패 ${hotIssue.failed}` +
+      ` · 뽑힘 ${hotIssue.gated}` +
+      (hotIssue.duplicates > 0 ? ` · 같은 사건이라 뺌 ${hotIssue.duplicates}` : "") +
+      (hotIssue.skipped > 0 ? ` · 예산에 밀림 ${hotIssue.skipped}` : "") +
+      (hotIssue.error ? ` · ${plain(hotIssue.error)}` : ""),
+  );
+  for (const why of hotIssue.failureReasons ?? []) console.log(`      실패 이유: ${plain(why)}`);
+  console.log(
+    `  토큰(핫이슈) 호출 ${hotIssue.usage.calls} · 입력 ${hotIssue.usage.inputTokens}` +
+      ` · 출력 ${hotIssue.usage.outputTokens}`,
+  );
+}
 console.log(
   `  본문 추출   시도 ${extraction.attempted} · 성공 ${extraction.succeeded} · 실패 ${extraction.failed}` +
     (extraction.error ? ` · ${plain(extraction.error)}` : ""),
@@ -153,6 +173,19 @@ console.log(
 console.log(
   `  토큰(판정)   호출 ${usage.topicCalls} · 입력 ${usage.topicInputTokens} · 출력 ${usage.topicOutputTokens}`,
 );
+// 단계마다 걸린 시간 (2026-09-22). 총 소요시간 하나만 찍으면 244초가 나와도 그중
+// 주제 판정이 얼마인지 요약이 얼마인지 알 수 없고, 한 바퀴를 어떻게 나눌지를 추정으로
+// 정하게 된다. 옛 실행 기록에는 이 칸이 없으므로 없으면 조용히 건너뛴다.
+if (usage.stageMs) {
+  const m = usage.stageMs;
+  const sec = (ms) => `${(ms / 1000).toFixed(1)}초`;
+  console.log(
+    `  단계별 시간  피드 ${sec(m.feedMs)} · 판정 ${sec(m.topicMs)} · 적재 ${sec(m.storeMs)}` +
+      ` · 핫이슈 ${sec(m.hotIssueMs)} · 본문 ${sec(m.extractionMs)}` +
+      ` · 요약 ${sec(m.enrichmentMs)} · 키워드 ${sec(m.keywordsMs)}`,
+  );
+}
+
 // 시간 예산에 걸려 건너뛴 것. 안 찍으면 뒤쪽 소스가 매일 0건인 것이
 // "그 소스에 새 글이 없다"로 보인다 — notChecked 를 따로 찍는 이유와 같다.
 const budget = report.budget;

@@ -3,31 +3,51 @@ import "server-only";
 
 import Anthropic from "@anthropic-ai/sdk";
 import { serverSupabase } from "@/shared/api/supabase-server";
+import { createHotIssueDbPorts } from "./hot-issue-db";
+import { fetchRecentRuns } from "@/entities/ingest-run/api/dashboard-queries";
+import { todaySpendUsd } from "../lib/cost-cap";
+import { dayKey, dayStartIso } from "@/shared/lib/datetime";
+import { candidateWindowStartIso } from "../lib/candidate-window";
 import { anthropicApiKey } from "@/shared/api/server-env";
-import { toOfficialBasis, type FeedItemDraft } from "@/entities/article";
+import { GATE_ONE, toOfficialBasis, type FeedItemDraft } from "@/entities/article";
 import { getSourceWeight } from "@/entities/source";
 import type { Source } from "@/entities/source";
 import {
   ENRICH_BATCH,
   ENRICH_POOL,
+  PICKED_TITLES_LIMIT,
   KEYWORD_MAX_TOKENS,
   KEYWORD_TIMEOUT_MS,
   MAX_FETCH_BYTES,
+  HOT_ISSUE_MAX_TOKENS,
+  HOT_ISSUE_TIMEOUT_MS,
+  TOPIC_MAX_TOKENS,
+  TOPIC_MODEL,
+  TOPIC_TIMEOUT_MS,
+  KEYWORD_MODEL,
+  HOT_ISSUE_MODEL,
+  ENRICH_MODEL,
+  ENRICH_TIMEOUT_MS,
+  EXTRACTION_TIMEOUT_MS,
 } from "../lib/budgets";
 import { fenceData } from "../lib/data-fence";
 import { fetchPublic } from "../lib/fetch-public";
 import { keywordEvidence } from "../lib/keyword-evidence";
 import { extractArticleHtml } from "../lib/extract-content";
 import { buildEnrichPrompt } from "../lib/build-enrich-prompt";
+import { buildHotIssuePrompt } from "../lib/build-hot-issue-prompt";
 import { buildKeywordPrompt } from "../lib/build-keyword-prompt";
 import { buildTopicPrompt } from "../lib/build-topic-prompt";
 import { parseFeedXml } from "../lib/parse-feed";
+import { parseHotIssue } from "../lib/parse-hot-issue";
 import { isSafeKeyword, parseKeywords } from "../lib/parse-keywords";
 import { pickEnrichTargets } from "../lib/pick-enrich-targets";
 import { batchAxisEntries, itemTagLinks, tagIdByNormalized, tagUpsertRows } from "../lib/tag-links";
 import { topicVerdict } from "../lib/topic-verdict";
 import { upsertBatches } from "../lib/upsert-rows";
 import type {
+  HotIssueCandidate,
+  HotIssueSave,
   EnrichCandidate,
   EnrichResult,
   ExtractionCandidate,
@@ -45,10 +65,12 @@ import type {
  * 실제 서버 없이 확인할 수 있다. 이 파일 자체는 통합 테스트와 실제 수집에서 검증된다.
  */
 
-const FETCH_TIMEOUT_MS = 15_000;
-const SUMMARY_TIMEOUT_MS = 30_000;
+// 이 둘은 budgets.ts 에 있다 (2026-09-22). 여기 있던 동안은 `server-only` 라 유닛이
+// 로드조차 못 해서 어떤 값으로 바꿔도 전 스위트가 green 이었고, INV-CB9 가 "한 건의
+// 최악 소요 시간"으로 쓰는 값이라 두 벌로 두면 판단이 틀린 수에 맞춰진다.
+const FETCH_TIMEOUT_MS = EXTRACTION_TIMEOUT_MS;
+const SUMMARY_TIMEOUT_MS = ENRICH_TIMEOUT_MS;
 /** 주제 판정은 제목 하나만 보내는 짧은 호출이라 요약보다 짧게 잡는다. */
-const TOPIC_TIMEOUT_MS = 15_000;
 /** 요약에 넘길 근거의 최대 길이. 본문 전체를 넣으면 토큰만 낭비된다. */
 const EVIDENCE_LIMIT = 20_000;
 
@@ -70,6 +92,19 @@ interface PoolRow {
  * 추출·요약 두 단계가 **같은 함수를 쓴다** — 다른 기준을 쓰면 본문을 채운 항목과
  * 요약할 항목이 어긋나 예산이 서로를 못 쓴다.
  */
+/**
+ * 후보 조회가 볼 범위의 시작 시각 (2026-09-22).
+ *
+ * 세 후보 조회가 **같은 값을 써야 한다** — 하나만 창 밖까지 보면 그 단계만 옛 글을
+ * 붙들고, 예산은 거기 쓰이는데 화면에는 안 나타난다.
+ *
+ * `null` 이면 창을 안 건다(계산이 실패한 경우). 조용히 전체를 보는 쪽이 조용히 0건을
+ * 보는 것보다 낫다 — 전자는 요금이 더 나가고 후자는 수집이 멈춘다.
+ */
+function windowStart(): string | null {
+  return candidateWindowStartIso(new Date());
+}
+
 function pickFromPool(pool: readonly PoolRow[]): string[] {
   return pickEnrichTargets({
     pool: pool.map((r) => ({
@@ -140,6 +175,9 @@ function orderByIds<T extends { id: unknown }>(rows: readonly T[], ids: readonly
 
 export function createIngestPorts(): IngestPorts {
   const db = serverSupabase();
+  // 핫이슈의 DB 문은 `hot-issue-db.ts` 에 있다 — 그 파일은 `server-only` 가 없어서
+  // 유닛·통합이 실제로 부를 수 있다(2026-09-21 테스트 감사). 여기서는 클라이언트만 넘긴다.
+  const hotIssueDb = createHotIssueDbPorts(db);
   // 키를 모듈 최상위에서 읽지 않는다 — import 만 해도 던지면 라우트 전체가 죽는다.
   let anthropic: Anthropic | null = null;
 
@@ -210,17 +248,29 @@ export function createIngestPorts(): IngestPorts {
   }
 
   return {
+    /**
+     * 오늘(KST) 저장된 실행 기록의 요금 합계 (INV-CB6).
+     *
+     * 하루치만 가져온다 — 상한이 보는 것은 오늘뿐이고, 더 가져오면 조회만 무거워진다.
+     * 실패하면 **던진다**: 파이프라인이 그것을 "상한에 닿았다"로 받는다(모르면 멈추는 쪽).
+     * 여기서 0 을 돌려주면 조회가 깨진 날 상한이 통째로 사라진다.
+     */
+    async loadTodaySpendUsd(now: Date) {
+      return todaySpendUsd(await fetchRecentRuns(1, now), now);
+    },
     async judgeTopic(title: string) {
       anthropic ??= new Anthropic({ apiKey: anthropicApiKey() });
 
       const res = await anthropic.messages.create(
         {
-          model: "claude-sonnet-5",
+          model: TOPIC_MODEL,
           // "yes"/"no" 한 단어만 받으면 되지만 **모델은 그 앞에 생각을 한다.**
           // 5 로 잡았더니 5토큰을 전부 thinking 블록에 쓰고 텍스트가 0글자로 왔다
           // (2026-08-12 실측: stop=max_tokens, blocks=["thinking"]). 그러면 판정이
           // 매번 실패로 떨어져 필터가 통째로 죽는다. 생각을 끝낸 응답은 32토큰이었다.
-          max_tokens: 200,
+          // 값과 근거는 budgets.ts 에 있다 — 이 파일은 `server-only` 라 유닛이 못 읽어서,
+          // 여기 둔 동안은 어떤 값으로 바꿔도 전 스위트가 통과했다(2026-09-22 에 내렸다).
+          max_tokens: TOPIC_MAX_TOKENS,
           system: buildTopicPrompt(),
           // 제목도 남의 글이다 — 감싸지 않으면 제목에 심은 지시로 주제 필터를 통과할 수 있다.
           // 요약 프롬프트와 같은 경계를 쓴다 — 여기만 감싸기만 하면 제목에 심은
@@ -299,10 +349,13 @@ export function createIngestPorts(): IngestPorts {
       // 요약 후보와 **같은 기준으로 고른다** (2026-08-13 리뷰). 여기만 최신순으로 두면
       // 두 단계가 서로 다른 항목에 예산을 쓴다 — 본문을 채운 항목은 요약 후보에 못 들고,
       // 요약할 항목은 근거가 없어 건너뛰어진다(skippedNoEvidence).
-      const { data: pool, error: poolError } = await db
+      const from = windowStart();
+      let poolQuery = db
         .from("item")
         .select("id, published_at, source_id")
-        .eq("content_html", "")
+        .eq("content_html", "");
+      if (from !== null) poolQuery = poolQuery.gte("published_at", from);
+      const { data: pool, error: poolError } = await poolQuery
         .order("published_at", { ascending: false })
         .limit(ENRICH_POOL);
       if (poolError) throw new Error(poolError.message);
@@ -355,10 +408,10 @@ export function createIngestPorts(): IngestPorts {
       // 1단계: **랭킹에 필요한 세 칸만** 넓게 받는다.
       // 본문까지 이만큼 받으면 한 건이 2만 자라 응답이 수 MB 가 된다.
       // 자르는 기준(발행시각)과 고르는 기준(점수)이 다르므로 풀은 넓어야 한다 — budgets.ts 참고.
-      const { data: pool, error: poolError } = await db
-        .from("item")
-        .select("id, published_at, source_id")
-        .or(CANDIDATE_FILTER)
+      const from = windowStart();
+      let poolQuery = db.from("item").select("id, published_at, source_id").or(CANDIDATE_FILTER);
+      if (from !== null) poolQuery = poolQuery.gte("published_at", from);
+      const { data: pool, error: poolError } = await poolQuery
         .order("published_at", { ascending: false })
         .limit(ENRICH_POOL);
       if (poolError) throw new Error(poolError.message);
@@ -403,7 +456,7 @@ export function createIngestPorts(): IngestPorts {
 
       const res = await anthropic.messages.create(
         {
-          model: "claude-sonnet-5",
+          model: ENRICH_MODEL,
           // 요약이 길어지고 핵심 항목·제목이 붙어 예전 600 으로는 잘린다.
           // 제목만 부를 때도 200 은 빠듯하다 — 한국어는 글자당 토큰이 커서 긴 제목이면
           // JSON 껍데기까지 넣다 잘리고, 잘리면 닫는 중괄호가 없어 파싱이 실패한다.
@@ -472,10 +525,10 @@ export function createIngestPorts(): IngestPorts {
       // **본문을 여기서 안 받는다.** 한 건이 2만 자라 80건이면 최악 1.6MB 를 받아 놓고
       // 1,200자로 자르게 된다 — 이 파일의 다른 두 후보 조회가 같은 이유로 이미 본문을 뺐다.
       // 요약글이 없는 건에 대해서만 2차로 받아 온다(요약 단계가 쓰는 것과 같은 2단계 패턴).
-      const { data, error } = await db
-        .from("item")
-        .select("id, title, source_excerpt")
-        .is("keywords_at", null)
+      const from = windowStart();
+      let query = db.from("item").select("id, title, source_excerpt").is("keywords_at", null);
+      if (from !== null) query = query.gte("published_at", from);
+      const { data, error } = await query
         .order("published_at", { ascending: false })
         .limit(limit);
       if (error) throw new Error(error.message);
@@ -541,7 +594,7 @@ export function createIngestPorts(): IngestPorts {
 
       const res = await anthropic.messages.create(
         {
-          model: "claude-sonnet-5",
+          model: KEYWORD_MODEL,
           max_tokens: KEYWORD_MAX_TOKENS,
           system: buildKeywordPrompt(knownFields, knownKinds),
           messages: [{ role: "user", content }],
@@ -566,6 +619,49 @@ export function createIngestPorts(): IngestPorts {
         },
       };
     },
+
+
+
+
+    async judgeHotIssue({ title, evidence, alreadyPicked }) {
+      anthropic ??= new Anthropic({ apiKey: anthropicApiKey() });
+
+      // 제목과 근거를 **따로** 감싼다 — 이어 붙이면 근거에 심은 문장이 제목의 일부로 읽힌다.
+      const content = evidence
+        ? `${fenceData("제목", title)}
+${fenceData("출처 요약글", evidence)}`
+        : fenceData("제목", title);
+
+      const res = await anthropic.messages.create(
+        {
+          model: HOT_ISSUE_MODEL,
+          max_tokens: HOT_ISSUE_MAX_TOKENS,
+          system: buildHotIssuePrompt({ alreadyPicked }),
+          messages: [{ role: "user", content }],
+        },
+        { timeout: HOT_ISSUE_TIMEOUT_MS },
+      );
+
+      return {
+        // 잘린 응답·형식이 깨진 응답을 가리는 것은 순수 함수가 한다 (parse-hot-issue).
+        verdict: parseHotIssue(
+          res.content
+            .filter((b): b is Anthropic.TextBlock => b.type === "text")
+            .map((b) => b.text)
+            .join(""),
+        ),
+        usage: {
+          inputTokens: res.usage.input_tokens,
+          outputTokens: res.usage.output_tokens,
+          cacheReadTokens: res.usage.cache_read_input_tokens ?? 0,
+          cacheWriteTokens: res.usage.cache_creation_input_tokens ?? 0,
+        },
+      };
+    },
+
+
+
+    ...hotIssueDb,
 
     attachKeywords,
 

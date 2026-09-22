@@ -12,18 +12,34 @@ export {
   filterByTag,
   findArticleById,
   groupByDay,
+  inSegment,
   selectFeed,
   sortArticles,
 } from "./lib/query";
-export type { ArticleDayGroup, FeedSelection, SortMode } from "./lib/query";
+export type { ArticleDayGroup, FeedSegment, FeedSelection, SortMode } from "./lib/query";
 export {
   compareForRanking,
   computeScore,
   HALF_LIFE_HOURS,
   markTrending,
   TRENDING_TOP_N,
+  compareByIssue,
 } from "./lib/ranking";
-export type { Rankable, ScoreInput } from "./lib/ranking";
+export type { IssueRankable, Rankable, ScoreInput } from "./lib/ranking";
+export {
+  assignGate,
+  computeIssueScore,
+  GATE_ONE,
+  placeArticle,
+  toArticleKinds,
+  toGate,
+} from "./lib/hot-issue";
+export type {
+  ArticleKind,
+  Gate,
+  IssueScoreInput,
+  Placement,
+} from "./lib/hot-issue";
 export { canonicalizeUrl, TRACKING_PARAMS } from "./lib/canonical-url";
 export { normalizePublishedAt } from "./lib/published-at";
 export type { NormalizedPublishedAt } from "./lib/published-at";

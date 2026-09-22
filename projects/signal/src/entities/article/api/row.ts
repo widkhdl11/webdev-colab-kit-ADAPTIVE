@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { toArticleKinds, toGate } from "../lib/hot-issue";
 import { toOfficialBasis } from "../lib/official";
 import type { ArticleKeyword, StoredArticle } from "../model/types";
 
@@ -21,6 +22,11 @@ const tagJoin = z
   .optional()
   .nullable();
 
+const kindJoin = z
+  .array(z.object({ kind: z.unknown() }).passthrough())
+  .optional()
+  .nullable();
+
 const rowSchema = z.object({
   id: z.string().min(1),
   original_url: z.string().min(1),
@@ -35,8 +41,14 @@ const rowSchema = z.object({
   // 모르는 값이 와도 행을 버리지 않는다 — 표시 하나 때문에 소식이 사라지면 안 된다.
   // 값의 판정은 toOfficialBasis 가 한다(모르는 값 → none).
   official_basis: z.unknown().optional(),
+  // 문 배정 (hot-issue.md INV-H1). 모르는 값이 와도 행을 버리지 않는다 — 위와 같은 이유다.
+  // 값의 판정은 toGate 가 한다(모르는 값 · 없음 → null = 판정 못 받음).
+  gate: z.unknown().optional(),
   published_at: z.string().min(1),
   item_tag: tagJoin,
+  // 종류 (hot-issue.md INV-G1). 축 태그(item_tag)와 다른 테이블이다 — 이름이 비슷해서
+  // 헷갈리기 쉬운데, 저쪽은 뱃지 줄에 쓰는 키워드고 이쪽은 화면 자리를 정하는 판정이다.
+  item_kind: kindJoin,
 });
 
 /** 목록 투영에는 본문이 없다 — `StoredArticle` 에서 contentHtml 만 뺀 모양. */
@@ -90,6 +102,10 @@ function common(raw: unknown) {
     publishedAt: new Date(ms).toISOString(),
     tags: knownTags(r.item_tag),
     officialBasis: toOfficialBasis(r.official_basis),
+    gate: toGate(r.gate),
+    // 모르는 이름은 toArticleKinds 가 버린다. 버려도 그 글이 사라지지는 않는다 —
+    // 종류가 비어 있으면 소식에 선다(INV-G3).
+    kinds: toArticleKinds((r.item_kind ?? []).map((k) => k.kind)),
     contentHtml: r.content_html ?? "",
   };
 }

@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
 
 /**
@@ -8,6 +9,11 @@ import { defineConfig } from "vitest/config";
  * 실행: `npm run test:integration` (환경변수가 있어야 한다 — 없으면 통과가 아니라 실패다).
  */
 export default defineConfig({
+  // `@/` 별칭 — 기본 설정과 같은 값이어야 한다. 2026-09-21 에 통합 테스트가 제품 코드를
+  // **직접 부르기** 시작하면서 필요해졌다(그 전에는 supabase-js 만 썼다).
+  resolve: {
+    alias: { "@": resolve(__dirname, "src") },
+  },
   test: {
     environment: "node",
     globals: true,

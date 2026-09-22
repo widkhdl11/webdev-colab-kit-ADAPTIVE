@@ -294,6 +294,9 @@ async function getJsonl(path) {
 let selected = null;
 let lastMapKey = "";
 let lastPanelKey = "";
+// 마지막으로 그린 결정 카드의 HTML. 같으면 다시 안 그린다 — 자세히 칸이 스크롤 상자라
+// 갈아끼우는 순간 스크롤이 맨 위로 돌아간다(읽는 중에 그러면 화면이 손을 무시하는 것이다).
+let lastDecisionHtml = "";
 const openRows = new Set();
 // 사람이 직접 여닫은 절. 여기 들어 있으면 자동 규칙이 그 절을 건드리지 않는다 —
 // 접어 둔 절이 4초 뒤에 저절로 펼쳐지면 그건 화면이 손을 무시하는 것이다.
@@ -305,6 +308,13 @@ let cfg = null;
  * 4초마다 innerHTML 을 갈아끼우면 포커스를 들고 있던 노드가 통째로 사라진다 — Tab 으로
  * 어딘가에 가 있어도 4초 뒤 처음으로 돌아간다. 그래서 다시 그리기 전에 지금 초점이 있는
  * 것의 식별자를 적어 두고, 그린 뒤 같은 것을 찾아 초점을 돌려준다.
+ *
+ * **읽던 자리도 같이 지킨다.** 절을 하나씩 갈아끼우는 동안 문서가 잠깐 짧아지는데,
+ * 그 순간 브라우저가 스크롤을 문서 끝(대개 맨 위)으로 끌어내린다. 그린 뒤 원래 자리로
+ * 되돌려 놓는다 — 아래를 읽고 있는데 4초마다 맨 위로 올라가면 긴 절을 끝까지 못 읽는다.
+ *
+ * 초점을 돌려줄 때 `preventScroll` 을 주는 이유도 같다. 기본 동작은 그 요소가 보이도록
+ * 화면을 움직이는 것이라, 방금 되돌린 자리를 초점 복원이 다시 흔든다.
  */
 function keepFocus(draw) {
   const el = document.activeElement;
@@ -313,12 +323,14 @@ function keepFocus(draw) {
       : el.dataset?.node ? `node:${el.dataset.node}`
         : el.id ? `id:${el.id}` : null
     : null;
+  const pageY = window.scrollY;
   draw();
+  if (window.scrollY !== pageY) window.scrollTo({ top: pageY, behavior: "instant" });
   if (!key) return;
   const [kind, value] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)];
   const sel = kind === "item" ? `[data-item="${CSS.escape(value)}"]`
     : kind === "node" ? `[data-node="${CSS.escape(value)}"]` : `#${CSS.escape(value)}`;
-  document.querySelector(sel)?.focus?.();
+  document.querySelector(sel)?.focus?.({ preventScroll: true });
 }
 
 async function tick() {
@@ -372,7 +384,7 @@ function drawDecision() {
   // 4초마다 다시 그리므로, 펼쳐 둔 「자세히」가 그대로 닫힌다. 읽는 중에 닫히면
   // 그건 화면이 손을 무시하는 것이다 — 피드 절이 쓰는 처리와 같게 맞춘다.
   const wasOpen = el.querySelector("details")?.open === true;
-  if (!v) { el.innerHTML = ""; el.hidden = true; return; }
+  if (!v) { el.innerHTML = ""; el.hidden = true; lastDecisionHtml = ""; return; }
   el.hidden = false;
 
   const doneWhen = v.doneWhen.map((t) => `<li>${esc(t)}</li>`).join("");
@@ -384,7 +396,7 @@ function drawDecision() {
 
   // 절 제목을 따로 두지 않는다. 카드의 첫 줄 라벨이 이미 「결정해 주세요」라서,
   // 제목을 붙이면 같은 말이 두 줄 연속으로 나온다. 절 이름은 aria-label 이 나른다.
-  el.innerHTML = `<div class="card decision">
+  const html = `<div class="card decision">
       ${kvHtml(v.rows, "d_what")}
       <dl class="kv"><div>
         <dt>${esc(v.doneWhenLabel)}</dt>
@@ -395,6 +407,13 @@ function drawDecision() {
       </div></dl>
       <p class="ask-note">${esc(v.note)}</p>
     </div>`;
+
+  // 내용이 그대로면 DOM 을 손대지 않는다. 자세히 칸(`pre.detail`)은 높이가 320px 로
+  // 잘린 스크롤 상자라, 같은 내용으로 갈아끼워도 스크롤이 맨 위로 돌아간다 —
+  // 4초마다 그러면 긴 근거 본문을 아래까지 읽을 수가 없다. 지도·패널이 쓰는 처리와 같다.
+  if (html === lastDecisionHtml) return;
+  lastDecisionHtml = html;
+  el.innerHTML = html;
 }
 
 // ── B-1 지금 ────────────────────────────────────────────────────────────

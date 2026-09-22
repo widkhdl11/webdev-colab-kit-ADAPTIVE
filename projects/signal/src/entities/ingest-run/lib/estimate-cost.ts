@@ -12,10 +12,22 @@ export const PROMO_RATES = {
   inputPerMTokUsd: 2.0,
   outputPerMTokUsd: 10.0,
 } as const;
+/**
+ * **2026-09-22 정정: 3.0/15.0 → 2.0/10.0.**
+ *
+ * 앤트로픽 공식 요금표의 `claude-sonnet-5` 단가는 입력 $2.00 · 출력 $10.00 이다.
+ * 여기 적혀 있던 3.0/15.0 은 **이전 세대(Sonnet 4.6)의 단가**였고, 그 값으로
+ * 화면과 보고서가 실제보다 **50% 비싸게** 표시하고 있었다. 그 숫자를 근거로
+ * 하루 상한과 월 예상 요금을 정하려던 참에 드러났다.
+ *
+ * 공교롭게 아래 프로모션가와 같은 값이 됐다. 그래도 두 갈래를 그대로 두는 이유는,
+ * 단가가 바뀔 때 **실행 시각으로 고르는 구조**가 필요하기 때문이다 — 상수 하나를
+ * 손으로 갈면 배포 시점을 못 맞춘 실행이 조용히 틀린 값으로 계산된다.
+ */
 export const STANDARD_RATES = {
   tier: "standard",
-  inputPerMTokUsd: 3.0,
-  outputPerMTokUsd: 15.0,
+  inputPerMTokUsd: 2.0,
+  outputPerMTokUsd: 10.0,
 } as const;
 
 /**
@@ -60,6 +72,67 @@ export function ratesFor(startedAt: string): Rates {
   return ms < STANDARD_FROM_MS ? PROMO_RATES : STANDARD_RATES;
 }
 
+/**
+ * **모델별 단가** (per-MTok, USD). 앤트로픽 공식 요금표 기준, 2026-09-22 확인.
+ *
+ * 왜 모델별인가: 2026-09-22 부터 단계마다 다른 모델을 쓴다 — 제목 한 줄을 가르는 일과
+ * 사람이 읽을 요약을 쓰는 일에 같은 모델을 쓸 이유가 없다. 단가가 두 배 차이라
+ * 한 값으로 계산하면 화면의 금액이 실제와 갈린다.
+ */
+export const MODEL_RATES: Record<string, { inputPerMTokUsd: number; outputPerMTokUsd: number }> = {
+  "claude-sonnet-5": { inputPerMTokUsd: 2.0, outputPerMTokUsd: 10.0 },
+  "claude-haiku-4-5": { inputPerMTokUsd: 1.0, outputPerMTokUsd: 5.0 },
+};
+
+/**
+ * 모르는 모델 이름이면 **표에서 제일 비싼 단가**로 본다.
+ *
+ * 싼 쪽으로 틀리면 화면이 "생각보다 안 썼네"로 보이고, 그게 이 화면을 만든 이유를
+ * 정면으로 깬다. 비싼 쪽으로 틀리면 사람이 한 번 더 확인하게 된다.
+ */
+export function ratesForModel(model: string): { inputPerMTokUsd: number; outputPerMTokUsd: number } {
+  const known = MODEL_RATES[model];
+  if (known) return known;
+  const all = Object.values(MODEL_RATES);
+  return all.reduce((a, b) => (b.inputPerMTokUsd > a.inputPerMTokUsd ? b : a));
+}
+
+/**
+ * 모델 하나가 토큰만큼 쓴 요금 (USD).
+ *
+ * 왜 따로 내보내나: 수집이 도는 **중간에** "지금까지 얼마 썼나"를 물어야 하기 때문이다
+ * (ingest-chaining-budget INV-CB7 — 모델을 부르기 전에 확인한다). 그때는 아직 실행 기록이
+ * 없어서 `estimateCostBreakdown` 에 넘길 것이 없다. 단가를 고르는 규칙은 하나여야 하므로
+ * 여기 있는 것을 쓴다 — 부르는 쪽이 자기 단가표를 들면 화면의 금액과 상한의 금액이 갈린다.
+ */
+export function stageCostUsd(model: string, inputTokens: number, outputTokens: number): number {
+  const r = ratesForModel(model);
+  return (inputTokens / 1_000_000) * r.inputPerMTokUsd + (outputTokens / 1_000_000) * r.outputPerMTokUsd;
+}
+
+/**
+ * 모델 기록이 없는 옛 실행이 쓰던 모델 (2026-09-22 이전).
+ *
+ * 그때는 네 단계가 전부 이 하나였다. 이 값을 지금 코드의 상수로 바꾸면 모델을 바꿀 때마다
+ * 과거 요금이 따라 움직인다.
+ */
+const LEGACY_MODELS = {
+  topic: "claude-sonnet-5",
+  hotIssue: "claude-sonnet-5",
+  enrich: "claude-sonnet-5",
+  keywords: "claude-sonnet-5",
+} as const;
+
+/** 단계별로 나눈 요금. 화면이 "어디서 줄일까"를 고르는 재료다. */
+export interface StageCosts {
+  topicCostUsd: number;
+  hotIssueCostUsd: number;
+  enrichCostUsd: number;
+  keywordCostUsd: number;
+  totalCostUsd: number;
+  rateTier: RateTier;
+}
+
 /** 캐시 쓰기는 입력가의 1.25배, 읽기는 0.1배 (5분 TTL 기준 — 이 프로젝트는 아직 캐싱을 안 쓴다). */
 const CACHE_WRITE_MULTIPLIER = 1.25;
 const CACHE_READ_MULTIPLIER = 0.1;
@@ -89,30 +162,46 @@ export function estimateCostUsd(run: CostInput): number {
  * 여기서 한 번에 나눈다(2026-08-17 리뷰). 캐시 비용은 어느 단계가 썼는지 usage 에 안 남아
  * 있어 enrich 쪽에 몰아 둔다 — 이 프로젝트는 아직 캐싱을 안 쓰므로 지금은 항상 0.
  */
-export function estimateCostBreakdown(run: CostInput): {
-  topicCostUsd: number;
-  enrichCostUsd: number;
-  totalCostUsd: number;
-  rateTier: RateTier;
-} {
+export function estimateCostBreakdown(run: CostInput): StageCosts {
   const { usage, startedAt } = run;
-  // 어느 단가를 썼는지 같이 돌려준다 — 화면이 `startedAt` 으로 다시 판단하면 경계가 두
-  // 군데로 갈려 조용히 어긋난다 (2026-08-31 리뷰 이관분).
-  const { tier, inputPerMTokUsd, outputPerMTokUsd } = ratesFor(startedAt);
+  // 실행이 실제로 쓴 모델로 단가를 고른다. 옛 실행에는 그 기록이 없어서 그때 유일하게
+  // 쓰던 모델로 본다 — 지금 코드의 값으로 계산하면 모델을 바꾼 날 **과거 요금이 소급해서
+  // 바뀌고**, 화면에서 "바꾸고 얼마나 줄었나"를 볼 수 없게 된다.
+  const models = usage.models ?? LEGACY_MODELS;
+  const { tier } = ratesFor(startedAt);
 
-  const topicCostUsd =
-    (usage.topicInputTokens / 1_000_000) * inputPerMTokUsd +
-    (usage.topicOutputTokens / 1_000_000) * outputPerMTokUsd;
+  // 계산식은 `stageCostUsd` 하나뿐이다 — 두 벌을 두면 한쪽만 고치는 날 화면의 금액과
+  // 상한이 재는 금액이 갈린다.
+  const cost = stageCostUsd;
 
+  const topicCostUsd = cost(models.topic, usage.topicInputTokens, usage.topicOutputTokens);
+  const hotIssueCostUsd = cost(
+    models.hotIssue,
+    usage.hotIssueInputTokens ?? 0,
+    usage.hotIssueOutputTokens ?? 0,
+  );
+  const keywordCostUsd = cost(
+    models.keywords,
+    usage.keywordInputTokens ?? 0,
+    usage.keywordOutputTokens ?? 0,
+  );
+
+  // 캐시 비용은 어느 단계가 썼는지 usage 에 안 남아 있어 요약 쪽에 몰아 둔다 —
+  // 이 프로젝트는 아직 캐싱을 안 쓰므로 지금은 항상 0 이다.
+  const enrichRates = ratesForModel(models.enrich);
   const cacheWriteCost =
-    (usage.cacheWriteTokens / 1_000_000) * inputPerMTokUsd * CACHE_WRITE_MULTIPLIER;
+    (usage.cacheWriteTokens / 1_000_000) * enrichRates.inputPerMTokUsd * CACHE_WRITE_MULTIPLIER;
   const cacheReadCost =
-    (usage.cacheReadTokens / 1_000_000) * inputPerMTokUsd * CACHE_READ_MULTIPLIER;
+    (usage.cacheReadTokens / 1_000_000) * enrichRates.inputPerMTokUsd * CACHE_READ_MULTIPLIER;
   const enrichCostUsd =
-    (usage.inputTokens / 1_000_000) * inputPerMTokUsd +
-    (usage.outputTokens / 1_000_000) * outputPerMTokUsd +
-    cacheWriteCost +
-    cacheReadCost;
+    cost(models.enrich, usage.inputTokens, usage.outputTokens) + cacheWriteCost + cacheReadCost;
 
-  return { topicCostUsd, enrichCostUsd, totalCostUsd: topicCostUsd + enrichCostUsd, rateTier: tier };
+  return {
+    topicCostUsd,
+    hotIssueCostUsd,
+    enrichCostUsd,
+    keywordCostUsd,
+    totalCostUsd: topicCostUsd + hotIssueCostUsd + enrichCostUsd + keywordCostUsd,
+    rateTier: tier,
+  };
 }

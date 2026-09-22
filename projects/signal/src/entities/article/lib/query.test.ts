@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ArticleListItem, ArticleTag } from "../model/types";
+import { GATE_ONE, placeArticle } from "./hot-issue";
+import type { ArticleKind, Gate } from "./hot-issue";
 import {
   filterByTag,
   findArticleById,
@@ -7,6 +9,7 @@ import {
   selectFeed,
   sortArticles,
 } from "./query";
+import type { FeedSegment } from "./query";
 
 function article(
   id: string,
@@ -29,6 +32,15 @@ function article(
     // 필터는 이름으로 맞춘다 — 축은 이 파일의 관심사가 아니다.
     tags: tagNames.map((name) => ({ name, axis: "field" as const })),
     officialBasis: "none",
+    // 종류는 이 파일의 관심사가 아니다 — 배치를 보는 검사는 아래 세그먼트 절에 따로 있다.
+    kinds: [],
+    // 지금 실제 관계와 같게 둔다(교차 발행처 수가 1 이라 점수와 같은 값).
+    // 둘이 갈리는 경우는 아래 「핫이슈 순서」 절이 따로 만든다.
+    issueScore: score,
+  // **핫이슈로 판정된 것으로 둔다.** 2026-09-21 부터 `핫이슈` 세그먼트가 실제로 거르므로
+  // (hot-issue.md INV-G3), 이 값이 없으면 그 정렬에서 목록이 통째로 비어 아래 검사들이
+  // "0건이라 통과"가 된다. 이 파일이 보려는 것은 거르기가 아니라 묶음·순서다.
+  gate: GATE_ONE,
     score,
     isTrending: false,
   };
@@ -152,7 +164,7 @@ describe("selectFeed", () => {
     const { groups } = selectFeed({
       articles: ALL,
       tag: null,
-      sort: "trending",
+      segment: "hot",
       limit: 10,
     });
     expect(groups.map((g) => g.dayKey)).toEqual(["2026-08-05", "2026-08-04"]);
@@ -163,7 +175,7 @@ describe("selectFeed", () => {
     const { groups, shown, total } = selectFeed({
       articles: ALL,
       tag: null,
-      sort: "trending",
+      segment: "hot",
       limit: 3,
     });
     expect(shown).toBe(3);
@@ -182,7 +194,7 @@ describe("selectFeed", () => {
     const { shown, total } = selectFeed({
       articles: tagged,
       tag: "MCP",
-      sort: "latest",
+      segment: "hot",
       limit: 10,
     });
     expect(shown).toBe(1);
@@ -193,7 +205,7 @@ describe("selectFeed", () => {
     const { groups, shown, total } = selectFeed({
       articles: ALL,
       tag: null,
-      sort: "latest",
+      segment: "hot",
       limit: 0,
     });
     expect(groups).toEqual([]);
@@ -220,7 +232,7 @@ describe("발행시각을 못 읽는 항목", () => {
     const { shown, total } = selectFeed({
       articles: [...ALL, BROKEN],
       tag: null,
-      sort: "latest",
+      segment: "hot",
       limit: 100,
     });
     // 그릴 수 없는 항목이 total 에 남으면 shown < total 이 영원히 참이 된다
@@ -243,7 +255,7 @@ describe("selectFeed — INV-B4 (BK16) 뱃지 창이 글 목록을 자르지 않
     const { groups, total } = selectFeed({
       articles: [old, fresh],
       tag: null,
-      sort: "latest",
+      segment: "hot",
       limit: 50,
     });
     expect(total).toBe(2);
@@ -257,10 +269,125 @@ describe("selectFeed — INV-B4 (BK16) 뱃지 창이 글 목록을 자르지 않
     const { groups, shown } = selectFeed({
       articles: [old],
       tag: null,
-      sort: "latest",
+      segment: "hot",
       limit: 50,
     });
     expect(shown).toBe(1);
     expect(groups).toHaveLength(1);
+  });
+});
+
+/**
+ * 화면이 실제로 세 자리를 그리는지 본다 (hot-issue.md INV-G3 · S32·S32b·S32c).
+ *
+ * **`placeArticle` 단위 테스트만으로는 부족하다.** 2026-09-21 이전이 그 상태였다 —
+ * 배치 함수는 여섯 칸을 정확히 계산했고 테스트도 다 green 이었는데, 화면이 그 함수를
+ * 한 번도 안 불러서 자리가 두 개뿐이었다. 그래서 여기는 화면이 쓰는 `selectFeed` 로 본다.
+ */
+describe("selectFeed — 세 자리 (hot-issue.md INV-G3)", () => {
+  const at = (id: string, hours: number, gate: Gate | null, kinds: ArticleKind[]) => ({
+    ...article(id, `2026-08-05T0${hours}:00:00.000Z`, 1),
+    gate,
+    kinds,
+  });
+
+  const hotNews = at("핫이슈뉴스", 1, GATE_ONE, ["news"]);
+  const hotTool = at("핫이슈툴", 2, GATE_ONE, ["news", "tool"]);
+  const plainNews = at("그냥뉴스", 3, null, ["news"]);
+  const plainTool = at("그냥툴", 4, null, ["tool"]);
+  const noKind = at("종류없음", 5, null, []);
+  const ALL_SIX = [hotNews, hotTool, plainNews, plainTool, noKind];
+
+  const idsIn = (segment: FeedSegment) =>
+    selectFeed({ articles: ALL_SIX, segment, tag: null, limit: 50 })
+      .groups.flatMap((g) => g.articles.map((a) => a.id))
+      .sort();
+
+  it("INV-G3: `핫이슈` 는 문턱을 넘은 글 전부다 — 종류를 안 본다", () => {
+    expect(idsIn("hot")).toEqual(["핫이슈뉴스", "핫이슈툴"]);
+  });
+
+  it("INV-G3: `소식` 은 문턱을 못 넘은 글 전부다 (S32b) — 툴도 종류 없는 글도 포함", () => {
+    expect(idsIn("news")).toEqual(["그냥뉴스", "그냥툴", "종류없음"]);
+  });
+
+  it("INV-G3: `스킬·툴` 은 툴 전부다 — 문턱을 넘었든 아니든 (S32)", () => {
+    expect(idsIn("tools")).toEqual(["그냥툴", "핫이슈툴"]);
+  });
+
+  it("INV-G3: 툴은 두 자리에 겹쳐 선다 — 스킬·툴에 있다고 소식에서 빠지지 않는다", () => {
+    expect(idsIn("news")).toContain("그냥툴");
+    expect(idsIn("tools")).toContain("그냥툴");
+  });
+
+  it("INV-G3 실패경로: 어느 자리에도 안 서는 글이 없다", () => {
+    const anywhere = new Set([...idsIn("hot"), ...idsIn("news"), ...idsIn("tools")]);
+    expect([...anywhere].sort()).toEqual(ALL_SIX.map((a) => a.id).sort());
+  });
+
+  it("INV-G3 (S32c): 자리별 건수가 배치 함수의 판정과 같다 — 화면이 다시 거르지 않는다", () => {
+    for (const segment of ["hot", "news", "tools"] as const) {
+      const byPlacement = ALL_SIX.filter((a) => {
+        const place = placeArticle({ kinds: a.kinds, gate: a.gate });
+        return segment === "hot" ? place.hotIssue : segment === "news" ? place.news : place.tools;
+      });
+      const got = selectFeed({ articles: ALL_SIX, segment, tag: null, limit: 50 });
+      expect(got.total).toBe(byPlacement.length);
+    }
+  });
+
+  it("「더 보기」 계산에 안 나오는 글이 안 섞인다", () => {
+    expect(selectFeed({ articles: ALL_SIX, segment: "hot", tag: null, limit: 50 }).total).toBe(2);
+  });
+});
+
+/**
+ * 핫이슈 자리의 **순서**는 이슈성이 정한다 (hot-issue.md INV-N3).
+ *
+ * **점수와 이슈성을 갈라 두는 이유가 여기 있다.** 지금 두 값은 같다 — 교차 발행처 수가
+ * 항상 1 이라 두 식이 `시간감쇠 × weight` 로 같아진다. 그래서 어느 쪽으로 정렬해도
+ * 결과가 같고, 잘못 이어 붙여도 아무 증상이 없다.
+ *
+ * 2026-09-21 까지가 정확히 그 상태였다 — `computeIssueScore` 를 아무도 안 불렀고,
+ * 테스트 여섯 개가 그 함수를 붙들고 있었지만 화면은 점수로 정렬했다. 같은 사건 묶기가
+ * 붙어 그 수가 1 을 넘는 날, 핫이슈 순서는 조용히 안 바뀌었을 것이다.
+ *
+ * 그래서 이 절은 **두 값을 일부러 어긋나게 만들어** 어느 쪽을 보는지 확인한다.
+ */
+describe("selectFeed — 핫이슈 순서는 이슈성이 정한다 (INV-N3)", () => {
+  const withScores = (id: string, score: number, issueScore: number): ArticleListItem => ({
+    ...article(id, "2026-08-05T00:00:00.000Z", score),
+    gate: GATE_ONE,
+    issueScore,
+  });
+
+  it("INV-N3: 점수가 같고 이슈성만 다르면 이슈성 높은 것이 먼저다", () => {
+    // 점수로 정렬하면 동률이라 id 순(`ㄱ` → `ㄴ`)이 된다. 이슈성을 보면 뒤집힌다.
+    const low = withScores("ㄱ낮은이슈성", 5, 1);
+    const high = withScores("ㄴ높은이슈성", 5, 9);
+    const got = selectFeed({ articles: [low, high], segment: "hot", tag: null, limit: 50 });
+
+    expect(got.groups.flatMap((g) => g.articles.map((a) => a.id))).toEqual([
+      "ㄴ높은이슈성",
+      "ㄱ낮은이슈성",
+    ]);
+  });
+
+  it("INV-N3 실패경로: 이슈성이 같고 점수만 다르면 순서가 안 바뀐다 — 점수를 안 본다", () => {
+    // 부재만 보면 절반이다. 위 검사만 두면 "둘 다 본다"로 바꿔도 통과한다.
+    const a = withScores("ㄱ", 1, 5);
+    const b = withScores("ㄴ", 9, 5);
+    const got = selectFeed({ articles: [a, b], segment: "hot", tag: null, limit: 50 });
+
+    // 이슈성 동률 → 발행시각 동률 → id 순. 점수가 높은 `ㄴ` 이 앞에 오면 점수를 본 것이다.
+    expect(got.groups.flatMap((g) => g.articles.map((a) => a.id))).toEqual(["ㄱ", "ㄴ"]);
+  });
+
+  it("소식 자리는 최신순이다 — 자리마다 순서가 다르다", () => {
+    const older = { ...article("옛것", "2026-08-05T00:00:00.000Z", 9), gate: null, issueScore: 9 };
+    const newer = { ...article("새것", "2026-08-05T05:00:00.000Z", 1), gate: null, issueScore: 1 };
+    const got = selectFeed({ articles: [older, newer], segment: "news", tag: null, limit: 50 });
+
+    expect(got.groups.flatMap((g) => g.articles.map((a) => a.id))).toEqual(["새것", "옛것"]);
   });
 });

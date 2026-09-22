@@ -5,6 +5,7 @@
 // 를 직접 가리켜서 쓴다.
 export type {
   IngestRunBudget,
+  IngestRunCost,
   IngestRunRecord,
   IngestRunSourceStat,
   IngestRunUsage,
@@ -16,5 +17,7 @@ export { totals } from "./lib/totals";
 export type { IngestRunTotals } from "./lib/totals";
 // `estimateCostUsd` 는 배럴에 안 올린다 — 프로덕션 호출자가 없고(위젯은 breakdown 만 쓴다)
 // 테스트의 "부분의 합 = 전체" 교차검증용이라, 공개해 두면 다른 화면이 그걸 쓰게 된다.
-export { estimateCostBreakdown } from "./lib/estimate-cost";
+export { estimateCostBreakdown, stageCostUsd } from "./lib/estimate-cost";
+export { summarizeSpend } from "./lib/spend";
+export type { SpendSummary, StageSpend } from "./lib/spend";
 export { USD_TO_KRW, toKrw } from "./lib/to-krw";

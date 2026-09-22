@@ -7,6 +7,7 @@
 //                --risk "<한 줄 또는 두 줄>" --not-doing "<한 줄>" [--also-fixing "<한 줄>"] \
 //                --done-when "문장1|문장2|..." --details-ref "<근거가 있는 곳>" \
 //                ( --detail-file <근거 본문 md 경로> | --detail "<근거 본문>" )
+//   본문만: --amend --id <열린 결정의 id> ( --detail-file <md 경로> | --detail "<본문>" )
 //   답변:  --answer "<사람이 고른 말>"
 //
 // 왜 하나뿐인가: 카드와 근거 본문은 **같은 턴에 쌍으로** 기록돼야 하고(한쪽만 있으면 화면의
@@ -92,6 +93,29 @@ export function ask(dir, card, detailBody) {
  * 답을 받아 결정을 닫는다. 이력에는 **근거 본문까지 실어** 한 줄을 남긴다 —
  * 본문 파일은 열린 결정 하나에만 대응하는 덮어쓰기 파일이라 여기서 안 실으면 사라진다.
  */
+/**
+ * 열린 결정의 **근거 본문만** 갈아끼운다. 카드는 손대지 않는다.
+ *
+ * 왜 필요한가 (2026-09-22): 답을 기다리는 동안 더 나은 안이 나오면 본문이 낡은 채로 남는데,
+ * 사람은 그걸 읽고 결정한다. 열기는 열린 카드가 있으면 거부하고, 닫기는 선택지 중 하나를
+ * 답으로 기록해야 해서 — 안 고른 답을 적지 않고는 본문을 고칠 길이 없었다.
+ *
+ * **묻는 말이 그대로일 때만 쓴다.** 무엇을 묻는지가 바뀌면 그건 다른 결정이므로 답을 받아
+ * 닫고 새로 연다. 그 판단은 사람이 한다 — 기계가 가를 수 있는 것이 아니라서, 여기서는
+ * 같은 결정을 가리키고 있는지(`id`)만 확인한다.
+ */
+export function amend(dir, id, detailBody) {
+  const p = paths(dir);
+  const open = readJson(p.decision);
+  if (!open || open.status !== "대기") throw new Error("열린 결정이 없다. 본문만 갈아끼울 대상이 없다.");
+  if (open.id !== id) throw new Error(`열린 결정은 ${open.id} 다. --id 가 그것과 같아야 한다 (받은 값: ${id}).`);
+  if (typeof detailBody !== "string" || detailBody.trim() === "") {
+    throw new Error("근거 본문이 비었다. 갈아끼울 내용이 없으면 아무것도 안 바꾼다.");
+  }
+  writeFileSync(p.detail, detailBody.endsWith("\n") ? detailBody : `${detailBody}\n`, "utf-8");
+  return open;
+}
+
 export function answer(dir, answerText) {
   const p = paths(dir);
   const card = readJson(p.decision);
@@ -154,8 +178,14 @@ if (isMain) {
       const written = ask(dir, card, detailBody);
       console.log(`결정 열림: ${written.id} — ${written.what}`);
       console.log(`대기 항목을 걸어야 한다: node scripts/report-note.mjs --project ${slug} --blocker "${written.id}=${written.what}" ...`);
+    } else if (has("amend")) {
+      const detailPath = arg("detail-file");
+      const detailBody = detailPath !== undefined ? readFileSync(detailPath, "utf-8") : arg("detail");
+      const open = amend(dir, arg("id"), detailBody);
+      console.log(`근거 본문 갈아끼움: ${open.id} — ${open.what}`);
+      console.log("카드와 대기 항목은 그대로다 — 묻는 말이 안 바뀌었으므로 다시 걸 것이 없다.");
     } else {
-      console.error("--ask 또는 --answer 중 하나가 필요하다.");
+      console.error("--ask · --amend · --answer 중 하나가 필요하다.");
       process.exit(2);
     }
   } catch (e) {

@@ -1,6 +1,8 @@
-import type { FeedItemDraft, OfficialBasis } from "@/entities/article";
+import type { ArticleKind, FeedItemDraft, OfficialBasis } from "@/entities/article";
 import type { Source } from "@/entities/source";
+import type { HotIssueVerdict } from "./parse-hot-issue";
 import type { Keywords } from "./parse-keywords";
+import type { HotIssueReport } from "./run-hot-issue";
 import type { KeywordReport } from "./run-keywords";
 
 /**
@@ -142,7 +144,86 @@ export interface KeywordPorts {
   attachKeywords(pairs: KeywordAttachment[]): Promise<void>;
 }
 
-export interface IngestPorts extends KeywordPorts {
+
+/** 핫이슈 판정 후보 (hot-issue.md INV-G2). 근거는 출처 요약글, 있으면 본문. */
+export interface HotIssueCandidate {
+  id: string;
+  title: string;
+  /** 판정 근거. 본문이 있으면 본문, 없으면 출처 요약글. **AI 요약은 안 기다린다.** */
+  evidence: string;
+  /** 이슈성 계산에 쓴다 (INV-N3). 항목에 스냅샷하지 않고 설정에서 온다 (INV-R4). */
+  sourceId: string;
+  publishedAt: string;
+}
+
+/** 판정 결과를 저장할 한 줄. 종류는 다대다로 따로 간다 (INV-G1). */
+export interface HotIssueSave {
+  itemId: string;
+  /** 문턱 질문 셋 중 참인 개수 (0~3). */
+  importance: number;
+  /**
+   * **어느 질문이 참이었나** (INV-G2 · S31). 예: `{ 변화: true, 방향: false, 기회: true }`
+   *
+   * 개수(`importance`)와 따로 나른다. 개수만 남기면 "왜 뽑혔나"를 되짚을 수 없고,
+   * 표본 검토가 **셋 중 어느 질문을 고쳐야 하는지**를 말할 수 없다 — 질문을 셋으로
+   * 나눈 이유가 그것이다.
+   */
+  answers: Record<string, boolean>;
+  kinds: ArticleKind[];
+}
+
+export interface HotIssuePorts {
+  /**
+   * 아직 안 물어본 글을 최신순으로 (`hot_issue_at is null`).
+   *
+   * 주제 판정과 달리 **이미 적재된 글도 후보다** — 판정은 적재 뒤에 따로 돌고,
+   * 지난 주기에 예산이 떨어져 못 물어본 글이 여기서 다시 잡힌다.
+   */
+  listHotIssueCandidates(limit: number): Promise<HotIssueCandidate[]>;
+  /**
+   * 오늘 이미 핫이슈로 뽑힌 제목들 (INV-G4).
+   *
+   * **이 값은 우리가 쓴 문장이 아니다** — 남의 피드에서 온 제목이 지시문 본문으로 들어간다.
+   * 조립하는 쪽(`buildHotIssuePrompt`)이 각 줄을 따옴표로 감싸 경계를 만든다.
+   */
+  listPickedTitlesToday(now: Date): Promise<string[]>;
+  /** 모델 호출. 못 읽으면 `verdict: null` — 실패와 "중요도 0"은 다르다 (INV-G2). */
+  judgeHotIssue(input: {
+    title: string;
+    evidence: string;
+    alreadyPicked: string[];
+  }): Promise<{ verdict: HotIssueVerdict | null; usage: EnrichUsage }>;
+  /**
+   * 중요도·종류와 **물어봤다는 표시**(`hot_issue_at`)를 저장한다.
+   *
+   * 표시를 같이 남겨야 그 글이 다음 주기 후보에서 빠진다 — 안 남기면 중요도 0 인 글이
+   * 매 주기 다시 뽑혀 같은 질문에 계속 요금을 쓴다 (`attachKeywords` 와 같은 자리).
+   */
+  saveHotIssue(rows: HotIssueSave[]): Promise<void>;
+  /**
+   * 1번 문 배정을 저장한다 (INV-H1). **청크마다** 부른다 — `saveHotIssue` 바로 뒤다.
+   *
+   * `saveHotIssue` 와 나눈 이유는 순서 하나다: 중요도·근거가 먼저 남아야 문만 찍힌 글이
+   * 안 생긴다. 모아서 한 번에 쓰지 않는 이유는 `run-hot-issue.ts` 의 배정 블록 주석에 있다
+   * (모으는 동안 죽으면 그 바퀴에 뽑힌 것이 전부 영영 사라진다).
+   *
+   * 2026-09-21 이전에는 "상한을 적용한 뒤"라는 이유로 바퀴 끝에 한 번 불렀다.
+   * 그 상한이 없어졌는데 호출 시점만 남아 있었다.
+   */
+  assignGates(itemIds: string[]): Promise<void>;
+}
+
+export interface IngestPorts extends KeywordPorts, HotIssuePorts {
+  /**
+   * 오늘(한국 시간) 저장된 실행 기록의 요금 합계 (ingest-chaining-budget INV-CB6).
+   *
+   * **호출과 호출 사이에 숫자를 넘겨받지 않는다.** 넘겨받은 숫자는 이어달리기가 한 번
+   * 끊기면 0 부터 다시 시작하고, 그러면 상한이 있는데도 하루에 몇 번이고 상한만큼 쓸 수 있다.
+   *
+   * 실패하면 던진다 — 파이프라인이 **상한에 닿은 것으로** 본다(모르면 멈추는 쪽).
+   * 0 으로 보면 조회가 깨진 날 상한이 통째로 사라지는데, 그게 이 조항이 막으려던 상태다.
+   */
+  loadTodaySpendUsd(now: Date): Promise<number>;
   /** 소스 하나의 피드를 읽는다. 실패하면 던진다 — 격리는 파이프라인이 한다. */
   fetchFeed(source: Source): Promise<unknown[]>;
   /**
@@ -264,6 +345,31 @@ export interface StageReport {
  *   - `maxInputTokens` 만 크게 튀면 → 어떤 항목의 근거가 비정상적으로 크다
  *   - `cacheReadTokens` 가 계속 0 이면 → 프롬프트 캐싱이 안 걸리고 있다
  */
+/**
+ * 단계마다 실제로 걸린 시간(ms) — 2026-09-22.
+ *
+ * 왜 재나: 한 바퀴 예산(`INGEST_BUDGET_MS`)을 어느 단계가 쓰는지가 지금까지 추정이었다.
+ * 총 소요시간 하나만 남아서, 244초가 나와도 그중 주제 판정이 얼마인지 요약이 얼마인지
+ * 알 수 없었다. 그 상태로 단계를 나누거나 문턱을 정하면 **틀린 값에 맞춰 나누게 된다.**
+ *
+ * 건당 시간은 여기 안 담는다 — 단계별 시도 건수가 리포트에 이미 있어서 나누면 나온다.
+ * 두 벌로 담으면 한쪽만 갱신되는 날이 온다.
+ *
+ * 관찰용이다. 불변식이 아니고, 이 값이 틀려도 수집 결과는 달라지지 않는다.
+ */
+export interface StageMs {
+  /** 피드를 받아 파싱한 시간 (소스 14곳 합계). */
+  feedMs: number;
+  /** 주제 판정에 쓴 시간 (소스 합계). */
+  topicMs: number;
+  /** 적재(upsert)에 쓴 시간 (소스 합계). */
+  storeMs: number;
+  hotIssueMs: number;
+  extractionMs: number;
+  enrichmentMs: number;
+  keywordsMs: number;
+}
+
 export interface UsageReport {
   /** enrich 호출 횟수. **실패한 호출도 센다** — 실패해도 요금은 나갔다. */
   calls: number;
@@ -280,6 +386,37 @@ export interface UsageReport {
   cacheWriteTokens: number;
   /** 한 호출이 쓴 최대 입력 토큰. 합계가 멀쩡해도 여기가 튀면 한 건이 범인이다. */
   maxInputTokens: number;
+  /** 단계마다 걸린 시간. 토큰과 같은 자리에 두는 이유는 둘 다 관찰용이기 때문이다. */
+  stageMs: StageMs;
+  /**
+   * 핫이슈 판정과 키워드가 쓴 토큰 (2026-09-22).
+   *
+   * **그전에는 이 둘이 여기 없었다.** 각 단계 리포트 안에만 있어서, 저장되는 `usage` 에
+   * 안 실렸고 화면은 주제 판정과 요약 둘만 보여줬다 — 실제로 나가는 요금의 절반이
+   * 화면에 없었다는 뜻이다. 요금을 줄일 자리를 고르려면 네 단계가 다 보여야 한다.
+   */
+  hotIssueCalls: number;
+  hotIssueInputTokens: number;
+  hotIssueOutputTokens: number;
+  keywordCalls: number;
+  keywordInputTokens: number;
+  keywordOutputTokens: number;
+  /**
+   * 이 실행에서 **단계마다 실제로 부른 모델**.
+   *
+   * 왜 저장하나: 단가가 모델마다 다르니 요금은 "어느 모델을 썼나"로만 계산할 수 있다.
+   * 코드의 현재 값으로 옛 실행을 계산하면, 모델을 바꾼 날 **과거 요금이 소급해서 바뀐다.**
+   * 그러면 "바꾸고 나서 얼마나 줄었나"를 화면에서 볼 수 없다 — 그게 이 칸을 만든 이유다.
+   */
+  models: StageModels;
+}
+
+/** 단계별로 부른 모델 이름. 값은 API 에 보낸 문자열 그대로다. */
+export interface StageModels {
+  topic: string;
+  hotIssue: string;
+  enrich: string;
+  keywords: string;
 }
 
 /**
@@ -363,8 +500,37 @@ export interface IngestReport {
    * **0건과 안 돌린 것을 가른다.** 0건은 후보가 없었다는 뜻이고, null 은 못 돌렸다는 뜻이다.
    */
   keywords: KeywordReport | null;
+  /**
+   * 핫이슈 판정 (hot-issue.md). 예산이 떨어져 통째로 건너뛰었으면 `null` 이다 —
+   * 키워드와 같은 규칙으로 **0건과 안 돌린 것을 가른다.**
+   */
+  hotIssue: HotIssueReport | null;
   /** 시간 예산 (2026-08-13 리뷰). */
   budget: BudgetReport;
+  /** 하루 요금 상한 (ingest-chaining-budget INV-CB8). */
+  cost: CostReport;
+}
+
+/**
+ * 하루 요금 상한이 이 바퀴에 어떻게 걸렸나 (INV-CB8).
+ *
+ * 왜 리포트에 남기나: 남긴 기록이 없으면 **"그날 글이 없었다"와 "상한에 걸렸다"가
+ * 리포트에서 같은 모양이 된다** — 요약 0건·키워드 0건으로 똑같이 보인다.
+ * 건너뛴 건수는 `BudgetReport` 가 이미 들고 있고, 여기는 **왜** 건너뛰었나를 말한다.
+ */
+export interface CostReport {
+  /** 이 실행이 쓴 상한 금액. 값을 바꾼 날 옛 리포트가 따라 움직이면 안 되니 같이 저장한다. */
+  capUsd: number;
+  /** 저장된 오늘 합계 + 이번 바퀴가 쓴 돈. 멈춘 시점의 합계가 이 값이다. */
+  spentUsd: number;
+  /** 상한에 닿았는가. 닿으면 본문 긁기·요약·번역·키워드가 멈춘다(판정 둘은 계속한다). */
+  capped: boolean;
+  /**
+   * 오늘 합계를 **읽지 못했는가**. 읽지 못하면 상한에 닿은 것으로 보므로(모르면 멈추는 쪽),
+   * 이 칸이 참인데 `capped` 도 참이면 그건 "돈을 다 썼다"가 아니라 "못 읽었다"다.
+   * 둘을 한 칸에 섞으면 조회가 깨진 날이 돈을 다 쓴 날처럼 보인다.
+   */
+  lookupFailed: boolean;
 }
 
 /**
@@ -400,4 +566,11 @@ export interface BudgetReport {
    * 밀린 글은 `keywords_at` 이 비어 있어 다음 주기에 그대로 다시 잡힌다.
    */
   skippedKeywords: boolean;
+  /**
+   * 핫이슈 판정을 **통째로** 못 돌렸는가 (hot-issue.md).
+   *
+   * 중간에 멈춘 건수는 `hotIssue.skipped` 가 따로 나른다 — 둘을 한 칸에 섞으면
+   * "예산이 아예 없었다"와 "120건 중 30건에서 멈췄다"가 리포트에서 같은 모양이 된다.
+   */
+  skippedHotIssue: boolean;
 }

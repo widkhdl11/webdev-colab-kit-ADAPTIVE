@@ -1,4 +1,4 @@
-import { computeScore, markTrending, TRENDING_TOP_N } from "@/entities/article";
+import { computeIssueScore, computeScore, markTrending, TRENDING_TOP_N } from "@/entities/article";
 import type { SourceWeightLookup } from "@/entities/source";
 
 /** 랭킹에 필요한 최소 필드. 목록 투영이든 본문까지 있는 항목이든 이것만 있으면 된다. */
@@ -24,9 +24,10 @@ export interface RankableRow {
  * "여긴 값이 없다"를 못 박아 뒀다(INV-R1). 그걸 그대로 교집합하면 `number & never` 가 돼
  * 타입 전체가 `never` 로 무너진다. 붙이는 쪽에서 그 자리를 비우고 새 값을 넣는다.
  */
-export type Ranked<T> = Omit<T, "score" | "isTrending"> & {
+export type Ranked<T> = Omit<T, "score" | "isTrending" | "issueScore"> & {
   score: number;
   isTrending: boolean;
+  issueScore: number;
 };
 
 export function rankFeed<T extends RankableRow>(params: {
@@ -46,6 +47,19 @@ export function rankFeed<T extends RankableRow>(params: {
       publishedAt: item.publishedAt,
       now,
       weight: weightOf(item.sourceId),
+    }),
+    // **이슈성도 여기서 계산한다** (hot-issue.md INV-N3 · H2). 저장하지 않는 것은 점수와
+    // 같은 이유다 — 시간감쇠가 든 파생값이라 저장하면 낡는다.
+    //
+    // 지금은 `score` 와 값이 같다(교차 발행처 수가 항상 1). 그래도 따로 계산하는 것이
+    // 요점이다: 같은 사건 묶기가 붙는 날 이 줄만 바뀌고 핫이슈 순서가 따라 바뀐다.
+    // 2026-09-21 까지는 이 함수를 **아무도 안 불렀고**, 그래서 그날이 와도 아무 일이
+    // 안 일어나는 상태였다.
+    issueScore: computeIssueScore({
+      crossPublisherCount: 1, // 같은 사건 묶기가 붙기 전까지 항상 1 (INV-N3)
+      weight: weightOf(item.sourceId),
+      publishedAt: item.publishedAt,
+      now,
     }),
   }));
 

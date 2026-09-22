@@ -1689,6 +1689,22 @@ const rejects = (over, what) => validateDecision(card(over), VOCAB).some((e) => 
         && /<details\$\{wasOpen \? " open" : ""\}>/.test(html),
     "펼쳐 둔 「자세히」가 4초 뒤 다시 그릴 때도 펼쳐진 채로 남는다",
     "다시 그리면 「자세히」가 저절로 닫힌다 — 읽는 중에 닫히면 화면이 손을 무시하는 것이다");
+  check("38 스크롤 유지", /if \(html === lastDecisionHtml\) return;/.test(html)
+        && /lastDecisionHtml = html;\s*\n\s*el\.innerHTML = html;/.test(html)
+        && /if \(!v\) \{ el\.innerHTML = ""; el\.hidden = true; lastDecisionHtml = ""; return; \}/.test(html),
+    "내용이 그대로면 결정 카드를 다시 안 그린다 — 자세히 칸의 스크롤 위치가 남는다",
+    "같은 내용으로도 카드를 갈아끼운다 — 자세히 칸이 4초마다 맨 위로 돌아가 긴 근거를 못 읽는다");
+  // 위 「스크롤 유지」는 자세히 칸 **안쪽** 스크롤을, 이건 **페이지 전체** 스크롤을 본다.
+  // 둘은 원인이 다르다 — 안쪽은 카드를 갈아끼워서, 페이지 쪽은 절을 갈아끼우는 동안
+  // 문서가 잠깐 짧아져서 브라우저가 스크롤을 끌어내리기 때문이다. 하나만 고치면 증상이 남는다.
+  // 강제 장치가 둘이라 항목도 둘로 나눈다. 한 항목으로 묶으면 둘 중 하나만 살아 있어도
+  // 통과로 나와서, 나머지 하나는 아무도 안 붙드는데 숫자는 만점이 된다.
+  check("38 읽던 자리", /const pageY = window\.scrollY;\s*\n\s*draw\(\);\s*\n\s*if \(window\.scrollY !== pageY\) window\.scrollTo\(/.test(html),
+    "다시 그려도 페이지가 읽던 자리에 머문다",
+    "다시 그리면 페이지가 맨 위로 올라간다 — 아래쪽 절을 끝까지 못 읽는다");
+  check("38 초점 복원이 안 흔든다", /\?\.focus\?\.\(\{ preventScroll: true \}\)/.test(html),
+    "초점을 돌려줄 때 화면을 움직이지 않는다 — 방금 되돌린 자리가 그대로 남는다",
+    "초점 복원이 그 요소를 보이게 하려고 화면을 끌어당긴다");
   check("38 그대로 나감", decisionCardRef({ decision: OK_CARD }).rows.find((r) => r.key === "d_what").value === OK_CARD.what,
     "카드의 문장이 기록에 적힌 그대로 화면에 나간다(렌더가 고쳐 쓰지 않는다)", "렌더가 문장을 고쳐 썼다");
 }
@@ -1713,9 +1729,34 @@ const rejects = (over, what) => validateDecision(card(over), VOCAB).some((e) => 
   try { decMod.ask(dir, card({ id: "signal2-20260918-1-d2" }), "또 다른 근거"); } catch { refusedTwo = true; }
   check("39 하나뿐", refusedTwo, "열린 결정이 있으면 새 결정을 거부한다", "결정 둘이 동시에 열렸다");
 
+  // 본문만 갈아끼우기. 답을 기다리는 동안 더 나은 안이 나왔을 때 쓰는 자리다 —
+  // 이게 없으면 안 고른 답을 기록해 닫는 것 말고는 낡은 본문을 고칠 길이 없다.
+  const cardBefore = readFileSync(join(dir, "decision.json"), "utf-8");
+  decMod.amend(dir, OK_CARD.id, "# 근거\n다시 쓴 본문");
+  check("39 본문만 갈아끼움", readFileSync(join(dir, "decision-detail.md"), "utf-8").includes("다시 쓴 본문")
+        && readFileSync(join(dir, "decision.json"), "utf-8") === cardBefore,
+    "본문만 갈아끼우면 근거는 바뀌고 카드는 그대로다 — 묻는 말이 안 바뀌었으니 대기도 그대로다",
+    "본문이 안 바뀌었거나 카드까지 바뀌었다");
+
+  let refusedOtherId = false;
+  try { decMod.amend(dir, "signal2-20260918-1-d9", "# 근거\n엉뚱한 카드"); } catch { refusedOtherId = true; }
+  check("39 프로브(다른 결정)", refusedOtherId
+        && readFileSync(join(dir, "decision-detail.md"), "utf-8").includes("다시 쓴 본문"),
+    "열린 결정이 아닌 번호로 갈아끼우려 하면 거부한다 — 남의 근거를 덮지 않는다",
+    "다른 번호로도 본문이 덮였다");
+
+  let refusedEmpty = false;
+  try { decMod.amend(dir, OK_CARD.id, "   "); } catch { refusedEmpty = true; }
+  check("39 프로브(빈 본문)", refusedEmpty
+        && readFileSync(join(dir, "decision-detail.md"), "utf-8").includes("다시 쓴 본문"),
+    "빈 본문으로 갈아끼우려 하면 거부한다 — 근거가 사라진 카드가 남지 않는다",
+    "빈 본문이 근거를 지웠다");
+
   const closed = decMod.answer(dir, "착수해");
   const hist = parseJsonl(readFileSync(join(dir, "decisions-history.jsonl"), "utf-8")).rows;
-  check("39 이력", hist.length === 1 && hist[0].answer === "착수해" && hist[0].detail.includes("합의문 본문")
+  // 본문은 위에서 갈아끼웠다. 이력에 실려 가는 것이 **갈아끼운 뒤의 본문**이어야 한다 —
+  // 옛 본문이 실려 가면 사람이 읽고 결정한 근거와 기록이 갈린다.
+  check("39 이력", hist.length === 1 && hist[0].answer === "착수해" && hist[0].detail.includes("다시 쓴 본문")
         && !existsSync(join(dir, "decision.json")) && !existsSync(join(dir, "decision-detail.md")),
     "답하면 이력에 근거 본문까지 한 줄로 실려 가고, 카드와 본문 파일은 비워진다",
     `이력 이동이 안 맞는다 (이력 ${hist.length}줄)`);

@@ -1,4 +1,5 @@
 import { normalizeTagName } from "@/entities/article";
+import { unsafeCharTest } from "./unsafe-chars";
 
 /**
  * 모델 응답 → 뱃지 키워드 (keywords-and-kinds INV-B1·B2).
@@ -80,7 +81,12 @@ function firstObjectLiteral(text: string): string | null {
  *
  * **잘라 쓰지 않고 통째로 버린다** — 앞부분만 남기면 그 조각이 키워드처럼 보인다.
  */
-const CONTROL_CHARS = new RegExp("[\\u0000-\\u001f\\u007f\\u0085\\u2028\\u2029`]");
+// 공통 목록(unsafe-chars.ts) + **백틱**. 앵커 목록이 값을 백틱으로 감싸므로,
+// 값 안의 백틱이 자기를 감싼 백틱을 닫고 지시문 본문에 맨 문장을 남길 수 있다.
+//
+// **목록을 여기 다시 적지 않는다.** 전에는 이 줄이 정본이었는데, 2026-09-21 에 제목 쪽이
+// 좁은 판을 따로 쓰면서 갈렸다(보안 리뷰). 한 곳에서 관리한다.
+const CONTROL_CHARS = unsafeCharTest("`");
 
 /**
  * 이 값을 지시문에 실어도 되나 (INV-B3 의 신뢰 경계).

@@ -27,6 +27,27 @@ const NO_USAGE = {
   cacheReadTokens: 0,
   cacheWriteTokens: 0,
   maxInputTokens: 0,
+  stageMs: {
+    feedMs: 0,
+    topicMs: 0,
+    storeMs: 0,
+    hotIssueMs: 0,
+    extractionMs: 0,
+    enrichmentMs: 0,
+    keywordsMs: 0,
+  },
+  hotIssueCalls: 0,
+  hotIssueInputTokens: 0,
+  hotIssueOutputTokens: 0,
+  keywordCalls: 0,
+  keywordInputTokens: 0,
+  keywordOutputTokens: 0,
+  models: {
+    topic: "claude-haiku-4-5",
+    hotIssue: "claude-sonnet-5",
+    enrich: "claude-sonnet-5",
+    keywords: "claude-haiku-4-5",
+  },
 };
 
 type IngestArgs = Parameters<(typeof import("@/features/ingestion"))["runIngest"]>[0];
@@ -38,6 +59,13 @@ type SaveRunArgs = Parameters<(typeof import("@/features/ingestion"))["saveInges
  * 전부 소문자면 비교를 `toLowerCase()` 로 느슨하게 바꿔도 모든 케이스가 통과한다 —
  * 그건 비밀 공간을 크게 줄이는 변경인데 테스트가 아무 말도 안 하는 상태다.
  */
+/**
+ * 라우트가 서버 전용 모듈(`shared/api/server-env`)을 하나 import 한다 — 이어달리기
+ * 목적지를 거기서 읽는다. `server-only` 는 서버 조건에서만 풀리므로 빈 모듈로 바꿔 끼운다
+ * (그 파일의 방벽은 빌드가 잡는다 — server-env.test.ts 와 같은 처리다).
+ */
+vi.mock("server-only", () => ({}));
+
 const SECRET = "Cron-SECRET-test-Xy";
 
 const NO_BUDGET = {
@@ -47,7 +75,11 @@ const NO_BUDGET = {
   skippedExtractions: 0,
   skippedEnrichments: 0,
     skippedKeywords: false,
+      skippedHotIssue: false,
 };
+
+/** 요금 상한에 안 걸린 평소 상태. 상한 자체는 run-ingest.test.ts 가 본다. */
+const NO_COST = { capUsd: 10, spentUsd: 0, capped: false, lookupFailed: false };
 
 const NO_TOPIC_FILTER = {
   attempted: 0,
@@ -59,7 +91,8 @@ const NO_TOPIC_FILTER = {
   failedOpen: 0,
 };
 
-const runIngest = vi.fn(async (_params: IngestArgs): Promise<Report> => ({
+/** 아무것도 안 밀린 평소 리포트. 이어달리기 케이스만 `budget.exhausted` 를 바꿔 쓴다. */
+const REPORT: Report = {
   sources: [],
   failedSources: [],
   topicFilter: NO_TOPIC_FILTER,
@@ -69,8 +102,12 @@ const runIngest = vi.fn(async (_params: IngestArgs): Promise<Report> => ({
   usage: NO_USAGE,
   enrichUsageBySource: {},
   keywords: null,
+    hotIssue: null,
   budget: NO_BUDGET,
-}));
+  cost: NO_COST,
+};
+
+const runIngest = vi.fn(async (_params: IngestArgs): Promise<Report> => REPORT);
 
 // 대시보드 기록은 이 파일의 관심사가 아니다(save-run-report.test.ts 가 따로 본다).
 // 여기서는 라우트가 이 호출의 실패를 삼키는지만 본다("저장이 실패해도 200" 케이스).
@@ -80,15 +117,28 @@ const saveIngestRunReport = vi.fn(async (_params: SaveRunArgs): Promise<void> =>
 // 구현을 붙들려면 이름이 있어야 한다(2026-09-19 테스트 감사).
 const createIngestPorts = vi.fn(() => ({}));
 
-vi.mock("@/features/ingestion", () => ({
-  runIngest,
-  createIngestPorts,
-  saveIngestRunReport,
-}));
+/**
+ * 다음 호출을 실제로 보내는 자리만 가짜로 바꾼다 (INV-CB4).
+ *
+ * **목적지를 정하는 함수(`buildChainRequest`)는 진짜를 쓴다** — 그게 이 라우트에서
+ * 확인할 것이다. 가짜로 바꾸면 "환경변수의 주소로만 간다"가 아무 데서도 안 붙들린다.
+ */
+const sendChainRequest = vi.fn(async (_req: unknown) => {});
 
-const call = async (headers: Record<string, string> = {}) => {
+vi.mock("@/features/ingestion", async () => {
+  const chaining = await import("@/features/ingestion/lib/chaining");
+  return {
+    ...chaining,
+    sendChainRequest,
+    runIngest,
+    createIngestPorts,
+    saveIngestRunReport,
+  };
+});
+
+const call = async (headers: Record<string, string> = {}, url = "http://localhost/api/ingest") => {
   const { GET } = await import("@/app/api/ingest/route");
-  return GET(new Request("http://localhost/api/ingest", { method: "GET", headers }));
+  return GET(new Request(url, { method: "GET", headers }));
 };
 
 beforeEach(() => {
@@ -97,6 +147,9 @@ beforeEach(() => {
   createIngestPorts.mockClear();
   saveIngestRunReport.mockClear();
   saveIngestRunReport.mockImplementation(async () => {});
+  sendChainRequest.mockClear();
+  // 기본은 "다 끝냈다" — 이어달리기가 이 파일의 기존 케이스에 끼어들지 않게 한다.
+  runIngest.mockImplementation(async () => REPORT);
 });
 
 afterEach(() => {
@@ -193,7 +246,9 @@ describe("GET /api/ingest — 인가", () => {
       usage: NO_USAGE,
       enrichUsageBySource: {},
   keywords: null,
+    hotIssue: null,
       budget: NO_BUDGET,
+  cost: NO_COST,
     });
     const res = await call({ authorization: `Bearer ${SECRET}` });
     expect(res.status).toBe(200);
@@ -286,5 +341,82 @@ describe("GET /api/ingest — 진입점은 하나뿐이다", () => {
     const mod = await import("@/app/api/ingest/route");
     const methodLike = Object.keys(mod).filter((k) => /^[A-Z]+$/.test(k));
     expect(methodLike).toEqual(["GET"]);
+  });
+});
+
+/**
+ * 이어달리기 — ingest-chaining-budget INV-CB1~CB5 의 라우트 쪽 자리.
+ *
+ * 여기서 확인하는 것은 **라우트가 목적지를 어디서 가져오는가** 하나다. 목적지를 고르는
+ * 규칙 자체는 `chaining.test.ts` 가 보고, 그 함수를 라우트가 실제로 쓰는지를 여기서 본다.
+ */
+describe("GET /api/ingest — 이어달리기", () => {
+  const SELF = "https://signal.example.com";
+  /** 시간이 떨어져 남은 일이 있는 리포트. */
+  const exhausted: Report = {
+    ...REPORT,
+    budget: { ...NO_BUDGET, exhausted: true, skippedSources: ["s3"] },
+  };
+
+  it("INV-CB1: 남은 일이 있으면 **설정에 적힌 주소**로 다음 호출을 하나 부른다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", SELF);
+    runIngest.mockImplementation(async () => exhausted);
+
+    const res = await call({ authorization: `Bearer ${SECRET}` });
+    expect(res.status).toBe(200);
+    expect(sendChainRequest).toHaveBeenCalledTimes(1);
+
+    const req = sendChainRequest.mock.calls[0]![0] as { url: string; headers: Record<string, string> };
+    expect(new URL(req.url).origin).toBe(SELF);
+    expect(new URL(req.url).searchParams.get("chain")).toBe("2");
+    // INV-CB3: 시크릿은 헤더로만 간다 — 주소는 실행 로그에 그대로 남는다.
+    expect(req.headers.authorization).toBe(`Bearer ${SECRET}`);
+    expect(req.url).not.toContain(SECRET);
+  });
+
+  it("INV-CB2 실패경로: 설정이 없으면 **요청 헤더의 호스트로 대신 부르지 않는다**", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", "");
+    runIngest.mockImplementation(async () => exhausted);
+
+    // 요청은 남의 호스트에서 온 것처럼 보인다 — 그 값으로 목적지를 정하면 안 된다.
+    const res = await call({ authorization: `Bearer ${SECRET}` }, "https://남의호스트.example/api/ingest");
+    expect(res.status).toBe(200);
+    // 부를 데가 없으면 null 이 넘어가고, 보내는 자리가 아무 요청도 안 낸다.
+    expect(sendChainRequest).toHaveBeenCalledWith(null);
+  });
+
+  it("INV-CB5: 번호를 하나 올려서 넘긴다 — 상한에 닿으면 더 안 부른다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", SELF);
+    runIngest.mockImplementation(async () => exhausted);
+
+    await call({ authorization: `Bearer ${SECRET}` }, "http://localhost/api/ingest?chain=7");
+    const req = sendChainRequest.mock.calls[0]![0] as { url: string };
+    expect(new URL(req.url).searchParams.get("chain")).toBe("8");
+
+    sendChainRequest.mockClear();
+    await call({ authorization: `Bearer ${SECRET}` }, "http://localhost/api/ingest?chain=20");
+    expect(sendChainRequest).toHaveBeenCalledWith(null);
+  });
+
+  it("다 끝냈으면 안 부른다 — 다음 호출은 조회만 하고 끝난다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", SELF);
+    runIngest.mockImplementation(async () => REPORT);
+
+    await call({ authorization: `Bearer ${SECRET}` });
+    expect(sendChainRequest).not.toHaveBeenCalled();
+  });
+
+  it("인가에 실패하면 이어달리기까지 못 간다 — 남이 체인을 시작시킬 수 없다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", SELF);
+    runIngest.mockImplementation(async () => exhausted);
+
+    const res = await call({ authorization: "Bearer wrong-value" }, "http://localhost/api/ingest?chain=2");
+    expect(res.status).toBe(401);
+    expect(sendChainRequest).not.toHaveBeenCalled();
   });
 });

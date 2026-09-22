@@ -3,6 +3,7 @@ import {
   displaySummary,
   displayTitle,
   hostFromUrl,
+  placeArticle,
   type ArticleListItem,
 } from "@/entities/article";
 import { relativeTime } from "@/shared/lib/datetime";
@@ -61,6 +62,15 @@ export function ArticleCard({ article, isRead, nowIso }: Props) {
   const summary = displaySummary(article);
   const title = displayTitle(article);
   const official = officialMark(article.officialBasis, article.sourceUrl);
+  // **저장된 판정을 그대로 읽는다** (hot-issue.md INV-H1). 화면이 다시 판정하면 그날마다
+  // 기준이 흔들린다. 2026-09-21 이전에는 이 자리가 `article.isTrending`(그날 점수 상위 3)
+  // 이었다 — 내용을 안 보는 값이라 이름만 `핫뉴스` 였고, 2026-08-27 결정이 예고한 대로
+  // 진짜 판정이 그 자리를 물려받았다.
+  // **판정은 `placeArticle` 하나가 한다** (INV-G3 · S32c, 2026-09-21 리뷰).
+  // 전에는 여기서 `article.gate !== null` 을 손으로 다시 썼다. 지금은 값이 같아 증상이
+  // 없지만, 2번·3번 문이 열려 `gate2` 가 생기는 날 목록과 카드가 갈린다 — 목록에는
+  // 안 서는 글에 딱지만 붙는다. `query.ts` 의 `inSegment` 와 같은 함수를 부른다.
+  const isHotIssue = placeArticle({ kinds: article.kinds, gate: article.gate }).hotIssue;
 
   return (
     <Link
@@ -71,11 +81,11 @@ export function ArticleCard({ article, isRead, nowIso }: Props) {
       {isRead ? <span className="sr-only">읽은 글</span> : null}
 
       <div className={styles.cardBody}>
-        {article.isTrending || official !== null ? (
+        {isHotIssue || official !== null ? (
           <div className={styles.badgeRow}>
-            {article.isTrending ? (
+            {isHotIssue ? (
               <span className={styles.badge}>
-                <span aria-hidden="true">🔥</span> 뜨는 중
+                <span aria-hidden="true">🔥</span> 핫이슈
               </span>
             ) : null}
             {official !== null ? (

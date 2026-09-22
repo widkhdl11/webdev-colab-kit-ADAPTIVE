@@ -15,7 +15,16 @@ import nextEnv from "@next/env";
 nextEnv.loadEnvConfig(process.cwd(), true, { info: () => {}, error: () => {} });
 
 const PUBLIC = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"];
-const SERVER = ["SUPABASE_SECRET_KEY", "ANTHROPIC_API_KEY"];
+const SERVER = ["SUPABASE_SECRET_KEY", "ANTHROPIC_API_KEY", "CRON_SECRET"];
+
+/**
+ * 없어도 되는 것 — 있으면 동작이 달라진다.
+ *
+ * 이어달리기 목적지(INV-CB1·CB2). 없으면 이어달리기를 **안 하고** 한 호출만 돌고 끝난다.
+ * 그래서 "없음"이 오류가 아니다. 다만 배포에서 빠뜨리면 증상이 조용하다 —
+ * 수집이 300초에서 잘린 채 매번 같은 자리까지만 하고 끝난다. 그래서 따로 보여 준다.
+ */
+const OPTIONAL = ["INGEST_BASE_URL"];
 
 /** 흔히 헷갈리는 다른 이름들 — 이게 잡히면 "없음"의 원인이 오타가 아니라 이름 규칙이다. */
 const NEAR_MISSES = [
@@ -35,6 +44,10 @@ console.log("공개 (브라우저까지 감)");
 for (const n of PUBLIC) console.log(mark(n));
 console.log("\n서버 전용 (아직 없어도 된다 — 수집·요약 붙일 때 필요)");
 for (const n of SERVER) console.log(mark(n));
+
+console.log("
+선택 (없으면 이어달리기를 안 한다 — 한 호출만 돌고 끝난다)");
+for (const n of OPTIONAL) console.log(mark(n));
 
 const found = NEAR_MISSES.filter(has);
 if (found.length > 0) {

@@ -158,9 +158,11 @@ describe("마이그레이션 전체 — INV-DA1·DA2 는 파일 하나의 약속
     expect(policyViolations(all)).toEqual([]);
   });
 
-  it("INV-DA1: 정책은 셋뿐이고 전부 읽기다", () => {
+  // 개수를 못박아 둔다 — 새 정책이 늘면 여기가 빨간불이 되고, 그때 사람이 한 번 본다.
+  // 2026-09-20 에 3 → 4. `item_kind`(0008, 핫이슈 종류) 에 읽기 정책을 붙였다.
+  it("INV-DA1: 정책은 넷뿐이고 전부 읽기다", () => {
     const policies = all.match(/create\s+policy[\s\S]*?;/g) ?? [];
-    expect(policies).toHaveLength(3);
+    expect(policies).toHaveLength(4);
     for (const p of policies) expect(p).toMatch(/\bfor\s+select\b/);
   });
 

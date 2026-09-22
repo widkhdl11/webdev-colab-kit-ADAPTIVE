@@ -7,21 +7,21 @@ import { FeedControls } from "./feed-controls";
  * 화면을 가르는 축은 갈래다 — 두 축을 동시에 1차 기준으로 두면 훑는 방법이 갈린다.
  */
 describe("FeedControls — INV-L2 층은 화면 컨트롤로 드러나지 않는다", () => {
-  it("INV-L2 (CS12): 컨트롤 줄에는 정렬·주제 필터 그룹만 있다", () => {
+  it("INV-L2 (CS12): 컨트롤 줄에는 자리·주제 필터 그룹만 있다", () => {
     const html = renderToStaticMarkup(
-      <FeedControls sort="trending" tag={null} onSortChange={() => {}} onTagChange={() => {}} />,
+      <FeedControls segment="hot" tag={null} onSegmentChange={() => {}} onTagChange={() => {}} />,
     );
     const doc = new DOMParser().parseFromString(html, "text/html");
     const groups = [...doc.querySelectorAll('[role="group"]')].map((g) =>
       g.getAttribute("aria-label"),
     );
     // 정확한 목록을 단언한다 — "포함한다"만 보면 세 번째 그룹이 추가돼도 통과한다.
-    expect(groups).toEqual(["정렬 방식", "주제 필터"]);
+    expect(groups).toEqual(["볼 자리", "주제 필터"]);
   });
 
   it("INV-L2 (CS12): 층을 고르는 토글·칩이 없다", () => {
     const html = renderToStaticMarkup(
-      <FeedControls sort="latest" tag={null} onSortChange={() => {}} onTagChange={() => {}} />,
+      <FeedControls segment="news" tag={null} onSegmentChange={() => {}} onTagChange={() => {}} />,
     );
     const doc = new DOMParser().parseFromString(html, "text/html");
     const buttonLabels = [...doc.querySelectorAll("button")].map((b) => b.textContent ?? "");
@@ -39,7 +39,7 @@ describe("FeedControls — INV-L2 층은 화면 컨트롤로 드러나지 않는
 describe("FeedControls — 목록에는 건수를 안 붙인다 (INV-N5)", () => {
   const render = (tag: string | null = null) =>
     renderToStaticMarkup(
-      <FeedControls sort="trending" tag={tag} onSortChange={() => {}} onTagChange={() => {}} />,
+      <FeedControls segment="hot" tag={tag} onSegmentChange={() => {}} onTagChange={() => {}} />,
     );
 
   it("BK20: 컨트롤 줄의 어떤 버튼에도 숫자가 없다", () => {

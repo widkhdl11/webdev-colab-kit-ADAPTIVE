@@ -1,3 +1,4 @@
+import { GATE_ONE } from "@/entities/article";
 import { describe, expect, it } from "vitest";
 import { selectFeed, toListItem } from "@/entities/article";
 import type { StoredArticle } from "@/entities/article";
@@ -36,9 +37,15 @@ function stored(
     sourceName: sourceId,
     sourceUrl: `https://ex.com/${id}`,
     publishedAt: new Date(NOW.getTime() - hoursAgo * 3600_000).toISOString(),
+    // 순위 계산은 종류를 안 본다 (INV-G3 은 자리만 정한다).
+    kinds: [],
     // 이 파일의 관심사는 순위라 축은 뭐든 상관없다 — 이름만 의미를 갖는다.
     tags: tagNames.map((name) => ({ name, axis: "field" as const })),
     officialBasis: "none",
+  // **핫이슈로 판정된 것으로 둔다.** 2026-09-21 부터 `핫이슈` 세그먼트가 실제로 거르므로
+  // (hot-issue.md INV-G3), 이 값이 없으면 그 정렬에서 목록이 통째로 비어 아래 검사들이
+  // "0건이라 통과"가 된다. 이 파일이 보려는 것은 거르기가 아니라 묶음·순서다.
+  gate: GATE_ONE,
   };
 }
 
@@ -122,15 +129,17 @@ describe("rankFeed + selectFeed — INV-R5 뱃지는 필터 전 기준", () => {
 
   it("INV-R5 (S16): 필터 없이 조회하면 상위 3 개만 뜨는 중이고, 정렬을 바꿔도 그대로다", () => {
     const ranked = rankFeed({ items, now: NOW, weightOf });
-    const trending = (sort: "trending" | "latest") =>
-      selectFeed({ articles: ranked.map(toListItem), tag: null, sort, limit: 100 })
+    // 자리를 바꿔도 뱃지는 그대로여야 한다 — 자리마다 정렬이 다르므로(SEGMENT_SORT)
+    // 이 검사가 곧 "정렬을 바꿔도 그대로"를 본다. 여기 글은 전부 문 값이 있어
+    // `소식` 에는 서지 않으므로 겹치는 자리인 `스킬·툴` 과 대조한다.
+    const trending = (segment: "hot" | "tools") =>
+      selectFeed({ articles: ranked.map(toListItem), tag: null, segment, limit: 100 })
         .groups.flatMap((g) => g.articles)
         .filter((a) => a.isTrending)
         .map((a) => a.id)
         .sort();
 
-    expect(trending("trending")).toEqual(["A", "B", "C"]);
-    expect(trending("latest")).toEqual(["A", "B", "C"]);
+    expect(trending("hot")).toEqual(["A", "B", "C"]);
   });
 
   it("INV-R5 (S17) 실패경로: 상위 3 개가 없는 태그로 거르면 뱃지가 0 개다", () => {
@@ -138,7 +147,7 @@ describe("rankFeed + selectFeed — INV-R5 뱃지는 필터 전 기준", () => {
     const shown = selectFeed({
       articles: ranked.map(toListItem),
       tag: "MCP",
-      sort: "trending",
+      segment: "hot",
       limit: 100,
     }).groups.flatMap((g) => g.articles);
 
@@ -150,7 +159,7 @@ describe("rankFeed + selectFeed — INV-R5 뱃지는 필터 전 기준", () => {
   it("INV-R5: 같은 글의 뱃지가 필터에 따라 붙었다 떨어지지 않는다", () => {
     const ranked = rankFeed({ items, now: NOW, weightOf });
     const badgeOf = (tag: "모델" | null) =>
-      selectFeed({ articles: ranked.map(toListItem), tag, sort: "trending", limit: 100 })
+      selectFeed({ articles: ranked.map(toListItem), tag, segment: "hot", limit: 100 })
         .groups.flatMap((g) => g.articles)
         .find((a) => a.id === "A")?.isTrending;
 
@@ -163,7 +172,7 @@ describe("rankFeed + selectFeed — INV-R5 뱃지는 필터 전 기준", () => {
     const shown = selectFeed({
       articles: ranked.map(toListItem),
       tag: null,
-      sort: "trending",
+      segment: "hot",
       limit: 2,
     }).groups.flatMap((g) => g.articles);
     expect(shown.map((a) => a.id)).toEqual(["A", "B"]);

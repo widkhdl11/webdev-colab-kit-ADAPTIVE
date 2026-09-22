@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { BADGE_WINDOW_DAYS } from "@/entities/article";
 import {
+  CANDIDATE_WINDOW_DAYS,
   ENRICH_BATCH,
   ENRICH_POOL,
   INGEST_BUDGET_MS,
@@ -13,6 +15,14 @@ import {
   MAX_TITLE_LENGTH,
   PER_SOURCE_ENRICH_LIMIT,
   TOPIC_CONCURRENCY,
+  TOPIC_MAX_TOKENS,
+  TOPIC_TIMEOUT_MS,
+  DAILY_COST_CAP_USD,
+  ENRICH_TIMEOUT_MS,
+  EXTRACTION_TIMEOUT_MS,
+  HOT_ISSUE_TIMEOUT_MS,
+  MAX_CHAIN_LENGTH,
+  WORST_CASE_MS,
 } from "./budgets";
 
 /**
@@ -26,6 +36,22 @@ import {
  * 하는지**가 테스트에 남는다. 값만 못 박으면 다음 사람이 숫자만 고치고 지나간다.
  */
 describe("수집 예산 상수", () => {
+  it("후보 창 — 뱃지 줄의 창과 같아야 «뱃지엔 있는데 키워드는 없는 글»이 안 생긴다", () => {
+    expect(CANDIDATE_WINDOW_DAYS).toBe(3);
+    // 두 창이 갈리면 그 차이는 화면에 조용히 나타난다: 좁으면 뱃지에만 있는 글이 생기고,
+    // 넓으면 화면에 안 쓰일 글에 요금을 쓴다. 같이 움직여야 하므로 관계를 못 박는다.
+    expect(CANDIDATE_WINDOW_DAYS).toBe(BADGE_WINDOW_DAYS);
+  });
+
+  it("주제 판정 응답 상한 — 모델이 생각을 마칠 만큼은 줘야 필터가 조용히 안 열린다", () => {
+    expect(TOPIC_MAX_TOKENS).toBe(400);
+    expect(TOPIC_TIMEOUT_MS).toBe(15_000);
+    // 2026-09-22 실측: 200 일 때 218건 중 49건이 `stop=max_tokens` 로 죽었고,
+    // 판정 실패는 INV-F3 에 따라 **통과**로 처리된다 — 필터가 5분의 1쯤 안 돈 것이다.
+    // 정상 응답이 32토큰이었던 2026-08-12 기준으로도 한참 위여야 한다.
+    expect(TOPIC_MAX_TOKENS).toBeGreaterThan(200);
+  });
+
   it("요약 배치와 후보 풀 — 풀이 배치보다 충분히 넓어야 '점수로 고른다'가 의미를 갖는다", () => {
     expect(ENRICH_BATCH).toBe(10);
     expect(ENRICH_POOL).toBe(500);
@@ -95,5 +121,42 @@ describe("수집 예산 상수", () => {
   it("실패 이유 — 개수와 한 줄 길이 둘 다 막는다", () => {
     expect(MAX_FAILURE_REASONS).toBe(5);
     expect(MAX_FAILURE_REASON_LENGTH).toBe(200);
+  });
+
+  it("INV-CB5: 이어달리기 길이 상한 — 안 멈추는 버그를 끊는 자리다", () => {
+    expect(MAX_CHAIN_LENGTH).toBe(20);
+    // 1 이면 이어달리기가 아예 없는 것과 같고(첫 호출이 곧 마지막이다), 그러면
+    // 한 바퀴가 300초 안에 안 끝나는 지금 상태가 그대로 남는다.
+    expect(MAX_CHAIN_LENGTH).toBeGreaterThan(1);
+    // 한 호출이 한 바퀴 예산만큼 일하므로, 이 곱이 곧 최대 연쇄 시간이다.
+    // 두 시간을 넘기면 다음 예약 실행과 겹칠 수 있다(예약은 한 시간 간격이 기준).
+    expect(MAX_CHAIN_LENGTH * INGEST_BUDGET_MS).toBeLessThanOrEqual(2 * 60 * 60 * 1000);
+  });
+
+  it("INV-CB6~CB8: 하루 요금 상한 — 평소의 대여섯 배여야 몰린 날에 안 걸린다", () => {
+    expect(DAILY_COST_CAP_USD).toBe(10);
+    // 2026-09-22 실측: 평범한 날 약 $1.71, 두 배로 몰린 날 약 $2.19.
+    // 몰린 날의 곱절 아래로 내려가면 상한이 "비정상을 끊는 장치"가 아니라
+    // 할당량이 되고, 걸리는 날 화면이 조용히 얇아진다.
+    expect(DAILY_COST_CAP_USD).toBeGreaterThan(2.19 * 2);
+    // 위로도 막는다 — 나쁜 하루의 청구서가 이 값이다.
+    expect(DAILY_COST_CAP_USD).toBeLessThanOrEqual(20);
+  });
+
+  it("INV-CB9: 단계별 최악 소요 시간 — 그 단계의 타임아웃과 같은 값이어야 한다", () => {
+    expect(EXTRACTION_TIMEOUT_MS).toBe(15_000);
+    expect(ENRICH_TIMEOUT_MS).toBe(30_000);
+    // 타임아웃보다 오래 걸리는 길이 없으므로 최악치가 곧 타임아웃이다.
+    // 둘이 갈리면 "시작해도 못 끝낼 건"을 틀린 수로 판단하게 된다.
+    expect(WORST_CASE_MS.topic).toBe(TOPIC_TIMEOUT_MS);
+    expect(WORST_CASE_MS.hotIssue).toBe(HOT_ISSUE_TIMEOUT_MS);
+    expect(WORST_CASE_MS.extraction).toBe(EXTRACTION_TIMEOUT_MS);
+    expect(WORST_CASE_MS.enrich).toBe(ENRICH_TIMEOUT_MS);
+    expect(WORST_CASE_MS.keywords).toBe(KEYWORD_TIMEOUT_MS);
+    // 최악치 하나가 한 바퀴 예산을 넘으면 그 단계는 **영영 시작되지 않는다**.
+    for (const ms of Object.values(WORST_CASE_MS)) {
+      expect(ms).toBeGreaterThan(0);
+      expect(ms).toBeLessThan(INGEST_BUDGET_MS);
+    }
   });
 });

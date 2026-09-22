@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { SOURCES } from "@/entities/source";
-import { createIngestPorts, runIngest, saveIngestRunReport } from "@/features/ingestion";
+import { selfBaseUrl } from "@/shared/api/server-env";
+import {
+  CHAIN_PARAM,
+  buildChainRequest,
+  createIngestPorts,
+  parseChainIndex,
+  runIngest,
+  saveIngestRunReport,
+  sendChainRequest,
+  shouldChain,
+} from "@/features/ingestion";
 
 /**
  * 수집 진입점 (Cron).
@@ -32,6 +42,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  // 몇 번째 이어달리기인가 (INV-CB5). 쿼리 문자열은 남이 보낸 값이라 범위를 확인하고 쓴다 —
+  // 읽을 수 없거나 범위 밖이면 첫 번째로 본다.
+  const chainIndex = parseChainIndex(new URL(request.url).searchParams.get(CHAIN_PARAM));
+
   const runId = crypto.randomUUID();
   const startedAt = new Date();
   const report = await runIngest({
@@ -48,6 +62,25 @@ export async function GET(request: Request) {
     await saveIngestRunReport({ runId, startedAt, elapsedMs, report });
   } catch {
     // 조용히 넘어간다 — 위 이유.
+  }
+
+  // 시간이 떨어져 남은 일이 있으면 **다음 호출 하나**를 부른다 (INV-CB1~CB5).
+  //
+  // 목적지는 설정에 적힌 주소뿐이고 경로는 코드 상수다 — 수집이 읽은 어떤 값(피드 제목·
+  // 원문 주소)도 목적지에 닿지 않는다. 그 설정이 없으면 **아무 데도 안 부른다**:
+  // 요청 헤더의 호스트로 대신 부르면 그건 남이 보낸 값이라 목적지를 남이 고르는 것이 된다.
+  //
+  // 저장(saveIngestRunReport) **뒤에** 부르는 것이 중요하다 — 다음 호출이 오늘 쓴 돈을
+  // 저장된 기록에서 읽기 때문이다(INV-CB6). 먼저 부르면 이 바퀴 지출이 안 보인 채로
+  // 다음 바퀴가 상한을 잰다.
+  if (shouldChain(report)) {
+    await sendChainRequest(
+      buildChainRequest({
+        baseUrl: selfBaseUrl(),
+        secret: expected,
+        chainIndex,
+      }),
+    );
   }
 
   // 실패가 있어도 200 이다 — 일부 소스가 죽는 건 정상 경로다(INV-C4).

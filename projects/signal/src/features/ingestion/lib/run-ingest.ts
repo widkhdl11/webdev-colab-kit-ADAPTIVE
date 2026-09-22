@@ -1,8 +1,15 @@
 import { nextOfficialBasis, parseFeedItem } from "@/entities/article";
 import type { FeedItemDraft, OfficialBasis } from "@/entities/article";
-import { SUBJECT_SITES } from "@/entities/source";
+import { SUBJECT_SITES, sourceWeightLookup } from "@/entities/source";
 import type { Source } from "@/entities/source";
 import {
+  ENRICH_MODEL,
+  HOT_ISSUE_BATCH,
+  HOT_ISSUE_CONCURRENCY,
+  HOT_ISSUE_MODEL,
+  KEYWORD_MODEL,
+  TOPIC_MODEL,
+  DAILY_COST_CAP_USD,
   INGEST_BUDGET_MS,
   KEYWORD_BATCH,
   KEYWORD_CONCURRENCY,
@@ -10,12 +17,17 @@ import {
   MAX_FAILURE_REASONS,
   MAX_TITLE_LENGTH,
   TOPIC_CONCURRENCY,
+  WORST_CASE_MS,
 } from "./budgets";
+import { createCostMeter } from "./cost-cap";
+import type { CostMeter } from "./cost-cap";
+import { runHotIssue } from "./run-hot-issue";
 import { runKeywords } from "./run-keywords";
 import type {
   IngestPorts,
   IngestReport,
   SourceReport,
+  StageMs,
   TopicFilterReport,
   TopicUsage,
 } from "./ports";
@@ -83,12 +95,46 @@ export { TOPIC_CONCURRENCY };
  */
 interface Budget {
   exhausted(): boolean;
+  /**
+   * 지금부터 `ms` 밀리초를 더 써도 마감 안인가 (INV-CB9).
+   *
+   * `exhausted()` 와 나눈 이유: 마감까지 1초 남았는지 확인하고 30초짜리 요약을 시작하면
+   * 그 한 건이 Vercel 300초를 넘긴다 — 넘기면 **응답 본문이 없어** 이 리포트가 통째로
+   * 사라진다. "남았나"가 아니라 "그 한 건을 끝낼 만큼 남았나"를 물어야 한다.
+   */
+  canAfford(ms: number): boolean;
   skippedSources: string[];
   skippedTopicChecks: number;
   skippedExtractions: number;
   skippedEnrichments: number;
   /** 키워드 단계를 통째로 건너뛰었나 — 단계가 하나뿐이라 건수가 아니라 참/거짓이다. */
   skippedKeywords: boolean;
+  /** 핫이슈 판정 단계를 통째로 건너뛰었나. 위와 같은 이유로 참/거짓이다. */
+  skippedHotIssue: boolean;
+}
+
+/**
+ * 단계마다 걸린 시간을 모으는 그릇 (2026-09-22).
+ *
+ * 예산(`Budget`)과 같은 방식으로 단계에 들고 다닌다 — 돌려주는 값에 섞으면 단계마다
+ * 반환 타입이 하나씩 늘고, 실패 경로에서 빠뜨리기 쉽다. 예산이 그래서 이 모양이다.
+ *
+ * 시계를 주입받는 이유도 예산과 같다: 테스트가 실제로 4분을 기다릴 수 없고,
+ * 논리 시각(`now`)과 섞으면 안 된다(그건 발행시각 계산용 고정값이라 흐르지 않는다).
+ */
+interface Timing {
+  now(): number;
+  ms: StageMs;
+}
+
+/** 한 단계를 재서 그릇에 더한다. **던져도 잰다** — 실패한 단계도 시간은 썼다. */
+async function measure<T>(t: Timing, key: keyof StageMs, fn: () => Promise<T>): Promise<T> {
+  const at = t.now();
+  try {
+    return await fn();
+  } finally {
+    t.ms[key] += t.now() - at;
+  }
 }
 
 async function filterByTopic(
@@ -96,6 +142,8 @@ async function filterByTopic(
   ports: IngestPorts,
   needsTopicCheck: boolean,
   budget: Budget,
+  timing: Timing,
+  meter: CostMeter,
 ): Promise<{ kept: FeedItemDraft[]; report: TopicFilterReport; usage: TopicUsage }> {
   // INV-F4: 주제가 안 섞이는 소스(AI 전용 피드)에는 판정을 걸지 않는다.
   // 건너뛴 건수는 반드시 남긴다 — 안 남기면 "0건 걸러냄"이 새 글이 없는 것인지
@@ -148,12 +196,17 @@ async function filterByTopic(
     //
     // 소스 루프 머리의 확인만으로는 부족하다: 시작 시점만 통과하면 한 소스가 최대 50건
     // (7묶음)을 끝까지 돌리고, 판정이 타임아웃으로 떨어지면 묶음당 15초다.
-    if (budget.exhausted()) {
+    // INV-CB9: 남은 시간이 한 묶음의 최악치보다 적으면 시작하지 않는다.
+    // **상한(INV-CB8)은 여기서 안 본다** — 주제 판정이 멈추면 그날 들어온 글이 전부
+    // 조용히 「소식」으로 가서 화면이 틀린다. 멈춰도 화면이 안 틀리는 단계만 멈춘다.
+    if (!budget.canAfford(WORST_CASE_MS.topic)) {
       budget.skippedTopicChecks += items.length - start;
       break;
     }
     const chunk = items.slice(start, start + TOPIC_CONCURRENCY);
-    await Promise.all(
+    // 묶음 단위로 잰다. 건당으로 재면 여덟 건이 동시에 도는 시간이 여덟 번 더해져
+    // 합계가 실제 경과보다 커지고, 그 값으로 문턱을 정하면 지나치게 일찍 끊는다.
+    await measure(timing, "topicMs", () => Promise.all(
       chunk.map(async (item, offset) => {
         const at = start + offset;
         if (known.has(item.canonicalUrl)) {
@@ -172,6 +225,9 @@ async function filterByTopic(
           usage.calls += 1;
           usage.inputTokens += verdict.usage.inputTokens;
           usage.outputTokens += verdict.usage.outputTokens;
+          // 이번 바퀴가 쓴 돈에 바로 더한다 (INV-CB7) — 리포트는 바퀴가 끝나야 저장되므로
+          // 저장된 합계만 보면 이 바퀴 지출이 통째로 안 보인다.
+          meter.add(TOPIC_MODEL, verdict.usage.inputTokens, verdict.usage.outputTokens);
         } catch (e) {
           decisions[at] = true; // INV-F3: 판정이 실패하면 거르지 않는다.
           failedOpen += 1;
@@ -179,7 +235,7 @@ async function filterByTopic(
           noteFailure(failureReasons, e);
         }
       }),
-    );
+    ));
   }
 
   for (const [at, item] of items.entries()) {
@@ -236,7 +292,9 @@ async function ingestSource(
   ports: IngestPorts,
   now: Date,
   budget: Budget,
+  timing: Timing,
   runId: string,
+  meter: CostMeter,
 ): Promise<{ report: SourceReport; topicFilter: TopicFilterReport; topicUsage: TopicUsage }> {
   const base = { sourceId: source.id, fetched: 0, stored: 0, dropped: 0 };
   // try 바깥에 둔다 — 적재가 던져도 **이미 한 판정은 리포트에 남아야 한다**(INV-F2).
@@ -253,7 +311,7 @@ async function ingestSource(
   // 토큰도 같은 이유로 try 바깥이다 — 적재가 죽어도 이미 쓴 돈은 보고서에 남아야 한다.
   let topicUsage: TopicUsage = { calls: 0, inputTokens: 0, outputTokens: 0 };
   try {
-    const raw = await ports.fetchFeed(source);
+    const raw = await measure(timing, "feedMs", () => ports.fetchFeed(source));
     const drafts = raw
       .map((item) =>
         parseFeedItem(item, {
@@ -272,13 +330,13 @@ async function ingestSource(
       .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
       .slice(0, MAX_ITEMS_PER_SOURCE);
 
-    const filtered = await filterByTopic(unique, ports, source.needsTopicCheck, budget);
+    const filtered = await filterByTopic(unique, ports, source.needsTopicCheck, budget, timing, meter);
     topicFilter = filtered.report;
     topicUsage = filtered.usage;
     const { kept } = filtered;
 
     // 넣을 게 없으면 부르지 않는다 — 빈 upsert 로 실패 위험만 늘릴 이유가 없다.
-    if (kept.length > 0) await ports.upsertItems(kept, runId);
+    if (kept.length > 0) await measure(timing, "storeMs", () => ports.upsertItems(kept, runId));
 
     return {
       report: {
@@ -312,6 +370,8 @@ async function ingestSource(
 async function runExtraction(
   ports: IngestPorts,
   budget: Budget,
+  timing: Timing,
+  meter: CostMeter,
 ): Promise<IngestReport["extraction"]> {
   // 실패는 세지 않고 **적는다** — 건수는 목록 길이에서 나온다(둘이 갈리면 보고서가 조용히 틀린다).
   const failedUrls: string[] = [];
@@ -327,15 +387,18 @@ async function runExtraction(
   }
 
   for (const item of candidates) {
-    // 예산이 떨어지면 **멈추고 리포트를 돌려준다.** 계속 가면 Vercel 이 함수를 죽여
-    // 응답 본문이 통째로 사라진다 — 지금까지의 실패 이유·토큰 계측이 다 날아간다.
-    if (budget.exhausted()) {
+    // 멈추는 이유가 둘이다.
+    //   시간 (INV-CB9): 한 건의 최악치보다 적게 남았으면 시작하지 않는다. 계속 가면
+    //     Vercel 이 함수를 죽여 응답 본문이 통째로 사라진다 — 실패 이유·토큰 계측이 다 날아간다.
+    //   요금 (INV-CB8): 상한에 닿으면 본문 긁기는 멈춘다. 본문이 없으면 요약·키워드의
+    //     근거가 없어서, 긁어 놓고 못 쓰면 다음 단계가 어차피 안 돈다.
+    if (!budget.canAfford(WORST_CASE_MS.extraction) || meter.capped()) {
       budget.skippedExtractions += candidates.length - result.attempted;
       break;
     }
     result.attempted += 1;
     try {
-      const html = await ports.extractContent(item.url);
+      const html = await measure(timing, "extractionMs", () => ports.extractContent(item.url));
       // 빈 본문을 저장하면 다음 주기에 후보에서 빠지지 않고 계속 재시도된다 —
       // 그건 맞다(사이트가 고쳐질 수 있다). 다만 저장할 것은 없다.
       if (html.trim() === "") {
@@ -364,11 +427,29 @@ async function runExtraction(
 async function runEnrichment(
   ports: IngestPorts,
   budget: Budget,
+  meter: CostMeter,
 ): Promise<{
   summaries: IngestReport["summaries"];
   titles: IngestReport["titles"];
-  /** 주제 판정 칸은 여기서 채우지 않는다 — 이 함수는 후처리만 본다. */
-  usage: Omit<IngestReport["usage"], "topicCalls" | "topicInputTokens" | "topicOutputTokens">;
+  /**
+   * 주제 판정 칸은 여기서 채우지 않는다 — 이 함수는 후처리만 본다.
+   * 단계별 시간(`stageMs`)도 마찬가지다. 그건 한 바퀴 전체를 아는 자리에서 한 번에 채운다 —
+   * 단계마다 자기 칸만 채워 올리면 나머지 칸을 0 으로 메우게 되고, 그 0 이 "안 돌았다"로 읽힌다.
+   */
+  usage: Omit<
+    IngestReport["usage"],
+    | "topicCalls"
+    | "topicInputTokens"
+    | "topicOutputTokens"
+    | "stageMs"
+    | "hotIssueCalls"
+    | "hotIssueInputTokens"
+    | "hotIssueOutputTokens"
+    | "keywordCalls"
+    | "keywordInputTokens"
+    | "keywordOutputTokens"
+    | "models"
+  >;
   /** 소스별 요약·번역 토큰 (2026-08-17) — 후보가 들고 온 sourceId 로 접는다. */
   usageBySource: IngestReport["enrichUsageBySource"];
 }> {
@@ -428,7 +509,12 @@ async function runEnrichment(
   for (const [index, item] of candidates.entries()) {
     // 예산이 떨어지면 멈춘다 (runExtraction 과 같은 이유). 후보는 점수순이라
     // 남는 것은 항상 **점수가 낮은 쪽**이고, 다음 주기에 다시 잡힌다.
-    if (budget.exhausted()) {
+    // 멈추는 이유가 둘이다 (runExtraction 과 같은 자리).
+    //   시간 (INV-CB9): 요약 한 건의 최악치(30초)보다 적게 남았으면 시작하지 않는다.
+    //   요금 (INV-CB8·CB7): 상한에 닿으면 **모델을 부르기 전에** 멈춘다. 요약이 밀려도
+    //     카드에는 출처 요약글이 남아 화면이 틀리지는 않는다.
+    // 후보는 점수순이라 남는 것은 항상 **점수가 낮은 쪽**이고, 다음 호출에 다시 잡힌다.
+    if (!budget.canAfford(WORST_CASE_MS.enrich) || meter.capped()) {
       budget.skippedEnrichments += candidates.length - index;
       break;
     }
@@ -472,6 +558,8 @@ async function runEnrichment(
       usage.cacheWriteTokens += out.usage.cacheWriteTokens;
       usage.maxInputTokens = Math.max(usage.maxInputTokens, out.usage.inputTokens);
       addUsageBySource(item.sourceId, out.usage.inputTokens, out.usage.outputTokens);
+      // 이번 바퀴 지출에 바로 더한다 (INV-CB7) — 다음 건을 시작하기 전에 상한을 다시 본다.
+      meter.add(ENRICH_MODEL, out.usage.inputTokens, out.usage.outputTokens);
 
       const patch: {
         summary?: string;
@@ -567,12 +655,46 @@ export async function runIngest(params: {
   const deadline = monotonicNow() + budgetMs;
   const budget: Budget = {
     exhausted: () => monotonicNow() >= deadline,
+    canAfford: (ms) => monotonicNow() + ms <= deadline,
     skippedSources: [],
     skippedTopicChecks: 0,
     skippedExtractions: 0,
     skippedEnrichments: 0,
     skippedKeywords: false,
+    skippedHotIssue: false,
   };
+
+  const timing: Timing = {
+    now: monotonicNow,
+    ms: {
+      feedMs: 0,
+      topicMs: 0,
+      storeMs: 0,
+      hotIssueMs: 0,
+      extractionMs: 0,
+      enrichmentMs: 0,
+      keywordsMs: 0,
+    },
+  };
+
+  // 오늘(KST) 지금까지 쓴 돈을 **저장된 실행 기록에서** 읽는다 (INV-CB6).
+  // 호출과 호출 사이에 숫자를 넘겨받지 않는다 — 넘겨받으면 체인이 한 번 끊길 때마다
+  // 0 부터 다시 시작해서, 상한이 있는데도 하루에 몇 번이고 상한만큼 쓸 수 있다.
+  //
+  // **조회가 실패하면 상한에 닿은 것으로 본다.** 실패를 0 으로 보면 그 순간 상한이
+  // 사라지는데, 그게 바로 이 조항이 막으려던 상태다("상한이 있는데 안 걸린다").
+  // 반대로 틀리면 그날 요약·키워드가 밀릴 뿐이고, 밀린 글은 다음 호출에 다시 잡힌다.
+  // 어느 쪽으로 틀렸는지는 리포트의 `cost.lookupFailed` 가 말한다.
+  let baseSpendUsd = 0;
+  let lookupFailed = false;
+  try {
+    baseSpendUsd = await ports.loadTodaySpendUsd(now);
+  } catch {
+    lookupFailed = true;
+  }
+  const meter = createCostMeter({
+    baseUsd: lookupFailed ? DAILY_COST_CAP_USD : baseSpendUsd,
+  });
 
   const reports: SourceReport[] = [];
   const topicUsage: TopicUsage = { calls: 0, inputTokens: 0, outputTokens: 0 };
@@ -584,19 +706,48 @@ export async function runIngest(params: {
       continue;
     }
     // 소스마다 독립 실행 (INV-C4). 하나가 죽어도 루프는 계속 돈다.
-    const result = await ingestSource(source, ports, now, budget, runId);
+    const result = await ingestSource(source, ports, now, budget, timing, runId, meter);
     reports.push(result.report);
     topicUsage.calls += result.topicUsage.calls;
     topicUsage.inputTokens += result.topicUsage.inputTokens;
     topicUsage.outputTokens += result.topicUsage.outputTokens;
   }
 
-  // 순서가 규칙이다: 주제 선별 → 적재 → 본문 추출 → 후처리(요약·번역) → 뱃지 키워드.
-  // 추출이 앞이어야 이번 주기에 채운 본문이 곧바로 요약 근거가 된다.
-  const extraction = await runExtraction(ports, budget);
-  const { summaries, titles, usage, usageBySource: enrichUsageBySource } = await runEnrichment(
-    ports,
-    budget,
+  // 순서가 규칙이다:
+  //   주제 선별 → 적재 → **핫이슈 판정** → 본문 추출 → 후처리(요약·번역) → 뱃지 키워드.
+  // 추출이 요약보다 앞인 이유는 그대로다 — 이번 주기에 채운 본문이 곧바로 요약 근거가 된다.
+  //
+  // **핫이슈가 적재 바로 다음인 이유** (2026-09-20 사용자 결정): 이 판정은 그날 무엇을
+  // 볼지를 정하는 값이라 밀리면 화면의 구획이 통째로 빈다. 요약은 밀려도 카드에 출처
+  // 요약글이 남아서 글자가 있다. 예산이 모자란 날 무엇이 먼저 밀리나를 이 순서가 정한다.
+  //
+  // 대가를 적어 둔다: 추출보다 앞이라 **이번 주기에 새로 들어온 글은 본문 없이 판정된다**
+  // (근거가 출처 요약글뿐이다). 지난 주기에 본문이 채워진 글은 본문을 쓴다. 스펙이
+  // "제목 + 출처 요약글 + (있으면) 본문"으로 적은 그대로다 — AI 요약을 기다리지 않는다.
+  //
+  // **요금 상한은 이 단계를 멈추지 않는다** (INV-CB8): 판정이 멈추면 그날 들어온 글이
+  // 전부 조용히 「소식」으로 간다 — 판정을 못 받은 글이 서는 자리가 거기다. 화면은
+  // 멀쩡해 보이는데 내용이 틀린다. 시간(INV-CB9)으로만 끊는다.
+  const hotIssue = !budget.canAfford(WORST_CASE_MS.hotIssue)
+    ? null
+    : await measure(timing, "hotIssueMs", () =>
+        runHotIssue(ports, {
+          limit: HOT_ISSUE_BATCH,
+          concurrency: HOT_ISSUE_CONCURRENCY,
+          now,
+          exhausted: () => !budget.canAfford(WORST_CASE_MS.hotIssue),
+        }));
+  if (hotIssue === null) budget.skippedHotIssue = true;
+  // 이번 바퀴 지출에 더한다 — 아래 단계들이 상한을 볼 때 이 돈이 세어져 있어야 한다.
+  if (hotIssue !== null) {
+    meter.add(HOT_ISSUE_MODEL, hotIssue.usage.inputTokens, hotIssue.usage.outputTokens);
+  }
+
+  const extraction = await runExtraction(ports, budget, timing, meter);
+  const { summaries, titles, usage, usageBySource: enrichUsageBySource } = await measure(
+    timing,
+    "enrichmentMs",
+    () => runEnrichment(ports, budget, meter),
   );
 
   // 키워드가 **맨 뒤**인 이유: 근거로 출처 요약글과 본문을 쓰므로 추출 뒤여야 한다.
@@ -606,20 +757,38 @@ export async function runIngest(params: {
   // **예산 판정을 안으로도 넘긴다.** 여기 한 번만 보면 그 순간 통과한 뒤로 최악 150초를
   // 더 쓰고(청크 10개 × 타임아웃 15초) Vercel 300초를 넘긴다 — 넘기면 응답 본문이 없어
   // 이 리포트가 통째로 사라진다. 중간에 멈춘 건수는 `keywords.skipped` 로 돌아온다.
-  const keywords = budget.exhausted()
-    ? null
-    : await runKeywords(ports, {
-        limit: KEYWORD_BATCH,
-        concurrency: KEYWORD_CONCURRENCY,
-        exhausted: () => budget.exhausted(),
-      });
+  //
+  // **요금 상한에도 멈춘다** (INV-CB8). 키워드가 밀리면 뱃지 줄이 그만큼 비지만,
+  // 화면이 **틀리지는** 않는다 — 가르는 기준은 "요약이냐"가 아니라 "멈추면 화면이
+  // 틀리느냐"다. 상한은 비정상을 끊는 장치라 그때는 최대한 멈추는 쪽이 맞다.
+  const keywords =
+    !budget.canAfford(WORST_CASE_MS.keywords) || meter.capped()
+      ? null
+      : await measure(timing, "keywordsMs", () =>
+        runKeywords(ports, {
+          limit: KEYWORD_BATCH,
+          concurrency: KEYWORD_CONCURRENCY,
+          exhausted: () => !budget.canAfford(WORST_CASE_MS.keywords) || meter.capped(),
+        }));
   // `skippedKeywords` 는 **통째로 안 돌린 경우**만 참이다. 중간에 멈춘 건수는
   // `keywords.skipped` 가 따로 나른다 — 둘을 한 칸에 섞으면 "예산이 아예 없었다"와
   // "80건 중 24건에서 멈췄다"가 리포트에서 같은 모양이 된다.
   if (keywords === null) budget.skippedKeywords = true;
+  if (keywords !== null) {
+    meter.add(KEYWORD_MODEL, keywords.usage.inputTokens, keywords.usage.outputTokens);
+  }
 
   return {
     keywords,
+    hotIssue,
+    // 상한에 걸렸다는 것과 **그때의 합계**를 남긴다 (INV-CB8). 안 남기면 리포트에서
+    // "그날 글이 없었다"와 "상한에 걸렸다"가 같은 모양이 된다.
+    cost: {
+      capUsd: meter.capUsd,
+      spentUsd: meter.spentUsd(),
+      capped: meter.capped(),
+      lookupFailed,
+    },
     sources: reports,
     failedSources: reports.filter((r) => r.error !== null).map((r) => r.sourceId),
     topicFilter: mergeTopicFilterReports(reports.map((r) => r.topicFilter)),
@@ -631,6 +800,34 @@ export async function runIngest(params: {
       topicCalls: topicUsage.calls,
       topicInputTokens: topicUsage.inputTokens,
       topicOutputTokens: topicUsage.outputTokens,
+      // 핫이슈·키워드 토큰은 각 단계 리포트 안에 있다. 여기로 옮겨 담아야 저장되는
+      // `usage` 에 실리고, 화면이 네 단계의 요금을 다 보여줄 수 있다 (2026-09-22).
+      // 단계를 못 돌렸으면(null) 0 이다 — 안 돌았으니 토큰도 안 썼다.
+      hotIssueCalls: hotIssue?.usage.calls ?? 0,
+      hotIssueInputTokens: hotIssue?.usage.inputTokens ?? 0,
+      hotIssueOutputTokens: hotIssue?.usage.outputTokens ?? 0,
+      keywordCalls: keywords?.usage.calls ?? 0,
+      keywordInputTokens: keywords?.usage.inputTokens ?? 0,
+      keywordOutputTokens: keywords?.usage.outputTokens ?? 0,
+      // 이 실행이 실제로 부른 모델. 코드의 지금 값으로 옛 실행을 계산하면 모델을 바꾼 날
+      // 과거 요금이 소급해서 바뀌고, "바꾸고 얼마나 줄었나"를 볼 수 없게 된다.
+      models: {
+        topic: TOPIC_MODEL,
+        hotIssue: HOT_ISSUE_MODEL,
+        enrich: ENRICH_MODEL,
+        keywords: KEYWORD_MODEL,
+      },
+      // 소수점은 버린다 — 단계 하나가 몇 밀리초인지는 결정에 안 쓰이고, 저장되는 값이
+      // 실행마다 미세하게 달라지면 리포트를 눈으로 비교할 수 없다.
+      stageMs: {
+        feedMs: Math.round(timing.ms.feedMs),
+        topicMs: Math.round(timing.ms.topicMs),
+        storeMs: Math.round(timing.ms.storeMs),
+        hotIssueMs: Math.round(timing.ms.hotIssueMs),
+        extractionMs: Math.round(timing.ms.extractionMs),
+        enrichmentMs: Math.round(timing.ms.enrichmentMs),
+        keywordsMs: Math.round(timing.ms.keywordsMs),
+      },
     },
     enrichUsageBySource,
     budget: {
@@ -640,12 +837,14 @@ export async function runIngest(params: {
         budget.skippedTopicChecks > 0 ||
         budget.skippedExtractions > 0 ||
         budget.skippedEnrichments > 0 ||
-        budget.skippedKeywords,
+        budget.skippedKeywords ||
+        budget.skippedHotIssue,
       skippedSources: budget.skippedSources,
       skippedTopicChecks: budget.skippedTopicChecks,
       skippedExtractions: budget.skippedExtractions,
       skippedEnrichments: budget.skippedEnrichments,
       skippedKeywords: budget.skippedKeywords,
+      skippedHotIssue: budget.skippedHotIssue,
     },
   };
 }

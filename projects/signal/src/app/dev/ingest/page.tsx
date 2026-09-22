@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
 // INV-S4: 이 두 함수는 entities/ingest-run 의 배럴에서 일부러 안 내보낸다(secret 키로
 // 읽는 server-only 조회라서) — app/ 아래(서버 전용 자리)만 파일을 직접 가리켜서 쓴다.
-import { fetchLatestIngestRun, fetchRunSourceItems } from "@/entities/ingest-run/api/dashboard-queries";
+import {
+  fetchLatestIngestRun,
+  fetchRecentRuns,
+  fetchRunSourceItems,
+} from "@/entities/ingest-run/api/dashboard-queries";
+import { summarizeSpend } from "@/entities/ingest-run";
 import { IngestDashboard } from "@/widgets/ingest-dashboard";
 
 /**
@@ -21,7 +26,15 @@ interface Props {
 export default async function IngestDashboardPage({ searchParams }: Props) {
   if (process.env.NODE_ENV === "production") notFound();
 
-  const [run, params] = await Promise.all([fetchLatestIngestRun(), searchParams]);
+  // 요금 합계는 **최신 실행 하나로는 안 나온다** — 하루에 여러 번 돌 수 있다.
+  // 7일을 받아 오늘 합계와 하루 평균을 같이 낸다(월 환산의 재료다).
+  const now = new Date();
+  const [run, recentRuns, params] = await Promise.all([
+    fetchLatestIngestRun(),
+    fetchRecentRuns(7, now),
+    searchParams,
+  ]);
+  const spend = summarizeSpend(recentRuns, now);
   const raw = params.source;
   const source = Array.isArray(raw) ? raw[0] : raw;
 
@@ -30,5 +43,12 @@ export default async function IngestDashboardPage({ searchParams }: Props) {
   const sourceExists = run !== null && source !== undefined && run.sources.some((s) => s.sourceId === source);
   const sourceItems = sourceExists ? await fetchRunSourceItems(run.id, source) : null;
 
-  return <IngestDashboard run={run} selectedSourceId={source ?? null} sourceItems={sourceItems} />;
+  return (
+    <IngestDashboard
+      run={run}
+      spend={spend}
+      selectedSourceId={source ?? null}
+      sourceItems={sourceItems}
+    />
+  );
 }

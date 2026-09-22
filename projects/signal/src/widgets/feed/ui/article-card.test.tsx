@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+import { GATE_ONE } from "@/entities/article";
 import type { ArticleListItem } from "@/entities/article";
 import { ArticleCard } from "./article-card";
 
@@ -21,8 +22,11 @@ function item(overrides: Partial<ArticleListItem> = {}): ArticleListItem {
     sourceName: "Hacker News",
     sourceUrl: "https://example.com/a",
     publishedAt: "2026-08-10T00:00:00.000Z",
+    kinds: [],
+    issueScore: 0,
     tags: [{ name: "모델", axis: "field" as const }],
     officialBasis: "none",
+    gate: null,
     score: 10,
     isTrending: false,
     ...overrides,
@@ -196,5 +200,34 @@ describe("ArticleCard — 카드 뱃지 (INV-KD1)", () => {
     for (const chip of chips) {
       expect(visibleText(chip)).not.toMatch(/\d/);
     }
+  });
+});
+
+describe("핫이슈 뱃지 — hot-issue.md INV-H1", () => {
+  const html = (gate: ArticleListItem["gate"]) =>
+    renderToStaticMarkup(
+      <ArticleCard article={item({ gate })} nowIso={NOW} isRead={false} />,
+    );
+
+  it("INV-H1: 1번 문에 배정된 글에는 핫이슈 뱃지가 붙는다", () => {
+    expect(html(GATE_ONE)).toContain("핫이슈");
+  });
+
+  it("INV-H1 실패경로: 문 값이 없으면 안 붙는다 — 판정을 못 받았거나 문턱을 못 넘었다", () => {
+    // 부재만 확인하면 절반이다. 위의 「붙는다」와 짝이라야 뱃지 줄을 지웠을 때 빨간불이 난다.
+    expect(html(null)).not.toContain("핫이슈");
+  });
+
+  it("INV-H1: 뱃지 기준은 점수가 아니다 — 그날 상위여도 문 값이 없으면 안 붙는다", () => {
+    // 2026-09-21 이전에는 이 자리가 `isTrending`(그날 점수 상위 3)이었다.
+    // 그 값으로 되돌리면 이 검사가 잡는다.
+    const topByScore = renderToStaticMarkup(
+      <ArticleCard
+        article={item({ gate: null, isTrending: true, score: 99 })}
+        nowIso={NOW}
+        isRead={false}
+      />,
+    );
+    expect(topByScore).not.toContain("핫이슈");
   });
 });

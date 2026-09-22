@@ -3,6 +3,7 @@
 import "server-only";
 
 import { serverSupabase } from "@/shared/api/supabase-server";
+import { dayKey, dayStartIso } from "@/shared/lib/datetime";
 import { toIngestRunRecord, toRunSourceItem } from "./row";
 import type { IngestRunRecord, RunSourceItem } from "../model/types";
 
@@ -18,6 +19,31 @@ export async function fetchLatestIngestRun(): Promise<IngestRunRecord | null> {
     .maybeSingle();
   if (error) throw new Error(`실행 이력 조회 실패: ${error.message}`);
   return data === null ? null : toIngestRunRecord(data);
+}
+
+/**
+ * **오늘과 최근 며칠에 쓴 요금**을 내기 위한 실행 목록 (2026-09-22).
+ *
+ * 왜 최신 1건이 아닌가: 하루에 여러 번 돌 수 있고(이어달리기가 붙으면 확실히 그렇다),
+ * 화면이 최신 실행 하나만 보여주면 **그날 실제로 나간 돈을 알 수 없다.**
+ *
+ * `days` 일 전 0시(KST)부터 지금까지를 가져온다. 기준이 KST 인 이유는 사람이 "오늘"을
+ * 그렇게 세기 때문이다 — 실행 환경의 시간대로 세면 하루가 다른 시각에 바뀐다.
+ */
+export async function fetchRecentRuns(days: number, now: Date): Promise<IngestRunRecord[]> {
+  const from = dayStartIso(dayKey(now.toISOString()));
+  if (from === null) return [];
+  const fromMs = Date.parse(from) - (days - 1) * 24 * 60 * 60 * 1000;
+  const { data, error } = await serverSupabase()
+    .from("ingest_run")
+    .select(RUN_COLUMNS)
+    .gte("started_at", new Date(fromMs).toISOString())
+    .order("started_at", { ascending: false })
+    // 상한을 둔다 — 하루에 몇 번 도는지가 앞으로 달라질 값이라, 없으면 이 조회가
+    // 언젠가 수백 행을 끌고 온다. 넘치면 오래된 것부터 빠지고 합계가 **적게** 나온다.
+    .limit(200);
+  if (error) throw new Error(`실행 이력 조회 실패: ${error.message}`);
+  return (data ?? []).map(toIngestRunRecord).filter((r): r is IngestRunRecord => r !== null);
 }
 
 /**

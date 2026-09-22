@@ -1,11 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 import type { FeedItemDraft } from "@/entities/article";
 import type { Source } from "@/entities/source";
-import { MAX_TITLE_LENGTH } from "./budgets";
+import {
+  ENRICH_MODEL,
+  HOT_ISSUE_MODEL,
+  KEYWORD_MODEL,
+  MAX_TITLE_LENGTH,
+  TOPIC_MODEL,
+} from "./budgets";
 import { MAX_ITEMS_PER_SOURCE, TOPIC_CONCURRENCY, runIngest } from "./run-ingest";
 import type {
   EnrichCandidate,
   ExtractionCandidate,
+  HotIssueCandidate,
   IngestPorts,
   KeywordCandidate,
 } from "./ports";
@@ -46,9 +53,20 @@ const feedItem = (n: string) => ({
 
 function makePorts(over: Partial<IngestPorts> = {}): IngestPorts {
   return {
+    // 기본은 "오늘 아직 안 썼다" — 상한이 평소에 끼어들지 않는 상태다.
+    // 상한이 주인공인 테스트만 이 값을 바꾼다.
+    loadTodaySpendUsd: vi.fn(async () => 0),
     fetchFeed: vi.fn(async () => []),
     judgeTopic: vi.fn(async () => verdict(true)),
     listKnownUrls: vi.fn(async () => [] as string[]),
+    // 핫이슈 판정은 기본 픽스처에서 **후보 0건**이다. 이 파일의 기존 테스트들은 이 단계가
+    // 생기기 전에 쓰였고, 후보를 주면 그 테스트들이 판정 호출까지 세게 된다.
+    // 이 단계 자체는 run-hot-issue.test.ts 가 따로 본다.
+    listHotIssueCandidates: vi.fn(async () => [] as HotIssueCandidate[]),
+    listPickedTitlesToday: vi.fn(async () => [] as string[]),
+    judgeHotIssue: vi.fn(async () => ({ verdict: null, usage: USAGE })),
+    saveHotIssue: vi.fn(async () => {}),
+    assignGates: vi.fn(async () => {}),
     upsertItems: vi.fn(async (items) => items.length),
     listExtractionCandidates: vi.fn(async () => [] as ExtractionCandidate[]),
     extractContent: vi.fn(async () => "<p>추출된 본문</p>"),
@@ -799,7 +817,14 @@ describe("runIngest — 토큰 사용량 보고", () => {
   });
 
   it("부를 일이 없으면 전부 0 이다", async () => {
-    const report = await runIngest({ sources: [], ports: makePorts(), now: NOW });
+    // 시계를 멈춰 둔다 — 단계별 시간은 실제 경과라 진짜 시계로 재면 0 일 때도 있고
+    // 1 일 때도 있다. 멈춘 시계면 "아무 일도 안 했으면 전부 0"을 그대로 단언할 수 있다.
+    const report = await runIngest({
+      sources: [],
+      ports: makePorts(),
+      now: NOW,
+      monotonicNow: () => 0,
+    });
     expect(report.usage).toEqual({
       calls: 0,
       topicCalls: 0,
@@ -810,6 +835,29 @@ describe("runIngest — 토큰 사용량 보고", () => {
       cacheReadTokens: 0,
       cacheWriteTokens: 0,
       maxInputTokens: 0,
+      stageMs: {
+        feedMs: 0,
+        topicMs: 0,
+        storeMs: 0,
+        hotIssueMs: 0,
+        extractionMs: 0,
+        enrichmentMs: 0,
+        keywordsMs: 0,
+      },
+      hotIssueCalls: 0,
+      hotIssueInputTokens: 0,
+      hotIssueOutputTokens: 0,
+      keywordCalls: 0,
+      keywordInputTokens: 0,
+      keywordOutputTokens: 0,
+      // 부른 모델은 **0 이 아니라 이름**이다 — 아무것도 안 했어도 어느 모델로 돌 뻔했는지는
+      // 남아야 한다. 이 칸이 비면 그 실행의 요금을 나중에 계산할 수 없다.
+      models: {
+        topic: TOPIC_MODEL,
+        hotIssue: HOT_ISSUE_MODEL,
+        enrich: ENRICH_MODEL,
+        keywords: KEYWORD_MODEL,
+      },
     });
   });
 });
@@ -1508,8 +1556,58 @@ describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)"
       skippedExtractions: 0,
       skippedEnrichments: 0,
       skippedKeywords: false,
+      skippedHotIssue: false,
     });
     expect(report.sources).toHaveLength(2);
+  });
+
+  it("단계마다 걸린 시간을 따로 남긴다 (2026-09-22)", async () => {
+    // 왜 이 테스트가 있나: 지금까지 남는 것이 총 소요시간 하나뿐이었다. 244초가 나와도
+    // 그중 주제 판정이 얼마고 요약이 얼마인지 알 길이 없어서, 한 바퀴를 어떻게 나눌지를
+    // **추정으로** 정하게 돼 있었다. 칸이 있어도 아무도 안 채우면 전부 0 으로 남는다.
+    //
+    // 시계는 부를 때마다 10 씩 간다 — 재기 전후로 한 번씩 읽으므로 실제로 잰 단계만 0 보다 커진다.
+    let t = 0;
+    const tick = () => (t += 10);
+    const ports = makePorts({
+      fetchFeed: vi.fn(async () => [feedItem("a")]),
+      listKeywordCandidates: vi.fn(async () => [
+        { id: "k1", title: "제목", evidence: "근거" },
+      ]),
+    });
+
+    const report = await runIngest({
+      sources: [source("s1")],
+      ports,
+      now: NOW,
+      monotonicNow: tick,
+    });
+
+    // 실제로 돈 단계는 시간이 남는다.
+    expect(report.usage.stageMs.feedMs).toBeGreaterThan(0);
+    expect(report.usage.stageMs.topicMs).toBeGreaterThan(0);
+    expect(report.usage.stageMs.storeMs).toBeGreaterThan(0);
+    expect(report.usage.stageMs.enrichmentMs).toBeGreaterThan(0);
+    expect(report.usage.stageMs.keywordsMs).toBeGreaterThan(0);
+    // 후보가 없어 아무것도 안 뽑은 단계도 **돌기는 했다** — 0 이 아니다.
+    // 그래야 "돌았는데 할 일이 없었다"와 "아예 안 돌았다"가 갈린다.
+    expect(report.usage.stageMs.hotIssueMs).toBeGreaterThan(0);
+  });
+
+  it("건너뛴 단계는 시간이 0 이다 — 「할 일이 없었다」와 「못 돌았다」를 가른다", async () => {
+    const ports = makePorts({ fetchFeed: vi.fn(async () => [feedItem("a")]) });
+    const report = await runIngest({
+      sources: [source("s1")],
+      ports,
+      now: NOW,
+      budgetMs: 1000,
+      // 마감 계산 1 + 소스 확인 1 = 2번까지 예산 안. 소스부터 통째로 밀린다.
+      monotonicNow: clockAfter(2, 5000),
+    });
+
+    expect(report.budget.skippedKeywords).toBe(true);
+    expect(report.usage.stageMs.keywordsMs).toBe(0);
+    expect(report.usage.stageMs.hotIssueMs).toBe(0);
   });
 
   it("INV-F5: 예산이 떨어지면 **판정 청크 사이에서도** 멈추고, 남은 건 통과시킨다(INV-F3)", async () => {
@@ -1525,9 +1623,13 @@ describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)"
       sources: [source("s1")],
       ports,
       now: NOW,
-      budgetMs: 1000,
-      // 마감 계산 1 + 소스 확인 1 + 첫 청크 확인 1 = 3번까지 예산 안. 둘째 청크에서 끊긴다.
-      monotonicNow: clockAfter(3, 5000),
+      // 한 묶음의 최악치(15초)보다는 넉넉해야 첫 묶음이 시작된다 (INV-CB9).
+      budgetMs: 20_000,
+      // 마감 계산 1 + 소스 확인 1 + 피드 재기 2 + 첫 청크 확인 1 + 첫 청크 재기 2 = 7번까지
+      // 0 초. 둘째 청크 확인(8번째)이 6초 시점인데, 남은 14초는 한 묶음의 최악치(15초)보다
+      // **적다** — 마감까지 시간이 남았는데도 끊는다. 그게 INV-CB9 다.
+      // **단계를 재는 것도 시계를 읽는다**(2026-09-22) — 재기 전후로 한 번씩이다.
+      monotonicNow: clockAfter(7, 6000),
     });
 
     // 첫 묶음만 물었다 — 예산이 판정 도중에 실제로 걸렸다는 뜻이다.
@@ -1605,3 +1707,223 @@ describe("runIngest — 2026-08-17: 실행 id · 소스별 주제판정 (대시�
     expect(report.topicFilter.filtered).toBe(a.topicFilter.filtered + b.topicFilter.filtered);
   });
 });
+
+/**
+ * 하루 요금 상한 — ingest-chaining-budget INV-CB6·CB7·CB8·CB9.
+ *
+ * 붙드는 것은 **무엇이 멈추고 무엇이 계속 도는가**다. 가르는 기준은 "요약이냐"가 아니라
+ * "멈추면 화면이 틀리느냐"다 — 판정이 멈추면 그날 글이 전부 조용히 「소식」으로 간다.
+ */
+describe("runIngest — 하루 요금 상한", () => {
+  const cappedPorts = (over: Partial<IngestPorts> = {}) =>
+    makePorts({
+      // 저장된 오늘 합계가 이미 상한이다 (INV-CB6: 기록에서 읽는다).
+      loadTodaySpendUsd: vi.fn(async () => 10),
+      listHotIssueCandidates: vi.fn(async () => [
+        {
+          id: "h1",
+          title: "핫이슈 후보",
+          evidence: "근거",
+          sourceId: "s",
+          publishedAt: NOW.toISOString(),
+        },
+      ]),
+      listExtractionCandidates: vi.fn(async () => [{ id: "e1", url: "https://ex.com/e1" }]),
+      listEnrichCandidates: vi.fn(async () => [
+        {
+          id: "n1",
+          title: "Title",
+          titleKo: null,
+          contentHtml: "<p>본문</p>",
+          sourceExcerpt: null,
+          summary: null,
+          officialBasis: "none" as const,
+          sourceId: "s",
+        },
+      ]),
+      listKeywordCandidates: vi.fn(async () => [{ id: "k1", title: "제목", evidence: "근거" }]),
+      ...over,
+    });
+
+  it("INV-CB8: 상한에 닿으면 판정 둘은 계속 돌고, 본문·요약·번역·키워드는 안 돈다", async () => {
+    const ports = cappedPorts();
+    const report = await runIngest({
+      sources: [source("s")],
+      ports: makePortsWith(ports, { fetchFeed: vi.fn(async () => [feedItem("a")]) }),
+      now: NOW,
+    });
+
+    // 계속 도는 쪽 — 멈추면 화면이 **틀린다**.
+    expect(ports.judgeTopic).toHaveBeenCalled();
+    expect(ports.judgeHotIssue).toHaveBeenCalled();
+    // 멈추는 쪽 — 비거나 얇아질 뿐이다.
+    expect(ports.extractContent).not.toHaveBeenCalled();
+    expect(ports.enrich).not.toHaveBeenCalled();
+    expect(ports.extractKeywords).not.toHaveBeenCalled();
+    expect(report.keywords).toBeNull();
+    expect(report.hotIssue).not.toBeNull();
+  });
+
+  it("INV-CB8 실패경로: 멈춘 사실과 그때의 합계가 리포트에 남는다", async () => {
+    const report = await runIngest({ sources: [], ports: cappedPorts(), now: NOW });
+    expect(report.cost.capped).toBe(true);
+    expect(report.cost.spentUsd).toBeGreaterThanOrEqual(report.cost.capUsd);
+    expect(report.cost.lookupFailed).toBe(false);
+    // 안 남기면 "그날 글이 없었다"와 "상한에 걸렸다"가 리포트에서 같은 모양이 된다.
+    expect(report.budget.skippedKeywords).toBe(true);
+    expect(report.budget.skippedEnrichments).toBeGreaterThan(0);
+    expect(report.budget.skippedExtractions).toBeGreaterThan(0);
+  });
+
+  it("INV-CB7: 상한을 넘었으면 모델을 **한 번도** 부르지 않는다 (요약·키워드)", async () => {
+    const ports = cappedPorts();
+    await runIngest({ sources: [], ports, now: NOW });
+    expect(ports.enrich).toHaveBeenCalledTimes(0);
+    expect(ports.extractKeywords).toHaveBeenCalledTimes(0);
+  });
+
+  it("상한 아래면 평소대로 다 돈다 — 가드가 평소에 끼어들지 않는다", async () => {
+    const ports = makePorts({
+      loadTodaySpendUsd: vi.fn(async () => 2.19),
+      listEnrichCandidates: vi.fn(async () => [
+        {
+          id: "n1",
+          title: "Title",
+          titleKo: null,
+          contentHtml: "<p>본문</p>",
+          sourceExcerpt: null,
+          summary: null,
+          officialBasis: "none" as const,
+          sourceId: "s",
+        },
+      ]),
+      listKeywordCandidates: vi.fn(async () => [{ id: "k1", title: "제목", evidence: "근거" }]),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(ports.enrich).toHaveBeenCalled();
+    expect(ports.extractKeywords).toHaveBeenCalled();
+    expect(report.cost.capped).toBe(false);
+  });
+
+  it("INV-CB6 실패경로: 오늘 합계를 못 읽으면 상한에 닿은 것으로 본다", async () => {
+    // 0 으로 보면 조회가 깨진 날 상한이 통째로 사라진다 — 그게 이 조항이 막으려던 상태다.
+    const ports = makePorts({
+      loadTodaySpendUsd: vi.fn(async () => {
+        throw new Error("DB 안 됨");
+      }),
+      listEnrichCandidates: vi.fn(async () => [
+        {
+          id: "n1",
+          title: "Title",
+          titleKo: null,
+          contentHtml: "<p>본문</p>",
+          sourceExcerpt: null,
+          summary: null,
+          officialBasis: "none" as const,
+          sourceId: "s",
+        },
+      ]),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.cost.capped).toBe(true);
+    // **"돈을 다 썼다"와 "못 읽었다"는 다르다** — 한 칸에 섞으면 조회가 깨진 날이
+    // 돈을 다 쓴 날처럼 보인다.
+    expect(report.cost.lookupFailed).toBe(true);
+    expect(ports.enrich).not.toHaveBeenCalled();
+  });
+
+  it("INV-CB7: 이번 바퀴가 상한을 넘기면 그 다음 건부터 모델을 안 부른다", async () => {
+    // 저장된 합계는 상한 아래인데, 이 바퀴의 요약 호출이 상한을 넘긴다.
+    // 이번 바퀴 지출을 안 세면 한 호출이 상한을 통째로 넘길 수 있다.
+    const candidates = Array.from({ length: 4 }, (_, i) => ({
+      id: `n${i}`,
+      title: `Title ${i}`,
+      titleKo: null,
+      contentHtml: "<p>본문</p>",
+      sourceExcerpt: null,
+      summary: null,
+      officialBasis: "none" as const,
+      sourceId: "s",
+    }));
+    const enrich = vi.fn(async () => ({
+      summary: "요약",
+      points: ["항목"],
+      titleKo: "한국어 제목",
+      officialByContent: false,
+      // 한 번에 $10 어치(출력 100만 토큰 × $10/MTok)를 쓴다.
+      usage: { inputTokens: 0, outputTokens: 1_000_000, cacheReadTokens: 0, cacheWriteTokens: 0 },
+    }));
+    const ports = makePorts({
+      loadTodaySpendUsd: vi.fn(async () => 0),
+      listEnrichCandidates: vi.fn(async () => candidates),
+      enrich,
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+
+    expect(enrich).toHaveBeenCalledTimes(1);
+    expect(report.budget.skippedEnrichments).toBe(3);
+    expect(report.cost.capped).toBe(true);
+  });
+
+  it("INV-CB9 실패경로: 다음 호출은 번호가 아니라 **아직 안 된 것**을 DB 에서 다시 찾는다", async () => {
+    // 번호로 이어받으면 그 사이에 새 글이 앞에 들어왔을 때 줄이 밀려 중간이 통째로
+    // 건너뛰어진다. 아무 오류도 안 나고 리포트도 정상이라 알 길이 없다.
+    const pending = ["a", "b", "c"];
+    const asCandidate = (id: string) => ({
+      id,
+      title: `Title ${id}`,
+      titleKo: null,
+      contentHtml: "<p>본문</p>",
+      sourceExcerpt: null,
+      summary: null,
+      officialBasis: "none" as const,
+      sourceId: "s",
+    });
+    const done: string[] = [];
+    // 요약 한 건이 40초씩 걸리는 시계. 호출 횟수가 아니라 **쓴 시간**으로 끊어야
+    // 이 테스트가 보는 것이 INV-CB9(한 건의 최악치만큼 남았나)가 된다.
+    let clock = 0;
+    const ports = makePorts({
+      enrich: vi.fn(async () => {
+        clock += 40_000;
+        return {
+          summary: "요약",
+          points: ["항목"],
+          titleKo: "한국어 제목",
+          officialByContent: false,
+          usage: USAGE,
+        };
+      }),
+      // 아직 안 된 것만 돌려준다 (DB 조회가 하는 일 그대로).
+      listEnrichCandidates: vi.fn(async () => pending.filter((id) => !done.includes(id)).map(asCandidate)),
+      saveEnrichment: vi.fn(async (id: string) => {
+        done.push(id);
+      }),
+    });
+
+    // 첫 호출: 두 건만 처리할 시간이 있다.
+    await runIngest({
+      sources: [],
+      ports,
+      now: NOW,
+      // 두 건(80초)까지는 들어가고, 세 번째는 남은 20초가 한 건의 최악치(30초)보다
+      // 적어서 시작하지 않는다 — 마감까지 시간이 남았는데도 끊는다.
+      budgetMs: 100_000,
+      monotonicNow: () => clock,
+    });
+    expect(done).toEqual(["a", "b"]);
+
+    // 그 사이 새 글이 **앞에** 들어왔다.
+    pending.unshift("new");
+    await runIngest({ sources: [], ports, now: NOW });
+
+    // 새 글과 밀린 c 가 둘 다 처리됐다 — 번호로 이어받았다면 c 가 통째로 건너뛰어진다.
+    expect(done).toEqual(["a", "b", "new", "c"]);
+  });
+});
+
+/** 이미 만든 포트 묶음에 몇 개만 덮어쓴다 — 호출 횟수를 보는 스파이를 그대로 유지하려고. */
+function makePortsWith(base: IngestPorts, over: Partial<IngestPorts>): IngestPorts {
+  return { ...base, ...over };
+}
+
