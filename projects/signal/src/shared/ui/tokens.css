@@ -127,7 +127,8 @@
   --fs-art-title: 28px;
   --fs-h1: 22px;
   --fs-prose-h2: 20px;
-  --fs-prose: 17px;
+  /* 원문 본문. 17 → 16px (design-rules 2026-09-23) — 원문이 요약보다 크게 전면에 서지 않게 한다. */
+  --fs-prose: 16px;
   --fs-logo: 19px;
   --fs-title: 16px;
   --fs-body: 15px;

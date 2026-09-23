@@ -2,13 +2,12 @@ import type { SummaryTable } from "@/entities/article";
 import styles from "./article-view.module.css";
 
 /**
- * AI 요약 본문 — 칸으로 나뉜 요약을 **글자로만** 그린다 (content-safety INV-D7 · ingestion-ranking INV-S8).
+ * 「핵심」 절 본문 — 칸으로 나뉜 요약을 **글자로만** 그린다 (content-safety INV-D7 · ingestion-ranking INV-S8).
  *
  * 글자 안의 기호는 해석하지 않는다. 한 줄 요약·핵심·표가 따로 저장된 칸이라 해석할 것이 없다 —
  * 요약에 심은 `**`·`[글](주소)` 는 글자 그대로 보인다. HTML 문자열을 만들지 않는다(INV-D3).
  *
- * 순서는 2026-09-23 승인 B안: 한 줄 요약 → 「핵심」 → 표. 상세 화면 재구성 시안(article-detail-v2)이
- * 승인되면 이 순서가 바뀐다.
+ * 순서는 2026-09-23 승인 시안(article-detail-v2): 핵심 번호 셋 → 표. 한 줄 요약은 제목 아래에 선다.
  */
 export function AiSummaryBody({
   oneLine,
@@ -16,35 +15,33 @@ export function AiSummaryBody({
   points,
   table,
 }: {
-  /** 한 줄 요약. 없으면 옛 요약이다. */
+  /** 한 줄 요약. 있으면 새 형식이다 — 한 줄 요약 자체는 제목 아래에 따로 선다. */
   oneLine: string | null;
-  /** 옛 요약 문단(한 줄 요약이 없을 때만 그린다). */
+  /** 옛 요약 문단(한 줄 요약이 없을 때만 쓴다). */
   legacyText: string;
   points: string[];
   table: SummaryTable | null;
 }) {
+  const isLegacy = oneLine === null;
   return (
     <>
-      {oneLine !== null ? <p className={styles.summaryLead}>{oneLine}</p> : null}
-      {points.length > 0 ? <PointsList points={points} /> : null}
-      {/* 옛 요약은 문단 하나 그대로 둔다 — 다시 요약하지 않는다(사용자 결정 2026-09-23). */}
-      {oneLine === null ? <p>{legacyText}</p> : null}
+      {points.length > 0 ? (
+        <ol className={styles.keyPoints}>
+          {points.map((point, i) => (
+            <li key={`${i}-${point}`}>{point}</li>
+          ))}
+        </ol>
+      ) : null}
+      {/* 옛 요약 호환 (사용자 결정 2026-09-23 「다시 요약하지 않는다」). 문단은 핵심을 되풀이하는
+          경우가 많아 접어 둔다. 핵심이 없는 옛 글은 문단이 유일한 요약이라 펼친 채로 둔다. */}
+      {isLegacy && points.length > 0 ? (
+        <details className={styles.legacy}>
+          <summary>이전 형식의 요약 문단 보기</summary>
+          <p>{legacyText}</p>
+        </details>
+      ) : null}
+      {isLegacy && points.length === 0 ? <p className={styles.excerpt}>{legacyText}</p> : null}
       {table !== null ? <SummaryTableView table={table} /> : null}
-    </>
-  );
-}
-
-function PointsList({ points }: { points: string[] }) {
-  return (
-    <>
-      <span id="summary-points-label" className={styles.pointsLabel}>
-        핵심
-      </span>
-      <ul className={styles.summaryPoints} aria-labelledby="summary-points-label">
-        {points.map((point, i) => (
-          <li key={`${i}-${point}`}>{point}</li>
-        ))}
-      </ul>
     </>
   );
 }

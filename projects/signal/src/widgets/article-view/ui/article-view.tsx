@@ -1,10 +1,21 @@
 import Link from "next/link";
-import { displaySummary, displayTitle, type Article } from "@/entities/article";
+import { displaySummary, displayTitle, type Article, type SignalKey } from "@/entities/article";
+import { sourcePresentation } from "@/entities/source";
 import { ArticleBody, safeSourceUrl } from "@/features/content-render";
 import { MarkReadOnView } from "@/features/read-state";
 import { relativeTime } from "@/shared/lib/datetime";
 import styles from "./article-view.module.css";
 import { AiSummaryBody } from "./summary-markup";
+
+/**
+ * 화면 라벨 (design-rules 2026-09-23 화면 어휘). 판정 질문(모델용 문장)과 갈라 둔다 —
+ * 화면에는 이 넷 밖의 말이 나오지 않는다. 카드 뱃지로도 쓸 수 있게 두 단어 이내다.
+ */
+const SIGNAL_LABELS: Record<SignalKey, string> = {
+  변화: "실무 영향",
+  방향: "흐름 변화",
+  기회: "시한 있음",
+};
 
 /** 이전/다음 한 칸. 주소는 피드 상태를 실어 페이지가 만든다(`articleHref`). */
 export interface ArticleNavLink {
@@ -35,6 +46,15 @@ export function ArticleView({
   // AI 요약 → 없으면 출처가 준 요약글 (INV-S2). 고르는 규칙은 entities 한 곳에 있다.
   const summary = displaySummary(article);
   const title = displayTitle(article);
+  const source = sourcePresentation(article.sourceId, article.sourceName);
+  // 한 줄 요약은 AI 요약일 때만 쓴다 — 출처 글을 보여주는 화면에 우리 문장을 섞지 않는다(INV-S2).
+  const oneLine = summary?.isAi ? (article.oneLine ?? null) : null;
+  const signalPointsList = article.signalPoints ?? [];
+  // 분야 먼저, 사건종류 다음 — 색이 없어진 만큼 순서가 축을 나른다.
+  const orderedTags = [
+    ...article.tags.filter((t) => t.axis !== "kind"),
+    ...article.tags.filter((t) => t.axis === "kind"),
+  ];
 
   return (
     <main className={styles.read}>
@@ -48,113 +68,105 @@ export function ArticleView({
 
       <h1 className={styles.title}>{title.text}</h1>
 
-      <div className={styles.metaRow}>
-        <span className={styles.who}>
-          {/* 발행시각을 못 읽으면 빈 문자열이 온다. 구분자까지 같이 빼지 않으면
-              "출처 · " 처럼 매달린 가운뎃점만 남는다. */}
-          <strong>{article.sourceName}</strong>
-          {when !== "" ? ` · ${when}` : null}
-        </span>
-        {/* 원문 제목을 함께 남긴다 (INV-S6) — 번역이 틀렸을 때 대조할 것이 있어야 한다.
-            번역이 없으면 원문이 이미 제목 자리에 있으므로 이 줄은 렌더되지 않는다.
-            **메타 줄 안에 둔다** (design-rules 2026-08-10 승인) — 제목 바로 밑에 붙이면
-            우리가 붙인 제목과 한 덩어리로 보인다. 여기서는 출처·시각과 같은 묶음,
-            즉 "이 글에 딸린 참고 정보" 쪽에 선다. */}
-        {title.original !== null ? (
-          <p className={styles.originalTitle}>
-            {/* `lang` 을 걸지 않는다: 원문이 영어라는 보장이 없고(출처가 늘면 더 그렇다),
-                틀린 lang 은 스크린리더 발음을 잘못 바꾼다. 안 걸면 html lang="ko" 를 물려받는다.
-                라벨까지 en 으로 감싸면 "원문 제목:" 이 영어로 읽힌다.
-                라벨은 뺄 수 없다 — 제목에서 떨어져 나온 만큼 이 줄이 무엇인지는 라벨만 나른다. */}
-            원문 제목: {title.original}
-          </p>
-        ) : null}
-      </div>
+      {/* 한 줄 요약 — 제목 바로 아래 (design-rules 2026-09-23 「상세 화면 재구성」). 이 글을 모르는
+          사람이 읽어도 서는 한 문장이다. 옛 요약에는 없다 — 다시 요약하지 않는다. */}
+      {oneLine !== null ? <p className={styles.leadLine}>{oneLine}</p> : null}
 
-      {/* 키워드는 메타 줄 **밖**, 점선 아래 별도 줄이다 (승인 시안 badge-row.html `.detailKw`).
-          출처·시각과 같은 줄에 두면 "이 글에 딸린 참고 정보"와 섞여 무엇이 무엇인지 안 갈린다.
-          `role="group"` + 라벨을 두는 이유: 줄이 메타에서 떨어져 나온 만큼, 화면을 못 보는
-          사람에게는 이 알약 뭉치가 무엇의 목록인지 알려줄 것이 라벨밖에 없다.
-          키워드가 하나도 없으면 줄 자체를 그리지 않는다 — 백필을 안 했으므로(2026-08-30)
-          옛 글은 빈 배열로 온다. 빈 div 를 그리면 padding 만큼 여백이 이유 없이 벌어진다. */}
-      {article.tags.length > 0 ? (
-        <div
-          className={styles.keywords}
-          role="group"
-          aria-label="이 소식의 키워드"
-        >
-          {article.tags.map((tag) => (
-            <span
-              key={`${tag.axis}:${tag.name}`}
-              className={`${styles.tag} ${tag.axis === "kind" ? styles.kwKind : styles.kwField}`}
-            >
-              {/* 축은 색으로만 전해진다 — 화면을 못 보는 사람에게는 이 접두사가 그 정보의 전부다.
-                  접두사 **앞**의 공백은 알약 사이를 띄우는 것이다: map 이 만든 span 사이에는
-                  텍스트 노드가 없고 알약은 바깥 display 가 inline 이라, 없으면 앞 알약의 마지막
-                  글자와 붙어 "코딩분야 보안"으로 읽힐 수 있다. 시안은 HTML 소스에서 줄이 나뉘어
-                  이 공백이 자연히 있었다. `.sr-only` 는 position:absolute 라 알약 폭은 안 바뀐다. */}
-              <span className="sr-only">
-                {tag.axis === "kind" ? " 사건종류 " : " 분야 "}
-              </span>
+      <div className={styles.metaRow}>
+        {/* 메타 한 줄: 출처 · 시각 · 분야 · 사건종류. 키워드를 알약 대신 글자로 이어 쓴다 —
+            상세의 알약은 눌리지 않는데 눌릴 것처럼 보였다. 분야를 먼저 쓰고, 두 축을 가르던 색 대신
+            스크린리더용 접두사가 축을 나른다. 발행시각을 못 읽으면 가운뎃점까지 같이 뺀다. */}
+        <span className={styles.who}>
+          <strong>{source.displayName}</strong>
+          {when !== "" ? ` · ${when}` : null}
+          {orderedTags.map((tag) => (
+            <span key={`${tag.axis}:${tag.name}`}>
+              {" · "}
+              <span className="sr-only">{tag.axis === "kind" ? "사건종류 " : "분야 "}</span>
               {tag.name}
             </span>
           ))}
-        </div>
+        </span>
+        {/* 원문 제목을 함께 남긴다 (INV-S6) — 번역이 틀렸을 때 대조할 것이 있어야 한다. `lang` 을
+            걸지 않는다: 원문이 영어라는 보장이 없고 틀린 lang 은 발음을 잘못 바꾼다. */}
+        {title.original !== null ? (
+          <p className={styles.originalTitle}>원문: {title.original}</p>
+        ) : null}
+      </div>
+
+      {/* signal 포인트 — 핫이슈 판정에서 참인 질문과 그 근거 (hot-issue INV-G2). 판정이 없는 글은
+          절이 통째로 없다 — 「해당 없음」이라고 쓰지 않는다(절이 없는 것이 정직한 상태). */}
+      {signalPointsList.length > 0 ? (
+        <section className={styles.sec} aria-labelledby="signal-points-heading">
+          <h2 className={styles.secHeading} id="signal-points-heading">
+            <span className={styles.brand}>signal</span> 포인트
+          </h2>
+          <ul className={styles.points}>
+            {signalPointsList.map((point) => (
+              <li key={point.key}>
+                <span className={styles.pointLabel}>{SIGNAL_LABELS[point.key]}</span>
+                {point.reason !== null ? <span className={styles.pointText}>{point.reason}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
-      {/* 요약은 신뢰 경계 밖이다 — 원문과 분리하고, 어디서 온 글인지 문구로 드러낸다.
-          AI 요약이 없으면 출처가 준 요약글을 대신 보여준다(INV-S2). 둘 다 없으면
-          박스 자체를 그리지 않는다(빈 박스가 더 나쁜 정보다).
-          **라벨을 값에 맞춰야 한다** — 출처 글을 "AI 요약"이라고 붙이면 표시가 거짓이 된다. */}
+      {/* 핵심 — 무슨 일이 있었나. signal 포인트는 그것이 왜 신호인가다(design-rules 2026-09-23). */}
       {summary !== null ? (
         <section
-          className={styles.aiSummary}
-          aria-label={summary.isAi ? "AI 요약" : "출처가 준 요약"}
+          className={styles.sec}
+          aria-labelledby="summary-heading"
         >
-          <span className={styles.aiLabel}>
-            <span aria-hidden="true">{summary.isAi ? "✨" : "❞"}</span>{" "}
-            {summary.isAi ? "AI 요약" : "출처가 준 요약"}
-          </span>
-          {/* 순서는 한 문장 → 「핵심」 → 나머지 문단 → 표다 (2026-09-23 사용자 결정: B안 +
-              「첫 줄에 간단요약이 있어야 표를 봐도 무슨 이야기인지 알고 읽는다」).
-              서식은 우리 지시로 모델이 쓴 글에만 붙인다(INV-D7) — 출처가 준 글의 기호를
-              서식으로 바꾸면 「누가 쓴 것인지」가 흐려진다. 출처 글은 한 문단 그대로 둔다. */}
+          <h2 className={styles.secHeading} id="summary-heading">
+            {summary.isAi ? "핵심" : "출처가 준 요약"}
+          </h2>
           {summary.isAi ? (
             <AiSummaryBody
-              oneLine={article.oneLine ?? null}
+              oneLine={oneLine}
               legacyText={summary.text}
               points={summary.points}
               table={article.summaryTable ?? null}
             />
           ) : (
-            <p>{summary.text}</p>
+            // 출처가 준 글은 문단 하나 그대로다 — 번호 목록·표를 붙이지 않는다(INV-D7 · INV-S7).
+            <p className={styles.excerpt}>{summary.text}</p>
           )}
           <p className={styles.caveat}>
             {summary.isAi
-              ? "요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을 읽어주세요."
+              ? "요약은 자동으로 만들어집니다. 사실 확인이 필요하면 원문을 읽어주세요."
               : "출처가 제공한 소개글입니다. 자세한 내용은 원문을 읽어주세요."}
           </p>
         </section>
       ) : null}
 
-      {/* 원문을 안 주는 출처가 있다 — RSS 가 제목·링크만 주는 경우다(2026-08-09 실측: HN·OpenAI 둘 다).
-          그때도 "아래는 원문입니다"를 띄우면 그 아래가 비어 있어 화면이 거짓말을 한다.
-          없으면 없다고 말하고 출처로 보낸다. */}
-      <article className={styles.prose}>
-        {article.contentHtml.trim() !== "" ? (
-          <>
-            <p className={styles.sourceNote}>
-              아래는 출처에서 가져온 원문입니다.
-            </p>
+      {/* 원문 — 기본 접힘 (design-rules 2026-09-23). 요약보다 크게 전면에 서지 않게 한다.
+          펼치기 라벨에 원문의 언어·성격을 적는다(소스 설정). 원문을 안 주는 출처는 접을 것이
+          없으므로 안내 한 줄만 둔다 — 빈 상자를 펼치게 하면 화면이 거짓말을 한다. */}
+      {article.contentHtml.trim() !== "" ? (
+        <details className={styles.orig}>
+          <summary>
+            <span>
+              원문 보기
+              {source.originalNote !== null ? (
+                <span className={styles.origNote}> ({source.originalNote})</span>
+              ) : null}
+            </span>
+            <span className={styles.origAct} aria-hidden="true">
+              <span className={styles.actOpen}>펼치기 ▾</span>
+              <span className={styles.actClose}>접기 ▴</span>
+            </span>
+          </summary>
+          <article className={styles.prose}>
+            <p className={styles.sourceNote}>아래는 출처에서 가져온 원문입니다.</p>
             <ArticleBody html={article.contentHtml} />
-          </>
-        ) : (
-          <p className={styles.sourceNote}>
-            이 출처는 원문 전문을 제공하지 않습니다. 아래 링크로 출처에서 읽어
-            주세요.
-          </p>
-        )}
-      </article>
+          </article>
+        </details>
+      ) : (
+        <p className={styles.noOriginal}>
+          이 출처는 원문 전문을 제공하지 않습니다. 아래 링크로 출처에서 읽어 주세요.
+        </p>
+      )}
 
       <div className={styles.foot}>
         <span className={styles.note}>원문의 저작권은 출처에 있습니다.</span>
