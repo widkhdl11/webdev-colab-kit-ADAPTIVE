@@ -1,5 +1,5 @@
 import { dayKey, dayStartIso } from "@/shared/lib/datetime";
-import { CANDIDATE_WINDOW_DAYS } from "./budgets";
+import { CANDIDATE_WINDOW_DAYS, ENRICH_FLOOR_ISO } from "./budgets";
 
 /**
  * 비싼 단계(본문 긁기·요약·번역·핫이슈 판정·키워드)가 **볼 글의 범위**.
@@ -17,6 +17,7 @@ import { CANDIDATE_WINDOW_DAYS } from "./budgets";
 export function candidateWindowStartIso(
   now: Date,
   days: number = CANDIDATE_WINDOW_DAYS,
+  floorIso?: string,
 ): string | null {
   // 읽을 수 없는 시각이면 창을 안 건다. `toISOString()` 은 그런 값에 **던진다** —
   // 여기서 막지 않으면 후보 조회가 통째로 죽고, 그 단계가 그날 아무 일도 못 한다.
@@ -26,5 +27,29 @@ export function candidateWindowStartIso(
   const start = dayStartIso(todayKey);
   if (start === null) return null;
   const startMs = Date.parse(start) - (days - 1) * 24 * 60 * 60 * 1000;
-  return Number.isNaN(startMs) ? null : new Date(startMs).toISOString();
+  if (Number.isNaN(startMs)) return null;
+
+  // 기준 시각과 둘 중 **늦은 쪽**을 쓴다 (2026-09-23).
+  //
+  // 창은 「얼마나 거슬러 올라가나」이고 기준 시각은 「여기보다 앞은 아예 안 본다」다.
+  // 늦은 쪽을 골라야 둘 다 지켜진다 — 이른 쪽을 고르면 기준 시각이 창을 **넓히는** 일이
+  // 생기고, 그건 아끼려다 옛날 글 전부를 후보로 만드는 것이다.
+  //
+  // 못 읽는 값은 **없는 것으로 본다.** 여기서 null 을 돌려주면 창이 통째로 사라져 같은
+  // 방향으로 틀린다 — 설정 하나가 잘못 적힌 대가가 「전부 다 한다」면 안 된다.
+  const floorMs = floorIso === undefined ? NaN : Date.parse(floorIso);
+  if (!Number.isNaN(floorMs) && floorMs > startMs) return new Date(floorMs).toISOString();
+  return new Date(startMs).toISOString();
+}
+
+/**
+ * **돈이 드는 단계**(본문 긁기·요약·번역·키워드)가 쓰는 창 (2026-09-23).
+ *
+ * 3일 창에 기준 시각을 겹쳐 놓은 것이다. 창만 쓰는 `candidateWindowStartIso` 와 따로 두는
+ * 이유는 **주제 판정과 핫이슈 판정은 이 기준에 안 걸려야** 하기 때문이다 — 그 둘이 멈추면
+ * 화면이 틀린다(INV-CB8 과 같은 기준). 기본값으로 섞어 두면 "어느 단계가 기준 시각을
+ * 받는가"가 부르는 쪽마다 흩어지고, 그건 나중에 한 곳만 빠뜨리는 자리가 된다.
+ */
+export function enrichWindowStartIso(now: Date): string | null {
+  return candidateWindowStartIso(now, CANDIDATE_WINDOW_DAYS, ENRICH_FLOOR_ISO);
 }

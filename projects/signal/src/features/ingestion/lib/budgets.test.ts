@@ -3,6 +3,7 @@ import { BADGE_WINDOW_DAYS } from "@/entities/article";
 import * as budgets from "./budgets";
 import {
   CANDIDATE_WINDOW_DAYS,
+  ENRICH_FLOOR_ISO,
   ENRICH_POOL,
   INGEST_BUDGET_MS,
   KEYWORD_BATCH,
@@ -49,6 +50,15 @@ describe("수집 예산 상수", () => {
     // 판정 실패는 INV-F3 에 따라 **통과**로 처리된다 — 필터가 5분의 1쯤 안 돈 것이다.
     // 정상 응답이 32토큰이었던 2026-08-12 기준으로도 한참 위여야 한다.
     expect(TOPIC_MAX_TOKENS).toBeGreaterThan(200);
+  });
+
+  it("기준 시각 — 이 값이 앞으로 밀리면 옛날 글이 다시 후보가 된다", () => {
+    // **값을 못 박는다.** 상대적으로만 검사하면 2020년으로 되돌려도 전부 green 이다
+    // (2026-09-23 변이 확인에서 실제로 그랬다). 이 값이 과거로 밀리는 순간, 그날 안 하기로
+    // 한 글 180건이 도로 후보가 되고 요금이 다시 나간다.
+    expect(ENRICH_FLOOR_ISO).toBe("2026-09-22T22:00:00.000Z");
+    // 읽을 수 있는 시각이어야 한다. 못 읽으면 조용히 무시돼서 기준이 없는 것과 같아진다.
+    expect(Number.isNaN(Date.parse(ENRICH_FLOOR_ISO))).toBe(false);
   });
 
   it("후보 풀 — 하루 신규(약 68건)를 한 바퀴에 다 담고도 남아야 한다 (INV-CB11)", () => {

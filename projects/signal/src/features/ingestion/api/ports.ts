@@ -7,7 +7,7 @@ import { createHotIssueDbPorts } from "./hot-issue-db";
 import { fetchRecentRuns } from "@/entities/ingest-run/api/dashboard-queries";
 import { todaySpendUsd } from "../lib/cost-cap";
 import { dayKey, dayStartIso } from "@/shared/lib/datetime";
-import { candidateWindowStartIso } from "../lib/candidate-window";
+import { enrichWindowStartIso } from "../lib/candidate-window";
 import { anthropicApiKey } from "@/shared/api/server-env";
 import { GATE_ONE, toOfficialBasis, type FeedItemDraft } from "@/entities/article";
 import { getSourceWeight } from "@/entities/source";
@@ -100,8 +100,15 @@ interface PoolRow {
  * `null` 이면 창을 안 건다(계산이 실패한 경우). 조용히 전체를 보는 쪽이 조용히 0건을
  * 보는 것보다 낫다 — 전자는 요금이 더 나가고 후자는 수집이 멈춘다.
  */
+/**
+ * 돈이 드는 단계(본문 긁기·요약·번역·키워드)가 쓰는 창.
+ *
+ * `enrichWindowStartIso` 는 3일 창에 **기준 시각**을 겹쳐 놓은 것이다 — 그 시각 이전에
+ * 발행된 글에는 돈을 쓰지 않는다(2026-09-23). 주제 판정과 핫이슈 판정은 이 함수를 안 쓴다:
+ * 그 둘이 멈추면 화면이 틀린다(INV-CB8 과 같은 기준).
+ */
 function windowStart(): string | null {
-  return candidateWindowStartIso(new Date());
+  return enrichWindowStartIso(new Date());
 }
 
 /**
