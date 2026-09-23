@@ -427,8 +427,7 @@ describe("ArticleView — 상세 뱃지 (INV-KD1)", () => {
  */
 describe("ArticleView — 이전 글 / 다음 글", () => {
   const dom = (html: string) => {
-    const root = document.createElement("div");
-    root.innerHTML = html;
+    const root = new DOMParser().parseFromString(html, "text/html").body;
     return root;
   };
   const link = (title: string) => ({
@@ -527,8 +526,7 @@ describe("ArticleView — 이전 글 / 다음 글", () => {
  */
 describe("ArticleView — 요약 서식 (INV-D7)", () => {
   const box = (a: Article) => {
-    const root = document.createElement("div");
-    root.innerHTML = renderToStaticMarkup(<ArticleView article={a} nowIso={NOW} />);
+    const root = new DOMParser().parseFromString(renderToStaticMarkup(<ArticleView article={a} nowIso={NOW} />), "text/html").body;
     return root.querySelector(`.${styles.aiSummary}`) as HTMLElement;
   };
 
@@ -575,8 +573,7 @@ describe("ArticleView — 요약 서식 (INV-D7)", () => {
  */
 describe("ArticleView — 요약 상자 순서 (B안 + 한 문장)", () => {
   const kids = (a: Article) => {
-    const root = document.createElement("div");
-    root.innerHTML = renderToStaticMarkup(<ArticleView article={a} nowIso={NOW} />);
+    const root = new DOMParser().parseFromString(renderToStaticMarkup(<ArticleView article={a} nowIso={NOW} />), "text/html").body;
     const box = root.querySelector(`.${styles.aiSummary}`) as HTMLElement;
     return [...box.children];
   };

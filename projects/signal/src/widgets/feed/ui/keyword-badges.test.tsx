@@ -290,8 +290,7 @@ function three_() {
 describe("KeywordBadges — 켠 키워드가 줄에 없을 때 (design-rules 2026-09-01 (3))", () => {
   it("0짜리 칩을 맨 앞에 세운다 — 무엇으로 걸렀는지가 화면에 남는다", () => {
     const html = render([badge({ name: "코딩" })], "창밖키워드");
-    const root = document.createElement("div");
-    root.innerHTML = html;
+    const root = new DOMParser().parseFromString(html, "text/html").body;
     const first = root.querySelector('[role="group"] button');
     expect(first?.textContent).toContain("창밖키워드");
     expect(first?.getAttribute("aria-pressed")).toBe("true");
@@ -310,8 +309,7 @@ describe("KeywordBadges — 켠 키워드가 줄에 없을 때 (design-rules 202
 
 describe("KeywordBadges — 세운 칩의 0 은 「다 읽었다」가 아니다", () => {
   const first = (html: string) => {
-    const root = document.createElement("div");
-    root.innerHTML = html;
+    const root = new DOMParser().parseFromString(html, "text/html").body;
     return root.querySelector('[role="group"] button');
   };
 
