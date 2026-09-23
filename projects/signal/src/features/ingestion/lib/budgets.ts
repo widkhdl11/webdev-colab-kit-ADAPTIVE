@@ -342,7 +342,7 @@ export const EXTRACTION_TIMEOUT_MS = 15_000;
 export const ENRICH_TIMEOUT_MS = 30_000;
 
 /**
- * 요약이 형식 검사에 몇 번 떨어지면 그 글을 포기하는가 (ingestion-ranking INV-S3 S32, 2026-09-23).
+ * 모델이 답했는데 요약을 못 쓴 것(형식 불합격·응답 잘림·JSON 못 읽음)이 몇 번이면 그 글을 포기하는가 (ingestion-ranking INV-S3 S32, 2026-09-23).
  *
  * 한도가 없으면 **어떤 글을 돌려도 매번 떨어질 때** 3일 창이 끝날 때까지 매 주기 같은 글에
  * 요금이 나간다. 후보가 점수순이라 그런 글이 예산 앞자리를 먼저 먹는다. 3 인 이유: 모델 응답이

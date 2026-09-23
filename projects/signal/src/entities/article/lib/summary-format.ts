@@ -54,10 +54,19 @@ function isFalseEnd(s: string, index: number, mark: string): boolean {
   // 마침표 둘 이상(`..`·`...`)은 말줄임표다. `?!` 같은 조합은 문장 끝 그대로다.
   if (/^\.{2,}$/.test(punct)) return true;
   if (punct !== ".") return false;
-  const word = /([A-Za-z]+)$/.exec(s.slice(0, index));
+  const before = s.slice(0, index);
+  // 한국식 날짜(`2026. 9. 23.`) — 숫자 뒤 마침표가 다음 숫자로 이어지거나 앞 숫자에서 이어져 온다.
+  if (/\d$/.test(before) && (/^\s\d/.test(s.slice(index + mark.length)) || /\d\.\s\d{1,2}$/.test(before))) {
+    return true;
+  }
+  // 약어는 **낱말 전체**여야 한다 — 앞이 줄 처음·공백·마침표·여는 괄호일 때만. 안 그러면
+  // `GPT-4o.`·`70B.` 의 끝 글자를 한 글자 약어로 보고 뒤 문장을 삼킨다(2026-09-23 재리뷰).
+  const word = /(?:^|[\s.(])([A-Za-z]+)$/.exec(before);
   if (word === null) return false;
   return word[1].length === 1 || ABBREVIATIONS.has(word[1].toLowerCase());
 }
+// 알려진 한계 — 둘로 센다(드물고, 지시문이 문장 끝 말고는 부호를 쓰지 말라고 한다):
+// 느낌표가 붙은 고유명사(`Yahoo! 재팬`), 따옴표와 조사를 띄운 인용(`"왜 지금인가?" 라고`).
 
 /**
  * 문장 **사이의** 끝 개수 — 마지막 문장 부호는 세지 않는다. 마지막이 약어로 끝나도

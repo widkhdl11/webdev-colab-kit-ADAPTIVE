@@ -504,6 +504,21 @@ describe("runIngest — INV-S2·S3 요약", () => {
     expect(report.summaries.gaveUpTitles).toEqual(["제목 last"]);
   });
 
+  it("INV-S3 (S32) 실패경로: 저장이 실패하면 포기 목록에 올리지 않는다 — 횟수가 안 올라 다시 요약된다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [
+        { ...candidate("last", null), summaryFailures: SUMMARY_MAX_FAILURES - 1 },
+      ]),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: null, oneLine: null, table: null, officialByContent: false, usage: USAGE })),
+      saveEnrichment: vi.fn(async () => {
+        throw new Error("DB 거부");
+      }),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.summaries.gaveUpTitles).toEqual([]);
+    expect(report.summaries.failed).toBe(1);
+  });
+
   it("INV-S3 실패경로: 모델 호출 자체가 죽으면 실패 횟수를 올리지 않는다", async () => {
     // 네트워크·시간 초과는 글 탓이 아니다 — 세면 멀쩡한 글이 장애 한 번에 포기된다.
     const ports = makePorts({

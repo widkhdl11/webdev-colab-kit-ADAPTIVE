@@ -56,6 +56,15 @@ describe("한 줄 요약 (ingestion-ranking INV-S8)", () => {
     expect(isOneLine("가격을 내렸다고 했다.\" 업계는 반발했다.")).toBe(false);
     expect(isOneLine("정말 내렸나? 그렇다.")).toBe(false);
   });
+
+  it("INV-S8 실패경로: 모델 이름 끝 글자(GPT-4o·70B)는 약어가 아니다 — 뒤 문장을 삼키지 않는다", () => {
+    expect(isOneLine("OpenAI가 GPT-4o. 가격은 절반이다.")).toBe(false);
+    expect(isOneLine("라마가 70B. 작은 모델도 냈다.")).toBe(false);
+  });
+
+  it("INV-S8: 한국식 날짜(2026. 9. 23.)의 마침표는 문장 끝으로 세지 않는다", () => {
+    expect(isOneLine("OpenAI가 2026. 9. 23. 새 캐싱 요금을 발표했다.")).toBe(true);
+  });
 });
 
 describe("핵심 셋 (ingestion-ranking INV-S7)", () => {

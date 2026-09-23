@@ -583,8 +583,9 @@ async function runEnrichment(
         officialBasis?: OfficialBasis;
         summaryFailures?: number;
       } = {};
-      // 모델이 답했는데 요약이 불합격이면 횟수를 남긴다 (INV-S3 S32). 호출 자체가 죽은 경우
-      // (시간 초과·네트워크)는 여기 오지 않는다 — 글 탓이 아니라서 세지 않는다.
+      // 모델이 답했는데 요약을 못 쓴 횟수를 남긴다 (INV-S3 S32) — 형식 불합격뿐 아니라 응답이
+      // 잘렸거나(max_tokens) JSON 을 못 읽은 경우도 센다. 셋 다 요금이 나간 호출이라서다. 호출 자체가
+      // 죽은 경우(시간 초과·네트워크)는 여기 오지 않는다 — 요금이 안 나가거나 글 탓이 아니라서 세지 않는다.
       let failureReady = false;
 
       if (needSummary) {
@@ -595,7 +596,6 @@ async function runEnrichment(
           summaryCounted = true;
           patch.summaryFailures = item.summaryFailures + 1;
           failureReady = true;
-          if (patch.summaryFailures >= SUMMARY_MAX_FAILURES) summaries.gaveUpTitles.push(item.title);
         } else {
           patch.summary = text;
           // 새 형식의 칸 (INV-S8). 성공한 요약의 summary 는 한 줄 요약 그 자체다(parse-enrich) —
@@ -636,6 +636,8 @@ async function runEnrichment(
       await ports.saveEnrichment(item.id, patch);
       if (summaryReady) summaries.succeeded += 1;
       if (titleReady) titles.succeeded += 1;
+      // 포기는 **저장된 뒤에만** 알린다 — 저장이 실패하면 횟수가 안 올라 다음 주기에 다시 요약한다.
+      if ((patch.summaryFailures ?? 0) >= SUMMARY_MAX_FAILURES) summaries.gaveUpTitles.push(item.title);
     } catch (e) {
       // 저장하지 않는다 — 비어 있어야 다음 주기에 다시 잡힌다 (INV-S2).
       // 이미 빈 값으로 실패를 센 쪽은 두 번 세지 않는다.
