@@ -540,8 +540,11 @@ describe("ArticleView — 요약 서식 (INV-D7)", () => {
       }),
     );
     expect(el.querySelector("strong")?.textContent).toBe("핵심");
-    expect(el.querySelectorAll("table th")).toHaveLength(2);
-    expect(el.querySelector("table td")?.textContent).toBe("A");
+    expect(el.querySelectorAll("table thead th")).toHaveLength(2);
+    // 첫 열은 행 머리칸이다 — 스크린리더가 그 행의 이름으로 읽는다
+    const rowHead = el.querySelector("table tbody th");
+    expect(rowHead?.textContent).toBe("A");
+    expect(rowHead?.getAttribute("scope")).toBe("row");
     expect([...el.querySelectorAll("li")].map((li) => li.textContent)).toContain("항목 하나");
     expect(el.textContent).toContain("둘째 문단.");
   });
@@ -563,5 +566,53 @@ describe("ArticleView — 요약 서식 (INV-D7)", () => {
     const el = box(article({ summary: "", sourceExcerpt: "출처 글 **굵게** 표기" }));
     expect(el.querySelector("strong")).toBeNull();
     expect(el.textContent).toContain("출처 글 **굵게** 표기");
+  });
+});
+
+/**
+ * 요약 상자 순서 — B안 + 한 문장 요약 (2026-09-23 사용자 결정).
+ * 한 문장 → 「핵심」 목록 → 나머지 문단 → 표. 자리를 DOM 순서로 본다.
+ */
+describe("ArticleView — 요약 상자 순서 (B안 + 한 문장)", () => {
+  const kids = (a: Article) => {
+    const root = document.createElement("div");
+    root.innerHTML = renderToStaticMarkup(<ArticleView article={a} nowIso={NOW} />);
+    const box = root.querySelector(`.${styles.aiSummary}`) as HTMLElement;
+    return [...box.children];
+  };
+
+  it("한 문장 → 핵심 목록 → 문단 → 표 → 안내 순이다", () => {
+    const order = kids(
+      article({
+        summary: "미스트랄이 모델 세 개를 내놓았다.\n\n가격이 내려갔다.\n\n| 모델 | 가격 |\n|---|---|\n| S | $0.1 |",
+        summaryPoints: ["세 개 공개", "가격 인하"],
+      }),
+    ).map((el) => (el.tagName === "P" ? `P:${el.textContent}` : el.tagName));
+    expect(order).toEqual([
+      "SPAN", // 「AI 요약」 라벨
+      "P:미스트랄이 모델 세 개를 내놓았다.",
+      "SPAN", // 「핵심」 라벨
+      "UL",
+      "P:가격이 내려갔다.",
+      "TABLE",
+      "P:요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을 읽어주세요.",
+    ]);
+  });
+
+  it("한 문장에는 앞세움 모양이 붙고 핵심 목록에도 제 모양이 붙는다", () => {
+    const el = kids(article({ summary: "한 문장.\n\n둘째.", summaryPoints: ["항목"] }));
+    expect(el[1].className).toContain(styles.summaryLead);
+    expect(el[3].className).toContain(styles.summaryPoints);
+  });
+
+  it("핵심 항목이 없으면 「핵심」 라벨도 없다", () => {
+    const el = kids(article({ summary: "한 문장.\n\n둘째.", summaryPoints: [] }));
+    expect(el.some((e) => e.textContent === "핵심")).toBe(false);
+  });
+
+  it("실패경로: 출처가 준 요약글은 순서를 바꾸지 않고 한 문단 그대로다", () => {
+    const el = kids(article({ summary: "", sourceExcerpt: "출처 글.\n\n둘째 줄", summaryPoints: ["무시"] }));
+    expect(el.filter((e) => e.tagName === "UL")).toHaveLength(0);
+    expect(el[1].className).not.toContain(styles.summaryLead);
   });
 });

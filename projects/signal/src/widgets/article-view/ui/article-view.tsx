@@ -4,7 +4,7 @@ import { ArticleBody, safeSourceUrl } from "@/features/content-render";
 import { MarkReadOnView } from "@/features/read-state";
 import { relativeTime } from "@/shared/lib/datetime";
 import styles from "./article-view.module.css";
-import { SummaryMarkup } from "./summary-markup";
+import { AiSummaryBody } from "./summary-markup";
 
 /** 이전/다음 한 칸. 주소는 피드 상태를 실어 페이지가 만든다(`articleHref`). */
 export interface ArticleNavLink {
@@ -115,16 +115,15 @@ export function ArticleView({
             <span aria-hidden="true">{summary.isAi ? "✨" : "❞"}</span>{" "}
             {summary.isAi ? "AI 요약" : "출처가 준 요약"}
           </span>
-          {/* 서식은 우리 지시로 모델이 쓴 글에만 붙인다(INV-D7) — 출처가 준 글의 기호를
-              서식으로 바꾸면 「누가 쓴 것인지」가 흐려진다. */}
-          {summary.isAi ? <SummaryMarkup source={summary.text} /> : <p>{summary.text}</p>}
-          {summary.points.length > 0 ? (
-            <ul>
-              {summary.points.map((point, i) => (
-                <li key={`${i}-${point}`}>{point}</li>
-              ))}
-            </ul>
-          ) : null}
+          {/* 순서는 한 문장 → 「핵심」 → 나머지 문단 → 표다 (2026-09-23 사용자 결정: B안 +
+              「첫 줄에 간단요약이 있어야 표를 봐도 무슨 이야기인지 알고 읽는다」).
+              서식은 우리 지시로 모델이 쓴 글에만 붙인다(INV-D7) — 출처가 준 글의 기호를
+              서식으로 바꾸면 「누가 쓴 것인지」가 흐려진다. 출처 글은 한 문단 그대로 둔다. */}
+          {summary.isAi ? (
+            <AiSummaryBody text={summary.text} points={summary.points} />
+          ) : (
+            <p>{summary.text}</p>
+          )}
           <p className={styles.caveat}>
             {summary.isAi
               ? "요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을 읽어주세요."

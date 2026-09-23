@@ -88,6 +88,8 @@ export {
 export type { FeedState, ParamReader } from "./lib/feed-url";
 export {
   parseSummaryMarkup,
+  leadToMarkup,
+  splitLead,
   summaryPreviewText,
   tableToMarkup,
   TABLE_MAX_COLS,

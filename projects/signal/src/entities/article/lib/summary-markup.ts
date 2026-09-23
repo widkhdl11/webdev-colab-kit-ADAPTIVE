@@ -25,8 +25,20 @@ export const TABLE_MIN_COLS = 2;
 export const TABLE_MAX_COLS = 3;
 export const TABLE_MAX_ROWS = 8;
 
+/** 표 모양 한도 검사 — 해석기와 수집 쪽 변환기가 **같은 함수**를 쓴다. */
+function fitsTableLimits(
+  head: readonly unknown[],
+  body: readonly (readonly unknown[])[],
+): boolean {
+  const cols = head.length;
+  if (cols < TABLE_MIN_COLS || cols > TABLE_MAX_COLS) return false;
+  if (body.length === 0 || body.length > TABLE_MAX_ROWS) return false;
+  return body.every((r) => r.length === cols);
+}
+
 const BOLD = /\*\*([^*\n]+?)\*\*/g;
-const LIST_ITEM = /^- (.*)$/;
+// 뒤에 글자가 있어야 목록 줄이다 — `- ` 만 있는 줄이 빈 항목이 되지 않게(2026-09-23 리뷰).
+const LIST_ITEM = /^- (.*\S.*)$/;
 const SEPARATOR_CELL = /^:?-{3,}:?$/;
 
 /** 한 줄 안에서 `**굵게**` 만 해석한다. 짝이 안 맞는 별표는 글자로 남는다. */
@@ -62,11 +74,8 @@ function parseTable(lines: string[]): SummaryBlock | null {
   const rows = lines.map(splitRow);
   if (rows.some((r) => r === null)) return null;
   const [head, sep, ...body] = rows as string[][];
-  const cols = head.length;
-  if (cols < TABLE_MIN_COLS || cols > TABLE_MAX_COLS) return null;
-  if (sep.length !== cols || !sep.every((c) => SEPARATOR_CELL.test(c))) return null;
-  if (body.length === 0 || body.length > TABLE_MAX_ROWS) return null;
-  if (body.some((r) => r.length !== cols)) return null;
+  if (!fitsTableLimits(head, body)) return null;
+  if (sep.length !== head.length || !sep.every((c) => SEPARATOR_CELL.test(c))) return null;
   return {
     kind: "table",
     head: head.map(parseInline),
@@ -129,14 +138,16 @@ export function parseSummaryMarkup(source: string): SummaryBlock[] {
 const plain = (xs: SummaryInline[]) => xs.map((x) => x.text).join("");
 
 /**
- * 목록 카드의 두 줄 미리보기 (INV-D7). **서식 기호를 벗긴 첫 문단 글자.**
+ * 목록 카드의 두 줄 미리보기 (INV-D7). **서식 기호를 벗긴 문단 글자.**
  * 표는 건너뛴다 — 두 줄 안에 표를 글자로 풀면 `모델 컨텍스트 가격 A 20만…` 이 된다.
  * 목록뿐인 요약이면 항목을 가운뎃점으로 잇는다.
  */
 export function summaryPreviewText(source: string): string {
   const blocks = parseSummaryMarkup(source);
-  const para = blocks.find((b) => b.kind === "paragraph");
-  if (para?.kind === "paragraph") return plain(para.inlines);
+  // 문단을 **전부** 잇는다 — 첫 문단이 40자짜리 한 문장이면 두 줄 미리보기의 둘째 줄이 빈다
+  // (2026-09-23 리뷰). 자르는 일은 카드 CSS(두 줄)가 한다.
+  const paras = blocks.flatMap((b) => (b.kind === "paragraph" ? [plain(b.inlines)] : []));
+  if (paras.length > 0) return paras.join(" ");
   const list = blocks.find((b) => b.kind === "list");
   if (list?.kind === "list") return list.items.map(plain).join(" · ");
   return "";
@@ -157,11 +168,50 @@ export function tableToMarkup(value: unknown): string | null {
   const isRow = (r: unknown): r is string[] =>
     Array.isArray(r) && r.every((c) => typeof c === "string" && c.trim() !== "");
   if (!isRow(head) || !Array.isArray(rows) || !rows.every(isRow)) return null;
-  const cols = head.length;
-  if (cols < TABLE_MIN_COLS || cols > TABLE_MAX_COLS) return null;
-  if (rows.length === 0 || rows.length > TABLE_MAX_ROWS) return null;
-  if (rows.some((r) => r.length !== cols)) return null;
-  const cell = (c: string) => c.replace(/\s*[\r\n]+\s*/g, " ").replace(/\|/g, "/").trim();
+  if (!fitsTableLimits(head, rows)) return null;
+  // 공백을 한 칸으로 접는다 — 줄바꿈도 같이 접혀 표 줄이 깨지지 않는다. 앞뒤에 `\s*` 를 둔
+  // 옛 식은 긴 공백에서 되돌아가기가 제곱으로 늘었다(2026-09-23 보안 리뷰).
+  const cell = (c: string) => c.replace(/\s+/g, " ").replace(/\|/g, "/").trim();
   const line = (r: string[]) => `| ${r.map(cell).join(" | ")} |`;
-  return [line(head), `|${" --- |".repeat(cols)}`, ...rows.map(line)].join("\n");
+  return [line(head), `|${" --- |".repeat(head.length)}`, ...rows.map(line)].join("\n");
+}
+
+/**
+ * 모델이 따로 준 **한 문장 요약**을 요약 표기로 옮긴다 (2026-09-23 사용자 요구).
+ *
+ * "첫 줄에 간단요약이 있어야 표를 봐도 무슨 이야기인지 알고 읽을 수 있다" — 그래서 이 한 문장은
+ * 저장할 때 요약의 **첫 문단**이 되고, 화면은 첫 문단을 맨 위에 앞세운다(`splitLead`).
+ * 한 줄로 접고, 목록·표 기호로 시작하면 떼어 낸다 — 첫 문단이 문단이 아니면 앞세울 수 없다.
+ */
+export function leadToMarkup(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const line = value
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(?:-\s+|\|\s*)+/, "")
+    .trim();
+  return line === "" ? null : line;
+}
+
+/** 한 문장 요약으로 치는 최대 길이. 지시문이 "40자 안팎"이라 두 배 여유를 둔다. */
+export const LEAD_MAX_CHARS = 80;
+
+/**
+ * 첫 문단을 앞세우고 나머지를 따로 돌려준다 — 상세의 순서(한 문장 → 핵심 → 문단 → 표)를
+ * 그리려고 쓴다. 첫 블록이 문단이 아니면 앞세울 것이 없다.
+ */
+export function splitLead(source: string): {
+  lead: SummaryInline[] | null;
+  rest: SummaryBlock[];
+} {
+  const blocks = parseSummaryMarkup(source);
+  const [first, ...rest] = blocks;
+  if (first?.kind !== "paragraph") return { lead: null, rest: blocks };
+  // **짧고 뒤에 이어지는 것이 있을 때만** 한 문장으로 친다(2026-09-23 리뷰). 저장 형식에는
+  // "한 문장이 붙었나"가 안 남는다 — 옛 요약(문단 하나)이나 모델이 lead 를 빠뜨린 요약에서
+  // 두세 문장짜리 첫 문단 전체가 굵게 앞에 서면 안 된다.
+  if (rest.length === 0 || plain(first.inlines).length > LEAD_MAX_CHARS) {
+    return { lead: null, rest: blocks };
+  }
+  return { lead: first.inlines, rest };
 }

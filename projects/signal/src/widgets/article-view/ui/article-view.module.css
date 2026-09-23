@@ -147,7 +147,9 @@
    "본문 16px 이상" 하한을 지킨다. 원문(17px)과 1px 차이밖에 안 나므로 위계는
    면(--surface)·색(--text2)·왼쪽 포인트선·줄높이 1.70 이 함께 나른다. */
 .aiSummary p {
-  margin: 0 0 var(--space-8);
+  /* 문단 사이 8 → 12px (2026-09-23 요약 서식 시안 승인) — 요약이 문단 여럿으로 나뉘면서
+     8px 로는 문단 경계가 줄바꿈과 구별되지 않았다. */
+  margin: 0 0 var(--space-12);
   font-size: var(--fs-title);
   line-height: 1.7;
   color: var(--text2);
@@ -157,7 +159,8 @@
 /* Tailwind Preflight 가 ol·ul 의 list-style 을 지운다 — 여기서 되살리지 않으면
    점도 번호도 안 보인다(마커 색만 정해둔 죽은 규칙이 된다). */
 .aiSummary ul {
-  margin: 0;
+  /* 목록 뒤에 문단·표가 와도 문단 사이와 같은 12px (2026-09-23 승인 시안) */
+  margin: 0 0 var(--space-12);
   padding-left: var(--space-20);
   list-style: disc outside;
 }
@@ -176,6 +179,86 @@
 
 .aiSummary li:last-child {
   margin-bottom: 0;
+}
+
+/* ── 요약 서식 (2026-09-23 승인 시안 mockups/summary-format.html B안 + 한 문장) ──
+   순서: 한 문장 → 「핵심」 → 문단 → 표. 새 색은 없다 — 전부 기존 토큰이다. */
+
+/* 한 문장 요약 — 상자의 첫 줄. 크기는 요약 본문과 같고 먹색·굵기로만 앞세운다
+   (크기 단계를 늘리지 않는다는 타이포 규칙). */
+.aiSummary p.summaryLead {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.pointsLabel {
+  display: block;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  color: var(--meta);
+  margin: 0 0 var(--space-4);
+}
+
+/* 요점은 문단보다 한 칸 진하게 — 두 층이 갈려 보이게 */
+.aiSummary ul.summaryPoints {
+  margin-bottom: var(--space-14);
+}
+
+.aiSummary ul.summaryPoints li {
+  color: var(--text);
+}
+
+/* 굵게 — 색을 바꾸지 않고 한 칸 진하게만(포인트색은 얇은 선까지만) */
+.aiSummary strong {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* 요약 안의 표 — 가로 스크롤을 쓰지 않는다. 열은 해석기가 2~3개로 막는다(INV-D7). */
+.summaryTable {
+  width: 100%;
+  margin: var(--space-4) 0 var(--space-12);
+  border-collapse: separate; /* 라운드 테두리를 쓰려고 separate */
+  border-spacing: 0;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-img);
+  overflow: hidden;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryTable th,
+.summaryTable td {
+  padding: var(--space-8) var(--space-12);
+  text-align: left;
+  word-break: keep-all;
+  overflow-wrap: anywhere; /* 마지막 안전장치 — 어떤 칸도 상자 밖으로 안 나간다 */
+  vertical-align: top;
+}
+
+.summaryTable thead th {
+  background: var(--bg);
+  font-weight: 700;
+  color: var(--text);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.summaryTable tbody th,
+.summaryTable td {
+  background: var(--surface);
+  color: var(--text2);
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* 행 머리칸(첫 열) — 굵게, 먹색 */
+.summaryTable tbody th {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.summaryTable tbody tr:last-child > * {
+  border-bottom: 0;
 }
 
 .aiSummary p.caveat,
@@ -748,6 +831,14 @@
 }
 
 @media (max-width: 640px) {
+  /* 폰에서 표는 글자를 한 단계 작게 — 3열이 가로 스크롤 없이 들어가는 폭을 만든다 */
+  .summaryTable {
+    font-size: var(--fs-sm);
+  }
+  .summaryTable th,
+  .summaryTable td {
+    padding: var(--space-8) var(--space-10);
+  }
   .title {
     font-size: 23px;
   }

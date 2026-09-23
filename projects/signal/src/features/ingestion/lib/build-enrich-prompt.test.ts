@@ -116,3 +116,16 @@ describe("지시문 한 줄 = 규칙 하나", () => {
     for (const line of system.split("\n")) expect(line.startsWith("- ")).toBe(true);
   });
 });
+
+describe("한 문장 요약 칸 (2026-09-23)", () => {
+  it("요약이 필요하면 lead 칸과 그 규칙을 같이 싣는다", () => {
+    const { system } = buildEnrichPrompt({ title: "t", evidence: "e", needSummary: true, needTitle: false });
+    expect(system).toContain('"lead"');
+    expect(system).toContain("lead 는 누가 무엇을 했는지 한 문장");
+  });
+
+  it("실패경로: 제목만 옮길 때는 lead 를 묻지 않는다", () => {
+    const { system } = buildEnrichPrompt({ title: "t", evidence: "", needSummary: false, needTitle: true });
+    expect(system).not.toContain('"lead"');
+  });
+});

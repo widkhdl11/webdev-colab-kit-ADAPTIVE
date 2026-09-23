@@ -33,6 +33,8 @@ export function buildEnrichPrompt(input: EnrichPromptInput): EnrichPrompt {
 
   const wanted = [
     needTitle ? '"titleKo": "한국어로 옮긴 제목"' : null,
+    // 한 문장 요약은 요약 문단과 **따로 받는다** — 저장할 때 첫 문단으로 붙인다(tableToMarkup 과 같은 방식).
+    needSummary ? '"lead": "무슨 일인지 한 문장"' : null,
     needSummary ? '"summary": "요약문"' : null,
     needSummary ? '"points": ["핵심 항목", "..."]' : null,
     // 표는 요약 문자열이 아니라 **따로 받는다** (INV-D7). 요약 안에 파이프 표를 쓰라고 했을 때

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { parseSummaryMarkup, summaryPreviewText, tableToMarkup } from "./summary-markup";
+import {
+  leadToMarkup,
+  parseSummaryMarkup,
+  splitLead,
+  summaryPreviewText,
+  tableToMarkup,
+} from "./summary-markup";
 import type { SummaryBlock } from "./summary-markup";
 
 /** 블록 목록에서 해석된 글자를 모두 모은다 — "글자 그대로 남았나"를 볼 때 쓴다. */
@@ -131,9 +137,11 @@ describe("요약 서식 해석 — 허용 목록 밖은 글자 그대로 (INV-D7
   });
 });
 
-describe("카드 미리보기 — 서식 기호를 벗긴 첫 문단 (INV-D7)", () => {
-  it("INV-D7: 굵게 기호를 벗긴다", () => {
-    expect(summaryPreviewText("가격은 **100만 원**이다.\n\n둘째")).toBe("가격은 100만 원이다.");
+describe("카드 미리보기 — 서식 기호를 벗긴 문단 글자 (INV-D7)", () => {
+  it("INV-D7: 굵게 기호를 벗기고 문단을 잇는다 — 한 문장만 쓰면 둘째 줄이 빈다", () => {
+    expect(summaryPreviewText("가격은 **100만 원**이다.\n\n둘째")).toBe(
+      "가격은 100만 원이다. 둘째",
+    );
   });
 
   it("INV-D7: 표로 시작하면 표를 건너뛰고 다음 문단을 쓴다", () => {
@@ -177,5 +185,50 @@ describe("모델이 따로 준 표를 요약 표기로 옮긴다 (INV-D7)", () =
     ["null", null],
   ])("INV-D7 실패경로: %s 이면 표를 버린다", (_label, value) => {
     expect(tableToMarkup(value)).toBeNull();
+  });
+});
+
+describe("한 문장 요약을 맨 앞에 (2026-09-23 사용자: 「첫 줄에 간단요약」)", () => {
+  it("INV-D7: 모델이 따로 준 한 문장은 한 줄 문단 표기가 된다", () => {
+    expect(leadToMarkup("미스트랄이 모델 세 개를\n한 번에 내놓았다.")).toBe(
+      "미스트랄이 모델 세 개를 한 번에 내놓았다.",
+    );
+  });
+
+  it("INV-D7 실패경로: 목록·표 기호로 시작해도 문단으로 남는다", () => {
+    const md = leadToMarkup("- 목록처럼 보이는 한 줄") ?? "";
+    expect(parseSummaryMarkup(md)[0].kind).toBe("paragraph");
+  });
+
+  it("INV-D7 실패경로: 비었거나 글자가 아니면 없다", () => {
+    expect(leadToMarkup("  ")).toBeNull();
+    expect(leadToMarkup(3)).toBeNull();
+  });
+
+  it("첫 문단을 앞세우고 나머지를 따로 돌려준다", () => {
+    const { lead, rest } = splitLead("한 문장.\n\n둘째 문단.\n\n| a | b |\n|---|---|\n| 1 | 2 |");
+    expect(lead?.map((x) => x.text).join("")).toBe("한 문장.");
+    expect(rest.map((b) => b.kind)).toEqual(["paragraph", "table"]);
+  });
+
+  it("실패경로: 문단 하나뿐인 옛 요약은 앞세우지 않는다 — 전체가 굵게 서면 안 된다", () => {
+    const { lead, rest } = splitLead("옛 요약 한 덩어리다. 두 문장이다.");
+    expect(lead).toBeNull();
+    expect(rest).toHaveLength(1);
+  });
+
+  it("실패경로: 첫 문단이 한 문장치고 길면(lead 를 빠뜨린 요약) 앞세우지 않는다", () => {
+    expect(splitLead(`${"가".repeat(81)}\n\n둘째`).lead).toBeNull();
+    expect(splitLead(`${"가".repeat(80)}\n\n둘째`).lead).not.toBeNull();
+  });
+
+  it("`- ` 뒤가 비어 있으면 목록 항목이 아니다", () => {
+    expect(parseSummaryMarkup("-  \n글")[0].kind).toBe("paragraph");
+  });
+
+  it("첫 블록이 문단이 아니면 앞세울 것이 없다", () => {
+    const { lead, rest } = splitLead("- 하나\n- 둘");
+    expect(lead).toBeNull();
+    expect(rest).toHaveLength(1);
   });
 });
