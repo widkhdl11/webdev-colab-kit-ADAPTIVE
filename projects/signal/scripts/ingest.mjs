@@ -225,7 +225,15 @@ if (chain) {
       ? "다음 호출을 보냈다"
       : "⚠ 보낼 데가 없다 — 목적지 설정이 없거나 길이 상한(20)에 닿았다"
     : "남은 일이 없어 안 보냈다";
-  console.log(`  이어달리기  ${chain.index}번째 바퀴 · ${where}`);
+  // 목적지를 아는지는 **보낼 일이 없던 날에도** 찍는다. 안 찍으면 설정이 빠진 것을
+  // 실제로 이어달려야 하는 날까지 모른다 — 그날은 이미 글이 밀린 날이다.
+  const target =
+    chain.hasTarget === undefined
+      ? " · 목적지 칸 없음 — 이 칸이 없던 시절의 배포다"
+      : chain.hasTarget
+        ? " · 목적지를 안다"
+        : " · ⚠ 목적지를 모른다 (INGEST_BASE_URL 이 없거나 주소로 안 읽힌다)";
+  console.log(`  이어달리기  ${chain.index}번째 바퀴 · ${where}${target}`);
 } else {
   console.log("  이어달리기  칸 없음 — 이어달리기가 없던 시절의 배포다");
 }

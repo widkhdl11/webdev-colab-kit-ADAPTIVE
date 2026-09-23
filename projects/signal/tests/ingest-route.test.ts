@@ -441,8 +441,10 @@ describe("GET /api/ingest — 응답의 chain 칸", () => {
     runIngest.mockImplementation(async () => exhausted);
 
     const res = await call({ authorization: `Bearer ${SECRET}` }, "http://localhost/api/ingest?chain=3");
-    const body = (await res.json()) as { chain: { index: number; needed: boolean; dispatched: boolean } };
-    expect(body.chain).toEqual({ index: 3, needed: true, dispatched: true });
+    const body = (await res.json()) as {
+      chain: { index: number; needed: boolean; dispatched: boolean; hasTarget: boolean };
+    };
+    expect(body.chain).toEqual({ index: 3, needed: true, dispatched: true, hasTarget: true });
   });
 
   it("보낼 데가 없으면 needed 는 참인데 dispatched 가 거짓이다 — 이게 설정 문제의 신호다", async () => {
@@ -465,6 +467,50 @@ describe("GET /api/ingest — 응답의 chain 칸", () => {
     const body = (await res.json()) as { chain: { needed: boolean; dispatched: boolean } };
     expect(body.chain.needed).toBe(false);
     expect(body.chain.dispatched).toBe(false);
+  });
+
+  /**
+   * `hasTarget` — **시간이 남아도는 날에도 설정을 볼 수 있어야 한다** (2026-09-22).
+   *
+   * `dispatched` 는 `needed` 가 참일 때만 뜻이 있다. 그래서 상한에 안 걸린 날에는
+   * 「목적지를 알고 있나」가 응답 어디에도 안 나온다 — 진단 칸이 정작 사고가 나는
+   * 날에만 켜지는 셈이다. 2026-09-22 배포 확인이 여기서 멈췄다.
+   */
+  it("남은 일이 없어도 설정이 있으면 hasTarget 이 참이다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", SELF);
+    runIngest.mockImplementation(async () => REPORT);
+
+    const res = await call({ authorization: `Bearer ${SECRET}` });
+    const body = (await res.json()) as { chain: { needed: boolean; hasTarget: boolean } };
+    expect(body.chain.needed).toBe(false);
+    expect(body.chain.hasTarget).toBe(true);
+  });
+
+  it("설정이 없으면 hasTarget 이 거짓이다 — needed·dispatched 가 같은 값이라 이 칸이 가른다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", "");
+    runIngest.mockImplementation(async () => REPORT);
+
+    const res = await call({ authorization: `Bearer ${SECRET}` });
+    const body = (await res.json()) as {
+      chain: { needed: boolean; dispatched: boolean; hasTarget: boolean };
+    };
+    // 바로 위 케이스와 이 둘은 같다 — 그래서 hasTarget 없이는 구별이 안 된다.
+    expect(body.chain.needed).toBe(false);
+    expect(body.chain.dispatched).toBe(false);
+    expect(body.chain.hasTarget).toBe(false);
+  });
+
+  it("주소로 못 읽는 값이면 hasTarget 이 거짓이다 — 설정이 있다고 목적지가 있는 게 아니다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    // 값은 채워져 있지만 오리진이 없다. 이 값으로는 부를 데가 없다 (INV-CB2).
+    vi.stubEnv("INGEST_BASE_URL", "/api/ingest");
+    runIngest.mockImplementation(async () => REPORT);
+
+    const res = await call({ authorization: `Bearer ${SECRET}` });
+    const body = (await res.json()) as { chain: { hasTarget: boolean } };
+    expect(body.chain.hasTarget).toBe(false);
   });
 
   it("리포트의 나머지 칸은 그대로 실려 나간다 — chain 을 덧붙이느라 덮어쓰지 않는다", async () => {

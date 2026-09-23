@@ -73,11 +73,17 @@ export async function GET(request: Request) {
   // 저장(saveIngestRunReport) **뒤에** 부르는 것이 중요하다 — 다음 호출이 오늘 쓴 돈을
   // 저장된 기록에서 읽기 때문이다(INV-CB6). 먼저 부르면 이 바퀴 지출이 안 보인 채로
   // 다음 바퀴가 상한을 잰다.
+  const baseUrl = selfBaseUrl();
   const willChain = shouldChain(report);
   const chainRequest = willChain
-    ? buildChainRequest({ baseUrl: selfBaseUrl(), secret: expected, chainIndex })
+    ? buildChainRequest({ baseUrl, secret: expected, chainIndex })
     : null;
   await sendChainRequest(chainRequest);
+
+  // 목적지를 **알고 있기는 한가** — 이어달릴 이유가 있었는지와 따로 본다.
+  // 판정을 여기서 다시 쓰지 않고 같은 함수에 1번째를 물어본다: 규칙이 둘로 갈리면
+  // 진단 칸이 "부를 수 있다"고 말하는데 실제로는 못 부르는 날이 온다.
+  const hasTarget = buildChainRequest({ baseUrl, secret: expected, chainIndex: 1 }) !== null;
 
   // 실패가 있어도 200 이다 — 일부 소스가 죽는 건 정상 경로다(INV-C4).
   // 무엇이 실패했는지는 본문에 담아 Cron 로그에서 보이게 한다.
@@ -98,6 +104,12 @@ export async function GET(request: Request) {
        * 목적지 설정이 없거나(INV-CB2), 길이 상한에 닿았거나(INV-CB5).
        */
       dispatched: chainRequest !== null,
+      /**
+       * 부를 데를 알고 있나. **`needed` 와 무관하게 채운다** — 상한에 안 걸린 날에는
+       * `dispatched` 가 항상 거짓이라, 이 칸이 없으면 설정이 빠진 것을 사고가 나는
+       * 날까지 모른다. 2026-09-22 배포 확인이 정확히 여기서 멈췄다.
+       */
+      hasTarget,
     },
   });
 }
