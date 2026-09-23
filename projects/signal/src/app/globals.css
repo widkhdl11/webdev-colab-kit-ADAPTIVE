@@ -55,3 +55,15 @@ button:focus-visible,
     animation: none !important;
   }
 }
+
+/* 640px 아래에서는 조작이 화면 아래 고정 줄로 내려간다(한손 조작, design-rules 2026-09-01).
+ * 그 줄이 마지막 내용을 가리지 않게 여기서 자리를 비워 둔다.
+ *
+ * **고정 줄이 있는 화면에서만 비운다.** 폭만 보고 무조건 비우면 고정 줄이 없는 404 에
+ * 빈 띠가 생긴다(signal2 실측). 표식은 고정 줄을 그리는 요소가 직접 단다
+ * (`data-dock` — CSS 모듈 이름은 해시되므로 전역에서 대조할 수 없다). */
+@media (max-width: 640px) {
+  body:has([data-dock]) {
+    padding-bottom: calc(var(--dock-h) + env(safe-area-inset-bottom));
+  }
+}

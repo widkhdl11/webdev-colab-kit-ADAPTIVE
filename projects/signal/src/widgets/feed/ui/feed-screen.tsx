@@ -1,17 +1,37 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { buildKeywordBadges, selectFeed } from "@/entities/article";
-import type { ArticleListItem, ArticleTag, FeedSegment } from "@/entities/article";
+import { useSearchParams } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  articleHref,
+  buildKeywordBadges,
+  feedHref,
+  orderFeed,
+  parseFeedState,
+  selectFeed,
+  withMoreDays,
+  withSegment,
+  withTag,
+} from "@/entities/article";
+import type {
+  ArticleListItem,
+  ArticleTag,
+  FeedSegment,
+  FeedState,
+} from "@/entities/article";
 import { useReadArticles } from "@/features/read-state";
-import { dayKey } from "@/shared/lib/datetime";
+import { dayHeading, dayKey } from "@/shared/lib/datetime";
 import { DaySection } from "./day-section";
 import { FeedControls } from "./feed-controls";
 import { KeywordBadges } from "./keyword-badges";
 import styles from "./feed.module.css";
-
-/** 한 번에 보여줄 건수. "더 보기"를 누르면 이만큼씩 늘어난다. */
-const PAGE_SIZE = 12;
 
 interface Props {
   articles: ArticleListItem[];
@@ -20,17 +40,44 @@ interface Props {
 }
 
 export function FeedScreen({ articles, nowIso }: Props) {
-  const [segment, setSegment] = useState<FeedSegment>("hot");
-  const [tag, setTag] = useState<ArticleTag | null>(null);
-  const [limit, setLimit] = useState(PAGE_SIZE);
+  const searchParams = useSearchParams();
   const [notice, setNotice] = useState("");
   const { isRead } = useReadArticles();
+  const allChipId = useId();
 
-  const { groups, shown, total } = useMemo(
-    () => selectFeed({ articles, segment, tag, limit }),
-    [articles, segment, tag, limit],
+  /**
+   * 자리·필터·펼친 날 수를 **주소에서 읽는다** (design-rules 2026-09-01 (3)).
+   *
+   * 2026-09-23 까지는 `useState` 로 들고 있어서, 「소식」을 보다가 글을 열고 뒤로 오면
+   * 「핫이슈」 첫 화면으로 돌아갔다. 주소가 근거면 뒤로·앞으로가 저절로 맞는다.
+   */
+  const fromUrl = useMemo(
+    () => parseFeedState((key) => searchParams.get(key)),
+    [searchParams],
+  );
+
+  const state = fromUrl;
+  const { segment, tag, days } = state;
+
+  /**
+   * 주소를 갈아 끼운다 — **서버에 다시 묻지 않는다.**
+   *
+   * 처음에는 `router.replace` 를 썼는데, 이 페이지는 요청마다 렌더(`force-dynamic`)라 칩을
+   * 누를 때마다 피드 전체 조회가 다시 나가고 기준 시각까지 새로 잡혔다(2026-09-23 리뷰).
+   * 화면에 필요한 글은 이미 전부 들고 있다. Next 15 는 `history.replaceState` 를
+   * `useSearchParams` 와 맞춰 주므로 이것만으로 주소·화면·뒤로가기가 같이 움직인다.
+   * `replace` 라 히스토리가 안 쌓이고, 스크롤도 그대로다.
+   */
+  const go = useCallback((next: FeedState) => {
+    window.history.replaceState(null, "", feedHref(next));
+  }, []);
+
+  const { groups, shown, total, nextDay } = useMemo(
+    () => selectFeed({ articles, segment, tag, days }),
+    [articles, segment, tag, days],
   );
   const todayKey = useMemo(() => dayKey(nowIso), [nowIso]);
+  const hrefOf = useCallback((id: string) => articleHref(id, state), [state]);
 
   /**
    * 지금 비어 있는 이유를 문장으로 (2026-09-21).
@@ -40,7 +87,9 @@ export function FeedScreen({ articles, nowIso }: Props) {
    */
   const emptyMessage = useMemo(() => {
     if (segment === "hot") {
-      const rest = articles.filter((a) => a.gate === null).length;
+      // 소식 자리의 건수도 **화면과 같은 함수로** 센다 — 여기서 배치 조건을 손으로 다시
+      // 쓰면 켠 필터를 무시한 숫자가 나온다(2026-09-23 리뷰).
+      const rest = orderFeed({ articles, segment: "news", tag }).length;
       return rest > 0
         ? `오늘은 핫이슈가 없습니다 — 소식에 ${rest}건 있습니다.`
         : "오늘은 핫이슈가 없습니다.";
@@ -50,7 +99,9 @@ export function FeedScreen({ articles, nowIso }: Props) {
         ? "스킬·툴로 분류된 글이 아직 없습니다."
         : "이 주제의 스킬·툴 글이 아직 없습니다.";
     }
-    return tag === null ? "아직 모인 소식이 없습니다." : "이 주제로 모인 소식이 아직 없습니다.";
+    return tag === null
+      ? "아직 모인 소식이 없습니다."
+      : "이 주제로 모인 소식이 아직 없습니다.";
   }, [segment, tag, articles]);
 
   /**
@@ -77,25 +128,30 @@ export function FeedScreen({ articles, nowIso }: Props) {
     [articles, isRead, nowIso],
   );
 
-  // 조건이 바뀌면 다시 처음부터 — 이전에 펼쳐둔 개수가 남아 있으면 결과가 뜬금없이 길어진다.
-  const changeSegment = useCallback((next: FeedSegment) => {
-    setSegment(next);
-    setLimit(PAGE_SIZE);
-    setNotice("");
-  }, []);
-  const changeTag = useCallback((next: ArticleTag | null) => {
-    setTag(next);
-    setLimit(PAGE_SIZE);
-    setNotice("");
-  }, []);
+  // 켤 때 집계 창만큼 펴고 끌 때 안 줄이는 규칙, 자리를 바꾸면 날 수를 처음으로 돌리는
+  // 규칙은 entities 에 있다(withTag · withSegment).
+  const changeSegment = useCallback(
+    (next: FeedSegment) => {
+      setNotice("");
+      go(withSegment(state, next));
+    },
+    [go, state],
+  );
+  const changeTag = useCallback(
+    (next: ArticleTag | null) => {
+      setNotice("");
+      go(withTag(state, next));
+    },
+    [go, state],
+  );
 
   return (
     <main className={styles.wrap}>
       <div className={styles.pageHead}>
         <h1>오늘의 신호</h1>
         <p>
-          매일 아침 갱신 · 핫이슈는 읽어야 할 것만 골라 담고, 소식은 나머지 전부입니다.
-          스킬·툴은 그중 툴 이야기만 따로 모읍니다.
+          매일 아침 갱신 · 핫이슈는 읽어야 할 것만 골라 담고, 소식은 나머지
+          전부입니다. 스킬·툴은 그중 툴 이야기만 따로 모읍니다.
         </p>
       </div>
 
@@ -104,9 +160,15 @@ export function FeedScreen({ articles, nowIso }: Props) {
         tag={tag}
         onSegmentChange={changeSegment}
         onTagChange={changeTag}
+        allChipId={allChipId}
       />
 
-      <KeywordBadges badges={badges} selected={tag} onSelect={changeTag} />
+      <KeywordBadges
+        badges={badges}
+        selected={tag}
+        onSelect={changeTag}
+        fallbackFocusId={allChipId}
+      />
 
       {groups.length === 0 ? (
         // **무엇 때문에 비었는지를 가려 말한다.** 화면이 엉뚱한 것을 탓하면 사용자가
@@ -126,6 +188,7 @@ export function FeedScreen({ articles, nowIso }: Props) {
             todayKey={todayKey}
             nowIso={nowIso}
             isRead={isRead}
+            hrefOf={hrefOf}
           />
         ))
       )}
@@ -137,20 +200,23 @@ export function FeedScreen({ articles, nowIso }: Props) {
           자리를 바꾸면 사라진다 (2026-09-21 리뷰). */}
       {total > 0 ? (
         <div className={styles.more}>
-          {/* 다 불러와도 버튼을 없애지 않는다 — 사라지는 순간 포커스가 문서 맨 위로 떨어진다 */}
+          {/* 다 불러와도 버튼을 없애지 않는다 — 사라지는 순간 포커스가 문서 맨 위로 떨어진다.
+              문구에 **넘어올 날의 건수**를 적는다(design-rules 2026-09-01) — 눌러 보기 전에
+              그날이 한산한지 알 수 있다. */}
           <button
             type="button"
-            aria-disabled={shown >= total}
+            aria-disabled={nextDay === null}
             onClick={() => {
-              if (shown >= total) return;
-              const next = Math.min(total, shown + PAGE_SIZE);
-              setLimit((n) => n + PAGE_SIZE);
-              // 누적으로 알린다. "12건 더 불러왔습니다"처럼 증가분만 쓰면 두 번째부터
-              // 같은 문자열이 되고, aria-live 는 값이 안 바뀌면 아무 말도 하지 않는다.
-              setNotice(`${total}건 중 ${next}건 표시`);
+              if (nextDay === null) return;
+              go(withMoreDays(state));
+              // 누적으로 알린다. 증가분만 쓰면 두 번째부터 같은 문자열이 되고,
+              // aria-live 는 값이 안 바뀌면 아무 말도 하지 않는다.
+              setNotice(`${total}건 중 ${shown + nextDay.count}건 표시`);
             }}
           >
-            {shown < total ? "더 보기" : "모두 불러왔습니다"}
+            {nextDay === null
+              ? "모두 불러왔습니다"
+              : `더 보기 · ${dayHeading(nextDay.dayKey, todayKey)} ${nextDay.count}건`}
           </button>
         </div>
       ) : null}

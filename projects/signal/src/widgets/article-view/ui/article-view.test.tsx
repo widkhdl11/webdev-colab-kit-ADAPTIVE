@@ -420,3 +420,102 @@ describe("ArticleView — 상세 뱃지 (INV-KD1)", () => {
     expect(chips[0].className).not.toBe(chips[4].className);
   });
 });
+
+/**
+ * 하단 이전/다음 (design-rules 2026-09-01 「상세 화면 하단 — 이전 글 / 다음 글」).
+ * 자리·형태는 DOM 으로 본다 — 문자열 포함만 보면 순서가 뒤집혀도 통과한다.
+ */
+describe("ArticleView — 이전 글 / 다음 글", () => {
+  const dom = (html: string) => {
+    const root = document.createElement("div");
+    root.innerHTML = html;
+    return root;
+  };
+  const link = (title: string) => ({
+    href: `/articles/${title}?tab=news`,
+    title,
+  });
+
+  it("앞뒤 글의 제목과 주소를 그대로 그린다 — 원문 링크 줄 다음 자리다", () => {
+    const root = dom(
+      renderToStaticMarkup(
+        <ArticleView
+          article={article()}
+          nowIso={NOW}
+          nav={{ prev: link("앞글"), next: link("뒷글") }}
+        />,
+      ),
+    );
+    const nav = root.querySelector('nav[aria-label="글 이동"]');
+    expect(nav).not.toBeNull();
+    expect(nav?.previousElementSibling?.className).toContain(styles.foot);
+    const anchors = [...(nav?.querySelectorAll("a") ?? [])];
+    expect(anchors.map((a) => a.getAttribute("href"))).toEqual([
+      "/articles/앞글?tab=news",
+      "/articles/뒷글?tab=news",
+    ]);
+    expect(anchors.map((a) => a.textContent)).toEqual([
+      "← 이전 글앞글",
+      "다음 글 →뒷글",
+    ]);
+    // 모바일 고정 줄로 내려갈 표식 — body 가 이걸 보고 아래 자리를 비운다
+    expect(nav?.hasAttribute("data-dock")).toBe(true);
+  });
+
+  it("끝에 닿아도 칸을 없애지 않는다 — 포커스를 받는 비활성 버튼으로 남는다", () => {
+    const root = dom(
+      renderToStaticMarkup(
+        <ArticleView
+          article={article()}
+          nowIso={NOW}
+          nav={{ prev: null, next: link("뒷글") }}
+        />,
+      ),
+    );
+    const first = root.querySelector(
+      'nav[aria-label="글 이동"]',
+    )?.firstElementChild;
+    expect(first?.tagName).toBe("BUTTON");
+    expect(first?.getAttribute("aria-disabled")).toBe("true");
+    expect(first?.textContent).toContain("첫 글입니다");
+  });
+
+  it("마지막 글이면 다음 칸이 「마지막 글입니다」다", () => {
+    const root = dom(
+      renderToStaticMarkup(
+        <ArticleView
+          article={article()}
+          nowIso={NOW}
+          nav={{ prev: link("앞글"), next: null }}
+        />,
+      ),
+    );
+    const last = root.querySelector(
+      'nav[aria-label="글 이동"]',
+    )?.lastElementChild;
+    expect(last?.tagName).toBe("BUTTON");
+    expect(last?.textContent).toContain("마지막 글입니다");
+  });
+
+  it("이웃을 모르면(피드 목록 밖의 옛 글) 줄 자체를 안 그린다 — 「첫 글」이라 하면 거짓말이다", () => {
+    const html = renderToStaticMarkup(
+      <ArticleView article={article()} nowIso={NOW} nav={null} />,
+    );
+    expect(dom(html).querySelector('nav[aria-label="글 이동"]')).toBeNull();
+  });
+
+  it("「피드로」는 들어올 때의 피드 주소로 돌아간다", () => {
+    const root = dom(
+      renderToStaticMarkup(
+        <ArticleView
+          article={article()}
+          nowIso={NOW}
+          backHref="/?tab=news&days=3"
+        />,
+      ),
+    );
+    expect(root.querySelector(`a.${styles.back}`)?.getAttribute("href")).toBe(
+      "/?tab=news&days=3",
+    );
+  });
+});

@@ -2,7 +2,7 @@ import { dayKey } from "@/shared/lib/datetime";
 import type { ArticleListItem, ArticleTag } from "../model/types";
 import { placeArticle } from "./hot-issue";
 import { compareByIssue, compareForRanking } from "./ranking";
-import { normalizeTagName } from "./tagging";
+import { sameTag } from "./tagging";
 
 /**
  * 피드 목록을 고르는 규칙.
@@ -46,8 +46,7 @@ export function filterByTag<T extends ArticleListItem>(
   // **정규화 키로 맞춘다.** 뱃지 줄은 표기가 갈린 것을 한 뱃지로 합쳐 보여주므로
   // (buildKeywordBadges), 뱃지에 적힌 표기와 글에 붙은 표기가 다를 수 있다.
   // 이름을 그대로 비교하면 그 글들이 필터에서 조용히 빠진다 — 뱃지 숫자와 결과 수가 안 맞는다.
-  const key = normalizeTagName(tag);
-  return articles.filter((a) => a.tags.some((t) => normalizeTagName(t.name) === key));
+  return articles.filter((a) => a.tags.some((t) => sameTag(t.name, tag)));
 }
 
 /** 화면의 세 자리 (hot-issue.md INV-G3). */
@@ -140,34 +139,78 @@ export interface FeedSelection<T extends ArticleListItem = ArticleListItem> {
   shown: number;
   /** 필터를 통과한 전체 건수. shown < total 이면 더 볼 것이 남았다. */
   total: number;
+  /**
+   * 「더 보기」를 누르면 넘어올 날. 없으면 다 불러온 것이다.
+   *
+   * 버튼 문구가 이 값을 쓴다(`더 보기 · 어제 5건`) — 눌러 보기 전에 그날이 한산한지 알 수
+   * 있게 한다(design-rules 2026-09-01 「더 보기가 한 번에 불러오는 단위는 하루다」).
+   */
+  nextDay: { dayKey: string; count: number } | null;
 }
 
 /**
- * 필터 → 정렬 → 날짜 묶음 → 개수 제한을 한 번에.
- * 개수 제한은 날짜를 가로질러 앞에서부터 자른다(그래야 "오늘"이 먼저 다 보인다).
+ * 자리 → 주제 → 정렬 → 날짜 순으로 한 줄로 편다.
+ *
+ * 피드 화면과 상세의 이전/다음이 **같은 함수로** 줄을 세운다. 상세가 따로 세우면 피드에서
+ * 보던 순서와 「다음 글」이 갈리고, 어느 쪽이 맞는지 알 수 없다.
+ * 날짜를 넘어서도 이어진다 — 오늘 마지막 글 다음이 어제 첫 글이다.
+ */
+export function orderFeed<T extends ArticleListItem>(params: {
+  articles: readonly T[];
+  segment: FeedSegment;
+  tag: ArticleTag | null;
+}): T[] {
+  const { articles, segment, tag } = params;
+  // 자리로 거르는 것이 **정렬보다 먼저**다 — 뒤에 두면 그 자리에 안 서는 글이
+  // 「더 보기」 계산에 섞여 화면에 안 나오는 건수가 total 에 남는다.
+  const filtered = filterByTag(inSegment(articles, segment), tag);
+  return groupByDay(sortArticles(filtered, SEGMENT_SORT[segment])).flatMap(
+    (g) => g.articles,
+  );
+}
+
+/**
+ * 한 줄로 편 목록에서 앞뒤 이웃. **목록에 없는 글이면 `null`** 이다 — 「첫 글이라 앞이 없다」와
+ * 「목록 밖이라 이웃을 모른다」를 한 모양으로 돌려주면 부르는 쪽이 목록을 한 번 더 훑어야 한다.
+ */
+export function findNeighbors<T extends { id: string }>(
+  ordered: readonly T[],
+  id: string,
+): { prev: T | null; next: T | null } | null {
+  const i = ordered.findIndex((a) => a.id === id);
+  if (i === -1) return null;
+  return { prev: ordered[i - 1] ?? null, next: ordered[i + 1] ?? null };
+}
+
+/**
+ * 필터 → 정렬 → 날짜 묶음 → **날 수**로 자른다.
+ *
+ * 2026-09-23 까지는 카드 열두 장 단위로 잘랐다. 그러면 그날 그룹이 중간에서 끊겨
+ * 「어제 · 5건」 헤더 아래 카드가 3장만 그려지는 일이 생겼다. 하루 단위로 자르면
+ * 날짜 옆 건수가 화면의 카드 수와 항상 같다(design-rules 2026-09-01).
  */
 export function selectFeed<T extends ArticleListItem>(params: {
   articles: readonly T[];
   segment: FeedSegment;
   tag: ArticleTag | null;
-  limit: number;
+  /** 펼쳐 둔 날 수. 오늘이 1이다. */
+  days: number;
 }): FeedSelection<T> {
-  const { articles, segment, tag, limit } = params;
-  const sort = SEGMENT_SORT[segment];
-  // 자리로 거르는 것이 **정렬보다 먼저**다 — 뒤에 두면 그 자리에 안 서는 글이
-  // 「더 보기」 계산에 섞여 화면에 안 나오는 건수가 total 에 남는다.
-  const filtered = filterByTag(inSegment(articles, segment), tag);
-  const ordered = groupByDay(sortArticles(filtered, sort)).flatMap(
-    (g) => g.articles,
-  );
-  const visible = ordered.slice(0, Math.max(0, limit));
+  const { days } = params;
+  // 버린 항목(발행시각 파싱 실패)은 여기서 이미 빠진다 — groupByDay 가 버리므로
+  // total 에도 안 남는다. 남으면 shown < total 이 영원히 참이 되고,
+  // "더 보기"가 눌러도 아무 일 없는 버튼으로 굳는다.
+  const all = groupByDay(orderFeed(params));
+  const visible = all.slice(0, Math.max(0, days));
+  const after = all[visible.length];
 
   return {
-    groups: groupByDay(visible),
-    shown: visible.length,
-    // 버린 항목(발행시각 파싱 실패)은 total 에서도 빠져야 한다. filtered.length 를 쓰면
-    // 그릴 수 없는 항목이 건수에 남아 shown < total 이 영원히 참이 되고,
-    // "더 보기"가 눌러도 아무 일 없는 버튼으로 굳는다.
-    total: ordered.length,
+    groups: visible,
+    shown: visible.reduce((n, g) => n + g.articles.length, 0),
+    total: all.reduce((n, g) => n + g.articles.length, 0),
+    nextDay:
+      after === undefined
+        ? null
+        : { dayKey: after.dayKey, count: after.articles.length },
   };
 }

@@ -133,7 +133,7 @@ describe("rankFeed + selectFeed — INV-R5 뱃지는 필터 전 기준", () => {
     // 이 검사가 곧 "정렬을 바꿔도 그대로"를 본다. 여기 글은 전부 문 값이 있어
     // `소식` 에는 서지 않으므로 겹치는 자리인 `스킬·툴` 과 대조한다.
     const trending = (segment: "hot" | "tools") =>
-      selectFeed({ articles: ranked.map(toListItem), tag: null, segment, limit: 100 })
+      selectFeed({ articles: ranked.map(toListItem), tag: null, segment, days: 50 })
         .groups.flatMap((g) => g.articles)
         .filter((a) => a.isTrending)
         .map((a) => a.id)
@@ -148,7 +148,7 @@ describe("rankFeed + selectFeed — INV-R5 뱃지는 필터 전 기준", () => {
       articles: ranked.map(toListItem),
       tag: "MCP",
       segment: "hot",
-      limit: 100,
+      days: 50,
     }).groups.flatMap((g) => g.articles);
 
     expect(shown.map((a) => a.id).sort()).toEqual(["D", "E", "F"]);
@@ -159,7 +159,7 @@ describe("rankFeed + selectFeed — INV-R5 뱃지는 필터 전 기준", () => {
   it("INV-R5: 같은 글의 뱃지가 필터에 따라 붙었다 떨어지지 않는다", () => {
     const ranked = rankFeed({ items, now: NOW, weightOf });
     const badgeOf = (tag: "모델" | null) =>
-      selectFeed({ articles: ranked.map(toListItem), tag, segment: "hot", limit: 100 })
+      selectFeed({ articles: ranked.map(toListItem), tag, segment: "hot", days: 50 })
         .groups.flatMap((g) => g.articles)
         .find((a) => a.id === "A")?.isTrending;
 
@@ -167,15 +167,4 @@ describe("rankFeed + selectFeed — INV-R5 뱃지는 필터 전 기준", () => {
     expect(badgeOf("모델")).toBe(true);
   });
 
-  it("INV-R5: 개수 제한으로 잘려도 남은 항목의 뱃지는 그대로다", () => {
-    const ranked = rankFeed({ items, now: NOW, weightOf });
-    const shown = selectFeed({
-      articles: ranked.map(toListItem),
-      tag: null,
-      segment: "hot",
-      limit: 2,
-    }).groups.flatMap((g) => g.articles);
-    expect(shown.map((a) => a.id)).toEqual(["A", "B"]);
-    expect(shown.every((a) => a.isTrending)).toBe(true);
-  });
 });

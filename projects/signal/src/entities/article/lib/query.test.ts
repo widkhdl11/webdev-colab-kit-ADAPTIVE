@@ -165,25 +165,33 @@ describe("selectFeed", () => {
       articles: ALL,
       tag: null,
       segment: "hot",
-      limit: 10,
+      days: 50,
     });
     expect(groups.map((g) => g.dayKey)).toEqual(["2026-08-05", "2026-08-04"]);
     expect(groups[0].articles[0].id).toBe("today-high");
   });
 
-  it("개수 제한은 앞에서부터 자른다 — 오늘이 먼저 다 보인다", () => {
-    const { groups, shown, total } = selectFeed({
+  it("날 수로 자른다 — 그날 그룹은 잘리지 않고 통째로 나온다", () => {
+    // 2026-09-23 까지는 카드 장 수로 잘라서 「어제 · 2건」 아래 카드가 1장만 그려질 수 있었다.
+    const { groups, shown, total, nextDay } = selectFeed({
       articles: ALL,
       tag: null,
       segment: "hot",
-      limit: 3,
+      days: 1,
     });
-    expect(shown).toBe(3);
+    expect(shown).toBe(2);
     expect(total).toBe(4);
     expect(groups.map((g) => g.articles.map((a) => a.id))).toEqual([
       ["today-high", "today-low"],
-      ["prev-high"],
     ]);
+    // 「더 보기」 문구가 쓰는 값 — 넘어올 날과 그날 건수
+    expect(nextDay).toEqual({ dayKey: "2026-08-04", count: 2 });
+  });
+
+  it("다 펼치면 넘어올 날이 없다 — 「모두 불러왔습니다」의 근거", () => {
+    const { groups, nextDay } = selectFeed({ articles: ALL, tag: null, segment: "hot", days: 2 });
+    expect(groups).toHaveLength(2);
+    expect(nextDay).toBeNull();
   });
 
   it("total 은 제한이 아니라 필터 기준이다 (더 볼 것이 남았는지 판단용)", () => {
@@ -195,18 +203,18 @@ describe("selectFeed", () => {
       articles: tagged,
       tag: "MCP",
       segment: "hot",
-      limit: 10,
+      days: 50,
     });
     expect(shown).toBe(1);
     expect(total).toBe(1);
   });
 
-  it("limit 0 이면 아무것도 그리지 않지만 total 은 남는다", () => {
+  it("0일이면 아무것도 그리지 않지만 total 은 남는다", () => {
     const { groups, shown, total } = selectFeed({
       articles: ALL,
       tag: null,
       segment: "hot",
-      limit: 0,
+      days: 0,
     });
     expect(groups).toEqual([]);
     expect(shown).toBe(0);
@@ -233,7 +241,7 @@ describe("발행시각을 못 읽는 항목", () => {
       articles: [...ALL, BROKEN],
       tag: null,
       segment: "hot",
-      limit: 100,
+      days: 50,
     });
     // 그릴 수 없는 항목이 total 에 남으면 shown < total 이 영원히 참이 된다
     expect(total).toBe(ALL.length);
@@ -256,7 +264,7 @@ describe("selectFeed — INV-B4 (BK16) 뱃지 창이 글 목록을 자르지 않
       articles: [old, fresh],
       tag: null,
       segment: "hot",
-      limit: 50,
+      days: 50,
     });
     expect(total).toBe(2);
     const ids = groups.flatMap((g) => g.articles.map((a) => a.id));
@@ -270,7 +278,7 @@ describe("selectFeed — INV-B4 (BK16) 뱃지 창이 글 목록을 자르지 않
       articles: [old],
       tag: null,
       segment: "hot",
-      limit: 50,
+      days: 50,
     });
     expect(shown).toBe(1);
     expect(groups).toHaveLength(1);
@@ -299,7 +307,7 @@ describe("selectFeed — 세 자리 (hot-issue.md INV-G3)", () => {
   const ALL_SIX = [hotNews, hotTool, plainNews, plainTool, noKind];
 
   const idsIn = (segment: FeedSegment) =>
-    selectFeed({ articles: ALL_SIX, segment, tag: null, limit: 50 })
+    selectFeed({ articles: ALL_SIX, segment, tag: null, days: 50 })
       .groups.flatMap((g) => g.articles.map((a) => a.id))
       .sort();
 
@@ -331,13 +339,13 @@ describe("selectFeed — 세 자리 (hot-issue.md INV-G3)", () => {
         const place = placeArticle({ kinds: a.kinds, gate: a.gate });
         return segment === "hot" ? place.hotIssue : segment === "news" ? place.news : place.tools;
       });
-      const got = selectFeed({ articles: ALL_SIX, segment, tag: null, limit: 50 });
+      const got = selectFeed({ articles: ALL_SIX, segment, tag: null, days: 50 });
       expect(got.total).toBe(byPlacement.length);
     }
   });
 
   it("「더 보기」 계산에 안 나오는 글이 안 섞인다", () => {
-    expect(selectFeed({ articles: ALL_SIX, segment: "hot", tag: null, limit: 50 }).total).toBe(2);
+    expect(selectFeed({ articles: ALL_SIX, segment: "hot", tag: null, days: 50 }).total).toBe(2);
   });
 });
 
@@ -365,7 +373,7 @@ describe("selectFeed — 핫이슈 순서는 이슈성이 정한다 (INV-N3)", (
     // 점수로 정렬하면 동률이라 id 순(`ㄱ` → `ㄴ`)이 된다. 이슈성을 보면 뒤집힌다.
     const low = withScores("ㄱ낮은이슈성", 5, 1);
     const high = withScores("ㄴ높은이슈성", 5, 9);
-    const got = selectFeed({ articles: [low, high], segment: "hot", tag: null, limit: 50 });
+    const got = selectFeed({ articles: [low, high], segment: "hot", tag: null, days: 50 });
 
     expect(got.groups.flatMap((g) => g.articles.map((a) => a.id))).toEqual([
       "ㄴ높은이슈성",
@@ -377,7 +385,7 @@ describe("selectFeed — 핫이슈 순서는 이슈성이 정한다 (INV-N3)", (
     // 부재만 보면 절반이다. 위 검사만 두면 "둘 다 본다"로 바꿔도 통과한다.
     const a = withScores("ㄱ", 1, 5);
     const b = withScores("ㄴ", 9, 5);
-    const got = selectFeed({ articles: [a, b], segment: "hot", tag: null, limit: 50 });
+    const got = selectFeed({ articles: [a, b], segment: "hot", tag: null, days: 50 });
 
     // 이슈성 동률 → 발행시각 동률 → id 순. 점수가 높은 `ㄴ` 이 앞에 오면 점수를 본 것이다.
     expect(got.groups.flatMap((g) => g.articles.map((a) => a.id))).toEqual(["ㄱ", "ㄴ"]);
@@ -386,7 +394,7 @@ describe("selectFeed — 핫이슈 순서는 이슈성이 정한다 (INV-N3)", (
   it("소식 자리는 최신순이다 — 자리마다 순서가 다르다", () => {
     const older = { ...article("옛것", "2026-08-05T00:00:00.000Z", 9), gate: null, issueScore: 9 };
     const newer = { ...article("새것", "2026-08-05T05:00:00.000Z", 1), gate: null, issueScore: 1 };
-    const got = selectFeed({ articles: [older, newer], segment: "news", tag: null, limit: 50 });
+    const got = selectFeed({ articles: [older, newer], segment: "news", tag: null, days: 50 });
 
     expect(got.groups.flatMap((g) => g.articles.map((a) => a.id))).toEqual(["새것", "옛것"]);
   });

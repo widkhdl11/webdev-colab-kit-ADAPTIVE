@@ -52,11 +52,16 @@ interface Props {
   isRead: boolean;
   /** 목록 전체가 공유하는 기준 시각(ISO). 카드마다 현재 시각을 따로 읽지 않는다. */
   nowIso: string;
+  /**
+   * 상세 주소. 피드가 지금 상태(자리·필터·펼친 날 수)를 실어 만든다(`articleHref`).
+   * 안 주면 상태 없는 주소다 — 카드만 따로 그리는 테스트가 그 경우다.
+   */
+  href?: string;
 }
 
 // 읽음 기록은 여기서 하지 않는다 — 상세가 실제로 뜬 시점에 features/read-state 가 찍는다.
 // 클릭 시점에 찍으면 이동이 실패했을 때 읽지도 않은 글이 흐릿해진다.
-export function ArticleCard({ article, isRead, nowIso }: Props) {
+export function ArticleCard({ article, isRead, nowIso, href }: Props) {
   // AI 요약이 없으면 출처가 준 요약글 (INV-S2). 어느 쪽을 고를지는 entities 가 정한다 —
   // 카드와 상세가 각자 판단하면 두 화면이 다른 글을 보여주는 날이 온다.
   const summary = displaySummary(article);
@@ -75,7 +80,7 @@ export function ArticleCard({ article, isRead, nowIso }: Props) {
   return (
     <Link
       className={isRead ? `${styles.card} ${styles.isRead}` : styles.card}
-      href={`/articles/${article.id}`}
+      href={href ?? `/articles/${article.id}`}
     >
       {/* 읽음을 색으로만 알리지 않는다 */}
       {isRead ? <span className="sr-only">읽은 글</span> : null}

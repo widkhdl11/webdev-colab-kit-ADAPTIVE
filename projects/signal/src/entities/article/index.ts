@@ -13,6 +13,8 @@ export {
   findArticleById,
   groupByDay,
   inSegment,
+  findNeighbors,
+  orderFeed,
   selectFeed,
   sortArticles,
 } from "./lib/query";
@@ -53,7 +55,7 @@ export type { DisplaySummary } from "./lib/display-summary";
 export { displayTitle } from "./lib/display-title";
 export type { DisplayTitle } from "./lib/display-title";
 export { sourceExcerpt } from "./lib/excerpt";
-export { normalizeTagName } from "./lib/tagging";
+export { normalizeTagName, sameTag } from "./lib/tagging";
 export {
   BADGE_LIMIT,
   BADGE_MIN_COUNT,
@@ -71,3 +73,16 @@ export {
   toOfficialBasis,
 } from "./lib/official";
 export type { SubjectSiteLike } from "./lib/official";
+export {
+  articleHref,
+  DEFAULT_FEED_STATE,
+  feedHref,
+  fitFeedStateToArticle,
+  MAX_FEED_DAYS,
+  parseFeedState,
+  withMoreDays,
+  withSegment,
+  withDaysCovering,
+  withTag,
+} from "./lib/feed-url";
+export type { FeedState, ParamReader } from "./lib/feed-url";

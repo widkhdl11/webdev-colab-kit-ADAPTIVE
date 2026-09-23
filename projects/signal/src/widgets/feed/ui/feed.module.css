@@ -72,6 +72,12 @@
   color: var(--on-accent);
 }
 
+/* 자리 세그먼트를 감싸는 고정 줄. 데스크톱에서는 상자를 만들지 않는다 —
+   세그먼트가 컨트롤 줄의 한 항목으로 그대로 선다. 640px 아래에서만 화면 아래로 내려간다. */
+.dock {
+  display: contents;
+}
+
 .dividerV {
   width: 1px;
   height: 20px;
@@ -250,7 +256,9 @@
     color 0.15s ease;
 }
 
-.kwMore:hover {
+/* 누를 수 없는 상태(「모두 보임」)는 호버에 반응하지 않는다 — 호버 뒤에 원래 값을 다시 적지
+   않고 아예 안 걸리게 둔다(design-rules 2026-09-01 (3) 「비활성 호버를 한 방법으로 모았다」). */
+.kwMore:not([aria-disabled="true"]):hover {
   background: var(--surface);
   color: var(--text);
   border-color: var(--border-soft-h);
@@ -661,7 +669,7 @@
     color 0.15s ease;
 }
 
-.more button:hover {
+.more button:not([aria-disabled="true"]):hover {
   background: var(--surface);
   color: var(--text);
   border-color: var(--border-soft-h);
@@ -674,11 +682,6 @@
   color: var(--meta);
 }
 
-.more button[aria-disabled="true"]:hover {
-  background: transparent;
-  color: var(--meta);
-  border-color: var(--border-soft);
-}
 
 /* 필터 결과가 0건일 때의 유일한 문장 — 목록 미리보기가 아니라 본문이라 본문 크기를 쓴다 */
 .empty {
@@ -713,6 +716,42 @@
      대가는 세그먼트 줄이 두꺼워져 첫 카드가 그만큼 밀리는 것이다. */
   .segment button {
     min-height: var(--touch-min);
+  }
+
+  /* 한손 조작 — 자리 세그먼트를 엄지가 닿는 화면 아래로 내린다 (design-rules 2026-09-01
+     「모바일 하단 고정 조작 줄」). 그 규칙이 적은 것은 「정렬 세그먼트(핫이슈/최신)」인데,
+     2026-09-21 에 그 자리를 세 자리 세그먼트가 물려받았다 — 규칙의 기준은 "그 화면에서
+     반복해서 쓰는 것"이라 이름이 아니라 역할을 따라간다.
+     「더 보기」는 안 넣는다: 다 읽고 나서 한 번 누르는 것이라 본문 끝이 제자리다.
+     `전체` 칩·키워드 뱃지도 안 넣는다: 한 번 고르면 한동안 안 바꾼다.
+     이 줄이 마지막 내용을 가리지 않게 body 에 아래 여백을 준다(app/globals.css). */
+  .dock {
+    display: flex;
+    justify-content: center;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    background: var(--surface);
+    border-top: 1px solid var(--hairline);
+    padding: var(--space-12) var(--space-16)
+      calc(var(--space-12) + env(safe-area-inset-bottom));
+  }
+
+  /* 고정 줄의 면이 --surface 라 세그먼트 바탕을 한 단계 뒤집어야 알약 테두리가 보인다 */
+  .dock .segment {
+    background: var(--bg);
+  }
+
+  /* 모바일 뱃지 줄 — 누르는 것은 전부 44px 이상 (design-rules 2026-09-01 (2)).
+     접힘 2줄 공식도 같은 근거에서 뽑는다: 44 × 2 + 줄 간격 + 아웃라인 자리. */
+  .kwBadge,
+  .kwMore {
+    min-height: var(--touch-min);
+  }
+  .kwRowCollapsed {
+    max-height: calc(var(--touch-min) * 2 + var(--space-6) + 8px);
   }
   .dividerV {
     display: none;

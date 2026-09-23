@@ -5,12 +5,30 @@ import { MarkReadOnView } from "@/features/read-state";
 import { relativeTime } from "@/shared/lib/datetime";
 import styles from "./article-view.module.css";
 
+/** 이전/다음 한 칸. 주소는 피드 상태를 실어 페이지가 만든다(`articleHref`). */
+export interface ArticleNavLink {
+  href: string;
+  title: string;
+}
+
 interface Props {
   article: Article;
   nowIso: string;
+  /** 「피드로」가 돌아갈 주소 — 들어올 때의 자리·필터·펼친 날 수를 그대로 싣는다. */
+  backHref?: string;
+  /**
+   * 하단 이전/다음 (design-rules 2026-09-01). `null` 이면 줄을 안 그린다 — 이 글이
+   * 피드 목록 밖이라 이웃을 모를 때다. 칸 하나가 `null` 이면 그쪽 끝에 닿은 것이다.
+   */
+  nav?: { prev: ArticleNavLink | null; next: ArticleNavLink | null } | null;
 }
 
-export function ArticleView({ article, nowIso }: Props) {
+export function ArticleView({
+  article,
+  nowIso,
+  backHref = "/",
+  nav = null,
+}: Props) {
   const sourceHref = safeSourceUrl(article.sourceUrl);
   const when = relativeTime(article.publishedAt, nowIso);
   // AI 요약 → 없으면 출처가 준 요약글 (INV-S2). 고르는 규칙은 entities 한 곳에 있다.
@@ -22,7 +40,8 @@ export function ArticleView({ article, nowIso }: Props) {
       {/* 상세가 뜬 시점 = 읽은 시점 */}
       <MarkReadOnView id={article.id} />
 
-      <Link className={styles.back} href="/">
+      {/* 켜 둔 자리·필터·펼친 양을 들고 돌아간다 — 안 그러면 뒤로가기와 이 링크가 다른 곳으로 간다. */}
+      <Link className={styles.back} href={backHref}>
         <span aria-hidden="true">←</span> 피드로
       </Link>
 
@@ -58,7 +77,11 @@ export function ArticleView({ article, nowIso }: Props) {
           키워드가 하나도 없으면 줄 자체를 그리지 않는다 — 백필을 안 했으므로(2026-08-30)
           옛 글은 빈 배열로 온다. 빈 div 를 그리면 padding 만큼 여백이 이유 없이 벌어진다. */}
       {article.tags.length > 0 ? (
-        <div className={styles.keywords} role="group" aria-label="이 소식의 키워드">
+        <div
+          className={styles.keywords}
+          role="group"
+          aria-label="이 소식의 키워드"
+        >
           {article.tags.map((tag) => (
             <span
               key={`${tag.axis}:${tag.name}`}
@@ -69,7 +92,9 @@ export function ArticleView({ article, nowIso }: Props) {
                   텍스트 노드가 없고 알약은 바깥 display 가 inline 이라, 없으면 앞 알약의 마지막
                   글자와 붙어 "코딩분야 보안"으로 읽힐 수 있다. 시안은 HTML 소스에서 줄이 나뉘어
                   이 공백이 자연히 있었다. `.sr-only` 는 position:absolute 라 알약 폭은 안 바뀐다. */}
-              <span className="sr-only">{tag.axis === "kind" ? " 사건종류 " : " 분야 "}</span>
+              <span className="sr-only">
+                {tag.axis === "kind" ? " 사건종류 " : " 분야 "}
+              </span>
               {tag.name}
             </span>
           ))}
@@ -111,12 +136,15 @@ export function ArticleView({ article, nowIso }: Props) {
       <article className={styles.prose}>
         {article.contentHtml.trim() !== "" ? (
           <>
-            <p className={styles.sourceNote}>아래는 출처에서 가져온 원문입니다.</p>
+            <p className={styles.sourceNote}>
+              아래는 출처에서 가져온 원문입니다.
+            </p>
             <ArticleBody html={article.contentHtml} />
           </>
         ) : (
           <p className={styles.sourceNote}>
-            이 출처는 원문 전문을 제공하지 않습니다. 아래 링크로 출처에서 읽어 주세요.
+            이 출처는 원문 전문을 제공하지 않습니다. 아래 링크로 출처에서 읽어
+            주세요.
           </p>
         )}
       </article>
@@ -138,6 +166,50 @@ export function ArticleView({ article, nowIso }: Props) {
           </a>
         ) : null}
       </div>
+
+      {nav !== null ? (
+        <nav className={styles.readNav} aria-label="글 이동" data-dock>
+          <NavSlot side="prev" link={nav.prev} />
+          <NavSlot side="next" link={nav.next} />
+        </nav>
+      ) : null}
     </main>
+  );
+}
+
+/**
+ * 이전 글 / 다음 글 한 칸.
+ *
+ * **끝에 닿아도 없애지 않는다.** 없애면 키보드 포커스가 문서 맨 위로 떨어진다 — 피드의
+ * 「더 보기」와 같은 이유다. 비활성 쪽이 `<span>` 이 아니라 `<button>` 인 이유: `span` 은
+ * 포커스를 못 받고 role 이 없어 `aria-disabled` 가 보조기술에 전해지지 않는다.
+ *
+ * 640px 아래에서는 이 줄이 화면 아래 고정 줄이 된다(article-view.module.css).
+ */
+function NavSlot({
+  side,
+  link,
+}: {
+  side: "prev" | "next";
+  link: ArticleNavLink | null;
+}) {
+  const className = `${styles.navButton} ${side === "prev" ? styles.navPrev : styles.navNext}`;
+  const role = side === "prev" ? "← 이전 글" : "다음 글 →";
+  if (link === null) {
+    return (
+      <button type="button" className={className} aria-disabled="true">
+        <span className={styles.navRole}>{role}</span>
+        <span className={styles.navTitle}>
+          {side === "prev" ? "첫 글입니다" : "마지막 글입니다"}
+        </span>
+      </button>
+    );
+  }
+  return (
+    <Link className={className} href={link.href}>
+      <span className={styles.navRole}>{role}</span>
+      {/* 제목을 같이 보여준다 — 「다음 글 →」만 있으면 누르기 전에 무엇인지 모른다 */}
+      <span className={styles.navTitle}>{link.title}</span>
+    </Link>
   );
 }

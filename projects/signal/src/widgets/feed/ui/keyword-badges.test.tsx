@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { KeywordBadge } from "@/entities/article";
 import { KeywordBadges } from "./keyword-badges";
+import styles from "./feed.module.css";
 
 /**
  * 뱃지 줄이 화면에 내보내는 것 — design-rules 2026-08-27 블록 · badge-keywords INV-B5·N5.
@@ -285,3 +286,44 @@ describe("KeywordBadges — 넘침을 재기 전에는 아무것도 안 가린�
 function three_() {
   return [badge({ name: "보안" }), badge({ name: "코딩" }), badge({ name: "정책" })];
 }
+
+describe("KeywordBadges — 켠 키워드가 줄에 없을 때 (design-rules 2026-09-01 (3))", () => {
+  it("0짜리 칩을 맨 앞에 세운다 — 무엇으로 걸렀는지가 화면에 남는다", () => {
+    const html = render([badge({ name: "코딩" })], "창밖키워드");
+    const root = document.createElement("div");
+    root.innerHTML = html;
+    const first = root.querySelector('[role="group"] button');
+    expect(first?.textContent).toContain("창밖키워드");
+    expect(first?.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("줄이 통째로 비는 날에도 켠 칩 하나는 그린다", () => {
+    const html = render([], "창밖키워드");
+    expect(html).toContain("창밖키워드");
+  });
+
+  it("줄에 있으면 새로 세우지 않는다 — 같은 칩이 두 번 나오지 않는다", () => {
+    const html = render([badge({ name: "코딩" })], "코딩");
+    expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
+  });
+});
+
+describe("KeywordBadges — 세운 칩의 0 은 「다 읽었다」가 아니다", () => {
+  const first = (html: string) => {
+    const root = document.createElement("div");
+    root.innerHTML = html;
+    return root.querySelector('[role="group"] button');
+  };
+
+  it("세운 칩에는 취소선 모양을 안 붙이고 「집계에 없다」로 읽힌다", () => {
+    const chip = first(render([badge({ name: "코딩" })], "창밖키워드"));
+    expect(chip?.className).not.toContain(styles.kwZero);
+    expect(chip?.textContent).toContain("최근 3일 집계에는 없습니다");
+    expect(chip?.textContent).not.toContain("안 읽은 글 없음");
+  });
+
+  it("다 읽어서 0 이 된 칩은 여전히 취소선 모양이다", () => {
+    const chip = first(render([badge({ name: "코딩", total: 4, unread: 0 })], "코딩"));
+    expect(chip?.className).toContain(styles.kwZero);
+  });
+});

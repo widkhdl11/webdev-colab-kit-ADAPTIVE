@@ -628,6 +628,97 @@
   padding-bottom: 56px;
 }
 
+/* 이동 줄이 있으면 화면 끝 여백은 그 줄이 진다 — 둘 다 56px 을 두면 사이가 벌어진다 */
+.foot:has(+ .readNav) {
+  padding-bottom: 0;
+}
+
+/* ── 이전 글 / 다음 글 (design-rules 2026-09-01 승인) ──────────────────
+ * 자리: 원문 링크 아래, 점선 구분선 뒤. 좌우 반반.
+ * 형태가 알약이 아니라 카드 라운드인 이유: 두 줄짜리 제목이 들어가는데
+ * 알약이면 세로가 늘어져 버튼으로 안 읽힌다. */
+.readNav {
+  display: flex;
+  gap: var(--space-12);
+  margin-top: var(--space-28);
+  padding: var(--space-20) 0 56px;
+  border-top: 1px dotted var(--dot);
+}
+
+/* 활성 쪽은 <a>, 비활성 쪽은 <button> 이다. 버튼은 글꼴을 안 물려받으므로 여기서 맞춘다 —
+ * 안 하면 비활성 쪽만 시스템 폰트로 뜬다. */
+.navButton {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  font: inherit;
+  appearance: none;
+  padding: var(--space-14) 18px;
+  border-radius: var(--r-card);
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  text-decoration: none;
+  color: var(--text2);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+/* **복합 선택자여야 한다**(`.readNav .navPrev` = 0,2,0). 한 클래스로 두면 아래 미디어쿼리의
+ * `.navButton { align-items: center }`(0,1,0)가 뒤에 온다는 이유로 이겨서, 좁은 화면에서
+ * 화살표는 좌·우를 가리키는데 글자는 둘 다 가운데로 몰린다(signal2 에서 실제로 났다). */
+.readNav .navPrev {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.readNav .navNext {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.navRole {
+  font-size: var(--fs-meta);
+  color: var(--meta);
+}
+
+/* 2줄까지, 어절 단위로 끊는다(카드 제목과 같은 규칙) */
+.navTitle {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text2);
+  word-break: keep-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 누를 수 없는 것은 호버에 반응하지 않는다. 호버 뒤에 원래 값을 다시 적는 대신 아예 안
+ * 걸리게 둔다 — 640px 아래에서 배경이 바뀌므로 "원래 값"이 화면 폭에 따라 다르다. */
+.navButton:not([aria-disabled="true"]):hover {
+  background: var(--surface);
+  border-color: var(--border-soft-h);
+}
+
+.navButton:not([aria-disabled="true"]):hover .navTitle {
+  color: var(--accent);
+}
+
+/* 끝에 닿아도 없애지 않는다. 점선은 이미 「공식 발표라고 함」이 쓰는 표식이라 새 언어가 아니다. */
+.navButton[aria-disabled="true"] {
+  border-style: dashed;
+  cursor: default;
+}
+
+.navButton[aria-disabled="true"] .navTitle {
+  color: var(--meta);
+  font-weight: 500;
+}
+
 .note {
   font-size: var(--fs-xs);
   color: var(--meta);
@@ -676,8 +767,81 @@
   }
 }
 
+@media (max-width: 640px) {
+  /* 한손 조작 — 글 이동을 엄지가 닿는 화면 아래로 내린다(design-rules 2026-09-01).
+   * 자리를 비우는 것은 body 가 한다(app/globals.css). */
+  .foot:has(+ .readNav) {
+    padding-bottom: var(--space-28);
+  }
+
+  .readNav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    margin-top: 0;
+    padding: var(--space-12) var(--space-16)
+      calc(var(--space-12) + env(safe-area-inset-bottom));
+    gap: var(--space-8);
+    background: var(--surface);
+    border-top: 1px solid var(--hairline);
+  }
+
+  /* 좁은 화면에서는 제목을 눈에서 뺀다 — 두 줄짜리 제목 둘이 들어가면 줄이 화면의 3분의 1이
+     된다. 역할 글자만 남기고 터치 영역을 44px 로 맞춘다. */
+  .navButton {
+    min-height: var(--touch-min);
+    justify-content: center;
+    align-items: center;
+    padding: 0 var(--space-14);
+    border-radius: var(--r-pill);
+    background: var(--bg);
+  }
+
+  .navRole {
+    font-size: var(--fs-btn);
+    font-weight: 600;
+    color: var(--text2);
+  }
+
+  /* **눈에서만 감춘다.** `display: none` 이면 링크의 접근 이름이 「다음 글 →」뿐이 되는데,
+     제목을 같이 보여주는 이유는 화면을 못 보는 사람에게 더 세게 걸린다. */
+  .navTitle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* 끝에 닿았을 때는 역할 대신 이유를 보여준다 — 「다음 글 →」만 남으면 왜 안 눌리는지
+     알 방법이 점선 테두리뿐이다. */
+  .navButton[aria-disabled="true"] .navRole {
+    display: none;
+  }
+
+  .navButton[aria-disabled="true"] .navTitle {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    font-size: var(--fs-btn);
+    font-weight: 500;
+    color: var(--meta);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sourceButton:hover {
     transform: none;
+  }
+  .navButton {
+    transition: none;
   }
 }

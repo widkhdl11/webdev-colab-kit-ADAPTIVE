@@ -6,6 +6,8 @@ interface Props {
   tag: ArticleTag | null;
   onSegmentChange: (segment: FeedSegment) => void;
   onTagChange: (tag: ArticleTag | null) => void;
+  /** `전체` 칩의 id — 뱃지 줄이 켠 칩을 잃을 때 포커스를 여기로 옮긴다. */
+  allChipId?: string;
 }
 
 /**
@@ -30,24 +32,35 @@ const SEGMENTS: ReadonlyArray<{ id: FeedSegment; label: string }> = [
  * 개수 표시 금지 규칙(INV-N5)이 막으려던 그 숫자가 된다 — 뱃지 숫자는 수십 개 중
  * 무엇을 누를지 고르는 정보라 예외지만, 하나로 합친 숫자는 그대로 할당량이 된다.
  */
-export function FeedControls({ segment, tag, onSegmentChange, onTagChange }: Props) {
+export function FeedControls({
+  segment,
+  tag,
+  onSegmentChange,
+  onTagChange,
+  allChipId,
+}: Props) {
   return (
     <div className={styles.controls}>
-      <div className={styles.segment} role="group" aria-label="볼 자리">
-        {/* 2026-09-21 에 두 개에서 세 개가 됐다. 그 전에는 이 줄이 정렬 토글이었고
+      {/* 640px 아래에서는 이 줄이 화면 아래 고정 줄이 된다(feed.module.css `.dock`).
+          한 손으로 훑는 동안 계속 쓰는 조작이라 엄지가 닿는 자리에 둔다.
+          data-dock 은 body 가 아래 여백을 비울지 정하는 표식이다(app/globals.css). */}
+      <div className={styles.dock} data-dock>
+        <div className={styles.segment} role="group" aria-label="볼 자리">
+          {/* 2026-09-21 에 두 개에서 세 개가 됐다. 그 전에는 이 줄이 정렬 토글이었고
             (`핫이슈`/`최신`), 이름만 자리처럼 보였다. 지금은 실제로 다른 글을 보여준다 —
             `핫이슈`는 문턱을 넘은 것, `소식`은 못 넘은 것 전부, `스킬·툴`은 툴만 모은 것이라
             앞의 둘과 겹친다(INV-G3). 정렬은 자리에서 파생돼 따로 고르지 않는다. */}
-        {SEGMENTS.map((seg) => (
-          <button
-            key={seg.id}
-            type="button"
-            aria-pressed={segment === seg.id}
-            onClick={() => onSegmentChange(seg.id)}
-          >
-            {seg.label}
-          </button>
-        ))}
+          {SEGMENTS.map((seg) => (
+            <button
+              key={seg.id}
+              type="button"
+              aria-pressed={segment === seg.id}
+              onClick={() => onSegmentChange(seg.id)}
+            >
+              {seg.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <span className={styles.dividerV} aria-hidden="true" />
@@ -55,6 +68,7 @@ export function FeedControls({ segment, tag, onSegmentChange, onTagChange }: Pro
       <div className={styles.chipsRow} role="group" aria-label="주제 필터">
         <button
           type="button"
+          id={allChipId}
           className={styles.filterChip}
           aria-pressed={tag === null}
           onClick={() => onTagChange(null)}

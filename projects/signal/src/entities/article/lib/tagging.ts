@@ -35,3 +35,11 @@ export function normalizeTagName(name: string): string {
       .toLowerCase()
   );
 }
+
+/**
+ * 두 키워드가 같은 것인가. **필터와 「켜짐」 표시가 이 함수 하나를 쓴다** — 둘이 각자
+ * 비교하면 한쪽 규칙만 바뀌는 날 칩은 켜져 있는데 결과는 0건이 된다(2026-09-23 리뷰).
+ */
+export function sameTag(a: string, b: string): boolean {
+  return normalizeTagName(a) === normalizeTagName(b);
+}
