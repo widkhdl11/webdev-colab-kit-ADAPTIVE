@@ -11,7 +11,7 @@
   },
   "spec": {
     "status": "clean",
-    "hash": "a5ea9227b712"
+    "hash": "df3edf7b42f2"
   },
   "design": {
     "status": "clean",
@@ -19,7 +19,7 @@
   },
   "design/page-designer": {
     "status": "clean",
-    "hash": "a527791f61ae"
+    "hash": "c005a5f92d32"
   },
   "design/schema-designer": {
     "status": "clean",
@@ -27,7 +27,7 @@
   },
   "implement": {
     "status": "clean",
-    "hash": "4fbe4c0c2651"
+    "hash": "0770165fae3e"
   },
   "qa": {
     "status": "clean",
