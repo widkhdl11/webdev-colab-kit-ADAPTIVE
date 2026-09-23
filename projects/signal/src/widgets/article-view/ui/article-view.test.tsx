@@ -519,3 +519,49 @@ describe("ArticleView — 이전 글 / 다음 글", () => {
     );
   });
 });
+
+/**
+ * 요약 서식 (content-safety INV-D7). 해석기 단위 테스트만으로는 부족하다 — 화면이 해석기를
+ * 안 부르거나 결과를 HTML 문자열로 밀어 넣어도 해석기 테스트는 green 이다. 그래서 상세
+ * 렌더 결과를 DOM 으로 본다.
+ */
+describe("ArticleView — 요약 서식 (INV-D7)", () => {
+  const box = (a: Article) => {
+    const root = document.createElement("div");
+    root.innerHTML = renderToStaticMarkup(<ArticleView article={a} nowIso={NOW} />);
+    return root.querySelector(`.${styles.aiSummary}`) as HTMLElement;
+  };
+
+  it("INV-D7 (S14): AI 요약의 문단·굵게·목록·표가 요소로 그려진다", () => {
+    const el = box(
+      article({
+        summary:
+          "첫 문단 **핵심**.\n\n둘째 문단.\n\n- 항목 하나\n- 항목 둘\n\n| 모델 | 가격 |\n|---|---|\n| A | $3 |",
+      }),
+    );
+    expect(el.querySelector("strong")?.textContent).toBe("핵심");
+    expect(el.querySelectorAll("table th")).toHaveLength(2);
+    expect(el.querySelector("table td")?.textContent).toBe("A");
+    expect([...el.querySelectorAll("li")].map((li) => li.textContent)).toContain("항목 하나");
+    expect(el.textContent).toContain("둘째 문단.");
+  });
+
+  it("INV-D7 (S15, 실패경로): 링크·이미지·제목·스크립트 요소가 하나도 생기지 않는다", () => {
+    const el = box(
+      article({
+        summary:
+          "[클릭](javascript:alert(1))\n\n![x](https://ex.com/a.png)\n\n# 제목\n\n<script>alert(1)</script>\n\nhttps://evil.example",
+      }),
+    );
+    expect(el.querySelector("a, img, h1, h2, h3, h4, h5, h6, script")).toBeNull();
+    // 표기는 글자 그대로 보인다 — 조용히 지우면 무엇이 들어왔는지 사람이 알 수 없다
+    expect(el.textContent).toContain("[클릭](javascript:alert(1))");
+    expect(el.textContent).toContain("<script>alert(1)</script>");
+  });
+
+  it("INV-D7 (S17, 실패경로): 출처가 준 요약글의 기호는 해석하지 않는다", () => {
+    const el = box(article({ summary: "", sourceExcerpt: "출처 글 **굵게** 표기" }));
+    expect(el.querySelector("strong")).toBeNull();
+    expect(el.textContent).toContain("출처 글 **굵게** 표기");
+  });
+});

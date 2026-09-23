@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>signal — AI 요약 서식 시안 (A/B)</title>
+
+<!--
+  signal / 소식 상세 · 「AI 요약」 상자 서식 시안
+  ─────────────────────────────────────────────────────────────────────────────
+  근거: docs/design/design-rules.md (status: approved)
+        src/shared/ui/tokens.css (값을 그대로 옮겼다 — 새 색 없음)
+        src/widgets/article-view/ui/article-view.module.css 의 .aiSummary / .aiLabel / .caveat
+        docs/design/mockups/article-prose.html (요약 상자·원문 표의 승인된 값)
+        docs/DECISIONS.md 「요약은 요점 먼저, 표를 허용한다」(2026-08-15)
+
+  배경
+  ────
+  2026-09-23 사용자 결정: 요약 안에 문단 나누기 · 굵게 · 점 목록 · 표를 허용한다.
+  요구: "요약이지만 잘 읽히고 내용을 잘 전달하게".
+  요약 안에는 링크 · 이미지 · 제목이 없다(보안 결정). 아래 「핵심」 글자는 모델이 쓴 제목이
+  아니라 화면이 그리는 고정 라벨이다 — 요약 텍스트에서 오는 것이 아니다.
+
+  비교안 (색·톤·크기 단계는 두 안이 같다. 다른 것은 순서와 「핵심」 라벨뿐)
+  ────
+  A안: 지금 순서 — 요약 문단 → 표 → 핵심 목록
+  B안: 요점 먼저 — 「핵심」 목록 → 요약 문단 → 표
+
+  이 시안이 새로 제안하는 값 (design-rules 에 아직 없는 것)
+  ────
+  ① 요약 안의 표
+     · 겉 테두리 1px --border-soft, 라운드 --r-img(8px). 머리행 면 --bg, 몸통 면 --surface
+     · 행 구분 1px --hairline (원문 표의 점선 대신 실선 — 상자 아래 주의문구 점선과 겹치지 않게)
+     · 글자: 1280px 에서 --fs-body(15px), 390px 에서 --fs-sm(13.5px) — 요약 본문(16px)보다 한 단계 작게
+     · 첫 열 굵게(700, --text) · 숫자는 tabular-nums · 셀 줄바꿈 keep-all
+     · 가로 스크롤 없음: min-width 를 두지 않고 overflow-wrap:anywhere 를 마지막 안전장치로 둔다
+       (원문 표는 min-width 480px + 가로 스크롤이지만, 요약 표는 우리가 셀을 짧게 쓰게 할 수 있다)
+     · 머리글은 원문 표와 달리 nowrap 을 풀었다 — 390px 에서 "가격(100만 토큰)"이 두 줄로 접힌다
+  ② 굵게: 700 + --text (요약 본문 --text2 보다 한 칸 진하게). 색은 바꾸지 않는다
+  ③ 문단 사이: 기존 8px → 12px(--space-12). 한 문단에 한 생각이라 문단이 셋이 되면서
+     8px 로는 문단 경계가 줄바꿈처럼 보였다
+  ④ (B안만) 「핵심」 라벨: 12px 700 --meta, 목록 글자는 --text (요약 문단보다 진하게)
+
+  폭 흉내
+  ────
+  iframe 없이 두 칸을 max-width 로 흉내 낸다. 390px 칸의 모바일 규칙은 @container 로
+  걸었다 — 실제 구현은 기존대로 @media (max-width: 640px) 에 넣으면 된다.
+  예시 숫자·모델명은 더미다(서식을 보려는 것이지 사실 확인용이 아니다).
+-->
+
+<style>
+  :root{
+    /* tokens.css 값 그대로 */
+    --bg: #efeff5;
+    --surface: #f8f8fc;
+    --hairline: #e2e2ec;
+    --dot: #c9c9d6;
+    --border-soft: #e3e3ec;
+    --text: #1f2024;
+    --text2: #4a4e55;
+    --meta: #656a72;
+    --accent: #4f46e5;
+    --accent-soft: #e9e8fb;
+    --r-card: 12px;
+    --r-img: 8px;
+    --r-pill: 999px;
+    --readw: 704px;
+    --space-4: 4px; --space-6: 6px; --space-8: 8px; --space-10: 10px;
+    --space-12: 12px; --space-14: 14px; --space-16: 16px; --space-20: 20px; --space-28: 28px;
+    --font-sans: "Pretendard Variable", "Pretendard", system-ui, -apple-system,
+      "Apple SD Gothic Neo", sans-serif;
+    --fs-art-title: 28px;
+    --fs-title: 16px;
+    --fs-body: 15px;
+    --fs-sm: 13.5px;
+    --fs-ui: 13px;
+    --fs-meta: 12px;
+    --fs-chip: 11.5px;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--fs-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  [tabindex]:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── 시안 틀 (실제 화면이 아니다) ── */
+  .sheet{ max-width: 1240px; margin: 0 auto; padding: 32px 20px 64px; }
+  .sheet > h1{ font-size: 22px; font-weight: 800; margin: 0 0 6px; }
+  .sheet > .lead{ color: var(--text2); margin: 0 0 32px; font-size: var(--fs-sm); word-break: keep-all; }
+  .opt{ margin-bottom: 56px; }
+  .opt > h2{ font-size: 18px; font-weight: 800; margin: 0 0 4px; }
+  .opt > .desc{ color: var(--text2); font-size: var(--fs-sm); margin: 0 0 16px; word-break: keep-all; }
+  .frames{ display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+  .frame{ container-type: inline-size; border: 1px dashed var(--dot); border-radius: var(--r-card); background: var(--bg); }
+  .frame-d{ width: 760px; max-width: 100%; }
+  .frame-m{ width: 390px; max-width: 100%; }
+  .frame-cap{ font-size: var(--fs-meta); color: var(--meta); font-weight: 600; padding: 8px 12px 0; }
+
+  /* ── 상세 화면 (article-view.module.css 의 .read · .title 값) ── */
+  .read{ max-width: var(--readw); margin: 0 auto; padding: 0 var(--space-20) var(--space-28); }
+  .title{ font-size: var(--fs-art-title); font-weight: 800; letter-spacing: -0.4px; line-height: 1.35; margin: 16px 0 6px; word-break: keep-all; }
+  .who{ font-size: var(--fs-ui); color: var(--meta); }
+  .who strong{ color: var(--text2); }
+
+  /* ── AI 요약 상자 — .aiSummary / .aiLabel / .caveat 그대로 ── */
+  .ai-sum{
+    margin: 24px 0 var(--space-8);
+    background: var(--surface);
+    border-left: 4px solid var(--accent);   /* 포인트색은 얇은 선까지만 */
+    border-radius: var(--r-card);
+    padding: 18px var(--space-20);
+  }
+  .ai-label{
+    display: inline-flex; align-items: center; gap: var(--space-6);
+    font-size: var(--fs-chip); font-weight: 700; letter-spacing: -0.1px;
+    color: var(--accent); background: var(--accent-soft);
+    padding: var(--space-4) var(--space-10); border-radius: var(--r-pill);
+    margin-bottom: var(--space-10);
+  }
+  .ai-sum p{
+    /* ③ 새 값: 문단 사이 8px → 12px */
+    margin: 0 0 var(--space-12);
+    font-size: var(--fs-title); line-height: 1.7;
+    color: var(--text2); word-break: keep-all;
+  }
+  .ai-sum ul{ margin: 0 0 var(--space-12); padding-left: var(--space-20); list-style: disc outside; }
+  .ai-sum li{
+    font-size: var(--fs-title); line-height: 1.7;
+    color: var(--text2); margin-bottom: var(--space-4); word-break: keep-all;
+  }
+  .ai-sum li::marker{ color: var(--meta); }
+  .ai-sum li:last-child{ margin-bottom: 0; }
+  .ai-sum > :last-child{ margin-bottom: 0; }
+
+  /* ② 새 값: 굵게 — 색을 바꾸지 않고 한 칸 진하게만 */
+  .ai-sum strong{ font-weight: 700; color: var(--text); }
+
+  .caveat{
+    margin: var(--space-12) 0 0; padding-top: var(--space-10);
+    border-top: 1px dotted var(--dot);
+    font-size: var(--fs-meta); color: var(--meta); line-height: 1.6;
+  }
+
+  /* ① 새 값: 요약 안의 표 — 가로 스크롤 없음 */
+  .ai-sum table{
+    width: 100%;
+    margin: var(--space-4) 0 var(--space-12);
+    border-collapse: separate; border-spacing: 0;   /* 라운드 테두리를 쓰려고 separate */
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-img);
+    overflow: hidden;
+    font-size: var(--fs-body);
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+  .ai-sum thead th{
+    background: var(--bg);
+    text-align: left;
+    font-weight: 700;
+    color: var(--text);
+    padding: var(--space-8) var(--space-12);
+    border-bottom: 1px solid var(--border-soft);
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  .ai-sum tbody td{
+    background: var(--surface);
+    color: var(--text2);
+    padding: var(--space-8) var(--space-12);
+    border-bottom: 1px solid var(--hairline);
+    word-break: keep-all;
+    overflow-wrap: anywhere;   /* 마지막 안전장치 — 어떤 경우에도 상자 밖으로 안 나간다 */
+    vertical-align: top;
+  }
+  .ai-sum tbody td:first-child{ font-weight: 700; color: var(--text); }
+  .ai-sum tbody tr:last-child td{ border-bottom: 0; }
+
+  /* ④ B안: 「핵심」 라벨 + 요점 목록을 요약 문단보다 진하게 */
+  .pts-label{
+    display: block;
+    font-size: var(--fs-meta); font-weight: 700; color: var(--meta);
+    margin: 0 0 var(--space-4);
+  }
+  .ai-sum ul.pts{ margin-bottom: var(--space-14); }
+  .ai-sum ul.pts li{ color: var(--text); }
+
+  /* ── 390px — 실제 구현에서는 @media (max-width: 640px) ── */
+  @container (max-width: 640px){
+    .title{ font-size: 23px; }
+    .ai-sum table{ font-size: var(--fs-sm); }
+    .ai-sum thead th,
+    .ai-sum tbody td{ padding: var(--space-8) var(--space-10); }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <h1>AI 요약 서식 — A안 / B안</h1>
+  <p class="lead">두 안은 같은 요약 글을 담았다. 다른 것은 <b>순서</b>와 B안의 <b>「핵심」 라벨</b>뿐이다. 각 안마다 왼쪽이 1280px 화면(읽기 컬럼 704px), 오른쪽이 390px 휴대폰 폭이다.</p>
+
+  <!-- ═══════════════ A안 ═══════════════ -->
+  <section class="opt" aria-labelledby="optA">
+    <h2 id="optA">A안 — 지금 순서 (요약 문단 → 표 → 핵심 목록)</h2>
+    <p class="desc">지금 화면과 같은 순서에 서식만 더했다. 처음 읽는 것이 문단이라 흐름은 자연스럽지만, 요점이 맨 아래에 있어 훑어보는 사람은 표까지 지나야 닿는다.</p>
+    <div class="frames">
+      <div class="frame frame-d"><div class="frame-cap">1280px</div>
+        <div class="read">
+          <h3 class="title">미스트랄, 크기별 새 모델 세 개를 한꺼번에 공개</h3>
+          <div class="who"><strong>Mistral 블로그</strong> · 5시간 전</div>
+          <section class="ai-sum" aria-label="AI 요약">
+            <span class="ai-label">✨ AI 요약</span>
+            <p>미스트랄이 크기가 다른 모델 세 개를 한 번에 내놓았다. 가장 큰 Large 3 는 한 번에 읽을 수 있는 분량을 <strong>25만 6천 토큰</strong>까지 늘렸다.</p>
+            <p>가격은 작은 모델 쪽에서 크게 내려갔다. Small 3.2 는 입력 100만 토큰에 <strong>0.1달러</strong>로 이전 판의 절반 수준이다. 분류나 짧은 요약처럼 자주 부르는 일을 겨냥한 값이다.</p>
+            <p>세 모델 모두 같은 API 로 부를 수 있어 코드는 모델 이름만 바꾸면 된다. 다만 <strong>Medium 은 아직 도구 호출을 지원하지 않는다</strong>.</p>
+            <table>
+              <thead><tr><th scope="col">모델</th><th scope="col">컨텍스트</th><th scope="col">가격(100만 토큰)</th></tr></thead>
+              <tbody>
+                <tr><td>Large 3</td><td>256K</td><td>$2.00</td></tr>
+                <tr><td>Medium 3.2</td><td>128K</td><td>$0.40</td></tr>
+                <tr><td>Small 3.2</td><td>128K</td><td>$0.10</td></tr>
+              </tbody>
+            </table>
+            <ul>
+              <li>크기별 모델 세 개를 한 번에 공개했다</li>
+              <li>Small 가격이 이전 판의 절반 수준으로 내려갔다</li>
+              <li>Medium 은 도구 호출이 아직 안 된다</li>
+            </ul>
+            <p class="caveat">요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을 읽어주세요.</p>
+          </section>
+        </div>
+      </div>
+
+      <div class="frame frame-m"><div class="frame-cap">390px</div>
+        <div class="read">
+          <h3 class="title">미스트랄, 크기별 새 모델 세 개를 한꺼번에 공개</h3>
+          <div class="who"><strong>Mistral 블로그</strong> · 5시간 전</div>
+          <section class="ai-sum" aria-label="AI 요약">
+            <span class="ai-label">✨ AI 요약</span>
+            <p>미스트랄이 크기가 다른 모델 세 개를 한 번에 내놓았다. 가장 큰 Large 3 는 한 번에 읽을 수 있는 분량을 <strong>25만 6천 토큰</strong>까지 늘렸다.</p>
+            <p>가격은 작은 모델 쪽에서 크게 내려갔다. Small 3.2 는 입력 100만 토큰에 <strong>0.1달러</strong>로 이전 판의 절반 수준이다. 분류나 짧은 요약처럼 자주 부르는 일을 겨냥한 값이다.</p>
+            <p>세 모델 모두 같은 API 로 부를 수 있어 코드는 모델 이름만 바꾸면 된다. 다만 <strong>Medium 은 아직 도구 호출을 지원하지 않는다</strong>.</p>
+            <table>
+              <thead><tr><th scope="col">모델</th><th scope="col">컨텍스트</th><th scope="col">가격(100만 토큰)</th></tr></thead>
+              <tbody>
+                <tr><td>Large 3</td><td>256K</td><td>$2.00</td></tr>
+                <tr><td>Medium 3.2</td><td>128K</td><td>$0.40</td></tr>
+                <tr><td>Small 3.2</td><td>128K</td><td>$0.10</td></tr>
+              </tbody>
+            </table>
+            <ul>
+              <li>크기별 모델 세 개를 한 번에 공개했다</li>
+              <li>Small 가격이 이전 판의 절반 수준으로 내려갔다</li>
+              <li>Medium 은 도구 호출이 아직 안 된다</li>
+            </ul>
+            <p class="caveat">요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을 읽어주세요.</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ B안 ═══════════════ -->
+  <section class="opt" aria-labelledby="optB">
+    <h2 id="optB">B안 — 요점 먼저 (「핵심」 목록 → 요약 문단 → 표)</h2>
+    <p class="desc">2026-08-15 에 말한 "요점 → 내용 요약 → 원문" 순서다. 상자를 열자마자 세 줄로 무슨 일인지 알고, 더 알고 싶으면 문단과 표로 내려간다. 요점 글자를 문단보다 한 칸 진하게 해 두 층이 갈려 보이게 했다.</p>
+    <div class="frames">
+      <div class="frame frame-d"><div class="frame-cap">1280px</div>
+        <div class="read">
+          <h3 class="title">미스트랄, 크기별 새 모델 세 개를 한꺼번에 공개</h3>
+          <div class="who"><strong>Mistral 블로그</strong> · 5시간 전</div>
+          <section class="ai-sum" aria-label="AI 요약">
+            <span class="ai-label">✨ AI 요약</span>
+            <span class="pts-label" id="ptsB1">핵심</span>
+            <ul class="pts" aria-labelledby="ptsB1">
+              <li>크기별 모델 세 개를 한 번에 공개했다</li>
+              <li>Small 가격이 이전 판의 절반 수준으로 내려갔다</li>
+              <li>Medium 은 도구 호출이 아직 안 된다</li>
+            </ul>
+            <p>미스트랄이 크기가 다른 모델 세 개를 한 번에 내놓았다. 가장 큰 Large 3 는 한 번에 읽을 수 있는 분량을 <strong>25만 6천 토큰</strong>까지 늘렸다.</p>
+            <p>가격은 작은 모델 쪽에서 크게 내려갔다. Small 3.2 는 입력 100만 토큰에 <strong>0.1달러</strong>로 이전 판의 절반 수준이다. 분류나 짧은 요약처럼 자주 부르는 일을 겨냥한 값이다.</p>
+            <p>세 모델 모두 같은 API 로 부를 수 있어 코드는 모델 이름만 바꾸면 된다. 다만 <strong>Medium 은 아직 도구 호출을 지원하지 않는다</strong>.</p>
+            <table>
+              <thead><tr><th scope="col">모델</th><th scope="col">컨텍스트</th><th scope="col">가격(100만 토큰)</th></tr></thead>
+              <tbody>
+                <tr><td>Large 3</td><td>256K</td><td>$2.00</td></tr>
+                <tr><td>Medium 3.2</td><td>128K</td><td>$0.40</td></tr>
+                <tr><td>Small 3.2</td><td>128K</td><td>$0.10</td></tr>
+              </tbody>
+            </table>
+            <p class="caveat">요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을 읽어주세요.</p>
+          </section>
+        </div>
+      </div>
+
+      <div class="frame frame-m"><div class="frame-cap">390px</div>
+        <div class="read">
+          <h3 class="title">미스트랄, 크기별 새 모델 세 개를 한꺼번에 공개</h3>
+          <div class="who"><strong>Mistral 블로그</strong> · 5시간 전</div>
+          <section class="ai-sum" aria-label="AI 요약">
+            <span class="ai-label">✨ AI 요약</span>
+            <span class="pts-label" id="ptsB2">핵심</span>
+            <ul class="pts" aria-labelledby="ptsB2">
+              <li>크기별 모델 세 개를 한 번에 공개했다</li>
+              <li>Small 가격이 이전 판의 절반 수준으로 내려갔다</li>
+              <li>Medium 은 도구 호출이 아직 안 된다</li>
+            </ul>
+            <p>미스트랄이 크기가 다른 모델 세 개를 한 번에 내놓았다. 가장 큰 Large 3 는 한 번에 읽을 수 있는 분량을 <strong>25만 6천 토큰</strong>까지 늘렸다.</p>
+            <p>가격은 작은 모델 쪽에서 크게 내려갔다. Small 3.2 는 입력 100만 토큰에 <strong>0.1달러</strong>로 이전 판의 절반 수준이다. 분류나 짧은 요약처럼 자주 부르는 일을 겨냥한 값이다.</p>
+            <p>세 모델 모두 같은 API 로 부를 수 있어 코드는 모델 이름만 바꾸면 된다. 다만 <strong>Medium 은 아직 도구 호출을 지원하지 않는다</strong>.</p>
+            <table>
+              <thead><tr><th scope="col">모델</th><th scope="col">컨텍스트</th><th scope="col">가격(100만 토큰)</th></tr></thead>
+              <tbody>
+                <tr><td>Large 3</td><td>256K</td><td>$2.00</td></tr>
+                <tr><td>Medium 3.2</td><td>128K</td><td>$0.40</td></tr>
+                <tr><td>Small 3.2</td><td>128K</td><td>$0.10</td></tr>
+              </tbody>
+            </table>
+            <p class="caveat">요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을 읽어주세요.</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

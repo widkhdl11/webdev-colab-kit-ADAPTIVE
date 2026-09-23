@@ -4,6 +4,7 @@ import {
   displayTitle,
   hostFromUrl,
   placeArticle,
+  summaryPreviewText,
   type ArticleListItem,
 } from "@/entities/article";
 import { relativeTime } from "@/shared/lib/datetime";
@@ -104,7 +105,10 @@ export function ArticleCard({ article, isRead, nowIso, href }: Props) {
         ) : null}
         <h3 className={styles.cardTitle}>{title.text}</h3>
         {summary !== null ? (
-          <p className={styles.cardSummary}>{summary.text}</p>
+          // 두 줄 미리보기에 `**`·`|` 가 찍히지 않게 AI 요약은 서식을 벗긴 첫 문단만 쓴다(INV-D7).
+          <p className={styles.cardSummary}>
+            {summary.isAi ? summaryPreviewText(summary.text) : summary.text}
+          </p>
         ) : null}
       </div>
 

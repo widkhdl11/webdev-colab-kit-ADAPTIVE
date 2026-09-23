@@ -9,7 +9,7 @@ import { todaySpendUsd } from "../lib/cost-cap";
 import { dayKey, dayStartIso } from "@/shared/lib/datetime";
 import { enrichWindowStartIso } from "../lib/candidate-window";
 import { anthropicApiKey } from "@/shared/api/server-env";
-import { GATE_ONE, toOfficialBasis, type FeedItemDraft } from "@/entities/article";
+import { GATE_ONE, tableToMarkup, toOfficialBasis, type FeedItemDraft } from "@/entities/article";
 import { getSourceWeight } from "@/entities/source";
 import type { Source } from "@/entities/source";
 import {
@@ -472,7 +472,9 @@ export function createIngestPorts(): IngestPorts {
           // 제목만 부를 때도 200 은 빠듯하다 — 한국어는 글자당 토큰이 커서 긴 제목이면
           // JSON 껍데기까지 넣다 잘리고, 잘리면 닫는 중괄호가 없어 파싱이 실패한다.
           // 그러면 title_ko 가 계속 null 이라 **같은 항목이 매 주기 같은 자리에서 다시 잘린다.**
-          max_tokens: needSummary ? 1400 : 500,
+          // 2026-09-23 요약에 표를 허용하면서(INV-D7) 1400 → 1800. 표 하나가 200~300 토큰을
+          // 더 쓴다. 상한은 쓴 만큼만 청구되므로 올려도 요금은 표가 붙은 글에서만 오른다.
+          max_tokens: needSummary ? 1800 : 500,
           system: prompt.system,
           messages: [{ role: "user", content: prompt.user }],
         },
@@ -513,7 +515,11 @@ export function createIngestPorts(): IngestPorts {
         Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
       try {
         const parsed = JSON.parse(json) as Record<string, unknown>;
-        const summary = typeof parsed.summary === "string" ? parsed.summary.trim() : "";
+        const prose = typeof parsed.summary === "string" ? parsed.summary.trim() : "";
+        // 표는 따로 받아 요약 끝에 붙여 저장한다(INV-D7) — 칸을 새로 만들지 않는다. 모양이
+        // 틀린 표는 버리고 요약은 살린다. 요약이 비면 표도 붙이지 않는다(부속이다).
+        const table = prose === "" ? null : tableToMarkup(parsed.table);
+        const summary = table === null ? prose : `${prose}\n\n${table}`;
         return {
           summary,
           // 핵심 항목은 요약의 부속이다 (INV-S7) — 요약이 비면 항목도 버린다.

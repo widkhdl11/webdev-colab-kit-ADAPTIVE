@@ -231,3 +231,30 @@ describe("핫이슈 뱃지 — hot-issue.md INV-H1", () => {
     expect(topByScore).not.toContain("핫이슈");
   });
 });
+
+describe("ArticleCard — 요약 미리보기에 서식 기호가 안 찍힌다 (INV-D7)", () => {
+  it("INV-D7: AI 요약은 기호를 벗긴 첫 문단만 보인다", () => {
+    const html = renderToStaticMarkup(
+      <ArticleCard
+        article={item({ summary: "| a | b |\n|---|---|\n| 1 | 2 |\n\n가격은 **100만 원**이다.\n\n둘째" })}
+        nowIso={NOW}
+        isRead={false}
+      />,
+    );
+    expect(html).toContain("가격은 100만 원이다.");
+    expect(html).not.toContain("**");
+    expect(html).not.toContain("| a |");
+    expect(html).not.toContain("둘째");
+  });
+
+  it("INV-D7 실패경로: 출처가 준 요약글은 손대지 않는다", () => {
+    const html = renderToStaticMarkup(
+      <ArticleCard
+        article={item({ summary: "", sourceExcerpt: "출처 **그대로**" })}
+        nowIso={NOW}
+        isRead={false}
+      />,
+    );
+    expect(html).toContain("출처 **그대로**");
+  });
+});

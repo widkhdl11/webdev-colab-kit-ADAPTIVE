@@ -86,3 +86,11 @@ export {
   withTag,
 } from "./lib/feed-url";
 export type { FeedState, ParamReader } from "./lib/feed-url";
+export {
+  parseSummaryMarkup,
+  summaryPreviewText,
+  tableToMarkup,
+  TABLE_MAX_COLS,
+  TABLE_MAX_ROWS,
+} from "./lib/summary-markup";
+export type { SummaryBlock, SummaryInline } from "./lib/summary-markup";

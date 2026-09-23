@@ -35,6 +35,9 @@ export function buildEnrichPrompt(input: EnrichPromptInput): EnrichPrompt {
     needTitle ? '"titleKo": "한국어로 옮긴 제목"' : null,
     needSummary ? '"summary": "요약문"' : null,
     needSummary ? '"points": ["핵심 항목", "..."]' : null,
+    // 표는 요약 문자열이 아니라 **따로 받는다** (INV-D7). 요약 안에 파이프 표를 쓰라고 했을 때
+    // 실측 3건 중 한 번도 안 나왔다 — 자세한 이유는 entities 의 tableToMarkup 주석.
+    needSummary ? '"table": {"head": ["대상", "기준"], "rows": [["...", "..."]]} 또는 null' : null,
     // `"tags"` 를 여기서 뺐다 (2026-08-30) — 고정 5개 목록에서 고르게 하던 자리다.
     // 뱃지 키워드가 그 자리를 물려받았고, 그쪽은 별도 단계로 돈다(run-keywords).
     // 공식 여부는 글 내용을 보고 정한다 (INV-O2) — 근거가 실리는 경우에만 묻는다.

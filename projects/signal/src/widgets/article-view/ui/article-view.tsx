@@ -4,6 +4,7 @@ import { ArticleBody, safeSourceUrl } from "@/features/content-render";
 import { MarkReadOnView } from "@/features/read-state";
 import { relativeTime } from "@/shared/lib/datetime";
 import styles from "./article-view.module.css";
+import { SummaryMarkup } from "./summary-markup";
 
 /** 이전/다음 한 칸. 주소는 피드 상태를 실어 페이지가 만든다(`articleHref`). */
 export interface ArticleNavLink {
@@ -114,7 +115,9 @@ export function ArticleView({
             <span aria-hidden="true">{summary.isAi ? "✨" : "❞"}</span>{" "}
             {summary.isAi ? "AI 요약" : "출처가 준 요약"}
           </span>
-          <p>{summary.text}</p>
+          {/* 서식은 우리 지시로 모델이 쓴 글에만 붙인다(INV-D7) — 출처가 준 글의 기호를
+              서식으로 바꾸면 「누가 쓴 것인지」가 흐려진다. */}
+          {summary.isAi ? <SummaryMarkup source={summary.text} /> : <p>{summary.text}</p>}
           {summary.points.length > 0 ? (
             <ul>
               {summary.points.map((point, i) => (
