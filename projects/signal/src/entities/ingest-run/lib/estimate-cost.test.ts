@@ -210,11 +210,20 @@ describe("모델별 단가", () => {
     expect(haiku).toBeCloseTo(1.5, 5);
   });
 
+  it("opus-5-5 는 sonnet-5 의 두 배다 — 요약 단계 모델 (2026-09-23)", () => {
+    const opus = estimateCostBreakdown(
+      withModels({ topic: "claude-opus-5-5", hotIssue: "x", enrich: "x", keywords: "x" }),
+    ).topicCostUsd;
+    // 1,000,000 * $4 + 100,000 * $20 = $4 + $2 = $6
+    expect(opus).toBeCloseTo(6, 5);
+  });
+
   it("모르는 모델은 **제일 비싼 단가**로 본다 — 싼 쪽으로 틀리면 화면이 안심시킨다", () => {
     const unknown = estimateCostBreakdown(
       withModels({ topic: "claude-미래-9", hotIssue: "x", enrich: "x", keywords: "x" }),
     ).topicCostUsd;
-    expect(unknown).toBeCloseTo(3, 5);
+    // 표에서 제일 비싼 것은 opus-5-5($4/$20) — 2026-09-23 요약 단계를 옮기면서 sonnet 에서 바뀌었다.
+    expect(unknown).toBeCloseTo(6, 5);
   });
 
   it("모델 기록이 없는 옛 실행은 그때 쓰던 모델로 본다", () => {

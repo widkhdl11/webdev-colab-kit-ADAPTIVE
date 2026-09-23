@@ -81,6 +81,8 @@ export function ratesFor(startedAt: string): Rates {
  */
 export const MODEL_RATES: Record<string, { inputPerMTokUsd: number; outputPerMTokUsd: number }> = {
   "claude-sonnet-5": { inputPerMTokUsd: 2.0, outputPerMTokUsd: 10.0 },
+  // 요약 단계 (2026-09-23 사용자 결정). 표에 없으면 제일 비싼 단가로 계산돼 오히려 싸게 보였다.
+  "claude-opus-5-5": { inputPerMTokUsd: 4.0, outputPerMTokUsd: 20.0 },
   "claude-haiku-4-5": { inputPerMTokUsd: 1.0, outputPerMTokUsd: 5.0 },
 };
 

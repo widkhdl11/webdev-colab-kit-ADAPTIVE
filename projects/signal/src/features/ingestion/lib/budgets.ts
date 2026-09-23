@@ -92,7 +92,9 @@ export const ENRICH_POOL = 500;
  *                       아니지만(판정은 한 번뿐이다) 위험은 "엉뚱한 글이 들어온다" 정도다
  *   키워드     haiku  — 1,200자에서 낱말 몇 개 뽑기. 표기 규칙은 지시문이 잡는다
  *   핫이슈     sonnet — "중요한 소식인가"의 판단이다. 이게 흔들리면 첫 화면이 흔들린다
- *   요약·번역  sonnet — **사람이 그대로 읽는 문장이다.** 여기서 아끼면 바로 티가 난다
+ *   요약·번역  opus-5-5 — **사람이 그대로 읽는 문장이다.** 여기서 아끼면 바로 티가 난다.
+ *                       2026-09-23 사용자 결정으로 sonnet-5 → opus-5-5($4/$20, sonnet 의 두 배).
+ *                       생각은 끌 수 없고 깊이는 effort 로만 정한다 — ports.ts 의 호출에 적었다
  *
  * 값을 바꾸면 요금과 판정 품질이 같이 바뀐다. 보고서에 실행마다 **어느 모델을 썼는지**
  * 남기므로(`usage.models`), 바꾼 뒤 화면에서 전후를 비교할 수 있다.
@@ -100,7 +102,7 @@ export const ENRICH_POOL = 500;
 export const TOPIC_MODEL = "claude-haiku-4-5";
 export const KEYWORD_MODEL = "claude-haiku-4-5";
 export const HOT_ISSUE_MODEL = "claude-sonnet-5";
-export const ENRICH_MODEL = "claude-sonnet-5";
+export const ENRICH_MODEL = "claude-opus-5-5";
 
 /**
  * 주제 판정 응답에 줄 최대 토큰.

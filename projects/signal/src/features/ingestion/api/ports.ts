@@ -484,6 +484,11 @@ export function createIngestPorts(): IngestPorts {
           // 청구되므로 올려도 평소 요금은 그대로다. 2600 인 이유는 시간 상한(ENRICH_TIMEOUT_MS 30초)
           // 이다 — 실측 속도(초당 약 95토큰)로 2600 이면 27초 안팎이라 그 안에 든다.
           max_tokens: needSummary ? 2600 : 500,
+          // opus-5-5 는 생각을 끌 수 없고(끄면 400) 깊이는 effort 로만 정한다. 비워 두면 이 모델의
+          // 기본값 medium 인데, 모델마다 기본값이 달라(sonnet-5 는 high) 명시한다. high 로 올리지 않는
+          // 이유: 생각이 길어지면 위 2600 상한과 30초 시간 상한에 먼저 걸린다 — 잘린 응답은 불합격으로
+          // 세여 3번이면 그 글을 포기한다(INV-S3 S32).
+          output_config: { effort: "medium" },
           system: prompt.system,
           messages: [{ role: "user", content: prompt.user }],
         },
