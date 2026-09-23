@@ -1,6 +1,6 @@
 # 리뷰 지적 — 요약 단계 Opus 5.5 교체 (커밋 d11430a, push 안 함)
 
-랩업 뒤에 도착한 것을 적어 둔다. **아직 하나도 안 고쳤다.** code-reviewer 결과는 못 받았다 — 다음 세션에 다시 돌린다.
+랩업 뒤에 도착한 것을 적어 둔다. **아직 하나도 안 고쳤다.** 리뷰 둘 다 도착했다 — 겹치는 지적(재시도)이 있어 한 번에 고친다.
 
 ## 보안 리뷰 (security-reviewer) — high/medium 없음
 
@@ -19,3 +19,29 @@
 
 **문제 없음 확인**: 생각 블록은 저장·로그로 안 샌다(텍스트 블록만 모음) · 하루 상한은 새 단가($4/$20)로 계산되고 생각 토큰도 포함 ·
 과거 실행은 그때 모델로 계산돼 다시 매겨지지 않는다 · 모르는 모델은 여전히 비싸게 잡는다.
+
+## 코드 리뷰 (code-reviewer)
+
+요금 계산은 문제 없음. 위험은 **시간** 쪽이다 — 근거가 sonnet 실측이고 opus 는 안 쟀다("틀렸다"가 아니라 "확인 안 됨").
+
+**high**
+1. **한 건이 30초가 아니라 최악 90초 넘게** — 보안 low 2 와 같은 자리. `ports.ts:463,495` 클라이언트에 `maxRetries` 없음 → SDK 기본 2회,
+   시간 초과도 재시도(`node_modules/@anthropic-ai/sdk/client.js:111`, 549-557). `WORST_CASE_MS.enrich = 30_000`(budgets.ts:359·365-371)의 전제가 깨져
+   남은 31초에 시작한 호출이 Vercel 300초를 넘길 수 있다. 전부터 있던 결함이지만 opus 에서 30초 초과가 잦아지면 터진다.
+   고칠 것: 요약 호출 옵션 `{ timeout: SUMMARY_TIMEOUT_MS, maxRetries: 0 }` — 다른 세 단계도 같다.
+
+**medium**
+2. **2600토큰·30초 근거(초당 95토큰)가 sonnet 실측** — `ports.ts:481-486`. opus 가 초당 87토큰보다 느리면 못 끝난다.
+   시간 초과는 실패 횟수를 안 올리고 요금 상한에도 안 잡혀 **늘 시간 초과 나는 글은 3회 포기에 안 걸린다**.
+   고칠 것: opus 1회 경과 시간을 재서 초당 토큰 확인 → 주석·상한·`ENRICH_TIMEOUT_MS`·`budgets.test.ts` 조정. (시간 초과도 세는지 같이 판단)
+3. **제목만 번역하는 호출(max_tokens 500)이 생각을 끌 수 없다** — `ports.ts:486`, `run-ingest.ts:609-617,635`.
+   생각이 500 을 다 먹으면 빈 값 → 제목 번역 실패. 3회 포기는 요약에만 걸려 같은 글이 매 주기 다시 잘린다(단가 두 배).
+   고칠 것: 제목만 호출을 opus 로 1회 재서 생각 토큰 확인, 모자라면 500 을 올리고 budgets.ts 로 내려 테스트로 고정.
+
+**low**
+- 낡은 주석: `budgets.ts:90`(월 71,000→54,000원 sonnet 기준) · `budgets.ts:311-314`(평범한 날 약 $2.3 로 → 상한은 네 배 남짓) ·
+  `budgets.ts:341-342` · `widgets/ingest-dashboard/ui/ingest-dashboard.tsx:23` · `entities/ingest-run/lib/estimate-cost.ts:4`.
+- `scripts/count-prompt-tokens.ts:35,38-41,45` 가 sonnet 단가·상한 1400 그대로 → 요약 요금을 절반으로 보여 준다. `ENRICH_MODEL`·`ratesForModel` 을 쓰게.
+
+**문제 없음 확인**: 실행 기록·화면·하루 상한이 같은 `stageCostUsd` 로 새 단가 계산 · 옛 실행은 소급 안 됨 · 「모르는 모델」 규칙을 타는 실제 계산 없음 ·
+SDK 가 `output_config.effort` 지원 · prefill·tool_choice 없음 · effort medium 은 3회 포기 규칙과 맞다(실측 1053 이면 2600 대비 2.5배 여유).

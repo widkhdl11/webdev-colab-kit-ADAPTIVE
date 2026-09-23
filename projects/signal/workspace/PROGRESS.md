@@ -4,8 +4,8 @@
 
 - **오늘의 목표**: 상세 화면 재구성의 리뷰 지적을 전부 고치고 배포 → **달성**, 이어서 요약 단계를 Opus 5.5 로 교체
 - **완료**: 리뷰 지적 전부 반영(코드 high 둘 = 약어 문장 불합격 · 불합격 글 매 주기 재과금 → 불합격 3회에서 포기) · 재리뷰 code·ui·security 통과 · 사인오프 · 0011 적용(사용자) · push·운영 배포 `277d475`(운영 주소에서 상세 200 확인) · 옛 글 재요약 안 함으로 결정 · 요약 모델 Opus 5.5(effort medium, 실호출 1회 통과)
-- **멈춘 지점**: Opus 5.5 교체를 **커밋만 하고 push 안 함**. 보안 리뷰는 도착(high·medium 없음, low 둘 — 거부 응답을 명시적으로 안 거름 · 재시도 기본 2회로 한 건 최악 90초) → [지적](REVIEW-2026-09-23-opus.md), 아직 안 고침. code-reviewer 결과는 못 받음. 운영은 아직 sonnet-5
-- **다음 할 일**: [Opus 교체 지적](REVIEW-2026-09-23-opus.md) 의 low 둘(`stop_reason !== "end_turn"` 이면 빈 값 · `maxRetries: 0`)을 고치고 code-reviewer 를 다시 돌려 통과하면 사인오프·push → 09-24 7시 실행을 `npm run runs` 로 보고(sonnet 기준선) [운영](https://webdev-colab-kit-adaptive-xi.vercel.app/) 상세에서 새 형식 요약과 `포기:` 줄을 확인한다
+- **멈춘 지점**: Opus 5.5 교체를 **커밋만 하고 push 안 함**. 리뷰 둘 도착, 아직 안 고침 → [지적](REVIEW-2026-09-23-opus.md): high 1(재시도 기본 2회로 한 건 최악 90초) · medium 2(2600토큰/30초 근거가 sonnet 속도 · 제목만 호출 500토큰을 생각이 먹을 수 있음) · low 여럿. 운영은 아직 sonnet-5
+- **다음 할 일**: [Opus 교체 지적](REVIEW-2026-09-23-opus.md) 을 고친다 — `maxRetries: 0`·거부 응답 거르기부터, 이어서 opus 로 요약·제목만 호출을 한 번씩 재서 속도·생각 토큰을 확인하고 상한을 맞춘 뒤 사인오프·push → 09-24 7시 실행을 `npm run runs` 로 보고(sonnet 기준선) [운영](https://webdev-colab-kit-adaptive-xi.vercel.app/) 상세에서 새 형식 요약과 `포기:` 줄을 확인한다
 - **대기 중인 결정**: ① signal2 폴더를 계속 둘지
 
 ## 로그
