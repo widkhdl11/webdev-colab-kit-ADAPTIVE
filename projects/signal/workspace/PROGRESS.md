@@ -4,8 +4,8 @@
 
 - **오늘의 목표**: 상세 화면 재구성의 리뷰 지적을 전부 고치고 배포 → **달성**, 이어서 요약 단계를 Opus 5.5 로 교체
 - **완료**: 리뷰 지적 전부 반영(코드 high 둘 = 약어 문장 불합격 · 불합격 글 매 주기 재과금 → 불합격 3회에서 포기) · 재리뷰 code·ui·security 통과 · 사인오프 · 0011 적용(사용자) · push·운영 배포 `277d475`(운영 주소에서 상세 200 확인) · 옛 글 재요약 안 함으로 결정 · 요약 모델 Opus 5.5(effort medium, 실호출 1회 통과)
-- **멈춘 지점**: Opus 5.5 교체를 **커밋만 하고 push 안 함** — 코드·보안 리뷰를 파견했지만 결과를 받기 전에 세션을 닫았다. 운영은 아직 sonnet-5 로 돈다(내일 7시 실행도 sonnet). [리뷰 사인오프](review.md) basis 가 낡아 review 가 dirty 다
-- **다음 할 일**: Opus 5.5 교체 diff(`budgets.ts` · `ports.ts` effort · `estimate-cost.ts` 단가)에 code-reviewer·security-reviewer 를 다시 돌려 통과하면 사인오프하고 push 한다 → 이어서 09-24 7시 실행을 `npm run runs` 로 보고(이 실행은 sonnet 기준선이 된다) [운영](https://webdev-colab-kit-adaptive-xi.vercel.app/) 상세에서 새 형식 요약과 `포기:` 줄을 확인한다
+- **멈춘 지점**: Opus 5.5 교체를 **커밋만 하고 push 안 함**. 보안 리뷰는 도착(high·medium 없음, low 둘 — 거부 응답을 명시적으로 안 거름 · 재시도 기본 2회로 한 건 최악 90초) → [지적](REVIEW-2026-09-23-opus.md), 아직 안 고침. code-reviewer 결과는 못 받음. 운영은 아직 sonnet-5
+- **다음 할 일**: [Opus 교체 지적](REVIEW-2026-09-23-opus.md) 의 low 둘(`stop_reason !== "end_turn"` 이면 빈 값 · `maxRetries: 0`)을 고치고 code-reviewer 를 다시 돌려 통과하면 사인오프·push → 09-24 7시 실행을 `npm run runs` 로 보고(sonnet 기준선) [운영](https://webdev-colab-kit-adaptive-xi.vercel.app/) 상세에서 새 형식 요약과 `포기:` 줄을 확인한다
 - **대기 중인 결정**: ① signal2 폴더를 계속 둘지
 
 ## 로그
