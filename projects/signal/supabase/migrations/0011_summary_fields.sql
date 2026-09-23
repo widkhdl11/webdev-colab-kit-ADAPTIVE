@@ -16,6 +16,11 @@
 --                    같은 이유로 jsonb 다(질문은 고칠 것을 전제로 만든 값이라 컬럼 이름으로 박지 않는다).
 --                    답(참/거짓)과 칸을 가르는 이유: 근거가 비어도 판정은 살아 있어야 한다(S31d).
 --
+-- `summary_failures` 모델이 답했는데 요약이 형식 검사에 떨어진 횟수(INV-S3 S32). 3 에 닿으면 그 글은
+--                    다시 요약하지 않는다. 이 칸이 없던 동안은 **매번 떨어지는 글**(검사가 `U.S.` 같은 정상
+--                    문장을 두 문장으로 세던 버그)이 3일 창이 끝날 때까지 매 주기 같은 요금을 냈다.
+--                    시간 초과·네트워크 실패는 세지 않는다 — 글 탓이 아니다.
+--
 -- 핵심 셋은 기존 `summary_points` 를 그대로 쓴다. `summary` 에는 한 줄 요약과 같은 글을 넣는다 —
 -- 재시도 조건(`summary is null`)과 카드 미리보기가 이 칸을 읽으므로 비워 두면 같은 글이 매 주기
 -- 다시 요약된다.
@@ -29,6 +34,7 @@
 alter table public.item add column if not exists one_line text;
 alter table public.item add column if not exists summary_table jsonb;
 alter table public.item add column if not exists hot_issue_reasons jsonb;
+alter table public.item add column if not exists summary_failures smallint not null default 0;
 
 comment on column public.item.one_line is
   '한 줄 요약(한 문장·80자 이내). 있으면 새 요약 형식이다. null = 옛 요약 또는 요약 없음.';
@@ -36,3 +42,5 @@ comment on column public.item.summary_table is
   '요약에 딸린 표 {head, rows}. 열 2~3·행 1~8. 비교할 수치가 없는 글은 null.';
 comment on column public.item.hot_issue_reasons is
   '핫이슈 판정에서 참인 질문마다의 근거 한 문장 {질문키: 문장}. null = 근거 저장 이전의 판정.';
+comment on column public.item.summary_failures is
+  '요약이 형식 검사에 떨어진 횟수. 3 이면 다시 요약하지 않는다(출처 요약글로 보인다).';

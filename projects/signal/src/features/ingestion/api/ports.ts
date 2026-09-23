@@ -28,6 +28,7 @@ import {
   ENRICH_MODEL,
   ENRICH_TIMEOUT_MS,
   EXTRACTION_TIMEOUT_MS,
+  SUMMARY_MAX_FAILURES,
 } from "../lib/budgets";
 import { fenceData } from "../lib/data-fence";
 import { fetchPublic } from "../lib/fetch-public";
@@ -415,9 +416,11 @@ export function createIngestPorts(): IngestPorts {
       //   - 요약(INV-S3): summary 가 비어 있고 **근거가 있는** 것. 근거 조건을 여기서 걸지 않으면
       //     근거 없는 항목이 최신 10건을 채워 그 주기의 요약이 0건이 되고, 다음 주기에도
       //     같은 10건이 뽑혀 영원히 굶는다.
+      //     형식 검사에 한도만큼 떨어진 글은 뺀다(INV-S3 S32) — 안 빼면 매 주기 같은 글에 요금이 나간다.
       //   - 번역(INV-S6): title_ko 가 비어 있는 것. **근거는 안 본다** — 번역의 근거는 제목이다.
       const CANDIDATE_FILTER =
-        "title_ko.is.null,and(summary.is.null,or(content_html.neq.,source_excerpt.not.is.null))";
+        `title_ko.is.null,and(summary.is.null,summary_failures.lt.${SUMMARY_MAX_FAILURES},` +
+        "or(content_html.neq.,source_excerpt.not.is.null))";
 
       // 1단계: **랭킹에 필요한 세 칸만** 넓게 받는다.
       // 본문까지 이만큼 받으면 한 건이 2만 자라 응답이 수 MB 가 된다.
@@ -438,7 +441,7 @@ export function createIngestPorts(): IngestPorts {
       const { data, error } = await db
         .from("item")
         .select(
-          "id, title, title_ko, content_html, source_excerpt, summary, official_basis, source_id",
+          "id, title, title_ko, content_html, source_excerpt, summary, summary_failures, official_basis, source_id",
         )
         .in("id", targetIds);
       if (error) throw new Error(error.message);
@@ -449,6 +452,7 @@ export function createIngestPorts(): IngestPorts {
         contentHtml: (r.content_html as string) ?? "",
         sourceExcerpt: (r.source_excerpt as string | null) ?? null,
         summary: (r.summary as string | null) ?? null,
+        summaryFailures: (r.summary_failures as number | null) ?? 0,
         // 모르는 값은 none 으로 떨어뜨린다 — 여기서 통과시키면 화면이 판단 못 하는 값을 그린다.
         officialBasis: toOfficialBasis(r.official_basis),
         sourceId: r.source_id as string,

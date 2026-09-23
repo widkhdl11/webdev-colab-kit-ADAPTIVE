@@ -7,6 +7,7 @@ import {
   HOT_ISSUE_MODEL,
   KEYWORD_MODEL,
   MAX_TITLE_LENGTH,
+  SUMMARY_MAX_FAILURES,
   TOPIC_MODEL,
 } from "./budgets";
 import { MAX_ITEMS_PER_SOURCE, TOPIC_CONCURRENCY, runIngest } from "./run-ingest";
@@ -312,7 +313,7 @@ describe("runIngest — INV-F1·F2·F3 주제 선별", () => {
           contentHtml: "<p>본문</p>",
           sourceExcerpt: null,
           summary: null,
-          officialBasis: "none" as const,
+          summaryFailures: 0, officialBasis: "none" as const,
           sourceId: i.sourceId,
         })),
       ),
@@ -377,7 +378,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
     contentHtml: `<p>본문 ${id}</p>`,
     sourceExcerpt: null,
     summary,
-    officialBasis: "none" as const,
+    summaryFailures: 0, officialBasis: "none" as const,
     sourceId: "s",
   });
 
@@ -412,7 +413,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
     // 트림을 지우면 공백 본문이 근거가 돼 제목만 보고 지어내게 된다(INV-S1 위반).
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "a", title: "제목", titleKo: "번역됨", contentHtml: "   ", sourceExcerpt: null, summary: null, officialBasis: "none" as const, sourceId: "s" },
+        { id: "a", title: "제목", titleKo: "번역됨", contentHtml: "   ", sourceExcerpt: null, summary: null, summaryFailures: 0, officialBasis: "none" as const, sourceId: "s" },
       ]),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
@@ -452,15 +453,75 @@ describe("runIngest — INV-S2·S3 요약", () => {
     expect(report.summaries.failed).toBe(1);
   });
 
-  it("INV-S2 실패경로: 빈 요약이 돌아오면 저장하지 않는다 (재시도 대상으로 남긴다)", async () => {
+  it("INV-S2 실패경로: 빈 요약이 돌아오면 요약은 저장하지 않고 실패 횟수만 올린다", async () => {
     // 빈 문자열을 저장하면 S3 의 재시도 조건에서 빠져나가 영원히 요약 없는 항목이 된다.
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [candidate("a", null)]),
       enrich: vi.fn(async () => ({ summary: "   ", points: [], tags: [], titleKo: null, oneLine: null, table: null, officialByContent: false, usage: USAGE })),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
-    expect(vi.mocked(ports.saveEnrichment)).not.toHaveBeenCalled();
+    expect(vi.mocked(ports.saveEnrichment)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(ports.saveEnrichment).mock.calls[0][1]).toEqual({ summaryFailures: 1 });
     expect(report.summaries.failed).toBe(1);
+  });
+
+  it("INV-S3 (S32): 모델이 답했는데 요약이 불합격이면 실패 횟수를 하나 올린다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [{ ...candidate("a", null), summaryFailures: 1 }]),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: null, oneLine: null, table: null, officialByContent: false, usage: USAGE })),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(vi.mocked(ports.saveEnrichment).mock.calls[0][1]).toEqual({ summaryFailures: 2 });
+    // 아직 한도 전이라 포기 목록에는 없다.
+    expect(report.summaries.gaveUpTitles).toEqual([]);
+  });
+
+  it(`INV-S3 (S32) 실패경로: 실패가 ${SUMMARY_MAX_FAILURES}번 쌓인 글은 다시 부르지 않는다`, async () => {
+    // 조회 계층의 필터만 믿으면 그 필터를 지워도 테스트가 통과한다 — 여기서도 판정한다.
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [
+        { ...candidate("done", null), summaryFailures: SUMMARY_MAX_FAILURES },
+        { ...candidate("left", null), summaryFailures: SUMMARY_MAX_FAILURES - 1 },
+      ]),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(vi.mocked(ports.enrich)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(ports.enrich).mock.calls[0][0].title).toBe("제목 left");
+    expect(report.summaries.attempted).toBe(1);
+  });
+
+  it("INV-S3 (S32): 한도에 닿는 실패는 포기 목록에 제목을 남긴다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [
+        { ...candidate("last", null), summaryFailures: SUMMARY_MAX_FAILURES - 1 },
+      ]),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: null, oneLine: null, table: null, officialByContent: false, usage: USAGE })),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(vi.mocked(ports.saveEnrichment).mock.calls[0][1]).toEqual({
+      summaryFailures: SUMMARY_MAX_FAILURES,
+    });
+    expect(report.summaries.gaveUpTitles).toEqual(["제목 last"]);
+  });
+
+  it("INV-S3 실패경로: 모델 호출 자체가 죽으면 실패 횟수를 올리지 않는다", async () => {
+    // 네트워크·시간 초과는 글 탓이 아니다 — 세면 멀쩡한 글이 장애 한 번에 포기된다.
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [candidate("a", null)]),
+      enrich: vi.fn(async () => {
+        throw new Error("timeout");
+      }),
+    });
+    await runIngest({ sources: [], ports, now: NOW });
+    expect(vi.mocked(ports.saveEnrichment)).not.toHaveBeenCalled();
+  });
+
+  it("INV-S3: 요약에 성공하면 실패 횟수는 건드리지 않는다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [{ ...candidate("a", null), summaryFailures: 2 }]),
+    });
+    await runIngest({ sources: [], ports, now: NOW });
+    expect(Object.keys(vi.mocked(ports.saveEnrichment).mock.calls[0][1])).not.toContain("summaryFailures");
   });
 
   it("INV-S7: 핵심 항목은 요약과 함께 저장된다", async () => {
@@ -508,7 +569,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
     contentHtml: "",
     sourceExcerpt: null,
     summary: null,
-    officialBasis: "none" as const,
+    summaryFailures: 0, officialBasis: "none" as const,
     sourceId: "s",
     ...over,
   });
@@ -575,7 +636,8 @@ describe("runIngest — INV-S6 제목 번역", () => {
     });
     await runIngest({ sources: [], ports, now: NOW });
     const patch = vi.mocked(ports.saveEnrichment).mock.calls[0][1];
-    expect(patch).toEqual({ titleKo: "번역" });
+    // 요약 불합격은 실패 횟수로만 남는다(INV-S3 S32).
+    expect(patch).toEqual({ titleKo: "번역", summaryFailures: 1 });
     expect(Object.keys(patch)).not.toContain("summary");
   });
 
@@ -636,7 +698,7 @@ describe("runIngest — INV-S5 본문 추출", () => {
         throw new Error("후보 조회 실패");
       }),
       listEnrichCandidates: vi.fn(async () => [
-        { id: "s", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨", officialBasis: "none" as const, sourceId: "s" },
+        { id: "s", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨", summaryFailures: 0, officialBasis: "none" as const, sourceId: "s" },
       ]),
     });
     const report = await runIngest({ sources: [source("s")], ports, now: NOW });
@@ -667,7 +729,7 @@ describe("runIngest — INV-S3 근거가 없으면 요약하지 않는다", () =
     // 제목만 주고 요약시키면 모델이 지어낸다 — INV-S1 위반이다.
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "a", title: "Dithered QR Codes", contentHtml: "", sourceExcerpt: null, summary: null, titleKo: "번역됨", officialBasis: "none" as const, sourceId: "s" },
+        { id: "a", title: "Dithered QR Codes", contentHtml: "", sourceExcerpt: null, summary: null, titleKo: "번역됨", summaryFailures: 0, officialBasis: "none" as const, sourceId: "s" },
       ]),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
@@ -686,7 +748,7 @@ describe("runIngest — INV-S3 근거가 없으면 요약하지 않는다", () =
           title: "제목",
           contentHtml: "",
           sourceExcerpt: "OpenAI 가 새 평가 결과를 공개했다.",
-          summary: null, titleKo: "번역됨", officialBasis: "none" as const,
+          summary: null, titleKo: "번역됨", summaryFailures: 0, officialBasis: "none" as const,
           sourceId: "s",
         },
       ]),
@@ -700,7 +762,7 @@ describe("runIngest — INV-S3 근거가 없으면 요약하지 않는다", () =
   it("INV-S3: 본문이 있으면 본문을 근거로 쓴다 (요약글보다 낫다)", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "a", title: "제목", contentHtml: "<p>긴 본문</p>", sourceExcerpt: "짧은 요약글", summary: null, titleKo: "번역됨", officialBasis: "none" as const, sourceId: "s" },
+        { id: "a", title: "제목", contentHtml: "<p>긴 본문</p>", sourceExcerpt: "짧은 요약글", summary: null, titleKo: "번역됨", summaryFailures: 0, officialBasis: "none" as const, sourceId: "s" },
       ]),
     });
     await runIngest({ sources: [], ports, now: NOW });
@@ -714,7 +776,7 @@ describe("runIngest — 요약 저장 (태그는 여기서 안 만든다)", () =
     // 뱃지 키워드가 그 자리를 물려받았고 별도 단계(runKeywords)로 돈다.
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "a", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨", officialBasis: "none" as const, sourceId: "s" },
+        { id: "a", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨", summaryFailures: 0, officialBasis: "none" as const, sourceId: "s" },
       ]),
       enrich: vi.fn(async () => ({
         summary: "요약문",
@@ -740,7 +802,7 @@ describe("runIngest — 요약 저장 (태그는 여기서 안 만든다)", () =
     // 조용히 넘기면 이 항목은 다음 주기에 요약 후보가 아니라서 태그를 붙일 기회가 없다.
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "a", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨", officialBasis: "none" as const, sourceId: "s" },
+        { id: "a", title: "제목", contentHtml: "<p>본문</p>", sourceExcerpt: null, summary: null, titleKo: "번역됨", summaryFailures: 0, officialBasis: "none" as const, sourceId: "s" },
       ]),
       saveEnrichment: vi.fn(async () => {
         throw new Error("태그 저장 실패");
@@ -761,7 +823,7 @@ describe("runIngest — 토큰 사용량 보고", () => {
     contentHtml: `<p>본문 ${id}</p>`,
     sourceExcerpt: null,
     summary: null,
-    officialBasis: "none" as const,
+    summaryFailures: 0, officialBasis: "none" as const,
     sourceId: "s",
   });
 
@@ -900,7 +962,7 @@ describe("runIngest — INV-O2 공식 여부의 근거", () => {
     contentHtml: "<p>본문</p>",
     sourceExcerpt: null,
     summary: null,
-    officialBasis: "none" as const,
+    summaryFailures: 0, officialBasis: "none" as const,
     sourceId: "s",
     ...over,
   });
@@ -971,7 +1033,8 @@ describe("runIngest — INV-O2 공식 여부의 근거", () => {
       })),
     });
     await runIngest({ sources: [], ports, now: NOW });
-    expect(vi.mocked(ports.saveEnrichment)).not.toHaveBeenCalled();
+    // 불합격 횟수만 저장된다(INV-S3 S32) — 공식 근거는 패치에 없어야 한다.
+    expect(vi.mocked(ports.saveEnrichment).mock.calls[0][1]).toEqual({ summaryFailures: 1 });
   });
 
   it("INV-O2 (CS2 연계): 번역만 하는 항목에는 공식 판정을 요청하지 않는다", async () => {
@@ -1015,7 +1078,7 @@ describe("runIngest — 실패한 항목을 지목한다", () => {
     contentHtml: `<p>본문 ${id}</p>`,
     sourceExcerpt: null,
     summary: null,
-    officialBasis: "none" as const,
+    summaryFailures: 0, officialBasis: "none" as const,
     sourceId: "s",
     ...over,
   });
@@ -1375,7 +1438,7 @@ describe("runIngest — 실패 이유를 남긴다", () => {
   it("요약이 실패하면 그 이유가 리포트에 남는다", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [
-        { id: "1", title: "T1", titleKo: null, contentHtml: "<p>근거</p>", sourceExcerpt: null, summary: null, officialBasis: "none" as const, sourceId: "s" },
+        { id: "1", title: "T1", titleKo: null, contentHtml: "<p>근거</p>", sourceExcerpt: null, summary: null, summaryFailures: 0, officialBasis: "none" as const, sourceId: "s" },
       ]),
       enrich: vi.fn(async () => {
         throw new Error("400 크레딧 잔액이 부족합니다");
@@ -1390,7 +1453,7 @@ describe("runIngest — 실패 이유를 남긴다", () => {
       listEnrichCandidates: vi.fn(async () =>
         ["1", "2", "3"].map((id) => ({
           id, title: `T${id}`, titleKo: null, contentHtml: "<p>근거</p>",
-          sourceExcerpt: null, summary: null, officialBasis: "none" as const, sourceId: "s",
+          sourceExcerpt: null, summary: null, summaryFailures: 0, officialBasis: "none" as const, sourceId: "s",
         })),
       ),
       enrich: vi.fn(async () => {
@@ -1440,7 +1503,7 @@ describe("runIngest — 번역 실패 이유도 남는다", () => {
           contentHtml: "<p>본문</p>",
           sourceExcerpt: null,
           summary: null,
-          officialBasis: "none" as const,
+          summaryFailures: 0, officialBasis: "none" as const,
           sourceId: "s",
         },
       ]),
@@ -1565,7 +1628,7 @@ describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)"
       contentHtml: "<p>본문</p>",
       sourceExcerpt: null,
       summary: null,
-      officialBasis: "none" as const,
+      summaryFailures: 0, officialBasis: "none" as const,
       sourceId: "s",
     }));
     const ports = makePorts({ listEnrichCandidates: vi.fn(async () => candidates) });
@@ -1593,7 +1656,7 @@ describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)"
       contentHtml: "<p>본문</p>",
       sourceExcerpt: null,
       summary: null,
-      officialBasis: "none" as const,
+      summaryFailures: 0, officialBasis: "none" as const,
       sourceId: "s",
     }));
 
@@ -1857,7 +1920,7 @@ describe("runIngest — 하루 요금 상한", () => {
           contentHtml: "<p>본문</p>",
           sourceExcerpt: null,
           summary: null,
-          officialBasis: "none" as const,
+          summaryFailures: 0, officialBasis: "none" as const,
           sourceId: "s",
         },
       ]),
@@ -1913,7 +1976,7 @@ describe("runIngest — 하루 요금 상한", () => {
           contentHtml: "<p>본문</p>",
           sourceExcerpt: null,
           summary: null,
-          officialBasis: "none" as const,
+          summaryFailures: 0, officialBasis: "none" as const,
           sourceId: "s",
         },
       ]),
@@ -1939,7 +2002,7 @@ describe("runIngest — 하루 요금 상한", () => {
           contentHtml: "<p>본문</p>",
           sourceExcerpt: null,
           summary: null,
-          officialBasis: "none" as const,
+          summaryFailures: 0, officialBasis: "none" as const,
           sourceId: "s",
         },
       ]),
@@ -1962,7 +2025,7 @@ describe("runIngest — 하루 요금 상한", () => {
       contentHtml: "<p>본문</p>",
       sourceExcerpt: null,
       summary: null,
-      officialBasis: "none" as const,
+      summaryFailures: 0, officialBasis: "none" as const,
       sourceId: "s",
     }));
     const enrich = vi.fn(async () => ({
@@ -2000,7 +2063,7 @@ describe("runIngest — 하루 요금 상한", () => {
       contentHtml: "<p>본문</p>",
       sourceExcerpt: null,
       summary: null,
-      officialBasis: "none" as const,
+      summaryFailures: 0, officialBasis: "none" as const,
       sourceId: "s",
     });
     const done: string[] = [];

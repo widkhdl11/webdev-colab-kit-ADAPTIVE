@@ -98,7 +98,7 @@ function report(over: Partial<IngestReport> = {}): IngestReport {
     failedSources: [],
     topicFilter: { ...NO_TOPIC_FILTER, filtered: 1, filteredTitles: ["걸러진 제목"] },
     extraction: { attempted: 0, succeeded: 0, failed: 0, failedUrls: [], failureReasons: [], error: null },
-    summaries: { attempted: 0, succeeded: 0, failed: 0, skippedNoEvidence: 0, failedTitles: [], failureReasons: [], error: null },
+    summaries: { attempted: 0, succeeded: 0, failed: 0, skippedNoEvidence: 0, failedTitles: [], gaveUpTitles: [], failureReasons: [], error: null },
     titles: { attempted: 0, succeeded: 0, failed: 0, failedTitles: [], failureReasons: [], error: null },
     usage: NO_USAGE,
     enrichUsageBySource: {},

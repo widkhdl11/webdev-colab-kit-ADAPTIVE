@@ -32,6 +32,11 @@ export interface EnrichCandidate {
   sourceExcerpt: string | null;
   summary: string | null;
   /**
+   * 모델이 답했는데 요약이 형식 검사에 떨어진 횟수 (INV-S3 S32, 0011). `SUMMARY_MAX_FAILURES`
+   * 에 닿으면 그 글은 다시 요약하지 않는다 — 안 들고 오면 파이프라인이 한도를 판정할 수 없다.
+   */
+  summaryFailures: number;
+  /**
    * 지금 저장돼 있는 공식 근거 (INV-O2). 모델 판단을 쓸지 말지가 이 값으로 갈린다 —
    * 이미 `byUrl` 이면 덮지 않는다. 안 들고 오면 그 판단을 파이프라인이 할 수 없다.
    */
@@ -294,6 +299,8 @@ export interface IngestPorts extends KeywordPorts, HotIssuePorts {
       points?: string[];
       titleKo?: string;
       officialBasis?: OfficialBasis;
+      /** 요약 불합격 누적 횟수 (INV-S3 S32, 0011). 불합격한 호출에만 온다. */
+      summaryFailures?: number;
     },
   ): Promise<void>;
 }
@@ -489,6 +496,11 @@ export interface IngestReport {
     skippedNoEvidence: number;
     /** 요약에 실패한 항목의 제목. 걸러진 제목을 남기는 것(INV-F2)과 같은 이유다. */
     failedTitles: string[];
+    /**
+     * 이번 실패로 한도(`SUMMARY_MAX_FAILURES`)에 닿아 **앞으로 다시 요약하지 않을** 글의 제목
+     * (INV-S3 S32). 조용히 빠지면 검사가 정상 문장을 떨어뜨리는 버그가 있어도 안 보인다.
+     */
+    gaveUpTitles: string[];
   };
   /** 제목 번역 (INV-S6). 요약과 같은 호출에서 처리되지만 조건이 달라 따로 센다. */
   titles: StageReport & {

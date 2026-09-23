@@ -26,4 +26,9 @@ describe("요약 저장 줄 (ingestion-ranking INV-S8)", () => {
     const row = toEnrichmentRow({ titleKo: "제목" }, NOW);
     expect(row).toEqual({ updated_at: NOW, title_ko: "제목" });
   });
+
+  it("INV-S3 (S32): 요약 불합격 횟수는 summary_failures 칸으로 가고 요약 칸은 안 건드린다", () => {
+    // 이 줄이 빠지면 한도가 영영 안 차서 같은 글에 매 주기 요금이 나간다.
+    expect(toEnrichmentRow({ summaryFailures: 2 }, NOW)).toEqual({ updated_at: NOW, summary_failures: 2 });
+  });
 });

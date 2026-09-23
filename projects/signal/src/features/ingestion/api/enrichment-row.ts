@@ -21,5 +21,7 @@ export function toEnrichmentRow(patch: EnrichmentPatch, nowIso: string): Record<
   if (patch.titleKo !== undefined) row.title_ko = patch.titleKo;
   // 파이프라인이 "덮어도 되는 경우"에만 실어 보낸다 (INV-O2) — 여기서 다시 판단하지 않는다.
   if (patch.officialBasis !== undefined) row.official_basis = patch.officialBasis;
+  // 요약 불합격 횟수 (INV-S3 S32, 0011). 이 줄이 빠지면 한도가 영영 안 차 같은 글에 매 주기 요금이 나간다.
+  if (patch.summaryFailures !== undefined) row.summary_failures = patch.summaryFailures;
   return row;
 }

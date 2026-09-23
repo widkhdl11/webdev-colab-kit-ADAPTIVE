@@ -26,16 +26,61 @@ export interface SummaryTable {
 }
 
 /**
- * 문장 끝 — 마침표·물음표·느낌표 **뒤가 공백이거나 끝**일 때만 센다.
- * `5.5`·`$4.00` 처럼 숫자 안의 마침표는 뒤에 글자가 붙어 있어 세지 않는다.
+ * 문장 부호 뒤에 붙어도 문장 끝으로 보는 닫는 기호 — `…했다"` · `…했다)` · `「…했다」`.
+ * 이걸 떼지 않으면 인용으로 끝나는 정상 문장을 명사 조각으로 떨어뜨린다(2026-09-23 코드 리뷰).
  */
-const SENTENCE_END = /[.!?](?=\s|$)/g;
+const CLOSERS = "\"'”’)\\]」』》";
+const TRAILING_CLOSERS = new RegExp(`[${CLOSERS}]+$`);
+
+/**
+ * 문장 끝 후보 — 문장 부호(연달아 와도 하나) + 닫는 기호, **뒤가 공백이거나 끝**일 때만.
+ * `5.5`·`$4.00` 처럼 숫자 안의 마침표는 뒤에 글자가 붙어 있어 후보가 아니다.
+ */
+const SENTENCE_END = new RegExp(`[.!?]+[${CLOSERS}]*(?=\\s|$)`, "g");
+
+/**
+ * 마침표로 끝나도 문장 끝이 아닌 영어 약어. 한 글자짜리(`U.S.`·`e.g.`의 각 글자)는 목록 없이
+ * 규칙으로 거른다. 대소문자는 가리지 않는다.
+ */
+const ABBREVIATIONS = new Set([
+  "vs", "inc", "co", "corp", "ltd", "llc", "no", "nos", "mr", "mrs", "ms", "dr", "prof",
+  "jr", "sr", "st", "etc", "approx", "dept", "est", "fig", "vol", "ver",
+  "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+]);
+
+/** 이 후보가 약어·말줄임표의 마침표라 문장 끝이 아닌가. */
+function isFalseEnd(s: string, index: number, mark: string): boolean {
+  const punct = mark.replace(TRAILING_CLOSERS, "");
+  // 마침표 둘 이상(`..`·`...`)은 말줄임표다. `?!` 같은 조합은 문장 끝 그대로다.
+  if (/^\.{2,}$/.test(punct)) return true;
+  if (punct !== ".") return false;
+  const word = /([A-Za-z]+)$/.exec(s.slice(0, index));
+  if (word === null) return false;
+  return word[1].length === 1 || ABBREVIATIONS.has(word[1].toLowerCase());
+}
+
+/**
+ * 문장 **사이의** 끝 개수 — 마지막 문장 부호는 세지 않는다. 마지막이 약어로 끝나도
+ * (`… 시장에 들어온 U.S.`) 그건 문장의 끝이 맞기 때문이다.
+ */
+function innerSentenceEnds(s: string): number {
+  let count = 0;
+  for (const m of s.matchAll(SENTENCE_END)) {
+    const index = m.index ?? 0;
+    if (index + m[0].length >= s.length) continue;
+    if (!isFalseEnd(s, index, m[0])) count += 1;
+  }
+  return count;
+}
 
 const collapse = (s: string) => s.replace(/\s+/g, " ").trim();
 
-/** 완결 문장인가 — 문장 부호로 끝난다. 명사 조각(「가격 인하」)을 거른다. */
+/**
+ * 완결 문장인가 — 문장 부호로 끝난다(뒤에 붙은 닫는 따옴표·괄호는 떼고 본다).
+ * 명사 조각(「가격 인하」)을 거른다.
+ */
 export function isCompleteSentence(value: string): boolean {
-  return /[.!?]$/.test(collapse(value));
+  return /[.!?]$/.test(collapse(value).replace(TRAILING_CLOSERS, ""));
 }
 
 /** 한 줄 요약인가 (INV-S8) — 한 문장, 80자 이내, 문장 부호로 끝난다. */
@@ -43,7 +88,7 @@ export function isOneLine(value: string): boolean {
   const s = collapse(value);
   if (s === "" || [...s].length > ONE_LINE_MAX_CHARS) return false;
   if (!isCompleteSentence(s)) return false;
-  return (s.match(SENTENCE_END) ?? []).length === 1;
+  return innerSentenceEnds(s) === 0;
 }
 
 /**

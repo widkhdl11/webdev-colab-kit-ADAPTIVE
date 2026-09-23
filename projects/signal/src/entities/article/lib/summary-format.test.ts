@@ -31,6 +31,31 @@ describe("한 줄 요약 (ingestion-ranking INV-S8)", () => {
   it("숫자 안의 마침표(버전·가격)는 문장 끝으로 세지 않는다", () => {
     expect(isOneLine("앤스로픽이 Opus 5.5를 $4.00에 내놓았다.")).toBe(true);
   });
+
+  it.each([
+    ["나라 약어", "U.S. 정부가 AI 칩 수출 규제를 다시 넓혔다."],
+    ["소문자 약어", "e.g. 캐싱처럼 반복 호출이 싼 기능이 늘었다."],
+    ["vs.", "OpenAI vs. 앤스로픽 가격 경쟁이 다시 붙었다."],
+    ["회사 약어", "Nvidia Inc. 가 새 추론 칩을 내놓았다."],
+    ["번호 약어", "No. 1 모델 자리를 새 오픈 모델이 가져갔다."],
+    ["말줄임표", "업계는 반응이... 엇갈렸다고 전했다."],
+  ])("INV-S8: 약어·말줄임표 안의 마침표는 문장 끝으로 세지 않는다 — %s", (_label, line) => {
+    expect(isOneLine(line)).toBe(true);
+  });
+
+  it.each([
+    ["닫는 큰따옴표", "CEO는 \"가격을 더 내리겠다\"고 말했다.\""],
+    ["닫는 괄호", "새 모델이 나왔다(가격은 그대로다.)"],
+    ["낫표", "회사는 「출시를 미룬다」고 했다."],
+  ])("INV-S8: 닫는 따옴표·괄호로 끝나도 완결 문장이다 — %s", (_label, line) => {
+    expect(isOneLine(line)).toBe(true);
+  });
+
+  it("INV-S8 실패경로: 약어를 걸러도 진짜 두 문장은 여전히 두 문장이다", () => {
+    expect(isOneLine("U.S. 정부가 규제를 넓혔다. 업계는 반발했다.")).toBe(false);
+    expect(isOneLine("가격을 내렸다고 했다.\" 업계는 반발했다.")).toBe(false);
+    expect(isOneLine("정말 내렸나? 그렇다.")).toBe(false);
+  });
 });
 
 describe("핵심 셋 (ingestion-ranking INV-S7)", () => {
@@ -62,6 +87,12 @@ describe("핵심 셋 (ingestion-ranking INV-S7)", () => {
   it("완결 문장 판정 — 문장 부호로 끝나야 한다", () => {
     expect(isCompleteSentence("가격이 내렸다.")).toBe(true);
     expect(isCompleteSentence("가격 인하")).toBe(false);
+  });
+
+  it("INV-S7: 핵심이 닫는 따옴표·괄호로 끝나도 받는다", () => {
+    const quoted = ["CEO는 \"가격을 더 내린다.\"", "새 모델이 나왔다(유료.)", "회사는 「미룬다」고 했다."];
+    expect(parseKeyPoints(quoted)).toEqual(quoted);
+    expect(isCompleteSentence("회사는 \"미룬다\"")).toBe(false);
   });
 });
 

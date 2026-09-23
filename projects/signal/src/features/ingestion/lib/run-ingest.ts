@@ -18,6 +18,7 @@ import {
   MAX_FAILURE_REASON_LENGTH,
   MAX_FAILURE_REASONS,
   MAX_TITLE_LENGTH,
+  SUMMARY_MAX_FAILURES,
   TOPIC_CONCURRENCY,
   WORST_CASE_MS,
 } from "./budgets";
@@ -463,6 +464,7 @@ async function runEnrichment(
     succeeded: 0,
     skippedNoEvidence: 0,
     failedTitles: [] as string[],
+    gaveUpTitles: [] as string[],
     failureReasons: [] as string[],
     error: null as string | null,
   };
@@ -532,7 +534,9 @@ async function runEnrichment(
     const evidence = item.contentHtml.trim() || (item.sourceExcerpt ?? "").trim();
     const summaryMissing = (item.summary ?? "").trim() === "";
     const needTitle = (item.titleKo ?? "").trim() === "";
-    const needSummary = summaryMissing && evidence !== "";
+    // 형식 검사에 한도만큼 떨어진 글은 포기한다 (INV-S3 S32) — 조회 계층도 거르지만 여기서 다시 본다.
+    const gaveUp = item.summaryFailures >= SUMMARY_MAX_FAILURES;
+    const needSummary = summaryMissing && evidence !== "" && !gaveUp;
 
     // 근거가 없어 요약을 포기한 건 실패와 따로 센다 — 재시도해도 소용없다 (INV-S3).
     if (summaryMissing && evidence === "") summaries.skippedNoEvidence += 1;
@@ -577,7 +581,11 @@ async function runEnrichment(
         tags?: string[];
         titleKo?: string;
         officialBasis?: OfficialBasis;
+        summaryFailures?: number;
       } = {};
+      // 모델이 답했는데 요약이 불합격이면 횟수를 남긴다 (INV-S3 S32). 호출 자체가 죽은 경우
+      // (시간 초과·네트워크)는 여기 오지 않는다 — 글 탓이 아니라서 세지 않는다.
+      let failureReady = false;
 
       if (needSummary) {
         // 빈 요약을 저장하면 다음 주기의 재시도 조건에서 빠져나가 영영 요약 없는 항목이 된다.
@@ -585,6 +593,9 @@ async function runEnrichment(
         if (text === "") {
           summaries.failedTitles.push(item.title);
           summaryCounted = true;
+          patch.summaryFailures = item.summaryFailures + 1;
+          failureReady = true;
+          if (patch.summaryFailures >= SUMMARY_MAX_FAILURES) summaries.gaveUpTitles.push(item.title);
         } else {
           patch.summary = text;
           // 새 형식의 칸 (INV-S8). 한 줄 요약이 없으면 요약 자체가 실패로 왔다(parse-enrich).
@@ -620,7 +631,7 @@ async function runEnrichment(
       }
 
       // 저장할 게 없으면 부르지 않는다 — 빈 update 는 왕복만 늘린다.
-      if (!summaryReady && !titleReady && !officialReady) continue;
+      if (!summaryReady && !titleReady && !officialReady && !failureReady) continue;
       await ports.saveEnrichment(item.id, patch);
       if (summaryReady) summaries.succeeded += 1;
       if (titleReady) titles.succeeded += 1;

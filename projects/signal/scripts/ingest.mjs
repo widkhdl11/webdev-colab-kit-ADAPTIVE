@@ -133,11 +133,13 @@ console.log(
 for (const url of extraction.failedUrls) console.log(`      실패: ${plain(url)}`);
 for (const why of extraction.failureReasons ?? []) console.log(`      실패 이유: ${plain(why)}`);
 console.log(
-  `  요약        시도 ${summaries.attempted} · 성공 ${summaries.succeeded} · 실패 ${summaries.failed} · 근거없음 ${summaries.skippedNoEvidence}` +
+  `  요약        시도 ${summaries.attempted} · 성공 ${summaries.succeeded} · 실패 ${summaries.failed} · 근거없음 ${summaries.skippedNoEvidence} · 포기 ${summaries.gaveUpTitles?.length ?? 0}` +
     (summaries.error ? ` · ${plain(summaries.error)}` : ""),
 );
 for (const title of summaries.failedTitles) console.log(`      실패: ${plain(title)}`);
 for (const why of summaries.failureReasons ?? []) console.log(`      실패 이유: ${plain(why)}`);
+// 한도에 닿아 앞으로 요약하지 않을 글 (INV-S3 S32) — 같은 글이 계속 여기 뜨면 형식 검사를 의심한다.
+for (const title of summaries.gaveUpTitles ?? []) console.log(`      포기: ${plain(title)}`);
 console.log(
   `  제목 번역   시도 ${titles.attempted} · 성공 ${titles.succeeded} · 실패 ${titles.failed}` +
     (titles.error ? ` · ${plain(titles.error)}` : ""),
