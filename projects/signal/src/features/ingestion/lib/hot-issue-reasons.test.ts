@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SIGNAL_KEYS } from "@/entities/article";
+import { SIGNAL_KEYS, SIGNAL_STORED_KEYS } from "@/entities/article";
 import { HOT_ISSUE_MAX_TOKENS } from "./budgets";
 import { buildHotIssuePrompt } from "./build-hot-issue-prompt";
 import { parseHotIssue } from "./parse-hot-issue";
@@ -47,6 +47,6 @@ describe("signal 포인트 근거 — hot-issue INV-G2 (2026-09-23)", () => {
   });
 
   it("수집 쪽 질문 키와 화면 쪽 키가 같다 — 어긋나면 화면에 signal 포인트가 안 선다", () => {
-    expect(HOT_ISSUE_QUESTIONS.map((q) => q.key)).toEqual([...SIGNAL_KEYS]);
+    expect(HOT_ISSUE_QUESTIONS.map((q) => q.key)).toEqual(SIGNAL_KEYS.map((k) => SIGNAL_STORED_KEYS[k]));
   });
 });

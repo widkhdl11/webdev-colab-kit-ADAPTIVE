@@ -598,8 +598,9 @@ async function runEnrichment(
           if (patch.summaryFailures >= SUMMARY_MAX_FAILURES) summaries.gaveUpTitles.push(item.title);
         } else {
           patch.summary = text;
-          // 새 형식의 칸 (INV-S8). 한 줄 요약이 없으면 요약 자체가 실패로 왔다(parse-enrich).
-          if (out.oneLine !== null) patch.oneLine = out.oneLine;
+          // 새 형식의 칸 (INV-S8). 성공한 요약의 summary 는 한 줄 요약 그 자체다(parse-enrich) —
+          // 한 줄 요약이 없으면 요약이 실패로 와서 여기 오지 않는다.
+          patch.oneLine = text;
           patch.table = out.table;
           patch.points = out.points;
           summaryReady = true;

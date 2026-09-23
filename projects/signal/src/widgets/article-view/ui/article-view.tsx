@@ -12,9 +12,9 @@ import { AiSummaryBody } from "./summary-markup";
  * 화면에는 이 넷 밖의 말이 나오지 않는다. 카드 뱃지로도 쓸 수 있게 두 단어 이내다.
  */
 const SIGNAL_LABELS: Record<SignalKey, string> = {
-  변화: "실무 영향",
-  방향: "흐름 변화",
-  기회: "시한 있음",
+  change: "실무 영향",
+  direction: "흐름 변화",
+  window: "시한 있음",
 };
 
 /** 이전/다음 한 칸. 주소는 피드 상태를 실어 페이지가 만든다(`articleHref`). */
@@ -47,8 +47,8 @@ export function ArticleView({
   const summary = displaySummary(article);
   const title = displayTitle(article);
   const source = sourcePresentation(article.sourceId, article.sourceName);
-  // 한 줄 요약은 AI 요약일 때만 쓴다 — 출처 글을 보여주는 화면에 우리 문장을 섞지 않는다(INV-S2).
-  const oneLine = summary?.isAi ? (article.oneLine ?? null) : null;
+  // 한 줄 요약은 AI 요약일 때만 온다(INV-S2) — 그 판단도 displaySummary 가 한다.
+  const oneLine = summary?.oneLine ?? null;
   const signalPointsList = article.signalPoints ?? [];
   // 분야 먼저, 사건종류 다음 — 색이 없어진 만큼 순서가 축을 나른다.
   const orderedTags = [
@@ -123,7 +123,7 @@ export function ArticleView({
           </h2>
           {summary.isAi ? (
             <AiSummaryBody
-              oneLine={oneLine}
+              isLegacy={summary.isLegacy}
               legacyText={summary.text}
               points={summary.points}
               table={article.summaryTable ?? null}
@@ -157,8 +157,12 @@ export function ArticleView({
               <span className={styles.actClose}>접기 ▴</span>
             </span>
           </summary>
-          <article className={styles.prose}>
-            <p className={styles.sourceNote}>아래는 출처에서 가져온 원문입니다.</p>
+          {/* 원문의 언어를 건다(소스 설정) — 안내 문장은 우리 말이라 ko 로 되돌린다. 설정에 없는
+              소스면 lang 을 걸지 않는다: 틀린 lang 은 발음을 잘못 바꾼다. */}
+          <article className={styles.prose} lang={source.originalLang ?? undefined}>
+            <p className={styles.sourceNote} lang="ko">
+              아래는 출처에서 가져온 원문입니다.
+            </p>
             <ArticleBody html={article.contentHtml} />
           </article>
         </details>

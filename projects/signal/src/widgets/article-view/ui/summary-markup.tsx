@@ -10,19 +10,18 @@ import styles from "./article-view.module.css";
  * 순서는 2026-09-23 승인 시안(article-detail-v2): 핵심 번호 셋 → 표. 한 줄 요약은 제목 아래에 선다.
  */
 export function AiSummaryBody({
-  oneLine,
+  isLegacy,
   legacyText,
   points,
   table,
 }: {
-  /** 한 줄 요약. 있으면 새 형식이다 — 한 줄 요약 자체는 제목 아래에 따로 선다. */
-  oneLine: string | null;
-  /** 옛 요약 문단(한 줄 요약이 없을 때만 쓴다). */
+  /** 옛 형식인가 — 판정은 displaySummary 가 한다. 새 형식의 한 줄 요약은 제목 아래에 따로 선다. */
+  isLegacy: boolean;
+  /** 옛 요약 문단(옛 형식일 때만 쓴다). */
   legacyText: string;
   points: string[];
   table: SummaryTable | null;
 }) {
-  const isLegacy = oneLine === null;
   return (
     <>
       {points.length > 0 ? (
@@ -49,6 +48,8 @@ export function AiSummaryBody({
 function SummaryTableView({ table }: { table: SummaryTable }) {
   return (
     <table className={styles.summaryTable}>
+      {/* 표에 이름이 없으면 스크린리더가 「표」라고만 읽는다 — 눈에는 절 제목이 이름을 대신한다. */}
+      <caption className="sr-only">요약 표</caption>
       <thead>
         <tr>
           {table.head.map((cell, j) => (

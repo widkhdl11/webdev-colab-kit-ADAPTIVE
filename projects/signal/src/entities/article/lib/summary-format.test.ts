@@ -130,29 +130,29 @@ describe("요약 표 칸 (content-safety INV-D7 · ingestion-ranking S30)", () =
 describe("signal 포인트 — 참인 질문과 근거 (hot-issue INV-G2)", () => {
   it("INV-G2: 참인 질문만, 정해진 순서로, 근거와 함께 돌려준다", () => {
     expect(
-      signalPoints({ 기회: true, 방향: false, 변화: true }, { 변화: "비용이 준다.", 기회: "패치 전이 위험하다." }),
+      signalPoints({ "기회": true, "방향": false, "변화": true }, { "변화": "비용이 준다.", "기회": "패치 전이 위험하다." }),
     ).toEqual([
-      { key: "변화", reason: "비용이 준다." },
-      { key: "기회", reason: "패치 전이 위험하다." },
+      { key: "change", reason: "비용이 준다." },
+      { key: "window", reason: "패치 전이 위험하다." },
     ]);
   });
 
   it("INV-G2 (S31d, 실패경로): 근거가 없어도 참인 질문은 남는다", () => {
-    expect(signalPoints({ 변화: true }, null)).toEqual([{ key: "변화", reason: null }]);
-    expect(signalPoints({ 변화: true }, { 변화: "  " })).toEqual([{ key: "변화", reason: null }]);
+    expect(signalPoints({ "변화": true }, null)).toEqual([{ key: "change", reason: null }]);
+    expect(signalPoints({ "변화": true }, { "변화": "  " })).toEqual([{ key: "change", reason: null }]);
   });
 
   it("INV-G2 실패경로: 판정이 없으면 빈 목록 — 절을 그리지 않는다", () => {
     expect(signalPoints(null, null)).toEqual([]);
-    expect(signalPoints({ 변화: false, 방향: false, 기회: false }, null)).toEqual([]);
+    expect(signalPoints({ "변화": false, "방향": false, "기회": false }, null)).toEqual([]);
   });
 
   it("INV-G2 실패경로: 모르는 질문 키는 버린다 — 화면에 라벨 없는 줄이 서면 안 된다", () => {
-    expect(signalPoints({ 새질문: true }, { 새질문: "근거." })).toEqual([]);
+    expect(signalPoints({ "새질문": true }, { "새질문": "근거." })).toEqual([]);
   });
 
   it("실패경로: 모양이 틀린 값은 판정이 없는 것으로 본다", () => {
     expect(signalPoints("참", "근거")).toEqual([]);
-    expect(signalPoints({ 변화: "true" }, null)).toEqual([]);
+    expect(signalPoints({ "변화": "true" }, null)).toEqual([]);
   });
 });

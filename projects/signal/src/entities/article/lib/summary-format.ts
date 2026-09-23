@@ -120,13 +120,24 @@ export function parseSummaryTable(value: unknown): SummaryTable | null {
 }
 
 /**
- * 핫이슈 판정 질문의 키와 순서 (hot-issue INV-G2).
+ * 핫이슈 판정 질문의 id 와 순서 (hot-issue INV-G2). 순서가 화면 순서다.
  *
- * 수집 쪽 질문 목록(`HOT_ISSUE_QUESTIONS`)과 키가 같아야 한다 — 그쪽 테스트가 둘을 대조한다.
- * 여기 두는 이유: 화면은 수집(features)을 가져올 수 없고, 순서가 화면 순서다.
+ * 코드 안에서는 ASCII id 로 다룬다(CLAUDE.md 식별자 규칙). 저장된 판정(0009·0011 의 jsonb)과
+ * 모델 응답은 한글 키를 쓰므로 둘을 잇는 곳은 아래 `SIGNAL_STORED_KEYS` 한 곳뿐이다.
+ * 여기 두는 이유: 화면은 수집(features)을 가져올 수 없다.
  */
-export const SIGNAL_KEYS = ["변화", "방향", "기회"] as const;
+export const SIGNAL_KEYS = ["change", "direction", "window"] as const;
 export type SignalKey = (typeof SIGNAL_KEYS)[number];
+
+/**
+ * 저장된 판정의 키 — 수집 쪽 질문 목록(`HOT_ISSUE_QUESTIONS`)의 key 와 같아야 한다(그쪽 테스트가
+ * 대조한다). 식별자가 아니라 DB 에 들어 있는 **값**이다 — 바꾸면 이미 저장된 판정을 못 읽는다.
+ */
+export const SIGNAL_STORED_KEYS: Readonly<Record<SignalKey, string>> = {
+  change: "변화",
+  direction: "방향",
+  window: "기회",
+};
 
 export interface SignalPoint {
   key: SignalKey;
@@ -143,8 +154,8 @@ export function signalPoints(answers: unknown, reasons: unknown): SignalPoint[] 
   if (typeof answers !== "object" || answers === null) return [];
   const a = answers as Record<string, unknown>;
   const r = typeof reasons === "object" && reasons !== null ? (reasons as Record<string, unknown>) : {};
-  return SIGNAL_KEYS.filter((key) => a[key] === true).map((key) => {
-    const raw = r[key];
+  return SIGNAL_KEYS.filter((key) => a[SIGNAL_STORED_KEYS[key]] === true).map((key) => {
+    const raw = r[SIGNAL_STORED_KEYS[key]];
     const reason = typeof raw === "string" && raw.trim() !== "" ? collapse(raw) : null;
     return { key, reason };
   });

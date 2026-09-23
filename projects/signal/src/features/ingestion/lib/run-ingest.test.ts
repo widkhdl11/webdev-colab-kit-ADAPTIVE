@@ -782,7 +782,7 @@ describe("runIngest — 요약 저장 (태그는 여기서 안 만든다)", () =
         summary: "요약문",
         points: [],
         titleKo: null,
-        oneLine: null,
+        oneLine: "요약문",
 
         table: null,
 
@@ -790,9 +790,10 @@ describe("runIngest — 요약 저장 (태그는 여기서 안 만든다)", () =
       })),
     });
     await runIngest({ sources: [], ports, now: NOW });
-    // 표 칸은 늘 같이 간다(없으면 null) — 새 형식 칸이 없는 요약도 표를 비워 둔다(INV-S8).
+    // 표 칸은 늘 같이 간다(없으면 null) — 표가 없는 요약도 칸을 비워 둔다(INV-S8).
     expect(vi.mocked(ports.saveEnrichment)).toHaveBeenCalledWith("a", {
       summary: "요약문",
+      oneLine: "요약문",
       table: null,
       points: [],
     });

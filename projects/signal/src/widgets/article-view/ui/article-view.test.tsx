@@ -532,6 +532,39 @@ describe("ArticleView — 요약 칸 (INV-D7 · INV-S8)", () => {
   it("「핵심」 절 제목이 절의 이름이다", () => {
     expect(box(article(NEW)).querySelector("h2")?.textContent).toBe("핵심");
   });
+
+  it("요약 표에 스크린리더용 이름이 있다", () => {
+    const caption = box(article(NEW)).querySelector("table > caption");
+    expect(caption?.textContent).toBe("요약 표");
+    expect(caption?.className).toBe("sr-only");
+  });
+
+  it("INV-S2 실패경로: 출처 글 화면에는 남아 있는 한 줄 요약이 서지 않는다", () => {
+    const doc = new DOMParser().parseFromString(
+      renderToStaticMarkup(
+        <ArticleView article={article({ summary: "", sourceExcerpt: "출처 글", oneLine: "우리 문장." })} nowIso={NOW} />,
+      ),
+      "text/html",
+    );
+    expect(doc.querySelector(`.${styles.leadLine}`)).toBeNull();
+  });
+});
+
+describe("ArticleView — 원문의 언어", () => {
+  const prose = (a: Article) =>
+    new DOMParser()
+      .parseFromString(renderToStaticMarkup(<ArticleView article={a} nowIso={NOW} />), "text/html")
+      .querySelector(`.${styles.prose}`);
+
+  it("영어 소스의 원문 영역은 lang=en 이고 우리 안내 문장은 ko 로 되돌린다", () => {
+    const el = prose(article({ sourceId: "theverge" }));
+    expect(el?.getAttribute("lang")).toBe("en");
+    expect(el?.querySelector(`.${styles.sourceNote}`)?.getAttribute("lang")).toBe("ko");
+  });
+
+  it("실패경로: 설정에 없는 소스는 lang 을 걸지 않는다 — 틀린 lang 은 발음을 잘못 바꾼다", () => {
+    expect(prose(article({ sourceId: "test-source" }))?.hasAttribute("lang")).toBe(false);
+  });
 });
 
 /**
@@ -545,8 +578,8 @@ describe("ArticleView — signal 포인트", () => {
     const doc = d(
       article({
         signalPoints: [
-          { key: "변화", reason: "API 비용이 크게 줄어든다." },
-          { key: "기회", reason: "패치 전까지가 위험하다." },
+          { key: "change", reason: "API 비용이 크게 줄어든다." },
+          { key: "window", reason: "패치 전까지가 위험하다." },
         ],
       }),
     );
@@ -559,7 +592,7 @@ describe("ArticleView — signal 포인트", () => {
   it("화면 라벨은 넷 밖의 말을 쓰지 않는다 — 판정 질문 원문이 화면에 나오지 않는다", () => {
     const html = renderToStaticMarkup(
       <ArticleView
-        article={article({ signalPoints: [{ key: "변화", reason: null }, { key: "방향", reason: null }, { key: "기회", reason: null }] })}
+        article={article({ signalPoints: [{ key: "change", reason: null }, { key: "direction", reason: null }, { key: "window", reason: null }] })}
         nowIso={NOW}
       />,
     );
@@ -571,7 +604,7 @@ describe("ArticleView — signal 포인트", () => {
   });
 
   it("INV-G2 (S31d): 근거가 없으면 라벨만 선다", () => {
-    const li = d(article({ signalPoints: [{ key: "변화", reason: null }] })).querySelector(
+    const li = d(article({ signalPoints: [{ key: "change", reason: null }] })).querySelector(
       'section[aria-labelledby="signal-points-heading"] li',
     );
     expect(li?.textContent).toBe("실무 영향");

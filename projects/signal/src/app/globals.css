@@ -25,9 +25,11 @@ body {
    이겨서, 포커스가 닿는 순간 카드가 12px→6px, 알약 버튼이 999px→6px 로 각지게 변한다.
    design-rules 의 "호버·포커스에서 완전 복구(키보드 이동도 같다)"와 정면으로 어긋난다.
    빼두면 아웃라인이 각 요소 자신의 라운드를 따라간다.
-   [tabindex] 는 원문 안의 가로 스크롤 영역(표·코드 블록)용 — 링이 없으면 포커스가 어디 있는지 모른다. */
+   [tabindex] 는 원문 안의 가로 스크롤 영역(표·코드 블록)용 — 링이 없으면 포커스가 어디 있는지 모른다.
+   summary 는 접고 펴는 줄(원문 보기·옛 요약)이다 — 키보드로 닿는 요소인데 링이 없었다. */
 a:focus-visible,
 button:focus-visible,
+summary:focus-visible,
 [tabindex]:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

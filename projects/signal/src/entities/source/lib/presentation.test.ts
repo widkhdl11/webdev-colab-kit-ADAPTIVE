@@ -10,6 +10,7 @@ describe("출처를 화면에 부르는 법", () => {
     expect(sourcePresentation("geeknews", "Hada")).toEqual({
       displayName: "Hada",
       originalNote: "Hada 정리, 한국어",
+      originalLang: "ko",
     });
   });
 
@@ -17,7 +18,11 @@ describe("출처를 화면에 부르는 법", () => {
     expect(sourcePresentation("theverge", "The Verge").originalNote).toBe("영어");
   });
 
+  it("원문 언어 태그 — 영어 소스는 en (원문 영역의 lang 으로 간다)", () => {
+    expect(sourcePresentation("theverge", "The Verge").originalLang).toBe("en");
+  });
+
   it("실패경로: 설정에 없는 소스는 항목의 이름을 쓰고 원문 성격을 지어내지 않는다", () => {
-    expect(sourcePresentation("gone", "옛 소스")).toEqual({ displayName: "옛 소스", originalNote: null });
+    expect(sourcePresentation("gone", "옛 소스")).toEqual({ displayName: "옛 소스", originalNote: null, originalLang: null });
   });
 });
