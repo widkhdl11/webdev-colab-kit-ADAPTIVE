@@ -1,6 +1,5 @@
 import { compareForRanking, computeScore } from "@/entities/article";
 import type { SourceWeightLookup } from "@/entities/source";
-import { PER_SOURCE_ENRICH_LIMIT } from "./budgets";
 
 /**
  * 이번 주기에 **어느 항목을 요약할지** 고른다.
@@ -32,10 +31,10 @@ export function pickEnrichTargets(params: {
   now: Date;
   weightOf: SourceWeightLookup;
   limit: number;
-  /** 한 소스가 가져갈 수 있는 최대 칸수. 0 이하면 상한 없음. */
+  /** 한 소스가 가져갈 수 있는 최대 칸수. 0 이하면 상한 없음 — **기본이 상한 없음이다**(INV-CB11). */
   perSourceLimit?: number;
 }): string[] {
-  const { pool, now, weightOf, limit, perSourceLimit = PER_SOURCE_ENRICH_LIMIT } = params;
+  const { pool, now, weightOf, limit, perSourceLimit = 0 } = params;
   if (limit <= 0) return [];
 
   const ranked = pool
@@ -77,4 +76,25 @@ export function pickEnrichTargets(params: {
   }
 
   return picked;
+}
+
+/**
+ * 풀을 **전부** 점수순으로 돌려준다 (INV-CB11).
+ *
+ * `pickEnrichTargets` 를 직접 부르지 않고 이 이름을 따로 두는 이유: 부르는 자리가
+ * `api/ports.ts` 안인데 그 파일은 `server-only` 라 유닛 테스트가 한 번도 로드하지 않는다.
+ * 거기에 숫자를 적어 두면 **10 으로 바꿔도 전부 green 이다** — 2026-09-23 변이 확인에서
+ * 실제로 그랬고, `ENRICH_POOL` 을 100→10 으로 바꿔도 450개가 green 이던 자리와 같다.
+ *
+ * 그래서 "몇 건"이라는 판단 자체를 여기로 꺼내 이름으로 고정한다. 부르는 자리에는
+ * 고를 숫자가 남지 않는다.
+ */
+export function orderWholeEnrichPool(params: {
+  pool: readonly EnrichPoolRow[];
+  now: Date;
+  weightOf: SourceWeightLookup;
+}): string[] {
+  const { pool, now, weightOf } = params;
+  // 자르지 않는다. 정렬만 한다 — 시간이 모자라 끊길 때 뒤에 남는 것이 점수 낮은 쪽이 되게.
+  return pickEnrichTargets({ pool, now, weightOf, limit: pool.length, perSourceLimit: 0 });
 }

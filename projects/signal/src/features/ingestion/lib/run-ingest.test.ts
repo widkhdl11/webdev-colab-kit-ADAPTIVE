@@ -3,6 +3,7 @@ import type { FeedItemDraft } from "@/entities/article";
 import type { Source } from "@/entities/source";
 import {
   ENRICH_MODEL,
+  ENRICH_POOL,
   HOT_ISSUE_MODEL,
   KEYWORD_MODEL,
   MAX_TITLE_LENGTH,
@@ -1541,6 +1542,80 @@ describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)"
     expect(report.budget.exhausted).toBe(true);
   });
 
+  /** 요약 후보 n 건. 칸 내용은 판정과 무관하므로 최소한만 채운다. */
+  const enrichPool = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `e${i}`,
+      title: `Title ${i}`,
+      titleKo: null,
+      contentHtml: "<p>본문</p>",
+      sourceExcerpt: null,
+      summary: null,
+      officialBasis: "none" as const,
+      sourceId: "s",
+    }));
+
+  /**
+   * INV-CB12 — 리포트에는 **아직 처리 안 된 건수**가 남는다.
+   *
+   * 처리한 건수만 남기면 「요약 10건」이 그날 전부인지 마흔 건 중 열 건인지 구별이 안 된다.
+   * 2026-09-22 에 실제로 그 빈칸 때문에 「다 처리했다」로 읽었다.
+   */
+  it("INV-CB12: 남은 건수가 리포트에 남는다 — 처리한 수만으로는 다 했는지 알 수 없다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => enrichPool(4)),
+    });
+    const report = await runIngest({
+      sources: [],
+      ports,
+      now: NOW,
+      budgetMs: 1000,
+      monotonicNow: clockAfter(3, 5000),
+    });
+
+    // 처리한 수와 남은 수를 더하면 후보 전부가 된다. 이 등식이 깨지면 어딘가로 조용히 샌다.
+    expect(report.budget.skippedEnrichments).toBeGreaterThan(0);
+    expect(report.summaries.succeeded + report.budget.skippedEnrichments).toBe(4);
+  });
+
+  it("INV-CB12 실패경로: 후보 조회가 잘리면 그 사실이 남는다 — 예산은 하나도 안 썼는데 일은 남는다", async () => {
+    // 풀 상한만큼 받아 오면 **더 있는데 못 본 것**이다. 시간도 돈도 안 썼으므로 다른 칸은
+    // 전부 0 이고, 이 칸이 없으면 그 상태가 「다 했다」와 같은 모양이 된다.
+    const ports = makePorts({ listEnrichCandidates: vi.fn(async () => enrichPool(ENRICH_POOL)) });
+    const report = await runIngest({ sources: [], ports, now: NOW, monotonicNow: () => 0 });
+
+    expect(report.budget.poolTruncated).toBe(true);
+    expect(report.budget.exhausted).toBe(true);
+  });
+
+  it("INV-CB12: 단계 **안에서** 멈춘 건수도 리포트로 옮겨 온다", async () => {
+    // 키워드 단계가 스스로 센 「밀린 건수」가 budget 으로 안 넘어오면 이어달리기 판정이
+    // (INV-CB10) 그 일을 못 본다 — 단계 리포트에는 남아 있는데 아무도 안 읽는 상태가 된다.
+    // 여기서는 단계가 **돌기는 했고**(null 이 아니다) 그 안에서 전부 밀린 상태를 만든다.
+    const ports = makePorts({
+      listKeywordCandidates: vi.fn(async () =>
+        Array.from({ length: 16 }, (_, i) => ({
+          id: `k${i}`,
+          title: `T${i}`,
+          evidence: "본문",
+        })),
+      ),
+    });
+    const report = await runIngest({
+      sources: [],
+      ports,
+      now: NOW,
+      budgetMs: 60_000,
+      monotonicNow: clockAfter(8, 100_000),
+    });
+
+    // 통째로 건너뛴 것이 아니다 — 그랬다면 `skippedKeywords` 쪽이고 다른 칸이다.
+    expect(report.budget.skippedKeywords).toBe(false);
+    expect(report.budget.skippedKeywordItems).toBe(16);
+    // 단계가 센 값이 그대로 와야 한다. 여기가 0 으로 굳어 있으면 남은 일이 안 보인다.
+    expect(report.budget.skippedKeywordItems).toBe(report.keywords?.skipped);
+  });
+
   it("예산이 넉넉하면 아무것도 건너뛰지 않는다 — 가드가 평소에 끼어들지 않는다", async () => {
     const ports = makePorts({ fetchFeed: vi.fn(async () => [feedItem("a")]) });
     const report = await runIngest({
@@ -1557,6 +1632,9 @@ describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)"
       skippedEnrichments: 0,
       skippedKeywords: false,
       skippedHotIssue: false,
+      skippedKeywordItems: 0,
+      skippedHotIssueItems: 0,
+      poolTruncated: false,
     });
     expect(report.sources).toHaveLength(2);
   });

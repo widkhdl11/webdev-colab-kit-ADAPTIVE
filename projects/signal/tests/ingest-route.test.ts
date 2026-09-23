@@ -75,7 +75,10 @@ const NO_BUDGET = {
   skippedExtractions: 0,
   skippedEnrichments: 0,
     skippedKeywords: false,
-      skippedHotIssue: false,
+      skippedHotIssue: false,  skippedKeywordItems: 0,
+  skippedHotIssueItems: 0,
+  poolTruncated: false,
+
 };
 
 /** 요금 상한에 안 걸린 평소 상태. 상한 자체는 run-ingest.test.ts 가 본다. */
@@ -433,7 +436,12 @@ describe("GET /api/ingest — 이어달리기", () => {
  */
 describe("GET /api/ingest — 응답의 chain 칸", () => {
   const SELF = "https://signal.example.com";
-  const exhausted: Report = { ...REPORT, budget: { ...NO_BUDGET, exhausted: true } };
+  // **남은 일이 실제로 있는 모양**이어야 한다 (INV-CB10). `exhausted` 만 참으로 두면
+  // 이어달리기는 이 리포트를 「다 했다」로 읽는다 — 그 구별이 이 스펙 개정의 전부다.
+  const exhausted: Report = {
+    ...REPORT,
+    budget: { ...NO_BUDGET, exhausted: true, skippedEnrichments: 4 },
+  };
 
   it("보냈으면 dispatched 가 참이고 몇 번째인지도 남는다", async () => {
     vi.stubEnv("CRON_SECRET", SECRET);

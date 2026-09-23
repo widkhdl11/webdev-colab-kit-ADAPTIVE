@@ -215,6 +215,25 @@ if (cost) {
   console.log("  요금        칸 없음 — 상한이 없던 시절의 배포이거나 마이그레이션 0010 이 안 갔다");
 }
 
+// 남은 일 (INV-CB12). **처리한 건수만 찍으면 그게 그날 전부인지 알 수 없다** —
+// 2026-09-22 에 「요약 10건」을 보고 다 했다고 읽었는데 실은 상한에 잘린 것이었다.
+const left = report.budget;
+if (left) {
+  const parts = [];
+  if (left.skippedSources?.length > 0) parts.push(`소스 ${left.skippedSources.length}곳`);
+  if (left.skippedTopicChecks > 0) parts.push(`주제 판정 ${left.skippedTopicChecks}`);
+  if (left.skippedHotIssue) parts.push("핫이슈 단계 통째로");
+  else if (left.skippedHotIssueItems > 0) parts.push(`핫이슈 ${left.skippedHotIssueItems}`);
+  if (left.skippedExtractions > 0) parts.push(`본문 ${left.skippedExtractions}`);
+  if (left.skippedEnrichments > 0) parts.push(`요약·번역 ${left.skippedEnrichments}`);
+  if (left.skippedKeywords) parts.push("키워드 단계 통째로");
+  else if (left.skippedKeywordItems > 0) parts.push(`키워드 ${left.skippedKeywordItems}`);
+  if (left.poolTruncated) parts.push("⚠ 후보 조회가 잘렸다 — 더 있다");
+  console.log(`  남은 일      ${parts.length === 0 ? "없다 — 그날 것을 다 했다" : parts.join(" · ")}`);
+} else {
+  console.log("  남은 일      칸 없음 — 이 칸이 없던 시절의 배포다");
+}
+
 // 이어달리기 (INV-CB1~CB5). `needed` 가 참인데 `dispatched` 가 거짓이면 이유는 둘뿐이다 —
 // 목적지 설정이 없거나, 길이 상한에 닿았거나. 안 찍으면 그 둘과 "보냈는데 안 닿았다"가
 // 전부 "다음 바퀴가 안 돌았다"로 보인다.

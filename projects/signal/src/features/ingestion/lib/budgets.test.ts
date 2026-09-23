@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BADGE_WINDOW_DAYS } from "@/entities/article";
+import * as budgets from "./budgets";
 import {
   CANDIDATE_WINDOW_DAYS,
-  ENRICH_BATCH,
   ENRICH_POOL,
   INGEST_BUDGET_MS,
   KEYWORD_BATCH,
@@ -13,7 +13,6 @@ import {
   MAX_FAILURE_REASONS,
   MAX_FETCH_BYTES,
   MAX_TITLE_LENGTH,
-  PER_SOURCE_ENRICH_LIMIT,
   TOPIC_CONCURRENCY,
   TOPIC_MAX_TOKENS,
   TOPIC_TIMEOUT_MS,
@@ -52,12 +51,12 @@ describe("수집 예산 상수", () => {
     expect(TOPIC_MAX_TOKENS).toBeGreaterThan(200);
   });
 
-  it("요약 배치와 후보 풀 — 풀이 배치보다 충분히 넓어야 '점수로 고른다'가 의미를 갖는다", () => {
-    expect(ENRICH_BATCH).toBe(10);
+  it("후보 풀 — 하루 신규(약 68건)를 한 바퀴에 다 담고도 남아야 한다 (INV-CB11)", () => {
     expect(ENRICH_POOL).toBe(500);
-    // 풀이 배치와 같아지면 받은 게 곧 답이 되어 pickEnrichTargets 가 항등 함수가 된다.
-    // 그 상태는 이번에 고친 버그(한 매체가 10칸 독식) 그 자체다.
-    expect(ENRICH_POOL).toBeGreaterThanOrEqual(ENRICH_BATCH * 20);
+    // 건수 상한이 없어졌으므로 이 값이 한 바퀴가 볼 수 있는 전부다. 여기서 잘리면
+    // 그 사실이 리포트의 `poolTruncated` 로 나가고 다음 바퀴가 이어받는다.
+    // 하루 신규의 몇 배는 돼야 평소에 잘리지 않는다.
+    expect(ENRICH_POOL).toBeGreaterThan(68 * 5);
   });
 
   it("키워드 배치 — 하루 신규(약 68건)를 한 주기에 소화해야 뱃지 줄이 안 빈다", () => {
@@ -65,7 +64,6 @@ describe("수집 예산 상수", () => {
     expect(KEYWORD_CONCURRENCY).toBe(8);
     // 요약 배치와 같아지면 하루 신규의 8분의 1만 처리된다 — 키워드 없는 글은 어느 뱃지에도
     // 안 들어가므로, 밀리는 순간 화면에서 사라진 것처럼 보인다.
-    expect(KEYWORD_BATCH).toBeGreaterThan(ENRICH_BATCH * 5);
     // 동시 수가 배치와 같아지면 청크가 하나뿐이라 **앵커가 한 번도 안 자란다**(INV-B3).
     // 그러면 이번 주기에 새로 나온 표기가 같은 주기 안에서 안 합쳐진다.
     expect(KEYWORD_CONCURRENCY).toBeLessThan(KEYWORD_BATCH);
@@ -84,11 +82,13 @@ describe("수집 예산 상수", () => {
     expect(KEYWORD_MAX_TOKENS).toBeGreaterThan(40);
   });
 
-  it("소스당 상한 — 1 이상이고 배치보다 작아야 상한이 상한 노릇을 한다", () => {
-    expect(PER_SOURCE_ENRICH_LIMIT).toBe(3);
-    expect(PER_SOURCE_ENRICH_LIMIT).toBeGreaterThanOrEqual(1);
-    // 배치와 같거나 크면 한 소스가 다시 전부 가져갈 수 있다 = 상한이 없는 것과 같다.
-    expect(PER_SOURCE_ENRICH_LIMIT).toBeLessThan(ENRICH_BATCH);
+  it("소스당 상한과 한 바퀴 건수 상한은 **없다** (INV-CB11)", () => {
+    // 이 검사는 값을 못 박는 것이 아니라 **값이 돌아오는 것**을 막는다. 상한을 다시
+    // 넣으면 2026-09-22 의 사고(하루 열 건)가 그대로 돌아오고, 증상은 「요약이 좀 적네」
+    // 하나뿐이라 며칠이 지나야 눈치챈다.
+    const names = Object.keys(budgets);
+    expect(names).not.toContain("ENRICH_BATCH");
+    expect(names).not.toContain("PER_SOURCE_ENRICH_LIMIT");
   });
 
   it("리포트에 싣는 제목 길이 — 남의 서버가 준 문자열이 로그로 그대로 흘러가지 않게", () => {

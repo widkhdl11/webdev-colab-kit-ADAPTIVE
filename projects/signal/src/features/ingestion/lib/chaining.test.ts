@@ -144,13 +144,56 @@ describe("INV-CB5: 길이 상한", () => {
   });
 });
 
-describe("이어달리기를 할지 말지", () => {
-  it("시간이 떨어져 남은 일이 있으면 이어달린다", () => {
-    expect(shouldChain({ budget: { exhausted: true } })).toBe(true);
+/**
+ * INV-CB10 — 판정 기준은 **"할 일이 남았나"** 이지 "시간이 떨어졌나"가 아니다.
+ *
+ * 2026-09-22 에 실제로 난 사고: 한 바퀴가 요약하는 건수에 상한(10)이 따로 있어서
+ * 시간이 남아도 일이 남았는데, 조건이 "시간이 떨어졌나"뿐이라 「남은 일이 없다」로
+ * 판정했다. 예약 실행이 하루 한 번이니 그날 글의 일부만 처리되고 나머지는 조용히
+ * 다음 날로 넘어갔다.
+ */
+/** 아무것도 안 남은 상태. 케이스마다 한 칸씩만 바꿔서 그 칸이 실제로 붙드는지 본다. */
+const NONE_LEFT = {
+  exhausted: false,
+  skippedSources: [] as string[],
+  skippedTopicChecks: 0,
+  skippedExtractions: 0,
+  skippedEnrichments: 0,
+  skippedKeywords: false,
+  skippedKeywordItems: 0,
+  skippedHotIssue: false,
+  skippedHotIssueItems: 0,
+  poolTruncated: false,
+};
+
+describe("이어달리기를 할지 말지 (INV-CB10)", () => {
+  it("남은 일이 있으면 이어달린다", () => {
+    expect(shouldChain({ budget: { ...NONE_LEFT, skippedEnrichments: 3 } })).toBe(true);
   });
 
   it("다 끝냈으면 안 이어달린다 — 다음 호출은 조회만 하고 끝난다", () => {
-    expect(shouldChain({ budget: { exhausted: false } })).toBe(false);
+    expect(shouldChain({ budget: NONE_LEFT })).toBe(false);
+  });
+
+  it("**시간이 남아도** 못 한 일이 있으면 이어달린다 — 2026-09-22 사고의 자리", () => {
+    // 이것이 핵심이다. 시간을 다 안 썼는데도 후보가 남아 있는 상태다.
+    // 옛 조건(시간이 떨어졌나)으로는 거짓이 나온다.
+    expect(shouldChain({ budget: { ...NONE_LEFT, poolTruncated: true } })).toBe(true);
+  });
+
+  it("단계마다 따로 본다 — 어느 한 단계에만 남아도 이어달린다", () => {
+    expect(shouldChain({ budget: { ...NONE_LEFT, skippedTopicChecks: 1 } })).toBe(true);
+    expect(shouldChain({ budget: { ...NONE_LEFT, skippedExtractions: 1 } })).toBe(true);
+    expect(shouldChain({ budget: { ...NONE_LEFT, skippedKeywordItems: 2 } })).toBe(true);
+    expect(shouldChain({ budget: { ...NONE_LEFT, skippedHotIssueItems: 1 } })).toBe(true);
+    // 단계를 통째로 안 돌린 것도 남은 일이다.
+    expect(shouldChain({ budget: { ...NONE_LEFT, skippedKeywords: true } })).toBe(true);
+    expect(shouldChain({ budget: { ...NONE_LEFT, skippedHotIssue: true } })).toBe(true);
+    expect(shouldChain({ budget: { ...NONE_LEFT, skippedSources: ["s1"] } })).toBe(true);
+  });
+
+  it("남은 건수가 음수로 와도 이어달리지 않는다 — 셈이 틀려도 체인이 헛돌면 안 된다", () => {
+    expect(shouldChain({ budget: { ...NONE_LEFT, skippedEnrichments: -1 } })).toBe(false);
   });
 });
 

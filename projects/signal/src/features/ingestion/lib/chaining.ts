@@ -132,15 +132,65 @@ export async function sendChainRequest(
 }
 
 /**
- * 이 바퀴가 다음 호출을 만들어야 하나.
+ * 이어달리기 판정이 보는 칸들 — **"무엇이 안 끝났나"** 하나만 담는다.
  *
- * 기준은 하나다 — **시간이 떨어져 못 한 일이 남았는가**(`budget.exhausted`). 남은 일이
- * 없으면 다음 호출은 후보 조회만 하고 끝나므로 부를 이유가 없다.
+ * 단계가 통째로 안 돈 것과 중간에 멈춘 것을 **따로 둔다.** 한 칸에 섞으면 "예산이 아예
+ * 없었다"와 "여든 건 중 스물넷에서 멈췄다"가 같은 모양이 되고, 그건 리포트가 이미
+ * 따로 세고 있는 구별이다.
+ */
+export interface RemainingWork {
+  /** 손도 못 댄 소스. */
+  skippedSources: readonly string[];
+  /** 주제 판정을 못 건 항목 수. */
+  skippedTopicChecks: number;
+  /** 본문을 못 긁은 건수. */
+  skippedExtractions: number;
+  /** 요약·번역을 못 한 건수. */
+  skippedEnrichments: number;
+  /** 키워드 단계를 통째로 안 돌렸나. */
+  skippedKeywords: boolean;
+  /** 키워드 단계 안에서 멈춘 건수. */
+  skippedKeywordItems: number;
+  /** 핫이슈 단계를 통째로 안 돌렸나. */
+  skippedHotIssue: boolean;
+  /** 핫이슈 단계 안에서 멈춘 건수. */
+  skippedHotIssueItems: number;
+  /** 후보를 받아 오는 자리에서 잘렸나 — 잘렸으면 못 본 것이 더 있다. */
+  poolTruncated: boolean;
+}
+
+/**
+ * 이 바퀴가 다음 호출을 만들어야 하나 (INV-CB10).
+ *
+ * 기준은 **할 일이 남았는가** 하나다. 「시간이 떨어졌는가」가 아니다.
+ *
+ * 그 둘을 같은 것으로 보면 2026-09-22 의 사고가 난다: 한 바퀴가 처리하는 건수에 상한이
+ * 따로 있으면 **시간이 남아도 일은 남는다.** 그날 요약이 매 바퀴 정확히 10건에서 끝났는데
+ * 이어달리기는 「남은 일이 없다」로 판정했고, 예약 실행이 하루 한 번이라 나머지는 조용히
+ * 다음 날로 넘어갔다. 다음 날이면 그 글들은 순위에서 밀려 영영 처리되지 않는다.
  *
  * 요금 상한에 걸린 것은 여기서 안 본다: 상한에 걸려도 주제·핫이슈 판정은 계속 도는데
- * (INV-CB8) 그 일이 시간이 모자라 밀렸다면 다음 호출이 이어받아야 한다. 대신 체인은
+ * (INV-CB8) 그 일이 밀렸다면 다음 호출이 이어받아야 한다. 대신 체인은
  * `MAX_CHAIN_LENGTH` 에서 반드시 끝난다(INV-CB5).
+ *
+ * 단계를 통째로 안 돌린 경우도 참이다. 그 단계에 실제로 밀린 글이 없을 수도 있지만,
+ * 그때는 **다음 바퀴가 조회만 하고 아무것도 안 남겨서 거기서 체인이 끝난다** — 한 바퀴를
+ * 더 도는 대가로 「안 돌렸는데 남은 게 없었다」를 확인한다. 반대로 틀리면 그날 일이 빠진다.
+ *
+ * **음수는 안 센다.** 어딘가의 셈이 틀려 음수가 와도 체인이 헛돌면 안 된다 —
+ * 헛도는 체인은 요금이 계속 나가고, 증상은 "수집이 오래 걸린다"뿐이다.
  */
-export function shouldChain(report: { budget: { exhausted: boolean } }): boolean {
-  return report.budget.exhausted;
+export function shouldChain(report: { budget: RemainingWork }): boolean {
+  const b = report.budget;
+  if (b.poolTruncated) return true;
+  if (b.skippedKeywords || b.skippedHotIssue) return true;
+  if (b.skippedSources.length > 0) return true;
+  const counts = [
+    b.skippedTopicChecks,
+    b.skippedExtractions,
+    b.skippedEnrichments,
+    b.skippedKeywordItems,
+    b.skippedHotIssueItems,
+  ];
+  return counts.some((n) => Number.isFinite(n) && n > 0);
 }

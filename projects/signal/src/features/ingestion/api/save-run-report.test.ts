@@ -111,7 +111,10 @@ function report(over: Partial<IngestReport> = {}): IngestReport {
       skippedExtractions: 0,
       skippedEnrichments: 0,
     skippedKeywords: false,
-      skippedHotIssue: false,
+      skippedHotIssue: false,  skippedKeywordItems: 0,
+  skippedHotIssueItems: 0,
+  poolTruncated: false,
+
     },
     // 요금 상한은 이 파일의 관심사가 아니다 — 안 걸린 평소 상태로 채운다.
     cost: { capUsd: 10, spentUsd: 0, capped: false, lookupFailed: false },
@@ -206,7 +209,10 @@ describe("saveIngestRunReport", () => {
       skippedExtractions: 0,
       skippedEnrichments: 0,
     skippedKeywords: false,
-      skippedHotIssue: false,
+      skippedHotIssue: false,  skippedKeywordItems: 0,
+  skippedHotIssueItems: 0,
+  poolTruncated: false,
+
     };
     await saveIngestRunReport({
       runId: "run-1",

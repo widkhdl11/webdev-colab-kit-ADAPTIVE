@@ -4,6 +4,7 @@ import { SUBJECT_SITES, sourceWeightLookup } from "@/entities/source";
 import type { Source } from "@/entities/source";
 import {
   ENRICH_MODEL,
+  ENRICH_POOL,
   HOT_ISSUE_BATCH,
   HOT_ISSUE_CONCURRENCY,
   HOT_ISSUE_MODEL,
@@ -109,6 +110,8 @@ interface Budget {
   skippedEnrichments: number;
   /** 키워드 단계를 통째로 건너뛰었나 — 단계가 하나뿐이라 건수가 아니라 참/거짓이다. */
   skippedKeywords: boolean;
+  /** 후보 조회가 풀 상한에서 잘렸나 (INV-CB10). */
+  poolTruncated: boolean;
   /** 핫이슈 판정 단계를 통째로 건너뛰었나. 위와 같은 이유로 참/거짓이다. */
   skippedHotIssue: boolean;
 }
@@ -499,6 +502,10 @@ async function runEnrichment(
   let candidates;
   try {
     candidates = await ports.listEnrichCandidates();
+    // 받아 온 수가 풀 상한과 같으면 **더 있는데 못 본 것**이다. 건수 상한을 없앤 뒤로
+    // 한 바퀴가 보는 전부가 이 풀이라, 여기서 잘리면 예산은 하나도 안 썼는데 일은 남는다
+    // (INV-CB10). 표시를 안 하면 그 상태가 「다 했다」와 같은 모양이 된다.
+    if (candidates.length >= ENRICH_POOL) budget.poolTruncated = true;
   } catch (e) {
     // 이 단계가 통째로 죽어도 이미 끝난 적재는 유효하다.
     const error = errorText(e);
@@ -662,6 +669,7 @@ export async function runIngest(params: {
     skippedEnrichments: 0,
     skippedKeywords: false,
     skippedHotIssue: false,
+    poolTruncated: false,
   };
 
   const timing: Timing = {
@@ -838,13 +846,19 @@ export async function runIngest(params: {
         budget.skippedExtractions > 0 ||
         budget.skippedEnrichments > 0 ||
         budget.skippedKeywords ||
-        budget.skippedHotIssue,
+        budget.skippedHotIssue ||
+        budget.poolTruncated,
       skippedSources: budget.skippedSources,
       skippedTopicChecks: budget.skippedTopicChecks,
       skippedExtractions: budget.skippedExtractions,
       skippedEnrichments: budget.skippedEnrichments,
       skippedKeywords: budget.skippedKeywords,
       skippedHotIssue: budget.skippedHotIssue,
+      // 단계 **안에서** 멈춘 건수. 단계 리포트가 이미 세고 있는 값을 여기로 옮겨 온다 —
+      // 이어달리기 판정(INV-CB10)이 한자리에서 「무엇이 안 끝났나」를 보기 위해서다.
+      skippedKeywordItems: keywords?.skipped ?? 0,
+      skippedHotIssueItems: hotIssue?.skipped ?? 0,
+      poolTruncated: budget.poolTruncated,
     },
   };
 }

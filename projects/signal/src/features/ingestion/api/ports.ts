@@ -13,7 +13,6 @@ import { GATE_ONE, toOfficialBasis, type FeedItemDraft } from "@/entities/articl
 import { getSourceWeight } from "@/entities/source";
 import type { Source } from "@/entities/source";
 import {
-  ENRICH_BATCH,
   ENRICH_POOL,
   PICKED_TITLES_LIMIT,
   KEYWORD_MAX_TOKENS,
@@ -41,7 +40,7 @@ import { buildTopicPrompt } from "../lib/build-topic-prompt";
 import { parseFeedXml } from "../lib/parse-feed";
 import { parseHotIssue } from "../lib/parse-hot-issue";
 import { isSafeKeyword, parseKeywords } from "../lib/parse-keywords";
-import { pickEnrichTargets } from "../lib/pick-enrich-targets";
+import { orderWholeEnrichPool } from "../lib/pick-enrich-targets";
 import { batchAxisEntries, itemTagLinks, tagIdByNormalized, tagUpsertRows } from "../lib/tag-links";
 import { topicVerdict } from "../lib/topic-verdict";
 import { upsertBatches } from "../lib/upsert-rows";
@@ -105,8 +104,15 @@ function windowStart(): string | null {
   return candidateWindowStartIso(new Date());
 }
 
+/**
+ * 받아 온 풀을 **전부** 후보로 돌려준다 (INV-CB11).
+ *
+ * 고를 숫자가 여기 없는 것이 요점이다 — 이 파일은 `server-only` 라 유닛이 로드하지 않아서,
+ * 여기 적힌 숫자는 바꿔도 아무 테스트가 안 깨진다. 판단은 `orderWholeEnrichPool` 안에 있고
+ * 그 파일은 유닛이 로드한다.
+ */
 function pickFromPool(pool: readonly PoolRow[]): string[] {
-  return pickEnrichTargets({
+  return orderWholeEnrichPool({
     pool: pool.map((r) => ({
       id: r.id as string,
       publishedAt: r.published_at as string,
@@ -114,7 +120,6 @@ function pickFromPool(pool: readonly PoolRow[]): string[] {
     })),
     now: new Date(),
     weightOf: getSourceWeight,
-    limit: ENRICH_BATCH,
   });
 }
 
@@ -417,9 +422,8 @@ export function createIngestPorts(): IngestPorts {
       if (poolError) throw new Error(poolError.message);
       if (!pool || pool.length === 0) return [];
 
-      // 2단계: 그중 점수 상위 ENRICH_BATCH 건만 본문까지 받는다.
-      // 발행시각순으로만 자르면 자주 올리는 매체 하나가 그 주기의 요약 예산을 다 먹는다
-      // (2026-08-13 실측: 요약 후보 10건이 전부 한 매체였다).
+      // 2단계: 받아 온 것을 **전부** 본문까지 받는다 (INV-CB11). 자르지 않는다 —
+      // 정렬만 점수순으로 해서, 시간이 모자라 끊길 때 뒤에 남는 것이 점수 낮은 쪽이 되게 한다.
       const targetIds = pickFromPool(pool);
 
       const { data, error } = await db
