@@ -143,6 +143,9 @@ export function createHotIssueDbPorts(db: SupabaseClient): HotIssueDbPorts {
             // 판정 근거 (INV-G2 · S31). 키는 `HOT_ISSUE_QUESTIONS` 가 정한다 —
             // DB 는 모양을 강제하지 않으므로 질문이 바뀌어도 마이그레이션이 필요 없다.
             hot_issue_answers: row.answers,
+            // 참인 질문의 근거 문장 (INV-G2 · 0011). 빈 객체 = 물어봤지만 쓸 만한 근거가 없었다.
+            // null(0011 이전 행) 과 가른다.
+            hot_issue_reasons: row.reasons,
             hot_issue_at: askedAt,
           })
           .eq("id", row.itemId);

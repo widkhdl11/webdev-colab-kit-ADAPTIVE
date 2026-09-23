@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { toArticleKinds, toGate } from "../lib/hot-issue";
 import { toOfficialBasis } from "../lib/official";
+import { isOneLine, parseSummaryTable, signalPoints } from "../lib/summary-format";
 import type { ArticleKeyword, StoredArticle } from "../model/types";
 
 /**
@@ -49,6 +50,11 @@ const rowSchema = z.object({
   // 종류 (hot-issue.md INV-G1). 축 태그(item_tag)와 다른 테이블이다 — 이름이 비슷해서
   // 헷갈리기 쉬운데, 저쪽은 뱃지 줄에 쓰는 키워드고 이쪽은 화면 자리를 정하는 판정이다.
   item_kind: kindJoin,
+  // 상세만 받는 칸 (0011 · INV-S8 · INV-G2). 모양 검사는 summary-format 이 한다.
+  one_line: z.string().nullable().optional(),
+  summary_table: z.unknown().optional(),
+  hot_issue_answers: z.unknown().optional(),
+  hot_issue_reasons: z.unknown().optional(),
 });
 
 /** 목록 투영에는 본문이 없다 — `StoredArticle` 에서 contentHtml 만 뺀 모양. */
@@ -107,6 +113,10 @@ function common(raw: unknown) {
     // 종류가 비어 있으면 소식에 선다(INV-G3).
     kinds: toArticleKinds((r.item_kind ?? []).map((k) => k.kind)),
     contentHtml: r.content_html ?? "",
+    // 한 줄 요약도 형식 검사를 다시 한다 — 검사를 바꾼 날 이미 저장된 값이 화면에서 깨지지 않게.
+    oneLine: r.one_line && isOneLine(r.one_line) ? r.one_line.trim() : null,
+    summaryTable: parseSummaryTable(r.summary_table),
+    signalPoints: signalPoints(r.hot_issue_answers, r.hot_issue_reasons),
   };
 }
 

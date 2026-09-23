@@ -87,12 +87,13 @@ export {
 } from "./lib/feed-url";
 export type { FeedState, ParamReader } from "./lib/feed-url";
 export {
-  parseSummaryMarkup,
-  leadToMarkup,
-  splitLead,
-  summaryPreviewText,
-  tableToMarkup,
-  TABLE_MAX_COLS,
-  TABLE_MAX_ROWS,
-} from "./lib/summary-markup";
-export type { SummaryBlock, SummaryInline } from "./lib/summary-markup";
+  isCompleteSentence,
+  isOneLine,
+  KEY_POINT_COUNT,
+  ONE_LINE_MAX_CHARS,
+  parseKeyPoints,
+  parseSummaryTable,
+  SIGNAL_KEYS,
+  signalPoints,
+} from "./lib/summary-format";
+export type { SignalKey, SignalPoint, SummaryTable } from "./lib/summary-format";

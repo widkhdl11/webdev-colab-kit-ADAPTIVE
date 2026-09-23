@@ -1,4 +1,4 @@
-import type { ArticleKind } from "@/entities/article";
+import { isCompleteSentence, type ArticleKind } from "@/entities/article";
 import { HOT_ISSUE_QUESTIONS } from "../model/prompt-text";
 
 /**
@@ -16,6 +16,11 @@ export interface HotIssueVerdict {
   importance: number;
   /** 어느 질문이 참이었나. 첫 2주 표본 검토가 이것을 읽는다. */
   answers: Record<string, boolean>;
+  /**
+   * 참인 질문마다의 근거 한 문장 (INV-G2 · signal 포인트, 2026-09-23). 참인 질문만 키가 있다.
+   * 비었거나 문장이 아닌 근거는 **그 근거만** 버린다 — 판정은 근거와 무관하게 산다(S31d).
+   */
+  reasons: Record<string, string>;
   /** 그날 이미 뽑힌 것과 같은 사건인가 (INV-G4). 안 물어봤으면 false. */
   duplicateOfPicked: boolean;
 }
@@ -70,10 +75,26 @@ export function parseHotIssue(raw: string): HotIssueVerdict | null {
   const duplicate = obj["같은사건"];
   if (duplicate !== undefined && typeof duplicate !== "boolean") return null;
 
+  // 근거는 **엄격하지 않게** 읽는다 — 위의 답·같은사건과 반대다. 답이 깨지면 판정 자체를 모르는
+  // 것이지만, 근거가 깨지면 화면의 한 줄 설명만 빠진다. 근거 때문에 판정을 버리면 중요도까지
+  // 비어 다음 주기에 같은 글을 다시 물어야 한다(요금이 한 번 더 나간다).
+  const reasons: Record<string, string> = {};
+  const rawReasons = obj["근거"];
+  if (typeof rawReasons === "object" && rawReasons !== null && !Array.isArray(rawReasons)) {
+    for (const q of HOT_ISSUE_QUESTIONS) {
+      if (answers[q.key] !== true) continue; // 거짓인 질문의 근거는 받지 않는다
+      const r = (rawReasons as Record<string, unknown>)[q.key];
+      if (typeof r !== "string") continue;
+      const text = r.replace(/\s+/g, " ").trim();
+      if (text !== "" && isCompleteSentence(text)) reasons[q.key] = text;
+    }
+  }
+
   return {
     kinds,
     importance: Object.values(answers).filter(Boolean).length,
     answers,
+    reasons,
     duplicateOfPicked: duplicate === true,
   };
 }

@@ -24,7 +24,7 @@ describe("Source — INV-L1 소스마다 층을 둔다", () => {
       name: "daily",
       weight: 1.4,
       feedUrl: "https://ex.com/daily.xml",
-      needsTopicCheck: true,
+      needsTopicCheck: true, original: { lang: "영어" as const },
       tier: "daily",
     };
     const deepSource: Source = {
@@ -32,7 +32,7 @@ describe("Source — INV-L1 소스마다 층을 둔다", () => {
       name: "deep",
       weight: 0.8,
       feedUrl: "https://ex.com/deep.xml",
-      needsTopicCheck: true,
+      needsTopicCheck: true, original: { lang: "영어" as const },
       tier: "deep",
     };
     // 값이 같으면 이 테스트는 "층이 조회값에 반영된다"를 증명하지 못한다.

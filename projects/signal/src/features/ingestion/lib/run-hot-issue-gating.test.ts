@@ -33,7 +33,7 @@ const verdict = {
   verdict: {
     kinds: ["news" as const],
     importance: 2,
-    answers: { 변화: true, 방향: true, 기회: false },
+    answers: { 변화: true, 방향: true, 기회: false }, reasons: {},
     duplicateOfPicked: false,
   },
   usage: USAGE,

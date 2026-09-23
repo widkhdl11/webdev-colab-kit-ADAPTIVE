@@ -163,6 +163,7 @@ describe("saveHotIssue — 무엇을 어떤 순서로 쓰나 (INV-G1 · G2 · S3
     itemId: "a",
     importance: 2,
     answers: { 변화: true, 방향: false, 기회: true },
+    reasons: { 변화: "API 비용이 줄어든다.", 기회: "패치 전까지가 위험하다." },
     kinds: ["news" as const, "tool" as const],
   };
 
@@ -173,6 +174,12 @@ describe("saveHotIssue — 무엇을 어떤 순서로 쓰나 (INV-G1 · G2 · S3
     const update = calls.find((c) => c.op === "update");
     expect(update?.payload?.importance).toBe(2);
     expect(update?.payload?.hot_issue_answers).toEqual(row.answers);
+  });
+
+  it("INV-G2 (S31c): 참인 질문의 근거 문장도 같이 쓴다 — signal 포인트가 읽는다", async () => {
+    const { db, calls } = fakeDb();
+    await createHotIssueDbPorts(db).saveHotIssue([row]);
+    expect(calls.find((c) => c.op === "update")?.payload?.hot_issue_reasons).toEqual(row.reasons);
   });
 
   it("종류를 `item_kind` 에 붙인다 (INV-G1) — 한 글이 둘 다일 수 있다", async () => {

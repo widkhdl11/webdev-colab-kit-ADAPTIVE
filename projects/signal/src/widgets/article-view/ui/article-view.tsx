@@ -120,7 +120,12 @@ export function ArticleView({
               서식은 우리 지시로 모델이 쓴 글에만 붙인다(INV-D7) — 출처가 준 글의 기호를
               서식으로 바꾸면 「누가 쓴 것인지」가 흐려진다. 출처 글은 한 문단 그대로 둔다. */}
           {summary.isAi ? (
-            <AiSummaryBody text={summary.text} points={summary.points} />
+            <AiSummaryBody
+              oneLine={article.oneLine ?? null}
+              legacyText={summary.text}
+              points={summary.points}
+              table={article.summaryTable ?? null}
+            />
           ) : (
             <p>{summary.text}</p>
           )}

@@ -63,30 +63,33 @@ describe("0009 — INV-G2 (S31) 어느 질문이 참이었는지 DB 에 남는�
   it("**진짜 `saveHotIssue`** 가 판정 근거를 남긴다 — 테스트가 손으로 쓰지 않는다", async () => {
     const id = await insertItem("write");
     const answers = { 변화: true, 방향: false, 기회: true };
+    // 근거 문장 (INV-G2 · S31c, 0011) — 저장 코드에서 `hot_issue_reasons` 를 빼면 아래가 깨진다.
+    const reasons = { 변화: "API 비용이 크게 줄어든다.", 기회: "패치 전까지가 위험하다." };
 
     // 이 줄이 이 파일의 요점이다. 저장 코드에서 `hot_issue_answers` 를 빼면 여기가 깨진다.
     try {
       await createHotIssueDbPorts(db).saveHotIssue([
-        { itemId: id, importance: 2, answers, kinds: ["news"] },
+        { itemId: id, importance: 2, answers, reasons, kinds: ["news"] },
       ]);
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       throw new Error(
-        message.includes(UNKNOWN_COLUMN) || message.includes("hot_issue_answers")
-          ? "0009 마이그레이션을 아직 안 돌렸다"
+        message.includes(UNKNOWN_COLUMN) || message.includes("hot_issue_answers") || message.includes("hot_issue_reasons")
+          ? "0009 또는 0011 마이그레이션을 아직 안 돌렸다"
           : message,
       );
     }
 
     const read = await db
       .from("item")
-      .select("importance, hot_issue_answers, hot_issue_at")
+      .select("importance, hot_issue_answers, hot_issue_reasons, hot_issue_at")
       .eq("id", id)
       .single();
     expect(read.error?.message ?? null).toBeNull();
     expect(read.data?.importance).toBe(2);
     // **개수만으로는 못 되짚는다.** 중요도 2 는 어느 두 질문이 참이었는지 말해 주지 않는다.
     expect(read.data?.hot_issue_answers).toEqual(answers);
+    expect(read.data?.hot_issue_reasons).toEqual(reasons);
     // 「물어봤다」 표시도 같이 찍혀야 다음 주기가 다시 안 묻는다.
     expect(read.data?.hot_issue_at).not.toBeNull();
   });
@@ -95,7 +98,7 @@ describe("0009 — INV-G2 (S31) 어느 질문이 참이었는지 DB 에 남는�
     const id = await insertItem("gate");
     const ports = createHotIssueDbPorts(db);
     await ports.saveHotIssue([
-      { itemId: id, importance: 1, answers: { 변화: true, 방향: false, 기회: false }, kinds: [] },
+      { itemId: id, importance: 1, answers: { 변화: true, 방향: false, 기회: false }, reasons: {}, kinds: [] },
     ]);
     await ports.assignGates([id]);
 

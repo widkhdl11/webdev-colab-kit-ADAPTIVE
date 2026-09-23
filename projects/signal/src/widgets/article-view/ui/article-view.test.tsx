@@ -520,96 +520,77 @@ describe("ArticleView — 이전 글 / 다음 글", () => {
 });
 
 /**
- * 요약 서식 (content-safety INV-D7). 해석기 단위 테스트만으로는 부족하다 — 화면이 해석기를
- * 안 부르거나 결과를 HTML 문자열로 밀어 넣어도 해석기 테스트는 green 이다. 그래서 상세
- * 렌더 결과를 DOM 으로 본다.
+ * 요약 칸 (content-safety INV-D7 · ingestion-ranking INV-S8). 해석기가 없으므로 "칸이 칸대로 그려지는가"와
+ * "칸 안의 기호가 요소가 되지 않는가"를 상세 렌더 결과(DOM)로 본다.
  */
-describe("ArticleView — 요약 서식 (INV-D7)", () => {
+describe("ArticleView — 요약 칸 (INV-D7 · INV-S8)", () => {
   const box = (a: Article) => {
-    const root = new DOMParser().parseFromString(renderToStaticMarkup(<ArticleView article={a} nowIso={NOW} />), "text/html").body;
+    const root = new DOMParser().parseFromString(
+      renderToStaticMarkup(<ArticleView article={a} nowIso={NOW} />),
+      "text/html",
+    ).body;
     return root.querySelector(`.${styles.aiSummary}`) as HTMLElement;
   };
-
-  it("INV-D7 (S14): AI 요약의 문단·굵게·목록·표가 요소로 그려진다", () => {
-    const el = box(
-      article({
-        summary:
-          "첫 문단 **핵심**.\n\n둘째 문단.\n\n- 항목 하나\n- 항목 둘\n\n| 모델 | 가격 |\n|---|---|\n| A | $3 |",
-      }),
-    );
-    expect(el.querySelector("strong")?.textContent).toBe("핵심");
-    expect(el.querySelectorAll("table thead th")).toHaveLength(2);
-    // 첫 열은 행 머리칸이다 — 스크린리더가 그 행의 이름으로 읽는다
-    const rowHead = el.querySelector("table tbody th");
-    expect(rowHead?.textContent).toBe("A");
-    expect(rowHead?.getAttribute("scope")).toBe("row");
-    expect([...el.querySelectorAll("li")].map((li) => li.textContent)).toContain("항목 하나");
-    expect(el.textContent).toContain("둘째 문단.");
-  });
-
-  it("INV-D7 (S15, 실패경로): 링크·이미지·제목·스크립트 요소가 하나도 생기지 않는다", () => {
-    const el = box(
-      article({
-        summary:
-          "[클릭](javascript:alert(1))\n\n![x](https://ex.com/a.png)\n\n# 제목\n\n<script>alert(1)</script>\n\nhttps://evil.example",
-      }),
-    );
-    expect(el.querySelector("a, img, h1, h2, h3, h4, h5, h6, script")).toBeNull();
-    // 표기는 글자 그대로 보인다 — 조용히 지우면 무엇이 들어왔는지 사람이 알 수 없다
-    expect(el.textContent).toContain("[클릭](javascript:alert(1))");
-    expect(el.textContent).toContain("<script>alert(1)</script>");
-  });
-
-  it("INV-D7 (S17, 실패경로): 출처가 준 요약글의 기호는 해석하지 않는다", () => {
-    const el = box(article({ summary: "", sourceExcerpt: "출처 글 **굵게** 표기" }));
-    expect(el.querySelector("strong")).toBeNull();
-    expect(el.textContent).toContain("출처 글 **굵게** 표기");
-  });
-});
-
-/**
- * 요약 상자 순서 — B안 + 한 문장 요약 (2026-09-23 사용자 결정).
- * 한 문장 → 「핵심」 목록 → 나머지 문단 → 표. 자리를 DOM 순서로 본다.
- */
-describe("ArticleView — 요약 상자 순서 (B안 + 한 문장)", () => {
-  const kids = (a: Article) => {
-    const root = new DOMParser().parseFromString(renderToStaticMarkup(<ArticleView article={a} nowIso={NOW} />), "text/html").body;
-    const box = root.querySelector(`.${styles.aiSummary}`) as HTMLElement;
-    return [...box.children];
+  const NEW = {
+    summary: "미스트랄이 모델 세 개를 내놓았다.",
+    oneLine: "미스트랄이 모델 세 개를 내놓았다.",
+    summaryPoints: ["세 모델이 한 번에 나왔다.", "작은 모델 가격이 내렸다.", "도구 호출은 아직 안 된다."],
+    summaryTable: { head: ["모델", "가격"], rows: [["S", "$0.1"]] },
   };
 
-  it("한 문장 → 핵심 목록 → 문단 → 표 → 안내 순이다", () => {
-    const order = kids(
-      article({
-        summary: "미스트랄이 모델 세 개를 내놓았다.\n\n가격이 내려갔다.\n\n| 모델 | 가격 |\n|---|---|\n| S | $0.1 |",
-        summaryPoints: ["세 개 공개", "가격 인하"],
-      }),
-    ).map((el) => (el.tagName === "P" ? `P:${el.textContent}` : el.tagName));
+  it("INV-D7 (S14): 한 줄 요약 → 핵심 → 표 → 안내 순으로 그려진다", () => {
+    const order = [...box(article(NEW)).children].map((el) =>
+      el.tagName === "P" ? `P:${el.textContent}` : el.tagName,
+    );
     expect(order).toEqual([
       "SPAN", // 「AI 요약」 라벨
       "P:미스트랄이 모델 세 개를 내놓았다.",
       "SPAN", // 「핵심」 라벨
       "UL",
-      "P:가격이 내려갔다.",
       "TABLE",
       "P:요약은 자동으로 생성됩니다. 사실 확인이 필요하면 아래 원문을 읽어주세요.",
     ]);
   });
 
-  it("한 문장에는 앞세움 모양이 붙고 핵심 목록에도 제 모양이 붙는다", () => {
-    const el = kids(article({ summary: "한 문장.\n\n둘째.", summaryPoints: ["항목"] }));
-    expect(el[1].className).toContain(styles.summaryLead);
-    expect(el[3].className).toContain(styles.summaryPoints);
+  it("INV-D7 (S14): 표의 첫 열은 행 머리칸이다", () => {
+    const head = box(article(NEW)).querySelector("table tbody th");
+    expect(head?.textContent).toBe("S");
+    expect(head?.getAttribute("scope")).toBe("row");
   });
 
-  it("핵심 항목이 없으면 「핵심」 라벨도 없다", () => {
-    const el = kids(article({ summary: "한 문장.\n\n둘째.", summaryPoints: [] }));
-    expect(el.some((e) => e.textContent === "핵심")).toBe(false);
+  it("INV-D7 (S15, 실패경로): 칸 안의 기호는 요소가 되지 않고 글자 그대로 보인다", () => {
+    const hostile = "[클릭](javascript:alert(1)) **굵게** <script>alert(1)</script>";
+    const el = box(
+      article({
+        ...NEW,
+        oneLine: hostile,
+        summaryPoints: ["![x](https://ex.com/a.png)", "# 제목", "https://evil.example"],
+        summaryTable: { head: ["**a**", "b"], rows: [["[x](y)", "c"]] },
+      }),
+    );
+    expect(el.querySelector("a, img, h1, h2, h3, h4, h5, h6, script, strong")).toBeNull();
+    expect(el.textContent).toContain(hostile);
+    expect(el.textContent).toContain("![x](https://ex.com/a.png)");
+    expect(el.textContent).toContain("**a**");
   });
 
-  it("실패경로: 출처가 준 요약글은 순서를 바꾸지 않고 한 문단 그대로다", () => {
-    const el = kids(article({ summary: "", sourceExcerpt: "출처 글.\n\n둘째 줄", summaryPoints: ["무시"] }));
-    expect(el.filter((e) => e.tagName === "UL")).toHaveLength(0);
-    expect(el[1].className).not.toContain(styles.summaryLead);
+  it("INV-S8 (옛 요약 호환): 한 줄 요약이 없으면 옛 문단 하나 + 핵심이 그대로 보인다", () => {
+    const el = box(article({ summary: "옛 요약 문단이다.", oneLine: null, summaryPoints: ["항목"] }));
+    expect(el.querySelector(`.${styles.summaryLead}`)).toBeNull();
+    expect(el.textContent).toContain("옛 요약 문단이다.");
+    expect(el.querySelectorAll("li")).toHaveLength(1);
+  });
+
+  it("INV-D7 (S17, 실패경로): 출처가 준 요약글은 문단 하나 그대로이고 목록·표가 없다", () => {
+    const el = box(article({ summary: "", sourceExcerpt: "출처 **글**", summaryPoints: ["무시"], summaryTable: NEW.summaryTable }));
+    expect(el.querySelector("ul, table, strong")).toBeNull();
+    expect(el.textContent).toContain("출처 **글**");
+  });
+
+  it("「핵심」 라벨이 목록의 이름이다", () => {
+    const el = box(article(NEW));
+    const ul = el.querySelector("ul");
+    const label = el.querySelector(`#${ul?.getAttribute("aria-labelledby")}`);
+    expect(label?.textContent?.trim()).toBe("핵심");
   });
 });

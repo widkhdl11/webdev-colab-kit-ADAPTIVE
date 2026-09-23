@@ -232,29 +232,19 @@ describe("핫이슈 뱃지 — hot-issue.md INV-H1", () => {
   });
 });
 
-describe("ArticleCard — 요약 미리보기에 서식 기호가 안 찍힌다 (INV-D7)", () => {
-  it("INV-D7: AI 요약은 기호를 벗긴 문단 글자만 보인다(표는 뺀다)", () => {
+describe("ArticleCard — 요약 글자는 해석하지 않는다 (INV-D7)", () => {
+  it("INV-D7: 새 형식의 요약(한 줄 요약)이 그대로 미리보기가 된다", () => {
     const html = renderToStaticMarkup(
-      <ArticleCard
-        article={item({ summary: "| a | b |\n|---|---|\n| 1 | 2 |\n\n가격은 **100만 원**이다.\n\n둘째" })}
-        nowIso={NOW}
-        isRead={false}
-      />,
+      <ArticleCard article={item({ summary: "OpenAI가 캐싱을 고쳐 비용을 낮췄다." })} nowIso={NOW} isRead={false} />,
     );
-    // 문단은 이어 보여준다 — 자르는 것은 카드 CSS(두 줄)다
-    expect(html).toContain("가격은 100만 원이다. 둘째");
-    expect(html).not.toContain("**");
-    expect(html).not.toContain("| a |");
+    expect(html).toContain("OpenAI가 캐싱을 고쳐 비용을 낮췄다.");
   });
 
-  it("INV-D7 실패경로: 출처가 준 요약글은 손대지 않는다", () => {
+  it("INV-D7 실패경로: 요약 안의 기호는 요소가 되지 않는다", () => {
     const html = renderToStaticMarkup(
-      <ArticleCard
-        article={item({ summary: "", sourceExcerpt: "출처 **그대로**" })}
-        nowIso={NOW}
-        isRead={false}
-      />,
+      <ArticleCard article={item({ summary: "가격은 **100만 원**이다." })} nowIso={NOW} isRead={false} />,
     );
-    expect(html).toContain("출처 **그대로**");
+    expect(html).not.toContain("<strong>");
+    expect(html).toContain("가격은 **100만 원**이다.");
   });
 });

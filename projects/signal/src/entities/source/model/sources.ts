@@ -44,6 +44,7 @@ export const SOURCES: readonly Source[] = [
   {
     id: "openai-blog",
     name: "OpenAI",
+    original: { lang: "영어" },
     weight: 1.6,
     feedUrl: "https://openai.com/blog/rss.xml",
     needsTopicCheck: true,
@@ -52,6 +53,7 @@ export const SOURCES: readonly Source[] = [
   {
     id: "google-ai-blog",
     name: "Google AI",
+    original: { lang: "영어" },
     weight: 1.5,
     feedUrl: "https://blog.google/technology/ai/rss/",
     needsTopicCheck: true,
@@ -60,6 +62,7 @@ export const SOURCES: readonly Source[] = [
   {
     id: "deepmind-blog",
     name: "Google DeepMind",
+    original: { lang: "영어" },
     weight: 1.5,
     feedUrl: "https://deepmind.google/blog/rss.xml",
     needsTopicCheck: true,
@@ -70,6 +73,7 @@ export const SOURCES: readonly Source[] = [
     // 근거가 없어 요약을 아예 안 만든다(INV-S3) — 카드가 제목 한 줄이 된다.
     id: "huggingface-blog",
     name: "Hugging Face",
+    original: { lang: "영어" },
     weight: 1.3,
     feedUrl: "https://huggingface.co/blog/feed.xml",
     needsTopicCheck: true,
@@ -86,6 +90,8 @@ export const SOURCES: readonly Source[] = [
     // 결과가 더 문제였다 — 고빈도 소스라 요약 예산 상위를 매일 독식했다.
     id: "geeknews",
     name: "GeekNews",
+    displayName: "Hada",
+    original: { lang: "한국어", note: "Hada 정리" },
     weight: 1.3,
     feedUrl: "https://news.hada.io/rss/news",
     needsTopicCheck: true,
@@ -96,6 +102,7 @@ export const SOURCES: readonly Source[] = [
     // 투구게·칵테일 레시피가 여기서 들어왔다 — 점수 문턱이 1차 방벽이다.
     id: "hn-frontpage",
     name: "Hacker News",
+    original: { lang: "영어" },
     weight: 1.0,
     feedUrl: "https://hnrss.org/frontpage?points=100",
     needsTopicCheck: true,
@@ -111,6 +118,7 @@ export const SOURCES: readonly Source[] = [
   {
     id: "techcrunch-ai",
     name: "TechCrunch",
+    original: { lang: "영어" },
     weight: 0.9,
     feedUrl: "https://techcrunch.com/category/artificial-intelligence/feed/",
     needsTopicCheck: true,
@@ -121,6 +129,7 @@ export const SOURCES: readonly Source[] = [
     // 요약 호출의 입력 토큰이 다른 소스의 5~10배다.
     id: "venturebeat-ai",
     name: "VentureBeat",
+    original: { lang: "영어" },
     weight: 0.9,
     feedUrl: "https://venturebeat.com/category/ai/feed/",
     needsTopicCheck: true,
@@ -129,6 +138,7 @@ export const SOURCES: readonly Source[] = [
   {
     id: "mit-techreview",
     name: "MIT Technology Review",
+    original: { lang: "영어" },
     weight: 1.2,
     feedUrl: "https://www.technologyreview.com/topic/artificial-intelligence/feed/",
     needsTopicCheck: true,
@@ -137,6 +147,7 @@ export const SOURCES: readonly Source[] = [
   {
     id: "theverge",
     name: "The Verge",
+    original: { lang: "영어" },
     weight: 0.8,
     feedUrl: "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
     needsTopicCheck: true,
@@ -145,6 +156,7 @@ export const SOURCES: readonly Source[] = [
   {
     id: "arstechnica",
     name: "Ars Technica",
+    original: { lang: "영어" },
     weight: 0.9,
     feedUrl: "https://arstechnica.com/ai/feed/",
     needsTopicCheck: true,
@@ -155,6 +167,7 @@ export const SOURCES: readonly Source[] = [
   {
     id: "aitimes",
     name: "AI타임스",
+    original: { lang: "한국어" },
     weight: 1.1,
     feedUrl: "https://www.aitimes.com/rss/allArticle.xml",
     needsTopicCheck: true,
@@ -166,6 +179,7 @@ export const SOURCES: readonly Source[] = [
   {
     id: "aitimes-kr",
     name: "인공지능신문",
+    original: { lang: "한국어" },
     weight: 0.9,
     feedUrl: "https://www.aitimes.kr/rss/allArticle.xml",
     needsTopicCheck: true,
@@ -178,6 +192,7 @@ export const SOURCES: readonly Source[] = [
     // rss.etnews.com/ 목록에서 04046 이 AI, 04 가 SW 다.
     id: "etnews-ai",
     name: "전자신문",
+    original: { lang: "한국어" },
     weight: 0.9,
     feedUrl: "https://rss.etnews.com/04046.xml",
     needsTopicCheck: true,

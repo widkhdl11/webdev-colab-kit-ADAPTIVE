@@ -33,12 +33,11 @@ export function buildEnrichPrompt(input: EnrichPromptInput): EnrichPrompt {
 
   const wanted = [
     needTitle ? '"titleKo": "한국어로 옮긴 제목"' : null,
-    // 한 문장 요약은 요약 문단과 **따로 받는다** — 저장할 때 첫 문단으로 붙인다(tableToMarkup 과 같은 방식).
-    needSummary ? '"lead": "무슨 일인지 한 문장"' : null,
-    needSummary ? '"summary": "요약문"' : null,
-    needSummary ? '"points": ["핵심 항목", "..."]' : null,
-    // 표는 요약 문자열이 아니라 **따로 받는다** (INV-D7). 요약 안에 파이프 표를 쓰라고 했을 때
-    // 실측 3건 중 한 번도 안 나왔다 — 자세한 이유는 entities 의 tableToMarkup 주석.
+    // 요약은 **칸으로 나눠** 받는다 (INV-S8, 2026-09-23). 문단은 없앴다 — 핵심을 문장으로
+    // 되풀이할 뿐이었다(사용자 결정). 검사는 parse-enrich 가 한다.
+    needSummary ? '"oneLine": "한 문장 요약"' : null,
+    needSummary ? '"points": ["완결 문장", "완결 문장", "완결 문장"]' : null,
+    // 표는 따로 받는다(INV-S8) — 요약 글 안에 쓰게 하면 모델이 안 쓴다(2026-09-23 실측).
     needSummary ? '"table": {"head": ["대상", "기준"], "rows": [["...", "..."]]} 또는 null' : null,
     // `"tags"` 를 여기서 뺐다 (2026-08-30) — 고정 5개 목록에서 고르게 하던 자리다.
     // 뱃지 키워드가 그 자리를 물려받았고, 그쪽은 별도 단계로 돈다(run-keywords).

@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>signal — 상세 화면 재배치 시안 (v2)</title>
+
+<!--
+  signal / 소식 상세 · 재배치 시안 v2
+  ─────────────────────────────────────────────────────────────────────────────
+  근거: docs/design/design-rules.md (status: approved)
+        src/shared/ui/tokens.css (값을 그대로 옮겼다 — 새 색 없음)
+        src/widgets/article-view/ui/article-view.module.css (.read · .title · .metaRow · .who ·
+          .originalTitle · .summaryLead · .pointsLabel · .summaryTable · .caveat · .prose · .foot ·
+          .readNav · .navButton · .sourceButton)
+        docs/design/mockups/summary-format.html (요약 서식 B안 — 2026-09-23 승인)
+
+  무엇을 바꾸나
+  ────
+  화면 순서를 "사람이 묻는 순서"로 다시 놓는다.
+    무슨 일? → 제목 + 한 줄 요약
+    어디서·언제? → 메타 한 줄 (출처 · 시각 · 태그) + 원문 제목
+    왜 신호인가? → signal 포인트 (판정이 있는 기사만)
+    무엇이 있었나? → 핵심 (번호 목록 3개, 필요하면 표) + 안내 문구
+    근거는? → 원문 보기 (기본 접힘)
+  그 아래 출처 버튼 줄 · 이전/다음 글 줄은 지금 그대로다.
+
+  이 시안이 새로 제안하는 값 (design-rules 에 아직 없는 것) — 각 자리의 CSS 주석에 ★ 표시
+  ────
+  ① AI 요약 상자(면 + 왼쪽 4px 포인트선 + 「✨ AI 요약」 알약)를 푼다.
+     한 줄 요약은 제목 밑, 핵심은 절 제목 밑으로 흩어지고, 상자 대신 절 제목 + 여백으로 나눈다.
+     이유: 새 순서에서는 한 줄 요약과 핵심 사이에 메타 줄과 signal 포인트가 끼므로, 상자로 묶으려면
+     상자가 둘로 쪼개지거나 메타 줄까지 삼킨다. 요약과 원문을 가르던 역할은 이제
+     「원문 보기」가 접힌 버튼이라는 구조가 맡는다 — 원문은 누르기 전엔 화면에 없다.
+  ② 메타 한 줄에 태그를 글자로 이어 쓴다 (`출처 · 시각 · 분야 · 사건종류`). 알약 줄은 없앤다.
+     이유: 상세의 태그 알약은 누르는 기능이 없는데 알약 모양은 눌리는 것처럼 보인다.
+     그리고 제목과 signal 포인트 사이에 한 줄(24px + 여백 14px)이 덜 끼어 "왜 신호인가"가 위로 올라온다.
+     대가: 분야/사건종류를 가르던 색(청회색·모래빛)이 사라진다 — 순서(분야 먼저)와 스크린리더 접두사가 대신한다.
+  ③ 원문 제목 라벨 "원문 제목:" → "원문:" (지시받은 문구). 크기·색은 그대로 12px --meta.
+  ④ 절 제목: 13px(--fs-ui) / 700 / --meta. 「signal」 부분만 --text / 800 (로고 "signal." 과 같은 굵기·자간).
+     기존 「핵심」 라벨(12px)은 상자 안의 라벨이었고 이제는 절 제목이라 한 칸 올렸다. 13px 은 이미 있는 단계다.
+  ⑤ signal 포인트 한 줄 = 라벨(13px / 700 / --accent) + 근거 한 문장(16px / --text / 줄높이 1.7).
+     데스크톱은 라벨 칸 84px + 문장, 390px 은 라벨 위·문장 아래로 쌓는다.
+     포인트색은 라벨 글자(작은 표식)에만 닿는다 — 면·선에는 안 쓴다.
+     --accent on --bg = 5.49:1 (페이지 제목·링크가 이미 쓰는 조합).
+  ⑥ 핵심 = 번호 목록(decimal). 마커 --meta, 글자 --text 16px / 1.7 (요점 글자 값 그대로).
+  ⑦ 원문 보기 = details/summary. 닫힌 모양은 이전/다음 글 버튼과 같은 언어
+     (카드 라운드 12px + 1px --border-soft, 호버 --surface). 높이 48px(폰에서도 44px 이상).
+     라벨 오른쪽에 「펼치기 ▾」/「접기 ▴」.
+  ⑧ 원문 글자 17px → 16px (요약보다 크지 않게). 줄높이 1.78 · --text 그대로.
+     이제 원문 h3~h6 도 16px 이 된다 — 지금 폰에서 하는 것과 같은 처리.
+  ⑨ 간격: 제목 → 한 줄 요약 12px(기존 .title 아래 여백) · 한 줄 요약 → 메타 16px ·
+     메타 점선 → signal 포인트 24px · 절과 절 사이 28px · 핵심 → 원문 보기 28px.
+
+  조건부 자리 (시안에 모두 그리지는 않았다)
+  ────
+  · 판정이 없는 기사: signal 포인트 절이 통째로 없다. 메타 점선 다음에 바로 「핵심」이 온다.
+  · 표가 있는 기사: 핵심 목록 뒤 · 안내 문구 앞에 표 (맨 아래 조각 참고)
+  · 한 줄 요약이 없는 기사(옛 요약): 제목 다음에 바로 메타 줄. 옛 요약 문단은 핵심 자리에 문단으로 선다
+  · 원문 전문이 없는 출처: 「원문 보기」 자리에 기존 안내 한 줄 ("이 출처는 원문 전문을 제공하지 않습니다…")만.
+    펼쳐도 빈 버튼은 그리지 않는다
+
+  폭 흉내
+  ────
+  iframe 없이 두 칸을 폭으로 흉내 낸다. 390px 칸의 모바일 규칙은 @container 로 걸었다 —
+  실제 구현은 기존대로 @media (max-width: 640px) 에 넣으면 된다. 폰의 하단 고정 줄(이전/다음 글)은
+  칸 맨 아래에 붙여 그렸다(실제로는 position: fixed).
+-->
+
+<style>
+  :root{
+    /* tokens.css 값 그대로 */
+    --bg: #efeff5;
+    --surface: #f8f8fc;
+    --hairline: #e2e2ec;
+    --dot: #c9c9d6;
+    --sunken: #e5e5ee;
+    --code-ink: #33353c;
+    --border-soft: #e3e3ec;
+    --border-soft-h: #d8d8e4;
+    --text: #1f2024;
+    --text2: #4a4e55;
+    --meta: #656a72;
+    --accent: #4f46e5;
+    --accent-soft: #e9e8fb;
+    --on-accent: #ffffff;
+    --r-card: 12px;
+    --r-img: 8px;
+    --r-pill: 999px;
+    --r-inline: 6px;
+    --readw: 704px;
+    --touch-min: 44px;
+    --shadow-btn-h: 0 2px 10px rgba(31, 32, 36, 0.09);
+    --space-2: 2px; --space-4: 4px; --space-6: 6px; --space-8: 8px; --space-10: 10px;
+    --space-12: 12px; --space-14: 14px; --space-16: 16px; --space-20: 20px;
+    --space-22: 22px; --space-28: 28px;
+    --font-sans: "Pretendard Variable", "Pretendard", system-ui, -apple-system,
+      "Apple SD Gothic Neo", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --fs-art-title: 28px;
+    --fs-logo: 19px;
+    --fs-title: 16px;
+    --fs-body: 15px;
+    --fs-btn: 14px;
+    --fs-sm: 13.5px;
+    --fs-ui: 13px;
+    --fs-xs: 12.5px;
+    --fs-meta: 12px;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--fs-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a:focus-visible, summary:focus-visible, button:focus-visible, [tabindex]:focus-visible{
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  .sr-only{
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+
+  /* ── 시안 틀 (실제 화면이 아니다) ── */
+  .sheet{ max-width: 1240px; margin: 0 auto; padding: 32px 20px 64px; }
+  .sheet > h1{ font-size: 22px; font-weight: 800; margin: 0 0 6px; }
+  .sheet > .lead{ color: var(--text2); margin: 0 0 32px; font-size: var(--fs-sm); word-break: keep-all; max-width: 900px; }
+  .opt{ margin-bottom: 64px; }
+  .opt > h2{ font-size: 18px; font-weight: 800; margin: 0 0 4px; }
+  .opt > .desc{ color: var(--text2); font-size: var(--fs-sm); margin: 0 0 16px; word-break: keep-all; max-width: 900px; }
+  .frames{ display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+  .frame{ container-type: inline-size; border: 1px dashed var(--dot); border-radius: var(--r-card); background: var(--bg); overflow: hidden; }
+  .frame-d{ width: 760px; max-width: 100%; }
+  .frame-m{ width: 390px; max-width: 100%; }
+  .frame-cap{ font-size: var(--fs-meta); color: var(--meta); font-weight: 600; padding: 8px 12px; border-bottom: 1px dashed var(--dot); }
+
+  /* ── 상단 헤더 (site-chrome 값) ── */
+  .top{ border-bottom: 1px solid var(--hairline); padding: var(--space-14) var(--space-20); }
+  .logo{ font-size: var(--fs-logo); font-weight: 800; letter-spacing: -0.3px; color: var(--text); text-decoration: none; }
+  .logo .d{ color: var(--accent); }
+
+  /* ── 읽기 컬럼 · 제목 (기존 값 그대로) ── */
+  .read{ max-width: var(--readw); margin: 0 auto; padding: 0 var(--space-20); }
+  .back{
+    display: inline-block; margin: 24px 0 var(--space-20);
+    font-size: var(--fs-ui); font-weight: 600; color: var(--meta); text-decoration: none;
+  }
+  .back:hover{ color: var(--accent); }
+  .title{
+    margin: 0 0 var(--space-12);
+    font-size: var(--fs-art-title); font-weight: 800; line-height: 1.35; letter-spacing: -0.7px;
+    color: var(--accent); word-break: keep-all;
+  }
+
+  /* 한 줄 요약 — 기존 .summaryLead 값(16px · --text · 600) 그대로. 상자 밖으로 나왔을 뿐이다.
+     ★⑨ 아래 여백 16px */
+  .lead-line{
+    margin: 0 0 var(--space-16);
+    font-size: var(--fs-title); font-weight: 600; line-height: 1.7;
+    color: var(--text); word-break: keep-all;
+  }
+
+  /* 메타 줄 — 기존 .metaRow (점선 밑선) */
+  .metaRow{
+    display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-10);
+    padding-bottom: 18px; border-bottom: 1px dotted var(--dot);
+  }
+  .who{ font-size: var(--fs-ui); color: var(--meta); word-break: keep-all; }
+  .who strong{ color: var(--text2); font-weight: 600; }
+  /* ★② 태그는 메타 글자로 이어 쓴다 — 출처·시각과 같은 크기·색 */
+  .originalTitle{
+    flex: 1 0 100%; margin: 0;
+    font-size: var(--fs-meta); color: var(--meta); line-height: 1.5;
+    word-break: keep-all; overflow-wrap: anywhere;
+  }
+
+  /* ── 절 ── ★④⑨ */
+  .sec{ margin-top: var(--space-28); }
+  .metaRow + .sec{ margin-top: 24px; }
+  .sec-h{
+    margin: 0 0 var(--space-10);
+    font-size: var(--fs-ui); font-weight: 700; line-height: 1.5;
+    color: var(--meta);
+  }
+  .sec-h .brand{ color: var(--text); font-weight: 800; letter-spacing: -0.3px; }
+
+  /* ── signal 포인트 ── ★⑤ 포인트색은 라벨 글자에만 */
+  .points{ list-style: none; margin: 0; padding: 0; }
+  .points li{
+    display: grid; grid-template-columns: 84px 1fr; column-gap: var(--space-12);
+    align-items: baseline;
+  }
+  .points li + li{ margin-top: var(--space-10); }
+  .pt-label{
+    font-size: var(--fs-ui); font-weight: 700; color: var(--accent);
+    white-space: nowrap;
+  }
+  .pt-text{
+    font-size: var(--fs-title); line-height: 1.7; color: var(--text); word-break: keep-all;
+  }
+
+  /* ── 핵심 ── ★⑥ 번호 목록 */
+  .keypts{ margin: 0; padding-left: var(--space-22); list-style: decimal outside; }
+  .keypts li{
+    font-size: var(--fs-title); line-height: 1.7; color: var(--text);
+    margin-bottom: var(--space-6); word-break: keep-all;
+  }
+  .keypts li:last-child{ margin-bottom: 0; }
+  .keypts li::marker{ color: var(--meta); font-weight: 600; }
+  .keypts code{
+    font-family: var(--font-mono); font-size: 0.87em; background: var(--sunken);
+    border-radius: var(--r-inline); padding: var(--space-2) var(--space-6); color: var(--code-ink);
+  }
+  /* 안내 문구 — 기존 .caveat 의 크기·색. 상자가 풀리며 점선 위선은 뺐다
+     (바로 아래 「원문 보기」 버튼이 경계 노릇을 한다) */
+  .caveat{
+    margin: var(--space-12) 0 0;
+    font-size: var(--fs-meta); color: var(--meta); line-height: 1.6; word-break: keep-all;
+  }
+
+  /* 표 — design-rules 2026-09-23 「요약 상자 서식」 값 그대로 (.summaryTable) */
+  .summaryTable{
+    width: 100%; margin: var(--space-14) 0 0;
+    border-collapse: separate; border-spacing: 0;
+    border: 1px solid var(--border-soft); border-radius: var(--r-img); overflow: hidden;
+    font-size: var(--fs-body); line-height: 1.5; font-variant-numeric: tabular-nums;
+  }
+  .summaryTable th, .summaryTable td{
+    padding: var(--space-8) var(--space-12); text-align: left;
+    word-break: keep-all; overflow-wrap: anywhere; vertical-align: top;
+  }
+  .summaryTable thead th{
+    background: var(--bg); font-weight: 700; color: var(--text);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .summaryTable tbody th, .summaryTable td{
+    background: var(--surface); color: var(--text2); border-bottom: 1px solid var(--hairline);
+  }
+  .summaryTable tbody th{ font-weight: 700; color: var(--text); }
+  .summaryTable tbody tr:last-child > *{ border-bottom: 0; }
+
+  /* ── 원문 보기 ── ★⑦ 이전/다음 글 버튼과 같은 언어(카드 라운드 + --border-soft) */
+  .orig{ margin-top: var(--space-28); }
+  .orig > summary{
+    list-style: none;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-12);
+    min-height: 48px; padding: 0 var(--space-16);
+    border: 1px solid var(--border-soft); border-radius: var(--r-card);
+    font-size: var(--fs-body); font-weight: 600; color: var(--text2);
+    cursor: pointer; word-break: keep-all;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .orig > summary::-webkit-details-marker{ display: none; }
+  .orig > summary:hover{ background: var(--surface); border-color: var(--border-soft-h); }
+  .orig .lang{ font-weight: 500; color: var(--meta); }
+  .orig .act{ flex: none; font-size: var(--fs-ui); font-weight: 600; color: var(--meta); }
+  .orig .act-close{ display: none; }
+  .orig[open] .act-open{ display: none; }
+  .orig[open] .act-close{ display: inline; }
+  .orig[open] > summary{ border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: var(--surface); }
+
+  /* 펼친 원문 — ★⑧ 17px → 16px. 나머지(줄높이·색·목록·코드)는 기존 .prose 값 */
+  .prose{
+    padding: 20px var(--space-16) var(--space-8);
+    border: 1px solid var(--border-soft); border-top: 0;
+    border-radius: 0 0 var(--r-card) var(--r-card);
+  }
+  .sourceNote{ font-size: var(--fs-meta); font-weight: 600; color: var(--meta); margin: 0 0 var(--space-20); }
+  .prose p{ margin: 0 0 1.15em; font-size: var(--fs-title); line-height: 1.78; color: var(--text); word-break: keep-all; }
+  .prose ul{ margin: 0 0 1.15em; padding-left: var(--space-22); list-style: disc outside; }
+  .prose li{ font-size: var(--fs-title); line-height: 1.78; color: var(--text); margin-bottom: .45em; word-break: keep-all; }
+  .prose li::marker{ color: var(--meta); }
+  .prose h3{ margin: 1.6em 0 .6em; font-size: var(--fs-title); font-weight: 700; line-height: 1.5; color: var(--text); word-break: keep-all; }
+  .prose code{
+    font-family: var(--font-mono); font-size: .87em; background: var(--sunken);
+    border-radius: var(--r-inline); padding: var(--space-2) var(--space-6); color: var(--code-ink);
+    overflow-wrap: anywhere;
+  }
+  .prose a{
+    color: var(--accent); text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent); text-underline-offset: 3px;
+  }
+
+  /* ── 하단 (기존 .foot · .sourceButton · .readNav 그대로) ── */
+  .foot{
+    margin-top: 32px; padding-top: var(--space-20); border-top: 1px dotted var(--dot);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-14);
+  }
+  .note{ font-size: var(--fs-xs); color: var(--meta); }
+  .sourceButton{
+    display: inline-flex; align-items: center; gap: var(--space-8);
+    font-size: var(--fs-btn); font-weight: 600; padding: var(--space-12) var(--space-20);
+    border-radius: var(--r-pill); background: var(--accent); color: var(--on-accent); text-decoration: none;
+  }
+  .sourceButton:hover{ filter: brightness(1.08); box-shadow: var(--shadow-btn-h); }
+  .readNav{
+    display: flex; gap: var(--space-12); margin-top: var(--space-28);
+    padding: var(--space-20) 0 56px; border-top: 1px dotted var(--dot);
+  }
+  .navButton{
+    flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4);
+    padding: var(--space-14) 18px; border-radius: var(--r-card); background: transparent;
+    border: 1px solid var(--border-soft); text-decoration: none; color: var(--text2);
+  }
+  .readNav .navPrev{ align-items: flex-start; text-align: left; }
+  .readNav .navNext{ align-items: flex-end; text-align: right; }
+  .navButton:hover{ background: var(--surface); border-color: var(--border-soft-h); }
+  .navRole{ font-size: var(--fs-meta); color: var(--meta); }
+  .navTitle{
+    font-size: var(--fs-sm); font-weight: 600; line-height: 1.45; color: var(--text2); word-break: keep-all;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  /* 표 조각 칸 */
+  .frag{ padding: 24px var(--space-20) 28px; }
+
+  /* ── 390px — 실제 구현에서는 @media (max-width: 640px) ── */
+  @container (max-width: 640px){
+    .title{ font-size: 23px; }
+    .back{ margin: 16px 0 var(--space-16); }
+    /* 라벨 위 · 문장 아래로 쌓는다 */
+    .points li{ grid-template-columns: 1fr; row-gap: var(--space-2); }
+    .points li + li{ margin-top: var(--space-14); }
+    .orig > summary{ padding: 0 var(--space-14); }
+    .prose{ padding: 16px var(--space-14) var(--space-4); }
+    .summaryTable{ font-size: var(--fs-sm); }
+    .summaryTable th, .summaryTable td{ padding: var(--space-8) var(--space-10); }
+    .foot{ flex-direction: column; align-items: flex-start; padding-bottom: var(--space-28); }
+    /* 하단 고정 줄 (실제로는 position: fixed) */
+    .readNav{
+      margin-top: 0; padding: var(--space-12) var(--space-16); gap: var(--space-8);
+      background: var(--surface); border-top: 1px solid var(--hairline);
+      margin-left: calc(-1 * var(--space-20)); margin-right: calc(-1 * var(--space-20));
+    }
+    .navButton{
+      min-height: var(--touch-min); justify-content: center; align-items: center;
+      padding: 0 var(--space-14); border-radius: var(--r-pill); background: var(--bg);
+    }
+    .navRole{ font-size: var(--fs-btn); font-weight: 600; color: var(--text2); }
+    .navTitle{
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .orig > summary{ transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <h1>상세 화면 재배치 — 사람이 묻는 순서로</h1>
+  <p class="lead">
+    위에서 아래로: 무슨 일인가(제목 + 한 줄 요약) → 어디서·언제(메타) → 왜 신호인가(signal 포인트) →
+    무엇이 있었나(핵심) → 근거(원문 보기, 기본 접힘). 색·크기 단계는 모두 기존 토큰이다.
+    왼쪽은 1280px 화면의 읽기 컬럼(704px), 오른쪽은 390px 폰.
+  </p>
+
+  <!-- ═══════════════════════════ 기사 1 — 원문 접힘 ═══════════════════════════ -->
+  <section class="opt" aria-labelledby="o1">
+    <h2 id="o1">기사 1 · OpenAI — 원문 접힌 상태 (기본)</h2>
+    <p class="desc">signal 포인트가 하나인 기사. 원문은 영어라 라벨이 「원문 보기 (영어)」.</p>
+    <div class="frames">
+
+      <!-- 1280px -->
+      <div class="frame frame-d">
+        <div class="frame-cap">1280px · 읽기 컬럼 704px</div>
+        <header class="top"><a class="logo" href="#">signal<span class="d">.</span></a></header>
+        <main class="read">
+          <a class="back" href="#"><span aria-hidden="true">←</span> 피드로</a>
+          <h1 class="title">GPT-6 프롬프트 캐싱 개선: 30분 안에 다시 쓰면 입력 비용이 최대 90% 줄어든다</h1>
+          <p class="lead-line">OpenAI가 GPT-6의 프롬프트 캐싱을 고쳐 반복 호출 비용을 크게 낮췄다.</p>
+
+          <div class="metaRow">
+            <span class="who"><strong>OpenAI</strong> · 12시간 전 · <span class="sr-only">분야 </span>AI 모델 · <span class="sr-only">사건종류 </span>기능 추가</span>
+            <p class="originalTitle">원문: Better prompt caching for GPT-6</p>
+          </div>
+
+          <!-- signal 포인트: 판정이 없는 기사는 이 section 이 통째로 없다 -->
+          <section class="sec" aria-labelledby="d1-sig">
+            <h2 class="sec-h" id="d1-sig"><span class="brand">signal</span> 포인트</h2>
+            <ul class="points">
+              <li><span class="pt-label">실무 영향</span><span class="pt-text">같은 지시문을 되풀이하는 에이전트라면 API 비용이 크게 줄어든다.</span></li>
+            </ul>
+          </section>
+
+          <section class="sec" aria-labelledby="d1-key">
+            <h2 class="sec-h" id="d1-key">핵심</h2>
+            <ol class="keypts">
+              <li>같은 앞부분을 30분 안에 다시 보내면 캐시 할인이 최대 90%까지 붙는다.</li>
+              <li>캐시 적중률을 보는 대시보드와 캐시 미스 원인을 짚는 도구가 새로 생겼다.</li>
+              <li>지시문이나 도구를 바꾸거나 추론 강도를 조정해도 캐시가 유지된다.</li>
+            </ol>
+            <p class="caveat">요약은 자동으로 만들어집니다. 사실 확인이 필요하면 원문을 읽어주세요.</p>
+          </section>
+
+          <details class="orig">
+            <summary>
+              <span>원문 보기 <span class="lang">(영어)</span></span>
+              <span class="act" aria-hidden="true"><span class="act-open">펼치기 ▾</span><span class="act-close">접기 ▴</span></span>
+            </summary>
+            <div class="prose" lang="en">
+              <p class="sourceNote" lang="ko">아래는 출처에서 가져온 원문입니다.</p>
+              <p>Today we're shipping a set of improvements to prompt caching for GPT-6. When you resend the same prefix within 30 minutes, cached input tokens are now discounted by up to 90%.</p>
+              <p>We're also adding a cache hit-rate dashboard and a miss inspector that points to the exact token where a prefix diverged.</p>
+              <p>Caches now survive changes to system instructions, tool definitions and reasoning effort, so agent loops keep their discount as they evolve.</p>
+            </div>
+          </details>
+
+          <div class="foot">
+            <span class="note">원문의 저작권은 출처에 있습니다.</span>
+            <a class="sourceButton" href="#" target="_blank" rel="noopener noreferrer">출처에서 원문 보기 <span aria-hidden="true">↗</span><span class="sr-only">새 창에서 열림</span></a>
+          </div>
+          <nav class="readNav" aria-label="글 이동">
+            <a class="navButton navPrev" href="#"><span class="navRole">← 이전 글</span><span class="navTitle">앤트로픽, 클로드 코드에 백그라운드 작업 추가</span></a>
+            <a class="navButton navNext" href="#"><span class="navRole">다음 글 →</span><span class="navTitle">WordPress 취약점: 인증 없이 로컬 PHP 파일을 끼워 넣을 수 있다</span></a>
+          </nav>
+        </main>
+      </div>
+
+      <!-- 390px -->
+      <div class="frame frame-m">
+        <div class="frame-cap">390px · 폰</div>
+        <header class="top"><a class="logo" href="#">signal<span class="d">.</span></a></header>
+        <main class="read">
+          <a class="back" href="#"><span aria-hidden="true">←</span> 피드로</a>
+          <h1 class="title">GPT-6 프롬프트 캐싱 개선: 30분 안에 다시 쓰면 입력 비용이 최대 90% 줄어든다</h1>
+          <p class="lead-line">OpenAI가 GPT-6의 프롬프트 캐싱을 고쳐 반복 호출 비용을 크게 낮췄다.</p>
+
+          <div class="metaRow">
+            <span class="who"><strong>OpenAI</strong> · 12시간 전 · <span class="sr-only">분야 </span>AI 모델 · <span class="sr-only">사건종류 </span>기능 추가</span>
+            <p class="originalTitle">원문: Better prompt caching for GPT-6</p>
+          </div>
+
+          <!-- signal 포인트: 판정이 없는 기사는 이 section 이 통째로 없다 -->
+          <section class="sec" aria-labelledby="m1-sig">
+            <h2 class="sec-h" id="m1-sig"><span class="brand">signal</span> 포인트</h2>
+            <ul class="points">
+              <li><span class="pt-label">실무 영향</span><span class="pt-text">같은 지시문을 되풀이하는 에이전트라면 API 비용이 크게 줄어든다.</span></li>
+            </ul>
+          </section>
+
+          <section class="sec" aria-labelledby="m1-key">
+            <h2 class="sec-h" id="m1-key">핵심</h2>
+            <ol class="keypts">
+              <li>같은 앞부분을 30분 안에 다시 보내면 캐시 할인이 최대 90%까지 붙는다.</li>
+              <li>캐시 적중률을 보는 대시보드와 캐시 미스 원인을 짚는 도구가 새로 생겼다.</li>
+              <li>지시문이나 도구를 바꾸거나 추론 강도를 조정해도 캐시가 유지된다.</li>
+            </ol>
+            <p class="caveat">요약은 자동으로 만들어집니다. 사실 확인이 필요하면 원문을 읽어주세요.</p>
+          </section>
+
+          <details class="orig">
+            <summary>
+              <span>원문 보기 <span class="lang">(영어)</span></span>
+              <span class="act" aria-hidden="true"><span class="act-open">펼치기 ▾</span><span class="act-close">접기 ▴</span></span>
+            </summary>
+            <div class="prose" lang="en">
+              <p class="sourceNote" lang="ko">아래는 출처에서 가져온 원문입니다.</p>
+              <p>Today we're shipping a set of improvements to prompt caching for GPT-6. When you resend the same prefix within 30 minutes, cached input tokens are now discounted by up to 90%.</p>
+              <p>We're also adding a cache hit-rate dashboard and a miss inspector that points to the exact token where a prefix diverged.</p>
+              <p>Caches now survive changes to system instructions, tool definitions and reasoning effort, so agent loops keep their discount as they evolve.</p>
+            </div>
+          </details>
+
+          <div class="foot">
+            <span class="note">원문의 저작권은 출처에 있습니다.</span>
+            <a class="sourceButton" href="#" target="_blank" rel="noopener noreferrer">출처에서 원문 보기 <span aria-hidden="true">↗</span><span class="sr-only">새 창에서 열림</span></a>
+          </div>
+          <nav class="readNav" aria-label="글 이동">
+            <a class="navButton navPrev" href="#"><span class="navRole">← 이전 글</span><span class="navTitle">앤트로픽, 클로드 코드에 백그라운드 작업 추가</span></a>
+            <a class="navButton navNext" href="#"><span class="navRole">다음 글 →</span><span class="navTitle">WordPress 취약점: 인증 없이 로컬 PHP 파일을 끼워 넣을 수 있다</span></a>
+          </nav>
+        </main>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ 기사 2 — 원문 펼침 ═══════════════════════════ -->
+  <section class="opt" aria-labelledby="o2">
+    <h2 id="o2">기사 2 · GeekNews — 원문 펼친 상태</h2>
+    <p class="desc">signal 포인트가 둘인 기사. 원문이 Hada 의 한국어 정리라 라벨이 「원문 보기 (Hada 정리, 한국어)」. 펼친 원문은 16px — 위의 요약 글자와 같은 크기.</p>
+    <div class="frames">
+
+      <!-- 1280px -->
+      <div class="frame frame-d">
+        <div class="frame-cap">1280px · 읽기 컬럼 704px · 원문 펼침</div>
+        <header class="top"><a class="logo" href="#">signal<span class="d">.</span></a></header>
+        <main class="read">
+          <a class="back" href="#"><span aria-hidden="true">←</span> 피드로</a>
+          <h1 class="title">WordPress 취약점: 인증 없이 로컬 PHP 파일을 끼워 넣을 수 있고, 조건이 맞으면 원격 코드 실행으로 이어진다</h1>
+          <p class="lead-line">WordPress에서 로그인 없이 서버의 PHP 파일을 실행시킬 수 있는 취약점이 발견됐다.</p>
+
+          <div class="metaRow">
+            <span class="who"><strong>Hada</strong> · 5시간 전 · <span class="sr-only">분야 </span>보안 · <span class="sr-only">사건종류 </span>취약점</span>
+            <p class="originalTitle">원문: WordPress: 인증 없이 악용 가능한 경로 순회 취약점, 조건 충족 시 원격 코드 실행으로 이어짐</p>
+          </div>
+
+          <!-- signal 포인트: 판정이 없는 기사는 이 section 이 통째로 없다 -->
+          <section class="sec" aria-labelledby="d2-sig">
+            <h2 class="sec-h" id="d2-sig"><span class="brand">signal</span> 포인트</h2>
+            <ul class="points">
+              <li><span class="pt-label">실무 영향</span><span class="pt-text">WordPress 사이트를 운영한다면 테마 디렉터리와 업로드 경로를 지금 점검해야 한다.</span></li>
+              <li><span class="pt-label">시한 있음</span><span class="pt-text">로그인이 필요 없는 공격이라 패치 전까지 노출된 사이트가 먼저 표적이 된다.</span></li>
+            </ul>
+          </section>
+
+          <section class="sec" aria-labelledby="d2-key">
+            <h2 class="sec-h" id="d2-key">핵심</h2>
+            <ol class="keypts">
+              <li><code>get_page_template()</code> 함수가 활성 테마 밖의 .php 파일을 불러올 수 있다.</li>
+              <li>서버 설정에 따라 파일 노출을 넘어 원격 코드 실행까지 이어질 수 있다.</li>
+              <li>원격 코드 실행에는 테마 구조와 업로드 방식 같은 조건이 함께 맞아야 한다.</li>
+            </ol>
+            <p class="caveat">요약은 자동으로 만들어집니다. 사실 확인이 필요하면 원문을 읽어주세요.</p>
+          </section>
+
+          <details class="orig" open>
+            <summary>
+              <span>원문 보기 <span class="lang">(Hada 정리, 한국어)</span></span>
+              <span class="act" aria-hidden="true"><span class="act-open">펼치기 ▾</span><span class="act-close">접기 ▴</span></span>
+            </summary>
+            <div class="prose">
+              <p class="sourceNote">아래는 출처에서 가져온 원문입니다.</p>
+              <p>WordPress 코어의 페이지 템플릿 처리에서 경로 순회 취약점이 보고됨. 로그인하지 않은 방문자도 요청 파라미터만으로 악용할 수 있음</p>
+              <ul>
+                <li><code>get_page_template()</code> 가 템플릿 이름을 정규화하지 않고 받아 <code>../</code> 로 활성 테마 밖의 .php 파일을 지정할 수 있음</li>
+                <li>기본 설정에서는 서버 안의 PHP 파일을 불러오는 데서 그치지만, 업로드 디렉터리에서 PHP 실행이 허용된 서버라면 원격 코드 실행으로 이어짐</li>
+                <li>관리자 권한이나 로그인 세션이 전혀 필요 없음</li>
+              </ul>
+              <h3>대응</h3>
+              <p>보안 패치가 나오기 전까지는 업로드 디렉터리의 PHP 실행을 막고, 테마 디렉터리 밖으로 나가는 템플릿 요청을 웹 서버 단에서 거르는 것이 권장됨</p>
+            </div>
+          </details>
+
+          <div class="foot">
+            <span class="note">원문의 저작권은 출처에 있습니다.</span>
+            <a class="sourceButton" href="#" target="_blank" rel="noopener noreferrer">출처에서 원문 보기 <span aria-hidden="true">↗</span><span class="sr-only">새 창에서 열림</span></a>
+          </div>
+          <nav class="readNav" aria-label="글 이동">
+            <a class="navButton navPrev" href="#"><span class="navRole">← 이전 글</span><span class="navTitle">GPT-6 프롬프트 캐싱 개선: 30분 안에 다시 쓰면 입력 비용이 최대 90% 줄어든다</span></a>
+            <a class="navButton navNext" href="#"><span class="navRole">다음 글 →</span><span class="navTitle">구글, 제미나이 CLI 에 원격 MCP 서버 인증 추가</span></a>
+          </nav>
+        </main>
+      </div>
+
+      <!-- 390px -->
+      <div class="frame frame-m">
+        <div class="frame-cap">390px · 폰 · 원문 펼침</div>
+        <header class="top"><a class="logo" href="#">signal<span class="d">.</span></a></header>
+        <main class="read">
+          <a class="back" href="#"><span aria-hidden="true">←</span> 피드로</a>
+          <h1 class="title">WordPress 취약점: 인증 없이 로컬 PHP 파일을 끼워 넣을 수 있고, 조건이 맞으면 원격 코드 실행으로 이어진다</h1>
+          <p class="lead-line">WordPress에서 로그인 없이 서버의 PHP 파일을 실행시킬 수 있는 취약점이 발견됐다.</p>
+
+          <div class="metaRow">
+            <span class="who"><strong>Hada</strong> · 5시간 전 · <span class="sr-only">분야 </span>보안 · <span class="sr-only">사건종류 </span>취약점</span>
+            <p class="originalTitle">원문: WordPress: 인증 없이 악용 가능한 경로 순회 취약점, 조건 충족 시 원격 코드 실행으로 이어짐</p>
+          </div>
+
+          <!-- signal 포인트: 판정이 없는 기사는 이 section 이 통째로 없다 -->
+          <section class="sec" aria-labelledby="m2-sig">
+            <h2 class="sec-h" id="m2-sig"><span class="brand">signal</span> 포인트</h2>
+            <ul class="points">
+              <li><span class="pt-label">실무 영향</span><span class="pt-text">WordPress 사이트를 운영한다면 테마 디렉터리와 업로드 경로를 지금 점검해야 한다.</span></li>
+              <li><span class="pt-label">시한 있음</span><span class="pt-text">로그인이 필요 없는 공격이라 패치 전까지 노출된 사이트가 먼저 표적이 된다.</span></li>
+            </ul>
+          </section>
+
+          <section class="sec" aria-labelledby="m2-key">
+            <h2 class="sec-h" id="m2-key">핵심</h2>
+            <ol class="keypts">
+              <li><code>get_page_template()</code> 함수가 활성 테마 밖의 .php 파일을 불러올 수 있다.</li>
+              <li>서버 설정에 따라 파일 노출을 넘어 원격 코드 실행까지 이어질 수 있다.</li>
+              <li>원격 코드 실행에는 테마 구조와 업로드 방식 같은 조건이 함께 맞아야 한다.</li>
+            </ol>
+            <p class="caveat">요약은 자동으로 만들어집니다. 사실 확인이 필요하면 원문을 읽어주세요.</p>
+          </section>
+
+          <details class="orig" open>
+            <summary>
+              <span>원문 보기 <span class="lang">(Hada 정리, 한국어)</span></span>
+              <span class="act" aria-hidden="true"><span class="act-open">펼치기 ▾</span><span class="act-close">접기 ▴</span></span>
+            </summary>
+            <div class="prose">
+              <p class="sourceNote">아래는 출처에서 가져온 원문입니다.</p>
+              <p>WordPress 코어의 페이지 템플릿 처리에서 경로 순회 취약점이 보고됨. 로그인하지 않은 방문자도 요청 파라미터만으로 악용할 수 있음</p>
+              <ul>
+                <li><code>get_page_template()</code> 가 템플릿 이름을 정규화하지 않고 받아 <code>../</code> 로 활성 테마 밖의 .php 파일을 지정할 수 있음</li>
+                <li>기본 설정에서는 서버 안의 PHP 파일을 불러오는 데서 그치지만, 업로드 디렉터리에서 PHP 실행이 허용된 서버라면 원격 코드 실행으로 이어짐</li>
+                <li>관리자 권한이나 로그인 세션이 전혀 필요 없음</li>
+              </ul>
+              <h3>대응</h3>
+              <p>보안 패치가 나오기 전까지는 업로드 디렉터리의 PHP 실행을 막고, 테마 디렉터리 밖으로 나가는 템플릿 요청을 웹 서버 단에서 거르는 것이 권장됨</p>
+            </div>
+          </details>
+
+          <div class="foot">
+            <span class="note">원문의 저작권은 출처에 있습니다.</span>
+            <a class="sourceButton" href="#" target="_blank" rel="noopener noreferrer">출처에서 원문 보기 <span aria-hidden="true">↗</span><span class="sr-only">새 창에서 열림</span></a>
+          </div>
+          <nav class="readNav" aria-label="글 이동">
+            <a class="navButton navPrev" href="#"><span class="navRole">← 이전 글</span><span class="navTitle">GPT-6 프롬프트 캐싱 개선: 30분 안에 다시 쓰면 입력 비용이 최대 90% 줄어든다</span></a>
+            <a class="navButton navNext" href="#"><span class="navRole">다음 글 →</span><span class="navTitle">구글, 제미나이 CLI 에 원격 MCP 서버 인증 추가</span></a>
+          </nav>
+        </main>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ 조각 — 표가 있는 기사 ═══════════════════════════ -->
+  <section class="opt" aria-labelledby="o3">
+    <h2 id="o3">조각 · 표가 있는 기사일 때 표의 자리</h2>
+    <p class="desc">기사 「오픈AI, GPT-6 솔·루나 공개」의 핵심 절만 잘라 그렸다. 표는 핵심 목록 뒤 · 안내 문구 앞. 표 값은 2026-09-23 「요약 상자 서식」 그대로 — 상자 면(--surface) 대신 페이지 면(--bg) 위에 놓인다는 것만 다르다.</p>
+    <div class="frames">
+      <div class="frame frame-d">
+        <div class="frame-cap">1280px · 읽기 컬럼 704px</div>
+        <div class="read frag">
+          <section aria-labelledby="t1-key">
+            <h2 class="sec-h" id="t1-key">핵심</h2>
+            <ol class="keypts">
+              <li>오픈AI가 GPT-6를 크기가 다른 두 모델, 솔과 루나로 나눠 내놓았다.</li>
+              <li>솔은 복잡한 추론과 코딩을, 루나는 빠르고 값싼 대량 처리를 맡는다.</li>
+              <li>두 모델 모두 오늘부터 API로 쓸 수 있고, 루나는 솔보다 20배 싸다.</li>
+            </ol>
+            <table class="summaryTable">
+              <caption class="sr-only">모델별 가격</caption>
+              <thead><tr><th scope="col">모델</th><th scope="col">입력/출력 가격(100만 토큰)</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">GPT-6 솔</th><td>$2 / $10</td></tr>
+                <tr><th scope="row">GPT-6 루나</th><td>$0.10 / $0.50</td></tr>
+                <tr><th scope="row">클로드 오퍼스 5.5</th><td>$4 / $20</td></tr>
+              </tbody>
+            </table>
+            <p class="caveat">요약은 자동으로 만들어집니다. 사실 확인이 필요하면 원문을 읽어주세요.</p>
+          </section>
+        </div>
+      </div>
+
+      <div class="frame frame-m">
+        <div class="frame-cap">390px · 폰</div>
+        <div class="read frag">
+          <section aria-labelledby="t2-key">
+            <h2 class="sec-h" id="t2-key">핵심</h2>
+            <ol class="keypts">
+              <li>오픈AI가 GPT-6를 크기가 다른 두 모델, 솔과 루나로 나눠 내놓았다.</li>
+              <li>솔은 복잡한 추론과 코딩을, 루나는 빠르고 값싼 대량 처리를 맡는다.</li>
+              <li>두 모델 모두 오늘부터 API로 쓸 수 있고, 루나는 솔보다 20배 싸다.</li>
+            </ol>
+            <table class="summaryTable">
+              <caption class="sr-only">모델별 가격</caption>
+              <thead><tr><th scope="col">모델</th><th scope="col">입력/출력 가격(100만 토큰)</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">GPT-6 솔</th><td>$2 / $10</td></tr>
+                <tr><th scope="row">GPT-6 루나</th><td>$0.10 / $0.50</td></tr>
+                <tr><th scope="row">클로드 오퍼스 5.5</th><td>$4 / $20</td></tr>
+              </tbody>
+            </table>
+            <p class="caveat">요약은 자동으로 만들어집니다. 사실 확인이 필요하면 원문을 읽어주세요.</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

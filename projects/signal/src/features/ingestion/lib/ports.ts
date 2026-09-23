@@ -1,3 +1,4 @@
+import type { SummaryTable } from "@/entities/article";
 import type { ArticleKind, FeedItemDraft, OfficialBasis } from "@/entities/article";
 import type { Source } from "@/entities/source";
 import type { HotIssueVerdict } from "./parse-hot-issue";
@@ -70,8 +71,12 @@ export interface EnrichUsage {
  * 나눠 부르면 비용이 배로 늘고, 같은 근거를 두 번 보내게 된다 (INV-S6·S7).
  */
 export interface EnrichResult {
-  /** 요약. 요청하지 않았거나 실패하면 빈 문자열. */
+  /** 요약. 요청하지 않았거나 실패하면 빈 문자열. 새 형식에서는 한 줄 요약과 같다(INV-S8). */
   summary: string;
+  /** 한 줄 요약 (INV-S8). 실패하면 null. */
+  oneLine: string | null;
+  /** 요약에 딸린 표 (INV-S8). 없거나 형식이 틀리면 null. */
+  table: SummaryTable | null;
   /** 요약의 핵심 항목 (INV-S7). 요약이 없으면 빈 배열이어야 한다. */
   points: string[];
   /** 한국어 제목 (INV-S6). 요청하지 않았거나 실패하면 null. */
@@ -169,6 +174,8 @@ export interface HotIssueSave {
    * 나눈 이유가 그것이다.
    */
   answers: Record<string, boolean>;
+  /** 참인 질문마다의 근거 한 문장 (INV-G2 · signal 포인트, 2026-09-23). 없으면 빈 객체. */
+  reasons: Record<string, string>;
   kinds: ArticleKind[];
 }
 
@@ -280,6 +287,10 @@ export interface IngestPorts extends KeywordPorts, HotIssuePorts {
     id: string,
     patch: {
       summary?: string;
+      /** 한 줄 요약 (INV-S8, 0011). */
+      oneLine?: string;
+      /** 요약 표 (INV-S8, 0011). null 이면 표 없음으로 저장한다. */
+      table?: SummaryTable | null;
       points?: string[];
       titleKo?: string;
       officialBasis?: OfficialBasis;

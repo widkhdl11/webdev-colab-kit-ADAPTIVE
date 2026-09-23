@@ -22,7 +22,7 @@ const verdictOf = (importance: number, over: Record<string, unknown> = {}) => ({
   verdict: {
     kinds: ["news" as const],
     importance,
-    answers: { 변화: importance > 0, 방향: importance > 1, 기회: importance > 2 },
+    answers: { 변화: importance > 0, 방향: importance > 1, 기회: importance > 2 }, reasons: {},
     duplicateOfPicked: false,
     ...over,
   },
@@ -70,7 +70,7 @@ describe("runHotIssue — 후보와 저장", () => {
         itemId: "a",
         importance: 0,
         // 셋 다 거짓이어도 **무엇이 거짓이었는지**가 남는다 — 판정이 빡빡한지 보는 재료다.
-        answers: { 변화: false, 방향: false, 기회: false },
+        answers: { 변화: false, 방향: false, 기회: false }, reasons: {},
         kinds: ["news"],
       },
     ]);
@@ -242,7 +242,7 @@ describe("runHotIssue — INV-G4 같은 사건 빼기", () => {
       {
         itemId: "a",
         importance: 3,
-        answers: { 변화: true, 방향: true, 기회: true },
+        answers: { 변화: true, 방향: true, 기회: true }, reasons: {},
         kinds: ["news"],
       },
     ]);

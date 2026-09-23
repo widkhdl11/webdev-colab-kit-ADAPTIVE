@@ -1,4 +1,5 @@
 import type { ArticleKind, Gate } from "../lib/hot-issue";
+import type { SignalPoint, SummaryTable } from "../lib/summary-format";
 
 /** 수집된 소식 한 건. 피드·상세가 공유하는 도메인 모델. */
 
@@ -150,6 +151,15 @@ export interface Article {
    * 한 칸으로 합치면 그날 아무것도 안 바뀌고, 그 사실을 아무도 모른다(2026-09-21 리뷰).
    */
   issueScore: number;
+  /**
+   * 한 줄 요약 (ingestion-ranking INV-S8). **있으면 새 요약 형식이다** — 화면이 새 순서로 그린다.
+   * 옛 요약이면 null. 선택 칸인 이유: 목록 조회는 이 칸을 안 받는다(상세만 받는다).
+   */
+  oneLine?: string | null;
+  /** 요약에 딸린 표 (INV-S8). 검사를 통과한 것만 온다(content-safety INV-D7). */
+  summaryTable?: SummaryTable | null;
+  /** 핫이슈 판정에서 참인 질문과 근거 (hot-issue INV-G2). 판정이 없으면 빈 목록. */
+  signalPoints?: SignalPoint[];
 }
 
 /**

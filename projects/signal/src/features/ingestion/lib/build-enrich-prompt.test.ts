@@ -10,7 +10,7 @@ describe("buildEnrichPrompt — INV-P1 항목마다 필요한 지시만 싣는�
       needTitle: true,
     });
 
-    expect(prompt.system).not.toContain("요약은 문단 두세 개");
+    expect(prompt.system).not.toContain("points 는 정확히 세 개다");
     expect(prompt.system).not.toContain("핵심 항목(points)");
     expect(prompt.system).toContain("제목은 자연스러운 한국어로 옮긴다");
     // 근거 없이 번역만 할 때는 본문을 보내지 않는다 — 근거가 없다는 사실 자체가 신호다.
@@ -26,7 +26,7 @@ describe("buildEnrichPrompt — INV-P1 항목마다 필요한 지시만 싣는�
       needTitle: false,
     });
 
-    expect(prompt.system).toContain("요약은 문단 두세 개");
+    expect(prompt.system).toContain("points 는 정확히 세 개다");
     // 번역이 필요 없으면 번역 규칙은 안 실린다 — 반대 방향도 같은 규칙이다.
     expect(prompt.system).not.toContain("제목은 자연스러운 한국어로 옮긴다");
     expect(prompt.user).toContain("본문 내용");
@@ -59,7 +59,7 @@ describe("buildEnrichPrompt — INV-P1 항목마다 필요한 지시만 싣는�
       needTitle: true,
     });
 
-    expect(prompt.system).toContain("요약은 문단 두세 개");
+    expect(prompt.system).toContain("points 는 정확히 세 개다");
     expect(prompt.system).toContain("제목은 자연스러운 한국어로 옮긴다");
   });
 });
@@ -97,11 +97,10 @@ describe("buildEnrichPrompt — 자료와 지시를 가른다 (프롬프트 주�
 });
 
 describe("요약 서식 지시 (content-safety INV-D7)", () => {
-  it("INV-D7: 요약이 필요할 때 서식 넷과 쓰지 말 것을 같이 싣는다", () => {
+  it("INV-D7: 요약이 필요할 때 표 칸을 묻고 기호를 쓰지 말라고 싣는다", () => {
     const { system } = buildEnrichPrompt({ title: "t", evidence: "e", needSummary: true, needTitle: false });
-    expect(system).toContain("**굵게**");
-    expect(system).toContain("table");
-    expect(system).toContain("링크·이미지·제목(#)");
+    expect(system).toContain('"table"');
+    expect(system).toContain("마크다운 기호");
   });
 
   it("INV-D7 실패경로: 제목만 옮길 때는 서식 지시를 싣지 않는다", () => {
@@ -118,14 +117,14 @@ describe("지시문 한 줄 = 규칙 하나", () => {
 });
 
 describe("한 문장 요약 칸 (2026-09-23)", () => {
-  it("요약이 필요하면 lead 칸과 그 규칙을 같이 싣는다", () => {
+  it("INV-S8: 요약이 필요하면 oneLine 칸과 그 규칙을 같이 싣는다", () => {
     const { system } = buildEnrichPrompt({ title: "t", evidence: "e", needSummary: true, needTitle: false });
-    expect(system).toContain('"lead"');
-    expect(system).toContain("lead 는 누가 무엇을 했는지 한 문장");
+    expect(system).toContain('"oneLine"');
+    expect(system).toContain("oneLine 은 이 글을 모르는 사람이 읽어도 서는 한 문장");
   });
 
-  it("실패경로: 제목만 옮길 때는 lead 를 묻지 않는다", () => {
+  it("INV-S8 실패경로: 제목만 옮길 때는 oneLine 을 묻지 않는다", () => {
     const { system } = buildEnrichPrompt({ title: "t", evidence: "", needSummary: false, needTitle: true });
-    expect(system).not.toContain('"lead"');
+    expect(system).not.toContain('"oneLine"');
   });
 });

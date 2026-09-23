@@ -164,6 +164,8 @@ export async function runHotIssue(
         itemId: item.id,
         importance: verdict.importance,
         answers: verdict.answers,
+        // 근거 문장 (INV-G2 · 2026-09-23) — 상세 화면의 「signal 포인트」가 읽는다.
+        reasons: verdict.reasons,
         kinds: verdict.kinds,
       });
 

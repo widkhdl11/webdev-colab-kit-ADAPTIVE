@@ -17,7 +17,8 @@ import { toListItemRow, toStoredArticle, type StoredArticleListItem } from "./ro
 export const LIST_COLUMNS =
   "id, original_url, title, title_ko, summary, source_excerpt, summary_points, source_id, source_name, official_basis, gate, published_at, item_tag(tag(name, axis)), item_kind(kind)";
 
-const DETAIL_COLUMNS = `${LIST_COLUMNS}, content_html`;
+// 새 요약 칸·판정 근거는 상세만 쓴다(INV-S8 · INV-G2) — 목록까지 받으면 피드 응답만 무거워진다.
+const DETAIL_COLUMNS = `${LIST_COLUMNS}, content_html, one_line, summary_table, hot_issue_answers, hot_issue_reasons`;
 
 /**
  * 창 밖에서 더 받아 오는 건수 — **날짜 그룹을 내려가는 길**이다 (INV-B4 뒷절).

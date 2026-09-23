@@ -41,7 +41,7 @@ const source = (id: string): Source => ({
   weight: 1,
   feedUrl: `https://ex.com/${id}.xml`,
   // 기본 픽스처는 판정을 건다 — 기존 INV-F1·F2·F3 테스트가 전부 이 전제 위에 있다.
-  needsTopicCheck: true,
+  needsTopicCheck: true, original: { lang: "영어" as const },
   tier: "daily",
 });
 
@@ -77,6 +77,10 @@ function makePorts(over: Partial<IngestPorts> = {}): IngestPorts {
       summary: "요약",
       points: ["항목"],
       titleKo: "한국어 제목",
+      oneLine: null,
+
+      table: null,
+
       officialByContent: false, usage: USAGE,
     })),
     saveEnrichment: vi.fn(async () => {}),
@@ -314,7 +318,7 @@ describe("runIngest — INV-F1·F2·F3 주제 선별", () => {
       ),
       enrich: vi.fn(async ({ title }) => {
         enrichCalls.push(title);
-        return { summary: "", points: [], tags: [], titleKo: null, officialByContent: false, usage: USAGE };
+        return { summary: "", points: [], tags: [], titleKo: null, oneLine: null, table: null, officialByContent: false, usage: USAGE };
       }),
     });
 
@@ -422,7 +426,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
       listEnrichCandidates: vi.fn(async () => [candidate("a", null), candidate("b", null)]),
       enrich: vi.fn(async ({ title }) => {
         if (title.endsWith("a")) throw new Error("timeout");
-        return { summary: "b 의 요약", points: [], tags: [], titleKo: null, officialByContent: false, usage: USAGE };
+        return { summary: "b 의 요약", points: [], tags: [], titleKo: null, oneLine: null, table: null, officialByContent: false, usage: USAGE };
       }),
       saveEnrichment: vi.fn(async (id) => {
         saved.push(id);
@@ -452,7 +456,7 @@ describe("runIngest — INV-S2·S3 요약", () => {
     // 빈 문자열을 저장하면 S3 의 재시도 조건에서 빠져나가 영원히 요약 없는 항목이 된다.
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [candidate("a", null)]),
-      enrich: vi.fn(async () => ({ summary: "   ", points: [], tags: [], titleKo: null, officialByContent: false, usage: USAGE })),
+      enrich: vi.fn(async () => ({ summary: "   ", points: [], tags: [], titleKo: null, oneLine: null, table: null, officialByContent: false, usage: USAGE })),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
     expect(vi.mocked(ports.saveEnrichment)).not.toHaveBeenCalled();
@@ -467,6 +471,10 @@ describe("runIngest — INV-S2·S3 요약", () => {
         points: ["항목1", "항목2"],
         tags: ["MCP"],
         titleKo: null,
+        oneLine: null,
+
+        table: null,
+
         officialByContent: false, usage: USAGE,
       })),
     });
@@ -536,7 +544,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
   it("INV-S6 실패경로: 공백뿐인 번역이 오면 저장하지 않는다 (다음 주기에 다시 잡히게)", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [cand()]),
-      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "   ", officialByContent: false, usage: USAGE })),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "   ", oneLine: null, table: null, officialByContent: false, usage: USAGE })),
     });
     const report = await runIngest({ sources: [], ports, now: NOW });
     expect(vi.mocked(ports.saveEnrichment)).not.toHaveBeenCalled();
@@ -563,7 +571,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
   it("INV-S3: 번역만 성공하면 summary 는 패치에 없다 (재시도 신호를 지우지 않는다)", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [cand({ contentHtml: "<p>본문</p>" })]),
-      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역", officialByContent: false, usage: USAGE })),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역", oneLine: null, table: null, officialByContent: false, usage: USAGE })),
     });
     await runIngest({ sources: [], ports, now: NOW });
     const patch = vi.mocked(ports.saveEnrichment).mock.calls[0][1];
@@ -574,7 +582,7 @@ describe("runIngest — INV-S6 제목 번역", () => {
   it("실패를 두 번 세지 않는다: 빈 요약 + 저장 실패", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [cand({ contentHtml: "<p>본문</p>" })]),
-      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역", officialByContent: false, usage: USAGE })),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: "번역", oneLine: null, table: null, officialByContent: false, usage: USAGE })),
       saveEnrichment: vi.fn(async () => {
         throw new Error("DB 거부");
       }),
@@ -712,12 +720,18 @@ describe("runIngest — 요약 저장 (태그는 여기서 안 만든다)", () =
         summary: "요약문",
         points: [],
         titleKo: null,
+        oneLine: null,
+
+        table: null,
+
         officialByContent: false, usage: USAGE,
       })),
     });
     await runIngest({ sources: [], ports, now: NOW });
+    // 표 칸은 늘 같이 간다(없으면 null) — 새 형식 칸이 없는 요약도 표를 비워 둔다(INV-S8).
     expect(vi.mocked(ports.saveEnrichment)).toHaveBeenCalledWith("a", {
       summary: "요약문",
+      table: null,
       points: [],
     });
   });
@@ -761,6 +775,10 @@ describe("runIngest — 토큰 사용량 보고", () => {
         points: [],
         tags: [],
         titleKo: null,
+        oneLine: null,
+
+        table: null,
+
         officialByContent: false,
         usage: { inputTokens: 4000, outputTokens: 12, cacheReadTokens: 0, cacheWriteTokens: 0 },
       })),
@@ -784,6 +802,10 @@ describe("runIngest — 토큰 사용량 보고", () => {
         points: [],
         tags: [],
         titleKo: null,
+        oneLine: null,
+
+        table: null,
+
         officialByContent: false,
         usage: {
           inputTokens: sizes[title.slice(-1)] ?? 0,
@@ -889,6 +911,10 @@ describe("runIngest — INV-O2 공식 여부의 근거", () => {
       points: [],
       tags: [],
       titleKo: null,
+      oneLine: null,
+
+      table: null,
+
       officialByContent,
       usage: USAGE,
     }));
@@ -936,6 +962,10 @@ describe("runIngest — INV-O2 공식 여부의 근거", () => {
         points: [],
         tags: [],
         titleKo: null,
+        oneLine: null,
+
+        table: null,
+
         officialByContent: true,
         usage: USAGE,
       })),
@@ -956,6 +986,10 @@ describe("runIngest — INV-O2 공식 여부의 근거", () => {
         points: [],
         tags: [],
         titleKo: "번역",
+        oneLine: null,
+
+        table: null,
+
         officialByContent: true,
         usage: USAGE,
       })),
@@ -994,6 +1028,10 @@ describe("runIngest — 실패한 항목을 지목한다", () => {
         points: [],
         tags: [],
         titleKo: "번역",
+        oneLine: null,
+
+        table: null,
+
         officialByContent: false,
         usage: USAGE,
       })),
@@ -1025,6 +1063,10 @@ describe("runIngest — 실패한 항목을 지목한다", () => {
         points: [],
         tags: [],
         titleKo: title.endsWith("a") ? "" : "번역",
+        oneLine: null,
+
+        table: null,
+
         officialByContent: false,
         usage: USAGE,
       })),
@@ -1275,7 +1317,7 @@ describe("runIngest — INV-F4 판정을 거는 소스는 설정이 정한다", 
       fetchFeed: vi.fn(async () => [feedItem("a"), feedItem("b")]),
     });
     const report = await runIngest({
-      sources: [{ ...source("ai-only"), needsTopicCheck: false }],
+      sources: [{ ...source("ai-only"), needsTopicCheck: false , original: { lang: "영어" as const }}],
       ports,
       now: NOW,
     });
@@ -1290,7 +1332,7 @@ describe("runIngest — INV-F4 판정을 거는 소스는 설정이 정한다", 
       judgeTopic: vi.fn(async (title: string) => verdict(!title.includes("cocktail"))),
     });
     const report = await runIngest({
-      sources: [{ ...source("mixed"), needsTopicCheck: true }],
+      sources: [{ ...source("mixed"), needsTopicCheck: true , original: { lang: "영어" as const }}],
       ports,
       now: NOW,
     });
@@ -1308,8 +1350,8 @@ describe("runIngest — INV-F4 판정을 거는 소스는 설정이 정한다", 
     });
     const report = await runIngest({
       sources: [
-        { ...source("ai-only"), needsTopicCheck: false },
-        { ...source("mixed"), needsTopicCheck: true },
+        { ...source("ai-only"), needsTopicCheck: false , original: { lang: "영어" as const }},
+        { ...source("mixed"), needsTopicCheck: true , original: { lang: "영어" as const }},
       ],
       ports,
       now: NOW,
@@ -1927,6 +1969,10 @@ describe("runIngest — 하루 요금 상한", () => {
       summary: "요약",
       points: ["항목"],
       titleKo: "한국어 제목",
+      oneLine: null,
+
+      table: null,
+
       officialByContent: false,
       // 한 번에 $10 어치(출력 100만 토큰 × $10/MTok)를 쓴다.
       usage: { inputTokens: 0, outputTokens: 1_000_000, cacheReadTokens: 0, cacheWriteTokens: 0 },
@@ -1968,6 +2014,10 @@ describe("runIngest — 하루 요금 상한", () => {
           summary: "요약",
           points: ["항목"],
           titleKo: "한국어 제목",
+          oneLine: null,
+
+          table: null,
+
           officialByContent: false,
           usage: USAGE,
         };

@@ -1,3 +1,4 @@
+import type { SummaryTable } from "@/entities/article";
 import { nextOfficialBasis, parseFeedItem } from "@/entities/article";
 import type { FeedItemDraft, OfficialBasis } from "@/entities/article";
 import { SUBJECT_SITES, sourceWeightLookup } from "@/entities/source";
@@ -570,6 +571,8 @@ async function runEnrichment(
 
       const patch: {
         summary?: string;
+        oneLine?: string;
+        table?: SummaryTable | null;
         points?: string[];
         tags?: string[];
         titleKo?: string;
@@ -584,6 +587,9 @@ async function runEnrichment(
           summaryCounted = true;
         } else {
           patch.summary = text;
+          // 새 형식의 칸 (INV-S8). 한 줄 요약이 없으면 요약 자체가 실패로 왔다(parse-enrich).
+          if (out.oneLine !== null) patch.oneLine = out.oneLine;
+          patch.table = out.table;
           patch.points = out.points;
           summaryReady = true;
         }

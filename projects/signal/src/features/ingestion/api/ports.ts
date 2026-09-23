@@ -9,13 +9,7 @@ import { todaySpendUsd } from "../lib/cost-cap";
 import { dayKey, dayStartIso } from "@/shared/lib/datetime";
 import { enrichWindowStartIso } from "../lib/candidate-window";
 import { anthropicApiKey } from "@/shared/api/server-env";
-import {
-  GATE_ONE,
-  leadToMarkup,
-  tableToMarkup,
-  toOfficialBasis,
-  type FeedItemDraft,
-} from "@/entities/article";
+import { GATE_ONE, toOfficialBasis, type FeedItemDraft } from "@/entities/article";
 import { getSourceWeight } from "@/entities/source";
 import type { Source } from "@/entities/source";
 import {
@@ -39,6 +33,8 @@ import { fenceData } from "../lib/data-fence";
 import { fetchPublic } from "../lib/fetch-public";
 import { keywordEvidence } from "../lib/keyword-evidence";
 import { extractArticleHtml } from "../lib/extract-content";
+import { parseEnrichJson } from "../lib/parse-enrich";
+import { toEnrichmentRow } from "./enrichment-row";
 import { buildEnrichPrompt } from "../lib/build-enrich-prompt";
 import { buildHotIssuePrompt } from "../lib/build-hot-issue-prompt";
 import { buildKeywordPrompt } from "../lib/build-keyword-prompt";
@@ -509,7 +505,9 @@ export function createIngestPorts(): IngestPorts {
       // JSON 이 아니면 빈 값으로 돌려보낸다 — 파이프라인이 실패로 세고 다음 주기에 다시 한다.
       const empty: EnrichResult = {
         summary: "",
+        oneLine: null,
         points: [],
+        table: null,
         titleKo: null,
         // 응답을 못 읽었으면 공식 여부도 모른다 — 모르는 것은 false 다 (INV-O2 CS9).
         officialByContent: false,
@@ -520,30 +518,9 @@ export function createIngestPorts(): IngestPorts {
       // 여기서 안 거르면 반쪽짜리 요약이 저장돼 다음 주기 재시도 대상에서 빠진다(INV-S3).
       if (res.stop_reason === "max_tokens") return empty;
       const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
-      const strings = (v: unknown): string[] =>
-        Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
       try {
-        const parsed = JSON.parse(json) as Record<string, unknown>;
-        const prose = typeof parsed.summary === "string" ? parsed.summary.trim() : "";
-        // 표는 따로 받아 요약 끝에 붙여 저장한다(INV-D7) — 칸을 새로 만들지 않는다. 모양이
-        // 틀린 표는 버리고 요약은 살린다. 요약이 비면 표도 붙이지 않는다(부속이다).
-        const table = prose === "" ? null : tableToMarkup(parsed.table);
-        // 한 문장 요약은 **첫 문단**으로 붙인다 — 화면은 첫 문단을 맨 위에 앞세우고, 카드는
-        // 미리보기로 쓴다. 요약 문단이 비면 한 문장만 남기지 않는다(요약이 실패한 것이다).
-        const lead = prose === "" ? null : leadToMarkup(parsed.lead);
-        const summary = [lead, prose, table]
-          .filter((x): x is string => x !== null && x !== "")
-          .join("\n\n");
-        return {
-          summary,
-          // 핵심 항목은 요약의 부속이다 (INV-S7) — 요약이 비면 항목도 버린다.
-          points: summary === "" ? [] : strings(parsed.points).map((p) => p.trim()).filter(Boolean),
-          titleKo: typeof parsed.titleKo === "string" ? parsed.titleKo.trim() || null : null,
-          // `true` 하나만 참으로 친다. 문자열 "true"·1 을 받아 주면 모델이 형식을 흘릴 때
-          // 공식 표시가 조용히 늘어난다 — 틀린 쪽으로 기울면 안 되는 값이다(INV-O2).
-          officialByContent: parsed.official === true,
-          usage,
-        };
+        // 칸 검사는 순수 함수가 한다(parse-enrich) — 이 파일은 server-only 라 유닛이 못 본다.
+        return { ...parseEnrichJson(JSON.parse(json) as Record<string, unknown>), usage };
       } catch {
         return empty;
       }
@@ -697,15 +674,8 @@ ${fenceData("출처 요약글", evidence)}`
     attachKeywords,
 
     async saveEnrichment(id, patch) {
-      // 주지 않은 필드는 건드리지 않는다 — 번역만 성공한 항목의 summary 를 덮으면
-      // 재시도 신호(비어 있음)가 사라진다 (INV-S3).
-      const row: Record<string, unknown> = { updated_at: new Date().toISOString() };
-      if (patch.summary !== undefined) row.summary = patch.summary;
-      if (patch.points !== undefined) row.summary_points = patch.points;
-      if (patch.titleKo !== undefined) row.title_ko = patch.titleKo;
-      // 파이프라인이 "덮어도 되는 경우"에만 실어 보낸다 (INV-O2) — 여기서 다시 판단하지 않는다.
-      if (patch.officialBasis !== undefined) row.official_basis = patch.officialBasis;
-
+      // 줄 만들기는 순수 함수가 한다(enrichment-row) — 이 파일은 server-only 라 유닛이 못 본다.
+      const row = toEnrichmentRow(patch, new Date().toISOString());
       const { error } = await db.from("item").update(row).eq("id", id);
       if (error) throw new Error(error.message);
     },

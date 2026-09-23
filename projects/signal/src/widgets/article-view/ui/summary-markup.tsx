@@ -1,111 +1,82 @@
-import { useId } from "react";
-import { splitLead } from "@/entities/article";
-import type { SummaryBlock, SummaryInline } from "@/entities/article";
+import type { SummaryTable } from "@/entities/article";
 import styles from "./article-view.module.css";
 
 /**
- * AI 요약을 서식대로 그린다 (content-safety INV-D7).
+ * AI 요약 본문 — 칸으로 나뉜 요약을 **글자로만** 그린다 (content-safety INV-D7 · ingestion-ranking INV-S8).
  *
- * 해석은 entities 가 하고 여기는 **구조를 요소로 옮기기만** 한다. 해석 결과에는 링크·이미지를
- * 담을 자리가 없으므로, 이 컴포넌트가 만들 수 있는 요소는 p · strong · ul/li · table 뿐이다.
- * 글자는 전부 React 텍스트 노드로 들어가 이스케이프된다 — HTML 문자열을 만들지 않는다(INV-D3).
+ * 글자 안의 기호는 해석하지 않는다. 한 줄 요약·핵심·표가 따로 저장된 칸이라 해석할 것이 없다 —
+ * 요약에 심은 `**`·`[글](주소)` 는 글자 그대로 보인다. HTML 문자열을 만들지 않는다(INV-D3).
+ *
+ * 순서는 2026-09-23 승인 B안: 한 줄 요약 → 「핵심」 → 표. 상세 화면 재구성 시안(article-detail-v2)이
+ * 승인되면 이 순서가 바뀐다.
  */
-export function AiSummaryBody({ text, points }: { text: string; points: string[] }) {
-  const { lead, rest } = splitLead(text);
-  // 「핵심」 라벨이 목록의 이름이다 — 스크린리더가 목록을 읽을 때 붙여 읽는다(승인 시안과 같다).
-  const pointsLabelId = useId();
+export function AiSummaryBody({
+  oneLine,
+  legacyText,
+  points,
+  table,
+}: {
+  /** 한 줄 요약. 없으면 옛 요약이다. */
+  oneLine: string | null;
+  /** 옛 요약 문단(한 줄 요약이 없을 때만 그린다). */
+  legacyText: string;
+  points: string[];
+  table: SummaryTable | null;
+}) {
   return (
     <>
-      {/* 한 문장 요약 — 저장할 때 첫 문단으로 붙인다(수집 쪽 leadToMarkup). 옛 요약은 문단이
-          하나뿐이라 그 문단이 여기 선다: 모양만 앞세움이고 내용은 예전과 같다. */}
-      {lead !== null ? (
-        <p className={styles.summaryLead}>
-          <Inlines parts={lead} />
-        </p>
-      ) : null}
-      {/* 「핵심」 (INV-S7) — 한 문장 바로 아래. 상자를 열자마자 세 줄로 무슨 일인지 안다. */}
-      {points.length > 0 ? (
-        <>
-          <span id={pointsLabelId} className={styles.pointsLabel}>
-            핵심
-          </span>
-          <ul className={styles.summaryPoints} aria-labelledby={pointsLabelId}>
-            {points.map((point, i) => (
-              <li key={`${i}-${point}`}>{point}</li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-      <SummaryBlocks blocks={rest} />
+      {oneLine !== null ? <p className={styles.summaryLead}>{oneLine}</p> : null}
+      {points.length > 0 ? <PointsList points={points} /> : null}
+      {/* 옛 요약은 문단 하나 그대로 둔다 — 다시 요약하지 않는다(사용자 결정 2026-09-23). */}
+      {oneLine === null ? <p>{legacyText}</p> : null}
+      {table !== null ? <SummaryTableView table={table} /> : null}
     </>
   );
 }
 
-function SummaryBlocks({ blocks }: { blocks: SummaryBlock[] }) {
+function PointsList({ points }: { points: string[] }) {
   return (
     <>
-      {blocks.map((block, i) => {
-        if (block.kind === "paragraph") {
-          return (
-            <p key={i}>
-              <Inlines parts={block.inlines} />
-            </p>
-          );
-        }
-        if (block.kind === "list") {
-          return (
-            <ul key={i}>
-              {block.items.map((item, j) => (
-                <li key={j}>
-                  <Inlines parts={item} />
-                </li>
-              ))}
-            </ul>
-          );
-        }
-        return (
-          <table key={i} className={styles.summaryTable}>
-            <thead>
-              <tr>
-                {block.head.map((cell, j) => (
-                  <th key={j} scope="col">
-                    <Inlines parts={cell} />
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {block.rows.map((row, j) => (
-                <tr key={j}>
-                  {/* 첫 칸은 그 행의 이름이다(모델명 등) — 눈으로 굵게 보이는 만큼 스크린리더에도
-                      행 머리칸으로 알린다. */}
-                  {row.map((cell, k) =>
-                    k === 0 ? (
-                      <th key={k} scope="row">
-                        <Inlines parts={cell} />
-                      </th>
-                    ) : (
-                      <td key={k}>
-                        <Inlines parts={cell} />
-                      </td>
-                    ),
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        );
-      })}
+      <span id="summary-points-label" className={styles.pointsLabel}>
+        핵심
+      </span>
+      <ul className={styles.summaryPoints} aria-labelledby="summary-points-label">
+        {points.map((point, i) => (
+          <li key={`${i}-${point}`}>{point}</li>
+        ))}
+      </ul>
     </>
   );
 }
 
-function Inlines({ parts }: { parts: SummaryInline[] }) {
+function SummaryTableView({ table }: { table: SummaryTable }) {
   return (
-    <>
-      {parts.map((part, i) =>
-        part.kind === "bold" ? <strong key={i}>{part.text}</strong> : part.text,
-      )}
-    </>
+    <table className={styles.summaryTable}>
+      <thead>
+        <tr>
+          {table.head.map((cell, j) => (
+            <th key={j} scope="col">
+              {cell}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {table.rows.map((row, j) => (
+          <tr key={j}>
+            {/* 첫 칸은 그 행의 이름이다 — 스크린리더에도 행 머리칸으로 알린다. */}
+            {row.map((cell, k) =>
+              k === 0 ? (
+                <th key={k} scope="row">
+                  {cell}
+                </th>
+              ) : (
+                <td key={k}>{cell}</td>
+              ),
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
