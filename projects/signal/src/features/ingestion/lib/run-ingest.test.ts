@@ -504,6 +504,17 @@ describe("runIngest — INV-S2·S3 요약", () => {
     expect(report.summaries.gaveUpTitles).toEqual(["제목 last"]);
   });
 
+  it("INV-S3 (S32): 포기 목록의 제목은 MAX_TITLE_LENGTH 로 자른다 — 남의 피드가 준 문자열이다", async () => {
+    const ports = makePorts({
+      listEnrichCandidates: vi.fn(async () => [
+        { ...candidate("long", null), title: "가".repeat(MAX_TITLE_LENGTH + 50), summaryFailures: SUMMARY_MAX_FAILURES - 1 },
+      ]),
+      enrich: vi.fn(async () => ({ summary: "", points: [], tags: [], titleKo: null, oneLine: null, table: null, officialByContent: false, usage: USAGE })),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW });
+    expect(report.summaries.gaveUpTitles[0]).toHaveLength(MAX_TITLE_LENGTH);
+  });
+
   it("INV-S3 (S32) 실패경로: 저장이 실패하면 포기 목록에 올리지 않는다 — 횟수가 안 올라 다시 요약된다", async () => {
     const ports = makePorts({
       listEnrichCandidates: vi.fn(async () => [

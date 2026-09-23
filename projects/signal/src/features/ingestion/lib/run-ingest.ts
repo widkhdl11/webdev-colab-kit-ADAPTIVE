@@ -637,7 +637,10 @@ async function runEnrichment(
       if (summaryReady) summaries.succeeded += 1;
       if (titleReady) titles.succeeded += 1;
       // 포기는 **저장된 뒤에만** 알린다 — 저장이 실패하면 횟수가 안 올라 다음 주기에 다시 요약한다.
-      if ((patch.summaryFailures ?? 0) >= SUMMARY_MAX_FAILURES) summaries.gaveUpTitles.push(item.title);
+      if ((patch.summaryFailures ?? 0) >= SUMMARY_MAX_FAILURES) {
+        // 남의 피드가 준 제목이라 길이를 자른다 — 걸러진 제목(INV-F2)과 같은 상한.
+        summaries.gaveUpTitles.push(item.title.slice(0, MAX_TITLE_LENGTH));
+      }
     } catch (e) {
       // 저장하지 않는다 — 비어 있어야 다음 주기에 다시 잡힌다 (INV-S2).
       // 이미 빈 값으로 실패를 센 쪽은 두 번 세지 않는다.
