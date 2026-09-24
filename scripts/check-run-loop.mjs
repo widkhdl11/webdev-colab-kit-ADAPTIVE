@@ -286,17 +286,30 @@ try {
     check("J8 기록이 없으면 줄이 없다", loopNotice(null) === null);
     const big = loopNotice({ status: "실행 중", done: 0, total: 3, round: 1, rehearsal: { tokens: 58045, over_limit: true } });
     check("J6 리허설 입력이 기준을 넘으면 대시보드 줄에 붙는다", /리허설 입력 약 58k 토큰/.test(big.text), big.text);
+    // 실패 표시(fail-alert I2): 마지막 회차의 failure_summary 가 줄 끝에 붙고, 도는 중이어도 경고로 오른다.
+    const failed = { round: 3, item: "I2", outcome: "항목 미완", failure_summary: "항목이 닫히지 않았다 · B1 커밋 안 된 변경 2건" };
+    const stopFail = loopNotice({ status: "항목 실패", stop_detail: "I2 가 재시도 뒤에도 안 끝났다", done: 1, total: 3, round: 3, last_result: failed });
+    check("I2 멈춘 루프 줄에 마지막 실패 요약이 회차·항목과 함께 붙는다",
+      stopFail.tone === "warn" && stopFail.text.endsWith(" · 실패: 3회차 I2 — 항목이 닫히지 않았다 · B1 커밋 안 된 변경 2건"), stopFail.text);
+    const retry = loopNotice({ status: "실행 중", done: 1, total: 3, round: 4, last_result: failed });
+    check("I2 재시도로 도는 중이면 경고로 오르고 요약이 붙는다", retry.tone === "warn" && /실패: 3회차 I2 — /.test(retry.text), JSON.stringify(retry));
+    const okLast = loopNotice({ status: "실행 중", done: 2, total: 3, round: 4, last_result: { round: 3, item: "I2", outcome: "항목 완료", failure_summary: null } });
+    check("I2 마지막 회차가 성공이면 실패 표시가 없다", okLast.tone === "info" && !/실패:/.test(okLast.text), okLast.text);
     // 화면(render.mjs)은 scripts/lib 를 못 읽어 같은 계산을 한 벌 더 둔다. 두 벌이 같은 답을 내는지 본다.
     const render = await import(pathToFileURL(join(KIT, ".claude", "skills", "report-dashboard", "assets", "render.mjs")).href);
     const samples = [null, { status: "모름" }, { status: "실행 중", done: 0, total: 2, round: 1 },
       { status: "실행 중", done: 1, total: 2, round: 2, stop_requested: true }, { status: "요청 완료", done: 2, total: 2, round: 2 },
       { status: "실행 중", done: 0, total: 3, round: 1, rehearsal: { ok: true, tokens: 58045, over_limit: true } },
-      ...["결정 대기", "항목 실패", "상한 도달", "리허설 실패", "정지 요청"].map((s, i) => ({ status: s, stop_detail: i % 2 ? `사유 ${i}` : null, done: i, total: 5, round: i + 1 }))];
+      ...["결정 대기", "항목 실패", "상한 도달", "리허설 실패", "정지 요청"].map((s, i) => ({ status: s, stop_detail: i % 2 ? `사유 ${i}` : null, done: i, total: 5, round: i + 1 })),
+      ...["실행 중", "항목 실패", "요청 완료"].map((s) => ({ status: s, done: 1, total: 3, round: 3, last_result: { round: 2, item: "I2", failure_summary: "종료 코드 1 · B6 게이트 실패" } })),
+      { status: "항목 실패", done: 1, total: 3, round: 3, last_result: { failure_summary: "원인 기록만 있다" } }];
     const diff = samples.filter((x) => JSON.stringify(render.loopRow(x)) !== JSON.stringify(loopNotice(x)));
     check("J8 화면의 루프 줄과 스크립트의 루프 줄이 같은 답을 낸다", diff.length === 0, JSON.stringify(diff));
     const rows = render.noticeRows({ loop: { status: "결정 대기", stop_detail: "결정 카드 답 대기 — 남은 항목 1개가 걸려 있다", done: 2, total: 3, round: 3 } }, Date.now());
     const r10 = rows.find((r) => r.code === 10);
     check("J8 특이사항에 루프 줄이 경고로 뜬다", r10?.label === "자동 실행 루프" && r10?.tone === "warn" && r10.value.includes("항목 2/3 · 3회차"), JSON.stringify(r10));
+    const f10 = render.noticeRows({ loop: { status: "실행 중", done: 1, total: 3, round: 4, last_result: failed } }, Date.now()).find((r) => r.code === 10);
+    check("I2 특이사항 화면에 실패 요약이 경고로 뜬다", f10?.tone === "warn" && f10.value.includes("실패: 3회차 I2 — 항목이 닫히지 않았다"), JSON.stringify(f10));
     const at = new Date().toISOString();
     check("E  항목 경계의 대화 길이 경고가 특이사항에 뜬다", render.noticeRows({ sessionWarning: { at, tokens: 131000, boundary: true } }, Date.now()).some((r) => r.code === 11 && /새 세션 권장/.test(r.value)));
     check("E  항목 중간의 경고는 특이사항에 안 띄운다", !render.noticeRows({ sessionWarning: { at, tokens: 131000, boundary: false } }, Date.now()).some((r) => r.code === 11));

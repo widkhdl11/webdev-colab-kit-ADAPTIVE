@@ -531,13 +531,17 @@ export function loopRow(loop) {
   // 리허설 입력이 기준을 넘었으면 같은 줄 끝에 붙인다 — HANDOFF·PROGRESS 가 새 대화에 싣기엔 크다는 신호다.
   const big = loop.rehearsal?.over_limit ? ` · 리허설 입력 약 ${Math.round((loop.rehearsal.tokens ?? 0) / 1000)}k 토큰 — 인수인계 파일이 크다` : "";
   const n = `항목 ${loop.done ?? 0}/${loop.total ?? 0} · ${loop.round ?? 0}회차${big}`;
+  // 마지막 회차가 「항목 미완」이면 그 실패 요약을 줄 끝에 붙인다 — 회차 기록을 열지 않고 무엇이 틀렸는지 읽게 한다.
+  // 재시도로 도는 중에도 붙이고 경고로 올린다. 다음 회차가 성공하면 요약이 null 로 바뀌어 저절로 걷힌다.
+  const last = loop.last_result;
+  const fail = last?.failure_summary ? ` · 실패: ${last.round ?? "?"}회차 ${last.item ?? "?"} — ${last.failure_summary}` : "";
   if (loop.status === "실행 중") {
     const stop = loop.stop_requested ? " · 멈춤 요청됨 — 지금 항목이 끝나면 정지" : "";
-    return { tone: "info", text: `루프 실행 중 · ${n}${stop}` };
+    return { tone: fail ? "warn" : "info", text: `루프 실행 중 · ${n}${stop}${fail}` };
   }
   if (loop.status === "요청 완료") return { tone: "info", text: `루프 끝 — 요청 완료 · ${n}` };
   const why = loop.stop_detail ? ` (${loop.stop_detail})` : "";
-  return { tone: "warn", text: `루프 멈춤 — ${loop.status}${why} · ${n}` };
+  return { tone: "warn", text: `루프 멈춤 — ${loop.status}${why} · ${n}${fail}` };
 }
 
 /** 대화 길이 경고가 특이사항에 남는 시간. 새 세션을 열면 기록이 안 바뀌므로 시간으로 거둔다. */

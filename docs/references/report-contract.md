@@ -527,3 +527,5 @@
 - 2026-09-24. **자율 실행 루프용 칸을 등재했다.** 6절 `items[].deps`(선택), 12절 `item`·`starts_loop`(선택),
   9절 `loop/` 와 `session-warning.json`. 대시보드 특이사항에 10번(루프 상태)·11번(대화 길이 — 항목 경계에서만)을
   더했다. 정본: docs/references/run-loop.md · 검사: `check-run-loop.mjs`.
+- 2026-09-24. 특이사항 10번(루프 줄)이 `loop/state.json` 의 `last_result.failure_summary` 를 읽는다 — 있으면 줄 끝에 실패 요약을
+  붙이고, 루프가 도는 중이어도 경고로 올린다. 정본: docs/references/run-loop.md 1절 5 · 검사: `check-run-loop.mjs` (I2 네 개).
