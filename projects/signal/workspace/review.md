@@ -1,13 +1,41 @@
 ---
 project: signal
 status: passed
-basis: dca01eb2de1f
+basis: 7dd7eb699b52
 reviewers: [code-reviewer, ui-reviewer, security-reviewer]
 ---
 # review — signal
 
 > 이 마커가 review 노드를 clean으로 만든다. basis는 구현(src/**) 해시 — 구현이 바뀌면 불일치로
 > review가 자동으로 낡아 재리뷰가 강제된다. (graph-stop 출력이 basis 값을 안내한다)
+
+## 2026-09-24 — 요약 Opus 5.5 교체 + 리뷰 수정 · 피드 `전체` 자리 · 이어달리기 경계 (d11430a..faeca52)
+
+- **범위**: 요약 단계 모델을 opus-5-5 로(d11430a) 와 그 리뷰 지적 전부(`workspace/REVIEW-2026-09-23-opus.md` 처리 표) ·
+  피드 자리 줄에 `전체` 추가·키워드 `전체` 칩 이동·뱃지를 자리별로 집계(a72cf5a, c132d89) ·
+  이어달리기 요청이 리다이렉트를 안 따라가고 배포 환경에서는 https 만 받음(5c8a6b5, faeca52).
+- **테스트**: 1121 passed · tsc 통과. 강제 장치를 하나씩 풀면 빨간불(거부 거르기 · 재시도 0 · 제목 상한 · 자리별 집계 ·
+  포커스 처리 · 합성 칩 문구 · 빈 이유 판단 · redirect: error · allowHttp 기본값 · 라우트의 production 분기).
+- **실행 근거**:
+  - `npm run probe:enrich` (opus-5-5 · medium · 4건, 약 $0.16): 요약 초당 94~104토큰 · 출력 703~1124 · 최장 11.7초 · 전부 end_turn /
+    제목만 최대 405토큰 → 상한 1000.
+  - 로컬 dev 서버에서 피드 1280px/390px: 뱃지 수 전체 49 · 핫이슈 22 · 소식 42 · 스킬·툴 15, `AI 모델` 82 = 30 + 52.
+  - 09-24 07시 예약 실행(`npm run runs`): 4바퀴 이어달려 남은 일 없음 · $1.674 (아직 sonnet). 운영 상세에서 새 형식 요약 표시 확인.
+  - opus 로 도는 수집은 **push 뒤 첫 예약 실행(09-25 07시)** 에서 처음 확인한다.
+
+### code-reviewer (두 번)
+- a72cf5a: medium 2(포커스 유실 · 자리 전환 뒤 합성 칩 문구/축) · low 3 → **전부 반영**(c132d89), 재리뷰에서 확인.
+- 6bac04f(Opus 수정): high·medium 없음. low 5(낡은 주석 · 테스트 제목 · 처리 기록 표현 · count-prompt-tokens 가 옛 형식을 잼) → **전부 반영**(5c8a6b5).
+
+### security-reviewer (두 번)
+- 6bac04f: 이전 지적(거부 거르기 · 재시도) 닫힘 확인. 새 low 2(이어달리기가 리다이렉트를 따라감 · http 허용) → **반영**(5c8a6b5).
+- 5c8a6b5 확인: 둘 다 닫힘. low 1(라우트 테스트가 production 분기를 안 돎) → **반영**(faeca52).
+
+### ui-reviewer
+- a72cf5a+c132d89: medium 1(핫이슈 자리에서 켠 키워드 글이 없으면 「핫이슈가 없습니다」로 잘못 말함) · low 3 → **전부 반영**(5c8a6b5 —
+  빈 이유 판단을 entities `feedEmptyReason` 으로, 키워드 `전체` 칩 sr 접두사, 모바일 빈 컨트롤 줄 여백 0).
+
+test-auditor 는 안 돌렸다 — 새로 쓴 것이 스펙 INV 테스트가 아니라 값 고정·동작 테스트이고, 각각 변이로 직접 확인했다.
 
 ## 2026-09-23 — 상세 화면 재구성 + 리뷰 수정 (82714ae..8ee104f 및 이후 수정)
 
