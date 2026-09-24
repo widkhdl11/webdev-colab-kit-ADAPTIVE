@@ -117,6 +117,9 @@
   화면을 계속 쓰려면 관리자 로그인을 먼저 붙인다.** 데이터는 `ingest_run` 테이블(이력 로그,
   공개 select 정책 없음)에 실행마다 쌓인다. 상세는 0005_ingest_run.sql·
   features/ingestion/api/save-run-report.ts·entities/ingest-run.
+  _(2026-09-24: 「판정 검토」 탭(`/dev/ingest/review`)을 더했다 — 핫이슈 판정을 매주 표본 20건으로
+  사람이 채점한다. 이 대시보드에서 **처음으로 쓰기가 생겼다**(답 저장). 같은 가드로 배포본에서는 막히고,
+  배포하려면 관리자 로그인이 먼저라는 위 조건이 이 쓰기에도 그대로 걸린다. 스펙 docs/specs/verdict-review.md)_
 
 ## ⑤ 디자인 방향
 
