@@ -2,12 +2,26 @@
 project: signal
 status: passed
 basis: 41d86a03c051
-reviewers: [code-reviewer, security-reviewer]
+reviewers: [code-reviewer, security-reviewer, ui-reviewer, test-auditor]
 ---
 # review — signal
 
 > 이 마커가 review 노드를 clean으로 만든다. basis는 구현(src/**) 해시 — 구현이 바뀌면 불일치로
 > review가 자동으로 낡아 재리뷰가 강제된다. (graph-stop 출력이 basis 값을 안내한다)
+
+## 2026-09-24 (4) — 판정 검토 (매주 표본 20건 채점)
+
+- **범위**: 스펙 `docs/specs/verdict-review.md`(INV-VR1~VR8). `src/**` 는 안 건드렸다(basis 그대로) —
+  표본·집계는 `scripts/verdict-review.mjs`·`scripts/lib/verdict-sample.mjs`·`report/review-model.mjs`,
+  화면은 `report/review.html`, 쓰기 경로는 킷 `scripts/report-serve.mjs`·`scripts/lib/review-answer.mjs`.
+- **리뷰어 넷**: security-reviewer(쓰기 경로 — 새 경로는 문제없음. 기존 읽기 경로의 DNS 재바인딩·틀 넣기를 같이 막음) ·
+  code-reviewer(10건 — 틀리다 재누름이 고른 방향을 덮던 것 high, 실행 잠금·원자적 생성·닫는 틈·표시 수명·맞바꾸기 등 반영) ·
+  ui-reviewer(대비·절 제목·화면 말 표 등재·초점 흐름 등 반영, 기존 어휘표 정리는 킷 백로그) ·
+  test-auditor(주간 실행을 도는 테스트가 없던 것 → `tests/verdict-review-cli.test.ts` 신설).
+- **테스트**: tsc 통과 · 1197 passed(판정 검토 71개: 순수 34 · 서버 26 · 주간 실행 11). 변이 한 번에 하나씩 약 45개 —
+  「질문별은 핫이슈만」 외 전부 빨간불, 그것도 리뷰 뒤 테스트를 더해 잡힘. `check-report.mjs` 292/292(42·43번 신설).
+- **실행 근거**: `npm run review` → 「뽑음: 2026-W39 — 20건 (후보 335건)」 · 작업 스케줄러 수동 실행 LastTaskResult 0 ·
+  브라우저(사본 폴더)에서 맞다/틀리다+방향/키보드 1·2·3/새로고침 후 유지 확인. 4주 모의 실행(가짜 행)으로 2주 연속 표시·검토 안 함 기록 확인.
 
 ## 2026-09-24 (3) — 뱃지 줄은 피드가 펼친 날만 센다 (44f15ae..dffd8e0)
 
