@@ -1,13 +1,22 @@
 ---
 project: signal
 status: passed
-basis: 7dd7eb699b52
-reviewers: [code-reviewer, ui-reviewer, security-reviewer]
+basis: 97aed6d824cd
+reviewers: [ui-reviewer, security-reviewer]
 ---
 # review — signal
 
 > 이 마커가 review 노드를 clean으로 만든다. basis는 구현(src/**) 해시 — 구현이 바뀌면 불일치로
 > review가 자동으로 낡아 재리뷰가 강제된다. (graph-stop 출력이 basis 값을 안내한다)
+
+## 2026-09-24 (2) — 사이트 이름 simoori (4169663 + 근거 문구)
+
+- **범위**: 로고·푸터·탭 제목의 `signal` → `simoori`. 「signal 포인트」 절 이름은 개념 이름이라 유지하고, 그 강조의
+  근거 문구(design-rules 절 제목 행 · article-view.module.css 주석)를 "로고와 같은 표기"에서 "개념 이름 강조"로 고침.
+- **테스트**: `npx tsc --noEmit` 통과 · `npx vitest run src/widgets src/app` 111 passed.
+- **리뷰**: security-reviewer 통과(바뀐 줄은 고정 문자열뿐, 글 제목은 `<title>` 텍스트로 이스케이프됨) ·
+  ui-reviewer 통과(헤더 줄은 줄바꿈 허용이라 320px 에서 태그라인이 내려가는 것은 이전과 같음 — 어림값, 렌더 실측 아님).
+  근거 문구 불일치 권고는 위처럼 반영. code-reviewer 는 뺐다 — 로직 변경이 없다.
 
 ## 2026-09-24 — 요약 Opus 5.5 교체 + 리뷰 수정 · 피드 `전체` 자리 · 이어달리기 경계 (d11430a..faeca52)
 

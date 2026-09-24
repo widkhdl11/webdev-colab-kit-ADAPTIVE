@@ -108,7 +108,7 @@
   color: var(--meta);
 }
 
-/* 「signal」 은 로고와 같은 굵기·먹색 — 소문자 그대로 */
+/* 「signal」 은 개념 이름 강조 — 로고와 같은 굵기·먹색을 빌렸다. 사이트 이름(simoori)과는 별개, 소문자 그대로 */
 .brand {
   color: var(--text);
   font-weight: 800;
