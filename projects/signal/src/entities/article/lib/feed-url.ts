@@ -35,7 +35,7 @@ export const DEFAULT_FEED_STATE: FeedState = {
  */
 export const MAX_FEED_DAYS = 365;
 
-const SEGMENTS: readonly FeedSegment[] = ["hot", "news", "tools"];
+const SEGMENTS: readonly FeedSegment[] = ["all", "hot", "news", "tools"];
 
 /** 뱃지를 켠 상태의 기본 펼침은 집계 창만큼이다 — 아래 `withTag` 참고. */
 function defaultDays(tag: ArticleTag | null): number {

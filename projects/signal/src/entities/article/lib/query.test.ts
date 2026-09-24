@@ -344,6 +344,19 @@ describe("selectFeed — 세 자리 (hot-issue.md INV-G3)", () => {
     }
   });
 
+  it("`전체` 는 들어온 글 전부다 — 핫이슈와 소식을 합친 것이고 툴이 두 번 나오지 않는다", () => {
+    expect(idsIn("all")).toEqual(ALL_SIX.map((a) => a.id).sort());
+    expect(selectFeed({ articles: ALL_SIX, segment: "all", tag: null, days: 50 }).total).toBe(
+      ALL_SIX.length,
+    );
+  });
+
+  it("`전체` 는 최신순이다 — 핫이슈의 이슈성 순서를 쓰지 않는다", () => {
+    const order = selectFeed({ articles: ALL_SIX, segment: "all", tag: null, days: 50 })
+      .groups.flatMap((g) => g.articles.map((a) => a.id));
+    expect(order).toEqual(["종류없음", "그냥툴", "그냥뉴스", "핫이슈툴", "핫이슈뉴스"]);
+  });
+
   it("「더 보기」 계산에 안 나오는 글이 안 섞인다", () => {
     expect(selectFeed({ articles: ALL_SIX, segment: "hot", tag: null, days: 50 }).total).toBe(2);
   });

@@ -7,21 +7,22 @@ import { FeedControls } from "./feed-controls";
  * 화면을 가르는 축은 갈래다 — 두 축을 동시에 1차 기준으로 두면 훑는 방법이 갈린다.
  */
 describe("FeedControls — INV-L2 층은 화면 컨트롤로 드러나지 않는다", () => {
-  it("INV-L2 (CS12): 컨트롤 줄에는 자리·주제 필터 그룹만 있다", () => {
+  it("INV-L2 (CS12): 컨트롤 줄에는 자리 그룹만 있다", () => {
     const html = renderToStaticMarkup(
-      <FeedControls segment="hot" tag={null} onSegmentChange={() => {}} onTagChange={() => {}} />,
+      <FeedControls segment="hot" onSegmentChange={() => {}} />,
     );
     const doc = new DOMParser().parseFromString(html, "text/html");
     const groups = [...doc.querySelectorAll('[role="group"]')].map((g) =>
       g.getAttribute("aria-label"),
     );
     // 정확한 목록을 단언한다 — "포함한다"만 보면 세 번째 그룹이 추가돼도 통과한다.
-    expect(groups).toEqual(["볼 자리", "주제 필터"]);
+    // 키워드 `전체` 칩은 2026-09-24 에 뱃지 줄로 옮겼다(keyword-badges.test.tsx).
+    expect(groups).toEqual(["볼 자리"]);
   });
 
   it("INV-L2 (CS12): 층을 고르는 토글·칩이 없다", () => {
     const html = renderToStaticMarkup(
-      <FeedControls segment="news" tag={null} onSegmentChange={() => {}} onTagChange={() => {}} />,
+      <FeedControls segment="news" onSegmentChange={() => {}} />,
     );
     const doc = new DOMParser().parseFromString(html, "text/html");
     const buttonLabels = [...doc.querySelectorAll("button")].map((b) => b.textContent ?? "");
@@ -37,25 +38,31 @@ describe("FeedControls — INV-L2 층은 화면 컨트롤로 드러나지 않는
  * keyword-badges.test.tsx 가 본다 — 한쪽만 보면 **숫자를 통째로 없애도 통과한다.**
  */
 describe("FeedControls — 목록에는 건수를 안 붙인다 (INV-N5)", () => {
-  const render = (tag: string | null = null) =>
-    renderToStaticMarkup(
-      <FeedControls segment="hot" tag={tag} onSegmentChange={() => {}} onTagChange={() => {}} />,
+  it("BK20: 자리 버튼 어디에도 숫자가 없다 — `전체` 포함", () => {
+    const html = renderToStaticMarkup(
+      <FeedControls segment="all" onSegmentChange={() => {}} />,
     );
-
-  it("BK20: 컨트롤 줄의 어떤 버튼에도 숫자가 없다", () => {
-    const doc = new DOMParser().parseFromString(render(), "text/html");
+    const doc = new DOMParser().parseFromString(html, "text/html");
     for (const button of doc.querySelectorAll("button")) {
       expect(button.textContent ?? "").not.toMatch(/\d/);
     }
   });
+});
 
-  it("BK20: `전체` 칩은 필터가 켜진 상태에서도 숫자를 안 받는다", () => {
-    // 필터를 켜면 "전체 37" 로 돌아갈 자리가 생긴다 — 그때도 안 붙는지 본다.
-    const doc = new DOMParser().parseFromString(render("보안"), "text/html");
-    const all = [...doc.querySelectorAll("button")].find((b) =>
-      (b.textContent ?? "").includes("전체"),
+/** 2026-09-24: 자리 줄에 `전체` 가 생겼다 — 핫이슈와 소식을 합친 자리다. */
+describe("FeedControls — 자리 넷", () => {
+  it("자리는 `전체 · 핫이슈 · 소식 · 스킬·툴` 순서이고 지금 자리만 눌려 있다", () => {
+    const html = renderToStaticMarkup(
+      <FeedControls segment="all" onSegmentChange={() => {}} />,
     );
-    expect(all).toBeDefined();
-    expect(all?.textContent?.trim()).toBe("전체");
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const buttons = [...doc.querySelectorAll("button")];
+    expect(buttons.map((b) => b.textContent)).toEqual(["전체", "핫이슈", "소식", "스킬·툴"]);
+    expect(buttons.map((b) => b.getAttribute("aria-pressed"))).toEqual([
+      "true",
+      "false",
+      "false",
+      "false",
+    ]);
   });
 });

@@ -49,8 +49,13 @@ export function filterByTag<T extends ArticleListItem>(
   return articles.filter((a) => a.tags.some((t) => sameTag(t.name, tag)));
 }
 
-/** 화면의 세 자리 (hot-issue.md INV-G3). */
-export type FeedSegment = "hot" | "news" | "tools";
+/**
+ * 화면의 자리 (hot-issue.md INV-G3) + 그 위의 `전체`.
+ *
+ * `all` 은 네 번째 배치가 아니다 — 핫이슈와 소식은 들어온 글 전부를 문턱으로 가른 것이라
+ * 둘을 합치면 전부가 된다(2026-09-24 사용자 지시). 배치 판정을 새로 만들지 않는다.
+ */
+export type FeedSegment = "all" | "hot" | "news" | "tools";
 
 /**
  * 자리마다의 정렬 (ingestion-ranking INV-R3).
@@ -60,6 +65,8 @@ export type FeedSegment = "hot" | "news" | "tools";
  * 다 열면 조합이 여섯 개가 되는데 그중 넷은 아무도 안 쓴다.
  */
 const SEGMENT_SORT: Record<FeedSegment, SortMode> = {
+  // 전체는 훑는 자리다 — 핫이슈를 위로 올리면 그건 핫이슈 자리와 같은 화면이 된다.
+  all: "latest",
   // 핫이슈는 **이슈성** 순이다 (INV-N3). 점수순(`trending`)과 지금 결과가 같지만,
   // 같은 사건 묶기가 붙는 날 이 자리만 바뀌어야 한다.
   hot: "issue",
@@ -80,6 +87,9 @@ export function inSegment<T extends ArticleListItem>(
 ): T[] {
   return articles.filter((a) => {
     const at = placeArticle({ kinds: a.kinds, gate: a.gate });
+    // 핫이슈 ∪ 소식. `true` 로 두지 않는다 — 배치가 어느 자리에도 안 세운 글이 생기면
+    // 전체에만 나타나 "여기엔 있는데 어느 자리에도 없다"가 된다(S32b 가 그걸 막는다).
+    if (segment === "all") return at.hotIssue || at.news;
     if (segment === "hot") return at.hotIssue;
     if (segment === "news") return at.news;
     return at.tools;

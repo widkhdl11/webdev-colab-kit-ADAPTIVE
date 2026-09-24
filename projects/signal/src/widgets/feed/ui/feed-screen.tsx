@@ -13,6 +13,7 @@ import {
   articleHref,
   buildKeywordBadges,
   feedHref,
+  inSegment,
   orderFeed,
   parseFeedState,
   selectFeed,
@@ -43,7 +44,7 @@ export function FeedScreen({ articles, nowIso }: Props) {
   const searchParams = useSearchParams();
   const [notice, setNotice] = useState("");
   const { isRead } = useReadArticles();
-  const allChipId = useId();
+  const pressedSegmentId = useId();
 
   /**
    * 자리·필터·펼친 날 수를 **주소에서 읽는다** (design-rules 2026-09-01 (3)).
@@ -120,12 +121,20 @@ export function FeedScreen({ articles, nowIso }: Props) {
     setNotice(total === 0 ? emptyMessage : `${total}건 중 ${shown}건 표시`);
   }, [segment, tag, total, shown, emptyMessage]);
 
-  // 뱃지 줄은 **필터가 걸리기 전 목록**으로 센다 — 필터를 켠 뒤에도 다른 뱃지가 그대로
-  // 보여야 갈아탈 수 있다. 필터 결과로 다시 세면 켠 뱃지 하나만 남는다.
+  // 뱃지 줄은 **지금 자리의 글**로 센다 (2026-09-24 사용자 지시) — 핫이슈를 보고 있으면
+  // 핫이슈 글에 붙은 키워드와 그 건수만 나온다. 자리 밖 글까지 세면 뱃지에 「6」이라고
+  // 적혀 있는데 눌렀을 때 2장만 나온다.
+  // **키워드 필터는 걸기 전**이다 — 필터를 켠 뒤에도 다른 뱃지가 그대로 보여야 갈아탈 수
+  // 있다. 필터 결과로 다시 세면 켠 뱃지 하나만 남는다.
   // `isRead` 는 숫자에만 쓰인다: 자리·순서·노출은 전체 건수가 정한다(design-rules 2026-08-27).
   const badges = useMemo(
-    () => buildKeywordBadges({ articles, isRead, nowIso }),
-    [articles, isRead, nowIso],
+    () =>
+      buildKeywordBadges({
+        articles: inSegment(articles, segment),
+        isRead,
+        nowIso,
+      }),
+    [articles, segment, isRead, nowIso],
   );
 
   // 켤 때 집계 창만큼 펴고 끌 때 안 줄이는 규칙, 자리를 바꾸면 날 수를 처음으로 돌리는
@@ -151,23 +160,21 @@ export function FeedScreen({ articles, nowIso }: Props) {
         <h1>오늘의 신호</h1>
         <p>
           매일 아침 갱신 · 핫이슈는 읽어야 할 것만 골라 담고, 소식은 나머지
-          전부입니다. 스킬·툴은 그중 툴 이야기만 따로 모읍니다.
+          전부입니다. 전체는 둘을 합친 것이고, 스킬·툴은 그중 툴 이야기만 따로 모읍니다.
         </p>
       </div>
 
       <FeedControls
         segment={segment}
-        tag={tag}
         onSegmentChange={changeSegment}
-        onTagChange={changeTag}
-        allChipId={allChipId}
+        pressedId={pressedSegmentId}
       />
 
       <KeywordBadges
         badges={badges}
         selected={tag}
         onSelect={changeTag}
-        fallbackFocusId={allChipId}
+        fallbackFocusId={pressedSegmentId}
       />
 
       {groups.length === 0 ? (

@@ -56,6 +56,7 @@ describe("피드 주소 — 주소가 화면 상태의 근거다 (design-rules 2
       return parseFeedState((k) => p.get(k));
     };
     expect(get("tab=nope").segment).toBe("hot");
+    expect(get("tab=all").segment).toBe("all");
     expect(get("days=0").days).toBe(1);
     expect(get(`days=${MAX_FEED_DAYS + 1}`).days).toBe(1);
     expect(get("days=2.5").days).toBe(1);

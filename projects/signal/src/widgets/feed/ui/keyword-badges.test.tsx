@@ -42,7 +42,7 @@ const render = (badges: KeywordBadge[], selected: string | null = null) =>
 function badgeButtons(html: string): Element[] {
   const doc = new DOMParser().parseFromString(html, "text/html");
   const row = doc.querySelector('[aria-label="키워드 뱃지"]');
-  return row === null ? [] : [...row.querySelectorAll("button")];
+  return row === null ? [] : [...row.querySelectorAll("button[data-kw]")];
 }
 
 /** 실제로 마운트해서 클릭까지 본다 — 정적 렌더로는 토글·펼침 경로를 한 번도 안 지난다. */
@@ -135,17 +135,17 @@ describe("KeywordBadges — 숫자는 안 읽은 수다", () => {
 });
 
 describe("KeywordBadges — 켜짐과 접힘", () => {
+  const pressed = (html: string) =>
+    badgeButtons(html).map((b) => b.getAttribute("aria-pressed"));
+
   it("켜진 뱃지만 aria-pressed=true 다", () => {
     const html = render([badge({ name: "보안" }), badge({ name: "코딩" })], "보안");
     // 첫 뱃지가 켜지고 둘째는 꺼진 상태여야 한다.
-    expect(html.indexOf('aria-pressed="true"')).toBeLessThan(
-      html.indexOf('aria-pressed="false"'),
-    );
-    expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
+    expect(pressed(html)).toEqual(["true", "false"]);
   });
 
   it("아무것도 안 켜져 있으면 켜진 뱃지가 없다", () => {
-    expect(render([badge()])).not.toContain('aria-pressed="true"');
+    expect(pressed(render([badge()]))).toEqual(["false"]);
   });
 
   it("접힘으로 시작하고, `더 보기` 가 줄을 가리킨다", () => {
@@ -191,7 +191,7 @@ describe("KeywordBadges — 실제로 눌러 본다", () => {
     const m = await mount(
       <KeywordBadges badges={[badge({ name: "보안" })]} selected={null} onSelect={(t) => picked.push(t)} />,
     );
-    await m.click(m.container.querySelectorAll("button")[0]);
+    await m.click(m.container.querySelectorAll("button[data-kw]")[0]);
     expect(picked).toEqual(["보안"]);
     m.cleanup();
   });
@@ -206,7 +206,7 @@ describe("KeywordBadges — 실제로 눌러 본다", () => {
         onSelect={(t) => picked.push(t)}
       />,
     );
-    await m.click(m.container.querySelectorAll("button")[0]);
+    await m.click(m.container.querySelectorAll("button[data-kw]")[0]);
     expect(picked).toEqual([null]);
     m.cleanup();
   });
@@ -291,7 +291,7 @@ describe("KeywordBadges — 켠 키워드가 줄에 없을 때 (design-rules 202
   it("0짜리 칩을 맨 앞에 세운다 — 무엇으로 걸렀는지가 화면에 남는다", () => {
     const html = render([badge({ name: "코딩" })], "창밖키워드");
     const root = new DOMParser().parseFromString(html, "text/html").body;
-    const first = root.querySelector('[role="group"] button');
+    const first = root.querySelector('[role="group"] button[data-kw]');
     expect(first?.textContent).toContain("창밖키워드");
     expect(first?.getAttribute("aria-pressed")).toBe("true");
   });
@@ -303,14 +303,14 @@ describe("KeywordBadges — 켠 키워드가 줄에 없을 때 (design-rules 202
 
   it("줄에 있으면 새로 세우지 않는다 — 같은 칩이 두 번 나오지 않는다", () => {
     const html = render([badge({ name: "코딩" })], "코딩");
-    expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
+    expect(badgeButtons(html)).toHaveLength(1);
   });
 });
 
 describe("KeywordBadges — 세운 칩의 0 은 「다 읽었다」가 아니다", () => {
   const first = (html: string) => {
     const root = new DOMParser().parseFromString(html, "text/html").body;
-    return root.querySelector('[role="group"] button');
+    return root.querySelector('[role="group"] button[data-kw]');
   };
 
   it("세운 칩에는 취소선 모양을 안 붙이고 「집계에 없다」로 읽힌다", () => {
@@ -323,5 +323,48 @@ describe("KeywordBadges — 세운 칩의 0 은 「다 읽었다」가 아니다
   it("다 읽어서 0 이 된 칩은 여전히 취소선 모양이다", () => {
     const chip = first(render([badge({ name: "코딩", total: 4, unread: 0 })], "코딩"));
     expect(chip?.className).toContain(styles.kwZero);
+  });
+});
+
+/**
+ * 키워드 `전체` 칩 (2026-09-24 에 세그먼트 줄에서 이 줄 맨 앞으로 옮겼다).
+ * 자리 버튼 옆에 있으면 "자리 전체"로 읽혀서, 끄는 대상인 키워드 옆으로 왔다.
+ */
+describe("KeywordBadges — 키워드 `전체` 칩", () => {
+  const allChip = (html: string) => {
+    const row = new DOMParser()
+      .parseFromString(html, "text/html")
+      .querySelector('[aria-label="키워드 뱃지"]');
+    return row?.querySelector("button") ?? null;
+  };
+
+  it("뱃지 줄 맨 앞에 있고, 아무 키워드도 안 켜졌을 때 눌려 있다", () => {
+    const chip = allChip(render([badge({ name: "보안" })]));
+    expect(chip?.textContent?.trim()).toBe("전체");
+    expect(chip?.hasAttribute("data-kw")).toBe(false);
+    expect(chip?.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("키워드를 켜면 꺼진 상태가 된다", () => {
+    const chip = allChip(render([badge({ name: "보안" })], "보안"));
+    expect(chip?.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("BK20 (INV-N5): 키워드를 켠 상태에서도 숫자를 안 받는다", () => {
+    const chip = allChip(render([badge({ name: "보안", unread: 7 })], "보안"));
+    expect(chip?.textContent ?? "").not.toMatch(/\d/);
+  });
+
+  it("누르면 키워드 필터가 꺼진다(null 이 올라간다)", async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const picked: (string | null)[] = [];
+    const m = await mount(
+      <KeywordBadges badges={[badge({ name: "보안" })]} selected="보안" onSelect={(t) => picked.push(t)} />,
+    );
+    const chip = m.container.querySelector('[aria-label="키워드 뱃지"] button');
+    expect(chip?.textContent?.trim()).toBe("전체");
+    await m.click(chip as Element);
+    expect(picked).toEqual([null]);
+    m.cleanup();
   });
 });
