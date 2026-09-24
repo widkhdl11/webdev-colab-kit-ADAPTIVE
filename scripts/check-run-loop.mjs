@@ -27,7 +27,7 @@ import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { runLoop, stopLoop } from "./run-loop.mjs";
 import { probeWrapup } from "./check-wrapup.mjs";
-import { runRehearsal } from "./loop-rehearsal.mjs";
+import { runRehearsal, compareAnswer, handoffFrontier } from "./loop-rehearsal.mjs";
 import { loopNotice, pickNextItem, shouldAutostart, mergeLoopConfig, limitReason } from "./lib/loop-model.mjs";
 import { validateRequest, frozenItemsErrors } from "./lib/request-model.mjs";
 import { loopPaths } from "./lib/loop-files.mjs";
@@ -248,6 +248,11 @@ try {
     const big = repo("reh-big", { items: ["a"], scenario: { items: {}, rehearsal: good }, config: { rehearsal: true, rehearsal_token_limit: 10 } });
     const out = runRehearsal({ root: big, slug: "x" });
     check("J6 입력이 상한을 넘으면 표시한다", out.over_limit === true && out.ok === true, `${out.input_tokens_estimate}`);
+    const none = compareAnswer({ now_node: null, next_item_id: "I1", open_decision_id: null }, { now_node: "없음 — 전부 clean", next_item_id: "I1", open_decision_id: "없음" });
+    check("J6 「없음 — 전부 clean」 같은 없음 표기는 없음으로 읽는다", none.length === 0, none.join(" / "));
+    const word = compareAnswer({ now_node: null, next_item_id: null, open_decision_id: null }, { now_node: "nullable", next_item_id: null, open_decision_id: null });
+    check("J6 「없음」으로 시작하는 게 아닌 낱말은 값으로 읽는다(nullable)", word.length === 1, word.join(" / "));
+    check("J6 HANDOFF 의 「없음 — 전부 clean」 프론티어는 노드 없음이다", handoffFrontier("# 프론티어(지금 작업할 노드, 파생값): 없음 — 전부 clean") === null && handoffFrontier("# 프론티어(지금 작업할 노드, 파생값): review") === "review");
   }
 
   // ── J7 · 자동 시작 판정 ──────────────────────────────────────────────
@@ -273,10 +278,13 @@ try {
     check("J8 멈춤 요청이 보인다", /멈춤 요청됨 — 지금 항목이 끝나면 정지/.test(req.text), req.text);
     check("J8 멈춤은 종류와 사유가 경고로 보인다", wait.tone === "warn" && wait.text.startsWith("루프 멈춤 — 결정 대기 (결정 카드 답 대기"), wait.text);
     check("J8 기록이 없으면 줄이 없다", loopNotice(null) === null);
+    const big = loopNotice({ status: "실행 중", done: 0, total: 3, round: 1, rehearsal: { tokens: 58045, over_limit: true } });
+    check("J6 리허설 입력이 기준을 넘으면 대시보드 줄에 붙는다", /리허설 입력 약 58k 토큰/.test(big.text), big.text);
     // 화면(render.mjs)은 scripts/lib 를 못 읽어 같은 계산을 한 벌 더 둔다. 두 벌이 같은 답을 내는지 본다.
     const render = await import(pathToFileURL(join(KIT, ".claude", "skills", "report-dashboard", "assets", "render.mjs")).href);
     const samples = [null, { status: "모름" }, { status: "실행 중", done: 0, total: 2, round: 1 },
       { status: "실행 중", done: 1, total: 2, round: 2, stop_requested: true }, { status: "요청 완료", done: 2, total: 2, round: 2 },
+      { status: "실행 중", done: 0, total: 3, round: 1, rehearsal: { ok: true, tokens: 58045, over_limit: true } },
       ...["결정 대기", "항목 실패", "상한 도달", "리허설 실패", "정지 요청"].map((s, i) => ({ status: s, stop_detail: i % 2 ? `사유 ${i}` : null, done: i, total: 5, round: i + 1 }))];
     const diff = samples.filter((x) => JSON.stringify(render.loopRow(x)) !== JSON.stringify(loopNotice(x)));
     check("J8 화면의 루프 줄과 스크립트의 루프 줄이 같은 답을 낸다", diff.length === 0, JSON.stringify(diff));

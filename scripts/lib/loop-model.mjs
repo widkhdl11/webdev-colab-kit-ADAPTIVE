@@ -152,7 +152,9 @@ export function shouldAutostart({ card, answer, loopState, lockAlive, config }) 
 /** 루프 state.json 이 대시보드에 띄울 한 줄. 도는 중이면 info, 끝(요청 완료)도 info, 나머지 멈춤은 warn. */
 export function loopNotice(loop) {
   if (!loop || !LOOP_STATUS.includes(loop.status)) return null;
-  const n = `항목 ${loop.done ?? 0}/${loop.total ?? 0} · ${loop.round ?? 0}회차`;
+  // 리허설 입력이 기준을 넘었으면 같은 줄 끝에 붙인다 — HANDOFF·PROGRESS 가 새 대화에 싣기엔 크다는 신호다.
+  const big = loop.rehearsal?.over_limit ? ` · 리허설 입력 약 ${Math.round((loop.rehearsal.tokens ?? 0) / 1000)}k 토큰 — 인수인계 파일이 크다` : "";
+  const n = `항목 ${loop.done ?? 0}/${loop.total ?? 0} · ${loop.round ?? 0}회차${big}`;
   if (loop.status === LOOP_RUNNING) {
     const stop = loop.stop_requested ? " · 멈춤 요청됨 — 지금 항목이 끝나면 정지" : "";
     return { tone: "info", text: `루프 실행 중 · ${n}${stop}` };

@@ -34,7 +34,10 @@ export const estimateTokens = (text) => Math.ceil(Buffer.byteLength(String(text 
 /** HANDOFF 머리말의 프론티어 값. 없으면 null. */
 export function handoffFrontier(text) {
   const m = String(text ?? "").match(/프론티어\(지금 작업할 노드, 파생값\):\s*(.+)/);
-  return m ? m[1].trim() : null;
+  if (!m) return null;
+  // 「없음 — 전부 clean」 처럼 작업할 노드가 없다는 표기는 값이 아니라 없음이다.
+  const v = m[1].trim();
+  return /^없음/.test(v) ? null : v;
 }
 
 /** 파일에서 기계로 뽑은 기대값. */
@@ -50,7 +53,7 @@ export function expectedAnswer({ handoffText, request, decision }) {
 const norm = (v) => {
   if (v === null || v === undefined) return null;
   const s = String(v).trim();
-  return s === "" || /^(없음|null|none|n\/a)$/i.test(s) ? null : s;
+  return s === "" || /^(없음|null|none|n\/a)(\s|—|$)/i.test(s) ? null : s;
 };
 
 /** 답에서 JSON 한 덩어리를 뽑는다. 앞뒤 설명·코드 울타리가 섞여 있어도 첫 { … 마지막 } 을 본다. */

@@ -528,7 +528,9 @@ export function progressView(data, until = Date.now(), cfg = DEFAULT_REPORT_CONF
 const LOOP_STATUS_ALL = ["실행 중", "요청 완료", "결정 대기", "항목 실패", "상한 도달", "리허설 실패", "정지 요청"];
 export function loopRow(loop) {
   if (!loop || !LOOP_STATUS_ALL.includes(loop.status)) return null;
-  const n = `항목 ${loop.done ?? 0}/${loop.total ?? 0} · ${loop.round ?? 0}회차`;
+  // 리허설 입력이 기준을 넘었으면 같은 줄 끝에 붙인다 — HANDOFF·PROGRESS 가 새 대화에 싣기엔 크다는 신호다.
+  const big = loop.rehearsal?.over_limit ? ` · 리허설 입력 약 ${Math.round((loop.rehearsal.tokens ?? 0) / 1000)}k 토큰 — 인수인계 파일이 크다` : "";
+  const n = `항목 ${loop.done ?? 0}/${loop.total ?? 0} · ${loop.round ?? 0}회차${big}`;
   if (loop.status === "실행 중") {
     const stop = loop.stop_requested ? " · 멈춤 요청됨 — 지금 항목이 끝나면 정지" : "";
     return { tone: "info", text: `루프 실행 중 · ${n}${stop}` };
