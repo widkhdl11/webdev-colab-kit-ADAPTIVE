@@ -5,9 +5,12 @@ import {
   BADGE_WINDOW_DAYS,
   badgeWindowStartIso,
   buildKeywordBadges,
+  buildSegmentBadges,
 } from "./badges";
+import { GATE_ONE } from "./hot-issue";
+import type { FeedSegment } from "./query";
 import { dayKey } from "@/shared/lib/datetime";
-import type { ArticleKeyword } from "../model/types";
+import type { ArticleKeyword, ArticleListItem } from "../model/types";
 
 /**
  * 뱃지 줄 집계 — INV-B4(미끄러지는 창) · design-rules 2026-08-27.
@@ -272,5 +275,59 @@ describe("badgeWindowStartIso — 창의 왼쪽 끝", () => {
     const start = badgeWindowStartIso(NOW)!;
     const oldestCounted = new Date(Date.parse(NOW) - 2 * 86_400_000).toISOString();
     expect(start.slice(0, 10)).toBe(dayKey(oldestCounted));
+  });
+});
+
+/**
+ * 뱃지는 **지금 자리의 글로** 센다 (2026-09-24 사용자 지시). 핫이슈를 보면 핫이슈 글의
+ * 키워드와 건수만 나온다. `elsewhere` 는 모든 자리를 합친 집계로, 켠 키워드가 이 자리에만
+ * 없는지(다른 자리에는 있는지)를 가르는 데 쓴다.
+ */
+describe("buildSegmentBadges — 뱃지는 지금 자리의 글로 센다", () => {
+  const placed = (id: string, hot: boolean, tags: ArticleKeyword[]): ArticleListItem => ({
+    id,
+    title: id,
+    titleKo: null,
+    summary: "",
+    sourceExcerpt: null,
+    summaryPoints: [],
+    sourceId: "s",
+    sourceName: "s",
+    sourceUrl: "https://example.com",
+    publishedAt: at(0),
+    tags,
+    officialBasis: "none",
+    kinds: [],
+    issueScore: 1,
+    gate: hot ? GATE_ONE : null,
+    score: 1,
+    isTrending: false,
+  });
+  const ARTICLES = [
+    placed("h1", true, [field("보안"), kind("출시")]),
+    placed("h2", true, [field("보안")]),
+    placed("n1", false, [field("보안"), kind("출시")]),
+    placed("n2", false, [kind("출시")]),
+  ];
+  const run = (segment: FeedSegment) =>
+    buildSegmentBadges({ articles: ARTICLES, segment, isRead: () => false, nowIso: NOW });
+  const counts = (segment: FeedSegment) =>
+    Object.fromEntries(run(segment).badges.map((b) => [b.name, b.total]));
+
+  it("핫이슈는 핫이슈 글만 센다", () => {
+    expect(counts("hot")).toEqual({ 보안: 2 });
+  });
+
+  it("소식은 소식 글만 센다", () => {
+    expect(counts("news")).toEqual({ 출시: 2 });
+  });
+
+  it("전체는 둘을 합친 수다", () => {
+    expect(counts("all")).toEqual({ 보안: 3, 출시: 3 });
+  });
+
+  it("elsewhere 는 자리와 무관하게 창 안의 키워드를 문턱 없이 전부 담는다 — 축을 찾을 수 있게", () => {
+    const names = run("hot").elsewhere.map((b) => `${b.axis}:${b.name}`).sort();
+    expect(names).toEqual(["field:보안", "kind:출시"]);
   });
 });

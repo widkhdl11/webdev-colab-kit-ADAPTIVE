@@ -11,9 +11,8 @@ import {
 } from "react";
 import {
   articleHref,
-  buildKeywordBadges,
+  buildSegmentBadges,
   feedHref,
-  inSegment,
   orderFeed,
   parseFeedState,
   selectFeed,
@@ -95,10 +94,22 @@ export function FeedScreen({ articles, nowIso }: Props) {
         ? `오늘은 핫이슈가 없습니다 — 소식에 ${rest}건 있습니다.`
         : "오늘은 핫이슈가 없습니다.";
     }
+    // 자리를 바꿔도 키워드는 켜진 채 남는다. 그 키워드 글이 다른 자리에만 있으면
+    // 원인은 주제가 아니라 자리다 — 핫이슈 문장과 같은 모양으로 갈 곳을 알려 준다.
+    if (tag !== null && segment !== "all") {
+      const rest = orderFeed({ articles, segment: "all", tag }).length;
+      if (rest > 0) return `이 자리에는 이 주제의 글이 없습니다 — 전체에 ${rest}건 있습니다.`;
+    }
     if (segment === "tools") {
       return tag === null
         ? "스킬·툴로 분류된 글이 아직 없습니다."
         : "이 주제의 스킬·툴 글이 아직 없습니다.";
+    }
+    // `전체` 는 「소식」이라고 쓰지 않는다 — 소식이 자리 이름이라 그 자리만 빈 것처럼 읽힌다.
+    if (segment === "all") {
+      return tag === null
+        ? "아직 모인 글이 없습니다."
+        : "이 주제로 모인 글이 아직 없습니다.";
     }
     return tag === null
       ? "아직 모인 소식이 없습니다."
@@ -121,19 +132,10 @@ export function FeedScreen({ articles, nowIso }: Props) {
     setNotice(total === 0 ? emptyMessage : `${total}건 중 ${shown}건 표시`);
   }, [segment, tag, total, shown, emptyMessage]);
 
-  // 뱃지 줄은 **지금 자리의 글**로 센다 (2026-09-24 사용자 지시) — 핫이슈를 보고 있으면
-  // 핫이슈 글에 붙은 키워드와 그 건수만 나온다. 자리 밖 글까지 세면 뱃지에 「6」이라고
-  // 적혀 있는데 눌렀을 때 2장만 나온다.
-  // **키워드 필터는 걸기 전**이다 — 필터를 켠 뒤에도 다른 뱃지가 그대로 보여야 갈아탈 수
-  // 있다. 필터 결과로 다시 세면 켠 뱃지 하나만 남는다.
+  // 뱃지 줄은 **지금 자리의 글**로 센다 — 규칙은 entities 의 buildSegmentBadges 에 있다.
   // `isRead` 는 숫자에만 쓰인다: 자리·순서·노출은 전체 건수가 정한다(design-rules 2026-08-27).
-  const badges = useMemo(
-    () =>
-      buildKeywordBadges({
-        articles: inSegment(articles, segment),
-        isRead,
-        nowIso,
-      }),
+  const { badges, elsewhere } = useMemo(
+    () => buildSegmentBadges({ articles, segment, isRead, nowIso }),
     [articles, segment, isRead, nowIso],
   );
 
@@ -174,6 +176,7 @@ export function FeedScreen({ articles, nowIso }: Props) {
         badges={badges}
         selected={tag}
         onSelect={changeTag}
+        elsewhere={elsewhere}
         fallbackFocusId={pressedSegmentId}
       />
 

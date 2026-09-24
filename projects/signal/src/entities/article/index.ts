@@ -62,6 +62,7 @@ export {
   BADGE_WINDOW_DAYS,
   badgeWindowStartIso,
   buildKeywordBadges,
+  buildSegmentBadges,
 } from "./lib/badges";
 export type { KeywordBadge } from "./lib/badges";
 export { publisherFromUrl } from "./lib/publisher";

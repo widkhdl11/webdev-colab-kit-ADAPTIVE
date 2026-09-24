@@ -69,8 +69,9 @@ export function withTag(state: FeedState, tag: ArticleTag | null): FeedState {
  * 자리를 바꾼다. **펼친 날 수는 처음으로 돌린다.**
  *
  * signal2 의 규칙(「정렬을 바꿔도 펼친 날 수는 그대로」)은 두 버튼이 **같은 글 전부**를
- * 순서만 달리 보여줄 때의 것이다. 이 구현의 세 자리는 서로 다른 글을 보여주므로
- * (hot-issue.md INV-G3) 핫이슈에서 5일치 펼친 것이 소식 5일치로 넘어가면 뜬금없이 길어진다.
+ * 순서만 달리 보여줄 때의 것이다. 이 구현의 자리들은 서로 다른 글을 보여주므로
+ * (hot-issue.md INV-G3 — `전체` 도 핫이슈·소식보다 훨씬 많다) 핫이슈에서 5일치 펼친 것이
+ * 소식이나 전체 5일치로 넘어가면 뜬금없이 길어진다.
  */
 export function withSegment(state: FeedState, segment: FeedSegment): FeedState {
   return { ...state, segment, days: defaultDays(state.tag) };
@@ -146,7 +147,8 @@ export function articleHref(id: string, state: FeedState): string {
  *
  * **자리도 같은 이유로 옮긴다.** 규칙 문서는 필터만 말하지만, 이 구현에서는 자리도
  * 글을 거른다(hot-issue.md INV-G3). 핫이슈 자리를 든 주소로 소식 글을 열면 같은 일이
- * 난다 — 그 글이 서는 자리(핫이슈 아니면 소식)로 옮긴다.
+ * 난다 — 그 글이 서는 자리(핫이슈 아니면 소식)로 옮긴다. `전체` 에는 모든 글이 서므로
+ * 그 주소는 자리를 옮길 일이 없다.
  *
  * `days` 는 주소에 명시돼 있을 때만 지킨다. 없던 값은 "뱃지를 켰으니 3일"로 합성된
  * 것이라, 필터를 놓으면 근거가 사라진다.

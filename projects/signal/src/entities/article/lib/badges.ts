@@ -1,6 +1,8 @@
 import { dayKey } from "@/shared/lib/datetime";
 import { normalizeTagName } from "./tagging";
-import type { ArticleKeyword, TagAxis } from "../model/types";
+import { inSegment } from "./query";
+import type { FeedSegment } from "./query";
+import type { ArticleKeyword, ArticleListItem, TagAxis } from "../model/types";
 
 /**
  * 뱃지 줄의 집계 — badge-keywords INV-B4 · design-rules 2026-08-27 블록.
@@ -152,4 +154,32 @@ export function buildKeywordBadges(params: {
     // "자리를 고정한다"는 규칙 자체가 성립하지 않는다.
     .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
     .slice(0, Math.max(0, limit));
+}
+
+/**
+ * 지금 자리의 뱃지 줄 (2026-09-24 사용자 지시 — 뱃지와 숫자는 고른 자리를 따른다).
+ *
+ * 핫이슈를 보고 있는데 모든 글로 세면 뱃지에 「6」이라고 적혀 있고 눌렀을 때 2장만 나온다.
+ * **키워드 필터는 걸기 전**이다 — 필터 결과로 세면 켠 뱃지 하나만 남아 갈아탈 수 없다.
+ *
+ * `elsewhere` 는 자리와 무관하게 창 안 키워드를 문턱 없이 모은 것이다. 켠 키워드가 이 자리
+ * 줄에 없을 때 "다른 자리에는 있다"와 "최근 창에 아예 없다"를 가르고, 그 키워드의 축을 찾는다.
+ */
+export function buildSegmentBadges(params: {
+  articles: readonly ArticleListItem[];
+  segment: FeedSegment;
+  isRead: (id: string) => boolean;
+  nowIso: string;
+}): { badges: KeywordBadge[]; elsewhere: KeywordBadge[] } {
+  const { articles, segment, isRead, nowIso } = params;
+  return {
+    badges: buildKeywordBadges({ articles: inSegment(articles, segment), isRead, nowIso }),
+    elsewhere: buildKeywordBadges({
+      articles,
+      isRead,
+      nowIso,
+      minCount: 1,
+      limit: Number.POSITIVE_INFINITY,
+    }),
+  };
 }

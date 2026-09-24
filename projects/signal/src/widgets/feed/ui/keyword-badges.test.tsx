@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { act } from "react";
+import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { KeywordBadge } from "@/entities/article";
@@ -366,5 +366,76 @@ describe("KeywordBadges — 키워드 `전체` 칩", () => {
     await m.click(chip as Element);
     expect(picked).toEqual([null]);
     m.cleanup();
+  });
+});
+
+describe("KeywordBadges — 줄이 사라져도 포커스가 문서 맨 위로 떨어지지 않는다 (2026-09-24 리뷰)", () => {
+  const nextFrame = () =>
+    act(async () => {
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+    });
+
+  it("뱃지 0개 자리에서 `전체` 칩으로 키워드를 끄면 바깥 대상으로 포커스가 간다", async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const outside = document.createElement("button");
+    outside.id = "outside-target";
+    document.body.appendChild(outside);
+    function Harness() {
+      const [tag, setTag] = React.useState<string | null>("창밖키워드");
+      return (
+        <KeywordBadges badges={[]} selected={tag} onSelect={setTag} fallbackFocusId="outside-target" />
+      );
+    }
+    const h = await mount(<Harness />);
+    const chip = h.container.querySelector('[aria-label="키워드 뱃지"] button') as HTMLElement;
+    expect(chip.textContent?.trim()).toBe("전체");
+    chip.focus();
+    await h.click(chip);
+    await nextFrame();
+    expect(h.container.querySelector('[aria-label="키워드 뱃지"]')).toBeNull();
+    expect(document.activeElement).toBe(outside);
+    h.cleanup();
+    outside.remove();
+  });
+
+  it("뱃지가 있는 자리에서 세운 칩을 끄면 `전체` 칩으로 포커스가 간다", async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    function Harness() {
+      const [tag, setTag] = React.useState<string | null>("창밖키워드");
+      return <KeywordBadges badges={[badge({ name: "보안" })]} selected={tag} onSelect={setTag} />;
+    }
+    const h = await mount(<Harness />);
+    const synthetic = h.container.querySelector("button[data-kw]") as HTMLElement;
+    expect(synthetic.textContent).toContain("창밖키워드");
+    await h.click(synthetic);
+    await nextFrame();
+    const all = h.container.querySelector('[aria-label="키워드 뱃지"] button');
+    expect(document.activeElement).toBe(all);
+    h.cleanup();
+  });
+});
+
+describe("KeywordBadges — 켠 키워드가 이 자리에만 없을 때 (2026-09-24 리뷰)", () => {
+  const renderWith = (elsewhere: KeywordBadge[]) =>
+    renderToStaticMarkup(
+      <KeywordBadges
+        badges={[badge({ name: "코딩" })]}
+        selected="출시"
+        onSelect={() => {}}
+        elsewhere={elsewhere}
+      />,
+    );
+
+  it("다른 자리에 있으면 「이 자리에는 없습니다」로 읽히고 축을 거기서 가져온다", () => {
+    const [chip] = badgeButtons(renderWith([badge({ name: "출시", axis: "kind" })]));
+    expect(chip.textContent).toContain("이 자리에는 없습니다");
+    expect(chip.textContent).not.toContain("최근 3일 집계에는 없습니다");
+    expect(chip.className).toContain(styles.kwKind);
+  });
+
+  it("어디에도 없으면 「최근 3일 집계에는 없습니다」 그대로다", () => {
+    const [chip] = badgeButtons(renderWith([]));
+    expect(chip.textContent).toContain("최근 3일 집계에는 없습니다");
+    expect(chip.className).toContain(styles.kwField);
   });
 });

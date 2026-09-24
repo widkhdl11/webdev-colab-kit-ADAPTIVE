@@ -57,6 +57,9 @@ describe("피드 주소 — 주소가 화면 상태의 근거다 (design-rules 2
     };
     expect(get("tab=nope").segment).toBe("hot");
     expect(get("tab=all").segment).toBe("all");
+    // 쓰는 쪽도 같은 값을 싣는다 — 읽기만 되고 쓰기가 빠지면 새로고침에 자리가 사라진다
+    expect(feedHref({ segment: "all", tag: null, days: 1 })).toBe("/?tab=all");
+    expect(get("tab=all&days=2")).toEqual({ segment: "all", tag: null, days: 2 });
     expect(get("days=0").days).toBe(1);
     expect(get(`days=${MAX_FEED_DAYS + 1}`).days).toBe(1);
     expect(get("days=2.5").days).toBe(1);
@@ -210,5 +213,17 @@ describe("펼친 날 수를 그 글의 날까지 넓힌다", () => {
     expect(withDaysCovering(DEFAULT_FEED_STATE, ordered, "zz")).toEqual(
       DEFAULT_FEED_STATE,
     );
+  });
+});
+
+describe("fitFeedStateToArticle — `전체` 자리", () => {
+  it("모든 글이 서는 자리라 자리를 옮기지 않는다", () => {
+    const next = fitFeedStateToArticle({
+      state: { segment: "all", tag: null, days: 1 },
+      daysExplicit: false,
+      inSegment: (s) => s === "all" || s === "news",
+      hasTag: () => true,
+    });
+    expect(next.segment).toBe("all");
   });
 });
