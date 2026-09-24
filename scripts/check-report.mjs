@@ -1810,6 +1810,47 @@ const rejects = (over, what) => validateDecision(card(over), VOCAB).some((e) => 
     "카드가 없는데도 값을 바꿔 적었다");
 }
 
+// ── 42. 대시보드 서버 — 이 PC 의 이 주소로 온 읽기만 받는다 (2026-09-24 보안 리뷰) ──
+// 127.0.0.1 바인딩만으로는 DNS 재바인딩한 외부 페이지가 activity.jsonl(명령 원문)을 읽어 간다.
+// 실제 서버를 띄워 요청을 보낸다 — 함수만 보면 서버가 그 함수를 안 불러도 통과한다.
+if (INSTALLED) {
+  const { spawn } = await import("node:child_process");
+  const { request } = await import("node:http");
+  const port = 44000 + Math.floor(Math.random() * 1000);
+  const proc = spawn(process.execPath, [join(ROOT, "scripts", "report-serve.mjs"), "--project", SLUG, "--port", String(port), "--no-open"], { stdio: "pipe" });
+  const up = await new Promise((ok) => {
+    const t = setTimeout(() => ok(false), 5000);
+    proc.stdout.on("data", (d) => { if (String(d).includes("대시보드")) { clearTimeout(t); ok(true); } });
+    proc.on("exit", () => { clearTimeout(t); ok(false); });
+  });
+  const hit = (path, { host = `localhost:${port}`, method = "GET" } = {}) => new Promise((ok) => {
+    const req = request({ host: "127.0.0.1", port, path, method, headers: { host } }, (res) => { res.resume(); ok({ status: res.statusCode, headers: res.headers }); });
+    req.on("error", () => ok({ status: 0, headers: {} }));
+    req.end();
+  });
+  if (!up) {
+    check("42 서버", false, "", "대시보드 서버가 안 떴다 — 아래 항목을 판정할 수 없다");
+  } else {
+    const okRead = await hit("/workflow.json");
+    check("42 읽기", okRead.status === 200, "우리 주소로 온 읽기는 받는다", `정상 읽기가 ${okRead.status} — 아래 프로브가 전부 무의미해진다`);
+    check("42 프로브(재바인딩)", (await hit("/activity.jsonl", { host: `evil.example:${port}` })).status === 403,
+      "Host 가 우리 주소가 아니면 403 — 재바인딩한 외부 페이지가 활동 기록을 못 읽는다", "다른 Host 의 읽기가 통과했다");
+    check("42 틀 넣기 금지", okRead.headers["x-frame-options"] === "DENY" && String(okRead.headers["content-security-policy"]).includes("frame-ancestors 'none'"),
+      "모든 응답에 틀 넣기 금지 헤더가 붙는다", "틀 넣기 금지 헤더가 없다");
+    check("42 프로브(쓰기)", (await hit("/workflow.json", { method: "POST" })).status === 405, "읽기 전용 — POST 는 405", "POST 가 405 가 아니다");
+    // report/ 밖의 실재 파일(루트 ACTIVE)을 가리킨다. 경로는 절대 경로로 정규화돼 루트 위로 못 올라가서
+    // 보통 report/ 안의 없는 파일(404)이 된다 — 판정은 「그 파일이 안 나온다」(200 이 아님)다.
+    const escapes = ["/..%2f..%2f..%2fACTIVE", "/..%2f..%2f..%2f..%2f..%2fACTIVE", "/..%5c..%5c..%5cACTIVE"];
+    const leaked = [];
+    for (const p of escapes) if ((await hit(p)).status === 200) leaked.push(p);
+    check("42 프로브(바깥 경로)", leaked.length === 0, "report/ 밖의 파일은 어떤 경로로도 안 나온다", `밖의 파일이 나왔다: ${leaked.join(", ")}`);
+    const bad = await hit("/%E0%A4%A");
+    const after = await hit("/workflow.json");
+    check("42 프로브(깨진 인코딩)", bad.status === 400 && after.status === 200, "깨진 퍼센트 인코딩은 400 이고 서버는 산다", `깨진 인코딩 ${bad.status}, 그 뒤 ${after.status}`);
+  }
+  proc.kill();
+}
+
 // ── 보고 ────────────────────────────────────────────────────────────────
 for (const d of tmpRoots) { try { rmSync(d, { recursive: true, force: true }); } catch { /* 임시 폴더다 */ } }
 
