@@ -5,7 +5,7 @@
 - **오늘의 목표**: 피드 자리 줄 `전체`·키워드 뱃지 자리별 집계 + Opus 교체 리뷰 지적을 고쳐 한꺼번에 배포 → **달성**
 - **완료**: ([리뷰 처리](REVIEW-2026-09-23-opus.md)) 피드 `전체` 자리·키워드 `전체` 칩 이동·뱃지 자리별 집계 · Opus 지적 전부(재시도 0 · 거부 거르기 · 실측 `probe:enrich` 로 제목 상한 1000) · 이어달리기 리다이렉트 차단·배포 https 한정 · 재리뷰 code·security·ui 통과 · 사인오프 · push·운영 배포 `38a6fb3`(www.simoori.com 에서 새 화면 확인) · 공개 주소 www.simoori.com 기록
 - **멈춘 지점**: 배포까지 끝. 요약은 이제 opus 로 돈다 — 첫 실행은 09-25 07시
-- **다음 할 일**: 09-25 07시 실행(요약이 opus 로 도는 첫 실행)을 `npm run runs` 로 보고 09-24($1.674, sonnet)와 요금을 비교하고, [운영](https://www.simoori.com/) 상세에서 opus 요약을 확인한다 — 그 전에 사용자가 버셀 `INGEST_BASE_URL` 을 `https://www.simoori.com`(www 필수)으로 바꿨는지 묻는다 ([배포 기록](deploy.md))
+- **다음 할 일**: 09-25 07시 실행(요약이 opus 로 도는 첫 실행)을 `npm run runs` 로 보고 09-24($1.674, sonnet)와 요금을 비교하고, [운영](https://www.simoori.com/) 상세에서 opus 요약을 확인한다 — 같은 기록에서 이어달리기가 끊기지 않았는지도 본다(`INGEST_BASE_URL` 은 09-24 에 www 주소로 바꿨다고 들음, [배포 기록](deploy.md))
 - **대기 중인 결정**: ① signal2 폴더를 계속 둘지
 
 ## 로그
