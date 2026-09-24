@@ -26,6 +26,14 @@ projects/*/report/state.json
 projects/*/report/request.json
 projects/*/report/turn-hashes.json
 projects/*/report/*.jsonl
+# 예외: 판정 검토 집계는 사람 판단의 정본이라 커밋한다(report-contract 9·15절)
+!projects/*/report/review-summary.jsonl
+# 스크립트가 매번 다시 쓰는 것 · 쓰다 남은 임시 파일
+projects/*/report/notices.json
+projects/*/report/review-samples/index.json
+projects/*/report/**/*.tmp
+projects/*/report/review-samples/*.closing
+projects/*/report/.verdict-review.lock
 # 열린 결정 카드와 그 근거 본문 — 답하면 이력(jsonl)으로 옮겨간다
 projects/*/report/decision.json
 projects/*/report/decision-detail.md

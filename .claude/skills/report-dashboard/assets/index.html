@@ -229,10 +229,18 @@
   /* 우측 열은 1024px 에서도 그대로 있는다(요약 박스는 항상 보여야 한다).
      좁아지면 아래로 내려간다 — 옆에 두면 본문이 눌려 글자 크기 기준을 어긴다. */
   @media (max-width:860px) { .cols { flex-direction:column; } .side { width:100%; position:static; } }
+
+  /* ── 탭 줄 (report-contract 17절) ─────────────────────────── */
+  /* tabs.json 이 없으면 줄 자체가 없다. 탭이 하나뿐이면 옮겨 갈 곳이 없으니 그것도 안 그린다. */
+  .tabs { display:flex; gap:4px; margin:0 0 16px; border-bottom:1px solid var(--line); }
+  .tabs a { padding:8px 14px; color:var(--dim); text-decoration:none; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .tabs a:hover { color:var(--fg); }
+  .tabs a[aria-current="page"] { color:var(--fg); border-bottom-color:var(--accent); font-weight:650; }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <nav class="tabs" id="tabs" hidden></nav>
   <div class="cols">
     <div class="main">
       <!-- 읽는 순서 = 묻는 순서. 지금 뭐 하나 → 어디까지 왔나 → 막힌 것 있나 → 나머지 -->
@@ -335,7 +343,7 @@ function keepFocus(draw) {
 
 async function tick() {
   const [workflow, state, request, transitions, activity, subagents, history, config,
-         decision, decisionsHistory, decisionDetail] = await Promise.all([
+         decision, decisionsHistory, decisionDetail, notices, tabs] = await Promise.all([
     getJson("workflow.json", { nodes: [], edges: [], skills: [], agents: [] }),
     getJson("state.json", null),
     getJson("request.json", null),
@@ -347,9 +355,12 @@ async function tick() {
     getJson("decision.json", null),
     getJsonl("decisions-history.jsonl"),
     getText("decision-detail.md"),
+    getJson("notices.json", null),
+    getJson("tabs.json", null),
   ]);
   data = { workflow, state, request, transitions, activity, subagents, history,
-           decision, decisionsHistory, decisionDetail };
+           decision, decisionsHistory, decisionDetail, notices };
+  drawTabs(tabs);
   cfg = reportConfig(config);
 
   keepFocus(() => {
@@ -465,6 +476,26 @@ function drawProgress() {
   el.querySelectorAll("[data-item]").forEach((b) => {
     b.addEventListener("click", () => { selected = { kind: "delay", id: b.dataset.item }; drawPanel(true); });
   });
+}
+
+// ── 탭 줄 ───────────────────────────────────────────────────────────────
+// 프로젝트가 화면을 더 붙일 때 쓰는 자리(report-contract 17절). 같은 폴더의 파일만 가리킨다 —
+// 바깥 주소로 나가는 링크를 이 화면이 만들 이유가 없다.
+let lastTabsKey = "";
+function drawTabs(tabs) {
+  const el = $("tabs");
+  const list = Array.isArray(tabs)
+    ? tabs.filter((t) => typeof t?.label === "string" && /^[\w.-]+\.html$/.test(t?.href ?? ""))
+    : [];
+  const key = JSON.stringify(list);
+  if (key === lastTabsKey) return;
+  lastTabsKey = key;
+  if (list.length < 2) { el.hidden = true; el.innerHTML = ""; return; }
+  const here = location.pathname.split("/").pop() || "index.html";
+  el.setAttribute("aria-label", LABEL.sec_tabs);
+  el.innerHTML = list.map((t) =>
+    `<a href="${esc(t.href)}"${t.href === here ? ' aria-current="page"' : ""}>${esc(t.label)}</a>`).join("");
+  el.hidden = false;
 }
 
 // ── B-3 특이사항 ────────────────────────────────────────────────────────

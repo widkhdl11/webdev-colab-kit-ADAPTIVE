@@ -1810,6 +1810,64 @@ const rejects = (over, what) => validateDecision(card(over), VOCAB).some((e) => 
     "카드가 없는데도 값을 바꿔 적었다");
 }
 
+// ── 42. 프로젝트 알림(notices.json) — 계약 16절 ──────────────────────────
+{
+  const { projectNoticeRows } = RENDER_EXPORTS;
+  const at = (h) => new Date(V3.now - h * 3600_000).toISOString();
+  const fresh = { s: { name: "주간 실행", generated_at: at(1), stale_after_hours: 48, rows: [{ tone: "info", text: "정확도 90%" }, { tone: "warn", text: "실패" }] } };
+  const got = projectNoticeRows(fresh, V3.now);
+  check("42 줄", got.length === 2 && got[0].tone === "info" && got[1].tone === "warn",
+    "스크립트가 남긴 줄이 tone 그대로 특이사항에 뜬다", `줄이 다르다: ${JSON.stringify(got)}`);
+  const withRows = noticeRowsRef({ ...V3.product, notices: fresh }, V3.now, DEFAULT_REPORT_CONFIG).filter((r) => r.code === 10);
+  check("42 특이사항에 합류", withRows.length === 2 && withRows.every((r) => r.label === "프로젝트 알림"),
+    "특이사항 절이 그 줄을 어휘표 라벨로 그린다", "특이사항에 안 들어갔거나 라벨이 다르다");
+  const stale = projectNoticeRows({ s: { ...fresh.s, generated_at: at(72) } }, V3.now);
+  check("42 프로브(안 돎)", stale.some((r) => r.tone === "warn" && r.text.includes("주간 실행") && r.text.includes("3일째")),
+    "마지막 기록이 기한을 넘으면 「안 돌았을 수 있다」가 뜬다 — 무인 실행이 조용히 멈추면 이것 말고는 신호가 없다",
+    "낡은 기록이 조용히 통과했다");
+  check("42 프로브(모양 틀림)", projectNoticeRows({ a: null, b: { rows: [{ text: "" }, { tone: "warn" }, "x"] } }, V3.now).length === 0
+      && projectNoticeRows([1, 2], V3.now).length === 0,
+    "모양이 틀린 칸·줄은 버린다 — 남의 파일 때문에 화면이 깨지지 않는다", "모양이 틀린 줄이 화면에 나갔다");
+}
+
+// ── 43. 쓰기 경로 검증 — 계약 13·14절 ──────────────────────────────────
+{
+  const { isLocalRequest, validateAnswer, isClosed, WEEK_RE } =
+    await import(pathToFileURL(join(ROOT, "scripts", "lib", "review-answer.mjs")).href);
+  const P = 4321;
+  const H = { host: `localhost:${P}`, origin: `http://localhost:${P}` };
+  check("43 로컬 요청", isLocalRequest(H, P, "127.0.0.1") && isLocalRequest({ host: `127.0.0.1:${P}`, origin: `http://127.0.0.1:${P}` }, P, "::1"),
+    "이 화면에서 온 요청은 받는다", "정상 요청을 거부했다 — 아래 프로브가 전부 무의미해진다");
+  const planted = [
+    ["외부 사이트", { ...H, origin: "https://evil.example" }, "127.0.0.1"],
+    ["DNS 재바인딩", { ...H, host: `evil.example:${P}` }, "127.0.0.1"],
+    ["Origin 없음", { host: H.host }, "127.0.0.1"],
+    ["다른 포트", { ...H, origin: `http://localhost:${P + 1}` }, "127.0.0.1"],
+    ["외부 주소", H, "192.168.0.7"],
+  ];
+  for (const [name, headers, addr] of planted) {
+    check(`43 프로브(${name})`, !isLocalRequest(headers, P, addr), `${name} 요청을 거부한다`, `${name} 요청이 통과했다`);
+  }
+  const sample = { week: "2026-W40", extracted_at: new Date(V3.now).toISOString(),
+    items: [{ id: "1", verdict: { hot: true } }, { id: "2", verdict: { hot: false } }], answers: {} };
+  const v = (b, closed = false) => validateAnswer(sample, JSON.stringify(b), closed);
+  check("43 답", v({ id: "1", answer: "wrong", direction: "wrong_reason" }).ok && v({ id: "2", answer: "wrong" }).direction === "should_be_hot"
+      && v({ id: "1", answer: "wrong" }).direction === "unknown",
+    "맞는 답은 받고, 방향이 하나뿐이면 그것으로, 둘 이상인데 안 골랐으면 방향 미상으로 채운다", "정상 답을 거부했거나 방향을 잘못 채웠다");
+  const badBodies = [
+    ["모르는 칸", { id: "1", answer: "correct", x: 1 }], ["모르는 답", { id: "1", answer: "maybe" }],
+    ["없는 id", { id: "9", answer: "correct" }], ["판정과 안 맞는 방향", { id: "2", answer: "wrong", direction: "wrong_reason" }],
+    ["맞다에 방향", { id: "1", answer: "correct", direction: "unknown" }],
+  ];
+  for (const [name, b] of badBodies) check(`43 프로브(${name})`, !v(b).ok, `${name} 을 거부한다`, `${name} 이 통과했다`);
+  check("43 프로브(닫힌 주)", !v({ id: "1", answer: "correct" }, true).ok, "닫힌 주의 답을 거부한다", "닫힌 주에 답이 들어갔다");
+  check("43 닫힘", isClosed(sample, [{ week: "2026-W40" }], V3.now) && isClosed(sample, [], V3.now + 7 * 86_400_000)
+      && !isClosed(sample, [], V3.now + 86_400_000),
+    "집계 줄이 있거나 7일이 지나면 닫히고, 그 전에는 열려 있다", "닫힘 판정이 틀렸다");
+  check("43 프로브(경로 조각)", !WEEK_RE.test("../state") && !WEEK_RE.test("2026-W40/../x") && WEEK_RE.test("2026-W40"),
+    "주차 자리에 경로 조각이 들어오지 못한다", "경로 조각이 주차로 통과했다");
+}
+
 // ── 보고 ────────────────────────────────────────────────────────────────
 for (const d of tmpRoots) { try { rmSync(d, { recursive: true, force: true }); } catch { /* 임시 폴더다 */ } }
 

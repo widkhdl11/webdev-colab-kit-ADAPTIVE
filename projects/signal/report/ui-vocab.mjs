@@ -43,6 +43,10 @@ export const LABEL = {
   no_activity: "활동 없음",
   dwell: "머문 시간",
   open_request: "열린 요청",
+  // 프로젝트 스크립트가 notices.json 에 남긴 줄 (report-contract 16절). 값은 그 스크립트가 쓴 문장이다.
+  project_notice: "프로젝트 알림",
+  // 화면 위의 탭 줄 (report-contract 17절)
+  sec_tabs: "화면",
 
   // B-0 결정 카드 — 왼쪽 열의 말. 예시 카드에서 사용자가 직접 고른 문구다.
   decide: "결정해 주세요",
@@ -138,6 +142,8 @@ export const FMT = {
   idleFor: (min) => `${min}분`,
   /** 특이사항 — 항목이 오래 걸림 */
   overDwell: (item, duration, thresholdMin) => `${item} — ${duration} (기준 ${thresholdMin}분)`,
+  /** 특이사항 — 프로젝트 스크립트가 제때 안 돌았다 */
+  noticeStale: (name, days) => `${name} 기록이 ${days}일째 새로 안 쓰였다 — 실행이 안 돌았을 수 있다`,
   /** 특이사항 — 방금 답한 결정 (다음 결정이 열리거나 24시간이 지나면 사라진다) */
   answeredDecision: (what, answer) => `${what} — ${answer}`,
   /** 접힌 서브에이전트 절 제목 */

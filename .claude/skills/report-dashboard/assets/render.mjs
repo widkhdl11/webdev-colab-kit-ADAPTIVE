@@ -520,6 +520,30 @@ export function progressView(data, until = Date.now(), cfg = DEFAULT_REPORT_CONF
 }
 
 /**
+ * notices.json → 특이사항 줄 (report-contract 16절). 칸마다 스크립트 하나가 제 줄을 쓴다.
+ * 모양이 틀린 칸·줄은 버린다 — 이 화면이 남의 파일 때문에 멈추면 안 된다.
+ * 마지막 기록이 `stale_after_hours` 를 넘으면 경고 한 줄을 더한다. 무인 실행이 **아예 안 돌면**
+ * 그 스크립트는 실패를 적을 기회도 없다 — 조용히 낡은 줄만 남는다.
+ */
+export function projectNoticeRows(notices, until = Date.now()) {
+  if (typeof notices !== "object" || notices === null || Array.isArray(notices)) return [];
+  const out = [];
+  for (const [key, sec] of Object.entries(notices)) {
+    if (typeof sec !== "object" || sec === null) continue;
+    for (const r of Array.isArray(sec.rows) ? sec.rows : []) {
+      if (typeof r?.text !== "string" || r.text.trim() === "") continue;
+      out.push({ tone: r.tone === "info" ? "info" : "warn", text: r.text });
+    }
+    const at = Date.parse(sec.generated_at ?? "");
+    const limitH = Number(sec.stale_after_hours);
+    if (!Number.isNaN(at) && Number.isFinite(limitH) && limitH > 0 && until - at > limitH * 3600_000) {
+      out.push({ tone: "warn", text: FMT.noticeStale(typeof sec.name === "string" && sec.name ? sec.name : key, Math.floor((until - at) / 86_400_000)) });
+    }
+  }
+  return out;
+}
+
+/**
  * B-3 「특이사항」. 조건에 하나도 해당하지 않으면 **빈 배열**이고, 화면은 절 자체를 안 그린다 —
  * "없음"이라고 적힌 절은 자리만 차지하고 아무것도 안 알려 준다.
  *
@@ -585,6 +609,11 @@ export function noticeRows(data, until = Date.now(), cfg = DEFAULT_REPORT_CONFIG
   // 9) 제품 단계에 있는데 열린 요청이 없다. **표시만 한다** — 잘못된 상태가 아니라
   //    "지금 화면이 항목 진행을 못 보여 주는 이유"다.
   if (workKind(data) === "product") push(9, LABEL.open_request, TERM.open_request_absent);
+  // 10) 프로젝트 스크립트가 남긴 줄 (report-contract 16절). tone 은 그 스크립트가 정한다 —
+  //     「정확도가 몇 %」는 상황 설명이고 「실행 실패」는 손쓸 일인데, 그걸 아는 건 쓴 쪽이다.
+  for (const n of projectNoticeRows(data?.notices, until)) {
+    rows.push({ code: 10, label: LABEL.project_notice, value: n.text, fromRecord: true, tone: n.tone });
+  }
 
   return rows;
 }
