@@ -7,7 +7,7 @@ import { AppProviders } from "@/shared/providers/app-providers";
 import { SiteFooter, SiteHeader } from "@/widgets/site-chrome";
 
 export const metadata: Metadata = {
-  title: "signal",
+  title: "simoori",
   description: "AI·IT 소식을 신호만 골라 보는 개인용 리더",
 };
 

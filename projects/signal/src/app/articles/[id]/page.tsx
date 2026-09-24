@@ -54,7 +54,7 @@ const loadArticle = cache(async (id: string) => {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const { article } = await loadArticle(id);
-  return { title: article ? `${article.title} — signal` : "signal" };
+  return { title: article ? `${article.title} — simoori` : "simoori" };
 }
 
 export default async function ArticlePage({ params, searchParams }: Props) {

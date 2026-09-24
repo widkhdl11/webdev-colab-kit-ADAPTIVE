@@ -6,7 +6,7 @@ export function SiteHeader() {
     <header className={styles.top}>
       <div className={styles.topInner}>
         <Link className={styles.logo} href="/">
-          signal<span className={styles.logoDot}>.</span>
+          simoori<span className={styles.logoDot}>.</span>
         </Link>
         <span className={styles.tagline}>
           AI·IT 소식에서 신호만 골라 훑는 곳
