@@ -5,6 +5,7 @@
 //   시작:      --start --task <식별자> --request "<사람이 시킨 문장 원문>"
 //                      ( --spec <스펙 경로> | --items "항목1|항목2|..." )
 //                      [--goal "<왜 하는지 한 줄>"] [--title "<한 줄 제목 40자 이내>"]
+//                      [--deps "I3=I1;I4="]   (항목 의존 — 없으면 루프가 바로 앞 항목을 의존으로 본다)
 //   항목 완료: --done <item-id>
 //   상태 변경: --status "승인 대기" --reason "<사유>"     (되돌리기: --status "진행 중")
 //   끝내기:    --finish 완료            /  --finish 중단 --reason "<사유>"
@@ -163,6 +164,17 @@ if (resolve(process.argv[1] ?? "") === resolve(fileURLToPath(import.meta.url))) 
       } else {
         items = itemsArg.split("|").map((s, i) => ({ id: `I${i + 1}`, label: s.trim(), done: false }))
           .filter((it) => it.label !== "");
+      }
+      // --deps "I3=I1;I4=" — 항목의 명시 의존. 적지 않은 항목은 루프가 바로 앞 항목을 의존으로 본다.
+      // 빈 값(`I4=`)은 "의존 없음"이다. 판정(앞 항목만)은 validateRequest 가 한다.
+      const depsArg = arg("deps");
+      if (depsArg) {
+        for (const part of depsArg.split(";").map((s) => s.trim()).filter(Boolean)) {
+          const [id, rhs = ""] = part.split("=");
+          const it = items.find((x) => x.id === id.trim());
+          if (!it) { console.error(`--deps 의 항목이 없다: ${id}`); process.exit(2); }
+          it.deps = rhs.split(",").map((s) => s.trim()).filter(Boolean);
+        }
       }
       const req = start(dir, { task, request, items, specPath, goal: arg("goal") ?? null, title: arg("title") ?? null });
       console.log(`요청 시작: ${req.task} · ${req.source} · 항목 ${req.items.length}개`);

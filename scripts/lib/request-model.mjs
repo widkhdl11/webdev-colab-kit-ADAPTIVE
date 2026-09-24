@@ -103,7 +103,27 @@ export function validateRequest(req) {
         seenLabels.add(it.label);
       }
     });
+    errors.push(...depsErrors(req.items));
   }
+  return errors;
+}
+
+/**
+ * 항목의 명시 의존(`deps`) 판정. 없어도 된다 — 없으면 루프는 **바로 앞 항목**을 의존으로 본다.
+ * 앞 항목만 가리킬 수 있게 막는다. 그러면 순환이 생길 수 없고, 순서가 곧 작업 순서라는
+ * 규약(items 가 얼어붙는 이유)과도 어긋나지 않는다.
+ */
+export function depsErrors(items) {
+  const errors = [];
+  (items ?? []).forEach((it, i) => {
+    if (it === null || typeof it !== "object" || it.deps === undefined) return;
+    if (!Array.isArray(it.deps)) { errors.push(`items[${i}].deps 는 배열이다`); return; }
+    for (const d of it.deps) {
+      const j = items.findIndex((x) => x?.id === d);
+      if (j < 0) errors.push(`items[${i}].deps 에 없는 항목이 있다: ${d}`);
+      else if (j >= i) errors.push(`items[${i}].deps 는 앞 항목만 가리킨다: ${d}`);
+    }
+  });
   return errors;
 }
 
@@ -137,6 +157,10 @@ export function frozenItemsErrors(before, after) {
       continue; // 자리가 통째로 다른데 label 까지 다르다고 또 적으면 줄만 늘고 원인은 같다
     }
     if (a[i].label !== b[i].label) errors.push(`items[${i}].label 이 바뀌었다 (${a[i].label} → ${b[i].label}) — 시작 후 요청 범위는 고정이다`);
+    // 의존도 순서와 같이 얼어붙는다. 진행 중에 풀 수 있으면 카드에 걸린 항목을 의존만 지워서 돌릴 수 있다.
+    if (JSON.stringify(a[i].deps ?? null) !== JSON.stringify(b[i].deps ?? null)) {
+      errors.push(`items[${i}].deps 가 바뀌었다 — 시작 후 항목의 의존은 고정이다`);
+    }
   }
   return errors;
 }

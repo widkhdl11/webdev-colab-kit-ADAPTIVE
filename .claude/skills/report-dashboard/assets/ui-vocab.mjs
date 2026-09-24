@@ -43,6 +43,8 @@ export const LABEL = {
   no_activity: "활동 없음",
   dwell: "머문 시간",
   open_request: "열린 요청",
+  loop: "자동 실행 루프",
+  session_size: "대화 길이",
 
   // B-0 결정 카드 — 왼쪽 열의 말. 예시 카드에서 사용자가 직접 고른 문구다.
   decide: "결정해 주세요",

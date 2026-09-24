@@ -243,13 +243,20 @@
   "goal": "이 요청의 목표(왜) 한 줄, 없으면 null",
   "source": "spec | manual",
   "spec_path": "source 가 spec 이면 스펙 경로, 아니면 null",
-  "items": [{ "id": "문자열", "label": "문자열", "done": false }],
+  "items": [{ "id": "문자열", "label": "문자열", "done": false, "deps": ["앞 항목 id — 없어도 된다"] }],
   "status": "진행 중 | 승인 대기 | 완료 | 중단",
   "status_reason": "승인 대기·중단이면 사유, 아니면 null",
   "started_at": "ISO8601",
   "ended_at": "ISO8601 | null"
 }
 ```
+
+### `deps` — 항목의 의존 (없어도 된다)
+
+자율 실행 루프가 다음 항목을 고를 때 쓴다. **없으면 바로 앞 항목 하나**가 의존이다 — 항목 순서가 곧
+작업 순서라서다. 앞 항목과 상관없는 항목만 `deps` 로 풀어 준다(`[]` 는 의존 없음). 앞 항목만 가리킬 수 있고
+(순환이 생길 수 없다), items 처럼 시작 뒤에는 못 바꾼다. 기록: `report-request.mjs --start ... --deps "I3=I1;I4="`.
+상세: docs/references/run-loop.md.
 
 ### `goal` — "왜"는 "무엇"과 다른 칸이다
 
@@ -340,6 +347,8 @@
 | `state.json` · `request.json` · `turn-hashes.json` · `*.jsonl` | 안 한다 (과정 기록) |
 | `decision-vocab.json` | 한다 (설정 — 사람이 늘린 줄이 남아야 한다) |
 | `decision.json` · `decision-detail.md` | 안 한다 (과정 기록) |
+| `loop/config.json` | 한다 (설정) |
+| `loop/` 의 나머지 · `loop.lock` · `session-warning.json` | 안 한다 (루프 회차 로그·상태·잠금, 대화 길이 경고) |
 
 ## 11. `config.json` — 프로젝트별 임계값
 
@@ -391,6 +400,8 @@
   "also_fixing": "같이 고치는 것 — 한 줄, 없으면 null",
   "done_when": ["끝나면 확인할 것 — 완결 문장 2~5개"],
   "details_ref": "근거 본문이 있는 곳",
+  "item": "이 카드가 막는 요청 항목 id, 없으면 null (선택 칸)",
+  "starts_loop": "참이면 첫 선택지 답이 자율 실행 루프를 띄운다 (선택 칸, 없으면 거짓)",
   "status": "대기 | 답변됨",
   "answer": "사람이 고른 말, 아직이면 null",
   "answered_at": "ISO8601 | null"
@@ -398,6 +409,9 @@
 ```
 
 - 필수 칸은 열넷 전부다. `also_fixing`·`answer`·`answered_at` 만 값이 `null` 일 수 있다.
+- `item`·`starts_loop` 는 선택 칸이다(자율 실행 루프용). `item` 이 없는 카드는 루프가 **남은 항목 전부**를
+  막는 것으로 본다 — 어느 항목에 걸린 결정인지 모르는 카드를 한 항목에만 걸면 방향 전체를 묻는 카드인데도
+  나머지를 계속 진행한다. 자동 시작은 설정 `autostart` 가 켜졌을 때만이다(기본 꺼짐). 상세: docs/references/run-loop.md.
 - `answer_options` 는 **2~4개**. 하나뿐이면 고르는 것이 아니고, 다섯이 넘으면 첫 세 칸만
   읽고 답한다는 전제가 깨진다.
 - `done_when` 은 **2~5개**. 하나면 판정이 아니라 선언이고, 여섯이 넘으면 작업 계획서다.
@@ -510,3 +524,6 @@
   GET·HEAD 말고는 405 다. 깨진 퍼센트 인코딩은 400(전에는 서버가 죽을 수 있었다), 바깥 경로 비교는 구분자까지 본다.
   검사: `check-report.mjs` 42번(실제 서버를 띄워 본다). 같은 날 이 대시보드에 판정 검토 탭·쓰기 경로를 잠깐
   넣었다가 뺐다 — 그 기능은 signal 의 개발자 대시보드(/dev/ingest)로 옮겼다.
+- 2026-09-24. **자율 실행 루프용 칸을 등재했다.** 6절 `items[].deps`(선택), 12절 `item`·`starts_loop`(선택),
+  9절 `loop/` 와 `session-warning.json`. 대시보드 특이사항에 10번(루프 상태)·11번(대화 길이 — 항목 경계에서만)을
+  더했다. 정본: docs/references/run-loop.md · 검사: `check-run-loop.mjs`.

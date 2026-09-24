@@ -31,3 +31,8 @@ projects/*/report/decision.json
 projects/*/report/decision-detail.md
 # probe 가 남기는 스크린샷 — 관측 기록이라 매 실행마다 쌓인다
 projects/*/report/probe/
+# 자율 실행 루프의 실행 기록(회차 로그·상태·잠금). 설정(config.json)만 커밋한다.
+projects/*/report/loop/*
+!projects/*/report/loop/config.json
+projects/*/report/loop.lock
+projects/*/report/session-warning.json

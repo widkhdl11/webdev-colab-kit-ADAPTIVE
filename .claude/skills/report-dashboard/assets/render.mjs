@@ -520,6 +520,40 @@ export function progressView(data, until = Date.now(), cfg = DEFAULT_REPORT_CONF
 }
 
 /**
+ * 자율 실행 루프 한 줄. 루프 기록(loop/state.json)이 없으면 null 이다.
+ *
+ * **같은 계산이 scripts/lib/loop-model.mjs 의 loopNotice 에 있다.** 브라우저는 scripts/lib 를
+ * 못 읽어서 두 벌을 둔다 — 두 벌이 갈라지지 않는지 check-run-loop 가 같은 입력으로 대조한다.
+ */
+const LOOP_STATUS_ALL = ["실행 중", "요청 완료", "결정 대기", "항목 실패", "상한 도달", "리허설 실패", "정지 요청"];
+export function loopRow(loop) {
+  if (!loop || !LOOP_STATUS_ALL.includes(loop.status)) return null;
+  const n = `항목 ${loop.done ?? 0}/${loop.total ?? 0} · ${loop.round ?? 0}회차`;
+  if (loop.status === "실행 중") {
+    const stop = loop.stop_requested ? " · 멈춤 요청됨 — 지금 항목이 끝나면 정지" : "";
+    return { tone: "info", text: `루프 실행 중 · ${n}${stop}` };
+  }
+  if (loop.status === "요청 완료") return { tone: "info", text: `루프 끝 — 요청 완료 · ${n}` };
+  const why = loop.stop_detail ? ` (${loop.stop_detail})` : "";
+  return { tone: "warn", text: `루프 멈춤 — ${loop.status}${why} · ${n}` };
+}
+
+/** 대화 길이 경고가 특이사항에 남는 시간. 새 세션을 열면 기록이 안 바뀌므로 시간으로 거둔다. */
+export const SESSION_WARNING_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * 대화 길이 한 줄. 경고 훅이 「항목 경계에서 임계를 넘었다」고 남긴 기록이 있을 때만 뜬다.
+ * 항목 중간의 경고는 대화 안에서만 알리고 여기 안 띄운다 — 지금 멈추라는 뜻이 아니라서.
+ */
+export function sessionSizeRow(warning, until = Date.now()) {
+  if (!warning || warning.boundary !== true) return null;
+  const at = Date.parse(warning.at);
+  if (!Number.isFinite(at) || until - at > SESSION_WARNING_MS) return null;
+  const k = Math.round((warning.tokens ?? 0) / 1000);
+  return { tone: "warn", text: `항목 완료 · 새 세션 권장 — 대화가 약 ${k}k 토큰이다` };
+}
+
+/**
  * B-3 「특이사항」. 조건에 하나도 해당하지 않으면 **빈 배열**이고, 화면은 절 자체를 안 그린다 —
  * "없음"이라고 적힌 절은 자리만 차지하고 아무것도 안 알려 준다.
  *
@@ -533,8 +567,8 @@ export function noticeRows(data, until = Date.now(), cfg = DEFAULT_REPORT_CONFIG
   // 사람이 손쓸 일이 아니라 상황 설명인데, 경고색으로 그리면 멀쩡한 상태가 문제로 읽힌다.
   // 어느 줄이 손쓸 일인지는 데이터로 정해 두고 화면은 그것을 따른다.
   const INFO_CODES = [0, 5, 9];
-  const push = (code, label, value, fromRecord = false) =>
-    rows.push({ code, label, value, fromRecord, tone: INFO_CODES.includes(code) ? "info" : "warn" });
+  const push = (code, label, value, fromRecord = false, tone = null) =>
+    rows.push({ code, label, value, fromRecord, tone: tone ?? (INFO_CODES.includes(code) ? "info" : "warn") });
 
   // 0) 방금 답한 결정. 다음 결정이 열리거나 24시간이 지나면 이 줄은 사라진다.
   const answered = answeredDecisionRow(data, until);
@@ -585,6 +619,12 @@ export function noticeRows(data, until = Date.now(), cfg = DEFAULT_REPORT_CONFIG
   // 9) 제품 단계에 있는데 열린 요청이 없다. **표시만 한다** — 잘못된 상태가 아니라
   //    "지금 화면이 항목 진행을 못 보여 주는 이유"다.
   if (workKind(data) === "product") push(9, LABEL.open_request, TERM.open_request_absent);
+  // 10) 자율 실행 루프. 도는 중·끝은 알려 주는 줄, 그 밖의 멈춤은 손쓸 줄이다.
+  const loop = loopRow(data?.loop ?? null);
+  if (loop) push(10, LABEL.loop, loop.text, true, loop.tone);
+  // 11) 대화 길이 — 항목 경계에서 임계를 넘었을 때만.
+  const size = sessionSizeRow(data?.sessionWarning ?? null, until);
+  if (size) push(11, LABEL.session_size, size.text, false, size.tone);
 
   return rows;
 }

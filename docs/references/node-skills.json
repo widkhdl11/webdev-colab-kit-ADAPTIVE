@@ -49,7 +49,7 @@
     {
       "node": "all",
       "skill": "wrap-up",
-      "contract": "pending: 계약 테스트 규약"
+      "contract": "scripts/check-run-loop.mjs"
     },
     {
       "node": "all",

@@ -335,7 +335,7 @@ function keepFocus(draw) {
 
 async function tick() {
   const [workflow, state, request, transitions, activity, subagents, history, config,
-         decision, decisionsHistory, decisionDetail] = await Promise.all([
+         decision, decisionsHistory, decisionDetail, loop, sessionWarning] = await Promise.all([
     getJson("workflow.json", { nodes: [], edges: [], skills: [], agents: [] }),
     getJson("state.json", null),
     getJson("request.json", null),
@@ -347,9 +347,11 @@ async function tick() {
     getJson("decision.json", null),
     getJsonl("decisions-history.jsonl"),
     getText("decision-detail.md"),
+    getJson("loop/state.json", null),
+    getJson("session-warning.json", null),
   ]);
   data = { workflow, state, request, transitions, activity, subagents, history,
-           decision, decisionsHistory, decisionDetail };
+           decision, decisionsHistory, decisionDetail, loop, sessionWarning };
   cfg = reportConfig(config);
 
   keepFocus(() => {

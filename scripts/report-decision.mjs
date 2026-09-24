@@ -6,7 +6,10 @@
 //                --what "<한 줄>" --why "<한 줄>" --visible "<한 줄>" \
 //                --risk "<한 줄 또는 두 줄>" --not-doing "<한 줄>" [--also-fixing "<한 줄>"] \
 //                --done-when "문장1|문장2|..." --details-ref "<근거가 있는 곳>" \
-//                ( --detail-file <근거 본문 md 경로> | --detail "<근거 본문>" )
+//                ( --detail-file <근거 본문 md 경로> | --detail "<근거 본문>" ) \
+//                [--item <요청 항목 id>] [--starts-loop]
+//            --item: 이 카드가 막는 항목. 없으면 루프는 남은 항목 전부가 걸린 것으로 본다.
+//            --starts-loop: 첫 선택지를 고르면 자율 실행 루프를 띄우는 카드(설정 autostart 가 켜졌을 때만).
 //   본문만: --amend --id <열린 결정의 id> ( --detail-file <md 경로> | --detail "<본문>" )
 //   답변:  --answer "<사람이 고른 말>"
 //
@@ -24,6 +27,9 @@ import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync, rmS
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateDecision, parseVocab } from "./lib/decision-model.mjs";
+import { spawn } from "node:child_process";
+import { shouldAutostart } from "./lib/loop-model.mjs";
+import { loopPaths, loadLoopConfig, lockStatus } from "./lib/loop-files.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -138,6 +144,23 @@ export function answer(dir, answerText) {
   return closed;
 }
 
+/**
+ * 답이 루프의 방아쇠인지 보고, 그렇다면 루프를 분리된 프로세스로 띄운다.
+ * 사람의 답이 기록되는 이 자리가 루프를 띄우는 **유일한** 길이다 — 에이전트가 스스로 띄우는 경로는 없다.
+ * 판정은 loop-model 의 shouldAutostart 다(설정 autostart 가 꺼져 있으면 언제나 아니다).
+ */
+function maybeStartLoop(slug, closed) {
+  const { config, errors } = loadLoopConfig(ROOT, slug);
+  if (errors.length) { console.log(`루프 설정을 못 읽어 자동 시작을 건너뛴다: ${errors.join(" / ")}`); return; }
+  const loopState = (() => { try { return JSON.parse(readFileSync(loopPaths(ROOT, slug).state, "utf-8")); } catch { return null; } })();
+  const { alive } = lockStatus(ROOT, slug);
+  if (!shouldAutostart({ card: closed, answer: closed.answer, loopState, lockAlive: alive, config })) return;
+  const child = spawn(process.execPath, [join(ROOT, "scripts", "run-loop.mjs"), "--project", slug],
+    { cwd: ROOT, detached: true, stdio: "ignore", windowsHide: true });
+  child.unref();
+  console.log(`자율 실행 루프를 띄웠다 (프로세스 ${child.pid}) — 대시보드 특이사항에서 진행이 보인다`);
+}
+
 // ── CLI ──────────────────────────────────────────────────────────────────
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
@@ -154,6 +177,7 @@ if (isMain) {
       const closed = answer(dir, arg("answer"));
       console.log(`결정 닫힘: ${closed.id} — ${closed.answer}`);
       console.log(`대기 항목을 풀어야 한다: node scripts/report-note.mjs --project ${slug} --clear-blockers ...`);
+      maybeStartLoop(slug, closed);
     } else if (has("ask")) {
       const split = (v) => String(v ?? "").split("|").map((s) => s.trim()).filter((s) => s !== "");
       const card = {
@@ -169,6 +193,8 @@ if (isMain) {
         also_fixing: arg("also-fixing") ?? null,
         done_when: split(arg("done-when")),
         details_ref: arg("details-ref"),
+        item: arg("item") ?? null,
+        starts_loop: has("starts-loop"),
         status: "대기",
         answer: null,
         answered_at: null,
