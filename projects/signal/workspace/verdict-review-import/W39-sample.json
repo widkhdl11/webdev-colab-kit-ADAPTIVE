@@ -1,0 +1,416 @@
+{
+  "week": "2026-W39",
+  "extracted_at": "2026-09-24T09:54:17.005Z",
+  "seed": 1758592159,
+  "pool_size": 335,
+  "shortfall": {
+    "hot": 0,
+    "not_hot": 0
+  },
+  "items": [
+    {
+      "id": "5deea307-d876-4a10-a6ba-ca9667761554",
+      "title": "TIN - PlanetScale의 Postgres 전문 검색 엔진",
+      "source": "geeknews",
+      "source_name": "Hada",
+      "url": "https://news.hada.io/topic?id=33955",
+      "judged_at": "2026-09-22T08:53:03.675+00:00",
+      "verdict": {
+        "hot": true,
+        "true_questions": [
+          "변화"
+        ],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": []
+      }
+    },
+    {
+      "id": "11bda171-9c5c-4fdd-88af-ddd2727b424c",
+      "title": "YouTube Music, 대화형 AI 기능으로 음악과 팟캐스트 탐색 강화한다",
+      "source": "techcrunch-ai",
+      "source_name": "Techcrunch",
+      "url": "https://techcrunch.com/2026/09/23/youtube-music-gets-more-conversational-with-new-ai-features/",
+      "judged_at": "2026-09-23T22:57:43.781+00:00",
+      "verdict": {
+        "hot": true,
+        "true_questions": [
+          "변화"
+        ],
+        "reasons": {
+          "변화": "노래 제목이나 아티스트명 대신 자연어로 원하는 음악을 설명해 검색할 수 있게 된다."
+        }
+      },
+      "summary": {
+        "one_line": "YouTube Music이 대화형 검색과 개인화 팟캐스트 추천 등 새 AI 기능을 도입한다.",
+        "points": [
+          "Ask Music은 3억 곡 이상의 카탈로그에서 일상 언어로 곡을 찾고 재생목록을 만들 수 있게 해준다.",
+          "Your Podcast Lineup은 매주 추천 팟캐스트를 음성으로 소개하고 이유를 설명해준다.",
+          "두 기능은 YouTube Music과 YouTube Premium 구독자에게 전 세계적으로 곧 제공된다."
+        ]
+      }
+    },
+    {
+      "id": "446f4647-aa44-4de9-afa3-dcba4a44c581",
+      "title": "Claude Opus 5.5, 추론 설정별 성능과 비용 비교",
+      "source": "geeknews",
+      "source_name": "Hada",
+      "url": "https://news.hada.io/topic?id=34142",
+      "judged_at": "2026-09-22T22:57:18.297+00:00",
+      "verdict": {
+        "hot": true,
+        "true_questions": [
+          "변화"
+        ],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": [
+          "Opus 5.5 max, AAII 지능 지수 58점으로 역대 최고",
+          "추론 강도 높일수록 성능 상승하나 비용도 증가",
+          "medium 51점부터 max 58점까지 단계별 차이 확인"
+        ]
+      }
+    },
+    {
+      "id": "0a0fc4d3-9749-44a4-b924-9de5aefa4b49",
+      "title": "[스냅드래곤 서밋] 영상 편집부터 사진찍기 좋은 자세까지…스냅드래곤 기반 AI 솔루션 선보여",
+      "source": "etnews-ai",
+      "source_name": "Etnews",
+      "url": "https://www.etnews.com/20260923000124",
+      "judged_at": "2026-09-23T04:55:02.929+00:00",
+      "verdict": {
+        "hot": true,
+        "true_questions": [
+          "변화"
+        ],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": [
+          "다수 영상을 AI가 자동 편집해 하이라이트 릴로 변환",
+          "노코드 앱 개발 '제덱 AI', 포즈 추천 'AI 카메라 코치' 공개",
+          "24시간 작동하는 에이전틱 AI PC 시제품, 연내 상용화 목표"
+        ]
+      }
+    },
+    {
+      "id": "16a7bc24-dfa1-41ff-9328-ae5baa73dbf3",
+      "title": "퀄컴, 차세대 온디바이스 AI 칩 공개…\"에이전트 중심 경험 전환\"",
+      "source": "aitimes",
+      "source_name": "Aitimes",
+      "url": "https://www.aitimes.com/news/articleView.html?idxno=215614",
+      "judged_at": "2026-09-23T22:58:03.809+00:00",
+      "verdict": {
+        "hot": true,
+        "true_questions": [
+          "변화"
+        ],
+        "reasons": {
+          "변화": "차세대 스마트폰의 온디바이스 AI 에이전트 성능과 사용 경험이 달라진다."
+        }
+      },
+      "summary": {
+        "one_line": "퀄컴이 스마트폰에서 AI 에이전트를 직접 구동하는 차세대 스냅드래곤 8 엘리트 칩 두 종을 공개했다.",
+        "points": [
+          "익스트림 모델은 최대 300억개 매개변수의 전문가 혼합 모델을 스마트폰에서 직접 실행할 수 있다.",
+          "새 센싱 허브는 최대 2억개 매개변수 소형 모델로 음성 기록과 개인화 메모리 구축을 지원한다.",
+          "두 칩 모두 TSMC 2나노 공정으로 제작됐으며 모토로라와 샤오미 등이 채택할 예정이다."
+        ]
+      }
+    },
+    {
+      "id": "3ace4ede-24d4-4511-9077-1071c0a470ec",
+      "title": "구글, 전 세계 80개국에 AI 무료 교육 10만 개 푼다…유엔과 글로벌 인재 양성",
+      "source": "aitimes-kr",
+      "source_name": "Aitimes",
+      "url": "https://www.aitimes.kr/news/articleView.html?idxno=42053",
+      "judged_at": "2026-09-23T04:55:02.929+00:00",
+      "verdict": {
+        "hot": true,
+        "true_questions": [
+          "기회"
+        ],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": [
+          "구글·ITU, 80여개국에 AI 교육 장학금 10만개 지원",
+          "학생·교사·구직자·공무원 대상 200개 이상 실습 과정 제공",
+          "전 세계 12억명 디지털 역량 교육 필요성 배경"
+        ]
+      }
+    },
+    {
+      "id": "dbdcb891-866d-4534-ab18-039a8febe908",
+      "title": "[ET시론] AI 시대의 데이터센터 구축 전략",
+      "source": "etnews-ai",
+      "source_name": "Etnews",
+      "url": "https://www.etnews.com/20260921000145",
+      "judged_at": "2026-09-22T08:52:58.301+00:00",
+      "verdict": {
+        "hot": false,
+        "true_questions": [],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": []
+      }
+    },
+    {
+      "id": "6c41a493-9699-4385-a22e-2e24229442b0",
+      "title": "iPhone owners can now submit claims in Apple’s $250 million Siri AI settlement",
+      "source": "theverge",
+      "source_name": "Theverge",
+      "url": "https://www.theverge.com/tech/998191/apple-siri-ai-iphone-16-class-action-lawsuit-settlement",
+      "judged_at": "2026-09-22T08:15:50.373+00:00",
+      "verdict": {
+        "hot": true,
+        "true_questions": [
+          "기회"
+        ],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": []
+      }
+    },
+    {
+      "id": "6095225e-fe51-48af-bff7-d2cf9b30f8fd",
+      "title": "[창간특집] AI 전문가들이 꼽은 위협 '개인정보·기술 유출'…“기술·제도 보완으로 해결 가능”",
+      "source": "etnews-ai",
+      "source_name": "Etnews",
+      "url": "https://www.etnews.com/20260915000138",
+      "judged_at": "2026-09-22T08:16:18.483+00:00",
+      "verdict": {
+        "hot": false,
+        "true_questions": [],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": []
+      }
+    },
+    {
+      "id": "05b6426f-9bfa-46b5-be49-32897c74c5bb",
+      "title": "Frontier AI on Your Own Hardware",
+      "source": "hn-frontpage",
+      "source_name": "Timdettmers",
+      "url": "https://timdettmers.com/2026/09/21/dlab-open-source-week/",
+      "judged_at": "2026-09-22T08:15:24.318+00:00",
+      "verdict": {
+        "hot": true,
+        "true_questions": [
+          "변화"
+        ],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": []
+      }
+    },
+    {
+      "id": "242fb873-515f-43eb-b2a0-0cd21ec9e2ca",
+      "title": "Cloudflare Python Workers 정식 출시",
+      "source": "geeknews",
+      "source_name": "Hada",
+      "url": "https://news.hada.io/topic?id=34087",
+      "judged_at": "2026-09-22T06:04:07.98+00:00",
+      "verdict": {
+        "hot": true,
+        "true_questions": [
+          "변화"
+        ],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": [
+          "Python이 Cloudflare Workers의 정식 지원 언어로 승격",
+          "FastAPI, Django, Flask 등 기존 프레임워크 그대로 실행 가능",
+          "별도 서버 운영 없이 Workers가 요청 처리·글로벌 배포 담당"
+        ]
+      }
+    },
+    {
+      "id": "0831d4a7-6072-4083-92f2-3f3ebbf56286",
+      "title": "액센츄어·구글 클라우드, 볼보와 AI 자동차 SW 개발 혁신…테스트 최대 9배 빨라진다",
+      "source": "aitimes-kr",
+      "source_name": "Aitimes",
+      "url": "https://www.aitimes.kr/news/articleView.html?idxno=42046",
+      "judged_at": "2026-09-22T08:52:40.405+00:00",
+      "verdict": {
+        "hot": false,
+        "true_questions": [],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": [
+          "볼보, 호라이즌 플랫폼 선도 산업 파트너로 합류",
+          "가상 테스트로 SW 검증 속도 최대 9배 향상",
+          "빌드 피드백 2시간→수분, 개발 비용도 최대 40% 절감"
+        ]
+      }
+    },
+    {
+      "id": "a2113990-ab5f-41a4-9ff9-c0a8821ecfdc",
+      "title": "[AI 세이프가드] ① “AI 통제권 확보할 마지막 '골든타임'…안전장치 서둘러야”",
+      "source": "etnews-ai",
+      "source_name": "Etnews",
+      "url": "https://www.etnews.com/20260914000441",
+      "judged_at": "2026-09-22T08:16:18.483+00:00",
+      "verdict": {
+        "hot": false,
+        "true_questions": [],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": []
+      }
+    },
+    {
+      "id": "5d984356-27d2-4a79-b2f9-b52f4ed16bca",
+      "title": "포바이포, AI 기술로 '대장금·허준' 4K 리마스터링",
+      "source": "etnews-ai",
+      "source_name": "Etnews",
+      "url": "https://www.etnews.com/20260923000027",
+      "judged_at": "2026-09-23T04:55:11.95+00:00",
+      "verdict": {
+        "hot": false,
+        "true_questions": [],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": [
+          "포바이포, 웨이브 '뉴클래식 프로젝트'에 AI 화질 개선 기술 제공",
+          "대장금·허준 등 과거 명작을 4K로 업스케일링",
+          "원본 질감 보존 중심의 맞춤형 AI 기술 적용"
+        ]
+      }
+    },
+    {
+      "id": "15e89917-d9e3-4064-be2f-f89e6e1a51ad",
+      "title": "국토부, APEC 교통장관회의서 AI·스마트 모빌리티 미래협력 제안 나서",
+      "source": "aitimes-kr",
+      "source_name": "Aitimes",
+      "url": "https://www.aitimes.kr/news/articleView.html?idxno=42038",
+      "judged_at": "2026-09-22T06:03:49.549+00:00",
+      "verdict": {
+        "hot": false,
+        "true_questions": [],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": []
+      }
+    },
+    {
+      "id": "d954aec1-225c-4a52-9ad1-bda54892b8ca",
+      "title": "알리바바, 통역 지연 '2.3초'로 줄인 AI '큐원3.8-라이브트랜스레이트' 공개",
+      "source": "aitimes",
+      "source_name": "Aitimes",
+      "url": "https://www.aitimes.com/news/articleView.html?idxno=215516",
+      "judged_at": "2026-09-22T08:16:05.974+00:00",
+      "verdict": {
+        "hot": true,
+        "true_questions": [
+          "변화"
+        ],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": []
+      }
+    },
+    {
+      "id": "5b04f051-d519-463a-b7ea-cfd0bda09ee3",
+      "title": "Transformer를 시각적으로 이해하기",
+      "source": "geeknews",
+      "source_name": "Hada",
+      "url": "https://news.hada.io/topic?id=34091",
+      "judged_at": "2026-09-22T06:03:55.383+00:00",
+      "verdict": {
+        "hot": false,
+        "true_questions": [],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": [
+          "브라우저에서 GPT-2 small 124M 모델을 직접 실행",
+          "토큰화·임베딩·어텐션·출력 확률을 단계별 시각화"
+        ]
+      }
+    },
+    {
+      "id": "dd0f2f3d-0f78-41f1-8271-c686920373ed",
+      "title": "Show GN: Seoul3D - 서울 지하철 16개 노선을 3D 지도 위에서 실시간으로",
+      "source": "geeknews",
+      "source_name": "Hada",
+      "url": "https://news.hada.io/topic?id=34098",
+      "judged_at": "2026-09-22T06:03:55.383+00:00",
+      "verdict": {
+        "hot": false,
+        "true_questions": [],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": [
+          "지하철 16개 노선 실시간 3D 운행 구현",
+          "약 380대 열차를 시간표 보간으로 위치 시뮬레이션",
+          "남한 전역 지형과 서울 건물 약 7만 동 반영"
+        ]
+      }
+    },
+    {
+      "id": "26584f60-949b-4ddd-8697-74b75005ba5b",
+      "title": "Attention is all you have",
+      "source": "hn-frontpage",
+      "source_name": "Alicegg",
+      "url": "https://alicegg.tech/2026/09/21/attention",
+      "judged_at": "2026-09-22T08:15:50.373+00:00",
+      "verdict": {
+        "hot": false,
+        "true_questions": [],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": []
+      }
+    },
+    {
+      "id": "b622f2a1-9c4d-47b0-8773-c8a734283fde",
+      "title": "애피어, 에이전틱 AI 성과 확장 위한 5대 핵심 조건 ‘SCALE’ 제시",
+      "source": "aitimes-kr",
+      "source_name": "Aitimes",
+      "url": "https://www.aitimes.kr/news/articleView.html?idxno=42027",
+      "judged_at": "2026-09-22T08:16:05.974+00:00",
+      "verdict": {
+        "hot": false,
+        "true_questions": [],
+        "reasons": {}
+      },
+      "summary": {
+        "one_line": null,
+        "points": []
+      }
+    }
+  ],
+  "answers": {}
+}
