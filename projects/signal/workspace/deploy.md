@@ -1,7 +1,7 @@
 ---
 project: signal
 status: deployed
-basis: 7dd7eb699b52
+basis: 97aed6d824cd
 ---
 # deploy — signal
 
@@ -11,6 +11,10 @@ basis: 7dd7eb699b52
 > 구현(src/**) 해시 — 구현이 바뀌면 불일치로 배포 기록이 낡는다(재배포 강제).
 > `status:` 값은 짧은 한 줄로 둔다. 뒤에 긴 주석을 달면 포매터가 값을 다음 줄로 접어
 > 게이트 정규식(`^\s*status:\s*...`)이 못 읽는다.
+
+## 2026-09-24 (2) — 사이트 이름 simoori (d893839)
+
+- push 뒤 약 1분에 운영 반영. `curl https://www.simoori.com/` 로 확인: `<title>simoori</title>` · 로고 `simoori.` · 푸터 `simoori — 개인용 소식 리더`.
 
 ## 2026-09-24 — 요약 Opus 5.5 · 피드 `전체` 자리 · 이어달리기 경계 (38a6fb3)
 
