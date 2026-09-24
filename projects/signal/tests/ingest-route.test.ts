@@ -390,6 +390,32 @@ describe("GET /api/ingest — 이어달리기", () => {
     expect(sendChainRequest).toHaveBeenCalledWith(null);
   });
 
+  it("실패경로: 배포 환경(production)에서는 http 로 적힌 주소를 안 부른다 — 시크릿이 평문으로 나간다 (2026-09-24 보안 리뷰)", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", "http://www.simoori.com");
+    runIngest.mockImplementation(async () => exhausted);
+
+    const res = await call({ authorization: `Bearer ${SECRET}` });
+    expect(res.status).toBe(200);
+    expect(sendChainRequest).toHaveBeenCalledWith(null);
+    // 설정 실수가 진단 칸에 드러난다 — 「목적지를 모른다」
+    const body = (await res.json()) as { chain?: { hasTarget?: boolean } };
+    expect(body.chain?.hasTarget).toBe(false);
+  });
+
+  it("로컬(development)에서는 http 주소를 부른다 — 개발 서버는 https 가 아니다", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CRON_SECRET", SECRET);
+    vi.stubEnv("INGEST_BASE_URL", "http://localhost:3000");
+    runIngest.mockImplementation(async () => exhausted);
+
+    await call({ authorization: `Bearer ${SECRET}` });
+    const req = sendChainRequest.mock.calls[0]![0] as { url: string } | null;
+    expect(req).not.toBeNull();
+    expect(new URL(req!.url).origin).toBe("http://localhost:3000");
+  });
+
   it("INV-CB5: 번호를 하나 올려서 넘긴다 — 상한에 닿으면 더 안 부른다", async () => {
     vi.stubEnv("CRON_SECRET", SECRET);
     vi.stubEnv("INGEST_BASE_URL", SELF);
