@@ -20,7 +20,7 @@ interface Props {
 
 const fmt = (n: number) => n.toLocaleString("ko-KR");
 // 소수점 둘째 자리까지 — 토큰 수만 봐서는 비용 감이 안 온다는 요청으로 추가(2026-08-17).
-// claude-sonnet-5 가격 기준 근사치다(entities/ingest-run/lib/estimate-cost.ts 참고).
+// 단계마다 그 단계 모델의 단가로 계산한 근사치다(entities/ingest-run/lib/estimate-cost.ts 의 MODEL_RATES).
 const fmtUsd = (n: number) => `$${n.toFixed(2)}`;
 // 달러도 감이 안 온다는 요청으로 원화를 같이 붙인다(2026-08-26). 환율은 고정 상수라
 // 근사치다 — 정확한 청구액은 앤트로픽 콘솔의 달러 금액이 기준(lib/to-krw.ts).

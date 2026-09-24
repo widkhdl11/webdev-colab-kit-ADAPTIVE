@@ -15,12 +15,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 // 이름 가져오기로 쓴다 — tsx 가 CJS 로 옮기면 기본 가져오기가 undefined 가 된다.
 import { loadEnvConfig } from "@next/env";
-import { ARTICLE_TAGS } from "../src/entities/article/model/types";
+import { ratesForModel } from "../src/entities/ingest-run/lib/estimate-cost";
 import {
-  PROMO_RATES,
-  STANDARD_FROM_MS,
-  STANDARD_RATES,
-} from "../src/entities/ingest-run/lib/estimate-cost";
+  ENRICH_EVIDENCE_LIMIT,
+  ENRICH_MAX_TOKENS,
+  ENRICH_MODEL,
+} from "../src/features/ingestion/lib/budgets";
 import {
   EVIDENCE_ONLY,
   OFFICIAL_RULE,
@@ -32,17 +32,14 @@ import {
 
 loadEnvConfig(process.cwd(), true, { info: () => {}, error: () => {} });
 
-const MODEL = "claude-sonnet-5";
-// 100만 토큰당 단가. 숫자를 여기 다시 적지 않는다 — entities/ingest-run 이 이미 쥐고 있고,
-// 대시보드가 실행마다 고르는 단가와 이 스크립트가 어긋나면 두 수치를 대조할 수 없다.
-const PRICE = {
-  intro: PROMO_RATES,
-  standard: STANDARD_RATES,
-};
-// api/ports.ts 와 같은 값이어야 한다. 다르면 여기서 잰 수치가 실제와 어긋난다.
-const EVIDENCE_LIMIT = 20_000;
+// 요약 단계의 모델·상한을 수집 코드에서 그대로 가져온다 (2026-09-24 리뷰: sonnet 단가와
+// 옛 상한 1400 을 베껴 두고 있어서 요약 요금을 절반으로 보여 줬다).
+const MODEL = ENRICH_MODEL;
+// 100만 토큰당 단가. 숫자를 여기 다시 적지 않는다 — 대시보드가 쓰는 표와 같은 것을 쓴다.
+const PRICE = ratesForModel(MODEL);
+const EVIDENCE_LIMIT = ENRICH_EVIDENCE_LIMIT;
 // 요약이 붙는 호출의 출력 상한. 실제 출력은 이보다 작지만 최악을 같이 보여준다.
-const MAX_OUTPUT = 1400;
+const MAX_OUTPUT = ENRICH_MAX_TOKENS;
 
 const url = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
@@ -197,18 +194,12 @@ async function main() {
   console.log(`\n지시문만(근거 제외)  ${sysOnly} 토큰 · 그중 키워드 목록 100개가 ${sysOnly - sysNoList} 토큰`);
   console.log(`  → 캐시가 걸리면 이 부분이 0.1 배로 읽힌다 (최소 캐시 길이 1024 토큰)`);
 
-  for (const [label, p] of Object.entries(PRICE)) {
-    const inCur = usd(curTotal / n, p.inputPerMTokUsd);
-    const inDraft = usd(draftTotal / n, p.inputPerMTokUsd);
-    const out = usd(MAX_OUTPUT, p.outputPerMTokUsd);
-    console.log(
-      `\n[${label}] 건당 입력 $${inCur.toFixed(5)} → $${inDraft.toFixed(5)} · 출력 최대 $${out.toFixed(5)}`,
-    );
-    console.log(`         하루 40건이면 $${((inDraft + out) * 40).toFixed(3)} · 한 달 $${((inDraft + out) * 40 * 30).toFixed(2)}`);
-  }
-  // 날짜도 베끼지 않는다 — 경계는 estimate-cost 가 정한다.
-  const lastPromoDay = new Date(STANDARD_FROM_MS - 1).toISOString().slice(0, 10);
-  console.log(`\n※ 도입가(intro)는 ${lastPromoDay} (UTC) 에 끝난다. 그 뒤는 standard.`);
+  const inCur = usd(curTotal / n, PRICE.inputPerMTokUsd);
+  const inDraft = usd(draftTotal / n, PRICE.inputPerMTokUsd);
+  const out = usd(MAX_OUTPUT, PRICE.outputPerMTokUsd);
+  console.log(`
+건당 입력 $${inCur.toFixed(5)} → $${inDraft.toFixed(5)} · 출력 최대 $${out.toFixed(5)}`);
+  console.log(`하루 40건이면 $${((inDraft + out) * 40).toFixed(3)} · 한 달 $${((inDraft + out) * 40 * 30).toFixed(2)}`);
 }
 
 main().catch((e: unknown) => {

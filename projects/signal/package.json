@@ -18,7 +18,8 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "count:tokens": "tsx scripts/count-prompt-tokens.ts"
+    "count:tokens": "tsx scripts/count-prompt-tokens.ts",
+    "probe:enrich": "tsx scripts/probe-enrich.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

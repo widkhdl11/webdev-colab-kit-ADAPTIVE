@@ -26,7 +26,11 @@ import {
   KEYWORD_MODEL,
   HOT_ISSUE_MODEL,
   ENRICH_MODEL,
+  ENRICH_EVIDENCE_LIMIT,
+  ENRICH_MAX_TOKENS,
   ENRICH_TIMEOUT_MS,
+  ENRICH_TITLE_MAX_TOKENS,
+  MODEL_MAX_RETRIES,
   EXTRACTION_TIMEOUT_MS,
   SUMMARY_MAX_FAILURES,
 } from "../lib/budgets";
@@ -34,7 +38,7 @@ import { fenceData } from "../lib/data-fence";
 import { fetchPublic } from "../lib/fetch-public";
 import { keywordEvidence } from "../lib/keyword-evidence";
 import { extractArticleHtml } from "../lib/extract-content";
-import { parseEnrichJson } from "../lib/parse-enrich";
+import { enrichStopAccepted, parseEnrichJson } from "../lib/parse-enrich";
 import { toEnrichmentRow } from "./enrichment-row";
 import { buildEnrichPrompt } from "../lib/build-enrich-prompt";
 import { buildHotIssuePrompt } from "../lib/build-hot-issue-prompt";
@@ -72,9 +76,6 @@ import type {
 // 최악 소요 시간"으로 쓰는 값이라 두 벌로 두면 판단이 틀린 수에 맞춰진다.
 const FETCH_TIMEOUT_MS = EXTRACTION_TIMEOUT_MS;
 const SUMMARY_TIMEOUT_MS = ENRICH_TIMEOUT_MS;
-/** 주제 판정은 제목 하나만 보내는 짧은 호출이라 요약보다 짧게 잡는다. */
-/** 요약에 넘길 근거의 최대 길이. 본문 전체를 넣으면 토큰만 낭비된다. */
-const EVIDENCE_LIMIT = 20_000;
 
 // 키워드 상수 셋(`KEYWORD_EVIDENCE_LIMIT`·`KEYWORD_MAX_TOKENS`·`KEYWORD_TIMEOUT_MS`)과
 // `keywordEvidence()` 가 여기 있었다. 2026-08-31 에 `lib/budgets.ts`·`lib/keyword-evidence.ts`
@@ -195,6 +196,10 @@ export function createIngestPorts(): IngestPorts {
   const hotIssueDb = createHotIssueDbPorts(db);
   // 키를 모듈 최상위에서 읽지 않는다 — import 만 해도 던지면 라우트 전체가 죽는다.
   let anthropic: Anthropic | null = null;
+  // 재시도를 끈다 — 한 건의 최악 시간이 타임아웃을 넘지 않게(budgets.ts `MODEL_MAX_RETRIES`).
+  // 네 단계가 이 클라이언트 하나를 나눠 쓰므로 여기서 한 번 건다.
+  const newAnthropic = () =>
+    new Anthropic({ apiKey: anthropicApiKey(), maxRetries: MODEL_MAX_RETRIES });
 
   /**
    * 키워드를 축과 함께 올리고 글에 연결한다 (INV-B1·K1).
@@ -274,7 +279,7 @@ export function createIngestPorts(): IngestPorts {
       return todaySpendUsd(await fetchRecentRuns(1, now), now);
     },
     async judgeTopic(title: string) {
-      anthropic ??= new Anthropic({ apiKey: anthropicApiKey() });
+      anthropic ??= newAnthropic();
 
       const res = await anthropic.messages.create(
         {
@@ -460,13 +465,13 @@ export function createIngestPorts(): IngestPorts {
     },
 
     async enrich({ title, evidence, needSummary, needTitle }): Promise<EnrichResult> {
-      anthropic ??= new Anthropic({ apiKey: anthropicApiKey() });
+      anthropic ??= newAnthropic();
 
       // 항목마다 필요한 지시만 조립한다 (INV-P1) — 조립 자체는 순수 함수라 여기서 직접
       // 검증하지 않는다(build-enrich-prompt.test.ts 가 한다).
       const prompt = buildEnrichPrompt({
         title,
-        evidence: evidence.slice(0, EVIDENCE_LIMIT),
+        evidence: evidence.slice(0, ENRICH_EVIDENCE_LIMIT),
         needSummary,
         needTitle,
       });
@@ -474,19 +479,11 @@ export function createIngestPorts(): IngestPorts {
       const res = await anthropic.messages.create(
         {
           model: ENRICH_MODEL,
-          // 요약이 길어지고 핵심 항목·제목이 붙어 예전 600 으로는 잘린다.
-          // 제목만 부를 때도 200 은 빠듯하다 — 한국어는 글자당 토큰이 커서 긴 제목이면
-          // JSON 껍데기까지 넣다 잘리고, 잘리면 닫는 중괄호가 없어 파싱이 실패한다.
-          // 그러면 title_ko 가 계속 null 이라 **같은 항목이 매 주기 같은 자리에서 다시 잘린다.**
-          // 2026-09-23 요약에 한 문장·표를 붙이면서 1400 → 2600. 이 모델은 생각을 먼저 하고
-          // 그 양이 들쭉날쭉하다 — 같은 글이 1047·1640 토큰으로 끝났다가 한 번은 1800 을 전부
-          // 생각에 쓰고 **요약 0글자**로 끝났다(stop=max_tokens, blocks=[thinking]). 상한은 쓴 만큼만
-          // 청구되므로 올려도 평소 요금은 그대로다. 2600 인 이유는 시간 상한(ENRICH_TIMEOUT_MS 30초)
-          // 이다 — 실측 속도(초당 약 95토큰)로 2600 이면 27초 안팎이라 그 안에 든다.
-          max_tokens: needSummary ? 2600 : 500,
+          // 값과 근거는 budgets.ts 에 있다(유닛이 읽을 수 있는 자리).
+          max_tokens: needSummary ? ENRICH_MAX_TOKENS : ENRICH_TITLE_MAX_TOKENS,
           // opus-5-5 는 생각을 끌 수 없고(끄면 400) 깊이는 effort 로만 정한다. 비워 두면 이 모델의
           // 기본값 medium 인데, 모델마다 기본값이 달라(sonnet-5 는 high) 명시한다. high 로 올리지 않는
-          // 이유: 생각이 길어지면 위 2600 상한과 30초 시간 상한에 먼저 걸린다 — 잘린 응답은 불합격으로
+          // 이유: 생각이 길어지면 출력 상한과 30초 시간 상한에 먼저 걸린다 — 잘린 응답은 불합격으로
           // 세여 3번이면 그 글을 포기한다(INV-S3 S32).
           output_config: { effort: "medium" },
           system: prompt.system,
@@ -523,9 +520,9 @@ export function createIngestPorts(): IngestPorts {
         usage,
       };
 
-      // 잘린 응답은 파싱이 우연히 성공할 수도 있어서(닫는 중괄호가 앞쪽에 있으면) 먼저 거른다.
+      // 끝까지 쓴 응답만 읽는다 — 잘림·거부는 파싱이 우연히 성공할 수도 있어서 먼저 거른다.
       // 여기서 안 거르면 반쪽짜리 요약이 저장돼 다음 주기 재시도 대상에서 빠진다(INV-S3).
-      if (res.stop_reason === "max_tokens") return empty;
+      if (!enrichStopAccepted(res.stop_reason)) return empty;
       const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
       try {
         // 칸 검사는 순수 함수가 한다(parse-enrich) — 이 파일은 server-only 라 유닛이 못 본다.
@@ -602,7 +599,7 @@ export function createIngestPorts(): IngestPorts {
     },
 
     async extractKeywords({ title, evidence, knownFields, knownKinds }) {
-      anthropic ??= new Anthropic({ apiKey: anthropicApiKey() });
+      anthropic ??= newAnthropic();
 
       // 제목과 근거를 **따로** 감싼다 — 이어 붙이면 근거에 심은 문장이 제목의 일부로 읽힌다.
       const content = evidence
@@ -641,7 +638,7 @@ export function createIngestPorts(): IngestPorts {
 
 
     async judgeHotIssue({ title, evidence, alreadyPicked }) {
-      anthropic ??= new Anthropic({ apiKey: anthropicApiKey() });
+      anthropic ??= newAnthropic();
 
       // 제목과 근거를 **따로** 감싼다 — 이어 붙이면 근거에 심은 문장이 제목의 일부로 읽힌다.
       const content = evidence

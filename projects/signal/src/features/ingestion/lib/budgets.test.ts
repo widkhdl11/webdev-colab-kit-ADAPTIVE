@@ -22,7 +22,10 @@ import {
   EXTRACTION_TIMEOUT_MS,
   HOT_ISSUE_TIMEOUT_MS,
   MAX_CHAIN_LENGTH,
+  MODEL_MAX_RETRIES,
   WORST_CASE_MS,
+  ENRICH_MAX_TOKENS,
+  ENRICH_TITLE_MAX_TOKENS,
 } from "./budgets";
 
 /**
@@ -153,16 +156,43 @@ describe("수집 예산 상수", () => {
     expect(DAILY_COST_CAP_USD).toBeLessThanOrEqual(20);
   });
 
+  it("요약 출력 상한은 시간 상한 안에 다 쓸 수 있는 양이다 (2026-09-24 opus 실측 초당 94~104)", () => {
+    expect(ENRICH_MAX_TOKENS).toBe(2600);
+    // 가장 느리게 잰 속도로도 상한만큼 쓰는 시간이 타임아웃 안에 들어야 한다.
+    // 넘으면 "생각이 길어진 날"이 잘림 대신 시간 초과가 되고, 시간 초과는 요금 상한에 안 잡힌다.
+    const slowestTokPerSec = 94;
+    expect((ENRICH_MAX_TOKENS / slowestTokPerSec) * 1000).toBeLessThan(ENRICH_TIMEOUT_MS);
+    // 실측 최대 출력(1124)의 두 배 이상 — 생각이 들쭉날쭉해서다.
+    expect(ENRICH_MAX_TOKENS).toBeGreaterThanOrEqual(1124 * 2);
+  });
+
+  it("제목만 호출의 출력 상한은 생각 몫까지 넉넉하다 (2026-09-24 실측 최대 405)", () => {
+    expect(ENRICH_TITLE_MAX_TOKENS).toBe(1000);
+    // 500 이던 때 한 건이 405 를 썼다 — 두 배 여유를 둔다. 잘리면 같은 글이 매 주기 다시 불린다.
+    expect(ENRICH_TITLE_MAX_TOKENS).toBeGreaterThanOrEqual(405 * 2);
+    // 이 호출의 가장 느린 속도(초당 45)로도 시간 상한 안
+    expect((ENRICH_TITLE_MAX_TOKENS / 45) * 1000).toBeLessThan(ENRICH_TIMEOUT_MS);
+  });
+
+  it("INV-CB9: 모델 호출은 SDK 재시도를 끈다 — 실패한 건은 다음 주기가 다시 부른다", () => {
+    // 재시도가 켜져 있으면 한 건이 타임아웃의 세 배까지 늘고, 그 시간은 요금 상한에도
+    // 안 잡힌다. 다음 주기가 어차피 같은 글을 다시 부르므로 여기서 기다릴 이유가 없다.
+    expect(MODEL_MAX_RETRIES).toBe(0);
+  });
+
   it("INV-CB9: 단계별 최악 소요 시간 — 그 단계의 타임아웃과 같은 값이어야 한다", () => {
     expect(EXTRACTION_TIMEOUT_MS).toBe(15_000);
     expect(ENRICH_TIMEOUT_MS).toBe(30_000);
-    // 타임아웃보다 오래 걸리는 길이 없으므로 최악치가 곧 타임아웃이다.
+    // 모델 호출은 SDK 가 시간 초과까지 재시도하므로 한 건의 최악치는 타임아웃 × (재시도 + 1) 이다
+    // (2026-09-24 리뷰: 재시도를 안 셌을 때 요약 한 건이 30초가 아니라 90초였다).
     // 둘이 갈리면 "시작해도 못 끝낼 건"을 틀린 수로 판단하게 된다.
-    expect(WORST_CASE_MS.topic).toBe(TOPIC_TIMEOUT_MS);
-    expect(WORST_CASE_MS.hotIssue).toBe(HOT_ISSUE_TIMEOUT_MS);
+    const attempts = MODEL_MAX_RETRIES + 1;
+    expect(WORST_CASE_MS.topic).toBe(TOPIC_TIMEOUT_MS * attempts);
+    expect(WORST_CASE_MS.hotIssue).toBe(HOT_ISSUE_TIMEOUT_MS * attempts);
+    expect(WORST_CASE_MS.enrich).toBe(ENRICH_TIMEOUT_MS * attempts);
+    expect(WORST_CASE_MS.keywords).toBe(KEYWORD_TIMEOUT_MS * attempts);
+    // 본문 추출은 모델이 아니라 fetch 라 재시도가 없다
     expect(WORST_CASE_MS.extraction).toBe(EXTRACTION_TIMEOUT_MS);
-    expect(WORST_CASE_MS.enrich).toBe(ENRICH_TIMEOUT_MS);
-    expect(WORST_CASE_MS.keywords).toBe(KEYWORD_TIMEOUT_MS);
     // 최악치 하나가 한 바퀴 예산을 넘으면 그 단계는 **영영 시작되지 않는다**.
     for (const ms of Object.values(WORST_CASE_MS)) {
       expect(ms).toBeGreaterThan(0);

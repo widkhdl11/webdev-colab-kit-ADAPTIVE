@@ -49,3 +49,14 @@ export function parseEnrichJson(parsed: Record<string, unknown>): ParsedEnrich {
     officialByContent: parsed.official === true,
   };
 }
+
+/**
+ * 요약 응답을 읽어도 되는가 — 모델이 **끝까지 쓰고 멈췄을 때만** 읽는다 (2026-09-24 보안 리뷰).
+ *
+ * 통과시킬 값만 적는다. `max_tokens`(잘림)만 거르던 때는 거부(`refusal`)된 응답도 파싱까지
+ * 갔고, 부분 텍스트가 우연히 완결된 객체면 반쪽 요약이 저장돼 재시도 대상에서 빠졌다(INV-S3).
+ * 새 멈춤 이유가 생겨도 기본이 거절이다. 거절된 응답은 실패로 세여 세 번이면 그 글을 포기한다.
+ */
+export function enrichStopAccepted(stopReason: string | null): boolean {
+  return stopReason === "end_turn";
+}

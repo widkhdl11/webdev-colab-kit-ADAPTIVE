@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseEnrichJson } from "./parse-enrich";
+import { enrichStopAccepted, parseEnrichJson } from "./parse-enrich";
 
 const GOOD = {
   oneLine: "OpenAI가 GPT-6의 프롬프트 캐싱을 고쳐 반복 호출 비용을 크게 낮췄다.",
@@ -52,4 +52,24 @@ describe("요약 응답을 칸으로 나눠 받는다 (ingestion-ranking INV-S8)
     expect(out.titleKo).toBe("한국어 제목");
     expect(out.summary).toBe("");
   });
+});
+
+/**
+ * 요약 응답을 읽어도 되는가 — 멈춘 이유로 가른다 (2026-09-24 보안 리뷰).
+ *
+ * 전에는 `max_tokens` 만 걸렀다. 거부(`refusal`)된 응답도 파싱까지 가서, 부분 텍스트가
+ * 우연히 완결된 객체면 그대로 저장될 수 있었다. **통과시킬 값만 적는다** — 새 멈춤 이유가
+ * 생겨도 기본이 거절이다.
+ */
+describe("enrichStopAccepted — 끝까지 쓴 응답만 읽는다", () => {
+  it("end_turn 은 읽는다", () => {
+    expect(enrichStopAccepted("end_turn")).toBe(true);
+  });
+
+  it.each(["refusal", "max_tokens", "pause_turn", "tool_use", "stop_sequence", null, "처음 보는 값"])(
+    "실패경로: %s 는 읽지 않는다",
+    (reason) => {
+      expect(enrichStopAccepted(reason)).toBe(false);
+    },
+  );
 });
