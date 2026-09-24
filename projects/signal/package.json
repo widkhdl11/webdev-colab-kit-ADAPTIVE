@@ -15,6 +15,7 @@
     "badges": "node scripts/badge-distribution.mjs",
     "kinds": "node scripts/kind-audit.mjs",
     "hot-issue": "node scripts/hot-issue-log.mjs",
+    "review": "node scripts/verdict-review.mjs",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts",

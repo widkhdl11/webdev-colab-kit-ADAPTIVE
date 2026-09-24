@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>판정 검토</title>
+<style>
+  /* 색 토큰은 index.html 과 같다(devtool-ui-standards.md). 이 화면만의 색을 만들지 않는다. */
+  :root {
+    --bg:#ffffff; --panel:#f6f7f9; --panel-2:#eceff3; --line:#d3d9e2;
+    --fg:#14171c; --dim:#4c5462; --accent:#1b4fd8; --accent-bg:#e6ecfd; --on-accent:#ffffff;
+    --live:#0f6b39; --live-bg:#e3f4ea; --warn:#8a4b00; --warn-bg:#fbeedd; --focus:#1b4fd8; --r:8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0e1116; --panel:#161a21; --panel-2:#1d232c; --line:#2c3441;
+      --fg:#e9edf4; --dim:#a7b1c0; --accent:#86abff; --accent-bg:#1a2440; --on-accent:#0e1116;
+      --live:#5cd08c; --live-bg:#12291d; --warn:#e6a64d; --warn-bg:#2b2013; --focus:#86abff;
+    }
+  }
+  * { box-sizing:border-box; }
+  /* 스크롤바 — index.html 과 같은 규칙(기준 6절) */
+  * { scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--line); border-radius:999px; border:2px solid transparent; background-clip:padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--dim); background-clip:padding-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:14px/1.6 "Pretendard","Inter",-apple-system,"Segoe UI",system-ui,sans-serif; }
+  :focus-visible { outline:3px solid var(--focus); outline-offset:2px; border-radius:4px; }
+  h2 { font-size:14px; margin:0 0 10px; font-weight:650; }
+  /* 바깥 폭은 index.html 과 같다 — 탭을 오갈 때 탭 줄이 옆으로 움직이지 않게. 본문만 안쪽으로 좁힌다. */
+  .wrap { max-width:1400px; margin:0 auto; padding:20px 22px 60px; }
+  .inner { max-width:960px; }
+  @media (max-width:520px) { .wrap { padding:16px 16px 48px; } }
+  .dim { color:var(--dim); }
+  .num { font-variant-numeric:tabular-nums; }
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+  .tabs { display:flex; gap:4px; margin:0 0 16px; border-bottom:1px solid var(--line); }
+  .tabs a { padding:8px 14px; color:var(--dim); text-decoration:none; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .tabs a:hover { color:var(--fg); }
+  .tabs a[aria-current="page"] { color:var(--fg); border-bottom-color:var(--accent); font-weight:650; }
+
+  /* ── 상단: 주별 정확도 · 어디서 틀렸나 · 진행 ─────────────── */
+  .top { display:grid; grid-template-columns: 1.1fr 1.4fr 0.8fr; gap:12px; margin-bottom:12px; }
+  @media (max-width:760px) { .top { grid-template-columns:1fr; } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:14px; min-width:0; }
+
+  /* 막대: 한 계열이라 색 하나, 범례 없음. 값은 막대 위에 글자로 — 색으로만 읽게 하지 않는다. */
+  .bars { display:flex; gap:10px; align-items:flex-end; height:120px; padding-top:18px; }
+  .bars.labels { height:auto; padding-top:0; }
+  .bar { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; min-width:0; }
+  .bar .v { font-size:12px; font-weight:650; margin-bottom:4px; white-space:nowrap; }
+  .bar .fill { width:60%; max-width:36px; background:var(--accent); border-radius:4px 4px 0 0; min-height:2px; }
+  /* 값이 없는 주: 낮은 점선 칸. 꽉 찬 막대처럼 보이지 않게 높이를 낮게, 선은 흐린 글자색(약 7:1)으로. */
+  .bar .fill.empty { background:transparent; border:1px dashed var(--dim); border-bottom:none; height:24px; }
+  .bar .w { font-size:12px; color:var(--dim); margin-top:6px; white-space:nowrap; }
+  .axis { border-top:1px solid var(--line); }
+
+  .split { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; }
+  @media (max-width:520px) { .split { grid-template-columns:1fr; } }
+  .split h3 { font-size:12px; color:var(--dim); font-weight:600; margin:0 0 4px; }
+  .split ul { list-style:none; margin:0; padding:0; font-size:13px; }
+  .split li { display:flex; justify-content:space-between; gap:8px; }
+  .split li span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .progress .big { font-size:22px; font-weight:700; }
+  .meter { height:6px; background:var(--panel-2); border-radius:999px; overflow:hidden; margin-top:8px; }
+  .meter > div { height:100%; background:var(--live); }
+
+  .note { background:var(--warn-bg); color:var(--warn); border-radius:var(--r); padding:8px 12px; margin:0 0 12px; font-size:13px; }
+  .hint { font-size:12px; color:var(--dim); margin:0 0 10px; }
+  #status { min-height:1.6em; font-size:13px; color:var(--dim); margin:0 0 8px; }
+  #status.err { color:var(--warn); }
+
+  /* ── 표본 목록 ──────────────────────────────────────────── */
+  ol.items { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+  .item { border:1px solid var(--line); border-radius:var(--r); padding:12px 14px; background:var(--bg); }
+  .item.done { background:var(--panel); }
+  .item .head { display:flex; gap:10px; justify-content:space-between; align-items:baseline; }
+  .item .title { font-weight:650; margin:0; font-size:15px; overflow-wrap:anywhere; min-width:0; }
+  .item .title a { color:inherit; }
+  .item .src { color:var(--dim); font-size:12px; white-space:nowrap; }
+  .item dl { display:grid; grid-template-columns:44px 1fr; gap:2px 10px; margin:8px 0; font-size:13px; }
+  .item dt { color:var(--dim); }
+  .item dd { margin:0; overflow-wrap:anywhere; }
+  .item details.sum { font-size:13px; margin:4px 0 10px; }
+  .item details.sum summary { cursor:pointer; color:var(--accent); }
+  .item details.sum ul { margin:6px 0 0; padding-left:18px; }
+  .answers { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .answers button, .dirs button {
+    font:inherit; font-size:13px; padding:6px 12px; border-radius:6px; cursor:pointer;
+    border:1px solid var(--line); background:var(--bg); color:var(--fg); min-height:32px;
+  }
+  .answers button[aria-pressed="true"] { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+  /* 닫힌 주: opacity 로 흐리게 하지 않는다 — 고른 답의 대비가 3:1 아래로 떨어진다(기준 1절).
+     안 고른 버튼만 바탕을 바꾸고, 고른 버튼은 그대로 둔다 — 닫힌 주에는 그것이 「내 답」의 유일한 표시다. */
+  .answers button:disabled { cursor:not-allowed; background:var(--panel-2); color:var(--dim); }
+  .answers button[aria-pressed="true"]:disabled { background:var(--accent); color:var(--on-accent); }
+  .answers button[aria-busy="true"] { cursor:progress; }
+  .dirs { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; padding:8px; background:var(--panel-2); border-radius:6px; }
+  .dirs .q { width:100%; font-size:12px; color:var(--dim); }
+  .dirs button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); font-weight:650; }
+  details.done-wrap > summary { cursor:pointer; list-style:none; display:flex; gap:10px; justify-content:space-between; }
+  details.done-wrap > summary::-webkit-details-marker { display:none; }
+  details.done-wrap > summary .t { overflow-wrap:anywhere; min-width:0; }
+  details.done-wrap > summary .ans { color:var(--dim); font-size:13px; white-space:nowrap; }
+  .empty { color:var(--dim); padding:28px; text-align:center; border:1px dashed var(--line); border-radius:var(--r); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="tabs" id="tabs" aria-label="화면" hidden></nav>
+  <div class="inner">
+    <div id="top"></div>
+    <p id="status" role="status" aria-live="polite"></p>
+    <section id="list" aria-label="표본"></section>
+  </div>
+</div>
+
+<script type="module">
+import {
+  QUESTION_LABELS, ANSWER_LABELS, DIRECTION_LABELS, DIRECTION_ERROR_LABELS,
+  summarize, orderItems, fmtPct, directionsFor, isClosedView, weekLabel,
+} from "./review-model.mjs";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+async function getJson(path, fallback) {
+  try { const r = await fetch(`${path}?t=${Date.now()}`); return r.ok ? await r.json() : fallback; } catch { return fallback; }
+}
+async function getJsonl(path) {
+  try {
+    const r = await fetch(`${path}?t=${Date.now()}`);
+    if (!r.ok) return [];
+    return (await r.text()).split(/\r?\n/).filter((l) => l.trim()).flatMap((l) => { try { return [JSON.parse(l)]; } catch { return []; } });
+  } catch { return []; }
+}
+
+let sample = null;
+let lines = [];
+// 서버가 「닫힌 주」라고 거부했으면 화면도 닫힌 것으로 바꾼다 — 두 판정이 어긋나도 버튼이 계속 켜져 있지 않게.
+let closedByServer = false;
+// 방향 칸이 열린 글. 다시 그려도 열린 채로 둔다.
+let openDirs = null;
+// 안 답한 목록에서 「틀리다」를 눌러 방향을 고르는 중인 글 — 방향을 고를 때까지 제자리에 둔다.
+let pinned = null;
+// 펼쳐 둔 답한 글. 다시 그려도 펼친 채로 둔다.
+const openDone = new Set();
+// 다시 그린 뒤 초점을 줄 곳. 키보드로 답했을 때만 쓴다 — 마우스로 누를 때 화면이 튀면 안 된다.
+let focusAfter = null;
+let saving = false;
+
+const closed = () => closedByServer || !sample || isClosedView(sample, lines, Date.now());
+const noOf = (id) => sample.items.findIndex((i) => i.id === id) + 1;
+
+function drawTabs(tabs) {
+  const list = Array.isArray(tabs) ? tabs.filter((t) => typeof t?.label === "string" && /^[\w.-]+\.html$/.test(t?.href ?? "")) : [];
+  if (list.length < 2) return;
+  const here = location.pathname.split("/").pop() || "index.html";
+  $("tabs").innerHTML = list.map((t) =>
+    `<a href="${esc(t.href)}"${t.href === here ? ' aria-current="page"' : ""}>${esc(t.label)}</a>`).join("");
+  $("tabs").hidden = false;
+}
+
+// ── 상단 ───────────────────────────────────────────────────────────────
+function trendBars(s) {
+  // 닫힌 주 최근 셋 + 이번 주. 검토 안 한 주와, 답이 다 안 모인 이번 주는 값이 없다 —
+  // 반쯤 답한 정확도는 그 주의 값이 아니다(INV-VR6).
+  const past = [...lines].filter((l) => l.week !== sample?.week).sort((a, b) => a.week.localeCompare(b.week)).slice(-3)
+    .map((l) => ({ week: l.week, acc: l.status === "reviewed" ? l.accuracy : null, note: l.status === "reviewed" ? null : "검토 안 함", sr: l.status === "reviewed" ? null : "검토 안 함" }));
+  const cur = sample ? [{ week: sample.week, acc: s.answered === s.total && s.total > 0 ? s.accuracy : null,
+    note: s.answered === s.total ? null : `${s.answered}/${s.total}`, sr: s.answered === s.total ? null : `${s.total}건 중 ${s.answered}건 답함` }] : [];
+  const bars = [...past, ...cur];
+  if (bars.length === 0) return `<p class="dim">아직 기록이 없다</p>`;
+  const text = (b) => (b.acc === null ? (b.note ?? "값 없음") : fmtPct(b.acc));
+  return `<div class="bars" role="img" aria-label="${esc(bars.map((b) => `${weekLabel(b.week)} ${b.acc === null ? (b.sr ?? "값 없음") : fmtPct(b.acc)}`).join(", "))}">
+    ${bars.map((b) => {
+      const h = b.acc === null ? null : Math.max(2, Math.round(b.acc * 100));
+      return `<div class="bar" title="${esc(weekLabel(b.week))} · ${esc(text(b))}">
+        <span class="v num">${esc(text(b))}</span>
+        ${h === null ? `<div class="fill empty"></div>` : `<div class="fill" style="height:${h}%"></div>`}
+      </div>`;
+    }).join("")}
+  </div>
+  <div class="axis"></div>
+  <div class="bars labels" aria-hidden="true">${bars.map((b) => `<div class="bar"><span class="w">${esc(weekLabel(b.week))}</span></div>`).join("")}</div>`;
+}
+
+function listOf(obj, label) {
+  const e = Object.entries(obj).sort((a, b) => b[1] - a[1]);
+  if (e.length === 0) return `<li class="dim"><span>없음</span></li>`;
+  // 좁은 칸에서 말줄임될 수 있다 — 전체 말은 title 에 남긴다.
+  return e.map(([k, n]) => `<li><span title="${esc(label(k))}">${esc(label(k))}</span><span class="num">${n}</span></li>`).join("");
+}
+
+function drawTop() {
+  if (!sample) { $("top").innerHTML = ""; return; }
+  const s = summarize(sample);
+  const names = Object.fromEntries(sample.items.map((i) => [i.source, i.source_name || i.source]));
+  const hot = sample.items.filter((i) => i.verdict.hot).length;
+  const short = (sample.shortfall?.hot ?? 0) + (sample.shortfall?.not_hot ?? 0);
+  $("top").innerHTML = `
+    ${short > 0 ? `<p class="note">후보가 모자라 핫이슈 ${hot}건 · 핫이슈 아님 ${sample.items.length - hot}건만 뽑혔다 (한 출처에서 5건까지만)</p>` : ""}
+    <div class="top">
+      <section class="card" aria-label="주별 정확도"><h2>주별 정확도</h2>${trendBars(s)}</section>
+      <section class="card" aria-label="어디서 틀렸나"><h2>어디서 틀렸나 <span class="dim num">· 틀리다 ${s.wrong}건</span></h2>
+        <div class="split">
+          <div><h3>어느 쪽으로</h3><ul>${listOf(s.byDirection, (k) => DIRECTION_ERROR_LABELS[k] ?? k)}</ul></div>
+          <div><h3>질문</h3><ul>${listOf(s.byQuestion, (k) => QUESTION_LABELS[k] ?? k)}</ul></div>
+          <div><h3>출처</h3><ul>${listOf(s.bySource, (k) => names[k] ?? k)}</ul></div>
+        </div>
+      </section>
+      <section class="card progress" aria-label="진행"><h2>진행</h2>
+        <div class="big num" aria-label="${s.total}건 중 ${s.answered}건 답함">${s.answered}/${s.total}</div>
+        <div class="dim">${esc(weekLabel(sample.week))} · ${closed() ? "닫힌 주" : "답한 수"}${s.unsure ? ` · 모르겠다 ${s.unsure}` : ""}</div>
+        <div class="meter" aria-hidden="true"><div style="width:${s.total ? Math.round((s.answered / s.total) * 100) : 0}%"></div></div>
+      </section>
+    </div>`;
+}
+
+// ── 목록 ───────────────────────────────────────────────────────────────
+function verdictRows(item) {
+  const qs = item.verdict.true_questions ?? [];
+  if (!item.verdict.hot) {
+    // 질문에는 해당했는데 핫이슈가 아닌 글 — 같은 사건 글이 이미 있어 빠졌거나 배정이 실패한 것이다.
+    // 이걸 모르면 「핫이슈여야 함」을 누르게 되는데, 그건 질문이 아니라 중복 처리의 결과다.
+    const note = qs.length > 0
+      ? `<dt></dt><dd class="dim">질문(${esc(qs.map((q) => QUESTION_LABELS[q] ?? q).join(", "))})에는 해당했지만 같은 사건 글이 이미 있어 빠졌다</dd>` : "";
+    return `<dt>판정</dt><dd id="v-${esc(item.id)}"><strong>핫이슈 아님</strong></dd>${note}`;
+  }
+  const head = `<dt>판정</dt><dd id="v-${esc(item.id)}"><strong>핫이슈</strong></dd>`;
+  if (qs.length === 0) return `${head}<dt>근거</dt><dd class="dim">해당하는 질문이 없다</dd>`;
+  return head + qs.map((q, i) => `<dt>${i === 0 ? "근거" : ""}</dt><dd><strong>${esc(QUESTION_LABELS[q] ?? q)}</strong>${
+    item.verdict.reasons?.[q] ? ` — ${esc(item.verdict.reasons[q])}` : ""}</dd>`).join("");
+}
+
+function summaryBlock(item) {
+  const one = item.summary?.one_line;
+  const pts = item.summary?.points ?? [];
+  if (!one && pts.length === 0) return "";
+  return `<details class="sum"><summary>요약 보기</summary>
+    ${one ? `<p style="margin:6px 0 0">${esc(one)}</p>` : ""}
+    ${pts.length ? `<ul>${pts.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}</details>`;
+}
+
+function controls(item, no, a) {
+  const off = closed() ? " disabled" : "";
+  const pressed = (k) => (a?.answer === k ? "true" : "false");
+  const id = esc(item.id);
+  const dirs = directionsFor(item);
+  const menu = dirs.length > 1;
+  const wrongLabel = menu ? `틀리다 <span aria-hidden="true">▾</span>` : `틀리다 (${esc(DIRECTION_LABELS[dirs[0]])})`;
+  const panel = menu && openDirs === item.id && !closed()
+    ? `<div class="dirs" id="dirs-${id}" role="group" aria-label="${no}번은 어느 쪽으로 틀렸나">
+        <span class="q">어느 쪽으로 틀렸나 — 안 고르고 닫으면 「${esc(DIRECTION_LABELS.unknown)}」</span>
+        ${dirs.map((d) =>
+          `<button type="button" data-act="dir" data-id="${id}" data-dir="${d}" aria-pressed="${a?.direction === d}">${esc(DIRECTION_LABELS[d])}</button>`).join("")}
+        <button type="button" data-act="close-dirs" data-id="${id}">닫기</button>
+      </div>` : "";
+  return `<div class="answers" role="group" aria-label="${no}번 판정은">
+      <button type="button" data-act="answer" data-id="${id}" data-answer="correct" aria-pressed="${pressed("correct")}"${off}>맞다</button>
+      <button type="button" data-act="answer" data-id="${id}" data-answer="wrong" aria-pressed="${pressed("wrong")}"${menu ? ` aria-expanded="${openDirs === item.id}" aria-controls="dirs-${id}"` : ""}${off}>${wrongLabel}</button>
+      <button type="button" data-act="answer" data-id="${id}" data-answer="unsure" aria-pressed="${pressed("unsure")}"${off}>모르겠다</button>
+    </div>${panel}`;
+}
+
+function answerText(a) {
+  if (!a) return "";
+  if (a.answer !== "wrong") return ANSWER_LABELS[a.answer] ?? a.answer;
+  return `틀리다 · ${DIRECTION_LABELS[a.direction ?? "unknown"] ?? a.direction}`;
+}
+
+function titleHtml(item) {
+  return /^https?:\/\//i.test(item.url ?? "")
+    ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title)}</a>` : esc(item.title);
+}
+
+/** withTitle=false: 답한 글을 펼친 경우 — 제목은 이미 접힌 줄에 있다. */
+function body(item, no, a, withTitle) {
+  return `
+    <div class="head">
+      ${withTitle ? `<h3 class="title" id="t-${esc(item.id)}">${no}. ${titleHtml(item)}</h3>` : `<span></span>`}
+      <span class="src">${esc(item.source_name || item.source)}</span>
+    </div>
+    <dl>${verdictRows(item)}</dl>
+    ${summaryBlock(item)}
+    ${controls(item, no, a)}`;
+}
+
+function drawList() {
+  if (!sample) {
+    $("list").innerHTML = `<h2>표본</h2><p class="empty">아직 뽑힌 표본이 없다. 매주 월요일 아침에 자동으로 뽑힌다 (직접: <code>npm run review</code>)</p>`;
+    return;
+  }
+  const rows = orderItems(sample);
+  const stays = (r) => r.answer === null || r.item.id === pinned;
+  const todo = rows.filter(stays).sort((a, b) => a.no - b.no);
+  const done = rows.filter((r) => !stays(r));
+  $("list").innerHTML = `
+    <h2 id="list-h" tabindex="-1">표본 ${rows.length}건 <span class="dim num">· 남은 ${todo.filter((r) => r.answer === null).length}건</span></h2>
+    ${closed() ? `<p class="note">닫힌 주다 — 답을 더 받지 않는다</p>` : `<p class="hint">↑↓ 로 글 이동 · 1 맞다 · 2 틀리다 · 3 모르겠다. 누르는 즉시 저장된다.</p>`}
+    <ol class="items">
+      ${todo.map((r) => `<li class="item" tabindex="0" data-item="${esc(r.item.id)}" aria-labelledby="t-${esc(r.item.id)} v-${esc(r.item.id)}">${body(r.item, r.no, r.answer, true)}</li>`).join("")}
+      ${done.map((r) => `<li class="item done" data-item="${esc(r.item.id)}">
+        <details class="done-wrap" data-done="${esc(r.item.id)}"${openDone.has(r.item.id) || openDirs === r.item.id ? " open" : ""}>
+          <summary><h3 class="title t" id="t-${esc(r.item.id)}" style="font-size:14px;font-weight:500">${r.no}. ${esc(r.item.title)}</h3><span class="ans">${esc(answerText(r.answer))}</span></summary>
+          ${body(r.item, r.no, r.answer, false)}
+        </details></li>`).join("")}
+    </ol>`;
+  for (const d of $("list").querySelectorAll("details.done-wrap")) {
+    d.addEventListener("toggle", () => { if (d.open) openDone.add(d.dataset.done); else openDone.delete(d.dataset.done); });
+  }
+}
+
+function draw() {
+  drawTop();
+  drawList();
+  if (focusAfter) {
+    const el = document.querySelector(focusAfter) ?? $("list-h");
+    el?.focus({ preventScroll: true });
+    el?.scrollIntoView({ block: "nearest" });
+    focusAfter = null;
+  }
+}
+
+// ── 저장 ───────────────────────────────────────────────────────────────
+function say(text, err = false) {
+  $("status").textContent = text;
+  $("status").className = err ? "err" : "";
+}
+
+async function save(id, answer, direction) {
+  if (saving) return false;
+  saving = true;
+  for (const b of document.querySelectorAll(`button[data-id="${CSS.escape(id)}"]`)) b.setAttribute("aria-busy", "true");
+  const payload = direction ? { id, answer, direction } : { id, answer };
+  try {
+    const r = await fetch(`/api/review-samples/${encodeURIComponent(sample.week)}`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 409) { closedByServer = true; say("저장하지 못했다: 이 주는 닫혔다", true); draw(); return false; }
+    if (!r.ok) { say(`저장하지 못했다: ${j.error ?? r.status}`, true); return false; }
+    sample = j;
+    const left = summarize(sample);
+    say(`${noOf(id)}번 「${answerText(sample.answers[id])}」 저장 · 남은 ${left.total - left.answered}건`);
+    return true;
+  } catch {
+    say("저장하지 못했다: 대시보드 서버가 꺼져 있다 (node scripts/report-serve.mjs)", true);
+    return false;
+  } finally {
+    saving = false;
+    for (const b of document.querySelectorAll(`button[aria-busy="true"]`)) b.removeAttribute("aria-busy");
+  }
+}
+
+/** 방금 답한 글 다음 번호의 안 답한 글. 뒤에 없으면 앞에서 다시 찾는다. 하나도 없으면 null. */
+function nextTodoSelector(afterId) {
+  const after = noOf(afterId);
+  const todo = orderItems(sample).filter((r) => r.answer === null && r.item.id !== afterId).map((r) => r.no).sort((a, b) => a - b);
+  const next = todo.find((n) => n > after) ?? todo[0];
+  return next ? `[data-item="${CSS.escape(sample.items[next - 1].id)}"]` : null;
+}
+
+async function onAnswer(id, answer, byKey) {
+  const item = sample.items.find((i) => i.id === id);
+  if (!item || closed()) return;
+  const prev = sample.answers?.[id];
+  const menu = directionsFor(item).length > 1;
+  if (answer === "wrong" && menu) {
+    if (openDirs === id) {
+      // 다시 누르면 칸을 닫는다
+      openDirs = null; pinned = null; draw(); return;
+    }
+    // 이미 방향까지 고른 글이면 저장하지 않고 칸만 연다 — 다시 저장하면 고른 방향이 「안 고름」으로 덮인다.
+    if (!(prev?.answer === "wrong" && prev.direction && prev.direction !== "unknown")) {
+      // 틀리다는 누르는 순간 「어느 쪽인지 안 고름」으로 저장되고, 방향을 고르면 덮어쓴다 — 중간에 닫아도 답이 남는다.
+      if (!(await save(id, "wrong"))) return;
+    }
+    openDirs = id;
+    if (prev === undefined) pinned = id;
+    focusAfter = `[data-act="dir"][data-id="${CSS.escape(id)}"]`;
+    draw();
+    return;
+  }
+  if (!(await save(id, answer))) return;
+  openDirs = null; pinned = null;
+  focusAfter = byKey ? nextTodoSelector(id) ?? `[data-done="${CSS.escape(id)}"] summary` : null;
+  draw();
+}
+
+function closeDirs(id, byKey) {
+  openDirs = null; pinned = null;
+  focusAfter = byKey ? nextTodoSelector(id) ?? `[data-done="${CSS.escape(id)}"] summary` : null;
+  draw();
+}
+
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-act]");
+  if (!b) return;
+  const id = b.dataset.id;
+  const byKey = e.detail === 0; // 키보드로 누른 click 은 detail 이 0 이다
+  if (b.dataset.act === "answer") await onAnswer(id, b.dataset.answer, byKey);
+  else if (b.dataset.act === "dir") {
+    if (await save(id, "wrong", b.dataset.dir)) closeDirs(id, byKey);
+  } else if (b.dataset.act === "close-dirs") closeDirs(id, byKey);
+});
+
+// 키보드: 글 사이 이동과 답 선택. 입력 칸이 없는 화면이라 숫자키가 다른 것과 부딪히지 않는다.
+document.addEventListener("keydown", async (e) => {
+  if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+  if (e.key === "Escape" && openDirs) { closeDirs(openDirs, true); return; }
+  const host = e.target.closest?.("[data-item]");
+  if (!host) return;
+  const id = host.dataset.item;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    const all = [...document.querySelectorAll("li.item")];
+    const i = all.indexOf(host);
+    const to = all[i + (e.key === "ArrowDown" ? 1 : -1)];
+    if (to) { e.preventDefault(); (to.matches("[tabindex]") ? to : to.querySelector("summary"))?.focus(); }
+    return;
+  }
+  const map = { "1": "correct", "2": "wrong", "3": "unsure" };
+  if (map[e.key] && (e.target === host || e.target.matches?.("summary"))) { e.preventDefault(); await onAnswer(id, map[e.key], true); }
+});
+
+// ── 시작 ───────────────────────────────────────────────────────────────
+const [tabs, index, summaryLines] = await Promise.all([
+  getJson("tabs.json", null),
+  getJson("review-samples/index.json", null),
+  getJsonl("review-summary.jsonl"),
+]);
+drawTabs(tabs);
+lines = summaryLines;
+const week = index?.open ?? index?.weeks?.[index.weeks.length - 1] ?? null;
+sample = week && /^\d{4}-W\d{2}$/.test(week) ? await getJson(`review-samples/${week}.json`, null) : null;
+draw();
+</script>
+</body>
+</html>
