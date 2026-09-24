@@ -1,13 +1,25 @@
 ---
 project: signal
 status: passed
-basis: 41d86a03c051
+basis: 1fb51f47ce56
 reviewers: [code-reviewer, security-reviewer, ui-reviewer, test-auditor]
 ---
 # review — signal
 
 > 이 마커가 review 노드를 clean으로 만든다. basis는 구현(src/**) 해시 — 구현이 바뀌면 불일치로
 > review가 자동으로 낡아 재리뷰가 강제된다. (graph-stop 출력이 basis 값을 안내한다)
+
+## 2026-09-24 (5) — 판정 검토를 simoori `/dev/ingest/review` 로 옮긴 판
+
+- **범위**: 아래 (4)를 킷 대시보드에서 simoori 개발자 화면으로 옮기고 저장을 Supabase(0012)로 바꾼 판.
+  테이블 셋(RLS·정책 없음) · 답 쓰기·주 만들기 DB 함수 · 표본 동결 트리거 · `/dev/*` 는 이 PC 개발 서버·주소에서만 ·
+  주간 뽑기는 매일 수집 실행 첫 바퀴. 커밋 `1973367` 이 리뷰 반영까지 담았고 그 뒤 `src/**` 변화 없음.
+- **리뷰어 넷**(옮긴 코드에 다시 파견): security-reviewer(`/dev/*`·답 액션의 Host·NODE_ENV·VERCEL 검사 — 결정 로그 D21) ·
+  code-reviewer(high: 주와 표본 사이에서 멈추면 표본 0건 주가 남음 → DB 함수 한 트랜잭션, D22) · ui-reviewer · test-auditor(행 모양이 틀리면 실패하게).
+- **실행 근거**: 0012 적용 뒤 `npm run test:integration` → 5 files · 52 passed(판정 검토 INV-VR2~VR5 포함) ·
+  `npx tsc --noEmit` 통과 · `npm test` → 84 files · 1205 passed ·
+  `import-w39.mjs` → 「옮김: 2026-W39 20건」 · 개발 서버(3100)에서 `/dev/ingest/review` 를 열어 20건·핫이슈 10·진행 0/20·「눈여겨볼 것」 두 줄 확인.
+  답 버튼은 누르지 않았다 — 실제 주(W39)라 사용자 답이 들어갈 자리다. 답 쓰기는 통합 테스트(2001-W01)로만 확인.
 
 ## 2026-09-24 (4) — 판정 검토 (매주 표본 20건 채점)
 
