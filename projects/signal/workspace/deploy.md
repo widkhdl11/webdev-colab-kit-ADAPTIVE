@@ -1,16 +1,24 @@
 ---
 project: signal
 status: deployed
-basis: dca01eb2de1f
+basis: 7dd7eb699b52
 ---
 # deploy — signal
 
-**운영 공개 주소**: https://webdev-colab-kit-adaptive-xi.vercel.app/ (2026-09-23 사용자). 배포별 주소(`…-<해시>-widkhdl11s-projects.vercel.app`)는 로그인이 필요하다 — 배포 뒤 확인은 이 주소로 한다.
+**운영 공개 주소**: https://www.simoori.com/ (2026-09-24 사용자가 도메인 연결 · `simoori.com` 은 www 로 308). 예전 https://webdev-colab-kit-adaptive-xi.vercel.app/ 도 열린다. 배포별 주소(`…-<해시>-widkhdl11s-projects.vercel.app`)는 로그인이 필요하다 — 배포 뒤 확인은 이 주소로 한다.
 
 > 이 마커가 deploy 노드를 clean으로 만든다. `status: deployed` 가 되어야 clean이고, basis는
 > 구현(src/**) 해시 — 구현이 바뀌면 불일치로 배포 기록이 낡는다(재배포 강제).
 > `status:` 값은 짧은 한 줄로 둔다. 뒤에 긴 주석을 달면 포매터가 값을 다음 줄로 접어
 > 게이트 정규식(`^\s*status:\s*...`)이 못 읽는다.
+
+## 2026-09-24 — 요약 Opus 5.5 · 피드 `전체` 자리 · 이어달리기 경계 (38a6fb3)
+
+- **순서**: 마이그레이션 없음. push 한 번.
+- **운영 확인**: push 60초 뒤 www.simoori.com 첫 화면에 새 자리 줄(`전체·핫이슈·소식·스킬·툴`)과 뱃지 줄 `전체` 칩 ·
+  `?tab=all` 200 · `/api/ingest` 를 비밀키 없이 부르면 401.
+- **남은 확인**: opus 로 요약하는 첫 예약 실행은 09-25 07시. 버셀 환경변수 `INGEST_BASE_URL` 은 사용자가 `https://www.simoori.com`
+  으로 바꾸기로 함 — **www 없이 적으면 이제 이어달리기가 바로 끊긴다**(리다이렉트를 안 따라가게 바꿨다).
 
 ## 2026-09-23 — 상세 화면 재구성 + 요약 불합격 한도 (277d475)
 
