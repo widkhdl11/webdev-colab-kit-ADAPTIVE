@@ -1,13 +1,27 @@
 ---
 project: signal
 status: passed
-basis: 97aed6d824cd
-reviewers: [ui-reviewer, security-reviewer]
+basis: 41d86a03c051
+reviewers: [code-reviewer, security-reviewer]
 ---
 # review — signal
 
 > 이 마커가 review 노드를 clean으로 만든다. basis는 구현(src/**) 해시 — 구현이 바뀌면 불일치로
 > review가 자동으로 낡아 재리뷰가 강제된다. (graph-stop 출력이 basis 값을 안내한다)
+
+## 2026-09-24 (3) — 뱃지 줄은 피드가 펼친 날만 센다 (44f15ae..dffd8e0)
+
+- **범위**: 사용자 지시 "키워드는 기본 당일 것만, 더 보기마다 전날·전전날 포함". 목록과 뱃지가 한 경계(`shownDays`, 자리의
+  날짜 묶음 기준)를 쓴다 · 뱃지를 켜면 3일로 펴던 규칙 제거 · 켠 키워드를 다 펼치면 더 보기 끝 · 펼친 날에 없을 때 빈 문구.
+  스펙 INV-B4 · design-rules 2026-09-24 블록.
+- **테스트**: tsc 통과 · 1126 passed. 새 테스트 6개(하루/이틀/사흘 집계 · 뱃지 수 = 켰을 때 카드 수 · 0건 날 · 끝 판정).
+  뱃지가 날 경계를 무시하게 심으면 3개가 빨간불(확인 후 복원).
+- **실행 근거**: 로컬 dev(실데이터) `전체` 자리 — 처음 오늘만(AI 서비스 15) → 더 보기 1회 +어제(38) → 2회 +9/22(AI 모델 81).
+  AI 모델 켜면 카드 82 = 뱃지 81(안 읽은 수) + 읽은 글 1.
+- **리뷰**: code-reviewer 통과(critical·high 없음) — medium 1(자리 거르기 반복·시작/다음 날 따로 계산 → 한 인덱스로) ·
+  low 5(nowIso 제거 · 낡은 주석 넷 · daysExplicit 죽은 코드 · 0건 날 알림 문구 · "오늘이 1" 표현) 전부 반영.
+  security-reviewer 통과(`days` 1~365 상한 유지 · `kw` 는 비교·인코딩·텍스트로만 쓰임).
+  ui-reviewer 는 뺐다 — 새 컴포넌트·토큰 없이 문구 둘만 바뀌었고 규칙 변경은 design-rules 에 기록했다.
 
 ## 2026-09-24 (2) — 사이트 이름 simoori (4169663 + 근거 문구)
 
