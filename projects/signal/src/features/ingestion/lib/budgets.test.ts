@@ -180,7 +180,7 @@ describe("수집 예산 상수", () => {
     expect(MODEL_MAX_RETRIES).toBe(0);
   });
 
-  it("INV-CB9: 단계별 최악 소요 시간 — 그 단계의 타임아웃과 같은 값이어야 한다", () => {
+  it("INV-CB9: 단계별 최악 소요 시간 — 모델 단계는 타임아웃 × (재시도 + 1), 추출은 타임아웃", () => {
     expect(EXTRACTION_TIMEOUT_MS).toBe(15_000);
     expect(ENRICH_TIMEOUT_MS).toBe(30_000);
     // 모델 호출은 SDK 가 시간 초과까지 재시도하므로 한 건의 최악치는 타임아웃 × (재시도 + 1) 이다

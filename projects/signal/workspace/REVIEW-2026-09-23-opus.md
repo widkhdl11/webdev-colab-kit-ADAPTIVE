@@ -62,5 +62,7 @@ SDK 가 `output_config.effort` 지원 · prefill·tool_choice 없음 · effort m
 | 코드 medium 2 뒷부분 (시간 초과도 실패로 셀지) | 세지 않는다. 실측 최장 11.7초로 30초에 여유가 크고, 센다면 API가 잠깐 느린 날 멀쩡한 글을 포기하게 된다 |
 | low 낡은 주석 · count-prompt-tokens 단가 | 고침. 스크립트는 `ENRICH_MODEL`·`ratesForModel`·`ENRICH_MAX_TOKENS` 를 쓴다 |
 
-검사: 유닛 1111 green · tsc 통과 · 강제 장치를 하나씩 풀면 잡힌다(거부 거르기 · 재시도 0 · 최악 시간 계산 · 제목 상한).
+검사: 유닛 1111 green · tsc 통과 · 강제 장치를 하나씩 풀면 잡힌다(거부 거르기 · 재시도 0 · 제목 상한).
+최악 시간 계산의 `× (재시도 + 1)` 은 재시도가 0 인 동안 지워도 값이 같아 **따로 잡히지 않는다** —
+그것을 붙드는 것은 `MODEL_MAX_RETRIES === 0` 고정이다(재시도를 올리면 두 검사가 같이 깨진다, 확인함).
 유닛이 못 보는 곳: `api/ports.ts`(server-only)가 실제로 `MODEL_MAX_RETRIES` 를 클라이언트에 넘기는지 — 코드로만 확인.

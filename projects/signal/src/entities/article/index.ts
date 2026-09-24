@@ -9,6 +9,7 @@ export type {
   TagAxis,
 } from "./model/types";
 export {
+  feedEmptyReason,
   filterByTag,
   findArticleById,
   groupByDay,
@@ -18,7 +19,13 @@ export {
   selectFeed,
   sortArticles,
 } from "./lib/query";
-export type { ArticleDayGroup, FeedSegment, FeedSelection, SortMode } from "./lib/query";
+export type {
+  ArticleDayGroup,
+  FeedEmptyReason,
+  FeedSegment,
+  FeedSelection,
+  SortMode,
+} from "./lib/query";
 export {
   compareForRanking,
   computeScore,

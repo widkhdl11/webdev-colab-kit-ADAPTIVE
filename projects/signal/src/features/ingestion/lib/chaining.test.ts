@@ -37,6 +37,23 @@ describe("INV-CB1: 목적지는 환경변수에 적힌 주소 하나뿐이다", 
     expect(buildChainRequest({ baseUrl: "file:///etc/passwd", secret: TOKEN, chainIndex: 1 })).toBeNull();
   });
 
+  it("실패경로: 배포 환경에서는 http 주소로 안 부른다 — 첫 요청에 시크릿이 평문으로 실린다 (2026-09-24 보안 리뷰)", () => {
+    // http 로 적어 두면 https 로 넘어가며 헤더가 떨어져 어차피 401 인데, 그 전에 시크릿이
+    // 암호화 없이 한 번 나간다. 동작은 안 하고 노출만 되는 설정이다.
+    expect(buildChainRequest({ baseUrl: "http://www.simoori.com", secret: TOKEN, chainIndex: 1 })).toBeNull();
+  });
+
+  it("로컬(allowHttp)에서는 http 를 받는다 — 개발 서버는 https 가 아니다", () => {
+    const req = buildChainRequest({
+      baseUrl: "http://localhost:3000",
+      secret: TOKEN,
+      chainIndex: 1,
+      allowHttp: true,
+    });
+    expect(req).not.toBeNull();
+    expect(new URL(req!.url).origin).toBe("http://localhost:3000");
+  });
+
   it("환경변수의 경로·쿼리는 버리고 오리진만 쓴다", () => {
     // 배포 주소에 실수로 경로가 붙어도(`https://x/api/ingest?chain=9`) 경로는 코드가 정한다.
     const req = buildChainRequest({
@@ -88,6 +105,14 @@ describe("INV-CB4: 한 호출은 다음 호출을 최대 하나만 만든다", (
     const req = buildChainRequest({ baseUrl: BASE, secret: TOKEN, chainIndex: 1 })!;
     await sendChainRequest(req, fetchImpl);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("INV-CB1: 리다이렉트를 따라가지 않는다 — 목적지를 응답의 Location 이 바꾸지 못한다 (2026-09-24 보안 리뷰)", async () => {
+    // 따라가면 실제 목적지를 서버 응답이 정하고, 헤더를 떼느냐는 런타임 버전에 달린다.
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(null, { status: 200 }));
+    const req = buildChainRequest({ baseUrl: BASE, secret: TOKEN, chainIndex: 1 })!;
+    await sendChainRequest(req, fetchImpl);
+    expect(fetchImpl.mock.calls[0][1]).toMatchObject({ redirect: "error" });
   });
 
   it("다음 호출이 실패해도 던지지 않는다 — 이 바퀴의 결과는 이미 유효하다", async () => {

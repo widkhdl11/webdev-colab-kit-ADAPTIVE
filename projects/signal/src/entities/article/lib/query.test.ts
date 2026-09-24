@@ -3,6 +3,7 @@ import type { ArticleListItem, ArticleTag } from "../model/types";
 import { GATE_ONE, placeArticle } from "./hot-issue";
 import type { ArticleKind, Gate } from "./hot-issue";
 import {
+  feedEmptyReason,
   filterByTag,
   findArticleById,
   groupByDay,
@@ -410,5 +411,54 @@ describe("selectFeed — 핫이슈 순서는 이슈성이 정한다 (INV-N3)", (
     const got = selectFeed({ articles: [older, newer], segment: "news", tag: null, days: 50 });
 
     expect(got.groups.flatMap((g) => g.articles.map((a) => a.id))).toEqual(["새것", "옛것"]);
+  });
+});
+
+/**
+ * 목록이 빈 이유 (design-rules 2026-09-21 「가르는 순서는 자리 → 주제 → 수집이다」 ·
+ * 2026-09-24 「이 자리에는 이 주제의 글이 없습니다 — 전체에 N건」).
+ *
+ * 2026-09-24 UI 리뷰: 핫이슈 분기가 키워드를 안 보고 먼저 걸려서, 핫이슈가 10건 있어도
+ * 켠 키워드 글이 없으면 「오늘은 핫이슈가 없습니다」가 나왔다. 자리를 바꿔도 키워드가
+ * 남으면서 이 경로가 흔해졌다.
+ */
+describe("feedEmptyReason — 먼저 걸린 것이 원인이다", () => {
+  const at = (id: string, gate: Gate | null, tags: ArticleTag[]) => ({
+    ...article(id, "2026-08-05T01:00:00.000Z", 1, tags),
+    gate,
+  });
+  const hotA = at("핫A", GATE_ONE, ["모델"]);
+  const newsB = at("소식B", null, ["보안"]);
+  const newsC = at("소식C", null, ["모델"]);
+
+  it("핫이슈가 한 건도 없으면 원인은 자리다 — 소식 건수를 같이 준다", () => {
+    expect(feedEmptyReason({ articles: [newsB, newsC], segment: "hot", tag: null })).toEqual({
+      kind: "noHot",
+      newsCount: 2,
+    });
+  });
+
+  it("핫이슈는 있는데 켠 키워드 글이 없으면 원인은 자리가 아니다 — 전체 건수를 준다", () => {
+    expect(feedEmptyReason({ articles: [hotA, newsB], segment: "hot", tag: "보안" })).toEqual({
+      kind: "elsewhere",
+      allCount: 1,
+    });
+  });
+
+  it("다른 자리에도 그 키워드 글이 없으면 「없다」다", () => {
+    expect(feedEmptyReason({ articles: [hotA, newsB], segment: "hot", tag: "에이전트" })).toEqual({
+      kind: "none",
+    });
+  });
+
+  it("소식에서 켠 키워드가 핫이슈에만 있으면 전체 건수를 준다", () => {
+    expect(feedEmptyReason({ articles: [hotA, newsB], segment: "news", tag: "모델" })).toEqual({
+      kind: "elsewhere",
+      allCount: 1,
+    });
+  });
+
+  it("`전체` 자리는 더 갈 곳이 없다 — 「없다」다", () => {
+    expect(feedEmptyReason({ articles: [hotA], segment: "all", tag: "보안" })).toEqual({ kind: "none" });
   });
 });

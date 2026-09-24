@@ -340,7 +340,7 @@ describe("KeywordBadges — 키워드 `전체` 칩", () => {
 
   it("뱃지 줄 맨 앞에 있고, 아무 키워드도 안 켜졌을 때 눌려 있다", () => {
     const chip = allChip(render([badge({ name: "보안" })]));
-    expect(chip?.textContent?.trim()).toBe("전체");
+    expect(chip?.textContent?.trim()).toBe("키워드 전체");
     expect(chip?.hasAttribute("data-kw")).toBe(false);
     expect(chip?.getAttribute("aria-pressed")).toBe("true");
   });
@@ -362,7 +362,7 @@ describe("KeywordBadges — 키워드 `전체` 칩", () => {
       <KeywordBadges badges={[badge({ name: "보안" })]} selected="보안" onSelect={(t) => picked.push(t)} />,
     );
     const chip = m.container.querySelector('[aria-label="키워드 뱃지"] button');
-    expect(chip?.textContent?.trim()).toBe("전체");
+    expect(chip?.textContent?.trim()).toBe("키워드 전체");
     await m.click(chip as Element);
     expect(picked).toEqual([null]);
     m.cleanup();
@@ -388,7 +388,7 @@ describe("KeywordBadges — 줄이 사라져도 포커스가 문서 맨 위로 �
     }
     const h = await mount(<Harness />);
     const chip = h.container.querySelector('[aria-label="키워드 뱃지"] button') as HTMLElement;
-    expect(chip.textContent?.trim()).toBe("전체");
+    expect(chip.textContent?.trim()).toBe("키워드 전체");
     chip.focus();
     await h.click(chip);
     await nextFrame();

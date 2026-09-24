@@ -584,7 +584,7 @@ async function runEnrichment(
         summaryFailures?: number;
       } = {};
       // 모델이 답했는데 요약을 못 쓴 횟수를 남긴다 (INV-S3 S32) — 형식 불합격뿐 아니라 응답이
-      // 잘렸거나(max_tokens) JSON 을 못 읽은 경우도 센다. 셋 다 요금이 나간 호출이라서다. 호출 자체가
+      // 잘렸거나(max_tokens) 거부됐거나(refusal) JSON 을 못 읽은 경우도 센다. 넷 다 요금이 나간 호출이라서다. 호출 자체가
       // 죽은 경우(시간 초과·네트워크)는 여기 오지 않는다 — 요금이 안 나가거나 글 탓이 아니라서 세지 않는다.
       let failureReady = false;
 

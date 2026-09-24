@@ -224,3 +224,35 @@ export function selectFeed<T extends ArticleListItem>(params: {
         : { dayKey: after.dayKey, count: after.articles.length },
   };
 }
+
+/**
+ * 목록이 빈 이유 — 화면이 문장으로 바꾼다 (design-rules 2026-09-21 「가르는 순서는
+ * 자리 → 주제 → 수집이다. 먼저 걸린 것이 원인이다」).
+ *
+ * - `noHot`: 핫이슈 자리에 **키워드와 무관하게** 한 건도 없다. 핫이슈 0건인 날은 정상이다(INV-N4).
+ * - `elsewhere`: 이 자리에는 켠 키워드 글이 없지만 `전체` 에는 있다 — 원인은 자리다.
+ * - `none`: 어디에도 없다 — 주제 또는 수집이다.
+ *
+ * 2026-09-24 UI 리뷰: 이 판단이 화면 안에 있을 때 핫이슈 분기가 키워드를 안 봐서, 핫이슈가
+ * 있는데도 「오늘은 핫이슈가 없습니다」가 나왔다. 건수는 **화면과 같은 함수(`orderFeed`)로** 센다.
+ */
+export type FeedEmptyReason =
+  | { kind: "noHot"; newsCount: number }
+  | { kind: "elsewhere"; allCount: number }
+  | { kind: "none" };
+
+export function feedEmptyReason<T extends ArticleListItem>(params: {
+  articles: readonly T[];
+  segment: FeedSegment;
+  tag: ArticleTag | null;
+}): FeedEmptyReason {
+  const { articles, segment, tag } = params;
+  if (segment === "hot" && orderFeed({ articles, segment: "hot", tag: null }).length === 0) {
+    return { kind: "noHot", newsCount: orderFeed({ articles, segment: "news", tag }).length };
+  }
+  if (tag !== null && segment !== "all") {
+    const allCount = orderFeed({ articles, segment: "all", tag }).length;
+    if (allCount > 0) return { kind: "elsewhere", allCount };
+  }
+  return { kind: "none" };
+}

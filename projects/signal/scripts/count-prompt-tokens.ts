@@ -21,9 +21,9 @@ import {
   ENRICH_MAX_TOKENS,
   ENRICH_MODEL,
 } from "../src/features/ingestion/lib/budgets";
+import { buildEnrichPrompt } from "../src/features/ingestion/lib/build-enrich-prompt";
 import {
   EVIDENCE_ONLY,
-  OFFICIAL_RULE,
   ROLE,
   TITLE_RULE,
   keywordRules,
@@ -67,23 +67,6 @@ async function fetchItems(limit: number): Promise<Row[]> {
   return (await res.json()) as Row[];
 }
 
-/** 지금 돌고 있는 프롬프트 그대로. */
-function currentSystem(needSummary: boolean, needTitle: boolean): string {
-  const wanted = [
-    needTitle ? '"titleKo": "한국어로 옮긴 제목"' : null,
-    needSummary ? '"summary": "요약문"' : null,
-    needSummary ? '"points": ["핵심 항목", "..."]' : null,
-    needSummary ? '"tags": ["..."]' : null,
-    needSummary ? '"official": true|false' : null,
-  ].filter((l): l is string => l !== null);
-
-  const rules = [ROLE, EVIDENCE_ONLY];
-  if (needTitle) rules.push(TITLE_RULE);
-  if (needSummary) rules.push(...summaryRules(), OFFICIAL_RULE);
-  rules.push(`출력은 JSON 하나: {${wanted.join(", ")}}. 다른 말은 쓰지 않는다.`);
-  return rules.map((r) => `- ${r}`).join("\n");
-}
-
 /**
  * 아직 스펙으로 확정되지 않은 **초안**이다 (지금은 갈래뿐).
  * 스펙이 승인되면 이 문장들은 prompt-text.ts 로 옮기고 여기서는 지운다.
@@ -97,7 +80,7 @@ function currentSystem(needSummary: boolean, needTitle: boolean): string {
 const DRAFT_RULES = [
   "갈래는 핫이슈·소식·스킬/툴 중에서 고른다. 해당하면 여러 개를 골라도 된다.",
 ];
-// 공식 표시는 2026-08-11 에 스펙(INV-O2)으로 확정돼 여기서 뺐다 — 이제 currentSystem 이
+// 공식 표시는 2026-08-11 에 스펙(INV-O2)으로 확정돼 여기서 뺐다 — 이제 실제 조립(buildEnrichPrompt)이
 // OFFICIAL_RULE 로 싣는다. 초안에 남겨 두면 이미 내는 비용을 "추가 비용"으로 두 번 센다.
 
 function draftSystem(keywords: string[]): string {
@@ -173,7 +156,15 @@ async function main() {
     const user = `제목: ${row.title}\n\n글:\n${evidence.slice(0, EVIDENCE_LIMIT)}`;
     const needSummary = evidence !== "";
 
-    const cur = await count(currentSystem(needSummary, true), needSummary ? user : `제목: ${row.title}`);
+    // 지금 보내는 것은 수집 코드의 조립 함수에서 그대로 가져온다 — 여기서 베껴 두었다가
+    // 옛 형식(summary·tags)을 재고 있었다(2026-09-24 리뷰).
+    const now = buildEnrichPrompt({
+      title: row.title,
+      evidence: evidence.slice(0, EVIDENCE_LIMIT),
+      needSummary,
+      needTitle: true,
+    });
+    const cur = await count(now.system, now.user);
     const draft = await count(draftSystem(keywords), user);
     curTotal += cur;
     draftTotal += draft;

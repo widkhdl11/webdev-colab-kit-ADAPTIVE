@@ -61,8 +61,14 @@ export function buildChainRequest(input: {
   secret: string | undefined;
   /** 지금이 몇 번째인가. 다음은 이 값 + 1 이다. */
   chainIndex: number;
+  /**
+   * `http:` 주소를 받을지. **로컬 개발 서버에서만 켠다.** 배포 환경에서 http 로 적힌 주소를
+   * 부르면 첫 요청에 시크릿이 평문으로 실린다 — 그 뒤 https 로 넘어가며 헤더가 떨어져 어차피
+   * 401 이니, 동작은 안 하고 노출만 되는 설정이다(2026-09-24 보안 리뷰).
+   */
+  allowHttp?: boolean;
 }): ChainRequest | null {
-  const { baseUrl, secret, chainIndex } = input;
+  const { baseUrl, secret, chainIndex, allowHttp = false } = input;
   if (!baseUrl || baseUrl.trim() === "") return null;
   if (!secret || secret.trim() === "") return null;
   // 상한에 닿았으면 여기서 끝이다. 범위 밖의 값이 들어와도 같다.
@@ -72,8 +78,10 @@ export function buildChainRequest(input: {
   let origin: string;
   try {
     const parsed = new URL(baseUrl.trim());
-    // `file:`·`data:` 같은 것에 시크릿을 넘기지 않는다.
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    // `file:`·`data:` 같은 것에 시크릿을 넘기지 않는다. http 는 로컬에서만(위 `allowHttp`).
+    const okProtocol =
+      parsed.protocol === "https:" || (allowHttp && parsed.protocol === "http:");
+    if (!okProtocol) return null;
     // 오리진만 쓴다 — 환경변수에 경로·쿼리가 섞여 들어와도 목적지가 안 달라진다.
     origin = parsed.origin;
   } catch {
@@ -123,6 +131,11 @@ export async function sendChainRequest(
     await fetchImpl(request.url, {
       method: "GET",
       headers: request.headers,
+      // 리다이렉트를 따라가지 않는다 (INV-CB1 — 목적지는 환경변수 하나). 따라가면 실제 목적지를
+      // 응답의 Location 이 정하고, 시크릿 헤더를 떼느냐는 런타임 버전에 달린다. `manual` 이
+      // 아니라 `error` 인 이유: 실패가 드러난다(아래 catch 로 가고 이 바퀴는 정상으로 끝난다).
+      // 예: INGEST_BASE_URL 을 `simoori.com` 으로 적으면 www 로 308 이 나서 여기서 끊긴다.
+      redirect: "error",
       signal: AbortSignal.timeout(CHAIN_DISPATCH_TIMEOUT_MS),
     });
   } catch {

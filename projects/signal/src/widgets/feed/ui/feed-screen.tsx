@@ -12,8 +12,8 @@ import {
 import {
   articleHref,
   buildSegmentBadges,
+  feedEmptyReason,
   feedHref,
-  orderFeed,
   parseFeedState,
   selectFeed,
   withMoreDays,
@@ -82,24 +82,21 @@ export function FeedScreen({ articles, nowIso }: Props) {
   /**
    * 지금 비어 있는 이유를 문장으로 (2026-09-21).
    *
-   * 자리 → 주제 → 수집 순으로 가른다. **먼저 걸린 것이 원인이다** — 핫이슈가 0건이면
-   * 주제 필터를 탓할 이유가 없고, 자리가 `소식` 인데 비었으면 그때야 수집을 말할 수 있다.
+   * **어느 것이 원인인지는 entities 가 가른다**(feedEmptyReason — 자리 → 주제 → 수집, 먼저 걸린
+   * 것이 원인). 여기서는 문장만 고른다. 2026-09-24 까지는 이 판단이 여기 있었고, 핫이슈 분기가
+   * 켠 키워드를 안 봐서 핫이슈가 있는데도 「오늘은 핫이슈가 없습니다」가 나왔다.
    */
   const emptyMessage = useMemo(() => {
-    if (segment === "hot") {
-      // 소식 자리의 건수도 **화면과 같은 함수로** 센다 — 여기서 배치 조건을 손으로 다시
-      // 쓰면 켠 필터를 무시한 숫자가 나온다(2026-09-23 리뷰).
-      const rest = orderFeed({ articles, segment: "news", tag }).length;
-      return rest > 0
-        ? `오늘은 핫이슈가 없습니다 — 소식에 ${rest}건 있습니다.`
+    const reason = feedEmptyReason({ articles, segment, tag });
+    if (reason.kind === "noHot") {
+      return reason.newsCount > 0
+        ? `오늘은 핫이슈가 없습니다 — 소식에 ${reason.newsCount}건 있습니다.`
         : "오늘은 핫이슈가 없습니다.";
     }
-    // 자리를 바꿔도 키워드는 켜진 채 남는다. 그 키워드 글이 다른 자리에만 있으면
-    // 원인은 주제가 아니라 자리다 — 핫이슈 문장과 같은 모양으로 갈 곳을 알려 준다.
-    if (tag !== null && segment !== "all") {
-      const rest = orderFeed({ articles, segment: "all", tag }).length;
-      if (rest > 0) return `이 자리에는 이 주제의 글이 없습니다 — 전체에 ${rest}건 있습니다.`;
+    if (reason.kind === "elsewhere") {
+      return `이 자리에는 이 주제의 글이 없습니다 — 전체에 ${reason.allCount}건 있습니다.`;
     }
+    if (segment === "hot") return "이 주제의 핫이슈가 아직 없습니다.";
     if (segment === "tools") {
       return tag === null
         ? "스킬·툴로 분류된 글이 아직 없습니다."
