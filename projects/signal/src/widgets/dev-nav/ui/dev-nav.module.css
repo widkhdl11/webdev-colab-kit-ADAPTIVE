@@ -1,0 +1,32 @@
+/* 개발자 대시보드 탭 줄. 시각 방향을 새로 잡지 않는다 — 기존 토큰만(ingest-dashboard 와 같은 결정). */
+
+.nav {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-20) 0;
+  display: flex;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tab {
+  padding: var(--space-8) var(--space-14);
+  font-size: var(--fs-ui);
+  color: var(--meta);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  min-height: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab[aria-current="page"] {
+  color: var(--text);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+}

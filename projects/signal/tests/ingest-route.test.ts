@@ -139,6 +139,18 @@ vi.mock("@/features/ingestion", async () => {
   };
 });
 
+/**
+ * 판정 검토 주간 실행 (verdict-review INV-VR2·VR8). 라우트가 확인할 것은 셋 —
+ * 첫 바퀴에서만 부른다 · 인가 뒤에 부른다 · 실패해도 수집은 그대로 200 이다.
+ */
+const runWeeklyReview = vi.fn(async (_p: unknown) => ({ ok: true, message: "할 일 없음" }));
+const createReviewStore = vi.fn(() => ({}));
+vi.mock("@/features/verdict-review", () => ({ runWeeklyReview }));
+// `after` 는 진짜 요청 안에서만 돈다(밖에서 부르면 던진다). 등록만 기록하고 실행은 하지 않는다.
+const after = vi.fn((_task: unknown) => {});
+vi.mock("next/server", async (importOriginal) => ({ ...(await importOriginal<typeof import("next/server")>()), after }));
+vi.mock("@/features/verdict-review/api/supabase-store", () => ({ createReviewStore }));
+
 const call = async (headers: Record<string, string> = {}, url = "http://localhost/api/ingest") => {
   const { GET } = await import("@/app/api/ingest/route");
   return GET(new Request(url, { method: "GET", headers }));
@@ -151,6 +163,10 @@ beforeEach(() => {
   saveIngestRunReport.mockClear();
   saveIngestRunReport.mockImplementation(async () => {});
   sendChainRequest.mockClear();
+  runWeeklyReview.mockClear();
+  runWeeklyReview.mockImplementation(async () => ({ ok: true, message: "할 일 없음" }));
+  createReviewStore.mockClear();
+  createReviewStore.mockImplementation(() => ({}));
   // 기본은 "다 끝냈다" — 이어달리기가 이 파일의 기존 케이스에 끼어들지 않게 한다.
   runIngest.mockImplementation(async () => REPORT);
 });
@@ -554,5 +570,62 @@ describe("GET /api/ingest — 응답의 chain 칸", () => {
     const body = (await res.json()) as Report;
     expect(body.budget.exhausted).toBe(true);
     expect(body.cost).toEqual(NO_COST);
+  });
+});
+
+describe("GET /api/ingest — 판정 검토 주간 실행 (verdict-review)", () => {
+  it("INV-VR2: 이어달리기의 첫 바퀴에서만 부르고, 둘째 바퀴부터는 안 부른다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    await call({ authorization: `Bearer ${SECRET}` });
+    expect(runWeeklyReview).toHaveBeenCalledTimes(1);
+    runWeeklyReview.mockClear();
+    await call({ authorization: `Bearer ${SECRET}` }, "http://localhost/api/ingest?chain=2");
+    expect(runWeeklyReview).not.toHaveBeenCalled();
+  });
+
+  it("INV-VR9: 인가가 틀리면 부르지 않는다 — 남이 우리 DB 쓰기를 부르게 하지 않는다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    await call({ authorization: "Bearer wrong" });
+    expect(runWeeklyReview).not.toHaveBeenCalled();
+    expect(createReviewStore).not.toHaveBeenCalled();
+  });
+
+  it("INV-VR8: 주간 실행이 던져도 수집은 그대로 돌고 200 이다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    runWeeklyReview.mockImplementation(async () => {
+      throw new Error("테이블 없음");
+    });
+    const res = await call({ authorization: `Bearer ${SECRET}` });
+    expect(res.status).toBe(200);
+    expect(runIngest).toHaveBeenCalledTimes(1);
+  });
+
+  it("INV-VR8: 주간 실행이 멈춰도(DB 가 안 답함) 15초 뒤 수집으로 넘어가고 200 — 남은 실행은 after 에 맡긴다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    // 라우트를 먼저 불러 둔다 — 가짜 시계를 켠 뒤 불러오면 모듈이 뜨기 전에 시계가 흘러 버린다
+    const { GET } = await import("@/app/api/ingest/route");
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    try {
+      runWeeklyReview.mockImplementation(() => new Promise(() => {}));
+      after.mockClear();
+      const pending = GET(new Request("http://localhost/api/ingest", { method: "GET", headers: { authorization: `Bearer ${SECRET}` } }));
+      await vi.advanceTimersByTimeAsync(15_000);
+      const res = await pending;
+      expect(res.status).toBe(200);
+      expect(runIngest).toHaveBeenCalledTimes(1);
+      expect(after).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("INV-VR8: 저장소를 만드는 순간 던져도(키 없음) 수집은 그대로 200 이다", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    createReviewStore.mockImplementation(() => {
+      throw new Error("SUPABASE_SECRET_KEY 없음");
+    });
+    const res = await call({ authorization: `Bearer ${SECRET}` });
+    expect(res.status).toBe(200);
+    expect(runIngest).toHaveBeenCalledTimes(1);
   });
 });

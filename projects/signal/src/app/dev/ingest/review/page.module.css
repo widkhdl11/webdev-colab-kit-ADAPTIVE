@@ -1,0 +1,27 @@
+/* 수집 대시보드(ingest-dashboard.module.css)의 머리와 같은 모양 — 탭을 오갈 때 자리가 안 움직이게. */
+
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--space-28) var(--space-20);
+}
+
+.pageHead h1 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-h1);
+  font-weight: 700;
+}
+
+.pageHead p {
+  margin: 0 0 var(--space-20);
+  font-size: var(--fs-ui);
+  color: var(--meta);
+}
+
+.error {
+  padding: var(--space-12) var(--space-14);
+  background: var(--sunken);
+  border-radius: var(--r-inline);
+  font-size: var(--fs-ui);
+  color: var(--text);
+}

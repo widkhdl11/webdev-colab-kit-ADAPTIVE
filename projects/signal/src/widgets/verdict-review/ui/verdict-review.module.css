@@ -1,0 +1,429 @@
+/* 판정 검토 탭 — 개발자 대시보드. 시각 방향을 새로 잡지 않는다(ingest-dashboard 와 같은 결정,
+   2026-08-17) — 기존 토큰만 쓴다. 색·라운드·그림자는 하드코딩하지 않는다. */
+
+.empty {
+  color: var(--meta);
+  font-size: var(--fs-body);
+  text-align: center;
+  padding: 56px var(--space-20);
+}
+
+.dim {
+  color: var(--meta);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  margin: 0 0 var(--space-12);
+  padding: var(--space-8) var(--space-12);
+  background: var(--sunken);
+  border-radius: var(--r-inline);
+  font-size: var(--fs-ui);
+  color: var(--text);
+}
+
+.hint {
+  margin: 0 0 var(--space-10);
+  font-size: var(--fs-xs);
+  color: var(--meta);
+}
+
+/* ── 눈여겨볼 것 ─────────────────────────────────────────── */
+.notices {
+  margin: 0 0 var(--space-20);
+  padding: var(--space-12) var(--space-14);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+}
+
+.notices ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-6);
+  font-size: var(--fs-body);
+}
+
+.noticesTitle {
+  margin: 0 0 var(--space-8);
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+/* 상태를 색으로만 가르지 않는다 — 앞에 「확인 필요」·「참고」 글자가 붙는다. */
+.noticeWarn,
+.noticeInfo {
+  color: var(--text);
+}
+
+.noticeWarn .noticeTag {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.noticeTag {
+  display: inline-block;
+  min-width: 64px;
+  margin-right: var(--space-8);
+  font-size: var(--fs-xs);
+  color: var(--meta);
+}
+
+/* ── 위쪽 세 칸 ──────────────────────────────────────────── */
+.top {
+  display: grid;
+  grid-template-columns: 1.1fr 1.4fr 0.8fr;
+  gap: var(--space-12);
+  margin-bottom: var(--space-12);
+}
+
+@media (max-width: 760px) {
+  .top {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: var(--space-12) var(--space-14);
+  min-width: 0;
+}
+
+.cardTitle {
+  margin: 0 0 var(--space-10);
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+/* 막대: 한 계열이라 색 하나, 범례 없음. 값은 막대 위에 글자로 — 색으로만 읽게 하지 않는다. */
+.bars {
+  display: flex;
+  gap: var(--space-10);
+  align-items: flex-end;
+  height: 120px;
+  padding-top: var(--space-16);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  min-width: 0;
+}
+
+.barValue {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+  white-space: nowrap;
+}
+
+.track {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.barFill {
+  width: 60%;
+  max-width: 36px;
+  min-height: 2px;
+  background: var(--accent);
+  border-radius: var(--r-inline) var(--r-inline) 0 0;
+}
+
+/* 값이 없는 주: 낮은 점선 칸. 꽉 찬 막대처럼 보이지 않게 낮게, 선은 흐린 글자색으로. */
+.barEmpty {
+  width: 60%;
+  max-width: 36px;
+  height: 24px;
+  border: 1px dashed var(--meta);
+  border-bottom: none;
+}
+
+.barLabels {
+  display: flex;
+  gap: var(--space-10);
+  margin-top: var(--space-6);
+}
+
+.barLabels span {
+  flex: 1;
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--meta);
+  white-space: nowrap;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-10);
+}
+
+@media (max-width: 520px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.split h3 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--meta);
+}
+
+.split ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--fs-ui);
+}
+
+.split li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.split li span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.big {
+  margin: 0;
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.meter {
+  height: 6px;
+  margin-top: var(--space-8);
+  background: var(--sunken);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+
+.meter > div {
+  height: 100%;
+  background: var(--accent);
+}
+
+.status,
+.statusError {
+  min-height: 1.6em;
+  margin: 0 0 var(--space-8);
+  font-size: var(--fs-ui);
+  color: var(--meta);
+}
+
+.statusError {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* ── 표본 목록 ──────────────────────────────────────────── */
+.listTitle {
+  margin: var(--space-16) 0 var(--space-6);
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-10);
+}
+
+.item {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: var(--space-12) var(--space-14);
+}
+
+.itemDone {
+  background: var(--surface-read);
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-10);
+}
+
+.title {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.title a {
+  color: inherit;
+}
+
+.src {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--meta);
+  white-space: nowrap;
+}
+
+.verdict {
+  margin: var(--space-8) 0;
+  font-size: var(--fs-ui);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: var(--space-10);
+}
+
+.row dt {
+  color: var(--meta);
+}
+
+.row dd {
+  margin: 0;
+  font-size: var(--fs-title);
+  overflow-wrap: anywhere;
+}
+
+.sum {
+  margin: var(--space-4) 0 var(--space-10);
+  font-size: var(--fs-ui);
+}
+
+.sum summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.sum p,
+.sum li {
+  font-size: var(--fs-title);
+}
+
+.sum p {
+  margin: var(--space-6) 0 0;
+}
+
+.sum ul {
+  margin: var(--space-6) 0 0;
+  padding-left: var(--space-20);
+}
+
+.answers,
+.dirs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: center;
+}
+
+.dirs {
+  margin-top: var(--space-8);
+  padding: var(--space-8);
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-inline);
+}
+
+.dirsQ {
+  width: 100%;
+  font-size: var(--fs-xs);
+  color: var(--meta);
+}
+
+.btn {
+  min-height: var(--touch-min);
+  padding: var(--space-6) var(--space-14);
+  font: inherit;
+  font-size: var(--fs-btn);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--border-soft-h);
+}
+
+/* 고른 답: 채움 + 흰 글자. 닫힌 주에도 그대로 둔다 — 그때는 이것이 「내 답」의 유일한 표시다. */
+.btn[aria-pressed="true"] {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* 닫힌 주의 안 고른 버튼: opacity 로 흐리게 하지 않는다(대비가 떨어진다). 바탕만 바꾼다. */
+.btn:disabled:not([aria-pressed="true"]) {
+  color: var(--meta);
+  background: var(--surface-read);
+  cursor: not-allowed;
+}
+
+.btn[aria-pressed="true"]:disabled {
+  cursor: not-allowed;
+}
+
+.dirs .btn[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--bg);
+  font-weight: 700;
+}
+
+.doneSummary {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-10);
+  cursor: pointer;
+  list-style: none;
+}
+
+.doneSummary::-webkit-details-marker {
+  display: none;
+}
+
+.doneTitle {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--fs-ui);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .sum summary,
+  .doneSummary {
+    min-height: var(--touch-min);
+    display: flex;
+    align-items: center;
+  }
+}

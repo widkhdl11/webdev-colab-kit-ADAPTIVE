@@ -137,7 +137,10 @@ const withoutComments = (text: string) =>
  */
 export function policyViolations(sqlText: string): string[] {
   const out: string[] = [];
-  if (/for\s+(insert|update|delete|all)\b/.test(sqlText)) out.push("쓰기 정책(for insert·update·delete·all)");
+  // 정책 문장 안에서만 본다 — 함수 본문의 행 잠금(`select ... for update`, 0012 판정 검토)이나
+  // 트리거의 `for each row` 는 정책이 아니다. 문장 밖까지 보면 그것들이 쓰기 정책으로 잡힌다(2026-09-24).
+  const policies = sqlText.match(/create\s+policy[\s\S]*?;/g) ?? [];
+  if (policies.some((p) => /\bfor\s+(insert|update|delete|all)\b/.test(p))) out.push("쓰기 정책(for insert·update·delete·all)");
   // `for` 절이 없는 정책은 FOR ALL 이다 — 문장 단위로 보고 `for select` 가 아닌 것을 찾는다.
   for (const stmt of sqlText.match(/create\s+policy[\s\S]*?;/g) ?? []) {
     if (!/\bfor\s+select\b/.test(stmt)) out.push(`읽기 전용이 아닌 정책: ${stmt.trim().slice(0, 60)}`);
@@ -169,6 +172,14 @@ describe("마이그레이션 전체 — INV-DA1·DA2 는 파일 하나의 약속
   // ── 심은 위반 셋. 이름표를 따로 단다 — 하나로 묶으면 한 갈래만 붙들려 있어도 만점이 된다.
   it("프로브(쓰기 정책): for insert 를 심으면 잡는다", () => {
     expect(policyViolations(`${all}\ncreate policy "x" on public.item for insert with check (true);`))
+      .toContain("쓰기 정책(for insert·update·delete·all)");
+  });
+
+  it("프로브(행 잠금은 정책이 아니다): 함수 안의 select … for update 는 쓰기 정책으로 안 센다", () => {
+    const lock = "create or replace function f() returns void as $$ begin perform 1 from public.item where id = null for update; end $$;";
+    expect(policyViolations(lock)).toEqual([]);
+    // 같은 입력에 정책을 하나 심으면 잡는다 — 위 단언이 「아무것도 안 잡는 함수」로 통과한 것이 아님을 본다
+    expect(policyViolations(`${lock}\ncreate policy "x" on public.item for update using (true);`))
       .toContain("쓰기 정책(for insert·update·delete·all)");
   });
 

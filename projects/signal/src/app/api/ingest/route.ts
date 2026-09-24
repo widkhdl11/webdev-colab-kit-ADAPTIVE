@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { SOURCES } from "@/entities/source";
 import { selfBaseUrl } from "@/shared/api/server-env";
 import {
@@ -11,6 +11,11 @@ import {
   sendChainRequest,
   shouldChain,
 } from "@/features/ingestion";
+import { runWeeklyReview } from "@/features/verdict-review";
+import { createReviewStore } from "@/features/verdict-review/api/supabase-store";
+
+/** 판정 검토 주간 실행의 상한. 평소 몇 초다 — 넘으면 기다리지 않고 수집으로 간다(실행은 after 로 끝까지 돈다). */
+const WEEKLY_REVIEW_TIMEOUT_MS = 15_000;
 
 /**
  * 수집 진입점 (Cron).
@@ -45,6 +50,24 @@ export async function GET(request: Request) {
   // 몇 번째 이어달리기인가 (INV-CB5). 쿼리 문자열은 남이 보낸 값이라 범위를 확인하고 쓴다 —
   // 읽을 수 없거나 범위 밖이면 첫 번째로 본다.
   const chainIndex = parseChainIndex(new URL(request.url).searchParams.get(CHAIN_PARAM));
+
+  // 판정 검토 주간 실행 — 이어달리기의 **첫 바퀴에서만**, 수집보다 먼저(verdict-review INV-VR2·VR8).
+  // 할 일 없는 날은 조회 한 번이다. 실패해도 던지지 않고 자기 기록에 남긴다 — 수집이 실패로 보이면 안 된다.
+  // 시간 상한을 따로 둔다: 수집 예산(240초) 밖의 여유 60초를 이것이 다 먹으면 안 된다.
+  if (chainIndex === 1) {
+    // 저장소 만들기(키 읽기)도 던질 수 있어서 통째로 감싼다 — 인자를 만드는 중에 던지면 .catch 가 못 잡는다.
+    const weekly = (async () => {
+      try {
+        await runWeeklyReview({ store: createReviewStore(), now: new Date() });
+      } catch {
+        // runWeeklyReview 는 던지지 않는다. 여기 오는 것은 저장소를 못 만든 경우뿐이고, 수집은 그대로 간다.
+      }
+    })();
+    // 상한을 넘기면 수집으로 넘어가되, 남은 주간 실행은 응답 뒤에도 끝까지 돌게 등록한다(after) —
+    // 등록하지 않으면 서버리스 함수가 끝날 때 주 만들기 도중에 끊길 수 있다.
+    after(() => weekly);
+    await Promise.race([weekly, new Promise((resolve) => setTimeout(resolve, WEEKLY_REVIEW_TIMEOUT_MS))]);
+  }
 
   const runId = crypto.randomUUID();
   const startedAt = new Date();

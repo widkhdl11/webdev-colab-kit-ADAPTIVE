@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { IngestRunRecord, RunSourceItem, SpendSummary } from "@/entities/ingest-run";
 import {
   avgMsPerItem,
@@ -16,6 +17,8 @@ interface Props {
   spend: SpendSummary;
   selectedSourceId: string | null;
   sourceItems: RunSourceItem[] | null;
+  /** 머리 아래 자리 — 판정 검토의 「눈여겨볼 것」이 들어온다(위젯끼리 import 하지 않으려고 자리만 연다). */
+  notices?: ReactNode;
 }
 
 const fmt = (n: number) => n.toLocaleString("ko-KR");
@@ -50,7 +53,7 @@ const LEGACY_MODELS = {
   keywords: "claude-sonnet-5",
 } as const;
 
-export function IngestDashboard({ run, spend, selectedSourceId, sourceItems }: Props) {
+export function IngestDashboard({ run, spend, selectedSourceId, sourceItems, notices = null }: Props) {
   if (run === null) {
     return (
       <main className={styles.wrap}>
@@ -58,6 +61,7 @@ export function IngestDashboard({ run, spend, selectedSourceId, sourceItems }: P
           <h1>수집 파이프라인</h1>
           <p>개발자용 — 최근 실행 1건의 소스별 통계를 보여준다.</p>
         </div>
+        {notices}
         <p className={styles.empty}>아직 기록된 실행이 없습니다. `npm run ingest` 를 한 번 돌려보세요.</p>
       </main>
     );
@@ -140,6 +144,8 @@ export function IngestDashboard({ run, spend, selectedSourceId, sourceItems }: P
           </p>
         ) : null}
       </div>
+
+      {notices}
 
       {/* 단계별 시간 (2026-09-22). 총 소요시간 하나만으로는 어느 단계가 예산을 쓰는지
           알 수 없어서, 한 바퀴를 어떻게 나눌지를 추정으로 정하게 된다.

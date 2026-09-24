@@ -8,6 +8,12 @@ import {
 } from "@/entities/ingest-run/api/dashboard-queries";
 import { summarizeSpend } from "@/entities/ingest-run";
 import { IngestDashboard } from "@/widgets/ingest-dashboard";
+import { localDevOnly } from "../local-guard";
+import { fetchReviewItems, fetchReviewRuns, fetchReviewWeeks } from "@/entities/verdict-review/api/review-queries";
+import { pickReviewWeek } from "@/entities/verdict-review";
+import { reviewNotices, type Notice } from "@/features/verdict-review";
+import { DevNav } from "@/widgets/dev-nav";
+import { ReviewNotices } from "@/widgets/verdict-review";
 
 /**
  * 개발자용 파이프라인 대시보드 — 최근 실행 1건의 소스별 통계 (2026-08-17).
@@ -24,7 +30,8 @@ interface Props {
 }
 
 export default async function IngestDashboardPage({ searchParams }: Props) {
-  if (process.env.NODE_ENV === "production") notFound();
+  // 배포본·다른 기기·재바인딩한 주소면 없는 화면이다 (verdict-review INV-VR9, 2026-09-24 보안 리뷰)
+  if (!(await localDevOnly())) notFound();
 
   // 요금 합계는 **최신 실행 하나로는 안 나온다** — 하루에 여러 번 돌 수 있다.
   // 7일을 받아 오늘 합계와 하루 평균을 같이 낸다(월 환산의 재료다).
@@ -44,11 +51,31 @@ export default async function IngestDashboardPage({ searchParams }: Props) {
   const sourceItems = sourceExists ? await fetchRunSourceItems(run.id, source) : null;
 
   return (
-    <IngestDashboard
-      run={run}
-      spend={spend}
-      selectedSourceId={source ?? null}
-      sourceItems={sourceItems}
-    />
+    <>
+      <DevNav current="ingest" />
+      <IngestDashboard
+        run={run}
+        spend={spend}
+        selectedSourceId={source ?? null}
+        sourceItems={sourceItems}
+        notices={<ReviewNotices notices={await loadReviewNotices(now)} />}
+      />
+    </>
   );
+}
+
+/**
+ * 판정 검토의 「눈여겨볼 것」(verdict-review INV-VR8). 판정 검토 테이블을 못 읽어도(마이그레이션 전 등)
+ * 수집 대시보드는 그대로 그린다 — 대신 못 읽었다는 줄 하나를 띄운다.
+ */
+async function loadReviewNotices(now: Date): Promise<Notice[]> {
+  try {
+    const nowMs = now.getTime();
+    const [weeks, runs] = await Promise.all([fetchReviewWeeks(60), fetchReviewRuns()]);
+    const { week, open } = pickReviewWeek(weeks, nowMs);
+    const openItems = open && week ? await fetchReviewItems(week.week) : null;
+    return reviewNotices({ weeks, openItems, lastRun: runs.last, nowMs });
+  } catch {
+    return [{ tone: "warn", text: "판정 검토 기록을 읽지 못했다 — 마이그레이션 0012(판정 검토 테이블)를 적용했는지 본다" }];
+  }
 }
