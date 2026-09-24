@@ -193,11 +193,37 @@ export function findNeighbors<T extends { id: string }>(
 }
 
 /**
+ * 지금 펼친 날들의 **가장 오래된 날짜 키** — 목록과 뱃지 줄이 같은 날들을 보게 하는 경계다
+ * (2026-09-24 사용자 지시: "키워드는 기본으로 당일 것만, 더 보기를 누르면 전날 것까지").
+ *
+ * 날은 **자리의 날짜 묶음**으로 센다 — 키워드를 켜기 전이다. 켠 키워드로 걸러진 목록에서 세면
+ * 그 키워드가 없는 날을 건너뛰어, 뱃지는 「오늘」을 셌는데 목록은 사흘 전까지 내려가는 일이 난다.
+ * 글이 없는 날은 날짜 묶음이 없으니 건너뛴다 — 「더 보기」가 하루씩 넘기는 단위와 같다.
+ * 그 자리에 글이 한 건도 없으면 `null` 이다.
+ */
+export function shownDaysStart<T extends ArticleListItem>(params: {
+  articles: readonly T[];
+  segment: FeedSegment;
+  /** 펼쳐 둔 날 수. 오늘이 1이다. */
+  days: number;
+}): string | null {
+  if (params.days < 1) return null;
+  const groups = groupByDay(inSegment(params.articles, params.segment));
+  if (groups.length === 0) return null;
+  const index = Math.min(params.days, groups.length) - 1;
+  return groups[index]?.dayKey ?? null;
+}
+
+/**
  * 필터 → 정렬 → 날짜 묶음 → **날 수**로 자른다.
  *
  * 2026-09-23 까지는 카드 열두 장 단위로 잘랐다. 그러면 그날 그룹이 중간에서 끊겨
  * 「어제 · 5건」 헤더 아래 카드가 3장만 그려지는 일이 생겼다. 하루 단위로 자르면
  * 날짜 옆 건수가 화면의 카드 수와 항상 같다(design-rules 2026-09-01).
+ *
+ * 날 수는 **자리의 날짜 묶음**으로 센다(`shownDaysStart`) — 뱃지 줄이 세는 날과 같게 하려고다.
+ * 그래서 키워드를 켜면 뱃지에 적힌 수만큼 카드가 나온다. 켠 키워드가 없는 날로 「더 보기」가
+ * 넘어가면 그날은 0건이다.
  */
 export function selectFeed<T extends ArticleListItem>(params: {
   articles: readonly T[];
@@ -206,22 +232,34 @@ export function selectFeed<T extends ArticleListItem>(params: {
   /** 펼쳐 둔 날 수. 오늘이 1이다. */
   days: number;
 }): FeedSelection<T> {
-  const { days } = params;
+  const { articles, segment, days } = params;
   // 버린 항목(발행시각 파싱 실패)은 여기서 이미 빠진다 — groupByDay 가 버리므로
   // total 에도 안 남는다. 남으면 shown < total 이 영원히 참이 되고,
   // "더 보기"가 눌러도 아무 일 없는 버튼으로 굳는다.
   const all = groupByDay(orderFeed(params));
-  const visible = all.slice(0, Math.max(0, days));
-  const after = all[visible.length];
+  const start = shownDaysStart({ articles, segment, days });
+  const visible = start === null ? [] : all.filter((g) => g.dayKey >= start);
+
+  // 다음 날은 자리의 날짜 묶음에서 고르고, 건수는 걸러진 목록에서 센다.
+  const segmentDays = groupByDay(inSegment(articles, segment)).map((g) => g.dayKey);
+  const nextKey =
+    start === null ? undefined : segmentDays.find((key) => key < start);
+  const total = all.reduce((n, g) => n + g.articles.length, 0);
+  const shown = visible.reduce((n, g) => n + g.articles.length, 0);
 
   return {
     groups: visible,
-    shown: visible.reduce((n, g) => n + g.articles.length, 0),
-    total: all.reduce((n, g) => n + g.articles.length, 0),
+    shown,
+    total,
+    // 걸러진 글이 더 남지 않았으면 자리에 옛날이 남아 있어도 끝이다 — 안 그러면 키워드를 켠
+    // 상태에서 「더 보기 · 0건」을 끝없이 누르게 된다.
     nextDay:
-      after === undefined
+      nextKey === undefined || shown >= total
         ? null
-        : { dayKey: after.dayKey, count: after.articles.length },
+        : {
+            dayKey: nextKey,
+            count: all.find((g) => g.dayKey === nextKey)?.articles.length ?? 0,
+          },
   };
 }
 

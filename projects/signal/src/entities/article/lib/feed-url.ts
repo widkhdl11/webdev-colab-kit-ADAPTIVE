@@ -1,6 +1,5 @@
 import type { ArticleListItem, ArticleTag } from "../model/types";
-import { BADGE_WINDOW_DAYS } from "./badges";
-import { groupByDay } from "./query";
+import { groupByDay, inSegment } from "./query";
 import type { FeedSegment } from "./query";
 
 /**
@@ -21,6 +20,10 @@ export interface FeedState {
   days: number;
 }
 
+/**
+ * 기본 펼침은 **키워드를 켰든 안 켰든 하루**다 (2026-09-24). 전에는 뱃지를 켜면 집계 창(3일)만큼
+ * 폈다 — 뱃지 숫자가 3일치를 셌기 때문이다. 이제 뱃지는 피드가 펼친 날만 센다.
+ */
 export const DEFAULT_FEED_STATE: FeedState = {
   segment: "hot",
   tag: null,
@@ -37,32 +40,20 @@ export const MAX_FEED_DAYS = 365;
 
 const SEGMENTS: readonly FeedSegment[] = ["all", "hot", "news", "tools"];
 
-/** 뱃지를 켠 상태의 기본 펼침은 집계 창만큼이다 — 아래 `withTag` 참고. */
-function defaultDays(tag: ArticleTag | null): number {
-  return tag === null ? DEFAULT_FEED_STATE.days : BADGE_WINDOW_DAYS;
-}
-
 /** 「더 보기」 한 번. 하루씩 늘린다 — 수집이 매일 아침 도는 배치라 사용자가 세는 단위가 하루다. */
 export function withMoreDays(state: FeedState): FeedState {
   return { ...state, days: Math.min(state.days + 1, MAX_FEED_DAYS) };
 }
 
 /**
- * 뱃지를 켜고 끈다 (design-rules 2026-09-01 (2) 「뱃지를 켜면 집계 창만큼 편다」).
+ * 뱃지를 켜고 끈다. **펼친 날 수는 그대로 둔다.**
  *
- * **켤 때는 집계 창만큼 편다.** 뱃지 숫자는 창 3일치를 센 값인데 목록은 하루씩 나오므로,
- * 그대로 두면 「6」이라고 적힌 뱃지를 눌렀을 때 카드가 1장만 보이고 나머지는 「더 보기」 뒤에 숨는다.
- *
- * **줄이지는 않는다.** 이미 5일치를 펼쳐 둔 사람에게는 보던 것이 사라지는 일이 된다.
- * 끌 때도 안 돌린다 — 「더 보기」를 두 번 누른 것과 같은 상태다.
+ * 뱃지 숫자는 지금 펼친 날들을 센 값이라(`buildSegmentBadges`) 켜도 같은 날들 안에서
+ * 그 숫자만큼 카드가 나온다. 2026-09-24 까지는 켤 때 3일로 폈다(design-rules 2026-09-01 (2)) —
+ * 그때는 뱃지가 3일치를 셌기 때문이다.
  */
 export function withTag(state: FeedState, tag: ArticleTag | null): FeedState {
-  if (tag === null) return { ...state, tag: null };
-  return {
-    ...state,
-    tag,
-    days: Math.min(Math.max(state.days, BADGE_WINDOW_DAYS), MAX_FEED_DAYS),
-  };
+  return { ...state, tag };
 }
 
 /**
@@ -74,7 +65,7 @@ export function withTag(state: FeedState, tag: ArticleTag | null): FeedState {
  * 소식이나 전체 5일치로 넘어가면 뜬금없이 길어진다.
  */
 export function withSegment(state: FeedState, segment: FeedSegment): FeedState {
-  return { ...state, segment, days: defaultDays(state.tag) };
+  return { ...state, segment, days: DEFAULT_FEED_STATE.days };
 }
 
 /** 주소에서 값 하나를 꺼내는 함수. 서버(`searchParams` 객체)와 클라이언트(`URLSearchParams`)가 모양이 달라 함수로 받는다. */
@@ -89,12 +80,12 @@ function parseTag(raw: string | null): ArticleTag | null {
   return trimmed === "" ? null : trimmed;
 }
 
-function parseDays(raw: string | null, tag: ArticleTag | null): number {
+function parseDays(raw: string | null): number {
   const n = raw === null ? NaN : Number(raw);
   // 정수가 아니거나 범위를 벗어나면 기본값이다. 상한을 두는 이유는 `?days=99999` 같은
   // 주소가 그대로 렌더 비용이 되기 때문이다 — 날짜 그룹 수를 넘으면 어차피 더 안 나온다.
   if (!Number.isInteger(n) || n < 1 || n > MAX_FEED_DAYS)
-    return defaultDays(tag);
+    return DEFAULT_FEED_STATE.days;
   return n;
 }
 
@@ -103,7 +94,7 @@ export function parseFeedState(get: ParamReader): FeedState {
   return {
     segment: parseSegment(get("tab")),
     tag,
-    days: parseDays(get("days"), tag),
+    days: parseDays(get("days")),
   };
 }
 
@@ -113,7 +104,7 @@ function toParams(state: FeedState): URLSearchParams {
   if (state.segment !== DEFAULT_FEED_STATE.segment)
     params.set("tab", state.segment);
   if (state.tag !== null) params.set("kw", state.tag);
-  if (state.days !== defaultDays(state.tag))
+  if (state.days !== DEFAULT_FEED_STATE.days)
     params.set("days", String(state.days));
   return params;
 }
@@ -150,8 +141,9 @@ export function articleHref(id: string, state: FeedState): string {
  * 난다 — 그 글이 서는 자리(핫이슈 아니면 소식)로 옮긴다. `전체` 에는 모든 글이 서므로
  * 그 주소는 자리를 옮길 일이 없다.
  *
- * `days` 는 주소에 명시돼 있을 때만 지킨다. 없던 값은 "뱃지를 켰으니 3일"로 합성된
- * 것이라, 필터를 놓으면 근거가 사라진다.
+ * `days` 는 주소에 명시돼 있을 때만 지킨다. 없던 값은 기본값(하루)이다 — 2026-09-24 까지는
+ * "뱃지를 켰으니 3일"로 합성된 값이라 필터를 놓으면 근거가 사라졌다. 지금은 기본값이 하나라
+ * 결과가 같지만, 기본값이 다시 갈리는 날을 위해 판정은 남긴다.
  */
 export function fitFeedStateToArticle(params: {
   state: FeedState;
@@ -168,7 +160,7 @@ export function fitFeedStateToArticle(params: {
     next = {
       ...next,
       tag: null,
-      days: daysExplicit ? next.days : defaultDays(null),
+      days: daysExplicit ? next.days : DEFAULT_FEED_STATE.days,
     };
   }
   if (!inSegment(next.segment)) {
@@ -176,7 +168,7 @@ export function fitFeedStateToArticle(params: {
     next = {
       ...next,
       segment: home,
-      days: daysExplicit ? next.days : defaultDays(next.tag),
+      days: daysExplicit ? next.days : DEFAULT_FEED_STATE.days,
     };
   }
   return next;
@@ -189,13 +181,16 @@ export function fitFeedStateToArticle(params: {
  * 「다음 글」로 어제 글에 온 뒤 「피드로」를 누르면 오늘치만 펼친 피드로 돌아가 **방금 읽은
  * 글이 피드에 없었다**(2026-09-23 리뷰). 공유 링크로 사흘 전 글에 바로 들어온 경우도 같다.
  * 줄이지는 않는다 — 넓게 펼쳐 둔 사람의 화면을 좁힐 이유가 없다.
+ *
+ * 날은 **자리의 날짜 묶음**으로 센다 — 피드(`selectFeed`)가 그렇게 센다. 키워드로 걸러진
+ * 목록에서 세면 그 키워드가 없는 날을 건너뛰어 모자라게 펼친다.
  */
 export function withDaysCovering<T extends ArticleListItem>(
   state: FeedState,
-  ordered: readonly T[],
+  articles: readonly T[],
   id: string,
 ): FeedState {
-  const index = groupByDay(ordered).findIndex((g) =>
+  const index = groupByDay(inSegment(articles, state.segment)).findIndex((g) =>
     g.articles.some((a) => a.id === id),
   );
   if (index === -1) return state;

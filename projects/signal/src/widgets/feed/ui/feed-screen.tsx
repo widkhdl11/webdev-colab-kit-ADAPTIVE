@@ -87,6 +87,9 @@ export function FeedScreen({ articles, nowIso }: Props) {
    * 켠 키워드를 안 봐서 핫이슈가 있는데도 「오늘은 핫이슈가 없습니다」가 나왔다.
    */
   const emptyMessage = useMemo(() => {
+    // 펼친 날에만 없고 옛날에는 있다 — 키워드를 켠 채 날을 좁혀 둔 경우다(뱃지 줄은 펼친 날만
+    // 센다, 2026-09-24). 「아직 없습니다」라고 쓰면 더 보기 뒤에 있는 글을 없다고 말하게 된다.
+    if (total > 0) return "펼친 날에는 이 주제의 글이 없습니다 — 더 보기로 이전 날을 펼쳐 보세요.";
     const reason = feedEmptyReason({ articles, segment, tag });
     if (reason.kind === "noHot") {
       return reason.newsCount > 0
@@ -111,7 +114,7 @@ export function FeedScreen({ articles, nowIso }: Props) {
     return tag === null
       ? "아직 모인 소식이 없습니다."
       : "이 주제로 모인 소식이 아직 없습니다.";
-  }, [segment, tag, articles]);
+  }, [segment, tag, articles, total]);
 
   /**
    * 목록 길이가 바뀐 것을 화면 밖으로도 알린다 (design-rules 「늘어난 건수는 화면 밖으로도
@@ -132,11 +135,11 @@ export function FeedScreen({ articles, nowIso }: Props) {
   // 뱃지 줄은 **지금 자리의 글**로 센다 — 규칙은 entities 의 buildSegmentBadges 에 있다.
   // `isRead` 는 숫자에만 쓰인다: 자리·순서·노출은 전체 건수가 정한다(design-rules 2026-08-27).
   const { badges, elsewhere } = useMemo(
-    () => buildSegmentBadges({ articles, segment, isRead, nowIso }),
-    [articles, segment, isRead, nowIso],
+    () => buildSegmentBadges({ articles, segment, isRead, nowIso, days }),
+    [articles, segment, isRead, nowIso, days],
   );
 
-  // 켤 때 집계 창만큼 펴고 끌 때 안 줄이는 규칙, 자리를 바꾸면 날 수를 처음으로 돌리는
+  // 뱃지를 켜고 꺼도 펼친 날은 그대로, 자리를 바꾸면 날 수를 처음으로 돌리는
   // 규칙은 entities 에 있다(withTag · withSegment).
   const changeSegment = useCallback(
     (next: FeedSegment) => {

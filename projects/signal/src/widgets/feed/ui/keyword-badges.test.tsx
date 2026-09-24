@@ -316,7 +316,7 @@ describe("KeywordBadges — 세운 칩의 0 은 「다 읽었다」가 아니다
   it("세운 칩에는 취소선 모양을 안 붙이고 「집계에 없다」로 읽힌다", () => {
     const chip = first(render([badge({ name: "코딩" })], "창밖키워드"));
     expect(chip?.className).not.toContain(styles.kwZero);
-    expect(chip?.textContent).toContain("최근 3일 집계에는 없습니다");
+    expect(chip?.textContent).toContain("펼친 날에는 없습니다");
     expect(chip?.textContent).not.toContain("안 읽은 글 없음");
   });
 
@@ -429,13 +429,13 @@ describe("KeywordBadges — 켠 키워드가 이 자리에만 없을 때 (2026-0
   it("다른 자리에 있으면 「이 자리에는 없습니다」로 읽히고 축을 거기서 가져온다", () => {
     const [chip] = badgeButtons(renderWith([badge({ name: "출시", axis: "kind" })]));
     expect(chip.textContent).toContain("이 자리에는 없습니다");
-    expect(chip.textContent).not.toContain("최근 3일 집계에는 없습니다");
+    expect(chip.textContent).not.toContain("펼친 날에는 없습니다");
     expect(chip.className).toContain(styles.kwKind);
   });
 
-  it("어디에도 없으면 「최근 3일 집계에는 없습니다」 그대로다", () => {
+  it("어디에도 없으면 「펼친 날에는 없습니다」 그대로다", () => {
     const [chip] = badgeButtons(renderWith([]));
-    expect(chip.textContent).toContain("최근 3일 집계에는 없습니다");
+    expect(chip.textContent).toContain("펼친 날에는 없습니다");
     expect(chip.className).toContain(styles.kwField);
   });
 });

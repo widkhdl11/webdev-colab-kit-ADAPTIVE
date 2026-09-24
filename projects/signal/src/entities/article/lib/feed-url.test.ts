@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { BADGE_WINDOW_DAYS } from "./badges";
 import {
   articleHref,
   DEFAULT_FEED_STATE,
@@ -39,15 +38,10 @@ describe("피드 주소 — 주소가 화면 상태의 근거다 (design-rules 2
     expect(roundTrip(href)).toEqual(state);
   });
 
-  it("뱃지를 켠 상태의 기본 펼침(집계 창)은 주소에 안 싣는다", () => {
-    const href = feedHref({
-      segment: "hot",
-      tag: "코딩",
-      days: BADGE_WINDOW_DAYS,
-    });
+  it("뱃지를 켜도 기본 펼침은 하루라 주소에 안 싣는다 (2026-09-24)", () => {
+    const href = feedHref({ segment: "hot", tag: "코딩", days: 1 });
     expect(href).not.toContain("days=");
-    // 안 실어도 읽는 쪽이 같은 값으로 복원해야 한다
-    expect(roundTrip(href).days).toBe(BADGE_WINDOW_DAYS);
+    expect(roundTrip(href).days).toBe(1);
   });
 
   it("실패경로: 모르는 자리·범위 밖 날 수는 기본값으로 읽는다", () => {
@@ -77,8 +71,8 @@ describe("상태 전이", () => {
     expect(withMoreDays(at).days).toBe(MAX_FEED_DAYS);
   });
 
-  it("뱃지를 켜면 집계 창만큼 편다 — 「6」을 눌렀는데 1장만 보이는 일을 막는다", () => {
-    expect(withTag(DEFAULT_FEED_STATE, "코딩").days).toBe(BADGE_WINDOW_DAYS);
+  it("뱃지를 켜도 펼친 날은 그대로다 — 뱃지 숫자가 이미 펼친 날만 센 값이다 (2026-09-24)", () => {
+    expect(withTag(DEFAULT_FEED_STATE, "코딩").days).toBe(1);
   });
 
   it("뱃지를 켜도 이미 펼친 것은 줄이지 않는다", () => {
@@ -97,10 +91,8 @@ describe("상태 전이", () => {
       tag: null,
       days: 1,
     });
-    // 뱃지가 켜져 있으면 처음 = 집계 창
-    expect(withSegment({ ...wide, tag: "코딩" }, "news").days).toBe(
-      BADGE_WINDOW_DAYS,
-    );
+    // 뱃지가 켜져 있어도 처음은 하루다
+    expect(withSegment({ ...wide, tag: "코딩" }, "news").days).toBe(1);
   });
 });
 
@@ -123,7 +115,7 @@ describe("상세를 열 때 피드 상태를 그 글에 맞춘다 (design-rules 
     const state: FeedState = {
       segment: "news",
       tag: "코딩",
-      days: BADGE_WINDOW_DAYS,
+      days: 3,
     };
     const got = fitFeedStateToArticle({
       state,
@@ -132,7 +124,7 @@ describe("상세를 열 때 피드 상태를 그 글에 맞춘다 (design-rules 
       hasTag: () => false,
     });
     expect(got.tag).toBeNull();
-    // 주소에 없던 3일은 필터 때문에 합성된 값이라 같이 놓는다
+    // 주소에 없던 날 수는 기본값(하루)으로 돌린다
     expect(got.days).toBe(1);
   });
 
@@ -191,27 +183,30 @@ describe("이전/다음 이웃", () => {
 });
 
 describe("펼친 날 수를 그 글의 날까지 넓힌다", () => {
+  // 판정이 없는 글(gate: null)은 소식 자리에 선다.
   const at = (id: string, publishedAt: string) =>
-    ({ id, publishedAt }) as unknown as ArticleListItem;
+    ({ id, publishedAt, kinds: [], gate: null }) as unknown as ArticleListItem;
   const ordered = [
     at("t1", "2026-08-05T01:00:00.000Z"),
     at("y1", "2026-08-04T01:00:00.000Z"),
     at("d1", "2026-08-03T01:00:00.000Z"),
   ];
+  // `전체` 자리에는 모든 글이 선다 — 날은 자리의 날짜 묶음으로 센다.
+  const ALL_STATE: FeedState = { ...DEFAULT_FEED_STATE, segment: "all" };
 
   it("어제 글이면 이틀로 넓힌다 — 「피드로」 돌아갔을 때 그 글이 보인다", () => {
-    expect(withDaysCovering(DEFAULT_FEED_STATE, ordered, "y1").days).toBe(2);
+    expect(withDaysCovering(ALL_STATE, ordered, "y1").days).toBe(2);
   });
 
   it("이미 넓으면 줄이지 않는다", () => {
     expect(
-      withDaysCovering({ ...DEFAULT_FEED_STATE, days: 5 }, ordered, "t1").days,
+      withDaysCovering({ ...ALL_STATE, days: 5 }, ordered, "t1").days,
     ).toBe(5);
   });
 
   it("목록에 없는 글이면 그대로다", () => {
-    expect(withDaysCovering(DEFAULT_FEED_STATE, ordered, "zz")).toEqual(
-      DEFAULT_FEED_STATE,
+    expect(withDaysCovering(ALL_STATE, ordered, "zz")).toEqual(
+      ALL_STATE,
     );
   });
 });

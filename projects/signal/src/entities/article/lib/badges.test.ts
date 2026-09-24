@@ -8,6 +8,7 @@ import {
   buildSegmentBadges,
 } from "./badges";
 import { GATE_ONE } from "./hot-issue";
+import { selectFeed } from "./query";
 import type { FeedSegment } from "./query";
 import { dayKey } from "@/shared/lib/datetime";
 import type { ArticleKeyword, ArticleListItem } from "../model/types";
@@ -310,7 +311,7 @@ describe("buildSegmentBadges — 뱃지는 지금 자리의 글로 센다", () =
     placed("n2", false, [kind("출시")]),
   ];
   const run = (segment: FeedSegment) =>
-    buildSegmentBadges({ articles: ARTICLES, segment, isRead: () => false, nowIso: NOW });
+    buildSegmentBadges({ articles: ARTICLES, segment, isRead: () => false, nowIso: NOW, days: 1 });
   const counts = (segment: FeedSegment) =>
     Object.fromEntries(run(segment).badges.map((b) => [b.name, b.total]));
 
@@ -329,5 +330,79 @@ describe("buildSegmentBadges — 뱃지는 지금 자리의 글로 센다", () =
   it("elsewhere 는 자리와 무관하게 창 안의 키워드를 문턱 없이 전부 담는다 — 축을 찾을 수 있게", () => {
     const names = run("hot").elsewhere.map((b) => `${b.axis}:${b.name}`).sort();
     expect(names).toEqual(["field:보안", "kind:출시"]);
+  });
+});
+
+/**
+ * 뱃지는 피드가 펼친 날만 센다 (2026-09-24 사용자 지시 — "기본은 당일 것만, 더 보기를 누르면
+ * 전날 것 포함, 한 번 더 누르면 전전날 것 포함").
+ *
+ * 붙드는 것: 뱃지 숫자 = 그 뱃지를 눌렀을 때 나오는 카드 수. 목록과 뱃지가 날을 따로 세면
+ * 둘이 갈린다.
+ */
+describe("buildSegmentBadges — 펼친 날만 센다", () => {
+  const news = (id: string, daysAgo: number, tags: ArticleKeyword[]): ArticleListItem => ({
+    id,
+    title: id,
+    titleKo: null,
+    summary: "",
+    sourceExcerpt: null,
+    summaryPoints: [],
+    sourceId: "s",
+    sourceName: "s",
+    sourceUrl: "https://example.com",
+    publishedAt: at(daysAgo),
+    tags,
+    officialBasis: "none",
+    kinds: [],
+    issueScore: 1,
+    gate: null,
+    score: 1,
+    isTrending: false,
+  });
+  const ARTICLES = [
+    news("t1", 0, [field("보안")]),
+    news("t2", 0, [field("보안")]),
+    news("y1", 1, [field("보안"), field("에이전트")]),
+    news("y2", 1, [field("에이전트")]),
+    news("d1", 2, [field("에이전트")]),
+  ];
+  const counts = (days: number) =>
+    Object.fromEntries(
+      buildSegmentBadges({ articles: ARTICLES, segment: "news", isRead: () => false, nowIso: NOW, days })
+        .badges.map((b) => [b.name, b.total]),
+    );
+
+  it("처음(하루)에는 오늘 글만 센다", () => {
+    expect(counts(1)).toEqual({ 보안: 2 });
+  });
+
+  it("더 보기 한 번이면 어제 글이 더해진다", () => {
+    expect(counts(2)).toEqual({ 보안: 3, 에이전트: 2 });
+  });
+
+  it("두 번이면 그저께 글까지 더해진다", () => {
+    expect(counts(3)).toEqual({ 보안: 3, 에이전트: 3 });
+  });
+
+  it("뱃지 숫자와 그 뱃지를 켰을 때 나오는 카드 수가 같다", () => {
+    for (const days of [1, 2, 3]) {
+      for (const [name, total] of Object.entries(counts(days))) {
+        const { shown } = selectFeed({ articles: ARTICLES, segment: "news", tag: name, days });
+        expect(shown, `${days}일 · ${name}`).toBe(total);
+      }
+    }
+  });
+
+  it("오늘 글이 없는 키워드를 켜면 오늘은 비고, 더 보기가 어제로 넘어간다", () => {
+    const got = selectFeed({ articles: ARTICLES, segment: "news", tag: "에이전트", days: 1 });
+    expect(got.groups).toEqual([]);
+    expect(got.nextDay).toEqual({ dayKey: dayKey(at(1)), count: 2 });
+  });
+
+  it("켠 키워드의 글을 다 펼쳤으면 옛날이 남아 있어도 더 보기가 끝난다", () => {
+    const got = selectFeed({ articles: ARTICLES, segment: "news", tag: "보안", days: 2 });
+    expect(got.shown).toBe(3);
+    expect(got.nextDay).toBeNull();
   });
 });

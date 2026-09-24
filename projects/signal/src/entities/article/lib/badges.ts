@@ -1,6 +1,6 @@
 import { dayKey } from "@/shared/lib/datetime";
 import { normalizeTagName } from "./tagging";
-import { inSegment } from "./query";
+import { inSegment, shownDaysStart } from "./query";
 import type { FeedSegment } from "./query";
 import type { ArticleKeyword, ArticleListItem, TagAxis } from "../model/types";
 
@@ -18,9 +18,12 @@ import type { ArticleKeyword, ArticleListItem, TagAxis } from "../model/types";
  */
 
 /**
- * 뱃지 줄이 세는 기간(날짜 수, 오늘 포함). **잠정값이다.**
+ * 글을 **빠짐없이** 받아 오는 기간(날짜 수, 오늘 포함). 조회(`badgeWindowStartIso`)와
+ * 수집 후보 창이 이 값을 쓴다.
  *
- * 사용자가 말한 값은 3~4일이고 짧은 쪽으로 먼저 본다(뱃지가 적게 나오는 쪽).
+ * 2026-09-24 까지는 화면의 뱃지 줄도 이 기간을 셌다. 지금 화면은 **피드가 펼친 날**만 센다
+ * (`buildSegmentBadges` — 기본은 오늘 하루). 이 값보다 멀리 펼치면 그 날들은 목록이 받은
+ * 만큼만 센다 — 목록에 보이는 카드와 같은 글이다.
  * 창 밖 글은 **지우지 않는다** — 날짜 묶음에는 그대로 남는다(INV-B4).
  */
 export const BADGE_WINDOW_DAYS = 3;
@@ -109,6 +112,11 @@ export function buildKeywordBadges(params: {
   /** 서버에서 한 번 정한 기준 시각. 창의 오른쪽 끝이다. */
   nowIso: string;
   windowDays?: number;
+  /**
+   * 주어지면 `windowDays` 대신 **이 날짜 키 이후(포함)의 글**만 센다 — 피드가 펼친 날들과
+   * 같은 날을 세게 하는 자리다(`shownDaysStart`). `null` 이면 셀 글이 없다.
+   */
+  fromDayKey?: string | null;
   minCount?: number;
   limit?: number;
 }): KeywordBadge[] {
@@ -117,6 +125,7 @@ export function buildKeywordBadges(params: {
     isRead,
     nowIso,
     windowDays = BADGE_WINDOW_DAYS,
+    fromDayKey,
     minCount = BADGE_MIN_COUNT,
     limit = BADGE_LIMIT,
   } = params;
@@ -124,8 +133,13 @@ export function buildKeywordBadges(params: {
   const keys = windowKeys(nowIso, windowDays);
   const byKey = new Map<string, KeywordBadge>();
 
+  const inWindow = (key: string): boolean =>
+    fromDayKey === undefined
+      ? keys.has(key)
+      : fromDayKey !== null && key !== "" && key >= fromDayKey;
+
   for (const article of articles) {
-    if (!keys.has(dayKey(article.publishedAt))) continue;
+    if (!inWindow(dayKey(article.publishedAt))) continue;
     const read = isRead(article.id);
 
     // 한 글이 같은 뱃지를 두 번 올리지 않는다. 저장 쪽이 막고 있지만(item_tag 기본키)
@@ -162,22 +176,36 @@ export function buildKeywordBadges(params: {
  * 핫이슈를 보고 있는데 모든 글로 세면 뱃지에 「6」이라고 적혀 있고 눌렀을 때 2장만 나온다.
  * **키워드 필터는 걸기 전**이다 — 필터 결과로 세면 켠 뱃지 하나만 남아 갈아탈 수 없다.
  *
- * `elsewhere` 는 자리와 무관하게 창 안 키워드를 문턱 없이 모은 것이다. 켠 키워드가 이 자리
- * 줄에 없을 때 "다른 자리에는 있다"와 "최근 창에 아예 없다"를 가르고, 그 키워드의 축을 찾는다.
+ * **세는 날은 피드가 펼친 날과 같다** (2026-09-24 사용자 지시 — "기본은 당일 것만, 더 보기를
+ * 누르면 전날 것 포함"). 처음에는 오늘치만 세고 「더 보기」로 하루를 펼칠 때마다 그날이 더해진다.
+ * 경계는 `shownDaysStart` 하나가 정한다 — 목록과 따로 계산하면 뱃지 숫자와 눌렀을 때 나오는
+ * 카드 수가 갈린다.
+ *
+ * `elsewhere` 는 자리와 무관하게 같은 날들의 키워드를 문턱 없이 모은 것이다. 켠 키워드가 이 자리
+ * 줄에 없을 때 "다른 자리에는 있다"와 "펼친 날에 아예 없다"를 가르고, 그 키워드의 축을 찾는다.
  */
 export function buildSegmentBadges(params: {
   articles: readonly ArticleListItem[];
   segment: FeedSegment;
   isRead: (id: string) => boolean;
   nowIso: string;
+  /** 피드가 펼쳐 둔 날 수. 오늘이 1이다. */
+  days: number;
 }): { badges: KeywordBadge[]; elsewhere: KeywordBadge[] } {
-  const { articles, segment, isRead, nowIso } = params;
+  const { articles, segment, isRead, nowIso, days } = params;
+  const fromDayKey = shownDaysStart({ articles, segment, days });
   return {
-    badges: buildKeywordBadges({ articles: inSegment(articles, segment), isRead, nowIso }),
+    badges: buildKeywordBadges({
+      articles: inSegment(articles, segment),
+      isRead,
+      nowIso,
+      fromDayKey,
+    }),
     elsewhere: buildKeywordBadges({
       articles,
       isRead,
       nowIso,
+      fromDayKey,
       minCount: 1,
       limit: Number.POSITIVE_INFINITY,
     }),

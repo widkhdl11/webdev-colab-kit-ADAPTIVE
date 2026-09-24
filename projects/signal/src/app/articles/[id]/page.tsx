@@ -81,10 +81,11 @@ export default async function ArticlePage({ params, searchParams }: Props) {
 
   // 이전/다음은 피드에 보이던 순서 그대로다 — **같은 조회, 같은 줄 세우기 함수**를 쓴다.
   // 날짜 경계를 넘어간다: 오늘 마지막 글의 「다음」은 어제 첫 글이다.
-  const ordered = orderFeed({ articles: await loadRankedFeed(now), ...asked });
+  const feed = await loadRankedFeed(now);
+  const ordered = orderFeed({ articles: feed, ...asked });
   // 「피드로」·이웃 링크가 싣는 날 수는 이 글이 속한 날까지 넓힌다 — 안 그러면 돌아간
-  // 피드에 방금 읽은 글이 없다.
-  const state = withDaysCovering(asked, ordered, article.id);
+  // 피드에 방금 읽은 글이 없다. 날은 자리의 날짜 묶음으로 세므로 거르기 전 목록을 넘긴다.
+  const state = withDaysCovering(asked, feed, article.id);
   const neighbors = findNeighbors(ordered, article.id);
   const toLink = (a: (typeof ordered)[number] | null): ArticleNavLink | null =>
     a === null
