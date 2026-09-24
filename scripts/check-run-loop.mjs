@@ -28,7 +28,7 @@ import { spawnSync } from "node:child_process";
 import { runLoop, stopLoop } from "./run-loop.mjs";
 import { probeWrapup } from "./check-wrapup.mjs";
 import { runRehearsal, compareAnswer, handoffFrontier } from "./loop-rehearsal.mjs";
-import { loopNotice, pickNextItem, shouldAutostart, mergeLoopConfig, limitReason } from "./lib/loop-model.mjs";
+import { loopNotice, pickNextItem, shouldAutostart, mergeLoopConfig, limitReason, roundFailureSummary } from "./lib/loop-model.mjs";
 import { validateRequest, frozenItemsErrors } from "./lib/request-model.mjs";
 import { loopPaths } from "./lib/loop-files.mjs";
 
@@ -145,6 +145,7 @@ try {
     const pids = new Set(rounds.map((r) => r.pid));
     check("J1 세 항목이 다 끝나면 「요청 완료」로 멈춘다", st.status === "요청 완료" && st.done === 3, `${st.status} ${st.done}/3`);
     check("J1 회차마다 다른 프로세스였다(회차 기록의 프로세스 id)", pids.size === 3 && !pids.has(null), [...pids].join(","));
+    check("F  끝난 회차의 실패 요약은 비어 있다(null)", rounds.every((r) => "failure_summary" in r && r.failure_summary === null), rounds.map((r) => r.failure_summary).join(" | "));
     check("J4 끝나면 잠금이 걷힌다", lockGone(root));
     const perm = JSON.parse(readFileSync(loopPaths(root, "x").permissions, "utf-8"));
     check("G  쓴 도구를 허용 목록 재료로 센다", perm.used["Bash(git:*)"] === 3, JSON.stringify(perm.used));
@@ -160,6 +161,9 @@ try {
     check("J2 재시도도 실패하면 「항목 실패」로 멈춘다", st.status === "항목 실패", st.status);
     check("J2 재시도 회차에도 커밋을 빠뜨리면 B1, 커밋 안 된 발견 기록이라 B8 도 잡힌다", w2.failed.join(",") === "B1,B8", w2.failed.join(","));
     check("J2 멈춘 뒤 다음 항목은 손대지 않았다", sc.seen.I2 === undefined);
+    const r2 = JSON.parse(readFileSync(loopPaths(root, "x").round(2), "utf-8"));
+    check("F  실패 회차 기록에 실패 요약 한 줄 — 끝 검사 id 와 그 사유", /^B1 커밋 안 된 변경/.test(r2.failure_summary ?? "") && /B8 /.test(r2.failure_summary), r2.failure_summary);
+    check("F  멈춘 상태의 마지막 결과에도 같은 요약", st.last_result?.failure_summary === r2.failure_summary, st.last_result?.failure_summary);
     check("J4 멈춰도 잠금이 걷힌다", lockGone(root));
   }
   {
@@ -168,6 +172,8 @@ try {
     check("J2 한 번 실패하고 재시도에서 끝내면 계속 간다", st.status === "요청 완료", st.status);
     const perm = JSON.parse(readFileSync(loopPaths(root, "x").permissions, "utf-8"));
     check("G  권한 거부를 따로 센다", perm.denied.Write === 1, JSON.stringify(perm.denied));
+    const r1 = JSON.parse(readFileSync(loopPaths(root, "x").round(1), "utf-8"));
+    check("F  안 끝낸 회차 요약에 권한 거부와 「항목이 닫히지 않았다」", /권한 거부 1건\(Write\)/.test(r1.failure_summary ?? "") && /항목이 닫히지 않았다/.test(r1.failure_summary), r1.failure_summary);
   }
 
   // ── J3 · 카드 하나가 항목 하나를 막으면 건너뛴다 · 전부 걸리면 멈춘다 ───
@@ -294,6 +300,18 @@ try {
     const at = new Date().toISOString();
     check("E  항목 경계의 대화 길이 경고가 특이사항에 뜬다", render.noticeRows({ sessionWarning: { at, tokens: 131000, boundary: true } }, Date.now()).some((r) => r.code === 11 && /새 세션 권장/.test(r.value)));
     check("E  항목 중간의 경고는 특이사항에 안 띄운다", !render.noticeRows({ sessionWarning: { at, tokens: 131000, boundary: false } }, Date.now()).some((r) => r.code === 11));
+  }
+
+  // ── F · 실패 요약 판정(순수 함수) ──────────────────────────────────
+  {
+    const ok = { subtype: "success", is_error: false, permission_denials: [] };
+    check("F  카드를 열고 넘어간 회차는 요약이 없다", roundFailureSummary({ outcome: "결정 카드를 열고 넘어감", exit: 0, result: ok }) === null);
+    const spawn = roundFailureSummary({ outcome: "항목 미완", spawnError: "spawn claude ENOENT", exit: null, result: null, checks: [{ id: "B3", ok: false, detail: "이 회차에 전환 기록이 한 줄도 없다" }] });
+    check("F  프로세스를 못 띄웠으면 그것이 맨 앞이다", /^프로세스를 못 띄웠다: spawn claude ENOENT · 항목이 닫히지 않았다 · B3 /.test(spawn), spawn);
+    const crash = roundFailureSummary({ outcome: "항목 미완", exit: 1, result: { ...ok, is_error: true, subtype: "error_max_turns" }, itemDone: true, checks: [{ id: "B1", ok: false, detail: "x".repeat(200) }] });
+    check("F  종료 코드·오류 결과를 적고 긴 사유는 자른다", /^종료 코드 1 · 결과가 오류로 끝났다\(error_max_turns\) · B1 x+…$/.test(crash) && crash.length < 160 && !/닫히지/.test(crash), crash);
+    const bare = roundFailureSummary({ outcome: "항목 미완", exit: 0, result: ok, itemDone: true, checks: [{ id: "B6", ok: true }] });
+    check("F  원인을 못 찾아도 빈 문자열이 아니다", bare === "항목 미완 — 원인 기록 없음", bare);
   }
 
   // ── 의존과 상한 판정 ────────────────────────────────────────────────

@@ -165,6 +165,36 @@ export function loopNotice(loop) {
 }
 
 /**
+ * 회차 기록의 실패 요약 한 줄. 항목이 끝났거나 카드를 열고 넘어간 회차면 null 이다.
+ *
+ * 회차 기록에는 끝 검사 id(`wrapup_failed`)·종료 코드·권한 거부가 칸마다 따로 있어서, 사람이 왜
+ * 실패했는지 알려면 `<n>.wrapup.json` 까지 열어 맞춰 봐야 한다. 대시보드·알림은 이 한 줄을 그대로 쓴다.
+ * 이유는 원인에 가까운 순서로 적는다 — 프로세스가 못 떴으면 끝 검사 실패는 그 결과일 뿐이다.
+ *
+ * @param r.outcome      회차 결과(「항목 완료」·「결정 카드를 열고 넘어감」·「항목 미완」)
+ * @param r.spawnError   프로세스를 못 띄웠을 때의 메시지(없으면 null)
+ * @param r.exit         종료 코드
+ * @param r.result       parseStreamJson 의 result(없으면 null — 결과 줄을 못 냈다)
+ * @param r.checks       끝 검사 결과 [{ id, ok, detail }]
+ * @param r.itemDone     회차 뒤 그 항목이 done 인가
+ */
+export function roundFailureSummary({ outcome, spawnError = null, exit = null, result = null, checks = [], itemDone = false }) {
+  if (outcome !== "항목 미완") return null;
+  const cut = (s, n = 80) => { const t = String(s ?? "").replace(/\s+/g, " ").trim(); return t.length > n ? `${t.slice(0, n - 1)}…` : t; };
+  const parts = [];
+  if (spawnError) parts.push(`프로세스를 못 띄웠다: ${cut(spawnError)}`);
+  else if (exit !== 0 && exit !== null) parts.push(`종료 코드 ${exit}`);
+  else if (exit === null) parts.push("프로세스가 종료 코드 없이 끝났다");
+  if (!spawnError && !result) parts.push("결과 줄이 없다");
+  else if (result?.is_error) parts.push(`결과가 오류로 끝났다(${result.subtype ?? "?"})`);
+  const denials = result?.permission_denials ?? [];
+  if (denials.length) parts.push(`권한 거부 ${denials.length}건(${[...new Set(denials)].slice(0, 3).join(", ")})`);
+  if (!itemDone) parts.push("항목이 닫히지 않았다");
+  for (const c of checks) if (!c.ok) parts.push(`${c.id} ${cut(c.detail || c.name)}`);
+  return parts.length ? parts.join(" · ") : "항목 미완 — 원인 기록 없음";
+}
+
+/**
  * 회차 지시문을 채운다. 틀은 scripts/loop-item-prompt.md 에 있고 여기서는 자리만 바꾼다.
  * 자리 표시가 남으면 실패한다 — 채우지 못한 지시문을 그대로 보내면 모델이 `{{item_id}}` 를
  * 항목 이름으로 읽는다.

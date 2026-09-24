@@ -24,7 +24,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import {
-  LOOP_RUNNING, fillItemPrompt, limitReason, parseStreamJson, pickNextItem, blockedByDecision,
+  LOOP_RUNNING, fillItemPrompt, limitReason, parseStreamJson, pickNextItem, blockedByDecision, roundFailureSummary,
 } from "./lib/loop-model.mjs";
 import { lockStatus, loopPaths, loadLoopConfig, nextRoundNumber, readJson } from "./lib/loop-files.mjs";
 import { validateRequest } from "./lib/request-model.mjs";
@@ -189,14 +189,18 @@ export function runLoop({ root = KIT_ROOT, slug, now = () => Date.now(), log = c
       const parkedOnCard = !doneNow && blockedByDecision(after?.items ?? [], afterDecision).has(item.id);
       const passed = wr.failed.length === 0;
       const outcome = passed && doneNow ? "항목 완료" : passed && parkedOnCard ? "결정 카드를 열고 넘어감" : "항목 미완";
+      const failureSummary = roundFailureSummary({
+        outcome, spawnError: r.error?.message ?? null, exit: r.status, result: parsed.result, checks: wr.checks, itemDone: doneNow,
+      });
 
       writeJson(p.round(n), {
         round: n, item: item.id, attempt: tries + 1, started_at: roundStart, ended_at: new Date(now()).toISOString(),
         pid: r.pid ?? null, exit: r.status, session_id: parsed.result?.session_id ?? null,
         num_turns: parsed.result?.num_turns ?? null, cost_usd: parsed.result?.total_cost_usd ?? null,
         permission_denials: parsed.result?.permission_denials ?? [], wrapup_failed: wr.failed, outcome,
+        failure_summary: failureSummary,
       });
-      save({ last_result: { round: n, item: item.id, outcome, wrapup_failed: wr.failed, denials: (parsed.result?.permission_denials ?? []).length } });
+      save({ last_result: { round: n, item: item.id, outcome, wrapup_failed: wr.failed, denials: (parsed.result?.permission_denials ?? []).length, failure_summary: failureSummary } });
       log(`  → ${outcome}${wr.failed.length ? ` · 끝 검사 실패 ${wr.failed.join(",")}` : ""}${parsed.result?.permission_denials?.length ? ` · 권한 거부 ${parsed.result.permission_denials.length}건` : ""}`);
 
       if (outcome !== "항목 미완") { attempts.delete(item.id); continue; }
