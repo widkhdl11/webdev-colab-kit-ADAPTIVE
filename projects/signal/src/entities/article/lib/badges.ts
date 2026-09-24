@@ -1,6 +1,6 @@
 import { dayKey } from "@/shared/lib/datetime";
 import { normalizeTagName } from "./tagging";
-import { inSegment, shownDaysStart } from "./query";
+import { inSegment, shownDays } from "./query";
 import type { FeedSegment } from "./query";
 import type { ArticleKeyword, ArticleListItem, TagAxis } from "../model/types";
 
@@ -12,9 +12,10 @@ import type { ArticleKeyword, ArticleListItem, TagAxis } from "../model/types";
  * 안 읽은 수로 자리까지 정하면 화면이 뜬 직후 줄 전체가 다시 배열되고, 누르려던 뱃지가
  * 눈앞에서 움직인다.
  *
- * 창은 **날짜 단위**다. "내일이 되면 제일 오래된 날의 뱃지가 빠진다"가 설계 문장이고,
- * 날짜 묶음도 KST 날짜로 나뉘므로 같은 기준을 쓴다 — 시각 단위(72시간)로 하면 화면의
- * 날짜 묶음과 뱃지 줄이 서로 다른 경계를 갖는다.
+ * 세는 범위는 **날짜 단위**다 — 날짜 묶음도 KST 날짜로 나뉘므로 같은 기준을 쓴다. 시각
+ * 단위(72시간)로 하면 화면의 날짜 묶음과 뱃지 줄이 서로 다른 경계를 갖는다.
+ * 화면은 **피드가 펼친 날**만 센다(`buildSegmentBadges`, 2026-09-24). `windowDays` 로 세는
+ * 방식은 조회 창 검사와 `npm run badges` 분포 확인용으로 남아 있다.
  */
 
 /**
@@ -63,7 +64,7 @@ export interface KeywordBadge {
   /** 화면에 쓰는 표기. 표기가 갈리면 **처음 나온 것**을 쓴다(저장 규칙과 같다). */
   name: string;
   axis: TagAxis;
-  /** 창 안에서 이 뱃지가 붙은 글 수. 자리·순서·노출을 정하는 값이다. */
+  /** 세는 범위(화면에서는 펼친 날) 안에서 이 뱃지가 붙은 글 수. 자리·순서·노출을 정하는 값이다. */
   total: number;
   /** 그중 아직 안 읽은 글 수. **숫자만** 이 값으로 바뀐다. */
   unread: number;
@@ -109,12 +110,13 @@ export function buildKeywordBadges(params: {
   articles: readonly BadgeSource[];
   /** 읽은 글 판정. 서버 렌더에서는 항상 false 가 오고, 그래서 첫 화면은 전부 안 읽음이다. */
   isRead: (id: string) => boolean;
-  /** 서버에서 한 번 정한 기준 시각. 창의 오른쪽 끝이다. */
-  nowIso: string;
+  /** 서버에서 한 번 정한 기준 시각. 창의 오른쪽 끝이다. `fromDayKey` 를 주면 안 쓰인다. */
+  nowIso?: string;
   windowDays?: number;
   /**
    * 주어지면 `windowDays` 대신 **이 날짜 키 이후(포함)의 글**만 센다 — 피드가 펼친 날들과
-   * 같은 날을 세게 하는 자리다(`shownDaysStart`). `null` 이면 셀 글이 없다.
+   * 같은 날을 세게 하는 자리다(`shownDays`). `null` 이면 셀 글이 없다(그 자리에 글이 없다) —
+   * `undefined`(안 줌)와 뜻이 다르다.
    */
   fromDayKey?: string | null;
   minCount?: number;
@@ -130,13 +132,13 @@ export function buildKeywordBadges(params: {
     limit = BADGE_LIMIT,
   } = params;
 
-  const keys = windowKeys(nowIso, windowDays);
+  const keys = fromDayKey === undefined ? windowKeys(nowIso ?? "", windowDays) : null;
   const byKey = new Map<string, KeywordBadge>();
 
   const inWindow = (key: string): boolean =>
-    fromDayKey === undefined
+    keys !== null
       ? keys.has(key)
-      : fromDayKey !== null && key !== "" && key >= fromDayKey;
+      : fromDayKey != null && key !== "" && key >= fromDayKey;
 
   for (const article of articles) {
     if (!inWindow(dayKey(article.publishedAt))) continue;
@@ -178,7 +180,7 @@ export function buildKeywordBadges(params: {
  *
  * **세는 날은 피드가 펼친 날과 같다** (2026-09-24 사용자 지시 — "기본은 당일 것만, 더 보기를
  * 누르면 전날 것 포함"). 처음에는 오늘치만 세고 「더 보기」로 하루를 펼칠 때마다 그날이 더해진다.
- * 경계는 `shownDaysStart` 하나가 정한다 — 목록과 따로 계산하면 뱃지 숫자와 눌렀을 때 나오는
+ * 경계는 `shownDays` 하나가 정한다 — 목록과 따로 계산하면 뱃지 숫자와 눌렀을 때 나오는
  * 카드 수가 갈린다.
  *
  * `elsewhere` 는 자리와 무관하게 같은 날들의 키워드를 문턱 없이 모은 것이다. 켠 키워드가 이 자리
@@ -188,23 +190,20 @@ export function buildSegmentBadges(params: {
   articles: readonly ArticleListItem[];
   segment: FeedSegment;
   isRead: (id: string) => boolean;
-  nowIso: string;
-  /** 피드가 펼쳐 둔 날 수. 오늘이 1이다. */
+  /** 피드가 펼쳐 둔 날 수. 그 자리에 글이 있는 가장 최근 날이 1이다. */
   days: number;
 }): { badges: KeywordBadge[]; elsewhere: KeywordBadge[] } {
-  const { articles, segment, isRead, nowIso, days } = params;
-  const fromDayKey = shownDaysStart({ articles, segment, days });
+  const { articles, segment, isRead, days } = params;
+  const fromDayKey = shownDays({ articles, segment, days }).start;
   return {
     badges: buildKeywordBadges({
       articles: inSegment(articles, segment),
       isRead,
-      nowIso,
       fromDayKey,
     }),
     elsewhere: buildKeywordBadges({
       articles,
       isRead,
-      nowIso,
       fromDayKey,
       minCount: 1,
       limit: Number.POSITIVE_INFINITY,

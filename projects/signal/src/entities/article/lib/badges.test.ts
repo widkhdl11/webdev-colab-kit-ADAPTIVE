@@ -311,7 +311,7 @@ describe("buildSegmentBadges — 뱃지는 지금 자리의 글로 센다", () =
     placed("n2", false, [kind("출시")]),
   ];
   const run = (segment: FeedSegment) =>
-    buildSegmentBadges({ articles: ARTICLES, segment, isRead: () => false, nowIso: NOW, days: 1 });
+    buildSegmentBadges({ articles: ARTICLES, segment, isRead: () => false, days: 1 });
   const counts = (segment: FeedSegment) =>
     Object.fromEntries(run(segment).badges.map((b) => [b.name, b.total]));
 
@@ -369,7 +369,7 @@ describe("buildSegmentBadges — 펼친 날만 센다", () => {
   ];
   const counts = (days: number) =>
     Object.fromEntries(
-      buildSegmentBadges({ articles: ARTICLES, segment: "news", isRead: () => false, nowIso: NOW, days })
+      buildSegmentBadges({ articles: ARTICLES, segment: "news", isRead: () => false, days })
         .badges.map((b) => [b.name, b.total]),
     );
 

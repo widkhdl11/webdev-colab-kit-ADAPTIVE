@@ -141,35 +141,24 @@ export function articleHref(id: string, state: FeedState): string {
  * 난다 — 그 글이 서는 자리(핫이슈 아니면 소식)로 옮긴다. `전체` 에는 모든 글이 서므로
  * 그 주소는 자리를 옮길 일이 없다.
  *
- * `days` 는 주소에 명시돼 있을 때만 지킨다. 없던 값은 기본값(하루)이다 — 2026-09-24 까지는
- * "뱃지를 켰으니 3일"로 합성된 값이라 필터를 놓으면 근거가 사라졌다. 지금은 기본값이 하나라
- * 결과가 같지만, 기본값이 다시 갈리는 날을 위해 판정은 남긴다.
+ * `days` 는 그대로 둔다. 2026-09-24 까지는 뱃지를 켜면 기본 펼침이 3일로 합성돼, 주소에 없던
+ * 날 수를 필터와 같이 놓아야 했다. 지금은 기본값이 하나(하루)라 놓을 것이 없다.
  */
 export function fitFeedStateToArticle(params: {
   state: FeedState;
-  /** 주소에 `days` 가 실제로 있었나. */
-  daysExplicit: boolean;
   /** 이 글이 요청한 자리에 서나 */
   inSegment: (segment: FeedSegment) => boolean;
   /** 이 글에 이 키워드가 붙어 있나 */
   hasTag: (tag: ArticleTag) => boolean;
 }): FeedState {
-  const { state, daysExplicit, inSegment, hasTag } = params;
+  const { state, inSegment, hasTag } = params;
   let next = state;
   if (next.tag !== null && !hasTag(next.tag)) {
-    next = {
-      ...next,
-      tag: null,
-      days: daysExplicit ? next.days : DEFAULT_FEED_STATE.days,
-    };
+    next = { ...next, tag: null };
   }
   if (!inSegment(next.segment)) {
     const home: FeedSegment = inSegment("hot") ? "hot" : "news";
-    next = {
-      ...next,
-      segment: home,
-      days: daysExplicit ? next.days : DEFAULT_FEED_STATE.days,
-    };
+    next = { ...next, segment: home };
   }
   return next;
 }

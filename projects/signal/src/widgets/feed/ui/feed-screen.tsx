@@ -135,8 +135,8 @@ export function FeedScreen({ articles, nowIso }: Props) {
   // 뱃지 줄은 **지금 자리의 글**로 센다 — 규칙은 entities 의 buildSegmentBadges 에 있다.
   // `isRead` 는 숫자에만 쓰인다: 자리·순서·노출은 전체 건수가 정한다(design-rules 2026-08-27).
   const { badges, elsewhere } = useMemo(
-    () => buildSegmentBadges({ articles, segment, isRead, nowIso, days }),
-    [articles, segment, isRead, nowIso, days],
+    () => buildSegmentBadges({ articles, segment, isRead, days }),
+    [articles, segment, isRead, days],
   );
 
   // 뱃지를 켜고 꺼도 펼친 날은 그대로, 자리를 바꾸면 날 수를 처음으로 돌리는
@@ -220,8 +220,11 @@ export function FeedScreen({ articles, nowIso }: Props) {
               if (nextDay === null) return;
               go(withMoreDays(state));
               // 누적으로 알린다. 증가분만 쓰면 두 번째부터 같은 문자열이 되고,
-              // aria-live 는 값이 안 바뀌면 아무 말도 하지 않는다.
-              setNotice(`${total}건 중 ${shown + nextDay.count}건 표시`);
+              // aria-live 는 값이 안 바뀌면 아무 말도 하지 않는다. 키워드를 켠 채 0건인 날을
+              // 펼치면 누적 수가 그대로라 같은 문자열이 되므로 그날 이름을 넣는다.
+              setNotice(
+                `${dayHeading(nextDay.dayKey, todayKey)} 펼침 · ${total}건 중 ${shown + nextDay.count}건 표시`,
+              );
             }}
           >
             {nextDay === null

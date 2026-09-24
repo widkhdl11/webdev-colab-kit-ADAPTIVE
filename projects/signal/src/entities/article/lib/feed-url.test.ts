@@ -104,38 +104,20 @@ describe("상세를 열 때 피드 상태를 그 글에 맞춘다 (design-rules 
     expect(
       fitFeedStateToArticle({
         state,
-        daysExplicit: true,
-        inSegment: everywhere,
+          inSegment: everywhere,
         hasTag: () => true,
       }),
     ).toEqual(state);
   });
 
-  it("켠 뱃지가 안 붙은 글이면 필터를 놓는다", () => {
-    const state: FeedState = {
-      segment: "news",
-      tag: "코딩",
-      days: 3,
-    };
+  it("켠 뱃지가 안 붙은 글이면 필터를 놓고, 펼친 날 수는 지킨다", () => {
+    const state: FeedState = { segment: "news", tag: "코딩", days: 5 };
     const got = fitFeedStateToArticle({
       state,
-      daysExplicit: false,
       inSegment: everywhere,
       hasTag: () => false,
     });
     expect(got.tag).toBeNull();
-    // 주소에 없던 날 수는 기본값(하루)으로 돌린다
-    expect(got.days).toBe(1);
-  });
-
-  it("주소에 명시된 날 수는 필터를 놓아도 지킨다 — 사용자가 실제로 펼친 값이다", () => {
-    const state: FeedState = { segment: "news", tag: "코딩", days: 5 };
-    const got = fitFeedStateToArticle({
-      state,
-      daysExplicit: true,
-      inSegment: everywhere,
-      hasTag: () => false,
-    });
     expect(got.days).toBe(5);
   });
 
@@ -143,7 +125,6 @@ describe("상세를 열 때 피드 상태를 그 글에 맞춘다 (design-rules 
     const state: FeedState = { segment: "hot", tag: null, days: 1 };
     const got = fitFeedStateToArticle({
       state,
-      daysExplicit: false,
       inSegment: (s) => s === "news",
       hasTag: () => true,
     });
@@ -154,7 +135,6 @@ describe("상세를 열 때 피드 상태를 그 글에 맞춘다 (design-rules 
     const state: FeedState = { segment: "tools", tag: null, days: 1 };
     const got = fitFeedStateToArticle({
       state,
-      daysExplicit: false,
       inSegment: (s) => s === "hot",
       hasTag: () => true,
     });
@@ -215,7 +195,6 @@ describe("fitFeedStateToArticle — `전체` 자리", () => {
   it("모든 글이 서는 자리라 자리를 옮기지 않는다", () => {
     const next = fitFeedStateToArticle({
       state: { segment: "all", tag: null, days: 1 },
-      daysExplicit: false,
       inSegment: (s) => s === "all" || s === "news",
       hasTag: () => true,
     });

@@ -74,7 +74,6 @@ export default async function ArticlePage({ params, searchParams }: Props) {
   const item = toListItem(article);
   const asked = fitFeedStateToArticle({
     state: parseFeedState(read),
-    daysExplicit: read("days") !== null,
     inSegment: (segment) => inSegment([item], segment).length > 0,
     hasTag: (tag) => filterByTag([item], tag).length > 0,
   });

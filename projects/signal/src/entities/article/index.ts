@@ -17,7 +17,7 @@ export {
   findNeighbors,
   orderFeed,
   selectFeed,
-  shownDaysStart,
+  shownDays,
   sortArticles,
 } from "./lib/query";
 export type {

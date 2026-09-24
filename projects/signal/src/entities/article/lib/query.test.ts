@@ -258,7 +258,7 @@ describe("발행시각을 못 읽는 항목", () => {
  * "창 밖은 안 센다"(앞절)만 본다. 둘을 같이 둬야 `selectFeed` 에 창을 거는 변이가 잡힌다.
  */
 describe("selectFeed — INV-B4 (BK16) 뱃지 창이 글 목록을 자르지 않는다", () => {
-  it("뱃지 창(3일)보다 오래된 글도 목록에는 그대로 있다", () => {
+  it("조회 창(3일)보다 오래된 글도 목록에는 그대로 있다 — 펼치면 나온다", () => {
     const old = article("old", "2026-07-01T00:00:00.000Z", 5);
     const fresh = article("fresh", "2026-08-05T00:00:00.000Z", 5);
     const { groups, total } = selectFeed({
