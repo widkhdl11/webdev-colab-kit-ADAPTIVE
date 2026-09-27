@@ -49,9 +49,13 @@ function runSpending(usd: number, startedAt: string): IngestRunRecord {
       skippedEnrichments: 0,
       skippedKeywords: null,
       skippedHotIssue: null,
+      skippedKeywordItems: null,
+      skippedHotIssueItems: null,
+      poolTruncated: null,
     },
     usage: { ...EMPTY_USAGE, outputTokens: (usd / 10) * 1_000_000 },
     cost: null,
+    failures: null,
     sources: [],
   };
 }

@@ -70,6 +70,14 @@ export interface IngestRunBudget {
    */
   skippedKeywords: boolean | null;
   skippedHotIssue: boolean | null;
+  /**
+   * 단계 안에서 멈춘 건수·후보 풀이 잘렸나 (features/ingestion 의 BudgetReport 와 같은 칸).
+   * 「그날 마지막 실행에 남은 일이 있나」를 이어달리기 판정(shouldChain)과 같은 기준으로 보려고 읽는다.
+   * 옛 행에는 없어서 `null` 이다.
+   */
+  skippedKeywordItems: number | null;
+  skippedHotIssueItems: number | null;
+  poolTruncated: boolean | null;
 }
 
 /**
@@ -101,6 +109,35 @@ export interface IngestRunCost {
   lookupFailed: boolean;
 }
 
+/**
+ * 실패가 난 단계. 소스별 실패(피드 받기·적재)는 여기 없다 — `IngestRunSourceStat.error` 가 이미 들고 있다.
+ */
+export const INGEST_RUN_FAILURE_STAGES = [
+  "topic",
+  "hotIssue",
+  "extraction",
+  "summary",
+  "title",
+  "keywords",
+] as const;
+export type IngestRunFailureStage = (typeof INGEST_RUN_FAILURE_STAGES)[number];
+
+/**
+ * 실행 하나에서 난 실패 이유 한 줄 (2026-09-27). 같은 단계·같은 이유는 한 번만 담긴다.
+ *
+ * 건수를 같이 둔다 — 이유만 있으면 "120건 중 1건"과 "120건 전부"가 같은 모양이 된다.
+ * 모델 호출 한 건 실패(응답 잘림·일시 과부하)는 매일 나서, 건수 없이 판정하면 매일이 실패다.
+ */
+export interface IngestRunFailure {
+  stage: IngestRunFailureStage;
+  reason: string;
+  /** 단계가 통째로 죽었나(후보 조회 실패 등) — 참이면 건수와 무관하게 실패다. */
+  whole: boolean;
+  /** 그 단계가 이번 실행에서 시도한 건수와 실패한 건수(단계 합계 — 이유별이 아니다). */
+  attempted: number;
+  failed: number;
+}
+
 export interface IngestRunRecord {
   id: string;
   startedAt: string;
@@ -110,6 +147,11 @@ export interface IngestRunRecord {
   sources: IngestRunSourceStat[];
   /** 요금 상한 판정. 상한이 없던 시절의 실행은 null 이다. */
   cost: IngestRunCost | null;
+  /**
+   * 실패 이유. **빈 배열과 null 이 다르다** — 빈 배열은 "실패 없음",
+   * null 은 이유를 저장하기 전(2026-09-27 이전)의 실행이라 "모른다"다.
+   */
+  failures: IngestRunFailure[] | null;
 }
 
 /** 소스별 드릴다운에 쓰는 최소 투영. */

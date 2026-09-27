@@ -8,7 +8,7 @@ const selectItemsByUrl = vi.fn(async (_urls: string[]) => ({
   data: [] as { source_id: string; original_url: string }[],
   error: null as { message: string } | null,
 }));
-const insertRun = vi.fn(async (_row: unknown) => ({ error: null as { message: string } | null }));
+const insertRun = vi.fn(async (_row: unknown) => ({ error: null as { message: string; code?: string } | null }));
 
 vi.mock("@/shared/api/supabase-server", () => ({
   serverSupabase: () => ({
@@ -292,6 +292,61 @@ describe("saveIngestRunReport", () => {
     const c = row.sources.find((s) => s.sourceId === "c");
     expect(c?.tokensUsed).toBe(330);
     expect(c?.fetched).toBe(0);
+  });
+
+  it("2026-09-27: 단계별 실패 이유를 모아 failures 로 저장한다 — 본문 긁기는 통째로 죽은 것만", async () => {
+    const { saveIngestRunReport } = await import("./save-run-report");
+    await saveIngestRunReport({
+      runId: "run-1",
+      startedAt: new Date("2026-09-27T00:00:00.000Z"),
+      elapsedMs: 1,
+      report: report({
+        topicFilter: { ...NO_TOPIC_FILTER, attempted: 30, failedOpen: 30, failureReasons: ["400 credit balance is too low"] },
+        extraction: { attempted: 1, succeeded: 0, failed: 1, failedUrls: [], failureReasons: ["HTTP 403"], error: null },
+        summaries: {
+          attempted: 2, succeeded: 0, failed: 2, skippedNoEvidence: 0, failedTitles: [], gaveUpTitles: [],
+          failureReasons: ["400 credit balance is too low"], error: null,
+        },
+      }),
+    });
+    const row = insertRun.mock.calls[0]![0] as { failures: unknown };
+    // 본문 긁기의 한 건 실패(HTTP 403)는 남의 사이트 사정이라 담지 않는다 — 담으면 매일이 실패로 보인다
+    // 단계의 시도·실패 건수를 같이 담는다 — 읽는 쪽이 「한 건 실패」와 「전부 실패」를 가른다
+    expect(row.failures).toEqual([
+      { stage: "topic", reason: "400 credit balance is too low", whole: false, attempted: 30, failed: 30 },
+      { stage: "summary", reason: "400 credit balance is too low", whole: false, attempted: 2, failed: 2 },
+    ]);
+  });
+
+  it("2026-09-27: 단계가 통째로 죽은 것(error)은 whole 로 표시해 담는다", async () => {
+    const { saveIngestRunReport } = await import("./save-run-report");
+    await saveIngestRunReport({
+      runId: "run-1",
+      startedAt: new Date("2026-09-27T00:00:00.000Z"),
+      elapsedMs: 1,
+      report: report({
+        extraction: { attempted: 0, succeeded: 0, failed: 0, failedUrls: [], failureReasons: [], error: "DB 조회 실패" },
+      }),
+    });
+    const row = insertRun.mock.calls[0]![0] as { failures: unknown };
+    expect(row.failures).toEqual([
+      { stage: "extraction", reason: "DB 조회 실패", whole: true, attempted: 0, failed: 0 },
+    ]);
+  });
+
+  it("2026-09-27: failures 칸이 아직 없으면(0013 전) 그 칸만 빼고 다시 저장한다 — 실행 기록을 잃지 않는다", async () => {
+    insertRun.mockResolvedValueOnce({ error: { message: "Could not find the 'failures' column", code: "PGRST204" } });
+    const { saveIngestRunReport } = await import("./save-run-report");
+    await saveIngestRunReport({
+      runId: "run-1",
+      startedAt: new Date("2026-09-27T00:00:00.000Z"),
+      elapsedMs: 1,
+      report: report(),
+    });
+    expect(insertRun).toHaveBeenCalledTimes(2);
+    expect(insertRun.mock.calls[0]![0]).toHaveProperty("failures");
+    expect(insertRun.mock.calls[1]![0]).not.toHaveProperty("failures");
+    expect(insertRun.mock.calls[1]![0]).toMatchObject({ id: "run-1" });
   });
 
   it("실패경로: 저장이 거부되면 던진다 — 부르는 쪽(route.ts)이 삼킬지 정한다", async () => {

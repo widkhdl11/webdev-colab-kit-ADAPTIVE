@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayHeading, dayKey, relativeTime } from "./datetime";
+import { dayHeading, dayKey, fullDateKo, fullDateTimeKo, relativeTime } from "./datetime";
 
 // 기준: 2026-08-05 01:00 UTC = 2026-08-05 10:00 KST
 const NOW = "2026-08-05T01:00:00.000Z";
@@ -87,5 +87,27 @@ describe("relativeTime", () => {
     expect(() => relativeTime("", NOW)).not.toThrow();
     expect(relativeTime("", NOW)).toBe("");
     expect(dayKey("이건 날짜가 아니다")).toBe("");
+  });
+});
+
+describe("fullDateTimeKo — 한 시점을 빠짐없이 적는 표기", () => {
+  it("한국 시간으로 적고, 월·일은 두 자리로 채운다", () => {
+    // UTC 로는 전날 22시 — 한국 시간으로 바꾸지 않으면 날짜가 하루 어긋난다
+    expect(fullDateTimeKo("2026-09-26T22:02:00.000Z")).toBe("2026년 09월 27일 오전 7시 2분");
+  });
+  it("정각이면 분을 빼고, 낮 12시는 오후 12시다", () => {
+    expect(fullDateTimeKo("2026-09-27T07:00:00+09:00")).toBe("2026년 09월 27일 오전 7시");
+    expect(fullDateTimeKo("2026-09-27T12:30:00+09:00")).toBe("2026년 09월 27일 오후 12시 30분");
+    expect(fullDateTimeKo("2026-09-27T00:05:00+09:00")).toBe("2026년 09월 27일 오전 12시 5분");
+  });
+  it("파싱할 수 없으면 원문 그대로", () => {
+    expect(fullDateTimeKo("모름")).toBe("모름");
+  });
+});
+
+describe("fullDateKo — 시각 없는 날짜 표기", () => {
+  it("날짜 키를 두 자리 월·일로 적고, 꼴이 아니면 원문 그대로", () => {
+    expect(fullDateKo("2026-09-19")).toBe("2026년 09월 19일");
+    expect(fullDateKo("모름")).toBe("모름");
   });
 });

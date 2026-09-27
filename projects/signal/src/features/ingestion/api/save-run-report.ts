@@ -8,9 +8,11 @@ import { serverSupabase } from "@/shared/api/supabase-server";
 import type {
   IngestRunBudget,
   IngestRunCost,
+  IngestRunFailure,
   IngestRunSourceStat,
   IngestRunUsage,
 } from "@/entities/ingest-run";
+import { collectFailures } from "../lib/collect-failures";
 import type { IngestReport } from "../lib/ports";
 
 /**
@@ -109,7 +111,7 @@ export async function saveIngestRunReport(params: {
   // "상한에 걸렸다"가 같은 모양이 된다.
   const cost: IngestRunCost = report.cost;
 
-  const { error } = await db.from("ingest_run").insert({
+  const row = {
     id: runId,
     started_at: startedAt.toISOString(),
     elapsed_ms: elapsedMs,
@@ -117,6 +119,14 @@ export async function saveIngestRunReport(params: {
     sources,
     budget,
     cost,
-  });
+  };
+  // 실패 이유 (0013). 칸이 아직 없으면(마이그레이션보다 배포가 먼저 나간 날) 이 칸만 빼고
+  // 다시 쓴다 — 실패 이유 하나 때문에 **그 실행 기록 전체**를 잃으면 안 된다.
+  const failures: IngestRunFailure[] = collectFailures(report);
+  let { error } = await db.from("ingest_run").insert({ ...row, failures });
+  if (error?.code === MISSING_COLUMN) ({ error } = await db.from("ingest_run").insert(row));
   if (error) throw new Error(error.message);
 }
+
+/** PostgREST 「스키마에 없는 칸」 오류 코드. */
+const MISSING_COLUMN = "PGRST204";

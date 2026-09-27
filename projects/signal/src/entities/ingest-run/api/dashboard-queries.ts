@@ -7,18 +7,22 @@ import { dayKey, dayStartIso } from "@/shared/lib/datetime";
 import { toIngestRunRecord, toRunSourceItem } from "./row";
 import type { IngestRunRecord, RunSourceItem } from "../model/types";
 
-const RUN_COLUMNS = "id, started_at, elapsed_ms, budget, usage, sources";
+const RUN_COLUMNS = "id, started_at, elapsed_ms, budget, usage, sources, cost";
+/**
+ * `failures` 는 0013 이 만든 칸이다. 마이그레이션 전에 이 칸을 고르면 조회가 통째로 실패해서
+ * 대시보드가 죽는다 — 없으면 이 칸만 빼고 다시 묻는다(옛 행처럼 null 로 읽힌다).
+ */
+const RUN_COLUMNS_WITH_FAILURES = `${RUN_COLUMNS}, failures`;
+/** Postgres 「없는 컬럼」 오류 코드. */
+const UNDEFINED_COLUMN = "42703";
 
-/** 가장 최근 실행 하나. 실행 기록이 없으면 null — 부르는 쪽이 "실행 없음"으로 그린다. */
-export async function fetchLatestIngestRun(): Promise<IngestRunRecord | null> {
-  const { data, error } = await serverSupabase()
-    .from("ingest_run")
-    .select(RUN_COLUMNS)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+async function selectRuns<T>(
+  query: (columns: string) => PromiseLike<{ data: T; error: { code?: string; message: string } | null }>,
+): Promise<T> {
+  let { data, error } = await query(RUN_COLUMNS_WITH_FAILURES);
+  if (error?.code === UNDEFINED_COLUMN) ({ data, error } = await query(RUN_COLUMNS));
   if (error) throw new Error(`실행 이력 조회 실패: ${error.message}`);
-  return data === null ? null : toIngestRunRecord(data);
+  return data;
 }
 
 /**
@@ -30,20 +34,28 @@ export async function fetchLatestIngestRun(): Promise<IngestRunRecord | null> {
  * `days` 일 전 0시(KST)부터 지금까지를 가져온다. 기준이 KST 인 이유는 사람이 "오늘"을
  * 그렇게 세기 때문이다 — 실행 환경의 시간대로 세면 하루가 다른 시각에 바뀐다.
  */
-export async function fetchRecentRuns(days: number, now: Date): Promise<IngestRunRecord[]> {
+export async function fetchRecentRuns(
+  days: number,
+  now: Date,
+  /** 행 상한. 하루에 이어달리기가 여러 바퀴 도므로 부르는 쪽이 `days × 하루 최대 바퀴`로 준다. */
+  limit: number,
+): Promise<IngestRunRecord[]> {
   const from = dayStartIso(dayKey(now.toISOString()));
   if (from === null) return [];
   const fromMs = Date.parse(from) - (days - 1) * 24 * 60 * 60 * 1000;
-  const { data, error } = await serverSupabase()
-    .from("ingest_run")
-    .select(RUN_COLUMNS)
-    .gte("started_at", new Date(fromMs).toISOString())
-    .order("started_at", { ascending: false })
-    // 상한을 둔다 — 하루에 몇 번 도는지가 앞으로 달라질 값이라, 없으면 이 조회가
-    // 언젠가 수백 행을 끌고 온다. 넘치면 오래된 것부터 빠지고 합계가 **적게** 나온다.
-    .limit(200);
-  if (error) throw new Error(`실행 이력 조회 실패: ${error.message}`);
-  return (data ?? []).map(toIngestRunRecord).filter((r): r is IngestRunRecord => r !== null);
+  const data = await selectRuns((columns) =>
+    serverSupabase()
+      .from("ingest_run")
+      .select(columns)
+      .gte("started_at", new Date(fromMs).toISOString())
+      .order("started_at", { ascending: false })
+      // 상한을 둔다 — 없으면 이 조회가 언젠가 수백 행을 끌고 온다. 넘치면 오래된 것부터 빠진다 —
+      // 그러면 그 날이 「실행 기록 없음」으로 보이므로 상한은 넘치지 않을 만큼 넉넉해야 한다.
+      .limit(limit),
+  );
+  return ((data ?? []) as unknown[])
+    .map(toIngestRunRecord)
+    .filter((r): r is IngestRunRecord => r !== null);
 }
 
 /**

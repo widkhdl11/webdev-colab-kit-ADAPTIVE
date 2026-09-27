@@ -25,3 +25,4 @@ export {
 export type { ChainRequest } from "./lib/chaining";
 export { createIngestPorts } from "./api/ports";
 export { saveIngestRunReport } from "./api/save-run-report";
+export { MAX_CHAIN_LENGTH } from "./lib/budgets";

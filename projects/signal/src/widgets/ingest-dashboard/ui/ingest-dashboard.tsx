@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { IngestRunRecord, RunSourceItem, SpendSummary } from "@/entities/ingest-run";
+import type { DayOutcome, IngestRunRecord, RunSourceItem, SpendSummary } from "@/entities/ingest-run";
 import {
   avgMsPerItem,
   avgTokensPerItem,
@@ -9,10 +9,16 @@ import {
   totals,
 } from "@/entities/ingest-run";
 import { safeSourceUrl } from "@/features/content-render";
+import { DailyResult } from "./daily-result";
 import styles from "./ingest-dashboard.module.css";
 
 interface Props {
+  /** 고른 날의 마지막 실행. 그날 실행이 없으면 null. */
   run: IngestRunRecord | null;
+  /** 맨 위 날짜 줄과 「그날 처리 결과」 (2026-09-27). */
+  days: DayOutcome[];
+  selectedDay: string;
+  todayKey: string;
   /** 오늘·최근 며칠의 요금 합계. 최신 실행 하나로는 "오늘 얼마 썼나"가 안 나온다. */
   spend: SpendSummary;
   selectedSourceId: string | null;
@@ -53,16 +59,65 @@ const LEGACY_MODELS = {
   keywords: "claude-sonnet-5",
 } as const;
 
-export function IngestDashboard({ run, spend, selectedSourceId, sourceItems, notices = null }: Props) {
+export function IngestDashboard({
+  run,
+  days,
+  selectedDay,
+  todayKey,
+  spend,
+  selectedSourceId,
+  sourceItems,
+  notices = null,
+}: Props) {
+  const daily = <DailyResult days={days} selectedDay={selectedDay} todayKey={todayKey} />;
+  // 오늘·최근 7일 요금은 고른 날과 무관하다 — 고른 날에 실행이 없어도 그린다(2026-09-27 코드 리뷰).
+  const spendSection = (
+    <>
+      {/* 요금 절 (2026-09-22 사용자 요청) — "이걸 보면서 줄일 방법을 생각한다"가 목적이라
+          단계별로 나눈다. 합계만 있으면 어디를 손댈지가 안 나온다. */}
+      <h2 className={styles.sectionTitle}>요금</h2>
+      <dl className={styles.statGrid}>
+        <div className={styles.stat}>
+          <dt>오늘 쓴 요금</dt>
+          <dd>
+            {fmtMoney(spend.today.totalUsd)}
+            <span className={styles.statSub}>
+              {" "}
+              {spend.todayRuns === 0 ? "오늘 아직 안 돌았음" : `실행 ${spend.todayRuns}회`}
+            </span>
+          </dd>
+        </div>
+        <div className={styles.stat}>
+          <dt>하루 평균</dt>
+          <dd>
+            {fmtMoney(spend.dailyAverageUsd)}
+            <span className={styles.statSub}>
+              {" "}
+              {spend.daysCounted === 0 ? "기록 없음" : `기록 있는 ${spend.daysCounted}일 기준`}
+            </span>
+          </dd>
+        </div>
+        <div className={styles.stat}>
+          {/* 예측이 아니라 "지금 속도가 유지되면" 이다. 그 전제를 라벨에 적는다 —
+              안 적으면 이 숫자가 약속으로 읽힌다. */}
+          <dt>한 달 환산 (지금 속도면)</dt>
+          <dd>{fmtMoney(spend.monthlyEstimateUsd)}</dd>
+        </div>
+      </dl>
+    </>
+  );
+
   if (run === null) {
     return (
       <main className={styles.wrap}>
+        {daily}
         <div className={styles.pageHead}>
           <h1>수집 파이프라인</h1>
-          <p>개발자용 — 최근 실행 1건의 소스별 통계를 보여준다.</p>
+          <p>개발자용 — 고른 날의 마지막 실행 1건을 소스별로 보여준다.</p>
         </div>
         {notices}
-        <p className={styles.empty}>아직 기록된 실행이 없습니다. `npm run ingest` 를 한 번 돌려보세요.</p>
+        <p className={styles.empty}>이 날은 기록된 실행이 없습니다.</p>
+        {spendSection}
       </main>
     );
   }
@@ -115,10 +170,11 @@ export function IngestDashboard({ run, spend, selectedSourceId, sourceItems, not
 
   return (
     <main className={styles.wrap}>
+      {daily}
       <div className={styles.pageHead}>
         <h1>수집 파이프라인</h1>
         <p>
-          최근 실행 · {new Date(run.startedAt).toLocaleString("ko-KR")}
+          이 날 마지막 실행 · {new Date(run.startedAt).toLocaleString("ko-KR")}
           {run.budget.exhausted ? <span className={styles.warn}> · 시간 예산 초과</span> : null}
         </p>
         {run.budget.exhausted ? (
@@ -196,37 +252,7 @@ export function IngestDashboard({ run, spend, selectedSourceId, sourceItems, not
         </div>
       </dl>
 
-      {/* 요금 절 (2026-09-22 사용자 요청) — "이걸 보면서 줄일 방법을 생각한다"가 목적이라
-          단계별로 나눈다. 합계만 있으면 어디를 손댈지가 안 나온다. */}
-      <h2 className={styles.sectionTitle}>요금</h2>
-      <dl className={styles.statGrid}>
-        <div className={styles.stat}>
-          <dt>오늘 쓴 요금</dt>
-          <dd>
-            {fmtMoney(spend.today.totalUsd)}
-            <span className={styles.statSub}>
-              {" "}
-              {spend.todayRuns === 0 ? "오늘 아직 안 돌았음" : `실행 ${spend.todayRuns}회`}
-            </span>
-          </dd>
-        </div>
-        <div className={styles.stat}>
-          <dt>하루 평균</dt>
-          <dd>
-            {fmtMoney(spend.dailyAverageUsd)}
-            <span className={styles.statSub}>
-              {" "}
-              {spend.daysCounted === 0 ? "기록 없음" : `기록 있는 ${spend.daysCounted}일 기준`}
-            </span>
-          </dd>
-        </div>
-        <div className={styles.stat}>
-          {/* 예측이 아니라 "지금 속도가 유지되면" 이다. 그 전제를 라벨에 적는다 —
-              안 적으면 이 숫자가 약속으로 읽힌다. */}
-          <dt>한 달 환산 (지금 속도면)</dt>
-          <dd>{fmtMoney(spend.monthlyEstimateUsd)}</dd>
-        </div>
-      </dl>
+      {spendSection}
 
       <table className={styles.table}>
         <caption>단계별 — 이번 실행과 오늘 합계</caption>
@@ -276,7 +302,7 @@ export function IngestDashboard({ run, spend, selectedSourceId, sourceItems, not
                       (design-rules "상태를 색으로만 알리지 않는다", 2026-08-31 리뷰 이관분).
                       `aria-current` 로 지금 보고 있는 소스가 어느 줄인지 같이 말한다. */}
                   <Link
-                    href={`?source=${encodeURIComponent(s.sourceId)}`}
+                    href={`?day=${selectedDay}&source=${encodeURIComponent(s.sourceId)}`}
                     aria-current={s.sourceId === selectedSourceId ? "true" : undefined}
                   >
                     {s.sourceId}

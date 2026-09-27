@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { IngestRunRecord, RunSourceItem } from "../model/types";
+import { INGEST_RUN_FAILURE_STAGES, type IngestRunRecord, type RunSourceItem } from "../model/types";
 
 /**
  * 조회 응답 → 도메인 모양. **신뢰 경계다** (rules/supabase — row.ts 와 같은 이유).
@@ -73,6 +73,9 @@ const budgetSchema = z.object({
   // 옛 행에는 없을 수 있어 `nullish` 다 — 위 stageMs 와 같은 이유.
   skippedKeywords: z.boolean().nullish(),
   skippedHotIssue: z.boolean().nullish(),
+  skippedKeywordItems: z.number().nullish(),
+  skippedHotIssueItems: z.number().nullish(),
+  poolTruncated: z.boolean().nullish(),
 });
 
 /**
@@ -86,6 +89,15 @@ const costSchema = z.object({
   lookupFailed: z.boolean(),
 });
 
+/** 실패 이유 (0013, 2026-09-27). 옛 행에는 칸 자체가 없어서 `nullish` 다 — 위 `cost` 와 같은 이유. */
+const failureSchema = z.object({
+  stage: z.enum(INGEST_RUN_FAILURE_STAGES),
+  reason: z.string(),
+  whole: z.boolean(),
+  attempted: z.number(),
+  failed: z.number(),
+});
+
 const rowSchema = z.object({
   id: z.string().min(1),
   started_at: z.string().min(1),
@@ -94,6 +106,9 @@ const rowSchema = z.object({
   sources: z.array(sourceStatSchema),
   budget: budgetSchema,
   cost: costSchema.nullish(),
+  // 모양이 어긋나면(모르는 단계가 먼저 저장된 날 등) **이 칸만** 모른다로 떨어뜨린다 —
+  // 관찰용 칸 하나 때문에 실행 기록 전체가 버려져 그날이 「실행 기록 없음」이 되면 안 된다.
+  failures: z.array(failureSchema).nullish().catch(null),
 });
 
 /** 못 믿을 행은 버린다(null) — 대시보드가 던지는 대신 "실행 없음"으로 떨어진다. */
@@ -109,10 +124,14 @@ export function toIngestRunRecord(raw: unknown): IngestRunRecord | null {
     // "이 실행에는 그 칸이 아예 없었다"를 같은 것으로 보게 되고, 옛 행과 새 행이 섞인
     // 목록에서 그 차이가 그대로 사라진다.
     cost: r.cost ?? null,
+    failures: r.failures ?? null,
     budget: {
       ...r.budget,
       skippedKeywords: r.budget.skippedKeywords ?? null,
       skippedHotIssue: r.budget.skippedHotIssue ?? null,
+      skippedKeywordItems: r.budget.skippedKeywordItems ?? null,
+      skippedHotIssueItems: r.budget.skippedHotIssueItems ?? null,
+      poolTruncated: r.budget.poolTruncated ?? null,
     },
     usage: {
       ...r.usage,

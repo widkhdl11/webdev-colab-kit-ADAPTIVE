@@ -276,7 +276,8 @@ export function createIngestPorts(): IngestPorts {
      * 여기서 0 을 돌려주면 조회가 깨진 날 상한이 통째로 사라진다.
      */
     async loadTodaySpendUsd(now: Date) {
-      return todaySpendUsd(await fetchRecentRuns(1, now), now);
+      // 상한 200행은 이 함수가 원래 쓰던 값 그대로다(2026-09-27 상한을 부르는 쪽 인자로 옮김).
+      return todaySpendUsd(await fetchRecentRuns(1, now, 200), now);
     },
     async judgeTopic(title: string) {
       anthropic ??= newAnthropic();

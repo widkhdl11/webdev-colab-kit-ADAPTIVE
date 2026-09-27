@@ -34,6 +34,7 @@ const run = (startedAt: string, over: Partial<IngestRunRecord["usage"]> = {}): I
   elapsedMs: 1000,
   // 요금 상한이 생기기 전의 실행도 합계에 들어간다 — 그 칸은 null 이다.
   cost: null,
+  failures: null,
   budget: {
     exhausted: false,
     skippedSources: [],
@@ -42,6 +43,9 @@ const run = (startedAt: string, over: Partial<IngestRunRecord["usage"]> = {}): I
     skippedEnrichments: 0,
     skippedKeywords: null,
     skippedHotIssue: null,
+    skippedKeywordItems: null,
+    skippedHotIssueItems: null,
+    poolTruncated: null,
   },
   usage: { ...NO_USAGE, ...over },
   sources: [],

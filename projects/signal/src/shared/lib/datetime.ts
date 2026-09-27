@@ -117,3 +117,26 @@ export function relativeTime(
   if (!sameYear) return `${shifted.getUTCFullYear()}년 ${monthDay}`;
   return shifted.getUTCMonth() === shiftedNow.getUTCMonth() ? day : monthDay;
 }
+
+/**
+ * 한 시점을 빠짐없이 적는 표기 — `2026년 09월 27일 오전 7시 2분`.
+ * 월·일을 두 자리로 채운다(사용자가 준 형식). 정각이면 분을 뺀다. 파싱할 수 없으면 원문 그대로.
+ */
+export function fullDateTimeKo(iso: string, offsetMinutes: number = SEOUL_OFFSET_MINUTES): string {
+  const d = shift(iso, offsetMinutes);
+  if (d === null) return iso;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const h = d.getUTCHours();
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  const minute = d.getUTCMinutes();
+  return (
+    `${d.getUTCFullYear()}년 ${pad(d.getUTCMonth() + 1)}월 ${pad(d.getUTCDate())}일 ` +
+    `${meridiem(d)} ${hour12}시${minute === 0 ? "" : ` ${minute}분`}`
+  );
+}
+
+/** 날짜 키(`YYYY-MM-DD`) → `2026년 09월 27일`. 시각이 없는 날(실행 기록 없음)에 쓴다. 꼴이 아니면 원문 그대로. */
+export function fullDateKo(key: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+  return m === null ? key : `${m[1]}년 ${m[2]}월 ${m[3]}일`;
+}
