@@ -294,7 +294,7 @@ describe("saveIngestRunReport", () => {
     expect(c?.fetched).toBe(0);
   });
 
-  it("2026-09-27: 단계별 실패 이유를 모아 failures 로 저장한다 — 본문 긁기는 통째로 죽은 것만", async () => {
+  it("2026-09-27: 단계별 실패 이유를 모아 failures 로 저장한다 — 한 건 실패도 담는다", async () => {
     const { saveIngestRunReport } = await import("./save-run-report");
     await saveIngestRunReport({
       runId: "run-1",
@@ -310,12 +310,30 @@ describe("saveIngestRunReport", () => {
       }),
     });
     const row = insertRun.mock.calls[0]![0] as { failures: unknown };
-    // 본문 긁기의 한 건 실패(HTTP 403)는 남의 사이트 사정이라 담지 않는다 — 담으면 매일이 실패로 보인다
-    // 단계의 시도·실패 건수를 같이 담는다 — 읽는 쪽이 「한 건 실패」와 「전부 실패」를 가른다
+    // 본문 긁기 한 건 실패(HTTP 403)도 담는다 — 한 단계라도 실패하면 그날은 실패다(사용자 지시)
+    // 단계의 시도·실패 건수를 같이 담는다 — 화면이 「몇 건 중 몇 건」을 적는다
     expect(row.failures).toEqual([
       { stage: "topic", reason: "400 credit balance is too low", whole: false, attempted: 30, failed: 30 },
+      { stage: "extraction", reason: "HTTP 403", whole: false, attempted: 1, failed: 1 },
       { stage: "summary", reason: "400 credit balance is too low", whole: false, attempted: 2, failed: 2 },
     ]);
+  });
+
+  it("2026-09-27: 실패 건수만 있고 이유가 없는 단계도 빈 이유로 담는다 — 빠지면 그 실패가 화면에서 사라진다", async () => {
+    const { saveIngestRunReport } = await import("./save-run-report");
+    await saveIngestRunReport({
+      runId: "run-1",
+      startedAt: new Date("2026-09-27T00:00:00.000Z"),
+      elapsedMs: 1,
+      report: report({
+        summaries: {
+          attempted: 10, succeeded: 9, failed: 1, skippedNoEvidence: 0, failedTitles: ["t"], gaveUpTitles: [],
+          failureReasons: [], error: null,
+        },
+      }),
+    });
+    const row = insertRun.mock.calls[0]![0] as { failures: unknown };
+    expect(row.failures).toEqual([{ stage: "summary", reason: "", whole: false, attempted: 10, failed: 1 }]);
   });
 
   it("2026-09-27: 단계가 통째로 죽은 것(error)은 whole 로 표시해 담는다", async () => {

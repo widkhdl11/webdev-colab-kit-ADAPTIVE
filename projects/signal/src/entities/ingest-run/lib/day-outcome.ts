@@ -1,5 +1,5 @@
 import { dayKey, dayStartIso } from "@/shared/lib/datetime";
-import type { IngestRunFailureStage, IngestRunRecord } from "../model/types";
+import { INGEST_RUN_FAILURE_STAGES, type IngestRunFailureStage, type IngestRunRecord } from "../model/types";
 
 /**
  * 날짜별 「그날 처리 결과」 (2026-09-27 사용자 요청).
@@ -7,15 +7,11 @@ import type { IngestRunFailureStage, IngestRunRecord } from "../model/types";
  * 대시보드가 최신 실행 하나의 숫자만 보여줘서, **어제 수집이 성공했는지**를 알려면 표를 읽고
  * 스스로 판단해야 했다. 여기서 하루를 성공·실패 하나로 접고, 실패면 이유를 사람 말로 적는다.
  *
- * 무엇을 실패로 치나 — **파이프라인이 제 일을 못 한 것**만:
- *  - 그날 실행 기록이 없다(예약 실행이 안 돌았거나, 기록을 저장하기 전에 멈췄다)
- *  - 모델 호출 단계(주제 판정·핫이슈·요약·번역·키워드)에 실패 이유가 있다 — API 요금 부족이 여기 걸린다
- *  - 단계가 통째로 죽었다(후보 조회 실패 등)
- *  - 하루 요금 상한에 닿았거나, 오늘 쓴 요금을 못 읽어 멈췄다
- *  - 피드 소스가 **전부** 실패했다
- * 무엇을 실패로 치지 않나 — 남의 사이트 사정이라 매일 조금씩 나는 것은 「참고」로만 적는다:
- *  - 피드 소스 일부 실패(INV-C4: 일부 소스가 죽는 것은 정상 경로다), 본문 긁기 개별 실패
- *  - 시간 예산이 떨어져 남은 일(이어달리기가 다음 바퀴로 넘긴다)
+ * 기준(2026-09-27 사용자 지시): **모든 단계가 성공한 날만 성공이다. 한 단계라도 실패하면 실패이고,
+ * 실패한 단계를 이유에 적는다.** 단계 = 피드 받기·주제 판정·핫이슈 판정·본문 긁기·요약·제목 번역·키워드.
+ * 한 건만 실패해도 그 단계는 실패다 — 건수는 같이 적는다(「120건 중 12건」).
+ * 단계 밖의 실패: 실행 기록 없음 · 요금 상한 도달 · 요금 조회 실패 · 남은 일이 있는 채 끝남.
+ * (처음엔 한 건짜리 실패를 「참고」로 내렸는데, 사용자가 전부 실패로 보겠다고 정했다.)
  */
 
 export type DayStatus = "ok" | "fail" | "pending";
@@ -80,15 +76,12 @@ export function explainFailure(reason: string): string {
 
 const fmtUsd = (n: number) => `$${n.toFixed(2)}`;
 
-/**
- * 이유 자체가 치명적인 것 — 한 건만 나도 그날은 실패다. 요금·키·권한은 다음 호출도 똑같이 막히므로
- * 「몇 건 중 몇 건」을 따질 이유가 없다. 나머지(과부하·응답 잘림·시간 초과)는 한 건씩 흔히 나서
- * 그 단계가 **한 건도 못 했을 때만** 실패로 친다(2026-09-27 코드 리뷰 — 핫이슈 판정 응답 잘림이 매일 6~17%).
- */
-const FATAL = new Set(["API 요금(크레딧) 부족", "API 키 인증 실패", "API 사용 권한 없음"]);
-
 /** 마지막 실행 뒤 이만큼 지나도 다음 바퀴가 없으면 이어달리기가 끝난 것으로 본다(오늘 날짜에만 쓴다). */
 const CHAIN_SETTLE_MS = 30 * 60 * 1000;
+
+/** 이유 줄의 순서 — 파이프라인이 실제로 도는 순서다. */
+const FEED_LABEL = "피드 받기";
+const STAGE_ORDER = [FEED_LABEL, ...INGEST_RUN_FAILURE_STAGES.map((s) => STAGE_LABELS[s])];
 
 /**
  * 그 실행이 끝났을 때 남은 일이 있었나 — features/ingestion `shouldChain` 과 **같은 기준**이다.
@@ -106,6 +99,27 @@ function hasRemainingWork(b: IngestRunRecord["budget"]): boolean {
   ].some((n) => Number.isFinite(n) && n > 0);
 }
 
+/** 한 단계가 그날 모든 실행에 걸쳐 낸 실패. */
+interface StageTally {
+  failed: number;
+  /** 시도 건수를 아는 실행에서만 더한다. 모르면(옛 기록) 「N건 실패」로만 적는다. */
+  attempted: number;
+  attemptedKnown: boolean;
+  whole: boolean;
+  texts: Set<string>;
+}
+
+function stageLine(label: string, t: StageTally): string {
+  // 피드 받기는 소스 단위다. 바퀴마다 같은 소스를 다시 받아서 건수를 더하면 부풀므로 이름 수로 센다.
+  if (label === FEED_LABEL) return `${label} — 소스 ${t.texts.size}곳 실패 (${[...t.texts].join(", ")})`;
+  const what = t.whole
+    ? "단계 전체가 멈춤"
+    : t.attemptedKnown && t.attempted > 0
+      ? `${t.attempted}건 중 ${t.failed}건 실패`
+      : `${t.failed}건 실패`;
+  return t.texts.size === 0 ? `${label} — ${what}` : `${label} — ${what} (${[...t.texts].join(", ")})`;
+}
+
 function judgeDay(
   day: string,
   runs: readonly IngestRunRecord[],
@@ -117,65 +131,58 @@ function judgeDay(
   const reasons: string[] = [];
   const notes: string[] = [];
 
-  // 같은 이유가 여러 단계·여러 실행에 나면 한 줄로 묶는다 — 요금이 떨어진 날은 모든 단계가
-  // 같은 이유로 실패해서, 단계마다 한 줄씩 쓰면 같은 말이 대여섯 번 반복된다.
-  const group = (into: Map<string, Set<string>>, text: string, stage: string) => {
-    const stages = into.get(text) ?? new Set<string>();
-    stages.add(stage);
-    into.set(text, stages);
+  const tallies = new Map<string, StageTally>();
+  const tally = (label: string) => {
+    const t = tallies.get(label) ?? { failed: 0, attempted: 0, attemptedKnown: true, whole: false, texts: new Set<string>() };
+    tallies.set(label, t);
+    return t;
   };
-  const fatal = new Map<string, Set<string>>();
-  const stageDead = new Map<string, Set<string>>();
-  const recovered = new Set<string>();
-  const partial = new Map<string, { failed: number; attempted: number; texts: Set<string> }>();
   let unknownFailures = false;
   let capped: { capUsd: number } | null = null;
 
   for (const run of ordered) {
-    const isLatest = run === latestRun;
-    if (run.failures === null) unknownFailures = true;
+    // 피드 받기 — 소스별 오류로 센다(실패 이유 칸이 생기기 전 기록에도 있다).
+    const feedFailed = run.sources.filter((s) => s.error !== null);
+    if (feedFailed.length > 0) {
+      const t = tally(FEED_LABEL);
+      for (const s of feedFailed) t.texts.add(s.sourceId);
+    }
+
+    if (run.failures === null) {
+      unknownFailures = true;
+      // 이유 칸이 없던 실행도 본문 긁기 실패 건수는 소스별로 남아 있다.
+      const extractionFailed = run.sources.reduce((n, s) => n + s.extractionFailed, 0);
+      if (extractionFailed > 0) {
+        const t = tally(STAGE_LABELS.extraction);
+        t.failed += extractionFailed;
+        t.attemptedKnown = false;
+      }
+    }
     // 단계 건수는 이유마다 같은 값이 반복돼 담긴다 — 실행마다 단계당 한 번만 더한다.
     const counted = new Set<string>();
     for (const f of run.failures ?? []) {
-      const text = explainFailure(f.reason);
-      const label = STAGE_LABELS[f.stage];
-      if (FATAL.has(text)) group(fatal, text, label);
-      else if (f.whole || (f.attempted > 0 && f.failed >= f.attempted)) {
-        // 단계가 한 건도 못 했다. 그날 마지막 실행이면 실패, 앞 바퀴면 뒤 바퀴가 다시 돌았으니 참고.
-        if (isLatest) group(stageDead, text, label);
-        else recovered.add(label);
-      } else {
-        const p = partial.get(label) ?? { failed: 0, attempted: 0, texts: new Set<string>() };
-        if (!counted.has(label)) {
-          counted.add(label);
-          p.failed += f.failed;
-          p.attempted += f.attempted;
-        }
-        p.texts.add(text);
-        partial.set(label, p);
+      const t = tally(STAGE_LABELS[f.stage]);
+      if (!counted.has(f.stage)) {
+        counted.add(f.stage);
+        t.failed += f.failed;
+        t.attempted += f.attempted;
       }
+      if (f.whole) t.whole = true;
+      // 빈 이유 = 실패 건수만 있고 이유는 안 남은 경로(요약 형식 불합격 등). 건수만 적는다.
+      if (f.reason.trim() !== "") t.texts.add(explainFailure(f.reason));
     }
     if (run.cost?.capped && !run.cost.lookupFailed) capped = { capUsd: run.cost.capUsd };
+    if (run.cost?.lookupFailed) tally("요금 조회").texts.add("오늘 쓴 요금을 읽지 못해 요약·키워드를 멈춤");
   }
 
-  for (const [text, stages] of fatal) reasons.push(`${text} — ${[...stages].join("·")}`);
-  for (const [text, stages] of stageDead) reasons.push(`${[...stages].join("·")} 단계가 한 건도 처리하지 못함 — ${text}`);
-  // 요금을 못 읽으면 상한에 닿은 것으로 보고 멈춘다. 그날 마지막 실행에서만 따진다 — 앞 바퀴의 일시 실패는 뒤 바퀴가 복구한다.
-  if (latestRun.cost?.lookupFailed) reasons.push("오늘 쓴 요금을 읽지 못해 요약·키워드를 멈춤");
+  for (const label of STAGE_ORDER) {
+    const t = tallies.get(label);
+    if (t !== undefined) reasons.push(stageLine(label, t));
+  }
+  const lookup = tallies.get("요금 조회");
+  if (lookup !== undefined) reasons.push(...lookup.texts);
   if (capped !== null) reasons.push(`하루 요금 상한(${fmtUsd(capped.capUsd)})에 닿아 요약·키워드를 멈춤`);
 
-  // 바퀴마다 소스 전부를 다시 받는다(route.ts). 한 바퀴의 일시 끊김으로 전부 실패해도 다른 바퀴가 받았으면
-  // 그날 글은 들어왔다 — 소스를 받으려 한 **모든** 바퀴에서 전부 실패했을 때만 실패다.
-  const withSources = ordered.filter((r) => r.sources.length > 0);
-  const failedSources = new Set(withSources.flatMap((r) => r.sources.filter((s) => s.error !== null).map((s) => s.sourceId)));
-  if (withSources.length > 0 && withSources.every((r) => r.sources.every((s) => s.error !== null))) {
-    reasons.push("피드 소스를 전부 받지 못함");
-  } else if (failedSources.size > 0) {
-    notes.push(`피드 소스 ${failedSources.size}곳 받기 실패: ${[...failedSources].join(", ")}`);
-  }
-
-  // 그날 마지막 실행에 남은 일이 있으면 뒤를 이을 바퀴가 없었다는 뜻이다 — 이어달리기가 끊겼거나
-  // 바퀴 상한에 닿았다. 2026-09-22 에 남은 일이 조용히 다음 날로 넘어간 것과 같은 모양이라 실패로 친다.
   // 이어달리기는 요금 상한과 함께 생겼다(2026-09-22) — 요금 기록(cost)이 없는 실행은 그 전이라,
   // 남은 일을 다음 날로 넘기는 것이 그때의 정상 동작이었다. 실패가 아니라 참고다.
   if (hasRemainingWork(latestRun.budget) && settled(latestRun)) {
@@ -183,14 +190,8 @@ function judgeDay(
     else reasons.push("처리 못 한 일이 남은 채 끝남 — 이어달리기가 끊겼거나 바퀴 상한에 닿았다");
   }
 
-  for (const [label, p] of partial) {
-    notes.push(`${label} ${p.attempted}건 중 ${p.failed}건 실패 — ${[...p.texts].join(", ")}`);
-  }
-  if (recovered.size > 0) {
-    notes.push(`앞 바퀴에서 ${[...recovered].join("·")} 단계가 실패했지만 뒤 바퀴가 다시 돌았다`);
-  }
   if (unknownFailures) {
-    notes.push("실패 이유를 저장하기 전의 실행이 섞여 있어, 그 실행의 API 오류는 여기 안 보인다");
+    notes.push("실패 이유를 저장하기 전의 실행이 섞여 있어, 그 실행의 모델 호출 실패는 여기 안 보인다");
   }
 
   return {
