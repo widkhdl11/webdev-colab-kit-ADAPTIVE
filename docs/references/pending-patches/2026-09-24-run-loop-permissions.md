@@ -1,4 +1,7 @@
-# 2026-09-24 — 자율 실행 루프의 권한 허용 목록 (결정 필요 — 아직 붙이지 않는다)
+# 2026-09-24 — 자율 실행 루프의 권한 허용 목록
+
+> **결정: A (2026-09-27 사용자).** `auto` 를 유지하고 목록을 고정하지 않는다. 붙일 것이 없다.
+> B 는 제품 요청에 루프를 쓰기 시작할 때, 그동안 쌓인 `report/loop/permissions.json` 으로 다시 본다.
 
 정본: docs/references/run-loop.md 4절. 재료: 킷 시험(요청 `fail-alert`, 3회차)의 `report/loop/permissions.json`.
 
