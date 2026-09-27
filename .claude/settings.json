@@ -55,6 +55,15 @@
             "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/report-subagent.mjs\""
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/loop-lock.mjs\""
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -96,6 +105,10 @@
           {
             "type": "command",
             "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/gates/graph-stop.mjs\""
+          },
+          {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/session-size.mjs\""
           }
         ]
       }

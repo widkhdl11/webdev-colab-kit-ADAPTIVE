@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // @check-role: on-change
-// @check-guards: .claude/settings.json
-//   (훅 파일 둘은 아직 없어서 지키는 목록에 못 넣는다 — 패치를 붙인 뒤 .claude/hooks/loop-lock.mjs 와
-//    .claude/hooks/session-size.mjs 를 여기 더한다. 그 전에는 등록 단계에서 설정 파일이 바뀌는 턴에 돈다.)
+// @check-guards: .claude/hooks/loop-lock.mjs, .claude/hooks/session-size.mjs, .claude/settings.json
+//   (2026-09-27 패치 적용 확인 22/22 뒤 훅 파일 둘을 더했다.)
 //
 // check-loop-hooks.mjs — 자율 실행 루프의 보호 파일 패치 둘(잠금 훅·대화 길이 훅)이 붙었고 듣는지 본다.
 //
