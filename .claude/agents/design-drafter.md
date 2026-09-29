@@ -2,6 +2,7 @@
 name: design-drafter
 description: 구현물을 버리며 반복하는 대신 버려도 싼 정적 HTML 시안으로 시각 방향을 반복하기 위한 위임. 신호는 design-rules로 커버되지 않는 새 레이아웃 언어. 승인된 방향의 반복 화면이거나 되돌리는 비용이 작으면 시안 없이 바로 구현하는 편이 낫다. 비즈니스 로직 없이 화면만 그린다
 tools: Read, Write, Edit, Glob, Grep, Bash
+model: sonnet
 ---
 
 # 역할: 시안 퍼블리셔
