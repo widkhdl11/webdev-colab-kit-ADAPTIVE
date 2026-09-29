@@ -1,9 +1,11 @@
 ---
 project: signal
 status: deployed
-basis: 1fb51f47ce56
+basis: 5e686f22cd58
 ---
 # deploy — signal
+
+> 2026-09-29 — `b7f1c5c` push → Vercel 상태 `success`(Deployment has completed) · `www.simoori.com` 200 · `/api/ingest` 인증 없이 401. 수집 대시보드 「그날 처리 결과」와 실패 이유 저장(0013, 사용자 적용).
 
 **운영 공개 주소**: https://www.simoori.com/ (2026-09-24 사용자가 도메인 연결 · `simoori.com` 은 www 로 308). 예전 https://webdev-colab-kit-adaptive-xi.vercel.app/ 도 열린다. 배포별 주소(`…-<해시>-widkhdl11s-projects.vercel.app`)는 로그인이 필요하다 — 배포 뒤 확인은 이 주소로 한다.
 
