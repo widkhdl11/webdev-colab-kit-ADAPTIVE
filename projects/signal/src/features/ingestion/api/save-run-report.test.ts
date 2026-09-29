@@ -336,6 +336,20 @@ describe("saveIngestRunReport", () => {
     expect(row.failures).toEqual([{ stage: "summary", reason: "", whole: false, attempted: 10, failed: 1 }]);
   });
 
+  it("2026-09-29: 실패 이유는 저장 전에 200자로 자른다 — 통째 실패(error)도", async () => {
+    const { saveIngestRunReport } = await import("./save-run-report");
+    await saveIngestRunReport({
+      runId: "run-1",
+      startedAt: new Date("2026-09-29T00:00:00.000Z"),
+      elapsedMs: 1,
+      report: report({
+        extraction: { attempted: 0, succeeded: 0, failed: 0, failedUrls: [], failureReasons: [], error: "x".repeat(500) },
+      }),
+    });
+    const row = insertRun.mock.calls[0]![0] as { failures: { reason: string }[] };
+    expect(row.failures[0]!.reason).toHaveLength(200);
+  });
+
   it("2026-09-27: 단계가 통째로 죽은 것(error)은 whole 로 표시해 담는다", async () => {
     const { saveIngestRunReport } = await import("./save-run-report");
     await saveIngestRunReport({

@@ -11,6 +11,9 @@ import type { IngestReport } from "./ports";
  * 단계 안의 한 건 실패도 전부 담는다 — 한 단계라도 실패하면 그날은 실패다(2026-09-27 사용자 지시).
  * 소스별 실패(피드 받기·적재)는 담지 않는다 — `sources[].error` 가 이미 들고 있다.
  */
+/** 저장하는 실패 이유 한 줄의 최대 길이. 단계 안의 한 건 실패 이유(noteFailure)와 같은 200자. */
+const MAX_STORED_REASON_LENGTH = 200;
+
 export function collectFailures(report: IngestReport): IngestRunFailure[] {
   const out: IngestRunFailure[] = [];
   const add = (
@@ -26,7 +29,11 @@ export function collectFailures(report: IngestReport): IngestRunFailure[] {
     // 실패 건수는 있는데 이유를 안 남기는 경로가 있다(요약 형식 불합격 등). 이유가 없다고 빠지면
     // 그 단계의 실패가 화면에서 사라진다 — 빈 이유로 한 줄 담는다.
     if (entries.length === 0 && counts.failed > 0) entries.push({ reason: "", whole: false });
-    for (const { reason, whole } of entries) {
+    for (const entry of entries) {
+      // 저장 전에 한 곳에서 자른다 — 단계마다 자르는 방식이 달라 통째 실패(error)는 원문 전체가
+      // 들어오고 있었다(2026-09-29 보안 리뷰 low). 오류 문구에 무엇이 섞여 올지 모르니 길이라도 막는다.
+      const reason = entry.reason.slice(0, MAX_STORED_REASON_LENGTH);
+      const whole = entry.whole;
       if (out.some((f) => f.stage === stage && f.reason === reason)) continue;
       out.push({ stage, reason, whole, attempted: counts.attempted, failed: counts.failed });
     }

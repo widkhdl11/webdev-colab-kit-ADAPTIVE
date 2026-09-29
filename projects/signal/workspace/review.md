@@ -1,13 +1,22 @@
 ---
 project: signal
 status: passed
-basis: 1fb51f47ce56
-reviewers: [code-reviewer, security-reviewer, ui-reviewer, test-auditor]
+basis: 5e686f22cd58
+reviewers: [code-reviewer, security-reviewer, ui-reviewer]
 ---
 # review — signal
 
 > 이 마커가 review 노드를 clean으로 만든다. basis는 구현(src/**) 해시 — 구현이 바뀌면 불일치로
 > review가 자동으로 낡아 재리뷰가 강제된다. (graph-stop 출력이 basis 값을 안내한다)
+
+## 2026-09-29 — 수집 대시보드 「그날 처리 결과」 (날짜 줄·성공/실패 불빛·단계별 이유)
+
+- **범위**: `ingest_run.failures`(0013) 저장 · `summarizeDays` 판정(한 단계라도 실패면 실패) · 날짜 줄·결과 카드 · 조회 폴백(42703·PGRST204).
+- **리뷰어**: code-reviewer(high 1 — 한 건 실패로 매일 빨간불 · medium 5 · low 7) → 반영, 이후 사용자 지시로 「한 단계라도 실패면 실패」로 다시 바꿈 ·
+  ui-reviewer(medium 2 — 포커스 링 잘림·날짜 줄 색만으로 구분, low 3) → 전부 반영 · security-reviewer(low 1 — 통째 실패 원문 길이 무제한) → 200자로 자름.
+  test-auditor 는 뺐다 — 스펙 INV 테스트를 새로 쓰지 않았다. 대신 판정 규칙마다 변이를 심어 빨간불을 확인했다(6+6+3개 전부 잡힘).
+- **실행 근거**: `npx vitest run` → 1239 passed · 게이트 통과 · `/dev/ingest` 넓은 폭·390 폭 실측(날짜 줄 가로 밀림 1453px 찾아 고침) ·
+  실데이터 9/20~9/29 전부 실패 판정(`venturebeat-ai` 매일 실패·본문 긁기 매일 몇 건) · 0013 사용자 적용 · push 후 운영 반영.
 
 ## 2026-09-24 (5) — 판정 검토를 simoori `/dev/ingest/review` 로 옮긴 판
 
