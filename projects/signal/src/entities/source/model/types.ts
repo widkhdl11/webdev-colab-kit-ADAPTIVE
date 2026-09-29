@@ -79,4 +79,12 @@ export interface Source {
    * 타임존 없는 **해외** 피드를 추가할 때 그쪽이 조용히 9시간 틀어진다.
    */
   feedTimezone?: string;
+  /**
+   * 수집을 쉬는 소스 (2026-09-29). 있으면 수집기가 건너뛴다(`INGEST_SOURCES`).
+   *
+   * 목록에서 지우지 않고 쉬게 하는 이유: 이미 적재된 글이 이 설정에서 출처 표시명·원문 언어·weight 를
+   * 읽는다. 지우면 그 글들이 「원문 보기」 라벨을 잃고 weight 가 기본값으로 바뀐다.
+   * 되살릴 때는 이 칸만 지운다.
+   */
+  paused?: { since: string; reason: string };
 }

@@ -732,7 +732,8 @@ export async function runIngest(params: {
   for (const source of sources) {
     // 예산이 떨어지면 남은 소스는 손대지 않는다. **건너뛴 것은 반드시 남긴다** —
     // 안 남기면 뒤쪽 소스가 매일 0건인 것이 "그 소스에 새 글이 없다"로 보인다.
-    if (budget.exhausted()) {
+    // 마감만 보면 마감 직전에 시작한 소스가 재시도까지 32초를 마감 뒤로 끌고 간다 — 최악치로 잰다(INV-CB9).
+    if (!budget.canAfford(WORST_CASE_MS.feed)) {
       budget.skippedSources.push(source.id);
       continue;
     }

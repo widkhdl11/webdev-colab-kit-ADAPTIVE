@@ -1,13 +1,26 @@
 ---
 project: signal
 status: passed
-basis: 5e686f22cd58
-reviewers: [code-reviewer, security-reviewer, ui-reviewer]
+basis: b56124b10ddf
+reviewers: [code-reviewer, security-reviewer]
 ---
 # review — signal
 
 > 이 마커가 review 노드를 clean으로 만든다. basis는 구현(src/**) 해시 — 구현이 바뀌면 불일치로
 > review가 자동으로 낡아 재리뷰가 강제된다. (graph-stop 출력이 basis 값을 안내한다)
+
+## 2026-09-29 (2) — 피드 받기 재시도 · VentureBeat 쉬게 하기
+
+- **범위**: 피드 받기가 접속 단계에서 끊기면(`fetch failed`) 2초 뒤 한 번 더 시도(`retry-network.ts`) ·
+  소스 `paused` 칸 + `INGEST_SOURCES`(쉬는 소스를 뺀 목록을 수집 라우트가 넘김) · `venturebeat-ai` 쉼(사이트 전체 Vercel 봇 확인 → 매일 429) ·
+  소스 루프가 마감이 아니라 피드 받기 최악치(`WORST_CASE_MS.feed` = 15+2+15초)로 시작 여부를 잰다.
+- **리뷰어**: code-reviewer(medium 1 — 소스 루프가 마감만 봐서 재시도로 마감 뒤 초과가 15→32초 · low 2 — 재시도 간격 상수가 server-only 파일에 있음 ·
+  재시도 범위가 헤더까지라는 설명 없음) → 전부 반영 · security-reviewer(지적 없음 — 재시도가 공개 주소·리다이렉트 검사를 매 시도 다시 거치고, 저장 이유는 `fetch failed` 문구뿐).
+  ui-reviewer 는 뺐다 — 화면을 안 건드렸다. test-auditor 는 뺐다 — 스펙 INV 테스트를 새로 쓰지 않았다(INV-CB9 테스트 2건은 기존 불변식에 경계값을 더한 것이고 변이로 확인).
+- **실행 근거**: 원인 실측 — VentureBeat 응답 `x-vercel-mitigated: challenge`·429(브라우저 UA·`/feed/` 동일, feedburner 는 9/3 정지) ·
+  hnrss 9/20~9/29 23번 중 5번 `fetch failed`, 즉시 12번 연속 200. `npx vitest run` → 1252 passed · `tsc` 통과 · 게이트 통과 ·
+  변이 8개 전부 빨간불(재시도 판별 풀기·재시도 없애기·기다림 빼기·무한 재시도·라우트가 SOURCES 넘기기·쉼 필터 풀기·루프를 마감 검사로 되돌리기·최악치를 15초로).
+  배포 뒤 실제 수집은 09-30 07시 실행에서 확인한다.
 
 ## 2026-09-29 — 수집 대시보드 「그날 처리 결과」 (날짜 줄·성공/실패 불빛·단계별 이유)
 

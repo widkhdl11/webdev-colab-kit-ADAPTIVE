@@ -301,13 +301,15 @@ describe("GET /api/ingest — 인가 비교의 엄밀함", () => {
     expect(runIngest).not.toHaveBeenCalled();
   });
 
-  it("소스 목록 **전체**를 넘긴다 — 일부만 넘기면 나머지가 조용히 빠진다", async () => {
+  it("쉬지 않는 소스 **전체**를 넘긴다 — 일부만 넘기면 나머지가 조용히 빠진다", async () => {
     vi.stubEnv("CRON_SECRET", SECRET);
-    const { SOURCES } = await import("@/entities/source");
+    const { INGEST_SOURCES } = await import("@/entities/source");
     await call({ authorization: `Bearer ${SECRET}` });
     const arg = runIngest.mock.calls[0]![0]!;
-    // `length > 0` 만 보면 `SOURCES.slice(0, 1)` 변이가 통과한다(13곳이 매일 안 돈다).
-    expect(arg.sources).toBe(SOURCES);
+    // `length > 0` 만 보면 `INGEST_SOURCES.slice(0, 1)` 변이가 통과한다(12곳이 매일 안 돈다).
+    // 쉬는 소스(2026-09-29 venturebeat-ai)는 넘기지 않는다 — SOURCES 를 넘기면 매일 실패로 빨간불이 켜진다.
+    expect(arg.sources).toBe(INGEST_SOURCES);
+    expect(arg.sources.map((s: { id: string }) => s.id)).not.toContain("venturebeat-ai");
   });
 });
 

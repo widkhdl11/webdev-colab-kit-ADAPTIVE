@@ -343,6 +343,12 @@ export const MAX_CHAIN_LENGTH = 20;
 export const EXTRACTION_TIMEOUT_MS = 15_000;
 
 /**
+ * 피드 받기가 접속 단계에서 끊겼을 때 다시 부르기 전 기다리는 시간 (2026-09-29, retry-network.ts).
+ * `api/ports.ts` 에 두지 않는 이유는 위와 같다 — 거기선 유닛이 못 읽고, 최악치(WORST_CASE_MS.feed)가 이 값을 쓴다.
+ */
+export const FEED_RETRY_DELAY_MS = 2_000;
+
+/**
  * 요약·번역 한 건에 줄 시간. 위와 같은 날 같은 이유로 내려왔다.
  *
  * 다른 단계(15초)보다 긴 이유: 응답이 한 문장 요약·핵심 셋·표에 생각까지 얹혀 생성할 토큰이
@@ -412,6 +418,9 @@ export const MODEL_MAX_RETRIES = 0;
  * 넘기면 **응답 본문이 없다.** 그날의 실패 이유도 토큰 계측도 안 남고 요금만 나간다.
  */
 export const WORST_CASE_MS = {
+  // 피드 받기는 접속 단계 실패에만 한 번 더 시도한다(retry-network.ts) — 타임아웃 두 번 + 사이 기다림.
+  // 소스 루프가 이 값으로 「시작해도 되나」를 잰다(2026-09-29 리뷰: 전엔 마감만 봐서 한 소스가 마감 뒤로 샜다).
+  feed: EXTRACTION_TIMEOUT_MS * 2 + FEED_RETRY_DELAY_MS,
   topic: TOPIC_TIMEOUT_MS * (MODEL_MAX_RETRIES + 1),
   hotIssue: HOT_ISSUE_TIMEOUT_MS * (MODEL_MAX_RETRIES + 1),
   // 본문 추출은 모델이 아니라 fetch 라 재시도가 없다

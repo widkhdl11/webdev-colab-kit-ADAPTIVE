@@ -1,5 +1,5 @@
 import { NextResponse, after } from "next/server";
-import { SOURCES } from "@/entities/source";
+import { INGEST_SOURCES } from "@/entities/source";
 import { selfBaseUrl } from "@/shared/api/server-env";
 import {
   CHAIN_PARAM,
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
   const runId = crypto.randomUUID();
   const startedAt = new Date();
   const report = await runIngest({
-    sources: SOURCES,
+    sources: INGEST_SOURCES,
     ports: createIngestPorts(),
     now: startedAt,
     runId,

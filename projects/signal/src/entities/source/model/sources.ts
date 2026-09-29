@@ -134,6 +134,11 @@ export const SOURCES: readonly Source[] = [
     feedUrl: "https://venturebeat.com/category/ai/feed/",
     needsTopicCheck: true,
     tier: "daily",
+    // 2026-09-29 실측: 사이트 전체가 Vercel 봇 확인 화면이다(`x-vercel-mitigated: challenge`,
+    // 본문 "This request requires a challenge to be completed."). 브라우저 UA·전체 피드(/feed/)도
+    // 같은 429 이고, 옛 feedburner 주소는 9/3 에서 멈췄다. 기록이 남은 9/20~9/29 실행 23번 전부 실패.
+    // 되살리기 전에 위 주소가 200 + XML 로 오는지 먼저 확인한다.
+    paused: { since: "2026-09-29", reason: "사이트 전체 봇 차단(Vercel challenge) — 피드를 받을 수 없다" },
   },
   {
     id: "mit-techreview",
@@ -199,6 +204,9 @@ export const SOURCES: readonly Source[] = [
     tier: "daily",
   },
 ];
+
+/** 수집기가 실제로 받는 소스 — 쉬는 소스(`paused`)를 뺀 목록. 화면·weight 는 계속 `SOURCES` 를 읽는다. */
+export const INGEST_SOURCES: readonly Source[] = SOURCES.filter((s) => s.paused === undefined);
 
 // 2026-08-12 에 후보 19개 주소를 전부 받아 확인했다(200 + XML 파싱 + 항목 수).
 //

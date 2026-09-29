@@ -9,6 +9,7 @@ import {
   MAX_TITLE_LENGTH,
   SUMMARY_MAX_FAILURES,
   TOPIC_MODEL,
+  WORST_CASE_MS,
 } from "./budgets";
 import { MAX_ITEMS_PER_SOURCE, TOPIC_CONCURRENCY, runIngest } from "./run-ingest";
 import type {
@@ -1635,9 +1636,10 @@ describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)"
       sources: [source("s1"), source("s2"), source("s3")],
       ports,
       now: NOW,
-      budgetMs: 1000,
+      // 피드 받기 한 번의 최악치(WORST_CASE_MS.feed, 32초)보다는 넉넉해야 s1 이 시작된다.
+      budgetMs: 40_000,
       // 마감 계산 1 + s1 확인 1 = 2번까지만 예산 안이다.
-      monotonicNow: clockAfter(2, 5000),
+      monotonicNow: clockAfter(2, 50_000),
     });
 
     expect(report.sources.map((r) => r.sourceId)).toEqual(["s1"]);
@@ -1645,6 +1647,37 @@ describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)"
     expect(report.budget.exhausted).toBe(true);
     // 던지지 않는다 — 여기까지 왔다는 것 자체가 리포트가 돌아왔다는 뜻이다.
     expect(report.failedSources).toEqual([]);
+  });
+
+  it("INV-CB9: 남은 시간이 피드 받기 한 번의 최악치보다 적으면 그 소스를 시작하지 않는다", async () => {
+    // 마감 전이지만(exhausted 아님) 남은 시간이 WORST_CASE_MS.feed 보다 1ms 적다.
+    // 시작하면 재시도까지 32초를 마감 뒤로 끌고 가 저장·이어달리기 몫을 먹는다(2026-09-29 리뷰).
+    const budgetMs = 100_000;
+    const fetchFeed = vi.fn(async () => [feedItem("a")]);
+    const report = await runIngest({
+      sources: [source("s1"), source("s2")],
+      ports: makePorts({ fetchFeed }),
+      now: NOW,
+      budgetMs,
+      monotonicNow: clockAfter(2, budgetMs - WORST_CASE_MS.feed + 1),
+    });
+
+    expect(report.sources.map((r) => r.sourceId)).toEqual(["s1"]);
+    expect(report.budget.skippedSources).toEqual(["s2"]);
+    expect(fetchFeed).toHaveBeenCalledTimes(1);
+  });
+
+  it("INV-CB9: 남은 시간이 피드 받기 최악치와 딱 같으면 시작한다", async () => {
+    const budgetMs = 100_000;
+    const report = await runIngest({
+      sources: [source("s1"), source("s2")],
+      ports: makePorts({ fetchFeed: vi.fn(async () => [feedItem("a")]) }),
+      now: NOW,
+      budgetMs,
+      monotonicNow: clockAfter(2, budgetMs - WORST_CASE_MS.feed),
+    });
+
+    expect(report.sources.map((r) => r.sourceId)).toEqual(["s1", "s2"]);
   });
 
   it("예산이 떨어지면 후처리도 멈추고 건너뛴 건수를 남긴다", async () => {
@@ -1833,13 +1866,13 @@ describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)"
       sources: [source("s1")],
       ports,
       now: NOW,
-      // 한 묶음의 최악치(15초)보다는 넉넉해야 첫 묶음이 시작된다 (INV-CB9).
-      budgetMs: 20_000,
+      // 피드 받기 최악치(32초)보다는 넉넉해야 소스가 시작된다 (INV-CB9).
+      budgetMs: 40_000,
       // 마감 계산 1 + 소스 확인 1 + 피드 재기 2 + 첫 청크 확인 1 + 첫 청크 재기 2 = 7번까지
-      // 0 초. 둘째 청크 확인(8번째)이 6초 시점인데, 남은 14초는 한 묶음의 최악치(15초)보다
+      // 0 초. 둘째 청크 확인(8번째)이 26초 시점인데, 남은 14초는 한 묶음의 최악치(15초)보다
       // **적다** — 마감까지 시간이 남았는데도 끊는다. 그게 INV-CB9 다.
       // **단계를 재는 것도 시계를 읽는다**(2026-09-22) — 재기 전후로 한 번씩이다.
-      monotonicNow: clockAfter(7, 6000),
+      monotonicNow: clockAfter(7, 26_000),
     });
 
     // 첫 묶음만 물었다 — 예산이 판정 도중에 실제로 걸렸다는 뜻이다.

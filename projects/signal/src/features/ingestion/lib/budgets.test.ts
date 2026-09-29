@@ -20,6 +20,7 @@ import {
   DAILY_COST_CAP_USD,
   ENRICH_TIMEOUT_MS,
   EXTRACTION_TIMEOUT_MS,
+  FEED_RETRY_DELAY_MS,
   HOT_ISSUE_TIMEOUT_MS,
   MAX_CHAIN_LENGTH,
   MODEL_MAX_RETRIES,
@@ -193,6 +194,9 @@ describe("수집 예산 상수", () => {
     expect(WORST_CASE_MS.keywords).toBe(KEYWORD_TIMEOUT_MS * attempts);
     // 본문 추출은 모델이 아니라 fetch 라 재시도가 없다
     expect(WORST_CASE_MS.extraction).toBe(EXTRACTION_TIMEOUT_MS);
+    // 피드 받기는 접속 실패에 한 번 더 시도한다(2026-09-29) — 타임아웃 두 번 + 사이 기다림.
+    expect(FEED_RETRY_DELAY_MS).toBe(2_000);
+    expect(WORST_CASE_MS.feed).toBe(EXTRACTION_TIMEOUT_MS * 2 + FEED_RETRY_DELAY_MS);
     // 최악치 하나가 한 바퀴 예산을 넘으면 그 단계는 **영영 시작되지 않는다**.
     for (const ms of Object.values(WORST_CASE_MS)) {
       expect(ms).toBeGreaterThan(0);

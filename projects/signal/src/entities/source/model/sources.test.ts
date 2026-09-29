@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SOURCES, SUBJECT_SITES } from "./sources";
+import { INGEST_SOURCES, SOURCES, SUBJECT_SITES } from "./sources";
 import { sourceWeightLookup } from "../lib/weight";
 import type { Source } from "./types";
 
@@ -111,6 +111,27 @@ describe("SOURCES — 목록의 모양", () => {
 
   it("소스 개수를 못 박는다 — 목록이 통째로 줄어드는 변경을 알아채야 한다", () => {
     expect(SOURCES).toHaveLength(14);
+  });
+});
+
+describe("INGEST_SOURCES — 수집기가 실제로 받는 소스", () => {
+  // 쉬는 소스는 SOURCES 에 남는다 — 이미 적재된 글이 출처 이름·원문 언어·weight 를 잃지 않게.
+  // 수집만 건너뛴다. 이름을 적어 두면 쉬게 하거나 되살리는 변경이 전부 diff 에 뜬다.
+  it("쉬는 소스(venturebeat-ai — 사이트 봇 차단)는 수집하지 않는다", () => {
+    expect(SOURCES.filter((s) => s.paused !== undefined).map((s) => s.id)).toEqual(["venturebeat-ai"]);
+    expect(INGEST_SOURCES.map((s) => s.id)).not.toContain("venturebeat-ai");
+  });
+
+  it("쉬지 않는 소스는 전부 수집한다", () => {
+    expect(INGEST_SOURCES).toHaveLength(13);
+    expect(INGEST_SOURCES.every((s) => s.paused === undefined)).toBe(true);
+  });
+
+  it("쉬는 소스는 쉬는 이유와 시작일을 적는다 — 되살릴지 판단할 근거다", () => {
+    for (const s of SOURCES.filter((x) => x.paused !== undefined)) {
+      expect(s.paused!.reason.trim()).not.toBe("");
+      expect(s.paused!.since).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
   });
 });
 

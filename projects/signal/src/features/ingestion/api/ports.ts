@@ -6,6 +6,7 @@ import { serverSupabase } from "@/shared/api/supabase-server";
 import { createHotIssueDbPorts } from "./hot-issue-db";
 import { fetchRecentRuns } from "@/entities/ingest-run/api/dashboard-queries";
 import { todaySpendUsd } from "../lib/cost-cap";
+import { retryOnConnectionFailure } from "../lib/retry-network";
 import { dayKey, dayStartIso } from "@/shared/lib/datetime";
 import { enrichWindowStartIso } from "../lib/candidate-window";
 import { anthropicApiKey } from "@/shared/api/server-env";
@@ -32,6 +33,7 @@ import {
   ENRICH_TITLE_MAX_TOKENS,
   MODEL_MAX_RETRIES,
   EXTRACTION_TIMEOUT_MS,
+  FEED_RETRY_DELAY_MS,
   SUMMARY_MAX_FAILURES,
 } from "../lib/budgets";
 import { fenceData } from "../lib/data-fence";
@@ -328,10 +330,15 @@ export function createIngestPorts(): IngestPorts {
 
     async fetchFeed(source: Source) {
       // 타임아웃이 없으면 소스 하나가 응답을 안 줄 때 Cron 이 통째로 매달린다.
-      const res = await fetchPublic(source.feedUrl, {
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        headers: { accept: "application/rss+xml, application/atom+xml, application/xml, text/xml" },
-      });
+      // 시도마다 새 타임아웃을 건다 — 첫 시도의 신호를 재사용하면 두 번째가 이미 끝난 시계로 돈다.
+      const res = await retryOnConnectionFailure(
+        () =>
+          fetchPublic(source.feedUrl, {
+            signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+            headers: { accept: "application/rss+xml, application/atom+xml, application/xml, text/xml" },
+          }),
+        { delayMs: FEED_RETRY_DELAY_MS },
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return parseFeedXml(await readTextCapped(res));
     },
