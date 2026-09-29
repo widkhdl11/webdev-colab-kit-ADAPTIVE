@@ -1,9 +1,11 @@
 ---
 project: signal
 status: deployed
-basis: 5e686f22cd58
+basis: b56124b10ddf
 ---
 # deploy — signal
+
+> 2026-09-29 (2) — `8390219` push → Vercel `success` · `www.simoori.com` 200 · `/api/ingest` 인증 없이 401. 피드 받기 재시도 · VentureBeat 수집 쉼.
 
 > 2026-09-29 — `b7f1c5c` push → Vercel 상태 `success`(Deployment has completed) · `www.simoori.com` 200 · `/api/ingest` 인증 없이 401. 수집 대시보드 「그날 처리 결과」와 실패 이유 저장(0013). **정정(09-29 오후)**: 운영 DB 에 0013 칸이 없다(조회 42703 `column ingest_run.failures does not exist`) — 적용됐다는 기록이 틀렸다. 새 코드는 칸이 없으면 그 칸만 빼고 저장하므로 이유가 조용히 버려진다. 같은 날 사용자가 적용 → 재실행 1회로 이유 저장 확인.
 
