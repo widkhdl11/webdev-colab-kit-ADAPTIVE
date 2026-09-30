@@ -1,9 +1,11 @@
 ---
 project: signal
 status: deployed
-basis: b56124b10ddf
+basis: 62535bad3307
 ---
 # deploy — signal
+
+> 2026-09-30 — `98f7ef7` push → Vercel `success` · `www.simoori.com` 200 · `/api/ingest` 인증 없이 401. 수집 후보를 그날 배치로(3일 창 걷음).
 
 > 2026-09-29 (2) — `8390219` push → Vercel `success` · `www.simoori.com` 200 · `/api/ingest` 인증 없이 401. 피드 받기 재시도 · VentureBeat 수집 쉼.
 
