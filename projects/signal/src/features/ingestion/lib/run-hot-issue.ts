@@ -38,9 +38,15 @@ export interface HotIssueReport {
    * 예산이 떨어져 **묻지도 못하고 남긴** 건수.
    *
    * 실패와 다른 칸이어야 한다 — 실패는 "물어봤는데 안 됐다"이고 이건 "시간이 없어 안 물었다"다.
-   * 이 글들은 `hot_issue_at` 이 비어 있어 다음 주기에 그대로 다시 잡힌다.
+   * 이 글들은 `hot_issue_at` 이 비어 있어 다음 바퀴(이어달리기)가 그대로 다시 잡는다.
    */
   skipped: number;
+  /**
+   * 후보를 한 바퀴 상한(`limit`)만큼 받아 왔나 — 그렇다면 **더 있는데 못 본 것**이다 (2026-09-30).
+   * 후보 범위가 그날 배치라 이 바퀴가 다 처리해도 뒤의 글은 다음 날엔 창 밖이다. 이어달리기가
+   * 한 바퀴 더 돌도록 run-ingest 가 `poolTruncated` 로 옮긴다(INV-CB12).
+   */
+  poolFull: boolean;
   /** 단계 자체가 죽은 경우. 앞 청크의 저장분은 그대로 남는다. */
   error: string | null;
 }
@@ -85,6 +91,7 @@ export async function runHotIssue(
       cacheWriteTokens: 0,
     },
     skipped: 0,
+    poolFull: false,
     error: null,
   };
 
@@ -100,6 +107,7 @@ export async function runHotIssue(
 
   // 후보가 없으면 모델을 부르지 않는다. 부르지 않는다는 것 자체가 이 단계의 계약이다.
   if (candidates.length === 0) return report;
+  report.poolFull = candidates.length >= opts.limit;
 
   const size = Math.max(1, opts.concurrency);
 

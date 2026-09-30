@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHotIssueDbPorts } from "./hot-issue-db";
 import { PICKED_TITLES_LIMIT } from "../lib/budgets";
+import { batchWindow } from "../lib/candidate-window";
 
 /**
  * 핫이슈 DB 어댑터 — **실제 쿼리 조립을 검증한다** (hot-issue.md INV-G1 · G2 · G4 · H1).
@@ -29,6 +30,8 @@ interface Recorded {
   is?: [string, unknown];
   eq?: [string, unknown];
   gte?: [string, unknown];
+  /** gte 를 여러 번 걸면 전부 남는다 — 마지막 것만 보면 앞의 조건을 지워도 모른다. */
+  gtes?: [string, unknown][];
   inValues?: [string, unknown[]];
   order?: string;
   limit?: number;
@@ -76,6 +79,7 @@ function fakeDb(dataByCall: unknown[][] = [], errorAt: number[] = []) {
       },
       gte: (col: string, v: unknown) => {
         rec.gte = [col, v];
+        rec.gtes = [...(rec.gtes ?? []), [col, v]];
         return chain;
       },
       in: (col: string, v: unknown[]) => {
@@ -108,6 +112,23 @@ describe("listHotIssueCandidates — 아직 안 물어본 글만 (INV-G2)", () =
     expect(calls[0].table).toBe("item");
     expect(calls[0].is).toEqual(["hot_issue_at", null]);
     expect(calls[0].limit).toBe(120);
+  });
+
+  it("그날 배치만 본다 — 처음 본 시각과 발행 시각 하한 둘 다 건다 (2026-09-30)", async () => {
+    // 창이 빠지면 지난 날짜 글 전부가 판정 요금을 탄다. 둘 중 하나만 빠져도 잡는다.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-30T07:56:00+09:00"));
+    try {
+      const { db, calls } = fakeDb([[]]);
+      await createHotIssueDbPorts(db).listHotIssueCandidates(120);
+      const w = batchWindow(new Date())!;
+      expect(calls[0].gtes).toEqual([
+        ["created_at", w.firstSeenFrom],
+        ["published_at", w.publishedFrom],
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("본문은 요약글이 빈 건에 대해서만 2차로 받는다 — 한 번에 받으면 최악 2.4MB 다", async () => {

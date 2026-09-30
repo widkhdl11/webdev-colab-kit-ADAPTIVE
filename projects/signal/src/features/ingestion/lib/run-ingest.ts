@@ -770,6 +770,8 @@ export async function runIngest(params: {
           exhausted: () => !budget.canAfford(WORST_CASE_MS.hotIssue),
         }));
   if (hotIssue === null) budget.skippedHotIssue = true;
+  // 상한만큼 받아 왔으면 더 있다 — 그날 배치 안에서 이어달려야 한다 (INV-CB12, 2026-09-30).
+  if (hotIssue?.poolFull === true) budget.poolTruncated = true;
   // 이번 바퀴 지출에 더한다 — 아래 단계들이 상한을 볼 때 이 돈이 세어져 있어야 한다.
   if (hotIssue !== null) {
     meter.add(HOT_ISSUE_MODEL, hotIssue.usage.inputTokens, hotIssue.usage.outputTokens);
@@ -806,6 +808,7 @@ export async function runIngest(params: {
   // `keywords.skipped` 가 따로 나른다 — 둘을 한 칸에 섞으면 "예산이 아예 없었다"와
   // "80건 중 24건에서 멈췄다"가 리포트에서 같은 모양이 된다.
   if (keywords === null) budget.skippedKeywords = true;
+  if (keywords?.poolFull === true) budget.poolTruncated = true;
   if (keywords !== null) {
     meter.add(KEYWORD_MODEL, keywords.usage.inputTokens, keywords.usage.outputTokens);
   }

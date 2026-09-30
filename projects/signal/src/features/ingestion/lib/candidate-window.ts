@@ -1,55 +1,54 @@
 import { dayKey, dayStartIso } from "@/shared/lib/datetime";
-import { CANDIDATE_WINDOW_DAYS, ENRICH_FLOOR_ISO } from "./budgets";
+import { BATCH_PUBLISHED_LOOKBACK_DAYS, INGEST_SCHEDULE_HOUR_KST } from "./budgets";
+
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
 
 /**
- * 비싼 단계(본문 긁기·요약·번역·핫이슈 판정·키워드)가 **볼 글의 범위**.
+ * 비싼 단계(본문 긁기·요약·번역·핫이슈 판정·키워드)가 **볼 글의 범위** — 그날 배치의 시작.
  *
- * 왜 창을 거나 (2026-09-22 사용자 결정): 후보가 전체 기간이면 대기열이 유입량보다 빨리
- * 자라서 영영 안 줄어든다. 실측으로 요약 없는 글이 1,560건이었고, 고르는 기준이
- * 최신순이라 그 글들은 **다음 주기에도 그다음에도 순위 안에 못 든다.** 즉 대기열이
- * 아니라 영구 누락이었다. 그 상태로 한 바퀴 예산만 키우면 요금만 늘고 밀린 것은 그대로다.
+ * 2026-09-30 사용자 결정(`signal-20260930-1-d1`): 수집의 목적은 **그날 들어온 글을 그날 처리**하는
+ * 것이다. 이어달리기는 그날 일이 한 바퀴(300초)에 안 끝날 때 잇는 것이지, 지난 날짜 글을 채우는
+ * 것이 아니다. 그래서 가장 최근 예약 시각(오전 7시 KST) 이후 **처음 본**(`item.created_at`) 글만
+ * 후보로 본다.
  *
- * 창 밖 글을 **지우지는 않는다.** 화면에는 그대로 있고, 요약·키워드가 없을 뿐이다.
+ * 전에는 「오늘 포함 3일」 창이었다(2026-09-22). 그건 그때까지 수집을 거의 안 돌려서 프로토타입에
+ * 쓸 결과가 필요해 3일치를 한 번 돌리려던 것이었는데, 그대로 남아 매일의 규칙이 됐다. 그 결과
+ * 9/29 수집이 크레딧 부족으로 통째로 실패하자 9/30 이어달리기가 9/28·9/29 글까지 할 일로 잡았다.
  *
- * 날짜 단위로 자르는 이유: 뱃지 줄의 창(`BADGE_WINDOW_DAYS`)도 날짜 단위라, 여기만
- * "72시간 전부터"로 하면 **뱃지에는 있는데 키워드는 안 붙는 날**이 생긴다. 같은 기준을 쓴다.
+ * 왜 0시가 아니라 예약 시각인가: 예약 실행은 하루 한 번 7시다. 0시로 끊으면 전날 7시~자정에
+ * 들어온 글은 어느 실행도 맡지 않는다(전날 7시엔 없었고, 오늘 7시엔 「어제 글」이다).
+ *
+ * 왜 발행 시각이 아니라 처음 본 시각인가: 피드에 늦게 올라오는 글이 있다. 발행 시각으로 자르면
+ * 어제 날짜로 발행돼 오늘 처음 들어온 글이 어느 배치에도 안 든다.
+ *
+ * 대가: 하루 수집이 통째로 실패하면 그날 글은 다음 날 자동으로 채워지지 않는다. 필요하면 그날만
+ * 손으로 돌린다. 창 밖 글을 지우지는 않는다 — 화면에는 그대로 있고 요약·키워드가 없을 뿐이다.
+ *
+ * `null` = 시각을 못 읽음. 부르는 쪽은 **후보를 0건으로** 본다 — 창 없이 전체를 보면 요약 안 된
+ * 옛 글 전부가 후보가 되어, 그날 것만 처리한다는 결정과 정반대가 된다(2026-09-30 보안 리뷰).
  */
-export function candidateWindowStartIso(
-  now: Date,
-  days: number = CANDIDATE_WINDOW_DAYS,
-  floorIso?: string,
-): string | null {
-  // 읽을 수 없는 시각이면 창을 안 건다. `toISOString()` 은 그런 값에 **던진다** —
-  // 여기서 막지 않으면 후보 조회가 통째로 죽고, 그 단계가 그날 아무 일도 못 한다.
+export function batchStartIso(now: Date): string | null {
   if (Number.isNaN(now.getTime())) return null;
-  // 오늘을 포함해 `days` 일이다 — 3일이면 그저께 0시(KST)부터다.
-  const todayKey = dayKey(now.toISOString());
-  const start = dayStartIso(todayKey);
+  const start = dayStartIso(dayKey(now.toISOString()));
   if (start === null) return null;
-  const startMs = Date.parse(start) - (days - 1) * 24 * 60 * 60 * 1000;
-  if (Number.isNaN(startMs)) return null;
-
-  // 기준 시각과 둘 중 **늦은 쪽**을 쓴다 (2026-09-23).
-  //
-  // 창은 「얼마나 거슬러 올라가나」이고 기준 시각은 「여기보다 앞은 아예 안 본다」다.
-  // 늦은 쪽을 골라야 둘 다 지켜진다 — 이른 쪽을 고르면 기준 시각이 창을 **넓히는** 일이
-  // 생기고, 그건 아끼려다 옛날 글 전부를 후보로 만드는 것이다.
-  //
-  // 못 읽는 값은 **없는 것으로 본다.** 여기서 null 을 돌려주면 창이 통째로 사라져 같은
-  // 방향으로 틀린다 — 설정 하나가 잘못 적힌 대가가 「전부 다 한다」면 안 된다.
-  const floorMs = floorIso === undefined ? NaN : Date.parse(floorIso);
-  if (!Number.isNaN(floorMs) && floorMs > startMs) return new Date(floorMs).toISOString();
-  return new Date(startMs).toISOString();
+  const todaySchedule = Date.parse(start) + INGEST_SCHEDULE_HOUR_KST * HOUR_MS;
+  // 예약 시각 전이면 어제 배치가 아직 진행 중이다.
+  const batch = now.getTime() >= todaySchedule ? todaySchedule : todaySchedule - DAY_MS;
+  return new Date(batch).toISOString();
 }
 
-/**
- * **돈이 드는 단계**(본문 긁기·요약·번역·키워드)가 쓰는 창 (2026-09-23).
- *
- * 3일 창에 기준 시각을 겹쳐 놓은 것이다. 창만 쓰는 `candidateWindowStartIso` 와 따로 두는
- * 이유는 **주제 판정과 핫이슈 판정은 이 기준에 안 걸려야** 하기 때문이다 — 그 둘이 멈추면
- * 화면이 틀린다(INV-CB8 과 같은 기준). 기본값으로 섞어 두면 "어느 단계가 기준 시각을
- * 받는가"가 부르는 쪽마다 흩어지고, 그건 나중에 한 곳만 빠뜨리는 자리가 된다.
- */
-export function enrichWindowStartIso(now: Date): string | null {
-  return candidateWindowStartIso(now, CANDIDATE_WINDOW_DAYS, ENRICH_FLOOR_ISO);
+export interface BatchWindow {
+  /** `item.created_at` 하한 — 그날 배치의 시작. */
+  firstSeenFrom: string;
+  /** `item.published_at` 하한 — 새 소스의 옛 글이 배치에 끼어드는 것을 막는다(`BATCH_PUBLISHED_LOOKBACK_DAYS`). */
+  publishedFrom: string;
+}
+
+/** 후보 조회 네 곳(본문 긁기·요약/번역·키워드·핫이슈)이 **같이** 쓰는 창. `null` 이면 후보 0건. */
+export function batchWindow(now: Date): BatchWindow | null {
+  const firstSeenFrom = batchStartIso(now);
+  if (firstSeenFrom === null) return null;
+  const publishedFrom = new Date(Date.parse(firstSeenFrom) - BATCH_PUBLISHED_LOOKBACK_DAYS * DAY_MS).toISOString();
+  return { firstSeenFrom, publishedFrom };
 }

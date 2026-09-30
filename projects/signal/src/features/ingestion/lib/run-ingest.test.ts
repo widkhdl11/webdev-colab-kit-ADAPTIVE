@@ -9,6 +9,8 @@ import {
   MAX_TITLE_LENGTH,
   SUMMARY_MAX_FAILURES,
   TOPIC_MODEL,
+  KEYWORD_BATCH,
+  HOT_ISSUE_BATCH,
   WORST_CASE_MS,
 } from "./budgets";
 import { MAX_ITEMS_PER_SOURCE, TOPIC_CONCURRENCY, runIngest } from "./run-ingest";
@@ -1751,6 +1753,59 @@ describe("runIngest — 시간 예산 (Vercel 300초에서 잘리지 않는다)"
 
     expect(report.budget.poolTruncated).toBe(true);
     expect(report.budget.exhausted).toBe(true);
+  });
+
+  // 2026-09-30 리뷰(high): 후보 범위가 그날 배치로 좁아진 뒤로는, 한 바퀴 상한만큼 받아 와서
+  // 다 처리하고 끝나면 그 뒤의 글은 **다음 날엔 창 밖**이라 영영 안 잡힌다. 상한만큼 받았으면
+  // 더 있는데 못 본 것이므로 이어달리기가 한 바퀴 더 돌아야 한다.
+  it("INV-CB12 실패경로: 키워드 후보가 한 바퀴 상한만큼 오면 남은 일로 친다", async () => {
+    const ports = makePorts({
+      listKeywordCandidates: vi.fn(async () =>
+        Array.from({ length: KEYWORD_BATCH }, (_, i) => ({ id: `k${i}`, title: `T${i}`, evidence: "본문" })),
+      ),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW, monotonicNow: () => 0 });
+
+    expect(report.keywords?.skipped).toBe(0);
+    expect(report.budget.poolTruncated).toBe(true);
+  });
+
+  it("INV-CB12 실패경로: 핫이슈 후보가 한 바퀴 상한만큼 오면 남은 일로 친다", async () => {
+    const ports = makePorts({
+      listHotIssueCandidates: vi.fn(async () =>
+        Array.from({ length: HOT_ISSUE_BATCH }, (_, i) => ({
+          id: `h${i}`,
+          title: `T${i}`,
+          evidence: "본문",
+          sourceId: "s1",
+          publishedAt: NOW.toISOString(),
+        })),
+      ),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW, monotonicNow: () => 0 });
+
+    expect(report.hotIssue?.skipped).toBe(0);
+    expect(report.budget.poolTruncated).toBe(true);
+  });
+
+  it("INV-CB12: 상한보다 하나 적게 오면 남은 일이 아니다", async () => {
+    const ports = makePorts({
+      listKeywordCandidates: vi.fn(async () =>
+        Array.from({ length: KEYWORD_BATCH - 1 }, (_, i) => ({ id: `k${i}`, title: `T${i}`, evidence: "본문" })),
+      ),
+      listHotIssueCandidates: vi.fn(async () =>
+        Array.from({ length: HOT_ISSUE_BATCH - 1 }, (_, i) => ({
+          id: `h${i}`,
+          title: `T${i}`,
+          evidence: "본문",
+          sourceId: "s1",
+          publishedAt: NOW.toISOString(),
+        })),
+      ),
+    });
+    const report = await runIngest({ sources: [], ports, now: NOW, monotonicNow: () => 0 });
+
+    expect(report.budget.poolTruncated).toBe(false);
   });
 
   it("INV-CB12: 단계 **안에서** 멈춘 건수도 리포트로 옮겨 온다", async () => {

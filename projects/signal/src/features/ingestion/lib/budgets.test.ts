@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { BADGE_WINDOW_DAYS } from "@/entities/article";
 import * as budgets from "./budgets";
 import {
-  CANDIDATE_WINDOW_DAYS,
-  ENRICH_FLOOR_ISO,
   ENRICH_POOL,
   INGEST_BUDGET_MS,
+  INGEST_SCHEDULE_HOUR_KST,
   KEYWORD_BATCH,
   KEYWORD_CONCURRENCY,
   KEYWORD_MAX_TOKENS,
@@ -40,11 +38,10 @@ import {
  * 하는지**가 테스트에 남는다. 값만 못 박으면 다음 사람이 숫자만 고치고 지나간다.
  */
 describe("수집 예산 상수", () => {
-  it("후보 창 — 뱃지 줄의 창과 같아야 «뱃지엔 있는데 키워드는 없는 글»이 안 생긴다", () => {
-    expect(CANDIDATE_WINDOW_DAYS).toBe(3);
-    // 두 창이 갈리면 그 차이는 화면에 조용히 나타난다: 좁으면 뱃지에만 있는 글이 생기고,
-    // 넓으면 화면에 안 쓰일 글에 요금을 쓴다. 같이 움직여야 하므로 관계를 못 박는다.
-    expect(CANDIDATE_WINDOW_DAYS).toBe(BADGE_WINDOW_DAYS);
+  it("예약 시각 — 그날 배치의 시작이다. vercel.json 의 크론(22시 UTC)과 같아야 한다", () => {
+    // 크론만 옮기고 이 값을 안 옮기면 그날 배치가 실행 시각과 어긋나, 새벽에 들어온 글이
+    // 어느 배치에도 안 들거나 두 배치에 걸친다.
+    expect(INGEST_SCHEDULE_HOUR_KST).toBe(7);
   });
 
   it("주제 판정 응답 상한 — 모델이 생각을 마칠 만큼은 줘야 필터가 조용히 안 열린다", () => {
@@ -54,15 +51,6 @@ describe("수집 예산 상수", () => {
     // 판정 실패는 INV-F3 에 따라 **통과**로 처리된다 — 필터가 5분의 1쯤 안 돈 것이다.
     // 정상 응답이 32토큰이었던 2026-08-12 기준으로도 한참 위여야 한다.
     expect(TOPIC_MAX_TOKENS).toBeGreaterThan(200);
-  });
-
-  it("기준 시각 — 이 값이 앞으로 밀리면 옛날 글이 다시 후보가 된다", () => {
-    // **값을 못 박는다.** 상대적으로만 검사하면 2020년으로 되돌려도 전부 green 이다
-    // (2026-09-23 변이 확인에서 실제로 그랬다). 이 값이 과거로 밀리는 순간, 그날 안 하기로
-    // 한 글 180건이 도로 후보가 되고 요금이 다시 나간다.
-    expect(ENRICH_FLOOR_ISO).toBe("2026-09-22T22:00:00.000Z");
-    // 읽을 수 있는 시각이어야 한다. 못 읽으면 조용히 무시돼서 기준이 없는 것과 같아진다.
-    expect(Number.isNaN(Date.parse(ENRICH_FLOOR_ISO))).toBe(false);
   });
 
   it("후보 풀 — 하루 신규(약 68건)를 한 바퀴에 다 담고도 남아야 한다 (INV-CB11)", () => {

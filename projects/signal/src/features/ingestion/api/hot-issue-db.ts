@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { GATE_ONE } from "@/entities/article";
 import { dayKey, dayStartIso } from "@/shared/lib/datetime";
-import { candidateWindowStartIso } from "../lib/candidate-window";
+import { batchWindow } from "../lib/candidate-window";
 import { PICKED_TITLES_LIMIT } from "../lib/budgets";
 import { keywordEvidence } from "../lib/keyword-evidence";
 import type { HotIssueCandidate, HotIssueSave } from "../lib/ports";
@@ -44,15 +44,17 @@ export function createHotIssueDbPorts(db: SupabaseClient): HotIssueDbPorts {
       //
       // 본문을 여기서 안 받는다: 한 건이 2만 자라 120건이면 최악 2.4MB 를 받게 된다.
       // 요약글이 없는 건에 대해서만 2차로 받아 온다(`listKeywordCandidates` 와 같은 패턴).
-      // 다른 후보 조회와 **같은 창**을 쓴다 (2026-09-22). 여기만 전체 기간을 보면
-      // 그날 예산이 3주 전 글의 판정에 쓰이고, 정작 오늘 글이 화면에 안 선다.
-      const from = candidateWindowStartIso(new Date());
-      let query = db
+      // 다른 후보 조회와 **같은 창**(그날 배치, 처음 본 시각 기준)을 쓴다 (2026-09-30). 여기만 넓게 보면
+      // 그날 예산이 지난 날짜 글의 판정에 쓰이고, 정작 오늘 글이 화면에 안 선다.
+      // 시각 계산이 실패하면 후보 0건 — 창 없이 전체를 보면 옛 글 전부가 판정 요금을 탄다.
+      const w = batchWindow(new Date());
+      if (w === null) return [];
+      const { data, error } = await db
         .from("item")
         .select("id, title, source_excerpt, source_id, published_at")
-        .is("hot_issue_at", null);
-      if (from !== null) query = query.gte("published_at", from);
-      const { data, error } = await query
+        .is("hot_issue_at", null)
+        .gte("created_at", w.firstSeenFrom)
+        .gte("published_at", w.publishedFrom)
         .order("published_at", { ascending: false })
         .limit(limit);
       if (error) throw new Error(error.message);

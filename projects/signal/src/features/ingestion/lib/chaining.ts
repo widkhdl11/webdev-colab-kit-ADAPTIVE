@@ -139,8 +139,9 @@ export async function sendChainRequest(
       signal: AbortSignal.timeout(CHAIN_DISPATCH_TIMEOUT_MS),
     });
   } catch {
-    // 조용히 넘어간다 — 위 이유. 이어달리기가 끊기면 다음 예약 실행이 이어받는다
-    // (남은 일은 DB 에서 다시 찾는다 — INV-CB9).
+    // 조용히 넘어간다 — 위 이유. 이어달리기가 여기서 끊기면 **그날 남은 일은 사라진다** —
+    // 후보 범위가 그날 배치라(2026-09-30) 다음 예약 실행은 그 글들을 창 밖으로 본다.
+    // 같은 날 손으로 다시 돌리면 이어받는다(남은 일은 DB 에서 다시 찾는다).
   }
 }
 

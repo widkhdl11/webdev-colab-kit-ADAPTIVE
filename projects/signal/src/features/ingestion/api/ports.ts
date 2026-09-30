@@ -7,8 +7,7 @@ import { createHotIssueDbPorts } from "./hot-issue-db";
 import { fetchRecentRuns } from "@/entities/ingest-run/api/dashboard-queries";
 import { todaySpendUsd } from "../lib/cost-cap";
 import { retryOnConnectionFailure } from "../lib/retry-network";
-import { dayKey, dayStartIso } from "@/shared/lib/datetime";
-import { enrichWindowStartIso } from "../lib/candidate-window";
+import { batchWindow, type BatchWindow } from "../lib/candidate-window";
 import { anthropicApiKey } from "@/shared/api/server-env";
 import { GATE_ONE, toOfficialBasis, type FeedItemDraft } from "@/entities/article";
 import { getSourceWeight } from "@/entities/source";
@@ -98,23 +97,16 @@ interface PoolRow {
  * 요약할 항목이 어긋나 예산이 서로를 못 쓴다.
  */
 /**
- * 후보 조회가 볼 범위의 시작 시각 (2026-09-22).
+ * 후보 조회가 볼 범위의 시작 시각 — 그날 배치(가장 최근 예약 시각 이후 처음 본 글, candidate-window.ts).
  *
- * 세 후보 조회가 **같은 값을 써야 한다** — 하나만 창 밖까지 보면 그 단계만 옛 글을
- * 붙들고, 예산은 거기 쓰이는데 화면에는 안 나타난다.
+ * 세 후보 조회와 핫이슈 조회가 **같은 값을 써야 한다** — 하나만 넓게 보면 그 단계만 옛 글을
+ * 붙들고, 예산은 거기 쓰이는데 화면에는 안 나타난다. 처음 본 시각(`created_at`)으로 거른다.
  *
- * `null` 이면 창을 안 건다(계산이 실패한 경우). 조용히 전체를 보는 쪽이 조용히 0건을
- * 보는 것보다 낫다 — 전자는 요금이 더 나가고 후자는 수집이 멈춘다.
+ * 발행 시각 하한도 같이 건다 — 새 소스의 옛 글이 「오늘 처음 본 글」로 끼어들지 않게(budgets.ts).
+ * `null`(시각 계산 실패)이면 **후보 0건**이다. 창 없이 전체를 보면 요약 안 된 옛 글 전부가 후보가 된다.
  */
-/**
- * 돈이 드는 단계(본문 긁기·요약·번역·키워드)가 쓰는 창.
- *
- * `enrichWindowStartIso` 는 3일 창에 **기준 시각**을 겹쳐 놓은 것이다 — 그 시각 이전에
- * 발행된 글에는 돈을 쓰지 않는다(2026-09-23). 주제 판정과 핫이슈 판정은 이 함수를 안 쓴다:
- * 그 둘이 멈추면 화면이 틀린다(INV-CB8 과 같은 기준).
- */
-function windowStart(): string | null {
-  return enrichWindowStartIso(new Date());
+function currentWindow(): BatchWindow | null {
+  return batchWindow(new Date());
 }
 
 /**
@@ -377,13 +369,14 @@ export function createIngestPorts(): IngestPorts {
       // 요약 후보와 **같은 기준으로 고른다** (2026-08-13 리뷰). 여기만 최신순으로 두면
       // 두 단계가 서로 다른 항목에 예산을 쓴다 — 본문을 채운 항목은 요약 후보에 못 들고,
       // 요약할 항목은 근거가 없어 건너뛰어진다(skippedNoEvidence).
-      const from = windowStart();
-      let poolQuery = db
+      const w = currentWindow();
+      if (w === null) return [];
+      const { data: pool, error: poolError } = await db
         .from("item")
         .select("id, published_at, source_id")
-        .eq("content_html", "");
-      if (from !== null) poolQuery = poolQuery.gte("published_at", from);
-      const { data: pool, error: poolError } = await poolQuery
+        .eq("content_html", "")
+        .gte("created_at", w.firstSeenFrom)
+        .gte("published_at", w.publishedFrom)
         .order("published_at", { ascending: false })
         .limit(ENRICH_POOL);
       if (poolError) throw new Error(poolError.message);
@@ -438,10 +431,14 @@ export function createIngestPorts(): IngestPorts {
       // 1단계: **랭킹에 필요한 세 칸만** 넓게 받는다.
       // 본문까지 이만큼 받으면 한 건이 2만 자라 응답이 수 MB 가 된다.
       // 자르는 기준(발행시각)과 고르는 기준(점수)이 다르므로 풀은 넓어야 한다 — budgets.ts 참고.
-      const from = windowStart();
-      let poolQuery = db.from("item").select("id, published_at, source_id").or(CANDIDATE_FILTER);
-      if (from !== null) poolQuery = poolQuery.gte("published_at", from);
-      const { data: pool, error: poolError } = await poolQuery
+      const w = currentWindow();
+      if (w === null) return [];
+      const { data: pool, error: poolError } = await db
+        .from("item")
+        .select("id, published_at, source_id")
+        .or(CANDIDATE_FILTER)
+        .gte("created_at", w.firstSeenFrom)
+        .gte("published_at", w.publishedFrom)
         .order("published_at", { ascending: false })
         .limit(ENRICH_POOL);
       if (poolError) throw new Error(poolError.message);
@@ -547,10 +544,14 @@ export function createIngestPorts(): IngestPorts {
       // **본문을 여기서 안 받는다.** 한 건이 2만 자라 80건이면 최악 1.6MB 를 받아 놓고
       // 1,200자로 자르게 된다 — 이 파일의 다른 두 후보 조회가 같은 이유로 이미 본문을 뺐다.
       // 요약글이 없는 건에 대해서만 2차로 받아 온다(요약 단계가 쓰는 것과 같은 2단계 패턴).
-      const from = windowStart();
-      let query = db.from("item").select("id, title, source_excerpt").is("keywords_at", null);
-      if (from !== null) query = query.gte("published_at", from);
-      const { data, error } = await query
+      const w = currentWindow();
+      if (w === null) return [];
+      const { data, error } = await db
+        .from("item")
+        .select("id, title, source_excerpt")
+        .is("keywords_at", null)
+        .gte("created_at", w.firstSeenFrom)
+        .gte("published_at", w.publishedFrom)
         .order("published_at", { ascending: false })
         .limit(limit);
       if (error) throw new Error(error.message);
