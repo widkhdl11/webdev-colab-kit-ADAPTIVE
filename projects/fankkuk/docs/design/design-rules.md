@@ -1,5 +1,5 @@
 ---
-status: approved
+status: draft
 ---
 
 # 팬꾹 디자인 기준

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 세션 브리핑 — SessionStart 훅과 /status가 호출. 사람과 Claude가 같은 그림으로 시작한다.
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, posix } from "node:path";
 import { spawnSync } from "node:child_process";
 import { GRAPH } from "../graph.mjs";
@@ -179,6 +179,21 @@ if (naLine) console.log(`○ n/a(이번 작업엔 해당 없음): ${naLine}`);
 console.log(`↩ 멈춘 지점: ${stopped}`);
 console.log(`→ 다음 할 일: ${next}`);
 if (principleWarn) console.log(principleWarn);
+// 「주의할 것」 — 랩업의 인수인계 리허설(loop-rehearsal)이 남긴 문장. 예전에는 사람이 리허설 출력 네 줄을
+// /clear 뒤에 손으로 붙여 넣어야 이 줄이 새 세션에 닿았다(위치·결정·다음 할 일은 위에서 이미 읽는다).
+// 리허설이 PROGRESS 보다 먼저 쓰였으면 낡은 문장이라 날짜를 붙여 그 사실을 같이 보인다.
+{
+  const rehearsal = `${projectDir}/report/loop/rehearsal.json`;
+  try {
+    const r = JSON.parse(read(rehearsal));
+    const cautions = r?.answer?.cautions ?? [];
+    if (Array.isArray(cautions) && cautions.length > 0) {
+      const stale = progressRaw && statSync(join(ROOT, PROGRESS)).mtimeMs > Date.parse(r.at);
+      console.log(`⚑ 주의할 것 (지난 랩업 리허설 ${String(r.at).slice(0, 10)}${stale ? " — 그 뒤 PROGRESS 가 바뀌어 낡았을 수 있다" : ""}):`);
+      for (const c of cautions) console.log(`   · ${c}`);
+    }
+  } catch { /* 리허설을 안 돌린 프로젝트 — 조용히 넘어간다 */ }
+}
 if (deadRefs.length > 0)
   console.log(`⚠ 위 줄이 가리키는 파일이 없다: ${deadRefs.join(" · ")} — PROGRESS 의 링크가 낡았다.`);
 if (total > 0) console.log(`▤ 필수 기능 진행: ${done}/${total}`);
