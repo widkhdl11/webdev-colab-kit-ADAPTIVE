@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     paymentKey: q.get("paymentKey") ?? "",
   });
 
-  const back = new URL("/", req.nextUrl.origin);
+  const back = new URL("/dev/checkout", req.nextUrl.origin);
   if (outcome.ok) {
     back.searchParams.set("result", "done");
     back.searchParams.set("orderId", outcome.orderId);

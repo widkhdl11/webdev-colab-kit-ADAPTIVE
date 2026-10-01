@@ -62,7 +62,7 @@ export function TestCheckout({ clientKey, result }: { clientKey: string; result:
       orderId: pending.orderId,
       orderName: `팬꾹 선물 전달 ${pending.orderNo}`,
       successUrl: `${window.location.origin}/api/checkout/success`,
-      failUrl: `${window.location.origin}/?result=fail&reason=user`,
+      failUrl: `${window.location.origin}/dev/checkout?result=fail&reason=user`,
     });
   }
 

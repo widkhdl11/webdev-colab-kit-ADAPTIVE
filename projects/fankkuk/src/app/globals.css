@@ -1,1 +1,39 @@
 @import "tailwindcss";
+@import "../shared/ui/tokens.css";
+
+/* Tailwind 유틸리티 이름 ↔ 토큰 (bg-brand, text-ink, rounded-card …) */
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-page: var(--page);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-spark: var(--spark);
+  --color-spark-soft: var(--spark-soft);
+  --color-tint: var(--tint);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-canvas: var(--canvas);
+  --color-line: var(--line);
+  --color-on-brand: var(--on-brand);
+  --radius-card: var(--radius-card);
+  --radius-button: var(--radius-button);
+  --radius-float: var(--radius-float);
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}

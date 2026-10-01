@@ -1,0 +1,35 @@
+/* 디자인 토큰 — 값의 정본은 docs/design/design-rules.md (2026-10-01 승인). 여기를 고치면 그 문서도 같이 고친다. */
+:root {
+  /* 색 */
+  --brand: #32776b; /* 주요 버튼·로고. 흰 글자 5.27:1 */
+  --brand-hover: #2a655b;
+  --page: #faf9f5; /* 페이지 배경 아이보리 */
+  --paper: #ffffff; /* 카드·입력창 */
+  --ink: #293b36; /* 본문 차콜 */
+  --muted: #596762; /* 보조 글자 */
+  --spark: #f2b493; /* 살구 — 작은 장식 전용, 글자에 쓰지 않는다 */
+  --spark-soft: #f6d6c4;
+  --tint: #eef1ed; /* 청록 옅은 면 — 이보다 진하면 청록 글자가 4.5 미달 */
+  --accent: #8cb2a9; /* 일러스트 면 */
+  --accent-soft: #c2d5ce;
+  --canvas: #f4f2e9;
+  --line: #e1e2de;
+  --on-brand: #ffffff;
+
+  /* 형태 */
+  --radius-card: 12px;
+  --radius-button: 14px; /* 높이 56px ÷ 4 */
+  --radius-float: 20px; /* 바텀시트·모달 */
+  --radius-pill: 9999px;
+
+  /* 간격 (4px 단위, 짝수만) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  --max-width: 480px;
+}
