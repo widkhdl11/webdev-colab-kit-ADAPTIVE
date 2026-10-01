@@ -205,7 +205,13 @@ end $$;
 
 revoke all on public.decrypt_log from service_role;
 grant select on public.decrypt_log to service_role;
+grant usage on schema public to address_decryptor;
 grant select, insert on public.decrypt_log to address_decryptor;
+-- RLS 가 켜져 있으므로 이 역할에만 넣기·읽기 정책을 준다. 고치기·지우기 정책은 어느 역할에도 없다.
+create policy decrypt_log_append on public.decrypt_log for insert to address_decryptor with check (true);
+create policy decrypt_log_read on public.decrypt_log for select to address_decryptor using (true);
+-- 로컬 Supabase 의 postgres 는 슈퍼유저가 아니라서, 이 역할로 바꿔 확인하려면 소속이 있어야 한다(통합 테스트 INV-P7)
+grant address_decryptor to postgres;
 
 create function public.decrypt_log_append_only() returns trigger
 language plpgsql as $$
@@ -237,45 +243,41 @@ create trigger approval_requests_require_payment before insert on public.approva
 
 -- ── 승인 상태를 바꾸는 입구는 approve_request 하나(INV-S7) ──
 
--- approve_request 만 이 트랜잭션 안에서 표시를 켠다. 다른 경로(표 직접 갱신 등)로
--- approved_at 이나 요청의 approved 상태를 바꾸면 거부한다.
-create function public.guard_approval_change() returns trigger
+-- approve_request 만 이 트랜잭션 안에서 표시를 켠다. 다른 경로(표 직접 갱신·직접 삽입)로
+-- 주문의 approved_at 이나 요청의 approved 상태를 만들면 거부한다.
+-- 표마다 함수를 따로 둔다 — 한 함수에서 두 표의 칸을 같이 비교하면 다른 표의 값 목록으로 해석하다 실패한다.
+create function public.approval_change_allowed() returns boolean
+language sql stable as $$
+  select coalesce(current_setting('fankkuk.approving', true), '') = 'on';
+$$;
+
+create function public.guard_order_approval() returns trigger
 language plpgsql as $$
 begin
-  if coalesce(current_setting('fankkuk.approving', true), '') = 'on' then
+  if public.approval_change_allowed() then
     return new;
   end if;
-  if tg_table_name = 'orders' and new.approved_at is distinct from old.approved_at then
-    raise exception '승인은 approve_request 로만 바꿀 수 있다 (INV-S7)' using errcode = '42501';
-  end if;
-  if tg_table_name = 'approval_requests'
-     and (new.status = 'approved' or old.status = 'approved') and new.status is distinct from old.status then
+  if (tg_op = 'INSERT' and new.approved_at is not null)
+     or (tg_op = 'UPDATE' and new.approved_at is distinct from old.approved_at) then
     raise exception '승인은 approve_request 로만 바꿀 수 있다 (INV-S7)' using errcode = '42501';
   end if;
   return new;
 end $$;
 
-create trigger orders_guard_approval before update on public.orders
-  for each row execute function public.guard_approval_change();
-create trigger approval_requests_guard_approval before update on public.approval_requests
-  for each row execute function public.guard_approval_change();
-
-create function public.guard_approval_insert() returns trigger
+create function public.guard_request_approval() returns trigger
 language plpgsql as $$
 begin
-  if coalesce(current_setting('fankkuk.approving', true), '') = 'on' then
+  if public.approval_change_allowed() then
     return new;
   end if;
-  if tg_table_name = 'orders' and new.approved_at is not null then
-    raise exception '승인은 approve_request 로만 바꿀 수 있다 (INV-S7)' using errcode = '42501';
-  end if;
-  if tg_table_name = 'approval_requests' and new.status = 'approved' then
+  if (tg_op = 'INSERT' and new.status = 'approved')
+     or (tg_op = 'UPDATE' and new.status is distinct from old.status and 'approved' in (new.status, old.status)) then
     raise exception '승인은 approve_request 로만 바꿀 수 있다 (INV-S7)' using errcode = '42501';
   end if;
   return new;
 end $$;
 
-create trigger orders_guard_approval_insert before insert on public.orders
-  for each row execute function public.guard_approval_insert();
-create trigger approval_requests_guard_approval_insert before insert on public.approval_requests
-  for each row execute function public.guard_approval_insert();
+create trigger orders_guard_approval before insert or update on public.orders
+  for each row execute function public.guard_order_approval();
+create trigger approval_requests_guard_approval before insert or update on public.approval_requests
+  for each row execute function public.guard_request_approval();

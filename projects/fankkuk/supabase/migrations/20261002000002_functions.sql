@@ -267,5 +267,6 @@ grant execute on function public.approve_request(text) to service_role;
 -- 트리거 함수는 아무도 직접 부를 일이 없다
 revoke all on function public.decrypt_log_append_only() from public, anon, authenticated;
 revoke all on function public.approval_request_requires_payment() from public, anon, authenticated;
-revoke all on function public.guard_approval_change() from public, anon, authenticated;
-revoke all on function public.guard_approval_insert() from public, anon, authenticated;
+revoke all on function public.guard_order_approval() from public, anon, authenticated;
+revoke all on function public.guard_request_approval() from public, anon, authenticated;
+revoke all on function public.approval_change_allowed() from public, anon, authenticated;
