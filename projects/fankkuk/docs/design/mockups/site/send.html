@@ -46,7 +46,11 @@
     .step h2:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
     .step-h { margin-bottom: 20px; }
     .step-h p { margin-top: 8px; color: var(--muted); }
-    #pick-list { display: grid; gap: 8px; max-height: 360px; overflow-y: auto; margin-top: 12px; padding: 4px; }
+    /* 크리에이터 목록은 둘레를 두른 상자 — 페이지와 구분 (사용자 「크리에이터 리스트부분과 구분이 되게」) */
+    .pick-box { margin-top: 16px; border: 1px solid var(--field-line); border-radius: 8px; background: var(--tint); }
+    .pick-box-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-weight: 800; }
+    .pick-box-head .hint { margin: 0; font-weight: 600; color: var(--muted); }
+    #pick-list { display: grid; gap: 8px; max-height: 336px; overflow-y: auto; margin: 0; padding: 12px; }
     .pick { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 16px; border: 1px solid var(--field-line); border-radius: 6px; background: var(--paper); cursor: pointer; }
     .pick:hover { border-color: var(--ink); }
     .pick:has(input:checked) { border: 3px solid var(--ink); padding: 6px 14px; }
@@ -87,13 +91,17 @@
     .summary .sum-row { grid-template-columns: 96px minmax(0, 1fr); }
 
     /* 이전·다음 */
-    .step-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; }
+    /* 「다음」은 모든 단계에서 같은 자리 — 화면 아래에 붙은 줄의 오른쪽 끝 (사용자 「다음 버튼 위치 통일」) */
+    body { padding-bottom: 96px; }
+    .step-actions { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 12px; margin: 0; padding: 16px max(var(--gutter), calc((100% - var(--maxw)) / 2)); background: var(--paper); border-top: 2px solid var(--rule); }
     .step-actions .btn { min-width: 120px; }
+    .step-actions #next { margin-left: auto; }
     @media (max-width: 767px) {
       body { padding-bottom: 88px; }
       .step-actions { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: 1fr 2fr; margin: 0; padding: 12px var(--gutter); background: var(--paper); border-top: 2px solid var(--rule); }
       .step-actions.no-prev { grid-template-columns: 1fr; }
       .step-actions .btn { height: 52px; }
+      .step-actions #next { margin-left: 0; }
       .sum-row { grid-template-columns: minmax(0, 1fr) auto; }
       .sum-row dt { grid-column: 1 / -1; }
       .sum-row dd { grid-column: 1; }
@@ -250,7 +258,8 @@
               <label class="sr-only" for="pick-q">크리에이터 검색</label>
               <input class="input" id="pick-q" type="search" placeholder="이름이나 채널 이름으로 찾아요" autocomplete="off" data-live-filter data-target="#pick-list" data-empty="#pick-empty" data-count="#pick-count">
             </div>
-            <p class="hint" id="pick-count" role="status" aria-live="polite" style="margin-top:8px"></p>
+            <div class="pick-box">
+            <div class="pick-box-head"><span>크리에이터 목록</span><p class="hint" id="pick-count" role="status" aria-live="polite"></p></div>
             <ul id="pick-list">
               <li data-search="하루 haru 게임 하루의 놀이터">
                 <label class="pick"><input type="radio" name="creator" value="haru" checked>
@@ -301,7 +310,8 @@
                 </label>
               </li>
             </ul>
-            <p class="empty-mini muted" id="pick-empty" hidden role="status" style="margin-top:12px">찾는 크리에이터가 없어요. 본인 확인을 마친 크리에이터만 선택할 수 있어요.</p>
+            <p class="empty-mini muted" id="pick-empty" hidden role="status" style="margin:12px">찾는 크리에이터가 없어요. 본인 확인을 마친 크리에이터만 선택할 수 있어요.</p>
+            </div>
           </fieldset>
 
           <!-- 2 선물 -->
