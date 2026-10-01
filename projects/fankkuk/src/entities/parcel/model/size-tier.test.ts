@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyParcel, isLargerTier } from "./size-tier";
+import { classifyParcel, OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "./size-tier";
 
 describe("classifyParcel — 상자 크기·무게 → 구간 (사용자 결정 d7)", () => {
   it("세 변 합 100cm·5kg 이하는 소형 — 경계값 포함", () => {
@@ -23,11 +23,10 @@ describe("classifyParcel — 상자 크기·무게 → 구간 (사용자 결정 
   });
 });
 
-describe("isLargerTier — 도착 실측이 신고보다 큰가 (차액 요청의 조건)", () => {
-  it("실측이 큰 구간일 때만 참", () => {
-    expect(isLargerTier("medium", "small")).toBe(true);
-    expect(isLargerTier("oversize", "medium")).toBe(true);
-    expect(isLargerTier("small", "small")).toBe(false);
-    expect(isLargerTier("small", "medium")).toBe(false);
+describe("PARCEL_TIER_GUIDE — 화면 안내 문구가 판정 기준과 같다", () => {
+  it("소형·중형·초과 문구", () => {
+    expect(PARCEL_TIER_GUIDE.small.rule).toBe("세 변 합 100cm·5kg 이하");
+    expect(PARCEL_TIER_GUIDE.medium.rule).toBe("세 변 합 100cm·10kg 이하");
+    expect(OVERSIZE_RULE).toBe("세 변 합 100cm나 10kg를 넘는 상자");
   });
 });

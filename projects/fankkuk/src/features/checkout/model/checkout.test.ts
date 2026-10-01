@@ -21,22 +21,27 @@ const done = (b: { orderId: string; amount: number }) => ({ status: "DONE", orde
 function setup(respond = done) {
   const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
   const toss = fakeToss(respond);
-  return { store, toss, deps: { store, toss: toss.client, shippingFeeKrw: 4000 } };
+  return { store, toss, deps: { store, toss: toss.client } };
 }
 
 describe("결제 흐름", () => {
-  it("INV-M1 (S1): 결제 대기는 서버가 계산한 9,000원으로 만들어진다", async () => {
+  it("INV-M1 (S1): 결제 대기는 서버가 상자 구간으로 계산한 금액으로 만들어진다", async () => {
     const { deps } = setup();
-    const pending = await startCheckout(deps, { orderNo: "FC-7K3M9" });
-    expect(pending.amountKrw).toBe(9000);
-    expect(pending.charge).toEqual({ goodsKrw: 0, serviceFeeKrw: 5000, shippingFeeKrw: 4000, totalKrw: 9000 });
+    const pending = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small", "medium"] });
+    expect(pending.amountKrw).toBe(15800);
+    expect(pending.charge.totalKrw).toBe(15800);
+  });
+
+  it("INV-M1 (S1c, 실패경로): 중형 초과 상자가 섞이면 결제 대기를 만들지 않는다", async () => {
+    const { deps } = setup();
+    await expect(startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small", "oversize"] })).rejects.toThrow();
   });
 
   it("INV-M3 (S3): 금액이 맞고 승인 응답이 DONE 이면 결제 완료로 기록된다", async () => {
     const { deps, store, toss } = setup();
-    const p = await startCheckout(deps, { orderNo: "FC-7K3M9" });
+    const p = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small"] });
 
-    const res = await confirmPayment(deps, { orderId: p.orderId, amount: "9000", paymentKey: "tgen_1" });
+    const res = await confirmPayment(deps, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
 
     expect(res).toEqual({ ok: true, orderId: p.orderId });
     expect((await store.find(p.orderId))?.status).toBe("done");
@@ -46,7 +51,7 @@ describe("결제 흐름", () => {
 
   it("INV-M2 (S2, 실패경로): 금액이 다르면 승인 API 를 부르지 않고 결제 대기를 실패로 닫는다", async () => {
     const { deps, store, toss } = setup();
-    const p = await startCheckout(deps, { orderNo: "FC-7K3M9" });
+    const p = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small"] });
 
     const res = await confirmPayment(deps, { orderId: p.orderId, amount: "100", paymentKey: "tgen_1" });
 
@@ -57,9 +62,9 @@ describe("결제 흐름", () => {
 
   it("INV-M3 (S3b, 실패경로): 승인 응답이 ABORTED 면 완료로 기록하지 않는다", async () => {
     const { deps, store } = setup((b) => ({ status: "ABORTED", orderId: b.orderId, totalAmount: b.amount }));
-    const p = await startCheckout(deps, { orderNo: "FC-7K3M9" });
+    const p = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small"] });
 
-    const res = await confirmPayment(deps, { orderId: p.orderId, amount: "9000", paymentKey: "tgen_1" });
+    const res = await confirmPayment(deps, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
 
     expect(res).toEqual({ ok: false, reason: "not_approved" });
     expect((await store.find(p.orderId))?.status).toBe("failed");
@@ -67,8 +72,8 @@ describe("결제 흐름", () => {
 
   it("INV-M5 (S5): 성공 주소를 새로고침해도 승인 API 는 한 번만 불리고 완료 기록은 그대로다", async () => {
     const { deps, store, toss } = setup();
-    const p = await startCheckout(deps, { orderNo: "FC-7K3M9" });
-    const ret = { orderId: p.orderId, amount: "9000", paymentKey: "tgen_1" };
+    const p = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small"] });
+    const ret = { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" };
 
     await confirmPayment(deps, ret);
     const again = await confirmPayment(deps, ret);
@@ -80,8 +85,8 @@ describe("결제 흐름", () => {
 
   it("INV-M5 (S5b, 동시): 승인 처리 두 개가 동시에 와도 승인 API 는 한 번만 불린다", async () => {
     const { deps, toss } = setup();
-    const p = await startCheckout(deps, { orderNo: "FC-7K3M9" });
-    const ret = { orderId: p.orderId, amount: "9000", paymentKey: "tgen_1" };
+    const p = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small"] });
+    const ret = { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" };
 
     const [a, b] = await Promise.all([confirmPayment(deps, ret), confirmPayment(deps, ret)]);
 
@@ -91,7 +96,7 @@ describe("결제 흐름", () => {
 
   it("INV-M2 (S2b, 실패경로): 없는 orderId 로 오면 승인 API 를 부르지 않는다", async () => {
     const { deps, toss } = setup();
-    const res = await confirmPayment(deps, { orderId: "pay_nope00", amount: "9000", paymentKey: "tgen_1" });
+    const res = await confirmPayment(deps, { orderId: "pay_nope00", amount: "6900", paymentKey: "tgen_1" });
     expect(res).toEqual({ ok: false, reason: "no_pending_payment" });
     expect(toss.calls).toHaveLength(0);
   });

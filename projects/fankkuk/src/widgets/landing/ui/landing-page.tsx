@@ -1,10 +1,10 @@
-import type { ChargeBreakdown } from "@/entities/payment/model/charge";
+import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { BILLABLE_TIERS, TIER_PRICE_KRW } from "@/entities/payment/config/tier-pricing";
 import s from "./landing.module.css";
 
 // 메인(소개) 화면. 시각 기준: docs/design/design-rules.md, 시안: docs/design/mockups/main.html
 // 문구 한계(design-rules 5절): "열지 않는다"는 쓰고 "열 수 없다"·"절대 유출되지 않는다"는 쓰지 않는다.
 
-const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
 function Logo() {
   return (
@@ -55,7 +55,8 @@ const STEPS = [
   ["배송", "검수가 끝난 선물만 크리에이터에게 발송합니다. 팬은 상태 화면에서 진행 상황을 확인합니다."],
 ] as const;
 
-export function LandingPage({ charge }: { charge: ChargeBreakdown }) {
+// 요금표는 결제와 같은 요금표(tier-pricing)와 구간 기준(size-tier)을 읽는다 — 화면 숫자·기준과 결제가 어긋나지 않게.
+export function LandingPage() {
   return (
     <div className={`${s.root} ${s.page}`}>
       <header className={s.top}>
@@ -156,28 +157,29 @@ export function LandingPage({ charge }: { charge: ChargeBreakdown }) {
 
         <section aria-labelledby="price-title">
           <h2 id="price-title">검수는 기본으로 담았어요</h2>
-          <p className={s.intro}>검수·전달 서비스료에 배송비 실비를 더합니다.</p>
+          <p className={s.intro}>상자 하나에 배송비까지 담은 한 금액이에요.</p>
           <div className={s["price-card"]}>
             <div className={s["price-main"]}>
-              <span className={s.pill}>검수 포함</span>
-              <p className={s.amount}>
-                {charge.totalKrw.toLocaleString("ko-KR")}
-                <span>원</span>
-              </p>
+              <span className={s.pill}>추적 장치 검수 포함</span>
+              <ul className={s.tiers} role="list">
+                {BILLABLE_TIERS.map((tier) => (
+                  <li key={tier}>
+                    <div>
+                      <p className={s["tier-name"]}>{PARCEL_TIER_GUIDE[tier].name}</p>
+                      <p className={s["tier-rule"]}>{PARCEL_TIER_GUIDE[tier].rule}</p>
+                    </div>
+                    <p className={s["tier-amount"]}>
+                      {TIER_PRICE_KRW[tier].toLocaleString("ko-KR")}
+                      <span>원</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
             </div>
             <div className={s["price-detail"]}>
-              <dl>
-                <div>
-                  <dt>검수·전달 서비스료</dt>
-                  <dd>{won(charge.serviceFeeKrw)}</dd>
-                </div>
-                <div>
-                  <dt>배송비 실비</dt>
-                  <dd>지금 {won(charge.shippingFeeKrw)}</dd>
-                </div>
-              </dl>
               <p className={s["price-note"]}>
-                현재 배송비 기준으로 총 {won(charge.totalKrw)}입니다. 배송비는 실제 택배 요금에 따라 달라집니다.
+                상자마다 받는 금액이에요. 크기와 무게 중 큰 쪽 구간을 적용하고, 도착해서 잰 크기가 더 크면 차액을 따로
+                요청드려요. {OVERSIZE_RULE}는 받지 않아요.
               </p>
             </div>
           </div>

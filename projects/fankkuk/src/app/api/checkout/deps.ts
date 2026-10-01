@@ -1,5 +1,4 @@
 import { createMemoryPaymentStore } from "@/entities/payment/api/memory-payment-store";
-import { shippingFeeFromEnv } from "@/entities/payment/config/shipping-fee";
 import type { CheckoutDeps } from "@/features/checkout/model/checkout";
 import { createTossPaymentsClient, readTossSecretKey } from "@/shared/api/toss-payments/client";
 
@@ -13,7 +12,6 @@ export function checkoutDeps(): CheckoutDeps {
   const deps: CheckoutDeps = {
     store: createMemoryPaymentStore({ env }),
     toss: createTossPaymentsClient({ secretKey: readTossSecretKey(env), env, fetchImpl: fetch }),
-    shippingFeeKrw: shippingFeeFromEnv(env),
   };
   holder.__fankkukCheckoutDeps = deps;
   return deps;

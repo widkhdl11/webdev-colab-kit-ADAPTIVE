@@ -2,23 +2,24 @@ import { describe, expect, it } from "vitest";
 import { computeCharge } from "./charge";
 import { refundAmountFor, nextRefund } from "./refund";
 
-const paid = computeCharge({ shippingFeeKrw: 4000 }); // 9,000원
+const paid = computeCharge({ boxes: ["small"] }); // 6,900원 (배송비 칸 = 소형 택배 원가)
+const ship = paid.shippingFeeKrw;
 
 describe("환불 금액 (INV-M8)", () => {
   it.each([
-    ["rejected", false, 9000],
-    ["expired", false, 9000],
-    ["canceled", false, 9000],
+    ["rejected", false, 6900],
+    ["expired", false, 6900],
+    ["canceled", false, 6900],
   ] as const)("INV-M8 (S8): 입고 전 %s 는 전액 환불", (reason, arrived, expected) => {
     expect(refundAmountFor({ reason, arrived, shipped: false, charge: paid })).toBe(expected);
   });
 
-  it("INV-M8 (S8): 입고 뒤 검수 불합격은 배송비만 환불", () => {
-    expect(refundAmountFor({ reason: "inspection_failed", arrived: true, shipped: false, charge: paid })).toBe(4000);
+  it("INV-M8 (S8): 입고 뒤 검수 불합격은 배송비 칸만 환불", () => {
+    expect(refundAmountFor({ reason: "inspection_failed", arrived: true, shipped: false, charge: paid })).toBe(ship);
   });
 
-  it.each(["rejected", "expired", "canceled"] as const)("INV-M8 (S8): 입고 뒤 %s 는 배송비만 환불", (reason) => {
-    expect(refundAmountFor({ reason, arrived: true, shipped: false, charge: paid })).toBe(4000);
+  it.each(["rejected", "expired", "canceled"] as const)("INV-M8 (S8): 입고 뒤 %s 는 배송비 칸만 환불", (reason) => {
+    expect(refundAmountFor({ reason, arrived: true, shipped: false, charge: paid })).toBe(ship);
   });
 
   it.each(["rejected", "expired", "canceled", "inspection_failed"] as const)(
@@ -31,6 +32,16 @@ describe("환불 금액 (INV-M8)", () => {
   it("INV-M8 (실패경로): 검수 불합격은 입고 전일 수 없다 — 이상한 조합은 거부한다", () => {
     expect(() => refundAmountFor({ reason: "inspection_failed", arrived: false, shipped: false, charge: paid })).toThrow();
     expect(() => refundAmountFor({ reason: "rejected", arrived: false, shipped: true, charge: paid })).toThrow();
+  });
+});
+
+describe("차액 미납 반송 환불 (INV-M8)", () => {
+  it("INV-M8 (S8): 차액 미납 반송은 배송비 칸만 환불", () => {
+    expect(refundAmountFor({ reason: "difference_unpaid", arrived: true, shipped: false, charge: paid })).toBe(ship);
+  });
+
+  it("INV-M8 (실패경로): 차액 미납은 입고 전일 수 없다", () => {
+    expect(() => refundAmountFor({ reason: "difference_unpaid", arrived: false, shipped: false, charge: paid })).toThrow();
   });
 });
 

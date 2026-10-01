@@ -3,16 +3,19 @@ import { computeCharge } from "@/entities/payment/model/charge";
 import { checkSuccessReturn, evaluateConfirmResponse, type SuccessReturn } from "@/entities/payment/model/confirm";
 import type { TossPaymentsClient } from "@/shared/api/toss-payments/client";
 
-export type CheckoutDeps = { store: PaymentStore; toss: TossPaymentsClient; shippingFeeKrw: number };
+export type CheckoutDeps = { store: PaymentStore; toss: TossPaymentsClient };
 
 // 토스 orderId 규칙: 영문·숫자·-·_ 6~64자.
 function newPaymentOrderId(): string {
   return `pay_${crypto.randomUUID().replaceAll("-", "")}`;
 }
 
-/** 결제 대기를 만든다. 금액은 서버 설정으로만 계산한다(INV-M1). */
-export async function startCheckout(deps: CheckoutDeps, input: { orderNo: string }): Promise<StoredPayment> {
-  const charge = computeCharge({ shippingFeeKrw: deps.shippingFeeKrw });
+/** 결제 대기를 만든다. 금액은 상자 구간과 서버 요금표로만 계산한다(INV-M1). 중형 초과·0개면 만들지 않는다. */
+export async function startCheckout(
+  deps: CheckoutDeps,
+  input: { orderNo: string; boxes: readonly string[] },
+): Promise<StoredPayment> {
+  const charge = computeCharge({ boxes: input.boxes });
   return deps.store.create({ orderId: newPaymentOrderId(), orderNo: input.orderNo, charge });
 }
 

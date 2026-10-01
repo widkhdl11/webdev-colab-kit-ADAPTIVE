@@ -41,14 +41,14 @@
 .price-card { margin-top: 24px; border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; }
 .price-main { background: var(--tint); padding: 24px; }
 .pill { display: inline-flex; padding: 4px 12px; border-radius: var(--radius-pill); color: var(--brand); background: var(--paper); font-weight: 700; }
-.amount { margin-top: 12px; font-size: 48px; line-height: 1.2; font-weight: 850; letter-spacing: -0.04em; }
-.amount span { font-size: 24px; margin-left: 4px; }
 .price-detail { padding: 24px; }
-.price-detail dl { display: grid; gap: 12px; }
-.price-detail dl > div { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.price-detail dt { color: var(--muted); }
-.price-detail dd { font-weight: 750; white-space: nowrap; }
-.price-note { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 20px; color: var(--muted); }
+.price-note { color: var(--muted); }
+.tiers { list-style: none; padding: 0; margin-top: 16px; display: grid; gap: 16px; }
+.tiers li { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.tier-name { font-size: 20px; font-weight: 800; }
+.tier-rule { color: var(--muted); }
+.tier-amount { font-size: 36px; line-height: 1.2; font-weight: 850; letter-spacing: -0.04em; white-space: nowrap; }
+.tier-amount span { font-size: 20px; margin-left: 4px; }
 .included { margin-top: 16px; display: flex; align-items: center; gap: 8px; font-weight: 650; }
 .included svg { color: var(--brand); }
 .creator { margin: 0 16px 48px; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--tint); }

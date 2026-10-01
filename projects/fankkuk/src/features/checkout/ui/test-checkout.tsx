@@ -9,7 +9,6 @@ type Pending = {
   orderId: string;
   orderNo: string;
   amountKrw: number;
-  charge: { serviceFeeKrw: number; shippingFeeKrw: number };
 };
 
 const REASON_TEXT: Record<string, string> = {
@@ -84,8 +83,7 @@ export function TestCheckout({ clientKey, result }: { clientKey: string; result:
       ) : (
         <>
           <p>
-            주문번호 {pending.orderNo} · 서비스료 {pending.charge.serviceFeeKrw.toLocaleString()}원 + 배송비{" "}
-            {pending.charge.shippingFeeKrw.toLocaleString()}원 = {pending.amountKrw.toLocaleString()}원
+            주문번호 {pending.orderNo} · 결제 금액 {pending.amountKrw.toLocaleString()}원
           </p>
           <div id="payment-methods" />
           <div id="agreement" />

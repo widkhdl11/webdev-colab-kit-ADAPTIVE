@@ -4,8 +4,6 @@
 
 export type ParcelTier = "small" | "medium" | "oversize";
 
-const ORDER: Record<ParcelTier, number> = { small: 0, medium: 1, oversize: 2 };
-
 const MAX_SUM_OF_SIDES_CM = 100;
 const SMALL_MAX_WEIGHT_KG = 5;
 const MEDIUM_MAX_WEIGHT_KG = 10;
@@ -17,7 +15,11 @@ export function classifyParcel(measure: { sumOfSidesCm: number; weightKg: number
   return weightKg > SMALL_MAX_WEIGHT_KG ? "medium" : "small";
 }
 
-/** 도착 실측 구간이 신고 구간보다 큰가 — 차액 요청은 이때만 생긴다. */
-export function isLargerTier(measured: ParcelTier, declared: ParcelTier): boolean {
-  return ORDER[measured] > ORDER[declared];
-}
+/** 화면 안내 문구. 판정 상수에서 만들어 기준이 바뀌면 등록 화면·메인 요금표가 같이 바뀐다. */
+export const PARCEL_TIER_GUIDE: Readonly<Record<Exclude<ParcelTier, "oversize">, { name: string; rule: string }>> = {
+  small: { name: "소형", rule: `세 변 합 ${MAX_SUM_OF_SIDES_CM}cm·${SMALL_MAX_WEIGHT_KG}kg 이하` },
+  medium: { name: "중형", rule: `세 변 합 ${MAX_SUM_OF_SIDES_CM}cm·${MEDIUM_MAX_WEIGHT_KG}kg 이하` },
+};
+
+/** 받지 않는 상자 안내. */
+export const OVERSIZE_RULE = `세 변 합 ${MAX_SUM_OF_SIDES_CM}cm나 ${MEDIUM_MAX_WEIGHT_KG}kg를 넘는 상자`;

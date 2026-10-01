@@ -29,9 +29,14 @@ const ok: DecryptRequest = {
   orderStatus: "inspected",
   fanBlocked: false,
   decryptCount: 0,
+  differenceUnpaid: false,
 };
 
 describe("복호화 허용 판정", () => {
+  it("INV-M12 (S12, 실패경로): 차액이 아직 결제되지 않은 주문은 송장을 출력하지 않는다", () => {
+    expect(authorizeDecrypt({ ...ok, differenceUnpaid: true })).toEqual({ ok: false, reason: "difference_unpaid" });
+  });
+
   it("INV-P4: 조건이 모두 맞으면 첫 출력이 허용되고 재출력 표시는 없다", () => {
     expect(authorizeDecrypt(ok)).toEqual({ ok: true, isReprint: false });
   });

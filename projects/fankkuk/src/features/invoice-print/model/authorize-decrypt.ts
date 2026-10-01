@@ -18,13 +18,15 @@ export type DecryptRequest = {
   fanBlocked: boolean;
   /** 이 주문에서 지금까지 성공한 복호화 횟수 */
   decryptCount: number;
+  /** 도착 실측 차액 요청이 있고 아직 결제되지 않았는가 */
+  differenceUnpaid: boolean;
 };
 
 export type DecryptDecision =
   | { ok: true; isReprint: boolean }
   | {
       ok: false;
-      reason: "not_owner" | "no_valid_approval" | "order_mismatch" | "order_not_printable" | "decrypt_limit_reached";
+      reason: "not_owner" | "no_valid_approval" | "order_mismatch" | "order_not_printable" | "difference_unpaid" | "decrypt_limit_reached";
     };
 
 /** 복호화 함수 진입부 판정. 하나라도 어긋나면 열지 않는다. 동시 요청의 원자성은 저장소 쪽이 맡는다. */
@@ -42,6 +44,9 @@ export function authorizeDecrypt(req: DecryptRequest): DecryptDecision {
 
   // INV-P4 (c)·INV-P5: 검수 완료 ~ 출고 확정 전에만. 출고 확정되면 남은 횟수는 소멸. 차단된 팬의 주문도 거부.
   if (req.fanBlocked || !isPrintable(req.orderStatus)) return { ok: false, reason: "order_not_printable" };
+
+  // INV-M12: 차액을 덜 낸 주문은 출고하지 않는다 — 송장 출력(=주소 열기)도 하지 않는다.
+  if (req.differenceUnpaid) return { ok: false, reason: "difference_unpaid" };
 
   // INV-P5: 상한.
   if (req.decryptCount >= MAX_DECRYPTS_PER_ORDER) return { ok: false, reason: "decrypt_limit_reached" };
