@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 크리에이터가 승인한 선물만 배송 (시안 A: 따뜻한 코랄·피치)</title>
+<!--
+  팬꾹 메인(소개) 시안 A — 색 조합: 따뜻한 코랄·피치
+  세 안(main-a/b/c)은 레이아웃·구성·문구가 같고 아래 :root 색 토큰만 다르다.
+  근거: projects/fankkuk/docs/design/INTERVIEW.md (플레이풀·귀여움 / 라이트 / Pretendard / 여백 위주 / 모바일 우선)
+  지시 반영(2026-10-01): 모서리를 "살짝 라운드"에서 "둥글둥글"로 변경 — 카드 24px, 알약 버튼·배지, 원형 단계 표시, 일러스트도 둥근 도형.
+  라운드 값은 --radius-* 변수에 모아 두었다 (정찰 수치가 오면 이 변수만 고친다).
+  두 층 원칙: 일러스트·색·말투(히어로·단계 제목)는 귀엽게, 안심 약속·절차 설명·요금·사업자 정보는 또렷하고 차분하게.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{
+  /* ===== 이 안의 색 토큰 (따뜻한 코랄·피치) ===== */
+  --brand:#C4402B;        /* 버튼 배경·강조. 흰 글자 대비 5.10:1 */
+  --brand-dark:#9E2F1D;   /* 강조 글자·눌림. 흰 글자 대비 7.30:1 */
+  --accent:#FF9E7D;       /* 장식 도형 전용 (글자에 쓰지 않음) */
+  --accent-2:#FFC9A8;     /* 장식 도형 전용 */
+  --tint:#FFF0E8;         /* 옅은 면 배경 */
+  --tint-2:#FFDCCB;       /* 한 단계 진한 면 배경 */
+  --bg:#FFFBF8;           /* 페이지 배경 */
+  --ink:#2B2321;          /* 본문 글자 */
+  --ink-sub:#5E5250;      /* 보조 글자 */
+  --line:#F1D9CC;         /* 테두리 */
+  --on-brand:#FFFFFF;
+  /* ===== 둥글둥글 라운드 (한 곳에 모음) ===== */
+  /* 형태: fanding.kr 실측을 따른다 — 카드 12px + 가는 선, 그림자 없음, 버튼 반경 = 높이의 1/4, 원은 반복해서 쓴다 */
+  --radius:12px;          /* 카드 */
+  --radius-sm:8px;        /* 작은 면 */
+  --radius-btn:14px;      /* 버튼 (높이 56px ÷ 4) */
+  --radius-pill:999px;    /* 배지·칩 */
+  --radius-round:50%;     /* 단계 번호 등 원형 */
+  --radius-page:20px;     /* 데스크톱에서 페이지 틀 (떠 있는 면은 한 단계 더 둥글게) */
+  /* ===== 그림자·간격 (모든 간격 짝수 px) ===== */
+  --shadow:none;          /* 그림자 없이 선과 면으로만 나눈다 */
+  --space-1:8px; --space-2:16px; --space-3:24px; --space-4:32px; --space-5:48px; --space-6:64px;
+  --maxw:480px;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--tint);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;font-size:16px;line-height:1.7;word-break:keep-all}
+.page{max-width:var(--maxw);margin:0 auto;background:var(--bg);min-height:100vh;box-shadow:0 0 0 1px var(--line)}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--brand-dark);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+section{padding:var(--space-5) var(--space-3)}
+.eyebrow{display:inline-block;font-size:14px;font-weight:700;color:var(--brand-dark);background:var(--tint);padding:2px 16px;border-radius:var(--radius-pill);margin-bottom:var(--space-1);letter-spacing:.02em}
+h2{font-size:24px;line-height:1.4;font-weight:800;letter-spacing:-.02em;margin-bottom:var(--space-3)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:56px;padding:0 var(--space-4);border-radius:var(--radius-btn);background:var(--brand);color:var(--on-brand);font-weight:700;font-size:18px;text-decoration:none;box-shadow:var(--shadow);transition:background .15s}
+.btn:hover{background:var(--brand-dark)}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:var(--space-2) var(--space-3)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:22px;color:var(--brand-dark);text-decoration:none;letter-spacing:-.03em}
+.logo i{width:28px;height:28px;border-radius:50%;background:var(--brand);display:inline-block;position:relative}
+.logo i::after{content:"";position:absolute;left:10px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--accent-2)}
+header.top a.login{font-size:16px;font-weight:600;color:var(--ink-sub);text-decoration:none;padding:8px 16px;border-radius:var(--radius-pill);background:var(--tint)}
+.hero{background:linear-gradient(180deg,var(--tint) 0%,var(--bg) 100%);text-align:center;padding-top:var(--space-3);padding-bottom:var(--space-5)}
+.hero .gift{display:block;margin:0 auto var(--space-2);max-width:100%;height:auto}
+.hero h1{font-size:30px;line-height:1.35;font-weight:800;letter-spacing:-.03em;margin-bottom:var(--space-2)}
+.hero h1 em{font-style:normal;color:var(--brand-dark);background:linear-gradient(transparent 62%,var(--tint-2) 62%)}
+.hero p.lead{color:var(--ink-sub);margin-bottom:var(--space-3)}
+.hero .note{margin-top:var(--space-2);font-size:16px;color:var(--ink-sub)}
+.steps{display:grid;gap:var(--space-2)}
+.steps li{display:grid;grid-template-columns:48px 1fr;gap:var(--space-2);align-items:start;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:var(--space-3);box-shadow:var(--shadow)}
+.steps .num{width:48px;height:48px;border-radius:var(--radius-round);background:var(--tint-2);color:var(--brand-dark);display:grid;place-items:center;font-weight:800;font-size:20px}
+.steps h3{font-size:18px;font-weight:700;line-height:1.4;margin-bottom:4px}
+.steps p{color:var(--ink-sub)}
+.promise{background:var(--tint)}
+.promise ul{display:grid;gap:var(--space-2)}
+.promise li{background:#fff;border-radius:var(--radius);padding:var(--space-3);display:grid;gap:var(--space-1);border:2px solid var(--tint-2)}
+.promise li svg{display:block}
+.promise h3{font-size:18px;font-weight:700;line-height:1.5}
+.promise p{color:var(--ink-sub)}
+.price-card{background:#fff;border:2px solid var(--brand);border-radius:var(--radius);padding:var(--space-3);text-align:center}
+.price-card .big{font-size:40px;font-weight:800;color:var(--brand-dark);letter-spacing:-.03em;line-height:1.3}
+.price-card .big small{font-size:18px;font-weight:700;color:var(--ink)}
+.price-card .tag{display:inline-block;background:var(--brand);color:var(--on-brand);font-weight:700;font-size:14px;padding:2px 16px;border-radius:var(--radius-pill);margin-bottom:var(--space-1)}
+.price-card dl{margin:var(--space-3) 0 0;display:grid;gap:var(--space-1);text-align:left}
+.price-card dl div{display:flex;justify-content:space-between;gap:var(--space-2);padding:var(--space-1) 0;border-top:1px solid var(--line)}
+.price-card dt{color:var(--ink-sub)}
+.price-card dd{margin:0;font-weight:700}
+.price-card .why{margin-top:var(--space-2);color:var(--ink-sub);text-align:left}
+.creator{background:var(--tint-2)}
+.creator .box{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:var(--space-3);box-shadow:var(--shadow)}
+.creator h2{margin-bottom:var(--space-2)}
+.creator ul{display:grid;gap:var(--space-1);margin:var(--space-2) 0 var(--space-3)}
+.creator li{position:relative;padding-left:28px}
+.creator li::before{content:"";position:absolute;left:2px;top:10px;width:12px;height:12px;border-radius:50%;background:var(--brand)}
+.creator .free{color:var(--ink-sub);margin-top:var(--space-2);text-align:center}
+footer{padding:var(--space-4) var(--space-3) var(--space-5);color:var(--ink-sub);font-size:14px;line-height:1.8;border-top:1px solid var(--line)}
+footer .flogo{font-weight:800;font-size:18px;color:var(--brand-dark);margin-bottom:var(--space-1)}
+footer dl{margin:0;display:grid;gap:4px}
+footer dl div{display:flex;gap:var(--space-1)}
+footer dt{min-width:104px;font-weight:600}
+footer dd{margin:0}
+footer nav{display:flex;gap:var(--space-2);margin-top:var(--space-2)}
+footer nav a{color:var(--ink-sub);padding:8px 0}
+footer .copy{margin-top:var(--space-2)}
+@media (min-width:600px){
+  body{padding:var(--space-4) 0}
+  .page{border-radius:var(--radius-page);overflow:hidden;min-height:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="top">
+  <a class="logo" href="#"><i aria-hidden="true"></i>팬꾹</a>
+  <a class="login" href="#">로그인</a>
+</header>
+
+<main>
+<!-- ① 첫 화면 -->
+<section class="hero" aria-labelledby="hero-title">
+  <svg class="gift" viewBox="0 0 160 160" role="img" aria-label="리본을 두른 선물 상자 일러스트" width="160" height="160">
+<ellipse cx="80" cy="146" rx="52" ry="8" fill="var(--tint-2)"/>
+<rect x="24" y="64" width="112" height="76" rx="24" fill="var(--accent)"/>
+<rect x="16" y="46" width="128" height="32" rx="16" fill="var(--accent-2)"/>
+<rect x="68" y="46" width="24" height="94" rx="8" fill="var(--brand)"/>
+<path d="M80 48 C60 12 26 22 42 42 C50 52 70 50 80 48Z" fill="var(--brand)"/>
+<path d="M80 48 C100 12 134 22 118 42 C110 52 90 50 80 48Z" fill="var(--brand-dark)"/>
+<circle cx="80" cy="48" r="10" fill="var(--brand-dark)"/>
+<circle cx="50" cy="104" r="5" fill="#fff"/><circle cx="110" cy="118" r="5" fill="#fff"/>
+<circle cx="126" cy="24" r="5" fill="var(--accent)"/><circle cx="32" cy="18" r="4" fill="var(--brand)"/><circle cx="140" cy="52" r="3" fill="var(--accent-2)"/>
+</svg>
+  <h1 id="hero-title"><em>크리에이터가 승인한</em><br>선물만 배송해요</h1>
+  <p class="lead">팬이 보낸 선물을 저희 사무실에서 받아 검수한 뒤, 크리에이터의 주소를 알리지 않고 대신 전달합니다.</p>
+  <a class="btn" href="#">선물 보내기</a>
+  <p class="note">승인 전에는 아무것도 배송되지 않습니다.</p>
+</section>
+
+<!-- ② 이용 순서 -->
+<section aria-labelledby="steps-title">
+  <span class="eyebrow">이용 순서</span>
+  <h2 id="steps-title">선물은 이렇게 도착해요</h2>
+  <ol class="steps">
+    <li><span class="num" aria-hidden="true">1</span><div><h3><span class="sr-only">1단계 </span>등록</h3><p>팬이 선물 정보와 상자 수를 등록하고 요금을 결제합니다. 주문번호가 만들어집니다.</p></div></li>
+    <li><span class="num" aria-hidden="true">2</span><div><h3><span class="sr-only">2단계 </span>승인</h3><p>크리에이터가 선물을 건별로 확인하고 승인하거나 거절합니다. 승인된 뒤에야 팬에게 사무실 주소가 공개됩니다.</p></div></li>
+    <li><span class="num" aria-hidden="true">3</span><div><h3><span class="sr-only">3단계 </span>검수</h3><p>선물이 도착하면 모든 상자의 원래 송장을 떼어 파쇄하고 겉면을 검사합니다. 검사에 걸린 상자만 열어 확인하고, 검수 기록을 남깁니다.</p></div></li>
+    <li><span class="num" aria-hidden="true">4</span><div><h3><span class="sr-only">4단계 </span>배송</h3><p>검수가 끝난 선물만 저희가 택배로 보냅니다. 팬은 상태 화면에서 진행 단계를 확인할 수 있습니다.</p></div></li>
+  </ol>
+</section>
+
+<!-- ③ 안심 약속 -->
+<section class="promise" aria-labelledby="promise-title">
+  <span class="eyebrow" style="background:#fff">안심 약속</span>
+  <h2 id="promise-title">팬꾹이 지키는 세 가지 약속</h2>
+  <ul>
+    <li><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect x="5" y="14" width="22" height="15" rx="7" fill="var(--brand)"/><path d="M10 14v-3a6 6 0 0 1 12 0v3" fill="none" stroke="var(--brand)" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="21" r="2.6" fill="#fff"/></svg><h3>승인 없이는 저희 시스템이 주소를 열지 않습니다</h3><p>크리에이터의 주소는 암호화되어 보관되고, 승인된 건에 한해서만 배송 직전에 열립니다. 승인이 없으면 운영자도 볼 수 없습니다.</p></li>
+    <li><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="10" fill="var(--brand)"/><path d="M10 16l4 4 8-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>모든 선물을 검수합니다</h3><p>모든 상자의 원래 송장을 떼어 파쇄하고 겉면을 검사합니다. 검사에 걸린 상자는 열어서 확인합니다. 검수를 건너뛰는 요금제는 없습니다.</p></li>
+    <li><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><ellipse cx="16" cy="16" rx="14" ry="10" fill="var(--brand)"/><circle cx="16" cy="16" r="5.5" fill="#fff"/><circle cx="16" cy="16" r="2.6" fill="var(--brand-dark)"/></svg><h3>주소를 연 기록을 크리에이터에게 전부 공개합니다</h3><p>언제, 어느 주문 때문에, 누가 열었는지를 크리에이터가 직접 확인할 수 있습니다.</p></li>
+  </ul>
+</section>
+
+<!-- ④ 요금 -->
+<section aria-labelledby="price-title">
+  <span class="eyebrow">요금</span>
+  <h2 id="price-title">검수까지 포함해서 9,000원</h2>
+  <div class="price-card">
+    <span class="tag">검수 포함</span>
+    <p class="big">9,000원<small> / 1건 기준</small></p>
+    <dl>
+      <div><dt>검수·전달 서비스료</dt><dd>5,000원</dd></div>
+      <div><dt>배송비</dt><dd>실비</dd></div>
+    </dl>
+    <p class="why">지금 배송비 실비는 4,000원입니다. 택배 요금이 바뀌면 배송비도 같이 바뀌어요. 검수가 빠진 요금은 없습니다.</p>
+  </div>
+</section>
+
+<!-- ⑤ 크리에이터 안내 -->
+<section class="creator" aria-labelledby="creator-title">
+  <div class="box">
+    <span class="eyebrow">크리에이터라면</span>
+    <h2 id="creator-title">승인하지 않은 선물의 주소는 열리지 않습니다</h2>
+    <p>팬의 마음은 받고, 주소는 지키세요. 선물마다 직접 승인하거나 거절하고, 주소가 열린 기록은 언제든 확인할 수 있습니다.</p>
+    <ul>
+      <li>선물은 한 건씩 승인합니다. 전체 승인 버튼은 없습니다.</li>
+      <li>거절한 이유는 팬에게 알려지지 않습니다.</li>
+      <li>원하지 않는 팬은 차단할 수 있습니다.</li>
+    </ul>
+    <a class="btn" href="#">크리에이터로 가입하기</a>
+    <p class="free">크리에이터는 무료입니다.</p>
+  </div>
+</section>
+</main>
+
+<!-- ⑥ 사업자 정보 -->
+<footer>
+  <p class="flogo">팬꾹</p>
+  <dl>
+    <div><dt>상호</dt><dd>네오코드</dd></div>
+    <div><dt>사업자등록번호</dt><dd>000-00-00000</dd></div>
+    <div><dt>고객센터</dt><dd>(번호·운영시간 입력 예정)</dd></div>
+  </dl>
+  <nav aria-label="약관"><a href="#">이용약관</a><a href="#">개인정보처리방침</a></nav>
+  <p class="copy">© 네오코드. All rights reserved.</p>
+</footer>
+
+</div>
+</body>
+</html>
