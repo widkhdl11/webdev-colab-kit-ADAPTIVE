@@ -1,0 +1,250 @@
+<!doctype html>
+<!--
+  크리에이터 페이지 (팬이 보는 쪽) — 팬꾹 사이트 시안 2단계 (2026-10-01)
+  근거: _brief.md. 팔로워 수는 일부러 넣지 않았다(크리에이터가 원치 않을 수 있음).
+  받는 선물 안내의 "보낼 수 없는 것"은 예시 문구 — 실제 금지 목록은 운영 기준 확정 뒤 교체.
+  요금은 브리프의 구간 요금 그대로(소형 6,900 / 중형 8,900, 추적 장치 검수 포함).
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 하루님의 페이지</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="site.css">
+  <style>
+    .crumb { padding-block: 24px 0; }
+    .crumb a { display: inline-flex; align-items: center; min-height: 44px; color: var(--brand); font-weight: 700; text-decoration: none; }
+    .crumb a:hover { text-decoration: underline; text-underline-offset: 4px; }
+    .profile { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 32px; align-items: center; }
+    .profile h1 { font-size: clamp(32px, 4vw, 40px); }
+    .p-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .p-avg { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: 650; }
+    .p-avg svg { color: var(--brand); }
+    .p-actions { display: grid; gap: 12px; min-width: 240px; }
+    .follow[aria-pressed="true"] { background: var(--tint); }
+    .two { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+    .no-list { display: grid; gap: 12px; margin-top: 16px; }
+    .no-list li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; background: var(--page); border: 1px solid var(--line); font-weight: 650; }
+    .no-list .x { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: #fff; flex-shrink: 0; }
+    .price-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    .price-table th, .price-table td { padding: 12px 0; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .price-table td:last-child { text-align: right; font-weight: 800; white-space: nowrap; }
+    .price-table small { display: block; color: var(--muted); font-size: 16px; font-weight: 500; }
+    @media (max-width: 1023px) { .profile { grid-template-columns: auto minmax(0, 1fr); } .p-actions { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; } .two { grid-template-columns: 1fr; } }
+    @media (max-width: 767px) { .profile { gap: 20px; } .p-actions { grid-template-columns: 1fr; min-width: 0; } .avatar--xl { width: 72px; height: 72px; font-size: 28px; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+<!-- HEADER:fan START (팬 로그인: 선물 상태 아이콘 + 내 정보 메뉴) -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="home.html" aria-label="팬꾹 메인">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+        팬꾹
+      </a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <ul>
+          <li><a href="creators.html" aria-current="page">크리에이터 찾기</a></li>
+          <li><a href="send.html">선물 보내기</a></li>
+          <li><a href="notices.html">공지사항</a></li>
+          <li><a href="about.html">팬꾹 소개</a></li>
+          <li><a href="support.html">고객센터</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <!-- 선물 상태 아이콘 (PC·태블릿) -->
+        <ul class="gift-status" aria-label="진행 중인 선물 4개">
+          <li class="gift-item">
+            <a class="gift-icon" data-state="move" href="gift.html" aria-label="하루님께 보낸 선물" aria-describedby="tip-1">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/></svg>
+            </a>
+            <span class="tip" role="tooltip" id="tip-1"><span class="tip-body">선물 4개 중 1번째 · 하루님께 · 배송중</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-icon" data-state="wait" href="gift.html" aria-label="모모님께 보낸 선물" aria-describedby="tip-2">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.4 4.8L14.5 12l2.1.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.4-4.8L9.5 12l-2.1-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="var(--tint)"/></svg>
+            </a>
+            <span class="tip" role="tooltip" id="tip-2"><span class="tip-body">선물 4개 중 2번째 · 모모님께 · 승인 대기</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-icon" data-state="done" href="gift.html" aria-label="새벽달님께 보낸 선물" aria-describedby="tip-3">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <span class="tip" role="tooltip" id="tip-3"><span class="tip-body">선물 4개 중 3번째 · 새벽달님께 · 배송 완료</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-more" href="my-gifts.html" aria-label="선물 1개 더 보기" aria-describedby="tip-4">+1</a>
+            <span class="tip" role="tooltip" id="tip-4"><span class="tip-body">선물 4개 중 4번째 · 별이님께 · 입고 대기</span></span>
+          </li>
+        </ul>
+        <!-- 휴대폰: 「선물 N」 배지 -->
+        <button class="gift-badge" type="button" data-sheet-open="gift-sheet" aria-haspopup="dialog">
+          <span class="glyph" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--paper)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--paper)" stroke-width="2"/></svg></span>
+          선물 4
+        </button>
+        <!-- 내 정보 메뉴 -->
+        <div class="user-menu">
+          <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown" aria-haspopup="true">
+            <span class="avatar" aria-hidden="true">민</span>
+            <span class="nick">민지</span>
+            <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" hidden>
+            <p class="who">민지님 · 팬</p>
+            <a href="my-info.html">내 정보</a>
+            <a href="my-following.html">팔로우한 크리에이터</a>
+            <a href="my-gifts.html">선물 내역</a>
+            <hr>
+            <a href="landing.html">로그아웃</a>
+          </div>
+        </div>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기">
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="creators.html" aria-current="page">크리에이터 찾기</a>
+      <a href="send.html">선물 보내기</a>
+      <a href="notices.html">공지사항</a>
+      <a href="about.html">팬꾹 소개</a>
+      <a href="support.html">고객센터</a>
+      <p class="group-label">내 정보 · 민지님</p>
+      <a href="my-info.html">내 정보</a>
+      <a href="my-following.html">팔로우한 크리에이터</a>
+      <a href="my-gifts.html">선물 내역</a>
+      <a href="landing.html">로그아웃</a>
+    </div>
+    <!-- 휴대폰 바텀시트: 선물 목록 -->
+    <div class="sheet-root" id="gift-sheet" hidden>
+      <div class="sheet-scrim" data-sheet-close></div>
+      <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="gift-sheet-title">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="sheet-head">
+          <h2 id="gift-sheet-title" style="font-size:20px">진행 중인 선물 4개</h2>
+          <button class="sheet-close" type="button" data-sheet-close aria-label="닫기"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+        </div>
+        <ul class="sheet-list">
+          <li><a href="gift.html"><span class="gift-icon" data-state="move"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/></svg></span><span><strong>하루님께</strong><small>배송중</small></span></a></li>
+          <li><a href="gift.html"><span class="gift-icon" data-state="wait"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.4 4.8L14.5 12l2.1.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.4-4.8L9.5 12l-2.1-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="var(--tint)"/></svg></span><span><strong>모모님께</strong><small>승인 대기</small></span></a></li>
+          <li><a href="gift.html"><span class="gift-icon" data-state="done"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>새벽달님께</strong><small>배송 완료</small></span></a></li>
+          <li><a href="gift.html"><span class="gift-icon" data-state="move"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/></svg></span><span><strong>별이님께</strong><small>입고 대기</small></span></a></li>
+        </ul>
+        <a class="btn btn--secondary btn--block" style="margin-top:12px" href="my-gifts.html">선물 내역 전체 보기</a>
+      </section>
+    </div>
+  </header>
+  <!-- HEADER:fan END -->
+
+  <main id="main">
+    <div class="container crumb"><a href="creators.html">&larr; 크리에이터 찾기로</a></div>
+
+    <section class="section" style="padding-block:16px 24px" aria-labelledby="name">
+      <div class="container">
+        <div class="card profile">
+          <span class="avatar avatar--xl" aria-hidden="true">하</span>
+          <div>
+            <h1 id="name">하루</h1>
+            <p class="lead" style="margin-top:4px">게임 방송을 해요. 하루의 놀이터</p>
+            <div class="p-meta">
+              <span class="badge badge--solid"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 본인 확인 완료</span>
+              <span class="badge">게임 · 하루의 놀이터</span>
+            </div>
+            <p class="p-avg"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.5V12l3.5 2.5" fill="none" stroke="var(--paper)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 평균 승인 약 2시간 <span class="muted">(최근 30일)</span></p>
+          </div>
+          <div class="p-actions">
+            <a class="btn btn--lg btn--block" href="send.html">선물 보내기</a>
+            <button class="btn btn--secondary btn--block follow" type="button" aria-pressed="true">팔로우 중</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-block:0 72px" aria-label="받는 선물 안내와 요금">
+      <div class="container two">
+        <div class="stack-24">
+          <div class="card">
+            <h2 style="font-size:24px">하루님이 받는 선물</h2>
+            <p class="muted" style="margin-top:8px">편지, 인형, 손수건, 책, 그림 같은 작은 선물을 상자에 담아 보내 주세요. 상자는 소형과 중형 두 가지예요.</p>
+            <h3 style="margin-top:24px;font-size:18px">보낼 수 없는 것</h3>
+            <ul class="no-list">
+              <li><span class="x" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 20 20"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>음식과 신선식품 (유통기한이 있는 것 모두)</li>
+              <li><span class="x" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 20 20"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>살아 있는 동물과 식물</li>
+              <li><span class="x" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 20 20"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>폭발·인화성 물질 등 위험물</li>
+              <li><span class="x" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 20 20"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>현금과 상품권</li>
+            </ul>
+          </div>
+          <div class="card card--tint">
+            <h2 style="font-size:24px">상자는 이렇게 확인해요</h2>
+            <ul class="dot-list" style="margin-top:16px">
+              <li>팬꾹 사무실에 상자가 도착하면 겉에 붙은 송장을 떼고 겉면을 검사해요.</li>
+              <li>추적 장치가 의심되는 상자만 열어 확인하고, 문제가 없으면 새 송장을 붙여 크리에이터에게 보내 드려요.</li>
+              <li>승인 없이는 저희 시스템이 크리에이터의 주소를 열지 않습니다.</li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="card" aria-labelledby="fee-title">
+          <h2 id="fee-title" style="font-size:24px">요금 안내</h2>
+          <p class="muted" style="margin-top:8px">상자마다 배송비가 포함돼 있어요.</p>
+          <table class="price-table">
+            <caption class="sr-only">상자 크기별 요금</caption>
+            <tbody>
+              <tr><th scope="row">소형 상자<small>세 변 합 100cm · 5kg 이하</small></th><td>6,900원</td></tr>
+              <tr><th scope="row">중형 상자<small>세 변 합 100cm · 10kg 이하</small></th><td>8,900원</td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top:12px"><span class="badge"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 추적 장치 검수 포함</span></p>
+          <p class="muted" style="margin-top:16px">크기와 무게 중 큰 쪽으로 정해져요. 중형보다 큰 상자는 받지 않아요. 도착한 상자를 재어 보니 구간이 더 크면 차액만 따로 결제해요.</p>
+          <a class="btn btn--block" style="margin-top:20px" href="send.html">하루님께 선물 보내기</a>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER START -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">
+            <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+            팬꾹
+          </p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="support.html">고객센터</a>
+          <a href="about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <!-- FOOTER END -->
+
+  <script src="site.js"></script>
+  <script>
+    // 시안용: 팔로우 버튼 표시만 바꾼다 (저장 없음)
+    document.querySelectorAll('.follow').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var on = b.getAttribute('aria-pressed') !== 'true';
+        b.setAttribute('aria-pressed', String(on));
+        b.textContent = on ? '팔로우 중' : '팔로우';
+      });
+    });
+  </script>
+</body>
+</html>

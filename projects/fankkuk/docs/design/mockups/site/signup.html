@@ -1,0 +1,230 @@
+<!doctype html>
+<!--
+회원가입 — 팬꾹 사이트 시안 2단계 (2026-10-01). 근거: _brief.md 회원가입 항목. 세 단계를 모두 펼쳐 보여 주는 시안. 카카오 노란 버튼·가입 단계 표시(3칸)는 새로 제안한 요소.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>회원가입 — 팬꾹</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="site.css">
+  <style>
+    .su-wrap { max-width: 720px; margin-inline: auto; padding-block: 40px 80px; }
+    .su-wrap > * + * { margin-top: 24px; }
+    .s3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .s3 li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: var(--muted); font-weight: 650; }
+    .s3 .dot { position: relative; z-index: 1; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--line); background: var(--paper); font-weight: 750; }
+    .s3 li:not(:last-child)::after { content: ""; position: absolute; top: 17px; left: calc(50% + 24px); right: calc(-50% + 24px); height: 2px; background: var(--line); }
+    .s3 .is-current { color: var(--ink); font-weight: 800; }
+    .s3 .is-current .dot { border-color: var(--brand); background: var(--brand); color: var(--on-brand); }
+    .note-dash { padding: 12px 16px; border: 1px dashed var(--field-line); border-radius: 12px; color: var(--muted); }
+    .step-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .step-head .number { margin: 0; flex-shrink: 0; }
+    .step-head h2 { font-size: 24px; }
+    .choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .choice { position: relative; display: block; cursor: pointer; }
+    .choice-body { display: block; height: 100%; padding: 20px; border: 2px solid var(--line); border-radius: 12px; background: var(--paper); }
+    .choice:hover .choice-body { border-color: var(--accent); }
+    .choice input:checked + .choice-body { border-color: var(--brand); background: var(--tint); }
+    .choice input:focus-visible + .choice-body { outline: 3px solid var(--ink); outline-offset: 3px; }
+    .choice-body strong { display: block; font-size: 20px; font-weight: 750; }
+    .choice-body .icon-tile { margin-bottom: 12px; }
+    .choice input:checked + .choice-body .icon-tile { background: var(--paper); }
+    .form-stack > * + * { margin-top: 20px; }
+    .terms { border: 1px solid var(--line); border-radius: 12px; }
+    .terms > * { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 16px; }
+    .terms > * + * { border-top: 1px solid var(--line); }
+    .terms .all { background: var(--tint); border-radius: 11px 11px 0 0; font-weight: 750; }
+    .terms .check { flex: 1; min-width: 0; }
+    .check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-weight: 650; cursor: pointer; }
+    .check input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); flex-shrink: 0; }
+    .req { color: var(--brand); font-weight: 750; }
+    .btn--kakao { background: #FEE500; border-color: #FEE500; color: #191919; }
+    .btn--kakao:hover { background: #F2D900; border-color: #F2D900; }
+    .kakao-steps { counter-reset: k; display: grid; gap: 12px; }
+    .kakao-steps li { counter-increment: k; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; align-items: start; }
+    .kakao-steps li::before { content: counter(k); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--tint); color: var(--brand); font-weight: 750; }
+    .already { text-align: center; }
+    @media (max-width: 767px) { .su-wrap { padding-block: 24px 56px; } .choices { grid-template-columns: 1fr; } .step-head h2 { font-size: 22px; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <!-- HEADER:guest START (비로그인: 오른쪽에 로그인·회원가입) -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="landing.html" aria-label="팬꾹 처음 화면">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+        팬꾹
+      </a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <ul>
+          <li><a href="creators.html">크리에이터 찾기</a></li>
+          <li><a href="send.html">선물 보내기</a></li>
+          <li><a href="notices.html">공지사항</a></li>
+          <li><a href="about.html">팬꾹 소개</a></li>
+          <li><a href="support.html">고객센터</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn--ghost btn--sm hide-sm" href="login.html">로그인</a>
+        <a class="btn btn--sm hide-sm" href="signup.html">회원가입</a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기">
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="creators.html">크리에이터 찾기</a>
+      <a href="send.html">선물 보내기</a>
+      <a href="notices.html">공지사항</a>
+      <a href="about.html">팬꾹 소개</a>
+      <a href="support.html">고객센터</a>
+      <div class="btn-row">
+        <a class="btn btn--secondary" href="login.html">로그인</a>
+        <a class="btn" href="signup.html">회원가입</a>
+      </div>
+    </div>
+  </header>
+  <!-- HEADER:guest END -->
+
+  <main id="main">
+    <div class="container">
+      <div class="su-wrap">
+        <div>
+          <h1 style="font-size:clamp(28px,3.4vw,38px)">회원가입</h1>
+          <p class="muted" style="margin-top:8px">세 단계면 끝나요.</p>
+        </div>
+
+        <ol class="s3" aria-label="가입 단계">
+          <li class="is-current" aria-current="step"><span class="dot">1</span><span>유형 선택</span></li>
+          <li><span class="dot">2</span><span>정보 입력</span></li>
+          <li><span class="dot">3</span><span>본인 확인</span></li>
+        </ol>
+
+        <p class="note-dash">시안 안내: 실제 화면은 한 번에 한 단계만 보여요. 시안에서는 세 단계를 모두 펼쳐 두었어요.</p>
+
+        <!-- 1단계 -->
+        <section class="card" aria-labelledby="su1">
+          <div class="step-head"><span class="number" aria-hidden="true">1</span><h2 id="su1">어떤 분이세요?</h2></div>
+          <fieldset style="border:0;padding:0;margin:0;min-width:0">
+            <legend class="sr-only">회원 유형</legend>
+            <div class="choices">
+              <label class="choice">
+                <input class="sr-only" type="radio" name="kind" value="fan" checked>
+                <span class="choice-body">
+                  <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><path fill="currentColor" d="M4 12h24v14a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V12Z"/><rect x="2" y="8" width="28" height="7" rx="3" fill="var(--accent)"/><rect x="14" y="8" width="4" height="22" fill="var(--paper)"/><path d="M16 8c-3-1-8-2-8-5 0-3 6-1 8 5Zm0 0c3-1 8-2 8-5 0-3-6-1-8 5Z" fill="currentColor"/></svg></span>
+                  <strong>팬이에요</strong>
+                  <span class="muted">응원하는 크리에이터에게 선물을 보내고 싶어요.</span>
+                </span>
+              </label>
+              <label class="choice">
+                <input class="sr-only" type="radio" name="kind" value="creator">
+                <span class="choice-body">
+                  <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="10" r="7" fill="currentColor"/><path d="M3 29a13 13 0 0 1 26 0Z" fill="currentColor"/></svg></span>
+                  <strong>크리에이터예요</strong>
+                  <span class="muted">팬이 보내는 선물을 안전하게 받고 싶어요.</span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+          <div class="card card--tint" style="margin-top:16px;padding:16px 20px">
+            <p><strong>크리에이터로 가입하면</strong> 가입한 뒤에 방송 채널 인증 코드로 본인 확인을 한 번 더 해요. 방송 채널에 인증 코드를 올려 주시면 같은 분이 맞는지 확인하고, 확인이 끝나야 「크리에이터 찾기」에 나타나요.</p>
+          </div>
+        </section>
+
+        <!-- 2단계 -->
+        <section class="card" aria-labelledby="su2">
+          <div class="step-head"><span class="number" aria-hidden="true">2</span><h2 id="su2">정보를 입력해 주세요</h2></div>
+          <form class="form-stack" action="#" onsubmit="return false">
+            <div class="field">
+              <label for="su-id">아이디</label>
+              <input class="input" id="su-id" type="text" autocomplete="username" placeholder="영문 소문자·숫자 4~20자" aria-describedby="su-id-h">
+              <p class="hint" id="su-id-h">가입한 뒤에는 아이디를 바꿀 수 없어요.</p>
+            </div>
+            <div class="field">
+              <label for="su-mail">이메일</label>
+              <input class="input" id="su-mail" type="email" autocomplete="email" placeholder="example@email.com" aria-describedby="su-mail-h">
+              <p class="hint" id="su-mail-h">비밀번호를 잊었을 때 재설정 링크를 보내 드려요.</p>
+            </div>
+            <div class="field">
+              <label for="su-pw">비밀번호</label>
+              <input class="input" id="su-pw" type="password" autocomplete="new-password" placeholder="8자 이상, 영문·숫자 포함">
+            </div>
+            <div class="field">
+              <label for="su-pw2">비밀번호 확인</label>
+              <input class="input" id="su-pw2" type="password" autocomplete="new-password" placeholder="비밀번호를 한 번 더 입력해 주세요">
+            </div>
+            <div class="field">
+              <label for="su-tel">휴대폰 번호</label>
+              <input class="input" id="su-tel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="010-0000-0000" aria-describedby="su-tel-h">
+              <p class="hint" id="su-tel-h">선물 소식을 카카오톡 알림톡으로 보내 드릴 번호예요. 실명·주소처럼 따로 나눠 보관해요.</p>
+            </div>
+
+            <fieldset style="border:0;padding:0;margin:0;min-width:0">
+              <legend style="font-weight:700;margin-bottom:8px">약관 동의</legend>
+              <div class="terms">
+                <div class="all"><label class="check"><input type="checkbox"> 전체 동의</label></div>
+                <div><label class="check"><input type="checkbox"><span><span class="req">[필수]</span> 이용약관</span></label><a class="link" href="#">보기</a></div>
+                <div><label class="check"><input type="checkbox"><span><span class="req">[필수]</span> 개인정보 수집·이용</span></label><a class="link" href="#">보기</a></div>
+                <div><label class="check"><input type="checkbox"><span>[선택] 이벤트·소식 알림 받기</span></label><a class="link" href="#">보기</a></div>
+              </div>
+            </fieldset>
+          </form>
+        </section>
+
+        <!-- 3단계 -->
+        <section class="card" aria-labelledby="su3">
+          <div class="step-head"><span class="number" aria-hidden="true">3</span><h2 id="su3">카카오톡으로 본인 확인</h2></div>
+          <p class="muted">휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요.</p>
+          <ol class="kakao-steps" style="margin-block:20px">
+            <li><span>아래 버튼을 누르면 카카오톡에 인증 요청이 가요.</span></li>
+            <li><span>카카오톡에서 요청을 열고 인증을 눌러 주세요.</span></li>
+            <li><span>팬꾹으로 돌아오면 가입 완료예요.</span></li>
+          </ol>
+          <button class="btn btn--lg btn--block btn--kakao" type="button">
+            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="#191919" d="M12 3C6.5 3 2 6.5 2 10.8c0 2.8 1.9 5.3 4.7 6.7l-1 3.6c-.1.3.2.5.5.4l4.2-2.8c.5.1 1 .1 1.6.1 5.5 0 10-3.5 10-7.8S17.5 3 12 3Z"/></svg>
+            카카오톡으로 인증하고 가입하기
+          </button>
+        </section>
+
+        <p class="already muted">이미 회원이신가요? <a class="link" href="login.html">로그인</a></p>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER START -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">
+            <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+            팬꾹
+          </p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="support.html">고객센터</a>
+          <a href="about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <!-- FOOTER END -->
+
+  <script src="site.js"></script>
+</body>
+</html>

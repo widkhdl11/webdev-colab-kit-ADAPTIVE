@@ -1,0 +1,287 @@
+<!doctype html>
+<!--
+  크리에이터 · 승인 요청 — 팬꾹 사이트 시안 2단계 (2026-10-01)
+  근거: _brief.md, specs/approval-signature.md (INV-S5·S7: 승인은 서명 검증을 통과한 한 경로뿐, 전체 승인 없음 / 거절은 서명 불필요),
+        specs/address-protection.md. 헤더는 index.html 의 HEADER:creator 견본 그대로(승인 요청 aria-current).
+  이 화면의 「카카오톡으로 승인」은 승인하지 않는다 — 서명 요청을 보낼 뿐이고, 승인은 서명이 서버 검증을 통과해야 일어난다.
+  그래서 예시 카드 하나는 「서명 대기」 상태로 그렸다. 받지 않기는 서명이 필요 없다(주소를 여는 방향이 아니라서).
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 승인 요청</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="site.css">
+  <style>
+    /* 이 화면 전용 (공통 css 는 건드리지 않는다) */
+    .req-list { align-items: stretch; }
+    .req { display: flex; flex-direction: column; gap: 16px; }
+    .req-head { display: flex; align-items: center; gap: 12px; }
+    .req-head .who { min-width: 0; flex: 1; }
+    .req-head h3 { font-size: 18px; line-height: 1.4; }
+    .req-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 16px; }
+    .req-facts dt { color: var(--muted); }
+    .req-facts dd { font-weight: 650; }
+    .req-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .req-actions { display: grid; gap: 8px; margin-top: auto; }
+    .req--signing { border: 2px solid var(--brand); padding: 23px; }
+    .sign-wait { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: start; padding: 16px; border-radius: 12px; background: var(--tint); }
+    .sign-wait .glyph { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--paper); color: var(--brand); }
+    .sign-wait strong { display: block; }
+    .sign-wait p { color: var(--muted); }
+    .notice-line { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 12px; background: var(--tint); font-weight: 700; }
+    .notice-line svg { color: var(--brand); }
+    .check-row { display: flex; align-items: flex-start; gap: 12px; min-height: 44px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; font-weight: 700; }
+    .check-row input { width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--brand); flex-shrink: 0; }
+    .check-row small { display: block; margin-top: 4px; color: var(--muted); font-size: 16px; font-weight: 500; }
+    @media (min-width: 768px) {
+      /* 같은 시트가 PC 에서는 가운데 모달로 */
+      #decline-sheet { align-items: center; }
+      #decline-sheet .sheet { border-radius: 20px; padding: 24px; }
+      #decline-sheet .sheet-grip { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+        <!-- HEADER:creator START (크리에이터 로그인: 승인 요청·열람 기록·주소와 설정 + 공지사항·고객센터) -->
+        <header class="site-header">
+          <div class="container header-inner">
+            <a class="logo" href="creator-requests.html" aria-label="팬꾹 크리에이터 처음 화면">
+              <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+              팬꾹
+            </a>
+            <nav class="nav" aria-label="주요 메뉴">
+              <ul>
+                <li><a href="creator-requests.html" aria-current="page">승인 요청 <span class="nav-count" aria-label="대기 4건">4</span></a></li>
+                <li><a href="creator-log.html">열람 기록</a></li>
+                <li><a href="creator-settings.html">주소와 설정</a></li>
+                <li><a href="notices.html">공지사항</a></li>
+                <li><a href="support.html">고객센터</a></li>
+              </ul>
+            </nav>
+            <div class="header-actions">
+              <div class="user-menu">
+                <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown-c" aria-haspopup="true">
+                  <span class="avatar" aria-hidden="true">하</span>
+                  <span class="nick">하루</span>
+                  <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="user-dropdown" id="user-dropdown-c" hidden>
+                  <p class="who">하루님 · 크리에이터</p>
+                  <a href="creator-settings.html">주소와 설정</a>
+                  <hr>
+                  <a href="landing.html">로그아웃</a>
+                </div>
+              </div>
+              <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="mobile-menu" id="mobile-menu" hidden>
+            <a href="creator-requests.html">승인 요청 (대기 4건)</a>
+            <a href="creator-log.html">열람 기록</a>
+            <a href="creator-settings.html">주소와 설정</a>
+            <a href="notices.html">공지사항</a>
+            <a href="support.html">고객센터</a>
+            <a href="landing.html">로그아웃</a>
+          </div>
+        </header>
+        <!-- HEADER:creator END -->
+
+  <main id="main" class="container">
+    <div class="page-title">
+      <h1>승인 요청</h1>
+      <p>팬이 보낸 선물을 받을지 정하는 곳이에요. 7일 안에 정하지 않으면 자동으로 받지 않음 처리돼요.</p>
+    </div>
+
+    <p class="notice-line">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      승인은 한 건씩, 카카오톡 인증서로 서명해요
+    </p>
+
+    <section class="section" style="padding-block:24px 72px" aria-label="요청 목록">
+      <div class="tabs" role="tablist" data-tabs aria-label="요청 구분">
+        <button class="tab" role="tab" id="t-wait" aria-selected="true" aria-controls="p-wait">승인 대기 <span class="badge">4</span></button>
+        <button class="tab" role="tab" id="t-done" aria-selected="false" tabindex="-1" aria-controls="p-done">처리한 요청</button>
+      </div>
+
+      <!-- 승인 대기 -->
+      <div class="tab-panel" role="tabpanel" id="p-wait" aria-labelledby="t-wait">
+        <ul class="grid cols-3 gap-16 req-list">
+
+          <li class="card req">
+            <div class="req-head">
+              <span class="avatar avatar--lg" aria-hidden="true">별</span>
+              <div class="who"><h3>별이</h3><p class="muted">2026.09.30 14:20 요청</p></div>
+              <span class="badge badge--solid">도착함</span>
+            </div>
+            <dl class="req-facts">
+              <dt>선물</dt><dd>손편지와 간식 세트</dd>
+              <dt>상자</dt><dd>2개</dd>
+              <dt>주문번호</dt><dd>FC-4T7NX</dd>
+            </dl>
+            <div class="req-tags"><span class="badge badge--plain">남은 기간 6일</span></div>
+            <div class="req-actions">
+              <button class="btn btn--block" type="button"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 2C5.6 2 2 4.9 2 8.5c0 2.3 1.5 4.3 3.7 5.5l-.9 3.3 3.9-2.2c.4.1.8.1 1.3.1 4.4 0 8-2.9 8-6.7S14.4 2 10 2Z"/></svg>카카오톡으로 승인</button>
+              <button class="btn btn--secondary btn--block" type="button" data-sheet-open="decline-sheet" data-fan="별이">받지 않기</button>
+            </div>
+          </li>
+
+          <li class="card req req--signing">
+            <div class="req-head">
+              <span class="avatar avatar--lg" aria-hidden="true">달</span>
+              <div class="who"><h3>달콤이</h3><p class="muted">2026.09.30 11:05 요청</p></div>
+              <span class="badge badge--solid">도착함</span>
+            </div>
+            <dl class="req-facts">
+              <dt>선물</dt><dd>직접 뜬 목도리</dd>
+              <dt>상자</dt><dd>1개</dd>
+              <dt>주문번호</dt><dd>FC-7M2JC</dd>
+            </dl>
+            <div class="sign-wait" role="status">
+              <span class="glyph" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.4 4.8L14.5 12l2.1.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.4-4.8L9.5 12l-2.1-.2A6 6 0 0 1 5 7V2Z"/></svg></span>
+              <div>
+                <strong>카카오톡에서 서명을 기다리고 있어요</strong>
+                <p>서명을 마치기 전에는 아무것도 바뀌지 않아요.</p>
+              </div>
+            </div>
+            <div class="req-actions">
+              <button class="btn btn--secondary btn--block" type="button">서명 요청 취소</button>
+            </div>
+          </li>
+
+          <li class="card req">
+            <div class="req-head">
+              <span class="avatar avatar--lg" aria-hidden="true">구</span>
+              <div class="who"><h3>구름빵</h3><p class="muted">2026.09.29 21:48 요청</p></div>
+            </div>
+            <dl class="req-facts">
+              <dt>선물</dt><dd>무선 이어폰</dd>
+              <dt>상자</dt><dd>1개</dd>
+              <dt>주문번호</dt><dd>FC-2X9PB</dd>
+            </dl>
+            <div class="req-tags"><span class="badge badge--soft">전자기기·금속 있음</span><span class="badge badge--plain">남은 기간 5일</span></div>
+            <div class="req-actions">
+              <button class="btn btn--block" type="button"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 2C5.6 2 2 4.9 2 8.5c0 2.3 1.5 4.3 3.7 5.5l-.9 3.3 3.9-2.2c.4.1.8.1 1.3.1 4.4 0 8-2.9 8-6.7S14.4 2 10 2Z"/></svg>카카오톡으로 승인</button>
+              <button class="btn btn--secondary btn--block" type="button" data-sheet-open="decline-sheet" data-fan="구름빵">받지 않기</button>
+            </div>
+          </li>
+
+          <li class="card req">
+            <div class="req-head">
+              <span class="avatar avatar--lg" aria-hidden="true">솜</span>
+              <div class="who"><h3>솜사탕</h3><p class="muted">2026.09.28 09:12 요청</p></div>
+              <span class="badge badge--solid">도착함</span>
+            </div>
+            <dl class="req-facts">
+              <dt>선물</dt><dd>키링과 엽서 모음</dd>
+              <dt>상자</dt><dd>3개</dd>
+              <dt>주문번호</dt><dd>FC-6H3LM</dd>
+            </dl>
+            <div class="req-tags"><span class="badge badge--soft">전자기기·금속 있음</span><span class="badge badge--plain">남은 기간 3일</span></div>
+            <div class="req-actions">
+              <button class="btn btn--block" type="button"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 2C5.6 2 2 4.9 2 8.5c0 2.3 1.5 4.3 3.7 5.5l-.9 3.3 3.9-2.2c.4.1.8.1 1.3.1 4.4 0 8-2.9 8-6.7S14.4 2 10 2Z"/></svg>카카오톡으로 승인</button>
+              <button class="btn btn--secondary btn--block" type="button" data-sheet-open="decline-sheet" data-fan="솜사탕">받지 않기</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- 처리한 요청 -->
+      <div class="tab-panel" role="tabpanel" id="p-done" aria-labelledby="t-done" hidden>
+        <ul class="grid cols-3 gap-16 req-list">
+          <li class="card req">
+            <div class="req-head"><span class="avatar avatar--lg" aria-hidden="true">도</span><div class="who"><h3>도토리</h3><p class="muted">2026.09.27 처리</p></div><span class="badge badge--solid">승인함</span></div>
+            <dl class="req-facts"><dt>선물</dt><dd>수제 쿠키 세트</dd><dt>상자</dt><dd>1개</dd><dt>주문번호</dt><dd>FC-9B2KR</dd></dl>
+            <p class="muted">카카오톡 서명으로 승인했어요.</p>
+          </li>
+          <li class="card req">
+            <div class="req-head"><span class="avatar avatar--lg" aria-hidden="true">라</span><div class="who"><h3>라떼한잔</h3><p class="muted">2026.09.25 처리</p></div><span class="badge badge--plain">받지 않음</span></div>
+            <dl class="req-facts"><dt>선물</dt><dd>인형</dd><dt>상자</dt><dd>1개</dd><dt>주문번호</dt><dd>FC-5L4GT</dd></dl>
+            <p class="muted">팬에게는 이유를 알리지 않았어요.</p>
+          </li>
+          <li class="card req">
+            <div class="req-head"><span class="avatar avatar--lg" aria-hidden="true">잠</span><div class="who"><h3>잠꾸러기</h3><p class="muted">2026.09.20 처리</p></div><span class="badge badge--plain">차단함</span></div>
+            <dl class="req-facts"><dt>선물</dt><dd>스티커 묶음</dd><dt>상자</dt><dd>1개</dd><dt>주문번호</dt><dd>FC-3N8HU</dd></dl>
+            <p class="muted">앞으로 이 팬의 선물은 받지 않아요. 풀려면 <a class="link" href="creator-settings.html#blocked">주소와 설정</a>에서 해요.</p>
+          </li>
+          <li class="card req">
+            <div class="req-head"><span class="avatar avatar--lg" aria-hidden="true">밤</span><div class="who"><h3>밤하늘</h3><p class="muted">2026.09.14 자동 처리</p></div><span class="badge badge--plain">자동 반려</span></div>
+            <dl class="req-facts"><dt>선물</dt><dd>그림 액자</dd><dt>상자</dt><dd>1개</dd><dt>주문번호</dt><dd>FC-8F1WS</dd></dl>
+            <p class="muted">7일 안에 정하지 않아 자동으로 받지 않음 처리됐어요.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <!-- 받지 않기 시트: 휴대폰은 아래에서 올라오고 PC 는 가운데 모달 -->
+  <div class="sheet-root" id="decline-sheet" hidden>
+    <div class="sheet-scrim" data-sheet-close></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="decline-title">
+      <div class="sheet-grip"></div>
+      <div class="sheet-head">
+        <h2 id="decline-title" style="font-size:22px"><span id="decline-fan">별이</span>님의 선물을 받지 않을까요?</h2>
+        <button class="sheet-close" type="button" data-sheet-close aria-label="닫기"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="stack-16">
+        <p class="muted">받지 않는 데에는 카카오톡 서명이 필요 없어요.</p>
+        <label class="check-row">
+          <input type="checkbox">
+          <span>이 팬의 선물을 앞으로 받지 않기(차단)<small>차단한 팬은 선물을 보낼 수 없어요. 풀기는 주소와 설정에서 해요.</small></span>
+        </label>
+        <p class="check-line">
+          <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10.5 4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          팬에게는 이유를 알리지 않아요
+        </p>
+        <div class="grid cols-2 gap-16" style="margin-top:8px">
+          <button class="btn btn--secondary btn--block" type="button" data-sheet-close>돌아가기</button>
+          <button class="btn btn--block" type="button" data-sheet-close>받지 않기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER START -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">
+            <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+            팬꾹
+          </p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="support.html">고객센터</a>
+          <a href="about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <!-- FOOTER END -->
+
+  <script src="site.js"></script>
+  <script>
+    // 시트 제목에 누른 카드의 팬 이름을 넣는 시연용 코드 (서버 호출 없음)
+    document.querySelectorAll('[data-fan]').forEach(function (b) {
+      b.addEventListener('click', function () { document.getElementById('decline-fan').textContent = b.getAttribute('data-fan'); });
+    });
+  </script>
+</body>
+</html>

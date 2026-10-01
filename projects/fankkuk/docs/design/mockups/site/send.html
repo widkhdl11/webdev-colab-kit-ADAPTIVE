@@ -1,0 +1,329 @@
+<!doctype html>
+<!--
+  선물 보내기 (팬 로그인) — 팬꾹 사이트 시안 2단계 (2026-10-01)
+  근거: _brief.md. 왼쪽 입력 · 오른쪽 고정 결제 요약(1024 이상). 767 이하에서는 요약이 아래로 내려온다.
+  상자 수 버튼(−/+)은 시안이라 값이 바뀌지 않는다. 합계는 소형 1 + 중형 1 기준.
+  크리에이터 선택은 data-live-filter 를 그대로 쓴다(검색해서 고르기, 하루 선택됨).
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 선물 보내기</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="site.css">
+  <style>
+    .send-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 32px; align-items: start; }
+    .summary { position: sticky; top: 96px; }
+    @media (max-width: 1023px) { .send-grid { grid-template-columns: 1fr; } .summary { position: static; } }
+    .step-h { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .step-h .number { margin: 0; flex-shrink: 0; }
+    .step-h h2 { font-size: 22px; }
+    #pick-list { display: grid; gap: 8px; max-height: 320px; overflow-y: auto; margin-top: 12px; padding: 4px; }
+    .pick { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); cursor: pointer; }
+    .pick:hover { border-color: var(--accent); }
+    .pick:has(input:checked) { background: var(--tint); border-color: var(--brand); }
+    .pick:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
+    .pick input { width: 24px; height: 24px; accent-color: var(--brand); flex-shrink: 0; margin: 0; }
+    .pick-text { display: grid; min-width: 0; }
+    .pick-text small { color: var(--muted); font-size: 16px; }
+    .pick:has(input:checked) .avatar { background: var(--paper); }
+    .counter { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); }
+    .counter:first-of-type { border-top: 0; padding-top: 0; }
+    .counter small { display: block; color: var(--muted); font-size: 16px; font-weight: 500; }
+    .qty { display: flex; align-items: center; gap: 12px; }
+    .qty-btn { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--brand); border-radius: 50%; background: var(--paper); color: var(--brand); font-size: 24px; line-height: 1; cursor: pointer; }
+    .qty-btn:hover { background: var(--tint); }
+    .qty-btn[disabled] { opacity: .5; cursor: not-allowed; }
+    .qty output { min-width: 32px; text-align: center; font-size: 22px; font-weight: 800; }
+    .radios { display: flex; flex-wrap: wrap; gap: 12px; }
+    .radios label { display: inline-flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 20px 0 16px; border: 1px solid var(--field-line); border-radius: 12px; background: var(--paper); font-weight: 700; cursor: pointer; }
+    .radios label:has(input:checked) { border-color: var(--brand); background: var(--tint); }
+    .radios label:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
+    .radios input { width: 24px; height: 24px; accent-color: var(--brand); margin: 0; }
+    .char-count { text-align: right; color: var(--muted); }
+    .sum-line { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+    .sum-line .amt { font-weight: 750; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .sum-line small { display: block; color: var(--muted); font-size: 16px; font-weight: 500; }
+    .sum-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 16px; border-top: 2px solid var(--ink); }
+    .sum-total .big { font-size: 32px; font-weight: 850; letter-spacing: -0.03em; }
+    .empty-mini { padding: 16px; text-align: center; border: 2px dashed var(--accent-soft); border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+<!-- HEADER:fan START (팬 로그인: 선물 상태 아이콘 + 내 정보 메뉴) -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="home.html" aria-label="팬꾹 메인">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+        팬꾹
+      </a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <ul>
+          <li><a href="creators.html">크리에이터 찾기</a></li>
+          <li><a href="send.html" aria-current="page">선물 보내기</a></li>
+          <li><a href="notices.html">공지사항</a></li>
+          <li><a href="about.html">팬꾹 소개</a></li>
+          <li><a href="support.html">고객센터</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <!-- 선물 상태 아이콘 (PC·태블릿) -->
+        <ul class="gift-status" aria-label="진행 중인 선물 4개">
+          <li class="gift-item">
+            <a class="gift-icon" data-state="move" href="gift.html" aria-label="하루님께 보낸 선물" aria-describedby="tip-1">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/></svg>
+            </a>
+            <span class="tip" role="tooltip" id="tip-1"><span class="tip-body">선물 4개 중 1번째 · 하루님께 · 배송중</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-icon" data-state="wait" href="gift.html" aria-label="모모님께 보낸 선물" aria-describedby="tip-2">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.4 4.8L14.5 12l2.1.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.4-4.8L9.5 12l-2.1-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="var(--tint)"/></svg>
+            </a>
+            <span class="tip" role="tooltip" id="tip-2"><span class="tip-body">선물 4개 중 2번째 · 모모님께 · 승인 대기</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-icon" data-state="done" href="gift.html" aria-label="새벽달님께 보낸 선물" aria-describedby="tip-3">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <span class="tip" role="tooltip" id="tip-3"><span class="tip-body">선물 4개 중 3번째 · 새벽달님께 · 배송 완료</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-more" href="my-gifts.html" aria-label="선물 1개 더 보기" aria-describedby="tip-4">+1</a>
+            <span class="tip" role="tooltip" id="tip-4"><span class="tip-body">선물 4개 중 4번째 · 별이님께 · 입고 대기</span></span>
+          </li>
+        </ul>
+        <!-- 휴대폰: 「선물 N」 배지 -->
+        <button class="gift-badge" type="button" data-sheet-open="gift-sheet" aria-haspopup="dialog">
+          <span class="glyph" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--paper)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--paper)" stroke-width="2"/></svg></span>
+          선물 4
+        </button>
+        <!-- 내 정보 메뉴 -->
+        <div class="user-menu">
+          <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown" aria-haspopup="true">
+            <span class="avatar" aria-hidden="true">민</span>
+            <span class="nick">민지</span>
+            <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" hidden>
+            <p class="who">민지님 · 팬</p>
+            <a href="my-info.html">내 정보</a>
+            <a href="my-following.html">팔로우한 크리에이터</a>
+            <a href="my-gifts.html">선물 내역</a>
+            <hr>
+            <a href="landing.html">로그아웃</a>
+          </div>
+        </div>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기">
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="creators.html">크리에이터 찾기</a>
+      <a href="send.html" aria-current="page">선물 보내기</a>
+      <a href="notices.html">공지사항</a>
+      <a href="about.html">팬꾹 소개</a>
+      <a href="support.html">고객센터</a>
+      <p class="group-label">내 정보 · 민지님</p>
+      <a href="my-info.html">내 정보</a>
+      <a href="my-following.html">팔로우한 크리에이터</a>
+      <a href="my-gifts.html">선물 내역</a>
+      <a href="landing.html">로그아웃</a>
+    </div>
+    <!-- 휴대폰 바텀시트: 선물 목록 -->
+    <div class="sheet-root" id="gift-sheet" hidden>
+      <div class="sheet-scrim" data-sheet-close></div>
+      <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="gift-sheet-title">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="sheet-head">
+          <h2 id="gift-sheet-title" style="font-size:20px">진행 중인 선물 4개</h2>
+          <button class="sheet-close" type="button" data-sheet-close aria-label="닫기"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+        </div>
+        <ul class="sheet-list">
+          <li><a href="gift.html"><span class="gift-icon" data-state="move"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/></svg></span><span><strong>하루님께</strong><small>배송중</small></span></a></li>
+          <li><a href="gift.html"><span class="gift-icon" data-state="wait"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.4 4.8L14.5 12l2.1.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.4-4.8L9.5 12l-2.1-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="var(--tint)"/></svg></span><span><strong>모모님께</strong><small>승인 대기</small></span></a></li>
+          <li><a href="gift.html"><span class="gift-icon" data-state="done"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>새벽달님께</strong><small>배송 완료</small></span></a></li>
+          <li><a href="gift.html"><span class="gift-icon" data-state="move"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/></svg></span><span><strong>별이님께</strong><small>입고 대기</small></span></a></li>
+        </ul>
+        <a class="btn btn--secondary btn--block" style="margin-top:12px" href="my-gifts.html">선물 내역 전체 보기</a>
+      </section>
+    </div>
+  </header>
+  <!-- HEADER:fan END -->
+
+  <main id="main">
+    <div class="container page-title">
+      <h1>선물 보내기</h1>
+      <p>누구에게, 무엇을, 몇 상자 보낼지 알려 주세요. 승인된 선물만 배송돼요.</p>
+    </div>
+
+    <section class="section" style="padding-block:8px 72px">
+      <div class="container send-grid">
+        <form class="stack-24" action="#" onsubmit="return false" aria-label="선물 보내기 입력">
+
+          <fieldset class="card" style="margin:0;border:1px solid var(--line)">
+            <legend class="sr-only">받는 크리에이터</legend>
+            <div class="step-h"><span class="number" aria-hidden="true">1</span><h2>누구에게 보낼까요?</h2></div>
+            <div class="search">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+              <label class="sr-only" for="pick-q">크리에이터 검색</label>
+              <input class="input" id="pick-q" type="search" placeholder="이름이나 채널 이름으로 찾아요" autocomplete="off" data-live-filter data-target="#pick-list" data-empty="#pick-empty" data-count="#pick-count">
+            </div>
+            <p class="hint" id="pick-count" role="status" aria-live="polite" style="margin-top:8px"></p>
+            <ul id="pick-list">
+              <li data-search="하루 haru 게임 하루의 놀이터">
+                <label class="pick"><input type="radio" name="creator" value="haru" checked>
+                  <span class="avatar" aria-hidden="true">하</span>
+                  <span class="pick-text"><strong>하루</strong><small>게임 · 하루의 놀이터 · 평균 승인 약 2시간</small></span>
+                </label>
+              </li>
+              <li data-search="모모 momo 노래 모모네 거실">
+                <label class="pick"><input type="radio" name="creator" value="momo">
+                  <span class="avatar" aria-hidden="true">모</span>
+                  <span class="pick-text"><strong>모모</strong><small>노래 · 모모네 거실 · 평균 승인 약 4시간</small></span>
+                </label>
+              </li>
+              <li data-search="새벽달 saebyeokdal 토크 새벽달 라디오">
+                <label class="pick"><input type="radio" name="creator" value="saebyeokdal">
+                  <span class="avatar" aria-hidden="true">새</span>
+                  <span class="pick-text"><strong>새벽달</strong><small>토크 · 새벽달 라디오 · 평균 승인 약 1시간</small></span>
+                </label>
+              </li>
+              <li data-search="별이 byeol 그림 별이의 작업실">
+                <label class="pick"><input type="radio" name="creator" value="byeol">
+                  <span class="avatar" aria-hidden="true">별</span>
+                  <span class="pick-text"><strong>별이</strong><small>그림 · 별이의 작업실 · 평균 승인 약 3시간</small></span>
+                </label>
+              </li>
+              <li data-search="솜사탕 somsatang 먹방 솜사탕 식탁">
+                <label class="pick"><input type="radio" name="creator" value="somsatang">
+                  <span class="avatar" aria-hidden="true">솜</span>
+                  <span class="pick-text"><strong>솜사탕</strong><small>먹방 · 솜사탕 식탁 · 평균 승인 약 6시간</small></span>
+                </label>
+              </li>
+              <li data-search="도담 dodam 운동 도담 홈트">
+                <label class="pick"><input type="radio" name="creator" value="dodam">
+                  <span class="avatar" aria-hidden="true">도</span>
+                  <span class="pick-text"><strong>도담</strong><small>운동 · 도담 홈트 · 평균 승인 약 2시간</small></span>
+                </label>
+              </li>
+              <li data-search="보리 bori 여행 보리의 지구본">
+                <label class="pick"><input type="radio" name="creator" value="bori">
+                  <span class="avatar" aria-hidden="true">보</span>
+                  <span class="pick-text"><strong>보리</strong><small>여행 · 보리의 지구본 · 평균 승인 약 5시간</small></span>
+                </label>
+              </li>
+              <li data-search="라온 raon 게임 라온 아케이드">
+                <label class="pick"><input type="radio" name="creator" value="raon">
+                  <span class="avatar" aria-hidden="true">라</span>
+                  <span class="pick-text"><strong>라온</strong><small>게임 · 라온 아케이드 · 평균 승인 약 3시간</small></span>
+                </label>
+              </li>
+            </ul>
+            <p class="empty-mini muted" id="pick-empty" hidden role="status" style="margin-top:12px">찾는 크리에이터가 없어요. 본인 확인을 마친 크리에이터만 선택할 수 있어요.</p>
+          </fieldset>
+
+          <div class="card">
+            <div class="step-h"><span class="number" aria-hidden="true">2</span><h2>어떤 선물인가요?</h2></div>
+            <div class="field">
+              <label for="what">선물 이름 (30자까지)</label>
+              <input class="input" id="what" type="text" maxlength="30" value="손편지와 곰인형" aria-describedby="what-hint">
+              <p class="char-count" id="what-hint">8 / 30자</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="step-h"><span class="number" aria-hidden="true">3</span><h2>상자는 몇 개인가요?</h2></div>
+            <div class="counter">
+              <div><strong>소형 상자</strong><small>세 변 합 100cm · 5kg 이하 · 6,900원</small></div>
+              <div class="qty" role="group" aria-label="소형 상자 수">
+                <button class="qty-btn" type="button" aria-label="소형 상자 하나 줄이기">&minus;</button>
+                <output aria-live="polite">1</output>
+                <button class="qty-btn" type="button" aria-label="소형 상자 하나 늘리기">+</button>
+              </div>
+            </div>
+            <div class="counter">
+              <div><strong>중형 상자</strong><small>세 변 합 100cm · 10kg 이하 · 8,900원</small></div>
+              <div class="qty" role="group" aria-label="중형 상자 수">
+                <button class="qty-btn" type="button" aria-label="중형 상자 하나 줄이기">&minus;</button>
+                <output aria-live="polite">1</output>
+                <button class="qty-btn" type="button" aria-label="중형 상자 하나 늘리기">+</button>
+              </div>
+            </div>
+            <p class="hint" style="margin-top:8px">크기와 무게 중 큰 쪽으로 정해져요. 중형보다 큰 상자는 받지 않아요.</p>
+          </div>
+
+          <fieldset class="card" style="margin:0;border:1px solid var(--line)">
+            <legend class="sr-only">전자기기 또는 금속 제품 신고</legend>
+            <div class="step-h"><span class="number" aria-hidden="true">4</span><h2>전자기기나 금속 제품이 들어 있나요?</h2></div>
+            <div class="radios">
+              <label><input type="radio" name="metal" value="yes"> 네, 있어요</label>
+              <label><input type="radio" name="metal" value="no" checked> 아니요, 없어요</label>
+            </div>
+            <p class="hint" style="margin-top:12px">검수에서 추적 장치와 구분하기 위해 미리 알려 주세요. 신고한 상자는 검수에 시간이 조금 더 걸릴 수 있어요.</p>
+          </fieldset>
+
+          <div class="card card--tint">
+            <div class="row" style="flex-wrap:nowrap;align-items:flex-start">
+              <span class="icon-tile" style="margin:0" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.5V12l3.5 2.5" fill="none" stroke="var(--paper)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <div>
+                <h2 style="font-size:20px">하루님은 보통 2시간 안에 승인해요</h2>
+                <p class="muted" style="margin-top:4px">승인은 크리에이터가 카카오톡 인증서로 선물마다 직접 해요. 승인이 나면 사무실 주소가 열리고, 알림톡으로 알려 드려요.</p>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <aside class="card summary" aria-labelledby="sum-title">
+          <h2 id="sum-title" style="font-size:22px">결제 요약</h2>
+          <p class="muted" style="margin-top:4px">하루님께 · 손편지와 곰인형</p>
+          <div style="margin-top:16px">
+            <div class="sum-line"><span>소형 상자 1개 <small>6,900원 × 1</small></span><span class="amt">6,900원</span></div>
+            <div class="sum-line"><span>중형 상자 1개 <small>8,900원 × 1</small></span><span class="amt">8,900원</span></div>
+          </div>
+          <div class="sum-total"><span>합계</span><span class="big">15,800원</span></div>
+          <p style="margin-top:8px"><span class="badge"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 추적 장치 검수 포함</span></p>
+          <p class="muted" style="margin-top:16px">배송비가 포함된 금액이에요. 도착한 상자를 재어 보니 구간이 더 크면, 차액만 따로 결제해요.</p>
+          <button class="btn btn--lg btn--block" style="margin-top:20px" type="button">15,800원 결제하기</button>
+          <p class="muted" style="margin-top:12px">결제하면 하루님께 승인 요청이 가요. 승인 없이는 저희 시스템이 주소를 열지 않습니다.</p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER START -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">
+            <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+            팬꾹
+          </p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="support.html">고객센터</a>
+          <a href="about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <!-- FOOTER END -->
+
+  <script src="site.js"></script>
+</body>
+</html>

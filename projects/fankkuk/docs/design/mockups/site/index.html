@@ -1,0 +1,216 @@
+<!doctype html>
+<!--
+  팬꾹 사이트 시안 목록 (2026-10-01)
+  - 맨 아래: 크리에이터 헤더 견본(HEADER:creator 경계) + 공통 부품 견본. 다른 페이지 작업자가 복사해 쓴다.
+  - 링크는 아직 없는 파일에도 걸려 있다(404 가능). 완료 표시는 「시안 있음」 배지로 구분.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 사이트 시안 목록</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="site.css">
+  <style>
+    .index-top { border-bottom: 1px solid var(--line); }
+    .index-top .container { display: flex; align-items: center; justify-content: space-between; min-height: 72px; }
+    .file { display: inline-block; padding: 0 8px; border-radius: 6px; background: var(--tint); font-family: ui-monospace, Consolas, monospace; font-size: 16px; }
+    .sample-frame { border: 1px dashed var(--field-line); border-radius: 12px; overflow: visible; }
+    .sample-frame .site-header { position: relative; border-radius: 12px 12px 0 0; }
+    .sample-frame .mobile-menu { position: static; }
+    .swatch { display: inline-block; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line); vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="index-top">
+    <div class="container">
+      <span class="logo" style="min-height:0">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+        팬꾹 시안
+      </span>
+      <span class="muted">PC 1200px 기준 · 1024 / 768 반응형</span>
+    </div>
+  </div>
+
+  <main id="main" class="container">
+    <div class="page-title">
+      <h1>사이트 전체 시안</h1>
+      <p>화면 폭을 줄였다 늘려 보며 확인해 주세요. 공통 틀은 <span class="file">site.css</span> · <span class="file">site.js</span> 입니다.</p>
+    </div>
+
+    <section class="section" style="padding-block:24px 40px" aria-labelledby="g1">
+      <h2 id="g1" style="font-size:26px;margin-bottom:16px">1. 비로그인</h2>
+      <div class="grid cols-3 gap-16">
+        <a class="card card--link" href="landing.html"><div class="row row--between"><span class="file">landing.html</span><span class="badge">시안 있음</span></div><h3 style="margin-top:8px">랜딩</h3><p class="muted">팬꾹 소개를 내려가며 읽고, 맨 아래 두 버튼으로 이동해요.</p></a>
+        <a class="card card--link" href="login.html"><span class="file">login.html</span><h3 style="margin-top:8px">로그인</h3><p class="muted">카카오 로그인과 아이디 로그인.</p></a>
+        <a class="card card--link" href="signup.html"><span class="file">signup.html</span><h3 style="margin-top:8px">회원가입</h3><p class="muted">팬 또는 크리에이터 선택 → 정보 입력 → 카카오 인증.</p></a>
+        <a class="card card--link" href="about.html"><span class="file">about.html</span><h3 style="margin-top:8px">팬꾹 소개</h3><p class="muted">서비스 이야기와 약속을 자세히.</p></a>
+        <a class="card card--link" href="notices.html"><span class="file">notices.html</span><h3 style="margin-top:8px">공지사항</h3><p class="muted">공지 목록과 펼친 상세 하나.</p></a>
+        <a class="card card--link" href="support.html"><span class="file">support.html</span><h3 style="margin-top:8px">고객센터</h3><p class="muted">자주 묻는 질문 · 1:1 문의 · 운영 시간.</p></a>
+      </div>
+    </section>
+
+    <section class="section" style="padding-block:24px 40px" aria-labelledby="g2">
+      <h2 id="g2" style="font-size:26px;margin-bottom:16px">2. 팬 (로그인 후)</h2>
+      <div class="grid cols-3 gap-16">
+        <a class="card card--link" href="home.html"><div class="row row--between"><span class="file">home.html</span><span class="badge">시안 있음</span></div><h3 style="margin-top:8px">메인</h3><p class="muted">인사·검색, 진행 중인 선물, 팔로우한 크리에이터, 공지, 고객센터.</p></a>
+        <a class="card card--link" href="creators.html"><span class="file">creators.html</span><h3 style="margin-top:8px">크리에이터 찾기</h3><p class="muted">실시간 검색, 아래에 결과 카드 목록.</p></a>
+        <a class="card card--link" href="creator.html"><span class="file">creator.html</span><h3 style="margin-top:8px">크리에이터 페이지</h3><p class="muted">검색 결과에서 들어가는 상세. 팔로우·선물 보내기.</p></a>
+        <a class="card card--link" href="send.html"><span class="file">send.html</span><h3 style="margin-top:8px">선물 보내기</h3><p class="muted">상자 등록과 결제 요약.</p></a>
+        <a class="card card--link" href="my-info.html"><span class="file">my-info.html</span><h3 style="margin-top:8px">내 정보</h3><p class="muted">개인정보 확인·수정. 휴대폰 번호 변경은 카카오 인증 다시.</p></a>
+        <a class="card card--link" href="my-following.html"><span class="file">my-following.html</span><h3 style="margin-top:8px">내 정보 · 팔로우</h3><p class="muted">팔로우한 크리에이터 목록.</p></a>
+        <a class="card card--link" href="my-gifts.html"><span class="file">my-gifts.html</span><h3 style="margin-top:8px">내 정보 · 선물 내역</h3><p class="muted">진행 중인 선물과 끝난 선물.</p></a>
+        <a class="card card--link" href="gift.html"><span class="file">gift.html</span><h3 style="margin-top:8px">선물 상세</h3><p class="muted">단계·상자별 상태·사무실 주소·송장번호 입력.</p></a>
+      </div>
+    </section>
+
+    <section class="section" style="padding-block:24px 40px" aria-labelledby="g3">
+      <h2 id="g3" style="font-size:26px;margin-bottom:16px">3. 크리에이터</h2>
+      <div class="grid cols-3 gap-16">
+        <a class="card card--link" href="creator-requests.html"><span class="file">creator-requests.html</span><h3 style="margin-top:8px">승인 요청</h3><p class="muted">건별 승인·거절. 전체 승인 버튼 없음.</p></a>
+        <a class="card card--link" href="creator-log.html"><span class="file">creator-log.html</span><h3 style="margin-top:8px">주소 열람 기록</h3><p class="muted">언제, 어느 주문의 주소가 열렸는지 전부.</p></a>
+        <a class="card card--link" href="creator-settings.html"><span class="file">creator-settings.html</span><h3 style="margin-top:8px">주소와 설정</h3><p class="muted">주소 관리와 차단 목록.</p></a>
+      </div>
+    </section>
+
+    <!-- 크리에이터 헤더 견본 -->
+    <section class="section section--line" style="padding-block:40px" aria-labelledby="g4">
+      <h2 id="g4" style="font-size:26px;margin-bottom:8px">크리에이터 헤더 견본</h2>
+      <p class="muted" style="margin-bottom:16px">네비가 다르고 선물 아이콘이 없어요. 승인 요청 옆 숫자는 대기 중인 건수예요. 경계 주석 <span class="file">HEADER:creator</span> 부분을 복사하세요.</p>
+      <div class="sample-frame">
+        <!-- HEADER:creator START (크리에이터 로그인: 승인 요청·열람 기록·주소와 설정 + 공지사항·고객센터) -->
+        <header class="site-header">
+          <div class="container header-inner">
+            <a class="logo" href="creator-requests.html" aria-label="팬꾹 크리에이터 처음 화면">
+              <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+              팬꾹
+            </a>
+            <nav class="nav" aria-label="주요 메뉴">
+              <ul>
+                <li><a href="creator-requests.html" aria-current="page">승인 요청 <span class="nav-count" aria-label="대기 2건">2</span></a></li>
+                <li><a href="creator-log.html">열람 기록</a></li>
+                <li><a href="creator-settings.html">주소와 설정</a></li>
+                <li><a href="notices.html">공지사항</a></li>
+                <li><a href="support.html">고객센터</a></li>
+              </ul>
+            </nav>
+            <div class="header-actions">
+              <div class="user-menu">
+                <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown-c" aria-haspopup="true">
+                  <span class="avatar" aria-hidden="true">하</span>
+                  <span class="nick">하루</span>
+                  <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="user-dropdown" id="user-dropdown-c" hidden>
+                  <p class="who">하루님 · 크리에이터</p>
+                  <a href="creator-settings.html">주소와 설정</a>
+                  <hr>
+                  <a href="landing.html">로그아웃</a>
+                </div>
+              </div>
+              <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="mobile-menu" id="mobile-menu" hidden>
+            <a href="creator-requests.html">승인 요청 (대기 2건)</a>
+            <a href="creator-log.html">열람 기록</a>
+            <a href="creator-settings.html">주소와 설정</a>
+            <a href="notices.html">공지사항</a>
+            <a href="support.html">고객센터</a>
+            <a href="landing.html">로그아웃</a>
+          </div>
+        </header>
+        <!-- HEADER:creator END -->
+        <div style="padding:24px"><p class="muted">여기부터 페이지 본문</p></div>
+      </div>
+    </section>
+
+    <!-- 공통 부품 견본 -->
+    <section class="section section--line" style="padding-block:40px 72px" aria-labelledby="g5">
+      <h2 id="g5" style="font-size:26px;margin-bottom:24px">공통 부품 견본</h2>
+
+      <h3>버튼</h3>
+      <div class="row" style="margin:12px 0 32px">
+        <a class="btn btn--lg" href="#">주 버튼 (큰 것)</a>
+        <a class="btn" href="#">주 버튼</a>
+        <a class="btn btn--secondary" href="#">보조 버튼</a>
+        <a class="btn btn--ghost" href="#">글자 버튼</a>
+        <a class="btn btn--sm" href="#">작은 버튼</a>
+        <a class="btn" href="#" aria-disabled="true">비활성</a>
+      </div>
+
+      <h3>배지 (흰 면 위)</h3>
+      <div class="row" style="margin:12px 0 32px">
+        <span class="badge">배송중</span><span class="badge badge--solid">배송 완료</span><span class="badge badge--plain">승인 대기</span><span class="badge badge--soft">점검</span>
+      </div>
+
+      <h3>입력창</h3>
+      <div class="grid cols-2" style="margin:12px 0 32px">
+        <div class="field"><label for="demo-name">닉네임</label><input class="input" id="demo-name" placeholder="예: 민지"><p class="hint">한글·영문·숫자 2~12자</p></div>
+        <div class="field"><label for="demo-id">아이디</label><input class="input" id="demo-id" value="minji_fan" readonly><p class="hint">아이디는 바꿀 수 없어요.</p></div>
+      </div>
+
+      <h3>실시간 검색 흉내 (site.js 의 data-live-filter)</h3>
+      <div style="margin:12px 0 32px">
+        <label class="search"><span class="sr-only">크리에이터 검색</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+          <input class="input" type="search" placeholder="이름이나 채널로 찾아요 (예: 하루)" data-live-filter data-target="#demo-list" data-empty="#demo-empty" data-count="#demo-count">
+        </label>
+        <p class="hint" id="demo-count" style="margin-top:8px" aria-live="polite"></p>
+        <ul class="grid cols-3 gap-16" id="demo-list" style="margin-top:12px">
+          <li class="card" data-search="하루 haru 게임 하루의 놀이터"><strong>하루</strong><p class="muted">게임 · 하루의 놀이터</p></li>
+          <li class="card" data-search="모모 momo 노래 모모네 거실"><strong>모모</strong><p class="muted">노래 · 모모네 거실</p></li>
+          <li class="card" data-search="새벽달 토크 새벽달 라디오"><strong>새벽달</strong><p class="muted">토크 · 새벽달 라디오</p></li>
+        </ul>
+        <p id="demo-empty" class="card" hidden style="margin-top:12px">찾는 크리에이터가 없어요. 방송 채널 인증을 마친 크리에이터만 검색돼요.</p>
+      </div>
+
+      <h3>탭</h3>
+      <div style="margin:12px 0 32px">
+        <div class="tabs" role="tablist" data-tabs aria-label="선물 내역 구분">
+          <button class="tab" role="tab" id="t1" aria-selected="true" aria-controls="p1">진행 중 <span class="badge">3</span></button>
+          <button class="tab" role="tab" id="t2" aria-selected="false" tabindex="-1" aria-controls="p2">끝난 선물</button>
+        </div>
+        <div class="tab-panel" role="tabpanel" id="p1" aria-labelledby="t1"><p>진행 중인 선물 목록이 들어가요.</p></div>
+        <div class="tab-panel" role="tabpanel" id="p2" aria-labelledby="t2" hidden><p>끝난 선물 목록이 들어가요.</p></div>
+      </div>
+
+      <h3>단계 표시 — 전체(상세용)</h3>
+      <div class="card" style="margin:12px 0 32px">
+        <ol class="stepper" aria-label="선물 진행 단계">
+          <li class="is-done"><span class="dot"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3.5 3.5L13 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>등록</span></li>
+          <li class="is-done"><span class="dot"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3.5 3.5L13 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>승인</span></li>
+          <li class="is-current" aria-current="step"><span class="dot">3</span><span>입고</span></li>
+          <li><span class="dot">4</span><span>검수</span></li>
+          <li><span class="dot">5</span><span>출고</span></li>
+          <li><span class="dot">6</span><span>배송중</span></li>
+          <li><span class="dot">7</span><span>수령</span></li>
+        </ol>
+      </div>
+
+      <h3>단계 표시 — 막대(카드용)</h3>
+      <div class="card" style="margin:12px 0 32px;max-width:480px">
+        <div class="stepbar" role="progressbar" aria-label="진행 단계" aria-valuemin="1" aria-valuemax="7" aria-valuenow="4" aria-valuetext="7단계 중 4단계, 검수"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span><span></span></div>
+        <p class="stepbar-label">검수 <span>4 / 7단계</span></p>
+      </div>
+
+      <h3>표</h3>
+      <div class="table-wrap" style="margin-top:12px">
+        <table class="table">
+          <caption class="sr-only">주소 열람 기록 예시</caption>
+          <thead><tr><th scope="col">일시</th><th scope="col">주문번호</th><th scope="col">열람자</th><th scope="col" class="num">건수</th></tr></thead>
+          <tbody>
+            <tr><td>2026.09.30 14:32</td><td>FC-4T7NX</td><td>송장 출력 시스템</td><td class="num">1</td></tr>
+            <tr><td>2026.09.28 10:05</td><td>FC-6H3LM</td><td>송장 출력 시스템</td><td class="num">1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="site.js"></script>
+</body>
+</html>

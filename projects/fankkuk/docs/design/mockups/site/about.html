@@ -1,0 +1,288 @@
+<!doctype html>
+<!--
+팬꾹 소개 — 팬꾹 사이트 시안 2단계 (2026-10-01). 근거: _brief.md 팬꾹 소개 항목 + 문구 한계. 랜딩과 겹치지 않게 이야기·흐름도·열람 기록 예시 중심.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 소개 — 팬꾹</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="site.css">
+  <style>
+    .about-hero { padding-block: 56px 64px; }
+    .about-hero h1 { margin-top: 16px; max-width: 760px; }
+    .about-hero .lead { margin-top: 20px; max-width: 640px; }
+    .story > * + * { margin-top: 16px; }
+    .quote { padding: 24px; border-left: 6px solid var(--accent); border-radius: 12px; background: var(--paper); border-top: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 20px; font-weight: 700; line-height: 1.6; }
+    .flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 32px; counter-reset: f; }
+    .flow > li { position: relative; display: flex; flex-direction: column; align-items: flex-start; }
+    .flow > li:not(:last-child)::after { content: ""; position: absolute; top: 44px; left: calc(100% + 4px); width: 24px; height: 24px; background: no-repeat center / contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 12h13m-5-6 6 6-6 6' fill='none' stroke='%23596762' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
+    .flow .card { width: 100%; height: 100%; padding: 20px; }
+    .flow .card--open { border: 2px solid var(--brand); background: var(--tint); }
+    .flow .step-no { margin-bottom: 8px; color: var(--brand); font-weight: 750; }
+    .flow h3 { font-size: 18px; }
+    .flow p { margin-top: 8px; color: var(--muted); }
+    .flow .icon-tile { margin-bottom: 12px; }
+    .flow .card--open .icon-tile { background: var(--paper); }
+    .once { display: flex; align-items: center; gap: 12px; margin-top: 24px; padding: 16px 20px; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); font-weight: 700; }
+    .not-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .not-list li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; align-items: start; padding: 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+    .not-list .x { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--tint); color: var(--brand); }
+    .not-list strong { display: block; }
+    .not-list span.d { color: var(--muted); }
+    @media (max-width: 1023px) {
+      .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+      .flow > li:not(:last-child)::after { display: none; }
+    }
+    @media (max-width: 767px) {
+      .about-hero { padding-block: 32px 40px; }
+      .flow { grid-template-columns: 1fr; gap: 28px; }
+      .flow > li:not(:last-child)::after { display: block; top: auto; bottom: -26px; left: 24px; transform: rotate(90deg); }
+      .not-list { grid-template-columns: 1fr; }
+      .quote { font-size: 18px; }
+    }
+    .split > * { min-width: 0; }
+    @media (max-width: 767px) { .split { grid-template-columns: minmax(0, 1fr); } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <!-- HEADER:guest START (비로그인: 오른쪽에 로그인·회원가입) -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="landing.html" aria-label="팬꾹 처음 화면">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+        팬꾹
+      </a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <ul>
+          <li><a href="creators.html">크리에이터 찾기</a></li>
+          <li><a href="send.html">선물 보내기</a></li>
+          <li><a href="notices.html">공지사항</a></li>
+          <li><a href="about.html" aria-current="page">팬꾹 소개</a></li>
+          <li><a href="support.html">고객센터</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn--ghost btn--sm hide-sm" href="login.html">로그인</a>
+        <a class="btn btn--sm hide-sm" href="signup.html">회원가입</a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기">
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="creators.html">크리에이터 찾기</a>
+      <a href="send.html">선물 보내기</a>
+      <a href="notices.html">공지사항</a>
+      <a href="about.html" aria-current="page">팬꾹 소개</a>
+      <a href="support.html">고객센터</a>
+      <div class="btn-row">
+        <a class="btn btn--secondary" href="login.html">로그인</a>
+        <a class="btn" href="signup.html">회원가입</a>
+      </div>
+    </div>
+  </header>
+  <!-- HEADER:guest END -->
+
+  <main id="main">
+    <section class="about-hero" aria-labelledby="about-title">
+      <div class="container">
+        <p class="eyebrow">팬꾹 소개</p>
+        <h1 id="about-title">선물은 따뜻하게,<br>주소는 조심스럽게</h1>
+        <p class="lead">팬꾹은 팬이 보내는 마음이 크리에이터의 주소를 위험하게 만들지 않도록, 사이에서 선물을 받아 검수하고 대신 보내 드리는 서비스예요. 네오코드가 만들고 운영합니다.</p>
+      </div>
+    </section>
+
+    <!-- 1 왜 만들었나 -->
+    <section class="section section--line" aria-labelledby="why-title">
+      <div class="container split">
+        <div class="story">
+          <p class="eyebrow">왜 만들었나요</p>
+          <h2 id="why-title">&ldquo;택배에 내 주소가 적히는 게 걱정이에요&rdquo;</h2>
+          <p class="muted">팬이 보내 주는 선물은 늘 고맙지만, 그 상자 겉면에는 크리에이터의 이름과 집 주소가 그대로 적혀요. 송장은 택배사 직원, 이웃, 버려진 상자를 본 누구에게나 보일 수 있어요.</p>
+          <p class="muted">그래서 많은 크리에이터가 선물 받기를 망설이거나, 주소를 숨기려고 번거로운 방법을 써요. 팬도 마음을 전하고 싶은데 어디로 보내야 할지 몰라 포기하고요.</p>
+          <p class="muted">팬꾹은 이 사이에 한 단계를 두기로 했어요. 팬은 주소를 알 필요가 없고, 크리에이터는 주소를 내놓지 않아도 선물을 받을 수 있게요.</p>
+        </div>
+        <figure class="stack-16">
+          <div class="scene" aria-hidden="true">
+            <svg viewBox="0 0 344 208" focusable="false">
+              <circle cx="172" cy="104" r="84" fill="var(--paper)"/>
+              <circle cx="40" cy="48" r="12" fill="var(--spark-soft)"/>
+              <circle cx="304" cy="164" r="18" fill="var(--spark-soft)"/>
+              <circle cx="300" cy="44" r="5" fill="var(--spark)"/>
+              <rect x="120" y="108" width="104" height="72" rx="12" fill="var(--accent)"/>
+              <path d="M108 112 172 56l64 56Z" fill="var(--brand)"/>
+              <rect x="160" y="132" width="26" height="48" rx="8" fill="var(--paper)"/>
+              <rect x="136" y="124" width="18" height="18" rx="5" fill="var(--paper)"/>
+              <rect x="190" y="124" width="18" height="18" rx="5" fill="var(--paper)"/>
+              <path d="M52 112c-6-6-18 0-14 8 3 6 12 12 12 12s10-6 14-12c4-8-6-14-12-8Z" fill="var(--spark)"/>
+            </svg>
+          </div>
+          <blockquote class="quote" style="margin:0">주소는 숨기고, 마음만 전하기.</blockquote>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 2 주소가 열리는 순간 -->
+    <section class="section section--tint" aria-labelledby="once-title">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="once-title">주소가 열리는 순간은 딱 한 번이에요</h2>
+          <p>주소는 잠긴 채로 보관되고, 크리에이터가 승인한 건만 송장을 출력하는 순간에 열려요.</p>
+        </div>
+        <ol class="flow" aria-label="주소가 열리기까지의 흐름">
+          <li>
+            <div class="card">
+              <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><path fill="currentColor" fill-rule="evenodd" d="M8 14v-4a8 8 0 0 1 16 0v4h1a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4h1Zm4 0h8v-4a4 4 0 0 0-8 0v4Z"/><circle cx="16" cy="22" r="3" fill="var(--paper)"/></svg></span>
+              <p class="step-no">1단계</p>
+              <h3>브라우저에서 잠가요</h3>
+              <p>크리에이터가 주소를 적으면, 크리에이터의 브라우저에서 먼저 잠근 뒤 팬꾹으로 보내요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="card">
+              <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><rect x="4" y="6" width="24" height="22" rx="6" fill="currentColor"/><rect x="9" y="2" width="14" height="8" rx="4" fill="var(--accent)"/><rect x="10" y="15" width="12" height="4" rx="2" fill="var(--paper)"/></svg></span>
+              <p class="step-no">2단계</p>
+              <h3>잠긴 채로 보관해요</h3>
+              <p>승인 없이는 저희 시스템이 주소를 열지 않습니다.</p>
+            </div>
+          </li>
+          <li>
+            <div class="card">
+              <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><rect x="6" y="2" width="22" height="28" rx="6" fill="currentColor"/><path d="m11 17 4 4 7-8" fill="none" stroke="var(--paper)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <p class="step-no">3단계</p>
+              <h3>크리에이터가 승인해요</h3>
+              <p>선물 한 건마다 카카오톡 인증서로 서명해요. 전체 승인 버튼은 없어요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="card card--open">
+              <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><path fill="currentColor" fill-rule="evenodd" d="M8 14v-4a8 8 0 0 1 14.800-4.200l-3.500 2A4 4 0 0 0 12 10v4h13a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4h1Z"/><circle cx="16" cy="22" r="3" fill="var(--tint)"/></svg></span>
+              <p class="step-no">4단계 · 딱 한 번</p>
+              <h3>송장 출력 때 열려요</h3>
+              <p>승인된 건만, 송장을 출력하는 순간에 열려요. 이 순간은 기록으로 남아요.</p>
+            </div>
+          </li>
+          <li>
+            <div class="card">
+              <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><rect x="2" y="10" width="18" height="14" rx="4" fill="currentColor"/><path d="M20 14h6l4 5v5h-10Z" fill="currentColor"/><circle cx="9" cy="25" r="4" fill="var(--accent)"/><circle cx="24" cy="25" r="4" fill="var(--accent)"/></svg></span>
+              <p class="step-no">5단계</p>
+              <h3>팬꾹 송장으로 출고해요</h3>
+              <p>검수가 끝난 상자를 팬꾹이 대신 보내 드려요.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 3 검수 -->
+    <section class="section" aria-labelledby="inspect-title">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="inspect-title">검수는 이렇게 해요</h2>
+          <p>사무실에 도착한 모든 상자에 같은 순서를 적용해요.</p>
+        </div>
+        <ol class="grid cols-3">
+          <li class="card"><span class="number" aria-hidden="true">1</span><h3>송장 제거</h3><p class="muted" style="margin-top:8px">상자에 붙어 온 원래 송장을 떼어 파쇄해요. 크리에이터행 송장은 팬꾹 송장 하나만 남아요.</p></li>
+          <li class="card"><span class="number" aria-hidden="true">2</span><h3>겉면 검사</h3><p class="muted" style="margin-top:8px">상자 겉면에 주소나 연락처가 숨어 있지 않은지, 이상한 부착물이 없는지 살펴봐요.</p></li>
+          <li class="card"><span class="number" aria-hidden="true">3</span><h3>추적 장치 검사</h3><p class="muted" style="margin-top:8px">위치 추적 장치가 들어 있는지 장비로 검사해요. 이 검수는 요금에 기본으로 포함돼 있어요.</p></li>
+        </ol>
+        <div class="card card--tint" style="margin-top:24px">
+          <h3>걸린 상자만 열어서 확인해요</h3>
+          <p class="muted" style="margin-top:8px">검사에서 걸린 상자만 개봉해요. 걸리지 않은 상자는 열지 않고 그대로 출고해요.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 열람 기록 -->
+    <section class="section section--tint" aria-labelledby="log-title">
+      <div class="container split">
+        <div class="story">
+          <p class="eyebrow">열람 기록</p>
+          <h2 id="log-title">주소를 연 기록은 크리에이터에게 전부 공개해요</h2>
+          <p class="muted">언제, 어느 주문의 주소를, 누가 열었는지 크리에이터가 언제든 확인할 수 있어요. 승인한 적 없는 주문이 기록에 보이면 바로 알아챌 수 있어요.</p>
+          <a class="link-arrow" href="signup.html">크리에이터로 가입하기 <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+        <div>
+          <div class="table-wrap">
+            <table class="table">
+              <caption class="sr-only">주소 열람 기록 예시</caption>
+              <thead><tr><th scope="col">열린 시각</th><th scope="col">주문번호</th><th scope="col">연 사람</th><th scope="col">사유</th></tr></thead>
+              <tbody>
+                <tr><td>10.28 14:32</td><td>FC-7K3M9</td><td>대표 계정</td><td>송장 출력</td></tr>
+                <tr><td>10.27 11:05</td><td>FC-5D1H6</td><td>대표 계정</td><td>송장 출력</td></tr>
+                <tr><td>10.25 16:48</td><td>FC-2P8QW</td><td>대표 계정</td><td>송장 출력</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="muted" style="margin-top:8px">예시 화면이에요. 실제 기록은 크리에이터 화면에서 볼 수 있어요.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 하지 않는 것 -->
+    <section class="section" aria-labelledby="not-title">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="not-title">팬꾹이 하지 않는 것</h2>
+          <p>약속만큼 중요한 건 하지 않는 일이에요.</p>
+        </div>
+        <ul class="not-list">
+          <li><span class="x" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><span><strong>승인 없이 주소를 열지 않아요</strong><span class="d">승인 없이는 저희 시스템이 주소를 열지 않습니다.</span></span></li>
+          <li><span class="x" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><span><strong>한꺼번에 승인하지 않아요</strong><span class="d">전체 승인 버튼은 없어요. 건마다 따로 서명해요.</span></span></li>
+          <li><span class="x" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><span><strong>거절 이유를 팬에게 알리지 않아요</strong><span class="d">거절된 선물은 배송되지 않고, 이유는 팬에게 전해지지 않아요.</span></span></li>
+          <li><span class="x" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><span><strong>모든 상자를 열어 보지 않아요</strong><span class="d">송장 제거와 겉면 검사를 거치고, 걸린 상자만 열어요.</span></span></li>
+          <li><span class="x" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><span><strong>팬에게 크리에이터행 운송장 번호를 보여 주지 않아요</strong><span class="d">팬이 볼 수 있는 주소는 승인 뒤에 열리는 사무실 주소뿐이에요.</span></span></li>
+          <li><span class="x" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><span><strong>검수를 뺀 요금제를 만들지 않아요</strong><span class="d">추적 장치 검수는 모든 요금에 포함돼 있어요.</span></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="cta-band on-brand" aria-labelledby="cta-title">
+      <div class="container">
+        <h2 id="cta-title">마음을 담아, 꾹.</h2>
+        <p>승인받은 선물만, 안전하게 전해 드릴게요.</p>
+        <div class="cta-actions">
+          <a class="btn btn--lg btn--on-brand" href="send.html">지금 바로 선물 보내러 가기</a>
+          <a class="btn btn--lg btn--outline-on-brand" href="creators.html">나의 크리에이터 찾으러 가기</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER START -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">
+            <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+            팬꾹
+          </p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="support.html">고객센터</a>
+          <a href="about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <!-- FOOTER END -->
+
+  <script src="site.js"></script>
+</body>
+</html>
