@@ -1,0 +1,296 @@
+<!doctype html>
+<!--
+  메인(팬 로그인 후) 안 1 (2026-10-02) — 팬꾹 v3 시안
+  사용자 원문(이번): 「흠 전체적으로 디자인이 아직도 구리다. 더 심플한 느낌. 아기자기한 느낌을 살려줘. 진행중인 선물도 한번에 옆으로 2줄로 나오니까 뭔가 꽉꽉 채워넣은거 같다」
+  앞선 원문: 「하얀색에 가까운 바탕」 · 「AI 디자인이 표준만 고집하다보니 다 비슷한 느낌… 한두 포인트만 살려서 AI 느낌을 없애줘」 · 「초록색도 너무 진해」
+  유지: 맑은 초록 #2E7D64(버튼, 흰 글자 4.97) · 옅은 회색 선 #C9CECB · 글자 #333D39 · 바탕 흰색 · 폭 최대 1200px
+
+  [설계 메모 — 안 1 「상자 친구」]
+  색: 흰 #FFFFFF(바탕) / 글자 #333D39 / 초록 #2E7D64(버튼·리본·자물쇠) / 옅은 회색 #C9CECB(선) / 민트 #E8F5EF(파스텔 하나 — 캐릭터 뒤 동그라미·선물 아이콘·고객센터 상자에만) / 볼터치 #FFC4BC(캐릭터 뺨에만)
+  글꼴: 제목(h1~h3·숫자·가격)만 Jua, 본문·버튼·표기는 Pretendard.
+  배치: 랜딩은 왼쪽 글·오른쪽 상자 친구, 이후 구간은 한 번에 하나만(걱정 2문장 → 4단계 → 약속 → 요금 → 크리에이터 → FAQ → 마무리). 메인은 인사·검색 → 세로 목록(한 줄 한 선물, 처음 3개) → 팔로우 얼굴 줄 → 공지.
+  유일한 포인트: 얼굴 있는 택배 상자(눈 두 점·볼터치·리본 하나). 랜딩 첫 화면에만 자물쇠 하트를 안은 큰 모습, 메인 인사 옆엔 작게, 목록에선 단계별 표정(대기=졸림, 이동=신남, 완료=웃음).
+  기본값 점검: 「민트 + 알약 버튼 + 둥근 글꼴」만 있으면 흔한 앱 소개 페이지다. 그래서 색·글꼴이 아니라 캐릭터 하나에 개성을 몰고, 나머지 구간은 장식 없이 글과 여백으로만 둔다. 도장·eyebrow·가운뎃점 나열·구간 페이드는 쓰지 않았다.
+
+  공통: ../site.css(토큰·헤더·푸터 구조) → base.css(둥근 모양·Jua) → 1.css(안별 값). 헤더·푸터 마크업 구조는 기존 그대로.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 메인</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="../site.css">
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="1.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- 작은 상자 친구 3가지 표정: 몸·뚜껑·리본은 같고 눈·입만 다르다 -->
+      <g id="box-base">
+        <rect x="8" y="15" width="32" height="26" rx="8" fill="#fff" stroke="#333D39" stroke-width="2.4"/>
+        <rect x="5" y="10" width="38" height="10" rx="5" fill="#CFEBDD" stroke="#333D39" stroke-width="2.4"/>
+        <g fill="#2E7D64" stroke="#333D39" stroke-width="1.6"><ellipse cx="19" cy="7.6" rx="4.4" ry="2.8" transform="rotate(-18 19 7.6)"/><ellipse cx="29" cy="7.6" rx="4.4" ry="2.8" transform="rotate(18 29 7.6)"/><circle cx="24" cy="9.4" r="2.6"/></g>
+        <ellipse cx="14" cy="32.5" rx="3.2" ry="2.1" fill="#FFC4BC"/><ellipse cx="34" cy="32.5" rx="3.2" ry="2.1" fill="#FFC4BC"/>
+      </g>
+      <symbol id="box-sleepy" viewBox="0 0 48 48"><use href="#box-base"/>
+        <path d="M14.5 27.5q2.6 2.8 5.2 0M28.3 27.5q2.6 2.8 5.2 0M22.5 33.2h3" fill="none" stroke="#333D39" stroke-width="2" stroke-linecap="round"/>
+        <path d="M41.5 21h4l-4 5h4" fill="none" stroke="#2E7D64" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="box-go" viewBox="0 0 48 48"><use href="#box-base"/>
+        <circle cx="17" cy="27.5" r="2.3" fill="#333D39"/><circle cx="31" cy="27.5" r="2.3" fill="#333D39"/><circle cx="17.8" cy="26.7" r=".8" fill="#fff"/><circle cx="31.8" cy="26.7" r=".8" fill="#fff"/>
+        <path d="M20.5 31.2q3.5 5 7 0z" fill="#333D39" stroke="#333D39" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M43 21v4.6M40.7 23.3h4.6" stroke="#2E7D64" stroke-width="1.8" stroke-linecap="round"/></symbol>
+      <symbol id="box-win" viewBox="0 0 48 48"><use href="#box-base"/>
+        <path d="M14.2 28.4q2.6-3.4 5.2 0M28.6 28.4q2.6-3.4 5.2 0" fill="none" stroke="#333D39" stroke-width="2" stroke-linecap="round"/>
+        <path d="M20.2 31.4q3.8 4.4 7.6 0" fill="none" stroke="#333D39" stroke-width="2" stroke-linecap="round"/></symbol>
+    </defs>
+  </svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <!-- HEADER:fan START (선물 상태 아이콘 + 내 정보 메뉴 — 기능은 기존 그대로, 모양만 이 안에 맞춤) -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="1-home.html" aria-label="팬꾹 메인">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+        팬꾹
+      </a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <ul>
+          <li><a href="../creators.html">크리에이터 찾기</a></li>
+          <li><a href="../send.html">선물 보내기</a></li>
+          <li><a href="../notices.html">공지사항</a></li>
+          <li><a href="../about.html">팬꾹 소개</a></li>
+          <li><a href="../support.html">고객센터</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <ul class="gift-status" aria-label="진행 중인 선물 4개">
+          <li class="gift-item">
+            <a class="gift-icon" data-state="move" href="../gift.html" aria-label="하루님께 보낸 선물" aria-describedby="tip-1"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/></svg></a>
+            <span class="tip" role="tooltip" id="tip-1"><span class="tip-body">선물 4개 중 1번째 · 하루님께 · 배송중</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-icon" data-state="wait" href="../gift.html" aria-label="모모님께 보낸 선물" aria-describedby="tip-2"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.4 4.8L14.5 12l2.1.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.4-4.8L9.5 12l-2.1-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="var(--tint)"/></svg></a>
+            <span class="tip" role="tooltip" id="tip-2"><span class="tip-body">선물 4개 중 2번째 · 모모님께 · 승인 대기</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-icon" data-state="done" href="../gift.html" aria-label="새벽달님께 보낸 선물" aria-describedby="tip-3"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <span class="tip" role="tooltip" id="tip-3"><span class="tip-body">선물 4개 중 3번째 · 새벽달님께 · 배송 완료</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-more" href="../my-gifts.html" aria-label="선물 1개 더 보기" aria-describedby="tip-4">+1</a>
+            <span class="tip" role="tooltip" id="tip-4"><span class="tip-body">선물 4개 중 4번째 · 별이님께 · 입고 대기</span></span>
+          </li>
+        </ul>
+        <button class="gift-badge" type="button" data-sheet-open="gift-sheet" aria-haspopup="dialog">
+          <span class="glyph" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--paper)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--paper)" stroke-width="2"/></svg></span>
+          선물 4
+        </button>
+        <div class="user-menu">
+          <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown" aria-haspopup="true">
+            <span class="avatar" aria-hidden="true">민</span>
+            <span class="nick">민지</span>
+            <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" hidden>
+            <p class="who">민지님 · 팬</p>
+            <a href="../my-info.html">내 정보</a>
+            <a href="../my-following.html">팔로우한 크리에이터</a>
+            <a href="../my-gifts.html">선물 내역</a>
+            <hr>
+            <a href="1-landing.html">로그아웃</a>
+          </div>
+        </div>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="../creators.html">크리에이터 찾기</a>
+      <a href="../send.html">선물 보내기</a>
+      <a href="../notices.html">공지사항</a>
+      <a href="../about.html">팬꾹 소개</a>
+      <a href="../support.html">고객센터</a>
+      <p class="group-label">내 정보 · 민지님</p>
+      <a href="../my-info.html">내 정보</a>
+      <a href="../my-following.html">팔로우한 크리에이터</a>
+      <a href="../my-gifts.html">선물 내역</a>
+      <a href="1-landing.html">로그아웃</a>
+    </div>
+    <div class="sheet-root" id="gift-sheet" hidden>
+      <div class="sheet-scrim" data-sheet-close></div>
+      <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="gift-sheet-title">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="sheet-head">
+          <h2 id="gift-sheet-title" style="font-size:24px">진행 중인 선물 4개</h2>
+          <button class="sheet-close" type="button" data-sheet-close aria-label="닫기"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+        </div>
+        <ul class="sheet-list">
+          <li><a href="../gift.html"><span class="gift-icon" data-state="move"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/></svg></span><span><strong>하루님께</strong><small>배송중</small></span></a></li>
+          <li><a href="../gift.html"><span class="gift-icon" data-state="wait"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.4 4.8L14.5 12l2.1.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.4-4.8L9.5 12l-2.1-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="var(--tint)"/></svg></span><span><strong>모모님께</strong><small>승인 대기</small></span></a></li>
+          <li><a href="../gift.html"><span class="gift-icon" data-state="done"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>새벽달님께</strong><small>배송 완료</small></span></a></li>
+          <li><a href="../gift.html"><span class="gift-icon" data-state="move"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="var(--tint)" stroke-width="2"/></svg></span><span><strong>별이님께</strong><small>입고 대기</small></span></a></li>
+        </ul>
+        <a class="btn btn--secondary btn--block" style="margin-top:12px" href="../my-gifts.html">선물 내역 전체 보기</a>
+      </section>
+    </div>
+  </header>
+  <!-- HEADER:fan END -->
+
+  <main id="main">
+    <!-- 인사 + 크리에이터 검색 -->
+    <section class="greet" aria-labelledby="hello-title">
+      <div class="container greet-grid">
+        <div class="greet-who">
+          <div class="bubble" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#box-win"/></svg></div>
+          <div>
+            <h1 id="hello-title">민지님, 반가워요</h1>
+            <p class="lead">오늘도 마음을 담아, 꾹.</p>
+          </div>
+        </div>
+        <div>
+          <a class="pill-search" href="../creators.html" aria-label="크리에이터 찾기로 이동">
+            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            나의 크리에이터를 검색해요
+          </a>
+          <p class="hint">방송 채널 인증을 마친 크리에이터만 검색돼요.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 진행 중인 선물: 한 줄에 하나, 처음 3개만 -->
+    <section class="home-sect" aria-labelledby="gifts-title">
+      <div class="container">
+        <div class="sect-head">
+          <h2 id="gifts-title">진행 중인 선물</h2>
+          <a class="link-arrow" href="../my-gifts.html">선물 내역 전체 보기</a>
+        </div>
+        <ul class="gift-list" id="gift-list">
+          <li>
+            <span class="mark" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#box-go"/></svg></span>
+            <div><p class="g-name">하루님께</p><p class="g-sub">상자 2개 (소형 1, 중형 1)</p></div>
+            <div class="stage">
+              <p class="stage-text">크리에이터에게 가고 있어요</p>
+              <div class="dots" role="progressbar" aria-label="하루님께 보낸 선물 진행 단계" aria-valuemin="1" aria-valuemax="7" aria-valuenow="6" aria-valuetext="7단계 중 6단계, 배송중"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+            </div>
+            <div class="go"><a class="btn btn--secondary btn--sm" href="../gift.html" aria-label="하루님께 보낸 선물 상세 보기">상세 보기</a></div>
+          </li>
+          <li>
+            <span class="mark" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#box-sleepy"/></svg></span>
+            <div><p class="g-name">모모님께</p><p class="g-sub">상자 1개 (소형 1)</p></div>
+            <div class="stage">
+              <p class="stage-text">크리에이터의 승인을 기다리고 있어요</p>
+              <div class="dots" role="progressbar" aria-label="모모님께 보낸 선물 진행 단계" aria-valuemin="1" aria-valuemax="7" aria-valuenow="2" aria-valuetext="7단계 중 2단계, 승인 대기"><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span><span></span></div>
+            </div>
+            <div class="go"><a class="btn btn--secondary btn--sm" href="../gift.html" aria-label="모모님께 보낸 선물 상세 보기">상세 보기</a></div>
+          </li>
+          <li>
+            <span class="mark" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#box-win"/></svg></span>
+            <div><p class="g-name">새벽달님께</p><p class="g-sub">상자 1개 (중형 1)</p></div>
+            <div class="stage">
+              <p class="stage-text">잘 도착했어요</p>
+              <div class="dots" role="progressbar" aria-label="새벽달님께 보낸 선물 진행 단계" aria-valuemin="1" aria-valuemax="7" aria-valuenow="7" aria-valuetext="7단계 중 7단계, 수령 완료"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+            </div>
+            <div class="go"><a class="btn btn--secondary btn--sm" href="../gift.html" aria-label="새벽달님께 보낸 선물 상세 보기">상세 보기</a></div>
+          </li>
+          <li id="gift-more-row" hidden>
+            <span class="mark" aria-hidden="true"><svg viewBox="0 0 48 48"><use href="#box-sleepy"/></svg></span>
+            <div><p class="g-name">별이님께</p><p class="g-sub">상자 3개 (소형 3)</p></div>
+            <div class="stage">
+              <p class="stage-text">승인됐어요. 사무실로 보내 주세요</p>
+              <div class="dots" role="progressbar" aria-label="별이님께 보낸 선물 진행 단계" aria-valuemin="1" aria-valuemax="7" aria-valuenow="3" aria-valuetext="7단계 중 3단계, 입고 대기"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span></div>
+            </div>
+            <div class="go"><a class="btn btn--secondary btn--sm" href="../gift.html" aria-label="별이님께 보낸 선물 상세 보기">상세 보기</a></div>
+          </li>
+        </ul>
+        <div class="more-row">
+          <button class="btn btn--secondary" type="button" id="more-btn" aria-controls="gift-more-row" aria-expanded="false">더 보기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 팔로우한 크리에이터 -->
+    <section class="home-sect" aria-labelledby="follow-title">
+      <div class="container">
+        <div class="sect-head" style="margin-bottom:24px">
+          <h2 id="follow-title">팔로우한 크리에이터</h2>
+          <a class="link-arrow" href="../my-following.html">전체 보기</a>
+        </div>
+        <ul class="faces">
+          <li><a class="face" href="../send.html" aria-label="하루에게 선물 보내기"><span class="c" aria-hidden="true">하</span>하루</a></li>
+          <li><a class="face" href="../send.html" aria-label="모모에게 선물 보내기"><span class="c" aria-hidden="true">모</span>모모</a></li>
+          <li><a class="face" href="../send.html" aria-label="새벽달에게 선물 보내기"><span class="c" aria-hidden="true">새</span>새벽달</a></li>
+          <li><a class="face" href="../send.html" aria-label="별이에게 선물 보내기"><span class="c" aria-hidden="true">별</span>별이</a></li>
+          <li><a class="face" href="../send.html" aria-label="솜사탕에게 선물 보내기"><span class="c" aria-hidden="true">솜</span>솜사탕</a></li>
+          <li><a class="face" href="../send.html" aria-label="도담에게 선물 보내기"><span class="c" aria-hidden="true">도</span>도담</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 공지사항 + 고객센터 -->
+    <section class="home-sect" style="padding-bottom:104px" aria-label="공지사항과 고객센터">
+      <div class="container info">
+        <div>
+          <div class="sect-head">
+            <h2 style="font-size:28px">공지사항</h2>
+            <a class="link-arrow" href="../notices.html">전체 보기</a>
+          </div>
+          <ul class="notice-list">
+            <li><a href="../notices.html"><span>중형 상자(10kg 이하) 요금 안내</span><span class="muted">09.28</span></a></li>
+            <li><a href="../notices.html"><span>휴대폰 번호 변경 시 카카오 인증을 다시 받아요</span><span class="muted">09.25</span></a></li>
+            <li><a href="../notices.html"><span>시스템 점검 안내 (10월 5일 새벽)</span><span class="muted">09.22</span></a></li>
+          </ul>
+        </div>
+        <div class="help">
+          <h2>고객센터</h2>
+          <p>궁금한 점이 있으면 편하게 물어보세요.</p>
+          <a class="btn" href="../support.html">문의하러 가기</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    // 더 보기: 숨겨 둔 네 번째 줄을 연다 (시안용 흉내)
+    (function () {
+      var b = document.getElementById('more-btn'), r = document.getElementById('gift-more-row');
+      if (!b || !r) return;
+      b.addEventListener('click', function () { r.hidden = false; b.parentNode.hidden = true; });
+    })();
+  </script>
+
+  <!-- FOOTER START -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">
+            <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+            팬꾹
+          </p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="../support.html">고객센터</a>
+          <a href="../about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <!-- FOOTER END -->
+
+  <script src="../site.js"></script>
+</body>
+</html>

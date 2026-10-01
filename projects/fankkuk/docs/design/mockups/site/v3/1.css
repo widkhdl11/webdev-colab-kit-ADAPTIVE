@@ -1,0 +1,16 @@
+/* 안 1 「상자 친구」 — base.css 위에 덮어쓰는 값. 파스텔 = 연한 민트. */
+:root {
+  --pastel: #E8F5EF;
+  --pastel-strong: #CFEBDD;
+  --pastel-ink: #1F6450;
+}
+.mascot { width: 100%; max-width: 440px; height: auto; margin-inline: auto; overflow: visible; }
+.mark svg { width: 40px; height: 40px; }
+.bubble { display: grid; place-items: center; flex-shrink: 0; width: 112px; height: 112px; border-radius: 50%; background: var(--pastel); }
+.bubble svg { width: 76px; height: 76px; }
+.closing-mini { flex-shrink: 0; display: grid; place-items: center; width: 200px; height: 200px; border-radius: 50%; background: var(--pastel); }
+.closing-mini svg { width: 136px; height: 136px; }
+@media (max-width: 767px) {
+  .bubble { width: 80px; height: 80px; } .bubble svg { width: 56px; height: 56px; }
+  .closing-mini { width: 140px; height: 140px; } .closing-mini svg { width: 96px; height: 96px; }
+}
