@@ -1,0 +1,241 @@
+"use client";
+
+import Link from "next/link";
+import { useRef, useState, type KeyboardEvent } from "react";
+import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { BILLABLE_TIERS, TIER_PRICE_KRW } from "@/entities/payment/config/tier-pricing";
+import s from "./support.module.css";
+
+// 고객센터. 시안: docs/design/mockups/site/v4/support.html
+// 1:1 문의는 겉모양만 — 보내기는 로그인 화면으로 이동한다(실제 접수는 아직 없다).
+// 요금 답변의 숫자·구간 기준은 결제와 같은 요금표(tier-pricing)·구간 기준(size-tier)을 읽는다.
+
+type Faq = { q: string; a: string };
+
+const FEE_ANSWER = `상자마다 배송비가 포함된 금액이에요. ${BILLABLE_TIERS.map(
+  (t) => `${PARCEL_TIER_GUIDE[t].name}(${PARCEL_TIER_GUIDE[t].rule}) ${TIER_PRICE_KRW[t].toLocaleString("ko-KR")}원`,
+).join(", ")}이고, 추적 장치 검수가 포함돼 있어요.`;
+
+const CATEGORIES: readonly { id: string; label: string; faqs: readonly Faq[] }[] = [
+  {
+    id: "gift",
+    label: "선물 보내기",
+    faqs: [
+      {
+        q: "선물은 어떻게 보내나요?",
+        a: "크리에이터를 찾아 「선물 보내기」를 누르고, 상자 수와 크기를 등록한 뒤 결제하면 요청이 크리에이터에게 가요. 크리에이터가 승인하면 팬꾹 사무실 주소가 열리고, 그 주소로 보내 주시면 돼요.",
+      },
+      { q: "크리에이터가 거절하면 어떻게 되나요?", a: "거절된 선물은 배송되지 않아요. 거절 이유는 팬에게 알리지 않습니다." },
+      {
+        q: "여러 상자를 한 번에 보낼 수 있나요?",
+        a: "네, 한 선물에 상자를 여러 개 등록할 수 있어요. 상자마다 크기에 맞는 요금이 정해져요.",
+      },
+    ],
+  },
+  {
+    id: "fee",
+    label: "요금",
+    faqs: [
+      { q: "요금은 얼마인가요?", a: FEE_ANSWER },
+      {
+        q: "크기와 무게가 서로 다른 구간이면 어떻게 정해지나요?",
+        a: "크기와 무게 중 큰 쪽 기준으로 정해져요. 예를 들어 세 변 합은 80cm인데 무게가 7kg이면 중형이에요.",
+      },
+      {
+        q: "도착해서 잰 크기가 등록한 것보다 크면요?",
+        a: `사무실에서 실측한 크기가 더 크면 차액을 따로 결제해 주셔야 해요. ${OVERSIZE_RULE}는 받지 않아요.`,
+      },
+    ],
+  },
+  {
+    id: "ship",
+    label: "배송",
+    faqs: [
+      {
+        q: "선물이 어디쯤 왔는지 어떻게 확인하나요?",
+        a: "등록 → 승인 → 입고 → 검수 → 출고 → 배송중 → 수령, 일곱 단계로 선물 상세 화면과 상단 선물 아이콘에서 볼 수 있어요.",
+      },
+      {
+        q: "크리에이터행 운송장 번호를 볼 수 있나요?",
+        a: "팬에게는 크리에이터행 운송장 번호를 보여 드리지 않아요. 팬이 입력하는 것은 사무실로 보내는 상자의 송장번호예요.",
+      },
+      { q: "검수는 어떻게 하나요?", a: "상자의 원래 송장을 제거하고, 겉면과 추적 장치를 검사해요. 검사에 걸린 상자만 열어서 확인해요." },
+    ],
+  },
+  {
+    id: "creator",
+    label: "크리에이터",
+    faqs: [
+      {
+        q: "크리에이터는 어떻게 가입하나요?",
+        a: "가입할 때 「크리에이터」를 고르면 돼요. 가입한 뒤 방송 채널에 인증 코드를 올려 본인 확인을 마치면 「크리에이터 찾기」에 나타나요.",
+      },
+      { q: "선물 승인은 어떻게 하나요?", a: "요청이 오면 한 건씩 카카오톡 인증서로 서명해서 승인해요. 전체 승인 버튼은 없어요." },
+      { q: "원치 않는 팬을 막을 수 있나요?", a: "네, 차단 목록에 추가하면 그 팬은 선물을 요청할 수 없어요." },
+    ],
+  },
+  {
+    id: "account",
+    label: "계정",
+    faqs: [
+      {
+        q: "비밀번호를 잊어버렸어요.",
+        a: "로그인 화면의 「비밀번호를 잊으셨나요?」에서 가입 이메일을 입력하면 재설정 링크를 보내 드려요.",
+      },
+      { q: "아이디를 바꿀 수 있나요?", a: "아이디는 바꿀 수 없어요. 닉네임과 이메일은 내 정보에서 고칠 수 있어요." },
+      { q: "휴대폰 번호를 바꾸고 싶어요.", a: "내 정보에서 바꿀 수 있고, 카카오톡 인증을 다시 받아야 해요." },
+    ],
+  },
+];
+
+const INQUIRY_KINDS = ["선물 보내기", "요금", "배송", "크리에이터", "계정", "기타"] as const;
+
+const CONTACT: readonly (readonly [string, string])[] = [
+  ["운영 시간", "(출시 전 기재)"],
+  ["점심 시간", "(출시 전 기재)"],
+  ["전화", "(출시 전 기재)"],
+  ["이메일", "(출시 전 기재)"],
+];
+
+function Chevron({ className }: { className: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+      <path d="m4 7.5 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function SupportPage() {
+  const [selected, setSelected] = useState(0);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // 화살표로 옆 탭을 고르고 포커스도 옮긴다(시안 site.js 와 같은 동작).
+  const onTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
+    const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (step === 0) return;
+    e.preventDefault();
+    const next = (i + step + CATEGORIES.length) % CATEGORIES.length;
+    setSelected(next);
+    tabRefs.current[next]?.focus();
+  };
+
+  return (
+    <main id="main">
+      <div className="container">
+        <div className={s["page-top"]}>
+          <div>
+            <h1 className="page-h">고객센터</h1>
+            <p className={`lead ${s["page-lead"]}`}>궁금한 점을 먼저 찾아보시고, 없으면 1:1 문의를 남겨 주세요.</p>
+          </div>
+          <div className={s["tile-ico"]} aria-hidden="true">
+            <img className="asset" src="/img/icon-help.png" width={72} height={72} alt="" />
+          </div>
+        </div>
+      </div>
+
+      <section aria-labelledby="faq-title">
+        <div className="container">
+          <h2 id="faq-title" className={s["faq-title"]}>
+            자주 묻는 질문
+          </h2>
+          <div className={s.tabs} role="tablist" aria-label="질문 분류">
+            {CATEGORIES.map((c, i) => (
+              <button
+                key={c.id}
+                ref={(el) => {
+                  tabRefs.current[i] = el;
+                }}
+                className={s.tab}
+                type="button"
+                role="tab"
+                id={`t-${c.id}`}
+                aria-controls={`p-${c.id}`}
+                aria-selected={i === selected}
+                tabIndex={i === selected ? 0 : -1}
+                onClick={() => setSelected(i)}
+                onKeyDown={(e) => onTabKeyDown(e, i)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          {CATEGORIES.map((c, i) => (
+            <div
+              key={c.id}
+              className={s.faq}
+              role="tabpanel"
+              id={`p-${c.id}`}
+              aria-labelledby={`t-${c.id}`}
+              hidden={i !== selected}
+            >
+              {c.faqs.map((f, j) => (
+                <details key={f.q} open={j === 0}>
+                  <summary>
+                    <span>{f.q}</span>
+                    <Chevron className={s.chev} />
+                  </summary>
+                  <p className={s.answer}>{f.a}</p>
+                </details>
+              ))}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={s.block} aria-labelledby="inquiry-title">
+        <div className={`container ${s.help}`}>
+          <div className={s.ask}>
+            <h2 id="inquiry-title">1:1 문의</h2>
+            {/* 접수는 아직 없다 — 제출해도 아무 일도 일어나지 않고, 아래 버튼은 로그인 화면으로 간다. */}
+            <form onSubmit={(e) => e.preventDefault()}>
+              <div className="field">
+                <label htmlFor="q-cat">분류</label>
+                <div className={s["select-wrap"]}>
+                  <select className={`input ${s.select}`} id="q-cat">
+                    {INQUIRY_KINDS.map((k) => (
+                      <option key={k}>{k}</option>
+                    ))}
+                  </select>
+                  <Chevron className={s["select-chev"]} />
+                </div>
+              </div>
+              <div className="field">
+                <label htmlFor="q-order">
+                  주문번호 <span className={s.optional}>(선택)</span>
+                </label>
+                <input className="input" id="q-order" type="text" placeholder="예: FC-7K3M9" aria-describedby="q-order-h" />
+                <p className="hint" id="q-order-h">
+                  선물에 관한 문의라면 적어 주시면 더 빨리 확인할 수 있어요.
+                </p>
+              </div>
+              <div className="field">
+                <label htmlFor="q-title">제목</label>
+                <input className="input" id="q-title" type="text" placeholder="문의 제목을 적어 주세요" />
+              </div>
+              <div className="field">
+                <label htmlFor="q-body">내용</label>
+                <textarea className={`input ${s.textarea}`} id="q-body" rows={6} placeholder="궁금한 점을 자세히 적어 주세요" />
+              </div>
+              <Link className="btn btn--block" href="/login">
+                로그인하고 문의 남기기
+              </Link>
+            </form>
+          </div>
+          <aside className={s.contact} aria-labelledby="contact-title">
+            <h2 id="contact-title">운영 시간·연락처</h2>
+            <dl>
+              {CONTACT.map(([k, v]) => (
+                <div key={k}>
+                  <dt>{k}</dt>
+                  <dd>{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className={s.note}>1:1 문의는 남겨 주신 순서대로 답변드려요. 답변은 알림톡으로 알려 드려요.</p>
+          </aside>
+        </div>
+      </section>
+      <div className={s["page-end"]} />
+    </main>
+  );
+}

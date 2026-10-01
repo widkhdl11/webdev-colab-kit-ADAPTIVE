@@ -1,0 +1,49 @@
+/* 메인(로그인 뒤, 팬) 화면 전용 — 시안 docs/design/mockups/site/v4/home.html, v4.css 13절 */
+
+.greet { padding-block: clamp(40px, 5vw, 72px) 0; text-align: center; }
+.greet h1 { font-size: clamp(32px, 3.6vw, 48px); line-height: 1.25; font-weight: 800; letter-spacing: -1.2px; }
+.greet-lead { margin-top: 12px; }
+.search { margin-top: 32px; }
+.tiles { margin-top: 32px; }
+
+.block { padding-block: clamp(56px, 7vw, 96px) 0; }
+.block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+.block-head h2 { font-size: clamp(28px, 2.6vw, 34px); letter-spacing: -.8px; }
+
+/* 진행 중인 선물 — 한 줄에 하나 */
+.gift-rows { border-top: 1px solid var(--divider); }
+.gift-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; align-items: center; gap: 16px 24px; padding-block: 24px; border-bottom: 1px solid var(--divider); }
+.who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.says { color: var(--sub); }
+.meter { display: grid; justify-items: end; gap: 4px; }
+.meter small { font-size: 16px; color: var(--sub); }
+.empty { padding-block: 24px; border-bottom: 1px solid var(--divider); color: var(--sub); }
+.more-wrap { margin-top: 32px; text-align: center; }
+
+/* 팔로우한 크리에이터 — 어느 폭에서도 한 줄 (사용자 「한줄로. 두~세줄되면 이상해」) */
+.follow-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 16px; margin-top: 32px; }
+.follow { display: grid; justify-items: center; gap: 8px; padding: 8px 0; text-decoration: none; text-align: center; font-weight: 600; border-radius: var(--r-box); }
+.follow:hover { background: var(--surface); }
+.follow small { display: block; color: var(--sub); font-size: 16px; font-weight: 400; }
+.add-face { display: grid; place-items: center; background: var(--surface); color: var(--sub); }
+
+/* 공지 */
+.notice-list { border-top: 1px solid var(--divider); margin-top: 8px; }
+.notice-list a { display: flex; align-items: center; gap: 12px; min-height: 68px; border-bottom: 1px solid var(--divider); text-decoration: none; }
+.notice-list a:hover .t { text-decoration: underline; text-underline-offset: 4px; }
+.t { flex: 1; min-width: 0; font-weight: 600; }
+.d { color: var(--sub); }
+
+.page-end { height: clamp(72px, 9vw, 128px); }
+
+@media (max-width: 1023px) {
+  .follow-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scrollbar-width: none; }
+  .follow-row::-webkit-scrollbar { display: none; }
+  .follow-row > li { flex: 0 0 104px; scroll-snap-align: start; }
+}
+@media (max-width: 767px) {
+  .follow-row > li { flex-basis: 88px; }
+  .gift-row { grid-template-columns: 48px minmax(0, 1fr); gap: 12px 16px; padding-block: 20px; }
+  .meter { grid-column: 2; justify-items: start; grid-auto-flow: column; justify-content: space-between; align-items: center; }
+  .go { grid-column: 2; justify-self: start; }
+}

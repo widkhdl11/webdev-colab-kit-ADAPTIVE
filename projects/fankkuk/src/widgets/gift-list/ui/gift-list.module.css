@@ -1,13 +1,27 @@
-.item { display: grid; gap: 8px; padding: 20px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-card); text-decoration: none; }
-.item:hover { border-color: var(--accent); }
-.head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.title { font-size: 18px; font-weight: 750; }
-.date { color: var(--muted); }
-.cta { margin-top: 20px; }
+/* 선물 내역 — 시안 docs/design/mockups/site/v4/my-gifts.html <style> + v4.css 의 gift-row. 내 정보 틀(제목·메뉴)은 라우트가 붙인다 */
+.my-h { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+.my-h h2 { font-size: 28px; letter-spacing: -.8px; }
 
-/* 7단계 진행 점 — 원을 반복해서 쓴다(design-rules 2절) */
-.dots { display: flex; gap: 4px; margin-block: 4px; }
-.dot-done, .dot-current, .dot-todo { width: 12px; height: 12px; border-radius: 50%; }
-.dot-done { background: var(--brand); }
-.dot-current { background: var(--paper); border: 2px solid var(--brand); }
-.dot-todo { background: var(--line); }
+.tabs { display: flex; gap: 8px; margin: 8px 0; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-weight: 600; cursor: pointer; }
+.tab:hover { background: var(--surface-hover); }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--on-brand); font-weight: 700; }
+
+.note-line { margin-top: 16px; color: var(--sub); }
+.empty { margin-top: 16px; padding: 24px; border-radius: var(--r-card); background: var(--surface); color: var(--sub); }
+.empty :global(.link-arrow) { margin-top: 4px; }
+
+/* 한 줄에 하나 — 줄 사이 얇은 구분선 */
+.gift-rows { margin-top: 16px; border-top: 1px solid var(--divider); }
+.gift-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; align-items: center; gap: 16px 24px; padding-block: 24px; border-bottom: 1px solid var(--divider); }
+.face { width: 48px; height: 48px; }
+.who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.says { color: var(--sub); }
+.meter { display: grid; justify-items: end; gap: 4px; }
+.meter small { font-size: 16px; color: var(--sub); }
+@media (max-width: 767px) {
+  .gift-row { grid-template-columns: 48px minmax(0, 1fr); gap: 12px 16px; padding-block: 20px; }
+  .meter { grid-column: 2; justify-items: start; grid-auto-flow: column; justify-content: space-between; align-items: center; }
+  .go { grid-column: 2; justify-self: start; }
+}

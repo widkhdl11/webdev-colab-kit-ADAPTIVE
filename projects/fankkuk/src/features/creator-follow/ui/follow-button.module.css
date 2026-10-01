@@ -1,0 +1,4 @@
+/* 팔로우 중 — 회색 면 + 초록 체크 (시안 creators.html 의 .btn--on) */
+.on { background: var(--surface); color: var(--ink); box-shadow: none; }
+.on:hover { background: var(--surface-hover); }
+.on svg { color: var(--brand); }

@@ -1,0 +1,14 @@
+/* 사이트 푸터(전역 클래스) — 시안 docs/design/mockups/site/v4/v4.css 11절 을 옮김. 색·반경은 tokens.css 토큰으로. */
+/* 11 푸터 */
+.site-footer { border-top: 1px solid var(--divider); color: var(--sub); }
+.footer-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; padding-block: 56px 24px; }
+.footer-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; color: var(--ink); font-size: 20px; font-weight: 800; }
+.biz { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 32px; }
+.biz div { display: flex; gap: 12px; }
+.biz dt { color: var(--ink); font-weight: 600; flex-shrink: 0; }
+.footer-links { display: grid; gap: 4px; align-content: start; }
+.footer-links a { display: flex; align-items: center; min-height: 44px; text-decoration: none; }
+.footer-links a:hover { color: var(--ink); text-decoration: underline; }
+.footer-copy { padding-bottom: 40px; }
+@media (max-width: 767px) { .footer-grid { grid-template-columns: 1fr; gap: 16px; padding-block: 40px 16px; } .biz { grid-template-columns: 1fr; } }
+

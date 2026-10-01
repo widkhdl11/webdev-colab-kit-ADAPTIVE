@@ -1,0 +1,18 @@
+/* 로그인 — 시안 docs/design/mockups/site/v4/login.html 의 <style>. 가운데 한 줄 기둥(440) */
+.auth { max-width: 440px; margin-inline: auto; padding-block: clamp(40px, 6vw, 88px) clamp(72px, 9vw, 128px); text-align: center; }
+.tile-ico { display: grid; place-items: center; width: 104px; height: 104px; margin: 0 auto 24px; border-radius: var(--r-tile); background: var(--surface); }
+.tile-ico img { width: 72px; height: 72px; }
+.auth :global(.lead) { margin-top: 8px; }
+.form { margin-top: 32px; display: grid; gap: 20px; text-align: left; }
+.check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-weight: 600; cursor: pointer; }
+.check input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); flex-shrink: 0; }
+
+.reset { margin-top: 16px; text-align: left; }
+.reset summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; font-weight: 600; color: var(--sub); cursor: pointer; list-style: none; }
+.reset summary::-webkit-details-marker { display: none; }
+.chev { color: var(--sub); transition: transform .15s; }
+.reset[open] > summary .chev { transform: rotate(180deg); }
+.reset-body { display: grid; gap: 16px; padding-block: 8px; }
+
+.signup-line { margin-top: 24px; color: var(--sub); }
+.link { color: var(--brand); font-weight: 700; text-underline-offset: 4px; }

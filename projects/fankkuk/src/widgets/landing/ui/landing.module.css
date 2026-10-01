@@ -1,69 +1,49 @@
-/* 메인(소개) — docs/design/mockups/main.html 을 옮긴 것. 색·반경은 shared/ui/tokens.css 변수만 쓴다. */
+/* 랜딩(비로그인) 화면 전용 — 시안 docs/design/mockups/site/v4/landing.html, v4.css 12절 */
 
+/* 첫 화면 — 가운데 */
+.hero { padding-block: clamp(48px, 7vw, 96px) clamp(56px, 7vw, 96px); text-align: center; }
+.kicker { margin-bottom: 16px; }
+.green-line { margin-top: 20px; }
+.search { margin-top: clamp(32px, 4vw, 48px); }
+.tiles { margin-top: 32px; }
+.hero-actions { display: grid; justify-items: center; gap: 12px; margin-top: 40px; }
 
-.root { word-break: keep-all; overflow-wrap: anywhere; }
-.root :where(h1, h2, h3, p, ol, ul, dl, dd) { margin: 0; }
-.root :where(a) { color: inherit; } /* :where — 우선순위 0 이라 .button 의 흰 글자를 덮지 않는다 */
-.root :where(a):focus-visible { outline: 4px solid var(--ink); outline-offset: 4px; }
-.root :where(svg) { display: block; flex-shrink: 0; }
-.page { width: 100%; max-width: 480px; margin-inline: auto; background: var(--page); }
-.top { height: 72px; padding-inline: 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
-.logo { display: inline-flex; gap: 8px; align-items: center; font-size: 24px; font-weight: 850; text-decoration: none; }
-.top-note { color: var(--muted); font-size: 16px; }
-.root :where(section) { padding: 48px 16px; }
-.root :where(h1) { font-size: 32px; line-height: 1.3; font-weight: 850; letter-spacing: -0.04em; }
-.root :where(h2) { font-size: 26px; line-height: 1.4; font-weight: 800; letter-spacing: -0.04em; }
-.root :where(h3) { font-size: 20px; line-height: 1.5; font-weight: 750; letter-spacing: -0.02em; }
-.intro { margin-top: 8px; color: var(--muted); }
-.hero { padding-top: 32px; padding-bottom: 40px; }
-.hello { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; color: var(--brand); font-weight: 700; }
-.hello::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
-.hero-copy { margin-top: 16px; color: var(--muted); max-width: 400px; }
-.parcel-scene { margin-block: 24px; position: relative; height: 208px; border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; background: var(--tint); }
-.parcel-scene > svg { width: 100%; height: 100%; }
-.seal { position: absolute; top: 20px; right: 20px; width: 72px; height: 72px; border-radius: 50%; background: var(--paper); color: var(--brand); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 750; font-size: 16px; transform: rotate(8deg); }
-.button { display: flex; justify-content: center; align-items: center; gap: 12px; height: 56px; border-radius: var(--radius-button); padding-inline: 16px; background: var(--brand); color: var(--on-brand); font-size: 18px; font-weight: 750; text-decoration: none; }
-.button:hover { background: var(--brand-hover); }
-.assurance { margin-top: 16px; color: var(--muted); text-align: center; font-size: 16px; }
-.how { border-top: 1px solid var(--line); }
-.steps { list-style: none; padding: 0; margin-top: 32px; }
-.steps li { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 16px; padding-bottom: 28px; }
-.steps li:not(:last-child)::before { content: ""; position: absolute; top: 44px; bottom: 4px; left: 20px; width: 2px; background: var(--line); }
-.steps li:last-child { padding-bottom: 0; }
-.number { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; color: var(--brand); background: var(--tint); font-size: 18px; font-weight: 750; }
-.steps h3 { padding-top: 4px; margin-bottom: 8px; }
-.steps p { color: var(--muted); }
-.promises { background: var(--tint); }
-.promise-list { list-style: none; padding: 0; display: grid; gap: 12px; margin-top: 24px; }
-.promise-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-card); padding: 24px; }
-.icon-tile { width: 48px; height: 48px; display: grid; place-items: center; background: var(--tint); color: var(--brand); border-radius: var(--radius-card); margin-bottom: 16px; }
-.promise-card p { margin-top: 12px; color: var(--muted); }
-.price-card { margin-top: 24px; border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; }
-.price-main { background: var(--tint); padding: 24px; }
-.pill { display: inline-flex; padding: 4px 12px; border-radius: var(--radius-pill); color: var(--brand); background: var(--paper); font-weight: 700; }
-.price-detail { padding: 24px; }
-.price-note { color: var(--muted); }
-.tiers { list-style: none; padding: 0; margin-top: 16px; display: grid; gap: 16px; }
-.tiers li { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.tier-name { font-size: 20px; font-weight: 800; }
-.tier-rule { color: var(--muted); }
-.tier-amount { font-size: 36px; line-height: 1.2; font-weight: 850; letter-spacing: -0.04em; white-space: nowrap; }
-.tier-amount span { font-size: 20px; margin-left: 4px; }
-.included { margin-top: 16px; display: flex; align-items: center; gap: 8px; font-weight: 650; }
-.included svg { color: var(--brand); }
-.creator { margin: 0 16px 48px; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--tint); }
-.creator-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; color: var(--brand); font-weight: 700; }
-.avatar { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--paper); }
-.creator h2 { font-size: 24px; }
-.creator-list { list-style: none; padding: 0; margin-block: 24px; display: grid; gap: 16px; }
-.creator-list li { display: grid; grid-template-columns: 8px minmax(0, 1fr); gap: 12px; }
-.creator-list li::before { content: ""; width: 8px; height: 8px; margin-top: 8px; border-radius: 50%; background: var(--brand); }
-.creator-list span { color: var(--muted); }
-.free { margin-top: 12px; text-align: center; color: var(--muted); }
-.footer { border-top: 1px solid var(--line); padding: 32px 16px 40px; color: var(--muted); font-size: 16px; }
-.footer-logo { color: var(--ink); font-size: 22px; font-weight: 800; margin-bottom: 16px; }
-.footer p + p { margin-top: 8px; }
-.footer nav { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 20px; }
-.footer nav a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 4px; }
-@media (min-width: 512px) { .page { margin-block: 32px; } }
-  
+/* 구간 머리 */
+.sec-head { margin-bottom: clamp(36px, 5vw, 64px); }
+.sec-head p { margin-top: 16px; font-size: 18px; color: var(--sub); max-width: 560px; }
+
+/* 구간 1: 작동 방식 */
+.step-col { text-align: left; }
+.step-ico { width: 80px; height: 80px; margin-bottom: 16px; }
+.step-col p { margin-top: 8px; color: var(--sub); }
+.step-col .num { margin-top: 0; margin-bottom: 4px; color: var(--brand); font-weight: 700; }
+.steps-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 48px; }
+.steps-label { margin-right: 4px; color: var(--sub); font-weight: 600; }
+.arrow { color: var(--faint); }
+
+/* 구간 2: 약속 — 회색 큰 판 하나 */
+.panel { padding: clamp(32px, 5vw, 72px); border-radius: var(--r-panel); background: var(--surface); }
+.panel-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(32px, 6vw, 96px); align-items: start; }
+.panel-lead { margin-top: 20px; }
+.panel-cta { margin-top: 32px; }
+.promise { border-top: 1px solid var(--divider); padding-block: 24px; }
+.promise:first-child { border-top: 0; padding-top: 0; }
+.promise:last-child { padding-bottom: 0; }
+.promise p { margin-top: 8px; color: var(--sub); }
+@media (max-width: 1023px) {
+  .panel-grid { grid-template-columns: 1fr; }
+  .panel { border-radius: var(--r-tile); }
+}
+
+/* 구간 3: 요금 */
+.price-grid { max-width: 840px; }
+.price { padding: 32px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.price-amount { margin-top: 16px; font-size: clamp(44px, 4.4vw, 56px); font-weight: 800; letter-spacing: -2px; line-height: 1.1; }
+.price-amount span { margin-left: 4px; font-size: 22px; font-weight: 700; letter-spacing: 0; }
+.inc { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--brand); font-weight: 700; }
+.spec { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--divider); color: var(--sub); }
+.notes { display: grid; gap: 8px; margin-top: 28px; color: var(--sub); }
+.notes li { display: flex; gap: 12px; }
+.notes li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+
+.page-end { height: clamp(72px, 9vw, 128px); }

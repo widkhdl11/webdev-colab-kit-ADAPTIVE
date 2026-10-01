@@ -1,39 +1,7 @@
-@import "tailwindcss";
+/* 전역 스타일은 토큰과 공통 기본 스타일 두 개뿐이다. 화면별 스타일은 각 위젯의 CSS 모듈에 있다.
+   Tailwind 기본 초기화(preflight)는 쓰지 않는다 — v4 시안이 브라우저 기본값 위에서 실측됐다. */
 @import "../shared/ui/tokens.css";
-
-/* Tailwind 유틸리티 이름 ↔ 토큰 (bg-brand, text-ink, rounded-card …) */
-@theme inline {
-  --color-brand: var(--brand);
-  --color-brand-hover: var(--brand-hover);
-  --color-page: var(--page);
-  --color-paper: var(--paper);
-  --color-ink: var(--ink);
-  --color-muted: var(--muted);
-  --color-spark: var(--spark);
-  --color-spark-soft: var(--spark-soft);
-  --color-tint: var(--tint);
-  --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
-  --color-canvas: var(--canvas);
-  --color-line: var(--line);
-  --color-on-brand: var(--on-brand);
-  --radius-card: var(--radius-card);
-  --radius-button: var(--radius-button);
-  --radius-float: var(--radius-float);
-  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-}
-
-body {
-  margin: 0;
-  background: var(--canvas);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@import "../shared/ui/base.css";
+/* 헤더·푸터는 모든 화면에 붙어 사실상 전역이다. 전역 CSS 는 app 안에서 불러오는 것이 Next.js 권장이라 여기서 불러온다. */
+@import "../widgets/site-header/ui/site-header.css";
+@import "../widgets/site-footer/ui/site-footer.css";

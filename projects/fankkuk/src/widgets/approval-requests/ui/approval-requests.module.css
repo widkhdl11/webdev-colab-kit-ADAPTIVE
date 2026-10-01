@@ -1,0 +1,12 @@
+/* 승인 요청 화면 — 시안 v4 creator-requests.html <style> 와 v4.css 13·14절(page-title·page-end) */
+.page-title { padding-block: clamp(32px, 4vw, 56px) 24px; }
+.page-title p { margin-top: 8px; color: var(--sub); font-size: 18px; }
+.page-end { height: clamp(72px, 9vw, 128px); }
+
+.rule-line { display: flex; align-items: center; gap: 16px; padding-block: 8px 24px; }
+.ico { width: 56px; height: 56px; }
+.rule-line strong { font-size: 18px; letter-spacing: -.3px; }
+
+@media (max-width: 767px) {
+  .ico { width: 48px; height: 48px; }
+}

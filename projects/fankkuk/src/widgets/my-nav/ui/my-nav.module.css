@@ -1,0 +1,16 @@
+/* 내 정보 틀 — PC 왼쪽 세로 메뉴, 767px 이하 위 탭(design-rules 5절). 시안 my-info.html · my-following.html · my-gifts.html 의 <style> */
+.title { padding-block: clamp(32px, 4vw, 56px) 24px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: clamp(72px, 9vw, 128px); }
+.side ul { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); box-shadow: 0 1px 0 var(--divider); }
+.side ul::-webkit-scrollbar { display: none; }
+.side a { display: flex; align-items: center; min-height: 52px; padding: 0 14px; white-space: nowrap; border-bottom: 3px solid transparent; color: var(--sub); font-weight: 600; text-decoration: none; }
+.side a:hover { color: var(--ink); }
+.side a[aria-current="page"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--brand); }
+@media (min-width: 768px) {
+  .grid { grid-template-columns: 224px minmax(0, 1fr); gap: 64px; }
+  .side { position: sticky; top: 96px; align-self: start; }
+  .side ul { flex-direction: column; overflow: visible; margin: 0; padding: 0; box-shadow: none; }
+  .side a { min-height: 48px; border-radius: var(--r-btn); border-bottom: 0; }
+  .side a:hover { background: var(--surface); }
+  .side a[aria-current="page"] { background: var(--surface); }
+}

@@ -1,0 +1,44 @@
+/* 공지사항 화면 전용 — 시안 docs/design/mockups/site/v4/notices.html <style> */
+
+/* 제목 줄 + 오른쪽 아이콘 칸 */
+.page-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: clamp(32px, 4vw, 56px) clamp(24px, 3vw, 40px); }
+.tile-ico { display: grid; place-items: center; width: 104px; height: 104px; border-radius: var(--r-tile); background: var(--surface); flex-shrink: 0; }
+.tile-ico img { width: 72px; height: 72px; }
+
+/* 공지 목록 — 한 줄에 하나, 눌러서 펼친다 */
+.nl { border-top: 1px solid var(--divider); }
+.nl > li { border-bottom: 1px solid var(--divider); }
+.nl summary { display: flex; align-items: center; gap: 16px; min-height: 76px; padding-block: 12px; cursor: pointer; list-style: none; }
+.nl summary::-webkit-details-marker { display: none; }
+.pin { flex: 0 0 56px; }
+.t { flex: 1; min-width: 0; font-size: 18px; font-weight: 600; letter-spacing: -.2px; }
+.d { color: var(--sub); white-space: nowrap; }
+.nl summary:hover .t { text-decoration: underline; text-underline-offset: 4px; }
+.chev { color: var(--sub); transition: transform .15s; }
+.nl details[open] > summary .chev { transform: rotate(180deg); }
+.body { display: grid; gap: 12px; max-width: 760px; padding: 4px 0 32px 72px; }
+.signature { color: var(--sub); }
+.link { color: var(--brand); font-weight: 700; text-underline-offset: 4px; }
+.dots { display: grid; gap: 8px; }
+.dots li { display: flex; gap: 12px; }
+.dots li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+
+/* 쪽 넘김 */
+.pager { display: flex; justify-content: center; gap: 8px; margin-top: 48px; }
+.pager a, .pager span { display: grid; place-items: center; min-width: 44px; height: 44px; border-radius: var(--r-btn); text-decoration: none; font-weight: 600; }
+.pager a:hover { background: var(--surface); }
+.pager a[aria-current="page"] { background: var(--brand); color: var(--on-brand); }
+.pager span { color: var(--faint); }
+
+.page-end { height: clamp(72px, 9vw, 128px); }
+
+@media (max-width: 767px) {
+  .tile-ico { width: 72px; height: 72px; border-radius: var(--r-card); }
+  .tile-ico img { width: 48px; height: 48px; }
+  .nl summary { gap: 12px; }
+  .pin { flex-basis: auto; }
+  .pin:empty { display: none; }
+  .t { font-size: 17px; }
+  .d { display: none; }
+  .body { padding-left: 0; }
+}

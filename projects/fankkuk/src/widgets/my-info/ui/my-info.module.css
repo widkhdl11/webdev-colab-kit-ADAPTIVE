@@ -1,0 +1,20 @@
+/* 내 정보 — 개인정보. 시안 docs/design/mockups/site/v4/my-info.html 의 <style> */
+.h { margin-bottom: 16px; font-size: 28px; letter-spacing: -.8px; }
+.form { border-top: 1px solid var(--divider); }
+.row { display: grid; grid-template-columns: 160px minmax(0, 520px); gap: 8px 24px; align-items: start; padding-block: 24px; border: 0; border-bottom: 1px solid var(--divider); margin: 0; min-width: 0; }
+.lb { padding: 14px 0 0; font-weight: 600; }
+.row :global(.input)[readonly] { box-shadow: none; color: var(--sub); }
+.with-btn { display: flex; gap: 8px; }
+.with-btn :global(.input) { flex: 1; min-width: 0; }
+.with-btn :global(.btn) { flex-shrink: 0; height: 56px; }
+.checks { display: grid; gap: 4px; }
+.checks label { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
+.checks input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); }
+.checks .hint-tight { margin-top: 4px; }
+.save-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; }
+.leave { display: inline-flex; align-items: center; min-height: 44px; color: var(--sub); text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 767px) {
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .lb { padding-top: 0; }
+  .save-bar :global(.row) { flex-wrap: nowrap; }
+}

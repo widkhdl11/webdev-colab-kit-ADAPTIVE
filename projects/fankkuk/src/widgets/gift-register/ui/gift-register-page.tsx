@@ -1,20 +1,16 @@
 import { RegisterForm, type CreatorOption } from "@/features/gift-register/ui/register-form";
-import { AppHeader } from "@/shared/ui/app-header";
-import s from "@/shared/ui/screen.module.css";
+import s from "./gift-register.module.css";
 
-// 팬 — 선물 등록. 시각 기준: docs/design/design-rules.md (메인에서 승인된 방향을 물려받음)
-export function GiftRegisterPage({ creators }: { creators: readonly CreatorOption[] }) {
+// 팬 — 선물 보내기 본문. 시안: docs/design/mockups/site/v4/send.html (4단계, 카드 안 이전·다음, PC 오른쪽 요약)
+// 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리 import 하지 않게.
+export function GiftRegisterPage({ creators, initialCreatorId }: { creators: readonly CreatorOption[]; initialCreatorId?: string }) {
   return (
-    <div className={`${s.root} ${s.page}`}>
-      <AppHeader link={{ href: "/gifts", label: "내 선물" }} />
-      <main className={s.main}>
-        <p className={s.eyebrow}>선물 등록</p>
-        <h1>어떤 선물을 보낼까요?</h1>
-        <p className={s.lead}>등록하면 크리에이터에게 승인 요청이 가요. 승인된 선물만 배송돼요.</p>
-        <div className={s.section}>
-          <RegisterForm creators={creators} />
-        </div>
-      </main>
-    </div>
+    <main id="main">
+      <div className={`container ${s["page-title"]}`}>
+        <h1 className="page-h">선물 보내기</h1>
+        <p>누구에게, 무엇을, 몇 상자 보낼지 알려 주세요.</p>
+      </div>
+      <RegisterForm creators={creators} initialCreatorId={initialCreatorId} />
+    </main>
   );
 }

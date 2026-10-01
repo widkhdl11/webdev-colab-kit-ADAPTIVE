@@ -85,3 +85,15 @@ export function hasShipped(view: FanGiftView): boolean {
 export function fanProgress(view: FanGiftView): { done: number; total: number } {
   return { done: view.steps.filter((st) => st.state === "done").length, total: view.steps.length };
 }
+
+/** 헤더 선물 아이콘의 모양. 승인 대기 = 모래시계(점선), 배송 완료 = 체크(초록 채움), 그 사이 = 트럭.
+ *  진행이 끝난 선물(받지 않음·반송·취소)은 헤더에 띄우지 않는다 — null. */
+export type HeaderGiftState = "wait" | "move" | "done";
+
+export function headerGiftState(view: FanGiftView): HeaderGiftState | null {
+  if (view.outcome !== "in_progress") return null;
+  const current = currentKey(view);
+  if (!current) return "done";
+  if (current === "approved") return "wait";
+  return "move";
+}

@@ -1,0 +1,49 @@
+/* 주소와 설정 화면 — 시안 v4 creator-settings.html <style> 와 v4.css 13·14절(page-title·page-end) */
+.page-title { padding-block: clamp(32px, 4vw, 56px) 24px; }
+.page-title p { margin-top: 8px; color: var(--sub); font-size: 18px; }
+.page-end { height: clamp(72px, 9vw, 128px); }
+
+/* 카카오 인증 버튼만 카카오 노란색 (design-rules 1절). 전역 .btn 보다 앞서게 두 클래스로 */
+.kakao:global(.btn) { background: var(--kakao); color: var(--kakao-ink); box-shadow: none; }
+.kakao:global(.btn):hover { background: var(--kakao-hover); }
+
+.set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(40px, 6vw, 96px); align-items: start; margin-top: 24px; }
+.col { display: grid; gap: clamp(48px, 5vw, 72px); }
+.anchor { scroll-margin-top: 88px; } /* 붙박이 헤더(72px) 아래로 */
+.s-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.s-head h2 { font-size: 26px; letter-spacing: -.6px; }
+
+.addr { display: flex; align-items: center; gap: 20px; padding: 28px; border-radius: var(--r-tile); background: var(--surface); }
+.addr-ico { width: 72px; height: 72px; }
+.addr-t { margin-bottom: 4px; font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
+.note { margin-block: 16px 20px; }
+
+.blist { border-top: 1px solid var(--divider); }
+.brow { display: flex; align-items: center; gap: 16px; padding-block: 16px; border-bottom: 1px solid var(--divider); }
+.who { flex: 1; min-width: 0; display: grid; }
+
+.kv { margin-top: 24px; }
+.kv > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; padding-block: 14px; border-top: 1px solid var(--divider); }
+.kv dt { color: var(--sub); }
+.kv dd { font-weight: 600; }
+
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; padding-block: 14px; border-top: 1px solid var(--divider); }
+.txt { display: grid; }
+.txt strong { font-weight: 600; }
+.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 52px; height: 32px; margin: 0; border-radius: var(--r-pill); background: var(--field-line); cursor: pointer; transition: background .15s; }
+.switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--white); transition: transform .15s; }
+.switch:checked { background: var(--brand); }
+.switch:checked::after { transform: translateX(20px); }
+.save { margin-top: 24px; }
+
+.sheet-sub { margin-top: 8px; }
+.sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+
+@media (max-width: 1023px) {
+  .set-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 767px) {
+  .addr { gap: 16px; padding: 20px; }
+  .addr-ico { width: 56px; height: 56px; }
+  .kv > div { grid-template-columns: 1fr; gap: 2px; }
+}

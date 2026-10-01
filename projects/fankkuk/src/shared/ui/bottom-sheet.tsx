@@ -3,8 +3,8 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import b from "./bottom-sheet.module.css";
 
-// 화면 아래에서 올라오는 확인 창. 브라우저 기본 <dialog> 의 모달 모드를 써서
-// 포커스가 창 안에 머물고 Esc 로 닫힌다.
+// 확인 창. 767px 이하는 화면 아래에서 올라오고, 768px 이상은 가운데 뜬다(시안 v4 creator-requests·creator-settings).
+// 브라우저 기본 <dialog> 의 모달 모드를 써서 포커스가 창 안에 머물고 Esc 로 닫힌다.
 export function BottomSheet({
   open,
   title,
@@ -12,7 +12,7 @@ export function BottomSheet({
   children,
 }: {
   open: boolean;
-  title: string;
+  title: ReactNode;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -37,10 +37,17 @@ export function BottomSheet({
       }}
     >
       <div className={b.body}>
-        <span className={b.handle} aria-hidden="true" />
-        <h2 id={titleId} className={b.title}>
-          {title}
-        </h2>
+        <span className={b.grip} aria-hidden="true" />
+        <div className={b.head}>
+          <h2 id={titleId} className={b.title}>
+            {title}
+          </h2>
+          <button className={b.close} type="button" aria-label="닫기" onClick={onClose}>
+            <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="m4 4 12 12M16 4 4 16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
         {children}
       </div>
     </dialog>

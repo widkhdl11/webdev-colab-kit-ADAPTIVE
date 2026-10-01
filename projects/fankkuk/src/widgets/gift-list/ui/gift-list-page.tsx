@@ -1,57 +1,132 @@
 import Link from "next/link";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
-import { fanBadge, fanHeadline, fanProgress } from "@/entities/order/ui/fan-stage-copy";
-import { formatDateTime } from "@/shared/lib/format/datetime";
-import { AppHeader } from "@/shared/ui/app-header";
-import s from "@/shared/ui/screen.module.css";
-import l from "./gift-list.module.css";
+import { CreatorFace } from "@/entities/creator/ui/creator-face";
+import { fanBadge, fanProgress } from "@/entities/order/ui/fan-stage-copy";
+import { formatDate } from "@/shared/lib/format/datetime";
+import { GiftTabs } from "./gift-tabs";
+import s from "./gift-list.module.css";
 
-// 팬 — 내 선물 목록. 카드 하나를 누르면 상태 화면으로 간다.
-export function GiftListPage({ gifts }: { gifts: readonly FanGiftView[] }) {
+// 팬 — 선물 내역(내 정보 안). 시안: docs/design/mockups/site/v4/my-gifts.html
+// 진행 중 · 끝난 선물 · 받지 않은 선물, 한 줄에 하나. 받지 않은 선물은 거절·자동 반려 모두 같은 모습이다(fan-view).
+// 내 정보 틀(제목·왼쪽 메뉴)과 <main> 은 라우트가 붙인다.
+
+function GiftRow({ gift, faceTone }: { gift: FanGiftView; faceTone: string | undefined }) {
+  const badge = fanBadge(gift);
+  const progress = fanProgress(gift);
+  const who = `${gift.creatorName}님께`;
   return (
-    <div className={`${s.root} ${s.page}`}>
-      <AppHeader link={{ href: "/gifts/new", label: "선물 등록" }} />
-      <main className={s.main}>
-        <p className={s.eyebrow}>내 선물</p>
-        <h1>보낸 선물이 지금 어디 있는지 확인하세요</h1>
-        {gifts.length === 0 ? (
-          <div className={`${s["card-tint"]} ${s.section}`}>
-            <p>아직 등록한 선물이 없어요.</p>
-            <Link className={`${s.button} ${l.cta}`} href="/gifts/new">
-              선물 등록하기
-            </Link>
-          </div>
+    <li className={s["gift-row"]}>
+      <CreatorFace tone={faceTone ?? "var(--face-1)"} />
+      <div>
+        <p className={s.who}>{who}</p>
+        <p className={s.says}>
+          {gift.itemKind} · 상자 {gift.boxCount}개 · 등록 {formatDate(gift.registeredAt)} · 주문번호 {gift.orderNo}
+        </p>
+      </div>
+      <div className={s.meter}>
+        {gift.outcome === "in_progress" ? (
+          <>
+            <div
+              className="dots"
+              role="progressbar"
+              aria-label={`${who} 보낸 선물 ${gift.orderNo} 진행 단계`}
+              aria-valuemin={0}
+              aria-valuemax={progress.total}
+              aria-valuenow={progress.done}
+              aria-valuetext={`${progress.total}단계 중 ${progress.done}단계 완료, ${badge.text}`}
+            >
+              {gift.steps.map((st) => (
+                <span key={st.key} className={st.state === "done" ? "on" : undefined} />
+              ))}
+            </div>
+            <small>
+              {badge.text} · {progress.done}/{progress.total}
+            </small>
+          </>
         ) : (
-          <ul className={`${s.list} ${s.section}`} role="list">
-            {gifts.map((g) => {
-              const badge = fanBadge(g);
-              const progress = fanProgress(g);
-              return (
-                <li key={g.orderNo}>
-                  <Link className={l.item} href={`/gifts/${g.orderNo}`}>
-                    <span className={l.head}>
-                      <span className={badge.tone === "brand" ? s.pill : s["pill-plain"]}>{badge.text}</span>
-                      <span className={s.muted}>{g.orderNo}</span>
-                    </span>
-                    <span className={l.title}>
-                      {g.creatorName}에게 · {g.itemKind}
-                    </span>
-                    <span className={s.muted}>{fanHeadline(g)}</span>
-                    {g.outcome === "in_progress" ? (
-                      <span className={l.dots} aria-label={`${progress.total}단계 중 ${progress.done}단계 완료`} role="img">
-                        {g.steps.map((st) => (
-                          <span key={st.key} className={l[`dot-${st.state}`]} />
-                        ))}
-                      </span>
-                    ) : null}
-                    <span className={l.date}>{formatDateTime(g.registeredAt)} 등록</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <span className={badge.tone === "brand" ? "tag tag--brand" : "tag"}>{badge.text}</span>
         )}
-      </main>
+      </div>
+      <Link className={`link-arrow ${s.go}`} href={`/gifts/${gift.orderNo}`} aria-label={`${who} 보낸 선물 ${gift.orderNo} 상세`}>
+        상세 보기 ›
+      </Link>
+    </li>
+  );
+}
+
+function Rows({
+  gifts,
+  empty,
+  faceToneByName,
+}: {
+  gifts: readonly FanGiftView[];
+  empty: string;
+  faceToneByName: Readonly<Record<string, string>>;
+}) {
+  if (gifts.length === 0) {
+    return (
+      <div className={s.empty}>
+        <p>{empty}</p>
+        <Link className="link-arrow" href="/gifts/new">
+          선물 보내기 ›
+        </Link>
+      </div>
+    );
+  }
+  return (
+    <ul className={s["gift-rows"]}>
+      {gifts.map((g) => (
+        <GiftRow key={g.orderNo} gift={g} faceTone={faceToneByName[g.creatorName]} />
+      ))}
+    </ul>
+  );
+}
+
+export function GiftListPage({
+  gifts,
+  faceToneByName,
+}: {
+  gifts: readonly FanGiftView[];
+  /** 크리에이터 이름 → 얼굴 면 색. 메인 화면과 같은 색을 쓴다. */
+  faceToneByName: Readonly<Record<string, string>>;
+}) {
+  // 수령까지 끝난 선물과 반송·취소는 「끝난 선물」, 거절·자동 반려는 「받지 않은 선물」
+  const finished = (g: FanGiftView) => g.outcome === "in_progress" && fanProgress(g).done === fanProgress(g).total;
+  const ongoing = gifts.filter((g) => g.outcome === "in_progress" && !finished(g));
+  const ended = gifts.filter((g) => finished(g) || g.outcome === "returned" || g.outcome === "canceled");
+  const notAccepted = gifts.filter((g) => g.outcome === "not_accepted");
+
+  return (
+    <div>
+      <div className={s["my-h"]}>
+        <h2>선물 내역</h2>
+      </div>
+      <GiftTabs
+        tabs={[
+          {
+            id: "ongoing",
+            label: `진행 중 ${ongoing.length}`,
+            panel: <Rows gifts={ongoing} faceToneByName={faceToneByName} empty="지금 진행 중인 선물이 없어요." />,
+          },
+          {
+            id: "ended",
+            label: `끝난 선물 ${ended.length}`,
+            panel: <Rows gifts={ended} faceToneByName={faceToneByName} empty="아직 끝난 선물이 없어요." />,
+          },
+          {
+            id: "not-accepted",
+            label: `받지 않은 선물 ${notAccepted.length}`,
+            panel: (
+              <>
+                <p className={s["note-line"]}>
+                  크리에이터가 받지 않기로 했거나 승인 시간이 지난 선물이에요. 결제 금액은 주문 상태에 따라 돌려드려요.
+                </p>
+                <Rows gifts={notAccepted} faceToneByName={faceToneByName} empty="받지 않은 선물이 없어요." />
+              </>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }

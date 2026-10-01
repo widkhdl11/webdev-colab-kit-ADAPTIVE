@@ -1,0 +1,63 @@
+/* 사이트 헤더·선물 상태 아이콘(전역 클래스) — 시안 docs/design/mockups/site/v4/v4.css 4·5절 을 옮김. 색·반경은 tokens.css 토큰으로. */
+/* 4 헤더 — guest / fan 이 같은 구조 */
+.site-header { position: sticky; top: 0; z-index: 40; background: var(--white); box-shadow: 0 1px 0 var(--divider); }
+.header-inner { display: flex; align-items: center; gap: 24px; min-height: 72px; }
+.logo { display: inline-flex; align-items: center; gap: 8px; font-size: 24px; font-weight: 800; letter-spacing: -.5px; text-decoration: none; }
+.nav { flex: 1; }
+.nav ul { display: flex; gap: 2px; }
+.nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: var(--r-btn-sm); font-weight: 600; text-decoration: none; }
+.nav a:hover { background: var(--surface); }
+.nav a[aria-current="page"] { color: var(--brand); font-weight: 700; }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.user-menu { position: relative; }
+.user-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 4px 12px 4px 4px; border: 0; border-radius: var(--r-pill); background: var(--surface); cursor: pointer; font-weight: 600; }
+.user-btn .caret { color: var(--sub); }
+.user-dropdown { position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; min-width: 220px; padding: 8px; background: var(--white); border-radius: var(--r-box); box-shadow: var(--float), var(--hair); }
+.user-dropdown a { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: var(--r-btn-sm); text-decoration: none; }
+.user-dropdown a:hover { background: var(--surface); }
+.user-dropdown hr { border: 0; border-top: 1px solid var(--divider); margin: 8px 0; }
+.user-dropdown .who { padding: 8px 12px; color: var(--sub); }
+
+.menu-toggle { display: none; place-items: center; width: 44px; height: 44px; border: 0; border-radius: var(--r-btn); background: var(--surface); cursor: pointer; }
+.mobile-menu { display: none; }
+@media (min-width: 768px) and (max-width: 1023px) {   /* 로고·액션 한 줄 + 네비 두 번째 줄 */
+  .header-inner { flex-wrap: wrap; gap: 0 16px; }
+  .nav { order: 3; flex-basis: 100%; padding-bottom: 8px; }
+  .user-btn .nick { display: none; }
+  .user-btn { padding-right: 8px; }
+}
+@media (max-width: 767px) {
+  .header-inner { gap: 12px; }
+  .nav, .user-menu, .gift-status, .hide-sm { display: none; }
+  .menu-toggle { display: grid; }
+  .mobile-menu { position: absolute; left: 0; right: 0; top: 100%; display: block; max-height: calc(100vh - 72px); overflow-y: auto; background: var(--white); box-shadow: 0 1px 0 var(--divider); padding: 8px var(--gutter) 24px; }
+  .mobile-menu[hidden] { display: none; }
+  .mobile-menu a:not(.btn) { display: flex; align-items: center; min-height: 52px; border-bottom: 1px solid var(--divider); text-decoration: none; font-weight: 600; }
+  .mobile-menu .group-label { margin-top: 16px; color: var(--sub); font-weight: 600; }
+  .mobile-menu .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+}
+
+/* 5 헤더 선물 상태 아이콘 + 말풍선 (기능 유지: 마우스·키보드 말풍선 「선물 4개 중 1번째 · 하루님께 · 배송중」) */
+.gift-status { display: flex; align-items: center; gap: 8px; margin-right: 4px; }
+.gift-item { position: relative; }
+.gift-icon { --gi-hole: var(--surface); display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--surface); color: var(--brand); text-decoration: none; }
+.gift-icon:hover { background: var(--surface-hover); }
+.gift-icon[data-state="wait"] { --gi-hole: var(--white); background: var(--white); color: var(--sub); box-shadow: none; border: 2px dashed var(--field-line); }   /* 승인 대기 — 점선 */
+.gift-icon[data-state="done"] { background: var(--brand); color: var(--on-brand); }                                                                   /* 배송 완료 — 초록 채움, 3일 뒤 사라짐 */
+.gift-more { display: inline-grid; place-items: center; min-width: 44px; height: 44px; padding-inline: 8px; border-radius: var(--r-pill); background: var(--surface); font-weight: 700; text-decoration: none; }
+.gift-more:hover { background: var(--surface-hover); }
+.tip { position: absolute; top: 100%; left: 50%; z-index: 60; padding-top: 8px; transform: translateX(-50%); display: none; }
+.tip.is-open { display: block; }
+.tip-body { display: block; padding: 8px 12px; border-radius: var(--r-btn-sm); background: var(--ink); color: var(--on-brand); font-size: 16px; font-weight: 600; line-height: 1.5; white-space: nowrap; }
+.tip-body::before { content: ""; position: absolute; top: 2px; left: var(--tip-arrow, 50%); width: 12px; height: 12px; background: var(--ink); transform: translateX(-50%) rotate(45deg); border-radius: 2px; }
+.gift-badge { display: none; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 8px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--ink); font-weight: 700; cursor: pointer; }
+.gift-badge .glyph { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: var(--on-brand); }
+@media (max-width: 767px) { .gift-badge { display: inline-flex; } .gift-status { display: none; } }
+
+
+/* 크리에이터 헤더 — 승인 대기 건수 (시안 creator-requests.html) */
+.req-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 8px; border-radius: var(--r-pill); background: var(--surface); color: var(--ink); font-weight: 700; text-decoration: none; }
+.req-pill .glyph { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: var(--on-brand); }
+.req-pill:hover { background: var(--surface-hover); }
+.sheet-all { margin-top: 12px; }

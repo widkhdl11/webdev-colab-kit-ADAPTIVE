@@ -1,0 +1,58 @@
+/* 크리에이터 페이지 — 시안 docs/design/mockups/site/v4/creator.html 의 <style> + v4.css 13절(follow-row·block-head) */
+.crumb a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 16px; color: var(--sub); font-weight: 600; text-decoration: none; }
+.crumb a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+.prof { display: grid; grid-template-columns: 96px minmax(0, 1fr) 240px; align-items: center; gap: 24px 32px; padding-block: 24px clamp(40px, 5vw, 64px); }
+.prof-face { width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0; }
+.intro { margin-top: 4px; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.avg { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--sub); }
+.avg svg { color: var(--brand); }
+.acts { display: grid; gap: 12px; }
+@media (max-width: 767px) { .prof { grid-template-columns: 72px minmax(0, 1fr); gap: 20px 16px; } .prof-face { width: 72px; height: 72px; } .acts { grid-column: 1 / -1; } }
+
+.two { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 6vw, 88px); align-items: start; }
+@media (max-width: 1023px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.part { padding-block: 40px; border-top: 1px solid var(--divider); }
+.part:first-child { border-top: 0; padding-top: 0; }
+.part-h { display: flex; align-items: center; gap: 16px; }
+.part-h h2 { font-size: 28px; letter-spacing: -.8px; }
+.part > p { margin-top: 16px; color: var(--sub); }
+.ico-tile { display: grid; place-items: center; width: 64px; height: 64px; border-radius: var(--r-card); background: var(--surface); flex-shrink: 0; }
+.ico-tile img { width: 44px; height: 44px; }
+.no-h { margin-top: 32px; }
+.no-list { display: grid; gap: 8px; margin-top: 16px; }
+.no-list li { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.x { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); color: var(--sub); }
+.notes { display: grid; gap: 8px; margin-top: 16px; color: var(--sub); }
+.notes li { display: flex; gap: 12px; }
+.notes li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+
+/* 요금 — 회색 판 하나 */
+.fee { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-tile); background: var(--surface); }
+@media (max-width: 1023px) { .fee { position: static; } }
+.fee h2 { font-size: 28px; letter-spacing: -.8px; }
+.fee > p { margin-top: 8px; color: var(--sub); }
+.fee-rows { margin-top: 20px; }
+.fee-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 18px; border-top: 1px solid var(--divider); }
+.fee-row small { display: block; font-size: 16px; color: var(--sub); }
+.fee-row b { font-size: 26px; font-weight: 800; letter-spacing: -.6px; white-space: nowrap; }
+.fee .fee-tag { margin-top: 8px; }
+.fee-tag :global(.tag) { background: var(--brand-soft); color: var(--brand-ink); }
+.fee .note { margin-top: 16px; color: var(--sub); }
+.fee-go { margin-top: 24px; }
+
+/* 이런 크리에이터도 있어요 — 어느 폭에서도 한 줄 */
+.strip { padding-block: clamp(48px, 6vw, 72px) clamp(72px, 9vw, 128px); }
+.block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+.block-head h2 { font-size: clamp(28px, 2.6vw, 34px); letter-spacing: -.8px; }
+.follow-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; margin-top: 32px; }
+.follow { display: grid; justify-items: center; gap: 8px; padding: 8px 0; text-decoration: none; text-align: center; font-weight: 600; border-radius: var(--r-box); }
+.follow:hover { background: var(--surface); }
+.follow small { display: block; color: var(--sub); font-size: 16px; font-weight: 400; }
+@media (max-width: 1023px) {
+  .follow-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scrollbar-width: none; }
+  .follow-row::-webkit-scrollbar { display: none; }
+  .follow-row > li { flex: 0 0 104px; scroll-snap-align: start; }
+}
+@media (max-width: 767px) { .follow-row > li { flex-basis: 88px; } }

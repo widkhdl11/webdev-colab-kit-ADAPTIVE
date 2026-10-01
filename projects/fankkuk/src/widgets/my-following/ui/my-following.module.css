@@ -1,0 +1,19 @@
+/* 내 정보 — 팔로우한 크리에이터. 시안 docs/design/mockups/site/v4/my-following.html 의 <style> */
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+.head h2 { font-size: 28px; letter-spacing: -.8px; }
+.cnt { margin-left: 8px; font-size: 20px; font-weight: 600; color: var(--sub); letter-spacing: 0; }
+
+.list { border-top: 1px solid var(--divider); }
+.row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px 20px; padding-block: 20px; border-bottom: 1px solid var(--divider); }
+.who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.who a { text-decoration: none; }
+.who a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.says { color: var(--sub); }
+.acts { display: flex; gap: 8px; }
+@media (max-width: 767px) { .row { grid-template-columns: 48px minmax(0, 1fr); } .acts { grid-column: 2; } }
+
+.empty { display: grid; justify-items: center; gap: 8px; margin-top: 16px; padding: 48px 24px; border-radius: var(--r-tile); background: var(--surface); text-align: center; }
+.empty h3 { letter-spacing: -.3px; }
+.empty-ico { display: grid; place-items: center; width: 96px; height: 96px; border-radius: var(--r-tile); background: var(--white); margin-bottom: 8px; }
+.empty-ico img { width: 64px; height: 64px; }
+.empty-cta { margin-top: 16px; }
