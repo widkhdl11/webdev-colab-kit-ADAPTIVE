@@ -1,0 +1,417 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v4 — 선물 보내기(팬 로그인) (2026-10-02)
+  [설계 메모]
+  색(6): 맑은 초록 #2E7D64(버튼·강조 글자만) / 글자 #333D39 / 보조 #5C6662 / 흐린 글 #68726E / 옅은 회색 면 #F6F6F8 / 흰 #FFFFFF.
+         원색(분홍·파랑·주황·노랑·초록·보라·청록)은 8개 아이콘과 얼굴 안에서만 나온다.
+  글자 단계: 본문 16/400 · 소제목 22/700 · 구간 제목 46/700 · 첫 화면 제목 66/800(자간 -1.5) · 보조 글은 같은 색의 단계(#5C6662)로.
+  배치: 첫 화면은 가운데 정렬(윗줄 + 큰 제목 + 초록 한 줄 + 알약 검색창 + 아이콘 칸), 아래 구간과 목록은 왼쪽 정렬. 구간 사이는 빈 공간으로만 나눈다(선·색 띠 없음).
+  유일한 포인트 = 둥근 회색 아이콘 칸 한 줄. 그 밖의 모든 곳은 글자·흰 바탕·옅은 안쪽 선만 쓴다.
+  기본값 점검: 「흰 바탕 + 초록 버튼 + 카드 격자」면 아무 사이트에나 나온다. 그래서 카드 격자를 쓰지 않고(구간마다 모양을 다르게:
+  빈 열 / 회색 큰 판 하나 / 가격 두 칸), 팬꾹 소재(상자·트럭·방패·열람 기록)를 직접 그린 아이콘으로 소개 자체를 대신한다.
+  4단계(크리에이터·선물·상자·결제)와 「카드 안 이전·다음, 다음은 카드 오른쪽 아래, PC 1~3단계 카드 높이 같게」 규칙을 그대로 유지(../send.html 의 마크업·스크립트 재사용). 입력창만 경계가 필요해 안쪽 선을 진하게(3:1) 쓴다.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 선물 보내기</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="v4.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-gift" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M13 31h46v24a7 7 0 0 1-7 7H20a7 7 0 0 1-7-7z" fill="#FF6F9A"/><path d="M13 52h46v3a7 7 0 0 1-7 7H20a7 7 0 0 1-7-7z" fill="#E9487B"/><rect x="9" y="22" width="54" height="13" rx="6" fill="#FF8FB1"/><path d="M9 31h54a6 6 0 0 1-6 4H15a6 6 0 0 1-6-4z" fill="#F0608F"/><rect x="31" y="22" width="10" height="40" fill="#FFD04D"/><rect x="37" y="22" width="4" height="40" fill="#F5B52A" opacity=".55"/><ellipse cx="27" cy="17" rx="9" ry="6.5" transform="rotate(-20 27 17)" fill="#FFD04D" stroke="#F5B52A" stroke-width="2.5"/><ellipse cx="45" cy="17" rx="9" ry="6.5" transform="rotate(20 45 17)" fill="#FFD04D" stroke="#F5B52A" stroke-width="2.5"/><circle cx="36" cy="20" r="5" fill="#FFC22E"/><rect x="17" y="38" width="5" height="14" rx="2.5" fill="#fff" opacity=".5"/><rect x="13" y="25" width="13" height="3.5" rx="1.75" fill="#fff" opacity=".55"/></symbol>
+    <symbol id="i-find" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M45 45l15 15" stroke="#FFB020" stroke-width="10" stroke-linecap="round"/><path d="M47 43l12 12" stroke="#FFD25E" stroke-width="3" stroke-linecap="round"/><circle cx="30" cy="30" r="19" fill="#E3F0FF" stroke="#4C8DF6" stroke-width="7"/><path d="M30 42C23 37 19 33.5 19 29a5.5 5.5 0 0 1 11-1.5A5.5 5.5 0 0 1 41 29c0 4.5-4 8-11 13z" fill="#FF5C86"/><path d="M23.500 27.500a3 3 0 0 1 2.500-2" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none" opacity=".7"/><path d="M13.500 23.500A19 19 0 0 1 22 13.500" stroke="#fff" stroke-width="2.500" stroke-linecap="round" fill="none" opacity=".65"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="28" ry="3" fill="#333D39" opacity=".10"/><rect x="5" y="20" width="37" height="30" rx="6" fill="#FF9F43"/><path d="M5 44h37a6 6 0 0 1-6 6H11a6 6 0 0 1-6-6z" fill="#F08423"/><path d="M44 28h10a4 4 0 0 1 3.400 1.900L66 41v9H44z" fill="#FFC15E"/><path d="M48 32h6l6 8.500H48z" fill="#CFE8FF"/><path d="M23 42c-4.500-3.200-6.500-5.500-6.500-8a3.300 3.300 0 0 1 6.500-.9 3.300 3.300 0 0 1 6.500.9c0 2.500-2 4.800-6.500 8z" fill="#fff"/><rect x="9" y="24" width="9" height="3.500" rx="1.750" fill="#fff" opacity=".5"/><circle cx="20" cy="52" r="8" fill="#3A4540"/><circle cx="20" cy="52" r="3" fill="#D9DEDC"/><circle cx="54" cy="52" r="8" fill="#3A4540"/><circle cx="54" cy="52" r="3" fill="#D9DEDC"/></symbol>
+    <symbol id="i-price" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M10 7h34v50l-5.700-4-5.700 4-5.700-4-5.700 4-5.700-4L10 57z" fill="#EEF3FF" stroke="#A9BDF2" stroke-width="2.500" stroke-linejoin="round"/><rect x="17" y="17" width="20" height="4" rx="2" fill="#B9C8EE"/><rect x="17" y="26" width="13" height="4" rx="2" fill="#B9C8EE"/><rect x="17" y="35" width="18" height="4" rx="2" fill="#B9C8EE"/><circle cx="48" cy="44" r="18" fill="#FFC83D"/><path d="M30 44a18 18 0 0 0 18 18 18 18 0 0 0 18-18c0 8-8 12-18 12s-18-4-18-12z" fill="#F2A900" opacity=".55"/><circle cx="48" cy="43" r="12" fill="none" stroke="#F2A900" stroke-width="3"/><text x="48" y="50" font-size="18" font-weight="800" text-anchor="middle" fill="#C77F00" font-family="Pretendard Variable, Pretendard, sans-serif">₩</text><path d="M36 33a14 14 0 0 1 7-5" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".7"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="20" ry="3" fill="#333D39" opacity=".10"/><path d="M36 7l23 8v19c0 14-10 24-23 30C23 58 13 48 13 34V15z" fill="#3DBE8B" stroke="#3DBE8B" stroke-width="4" stroke-linejoin="round"/><path d="M36 7l23 8v19c0 14-10 24-23 30z" fill="#2FA676"/><path d="M25 35l8 8 15-16" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19 19v11" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/></symbol>
+    <symbol id="i-inspect" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><rect x="6" y="28" width="40" height="32" rx="6" fill="#E9A765"/><path d="M6 54h40a6 6 0 0 1-6 6H12a6 6 0 0 1-6-6z" fill="#D58C47"/><rect x="4" y="24" width="44" height="11" rx="5" fill="#F3BE85"/><rect x="21" y="24" width="8" height="36" fill="#FFE08A" opacity=".9"/><rect x="10" y="39" width="5" height="12" rx="2.500" fill="#fff" opacity=".4"/><path d="M57 38l9 9" stroke="#6D3FE0" stroke-width="9" stroke-linecap="round"/><circle cx="47" cy="27" r="14" fill="#EEE6FF" stroke="#8B5CF6" stroke-width="6"/><path d="M41 27.500l4.500 4.500 8-9" stroke="#8B5CF6" stroke-width="3.500" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M36.500 22A13 13 0 0 1 42 16.500" stroke="#fff" stroke-width="2.500" stroke-linecap="round" fill="none" opacity=".7"/></symbol>
+    <symbol id="i-log" viewBox="0 0 72 72"><ellipse cx="36" cy="68" rx="24" ry="2.500" fill="#333D39" opacity=".10"/><path d="M5 28Q36 2 67 28Q36 54 5 28z" fill="#fff" stroke="#4FA3F7" stroke-width="5" stroke-linejoin="round"/><circle cx="36" cy="28" r="12" fill="#3B82F6"/><circle cx="36" cy="28" r="5.500" fill="#1D3E8F"/><circle cx="40" cy="24" r="3" fill="#fff"/><path d="M46 49v-5a8 8 0 0 1 16 0v5" stroke="#8A96A3" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="42" y="47" width="24" height="19" rx="6" fill="#FFB020"/><path d="M42 60h24a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6z" fill="#E59400"/><circle cx="54" cy="55" r="3" fill="#9A5B00"/><rect x="53" y="56" width="2" height="5" rx="1" fill="#9A5B00"/></symbol>
+    <symbol id="i-support" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M22 44l-4 16 18-14z" fill="#25B3A8"/><rect x="6" y="9" width="60" height="40" rx="16" fill="#2DBFB3"/><path d="M6 37h60v-0a16 16 0 0 1-16 12H22A16 16 0 0 1 6 37z" fill="#25B3A8" opacity=".75"/><circle cx="24" cy="29" r="4.500" fill="#fff"/><circle cx="36" cy="29" r="4.500" fill="#fff"/><circle cx="48" cy="29" r="4.500" fill="#fff"/><rect x="12" y="14" width="16" height="4" rx="2" fill="#fff" opacity=".45"/></symbol>
+    <!-- 동그란 얼굴: 색은 --c 로 -->
+    <symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.500 3.500 9.500 3.500 12 0" stroke="#333D39" stroke-width="2.600" stroke-linecap="round" fill="none"/><circle cx="12.500" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.500" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+  </defs>
+</svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="home.html" aria-label="팬꾹 메인"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="#fff"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+          <li><a href="../creators.html">크리에이터 찾기</a></li>
+          <li><a href="send.html" aria-current="page">선물 보내기</a></li>
+          <li><a href="../notices.html">공지사항</a></li>
+          <li><a href="../about.html">팬꾹 소개</a></li>
+          <li><a href="../support.html">고객센터</a></li>
+        </ul></nav>
+      <div class="header-actions">
+        <ul class="gift-status" aria-label="진행 중인 선물 4개">
+          <li class="gift-item">
+            <a class="gift-icon" data-state="move" href="../gift.html" aria-label="하루님께 보낸 선물" aria-describedby="tip-1"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/><circle cx="18" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/></svg></a>
+            <span class="tip" role="tooltip" id="tip-1"><span class="tip-body">선물 4개 중 1번째 · 하루님께 · 배송중</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-icon" data-state="wait" href="../gift.html" aria-label="모모님께 보낸 선물" aria-describedby="tip-2"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.400 4.800L14.500 12l2.100.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.400-4.800L9.500 12l-2.100-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="var(--gi-hole)"/></svg></a>
+            <span class="tip" role="tooltip" id="tip-2"><span class="tip-body">선물 4개 중 2번째 · 모모님께 · 승인 대기</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-icon" data-state="done" href="../gift.html" aria-label="새벽달님께 보낸 선물" aria-describedby="tip-3"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.500 4.500 4.500L19 7" fill="none" stroke="currentColor" stroke-width="3.500" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <span class="tip" role="tooltip" id="tip-3"><span class="tip-body">선물 4개 중 3번째 · 새벽달님께 · 배송 완료</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-more" href="../my-gifts.html" aria-label="선물 1개 더 보기" aria-describedby="tip-4">+1</a>
+            <span class="tip" role="tooltip" id="tip-4"><span class="tip-body">선물 4개 중 4번째 · 별이님께 · 입고 대기</span></span>
+          </li>
+        </ul>
+        <button class="gift-badge" type="button" data-sheet-open="gift-sheet" aria-haspopup="dialog">
+          <span class="glyph" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.500" r="3" fill="currentColor" stroke="var(--brand)" stroke-width="2"/><circle cx="18" cy="18.500" r="3" fill="currentColor" stroke="var(--brand)" stroke-width="2"/></svg></span>선물 4
+        </button>
+        <div class="user-menu">
+          <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown" aria-haspopup="true">
+            <span class="avatar" aria-hidden="true">민</span><span class="nick">민지</span>
+            <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" hidden>
+            <p class="who">민지님 · 팬</p>
+            <a href="../my-info.html">내 정보</a>
+            <a href="../my-following.html">팔로우한 크리에이터</a>
+            <a href="../my-gifts.html">선물 내역</a>
+            <hr>
+            <a href="landing.html">로그아웃</a>
+          </div>
+        </div>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="10.500" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.500" fill="currentColor"/></svg></button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="../creators.html">크리에이터 찾기</a>
+          <a href="send.html" aria-current="page">선물 보내기</a>
+          <a href="../notices.html">공지사항</a>
+          <a href="../about.html">팬꾹 소개</a>
+          <a href="../support.html">고객센터</a>
+      <p class="group-label">내 정보 · 민지님</p>
+      <a href="../my-info.html">내 정보</a>
+      <a href="../my-following.html">팔로우한 크리에이터</a>
+      <a href="../my-gifts.html">선물 내역</a>
+      <a href="landing.html">로그아웃</a>
+    </div>
+    <div class="sheet-root" id="gift-sheet" hidden>
+      <div class="sheet-scrim" data-sheet-close></div>
+      <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="gift-sheet-title">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="sheet-head">
+          <h2 id="gift-sheet-title">진행 중인 선물 4개</h2>
+          <button class="sheet-close" type="button" data-sheet-close aria-label="닫기"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="2.500" stroke-linecap="round"/></svg></button>
+        </div>
+        <ul class="sheet-list">
+          <li><a href="../gift.html"><span class="gift-icon" data-state="move"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/><circle cx="18" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/></svg></span><span><strong>하루님께</strong><small>배송중</small></span></a></li>
+          <li><a href="../gift.html"><span class="gift-icon" data-state="wait"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.400 4.800L14.500 12l2.100.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.400-4.800L9.500 12l-2.100-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="var(--gi-hole)"/></svg></span><span><strong>모모님께</strong><small>승인 대기</small></span></a></li>
+          <li><a href="../gift.html"><span class="gift-icon" data-state="done"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.500 4.500 4.500L19 7" fill="none" stroke="currentColor" stroke-width="3.500" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>새벽달님께</strong><small>배송 완료</small></span></a></li>
+          <li><a href="../gift.html"><span class="gift-icon" data-state="move"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/><circle cx="18" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/></svg></span><span><strong>별이님께</strong><small>입고 대기</small></span></a></li>
+        </ul>
+        <a class="btn btn--soft btn--block" style="margin-top:12px" href="../my-gifts.html">선물 내역 전체 보기</a>
+      </section>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container page-title">
+      <h1 class="page-h">선물 보내기</h1>
+      <p>누구에게, 무엇을, 몇 상자 보낼지 알려 주세요.</p>
+    </div>
+
+    <nav class="container steps-wrap" aria-label="선물 보내기 단계">
+      <p class="step-count"><span id="step-count">1 / 4</span> <span>단계</span></p>
+      <ol class="steps">
+        <li><button class="st" type="button" data-go="1"><span class="dot" aria-hidden="true">1</span><span class="lbl">크리에이터</span></button></li>
+        <li><button class="st" type="button" data-go="2"><span class="dot" aria-hidden="true">2</span><span class="lbl">선물</span></button></li>
+        <li><button class="st" type="button" data-go="3"><span class="dot" aria-hidden="true">3</span><span class="lbl">상자</span></button></li>
+        <li><button class="st" type="button" data-go="4"><span class="dot" aria-hidden="true">4</span><span class="lbl">결제</span></button></li>
+      </ol>
+    </nav>
+
+    <section style="padding-block:8px clamp(72px,9vw,128px)">
+      <div class="container send-grid" id="send-grid" data-step="1">
+        <form class="send-form" action="#" onsubmit="return false" aria-label="선물 보내기 입력">
+
+          <!-- 1 크리에이터 -->
+          <fieldset class="step" data-step="1">
+            <legend class="sr-only">받는 크리에이터</legend>
+            <div class="step-h"><h2 id="h-1" tabindex="-1">누구에게 보낼까요?</h2><p>본인 확인을 마친 크리에이터만 찾을 수 있어요.</p></div>
+            <div class="search search--field">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+              <label class="sr-only" for="pick-q">크리에이터 검색</label>
+              <input id="pick-q" type="search" placeholder="이름이나 채널 이름으로 찾아요" autocomplete="off" data-live-filter data-target="#pick-list" data-empty="#pick-empty" data-count="#pick-count">
+            </div>
+            <div class="pick-box">
+            <div class="pick-box-head"><span>크리에이터 목록</span><p class="hint" id="pick-count" role="status" aria-live="polite"></p></div>
+            <ul id="pick-list">
+              <li data-search="하루 haru 게임 하루의 놀이터">
+                <label class="pick"><input type="radio" name="creator" value="haru" checked>
+                  <span class="avatar" aria-hidden="true">하</span>
+                  <span class="pick-text"><strong>하루</strong><small>게임 · 하루의 놀이터 · 평균 승인 약 2시간</small></span>
+                </label>
+              </li>
+              <li data-search="모모 momo 노래 모모네 거실">
+                <label class="pick"><input type="radio" name="creator" value="momo">
+                  <span class="avatar" aria-hidden="true">모</span>
+                  <span class="pick-text"><strong>모모</strong><small>노래 · 모모네 거실 · 평균 승인 약 4시간</small></span>
+                </label>
+              </li>
+              <li data-search="새벽달 saebyeokdal 토크 새벽달 라디오">
+                <label class="pick"><input type="radio" name="creator" value="saebyeokdal">
+                  <span class="avatar" aria-hidden="true">새</span>
+                  <span class="pick-text"><strong>새벽달</strong><small>토크 · 새벽달 라디오 · 평균 승인 약 1시간</small></span>
+                </label>
+              </li>
+              <li data-search="별이 byeol 그림 별이의 작업실">
+                <label class="pick"><input type="radio" name="creator" value="byeol">
+                  <span class="avatar" aria-hidden="true">별</span>
+                  <span class="pick-text"><strong>별이</strong><small>그림 · 별이의 작업실 · 평균 승인 약 3시간</small></span>
+                </label>
+              </li>
+              <li data-search="솜사탕 somsatang 먹방 솜사탕 식탁">
+                <label class="pick"><input type="radio" name="creator" value="somsatang">
+                  <span class="avatar" aria-hidden="true">솜</span>
+                  <span class="pick-text"><strong>솜사탕</strong><small>먹방 · 솜사탕 식탁 · 평균 승인 약 6시간</small></span>
+                </label>
+              </li>
+              <li data-search="도담 dodam 운동 도담 홈트">
+                <label class="pick"><input type="radio" name="creator" value="dodam">
+                  <span class="avatar" aria-hidden="true">도</span>
+                  <span class="pick-text"><strong>도담</strong><small>운동 · 도담 홈트 · 평균 승인 약 2시간</small></span>
+                </label>
+              </li>
+              <li data-search="보리 bori 여행 보리의 지구본">
+                <label class="pick"><input type="radio" name="creator" value="bori">
+                  <span class="avatar" aria-hidden="true">보</span>
+                  <span class="pick-text"><strong>보리</strong><small>여행 · 보리의 지구본 · 평균 승인 약 5시간</small></span>
+                </label>
+              </li>
+              <li data-search="라온 raon 게임 라온 아케이드">
+                <label class="pick"><input type="radio" name="creator" value="raon">
+                  <span class="avatar" aria-hidden="true">라</span>
+                  <span class="pick-text"><strong>라온</strong><small>게임 · 라온 아케이드 · 평균 승인 약 3시간</small></span>
+                </label>
+              </li>
+            </ul>
+            <p class="empty-mini muted" id="pick-empty" hidden role="status" style="margin:12px">찾는 크리에이터가 없어요. 본인 확인을 마친 크리에이터만 선택할 수 있어요.</p>
+            </div>
+          </fieldset>
+
+          <!-- 2 선물 -->
+          <fieldset class="step" data-step="2" hidden>
+            <legend class="sr-only">선물 종류와 전자기기·금속 제품 신고</legend>
+            <div class="step-h"><h2 id="h-2" tabindex="-1">어떤 선물인가요?</h2><p>검수에서 추적 장치와 구분하기 위해 미리 알려 주세요.</p></div>
+            <div class="field">
+              <label for="what">선물 종류 (30자까지)</label>
+              <input class="input" id="what" type="text" maxlength="30" value="손편지와 곰인형" aria-describedby="what-hint">
+              <p class="char-count" id="what-hint">8 / 30자</p>
+            </div>
+            <div class="field" role="radiogroup" aria-labelledby="metal-q" style="margin-top:28px">
+              <p class="label" id="metal-q" style="font-weight:700">전자기기나 금속 제품이 들어 있나요?</p>
+              <div class="radios">
+                <label><input type="radio" name="metal" value="yes"> 네, 있어요</label>
+                <label><input type="radio" name="metal" value="no" checked> 아니요, 없어요</label>
+              </div>
+              <p class="hint">신고한 상자는 검수에 시간이 조금 더 걸릴 수 있어요.</p>
+            </div>
+          </fieldset>
+
+          <!-- 3 상자 -->
+          <section class="step" data-step="3" hidden aria-labelledby="h-3">
+            <div class="step-h"><h2 id="h-3" tabindex="-1">상자는 몇 개인가요?</h2><p>상자마다 배송비가 포함돼 있어요. 0개에서 10개까지 고를 수 있어요.</p></div>
+            <div class="counter">
+              <div><strong>소형 상자</strong><small>세 변 합 100cm · 5kg 이하 · 6,900원</small></div>
+              <div class="qty" role="group" aria-label="소형 상자 수">
+                <button class="qty-btn" type="button" data-box="small" data-d="-1" aria-label="소형 상자 하나 줄이기">&minus;</button>
+                <output id="q-small" aria-live="polite">1</output>
+                <button class="qty-btn" type="button" data-box="small" data-d="1" aria-label="소형 상자 하나 늘리기">+</button>
+              </div>
+            </div>
+            <div class="counter">
+              <div><strong>중형 상자</strong><small>세 변 합 100cm · 10kg 이하 · 8,900원</small></div>
+              <div class="qty" role="group" aria-label="중형 상자 수">
+                <button class="qty-btn" type="button" data-box="mid" data-d="-1" aria-label="중형 상자 하나 줄이기">&minus;</button>
+                <output id="q-mid" aria-live="polite">1</output>
+                <button class="qty-btn" type="button" data-box="mid" data-d="1" aria-label="중형 상자 하나 늘리기">+</button>
+              </div>
+            </div>
+            <p class="warn" id="box-warn" role="status" hidden>상자를 1개 이상 골라야 다음으로 갈 수 있어요.</p>
+            <div class="rule-note"><p><strong>구간은 이렇게 정해져요</strong></p><ul>
+                <li>소형은 세 변의 합 100cm 이하, 5kg 이하예요.</li>
+                <li>중형은 세 변의 합 100cm 이하, 10kg 이하예요.</li>
+                <li>크기와 무게 중 큰 쪽으로 정해져요. 중형보다 큰 상자는 받지 않아요.</li>
+                <li>도착한 상자를 재어 보니 구간이 더 크면, 차액만 따로 결제해요.</li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- 4 확인하고 결제 -->
+          <section class="step" data-step="4" hidden aria-labelledby="h-4">
+            <div class="step-h"><h2 id="h-4" tabindex="-1">확인하고 결제해요</h2><p>맞는지 한 번 더 봐 주세요. 틀린 곳은 「고치기」로 돌아갈 수 있어요.</p></div>
+            <dl>
+              <div class="sum-row"><dt>받는 크리에이터</dt><dd data-out="creator"></dd><button class="fix" type="button" data-go="1" aria-label="받는 크리에이터 고치기">고치기</button></div>
+              <div class="sum-row"><dt>선물 종류</dt><dd data-out="what"></dd><button class="fix" type="button" data-go="2" aria-label="선물 종류 고치기">고치기</button></div>
+              <div class="sum-row"><dt>전자기기·금속 제품</dt><dd data-out="metal"></dd><button class="fix" type="button" data-go="2" aria-label="전자기기·금속 제품 신고 고치기">고치기</button></div>
+              <div class="sum-row"><dt>상자</dt><dd data-out="boxes"></dd><button class="fix" type="button" data-go="3" aria-label="상자 수 고치기">고치기</button></div>
+            </dl>
+            <div id="pay-lines" style="margin-top:16px"></div>
+            <div class="sum-total"><span>합계</span><span class="big" data-out="total"></span></div>
+            <p style="margin-top:12px"><span class="tag tag--brand"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 추적 장치 검수 포함</span></p>
+            <p class="sub" style="margin-top:16px">배송비가 포함된 금액이에요. 도착한 상자를 재어 보니 구간이 더 크면, 차액만 따로 결제해요.</p>
+            <div class="rule-note"><p><strong><span data-out="who"></span>님은 보통 <span data-out="avg"></span> 안에 승인해요</strong></p>
+              <p class="sub" style="margin-top:4px">승인은 크리에이터가 카카오톡 인증서로 선물마다 직접 해요. 승인이 나면 사무실 주소가 열리고, 알림톡으로 알려 드려요. 승인 없이는 저희 시스템이 주소를 열지 않습니다.</p>
+            </div>
+          </section>
+
+          <div class="step-actions no-prev" id="step-actions">
+            <button class="btn btn--line" type="button" id="prev" hidden>이전</button>
+            <button class="btn" type="button" id="next">다음</button>
+          </div>
+        </form>
+        <aside class="summary" id="summary" aria-labelledby="sum-title">
+          <h2 id="sum-title">지금까지 고른 것</h2>
+          <dl style="margin-top:12px">
+            <div class="sum-row" data-from="1"><dt>크리에이터</dt><dd data-out="creator"></dd></div>
+            <div class="sum-row" data-from="2"><dt>선물 종류</dt><dd data-out="what"></dd></div>
+            <div class="sum-row" data-from="2"><dt>전자기기·금속</dt><dd data-out="metal"></dd></div>
+            <div class="sum-row" data-from="3"><dt>상자</dt><dd data-out="boxes"></dd></div>
+          </dl>
+          <div class="sum-total" data-from="3" style="margin-top:4px"><span>합계</span><span class="big" data-out="total"></span></div>
+          <p class="sub" data-from="3" style="margin-top:8px">배송비 포함 · 추적 장치 검수 포함</p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="#fff"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="../support.html">고객센터</a>
+          <a href="../about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+  <script>
+  /* 시안용 단계 전환 — 서버 호출 없음 */
+  (function () {
+    'use strict';
+    var PRICE = { small: 6900, mid: 8900 };
+    var qty = { small: 1, mid: 1 };
+    var step = 1, reached = 1;
+    var grid = document.getElementById('send-grid');
+    var panels = [].slice.call(document.querySelectorAll('.step'));
+    var stBtns = [].slice.call(document.querySelectorAll('.st'));
+    var prev = document.getElementById('prev'), next = document.getElementById('next');
+    var actions = document.getElementById('step-actions');
+    var warn = document.getElementById('box-warn');
+    var won = function (n) { return n.toLocaleString('ko-KR') + '원'; };
+    var total = function () { return qty.small * PRICE.small + qty.mid * PRICE.mid; };
+    var count = function () { return qty.small + qty.mid; };
+
+    function creator() {
+      var r = document.querySelector('input[name="creator"]:checked');
+      var lb = r ? r.closest('label') : null;
+      if (!lb) return { name: '', avg: '' };
+      var m = /평균 승인 (약 \d+시간)/.exec(lb.textContent);
+      return { name: lb.querySelector('strong').textContent, avg: m ? m[1] : '' };
+    }
+    function out(key, val) {
+      [].forEach.call(document.querySelectorAll('[data-out="' + key + '"]'), function (el) { el.textContent = val; });
+    }
+    function boxesText() {
+      var p = [];
+      if (qty.small) p.push('소형 ' + qty.small + '개');
+      if (qty.mid) p.push('중형 ' + qty.mid + '개');
+      return p.length ? p.join(' · ') : '없음';
+    }
+    function render() {
+      var c = creator();
+      var what = document.getElementById('what').value;
+      var metal = document.querySelector('input[name="metal"]:checked').value === 'yes' ? '네, 있어요' : '아니요, 없어요';
+      out('creator', c.name + '님');
+      out('who', c.name);
+      out('avg', c.avg);
+      out('what', what || '아직 안 적었어요');
+      out('metal', metal);
+      out('boxes', boxesText());
+      out('total', won(total()));
+      document.getElementById('what-hint').textContent = what.length + ' / 30자';
+      document.getElementById('q-small').textContent = qty.small;
+      document.getElementById('q-mid').textContent = qty.mid;
+      [].forEach.call(document.querySelectorAll('.qty-btn'), function (b) {
+        var v = qty[b.getAttribute('data-box')], d = +b.getAttribute('data-d');
+        b.disabled = (d < 0 && v <= 0) || (d > 0 && v >= 10);
+      });
+      var lines = '';
+      [['small', '소형'], ['mid', '중형']].forEach(function (t) {
+        if (!qty[t[0]]) return;
+        lines += '<div class="sum-line"><span>' + t[1] + ' 상자 ' + qty[t[0]] + '개 <small>' + PRICE[t[0]].toLocaleString('ko-KR') + '원 × ' + qty[t[0]] + '</small></span><span class="amt">' + won(qty[t[0]] * PRICE[t[0]]) + '</span></div>';
+      });
+      document.getElementById('pay-lines').innerHTML = lines;
+      // 요약: 지난 단계만큼 채운다
+      [].forEach.call(document.querySelectorAll('#summary [data-from]'), function (el) { el.style.display = step >= +el.getAttribute('data-from') ? '' : 'none'; });
+      var empty = count() === 0;
+      warn.hidden = !(step === 3 && empty);
+      next.disabled = step === 3 && empty;
+      next.textContent = step === 4 ? won(total()) + ' 결제하기' : '다음';
+    }
+    function go(n, moveFocus) {
+      step = Math.max(1, Math.min(4, n));
+      reached = Math.max(reached, step);
+      panels.forEach(function (p) { p.hidden = +p.getAttribute('data-step') !== step; });
+      grid.setAttribute('data-step', step);
+      stBtns.forEach(function (b, i) {
+        var k = i + 1;
+        b.classList.toggle('is-done', k !== step && k <= reached);
+        b.disabled = k > reached;
+        if (k === step) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+        b.querySelector('.dot').textContent = (k < step) ? '✓' : k;
+      });
+      document.getElementById('step-count').textContent = step + ' / 4';
+      prev.hidden = step === 1;
+      actions.classList.toggle('no-prev', step === 1);
+      render();
+      if (moveFocus) {
+        var h = document.getElementById('h-' + step);
+        h.focus({ preventScroll: true });
+        document.querySelector('.steps-wrap').scrollIntoView({ block: 'start', behavior: 'instant' });
+      }
+    }
+    stBtns.forEach(function (b) { b.addEventListener('click', function () { go(+b.getAttribute('data-go'), true); }); });
+    [].forEach.call(document.querySelectorAll('.fix'), function (b) { b.addEventListener('click', function () { go(+b.getAttribute('data-go'), true); }); });
+    prev.addEventListener('click', function () { go(step - 1, true); });
+    next.addEventListener('click', function () { if (!next.disabled && step < 4) go(step + 1, true); });
+    [].forEach.call(document.querySelectorAll('.qty-btn'), function (b) {
+      b.addEventListener('click', function () {
+        var k = b.getAttribute('data-box');
+        qty[k] = Math.max(0, Math.min(10, qty[k] + +b.getAttribute('data-d')));
+        render();
+      });
+    });
+    document.addEventListener('input', render);
+    document.addEventListener('change', render);
+    go(1, false);
+  })();
+  </script>
+</body>
+</html>
