@@ -9,6 +9,7 @@ import {
   fanProgress,
   fanStepDetail,
   hasShipped,
+  RETURN_ON_INSPECTION_NOTICE,
   RETURN_ON_REJECT_NOTICE,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
@@ -114,6 +115,12 @@ export function GiftStatusPage({ view }: { view: FanGiftView }) {
 
           <div className={s.two}>
             <div>
+              {view.outcome === "returned" ? (
+                <div className={s.part}>
+                  <h2>돌려보내 드렸어요</h2>
+                  <p className={s["sub-t"]}>{RETURN_ON_INSPECTION_NOTICE}</p>
+                </div>
+              ) : null}
               {view.outcome === "not_accepted" ? (
                 <div className={s.part}>
                   <h2>이 선물은 보내지 마세요</h2>

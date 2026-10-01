@@ -14,8 +14,10 @@ describe("환불 금액 (INV-M8)", () => {
     expect(refundAmountFor({ reason, arrived, shipped: false, charge: paid })).toBe(expected);
   });
 
-  it("INV-M8 (S8): 입고 뒤 검수 불합격은 배송비 칸만 환불", () => {
-    expect(refundAmountFor({ reason: "inspection_failed", arrived: true, shipped: false, charge: paid })).toBe(ship);
+  it("INV-M8 (S8): 입고 뒤 검수 불합격은 검수비(서비스료)와 반송비(배송비 칸)를 모두 빼 상품 대금 칸만 환불", () => {
+    expect(refundAmountFor({ reason: "inspection_failed", arrived: true, shipped: false, charge: paid })).toBe(0);
+    const withGoods = { goodsKrw: 10000, serviceFeeKrw: 2900, shippingFeeKrw: 4000, totalKrw: 16900 };
+    expect(refundAmountFor({ reason: "inspection_failed", arrived: true, shipped: false, charge: withGoods })).toBe(10000);
   });
 
   it.each(["rejected", "expired"] as const)("INV-M8 (S8): 입고 뒤 %s 는 반송 택배비(배송비 칸)를 뺀 금액을 환불", (reason) => {

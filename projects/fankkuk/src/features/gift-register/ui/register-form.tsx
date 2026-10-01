@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
-import { RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
+import { RETURN_ON_INSPECTION_NOTICE, RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { BILLABLE_TIERS, TIER_PRICE_KRW, type BillableTier } from "@/entities/payment/config/tier-pricing";
 import { formatDuration } from "@/shared/lib/format/datetime";
@@ -444,9 +444,10 @@ export function RegisterForm({
               {/* 승인을 기다리지 않고 보내는 대신 거절되면 반송비를 뺀다 — 결제 전에 반드시 보이게 조건 없이 둔다(2026-10-02 사용자 결정) */}
               <div className={f["rule-note"]} role="note" aria-labelledby="return-notice-title">
                 <p id="return-notice-title">
-                  <strong>크리에이터가 거절하면 반송돼요</strong>
+                  <strong>이럴 때는 돌려보내 드려요</strong>
                 </p>
                 <p className={f["rule-note-sub"]}>{RETURN_ON_REJECT_NOTICE}</p>
+                <p className={f["rule-note-sub"]}>{RETURN_ON_INSPECTION_NOTICE}</p>
               </div>
               {picked ? (
                 <div className={f["rule-note"]}>
