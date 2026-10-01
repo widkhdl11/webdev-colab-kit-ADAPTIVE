@@ -8,7 +8,7 @@
 
 - `fankkuk-20261001-1` — 킥오프(새 웹사이트 팬꾹). 2026-10-01 열림 — 사용자 「응 진행」.
   원본 두 문서(docs/reference/)에서 PRODUCT.md·DECISIONS.md 작성, 로그인·기술·첫 출시 범위 답 반영.
-  로그: `logs/DECISION_LOG.fankkuk-20261001-1.md`. 남은 것: PRODUCT.md 시작 승인 → setup.
+  로그: `logs/DECISION_LOG.fankkuk-20261001-1.md`. 2026-10-01 랩업 시점: 제품 정의·스택·스펙 3개·디자인 기준 승인, 메인 화면까지. 남은 것: 나머지 화면·DB·외부 연결(KMS·딜러사·택배사).
 
 ## 다음 사이클 대기
 
