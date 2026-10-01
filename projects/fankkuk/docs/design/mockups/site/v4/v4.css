@@ -275,9 +275,10 @@ h3 { font-size: 22px; line-height: 1.4; font-weight: 700; letter-spacing: -.3px;
 .notice-list .t { flex: 1; min-width: 0; font-weight: 600; }
 .notice-list .d { color: var(--sub); }
 .page-end { height: clamp(72px, 9vw, 128px); }
-@media (max-width: 1023px) { .follow-row { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* 크리에이터 줄은 어느 폭에서도 한 줄 — 좁으면 줄 안에서 옆으로 민다 (사용자 「한줄로. 두~세줄되면 이상해」) */
+@media (max-width: 1023px) { .follow-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; margin-inline: calc(-1 * var(--gutter, 24px)); padding-inline: var(--gutter, 24px); scrollbar-width: none; } .follow-row::-webkit-scrollbar { display: none; } .follow-row > li { flex: 0 0 104px; scroll-snap-align: start; } }
 @media (max-width: 767px) {
-  .follow-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .follow-row > li { flex-basis: 88px; }
   .gift-row { grid-template-columns: 48px minmax(0, 1fr); gap: 12px 16px; padding-block: 20px; }
   .gift-row .meter { grid-column: 2; justify-items: start; grid-auto-flow: column; justify-content: space-between; align-items: center; }
   .gift-row .go { grid-column: 2; justify-self: start; }
