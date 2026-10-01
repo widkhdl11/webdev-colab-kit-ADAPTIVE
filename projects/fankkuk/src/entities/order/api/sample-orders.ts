@@ -65,6 +65,22 @@ export const SAMPLE_ORDERS: readonly OrderRecord[] = [
     registeredAt: "2026-10-03T11:30:00.000Z",
   },
   {
+    // 승인을 기다리지 않고 보내서 검수까지 끝났고, 출고가 크리에이터 승인만 기다리는 선물
+    ...none,
+    orderNo: "FC-W5N3T",
+    creatorId: "c2",
+    creatorName: "모모",
+    fanNickname: "별빛",
+    itemKind: "손편지와 머리끈",
+    boxCount: 1,
+    hasElectronicsOrMetal: false,
+    status: "inspected",
+    registeredAt: "2026-10-02T02:00:00.000Z",
+    receivedAt: "2026-10-03T01:10:00.000Z",
+    inspection: { result: "passed", at: "2026-10-03T02:00:00.000Z" },
+    fanTrackingNo: "584012379911",
+  },
+  {
     ...none,
     orderNo: "FC-H8J2W",
     creatorId: "c3",

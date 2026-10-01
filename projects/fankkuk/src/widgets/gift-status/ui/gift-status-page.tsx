@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import {
+  APPROVAL_LABEL,
   FAN_STEP_LABEL,
   fanBadge,
   fanHeadline,
@@ -18,7 +20,8 @@ import s from "./gift-status.module.css";
 // 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v4/gift.html
 // 문의하지 않아도 지금 어디까지 왔는지 알 수 있게(성공 기준 3).
 // 크리에이터에게 보내는 송장번호는 이 화면에 오지 않는다 — toFanView 가 걸러서 넘긴다.
-// 사무실 주소는 view.officeAddress 가 있을 때(승인된 주문)만 그린다(INV-S9). 헤더·푸터는 라우트가 붙인다.
+// 사무실 주소는 view.officeAddress 가 있을 때(결제가 끝난 진행 중 주문)만 그린다(INV-S9). 헤더·푸터는 라우트가 붙인다.
+// 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 검수와 출고 사이에서 갈라져 붙는 칸으로 그린다.
 
 function Check({ size = 18 }: { size?: number }) {
   return (
@@ -29,6 +32,8 @@ function Check({ size = 18 }: { size?: number }) {
 }
 
 const STEP_CLASS = { done: s["is-done"], current: s["is-current"], stopped: s["is-stopped"], todo: undefined } as const;
+
+const APPROVAL_TEXT = { done: "승인됨", waiting: "기다리는 중", todo: "출고 전에 받아요" } as const;
 
 export function GiftStatusPage({ view }: { view: FanGiftView }) {
   const badge = fanBadge(view);
@@ -69,14 +74,31 @@ export function GiftStatusPage({ view }: { view: FanGiftView }) {
             <>
               <ol className={s.stepper} aria-label={`선물 진행 단계 ${progress.total}단계 중 ${progress.done}단계 완료`}>
                 {view.steps.map((st, i) => (
-                  <li key={st.key} className={STEP_CLASS[st.state]} aria-current={st.state === "current" ? "step" : undefined}>
-                    <span className={s.sn}>{st.state === "done" ? <Check /> : i + 1}</span>
-                    <span>
-                      {FAN_STEP_LABEL[st.key]}
-                      {st.state === "done" ? <span className="sr-only"> 완료</span> : null}
-                      {st.state === "stopped" ? <span className="sr-only"> 멈춤</span> : null}
-                    </span>
-                  </li>
+                  <Fragment key={st.key}>
+                    <li className={STEP_CLASS[st.state]} aria-current={st.state === "current" ? "step" : undefined}>
+                      <span className={s.sn}>{st.state === "done" ? <Check /> : i + 1}</span>
+                      <span>
+                        {FAN_STEP_LABEL[st.key]}
+                        {st.state === "done" ? <span className="sr-only"> 완료</span> : null}
+                        {st.state === "stopped" ? <span className="sr-only"> 멈춤</span> : null}
+                      </span>
+                    </li>
+                    {st.key === "inspected" && view.outcome === "in_progress" ? (
+                      <li className={s.branch} data-state={view.approval.state}>
+                        <span className={s["branch-line"]} aria-hidden="true" />
+                        <span className={s["branch-pill"]}>
+                          {view.approval.state === "done" ? <Check size={16} /> : null}
+                          {APPROVAL_LABEL}
+                          <span className={s["branch-state"]}>
+                            <span className="sr-only">: </span>
+                            {view.approval.state === "done" && view.approval.at
+                              ? `${APPROVAL_TEXT.done} · ${formatDate(view.approval.at)}`
+                              : APPROVAL_TEXT[view.approval.state]}
+                          </span>
+                        </span>
+                      </li>
+                    ) : null}
+                  </Fragment>
                 ))}
               </ol>
               <p className={s["step-note"]}>

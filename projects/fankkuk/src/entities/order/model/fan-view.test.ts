@@ -84,36 +84,39 @@ describe("toFanView — 팬에게 보이는 것", () => {
     expect(expired).toEqual(rejected);
   });
 
-  it("단계는 등록부터 수령까지 일곱 개이고, 처음 끝나지 않은 단계가 지금 단계다", () => {
+  it("본 단계는 등록부터 수령까지 여섯 개이고, 승인은 단계가 아니라 따로 붙는다", () => {
     const view = toFanView(shipped, OFFICE);
-    expect(view.steps.map((s) => s.key)).toEqual([
-      "registered",
-      "received",
-      "inspected",
-      "approved",
-      "shipped",
-      "in_transit",
-      "delivered",
-    ]);
-    expect(view.steps.map((s) => s.state)).toEqual(["done", "done", "done", "done", "done", "done", "current"]);
+    expect(view.steps.map((s) => s.key)).toEqual(["registered", "received", "inspected", "shipped", "in_transit", "delivered"]);
+    expect(view.steps.map((s) => s.state)).toEqual(["done", "done", "done", "done", "done", "current"]);
+    expect(view.approval).toEqual({ state: "done", at: "2026-10-01T03:00:00.000Z" });
   });
 
   it("결제 직후 지금 단계는 입고다 — 승인을 기다리지 않는다", () => {
     expect(toFanView(base, OFFICE).steps.find((s) => s.state === "current")?.key).toBe("received");
   });
 
-  it("검수까지 끝나고 승인 전이면 지금 단계는 승인이다", () => {
+  it("검수까지 끝나고 승인 전이면 출고가 승인을 기다린다 — 승인 칸이 waiting", () => {
     const view = toFanView(
       { ...base, status: "inspected", receivedAt: "2026-10-02T01:00:00.000Z", inspection: { result: "passed", at: "2026-10-02T02:00:00.000Z" } },
       OFFICE,
     );
-    expect(view.steps.find((s) => s.state === "current")?.key).toBe("approved");
+    expect(view.steps.find((s) => s.state === "current")?.key).toBe("shipped");
+    expect(view.approval).toEqual({ state: "waiting", at: null });
   });
 
-  it("입고 전에 승인되면 승인은 끝났고 지금 단계는 입고다", () => {
+  it("검수 전 승인 전이면 승인 칸은 아직 기다릴 때가 아니다 — todo", () => {
+    expect(toFanView(base, OFFICE).approval).toEqual({ state: "todo", at: null });
+  });
+
+  it("입고 전에 승인되면 승인 칸은 done 이고 지금 단계는 입고다", () => {
     const view = toFanView({ ...base, status: "approved", approvedAt: "2026-10-01T03:00:00.000Z" }, OFFICE);
-    expect(view.steps.find((s) => s.key === "approved")?.state).toBe("done");
+    expect(view.approval).toEqual({ state: "done", at: "2026-10-01T03:00:00.000Z" });
     expect(view.steps.find((s) => s.state === "current")?.key).toBe("received");
+  });
+
+  it("거절·반려된 주문은 승인 기록이 있어도 승인 칸이 done 이 아니다", () => {
+    const view = toFanView({ ...base, status: "rejected", approvedAt: "2026-10-01T03:00:00.000Z" }, OFFICE);
+    expect(view.approval.state).not.toBe("done");
   });
 
   it("검수 불합격이면 반송으로 끝나고 지금 단계가 없다", () => {

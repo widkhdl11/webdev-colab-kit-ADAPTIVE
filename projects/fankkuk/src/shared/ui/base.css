@@ -106,7 +106,7 @@ span.search-go:hover { background: var(--brand); }
 .chip { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-weight: 600; }
 .face { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; }
 .face--lg { width: 72px; height: 72px; }
-.dots { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 112px; }
+.dots { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; width: 112px; }
 .dots span { height: 6px; border-radius: var(--r-pill); background: var(--track); }
 .dots span.on { background: var(--brand); }
 .avatar { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--avatar-soft); color: var(--brand-ink); font-weight: 700; flex-shrink: 0; }

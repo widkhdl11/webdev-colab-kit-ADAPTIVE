@@ -10,7 +10,9 @@
 .g-lead { margin-top: 4px; }
 .g-state { min-height: 36px; padding-inline: 14px; font-size: 17px; }
 
-.stepper { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); padding-block: 8px 32px; }
+.stepper { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding-block: 8px 32px; }
+/* 승인 칸이 붙는 진행 중 선물은 아래에 갈래 칸 자리를 둔다 */
+.stepper:has(.branch) { padding-bottom: 96px; }
 .stepper li { position: relative; display: grid; justify-items: center; gap: 10px; text-align: center; color: var(--sub); font-weight: 600; }
 .stepper li::before { content: ""; position: absolute; top: 18px; left: -50%; width: 100%; height: 3px; background: var(--track); }
 .stepper li:first-child::before { display: none; }
@@ -21,8 +23,27 @@
 .is-current .sn { background: var(--white); color: var(--brand); box-shadow: inset 0 0 0 3px var(--brand); }
 .stepper li.is-stopped { color: var(--ink); font-weight: 700; }
 .is-stopped .sn { background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 3px var(--ink); }
+
+/* 크리에이터 승인 — 검수(3번째)와 출고(4번째) 사이 경계(= 가로 50%)에서 아래로 갈라진다 */
+.stepper li.branch { position: absolute; left: 50%; top: 28px; display: grid; justify-items: center; transform: translateX(-50%); }
+.stepper li.branch::before { display: none; }
+.branch-line { width: 0; height: 56px; border-left: 2px dashed var(--field-line); }
+.branch[data-state="done"] .branch-line { border-left-style: solid; border-left-color: var(--brand); }
+.branch-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: var(--r-pill); background: var(--white); color: var(--ink); font-weight: 700; white-space: nowrap; box-shadow: inset 0 0 0 2px var(--field-line); }
+.branch[data-state="waiting"] .branch-pill { box-shadow: inset 0 0 0 2px var(--ink); }
+.branch[data-state="done"] .branch-pill { background: var(--brand-soft); color: var(--brand-ink); box-shadow: none; }
+.branch-state { color: var(--sub); font-weight: 600; }
+.branch[data-state="done"] .branch-state { color: var(--brand-ink); }
+
 @media (max-width: 767px) {
   .stepper { grid-template-columns: minmax(0, 1fr); padding-bottom: 16px; }
+  .stepper:has(.branch) { padding-bottom: 16px; }
+  /* 휴대폰 — 검수 아래에 들여쓴 갈래 줄. 본 줄 선은 출고까지 이어진다 */
+  .stepper li.branch { position: static; display: flex; align-items: center; height: 56px; padding-left: 20px; transform: none; }
+  .branch-line { width: 24px; height: 0; border-left: 0; border-top: 2px dashed var(--field-line); }
+  .branch[data-state="done"] .branch-line { border-top-style: solid; border-top-color: var(--brand); }
+  .branch-pill { white-space: normal; }
+  .stepper li.branch + li::before { top: -84px; height: 112px; }
   .stepper li { grid-auto-flow: column; justify-content: start; justify-items: start; align-items: center; gap: 16px; height: 56px; padding-block: 8px; text-align: left; }
   .stepper li::before { top: -28px; left: 18px; width: 3px; height: 56px; }
 }

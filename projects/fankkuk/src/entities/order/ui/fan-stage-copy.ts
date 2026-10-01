@@ -8,7 +8,6 @@ export const FAN_STEP_LABEL: Record<FanStepKey, string> = {
   registered: "등록",
   received: "입고",
   inspected: "검수",
-  approved: "승인",
   shipped: "출고",
   in_transit: "배송중",
   delivered: "수령",
@@ -18,6 +17,9 @@ export const FAN_STEP_LABEL: Record<FanStepKey, string> = {
 export const RETURN_ON_REJECT_NOTICE = `크리에이터가 받지 않기로 하거나 ${APPROVAL_DEADLINE_DAYS}일 안에 승인하지 않으면, 선물은 보낸 주소로 돌려보내 드리고 결제 금액에서 반송 택배비를 뺀 금액을 돌려드려요.`;
 
 /** 거절·7일 자동 반려 때 팬이 보는 문구. 크리에이터의 거절 확인 창도 이 문구를 그대로 인용한다. */
+/** 본 단계 옆에 따로 붙는 승인 칸의 이름. */
+export const APPROVAL_LABEL = "크리에이터 승인";
+
 export const NOT_ACCEPTED_TEXT = "크리에이터가 이 선물을 받지 않아요";
 
 const currentKey = (view: FanGiftView) => view.steps.find((st) => st.state === "current")?.key;
@@ -32,10 +34,8 @@ export function fanHeadline(view: FanGiftView): string {
       return view.fanTrackingNo ? "보내 주셨군요! 사무실 도착을 기다려요" : "사무실로 보내 주세요";
     case "inspected":
       return "사무실에 도착했어요. 검수하고 있어요";
-    case "approved":
-      return "검수를 마쳤어요. 크리에이터의 승인을 기다려요";
     case "shipped":
-      return "승인됐어요. 곧 출고해요";
+      return view.approval.state === "done" ? "검수를 마쳤어요. 곧 출고해요" : "검수를 마쳤어요. 크리에이터의 승인을 기다려요";
     case "in_transit":
       return "출고했어요. 택배사가 곧 가져가요";
     case "delivered":
@@ -52,7 +52,7 @@ export function fanBadge(view: FanGiftView): { text: string; tone: "brand" | "pl
   if (view.outcome === "canceled") return { text: "취소", tone: "plain" };
   const current = currentKey(view);
   if (!current) return { text: "수령 완료", tone: "brand" };
-  if (current === "approved") return { text: "승인 대기", tone: "plain" };
+  if (current === "shipped" && view.approval.state !== "done") return { text: "승인 대기", tone: "plain" };
   if (current === "received") return { text: view.fanTrackingNo ? "도착 대기" : "보내 주세요", tone: "brand" };
   const lastDone = [...view.steps].reverse().find((st) => st.state === "done");
   return { text: lastDone ? FAN_STEP_LABEL[lastDone.key] : "등록", tone: "brand" };
@@ -63,7 +63,7 @@ export function fanStepDetail(step: FanStep, view: FanGiftView): string | null {
   const at = step.at ? formatDateTime(step.at) : null;
   if (step.state === "stopped") return at ? `${at} · 반송` : "반송";
   if (step.state === "current") {
-    if (step.key === "approved") return "승인되면 바로 출고하고 알림톡으로 알려 드려요";
+    if (step.key === "shipped" && view.approval.state !== "done") return "승인되면 바로 출고하고 알림톡으로 알려 드려요";
     if (step.key === "received") return "도착하면 시각이 여기에 표시돼요";
     if (step.key === "inspected") return "모든 상자의 원래 송장을 떼고 겉면을 검사해요";
     return null;
@@ -90,7 +90,7 @@ export function fanProgress(view: FanGiftView): { done: number; total: number } 
   return { done: view.steps.filter((st) => st.state === "done").length, total: view.steps.length };
 }
 
-/** 헤더 선물 아이콘의 모양. 승인 대기 = 모래시계(점선), 배송 완료 = 체크(초록 채움), 그 사이 = 트럭.
+/** 헤더 선물 아이콘의 모양. 검수 뒤 승인 대기 = 모래시계(점선), 배송 완료 = 체크(초록 채움), 그 사이 = 트럭.
  *  진행이 끝난 선물(받지 않음·반송·취소)은 헤더에 띄우지 않는다 — null. */
 export type HeaderGiftState = "wait" | "move" | "done";
 
@@ -98,7 +98,7 @@ export function headerGiftState(view: FanGiftView): HeaderGiftState | null {
   if (view.outcome !== "in_progress") return null;
   const current = currentKey(view);
   if (!current) return "done";
-  if (current === "approved") return "wait";
+  if (view.approval.state === "waiting") return "wait";
   return "move";
 }
 
