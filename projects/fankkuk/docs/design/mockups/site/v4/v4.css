@@ -169,14 +169,14 @@ h3 { font-size: 22px; line-height: 1.4; font-weight: 700; letter-spacing: -.3px;
 .tiles { display: grid; grid-template-columns: repeat(var(--n, 8), minmax(0, 1fr)); gap: 12px; max-width: 1100px; margin-inline: auto; }
 .tile { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; min-height: 152px; padding: 16px 4px 12px; border-radius: var(--r-tile); background: var(--surface); text-align: center; text-decoration: none; font-size: 16px; font-weight: 600; line-height: 1.35; letter-spacing: -.3px; }
 .tile:hover { background: #ECEDF1; }
-.tile .ico { width: 72px; height: 72px; }
+.tile .ico { width: 88px; height: 88px; }
 .tiles--6 { --n: 6; max-width: 900px; }
 @media (max-width: 1023px) { .tiles { gap: 8px; } }
 @media (max-width: 767px) {
   .tiles { --n: 4; gap: 8px; }
   .tiles--6 { --n: 3; }
   .tile { min-height: 124px; padding-top: 12px; letter-spacing: -.5px; }
-  .tile .ico { width: 56px; height: 56px; }
+  .tile .ico { width: 64px; height: 64px; }
 }
 
 /* 9 부품 */
@@ -378,3 +378,6 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
   .sum-row dd { grid-column: 1; }
   .sum-row .fix { grid-column: 2; }
 }
+
+/* Codex 가 만든 그림 — 칸 안에서 비율 유지 */
+img.asset { display: block; object-fit: contain; }

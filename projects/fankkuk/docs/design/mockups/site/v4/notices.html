@@ -1,0 +1,176 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v4 — 공지사항 (2026-10-02)
+  원본: ../notices.html 의 공지 8건·펼친 상세 하나(첫 공지)·페이지 번호를 그대로 살렸다.
+  배치: 제목 줄(왼쪽 제목 + 오른쪽 아이콘 칸 하나) 아래 한 줄에 하나씩 쌓는 목록. 카드 없이 옅은 구분선만. 고정 글은 초록 연한 태그.
+  새로 제안: 공지 아이콘(확성기, #i-notice, 임시 SVG) — 기존 아이콘 여덟 개에 알맞은 것이 없다.
+  [그림 자리] data-asset="이름" 이 붙은 요소는 나중에 <img> 로 바꿀 자리다. 목록: _assets-public.md (지금 그림은 임시 SVG).
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 공지사항</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="v4.css">
+  <style>
+    .tile-ico { display: grid; place-items: center; width: 104px; height: 104px; border-radius: var(--r-tile); background: var(--surface); }
+    .tile-ico svg, .tile-ico img.asset, .tile-ico img { width: 72px; height: 72px; }
+    .link { color: var(--brand); font-weight: 700; text-underline-offset: 4px; }
+    .check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-weight: 600; cursor: pointer; }
+    .check input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); flex-shrink: 0; }
+    .chev { color: var(--sub); transition: transform .15s; }
+    details[open] > summary .chev { transform: rotate(180deg); }
+    summary { list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    .nav a[aria-current="page"], .btn--text[aria-current="page"] { color: var(--brand); }
+    .page-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: clamp(32px, 4vw, 56px) clamp(24px, 3vw, 40px); }
+    .page-top .tile-ico { flex-shrink: 0; }
+    @media (max-width: 767px) { .page-top .tile-ico { width: 72px; height: 72px; border-radius: 22px; } .page-top .tile-ico svg, .page-top .tile-ico img.asset, .page-top .tile-ico img { width: 48px; height: 48px; } }
+    .nl { border-top: 1px solid rgba(51, 61, 57, .08); }
+    .nl details { border-bottom: 1px solid rgba(51, 61, 57, .08); }
+    .nl summary { display: flex; align-items: center; gap: 16px; min-height: 76px; padding-block: 12px; cursor: pointer; }
+    .nl .pin { flex: 0 0 56px; }
+    .nl .t { flex: 1; min-width: 0; font-size: 18px; font-weight: 600; letter-spacing: -.2px; }
+    .nl .d { color: var(--sub); white-space: nowrap; }
+    .nl summary:hover .t { text-decoration: underline; text-underline-offset: 4px; }
+    .nl .body { display: grid; gap: 12px; max-width: 760px; padding: 4px 0 32px 72px; }
+    .nl .body p.sub { color: var(--sub); }
+    .nl .dots { display: grid; gap: 8px; }
+    .nl .dots li { display: flex; gap: 12px; }
+    .nl .dots li::before { content: ""; width: 6px; height: 6px; margin-top: 11px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+    .pager { display: flex; justify-content: center; gap: 8px; margin-top: 48px; }
+    .pager a { display: grid; place-items: center; min-width: 44px; height: 44px; border-radius: var(--r-btn); text-decoration: none; font-weight: 600; }
+    .pager a:hover { background: var(--surface); }
+    .pager a[aria-current="page"] { background: var(--brand); color: #fff; }
+    .pager a[aria-disabled="true"] { color: var(--faint); pointer-events: none; }
+    @media (max-width: 767px) {
+      .nl summary { gap: 12px; }
+      .nl .pin { flex-basis: auto; }
+      .nl .pin:empty { display: none; }
+      .nl .t { font-size: 17px; }
+      .nl .d { display: none; }
+      .nl .body { padding-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-gift" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M13 31h46v24a7 7 0 0 1-7 7H20a7 7 0 0 1-7-7z" fill="#FF6F9A"/><path d="M13 52h46v3a7 7 0 0 1-7 7H20a7 7 0 0 1-7-7z" fill="#E9487B"/><rect x="9" y="22" width="54" height="13" rx="6" fill="#FF8FB1"/><path d="M9 31h54a6 6 0 0 1-6 4H15a6 6 0 0 1-6-4z" fill="#F0608F"/><rect x="31" y="22" width="10" height="40" fill="#FFD04D"/><rect x="37" y="22" width="4" height="40" fill="#F5B52A" opacity=".55"/><ellipse cx="27" cy="17" rx="9" ry="6.5" transform="rotate(-20 27 17)" fill="#FFD04D" stroke="#F5B52A" stroke-width="2.5"/><ellipse cx="45" cy="17" rx="9" ry="6.5" transform="rotate(20 45 17)" fill="#FFD04D" stroke="#F5B52A" stroke-width="2.5"/><circle cx="36" cy="20" r="5" fill="#FFC22E"/><rect x="17" y="38" width="5" height="14" rx="2.5" fill="#fff" opacity=".5"/><rect x="13" y="25" width="13" height="3.5" rx="1.75" fill="#fff" opacity=".55"/></symbol>
+    <symbol id="i-find" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M45 45l15 15" stroke="#FFB020" stroke-width="10" stroke-linecap="round"/><path d="M47 43l12 12" stroke="#FFD25E" stroke-width="3" stroke-linecap="round"/><circle cx="30" cy="30" r="19" fill="#E3F0FF" stroke="#4C8DF6" stroke-width="7"/><path d="M30 42C23 37 19 33.5 19 29a5.5 5.5 0 0 1 11-1.5A5.5 5.5 0 0 1 41 29c0 4.5-4 8-11 13z" fill="#FF5C86"/><path d="M23.500 27.500a3 3 0 0 1 2.500-2" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none" opacity=".7"/><path d="M13.500 23.500A19 19 0 0 1 22 13.500" stroke="#fff" stroke-width="2.500" stroke-linecap="round" fill="none" opacity=".65"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="28" ry="3" fill="#333D39" opacity=".10"/><rect x="5" y="20" width="37" height="30" rx="6" fill="#FF9F43"/><path d="M5 44h37a6 6 0 0 1-6 6H11a6 6 0 0 1-6-6z" fill="#F08423"/><path d="M44 28h10a4 4 0 0 1 3.400 1.900L66 41v9H44z" fill="#FFC15E"/><path d="M48 32h6l6 8.500H48z" fill="#CFE8FF"/><path d="M23 42c-4.500-3.200-6.500-5.500-6.500-8a3.300 3.300 0 0 1 6.500-.9 3.300 3.300 0 0 1 6.500.9c0 2.500-2 4.800-6.500 8z" fill="#fff"/><rect x="9" y="24" width="9" height="3.500" rx="1.750" fill="#fff" opacity=".5"/><circle cx="20" cy="52" r="8" fill="#3A4540"/><circle cx="20" cy="52" r="3" fill="#D9DEDC"/><circle cx="54" cy="52" r="8" fill="#3A4540"/><circle cx="54" cy="52" r="3" fill="#D9DEDC"/></symbol>
+    <symbol id="i-price" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M10 7h34v50l-5.700-4-5.700 4-5.700-4-5.700 4-5.700-4L10 57z" fill="#EEF3FF" stroke="#A9BDF2" stroke-width="2.500" stroke-linejoin="round"/><rect x="17" y="17" width="20" height="4" rx="2" fill="#B9C8EE"/><rect x="17" y="26" width="13" height="4" rx="2" fill="#B9C8EE"/><rect x="17" y="35" width="18" height="4" rx="2" fill="#B9C8EE"/><circle cx="48" cy="44" r="18" fill="#FFC83D"/><path d="M30 44a18 18 0 0 0 18 18 18 18 0 0 0 18-18c0 8-8 12-18 12s-18-4-18-12z" fill="#F2A900" opacity=".55"/><circle cx="48" cy="43" r="12" fill="none" stroke="#F2A900" stroke-width="3"/><text x="48" y="50" font-size="18" font-weight="800" text-anchor="middle" fill="#C77F00" font-family="Pretendard Variable, Pretendard, sans-serif">₩</text><path d="M36 33a14 14 0 0 1 7-5" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".7"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="20" ry="3" fill="#333D39" opacity=".10"/><path d="M36 7l23 8v19c0 14-10 24-23 30C23 58 13 48 13 34V15z" fill="#3DBE8B" stroke="#3DBE8B" stroke-width="4" stroke-linejoin="round"/><path d="M36 7l23 8v19c0 14-10 24-23 30z" fill="#2FA676"/><path d="M25 35l8 8 15-16" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19 19v11" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/></symbol>
+    <symbol id="i-inspect" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><rect x="6" y="28" width="40" height="32" rx="6" fill="#E9A765"/><path d="M6 54h40a6 6 0 0 1-6 6H12a6 6 0 0 1-6-6z" fill="#D58C47"/><rect x="4" y="24" width="44" height="11" rx="5" fill="#F3BE85"/><rect x="21" y="24" width="8" height="36" fill="#FFE08A" opacity=".9"/><rect x="10" y="39" width="5" height="12" rx="2.500" fill="#fff" opacity=".4"/><path d="M57 38l9 9" stroke="#6D3FE0" stroke-width="9" stroke-linecap="round"/><circle cx="47" cy="27" r="14" fill="#EEE6FF" stroke="#8B5CF6" stroke-width="6"/><path d="M41 27.500l4.500 4.500 8-9" stroke="#8B5CF6" stroke-width="3.500" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M36.500 22A13 13 0 0 1 42 16.500" stroke="#fff" stroke-width="2.500" stroke-linecap="round" fill="none" opacity=".7"/></symbol>
+    <symbol id="i-log" viewBox="0 0 72 72"><ellipse cx="36" cy="68" rx="24" ry="2.500" fill="#333D39" opacity=".10"/><path d="M5 28Q36 2 67 28Q36 54 5 28z" fill="#fff" stroke="#4FA3F7" stroke-width="5" stroke-linejoin="round"/><circle cx="36" cy="28" r="12" fill="#3B82F6"/><circle cx="36" cy="28" r="5.500" fill="#1D3E8F"/><circle cx="40" cy="24" r="3" fill="#fff"/><path d="M46 49v-5a8 8 0 0 1 16 0v5" stroke="#8A96A3" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="42" y="47" width="24" height="19" rx="6" fill="#FFB020"/><path d="M42 60h24a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6z" fill="#E59400"/><circle cx="54" cy="55" r="3" fill="#9A5B00"/><rect x="53" y="56" width="2" height="5" rx="1" fill="#9A5B00"/></symbol>
+    <symbol id="i-support" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M22 44l-4 16 18-14z" fill="#25B3A8"/><rect x="6" y="9" width="60" height="40" rx="16" fill="#2DBFB3"/><path d="M6 37h60v-0a16 16 0 0 1-16 12H22A16 16 0 0 1 6 37z" fill="#25B3A8" opacity=".75"/><circle cx="24" cy="29" r="4.500" fill="#fff"/><circle cx="36" cy="29" r="4.500" fill="#fff"/><circle cx="48" cy="29" r="4.500" fill="#fff"/><rect x="12" y="14" width="16" height="4" rx="2" fill="#fff" opacity=".45"/></symbol>
+    <!-- 동그란 얼굴: 색은 --c 로 -->
+    <symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.500 3.500 9.500 3.500 12 0" stroke="#333D39" stroke-width="2.600" stroke-linecap="round" fill="none"/><circle cx="12.500" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.500" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+  <symbol id="i-notice" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="24" ry="3" fill="#333D39" opacity=".10"/><path d="M24 46l4 14a3 3 0 0 0 3 2h5a2 2 0 0 0 2-2.500L35 47z" fill="#E9487B"/><path d="M12 28l30-14v44L12 44a6 6 0 0 1-4-5.500v-5A6 6 0 0 1 12 28z" fill="#FF6F9A" stroke="#FF6F9A" stroke-width="4" stroke-linejoin="round"/><path d="M12 28l30-14v10L10 38v-5A6 6 0 0 1 12 28z" fill="#FF8FB1"/><ellipse cx="44" cy="36" rx="7" ry="23" fill="#FFD04D"/><ellipse cx="44" cy="36" rx="3.500" ry="14" fill="#F5B52A" opacity=".55"/><path d="M58 24c4 7 4 17 0 24" stroke="#4C8DF6" stroke-width="4.500" stroke-linecap="round" fill="none"/><path d="M65 17c7 11 7 27 0 38" stroke="#4C8DF6" stroke-width="4.500" stroke-linecap="round" fill="none" opacity=".55"/><rect x="14" y="31" width="5" height="9" rx="2.500" fill="#fff" opacity=".5"/></symbol></defs>
+</svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="landing.html" aria-label="팬꾹 처음 화면"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="#fff"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+          <li><a href="creators.html">크리에이터 찾기</a></li>
+          <li><a href="send.html">선물 보내기</a></li>
+          <li><a href="notices.html" aria-current="page">공지사항</a></li>
+          <li><a href="about.html">팬꾹 소개</a></li>
+          <li><a href="support.html">고객센터</a></li>
+        </ul></nav>
+      <div class="header-actions">
+        <a class="btn btn--text btn--sm hide-sm" href="login.html">로그인</a>
+        <a class="btn btn--sm hide-sm" href="signup.html">회원가입</a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="10.500" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.500" fill="currentColor"/></svg></button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="creators.html">크리에이터 찾기</a>
+      <a href="send.html">선물 보내기</a>
+      <a href="notices.html" aria-current="page">공지사항</a>
+      <a href="about.html">팬꾹 소개</a>
+      <a href="support.html">고객센터</a>
+      <div class="btn-row"><a class="btn btn--line" href="login.html">로그인</a><a class="btn" href="signup.html">회원가입</a></div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <div class="page-top">
+        <div><h1 class="page-h">공지사항</h1></div>
+        <div class="tile-ico" aria-hidden="true"><svg aria-hidden="true" focusable="false" data-asset="icon-notice"><use href="#i-notice"/></svg></div>
+      </div>
+      <div class="nl" role="list" aria-label="공지사항 목록">
+          <details open>
+            <summary><span class="pin"><span class="tag tag--brand">고정</span></span><span class="t">팬꾹 서비스 시작 안내</span><span class="d">2026.10.01</span><svg class="chev" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 7.500 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <div class="body"><h3>안녕하세요, 팬꾹이에요</h3><p>팬이 보낸 선물을 크리에이터가 안전하게 받을 수 있도록, 팬꾹이 문을 열어요.</p><p>팬꾹에서는 크리에이터가 승인한 선물만 배송돼요. 승인 없이는 저희 시스템이 주소를 열지 않습니다. 사무실에 도착한 상자는 송장을 제거하고 겉면과 추적 장치를 검사한 뒤 출고하고, 검사에 걸린 상자만 열어서 확인해요.</p><p>서비스 이용 중 궁금한 점은 <a class="link" href="support.html">고객센터</a>에서 확인해 주세요. 많이 사랑해 주세요.</p><p class="sub">네오코드 팬꾹 운영팀</p></div>
+          </details>
+          <details>
+            <summary><span class="pin"><span class="tag tag--brand">고정</span></span><span class="t">선물 보내기 전에 꼭 확인해 주세요 (크기·무게 기준)</span><span class="d">2026.10.01</span><svg class="chev" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 7.500 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <div class="body"><p>소형(세 변 합 100cm · 5kg 이하)과 중형(세 변 합 100cm · 10kg 이하)까지 받아요. 크기와 무게 중 큰 쪽 기준으로 정해지고, 중형을 넘는 상자는 받지 않아요.</p><p>사무실에 도착해 실측한 크기가 등록하신 것보다 크면 차액을 따로 결제하셔야 해요.</p></div>
+          </details>
+          <details>
+            <summary><span class="pin"></span><span class="t">요금 안내: 상자마다 배송비가 포함돼 있어요</span><span class="d">2026.09.30</span><svg class="chev" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 7.500 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <div class="body"><ul class="dots"><li>소형 6,900원 — 세 변 합 100cm · 5kg 이하</li><li>중형 8,900원 — 세 변 합 100cm · 10kg 이하</li><li>모든 요금에 추적 장치 검수가 포함돼 있어요.</li></ul></div>
+          </details>
+          <details>
+            <summary><span class="pin"></span><span class="t">설 연휴 배송 일정 안내</span><span class="d">2026.09.29</span><svg class="chev" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 7.500 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <div class="body"><p>설 연휴에는 사무실 입고와 출고가 쉬어요. 연휴 전에 도착하게 하려면 여유를 두고 보내 주세요.</p><p>휴무 기간: (출시 전 기재)</p></div>
+          </details>
+          <details>
+            <summary><span class="pin"></span><span class="t">크리에이터 방송 채널 인증 방법 안내</span><span class="d">2026.09.28</span><svg class="chev" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 7.500 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <div class="body"><p>크리에이터로 가입하신 뒤에는 방송 채널에 인증 코드를 올려 본인 확인을 해 주세요. 확인이 끝나면 「크리에이터 찾기」에 나타나고, 팬이 선물을 보낼 수 있어요.</p></div>
+          </details>
+          <details>
+            <summary><span class="pin"></span><span class="t">검수는 이렇게 진행돼요: 걸린 상자만 개봉합니다</span><span class="d">2026.09.26</span><svg class="chev" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 7.500 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <div class="body"><p>사무실에 도착한 모든 상자는 원래 송장을 제거하고 겉면과 추적 장치를 검사해요. 검사에 걸린 상자만 열어서 확인해요.</p></div>
+          </details>
+          <details>
+            <summary><span class="pin"></span><span class="t">카카오톡 인증 점검 안내</span><span class="d">2026.09.24</span><svg class="chev" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 7.500 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <div class="body"><p>점검 시간에는 가입과 승인 서명이 잠시 어려울 수 있어요. 점검이 끝나면 바로 이용하실 수 있어요.</p><p>점검 일시: (출시 전 기재)</p></div>
+          </details>
+          <details>
+            <summary><span class="pin"></span><span class="t">개인정보 보관 방식 안내</span><span class="d">2026.09.22</span><svg class="chev" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 7.500 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <div class="body"><p>휴대폰 번호는 알림톡을 보내는 데 쓰고, 실명·주소와 따로 나눠 보관해요. 자세한 내용은 개인정보처리방침에서 확인하실 수 있어요.</p></div>
+          </details>
+      </div>
+      <nav class="pager" aria-label="공지사항 페이지">
+        <a href="#" aria-disabled="true" aria-label="이전 페이지">&lsaquo;</a>
+        <a href="#" aria-current="page" aria-label="1페이지">1</a>
+        <a href="#" aria-label="2페이지">2</a>
+        <a href="#" aria-label="3페이지">3</a>
+        <a href="#" aria-label="다음 페이지">&rsaquo;</a>
+      </nav>
+    </div>
+    <div class="page-end"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="#fff"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="../support.html">고객센터</a>
+          <a href="../about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+</body>
+</html>
