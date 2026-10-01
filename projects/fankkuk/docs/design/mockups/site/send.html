@@ -37,9 +37,9 @@
     @media (min-width: 768px) { .st { flex-direction: row; align-items: center; gap: 12px; } }
 
     /* 본문 배치 */
-    .send-grid { display: grid; grid-template-columns: minmax(0, 720px); gap: 48px; justify-content: center; align-items: start; }
-    @media (min-width: 1024px) { .send-grid { grid-template-columns: minmax(0, 720px) 360px; } .send-grid[data-step="4"] { grid-template-columns: minmax(0, 720px); } }
-    .summary { position: sticky; top: 96px; }
+    .send-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; align-items: start; }
+    @media (min-width: 1024px) { .send-grid { grid-template-columns: minmax(0, 1fr) 360px; } .send-grid[data-step="4"] { grid-template-columns: minmax(0, 1fr) 360px; } .send-grid[data-step="4"] > form { grid-column: 1; } }
+    .summary { position: sticky; top: 96px; padding: 32px !important; border: 1px solid var(--field-line) !important; border-radius: 12px; background: var(--paper); }
     @media (max-width: 1023px) { .summary { display: none; } }
     .step h2 { font-size: 26px; scroll-margin-top: 160px; }
     .step h2:focus { outline: none; }
@@ -90,18 +90,24 @@
     .sum-total .big { font-size: 32px; font-weight: 850; letter-spacing: -0.03em; }
     .summary .sum-row { grid-template-columns: 96px minmax(0, 1fr); }
 
-    /* 이전·다음 */
-    /* 「다음」은 모든 단계에서 같은 자리 — 화면 아래에 붙은 줄의 오른쪽 끝 (사용자 「다음 버튼 위치 통일」) */
-    body { padding-bottom: 96px; }
-    .step-actions { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 12px; margin: 0; padding: 16px max(var(--gutter), calc((100% - var(--maxw)) / 2)); background: var(--paper); border-top: 2px solid var(--rule); }
+    /* 단계 카드 — 입력과 이전·다음이 한 카드 안에 (사용자 「해당 섹션에서 카드 느낌으로」) */
+    .send-form { padding: 32px; border: 1px solid var(--field-line); border-radius: 12px; background: var(--paper); }
+    .send-form .step.card { padding-top: 0; border-top: 0; }
+    /* 1~3단계는 카드 높이를 같게 — 「다음」이 화면에서도 같은 높이에 (4단계 확인 화면만 더 길다) */
+    @media (min-width: 768px) {
+      .send-form { display: flex; flex-direction: column; min-height: 728px; }
+      .send-form .step-actions { margin-top: auto; }
+      .send-form > .step:not([hidden]) { margin-bottom: 32px !important; }
+    }
+    .step-actions { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); }
     .step-actions .btn { min-width: 120px; }
-    .step-actions #next { margin-left: auto; }
+    .step-actions #next { margin-left: auto; }   /* 「다음」은 모든 단계에서 카드 오른쪽 아래 */
     @media (max-width: 767px) {
-      body { padding-bottom: 88px; }
-      .step-actions { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: 1fr 2fr; margin: 0; padding: 12px var(--gutter); background: var(--paper); border-top: 2px solid var(--rule); }
+      .send-form { padding: 20px; }
+      .step-actions { display: grid; grid-template-columns: 1fr 2fr; }
       .step-actions.no-prev { grid-template-columns: 1fr; }
-      .step-actions .btn { height: 52px; }
       .step-actions #next { margin-left: 0; }
+      .step-actions .btn { height: 52px; min-width: 0; }
       .sum-row { grid-template-columns: minmax(0, 1fr) auto; }
       .sum-row dt { grid-column: 1 / -1; }
       .sum-row dd { grid-column: 1; }
@@ -247,7 +253,7 @@
 
     <section class="section" style="padding-block:8px 72px">
       <div class="container send-grid" id="send-grid" data-step="1">
-        <form action="#" onsubmit="return false" aria-label="선물 보내기 입력">
+        <form class="send-form" action="#" onsubmit="return false" aria-label="선물 보내기 입력">
 
           <!-- 1 크리에이터 -->
           <fieldset class="card step" data-step="1" style="margin:0;border-inline:0;border-bottom:0;padding-inline:0;min-width:0">
