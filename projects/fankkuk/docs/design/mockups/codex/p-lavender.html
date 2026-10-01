@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 크리에이터가 승인한 선물만 배송</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <style>
+    :root {
+      --brand: #725DBE;
+      --brand-hover: #5641A2;
+      --accent: #F5B79D;
+      --accent-soft: #F8D8C9;
+      --tint: #F2F0F9;
+      --ink: #29262C;
+      --muted: #625C66;
+      --paper: #FAF8F4;
+      --canvas: #F4EFE6;
+      --line: #E8E4E8;
+      --on-brand: #FFFFFF;
+      --main-original: #7965C1;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-size: 16px; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+    h1, h2, h3, p, ol, ul, dl, dd { margin: 0; }
+    a { color: inherit; }
+    a:focus-visible { outline: 4px solid var(--ink); outline-offset: 4px; }
+    svg { display: block; flex-shrink: 0; }
+    .page { width: 100%; max-width: 480px; margin-inline: auto; background: var(--paper); }
+    .top { height: 72px; padding-inline: 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+    .logo { display: inline-flex; gap: 8px; align-items: center; font-size: 24px; font-weight: 850; text-decoration: none; }
+    .top-note { color: var(--muted); font-size: 16px; }
+    section { padding: 48px 16px; }
+    h1 { font-size: 32px; line-height: 1.3; font-weight: 850; letter-spacing: -0.04em; }
+    h2 { font-size: 26px; line-height: 1.4; font-weight: 800; letter-spacing: -0.04em; }
+    h3 { font-size: 20px; line-height: 1.5; font-weight: 750; letter-spacing: -0.02em; }
+    .intro { margin-top: 8px; color: var(--muted); }
+    .hero { padding-top: 32px; padding-bottom: 40px; }
+    .hello { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; color: var(--brand); font-weight: 700; }
+    .hello::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
+    .hero-copy { margin-top: 16px; color: var(--muted); max-width: 400px; }
+    .parcel-scene { margin-block: 24px; position: relative; height: 208px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--tint); }
+    .parcel-scene > svg { width: 100%; height: 100%; }
+    .seal { position: absolute; top: 20px; right: 20px; width: 72px; height: 72px; border-radius: 50%; background: var(--paper); color: var(--brand); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 750; font-size: 16px; transform: rotate(8deg); }
+    .button { display: flex; justify-content: center; align-items: center; gap: 12px; height: 56px; border-radius: 14px; padding-inline: 16px; background: var(--brand); color: var(--on-brand); font-size: 18px; font-weight: 750; text-decoration: none; }
+    .button:hover { background: var(--brand-hover); }
+    .assurance { margin-top: 16px; color: var(--muted); text-align: center; font-size: 16px; }
+    .how { border-top: 1px solid var(--line); }
+    .steps { list-style: none; padding: 0; margin-top: 32px; }
+    .steps li { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 16px; padding-bottom: 28px; }
+    .steps li:not(:last-child)::before { content: ""; position: absolute; top: 44px; bottom: 4px; left: 20px; width: 2px; background: var(--line); }
+    .steps li:last-child { padding-bottom: 0; }
+    .number { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; color: var(--brand); background: var(--tint); font-size: 18px; font-weight: 750; }
+    .steps h3 { padding-top: 4px; margin-bottom: 8px; }
+    .steps p { color: var(--muted); }
+    .promises { background: var(--tint); }
+    .promise-list { list-style: none; padding: 0; display: grid; gap: 12px; margin-top: 24px; }
+    .promise-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+    .icon-tile { width: 48px; height: 48px; display: grid; place-items: center; background: var(--tint); color: var(--brand); border-radius: 12px; margin-bottom: 16px; }
+    .promise-card p { margin-top: 12px; color: var(--muted); }
+    .price-card { margin-top: 24px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .price-main { background: var(--tint); padding: 24px; }
+    .pill { display: inline-flex; padding: 4px 12px; border-radius: 9999px; color: var(--brand); background: var(--paper); font-weight: 700; }
+    .amount { margin-top: 12px; font-size: 48px; line-height: 1.2; font-weight: 850; letter-spacing: -0.04em; }
+    .amount span { font-size: 24px; margin-left: 4px; }
+    .price-detail { padding: 24px; }
+    .price-detail dl { display: grid; gap: 12px; }
+    .price-detail dl > div { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .price-detail dt { color: var(--muted); }
+    .price-detail dd { font-weight: 750; white-space: nowrap; }
+    .price-note { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 20px; color: var(--muted); }
+    .included { margin-top: 16px; display: flex; align-items: center; gap: 8px; font-weight: 650; }
+    .included svg { color: var(--brand); }
+    .creator { margin: 0 16px 48px; padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--tint); }
+    .creator-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; color: var(--brand); font-weight: 700; }
+    .avatar { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--paper); }
+    .creator h2 { font-size: 24px; }
+    .creator-list { list-style: none; padding: 0; margin-block: 24px; display: grid; gap: 16px; }
+    .creator-list li { display: grid; grid-template-columns: 8px minmax(0, 1fr); gap: 12px; }
+    .creator-list li::before { content: ""; width: 8px; height: 8px; margin-top: 8px; border-radius: 50%; background: var(--brand); }
+    .creator-list span { color: var(--muted); }
+    .free { margin-top: 12px; text-align: center; color: var(--muted); }
+    footer { border-top: 1px solid var(--line); padding: 32px 16px 40px; color: var(--muted); font-size: 16px; }
+    .footer-logo { color: var(--ink); font-size: 22px; font-weight: 800; margin-bottom: 16px; }
+    footer p + p { margin-top: 8px; }
+    footer nav { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 20px; }
+    footer nav a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 4px; }
+    @media (min-width: 512px) { .page { margin-block: 32px; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <a class="logo" href="#" aria-label="팬꾹 홈">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="var(--on-brand)"/></svg>
+        팬꾹
+      </a>
+      <span class="top-note">마음을 담아, 꾹.</span>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <p class="hello">팬의 마음에 안심을 더해요</p>
+        <h1 id="hero-title">크리에이터가<br>승인한 선물만 배송</h1>
+        <p class="hero-copy">팬꾹 사무실에서 선물을 받아 검수하고,<br>크리에이터의 주소를 노출하지 않고<br>대신 보내 드려요.</p>
+        <div class="parcel-scene" aria-hidden="true">
+          <svg viewBox="0 0 344 208" focusable="false">
+            <circle cx="164" cy="106" r="84" fill="var(--paper)"/>
+            <circle cx="40" cy="56" r="12" fill="var(--accent-soft)"/>
+            <circle cx="300" cy="164" r="20" fill="var(--accent-soft)"/>
+            <circle cx="60" cy="168" r="6" fill="var(--main-original)"/>
+            <circle cx="276" cy="32" r="4" fill="var(--accent)"/>
+            <g transform="rotate(-8 160 112)">
+              <rect x="98" y="88" width="136" height="92" rx="16" fill="var(--accent)"/>
+              <path d="M162 76c-20-2-54-6-54-26 0-24 42-10 54 26Z" fill="var(--main-original)"/>
+              <path d="M162 76c18-4 44-12 42-30-4-22-36-2-42 30Z" fill="var(--main-original)"/>
+              <rect x="90" y="76" width="152" height="32" rx="12" fill="var(--accent-soft)"/>
+              <rect x="150" y="76" width="24" height="104" rx="4" fill="var(--main-original)"/>
+              <rect x="186" y="124" width="32" height="36" rx="8" fill="var(--paper)"/>
+              <path d="M202 150c-4-3-10-7-10-12 0-5 7-6 10-2 3-4 10-3 10 2 0 5-6 9-10 12Z" fill="var(--main-original)"/>
+            </g>
+            <path d="M52 102c-6-6-18 0-14 8 3 6 12 12 12 12s10-6 14-12c4-8-6-14-12-8Z" fill="var(--accent)"/>
+          </svg>
+          <span class="seal"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false"><path d="m5 12 5 5 10-11" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>승인 먼저</span>
+        </div>
+        <a class="button" href="#">선물 보내기</a>
+        <p class="assurance">승인 전에는 아무것도 배송되지 않습니다.</p>
+      </section>
+      <section class="how" aria-labelledby="how-title">
+        <h2 id="how-title">선물이 도착하기까지</h2>
+        <p class="intro">등록부터 배송까지, 네 단계로 확인하세요.</p>
+        <ol class="steps" role="list">
+          <li><span class="number" aria-hidden="true">1</span><div><h3>등록</h3><p>팬이 선물 정보와 상자 수를 등록하고 결제하면 주문번호가 생성됩니다.</p></div></li>
+          <li><span class="number" aria-hidden="true">2</span><div><h3>승인</h3><p>크리에이터가 건별로 승인하거나 거절합니다. 승인 뒤에야 팬에게 사무실 주소가 공개됩니다.</p></div></li>
+          <li><span class="number" aria-hidden="true">3</span><div><h3>검수</h3><p>팬이 사무실로 보낸 선물을 받아 모든 상자의 원래 송장을 떼어 파쇄하고 겉면을 검사합니다. 검사에 걸린 상자는 열어서 확인합니다.</p></div></li>
+          <li><span class="number" aria-hidden="true">4</span><div><h3>배송</h3><p>검수가 끝난 선물만 크리에이터에게 발송합니다. 팬은 상태 화면에서 진행 상황을 확인합니다.</p></div></li>
+        </ol>
+      </section>
+      <section class="promises" aria-labelledby="promise-title">
+        <h2 id="promise-title">안심에는 이유가 있어요</h2>
+        <p class="intro">팬꾹이 지키는 세 가지 약속입니다.</p>
+        <ul class="promise-list" role="list">
+          <li class="promise-card">
+            <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><path fill="currentColor" fill-rule="evenodd" d="M8 14v-4a8 8 0 0 1 16 0v4h1a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4h1Zm4 0h8v-4a4 4 0 0 0-8 0v4Z"/><circle cx="16" cy="22" r="3" fill="var(--paper)"/></svg></span>
+            <h3>승인 없이는 저희 시스템이 주소를 열지 않습니다</h3>
+            <p>주소는 암호화되어 보관됩니다. 승인된 건만 송장을 출력하는 순간에 주소가 열립니다.</p>
+          </li>
+          <li class="promise-card">
+            <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><rect x="4" y="6" width="24" height="24" rx="6" fill="currentColor"/><rect x="10" y="2" width="12" height="8" rx="4" fill="var(--accent)"/><path d="m10 19 4 4 8-9" fill="none" stroke="var(--paper)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <h3>모든 선물을 검수합니다</h3>
+            <p>모든 상자의 원래 송장을 떼어 파쇄하고 겉면을 검사합니다. 검사에 걸린 상자는 열어서 확인합니다. 검수를 건너뛰는 요금제는 없습니다.</p>
+          </li>
+          <li class="promise-card">
+            <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><rect x="6" y="2" width="22" height="28" rx="6" fill="currentColor"/><rect x="12" y="10" width="10" height="4" rx="2" fill="var(--paper)"/><rect x="12" y="18" width="8" height="4" rx="2" fill="var(--paper)"/><circle cx="6" cy="10" r="3" fill="var(--accent)"/><circle cx="6" cy="22" r="3" fill="var(--accent)"/></svg></span>
+            <h3>주소를 연 기록을 크리에이터에게 전부 공개합니다</h3>
+            <p>언제, 어느 주문의 주소를, 누가 열었는지 크리에이터가 전부 확인할 수 있습니다.</p>
+          </li>
+        </ul>
+      </section>
+      <section aria-labelledby="price-title">
+        <h2 id="price-title">검수는 기본으로 담았어요</h2>
+        <p class="intro">검수·전달 서비스료에 배송비 실비를 더합니다.</p>
+        <div class="price-card">
+          <div class="price-main"><span class="pill">검수 포함</span><p class="amount">9,000<span>원</span></p></div>
+          <div class="price-detail">
+            <dl><div><dt>검수·전달 서비스료</dt><dd>5,000원</dd></div><div><dt>배송비 실비</dt><dd>지금 4,000원</dd></div></dl>
+            <p class="price-note">현재 배송비 기준으로 총 9,000원입니다. 배송비는 실제 택배 요금에 따라 달라집니다.</p>
+          </div>
+        </div>
+        <p class="included"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10" fill="currentColor"/><path d="m5 10 3 3 7-7" fill="none" stroke="var(--paper)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>검수가 빠진 요금은 없습니다.</p>
+      </section>
+      <section class="creator" aria-labelledby="creator-title">
+        <div class="creator-heading"><span class="avatar" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="10" r="7" fill="currentColor"/><path d="M3 29a13 13 0 0 1 26 0Z" fill="currentColor"/></svg></span>크리에이터를 위한 안내</div>
+        <h2 id="creator-title">승인하지 않은 선물의 주소는 열리지 않습니다</h2>
+        <ul class="creator-list" role="list">
+          <li><div>선물은 한 건씩 승인합니다.<br><span>전체 승인 버튼은 없습니다.</span></div></li>
+          <li><div>거절 이유는 팬에게 공개하지 않습니다.</div></li>
+          <li><div>원치 않는 팬은 차단할 수 있습니다.</div></li>
+        </ul>
+        <a class="button" href="#">크리에이터로 가입하기</a>
+        <p class="free">크리에이터는 무료입니다</p>
+      </section>
+    </main>
+    <footer>
+      <p class="footer-logo">팬꾹</p>
+      <p>상호 네오코드<br>사업자등록번호 000-00-00000</p>
+      <p>고객센터<br>(번호·운영시간 입력 예정)</p>
+      <nav aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a></nav>
+    </footer>
+  </div>
+</body>
+</html>
