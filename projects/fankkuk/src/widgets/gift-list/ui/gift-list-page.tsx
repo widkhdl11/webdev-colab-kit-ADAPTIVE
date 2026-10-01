@@ -118,7 +118,7 @@ export function GiftListPage({
             panel: (
               <>
                 <p className={s["note-line"]}>
-                  크리에이터가 받지 않기로 했거나 승인 시간이 지난 선물이에요. 결제 금액은 주문 상태에 따라 돌려드려요.
+                  크리에이터가 받지 않기로 했거나 승인 시간이 지난 선물이에요. 사무실 도착 전이면 결제 금액을 모두, 도착 뒤면 반송 택배비를 뺀 금액을 돌려드려요.
                 </p>
                 <Rows gifts={notAccepted} faceToneByName={faceToneByName} empty="받지 않은 선물이 없어요." />
               </>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState, type KeyboardEvent } from "react";
+import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { BILLABLE_TIERS, TIER_PRICE_KRW } from "@/entities/payment/config/tier-pricing";
 import s from "./support.module.css";
@@ -23,9 +24,12 @@ const CATEGORIES: readonly { id: string; label: string; faqs: readonly Faq[] }[]
     faqs: [
       {
         q: "선물은 어떻게 보내나요?",
-        a: "크리에이터를 찾아 「선물 보내기」를 누르고, 상자 수와 크기를 등록한 뒤 결제하면 요청이 크리에이터에게 가요. 크리에이터가 승인하면 팬꾹 사무실 주소가 열리고, 그 주소로 보내 주시면 돼요.",
+        a: "크리에이터를 찾아 「선물 보내기」를 누르고, 상자 수와 크기를 등록한 뒤 결제하면 바로 팬꾹 사무실 주소를 알려 드려요. 승인을 기다리지 말고 그 주소로 보내 주세요. 크리에이터는 출고 전에 승인해요.",
       },
-      { q: "크리에이터가 거절하면 어떻게 되나요?", a: "거절된 선물은 배송되지 않아요. 거절 이유는 팬에게 알리지 않습니다." },
+      {
+        q: "크리에이터가 거절하면 어떻게 되나요?",
+        a: `거절된 선물은 크리에이터에게 배송되지 않아요. 사무실에 도착하기 전이면 결제 금액을 모두 돌려드리고, 도착한 뒤면 보낸 주소로 돌려보내 드린 뒤 반송 택배비를 뺀 금액을 돌려드려요. ${APPROVAL_DEADLINE_DAYS}일 안에 승인하지 않은 선물도 같아요. 거절 이유는 팬에게 알리지 않습니다.`,
+      },
       {
         q: "여러 상자를 한 번에 보낼 수 있나요?",
         a: "네, 한 선물에 상자를 여러 개 등록할 수 있어요. 상자마다 크기에 맞는 요금이 정해져요.",
@@ -53,7 +57,7 @@ const CATEGORIES: readonly { id: string; label: string; faqs: readonly Faq[] }[]
     faqs: [
       {
         q: "선물이 어디쯤 왔는지 어떻게 확인하나요?",
-        a: "등록 → 승인 → 입고 → 검수 → 출고 → 배송중 → 수령, 일곱 단계로 선물 상세 화면과 상단 선물 아이콘에서 볼 수 있어요.",
+        a: "등록 → 입고 → 검수 → 승인 → 출고 → 배송중 → 수령, 일곱 단계로 선물 상세 화면과 상단 선물 아이콘에서 볼 수 있어요.",
       },
       {
         q: "크리에이터행 운송장 번호를 볼 수 있나요?",

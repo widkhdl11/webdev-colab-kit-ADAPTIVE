@@ -7,6 +7,7 @@ import {
   fanProgress,
   fanStepDetail,
   hasShipped,
+  RETURN_ON_REJECT_NOTICE,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
 import { TrackingInput } from "@/features/tracking-input/ui/tracking-input";
@@ -95,8 +96,8 @@ export function GiftStatusPage({ view }: { view: FanGiftView }) {
                 <div className={s.part}>
                   <h2>이 선물은 보내지 마세요</h2>
                   <p className={s["sub-t"]}>
-                    아직 보내지 않았다면 보내지 마세요. 이미 사무실에 도착했다면 보낸 주소로 돌려보내 드려요. 결제는 주문 상태에
-                    따라 돌려드려요.
+                    아직 보내지 않았다면 보내지 마세요 — 결제 금액을 모두 돌려드려요. 이미 사무실에 도착했다면 보낸 주소로
+                    돌려보내 드리고, 반송 택배비를 뺀 금액을 돌려드려요.
                   </p>
                 </div>
               ) : null}
@@ -135,11 +136,11 @@ export function GiftStatusPage({ view }: { view: FanGiftView }) {
                 </div>
               ) : null}
 
-              {/* 승인된 주문에만 주소가 온다(INV-S9). 도착한 뒤에는 더 보낼 일이 없어 접는다 */}
+              {/* 결제가 끝난 진행 중 주문에 주소가 온다 — 승인을 기다리지 않는다(INV-S9). 도착한 뒤에는 더 보낼 일이 없어 접는다 */}
               {view.officeAddress && view.canEnterTrackingNo ? (
                 <div className={s.part}>
                   <h2>보내실 주소</h2>
-                  <p className={s["sub-t"]}>{view.creatorName}님이 승인해서 알려 드리는 팬꾹 사무실 주소예요.</p>
+                  <p className={s["sub-t"]}>이 선물에만 쓰는 팬꾹 사무실 주소예요. {view.creatorName}님의 승인은 기다리지 않고 보내 주세요 — 출고 전에 받아요.</p>
                   <div className={s.addr}>
                     <p className={s["addr-title"]}>이 주소로 보내 주세요</p>
                     <dl>
@@ -159,19 +160,7 @@ export function GiftStatusPage({ view }: { view: FanGiftView }) {
                   <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`}>
                     받는 사람 이름에 주문번호가 있어야 도착한 상자를 바로 찾을 수 있어요.
                   </p>
-                </div>
-              ) : view.outcome === "in_progress" && !view.officeAddress ? (
-                <div className={s.part}>
-                  <h2>보내실 주소</h2>
-                  <div className={s.locked}>
-                    <span className={s["ico-tile"]} aria-hidden="true">
-                      <img className="asset" src="/img/icon-address-lock.png" alt="" width={44} height={44} />
-                    </span>
-                    <p className={s["sub-t"]}>
-                      {view.creatorName}님이 승인하면 사무실 주소가 열리고, 알림톡으로 알려 드려요. 승인 전에는 선물을 보내지
-                      마세요.
-                    </p>
-                  </div>
+                  <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`}>{RETURN_ON_REJECT_NOTICE}</p>
                 </div>
               ) : null}
             </div>

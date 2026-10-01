@@ -38,21 +38,30 @@ const shipped: OrderRecord = {
 };
 
 describe("toFanView — 팬에게 보이는 것", () => {
-  it("INV-S9: 승인 전 주문에는 사무실 주소가 없다", () => {
-    expect(toFanView(base, OFFICE).officeAddress).toBeNull();
+  it("INV-S9 (S9): 결제가 끝난 주문은 승인 전이라도 사무실 주소가 나온다 — 승인을 기다리지 않고 보낸다", () => {
+    expect(toFanView(base, OFFICE).officeAddress).toBe(OFFICE);
   });
 
-  it("INV-S9: 승인 전에 상자가 먼저 입고돼도 사무실 주소는 없다", () => {
-    const view = toFanView({ ...base, status: "received", receivedAt: "2026-10-02T01:00:00.000Z" }, OFFICE);
-    expect(view.officeAddress).toBeNull();
-  });
-
-  it("INV-S9: 승인된 주문에만 사무실 주소가 나온다", () => {
+  it("INV-S9: 승인된 주문도 사무실 주소가 나온다", () => {
     const view = toFanView({ ...base, status: "approved", approvedAt: "2026-10-01T03:00:00.000Z" }, OFFICE);
     expect(view.officeAddress).toBe(OFFICE);
   });
 
-  it("INV-S9: 승인 기록이 있어도 거절·반려·취소된 주문에는 사무실 주소가 없다", () => {
+  it("INV-S9 (S9b, 실패경로): 승인 전 거절·반려·취소된 주문에는 사무실 주소가 없다", () => {
+    for (const status of ["rejected", "expired", "canceled"] as const) {
+      expect(toFanView({ ...base, status }, OFFICE).officeAddress).toBeNull();
+    }
+  });
+
+  it("INV-S9 (S9b, 실패경로): 검수에서 반송된 주문에는 사무실 주소가 없다", () => {
+    const view = toFanView(
+      { ...base, status: "received", receivedAt: "2026-10-02T01:00:00.000Z", inspection: { result: "returned", at: "2026-10-02T02:00:00.000Z" } },
+      OFFICE,
+    );
+    expect(view.officeAddress).toBeNull();
+  });
+
+  it("INV-S9 (S9b, 실패경로): 승인 기록이 있어도 거절·반려·취소된 주문에는 사무실 주소가 없다", () => {
     for (const status of ["rejected", "expired", "canceled"] as const) {
       const view = toFanView({ ...base, status, approvedAt: "2026-10-01T03:00:00.000Z" }, OFFICE);
       expect(view.officeAddress).toBeNull();
@@ -79,9 +88,9 @@ describe("toFanView — 팬에게 보이는 것", () => {
     const view = toFanView(shipped, OFFICE);
     expect(view.steps.map((s) => s.key)).toEqual([
       "registered",
-      "approved",
       "received",
       "inspected",
+      "approved",
       "shipped",
       "in_transit",
       "delivered",
@@ -89,10 +98,22 @@ describe("toFanView — 팬에게 보이는 것", () => {
     expect(view.steps.map((s) => s.state)).toEqual(["done", "done", "done", "done", "done", "done", "current"]);
   });
 
-  it("승인 전에 입고되면 입고는 끝났어도 지금 단계는 승인이다", () => {
-    const view = toFanView({ ...base, status: "received", receivedAt: "2026-10-02T01:00:00.000Z" }, OFFICE);
+  it("결제 직후 지금 단계는 입고다 — 승인을 기다리지 않는다", () => {
+    expect(toFanView(base, OFFICE).steps.find((s) => s.state === "current")?.key).toBe("received");
+  });
+
+  it("검수까지 끝나고 승인 전이면 지금 단계는 승인이다", () => {
+    const view = toFanView(
+      { ...base, status: "inspected", receivedAt: "2026-10-02T01:00:00.000Z", inspection: { result: "passed", at: "2026-10-02T02:00:00.000Z" } },
+      OFFICE,
+    );
     expect(view.steps.find((s) => s.state === "current")?.key).toBe("approved");
-    expect(view.steps.find((s) => s.key === "received")?.state).toBe("done");
+  });
+
+  it("입고 전에 승인되면 승인은 끝났고 지금 단계는 입고다", () => {
+    const view = toFanView({ ...base, status: "approved", approvedAt: "2026-10-01T03:00:00.000Z" }, OFFICE);
+    expect(view.steps.find((s) => s.key === "approved")?.state).toBe("done");
+    expect(view.steps.find((s) => s.state === "current")?.key).toBe("received");
   });
 
   it("검수 불합격이면 반송으로 끝나고 지금 단계가 없다", () => {
@@ -104,11 +125,10 @@ describe("toFanView — 팬에게 보이는 것", () => {
     expect(view.steps.some((s) => s.state === "current")).toBe(false);
   });
 
-  it("송장번호 입력은 승인 뒤, 입고 전에만 열린다", () => {
-    const approved = { ...base, status: "approved" as const, approvedAt: "2026-10-01T03:00:00.000Z" };
-    expect(toFanView(base, OFFICE).canEnterTrackingNo).toBe(false);
-    expect(toFanView(approved, OFFICE).canEnterTrackingNo).toBe(true);
-    expect(toFanView({ ...approved, receivedAt: "2026-10-02T01:00:00.000Z" }, OFFICE).canEnterTrackingNo).toBe(false);
+  it("송장번호 입력은 결제 뒤 입고 전에만 열린다 — 승인 여부와 상관없다", () => {
+    expect(toFanView(base, OFFICE).canEnterTrackingNo).toBe(true);
+    expect(toFanView({ ...base, receivedAt: "2026-10-02T01:00:00.000Z" }, OFFICE).canEnterTrackingNo).toBe(false);
+    expect(toFanView({ ...base, status: "rejected" }, OFFICE).canEnterTrackingNo).toBe(false);
   });
   it("검수 반송이면 검수 단계가 '멈춤'이고 시각이 남는다 — 어디서 멈췄는지 보인다", () => {
     const view = toFanView(

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
+import { RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { BILLABLE_TIERS, TIER_PRICE_KRW, type BillableTier } from "@/entities/payment/config/tier-pricing";
 import { formatDuration } from "@/shared/lib/format/datetime";
@@ -127,9 +128,10 @@ export function RegisterForm({
         <div className={`${f["send-form"]} ${f.done}`}>
           <span className="tag tag--brand">등록 완료</span>
           <h2 ref={doneTitle} tabIndex={-1}>
-            크리에이터의 승인을 기다려요
+            이제 사무실로 보내 주세요
           </h2>
-          <p>승인되면 알림톡으로 알려 드리고, 그때 사무실 주소가 열려요. 승인 전에는 선물을 보내지 마세요.</p>
+          <p>사무실 주소는 선물 상세 화면에 있어요. 크리에이터 승인은 기다리지 않아도 돼요 — 출고 전에 받아요.</p>
+          <p>{RETURN_ON_REJECT_NOTICE}</p>
           <p>예시 화면이라 실제 결제와 등록은 하지 않았어요.</p>
           <Link className={`btn ${f["done-go"]}`} href="/gifts">
             선물 내역 보기
@@ -439,6 +441,13 @@ export function RegisterForm({
               <p className={f["pay-note"]}>
                 배송비가 포함된 금액이에요. 선물이 사무실에 도착하기 전에 거절되면 전액 돌려드려요.
               </p>
+              {/* 승인을 기다리지 않고 보내는 대신 거절되면 반송비를 뺀다 — 결제 전에 반드시 보이게 조건 없이 둔다(2026-10-02 사용자 결정) */}
+              <div className={f["rule-note"]} role="note" aria-labelledby="return-notice-title">
+                <p id="return-notice-title">
+                  <strong>크리에이터가 거절하면 반송돼요</strong>
+                </p>
+                <p className={f["rule-note-sub"]}>{RETURN_ON_REJECT_NOTICE}</p>
+              </div>
               {picked ? (
                 <div className={f["rule-note"]}>
                   <p>
@@ -449,8 +458,8 @@ export function RegisterForm({
                     </strong>
                   </p>
                   <p className={f["rule-note-sub"]}>
-                    승인은 크리에이터가 카카오톡 인증서로 선물마다 직접 해요. 승인이 나면 사무실 주소가 열리고, 알림톡으로 알려
-                    드려요. 승인 없이는 저희 시스템이 주소를 열지 않습니다. 그 전에는 선물을 보내지 마세요.
+                    결제하면 바로 사무실 주소를 알려 드려요. 승인을 기다리지 말고 보내 주세요 — 크리에이터는 출고 전에 카카오톡
+                    인증서로 선물마다 직접 승인해요.
                   </p>
                 </div>
               ) : null}

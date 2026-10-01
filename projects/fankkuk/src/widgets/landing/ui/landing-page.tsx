@@ -21,9 +21,9 @@ const TILES = [
 ] as const;
 
 const STEPS = [
-  { icon: "icon-gift", num: "1. 등록", title: "선물을 등록해요", body: "선물 정보와 상자 수를 적고 결제해요." },
-  { icon: "icon-approve", num: "2. 승인", title: "크리에이터가 승인해요", body: "건마다 직접 승인해요. 승인 뒤에야 사무실 주소가 열려요." },
-  { icon: "icon-inspect", num: "3. 검수", title: "사무실에서 검수해요", body: "원래 송장을 떼어 파쇄하고 겉면을 검사해요." },
+  { icon: "icon-gift", num: "1. 등록", title: "선물을 등록해요", body: "결제하면 바로 사무실 주소를 알려 드려요. 승인을 기다리지 않고 보내요." },
+  { icon: "icon-inspect", num: "2. 검수", title: "사무실에서 검수해요", body: "원래 송장을 떼어 파쇄하고 겉면을 검사해요." },
+  { icon: "icon-approve", num: "3. 승인", title: "크리에이터가 승인해요", body: "출고 전에 건마다 직접 승인해요. 거절되면 반송비를 뺀 금액을 돌려드려요." },
   { icon: "icon-truck", num: "4. 배송", title: "팬꾹이 대신 보내요", body: "검수가 끝난 선물만 출고해요." },
 ] as const;
 
@@ -145,7 +145,7 @@ export function LandingPage() {
                 주소를 <span className="accent">열지 않습니다</span>
               </h2>
               <p className={`lead ${s["panel-lead"]}`}>
-                승인한 선물만 사무실 주소가 열려요. 크리에이터의 주소는 팬에게 보이지 않아요.
+                크리에이터가 승인한 선물만 출고해요. 크리에이터의 주소는 팬에게 보이지 않아요.
               </p>
               <Link className={`btn ${s["panel-cta"]}`} href="/signup">
                 크리에이터로 가입하기

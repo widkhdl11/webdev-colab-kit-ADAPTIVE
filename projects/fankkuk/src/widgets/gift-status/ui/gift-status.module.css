@@ -55,7 +55,6 @@
 .addr dd { margin: 0; font-weight: 600; }
 .addr-copy { margin-top: 16px; }
 @media (max-width: 767px) { .addr dl div { grid-template-columns: minmax(0, 1fr); gap: 0; } }
-.locked { display: flex; align-items: center; gap: 20px; margin-top: 20px; }
 
 .eta { display: flex; align-items: center; gap: 20px; margin-bottom: 40px; }
 .eta h2 { font-size: 18px; font-weight: 600; letter-spacing: 0; }
