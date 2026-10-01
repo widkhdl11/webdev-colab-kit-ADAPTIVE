@@ -1,0 +1,95 @@
+/* =====================================================================
+   A 도장 — 색·포인트 시안 (2026-10-01). ../site.css 위에 덮어쓴다.
+   포인트: 「꾹」 = 잉크 도장(주홍 #B3261E, 흰 바탕 대비 6.5:1). 나머지는 먹색 글자와 가는 선.
+   브랜드색: 청록 #32776B -> 짙은 청먹 #28433D (버튼·링크·로고). 도장색은 상태·승인에만.
+   ===================================================================== */
+:root {
+  --brand: #28433D; --brand-hover: #1B2F2B;
+  --page: #FFFFFF; --paper: #FFFFFF; --tint: #F7F7F5;
+  --ink: #1E2B27; --muted: #59635E; --line: #E2E3E0;
+  --accent: #9AA39F; --accent-soft: #D5D8D5; --field-line: #7F8782;
+  --stamp: #B3261E;
+}
+
+/* ── 공통: 포인트가 아닌 곳은 조용하게 (세 안 모두 같은 바탕) ──
+   아이콘 타일·옅은 색 면·카드 상자·그림자를 걷고 선과 글자로 */
+body { background: var(--page); }
+.site-header { background: var(--page); }
+.section--tint { background: transparent; border-top: 1px solid var(--line); }
+section[aria-labelledby="hello-title"].section--tint { border-top: 0; border-bottom: 1px solid var(--line); }
+.icon-tile { display: none; }
+.card { background: transparent; border: 0; border-radius: 0; padding: 0; }
+.card--tint { background: transparent; }
+.nav a { border-radius: 0; }
+.nav a:hover { background: none; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 8px; }
+.nav a[aria-current="page"] { background: none; color: var(--ink); }
+.avatar { background: var(--paper); color: var(--ink); border: 1px solid var(--ink); }
+.faq details { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.faq summary::after { background: none; color: var(--ink); border-radius: 0; }
+.h-scroll > .card { padding: 20px; border: 1px solid var(--line); }
+
+/* 카드 = 위쪽 굵은 선 한 줄 */
+.card { border-top: 2px solid var(--ink); padding-top: 20px; }
+.split .card { border: 1.5px solid var(--ink); padding: 24px; }
+.split.card--tint { border: 0; border-top: 2px solid var(--ink); padding: 40px 0 0 !important; }
+#info-grid .card { padding: 20px 0 0; }
+.h-scroll > .card { border-top: 2px solid var(--ink); }
+
+/* 도장 부품 */
+.stamp { color: var(--stamp); mix-blend-mode: multiply; }
+.stamp--xl { position: absolute; right: -16px; bottom: -150px; width: 300px; height: 300px; }
+.stamp--sm { flex-shrink: 0; width: 200px; height: 200px; }
+.badge { background: transparent; color: var(--ink); border: 2px solid currentColor; border-radius: 6px; padding: 0 10px; font-weight: 850; line-height: 1.5; transform: rotate(-2deg); filter: url(#ink-rough); }
+.badge--go { color: var(--stamp); }
+.badge--plain { background: transparent; color: var(--muted); border-style: dashed; }
+.badge--soft { background: transparent; color: var(--ink); }
+.badge--solid { background: var(--stamp); border-color: var(--stamp); color: #fff; transform: rotate(3deg); }
+
+/* 헤더 선물 아이콘 = 작은 도장 (겹 테두리, 살짝 기울어짐) */
+.gift-icon { background: var(--paper); color: var(--stamp); border: 2px solid currentColor; box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4.5px currentColor; filter: url(#ink-rough); }
+.gift-item:nth-child(1) .gift-icon { transform: rotate(5deg); }
+.gift-item:nth-child(2) .gift-icon { transform: rotate(-6deg); }
+.gift-item:nth-child(3) .gift-icon { transform: rotate(-2deg); }
+.gift-icon:hover { box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4.5px currentColor; transform: rotate(0) scale(1.08); }
+.gift-icon[data-state="done"] { background: var(--stamp); border-color: var(--stamp); color: #fff; box-shadow: inset 0 0 0 3px var(--stamp), inset 0 0 0 4.5px #fff; }
+.gift-more { background: transparent; border: 2px solid var(--ink); }
+.gift-badge { background: transparent; color: var(--stamp); border: 2px solid currentColor; filter: url(#ink-rough); transform: rotate(-2deg); }
+.gift-badge:hover { background: var(--tint); }
+.gift-badge .glyph { background: var(--stamp); color: #fff; }
+.sheet-list .gift-icon { filter: none; }
+
+/* 첫 화면: 승인 요청서 위에 큰 「승인 꾹」 도장 */
+.hero { padding-block: 72px 168px; }
+.hero h1 { font-size: clamp(40px, 5.2vw, 68px); font-weight: 900; line-height: 1.14; }
+.hero-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 56px; }
+.paper { position: relative; min-height: 380px; padding: 28px 28px 100px; background: #fff; border: 1.5px solid var(--ink); transform: rotate(1.5deg); }
+.paper-title { padding-bottom: 12px; border-bottom: 2px solid var(--ink); font-size: 20px; font-weight: 850; }
+.paper-rows div { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.paper-rows dt { color: var(--muted); font-weight: 650; }
+.paper-rows dd { margin: 0; font-weight: 750; text-align: right; }
+.paper-rows .blank { color: var(--muted); font-weight: 600; }
+@media (max-width: 1023px) { .hero-grid { grid-template-columns: 1fr; } .paper { max-width: 520px; } }
+@media (max-width: 767px) { .hero { padding-block: 40px 168px; } .paper { transform: rotate(1deg); min-height: 340px; padding: 20px 20px 90px; } .stamp--xl { right: -4px; bottom: -140px; width: 264px; height: 264px; } }
+
+/* 구간 */
+.section { padding-block: 88px; }
+.number { display: block; width: auto; height: auto; margin: 0 0 12px; background: none; border-radius: 0; color: var(--ink); font-size: 44px; font-weight: 900; line-height: 1; }
+.card--tint .number { background: none; }
+.stepper .dot { border-color: var(--ink); }
+.stepper .is-current .dot { border: 3px solid var(--stamp); background: var(--paper); color: var(--stamp); filter: url(#ink-rough); transform: rotate(-4deg); }
+.price-amount { font-size: 56px; }
+
+/* 마무리: 흰 바탕, 왼쪽 정렬, 도장 하나 */
+.cta-band { background: var(--page); color: var(--ink); border-top: 2px solid var(--ink); text-align: left; padding-block: 88px; }
+.cta-band h2 { color: var(--ink); font-size: clamp(40px, 6vw, 84px); font-weight: 900; }
+.cta-band p { color: var(--muted); }
+.cta-split { display: flex; align-items: center; justify-content: space-between; gap: 48px; }
+.cta-actions { justify-content: flex-start; }
+.cta-band .btn--on-brand { background: var(--brand); color: #fff; border-color: var(--brand); }
+.cta-band .btn--on-brand:hover { background: var(--brand-hover); }
+.cta-band .btn--outline-on-brand { color: var(--ink); border-color: var(--ink); }
+.cta-band .btn--outline-on-brand:hover { background: var(--tint); }
+@media (max-width: 767px) { .cta-split { flex-direction: column; align-items: flex-start; gap: 24px; } .stamp--sm { width: 160px; height: 160px; } }
+
+/* 홈 */
+#info-grid .card + .card { border-top: 2px solid var(--ink); }

@@ -1,0 +1,57 @@
+<!doctype html>
+<!--
+  색·포인트 시안 세 안 고르기 (2026-10-01)
+  사용자 원문: 「하얀색에 가까운 바탕으로. 한두 포인트만 살려서 AI 느낌을 없애줘」
+  구성·폭은 ../site.css 그대로. 안마다 a.css · b.css · c.css 만 다르다.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 색·포인트 시안 — 세 안 고르기</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="../site.css">
+  <style>
+    :root { --page: #FFFFFF; --tint: #F6F6F4; --line: #D9DAD7; --brand: #1E2B27; --brand-hover: #000; --ink: #1E2B27; --muted: #59635E; }
+    .pick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+    .pick li { padding-top: 20px; border-top: 3px solid var(--ink); }
+    .pick h2 { font-size: 28px; }
+    .chips { display: flex; gap: 8px; margin: 16px 0; }
+    .chip { width: 40px; height: 40px; border: 1px solid var(--line); }
+    @media (max-width: 767px) { .pick { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="container" style="padding-block:56px 72px">
+    <p class="eyebrow">팬꾹 사이트 시안 · 색·포인트</p>
+    <h1 style="margin-top:12px">세 안 중에 고르세요</h1>
+    <p class="lead" style="margin-top:12px;max-width:640px">바탕은 모두 흰색이고, 안마다 포인트가 딱 하나입니다. 랜딩과 메인 두 장씩 봐 주세요.</p>
+    <ul class="pick" style="margin-top:48px">
+      <li>
+        <h2>A 도장</h2>
+        <div class="chips" aria-label="색 견본: 주홍 도장색, 청먹, 흰색">
+          <span class="chip" style="background:#B3261E"></span><span class="chip" style="background:#28433D"></span><span class="chip" style="background:#fff"></span>
+        </div>
+        <p>이름의 「꾹」을 도장으로. 랜딩 첫 화면에 큰 「승인 꾹」 도장, 헤더 선물 아이콘과 상태 배지가 모두 잉크 도장 말투입니다.</p>
+        <p class="row" style="margin-top:20px"><a class="btn" href="a-landing.html">랜딩 보기</a><a class="btn btn--secondary" href="a-home.html">메인 보기</a></p>
+      </li>
+      <li>
+        <h2>B 송장 라벨</h2>
+        <div class="chips" aria-label="색 견본: 잉크, 형광 연두, 흰색">
+          <span class="chip" style="background:#111418"></span><span class="chip" style="background:#D7FF2F"></span><span class="chip" style="background:#fff"></span>
+        </div>
+        <p>택배 송장 말투. 점선 절취선, 굵은 고정폭 주문번호, 바코드 줄무늬, 검정에 가까운 잉크에 형광 한 색을 글자 뒤 면으로만 씁니다.</p>
+        <p class="row" style="margin-top:20px"><a class="btn" href="b-landing.html">랜딩 보기</a><a class="btn btn--secondary" href="b-home.html">메인 보기</a></p>
+      </li>
+      <li>
+        <h2>C 큰 글자</h2>
+        <div class="chips" aria-label="색 견본: 먹색, 형광 분홍, 청록, 흰색">
+          <span class="chip" style="background:#14201C"></span><span class="chip" style="background:#FFA6CB"></span><span class="chip" style="background:#32776B"></span><span class="chip" style="background:#fff"></span>
+        </div>
+        <p>화면을 꽉 채우는 굵은 한글 제목에, 손으로 그은 듯한 형광펜 밑줄과 동그라미. 청록 버튼은 그대로 둡니다.</p>
+        <p class="row" style="margin-top:20px"><a class="btn" href="c-landing.html">랜딩 보기</a><a class="btn btn--secondary" href="c-home.html">메인 보기</a></p>
+      </li>
+    </ul>
+  </main>
+</body>
+</html>

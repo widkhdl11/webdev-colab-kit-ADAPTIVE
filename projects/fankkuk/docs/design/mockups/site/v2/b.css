@@ -1,0 +1,126 @@
+/* =====================================================================
+   B 송장 라벨 — 색·포인트 시안 (2026-10-01). ../site.css 위에 덮어쓴다.
+   포인트: 택배 송장 말투 — 점선 절취선, 굵은 고정폭 주문번호, 바코드 줄무늬, 검정에 가까운 잉크 + 형광 연두 #D7FF2F(글자 뒤 면으로만).
+   브랜드색: 청록 #32776B -> 잉크 #111418 (버튼·링크·로고).
+   ===================================================================== */
+:root {
+  --brand: #111418; --brand-hover: #2B3036;
+  --page: #FFFFFF; --paper: #FFFFFF; --tint: #F5F5F4;
+  --ink: #111418; --muted: #555B61; --line: #D8D9DB;
+  --accent: #8A9096; --accent-soft: #D8D9DB; --field-line: #7A8087;
+  --neon: #D7FF2F;
+  --mono: ui-monospace, SFMono-Regular, "D2Coding", Consolas, "Courier New", monospace;
+}
+
+/* ── 공통: 포인트가 아닌 곳은 조용하게 (세 안 모두 같은 바탕) ──
+   아이콘 타일·옅은 색 면·카드 상자·그림자를 걷고 선과 글자로 */
+body { background: var(--page); }
+.site-header { background: var(--page); }
+.section--tint { background: transparent; border-top: 1px solid var(--line); }
+section[aria-labelledby="hello-title"].section--tint { border-top: 0; border-bottom: 1px solid var(--line); }
+.icon-tile { display: none; }
+.card { background: transparent; border: 0; border-radius: 0; padding: 0; }
+.card--tint { background: transparent; }
+.nav a { border-radius: 0; }
+.nav a:hover { background: none; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 8px; }
+.nav a[aria-current="page"] { background: none; color: var(--ink); }
+.avatar { background: var(--paper); color: var(--ink); border: 1px solid var(--ink); }
+.faq details { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.faq summary::after { background: none; color: var(--ink); border-radius: 0; }
+.h-scroll > .card { padding: 20px; border: 1px solid var(--line); }
+
+.btn { border-width: 2px; border-radius: 4px; }
+.btn--lg, .btn--sm { border-radius: 4px; }
+.btn--secondary { border-color: var(--ink); color: var(--ink); }
+.btn--secondary:hover { background: var(--neon); border-color: var(--ink); }
+.link, .link-arrow { color: var(--ink); }
+.mono, .ordno { font-family: var(--mono); font-weight: 800; }
+.hl { background: linear-gradient(transparent 10%, var(--neon) 10%, var(--neon) 90%, transparent 90%); padding: 0 .08em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+
+/* 헤더 */
+.site-header { border-bottom: 2px solid var(--ink); }
+.nav a[aria-current="page"] { background: var(--neon); }
+.gift-icon { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 6px; box-shadow: none; }
+.gift-icon:hover { background: var(--neon); box-shadow: none; }
+.gift-icon[data-state="done"] { background: var(--neon); color: var(--ink); }
+.gift-more { border: 2px solid var(--ink); border-radius: 6px; background: var(--paper); }
+.gift-badge { border-radius: 6px; background: var(--ink); }
+.gift-badge .glyph { border-radius: 4px; }
+.sheet-list .gift-icon { border-radius: 6px; }
+.user-btn { border: 2px solid var(--ink); border-radius: 6px; }
+.avatar { border-radius: 4px; }
+
+/* 라벨 부품 */
+.badge { background: transparent; color: var(--ink); border: 2px solid var(--ink); border-radius: 0; padding: 0 8px; font-family: var(--mono); font-weight: 800; }
+.badge--go, .badge--soft { background: var(--neon); }
+.badge--plain { border-style: dashed; }
+.badge--solid { background: var(--ink); color: #fff; }
+.barcode { display: block; height: 72px; background: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 6px, var(--ink) 6px 7px, transparent 7px 12px, var(--ink) 12px 16px, transparent 16px 19px, var(--ink) 19px 21px, transparent 21px 23px, var(--ink) 23px 29px, transparent 29px 32px, var(--ink) 32px 33px, transparent 33px 37px); }
+.card { background: #fff; border: 2px solid var(--ink); padding: 24px; }
+.split .card { padding: 24px; }
+.split.card--tint { border: 0; border-top: 2px solid var(--ink); padding: 40px 0 0 !important; }
+#how li.card { border-style: dashed; }
+#info-grid .card { padding: 24px; }
+.h-scroll > .card { border: 2px solid var(--ink); }
+
+/* 첫 화면: 송장 라벨 */
+.hero { padding-block: 64px 96px; }
+.hero h1 { font-size: clamp(40px, 5.2vw, 68px); font-weight: 900; line-height: 1.2; letter-spacing: -0.045em; }
+.hero-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); }
+.label { position: relative; background: #fff; border: 2px solid var(--ink); transform: rotate(2deg); }
+.label-top { display: flex; justify-content: space-between; gap: 16px; padding: 12px 20px; border-bottom: 2px solid var(--ink); font-weight: 750; }
+.label-no { padding: 24px 20px 8px; font-family: var(--mono); font-weight: 800; font-size: clamp(36px, 4.2vw, 56px); line-height: 1; letter-spacing: -0.03em; }
+.label .barcode { margin: 12px 20px 8px; }
+.label-rows { padding: 8px 20px 4px; }
+.label-rows div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.label-rows dt { color: var(--muted); font-weight: 650; }
+.label-rows dd { margin: 0; font-weight: 750; text-align: right; }
+.cut { position: relative; margin-top: 16px; border-top: 2px dashed var(--ink); }
+.cut::before, .cut::after, .ordno-row::before, .ordno-row::after { content: ""; position: absolute; top: -13px; width: 12px; height: 24px; background: #fff; border: 2px solid var(--ink); }
+.cut::before { left: -2px; border-left: 0; border-radius: 0 24px 24px 0; }
+.cut::after { right: -2px; border-right: 0; border-radius: 24px 0 0 24px; }
+.label-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 20px; font-weight: 750; }
+@media (max-width: 1023px) { .hero-grid { grid-template-columns: 1fr; } .label { max-width: 520px; } }
+@media (max-width: 767px) { .hero { padding-block: 40px 56px; } .label { transform: rotate(1deg); } }
+
+/* 구간: 번호 매긴 라벨 머리 */
+main { counter-reset: sec; }
+.section-head::before { counter-increment: sec; content: "NO. 0" counter(sec); display: block; margin-bottom: 12px; padding-top: 8px; border-top: 2px solid var(--ink); font-family: var(--mono); font-weight: 800; }
+h2 { font-weight: 900; }
+.number { display: inline-block; width: auto; height: auto; margin-bottom: 16px; padding: 2px 8px; border: 2px solid var(--ink); border-radius: 0; background: #fff; color: var(--ink); font-family: var(--mono); font-size: 18px; font-weight: 800; }
+.number::before { content: "NO. 0"; }
+.card--tint .number { background: #fff; }
+.stepper .dot { border: 2px solid var(--ink); border-radius: 0; }
+.stepper .is-done .dot { background: var(--ink); border-color: var(--ink); }
+.stepper .is-current .dot { background: var(--neon); border-color: var(--ink); color: var(--ink); }
+.stepper li:not(:last-child)::after { height: 0; background: none; border-top: 2px dashed var(--ink); }
+.stepper .is-done:not(:last-child)::after { background: none; border-top-style: solid; }
+.stepbar span { border-radius: 0; height: 10px; }
+.price-amount { display: inline-block; padding: 0 8px; background: linear-gradient(transparent 10%, var(--neon) 10%, var(--neon) 90%, transparent 90%); font-family: var(--mono); font-size: 48px; }
+.price-amount span { font-family: Pretendard, sans-serif; }
+.faq { gap: 0; }
+.faq details { border: 2px solid var(--ink); }
+.faq details + details { border-top: 0; }
+.faq summary::after { border: 2px solid var(--ink); }
+.check-line svg { color: var(--ink); }
+.dot-list > li::before { border-radius: 0; background: var(--ink); }
+.eyebrow::before { border-radius: 0; background: var(--neon); border: 2px solid var(--ink); width: 12px; height: 12px; }
+
+/* 홈: 선물 카드 = 주문번호 라벨 */
+.ordno-row { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 0 0 20px; padding-bottom: 16px; border-bottom: 2px dashed var(--ink); }
+.ordno-row::before, .ordno-row::after { top: auto; bottom: -13px; }
+.ordno-row::before { left: -26px; border-left: 0; border-radius: 0 24px 24px 0; }
+.ordno-row::after { right: -26px; border-right: 0; border-radius: 24px 0 0 24px; }
+.ordno { font-size: 24px; letter-spacing: -0.02em; }
+.ordno-row .barcode { width: 112px; height: 32px; }
+.hero-actions .btn:not(.btn--secondary) { background: var(--neon); color: var(--ink); border-color: var(--ink); }
+.hero-actions .btn:not(.btn--secondary):hover { background: #E6FF7A; }
+
+/* 마무리: 먹색 띠 + 형광 버튼 */
+.cta-band { background: var(--ink); text-align: left; padding-block: 72px; }
+.cta-band .container::before { content: ""; display: block; width: 240px; height: 40px; margin-bottom: 32px; background: repeating-linear-gradient(90deg, #fff 0 3px, transparent 3px 6px, #fff 6px 7px, transparent 7px 12px, #fff 12px 16px, transparent 16px 19px, #fff 19px 21px, transparent 21px 23px, #fff 23px 29px, transparent 29px 32px, #fff 32px 33px, transparent 33px 37px); }
+.cta-band h2 { font-size: clamp(40px, 6vw, 84px); }
+.cta-actions { justify-content: flex-start; }
+.cta-band .btn--on-brand { background: var(--neon); color: var(--ink); border-color: var(--neon); }
+.cta-band .btn--on-brand:hover { background: #E6FF7A; border-color: #E6FF7A; }
+.cta-band .btn--outline-on-brand:hover { background: #2B3036; }
