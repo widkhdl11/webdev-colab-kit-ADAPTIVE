@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 색 무게 비교</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+  body { margin: 0; font-family: "Pretendard Variable", Pretendard, sans-serif; font-size: 16px; color: #1E2B27; background: #fff; }
+  .bar { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 24px; padding: 16px 24px; background: #fff; border-bottom: 1px solid #E2E3E0; }
+  fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  legend { font-weight: 800; margin-right: 8px; float: left; }
+  label { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #C9CECB; border-radius: 9999px; cursor: pointer; }
+  label:has(input:checked) { border-color: #1E2B27; font-weight: 750; }
+  .sw { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #0002; }
+  .frames { display: grid; gap: 0; }
+  iframe { width: 100%; height: 760px; border: 0; border-bottom: 8px solid #F2F2F0; }
+  .note { padding: 0 24px 16px; color: #59635E; }
+</style>
+</head>
+<body>
+<form class="bar" id="f">
+  <fieldset><legend>초록</legend>
+    <label><input type="radio" name="g" value="now"><span class="sw" style="background:#28433D"></span>지금(청먹)</label>
+    <label><input type="radio" name="g" value="clear" checked><span class="sw" style="background:#2E7D64"></span>맑은 초록</label>
+    <label><input type="radio" name="g" value="leaf"><span class="sw" style="background:#2F7F4F"></span>풀빛 초록</label>
+    <label><input type="radio" name="g" value="mint"><span class="sw" style="background:#D3EEE1"></span>연한 민트 버튼</label>
+  </fieldset>
+  <fieldset><legend>선</legend>
+    <label><input type="radio" name="r" value="now">지금(진한 선)</label>
+    <label><input type="radio" name="r" value="soft" checked>옅은 회색</label>
+    <label><input type="radio" name="r" value="faint">아주 옅게</label>
+  </fieldset>
+  <fieldset><legend>글자</legend>
+    <label><input type="radio" name="t" value="now">지금</label>
+    <label><input type="radio" name="t" value="soft" checked>조금 옅게</label>
+  </fieldset>
+</form>
+<p class="note">위에서 고르면 아래 두 화면(랜딩·메인)이 바로 바뀝니다. 바탕은 지금도 순백(#FFFFFF)이고, 하얀 느낌을 정하는 것은 그 위의 초록·선·글자의 무게입니다.</p>
+<div class="frames">
+  <iframe src="landing.html" title="랜딩"></iframe>
+  <iframe src="home.html" title="메인"></iframe>
+</div>
+<script>
+const G = {
+  now:   { "--brand": "#28433D", "--brand-hover": "#1B2F2B", "--brand-fill": "#28433D", "--on-brand": "#FFFFFF" },
+  clear: { "--brand": "#2E7D64", "--brand-hover": "#256A55", "--brand-fill": "#2E7D64", "--on-brand": "#FFFFFF" },
+  leaf:  { "--brand": "#2F7F4F", "--brand-hover": "#276B42", "--brand-fill": "#2F7F4F", "--on-brand": "#FFFFFF" },
+  mint:  { "--brand": "#2E7D64", "--brand-hover": "#BFE4D3", "--brand-fill": "#D3EEE1", "--on-brand": "#1E2B27" },
+};
+const R = { now: null, soft: "#C9CECB", faint: "#E2E3E0" };
+const T = { now: "#1E2B27", soft: "#333D39" };
+// 민트는 진행 막대가 흰 바탕에서 안 보이므로 막대만 글자 초록으로
+const MINT_FIX = ".stepbar span.on,.stepper .is-done .dot,.stepper .is-done:not(:last-child)::after{background:var(--brand)!important;color:#fff!important}";
+function apply() {
+  const v = Object.fromEntries(new FormData(document.getElementById("f")));
+  for (const fr of document.querySelectorAll("iframe")) {
+    const d = fr.contentDocument; if (!d) continue;
+    const s = d.documentElement.style;
+    for (const [k, val] of Object.entries(G[v.g])) s.setProperty(k, val);
+    s.setProperty("--ink", T[v.t]);
+    if (R[v.r]) s.setProperty("--rule", R[v.r]); else s.setProperty("--rule", T[v.t]);
+    let st = d.getElementById("tone-fix");
+    if (!st) { st = d.createElement("style"); st.id = "tone-fix"; d.head.appendChild(st); }
+    st.textContent = v.g === "mint" ? MINT_FIX : "";
+  }
+}
+document.getElementById("f").addEventListener("change", apply);
+document.querySelectorAll("iframe").forEach(fr => fr.addEventListener("load", apply));
+</script>
+</body>
+</html>
