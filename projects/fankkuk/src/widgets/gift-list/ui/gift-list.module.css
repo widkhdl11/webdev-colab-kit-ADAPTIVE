@@ -1,0 +1,13 @@
+.item { display: grid; gap: 8px; padding: 20px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-card); text-decoration: none; }
+.item:hover { border-color: var(--accent); }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.title { font-size: 18px; font-weight: 750; }
+.date { color: var(--muted); }
+.cta { margin-top: 20px; }
+
+/* 7단계 진행 점 — 원을 반복해서 쓴다(design-rules 2절) */
+.dots { display: flex; gap: 4px; margin-block: 4px; }
+.dot-done, .dot-current, .dot-todo { width: 12px; height: 12px; border-radius: 50%; }
+.dot-done { background: var(--brand); }
+.dot-current { background: var(--paper); border: 2px solid var(--brand); }
+.dot-todo { background: var(--line); }

@@ -82,8 +82,7 @@ export function LandingPage({ charge }: { charge: ChargeBreakdown }) {
             대신 보내 드려요.
           </p>
           <ParcelScene />
-          {/* 선물 등록 화면이 생기면 그 주소로 바꾼다 */}
-          <a className={s.button} href="#how-title">
+          <a className={s.button} href="/gifts/new">
             선물 보내기
           </a>
           <p className={s.assurance}>승인 전에는 아무것도 배송되지 않습니다.</p>

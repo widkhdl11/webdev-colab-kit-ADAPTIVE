@@ -1,0 +1,16 @@
+.who { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--tint); color: var(--brand); font-size: 20px; font-weight: 800; flex-shrink: 0; }
+.who-text { display: grid; min-width: 0; }
+.nickname { font-size: 18px; font-weight: 750; }
+.facts { margin-top: 16px; }
+.facts dd { text-align: right; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.tags:empty { display: none; }
+.actions { margin-top: 20px; }
+.result { margin-top: 20px; padding: 12px 16px; border-radius: var(--radius-card); background: var(--page); color: var(--muted); font-weight: 700; }
+.result-signing { background: var(--tint); color: var(--brand); }
+
+.check { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 12px; align-items: start; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-card); cursor: pointer; }
+.check input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); }
+.check > span { display: grid; gap: 4px; }
+.check-title { font-weight: 750; }
