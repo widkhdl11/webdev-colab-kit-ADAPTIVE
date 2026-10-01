@@ -1,0 +1,213 @@
+{
+  "nodes": [
+    {
+      "id": "product",
+      "label": "product",
+      "kind": "root",
+      "skills": [
+        "intake",
+        "kickoff",
+        "setup"
+      ]
+    },
+    {
+      "id": "spec",
+      "label": "spec",
+      "kind": "step",
+      "skills": [
+        "spec"
+      ]
+    },
+    {
+      "id": "design",
+      "label": "design",
+      "kind": "aggregate",
+      "skills": []
+    },
+    {
+      "id": "design/page-designer",
+      "label": "page-designer",
+      "kind": "child",
+      "parent": "design",
+      "skills": [
+        "checkpoint",
+        "design-interview"
+      ]
+    },
+    {
+      "id": "design/schema-designer",
+      "label": "schema-designer",
+      "kind": "child",
+      "parent": "design",
+      "skills": []
+    },
+    {
+      "id": "implement",
+      "label": "implement",
+      "kind": "step",
+      "skills": [
+        "scaffold"
+      ]
+    },
+    {
+      "id": "qa",
+      "label": "qa",
+      "kind": "step",
+      "skills": []
+    },
+    {
+      "id": "review",
+      "label": "review",
+      "kind": "step",
+      "skills": []
+    },
+    {
+      "id": "deploy",
+      "label": "deploy",
+      "kind": "step",
+      "skills": []
+    }
+  ],
+  "edges": [
+    {
+      "from": "product",
+      "to": "spec"
+    },
+    {
+      "from": "product",
+      "to": "design"
+    },
+    {
+      "from": "design/page-designer",
+      "to": "design"
+    },
+    {
+      "from": "design/schema-designer",
+      "to": "design"
+    },
+    {
+      "from": "spec",
+      "to": "implement"
+    },
+    {
+      "from": "design",
+      "to": "implement"
+    },
+    {
+      "from": "implement",
+      "to": "qa"
+    },
+    {
+      "from": "qa",
+      "to": "review"
+    },
+    {
+      "from": "review",
+      "to": "deploy"
+    }
+  ],
+  "skills": [
+    {
+      "name": "checkpoint",
+      "nodes": [
+        "design/page-designer"
+      ]
+    },
+    {
+      "name": "design-interview",
+      "nodes": [
+        "design/page-designer"
+      ]
+    },
+    {
+      "name": "goal",
+      "nodes": [
+        "all"
+      ]
+    },
+    {
+      "name": "intake",
+      "nodes": [
+        "product"
+      ]
+    },
+    {
+      "name": "kickoff",
+      "nodes": [
+        "product"
+      ]
+    },
+    {
+      "name": "report-dashboard",
+      "nodes": [
+        "all"
+      ]
+    },
+    {
+      "name": "retro",
+      "nodes": [
+        "all"
+      ]
+    },
+    {
+      "name": "scaffold",
+      "nodes": [
+        "implement"
+      ]
+    },
+    {
+      "name": "setup",
+      "nodes": [
+        "product"
+      ]
+    },
+    {
+      "name": "spec",
+      "nodes": [
+        "spec"
+      ]
+    },
+    {
+      "name": "status",
+      "nodes": [
+        "all"
+      ]
+    },
+    {
+      "name": "wrap-up",
+      "nodes": [
+        "all"
+      ]
+    }
+  ],
+  "agents": [
+    {
+      "name": "code-reviewer",
+      "description": "게이트는 문법을 보고 이 리뷰어는 의미를 본다 — 도메인 로직 위치, 네이밍, 중복, 엣지 케이스, 성능 낭비. 도메인 로직·상태 관리가 바뀐 diff의 기능 완성 시점에 파견한다. 카피·토큰 교체처럼 로직이 그대로인 변경에는 읽을 것이 없다."
+    },
+    {
+      "name": "design-drafter",
+      "description": "구현물을 버리며 반복하는 대신 버려도 싼 정적 HTML 시안으로 시각 방향을 반복하기 위한 위임. 신호는 design-rules로 커버되지 않는 새 레이아웃 언어. 승인된 방향의 반복 화면이거나 되돌리는 비용이 작으면 시안 없이 바로 구현하는 편이 낫다. 비즈니스 로직 없이 화면만 그린다"
+    },
+    {
+      "name": "qa-classifier",
+      "description": "검증(qa 테스트·review 리뷰어) 실패를 spec/design/impl 레벨로 귀속. 라우팅하지 않고 판정만 한다 — 어느 노드를 dirty로 마크할지 결정."
+    },
+    {
+      "name": "security-reviewer",
+      "description": "정적 게이트가 못 잡는 보안 맥락을 본다 — 검증 없이 쓰이는 입력, 인가 결함, 신뢰 경계, 민감 정보가 흐르는 경로. 사용자 입력·인가·시크릿·세션을 만진 diff에 파견한다. 그 표면에 닿지 않은 변경에는 판정할 근거가 없다."
+    },
+    {
+      "name": "style-scout",
+      "description": "사용자가 레퍼런스 URL 을 줬을 때 사이트 스타일을 정찰. 새 시각 방향을 잡기 전 참고용. Playwright MCP 연결 시에만 위임할 것 (미연결 시 위임 금지 — 대신 사용자에게 스크린샷 요청)"
+    },
+    {
+      "name": "test-auditor",
+      "description": "'\"이 테스트를 지워도 잘못된 구현이 통과하는가\"를 묻는다 — 통과하는 테스트는 그것만으로 검증의 증거가 아니기 때문이다. 스펙 INV를 검증하는 테스트를 새로 쓴 뒤에 파견한다. 기존 테스트에 변화가 없으면 감사할 것도 없다.'"
+    },
+    {
+      "name": "ui-reviewer",
+      "description": "승인된 design-rules와 접근성 기준에서 벗어난 곳을 찾는다 — 기준 문서가 있어야 판정이 취향 싸움이 되지 않는다. 승인된 방향에서 벗어나는 시각 변경(새 컴포넌트·레이아웃·토큰)에 파견한다. design-rules 안에서 반복되는 화면에는 지적할 기준 위반이 거의 없다."
+    }
+  ]
+}
