@@ -1,5 +1,5 @@
 // 예시 데이터 — DB 전에 화면 흐름을 보기 위한 것. 실제 크리에이터가 아니다.
-export type CreatorSummary = { id: string; name: string; channel: string };
+import type { CreatorProfile, CreatorSummary } from "../model/creator";
 
 export const SAMPLE_CREATORS: readonly CreatorSummary[] = [
   { id: "c1", name: "하루", channel: "치지직" },
@@ -29,20 +29,6 @@ export const SAMPLE_MORE_CREATORS: readonly CreatorSummary[] = [
 /** 크리에이터 찾기에 보이는 전체(본인 확인을 마친 크리에이터). */
 export const SAMPLE_LISTED_CREATORS: readonly CreatorSummary[] = [...SAMPLE_CREATORS, ...SAMPLE_MORE_CREATORS];
 
-/** 목록·크리에이터 페이지에 보이는 소개 칸. CreatorSummary 와 id 로 잇는다. */
-export type CreatorProfile = {
-  creatorId: string;
-  category: string;
-  channelTitle: string;
-  intro: string;
-  /** 검색에 같이 걸리는 로마자 이름. */
-  alias: string;
-  /** 최근 30일 평균 승인 시간(시간 단위). */
-  avgApprovalHours: number;
-  /** 얼굴 자리표시 동그라미 색 — 프로필 사진이 붙으면 사라질 값이라 토큰이 아니라 데이터로 둔다. */
-  faceTone: string;
-};
-
 export const SAMPLE_CREATOR_PROFILES: readonly CreatorProfile[] = [
   { creatorId: "c1", category: "게임", channelTitle: "하루의 놀이터", intro: "게임 방송을 해요.", alias: "haru", avgApprovalHours: 2, faceTone: "var(--face-6)" },
   { creatorId: "c2", category: "노래", channelTitle: "모모네 거실", intro: "노래 방송을 해요.", alias: "momo", avgApprovalHours: 4, faceTone: "var(--face-3)" },
@@ -60,3 +46,13 @@ export const SAMPLE_CREATOR_PROFILES: readonly CreatorProfile[] = [
 
 /** 예시에서 로그인한 팬이 팔로우한 크리에이터. 메인의 팔로우 줄·내 정보 화면과 같은 여섯 명이다. */
 export const SAMPLE_FOLLOWED_CREATOR_IDS: readonly string[] = ["c1", "c2", "c3", "c4", "c5", "c6"];
+
+/** 크리에이터 이름 → 얼굴 자리표시 색. 선물 줄의 얼굴이 팔로우 줄·크리에이터 찾기와 같은 색이 되게(선물 모양에는 이름만 있다). */
+export function sampleFaceToneByName(): Record<string, string> {
+  return Object.fromEntries(
+    SAMPLE_LISTED_CREATORS.flatMap((c) => {
+      const p = SAMPLE_CREATOR_PROFILES.find((x) => x.creatorId === c.id);
+      return p ? [[c.name, p.faceTone] as const] : [];
+    }),
+  );
+}

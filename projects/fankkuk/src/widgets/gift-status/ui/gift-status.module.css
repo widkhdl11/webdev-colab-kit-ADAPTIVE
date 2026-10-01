@@ -69,4 +69,3 @@
 .info-row dd { margin: 0; font-weight: 600; text-align: right; }
 .info :global(.tag) { margin-top: 12px; }
 .info-note { margin-top: 12px; color: var(--sub); }
-.page-end { height: clamp(72px, 9vw, 128px); }

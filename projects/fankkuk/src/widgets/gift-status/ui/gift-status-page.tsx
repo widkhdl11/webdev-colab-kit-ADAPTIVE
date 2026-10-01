@@ -35,7 +35,8 @@ export function GiftStatusPage({ view }: { view: FanGiftView }) {
   const current = view.steps.find((st) => st.state === "current");
   const currentDetail = current ? fanStepDetail(current, view) : null;
   const arrived = view.steps.some((st) => st.key === "received" && st.state === "done");
-  const showsBoxes = view.outcome === "in_progress" || view.outcome === "returned";
+  // 단계 막대와 상자별 상태는 같은 경우(진행 중·돌려보냄)에만 보인다
+  const showsProgress = showsSteps(view);
   const recipient = `팬꾹 ${view.orderNo}`;
 
   return (
@@ -63,7 +64,7 @@ export function GiftStatusPage({ view }: { view: FanGiftView }) {
             </span>
           </div>
 
-          {showsSteps(view) ? (
+          {showsProgress ? (
             <>
               <ol className={s.stepper} aria-label={`선물 진행 단계 ${progress.total}단계 중 ${progress.done}단계 완료`}>
                 {view.steps.map((st, i) => (
@@ -100,7 +101,7 @@ export function GiftStatusPage({ view }: { view: FanGiftView }) {
                 </div>
               ) : null}
 
-              {showsBoxes ? (
+              {showsProgress ? (
                 <div className={s.part}>
                   <h2>상자별 상태</h2>
                   <div className={s["box-rows"]}>
@@ -224,7 +225,7 @@ export function GiftStatusPage({ view }: { view: FanGiftView }) {
               </section>
             </div>
           </div>
-          <div className={s["page-end"]} />
+          <div className="page-end" />
         </div>
       </section>
     </main>

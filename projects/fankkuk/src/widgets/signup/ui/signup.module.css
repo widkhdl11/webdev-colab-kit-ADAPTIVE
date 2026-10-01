@@ -1,7 +1,5 @@
 /* 회원가입 — 시안 docs/design/mockups/site/v4/signup.html 의 <style> + v4.css 14절(단계 표시·단계 카드)에서 이 화면이 쓰는 것만 */
 .su { max-width: 720px; margin-inline: auto; padding-bottom: clamp(72px, 9vw, 128px); }
-.page-title { padding-block: clamp(32px, 4vw, 56px) 24px; }
-.page-title p { margin-top: 8px; color: var(--sub); font-size: 18px; }
 
 /* 단계 표시 */
 .steps-wrap { padding-bottom: 24px; scroll-margin-top: 88px; }
@@ -35,7 +33,7 @@
   .send-form > .step:not([hidden]) { margin-bottom: 32px; }
 }
 @media (max-width: 767px) {
-  .send-form { padding: 24px 20px; border-radius: 24px; }
+  .send-form { padding: 24px 20px; border-radius: var(--r-card); }
   .step h2 { font-size: 26px; }
   .step-actions { display: grid; grid-template-columns: 1fr 2fr; }
   .step-actions.no-prev { grid-template-columns: 1fr; }
@@ -51,7 +49,7 @@
 .choice-body strong { font-size: 20px; letter-spacing: -.3px; }
 .choice-body :global(.sub) { line-height: 1.5; }
 .choice input:checked + .choice-body { box-shadow: inset 0 0 0 2px var(--brand); }
-.choice input:focus-visible + .choice-body { outline: 3px solid var(--ink); outline-offset: 3px; }
+.choice input:focus-visible + .choice-body { outline: 3px solid var(--ink); outline-offset: 2px; }
 .kind-note { margin-top: 20px; }
 @media (max-width: 767px) {
   .choices { grid-template-columns: 1fr; }
@@ -68,12 +66,11 @@
 .check input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); flex-shrink: 0; }
 .req { color: var(--brand); font-weight: 700; }
 .link { color: var(--brand); font-weight: 700; text-underline-offset: 4px; }
+.link-off { color: var(--sub); font-weight: 600; }   /* 아직 갈 곳이 없는 「보기」 — 링크처럼 보이지 않게 */
 
 /* 3단계 — 카카오톡 본인 확인 */
 .kakao-steps { counter-reset: k; display: grid; gap: 16px; margin-top: 24px; }
 .kakao-steps li { counter-increment: k; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 16px; align-items: center; }
 .kakao-steps li::before { content: counter(k); display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface); font-weight: 700; }
-.kakao { background: var(--kakao); color: var(--kakao-ink); box-shadow: none; }
-.kakao:hover { background: var(--kakao-hover); }
 
 .already { margin-top: 24px; text-align: center; color: var(--sub); }

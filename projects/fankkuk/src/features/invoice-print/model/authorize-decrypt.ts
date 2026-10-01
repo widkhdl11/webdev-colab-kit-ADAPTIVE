@@ -1,3 +1,4 @@
+import type { AccessDenyReason } from "@/entities/address/model/access-log";
 import { checkApprovalSignature, type VerifiedSignature } from "@/entities/order/model/evaluate-approval";
 import { isPrintable, type OrderStatus } from "@/entities/order/model/order-status";
 
@@ -26,7 +27,8 @@ export type DecryptDecision =
   | { ok: true; isReprint: boolean }
   | {
       ok: false;
-      reason: "not_owner" | "no_valid_approval" | "order_mismatch" | "order_not_printable" | "difference_unpaid" | "decrypt_limit_reached";
+      // 열람 기록이 같은 이름을 보여 준다 — 사유를 더하면 기록 화면 문구도 타입 오류로 함께 드러난다
+      reason: AccessDenyReason;
     };
 
 /** 복호화 함수 진입부 판정. 하나라도 어긋나면 열지 않는다. 동시 요청의 원자성은 저장소 쪽이 맡는다. */

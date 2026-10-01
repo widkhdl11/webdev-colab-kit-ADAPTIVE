@@ -44,7 +44,7 @@ export function NoticesPage({ notices, page, pageCount }: Props) {
   return (
     <main id="main">
       <div className="container">
-        <div className={s["page-top"]}>
+        <div className="page-top">
           <div>
             <h1 className="page-h">공지사항</h1>
           </div>
@@ -98,7 +98,7 @@ export function NoticesPage({ notices, page, pageCount }: Props) {
           </nav>
         )}
       </div>
-      <div className={s["page-end"]} />
+      <div className="page-end" />
     </main>
   );
 }

@@ -46,4 +46,3 @@
 .notes li { display: flex; gap: 12px; }
 .notes li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
 
-.page-end { height: clamp(72px, 9vw, 128px); }

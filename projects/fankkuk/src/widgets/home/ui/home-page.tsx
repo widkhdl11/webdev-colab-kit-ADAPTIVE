@@ -21,6 +21,8 @@ type Props = {
 };
 
 const MAX_ROWS = 3;
+/** 팔로우 줄에 보이는 사람 수. 「더 찾기」 칸과 합쳐 PC 한 줄 7칸을 넘지 않게. 나머지는 「전체 보기」에서. */
+const MAX_FOLLOWS = 6;
 
 const TILES = [
   { href: "/gifts/new", label: "선물 보내기", icon: "icon-gift" },
@@ -72,9 +74,9 @@ export function HomePage({ nickname, gifts, following, faceToneByName, notices }
         </div>
       </section>
 
-      <section className={s.block} aria-labelledby="gifts-title">
+      <section className="block" aria-labelledby="gifts-title">
         <div className="container">
-          <div className={s["block-head"]}>
+          <div className="block-head">
             <h2 id="gifts-title">진행 중인 선물</h2>
           </div>
           {gifts.length === 0 ? (
@@ -129,18 +131,18 @@ export function HomePage({ nickname, gifts, following, faceToneByName, notices }
         </div>
       </section>
 
-      <section className={s.block} aria-labelledby="follow-title">
+      <section className="block" aria-labelledby="follow-title">
         <div className="container">
-          <div className={s["block-head"]}>
+          <div className="block-head">
             <h2 id="follow-title">팔로우한 크리에이터</h2>
             <Link className="link-arrow" href="/me/following">
               전체 보기
             </Link>
           </div>
           <ul className={s["follow-row"]}>
-            {following.map((f) => (
+            {following.slice(0, MAX_FOLLOWS).map((f) => (
               <li key={f.id}>
-                <Link className={s.follow} href="/gifts/new" aria-label={`${f.name}님께 선물 보내기`}>
+                <Link className={s.follow} href={`/gifts/new?creator=${f.id}`} aria-label={`${f.name}님께 선물 보내기`}>
                   <CreatorFace tone={f.faceTone} className="face face--lg" />
                   <span>
                     {f.name}
@@ -165,9 +167,9 @@ export function HomePage({ nickname, gifts, following, faceToneByName, notices }
         </div>
       </section>
 
-      <section className={s.block} aria-labelledby="notice-title">
+      <section className="block" aria-labelledby="notice-title">
         <div className="container">
-          <div className={s["block-head"]}>
+          <div className="block-head">
             <h2 id="notice-title">공지사항</h2>
             <Link className="link-arrow" href="/notices">
               전체 보기
@@ -185,7 +187,7 @@ export function HomePage({ nickname, gifts, following, faceToneByName, notices }
           </ul>
         </div>
       </section>
-      <div className={s["page-end"]} />
+      <div className="page-end" />
     </main>
   );
 }

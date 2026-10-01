@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { BlockedFan, CreatorSettingsView } from "@/entities/creator/api/sample-creator-settings";
+import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { formatDate } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
@@ -56,7 +57,7 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
   return (
     <main id="main">
       <div className="container">
-        <div className={s["page-title"]}>
+        <div className="page-title">
           <h1 className="page-h">주소와 설정</h1>
           <p>선물을 받을 주소와 차단한 팬, 프로필, 알림을 한곳에서 관리해요.</p>
         </div>
@@ -171,7 +172,7 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
               <Switch
                 id="sw-a2"
                 title="자동 반려 하루 전"
-                desc="7일이 다 되어 가는 요청을 알려드려요."
+                desc={`${APPROVAL_DEADLINE_DAYS}일이 다 되어 가는 요청을 알려드려요.`}
                 checked={notify.expiringSoon}
                 onChange={(v) => setNotify((n) => ({ ...n, expiringSoon: v }))}
               />
@@ -186,7 +187,7 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
           </div>
         </div>
       </div>
-      <div className={s["page-end"]} />
+      <div className="page-end" />
 
       <BottomSheet
         open={sheet !== null}
@@ -205,7 +206,7 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
           <button className="btn btn--soft" type="button" onClick={() => setSheet(null)}>
             돌아가기
           </button>
-          <button className={`btn ${s.kakao}`} type="button" onClick={() => setSheet(null)}>
+          <button className="btn btn--kakao" type="button" onClick={() => setSheet(null)}>
             <KakaoBubble />
             카카오톡으로 서명하기
           </button>

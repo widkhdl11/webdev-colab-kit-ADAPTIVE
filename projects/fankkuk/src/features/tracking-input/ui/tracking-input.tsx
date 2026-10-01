@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { parseTrackingNo } from "../model/tracking-no";
 import s from "./tracking-input.module.css";
 
@@ -10,14 +10,31 @@ export function TrackingInput({ initial }: { initial: string | null }) {
   const [saved, setSaved] = useState<string | null>(initial);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(initial === null);
+  // 등록·「고치기」를 누르면 누른 버튼이 사라진다 — 바뀐 자리로 포커스를 옮긴다. 처음 열 때는 옮기지 않는다.
+  const moved = useRef(false);
+  const resultRef = useRef<HTMLParagraphElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!moved.current) return;
+    moved.current = false;
+    if (editing) inputRef.current?.focus();
+    else resultRef.current?.focus();
+  }, [editing]);
 
   if (!editing && saved) {
     return (
       <div className={s.saved}>
-        <p>
+        <p ref={resultRef} tabIndex={-1}>
           내 송장번호 <strong>{saved}</strong>
         </p>
-        <button type="button" className="btn btn--text btn--sm" onClick={() => setEditing(true)}>
+        <button
+          type="button"
+          className="btn btn--text btn--sm"
+          onClick={() => {
+            moved.current = true;
+            setEditing(true);
+          }}
+        >
           송장번호 고치기
         </button>
       </div>
@@ -38,12 +55,14 @@ export function TrackingInput({ initial }: { initial: string | null }) {
         }
         setError(null);
         setSaved(result.value);
+        moved.current = true;
         setEditing(false);
       }}
     >
       <label htmlFor={`${id}-no`}>이 선물을 보낸 택배 송장번호</label>
       <div className={s.inv}>
         <input
+          ref={inputRef}
           id={`${id}-no`}
           name="trackingNo"
           className="input"

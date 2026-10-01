@@ -1,11 +1,4 @@
-/* 주소와 설정 화면 — 시안 v4 creator-settings.html <style> 와 v4.css 13·14절(page-title·page-end) */
-.page-title { padding-block: clamp(32px, 4vw, 56px) 24px; }
-.page-title p { margin-top: 8px; color: var(--sub); font-size: 18px; }
-.page-end { height: clamp(72px, 9vw, 128px); }
-
-/* 카카오 인증 버튼만 카카오 노란색 (design-rules 1절). 전역 .btn 보다 앞서게 두 클래스로 */
-.kakao:global(.btn) { background: var(--kakao); color: var(--kakao-ink); box-shadow: none; }
-.kakao:global(.btn):hover { background: var(--kakao-hover); }
+/* 주소와 설정 화면 — 시안 v4 creator-settings.html <style>. 페이지 머리·끝 여백은 base.css 공용 */
 
 .set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(40px, 6vw, 96px); align-items: start; margin-top: 24px; }
 .col { display: grid; gap: clamp(48px, 5vw, 72px); }

@@ -1,4 +1,5 @@
-import type { DecidedRequestView } from "@/entities/order/api/sample-decided-requests";
+import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
+import type { DecidedRequestView } from "@/entities/order/model/decided-request";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
 import { ApprovalRequestList } from "@/features/approval-request/ui/approval-request-list";
 import s from "./approval-requests.module.css";
@@ -16,9 +17,9 @@ export function ApprovalRequestsPage({
   return (
     <main id="main">
       <div className="container">
-        <div className={s["page-title"]}>
+        <div className="page-title">
           <h1 className="page-h">승인 요청</h1>
-          <p>팬이 보낸 선물을 받을지 정하는 곳이에요. 7일 안에 정하지 않으면 자동으로 받지 않음 처리돼요.</p>
+          <p>팬이 보낸 선물을 받을지 정하는 곳이에요. {APPROVAL_DEADLINE_DAYS}일 안에 정하지 않으면 자동으로 받지 않음 처리돼요.</p>
         </div>
 
         <div className={s["rule-line"]}>
@@ -30,7 +31,7 @@ export function ApprovalRequestsPage({
 
         <ApprovalRequestList requests={requests} decided={decided} />
       </div>
-      <div className={s["page-end"]} />
+      <div className="page-end" />
     </main>
   );
 }

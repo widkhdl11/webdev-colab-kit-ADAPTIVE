@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import s from "./signup.module.css";
 
 // 회원가입 3단계. 시안: docs/design/mockups/site/v4/signup.html
@@ -12,24 +13,14 @@ import s from "./signup.module.css";
 const STEPS = ["유형 선택", "정보 입력", "본인 확인"] as const;
 const LAST = STEPS.length;
 
-const TERMS = [
+type TermKey = "service" | "privacy" | "news";
+
+// 약관 전문 화면이 아직 없다 — href 가 없는 항목의 「보기」는 링크가 아니라 흐린 글자로 둔다. 전문이 생기면 href 만 채운다.
+const TERMS: ReadonlyArray<{ key: TermKey; label: string; required: boolean; href?: string }> = [
   { key: "service", label: "이용약관", required: true },
   { key: "privacy", label: "개인정보 수집·이용", required: true },
   { key: "news", label: "이벤트·소식 알림 받기", required: false },
-] as const;
-
-type TermKey = (typeof TERMS)[number]["key"];
-
-function KakaoBubble() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M12 3C6.5 3 2 6.5 2 10.8c0 2.8 1.9 5.3 4.7 6.7l-1 3.6c-.1.3.2.5.5.4l4.2-2.8c.5.1 1 .1 1.6.1 5.5 0 10-3.5 10-7.8S17.5 3 12 3Z"
-      />
-    </svg>
-  );
-}
+];
 
 export function SignupPage() {
   const router = useRouter();
@@ -80,7 +71,7 @@ export function SignupPage() {
     <main id="main">
       <div className="container">
         <div className={s.su}>
-          <div className={s["page-title"]}>
+          <div className="page-title">
             <h1 className="page-h">회원가입</h1>
             <p>세 단계면 끝나요.</p>
           </div>
@@ -152,11 +143,10 @@ export function SignupPage() {
                     id={f("id")}
                     type="text"
                     autoComplete="username"
-                    placeholder="영문 소문자·숫자 4~20자"
                     aria-describedby={f("id-h")}
                   />
                   <p className="hint" id={f("id-h")}>
-                    가입한 뒤에는 아이디를 바꿀 수 없어요.
+                    영문 소문자와 숫자로 4~20자예요. 가입한 뒤에는 아이디를 바꿀 수 없어요.
                   </p>
                 </div>
                 <div className="field">
@@ -175,7 +165,10 @@ export function SignupPage() {
                 </div>
                 <div className="field">
                   <label htmlFor={f("pw")}>비밀번호</label>
-                  <input className="input" id={f("pw")} type="password" autoComplete="new-password" placeholder="8자 이상, 영문·숫자 포함" />
+                  <input className="input" id={f("pw")} type="password" autoComplete="new-password" aria-describedby={f("pw-h")} />
+                  <p className="hint" id={f("pw-h")}>
+                    8자 이상, 영문과 숫자를 함께 넣어 주세요.
+                  </p>
                 </div>
                 <div className="field">
                   <label htmlFor={f("pw2")}>비밀번호 확인</label>
@@ -217,6 +210,7 @@ export function SignupPage() {
                         <label className={s.check}>
                           <input
                             type="checkbox"
+                            aria-required={t.required || undefined}
                             checked={agreed[t.key]}
                             onChange={(e) => setAgreed((prev) => ({ ...prev, [t.key]: e.target.checked }))}
                           />
@@ -224,9 +218,15 @@ export function SignupPage() {
                             {t.required ? <span className={s.req}>[필수]</span> : "[선택]"} {t.label}
                           </span>
                         </label>
-                        <a className={s.link} href="#">
-                          보기
-                        </a>
+                        {t.href ? (
+                          <Link className={s.link} href={t.href} aria-label={`${t.label} 보기`}>
+                            보기
+                          </Link>
+                        ) : (
+                          <span className={s["link-off"]}>
+                            보기<span className="sr-only"> — {t.label} 전문은 준비 중이에요</span>
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -264,8 +264,8 @@ export function SignupPage() {
                   다음
                 </button>
               ) : (
-                <button className={`btn ${s.kakao} ${s.next}`} type="submit">
-                  <KakaoBubble />
+                <button className={`btn btn--kakao ${s.next}`} type="submit">
+                  <KakaoBubble size={24} />
                   카카오톡으로 인증하고 가입하기
                 </button>
               )}

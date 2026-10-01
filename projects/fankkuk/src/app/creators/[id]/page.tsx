@@ -5,6 +5,7 @@ import {
   SAMPLE_LISTED_CREATORS,
 } from "@/entities/creator/api/sample-creators";
 import { toCreatorCards } from "@/entities/creator/model/creator-card";
+import { sampleApprovalMinutesByCreator } from "@/entities/order/api/sample-views";
 import { CreatorProfilePage } from "@/widgets/creator-profile/ui/creator-profile-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { sampleFanHeader } from "@/widgets/site-header/api/sample-header";
@@ -16,7 +17,7 @@ const OTHERS_SHOWN = 6;
 // 예시 데이터로 그린다. 목록에 없는 id 는 없는 주소로 취급한다.
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cards = toCreatorCards(SAMPLE_LISTED_CREATORS, SAMPLE_CREATOR_PROFILES, SAMPLE_FOLLOWED_CREATOR_IDS);
+  const cards = toCreatorCards(SAMPLE_LISTED_CREATORS, SAMPLE_CREATOR_PROFILES, SAMPLE_FOLLOWED_CREATOR_IDS, sampleApprovalMinutesByCreator());
   const creator = cards.find((c) => c.id === id);
   if (!creator) notFound();
   const others = cards.filter((c) => c.id !== id).slice(0, OTHERS_SHOWN);

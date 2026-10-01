@@ -1,4 +1,5 @@
-import type { CreatorProfile, CreatorSummary } from "../api/sample-creators";
+import { approvalTimeOf } from "./approval-time";
+import type { CreatorProfile, CreatorSummary } from "./creator";
 
 // 크리에이터 목록·페이지가 보여 주는 한 사람의 모양 — 기본 정보 + 소개 + 팔로우 여부.
 
@@ -11,16 +12,21 @@ export type CreatorCard = {
   channelTitle: string;
   intro: string;
   alias: string;
-  avgApprovalHours: number;
+  /** 평균 승인 시간(분). approvalTimeOf 가 정한다. */
+  approvalMinutes: number | null;
   faceTone: string;
   following: boolean;
 };
 
-/** 크리에이터 순서를 따르고, 소개가 없는 크리에이터(본인 확인 전)는 빼고 만든다. */
+/**
+ * 크리에이터 순서를 따르고, 소개가 없는 크리에이터(본인 확인 전)는 빼고 만든다.
+ * orderApprovalMinutes 는 주문 기록으로 계산한 크리에이터별 평균 승인 시간(분) — 없는 크리에이터는 소개 칸 값을 쓴다.
+ */
 export function toCreatorCards(
   creators: readonly CreatorSummary[],
   profiles: readonly CreatorProfile[],
   followedIds: readonly string[],
+  orderApprovalMinutes: Readonly<Record<string, number | null>> = {},
 ): CreatorCard[] {
   const followed = new Set(followedIds);
   return creators.flatMap((c) => {
@@ -35,7 +41,7 @@ export function toCreatorCards(
         channelTitle: p.channelTitle,
         intro: p.intro,
         alias: p.alias,
-        avgApprovalHours: p.avgApprovalHours,
+        approvalMinutes: approvalTimeOf(orderApprovalMinutes[c.id] ?? null, p.avgApprovalHours),
         faceTone: p.faceTone,
         following: followed.has(c.id),
       },
@@ -47,9 +53,16 @@ function normalize(text: string): string {
   return text.toLowerCase().replace(/\s+/g, "");
 }
 
-/** 실시간 검색 — 이름·로마자 이름·분야·채널 이름 중 하나에 검색어가 들어 있으면 통과. 띄어쓰기·대소문자는 무시한다. */
-export function matchesCreatorQuery(card: CreatorCard, query: string): boolean {
+/** 검색이 보는 칸. 소개 칸(로마자 이름·분야·채널 이름)은 없을 수 있다. */
+export type CreatorSearchFields = Pick<CreatorCard, "name" | "platform"> &
+  Partial<Pick<CreatorCard, "alias" | "category" | "channelTitle">>;
+
+/**
+ * 실시간 검색 — 이름·로마자 이름·분야·채널 이름·방송 플랫폼 중 하나에 검색어가 들어 있으면 통과. 띄어쓰기·대소문자는 무시한다.
+ * 크리에이터 찾기와 선물 보내기의 크리에이터 고르기가 같은 규칙을 쓴다.
+ */
+export function matchesCreatorQuery(card: CreatorSearchFields, query: string): boolean {
   const q = normalize(query);
   if (!q) return true;
-  return normalize([card.name, card.alias, card.category, card.channelTitle].join(" ")).includes(q);
+  return normalize([card.name, card.alias, card.category, card.channelTitle, card.platform].filter(Boolean).join(" ")).includes(q);
 }

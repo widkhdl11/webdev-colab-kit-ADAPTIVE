@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
-import { fanBadge, fanProgress } from "@/entities/order/ui/fan-stage-copy";
+import { fanBadge, fanGiftBucket, fanProgress } from "@/entities/order/ui/fan-stage-copy";
 import { formatDate } from "@/shared/lib/format/datetime";
 import { GiftTabs } from "./gift-tabs";
 import s from "./gift-list.module.css";
@@ -90,11 +90,10 @@ export function GiftListPage({
   /** 크리에이터 이름 → 얼굴 면 색. 메인 화면과 같은 색을 쓴다. */
   faceToneByName: Readonly<Record<string, string>>;
 }) {
-  // 수령까지 끝난 선물과 반송·취소는 「끝난 선물」, 거절·자동 반려는 「받지 않은 선물」
-  const finished = (g: FanGiftView) => g.outcome === "in_progress" && fanProgress(g).done === fanProgress(g).total;
-  const ongoing = gifts.filter((g) => g.outcome === "in_progress" && !finished(g));
-  const ended = gifts.filter((g) => finished(g) || g.outcome === "returned" || g.outcome === "canceled");
-  const notAccepted = gifts.filter((g) => g.outcome === "not_accepted");
+  // 묶음 기준은 fanGiftBucket 하나 — 메인 「진행 중인 선물」과 같은 수가 나온다
+  const ongoing = gifts.filter((g) => fanGiftBucket(g) === "ongoing");
+  const ended = gifts.filter((g) => fanGiftBucket(g) === "ended");
+  const notAccepted = gifts.filter((g) => fanGiftBucket(g) === "not_accepted");
 
   return (
     <div>

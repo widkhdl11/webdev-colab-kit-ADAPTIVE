@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useId, useState } from "react";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
+import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { FollowButton } from "@/features/creator-follow/ui/follow-button";
 import s from "./creator-search.module.css";
@@ -47,12 +48,13 @@ export function CreatorSearchPage({ creators }: { creators: readonly CreatorCard
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <button className="search-go" type="button" aria-label="찾기">
+            {/* 치는 대로 걸러지므로 누를 버튼이 없다 — 돋보기는 장식 */}
+            <span className="search-go" aria-hidden="true">
               <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="3" />
                 <path d="m15.5 15.5 5 5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               </svg>
-            </button>
+            </span>
           </div>
           <p className={s.verify}>
             <CheckIcon size={20} />
@@ -85,7 +87,7 @@ export function CreatorSearchPage({ creators }: { creators: readonly CreatorCard
                       <Link href={`/creators/${c.id}`}>{c.name}</Link>
                     </p>
                     <p className={s.says}>
-                      {c.category} · {c.channelTitle} · 평균 승인 약 {c.avgApprovalHours}시간
+                      {c.category} · {c.channelTitle} · {approvalTimeText(c.approvalMinutes)}
                     </p>
                   </div>
                   <div className={s.acts}>
@@ -98,7 +100,7 @@ export function CreatorSearchPage({ creators }: { creators: readonly CreatorCard
               ))}
             </ul>
           ) : (
-            <div className={s.empty} role="status">
+            <div className={s.empty}>
               <span className={s["empty-ico"]} aria-hidden="true">
                 <img className="asset" src="/img/illust-empty-search.png" alt="" width={64} height={64} />
               </span>

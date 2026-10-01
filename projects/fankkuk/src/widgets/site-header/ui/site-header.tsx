@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { HeaderGiftState } from "@/entities/order/ui/fan-stage-copy";
+import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { LogoMark } from "@/shared/ui/logo";
 
 // 사이트 헤더 세 상태(design-rules 5절). 같은 구조에 오른쪽 끝만 다르다.
@@ -157,73 +158,36 @@ function GiftStatus({ gifts }: { gifts: HeaderGift[] }) {
   );
 }
 
-/** 767px 이하 — 「선물 N」 배지가 여는 바텀시트. 포커스는 시트 안에서만 돈다. */
-function GiftSheet({ gifts, onClose, opener }: { gifts: HeaderGift[]; onClose: () => void; opener: HTMLElement | null }) {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const titleId = useId();
-
+/** 767px 이하 — 「선물 N」 배지가 여는 바텀시트. 공용 확인 창(BottomSheet)의 모달 모드라 포커스가 시트 안에서만 돌고 Esc 로 닫힌다. */
+function GiftSheet({ gifts, open, onClose }: { gifts: HeaderGift[]; open: boolean; onClose: () => void }) {
+  // 시트가 떠 있는 동안 뒤 페이지가 스크롤되지 않게
   useEffect(() => {
+    if (!open) return;
     document.body.classList.add("no-scroll");
-    closeRef.current?.focus();
-    return () => {
-      document.body.classList.remove("no-scroll");
-      opener?.focus();
-    };
-  }, [opener]);
-
-  function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    if (e.key === "Escape") {
-      onClose();
-      return;
-    }
-    if (e.key !== "Tab" || !rootRef.current) return;
-    const f = Array.from(rootRef.current.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"));
-    if (f.length === 0) return;
-    const first = f[0];
-    const last = f[f.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }
+    return () => document.body.classList.remove("no-scroll");
+  }, [open]);
 
   return (
-    <div className="sheet-root" ref={rootRef} onKeyDown={onKeyDown}>
-      <div className="sheet-scrim" onClick={onClose} />
-      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <div className="sheet-grip" aria-hidden="true" />
-        <div className="sheet-head">
-          <h2 id={titleId}>진행 중인 선물 {gifts.length}개</h2>
-          <button ref={closeRef} className="sheet-close" type="button" onClick={onClose} aria-label="닫기">
-            <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
-              <path d="m4 4 12 12M16 4 4 16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-        <ul className="sheet-list">
-          {gifts.map((g) => (
-            <li key={g.orderNo}>
-              <Link href={`/gifts/${g.orderNo}`} onClick={onClose}>
-                <span className="gift-icon" data-state={g.state}>
-                  <GiftGlyph state={g.state} />
-                </span>
-                <span>
-                  <strong>{g.creatorName}님께</strong>
-                  <small>{g.label}</small>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <Link className="btn btn--soft btn--block sheet-all" href="/gifts" onClick={onClose}>
-          선물 내역 전체 보기
-        </Link>
-      </section>
-    </div>
+    <BottomSheet open={open} title={`진행 중인 선물 ${gifts.length}개`} onClose={onClose}>
+      <ul className="sheet-list">
+        {gifts.map((g) => (
+          <li key={g.orderNo}>
+            <Link href={`/gifts/${g.orderNo}`} onClick={onClose}>
+              <span className="gift-icon" data-state={g.state}>
+                <GiftGlyph state={g.state} />
+              </span>
+              <span>
+                <strong>{g.creatorName}님께</strong>
+                <small>{g.label}</small>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <Link className="btn btn--soft btn--block sheet-all" href="/gifts" onClick={onClose}>
+        선물 내역 전체 보기
+      </Link>
+    </BottomSheet>
   );
 }
 
@@ -246,6 +210,10 @@ function UserMenu({ nickname, roleLabel, items }: { nickname: string; roleLabel:
     <div
       className="user-menu"
       ref={ref}
+      // 펼치기 버튼 방식(메뉴 역할 아님) — Tab 으로 패널 밖으로 나가면 닫는다
+      onBlur={(e) => {
+        if (open && !e.currentTarget.contains(e.relatedTarget)) setOpen(false);
+      }}
       onKeyDown={(e) => {
         if (e.key === "Escape" && open) {
           setOpen(false);
@@ -259,7 +227,6 @@ function UserMenu({ nickname, roleLabel, items }: { nickname: string; roleLabel:
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-haspopup="true"
         onClick={() => setOpen((v) => !v)}
       >
         <span className="avatar" aria-hidden="true">
@@ -268,7 +235,8 @@ function UserMenu({ nickname, roleLabel, items }: { nickname: string; roleLabel:
         <span className="nick">{nickname}</span>
         <Caret />
       </button>
-      <div className="user-dropdown" id={panelId} hidden={!open}>
+      {/* tabIndex -1: 패널 안을 눌러도 포커스가 패널에 머물러 onBlur 가 닫지 않게(포커스를 옮기지 않는 브라우저 대비) */}
+      <div className="user-dropdown" id={panelId} hidden={!open} tabIndex={-1}>
         <p className="who">
           {nickname}님 · {roleLabel}
         </p>
@@ -288,7 +256,6 @@ export function SiteHeader(props: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const badgeRef = useRef<HTMLButtonElement>(null);
   const menuId = useId();
 
   useEffect(() => {
@@ -348,7 +315,6 @@ export function SiteHeader(props: SiteHeaderProps) {
             <>
               <GiftStatus gifts={props.gifts} />
               <button
-                ref={badgeRef}
                 className="gift-badge"
                 type="button"
                 aria-haspopup="dialog"
@@ -416,8 +382,8 @@ export function SiteHeader(props: SiteHeaderProps) {
         ) : null}
         {props.role !== "guest" ? <Link href="/">로그아웃</Link> : null}
       </div>
-      {props.role === "fan" && sheetOpen ? (
-        <GiftSheet gifts={props.gifts} opener={badgeRef.current} onClose={() => setSheetOpen(false)} />
+      {props.role === "fan" && props.gifts.length > 0 ? (
+        <GiftSheet gifts={props.gifts} open={sheetOpen} onClose={() => setSheetOpen(false)} />
       ) : null}
     </header>
   );

@@ -6,9 +6,6 @@
 .search { margin-top: 32px; }
 .tiles { margin-top: 32px; }
 
-.block { padding-block: clamp(56px, 7vw, 96px) 0; }
-.block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
-.block-head h2 { font-size: clamp(28px, 2.6vw, 34px); letter-spacing: -.8px; }
 
 /* 진행 중인 선물 — 한 줄에 하나 */
 .gift-rows { border-top: 1px solid var(--divider); }
@@ -34,7 +31,6 @@
 .t { flex: 1; min-width: 0; font-weight: 600; }
 .d { color: var(--sub); }
 
-.page-end { height: clamp(72px, 9vw, 128px); }
 
 @media (max-width: 1023px) {
   .follow-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scrollbar-width: none; }

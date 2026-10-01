@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
+import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { BILLABLE_TIERS, TIER_PRICE_KRW, type BillableTier } from "@/entities/payment/config/tier-pricing";
 import { formatDuration } from "@/shared/lib/format/datetime";
@@ -11,16 +13,9 @@ import { summarizeBoxes } from "../model/box-summary";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
 import f from "./register-form.module.css";
 
-export type CreatorOption = {
-  id: string;
-  name: string;
-  channel: string;
-  averageApprovalMinutes: number | null;
-  /** 목록 한 줄 설명과 검색에 쓰는 소개 칸 — 없으면 플랫폼 이름만 보인다 */
-  category?: string;
-  channelTitle?: string;
-  alias?: string;
-};
+/** 고를 수 있는 크리에이터 한 명. 소개 칸(분야·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
+export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "approvalMinutes"> &
+  Partial<Pick<CreatorCard, "category" | "channelTitle" | "alias">>;
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const COUNT_FIELD = { small: "smallCount", medium: "mediumCount" } as const;
@@ -35,8 +30,6 @@ const STEP_FIELDS: Record<Exclude<StepNo, 4>, (keyof RegisterFormValues)[]> = {
   3: ["smallCount", "mediumCount"],
 };
 
-const norm = (v: string) => v.toLowerCase().replace(/\s+/g, "");
-const approvalText = (m: number | null) => (m === null ? "아직 승인 기록이 없어요" : `평균 승인 ${formatDuration(m)}`);
 
 // 선물 보내기 4단계(크리에이터·선물·상자·결제 확인). 지금은 예시 — 제출해도 결제·저장을 하지 않고 완료 모습만 보여 준다.
 // 결제는 등록 때 받는다(결제 스펙). 화면의 금액은 결제와 같은 계산(chargeLines)을 쓰지만,
@@ -123,7 +116,9 @@ export function RegisterForm({
   const changeCount = (tier: BillableTier, delta: 1 | -1) => {
     if (delta > 0 ? !summary.canAdd : !summary.canRemove[tier]) return;
     const hasCountError = errors.smallCount !== undefined || errors.mediumCount !== undefined;
-    setValue(COUNT_FIELD[tier], String(summary.counts[tier] + delta), { shouldValidate: hasCountError });
+    setValue(COUNT_FIELD[tier], String(summary.counts[tier] + delta));
+    // 합계 오류(하나 이상·10개까지)는 smallCount 칸에 붙는다 — 어느 칸을 바꿨든 두 칸을 같이 다시 검증해야 지난 오류가 사라진다
+    if (hasCountError) void trigger(["smallCount", "mediumCount"]);
   };
 
   if (done) {
@@ -144,10 +139,8 @@ export function RegisterForm({
     );
   }
 
-  const q = norm(query);
-  const matches = creators.filter(
-    (c) => !q || norm([c.name, c.channel, c.channelTitle, c.category, c.alias].filter(Boolean).join(" ")).includes(q),
-  );
+  // 크리에이터 찾기 화면과 같은 검색 규칙(이름·로마자 이름·분야·채널 이름·플랫폼)
+  const matches = creators.filter((c) => matchesCreatorQuery(c, query));
   const picked = creators.find((c) => c.id === creatorId);
   const metalText = metal === "yes" ? "네, 있어요" : metal === "no" ? "아니요, 없어요" : "아직 안 골랐어요";
   const boxesText =
@@ -190,7 +183,7 @@ export function RegisterForm({
         </p>
         <ol className={f.steps}>
           {STEP_NOS.map((n) => {
-            const isDone = n !== step && n <= reached;
+            const isDone = n !== step && n < reached; // 지나온 단계만 완료 — 아직 넘지 않은 마지막 단계는 숫자 그대로
             return (
               <li key={n}>
                 <button
@@ -201,7 +194,7 @@ export function RegisterForm({
                   onClick={() => go(n)}
                 >
                   <span className={f.dot} aria-hidden="true">
-                    {n < step ? "✓" : n}
+                    {isDone ? "✓" : n}
                   </span>
                   <span className={f.lbl}>{STEP_LABEL[n]}</span>
                 </button>
@@ -250,7 +243,7 @@ export function RegisterForm({
                 <div className={f["pick-box-head"]}>
                   <span>크리에이터 목록</span>
                   <p className="hint" role="status" aria-live="polite">
-                    {q ? `검색 결과 ${matches.length}명` : `전체 ${creators.length}명`}
+                    {query.trim() ? `검색 결과 ${matches.length}명` : `전체 ${creators.length}명`}
                   </p>
                 </div>
                 {/* 걸러진 줄은 지우지 않고 숨긴다 — 고른 값이 그대로 남게 */}
@@ -265,7 +258,7 @@ export function RegisterForm({
                         <span className={f["pick-text"]}>
                           <strong>{c.name}</strong>
                           <small>
-                            {[c.category, c.channelTitle ?? c.channel, approvalText(c.averageApprovalMinutes)]
+                            {[c.category, c.channelTitle ?? c.platform, approvalTimeText(c.approvalMinutes)]
                               .filter(Boolean)
                               .join(" · ")}
                           </small>
@@ -450,9 +443,9 @@ export function RegisterForm({
                 <div className={f["rule-note"]}>
                   <p>
                     <strong>
-                      {picked.averageApprovalMinutes === null
+                      {picked.approvalMinutes === null
                         ? `${picked.name}님은 아직 승인 기록이 없어요`
-                        : `${picked.name}님은 보통 ${formatDuration(picked.averageApprovalMinutes)} 안에 승인해요`}
+                        : `${picked.name}님은 보통 ${formatDuration(picked.approvalMinutes)} 안에 승인해요`}
                     </strong>
                   </p>
                   <p className={f["rule-note-sub"]}>

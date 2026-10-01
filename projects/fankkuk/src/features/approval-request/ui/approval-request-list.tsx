@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import type { DecidedOutcome, DecidedRequestView } from "@/entities/order/api/sample-decided-requests";
+import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
+import type { DecidedOutcome, DecidedRequestView } from "@/entities/order/model/decided-request";
 import { NOT_ACCEPTED_TEXT } from "@/entities/order/ui/fan-stage-copy";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
+import { applyDecision, type LocalDecision } from "../model/local-decision";
 import a from "./approval-request.module.css";
 
 // 크리에이터 승인 요청 목록(시안 v4 creator-requests.html). 지금은 예시 — 서버에 아무것도 보내지 않는다.
@@ -17,12 +19,6 @@ import a from "./approval-request.module.css";
 // 서버 검증을 통과했을 때만 일어난다(INV-S7: 승인 상태를 바꾸는 경로는 서명 검증을 통과한 승인 처리 하나뿐).
 // 그래서 예시에서도 버튼을 누른 결과는 "서명 대기"이지 "승인됨"이 아니다. 전체 승인 버튼은 없다.
 // 거절은 주소를 여는 방향이 아니라 서명 없이 로그인 세션으로 한다(승인 서명 스펙 비범위).
-
-type LocalState =
-  | { kind: "pending" }
-  | { kind: "signing" }
-  | { kind: "declined"; blocked: boolean }
-  | { kind: "blocked_elsewhere" }; // 같은 팬의 다른 요청을 거절하며 차단했다
 
 type TabKey = "wait" | "done";
 const TABS: readonly TabKey[] = ["wait", "done"];
@@ -52,7 +48,7 @@ function DecidedNote({ d }: { d: DecidedRequestView }) {
   const day = formatDate(d.decidedAt);
   if (d.outcome === "approved") return <>{day} 처리 · 카카오톡 서명으로 승인했어요.</>;
   if (d.outcome === "declined") return <>{day} 처리 · 팬에게는 이유를 알리지 않았어요.</>;
-  if (d.outcome === "expired") return <>{day} 자동 처리 · 7일 안에 정하지 않아 자동으로 받지 않음 처리됐어요.</>;
+  if (d.outcome === "expired") return <>{day} 자동 처리 · {APPROVAL_DEADLINE_DAYS}일 안에 정하지 않아 자동으로 받지 않음 처리됐어요.</>;
   return (
     <>
       {day} 처리 · 앞으로 이 팬의 선물은 받지 않아요. 풀려면{" "}
@@ -71,7 +67,7 @@ export function ApprovalRequestList({
   requests: readonly ApprovalRequestView[];
   decided: readonly DecidedRequestView[];
 }) {
-  const [states, setStates] = useState<Record<string, LocalState>>({});
+  const [states, setStates] = useState<Record<string, LocalDecision>>({});
   const [sheet, setSheet] = useState<{ kind: "approve" | "decline"; req: ApprovalRequestView } | null>(null);
   const [block, setBlock] = useState(false);
   const [tab, setTab] = useState<TabKey>("wait");
@@ -88,20 +84,9 @@ export function ApprovalRequestList({
     map.get(focusTarget.orderNo)?.focus();
   }, [focusTarget]);
 
-  const stateOf = (orderNo: string): LocalState => states[orderNo] ?? { kind: "pending" };
-  const decide = (req: ApprovalRequestView, st: LocalState) => {
-    setStates((prev) => {
-      const next: Record<string, LocalState> = { ...prev, [req.orderNo]: st };
-      // 차단은 팬 단위다 — 같은 팬이 기다리는 다른 요청도 더는 승인할 수 없다
-      if (st.kind === "declined" && st.blocked) {
-        for (const other of requests) {
-          if (other.fanNickname === req.fanNickname && other.orderNo !== req.orderNo && (next[other.orderNo] ?? { kind: "pending" }).kind === "pending") {
-            next[other.orderNo] = { kind: "blocked_elsewhere" };
-          }
-        }
-      }
-      return next;
-    });
+  const stateOf = (orderNo: string): LocalDecision => states[orderNo] ?? { kind: "pending" };
+  const decide = (req: ApprovalRequestView, st: LocalDecision) => {
+    setStates((prev) => applyDecision(prev, requests, req.orderNo, st));
     setFocusTarget({ orderNo: req.orderNo, where: "result" });
     setSheet(null);
   };
@@ -220,7 +205,7 @@ export function ApprovalRequestList({
                           if (el) approveRefs.current.set(r.orderNo, el);
                           else approveRefs.current.delete(r.orderNo);
                         }}
-                        className={`btn ${a.kakao}`}
+                        className="btn btn--kakao"
                         type="button"
                         onClick={() => setSheet({ kind: "approve", req: r })}
                       >
@@ -295,7 +280,7 @@ export function ApprovalRequestList({
               <button className="btn btn--soft" type="button" onClick={() => setSheet(null)}>
                 돌아가기
               </button>
-              <button className={`btn ${a.kakao}`} type="button" onClick={() => decide(sheet.req, { kind: "signing" })}>
+              <button className="btn btn--kakao" type="button" onClick={() => decide(sheet.req, { kind: "signing" })}>
                 <KakaoBubble />
                 서명 요청 보내기
               </button>

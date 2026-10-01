@@ -1,4 +1,4 @@
-/* 크리에이터 페이지 — 시안 docs/design/mockups/site/v4/creator.html 의 <style> + v4.css 13절(follow-row·block-head) */
+/* 크리에이터 페이지 — 시안 docs/design/mockups/site/v4/creator.html 의 <style> + v4.css 13절(follow-row) */
 .crumb a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 16px; color: var(--sub); font-weight: 600; text-decoration: none; }
 .crumb a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
@@ -44,8 +44,6 @@
 
 /* 이런 크리에이터도 있어요 — 어느 폭에서도 한 줄 */
 .strip { padding-block: clamp(48px, 6vw, 72px) clamp(72px, 9vw, 128px); }
-.block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
-.block-head h2 { font-size: clamp(28px, 2.6vw, 34px); letter-spacing: -.8px; }
 .follow-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; margin-top: 32px; }
 .follow { display: grid; justify-items: center; gap: 8px; padding: 8px 0; text-decoration: none; text-align: center; font-weight: 600; border-radius: var(--r-box); }
 .follow:hover { background: var(--surface); }

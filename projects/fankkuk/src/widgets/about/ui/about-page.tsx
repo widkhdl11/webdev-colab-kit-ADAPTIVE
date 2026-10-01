@@ -76,8 +76,8 @@ export function AboutPage() {
           <div className={`${s.panel} ${s["panel-grid"]}`}>
             <div>
               <h2 id="once-title">
-                주소가 열리는 순간은
-                <br />딱 한 번이에요
+                주소는 송장을 출력하는
+                <br />순간에만 열려요
               </h2>
               <p className={`lead ${s["panel-lead"]}`}>
                 주소는 잠긴 채로 보관되고, 크리에이터가 승인한 건만 송장을 출력하는 순간에 열려요.
@@ -92,7 +92,7 @@ export function AboutPage() {
                   <div>
                     <h3>
                       {f.title}
-                      {"once" in f && <span className="tag tag--brand">딱 한 번</span>}
+                      {"once" in f && <span className="tag tag--brand">출력할 때만</span>}
                     </h3>
                     <p>{f.body}</p>
                   </div>

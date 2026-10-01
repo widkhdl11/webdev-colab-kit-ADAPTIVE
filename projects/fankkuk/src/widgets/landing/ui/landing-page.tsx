@@ -118,7 +118,7 @@ export function LandingPage() {
               </li>
             ))}
           </ol>
-          <p className={s["steps-line"]} aria-label={`상태 화면의 ${stepLabels.length}단계`}>
+          <p className={s["steps-line"]}>
             <span className={s["steps-label"]}>상태 화면에서는</span>
             {stepLabels.map((label, i) => (
               <Fragment key={label}>
@@ -195,7 +195,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <div className={s["page-end"]} />
+      <div className="page-end" />
     </main>
   );
 }

@@ -122,7 +122,7 @@ export function SupportPage() {
   return (
     <main id="main">
       <div className="container">
-        <div className={s["page-top"]}>
+        <div className="page-top">
           <div>
             <h1 className="page-h">고객센터</h1>
             <p className={`lead ${s["page-lead"]}`}>궁금한 점을 먼저 찾아보시고, 없으면 1:1 문의를 남겨 주세요.</p>
@@ -182,7 +182,7 @@ export function SupportPage() {
         </div>
       </section>
 
-      <section className={s.block} aria-labelledby="inquiry-title">
+      <section className="block" aria-labelledby="inquiry-title">
         <div className={`container ${s.help}`}>
           <div className={s.ask}>
             <h2 id="inquiry-title">1:1 문의</h2>
@@ -235,7 +235,7 @@ export function SupportPage() {
           </aside>
         </div>
       </section>
-      <div className={s["page-end"]} />
+      <div className="page-end" />
     </main>
   );
 }

@@ -10,7 +10,7 @@ img, svg { display: block; max-width: 100%; }
 svg { flex-shrink: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
-:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 .on-brand :focus-visible { outline-color: var(--on-brand); }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .skip-link { position: absolute; left: 16px; top: -64px; z-index: 200; background: var(--ink); color: var(--on-brand); padding: 12px 16px; border-radius: var(--r-btn-sm); }
@@ -40,14 +40,16 @@ h3 { font-size: 22px; line-height: 1.4; font-weight: 700; letter-spacing: -.3px;
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .row--between { justify-content: space-between; }
 
-/* 6 바텀시트 */
-.sheet-root { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
-.sheet-scrim { position: absolute; inset: 0; background: var(--scrim); }
-.sheet { position: relative; width: 100%; max-width: 560px; max-height: 80vh; overflow-y: auto; background: var(--white); border-radius: 28px 28px 0 0; box-shadow: var(--float); padding: 12px 16px 24px; }
-.sheet-grip { width: 40px; height: 4px; margin: 0 auto 12px; border-radius: var(--r-pill); background: var(--grip); }
-.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.sheet-head h2 { font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
-.sheet-close { width: 44px; height: 44px; border: 0; border-radius: var(--r-btn); background: var(--surface); cursor: pointer; display: grid; place-items: center; }
+/* 페이지 머리·구간·끝 여백 — v4.css 13·14절. 여러 화면이 같은 값을 쓴다 */
+.page-title { padding-block: clamp(32px, 4vw, 56px) 24px; }
+.page-title p { margin-top: 8px; color: var(--sub); font-size: 18px; }
+.page-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: clamp(32px, 4vw, 56px) clamp(24px, 3vw, 40px); }
+.page-end { height: clamp(72px, 9vw, 128px); }
+.block { padding-block: clamp(56px, 7vw, 96px) 0; }
+.block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+.block-head h2 { font-size: clamp(28px, 2.6vw, 34px); letter-spacing: -.8px; }
+
+/* 6 바텀시트 — 창 자체는 shared/ui/bottom-sheet(공용 확인 창). 여기는 헤더 선물 시트의 목록 줄 */
 .sheet-list a { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 0; border-bottom: 1px solid var(--divider); text-decoration: none; }
 .sheet-list li:last-child a { border-bottom: 0; }
 .sheet-list .gift-icon { flex-shrink: 0; }
@@ -66,6 +68,9 @@ h3 { font-size: 22px; line-height: 1.4; font-weight: 700; letter-spacing: -.3px;
 .btn--sm { min-height: 44px; padding: 0 18px; border-radius: var(--r-btn-sm); font-size: 16px; box-shadow: none; }
 .btn--wide { min-width: 360px; }
 .btn--block { width: 100%; }
+/* 카카오 인증 버튼만 카카오 노란색 (design-rules 1절) — 떠 있는 그림자 없음 */
+.btn--kakao { background: var(--kakao); color: var(--kakao-ink); box-shadow: none; }
+.btn--kakao:hover { background: var(--kakao-hover); }
 .link-arrow { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--brand); font-weight: 700; text-decoration: none; }
 .link-arrow:hover { text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 767px) { .btn--wide { min-width: 0; width: 100%; } }
@@ -78,6 +83,8 @@ h3 { font-size: 22px; line-height: 1.4; font-weight: 700; letter-spacing: -.3px;
 .search input:focus { outline: none; }
 .search-go { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--brand); color: var(--on-brand); cursor: pointer; flex-shrink: 0; }
 .search-go:hover { background: var(--brand-hover); }
+span.search-go { cursor: default; }   /* 누르는 동작이 없는 장식용 돋보기 */
+span.search-go:hover { background: var(--brand); }
 .search--field { max-width: none; height: 56px; margin: 0; }   /* 보내기 화면 안 */
 
 .tiles { display: grid; grid-template-columns: repeat(var(--n, 8), minmax(0, 1fr)); gap: 12px; max-width: 1100px; margin-inline: auto; }
@@ -100,7 +107,7 @@ h3 { font-size: 22px; line-height: 1.4; font-weight: 700; letter-spacing: -.3px;
 .face { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; }
 .face--lg { width: 72px; height: 72px; }
 .dots { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 112px; }
-.dots span { height: 6px; border-radius: 3px; background: var(--track); }
+.dots span { height: 6px; border-radius: var(--r-pill); background: var(--track); }
 .dots span.on { background: var(--brand); }
 .avatar { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--avatar-soft); color: var(--brand-ink); font-weight: 700; flex-shrink: 0; }
 

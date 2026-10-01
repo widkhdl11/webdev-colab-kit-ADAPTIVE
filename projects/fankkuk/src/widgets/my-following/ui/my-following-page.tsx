@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
+import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import s from "./my-following.module.css";
 
@@ -39,7 +40,7 @@ export function MyFollowingPanel({ creators }: { creators: readonly CreatorCard[
                   <Link href={`/creators/${c.id}`}>{c.name}</Link>
                 </p>
                 <p className={s.says}>
-                  {c.category} · {c.channelTitle} · 평균 승인 약 {c.avgApprovalHours}시간
+                  {c.category} · {c.channelTitle} · {approvalTimeText(c.approvalMinutes)}
                 </p>
               </div>
               <div className={s.acts}>

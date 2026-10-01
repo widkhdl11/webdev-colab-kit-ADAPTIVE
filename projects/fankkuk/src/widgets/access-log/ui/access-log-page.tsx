@@ -1,4 +1,5 @@
 import type { AccessDenyReason, AccessLogSummary, AddressAccessEntry } from "@/entities/address/model/access-log";
+import { MAX_DECRYPTS_PER_ORDER } from "@/features/invoice-print/model/authorize-decrypt";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import s from "./access-log.module.css";
 
@@ -10,7 +11,7 @@ const DENY_TEXT: Record<AccessDenyReason, string> = {
   not_owner: "대표 계정이 아니라 열리지 않았어요",
   no_valid_approval: "승인 서명이 확인되지 않아 열리지 않았어요",
   order_mismatch: "서명한 주문과 달라 열리지 않았어요",
-  order_not_printable: "출고 확정 뒤라 열리지 않았어요",
+  order_not_printable: "지금은 주소를 열 수 없는 단계라 열리지 않았어요",
   difference_unpaid: "차액이 결제되지 않아 열리지 않았어요",
   decrypt_limit_reached: "출력 횟수를 다 써서 열리지 않았어요",
 };
@@ -45,7 +46,7 @@ export function AccessLogPage({
   return (
     <main id="main">
       <div className="container">
-        <div className={s["page-title"]}>
+        <div className="page-title">
           <h1 className="page-h">주소 열람 기록</h1>
           <p>
             <strong className={s.strong}>승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.
@@ -91,10 +92,10 @@ export function AccessLogPage({
           </div>
         </section>
         <p className={`sub ${s.rules}`}>
-          한 주문의 주소는 첫 출력과 재출력을 합쳐 최대 3번까지 열려요. 출고가 확정되면 남은 횟수가 있어도 더는 열리지 않아요.
+          한 주문의 주소는 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_ORDER}번까지 열려요. 출고가 확정되면 남은 횟수가 있어도 더는 열리지 않아요.
         </p>
 
-        <section className={s.block} aria-label="열람 기록">
+        <section className="block" aria-label="열람 기록">
           {entries.length === 0 ? (
             <p className={`sub ${s.empty}`}>아직 주소가 열린 기록이 없어요.</p>
           ) : (
@@ -146,7 +147,7 @@ export function AccessLogPage({
           )}
         </section>
       </div>
-      <div className={s["page-end"]} />
+      <div className="page-end" />
     </main>
   );
 }

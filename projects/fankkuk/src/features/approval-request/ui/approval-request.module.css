@@ -1,15 +1,12 @@
 /* 승인 요청 목록 — 시안 v4 creator-requests.html <style>. 한 줄에 한 건, 줄 사이 얇은 구분선 (design-rules 2절) */
 
-/* 카카오 인증 버튼만 카카오 노란색 (design-rules 1절). 전역 .btn 보다 앞서게 두 클래스로 */
-.kakao:global(.btn) { background: var(--kakao); color: var(--kakao-ink); box-shadow: none; }
-.kakao:global(.btn):hover { background: var(--kakao-hover); }
 .link-in { color: var(--brand); font-weight: 600; text-underline-offset: 4px; }
 
 .tabs-row { display: flex; gap: 8px; margin-bottom: 8px; }
 .tab { min-height: 44px; padding: 0 18px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-weight: 600; cursor: pointer; }
 .tab:hover { background: var(--surface-hover); }
 .tab[aria-selected="true"] { background: var(--ink); color: var(--on-brand); font-weight: 700; }
-.tab[aria-selected="true"]:focus-visible { outline-offset: 3px; }
+.tab[aria-selected="true"]:focus-visible { outline-offset: 4px; }
 
 .rows { border-top: 1px solid var(--divider); }
 .req { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 16px 24px; padding-block: 24px; border-bottom: 1px solid var(--divider); }

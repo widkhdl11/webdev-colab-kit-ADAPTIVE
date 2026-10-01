@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
+import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
-import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { BILLABLE_TIERS, TIER_PRICE_KRW } from "@/entities/payment/config/tier-pricing";
 import { FollowButton } from "@/features/creator-follow/ui/follow-button";
 import s from "./creator-profile.module.css";
@@ -16,6 +17,11 @@ const NOT_ALLOWED = [
   "폭발·인화성 물질 등 위험물",
   "현금과 상품권",
 ] as const;
+
+/** 받는 상자 구간 이름 — 「소형과 중형 두 가지」. 구간이 바뀌면 요금표와 같이 바뀐다. */
+const COUNT_WORD = ["", "한", "두", "세", "네"] as const;
+const tierNames = BILLABLE_TIERS.map((t) => PARCEL_TIER_GUIDE[t].name);
+const TIER_SENTENCE = `상자는 ${tierNames.join("과 ")} ${COUNT_WORD[tierNames.length] ?? tierNames.length} 가지예요.`;
 
 function CheckIcon() {
   return (
@@ -57,7 +63,7 @@ export function CreatorProfilePage({ creator, others }: { creator: CreatorCard; 
                 <circle cx="12" cy="12" r="10" fill="currentColor" />
                 <path d="M12 6.5V12l3.5 2.5" fill="none" stroke="var(--white)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              평균 승인 약 {creator.avgApprovalHours}시간 <span className="faint">(최근 30일)</span>
+              {approvalTimeText(creator.approvalMinutes)} <span className="faint">(최근 30일)</span>
             </p>
           </div>
           <div className={s.acts}>
@@ -79,7 +85,7 @@ export function CreatorProfilePage({ creator, others }: { creator: CreatorCard; 
                 </span>
                 <h2>{creator.name}님이 받는 선물</h2>
               </div>
-              <p>편지, 인형, 손수건, 책, 그림 같은 작은 선물을 상자에 담아 보내 주세요. 상자는 소형과 중형 두 가지예요.</p>
+              <p>편지, 인형, 손수건, 책, 그림 같은 작은 선물을 상자에 담아 보내 주세요. {TIER_SENTENCE}</p>
               <h3 className={s["no-h"]}>보낼 수 없는 것</h3>
               <ul className={s["no-list"]}>
                 {NOT_ALLOWED.map((item) => (
@@ -130,7 +136,7 @@ export function CreatorProfilePage({ creator, others }: { creator: CreatorCard; 
               </span>
             </p>
             <p className={s.note}>
-              크기와 무게 중 큰 쪽으로 정해져요. 중형보다 큰 상자는 받지 않아요. 도착한 상자를 재어 보니 구간이 더 크면 차액만 따로
+              크기와 무게 중 큰 쪽으로 정해져요. {OVERSIZE_RULE}는 받지 않아요. 도착한 상자를 재어 보니 구간이 더 크면 차액만 따로
               결제해요.
             </p>
             <Link className={`btn btn--block ${s["fee-go"]}`} href={sendHref}>
@@ -143,7 +149,7 @@ export function CreatorProfilePage({ creator, others }: { creator: CreatorCard; 
       {others.length > 0 ? (
         <section className={s.strip} aria-labelledby="similar-title">
           <div className="container">
-            <div className={s["block-head"]}>
+            <div className="block-head">
               <h2 id="similar-title">이런 크리에이터도 있어요</h2>
               <Link className="link-arrow" href="/creators">
                 전체 보기

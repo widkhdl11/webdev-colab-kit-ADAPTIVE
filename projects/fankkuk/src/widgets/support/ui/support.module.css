@@ -1,7 +1,6 @@
 /* 고객센터 화면 전용 — 시안 docs/design/mockups/site/v4/support.html <style> */
 
 /* 제목 줄 + 오른쪽 아이콘 칸 */
-.page-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: clamp(32px, 4vw, 56px) clamp(24px, 3vw, 40px); }
 .page-lead { margin-top: 8px; }
 .tile-ico { display: grid; place-items: center; width: 104px; height: 104px; border-radius: var(--r-tile); background: var(--surface); flex-shrink: 0; }
 .tile-ico img { width: 72px; height: 72px; }
@@ -22,7 +21,6 @@
 .answer { max-width: 760px; padding-bottom: 28px; color: var(--sub); }
 
 /* 1:1 문의 + 연락처 */
-.block { padding-block: clamp(56px, 7vw, 96px) 0; }
 .help { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
 @media (min-width: 1024px) { .help { grid-template-columns: minmax(0, 1fr) 360px; } }
 .ask { padding: 40px; border-radius: var(--r-panel); background: var(--white); box-shadow: var(--hair); }
@@ -41,7 +39,6 @@
 .contact dd { font-weight: 600; }
 .note { margin-top: 12px; color: var(--sub); }
 
-.page-end { height: clamp(72px, 9vw, 128px); }
 
 @media (max-width: 767px) {
   .tile-ico { width: 72px; height: 72px; border-radius: var(--r-card); }

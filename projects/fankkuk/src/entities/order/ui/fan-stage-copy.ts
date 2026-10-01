@@ -97,3 +97,13 @@ export function headerGiftState(view: FanGiftView): HeaderGiftState | null {
   if (current === "approved") return "wait";
   return "move";
 }
+
+/** 선물 목록의 묶음. 메인 「진행 중인 선물」과 선물 내역 탭이 같은 기준을 쓴다.
+ *  헤더 아이콘(headerGiftState)은 수령한 선물도 잠시 보여 주므로 이것과 다르다. */
+export type FanGiftBucket = "ongoing" | "ended" | "not_accepted";
+
+export function fanGiftBucket(view: FanGiftView): FanGiftBucket {
+  if (view.outcome === "not_accepted") return "not_accepted";
+  if (view.outcome !== "in_progress") return "ended";
+  return currentKey(view) ? "ongoing" : "ended";
+}
