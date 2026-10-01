@@ -24,18 +24,16 @@
     .step-head h2 { font-size: 24px; }
     .choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .choice { position: relative; display: block; cursor: pointer; }
-    .choice-body { display: block; height: 100%; padding: 20px; border: 2px solid var(--line); border-radius: 12px; background: var(--paper); }
+    .choice-body { display: block; height: 100%; padding: 20px; border: 1.5px solid var(--field-line); border-radius: 6px; background: var(--paper); }
     .choice:hover .choice-body { border-color: var(--accent); }
-    .choice input:checked + .choice-body { border-color: var(--brand); background: var(--tint); }
+    .choice input:checked + .choice-body { border: 3px solid var(--ink); padding: 18px; background: var(--paper); }
     .choice input:focus-visible + .choice-body { outline: 3px solid var(--ink); outline-offset: 3px; }
     .choice-body strong { display: block; font-size: 20px; font-weight: 750; }
-    .choice-body .icon-tile { margin-bottom: 12px; }
-    .choice input:checked + .choice-body .icon-tile { background: var(--paper); }
     .form-stack > * + * { margin-top: 20px; }
-    .terms { border: 1px solid var(--line); border-radius: 12px; }
+    .terms { border-block: 2px solid var(--ink); }
     .terms > * { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 16px; }
     .terms > * + * { border-top: 1px solid var(--line); }
-    .terms .all { background: var(--tint); border-radius: 11px 11px 0 0; font-weight: 750; }
+    .terms .all { font-weight: 800; }
     .terms .check { flex: 1; min-width: 0; }
     .check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-weight: 650; cursor: pointer; }
     .check input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); flex-shrink: 0; }
@@ -44,12 +42,26 @@
     .btn--kakao:hover { background: #F2D900; border-color: #F2D900; }
     .kakao-steps { counter-reset: k; display: grid; gap: 12px; }
     .kakao-steps li { counter-increment: k; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; align-items: start; }
-    .kakao-steps li::before { content: counter(k); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--tint); color: var(--brand); font-weight: 750; }
+    .kakao-steps li::before { content: counter(k); display: grid; place-items: center; width: 32px; height: 32px; border: 1.5px solid var(--ink); border-radius: 50%; color: var(--ink); font-weight: 750; }
     .already { text-align: center; }
     @media (max-width: 767px) { .su-wrap { padding-block: 24px 56px; } .choices { grid-template-columns: 1fr; } .step-head h2 { font-size: 22px; } }
   </style>
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
   <!-- HEADER:guest START (비로그인: 오른쪽에 로그인·회원가입) -->
@@ -115,7 +127,6 @@
               <label class="choice">
                 <input class="sr-only" type="radio" name="kind" value="fan" checked>
                 <span class="choice-body">
-                  <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><path fill="currentColor" d="M4 12h24v14a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V12Z"/><rect x="2" y="8" width="28" height="7" rx="3" fill="var(--accent)"/><rect x="14" y="8" width="4" height="22" fill="var(--paper)"/><path d="M16 8c-3-1-8-2-8-5 0-3 6-1 8 5Zm0 0c3-1 8-2 8-5 0-3-6-1-8 5Z" fill="currentColor"/></svg></span>
                   <strong>팬이에요</strong>
                   <span class="muted">응원하는 크리에이터에게 선물을 보내고 싶어요.</span>
                 </span>
@@ -123,14 +134,13 @@
               <label class="choice">
                 <input class="sr-only" type="radio" name="kind" value="creator">
                 <span class="choice-body">
-                  <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="10" r="7" fill="currentColor"/><path d="M3 29a13 13 0 0 1 26 0Z" fill="currentColor"/></svg></span>
                   <strong>크리에이터예요</strong>
                   <span class="muted">팬이 보내는 선물을 안전하게 받고 싶어요.</span>
                 </span>
               </label>
             </div>
           </fieldset>
-          <div class="card card--tint" style="margin-top:16px;padding:16px 20px">
+          <div class="card" style="margin-top:16px;padding:16px 20px">
             <p><strong>크리에이터로 가입하면</strong> 가입한 뒤에 방송 채널 인증 코드로 본인 확인을 한 번 더 해요. 방송 채널에 인증 코드를 올려 주시면 같은 분이 맞는지 확인하고, 확인이 끝나야 「크리에이터 찾기」에 나타나요.</p>
           </div>
         </section>

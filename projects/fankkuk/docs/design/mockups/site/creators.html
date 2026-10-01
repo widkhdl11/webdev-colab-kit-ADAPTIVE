@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
   <link rel="stylesheet" href="site.css">
   <style>
-    .find { padding-block: 48px 32px; background: var(--tint); }
+    .find { padding-block: 48px 32px; border-bottom: 1px solid var(--line); }
     .find .search { max-width: 720px; margin-top: 24px; }
     .find .search .input { height: 64px; font-size: 20px; padding-left: 56px; }
     .find .search svg { left: 20px; }
@@ -23,8 +23,7 @@
     .result-bar strong { font-size: 18px; }
     #list { display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
     @media (max-width: 767px) { #list { gap: 16px; grid-template-columns: 1fr; } .find { padding-block: 32px 24px; } }
-    .empty { display: grid; justify-items: center; gap: 8px; padding: 48px 24px; text-align: center; border: 2px dashed var(--accent-soft); border-radius: 12px; background: var(--paper); }
-    .empty .icon-tile { margin: 0 0 8px; }
+    .empty { display: grid; justify-items: center; gap: 8px; padding: 48px 24px; text-align: center; border: 2px dashed var(--accent-soft); }
     .c-card { display: grid; gap: 16px; align-content: start; }
     .c-top { display: flex; align-items: center; gap: 16px; min-width: 0; }
     .c-id { min-width: 0; display: grid; gap: 4px; }
@@ -39,6 +38,20 @@
   </style>
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
 <!-- HEADER:fan START (팬 로그인: 선물 상태 아이콘 + 내 정보 메뉴) -->
@@ -333,7 +346,6 @@
         </li>
         </ul>
         <div class="empty" id="empty" hidden role="status">
-          <span class="icon-tile" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>
           <h2 style="font-size:22px">찾는 크리에이터가 아직 없어요</h2>
           <p class="muted">이름 철자를 다시 확인해 보세요. 본인 확인을 마치지 않은 크리에이터는 검색되지 않아요.</p>
           <a class="btn btn--secondary" style="margin-top:12px" href="support.html">크리에이터를 초대하고 싶어요</a>

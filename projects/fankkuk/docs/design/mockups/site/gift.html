@@ -22,7 +22,7 @@
     @media (max-width: 1023px) { .two { grid-template-columns: 1fr; } }
     .box-row { display: grid; gap: 12px; padding: 16px 0; border-top: 1px solid var(--line); }
     .box-row:first-of-type { border-top: 0; padding-top: 0; }
-    .addr { padding: 20px; border-radius: 12px; background: var(--tint); border: 1px solid var(--accent-soft); }
+    .addr { border-left: 3px solid var(--ink); padding: 4px 0 4px 20px; background: none; border-radius: 0; }
     .addr dl { display: grid; gap: 8px; margin-top: 12px; }
     .addr dt { color: var(--muted); font-weight: 650; }
     .addr dd { font-weight: 750; }
@@ -40,6 +40,20 @@
   </style>
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
 <!-- HEADER:fan START (팬 로그인: 선물 상태 아이콘 + 내 정보 메뉴) -->
@@ -154,7 +168,7 @@
             <h1 id="g-title" style="font-size:clamp(28px,3.4vw,40px)">하루님께 보내는 선물</h1>
             <p class="lead" style="margin-top:4px">손편지와 곰인형 · 상자 2개</p>
           </div>
-          <span class="badge badge--solid" style="font-size:18px;padding:4px 16px">지금은 입고 단계예요</span>
+          <span class="badge" style="font-size:18px;padding:4px 16px">지금은 입고 단계예요</span>
         </div>
 
         <div class="card stepper-card">
@@ -175,7 +189,7 @@
             <div class="card">
               <h2 style="font-size:22px;margin-bottom:16px">상자별 상태</h2>
               <div class="box-row">
-                <div class="row row--between"><div><h3 style="font-size:18px">FC-7K3M9-1</h3><p class="muted">소형 상자</p></div><span class="badge badge--solid"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 입고 완료</span></div>
+                <div class="row row--between"><div><h3 style="font-size:18px">FC-7K3M9-1</h3><p class="muted">소형 상자</p></div><span class="badge"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 입고 완료</span></div>
                 <p class="muted">내 송장번호 <strong style="color:var(--ink)">6401 2345 7788</strong> (한진택배) — 10.01 도착 확인</p>
               </div>
               <div class="box-row">
@@ -208,8 +222,7 @@
           </div>
 
           <div class="stack-24">
-            <div class="card card--tint eta">
-              <span class="icon-tile" style="margin:0" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.5V12l3.5 2.5" fill="none" stroke="var(--paper)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="card eta">
               <div><h2 style="font-size:18px">도착 예정일</h2><p style="font-weight:800;font-size:22px">10월 9일 (금) 전후</p><p class="muted">입고와 검수가 예정대로 끝났을 때 기준이에요.</p></div>
             </div>
             <div class="card">

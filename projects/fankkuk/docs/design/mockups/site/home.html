@@ -1,9 +1,9 @@
 <!doctype html>
 <!--
-  메인(팬 로그인 후) — 팬꾹 사이트 시안 1단계 (2026-10-01)
-  근거: _brief.md. 헤더는 HEADER:fan 경계 — 다른 팬 페이지가 그대로 복사해 쓴다.
+  메인(팬 로그인 후) — 팬꾹 사이트 (2026-10-01). A안 「도장」 확정판 — 공통 부품은 site.css.
+  헤더는 HEADER:fan 경계 — 다른 팬 페이지가 그대로 복사해 쓴다.
   복사할 때 바꿀 것: 현재 페이지 nav 링크에 aria-current="page" 하나. 말풍선 문구(선물 N개 중 K번째 · ○○님께 · 상태)는 선물마다.
-  선물 아이콘 규칙: 최대 3개 + "+N", 상태별 모양(승인 대기=모래시계 / 이동 중=트럭 / 배송 완료=체크, 배송 완료는 3일 뒤 사라짐).
+  선물 아이콘 규칙: 최대 3개 + "+N", 상태별 모양(승인 대기=점선 모래시계 / 이동 중=주홍 외곽 트럭 / 배송 완료=주홍 채움 체크, 배송 완료는 3일 뒤 사라짐).
   휴대폰(767 이하)에서는 아이콘 대신 「선물 N」 배지 → 바텀시트 목록.
 -->
 <html lang="ko">
@@ -15,6 +15,20 @@
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
   <!-- HEADER:fan START (팬 로그인: 선물 상태 아이콘 + 내 정보 메뉴) -->
@@ -149,7 +163,7 @@
           <article class="card">
             <div class="row row--between" style="flex-wrap:nowrap">
               <div class="row" style="flex-wrap:nowrap"><span class="avatar avatar--lg" aria-hidden="true">하</span><div><h3>하루님께</h3><p class="muted">상자 2개 · 소형 1, 중형 1</p></div></div>
-              <span class="badge">배송중</span>
+              <span class="badge badge--go">배송중</span>
             </div>
             <div style="margin-top:20px">
               <div class="stepbar" role="progressbar" aria-label="하루님께 보낸 선물 진행 단계" aria-valuemin="1" aria-valuemax="7" aria-valuenow="6" aria-valuetext="7단계 중 6단계, 배송중"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>

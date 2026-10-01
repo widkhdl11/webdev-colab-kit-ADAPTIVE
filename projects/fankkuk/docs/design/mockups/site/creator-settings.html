@@ -18,9 +18,8 @@
     @media (max-width: 1023px) { .cols { grid-template-columns: 1fr; } }
     @media (max-width: 767px) { .cols { gap: 16px; } }
     .card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .card-head .icon-tile { margin: 0; flex-shrink: 0; }
     .card-head h2 { font-size: 22px; line-height: 1.4; }
-    .addr-state { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 12px; background: var(--tint); }
+    .addr-state { display: flex; align-items: center; gap: 12px; border-left: 3px solid var(--ink); padding: 4px 0 4px 16px; background: none; border-radius: 0; }
     .addr-state .lockline { color: var(--muted); }
     .addr-state strong { display: block; }
     .mask { letter-spacing: .2em; color: var(--muted); user-select: none; }
@@ -53,6 +52,20 @@
   </style>
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
         <!-- HEADER:creator START (크리에이터 로그인: 승인 요청·열람 기록·주소와 설정 + 공지사항·고객센터) -->
@@ -113,9 +126,8 @@
       <div class="stack-24">
         <section class="card" aria-labelledby="addr-h">
           <div class="card-head">
-            <span class="icon-tile" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 1 1 6 0v3H9Z"/></svg></span>
             <h2 id="addr-h">받는 주소</h2>
-            <span class="badge badge--solid" style="margin-left:auto">등록됨</span>
+            <span class="badge" style="margin-left:auto">등록됨</span>
           </div>
           <div class="addr-state">
             <div>
@@ -135,7 +147,6 @@
 
         <section class="card" id="blocked" aria-labelledby="block-h">
           <div class="card-head">
-            <span class="icon-tile" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="m6.5 17.5 11-11" stroke="#EEF1ED" stroke-width="2.5" stroke-linecap="round"/></svg></span>
             <h2 id="block-h">차단한 팬</h2>
             <span class="badge" style="margin-left:auto">3명</span>
           </div>
@@ -155,7 +166,6 @@
       <div class="stack-24">
         <section class="card" aria-labelledby="prof-h">
           <div class="card-head">
-            <span class="icon-tile" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5" fill="currentColor"/><path fill="currentColor" d="M3 21c0-4.4 4-7 9-7s9 2.6 9 7v1H3v-1Z"/></svg></span>
             <h2 id="prof-h">프로필</h2>
           </div>
           <div class="stack-16">
@@ -170,7 +180,7 @@
             </dl>
             <dl class="kv">
               <dt>본인 확인</dt>
-              <dd><span class="badge badge--solid"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3.5 3.5L13 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>확인 완료</span> <span class="muted">2026.09.02 방송 채널 인증</span></dd>
+              <dd><span class="badge"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3.5 3.5L13 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>확인 완료</span> <span class="muted">2026.09.02 방송 채널 인증</span></dd>
             </dl>
             <div class="switch-row">
               <label class="txt" for="sw-find"><strong>크리에이터 찾기에 보이기</strong><span>끄면 검색 결과에 나타나지 않아요.</span></label>
@@ -182,7 +192,6 @@
 
         <section class="card" aria-labelledby="alarm-h">
           <div class="card-head">
-            <span class="icon-tile" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a6 6 0 0 0-6 6v4l-2 4v1h16v-1l-2-4V8a6 6 0 0 0-6-6Z"/><path fill="currentColor" d="M9.5 20a2.5 2.5 0 0 0 5 0h-5Z"/></svg></span>
             <h2 id="alarm-h">알림 받기</h2>
           </div>
           <div>

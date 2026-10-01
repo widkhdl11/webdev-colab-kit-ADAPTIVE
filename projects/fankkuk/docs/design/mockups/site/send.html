@@ -20,9 +20,9 @@
     .step-h .number { margin: 0; flex-shrink: 0; }
     .step-h h2 { font-size: 22px; }
     #pick-list { display: grid; gap: 8px; max-height: 320px; overflow-y: auto; margin-top: 12px; padding: 4px; }
-    .pick { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); cursor: pointer; }
+    .pick { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 16px; border: 1px solid var(--field-line); border-radius: 6px; background: var(--paper); cursor: pointer; }
     .pick:hover { border-color: var(--accent); }
-    .pick:has(input:checked) { background: var(--tint); border-color: var(--brand); }
+    .pick:has(input:checked) { border: 3px solid var(--ink); padding: 6px 14px; }
     .pick:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
     .pick input { width: 24px; height: 24px; accent-color: var(--brand); flex-shrink: 0; margin: 0; }
     .pick-text { display: grid; min-width: 0; }
@@ -37,8 +37,8 @@
     .qty-btn[disabled] { opacity: .5; cursor: not-allowed; }
     .qty output { min-width: 32px; text-align: center; font-size: 22px; font-weight: 800; }
     .radios { display: flex; flex-wrap: wrap; gap: 12px; }
-    .radios label { display: inline-flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 20px 0 16px; border: 1px solid var(--field-line); border-radius: 12px; background: var(--paper); font-weight: 700; cursor: pointer; }
-    .radios label:has(input:checked) { border-color: var(--brand); background: var(--tint); }
+    .radios label { display: inline-flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 20px 0 16px; border: 1px solid var(--field-line); border-radius: 6px; background: var(--paper); font-weight: 700; cursor: pointer; }
+    .radios label:has(input:checked) { border: 3px solid var(--ink); padding: 0 18px 0 14px; }
     .radios label:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
     .radios input { width: 24px; height: 24px; accent-color: var(--brand); margin: 0; }
     .char-count { text-align: right; color: var(--muted); }
@@ -47,10 +47,24 @@
     .sum-line small { display: block; color: var(--muted); font-size: 16px; font-weight: 500; }
     .sum-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 16px; border-top: 2px solid var(--ink); }
     .sum-total .big { font-size: 32px; font-weight: 850; letter-spacing: -0.03em; }
-    .empty-mini { padding: 16px; text-align: center; border: 2px dashed var(--accent-soft); border-radius: 12px; }
+    .empty-mini { padding: 16px; text-align: center; border: 2px dashed var(--accent-soft); }
   </style>
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
 <!-- HEADER:fan START (팬 로그인: 선물 상태 아이콘 + 내 정보 메뉴) -->
@@ -266,9 +280,8 @@
             <p class="hint" style="margin-top:12px">검수에서 추적 장치와 구분하기 위해 미리 알려 주세요. 신고한 상자는 검수에 시간이 조금 더 걸릴 수 있어요.</p>
           </fieldset>
 
-          <div class="card card--tint">
+          <div class="card">
             <div class="row" style="flex-wrap:nowrap;align-items:flex-start">
-              <span class="icon-tile" style="margin:0" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.5V12l3.5 2.5" fill="none" stroke="var(--paper)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               <div>
                 <h2 style="font-size:20px">하루님은 보통 2시간 안에 승인해요</h2>
                 <p class="muted" style="margin-top:4px">승인은 크리에이터가 카카오톡 인증서로 선물마다 직접 해요. 승인이 나면 사무실 주소가 열리고, 알림톡으로 알려 드려요.</p>

@@ -25,7 +25,7 @@
     .follow[aria-pressed="true"] { background: var(--tint); }
     .two { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: start; }
     .no-list { display: grid; gap: 12px; margin-top: 16px; }
-    .no-list li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; background: var(--page); border: 1px solid var(--line); font-weight: 650; }
+    .no-list li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); font-weight: 650; }
     .no-list .x { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: #fff; flex-shrink: 0; }
     .price-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
     .price-table th, .price-table td { padding: 12px 0; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -36,6 +36,20 @@
   </style>
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
 <!-- HEADER:fan START (팬 로그인: 선물 상태 아이콘 + 내 정보 메뉴) -->
@@ -150,7 +164,7 @@
             <h1 id="name">하루</h1>
             <p class="lead" style="margin-top:4px">게임 방송을 해요. 하루의 놀이터</p>
             <div class="p-meta">
-              <span class="badge badge--solid"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 본인 확인 완료</span>
+              <span class="badge"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 본인 확인 완료</span>
               <span class="badge">게임 · 하루의 놀이터</span>
             </div>
             <p class="p-avg"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.5V12l3.5 2.5" fill="none" stroke="var(--paper)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 평균 승인 약 2시간 <span class="muted">(최근 30일)</span></p>
@@ -177,7 +191,7 @@
               <li><span class="x" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 20 20"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>현금과 상품권</li>
             </ul>
           </div>
-          <div class="card card--tint">
+          <div class="card">
             <h2 style="font-size:24px">상자는 이렇게 확인해요</h2>
             <ul class="dot-list" style="margin-top:16px">
               <li>팬꾹 사무실에 상자가 도착하면 겉에 붙은 송장을 떼고 겉면을 검사해요.</li>

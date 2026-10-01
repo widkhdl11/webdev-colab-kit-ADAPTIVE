@@ -11,22 +11,36 @@
   <link rel="stylesheet" href="site.css">
   <style>
     .auth-grid { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 440px); gap: 56px; justify-content: center; align-items: center; padding-block: 64px 80px; }
-    .auth-card { padding: 32px; }
+    .auth-card { padding: 32px; border: 1.5px solid var(--ink); }
     .auth-card h1 { font-size: 30px; }
     .auth-card form > * + * { margin-top: 20px; }
     .check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-weight: 650; cursor: pointer; }
     .check input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); flex-shrink: 0; }
-    .reset { border: 1px solid var(--line); border-radius: 12px; background: var(--page); }
+    .reset { border: 1px solid var(--line); border-radius: 12px; }
     .reset summary { display: flex; align-items: center; min-height: 48px; padding: 0 16px; font-weight: 700; color: var(--brand); cursor: pointer; }
     .reset > div { padding: 0 16px 16px; }
     .reset > div > * + * { margin-top: 12px; }
     .signup-line { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; }
-    .auth-aside .scene { margin-bottom: 24px; }
+    .auth-aside .line-art { margin-bottom: 24px; }
     @media (max-width: 1023px) { .auth-grid { grid-template-columns: minmax(0, 480px); gap: 32px; padding-block: 32px 56px; } }
     @media (max-width: 767px) { .auth-card { padding: 24px 20px; } .auth-card h1 { font-size: 26px; } }
   </style>
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
   <!-- HEADER:guest START (비로그인: 오른쪽에 로그인·회원가입) -->
@@ -101,21 +115,15 @@
       </section>
 
       <aside class="auth-aside" aria-label="팬꾹 안내">
-        <div class="scene" aria-hidden="true">
-          <svg viewBox="0 0 344 208" focusable="false">
-            <circle cx="172" cy="104" r="84" fill="var(--paper)"/>
-            <circle cx="44" cy="52" r="12" fill="var(--spark-soft)"/>
-            <circle cx="304" cy="160" r="18" fill="var(--spark-soft)"/>
-            <circle cx="288" cy="40" r="5" fill="var(--spark)"/>
-            <circle cx="52" cy="164" r="6" fill="var(--brand)"/>
-            <rect x="124" y="92" width="96" height="84" rx="14" fill="var(--accent)"/>
-            <rect x="116" y="80" width="112" height="28" rx="10" fill="var(--accent-soft)"/>
-            <rect x="160" y="80" width="24" height="96" rx="4" fill="var(--brand)"/>
-            <rect x="148" y="30" width="48" height="44" rx="12" fill="var(--brand)"/>
-            <rect x="158" y="14" width="28" height="30" rx="14" fill="none" stroke="var(--brand)" stroke-width="8"/>
-            <circle cx="172" cy="52" r="6" fill="var(--paper)"/>
-          </svg>
-        </div>
+        <svg class="line-art" viewBox="0 0 344 208" aria-hidden="true" focusable="false">
+          <g fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="124" y="92" width="96" height="84"/>
+            <rect x="116" y="76" width="112" height="24"/>
+            <path d="M172 76v100"/>
+            <path d="M172 76c-14-4-30-10-30-24 0-14 24-6 30 24Zm0 0c14-4 30-10 30-24 0-14-24-6-30 24Z"/>
+            <path d="M40 176h264" stroke-width="2"/>
+          </g>
+        </svg>
         <h2 style="font-size:24px">승인한 선물만 도착해요</h2>
         <ul class="dot-list" style="margin-top:16px">
           <li><span>선물은 크리에이터가 한 건씩 승인한 뒤에 배송돼요.</span></li>

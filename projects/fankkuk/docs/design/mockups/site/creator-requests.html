@@ -25,14 +25,15 @@
     .req-facts dd { font-weight: 650; }
     .req-tags { display: flex; flex-wrap: wrap; gap: 8px; }
     .req-actions { display: grid; gap: 8px; margin-top: auto; }
-    .req--signing { border: 2px solid var(--brand); padding: 23px; }
-    .sign-wait { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: start; padding: 16px; border-radius: 12px; background: var(--tint); }
-    .sign-wait .glyph { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--paper); color: var(--brand); }
+    .req--signing { border: 1.5px solid var(--ink); padding: 23px; }
+    .sign-wait { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: start; border-left: 3px solid var(--ink); padding: 4px 0 4px 16px; background: none; border-radius: 0; }
+    .sign-wait .glyph { display: grid; place-items: center; width: 40px; height: 40px; border: 1.5px solid var(--ink); border-radius: 50%; color: var(--ink); }
     .sign-wait strong { display: block; }
     .sign-wait p { color: var(--muted); }
-    .notice-line { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 12px; background: var(--tint); font-weight: 700; }
+    .notice-line { display: flex; align-items: center; gap: 12px; border-left: 3px solid var(--ink); padding: 4px 0 4px 16px; background: none; border-radius: 0; font-weight: 700; }
+    .stamp-done { padding: 2px 14px; font-size: 20px; letter-spacing: .04em; }   /* 승인 완료 — 이 화면에서 인주색은 이 도장뿐 */
     .notice-line svg { color: var(--brand); }
-    .check-row { display: flex; align-items: flex-start; gap: 12px; min-height: 44px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; font-weight: 700; }
+    .check-row { display: flex; align-items: flex-start; gap: 12px; min-height: 44px; padding: 12px 16px; border: 1px solid var(--field-line); border-radius: 6px; cursor: pointer; font-weight: 700; }
     .check-row input { width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--brand); flex-shrink: 0; }
     .check-row small { display: block; margin-top: 4px; color: var(--muted); font-size: 16px; font-weight: 500; }
     @media (min-width: 768px) {
@@ -44,6 +45,20 @@
   </style>
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
         <!-- HEADER:creator START (크리에이터 로그인: 승인 요청·열람 기록·주소와 설정 + 공지사항·고객센터) -->
@@ -117,7 +132,7 @@
             <div class="req-head">
               <span class="avatar avatar--lg" aria-hidden="true">별</span>
               <div class="who"><h3>별이</h3><p class="muted">2026.09.30 14:20 요청</p></div>
-              <span class="badge badge--solid">도착함</span>
+              <span class="badge">도착함</span>
             </div>
             <dl class="req-facts">
               <dt>선물</dt><dd>손편지와 간식 세트</dd>
@@ -135,7 +150,7 @@
             <div class="req-head">
               <span class="avatar avatar--lg" aria-hidden="true">달</span>
               <div class="who"><h3>달콤이</h3><p class="muted">2026.09.30 11:05 요청</p></div>
-              <span class="badge badge--solid">도착함</span>
+              <span class="badge">도착함</span>
             </div>
             <dl class="req-facts">
               <dt>선물</dt><dd>직접 뜬 목도리</dd>
@@ -175,7 +190,7 @@
             <div class="req-head">
               <span class="avatar avatar--lg" aria-hidden="true">솜</span>
               <div class="who"><h3>솜사탕</h3><p class="muted">2026.09.28 09:12 요청</p></div>
-              <span class="badge badge--solid">도착함</span>
+              <span class="badge">도착함</span>
             </div>
             <dl class="req-facts">
               <dt>선물</dt><dd>키링과 엽서 모음</dd>
@@ -195,7 +210,7 @@
       <div class="tab-panel" role="tabpanel" id="p-done" aria-labelledby="t-done" hidden>
         <ul class="grid cols-3 gap-16 req-list">
           <li class="card req">
-            <div class="req-head"><span class="avatar avatar--lg" aria-hidden="true">도</span><div class="who"><h3>도토리</h3><p class="muted">2026.09.27 처리</p></div><span class="badge badge--solid">승인함</span></div>
+            <div class="req-head"><span class="avatar avatar--lg" aria-hidden="true">도</span><div class="who"><h3>도토리</h3><p class="muted">2026.09.27 처리</p></div><span class="badge badge--solid stamp-done">승인함</span></div>
             <dl class="req-facts"><dt>선물</dt><dd>수제 쿠키 세트</dd><dt>상자</dt><dd>1개</dd><dt>주문번호</dt><dd>FC-9B2KR</dd></dl>
             <p class="muted">카카오톡 서명으로 승인했어요.</p>
           </li>

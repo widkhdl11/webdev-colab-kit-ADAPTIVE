@@ -13,7 +13,7 @@
     .faq { max-width: none; }
     .faq .answer a { color: var(--brand); }
     .help-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px; align-items: start; }
-    .need-login { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 16px 20px; border-radius: 12px; background: var(--tint); }
+    .need-login { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; border-left: 3px solid var(--ink); padding: 4px 0 4px 16px; background: none; border-radius: 0; font-weight: 650; }
     .need-login p { flex: 1; font-weight: 650; }
     .form-stack > * + * { margin-top: 20px; }
     .contact dt { font-weight: 700; }
@@ -24,6 +24,20 @@
   </style>
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
   <!-- HEADER:guest START (비로그인: 오른쪽에 로그인·회원가입) -->
@@ -162,7 +176,6 @@
         </div>
 
         <aside class="card" aria-labelledby="contact-title">
-          <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="currentColor"/><path d="M16 8v8l5 3" fill="none" stroke="var(--paper)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           <h2 id="contact-title" style="font-size:24px;margin-bottom:16px">운영 시간·연락처</h2>
           <dl class="contact">
             <dt>운영 시간</dt><dd>(출시 전 기재)</dd>

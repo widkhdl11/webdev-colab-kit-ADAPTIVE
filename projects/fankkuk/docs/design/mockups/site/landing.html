@@ -1,8 +1,8 @@
 <!doctype html>
 <!--
-  랜딩(비로그인) — 팬꾹 사이트 시안 1단계 (2026-10-01)
-  근거: _brief.md 사용자 구성 원문 + ../main.html 의 섹션 내용을 PC 폭(컨테이너 1200px)으로 다시 배치
-  헤더는 HEADER:guest 경계, 푸터는 FOOTER 경계 — 다른 페이지가 그대로 복사해 쓴다
+  랜딩(비로그인) — 팬꾹 사이트 (2026-10-01). A안 「도장」 확정판 — 공통 부품은 site.css.
+  포인트: 첫 화면 큰 「승인 꾹」 도장(서류 밖으로 삐져나옴, 서명 글자는 가리지 않음) / 마무리 「꾹」 도장.
+  헤더는 HEADER:guest 경계, 푸터는 FOOTER 경계 — 다른 페이지가 그대로 복사해 쓴다.
 -->
 <html lang="ko">
 <head>
@@ -13,6 +13,20 @@
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
   <!-- HEADER:guest START (비로그인: 오른쪽에 로그인·회원가입) -->
@@ -54,7 +68,7 @@
   <!-- HEADER:guest END -->
 
   <main id="main">
-    <!-- 첫 화면 -->
+    <!-- 첫 화면 — A: 승인 요청서 위에 큰 「승인 꾹」 도장 (비대칭: 도장이 종이 밖으로 삐져나온다) -->
     <section class="hero" aria-labelledby="hero-title">
       <div class="container hero-grid">
         <div>
@@ -67,25 +81,26 @@
           </div>
           <p class="assurance">승인 전에는 아무것도 배송되지 않습니다.</p>
         </div>
-        <div class="scene" aria-hidden="true">
-          <svg viewBox="0 0 344 208" focusable="false">
-            <circle cx="164" cy="106" r="84" fill="var(--paper)"/>
-            <circle cx="40" cy="56" r="12" fill="var(--spark-soft)"/>
-            <circle cx="300" cy="164" r="20" fill="var(--spark-soft)"/>
-            <circle cx="60" cy="168" r="6" fill="var(--brand)"/>
-            <circle cx="276" cy="32" r="4" fill="var(--spark)"/>
-            <g transform="rotate(-8 160 112)">
-              <rect x="98" y="88" width="136" height="92" rx="16" fill="var(--accent)"/>
-              <path d="M162 76c-20-2-54-6-54-26 0-24 42-10 54 26Z" fill="var(--brand)"/>
-              <path d="M162 76c18-4 44-12 42-30-4-22-36-2-42 30Z" fill="var(--brand)"/>
-              <rect x="90" y="76" width="152" height="32" rx="12" fill="var(--accent-soft)"/>
-              <rect x="150" y="76" width="24" height="104" rx="4" fill="var(--brand)"/>
-              <rect x="186" y="124" width="32" height="36" rx="8" fill="var(--paper)"/>
-              <path d="M202 150c-4-3-10-7-10-12 0-5 7-6 10-2 3-4 10-3 10 2 0 5-6 9-10 12Z" fill="var(--brand)"/>
+        <div class="paper" aria-hidden="true">
+          <p class="paper-title">선물 승인 요청</p>
+          <dl class="paper-rows">
+            <div><dt>받는 분</dt><dd>하루님</dd></div>
+            <div><dt>상자</dt><dd>2개 · 소형 1, 중형 1</dd></div>
+            <div><dt>보내는 분</dt><dd>민지님</dd></div>
+            <div><dt>승인</dt><dd class="blank">크리에이터 서명</dd></div>
+          </dl>
+          <svg class="stamp stamp--xl" viewBox="0 0 300 300" role="img" aria-label="승인 꾹 도장">
+            <g filter="url(#ink-big)" transform="rotate(-12 150 150)" fill="none" stroke="currentColor">
+              <circle cx="150" cy="150" r="140" stroke-width="9"/>
+              <circle cx="150" cy="150" r="122" stroke-width="3"/>
+              <circle cx="150" cy="150" r="88" stroke-width="3"/>
+              <path id="ring-top" d="M49 150A101 101 0 0 1 251 150" stroke="none"/>
+              <path id="ring-bot" d="M37 150A113 113 0 0 0 263 150" stroke="none"/>
+              <text font-size="21" font-weight="800" fill="currentColor" stroke="none" text-anchor="middle" letter-spacing="3"><textPath href="#ring-top" startOffset="50%">크리에이터 승인</textPath></text>
+              <text font-size="21" font-weight="800" fill="currentColor" stroke="none" text-anchor="middle" letter-spacing="3"><textPath href="#ring-bot" startOffset="50%">· 팬꾹 ·</textPath></text>
+              <text x="150" y="166" text-anchor="middle" font-size="48" font-weight="900" fill="currentColor" stroke="none">승인 꾹</text>
             </g>
-            <path d="M52 102c-6-6-18 0-14 8 3 6 12 12 12 12s10-6 14-12c4-8-6-14-12-8Z" fill="var(--spark)"/>
           </svg>
-          <span class="seal"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false"><path d="m5 12 5 5 10-11" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>승인 먼저</span>
         </div>
       </div>
     </section>
@@ -99,13 +114,11 @@
         </div>
         <div class="grid cols-2">
           <article class="card">
-            <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="10" r="7" fill="currentColor"/><path d="M3 29a13 13 0 0 1 26 0Z" fill="currentColor"/></svg></span>
             <p class="eyebrow">크리에이터라면</p>
             <h3 style="margin-top:8px">&ldquo;팬이 보낸 택배에 내 주소가 그대로 적혀 있으면 어쩌죠?&rdquo;</h3>
             <p class="muted" style="margin-top:12px">팬꾹은 선물을 사무실에서 먼저 받아요. 원래 송장을 떼어 파쇄하고 팬꾹 송장으로 바꿔서 보내 드리니, 팬이 크리에이터의 주소를 알 일이 없어요.</p>
           </article>
           <article class="card">
-            <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><path fill="currentColor" d="M4 12h24v14a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V12Z"/><rect x="2" y="8" width="28" height="7" rx="3" fill="var(--accent)"/><rect x="14" y="8" width="4" height="22" fill="var(--paper)"/><path d="M16 8c-3-1-8-2-8-5 0-3 6-1 8 5Zm0 0c3-1 8-2 8-5 0-3-6-1-8 5Z" fill="currentColor"/></svg></span>
             <p class="eyebrow">팬이라면</p>
             <h3 style="margin-top:8px">&ldquo;응원하는 크리에이터에게 선물을 직접 보낼 방법이 없어요.&rdquo;</h3>
             <p class="muted" style="margin-top:12px">크리에이터에게 선물 보내기를 요청하면, 크리에이터가 승인한 뒤에 팬꾹 사무실 주소가 열려요. 사무실로 보내 주시면 검수해서 대신 전해 드려요.</p>
@@ -152,17 +165,14 @@
         </div>
         <ul class="grid cols-3">
           <li class="card">
-            <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><path fill="currentColor" fill-rule="evenodd" d="M8 14v-4a8 8 0 0 1 16 0v4h1a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4h1Zm4 0h8v-4a4 4 0 0 0-8 0v4Z"/><circle cx="16" cy="22" r="3" fill="var(--paper)"/></svg></span>
             <h3>승인 없이는 저희 시스템이 주소를 열지 않습니다</h3>
             <p class="muted" style="margin-top:12px">주소는 암호화되어 보관됩니다. 승인된 건만 송장을 출력하는 순간에 주소가 열립니다.</p>
           </li>
           <li class="card">
-            <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><rect x="6" y="2" width="22" height="28" rx="6" fill="currentColor"/><rect x="12" y="10" width="10" height="4" rx="2" fill="var(--paper)"/><rect x="12" y="18" width="8" height="4" rx="2" fill="var(--paper)"/><circle cx="6" cy="10" r="3" fill="var(--accent)"/><circle cx="6" cy="22" r="3" fill="var(--accent)"/></svg></span>
             <h3>주소를 연 기록을 크리에이터에게 전부 공개합니다</h3>
             <p class="muted" style="margin-top:12px">언제, 어느 주문의 주소를, 누가 열었는지 크리에이터가 전부 확인할 수 있습니다.</p>
           </li>
           <li class="card">
-            <span class="icon-tile" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32"><rect x="4" y="6" width="24" height="24" rx="6" fill="currentColor"/><rect x="10" y="2" width="12" height="8" rx="4" fill="var(--accent)"/><path d="m10 19 4 4 8-9" fill="none" stroke="var(--paper)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             <h3>추적 장치 검수를 기본으로 합니다</h3>
             <p class="muted" style="margin-top:12px">모든 상자의 원래 송장을 떼어 파쇄하고 겉면을 검사합니다. 검사에 걸린 상자는 열어서 확인합니다. 검수를 건너뛰는 요금제는 없습니다.</p>
           </li>
@@ -268,14 +278,23 @@
     </section>
 
     <!-- 마무리 -->
-    <section class="cta-band on-brand" aria-labelledby="cta-title">
-      <div class="container">
-        <h2 id="cta-title">마음을 담아, 꾹.</h2>
-        <p>승인받은 선물만, 안전하게 전해 드릴게요.</p>
-        <div class="cta-actions">
-          <a class="btn btn--lg btn--on-brand" href="send.html">지금 바로 선물 보내러 가기</a>
-          <a class="btn btn--lg btn--outline-on-brand" href="creators.html">나의 크리에이터 찾으러 가기</a>
+    <section class="cta-band" aria-labelledby="cta-title">
+      <div class="container cta-split">
+        <div>
+          <h2 id="cta-title">마음을 담아, 꾹.</h2>
+          <p>승인받은 선물만, 안전하게 전해 드릴게요.</p>
+          <div class="cta-actions">
+          <a class="btn btn--lg" href="send.html">지금 바로 선물 보내러 가기</a>
+          <a class="btn btn--lg btn--secondary" href="creators.html">나의 크리에이터 찾으러 가기</a>
         </div>
+        </div>
+        <svg class="stamp stamp--sm" viewBox="0 0 160 160" aria-hidden="true" focusable="false">
+          <g filter="url(#ink-rough)" transform="rotate(8 80 80)" fill="none" stroke="currentColor">
+            <circle cx="80" cy="80" r="72" stroke-width="6"/>
+            <circle cx="80" cy="80" r="61" stroke-width="2"/>
+            <text x="80" y="112" text-anchor="middle" font-size="84" font-weight="900" fill="currentColor" stroke="none">꾹</text>
+          </g>
+        </svg>
       </div>
     </section>
   </main>

@@ -15,10 +15,10 @@
   <style>
 
     .my-grid { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px; align-items: start; }
-    .side { position: sticky; top: 96px; display: grid; gap: 4px; padding: 8px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
-    .side a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 8px; font-weight: 650; text-decoration: none; }
-    .side a:hover { background: var(--tint); }
-    .side a[aria-current="page"] { background: var(--tint); color: var(--brand); font-weight: 800; }
+    .side { position: sticky; top: 96px; display: grid; gap: 4px; padding: 8px 0; border-top: 2px solid var(--ink); }
+    .side a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; font-weight: 650; text-decoration: none; }
+    .side a:hover { text-decoration: underline; text-underline-offset: 6px; }
+    .side a[aria-current="page"] { color: var(--ink); font-weight: 800; box-shadow: inset 3px 0 0 var(--ink); }
     @media (max-width: 767px) {
       .my-grid { grid-template-columns: 1fr; gap: 16px; }
       .side { position: static; display: flex; gap: 4px; overflow-x: auto; padding: 4px; }
@@ -32,11 +32,25 @@
     @media (max-width: 1023px) { .g-row { grid-template-columns: minmax(0, 1fr) auto; } .g-bar { grid-column: 1 / -1; order: 3; } }
     @media (max-width: 767px) { .g-row { grid-template-columns: 1fr; padding: 20px; } .g-row .btn { width: 100%; } }
     .tabs { margin-bottom: 0; }
-    .notice { display: flex; gap: 12px; align-items: flex-start; padding: 16px 20px; border-radius: 12px; background: var(--tint); }
+    .notice { display: flex; gap: 12px; align-items: flex-start; border-left: 3px solid var(--ink); padding: 4px 0 4px 16px; background: none; border-radius: 0; }
     .notice svg { color: var(--brand); margin-top: 3px; }
   </style>
 </head>
 <body>
+  <!-- 도장 잉크 번짐 필터: 테두리를 일그러뜨리고(feDisplacementMap) 잉크가 빠진 얼룩을 만든다(feTurbulence) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink-rough" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-big" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.32" numOctaves="2" seed="11" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 9 0 0 -2.9" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+  </svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
 <!-- HEADER:fan START (팬 로그인: 선물 상태 아이콘 + 내 정보 메뉴) -->
