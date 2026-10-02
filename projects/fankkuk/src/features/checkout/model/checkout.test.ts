@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createTossPaymentsClient } from "@/shared/api/toss-payments/client";
 import { createMemoryPaymentStore } from "@/entities/payment/api/memory-payment-store";
-import { confirmPayment, startCheckout } from "./checkout";
+import type { PaymentStore } from "@/entities/payment/api/payment-store";
+import { computeCharge } from "@/entities/payment/model/charge";
+import { parseSigningPayload } from "@/entities/order/model/signing-payload";
+import { confirmPayment } from "./checkout";
 
 // 토스 승인 API 만 가짜로 둔다(외부). 대조·기록·멱등은 실제 코드가 돈다.
 function fakeToss(respond: (body: { orderId: string; amount: number }) => unknown) {
@@ -18,32 +21,32 @@ function fakeToss(respond: (body: { orderId: string; amount: number }) => unknow
 
 const done = (b: { orderId: string; amount: number }) => ({ status: "DONE", orderId: b.orderId, totalAmount: b.amount });
 
+/** 등록이 만든 결제 대기 하나(등록 자체는 gift-register 의 registerGift 가 한다). */
+let seq = 0;
+async function pendingFor(store: PaymentStore, boxes: ("small" | "medium")[]) {
+  seq += 1;
+  return store.create({
+    orderId: `pay_test${String(seq).padStart(4, "0")}`,
+    orderNo: "FC-7K3M9",
+    charge: computeCharge({ boxes }),
+    registration: { fanId: "fan-byeolbit", creatorId: "creator-1", itemKind: "손편지", hasElectronicsOrMetal: false, boxes },
+  });
+}
+
 function setup(respond = done) {
-  const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
+  const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" }, nicknames: { "fan-byeolbit": "별빛" } });
   const toss = fakeToss(respond);
   return { store, toss, deps: { store, toss: toss.client } };
 }
 
 describe("결제 흐름", () => {
-  it("INV-M1 (S1): 결제 대기는 서버가 상자 구간으로 계산한 금액으로 만들어진다", async () => {
-    const { deps } = setup();
-    const pending = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small", "medium"] });
-    expect(pending.amountKrw).toBe(15800);
-    expect(pending.charge.totalKrw).toBe(15800);
-  });
-
-  it("INV-M1 (S1c, 실패경로): 중형 초과 상자가 섞이면 결제 대기를 만들지 않는다", async () => {
-    const { deps } = setup();
-    await expect(startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small", "oversize"] })).rejects.toThrow();
-  });
-
   it("INV-M3 (S3): 금액이 맞고 승인 응답이 DONE 이면 결제 완료로 기록된다", async () => {
     const { deps, store, toss } = setup();
-    const p = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small"] });
+    const p = await pendingFor(store, ["small"]);
 
     const res = await confirmPayment(deps, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
 
-    expect(res).toEqual({ ok: true, orderId: p.orderId });
+    expect(res).toEqual({ ok: true, orderId: p.orderId, orderNo: "FC-7K3M9" });
     expect((await store.find(p.orderId))?.status).toBe("done");
     expect(toss.calls).toHaveLength(1);
     expect(toss.calls[0]!.idempotencyKey).toBe(`confirm-${p.orderId}`);
@@ -51,7 +54,7 @@ describe("결제 흐름", () => {
 
   it("INV-M2 (S2, 실패경로): 금액이 다르면 승인 API 를 부르지 않고 결제 대기를 실패로 닫는다", async () => {
     const { deps, store, toss } = setup();
-    const p = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small"] });
+    const p = await pendingFor(store, ["small"]);
 
     const res = await confirmPayment(deps, { orderId: p.orderId, amount: "100", paymentKey: "tgen_1" });
 
@@ -62,7 +65,7 @@ describe("결제 흐름", () => {
 
   it("INV-M3 (S3b, 실패경로): 승인 응답이 ABORTED 면 완료로 기록하지 않는다", async () => {
     const { deps, store } = setup((b) => ({ status: "ABORTED", orderId: b.orderId, totalAmount: b.amount }));
-    const p = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small"] });
+    const p = await pendingFor(store, ["small"]);
 
     const res = await confirmPayment(deps, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
 
@@ -72,20 +75,20 @@ describe("결제 흐름", () => {
 
   it("INV-M5 (S5): 성공 주소를 새로고침해도 승인 API 는 한 번만 불리고 완료 기록은 그대로다", async () => {
     const { deps, store, toss } = setup();
-    const p = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small"] });
+    const p = await pendingFor(store, ["small"]);
     const ret = { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" };
 
     await confirmPayment(deps, ret);
     const again = await confirmPayment(deps, ret);
 
-    expect(again).toEqual({ ok: true, orderId: p.orderId });
+    expect(again).toEqual({ ok: true, orderId: p.orderId, orderNo: "FC-7K3M9" });
     expect(toss.calls).toHaveLength(1);
     expect((await store.find(p.orderId))?.status).toBe("done");
   });
 
   it("INV-M5 (S5b, 동시): 승인 처리 두 개가 동시에 와도 승인 API 는 한 번만 불린다", async () => {
-    const { deps, toss } = setup();
-    const p = await startCheckout(deps, { orderNo: "FC-7K3M9", boxes: ["small"] });
+    const { deps, store, toss } = setup();
+    const p = await pendingFor(store, ["small"]);
     const ret = { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" };
 
     const [a, b] = await Promise.all([confirmPayment(deps, ret), confirmPayment(deps, ret)]);
@@ -99,6 +102,33 @@ describe("결제 흐름", () => {
     const res = await confirmPayment(deps, { orderId: "pay_nope00", amount: "6900", paymentKey: "tgen_1" });
     expect(res).toEqual({ ok: false, reason: "no_pending_payment" });
     expect(toss.calls).toHaveLength(0);
+  });
+});
+
+describe("결제 완료와 승인 요청", () => {
+  it("INV-M6 · INV-S1: 결제가 끝날 때 승인 요청을 같이 넘긴다 — 원문은 요청 ID·주문번호·시각·팬 닉네임 해시 네 값", async () => {
+    const { deps, store } = setup();
+    const p = await pendingFor(store, ["small"]);
+    await confirmPayment(deps, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
+
+    const settled = store.approvalRequests();
+    expect(settled).toHaveLength(1);
+    const req = settled[0]!;
+    const fields = parseSigningPayload(req.payload);
+    expect(fields).not.toBeNull();
+    expect(fields!.requestId).toBe(req.requestId);
+    expect(fields!.orderNo).toBe("FC-7K3M9");
+    expect(fields!.requestedAt).toBe(req.requestedAt);
+    const expectedHash = Buffer.from(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("별빛"))).toString("hex");
+    expect(fields!.fanNicknameHash).toBe(expectedHash);
+    expect(req.payload).not.toContain("별빛");
+  });
+
+  it("INV-M6 (S6, 실패경로): 승인되지 않은 결제에는 승인 요청을 넘기지 않는다", async () => {
+    const { deps, store } = setup((b) => ({ status: "ABORTED", orderId: b.orderId, totalAmount: b.amount }));
+    const p = await pendingFor(store, ["small"]);
+    await confirmPayment(deps, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
+    expect(store.approvalRequests()).toEqual([]);
   });
 });
 

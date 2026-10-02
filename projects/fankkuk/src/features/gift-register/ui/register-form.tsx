@@ -32,25 +32,36 @@ const STEP_FIELDS: Record<Exclude<StepNo, 4>, (keyof RegisterFormValues)[]> = {
 };
 
 
-// 선물 보내기 4단계(크리에이터·선물·상자·결제 확인). 지금은 예시 — 제출해도 결제·저장을 하지 않고 완료 모습만 보여 준다.
+/** 등록이 끝나 결제창으로 넘길 값. 금액은 서버가 계산한 것이다. */
+export type RegisteredGift = { orderId: string; orderNo: string; amountKrw: number };
+
+type RegisterResponse = Partial<RegisteredGift> & { message?: string };
+
+// 선물 보내기 4단계(크리에이터·선물·상자·결제 확인). 「결제하기」를 누르면 서버(/api/gifts)에 등록하고 결제창으로 넘긴다.
 // 결제는 등록 때 받는다(결제 스펙). 화면의 금액은 결제와 같은 계산(chargeLines)을 쓰지만,
 // 실제 결제 금액은 서버가 상자 구간으로 다시 계산한다(INV-M1) — 이 화면의 숫자는 안내일 뿐이다.
+// 보내는 사람은 서버가 로그인 세션으로 정한다(INV-L3) — 이 폼은 사용자 칸을 보내지 않는다.
 export function RegisterForm({
   creators,
   initialCreatorId = "",
+  notice,
+  onRegistered,
 }: {
   creators: readonly CreatorOption[];
   /** 크리에이터 화면에서 넘어오면 그 사람을 미리 골라 둔다 */
   initialCreatorId?: string;
+  /** 결제창에서 돌아온 실패 안내 */
+  notice?: string;
+  onRegistered: (gift: RegisteredGift) => void;
 }) {
   const [step, setStep] = useState<StepNo>(1);
   const [reached, setReached] = useState<StepNo>(1);
   const [query, setQuery] = useState("");
-  const [done, setDone] = useState(false);
+  const [submitError, setSubmitError] = useState<{ message: string; needsLogin: boolean } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const stepsWrap = useRef<HTMLElement>(null);
   const headings = useRef<Partial<Record<StepNo, HTMLHeadingElement | null>>>({});
-  const doneTitle = useRef<HTMLHeadingElement>(null);
   const pendingFocus = useRef(false);
 
   // 단계가 바뀌면 새 단계 제목으로 포커스 — 화면 낭독기가 바뀐 내용을 처음부터 읽게
@@ -60,10 +71,6 @@ export function RegisterForm({
     headings.current[step]?.focus({ preventScroll: true });
     stepsWrap.current?.scrollIntoView({ block: "start", behavior: "instant" });
   }, [step]);
-  // 제출하면 폼이 완료 카드로 바뀌어 제출 버튼이 사라진다 — 포커스를 완료 제목으로 옮긴다
-  useEffect(() => {
-    if (done) doneTitle.current?.focus();
-  }, [done]);
 
   const {
     register,
@@ -71,6 +78,7 @@ export function RegisterForm({
     control,
     setValue,
     trigger,
+    getValues,
     formState: { errors },
   } = useForm<RegisterFormValues, unknown, RegisterFormOutput>({
     resolver: zodResolver(registerFormSchema),
@@ -110,7 +118,34 @@ export function RegisterForm({
       void next();
       return;
     }
-    void handleSubmit(() => setDone(true), onInvalid)(e);
+    void handleSubmit(() => submit(), onInvalid)(e);
+  };
+
+  // 검증을 통과한 폼 값(문자열 그대로)을 보낸다 — 서버가 같은 입력 경계(parseRegisterInput)로 다시 검사한다.
+  const submit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const { creatorId, itemKind, smallCount, mediumCount, electronicsOrMetal } = getValues();
+      const res = await fetch("/api/gifts", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ creatorId, itemKind, smallCount, mediumCount, electronicsOrMetal }),
+      });
+      const body = (await res.json().catch(() => ({}))) as RegisterResponse;
+      if (res.ok && body.orderId && body.orderNo && typeof body.amountKrw === "number") {
+        onRegistered({ orderId: body.orderId, orderNo: body.orderNo, amountKrw: body.amountKrw });
+        return;
+      }
+      if (res.status === 401) setSubmitError({ message: "로그인하면 선물을 보낼 수 있어요.", needsLogin: true });
+      else if (res.status === 403) setSubmitError({ message: body.message ?? "팬 계정으로 로그인해 주세요.", needsLogin: false });
+      else setSubmitError({ message: "입력한 내용을 다시 확인해 주세요.", needsLogin: false });
+    } catch {
+      setSubmitError({ message: "등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.", needsLogin: false });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // 끝에 닿은 버튼은 disabled 대신 aria-disabled 로 둔다 — disabled 가 되면 키보드 포커스가 사라진다
@@ -121,25 +156,6 @@ export function RegisterForm({
     // 합계 오류(하나 이상·10개까지)는 smallCount 칸에 붙는다 — 어느 칸을 바꿨든 두 칸을 같이 다시 검증해야 지난 오류가 사라진다
     if (hasCountError) void trigger(["smallCount", "mediumCount"]);
   };
-
-  if (done) {
-    return (
-      <section className={`container ${f["send-section"]}`}>
-        <div className={`${f["send-form"]} ${f.done}`}>
-          <span className="tag tag--brand">등록 완료</span>
-          <h2 ref={doneTitle} tabIndex={-1}>
-            이제 사무실로 보내 주세요
-          </h2>
-          <p>사무실 주소는 선물 상세 화면에 있어요. 크리에이터 승인은 기다리지 않아도 돼요 — 출고 전에 받아요.</p>
-          <p>{RETURN_ON_REJECT_NOTICE}</p>
-          <p>예시 화면이라 실제 결제와 등록은 하지 않았어요.</p>
-          <Link className={`btn ${f["done-go"]}`} href="/gifts">
-            선물 내역 보기
-          </Link>
-        </div>
-      </section>
-    );
-  }
 
   // 크리에이터 찾기 화면과 같은 검색 규칙(이름·로마자 이름·분야·채널 이름·플랫폼)
   const matches = creators.filter((c) => matchesCreatorQuery(c, query));
@@ -466,6 +482,22 @@ export function RegisterForm({
               ) : null}
             </section>
 
+            {step === 4 && submitError ? (
+              <p className={f.error} role="alert">
+                {submitError.message}
+                {submitError.needsLogin ? (
+                  <>
+                    {" "}
+                    <Link href="/login">로그인하기</Link>
+                  </>
+                ) : null}
+              </p>
+            ) : null}
+            {notice ? (
+              <p className={f.error} role="alert">
+                {notice}
+              </p>
+            ) : null}
             <div className={`${f["step-actions"]} ${step === 1 ? f["no-prev"] : ""}`}>
               {step > 1 ? (
                 <button className="btn btn--line" type="button" onClick={() => go((step - 1) as StepNo)}>
@@ -477,7 +509,7 @@ export function RegisterForm({
                   다음
                 </button>
               ) : (
-                <button key="pay" className={`btn ${f.next}`} type="submit">
+                <button key="pay" className={`btn ${f.next}`} type="submit" disabled={submitting} aria-busy={submitting || undefined}>
                   {summary.totalKrw !== null ? `${won(summary.totalKrw)} 결제하기` : "결제하기"}
                 </button>
               )}

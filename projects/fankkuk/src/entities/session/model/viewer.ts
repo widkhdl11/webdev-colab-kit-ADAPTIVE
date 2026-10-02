@@ -14,3 +14,20 @@ export async function readVerifiedUserId(auth: Pick<SupabaseClient["auth"], "get
     return null;
   }
 }
+
+export type ViewerRole = "fan" | "creator" | "operator";
+
+/** 확인된 로그인 사용자와 그 역할. 역할은 DB 의 계정 칸(my_profile)에서 온다 — 주소 복호화 판단에는 쓰지 않는다(INV-P8). */
+export type Viewer = { userId: string; role: ViewerRole; nickname?: string };
+
+const ROLES: readonly ViewerRole[] = ["fan", "creator", "operator"];
+
+/** INV-L2 로 사람을 확인한 뒤, 그 사람의 계정 칸을 읽는다. 둘 중 하나라도 안 되면 로그인하지 않은 것으로 본다. */
+export async function readViewer(client: Pick<SupabaseClient, "auth" | "rpc">): Promise<Viewer | null> {
+  const userId = await readVerifiedUserId(client.auth);
+  if (!userId) return null;
+  const { data, error } = await client.rpc("my_profile");
+  const row = Array.isArray(data) ? (data[0] as { role?: unknown; nickname?: unknown } | undefined) : undefined;
+  if (error || !row || !ROLES.includes(row.role as ViewerRole)) return null;
+  return { userId, role: row.role as ViewerRole, nickname: typeof row.nickname === "string" ? row.nickname : undefined };
+}
