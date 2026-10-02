@@ -108,7 +108,8 @@ enabled = true
 # Port to use for the email testing server web interface.
 port = 55324
 # Uncomment to expose additional ports for testing user applications that send emails.
-# smtp_port = 55325
+# 앱 서버가 확인 메일을 보내는 포트(my-account INV-A7). 받은 메일은 위 port 의 화면에서 본다.
+smtp_port = 55325
 # pop3_port = 55326
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
