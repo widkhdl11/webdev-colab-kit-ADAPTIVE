@@ -1,21 +1,24 @@
-import { notFound } from "next/navigation";
-import { SAMPLE_ORDERS, SAMPLE_SIGNED_IN_FAN } from "@/entities/order/api/sample-orders";
-import { OFFICE_ADDRESS } from "@/entities/order/config/office-address";
-import { toFanView } from "@/entities/order/model/fan-view";
+import { notFound, redirect } from "next/navigation";
+import { readMyGiftView } from "@/entities/order/api/fan-gift-rows";
+import { isOrderNo } from "@/entities/order/model/order-no";
 import { GiftStatusPage } from "@/widgets/gift-status/ui/gift-status-page";
-import { sampleFanHeader } from "@/widgets/site-header/api/sample-header";
+import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 
-// 예시 데이터로 그린다. 내 주문이 아니면 없는 주소로 취급한다(남의 주문번호를 넣어 보는 것을 막는다).
+export const dynamic = "force-dynamic";
+
+// 선물 하나. 읽기 함수가 로그인한 팬의 주문만 돌려주므로 남의 주문번호는 없는 주소와 같다.
 export default async function Page({ params }: { params: Promise<{ orderNo: string }> }) {
   const { orderNo } = await params;
-  const order = SAMPLE_ORDERS.find((o) => o.orderNo === orderNo && o.fanNickname === SAMPLE_SIGNED_IN_FAN);
-  if (!order) notFound();
+  const { supabase, viewer } = await loadSession();
+  if (viewer?.role !== "fan") redirect("/login");
+  const view = isOrderNo(orderNo) ? await readMyGiftView(supabase, orderNo) : null;
+  if (!view) notFound();
   return (
     <>
-      <SiteHeader {...sampleFanHeader("/gifts")} />
-      <GiftStatusPage view={toFanView(order, OFFICE_ADDRESS)} />
+      <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts")} />
+      <GiftStatusPage view={view} />
       <SiteFooter />
     </>
   );

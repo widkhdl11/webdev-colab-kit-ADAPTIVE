@@ -115,3 +115,8 @@
 - 실측 | 브라우저(3311, 별빛): 틀린 비번 안내 표시 → 로그인 → 선물 보내기(DB 크리에이터 12명, 하루 미리 선택) → 결제창(토스 테스트) 표시. DB: 주문 팬 = byeolbit_fan, 결제 대기. 금액 100 으로 성공 주소 → 303 /gifts/new?payment=failed, 결제 failed
 - 실측 | 유닛 220 · 통합 46 · tsc 통과. 등록 변이 2개(본문 fanId 사용·역할 검사 제거) 빨간불
 - 안 함 | 토스 결제창에서 실제 인증까지 끝내기 — 사용자 「결제하기는 나중에 확인」(BACKLOG 그대로)
+- auto | 헤더는 전 화면이 세션에서(readSiteHeader). 팬 화면(/home·/gifts·/gifts/[주문번호])은 팬이 아니면 /login, 크리에이터 /home 은 /creator/requests 로 | 예시 헤더가 로그아웃 상태에서도 「별빛」으로 보이던 것
+- auto | 「처리한 요청」도 DB(my_decided_requests) — 한 화면에 예시와 실제가 섞이지 않게. 차단(blocked)은 DB 에 아직 없음
+- auto | 크리에이터 찾기·크리에이터 페이지·내 정보·팔로우·공지·기록·설정의 본문은 아직 예시(헤더만 세션) — 이번 범위(세 화면) 밖
+- 실측 | 3311 curl: 로그아웃 /gifts·/home·/creator/requests → 307 /login · 별빛 /gifts 자기 주문만, 남의 주문 404, 크리에이터 화면 307 · 하루 /creator/requests 200, /home → 307 /creator/requests
+- 안 함 | 승인 버튼은 서명 대기 표시까지 — 카카오 인증서 서명은 딜러사 연결 뒤(INV-S3·S8)

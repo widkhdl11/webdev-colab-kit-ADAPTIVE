@@ -1,19 +1,22 @@
-import { SAMPLE_DECIDED_REQUESTS } from "@/entities/order/api/sample-decided-requests";
-import { SAMPLE_ORDERS } from "@/entities/order/api/sample-orders";
-import { SAMPLE_SIGNED_IN_CREATOR_ID } from "@/entities/creator/api/sample-creators";
-import { pendingApprovalRequests } from "@/entities/order/model/creator-view";
+import { redirect } from "next/navigation";
+import { readMyApprovalRequests, readMyDecidedRequests } from "@/entities/order/api/creator-request-rows";
 import { ApprovalRequestsPage } from "@/widgets/approval-requests/ui/approval-requests-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
-import { sampleCreatorHeader } from "@/widgets/site-header/api/sample-header";
+import { loadSession } from "@/widgets/site-header/api/session-header";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
-// 예시 데이터로 그린다. 크리에이터 화면은 주문 기록을 그대로 받지 않고 승인 요청 모양만 받는다.
-export default function Page() {
-  const requests = pendingApprovalRequests(SAMPLE_ORDERS, SAMPLE_SIGNED_IN_CREATOR_ID);
+export const dynamic = "force-dynamic";
+
+// 크리에이터에게 온 승인 요청(DB 읽기 함수 — 그 크리에이터의 것만, 결제가 끝난 주문만, 크리에이터가 봐도 되는 칸만).
+// 승인 버튼은 아직 서명 대기 표시까지다 — 카카오 인증서 서명은 딜러사 연결 뒤에 붙는다(INV-S7: 승인 입구는 서명 검증 하나).
+export default async function Page() {
+  const { supabase, viewer } = await loadSession();
+  if (viewer?.role !== "creator") redirect("/login");
+  const [requests, decided] = await Promise.all([readMyApprovalRequests(supabase), readMyDecidedRequests(supabase)]);
   return (
     <>
-      <SiteHeader {...sampleCreatorHeader("/creator/requests")} />
-      <ApprovalRequestsPage requests={requests} decided={SAMPLE_DECIDED_REQUESTS} />
+      <SiteHeader role="creator" current="/creator/requests" nickname={viewer.nickname ?? ""} pendingCount={requests.length} />
+      <ApprovalRequestsPage requests={requests} decided={decided} />
       <SiteFooter />
     </>
   );
