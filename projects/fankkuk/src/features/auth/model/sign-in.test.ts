@@ -47,7 +47,7 @@ describe("INV-L6: 시험 계정은 운영 환경에서 로그인할 수 없다",
   it("INV-L6 (S6): 운영 표시가 있으면 시험 계정은 Auth 를 부르지 않고 같은 실패 응답", async () => {
     for (const env of [{ NODE_ENV: "production" }, { NODE_ENV: "development", VERCEL_ENV: "production" }]) {
       const { auth, calls } = recordingAuth("ok");
-      const r = await signIn({ auth, env }, { loginId: "byeolbit_fan", password: "fankkuk-local-1234" });
+      const r = await signIn({ auth, env }, { loginId: "byeolbit_fan", password: "pw-1234" });
       expect(r).toEqual({ ok: false, status: 401, message: SIGN_IN_FAILED_MESSAGE });
       expect(calls).toEqual([]);
     }

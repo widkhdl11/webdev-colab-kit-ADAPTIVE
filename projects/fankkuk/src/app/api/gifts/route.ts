@@ -9,7 +9,7 @@ import { isSameOriginJson } from "@/shared/lib/http/same-origin";
 // 선물 등록: 주문 + 상자 + 결제 대기. 팬은 세션에서 확인한 사람이다(INV-L3) — 본문의 사용자 칸은 읽지 않는다.
 // 응답에는 결제창에 필요한 결제 orderId·주문번호·금액만 싣는다(칸 나눔은 싣지 않는다, INV-M7).
 export async function POST(req: NextRequest) {
-  if (!isSameOriginJson({ headers: req.headers, origin: req.nextUrl.origin })) {
+  if (!isSameOriginJson(req.headers)) {
     return NextResponse.json({ message: "잘못된 요청이에요." }, { status: 403, headers: { "Cache-Control": "no-store" } });
   }
   let body: unknown = null;

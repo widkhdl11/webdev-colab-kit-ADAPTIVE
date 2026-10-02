@@ -8,7 +8,7 @@ const anonKey = () => process.env.FK_TEST_ANON_KEY ?? "";
 
 const noSession = { auth: { persistSession: false, autoRefreshToken: false } } as const;
 
-/** 앱 서버 키(service_role) 클라이언트. */
+/** 앱 서버 키(Supabase 비밀 키) 클라이언트. */
 export function adminClient(): SupabaseClient {
   return createClient(url(), process.env.FK_TEST_SERVICE_KEY ?? "", noSession);
 }

@@ -15,11 +15,11 @@ export function readSupabaseConfig(env: EnvLike): SupabaseConfig {
 }
 
 /** INV-L4: 관리자 키는 공개 접두어 없는 이름에서만 읽는다. 공개 이름으로도 설정돼 있으면 시작하지 않는다. */
-export function readServiceRoleKey(env: EnvLike): string {
-  if (env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY !== undefined) {
+export function readSecretKey(env: EnvLike): string {
+  if (env.NEXT_PUBLIC_SUPABASE_SECRET_KEY !== undefined) {
     throw new Error("관리자 키가 공개 환경 변수(NEXT_PUBLIC_)로 설정돼 있다 — 지우고 다시 시작한다");
   }
-  const key = env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY 가 없다");
+  const key = env.SUPABASE_SECRET_KEY;
+  if (!key) throw new Error("SUPABASE_SECRET_KEY 가 없다");
   return key;
 }
