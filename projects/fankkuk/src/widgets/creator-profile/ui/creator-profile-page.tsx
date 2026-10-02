@@ -4,7 +4,7 @@ import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { BILLABLE_TIERS, TIER_PRICE_KRW } from "@/entities/payment/config/tier-pricing";
-import { FollowButton } from "@/features/creator-follow/ui/follow-button";
+import { FollowButton, type FollowMode } from "@/features/creator-follow/ui/follow-button";
 import s from "./creator-profile.module.css";
 
 // 크리에이터 페이지. 시안: docs/design/mockups/site/v4/creator.html
@@ -31,7 +31,15 @@ function CheckIcon() {
   );
 }
 
-export function CreatorProfilePage({ creator, others }: { creator: CreatorCard; others: readonly CreatorCard[] }) {
+export function CreatorProfilePage({
+  creator,
+  others,
+  followMode,
+}: {
+  creator: CreatorCard;
+  others: readonly CreatorCard[];
+  followMode: FollowMode;
+}) {
   const sendHref = `/gifts/new?creator=${creator.id}`;
   return (
     <main id="main">
@@ -70,7 +78,7 @@ export function CreatorProfilePage({ creator, others }: { creator: CreatorCard; 
             <Link className="btn" href={sendHref}>
               선물 보내기
             </Link>
-            <FollowButton creatorName={creator.name} initialFollowing={creator.following} variant="profile" />
+            <FollowButton creatorId={creator.id} creatorName={creator.name} initialFollowing={creator.following} variant="profile" mode={followMode} />
           </div>
         </div>
       </section>

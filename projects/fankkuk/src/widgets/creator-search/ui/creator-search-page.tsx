@@ -5,7 +5,7 @@ import { useId, useState } from "react";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
-import { FollowButton } from "@/features/creator-follow/ui/follow-button";
+import { FollowButton, type FollowMode } from "@/features/creator-follow/ui/follow-button";
 import s from "./creator-search.module.css";
 
 // 크리에이터 찾기. 시안: docs/design/mockups/site/v4/creators.html
@@ -19,12 +19,12 @@ function CheckIcon({ size }: { size: number }) {
   );
 }
 
-export function CreatorSearchPage({ creators }: { creators: readonly CreatorCard[] }) {
+export function CreatorSearchPage({ creators, followMode }: { creators: readonly CreatorCard[]; followMode: FollowMode }) {
   const [query, setQuery] = useState("");
   const inputId = useId();
   const categories = [...new Set(creators.map((c) => c.category))];
-  const shown = creators.filter((c) => matchesCreatorQuery(c, query));
-  const count = query.trim() ? `검색 결과 ${shown.length}명` : `전체 ${creators.length}명`;
+  const shown = new Set(creators.filter((c) => matchesCreatorQuery(c, query)).map((c) => c.id));
+  const count = query.trim() ? `검색 결과 ${shown.size}명` : `전체 ${creators.length}명`;
 
   return (
     <main id="main">
@@ -77,29 +77,29 @@ export function CreatorSearchPage({ creators }: { creators: readonly CreatorCard
               {count}
             </strong>
           </div>
-          {shown.length > 0 ? (
-            <ul className={s.list}>
-              {shown.map((c) => (
-                <li key={c.id} className={s.row}>
-                  <CreatorFace tone={c.faceTone} />
-                  <div>
-                    <p className={s.who}>
-                      <Link href={`/creators/${c.id}`}>{c.name}</Link>
-                    </p>
-                    <p className={s.says}>
-                      {c.category} · {c.channelTitle} · {approvalTimeText(c.approvalMinutes)}
-                    </p>
-                  </div>
-                  <div className={s.acts}>
-                    <FollowButton creatorName={c.name} initialFollowing={c.following} variant="row" />
-                    <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
-                      선물 보내기
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
+          {/* 걸러진 줄은 지우지 않고 숨긴다 — 지우면 팔로우 버튼이 사라지며 누른 상태·저장 중 표시를 잃는다 */}
+          <ul className={s.list} hidden={shown.size === 0}>
+            {creators.map((c) => (
+              <li key={c.id} className={shown.has(c.id) ? s.row : `${s.row} ${s.off}`}>
+                <CreatorFace tone={c.faceTone} />
+                <div>
+                  <p className={s.who}>
+                    <Link href={`/creators/${c.id}`}>{c.name}</Link>
+                  </p>
+                  <p className={s.says}>
+                    {c.category} · {c.channelTitle} · {approvalTimeText(c.approvalMinutes)}
+                  </p>
+                </div>
+                <div className={s.acts}>
+                  <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing={c.following} variant="row" mode={followMode} />
+                  <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
+                    선물 보내기
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {shown.size === 0 && (
             <div className={s.empty}>
               <span className={s["empty-ico"]} aria-hidden="true">
                 <img className="asset" src="/img/illust-empty-search.png" alt="" width={64} height={64} />

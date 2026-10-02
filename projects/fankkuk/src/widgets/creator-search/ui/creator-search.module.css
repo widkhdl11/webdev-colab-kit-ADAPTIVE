@@ -21,6 +21,7 @@
 /* 한 줄에 한 명 */
 .list { border-top: 1px solid var(--divider); }
 .row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px 20px; padding-block: 20px; border-bottom: 1px solid var(--divider); }
+.off { display: none; } /* 검색에 걸러진 줄 — 지우지 않고 숨긴다(팔로우 상태 유지) */
 .who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
 .who a { text-decoration: none; }
 .who a:hover { text-decoration: underline; text-underline-offset: 4px; }

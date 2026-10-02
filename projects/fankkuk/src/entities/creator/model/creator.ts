@@ -1,4 +1,4 @@
-// 크리에이터의 저장 모양. DB 전에는 예시 데이터(api/sample-creators)가 이 모양을 따른다.
+// 크리에이터의 저장 모양. DB 읽기(api/creator-reads)가 이 모양으로 바꿔 넘긴다.
 
 /** 기본 정보 — 주문 기록이 creatorId 로 읽는다. */
 export type CreatorSummary = { id: string; name: string; channel: string };

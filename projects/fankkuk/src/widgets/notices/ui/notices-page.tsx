@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Notice, NoticeBlock } from "@/entities/notice/api/sample-notices";
+import type { Notice, NoticeBlock } from "@/entities/notice/model/notice";
 import s from "./notices.module.css";
 
 // 공지사항. 시안: docs/design/mockups/site/v4/notices.html

@@ -1,48 +1,126 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { saveFollow } from "../api/save-follow";
+import type { FollowMode } from "../model/follow-mode";
 import s from "./follow-button.module.css";
 
-// 팔로우 토글. 아직 저장하지 않는다 — 화면 안에서만 바뀐다(팔로우 저장은 DB 가 붙을 때).
+// 팔로우 토글. 누르면 바로 글자를 바꾸고 서버(/api/follows)에 저장한다 — 저장에 실패하면 원래대로 돌리고 알린다.
+// mode: fan = 저장하는 버튼 / login = 로그인하지 않은 사람, 누르면 로그인으로 / hidden = 크리에이터·운영자(팔로우하지 않음).
 // row = 크리에이터 찾기 목록의 작은 버튼, profile = 크리에이터 페이지의 큰 버튼(시안 creators.html · creator.html).
 // 상태는 바뀌는 글자(「팔로우」↔「팔로우 중」)로만 알린다 — 시안이 글자를 바꿔 보여 주므로 aria-pressed 를 같이 달지 않는다
 // (둘 다 달면 화면 낭독기가 「팔로우 중, 눌림」처럼 상태를 두 번 읽는다).
 
+export type { FollowMode };
+
 function Check() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="m5 12.5 4.5 4.5L19 7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
 export function FollowButton({
+  creatorId,
   creatorName,
   initialFollowing,
   variant,
+  mode,
 }: {
+  creatorId: string;
   creatorName: string;
   initialFollowing: boolean;
   variant: "row" | "profile";
+  mode: FollowMode;
 }) {
+  const router = useRouter();
   const [following, setFollowing] = useState(initialFollowing);
-  const toggle = () => setFollowing((v) => !v);
+  const [failed, setFailed] = useState(false);
+  const savingRef = useRef(false);
+
+  if (mode === "hidden") return null;
+  if (mode === "login") {
+    return (
+      <Link
+        className={
+          variant === "profile" ? "btn btn--line" : "btn btn--sm btn--line"
+        }
+        href="/login"
+        aria-label={
+          variant === "row"
+            ? `${creatorName} 팔로우 — 로그인이 필요해요`
+            : undefined
+        }
+      >
+        팔로우
+      </Link>
+    );
+  }
+
+  // 저장 중에 다시 누르면 무시한다 — 요청 순서가 뒤바뀌어 화면과 저장 값이 어긋나지 않게
+  const toggle = async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    const next = !following;
+    setFollowing(next);
+    setFailed(false);
+    const outcome = await saveFollow(creatorId, next);
+    savingRef.current = false;
+    if (outcome === "ok") return;
+    setFollowing(!next);
+    if (outcome === "login") router.push("/login");
+    else setFailed(true);
+  };
+
+  const notice = (
+    <span className={s.sr} role="status">
+      {failed ? "팔로우를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요." : ""}
+    </span>
+  );
 
   if (variant === "profile") {
     return (
-      <button className="btn btn--line" type="button" onClick={toggle}>
-        {following ? "팔로우 중" : "팔로우"}
-      </button>
+      <>
+        <button className="btn btn--line" type="button" onClick={toggle}>
+          {following ? "팔로우 중" : "팔로우"}
+        </button>
+        {notice}
+      </>
     );
   }
-  return following ? (
-    <button className={`btn btn--sm ${s.on}`} type="button" aria-label={`${creatorName} 팔로우 중`} onClick={toggle}>
-      <Check />
-      팔로우 중
-    </button>
-  ) : (
-    <button className="btn btn--sm btn--line" type="button" aria-label={`${creatorName} 팔로우`} onClick={toggle}>
-      팔로우
-    </button>
+  return (
+    <>
+      {following ? (
+        <button
+          className={`btn btn--sm ${s.on}`}
+          type="button"
+          aria-label={`${creatorName} 팔로우 중`}
+          onClick={toggle}
+        >
+          <Check />
+          팔로우 중
+        </button>
+      ) : (
+        <button
+          className="btn btn--sm btn--line"
+          type="button"
+          aria-label={`${creatorName} 팔로우`}
+          onClick={toggle}
+        >
+          팔로우
+        </button>
+      )}
+      {notice}
+    </>
   );
 }
