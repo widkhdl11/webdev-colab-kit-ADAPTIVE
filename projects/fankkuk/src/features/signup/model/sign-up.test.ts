@@ -166,6 +166,27 @@ describe("INV-U3·U11: 중복은 칸 단위로만 알려 준다", () => {
     expect(b.deleted).toEqual([USER_ID]);
   });
 
+  it("INV-U3 (S3b, 동시): 같은 아이디가 동시에 만들어지는 중이면 Auth 가 코드 없는 오류를 준다 — 한 번 더 시도해 「쓰는 아이디」로 알린다", async () => {
+    const h = harness();
+    const answers = [{ code: undefined }, { code: "email_exists" }];
+    h.deps.admin.auth.admin.createUser = async (a) => {
+      h.created.push(a);
+      return { data: { user: null }, error: answers.shift() ?? { code: "email_exists" } };
+    };
+    expect(await signUp(h.deps, body())).toEqual({ ok: false, status: 409, field: "loginId", message: "이미 쓰는 아이디예요." });
+    expect(h.created).toHaveLength(2);
+  });
+
+  it("INV-U3 (실패경로): 다시 시도해도 다른 오류면 서버 오류로 올린다 — 세 번째는 하지 않는다", async () => {
+    const h = harness();
+    h.deps.admin.auth.admin.createUser = async (a) => {
+      h.created.push(a);
+      return { data: { user: null }, error: {} };
+    };
+    await expect(signUp(h.deps, body())).rejects.toThrow();
+    expect(h.created).toHaveLength(2);
+  });
+
   it("INV-U11 (S11, 실패경로): 본인 확인 전이면 번호가 가입됐는지와 상관없이 「본인 확인 필요」뿐", async () => {
     const h = harness({ verifiedPhone: null, createAccountError: { code: "FKU02" } });
     const r = await signUp(h.deps, body());

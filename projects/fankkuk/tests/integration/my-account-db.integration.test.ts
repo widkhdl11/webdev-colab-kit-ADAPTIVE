@@ -156,15 +156,25 @@ describe("INV-A4: 이 경로로 고칠 수 있는 칸은 닉네임·확인 대�
     expect(contactOf(SEED.fanId)).toMatchObject({ email: BYEOL_EMAIL, pending: "new.byeol@example.com" });
   });
 
-  it("INV-A4: 휴대폰 칸을 쓰는 DB 함수가 없다 (검사기는 심어 둔 위반을 잡는다)", () => {
+  // 「이 경로」 = 로그인한 사람이 부를 수 있는 함수. 가입(create_account)은 앱 서버 키 전용이라 훑지 않는다 —
+  // 그 함수가 로그인 사용자에게 열리면 아래 두 번째 검사가 잡는다.
+  it("INV-A4: 로그인한 사람이 부를 수 있는 DB 함수 중 휴대폰 칸을 쓰는 것이 없다 (검사기는 심어 둔 위반을 잡는다)", () => {
     expect(WRITES_PHONE.test("update pii.account_contacts set email = v, phone = p_phone where account_id = v_uid")).toBe(true);
     expect(WRITES_PHONE.test("insert into pii.account_contacts (account_id, phone) values (v_uid, p_phone)")).toBe(true);
     expect(WRITES_PHONE.test("update pii.account_contacts set notify_kakao = p_notify_kakao where account_id = v_uid")).toBe(false);
     const sources = psql(
-      `select string_agg(p.proname || E'\\n' || p.prosrc, E'\\n----\\n') from pg_proc p where p.pronamespace in ('public'::regnamespace, 'pii'::regnamespace);`,
+      `select string_agg(p.proname || E'\\n' || p.prosrc, E'\\n----\\n') from pg_proc p where p.pronamespace in ('public'::regnamespace, 'pii'::regnamespace) and has_function_privilege('authenticated', p.oid, 'execute');`,
     );
     expect(sources).toContain("update_my_account"); // 훑을 대상이 실제로 읽혔다
     expect(WRITES_PHONE.test(sources)).toBe(false);
+  });
+
+  it("INV-A4: 휴대폰 칸을 쓰는 함수(가입)는 로그인 사용자가 부를 수 없다", () => {
+    const rows = psql(
+      `select string_agg(p.proname || ':' || has_function_privilege('authenticated', p.oid, 'execute') || ':' || has_function_privilege('anon', p.oid, 'execute') || E'\\n' || p.prosrc, E'\\n----\\n' order by p.proname) from pg_proc p where p.pronamespace in ('public'::regnamespace, 'pii'::regnamespace);`,
+    ).split("\n----\n");
+    const writers = rows.filter((r) => WRITES_PHONE.test(r)).map((r) => r.split("\n")[0]);
+    expect(writers).toEqual(["create_account:false:false"]);
   });
 });
 

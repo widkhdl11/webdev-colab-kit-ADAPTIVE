@@ -71,7 +71,13 @@ export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpRes
   const loginEmail = accountLoginEmail(input.loginId);
   if (!loginEmail) return { ok: false, status: 400, field: "loginId", message: "아이디를 확인해 주세요." };
 
-  const created = await deps.admin.auth.admin.createUser({ email: loginEmail, password: input.password, email_confirm: true });
+  const attrs = { email: loginEmail, password: input.password, email_confirm: true };
+  let created = await deps.admin.auth.admin.createUser(attrs);
+  // 같은 아이디가 동시에 만들어지는 중이면 늦은 쪽은 코드 없는 오류(500)를 받는다. 한 번만 다시 시도하면
+  // 먼저 온 쪽이 끝나 있어 email_exists 가 온다(INV-U3).
+  if (created.error && created.error.code !== "email_exists") {
+    created = await deps.admin.auth.admin.createUser(attrs);
+  }
   if (created.error || !created.data.user) {
     if (created.error?.code === "email_exists") return ID_TAKEN;
     throw new Error(`로그인 정보를 만들지 못했다: ${created.error?.code ?? "사용자 없음"}`);
