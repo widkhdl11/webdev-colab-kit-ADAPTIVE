@@ -203,6 +203,44 @@ describe("INV-U4: 한 번에 만들어진다", () => {
   });
 });
 
+describe("INV-U4: 로그인 정보가 홀로 남지 않는다", () => {
+  it("INV-U4 (실패경로): 계정 만들기 호출이 예외로 끝나도(네트워크 단절) 로그인 정보를 지운다", async () => {
+    const h = harness();
+    const rpc = h.deps.admin.rpc;
+    h.deps.admin.rpc = async (fn, args) => {
+      if (fn === "create_account") throw new Error("network down");
+      return rpc(fn, args);
+    };
+    await expect(signUp(h.deps, body())).rejects.toThrow();
+    expect(h.deleted).toEqual([USER_ID]);
+  });
+
+  it("INV-U4 (실패경로): 지우기가 한 번 실패하면 다시 지운다 — 그래도 실패하면 오류로 올린다", async () => {
+    const once = harness({ createAccountError: { code: "FKU02" } });
+    let failures = 1;
+    once.deps.admin.auth.admin.deleteUser = async (id) => {
+      once.deleted.push(id);
+      return { error: failures-- > 0 ? { message: "temporary" } : null };
+    };
+    expect(await signUp(once.deps, body())).toMatchObject({ ok: false, field: "phone" });
+    expect(once.deleted).toEqual([USER_ID, USER_ID]);
+
+    const never = harness({ createAccountError: { code: "FKU02" } });
+    never.deps.admin.auth.admin.deleteUser = async (id) => {
+      never.deleted.push(id);
+      return { error: { message: "down" } };
+    };
+    await expect(signUp(never.deps, body())).rejects.toThrow(/지우지 못했다/);
+    expect(never.deleted).toEqual([USER_ID, USER_ID]);
+  });
+
+  it("INV-U3: 코드가 있는 오류(비밀번호 거부 등)는 다시 시도하지 않는다", async () => {
+    const h = harness({ createUserError: { code: "weak_password" } });
+    await expect(signUp(h.deps, body())).rejects.toThrow();
+    expect(h.created).toHaveLength(1);
+  });
+});
+
 describe("INV-U5·U6: 입력 경계", () => {
   it("INV-U5 (S5, 실패경로): 역할이 팬·크리에이터가 아니면 아무것도 부르지 않고 거부", async () => {
     for (const role of ["admin", "operator", "", null]) {
@@ -236,6 +274,7 @@ describe("INV-U5·U6: 입력 경계", () => {
       const h = harness();
       const r = await signUp(h.deps, b);
       expect(r, JSON.stringify(b)).toMatchObject({ ok: false, status: 400 });
+      expect(r.ok ? null : r.field, JSON.stringify(b)).not.toBe("form");
       expect(h.created).toEqual([]);
     }
   });

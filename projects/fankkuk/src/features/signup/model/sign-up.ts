@@ -3,7 +3,7 @@ import { accountLoginEmail } from "@/entities/session/model/login-id";
 import type { SendMail } from "@/shared/api/mail/smtp";
 import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
 import { buildSignupMail } from "../lib/signup-mail";
-import { consentRows, signupInputSchema } from "./signup-input";
+import { consentRows, detailsFieldOf, signupInputSchema, type DetailsField } from "./signup-input";
 
 // 가입 처리(signup 스펙). 순서:
 // 1) 입력 검사(INV-U5·U6). 운영이면 카카오 연결 전이라 여기서 거부(INV-U9).
@@ -35,7 +35,8 @@ export type SignUpDeps = {
   getMailer: () => { send: SendMail; appOrigin: string };
 };
 
-export type SignUpField = "verification" | "loginId" | "phone" | "form";
+/** 오류가 가리키는 곳. 2단계 칸이면 화면이 그 칸으로 돌아간다. */
+export type SignUpField = DetailsField | "verification" | "form";
 
 export type SignUpResult =
   | { ok: true; loggedIn: boolean; mailSent: boolean }
@@ -59,7 +60,8 @@ export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpRes
   const parsed = signupInputSchema.safeParse(body);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    const field: SignUpField = issue?.path[0] === "verificationId" ? "verification" : "form";
+    const path = issue?.path ?? [];
+    const field: SignUpField = path[0] === "verificationId" ? "verification" : (detailsFieldOf(path) ?? "form");
     return { ok: false, status: 400, field, message: issue?.message ?? "입력을 확인해 주세요." };
   }
   const input = parsed.data;
@@ -75,7 +77,7 @@ export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpRes
   let created = await deps.admin.auth.admin.createUser(attrs);
   // 같은 아이디가 동시에 만들어지는 중이면 늦은 쪽은 코드 없는 오류(500)를 받는다. 한 번만 다시 시도하면
   // 먼저 온 쪽이 끝나 있어 email_exists 가 온다(INV-U3).
-  if (created.error && created.error.code !== "email_exists") {
+  if (created.error && !created.error.code) {
     created = await deps.admin.auth.admin.createUser(attrs);
   }
   if (created.error || !created.data.user) {
@@ -84,17 +86,23 @@ export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpRes
   }
   const userId = created.data.user.id;
 
-  const account = await deps.admin.rpc("create_account", {
-    p_user_id: userId,
-    p_login_id: input.loginId,
-    p_role: input.role,
-    p_email: input.email,
-    p_phone: input.phone,
-    p_verification_id: input.verificationId,
-    p_terms: consentRows(input.terms),
-  });
+  let account: Awaited<ReturnType<Rpc>>;
+  try {
+    account = await deps.admin.rpc("create_account", {
+      p_user_id: userId,
+      p_login_id: input.loginId,
+      p_role: input.role,
+      p_email: input.email,
+      p_phone: input.phone,
+      p_verification_id: input.verificationId,
+      p_terms: consentRows(input.terms),
+    });
+  } catch (e) {
+    await removeAuthUser(deps, userId);
+    throw e;
+  }
   if (account.error) {
-    await deps.admin.auth.admin.deleteUser(userId);
+    await removeAuthUser(deps, userId);
     if (account.error.code === "FKU01") return REVERIFY;
     if (account.error.code === "FKU02") return PHONE_TAKEN;
     if (account.error.code === "FKU03") return ID_TAKEN;
@@ -111,6 +119,19 @@ export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpRes
   }
 
   return { ok: true, loggedIn, mailSent: await sendSignupMail(deps, userId) };
+}
+
+/** INV-U4: 계정 만들기가 실패하면 방금 만든 로그인 정보를 지운다. 한 번 더 시도하고, 그래도 안 되면 오류로 올린다. */
+async function removeAuthUser(deps: SignUpDeps, userId: string): Promise<void> {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const { error } = await deps.admin.auth.admin.deleteUser(userId);
+      if (!error) return;
+    } catch {
+      // 다시 시도
+    }
+  }
+  throw new Error(`계정 만들기 실패 뒤 로그인 정보를 지우지 못했다: ${userId}`);
 }
 
 async function sendSignupMail(deps: SignUpDeps, userId: string): Promise<boolean> {

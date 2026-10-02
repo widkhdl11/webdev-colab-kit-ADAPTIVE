@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { isProduction, type DeployEnv } from "@/shared/lib/env/is-production";
+import { MOBILE_PHONE_SHAPE } from "@/shared/lib/validation/phone-shape";
 
 // 휴대폰 본인 확인 창구. 카카오 인증 연결 전이라 로컬에서는 가짜 창구를 쓴다(signup 결정 카드 d14).
 // 창구는 서버에서만 쓴다 — 확인 결과는 서버가 창구에게 직접 받은 것만 믿는다(INV-U1).
@@ -15,9 +17,6 @@ export type PhoneVerifier = {
   result(tx: string): Promise<PhoneVerificationResult>;
 };
 
-type EnvLike = Record<string, string | undefined>;
-
-const PHONE = /^01[016789][0-9]{7,8}$/;
 
 /** 가짜 창구 — 요청하면 바로 확인된다. 번호는 거래 값 안에 있고, 거래 값은 서버 DB 에만 있다. */
 const fakeVerifier: PhoneVerifier = {
@@ -27,13 +26,12 @@ const fakeVerifier: PhoneVerifier = {
   },
   async result(tx) {
     const [prefix, phone] = tx.split(":");
-    if (prefix !== "fake" || !phone || !PHONE.test(phone)) return { status: "failed" };
+    if (prefix !== "fake" || !phone || !MOBILE_PHONE_SHAPE.test(phone)) return { status: "failed" };
     return { status: "verified", phone };
   },
 };
 
-export function choosePhoneVerifier(env: EnvLike): PhoneVerifier | null {
-  const production = env.NODE_ENV === "production" || env.VERCEL_ENV === "production";
-  if (production) return null; // 실제 카카오 연결이 생기면 여기서 그 창구를 돌려준다
+export function choosePhoneVerifier(env: DeployEnv): PhoneVerifier | null {
+  if (isProduction(env)) return null; // 실제 카카오 연결이 생기면 여기서 그 창구를 돌려준다
   return fakeVerifier;
 }

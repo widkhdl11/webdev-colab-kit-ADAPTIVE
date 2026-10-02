@@ -131,6 +131,8 @@ describe("INV-U1: 서버가 확인한 번호로만 계정이 생긴다", () => {
     const fan = await signedInClient("byeolbit_fan");
     for (const client of [anonClient(), fan]) {
       expect((await client.rpc("request_phone_verification", { p_phone: phone() })).error?.code).toBe("42501");
+      expect((await client.rpc("attach_phone_verification_tx", { p_id: "00000000-0000-4000-8000-000000000000", p_tx: "x" })).error?.code).toBe("42501");
+      expect((await client.rpc("phone_verification_tx", { p_id: "00000000-0000-4000-8000-000000000000" })).error?.code).toBe("42501");
       expect((await client.rpc("complete_phone_verification", { p_id: "00000000-0000-4000-8000-000000000000", p_verified_phone: "01090000000" })).error?.code).toBe("42501");
       expect((await client.rpc("usable_phone_verification", { p_id: "00000000-0000-4000-8000-000000000000" })).error?.code).toBe("42501");
       expect((await client.rpc("create_account", { p_user_id: null, p_login_id: "x", p_role: "fan", p_email: "", p_phone: "", p_verification_id: null, p_terms: [] })).error?.code).toBe("42501");
@@ -170,6 +172,22 @@ describe("INV-U2: 본인 확인 한 건은 한 번, 10분 안에만", () => {
     expect(psql(`select count(*) from pii.account_contacts where phone = '${p}';`)).toBe("1");
   });
 
+  it("INV-U2 (실패경로): 이미 확인된 번호표를 다시 확인하지 않는다 — 10분 창이 늘어나지 않게", async () => {
+    const p = phone();
+    const vid = await verified(p);
+    const before = psql(`select verified_at from pii.phone_verifications where id = '${vid}';`);
+    expect((await adminClient().rpc("complete_phone_verification", { p_id: vid, p_verified_phone: p })).data).toBe(false);
+    expect(psql(`select verified_at from pii.phone_verifications where id = '${vid}';`)).toBe(before);
+  });
+
+  it("INV-U1 (실패경로): 거래 값은 한 번만 단다 — 두 번째는 FKU01", async () => {
+    const p = phone();
+    const id = (await adminClient().rpc("request_phone_verification", { p_phone: p })).data as string;
+    expect((await adminClient().rpc("attach_phone_verification_tx", { p_id: id, p_tx: `fake:${p}:a` })).error).toBeNull();
+    expect((await adminClient().rpc("attach_phone_verification_tx", { p_id: id, p_tx: `fake:${p}:b` })).error?.code).toBe("FKU01");
+    expect(psql(`select provider_tx from pii.phone_verifications where id = '${id}';`)).toBe(`fake:${p}:a`);
+  });
+
   it("INV-U2: 요청한 지 10분이 지난 확인은 결과를 적지 않는다", async () => {
     const p = phone();
     const id = (await adminClient().rpc("request_phone_verification", { p_phone: p })).data as string;
@@ -196,6 +214,14 @@ describe("INV-U3: 번호 하나에 계정 하나, 아이디도 하나", () => {
     const results = await Promise.all([createAccount(u1, "it_hotel1", p, v1), createAccount(u2, "it_hotel2", p, v2)]);
     expect(results.filter((r) => r.error === null)).toHaveLength(1);
     expect(results.find((r) => r.error)?.error?.code).toBe("FKU02");
+  });
+
+  it("INV-U3 (실패경로): 이미 있는 아이디로 프로필을 만들려 하면 DB 가 FKU03 — 번호표는 쓰지 않은 채", async () => {
+    const p = phone();
+    const vid = await verified(p);
+    const uid = await authUser("it_quebec");
+    expect((await createAccount(uid, "byeolbit_fan", p, vid)).error?.code).toBe("FKU03");
+    expect(usedAt(vid)).toBe("");
   });
 
   it("INV-U3 (S3b, 동시): 같은 아이디로 가입 둘을 동시에 — 하나만 성공", async () => {
@@ -258,6 +284,8 @@ describe("INV-U5·U6: 역할과 입력 경계는 DB 도 다시 본다", () => {
     const vid = await verified(p);
     const uid = await authUser("it_mike");
     expect((await createAccount(uid, "it_mike", p, vid, { p_terms: [{ key: "service", version: "2026-10-01" }] })).error?.code).toBe("22023");
+    expect((await createAccount(uid, "it_mike", p, vid, { p_terms: [{ key: "privacy", version: "2026-10-01" }] })).error?.code).toBe("22023");
+    expect((await createAccount(uid, "it_mike", p, vid, { p_email: "a,b@example.com" })).error?.code).toBe("22023");
     expect((await createAccount(uid, "IT_MIKE", p, vid)).error?.code).toBe("22023");
     expect((await createAccount(uid, "it_mike", p, vid, { p_terms: [...TERMS, { key: "marketing", version: "1" }] })).error?.code).toBe("22023");
     expect(usedAt(vid)).toBe("");
@@ -294,6 +322,14 @@ describe("INV-U10: 본인 확인 요청은 번호당 한 시간 다섯 번", () 
     for (let i = 0; i < 5; i += 1) expect((await startPhoneVerification(deps, { phone: p })).ok).toBe(true);
     expect(await startPhoneVerification(deps, { phone: p })).toMatchObject({ ok: false, status: 429 });
     expect(asked).toHaveLength(5);
+  });
+
+  it("INV-U10: 한 시간이 지난 요청은 세지 않는다 — 61분 전 다섯 번 뒤에도 새 요청은 된다", async () => {
+    const p = phone();
+    for (let i = 0; i < 5; i += 1) expect((await adminClient().rpc("request_phone_verification", { p_phone: p })).error).toBeNull();
+    expect((await adminClient().rpc("request_phone_verification", { p_phone: p })).error?.code).toBe("FK429");
+    psql(`update pii.phone_verifications set requested_at = now() - interval '61 minutes' where phone = '${p}';`);
+    expect((await adminClient().rpc("request_phone_verification", { p_phone: p })).error).toBeNull();
   });
 
   it("INV-U10 (동시): 같은 번호로 여덟 번을 동시에 요청해도 기록은 다섯 줄", async () => {

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { checkPhoneVerification, postSignup, requestPhoneVerification } from "@/features/signup/api/signup-client";
+import { completeSignup } from "@/features/signup/api/complete-signup";
+import { requestPhoneVerification } from "@/features/signup/api/signup-client";
 import { checkDetails, type DetailsField } from "@/features/signup/model/signup-input";
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import s from "./signup.module.css";
@@ -27,6 +28,15 @@ const TERMS: ReadonlyArray<{ key: TermKey; label: string; required: boolean; hre
   { key: "news", label: "이벤트·소식 알림 받기", required: false },
 ];
 
+/** 완료 표시 — design-rules §3: 체크는 단색 SVG, 글자색을 따라간다. 화면 낭독기에는 읽히지 않는다. */
+function CheckIcon({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function SignupPage() {
   const router = useRouter();
   const id = useId();
@@ -41,10 +51,13 @@ export function SignupPage() {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [phone, setPhone] = useState("");
   const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({ service: false, privacy: false, news: false });
-  // 요청을 보낸 번호와 번호표. 번호를 고치면 번호표를 버린다 — 다른 번호의 확인으로 가입하지 않게(서버도 막는다).
-  const [verification, setVerification] = useState<{ id: string; phone: string } | null>(null);
+  // 인증 요청을 보냈는가. 번호표 자체는 서버가 쿠키로 들고 있다(INV-U1). 번호를 고치면 요청부터 다시 —
+  // 다른 번호의 확인으로 가입하지 않게(서버도 번호 대조로 막는다).
+  const [requested, setRequested] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ field: ErrorField; message: string } | null>(null);
+  // 오류를 띄울 때마다 오르는 번호 — 같은 문구가 연달아 나와도 새로 붙여 다시 읽히게 한다.
+  const [errorSeq, setErrorSeq] = useState(0);
   const navRef = useRef<HTMLElement>(null);
   const headingRefs = useRef<Array<HTMLHeadingElement | null>>([]);
 
@@ -62,6 +75,11 @@ export function SignupPage() {
     setMoved(true);
   };
 
+  const showError = (next: { field: ErrorField; message: string }) => {
+    setError(next);
+    setErrorSeq((n) => n + 1);
+  };
+
   const details = () => checkDetails({ loginId, email, password, passwordConfirm, phone, terms: agreed });
 
   const sendRequest = async () => {
@@ -70,34 +88,21 @@ export function SignupPage() {
     setError(null);
     const r = await requestPhoneVerification(phone);
     setBusy(false);
-    if (r.ok) setVerification({ id: r.verificationId, phone });
-    else setError({ field: "verification", message: r.message });
+    if (r.ok) setRequested(true);
+    else showError({ field: "verification", message: r.message });
   };
 
   const finish = async () => {
-    if (busy || !verification) return;
+    if (busy || !requested) return;
     setBusy(true);
     setError(null);
-    const checked = await checkPhoneVerification(verification.id);
-    if (!checked.ok) {
-      setVerification(null);
-      setBusy(false);
-      setError({ field: "verification", message: checked.message });
-      return;
-    }
-    if (!checked.verified) {
-      setBusy(false);
-      setError({ field: "verification", message: "아직 인증이 확인되지 않았어요. 카카오톡에서 인증을 누른 뒤 다시 눌러 주세요." });
-      return;
-    }
-    const r = await postSignup({
+    const r = await completeSignup({
       role,
       loginId: loginId.trim(),
       email: email.trim(),
       password,
       phone,
       terms: agreed,
-      verificationId: verification.id,
     });
     if (r.ok) {
       router.push(r.loggedIn ? "/home" : "/login");
@@ -105,9 +110,9 @@ export function SignupPage() {
       return;
     }
     setBusy(false);
-    if (r.field === "verification") setVerification(null);
-    setError({ field: r.field, message: r.message });
-    if (r.field === "loginId" || r.field === "phone") go(2);
+    if (r.dropVerification) setRequested(false);
+    showError({ field: r.field, message: r.message });
+    if (r.field !== "verification" && r.field !== "form") go(2);
   };
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -115,13 +120,13 @@ export function SignupPage() {
     if (step === 2) {
       const problem = details();
       if (problem) {
-        setError(problem);
+        showError(problem);
         return;
       }
     }
     setError(null);
     if (step < LAST) go(step + 1);
-    else if (verification) void finish();
+    else if (requested) void finish();
     else void sendRequest();
   };
 
@@ -131,7 +136,7 @@ export function SignupPage() {
   const invalid = (field: ErrorField) => (error?.field === field ? { "aria-invalid": true, "aria-describedby": f("error") } : {});
   const errorLine = (show: boolean) =>
     show && error ? (
-      <p className={s.error} id={f("error")} role="alert">
+      <p className={s.error} id={f("error")} role="alert" key={errorSeq}>
         {error.message}
       </p>
     ) : null;
@@ -172,12 +177,19 @@ export function SignupPage() {
                       disabled={k > reached || busy}
                       aria-current={k === step ? "step" : undefined}
                       onClick={() => {
+                        // 단계 표시로 3단계에 갈 때도 2단계 검사를 거친다 — 고친 칸이 틀렸으면 2단계에 남는다
+                        const problem = k === LAST ? details() : null;
+                        if (problem) {
+                          go(2);
+                          showError(problem);
+                          return;
+                        }
                         setError(null);
                         go(k);
                       }}
                     >
                       <span className={s.dot} aria-hidden="true">
-                        {k < step ? "✓" : k}
+                        {k < step ? <CheckIcon size={16} /> : k}
                       </span>
                       <span className={s.lbl}>{label}</span>
                     </button>
@@ -302,7 +314,7 @@ export function SignupPage() {
                     value={phone}
                     onChange={(e) => {
                       setPhone(e.target.value);
-                      setVerification(null);
+                      setRequested(false);
                     }}
                     aria-describedby={f("tel-h")}
                     {...invalid("phone")}
@@ -359,10 +371,15 @@ export function SignupPage() {
                 <p>휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요.</p>
               </div>
               <ol className={s["kakao-steps"]}>
-                <li className={verification ? s["is-done"] : undefined}>
+                <li className={requested ? s["is-done"] : undefined}>
+                  {requested ? (
+                    <span className={s.mark}>
+                      <CheckIcon size={20} />
+                    </span>
+                  ) : null}
                   <span>
                     아래 버튼을 누르면 <strong>{phone || "입력한 번호"}</strong>의 카카오톡으로 인증 요청이 가요.
-                    {verification ? <span className={s.sent}> 요청을 보냈어요.</span> : null}
+                    {requested ? <span className={s.sent}> 요청을 보냈어요.</span> : null}
                   </span>
                 </li>
                 <li>
@@ -372,15 +389,15 @@ export function SignupPage() {
                   <span>팬꾹으로 돌아와 「인증했어요, 가입하기」를 누르면 가입 완료예요.</span>
                 </li>
               </ol>
-              {verification ? (
+              {requested ? (
                 <p className="hint">
                   요청이 오지 않았나요?{" "}
-                  <button className={s["text-btn"]} type="button" disabled={busy} onClick={() => void sendRequest()}>
+                  <button className={s["text-btn"]} type="button" aria-disabled={busy} onClick={() => void sendRequest()}>
                     다시 보내기
                   </button>
                 </p>
               ) : null}
-              <div aria-live="polite">{errorLine(step === 3)}</div>
+              {errorLine(step === 3)}
             </fieldset>
 
             <div className={step === 1 ? `${s["step-actions"]} ${s["no-prev"]}` : s["step-actions"]}>
@@ -404,7 +421,7 @@ export function SignupPage() {
               ) : (
                 <button className={`btn btn--kakao ${s.next}`} type="submit" aria-disabled={busy} aria-busy={busy || undefined}>
                   <KakaoBubble size={24} />
-                  {verification ? "인증했어요, 가입하기" : "카카오톡으로 인증 요청 보내기"}
+                  {requested ? "인증했어요, 가입하기" : "카카오톡으로 인증 요청 보내기"}
                 </button>
               )}
             </div>

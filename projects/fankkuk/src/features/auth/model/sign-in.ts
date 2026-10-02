@@ -1,13 +1,12 @@
 import { z } from "zod";
 import { loginEmailCandidates } from "@/entities/session/model/login-id";
+import type { DeployEnv } from "@/shared/lib/env/is-production";
 
 // 아이디·비밀번호 로그인. 비밀번호 확인은 Supabase Auth 가 하고, 성공하면 그 클라이언트가 세션 쿠키를 쓴다.
 
 export type PasswordAuth = {
   signInWithPassword(credentials: { email: string; password: string }): Promise<{ error: unknown }>;
 };
-
-type EnvLike = { NODE_ENV?: string; VERCEL_ENV?: string };
 
 export type SignInResult = { ok: true } | { ok: false; status: 400 | 401; message: string };
 
@@ -21,7 +20,7 @@ const inputSchema = z.object({
 
 const failed = { ok: false, status: 401, message: SIGN_IN_FAILED_MESSAGE } as const;
 
-export async function signIn(deps: { auth: PasswordAuth; env: EnvLike }, input: unknown): Promise<SignInResult> {
+export async function signIn(deps: { auth: PasswordAuth; env: DeployEnv }, input: unknown): Promise<SignInResult> {
   const parsed = inputSchema.safeParse(input);
   if (!parsed.success || parsed.data.loginId.trim() === "" || parsed.data.password === "") {
     return { ok: false, status: 400, message: "아이디와 비밀번호를 입력해 주세요." };

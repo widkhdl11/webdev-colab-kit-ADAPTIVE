@@ -9,7 +9,8 @@ describe("INV-U9: 가짜 본인 확인은 운영에서 켜질 수 없다", () =>
   });
 
   it("INV-U9: 운영에서 가짜를 켜는 설정을 넣어도 가짜가 나오지 않는다", () => {
-    expect(choosePhoneVerifier({ NODE_ENV: "production", FK_FAKE_PHONE_VERIFIER: "1" })).toBeNull();
+    const env: Record<string, string> = { NODE_ENV: "production", FK_FAKE_PHONE_VERIFIER: "1" };
+    expect(choosePhoneVerifier(env)).toBeNull();
   });
 
   it("INV-U9: 로컬에서는 가짜 확인 창구가 나온다", () => {
