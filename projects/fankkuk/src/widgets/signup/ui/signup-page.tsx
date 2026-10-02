@@ -3,17 +3,22 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { checkPhoneVerification, postSignup, requestPhoneVerification } from "@/features/signup/api/signup-client";
+import { checkDetails, type DetailsField } from "@/features/signup/model/signup-input";
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import s from "./signup.module.css";
 
-// 회원가입 3단계. 시안: docs/design/mockups/site/v4/signup.html
-// 겉모양과 단계 이동만 있다 — 가입·카카오 인증은 로그인 방식 결정 뒤에 붙인다. 마지막 버튼은 메인(/home)으로 넘어가기만 한다.
-// 입력값은 읽지도 보내지도 않는다. 입력칸에 name 을 두지 않아 폼 기본 제출이 일어나도 값이 주소창에 실리지 않는다.
+// 회원가입 3단계. 시안: docs/design/mockups/site/v4/signup.html · 스펙: docs/specs/signup.md
+// 3단계: 「인증 요청 보내기」로 카카오톡에 요청 → 카카오톡에서 인증 → 「인증했어요, 가입하기」.
+// 브라우저는 번호표만 들고 있다 — 인증됐는지는 서버가 카카오에게 묻는다(INV-U1).
+// 입력칸에 name 을 두지 않는다 — 폼 기본 제출이 일어나도 값이 주소창에 실리지 않게.
 
 const STEPS = ["유형 선택", "정보 입력", "본인 확인"] as const;
 const LAST = STEPS.length;
 
 type TermKey = "service" | "privacy" | "news";
+type Role = "fan" | "creator";
+type ErrorField = DetailsField | "verification" | "form";
 
 // 약관 전문 화면이 아직 없다 — href 가 없는 항목의 「보기」는 링크가 아니라 흐린 글자로 둔다. 전문이 생기면 href 만 채운다.
 const TERMS: ReadonlyArray<{ key: TermKey; label: string; required: boolean; href?: string }> = [
@@ -29,7 +34,17 @@ export function SignupPage() {
   const [step, setStep] = useState(1);
   const [reached, setReached] = useState(1);
   const [moved, setMoved] = useState(false);
+  const [role, setRole] = useState<Role>("fan");
+  const [loginId, setLoginId] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [phone, setPhone] = useState("");
   const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({ service: false, privacy: false, news: false });
+  // 요청을 보낸 번호와 번호표. 번호를 고치면 번호표를 버린다 — 다른 번호의 확인으로 가입하지 않게(서버도 막는다).
+  const [verification, setVerification] = useState<{ id: string; phone: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<{ field: ErrorField; message: string } | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const headingRefs = useRef<Array<HTMLHeadingElement | null>>([]);
 
@@ -47,14 +62,79 @@ export function SignupPage() {
     setMoved(true);
   };
 
+  const details = () => checkDetails({ loginId, email, password, passwordConfirm, phone, terms: agreed });
+
+  const sendRequest = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    const r = await requestPhoneVerification(phone);
+    setBusy(false);
+    if (r.ok) setVerification({ id: r.verificationId, phone });
+    else setError({ field: "verification", message: r.message });
+  };
+
+  const finish = async () => {
+    if (busy || !verification) return;
+    setBusy(true);
+    setError(null);
+    const checked = await checkPhoneVerification(verification.id);
+    if (!checked.ok) {
+      setVerification(null);
+      setBusy(false);
+      setError({ field: "verification", message: checked.message });
+      return;
+    }
+    if (!checked.verified) {
+      setBusy(false);
+      setError({ field: "verification", message: "아직 인증이 확인되지 않았어요. 카카오톡에서 인증을 누른 뒤 다시 눌러 주세요." });
+      return;
+    }
+    const r = await postSignup({
+      role,
+      loginId: loginId.trim(),
+      email: email.trim(),
+      password,
+      phone,
+      terms: agreed,
+      verificationId: verification.id,
+    });
+    if (r.ok) {
+      router.push(r.loggedIn ? "/home" : "/login");
+      router.refresh();
+      return;
+    }
+    setBusy(false);
+    if (r.field === "verification") setVerification(null);
+    setError({ field: r.field, message: r.message });
+    if (r.field === "loginId" || r.field === "phone") go(2);
+  };
+
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (step === 2) {
+      const problem = details();
+      if (problem) {
+        setError(problem);
+        return;
+      }
+    }
+    setError(null);
     if (step < LAST) go(step + 1);
-    else router.push("/home");
+    else if (verification) void finish();
+    else void sendRequest();
   };
 
   const allAgreed = TERMS.every((t) => agreed[t.key]);
   const setAll = (value: boolean) => setAgreed({ service: value, privacy: value, news: value });
+
+  const invalid = (field: ErrorField) => (error?.field === field ? { "aria-invalid": true, "aria-describedby": f("error") } : {});
+  const errorLine = (show: boolean) =>
+    show && error ? (
+      <p className={s.error} id={f("error")} role="alert">
+        {error.message}
+      </p>
+    ) : null;
 
   const heading = (n: number, text: string) => (
     <h2
@@ -89,9 +169,12 @@ export function SignupPage() {
                     <button
                       className={done ? `${s.st} ${s["is-done"]}` : s.st}
                       type="button"
-                      disabled={k > reached}
+                      disabled={k > reached || busy}
                       aria-current={k === step ? "step" : undefined}
-                      onClick={() => go(k)}
+                      onClick={() => {
+                        setError(null);
+                        go(k);
+                      }}
                     >
                       <span className={s.dot} aria-hidden="true">
                         {k < step ? "✓" : k}
@@ -104,13 +187,13 @@ export function SignupPage() {
             </ol>
           </nav>
 
-          <form className={s["send-form"]} onSubmit={onSubmit} aria-label="회원가입 입력">
+          <form className={s["send-form"]} onSubmit={onSubmit} aria-label="회원가입 입력" noValidate>
             <fieldset className={s.step} hidden={step !== 1}>
               <legend className="sr-only">회원 유형</legend>
               <div className={s["step-h"]}>{heading(1, "어떤 분이세요?")}</div>
               <div className={s.choices}>
                 <label className={s.choice}>
-                  <input className="sr-only" type="radio" name="kind" value="fan" defaultChecked />
+                  <input className="sr-only" type="radio" name="kind" value="fan" checked={role === "fan"} onChange={() => setRole("fan")} />
                   <span className={s["choice-body"]}>
                     <img className="asset" src="/img/icon-gift.png" alt="" aria-hidden="true" width={72} height={72} />
                     <strong>팬이에요</strong>
@@ -118,7 +201,14 @@ export function SignupPage() {
                   </span>
                 </label>
                 <label className={s.choice}>
-                  <input className="sr-only" type="radio" name="kind" value="creator" />
+                  <input
+                    className="sr-only"
+                    type="radio"
+                    name="kind"
+                    value="creator"
+                    checked={role === "creator"}
+                    onChange={() => setRole("creator")}
+                  />
                   <span className={s["choice-body"]}>
                     <img className="asset" src="/img/icon-approve.png" alt="" aria-hidden="true" width={72} height={72} />
                     <strong>크리에이터예요</strong>
@@ -143,10 +233,15 @@ export function SignupPage() {
                     id={f("id")}
                     type="text"
                     autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    value={loginId}
+                    onChange={(e) => setLoginId(e.target.value)}
                     aria-describedby={f("id-h")}
+                    {...invalid("loginId")}
                   />
                   <p className="hint" id={f("id-h")}>
-                    영문 소문자와 숫자로 4~20자예요. 가입한 뒤에는 아이디를 바꿀 수 없어요.
+                    영문 소문자·숫자·밑줄(_)로 4~20자예요. 가입한 뒤에는 아이디를 바꿀 수 없어요.
                   </p>
                 </div>
                 <div className="field">
@@ -157,17 +252,29 @@ export function SignupPage() {
                     type="email"
                     autoComplete="email"
                     placeholder="example@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     aria-describedby={f("mail-h")}
+                    {...invalid("email")}
                   />
                   <p className="hint" id={f("mail-h")}>
-                    비밀번호를 잊었을 때 재설정 링크를 보내 드려요.
+                    가입하면 확인 메일을 보내 드려요. 메일의 링크를 눌러야 이 주소로 선물 소식을 받아요.
                   </p>
                 </div>
                 <div className="field">
                   <label htmlFor={f("pw")}>비밀번호</label>
-                  <input className="input" id={f("pw")} type="password" autoComplete="new-password" aria-describedby={f("pw-h")} />
+                  <input
+                    className="input"
+                    id={f("pw")}
+                    type="password"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    aria-describedby={f("pw-h")}
+                    {...invalid("password")}
+                  />
                   <p className="hint" id={f("pw-h")}>
-                    8자 이상, 영문과 숫자를 함께 넣어 주세요.
+                    10자 이상으로 적어 주세요. 아이디와 같은 비밀번호는 쓸 수 없어요.
                   </p>
                 </div>
                 <div className="field">
@@ -178,6 +285,9 @@ export function SignupPage() {
                     type="password"
                     autoComplete="new-password"
                     placeholder="비밀번호를 한 번 더 입력해 주세요"
+                    value={passwordConfirm}
+                    onChange={(e) => setPasswordConfirm(e.target.value)}
+                    {...invalid("passwordConfirm")}
                   />
                 </div>
                 <div className="field">
@@ -189,7 +299,13 @@ export function SignupPage() {
                     inputMode="numeric"
                     autoComplete="tel"
                     placeholder="010-0000-0000"
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      setVerification(null);
+                    }}
                     aria-describedby={f("tel-h")}
+                    {...invalid("phone")}
                   />
                   <p className="hint" id={f("tel-h")}>
                     선물 소식을 카카오톡 알림톡으로 보내 드릴 번호예요. 실명·주소처럼 따로 나눠 보관해요.
@@ -213,6 +329,7 @@ export function SignupPage() {
                             aria-required={t.required || undefined}
                             checked={agreed[t.key]}
                             onChange={(e) => setAgreed((prev) => ({ ...prev, [t.key]: e.target.checked }))}
+                            {...(t.required ? invalid("terms") : {})}
                           />
                           <span>
                             {t.required ? <span className={s.req}>[필수]</span> : "[선택]"} {t.label}
@@ -231,6 +348,7 @@ export function SignupPage() {
                     ))}
                   </div>
                 </div>
+                {errorLine(step === 2)}
               </div>
             </fieldset>
 
@@ -241,21 +359,41 @@ export function SignupPage() {
                 <p>휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요.</p>
               </div>
               <ol className={s["kakao-steps"]}>
-                <li>
-                  <span>아래 버튼을 누르면 카카오톡에 인증 요청이 가요.</span>
+                <li className={verification ? s["is-done"] : undefined}>
+                  <span>
+                    아래 버튼을 누르면 <strong>{phone || "입력한 번호"}</strong>의 카카오톡으로 인증 요청이 가요.
+                    {verification ? <span className={s.sent}> 요청을 보냈어요.</span> : null}
+                  </span>
                 </li>
                 <li>
                   <span>카카오톡에서 요청을 열고 인증을 눌러 주세요.</span>
                 </li>
                 <li>
-                  <span>팬꾹으로 돌아오면 가입 완료예요.</span>
+                  <span>팬꾹으로 돌아와 「인증했어요, 가입하기」를 누르면 가입 완료예요.</span>
                 </li>
               </ol>
+              {verification ? (
+                <p className="hint">
+                  요청이 오지 않았나요?{" "}
+                  <button className={s["text-btn"]} type="button" disabled={busy} onClick={() => void sendRequest()}>
+                    다시 보내기
+                  </button>
+                </p>
+              ) : null}
+              <div aria-live="polite">{errorLine(step === 3)}</div>
             </fieldset>
 
             <div className={step === 1 ? `${s["step-actions"]} ${s["no-prev"]}` : s["step-actions"]}>
               {step > 1 ? (
-                <button className="btn btn--soft" type="button" onClick={() => go(step - 1)}>
+                <button
+                  className="btn btn--soft"
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setError(null);
+                    go(step - 1);
+                  }}
+                >
                   이전
                 </button>
               ) : null}
@@ -264,9 +402,9 @@ export function SignupPage() {
                   다음
                 </button>
               ) : (
-                <button className={`btn btn--kakao ${s.next}`} type="submit">
+                <button className={`btn btn--kakao ${s.next}`} type="submit" aria-disabled={busy} aria-busy={busy || undefined}>
                   <KakaoBubble size={24} />
-                  카카오톡으로 인증하고 가입하기
+                  {verification ? "인증했어요, 가입하기" : "카카오톡으로 인증 요청 보내기"}
                 </button>
               )}
             </div>

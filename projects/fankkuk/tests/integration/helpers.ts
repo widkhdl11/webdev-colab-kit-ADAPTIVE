@@ -71,6 +71,20 @@ export function deleteTestOrders(): void {
   );
 }
 
+/** 가입 시험이 쓰는 아이디 앞머리와 휴대폰 번호 앞자리. 시드 계정은 이 꼴을 쓰지 않는다. */
+export const TEST_SIGNUP_ID_PREFIX = "it_";
+export const TEST_SIGNUP_PHONE_PREFIX = "0109000";
+
+/** 가입 시험이 만든 계정(로그인 정보 → 프로필·연락처·약관 동의가 따라 지워진다)과 본인 확인 기록을 지운다. */
+export function deleteTestSignups(): void {
+  psql(
+    [
+      `delete from auth.users where email like '${TEST_SIGNUP_ID_PREFIX.replace("_", "\\_")}%@login.fankkuk.invalid';`,
+      `delete from pii.phone_verifications where phone like '${TEST_SIGNUP_PHONE_PREFIX}%';`,
+    ].join(" "),
+  );
+}
+
 export function countTestOrders(): number {
   const kinds = TEST_ITEM_KINDS.map((k) => `'${k}'`).join(", ");
   return Number(psql(`select count(*) from public.orders where item_kind in (${kinds});`));

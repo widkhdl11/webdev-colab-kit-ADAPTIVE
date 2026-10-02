@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isTestAccountEmail, loginIdToEmail } from "@/entities/session/model/login-id";
+import { loginEmailCandidates } from "@/entities/session/model/login-id";
 
 // 아이디·비밀번호 로그인. 비밀번호 확인은 Supabase Auth 가 하고, 성공하면 그 클라이언트가 세션 쿠키를 쓴다.
 
@@ -28,17 +28,17 @@ export async function signIn(deps: { auth: PasswordAuth; env: EnvLike }, input: 
   }
 
   // 꼴이 다른 아이디도 같은 실패로 — 꼴 검사가 「없는 아이디」를 따로 알려 주지 않게(INV-L5)
-  const email = loginIdToEmail(parsed.data.loginId);
-  if (!email) return failed;
+  const candidates = loginEmailCandidates(parsed.data.loginId, deps.env);
+  if (candidates.length === 0) return failed;
 
-  // INV-L6: 운영에서는 시험 계정을 Auth 에 보내지도 않는다
-  const production = deps.env.NODE_ENV === "production" || deps.env.VERCEL_ENV === "production";
-  if (production && isTestAccountEmail(email)) return failed;
-
-  try {
-    const { error } = await deps.auth.signInWithPassword({ email, password: parsed.data.password });
-    return error ? failed : { ok: true };
-  } catch {
-    return failed;
+  // INV-L6: 운영에서는 후보에 시험 계정 주소가 없다 — Auth 에 보내지도 않는다
+  for (const email of candidates) {
+    try {
+      const { error } = await deps.auth.signInWithPassword({ email, password: parsed.data.password });
+      if (!error) return { ok: true };
+    } catch {
+      // 다음 후보로 — 모두 실패하면 같은 실패 응답(INV-L5)
+    }
   }
+  return failed;
 }

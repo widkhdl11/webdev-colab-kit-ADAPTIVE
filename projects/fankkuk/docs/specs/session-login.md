@@ -6,6 +6,8 @@ status: approved
 #   2026-10-02 초안. 결정 카드 d9 「추천대로 진행」 — 시험 계정 + 아이디·비밀번호 로그인.
 #              가입·카카오 본인 확인·비밀번호 재설정은 계정 스펙 몫이다(비범위).
 #              같은 날 사용자 승인 (결정 카드 fankkuk-20261001-1-d10, 답: 추천대로 진행 — @supabase/ssr 추가 포함).
+#   2026-10-02 S6 문장만 고침 — 가입 계정이 생겨 운영에서도 가입 계정 주소로는 Auth 를 부른다(signup INV-U8, 카드 d14 승인).
+#              INV-L6 문장은 그대로다: 시험 계정 주소는 운영에서 Auth 에 가지 않는다.
 surfaces: [auth]
 # ↑ auth: 지금 요청을 보낸 사람이 누구인가. 이 판정이 틀리면 RLS·읽기 함수가 남의 선물을 보여 준다.
 ---
@@ -57,7 +59,7 @@ surfaces: [auth]
 - S3c (INV-L3, 실패경로): Given 크리에이터 계정 / When 선물 등록 / Then 거부.
 - S4 (INV-L4): Given 서버 설정 / When 환경 변수 이름을 검사 / Then 관리자 키가 공개 접두어로 쓰이지 않는다.
 - S5 (INV-L5, 실패경로): Given 없는 아이디 / 있는 아이디 + 틀린 비밀번호 / When 로그인 / Then 두 응답이 같다.
-- S6 (INV-L6, 실패경로): Given 운영 환경 표시 / When `byeolbit_fan` 로그인 / Then 거부, Supabase Auth 를 부르지 않는다.
+- S6 (INV-L6, 실패경로): Given 운영 환경 표시 / When `byeolbit_fan` 로그인 / Then 거부, 시험 계정 주소(`@fankkuk.test`)로는 Supabase Auth 를 부르지 않는다.
 - S7 (INV-L7): Given 로그인 → 로그아웃 / When 지운 쿠키 값을 다시 붙여 요청 / Then 로그인 안 함.
 
 ## 신뢰 경계

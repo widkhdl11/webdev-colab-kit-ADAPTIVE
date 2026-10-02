@@ -1,3 +1,4 @@
+import { confirmLink } from "@/entities/fan/lib/confirm-link";
 import type { OutgoingMail } from "@/shared/api/mail/smtp";
 
 // 이메일 확인 메일. 본문에는 링크와 닉네임만 넣는다 — 휴대폰 번호·주소·선물 내용은 넣지 않는다(INV-A8).
@@ -6,9 +7,7 @@ import type { OutgoingMail } from "@/shared/api/mail/smtp";
 
 export type VerificationMailInput = { to: string; nickname: string; token: string; appOrigin: string };
 
-export function confirmLink(appOrigin: string, token: string): string {
-  return `${appOrigin}/me/email/confirm?token=${encodeURIComponent(token)}`;
-}
+export { confirmLink };
 
 export function buildVerificationMail({ to, nickname, token, appOrigin }: VerificationMailInput): OutgoingMail {
   return {
