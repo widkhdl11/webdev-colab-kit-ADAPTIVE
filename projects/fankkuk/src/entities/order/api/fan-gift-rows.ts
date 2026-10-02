@@ -3,7 +3,7 @@ import { z } from "zod";
 import { OFFICE_ADDRESS } from "../config/office-address";
 import { toFanView, type FanGiftView, type FanOrderRecord } from "../model/fan-view";
 
-// 팬의 선물을 DB 읽기 함수(my_gifts·my_gift)로 읽는다. 함수가 로그인한 팬의 것만, 팬이 봐도 되는 칸만 돌려준다.
+// 팬의 선물을 DB 읽기 함수(my_gifts)로 읽는다. 함수가 로그인한 팬의 것만, 팬이 봐도 되는 칸만 돌려준다.
 // 응답은 신뢰 경계 밖이라 여기서 형식을 검사하고 팬 화면 모양(toFanView)으로 바꾼다.
 // 결제 대기 주문은 함수가 돌려주지 않는다. 승인은 상태가 아니라 approved_at 칸이다.
 
@@ -62,11 +62,4 @@ export async function readMyGiftViews(client: Pick<SupabaseClient, "rpc">): Prom
   const { data, error } = await client.rpc("my_gifts");
   if (error) throw new Error(`선물 목록을 읽지 못했다: ${error.code}`);
   return parseFanGiftRows(data, OFFICE_ADDRESS);
-}
-
-/** 로그인한 팬의 선물 하나. 남의 주문번호면 함수가 빈 결과를 돌려주므로 null. */
-export async function readMyGiftView(client: Pick<SupabaseClient, "rpc">, orderNo: string): Promise<FanGiftView | null> {
-  const { data, error } = await client.rpc("my_gift", { p_order_no: orderNo });
-  if (error) throw new Error(`선물을 읽지 못했다: ${error.code}`);
-  return parseFanGiftRows(data, OFFICE_ADDRESS)[0] ?? null;
 }

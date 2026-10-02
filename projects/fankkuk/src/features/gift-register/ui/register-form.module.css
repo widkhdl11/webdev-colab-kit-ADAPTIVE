@@ -106,16 +106,10 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .step-actions .next { margin-left: auto; }
 
 /* 등록 완료 (예시) */
-.done { display: grid; justify-items: start; gap: 12px; }
-.done h2 { font-size: 30px; letter-spacing: -.8px; }
-.done h2:focus { outline: none; }
-.done h2:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
-.done p { color: var(--sub); }
-.done-go { margin-top: 12px; }
 
 @media (max-width: 767px) {
   .send-form { padding: 24px 20px; border-radius: var(--r-card); }
-  .step h2, .done h2 { font-size: 26px; }
+  .step h2 { font-size: 26px; }
   .step-actions { display: grid; grid-template-columns: 1fr 2fr; }
   .step-actions.no-prev { grid-template-columns: 1fr; }
   .step-actions .next { margin-left: 0; }

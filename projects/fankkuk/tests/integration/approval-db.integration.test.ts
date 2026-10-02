@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adminClient, payTestOrder, registerTestOrder } from "./helpers";
+import { adminClient, payTestOrder, psqlError, registerTestOrder } from "./helpers";
 
 // 승인 서명 스펙(docs/specs/approval-signature.md) 중 DB 가 지키는 것.
 // 서명 검증(INV-S2~S4)은 앱 서버가 approve_request 를 부르기 전에 한다 — 여기서는 그 뒤의 기록만 본다.
@@ -34,11 +34,14 @@ describe("INV-S5: 한 요청 ID 는 한 번만 승인 처리된다", () => {
     expect(results.map((r) => r.data).sort()).toEqual(["already", "approved"]);
   });
 
-  it("INV-S5: 한 주문에 승인된 요청은 DB 제약으로도 하나다", async () => {
+  it("INV-S5: 한 주문에 승인된 요청은 DB 제약으로도 하나다 — 막음을 켠 채로 두 번째 승인 요청을 넣어도 거부", async () => {
     const o = await paidOrder();
     await adminClient().rpc("approve_request", { p_request_id: o.requestId });
-    const { data: idx } = await adminClient().from("approval_requests").select("status").eq("order_id", o.orderId);
-    expect(idx).toEqual([{ status: "approved" }]);
+    // 승인 입구 막음(INV-S7)을 켠 상태로 넣어 유일 제약만 남긴다
+    const err = psqlError(
+      `begin; select set_config('fankkuk.approving','on',true); insert into public.approval_requests (request_id, order_id, payload, created_at, status, decided_at) values ('${o.requestId}x', '${o.orderId}', 'x', now(), 'approved', now()); commit;`,
+    );
+    expect(err).toMatch(/approval_requests_one_approved|duplicate key/);
   });
 });
 
@@ -50,6 +53,21 @@ describe("INV-S6: 승인할 수 없는 주문은 승인하지 않는다", () => 
     expect(r.data).toBe("not_approvable");
     const { data } = await adminClient().from("orders").select("approved_at").eq("id", o.orderId).single();
     expect(data?.approved_at).toBeNull();
+  });
+
+  it("INV-S6 S6: 7일 자동 반려·취소·검수 반송된 주문은 승인되지 않는다", async () => {
+    for (const change of [{ status: "expired" }, { status: "canceled" }, { inspection_result: "returned", inspected_at: new Date().toISOString() }]) {
+      const o = await paidOrder();
+      expect((await adminClient().from("orders").update(change).eq("id", o.orderId)).error).toBeNull();
+      const r = await adminClient().rpc("approve_request", { p_request_id: o.requestId });
+      expect(r.data, JSON.stringify(change)).toBe("not_approvable");
+    }
+  });
+
+  it("INV-S6: 이미 받지 않음으로 처리된 요청은 승인되지 않는다", async () => {
+    const o = await paidOrder();
+    await adminClient().from("approval_requests").update({ status: "declined", decided_at: new Date().toISOString() }).eq("request_id", o.requestId);
+    expect((await adminClient().rpc("approve_request", { p_request_id: o.requestId })).data).toBe("not_approvable");
   });
 
   it("INV-S6: 없는 요청 ID 는 not_found", async () => {
@@ -87,6 +105,21 @@ describe("INV-S7: 승인 상태를 바꾸는 입구는 approve_request 하나다
       registered_at: new Date().toISOString(),
       approved_at: new Date().toISOString(),
     });
+    expect(error?.code).toBe("42501");
+  });
+
+  it("INV-S7: 승인된 채로 승인 요청을 새로 넣는 것도 거부한다", async () => {
+    const o = await paidOrder();
+    const { error } = await adminClient()
+      .from("approval_requests")
+      .insert({ request_id: `${o.requestId}b`, order_id: o.orderId, payload: "x", created_at: new Date().toISOString(), status: "approved", decided_at: new Date().toISOString() });
+    expect(error?.code).toBe("42501");
+  });
+
+  it("INV-S7: 승인된 요청을 다른 상태로 되돌리는 것도 거부한다", async () => {
+    const o = await paidOrder();
+    await adminClient().rpc("approve_request", { p_request_id: o.requestId });
+    const { error } = await adminClient().from("approval_requests").update({ status: "declined" }).eq("request_id", o.requestId);
     expect(error?.code).toBe("42501");
   });
 

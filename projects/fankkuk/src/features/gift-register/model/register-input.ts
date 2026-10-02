@@ -15,7 +15,8 @@ const count = z
 
 export const registerFormSchema = z
   .object({
-    creatorId: z.string().min(1, "선물을 받을 크리에이터를 골라 주세요."),
+    // 크리에이터 id 는 DB 의 uuid — 꼴이 다르면 고르지 않은 것과 같다(DB 형식 오류가 서버 오류로 번지지 않게)
+    creatorId: z.string().uuid("선물을 받을 크리에이터를 골라 주세요."),
     itemKind: z.string().trim().min(1, "어떤 선물인지 적어 주세요.").max(30, "30자 안으로 적어 주세요."),
     smallCount: count,
     mediumCount: count,

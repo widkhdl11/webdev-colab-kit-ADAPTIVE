@@ -59,6 +59,9 @@ export function RegisterForm({
   const [query, setQuery] = useState("");
   const [submitError, setSubmitError] = useState<{ message: string; needsLogin: boolean } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // 다시 그려지기 전에 Enter·클릭이 연달아 와도 한 번만 보내게 — state 는 다음 그리기까지 옛 값이다
+  const submittingRef = useRef(false);
+  const [noticeShown, setNoticeShown] = useState(true);
 
   const stepsWrap = useRef<HTMLElement>(null);
   const headings = useRef<Partial<Record<StepNo, HTMLHeadingElement | null>>>({});
@@ -123,9 +126,11 @@ export function RegisterForm({
 
   // 검증을 통과한 폼 값(문자열 그대로)을 보낸다 — 서버가 같은 입력 경계(parseRegisterInput)로 다시 검사한다.
   const submit = async () => {
-    if (submitting) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     setSubmitError(null);
+    setNoticeShown(false);
     try {
       const { creatorId, itemKind, smallCount, mediumCount, electronicsOrMetal } = getValues();
       const res = await fetch("/api/gifts", {
@@ -144,6 +149,7 @@ export function RegisterForm({
     } catch {
       setSubmitError({ message: "등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.", needsLogin: false });
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -493,7 +499,7 @@ export function RegisterForm({
                 ) : null}
               </p>
             ) : null}
-            {notice ? (
+            {notice && noticeShown ? (
               <p className={f.error} role="alert">
                 {notice}
               </p>
@@ -509,7 +515,7 @@ export function RegisterForm({
                   다음
                 </button>
               ) : (
-                <button key="pay" className={`btn ${f.next}`} type="submit" disabled={submitting} aria-busy={submitting || undefined}>
+                <button key="pay" className={`btn ${f.next}`} type="submit" aria-disabled={submitting} aria-busy={submitting || undefined}>
                   {summary.totalKrw !== null ? `${won(summary.totalKrw)} 결제하기` : "결제하기"}
                 </button>
               )}

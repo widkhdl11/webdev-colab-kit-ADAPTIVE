@@ -6,6 +6,7 @@
 --   byeolbit_fan  팬 「별빛」     선물 다섯 건
 --   daltokki_fan  팬 「달토끼」   하루에게 보낸 선물 한 건 — 다른 팬 선물이 안 보이는지 볼 때
 --   haru_creator  크리에이터 「하루」  승인 요청을 받는다
+--   momo_creator  크리에이터 「모모」  하루의 요청이 안 보이는지 볼 때
 --   fankkuk_admin 운영자
 
 -- 승인 기록(approved_at)은 approve_request 로만 바뀐다(INV-S7). 시험 데이터를 넣는 동안만 그 막음을 끈다.
@@ -21,6 +22,7 @@ insert into seed_accounts values
   ('00000000-0000-4000-a000-000000000004', 'somsatang_fan', '솜사탕', 'fan'),
   ('00000000-0000-4000-a000-000000000005', 'haneul_fan', '하늘', 'fan'),
   ('00000000-0000-4000-a000-000000000011', 'haru_creator', '하루', 'creator'),
+  ('00000000-0000-4000-a000-000000000012', 'momo_creator', '모모', 'creator'),
   ('00000000-0000-4000-a000-000000000021', 'fankkuk_admin', '팬꾹 운영', 'operator');
 
 -- 아이디 로그인은 Supabase Auth 의 이메일 로그인 위에 얹는다: 아이디 → <아이디>@fankkuk.test
@@ -48,7 +50,7 @@ select id, login_id, nickname, role from seed_accounts;
 insert into public.creators (id, profile_id, slug, name, channel, channel_title, category, intro, alias, avg_approval_hours, face_tone, identity_verified)
 values
   ('00000000-0000-4000-b000-000000000001', '00000000-0000-4000-a000-000000000011', 'haru', '하루', '치지직', '하루의 놀이터', '게임', '게임 방송을 해요.', 'haru', 2, 'var(--face-6)', true),
-  ('00000000-0000-4000-b000-000000000002', null, 'momo', '모모', '유튜브', '모모네 거실', '노래', '노래 방송을 해요.', 'momo', 4, 'var(--face-3)', true),
+  ('00000000-0000-4000-b000-000000000002', '00000000-0000-4000-a000-000000000012', 'momo', '모모', '유튜브', '모모네 거실', '노래', '노래 방송을 해요.', 'momo', 4, 'var(--face-3)', true),
   ('00000000-0000-4000-b000-000000000003', null, 'saebyeokdal', '새벽달', 'SOOP', '새벽달 라디오', '토크', '새벽에 이야기를 나눠요.', 'saebyeokdal', 1, 'var(--face-5)', true),
   ('00000000-0000-4000-b000-000000000004', null, 'byeol', '별이', '유튜브', '별이의 작업실', '그림', '그림 그리는 방송을 해요.', 'byeol', 3, 'var(--face-1)', true),
   ('00000000-0000-4000-b000-000000000005', null, 'somsatang', '솜사탕', '치지직', '솜사탕 식탁', '먹방', '맛있는 걸 같이 먹어요.', 'somsatang', 6, 'var(--face-4)', true),

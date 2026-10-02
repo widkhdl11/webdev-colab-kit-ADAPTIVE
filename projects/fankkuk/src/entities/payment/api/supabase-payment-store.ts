@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { parseChargeBreakdown } from "../model/charge";
-import type { PaymentStore, StoredPayment } from "./payment-store";
+import { OrderNoTakenError, type PaymentStore, type StoredPayment } from "./payment-store";
 
 // 결제 기록 저장소 — DB 구현. 관리자 키 클라이언트를 받는다(앱 서버 전용).
 // 쓰기는 전부 DB 함수(register_order·claim_payment·settle_payment)로 한다 — 한 처리 안에서 일어나야 하는 것들이
@@ -16,7 +16,7 @@ const rowSchema = z.object({
   shipping_fee_krw: z.number().int(),
   status: z.enum(["pending", "confirming", "done", "failed"]),
   payment_key: z.string().nullable(),
-  orders: z.object({ order_no: z.string(), profiles: z.object({ nickname: z.string() }) }),
+  orders: z.object({ order_no: z.string(), fan_id: z.string(), profiles: z.object({ nickname: z.string() }) }),
 });
 
 function toStored(row: unknown): StoredPayment {
@@ -36,11 +36,12 @@ function toStored(row: unknown): StoredPayment {
     status: r.status,
     paymentKey: r.payment_key,
     charge,
+    fanId: r.orders.fan_id,
     fanNickname: r.orders.profiles.nickname,
   };
 }
 
-const SELECT = "toss_order_id, amount_krw, goods_krw, service_fee_krw, shipping_fee_krw, status, payment_key, orders(order_no, profiles(nickname))";
+const SELECT = "toss_order_id, amount_krw, goods_krw, service_fee_krw, shipping_fee_krw, status, payment_key, orders(order_no, fan_id, profiles(nickname))";
 
 export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore {
   async function find(orderId: string): Promise<StoredPayment | null> {
@@ -64,6 +65,7 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
         p_shipping_fee_krw: charge.shippingFeeKrw,
         p_amount_krw: charge.totalKrw,
       });
+      if (error?.code === "23505" && error.message.includes("orders_order_no_key")) throw new OrderNoTakenError();
       if (error) throw new Error(`선물을 등록하지 못했다: ${error.code}`);
       const stored = await find(orderId);
       if (!stored) throw new Error("등록한 결제 기록을 다시 읽지 못했다");
@@ -77,7 +79,7 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
     },
     async settle(orderId, outcome) {
       const done = outcome.status === "done";
-      const { error } = await admin.rpc("settle_payment", {
+      const { data, error } = await admin.rpc("settle_payment", {
         p_toss_order_id: orderId,
         p_status: outcome.status,
         p_payment_key: done ? outcome.paymentKey : null,
@@ -86,6 +88,7 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
         p_requested_at: done ? outcome.approvalRequest.requestedAt : null,
       });
       if (error) throw new Error(`결제 결과를 반영하지 못했다: ${error.code}`);
+      return data === true;
     },
   };
 }

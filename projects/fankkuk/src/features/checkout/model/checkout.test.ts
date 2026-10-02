@@ -44,7 +44,7 @@ describe("결제 흐름", () => {
     const { deps, store, toss } = setup();
     const p = await pendingFor(store, ["small"]);
 
-    const res = await confirmPayment(deps, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
+    const res = await confirmPayment(deps, "fan-byeolbit", { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
 
     expect(res).toEqual({ ok: true, orderId: p.orderId, orderNo: "FC-7K3M9" });
     expect((await store.find(p.orderId))?.status).toBe("done");
@@ -56,7 +56,7 @@ describe("결제 흐름", () => {
     const { deps, store, toss } = setup();
     const p = await pendingFor(store, ["small"]);
 
-    const res = await confirmPayment(deps, { orderId: p.orderId, amount: "100", paymentKey: "tgen_1" });
+    const res = await confirmPayment(deps, "fan-byeolbit", { orderId: p.orderId, amount: "100", paymentKey: "tgen_1" });
 
     expect(res).toEqual({ ok: false, reason: "amount_mismatch" });
     expect(toss.calls).toHaveLength(0);
@@ -67,7 +67,7 @@ describe("결제 흐름", () => {
     const { deps, store } = setup((b) => ({ status: "ABORTED", orderId: b.orderId, totalAmount: b.amount }));
     const p = await pendingFor(store, ["small"]);
 
-    const res = await confirmPayment(deps, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
+    const res = await confirmPayment(deps, "fan-byeolbit", { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
 
     expect(res).toEqual({ ok: false, reason: "not_approved" });
     expect((await store.find(p.orderId))?.status).toBe("failed");
@@ -78,8 +78,8 @@ describe("결제 흐름", () => {
     const p = await pendingFor(store, ["small"]);
     const ret = { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" };
 
-    await confirmPayment(deps, ret);
-    const again = await confirmPayment(deps, ret);
+    await confirmPayment(deps, "fan-byeolbit", ret);
+    const again = await confirmPayment(deps, "fan-byeolbit", ret);
 
     expect(again).toEqual({ ok: true, orderId: p.orderId, orderNo: "FC-7K3M9" });
     expect(toss.calls).toHaveLength(1);
@@ -91,7 +91,7 @@ describe("결제 흐름", () => {
     const p = await pendingFor(store, ["small"]);
     const ret = { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" };
 
-    const [a, b] = await Promise.all([confirmPayment(deps, ret), confirmPayment(deps, ret)]);
+    const [a, b] = await Promise.all([confirmPayment(deps, "fan-byeolbit", ret), confirmPayment(deps, "fan-byeolbit", ret)]);
 
     expect(toss.calls).toHaveLength(1);
     expect([a.ok, b.ok].filter(Boolean).length).toBeGreaterThanOrEqual(1);
@@ -99,9 +99,47 @@ describe("결제 흐름", () => {
 
   it("INV-M2 (S2b, 실패경로): 없는 orderId 로 오면 승인 API 를 부르지 않는다", async () => {
     const { deps, toss } = setup();
-    const res = await confirmPayment(deps, { orderId: "pay_nope00", amount: "6900", paymentKey: "tgen_1" });
+    const res = await confirmPayment(deps, "fan-byeolbit", { orderId: "pay_nope00", amount: "6900", paymentKey: "tgen_1" });
     expect(res).toEqual({ ok: false, reason: "no_pending_payment" });
     expect(toss.calls).toHaveLength(0);
+  });
+});
+
+describe("결과를 모를 때·남의 결제·잘못된 입력", () => {
+  it("INV-M3 · INV-M5: 승인 API 호출이 오류로 끝나면(결과 모름) 실패로 닫지 않고 승인 중으로 남긴다 — 실제로는 승인됐을 수 있다", async () => {
+    const { store, toss } = setup();
+    const throwing = { ...toss.client, confirm: async () => { throw new Error("timeout"); } };
+    const p = await pendingFor(store, ["small"]);
+    const res = await confirmPayment({ store, toss: throwing }, "fan-byeolbit", { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
+    expect(res).toEqual({ ok: false, reason: "in_progress" });
+    expect((await store.find(p.orderId))?.status).toBe("confirming");
+    expect(store.approvalRequests()).toEqual([]);
+  });
+
+  it("INV-L3: 남의 결제를 처리하려 하면 없는 결제로 보고 아무것도 바꾸지 않는다", async () => {
+    const { deps, store, toss } = setup();
+    const p = await pendingFor(store, ["small"]);
+    const res = await confirmPayment(deps, "fan-daltokki", { orderId: p.orderId, amount: "100", paymentKey: "tgen_1" });
+    expect(res).toEqual({ ok: false, reason: "no_pending_payment" });
+    expect((await store.find(p.orderId))?.status).toBe("pending");
+    expect(toss.calls).toHaveLength(0);
+  });
+
+  it("INV-L3 (S3b): 로그인하지 않았으면(요청자 없음) 아무것도 바꾸지 않는다", async () => {
+    const { deps, store, toss } = setup();
+    const p = await pendingFor(store, ["small"]);
+    const res = await confirmPayment(deps, null, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
+    expect(res).toEqual({ ok: false, reason: "no_pending_payment" });
+    expect((await store.find(p.orderId))?.status).toBe("pending");
+    expect(toss.calls).toHaveLength(0);
+  });
+
+  it("꼴이 잘못된 입력(빈 결제 키·금액 꼴 아님)은 거부만 하고 결제 대기를 닫지 않는다", async () => {
+    const { deps, store } = setup();
+    const p = await pendingFor(store, ["small"]);
+    expect((await confirmPayment(deps, "fan-byeolbit", { orderId: p.orderId, amount: "6900", paymentKey: "" })).ok).toBe(false);
+    expect((await confirmPayment(deps, "fan-byeolbit", { orderId: p.orderId, amount: "6,900", paymentKey: "tgen_1" })).ok).toBe(false);
+    expect((await store.find(p.orderId))?.status).toBe("pending");
   });
 });
 
@@ -109,7 +147,7 @@ describe("결제 완료와 승인 요청", () => {
   it("INV-M6 · INV-S1: 결제가 끝날 때 승인 요청을 같이 넘긴다 — 원문은 요청 ID·주문번호·시각·팬 닉네임 해시 네 값", async () => {
     const { deps, store } = setup();
     const p = await pendingFor(store, ["small"]);
-    await confirmPayment(deps, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
+    await confirmPayment(deps, "fan-byeolbit", { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
 
     const settled = store.approvalRequests();
     expect(settled).toHaveLength(1);
@@ -127,7 +165,7 @@ describe("결제 완료와 승인 요청", () => {
   it("INV-M6 (S6, 실패경로): 승인되지 않은 결제에는 승인 요청을 넘기지 않는다", async () => {
     const { deps, store } = setup((b) => ({ status: "ABORTED", orderId: b.orderId, totalAmount: b.amount }));
     const p = await pendingFor(store, ["small"]);
-    await confirmPayment(deps, { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
+    await confirmPayment(deps, "fan-byeolbit", { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
     expect(store.approvalRequests()).toEqual([]);
   });
 });

@@ -43,6 +43,30 @@ describe("읽기 함수는 로그인한 사람의 것만 돌려준다", () => {
     expect(reqs2.map((g) => g.order_no)).toContain(o.orderNo);
   });
 
+  it("크리에이터는 자기에게 온 요청만 본다 — 하루의 요청은 모모에게, 모모의 요청은 하루에게 안 보인다", async () => {
+    const haru = await signedInClient("haru_creator");
+    const momo = await signedInClient("momo_creator");
+    const haruWaiting = ((await haru.rpc("my_approval_requests")).data as { order_no: string }[]).map((r) => r.order_no);
+    const momoWaiting = ((await momo.rpc("my_approval_requests")).data as { order_no: string }[]).map((r) => r.order_no);
+    expect(haruWaiting).toEqual(expect.arrayContaining(["FC-P4X7N", "FC-L5T6B", "FC-Z9C3V"]));
+    expect(haruWaiting).not.toContain("FC-W5N3T");
+    expect(momoWaiting).toContain("FC-W5N3T");
+    expect(momoWaiting).not.toContain("FC-P4X7N");
+
+    const haruDecided = ((await haru.rpc("my_decided_requests")).data as { order_no: string }[]).map((r) => r.order_no);
+    const momoDecided = ((await momo.rpc("my_decided_requests")).data as { order_no: string }[]).map((r) => r.order_no);
+    expect(haruDecided).toEqual(expect.arrayContaining(["FC-7K3M9", "FC-A1B2C"]));
+    expect(haruDecided).not.toContain("FC-M3N4P");
+    expect(momoDecided).toEqual(expect.arrayContaining(["FC-R2D8Q", "FC-M3N4P"]));
+    expect(momoDecided).not.toContain("FC-7K3M9");
+  });
+
+  it("처리한 요청도 팬이 부르면 빈 결과, 로그인하지 않으면 거부", async () => {
+    const byeolbit = await signedInClient("byeolbit_fan");
+    expect((await byeolbit.rpc("my_decided_requests")).data).toEqual([]);
+    expect((await anonClient().rpc("my_decided_requests")).error?.code).toBe("42501");
+  });
+
   it("승인 요청은 그 크리에이터 계정에게만 — 팬이 부르면 빈 결과", async () => {
     const byeolbit = await signedInClient("byeolbit_fan");
     const r = await byeolbit.rpc("my_approval_requests");

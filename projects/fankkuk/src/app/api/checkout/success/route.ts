@@ -1,13 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { readViewer } from "@/entities/session/model/viewer";
 import { confirmPayment } from "@/features/checkout/model/checkout";
+import { createRequestSupabase } from "@/shared/api/supabase/server";
 import { checkoutDeps } from "../deps";
 
 // 토스 결제창이 성공하면 이 주소로 paymentKey·orderId·amount 를 붙여 보낸다.
 // 쿼리 값은 대조용일 뿐이다 — 승인은 서버가 승인 API 를 부르고 응답을 판정해야 끝난다(INV-M2·M3).
+// 로그인한 팬이 등록한 결제만 처리한다(INV-L3) — 남의 결제 orderId 를 알아도 그 결제를 건드릴 수 없다.
 // 끝나면 선물 상세로, 실패하면 선물 보내기 화면으로 돌려보낸다.
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams;
-  const outcome = await confirmPayment(checkoutDeps(), {
+  const viewer = await readViewer(await createRequestSupabase());
+  const outcome = await confirmPayment(checkoutDeps(), viewer?.role === "fan" ? viewer.userId : null, {
     orderId: q.get("orderId") ?? "",
     amount: q.get("amount") ?? "",
     paymentKey: q.get("paymentKey") ?? "",

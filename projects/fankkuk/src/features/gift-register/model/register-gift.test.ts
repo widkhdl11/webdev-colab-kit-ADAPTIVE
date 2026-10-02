@@ -3,7 +3,7 @@ import { createMemoryPaymentStore } from "@/entities/payment/api/memory-payment-
 import { registerGift } from "./register-gift";
 
 const FAN = { userId: "fan-byeolbit", role: "fan" } as const;
-const form = { creatorId: "creator-1", itemKind: "손편지", smallCount: "2", mediumCount: "1", electronicsOrMetal: "no" };
+const form = { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "손편지", smallCount: "2", mediumCount: "1", electronicsOrMetal: "no" };
 
 function setup() {
   const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
@@ -54,5 +54,18 @@ describe("INV-L3: 쓰기에 넘기는 사람은 확인한 로그인 사용자다
       expect(await registerGift({ ...deps, viewer: { userId: "x", role } }, form)).toMatchObject({ ok: false, status: 403 });
     }
     expect(store.registrations()).toEqual([]);
+  });
+});
+
+describe("주문번호", () => {
+  it("만든 주문번호가 이미 있으면 새 번호로 다시 등록한다", async () => {
+    const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
+    const nos = ["FC-SAME1", "FC-SAME1", "FC-OTHER"];
+    const newNo = () => nos.shift()!;
+    const first = await registerGift({ store, viewer: FAN, newOrderNo: newNo }, form);
+    const second = await registerGift({ store, viewer: FAN, newOrderNo: newNo }, form);
+    expect(first).toMatchObject({ ok: true, orderNo: "FC-SAME1" });
+    expect(second).toMatchObject({ ok: true, orderNo: "FC-OTHER" });
+    expect(store.registrations()).toHaveLength(2);
   });
 });

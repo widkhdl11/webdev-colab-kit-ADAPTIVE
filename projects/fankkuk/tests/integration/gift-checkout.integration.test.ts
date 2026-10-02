@@ -53,9 +53,24 @@ describe("선물 등록을 DB 에", () => {
     expect(count).toBe(2);
   });
 
-  it("없는 크리에이터로는 등록되지 않는다", async () => {
+  it("없는 크리에이터로는 등록되지 않고 아무것도 남지 않는다", async () => {
     const store = createSupabasePaymentStore(adminClient());
-    await expect(registerGift({ store, viewer: fan }, form({ creatorId: "00000000-0000-4000-b000-000000000999" }))).rejects.toThrow();
+    const before = (await adminClient().from("orders").select("id", { count: "exact", head: true })).count;
+    await expect(registerGift({ store, viewer: fan }, form({ creatorId: "00000000-0000-4000-b000-000000000999" }))).rejects.toThrow(/등록하지 못했다/);
+    const after = (await adminClient().from("orders").select("id", { count: "exact", head: true })).count;
+    expect(after).toBe(before);
+  });
+
+  it("INV-L3: 달토끼로 로그인해 별빛의 결제를 승인하려 하면 아무것도 바뀌지 않는다", async () => {
+    const store = createSupabasePaymentStore(adminClient());
+    const toss = fakeToss();
+    const r = await registerGift({ store, viewer: fan }, form());
+    if (!r.ok) throw new Error();
+    const out = await confirmPayment({ store, toss: toss.client }, SEED.otherFanId, { orderId: r.orderId, amount: "1", paymentKey: "x" });
+    expect(out).toEqual({ ok: false, reason: "no_pending_payment" });
+    expect(toss.calls).toHaveLength(0);
+    const { data: pay } = await adminClient().from("payments").select("status").eq("toss_order_id", r.orderId).single();
+    expect(pay?.status).toBe("pending");
   });
 });
 
@@ -71,7 +86,7 @@ describe("결제 승인 → 승인 요청", () => {
     const r = await registerGift({ store, viewer: fan }, form());
     if (!r.ok) throw new Error();
 
-    const out = await confirmPayment({ store, toss: toss.client }, { orderId: r.orderId, amount: String(r.amountKrw), paymentKey: "tgen_it_1" });
+    const out = await confirmPayment({ store, toss: toss.client }, SEED.fanId, { orderId: r.orderId, amount: String(r.amountKrw), paymentKey: "tgen_it_1" });
     expect(out).toEqual({ ok: true, orderId: r.orderId, orderNo: r.orderNo });
 
     const { data: order } = await adminClient().from("orders").select("status").eq("order_no", r.orderNo).single();
@@ -97,8 +112,8 @@ describe("결제 승인 → 승인 요청", () => {
     const r = await registerGift({ store, viewer: fan }, form());
     if (!r.ok) throw new Error();
     const ret = { orderId: r.orderId, amount: String(r.amountKrw), paymentKey: "tgen_it_2" };
-    await confirmPayment({ store, toss: toss.client }, ret);
-    const again = await confirmPayment({ store, toss: toss.client }, ret);
+    await confirmPayment({ store, toss: toss.client }, SEED.fanId, ret);
+    const again = await confirmPayment({ store, toss: toss.client }, SEED.fanId, ret);
     expect(again.ok).toBe(true);
     expect(toss.calls).toHaveLength(1);
     const { data } = await adminClient().from("approval_requests").select("id").eq("order_id", (await orderId(r.orderNo))!);
@@ -110,7 +125,7 @@ describe("결제 승인 → 승인 요청", () => {
     const toss = fakeToss();
     const r = await registerGift({ store, viewer: fan }, form());
     if (!r.ok) throw new Error();
-    const out = await confirmPayment({ store, toss: toss.client }, { orderId: r.orderId, amount: "100", paymentKey: "tgen_it_3" });
+    const out = await confirmPayment({ store, toss: toss.client }, SEED.fanId, { orderId: r.orderId, amount: "100", paymentKey: "tgen_it_3" });
     expect(out).toEqual({ ok: false, reason: "amount_mismatch" });
     expect(toss.calls).toHaveLength(0);
     const { data: pay } = await adminClient().from("payments").select("status").eq("toss_order_id", r.orderId).single();
@@ -124,9 +139,13 @@ describe("결제 승인 → 승인 요청", () => {
     const toss = fakeToss("ABORTED");
     const r = await registerGift({ store, viewer: fan }, form());
     if (!r.ok) throw new Error();
-    const out = await confirmPayment({ store, toss: toss.client }, { orderId: r.orderId, amount: String(r.amountKrw), paymentKey: "tgen_it_4" });
+    const out = await confirmPayment({ store, toss: toss.client }, SEED.fanId, { orderId: r.orderId, amount: String(r.amountKrw), paymentKey: "tgen_it_4" });
     expect(out).toEqual({ ok: false, reason: "not_approved" });
     const { data: order } = await adminClient().from("orders").select("status").eq("order_no", r.orderNo).single();
     expect(order?.status).toBe("pending_payment");
+    const { data: pay } = await adminClient().from("payments").select("status").eq("toss_order_id", r.orderId).single();
+    expect(pay?.status).toBe("failed");
+    const { data: reqs } = await adminClient().from("approval_requests").select("id").eq("order_id", (await orderId(r.orderNo))!);
+    expect(reqs).toEqual([]);
   });
 });

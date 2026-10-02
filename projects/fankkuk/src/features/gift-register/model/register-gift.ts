@@ -1,4 +1,5 @@
-import type { PaymentStore } from "@/entities/payment/api/payment-store";
+import { newOrderNo } from "@/entities/order/model/order-no";
+import { OrderNoTakenError, type PaymentStore } from "@/entities/payment/api/payment-store";
 import { computeCharge } from "@/entities/payment/model/charge";
 import type { Viewer } from "@/entities/session/model/viewer";
 import { parseRegisterInput, type RegisterFormValues } from "./register-input";
@@ -9,16 +10,6 @@ export type RegisterGiftResult =
   | { ok: true; orderId: string; orderNo: string; amountKrw: number }
   | { ok: false; status: 401 | 403; message: string }
   | { ok: false; status: 400; errors: Partial<Record<keyof RegisterFormValues, string>> };
-
-const ORDER_NO_ALPHABET = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-
-function randomCode(n: number): string {
-  return Array.from(crypto.getRandomValues(new Uint8Array(n)), (b) => ORDER_NO_ALPHABET[b % ORDER_NO_ALPHABET.length]).join("");
-}
-
-export function newOrderNo(): string {
-  return `FC-${randomCode(5)}`;
-}
 
 /** 토스 orderId 규칙: 영문·숫자·-·_ 6~64자. */
 function newPaymentOrderId(): string {
@@ -42,12 +33,15 @@ export async function registerGift(
 
   const { creatorId, itemKind, boxes, hasElectronicsOrMetal } = parsed.data;
   const charge = computeCharge({ boxes });
-  const stored = await deps.store.create({
-    orderId: newPaymentOrderId(),
-    orderNo: (deps.newOrderNo ?? newOrderNo)(),
-    charge,
-    registration: { fanId: deps.viewer.userId, creatorId, itemKind, hasElectronicsOrMetal, boxes },
-  });
-  // 결제 기록의 칸 나눔(택배 원가·서비스료)은 돌려주지 않는다 — 팬에게는 한 금액만(INV-M7)
-  return { ok: true, orderId: stored.orderId, orderNo: stored.orderNo, amountKrw: stored.amountKrw };
+  const registration = { fanId: deps.viewer.userId, creatorId, itemKind, hasElectronicsOrMetal, boxes };
+  // 주문번호가 겹치면(다섯 자리 무작위) 새 번호로 두 번까지 다시 시도한다
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      const stored = await deps.store.create({ orderId: newPaymentOrderId(), orderNo: (deps.newOrderNo ?? newOrderNo)(), charge, registration });
+      // 결제 기록의 칸 나눔(택배 원가·서비스료)은 돌려주지 않는다 — 팬에게는 한 금액만(INV-M7)
+      return { ok: true, orderId: stored.orderId, orderNo: stored.orderNo, amountKrw: stored.amountKrw };
+    } catch (e) {
+      if (!(e instanceof OrderNoTakenError) || attempt >= 3) throw e;
+    }
+  }
 }

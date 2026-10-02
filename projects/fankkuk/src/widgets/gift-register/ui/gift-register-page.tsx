@@ -32,7 +32,7 @@ export function GiftRegisterPage({
           <PaymentStep clientKey={clientKey} pending={registered} />
         ) : (
           <p className="container" role="alert">
-            결제 설정이 없어 결제창을 열 수 없어요(NEXT_PUBLIC_TOSS_CLIENT_KEY).
+            지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.
           </p>
         )
       ) : (

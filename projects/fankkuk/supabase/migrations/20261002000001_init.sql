@@ -192,7 +192,10 @@ revoke all on all sequences in schema public from anon, authenticated;
 -- 앞으로 만드는 표도 기본으로 닫는다
 alter default privileges in schema public revoke all on tables from anon, authenticated;
 alter default privileges in schema public revoke all on sequences from anon, authenticated;
-alter default privileges in schema public revoke execute on functions from anon, authenticated, public;
+-- 함수 실행 권한을 PUBLIC 에 주는 것은 전역 기본값이라 스키마 단위로는 걷히지 않는다 — 전역으로 걷는다.
+-- (postgres 가 만드는 함수에 적용. 그래도 함수마다 revoke·grant 를 적는다 — 0002 이후 파일 참고)
+alter default privileges revoke execute on functions from public;
+alter default privileges in schema public revoke execute on functions from anon, authenticated;
 
 -- ── 열람 기록: 고치거나 지울 수 없다(INV-P7) ─────────────
 

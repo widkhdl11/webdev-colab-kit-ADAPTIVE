@@ -21,13 +21,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   const creators = await readCreatorCards(supabase, { signedIn: viewer !== null });
   const initialCreatorId = typeof creator === "string" && creators.some((c) => c.id === creator) ? creator : "";
   const notice = typeof payment === "string" ? PAYMENT_NOTICE[payment] : undefined;
+  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
+  if (!clientKey) console.warn("NEXT_PUBLIC_TOSS_CLIENT_KEY 가 없어 결제창을 열 수 없다");
   return (
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts/new")} />
       <GiftRegisterPage
         creators={creators}
         initialCreatorId={initialCreatorId}
-        clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""}
+        clientKey={clientKey}
         notice={notice}
       />
       <SiteFooter />

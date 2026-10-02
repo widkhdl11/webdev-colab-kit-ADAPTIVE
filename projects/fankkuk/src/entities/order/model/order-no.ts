@@ -5,3 +5,11 @@ export const ORDER_NO_PATTERN = /^FC-[0-9A-Z]{3,10}(-[0-9]{1,2})?$/;
 export function isOrderNo(value: string): boolean {
   return ORDER_NO_PATTERN.test(value);
 }
+
+// 새 등록 건의 번호: FC- + 다섯 자리. 헷갈리는 글자(I·O)는 뺀다. 겹치면 DB 유일 제약이 막고 등록이 새 번호로 다시 시도한다.
+const NEW_ORDER_NO_ALPHABET = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+export function newOrderNo(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(5));
+  return `FC-${Array.from(bytes, (b) => NEW_ORDER_NO_ALPHABET[b % NEW_ORDER_NO_ALPHABET.length]).join("")}`;
+}

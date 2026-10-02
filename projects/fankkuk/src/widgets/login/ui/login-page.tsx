@@ -62,21 +62,37 @@ export function LoginPage() {
           <form className={s.form} onSubmit={onSubmit}>
             <div className="field">
               <label htmlFor={f("id")}>아이디</label>
-              <input className="input" id={f("id")} type="text" autoComplete="username" placeholder="아이디를 입력해 주세요" />
+              <input
+                className="input"
+                id={f("id")}
+                type="text"
+                autoComplete="username"
+                placeholder="아이디를 입력해 주세요"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? f("error") : undefined}
+              />
             </div>
             <div className="field">
               <label htmlFor={f("pw")}>비밀번호</label>
-              <input className="input" id={f("pw")} type="password" autoComplete="current-password" placeholder="비밀번호를 입력해 주세요" />
+              <input
+                className="input"
+                id={f("pw")}
+                type="password"
+                autoComplete="current-password"
+                placeholder="비밀번호를 입력해 주세요"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? f("error") : undefined}
+              />
             </div>
             <label className={s.check}>
               <input type="checkbox" /> 로그인 상태 유지
             </label>
             {error && (
-              <p className={s.error} role="alert">
+              <p className={s.error} id={f("error")} role="alert">
                 {error}
               </p>
             )}
-            <button className="btn btn--block" type="submit" disabled={pending} aria-busy={pending || undefined}>
+            <button className="btn btn--block" type="submit" aria-disabled={pending} aria-busy={pending || undefined}>
               로그인
             </button>
           </form>

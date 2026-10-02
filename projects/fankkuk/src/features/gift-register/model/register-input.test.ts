@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { MAX_BOX_COUNT, parseRegisterInput } from "./register-input";
 
-const ok = { creatorId: "c1", itemKind: "인형", smallCount: "2", mediumCount: "1", electronicsOrMetal: "no" };
+const ok = { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "인형", smallCount: "2", mediumCount: "1", electronicsOrMetal: "no" };
 
 describe("parseRegisterInput — 선물 등록 입력 경계", () => {
   it("정상 입력은 상자 구간 목록·참거짓으로 바뀐다 (소형 먼저)", () => {
     expect(parseRegisterInput(ok)).toEqual({
       success: true,
-      data: { creatorId: "c1", itemKind: "인형", boxes: ["small", "small", "medium"], hasElectronicsOrMetal: false },
+      data: { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "인형", boxes: ["small", "small", "medium"], hasElectronicsOrMetal: false },
     });
   });
 
@@ -55,5 +55,13 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
     const r = parseRegisterInput({ ...ok, totalKrw: "100", largeCount: "3" });
     expect(r.success && Object.keys(r.data).sort()).toEqual(["boxes", "creatorId", "hasElectronicsOrMetal", "itemKind"]);
     expect(r.success && r.data.boxes).toHaveLength(3);
+  });
+});
+
+describe("크리에이터 칸", () => {
+  it("크리에이터 id 꼴(uuid)이 아니면 받지 않는다 — DB 형식 오류가 서버 오류로 번지지 않게", () => {
+    const base = { itemKind: "편지", smallCount: "1", mediumCount: "0", electronicsOrMetal: "no" };
+    expect(parseRegisterInput({ ...base, creatorId: "x" }).success).toBe(false);
+    expect(parseRegisterInput({ ...base, creatorId: "00000000-0000-4000-b000-000000000001" }).success).toBe(true);
   });
 });

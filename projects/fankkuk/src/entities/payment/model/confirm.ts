@@ -24,9 +24,9 @@ export function checkSuccessReturn(ret: SuccessReturn, pending: PendingPayment |
   if (pending.status !== "pending") return { ok: false, reason: "already_settled" };
   if (ret.paymentKey === "") return { ok: false, reason: "bad_input" };
   if (ret.orderId !== pending.orderId) return { ok: false, reason: "order_mismatch" };
-  if (!AMOUNT_PATTERN.test(ret.amount) || Number(ret.amount) !== pending.amountKrw) {
-    return { ok: false, reason: "amount_mismatch" };
-  }
+  // 꼴이 아닌 금액은 입력 오류(bad_input), 꼴은 맞는데 다른 금액만 금액 불일치(amount_mismatch) — 불일치만 결제 대기를 닫는다
+  if (!AMOUNT_PATTERN.test(ret.amount)) return { ok: false, reason: "bad_input" };
+  if (Number(ret.amount) !== pending.amountKrw) return { ok: false, reason: "amount_mismatch" };
   return { ok: true, paymentKey: ret.paymentKey, orderId: pending.orderId, amountKrw: pending.amountKrw };
 }
 

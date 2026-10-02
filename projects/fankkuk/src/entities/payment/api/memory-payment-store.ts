@@ -1,4 +1,4 @@
-import type { ApprovalRequestDraft, GiftRegistration, PaymentStore, StoredPayment } from "./payment-store";
+import { OrderNoTakenError, type ApprovalRequestDraft, type GiftRegistration, type PaymentStore, type StoredPayment } from "./payment-store";
 
 type EnvLike = { NODE_ENV?: string; VERCEL_ENV?: string };
 
@@ -24,6 +24,7 @@ export function createMemoryPaymentStore(opts: { env: EnvLike; nicknames?: Recor
   return {
     async create({ orderId, orderNo, charge, registration }) {
       if (rows.has(orderId)) throw new Error("이미 있는 결제 orderId");
+      if ([...rows.values()].some((r) => r.orderNo === orderNo)) throw new OrderNoTakenError();
       const row: StoredPayment = {
         orderId,
         orderNo,
@@ -31,6 +32,7 @@ export function createMemoryPaymentStore(opts: { env: EnvLike; nicknames?: Recor
         amountKrw: charge.totalKrw,
         status: "pending",
         paymentKey: null,
+        fanId: registration.fanId,
         fanNickname: opts.nicknames?.[registration.fanId] ?? registration.fanId,
       };
       rows.set(orderId, row);
@@ -50,12 +52,13 @@ export function createMemoryPaymentStore(opts: { env: EnvLike; nicknames?: Recor
     },
     async settle(orderId, outcome) {
       const row = rows.get(orderId);
-      if (!row || row.status === "done" || row.status === "failed") return;
+      if (!row || row.status === "done" || row.status === "failed") return false;
       row.status = outcome.status;
       if (outcome.status === "done") {
         row.paymentKey = outcome.paymentKey;
         requests.push({ ...outcome.approvalRequest });
       }
+      return true;
     },
     registrations: () => registrations.map((r) => ({ ...r })),
     approvalRequests: () => requests.map((r) => ({ ...r })),
