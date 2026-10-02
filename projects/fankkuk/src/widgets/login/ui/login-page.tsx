@@ -2,21 +2,50 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useId, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import s from "./login.module.css";
 
 // 로그인. 시안: docs/design/mockups/site/v4/login.html
-// 겉모양만 있다 — 로그인 방식은 아직 결정 대기라 실제 확인을 붙이지 않는다. 「로그인」은 메인(/home)으로 넘어가기만 한다.
-// 입력값은 읽지도 보내지도 않는다. 입력칸에 name 을 두지 않아 폼 기본 제출이 일어나도 값이 주소창에 실리지 않는다.
+// 아이디·비밀번호를 앱 서버(/api/auth/login)로 보낸다. 토큰은 서버가 HttpOnly 쿠키로만 쓰고 이 화면은 받지 않는다(INV-L1).
+// 입력칸에 name 을 두지 않아 스크립트가 꺼진 채 기본 제출이 일어나도 값이 주소창에 실리지 않는다.
+// 「로그인 상태 유지」·비밀번호 재설정은 계정 스펙 몫이라 아직 겉모양만 있다(지금은 늘 유지).
+
+type LoginResponse = { ok?: boolean; message?: string };
 
 export function LoginPage() {
   const router = useRouter();
   const id = useId();
   const f = (name: string) => `${id}-${name}`;
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    router.push("/home");
+    if (pending) return;
+    const form = e.currentTarget;
+    const loginId = (form.elements.namedItem(f("id")) as HTMLInputElement | null)?.value ?? "";
+    const password = (form.elements.namedItem(f("pw")) as HTMLInputElement | null)?.value ?? "";
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ loginId, password }),
+      });
+      if (res.ok) {
+        router.push("/home");
+        router.refresh();
+        return;
+      }
+      const body = (await res.json().catch(() => ({}))) as LoginResponse;
+      setError(body.message ?? "로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+    } catch {
+      setError("로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
@@ -42,7 +71,12 @@ export function LoginPage() {
             <label className={s.check}>
               <input type="checkbox" /> 로그인 상태 유지
             </label>
-            <button className="btn btn--block" type="submit">
+            {error && (
+              <p className={s.error} role="alert">
+                {error}
+              </p>
+            )}
+            <button className="btn btn--block" type="submit" disabled={pending} aria-busy={pending || undefined}>
               로그인
             </button>
           </form>
