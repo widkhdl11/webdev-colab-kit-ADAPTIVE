@@ -46,6 +46,36 @@ export function psqlError(sql: string): string | null {
   }
 }
 
+/** 시험이 만드는 주문의 물건 이름. 시드 주문은 이 이름을 쓰지 않는다 — 정리할 때 이것으로 가려낸다. */
+export const TEST_ITEM_KINDS = ["시험 선물", "통합 시험 선물"] as const;
+
+/**
+ * 시험이 만든 주문을 딸린 상자·결제·승인 요청·열람 기록까지 한 트랜잭션으로 지운다.
+ * 열람 기록은 DB 가 수정·삭제를 막아 두었으므로(INV-P7) 그 한 줄만 트리거를 끄고 지운다.
+ * 로컬 컨테이너에만 붙는 psql 로 실행하므로 호스팅 DB 에는 닿지 않는다.
+ */
+export function deleteTestOrders(): void {
+  const kinds = TEST_ITEM_KINDS.map((k) => `'${k}'`).join(", ");
+  const ids = `select id from public.orders where item_kind in (${kinds})`;
+  psql(
+    [
+      "begin;",
+      "set local session_replication_role = replica;",
+      `delete from public.decrypt_log where order_id in (${ids});`,
+      "set local session_replication_role = origin;",
+      `delete from public.approval_requests where order_id in (${ids});`,
+      `delete from public.payments where order_id in (${ids});`,
+      `delete from public.orders where item_kind in (${kinds});`,
+      "commit;",
+    ].join(" "),
+  );
+}
+
+export function countTestOrders(): number {
+  const kinds = TEST_ITEM_KINDS.map((k) => `'${k}'`).join(", ");
+  return Number(psql(`select count(*) from public.orders where item_kind in (${kinds});`));
+}
+
 export const SEED = {
   fanId: "00000000-0000-4000-a000-000000000001", // 별빛
   otherFanId: "00000000-0000-4000-a000-000000000002", // 달토끼

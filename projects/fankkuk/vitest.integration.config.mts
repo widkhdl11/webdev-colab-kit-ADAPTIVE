@@ -15,6 +15,7 @@ export default defineConfig({
     globals: true,
     include: ["tests/integration/**/*.test.ts"],
     setupFiles: ["tests/integration/setup-env.ts"],
+    globalSetup: ["tests/integration/global-cleanup.ts"],
     // 같은 표를 건드리므로 순차 실행한다.
     fileParallelism: false,
     testTimeout: 30_000,
