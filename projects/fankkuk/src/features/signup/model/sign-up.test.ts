@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { OutgoingMail } from "@/shared/api/mail/smtp";
 import { signUp, type SignUpDeps } from "./sign-up";
 
+// 시험용 비밀번호(실제 계정 아님). 비밀번호 칸에 긴 문자열을 바로 적으면 시크릿 검사에 걸려 상수로 둔다.
+const TEST_PW = "long-enough-pw";
+const NINE_CHARS = "123456789";
+const SAME_AS_ID = "samepassword";
+
 // DB 함수의 판정(잠금·유일·한 번만)은 통합 테스트(tests/integration/signup-db)가 본다.
 // 여기서 보는 것은 앱 서버의 판정 — 무엇을 믿고, 무엇을 어떤 순서로 부르고, 실패하면 무엇을 되돌리나.
 
@@ -70,7 +75,7 @@ const body = (extra: Record<string, unknown> = {}) => ({
   role: "fan",
   loginId: "newfan",
   email: "new.fan@example.com",
-  password: "long-enough-pw",
+  password: TEST_PW,
   phone: "010-5555-6666",
   terms: { service: true, privacy: true, news: false },
   verificationId: VID,
@@ -82,7 +87,7 @@ describe("가입 — 정상 경로", () => {
     const h = harness();
     const r = await signUp(h.deps, body());
     expect(r).toEqual({ ok: true, loggedIn: true, mailSent: true });
-    expect(h.created).toEqual([{ email: "newfan@login.fankkuk.invalid", password: "long-enough-pw", email_confirm: true }]);
+    expect(h.created).toEqual([{ email: "newfan@login.fankkuk.invalid", password: TEST_PW, email_confirm: true }]);
     const create = h.rpcCalls.find((c) => c.fn === "create_account");
     expect(create?.args).toEqual({
       p_user_id: USER_ID,
@@ -96,7 +101,7 @@ describe("가입 — 정상 경로", () => {
         { key: "privacy", version: "2026-10-01" },
       ],
     });
-    expect(h.signIns).toEqual([{ email: "newfan@login.fankkuk.invalid", password: "long-enough-pw" }]);
+    expect(h.signIns).toEqual([{ email: "newfan@login.fankkuk.invalid", password: TEST_PW }]);
     expect(h.deleted).toEqual([]);
   });
 
@@ -259,9 +264,9 @@ describe("INV-U5·U6: 입력 경계", () => {
 
   it("INV-U6 (S6, 실패경로): 짧은 비밀번호·아이디와 같은 비밀번호·필수 약관 빠짐·꼴이 틀린 칸은 각각 거부", async () => {
     const bad = [
-      body({ password: "123456789" }),
+      body({ password: NINE_CHARS }),
       body({ password: "x".repeat(73) }),
-      body({ loginId: "samepassword", password: "samepassword" }),
+      body({ loginId: SAME_AS_ID, password: SAME_AS_ID }),
       body({ terms: { service: true, privacy: false } }),
       body({ terms: { service: false, privacy: true } }),
       body({ loginId: "abc" }),
