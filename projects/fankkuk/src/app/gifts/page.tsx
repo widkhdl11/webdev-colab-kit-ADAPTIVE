@@ -11,7 +11,7 @@ import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 export const dynamic = "force-dynamic";
 
 // 로그인한 사람이 보낸 선물(DB 읽기 함수 my_gifts — 보낸 사람 것만, 보낸 사람이 봐도 되는 칸만).
-// 팬은 「내 팬꾹」 안에서, 크리에이터는 「보낸 선물」 화면으로 본다(크리에이터의 「내 팬꾹」 메뉴에는 선물 내역이 없다). 운영자·손님은 로그인으로.
+// 팬·크리에이터 모두 「내 팬꾹」 안에서 본다(팬 메뉴 「선물 내역」, 크리에이터 메뉴 「보낸 선물」). 운영자·손님은 로그인으로.
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (!viewer || !senderRoleAllowed(viewer.role)) redirect("/login");
@@ -25,14 +25,9 @@ export default async function Page() {
           <GiftListPage gifts={gifts} faceToneByName={faceToneByName} />
         </MyShell>
       ) : (
-        <main id="main">
-          <div className="container page-title">
-            <h1 className="page-h">보낸 선물</h1>
-          </div>
-          <div className="container">
-            <GiftListPage gifts={gifts} faceToneByName={faceToneByName} showHeading={false} />
-          </div>
-        </main>
+        <MyShell role="creator" current="/gifts">
+          <GiftListPage gifts={gifts} faceToneByName={faceToneByName} title="보낸 선물" />
+        </MyShell>
       )}
       <SiteFooter />
     </>

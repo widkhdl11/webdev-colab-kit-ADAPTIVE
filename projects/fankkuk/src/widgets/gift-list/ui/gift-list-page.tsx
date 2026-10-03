@@ -6,7 +6,7 @@ import { formatDate } from "@/shared/lib/format/datetime";
 import { GiftTabs } from "./gift-tabs";
 import s from "./gift-list.module.css";
 
-// 팬 — 선물 내역(내 정보 안). 시안: docs/design/mockups/site/v4/my-gifts.html
+// 보낸 선물 목록(「내 팬꾹」 안) — 팬은 「선물 내역」, 크리에이터는 「보낸 선물」. 시안: docs/design/mockups/site/v4/my-gifts.html
 // 진행 중 · 끝난 선물 · 받지 않은 선물, 한 줄에 하나. 받지 않은 선물은 거절·자동 반려 모두 같은 모습이다(fan-view).
 // 내 정보 틀(제목·왼쪽 메뉴)과 <main> 은 라우트가 붙인다.
 
@@ -85,10 +85,10 @@ function Rows({
 export function GiftListPage({
   gifts,
   faceToneByName,
-  showHeading = true,
+  title = "선물 내역",
 }: {
-  /** false = 화면 제목을 라우트가 이미 붙였다(크리에이터의 「보낸 선물」) — 두 번 나오지 않게 */
-  showHeading?: boolean;
+  /** 본문 머리 — 「내 팬꾹」 메뉴 이름과 같게(팬 「선물 내역」, 크리에이터 「보낸 선물」) */
+  title?: string;
   gifts: readonly FanGiftView[];
   /** 크리에이터 이름 → 얼굴 면 색. 메인 화면과 같은 색을 쓴다. */
   faceToneByName: Readonly<Record<string, string>>;
@@ -100,11 +100,9 @@ export function GiftListPage({
 
   return (
     <div>
-      {showHeading ? (
-        <div className={s["my-h"]}>
-          <h2>선물 내역</h2>
-        </div>
-      ) : null}
+      <div className={s["my-h"]}>
+        <h2>{title}</h2>
+      </div>
       <GiftTabs
         tabs={[
           {
