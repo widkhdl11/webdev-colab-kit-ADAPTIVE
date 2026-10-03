@@ -7,7 +7,7 @@
 {
   "product": {
     "status": "clean",
-    "hash": "3f51d64853bb"
+    "hash": "3ad32d93198f"
   },
   "spec": {
     "status": "dirty",
@@ -23,7 +23,7 @@
   },
   "design/schema-designer": {
     "status": "clean",
-    "hash": "77c62ed0f3a2"
+    "hash": "0efb6aa6e815"
   },
   "implement": {
     "status": "dirty",
