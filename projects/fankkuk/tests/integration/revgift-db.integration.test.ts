@@ -309,3 +309,28 @@ describe("역조공 보내기는 크리에이터 페이지와 묶인다", () => 
     expect(psql(`select creator_id from public.revgift_sends where id = '${send.sendId}'`)).toBe(HARU_CREATOR_ID);
   });
 });
+
+describe("앱 서버 등록 → DB 등록 함수 (INV-R1·R3 두 장치가 이어진다)", () => {
+  it("INV-R1 S1b (실패경로): 팔로우 안 한 팬을 넣으면 DB 가 거부하고 앱은 403 과 한 가지 문구를 준다", async () => {
+    const { registerRevgift } = await import("@/features/revgift-send/model/register-revgift");
+    const { createSupabaseRevgiftStore } = await import("@/features/revgift-send/api/supabase-revgift-store");
+    const r = await registerRevgift(
+      { store: createSupabaseRevgiftStore(adminClient()), viewer: { userId: PROFILE.haru, role: "creator" } },
+      { shares: [{ fanId: PROFILE.daltokki, tier: "small" }] },
+    );
+    expect(r).toEqual({ ok: false, status: 403, message: "나를 팔로우한 팬에게만 보낼 수 있어요." });
+  });
+
+  it("INV-R3 S3: 앱 서버가 계산한 금액으로 등록되고, 결제 기록의 검수비 칸은 0 이다", async () => {
+    const { registerRevgift } = await import("@/features/revgift-send/model/register-revgift");
+    const { createSupabaseRevgiftStore } = await import("@/features/revgift-send/api/supabase-revgift-store");
+    const r = await registerRevgift(
+      { store: createSupabaseRevgiftStore(adminClient()), viewer: { userId: PROFILE.haru, role: "creator" } },
+      { shares: [{ fanId: PROFILE.byeolbit, tier: "medium" }] },
+    );
+    if (!r.ok) throw new Error(JSON.stringify(r));
+    expect(r.amountKrw).toBe(6900);
+    expect(psql(`select amount_krw || ',' || inspection_fee_krw || ',' || shipping_fee_krw from public.revgift_sends where toss_order_id = '${r.tossOrderId}'`)).toBe("6900,0,5000");
+    psql(`delete from public.revgift_sends where toss_order_id = '${r.tossOrderId}'`);
+  });
+});
