@@ -57,6 +57,7 @@ export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onR
     setSearching(false);
     if (!found.ok) {
       if (found.reason === "login") router.push("/login");
+      else if (found.reason === "limited") setAddError(found.message);
       else setAddError("팬을 찾지 못했어요. 잠시 뒤 다시 시도해 주세요");
       return;
     }
@@ -110,11 +111,7 @@ export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onR
             받을 팬 추가
           </h2>
           <p className={s.sub}>나를 팔로우한 팬만 추가할 수 있어요.</p>
-          {notice && noticeShown ? (
-            <p className={s.error} role="alert">
-              {notice}
-            </p>
-          ) : null}
+          <div role="alert">{notice && noticeShown ? <p className={s.error}>{notice}</p> : null}</div>
           <form className={s["add-form"]} onSubmit={add} noValidate>
             <div className="field">
               <label htmlFor="rv-fan-id">팬 아이디</label>
@@ -147,9 +144,13 @@ export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onR
                   ? `한 번에 ${MAX_REVGIFT_SHARES}명까지 보낼 수 있어요. 더 보내려면 결제한 뒤 새로 보내 주세요.`
                   : "아이디 전체를 정확히 입력해야 찾을 수 있어요. 일부만 쓰거나 팔로워 목록에서 고르는 건 되지 않아요."}
               </p>
-              <p className={s.error} id="rv-fan-err" role="alert" hidden={!addError}>
-                {addError}
-              </p>
+              <div role="alert">
+                {addError ? (
+                  <p className={s.error} id="rv-fan-err">
+                    {addError}
+                  </p>
+                ) : null}
+              </div>
             </div>
           </form>
           <div className={s["list-head"]}>
@@ -247,11 +248,7 @@ export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onR
         <button className="btn btn--block" type="button" onClick={pay} disabled={picked.length === 0} aria-busy={paying || undefined}>
           결제하기
         </button>
-        {payError ? (
-          <p className={s.error} role="alert">
-            {payError}
-          </p>
-        ) : null}
+        <div role="alert">{payError ? <p className={s.error}>{payError}</p> : null}</div>
         <p className={s.after}>결제는 한 번이에요. 팬이 받지 않으면 그 팬의 상자 요금만 환불돼요.</p>
       </aside>
     </div>

@@ -1,6 +1,7 @@
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import type { ReceivedRevgift } from "@/entities/revgift/model/revgift-rows";
-import { daysLeft, receivedStage, replyDeadlineText, revgiftTierName } from "@/entities/revgift/ui/received-status";
+import { daysLeft, receivedStage } from "@/entities/revgift/model/received-stage";
+import { replyDeadlineText, revgiftTierName } from "@/entities/revgift/ui/received-status";
 import { ReceiveFlow } from "@/features/revgift-receive/ui/receive-flow";
 
 // 받은 역조공 하나(팬). 시안: docs/design/mockups/site/v4/revgift-receive.html

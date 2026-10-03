@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { readReceivedRevgifts } from "@/entities/revgift/api/revgift-reads";
+import { readReceivedRevgift } from "@/entities/revgift/api/revgift-reads";
 import { isRevgiftOrderNo } from "@/entities/revgift/model/revgift-order-no";
 import { CREATOR_HOME } from "@/entities/session/model/home-path";
 import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
@@ -17,8 +17,7 @@ export default async function Page({ params }: { params: Promise<{ orderNo: stri
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "creator") redirect(CREATOR_HOME);
   if (viewer?.role !== "fan") redirect("/login");
-  const items = isRevgiftOrderNo(orderNo) ? await readReceivedRevgifts(supabase) : [];
-  const item = items.find((r) => r.orderNo === orderNo);
+  const item = isRevgiftOrderNo(orderNo) ? await readReceivedRevgift(supabase, orderNo) : null;
   if (!item) notFound();
   return (
     <>

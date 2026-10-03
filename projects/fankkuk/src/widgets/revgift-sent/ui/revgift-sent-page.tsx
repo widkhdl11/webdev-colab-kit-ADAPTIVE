@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
+import { countBatchStates, toSentBatches } from "@/entities/revgift/model/sent-batches";
 import { sentStateTag } from "@/entities/revgift/ui/received-status";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
@@ -7,32 +8,20 @@ import s from "./revgift-sent.module.css";
 
 // 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v4/creator-revgift-list.html
 // 한 줄에 보이는 것은 팬 아이디·닉네임·주문번호·상태 배지(셋 중 하나)뿐이다(reverse-gift INV-R8).
-// 묶음은 보낸 시각이 같은 몫끼리 — 한 번에 등록한 몫은 같은 시각으로 기록된다.
-
-type Batch = { sentAt: string; shares: SentRevgift[] };
-
-function toBatches(rows: readonly SentRevgift[]): Batch[] {
-  const map = new Map<string, SentRevgift[]>();
-  for (const r of rows) {
-    const list = map.get(r.sentAt);
-    if (list) list.push(r);
-    else map.set(r.sentAt, [r]);
-  }
-  return [...map.entries()].map(([sentAt, shares]) => ({ sentAt, shares })).sort((a, b) => Date.parse(b.sentAt) - Date.parse(a.sentAt));
-}
+// 묶음 나누기와 상태 세기는 entities/revgift/model/sent-batches.ts — 여기서는 문구만 조립한다.
 
 function batchSummary(shares: readonly SentRevgift[]): string {
-  const n = (state: SentRevgift["state"]) => shares.filter((x) => x.state === state).length;
+  const n = countBatchStates(shares);
   const parts = [
-    n("accepted") ? `받은 팬 ${n("accepted")}명` : "",
-    n("waiting") ? `기다리는 중 ${n("waiting")}명` : "",
-    n("not_received") ? `받지 않은 팬 ${n("not_received")}명` : "",
+    n.accepted ? `받은 팬 ${n.accepted}명` : "",
+    n.waiting ? `기다리는 중 ${n.waiting}명` : "",
+    n.not_received ? `받지 않은 팬 ${n.not_received}명` : "",
   ].filter(Boolean);
-  return n("not_received") ? `${parts.join(" · ")} (받지 않은 상자 요금은 환불돼요)` : parts.join(" · ");
+  return n.not_received ? `${parts.join(" · ")} (받지 않은 상자 요금은 환불돼요)` : parts.join(" · ");
 }
 
 export function RevgiftSentPage({ rows, paid }: { rows: readonly SentRevgift[]; paid: boolean }) {
-  const batches = toBatches(rows);
+  const batches = toSentBatches(rows);
   return (
     <main id="main">
       <div className="container">

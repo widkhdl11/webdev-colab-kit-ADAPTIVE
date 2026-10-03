@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { z } from "zod";
 import { sealedAddressPlaintext, type RevgiftAddressInput } from "@/entities/revgift/model/sealed-address";
-import { settledStageCopy, type ReceivedStage } from "@/entities/revgift/ui/received-status";
+import type { ReceivedStage } from "@/entities/revgift/model/received-stage";
+import { settledStageCopy } from "@/entities/revgift/ui/received-status";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { importSealingPublicKey, sealEnvelope } from "@/shared/lib/envelope/envelope";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
@@ -230,11 +231,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
                 받지 않기
               </button>
             </div>
-            {declineError ? (
-              <p className={s.error} role="alert">
-                {declineError}
-              </p>
-            ) : null}
+            <div role="alert">{declineError ? <p className={s.error}>{declineError}</p> : null}</div>
             <p className={s.once}>기한 안에 정하지 않으면 자동으로 받지 않음 처리돼요. 받기 전에는 주소를 입력하지 않아도 돼요.</p>
           </>
         ) : null}
@@ -260,11 +257,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
               {field("recipientName", "받는 사람 이름", { type: "text", autoComplete: "name", maxLength: 30, placeholder: "택배에 적힐 이름", required: true })}
               {field("phone", "휴대폰 번호", { type: "tel", inputMode: "tel", autoComplete: "tel", maxLength: 13, placeholder: "010-0000-0000", required: true })}
             </div>
-            {submitError ? (
-              <p className={s.error} role="alert">
-                {submitError}
-              </p>
-            ) : null}
+            <div role="alert">{submitError ? <p className={s.error}>{submitError}</p> : null}</div>
             <div className={s["form-actions"]}>
               <button className="btn" type="submit" aria-disabled={busy || undefined} aria-busy={busy || undefined}>
                 이 주소로 받기
@@ -344,11 +337,13 @@ const RESULT_TITLE: Record<Exclude<ReceivedStage, "waiting" | "accepted">, strin
   expired: "기한이 지나 받지 않음으로 정해졌어요",
   shipped: "배송이 시작됐어요",
   returned: "상자를 돌려보냈어요",
+  cancelled: "이 선물은 취소됐어요",
 };
 
 function resultBody(stage: Exclude<ReceivedStage, "waiting" | "accepted">, creatorName: string): string {
   if (stage === "declined") return `${creatorName}님에게는 받지 않은 이유를 알리지 않아요. 입력한 주소는 없어요.`;
   if (stage === "expired") return `7일 안에 정하지 않아 받지 않음으로 처리됐어요. ${creatorName}님에게는 이유를 알리지 않아요.`;
   if (stage === "shipped") return "입력한 주소는 출고할 때 지워졌어요. 곧 도착해요.";
+  if (stage === "cancelled") return `${creatorName}님이 보낸 이 선물은 더 진행되지 않아요.`;
   return `상자를 ${creatorName}님에게 돌려보냈어요. 입력한 주소는 지워졌어요.`;
 }

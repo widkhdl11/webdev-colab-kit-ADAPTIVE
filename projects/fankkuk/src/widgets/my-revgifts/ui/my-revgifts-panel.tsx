@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReceivedRevgift } from "@/entities/revgift/model/revgift-rows";
-import { isOngoingStage, receivedStage, receivedStageCopy, revgiftTierName } from "@/entities/revgift/ui/received-status";
+import { isOngoingStage, receivedStage } from "@/entities/revgift/model/received-stage";
+import { receivedStageCopy, revgiftTierName } from "@/entities/revgift/ui/received-status";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { RevgiftTabs } from "./revgift-tabs";
 import s from "./my-revgifts.module.css";

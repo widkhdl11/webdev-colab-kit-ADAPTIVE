@@ -19,7 +19,7 @@
 .warn { margin-top: 24px; padding: 12px 16px; border-radius: var(--r-box); background: var(--warn-soft); color: var(--warn-ink); font-weight: 600; }
 
 .error { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; color: var(--ink); font-weight: 700; }
-.error::before { content: "!"; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
+.error::before { content: "!" / ""; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
 
 .panel { margin-top: 24px; padding: 40px; border-radius: var(--r-panel); background: var(--white); box-shadow: var(--hair); }
 .panel h2 { font-size: 28px; letter-spacing: -.8px; }
@@ -51,7 +51,7 @@
   .gift { width: 72px; height: 72px; }
   .facts { grid-template-columns: 1fr; gap: 12px; }
   .actions :global(.btn) { width: 100%; }
-  .panel { padding: 24px 20px; border-radius: 24px; }
+  .panel { padding: 24px 20px; border-radius: var(--r-panel-sm); }
   .panel h2 { font-size: 24px; }
   .two { grid-template-columns: 1fr; }
   .sec-note { grid-template-columns: 1fr; }
