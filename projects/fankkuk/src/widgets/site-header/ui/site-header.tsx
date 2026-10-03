@@ -25,6 +25,7 @@ const FAN_NAV: NavItem[] = [
 
 const CREATOR_NAV: NavItem[] = [
   { href: "/creator/requests", label: "승인 요청" },
+  { href: "/creator/revgifts", label: "역조공" },
   { href: "/creator/log", label: "열람 기록" },
   { href: "/creator/settings", label: "주소와 설정" },
   { href: "/notices", label: "공지사항" },
@@ -35,6 +36,7 @@ const FAN_MENU: NavItem[] = [
   { href: "/me", label: "내 정보" },
   { href: "/me/following", label: "팔로우한 크리에이터" },
   { href: "/gifts", label: "선물 내역" },
+  { href: "/me/revgifts", label: "받은 역조공" },
 ];
 
 const CREATOR_MENU: NavItem[] = [{ href: "/creator/settings", label: "주소와 설정" }];

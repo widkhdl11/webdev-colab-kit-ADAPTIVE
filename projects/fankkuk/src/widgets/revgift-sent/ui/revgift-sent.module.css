@@ -1,0 +1,36 @@
+/* 보낸 역조공 — 시안 v4 creator-revgift-list.html <style> */
+.top-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; }
+.top-row :global(.page-title) { padding-right: 0; }
+.top-row > :global(.btn) { margin-bottom: 24px; }
+.paid { display: grid; gap: 4px; margin-bottom: 24px; padding: 16px 20px; border-radius: var(--r-box); background: var(--brand-soft); color: var(--brand-ink); }
+.rule-line { display: flex; align-items: center; gap: 16px; padding-block: 8px; }
+.ico { width: 56px; height: 56px; flex-shrink: 0; }
+.rule-line strong { display: block; font-size: 18px; letter-spacing: -.3px; }
+.rule-line span { color: var(--sub); }
+
+.batch { margin-top: 40px; }
+.batch-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding-bottom: 12px; }
+.batch-head h2 { font-size: 24px; letter-spacing: -.5px; }
+.facts { color: var(--sub); }
+.shares { border-top: 1px solid var(--divider); }
+.share { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; padding-block: 20px; border-bottom: 1px solid var(--divider); }
+.nick { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.says { color: var(--sub); overflow-wrap: anywhere; }
+.tag { justify-self: end; }
+.batch-sum { margin-top: 12px; color: var(--sub); }
+.empty { margin-top: 40px; padding: 48px 24px; border-radius: var(--r-card); background: var(--surface); text-align: center; }
+.empty h2 { font-size: 22px; letter-spacing: -.3px; }
+.empty p { margin-top: 8px; }
+.foot-note { margin-top: 56px; padding: 20px 24px; border-radius: var(--r-box); background: var(--surface); }
+.foot-note ul { display: grid; gap: 4px; margin-top: 8px; padding: 0; list-style: none; color: var(--sub); }
+.foot-note li { display: flex; gap: 12px; }
+.foot-note li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+
+@media (max-width: 767px) {
+  .top-row > :global(.btn) { width: 100%; margin-bottom: 8px; }
+  .ico { width: 48px; height: 48px; }
+  .batch { margin-top: 32px; }
+  .batch-head h2 { font-size: 22px; }
+  .share { grid-template-columns: 48px minmax(0, 1fr); }
+  .tag { grid-column: 2; justify-self: start; }
+}

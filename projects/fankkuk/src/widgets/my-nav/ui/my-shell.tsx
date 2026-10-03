@@ -2,13 +2,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import s from "./my-nav.module.css";
 
-// 내 정보 화면 세 개(개인정보 · 팔로우한 크리에이터 · 선물 내역)가 같이 쓰는 틀 — 제목 + 메뉴 + 본문 칸.
+// 내 정보 화면 네 개(개인정보 · 팔로우한 크리에이터 · 선물 내역 · 받은 역조공)가 같이 쓰는 틀 — 제목 + 메뉴 + 본문 칸.
 // 라우트(app)가 이 틀 안에 각 화면 본문 위젯을 끼운다. 위젯끼리 서로 가져다 쓰지 않게 하려는 배치다.
 
 const MY_MENU = [
   { href: "/me", label: "개인정보" },
   { href: "/me/following", label: "팔로우한 크리에이터" },
   { href: "/gifts", label: "선물 내역" },
+  { href: "/me/revgifts", label: "받은 역조공" },
 ] as const;
 
 export type MyMenuHref = (typeof MY_MENU)[number]["href"];

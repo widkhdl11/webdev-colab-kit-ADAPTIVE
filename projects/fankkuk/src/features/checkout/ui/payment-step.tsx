@@ -12,7 +12,10 @@ export type CheckoutTarget = { orderId: string; orderNo: string; amountKrw: numb
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
-export function PaymentStep({ clientKey, pending }: { clientKey: string; pending: CheckoutTarget }) {
+/** 결제창이 돌아갈 주소와 주문 이름. 주지 않으면 팬 선물 전달 결제의 값을 쓴다(역조공은 자기 값을 넘긴다). */
+export type CheckoutRoute = { orderName: string; successPath: string; failPath: string };
+
+export function PaymentStep({ clientKey, pending, route }: { clientKey: string; pending: CheckoutTarget; route?: CheckoutRoute }) {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const widgetsRef = useRef<TossPaymentsWidgets | null>(null);
@@ -67,11 +70,12 @@ export function PaymentStep({ clientKey, pending }: { clientKey: string; pending
     if (!ready || !widgetsRef.current) return;
     setError(null);
     try {
+      const to = route ?? { orderName: `팬꾹 선물 전달 ${pending.orderNo}`, successPath: "/api/checkout/success", failPath: "/gifts/new?payment=failed" };
       await widgetsRef.current.requestPayment({
         orderId: pending.orderId,
-        orderName: `팬꾹 선물 전달 ${pending.orderNo}`,
-        successUrl: `${window.location.origin}/api/checkout/success`,
-        failUrl: `${window.location.origin}/gifts/new?payment=failed`,
+        orderName: to.orderName,
+        successUrl: `${window.location.origin}${to.successPath}`,
+        failUrl: `${window.location.origin}${to.failPath}`,
       });
     } catch {
       setError("결제를 마치지 못했어요. 다시 시도해 주세요.");
