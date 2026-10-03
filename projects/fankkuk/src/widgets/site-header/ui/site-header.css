@@ -14,8 +14,10 @@
 .user-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 4px 12px 4px 4px; border: 0; border-radius: var(--r-pill); background: var(--surface); cursor: pointer; font-weight: 600; }
 .user-btn .caret { color: var(--sub); }
 .user-dropdown { position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; min-width: 220px; padding: 8px; background: var(--white); border-radius: var(--r-box); box-shadow: var(--float), var(--hair); }
-.user-dropdown a { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: var(--r-btn-sm); text-decoration: none; }
-.user-dropdown a:hover { background: var(--surface); }
+.user-dropdown a, .user-dropdown .menu-action { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: var(--r-btn-sm); text-decoration: none; }
+.user-dropdown a:hover, .user-dropdown .menu-action:hover { background: var(--surface); }
+/* 링크와 같은 모양의 버튼(로그아웃) */
+.menu-action { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .user-dropdown hr { border: 0; border-top: 1px solid var(--divider); margin: 8px 0; }
 .user-dropdown .who { padding: 8px 12px; color: var(--sub); }
 
@@ -33,7 +35,7 @@
   .menu-toggle { display: grid; }
   .mobile-menu { position: absolute; left: 0; right: 0; top: 100%; display: block; max-height: calc(100vh - 72px); overflow-y: auto; background: var(--white); box-shadow: 0 1px 0 var(--divider); padding: 8px var(--gutter) 24px; }
   .mobile-menu[hidden] { display: none; }
-  .mobile-menu a:not(.btn) { display: flex; align-items: center; min-height: 52px; border-bottom: 1px solid var(--divider); text-decoration: none; font-weight: 600; }
+  .mobile-menu a:not(.btn), .mobile-menu .menu-action { display: flex; align-items: center; min-height: 52px; border-bottom: 1px solid var(--divider); text-decoration: none; font-weight: 600; }
   .mobile-menu .group-label { margin-top: 16px; color: var(--sub); font-weight: 600; }
   .mobile-menu .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
 }

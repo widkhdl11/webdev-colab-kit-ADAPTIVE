@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { HeaderGiftState } from "@/entities/order/ui/fan-stage-copy";
+import { LogoutButton } from "@/features/auth/ui/logout-button";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { LogoMark } from "@/shared/ui/logo";
 
@@ -246,7 +247,7 @@ function UserMenu({ nickname, roleLabel, items }: { nickname: string; roleLabel:
           </Link>
         ))}
         <hr />
-        <Link href="/">로그아웃</Link>
+        <LogoutButton className="menu-action" />
       </div>
     </div>
   );
@@ -380,7 +381,7 @@ export function SiteHeader(props: SiteHeaderProps) {
             ))}
           </>
         ) : null}
-        {props.role !== "guest" ? <Link href="/">로그아웃</Link> : null}
+        {props.role !== "guest" ? <LogoutButton className="menu-action" /> : null}
       </div>
       {props.role === "fan" && props.gifts.length > 0 ? (
         <GiftSheet gifts={props.gifts} open={sheetOpen} onClose={() => setSheetOpen(false)} />

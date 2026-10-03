@@ -1,11 +1,17 @@
 import { LandingPage } from "@/widgets/landing/ui/landing-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
+import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
-export default function Page() {
+export const dynamic = "force-dynamic";
+
+// 소개 첫 화면. 누구나 보지만 헤더는 로그인한 사람에 맞춘다 — 손님 헤더로 고정하면 로그인이 풀린 것처럼 보인다.
+export default async function Page() {
+  const { supabase, viewer } = await loadSession();
+  const header = await readSiteHeader(supabase, viewer, "/");
   return (
     <>
-      <SiteHeader role="guest" current="/" />
+      <SiteHeader {...header} />
       <LandingPage />
       <SiteFooter />
     </>
