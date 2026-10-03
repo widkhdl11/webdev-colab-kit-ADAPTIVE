@@ -68,7 +68,7 @@ select '00000000-0000-4000-a000-000000000001', c.id from public.creators c
 where c.slug in ('haru', 'momo', 'saebyeokdal', 'byeol', 'somsatang', 'dodam');
 
 -- ── 주문 ────────────────────────────────────────────────
--- 결제가 끝난 주문만 있다. 상자는 모두 소형 신고, 결제는 소형 요금(6,900 = 서비스료 2,900 + 배송비 칸 4,000).
+-- 결제가 끝난 주문만 있다. 상자는 모두 소형 신고, 결제는 소형 요금(6,900 = 기본 서비스료 1,400 + 검수비 1,500 + 배송비 칸 4,000).
 
 create temporary table seed_orders (
   order_no text, fan_login text, creator_slug text, item_kind text, box_count int, em boolean,
