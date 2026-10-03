@@ -16,16 +16,11 @@ export type HeaderGift = { orderNo: string; creatorName: string; state: HeaderGi
 
 type NavItem = { href: string; label: string };
 
-const FAN_NAV: NavItem[] = [
+// 손님·팬·크리에이터가 같은 가로 메뉴를 쓴다. 크리에이터도 다른 크리에이터를 찾아 선물을 보낸다(2026-10-04 사용자 「크리에이터도 일반 팬처럼 크리에이터 찾기 같은거 보여야하지 않나」).
+// 크리에이터의 일하는 화면(승인 요청·보낸 역조공·열람 기록·주소와 설정)은 「내 팬꾹」 왼쪽 메뉴에만 있다.
+const SITE_NAV: NavItem[] = [
   { href: "/creators", label: "크리에이터 찾기" },
   { href: "/gifts/new", label: "선물 보내기" },
-  { href: "/notices", label: "공지사항" },
-  { href: "/about", label: "팬꾹 소개" },
-  { href: "/support", label: "고객센터" },
-];
-
-// 크리에이터의 일하는 화면(승인 요청·보낸 역조공·열람 기록·주소와 설정)은 「내 팬꾹」 왼쪽 메뉴로 갔다 — 가로 메뉴에는 공용 화면만.
-const CREATOR_NAV: NavItem[] = [
   { href: "/notices", label: "공지사항" },
   { href: "/about", label: "팬꾹 소개" },
   { href: "/support", label: "고객센터" },
@@ -271,7 +266,6 @@ export function SiteHeader(props: SiteHeaderProps) {
     };
   }, [menuOpen]);
 
-  const nav = props.role === "creator" ? CREATOR_NAV : FAN_NAV;
   const logoHref = props.role === "guest" ? "/" : props.role === "fan" ? FAN_HOME : CREATOR_HOME;
   const logoLabel = props.role === "guest" ? "팬꾹 처음 화면" : props.role === "fan" ? "팬꾹 메인" : "팬꾹 크리에이터 메인";
   const navLink = (it: NavItem) => (
@@ -289,7 +283,7 @@ export function SiteHeader(props: SiteHeaderProps) {
         </Link>
         <nav className="nav" aria-label="주요 메뉴">
           <ul>
-            {nav.map((it) => (
+            {SITE_NAV.map((it) => (
               <li key={it.href}>{navLink(it)}</li>
             ))}
           </ul>
@@ -349,7 +343,7 @@ export function SiteHeader(props: SiteHeaderProps) {
         </div>
       </div>
       <div className="mobile-menu" id={menuId} hidden={!menuOpen}>
-        {nav.map((it) => (
+        {SITE_NAV.map((it) => (
           <Link key={it.href} href={it.href} aria-current={props.current === it.href ? "page" : undefined}>
             {it.label}
           </Link>
