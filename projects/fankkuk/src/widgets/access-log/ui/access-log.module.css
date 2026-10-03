@@ -1,4 +1,5 @@
-/* 주소 열람 기록 화면 — 시안 v4 creator-log.html <style>. 페이지 머리·구간·끝 여백(page-title·block·page-end)은 base.css 공용 */
+/* 주소 열람 기록 화면 — 시안 v4 creator-log.html <style>. 본문 머리(panel-title)는 base.css 공용 */
+.records { margin-top: 32px; }
 .strong { color: var(--ink); font-weight: 700; }
 
 .month { display: flex; align-items: center; gap: clamp(20px, 3vw, 40px); padding: clamp(24px, 3vw, 40px); border-radius: var(--r-tile); background: var(--surface); }
@@ -20,11 +21,12 @@
 .lrow { display: grid; gap: 2px; padding-block: 18px; border-bottom: 1px solid var(--divider); }
 .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
+/* 「내 팬꾹」 왼쪽 메뉴 옆이라 1023px 이하에서는 본문 칸이 5칸 표에 좁다 — 거기서부터 목록으로 */
 @media (max-width: 1023px) {
   .nums { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .log-table { display: none; }
+  .log-list { display: block; }
 }
 @media (max-width: 767px) {
   .ico { display: none; }
-  .log-table { display: none; }
-  .log-list { display: block; }
 }

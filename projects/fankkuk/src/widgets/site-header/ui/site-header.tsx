@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { HeaderGiftState } from "@/entities/order/ui/fan-stage-copy";
 import { CREATOR_HOME, FAN_HOME } from "@/entities/session/model/home-path";
+import { CREATOR_MY_MENU, FAN_MY_MENU, MY_PAGE_TITLE } from "@/entities/session/model/my-menu";
 import { LogoutButton } from "@/features/auth/ui/logout-button";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { LogoMark } from "@/shared/ui/logo";
@@ -23,23 +24,12 @@ const FAN_NAV: NavItem[] = [
   { href: "/support", label: "고객센터" },
 ];
 
+// 크리에이터의 일하는 화면(승인 요청·보낸 역조공·열람 기록·주소와 설정)은 「내 팬꾹」 왼쪽 메뉴로 갔다 — 가로 메뉴에는 공용 화면만.
 const CREATOR_NAV: NavItem[] = [
-  { href: "/creator/requests", label: "승인 요청" },
-  { href: "/creator/revgifts", label: "역조공" },
-  { href: "/creator/log", label: "열람 기록" },
-  { href: "/creator/settings", label: "주소와 설정" },
   { href: "/notices", label: "공지사항" },
+  { href: "/about", label: "팬꾹 소개" },
   { href: "/support", label: "고객센터" },
 ];
-
-const FAN_MENU: NavItem[] = [
-  { href: "/me", label: "내 정보" },
-  { href: "/me/following", label: "팔로우한 크리에이터" },
-  { href: "/gifts", label: "선물 내역" },
-  { href: "/me/revgifts", label: "받은 역조공" },
-];
-
-const CREATOR_MENU: NavItem[] = [{ href: "/creator/settings", label: "주소와 설정" }];
 
 /** 헤더에 아이콘으로 보이는 선물 수. 넘치면 「+N」. */
 const MAX_ICONS = 3;
@@ -195,7 +185,7 @@ function GiftSheet({ gifts, open, onClose }: { gifts: HeaderGift[]; open: boolea
   );
 }
 
-function UserMenu({ nickname, roleLabel, items }: { nickname: string; roleLabel: string; items: NavItem[] }) {
+function UserMenu({ nickname, roleLabel, items, current }: { nickname: string; roleLabel: string; items: readonly NavItem[]; current?: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -245,7 +235,7 @@ function UserMenu({ nickname, roleLabel, items }: { nickname: string; roleLabel:
           {nickname}님 · {roleLabel}
         </p>
         {items.map((it) => (
-          <Link key={it.href} href={it.href}>
+          <Link key={it.href} href={it.href} aria-current={current === it.href ? "page" : undefined}>
             {it.label}
           </Link>
         ))}
@@ -339,8 +329,8 @@ export function SiteHeader(props: SiteHeaderProps) {
               대기 {props.pendingCount}건
             </Link>
           ) : null}
-          {props.role === "fan" ? <UserMenu nickname={props.nickname} roleLabel="팬" items={FAN_MENU} /> : null}
-          {props.role === "creator" ? <UserMenu nickname={props.nickname} roleLabel="크리에이터" items={CREATOR_MENU} /> : null}
+          {props.role === "fan" ? <UserMenu nickname={props.nickname} roleLabel="팬" items={FAN_MY_MENU} current={props.current} /> : null}
+          {props.role === "creator" ? <UserMenu nickname={props.nickname} roleLabel="크리에이터" items={CREATOR_MY_MENU} current={props.current} /> : null}
           <button
             ref={toggleRef}
             className="menu-toggle"
@@ -361,7 +351,7 @@ export function SiteHeader(props: SiteHeaderProps) {
       <div className="mobile-menu" id={menuId} hidden={!menuOpen}>
         {nav.map((it) => (
           <Link key={it.href} href={it.href} aria-current={props.current === it.href ? "page" : undefined}>
-            {props.role === "creator" && it.href === "/creator/requests" ? `${it.label} (대기 ${props.pendingCount}건)` : it.label}
+            {it.label}
           </Link>
         ))}
         {props.role === "guest" ? (
@@ -374,12 +364,14 @@ export function SiteHeader(props: SiteHeaderProps) {
             </Link>
           </div>
         ) : null}
-        {props.role === "fan" ? (
+        {props.role !== "guest" ? (
           <>
-            <p className="group-label">내 정보 · {props.nickname}님</p>
-            {FAN_MENU.map((it) => (
-              <Link key={it.href} href={it.href}>
-                {it.label}
+            <p className="group-label">
+              {MY_PAGE_TITLE} · {props.nickname}님
+            </p>
+            {(props.role === "creator" ? CREATOR_MY_MENU : FAN_MY_MENU).map((it) => (
+              <Link key={it.href} href={it.href} aria-current={props.current === it.href ? "page" : undefined}>
+                {props.role === "creator" && it.href === "/creator/requests" ? `${it.label} (대기 ${props.pendingCount}건)` : it.label}
               </Link>
             ))}
           </>

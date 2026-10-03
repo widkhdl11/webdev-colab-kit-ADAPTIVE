@@ -14,3 +14,4 @@
   .side a:hover { background: var(--surface); }
   .side a[aria-current="page"] { background: var(--surface); }
 }
+.body { min-width: 0; }

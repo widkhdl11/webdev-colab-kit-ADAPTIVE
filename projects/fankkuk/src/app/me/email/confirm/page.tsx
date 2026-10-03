@@ -21,10 +21,17 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
   return (
     <>
       <SiteHeader {...header} />
-      {viewer ? (
-        <MyShell current="/me">
+      {viewer?.role === "fan" ? (
+        <MyShell role="fan" current="/me">
           <ConfirmEmailPanel token={token} />
         </MyShell>
+      ) : viewer ? (
+        // 팬이 아닌 계정(크리에이터)에는 팬 메뉴 틀을 씌우지 않는다 — 링크의 계정과 맞는지는 서버가 가린다
+        <main id="main">
+          <div className="container">
+            <ConfirmEmailPanel token={token} />
+          </div>
+        </main>
       ) : (
         <main id="main">
           <div className="container">

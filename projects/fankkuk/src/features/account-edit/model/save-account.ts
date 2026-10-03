@@ -30,7 +30,7 @@ const TOO_MANY = "확인 메일을 너무 자주 보냈어요. 한 시간 뒤에
 
 export async function saveAccount(deps: SaveAccountDeps, body: unknown): Promise<SaveAccountResult> {
   if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
-  if (deps.viewer.role !== "fan") return { ok: false, status: 403, message: "팬 계정의 내 정보만 여기서 고칠 수 있어요." };
+  if (deps.viewer.role !== "fan") return { ok: false, status: 403, message: "팬 계정의 개인정보만 여기서 고칠 수 있어요." };
 
   const parsed = accountInputSchema.safeParse(body);
   if (!parsed.success) {

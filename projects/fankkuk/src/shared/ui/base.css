@@ -44,6 +44,11 @@ h3 { font-size: 22px; line-height: 1.4; font-weight: 700; letter-spacing: -.3px;
 .page-title { padding-block: clamp(32px, 4vw, 56px) 24px; }
 .page-title p { margin-top: 8px; color: var(--sub); font-size: 18px; }
 .page-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: clamp(32px, 4vw, 56px) clamp(24px, 3vw, 40px); }
+/* 「내 팬꾹」 왼쪽 메뉴 틀 안의 본문 머리 — 페이지 제목(h1 「내 팬꾹」) 아래 단계라 h2 28 */
+.panel-head { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; margin-bottom: 24px; }
+.panel-h { font-size: 28px; letter-spacing: -.8px; }
+.panel-title { margin-bottom: 24px; }
+.panel-title p, .panel-head p { margin-top: 8px; color: var(--sub); }
 .page-end { height: clamp(72px, 9vw, 128px); }
 .block { padding-block: clamp(56px, 7vw, 96px) 0; }
 .block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }

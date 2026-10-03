@@ -11,7 +11,7 @@ export type ConfirmEmailResult =
   | { ok: true; email: string }
   | { ok: false; status: 400 | 401; message: string };
 
-const UNUSABLE = "쓸 수 없는 링크예요. 내 정보에서 이메일을 다시 저장하면 새 확인 메일이 가요.";
+const UNUSABLE = "쓸 수 없는 링크예요. 내 팬꾹의 개인정보에서 이메일을 다시 저장하면 새 확인 메일이 가요.";
 
 export async function confirmEmail(
   deps: { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null },

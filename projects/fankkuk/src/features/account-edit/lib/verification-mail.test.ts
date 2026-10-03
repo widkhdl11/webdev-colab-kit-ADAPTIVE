@@ -8,7 +8,7 @@ describe("이메일 확인 메일", () => {
     const mail = buildVerificationMail({ to: "b@example.com", nickname: "별빛", token: TOKEN, appOrigin: "http://127.0.0.1:3311" });
     expect(mail.to).toBe("b@example.com");
     expect(mail.text.split("\n")).toEqual([
-      "별빛님, 팬꾹 내 정보에서 이 주소로 이메일을 바꾸셨어요.",
+      "별빛님, 내 팬꾹에서 이 주소로 이메일을 바꾸셨어요.",
       "아래 링크를 누르면 이 주소로 바뀌어요. 링크는 24시간 동안 한 번만 쓸 수 있어요.",
       "",
       `http://127.0.0.1:3311/me/email/confirm?token=${TOKEN}`,

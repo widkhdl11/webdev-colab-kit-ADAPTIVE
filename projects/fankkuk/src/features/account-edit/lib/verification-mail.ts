@@ -14,7 +14,7 @@ export function buildVerificationMail({ to, nickname, token, appOrigin }: Verifi
     to,
     subject: "[팬꾹] 이메일 주소를 확인해 주세요",
     text: [
-      `${nickname}님, 팬꾹 내 정보에서 이 주소로 이메일을 바꾸셨어요.`,
+      `${nickname}님, 내 팬꾹에서 이 주소로 이메일을 바꾸셨어요.`,
       "아래 링크를 누르면 이 주소로 바뀌어요. 링크는 24시간 동안 한 번만 쓸 수 있어요.",
       "",
       confirmLink(appOrigin, token),

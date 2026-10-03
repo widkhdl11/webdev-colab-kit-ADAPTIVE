@@ -4,7 +4,7 @@
 .col { display: grid; gap: clamp(48px, 5vw, 72px); }
 .anchor { scroll-margin-top: 88px; } /* 붙박이 헤더(72px) 아래로 */
 .s-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.s-head h2 { font-size: 26px; letter-spacing: -.6px; }
+.s-head h3 { font-size: 22px; letter-spacing: -.3px; }
 
 .addr { display: flex; align-items: center; gap: 20px; padding: 28px; border-radius: var(--r-tile); background: var(--surface); }
 .addr-ico { width: 72px; height: 72px; }

@@ -23,73 +23,70 @@ function batchSummary(shares: readonly SentRevgift[]): string {
 export function RevgiftSentPage({ rows, paid }: { rows: readonly SentRevgift[]; paid: boolean }) {
   const batches = toSentBatches(rows);
   return (
-    <main id="main">
-      <div className="container">
-        <div className={s["top-row"]}>
-          <div className="page-title">
-            <h1 className="page-h">보낸 역조공</h1>
-            <p>팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
-          </div>
-          <Link className="btn" href="/creator/revgifts/new">
-            역조공 보내기
-          </Link>
+    <div>
+      <div className="panel-head">
+        <div>
+          <h2 className="panel-h">보낸 역조공</h2>
+          <p>팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
         </div>
-        {paid ? (
-          <p className={s.paid} role="status">
-            <strong>결제가 끝났어요.</strong>
-            <span>팬마다 상자를 따로 포장하고, 상자 겉에 그 팬의 주문번호를 적어 팬꾹 사무실로 보내 주세요.</span>
-          </p>
-        ) : null}
-        <div className={s["rule-line"]}>
-          <img className={`asset ${s.ico}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={56} height={56} />
-          <p>
-            <strong>팬의 주소와 실명은 보이지 않아요.</strong>
-            <span>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span>
-          </p>
-        </div>
-        {batches.length === 0 ? (
-          <div className={s.empty}>
-            <h2>아직 보낸 역조공이 없어요</h2>
-            <p className="sub">나를 팔로우한 팬의 아이디를 알면 선물을 보낼 수 있어요.</p>
-          </div>
-        ) : (
-          batches.map((b, bi) => (
-            <section key={b.sentAt} className={s.batch} aria-labelledby={`rv-batch-${bi}`}>
-              <div className={s["batch-head"]}>
-                <h2 id={`rv-batch-${bi}`}>{formatDateTime(b.sentAt)} 보낸 역조공</h2>
-                <p className={s.facts}>팬 {b.shares.length}명</p>
-              </div>
-              <ul className={s.shares}>
-                {b.shares.map((x, i) => {
-                  const tag = sentStateTag(x.state);
-                  return (
-                    <li key={x.orderNo} className={s.share}>
-                      <FaceAvatar index={i} />
-                      <div>
-                        <p className={s.nick}>{x.fanNickname}</p>
-                        <p className={s.says}>
-                          @{x.fanLoginId} · 주문번호 {x.orderNo}
-                        </p>
-                      </div>
-                      <span className={`tag ${tag.brand ? "tag--brand" : ""} ${s.tag}`}>{tag.tag}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-              <p className={s["batch-sum"]}>{batchSummary(b.shares)}</p>
-            </section>
-          ))
-        )}
-        <div className={s["foot-note"]}>
-          <strong>알아 두세요</strong>
-          <ul>
-            <li>「받지 않았어요」는 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
-            <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
-            <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
-          </ul>
-        </div>
+        <Link className="btn btn--sm" href="/creator/revgifts/new">
+          역조공 보내기
+        </Link>
       </div>
-      <div className="page-end" />
-    </main>
+      {paid ? (
+        <p className={s.paid} role="status">
+          <strong>결제가 끝났어요.</strong>
+          <span>팬마다 상자를 따로 포장하고, 상자 겉에 그 팬의 주문번호를 적어 팬꾹 사무실로 보내 주세요.</span>
+        </p>
+      ) : null}
+      <div className={s["rule-line"]}>
+        <img className={`asset ${s.ico}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={56} height={56} />
+        <p>
+          <strong>팬의 주소와 실명은 보이지 않아요.</strong>
+          <span>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span>
+        </p>
+      </div>
+      {batches.length === 0 ? (
+        <div className={s.empty}>
+          <h3>아직 보낸 역조공이 없어요</h3>
+          <p className="sub">나를 팔로우한 팬의 아이디를 알면 선물을 보낼 수 있어요.</p>
+        </div>
+      ) : (
+        batches.map((b, bi) => (
+          <section key={b.sentAt} className={s.batch} aria-labelledby={`rv-batch-${bi}`}>
+            <div className={s["batch-head"]}>
+              <h3 id={`rv-batch-${bi}`}>{formatDateTime(b.sentAt)} 보낸 역조공</h3>
+              <p className={s.facts}>팬 {b.shares.length}명</p>
+            </div>
+            <ul className={s.shares}>
+              {b.shares.map((x, i) => {
+                const tag = sentStateTag(x.state);
+                return (
+                  <li key={x.orderNo} className={s.share}>
+                    <FaceAvatar index={i} />
+                    <div>
+                      <p className={s.nick}>{x.fanNickname}</p>
+                      <p className={s.says}>
+                        @{x.fanLoginId} · 주문번호 {x.orderNo}
+                      </p>
+                    </div>
+                    <span className={`tag ${tag.brand ? "tag--brand" : ""} ${s.tag}`}>{tag.tag}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className={s["batch-sum"]}>{batchSummary(b.shares)}</p>
+          </section>
+        ))
+      )}
+      <div className={s["foot-note"]}>
+        <strong>알아 두세요</strong>
+        <ul>
+          <li>「받지 않았어요」는 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
+          <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
+          <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
+        </ul>
+      </div>
+    </div>
   );
 }

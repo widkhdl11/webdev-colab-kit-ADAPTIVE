@@ -246,7 +246,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
             <img className="asset" src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={56} height={56} />
             <p>
               주소는 이 브라우저에서 암호화돼요. 팬꾹도 송장을 뽑을 때만 열 수 있고, 출고되면 지워요. {creatorName}님에게는 보이지 않아요.
-              <small>이 주소는 이번 선물에만 쓰이고, 내 정보에 저장되지 않아요.</small>
+              <small>이 주소는 이번 선물에만 쓰이고, 계정에 저장되지 않아요.</small>
             </p>
           </div>
           <form className={s["form-grid"]} onSubmit={submit} noValidate>

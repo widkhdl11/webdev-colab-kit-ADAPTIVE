@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { readMyAccount } from "@/entities/fan/api/read-my-account";
-import { CREATOR_HOME } from "@/entities/session/model/home-path";
+import { CREATOR_MY_HOME } from "@/entities/session/model/my-menu";
 import { MyInfoPanel } from "@/widgets/my-info/ui/my-info-page";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 // 개발 서버는 no-cache 만 붙이고, proxy 에서 붙인 헤더는 Next 가 덮어쓴다(2026-10-02 실측 — 운영 빌드에서만 no-store 확인).
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
-  if (viewer?.role === "creator") redirect(CREATOR_HOME);
+  if (viewer?.role === "creator") redirect(CREATOR_MY_HOME);
   if (viewer?.role !== "fan") redirect("/login");
   const account = await readMyAccount(supabase);
   if (!account) throw new Error("내 정보를 읽지 못했다");
@@ -22,7 +22,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell current="/me">
+      <MyShell role="fan" current="/me">
         <MyInfoPanel account={account} />
       </MyShell>
       <SiteFooter />

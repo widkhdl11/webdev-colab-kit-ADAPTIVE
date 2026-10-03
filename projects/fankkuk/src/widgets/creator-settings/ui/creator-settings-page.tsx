@@ -55,139 +55,136 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
   const [notify, setNotify] = useState(settings.notify);
 
   return (
-    <main id="main">
-      <div className="container">
-        <div className="page-title">
-          <h1 className="page-h">주소와 설정</h1>
-          <p>선물을 받을 주소와 차단한 팬, 프로필, 알림을 한곳에서 관리해요.</p>
-        </div>
+    <div>
+      <div className="panel-title">
+        <h2 className="panel-h">주소와 설정</h2>
+        <p>선물을 받을 주소와 차단한 팬, 프로필, 알림을 한곳에서 관리해요.</p>
+      </div>
 
-        <div className={s["set-grid"]}>
-          <div className={s.col}>
-            <section aria-labelledby="addr-h">
-              <div className={s["s-head"]}>
-                <h2 id="addr-h">받는 주소</h2>
-                {settings.addressRegistered ? <span className="tag tag--brand">등록됨</span> : <span className="tag">등록 전</span>}
-              </div>
-              <div className={s.addr}>
-                <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
-                <div>
-                  <p className={s["addr-t"]}>{settings.addressRegistered ? "주소가 안전하게 등록돼 있어요" : "아직 주소를 등록하지 않았어요"}</p>
-                  <p className="sub">
-                    {settings.addressRegistered ? "브라우저에서 잠가 보냈어요. 저희 화면에는 보이지 않아요." : "등록하면 브라우저에서 잠가 보내요. 저희 화면에는 보이지 않아요."}
-                  </p>
-                </div>
-              </div>
-              <p className={`sub ${s.note}`}>아직 출력하지 않은 주문은 바뀐 주소로 나가요.</p>
-              <button className="btn btn--line" type="button" onClick={() => setSheet({ kind: "address" })}>
-                주소 바꾸기
-              </button>
-            </section>
-
-            <section id="blocked" className={s.anchor} aria-labelledby="block-h">
-              <div className={s["s-head"]}>
-                <h2 id="block-h">차단한 팬</h2>
-                <span className="tag">{blockedFans.length}명</span>
-              </div>
-              {blockedFans.length === 0 ? (
-                <p className="sub">차단한 팬이 없어요.</p>
-              ) : (
-                <ul className={s.blist}>
-                  {blockedFans.map((f, i) => (
-                    <li key={f.fanNickname} className={s.brow}>
-                      <FaceAvatar index={i} />
-                      <div className={s.who}>
-                        <strong>{f.fanNickname}</strong>
-                        <span className="sub">{formatDate(f.blockedAt)} 차단</span>
-                      </div>
-                      <button
-                        className="btn btn--soft btn--sm"
-                        type="button"
-                        aria-label={`${f.fanNickname}님 차단 풀기`}
-                        onClick={() => setSheet({ kind: "unblock", fan: f.fanNickname })}
-                      >
-                        차단 풀기
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p className={`sub ${s.note}`}>차단을 풀 때도 카카오톡 인증서 서명이 필요해요.</p>
-            </section>
-          </div>
-
-          <div className={s.col}>
-            <section aria-labelledby="prof-h">
-              <div className={s["s-head"]}>
-                <h2 id="prof-h">프로필</h2>
-              </div>
-              <div className="field">
-                <label htmlFor="pub-name">공개 이름</label>
-                <input
-                  className="input"
-                  id="pub-name"
-                  value={publicName}
-                  onChange={(e) => setPublicName(e.target.value)}
-                  aria-describedby="pub-name-hint"
-                />
-                <p className="hint" id="pub-name-hint">
-                  팬에게 보이는 이름이에요.
+      <div className={s["set-grid"]}>
+        <div className={s.col}>
+          <section aria-labelledby="addr-h">
+            <div className={s["s-head"]}>
+              <h3 id="addr-h">받는 주소</h3>
+              {settings.addressRegistered ? <span className="tag tag--brand">등록됨</span> : <span className="tag">등록 전</span>}
+            </div>
+            <div className={s.addr}>
+              <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
+              <div>
+                <p className={s["addr-t"]}>{settings.addressRegistered ? "주소가 안전하게 등록돼 있어요" : "아직 주소를 등록하지 않았어요"}</p>
+                <p className="sub">
+                  {settings.addressRegistered ? "브라우저에서 잠가 보냈어요. 저희 화면에는 보이지 않아요." : "등록하면 브라우저에서 잠가 보내요. 저희 화면에는 보이지 않아요."}
                 </p>
               </div>
-              <dl className={s.kv}>
-                <div>
-                  <dt>방송 채널</dt>
-                  <dd>{settings.channelTitle}</dd>
-                </div>
-                <div>
-                  <dt>본인 확인</dt>
-                  <dd>
-                    {settings.verifiedAt ? (
-                      <>
-                        <span className="tag tag--brand">확인 완료</span> <span className="sub">{formatDate(settings.verifiedAt)} 방송 채널 인증</span>
-                      </>
-                    ) : (
-                      <span className="tag">확인 전</span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
-              <Switch id="sw-find" title="크리에이터 찾기에 보이기" desc="끄면 검색 결과에 나타나지 않아요." checked={visible} onChange={setVisible} />
-              <button className={`btn ${s.save}`} type="button">
-                프로필 저장
-              </button>
-            </section>
+            </div>
+            <p className={`sub ${s.note}`}>아직 출력하지 않은 주문은 바뀐 주소로 나가요.</p>
+            <button className="btn btn--line" type="button" onClick={() => setSheet({ kind: "address" })}>
+              주소 바꾸기
+            </button>
+          </section>
 
-            <section aria-labelledby="alarm-h">
-              <div className={s["s-head"]}>
-                <h2 id="alarm-h">알림 받기</h2>
+          <section id="blocked" className={s.anchor} aria-labelledby="block-h">
+            <div className={s["s-head"]}>
+              <h3 id="block-h">차단한 팬</h3>
+              <span className="tag">{blockedFans.length}명</span>
+            </div>
+            {blockedFans.length === 0 ? (
+              <p className="sub">차단한 팬이 없어요.</p>
+            ) : (
+              <ul className={s.blist}>
+                {blockedFans.map((f, i) => (
+                  <li key={f.fanNickname} className={s.brow}>
+                    <FaceAvatar index={i} />
+                    <div className={s.who}>
+                      <strong>{f.fanNickname}</strong>
+                      <span className="sub">{formatDate(f.blockedAt)} 차단</span>
+                    </div>
+                    <button
+                      className="btn btn--soft btn--sm"
+                      type="button"
+                      aria-label={`${f.fanNickname}님 차단 풀기`}
+                      onClick={() => setSheet({ kind: "unblock", fan: f.fanNickname })}
+                    >
+                      차단 풀기
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className={`sub ${s.note}`}>차단을 풀 때도 카카오톡 인증서 서명이 필요해요.</p>
+          </section>
+        </div>
+
+        <div className={s.col}>
+          <section aria-labelledby="prof-h">
+            <div className={s["s-head"]}>
+              <h3 id="prof-h">프로필</h3>
+            </div>
+            <div className="field">
+              <label htmlFor="pub-name">공개 이름</label>
+              <input
+                className="input"
+                id="pub-name"
+                value={publicName}
+                onChange={(e) => setPublicName(e.target.value)}
+                aria-describedby="pub-name-hint"
+              />
+              <p className="hint" id="pub-name-hint">
+                팬에게 보이는 이름이에요.
+              </p>
+            </div>
+            <dl className={s.kv}>
+              <div>
+                <dt>방송 채널</dt>
+                <dd>{settings.channelTitle}</dd>
               </div>
-              <Switch
-                id="sw-a1"
-                title="새 승인 요청"
-                desc="팬이 선물을 등록하면 카카오톡으로 알려드려요."
-                checked={notify.newRequest}
-                onChange={(v) => setNotify((n) => ({ ...n, newRequest: v }))}
-              />
-              <Switch
-                id="sw-a2"
-                title="자동 반려 하루 전"
-                desc={`${APPROVAL_DEADLINE_DAYS}일이 다 되어 가는 요청을 알려드려요.`}
-                checked={notify.expiringSoon}
-                onChange={(v) => setNotify((n) => ({ ...n, expiringSoon: v }))}
-              />
-              <Switch
-                id="sw-a3"
-                title="주소가 열릴 때"
-                desc="송장을 출력해 주소가 열릴 때마다 알려드려요."
-                checked={notify.addressOpened}
-                onChange={(v) => setNotify((n) => ({ ...n, addressOpened: v }))}
-              />
-            </section>
-          </div>
+              <div>
+                <dt>본인 확인</dt>
+                <dd>
+                  {settings.verifiedAt ? (
+                    <>
+                      <span className="tag tag--brand">확인 완료</span> <span className="sub">{formatDate(settings.verifiedAt)} 방송 채널 인증</span>
+                    </>
+                  ) : (
+                    <span className="tag">확인 전</span>
+                  )}
+                </dd>
+              </div>
+            </dl>
+            <Switch id="sw-find" title="크리에이터 찾기에 보이기" desc="끄면 검색 결과에 나타나지 않아요." checked={visible} onChange={setVisible} />
+            <button className={`btn ${s.save}`} type="button">
+              프로필 저장
+            </button>
+          </section>
+
+          <section aria-labelledby="alarm-h">
+            <div className={s["s-head"]}>
+              <h3 id="alarm-h">알림 받기</h3>
+            </div>
+            <Switch
+              id="sw-a1"
+              title="새 승인 요청"
+              desc="팬이 선물을 등록하면 카카오톡으로 알려드려요."
+              checked={notify.newRequest}
+              onChange={(v) => setNotify((n) => ({ ...n, newRequest: v }))}
+            />
+            <Switch
+              id="sw-a2"
+              title="자동 반려 하루 전"
+              desc={`${APPROVAL_DEADLINE_DAYS}일이 다 되어 가는 요청을 알려드려요.`}
+              checked={notify.expiringSoon}
+              onChange={(v) => setNotify((n) => ({ ...n, expiringSoon: v }))}
+            />
+            <Switch
+              id="sw-a3"
+              title="주소가 열릴 때"
+              desc="송장을 출력해 주소가 열릴 때마다 알려드려요."
+              checked={notify.addressOpened}
+              onChange={(v) => setNotify((n) => ({ ...n, addressOpened: v }))}
+            />
+          </section>
         </div>
       </div>
-      <div className="page-end" />
 
       <BottomSheet
         open={sheet !== null}
@@ -212,6 +209,6 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
           </button>
         </div>
       </BottomSheet>
-    </main>
+    </div>
   );
 }

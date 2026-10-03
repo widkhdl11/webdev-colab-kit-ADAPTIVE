@@ -44,110 +44,107 @@ export function AccessLogPage({
   entries: readonly AddressAccessEntry[];
 }) {
   return (
-    <main id="main">
-      <div className="container">
-        <div className="page-title">
-          <h1 className="page-h">주소 열람 기록</h1>
-          <p>
-            <strong className={s.strong}>승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.
-          </p>
-        </div>
-
-        <section className={s.month} aria-labelledby="sum-h">
-          <img className={`asset ${s.ico}`} src="/img/icon-log.png" alt="" aria-hidden="true" width={96} height={96} />
-          <div className={s["month-body"]}>
-            <h2 id="sum-h" className={s["month-h"]}>
-              이번 달 ({monthLabel})
-            </h2>
-            <dl className={s.nums}>
-              <div>
-                <dt>승인</dt>
-                <dd>
-                  {approvedCount}
-                  <small>건</small>
-                </dd>
-              </div>
-              <div>
-                <dt>주소 열림</dt>
-                <dd>
-                  {summary.openedCount}
-                  <small>번</small>
-                </dd>
-              </div>
-              <div>
-                <dt>재출력</dt>
-                <dd>
-                  {summary.reprintCount}
-                  <small>번</small>
-                </dd>
-              </div>
-              <div>
-                <dt>거부</dt>
-                <dd>
-                  {summary.deniedCount}
-                  <small>번</small>
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </section>
-        <p className={`sub ${s.rules}`}>
-          한 주문의 주소는 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_ORDER}번까지 열려요. 출고가 확정되면 남은 횟수가 있어도 더는 열리지 않아요.
+    <div>
+      <div className="panel-title">
+        <h2 className="panel-h">주소 열람 기록</h2>
+        <p>
+          <strong className={s.strong}>승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.
         </p>
-
-        <section className="block" aria-label="열람 기록">
-          {entries.length === 0 ? (
-            <p className={`sub ${s.empty}`}>아직 주소가 열린 기록이 없어요.</p>
-          ) : (
-            <>
-              <table className={s["log-table"]}>
-                <caption className="sr-only">주소 열람 기록. 최근 순</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">시각</th>
-                    <th scope="col">주문번호</th>
-                    <th scope="col">누가</th>
-                    <th scope="col">결과</th>
-                    <th scope="col">비고</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entries.map((e) => (
-                    <tr key={`${e.orderNo}-${e.at}`}>
-                      <td className={s.nw}>{formatDateTime(e.at)}</td>
-                      <td className={s.nw}>{e.orderNo}</td>
-                      <td>{REQUESTER_TEXT[e.requester]}</td>
-                      <td>
-                        <ResultTag e={e} />
-                      </td>
-                      <td>
-                        <Note e={e} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <ul className={s["log-list"]} aria-label="주소 열람 기록">
-                {entries.map((e) => (
-                  <li key={`${e.orderNo}-${e.at}`} className={s.lrow}>
-                    <div className={s.top}>
-                      <strong>{formatDateTime(e.at)}</strong>
-                      <ResultTag e={e} />
-                    </div>
-                    <p className="sub">
-                      {e.orderNo} · {REQUESTER_TEXT[e.requester]}
-                    </p>
-                    <p>
-                      <Note e={e} />
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </section>
       </div>
-      <div className="page-end" />
-    </main>
+
+      <section className={s.month} aria-labelledby="sum-h">
+        <img className={`asset ${s.ico}`} src="/img/icon-log.png" alt="" aria-hidden="true" width={96} height={96} />
+        <div className={s["month-body"]}>
+          <h3 id="sum-h" className={s["month-h"]}>
+            이번 달 ({monthLabel})
+          </h3>
+          <dl className={s.nums}>
+            <div>
+              <dt>승인</dt>
+              <dd>
+                {approvedCount}
+                <small>건</small>
+              </dd>
+            </div>
+            <div>
+              <dt>주소 열림</dt>
+              <dd>
+                {summary.openedCount}
+                <small>번</small>
+              </dd>
+            </div>
+            <div>
+              <dt>재출력</dt>
+              <dd>
+                {summary.reprintCount}
+                <small>번</small>
+              </dd>
+            </div>
+            <div>
+              <dt>거부</dt>
+              <dd>
+                {summary.deniedCount}
+                <small>번</small>
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+      <p className={`sub ${s.rules}`}>
+        한 주문의 주소는 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_ORDER}번까지 열려요. 출고가 확정되면 남은 횟수가 있어도 더는 열리지 않아요.
+      </p>
+
+      <section className={s.records} aria-label="열람 기록">
+        {entries.length === 0 ? (
+          <p className={`sub ${s.empty}`}>아직 주소가 열린 기록이 없어요.</p>
+        ) : (
+          <>
+            <table className={s["log-table"]}>
+              <caption className="sr-only">주소 열람 기록. 최근 순</caption>
+              <thead>
+                <tr>
+                  <th scope="col">시각</th>
+                  <th scope="col">주문번호</th>
+                  <th scope="col">누가</th>
+                  <th scope="col">결과</th>
+                  <th scope="col">비고</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((e) => (
+                  <tr key={`${e.orderNo}-${e.at}`}>
+                    <td className={s.nw}>{formatDateTime(e.at)}</td>
+                    <td className={s.nw}>{e.orderNo}</td>
+                    <td>{REQUESTER_TEXT[e.requester]}</td>
+                    <td>
+                      <ResultTag e={e} />
+                    </td>
+                    <td>
+                      <Note e={e} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <ul className={s["log-list"]} aria-label="주소 열람 기록">
+              {entries.map((e) => (
+                <li key={`${e.orderNo}-${e.at}`} className={s.lrow}>
+                  <div className={s.top}>
+                    <strong>{formatDateTime(e.at)}</strong>
+                    <ResultTag e={e} />
+                  </div>
+                  <p className="sub">
+                    {e.orderNo} · {REQUESTER_TEXT[e.requester]}
+                  </p>
+                  <p>
+                    <Note e={e} />
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+    </div>
   );
 }

@@ -1,0 +1,197 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v4 — 보낸 역조공 목록 다듬기 (2026-10-04)
+  사용자: 「리스트가 너무 커서 싸구려 사이트같아. 조금 더 아기자기한 느낌이 있으면 좋겠어.」
+  지금 화면: 목록 줄이 1200px 폭을 꽉 채우고 닉네임 20px·줄 높이 88px — 빈 공간이 커서 허전하다.
+  A안: 한 줄에 하나는 그대로, 폭을 760px 로 좁히고 묶음마다 둥근 카드 안에 작은 줄. 상태는 색 점 + 알약.
+  B안: 팬 한 명 = 작은 타일(스티커처럼), 한 줄에 4칸. design-rules 2절 「목록은 카드 격자로 늘어놓지 않는다」를 바꿔야 한다.
+  보이는 칸은 지금과 같다(팬 닉네임·아이디·주문번호·상태 셋) — reverse-gift INV-R8.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 보낸 역조공 다듬기</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="v4.css">
+  <style>
+    .option-label { display: inline-block; margin: 72px 0 16px; padding: 6px 14px; border-radius: 9999px; background: var(--ink); color: #fff; font-weight: 700; }
+    .option-label + p { color: var(--sub); margin-bottom: 24px; }
+    .narrow { max-width: 760px; margin-inline: auto; }
+
+    .top-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; }
+    .top-row .page-title { padding-right: 0; }
+    .top-row .btn { margin-bottom: 24px; }
+    .rule-chip { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px 8px 8px; border-radius: 9999px; background: var(--surface); color: var(--sub); }
+    .rule-chip img { width: 32px; height: 32px; }
+    .rule-chip strong { color: var(--ink); }
+
+    /* 상태: 색 점 + 알약. 색만으로 알리지 않게 글자를 늘 같이 쓴다 */
+    .st { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; font-weight: 700; white-space: nowrap; }
+    .st::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .st--ok { background: #E6F2EE; color: #1F5A47; }
+    .st--wait { background: #FFF3E5; color: #5B3410; }
+    .st--no { background: var(--surface); color: var(--sub); }
+
+    /* ── A안 ── */
+    .a-batch { margin-top: 24px; padding: 8px 20px 16px; border-radius: 20px; background: #fff; box-shadow: var(--hair), 0 6px 20px rgba(51, 61, 57, .05); }
+    .a-head { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+    .a-head img { width: 40px; height: 40px; }
+    .a-head h2 { font-size: 18px; letter-spacing: -.3px; }
+    .a-head .count { margin-left: auto; padding: 2px 10px; border-radius: 9999px; background: var(--surface); color: var(--sub); font-weight: 600; }
+    .a-list { border-top: 1px dashed rgba(51, 61, 57, .14); }
+    .a-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 0; }
+    .a-row + .a-row { border-top: 1px solid rgba(51, 61, 57, .06); }
+    .a-row .face { width: 40px; height: 40px; }
+    .a-row .nick { font-weight: 700; }
+    .a-row .says { color: var(--faint); overflow-wrap: anywhere; }
+    .a-sum { display: flex; align-items: center; gap: 12px; margin-top: 8px; padding: 10px 14px; border-radius: 14px; background: var(--surface); color: var(--sub); }
+    .pips { display: flex; gap: 4px; }
+    .pips i { width: 10px; height: 10px; border-radius: 50%; background: #D5DAD8; }
+    .pips i.ok { background: var(--brand); }
+    .pips i.wait { background: #F2B66B; }
+
+    /* ── B안 ── */
+    .b-batch { margin-top: 24px; }
+    .b-head { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; }
+    .b-head img { width: 40px; height: 40px; }
+    .b-head h2 { font-size: 18px; letter-spacing: -.3px; }
+    .b-head .count { margin-left: auto; color: var(--sub); }
+    .b-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .b-tile { display: grid; justify-items: center; gap: 4px; padding: 20px 12px 16px; border-radius: 20px; background: var(--surface); text-align: center; }
+    .b-tile .face { width: 56px; height: 56px; margin-bottom: 4px; }
+    .b-tile .nick { font-weight: 700; }
+    .b-tile .says { color: var(--faint); overflow-wrap: anywhere; }
+    .b-tile .st { margin-top: 6px; background: #fff; }
+    .b-tile .st--ok { color: #1F5A47; }
+
+    @media (max-width: 1023px) { .b-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 767px) {
+      .top-row .btn { width: 100%; margin-bottom: 8px; }
+      .a-batch { padding: 4px 16px 14px; }
+      .b-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.5 3.5 9.5 3.5 12 0" stroke="#333D39" stroke-width="2.6" stroke-linecap="round" fill="none"/><circle cx="12.5" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.5" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+    </defs>
+  </svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="#" aria-label="팬꾹 크리에이터 처음 화면"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="var(--brand)"/><path d="M16 24C12 21 7 18 7 13a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 11Z" fill="#fff"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+        <li><a href="#">승인 요청</a></li>
+        <li><a href="#" aria-current="page">역조공</a></li>
+        <li><a href="#">열람 기록</a></li>
+        <li><a href="#">주소와 설정</a></li>
+        <li><a href="#">공지사항</a></li>
+        <li><a href="#">고객센터</a></li>
+      </ul></nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+
+      <!-- ───────────── A안 ───────────── -->
+      <span class="option-label">A안 · 둥근 카드 안의 작은 줄</span>
+      <p>한 줄에 팬 한 명은 그대로. 폭을 좁히고, 보낸 묶음마다 둥근 카드에 담았어요.</p>
+      <div class="narrow">
+        <div class="top-row">
+          <div class="page-title">
+            <h1 class="page-h">보낸 역조공</h1>
+            <p>팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
+          </div>
+          <a class="btn" href="#">역조공 보내기</a>
+        </div>
+        <span class="rule-chip"><img class="asset" src="img/icon-address-lock.png" alt=""><span><strong>팬의 주소와 실명은 보이지 않아요.</strong> 팬꾹만 송장을 뽑을 때 열어요.</span></span>
+
+        <section class="a-batch" aria-labelledby="a1">
+          <div class="a-head">
+            <img class="asset" src="img/icon-gift.png" alt="">
+            <h2 id="a1">10월 3일 오후 10:56</h2>
+            <span class="count">팬 3명</span>
+          </div>
+          <ul class="a-list">
+            <li class="a-row">
+              <svg class="face" style="--c:#FBE3A8" aria-hidden="true"><use href="#i-face"/></svg>
+              <div><p class="nick">별빛</p><p class="says">@byeolbit_fan · RG-V3Z60J</p></div>
+              <span class="st st--ok">받았어요</span>
+            </li>
+            <li class="a-row">
+              <svg class="face" style="--c:#DCD3F6" aria-hidden="true"><use href="#i-face"/></svg>
+              <div><p class="nick">달콤이</p><p class="says">@dalkong_fan · RG-K7M2CQ</p></div>
+              <span class="st st--wait">기다리는 중</span>
+            </li>
+            <li class="a-row">
+              <svg class="face" style="--c:#CDE9DE" aria-hidden="true"><use href="#i-face"/></svg>
+              <div><p class="nick">구름빵</p><p class="says">@gureum_fan · RG-P2W9XA</p></div>
+              <span class="st st--no">받지 않았어요</span>
+            </li>
+          </ul>
+          <p class="a-sum"><span class="pips" aria-hidden="true"><i class="ok"></i><i class="wait"></i><i></i></span>받은 팬 1명 · 기다리는 중 1명 · 받지 않은 팬 1명 (받지 않은 상자 요금은 환불돼요)</p>
+        </section>
+
+        <section class="a-batch" aria-labelledby="a2">
+          <div class="a-head">
+            <img class="asset" src="img/icon-gift.png" alt="">
+            <h2 id="a2">9월 28일 오후 3:12</h2>
+            <span class="count">팬 1명</span>
+          </div>
+          <ul class="a-list">
+            <li class="a-row">
+              <svg class="face" style="--c:#FAD4D8" aria-hidden="true"><use href="#i-face"/></svg>
+              <div><p class="nick">달토끼</p><p class="says">@daltokki_fan · RG-TZSVE8</p></div>
+              <span class="st st--ok">받았어요</span>
+            </li>
+          </ul>
+          <p class="a-sum"><span class="pips" aria-hidden="true"><i class="ok"></i></span>받은 팬 1명</p>
+        </section>
+      </div>
+
+      <!-- ───────────── B안 ───────────── -->
+      <span class="option-label">B안 · 팬 스티커 타일</span>
+      <p>팬 한 명을 작은 타일로. 한 줄에 4칸(태블릿 3칸, 휴대폰 2칸). 지금 디자인 기준의 「목록은 한 줄에 하나」를 바꿔야 해요.</p>
+      <div class="top-row">
+        <div class="page-title">
+          <h1 class="page-h">보낸 역조공</h1>
+          <p>팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
+        </div>
+        <a class="btn" href="#">역조공 보내기</a>
+      </div>
+      <span class="rule-chip"><img class="asset" src="img/icon-address-lock.png" alt=""><span><strong>팬의 주소와 실명은 보이지 않아요.</strong> 팬꾹만 송장을 뽑을 때 열어요.</span></span>
+
+      <section class="b-batch" aria-labelledby="b1" style="margin-top:32px">
+        <div class="b-head">
+          <img class="asset" src="img/icon-gift.png" alt="">
+          <h2 id="b1">10월 3일 오후 10:56</h2>
+          <span class="count">받은 팬 1 · 기다리는 중 1 · 받지 않음 1</span>
+        </div>
+        <ul class="b-grid">
+          <li class="b-tile">
+            <svg class="face" style="--c:#FBE3A8" aria-hidden="true"><use href="#i-face"/></svg>
+            <p class="nick">별빛</p><p class="says">@byeolbit_fan</p><p class="says">RG-V3Z60J</p>
+            <span class="st st--ok">받았어요</span>
+          </li>
+          <li class="b-tile">
+            <svg class="face" style="--c:#DCD3F6" aria-hidden="true"><use href="#i-face"/></svg>
+            <p class="nick">달콤이</p><p class="says">@dalkong_fan</p><p class="says">RG-K7M2CQ</p>
+            <span class="st st--wait">기다리는 중</span>
+          </li>
+          <li class="b-tile">
+            <svg class="face" style="--c:#CDE9DE" aria-hidden="true"><use href="#i-face"/></svg>
+            <p class="nick">구름빵</p><p class="says">@gureum_fan</p><p class="says">RG-P2W9XA</p>
+            <span class="st st--no">받지 않았어요</span>
+          </li>
+        </ul>
+      </section>
+
+      <div style="height:96px"></div>
+    </div>
+  </main>
+</body>
+</html>
