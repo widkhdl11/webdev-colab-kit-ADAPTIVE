@@ -1,8 +1,9 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { readViewer } from "@/entities/session/model/viewer";
 import { confirmPayment } from "@/features/checkout/model/checkout";
 import { checkoutRequesterId } from "@/features/gift-register/model/sender-rule";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
+import { seeOther } from "@/shared/lib/http/see-other";
 import { checkoutDeps } from "../deps";
 
 // 토스 결제창이 성공하면 이 주소로 paymentKey·orderId·amount 를 붙여 보낸다.
@@ -18,8 +19,6 @@ export async function GET(req: NextRequest) {
     paymentKey: q.get("paymentKey") ?? "",
   });
 
-  if (outcome.ok) return NextResponse.redirect(new URL(`/gifts/${encodeURIComponent(outcome.orderNo)}?paid=1`, req.nextUrl.origin), 303);
-  const back = new URL("/gifts/new", req.nextUrl.origin);
-  back.searchParams.set("payment", outcome.reason === "in_progress" ? "in_progress" : "failed");
-  return NextResponse.redirect(back, 303);
+  if (outcome.ok) return seeOther(`/gifts/${encodeURIComponent(outcome.orderNo)}?paid=1`);
+  return seeOther(`/gifts/new?payment=${outcome.reason === "in_progress" ? "in_progress" : "failed"}`);
 }
