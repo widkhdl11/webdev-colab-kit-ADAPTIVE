@@ -13,6 +13,7 @@ const rowSchema = z.object({
   amount_krw: z.number().int(),
   goods_krw: z.number().int(),
   service_fee_krw: z.number().int(),
+  inspection_fee_krw: z.number().int(),
   shipping_fee_krw: z.number().int(),
   status: z.enum(["pending", "confirming", "done", "failed"]),
   payment_key: z.string().nullable(),
@@ -24,10 +25,11 @@ function toStored(row: unknown): StoredPayment {
   const charge = parseChargeBreakdown({
     goodsKrw: r.goods_krw,
     serviceFeeKrw: r.service_fee_krw,
+    inspectionFeeKrw: r.inspection_fee_krw,
     shippingFeeKrw: r.shipping_fee_krw,
     totalKrw: r.amount_krw,
   });
-  // INV-M7: 저장된 세 칸의 합이 금액과 다르면 이 기록으로 결제를 진행하지 않는다
+  // INV-M7: 저장된 네 칸의 합이 금액과 다르면 이 기록으로 결제를 진행하지 않는다
   if (!charge) throw new Error("결제 기록의 칸 합계가 금액과 다르다");
   return {
     orderId: r.toss_order_id,
@@ -41,7 +43,7 @@ function toStored(row: unknown): StoredPayment {
   };
 }
 
-const SELECT = "toss_order_id, amount_krw, goods_krw, service_fee_krw, shipping_fee_krw, status, payment_key, orders(order_no, fan_id, profiles(nickname))";
+const SELECT = "toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status, payment_key, orders(order_no, fan_id, profiles(nickname))";
 
 export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore {
   async function find(orderId: string): Promise<StoredPayment | null> {
@@ -62,6 +64,7 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
         p_toss_order_id: orderId,
         p_goods_krw: charge.goodsKrw,
         p_service_fee_krw: charge.serviceFeeKrw,
+        p_inspection_fee_krw: charge.inspectionFeeKrw,
         p_shipping_fee_krw: charge.shippingFeeKrw,
         p_amount_krw: charge.totalKrw,
       });

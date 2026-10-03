@@ -108,9 +108,9 @@ from seed_orders s
 join public.orders o on o.order_no = s.order_no
 cross join lateral generate_series(1, s.box_count) as g(seq);
 
-insert into public.payments (order_id, kind, toss_order_id, amount_krw, goods_krw, service_fee_krw, shipping_fee_krw, status, payment_key, created_at, settled_at)
+insert into public.payments (order_id, kind, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status, payment_key, created_at, settled_at)
 select o.id, 'initial', 'pay_seed_' || replace(lower(s.order_no), '-', ''),
-       6900 * s.box_count, 0, 2900 * s.box_count, 4000 * s.box_count,
+       6900 * s.box_count, 0, 1400 * s.box_count, 1500 * s.box_count, 4000 * s.box_count,
        'done', 'seed_payment_key_' || replace(lower(s.order_no), '-', ''), s.registered_at, s.registered_at
 from seed_orders s
 join public.orders o on o.order_no = s.order_no;

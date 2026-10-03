@@ -48,10 +48,10 @@ describe("선물 등록을 DB 에", () => {
     expect(r.amountKrw).toBe(15800);
     const { data } = await adminClient()
       .from("payments")
-      .select("amount_krw, goods_krw, service_fee_krw, shipping_fee_krw, status")
+      .select("amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status")
       .eq("toss_order_id", r.orderId)
       .single();
-    expect(data).toEqual({ amount_krw: 15800, goods_krw: 0, service_fee_krw: 6800, shipping_fee_krw: 9000, status: "pending" });
+    expect(data).toEqual({ amount_krw: 15800, goods_krw: 0, service_fee_krw: 3300, inspection_fee_krw: 3500, shipping_fee_krw: 9000, status: "pending" });
     const { count } = await adminClient().from("boxes").select("id", { count: "exact", head: true }).eq("order_id", (await orderId(r.orderNo))!);
     expect(count).toBe(2);
   });

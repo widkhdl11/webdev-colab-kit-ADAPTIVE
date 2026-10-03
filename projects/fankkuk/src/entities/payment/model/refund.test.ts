@@ -16,14 +16,15 @@ describe("환불 금액 (INV-M8)", () => {
 
   it("INV-M8 (S8): 입고 뒤 검수 불합격은 검수비(서비스료)와 반송비(배송비 칸)를 모두 빼 상품 대금 칸만 환불", () => {
     expect(refundAmountFor({ reason: "inspection_failed", arrived: true, shipped: false, charge: paid })).toBe(0);
-    const withGoods = { goodsKrw: 10000, serviceFeeKrw: 2900, shippingFeeKrw: 4000, totalKrw: 16900 };
+    const withGoods = { goodsKrw: 10000, serviceFeeKrw: 1400, inspectionFeeKrw: 1500, shippingFeeKrw: 4000, totalKrw: 16900 };
     expect(refundAmountFor({ reason: "inspection_failed", arrived: true, shipped: false, charge: withGoods })).toBe(10000);
   });
 
   it.each(["rejected", "expired"] as const)("INV-M8 (S8): 입고 뒤 %s 는 반송 택배비(배송비 칸)를 뺀 금액을 환불", (reason) => {
     const refund = refundAmountFor({ reason, arrived: true, shipped: false, charge: paid });
     expect(refund).toBe(paid.totalKrw - ship);
-    expect(refund).toBe(paid.serviceFeeKrw + paid.goodsKrw);
+    // 「서비스료 칸」= 기본 서비스료 + 검수비 (INV-M7 개정 뒤에도 환불 뜻은 그대로)
+    expect(refund).toBe(paid.serviceFeeKrw + paid.inspectionFeeKrw + paid.goodsKrw);
   });
 
   it("INV-M8 (S8): 입고 뒤 팬 취소는 배송비 칸만 환불 — 거절 규칙(반송비 차감)과 섞이지 않는다", () => {
@@ -31,7 +32,7 @@ describe("환불 금액 (INV-M8)", () => {
   });
 
   it("INV-M8 (S8, 실패경로): 상품 대금이 있는 결제의 입고 뒤 거절은 상품 대금도 돌려준다 — 빼는 것은 반송 택배비뿐", () => {
-    const withGoods = { goodsKrw: 10000, serviceFeeKrw: 2900, shippingFeeKrw: 4000, totalKrw: 16900 };
+    const withGoods = { goodsKrw: 10000, serviceFeeKrw: 1400, inspectionFeeKrw: 1500, shippingFeeKrw: 4000, totalKrw: 16900 };
     expect(refundAmountFor({ reason: "rejected", arrived: true, shipped: false, charge: withGoods })).toBe(12900);
   });
 

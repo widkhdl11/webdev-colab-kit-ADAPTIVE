@@ -29,7 +29,8 @@ function register(senderId: string, creatorId: string) {
     p_tiers: ["small"],
     p_toss_order_id: `pay_test_cg_${tag.toLowerCase()}`,
     p_goods_krw: 0,
-    p_service_fee_krw: 2900,
+    p_service_fee_krw: 1400,
+    p_inspection_fee_krw: 1500,
     p_shipping_fee_krw: 4000,
     p_amount_krw: 6900,
   });

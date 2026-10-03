@@ -6,7 +6,7 @@ import { parseChargeBreakdown, tierBreakdown, type ChargeBreakdown } from "./cha
 export type MeasuredAssessment = { kind: "none" } | { kind: "difference"; charge: ChargeBreakdown } | { kind: "inspection_failed" };
 
 /**
- * INV-M11: 차액 = 실측 구간 요금 − 신고 구간 요금, 배송비·서비스료 칸도 각각의 차.
+ * INV-M11: 차액 = 실측 구간 요금 − 신고 구간 요금, 배송비·검수비·기본 서비스료 칸도 각각의 차.
  * 실측이 신고 이하이면 차액도 환불도 없다. 실측이 중형을 넘으면 차액이 아니라 검수 불합격이다.
  */
 export function assessMeasuredTier(input: { declared: BillableTier; measured: BillableTier | "oversize" }): MeasuredAssessment {
@@ -17,6 +17,7 @@ export function assessMeasuredTier(input: { declared: BillableTier; measured: Bi
   const charge = parseChargeBreakdown({
     goodsKrw: 0,
     serviceFeeKrw: measured.serviceFeeKrw - declared.serviceFeeKrw,
+    inspectionFeeKrw: measured.inspectionFeeKrw - declared.inspectionFeeKrw,
     shippingFeeKrw: measured.shippingFeeKrw - declared.shippingFeeKrw,
     totalKrw: measured.totalKrw - declared.totalKrw,
   });

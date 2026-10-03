@@ -14,6 +14,12 @@ export const TIER_PRICE_KRW: Readonly<Record<BillableTier, number>> = { small: 6
  */
 export const TIER_SHIPPING_COST_KRW: Readonly<Record<BillableTier, number>> = { small: 4000, medium: 5000 };
 
+/**
+ * 결제 기록의 검수비 칸(사용자 결정 2026-10-03). 서비스료 = 기본 서비스료 + 검수비로 나눈 것 중 검수비 몫이다(INV-M7).
+ * 역조공은 추적 장치 검사를 하지 않아 이 금액을 빼고 받는다(reverse-gift INV-R3).
+ */
+export const TIER_INSPECTION_FEE_KRW: Readonly<Record<BillableTier, number>> = { small: 1500, medium: 2000 };
+
 export function isBillableTier(value: unknown): value is BillableTier {
   return value === "small" || value === "medium";
 }

@@ -1,13 +1,13 @@
 import { z } from "zod";
-import { BILLABLE_TIERS, isBillableTier, TIER_PRICE_KRW, TIER_SHIPPING_COST_KRW, type BillableTier } from "../config/tier-pricing";
+import { BILLABLE_TIERS, isBillableTier, TIER_INSPECTION_FEE_KRW, TIER_PRICE_KRW, TIER_SHIPPING_COST_KRW, type BillableTier } from "../config/tier-pricing";
 
 const krw = z.number().int().nonnegative();
 
 const breakdownSchema = z
-  .object({ goodsKrw: krw, serviceFeeKrw: krw, shippingFeeKrw: krw, totalKrw: krw })
+  .object({ goodsKrw: krw, serviceFeeKrw: krw, inspectionFeeKrw: krw, shippingFeeKrw: krw, totalKrw: krw })
   .strict()
-  // INV-M7: 세 칸의 합이 결제 금액과 같아야 한다.
-  .refine((b) => b.goodsKrw + b.serviceFeeKrw + b.shippingFeeKrw === b.totalKrw);
+  // INV-M7: 네 칸(상품 대금·기본 서비스료·검수비·배송비)의 합이 결제 금액과 같아야 한다.
+  .refine((b) => b.goodsKrw + b.serviceFeeKrw + b.inspectionFeeKrw + b.shippingFeeKrw === b.totalKrw);
 
 export type ChargeBreakdown = z.infer<typeof breakdownSchema>;
 
@@ -20,11 +20,41 @@ function billableBoxes(boxes: readonly string[]): BillableTier[] {
   });
 }
 
-/** 구간 하나의 결제 칸 나눔. 배송비 칸 = 택배 원가, 서비스료 칸 = 나머지(INV-M7). */
+/** 구간 하나의 결제 칸 나눔. 배송비 칸 = 택배 원가, 검수비 칸 = 구간 검수비, 기본 서비스료 칸 = 나머지(INV-M7). */
 export function tierBreakdown(tier: BillableTier): ChargeBreakdown {
   const totalKrw = TIER_PRICE_KRW[tier];
   const shippingFeeKrw = TIER_SHIPPING_COST_KRW[tier];
-  return breakdownSchema.parse({ goodsKrw: 0, serviceFeeKrw: totalKrw - shippingFeeKrw, shippingFeeKrw, totalKrw });
+  const inspectionFeeKrw = TIER_INSPECTION_FEE_KRW[tier];
+  return breakdownSchema.parse({ goodsKrw: 0, serviceFeeKrw: totalKrw - shippingFeeKrw - inspectionFeeKrw, inspectionFeeKrw, shippingFeeKrw, totalKrw });
+}
+
+/** 역조공 상자 요금 = 팬 선물 요금 − 검수비 (reverse-gift INV-R3). */
+export const REVGIFT_TIER_PRICE_KRW: Readonly<Record<BillableTier, number>> = {
+  small: TIER_PRICE_KRW.small - TIER_INSPECTION_FEE_KRW.small,
+  medium: TIER_PRICE_KRW.medium - TIER_INSPECTION_FEE_KRW.medium,
+};
+
+/** 역조공 구간 하나의 칸 나눔 — 팬 선물과 같고 검수비 칸만 0 이다. */
+export function revgiftTierBreakdown(tier: BillableTier): ChargeBreakdown {
+  const fan = tierBreakdown(tier);
+  return breakdownSchema.parse({ ...fan, inspectionFeeKrw: 0, totalKrw: fan.totalKrw - fan.inspectionFeeKrw });
+}
+
+function sumBreakdowns(parts: readonly ChargeBreakdown[]): ChargeBreakdown {
+  const sum = { goodsKrw: 0, serviceFeeKrw: 0, inspectionFeeKrw: 0, shippingFeeKrw: 0, totalKrw: 0 };
+  for (const b of parts) {
+    sum.goodsKrw += b.goodsKrw;
+    sum.serviceFeeKrw += b.serviceFeeKrw;
+    sum.inspectionFeeKrw += b.inspectionFeeKrw;
+    sum.shippingFeeKrw += b.shippingFeeKrw;
+    sum.totalKrw += b.totalKrw;
+  }
+  return breakdownSchema.parse(sum);
+}
+
+/** INV-R3: 역조공 결제 금액 = 몫마다 고른 구간의 역조공 요금 합. 인자의 다른 칸은 쓰지 않는다. */
+export function computeRevgiftCharge(input: { boxes: readonly string[] }): ChargeBreakdown {
+  return sumBreakdowns(billableBoxes(input.boxes).map(revgiftTierBreakdown));
 }
 
 /**
@@ -32,14 +62,7 @@ export function tierBreakdown(tier: BillableTier): ChargeBreakdown {
  * 상품 대금은 대신 구매가 없는 지금 0 이다(INV-M7 칸 분리는 유지).
  */
 export function computeCharge(input: { boxes: readonly string[] }): ChargeBreakdown {
-  const sum = { goodsKrw: 0, serviceFeeKrw: 0, shippingFeeKrw: 0, totalKrw: 0 };
-  for (const tier of billableBoxes(input.boxes)) {
-    const b = tierBreakdown(tier);
-    sum.serviceFeeKrw += b.serviceFeeKrw;
-    sum.shippingFeeKrw += b.shippingFeeKrw;
-    sum.totalKrw += b.totalKrw;
-  }
-  return breakdownSchema.parse(sum);
+  return sumBreakdowns(billableBoxes(input.boxes).map(tierBreakdown));
 }
 
 export type ChargeLine = { tier: BillableTier; count: number; unitKrw: number; subtotalKrw: number };

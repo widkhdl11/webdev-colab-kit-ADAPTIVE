@@ -82,7 +82,8 @@ describe("INV-M5: 한 주문의 결제 완료 기록은 하나다", () => {
       toss_order_id: `${o.tossOrderId}_2`,
       amount_krw: 6900,
       goods_krw: 0,
-      service_fee_krw: 2900,
+      service_fee_krw: 1400,
+      inspection_fee_krw: 1500,
       shipping_fee_krw: 4000,
       status: "done",
       payment_key: "pk_dup",
@@ -91,8 +92,8 @@ describe("INV-M5: 한 주문의 결제 완료 기록은 하나다", () => {
   });
 });
 
-describe("INV-M7: 결제 기록 세 칸의 합은 결제 금액과 같다", () => {
-  it("INV-M7 S7b: 세 칸의 합이 금액과 다르면 등록이 통째로 거부된다", async () => {
+describe("INV-M7: 결제 기록 네 칸의 합은 결제 금액과 같다", () => {
+  it("INV-M7 S7b: 네 칸의 합이 금액과 다르면 등록이 통째로 거부된다", async () => {
     const { error } = await adminClient().rpc("register_order", {
       p_fan_id: "00000000-0000-4000-a000-000000000001",
       p_creator_id: "00000000-0000-4000-b000-000000000001",
@@ -102,7 +103,8 @@ describe("INV-M7: 결제 기록 세 칸의 합은 결제 금액과 같다", () =
       p_tiers: ["small"],
       p_toss_order_id: "pay_test_sum_mismatch",
       p_goods_krw: 0,
-      p_service_fee_krw: 2900,
+      p_service_fee_krw: 1400,
+      p_inspection_fee_krw: 1500,
       p_shipping_fee_krw: 4000,
       p_amount_krw: 100,
     });
@@ -112,14 +114,14 @@ describe("INV-M7: 결제 기록 세 칸의 합은 결제 금액과 같다", () =
     expect(data).toEqual([]);
   });
 
-  it("INV-M7 S7: 소형 하나의 기록은 상품 대금 0 · 서비스료 2,900 · 배송비 칸 4,000", async () => {
+  it("INV-M7 S7: 소형 하나의 기록은 상품 대금 0 · 기본 서비스료 1,400 · 검수비 1,500 · 배송비 칸 4,000", async () => {
     const o = await registerTestOrder();
     const { data } = await adminClient()
       .from("payments")
-      .select("amount_krw, goods_krw, service_fee_krw, shipping_fee_krw")
+      .select("amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw")
       .eq("order_id", o.orderId)
       .single();
-    expect(data).toEqual({ amount_krw: 6900, goods_krw: 0, service_fee_krw: 2900, shipping_fee_krw: 4000 });
+    expect(data).toEqual({ amount_krw: 6900, goods_krw: 0, service_fee_krw: 1400, inspection_fee_krw: 1500, shipping_fee_krw: 4000 });
   });
 });
 
@@ -134,7 +136,8 @@ describe("INV-M11: 한 상자의 차액 요청은 하나다", () => {
       toss_order_id: `${o.tossOrderId}_${suffix}`,
       amount_krw: 2000,
       goods_krw: 0,
-      service_fee_krw: 1000,
+      service_fee_krw: 500,
+      inspection_fee_krw: 500,
       shipping_fee_krw: 1000,
     });
     expect((await adminClient().from("payments").insert(diff("d1"))).error).toBeNull();
@@ -150,7 +153,8 @@ describe("등록 입력 경계는 DB 에도 있다", () => {
       p_item_kind: "시험 선물",
       p_has_electronics_or_metal: false,
       p_goods_krw: 0,
-      p_service_fee_krw: 2900,
+      p_service_fee_krw: 1400,
+      p_inspection_fee_krw: 1500,
       p_shipping_fee_krw: 4000,
       p_amount_krw: 6900,
     };

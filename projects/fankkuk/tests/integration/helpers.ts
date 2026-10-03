@@ -115,7 +115,8 @@ export async function registerTestOrder(boxCount = 1): Promise<{ orderId: string
     p_tiers: Array<string>(boxCount).fill("small"),
     p_toss_order_id: tossOrderId,
     p_goods_krw: 0,
-    p_service_fee_krw: 2900 * boxCount,
+    p_service_fee_krw: 1400 * boxCount,
+    p_inspection_fee_krw: 1500 * boxCount,
     p_shipping_fee_krw: 4000 * boxCount,
     p_amount_krw: 6900 * boxCount,
   });

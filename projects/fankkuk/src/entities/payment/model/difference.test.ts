@@ -7,8 +7,10 @@ describe("도착 실측 차액 (INV-M11)", () => {
     expect(r.kind).toBe("difference");
     if (r.kind !== "difference") return;
     expect(r.charge.totalKrw).toBe(2000);
-    expect(r.charge.goodsKrw + r.charge.serviceFeeKrw + r.charge.shippingFeeKrw).toBe(2000);
+    expect(r.charge.goodsKrw + r.charge.serviceFeeKrw + r.charge.inspectionFeeKrw + r.charge.shippingFeeKrw).toBe(2000);
     expect(r.charge.shippingFeeKrw).toBe(1000);
+    expect(r.charge.inspectionFeeKrw).toBe(500);
+    expect(r.charge.serviceFeeKrw).toBe(500);
   });
 
   it("INV-M11 (S11b, 실패경로): 실측이 신고와 같거나 작으면 차액도 환불도 없다", () => {
