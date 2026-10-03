@@ -232,7 +232,7 @@
   <script>
     // 시안용 흉내: 추가·빼기·합계만 (서버 호출 없음)
     (function () {
-      var PRICE = { s: 6900, m: 8900 };
+      var PRICE = { s: 5400, m: 6900 };
       var DIRECTORY = {
         byeolbit_fan: { nick: '별빛', color: '#FBE3A8' },
         dalkong_fan: { nick: '달콤이', color: '#DCD3F6' },
@@ -269,8 +269,8 @@
             '<svg class="face" style="--c:' + info.color + '" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>' +
             '<div class="fan-who"><p class="nick">' + info.nick + '</p><p class="sub">@' + p.id + '</p></div>' +
             '<fieldset class="sizes"><legend class="sr-only">' + info.nick + '님께 보낼 상자 크기</legend>' +
-              '<label><input type="radio" name="size-' + p.id + '" value="s"' + (p.size === 's' ? ' checked' : '') + '><span>소형 <span class="won">6,900원</span></span></label>' +
-              '<label><input type="radio" name="size-' + p.id + '" value="m"' + (p.size === 'm' ? ' checked' : '') + '><span>중형 <span class="won">8,900원</span></span></label>' +
+              '<label><input type="radio" name="size-' + p.id + '" value="s"' + (p.size === 's' ? ' checked' : '') + '><span>소형 <span class="won">5,400원</span></span></label>' +
+              '<label><input type="radio" name="size-' + p.id + '" value="m"' + (p.size === 'm' ? ' checked' : '') + '><span>중형 <span class="won">6,900원</span></span></label>' +
             '</fieldset>' +
             '<button class="btn btn--text btn--sm" type="button" aria-label="' + info.nick + '님 빼기">빼기</button>';
           li.querySelectorAll('input[type=radio]').forEach(function (r) {
@@ -295,8 +295,8 @@
         var m = picked.length - s;
         var total = s * PRICE.s + m * PRICE.m;
         var html = '';
-        if (s) html += '<div class="sum-line"><span>소형 상자 ' + s + '개<small>6,900원 × ' + s + '</small></span><span class="amt">' + won(s * PRICE.s) + '</span></div>';
-        if (m) html += '<div class="sum-line"><span>중형 상자 ' + m + '개<small>8,900원 × ' + m + '</small></span><span class="amt">' + won(m * PRICE.m) + '</span></div>';
+        if (s) html += '<div class="sum-line"><span>소형 상자 ' + s + '개<small>5,400원 × ' + s + '</small></span><span class="amt">' + won(s * PRICE.s) + '</span></div>';
+        if (m) html += '<div class="sum-line"><span>중형 상자 ' + m + '개<small>6,900원 × ' + m + '</small></span><span class="amt">' + won(m * PRICE.m) + '</span></div>';
         if (!html) html = '<p class="sub">팬을 추가하면 금액이 계산돼요.</p>';
         payLines.innerHTML = html;
         payTotal.textContent = won(total);
