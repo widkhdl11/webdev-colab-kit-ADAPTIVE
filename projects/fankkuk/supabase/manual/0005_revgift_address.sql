@@ -1,7 +1,8 @@
 -- 역조공 팬 주소 — 받기(주소 저장)와 몫 닫기(주소 지우기). 스펙: docs/specs/reverse-gift.md (INV-R4·R5·R6·R9·R10)
 -- 사람이 직접 적용한다(.claude/rules/supabase-fankkuk.md). 마이그레이션 20261004000002_reverse_gifts.sql 다음에 적용한다.
 --
--- 적용(로컬, Bash): MSYS_NO_PATHCONV=1 docker exec -i supabase_db_fankkuk psql -U postgres -d postgres -v ON_ERROR_STOP=1 < supabase/manual/0005_revgift_address.sql
+-- 적용(로컬, PowerShell — `!` 명령도 PowerShell 로 돈다):
+--   Get-Content projects/fankkuk/supabase/manual/0005_revgift_address.sql -Raw -Encoding utf8 | docker exec -i supabase_db_fankkuk psql -U postgres -d postgres -v ON_ERROR_STOP=1
 --
 -- 오류 코드: 22023 봉인 형식이 아님 · P0002 없는 몫(남의 몫·결제 전 포함 — 같은 답) · P0022 지금 상태에서는 받을 수 없음
 -- 파일 전체가 한 트랜잭션이다 — 중간에 실패하면 아무것도 남지 않는다.

@@ -1,0 +1,61 @@
+<!doctype html>
+<!-- 팬꾹 관리자 시안 · 역조공 처리 (2026-10-03) — 버려도 되는 시안. 근거: specs/admin-console.md(draft), DECISIONS 2026-10-03, design-rules.md 토큰 -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>역조공 처리 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html">대시보드</a></li><li><a href="parcels.html">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html">자동 처리 현황</a></li><li><a href="revgifts.html" aria-current="page">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">작업 / <strong>역조공 처리</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>역조공 처리</h1><p>크리에이터가 팬에게 보낸 선물의 몫별 상태예요. 몫마다 환불이나 반송을 따로 해요.</p></div></div>
+
+      <div class="stack">
+        <div class="note owner-only-note"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg><p><b>직원으로 보고 있어요.</b> 환불은 대표만 눌러요. 반송은 직원도 해요.</p></div>
+        <div class="toolbar" data-filter="rvtbl" style="margin-bottom:0">
+          <div class="tabs" role="group" aria-label="답으로 거르기"><button type="button" class="tab" data-tab="all" aria-pressed="true">전체 <span class="n"></span></button><button type="button" class="tab" data-tab="기다리는 중" aria-pressed="false">기다리는 중 <span class="n"></span></button><button type="button" class="tab" data-tab="받음" aria-pressed="false">받음 <span class="n"></span></button><button type="button" class="tab" data-tab="거절" aria-pressed="false">거절 <span class="n"></span></button><button type="button" class="tab" data-tab="기한 지남" aria-pressed="false">기한 지남 <span class="n"></span></button></div>
+          <div class="search"><label class="sr-only" for="rs">주문번호 또는 닉네임 검색</label><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="rs" type="search" placeholder="주문번호 · 닉네임" autocomplete="off"></div>
+        </div>
+        <div class="tbl-wrap"><table class="tbl" id="rvtbl" style="min-width:980px"><caption class="sr-only">역조공 몫 목록</caption>
+          <thead><tr><th scope="col">주문번호</th><th scope="col">크리에이터</th><th scope="col">팬</th><th scope="col">구간</th><th scope="col">팬의 답</th><th scope="col">받기 기한</th><th scope="col">입고</th><th scope="col"><span class="sr-only">처리</span></th></tr></thead>
+          <tbody><tr data-status="기다리는 중"><td class="mono"><strong>RG-261003-0009</strong></td><td>하루</td><td>모카</td><td>소형</td><td><span class="tag tag--warn">기다리는 중</span></td><td class="mono nowrap">10-10</td><td class="mono nowrap"><span class="faint">미입고</span></td><td class="act"><button type="button" class="btn btn--sm btn--line only-owner" data-dialog="rv-refund" data-fill-order="RG-261003-0009" data-fill-who="모카" disabled data-never="1">몫 환불</button><button type="button" class="btn btn--sm btn--line" data-dialog="rv-return" data-fill-order="RG-261003-0009" disabled>반송</button></td></tr><tr data-status="기다리는 중"><td class="mono"><strong>RG-261002-0008</strong></td><td>라온</td><td>달토끼</td><td>중형</td><td><span class="tag tag--warn">기다리는 중</span></td><td class="mono nowrap">10-09</td><td class="mono nowrap">10-03 10:15</td><td class="act"><button type="button" class="btn btn--sm btn--line only-owner" data-dialog="rv-refund" data-fill-order="RG-261002-0008" data-fill-who="달토끼" disabled data-never="1">몫 환불</button><button type="button" class="btn btn--sm btn--line" data-dialog="rv-return" data-fill-order="RG-261002-0008" disabled>반송</button></td></tr><tr data-status="기다리는 중"><td class="mono"><strong>RG-261001-0007</strong></td><td>하루</td><td>별빛</td><td>소형</td><td><span class="tag tag--warn">기다리는 중</span></td><td class="mono nowrap">10-04 <span class="tag tag--warn">D-1</span></td><td class="mono nowrap">10-02 15:20</td><td class="act"><button type="button" class="btn btn--sm btn--line only-owner" data-dialog="rv-refund" data-fill-order="RG-261001-0007" data-fill-who="별빛" disabled data-never="1">몫 환불</button><button type="button" class="btn btn--sm btn--line" data-dialog="rv-return" data-fill-order="RG-261001-0007" disabled>반송</button></td></tr><tr data-status="기다리는 중"><td class="mono"><strong>RG-260930-0006</strong></td><td>은하수</td><td>솜사탕</td><td>소형</td><td><span class="tag tag--warn">기다리는 중</span></td><td class="mono nowrap">10-05 <span class="tag tag--warn">D-2</span></td><td class="mono nowrap">10-01 11:40</td><td class="act"><button type="button" class="btn btn--sm btn--line only-owner" data-dialog="rv-refund" data-fill-order="RG-260930-0006" data-fill-who="솜사탕" disabled data-never="1">몫 환불</button><button type="button" class="btn btn--sm btn--line" data-dialog="rv-return" data-fill-order="RG-260930-0006" disabled>반송</button></td></tr><tr data-status="기다리는 중"><td class="mono"><strong>RG-260930-0005</strong></td><td>모카</td><td>도토리</td><td>중형</td><td><span class="tag tag--warn">기다리는 중</span></td><td class="mono nowrap">10-05 <span class="tag tag--warn">D-2</span></td><td class="mono nowrap"><span class="faint">미입고</span></td><td class="act"><button type="button" class="btn btn--sm btn--line only-owner" data-dialog="rv-refund" data-fill-order="RG-260930-0005" data-fill-who="도토리" disabled data-never="1">몫 환불</button><button type="button" class="btn btn--sm btn--line" data-dialog="rv-return" data-fill-order="RG-260930-0005" disabled>반송</button></td></tr><tr data-status="받음"><td class="mono"><strong>RG-260929-0004</strong></td><td>하루</td><td>솜사탕</td><td>중형</td><td><span class="tag tag--brand">받음</span></td><td class="mono nowrap">10-06</td><td class="mono nowrap">10-02 17:20</td><td class="act"><button type="button" class="btn btn--sm btn--line only-owner" data-dialog="rv-refund" data-fill-order="RG-260929-0004" data-fill-who="솜사탕" disabled data-never="1">몫 환불</button><button type="button" class="btn btn--sm btn--line" data-dialog="rv-return" data-fill-order="RG-260929-0004" disabled>반송</button></td></tr><tr data-status="받음"><td class="mono"><strong>RG-260929-0003</strong></td><td>은하수</td><td>라온</td><td>소형</td><td><span class="tag tag--brand">받음</span></td><td class="mono nowrap">10-06</td><td class="mono nowrap">10-01 13:11</td><td class="act"><button type="button" class="btn btn--sm btn--line only-owner" data-dialog="rv-refund" data-fill-order="RG-260929-0003" data-fill-who="라온" disabled data-never="1">몫 환불</button><button type="button" class="btn btn--sm btn--line" data-dialog="rv-return" data-fill-order="RG-260929-0003" disabled>반송</button></td></tr><tr data-status="거절"><td class="mono"><strong>RG-260928-0002</strong></td><td>라온</td><td>별빛</td><td>소형</td><td><span class="tag">거절</span></td><td class="mono nowrap">10-05</td><td class="mono nowrap">09-30 15:55</td><td class="act"><button type="button" class="btn btn--sm btn--line only-owner" data-dialog="rv-refund" data-fill-order="RG-260928-0002" data-fill-who="별빛" >몫 환불</button><button type="button" class="btn btn--sm btn--line" data-dialog="rv-return" data-fill-order="RG-260928-0002" >반송</button></td></tr><tr data-status="기한 지남"><td class="mono"><strong>RG-260926-0002</strong></td><td>하루</td><td>모카</td><td>소형</td><td><span class="tag tag--ink">기한 지남</span></td><td class="mono nowrap">10-02</td><td class="mono nowrap">09-30 10:30</td><td class="act"><button type="button" class="btn btn--sm btn--line only-owner" data-dialog="rv-refund" data-fill-order="RG-260926-0002" data-fill-who="모카" >몫 환불</button><button type="button" class="btn btn--sm btn--line" data-dialog="rv-return" data-fill-order="RG-260926-0002" >반송</button></td></tr><tr data-status="기한 지남"><td class="mono"><strong>RG-260927-0003</strong></td><td>라온</td><td>별빛</td><td>중형</td><td><span class="tag tag--ink">기한 지남</span></td><td class="mono nowrap">10-02</td><td class="mono nowrap"><span class="faint">미입고</span></td><td class="act"><button type="button" class="btn btn--sm btn--line only-owner" data-dialog="rv-refund" data-fill-order="RG-260927-0003" data-fill-who="별빛" >몫 환불</button><button type="button" class="btn btn--sm btn--line" data-dialog="rv-return" data-fill-order="RG-260927-0003" disabled>반송</button></td></tr></tbody></table>
+          <p class="empty" hidden>조건에 맞는 몫이 없어요.</p></div>
+        <p class="hint">환불·반송은 팬이 받지 않았거나(거절·기한 지남) 상자가 들어온 몫에만 켜져요. 환불 금액은 몫의 상태로 서버가 정해요. 팬의 주소는 이 화면에 없어요.</p>
+      </div>
+      <dialog id="rv-refund" aria-labelledby="rr-t"><form method="dialog"><div class="dlg-body"><h2 id="rr-t">이 몫을 환불할까요?</h2>
+        <dl class="kv"><dt>주문번호</dt><dd data-fill="order" class="mono"></dd><dt>팬</dt><dd data-fill="who"></dd></dl>
+        <div class="amount"><span class="sub" style="font-size:13px;display:block">돌려줄 금액 (서버가 계산한 값)</span><b>자리 · 몫 상태로 계산돼요</b></div>
+        <p class="hint">금액 입력 칸은 없어요. 같은 몫은 한 번만 환불돼요.</p></div>
+        <div class="dlg-foot"><button type="button" class="btn btn--line" data-close>닫기</button><button type="button" class="btn" data-confirm>환불 실행</button></div></form></dialog>
+      <dialog id="rv-return" aria-labelledby="rt-t"><form method="dialog"><div class="dlg-body"><h2 id="rt-t">상자를 반송할까요?</h2>
+        <p><b data-fill="order" class="mono"></b> 상자를 크리에이터에게 돌려보내요. 송장은 송장 출력 화면에서 따로 뽑아요.</p></div>
+        <div class="dlg-foot"><button type="button" class="btn btn--line" data-close>닫기</button><button type="button" class="btn" data-confirm>반송 처리</button></div></form></dialog>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+</body>
+</html>

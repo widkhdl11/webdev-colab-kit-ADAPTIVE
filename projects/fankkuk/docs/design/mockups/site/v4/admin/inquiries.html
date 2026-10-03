@@ -1,0 +1,87 @@
+<!doctype html>
+<!-- 팬꾹 관리자 시안 · 1:1 문의 (2026-10-03) — 버려도 되는 시안. 근거: specs/admin-console.md(draft), DECISIONS 2026-10-03, design-rules.md 토큰 -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>1:1 문의 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html">대시보드</a></li><li><a href="parcels.html">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html">자동 처리 현황</a></li><li><a href="revgifts.html">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html" aria-current="page">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">고객 / <strong>1:1 문의</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>1:1 문의</h1><p>쓴 사람과 운영자만 볼 수 있는 글이에요. 답을 달면 쓴 사람이 고칠 수 없어요.</p></div></div>
+
+      <div class="split split--list">
+        <section aria-label="문의 목록">
+          <div class="toolbar" data-filter="qlist" style="margin-bottom:8px">
+            <div class="tabs" role="group" aria-label="상태로 거르기"><button type="button" class="tab" data-tab="all" aria-pressed="true">전체 <span class="n"></span></button><button type="button" class="tab" data-tab="답변 대기" aria-pressed="false">답변 대기 <span class="n"></span></button><button type="button" class="tab" data-tab="답변 완료" aria-pressed="false">답변 완료 <span class="n"></span></button></div>
+          </div>
+          <div class="tbl-wrap"><table class="tbl" id="qlist"><caption class="sr-only">문의 목록</caption><thead class="sr-only"><tr><th>문의</th></tr></thead><tbody>
+          <tr data-status="답변 대기"><td style="padding:0"><button type="button" class="pick" data-q="q1" aria-current="true"><span class="t"><span>결제는 했는데 선물 상태가 그대로예요</span><span class="tag tag--warn">답변 대기</span></span><span class="m">별빛 · 10-03 13:20</span></button></td></tr>
+          <tr data-status="답변 대기"><td style="padding:0"><button type="button" class="pick" data-q="q2" aria-current="false"><span class="t"><span>주소를 바꾸고 싶어요</span><span class="tag tag--warn">답변 대기</span></span><span class="m">달토끼 · 10-02 20:05</span></button></td></tr>
+          <tr data-status="답변 대기"><td style="padding:0"><button type="button" class="pick" data-q="q3" aria-current="false"><span class="t"><span>대형 상자는 얼마인가요?</span><span class="tag tag--warn">답변 대기</span></span><span class="m">도토리 · 10-01 15:48</span></button></td></tr>
+          <tr data-status="답변 대기"><td style="padding:0"><button type="button" class="pick" data-q="q4" aria-current="false"><span class="t"><span>환불은 언제 들어오나요</span><span class="tag tag--warn">답변 대기</span></span><span class="m">솜사탕 · 10-01 09:12</span></button></td></tr>
+          <tr data-status="답변 완료"><td style="padding:0"><button type="button" class="pick" data-q="q5" aria-current="false"><span class="t"><span>배송 기간이 궁금해요</span><span class="tag">답변 완료</span></span><span class="m">라온 · 09-30 18:30</span></button></td></tr>
+          <tr data-status="답변 완료"><td style="padding:0"><button type="button" class="pick" data-q="q6" aria-current="false"><span class="t"><span>크리에이터가 승인을 안 해요</span><span class="tag">답변 완료</span></span><span class="m">은하수 · 09-29 11:02</span></button></td></tr>
+          </tbody></table><p class="empty" hidden>문의가 없어요.</p></div>
+        </section>
+        <section class="card" aria-labelledby="q-title" aria-live="polite">
+          <div class="section-h"><h2 id="q-title" style="font-size:18px"></h2><span id="q-st"></span></div>
+          <dl class="kv" style="margin-bottom:12px"><dt>작성자</dt><dd id="q-nick"></dd><dt>쓴 시각</dt><dd id="q-time" class="mono"></dd><dt>주문번호</dt><dd id="q-ord" class="mono"></dd></dl>
+          <div class="bubble" id="q-body"></div>
+          <div id="q-ans-wrap" style="margin-top:12px" hidden><p class="lab" style="font-size:13px;font-weight:700;color:var(--sub);margin-bottom:4px">보낸 답변</p><div class="bubble bubble--staff" id="q-ans"></div></div>
+          <form id="q-form" class="stack" style="gap:10px;margin-top:16px" onsubmit="return false">
+            <div class="field"><label for="ans">답변 쓰기</label><textarea id="ans" class="textarea" placeholder="쉬운 말로 적어 주세요. 주소·전화번호 같은 개인정보는 적지 않아요."></textarea></div>
+            <div class="btn-row"><button type="submit" class="btn">답변 보내기</button><button type="button" class="btn btn--line">자주 쓰는 답 넣기</button></div>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+  <script>
+
+    (function () {
+      var Q = {"q1":{"nick":"별빛","title":"결제는 했는데 선물 상태가 그대로예요","st":"답변 대기","t":"10-03 13:20","ord":"FC-261003-0041","body":"오늘 오전에 결제했는데 선물 상태가 계속 「승인 대기」로 나와요.\n원래 이런가요? 언제쯤 크리에이터에게 가는지 궁금해요.","ans":""},"q2":{"nick":"달토끼","title":"주소를 바꾸고 싶어요","st":"답변 대기","t":"10-02 20:05","ord":"","body":"이사 때문에 주소를 바꿔야 해요. 이미 보낸 선물은 어떻게 되나요?","ans":""},"q3":{"nick":"도토리","title":"대형 상자는 얼마인가요?","st":"답변 대기","t":"10-01 15:48","ord":"","body":"세 변 합이 150cm쯤 되는 인형을 보내고 싶은데 요금이 어떻게 되나요?","ans":""},"q4":{"nick":"솜사탕","title":"환불은 언제 들어오나요","st":"답변 대기","t":"10-01 09:12","ord":"FC-260929-0012","body":"승인이 안 돼서 반려됐다고 떴어요. 환불이 언제 되는지 알려 주세요.","ans":""},"q5":{"nick":"라온","title":"배송 기간이 궁금해요","st":"답변 완료","t":"09-30 18:30","ord":"FC-260930-0021","body":"출고 후 크리에이터가 받기까지 며칠 걸리나요?","ans":"안녕하세요, 팬꾹입니다. 출고 후 보통 1~2일(주말 제외) 걸려요. 송장 번호가 생기면 선물 상세에서 바로 보여 드려요."},"q6":{"nick":"은하수","title":"크리에이터가 승인을 안 해요","st":"답변 완료","t":"09-29 11:02","ord":"FC-260927-0003","body":"3일째 대기 중이에요. 어떻게 해야 하나요?","ans":"7일 안에 승인하지 않으면 자동으로 반려되고 전액 환불돼요. 조금만 더 기다려 주세요."}};
+      function show(id) {
+        var q = Q[id];
+        document.getElementById('q-title').textContent = q.title;
+        document.getElementById('q-st').textContent = q.st;
+        document.getElementById('q-nick').textContent = q.nick;
+        document.getElementById('q-time').textContent = q.t;
+        document.getElementById('q-ord').textContent = q.ord || '—';
+        document.getElementById('q-body').textContent = q.body;
+        document.getElementById('q-ans').textContent = q.ans;
+        document.getElementById('q-ans-wrap').hidden = !q.ans;
+        document.getElementById('q-form').hidden = !!q.ans;
+        document.querySelectorAll('.pick').forEach(function (p) { p.setAttribute('aria-current', String(p.dataset.q === id)); });
+      }
+      document.querySelectorAll('.pick').forEach(function (p) { p.addEventListener('click', function () { show(p.dataset.q); }); });
+      show('q1');
+    })();
+  </script>
+</body>
+</html>

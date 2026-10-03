@@ -1,0 +1,82 @@
+<!doctype html>
+<!-- 팬꾹 관리자 시안 · 대시보드 (2026-10-03) — 버려도 되는 시안. 근거: specs/admin-console.md(draft), DECISIONS 2026-10-03, design-rules.md 토큰 -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>대시보드 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html" aria-current="page">대시보드</a></li><li><a href="parcels.html">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html">자동 처리 현황</a></li><li><a href="revgifts.html">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">작업 / <strong>대시보드</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>오늘 할 일</h1><p>10월 3일 금요일 · 지금 처리할 일이 숫자로 보여요. 눌러서 해당 화면으로 가요.</p></div></div>
+
+      <div class="stack">
+        <section aria-labelledby="h-todo">
+          <h2 id="h-todo" class="sr-only">오늘 할 일 숫자</h2>
+          <div class="kpis">
+            <a class="kpi" href="parcels.html"><span class="lab">입고 대기</span><span class="val">12<small>건</small></span><span class="foot">상자가 오기를 기다려요</span></a>
+            <a class="kpi" href="parcels.html"><span class="lab">검수 대기</span><span class="val">7<small>건</small></span><span class="foot">송장 제거·겉면 검사 전</span></a>
+            <a class="kpi" href="parcels.html"><span class="lab">출고 대기</span><span class="val">9<small>건</small></span><span class="foot">크리에이터에게 보낼 차례</span></a>
+            <a class="kpi kpi--hot" href="unmatched.html"><span class="lab">미확인 입고</span><span class="val">3<small>건</small></span><span class="foot">주문을 못 찾은 상자</span></a>
+            <a class="kpi kpi--hot" href="inquiries.html"><span class="lab">답 안 한 문의</span><span class="val">4<small>건</small></span><span class="foot">가장 오래된 건 이틀 전</span></a>
+            <a class="kpi" href="payments.html"><span class="lab">환불 대기</span><span class="val">2<small>건</small></span><span class="foot">대표가 눌러야 나가요</span></a>
+            <a class="kpi kpi--hot" href="revgifts.html"><span class="lab">역조공 받기 기한 임박</span><span class="val">5<small>건</small></span><span class="foot">이틀 안에 끝나는 몫</span></a>
+            <div class="kpi" style="background:var(--white);box-shadow:var(--hair)"><span class="lab">오늘 입고 처리</span><span class="val">18<small>상자</small></span><span class="foot">어제보다 4상자 많아요</span></div>
+          </div>
+        </section>
+        <div class="two">
+          <section aria-labelledby="h-auto">
+            <div class="section-h"><h2 id="h-auto">자동 처리 현황</h2><a class="sub" href="automation.html" style="font-size:13px">전체 보기</a></div>
+            <div class="tbl-wrap"><table class="tbl"><caption class="sr-only">자동 처리 요약</caption>
+              <thead><tr><th scope="col">처리</th><th scope="col" class="num">대기</th><th scope="col">다음 자동 실행</th><th scope="col">마지막 결과</th></tr></thead>
+              <tbody>
+                <tr><th scope="row" style="background:none;color:var(--ink);font-size:14px">7일 미승인 자동 반려</th><td class="num">4건</td><td class="nowrap">오늘 03:00</td><td>어제 2건 반려</td></tr>
+                <tr><th scope="row" style="background:none;color:var(--ink);font-size:14px">역조공 받기 기한 지남</th><td class="num">3건</td><td class="nowrap">오늘 03:10</td><td>어제 1건 처리</td></tr>
+                <tr><th scope="row" style="background:none;color:var(--ink);font-size:14px">차액 미납 반송</th><td class="num">2건</td><td class="nowrap">오늘 03:20</td><td><span class="tag tag--warn">1건 실패</span></td></tr>
+              </tbody></table></div>
+          </section>
+          <section aria-labelledby="h-recent">
+            <div class="section-h"><h2 id="h-recent">방금 있었던 일</h2><span>최근 6건</span></div>
+            <div class="tbl-wrap"><table class="tbl"><caption class="sr-only">최근 활동</caption>
+              <thead><tr><th scope="col">시각</th><th scope="col">내용</th><th scope="col">담당</th></tr></thead>
+              <tbody>
+                <tr><td class="nowrap mono">14:32</td><td>FC-261003-0038 입고 확인</td><td>라임</td></tr>
+                <tr><td class="nowrap mono">14:10</td><td>1:1 문의 「배송 기간이 궁금해요」 답변</td><td>라임</td></tr>
+                <tr><td class="nowrap mono">13:48</td><td>크리에이터 「하루」 본인 확인 승인</td><td>모아</td></tr>
+                <tr><td class="nowrap mono">11:20</td><td>RG-261001-0007 몫 환불 실행</td><td>모아</td></tr>
+                <tr><td class="nowrap mono">10:05</td><td>보낼 수 없는 물품 「스프레이류」 설명 고침</td><td>모아</td></tr>
+                <tr><td class="nowrap mono">09:12</td><td>미확인 입고 사진 등록 (3건)</td><td>라임</td></tr>
+              </tbody></table></div>
+          </section>
+        </div>
+        <div class="note"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg><p>이 숫자는 오늘 새벽 자동 처리가 끝난 뒤 값이에요. 「지금 돌리기」는 자동 처리 현황 화면에서 해요.</p></div>
+      </div>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+</body>
+</html>

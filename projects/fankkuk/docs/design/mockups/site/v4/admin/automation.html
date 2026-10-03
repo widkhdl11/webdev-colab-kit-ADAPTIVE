@@ -1,0 +1,70 @@
+<!doctype html>
+<!-- 팬꾹 관리자 시안 · 자동 처리 현황 (2026-10-03) — 버려도 되는 시안. 근거: specs/admin-console.md(draft), DECISIONS 2026-10-03, design-rules.md 토큰 -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>자동 처리 현황 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html">대시보드</a></li><li><a href="parcels.html">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html" aria-current="page">자동 처리 현황</a></li><li><a href="revgifts.html">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">작업 / <strong>자동 처리 현황</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>자동 처리 현황</h1><p>매일 새벽에 자동으로 도는 일이에요. 기다리지 않고 한 줄만 먼저 돌릴 수도 있어요.</p></div></div>
+
+      <div class="stack">
+        
+        <section aria-labelledby="a1">
+          <div class="section-h"><h2 id="a1">7일 미승인 자동 반려 예정</h2><span>다음 자동 실행 오늘 03:00</span></div>
+          <p class="hint" style="margin:-4px 0 8px">크리에이터가 7일 안에 승인하지 않은 선물이에요. 반려되면 보낸 팬에게 환불 대상이 돼요.</p>
+          <div class="tbl-wrap"><table class="tbl" style="min-width:760px"><caption class="sr-only">7일 미승인 자동 반려 예정</caption>
+            <thead><tr><th scope="col">주문번호</th><th scope="col">보낸 사람</th><th scope="col">받는 크리에이터</th><th scope="col">승인 요청일</th><th scope="col">반려 예정</th><th scope="col">남은 시간</th><th scope="col"><span class="sr-only">처리</span></th></tr></thead>
+            <tbody><tr><td class="mono"><strong>FC-260927-0003</strong></td><td>별빛</td><td>하루</td><td>09-27</td><td>10-04 03:00</td><td><span class="tag tag--warn">13시간</span></td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="run" data-fill-what="FC-260927-0003">지금 돌리기</button></td></tr><tr><td class="mono"><strong>FC-260927-0005</strong></td><td>도토리</td><td>은하수</td><td>09-27</td><td>10-04 03:00</td><td><span class="tag tag--warn">13시간</span></td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="run" data-fill-what="FC-260927-0005">지금 돌리기</button></td></tr><tr><td class="mono"><strong>FC-260928-0009</strong></td><td>솜사탕</td><td>모카</td><td>09-28</td><td>10-05 03:00</td><td>1일 13시간</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="run" data-fill-what="FC-260928-0009">지금 돌리기</button></td></tr><tr><td class="mono"><strong>FC-260929-0012</strong></td><td>달토끼</td><td>라온</td><td>09-29</td><td>10-06 03:00</td><td>2일 13시간</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="run" data-fill-what="FC-260929-0012">지금 돌리기</button></td></tr></tbody></table></div>
+        </section>
+        
+        <section aria-labelledby="a2">
+          <div class="section-h"><h2 id="a2">역조공 받기 기한 지남</h2><span>다음 자동 실행 오늘 03:10</span></div>
+          <p class="hint" style="margin:-4px 0 8px">팬이 기한 안에 받지도 거절하지도 않은 몫이에요. 기한이 지나면 받지 않은 것으로 처리돼요.</p>
+          <div class="tbl-wrap"><table class="tbl" style="min-width:760px"><caption class="sr-only">역조공 받기 기한 지남</caption>
+            <thead><tr><th scope="col">주문번호</th><th scope="col">크리에이터</th><th scope="col">팬</th><th scope="col">기한</th><th scope="col">지난 시간</th><th scope="col">처리 후</th><th scope="col"><span class="sr-only">처리</span></th></tr></thead>
+            <tbody><tr><td class="mono"><strong>RG-260926-0002</strong></td><td>하루</td><td>모카</td><td>10-02</td><td><span class="tag tag--ink">1일 지남</span></td><td>반송 대상</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="run" data-fill-what="RG-260926-0002">지금 돌리기</button></td></tr><tr><td class="mono"><strong>RG-260927-0003</strong></td><td>라온</td><td>별빛</td><td>10-02</td><td><span class="tag tag--ink">1일 지남</span></td><td>반송 대상</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="run" data-fill-what="RG-260927-0003">지금 돌리기</button></td></tr><tr><td class="mono"><strong>RG-260928-0004</strong></td><td>은하수</td><td>솜사탕</td><td>10-03</td><td><span class="tag tag--warn">오늘 지남</span></td><td>반송 대상</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="run" data-fill-what="RG-260928-0004">지금 돌리기</button></td></tr></tbody></table></div>
+        </section>
+        
+        <section aria-labelledby="a3">
+          <div class="section-h"><h2 id="a3">차액 미납 반송 예정</h2><span>다음 자동 실행 오늘 03:20</span></div>
+          <p class="hint" style="margin:-4px 0 8px">상자가 더 큰 구간으로 바뀌어 차액을 내야 하는데 기한 안에 내지 않은 주문이에요.</p>
+          <div class="tbl-wrap"><table class="tbl" style="min-width:760px"><caption class="sr-only">차액 미납 반송 예정</caption>
+            <thead><tr><th scope="col">주문번호</th><th scope="col">보낸 사람</th><th scope="col">신고→실측</th><th scope="col">미납 차액</th><th scope="col">납부 기한</th><th scope="col">결과</th><th scope="col"><span class="sr-only">처리</span></th></tr></thead>
+            <tbody><tr><td class="mono"><strong>FC-260928-0014</strong></td><td>도토리</td><td>소형→중형</td><td>+2,000원</td><td>10-04</td><td>반송 예정</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="run" data-fill-what="FC-260928-0014">지금 돌리기</button></td></tr><tr><td class="mono"><strong>FC-260929-0011</strong></td><td>라온</td><td>중형→대형</td><td>+2,000원</td><td>10-05</td><td><span class="tag tag--warn">지난번 1회 실패</span></td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="run" data-fill-what="FC-260929-0011">지금 돌리기</button></td></tr></tbody></table></div>
+        </section>
+      </div>
+      <dialog id="run" aria-labelledby="run-t"><form method="dialog"><div class="dlg-body"><h2 id="run-t">지금 돌릴까요?</h2>
+        <p><b data-fill="what" class="mono"></b> 한 줄만 지금 처리해요. 새벽 자동 처리에서는 이미 한 일로 보고 건너뛰어요.</p></div>
+        <div class="dlg-foot"><button type="button" class="btn btn--line" data-close>닫기</button><button type="button" class="btn" data-confirm>지금 돌리기</button></div></form></dialog>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+</body>
+</html>

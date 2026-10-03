@@ -1,0 +1,72 @@
+<!doctype html>
+<!-- 팬꾹 관리자 시안 · 들어온 상자 (2026-10-03) — 버려도 되는 시안. 근거: specs/admin-console.md(draft), DECISIONS 2026-10-03, design-rules.md 토큰 -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>들어온 상자 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html">대시보드</a></li><li><a href="parcels.html" aria-current="page">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html">자동 처리 현황</a></li><li><a href="revgifts.html">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">작업 / <strong>들어온 상자</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>들어온 상자</h1><p>이름·주소·전화는 이 화면에 없어요. 닉네임과 주문번호로만 찾아요.</p></div></div>
+
+      <div class="toolbar" data-filter="ptbl">
+        <div class="tabs" role="group" aria-label="상태로 거르기">
+          <button type="button" class="tab" data-tab="all" aria-pressed="true">전체 <span class="n"></span></button>
+          <button type="button" class="tab" data-tab="입고 대기" aria-pressed="false">입고 대기 <span class="n"></span></button>
+          <button type="button" class="tab" data-tab="검수 대기" aria-pressed="false">검수 대기 <span class="n"></span></button>
+          <button type="button" class="tab" data-tab="출고 대기" aria-pressed="false">출고 대기 <span class="n"></span></button>
+          <button type="button" class="tab" data-tab="출고함" aria-pressed="false">출고함 <span class="n"></span></button>
+          <button type="button" class="tab" data-tab="반송" aria-pressed="false">반송 <span class="n"></span></button>
+        </div>
+        <div class="search"><label class="sr-only" for="scan">주문번호 스캔 또는 검색</label><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="scan" type="search" placeholder="주문번호 스캔 · 닉네임 검색" autocomplete="off"></div>
+      </div>
+      <div class="tbl-wrap"><table class="tbl" id="ptbl" style="min-width:880px"><caption class="sr-only">들어온 상자 목록</caption>
+        <thead><tr><th scope="col">주문번호</th><th scope="col">종류</th><th scope="col">보낸 사람</th><th scope="col">받는 사람</th><th scope="col">구간</th><th scope="col">상태</th><th scope="col">입고 시각</th><th scope="col"><span class="sr-only">처리</span></th></tr></thead>
+        <tbody>
+        <tr data-status="입고 대기"><td class="mono"><strong>FC-261003-0041</strong></td><td><span class="tag">팬 선물</span></td><td>별빛</td><td>하루</td><td>소형</td><td><span class="tag">입고 대기</span></td><td class="nowrap mono">—</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-done="처리했어요">입고 확인</button></td></tr>
+        <tr data-status="입고 대기"><td class="mono"><strong>FC-261003-0040</strong></td><td><span class="tag">팬 선물</span></td><td>달토끼</td><td>은하수</td><td>중형</td><td><span class="tag">입고 대기</span></td><td class="nowrap mono">—</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-done="처리했어요">입고 확인</button></td></tr>
+        <tr data-status="입고 대기"><td class="mono"><strong>RG-261003-0009</strong></td><td><span class="tag tag--brand">역조공</span></td><td>하루</td><td>모카</td><td>소형</td><td><span class="tag">입고 대기</span></td><td class="nowrap mono">—</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-done="처리했어요">입고 확인</button></td></tr>
+        <tr data-status="검수 대기"><td class="mono"><strong>FC-261003-0038</strong></td><td><span class="tag">팬 선물</span></td><td>솜사탕</td><td>라온</td><td>대형</td><td><span class="tag tag--warn">검수 대기</span></td><td class="nowrap mono">10-03 14:32</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-done="처리했어요">검수 완료</button></td></tr>
+        <tr data-status="검수 대기"><td class="mono"><strong>FC-261003-0036</strong></td><td><span class="tag">팬 선물</span></td><td>도토리</td><td>하루</td><td>중형</td><td><span class="tag tag--warn">검수 대기</span></td><td class="nowrap mono">10-03 13:05</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-done="처리했어요">검수 완료</button></td></tr>
+        <tr data-status="검수 대기"><td class="mono"><strong>FC-261003-0035</strong></td><td><span class="tag">팬 선물</span></td><td>별빛</td><td>은하수</td><td>소형</td><td><span class="tag tag--warn">검수 대기</span></td><td class="nowrap mono">10-03 11:40</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-done="처리했어요">검수 완료</button></td></tr>
+        <tr data-status="검수 대기"><td class="mono"><strong>RG-261002-0008</strong></td><td><span class="tag tag--brand">역조공</span></td><td>라온</td><td>달토끼</td><td>중형</td><td><span class="tag tag--warn">검수 대기</span></td><td class="nowrap mono">10-03 10:15</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-done="처리했어요">검수 완료</button></td></tr>
+        <tr data-status="출고 대기"><td class="mono"><strong>FC-261002-0031</strong></td><td><span class="tag">팬 선물</span></td><td>모카</td><td>라온</td><td>소형</td><td><span class="tag tag--brand">출고 대기</span></td><td class="nowrap mono">10-02 17:20</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-done="처리했어요">출고 처리</button></td></tr>
+        <tr data-status="출고 대기"><td class="mono"><strong>FC-261002-0029</strong></td><td><span class="tag">팬 선물</span></td><td>달토끼</td><td>하루</td><td>대형</td><td><span class="tag tag--brand">출고 대기</span></td><td class="nowrap mono">10-02 15:48</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-done="처리했어요">출고 처리</button></td></tr>
+        <tr data-status="출고 대기"><td class="mono"><strong>RG-261002-0006</strong></td><td><span class="tag tag--brand">역조공</span></td><td>은하수</td><td>별빛</td><td>소형</td><td><span class="tag tag--brand">출고 대기</span></td><td class="nowrap mono">10-02 14:02</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-done="처리했어요">출고 처리</button></td></tr>
+        <tr data-status="출고함"><td class="mono"><strong>FC-261001-0024</strong></td><td><span class="tag">팬 선물</span></td><td>솜사탕</td><td>은하수</td><td>중형</td><td><span class="tag">출고함</span></td><td class="nowrap mono">10-01 16:30</td><td class="act"></td></tr>
+        <tr data-status="출고함"><td class="mono"><strong>FC-261001-0022</strong></td><td><span class="tag">팬 선물</span></td><td>도토리</td><td>모카</td><td>소형</td><td><span class="tag">출고함</span></td><td class="nowrap mono">10-01 13:11</td><td class="act"></td></tr>
+        <tr data-status="반송"><td class="mono"><strong>FC-260930-0017</strong></td><td><span class="tag">팬 선물</span></td><td>별빛</td><td>라온</td><td>대형</td><td><span class="tag tag--ink">반송</span></td><td class="nowrap mono">09-30 15:55</td><td class="act"></td></tr>
+        <tr data-status="출고함"><td class="mono"><strong>RG-260930-0004</strong></td><td><span class="tag tag--brand">역조공</span></td><td>하루</td><td>솜사탕</td><td>중형</td><td><span class="tag">출고함</span></td><td class="nowrap mono">09-30 11:24</td><td class="act"></td></tr>
+        </tbody></table>
+        <p class="empty" hidden>조건에 맞는 상자가 없어요.</p></div>
+      <p class="hint" style="margin-top:8px">구간은 크기와 무게 중 큰 쪽으로 정해요. 대형을 넘는 상자는 검수에서 반송해요. 송장 출력은 이 화면이 아니라 별도 출력 화면에서만 해요.</p>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+</body>
+</html>

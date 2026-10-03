@@ -1,0 +1,69 @@
+<!doctype html>
+<!-- 팬꾹 관리자 시안 · 크리에이터 확인 (2026-10-03) — 버려도 되는 시안. 근거: specs/admin-console.md(draft), DECISIONS 2026-10-03, design-rules.md 토큰 -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>크리에이터 확인 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html">대시보드</a></li><li><a href="parcels.html">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html">자동 처리 현황</a></li><li><a href="revgifts.html">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html" aria-current="page">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">고객 / <strong>크리에이터 확인</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>크리에이터 본인 확인</h1><p>채널 주인이 맞는지 확인하고 승인해요. 취소하면 찾기에서 사라지고 새 선물·팔로우가 막혀요. 이미 등록된 주문은 그대로 가요.</p></div></div>
+
+      <div class="stack">
+        <section aria-labelledby="h-wait">
+          <div class="section-h"><h2 id="h-wait">승인 대기 <span>3명</span></h2><span>채널 설명란이나 최신 게시물에 인증 코드가 있는지 확인해 주세요</span></div>
+          <div class="tbl-wrap"><table class="tbl" style="min-width:860px"><caption class="sr-only">승인 대기 크리에이터</caption>
+            <thead><tr><th scope="col">닉네임</th><th scope="col">채널</th><th scope="col">인증 코드</th><th scope="col">게시 확인</th><th scope="col">신청</th><th scope="col"><span class="sr-only">처리</span></th></tr></thead>
+            <tbody><tr><td><strong>꿀단지</strong></td><td><span class="tag">유튜브</span> 꿀단지TV (구독 1.2만)</td><td class="mono"><b>FK-7H3Q-92</b></td><td><a href="#" onclick="return false" class="accent" style="font-weight:600">게시물 열기 ↗</a> <span class="faint" style="font-size:13px">(새 창 · 링크 자리)</span></td><td class="mono nowrap">10-03 08:40</td><td class="act"><button type="button" class="btn btn--sm" data-done="승인했어요">승인</button><button type="button" class="btn btn--sm btn--line" data-done="반려했어요">반려</button></td></tr><tr><td><strong>보리</strong></td><td><span class="tag">치지직</span> 보리의 작은방</td><td class="mono"><b>FK-2M8D-41</b></td><td><a href="#" onclick="return false" class="accent" style="font-weight:600">게시물 열기 ↗</a> <span class="faint" style="font-size:13px">(새 창 · 링크 자리)</span></td><td class="mono nowrap">10-02 21:15</td><td class="act"><button type="button" class="btn btn--sm" data-done="승인했어요">승인</button><button type="button" class="btn btn--sm btn--line" data-done="반려했어요">반려</button></td></tr><tr><td><strong>여름밤</strong></td><td><span class="tag">인스타그램</span> @summer_night_ko</td><td class="mono"><b>FK-9X5C-07</b></td><td><a href="#" onclick="return false" class="accent" style="font-weight:600">게시물 열기 ↗</a> <span class="faint" style="font-size:13px">(새 창 · 링크 자리)</span></td><td class="mono nowrap">10-02 13:02</td><td class="act"><button type="button" class="btn btn--sm" data-done="승인했어요">승인</button><button type="button" class="btn btn--sm btn--line" data-done="반려했어요">반려</button></td></tr></tbody></table></div>
+        </section>
+        <section aria-labelledby="h-ok">
+          <div class="section-h"><h2 id="h-ok">승인된 크리에이터</h2></div>
+          <div class="tbl-wrap"><table class="tbl" style="min-width:760px"><caption class="sr-only">승인된 크리에이터</caption>
+            <thead><tr><th scope="col">닉네임</th><th scope="col">채널</th><th scope="col">승인한 사람</th><th scope="col">승인 시각</th><th scope="col"><span class="sr-only">처리</span></th></tr></thead>
+            <tbody><tr><td><strong>하루</strong></td><td><span class="tag">유튜브</span> 하루의 방</td><td>모아</td><td class="mono nowrap">09-28 14:00</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="cancel" data-fill-who="하루">승인 취소</button></td></tr><tr><td><strong>은하수</strong></td><td><span class="tag">치지직</span> 은하수 라이브</td><td>라임</td><td class="mono nowrap">09-29 10:30</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="cancel" data-fill-who="은하수">승인 취소</button></td></tr><tr><td><strong>모카</strong></td><td><span class="tag">인스타그램</span> @mocha_daily</td><td>모아</td><td class="mono nowrap">09-30 16:45</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-dialog="cancel" data-fill-who="모카">승인 취소</button></td></tr></tbody></table></div>
+        </section>
+        <section aria-labelledby="h-log">
+          <div class="section-h"><h2 id="h-log">처리 기록</h2><span>누가 · 언제 · 무엇을</span></div>
+          <div class="tbl-wrap"><table class="tbl" style="min-width:560px"><caption class="sr-only">승인·취소 기록</caption>
+            <thead><tr><th scope="col">시각</th><th scope="col">누가</th><th scope="col">크리에이터</th><th scope="col">처리</th></tr></thead>
+            <tbody>
+              <tr><td class="mono nowrap">09-30 16:45</td><td>모아</td><td>모카</td><td><span class="tag tag--brand">승인</span></td></tr>
+              <tr><td class="mono nowrap">09-30 09:20</td><td>라임</td><td>달무리</td><td><span class="tag tag--ink">승인 취소</span> <span class="sub">코드가 게시물에서 사라짐</span></td></tr>
+              <tr><td class="mono nowrap">09-29 10:30</td><td>라임</td><td>은하수</td><td><span class="tag tag--brand">승인</span></td></tr>
+              <tr><td class="mono nowrap">09-28 14:00</td><td>모아</td><td>하루</td><td><span class="tag tag--brand">승인</span></td></tr>
+            </tbody></table></div>
+        </section>
+      </div>
+      <dialog id="cancel" aria-labelledby="c-t"><form method="dialog"><div class="dlg-body"><h2 id="c-t">승인을 취소할까요?</h2>
+        <p><b data-fill="who"></b>님이 팬의 크리에이터 찾기에서 사라지고, 새 선물 등록과 팔로우가 막혀요. 이미 등록된 주문은 그대로 가요. 누가 언제 취소했는지 남아요.</p></div>
+        <div class="dlg-foot"><button type="button" class="btn btn--line" data-close>닫기</button><button type="button" class="btn btn--ink" data-confirm>승인 취소</button></div></form></dialog>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+</body>
+</html>

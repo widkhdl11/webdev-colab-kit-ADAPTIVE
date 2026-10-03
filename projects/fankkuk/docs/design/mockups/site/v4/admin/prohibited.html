@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- 팬꾹 관리자 시안 · 보낼 수 없는 물품 (2026-10-03) — 버려도 되는 시안. 근거: specs/admin-console.md(draft), DECISIONS 2026-10-03, design-rules.md 토큰 -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>보낼 수 없는 물품 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html">대시보드</a></li><li><a href="parcels.html">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html">자동 처리 현황</a></li><li><a href="revgifts.html">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html" aria-current="page">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">관리 / <strong>보낼 수 없는 물품</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>보낼 수 없는 물품</h1><p>크리에이터 페이지와 선물 보내기 화면에 그대로 보이는 목록이에요. 이름은 40자, 설명은 120자까지예요.</p></div></div>
+
+      <div class="split">
+        <div class="stack">
+          <section aria-labelledby="h-list">
+            <div class="section-h"><h2 id="h-list">지금 보이는 목록 <span>7개</span></h2></div>
+            <div class="tbl-wrap"><table class="tbl" style="min-width:560px"><caption class="sr-only">보낼 수 없는 물품 목록</caption>
+              <thead><tr><th scope="col">이름</th><th scope="col">설명</th><th scope="col">바뀐 시각</th><th scope="col"><span class="sr-only">관리</span></th></tr></thead>
+              <tbody><tr><td><strong>리튬 배터리·보조배터리</strong></td><td class="sub">항공·택배 규정상 보낼 수 없어요. 기기에 들어 있는 것도 안 돼요.</td><td class="mono nowrap">09-28 15:10</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-edit data-name="리튬 배터리·보조배터리" data-desc="항공·택배 규정상 보낼 수 없어요. 기기에 들어 있는 것도 안 돼요.">고치기</button><button type="button" class="btn btn--sm btn--soft" data-dialog="del" data-fill-what="리튬 배터리·보조배터리">지우기</button></td></tr><tr><td><strong>액체류 (향수·화장수 포함)</strong></td><td class="sub">새면 다른 상자까지 망가져요. 밀봉된 소용량도 받지 않아요.</td><td class="mono nowrap">09-28 15:10</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-edit data-name="액체류 (향수·화장수 포함)" data-desc="새면 다른 상자까지 망가져요. 밀봉된 소용량도 받지 않아요.">고치기</button><button type="button" class="btn btn--sm btn--soft" data-dialog="del" data-fill-what="액체류 (향수·화장수 포함)">지우기</button></td></tr><tr><td><strong>스프레이·가스 용기</strong></td><td class="sub">압력 용기는 택배사가 받지 않아요.</td><td class="mono nowrap">10-03 10:05</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-edit data-name="스프레이·가스 용기" data-desc="압력 용기는 택배사가 받지 않아요.">고치기</button><button type="button" class="btn btn--sm btn--soft" data-dialog="del" data-fill-what="스프레이·가스 용기">지우기</button></td></tr><tr><td><strong>날이 있는 도구</strong></td><td class="sub">칼·가위 등 날붙이는 보낼 수 없어요.</td><td class="mono nowrap">09-28 15:12</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-edit data-name="날이 있는 도구" data-desc="칼·가위 등 날붙이는 보낼 수 없어요.">고치기</button><button type="button" class="btn btn--sm btn--soft" data-dialog="del" data-fill-what="날이 있는 도구">지우기</button></td></tr><tr><td><strong>현금·상품권</strong></td><td class="sub">분실해도 보상이 안 돼요. 선물 대금으로 대신해 주세요.</td><td class="mono nowrap">09-28 15:14</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-edit data-name="현금·상품권" data-desc="분실해도 보상이 안 돼요. 선물 대금으로 대신해 주세요.">고치기</button><button type="button" class="btn btn--sm btn--soft" data-dialog="del" data-fill-what="현금·상품권">지우기</button></td></tr><tr><td><strong>살아 있는 동식물</strong></td><td class="sub"><span class="faint">설명 없음</span></td><td class="mono nowrap">09-28 15:14</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-edit data-name="살아 있는 동식물" data-desc="">고치기</button><button type="button" class="btn btn--sm btn--soft" data-dialog="del" data-fill-what="살아 있는 동식물">지우기</button></td></tr><tr><td><strong>신선·냉장 식품</strong></td><td class="sub">상하기 쉬워서 받지 않아요. 상온 포장 과자류는 가능해요.</td><td class="mono nowrap">10-01 11:40</td><td class="act"><button type="button" class="btn btn--sm btn--line" data-edit data-name="신선·냉장 식품" data-desc="상하기 쉬워서 받지 않아요. 상온 포장 과자류는 가능해요.">고치기</button><button type="button" class="btn btn--sm btn--soft" data-dialog="del" data-fill-what="신선·냉장 식품">지우기</button></td></tr></tbody></table></div>
+          </section>
+          <section aria-labelledby="h-log">
+            <div class="section-h"><h2 id="h-log">바뀐 기록</h2></div>
+            <div class="tbl-wrap"><table class="tbl" style="min-width:520px"><caption class="sr-only">물품 목록 변경 기록</caption>
+              <thead><tr><th scope="col">시각</th><th scope="col">누가</th><th scope="col">무엇을</th></tr></thead>
+              <tbody>
+                <tr><td class="mono nowrap">10-03 10:05</td><td>모아 <span class="tag">대표</span></td><td>「스프레이·가스 용기」 설명을 고침</td></tr>
+                <tr><td class="mono nowrap">10-01 11:40</td><td>라임 <span class="tag">직원</span></td><td>「신선·냉장 식품」 추가</td></tr>
+                <tr><td class="mono nowrap">09-28 15:14</td><td>모아 <span class="tag">대표</span></td><td>「현금·상품권」 「살아 있는 동식물」 추가</td></tr>
+                <tr><td class="mono nowrap">09-28 15:10</td><td>모아 <span class="tag">대표</span></td><td>처음 목록 5개 등록</td></tr>
+              </tbody></table></div>
+          </section>
+        </div>
+        <section class="card" aria-labelledby="h-form" style="position:sticky;top:72px">
+          <div class="section-h"><h2 id="h-form"><span id="ftitle" style="font-size:17px;color:var(--ink)">항목 추가</span></h2></div>
+          <form class="stack" style="gap:12px" onsubmit="return false">
+            <div class="field"><label for="pn">이름 (1~40자)</label><input id="pn" class="input" maxlength="40" data-count="pnc" placeholder="예: 인화성 물질"><span class="count" id="pnc">0 / 40</span></div>
+            <div class="field"><label for="pd">설명 (0~120자)</label><textarea id="pd" class="textarea" maxlength="120" data-count="pdc" placeholder="왜 보낼 수 없는지, 대신 할 수 있는 것을 적어 주세요."></textarea><span class="count" id="pdc">0 / 120</span></div>
+            <div class="btn-row"><button type="submit" class="btn" id="fsave">추가하기</button><button type="button" class="btn btn--line" id="fclear" hidden>고치기 그만두기</button></div>
+          </form>
+        </section>
+      </div>
+      <dialog id="del" aria-labelledby="del-t"><form method="dialog"><div class="dlg-body"><h2 id="del-t">목록에서 지울까요?</h2>
+        <p>「<b data-fill="what"></b>」을 지우면 크리에이터 페이지와 선물 보내기 화면에서도 바로 사라져요. 지운 기록은 남아요.</p></div>
+        <div class="dlg-foot"><button type="button" class="btn btn--line" data-close>닫기</button><button type="button" class="btn btn--ink" data-confirm>지우기</button></div></form></dialog>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+  <script>
+
+    (function () {
+      var pn = document.getElementById('pn'), pd = document.getElementById('pd'), t = document.getElementById('ftitle'), s = document.getElementById('fsave'), c = document.getElementById('fclear');
+      document.querySelectorAll('[data-edit]').forEach(function (b) { b.addEventListener('click', function () {
+        pn.value = b.dataset.name; pd.value = b.dataset.desc; pn.dispatchEvent(new Event('input')); pd.dispatchEvent(new Event('input'));
+        t.textContent = '항목 고치기'; s.textContent = '고친 내용 저장'; c.hidden = false; pn.focus();
+      }); });
+      c.addEventListener('click', function () { pn.value = ''; pd.value = ''; pn.dispatchEvent(new Event('input')); pd.dispatchEvent(new Event('input')); t.textContent = '항목 추가'; s.textContent = '추가하기'; c.hidden = true; });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!doctype html>
+<!-- 팬꾹 관리자 시안 · 요금표 (2026-10-03) — 버려도 되는 시안. 근거: specs/admin-console.md(draft), DECISIONS 2026-10-03, design-rules.md 토큰 -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>요금표 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html">대시보드</a></li><li><a href="parcels.html">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html">자동 처리 현황</a></li><li><a href="revgifts.html">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html" aria-current="page">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">돈 / <strong>요금표</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>요금표</h1><p>구간별로 받는 값과 원가를 정해요. 요금은 대표만 고칠 수 있어요.</p></div></div>
+
+      <div class="stack">
+        <div class="note owner-only-note"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg><p><b>직원으로 보고 있어요.</b> 요금은 읽기만 되고, 고치면 서버가 거절해요.</p></div>
+        <div class="note note--ok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg><p><b>새 주문부터 적용돼요.</b> 이미 등록했거나 결제한 주문은 등록할 때의 요금 그대로예요.</p></div>
+        <form id="pf" onsubmit="return false">
+        <div class="tbl-wrap"><table class="tbl" style="min-width:900px"><caption class="sr-only">구간별 요금표</caption>
+          <thead><tr><th scope="col">구간</th><th scope="col">기준 (세 변 합·무게)</th><th scope="col" class="num">받는 값</th><th scope="col" class="num">택배 원가</th><th scope="col" class="num">검수비</th><th scope="col" class="num">기본 서비스료 <span class="faint" style="font-weight:600">자동</span></th><th scope="col" class="num">역조공 요금 <span class="faint" style="font-weight:600">자동</span></th></tr></thead>
+          <tbody>
+          <tr data-i="0"><th scope="row" style="background:none;color:var(--ink);font-size:15px">소형</th><td class="sub">100cm · 5kg 이하</td>
+            <td class="num"><label class="sr-only" for="p00">소형 받는 값</label><input id="p00" class="input num only-owner" style="width:116px" inputmode="numeric" value="6,900" data-k="0"> 원</td>
+            <td class="num"><label class="sr-only" for="p01">소형 택배 원가</label><input id="p01" class="input num only-owner" style="width:116px" inputmode="numeric" value="4,000" data-k="1"> 원</td>
+            <td class="num"><label class="sr-only" for="p02">소형 검수비</label><input id="p02" class="input num only-owner" style="width:116px" inputmode="numeric" value="1,500" data-k="2"> 원</td>
+            <td class="num"><b class="svc">1,400</b> 원</td><td class="num"><b class="rev">5,400</b> 원</td></tr>
+          <tr data-i="1"><th scope="row" style="background:none;color:var(--ink);font-size:15px">중형</th><td class="sub">100cm · 10kg 이하</td>
+            <td class="num"><label class="sr-only" for="p10">중형 받는 값</label><input id="p10" class="input num only-owner" style="width:116px" inputmode="numeric" value="8,900" data-k="0"> 원</td>
+            <td class="num"><label class="sr-only" for="p11">중형 택배 원가</label><input id="p11" class="input num only-owner" style="width:116px" inputmode="numeric" value="5,000" data-k="1"> 원</td>
+            <td class="num"><label class="sr-only" for="p12">중형 검수비</label><input id="p12" class="input num only-owner" style="width:116px" inputmode="numeric" value="2,000" data-k="2"> 원</td>
+            <td class="num"><b class="svc">1,900</b> 원</td><td class="num"><b class="rev">6,900</b> 원</td></tr>
+          <tr data-i="2"><th scope="row" style="background:none;color:var(--ink);font-size:15px">대형</th><td class="sub">160cm · 20kg 이하</td>
+            <td class="num"><label class="sr-only" for="p20">대형 받는 값</label><input id="p20" class="input num only-owner" style="width:116px" inputmode="numeric" value="10,900" data-k="0"> 원</td>
+            <td class="num"><label class="sr-only" for="p21">대형 택배 원가</label><input id="p21" class="input num only-owner" style="width:116px" inputmode="numeric" value="6,500" data-k="1"> 원</td>
+            <td class="num"><label class="sr-only" for="p22">대형 검수비</label><input id="p22" class="input num only-owner" style="width:116px" inputmode="numeric" value="2,500" data-k="2"> 원</td>
+            <td class="num"><b class="svc">1,900</b> 원</td><td class="num"><b class="rev">8,400</b> 원</td></tr>
+          </tbody></table></div>
+        <div class="split" style="margin-top:12px;grid-template-columns:minmax(0,1fr) auto;align-items:end">
+          <div><p class="lab" style="font-size:13px;font-weight:700;color:var(--sub);margin-bottom:6px">저장 전 검사</p>
+            <ul class="checks" id="chk" aria-live="polite"></ul></div>
+          <div class="btn-row"><button type="button" class="btn btn--line only-owner" id="reset">되돌리기</button><button type="submit" class="btn btn--lg only-owner" id="save">요금표 저장</button></div>
+        </div></form>
+        <p class="hint">구간 기준(크기·무게)은 이 화면에서 바꾸지 않아요. 크기와 무게 중 큰 쪽으로 구간을 정하고, 대형을 넘으면 받지 않아요. 역조공 요금은 받는 값 − 검수비로 늘 자동 계산해요.</p>
+        <section aria-labelledby="h-log">
+          <div class="section-h"><h2 id="h-log">요금 바꾼 기록</h2><span>고치거나 지울 수 없어요</span></div>
+          <div class="tbl-wrap"><table class="tbl" style="min-width:640px"><caption class="sr-only">요금 변경 기록</caption>
+            <thead><tr><th scope="col">시각</th><th scope="col">대표</th><th scope="col">구간</th><th scope="col">칸</th><th scope="col" class="num">전</th><th scope="col" class="num">후</th></tr></thead>
+            <tbody>
+              <tr><td class="mono nowrap">10-03 09:30</td><td>모아</td><td>대형</td><td>받는 값</td><td class="num mono">10,400원</td><td class="num mono"><b>10,900원</b></td></tr>
+              <tr><td class="mono nowrap">10-03 09:30</td><td>모아</td><td>대형</td><td>검수비</td><td class="num mono">2,000원</td><td class="num mono"><b>2,500원</b></td></tr>
+              <tr><td class="mono nowrap">10-03 09:30</td><td>모아</td><td>대형</td><td>택배 원가</td><td class="num mono">6,000원</td><td class="num mono"><b>6,500원</b></td></tr>
+              <tr><td class="mono nowrap">10-02 18:05</td><td>모아</td><td>중형</td><td>택배 원가</td><td class="num mono">4,800원</td><td class="num mono"><b>5,000원</b></td></tr>
+              <tr><td class="mono nowrap">10-01 11:12</td><td>모아</td><td>소형</td><td>받는 값</td><td class="num mono">6,500원</td><td class="num mono"><b>6,900원</b></td></tr>
+            </tbody></table></div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+  <script>
+
+    (function () {
+      var rows = Array.prototype.slice.call(document.querySelectorAll('#pf tbody tr'));
+      var chk = document.getElementById('chk'), save = document.getElementById('save');
+      var init = rows.map(function (r) { return Array.prototype.map.call(r.querySelectorAll('input'), function (i) { return i.value; }); });
+      function num(v) { var n = parseInt(String(v).replace(/[^0-9]/g, ''), 10); return isNaN(n) ? NaN : n; }
+      function fmt(n) { return isNaN(n) ? '—' : n.toLocaleString('ko-KR'); }
+      function run() {
+        var v = rows.map(function (r) { return Array.prototype.map.call(r.querySelectorAll('input'), function (i) { return num(i.value); }); });
+        var okA = v.every(function (r) { return r.every(function (x) { return !isNaN(x) && x >= 0; }) && r[0] >= 1; });
+        var okB = v.every(function (r) { return r[1] + r[2] <= r[0]; });
+        var okC = [0, 1, 2].every(function (k) { return v[0][k] <= v[1][k] && v[1][k] <= v[2][k]; });
+        rows.forEach(function (r, i) {
+          r.querySelector('.svc').textContent = fmt(v[i][0] - v[i][1] - v[i][2]);
+          r.querySelector('.rev').textContent = fmt(v[i][0] - v[i][2]);
+        });
+        var items = [[okA, '모든 값이 0 이상 정수, 받는 값은 1원 이상'], [okB, '구간마다 택배 원가 + 검수비 ≤ 받는 값 (서비스료가 마이너스가 되지 않아요)'], [okC, '받는 값·택배 원가·검수비 모두 소형 ≤ 중형 ≤ 대형']];
+        chk.innerHTML = items.map(function (x) { return '<li class="' + (x[0] ? '' : 'bad') + '"><span class="mk" aria-hidden="true">' + (x[0] ? '✓' : '!') + '</span>' + (x[0] ? '' : '<span class="sr-only">어긋남: </span>') + x[1] + '</li>'; }).join('');
+        var changed = rows.some(function (r, i) { return Array.prototype.some.call(r.querySelectorAll('input'), function (inp, k) { return inp.value !== init[i][k]; }); });
+        var all = okA && okB && okC;
+        save.setAttribute('aria-disabled', String(!(all && changed)));
+        save.textContent = all ? (changed ? '요금표 저장' : '바뀐 곳이 없어요') : '검사를 통과해야 저장돼요';
+        save.dataset.label = save.textContent;
+        save.style.cssText = (all && changed) ? '' : 'background:var(--surface);color:var(--faint);cursor:not-allowed';
+      }
+      rows.forEach(function (r) { r.querySelectorAll('input').forEach(function (i) { i.addEventListener('input', run); }); });
+      document.getElementById('reset').addEventListener('click', function () { rows.forEach(function (r, i) { r.querySelectorAll('input').forEach(function (inp, k) { inp.value = init[i][k]; }); }); run(); });
+      document.addEventListener('rolechange', function (e) { if (e.detail === 'owner') run(); else { save.textContent = '대표만'; save.style.cssText = ''; } });
+      run();
+    })();
+  </script>
+</body>
+</html>
