@@ -19,6 +19,7 @@ const ADDED_FOLLOWERS = [PROFILE.gureumppang, PROFILE.somsatang, PROFILE.momo];
 
 beforeAll(() => {
   deleteTestRevgifts();
+  psql(`delete from public.revgift_fan_lookups where creator_profile_id = '${PROFILE.haru}'`);
   followHaru(ADDED_FOLLOWERS);
 });
 
@@ -332,5 +333,92 @@ describe("앱 서버 등록 → DB 등록 함수 (INV-R1·R3 두 장치가 이�
     expect(r.amountKrw).toBe(6900);
     expect(psql(`select amount_krw || ',' || inspection_fee_krw || ',' || shipping_fee_krw from public.revgift_sends where toss_order_id = '${r.tossOrderId}'`)).toBe("6900,0,5000");
     psql(`delete from public.revgift_sends where toss_order_id = '${r.tossOrderId}'`);
+  });
+});
+
+describe("리뷰 뒤 보강 (2026-10-03)", () => {
+  it("INV-R10 (실패경로): 이미 받은 몫은 받지 않기로 돌릴 수 없다", async () => {
+    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
+    await payTestRevgift(send);
+    const no = send.orderNos[0]!;
+    psql(`update public.revgift_shares set reply = 'accepted', replied_at = now() where order_no = '${no}'`);
+    const fan = await signedInClient("byeolbit_fan");
+    expect((await fan.rpc("decline_revgift", { p_order_no: no })).error?.code).toBe("P0022");
+    expect(shareReply(no)).toBe("accepted");
+  });
+
+  it("INV-R10 (실패경로): 반송·취소된 몫은 받지 않기를 할 수 없다 — 환불 경로가 둘이 되지 않는다", async () => {
+    const fan = await signedInClient("byeolbit_fan");
+    for (const col of ["returned_at", "cancelled_at"]) {
+      const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
+      await payTestRevgift(send);
+      const no = send.orderNos[0]!;
+      psql(`update public.revgift_shares set ${col} = now() where order_no = '${no}'`);
+      expect((await fan.rpc("decline_revgift", { p_order_no: no })).error?.code).toBe("P0022");
+      expect(shareReply(no)).toBe("waiting");
+    }
+  });
+
+  it("INV-R1 (실패경로): 팔로워와 비팔로워를 섞어 등록하면 통째로 거부되고 아무것도 남지 않는다", async () => {
+    for (const order of [[PROFILE.byeolbit, PROFILE.daltokki], [PROFILE.daltokki, PROFILE.byeolbit]]) {
+      const args = revgiftArgs(order.map((fanId) => ({ fanId, tier: "small" as const })));
+      expect((await adminClient().rpc("register_revgift", args)).error?.code).toBe("P0021");
+      expect(psql(`select count(*) from public.revgift_sends where toss_order_id = '${args.p_toss_order_id}'`)).toBe("0");
+    }
+  });
+
+  it("INV-R8: 받은 몫은 「accepted」, 기한이 지났는데 기한 처리 전인 몫은 「not_received」로 보인다", async () => {
+    const send = await registerTestRevgift([
+      { fanId: PROFILE.byeolbit, tier: "small" },
+      { fanId: PROFILE.gureumppang, tier: "small" },
+    ]);
+    await payTestRevgift(send);
+    const [accepted, overdue] = send.orderNos as [string, string];
+    psql(`update public.revgift_shares set reply = 'accepted', replied_at = now() where order_no = '${accepted}'`);
+    backdateSettlement(send, 168, 1);
+    const { data } = await (await signedInClient("haru_creator")).rpc("my_sent_revgifts");
+    const stateOf = (no: string) => (data as { order_no: string; state: string }[]).find((r) => r.order_no === no)?.state;
+    expect(stateOf(accepted)).toBe("accepted");
+    expect(stateOf(overdue)).toBe("not_received");
+    expect(shareReply(overdue)).toBe("waiting");
+  });
+
+  it("INV-R10 (실패경로): 기한 처리는 서버 시각보다 미래의 기준 시각을 받아도 그 시각으로 앞당기지 않는다", async () => {
+    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
+    await payTestRevgift(send);
+    const future = new Date(Date.now() + 200 * 3_600_000).toISOString();
+    expect((await adminClient().rpc("expire_revgifts", { p_now: future })).error).toBeNull();
+    expect(shareReply(send.orderNos[0]!)).toBe("waiting");
+  });
+
+  it("팬 본인 목록은 반송과 취소를 나눠 보여 준다", async () => {
+    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
+    await payTestRevgift(send);
+    const no = send.orderNos[0]!;
+    psql(`update public.revgift_shares set cancelled_at = now() where order_no = '${no}'`);
+    const { data } = await (await signedInClient("byeolbit_fan")).rpc("my_received_revgifts");
+    const row = (data as { order_no: string; returned: boolean; cancelled: boolean }[]).find((r) => r.order_no === no);
+    expect(row).toMatchObject({ returned: false, cancelled: true });
+  });
+
+  it("팬 받기 화면은 주문번호 하나만 읽는다 — 남의 몫·없는 번호는 빈 결과", async () => {
+    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
+    await payTestRevgift(send);
+    const no = send.orderNos[0]!;
+    const mine = await (await signedInClient("byeolbit_fan")).rpc("my_received_revgift", { p_order_no: no });
+    expect((mine.data as { order_no: string }[]).map((r) => r.order_no)).toEqual([no]);
+    const other = await (await signedInClient("daltokki_fan")).rpc("my_received_revgift", { p_order_no: no });
+    expect(other.data).toEqual([]);
+  });
+
+  it("INV-R2 (실패경로): 팬 찾기는 10분에 30번까지 — 넘으면 거부되어 아이디를 대량으로 넣어 보며 팔로워를 모을 수 없다", async () => {
+    psql(`delete from public.revgift_fan_lookups where creator_profile_id = '${PROFILE.haru}'`);
+    const haru = await signedInClient("haru_creator");
+    for (let i = 0; i < 30; i += 1) {
+      expect((await haru.rpc("find_revgift_fan", { p_login_id: `nobody_${i}` })).error).toBeNull();
+    }
+    expect((await haru.rpc("find_revgift_fan", { p_login_id: "byeolbit_fan" })).error?.code).toBe("P0029");
+    psql(`delete from public.revgift_fan_lookups where creator_profile_id = '${PROFILE.haru}'`);
+    expect((await haru.rpc("find_revgift_fan", { p_login_id: "byeolbit_fan" })).data).toHaveLength(1);
   });
 });

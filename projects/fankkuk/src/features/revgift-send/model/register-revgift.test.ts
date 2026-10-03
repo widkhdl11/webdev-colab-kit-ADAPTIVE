@@ -38,6 +38,8 @@ describe("역조공 보내기 등록 — 앱 서버 쪽 판정 (INV-R1·R3)", ()
     expect(input.charge.inspectionFeeKrw).toBe(0);
     expect(new Set(input.shares.map((s) => s.orderNo)).size).toBe(3);
     expect(input.shares.map((s) => s.amountKrw)).toEqual([5400, 5400, 6900]);
+    // INV-R11: 몫의 배송비 칸 — 입고 뒤 받지 않음 환불이 이 값을 뺀다
+    expect(input.shares.map((s) => s.shippingFeeKrw)).toEqual([4000, 4000, 5000]);
   });
 
   it("INV-R3 S3d (실패경로): 본문의 금액·보내는 사람 칸은 읽지 않는다", async () => {

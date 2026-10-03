@@ -44,6 +44,7 @@ const receivedRow = z
     deadline: z.string(),
     shipped: z.boolean(),
     returned: z.boolean(),
+    cancelled: z.boolean(),
   })
   .strict();
 
@@ -55,11 +56,12 @@ export type ReceivedRevgift = {
   deadline: string;
   shipped: boolean;
   returned: boolean;
+  cancelled: boolean;
 };
 
 export function parseReceivedRows(data: unknown): ReceivedRevgift[] {
   return z
     .array(receivedRow)
     .parse(data)
-    .map((r) => ({ orderNo: r.order_no, creatorName: r.creator_name, tier: r.tier, reply: r.reply, deadline: r.deadline, shipped: r.shipped, returned: r.returned }));
+    .map((r) => ({ orderNo: r.order_no, creatorName: r.creator_name, tier: r.tier, reply: r.reply, deadline: r.deadline, shipped: r.shipped, returned: r.returned, cancelled: r.cancelled }));
 }

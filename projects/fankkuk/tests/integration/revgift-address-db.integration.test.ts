@@ -191,3 +191,83 @@ describe("INV-R10: 기한 처리와 받기가 겹쳐도 하나만 반영된다",
     }
   });
 });
+
+describe("리뷰 뒤 보강 (2026-10-03)", () => {
+  it("INV-R4 (실패경로): 반송·취소된 몫에는 주소를 넣을 수 없다", async () => {
+    const fan = await signedInClient("byeolbit_fan");
+    for (const col of ["returned_at", "cancelled_at"]) {
+      const no = await paidShareFor(PROFILE.byeolbit);
+      psql(`update public.revgift_shares set ${col} = now() where order_no = '${no}'`);
+      expect((await fan.rpc("accept_revgift", { p_order_no: no, p_envelope: sampleEnvelope() })).error?.code).toBe("P0022");
+      expect(addressCount(no)).toBe(0);
+    }
+  });
+
+  it("INV-R5 S5b (실패경로): 봉투의 판 번호·알고리즘·IV 길이·암호문 길이가 하나라도 틀리면 거부된다", async () => {
+    const no = await paidShareFor(PROFILE.byeolbit);
+    const fan = await signedInClient("byeolbit_fan");
+    const b64 = (n: number) => Buffer.from(crypto.getRandomValues(new Uint8Array(n))).toString("base64");
+    const bad = [
+      { ...sampleEnvelope(), v: 2 },
+      { ...sampleEnvelope(), alg: "RSA-OAEP+A128GCM" },
+      { ...sampleEnvelope(), iv: b64(16) },
+      { ...sampleEnvelope(), ciphertext: b64(8) },
+    ];
+    for (const env of bad) {
+      expect((await fan.rpc("accept_revgift", { p_order_no: no, p_envelope: env })).error?.code).toBe("22023");
+    }
+    expect(addressCount(no)).toBe(0);
+  });
+
+  it("INV-R6 S6: 받기는 개인정보 구역에 그 몫의 주소 한 줄만 더한다 — 내 정보(연락처)는 그대로다", async () => {
+    const no = await paidShareFor(PROFILE.byeolbit);
+    const contacts = () => psql(`select coalesce(md5(row(c.*)::text), '') from pii.account_contacts c where c.account_id = '${PROFILE.byeolbit}'`);
+    const countAll = () =>
+      psql(`select string_agg(c, ',' order by c) from (
+        select 'account_contacts=' || count(*) as c from pii.account_contacts
+        union all select 'revgift_addresses=' || count(*) from pii.revgift_addresses) x`);
+    const beforeContacts = contacts();
+    const before = countAll();
+    const fan = await signedInClient("byeolbit_fan");
+    await fan.rpc("accept_revgift", { p_order_no: no, p_envelope: sampleEnvelope() });
+    expect(contacts()).toBe(beforeContacts);
+    const after = countAll();
+    const n = (s: string, k: string) => Number(s.split(",").find((x) => x.startsWith(k))!.split("=")[1]);
+    expect(n(after, "account_contacts")).toBe(n(before, "account_contacts"));
+    expect(n(after, "revgift_addresses")).toBe(n(before, "revgift_addresses") + 1);
+  });
+
+  it("INV-R10 S10c (동시): 기한 처리가 바꿨다고 돌려준 건수와 최종 상태가 맞다", async () => {
+    for (let i = 0; i < 5; i += 1) {
+      const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
+      await payTestRevgift(send);
+      const no = send.orderNos[0]!;
+      // 기한을 정확히 지금으로 맞춘다 — 받기는 기한 전이라 통과할 수 있고 기한 처리도 바꿀 수 있는 경계
+      psql(`update public.revgift_sends set settled_at = now() - interval '168 hours' + interval '300 milliseconds' where id = '${send.sendId}'`);
+      const fan = await signedInClient("byeolbit_fan");
+      await new Promise((r) => setTimeout(r, 250));
+      const [, expired] = await Promise.all([
+        fan.rpc("accept_revgift", { p_order_no: no, p_envelope: sampleEnvelope() }),
+        adminClient().rpc("expire_revgifts"),
+      ]);
+      const reply = shareReply(no);
+      const changedByExpire = psql(`select count(*) from public.revgift_shares where order_no = '${no}' and reply = 'expired'`);
+      if (expired.data === 0) expect(changedByExpire).toBe("0");
+      expect(["accepted", "expired", "waiting"]).toContain(reply);
+      expect(addressCount(no)).toBe(reply === "accepted" ? 1 : 0);
+    }
+  });
+
+  it("INV-R9: 주소를 지운 사실은 남고 주소 값은 남지 않는다", async () => {
+    const no = await paidShareFor(PROFILE.byeolbit);
+    const fan = await signedInClient("byeolbit_fan");
+    await fan.rpc("accept_revgift", { p_order_no: no, p_envelope: sampleEnvelope() });
+    psql(`update public.revgift_shares set received_at = now(), inspected_at = now() where order_no = '${no}'`);
+    await adminClient().rpc("close_revgift_share", { p_order_no: no, p_outcome: "shipped" });
+    expect(
+      psql(`select e.event || ',' || e.outcome from public.revgift_address_events e join public.revgift_shares s on s.id = e.share_id where s.order_no = '${no}'`),
+    ).toBe("deleted,shipped");
+    const cols = psql(`select string_agg(column_name, ',' order by column_name) from information_schema.columns where table_schema = 'public' and table_name = 'revgift_address_events'`);
+    expect(cols).toBe("at,event,id,outcome,share_id");
+  });
+});

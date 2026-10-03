@@ -92,7 +92,7 @@ describe("INV-R8: 크리에이터용 보낸 목록은 정해진 칸만 받는다
   });
 
   it("팬 본인 목록은 거절과 기한 지남을 나눠 받는다", () => {
-    const received = { order_no: "RG-ABC123", creator_name: "하루", tier: "small", reply: "expired", deadline: "2026-10-10T00:00:00+00:00", shipped: false, returned: false };
+    const received = { order_no: "RG-ABC123", creator_name: "하루", tier: "small", reply: "expired", deadline: "2026-10-10T00:00:00+00:00", shipped: false, returned: false, cancelled: false };
     expect(parseReceivedRows([received])[0]?.reply).toBe("expired");
     expect(() => parseReceivedRows([{ ...received, reply: "unknown" }])).toThrow();
   });
