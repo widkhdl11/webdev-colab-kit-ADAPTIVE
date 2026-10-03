@@ -1,9 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { assessMeasuredTier, isDifferenceOverdue } from "./difference";
+import type { PriceTable } from "./price-table";
+
+// 첫 요금표(시험용 고정값). 운영 값은 DB 요금표에서만 온다.
+const PRICES: PriceTable = {
+  small: { priceKrw: 6900, carrierCostKrw: 4000, inspectionFeeKrw: 1500 },
+  medium: { priceKrw: 8900, carrierCostKrw: 5000, inspectionFeeKrw: 2000 },
+  large: { priceKrw: 10900, carrierCostKrw: 6500, inspectionFeeKrw: 2500 },
+};
 
 describe("도착 실측 차액 (INV-M11)", () => {
   it("INV-M11 (S11): 소형 신고·중형 실측이면 차액 2,000원, 칸마다 차", () => {
-    const r = assessMeasuredTier({ declared: "small", measured: "medium" });
+    const r = assessMeasuredTier(PRICES, { declared: "small", measured: "medium" });
     expect(r.kind).toBe("difference");
     if (r.kind !== "difference") return;
     expect(r.charge.totalKrw).toBe(2000);
@@ -14,13 +22,18 @@ describe("도착 실측 차액 (INV-M11)", () => {
   });
 
   it("INV-M11 (S11b, 실패경로): 실측이 신고와 같거나 작으면 차액도 환불도 없다", () => {
-    expect(assessMeasuredTier({ declared: "small", measured: "small" })).toEqual({ kind: "none" });
-    expect(assessMeasuredTier({ declared: "medium", measured: "small" })).toEqual({ kind: "none" });
+    expect(assessMeasuredTier(PRICES, { declared: "small", measured: "small" })).toEqual({ kind: "none" });
+    expect(assessMeasuredTier(PRICES, { declared: "medium", measured: "small" })).toEqual({ kind: "none" });
   });
 
-  it("INV-M11 (S11c, 실패경로): 실측이 중형을 넘으면 차액이 아니라 검수 불합격", () => {
-    expect(assessMeasuredTier({ declared: "small", measured: "oversize" })).toEqual({ kind: "inspection_failed" });
-    expect(assessMeasuredTier({ declared: "medium", measured: "oversize" })).toEqual({ kind: "inspection_failed" });
+  it("INV-M11: 중형 신고·대형 실측이면 차액 2,000원(대형 − 중형)", () => {
+    const r = assessMeasuredTier(PRICES, { declared: "medium", measured: "large" });
+    expect(r).toMatchObject({ kind: "difference", charge: { totalKrw: 2000, shippingFeeKrw: 1500, inspectionFeeKrw: 500, serviceFeeKrw: 0 } });
+  });
+
+  it("INV-M11 (S11c, 실패경로): 실측이 대형을 넘으면 차액이 아니라 검수 불합격", () => {
+    expect(assessMeasuredTier(PRICES, { declared: "small", measured: "oversize" })).toEqual({ kind: "inspection_failed" });
+    expect(assessMeasuredTier(PRICES, { declared: "medium", measured: "oversize" })).toEqual({ kind: "inspection_failed" });
   });
 });
 

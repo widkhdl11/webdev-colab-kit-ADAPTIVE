@@ -16,6 +16,7 @@ export const HARU_CREATOR_ID = "00000000-0000-4000-b000-000000000001";
 const TIER_KRW = {
   small: { total: 5400, service: 1400, shipping: 4000 },
   medium: { total: 6900, service: 1900, shipping: 5000 },
+  large: { total: 8400, service: 1900, shipping: 6500 },
 } as const;
 
 export type Tier = keyof typeof TIER_KRW;

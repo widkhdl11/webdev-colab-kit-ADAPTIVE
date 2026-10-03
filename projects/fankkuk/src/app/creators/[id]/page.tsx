@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
+import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
 import { followModeOf } from "@/features/creator-follow/model/follow-mode";
 import { canSendGiftTo } from "@/features/gift-register/api/can-send";
 import { sendAvailabilityOf } from "@/features/gift-register/model/sender-rule";
@@ -19,11 +20,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const { id } = await params;
   // 크리에이터가 볼 때: 자기 페이지면 팔로우·선물 보내기를 숨기고, 팔로우가 한쪽도 없으면 선물 보내기 대신 안내(INV-L8·L9)
   const asCreator = viewer?.role === "creator";
-  const [header, cards, ownCreatorId, canSend] = await Promise.all([
+  const [header, cards, ownCreatorId, canSend, prices] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creators"),
     readCreatorCards(supabase, { signedIn: viewer !== null }),
     asCreator ? readOwnCreatorId(supabase) : Promise.resolve(null),
     asCreator ? canSendGiftTo(supabase, id).catch(() => false) : Promise.resolve(false),
+    readTierPrices(supabase),
   ]);
   const creator = cards.find((c) => c.id === id);
   if (!creator) notFound();
@@ -37,6 +39,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         others={others}
         followMode={followModeOf(viewer, { creatorId: id, ownCreatorId })}
         send={send}
+        prices={prices}
       />
       <SiteFooter />
     </>

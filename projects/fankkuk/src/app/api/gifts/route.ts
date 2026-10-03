@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
 import { createSupabasePaymentStore } from "@/entities/payment/api/supabase-payment-store";
 import { readViewer } from "@/entities/session/model/viewer";
 import { createCreatorRelationReader } from "@/features/gift-register/api/creator-relation";
@@ -22,7 +23,12 @@ export async function POST(req: NextRequest) {
   const viewer = await readViewer(await createRequestSupabase());
   const admin = createAdminSupabase();
   const result = await registerGift(
-    { store: createSupabasePaymentStore(admin), viewer, creatorRelation: createCreatorRelationReader(admin) },
+    {
+      store: createSupabasePaymentStore(admin),
+      viewer,
+      creatorRelation: createCreatorRelationReader(admin),
+      readPrices: () => readTierPrices(admin),
+    },
     body,
   );
   const headers = { "Cache-Control": "no-store" };

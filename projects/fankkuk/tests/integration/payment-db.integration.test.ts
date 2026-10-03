@@ -108,7 +108,8 @@ describe("INV-M7: 결제 기록 네 칸의 합은 결제 금액과 같다", () =
       p_shipping_fee_krw: 4000,
       p_amount_krw: 100,
     });
-    expect(error?.code).toBe("23514");
+    // 등록 함수는 칸마다 등록 순간의 요금표와 먼저 맞춰 본다(admin-console INV-K3) — 합이 틀린 기록은 요금표와도 다르므로 거기서 거부된다
+    expect(error?.code).toBe("P0031");
     // 주문·상자도 남지 않는다(한 처리)
     const { data } = await adminClient().from("orders").select("id").eq("order_no", "FC-TSUMBAD");
     expect(data).toEqual([]);
@@ -146,7 +147,7 @@ describe("INV-M11: 한 상자의 차액 요청은 하나다", () => {
 });
 
 describe("등록 입력 경계는 DB 에도 있다", () => {
-  it("INV-M1 S1c: 상자 0개·11개·중형 초과 신고는 등록되지 않는다", async () => {
+  it("INV-M1 S1c: 상자 0개·11개·대형 초과 신고는 등록되지 않는다", async () => {
     const base = {
       p_fan_id: "00000000-0000-4000-a000-000000000001",
       p_creator_id: "00000000-0000-4000-b000-000000000001",
@@ -168,6 +169,7 @@ describe("등록 입력 경계는 DB 에도 있다", () => {
     });
     expect(many.error?.code).toBe("22023");
     const over = await adminClient().rpc("register_order", { ...base, p_order_no: "FC-TOVER1", p_toss_order_id: "pay_test_over1", p_tiers: ["oversize"] });
-    expect(over.error?.code).toBe("23514");
+    // 대형 초과는 요금표에 없는 구간이다 — 받을 수 없는 상자 구간(admin-console INV-K6)
+    expect(over.error?.code).toBe("22023");
   });
 });

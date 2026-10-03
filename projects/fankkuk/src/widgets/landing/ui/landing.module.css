@@ -36,7 +36,7 @@
 }
 
 /* 구간 3: 요금 */
-.price-grid { max-width: 840px; }
+.price-grid { max-width: 1080px; }
 .price { padding: 32px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
 .price-amount { margin-top: 16px; font-size: clamp(44px, 4.4vw, 56px); font-weight: 800; letter-spacing: -2px; line-height: 1.1; }
 .price-amount span { margin-left: 4px; font-size: 22px; font-weight: 700; letter-spacing: 0; }

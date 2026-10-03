@@ -7,7 +7,7 @@ import { ReceiveFlow } from "@/features/revgift-receive/ui/receive-flow";
 // 받은 역조공 하나(팬). 시안: docs/design/mockups/site/v4/revgift-receive.html
 // 남은 날·기한 문구는 서버에서 한 번 계산해 넘긴다 — 브라우저 시계로 다시 계산하면 첫 화면과 글자가 달라질 수 있다.
 export function RevgiftReceivePage({ item, nowMs, sealingKeyPem }: { item: ReceivedRevgift; nowMs: number; sealingKeyPem: string | null }) {
-  const tierRule = item.tier === "large" ? "" : PARCEL_TIER_GUIDE[item.tier].rule;
+  const tierRule = PARCEL_TIER_GUIDE[item.tier].rule;
   const stage = receivedStage(item, nowMs);
   return (
     <main id="main">

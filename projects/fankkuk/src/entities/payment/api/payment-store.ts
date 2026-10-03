@@ -1,4 +1,4 @@
-import type { BillableTier } from "../config/tier-pricing";
+import type { PricedTier } from "../model/price-table";
 import type { ChargeBreakdown } from "../model/charge";
 import type { PendingPayment } from "../model/confirm";
 
@@ -6,6 +6,13 @@ import type { PendingPayment } from "../model/confirm";
 export class OrderNoTakenError extends Error {
   constructor() {
     super("이미 있는 주문번호");
+  }
+}
+
+/** DB 등록 함수가 넘겨받은 금액을 거부했다 — 앱이 요금표를 읽은 뒤 등록하기 전에 대표가 요금을 바꿨다(admin-console INV-K3). */
+export class PriceChangedError extends Error {
+  constructor() {
+    super("등록 순간의 요금표와 금액이 다르다");
   }
 }
 
@@ -23,7 +30,7 @@ export type GiftRegistration = {
   creatorId: string;
   itemKind: string;
   hasElectronicsOrMetal: boolean;
-  boxes: BillableTier[];
+  boxes: PricedTier[];
 };
 
 /** 결제가 끝나는 순간 같이 만드는 승인 요청(INV-M6). 원문은 buildSigningPayload 가 만든다(INV-S1). */

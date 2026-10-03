@@ -7,7 +7,8 @@
 --   daltokki_fan  팬 「달토끼」   하루에게 보낸 선물 한 건 — 다른 팬 선물이 안 보이는지 볼 때
 --   haru_creator  크리에이터 「하루」  승인 요청을 받는다
 --   momo_creator  크리에이터 「모모」  하루의 요청이 안 보이는지 볼 때
---   fankkuk_admin 운영자
+--   fankkuk_admin 운영자 · 대표(요금 수정·환불)
+--   fankkuk_staff 운영자 · 직원(대표만 하는 일은 거부된다)
 
 -- 승인 기록(approved_at)은 approve_request 로만 바뀐다(INV-S7). 시험 데이터를 넣는 동안만 그 막음을 끈다.
 select set_config('fankkuk.approving', 'on', false);
@@ -23,7 +24,8 @@ insert into seed_accounts values
   ('00000000-0000-4000-a000-000000000005', 'haneul_fan', '하늘', 'fan'),
   ('00000000-0000-4000-a000-000000000011', 'haru_creator', '하루', 'creator'),
   ('00000000-0000-4000-a000-000000000012', 'momo_creator', '모모', 'creator'),
-  ('00000000-0000-4000-a000-000000000021', 'fankkuk_admin', '팬꾹 운영', 'operator');
+  ('00000000-0000-4000-a000-000000000021', 'fankkuk_admin', '팬꾹 운영', 'operator'),
+  ('00000000-0000-4000-a000-000000000022', 'fankkuk_staff', '팬꾹 직원', 'operator');
 
 -- 아이디 로그인은 Supabase Auth 의 이메일 로그인 위에 얹는다: 아이디 → <아이디>@fankkuk.test
 insert into auth.users (
@@ -44,6 +46,9 @@ from seed_accounts a;
 
 insert into public.profiles (id, login_id, nickname, role)
 select id, login_id, nickname, role from seed_accounts;
+
+-- 대표 운영자(admin-console INV-K2). 운영 DB 에서는 사람이 직접 넣는다.
+insert into public.owner_setting (owner_user_id) values ('00000000-0000-4000-a000-000000000021');
 
 -- ── 크리에이터 ───────────────────────────────────────────
 

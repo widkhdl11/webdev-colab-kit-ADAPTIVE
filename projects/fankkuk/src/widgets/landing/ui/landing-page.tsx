@@ -2,12 +2,12 @@ import Link from "next/link";
 import { Fragment } from "react";
 import { FAN_STEP_LABEL } from "@/entities/order/ui/fan-stage-copy";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { BILLABLE_TIERS, TIER_PRICE_KRW } from "@/entities/payment/config/tier-pricing";
+import { PRICED_TIERS, type PriceTable } from "@/entities/payment/model/price-table";
 import s from "./landing.module.css";
 
 // 랜딩(비로그인). 시안: docs/design/mockups/site/v4/landing.html
 // 문구 한계(design-rules 6절): 약속은 「승인 없이는 저희 시스템이 주소를 열지 않습니다」 한 문장만. 「모든 상자를 열어」라고 쓰지 않는다.
-// 요금 숫자·구간 기준은 결제와 같은 요금표(tier-pricing)·구간 기준(size-tier)을 읽는다 — 화면과 결제가 어긋나지 않게.
+// 요금 숫자는 결제와 같은 DB 요금표(서버 page 가 읽어 넘긴다)를, 구간 기준은 size-tier 를 읽는다 — 화면과 결제가 어긋나지 않게.
 
 const TILES = [
   { href: "/gifts/new", label: "선물 보내기", icon: "icon-gift" },
@@ -52,7 +52,7 @@ function CheckDot() {
   );
 }
 
-export function LandingPage() {
+export function LandingPage({ prices }: { prices: PriceTable }) {
   const stepLabels = Object.values(FAN_STEP_LABEL);
   return (
     <main id="main">
@@ -172,12 +172,12 @@ export function LandingPage() {
             </h2>
             <p>배송비를 포함한 금액이에요. 크기와 무게 중 큰 쪽으로 정해져요.</p>
           </div>
-          <div className={`grid cols-2 ${s["price-grid"]}`}>
-            {BILLABLE_TIERS.map((tier) => (
+          <div className={`grid cols-3 ${s["price-grid"]}`}>
+            {PRICED_TIERS.map((tier) => (
               <article key={tier} className={s.price}>
                 <span className="tag">{PARCEL_TIER_GUIDE[tier].name}</span>
                 <p className={s["price-amount"]}>
-                  {TIER_PRICE_KRW[tier].toLocaleString("ko-KR")}
+                  {prices[tier].priceKrw.toLocaleString("ko-KR")}
                   <span>원</span>
                 </p>
                 <p className={s.inc}>

@@ -1,4 +1,5 @@
 import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
+import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
 import { canSendGiftTo } from "@/features/gift-register/api/can-send";
 import { creatorSendList } from "@/features/gift-register/model/sender-rule";
 import { GiftRegisterPage } from "@/widgets/gift-register/ui/gift-register-page";
@@ -24,10 +25,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   const { supabase, viewer } = await loadSession();
   const creatorSender = viewer?.role === "creator";
   const preselectedId = typeof creator === "string" ? creator : null;
-  const [cards, ownCreatorId, preselectedCanSend] = await Promise.all([
+  const [cards, ownCreatorId, preselectedCanSend, prices] = await Promise.all([
     readCreatorCards(supabase, { signedIn: viewer !== null }),
     creatorSender ? readOwnCreatorId(supabase) : Promise.resolve(null),
     creatorSender && preselectedId ? canSendGiftTo(supabase, preselectedId).catch(() => false) : Promise.resolve(false),
+    readTierPrices(supabase),
   ]);
   const creators = creatorSender
     ? creatorSendList(cards, ownCreatorId, preselectedId ? { id: preselectedId, canSend: preselectedCanSend } : null)
@@ -41,6 +43,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts/new")} />
       <GiftRegisterPage
         creators={creators}
+        prices={prices}
         initialCreatorId={initialCreatorId}
         clientKey={clientKey}
         notice={notice}

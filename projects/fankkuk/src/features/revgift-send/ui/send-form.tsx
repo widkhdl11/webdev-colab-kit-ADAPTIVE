@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
-import type { BillableTier } from "@/entities/payment/config/tier-pricing";
-import { REVGIFT_TIER_PRICE_KRW } from "@/entities/payment/model/charge";
+import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { revgiftTierPrice } from "@/entities/payment/model/charge";
+import { PRICED_TIERS, type PriceTable, type PricedTier } from "@/entities/payment/model/price-table";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { findFan, registerRevgiftRequest, type FoundFan } from "../api/send-requests";
 import { MAX_REVGIFT_SHARES } from "../model/register-revgift";
@@ -11,20 +12,29 @@ import s from "./send-form.module.css";
 
 // 역조공 보내기 입력. 시안: docs/design/mockups/site/v4/creator-revgift-new.html
 // 팬은 아이디를 정확히 입력해 한 명씩 추가한다 — 팔로워 목록은 어디에도 보여 주지 않는다(reverse-gift INV-R2).
-// 합계는 안내용이다. 결제 금액은 등록 때 서버가 다시 계산한 값을 쓴다(INV-R3).
+// 합계는 화면을 열 때 읽은 요금표(prices)로 낸 안내용이다. 결제 금액은 등록 때 서버가 그 순간의 요금표로 다시 계산한 값을 쓴다(INV-R3·K3).
+// 그 사이 요금이 바뀌면 서버가 409 로 거부하고, 화면은 새 요금표를 다시 받아 금액을 고쳐 보여 준다.
 
 export type RevgiftCheckout = { orderId: string; orderNo: string; amountKrw: number; fanCount: number };
 
-type Picked = FoundFan & { tier: BillableTier };
+type Picked = FoundFan & { tier: PricedTier };
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
-const TIERS: readonly { tier: BillableTier; name: string }[] = [
-  { tier: "small", name: "소형" },
-  { tier: "medium", name: "중형" },
-];
+const TIERS: readonly { tier: PricedTier; name: string }[] = PRICED_TIERS.map((tier) => ({ tier, name: PARCEL_TIER_GUIDE[tier].name }));
 
-export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onRegistered: (target: RevgiftCheckout) => void }) {
+const SIZE_NOTE = `상자는 팬마다 고를 수 있어요. ${PRICED_TIERS.map((t) => `${PARCEL_TIER_GUIDE[t].name}은 ${PARCEL_TIER_GUIDE[t].rule}`).join(", ")}예요. 크기와 무게 중 큰 쪽으로 정해요.`;
+
+export function RevgiftSendForm({
+  prices,
+  notice,
+  onRegistered,
+}: {
+  /** 지금 요금표 — 서버 page 가 DB 에서 읽어 넘긴다. */
+  prices: PriceTable;
+  notice?: string;
+  onRegistered: (target: RevgiftCheckout) => void;
+}) {
   const router = useRouter();
   const [picked, setPicked] = useState<Picked[]>([]);
   const [loginId, setLoginId] = useState("");
@@ -36,7 +46,8 @@ export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onR
   const input = useRef<HTMLInputElement>(null);
 
   const full = picked.length >= MAX_REVGIFT_SHARES;
-  const total = picked.reduce((sum, p) => sum + REVGIFT_TIER_PRICE_KRW[p.tier], 0);
+  const unitKrw = (tier: PricedTier) => revgiftTierPrice(prices, tier);
+  const total = picked.reduce((sum, p) => sum + unitKrw(p.tier), 0);
 
   const add = async (e: FormEvent) => {
     e.preventDefault();
@@ -81,7 +92,7 @@ export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onR
     input.current?.focus();
   };
 
-  const setTier = (fanId: string, tier: BillableTier) => {
+  const setTier = (fanId: string, tier: PricedTier) => {
     setPicked((prev) => prev.map((p) => (p.fanId === fanId ? { ...p, tier } : p)));
   };
 
@@ -94,7 +105,11 @@ export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onR
     setPaying(false);
     if (!result.ok) {
       if (result.reason === "login") router.push("/login");
-      else setPayError(result.message ?? "보내기를 등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+      else if (result.reason === "price_changed") {
+        // 요금이 방금 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 팬은 그대로 남는다
+        setPayError(result.message ?? "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요.");
+        router.refresh();
+      } else setPayError(result.message ?? "보내기를 등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
       return;
     }
     const { tossOrderId, amountKrw, orderNos } = result.value;
@@ -178,7 +193,7 @@ export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onR
                           onChange={() => setTier(p.fanId, t.tier)}
                         />
                         <span>
-                          {t.name} <span className={s.won}>{won(REVGIFT_TIER_PRICE_KRW[t.tier])}</span>
+                          {t.name} <span className={s.won}>{won(unitKrw(t.tier))}</span>
                         </span>
                       </label>
                     ))}
@@ -192,9 +207,7 @@ export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onR
           ) : (
             <p className={s["empty-fans"]}>아직 추가한 팬이 없어요. 아이디를 입력해 추가해 주세요.</p>
           )}
-          <p className={s["size-note"]}>
-            상자는 팬마다 고를 수 있어요. 소형은 세 변 합 100cm · 5kg 이하, 중형은 세 변 합 100cm · 10kg 이하예요. 크기와 무게 중 큰 쪽으로 정해요.
-          </p>
+          <p className={s["size-note"]}>{SIZE_NOTE}</p>
         </section>
         <section className={s.card} aria-labelledby="rv-how-title">
           <h2 className={s.h} id="rv-how-title">
@@ -237,7 +250,7 @@ export function RevgiftSendForm({ notice, onRegistered }: { notice?: string; onR
               <span>
                 {t.name} 상자 × {t.count}
               </span>
-              <span className={s.amt}>{won(REVGIFT_TIER_PRICE_KRW[t.tier] * t.count)}</span>
+              <span className={s.amt}>{won(unitKrw(t.tier) * t.count)}</span>
             </p>
           ))}
         </div>

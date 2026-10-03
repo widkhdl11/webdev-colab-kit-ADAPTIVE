@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
 import { readViewer } from "@/entities/session/model/viewer";
 import { createSupabaseRevgiftStore } from "@/features/revgift-send/api/supabase-revgift-store";
 import { registerRevgift } from "@/features/revgift-send/model/register-revgift";
@@ -11,7 +12,8 @@ import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async (body) => {
     const viewer = await readViewer(await createRequestSupabase());
-    const result = await registerRevgift({ store: createSupabaseRevgiftStore(createAdminSupabase()), viewer }, body);
+    const admin = createAdminSupabase();
+    const result = await registerRevgift({ store: createSupabaseRevgiftStore(admin), viewer, readPrices: () => readTierPrices(admin) }, body);
     if (!result.ok) return { status: result.status, body: { message: result.message } };
     return { status: 200, body: { tossOrderId: result.tossOrderId, amountKrw: result.amountKrw, orderNos: result.orderNos } };
   });

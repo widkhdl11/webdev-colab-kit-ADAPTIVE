@@ -1,8 +1,9 @@
 import { z } from "zod";
-import type { BillableTier } from "@/entities/payment/config/tier-pricing";
+import type { PricedTier } from "@/entities/payment/model/price-table";
 
 // 브라우저에서 역조공 API 를 부른다 — 팬 찾기(/api/revgifts/fans)와 보내기 등록(/api/revgifts).
-// login = 세션이 끝났다(로그인으로 보낸다) / limited = 팬 찾기 한도를 넘었다(429, INV-R2) / failed = 그 밖의 실패.
+// login = 세션이 끝났다(로그인으로 보낸다) / limited = 팬 찾기 한도를 넘었다(429, INV-R2) /
+// price_changed = 화면을 연 뒤 요금이 바뀌었다(409, admin-console INV-K3) / failed = 그 밖의 실패.
 
 export type FoundFan = { fanId: string; loginId: string; nickname: string };
 
@@ -40,8 +41,8 @@ export type RegisteredRevgift = z.infer<typeof registered>;
 
 /** 보내기 등록. 금액·보내는 사람은 서버가 정한다 — 본문에는 받는 팬과 상자 구간만 싣는다(INV-R3). */
 export async function registerRevgiftRequest(
-  shares: readonly { fanId: string; tier: BillableTier }[],
-): Promise<{ ok: true; value: RegisteredRevgift } | { ok: false; reason: "login" | "failed"; message?: string }> {
+  shares: readonly { fanId: string; tier: PricedTier }[],
+): Promise<{ ok: true; value: RegisteredRevgift } | { ok: false; reason: "login" | "price_changed" | "failed"; message?: string }> {
   try {
     const res = await fetch("/api/revgifts", {
       method: "POST",
@@ -55,7 +56,7 @@ export async function registerRevgiftRequest(
     }
     if (res.status === 401) return { ok: false, reason: "login" };
     const message = refused.safeParse(body);
-    return { ok: false, reason: "failed", message: message.success ? message.data.message : undefined };
+    return { ok: false, reason: res.status === 409 ? "price_changed" : "failed", message: message.success ? message.data.message : undefined };
   } catch {
     return { ok: false, reason: "failed" };
   }

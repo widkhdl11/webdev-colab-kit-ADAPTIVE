@@ -3,8 +3,16 @@ import { createTossPaymentsClient } from "@/shared/api/toss-payments/client";
 import { createMemoryPaymentStore } from "@/entities/payment/api/memory-payment-store";
 import type { PaymentStore } from "@/entities/payment/api/payment-store";
 import { computeCharge } from "@/entities/payment/model/charge";
+import type { PriceTable } from "@/entities/payment/model/price-table";
 import { parseSigningPayload } from "@/entities/order/model/signing-payload";
 import { confirmPayment } from "./checkout";
+
+// 첫 요금표(시험용 고정값). 운영 값은 DB 요금표에서만 온다.
+const PRICES: PriceTable = {
+  small: { priceKrw: 6900, carrierCostKrw: 4000, inspectionFeeKrw: 1500 },
+  medium: { priceKrw: 8900, carrierCostKrw: 5000, inspectionFeeKrw: 2000 },
+  large: { priceKrw: 10900, carrierCostKrw: 6500, inspectionFeeKrw: 2500 },
+};
 
 // 토스 승인 API 만 가짜로 둔다(외부). 대조·기록·멱등은 실제 코드가 돈다.
 function fakeToss(respond: (body: { orderId: string; amount: number }) => unknown) {
@@ -28,7 +36,7 @@ async function pendingFor(store: PaymentStore, boxes: ("small" | "medium")[]) {
   return store.create({
     orderId: `pay_test${String(seq).padStart(4, "0")}`,
     orderNo: "FC-7K3M9",
-    charge: computeCharge({ boxes }),
+    charge: computeCharge(PRICES, { boxes }),
     registration: { fanId: "fan-byeolbit", creatorId: "creator-1", itemKind: "손편지", hasElectronicsOrMetal: false, boxes },
   });
 }

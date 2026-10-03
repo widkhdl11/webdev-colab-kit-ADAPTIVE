@@ -1,5 +1,5 @@
-import type { BillableTier } from "../config/tier-pricing";
 import { parseChargeBreakdown, tierBreakdown, type ChargeBreakdown } from "./charge";
+import type { PriceTable, PricedTier } from "./price-table";
 
 // 도착 실측 차액. 실측 구간 판정은 entities/parcel(classifyParcel)이 하고, 여기는 그 결과로 금액만 정한다.
 
@@ -7,12 +7,13 @@ export type MeasuredAssessment = { kind: "none" } | { kind: "difference"; charge
 
 /**
  * INV-M11: 차액 = 실측 구간 요금 − 신고 구간 요금, 배송비·검수비·기본 서비스료 칸도 각각의 차.
- * 실측이 신고 이하이면 차액도 환불도 없다. 실측이 중형을 넘으면 차액이 아니라 검수 불합격이다.
+ * 실측이 신고 이하이면 차액도 환불도 없다. 실측이 대형을 넘으면 차액이 아니라 검수 불합격이다.
+ * 요금은 넘겨받은 요금표(판정하는 순간 DB 에서 읽은 것)에서만 읽는다.
  */
-export function assessMeasuredTier(input: { declared: BillableTier; measured: BillableTier | "oversize" }): MeasuredAssessment {
+export function assessMeasuredTier(prices: PriceTable, input: { declared: PricedTier; measured: PricedTier | "oversize" }): MeasuredAssessment {
   if (input.measured === "oversize") return { kind: "inspection_failed" };
-  const declared = tierBreakdown(input.declared);
-  const measured = tierBreakdown(input.measured);
+  const declared = tierBreakdown(prices, input.declared);
+  const measured = tierBreakdown(prices, input.measured);
   if (measured.totalKrw <= declared.totalKrw) return { kind: "none" };
   const charge = parseChargeBreakdown({
     goodsKrw: 0,

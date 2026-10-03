@@ -1,6 +1,7 @@
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 import { createSupabasePaymentStore } from "@/entities/payment/api/supabase-payment-store";
-import { SenderRefusedError } from "@/entities/payment/api/payment-store";
+import { PriceChangedError, SenderRefusedError } from "@/entities/payment/api/payment-store";
+import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
 import { computeCharge } from "@/entities/payment/model/charge";
 import { createCreatorRelationReader } from "@/features/gift-register/api/creator-relation";
 import { adminClient, deleteTestOrders, psql, SEED, signedInClient } from "./helpers";
@@ -146,14 +147,26 @@ describe("앱 서버의 관계 읽기 — DB 함수를 부르지 않고 표로 �
 });
 
 describe("DB 거부를 앱 오류 종류로 — 서버 판정을 건너뛰고 저장소를 바로 불러도", () => {
-  const charge = computeCharge({ boxes: ["small"] });
-  const create = (creatorId: string) =>
+  const create = async (creatorId: string) =>
     createSupabasePaymentStore(adminClient()).create({
       orderId: `pay_test_cg_store_${Date.now().toString(36)}`,
       orderNo: `FC-S${Date.now().toString(36).toUpperCase().slice(-5)}`,
-      charge,
+      charge: computeCharge(await readTierPrices(adminClient()), { boxes: ["small"] }),
       registration: { fanId: HARU_PROFILE, creatorId, itemKind: "시험 선물", hasElectronicsOrMetal: false, boxes: ["small"] },
     });
+
+  it("admin-console INV-K3: 금액이 등록 순간의 요금표와 다르면 → PriceChangedError", async () => {
+    const now = await readTierPrices(adminClient());
+    const stale = { ...now, small: { ...now.small, priceKrw: now.small.priceKrw + 500 } };
+    await expect(
+      createSupabasePaymentStore(adminClient()).create({
+        orderId: `pay_test_cg_price_${Date.now().toString(36)}`,
+        orderNo: `FC-P${Date.now().toString(36).toUpperCase().slice(-5)}`,
+        charge: computeCharge(stale, { boxes: ["small"] }),
+        registration: { fanId: HARU_PROFILE, creatorId: MOMO_PAGE, itemKind: "시험 선물", hasElectronicsOrMetal: false, boxes: ["small"] },
+      }),
+    ).rejects.toBeInstanceOf(PriceChangedError);
+  });
 
   it("자기 자신 → SenderRefusedError(self)", async () => {
     await expect(create(HARU_PAGE)).rejects.toSatisfy((e) => e instanceof SenderRefusedError && e.reason === "self");

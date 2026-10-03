@@ -2,13 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { RETURN_ON_INSPECTION_NOTICE, RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { BILLABLE_TIERS, TIER_PRICE_KRW, type BillableTier } from "@/entities/payment/config/tier-pricing";
+import { PRICED_TIERS, type PriceTable, type PricedTier } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
 import { summarizeBoxes } from "../model/box-summary";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
@@ -19,7 +20,7 @@ export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "appr
   Partial<Pick<CreatorCard, "category" | "channelTitle" | "alias">>;
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
-const COUNT_FIELD = { small: "smallCount", medium: "mediumCount" } as const;
+const COUNT_FIELD = { small: "smallCount", medium: "mediumCount", large: "largeCount" } as const;
 
 type StepNo = 1 | 2 | 3 | 4;
 const STEP_NOS: readonly StepNo[] = [1, 2, 3, 4];
@@ -28,7 +29,7 @@ const STEP_LABEL: Record<StepNo, string> = { 1: "크리에이터", 2: "선물", 
 const STEP_FIELDS: Record<Exclude<StepNo, 4>, (keyof RegisterFormValues)[]> = {
   1: ["creatorId"],
   2: ["itemKind", "electronicsOrMetal"],
-  3: ["smallCount", "mediumCount"],
+  3: ["smallCount", "mediumCount", "largeCount"],
 };
 
 
@@ -38,22 +39,27 @@ export type RegisteredGift = { orderId: string; orderNo: string; amountKrw: numb
 type RegisterResponse = Partial<RegisteredGift> & { message?: string };
 
 // 선물 보내기 4단계(크리에이터·선물·상자·결제 확인). 「결제하기」를 누르면 서버(/api/gifts)에 등록하고 결제창으로 넘긴다.
-// 결제는 등록 때 받는다(결제 스펙). 화면의 금액은 결제와 같은 계산(chargeLines)을 쓰지만,
-// 실제 결제 금액은 서버가 상자 구간으로 다시 계산한다(INV-M1) — 이 화면의 숫자는 안내일 뿐이다.
+// 결제는 등록 때 받는다(결제 스펙). 화면의 금액은 결제와 같은 계산(chargeLines)에 화면을 열 때 읽은 요금표(prices)를 넣지만,
+// 실제 결제 금액은 서버가 등록 순간의 요금표로 다시 계산한다(INV-M1·K3) — 이 화면의 숫자는 안내일 뿐이다.
+// 그 사이 요금이 바뀌면 서버가 409 로 거부하고, 화면은 새 요금표를 다시 받아 금액을 고쳐 보여 준다.
 // 보내는 사람은 서버가 로그인 세션으로 정한다(INV-L3) — 이 폼은 사용자 칸을 보내지 않는다.
 export function RegisterForm({
   creators,
+  prices,
   initialCreatorId = "",
   notice,
   onRegistered,
 }: {
   creators: readonly CreatorOption[];
+  /** 지금 요금표 — 서버 page 가 DB 에서 읽어 넘긴다. */
+  prices: PriceTable;
   /** 크리에이터 화면에서 넘어오면 그 사람을 미리 골라 둔다 */
   initialCreatorId?: string;
   /** 결제창에서 돌아온 실패 안내 */
   notice?: string;
   onRegistered: (gift: RegisteredGift) => void;
 }) {
+  const router = useRouter();
   const [step, setStep] = useState<StepNo>(1);
   const [reached, setReached] = useState<StepNo>(1);
   const [query, setQuery] = useState("");
@@ -86,14 +92,15 @@ export function RegisterForm({
   } = useForm<RegisterFormValues, unknown, RegisterFormOutput>({
     resolver: zodResolver(registerFormSchema),
     // 전자기기 신고는 기본값이 없다 — 팬이 직접 골라야 한다
-    defaultValues: { creatorId: initialCreatorId, itemKind: "", smallCount: "1", mediumCount: "0" },
+    defaultValues: { creatorId: initialCreatorId, itemKind: "", smallCount: "1", mediumCount: "0", largeCount: "0" },
   });
   const creatorId = useWatch({ control, name: "creatorId" });
   const itemKind = useWatch({ control, name: "itemKind" }) ?? "";
   const metal = useWatch({ control, name: "electronicsOrMetal" });
-  const summary = summarizeBoxes({
+  const summary = summarizeBoxes(prices, {
     small: useWatch({ control, name: "smallCount" }),
     medium: useWatch({ control, name: "mediumCount" }),
+    large: useWatch({ control, name: "largeCount" }),
   });
 
   const go = (n: StepNo) => {
@@ -132,11 +139,11 @@ export function RegisterForm({
     setSubmitError(null);
     setNoticeShown(false);
     try {
-      const { creatorId, itemKind, smallCount, mediumCount, electronicsOrMetal } = getValues();
+      const { creatorId, itemKind, smallCount, mediumCount, largeCount, electronicsOrMetal } = getValues();
       const res = await fetch("/api/gifts", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ creatorId, itemKind, smallCount, mediumCount, electronicsOrMetal }),
+        body: JSON.stringify({ creatorId, itemKind, smallCount, mediumCount, largeCount, electronicsOrMetal }),
       });
       const body = (await res.json().catch(() => ({}))) as RegisterResponse;
       if (res.ok && body.orderId && body.orderNo && typeof body.amountKrw === "number") {
@@ -145,6 +152,11 @@ export function RegisterForm({
       }
       if (res.status === 401) setSubmitError({ message: "로그인하면 선물을 보낼 수 있어요.", needsLogin: true });
       else if (res.status === 403) setSubmitError({ message: body.message ?? "팬 계정으로 로그인해 주세요.", needsLogin: false });
+      else if (res.status === 409) {
+        // 요금이 방금 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 값은 그대로 남는다
+        setSubmitError({ message: body.message ?? "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요.", needsLogin: false });
+        router.refresh();
+      }
       else setSubmitError({ message: "입력한 내용을 다시 확인해 주세요.", needsLogin: false });
     } catch {
       setSubmitError({ message: "등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.", needsLogin: false });
@@ -155,12 +167,12 @@ export function RegisterForm({
   };
 
   // 끝에 닿은 버튼은 disabled 대신 aria-disabled 로 둔다 — disabled 가 되면 키보드 포커스가 사라진다
-  const changeCount = (tier: BillableTier, delta: 1 | -1) => {
+  const changeCount = (tier: PricedTier, delta: 1 | -1) => {
     if (delta > 0 ? !summary.canAdd : !summary.canRemove[tier]) return;
-    const hasCountError = errors.smallCount !== undefined || errors.mediumCount !== undefined;
+    const hasCountError = errors.smallCount !== undefined || errors.mediumCount !== undefined || errors.largeCount !== undefined;
     setValue(COUNT_FIELD[tier], String(summary.counts[tier] + delta));
-    // 합계 오류(하나 이상·10개까지)는 smallCount 칸에 붙는다 — 어느 칸을 바꿨든 두 칸을 같이 다시 검증해야 지난 오류가 사라진다
-    if (hasCountError) void trigger(["smallCount", "mediumCount"]);
+    // 합계 오류(하나 이상·10개까지)는 smallCount 칸에 붙는다 — 어느 칸을 바꿨든 세 칸을 같이 다시 검증해야 지난 오류가 사라진다
+    if (hasCountError) void trigger(["smallCount", "mediumCount", "largeCount"]);
   };
 
   // 크리에이터 찾기 화면과 같은 검색 규칙(이름·로마자 이름·분야·채널 이름·플랫폼)
@@ -168,11 +180,11 @@ export function RegisterForm({
   const picked = creators.find((c) => c.id === creatorId);
   const metalText = metal === "yes" ? "네, 있어요" : metal === "no" ? "아니요, 없어요" : "아직 안 골랐어요";
   const boxesText =
-    BILLABLE_TIERS.filter((t) => summary.counts[t] > 0)
+    PRICED_TIERS.filter((t) => summary.counts[t] > 0)
       .map((t) => `${PARCEL_TIER_GUIDE[t].name} ${summary.counts[t]}개`)
       .join(" · ") || "없음";
   const totalText = summary.totalKrw !== null ? won(summary.totalKrw) : summary.overLimit ? `${MAX_BOX_COUNT}개 초과` : "—";
-  const boxError = errors.smallCount?.message ?? errors.mediumCount?.message;
+  const boxError = errors.smallCount?.message ?? errors.mediumCount?.message ?? errors.largeCount?.message;
 
   const err = (id: string, message: string | undefined) =>
     message ? (
@@ -354,14 +366,14 @@ export function RegisterForm({
                 {heading(3, "상자는 몇 개인가요?")}
                 <p>상자마다 배송비가 포함돼 있어요. 모두 합쳐 {MAX_BOX_COUNT}개까지 한 번에 보낼 수 있어요.</p>
               </div>
-              {BILLABLE_TIERS.map((tier) => {
+              {PRICED_TIERS.map((tier) => {
                 const guide = PARCEL_TIER_GUIDE[tier];
                 return (
                   <div key={tier} className={f.counter}>
                     <div>
                       <strong>{guide.name} 상자</strong>
                       <small>
-                        {guide.rule} · {won(TIER_PRICE_KRW[tier])}
+                        {guide.rule} · {won(prices[tier].priceKrw)}
                       </small>
                     </div>
                     <div className={f.qty} role="group" aria-label={`${guide.name} 상자 수`}>
@@ -394,7 +406,7 @@ export function RegisterForm({
                   <strong>구간은 이렇게 정해져요</strong>
                 </p>
                 <ul>
-                  {BILLABLE_TIERS.map((tier) => (
+                  {PRICED_TIERS.map((tier) => (
                     <li key={tier}>
                       {PARCEL_TIER_GUIDE[tier].name}은 {PARCEL_TIER_GUIDE[tier].rule}예요.
                     </li>

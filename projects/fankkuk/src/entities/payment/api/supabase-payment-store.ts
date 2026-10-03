@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { parseChargeBreakdown } from "../model/charge";
-import { OrderNoTakenError, SenderRefusedError, type PaymentStore, type StoredPayment } from "./payment-store";
+import { OrderNoTakenError, PriceChangedError, SenderRefusedError, type PaymentStore, type StoredPayment } from "./payment-store";
 
 // 결제 기록 저장소 — DB 구현. 관리자 키 클라이언트를 받는다(앱 서버 전용).
 // 쓰기는 전부 DB 함수(register_order·claim_payment·settle_payment)로 한다 — 한 처리 안에서 일어나야 하는 것들이
@@ -69,6 +69,8 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
         p_amount_krw: charge.totalKrw,
       });
       if (error?.code === "23505" && error.message.includes("orders_order_no_key")) throw new OrderNoTakenError();
+      // INV-K3: 등록 순간의 요금표로 다시 계산한 금액과 다르다 — 요금이 방금 바뀌었다
+      if (error?.code === "P0031") throw new PriceChangedError();
       if (error?.code === "P0011") throw new SenderRefusedError("self");
       if (error?.code === "P0012") throw new SenderRefusedError("no_follow");
       if (error?.code === "42501") throw new SenderRefusedError("role");

@@ -1,12 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { RevgiftPayment, RevgiftPaymentStore } from "../model/confirm-revgift";
-import type { RevgiftStore } from "../model/register-revgift";
+import type { RevgiftRefusal, RevgiftStore } from "../model/register-revgift";
 
 // 역조공 보내기·결제 저장소 — DB 구현. 관리자 키 클라이언트를 받는다(앱 서버 전용).
 // 쓰기는 DB 함수(register_revgift·claim_revgift_payment·settle_revgift_payment)로만 한다.
 
-function refused(refusal: "not_follower" | "order_no_taken"): Error {
+function refused(refusal: RevgiftRefusal): Error {
   return Object.assign(new Error(`역조공 등록 거부: ${refusal}`), { refusal });
 }
 
@@ -31,6 +31,8 @@ export function createSupabaseRevgiftStore(admin: SupabaseClient): RevgiftStore 
       });
       // INV-R1 두 번째 장치: 받는 사람이 나를 팔로우하는 팬 계정이 아니다
       if (error?.code === "P0021") throw refused("not_follower");
+      // INV-K3: 등록 순간의 요금표로 다시 계산한 금액과 다르다 — 요금이 방금 바뀌었다
+      if (error?.code === "P0031") throw refused("price_changed");
       if (error?.code === "23505" && error.message.includes("revgift_shares_order_no_key")) throw refused("order_no_taken");
       if (error) throw new Error(`역조공을 등록하지 못했다: ${error.code}`);
       return { sendId: z.string().uuid().parse(data) };

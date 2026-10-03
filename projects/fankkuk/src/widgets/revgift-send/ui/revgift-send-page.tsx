@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import type { PriceTable } from "@/entities/payment/model/price-table";
 import { PaymentStep } from "@/features/checkout/ui/payment-step";
 import { RevgiftSendForm, type RevgiftCheckout } from "@/features/revgift-send/ui/send-form";
 
 // 역조공 보내기 본문(크리에이터). 시안: docs/design/mockups/site/v4/creator-revgift-new.html
 // 「결제하기」를 누르면 서버에 등록되고(결제 대기), 같은 자리에 결제창이 뜬다. 결제가 끝나면 서버가 보낸 역조공 목록으로 보낸다.
 // 헤더·푸터는 라우트(app)가 붙인다.
-export function RevgiftSendPage({ clientKey, notice }: { clientKey: string; notice?: string }) {
+export function RevgiftSendPage({ clientKey, prices, notice }: { clientKey: string; prices: PriceTable; notice?: string }) {
   const [registered, setRegistered] = useState<RevgiftCheckout | null>(null);
 
   return (
@@ -38,7 +39,7 @@ export function RevgiftSendPage({ clientKey, notice }: { clientKey: string; noti
         )
       ) : (
         <div className="container">
-          <RevgiftSendForm notice={notice} onRegistered={setRegistered} />
+          <RevgiftSendForm prices={prices} notice={notice} onRegistered={setRegistered} />
         </div>
       )}
     </main>

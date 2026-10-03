@@ -130,7 +130,8 @@ describe("INV-R3: 보내기 하나 = 결제 하나, 몫 1~10개, 팬마다 상�
     expect((await adminClient().rpc("register_revgift", mismatch)).error?.code).toMatch(/^(22023|23514)$/);
     const base = revgiftArgs([{ fanId: PROFILE.byeolbit, tier: "small" }]);
     const withInspection = { ...base, p_inspection_fee_krw: 1500, p_service_fee_krw: base.p_service_fee_krw - 1500 };
-    expect((await adminClient().rpc("register_revgift", withInspection)).error?.code).toBe("23514");
+    // 검수비 칸은 등록 순간의 요금표로 다시 계산한 값(0)과 맞춰 본다(admin-console INV-K3)
+    expect((await adminClient().rpc("register_revgift", withInspection)).error?.code).toBe("P0031");
   });
 
   it("INV-R3 (실패경로): 결제 칸 합은 맞아도 몫 금액의 합이 결제 금액과 다르면 거부된다", async () => {
@@ -314,9 +315,10 @@ describe("역조공 보내기는 크리에이터 페이지와 묶인다", () => 
 describe("앱 서버 등록 → DB 등록 함수 (INV-R1·R3 두 장치가 이어진다)", () => {
   it("INV-R1 S1b (실패경로): 팔로우 안 한 팬을 넣으면 DB 가 거부하고 앱은 403 과 한 가지 문구를 준다", async () => {
     const { registerRevgift } = await import("@/features/revgift-send/model/register-revgift");
+    const { readTierPrices } = await import("@/entities/payment/api/read-tier-prices");
     const { createSupabaseRevgiftStore } = await import("@/features/revgift-send/api/supabase-revgift-store");
     const r = await registerRevgift(
-      { store: createSupabaseRevgiftStore(adminClient()), viewer: { userId: PROFILE.haru, role: "creator" } },
+      { store: createSupabaseRevgiftStore(adminClient()), viewer: { userId: PROFILE.haru, role: "creator" }, readPrices: () => readTierPrices(adminClient()) },
       { shares: [{ fanId: PROFILE.daltokki, tier: "small" }] },
     );
     expect(r).toEqual({ ok: false, status: 403, message: "나를 팔로우한 팬에게만 보낼 수 있어요." });
@@ -324,9 +326,10 @@ describe("앱 서버 등록 → DB 등록 함수 (INV-R1·R3 두 장치가 이�
 
   it("INV-R3 S3: 앱 서버가 계산한 금액으로 등록되고, 결제 기록의 검수비 칸은 0 이다", async () => {
     const { registerRevgift } = await import("@/features/revgift-send/model/register-revgift");
+    const { readTierPrices } = await import("@/entities/payment/api/read-tier-prices");
     const { createSupabaseRevgiftStore } = await import("@/features/revgift-send/api/supabase-revgift-store");
     const r = await registerRevgift(
-      { store: createSupabaseRevgiftStore(adminClient()), viewer: { userId: PROFILE.haru, role: "creator" } },
+      { store: createSupabaseRevgiftStore(adminClient()), viewer: { userId: PROFILE.haru, role: "creator" }, readPrices: () => readTierPrices(adminClient()) },
       { shares: [{ fanId: PROFILE.byeolbit, tier: "medium" }] },
     );
     if (!r.ok) throw new Error(JSON.stringify(r));

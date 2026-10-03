@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MAX_BOX_COUNT, parseRegisterInput } from "./register-input";
 
-const ok = { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "인형", smallCount: "2", mediumCount: "1", electronicsOrMetal: "no" };
+const ok = { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "인형", smallCount: "2", mediumCount: "1", largeCount: "0", electronicsOrMetal: "no" };
 
 describe("parseRegisterInput — 선물 등록 입력 경계", () => {
   it("정상 입력은 상자 구간 목록·참거짓으로 바뀐다 (소형 먼저)", () => {
@@ -28,15 +28,22 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
     expect(r.success ? null : r.errors.smallCount).toBeTruthy();
   });
 
-  it(`두 구간을 합쳐 ${MAX_BOX_COUNT}개까지`, () => {
+  it(`세 구간을 합쳐 ${MAX_BOX_COUNT}개까지`, () => {
     expect(parseRegisterInput({ ...ok, smallCount: String(MAX_BOX_COUNT), mediumCount: "0" }).success).toBe(true);
     expect(parseRegisterInput({ ...ok, smallCount: String(MAX_BOX_COUNT), mediumCount: "1" }).success).toBe(false);
+    expect(parseRegisterInput({ ...ok, smallCount: String(MAX_BOX_COUNT - 1), mediumCount: "0", largeCount: "2" }).success).toBe(false);
+  });
+
+  it("대형 상자 수는 구간 목록 끝에 붙는다 (소형·중형·대형 순)", () => {
+    const r = parseRegisterInput({ ...ok, largeCount: "2" });
+    expect(r.success && r.data.boxes).toEqual(["small", "small", "medium", "large", "large"]);
   });
 
   it("상자 수는 0 이상 정수", () => {
     for (const bad of ["-1", "1.5", "", "abc"]) {
       expect(parseRegisterInput({ ...ok, smallCount: bad }).success).toBe(false);
       expect(parseRegisterInput({ ...ok, mediumCount: bad }).success).toBe(false);
+      expect(parseRegisterInput({ ...ok, largeCount: bad }).success).toBe(false);
     }
   });
 
@@ -51,8 +58,8 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
     expect(parseRegisterInput({ ...ok, creatorId: "" }).success).toBe(false);
   });
 
-  it("모르는 칸(금액·대형 상자 수 등)은 결과에 들어오지 않는다 — 결제 금액은 서버 요금표로만 계산한다", () => {
-    const r = parseRegisterInput({ ...ok, totalKrw: "100", largeCount: "3" });
+  it("모르는 칸(금액·대형 초과 상자 수 등)은 결과에 들어오지 않는다 — 결제 금액은 서버 요금표로만 계산한다", () => {
+    const r = parseRegisterInput({ ...ok, totalKrw: "100", oversizeCount: "3" });
     expect(r.success && Object.keys(r.data).sort()).toEqual(["boxes", "creatorId", "hasElectronicsOrMetal", "itemKind"]);
     expect(r.success && r.data.boxes).toHaveLength(3);
   });
@@ -60,7 +67,7 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
 
 describe("크리에이터 칸", () => {
   it("크리에이터 id 꼴(uuid)이 아니면 받지 않는다 — DB 형식 오류가 서버 오류로 번지지 않게", () => {
-    const base = { itemKind: "편지", smallCount: "1", mediumCount: "0", electronicsOrMetal: "no" };
+    const base = { itemKind: "편지", smallCount: "1", mediumCount: "0", largeCount: "0", electronicsOrMetal: "no" };
     expect(parseRegisterInput({ ...base, creatorId: "x" }).success).toBe(false);
     expect(parseRegisterInput({ ...base, creatorId: "00000000-0000-4000-b000-000000000001" }).success).toBe(true);
   });

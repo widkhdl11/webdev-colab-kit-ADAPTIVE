@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { createMemoryPaymentStore } from "@/entities/payment/api/memory-payment-store";
-import { SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
+import { PriceChangedError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
+import type { PriceTable } from "@/entities/payment/model/price-table";
 import type { CreatorRelation } from "./sender-rule";
 import { registerGift } from "./register-gift";
 
+// 첫 요금표(시험용 고정값). 운영 값은 DB 요금표에서만 온다.
+const PRICES: PriceTable = {
+  small: { priceKrw: 6900, carrierCostKrw: 4000, inspectionFeeKrw: 1500 },
+  medium: { priceKrw: 8900, carrierCostKrw: 5000, inspectionFeeKrw: 2000 },
+  large: { priceKrw: 10900, carrierCostKrw: 6500, inspectionFeeKrw: 2500 },
+};
+const readPrices = async (): Promise<PriceTable> => PRICES;
+
 const FAN = { userId: "fan-byeolbit", role: "fan" } as const;
-const form = { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "손편지", smallCount: "2", mediumCount: "1", electronicsOrMetal: "no" };
+const form = { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "손편지", smallCount: "2", mediumCount: "1", largeCount: "0", electronicsOrMetal: "no" };
 
 const NO_RELATION_READ = async (): Promise<CreatorRelation | null> => {
   throw new Error("팬이 보낼 때는 관계를 읽지 않는다");
@@ -13,7 +22,7 @@ const NO_RELATION_READ = async (): Promise<CreatorRelation | null> => {
 
 function setup(relation: (senderId: string, creatorId: string) => Promise<CreatorRelation | null> = NO_RELATION_READ) {
   const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
-  return { store, deps: { store, newOrderNo: () => "FC-TEST1", creatorRelation: relation } };
+  return { store, deps: { store, newOrderNo: () => "FC-TEST1", creatorRelation: relation, readPrices } };
 }
 
 const CREATOR = { userId: "creator-byeolbit", role: "creator" } as const;
@@ -111,13 +120,31 @@ describe("크리에이터가 보내는 선물 (INV-L8·INV-L9)", () => {
   });
 });
 
+describe("요금표 (admin-console INV-K3)", () => {
+  it("INV-K3: 금액은 요청마다 읽은 요금표로 계산한다 — 표가 바뀌면 등록 금액도 바뀐다", async () => {
+    const { deps, store } = setup();
+    const raised: PriceTable = { ...PRICES, small: { ...PRICES.small, priceKrw: 7400 } };
+    const r = await registerGift({ ...deps, viewer: FAN, readPrices: async () => raised }, form);
+    expect(r).toMatchObject({ ok: true, amountKrw: 7400 * 2 + 8900 });
+    if (!r.ok) throw new Error();
+    expect((await store.find(r.orderId))?.amountKrw).toBe(7400 * 2 + 8900);
+  });
+
+  it("INV-K3 (실패경로): 읽은 뒤 요금이 바뀌어 DB 가 금액을 거부하면 409 와 다시 확인하라는 문구", async () => {
+    const { deps } = setup();
+    const refusing: PaymentStore = { ...deps.store, create: async () => { throw new PriceChangedError(); } };
+    const r = await registerGift({ ...deps, store: refusing, viewer: FAN }, form);
+    expect(r).toEqual({ ok: false, status: 409, message: "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요." });
+  });
+});
+
 describe("주문번호", () => {
   it("만든 주문번호가 이미 있으면 새 번호로 다시 등록한다", async () => {
     const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
     const nos = ["FC-SAME1", "FC-SAME1", "FC-OTHER"];
     const newNo = () => nos.shift()!;
-    const first = await registerGift({ store, viewer: FAN, newOrderNo: newNo, creatorRelation: NO_RELATION_READ }, form);
-    const second = await registerGift({ store, viewer: FAN, newOrderNo: newNo, creatorRelation: NO_RELATION_READ }, form);
+    const first = await registerGift({ store, viewer: FAN, newOrderNo: newNo, creatorRelation: NO_RELATION_READ, readPrices }, form);
+    const second = await registerGift({ store, viewer: FAN, newOrderNo: newNo, creatorRelation: NO_RELATION_READ, readPrices }, form);
     expect(first).toMatchObject({ ok: true, orderNo: "FC-SAME1" });
     expect(second).toMatchObject({ ok: true, orderNo: "FC-OTHER" });
     expect(store.registrations()).toHaveLength(2);

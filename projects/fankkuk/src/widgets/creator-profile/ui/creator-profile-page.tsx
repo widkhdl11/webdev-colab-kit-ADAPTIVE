@@ -3,12 +3,12 @@ import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { BILLABLE_TIERS, TIER_PRICE_KRW } from "@/entities/payment/config/tier-pricing";
+import { PRICED_TIERS, type PriceTable } from "@/entities/payment/model/price-table";
 import { FollowButton, type FollowMode } from "@/features/creator-follow/ui/follow-button";
 import s from "./creator-profile.module.css";
 
 // 크리에이터 페이지. 시안: docs/design/mockups/site/v4/creator.html
-// 요금은 결제와 같은 요금표(tier-pricing)·구간 기준(size-tier)을 읽는다 — 화면 숫자와 결제가 어긋나지 않게.
+// 요금은 결제와 같은 DB 요금표(서버 page 가 읽어 넘긴다)를, 구간 기준은 size-tier 를 읽는다 — 화면 숫자와 결제가 어긋나지 않게.
 // 문구 한계(design-rules 6절): "승인 없이는 저희 시스템이 주소를 열지 않습니다"는 쓰고 "절대 유출되지 않는다"는 쓰지 않는다.
 
 const NOT_ALLOWED = [
@@ -18,10 +18,10 @@ const NOT_ALLOWED = [
   "현금과 상품권",
 ] as const;
 
-/** 받는 상자 구간 이름 — 「소형과 중형 두 가지」. 구간이 바뀌면 요금표와 같이 바뀐다. */
+/** 받는 상자 구간 이름 — 「소형, 중형, 대형 세 가지」. 구간이 바뀌면 요금표와 같이 바뀐다. */
 const COUNT_WORD = ["", "한", "두", "세", "네"] as const;
-const tierNames = BILLABLE_TIERS.map((t) => PARCEL_TIER_GUIDE[t].name);
-const TIER_SENTENCE = `상자는 ${tierNames.join("과 ")} ${COUNT_WORD[tierNames.length] ?? tierNames.length} 가지예요.`;
+const tierNames = PRICED_TIERS.map((t) => PARCEL_TIER_GUIDE[t].name);
+const TIER_SENTENCE = `상자는 ${tierNames.length === 2 ? tierNames.join("과 ") : tierNames.join(", ")} ${COUNT_WORD[tierNames.length] ?? tierNames.length} 가지예요.`;
 
 function CheckIcon() {
   return (
@@ -36,12 +36,15 @@ export function CreatorProfilePage({
   others,
   followMode,
   send = "open",
+  prices,
 }: {
   creator: CreatorCard;
   others: readonly CreatorCard[];
   followMode: FollowMode;
   /** open = 선물 보내기 / self = 크리에이터 자기 페이지(보내지 않음) / needs_follow = 크리에이터인데 팔로우가 한쪽도 없음(INV-L9) */
   send?: "open" | "self" | "needs_follow";
+  /** 지금 요금표 — 서버 page 가 DB 에서 읽어 넘긴다. */
+  prices: PriceTable;
 }) {
   const sendHref = `/gifts/new?creator=${creator.id}`;
   return (
@@ -134,13 +137,13 @@ export function CreatorProfilePage({
             <h2 id="fee-title">요금 안내</h2>
             <p>상자마다 배송비가 포함돼 있어요.</p>
             <div className={s["fee-rows"]}>
-              {BILLABLE_TIERS.map((tier) => (
+              {PRICED_TIERS.map((tier) => (
                 <div key={tier} className={s["fee-row"]}>
                   <span>
                     <strong>{PARCEL_TIER_GUIDE[tier].name} 상자</strong>
                     <small>{PARCEL_TIER_GUIDE[tier].rule}</small>
                   </span>
-                  <b>{TIER_PRICE_KRW[tier].toLocaleString("ko-KR")}원</b>
+                  <b>{prices[tier].priceKrw.toLocaleString("ko-KR")}원</b>
                 </div>
               ))}
             </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { PriceTable } from "@/entities/payment/model/price-table";
 import { PaymentStep } from "@/features/checkout/ui/payment-step";
 import { RegisterForm, type CreatorOption, type RegisteredGift } from "@/features/gift-register/ui/register-form";
 import s from "./gift-register-page.module.css";
@@ -11,12 +12,15 @@ import s from "./gift-register-page.module.css";
 // 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리 import 하지 않게.
 export function GiftRegisterPage({
   creators,
+  prices,
   initialCreatorId,
   clientKey,
   notice,
   creatorSender = false,
 }: {
   creators: readonly CreatorOption[];
+  /** 지금 요금표 — 서버 page 가 DB 에서 읽어 넘긴다. */
+  prices: PriceTable;
   initialCreatorId?: string;
   /** 토스 결제창 공개 키. 없으면 결제창 대신 안내만 보인다. */
   clientKey: string;
@@ -57,7 +61,7 @@ export function GiftRegisterPage({
           </p>
         )
       ) : (
-        <RegisterForm creators={creators} initialCreatorId={initialCreatorId} notice={notice} onRegistered={setRegistered} />
+        <RegisterForm creators={creators} prices={prices} initialCreatorId={initialCreatorId} notice={notice} onRegistered={setRegistered} />
       )}
     </main>
   );

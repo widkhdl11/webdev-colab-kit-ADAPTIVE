@@ -4,20 +4,24 @@ import Link from "next/link";
 import { useRef, useState, type KeyboardEvent } from "react";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { BILLABLE_TIERS, TIER_PRICE_KRW } from "@/entities/payment/config/tier-pricing";
+import { PRICED_TIERS, type PriceTable } from "@/entities/payment/model/price-table";
 import s from "./support.module.css";
 
 // 고객센터. 시안: docs/design/mockups/site/v4/support.html
 // 1:1 문의는 겉모양만 — 보내기는 로그인 화면으로 이동한다(실제 접수는 아직 없다).
-// 요금 답변의 숫자·구간 기준은 결제와 같은 요금표(tier-pricing)·구간 기준(size-tier)을 읽는다.
+// 요금 답변의 숫자는 결제와 같은 DB 요금표(서버 page 가 읽어 넘긴다)를, 구간 기준은 size-tier 를 읽는다.
 
 type Faq = { q: string; a: string };
 
-const FEE_ANSWER = `상자마다 배송비가 포함된 금액이에요. ${BILLABLE_TIERS.map(
-  (t) => `${PARCEL_TIER_GUIDE[t].name}(${PARCEL_TIER_GUIDE[t].rule}) ${TIER_PRICE_KRW[t].toLocaleString("ko-KR")}원`,
-).join(", ")}이고, 추적 장치 검수가 포함돼 있어요.`;
+type Category = { id: string; label: string; faqs: readonly Faq[] };
 
-const CATEGORIES: readonly { id: string; label: string; faqs: readonly Faq[] }[] = [
+function feeAnswer(prices: PriceTable): string {
+  return `상자마다 배송비가 포함된 금액이에요. ${PRICED_TIERS.map(
+    (t) => `${PARCEL_TIER_GUIDE[t].name}(${PARCEL_TIER_GUIDE[t].rule}) ${prices[t].priceKrw.toLocaleString("ko-KR")}원`,
+  ).join(", ")}이고, 추적 장치 검수가 포함돼 있어요.`;
+}
+
+const categoriesFor = (prices: PriceTable): readonly Category[] => [
   {
     id: "gift",
     label: "선물 보내기",
@@ -40,7 +44,7 @@ const CATEGORIES: readonly { id: string; label: string; faqs: readonly Faq[] }[]
     id: "fee",
     label: "요금",
     faqs: [
-      { q: "요금은 얼마인가요?", a: FEE_ANSWER },
+      { q: "요금은 얼마인가요?", a: feeAnswer(prices) },
       {
         q: "크기와 무게가 서로 다른 구간이면 어떻게 정해지나요?",
         a: "크기와 무게 중 큰 쪽 기준으로 정해져요. 예를 들어 세 변 합은 80cm인데 무게가 7kg이면 중형이에요.",
@@ -109,7 +113,8 @@ function Chevron({ className }: { className: string }) {
   );
 }
 
-export function SupportPage() {
+export function SupportPage({ prices }: { prices: PriceTable }) {
+  const categories = categoriesFor(prices);
   const [selected, setSelected] = useState(0);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -118,7 +123,7 @@ export function SupportPage() {
     const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
     if (step === 0) return;
     e.preventDefault();
-    const next = (i + step + CATEGORIES.length) % CATEGORIES.length;
+    const next = (i + step + categories.length) % categories.length;
     setSelected(next);
     tabRefs.current[next]?.focus();
   };
@@ -143,7 +148,7 @@ export function SupportPage() {
             자주 묻는 질문
           </h2>
           <div className={s.tabs} role="tablist" aria-label="질문 분류">
-            {CATEGORIES.map((c, i) => (
+            {categories.map((c, i) => (
               <button
                 key={c.id}
                 ref={(el) => {
@@ -163,7 +168,7 @@ export function SupportPage() {
               </button>
             ))}
           </div>
-          {CATEGORIES.map((c, i) => (
+          {categories.map((c, i) => (
             <div
               key={c.id}
               className={s.faq}
