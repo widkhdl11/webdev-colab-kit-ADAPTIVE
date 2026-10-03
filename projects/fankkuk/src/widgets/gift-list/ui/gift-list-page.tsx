@@ -85,7 +85,10 @@ function Rows({
 export function GiftListPage({
   gifts,
   faceToneByName,
+  showHeading = true,
 }: {
+  /** false = 화면 제목을 라우트가 이미 붙였다(크리에이터의 「보낸 선물」) — 두 번 나오지 않게 */
+  showHeading?: boolean;
   gifts: readonly FanGiftView[];
   /** 크리에이터 이름 → 얼굴 면 색. 메인 화면과 같은 색을 쓴다. */
   faceToneByName: Readonly<Record<string, string>>;
@@ -97,9 +100,11 @@ export function GiftListPage({
 
   return (
     <div>
-      <div className={s["my-h"]}>
-        <h2>선물 내역</h2>
-      </div>
+      {showHeading ? (
+        <div className={s["my-h"]}>
+          <h2>선물 내역</h2>
+        </div>
+      ) : null}
       <GiftTabs
         tabs={[
           {

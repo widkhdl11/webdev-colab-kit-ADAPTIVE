@@ -3,6 +3,7 @@ import { readCreatorCards } from "@/entities/creator/api/creator-reads";
 import { readNotices } from "@/entities/notice/api/notice-reads";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { fanGiftBucket } from "@/entities/order/ui/fan-stage-copy";
+import { CREATOR_HOME } from "@/entities/session/model/home-path";
 import { HomePage } from "@/widgets/home/ui/home-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
@@ -12,10 +13,10 @@ export const dynamic = "force-dynamic";
 
 // 팬 메인. 진행 중 선물·팔로우·공지 모두 DB. 공지 줄은 고정 여부와 상관없이 최신 셋.
 // 「진행 중」은 선물 내역의 「진행 중」 탭과 같은 기준(fanGiftBucket)이다.
-// 크리에이터는 승인 요청으로, 로그인하지 않았으면 로그인으로 보낸다.
+// 크리에이터는 크리에이터 메인으로, 로그인하지 않았으면 로그인으로 보낸다.
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
-  if (viewer?.role === "creator") redirect("/creator/requests");
+  if (viewer?.role === "creator") redirect(CREATOR_HOME);
   if (viewer?.role !== "fan") redirect("/login");
   const all = await readMyGiftViews(supabase);
   const gifts = all.filter((v) => fanGiftBucket(v) === "ongoing");

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { HeaderGiftState } from "@/entities/order/ui/fan-stage-copy";
+import { CREATOR_HOME, FAN_HOME } from "@/entities/session/model/home-path";
 import { LogoutButton } from "@/features/auth/ui/logout-button";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { LogoMark } from "@/shared/ui/logo";
@@ -279,8 +280,8 @@ export function SiteHeader(props: SiteHeaderProps) {
   }, [menuOpen]);
 
   const nav = props.role === "creator" ? CREATOR_NAV : FAN_NAV;
-  const logoHref = props.role === "guest" ? "/" : props.role === "fan" ? "/home" : "/creator/requests";
-  const logoLabel = props.role === "guest" ? "팬꾹 처음 화면" : props.role === "fan" ? "팬꾹 메인" : "팬꾹 크리에이터 처음 화면";
+  const logoHref = props.role === "guest" ? "/" : props.role === "fan" ? FAN_HOME : CREATOR_HOME;
+  const logoLabel = props.role === "guest" ? "팬꾹 처음 화면" : props.role === "fan" ? "팬꾹 메인" : "팬꾹 크리에이터 메인";
   const navLink = (it: NavItem) => (
     <Link href={it.href} aria-current={props.current === it.href ? "page" : undefined}>
       {it.label}

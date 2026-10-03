@@ -105,7 +105,7 @@ export function SignupPage() {
       terms: agreed,
     });
     if (r.ok) {
-      router.push(r.loggedIn ? "/home" : "/login");
+      router.push(r.loggedIn ? "/" : "/login"); // 「/」 가 역할별 첫 화면으로 나눈다
       router.refresh();
       return;
     }

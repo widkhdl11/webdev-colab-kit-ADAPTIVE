@@ -1,4 +1,4 @@
-import { readCreatorCards } from "@/entities/creator/api/creator-reads";
+import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
 import { followModeOf } from "@/features/creator-follow/model/follow-mode";
 import { CreatorSearchPage } from "@/widgets/creator-search/ui/creator-search-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -11,12 +11,22 @@ export const dynamic = "force-dynamic";
 // 로그인하지 않아도 찾을 수 있다 — 팔로우 버튼은 누르면 로그인으로 보낸다.
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
-  const header = await readSiteHeader(supabase, viewer, "/creators");
-  const creators = await readCreatorCards(supabase, { signedIn: viewer !== null });
+  // 크리에이터는 자기 줄에서 팔로우·선물 보내기를 보지 않고, 팔로우하지 않은 줄에는 선물 보내기가 없다(INV-L9 — 받는 쪽만
+  // 팔로우한 경우는 크리에이터 페이지에서 한 명씩 확인한다)
+  const [header, creators, ownCreatorId] = await Promise.all([
+    readSiteHeader(supabase, viewer, "/creators"),
+    readCreatorCards(supabase, { signedIn: viewer !== null }),
+    viewer?.role === "creator" ? readOwnCreatorId(supabase) : Promise.resolve(null),
+  ]);
   return (
     <>
       <SiteHeader {...header} />
-      <CreatorSearchPage creators={creators} followMode={followModeOf(viewer)} />
+      <CreatorSearchPage
+        creators={creators}
+        followMode={followModeOf(viewer)}
+        ownCreatorId={ownCreatorId}
+        sendOnlyToFollowed={viewer?.role === "creator"}
+      />
       <SiteFooter />
     </>
   );

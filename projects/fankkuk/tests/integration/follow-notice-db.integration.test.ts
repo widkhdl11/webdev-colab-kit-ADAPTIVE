@@ -15,6 +15,7 @@ async function followIds(loginId: string): Promise<string[]> {
 }
 
 afterAll(() => {
+  psql(`delete from public.follows where fan_id = '${SEED.creatorProfileId}'`);
   psql(
     `delete from public.follows where fan_id = '${SEED.otherFanId}' and creator_id in ('${SEED.haruCreatorId}', '${MOMO_CREATOR_ID}')`,
   );
@@ -105,18 +106,25 @@ describe("팔로우 저장은 로그인한 팬 자기 것만 바꾼다", () => {
     expect(r.error?.code).toBe("42501");
   });
 
-  it("크리에이터 계정은 팔로우하지 못한다", async () => {
+  it("크리에이터도 다른 크리에이터를 팔로우한다(session-login INV-L9) — 끊으면 사라진다", async () => {
     const haru = await signedInClient("haru_creator");
-    const r = await haru.rpc("set_follow", {
-      p_creator_id: MOMO_CREATOR_ID,
-      p_following: true,
-    });
+    expect((await haru.rpc("set_follow", { p_creator_id: MOMO_CREATOR_ID, p_following: true })).error).toBeNull();
+    expect(await followIds("haru_creator")).toEqual([MOMO_CREATOR_ID]);
+    expect((await haru.rpc("set_follow", { p_creator_id: MOMO_CREATOR_ID, p_following: false })).error).toBeNull();
+    expect(await followIds("haru_creator")).toEqual([]);
+  });
+
+  it("크리에이터는 자기 자신을 팔로우하지 못한다(P0011)", async () => {
+    const haru = await signedInClient("haru_creator");
+    const r = await haru.rpc("set_follow", { p_creator_id: SEED.haruCreatorId, p_following: true });
+    expect(r.error?.code).toBe("P0011");
+    expect(psql(`select count(*) from public.follows where fan_id = '${SEED.creatorProfileId}'`)).toBe("0");
+  });
+
+  it("운영자 계정은 팔로우하지 못한다", async () => {
+    const operator = await signedInClient("fankkuk_admin");
+    const r = await operator.rpc("set_follow", { p_creator_id: MOMO_CREATOR_ID, p_following: true });
     expect(r.error?.code).toBe("42501");
-    expect(
-      psql(
-        `select count(*) from public.follows where fan_id = '${SEED.creatorProfileId}'`,
-      ),
-    ).toBe("0");
   });
 
   it("본인 확인 전 크리에이터와 없는 크리에이터는 팔로우할 수 없다", async () => {

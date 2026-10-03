@@ -46,3 +46,12 @@ export async function readCreatorCards(client: Pick<SupabaseClient, "rpc">, opts
   const minutes = Object.fromEntries(rows.map((r) => [r.id, r.approval_minutes_from_orders]));
   return toCreatorCards(summaries, profiles, followedIds, minutes);
 }
+
+const creatorIdSchema = z.object({ creator_id: z.string().uuid() });
+
+/** 로그인한 크리에이터 자신의 크리에이터 id(없으면 null). 자기 줄·자기 페이지에서 팔로우·선물 보내기를 숨기는 데 쓴다. */
+export async function readOwnCreatorId(client: Pick<SupabaseClient, "rpc">): Promise<string | null> {
+  const own = await client.rpc("my_creator_id");
+  if (own.error) throw new Error(`내 크리에이터 id 를 읽지 못했다: ${own.error.code}`);
+  return z.array(creatorIdSchema).parse(own.data)[0]?.creator_id ?? null;
+}

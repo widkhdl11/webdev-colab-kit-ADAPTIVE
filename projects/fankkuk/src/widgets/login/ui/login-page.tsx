@@ -35,7 +35,8 @@ export function LoginPage() {
         body: JSON.stringify({ loginId, password }),
       });
       if (res.ok) {
-        router.push("/home");
+        // 첫 화면은 역할마다 다르다 — 이 화면은 역할을 모르므로 처음 화면(/)에 맡긴다. 그곳이 로그인한 사람을 제 메인으로 보낸다.
+        router.push("/");
         router.refresh();
         return;
       }

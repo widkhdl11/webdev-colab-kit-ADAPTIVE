@@ -35,10 +35,13 @@ export function CreatorProfilePage({
   creator,
   others,
   followMode,
+  send = "open",
 }: {
   creator: CreatorCard;
   others: readonly CreatorCard[];
   followMode: FollowMode;
+  /** open = 선물 보내기 / self = 크리에이터 자기 페이지(보내지 않음) / needs_follow = 크리에이터인데 팔로우가 한쪽도 없음(INV-L9) */
+  send?: "open" | "self" | "needs_follow";
 }) {
   const sendHref = `/gifts/new?creator=${creator.id}`;
   return (
@@ -75,9 +78,13 @@ export function CreatorProfilePage({
             </p>
           </div>
           <div className={s.acts}>
-            <Link className="btn" href={sendHref}>
-              선물 보내기
-            </Link>
+            {send === "open" ? (
+              <Link className="btn" href={sendHref}>
+                선물 보내기
+              </Link>
+            ) : null}
+            {send === "self" ? <span className="tag">내 크리에이터 페이지예요</span> : null}
+            {send === "needs_follow" ? <p className="sub">팔로우하면 선물을 보낼 수 있어요.</p> : null}
             <FollowButton creatorId={creator.id} creatorName={creator.name} initialFollowing={creator.following} variant="profile" mode={followMode} />
           </div>
         </div>
@@ -147,9 +154,11 @@ export function CreatorProfilePage({
               크기와 무게 중 큰 쪽으로 정해져요. {OVERSIZE_RULE}는 받지 않아요. 도착한 상자를 재어 보니 구간이 더 크면 차액만 따로
               결제해요.
             </p>
-            <Link className={`btn btn--block ${s["fee-go"]}`} href={sendHref}>
-              {creator.name}님께 선물 보내기
-            </Link>
+            {send === "open" ? (
+              <Link className={`btn btn--block ${s["fee-go"]}`} href={sendHref}>
+                {creator.name}님께 선물 보내기
+              </Link>
+            ) : null}
           </aside>
         </div>
       </section>

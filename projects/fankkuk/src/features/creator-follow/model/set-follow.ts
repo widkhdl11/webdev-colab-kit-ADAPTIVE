@@ -20,8 +20,8 @@ export async function setFollow(
 ): Promise<SetFollowResult> {
   if (!deps.viewer)
     return { ok: false, status: 401, message: "로그인이 필요해요." };
-  if (deps.viewer.role !== "fan")
-    return { ok: false, status: 403, message: "팬 계정만 팔로우할 수 있어요." };
+  if (deps.viewer.role === "operator")
+    return { ok: false, status: 403, message: "팬·크리에이터 계정만 팔로우할 수 있어요." };
 
   const parsed = inputSchema.safeParse(body);
   if (!parsed.success)
@@ -35,7 +35,9 @@ export async function setFollow(
   if (!error) return { ok: true, following };
   if (error.code === "P0002")
     return { ok: false, status: 404, message: "찾을 수 없는 크리에이터예요." };
+  if (error.code === "P0011")
+    return { ok: false, status: 400, message: "자기 자신은 팔로우할 수 없어요." };
   if (error.code === "42501")
-    return { ok: false, status: 403, message: "팬 계정만 팔로우할 수 있어요." };
+    return { ok: false, status: 403, message: "팬·크리에이터 계정만 팔로우할 수 있어요." };
   throw new Error(`팔로우를 저장하지 못했다: ${error.code}`);
 }

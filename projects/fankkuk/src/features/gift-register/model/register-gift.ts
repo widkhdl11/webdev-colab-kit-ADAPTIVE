@@ -1,14 +1,16 @@
 import { newOrderNo } from "@/entities/order/model/order-no";
-import { OrderNoTakenError, type PaymentStore } from "@/entities/payment/api/payment-store";
+import { OrderNoTakenError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
 import { computeCharge } from "@/entities/payment/model/charge";
 import type { Viewer } from "@/entities/session/model/viewer";
+import type { CreatorRelationReader } from "../api/creator-relation";
 import { parseRegisterInput, type RegisterFormValues } from "./register-input";
+import { decideSender, needsRelation, refusalStatus, SENDER_REFUSAL_MESSAGE, senderRoleAllowed } from "./sender-rule";
 
 // 선물 등록 = 주문 + 상자 + 결제 대기를 한 번에 만든다. 결제가 끝나야 크리에이터에게 승인 요청이 간다(INV-M6).
 
 export type RegisterGiftResult =
   | { ok: true; orderId: string; orderNo: string; amountKrw: number }
-  | { ok: false; status: 401 | 403; message: string }
+  | { ok: false; status: 401 | 403 | 404; message: string }
   | { ok: false; status: 400; errors: Partial<Record<keyof RegisterFormValues, string>> };
 
 /** 토스 orderId 규칙: 영문·숫자·-·_ 6~64자. */
@@ -17,21 +19,27 @@ function newPaymentOrderId(): string {
 }
 
 /**
- * INV-L3: 주문의 팬은 viewer(서버가 확인한 로그인 사용자)다. 본문의 사용자 ID·닉네임 칸은 읽지 않는다 —
+ * INV-L3: 주문의 보내는 사람(fanId 칸)은 viewer(서버가 확인한 로그인 사용자)다. 본문의 사용자 ID·닉네임 칸은 읽지 않는다 —
  * parseRegisterInput 이 정해진 다섯 칸만 꺼낸다.
  * INV-M1: 금액은 상자 구간과 서버 요금표로만 계산한다. 본문의 금액 칸은 읽지 않는다.
  */
 export async function registerGift(
-  deps: { store: PaymentStore; viewer: Viewer | null; newOrderNo?: () => string },
+  deps: { store: PaymentStore; viewer: Viewer | null; creatorRelation: CreatorRelationReader; newOrderNo?: () => string },
   body: unknown,
 ): Promise<RegisterGiftResult> {
   if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
-  if (deps.viewer.role !== "fan") return { ok: false, status: 403, message: "팬 계정으로 로그인해야 선물을 보낼 수 있어요." };
+  // INV-L3: 운영자는 본문을 읽기 전에 거부한다
+  if (!senderRoleAllowed(deps.viewer.role)) return { ok: false, status: 403, message: SENDER_REFUSAL_MESSAGE.role };
 
   const parsed = parseRegisterInput(body);
   if (!parsed.success) return { ok: false, status: 400, errors: parsed.errors };
 
   const { creatorId, itemKind, boxes, hasElectronicsOrMetal } = parsed.data;
+  // INV-L8·INV-L9: 크리에이터가 보낼 때는 받는 사람과의 관계를 서버가 읽어 판정한다(DB 등록 함수도 따로 막는다)
+  const relation = needsRelation(deps.viewer.role) ? await deps.creatorRelation(deps.viewer.userId, creatorId) : null;
+  const verdict = decideSender(deps.viewer.role, relation);
+  if (!verdict.ok) return { ok: false, status: refusalStatus(verdict.reason), message: SENDER_REFUSAL_MESSAGE[verdict.reason] };
+
   const charge = computeCharge({ boxes });
   const registration = { fanId: deps.viewer.userId, creatorId, itemKind, hasElectronicsOrMetal, boxes };
   // 주문번호가 겹치면(다섯 자리 무작위) 새 번호로 두 번까지 다시 시도한다
@@ -41,6 +49,11 @@ export async function registerGift(
       // 결제 기록의 칸 나눔(택배 원가·서비스료)은 돌려주지 않는다 — 팬에게는 한 금액만(INV-M7)
       return { ok: true, orderId: stored.orderId, orderNo: stored.orderNo, amountKrw: stored.amountKrw };
     } catch (e) {
+      if (e instanceof SenderRefusedError) {
+        // 없는 크리에이터는 팬이 보낼 때 DB 가 처음 판정하는 정상 경로다. 나머지는 서버 판정이 빠졌다는 뜻이다
+        if (e.reason !== "unknown_creator") console.error(`선물 등록: 서버 판정을 지나 DB 가 거부했다 (${e.reason})`);
+        return { ok: false, status: refusalStatus(e.reason), message: SENDER_REFUSAL_MESSAGE[e.reason] };
+      }
       if (!(e instanceof OrderNoTakenError) || attempt >= 3) throw e;
     }
   }

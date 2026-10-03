@@ -9,7 +9,15 @@ export class OrderNoTakenError extends Error {
   }
 }
 
-/** 결제 대기와 같이 저장되는 선물 등록 내용. fanId 는 서버가 확인한 로그인 사용자다(INV-L3). */
+/** DB 등록 함수가 보내는 사람을 거부했다 — 자기 자신(self)·팔로우 없음(no_follow)·보낼 수 없는 계정(role)·받을 수 없는 크리에이터(unknown_creator — 없거나 본인 확인 전).
+ * 앱 서버 판정이 먼저 막으므로 정상 흐름에서는 나오지 않는다. 나오면 서버 판정이 빠진 것이다(INV-L3·L8·L9 두 번째 장치). */
+export class SenderRefusedError extends Error {
+  constructor(readonly reason: "role" | "self" | "no_follow" | "unknown_creator") {
+    super(`DB 가 보내는 사람을 거부했다: ${reason}`);
+  }
+}
+
+/** 결제 대기와 같이 저장되는 선물 등록 내용. fanId 는 보내는 사람(팬 또는 크리에이터) — 서버가 확인한 로그인 사용자다(INV-L3). */
 export type GiftRegistration = {
   fanId: string;
   creatorId: string;

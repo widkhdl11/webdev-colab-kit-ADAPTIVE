@@ -1,14 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { createMemoryPaymentStore } from "@/entities/payment/api/memory-payment-store";
+import { SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
+import type { CreatorRelation } from "./sender-rule";
 import { registerGift } from "./register-gift";
 
 const FAN = { userId: "fan-byeolbit", role: "fan" } as const;
 const form = { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "손편지", smallCount: "2", mediumCount: "1", electronicsOrMetal: "no" };
 
-function setup() {
+const NO_RELATION_READ = async (): Promise<CreatorRelation | null> => {
+  throw new Error("팬이 보낼 때는 관계를 읽지 않는다");
+};
+
+function setup(relation: (senderId: string, creatorId: string) => Promise<CreatorRelation | null> = NO_RELATION_READ) {
   const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
-  return { store, deps: { store, newOrderNo: () => "FC-TEST1" } };
+  return { store, deps: { store, newOrderNo: () => "FC-TEST1", creatorRelation: relation } };
 }
+
+const CREATOR = { userId: "creator-byeolbit", role: "creator" } as const;
+const relationIs = (r: CreatorRelation) => async () => r;
 
 describe("선물 등록 = 주문 + 결제 대기", () => {
   it("INV-M1 (S1): 결제 금액은 상자 구간으로 서버가 계산한다 — 소형 2 + 중형 1 = 22,700원", async () => {
@@ -48,12 +57,57 @@ describe("INV-L3: 쓰기에 넘기는 사람은 확인한 로그인 사용자다
     expect(store.registrations()).toEqual([]);
   });
 
-  it("INV-L3 (S3c, 실패경로): 크리에이터·운영자 계정이면 403, 아무것도 저장하지 않는다", async () => {
+  it("INV-L3 (S3c, 실패경로): 운영자 계정이면 403, 아무것도 저장하지 않는다", async () => {
     const { deps, store } = setup();
-    for (const role of ["creator", "operator"] as const) {
-      expect(await registerGift({ ...deps, viewer: { userId: "x", role } }, form)).toMatchObject({ ok: false, status: 403 });
-    }
+    expect(await registerGift({ ...deps, viewer: { userId: "x", role: "operator" } }, form)).toMatchObject({ ok: false, status: 403 });
     expect(store.registrations()).toEqual([]);
+  });
+});
+
+describe("크리에이터가 보내는 선물 (INV-L8·INV-L9)", () => {
+  it("INV-L8 (S3d, 실패경로): 자기 자신에게 보내면 403, 아무것도 저장하지 않는다", async () => {
+    const { deps, store } = setup(relationIs({ receiverIsSelf: true, followEitherWay: true }));
+    const r = await registerGift({ ...deps, viewer: CREATOR }, form);
+    expect(r).toMatchObject({ ok: false, status: 403, message: "자기 자신에게는 선물을 보낼 수 없어요." });
+    expect(store.registrations()).toEqual([]);
+  });
+
+  it("INV-L3·INV-L9 (S3e): 팔로우가 있으면 등록되고, 보내는 사람은 로그인한 크리에이터다", async () => {
+    const asked: [string, string][] = [];
+    const { deps, store } = setup(async (senderId, creatorId) => {
+      asked.push([senderId, creatorId]);
+      return { receiverIsSelf: false, followEitherWay: true };
+    });
+    const r = await registerGift({ ...deps, viewer: CREATOR }, { ...form, fanId: "fan-daltokki" });
+    expect(r.ok).toBe(true);
+    expect(store.registrations().map((x) => [x.fanId, x.creatorId])).toEqual([["creator-byeolbit", form.creatorId]]);
+    // 관계는 본문이 아니라 로그인한 사람 기준으로 읽는다
+    expect(asked).toEqual([["creator-byeolbit", form.creatorId]]);
+  });
+
+  it("INV-L9 (S3g, 실패경로): 팔로우가 양쪽 다 없으면 403, 아무것도 저장하지 않는다", async () => {
+    const { deps, store } = setup(relationIs({ receiverIsSelf: false, followEitherWay: false }));
+    const r = await registerGift({ ...deps, viewer: CREATOR }, form);
+    expect(r).toMatchObject({ ok: false, status: 403 });
+    expect(store.registrations()).toEqual([]);
+  });
+
+  it("INV-L9 (S3g): 팬이 보낼 때는 팔로우를 묻지 않는다", async () => {
+    const { deps } = setup(NO_RELATION_READ);
+    expect((await registerGift({ ...deps, viewer: FAN }, form)).ok).toBe(true);
+  });
+
+  it("INV-L9 (실패경로): 받는 크리에이터를 못 찾으면 404 로 보내지 않는다", async () => {
+    const { deps, store } = setup(async () => null);
+    expect(await registerGift({ ...deps, viewer: CREATOR }, form)).toMatchObject({ ok: false, status: 404 });
+    expect(store.registrations()).toEqual([]);
+  });
+
+  it("INV-L8·L9 두 번째 장치: 서버 판정을 지나도 DB 가 거부하면 403 으로 돌려준다", async () => {
+    const { deps } = setup(relationIs({ receiverIsSelf: false, followEitherWay: true }));
+    const refusing: PaymentStore = { ...deps.store, create: async () => { throw new SenderRefusedError("no_follow"); } };
+    const r = await registerGift({ ...deps, store: refusing, viewer: CREATOR }, form);
+    expect(r).toMatchObject({ ok: false, status: 403 });
   });
 });
 
@@ -62,8 +116,8 @@ describe("주문번호", () => {
     const store = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
     const nos = ["FC-SAME1", "FC-SAME1", "FC-OTHER"];
     const newNo = () => nos.shift()!;
-    const first = await registerGift({ store, viewer: FAN, newOrderNo: newNo }, form);
-    const second = await registerGift({ store, viewer: FAN, newOrderNo: newNo }, form);
+    const first = await registerGift({ store, viewer: FAN, newOrderNo: newNo, creatorRelation: NO_RELATION_READ }, form);
+    const second = await registerGift({ store, viewer: FAN, newOrderNo: newNo, creatorRelation: NO_RELATION_READ }, form);
     expect(first).toMatchObject({ ok: true, orderNo: "FC-SAME1" });
     expect(second).toMatchObject({ ok: true, orderNo: "FC-OTHER" });
     expect(store.registrations()).toHaveLength(2);

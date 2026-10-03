@@ -19,7 +19,19 @@ function CheckIcon({ size }: { size: number }) {
   );
 }
 
-export function CreatorSearchPage({ creators, followMode }: { creators: readonly CreatorCard[]; followMode: FollowMode }) {
+/** ownCreatorId: 로그인한 크리에이터 자신의 줄 — 팔로우·선물 보내기를 보이지 않는다(자기 자신은 팔로우·선물 불가). */
+export function CreatorSearchPage({
+  creators,
+  followMode,
+  ownCreatorId = null,
+  sendOnlyToFollowed = false,
+}: {
+  creators: readonly CreatorCard[];
+  followMode: FollowMode;
+  ownCreatorId?: string | null;
+  /** 크리에이터가 볼 때 — 팔로우한 줄에만 선물 보내기를 둔다(INV-L9). 받는 쪽만 팔로우한 경우는 크리에이터 페이지에서 확인한다 */
+  sendOnlyToFollowed?: boolean;
+}) {
   const [query, setQuery] = useState("");
   const inputId = useId();
   const categories = [...new Set(creators.map((c) => c.category))];
@@ -90,12 +102,20 @@ export function CreatorSearchPage({ creators, followMode }: { creators: readonly
                     {c.category} · {c.channelTitle} · {approvalTimeText(c.approvalMinutes)}
                   </p>
                 </div>
-                <div className={s.acts}>
-                  <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing={c.following} variant="row" mode={followMode} />
-                  <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
-                    선물 보내기
-                  </Link>
-                </div>
+                {c.id === ownCreatorId ? (
+                  <div className={s.acts}>
+                    <span className="tag">내 페이지</span>
+                  </div>
+                ) : (
+                  <div className={s.acts}>
+                    <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing={c.following} variant="row" mode={followMode} />
+                    {!sendOnlyToFollowed || c.following ? (
+                      <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
+                        선물 보내기
+                      </Link>
+                    ) : null}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

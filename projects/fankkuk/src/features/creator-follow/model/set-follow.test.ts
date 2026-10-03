@@ -46,14 +46,33 @@ describe("팔로우 저장", () => {
     expect(f.calls).toEqual([]);
   });
 
-  it("크리에이터 계정은 403, DB 를 부르지 않는다", async () => {
+  it("INV-L9: 크리에이터도 팔로우한다 — DB 함수에 그대로 넘긴다", async () => {
     const f = fakeClient();
     const r = await setFollow(
-      { client: f.client, viewer: { userId: "c-haru", role: "creator" } },
+      { client: f.client, viewer: { userId: "c-byeolbit", role: "creator" } },
+      { creatorId: HARU, following: true },
+    );
+    expect(r).toEqual({ ok: true, following: true });
+    expect(f.calls).toEqual([{ fn: "set_follow", args: { p_creator_id: HARU, p_following: true } }]);
+  });
+
+  it("운영자 계정은 403, DB 를 부르지 않는다", async () => {
+    const f = fakeClient();
+    const r = await setFollow(
+      { client: f.client, viewer: { userId: "op", role: "operator" } },
       { creatorId: HARU, following: true },
     );
     expect(r).toMatchObject({ ok: false, status: 403 });
     expect(f.calls).toEqual([]);
+  });
+
+  it("자기 자신을 팔로우하려 하면 DB 가 거부하고(P0011) 400 으로 알린다", async () => {
+    const f = fakeClient({ code: "P0011" });
+    const r = await setFollow(
+      { client: f.client, viewer: { userId: "c-haru", role: "creator" } },
+      { creatorId: HARU, following: true },
+    );
+    expect(r).toMatchObject({ ok: false, status: 400 });
   });
 
   it("꼴이 틀리면 400 — id 가 uuid 가 아니거나 켜고 끄기가 참·거짓이 아님", async () => {

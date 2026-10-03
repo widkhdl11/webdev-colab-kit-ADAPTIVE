@@ -3,6 +3,7 @@ import { readMyApprovalRequests } from "@/entities/order/api/creator-request-row
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { fanBadge, headerGiftState } from "@/entities/order/ui/fan-stage-copy";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
+import { homePathOf } from "@/entities/session/model/home-path";
 import { readViewer, type Viewer } from "@/entities/session/model/viewer";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import type { HeaderGift, SiteHeaderProps } from "../ui/site-header";
@@ -36,9 +37,7 @@ export async function readSiteHeader(
 
 /** 로그인한 사람의 첫 화면. 손님·운영자(아직 화면 없음)는 null. */
 export function signedInHome(viewer: Viewer | null): string | null {
-  if (viewer?.role === "fan") return "/home";
-  if (viewer?.role === "creator") return "/creator/requests";
-  return null;
+  return homePathOf(viewer?.role);
 }
 
 /** 라우트가 쓰는 한 줄: 요청한 사람의 세션 클라이언트와 확인된 사용자(INV-L2). */
