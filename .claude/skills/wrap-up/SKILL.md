@@ -48,7 +48,7 @@ description: 다음 세션(또는 루프의 다음 회차)이 파일만 보고 �
   처리한 항목은 `- [x]` 로 바꿔 「닫힘」으로 옮긴다. 같은 것이 이미 있으면 그 줄에 덧붙인다.
   하네스(킷) 개선은 docs/references/harness-backlog.md 이고 retro 가 관리한다. 섞지 않는다.
 
-## 3. 인수인계 리허설과 다음 첫 입력 (세션 랩업)
+## 3. 인수인계 리허설 (세션 랩업)
 
 1. `node scripts/check-wrapup.mjs` — --since 없이 부르면 오늘 0시부터의 기록을 본다. 통과해야 한다
 2. `node scripts/loop-rehearsal.mjs` — 새 대화가 HANDOFF·PROGRESS·request.json 만 보고 지금 위치·다음 항목·
