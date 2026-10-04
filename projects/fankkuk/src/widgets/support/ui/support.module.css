@@ -26,11 +26,18 @@
 .ask { padding: 40px; border-radius: var(--r-panel); background: var(--white); box-shadow: var(--hair); }
 .ask h2 { font-size: 28px; letter-spacing: -.8px; }
 .ask form { display: grid; gap: 20px; margin-top: 24px; }
-.optional { color: var(--sub); font-weight: 500; }
-.select { appearance: none; padding-right: 52px; }
-.select-wrap { position: relative; }
-.select-chev { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--sub); pointer-events: none; }
-.textarea { height: auto; padding: 16px 20px; line-height: 1.6; resize: vertical; }
+/* 양식 칸 모양은 features/inquiry-submit/ui/inquiry-form.module.css */
+
+/* 내 문의 — 자주 묻는 질문과 같은 펼치는 줄(.faq)을 쓴다 */
+.mine { margin-top: 40px; }
+.mine h3 { font-size: 22px; letter-spacing: -.5px; }
+.mine .faq { margin-top: 12px; }
+.mine-empty { margin-top: 8px; color: var(--sub); }
+.mine-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-width: 0; overflow-wrap: anywhere; }
+.mine-meta { font-size: 16px; }
+.mine-text { margin-top: 8px; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.mine-reply { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--divider); }
+.mine-reply-h { font-weight: 700; color: var(--ink); }
 .contact { padding: 32px; border-radius: var(--r-tile); background: var(--surface); }
 .contact h2 { font-size: 24px; letter-spacing: -.5px; }
 .contact dl { margin-top: 16px; }

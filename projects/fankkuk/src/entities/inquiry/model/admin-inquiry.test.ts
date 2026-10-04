@@ -5,8 +5,10 @@ const ID = "3f1c2b7a-9d4e-4c1a-8b2f-0a1b2c3d4e5f";
 
 const OPEN = {
   id: ID,
+  kind: "account",
   title: "주소를 바꾸고 싶어요",
   body: "어떻게 하나요?",
+  order_no: null,
   status: "open",
   answer: null,
   created_at: "2026-10-02T11:05:00+00:00",
@@ -21,8 +23,10 @@ describe("관리자 1:1 문의 읽기 (INV-K11·K8)", () => {
     expect(adminInquiriesFromRows([{ ...OPEN, author_phone: "010" }])).toEqual([
       {
         id: ID,
+        kind: "account",
         title: "주소를 바꾸고 싶어요",
         body: "어떻게 하나요?",
+        orderNo: null,
         status: "open",
         answer: null,
         createdAt: "2026-10-02T11:05:00+00:00",
@@ -43,5 +47,10 @@ describe("관리자 1:1 문의 읽기 (INV-K11·K8)", () => {
     expect(adminInquiriesFromRows(null)).toBeNull();
     expect(adminInquiriesFromRows([{ ...OPEN, status: "closed" }])).toBeNull();
     expect(adminInquiriesFromRows([{ ...OPEN, title: 1 }])).toBeNull();
+    expect(adminInquiriesFromRows([{ ...OPEN, kind: "refund" }])).toBeNull();
+  });
+
+  it("결정 d25: 분류·주문번호를 옮긴다", () => {
+    expect(adminInquiriesFromRows([{ ...OPEN, kind: "shipping", order_no: "FC-7K3M9" }])?.[0]).toMatchObject({ kind: "shipping", orderNo: "FC-7K3M9" });
   });
 });

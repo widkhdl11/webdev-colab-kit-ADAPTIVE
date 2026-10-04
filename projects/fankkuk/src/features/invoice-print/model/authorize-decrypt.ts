@@ -1,9 +1,6 @@
-import type { AccessDenyReason } from "@/entities/address/model/access-log";
+import { MAX_DECRYPTS_PER_ORDER, type AccessDenyReason } from "@/entities/address/model/access-log";
 import { checkApprovalSignature, type VerifiedSignature } from "@/entities/order/model/evaluate-approval";
 import { isPrintable, type OrderStatus } from "@/entities/order/model/order-status";
-
-/** INV-P5: 승인 1건당 복호화 상한 — 첫 출력 + 재출력 2회. */
-export const MAX_DECRYPTS_PER_ORDER = 3;
 
 export type DecryptRequest = {
   requestedOrderNo: string;

@@ -3,6 +3,7 @@ import { isSameOriginJson } from "./same-origin";
 // 개인정보를 고치는 POST 의 겉껍데기(my-account INV-A6).
 // - 같은 사이트의 JSON 요청만 받는다 — 다른 사이트가 로그인한 사람 몰래 고치지 못하게. 아니면 본문을 읽지도 않고 403.
 // - 모든 응답(성공·실패)에 Cache-Control: no-store — 공용 컴퓨터·중간 캐시에 연락처가 남지 않게.
+//   처리 함수가 예외를 던져도 500 을 여기서 만들어 no-store 를 붙인다(프레임워크 기본 오류 응답에는 붙지 않는다).
 
 export type JsonReply = { status: number; body: Record<string, unknown> };
 
@@ -18,6 +19,12 @@ export async function handlePrivateJsonPost(req: Request, run: (body: unknown) =
   } catch {
     body = null;
   }
-  const reply = await run(body);
+  let reply: JsonReply;
+  try {
+    reply = await run(body);
+  } catch (e) {
+    console.error("private-json: 처리 중 예외", e instanceof Error ? e.name : typeof e);
+    reply = { status: 500, body: { message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." } };
+  }
   return Response.json(reply.body, { status: reply.status, headers: NO_STORE });
 }

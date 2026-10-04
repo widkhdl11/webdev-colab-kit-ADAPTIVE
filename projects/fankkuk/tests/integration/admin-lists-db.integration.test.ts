@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { orderArgs, SMALL_FIRST } from "./admin-pricing-helpers";
-import { adminClient, anonClient, deleteTestOrders, psql, SEED, signedInClient } from "./helpers";
+import { adminClient, anonClient, deleteTestOrders, psql, psqlError, SEED, signedInClient } from "./helpers";
 
 // 관리자 3단계 — 보낼 수 없는 물품(INV-K9) · 크리에이터 본인 확인(INV-K10) · 공지·1:1 문의(INV-K11).
 // 시드: fankkuk_admin = 대표 운영자, fankkuk_staff = 직원 운영자, byeolbit_fan = 별빛, daltokki_fan = 달토끼.
@@ -257,11 +257,16 @@ describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
   });
 });
 
-type Inquiry = { id: string; title: string; body: string; status: string; answer: string | null };
+type Inquiry = { id: string; title: string; body: string; status: string; answer: string | null; kind: string; order_no: string | null };
 
-async function writeInquiry(loginId: string, title = `${TEST_PREFIX}문의`): Promise<string> {
+/** create_inquiry 인자. 분류는 여섯 코드 중 하나, 주문번호는 없으면 null. */
+function inquiryArgs(title: string, body: string, kind = "shipping", orderNo: string | null = null) {
+  return { p_kind: kind, p_title: title, p_body: body, p_order_no: orderNo };
+}
+
+async function writeInquiry(loginId: string, title = `${TEST_PREFIX}문의`, orderNo: string | null = null): Promise<string> {
   const c = await signedInClient(loginId);
-  const r = await c.rpc("create_inquiry", { p_title: title, p_body: "선물이 아직 안 갔어요." });
+  const r = await c.rpc("create_inquiry", inquiryArgs(title, "선물이 아직 안 갔어요.", "shipping", orderNo));
   if (r.error) throw new Error(`create_inquiry 실패: ${r.error.message}`);
   return r.data as string;
 }
@@ -437,11 +442,11 @@ describe("1:1 문의 (INV-K11)", () => {
     ["본문 4001자", `${TEST_PREFIX}길다`, "나".repeat(4001)],
   ])("INV-K11 (실패경로): 문의 %s → 거부", async (_label, title, body) => {
     const me = await signedInClient("byeolbit_fan");
-    expect((await me.rpc("create_inquiry", { p_title: title, p_body: body })).error?.code).toBe("22023");
+    expect((await me.rpc("create_inquiry", inquiryArgs(title, body))).error?.code).toBe("22023");
   });
 
   it("INV-K11 (실패경로): 로그인하지 않으면 문의를 남길 수 없다", async () => {
-    expect((await anonClient().rpc("create_inquiry", { p_title: `${TEST_PREFIX}손님`, p_body: "x" })).error).not.toBeNull();
+    expect((await anonClient().rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}손님`, "x"))).error).not.toBeNull();
     expect(psql(`select count(*) from public.inquiries where title like '${TEST_PREFIX}%'`)).toBe("0");
   });
 
@@ -452,6 +457,132 @@ describe("1:1 문의 (INV-K11)", () => {
     expect(rows.length).toBeGreaterThan(0);
     for (const k of Object.keys(rows[0])) expect(k).not.toMatch(/^(name|real_?name|full_?name)$|phone|address|email|zip/);
     expect(rows[0]).toHaveProperty("author_login_id");
+  });
+});
+
+describe("1:1 문의 분류·주문번호 (결정 d25)", () => {
+  it("분류와 주문번호가 저장되고 my_inquiries·admin_inquiries 에 보인다", async () => {
+    const id = await writeInquiry("byeolbit_fan", `${TEST_PREFIX}분류`, "FC-7K3M9");
+    const me = await signedInClient("byeolbit_fan");
+    const mine = ((await me.rpc("my_inquiries")).data as Inquiry[]).find((q) => q.id === id);
+    expect(mine).toMatchObject({ kind: "shipping", order_no: "FC-7K3M9" });
+    const staff = await signedInClient("fankkuk_staff");
+    const row = ((await staff.rpc("admin_inquiries")).data as Inquiry[]).find((q) => q.id === id);
+    expect(row).toMatchObject({ kind: "shipping", order_no: "FC-7K3M9" });
+  });
+
+  it.each(["gift", "fee", "shipping", "creator", "account", "etc"])("분류 %s 는 받는다", async (kind) => {
+    const me = await signedInClient("byeolbit_fan");
+    const r = await me.rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}${kind}`, "본문", kind));
+    expect(r.error).toBeNull();
+    expect(psql(`select kind from public.inquiries where id = '${r.data as string}'`)).toBe(kind);
+  });
+
+  it("주문번호 없음(null·빈칸·공백만)은 받고 비어 있는 칸으로 저장한다", async () => {
+    const me = await signedInClient("byeolbit_fan");
+    for (const [i, orderNo] of [null, "", "   "].entries()) {
+      const r = await me.rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}번호없음${i}`, "본문", "etc", orderNo));
+      expect(r.error).toBeNull();
+      expect(psql(`select coalesce(order_no, '(null)') from public.inquiries where id = '${r.data as string}'`)).toBe("(null)");
+    }
+  });
+
+  it("주문번호는 앞뒤 공백을 지우고 대문자로 바꿔 저장한다", async () => {
+    const me = await signedInClient("byeolbit_fan");
+    const r = await me.rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}소문자`, "본문", "gift", "  fc-7k3m9-2 "));
+    expect(r.error).toBeNull();
+    expect(psql(`select order_no from public.inquiries where id = '${r.data as string}'`)).toBe("FC-7K3M9-2");
+  });
+
+  it.each([
+    ["여섯 밖 분류", "refund", null],
+    ["화면 라벨을 그대로 보낸 분류", "배송", null],
+    ["빈 분류", "", null],
+    ["대문자 분류", "GIFT", null],
+    ["접두어가 다른 주문번호", "etc", "AB-7K3M9"],
+    ["너무 짧은 주문번호", "etc", "FC-7K"],
+    ["너무 긴 주문번호", "etc", "FC-12345678901"],
+    ["뒷번호가 세 자리인 주문번호", "etc", "FC-7K3M9-123"],
+    ["가운데 공백이 낀 주문번호", "etc", "FC-7K 3M9"],
+    ["다른 문자가 섞인 주문번호", "etc", "FC-7K3M9;--"],
+  ])("(실패경로): %s → 거부, 아무것도 저장 안 함", async (_label, kind, orderNo) => {
+    const me = await signedInClient("byeolbit_fan");
+    expect((await me.rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}거부`, "본문", kind, orderNo))).error?.code).toBe("22023");
+    expect(psql(`select count(*) from public.inquiries where title like '${TEST_PREFIX}%'`)).toBe("0");
+  });
+
+  it("(실패경로): 분류 없이 부르던 옛 모양(제목·본문만)은 더 없다", async () => {
+    const me = await signedInClient("byeolbit_fan");
+    expect((await me.rpc("create_inquiry", { p_title: `${TEST_PREFIX}옛 모양`, p_body: "본문" })).error).not.toBeNull();
+    expect(psql(`select count(*) from public.inquiries where title like '${TEST_PREFIX}%'`)).toBe("0");
+  });
+
+  const directInsert = (kind: string, orderNo: string) =>
+    `insert into public.inquiries (author_id, kind, title, body, order_no) values ('${SEED.fanId}', ${kind}, '${TEST_PREFIX}직접', '본문', ${orderNo})`;
+
+  it("(실패경로): 표에 직접 넣어도 여섯 밖 분류는 막힌다", () => {
+    expect(psqlError(directInsert("'refund'", "NULL"))).toMatch(/inquiries_kind_check/);
+    expect(psql(`select count(*) from public.inquiries where title like '${TEST_PREFIX}%'`)).toBe("0");
+  });
+
+  it.each(["fc-7k3m9", "FC-", "FC-AB", "XX-12345", "FC-ABCDEFGHIJK", "FC-7K3M9-123", " FC-7K3M9", "FC-7K3M9 ", ""])(
+    "(실패경로): 표에 직접 넣어도 꼴 틀린 주문번호 '%s' 는 막힌다",
+    (orderNo) => {
+      expect(psqlError(directInsert("'etc'", `'${orderNo}'`))).toMatch(/inquiries_order_no_check/);
+      expect(psql(`select count(*) from public.inquiries where title like '${TEST_PREFIX}%'`)).toBe("0");
+    },
+  );
+
+  it("표에 직접 넣을 때 꼴 맞는 주문번호는 들어간다(위 거부가 다른 이유로 난 게 아님을 확인)", () => {
+    expect(psqlError(directInsert("'etc'", "'FC-7K3M9-2'"))).toBeNull();
+    expect(psql(`select count(*) from public.inquiries where title like '${TEST_PREFIX}%'`)).toBe("1");
+  });
+
+  it("(실패경로): 분류 칸 없이 표에 직접 넣으면 막힌다 — 분류에 기본값이 없다", () => {
+    const err = psqlError(
+      `insert into public.inquiries (author_id, title, body) values ('${SEED.fanId}', '${TEST_PREFIX}분류없음', '본문')`,
+    );
+    expect(err).toMatch(/null value in column "kind"/);
+    expect(psql(`select count(*) from public.inquiries where title like '${TEST_PREFIX}%'`)).toBe("0");
+  });
+
+  it("주문과 잇지 않음: 달토끼가 별빛의 실제 주문번호로 낸 문의와 없는 번호로 낸 문의가 똑같이 성공한다", async () => {
+    // 시험 준비 확인: FC-7K3M9 는 별빛의 주문이고 FC-ZZZZ9 는 없는 주문이다
+    expect(psql(`select p.login_id from public.orders o join public.profiles p on p.id = o.fan_id where o.order_no = 'FC-7K3M9'`)).toBe("byeolbit_fan");
+    expect(psql(`select count(*) from public.orders where order_no = 'FC-ZZZZ9'`)).toBe("0");
+
+    const dal = await signedInClient("daltokki_fan");
+    const real = await dal.rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}남의번호`, "본문", "shipping", "FC-7K3M9"));
+    const none = await dal.rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}없는번호`, "본문", "shipping", "FC-ZZZZ9"));
+    expect(real.error).toBeNull();
+    expect(none.error).toBeNull();
+    // 돌려받는 것은 둘 다 새 문의 id 하나뿐 — 있는 번호인지 알 수 있는 다른 차이가 없다
+    expect([typeof real.data, typeof none.data]).toEqual(["string", "string"]);
+    expect([real.status, real.statusText]).toEqual([none.status, none.statusText]);
+
+    const mine = (await dal.rpc("my_inquiries")).data as Inquiry[];
+    const rows = [real.data, none.data].map((id) => mine.find((q) => q.id === id));
+    expect(rows.map((q) => q?.order_no)).toEqual(["FC-7K3M9", "FC-ZZZZ9"]);
+    expect(Object.keys(rows[0] ?? {}).sort()).toEqual(Object.keys(rows[1] ?? {}).sort());
+    expect(rows.map((q) => q?.status)).toEqual(["open", "open"]);
+  });
+
+  it.each([
+    ["분류", "kind = 'etc'"],
+    ["주문번호", "order_no = 'FC-ZZZ99'"],
+    ["주문번호 지우기", "order_no = null"],
+  ])("(실패경로): 답이 달린 문의의 %s를 DB 에서 직접 바꾸면 거부", async (_label, set) => {
+    const id = await writeInquiry("byeolbit_fan", `${TEST_PREFIX}고정`, "FC-7K3M9");
+    const staff = await signedInClient("fankkuk_staff");
+    expect((await staff.rpc("admin_answer_inquiry", { p_id: id, p_answer: "답" })).error).toBeNull();
+    expect(psqlError(`update public.inquiries set ${set} where id = '${id}'`)).toMatch(/답이 달린 문의/);
+    expect(psql(`select kind || '/' || order_no from public.inquiries where id = '${id}'`)).toBe("shipping/FC-7K3M9");
+  });
+
+  it("(실패경로): 로그인하지 않은 키로는 분류·주문번호를 갖춰도 남길 수 없다", async () => {
+    const r = await anonClient().rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}손님`, "본문", "gift", "FC-7K3M9"));
+    expect(r.error).not.toBeNull();
+    expect(psql(`select count(*) from public.inquiries where title like '${TEST_PREFIX}%'`)).toBe("0");
   });
 });
 

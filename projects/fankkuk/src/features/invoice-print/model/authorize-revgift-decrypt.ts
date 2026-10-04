@@ -1,6 +1,5 @@
-import type { AccessDenyReason } from "@/entities/address/model/access-log";
+import { MAX_DECRYPTS_PER_ORDER, type AccessDenyReason } from "@/entities/address/model/access-log";
 import { readOpenedOrderNo } from "@/entities/revgift/model/sealed-address";
-import { MAX_DECRYPTS_PER_ORDER } from "./authorize-decrypt";
 
 // 역조공 몫의 주소를 여는 조건(reverse-gift INV-R7). 크리에이터 주소의 판정(authorize-decrypt)과 같은 자리에서 부른다 —
 // 승인 서명 대신 「팬이 받기를 하며 넣은 암호문」이 근거다.

@@ -47,4 +47,13 @@ describe("개인정보 고치기 요청의 겉껍데기", () => {
     });
     expect(seen).toBeNull();
   });
+
+  it("처리 함수가 예외를 던져도 500 이고 캐시되지 않는다", async () => {
+    const res = await handlePrivateJsonPost(post(sameSiteJson), async () => {
+      throw new Error("db down 010-1234-5678");
+    });
+    expect(res.status).toBe(500);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(JSON.stringify(await res.json())).not.toContain("010-1234-5678");
+  });
 });

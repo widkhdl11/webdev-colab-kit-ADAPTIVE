@@ -1,35 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { summarizeAccessLog, type AddressAccessEntry } from "./access-log";
+import { monthLabelOf, printLabelOf, seoulMonthKey } from "./access-log";
 
-const opened = (printNo: number): AddressAccessEntry => ({
-  at: "2026-09-30T05:32:00.000Z",
-  orderNo: "FC-TEST1",
-  requester: "owner",
-  result: { kind: "opened", printNo },
+describe("printLabelOf — 열람 기록 줄의 출력 라벨 (INV-P5)", () => {
+  it("1번째는 첫 출력", () => {
+    expect(printLabelOf(1)).toEqual({ reprint: false, text: "첫 출력" });
+  });
+
+  it("2번째부터 재출력, 몇 번째인지 붙인다", () => {
+    expect(printLabelOf(2)).toEqual({ reprint: true, text: "재출력 2번째" });
+    expect(printLabelOf(3)).toEqual({ reprint: true, text: "재출력 3번째" });
+  });
 });
-const denied: AddressAccessEntry = {
-  at: "2026-09-30T05:40:00.000Z",
-  orderNo: "FC-TEST1",
-  requester: "owner",
-  result: { kind: "denied", reason: "order_not_printable" },
-};
 
-describe("summarizeAccessLog — 열람 기록 화면의 이번 달 숫자", () => {
-  it("열림은 첫 출력과 재출력을 모두 센다", () => {
-    expect(summarizeAccessLog([opened(1), opened(2), opened(1)]).openedCount).toBe(3);
+describe("서울 기준 달", () => {
+  it("UTC 로는 9월 30일 밤이어도 서울로 10월 1일이면 10월이다", () => {
+    expect(seoulMonthKey("2026-09-30T15:30:00.000Z")).toBe("2026-10");
+    expect(seoulMonthKey("2026-09-30T14:59:00.000Z")).toBe("2026-09");
   });
 
-  it("재출력은 2번째 출력부터만 센다", () => {
-    expect(summarizeAccessLog([opened(1), opened(2), opened(3)]).reprintCount).toBe(2);
-  });
-
-  it("거부는 열림에 넣지 않고 따로 센다", () => {
-    const s = summarizeAccessLog([opened(1), denied]);
-    expect(s.openedCount).toBe(1);
-    expect(s.deniedCount).toBe(1);
-  });
-
-  it("기록이 없으면 전부 0", () => {
-    expect(summarizeAccessLog([])).toEqual({ openedCount: 0, reprintCount: 0, deniedCount: 0 });
+  it("달 이름은 「2026년 10월」", () => {
+    expect(monthLabelOf("2026-10")).toBe("2026년 10월");
+    expect(monthLabelOf("2026-09")).toBe("2026년 9월");
   });
 });

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildSigningPayload } from "@/entities/order/model/signing-payload";
 import type { VerifiedSignature } from "@/entities/order/model/evaluate-approval";
-import { authorizeDecrypt, MAX_DECRYPTS_PER_ORDER, type DecryptRequest } from "./authorize-decrypt";
+import { MAX_DECRYPTS_PER_ORDER } from "@/entities/address/model/access-log";
+import { authorizeDecrypt, type DecryptRequest } from "./authorize-decrypt";
 
 const OWNER = "user-owner";
 const CREATOR_SIGNER = "kakao-ci-creator-1";

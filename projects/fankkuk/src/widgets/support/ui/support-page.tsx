@@ -1,14 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useRef, useState, type KeyboardEvent } from "react";
+import { INQUIRY_KIND_LABELS } from "@/entities/inquiry/model/inquiry-kind";
+import type { MyInquiry } from "@/entities/inquiry/model/my-inquiry";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
+import { InquiryForm } from "@/features/inquiry-submit/ui/inquiry-form";
+import { formatDateTime } from "@/shared/lib/format/datetime";
 import s from "./support.module.css";
 
 // 고객센터. 시안: docs/design/mockups/site/v4/support.html
-// 1:1 문의는 겉모양만 — 보내기는 로그인 화면으로 이동한다(실제 접수는 아직 없다).
+// 1:1 문의: 로그인하지 않았으면 버튼이 로그인 화면으로 가고, 로그인했으면 실제로 접수한다(결정 d25).
+// 그 아래 「내 문의」는 자주 묻는 질문과 같은 펼치는 줄로 보인다(쓴 사람 본인 것만 — DB 가 거른다).
 // 요금 답변의 숫자는 결제와 같은 DB 요금표(서버 page 가 읽어 넘긴다)를, 구간 기준은 size-tier 를 읽는다.
 
 type Faq = { q: string; a: string };
@@ -96,8 +100,6 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
   },
 ];
 
-const INQUIRY_KINDS = ["선물 보내기", "요금", "배송", "크리에이터", "계정", "기타"] as const;
-
 const CONTACT: readonly (readonly [string, string])[] = [
   ["운영 시간", "(출시 전 기재)"],
   ["점심 시간", "(출시 전 기재)"],
@@ -113,7 +115,55 @@ function Chevron({ className }: { className: string }) {
   );
 }
 
-export function SupportPage({ prices }: { prices: PublicPriceTable }) {
+function MyInquiries({ inquiries }: { inquiries: readonly MyInquiry[] }) {
+  return (
+    <section className={s.mine} aria-labelledby="mine-title">
+      <h3 id="mine-title">내 문의</h3>
+      {inquiries.length === 0 ? (
+        <p className={s["mine-empty"]}>아직 남긴 문의가 없어요.</p>
+      ) : (
+        <div className={s.faq}>
+          {inquiries.map((q) => (
+            <details key={q.id}>
+              <summary>
+                <span className={s["mine-title"]}>
+                  <span>{q.title}</span>
+                  {q.status === "answered" ? <span className="tag tag--brand">답변 완료</span> : <span className="tag">답변 대기</span>}
+                </span>
+                <Chevron className={s.chev} />
+              </summary>
+              <div className={s.answer}>
+                <p className={s["mine-meta"]}>
+                  {INQUIRY_KIND_LABELS[q.kind]}
+                  {q.orderNo && ` · 주문번호 ${q.orderNo}`} · {formatDateTime(q.createdAt)}
+                </p>
+                <p className={s["mine-text"]}>{q.body}</p>
+                {q.status === "answered" && q.answer !== null ? (
+                  <div className={s["mine-reply"]}>
+                    <p className={s["mine-reply-h"]}>팬꾹의 답변{q.answeredAt && ` · ${formatDateTime(q.answeredAt)}`}</p>
+                    <p className={s["mine-text"]}>{q.answer}</p>
+                  </div>
+                ) : (
+                  <p className={s["mine-meta"]}>답변을 준비하고 있어요. 남겨 주신 순서대로 답변드려요.</p>
+                )}
+              </div>
+            </details>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function SupportPage({
+  prices,
+  signedIn,
+  myInquiries,
+}: {
+  prices: PublicPriceTable;
+  signedIn: boolean;
+  myInquiries: readonly MyInquiry[];
+}) {
   const categories = categoriesFor(prices);
   const [selected, setSelected] = useState(0);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -195,40 +245,8 @@ export function SupportPage({ prices }: { prices: PublicPriceTable }) {
         <div className={`container ${s.help}`}>
           <div className={s.ask}>
             <h2 id="inquiry-title">1:1 문의</h2>
-            {/* 접수는 아직 없다 — 제출해도 아무 일도 일어나지 않고, 아래 버튼은 로그인 화면으로 간다. */}
-            <form onSubmit={(e) => e.preventDefault()}>
-              <div className="field">
-                <label htmlFor="q-cat">분류</label>
-                <div className={s["select-wrap"]}>
-                  <select className={`input ${s.select}`} id="q-cat">
-                    {INQUIRY_KINDS.map((k) => (
-                      <option key={k}>{k}</option>
-                    ))}
-                  </select>
-                  <Chevron className={s["select-chev"]} />
-                </div>
-              </div>
-              <div className="field">
-                <label htmlFor="q-order">
-                  주문번호 <span className={s.optional}>(선택)</span>
-                </label>
-                <input className="input" id="q-order" type="text" placeholder="예: FC-7K3M9" aria-describedby="q-order-h" />
-                <p className="hint" id="q-order-h">
-                  선물에 관한 문의라면 적어 주시면 더 빨리 확인할 수 있어요.
-                </p>
-              </div>
-              <div className="field">
-                <label htmlFor="q-title">제목</label>
-                <input className="input" id="q-title" type="text" placeholder="문의 제목을 적어 주세요" />
-              </div>
-              <div className="field">
-                <label htmlFor="q-body">내용</label>
-                <textarea className={`input ${s.textarea}`} id="q-body" rows={6} placeholder="궁금한 점을 자세히 적어 주세요" />
-              </div>
-              <Link className="btn btn--block" href="/login">
-                로그인하고 문의 남기기
-              </Link>
-            </form>
+            <InquiryForm signedIn={signedIn} />
+            {signedIn && <MyInquiries inquiries={myInquiries} />}
           </div>
           <aside className={s.contact} aria-labelledby="contact-title">
             <h2 id="contact-title">운영 시간·연락처</h2>
@@ -240,7 +258,7 @@ export function SupportPage({ prices }: { prices: PublicPriceTable }) {
                 </div>
               ))}
             </dl>
-            <p className={s.note}>1:1 문의는 남겨 주신 순서대로 답변드려요. 답변은 알림톡으로 알려 드려요.</p>
+            <p className={s.note}>1:1 문의는 남겨 주신 순서대로 답변드려요. 답변이 달리면 「내 문의」에서 볼 수 있어요.</p>
           </aside>
         </div>
       </section>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { AddressAccessEntry } from "@/entities/address/model/access-log";
+import { printLabelOf, type AddressAccessEntry } from "@/entities/address/model/access-log";
 import { creatorProgressOf } from "@/entities/order/model/creator-progress";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
@@ -20,7 +20,7 @@ type Props = {
   nickname: string;
   /** 승인 대기 요청, 오래 기다린 것부터. */
   requests: readonly ApprovalRequestView[];
-  /** 최근 열람 기록, 최근 순. */
+  /** 최근 열람 기록, 최근 순(최대 CREATOR_HOME_LOG_ROWS 줄). */
   accessLog: readonly AddressAccessEntry[];
   notices: readonly CreatorHomeNotice[];
   /** 내가(로그인한 사람이) 보낸 선물, 최신 순. */
@@ -28,6 +28,9 @@ type Props = {
 };
 
 const MAX_ROWS = 3;
+
+/** 「최근 열람 기록」에 보이는 줄 수 — 라우트가 이만큼만 읽는다. */
+export const CREATOR_HOME_LOG_ROWS = MAX_ROWS;
 
 /** "2026-09-28" → "09.28" */
 const shortDate = (date: string) => date.slice(5).replace("-", ".");
@@ -87,7 +90,7 @@ function ProgressTrack({ request }: { request: ApprovalRequestView }) {
 
 function logNote(e: AddressAccessEntry): string {
   if (e.result.kind === "denied") return "열리지 않았어요";
-  return e.result.printNo === 1 ? "첫 출력" : `재출력(${e.result.printNo}번째)`;
+  return printLabelOf(e.result.printNo).text;
 }
 
 export function CreatorHomePage({ nickname, requests, accessLog, notices, sentGifts }: Props) {
@@ -111,7 +114,7 @@ export function CreatorHomePage({ nickname, requests, accessLog, notices, sentGi
               </>
             )}
           </h1>
-          <p className="lead">{waiting > 0 ? `진행 중인 선물은 ${waiting}개예요.` : "새 승인 요청이 오면 여기에 먼저 보여 드려요."}</p>
+          <p className="lead">{waiting > 0 ? `승인을 기다리는 선물은 ${waiting}개예요.` : "새 승인 요청이 오면 여기에 먼저 보여 드려요."}</p>
         </div>
       </section>
 
@@ -207,17 +210,17 @@ export function CreatorHomePage({ nickname, requests, accessLog, notices, sentGi
             </div>
             <p className="sub">승인 없이는 저희 시스템이 주소를 열지 않아요. 열린 기록은 전부 보여 드려요.</p>
             {accessLog.length === 0 ? (
-              <p className={s.empty}>아직 주소가 열린 기록이 없어요.</p>
+              <p className={s.empty}>아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
             ) : (
               <ul className={s["log-rows"]} aria-label="최근 주소 열람 기록">
-                {accessLog.slice(0, MAX_ROWS).map((e) => (
-                  <li key={`${e.at}-${e.orderNo}`} className={s.lrow}>
+                {accessLog.slice(0, MAX_ROWS).map((e, i) => (
+                  <li key={`${i}-${e.at}-${e.orderNo}`} className={s.lrow}>
                     <div className={s.top}>
                       <strong>{formatDateTime(e.at)}</strong>
                       {e.result.kind === "opened" ? <span className="tag tag--brand">열림</span> : <span className="tag">거부</span>}
                     </div>
                     <p className="sub">
-                      {e.orderNo} · 대표 계정 · {logNote(e)}
+                      {e.orderNo} · {e.requester === "owner" ? "대표 계정" : "대표가 아닌 계정"} · {logNote(e)}
                     </p>
                   </li>
                 ))}

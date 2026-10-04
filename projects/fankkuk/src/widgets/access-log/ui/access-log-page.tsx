@@ -1,5 +1,11 @@
-import type { AccessDenyReason, AccessLogSummary, AddressAccessEntry } from "@/entities/address/model/access-log";
-import { MAX_DECRYPTS_PER_ORDER } from "@/features/invoice-print/model/authorize-decrypt";
+import {
+  MAX_DECRYPTS_PER_ORDER,
+  printLabelOf,
+  type AccessDenyReason,
+  type AccessMonthSummary,
+  type AccessRequester,
+  type AddressAccessEntry,
+} from "@/entities/address/model/access-log";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import s from "./access-log.module.css";
 
@@ -16,7 +22,7 @@ const DENY_TEXT: Record<AccessDenyReason, string> = {
   decrypt_limit_reached: "출력 횟수를 다 써서 열리지 않았어요",
 };
 
-const REQUESTER_TEXT: Record<AddressAccessEntry["requester"], string> = { owner: "대표 계정" };
+const REQUESTER_TEXT: Record<AccessRequester, string> = { owner: "대표 계정", other: "대표가 아닌 계정" };
 
 function ResultTag({ e }: { e: AddressAccessEntry }) {
   return e.result.kind === "opened" ? <span className="tag tag--brand">열림</span> : <span className="tag">거부</span>;
@@ -24,23 +30,17 @@ function ResultTag({ e }: { e: AddressAccessEntry }) {
 
 function Note({ e }: { e: AddressAccessEntry }) {
   if (e.result.kind === "denied") return <>{DENY_TEXT[e.result.reason]}</>;
-  if (e.result.printNo === 1) return <>첫 출력</>;
-  return (
-    <>
-      <span className="tag">재출력</span> {e.result.printNo}번째 출력
-    </>
-  );
+  const label = printLabelOf(e.result.printNo);
+  return label.reprint ? <span className="tag">{label.text}</span> : <>{label.text}</>;
 }
 
 export function AccessLogPage({
   monthLabel,
-  approvedCount,
   summary,
   entries,
 }: {
   monthLabel: string;
-  approvedCount: number;
-  summary: AccessLogSummary;
+  summary: AccessMonthSummary;
   entries: readonly AddressAccessEntry[];
 }) {
   return (
@@ -50,8 +50,6 @@ export function AccessLogPage({
         <p>
           <strong className={s.strong}>승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.
         </p>
-        {/* 주소 보호(KMS·복호화 함수)를 붙이기 전이라 아래 줄은 지어낸 값이다 — 진짜 기록처럼 읽히지 않게 */}
-        <p className="hint">지금 보이는 기록은 예시예요. 주소 보호 연결을 마치면 실제 기록이 여기에 쌓여요.</p>
       </div>
 
       <section className={s.month} aria-labelledby="sum-h">
@@ -64,7 +62,7 @@ export function AccessLogPage({
             <div>
               <dt>승인</dt>
               <dd>
-                {approvedCount}
+                {summary.approvedCount}
                 <small>건</small>
               </dd>
             </div>
@@ -98,7 +96,7 @@ export function AccessLogPage({
 
       <section className={s.records} aria-label="열람 기록">
         {entries.length === 0 ? (
-          <p className={`sub ${s.empty}`}>아직 주소가 열린 기록이 없어요.</p>
+          <p className={`sub ${s.empty}`}>아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
         ) : (
           <>
             <table className={s["log-table"]}>
@@ -113,8 +111,8 @@ export function AccessLogPage({
                 </tr>
               </thead>
               <tbody>
-                {entries.map((e) => (
-                  <tr key={`${e.orderNo}-${e.at}`}>
+                {entries.map((e, i) => (
+                  <tr key={`${i}-${e.orderNo}-${e.at}`}>
                     <td className={s.nw}>{formatDateTime(e.at)}</td>
                     <td className={s.nw}>{e.orderNo}</td>
                     <td>{REQUESTER_TEXT[e.requester]}</td>
@@ -129,8 +127,8 @@ export function AccessLogPage({
               </tbody>
             </table>
             <ul className={s["log-list"]} aria-label="주소 열람 기록">
-              {entries.map((e) => (
-                <li key={`${e.orderNo}-${e.at}`} className={s.lrow}>
+              {entries.map((e, i) => (
+                <li key={`${i}-${e.orderNo}-${e.at}`} className={s.lrow}>
                   <div className={s.top}>
                     <strong>{formatDateTime(e.at)}</strong>
                     <ResultTag e={e} />
