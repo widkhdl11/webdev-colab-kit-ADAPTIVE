@@ -107,6 +107,26 @@ describe("상태 전환표 (INV-W1)", () => {
     expect((await staff.rpc("office_confirm_label", { p_qr: qrA })).error).toBeNull();
   });
 
+  it("INV-W1 (실패경로): 라벨 대기 줄이 남아 있어도 입고 완료가 아닌 상자는 부착 확인 거부", async () => {
+    // 대기 줄은 입고 완료 상자에만 생기므로, 상태 검사만 따로 보려고 줄을 직접 심는다
+    const g = await paidGift();
+    const no = waybill();
+    await fanSetsWaybill(g.boxIds[0], no);
+    const staff = await signedInClient("fankkuk_staff");
+    const qr = await receiveAndLabel(staff, no);
+    const labeledAt = psql(`select labeled_at from public.office_parcels where qr_code = '${qr}'`);
+    psql(
+      `insert into public.office_label_pending (operator_id, parcel_id) select pr.id, p.id from public.profiles pr, public.office_parcels p where pr.login_id = 'fankkuk_staff' and p.qr_code = '${qr}'`,
+    );
+    try {
+      expect((await staff.rpc("office_confirm_label", { p_qr: qr })).error?.code).toBe("55000");
+      expect(pendingLabels("fankkuk_staff")).toBe("1");
+      expect(psql(`select labeled_at from public.office_parcels where qr_code = '${qr}'`)).toBe(labeledAt);
+    } finally {
+      psql(`delete from public.office_label_pending where parcel_id in (select id from public.office_parcels where qr_code = '${qr}')`);
+    }
+  });
+
   it("INV-W1 (실패경로): 출고 확정 스캔의 송장번호가 이 상자의 것이 아니면 거부", async () => {
     const g = await paidGift();
     const no = waybill();
@@ -181,6 +201,8 @@ describe("한 번만·한 상자씩 (INV-W2)", () => {
       owner.rpc("office_scan_inbound", { p_waybill: no }),
     ]);
     expect(rs.filter((r) => r.error === null)).toHaveLength(1);
+    // 늦은 쪽은 줄을 잠그고 기다렸다가 「이미 처리됨」을 받는다 — 라벨 표 제약에 걸린 알 수 없는 오류가 아니다
+    expect(rs.find((r) => r.error)?.error?.code).toBe("55000");
     expect(psql("select count(*) from public.office_label_pending")).toBe("1");
   });
 

@@ -32,7 +32,7 @@ M = [
     ('match: already matched', 'match_unmatched', "where waybill_no = p_waybill and matched_parcel_id is null and expired_at is null", "where waybill_no = p_waybill and expired_at is null"),
     ('insp: operator', 'office_record_inspection', OP, F),
     ('insp: state', 'office_record_inspection', "if v.state <> 'labeled' then", F),
-    ('insp: values', 'office_record_inspection', "if exists (select 1 from jsonb_each_text(p_result) e where e.key <> 'outcome' and e.value not in ('clear', 'found'))\n     or", "if"),
+    ('insp: values', 'office_record_inspection', "if exists (select 1 from jsonb_each_text(p_result) e where e.key <> 'outcome' and (e.value is null or e.value not in ('clear', 'found')))\n     or", "if"),
     ('insp: fan keys', 'office_record_inspection', "if v_keys is distinct from array['bluetooth', 'metal', 'outcome', 'rf'] then", F),
     ('insp: tracker hold', 'office_record_inspection', "if v_tracker <> (v_outcome = 'hold') then", F),
     ('insp: share keys', 'office_record_inspection', "if v_keys is distinct from array['outcome', 'prohibited', 'surface'] then", F),
@@ -61,7 +61,7 @@ M = [
     ('expiry: gift 168', 'office_run_expiry', "      and o.registered_at <= now() - interval '168 hours'", "      and o.registered_at <= now() - interval '167 hours'"),
     ('expiry: unmatched', 'office_run_expiry', "where matched_parcel_id is null and expired_at is null and arrived_at <= now() - interval '168 hours'", "where false"),
     ('expiry: diff 168', 'office_run_expiry', "        and d.created_at <= now() - interval '168 hours'", "        and d.created_at <= now() - interval '167 hours'"),
-    ('expiry: dead parcels', 'office_run_expiry', "  where p.state = 'inspected' and public.office_parcel_dead(p);", "  where false;"),
+    ('expiry: dead parcels', 'office_run_expiry', "  where p.state = 'inspected' and public.office_parcel_dead(p)\n", "  where false\n"),
     ('expiry: revgifts', 'office_run_expiry', "    v_revgifts := public.expire_revgifts();", "    v_revgifts := 0;"),
     ('set box: owner', 'set_box_waybill', "where b.id = p_box_id and o.fan_id = auth.uid()", "where b.id = p_box_id"),
     ('set box: received', 'set_box_waybill', "  else\n    raise exception '이미 입고된 상자다' using errcode = '55000';", "  else\n    update public.office_parcels set inbound_waybill_no = p_waybill where id = v.id;"),
@@ -88,9 +88,12 @@ M = [
     ('inbound: recorded flag', 'office_scan_inbound', "case when exists (select 1 from public.office_unmatched u where u.waybill_no = p_waybill) then 'unmatched_recorded' else 'unmatched' end", "'unmatched'"),
     ('next step dead', 'office_next_step', "                               when public.office_parcel_dead(p_parcel) then 'wait_expiry'\n", ""),
     ('run one: dead filter', 'office_run_expiry', "\n    and (p_order_no is null\n         or exists", "\n    and (true\n         or exists"),
-    ('sync min', 'office_sync_order', "  select min(coalesce(", "  select max(coalesce("),
+    ('sync min', 'office_sync_order', "  select coalesce(min(case p.state", "  select coalesce(max(case p.state"),
 ]
 only = sys.argv[1:]
+if only and only[0] == '--from':
+    labels = [x[0] for x in M]
+    only = labels[labels.index(only[1]):] + only[2:]
 for label, fn, old, new in M:
     if only and label not in only:
         continue

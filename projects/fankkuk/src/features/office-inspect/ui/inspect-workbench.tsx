@@ -118,6 +118,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
       const state = done.body.state;
       if (state === "inspected" || state === "return_waiting" || state === "held") {
         setFinished({ state });
+        setParcel({ ...parcel, state }); // 상자 정보 칸의 상태 표시도 끝난 상태로
         setPhase("finished");
       } else {
         setError({ title: "결과를 읽지 못했어요", message: "QR 을 다시 스캔해 상자 상태를 확인해 주세요." });

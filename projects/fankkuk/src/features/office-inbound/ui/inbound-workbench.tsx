@@ -240,7 +240,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
           <div className={`${a.note} ${a.noteOk}`}>
             <InfoIcon />
             <p>
-              <strong>부착 확인 완료.</strong> {card.orderNo} 은 이제 검수 단계로 넘어가요. 다음 상자를 스캔하세요.
+              <strong>부착 확인 완료.</strong> {card.orderNo} 상자는 이제 검수 단계로 넘어가요. 다음 상자를 스캔하세요.
             </p>
           </div>
         )}
