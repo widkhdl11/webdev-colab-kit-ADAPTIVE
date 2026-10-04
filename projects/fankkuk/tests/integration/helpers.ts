@@ -126,6 +126,14 @@ export function deleteTestSignups(): void {
   );
 }
 
+/**
+ * 시험이 만든 팬 차단 줄을 지운다(decline-block). 시드에는 차단이 없다 — 남겨 두면 별빛 → 하루 등록을 쓰는 다른 시험이 막힌다.
+ * 차단 표가 아직 없을 때(구현 전 빨간불 확인)도 정리 단계가 멈추지 않게 표가 있을 때만 지운다.
+ */
+export function deleteTestBlocks(): void {
+  psql("do $$ begin if to_regclass('public.creator_blocks') is not null then delete from public.creator_blocks; end if; end $$;");
+}
+
 export function countTestOrders(): number {
   const kinds = TEST_ITEM_KINDS.map((k) => `'${k}'`).join(", ");
   return Number(psql(`select count(*) from public.orders where item_kind in (${kinds});`));
@@ -143,13 +151,16 @@ function randomCode(n: number): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(n)), (b) => alphabet[b % alphabet.length]).join("");
 }
 
-/** 시험마다 새 주문을 만든다 — 결제 대기 상태. 소형 상자 n 개. */
-export async function registerTestOrder(boxCount = 1): Promise<{ orderId: string; orderNo: string; tossOrderId: string }> {
+/** 시험마다 새 주문을 만든다 — 결제 대기 상태. 소형 상자 n 개. 보내는 사람·받는 크리에이터를 안 주면 별빛 → 하루. */
+export async function registerTestOrder(
+  boxCount = 1,
+  who: { senderId?: string; creatorId?: string } = {},
+): Promise<{ orderId: string; orderNo: string; tossOrderId: string }> {
   const orderNo = `FC-T${randomCode(6)}`;
   const tossOrderId = `pay_test_${randomCode(12).toLowerCase()}`;
   const { data, error } = await adminClient().rpc("register_order", {
-    p_fan_id: SEED.fanId,
-    p_creator_id: SEED.haruCreatorId,
+    p_fan_id: who.senderId ?? SEED.fanId,
+    p_creator_id: who.creatorId ?? SEED.haruCreatorId,
     p_order_no: orderNo,
     p_item_kind: "시험 선물",
     p_has_electronics_or_metal: false,
