@@ -50,6 +50,8 @@ export function AccessLogPage({
         <p>
           <strong className={s.strong}>승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.
         </p>
+        {/* 주소 보호(KMS·복호화 함수)를 붙이기 전이라 아래 줄은 지어낸 값이다 — 진짜 기록처럼 읽히지 않게 */}
+        <p className="hint">지금 보이는 기록은 예시예요. 주소 보호 연결을 마치면 실제 기록이 여기에 쌓여요.</p>
       </div>
 
       <section className={s.month} aria-labelledby="sum-h">

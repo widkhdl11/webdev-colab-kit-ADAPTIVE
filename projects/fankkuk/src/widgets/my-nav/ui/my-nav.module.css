@@ -6,6 +6,8 @@
 .side a { display: flex; align-items: center; min-height: 52px; padding: 0 14px; white-space: nowrap; border-bottom: 3px solid transparent; color: var(--sub); font-weight: 600; text-decoration: none; }
 .side a:hover { color: var(--ink); }
 .side a[aria-current="page"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--brand); }
+/* 탭 줄이 가로 스크롤이라 바깥으로 그린 포커스 테두리의 위아래가 잘린다 — 767px 이하는 안쪽에 그린다 */
+.side a:focus-visible { outline-offset: -4px; }
 @media (min-width: 768px) {
   .grid { grid-template-columns: 224px minmax(0, 1fr); gap: 64px; }
   .side { position: sticky; top: 96px; align-self: start; }
@@ -13,5 +15,6 @@
   .side a { min-height: 48px; border-radius: var(--r-btn); border-bottom: 0; }
   .side a:hover { background: var(--surface); }
   .side a[aria-current="page"] { background: var(--surface); }
+  .side a:focus-visible { outline-offset: 2px; }
 }
 .body { min-width: 0; }

@@ -59,6 +59,8 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
       <div className="panel-title">
         <h2 className="panel-h">주소와 설정</h2>
         <p>선물을 받을 주소와 차단한 팬, 프로필, 알림을 한곳에서 관리해요.</p>
+        {/* 주소 저장·차단 목록은 아직 DB 에 연결되지 않아 지어낸 값이다 */}
+        <p className="hint">지금 보이는 주소와 차단 목록은 예시예요. 저장 기능을 연결하면 실제 값이 보여요.</p>
       </div>
 
       <div className={s["set-grid"]}>
