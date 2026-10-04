@@ -11,23 +11,21 @@ const PENDING: LocalDecision = { kind: "pending" };
 
 /**
  * 한 줄의 결정을 적은 새 기록을 돌려준다.
- * 차단하며 거절했으면, 서버가 저장 뒤에 「아직 승인 대기」라고 돌려준 주문번호(stillWaiting)에 없는 다른 줄은
- * 차단으로 함께 거절된 것이다(INV-D8) — 화면에 남아 있던 대기·서명 대기 줄을 막는다. 이미 처리된 줄은 그대로 둔다.
+ * alsoDeclined 는 서버가 「이번 차단으로 함께 거절했다」고 돌려준 주문번호다(INV-D8) — 그중 화면에 대기·서명 대기로
+ * 남아 있던 줄만 막는다. 이미 처리된 줄은 그대로 둔다. 차단 없이 거절했으면 서버가 빈 목록을 준다.
  * 같은 팬인지 닉네임으로 가리지 않는다 — 닉네임은 겹칠 수 있고, 보낸 사람 계정 값은 화면에 오지 않는다(INV-D1·D6).
  */
 export function applyDecision(
   states: Readonly<Record<string, LocalDecision>>,
-  requests: ReadonlyArray<{ orderNo: string }>,
   orderNo: string,
   decision: LocalDecision,
-  stillWaiting: ReadonlySet<string> = new Set(),
+  alsoDeclined: ReadonlySet<string>,
 ): Record<string, LocalDecision> {
   const next: Record<string, LocalDecision> = { ...states, [orderNo]: decision };
-  if (decision.kind !== "declined" || !decision.blocked) return next;
-  for (const other of requests) {
-    if (other.orderNo === orderNo || stillWaiting.has(other.orderNo)) continue;
-    const kind = (next[other.orderNo] ?? PENDING).kind;
-    if (kind === "pending" || kind === "signing") next[other.orderNo] = { kind: "blocked_elsewhere" };
+  for (const other of alsoDeclined) {
+    if (other === orderNo) continue;
+    const kind = (next[other] ?? PENDING).kind;
+    if (kind === "pending" || kind === "signing") next[other] = { kind: "blocked_elsewhere" };
   }
   return next;
 }

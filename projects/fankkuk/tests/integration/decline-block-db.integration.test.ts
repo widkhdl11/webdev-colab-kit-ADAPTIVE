@@ -50,10 +50,16 @@ afterAll(() => {
   psql(`delete from public.follows where fan_id = '${MOMO_PROFILE_ID}' and creator_id = '${SEED.haruCreatorId}'`);
 });
 
-async function decline(client: SupabaseClient, requestId: string, block = false): Promise<unknown> {
+type DeclineReply = { result: string; also_declined: string[] };
+
+async function declineFull(client: SupabaseClient, requestId: string, block = false): Promise<DeclineReply> {
   const r = await client.rpc("decline_gift", { p_request_id: requestId, p_block: block });
   if (r.error) throw new Error(`decline_gift 실패: ${r.error.code} ${r.error.message}`);
-  return r.data;
+  return r.data as DeclineReply;
+}
+
+async function decline(client: SupabaseClient, requestId: string, block = false): Promise<string> {
+  return (await declineFull(client, requestId, block)).result;
 }
 
 /** 결제까지 끝난 선물(하늘 → 하루가 기본). 상자 n 개. */
@@ -252,9 +258,12 @@ describe("INV-D4: 한 승인 요청은 한 번만 결정된다", () => {
     const t0 = Date.now();
     const [a, d] = await Promise.all([
       adminClient().rpc("approve_request", { p_request_id: g.requestId }).then((r) => ({ data: r.data as unknown, ms: Date.now() - t0 })),
-      haru.rpc("decline_gift", { p_request_id: g.requestId, p_block: false }).then((r) => ({ data: r.data as unknown, ms: Date.now() - t0 })),
+      haru
+        .rpc("decline_gift", { p_request_id: g.requestId, p_block: false })
+        .then((r) => ({ data: (r.data as DeclineReply | null)?.result, error: r.error, ms: Date.now() - t0 })),
     ]);
     await hold.released;
+    expect(d.error).toBeNull();
     expect(Math.min(a.ms, d.ms)).toBeGreaterThan(900);
     const outcome = [a.data, d.data].sort();
     expect([["already", "approved"], ["declined", "not_approvable"]]).toContainEqual(outcome);
@@ -274,10 +283,16 @@ describe("INV-D4: 한 승인 요청은 한 번만 결정된다", () => {
     const hold = await holdRowLock(`select 1 from public.approval_requests where request_id = '${g.requestId}' for update`, 1.5);
     const t0 = Date.now();
     const [d, x] = await Promise.all([
-      haru.rpc("decline_gift", { p_request_id: g.requestId, p_block: false }).then((r) => ({ data: r.data as unknown, ms: Date.now() - t0 })),
-      staff.rpc("office_run_expiry", { p_order_no: g.orderNo }).then((r) => ({ data: r.data as { gifts: number } | null, ms: Date.now() - t0 })),
+      haru
+        .rpc("decline_gift", { p_request_id: g.requestId, p_block: false })
+        .then((r) => ({ data: (r.data as DeclineReply | null)?.result, error: r.error, ms: Date.now() - t0 })),
+      staff
+        .rpc("office_run_expiry", { p_order_no: g.orderNo })
+        .then((r) => ({ data: r.data as { gifts: number } | null, error: r.error, ms: Date.now() - t0 })),
     ]);
     await hold.released;
+    expect(d.error).toBeNull();
+    expect(x.error).toBeNull();
     expect(Math.min(d.ms, x.ms)).toBeGreaterThan(900);
     const decided = (d.data === "declined" ? 1 : 0) + (x.data?.gifts ?? 0);
     expect(decided).toBe(1);
@@ -372,12 +387,16 @@ describe("INV-D6: 차단은 보낸 사람 계정 기준, 살아 있는 차단은
     const a = await giftFrom();
     const b = await giftFrom();
     const hold = await holdRowLock(`select 1 from public.approval_requests where request_id in ('${a.requestId}', '${b.requestId}') for update`, 1.5);
+    const t0 = Date.now();
     const results = await Promise.all([decline(haru, a.requestId, true), decline(haru, b.requestId, true)]);
+    expect(Date.now() - t0).toBeGreaterThan(900);
     await hold.released;
     // 하나가 먼저 차단하며 다른 주문까지 거절했으면 두 번째는 「이미 처리됨」이다
-    expect(results).toContain("declined");
+    expect(results.sort()).toEqual(["already", "declined"]);
     expect(activeBlocks()).toEqual([SENDER]);
     expect([orderStatus(a.orderId), orderStatus(b.orderId)]).toEqual(["rejected", "rejected"]);
+    // 차단이 함께 거절한 쪽의 대기 요청도 거절로 기록된다 — 대기로 남으면 처리한 요청 목록에서 빠진다
+    expect([requestRow(a.requestId), requestRow(b.requestId)].map((r) => r.split("|")[0])).toEqual(["declined", "declined"]);
   });
 
   it("INV-D6: 살아 있는 차단을 같은 쌍에 하나 더 넣으면 DB 제약이 거부한다", async () => {
@@ -475,10 +494,31 @@ describe("INV-D7: 차단된 보낸 사람의 새 등록은 DB 등록 함수가 �
     } else {
       expect(reg.error.message).toContain("받을 수 없는 크리에이터");
     }
+    // 검수 불합격으로 반송 중인 주문은 차단해도 그대로다(INV-D2 와 맞춤) — 앞 시험이 남긴 그런 주문은 세지 않는다
     const left = psql(
-      `select count(*) from public.orders where fan_id = '${SENDER}' and creator_id = '${SEED.haruCreatorId}' and item_kind = '시험 선물' and status in ('pending_payment', 'registered', 'received', 'labeled', 'inspected')`,
+      `select count(*) from public.orders where fan_id = '${SENDER}' and creator_id = '${SEED.haruCreatorId}' and item_kind = '시험 선물' and status in ('pending_payment', 'registered', 'received', 'labeled', 'inspected') and inspection_result is distinct from 'returned'`,
     );
     expect(left).toBe("0");
+  });
+});
+
+describe("INV-D7 S7c: 차단이 먼저 끝나는 갈래", () => {
+  it("INV-D7 S7c: 차단 쪽이 쌍 잠금을 쥔 채 차단 줄을 넣는 동안 온 등록은, 차단이 끝난 뒤 확인해 거부된다", async () => {
+    const key = `creator_block:${SEED.haruCreatorId}:${SENDER}`;
+    const hold = await holdRowLock(
+      `select pg_advisory_xact_lock(hashtextextended('${key}', 0)); insert into public.creator_blocks (creator_id, sender_id) values ('${SEED.haruCreatorId}', '${SENDER}')`,
+      1.5,
+    );
+    const t0 = Date.now();
+    const r = await adminClient().rpc("register_order", {
+      p_fan_id: SENDER, p_creator_id: SEED.haruCreatorId, p_order_no: "FC-TRACE7D", p_item_kind: "시험 선물",
+      p_has_electronics_or_metal: false, p_tiers: ["small"], p_toss_order_id: "pay_test_race_7d",
+      p_goods_krw: 0, p_service_fee_krw: 1400, p_inspection_fee_krw: 1500, p_shipping_fee_krw: 4000, p_amount_krw: 6900,
+    });
+    await hold.released;
+    expect(Date.now() - t0).toBeGreaterThan(900);
+    expect(r.error?.message).toContain("받을 수 없는 크리에이터");
+    expect(psql(`select count(*) from public.orders where order_no = 'FC-TRACE7D'`)).toBe("0");
   });
 });
 
@@ -495,7 +535,9 @@ describe("INV-D8: 차단하면 그 팬의 진행 중 주문이 모두 거절된�
     const outbound = waybill();
     expect((await owner.rpc("office_print_label", { p_qr: printedQr, p_waybill: outbound })).error).toBeNull();
 
-    expect(await decline(haru, waiting.requestId, true)).toBe("declined");
+    const reply = await declineFull(haru, waiting.requestId, true);
+    expect(reply.result).toBe("declined");
+    expect([...reply.also_declined].sort()).toEqual([unpaid.orderNo, approved.orderNo].sort());
 
     expect(orderStatus(waiting.orderId)).toBe("rejected");
     expect(orderStatus(unpaid.orderId)).toBe("rejected");
@@ -503,6 +545,13 @@ describe("INV-D8: 차단하면 그 팬의 진행 중 주문이 모두 거절된�
     expect(requestRow(approved.requestId)).toMatch(/^approved\|/);
     expect(orderRow(approved.orderId)).toMatch(/^rejected\|\d/);
     expect(parcelState(approvedQr)).toBe("return_waiting");
+
+    // INV-D5: 결제한 적 없는 거절 주문은 차단으로만 생긴다 — 팬 목록·상자 읽기에 나오면 차단을 짐작한다
+    const gifts = (await fan.rpc("my_gifts")).data as { order_no: string }[];
+    expect(gifts.map((x) => x.order_no)).not.toContain(unpaid.orderNo);
+    expect(gifts.map((x) => x.order_no)).toContain(waiting.orderNo);
+    expect((await fan.rpc("my_gift_boxes", { p_order_no: unpaid.orderNo })).data).toEqual([]);
+    expect((await fan.rpc("my_gift_boxes", { p_order_no: waiting.orderNo })).data).toHaveLength(1);
 
     expect(orderStatus(printed.orderId)).toBe("label_printed");
     expect((await staff.rpc("office_confirm_shipment", { p_qr: printedQr, p_waybill: outbound })).error).toBeNull();
@@ -525,6 +574,39 @@ describe("INV-D8: 차단하면 그 팬의 진행 중 주문이 모두 거절된�
     expect(orderStatus(both.orderId)).toBe("registered");
     const secondQr = await receiveAndLabel(staff, second);
     expect(await inspect(staff, secondQr, FAN_PASS)).toBe("inspected");
+  });
+
+  it("INV-D8: 차단이 주문을 고른 뒤 잠그기 전에 송장 출력이 끝나도, 그 주문은 그대로 간다", async () => {
+    const both = await giftFrom(2);
+    const firstQr = await inspectedBox(both, 0);
+    await setWaybill(both.boxIds[1], waybill());
+    await approve(both);
+    // 다른 연결이 주문 줄을 잠근 채 첫 상자의 송장 출력을 끝낸다 — 차단은 이 주문을 후보로 고른 뒤 잠금에서 기다린다
+    const hold = await holdRowLock(
+      `select 1 from public.orders where id = '${both.orderId}' for update; update public.office_parcels set state = 'label_printed', printed_at = now(), outbound_waybill_no = '${waybill()}' where qr_code = '${firstQr}'`,
+      1.5,
+    );
+    const trigger = await giftFrom();
+    const t0 = Date.now();
+    const reply = await declineFull(haru, trigger.requestId, true);
+    expect(Date.now() - t0).toBeGreaterThan(900);
+    await hold.released;
+    expect(reply.result).toBe("declined");
+    expect(reply.also_declined).not.toContain(both.orderNo);
+    expect(orderStatus(both.orderId)).toBe("registered");
+  });
+
+  it("INV-D8·D2: 검수 불합격으로 반송 중인 주문은 차단해도 거절로 바뀌지 않는다", async () => {
+    const returned = await giftFrom();
+    const no = waybill();
+    await setWaybill(returned.boxIds[0], no);
+    const qr = await receiveAndLabel(staff, no);
+    expect(await inspect(staff, qr, { bluetooth: "clear", rf: "clear", metal: "found", outcome: "return" })).toBe("return_waiting");
+    const before = orderStatus(returned.orderId);
+    const trigger = await giftFrom();
+    const reply = await declineFull(haru, trigger.requestId, true);
+    expect(reply.also_declined).not.toContain(returned.orderNo);
+    expect(orderStatus(returned.orderId)).toBe(before);
   });
 
   it("INV-D8 S8b: 차단 때 결제 대기였던 주문은 결제가 끝나도 거절 그대로, 대기 요청 0건, 환불은 전액", async () => {
@@ -640,6 +722,33 @@ describe("처리한 요청 목록의 「차단함」 (스펙 「지금 코드와
       [approved.orderNo]: "blocked",
       [trigger.orderNo]: "blocked",
     });
+  });
+
+  it("INV-D8: 차단된 팬이라도 송장이 나간 승인 주문은 「approved」, 차단 전에 따로 거절한 주문은 「declined」 그대로", async () => {
+    const earlier = await giftFrom();
+    expect(await decline(haru, earlier.requestId)).toBe("declined");
+    const printed = await giftFrom();
+    const qr = await inspectedBox(printed);
+    await approve(printed);
+    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error).toBeNull();
+    const trigger = await giftFrom();
+    expect(await decline(haru, trigger.requestId, true)).toBe("declined");
+
+    expect(await decidedOf([earlier.orderNo, printed.orderNo, trigger.orderNo])).toEqual({
+      [earlier.orderNo]: "declined",
+      [printed.orderNo]: "approved",
+      [trigger.orderNo]: "blocked",
+    });
+  });
+
+  it("INV-D10: 차단으로 거절된 승인 주문은 차단을 풀면 「declined」 — 「승인함」으로 돌아가지 않는다", async () => {
+    const approved = await giftFrom();
+    await approve(approved);
+    const trigger = await giftFrom();
+    expect(await decline(haru, trigger.requestId, true)).toBe("declined");
+    const blockId = psql(`select id from public.creator_blocks where creator_id = '${SEED.haruCreatorId}' and sender_id = '${SENDER}' and unblocked_at is null`);
+    expect((await haru.rpc("unblock_sender", { p_block_id: blockId })).data).toBe("unblocked");
+    expect(await decidedOf([approved.orderNo])).toEqual({ [approved.orderNo]: "declined" });
   });
 
   it("INV-D10: 차단을 풀면 과거 거절은 「declined」로 보인다 — 「풀려면 설정에서」 안내가 남지 않게", async () => {

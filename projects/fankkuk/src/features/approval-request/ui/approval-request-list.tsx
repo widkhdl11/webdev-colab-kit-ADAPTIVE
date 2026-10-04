@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
 import type { DecidedOutcome, DecidedRequestView } from "@/entities/order/model/decided-request";
@@ -71,9 +71,22 @@ export function ApprovalRequestList({
   decided: readonly DecidedRequestView[];
 }) {
   const router = useRouter();
-  // 처음 받은 줄을 붙들어 둔다 — 저장 뒤 새로 읽어 오면(router.refresh) 거절된 줄이 목록에서 빠지는데, 결과 문구는 이 자리에 남아야 한다
-  const [rows] = useState(requests);
   const [states, setStates] = useState<Record<string, LocalDecision>>({});
+  // 저장 뒤 새로 읽으면(router.refresh) 거절된 줄은 대기 목록에서 빠진다. 결과 문구는 그 자리에 남아야 하므로
+  // 지금까지 본 줄을 순서대로 붙들고, 새로 읽은 목록에서 빠진 줄은 이 화면에서 처리한 것만 남긴다. 새 요청은 뒤에 붙인다.
+  const [seen, setSeen] = useState(requests);
+  const rows = useMemo(() => {
+    const fresh = new Set(requests.map((r) => r.orderNo));
+    const kept = seen.filter((r) => fresh.has(r.orderNo) || (states[r.orderNo]?.kind ?? "pending") !== "pending");
+    const keptNos = new Set(kept.map((r) => r.orderNo));
+    return [...kept, ...requests.filter((r) => !keptNos.has(r.orderNo))];
+  }, [requests, seen, states]);
+  // 줄 구성이 바뀔 때만 붙들어 둔다 — 매번 새 배열을 넣으면 rows 가 다시 계산돼 끝없이 돈다
+  const rowKey = rows.map((r) => r.orderNo).join(",");
+  const seenKey = seen.map((r) => r.orderNo).join(",");
+  useEffect(() => {
+    if (rowKey !== seenKey) setSeen(rows);
+  }, [rowKey, seenKey, rows]);
   const [sheet, setSheet] = useState<{ kind: "approve" | "decline"; req: ApprovalRequestView } | null>(null);
   const [block, setBlock] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -93,8 +106,8 @@ export function ApprovalRequestList({
   }, [focusTarget]);
 
   const stateOf = (orderNo: string): LocalDecision => states[orderNo] ?? { kind: "pending" };
-  const decide = (req: ApprovalRequestView, st: LocalDecision, stillWaiting?: ReadonlySet<string>) => {
-    setStates((prev) => applyDecision(prev, rows, req.orderNo, st, stillWaiting));
+  const decide = (req: ApprovalRequestView, st: LocalDecision, alsoDeclined: ReadonlySet<string> = new Set()) => {
+    setStates((prev) => applyDecision(prev, req.orderNo, st, alsoDeclined));
     setFocusTarget({ orderNo: req.orderNo, where: "result" });
     setSheet(null);
   };
@@ -106,7 +119,7 @@ export function ApprovalRequestList({
     const r = await sendDecline(req.requestId, block);
     setSaving(false);
     if (r.kind === "ok") {
-      decide(req, { kind: "declined", blocked: block }, new Set(r.waitingOrderNos));
+      decide(req, { kind: "declined", blocked: block }, new Set(r.alsoDeclinedOrderNos));
       router.refresh(); // 처리한 요청 탭과 머리글의 대기 수를 새로 읽는다
       return;
     }
