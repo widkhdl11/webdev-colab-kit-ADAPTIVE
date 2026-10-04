@@ -1,4 +1,4 @@
-import { adminClient, psql } from "./helpers";
+import { adminClient, officeRowsDelete, psql } from "./helpers";
 
 // 역조공 통합 시험 공용. 시험이 만든 보내기는 주문번호가 RG-T 로 시작한다 — 끝나면 그것만 지운다.
 
@@ -92,6 +92,8 @@ export function shareReply(orderNo: string): string {
 }
 
 export function deleteTestRevgifts(): void {
+  const shares = "select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_test_rg_%'";
+  psql(["begin;", "set local session_replication_role = replica;", ...officeRowsDelete(shares, "share_id"), "commit;"].join(" "));
   psql(
     "delete from public.refunds where share_id in (select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_test_rg_%'); " +
       "delete from public.revgift_sends where toss_order_id like 'pay_test_rg_%'",

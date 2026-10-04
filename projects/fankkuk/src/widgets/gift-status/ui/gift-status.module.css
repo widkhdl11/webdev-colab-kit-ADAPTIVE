@@ -64,9 +64,9 @@
 .box-row:first-child { border-top: 0; padding-top: 8px; }
 .box-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .box-top h3 { font-size: 20px; }
-.inv-no { margin-top: 8px; color: var(--sub); }
-.inv-no strong { color: var(--ink); }
-.tracking { padding-top: 24px; border-top: 1px solid var(--divider); }
+/* 입고된 상자의 원 송장번호 — 시안 gift-boxes.html .inv-fixed (고치는 칸은 features/box-waybill) */
+.inv-fixed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 12px; }
+.no { font-size: 20px; font-weight: 700; letter-spacing: .3px; font-variant-numeric: tabular-nums; }
 
 .addr { margin-top: 20px; padding: 24px; border-radius: var(--r-card); box-shadow: var(--hair); }
 .addr-title { font-size: 18px; font-weight: 700; }

@@ -1,0 +1,48 @@
+/* 팬꾹 관리자 작업 화면(입고·검수·출고) 전용 CSS — 시안. admin.css 를 먼저 불러온 뒤 쓴다. */
+.work { display: grid; gap: 16px; max-width: 980px; }
+.pending-line { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: var(--r-sm); background: var(--surface); font-size: 14px; position: sticky; top: 64px; z-index: 30; box-shadow: var(--hair); }
+.pending-line.is-on { background: #FFF3E5; color: #5B3410; font-weight: 700; box-shadow: none; }
+.pending-line .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+.pending-line.is-on .dot { background: #5B3410; }
+.scan { display: grid; gap: 6px; padding: 16px 18px; border-radius: var(--r-card); background: var(--surface); }
+.scan label { font-size: 14px; font-weight: 800; }
+.scan .row { display: flex; gap: 10px; align-items: center; }
+.scan input { flex: 1; min-width: 0; height: 56px; padding: 0 18px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: 20px; letter-spacing: .5px; font-variant-numeric: tabular-nums; }
+.scan input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.scan .hint { font-size: 13px; }
+.demo-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 12px; border-radius: var(--r-sm); border: 1px dashed #8A938F; font-size: 13px; color: var(--sub); }
+.demo-switch strong { color: var(--ink); margin-right: 4px; }
+.demo-switch button { height: 28px; padding: 0 12px; border: 0; border-radius: 9999px; background: var(--surface); font-weight: 700; font-size: 13px; cursor: pointer; }
+.demo-switch button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.result { display: grid; gap: 14px; padding: 20px 22px; border-radius: var(--r-card); box-shadow: var(--hair); background: var(--white); }
+.result--ok { box-shadow: inset 0 0 0 2px var(--brand); }
+.result--no { background: #FFF3E5; box-shadow: none; color: #5B3410; }
+.result-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.result-head h2 { font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
+.result .kv { grid-template-columns: 110px minmax(0, 1fr); font-size: 15px; }
+.result--no .kv dt { color: #5B3410; }
+.big-note { font-size: 17px; font-weight: 700; }
+.next-step { display: grid; gap: 8px; padding: 14px 16px; border-radius: var(--r-sm); background: var(--surface); }
+.next-step h3 { font-size: 14px; font-weight: 800; }
+.result--no .next-step { background: rgba(255,255,255,.7); }
+.qnum { display: grid; place-items: center; padding: 18px; border-radius: var(--r-card); background: var(--ink); color: #fff; font-size: 56px; font-weight: 800; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+.qnum small { display: block; font-size: 14px; font-weight: 600; letter-spacing: 0; opacity: .9; text-align: center; margin-bottom: 2px; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 14px; }
+.steps li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: var(--surface); color: var(--sub); font-weight: 600; }
+.steps li b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #DDE0DF; color: var(--ink); font-size: 12px; }
+.steps li.is-now { background: var(--ink); color: #fff; }
+.steps li.is-now b { background: #fff; color: var(--ink); }
+.steps li.is-done { background: #E6F2EE; color: #1F5A47; }
+.steps li.is-done b { background: var(--brand); color: #fff; }
+.choice { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.choice legend { padding: 0; font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+.choice .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: var(--r-sm); background: var(--white); box-shadow: var(--field); font-weight: 600; cursor: pointer; }
+.opt input { width: 18px; height: 18px; accent-color: var(--brand); margin: 0; }
+.opt:has(input:checked) { box-shadow: inset 0 0 0 2px var(--brand); background: #F2F9F6; }
+.opt:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
+.opt.is-off { background: var(--surface); color: var(--faint); box-shadow: none; cursor: not-allowed; }
+.check-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.work .tbl td, .work .tbl th { padding: 7px 12px; }
+.mini-h { font-size: 15px; font-weight: 800; margin-bottom: 8px; }
+@media (max-width: 1279px) { .check-grid { grid-template-columns: minmax(0, 1fr); } }

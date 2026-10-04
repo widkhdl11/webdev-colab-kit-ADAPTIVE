@@ -1,4 +1,4 @@
-import { psql, SEED } from "./helpers";
+import { officeRowsDelete, psql, SEED } from "./helpers";
 
 // 요금표 통합 시험 공용 (admin-console INV-K1~K6). 시드: fankkuk_admin = 대표 운영자, fankkuk_staff = 직원 운영자.
 
@@ -73,6 +73,8 @@ export const SMALL_RAISED: Amounts = { service: 1900, inspection: 1500, shipping
 
 /** 시험이 만든 역조공 보내기(결제 주문번호 pay_test_rg_*)를 지운다. */
 export function deleteTestRevgifts(): void {
+  const shares = "select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_test_rg_%'";
+  psql(["begin;", "set local session_replication_role = replica;", ...officeRowsDelete(shares, "share_id"), "commit;"].join(" "));
   psql(
     "delete from public.refunds where share_id in (select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_test_rg_%'); delete from public.revgift_shares where send_id in (select id from public.revgift_sends where toss_order_id like 'pay_test_rg_%'); delete from public.revgift_sends where toss_order_id like 'pay_test_rg_%';",
   );

@@ -1,0 +1,41 @@
+/* 상자 원 송장번호 칸 — 시안 v4 gift-boxes.html(.inv-fixed·.inv-edit·.finder) · creator-revgift-boxes.html(.share-inv). 입력창·버튼은 base.css */
+
+/* 등록된 번호 + 고치기 */
+.fixed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 12px; }
+.lab { color: var(--sub); }
+.no { font-size: 20px; font-weight: 700; letter-spacing: .3px; font-variant-numeric: tabular-nums; }
+
+/* 입력 */
+.edit { margin-top: 12px; }
+.inv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.inv :global(.input), .inv :global(.btn) { height: 52px; }
+
+/* 크리에이터 몫 줄 — 줄 아래에 붙고, 아바타 폭만큼 들여 쓴다 */
+.share { grid-column: 1 / -1; margin-left: 64px; }
+.share .fixed { margin-top: 0; gap: 8px 12px; }
+.share .no { font-size: 18px; }
+.share .edit { margin-top: 0; }
+.share .inv { grid-template-columns: minmax(0, 320px) auto; }
+
+/* 오류 — 색 하나로만 알리지 않게 테두리 원 안 「!」 + 굵은 본문색 (design-rules 7절).
+   「!」는 낭독기가 읽지 않게 aria-hidden 글자로 둔다(CSS content 는 읽힌다) */
+.error { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; color: var(--ink); font-weight: 700; }
+.error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
+
+/* 내 물건 찾기 */
+.finder { margin-top: 16px; padding: 24px; border-radius: var(--r-card); background: var(--surface); }
+.finder-q { font-size: 18px; font-weight: 700; }
+.finder form { display: grid; gap: 16px; margin-top: 20px; }
+.finder :global(.input) { background: var(--white); }
+.finder-none { margin-top: 8px; color: var(--sub); }
+.result { margin-top: 16px; padding: 16px 20px; border-radius: var(--r-box); background: var(--white); }
+.result:focus { outline: 3px solid var(--ink); outline-offset: 2px; }
+.result strong { display: block; font-size: 18px; }
+.result p { margin-top: 4px; color: var(--sub); }
+.result--ok { box-shadow: inset 0 0 0 2px var(--brand); }
+
+@media (max-width: 767px) {
+  .inv, .share .inv { grid-template-columns: minmax(0, 1fr); }
+  .share { margin-left: 0; }
+  .finder { padding: 20px; }
+}

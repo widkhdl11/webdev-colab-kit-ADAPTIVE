@@ -1,0 +1,60 @@
+/* 관리자 작업 화면(스캔 칸 하나 + 결과 카드) 부품 — 시안 docs/design/mockups/site/v4/admin/work.css (design-rules 8-1).
+   색·반경은 사이트 토큰. 공용 표·버튼·알림은 admin.module.css 를 같이 쓴다. */
+
+.work { display: grid; gap: 16px; max-width: 980px; }
+.pendingLine { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: var(--r-btn-sm); background: var(--surface); font-size: 14px; position: sticky; top: 64px; z-index: 30; box-shadow: var(--hair); }
+.pendingOn { background: var(--warn-soft); color: var(--warn-ink); font-weight: 700; box-shadow: none; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+.pendingOn .dot { background: var(--warn-ink); }
+
+.scan { display: grid; gap: 6px; padding: 16px 18px; border-radius: var(--r-card); background: var(--surface); }
+.scan label { font-size: 14px; font-weight: 800; }
+.scanRow { display: flex; gap: 10px; align-items: center; }
+.scan input { flex: 1; min-width: 0; height: 56px; padding: 0 18px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: 20px; letter-spacing: .5px; font-variant-numeric: tabular-nums; }
+.scan input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+.result { display: grid; gap: 14px; padding: 20px 22px; border-radius: var(--r-card); box-shadow: var(--hair); background: var(--white); }
+.resultOk { box-shadow: inset 0 0 0 2px var(--brand); }
+.resultNo { background: var(--warn-soft); box-shadow: none; color: var(--warn-ink); }
+.resultHead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.resultHead h2 { font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
+.resultHeadSm h2 { font-size: 18px; }
+.result dl { grid-template-columns: 110px minmax(0, 1fr); font-size: 15px; }
+.resultNo dl dt { color: var(--warn-ink); }
+.bigNote { font-size: 17px; font-weight: 700; }
+.nextStep { display: grid; gap: 8px; padding: 14px 16px; border-radius: var(--r-btn-sm); background: var(--surface); }
+.nextStep h3 { font-size: 14px; font-weight: 800; }
+.resultNo .nextStep { background: var(--white); }
+
+.qnum { display: grid; place-items: center; padding: 18px; border-radius: var(--r-card); background: var(--ink); color: var(--white); font-size: 56px; font-weight: 800; letter-spacing: 2px; font-variant-numeric: tabular-nums; text-align: center; }
+.qnum small { display: block; font-size: 14px; font-weight: 600; letter-spacing: 0; opacity: .9; margin-bottom: 2px; }
+.qnumSm { font-size: 36px; }
+
+.steps { display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 14px; list-style: none; padding: 0; margin: 0; }
+.steps li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-weight: 600; }
+.steps li b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--track); color: var(--ink); font-size: 12px; }
+.steps li.now { background: var(--ink); color: var(--white); }
+.steps li.now b { background: var(--white); color: var(--ink); }
+.steps li.done { background: var(--brand-soft); color: var(--brand-ink); }
+.steps li.done b { background: var(--brand); color: var(--white); }
+
+.choice { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; min-width: 0; }
+.choice legend { padding: 0; font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: var(--r-btn-sm); background: var(--white); box-shadow: var(--field); font-weight: 600; cursor: pointer; }
+.opt input { width: 18px; height: 18px; accent-color: var(--brand); margin: 0; }
+.opt:has(input:checked) { box-shadow: inset 0 0 0 2px var(--brand); background: var(--brand-soft); }
+.opt:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
+.optOff { background: var(--surface); color: var(--faint); box-shadow: none; cursor: not-allowed; }
+.checkGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.checkGrid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1279px) { .checkGrid, .checkGrid2 { grid-template-columns: minmax(0, 1fr); } }
+
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1023px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.noteWarn { background: var(--warn-soft); color: var(--warn-ink); }
+.miniH { font-size: 15px; font-weight: 800; margin-bottom: 8px; }
+.work table td, .work table th { padding: 6px 12px; }
+.formTitle { font-size: 18px; font-weight: 800; }
+.scanHint { font-size: 13px; color: var(--sub); }
+.scanNotice { font-size: 14px; font-weight: 700; }

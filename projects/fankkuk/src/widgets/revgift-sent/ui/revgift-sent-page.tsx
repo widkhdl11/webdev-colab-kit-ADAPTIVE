@@ -1,14 +1,52 @@
 import Link from "next/link";
+import { isWaybillEditable, type ShareBox } from "@/entities/parcel/model/box-rows";
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
 import { countBatchStates, toSentBatches } from "@/entities/revgift/model/sent-batches";
 import { sentStateTag } from "@/entities/revgift/ui/received-status";
+import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import s from "./revgift-sent.module.css";
 
 // 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v4/creator-revgift-list.html
 // 한 줄에 보이는 것은 팬 아이디·닉네임·주문번호·상태 배지(셋 중 하나)뿐이다(reverse-gift INV-R8).
+// 몫마다 원 송장번호 줄이 붙는다(시안 creator-revgift-boxes.html). 입고 전엔 넣고 고치고, 입고되면 「입고됨」으로 잠긴다.
+// 택배사 고르는 칸은 DB 에 그 칸이 없어 뺐다.
 // 묶음 나누기와 상태 세기는 entities/revgift/model/sent-batches.ts — 여기서는 문구만 조립한다.
+
+function Check() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// 받지 않은 몫(거절·기한 지남)은 보낼 상자가 아니라 송장번호 칸을 열지 않는다
+function ShareWaybill({ box, fanNickname, shareState }: { box: ShareBox; fanNickname: string; shareState: SentRevgift["state"] }) {
+  if (isWaybillEditable(box.state)) {
+    if (shareState === "not_received") return null;
+    return (
+      <WaybillEditor
+        target={{ kind: "share", id: box.shareId }}
+        boxName={`${fanNickname}님 상자`}
+        initial={box.waybillNo}
+        layout="share"
+        hint="팬 한 명마다 상자가 따로예요. 이 팬에게 보내는 상자의 송장번호를 넣어 주세요."
+      />
+    );
+  }
+  return (
+    <div className={s["share-inv"]}>
+      <span className={s.lab}>송장번호</span>
+      <span className="tag tag--brand">
+        <Check />
+        입고됨
+      </span>
+      <span className={s.lab}>사무실에 도착해 확인했어요</span>
+    </div>
+  );
+}
 
 function batchSummary(shares: readonly SentRevgift[]): string {
   const n = countBatchStates(shares);
@@ -20,8 +58,9 @@ function batchSummary(shares: readonly SentRevgift[]): string {
   return n.not_received ? `${parts.join(" · ")} (받지 않은 상자 요금은 환불돼요)` : parts.join(" · ");
 }
 
-export function RevgiftSentPage({ rows, paid }: { rows: readonly SentRevgift[]; paid: boolean }) {
+export function RevgiftSentPage({ rows, boxes, paid }: { rows: readonly SentRevgift[]; boxes: readonly ShareBox[]; paid: boolean }) {
   const batches = toSentBatches(rows);
+  const boxByOrder = new Map(boxes.map((b) => [b.orderNo, b]));
   return (
     <div>
       <div className="panel-head">
@@ -61,6 +100,7 @@ export function RevgiftSentPage({ rows, paid }: { rows: readonly SentRevgift[]; 
             <ul className={s.shares}>
               {b.shares.map((x, i) => {
                 const tag = sentStateTag(x.state);
+                const box = boxByOrder.get(x.orderNo);
                 return (
                   <li key={x.orderNo} className={s.share}>
                     <FaceAvatar index={i} />
@@ -71,6 +111,7 @@ export function RevgiftSentPage({ rows, paid }: { rows: readonly SentRevgift[]; 
                       </p>
                     </div>
                     <span className={`tag ${tag.brand ? "tag--brand" : ""} ${s.tag}`}>{tag.tag}</span>
+                    {box ? <ShareWaybill box={box} fanNickname={x.fanNickname} shareState={x.state} /> : null}
                   </li>
                 );
               })}
@@ -85,6 +126,7 @@ export function RevgiftSentPage({ rows, paid }: { rows: readonly SentRevgift[]; 
           <li>「받지 않았어요」는 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
           <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
           <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
+          <li>송장번호는 상자가 사무실에 도착하기 전까지만 고칠 수 있어요. 도착해서 입고되면 「입고됨」으로 바뀌고 잠겨요.</li>
         </ul>
       </div>
     </div>

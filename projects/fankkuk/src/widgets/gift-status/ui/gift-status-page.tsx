@@ -12,15 +12,19 @@ import {
   RETURN_ON_REJECT_NOTICE,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
+import { boxTierName, hasArrived, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
 import { RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
-import { TrackingInput } from "@/features/tracking-input/ui/tracking-input";
+import { formatWaybill } from "@/entities/parcel/model/waybill-no";
+import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
+import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { CopyButton } from "./copy-button";
 import s from "./gift-status.module.css";
 
 // 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v4/gift.html
 // 문의하지 않아도 지금 어디까지 왔는지 알 수 있게(성공 기준 3).
-// 크리에이터에게 보내는 송장번호는 이 화면에 오지 않는다 — toFanView 가 걸러서 넘긴다.
+// 크리에이터에게 보내는 송장번호는 이 화면에 오지 않는다 — toFanView·my_gift_boxes 가 걸러서 넘긴다.
+// 상자별 원 송장번호·내 물건 찾기 시안: docs/design/mockups/site/v4/gift-boxes.html (택배사 고르는 칸은 DB 에 그 칸이 없어 뺐다).
 // 사무실 주소는 view.officeAddress 가 있을 때(결제가 끝난 진행 중 주문)만 그린다(INV-S9). 헤더·푸터는 라우트가 붙인다.
 // 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 검수와 출고 사이에서 갈라져 붙는 칸으로 그린다.
 
@@ -36,12 +40,18 @@ const STEP_CLASS = { done: s["is-done"], current: s["is-current"], stopped: s["i
 
 const APPROVAL_TEXT = { done: "승인됨", waiting: "기다리는 중", todo: "출고 전에 받아요" } as const;
 
-export function GiftStatusPage({ view }: { view: FanGiftView }) {
+export function GiftStatusPage({ view, boxes }: { view: FanGiftView; boxes: readonly GiftBox[] }) {
   const badge = fanBadge(view);
   const progress = fanProgress(view);
   const current = view.steps.find((st) => st.state === "current");
   const currentDetail = current ? fanStepDetail(current, view) : null;
-  const arrived = view.steps.some((st) => st.key === "received" && st.state === "done");
+  // 상자별 원 송장번호는 입고 전까지만 고친다(design-rules 8-1). 출고 운송장은 읽기 함수가 주지 않는다.
+  const editableBoxes = view.outcome === "in_progress" ? boxes.filter((b) => isWaybillEditable(b.state)) : [];
+  const anyEditable = editableBoxes.length > 0;
+  const finderBoxes = editableBoxes.map((b) => {
+    const tierName = boxTierName(b.tier);
+    return { boxId: b.boxId, label: b.label, name: tierName ? `${b.label} · ${tierName}` : b.label };
+  });
   // 단계 막대와 상자별 상태는 같은 경우(진행 중·돌려보냄)에만 보인다
   const showsProgress = showsSteps(view);
   const recipient = `팬꾹 ${view.orderNo}`;
@@ -131,37 +141,63 @@ export function GiftStatusPage({ view }: { view: FanGiftView }) {
                 </div>
               ) : null}
 
-              {showsProgress ? (
+              {showsProgress && boxes.length > 0 ? (
                 <div className={s.part}>
                   <h2>상자별 상태</h2>
+                  {anyEditable ? <p className={s["sub-t"]}>상자마다 보낸 택배의 송장번호를 넣어 주세요. 사무실에서 상자를 찾는 데 쓰여요.</p> : null}
                   <div className={s["box-rows"]}>
-                    {Array.from({ length: view.boxCount }, (_, i) => (
-                      <div key={i} className={s["box-row"]}>
-                        <div className={s["box-top"]}>
-                          <h3>
-                            {view.orderNo}-{i + 1}
-                          </h3>
-                          {arrived ? (
-                            <span className="tag tag--brand">
-                              <Check size={16} />
-                              입고 완료
-                            </span>
-                          ) : (
-                            <span className="tag">아직 도착 전</span>
-                          )}
+                    {boxes.map((b) => {
+                      const tierName = boxTierName(b.tier);
+                      return (
+                        <div key={b.boxId} className={s["box-row"]}>
+                          <div className={s["box-top"]}>
+                            <div>
+                              <h3>{b.label}</h3>
+                              {tierName ? <p className="sub">{tierName}</p> : null}
+                            </div>
+                            {hasArrived(b.state) ? (
+                              <span className="tag tag--brand">
+                                <Check size={16} />
+                                입고됨
+                              </span>
+                            ) : (
+                              <span className="tag">아직 도착 전</span>
+                            )}
+                          </div>
+                          {isWaybillEditable(b.state) && view.outcome === "in_progress" ? (
+                            <WaybillEditor
+                              target={{ kind: "box", id: b.boxId }}
+                              boxName={b.label}
+                              initial={b.waybillNo}
+                              layout="box"
+                              hint="상자 하나에 송장번호 하나예요. 상자가 여러 개면 상자마다 따로 넣어 주세요."
+                            />
+                          ) : b.waybillNo ? (
+                            <>
+                              <div className={s["inv-fixed"]}>
+                                <span className="sub">송장번호</span>
+                                <span className={s.no}>{formatWaybill(b.waybillNo)}</span>
+                              </div>
+                              {hasArrived(b.state) ? <p className="hint">입고된 상자는 송장번호를 고칠 수 없어요.</p> : null}
+                            </>
+                          ) : null}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
-                  {view.canEnterTrackingNo ? (
-                    <div className={s.tracking}>
-                      <TrackingInput initial={view.fanTrackingNo} />
-                    </div>
-                  ) : view.fanTrackingNo ? (
-                    <p className={s["inv-no"]}>
-                      내 송장번호 <strong>{view.fanTrackingNo}</strong>
-                    </p>
-                  ) : null}
+                </div>
+              ) : null}
+
+              {/* 내 물건 찾기(office-workflow INV-W5) — 진행 중 주문이면 늘 그린다. 마지막 상자를 찾아 고를 상자가 없어져도
+                  결과 안내가 남아 있게, 빈 목록은 칸 안에서 처리한다. 잇는 판정은 DB 가 한다 */}
+              {showsProgress && view.outcome === "in_progress" && boxes.length > 0 ? (
+                <div className={s.part}>
+                  <h2>내 물건 찾기</h2>
+                  <p className={s["sub-t"]}>보낸 상자가 사무실에 도착했는데 주문과 이어지지 않았을 때 쓰는 칸이에요.</p>
+                  <FindMyBox boxes={finderBoxes} />
+                  <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`}>
+                    사무실에서 보이는 건 도착 시각과 보낸 사람 이름 앞 한 글자, 보관 선반 번호뿐이에요. 주소와 전화번호는 남기지 않아요.
+                  </p>
                 </div>
               ) : null}
 

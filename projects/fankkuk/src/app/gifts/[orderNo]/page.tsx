@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
+import { readMyGiftBoxes } from "@/entities/parcel/api/box-reads";
 import { isOrderNo } from "@/entities/order/model/order-no";
 import { senderRoleAllowed } from "@/features/gift-register/model/sender-rule";
 import { GiftStatusPage } from "@/widgets/gift-status/ui/gift-status-page";
@@ -18,10 +19,12 @@ export default async function Page({ params }: { params: Promise<{ orderNo: stri
   const gifts = await readMyGiftViews(supabase);
   const view = isOrderNo(orderNo) ? gifts.find((g) => g.orderNo === orderNo) : undefined;
   if (!view) notFound();
+  // 상자별 원 송장번호·상태 — 읽기 함수가 로그인한 사람의 주문이 아니면 빈 목록을 준다. 출고 운송장은 오지 않는다.
+  const boxes = await readMyGiftBoxes(supabase, view.orderNo);
   return (
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", gifts)} />
-      <GiftStatusPage view={view} />
+      <GiftStatusPage view={view} boxes={boxes} />
       <SiteFooter />
     </>
   );

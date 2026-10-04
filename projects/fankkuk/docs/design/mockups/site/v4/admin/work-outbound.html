@@ -1,0 +1,126 @@
+<!doctype html>
+<!--
+  팬꾹 관리자 시안 · 출고 (2026-10-04) — 버려도 되는 시안.
+  근거: specs/office-workflow.md INV-W1(송장 출력 → 송장 바코드 스캔 → 출고 확정) W3(출고 조건, 송장 출력은 대표만) W7 W8(반송 송장은 QR 스캔으로만, 봉투 번호만 표시, 파쇄 기록),
+        design-rules.md 8절. 직원으로 보면 「송장 출력」 버튼 대신 안내(admin.js 의 only-owner 규칙 그대로).
+  시안용 요소: 「시안용 상자 상태」 줄, 「…스캔 (시안용)」 버튼들.
+  새로 제안: 확정 스캔과 함께 「봉투 Q-번호 파쇄 기록됨 · 담당 · 시각」 줄이 남는 표시(별도 파쇄 버튼 없음) / 반송 송장 출력은 직원도 가능.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>출고 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="work.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html">대시보드</a></li><li><a href="work-inbound.html">입고</a></li><li><a href="work-inspect.html">검수</a></li><li><a href="work-outbound.html" aria-current="page">출고</a></li><li><a href="parcels.html">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html">자동 처리 현황</a></li><li><a href="revgifts.html">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">작업 / <strong>출고</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>출고</h1><p>라벨 QR 을 스캔하면 그 상자가 지금 할 수 있는 일만 나와요. 송장을 출력하고 그 바코드를 스캔해야 출고가 확정돼요.</p></div></div>
+      <div class="work">
+
+        <div class="scan">
+          <label for="scan">내부 라벨 QR 스캔</label>
+          <div class="row"><input id="scan" type="text" inputmode="none" autocomplete="off" placeholder="상자에 붙인 라벨 QR 을 읽혀 주세요" data-autofocus></div>
+          <p class="hint">QR 을 읽으면 그 상자가 지금 할 수 있는 일만 나와요. 봉투나 주문을 고르는 칸은 없어요.</p>
+        </div>
+
+        <div class="demo-switch" role="group" aria-label="시안용 상자 상태 전환" data-case-group="out"><strong>시안용 상자 상태</strong>
+          <button type="button" data-case-btn="ready">출고 조건 충족</button>
+          <button type="button" data-case-btn="wait1">승인 대기</button>
+          <button type="button" data-case-btn="wait2">받기 대기(역조공)</button>
+          <button type="button" data-case-btn="ret">반송 대기</button></div>
+
+        <section data-case-of="out" data-case="ready" class="work" style="max-width:none" aria-label="출고 가능 상자">
+          <div class="result result--ok">
+            <div class="result-head"><span class="tag tag--brand">출고 조건 충족</span><h2 class="mono">FC-7K3M9-1</h2></div>
+            <dl class="kv"><dt>종류</dt><dd>팬 선물 · 소형</dd><dt>보내는 사람</dt><dd>민지</dd><dt>받는 크리에이터</dt><dd>하루 (승인 10-02)</dd><dt>검수</dt><dd>통과 · 10-04 14:41</dd></dl>
+            <ul class="checks"><li><span class="mk" aria-hidden="true">✓</span>크리에이터 승인 있음</li><li><span class="mk" aria-hidden="true">✓</span>검수 완료</li><li><span class="mk" aria-hidden="true">✓</span>차액 미납 없음</li></ul>
+            <div id="print-box">
+              <div class="btn-row"><button class="btn btn--lg only-owner" type="button" data-reveal="printed" data-conceal="print-box">송장 출력</button></div>
+              <p class="hint" style="margin-top:6px">받는 크리에이터의 주소는 화면에 보이지 않고 송장에만 찍혀요. 주소 열기는 한 번만 돼요.</p>
+              <div class="note note--warn owner-only-note" style="margin-top:10px"><span aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><p><strong>송장 출력은 대표만 할 수 있어요.</strong> 이 상자를 대표에게 넘겨 주세요. 상자 상태는 그대로예요.</p></div>
+            </div>
+            <div id="printed" hidden class="next-step">
+              <h3>송장이 출력됐어요</h3>
+              <p>상자에 송장을 붙인 뒤, <strong>출력된 송장의 바코드</strong>를 스캔하면 출고가 확정돼요. 위 스캔 칸을 쓰세요.</p>
+              <div class="btn-row"><button class="btn" type="button" data-reveal="shipped" data-conceal="printed wrongbar">송장 바코드 스캔 (시안용)</button><button class="btn btn--line btn--sm" type="button" data-reveal="wrongbar">다른 상자 송장을 읽으면 (시안용)</button></div>
+              <div id="wrongbar" hidden class="note note--warn" role="alert"><span aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><p><strong>이 상자의 송장이 아니에요.</strong> 출고는 확정되지 않았어요. 붙인 송장을 다시 확인해 주세요.</p></div>
+            </div>
+            <div id="shipped" hidden class="next-step">
+              <div class="result-head"><span class="tag tag--brand">출고 확정</span><h2 style="font-size:20px">출고 확정됐어요</h2><span class="faint">10-04 14:52 · <span class="role-name">모아</span></span></div>
+              <p class="big-note">봉투 <span class="mono">Q-000123</span> 파쇄 기록됨 · 팬꾹 직원 · 15:20 — 봉투를 파쇄해 주세요</p>
+              <p class="hint">출고 확정과 함께 파쇄 기록이 남았어요. 봉투 안의 원 송장을 파쇄하면 돼요.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="result result--no" data-case-of="out" data-case="wait1" aria-labelledby="w1" hidden>
+          <div class="result-head"><span class="tag tag--ink">출고 안 됨</span><h2 id="w1">크리에이터 승인을 기다리고 있어요</h2></div>
+          <dl class="kv"><dt>주문번호</dt><dd class="mono">FC-8B2QD-1</dd><dt>종류</dt><dd>팬 선물 · 중형</dd><dt>받는 크리에이터</dt><dd>모모</dd><dt>상태</dt><dd>검수 완료 · 승인 대기 (남은 시간 4일)</dd></dl>
+          <div class="next-step"><h3>이렇게 하세요</h3><p>상자를 그대로 두세요. 승인이 나면 이 상자는 출고할 수 있게 돼요. 송장 출력 버튼은 나오지 않아요.</p></div>
+        </section>
+
+        <section class="result result--no" data-case-of="out" data-case="wait2" aria-labelledby="w2" hidden>
+          <div class="result-head"><span class="tag tag--ink">출고 안 됨</span><h2 id="w2">팬이 받기를 누르기 전이에요</h2></div>
+          <dl class="kv"><dt>주문번호</dt><dd class="mono">FC-R7M2C</dd><dt>종류</dt><dd>역조공 (크리에이터 → 팬)</dd><dt>받는 팬</dt><dd>달콤이</dd><dt>상태</dt><dd>검수 완료 · 받기 대기 (남은 시간 5일)</dd></dl>
+          <div class="next-step"><h3>이렇게 하세요</h3><p>상자를 그대로 두세요. 팬이 받기를 하면 출고할 수 있어요. 기한 안에 받지 않으면 반송 대기로 바뀌어요.</p></div>
+        </section>
+
+        <section data-case-of="out" data-case="ret" class="work" style="max-width:none" hidden aria-label="반송 대기 상자">
+          <div class="result result--ok">
+            <div class="result-head"><span class="tag tag--warn">반송 대기</span><h2 class="mono">FC-9D4WE-2</h2></div>
+            <dl class="kv"><dt>종류</dt><dd>팬 선물 · 소형</dd><dt>보내는 사람</dt><dd>구름빵</dd><dt>사유</dt><dd>크리에이터(새벽달)가 거절함</dd><dt>착불 반송</dt><dd>보낸 팬의 원 송장 주소로 보내요</dd></dl>
+            <div id="ret-btn" class="btn-row"><button class="btn btn--lg" type="button" data-reveal="ret-printed" data-conceal="ret-btn">반송 송장 출력</button></div>
+            <div id="ret-printed" hidden class="work" style="max-width:none">
+              <div class="qnum"><span><small>이 상자의 원 송장 봉투 번호</small>Q-000123</span></div>
+              <div class="next-step"><h3>이렇게 하세요</h3><p>화면에 뜬 번호의 봉투에서 원 송장을 꺼내 반송 송장을 붙여요. 봉투 번호는 이 상자 것만 나와요. 붙인 뒤 <strong>반송 송장의 바코드</strong>를 스캔하면 반송이 확정돼요.</p>
+                <div class="btn-row"><button class="btn" type="button" data-reveal="ret-done" data-conceal="ret-printed">반송 송장 바코드 스캔 (시안용)</button></div></div>
+            </div>
+            <div id="ret-done" hidden class="next-step">
+              <div class="result-head"><span class="tag tag--brand">반송 확정</span><h2 style="font-size:20px">반송 확정됐어요</h2><span class="faint">10-04 14:58 · <span class="role-name">모아</span></span></div>
+              <p class="big-note">봉투 <span class="mono">Q-000123</span> 파쇄 기록됨 · 팬꾹 직원 · 15:20 — 봉투를 파쇄해 주세요</p>
+              <p class="hint">반송 확정과 함께 파쇄 기록이 남았어요. 봉투 안의 원 송장을 파쇄하면 돼요.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+  <script src="work.js"></script>
+  <script>
+  /* 시안용: 상태를 바꾸면 흐름을 처음(출력 전)으로 되돌린다 */
+  document.addEventListener('casechange', function (e) {
+    if (e.detail.group !== 'out') return;
+    ['print-box', 'printed', 'wrongbar', 'shipped', 'ret-btn', 'ret-printed', 'ret-done'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) el.hidden = !(id === 'print-box' || id === 'ret-btn');
+    });
+  });
+  </script>
+</body>
+</html>

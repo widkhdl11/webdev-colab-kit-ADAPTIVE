@@ -9,6 +9,9 @@ export const ADMIN_MENU: readonly AdminMenuGroup[] = [
     name: "작업",
     items: [
       { href: "/admin", label: "대시보드" },
+      { href: "/admin/work/inbound", label: "입고" },
+      { href: "/admin/work/inspect", label: "검수" },
+      { href: "/admin/work/outbound", label: "출고" },
       { href: "/admin/parcels", label: "들어온 상자" },
       { href: "/admin/unmatched", label: "미확인 입고" },
       { href: "/admin/automation", label: "자동 처리 현황" },

@@ -124,3 +124,10 @@
 .doneLine { font-size: 14px; font-weight: 700; color: var(--brand-ink); }
 .doneLine:not(:empty) { margin-bottom: 12px; }
 .bubbleStaff { background: var(--brand-soft); color: var(--brand-ink); }
+
+/* 표 안 글 링크 · 남은 날 막대 — 시안 admin/parcels.html · unmatched.html */
+.link { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.bar { display: block; width: 100px; height: 8px; border-radius: var(--r-pill); background: var(--track); overflow: hidden; flex-shrink: 0; }
+.bar > i { display: block; height: 100%; background: var(--brand); border-radius: var(--r-pill); }
+.barHot > i { background: var(--ink); }
+.barRow { display: flex; align-items: center; gap: 10px; }

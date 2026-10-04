@@ -1,0 +1,121 @@
+<!doctype html>
+<!--
+  팬꾹 관리자 시안 · 입고 (2026-10-04) — 버려도 되는 시안.
+  근거: specs/office-workflow.md INV-W1(전환표) W2(1상자 1스캔 1라벨) W5(미확인 입고) W7(개인정보 없음) W8(원 송장 봉투),
+        design-rules.md 8절(관리자), admin/*.html 틀·admin.css 토큰 그대로. PC 폭 전용.
+  시안용 요소: 「시안용 결과 보기」 줄(실제 화면에는 없음), 「라벨 QR 스캔했어요 (시안용)」 버튼.
+  새로 제안: 상단 「부착 대기 라벨」 상시 줄 / 스캔 칸 하나가 상황에 따라 원 송장 바코드와 라벨 QR 을 번갈아 받는 방식 / 오늘 입고 표.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>입고 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="work.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html">대시보드</a></li><li><a href="work-inbound.html" aria-current="page">입고</a></li><li><a href="work-inspect.html">검수</a></li><li><a href="work-outbound.html">출고</a></li><li><a href="parcels.html">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html">자동 처리 현황</a></li><li><a href="revgifts.html">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">작업 / <strong>입고</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>입고</h1><p>상자 겉면의 택배 송장 바코드를 스캔해요. 서버가 허용해야만 입고되고, 라벨은 1상자에 1장만 나가요.</p></div></div>
+      <div class="work">
+
+        <div class="pending-line" id="pending-line" role="status" data-on-text="부착 대기 중인 라벨 1장 · FC-7K3M9-1 — 라벨 QR 을 스캔해 부착을 확인하기 전에는 다음 상자를 입고할 수 없어요" data-off-text="부착 대기 중인 라벨 없음 — 다음 상자를 스캔해도 돼요"><span class="dot" aria-hidden="true"></span><span class="txt">부착 대기 중인 라벨 없음 — 다음 상자를 스캔해도 돼요</span></div>
+
+        <div class="scan">
+          <label for="scan" id="scan-label">원 송장 바코드 스캔</label>
+          <div class="row"><input id="scan" type="text" inputmode="none" autocomplete="off" placeholder="스캐너로 읽으면 여기에 들어가요" data-autofocus></div>
+          <p class="hint" id="scan-hint">상자에 붙은 택배 송장 바코드를 스캐너로 읽어요. 주문번호나 상태를 손으로 고르는 칸은 없어요.</p>
+        </div>
+
+        <div class="demo-switch" role="group" aria-label="시안용 결과 전환" data-case-group="in"><strong>시안용 결과 보기</strong>
+          <button type="button" data-case-btn="a">입고 완료</button>
+          <button type="button" data-case-btn="b">맞는 주문 없음</button>
+          <button type="button" data-case-btn="c1">거부 · 앞 상자 라벨</button>
+          <button type="button" data-case-btn="c2">거부 · 이미 처리됨</button></div>
+
+        <section class="result result--ok" data-case-of="in" data-case="a" aria-labelledby="ra">
+          <div class="result-head"><span class="tag tag--brand">스캔 결과</span><h2 id="ra">입고 완료</h2><span class="faint">10-04 14:32 · 라임</span></div>
+          <dl class="kv"><dt>주문번호</dt><dd class="mono">FC-7K3M9-1</dd><dt>종류</dt><dd>팬 선물 (크리에이터에게 가는 상자)</dd><dt>보낸 사람</dt><dd>민지</dd><dt>구간</dt><dd>소형 (결제한 구간)</dd></dl>
+          <p class="big-note">라벨 1장 출력됨. 붙인 뒤 라벨 QR을 스캔해 부착 확인</p>
+          <div class="next-step"><h3>지금 할 일</h3>
+            <ol class="steps" aria-label="입고 순서"><li class="is-done"><b>1</b>원 송장 스캔</li><li class="is-now"><b>2</b>라벨 붙이기</li><li><b>3</b>라벨 QR 스캔</li></ol>
+            <p class="hint">떼어 낸 원 송장은 봉투 <strong class="mono">Q-000123</strong>(라벨의 QR 번호와 같아요)에 넣고, 상자와 따로 보관 선반에 두세요. 크리에이터에게 가는 상자에 섞이면 안 돼요.</p>
+            <div class="btn-row"><button class="btn btn--line" type="button" data-reveal="a-done" data-conceal="a-wait" data-pending="off" id="a-sim">라벨 QR 스캔했어요 (시안용)</button><span class="hint">실제로는 스캔 칸에 라벨 QR 을 읽히면 돼요.</span></div></div>
+          <div id="a-wait" class="note"><span aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><p>부착 확인 전까지 이 칸은 라벨 QR 만 받아요.</p></div>
+          <div id="a-done" class="note note--ok" hidden><span aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><p><strong>부착 확인 완료.</strong> FC-7K3M9-1 은 이제 검수 단계로 넘어가요. 다음 상자를 스캔하세요.</p></div>
+        </section>
+
+        <section class="result" data-case-of="in" data-case="b" aria-labelledby="rb" hidden>
+          <div class="result-head"><span class="tag tag--warn">스캔 결과</span><h2 id="rb">맞는 주문이 없어요</h2></div>
+          <p>이 송장번호는 어느 상자와도 이어지지 않아요. 미확인 입고로 기록해 두면 팬이 「내 물건 찾기」에서 송장번호를 넣을 때 이어져요.</p>
+          <form class="two" onsubmit="return false" aria-label="미확인 입고 기록">
+            <div class="field"><label for="u-sender">발신인 앞 한 글자</label><input class="input" id="u-sender" maxlength="1" placeholder="예: 별" autocomplete="off"><p class="hint">이름 전체·주소·전화는 적지 않아요. 앞 한 글자만 남겨요.</p></div>
+            <div class="field"><label for="u-shelf">보관 선반 번호</label><input class="input mono" id="u-shelf" placeholder="예: A-03" autocomplete="off"><p class="hint">상자를 둔 선반 번호만 적어요.</p></div>
+            <div class="field"><label for="u-time">들어온 시각</label><input class="input mono" id="u-time" value="10-04 14:35 (자동)" readonly></div>
+            <div class="field" style="align-content:end"><div class="btn-row"><button class="btn btn--lg" type="button" data-reveal="b-done" data-conceal="b-btn" id="b-btn">미확인 입고로 기록</button></div></div>
+          </form>
+          <div id="b-done" class="note note--ok" hidden><span aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><p><strong>접수 번호 U-1004-01 로 기록했어요.</strong> 7일 안에 팬이 찾지 않으면 처리 대상이 돼요. 상자는 입력한 선반에 두세요.</p></div>
+        </section>
+
+        <section class="result result--no" data-case-of="in" data-case="c1" aria-labelledby="rc1" hidden>
+          <div class="result-head"><span class="tag tag--ink">거부</span><h2 id="rc1">앞 상자 라벨 부착을 먼저 확인하세요</h2></div>
+          <dl class="kv"><dt>기다리는 라벨</dt><dd class="mono">FC-7K3M9-1 (10-04 14:32 출력)</dd><dt>상태</dt><dd>이번 스캔은 반영되지 않았어요. 상자 상태는 그대로예요.</dd></dl>
+          <div class="next-step"><h3>이렇게 하세요</h3><p>앞 상자에 라벨을 붙이고, 그 라벨의 QR 을 스캔하면 다음 상자를 받을 수 있어요. 한 상자에 스캔 한 번, 라벨 한 장씩 처리해요.</p></div>
+        </section>
+
+        <section class="result result--no" data-case-of="in" data-case="c2" aria-labelledby="rc2" hidden>
+          <div class="result-head"><span class="tag tag--ink">거부</span><h2 id="rc2">이미 처리된 상자예요</h2></div>
+          <dl class="kv"><dt>주문번호</dt><dd class="mono">FC-8B2QD-1</dd><dt>처리</dt><dd>10-04 14:20 입고 완료 (라임)</dd><dt>상태</dt><dd>두 번 처리되지 않아요. 라벨이 두 장 나가지 않았어요.</dd></dl>
+          <div class="next-step"><h3>이렇게 하세요</h3><p>같은 송장을 두 번 읽었다면 그대로 두세요. 이 상자에 붙은 라벨이 없다면 관리자에게 알려 주세요.</p></div>
+        </section>
+
+        <section aria-labelledby="recent"><h2 class="mini-h" id="recent">오늘 입고한 상자</h2>
+          <div class="tbl-wrap"><table class="tbl"><caption class="sr-only">오늘 입고 기록</caption>
+            <thead><tr><th scope="col">시각</th><th scope="col">주문번호</th><th scope="col">종류</th><th scope="col">보낸 사람</th><th scope="col">결과</th><th scope="col">담당</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">14:20</td><td class="mono"><strong>FC-8B2QD-1</strong></td><td>팬 선물</td><td>구름빵</td><td><span class="tag tag--brand">부착 확인</span></td><td>라임</td></tr>
+              <tr><td class="mono">14:11</td><td class="mono"><strong>FC-R4T8K</strong></td><td>역조공</td><td>하루 (크리에이터)</td><td><span class="tag tag--brand">부착 확인</span></td><td>라임</td></tr>
+              <tr><td class="mono">13:48</td><td class="mono"><strong>U-1004-00</strong></td><td>미확인</td><td>솜*</td><td><span class="tag">미확인 입고</span></td><td>모아</td></tr>
+            </tbody></table></div></section>
+
+      </div>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+  <script src="work.js"></script>
+  <script>
+  /* 시안용: 결과를 바꾸면 부착 대기 줄과 스캔 칸 안내가 같이 바뀐다 */
+  document.addEventListener('casechange', function (e) {
+    if (e.detail.group !== 'in') return;
+    var on = e.detail.key === 'a' || e.detail.key === 'c1';
+    document.getElementById('pending-line').dispatchEvent(new CustomEvent('set', { detail: on ? 'on' : 'off' }));
+    document.getElementById('scan-label').textContent = on ? '라벨 QR 스캔 — 방금 붙인 라벨의 QR 을 읽혀 주세요' : '원 송장 바코드 스캔';
+    var a = document.getElementById('a-done'), w = document.getElementById('a-wait'); if (a) a.hidden = true; if (w) w.hidden = false;
+  });
+  document.getElementById('a-sim').addEventListener('click', function () { document.getElementById('scan-label').textContent = '원 송장 바코드 스캔'; });
+  </script>
+</body>
+</html>

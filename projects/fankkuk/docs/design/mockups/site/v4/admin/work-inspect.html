@@ -1,0 +1,157 @@
+<!doctype html>
+<!--
+  팬꾹 관리자 시안 · 검수 (2026-10-04) — 버려도 되는 시안.
+  근거: specs/office-workflow.md INV-W1(라벨 부착 확인 → 검수) W4(검수 기록·추적 장치는 보관+크리에이터 알림) W7, design-rules.md 8절.
+  시안용 요소: 「시안용 상자 고르기」 줄, 「QR 다시 스캔 (시안용)」, 「기록 없이 스캔해 보기 (시안용)」 버튼.
+  새로 제안: 나옴 선택 시 결과 선택지 자동 제한 / 역조공은 겉면·금지 물품이 나오면 반송만 선택 가능(보관은 팬 선물 추적 장치 전용) / 단계 줄.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>검수 · 팬꾹 관리자 시안</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="work.css">
+</head>
+<body data-role="owner">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="pc-only"><h1>PC에서 써 주세요</h1><p class="sub">관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p></div>
+  <aside class="side" aria-label="관리자 메뉴">
+    <a class="side-logo" href="index.html"><span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z"/></svg></span>팬꾹<small>관리자</small></a>
+    <nav class="side-nav" aria-label="화면 이동">
+      <div class="side-group"><h2>작업</h2><ul><li><a href="index.html">대시보드</a></li><li><a href="work-inbound.html">입고</a></li><li><a href="work-inspect.html" aria-current="page">검수</a></li><li><a href="work-outbound.html">출고</a></li><li><a href="parcels.html">들어온 상자</a></li><li><a href="unmatched.html">미확인 입고<span class="cnt" aria-label="3건">3</span></a></li><li><a href="automation.html">자동 처리 현황</a></li><li><a href="revgifts.html">역조공 처리<span class="cnt" aria-label="5건">5</span></a></li></ul></div>
+      <div class="side-group"><h2>돈</h2><ul><li><a href="payments.html">결제·환불<span class="cnt" aria-label="2건">2</span></a></li><li><a href="pricing.html">요금표</a></li></ul></div>
+      <div class="side-group"><h2>고객</h2><ul><li><a href="inquiries.html">1:1 문의<span class="cnt" aria-label="4건">4</span></a></li><li><a href="notices.html">공지</a></li><li><a href="creators.html">크리에이터 확인<span class="cnt" aria-label="3건">3</span></a></li></ul></div>
+      <div class="side-group"><h2>관리</h2><ul><li><a href="prohibited.html">보낼 수 없는 물품</a></li></ul></div>
+    </nav>
+    <p class="side-foot"><a href="../index.html">시안 목록으로</a><br>예시 데이터예요. 실제 사람 정보는 없어요.</p>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <p class="crumb">작업 / <strong>검수</strong></p>
+      <div class="topbar-right">
+        <div class="role-demo" role="group" aria-label="시안용 보기 전환"><span>시안용 보기</span>
+          <button type="button" data-role="owner" aria-pressed="true">대표로</button>
+          <button type="button" data-role="staff" aria-pressed="false">직원으로</button></div>
+        <span class="who"><span class="face" aria-hidden="true"><span class="role-name">모아</span></span><span class="nm"><span class="role-name">모아</span> 님</span><span class="badge role-badge">대표</span></span>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head"><div><h1>검수</h1><p>라벨 QR 로 상자를 불러와 검수 결과를 기록해요. 기록이 있어야만 다음 단계로 넘어가요.</p></div></div>
+      <div class="work">
+
+        <div class="scan">
+          <label for="scan">내부 라벨 QR 스캔</label>
+          <div class="row"><input id="scan" type="text" inputmode="none" autocomplete="off" placeholder="상자에 붙인 라벨 QR 을 읽혀 주세요" data-autofocus></div>
+          <p class="hint">입고하며 붙인 라벨의 QR 로만 상자를 불러와요. 주문을 목록에서 고르는 칸은 없어요.</p>
+        </div>
+
+        <div class="demo-switch" role="group" aria-label="시안용 상자 전환" data-case-group="kind"><strong>시안용 상자 고르기</strong>
+          <button type="button" data-case-btn="gift">팬 선물</button>
+          <button type="button" data-case-btn="rev">역조공</button></div>
+
+        <ol class="steps" id="steps" aria-label="검수 순서">
+          <li class="is-done"><b>1</b>QR 스캔</li><li class="is-now"><b>2</b>검수 기록</li><li><b>3</b>기록 저장</li><li><b>4</b>QR 다시 스캔해 검수 완료</li></ol>
+
+        <section class="result" aria-labelledby="box-h">
+          <div class="result-head"><span class="tag tag--brand">상자 정보</span><h2 id="box-h" class="mono">FC-7K3M9-1</h2><span class="tag">입고 · 라벨 부착 확인됨</span></div>
+          <dl class="kv" data-case-of="kind" data-case="gift"><dt>종류</dt><dd>팬 선물 · 소형</dd><dt>보내는 사람</dt><dd>민지 (팬)</dd><dt>받는 크리에이터</dt><dd>하루</dd><dt>입고</dt><dd>10-04 14:32 · 라임</dd></dl>
+          <dl class="kv" data-case-of="kind" data-case="rev" hidden><dt>종류</dt><dd>역조공 (팬에게 가는 상자)</dd><dt>보내는 사람</dt><dd>하루 (크리에이터)</dd><dt>받는 팬</dt><dd>별빛</dd><dt>입고</dt><dd>10-04 14:11 · 라임</dd></dl>
+        </section>
+
+        <form class="result" id="form" onsubmit="return false" aria-labelledby="form-h">
+          <h2 id="form-h" style="font-size:18px;font-weight:800">검수 기록</h2>
+          <div class="check-grid" data-case-of="kind" data-case="gift">
+            <fieldset class="choice"><legend>블루투스 검사</legend><div class="opts"><label class="opt"><input type="radio" name="bt" value="ok" checked>이상 없음</label><label class="opt"><input type="radio" name="bt" value="hit">나옴</label></div></fieldset>
+            <fieldset class="choice"><legend>RF 검사</legend><div class="opts"><label class="opt"><input type="radio" name="rf" value="ok" checked>이상 없음</label><label class="opt"><input type="radio" name="rf" value="hit">나옴</label></div></fieldset>
+            <fieldset class="choice"><legend>금속 검사</legend><div class="opts"><label class="opt"><input type="radio" name="mt" value="ok" checked>이상 없음</label><label class="opt"><input type="radio" name="mt" value="hit">나옴</label></div></fieldset>
+          </div>
+          <div class="check-grid" data-case-of="kind" data-case="rev" hidden style="grid-template-columns:repeat(2,minmax(0,1fr))">
+            <fieldset class="choice"><legend>겉면 확인</legend><div class="opts"><label class="opt"><input type="radio" name="out" value="ok" checked>이상 없음</label><label class="opt"><input type="radio" name="out" value="hit">훼손·이상 있음</label></div></fieldset>
+            <fieldset class="choice"><legend>금지 물품 확인</legend><div class="opts"><label class="opt"><input type="radio" name="ban" value="ok" checked>없음</label><label class="opt"><input type="radio" name="ban" value="hit">나옴</label></div></fieldset>
+          </div>
+          <div id="warn" class="note note--warn" hidden role="alert"><span aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><p id="warn-t"></p></div>
+          <fieldset class="choice"><legend>검수 결과</legend><div class="opts" id="res-opts">
+            <label class="opt" id="o-pass"><input type="radio" name="res" value="pass" checked>통과</label>
+            <label class="opt" id="o-ret"><input type="radio" name="res" value="ret">반송</label>
+            <label class="opt" id="o-hold"><input type="radio" name="res" value="hold">보관</label></div>
+            <p class="hint" id="res-hint">통과하면 출고 단계로 넘어가요. 반송은 반송 대기로, 보관은 상자를 사무실에 두는 거예요.</p></fieldset>
+          <div class="btn-row"><button class="btn btn--lg" type="button" id="save">기록 저장</button><span class="hint">저장한 기록은 고치거나 지울 수 없어요. 시각과 담당자(<span class="role-name">모아</span>)가 같이 남아요.</span></div>
+        </form>
+
+        <div id="saved" class="result result--ok" hidden>
+          <div class="result-head"><span class="tag tag--brand">기록 저장됨</span><h2 style="font-size:18px">검수 기록이 남았어요</h2><span class="faint">10-04 14:41 · <span class="role-name">모아</span></span></div>
+          <p id="saved-sum"></p>
+          <div class="next-step"><h3>마지막으로</h3><p>상자의 라벨 QR 을 한 번 더 스캔하면 검수가 끝나고 다음 단계로 넘어가요.</p>
+            <div class="btn-row"><button class="btn" type="button" id="rescan">QR 다시 스캔해 검수 완료 (시안용)</button></div></div>
+        </div>
+
+        <div class="note" id="nope-box"><span aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><p><strong>검수 기록이 없으면 다음 단계로 넘어가지 않아요.</strong> 기록을 저장하기 전에 QR 을 다시 스캔하면 서버가 거부해요.
+          <button class="btn btn--line btn--sm" type="button" id="try-skip" style="margin-left:8px">기록 없이 스캔해 보기 (시안용)</button></p></div>
+        <div id="nope" class="result result--no" hidden role="alert"><div class="result-head"><span class="tag tag--ink">거부</span><h2 style="font-size:18px">검수 기록이 먼저 있어야 해요</h2></div><p>이 상자는 아직 검수 기록이 없어서 넘어갈 수 없어요. 위 양식을 채우고 「기록 저장」을 눌러 주세요.</p></div>
+
+        <div id="finished" class="result result--ok" hidden>
+          <div class="result-head"><span class="tag tag--brand">검수 끝</span><h2 id="fin-h">검수 완료</h2></div>
+          <p id="fin-t"></p>
+          <div id="fin-notice" class="note note--ok" hidden><span aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><p>크리에이터(하루)에게 추적 장치 알림이 남았어요. 상자는 사무실에 보관돼요.</p></div>
+          <p class="hint">다음 상자를 스캔하세요.</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <script src="admin.js"></script>
+  <script src="work.js"></script>
+  <script>
+  /* 시안용: 나옴이 하나라도 있으면 결과 선택지가 제한된다 (추적 장치 → 보관만) */
+  (function () {
+    var form = document.getElementById('form');
+    var steps = document.querySelectorAll('#steps li');
+    function kind() { return document.querySelector('[data-case-btn][aria-pressed="true"]').dataset.caseBtn; }
+    function stepTo(n) { steps.forEach(function (li, i) { li.className = i < n ? 'is-done' : (i === n ? 'is-now' : ''); }); }
+    function setOff(id, off) { var l = document.getElementById(id); l.classList.toggle('is-off', off); l.querySelector('input').disabled = off; }
+    function trackerHit() { return ['bt','rf','mt'].some(function (n) { return form.querySelector('input[name="' + n + '"][value="hit"]').checked; }); }
+    function sync() {
+      var k = kind(), hit = k === 'gift' ? trackerHit() : (form.querySelector('input[name="ban"][value="hit"]').checked || form.querySelector('input[name="out"][value="hit"]').checked);
+      var warn = document.getElementById('warn'), hint = document.getElementById('res-hint');
+      var radio = function (v) { return form.querySelector('input[name="res"][value="' + v + '"]'); };
+      if (k === 'gift' && hit) {
+        setOff('o-pass', true); setOff('o-ret', true); setOff('o-hold', false); radio('hold').checked = true;
+        warn.hidden = false; document.getElementById('warn-t').innerHTML = '<strong>추적 장치가 나왔어요. 보관만 고를 수 있어요.</strong> 크리에이터에게 알림이 남아요.';
+        hint.textContent = '추적 장치가 나온 상자는 팬에게 돌려보내지 않고 사무실에 보관해요.';
+      } else if (k === 'rev' && hit) {
+        setOff('o-pass', true); setOff('o-ret', false); setOff('o-hold', true); radio('ret').checked = true;
+        warn.hidden = false; document.getElementById('warn-t').innerHTML = '<strong>겉면이나 금지 물품에 문제가 있어서 반송만 고를 수 있어요.</strong>';
+        hint.textContent = '문제가 나온 역조공 상자는 반송 대기로 넘어가요. 보관은 팬 선물에서 추적 장치가 나왔을 때만 있어요.';
+      } else {
+        setOff('o-pass', false); setOff('o-ret', false); setOff('o-hold', false); warn.hidden = true;
+        hint.textContent = '통과하면 출고 단계로 넘어가요. 반송은 반송 대기로, 보관은 상자를 사무실에 두는 거예요.';
+      }
+    }
+    form.addEventListener('change', sync);
+    document.addEventListener('casechange', function () {
+      form.reset(); sync(); stepTo(1);
+      ['saved','finished','nope'].forEach(function (i) { document.getElementById(i).hidden = true; });
+      document.getElementById('nope-box').hidden = false; form.hidden = false;
+    });
+    document.getElementById('save').addEventListener('click', function () {
+      var r = form.querySelector('input[name="res"]:checked').value;
+      document.getElementById('saved-sum').textContent = '결과: ' + { pass: '통과 — 출고 단계로 넘어갈 수 있어요.', ret: '반송 — 반송 대기로 넘어가요.', hold: '보관 — 상자는 사무실에 남아요.' }[r];
+      document.getElementById('saved').hidden = false; document.getElementById('nope-box').hidden = true; document.getElementById('nope').hidden = true;
+      form.querySelectorAll('input, button').forEach(function (el) { el.disabled = true; });
+      form.dataset.res = r; stepTo(3);
+    });
+    document.getElementById('try-skip').addEventListener('click', function () { document.getElementById('nope').hidden = false; });
+    document.getElementById('rescan').addEventListener('click', function () {
+      var r = form.dataset.res;
+      document.getElementById('fin-h').textContent = { pass: '검수 완료', ret: '반송 대기로 넘어갔어요', hold: '보관으로 처리했어요' }[r];
+      document.getElementById('fin-t').textContent = { pass: '출고 단계에서 이 상자를 스캔할 수 있어요.', ret: '출고 화면에서 반송 송장을 출력해요.', hold: '상자를 보관 선반에 두세요.' }[r];
+      document.getElementById('fin-notice').hidden = !(r === 'hold' && kind() === 'gift' && trackerHit());
+      document.getElementById('saved').hidden = true; document.getElementById('finished').hidden = false; stepTo(4);
+    });
+    sync();
+  })();
+  </script>
+</body>
+</html>

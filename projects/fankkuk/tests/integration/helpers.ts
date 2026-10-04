@@ -62,6 +62,8 @@ export function deleteTestOrders(): void {
       "begin;",
       "set local session_replication_role = replica;",
       `delete from public.decrypt_log where order_id in (${ids});`,
+      // 사무실 작업 기록(검수·파쇄·라벨)은 추가만 되는 표라 같은 자리에서 지운다(INV-W4·W8)
+      ...officeRowsDelete(`select id from public.boxes where order_id in (${ids})`, "box_id"),
       "set local session_replication_role = origin;",
       `delete from public.approval_requests where order_id in (${ids});`,
       `delete from public.refunds where payment_id in (select id from public.payments where order_id in (${ids}));`,
@@ -70,6 +72,19 @@ export function deleteTestOrders(): void {
       "commit;",
     ].join(" "),
   );
+}
+
+/** 상자(또는 몫) id 목록에 딸린 사무실 작업 줄을 지우는 문장들. replica 역할 안에서 부른다 — 외래 키 연쇄 삭제가 꺼지므로 자식부터 지운다. */
+export function officeRowsDelete(unitIds: string, column: "box_id" | "share_id"): string[] {
+  const parcels = `select id from public.office_parcels where ${column} in (${unitIds})`;
+  return [
+    `delete from public.office_inspections where parcel_id in (${parcels});`,
+    `delete from public.office_envelope_shreds where parcel_id in (${parcels});`,
+    `delete from public.office_hold_alerts where parcel_id in (${parcels});`,
+    `delete from public.office_label_pending where parcel_id in (${parcels});`,
+    `delete from public.office_unmatched where matched_parcel_id in (${parcels});`,
+    `delete from public.office_parcels where ${column} in (${unitIds});`,
+  ];
 }
 
 /** 가입 시험이 쓰는 아이디 앞머리와 휴대폰 번호 앞자리. 시드 계정은 이 꼴을 쓰지 않는다. */

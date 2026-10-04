@@ -15,7 +15,10 @@ type Props = {
   unitId: string;
   orderNo: string;
   payerNickname: string;
-  amountKrw: number;
+  /** 서버가 계산한 금액. 목록이 금액을 모르면(역조공 몫 목록) null — 몫 상태로 서버가 정한다는 안내만 보인다 */
+  amountKrw: number | null;
+  /** 창의 사람 칸 이름(기본 「결제한 사람」) */
+  payerLabel?: string;
   retry: boolean;
   /** 창이 닫힌 뒤 포커스를 보낼 곳 — 성공하면 이 버튼이 표에서 사라지기 때문이다 */
   returnFocusId: string;
@@ -23,7 +26,7 @@ type Props = {
 
 const won = new Intl.NumberFormat("ko-KR");
 
-export function RefundButton({ unitKind, unitId, orderNo, payerNickname, amountKrw, retry, returnFocusId }: Props) {
+export function RefundButton({ unitKind, unitId, orderNo, payerNickname, amountKrw, payerLabel = "결제한 사람", retry, returnFocusId }: Props) {
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState(false);
@@ -74,12 +77,12 @@ export function RefundButton({ unitKind, unitId, orderNo, payerNickname, amountK
           <dl className={a.kv}>
             <dt>주문번호</dt>
             <dd className={a.mono}>{orderNo}</dd>
-            <dt>결제한 사람</dt>
+            <dt>{payerLabel}</dt>
             <dd>{payerNickname}</dd>
           </dl>
           <div className={a.amount}>
             <span className={a.amountLabel}>돌려줄 금액 (서버가 계산한 값)</span>
-            <b className={a.mono}>{won.format(amountKrw)}원</b>
+            {amountKrw === null ? <b>몫 상태로 서버가 계산해요</b> : <b className={a.mono}>{won.format(amountKrw)}원</b>}
           </div>
           <p className={a.hint}>
             금액은 사람이 바꿀 수 없어요. 같은 환불을 두 번 눌러도 결제사 취소는 한 번만 일어나요. 결제사 취소가 실패하면 「환불 실패」로 남고 다시 시도할 수 있어요.

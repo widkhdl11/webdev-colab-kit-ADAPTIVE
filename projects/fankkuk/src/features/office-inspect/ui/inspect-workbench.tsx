@@ -1,0 +1,369 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { allowedOutcomes, inspectionResultOf, outcomeRestriction, type CheckMark, type InspectionChecks, type InspectionOutcome } from "@/entities/parcel/model/inspection";
+import { needsReload } from "@/entities/parcel/model/office-error";
+import { KIND_LABEL, NEXT_STEP_TEXT, STATE_LABEL, TIER_LABEL } from "@/entities/parcel/model/office-labels";
+import { parcelFromLookupBody, type ParcelDetail } from "@/entities/parcel/model/office-parcel";
+import { readScan } from "@/entities/parcel/model/scan-code";
+import { formatStamp } from "@/shared/lib/format/datetime";
+import a from "@/shared/ui/admin.module.css";
+import { ScanInput, type ScanInputHandle } from "@/shared/ui/scan-input";
+import w from "@/shared/ui/work.module.css";
+import { postInspect } from "../api/post-inspect-client";
+
+// 검수 작업 화면 (office-workflow INV-W1·W4, design-rules 8-1, 시안 admin/work-inspect.html).
+// 라벨 QR 로 상자를 불러와 검수 기록을 저장하고, 같은 QR 을 한 번 더 스캔하면 DB 가 다음 상태(검수 완료·반송 대기·보관)를 정한다.
+// 결론 선택지는 검사 결과로 제한된다(추적 장치 → 보관만, 역조공에서 걸림 → 반송만). 저장한 기록은 고칠 수 없다.
+
+type Phase = "form" | "saved" | "finished";
+type Finished = { state: "inspected" | "return_waiting" | "held" };
+
+const OUTCOME_LABEL: Record<InspectionOutcome, string> = { pass: "통과", return: "반송", hold: "보관" };
+const SAVED_TEXT: Record<InspectionOutcome, string> = {
+  pass: "통과 — 출고 단계로 넘어갈 수 있어요.",
+  return: "반송 — 반송 대기로 넘어가요.",
+  hold: "보관 — 상자는 사무실에 남아요.",
+};
+const FINISHED: Record<Finished["state"], { title: string; text: string }> = {
+  inspected: { title: "검수 완료", text: "출고 단계에서 이 상자를 스캔할 수 있어요." },
+  return_waiting: { title: "반송 대기로 넘어갔어요", text: "출고 화면에서 반송 송장을 출력해요." },
+  held: { title: "보관으로 처리했어요", text: "상자를 보관 선반에 두세요." },
+};
+
+function InfoIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 7.5v.01" />
+    </svg>
+  );
+}
+
+type MarkProps = { name: string; legend: string; foundLabel: string; clearLabel: string; value: CheckMark; disabled: boolean; onChange: (v: CheckMark) => void };
+
+function MarkChoice({ name, legend, foundLabel, clearLabel, value, disabled, onChange }: MarkProps) {
+  return (
+    <fieldset className={w.choice} disabled={disabled}>
+      <legend>{legend}</legend>
+      <div className={w.opts}>
+        <label className={w.opt}>
+          <input type="radio" name={name} value="clear" checked={value === "clear"} onChange={() => onChange("clear")} />
+          {clearLabel}
+        </label>
+        <label className={w.opt}>
+          <input type="radio" name={name} value="found" checked={value === "found"} onChange={() => onChange("found")} />
+          {foundLabel}
+        </label>
+      </div>
+    </fieldset>
+  );
+}
+
+const CLEAR_GIFT: InspectionChecks = { kind: "gift", bluetooth: "clear", rf: "clear", metal: "clear" };
+const CLEAR_REVGIFT: InspectionChecks = { kind: "revgift", surface: "clear", prohibited: "clear" };
+
+export function InspectWorkbench({ operatorNickname }: { operatorNickname: string }) {
+  const router = useRouter();
+  const scan = useRef<ScanInputHandle>(null);
+  const [busy, setBusy] = useState(false);
+  const [parcel, setParcel] = useState<ParcelDetail | null>(null);
+  const [checks, setChecks] = useState<InspectionChecks>(CLEAR_GIFT);
+  const [outcome, setOutcome] = useState<InspectionOutcome>("pass");
+  const [phase, setPhase] = useState<Phase>("form");
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [finished, setFinished] = useState<Finished | null>(null);
+  const [error, setError] = useState<{ title: string; message: string } | null>(null);
+
+  const allowed = allowedOutcomes(checks);
+  const chosen = inspectionResultOf(checks, outcome).outcome;
+  const restriction = outcomeRestriction(checks);
+  const canInspect = parcel !== null && parcel.state === "labeled";
+
+  function updateChecks(next: InspectionChecks) {
+    setChecks(next);
+    setOutcome(inspectionResultOf(next, outcome).outcome);
+  }
+
+  /** 거부(409·404) 뒤 화면의 상자를 DB 에서 다시 읽는다 — 화면이 낡은 상자를 들고 있지 않게. 실패하면 카드를 내린다. */
+  async function reload(qr: string) {
+    const found = await postInspect({ kind: "lookup", qr });
+    const next = found.kind === "ok" ? parcelFromLookupBody(found.body) : null;
+    setParcel(next);
+    if (next && next.state !== "labeled") setPhase("form");
+  }
+
+  async function onScan(raw: string) {
+    const code = readScan(raw);
+    if (code.kind !== "qr") {
+      setError({ title: "라벨 QR 을 스캔해 주세요", message: "검수 화면은 상자에 붙인 라벨 QR(Q-여섯 자리)만 받아요." });
+      return;
+    }
+    setError(null);
+    setBusy(true);
+    // 불러온 상자의 QR 을 다시 스캔하면 검수를 끝낸다 — 기록이 없으면 DB 가 거부한다(INV-W4)
+    if (parcel && parcel.qr === code.value && canInspect && phase !== "finished") {
+      const done = await postInspect({ kind: "complete", qr: code.value });
+      setBusy(false);
+      scan.current?.focus();
+      if (done.kind === "failed") {
+        setError({ title: done.reason === "no_inspection" ? "검수 기록이 먼저 있어야 해요" : "반영되지 않았어요", message: done.message });
+        if (needsReload(done)) {
+          await reload(code.value);
+          router.refresh();
+        }
+        return;
+      }
+      const state = done.body.state;
+      if (state === "inspected" || state === "return_waiting" || state === "held") {
+        setFinished({ state });
+        setPhase("finished");
+      } else {
+        setError({ title: "결과를 읽지 못했어요", message: "QR 을 다시 스캔해 상자 상태를 확인해 주세요." });
+      }
+      return;
+    }
+
+    const found = await postInspect({ kind: "lookup", qr: code.value });
+    setBusy(false);
+    scan.current?.focus();
+    if (found.kind === "failed") {
+      setParcel(null);
+      setError({ title: "상자를 불러오지 못했어요", message: found.message });
+      return;
+    }
+    const next = parcelFromLookupBody(found.body);
+    if (!next) {
+      setParcel(null);
+      setError({ title: "상자를 불러오지 못했어요", message: "잠시 뒤 다시 스캔해 주세요." });
+      return;
+    }
+    setParcel(next);
+    setChecks(next.kind === "gift" ? CLEAR_GIFT : CLEAR_REVGIFT);
+    setOutcome("pass");
+    setPhase("form");
+    setSavedAt(null);
+    setFinished(null);
+  }
+
+  async function save() {
+    if (!parcel || busy) return;
+    const result = inspectionResultOf(checks, outcome);
+    setBusy(true);
+    setError(null);
+    const saved = await postInspect({ kind: "record", qr: parcel.qr, result });
+    setBusy(false);
+    if (saved.kind === "failed") {
+      setError({ title: "기록을 저장하지 못했어요", message: saved.message });
+      if (needsReload(saved)) {
+        await reload(parcel.qr);
+        router.refresh();
+      }
+      return;
+    }
+    setPhase("saved");
+    setSavedAt(new Date().toISOString());
+    scan.current?.focus();
+  }
+
+  const stepIndex = !parcel ? 0 : phase === "form" ? 1 : phase === "saved" ? 3 : 4;
+  const steps = ["QR 스캔", "검수 기록", "기록 저장", "QR 다시 스캔해 검수 완료"];
+  const announce = error
+    ? `거부: ${error.title}`
+    : phase === "finished" && finished
+      ? FINISHED[finished.state].title
+      : phase === "saved"
+        ? "검수 기록이 남았어요"
+        : parcel
+          ? `상자 불러옴 ${parcel.orderNo}`
+          : "";
+
+  return (
+    <div className={w.work}>
+      <ScanInput
+        ref={scan}
+        id="inspect-scan"
+        label="내부 라벨 QR 스캔"
+        placeholder="상자에 붙인 라벨 QR 을 읽혀 주세요"
+        hint="입고하며 붙인 라벨의 QR 로만 상자를 불러와요. 기록을 저장한 뒤 같은 QR 을 한 번 더 읽히면 검수가 끝나요. 주문을 목록에서 고르는 칸은 없어요."
+        busy={busy}
+        onScan={onScan}
+      />
+
+      <ol className={w.steps} aria-label="검수 순서">
+        {steps.map((label, i) => (
+          <li key={label} className={i < stepIndex ? w.done : i === stepIndex ? w.now : undefined}>
+            <b>{i + 1}</b>
+            {label}
+          </li>
+        ))}
+      </ol>
+
+      <p className="sr-only" role="status">
+        {announce}
+      </p>
+      <div className={w.work} style={{ maxWidth: "none" }}>
+        {error && (
+          <div className={`${w.result} ${w.resultNo} ${w.resultHeadSm}`}>
+            <div className={w.resultHead}>
+              <span className={`${a.tag} ${a.tagInk}`}>거부</span>
+              <h2>{error.title}</h2>
+            </div>
+            <p>{error.message} 상자 상태는 그대로예요.</p>
+          </div>
+        )}
+
+        {parcel && (
+          <section className={w.result} aria-labelledby="inspect-box">
+            <div className={w.resultHead}>
+              <span className={`${a.tag} ${a.tagBrand}`}>상자 정보</span>
+              <h2 id="inspect-box" className={a.mono}>
+                {parcel.orderNo}
+              </h2>
+              <span className={a.tag}>{STATE_LABEL[parcel.state].text}</span>
+            </div>
+            <dl className={a.kv}>
+              <dt>종류</dt>
+              <dd>
+                {parcel.kind === "gift" ? `${KIND_LABEL.gift} · ${TIER_LABEL[parcel.tier]}` : `${KIND_LABEL.revgift} (팬에게 가는 상자) · ${TIER_LABEL[parcel.tier]}`}
+              </dd>
+              <dt>보내는 사람</dt>
+              <dd>
+                {parcel.senderNickname} {parcel.kind === "gift" ? "(팬)" : "(크리에이터)"}
+              </dd>
+              <dt>{parcel.kind === "gift" ? "받는 크리에이터" : "받는 팬"}</dt>
+              <dd>{parcel.receiverName}</dd>
+              <dt>라벨</dt>
+              <dd className={a.mono}>{parcel.qr}</dd>
+            </dl>
+            {!canInspect && phase !== "finished" && (
+              <div className={a.note}>
+                <InfoIcon />
+                <p>
+                  <strong>이 상자는 지금 검수 단계가 아니에요.</strong> {NEXT_STEP_TEXT[parcel.nextStep] || "할 일이 없어요."}
+                </p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {parcel && canInspect && phase !== "finished" && (
+          <form
+            className={w.result}
+            aria-labelledby="inspect-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void save();
+            }}
+          >
+            <h2 id="inspect-form" className={w.formTitle}>
+              검수 기록
+            </h2>
+            {checks.kind === "gift" ? (
+              <div className={w.checkGrid}>
+                <MarkChoice name="bt" legend="블루투스 검사" clearLabel="이상 없음" foundLabel="나옴" value={checks.bluetooth} disabled={phase !== "form"} onChange={(v) => updateChecks({ ...checks, bluetooth: v })} />
+                <MarkChoice name="rf" legend="RF 검사" clearLabel="이상 없음" foundLabel="나옴" value={checks.rf} disabled={phase !== "form"} onChange={(v) => updateChecks({ ...checks, rf: v })} />
+                <MarkChoice name="mt" legend="금속 검사" clearLabel="이상 없음" foundLabel="나옴" value={checks.metal} disabled={phase !== "form"} onChange={(v) => updateChecks({ ...checks, metal: v })} />
+              </div>
+            ) : (
+              <div className={`${w.checkGrid} ${w.checkGrid2}`}>
+                <MarkChoice name="out" legend="겉면 확인" clearLabel="이상 없음" foundLabel="훼손·이상 있음" value={checks.surface} disabled={phase !== "form"} onChange={(v) => updateChecks({ ...checks, surface: v })} />
+                <MarkChoice name="ban" legend="금지 물품 확인" clearLabel="없음" foundLabel="나옴" value={checks.prohibited} disabled={phase !== "form"} onChange={(v) => updateChecks({ ...checks, prohibited: v })} />
+              </div>
+            )}
+
+            {restriction && (
+              <div className={`${a.note} ${w.noteWarn}`}>
+                <InfoIcon />
+                <p>
+                  {restriction === "hold_only" ? (
+                    <>
+                      <strong>추적 장치가 나왔어요. 보관만 고를 수 있어요.</strong> 크리에이터에게 알림이 남아요.
+                    </>
+                  ) : (
+                    <strong>겉면이나 금지 물품에 문제가 있어서 반송만 고를 수 있어요.</strong>
+                  )}
+                </p>
+              </div>
+            )}
+
+            <fieldset className={w.choice} disabled={phase !== "form"}>
+              <legend>검수 결과</legend>
+              <div className={w.opts}>
+                {(checks.kind === "gift" ? (["pass", "return", "hold"] as const) : (["pass", "return"] as const)).map((o) => {
+                  const off = !allowed.includes(o);
+                  return (
+                    <label key={o} className={off ? `${w.opt} ${w.optOff}` : w.opt}>
+                      <input type="radio" name="res" value={o} checked={chosen === o} disabled={off} onChange={() => setOutcome(o)} />
+                      {OUTCOME_LABEL[o]}
+                    </label>
+                  );
+                })}
+              </div>
+              <p className={a.hint}>
+                {restriction === "hold_only"
+                  ? "추적 장치가 나온 상자는 팬에게 돌려보내지 않고 사무실에 보관해요."
+                  : restriction === "return_only"
+                    ? "문제가 나온 역조공 상자는 반송 대기로 넘어가요."
+                    : "통과하면 출고 단계로 넘어가요. 반송은 반송 대기로 넘어가요. 보관은 팬 선물에서 추적 장치가 나왔을 때만 있어요."}
+              </p>
+            </fieldset>
+
+            {phase === "form" && (
+              <div className={a.btnRow}>
+                <button className={`${a.btn} ${a.btnLg}`} type="submit" aria-disabled={busy}>
+                  {busy ? "저장하는 중…" : "기록 저장"}
+                </button>
+                <span className={a.hint}>저장한 기록은 고치거나 지울 수 없어요. 시각과 담당자({operatorNickname})가 같이 남아요.</span>
+              </div>
+            )}
+          </form>
+        )}
+
+        {parcel && phase === "saved" && savedAt && (
+          <div className={`${w.result} ${w.resultOk}`}>
+            <div className={`${w.resultHead} ${w.resultHeadSm}`}>
+              <span className={`${a.tag} ${a.tagBrand}`}>기록 저장됨</span>
+              <h2>검수 기록이 남았어요</h2>
+              <span className={a.faint}>
+                {formatStamp(savedAt)} · {operatorNickname}
+              </span>
+            </div>
+            <p>결과: {SAVED_TEXT[chosen]}</p>
+            <div className={w.nextStep}>
+              <h3>마지막으로</h3>
+              <p>상자의 라벨 QR 을 한 번 더 스캔하면 검수가 끝나고 다음 단계로 넘어가요.</p>
+            </div>
+          </div>
+        )}
+
+        {parcel && phase === "form" && canInspect && (
+          <div className={a.note}>
+            <InfoIcon />
+            <p>
+              <strong>검수 기록이 없으면 다음 단계로 넘어가지 않아요.</strong> 기록을 저장하기 전에 QR 을 다시 스캔하면 서버가 거부해요. 이미 저장한 상자라면 QR 을 한 번 더 스캔하세요.
+            </p>
+          </div>
+        )}
+
+        {parcel && phase === "finished" && finished && (
+          <div className={`${w.result} ${w.resultOk}`}>
+            <div className={w.resultHead}>
+              <span className={`${a.tag} ${a.tagBrand}`}>검수 끝</span>
+              <h2>{FINISHED[finished.state].title}</h2>
+            </div>
+            <p>{FINISHED[finished.state].text}</p>
+            {finished.state === "held" && parcel.kind === "gift" && (
+              <div className={`${a.note} ${a.noteOk}`}>
+                <InfoIcon />
+                <p>크리에이터({parcel.receiverName})에게 추적 장치 알림이 남았어요. 상자는 사무실에 보관돼요.</p>
+              </div>
+            )}
+            <p className={a.hint}>다음 상자를 스캔하세요.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
