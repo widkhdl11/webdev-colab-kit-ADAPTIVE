@@ -30,8 +30,3 @@ export function countByTab(rows: readonly PaymentRow[]): Record<PaymentTab, numb
   for (const r of rows) out[tabOf(r.refund.status)] += 1;
   return out;
 }
-
-/** INV-K2·K7: 환불 버튼은 대표에게만, 환불 대기·실패 줄에만. 판정은 DB 가 다시 한다. */
-export function canRefund(access: "staff" | "owner", status: RefundStatus): boolean {
-  return access === "owner" && (status === "due" || status === "failed");
-}

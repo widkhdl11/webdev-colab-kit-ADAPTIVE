@@ -71,4 +71,22 @@ describe("토스페이먼츠 클라이언트", () => {
     expect(new Headers(calls[0]!.init.headers).get("idempotency-key")).toBe("refund-r1");
     expect(JSON.parse(String(calls[0]!.init.body))).toEqual({ cancelAmount: 4000, cancelReason: "검수 불합격 반송" });
   });
+
+  it("INV-K7: 환불 호출은 60초 안에 끝나지 않으면 끊는다 — 같은 기록을 다시 잡을 수 있게 되는 2분보다 짧게", async () => {
+    const { calls, fetchImpl } = recordingFetch({ status: "CANCELED" });
+    const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl });
+    const seen: number[] = [];
+    const original = AbortSignal.timeout;
+    AbortSignal.timeout = (ms: number) => {
+      seen.push(ms);
+      return original.call(AbortSignal, ms);
+    };
+    try {
+      await client.cancel({ paymentKey: "tgen_abc", cancelAmount: 4000, cancelReason: "r", idempotencyKey: "refund-r1" });
+    } finally {
+      AbortSignal.timeout = original;
+    }
+    expect(seen).toEqual([60_000]);
+    expect(calls[0]!.init.signal).toBeInstanceOf(AbortSignal);
+  });
 });

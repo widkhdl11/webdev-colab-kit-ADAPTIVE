@@ -155,10 +155,27 @@ describe("INV-K7: 결제사 취소가 실패하면 「실패」로 남는다", (
     expect(s.admin.calls[0]?.args).toMatchObject({ p_ok: false });
   });
 
-  it("결과를 기록하지 못하면 500 — 기록은 「처리 중」으로 남아 2분 뒤 같은 키로 다시 할 수 있다", async () => {
+  it("결과를 기록하지 못하면 500 — 기록은 「처리 중」으로 남아 2분 뒤 같은 키로 다시 할 수 있다고 알린다", async () => {
     const s = setup({ settle: { data: null, error: { code: "XX000" } } });
-    expect((await runRefund(s.deps, body)).status).toBe(500);
+    const reply = await runRefund(s.deps, body);
+    expect(reply.status).toBe(500);
+    expect(reply.body.message).toMatch(/2분 뒤/);
     expect(s.cancels).toHaveLength(1);
+  });
+
+  it("INV-K7 (실패경로): 다른 요청이 먼저 결과를 남겼으면(기록이 이미 처리 중이 아님) 성공이라고 답하지 않는다 — 409", async () => {
+    const s = setup({ settle: { data: false, error: null } });
+    const reply = await runRefund(s.deps, body);
+    expect(reply.status).toBe(409);
+    expect(reply.body.ok).toBeUndefined();
+  });
+
+  it("INV-M9 (실패경로): 다시 시도 기한(14일)이 지난 기록(P0025)은 409 이고 결제사 호출이 없다", async () => {
+    const s = setup({ session: ownerSession({ data: null, error: { code: "P0025" } }) });
+    const reply = await runRefund(s.deps, body);
+    expect(reply.status).toBe(409);
+    expect(reply.body.message).toMatch(/14일/);
+    expect(s.cancels).toHaveLength(0);
   });
 });
 
@@ -174,6 +191,17 @@ describe("cancelOutcome: 결제사 응답이 이 환불의 성공인가", () => 
 
   it("(실패경로) 취소 상태가 아니면 실패", () => {
     expect(cancelOutcome(canceled(6900, "DONE"), KEY, 6900).ok).toBe(false);
+  });
+
+  it("(실패경로) 마지막 취소 줄이 이 환불의 것이어야 한다 — 같은 결제의 앞선 다른 몫 취소 줄로는 성공이 아니다", () => {
+    const two = { paymentKey: KEY, status: "PARTIAL_CANCELED", cancels: [
+      { cancelAmount: 5400, cancelStatus: "DONE", canceledAt: "2026-10-04T10:00:00+09:00" },
+      { cancelAmount: 1400, cancelStatus: "DONE", canceledAt: "2026-10-04T11:00:00+09:00" },
+    ] };
+    expect(cancelOutcome(two, KEY, 5400).ok).toBe(false);
+    expect(cancelOutcome(two, KEY, 1400)).toEqual({ ok: true });
+    // 배열 순서가 시각 순서와 달라도 시각으로 고른다
+    expect(cancelOutcome({ ...two, cancels: [...two.cancels].reverse() }, KEY, 1400)).toEqual({ ok: true });
   });
 
   it("(실패경로) 이 금액의 취소 완료 줄이 없으면 실패", () => {

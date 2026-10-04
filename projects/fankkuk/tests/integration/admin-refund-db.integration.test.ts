@@ -301,6 +301,7 @@ describe("INV-K7 · INV-M9: 같은 환불은 한 번만", () => {
     const id = shareId(no);
     const results = await Promise.all([asOwner("revgift", id), asOwner("revgift", id)]);
     expect(results.filter((r) => r.code === null)).toHaveLength(1);
+    expect(results.filter((r) => r.code === "P0024")).toHaveLength(1);
     expect(refundCount(`share_id = '${id}'`)).toBe("1");
   });
 });

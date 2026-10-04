@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import type { PaymentRow, RefundStatus } from "@/entities/payment/model/payment-rows";
+import { canRefund } from "@/features/admin-refund/model/refund-access";
 import { RefundButton } from "@/features/admin-refund/ui/refund-button";
 import a from "@/shared/ui/admin.module.css";
-import { canRefund, countByTab, filterPayments, PAYMENT_TABS, type PaymentTab } from "../model/payment-filter";
+import { countByTab, filterPayments, PAYMENT_TABS, type PaymentTab } from "../model/payment-filter";
 
 // 관리자 「결제·환불」 본문 (admin-console INV-K1·K7·K8, 시안 admin/payments.html).
 // 결제 금액은 네 칸으로 나눠 보인다. 환불 금액은 서버가 주문 상태로 정한 값이고 이 화면에서 바꿀 수 없다.
@@ -60,7 +61,9 @@ export function PaymentsPanel({ rows, access }: Props) {
     <>
       <div className={a.pageHead}>
         <div>
-          <h1>결제·환불 내역</h1>
+          <h1 id="payments-title" tabIndex={-1}>
+            결제·환불 내역
+          </h1>
           <p>결제 금액은 네 칸으로 나뉘어 있어요. 환불 금액은 서버가 주문 상태로 정해서 이 화면에서 바꿀 수 없어요.</p>
         </div>
       </div>
@@ -92,6 +95,9 @@ export function PaymentsPanel({ rows, access }: Props) {
           </div>
         </div>
 
+        <p className="sr-only" role="status">
+          {shown.length}건
+        </p>
         <div className={a.tblWrap}>
           <table className={a.tbl} style={{ minWidth: 1060 }}>
             <caption className="sr-only">결제 및 환불 내역</caption>
@@ -119,12 +125,12 @@ export function PaymentsPanel({ rows, access }: Props) {
                   환불 금액
                 </th>
                 <th scope="col">결제 시각</th>
-                <th scope="col">
+                <th scope="col" className={a.stickyEnd}>
                   <span className="sr-only">환불</span>
                 </th>
               </tr>
             </thead>
-            <tbody aria-live="polite">
+            <tbody>
               {shown.length === 0 ? (
                 <tr>
                   <td colSpan={11} className={a.empty}>
@@ -159,7 +165,7 @@ export function PaymentsPanel({ rows, access }: Props) {
                       </td>
                       <td className={`${a.num} ${a.mono}`}>{r.refund.amountKrw === null ? "—" : `${won.format(r.refund.amountKrw)}원`}</td>
                       <td className={`${a.mono} ${a.nowrap}`}>{formatStamp(r.paidAt)}</td>
-                      <td className={a.act}>
+                      <td className={`${a.act} ${a.stickyEnd}`}>
                         {canRefund(access, r.refund.status) && r.refund.amountKrw !== null && (
                           <RefundButton
                             unitKind={r.unitKind}
@@ -168,6 +174,7 @@ export function PaymentsPanel({ rows, access }: Props) {
                             payerNickname={r.payerNickname}
                             amountKrw={r.refund.amountKrw}
                             retry={r.refund.status === "failed"}
+                            returnFocusId="payments-title"
                           />
                         )}
                       </td>

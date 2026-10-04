@@ -23,7 +23,7 @@
   },
   "design/schema-designer": {
     "status": "clean",
-    "hash": "1f2885e34b79"
+    "hash": "e6b5deee957d"
   },
   "implement": {
     "status": "dirty",

@@ -3,6 +3,7 @@
 // 결제 취소 POST /v1/payments/{paymentKey}/cancel, 비밀 키 Basic 인증, Idempotency-Key 헤더, 테스트 키는 test_ 접두어.
 
 const API_BASE = "https://api.tosspayments.com/v1/payments";
+const CANCEL_TIMEOUT_MS = 60_000;
 
 type EnvLike = { NODE_ENV?: string; VERCEL_ENV?: string };
 
@@ -33,11 +34,12 @@ export function createTossPaymentsClient(opts: {
   }
   const authorization = `Basic ${btoa(`${opts.secretKey}:`)}`;
 
-  async function post(url: string, body: unknown, idempotencyKey: string): Promise<unknown> {
+  async function post(url: string, body: unknown, idempotencyKey: string, signal?: AbortSignal): Promise<unknown> {
     const res = await opts.fetchImpl(url, {
       method: "POST",
       headers: { Authorization: authorization, "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
       body: JSON.stringify(body),
+      signal,
     });
     return res.json();
   }
@@ -45,7 +47,9 @@ export function createTossPaymentsClient(opts: {
   return {
     confirm: ({ paymentKey, orderId, amount, idempotencyKey }) =>
       post(`${API_BASE}/confirm`, { paymentKey, orderId, amount }, idempotencyKey),
+    // 취소는 60초 안에 끝나지 않으면 끊는다. 부르는 쪽이 같은 요청을 2분 뒤에야 다시 보낼 수 있게 막아 두므로
+    // 첫 요청이 그보다 오래 살아 있으면 두 요청의 결과가 섞인다. 끊긴 요청은 같은 멱등 키로 다시 보내면 된다.
     cancel: ({ paymentKey, cancelAmount, cancelReason, idempotencyKey }) =>
-      post(`${API_BASE}/${encodeURIComponent(paymentKey)}/cancel`, { cancelAmount, cancelReason }, idempotencyKey),
+      post(`${API_BASE}/${encodeURIComponent(paymentKey)}/cancel`, { cancelAmount, cancelReason }, idempotencyKey, AbortSignal.timeout(CANCEL_TIMEOUT_MS)),
   };
 }

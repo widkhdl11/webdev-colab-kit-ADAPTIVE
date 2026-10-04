@@ -29,7 +29,10 @@ const MESSAGE = {
   notRefundable: "지금 상태에서는 환불할 수 없어요.",
   alreadyDone: "이미 환불했어요.",
   inProgress: "환불을 처리하고 있어요. 잠시 뒤 새로고침해 주세요.",
+  tooOld: "다시 시도할 수 있는 기한(14일)이 지났어요. 결제사 관리 화면에서 취소됐는지 확인해 주세요.",
   failed: "환불하지 못했어요. 잠시 뒤 다시 해 주세요.",
+  unrecorded: "결제사 결과를 기록하지 못했어요. 2분 뒤 새로고침해서 상태를 확인해 주세요.",
+  settledElsewhere: "다른 요청이 먼저 결과를 남겼어요. 새로고침해서 상태를 확인해 주세요.",
   pgFailed: "결제사 취소가 실패했어요. 「다시 시도」로 다시 할 수 있어요.",
 } as const;
 
@@ -44,27 +47,45 @@ function claimErrorReply(code: string | undefined): RefundReply {
   if (code === "P0022") return { status: 409, body: { message: MESSAGE.notRefundable } };
   if (code === "P0023") return { status: 409, body: { message: MESSAGE.alreadyDone } };
   if (code === "P0024") return { status: 409, body: { message: MESSAGE.inProgress } };
+  if (code === "P0025") return { status: 409, body: { message: MESSAGE.tooOld } };
   return { status: 500, body: { message: MESSAGE.failed } };
 }
 
 const cancelShape = z.object({
   paymentKey: z.string(),
   status: z.string(),
-  cancels: z.array(z.object({ cancelAmount: z.number(), cancelStatus: z.string() })),
+  cancels: z.array(z.object({ cancelAmount: z.number(), cancelStatus: z.string(), canceledAt: z.string().optional() })),
 });
 const errorShape = z.object({ code: z.string(), message: z.string() });
 
 /**
- * 결제사 취소 응답이 이 환불의 성공인가. 결제 키가 같고, 취소 상태(전체·부분)이고, 이 금액의 취소 완료 줄이 있어야 성공.
+ * 결제사 취소 응답이 이 환불의 성공인가. 결제 키가 같고, 취소 상태(전체·부분)이고, **마지막(가장 늦은) 취소 줄**이
+ * 이 금액의 취소 완료여야 성공. 역조공은 몫들이 결제 하나를 같이 써서 앞선 다른 몫의 취소 줄이 같이 온다 —
+ * 같은 결제의 취소는 DB 가 한 번에 하나만 내보내므로(잡기 함수) 이번 요청의 줄이 마지막이다.
  * 실패면 기록에 남길 오류 문구(200자 안).
  */
+type CancelLine = { cancelAmount: number; cancelStatus: string; canceledAt?: string | undefined };
+
+/** 가장 늦은 취소 줄. 시각이 있으면 시각으로, 없으면 배열의 마지막. */
+function latestCancel(lines: readonly CancelLine[]): CancelLine | undefined {
+  let latest: CancelLine | undefined;
+  for (const line of lines) {
+    if (!latest || (line.canceledAt && latest.canceledAt ? Date.parse(line.canceledAt) >= Date.parse(latest.canceledAt) : true)) latest = line;
+  }
+  return latest;
+}
+
+function isThisCancel(line: CancelLine | undefined, amountKrw: number): boolean {
+  return line !== undefined && line.cancelAmount === amountKrw && line.cancelStatus === "DONE";
+}
+
 export function cancelOutcome(res: unknown, paymentKey: string, amountKrw: number): { ok: true } | { ok: false; error: string } {
   const done = cancelShape.safeParse(res);
   if (
     done.success &&
     done.data.paymentKey === paymentKey &&
     (done.data.status === "CANCELED" || done.data.status === "PARTIAL_CANCELED") &&
-    done.data.cancels.some((c) => c.cancelAmount === amountKrw && c.cancelStatus === "DONE")
+    isThisCancel(latestCancel(done.data.cancels), amountKrw)
   ) {
     return { ok: true };
   }
@@ -101,7 +122,9 @@ export async function runRefund(deps: RefundDeps, body: unknown): Promise<Refund
     p_ok: outcome.ok,
     p_error: outcome.ok ? null : outcome.error,
   });
-  if (settled.error) return { status: 500, body: { message: MESSAGE.failed } };
+  if (settled.error) return { status: 500, body: { message: MESSAGE.unrecorded } };
+  // 기록이 이미 「처리 중」이 아니면 다른 요청이 결과를 남긴 것이다 — 이 요청의 결과로 성공·실패를 말하지 않는다.
+  if (settled.data !== true) return { status: 409, body: { message: MESSAGE.settledElsewhere } };
   if (!outcome.ok) return { status: 502, body: { message: MESSAGE.pgFailed } };
   return { status: 200, body: { ok: true, refundKrw: amountKrw } };
 }
