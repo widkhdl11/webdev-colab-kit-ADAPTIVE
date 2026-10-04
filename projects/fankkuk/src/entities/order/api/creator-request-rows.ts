@@ -25,7 +25,7 @@ const decidedSchema = z.object({
   fan_nickname: z.string(),
   item_kind: z.string(),
   box_count: z.number().int().nonnegative(),
-  outcome: z.enum(["approved", "declined", "expired"]),
+  outcome: z.enum(["approved", "declined", "blocked", "expired"]),
   decided_at: ts,
 });
 
@@ -34,6 +34,7 @@ export function parseApprovalRequestRows(rows: unknown): ApprovalRequestView[] {
     .array(waitingSchema)
     .parse(rows)
     .map((r) => ({
+      requestId: r.request_id,
       orderNo: r.order_no,
       fanNickname: r.fan_nickname,
       itemKind: r.item_kind,
@@ -44,7 +45,7 @@ export function parseApprovalRequestRows(rows: unknown): ApprovalRequestView[] {
     }));
 }
 
-/** 차단(blocked)은 아직 DB 에 없다 — 팬 차단을 만들 때 함께 넣는다. */
+/** blocked = 주문이 거절됐고 그 팬이 지금 차단돼 있다(DB 가 판정). 차단을 풀면 declined 로 온다. */
 export function parseDecidedRequestRows(rows: unknown): DecidedRequestView[] {
   return z
     .array(decidedSchema)

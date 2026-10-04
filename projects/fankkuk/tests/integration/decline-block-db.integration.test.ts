@@ -618,3 +618,35 @@ describe("INV-D10: 차단 해제는 본인만, 그 쌍만, 과거 주문은 그�
     expect(activeBlocks()).toEqual([OTHER]);
   });
 });
+
+describe("처리한 요청 목록의 「차단함」 (스펙 「지금 코드와 다른 점」 둘째 줄)", () => {
+  type Decided = { order_no: string; outcome: string };
+  const decidedOf = async (orderNos: string[]): Promise<Record<string, string>> => {
+    const r = await haru.rpc("my_decided_requests");
+    expect(r.error).toBeNull();
+    return Object.fromEntries((r.data as Decided[]).filter((d) => orderNos.includes(d.order_no)).map((d) => [d.order_no, d.outcome]));
+  };
+
+  it("INV-D8: 차단하며 거절한 주문과 차단으로 거절된 승인 주문은 「blocked」, 차단 없이 거절한 주문은 「declined」", async () => {
+    const plain = await giftFrom(1, { senderId: OTHER });
+    expect(await decline(haru, plain.requestId)).toBe("declined");
+    const approved = await giftFrom();
+    await approve(approved);
+    const trigger = await giftFrom();
+    expect(await decline(haru, trigger.requestId, true)).toBe("declined");
+
+    expect(await decidedOf([plain.orderNo, approved.orderNo, trigger.orderNo])).toEqual({
+      [plain.orderNo]: "declined",
+      [approved.orderNo]: "blocked",
+      [trigger.orderNo]: "blocked",
+    });
+  });
+
+  it("INV-D10: 차단을 풀면 과거 거절은 「declined」로 보인다 — 「풀려면 설정에서」 안내가 남지 않게", async () => {
+    const trigger = await giftFrom();
+    expect(await decline(haru, trigger.requestId, true)).toBe("declined");
+    const blockId = psql(`select id from public.creator_blocks where creator_id = '${SEED.haruCreatorId}' and sender_id = '${SENDER}' and unblocked_at is null`);
+    expect((await haru.rpc("unblock_sender", { p_block_id: blockId })).data).toBe("unblocked");
+    expect(await decidedOf([trigger.orderNo])).toEqual({ [trigger.orderNo]: "declined" });
+  });
+});

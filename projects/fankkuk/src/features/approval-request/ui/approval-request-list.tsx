@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
@@ -10,10 +11,12 @@ import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
+import { sendDecline } from "../api/send-decline";
 import { applyDecision, type LocalDecision } from "../model/local-decision";
 import a from "./approval-request.module.css";
 
-// 크리에이터 승인 요청 목록(시안 v4 creator-requests.html). 지금은 예시 — 서버에 아무것도 보내지 않는다.
+// 크리에이터 승인 요청 목록(시안 v4 creator-requests.html).
+// 받지 않기(+차단)는 서버에 저장한다(decline-block). 승인 버튼은 아직 서명 대기 표시까지다 — 서버에 보내지 않는다.
 //
 // 승인 버튼은 승인하지 않는다. 카카오톡 인증서 서명 요청을 보내는 것까지이고, 승인은 서명이
 // 서버 검증을 통과했을 때만 일어난다(INV-S7: 승인 상태를 바꾸는 경로는 서명 검증을 통과한 승인 처리 하나뿐).
@@ -67,9 +70,14 @@ export function ApprovalRequestList({
   requests: readonly ApprovalRequestView[];
   decided: readonly DecidedRequestView[];
 }) {
+  const router = useRouter();
+  // 처음 받은 줄을 붙들어 둔다 — 저장 뒤 새로 읽어 오면(router.refresh) 거절된 줄이 목록에서 빠지는데, 결과 문구는 이 자리에 남아야 한다
+  const [rows] = useState(requests);
   const [states, setStates] = useState<Record<string, LocalDecision>>({});
   const [sheet, setSheet] = useState<{ kind: "approve" | "decline"; req: ApprovalRequestView } | null>(null);
   const [block, setBlock] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [declineError, setDeclineError] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("wait");
   const tabRefs = useRef(new Map<TabKey, HTMLButtonElement>());
 
@@ -85,17 +93,35 @@ export function ApprovalRequestList({
   }, [focusTarget]);
 
   const stateOf = (orderNo: string): LocalDecision => states[orderNo] ?? { kind: "pending" };
-  const decide = (req: ApprovalRequestView, st: LocalDecision) => {
-    setStates((prev) => applyDecision(prev, requests, req.orderNo, st));
+  const decide = (req: ApprovalRequestView, st: LocalDecision, stillWaiting?: ReadonlySet<string>) => {
+    setStates((prev) => applyDecision(prev, rows, req.orderNo, st, stillWaiting));
     setFocusTarget({ orderNo: req.orderNo, where: "result" });
     setSheet(null);
+  };
+  // 서버에 저장된 뒤에만 화면을 바꾼다. 실패하면 창을 닫지 않고 이유를 보인다.
+  const confirmDecline = async (req: ApprovalRequestView) => {
+    if (saving) return;
+    setSaving(true);
+    setDeclineError(null);
+    const r = await sendDecline(req.requestId, block);
+    setSaving(false);
+    if (r.kind === "ok") {
+      decide(req, { kind: "declined", blocked: block }, new Set(r.waitingOrderNos));
+      router.refresh(); // 처리한 요청 탭과 머리글의 대기 수를 새로 읽는다
+      return;
+    }
+    if (r.kind === "login") {
+      router.push("/login");
+      return;
+    }
+    setDeclineError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
   };
   const cancelSigning = (req: ApprovalRequestView) => {
     setStates((prev) => ({ ...prev, [req.orderNo]: { kind: "pending" } }));
     setFocusTarget({ orderNo: req.orderNo, where: "approve" });
   };
 
-  const waitingCount = requests.filter((r) => {
+  const waitingCount = rows.filter((r) => {
     const k = stateOf(r.orderNo).kind;
     return k === "pending" || k === "signing";
   }).length;
@@ -139,11 +165,11 @@ export function ApprovalRequestList({
       </div>
 
       <div role="tabpanel" id="p-wait" aria-labelledby="t-wait" hidden={tab !== "wait"}>
-        {requests.length === 0 ? (
+        {rows.length === 0 ? (
           <p className={a.empty}>기다리는 승인 요청이 없어요.</p>
         ) : (
           <ul className={a.rows}>
-            {requests.map((r, i) => {
+            {rows.map((r, i) => {
               const st = stateOf(r.orderNo);
               const requested = `${formatDateTime(r.registeredAt)} 요청`;
               return (
@@ -217,6 +243,7 @@ export function ApprovalRequestList({
                         type="button"
                         onClick={() => {
                           setBlock(false);
+                          setDeclineError(null);
                           setSheet({ kind: "decline", req: r });
                         }}
                       >
@@ -301,18 +328,26 @@ export function ApprovalRequestList({
               <input type="checkbox" checked={block} onChange={(e) => setBlock(e.target.checked)} />
               <span>
                 이 팬의 선물을 앞으로 받지 않기(차단)
-                <small>차단한 팬은 선물을 보낼 수 없어요. 풀 때는 주소와 설정에서 카카오톡 서명을 해요.</small>
+                <small>차단한 팬은 선물을 보낼 수 없어요. 승인 대기 중인 이 팬의 다른 선물도 함께 받지 않아요. 풀 때는 주소와 설정에서 해요.</small>
               </span>
             </label>
             <p className={`sub ${a.reason}`}>
               팬에게는 이유를 알리지 않아요. {sheet.req.fanNickname}님에게는 &ldquo;{NOT_ACCEPTED_TEXT}&rdquo;만 전해져요.
             </p>
+            {declineError ? (
+              <p className={a.error} role="alert">
+                <span className={a["error-mark"]} aria-hidden="true">
+                  !
+                </span>
+                {declineError}
+              </p>
+            ) : null}
             <div className={a["sheet-btns"]}>
               <button className="btn btn--soft" type="button" onClick={() => setSheet(null)}>
                 돌아가기
               </button>
-              <button className="btn" type="button" onClick={() => decide(sheet.req, { kind: "declined", blocked: block })}>
-                받지 않기
+              <button className="btn" type="button" disabled={saving} onClick={() => void confirmDecline(sheet.req)}>
+                {saving ? "저장하는 중…" : "받지 않기"}
               </button>
             </div>
           </>

@@ -48,9 +48,10 @@ describe("pendingApprovalRequests — 크리에이터 승인 요청 목록", () 
     expect(list[0]?.receivedAt).toBe("2026-10-02T01:00:00.000Z");
   });
 
-  it("크리에이터 요청에는 팬 닉네임·물품 종류·상자 수·전자기기 신고만 있고 팬의 송장번호는 없다", () => {
+  it("크리에이터 요청에는 요청 식별값·팬 닉네임·물품 종류·상자 수·전자기기 신고만 있고 팬의 송장번호는 없다", () => {
     const [req] = pendingApprovalRequests([base], "c1");
     expect(req).toEqual({
+      requestId: "apr_FC7K3M9",
       orderNo: "FC-7K3M9",
       fanNickname: "별빛",
       itemKind: "인형",

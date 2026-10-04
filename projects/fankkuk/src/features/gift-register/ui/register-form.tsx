@@ -154,6 +154,8 @@ export function RegisterForm({
       }
       if (res.status === 401) setSubmitError({ message: "로그인하면 선물을 보낼 수 있어요.", needsLogin: true });
       else if (res.status === 403) setSubmitError({ message: body.message ?? "팬 계정으로 로그인해 주세요.", needsLogin: false });
+      // 받을 수 없는 크리에이터 — 본인 확인 전이거나 이 사람을 차단했다. 둘을 가르지 않는 서버 문구를 그대로 보인다(decline-block INV-D7)
+      else if (res.status === 404) setSubmitError({ message: body.message ?? "선물을 받을 수 없는 크리에이터예요.", needsLogin: false });
       else if (res.status === 409) {
         // 화면을 연 뒤 요금이 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 값은 그대로 남는다
         setSubmitError({ message: body.message ?? PRICE_CHANGED_MESSAGE, needsLogin: false });

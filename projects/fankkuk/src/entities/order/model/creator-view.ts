@@ -4,6 +4,8 @@ import { isApprovable } from "./order-status";
 // 크리에이터 승인 요청 한 건. 원본 「팬이 보는 것 / 크리에이터가 보는 것」 표의 등록 단계:
 // 팬 닉네임과 팬이 입력한 물품 종류. 팬의 송장번호·결제 정보는 넣지 않는다.
 export type ApprovalRequestView = {
+  /** 승인 요청 식별값 — 거절할 때 이것 하나만 서버로 보낸다(decline-block INV-D1). 보낸 사람 계정 값은 화면에 오지 않는다. */
+  requestId: string;
   orderNo: string;
   fanNickname: string;
   itemKind: string;
@@ -23,6 +25,8 @@ export function pendingApprovalRequests(records: readonly OrderRecord[], creator
     .filter((r) => r.creatorId === creatorId && r.approvedAt === null && isApprovable(r.status) && r.inspection?.result !== "returned")
     .sort((a, b) => Date.parse(a.registeredAt) - Date.parse(b.registeredAt))
     .map((r) => ({
+      // 예시 기록에는 요청 식별값이 없다 — 시드와 같은 꼴(apr_ + 하이픈 뺀 주문번호)로 만든다
+      requestId: `apr_${r.orderNo.replaceAll("-", "")}`,
       orderNo: r.orderNo,
       fanNickname: r.fanNickname,
       itemKind: r.itemKind,
