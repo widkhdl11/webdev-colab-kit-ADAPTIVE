@@ -64,6 +64,7 @@ export function deleteTestOrders(): void {
       `delete from public.decrypt_log where order_id in (${ids});`,
       "set local session_replication_role = origin;",
       `delete from public.approval_requests where order_id in (${ids});`,
+      `delete from public.refunds where payment_id in (select id from public.payments where order_id in (${ids}));`,
       `delete from public.payments where order_id in (${ids});`,
       `delete from public.orders where item_kind in (${kinds});`,
       "commit;",

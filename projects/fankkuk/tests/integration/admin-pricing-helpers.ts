@@ -74,6 +74,6 @@ export const SMALL_RAISED: Amounts = { service: 1900, inspection: 1500, shipping
 /** 시험이 만든 역조공 보내기(결제 주문번호 pay_test_rg_*)를 지운다. */
 export function deleteTestRevgifts(): void {
   psql(
-    "delete from public.revgift_shares where send_id in (select id from public.revgift_sends where toss_order_id like 'pay_test_rg_%'); delete from public.revgift_sends where toss_order_id like 'pay_test_rg_%';",
+    "delete from public.refunds where share_id in (select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_test_rg_%'); delete from public.revgift_shares where send_id in (select id from public.revgift_sends where toss_order_id like 'pay_test_rg_%'); delete from public.revgift_sends where toss_order_id like 'pay_test_rg_%';",
   );
 }

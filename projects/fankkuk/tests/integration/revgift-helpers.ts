@@ -92,7 +92,10 @@ export function shareReply(orderNo: string): string {
 }
 
 export function deleteTestRevgifts(): void {
-  psql(`delete from public.revgift_sends where toss_order_id like 'pay_test_rg_%'`);
+  psql(
+    "delete from public.refunds where share_id in (select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_test_rg_%'); " +
+      "delete from public.revgift_sends where toss_order_id like 'pay_test_rg_%'",
+  );
 }
 
 /** 형식만 맞춘 봉인 주소(복호화는 이 시험의 대상이 아니다). 감싼 키 256바이트 · IV 12바이트 · 암호문 17바이트. */

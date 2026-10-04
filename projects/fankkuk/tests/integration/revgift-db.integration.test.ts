@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { adminClient, psql, psqlError, signedInClient } from "./helpers";
+import { adminClient, psql, signedInClient } from "./helpers";
 import {
   backdateSettlement,
   deleteTestRevgifts,
@@ -237,73 +237,7 @@ describe("INV-R10: 받지 않기와 168시간 기한", () => {
   });
 });
 
-describe("INV-R11: 환불은 몫마다 따로, 한 번만", () => {
-  it("INV-R11 S11: 셋 중 중형 몫이 입고 전 받지 않음이면 6,900원만 환불되고 나머지는 그대로", async () => {
-    const send = await registerTestRevgift([
-      { fanId: PROFILE.byeolbit, tier: "small" },
-      { fanId: PROFILE.gureumppang, tier: "small" },
-      { fanId: PROFILE.somsatang, tier: "medium" },
-    ]);
-    await payTestRevgift(send);
-    const medium = send.orderNos[2]!;
-    psql(`update public.revgift_shares set reply = 'expired', replied_at = now() where order_no = '${medium}'`);
-    const { data, error } = await adminClient().rpc("record_revgift_refund", { p_order_no: medium });
-    expect(error).toBeNull();
-    expect(data).toBe(6900);
-    expect(shareReply(send.orderNos[0]!)).toBe("waiting");
-  });
-
-  it("INV-R11: 입고 뒤 받지 않음은 반송 택배비(그 몫의 배송비 칸)를 뺀 금액", async () => {
-    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
-    await payTestRevgift(send);
-    const no = send.orderNos[0]!;
-    psql(`update public.revgift_shares set reply = 'declined', replied_at = now(), received_at = now() where order_no = '${no}'`);
-    expect((await adminClient().rpc("record_revgift_refund", { p_order_no: no })).data).toBe(5400 - 4000);
-  });
-
-  it("INV-R11 S11b (실패경로): 같은 몫의 환불이 동시에 두 번 와도 한 번만 기록된다", async () => {
-    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
-    await payTestRevgift(send);
-    const no = send.orderNos[0]!;
-    psql(`update public.revgift_shares set reply = 'expired', replied_at = now() where order_no = '${no}'`);
-    const results = await Promise.all([1, 2].map(() => adminClient().rpc("record_revgift_refund", { p_order_no: no })));
-    expect(results.filter((r) => r.error === null)).toHaveLength(1);
-    expect(psql(`select count(*) from public.revgift_refunds r join public.revgift_shares s on s.id = r.share_id where s.order_no = '${no}'`)).toBe("1");
-  });
-
-  it("INV-R11 S11c (실패경로): 받기를 기다리는 몫·받은 몫은 환불되지 않는다", async () => {
-    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
-    await payTestRevgift(send);
-    expect((await adminClient().rpc("record_revgift_refund", { p_order_no: send.orderNos[0] })).error?.code).toBe("P0022");
-  });
-
-  it("INV-R11 (실패경로): 한 보내기의 환불 합계는 결제 금액을 넘지 않는다 — DB 가 막는다", async () => {
-    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
-    await payTestRevgift(send);
-    const shareId = psql(`select id from public.revgift_shares where order_no = '${send.orderNos[0]}'`);
-    expect(psqlError(`insert into public.revgift_refunds (share_id, amount_krw) values ('${shareId}', 99999)`)).not.toBeNull();
-  });
-
-  it("INV-R11 (실패경로): 몫 금액이 잘못 커져 있어도 보내기 전체 환불은 결제 금액을 넘지 못한다", async () => {
-    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
-    await payTestRevgift(send);
-    const shareId = psql(`select id from public.revgift_shares where order_no = '${send.orderNos[0]}'`);
-    psql(`update public.revgift_shares set amount_krw = 9000 where id = '${shareId}'`);
-    expect(psqlError(`insert into public.revgift_refunds (share_id, amount_krw) values ('${shareId}', 9000)`)).not.toBeNull();
-    expect(psqlError(`insert into public.revgift_refunds (share_id, amount_krw) values ('${shareId}', 5400)`)).toBeNull();
-  });
-
-  it("INV-R11 (실패경로): 결제 금액 안이라도 몫 하나의 환불은 그 몫 금액을 넘지 못한다", async () => {
-    const send = await registerTestRevgift([
-      { fanId: PROFILE.byeolbit, tier: "small" },
-      { fanId: PROFILE.gureumppang, tier: "small" },
-    ]);
-    await payTestRevgift(send);
-    const shareId = psql(`select id from public.revgift_shares where order_no = '${send.orderNos[0]}'`);
-    expect(psqlError(`insert into public.revgift_refunds (share_id, amount_krw) values ('${shareId}', 6000)`)).not.toBeNull();
-  });
-});
-
+// INV-R11 환불 시험은 admin-refund-db.integration.test.ts 로 옮겼다(환불 기록이 팬 선물과 공용 표가 됐다).
 
 describe("역조공 보내기는 크리에이터 페이지와 묶인다", () => {
   it("보내기 기록의 보내는 크리에이터는 하루의 크리에이터 페이지다", async () => {
