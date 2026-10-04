@@ -1,7 +1,8 @@
 import { newOrderNo } from "@/entities/order/model/order-no";
 import { OrderNoTakenError, PriceChangedError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
 import { computeCharge } from "@/entities/payment/model/charge";
-import { PRICE_CHANGED_MESSAGE, type PriceTable } from "@/entities/payment/model/price-table";
+import { z } from "zod";
+import { PRICE_CHANGED_MESSAGE, quotedTotalSchema, type PriceTable } from "@/entities/payment/model/price-table";
 import type { Viewer } from "@/entities/session/model/viewer";
 import type { CreatorRelationReader } from "../api/creator-relation";
 import { parseRegisterInput, type RegisterFormValues } from "./register-input";
@@ -14,6 +15,8 @@ export type RegisterGiftResult =
   | { ok: false; status: 401 | 403 | 404 | 409; message: string }
   | { ok: false; status: 400; errors: Partial<Record<keyof RegisterFormValues, string>> };
 
+const quotedShape = z.object({ quotedTotalKrw: quotedTotalSchema });
+
 /** 토스 orderId 규칙: 영문·숫자·-·_ 6~64자. */
 function newPaymentOrderId(): string {
   return `pay_${crypto.randomUUID().replaceAll("-", "")}`;
@@ -23,7 +26,9 @@ function newPaymentOrderId(): string {
  * INV-L3: 주문의 보내는 사람(fanId 칸)은 viewer(서버가 확인한 로그인 사용자)다. 본문의 사용자 ID·닉네임 칸은 읽지 않는다 —
  * parseRegisterInput 이 정해진 다섯 칸만 꺼낸다.
  * INV-M1: 금액은 상자 구간과 서버 요금표로만 계산한다. 본문의 금액 칸은 읽지 않는다.
- * INV-K3: 요금표는 요청마다 한 번 DB 에서 읽는다(readPrices). 그 사이 요금이 바뀌면 DB 등록 함수가 거부하고 409 로 끝낸다.
+ * INV-K3: 요금표는 요청마다 한 번 DB 에서 읽는다(readPrices). 본문의 quotedTotalKrw(화면이 보여 준 합계)가 그 표로 계산한
+ * 합계와 다르면 화면을 연 뒤 요금이 바뀐 것이다 — DB 를 부르기 전에 409 로 끝낸다. 이 값은 비교에만 쓰고 결제 금액으로 쓰지 않는다.
+ * 읽은 뒤 등록하기 전에 바뀌면 DB 등록 함수가 거부하고(P0031) 역시 409 로 끝낸다.
  */
 export async function registerGift(
   deps: {
@@ -41,6 +46,8 @@ export async function registerGift(
 
   const parsed = parseRegisterInput(body);
   if (!parsed.success) return { ok: false, status: 400, errors: parsed.errors };
+  const quoted = quotedShape.safeParse(body);
+  if (!quoted.success) return { ok: false, status: 400, errors: {} };
 
   const { creatorId, itemKind, boxes, hasElectronicsOrMetal } = parsed.data;
   // INV-L8·INV-L9: 크리에이터가 보낼 때는 받는 사람과의 관계를 서버가 읽어 판정한다(DB 등록 함수도 따로 막는다)
@@ -49,6 +56,7 @@ export async function registerGift(
   if (!verdict.ok) return { ok: false, status: refusalStatus(verdict.reason), message: SENDER_REFUSAL_MESSAGE[verdict.reason] };
 
   const charge = computeCharge(await deps.readPrices(), { boxes });
+  if (charge.totalKrw !== quoted.data.quotedTotalKrw) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
   const registration = { fanId: deps.viewer.userId, creatorId, itemKind, hasElectronicsOrMetal, boxes };
   // 주문번호가 겹치면(다섯 자리 무작위) 새 번호로 두 번까지 다시 시도한다
   for (let attempt = 1; ; attempt += 1) {

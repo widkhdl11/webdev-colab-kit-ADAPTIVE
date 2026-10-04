@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
-import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
+import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { followModeOf } from "@/features/creator-follow/model/follow-mode";
 import { canSendGiftTo } from "@/features/gift-register/api/can-send";
 import { sendAvailabilityOf } from "@/features/gift-register/model/sender-rule";
@@ -25,7 +25,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     readCreatorCards(supabase, { signedIn: viewer !== null }),
     asCreator ? readOwnCreatorId(supabase) : Promise.resolve(null),
     asCreator ? canSendGiftTo(supabase, id).catch(() => false) : Promise.resolve(false),
-    readTierPrices(supabase),
+    readPublicPrices(supabase),
   ]);
   const creator = cards.find((c) => c.id === id);
   if (!creator) notFound();

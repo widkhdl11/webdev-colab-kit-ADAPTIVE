@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isPricedTier, PRICED_TIERS, type PriceTable, type PricedTier } from "./price-table";
+import { isPricedTier, PRICED_TIERS, type PriceTable, type PricedTier, type TierPrice } from "./price-table";
 
 const krw = z.number().int().nonnegative();
 
@@ -20,21 +20,31 @@ function pricedBoxes(boxes: readonly string[]): PricedTier[] {
   });
 }
 
+/** 기본 서비스료 = 받는 값 − 택배 원가 − 검수비 (INV-M7). 관리자 입력 화면의 자동 칸도 이 계산을 쓴다 — 입력 중 값은 NaN 일 수 있다. */
+export function serviceFeeOf(p: TierPrice): number {
+  return p.priceKrw - p.carrierCostKrw - p.inspectionFeeKrw;
+}
+
+/** 역조공 요금 = 받는 값 − 검수비 (reverse-gift INV-R3). 저장하지 않고 늘 계산한다(INV-K4). DB 공개 읽기 함수도 같은 식이다. */
+export function revgiftPriceOf(p: TierPrice): number {
+  return p.priceKrw - p.inspectionFeeKrw;
+}
+
 /** 구간 하나의 결제 칸 나눔. 배송비 칸 = 택배 원가, 검수비 칸 = 구간 검수비, 기본 서비스료 칸 = 나머지(INV-M7). */
 export function tierBreakdown(prices: PriceTable, tier: PricedTier): ChargeBreakdown {
   const p = prices[tier];
   return breakdownSchema.parse({
     goodsKrw: 0,
-    serviceFeeKrw: p.priceKrw - p.carrierCostKrw - p.inspectionFeeKrw,
+    serviceFeeKrw: serviceFeeOf(p),
     inspectionFeeKrw: p.inspectionFeeKrw,
     shippingFeeKrw: p.carrierCostKrw,
     totalKrw: p.priceKrw,
   });
 }
 
-/** 역조공 상자 요금 = 팬 선물 요금 − 검수비 (reverse-gift INV-R3). 저장하지 않고 늘 계산한다(INV-K4). */
+/** 역조공 상자 요금 = 팬 선물 요금 − 검수비 (reverse-gift INV-R3). */
 export function revgiftTierPrice(prices: PriceTable, tier: PricedTier): number {
-  return prices[tier].priceKrw - prices[tier].inspectionFeeKrw;
+  return revgiftPriceOf(prices[tier]);
 }
 
 /** 역조공 구간 하나의 칸 나눔 — 팬 선물과 같고 검수비 칸만 0 이다. */
@@ -70,8 +80,8 @@ export function computeCharge(prices: PriceTable, input: { boxes: readonly strin
 
 export type ChargeLine = { tier: PricedTier; count: number; unitKrw: number; subtotalKrw: number };
 
-/** 결제 화면의 「상자 수 × 구간 요금」 줄. 합은 computeCharge 의 결제 금액과 같다. */
-export function chargeLines(prices: PriceTable, boxes: readonly string[]): ChargeLine[] {
+/** 결제 화면의 「상자 수 × 구간 요금」 줄. 합은 computeCharge 의 결제 금액과 같다. 받는 값만 쓰므로 화면용 공개 요금표로도 부른다. */
+export function chargeLines(prices: Readonly<Record<PricedTier, Pick<TierPrice, "priceKrw">>>, boxes: readonly string[]): ChargeLine[] {
   const tiers = pricedBoxes(boxes);
   return PRICED_TIERS.map((tier) => {
     const count = tiers.filter((t) => t === tier).length;

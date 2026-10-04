@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import type { ReceivedRevgift } from "@/entities/revgift/model/revgift-rows";
 import { isOngoingStage, receivedStage } from "@/entities/revgift/model/received-stage";
-import { receivedStageCopy, revgiftTierName } from "@/entities/revgift/ui/received-status";
+import { receivedStageCopy } from "@/entities/revgift/ui/received-status";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { RevgiftTabs } from "./revgift-tabs";
 import s from "./my-revgifts.module.css";
@@ -21,7 +22,7 @@ function RowList({ rows }: { rows: readonly Row[] }) {
           <div>
             <p className={s.who}>{item.creatorName}님이 보낸 선물</p>
             <p className={s.says}>
-              {revgiftTierName(item.tier)} 상자 · 주문번호 {item.orderNo}
+              {PARCEL_TIER_GUIDE[item.tier].name} 상자 · 주문번호 {item.orderNo}
             </p>
           </div>
           <div className={s.state}>

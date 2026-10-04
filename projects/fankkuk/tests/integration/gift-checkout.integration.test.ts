@@ -28,6 +28,8 @@ const form = (extra: Record<string, unknown> = {}) => ({
   mediumCount: "1",
   largeCount: "0",
   electronicsOrMetal: "yes",
+  // 화면이 보여 준 합계(소형 6,900 + 중형 8,900) — 서버는 비교에만 쓴다(admin-console INV-K3)
+  quotedTotalKrw: 15800,
   ...extra,
 });
 

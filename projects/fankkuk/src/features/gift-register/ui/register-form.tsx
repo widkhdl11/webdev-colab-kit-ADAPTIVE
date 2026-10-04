@@ -7,9 +7,9 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
-import { RETURN_ON_INSPECTION_NOTICE, RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
-import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { PRICED_TIERS, type PriceTable, type PricedTier } from "@/entities/payment/model/price-table";
+import { RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
+import { OVERSIZE_RULE, PARCEL_TIER_GUIDE, RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
+import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
 import { summarizeBoxes } from "../model/box-summary";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
@@ -39,9 +39,10 @@ export type RegisteredGift = { orderId: string; orderNo: string; amountKrw: numb
 type RegisterResponse = Partial<RegisteredGift> & { message?: string };
 
 // 선물 보내기 4단계(크리에이터·선물·상자·결제 확인). 「결제하기」를 누르면 서버(/api/gifts)에 등록하고 결제창으로 넘긴다.
-// 결제는 등록 때 받는다(결제 스펙). 화면의 금액은 결제와 같은 계산(chargeLines)에 화면을 열 때 읽은 요금표(prices)를 넣지만,
-// 실제 결제 금액은 서버가 등록 순간의 요금표로 다시 계산한다(INV-M1·K3) — 이 화면의 숫자는 안내일 뿐이다.
-// 그 사이 요금이 바뀌면 서버가 409 로 거부하고, 화면은 새 요금표를 다시 받아 금액을 고쳐 보여 준다.
+// 결제는 등록 때 받는다(결제 스펙). 화면의 금액은 결제와 같은 계산(chargeLines)에 화면을 열 때 읽은 공개 요금표(prices)를 넣은 안내다.
+// 등록 요청에 이 화면이 보여 준 합계(quotedTotalKrw)를 같이 보내고, 서버는 등록 순간의 요금표로 다시 계산한 합계와 비교만 한다 —
+// 결제 금액은 서버 계산값이다(INV-M1·K3). 다르면(화면을 연 뒤 요금이 바뀌었으면) 서버가 409 로 거부하고,
+// 화면은 문구를 띄운 뒤 서버 page 를 다시 그려 새 요금표로 금액을 고쳐 보여 준다. 다시 누르면 새 합계로 보낸다.
 // 보내는 사람은 서버가 로그인 세션으로 정한다(INV-L3) — 이 폼은 사용자 칸을 보내지 않는다.
 export function RegisterForm({
   creators,
@@ -51,8 +52,8 @@ export function RegisterForm({
   onRegistered,
 }: {
   creators: readonly CreatorOption[];
-  /** 지금 요금표 — 서버 page 가 DB 에서 읽어 넘긴다. */
-  prices: PriceTable;
+  /** 지금 공개 요금표(받는 값만) — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
+  prices: PublicPriceTable;
   /** 크리에이터 화면에서 넘어오면 그 사람을 미리 골라 둔다 */
   initialCreatorId?: string;
   /** 결제창에서 돌아온 실패 안내 */
@@ -131,7 +132,8 @@ export function RegisterForm({
     void handleSubmit(() => submit(), onInvalid)(e);
   };
 
-  // 검증을 통과한 폼 값(문자열 그대로)을 보낸다 — 서버가 같은 입력 경계(parseRegisterInput)로 다시 검사한다.
+  // 검증을 통과한 폼 값(문자열 그대로)과 화면이 보여 준 합계를 보낸다 — 서버가 같은 입력 경계(parseRegisterInput)로 다시 검사하고,
+  // 합계는 등록 순간 요금표로 계산한 값과 비교만 한다(INV-K3).
   const submit = async () => {
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -143,7 +145,7 @@ export function RegisterForm({
       const res = await fetch("/api/gifts", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ creatorId, itemKind, smallCount, mediumCount, largeCount, electronicsOrMetal }),
+        body: JSON.stringify({ creatorId, itemKind, smallCount, mediumCount, largeCount, electronicsOrMetal, quotedTotalKrw: summary.totalKrw }),
       });
       const body = (await res.json().catch(() => ({}))) as RegisterResponse;
       if (res.ok && body.orderId && body.orderNo && typeof body.amountKrw === "number") {
@@ -153,8 +155,8 @@ export function RegisterForm({
       if (res.status === 401) setSubmitError({ message: "로그인하면 선물을 보낼 수 있어요.", needsLogin: true });
       else if (res.status === 403) setSubmitError({ message: body.message ?? "팬 계정으로 로그인해 주세요.", needsLogin: false });
       else if (res.status === 409) {
-        // 요금이 방금 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 값은 그대로 남는다
-        setSubmitError({ message: body.message ?? "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요.", needsLogin: false });
+        // 화면을 연 뒤 요금이 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 값은 그대로 남는다
+        setSubmitError({ message: body.message ?? PRICE_CHANGED_MESSAGE, needsLogin: false });
         router.refresh();
       }
       else setSubmitError({ message: "입력한 내용을 다시 확인해 주세요.", needsLogin: false });

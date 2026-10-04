@@ -4,6 +4,8 @@ import { REVGIFT_ORDER_NO_PATTERN } from "./revgift-order-no";
 // DB 읽기 함수가 돌려준 줄의 경계. 정해진 칸 밖의 값이 섞여 오면 목록 전체를 버린다 —
 // 크리에이터 화면에 팬 주소·실명·전화·운송장이 나갈 길을 여기서도 막는다(INV-R8).
 
+// 구간 목록은 결제 요금표의 구간(entities/payment PRICED_TIERS)과 같아야 한다. 같은 레이어의 다른 슬라이스라 가져다 쓸 수 없어
+// 여기 적고, tests/tier-lists.test.ts 가 두 목록이 같은지 실제로 넣어 보고 확인한다.
 const tier = z.enum(["small", "medium", "large"]);
 
 const sentRow = z

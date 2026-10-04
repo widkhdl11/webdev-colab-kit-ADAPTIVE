@@ -11,13 +11,24 @@ export type TierPrice = { priceKrw: number; carrierCostKrw: number; inspectionFe
 
 export type PriceTable = Readonly<Record<PricedTier, TierPrice>>;
 
+/** 화면용 공개 요금표 — 구간마다 받는 값과 역조공 값(받는 값 − 검수비)만. 택배 원가·검수비는 앱 서버만 안다. */
+export type PublicTierPrice = { priceKrw: number; revgiftPriceKrw: number };
+
+export type PublicPriceTable = Readonly<Record<PricedTier, PublicTierPrice>>;
+
 /** 앱이 요금표를 읽은 뒤 등록하기 전에 대표가 요금을 바꿔 DB 등록 함수가 금액을 거부했을 때의 문구(INV-K3). */
 export const PRICE_CHANGED_MESSAGE = "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요.";
+
+/**
+ * 등록 요청에 실려 오는, 화면이 보여 준 결제 금액(합계). 화면을 연 뒤 요금이 바뀌었는지 비교하는 데만 쓴다 —
+ * 결제 금액은 늘 서버가 등록 순간 요금표로 계산한 값이다(INV-M1·K3).
+ */
+export const quotedTotalSchema = z.number().int().positive();
 
 export type PriceTableProblem = "not_integer" | "price_zero" | "costs_exceed_price" | "not_ascending" | "shape";
 
 export function isPricedTier(value: unknown): value is PricedTier {
-  return value === "small" || value === "medium" || value === "large";
+  return PRICED_TIERS.includes(value as PricedTier);
 }
 
 const tierPriceShape = z.object({ priceKrw: z.unknown(), carrierCostKrw: z.unknown(), inspectionFeeKrw: z.unknown() }).strict();
@@ -51,14 +62,38 @@ export function checkPriceTable(input: unknown): { ok: true; table: PriceTable }
   return { ok: true, table };
 }
 
-/** DB 읽기 함수(current_tier_prices·admin_tier_prices)가 돌려준 줄을 요금표로. 모양이 다르거나 조건을 어기면 null. */
-export function priceTableFromRows(rows: unknown): PriceTable | null {
+/** 구간별 줄 목록을 구간 → 값으로. 모르는 구간이거나 같은 구간이 두 번 오면 null — 뒤 줄이 앞 줄을 몰래 덮지 않게. */
+function rowsByTier<T>(rows: unknown, pick: (r: Record<string, unknown>) => T): Partial<Record<PricedTier, T>> | null {
   if (!Array.isArray(rows)) return null;
-  const byTier: Record<string, TierPrice> = {};
+  const byTier: Partial<Record<PricedTier, T>> = {};
   for (const r of rows as Record<string, unknown>[]) {
-    if (!isPricedTier(r?.tier)) return null;
-    byTier[r.tier] = { priceKrw: r.price_krw as number, carrierCostKrw: r.carrier_cost_krw as number, inspectionFeeKrw: r.inspection_fee_krw as number };
+    const tier = r?.tier;
+    if (!isPricedTier(tier) || byTier[tier] !== undefined) return null;
+    byTier[tier] = pick(r);
   }
+  return byTier;
+}
+
+/** DB 읽기 함수(current_tier_prices·admin_tier_prices)나 요금표 저장 몸통의 줄을 요금표로. 모양이 다르거나 조건을 어기면 null. */
+export function priceTableFromRows(rows: unknown): PriceTable | null {
+  const byTier = rowsByTier(rows, (r) => ({ priceKrw: r.price_krw, carrierCostKrw: r.carrier_cost_krw, inspectionFeeKrw: r.inspection_fee_krw }));
+  if (!byTier) return null;
   const checked = checkPriceTable(byTier);
   return checked.ok ? checked.table : null;
+}
+
+const krw = z.number().int().nonnegative();
+const publicTableShape = z.object({
+  small: z.object({ priceKrw: krw.min(1), revgiftPriceKrw: krw }),
+  medium: z.object({ priceKrw: krw.min(1), revgiftPriceKrw: krw }),
+  large: z.object({ priceKrw: krw.min(1), revgiftPriceKrw: krw }),
+});
+
+/** 공개 읽기 함수(public_tier_prices)의 줄을 화면용 요금표로. 세 구간이 한 번씩, 0 이상 정수, 역조공 값 ≤ 받는 값이 아니면 null. */
+export function publicPriceTableFromRows(rows: unknown): PublicPriceTable | null {
+  const byTier = rowsByTier(rows, (r) => ({ priceKrw: r.price_krw, revgiftPriceKrw: r.revgift_price_krw }));
+  const parsed = publicTableShape.safeParse(byTier);
+  if (!parsed.success) return null;
+  const table = parsed.data;
+  return PRICED_TIERS.every((t) => table[t].revgiftPriceKrw <= table[t].priceKrw) ? table : null;
 }

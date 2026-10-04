@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
+import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { LandingPage } from "@/widgets/landing/ui/landing-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { loadSession, signedInHome } from "@/widgets/site-header/api/session-header";
@@ -12,7 +12,7 @@ export default async function Page() {
   const { supabase, viewer } = await loadSession();
   const home = signedInHome(viewer);
   if (home) redirect(home);
-  const prices = await readTierPrices(supabase);
+  const prices = await readPublicPrices(supabase);
   return (
     <>
       <SiteHeader role="guest" current="/" />

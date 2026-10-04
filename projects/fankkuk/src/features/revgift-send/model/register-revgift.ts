@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { computeRevgiftCharge, revgiftTierBreakdown, type ChargeBreakdown } from "@/entities/payment/model/charge";
-import { isPricedTier, PRICE_CHANGED_MESSAGE, type PriceTable, type PricedTier } from "@/entities/payment/model/price-table";
+import { isPricedTier, PRICE_CHANGED_MESSAGE, quotedTotalSchema, type PriceTable, type PricedTier } from "@/entities/payment/model/price-table";
 import { newRevgiftOrderNo } from "@/entities/revgift/model/revgift-order-no";
 import type { Viewer } from "@/entities/session/model/viewer";
 
@@ -35,6 +35,8 @@ const inputSchema = z.object({
     .max(MAX_REVGIFT_SHARES)
     // INV-R3: 한 보내기 안에 같은 팬은 한 번
     .refine((rows) => new Set(rows.map((r) => r.fanId)).size === rows.length),
+  // 화면이 보여 준 결제 금액 — 요금이 바뀌었는지 비교하는 데만 쓴다(INV-K3)
+  quotedTotalKrw: quotedTotalSchema,
 });
 
 function newPaymentOrderId(): string {
@@ -49,6 +51,7 @@ function refusalOf(e: unknown): RevgiftRefusal | null {
 /**
  * 보내는 사람은 viewer(서버가 확인한 로그인 크리에이터)다. 본문의 보내는 사람·금액 칸은 읽지 않는다 —
  * 금액은 몫마다 고른 상자 구간의 역조공 요금으로만 계산한다(INV-R3). 요금표는 요청마다 한 번 DB 에서 읽는다(INV-K3).
+ * 본문의 quotedTotalKrw(화면이 보여 준 합계)가 그 표로 계산한 합계와 다르면 DB 를 부르기 전에 409 — 비교에만 쓰고 결제 금액으로 쓰지 않는다.
  */
 export async function registerRevgift(
   deps: { store: RevgiftStore; viewer: Viewer | null; readPrices: () => Promise<PriceTable>; newOrderNo?: () => string },
@@ -63,6 +66,7 @@ export async function registerRevgift(
   const prices = await deps.readPrices();
   const tiers = parsed.data.shares.map((s) => s.tier as PricedTier);
   const charge = computeRevgiftCharge(prices, { boxes: tiers });
+  if (charge.totalKrw !== parsed.data.quotedTotalKrw) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
   const makeNo = deps.newOrderNo ?? newRevgiftOrderNo;
 
   // 주문번호가 겹치면(여섯 자리 무작위) 새 번호로 두 번까지 다시 시도한다

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { PriceTable } from "@/entities/payment/model/price-table";
+import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 import { PaymentStep } from "@/features/checkout/ui/payment-step";
 import { RegisterForm, type CreatorOption, type RegisteredGift } from "@/features/gift-register/ui/register-form";
 import s from "./gift-register-page.module.css";
@@ -19,8 +19,8 @@ export function GiftRegisterPage({
   creatorSender = false,
 }: {
   creators: readonly CreatorOption[];
-  /** 지금 요금표 — 서버 page 가 DB 에서 읽어 넘긴다. */
-  prices: PriceTable;
+  /** 지금 공개 요금표 — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
+  prices: PublicPriceTable;
   initialCreatorId?: string;
   /** 토스 결제창 공개 키. 없으면 결제창 대신 안내만 보인다. */
   clientKey: string;

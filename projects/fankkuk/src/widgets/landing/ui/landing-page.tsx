@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Fragment } from "react";
 import { FAN_STEP_LABEL } from "@/entities/order/ui/fan-stage-copy";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { PRICED_TIERS, type PriceTable } from "@/entities/payment/model/price-table";
+import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import s from "./landing.module.css";
 
 // 랜딩(비로그인). 시안: docs/design/mockups/site/v4/landing.html
@@ -52,7 +52,7 @@ function CheckDot() {
   );
 }
 
-export function LandingPage({ prices }: { prices: PriceTable }) {
+export function LandingPage({ prices }: { prices: PublicPriceTable }) {
   const stepLabels = Object.values(FAN_STEP_LABEL);
   return (
     <main id="main">

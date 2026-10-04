@@ -1,5 +1,5 @@
 import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
-import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
+import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { canSendGiftTo } from "@/features/gift-register/api/can-send";
 import { creatorSendList } from "@/features/gift-register/model/sender-rule";
 import { GiftRegisterPage } from "@/widgets/gift-register/ui/gift-register-page";
@@ -29,7 +29,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
     readCreatorCards(supabase, { signedIn: viewer !== null }),
     creatorSender ? readOwnCreatorId(supabase) : Promise.resolve(null),
     creatorSender && preselectedId ? canSendGiftTo(supabase, preselectedId).catch(() => false) : Promise.resolve(false),
-    readTierPrices(supabase),
+    readPublicPrices(supabase),
   ]);
   const creators = creatorSender
     ? creatorSendList(cards, ownCreatorId, preselectedId ? { id: preselectedId, canSend: preselectedCanSend } : null)

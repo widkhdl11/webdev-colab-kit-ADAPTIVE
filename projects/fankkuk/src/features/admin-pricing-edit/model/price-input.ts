@@ -1,6 +1,6 @@
-import type { PriceTableProblem, TierPrice } from "@/entities/payment/model/price-table";
+import type { PriceTableProblem } from "@/entities/payment/model/price-table";
 
-// 요금표 입력 칸과 자동 계산 칸 (admin-console INV-K4, reverse-gift INV-R3).
+// 요금표 입력 칸 (admin-console INV-K4). 자동 계산 칸(서비스료·역조공 요금)은 결제 계산과 같은 함수(entities/payment charge)를 쓴다.
 
 /** 입력 글자 → 원. 쉼표·공백·「원」은 무시하고, 숫자가 하나도 없으면 NaN(검사에서 걸린다). */
 export function parseWon(text: string): number {
@@ -10,16 +10,6 @@ export function parseWon(text: string): number {
 
 export function formatWon(n: number): string {
   return Number.isFinite(n) ? n.toLocaleString("ko-KR") : "—";
-}
-
-/** 기본 서비스료 = 받는 값 − 택배 원가 − 검수비 */
-export function serviceFeeOf(p: TierPrice): number {
-  return p.priceKrw - p.carrierCostKrw - p.inspectionFeeKrw;
-}
-
-/** 역조공 요금 = 받는 값 − 검수비 (저장하지 않고 늘 계산한다) */
-export function revgiftFeeOf(p: TierPrice): number {
-  return p.priceKrw - p.inspectionFeeKrw;
 }
 
 export type PriceRule = "a" | "b" | "c";

@@ -7,10 +7,16 @@ const ROWS = [
   { tier: "large", price_krw: 10900, carrier_cost_krw: 6500, inspection_fee_krw: 2500 },
 ];
 
-function fakeClient(error: { code: string } | null) {
+type Who = { operator: boolean; owner: boolean };
+const OWNER: Who = { operator: true, owner: true };
+
+/** 로그인한 사람의 세션 클라이언트 대역. 판정 함수(is_operator·is_owner)는 who 로 답하고, 저장 함수는 error 로 답한다. */
+function fakeClient(error: { code: string } | null, who: Who = OWNER) {
   const calls: { fn: string; args: unknown }[] = [];
   const client = {
     rpc: async (fn: string, args: unknown) => {
+      if (fn === "is_operator") return { data: who.operator, error: null };
+      if (fn === "is_owner") return { data: who.owner, error: null };
       calls.push({ fn, args });
       return { data: null, error };
     },
@@ -38,9 +44,33 @@ describe("요금표 저장 응답", () => {
     expect(calls).toEqual([{ fn: "admin_set_tier_prices", args: { p_rows: ROWS } }]);
   });
 
-  it("INV-K2 S2b (실패경로): 직원이 저장하면 DB 거부가 403 으로 나간다", async () => {
+  it("INV-K2 S2b (실패경로): 판정을 지나도 DB 가 대표 아님으로 거부하면 403 으로 나간다", async () => {
     const { client } = fakeClient({ code: "42501" });
     expect((await savePricing(client, { rows: ROWS })).status).toBe(403);
+  });
+
+  it("INV-K1 S1c (실패경로): 운영자가 아니면(손님 포함) 404 — 관리자 저장 주소가 있는 줄도 모르게, DB 저장 함수를 부르지 않는다", async () => {
+    const { calls, client } = fakeClient(null, { operator: false, owner: false });
+    expect(await savePricing(client, { rows: ROWS })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
+    expect(calls).toEqual([]);
+  });
+
+  it("INV-K2 S2b (실패경로): 운영자지만 대표가 아니면 403 — DB 저장 함수를 부르지 않는다", async () => {
+    const { calls, client } = fakeClient(null, { operator: true, owner: false });
+    expect(await savePricing(client, { rows: ROWS })).toEqual({ status: 403, body: { message: "요금은 대표만 바꿀 수 있어요." } });
+    expect(calls).toEqual([]);
+  });
+
+  it("INV-K1 (실패경로): 판정 함수가 오류면 운영자가 아닌 것으로 보고 404", async () => {
+    const calls: string[] = [];
+    const client = {
+      rpc: async (fn: string) => {
+        calls.push(fn);
+        return { data: null, error: { code: "42501" } };
+      },
+    } as never;
+    expect((await savePricing(client, { rows: ROWS })).status).toBe(404);
+    expect(calls).toEqual(["is_operator"]);
   });
 
   it("INV-K4 S4 (실패경로): 꼴이 틀리거나 조건을 어긴 몸통은 DB 를 부르지 않고 400", async () => {

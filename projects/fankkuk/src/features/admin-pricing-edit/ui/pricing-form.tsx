@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { revgiftPriceOf, serviceFeeOf } from "@/entities/payment/model/charge";
 import { PRICED_TIERS, checkPriceTable, type PriceTable, type PricedTier, type TierPrice } from "@/entities/payment/model/price-table";
 import a from "@/shared/ui/admin.module.css";
 import { postPricing } from "../api/post-pricing-client";
-import { PRICE_RULES, formatWon, parseWon, revgiftFeeOf, ruleOfProblem, serviceFeeOf } from "../model/price-input";
+import { PRICE_RULES, formatWon, parseWon, ruleOfProblem } from "../model/price-input";
 import { pricingRowsOf } from "../model/save-pricing";
 
 // 요금표 표 (admin-console INV-K2·K4, 시안 admin/pricing.html).
@@ -142,7 +143,7 @@ export function PricingForm({ table, editable }: { table: PriceTable; editable: 
                     <b>{formatWon(serviceFeeOf(numbers[tier]))}</b> 원
                   </td>
                   <td className={a.num}>
-                    <b>{formatWon(revgiftFeeOf(numbers[tier]))}</b> 원
+                    <b>{formatWon(revgiftPriceOf(numbers[tier]))}</b> 원
                   </td>
                 </tr>
               );

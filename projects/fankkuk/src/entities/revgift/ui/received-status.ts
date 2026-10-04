@@ -1,6 +1,6 @@
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import { daysLeft, type ReceivedStage } from "../model/received-stage";
-import type { ReceivedRevgift, SentRevgift } from "../model/revgift-rows";
+import type { SentRevgift } from "../model/revgift-rows";
 
 // 역조공 상태를 화면 말로 옮긴다. 단계 판정은 model/received-stage.ts 가 하고, 여기서는 문구만 고른다.
 // 팬 본인에게는 거절과 기한 지남을 나눠 보여 주고, 크리에이터에게는 세 가지뿐이다(reverse-gift INV-R8).
@@ -50,10 +50,4 @@ const SENT_TAG: Record<SentRevgift["state"], { tag: string; brand: boolean }> = 
 /** 크리에이터에게 보이는 상태 배지 — 세 가지뿐(INV-R8). */
 export function sentStateTag(state: SentRevgift["state"]): { tag: string; brand: boolean } {
   return SENT_TAG[state];
-}
-
-const TIER_NAME: Record<ReceivedRevgift["tier"], string> = { small: "소형", medium: "중형", large: "대형" };
-
-export function revgiftTierName(tier: ReceivedRevgift["tier"]): string {
-  return TIER_NAME[tier];
 }

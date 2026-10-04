@@ -16,11 +16,6 @@ export const FAN_STEP_LABEL: Record<FanStepKey, string> = {
 /** 보내기 전에 알리는 거절 안내. 승인을 기다리지 않고 보내는 대신, 거절되면 반송하고 반송 택배비를 뺀다(결제 INV-M8). */
 export const RETURN_ON_REJECT_NOTICE = `크리에이터가 받지 않기로 하거나 ${APPROVAL_DEADLINE_DAYS}일 안에 승인하지 않으면, 선물은 보낸 주소로 돌려보내 드리고 결제 금액에서 반송 택배비를 뺀 금액을 돌려드려요.`;
 
-/** 거절·7일 자동 반려 때 팬이 보는 문구. 크리에이터의 거절 확인 창도 이 문구를 그대로 인용한다. */
-/** 보내기 전에 알리는 검수 반송 안내. 추적 장치 등이 나오면 팬의 위반이라 검수비·반송비를 모두 뺀다(결제 INV-M8). */
-export const RETURN_ON_INSPECTION_NOTICE =
-  "검수에서 추적 장치처럼 보낼 수 없는 물품이 나오거나 상자가 중형보다 크면 돌려보내 드려요. 이때는 검수비와 반송 택배비를 빼서 돌려드리는 금액이 없어요.";
-
 /** 본 단계 옆에 따로 붙는 승인 칸의 이름. */
 export const APPROVAL_LABEL = "크리에이터 승인";
 

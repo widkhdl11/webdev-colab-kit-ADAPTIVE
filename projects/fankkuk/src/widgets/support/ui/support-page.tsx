@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState, type KeyboardEvent } from "react";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { PRICED_TIERS, type PriceTable } from "@/entities/payment/model/price-table";
+import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import s from "./support.module.css";
 
 // 고객센터. 시안: docs/design/mockups/site/v4/support.html
@@ -15,13 +15,13 @@ type Faq = { q: string; a: string };
 
 type Category = { id: string; label: string; faqs: readonly Faq[] };
 
-function feeAnswer(prices: PriceTable): string {
+function feeAnswer(prices: PublicPriceTable): string {
   return `상자마다 배송비가 포함된 금액이에요. ${PRICED_TIERS.map(
     (t) => `${PARCEL_TIER_GUIDE[t].name}(${PARCEL_TIER_GUIDE[t].rule}) ${prices[t].priceKrw.toLocaleString("ko-KR")}원`,
   ).join(", ")}이고, 추적 장치 검수가 포함돼 있어요.`;
 }
 
-const categoriesFor = (prices: PriceTable): readonly Category[] => [
+const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
   {
     id: "gift",
     label: "선물 보내기",
@@ -113,7 +113,7 @@ function Chevron({ className }: { className: string }) {
   );
 }
 
-export function SupportPage({ prices }: { prices: PriceTable }) {
+export function SupportPage({ prices }: { prices: PublicPriceTable }) {
   const categories = categoriesFor(prices);
   const [selected, setSelected] = useState(0);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);

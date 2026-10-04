@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { revgiftTierPrice } from "@/entities/payment/model/charge";
-import { PRICED_TIERS, type PriceTable, type PricedTier } from "@/entities/payment/model/price-table";
+import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { findFan, registerRevgiftRequest, type FoundFan } from "../api/send-requests";
 import { MAX_REVGIFT_SHARES } from "../model/register-revgift";
@@ -12,8 +11,9 @@ import s from "./send-form.module.css";
 
 // 역조공 보내기 입력. 시안: docs/design/mockups/site/v4/creator-revgift-new.html
 // 팬은 아이디를 정확히 입력해 한 명씩 추가한다 — 팔로워 목록은 어디에도 보여 주지 않는다(reverse-gift INV-R2).
-// 합계는 화면을 열 때 읽은 요금표(prices)로 낸 안내용이다. 결제 금액은 등록 때 서버가 그 순간의 요금표로 다시 계산한 값을 쓴다(INV-R3·K3).
-// 그 사이 요금이 바뀌면 서버가 409 로 거부하고, 화면은 새 요금표를 다시 받아 금액을 고쳐 보여 준다.
+// 합계는 화면을 열 때 읽은 공개 요금표(prices)의 역조공 값으로 낸 안내다. 보내기 요청에 이 합계(quotedTotalKrw)를 같이 보내고,
+// 서버는 등록 순간의 요금표로 다시 계산한 합계와 비교만 한다 — 결제 금액은 서버 계산값이다(INV-R3·K3).
+// 다르면(화면을 연 뒤 요금이 바뀌었으면) 서버가 409 로 거부하고, 화면은 문구를 띄운 뒤 서버 page 를 다시 그려 금액을 고친다.
 
 export type RevgiftCheckout = { orderId: string; orderNo: string; amountKrw: number; fanCount: number };
 
@@ -30,8 +30,8 @@ export function RevgiftSendForm({
   notice,
   onRegistered,
 }: {
-  /** 지금 요금표 — 서버 page 가 DB 에서 읽어 넘긴다. */
-  prices: PriceTable;
+  /** 지금 공개 요금표(받는 값·역조공 값만) — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
+  prices: PublicPriceTable;
   notice?: string;
   onRegistered: (target: RevgiftCheckout) => void;
 }) {
@@ -46,7 +46,7 @@ export function RevgiftSendForm({
   const input = useRef<HTMLInputElement>(null);
 
   const full = picked.length >= MAX_REVGIFT_SHARES;
-  const unitKrw = (tier: PricedTier) => revgiftTierPrice(prices, tier);
+  const unitKrw = (tier: PricedTier) => prices[tier].revgiftPriceKrw;
   const total = picked.reduce((sum, p) => sum + unitKrw(p.tier), 0);
 
   const add = async (e: FormEvent) => {
@@ -101,13 +101,16 @@ export function RevgiftSendForm({
     setPaying(true);
     setPayError(null);
     setNoticeShown(false);
-    const result = await registerRevgiftRequest(picked.map((p) => ({ fanId: p.fanId, tier: p.tier })));
+    const result = await registerRevgiftRequest(
+      picked.map((p) => ({ fanId: p.fanId, tier: p.tier })),
+      total,
+    );
     setPaying(false);
     if (!result.ok) {
       if (result.reason === "login") router.push("/login");
       else if (result.reason === "price_changed") {
-        // 요금이 방금 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 팬은 그대로 남는다
-        setPayError(result.message ?? "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요.");
+        // 화면을 연 뒤 요금이 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 팬은 그대로 남는다
+        setPayError(result.message ?? PRICE_CHANGED_MESSAGE);
         router.refresh();
       } else setPayError(result.message ?? "보내기를 등록하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
       return;

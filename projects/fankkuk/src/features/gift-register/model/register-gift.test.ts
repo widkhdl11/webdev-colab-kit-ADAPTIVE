@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createMemoryPaymentStore } from "@/entities/payment/api/memory-payment-store";
 import { PriceChangedError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
-import type { PriceTable } from "@/entities/payment/model/price-table";
+import { PRICE_CHANGED_MESSAGE, type PriceTable } from "@/entities/payment/model/price-table";
 import type { CreatorRelation } from "./sender-rule";
 import { registerGift } from "./register-gift";
 
@@ -14,7 +14,7 @@ const PRICES: PriceTable = {
 const readPrices = async (): Promise<PriceTable> => PRICES;
 
 const FAN = { userId: "fan-byeolbit", role: "fan" } as const;
-const form = { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "손편지", smallCount: "2", mediumCount: "1", largeCount: "0", electronicsOrMetal: "no" };
+const form = { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "손편지", smallCount: "2", mediumCount: "1", largeCount: "0", electronicsOrMetal: "no", quotedTotalKrw: 22700 };
 
 const NO_RELATION_READ = async (): Promise<CreatorRelation | null> => {
   throw new Error("팬이 보낼 때는 관계를 읽지 않는다");
@@ -124,7 +124,7 @@ describe("요금표 (admin-console INV-K3)", () => {
   it("INV-K3: 금액은 요청마다 읽은 요금표로 계산한다 — 표가 바뀌면 등록 금액도 바뀐다", async () => {
     const { deps, store } = setup();
     const raised: PriceTable = { ...PRICES, small: { ...PRICES.small, priceKrw: 7400 } };
-    const r = await registerGift({ ...deps, viewer: FAN, readPrices: async () => raised }, form);
+    const r = await registerGift({ ...deps, viewer: FAN, readPrices: async () => raised }, { ...form, quotedTotalKrw: 7400 * 2 + 8900 });
     expect(r).toMatchObject({ ok: true, amountKrw: 7400 * 2 + 8900 });
     if (!r.ok) throw new Error();
     expect((await store.find(r.orderId))?.amountKrw).toBe(7400 * 2 + 8900);
@@ -134,7 +134,31 @@ describe("요금표 (admin-console INV-K3)", () => {
     const { deps } = setup();
     const refusing: PaymentStore = { ...deps.store, create: async () => { throw new PriceChangedError(); } };
     const r = await registerGift({ ...deps, store: refusing, viewer: FAN }, form);
-    expect(r).toEqual({ ok: false, status: 409, message: "요금이 방금 바뀌었어요. 금액을 다시 확인하고 결제해 주세요." });
+    expect(r).toEqual({ ok: false, status: 409, message: PRICE_CHANGED_MESSAGE });
+  });
+
+  it("INV-K3 (실패경로): 화면이 보여 준 합계가 등록 순간 요금표의 합계와 다르면 DB 를 부르기 전에 409", async () => {
+    const { deps, store } = setup();
+    // 화면은 22,700 을 보고 있었는데 그 사이 소형이 7,400 으로 올랐다 → 서버 계산은 23,700
+    const raised: PriceTable = { ...PRICES, small: { ...PRICES.small, priceKrw: 7400 } };
+    const r = await registerGift({ ...deps, viewer: FAN, readPrices: async () => raised }, form);
+    expect(r).toEqual({ ok: false, status: 409, message: PRICE_CHANGED_MESSAGE });
+    expect(store.registrations()).toEqual([]);
+  });
+
+  it("INV-K3 · INV-M1: 화면 합계는 비교에만 쓴다 — 결제 기록의 금액은 서버가 계산한 칸 나눔이다", async () => {
+    const { deps, store } = setup();
+    const r = await registerGift({ ...deps, viewer: FAN }, form);
+    if (!r.ok) throw new Error();
+    expect((await store.find(r.orderId))?.charge).toEqual({ goodsKrw: 0, serviceFeeKrw: 4700, inspectionFeeKrw: 5000, shippingFeeKrw: 13000, totalKrw: 22700 });
+  });
+
+  it("INV-K3 (실패경로): 화면 합계가 없거나 숫자가 아니면 400, 아무것도 저장하지 않는다", async () => {
+    const { deps, store } = setup();
+    for (const quotedTotalKrw of [undefined, "22700", -1, 22700.5]) {
+      expect(await registerGift({ ...deps, viewer: FAN }, { ...form, quotedTotalKrw })).toMatchObject({ ok: false, status: 400 });
+    }
+    expect(store.registrations()).toEqual([]);
   });
 });
 

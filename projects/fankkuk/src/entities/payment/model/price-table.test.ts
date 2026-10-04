@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeCharge, computeRevgiftCharge } from "./charge";
-import { checkPriceTable, type PriceTable } from "./price-table";
+import { checkPriceTable, isPricedTier, priceTableFromRows, publicPriceTableFromRows, type PriceTable } from "./price-table";
 
 // 첫 요금표(admin-console INV-K6 · payment INV-M1·M7). 운영 값은 DB 요금표에서만 온다 — 여기 값은 시험용이다.
 const FIRST: PriceTable = {
@@ -72,5 +72,53 @@ describe("대형 구간 요금 (INV-K6)", () => {
     const before = computeCharge(FIRST, { boxes: ["small"] });
     expect(computeCharge(raised, { boxes: ["small"] }).totalKrw).toBe(7400);
     expect(before.totalKrw).toBe(6900);
+  });
+});
+
+const ROWS = [
+  { tier: "small", price_krw: 6900, carrier_cost_krw: 4000, inspection_fee_krw: 1500 },
+  { tier: "medium", price_krw: 8900, carrier_cost_krw: 5000, inspection_fee_krw: 2000 },
+  { tier: "large", price_krw: 10900, carrier_cost_krw: 6500, inspection_fee_krw: 2500 },
+];
+
+describe("DB 줄 → 요금표 (INV-K4·K6)", () => {
+  it("INV-K4: 세 구간 줄은 요금표가 된다", () => {
+    expect(priceTableFromRows(ROWS)).toEqual(FIRST);
+  });
+
+  it("INV-K4 (실패경로): 같은 구간 줄이 두 번 오면 null — 뒤 줄이 앞 줄을 덮지 않는다", () => {
+    // 네 줄째가 소형을 7,400 으로 덮어도 조건은 지키는 값이라, 겹침 검사가 없으면 요금표가 된다
+    expect(priceTableFromRows([...ROWS, { ...ROWS[0]!, price_krw: 7400 }])).toBeNull();
+  });
+
+  it("INV-K6 (실패경로): 요금표에 없는 구간 줄(대형 초과)이 섞이면 null", () => {
+    expect(priceTableFromRows([...ROWS, { tier: "oversize", price_krw: 20000, carrier_cost_krw: 0, inspection_fee_krw: 0 }])).toBeNull();
+    expect(isPricedTier("oversize")).toBe(false);
+    expect(isPricedTier("large")).toBe(true);
+  });
+});
+
+const PUBLIC_ROWS = [
+  { tier: "small", price_krw: 6900, revgift_price_krw: 5400 },
+  { tier: "medium", price_krw: 8900, revgift_price_krw: 6900 },
+  { tier: "large", price_krw: 10900, revgift_price_krw: 8400 },
+];
+
+describe("공개 요금표 (INV-K3 화면용)", () => {
+  it("INV-K3: 공개 읽기 함수 줄은 구간마다 받는 값·역조공 값만 담는다", () => {
+    expect(publicPriceTableFromRows(PUBLIC_ROWS)).toEqual({
+      small: { priceKrw: 6900, revgiftPriceKrw: 5400 },
+      medium: { priceKrw: 8900, revgiftPriceKrw: 6900 },
+      large: { priceKrw: 10900, revgiftPriceKrw: 8400 },
+    });
+  });
+
+  it("INV-K3 (실패경로): 구간 빠짐·겹침·소수·문자·역조공 값 > 받는 값이면 null", () => {
+    expect(publicPriceTableFromRows(PUBLIC_ROWS.slice(0, 2))).toBeNull();
+    expect(publicPriceTableFromRows([...PUBLIC_ROWS, PUBLIC_ROWS[0]])).toBeNull();
+    expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r, i) => (i === 0 ? { ...r, price_krw: 6900.5 } : r)))).toBeNull();
+    expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r, i) => (i === 1 ? { ...r, revgift_price_krw: "6900" } : r)))).toBeNull();
+    expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r, i) => (i === 2 ? { ...r, revgift_price_krw: 11000 } : r)))).toBeNull();
+    expect(publicPriceTableFromRows(null)).toBeNull();
   });
 });

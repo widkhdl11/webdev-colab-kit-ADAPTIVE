@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
+import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { RevgiftSendPage } from "@/widgets/revgift-send/ui/revgift-send-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
@@ -18,7 +18,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   const { supabase, viewer } = await loadSession();
   if (viewer?.role !== "creator") redirect("/login");
   const notice = typeof payment === "string" ? PAYMENT_NOTICE[payment] : undefined;
-  const prices = await readTierPrices(supabase);
+  const prices = await readPublicPrices(supabase);
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   if (!clientKey) console.warn("NEXT_PUBLIC_TOSS_CLIENT_KEY 가 없어 결제창을 열 수 없다");
   return (

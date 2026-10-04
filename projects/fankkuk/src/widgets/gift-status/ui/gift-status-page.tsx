@@ -9,10 +9,10 @@ import {
   fanProgress,
   fanStepDetail,
   hasShipped,
-  RETURN_ON_INSPECTION_NOTICE,
   RETURN_ON_REJECT_NOTICE,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
+import { RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
 import { TrackingInput } from "@/features/tracking-input/ui/tracking-input";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { CopyButton } from "./copy-button";

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { MAX_BOX_COUNT } from "./register-input";
 import { summarizeBoxes } from "./box-summary";
-import type { PriceTable } from "@/entities/payment/model/price-table";
+import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 
-// 첫 요금표(시험용 고정값). 운영 값은 DB 요금표에서만 온다.
-const PRICES: PriceTable = {
-  small: { priceKrw: 6900, carrierCostKrw: 4000, inspectionFeeKrw: 1500 },
-  medium: { priceKrw: 8900, carrierCostKrw: 5000, inspectionFeeKrw: 2000 },
-  large: { priceKrw: 10900, carrierCostKrw: 6500, inspectionFeeKrw: 2500 },
+// 첫 공개 요금표(시험용 고정값). 운영 값은 DB 요금표에서만 온다. 화면은 원가·검수비를 받지 않는다.
+const PRICES: PublicPriceTable = {
+  small: { priceKrw: 6900, revgiftPriceKrw: 5400 },
+  medium: { priceKrw: 8900, revgiftPriceKrw: 6900 },
+  large: { priceKrw: 10900, revgiftPriceKrw: 8400 },
 };
 
 describe("summarizeBoxes — 등록 화면의 상자 수량·금액 안내", () => {
