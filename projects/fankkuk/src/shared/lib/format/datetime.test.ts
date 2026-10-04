@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration } from "./datetime";
+import { formatDuration, formatMonthDay, formatStamp } from "./datetime";
+
+describe("formatStamp · formatMonthDay", () => {
+  it("서울 시각으로 「MM-DD HH:mm」「MM-DD」 — UTC 밤 시각은 다음 날로 넘어간다", () => {
+    expect(formatStamp("2026-10-02T15:05:00Z")).toBe("10-03 00:05");
+    expect(formatStamp("2026-09-28T06:10:00+00:00")).toBe("09-28 15:10");
+    expect(formatMonthDay("2026-10-02T15:05:00Z")).toBe("10-03");
+  });
+});
 
 describe("formatDuration", () => {
   it("단위 경계에서 반올림한 뒤 단위를 고른다 — 「약 60분」「약 24시간」이 나오지 않는다", () => {

@@ -93,3 +93,34 @@
 .kv dt { color: var(--sub); }
 .kv dd { font-weight: 600; }
 .amountLabel { display: block; font-size: 13px; color: var(--sub); }
+
+/* 목록 + 옆 칸(쓰기 양식·상세) — 시안 admin.css 의 split · card · field · pick · bubble */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; align-items: start; }
+.splitList { grid-template-columns: 420px minmax(0, 1fr); }
+.split > * { min-width: 0; }
+@media (max-width: 1023px) { .split, .splitList { grid-template-columns: minmax(0, 1fr); } }
+.card { padding: 16px 18px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.sideCard { position: sticky; top: 72px; }
+@media (max-width: 1023px) { .sideCard { position: static; } }
+.field { display: grid; gap: 4px; }
+.field > label, .fieldLabel { font-size: 13px; font-weight: 700; color: var(--sub); }
+.textarea { width: 100%; min-height: 120px; padding: 8px 10px; border: 0; border-radius: var(--r-btn-sm); background: var(--white); box-shadow: var(--field); font: inherit; font-size: 14px; line-height: 1.55; resize: vertical; }
+.textareaTall { min-height: 220px; }
+.count { font-size: 13px; color: var(--sub); text-align: right; }
+.check { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+.check input { width: 18px; height: 18px; accent-color: var(--brand); }
+.btnSoft { background: var(--surface); color: var(--ink); }
+.btnSoft:hover { background: var(--surface-hover); }
+.btnInk { background: var(--ink); color: var(--white); }
+.btnInk:hover { background: var(--ink); opacity: .88; }
+.act .btn + .btn { margin-left: 6px; }
+.pick { display: grid; width: 100%; gap: 2px; padding: 10px 14px; border: 0; background: var(--white); color: var(--ink); text-align: left; font: inherit; font-size: 14px; cursor: pointer; }
+.pick:hover { background: var(--surface); }
+.pick[aria-current="true"] { background: var(--brand-soft); box-shadow: inset 4px 0 0 var(--brand); }
+.pickTitle { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; }
+.pickMeta { font-size: 13px; color: var(--sub); }
+.tbl td.pickCell { padding: 0; }
+.bubble { padding: 12px 14px; border-radius: var(--r-card); background: var(--surface); white-space: pre-line; overflow-wrap: anywhere; }
+.doneLine { font-size: 14px; font-weight: 700; color: var(--brand-ink); }
+.doneLine:not(:empty) { margin-bottom: 12px; }
+.bubbleStaff { background: var(--brand-soft); color: var(--brand-ink); }

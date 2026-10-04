@@ -23,7 +23,9 @@
 .no-h { margin-top: 32px; }
 .no-list { display: grid; gap: 8px; margin-top: 16px; }
 .no-list li { display: flex; align-items: center; gap: 12px; min-height: 44px; }
-.x { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); color: var(--sub); }
+/* 설명이 있는 줄 — 이름 아래 작은 회색 글자 */
+.no-desc { display: block; margin-top: 2px; font-size: 16px; color: var(--sub); }
+.x { flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); color: var(--sub); }
 .notes { display: grid; gap: 8px; margin-top: 16px; color: var(--sub); }
 .notes li { display: flex; gap: 12px; }
 .notes li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }

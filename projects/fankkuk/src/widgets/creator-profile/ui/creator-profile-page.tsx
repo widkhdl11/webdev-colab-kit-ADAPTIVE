@@ -2,21 +2,15 @@ import Link from "next/link";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
+import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { FollowButton, type FollowMode } from "@/features/creator-follow/ui/follow-button";
 import s from "./creator-profile.module.css";
 
 // 크리에이터 페이지. 시안: docs/design/mockups/site/v4/creator.html
-// 요금은 결제와 같은 DB 요금표의 공개 칸(서버 page 가 읽어 넘긴다)을, 구간 기준은 size-tier 를 읽는다 — 화면 숫자와 결제가 어긋나지 않게.
+// 보낼 수 없는 것은 운영자가 관리자 화면에서 고치는 DB 목록을(INV-K9), 요금은 결제와 같은 DB 요금표의 공개 칸(서버 page 가 읽어 넘긴다)을, 구간 기준은 size-tier 를 읽는다 — 화면 숫자와 결제가 어긋나지 않게.
 // 문구 한계(design-rules 6절): "승인 없이는 저희 시스템이 주소를 열지 않습니다"는 쓰고 "절대 유출되지 않는다"는 쓰지 않는다.
-
-const NOT_ALLOWED = [
-  "음식과 신선식품 (유통기한이 있는 것 모두)",
-  "살아 있는 동물과 식물",
-  "폭발·인화성 물질 등 위험물",
-  "현금과 상품권",
-] as const;
 
 /** 「상자는 소형, 중형, 대형 세 가지예요.」 — 구간 이름은 size-tier 의 안내 문구에서 읽는다. */
 const COUNT_WORD = ["", "한", "두", "세", "네"] as const;
@@ -36,6 +30,7 @@ export function CreatorProfilePage({
   followMode,
   send = "open",
   prices,
+  prohibited,
 }: {
   creator: CreatorCard;
   others: readonly CreatorCard[];
@@ -44,6 +39,8 @@ export function CreatorProfilePage({
   send?: "open" | "self" | "needs_follow";
   /** 지금 공개 요금표 — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
   prices: PublicPriceTable;
+  /** 보낼 수 없는 물품 — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다(INV-K9). */
+  prohibited: readonly ProhibitedItem[];
 }) {
   const sendHref = `/gifts/new?creator=${creator.id}`;
   return (
@@ -103,19 +100,27 @@ export function CreatorProfilePage({
                 <h2>{creator.name}님이 받는 선물</h2>
               </div>
               <p>편지, 인형, 손수건, 책, 그림 같은 작은 선물을 상자에 담아 보내 주세요. {TIER_SENTENCE}</p>
+              {/* 운영자가 목록을 다 지웠으면 제목과 빈 목록을 그리지 않는다 */}
+              {prohibited.length > 0 && (
+                <>
               <h3 className={s["no-h"]}>보낼 수 없는 것</h3>
               <ul className={s["no-list"]}>
-                {NOT_ALLOWED.map((item) => (
-                  <li key={item}>
+                {prohibited.map((item) => (
+                  <li key={item.id}>
                     <span className={s.x} aria-hidden="true">
                       <svg width="14" height="14" viewBox="0 0 20 20">
                         <path d="m4 4 12 12M16 4 4 16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                       </svg>
                     </span>
-                    {item}
+                    <span>
+                      {item.name}
+                      {item.description ? <span className={s["no-desc"]}>{item.description}</span> : null}
+                    </span>
                   </li>
                 ))}
               </ul>
+                </>
+              )}
             </div>
             <div className={s.part}>
               <div className={s["part-h"]}>

@@ -32,3 +32,17 @@ export function formatDuration(minutes: number): string {
   if (h < 24) return `약 ${h}시간`;
   return `약 ${Math.round(h / 24)}일`;
 }
+
+const stamp = new Intl.DateTimeFormat("ko-KR", { timeZone: TZ, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+
+/** "10-03 09:30" (서울 시각) — 관리자 표처럼 칸이 좁은 곳에 쓴다 */
+export function formatStamp(iso: string): string {
+  const parts = stamp.formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
+}
+
+/** "10-03" (서울 날짜) */
+export function formatMonthDay(iso: string): string {
+  return formatStamp(iso).slice(0, 5);
+}
