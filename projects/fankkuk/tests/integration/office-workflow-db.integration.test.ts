@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { adminClient, anonClient, deleteTestOrders, psql, signedInClient } from "./helpers";
+import { adminClient, anonClient, deleteTestOrders, holdRowLock, psql, signedInClient } from "./helpers";
 import {
   approve,
   creatorSetsWaybill,
@@ -107,23 +107,31 @@ describe("상태 전환표 (INV-W1)", () => {
     expect((await staff.rpc("office_confirm_label", { p_qr: qrA })).error).toBeNull();
   });
 
-  it("INV-W1 (실패경로): 라벨 대기 줄이 남아 있어도 입고 완료가 아닌 상자는 부착 확인 거부", async () => {
+  it("INV-W1 (실패경로): 라벨 대기 줄이 남아 있어도 입고 완료가 아닌 상자는 부착 확인 거부(부착 확인 뒤·입고 전)", async () => {
     // 대기 줄은 입고 완료 상자에만 생기므로, 상태 검사만 따로 보려고 줄을 직접 심는다
-    const g = await paidGift();
-    const no = waybill();
-    await fanSetsWaybill(g.boxIds[0], no);
+    const g = await paidGift(2);
+    const [a, b] = [waybill(), waybill()];
+    await fanSetsWaybill(g.boxIds[0], a);
+    await fanSetsWaybill(g.boxIds[1], b);
     const staff = await signedInClient("fankkuk_staff");
-    const qr = await receiveAndLabel(staff, no);
-    const labeledAt = psql(`select labeled_at from public.office_parcels where qr_code = '${qr}'`);
-    psql(
-      `insert into public.office_label_pending (operator_id, parcel_id) select pr.id, p.id from public.profiles pr, public.office_parcels p where pr.login_id = 'fankkuk_staff' and p.qr_code = '${qr}'`,
-    );
-    try {
-      expect((await staff.rpc("office_confirm_label", { p_qr: qr })).error?.code).toBe("55000");
-      expect(pendingLabels("fankkuk_staff")).toBe("1");
-      expect(psql(`select labeled_at from public.office_parcels where qr_code = '${qr}'`)).toBe(labeledAt);
-    } finally {
-      psql(`delete from public.office_label_pending where parcel_id in (select id from public.office_parcels where qr_code = '${qr}')`);
+    const labeledQr = await receiveAndLabel(staff, a);
+    const awaitingQr = psql(`select qr_code from public.office_parcels where inbound_waybill_no = '${b}'`);
+    for (const [qr, state] of [
+      [labeledQr, "labeled"],
+      [awaitingQr, "awaiting"],
+    ] as const) {
+      const before = psql(`select state || '|' || coalesce(labeled_at::text, '') from public.office_parcels where qr_code = '${qr}'`);
+      psql(
+        `insert into public.office_label_pending (operator_id, parcel_id) select pr.id, p.id from public.profiles pr, public.office_parcels p where pr.login_id = 'fankkuk_staff' and p.qr_code = '${qr}'`,
+      );
+      try {
+        expect((await staff.rpc("office_confirm_label", { p_qr: qr })).error?.code).toBe("55000");
+        expect(pendingLabels("fankkuk_staff")).toBe("1");
+        expect(parcelState(qr)).toBe(state);
+        expect(psql(`select state || '|' || coalesce(labeled_at::text, '') from public.office_parcels where qr_code = '${qr}'`)).toBe(before);
+      } finally {
+        psql(`delete from public.office_label_pending where parcel_id in (select id from public.office_parcels where qr_code = '${qr}')`);
+      }
     }
   });
 
@@ -181,10 +189,16 @@ describe("한 번만·한 상자씩 (INV-W2)", () => {
     const owner = await signedInClient("fankkuk_admin");
     const out = waybill();
     await owner.rpc("office_print_label", { p_qr: qr, p_waybill: out });
+    // 다른 연결이 줄을 잠근 동안 둘을 보내 확실히 겹치게 한다 — 앞뒤로 오면 잠금 없이도 통과한다
+    const { released } = await holdRowLock(`select 1 from public.office_parcels where qr_code = '${qr}' for update`, 3);
+    const sentAt = Date.now();
     const rs = await Promise.all([
       staff.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out }),
       owner.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out }),
     ]);
+    await released;
+    // 잠금 뒤에 줄 서 있었다는 증거 — 잠금이 풀린 뒤에 도착했다면 겹치지 않은 것이라 이 시험은 아무것도 못 본다
+    expect(Date.now() - sentAt).toBeGreaterThanOrEqual(1000);
     expect(rs.filter((r) => r.error === null)).toHaveLength(1);
     expect(rs.find((r) => r.error)?.error?.code).toBe("55000");
     expect(psql(`select count(*) from public.office_envelope_shreds s join public.office_parcels p on p.id = s.parcel_id where p.qr_code = '${qr}'`)).toBe("1");
@@ -196,14 +210,25 @@ describe("한 번만·한 상자씩 (INV-W2)", () => {
     await fanSetsWaybill(g.boxIds[0], no);
     const staff = await signedInClient("fankkuk_staff");
     const owner = await signedInClient("fankkuk_admin");
+    // 다른 연결이 줄을 잠근 동안 둘을 보내 확실히 겹치게 한다 — 앞뒤로 오면 잠금 없이도 통과한다
+    const { released } = await holdRowLock(`select 1 from public.office_parcels where inbound_waybill_no = '${no}' for update`, 3);
+    const sentAt = Date.now();
     const rs = await Promise.all([
       staff.rpc("office_scan_inbound", { p_waybill: no }),
       owner.rpc("office_scan_inbound", { p_waybill: no }),
     ]);
-    expect(rs.filter((r) => r.error === null)).toHaveLength(1);
+    await released;
+    // 잠금 뒤에 줄 서 있었다는 증거 — 잠금이 풀린 뒤에 도착했다면 겹치지 않은 것이라 이 시험은 아무것도 못 본다
+    expect(Date.now() - sentAt).toBeGreaterThanOrEqual(1000);
+    const ok = rs.filter((r) => r.error === null);
+    expect(ok).toHaveLength(1);
+    expect((ok[0]!.data as { result: string }).result).toBe("received");
     // 늦은 쪽은 줄을 잠그고 기다렸다가 「이미 처리됨」을 받는다 — 라벨 표 제약에 걸린 알 수 없는 오류가 아니다
     expect(rs.find((r) => r.error)?.error?.code).toBe("55000");
-    expect(psql("select count(*) from public.office_label_pending")).toBe("1");
+    expect(psql(`select state from public.office_parcels where inbound_waybill_no = '${no}'`)).toBe("received");
+    expect(
+      psql(`select count(*) from public.office_label_pending l join public.office_parcels p on p.id = l.parcel_id where p.inbound_waybill_no = '${no}'`),
+    ).toBe("1");
   });
 
   it("INV-W2 (S2b, 실패경로): 부착 확인 전에는 같은 작업자의 다음 상자 입고를 거부", async () => {

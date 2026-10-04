@@ -74,7 +74,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   const [phase, setPhase] = useState<Phase>("form");
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [finished, setFinished] = useState<Finished | null>(null);
-  const [error, setError] = useState<{ title: string; message: string } | null>(null);
+  const [error, setError] = useState<{ title: string; message: string; unknown?: true } | null>(null); // unknown: 서버는 반영했을 수 있는데 응답을 못 읽음
 
   const allowed = allowedOutcomes(checks);
   const chosen = inspectionResultOf(checks, outcome).outcome;
@@ -118,10 +118,11 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
       const state = done.body.state;
       if (state === "inspected" || state === "return_waiting" || state === "held") {
         setFinished({ state });
-        setParcel({ ...parcel, state }); // 상자 정보 칸의 상태 표시도 끝난 상태로
+        // 상자 정보 칸의 상태 표시도 끝난 상태로. nextStep 은 옛 값이지만 finished 단계에서는 「검수 단계가 아니에요」 안내가 가려져 쓰이지 않는다
+        setParcel({ ...parcel, state });
         setPhase("finished");
       } else {
-        setError({ title: "결과를 읽지 못했어요", message: "QR 을 다시 스캔해 상자 상태를 확인해 주세요." });
+        setError({ title: "결과를 읽지 못했어요", message: "반영됐을 수 있어요. QR 을 다시 스캔해 상자 상태를 확인해 주세요.", unknown: true });
       }
       return;
     }
@@ -171,7 +172,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   const stepIndex = !parcel ? 0 : phase === "form" ? 1 : phase === "saved" ? 3 : 4;
   const steps = ["QR 스캔", "검수 기록", "기록 저장", "QR 다시 스캔해 검수 완료"];
   const announce = error
-    ? `거부: ${error.title}`
+    ? `${error.unknown ? "확인 필요" : "거부"}: ${error.title}`
     : phase === "finished" && finished
       ? FINISHED[finished.state].title
       : phase === "saved"
@@ -208,10 +209,13 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
         {error && (
           <div className={`${w.result} ${w.resultNo} ${w.resultHeadSm}`}>
             <div className={w.resultHead}>
-              <span className={`${a.tag} ${a.tagInk}`}>거부</span>
+              <span className={`${a.tag} ${a.tagInk}`}>{error.unknown ? "확인 필요" : "거부"}</span>
               <h2>{error.title}</h2>
             </div>
-            <p>{error.message} 상자 상태는 그대로예요.</p>
+            <p>
+              {error.message}
+              {error.unknown ? "" : " 상자 상태는 그대로예요."}
+            </p>
           </div>
         )}
 

@@ -129,7 +129,7 @@ export function FindMyBox({ boxes }: { boxes: readonly FinderBox[] }) {
         {result?.kind === "ok" ? (
           <div ref={resultRef} tabIndex={-1} className={`${s.result} ${s["result--ok"]}`}>
             <strong>찾았어요</strong>
-            <p>{result.label} 와 이어졌어요. 이 상자는 입고 처리됐고, 곧 검수로 넘어가요.</p>
+            <p>{result.label} 상자와 이어졌어요. 이 상자는 입고 처리됐고, 곧 검수로 넘어가요.</p>
           </div>
         ) : null}
         {result?.kind === "no" ? (

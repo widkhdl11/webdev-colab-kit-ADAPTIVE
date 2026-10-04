@@ -22,11 +22,12 @@ import { SHELF_MAX } from "../model/scan-inbound";
 
 type Card =
   | { kind: "received"; qr: string; orderNo: string; parcel: ParcelDetail | null; at: string; reprinted: boolean }
-  | { kind: "labeled"; orderNo: string }
+  | { kind: "labeled"; orderNo: string | null } // null: 이 화면이 모르는 라벨이라 주문번호를 알 수 없음
   | { kind: "unmatched"; waybill: string; at: string }
   | { kind: "unmatched_saved"; shelf: string }
   | { kind: "unmatched_recorded" }
-  | { kind: "rejected"; title: string; message: string; pending: PendingLabel | null };
+  // unknown: 서버는 반영했을 수 있는데 응답을 못 읽음 — 「반영되지 않았어요」라고 말하면 안 된다
+  | { kind: "rejected"; title: string; message: string; unknown?: true };
 
 /** 화면 읽기 프로그램이 읽는 한 줄 — 결과 카드의 제목만. 부착 대기 줄·양식은 따로 알리지 않는다. */
 function announceOf(card: Card | null): string {
@@ -43,7 +44,7 @@ function announceOf(card: Card | null): string {
     case "unmatched_recorded":
       return "이미 미확인 입고로 기록된 상자예요";
     case "rejected":
-      return `거부: ${card.title}`;
+      return `${card.unknown ? "확인 필요" : "거부"}: ${card.title}`;
   }
 }
 
@@ -86,14 +87,14 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
     setRecent((rows) => [row, ...rows].slice(0, 20));
   }
 
-  function reject(title: string, message: string) {
-    setCard({ kind: "rejected", title, message, pending });
+  function reject(title: string, message: string, unknown?: true) {
+    setCard(unknown ? { kind: "rejected", title, message, unknown } : { kind: "rejected", title, message });
   }
 
   async function onScan(raw: string) {
     const code = readScan(raw);
     if (code.kind === "invalid") {
-      reject("스캔한 값을 읽지 못했어요", "택배 송장 바코드(숫자 10~14자리)나 라벨 QR(Q-여섯 자리)을 다시 스캔해 주세요. 상자 상태는 그대로예요.");
+      reject("스캔한 값을 읽지 못했어요", "택배 송장 바코드(숫자 10~14자리)나 라벨 QR(Q-여섯 자리)을 다시 스캔해 주세요.");
       return;
     }
     setBusy(true);
@@ -111,16 +112,16 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
     }
 
     if (code.kind === "qr") {
-      const orderNo = pending?.qr === code.value ? pending.orderNo : code.value;
+      const orderNo = pending?.qr === code.value ? pending.orderNo : null;
       setPending(null);
       setCard({ kind: "labeled", orderNo });
-      addRecent({ at: now, orderNo, kindText: "—", resultText: "부착 확인" });
+      addRecent({ at: now, orderNo: orderNo ?? "—", kindText: "—", resultText: "부착 확인" });
       return;
     }
 
     const reply = inboundReplyFromBody(outcome.body);
     if (!reply) {
-      reject("결과를 읽지 못했어요", "화면을 새로고침해 부착 대기 라벨이 있는지 확인해 주세요.");
+      reject("결과를 읽지 못했어요", "반영됐을 수 있어요. 위의 부착 대기 줄에 이 상자의 라벨이 나왔는지 확인해 주세요.", true);
       router.refresh();
       return;
     }
@@ -240,7 +241,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
           <div className={`${a.note} ${a.noteOk}`}>
             <InfoIcon />
             <p>
-              <strong>부착 확인 완료.</strong> {card.orderNo} 상자는 이제 검수 단계로 넘어가요. 다음 상자를 스캔하세요.
+              <strong>부착 확인 완료.</strong> {card.orderNo ? `${card.orderNo} 상자는` : "이 상자는"} 이제 검수 단계로 넘어가요. 다음 상자를 스캔하세요.
             </p>
           </div>
         )}
@@ -320,25 +321,25 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
         {card?.kind === "rejected" && (
           <section className={`${w.result} ${w.resultNo}`} aria-labelledby="inbound-rejected">
             <div className={w.resultHead}>
-              <span className={`${a.tag} ${a.tagInk}`}>거부</span>
+              <span className={`${a.tag} ${a.tagInk}`}>{card.unknown ? "확인 필요" : "거부"}</span>
               <h2 id="inbound-rejected">{card.title}</h2>
             </div>
             <dl className={a.kv}>
-              {card.pending && (
+              {pending && (
                 <>
                   <dt>기다리는 라벨</dt>
                   <dd className={a.mono}>
-                    {card.pending.orderNo} ({card.pending.qr})
+                    {pending.orderNo} ({pending.qr})
                   </dd>
                 </>
               )}
               <dt>상태</dt>
-              <dd>{card.message} 이번 스캔은 반영되지 않았어요. 상자 상태는 그대로예요.</dd>
+              <dd>{card.unknown ? card.message : `${card.message} 이번 스캔은 반영되지 않았어요. 상자 상태는 그대로예요.`}</dd>
             </dl>
             <div className={w.nextStep}>
               <h3>이렇게 하세요</h3>
               <p>
-                {card.pending
+                {pending
                   ? "앞 상자에 라벨을 붙이고, 그 라벨의 QR 을 스캔하면 다음 상자를 받을 수 있어요. 한 상자에 스캔 한 번, 라벨 한 장씩 처리해요."
                   : "같은 송장을 두 번 읽었다면 그대로 두세요. 이 상자에 붙은 라벨이 없다면 관리자에게 알려 주세요."}
               </p>

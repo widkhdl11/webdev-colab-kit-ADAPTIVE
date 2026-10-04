@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 // 통합 테스트 공용 도구. 주소·키는 setup-env 가 로컬 Supabase 에서 읽어 둔다.
@@ -33,6 +33,31 @@ export function psql(sql: string): string {
     ["exec", "-i", "supabase_db_fankkuk", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-At", "-c", sql],
     { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
   ).trim();
+}
+
+/**
+ * 다른 연결에서 행 잠금을 잡고 seconds 동안 쥐고 있는다. 잠금을 잡은 뒤에야 돌아오고,
+ * 돌려준 `released` 는 잠금이 풀릴 때 끝난다. (Promise 를 그대로 돌려주면 async 함수가 그것을 풀어
+ * 기다려 버려서, 잠금이 풀린 뒤에야 돌아온다 — 객체로 감싸는 이유다.) 동시 요청 시험이 「운 좋게 앞뒤로 와서」 통과하지 않게,
+ * 요청들을 이 잠금 뒤에 줄 세워 확실히 겹치게 만든다.
+ */
+export async function holdRowLock(lockSql: string, seconds: number): Promise<{ released: Promise<void> }> {
+  const marker = `hold_row_lock_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const sql = `begin; ${lockSql}; select pg_sleep(${seconds}) as ${marker}; commit;`;
+  const child = spawn("docker", ["exec", "-i", "supabase_db_fankkuk", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-q", "-c", sql], {
+    stdio: ["ignore", "ignore", "pipe"],
+  });
+  const done = new Promise<void>((resolve, reject) => {
+    child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`holdRowLock 실패 (${code})`))));
+  });
+  // 잠금 다음 문장(pg_sleep)이 돌기 시작했으면 잠금은 잡힌 것이다
+  for (let i = 0; i < 100; i++) {
+    const n = psql(`select count(*) from pg_stat_activity where state = 'active' and query like '%as ${marker}%' and pid <> pg_backend_pid()`);
+    if (n === "1") return { released: done };
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  child.kill();
+  throw new Error("holdRowLock: 잠금을 잡지 못했다");
 }
 
 /** psql 실행이 오류로 끝나면 그 메시지를, 성공하면 null 을 돌려준다. */

@@ -20,6 +20,7 @@ M = [
     ('inbound: pending W2', 'office_scan_inbound', "if exists (select 1 from public.office_label_pending where operator_id = auth.uid()) then", F),
     ('inbound: lock', 'office_scan_inbound', "where inbound_waybill_no = p_waybill for update;", "where inbound_waybill_no = p_waybill; perform pg_sleep(0.3);"),
     ('inbound: reprint guard', 'office_scan_inbound', "if v.state = 'received' and v.labeled_at is null\n     and not exists (select 1 from public.office_label_pending where parcel_id = v.id) then", "if v.state = 'received' then"),
+    ('lock qr', 'office_lock_qr', "where qr_code = p_qr for update;", "where qr_code = p_qr;"),
     ('waybill format', 'office_check_waybill', "if p_no is null or p_no !~ '^[0-9]{10,14}$' then", "if p_no is null then"),
     ('qr format', 'office_lock_qr', "if p_qr is null or p_qr !~ '^Q-[0-9]{6}$' then", "if p_qr is null then"),
     ('label: operator', 'office_confirm_label', OP, F),

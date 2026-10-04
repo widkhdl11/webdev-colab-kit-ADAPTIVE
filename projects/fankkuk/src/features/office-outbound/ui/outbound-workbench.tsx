@@ -64,7 +64,7 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
   const [busy, setBusy] = useState(false);
   const [parcel, setParcel] = useState<ParcelDetail | null>(null);
   const [done, setDone] = useState<Done | null>(null);
-  const [error, setError] = useState<{ title: string; message: string } | null>(null);
+  const [error, setError] = useState<{ title: string; message: string; unknown?: true } | null>(null); // unknown: 서버는 반영했을 수 있는데 응답을 못 읽음
 
   /** quiet: 처리 뒤 다시 읽기 — 실패해도 거부 카드를 띄우지 않는다(앞 처리는 이미 됐다). 카드만 내린다. */
   async function lookup(qr: string, quiet = false): Promise<ParcelDetail | null> {
@@ -133,7 +133,7 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
       return;
     }
     const ok = kind === "print_label" ? printedReplyFromBody(outcome.body) : returnPrintedReplyFromBody(outcome.body);
-    if (!ok) setError({ title: "출력 결과를 읽지 못했어요", message: "QR 을 다시 스캔해 상자 상태를 확인해 주세요." });
+    if (!ok) setError({ title: "출력 결과를 읽지 못했어요", message: "반영됐을 수 있어요. QR 을 다시 스캔해 상자 상태를 확인해 주세요.", unknown: true });
     // 출력 뒤 상태는 DB 에서 다시 읽는다 — 화면이 상태를 짐작해 바꾸지 않는다
     setParcel(await lookup(parcel.qr, true));
     setBusy(false);
@@ -153,16 +153,19 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
       />
 
       <p className="sr-only" role="status">
-        {error ? `거부: ${error.title}` : done ? (done.kind === "shipped" ? "출고 확정됐어요" : "반송 확정됐어요") : parcel ? `${parcel.orderNo} ${NEXT_STEP_TEXT[parcel.nextStep] || STATE_LABEL[parcel.state].text}` : ""}
+        {error ? `${error.unknown ? "확인 필요" : "거부"}: ${error.title}` : done ? (done.kind === "shipped" ? "출고 확정됐어요" : "반송 확정됐어요") : parcel ? `${parcel.orderNo} ${NEXT_STEP_TEXT[parcel.nextStep] || STATE_LABEL[parcel.state].text}` : ""}
       </p>
       <div className={w.work} style={{ maxWidth: "none" }}>
         {error && (
           <div className={`${w.result} ${w.resultNo} ${w.resultHeadSm}`}>
             <div className={w.resultHead}>
-              <span className={`${a.tag} ${a.tagInk}`}>거부</span>
+              <span className={`${a.tag} ${a.tagInk}`}>{error.unknown ? "확인 필요" : "거부"}</span>
               <h2>{error.title}</h2>
             </div>
-            <p>{error.message} 상자 상태는 그대로예요.</p>
+            <p>
+              {error.message}
+              {error.unknown ? "" : " 상자 상태는 그대로예요."}
+            </p>
           </div>
         )}
 
