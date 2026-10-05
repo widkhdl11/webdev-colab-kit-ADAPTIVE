@@ -3,8 +3,8 @@
 ## 현재 상태
 
 - **오늘의 목표**: 로컬에서 할 수 있는 것 최대한 — 승인·주소 등록·송장 출력을 가짜 카카오 서명으로 끝까지(fankkuk-local-approval, 카드 d28) · 크리에이터 본인 확인 스펙(fankkuk-creator-verification)
-- **완료**: 승인 저장(9e2a318·3ade36e) · 크리에이터 주소 등록(650b7b1, pii 0007 적용됨) · 본인 확인 스펙 승인(d29) · 송장 출력 주소 열기 구현(fankkuk-invoice-print, 커밋됨 — pii 0008 미적용)
-- **멈춘 지점**: fankkuk-invoice-print — 통합 594 중 7개가 pii 0008 적용 대기. 화면 확인 안 함. 결정 d30(출력 횟수 상자마다) 대기
+- **완료**: 거절·차단(fankkuk-decline-block) d27 반영·review 사인오프(00f1f30) · 승인 저장(9e2a318·3ade36e) · 크리에이터 주소 등록(650b7b1, pii 0007 적용됨) · 본인 확인 스펙 승인(d29) · 송장 출력 주소 열기 구현(fankkuk-invoice-print, 커밋됨 — pii 0008 미적용)
+- **멈춘 지점**: fankkuk-invoice-print — 통합 594 중 7개가 pii 0008 적용 대기(그래프 qa 가 검증 실패로 잡음 — 적용 뒤 다시). 화면 확인 안 함. 결정 d30 대기
 - **다음 할 일**: 사용자에게 bash 로 0008 적용 부탁(`docker exec -i supabase_db_fankkuk psql -U postgres -d postgres -v ON_ERROR_STOP=1 < .../supabase/manual/0008_invoice_print.sql`) → 통합 시험 혼자 → 대표로 송장 출력 화면 확인 → d30 답 반영 → 크리에이터 본인 확인 구현(DB부터)
 - **대기 중인 결정**: d30 — 송장 주소 열기 횟수를 주문마다 3번에서 상자마다 3번으로(추천: 상자마다)
 
