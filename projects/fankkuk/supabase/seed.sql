@@ -174,3 +174,7 @@ insert into public.notices (slug, title, published_at, pinned, body) values
 drop table seed_orders;
 drop table seed_accounts;
 select set_config('fankkuk.approving', '', false);
+
+-- 가짜 서명 허용 (approval-signature INV-S11, 마이그레이션 20261005000016). 이 파일은 로컬 db reset 에서만 돈다 —
+-- 운영 DB 에는 이 줄이 없어 가짜 서명 승인이 거부된다.
+insert into public.local_dev_flags (flag) values ('allow_fake_signatures') on conflict do nothing;

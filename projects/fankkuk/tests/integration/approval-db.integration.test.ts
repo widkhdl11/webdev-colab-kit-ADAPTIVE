@@ -209,3 +209,24 @@ describe("INV-S11: 승인할 원문은 그 주문의 크리에이터에게만", 
     expect((await fan.rpc("approval_payload_of", { p_request_id: o.requestId, p_actor_id: SEED.creatorProfileId })).error?.code).toBe("42501");
   });
 });
+
+describe("INV-S11: 가짜 서명은 허용 줄이 있는 DB(로컬)에서만 받는다", () => {
+  it("INV-S11 S11c: 허용 줄이 없는 DB(운영 DB 와 같은 상태)에서는 가짜 서명 승인이 거부되고 아무것도 안 바뀐다", async () => {
+    const o = await paidOrder();
+    const a = approveArgs(o.requestId);
+    const q = (v: string) => `'${v.replace(/'/g, "''")}'`;
+    const out = psql(
+      `begin; delete from public.local_dev_flags; select public.approve_request(${q(a.p_request_id)}, ${q(a.p_actor_id ?? "")}::uuid, ${q(a.p_signed_content)}, ${q(a.p_signer_id)}, 'fake'); rollback;`,
+    );
+    expect(out.split("\n")).toContain("signature_mismatch");
+    expect(psql(`select status from public.approval_requests where request_id = '${o.requestId}'`)).toBe("waiting");
+    // 로컬 DB 에는 허용 줄이 있어(위 처리는 되돌렸다) 같은 승인이 된다. 서비스 키로는 표를 읽지도 못한다
+    expect(psql(`select count(*) from public.local_dev_flags where flag = 'allow_fake_signatures'`)).toBe("1");
+    expect((await adminClient().from("local_dev_flags").select("flag")).error?.code).toBe("42501");
+    expect((await approveRpc(o.requestId)).data).toBe("approved");
+  });
+
+  it("INV-S12: 서명 표는 통째로 비우기도 막힌다", () => {
+    expect(psqlError(`truncate public.approval_signatures`)).toMatch(/추가만/);
+  });
+});
