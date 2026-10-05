@@ -206,6 +206,12 @@ describe("INV-P5: 횟수는 상자마다 따로 센다 (카드 d30)", () => {
     return { ...g, qrs };
   }
 
+  /** 기록 줄을 「상자 순번:결과:출력 번호 또는 거부 사유」로. 상자 칸이 빈 줄은 이어 붙지 않아 빠진다 — 빠지면 단언이 깨진다. */
+  const boxLogRows = (orderId: string) =>
+    psql(
+      `select string_agg(b.seq || ':' || l.result || ':' || coalesce(l.print_no::text, l.deny_reason), ',' order by l.id) from public.decrypt_log l join public.boxes b on b.id = l.box_id where l.order_id = '${orderId}'`,
+    );
+
   it("INV-P5 (S5e): 상자 4개 주문은 네 상자 모두 송장이 나온다", async () => {
     const g = await inspectedBoxes(4);
     const results = [];
@@ -223,11 +229,7 @@ describe("INV-P5: 횟수는 상자마다 따로 센다 (카드 d30)", () => {
     expect(await print(a)).toEqual({ kind: "denied", reason: "decrypt_limit_reached" });
     expect(await print(b)).toMatchObject({ kind: "printed", reprint: false });
     // 기록 줄마다 어느 상자의 몇 번째인지 남는다
-    expect(
-      psql(
-        `select string_agg(b.seq || ':' || l.result || ':' || coalesce(l.print_no::text, l.deny_reason), ',' order by l.id) from public.decrypt_log l join public.boxes b on b.id = l.box_id where l.order_id = '${g.orderId}'`,
-      ),
-    ).toBe("1:opened:1,1:opened:2,1:opened:3,1:denied:decrypt_limit_reached,2:opened:1");
+    expect(boxLogRows(g.orderId)).toBe("1:opened:1,1:opened:2,1:opened:3,1:denied:decrypt_limit_reached,2:opened:1");
   });
 
   it("INV-P5 (S5g, 실패경로): 먼저 출고한 상자는 남은 횟수가 있어도 닫히고, 아직 안 나간 옆 상자는 열린다", async () => {
@@ -239,6 +241,8 @@ describe("INV-P5: 횟수는 상자마다 따로 센다 (카드 d30)", () => {
     expect((await staff.rpc("office_confirm_shipment", { p_qr: a, p_waybill: first.waybill })).error).toBeNull();
     expect(await print(a)).toEqual({ kind: "denied", reason: "order_not_printable" });
     expect(await print(b)).toMatchObject({ kind: "printed", reprint: false });
+    // 상자 1의 거부는 DB 가 잠근 자리에서 남긴 줄이다(주문은 상자 2 때문에 아직 출고 전이라 앱 판정은 통과한다) — 그 줄에도 상자가 있어야 한다
+    expect(boxLogRows(g.orderId)).toBe("1:opened:1,1:denied:order_not_printable,2:opened:1");
   });
 
   it("INV-P5 (실패경로): 어느 상자인지 없는 「연 줄」은 DB 가 받지 않는다 — 그런 줄은 어느 상자의 횟수에도 안 잡힌다", async () => {

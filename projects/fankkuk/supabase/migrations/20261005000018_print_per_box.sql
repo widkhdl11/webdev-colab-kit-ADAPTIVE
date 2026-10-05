@@ -12,6 +12,14 @@
 --   · manual/0009 만 → 그 파일이 처음에 상자 칸이 있는지 보고 없으면 멈춘다(아무것도 안 바뀜).
 
 alter table public.decrypt_log add column box_id uuid references public.boxes (id);
+-- 이 시점에 「연 줄」이 있으면 모두 상자 칸이 비어 있어 어느 상자의 횟수에도 안 잡힌다 — 그 상자는 3번을 더 열 수 있게 된다.
+-- 로컬 시험 기록이면 지우고 다시 적용하고, 운영이면 사람이 줄마다 상자를 확인한 뒤 적용한다. 조용히 지나가지 않게 여기서 멈춘다.
+do $$
+begin
+  if exists (select 1 from public.decrypt_log where result = 'opened') then
+    raise exception '상자를 모르는 「연 줄」이 있다 — 그대로 적용하면 그 상자들은 횟수를 처음부터 다시 센다';
+  end if;
+end $$;
 alter table public.decrypt_log add constraint decrypt_log_opened_has_box check (result <> 'opened' or box_id is not null) not valid;
 create index decrypt_log_box_opened on public.decrypt_log (box_id) where result = 'opened';
 
