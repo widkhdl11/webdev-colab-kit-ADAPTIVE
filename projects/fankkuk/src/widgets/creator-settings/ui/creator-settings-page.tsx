@@ -8,16 +8,18 @@ import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadlin
 import { formatDate } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
+import type { MyAddressStatus } from "@/entities/creator/api/my-address-status";
+import { AddressChangeForm } from "@/features/creator-address/ui/address-change-form";
 import { sendUnblock } from "@/features/creator-unblock/api/send-unblock";
-import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import s from "./creator-settings.module.css";
 
 // 크리에이터 — 주소와 설정. 시안: docs/design/mockups/site/v4/creator-settings.html
 //
-// 주소 변경은 카카오톡 인증서 재서명이 필요한 동작이라(INV-P11 — 로그인 세션만으로는 주소를 바꿀 수 없다)
-// 서명이 붙기 전까지 아무 일도 하지 않는다. 확인 창의 「카카오톡으로 서명하기」도 창을 닫기만 한다.
+// 주소 등록·변경(address-protection INV-P13): 확인 창에서 주소를 입력하고 「카카오톡으로 서명하기」를 누르면 이 브라우저에서 봉인해 보낸다.
+// 카카오 재서명 자리는 지금 로컬 가짜 서명 창구가 맡고(카드 d28), 운영에서는 서버가 창구가 없어 거부한다.
+// 「등록됨」은 서버에 저장된 뒤에만 바뀐다. 처음 그리는 값은 DB 읽기 함수(my_creator_address_status)의 등록 여부다.
 // 차단 풀기는 로그인 세션으로 저장한다(decline-block INV-D10, 카드 d26) — 풀어도 주소는 열리지 않고, 새 선물은 건마다 서명 승인이 있어야 나간다.
-// 주소는 값을 받지 않는다 — 「등록돼 있는가」만 보여 준다. 프로필 저장·알림 스위치도 예시라 서버에 보내지 않는다.
+// 주소는 값을 받지 않는다 — 「등록돼 있는가」만 보여 준다. 프로필 저장·알림 스위치는 아직 예시라 서버에 보내지 않는다.
 
 type SheetState = { kind: "address" } | { kind: "unblock"; fan: BlockedFan } | null;
 
@@ -52,9 +54,21 @@ function Switch({
   );
 }
 
-export function CreatorSettingsPage({ settings, blockedFans }: { settings: CreatorSettingsView; blockedFans: readonly BlockedFan[] }) {
+export function CreatorSettingsPage({
+  settings,
+  address,
+  sealingKeyPem,
+  blockedFans,
+}: {
+  settings: CreatorSettingsView;
+  address: MyAddressStatus;
+  /** 주소 봉인 공개키(PEM). 없으면 주소 입력 대신 안내만 보인다. */
+  sealingKeyPem: string | null;
+  blockedFans: readonly BlockedFan[];
+}) {
   const router = useRouter();
   const [sheet, setSheet] = useState<SheetState>(null);
+  const [addressRegistered, setAddressRegistered] = useState(address.registered);
   const [blocked, setBlocked] = useState(blockedFans);
   const [saving, setSaving] = useState(false);
   const [unblockError, setUnblockError] = useState<string | null>(null);
@@ -86,8 +100,8 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
       <div className="panel-title">
         <h2 className="panel-h">주소와 설정</h2>
         <p>선물을 받을 주소와 차단한 팬, 프로필, 알림을 한곳에서 관리해요.</p>
-        {/* 주소 저장은 아직 DB 에 연결되지 않아 지어낸 값이다 */}
-        <p className="hint">지금 보이는 주소는 예시예요. 저장 기능을 연결하면 실제 값이 보여요.</p>
+        {/* 프로필·알림은 아직 DB 에 연결되지 않아 지어낸 값이다 */}
+        <p className="hint">프로필과 알림은 아직 예시예요. 저장 기능을 연결하면 실제 값이 보여요.</p>
       </div>
 
       <div className={s["set-grid"]}>
@@ -95,20 +109,20 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
           <section aria-labelledby="addr-h">
             <div className={s["s-head"]}>
               <h3 id="addr-h">받는 주소</h3>
-              {settings.addressRegistered ? <span className="tag tag--brand">등록됨</span> : <span className="tag">등록 전</span>}
+              {addressRegistered ? <span className="tag tag--brand">등록됨</span> : <span className="tag">등록 전</span>}
             </div>
             <div className={s.addr}>
               <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
               <div>
-                <p className={s["addr-t"]}>{settings.addressRegistered ? "주소가 안전하게 등록돼 있어요" : "아직 주소를 등록하지 않았어요"}</p>
+                <p className={s["addr-t"]}>{addressRegistered ? "주소가 안전하게 등록돼 있어요" : "아직 주소를 등록하지 않았어요"}</p>
                 <p className="sub">
-                  {settings.addressRegistered ? "브라우저에서 잠가 보냈어요. 저희 화면에는 보이지 않아요." : "등록하면 브라우저에서 잠가 보내요. 저희 화면에는 보이지 않아요."}
+                  {addressRegistered ? "브라우저에서 잠가 보냈어요. 저희 화면에는 보이지 않아요." : "등록하면 브라우저에서 잠가 보내요. 저희 화면에는 보이지 않아요."}
                 </p>
               </div>
             </div>
             <p className={`sub ${s.note}`}>아직 출력하지 않은 주문은 바뀐 주소로 나가요.</p>
             <button className="btn btn--line" type="button" onClick={() => setSheet({ kind: "address" })}>
-              주소 바꾸기
+              {addressRegistered ? "주소 바꾸기" : "주소 등록하기"}
             </button>
           </section>
 
@@ -220,7 +234,7 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
 
       <BottomSheet
         open={sheet !== null}
-        title={sheet?.kind === "unblock" ? `${sheet.fan.fanNickname}님의 차단을 풀까요?` : "주소를 바꿀까요?"}
+        title={sheet?.kind === "unblock" ? `${sheet.fan.fanNickname}님의 차단을 풀까요?` : addressRegistered ? "주소를 바꿀까요?" : "주소를 등록할까요?"}
         onClose={() => setSheet(null)}
       >
         {sheet?.kind === "unblock" ? (
@@ -246,17 +260,36 @@ export function CreatorSettingsPage({ settings, blockedFans }: { settings: Creat
           </>
         ) : (
           <>
-            <p>주소를 바꾸려면 카카오톡 인증서 서명이 필요해요. 로그인만으로는 바꿀 수 없어요.</p>
+            <p>주소를 {addressRegistered ? "바꾸" : "등록하"}려면 카카오톡 인증서 서명이 필요해요. 로그인만으로는 바꿀 수 없어요.</p>
             <p className={`sub ${s["sheet-sub"]}`}>새 주소도 이 브라우저에서 잠가서 보내요. 아직 출력하지 않은 주문은 바뀐 주소로 나가요.</p>
-            <div className={s["sheet-btns"]}>
-              <button className="btn btn--soft" type="button" onClick={() => setSheet(null)}>
-                돌아가기
-              </button>
-              <button className="btn btn--kakao" type="button" onClick={() => setSheet(null)}>
-                <KakaoBubble />
-                카카오톡으로 서명하기
-              </button>
-            </div>
+            {sealingKeyPem ? (
+              <AddressChangeForm
+                creatorId={address.creatorId}
+                sealingKeyPem={sealingKeyPem}
+                onSaved={() => {
+                  // 서버에 저장된 뒤에만 「등록됨」으로 바꾼다
+                  setAddressRegistered(true);
+                  setSheet(null);
+                  router.refresh();
+                }}
+                onCancel={() => setSheet(null)}
+                onLoginExpired={() => router.push("/login")}
+              />
+            ) : (
+              <>
+                <p className={s.error} role="status">
+                  <span className={s["error-mark"]} aria-hidden="true">
+                    !
+                  </span>
+                  주소 보호 설정이 아직 안 돼 있어요. 지금은 주소를 등록할 수 없어요.
+                </p>
+                <div className={s["sheet-btns"]}>
+                  <button className="btn btn--soft" type="button" onClick={() => setSheet(null)}>
+                    돌아가기
+                  </button>
+                </div>
+              </>
+            )}
           </>
         )}
       </BottomSheet>
