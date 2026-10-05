@@ -4,8 +4,8 @@
 
 - **오늘의 목표**: 로컬에서 할 수 있는 것 최대한 — 승인·주소 등록·송장 출력을 가짜 카카오 서명으로 끝까지(fankkuk-local-approval, 카드 d28) · 크리에이터 본인 확인 스펙(fankkuk-creator-verification)
 - **완료**: 거절·차단(fankkuk-decline-block) d27 반영·review 사인오프(00f1f30) · 승인 저장(9e2a318·3ade36e) · 크리에이터 주소 등록(650b7b1, pii 0007 적용됨) · 본인 확인 스펙 승인(d29) · 송장 출력 주소 열기 구현(fankkuk-invoice-print, pii 0008 사용자 적용 — 통합 594 전부 통과)
-- **멈춘 지점**: fankkuk-invoice-print — 시험은 다 통과, 대표로 송장 출력 화면 확인은 아직. 결정 d30 대기. 본인 확인 스펙은 parked(구현 시작 때 approved 로)
-- **다음 할 일**: 대표(fankkuk_admin)로 송장 출력 화면 확인(하루 주소 등록돼 있음) → d30 답 반영 → 크리에이터 본인 확인 구현 — 스펙 status 를 parked → approved 로 되돌리고 INV-V1~V15 시험부터
+- **멈춘 지점**: fankkuk-invoice-print — 대표로 송장 출력 화면 확인 끝(FC-Z9C3V, 인쇄 때 빈 종이 나오던 CSS 고침). 결정 d30 대기. 본인 확인 스펙은 parked(구현 시작 때 approved 로)
+- **다음 할 일**: d30 답 반영 → 크리에이터 본인 확인 구현 — 스펙 status 를 parked → approved 로 되돌리고 INV-V1~V15 시험부터
 - **대기 중인 결정**: d30 — 송장 주소 열기 횟수를 주문마다 3번에서 상자마다 3번으로(추천: 상자마다)
 
 ## 로그
