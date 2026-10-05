@@ -341,7 +341,7 @@ export function ApprovalRequestList({
               <input type="checkbox" checked={block} onChange={(e) => setBlock(e.target.checked)} />
               <span>
                 이 팬의 선물을 앞으로 받지 않기(차단)
-                <small>차단한 팬은 선물을 보낼 수 없어요. 승인 대기 중인 이 팬의 다른 선물도 함께 받지 않아요. 풀 때는 주소와 설정에서 해요.</small>
+                <small>차단한 팬은 선물을 보낼 수 없어요. 승인 대기 중인 이 팬의 다른 선물도 함께 받지 않고, 이미 승인한 선물은 그대로 받아요. 풀 때는 주소와 설정에서 해요.</small>
               </span>
             </label>
             <p className={`sub ${a.reason}`}>

@@ -47,8 +47,8 @@ surfaces: [authz, concurrency]
   (강제 위치: DB 전환 함수 — 행 잠금 / 작업자별 「부착 대기 중인 라벨」 한 칸)
   위반 시: 라벨이 두 장 나가 상자가 섞이거나, 출고 확정이 두 번 기록된다.
 
-- INV-W3: 출고 조건 — 팬 선물은 크리에이터 승인(approval-signature)이 있고 거절·반려·차단·차액 미납(payment INV-M12)이 아니어야
-  한다. 역조공은 팬이 받기를 했어야 한다(reverse-gift INV-R7). 송장 출력(주소 열기)은 대표만(address-protection INV-P8).
+- INV-W3: 출고 조건 — 팬 선물은 크리에이터 승인(approval-signature)이 있고 거절·반려·차액 미납(payment INV-M12)이 아니어야
+  한다. 차단은 승인 전 주문을 거절로 바꿀 뿐이고, 이미 승인된 주문은 차단해도 출고한다(decline-block INV-D8, 카드 d27). 역조공은 팬이 받기를 했어야 한다(reverse-gift INV-R7). 송장 출력(주소 열기)은 대표만(address-protection INV-P8).
   승인 전에 상자가 먼저 와도 입고·검수까지는 정상 처리하고, 출고 목록에만 나오지 않는다.
   (강제 위치: DB 전환 함수 / 복호화 함수)
   위반 시: 승인 안 된 상자가 크리에이터 주소로 나간다 — 팬꾹이 파는 약속이 깨진다.
