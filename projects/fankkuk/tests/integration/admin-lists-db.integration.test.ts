@@ -12,8 +12,9 @@ const TEST_PREFIX = "시험-";
 const TEST_CREATOR_ID = "00000000-0000-4000-b000-0000000000f1";
 
 function insertTestCreator(verified: boolean): void {
+  // 확인된 크리에이터는 승인 함수로만 생긴다(creator-verification INV-V6) — 시드처럼 그 표시를 켜고 넣는다
   psql(
-    `insert into public.creators (id, slug, name, channel, identity_verified) values ('${TEST_CREATOR_ID}', 'test-verify', '${TEST_PREFIX}확인', '유튜브', ${verified}) on conflict (id) do update set identity_verified = excluded.identity_verified`,
+    `select set_config('fankkuk.verifying', 'on', false); insert into public.creators (id, slug, name, channel, identity_verified) values ('${TEST_CREATOR_ID}', 'test-verify', '${TEST_PREFIX}확인', '유튜브', ${verified}) on conflict (id) do update set identity_verified = excluded.identity_verified`,
   );
 }
 
@@ -145,10 +146,14 @@ describe("보낼 수 없는 물품 목록 (INV-K9)", () => {
 });
 
 describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
+  // 승인은 신청을 거쳐서만 된다(creator-verification INV-V6) — 승인 쪽 시험은 creator-verification-db 에 있다.
+  // 여기서는 취소(INV-K10 + INV-V9 사유)와 옛 승인 함수가 신청 없는 승인을 거부하는지를 본다.
+  const revokeArgs = (memo = "", code = "code_removed") => ({ p_creator_id: TEST_CREATOR_ID, p_reason_code: code, p_memo: memo });
+
   it("INV-K10 (S10): 승인을 취소하면 팬의 찾기에서 사라지고 새 선물 등록·팔로우가 막힌다", async () => {
     insertTestCreator(true);
     const staff = await signedInClient("fankkuk_staff");
-    const r = await staff.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: false, p_reason: "코드가 사라짐" });
+    const r = await staff.rpc("admin_revoke_creator", revokeArgs("코드가 사라짐"));
     expect(r.error).toBeNull();
 
     const fan = await signedInClient("byeolbit_fan");
@@ -162,14 +167,16 @@ describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
     expect(psql(`select count(*) from public.orders where creator_id = '${TEST_CREATOR_ID}'`)).toBe("0");
   });
 
-  it("INV-K10: 승인하면 찾기에 나오고 선물 등록이 된다", async () => {
+  it("INV-K10 (실패경로): 옛 승인 함수로 신청 없이 승인할 수 없다 — 취소는 「그 밖」 사유로 된다", async () => {
     insertTestCreator(false);
     const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: true, p_reason: "" })).error).toBeNull();
-    const found = (await anonClient().rpc("list_creators")).data as { id: string }[];
-    expect(found.map((c) => c.id)).toContain(TEST_CREATOR_ID);
-    const reg = await adminClient().rpc("register_order", { ...orderArgs(["small"], SMALL_FIRST), p_creator_id: TEST_CREATOR_ID });
-    expect(reg.error).toBeNull();
+    expect((await owner.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: true, p_reason: "" })).error?.code).toBe("FKV11");
+    expect(psql(`select identity_verified from public.creators where id = '${TEST_CREATOR_ID}'`)).toBe("f");
+    psql(`delete from public.creators where id = '${TEST_CREATOR_ID}'`);
+    insertTestCreator(true);
+    expect((await owner.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: false, p_reason: "옛 화면" })).error).toBeNull();
+    expect(psql(`select identity_verified from public.creators where id = '${TEST_CREATOR_ID}'`)).toBe("f");
+    expect(psql(`select action || '|' || reason_code || '|' || reason from public.creator_verification_events where creator_id = '${TEST_CREATOR_ID}'`)).toBe("revoke|other|옛 화면");
   });
 
   it("INV-K10: 이미 등록된 주문은 취소 뒤에도 그대로 간다", async () => {
@@ -177,42 +184,40 @@ describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
     const reg = await adminClient().rpc("register_order", { ...orderArgs(["small"], SMALL_FIRST), p_creator_id: TEST_CREATOR_ID });
     expect(reg.error).toBeNull();
     const staff = await signedInClient("fankkuk_staff");
-    expect((await staff.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: false, p_reason: "" })).error).toBeNull();
+    expect((await staff.rpc("admin_revoke_creator", revokeArgs())).error).toBeNull();
     expect(psql(`select status from public.orders where id = '${reg.data as string}'`)).toBe("pending_payment");
   });
 
-  it("INV-K10 (실패경로): 크리에이터·팬은 승인·취소할 수 없고 기록도 남지 않는다", async () => {
-    insertTestCreator(false);
+  it("INV-K10 (실패경로): 크리에이터·팬은 취소할 수 없고 기록도 남지 않는다", async () => {
+    insertTestCreator(true);
     // 운영자 기록이 하나 있어야 「빈 결과」가 필터 덕인지 볼 수 있다
     psql(`insert into public.creator_verification_events (creator_id, acted_by, action) values ('${TEST_CREATOR_ID}', '00000000-0000-4000-a000-000000000022', 'revoke')`);
     for (const who of ["haru_creator", "byeolbit_fan"]) {
       const c = await signedInClient(who);
-      expect((await c.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: true, p_reason: "" })).error?.code).toBe("42501");
+      expect((await c.rpc("admin_revoke_creator", revokeArgs())).error?.code).toBe("42501");
+      expect((await c.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: false, p_reason: "" })).error?.code).toBe("42501");
       expect((await c.rpc("admin_creators")).data).toEqual([]);
       expect((await c.rpc("admin_creator_verification_events")).data).toEqual([]);
     }
-    expect((await anonClient().rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: true, p_reason: "" })).error).not.toBeNull();
-    expect(psql(`select identity_verified from public.creators where id = '${TEST_CREATOR_ID}'`)).toBe("f");
+    expect((await anonClient().rpc("admin_revoke_creator", revokeArgs())).error).not.toBeNull();
+    expect(psql(`select identity_verified from public.creators where id = '${TEST_CREATOR_ID}'`)).toBe("t");
     expect(psql(`select count(*) from public.creator_verification_events where creator_id = '${TEST_CREATOR_ID}'`)).toBe("1");
   });
 
   it("INV-K10: 누가 언제 무엇을 했는지 남는다 — 운영자 목록에는 마지막 처리한 사람이 보인다", async () => {
-    insertTestCreator(false);
+    insertTestCreator(true);
     const owner = await signedInClient("fankkuk_admin");
     const staff = await signedInClient("fankkuk_staff");
-    await owner.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: true, p_reason: "" });
-    await staff.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: false, p_reason: "코드가 사라짐" });
+    expect((await staff.rpc("admin_revoke_creator", revokeArgs("코드가 사라짐"))).error).toBeNull();
     const events = ((await staff.rpc("admin_creator_verification_events")).data as {
       actor_nickname: string;
       creator_id: string;
       action: string;
       reason: string;
+      reason_code: string;
       at: string;
     }[]).filter((e) => e.creator_id === TEST_CREATOR_ID);
-    expect(events.map((e) => [e.action, e.actor_nickname, e.reason])).toEqual([
-      ["revoke", "팬꾹 직원", "코드가 사라짐"],
-      ["approve", "팬꾹 운영", ""],
-    ]);
+    expect(events.map((e) => [e.action, e.actor_nickname, e.reason_code, e.reason])).toEqual([["revoke", "팬꾹 직원", "code_removed", "코드가 사라짐"]]);
     expect(events.every((e) => !Number.isNaN(Date.parse(e.at)))).toBe(true);
     const row = ((await owner.rpc("admin_creators")).data as { id: string; verified: boolean; last_actor_nickname: string | null }[]).find(
       (c) => c.id === TEST_CREATOR_ID,
@@ -220,36 +225,33 @@ describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
     expect(row).toMatchObject({ verified: false, last_actor_nickname: "팬꾹 직원" });
   });
 
-  it("INV-K10 (실패경로·동시): 같은 승인을 두 번 동시에 눌러도 기록은 하나, 이미 그 상태면 거부", async () => {
-    insertTestCreator(false);
+  it("INV-K10 (실패경로·동시): 같은 취소를 두 번 동시에 눌러도 기록은 하나, 이미 그 상태면 거부", async () => {
+    insertTestCreator(true);
     const a = await signedInClient("fankkuk_admin");
     const b = await signedInClient("fankkuk_staff");
-    const results = await Promise.all([
-      a.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: true, p_reason: "" }),
-      b.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: true, p_reason: "" }),
-    ]);
+    const results = await Promise.all([a.rpc("admin_revoke_creator", revokeArgs()), b.rpc("admin_revoke_creator", revokeArgs())]);
     expect(results.filter((r) => r.error === null)).toHaveLength(1);
     expect(results.find((r) => r.error !== null)?.error?.code).toBe("55000");
     expect(psql(`select count(*) from public.creator_verification_events where creator_id = '${TEST_CREATOR_ID}'`)).toBe("1");
   });
 
-  it("INV-K10 (실패경로): 없는 크리에이터는 오류, 사유 201자는 거부", async () => {
+  it("INV-K10 (실패경로): 없는 크리에이터는 오류, 메모 201자는 거부", async () => {
     insertTestCreator(true);
     const staff = await signedInClient("fankkuk_staff");
     const ghost = "00000000-0000-4000-9000-000000000000";
-    expect((await staff.rpc("admin_set_creator_verified", { p_creator_id: ghost, p_verified: true, p_reason: "" })).error?.code).toBe("P0002");
-    const long = await staff.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: false, p_reason: "가".repeat(201) });
+    expect((await staff.rpc("admin_revoke_creator", { ...revokeArgs(), p_creator_id: ghost })).error?.code).toBe("P0002");
+    const long = await staff.rpc("admin_revoke_creator", revokeArgs("가".repeat(201)));
     expect(long.error?.code).toBe("22023");
     expect(psql(`select identity_verified from public.creators where id = '${TEST_CREATOR_ID}'`)).toBe("t");
   });
 
   it("INV-K10 (실패경로): 처리 기록은 고치거나 지울 수 없다", async () => {
-    insertTestCreator(false);
+    insertTestCreator(true);
     const staff = await signedInClient("fankkuk_staff");
-    await staff.rpc("admin_set_creator_verified", { p_creator_id: TEST_CREATOR_ID, p_verified: true, p_reason: "" });
+    await staff.rpc("admin_revoke_creator", revokeArgs());
     let err = "";
     try {
-      psql(`update public.creator_verification_events set action = 'revoke' where creator_id = '${TEST_CREATOR_ID}'`);
+      psql(`update public.creator_verification_events set action = 'approve' where creator_id = '${TEST_CREATOR_ID}'`);
     } catch (e) {
       err = String((e as { stderr?: string }).stderr ?? e);
     }

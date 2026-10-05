@@ -52,6 +52,9 @@ insert into public.owner_setting (owner_user_id) values ('00000000-0000-4000-a00
 
 -- ── 크리에이터 ───────────────────────────────────────────
 
+-- 확인된 크리에이터는 승인 함수로만 생긴다(creator-verification INV-V6). 시험 데이터를 넣는 동안만 그 막음을 끈다.
+select set_config('fankkuk.verifying', 'on', false);
+
 insert into public.creators (id, profile_id, slug, name, channel, channel_title, category, intro, alias, avg_approval_hours, face_tone, identity_verified)
 values
   ('00000000-0000-4000-b000-000000000001', '00000000-0000-4000-a000-000000000011', 'haru', '하루', '치지직', '하루의 놀이터', '게임', '게임 방송을 해요.', 'haru', 2, 'var(--face-6)', true),
@@ -66,6 +69,22 @@ values
   ('00000000-0000-4000-b000-000000000010', null, 'siwol', '시월', 'SOOP', '시월 라이브', '음악', '직접 연주해요.', 'siwol', 8, 'var(--face-4)', true),
   ('00000000-0000-4000-b000-000000000011', null, 'gureum', '구름', '유튜브', '구름 브이로그', '일상', '하루하루를 기록해요.', 'gureum', 4, 'var(--face-5)', true),
   ('00000000-0000-4000-b000-000000000012', null, 'haedeun', '해든', '치지직', '해든 부엌', '요리', '집밥을 만들어요.', 'haedeun', 2, 'var(--face-6)', true);
+
+-- 확인된 크리에이터의 예시 채널 주소와 채널 점유(creator-verification INV-V8 — 점유 표의 「채널 키마다 한 줄」이 이들도 검사한다).
+-- 유튜브·SOOP 은 slug 를 핸들·아이디로, 치지직은 slug 로 만든 32자리 16진수를 채널 ID 로 쓴다(지어낸 값).
+update public.creators c
+set platform = v.platform, channel_key = v.channel_key, channel_url = public.cv_channel_url(v.platform, v.channel_key)
+from (
+  select x.id, p.platform, case p.platform when 'chzzk' then md5('fankkuk-seed:' || x.slug) else x.slug end as channel_key
+  from public.creators x
+  cross join lateral (select case x.channel when '유튜브' then 'youtube' when '치지직' then 'chzzk' when 'SOOP' then 'soop' end as platform) p
+  where x.identity_verified and x.platform is null
+) v
+where c.id = v.id;
+insert into public.creator_channel_claims (platform, channel_key, kind, account_id, creator_id)
+select c.platform, c.channel_key, 'verified', c.profile_id, c.id from public.creators c where c.identity_verified and c.platform is not null
+on conflict do nothing;
+select set_config('fankkuk.verifying', '', false);
 
 -- 별빛이 팔로우한 크리에이터 여섯
 insert into public.follows (fan_id, creator_id)
