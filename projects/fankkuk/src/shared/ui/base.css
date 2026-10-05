@@ -127,3 +127,12 @@ span.search-go:hover { background: var(--brand); }
 
 /* 그림 — 칸 안에서 비율 유지 */
 img.asset { display: block; object-fit: contain; }
+
+/* 인쇄에만 나오는 칸 — 송장 라벨(받는 사람 주소)은 화면에 보이지 않고 인쇄에만 찍힌다(address-protection INV-P4, 출고 화면).
+   인쇄할 때는 이 칸만 남기고 나머지는 가린다. */
+.print-only { display: none; }
+@media print {
+  body:has(.print-only) * { visibility: hidden; }
+  .print-only, .print-only * { visibility: visible; }
+  .print-only { display: grid; gap: 6px; position: absolute; left: 0; top: 0; width: 100%; padding: 16px; background: #fff; color: #000; font-size: 16px; }
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { devWaybillNo } from "./dev-waybill";
-import { scanOutbound } from "./scan-outbound";
+import { scanOutbound, type OutboundDeps } from "./scan-outbound";
 
 type Reply = { data?: unknown; error: { code: string } | null };
 
@@ -19,19 +19,68 @@ function fakeClient(replies: Record<string, Reply>, who = { operator: true, owne
 }
 
 const NEW_WAYBILL = "555566667777";
-const deps = (client: never) => ({ client, newWaybill: () => NEW_WAYBILL });
+const LABEL = { recipientName: "김하루", phone: "01012345678", zipCode: "06236", address1: "서울시 강남구 테헤란로 123", address2: "101동" };
+type GiftOutcome = Awaited<ReturnType<OutboundDeps["printGiftLabel"]>>;
+function giftPrinter(outcome: GiftOutcome) {
+  const asked: string[] = [];
+  return { asked, printGiftLabel: async (qr: string) => (asked.push(qr), outcome) };
+}
+const deps = (client: never, printer = giftPrinter({ kind: "not_gift" })) => ({ client, newWaybill: () => NEW_WAYBILL, printGiftLabel: printer.printGiftLabel });
 
 describe("출고 (office-workflow INV-W1·W3·W8)", () => {
-  it("INV-W3: 대표가 송장 출력 → 서버가 만든 송장번호를 DB 에 넘기고 돌려준다", async () => {
+  it("INV-W3: 역조공 상자의 송장 출력 → 서버가 만든 송장번호를 DB 에 넘기고 돌려준다(주소 열기는 아직 없음)", async () => {
     const { calls, client } = fakeClient({ office_print_label: { error: null } });
-    expect(await scanOutbound(deps(client), { kind: "print_label", qr: "Q-000123" })).toEqual({ status: 200, body: { waybill: NEW_WAYBILL } });
+    const printer = giftPrinter({ kind: "not_gift" });
+    expect(await scanOutbound(deps(client, printer), { kind: "print_label", qr: "Q-000123" })).toEqual({ status: 200, body: { waybill: NEW_WAYBILL } });
+    expect(printer.asked).toEqual(["Q-000123"]);
     expect(calls).toEqual([{ fn: "office_print_label", args: { p_qr: "Q-000123", p_waybill: NEW_WAYBILL } }]);
+  });
+
+  it("INV-P4·W3: 팬 선물 상자의 송장 출력은 송장 출력 함수가 주소를 열어 라벨 칸을 돌려준다 — 앱 서버는 DB 출력 함수를 따로 부르지 않는다", async () => {
+    const { calls, client } = fakeClient({ office_print_label: { error: null } });
+    const printer = giftPrinter({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: LABEL });
+    expect(await scanOutbound(deps(client, printer), { kind: "print_label", qr: "Q-000123" })).toEqual({
+      status: 200,
+      body: { waybill: NEW_WAYBILL, reprint: false, label: LABEL },
+    });
+    expect(calls).toEqual([]);
+  });
+
+  it("INV-P4·P5·P14 (실패경로): 송장 출력 함수가 거부하면 409 와 사유별 문구, 주소 칸은 없다", async () => {
+    const reasons = ["no_valid_approval", "order_mismatch", "order_not_printable", "difference_unpaid", "decrypt_limit_reached", "address_mismatch"] as const;
+    const texts = new Set<string>();
+    for (const reason of reasons) {
+      const { calls, client } = fakeClient({});
+      const reply = await scanOutbound(deps(client, giftPrinter({ kind: "denied", reason })), { kind: "print_label", qr: "Q-000123" });
+      expect(reply.status).toBe(409);
+      expect(reply.body.reason).toBe("not_shippable");
+      expect(reply.body).not.toHaveProperty("label");
+      texts.add(String(reply.body.message));
+      expect(calls).toEqual([]);
+    }
+    expect(texts.size).toBe(reasons.length);
+  });
+
+  it("INV-P8 (실패경로): 송장 출력 함수가 대표가 아니라고 하면 403, 토큰을 못 믿으면 401", async () => {
+    const notOwner = fakeClient({});
+    expect((await scanOutbound(deps(notOwner.client, giftPrinter({ kind: "denied", reason: "not_owner" })), { kind: "print_label", qr: "Q-000123" })).status).toBe(403);
+    const noToken = fakeClient({});
+    expect((await scanOutbound(deps(noToken.client, giftPrinter({ kind: "unauthenticated" })), { kind: "print_label", qr: "Q-000123" })).status).toBe(401);
+  });
+
+  it("주소 미등록 409 · 없는 상자 404 · 실패 500", async () => {
+    const c = () => fakeClient({}).client;
+    expect((await scanOutbound(deps(c(), giftPrinter({ kind: "no_address" })), { kind: "print_label", qr: "Q-000123" })).status).toBe(409);
+    expect((await scanOutbound(deps(c(), giftPrinter({ kind: "not_found" })), { kind: "print_label", qr: "Q-000123" })).status).toBe(404);
+    expect((await scanOutbound(deps(c(), giftPrinter({ kind: "failed" })), { kind: "print_label", qr: "Q-000123" })).status).toBe(500);
   });
 
   it("INV-W3 (실패경로): 직원이 송장 출력을 부르면 403 — DB 출력 함수를 부르지 않는다", async () => {
     const { calls, client } = fakeClient({ office_print_label: { error: null } }, { operator: true, owner: false });
-    expect(await scanOutbound(deps(client), { kind: "print_label", qr: "Q-000123" })).toEqual({ status: 403, body: { message: "송장 출력은 대표만 할 수 있어요." } });
+    const printer = giftPrinter({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: LABEL });
+    expect(await scanOutbound(deps(client, printer), { kind: "print_label", qr: "Q-000123" })).toEqual({ status: 403, body: { message: "송장 출력은 대표만 할 수 있어요." } });
     expect(calls).toEqual([]);
+    expect(printer.asked).toEqual([]);
   });
 
   it("INV-W3 S3·S3b (실패경로): 출고 조건이 안 되면 409(P0041), 검수 완료가 아니면 409(55000)", async () => {

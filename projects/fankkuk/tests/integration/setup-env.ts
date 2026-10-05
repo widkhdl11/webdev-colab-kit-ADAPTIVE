@@ -24,3 +24,5 @@ if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(apiUrl)) {
 process.env.FK_TEST_API_URL = apiUrl;
 process.env.FK_TEST_ANON_KEY = values.ANON_KEY ?? "";
 process.env.FK_TEST_SERVICE_KEY = values.SERVICE_ROLE_KEY ?? "";
+// 송장 출력 함수의 DB 자격(복호화 전용 역할 토큰)을 시험이 직접 만들 때 쓴다 — 로컬 기본값이다(비밀 아님)
+process.env.FK_TEST_JWT_SECRET = values.JWT_SECRET ?? "";

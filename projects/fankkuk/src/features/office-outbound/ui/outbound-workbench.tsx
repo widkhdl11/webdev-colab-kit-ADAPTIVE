@@ -11,15 +11,35 @@ import a from "@/shared/ui/admin.module.css";
 import { ScanInput, type ScanInputHandle } from "@/shared/ui/scan-input";
 import w from "@/shared/ui/work.module.css";
 import { postOutbound } from "../api/post-outbound-client";
-import { printedReplyFromBody, returnPrintedReplyFromBody } from "../model/outbound-reply";
+import { printedReplyFromBody, returnPrintedReplyFromBody, type PrintedLabel } from "../model/outbound-reply";
 
 // 출고 작업 화면 (office-workflow INV-W1·W3·W8, design-rules 8-1, 시안 admin/work-outbound.html).
 // 라벨 QR 을 스캔하면 그 상자가 지금 할 수 있는 일만 나온다(다음 단계는 DB 가 정한 값). 봉투나 주문을 고르는 칸은 없다.
 // 「송장 출력」「반송 송장 출력」은 방금 스캔한 그 상자에만 걸리는 버튼이다 — 다른 상자를 고를 수 없고, 출고·반송 확정은
 // 출력된 송장 바코드를 스캔해야만 된다. 송장 출력은 대표만(직원에게는 버튼 대신 안내).
 // 택배사 API·라벨 프린터가 아직 없어 송장번호는 서버가 만든 개발용 번호를 화면에 크게 보이고 화면 인쇄로 대신한다.
+// 팬 선물은 송장 출력 함수가 연 받는 사람 주소(라벨 칸)를 응답으로 받아 인쇄에만 찍는다 — 화면에는 보이지 않고, 저장하지 않으며,
+// 다른 상자를 스캔하거나 확정하면 버린다(address-protection INV-P4·P10).
 
 type Done = { kind: "shipped" | "returned"; envelopeNo: string; at: string };
+/** 방금 연 라벨 — 그 상자(qr)의 인쇄에만 쓴다 */
+type OpenedLabel = { qr: string; waybill: string; fields: PrintedLabel };
+
+function PrintLabel({ orderNo, opened }: { orderNo: string; opened: OpenedLabel }) {
+  const f = opened.fields;
+  return (
+    <div className="print-only">
+      <strong>받는 사람 {f.recipientName}</strong>
+      <span>{f.phone}</span>
+      <span>
+        ({f.zipCode}) {f.address1} {f.address2}
+      </span>
+      <span>
+        송장번호 {opened.waybill} · 주문번호 {orderNo}
+      </span>
+    </div>
+  );
+}
 
 function InfoIcon() {
   return (
@@ -64,6 +84,7 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
   const [busy, setBusy] = useState(false);
   const [parcel, setParcel] = useState<ParcelDetail | null>(null);
   const [done, setDone] = useState<Done | null>(null);
+  const [opened, setOpened] = useState<OpenedLabel | null>(null);
   const [error, setError] = useState<{ title: string; message: string; unknown?: true } | null>(null); // unknown: 서버는 반영했을 수 있는데 응답을 못 읽음
 
   /** quiet: 처리 뒤 다시 읽기 — 실패해도 거부 카드를 띄우지 않는다(앞 처리는 이미 됐다). 카드만 내린다. */
@@ -93,6 +114,7 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
       scan.current?.focus();
       setParcel(next);
       setDone(null);
+      setOpened(null);
       return;
     }
 
@@ -114,6 +136,7 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
       }
       return;
     }
+    setOpened(null);
     setDone({ kind: shipping ? "shipped" : "returned", envelopeNo: parcel.envelopeNo, at: new Date().toISOString() });
     setParcel(await lookup(parcel.qr, true));
   }
@@ -132,8 +155,10 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
       setBusy(false);
       return;
     }
-    const ok = kind === "print_label" ? printedReplyFromBody(outcome.body) : returnPrintedReplyFromBody(outcome.body);
+    const printed = kind === "print_label" ? printedReplyFromBody(outcome.body) : null;
+    const ok = kind === "print_label" ? printed : returnPrintedReplyFromBody(outcome.body);
     if (!ok) setError({ title: "출력 결과를 읽지 못했어요", message: "반영됐을 수 있어요. QR 을 다시 스캔해 상자 상태를 확인해 주세요.", unknown: true });
+    setOpened(printed?.label ? { qr: parcel.qr, waybill: printed.waybill, fields: printed.label } : null);
     // 출력 뒤 상태는 DB 에서 다시 읽는다 — 화면이 상태를 짐작해 바꾸지 않는다
     setParcel(await lookup(parcel.qr, true));
     setBusy(false);
@@ -185,15 +210,21 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
           </div>
         )}
 
-        {parcel && !done && <ParcelCard parcel={parcel} access={access} busy={busy} onPrint={print} />}
+        {parcel && !done && <ParcelCard parcel={parcel} access={access} busy={busy} onPrint={print} opened={opened?.qr === parcel.qr ? opened : null} />}
       </div>
     </div>
   );
 }
 
-type CardProps = { parcel: ParcelDetail; access: "staff" | "owner"; busy: boolean; onPrint: (kind: "print_label" | "print_return") => void };
+type CardProps = {
+  parcel: ParcelDetail;
+  access: "staff" | "owner";
+  busy: boolean;
+  onPrint: (kind: "print_label" | "print_return") => void;
+  opened: OpenedLabel | null;
+};
 
-function ParcelCard({ parcel, access, busy, onPrint }: CardProps) {
+function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
   switch (parcel.nextStep) {
     case "print_label":
       return (
@@ -253,11 +284,31 @@ function ParcelCard({ parcel, access, busy, onPrint }: CardProps) {
             <p>
               상자에 송장을 붙인 뒤, <strong>출력된 송장의 바코드</strong>를 스캔하면 출고가 확정돼요. 위 스캔 칸을 쓰세요.
             </p>
-            <div className={a.btnRow}>
-              <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
-                화면 인쇄
-              </button>
-            </div>
+            {opened ? (
+              <>
+                <PrintLabel orderNo={parcel.orderNo} opened={opened} />
+                <div className={a.btnRow}>
+                  <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
+                    송장 인쇄
+                  </button>
+                </div>
+                <p className={a.hint}>받는 사람 주소는 화면에 보이지 않고 인쇄에만 찍혀요. 다른 상자를 스캔하면 지워져요.</p>
+              </>
+            ) : (
+              <div className={a.btnRow}>
+                <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
+                  화면 인쇄
+                </button>
+                {access === "owner" && parcel.kind === "gift" && (
+                  <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => onPrint("print_label")} aria-disabled={busy}>
+                    {busy ? "출력하는 중…" : "송장 다시 출력"}
+                  </button>
+                )}
+              </div>
+            )}
+            {!opened && access === "owner" && parcel.kind === "gift" && (
+              <p className={a.hint}>프린터가 걸렸거나 라벨이 망가졌을 때만 다시 출력해요. 다시 출력하면 주소를 한 번 더 열고 열람 기록에 남아요(첫 출력 포함 최대 3번).</p>
+            )}
           </div>
         </section>
       );

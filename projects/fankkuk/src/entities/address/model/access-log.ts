@@ -15,6 +15,8 @@ export const ACCESS_DENY_REASONS = [
   "order_not_printable",
   "difference_unpaid",
   "decrypt_limit_reached",
+  // INV-P14: 연 봉인 속 크리에이터가 주소 칸의 크리에이터와 달라 그 주소를 쓰지 않음(연 줄 다음에 이 줄이 붙는다)
+  "address_mismatch",
 ] as const;
 export type AccessDenyReason = (typeof ACCESS_DENY_REASONS)[number];
 

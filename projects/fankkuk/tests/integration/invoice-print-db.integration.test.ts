@@ -1,0 +1,260 @@
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
+import { adminClient, deleteTestOrders, holdRowLock, psql, signedInClient } from "./helpers";
+import {
+  decryptFileText,
+  HARU_CREATOR_ID,
+  LABEL,
+  logRows,
+  MOMO_CREATOR_ID,
+  OWNER_ID,
+  putHaruEnvelope,
+  restoreHaruAddress,
+  saveHaruAddress,
+  sealTestAddress,
+  STAFF_ID,
+  testKeyPair,
+  type TestKeys,
+} from "./invoice-helpers";
+import { approve, deleteTestUnmatched, FAN_PASS, fanSetsWaybill, inspect, orderStatus, paidGift, parcelState, receiveAndLabel, waybill, type Unit } from "./office-helpers";
+
+// 송장 출력 = 크리에이터 주소 열기 (address-protection INV-P4·P5·P7·P8·P12·P14, approval-signature INV-S11·S12, office-workflow INV-W3).
+// 송장 출력 함수를 실제 DB(복호화 전용 역할 토큰)·실제 로그인 검증·실제 봉투로 돌린다. 키 쌍은 시험이 만든다.
+
+let keys: TestKeys;
+let saved: ReturnType<typeof saveHaruAddress>;
+let decryptor: InvoiceDecryptor;
+
+const env = () => ({ NODE_ENV: "development", SUPABASE_URL: process.env.FK_TEST_API_URL, SUPABASE_ANON_KEY: process.env.FK_TEST_ANON_KEY });
+
+beforeAll(async () => {
+  keys = await testKeyPair();
+  saved = saveHaruAddress();
+  putHaruEnvelope(await sealTestAddress(keys, HARU_CREATOR_ID));
+  decryptor = createInvoiceDecryptor(env(), () => decryptFileText(keys), waybill);
+});
+
+afterEach(async () => {
+  deleteTestOrders();
+  deleteTestUnmatched();
+  putHaruEnvelope(await sealTestAddress(keys, HARU_CREATOR_ID));
+});
+
+afterAll(() => {
+  restoreHaruAddress(saved);
+});
+
+async function tokenOf(loginId: string): Promise<string> {
+  const client = await signedInClient(loginId);
+  const { data } = await client.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("토큰 없음");
+  return token;
+}
+
+/** 결제·(승인)·입고·부착·검수까지 끝난 하루 선물 상자 하나. */
+async function inspectedGift(opts: { approved?: boolean } = {}): Promise<Unit & { qr: string }> {
+  const g = await paidGift();
+  if (opts.approved !== false) await approve(g);
+  const no = waybill();
+  await fanSetsWaybill(g.boxIds[0]!, no);
+  const staff = await signedInClient("fankkuk_staff");
+  const qr = await receiveAndLabel(staff, no);
+  expect(await inspect(staff, qr, FAN_PASS)).toBe("inspected");
+  return { ...g, qr };
+}
+
+const print = async (qr: string, login = "fankkuk_admin") => decryptor({ qr, accessToken: await tokenOf(login) });
+
+describe("INV-P4·S12: 조건이 모두 맞으면 대표의 송장 출력이 하루의 주소를 연다", () => {
+  it("INV-P4·INV-S12·S12 (S1 흐름): 봉인한 주소가 라벨 칸으로 열리고, 상자는 송장 출력 단계로, 열람 기록 1줄", async () => {
+    const g = await inspectedGift();
+    const res = await print(g.qr);
+    expect(res).toMatchObject({ kind: "printed", reprint: false, label: LABEL });
+    if (res.kind !== "printed") throw new Error("열리지 않음");
+    expect(parcelState(g.qr)).toBe("label_printed");
+    expect(psql(`select outbound_waybill_no from public.office_parcels where qr_code = '${g.qr}'`)).toBe(res.waybill);
+    expect(logRows(g.orderId)).toEqual([`opened:1:${OWNER_ID}`]);
+  });
+
+  it("INV-P10: 열람 기록 줄에는 주소·암호문이 없다", async () => {
+    const g = await inspectedGift();
+    await print(g.qr);
+    const row = psql(`select row_to_json(l)::text from public.decrypt_log l where order_id = '${g.orderId}'`);
+    for (const leak of [LABEL.address1, LABEL.recipientName, LABEL.phone, "wrappedKey", "ciphertext"]) expect(row).not.toContain(leak);
+  });
+});
+
+describe("INV-P4 (a)(b): 승인 서명을 직접 다시 본다", () => {
+  it("INV-P4 (S4, 실패경로 a): 승인 없는 주문은 거부 — 거부 줄 1, 상자 그대로", async () => {
+    const g = await inspectedGift({ approved: false });
+    expect(await print(g.qr)).toEqual({ kind: "denied", reason: "no_valid_approval" });
+    expect(logRows(g.orderId)).toEqual([`denied:no_valid_approval:${OWNER_ID}`]);
+    expect(parcelState(g.qr)).toBe("inspected");
+  });
+
+  it("INV-P4 (실패경로 a)·INV-S12: DB 에 승인 표시가 있어도 저장된 서명이 없으면 열지 않는다", async () => {
+    const g = await inspectedGift();
+    psql(
+      `begin; set local session_replication_role = replica; delete from public.approval_signatures where request_id = '${g.requestId}'; commit;`,
+    );
+    expect(psql(`select approved_at is not null from public.orders where id = '${g.orderId}'`)).toBe("t");
+    expect(await print(g.qr)).toEqual({ kind: "denied", reason: "no_valid_approval" });
+    expect(logRows(g.orderId)).toEqual([`denied:no_valid_approval:${OWNER_ID}`]);
+  });
+
+  it("INV-P4 (실패경로 a)·INV-S11: 서명자가 그 크리에이터의 가짜 식별값이 아니면 열지 않는다", async () => {
+    const g = await inspectedGift();
+    psql(
+      `begin; set local session_replication_role = replica; update public.approval_signatures set signer_id = 'fake:${STAFF_ID}' where request_id = '${g.requestId}'; commit;`,
+    );
+    expect(await print(g.qr)).toEqual({ kind: "denied", reason: "no_valid_approval" });
+  });
+
+  it("INV-P4 (S4b, 실패경로 b): 주문 A 의 승인 원문·서명을 주문 B 에 옮겨 붙이면 거부", async () => {
+    const a = await inspectedGift();
+    const b = await inspectedGift();
+    const payloadA = psql(`select payload from public.approval_requests where request_id = '${a.requestId}'`);
+    const lit = `'${payloadA.replace(/'/g, "''")}'`;
+    psql(
+      `begin; set local session_replication_role = replica; update public.approval_requests set payload = ${lit} where request_id = '${b.requestId}'; update public.approval_signatures set signed_content = ${lit} where request_id = '${b.requestId}'; commit;`,
+    );
+    expect(await print(b.qr)).toEqual({ kind: "denied", reason: "order_mismatch" });
+    expect(logRows(b.orderId)).toEqual([`denied:order_mismatch:${OWNER_ID}`]);
+    expect(parcelState(b.qr)).toBe("inspected");
+  });
+});
+
+describe("INV-P8: 대표만 — 판단은 송장 출력 함수 설정의 대표 ID", () => {
+  it("INV-P8 (S8, 실패경로)·INV-P7: 직원 계정이면 거부, 기록 줄의 요청자는 그 직원", async () => {
+    const g = await inspectedGift();
+    expect(await print(g.qr, "fankkuk_staff")).toEqual({ kind: "denied", reason: "not_owner" });
+    expect(logRows(g.orderId)).toEqual([`denied:not_owner:${STAFF_ID}`]);
+    expect(parcelState(g.qr)).toBe("inspected");
+  });
+
+  it("INV-P8 (S8b, 실패경로): DB 의 대표 설정을 직원으로 바꿔 둬도 송장 출력 함수 설정의 대표가 아니면 거부", async () => {
+    const g = await inspectedGift();
+    psql(`update public.owner_setting set owner_user_id = '${STAFF_ID}'`);
+    try {
+      expect(await print(g.qr, "fankkuk_staff")).toEqual({ kind: "denied", reason: "not_owner" });
+    } finally {
+      psql(`update public.owner_setting set owner_user_id = '${OWNER_ID}'`);
+    }
+    expect(logRows(g.orderId)).toEqual([`denied:not_owner:${STAFF_ID}`]);
+  });
+
+  it("INV-P8 (실패경로): 로그인 토큰이 위조면 DB 를 부르지 않는다 — 기록 줄도 없다", async () => {
+    const g = await inspectedGift();
+    expect(await decryptor({ qr: g.qr, accessToken: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.forged" })).toEqual({ kind: "unauthenticated" });
+    expect(logRows(g.orderId)).toEqual([]);
+  });
+});
+
+describe("INV-P5: 최대 3번, 출고 확정 뒤에는 열리지 않는다", () => {
+  it("INV-P5 (S5·S5d): 재출력 두 번은 같은 송장번호·재출력 표시, 네 번째는 거부", async () => {
+    const g = await inspectedGift();
+    const first = await print(g.qr);
+    const second = await print(g.qr);
+    const third = await print(g.qr);
+    if (first.kind !== "printed" || second.kind !== "printed" || third.kind !== "printed") throw new Error("열리지 않음");
+    expect([first.reprint, second.reprint, third.reprint]).toEqual([false, true, true]);
+    expect(new Set([first.waybill, second.waybill, third.waybill]).size).toBe(1);
+    expect(await print(g.qr)).toEqual({ kind: "denied", reason: "decrypt_limit_reached" });
+    expect(logRows(g.orderId)).toEqual([`opened:1:${OWNER_ID}`, `opened:2:${OWNER_ID}`, `opened:3:${OWNER_ID}`, `denied:decrypt_limit_reached:${OWNER_ID}`]);
+  });
+
+  it("INV-P5 (S5c, 실패경로): 1회 출력 후 출고 확정하면 남은 2회는 쓸 수 없다", async () => {
+    const g = await inspectedGift();
+    const first = await print(g.qr);
+    if (first.kind !== "printed") throw new Error("열리지 않음");
+    const staff = await signedInClient("fankkuk_staff");
+    expect((await staff.rpc("office_confirm_shipment", { p_qr: g.qr, p_waybill: first.waybill })).error).toBeNull();
+    expect(orderStatus(g.orderId)).toBe("shipped");
+    expect(await print(g.qr)).toEqual({ kind: "denied", reason: "order_not_printable" });
+    expect(logRows(g.orderId)).toEqual([`opened:1:${OWNER_ID}`, `denied:order_not_printable:${OWNER_ID}`]);
+  });
+
+  it("INV-P5 (S5b, 동시): 상한 직전에 출력 요청 두 개가 겹쳐도 열리는 것은 하나, 나머지는 잠근 자리에서 거부", async () => {
+    const g = await inspectedGift();
+    await print(g.qr);
+    await print(g.qr);
+    const [ownerToken1, ownerToken2] = [await tokenOf("fankkuk_admin"), await tokenOf("fankkuk_admin")];
+    const lock = await holdRowLock(`select 1 from public.orders where id = '${g.orderId}' for update`, 2);
+    const results = await Promise.all([decryptor({ qr: g.qr, accessToken: ownerToken1 }), decryptor({ qr: g.qr, accessToken: ownerToken2 })]);
+    await lock.released;
+    expect(results.filter((r) => r.kind === "printed")).toHaveLength(1);
+    expect(results.filter((r) => r.kind === "denied" && r.reason === "decrypt_limit_reached")).toHaveLength(1);
+    expect(psql(`select count(*) from public.decrypt_log where order_id = '${g.orderId}' and result = 'opened'`)).toBe("3");
+  });
+});
+
+describe("INV-P4 (c): 검수 완료 ~ 출고 전에만", () => {
+  it("INV-P4 (S4c, 실패경로 c): 승인됐지만 검수 전인 상자는 거부", async () => {
+    const g = await paidGift();
+    await approve(g);
+    const no = waybill();
+    await fanSetsWaybill(g.boxIds[0]!, no);
+    const staff = await signedInClient("fankkuk_staff");
+    const qr = await receiveAndLabel(staff, no);
+    expect(await print(qr)).toEqual({ kind: "denied", reason: "order_not_printable" });
+    expect(logRows(g.orderId)).toEqual([`denied:order_not_printable:${OWNER_ID}`]);
+    expect(parcelState(qr)).toBe("labeled");
+  });
+});
+
+describe("INV-P14: 봉인 속 크리에이터가 주소 칸의 크리에이터와 다르면 쓰지 않는다", () => {
+  it("INV-P14 (S14, 실패경로): 모모의 봉인을 하루 칸에 옮겨 붙이면 라벨을 주지 않고, 상자는 그대로, 거부 줄이 남는다", async () => {
+    putHaruEnvelope(await sealTestAddress(keys, MOMO_CREATOR_ID));
+    const g = await inspectedGift();
+    const res = await print(g.qr);
+    expect(res).toEqual({ kind: "denied", reason: "address_mismatch" });
+    expect(parcelState(g.qr)).toBe("inspected");
+    expect(logRows(g.orderId)).toEqual([`opened:1:${OWNER_ID}`, `denied:address_mismatch:${OWNER_ID}`]);
+  });
+});
+
+describe("INV-P7: 기록은 송장 출력 함수만 쓴다 — 성공·거부 한 줄씩", () => {
+  it("INV-P7 (S7): 거부 1번(직원)·성공 1번(대표) → 두 줄, 크리에이터 열람 기록에 둘 다 보인다", async () => {
+    const g = await inspectedGift();
+    await print(g.qr, "fankkuk_staff");
+    await print(g.qr);
+    expect(logRows(g.orderId)).toEqual([`denied:not_owner:${STAFF_ID}`, `opened:1:${OWNER_ID}`]);
+    const haru = await signedInClient("haru_creator");
+    const { data } = await haru.rpc("my_access_log");
+    const mine = (data as { order_no: string; result: string }[]).filter((r) => r.order_no === g.orderNo);
+    expect(mine.map((r) => r.result).sort()).toEqual(["denied", "opened"]);
+  });
+
+  it("INV-P7 (S7b, 실패경로): 앱 서버 키·대표 로그인으로는 출력 함수를 부를 수도, 기록을 넣을 수도 없다", async () => {
+    const g = await inspectedGift();
+    const owner = await signedInClient("fankkuk_admin");
+    for (const client of [adminClient(), owner]) {
+      expect((await client.rpc("invoice_print_context", { p_qr: g.qr })).error).not.toBeNull();
+      expect((await client.rpc("invoice_claim_print", { p_qr: g.qr, p_requester: OWNER_ID })).error).not.toBeNull();
+      expect((await client.rpc("invoice_finish_print", { p_qr: g.qr, p_waybill: waybill() })).error).not.toBeNull();
+      expect((await client.from("decrypt_log").insert({ order_id: g.orderId, requester_id: OWNER_ID, result: "denied", deny_reason: "not_owner" })).error).not.toBeNull();
+    }
+    expect(logRows(g.orderId)).toEqual([]);
+    expect(parcelState(g.qr)).toBe("inspected");
+  });
+});
+
+describe("INV-P12: 개발용 키는 운영에서 만드는 순간 실패한다", () => {
+  it("INV-P12 (S12b, 실패경로): 운영 표시가 있으면 송장 출력 함수를 만들지 못하고 키 파일을 읽지 않는다", () => {
+    const read = vi.fn(() => decryptFileText(keys));
+    expect(() => createInvoiceDecryptor({ ...env(), NODE_ENV: "production" }, read, waybill)).toThrow(/운영/);
+    expect(() => createInvoiceDecryptor({ ...env(), VERCEL_ENV: "production" }, read, waybill)).toThrow(/운영/);
+    expect(read).not.toHaveBeenCalled();
+  });
+});
+
+describe("주소가 없는 크리에이터", () => {
+  it("주소 칸이 비어 있으면 열 것이 없다고 답하고, 횟수를 쓰지 않고, 상자는 그대로", async () => {
+    psql(`delete from pii.creator_addresses where creator_id = '${HARU_CREATOR_ID}'`);
+    const g = await inspectedGift();
+    expect(await print(g.qr)).toEqual({ kind: "no_address" });
+    expect(logRows(g.orderId)).toEqual([]);
+    expect(parcelState(g.qr)).toBe("inspected");
+  });
+});

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { creatorAddressPlaintext, type CreatorAddressInput } from "./creator-address-plaintext";
+import { creatorAddressPlaintext, readOpenedCreatorAddress, type CreatorAddressInput } from "./creator-address-plaintext";
 
 const HARU_CREATOR_ID = "00000000-0000-4000-b000-000000000001";
 
@@ -39,5 +39,31 @@ describe("크리에이터 주소 봉인 평문 (INV-P13)", () => {
 
   it("INV-P13 (실패경로): 정해진 칸 밖의 값이 섞이면 만들지 않는다", () => {
     expect(() => creatorAddressPlaintext({ ...VALID, memo: "x" } as CreatorAddressInput)).toThrow();
+  });
+});
+
+describe("연 평문 읽기 (INV-P14 — 송장 출력이 쓰는 꼴)", () => {
+  it("INV-P14: 봉인한 평문을 그대로 읽으면 크리에이터 식별값과 라벨 칸이 나뉘어 나온다", () => {
+    const { creatorId, ...label } = VALID;
+    expect(readOpenedCreatorAddress(creatorAddressPlaintext(VALID))).toEqual({ creatorId, label });
+  });
+
+  it("INV-P14: 라벨 칸에는 크리에이터 식별값·판 번호가 들어가지 않는다", () => {
+    const opened = readOpenedCreatorAddress(creatorAddressPlaintext(VALID));
+    expect(Object.keys(opened?.label ?? {}).sort()).toEqual(["address1", "address2", "phone", "recipientName", "zipCode"]);
+  });
+
+  it("INV-P14 (실패경로): 꼴이 틀린 평문은 null — 송장 출력이 그 내용을 쓰지 않는다", () => {
+    const broken = [
+      "not json",
+      "",
+      JSON.stringify({ ...VALID }),
+      JSON.stringify({ v: 2, ...VALID }),
+      JSON.stringify({ v: 1, ...VALID, memo: "x" }),
+      JSON.stringify({ v: 1, ...VALID, creatorId: "haru" }),
+      JSON.stringify({ v: 1, ...VALID, phone: "0212345678" }),
+      JSON.stringify(null),
+    ];
+    for (const text of broken) expect(readOpenedCreatorAddress(text)).toBeNull();
   });
 });

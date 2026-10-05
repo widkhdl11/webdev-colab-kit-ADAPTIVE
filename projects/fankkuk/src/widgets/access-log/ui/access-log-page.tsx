@@ -20,6 +20,7 @@ const DENY_TEXT: Record<AccessDenyReason, string> = {
   order_not_printable: "지금은 주소를 열 수 없는 단계라 열리지 않았어요",
   difference_unpaid: "차액이 결제되지 않아 열리지 않았어요",
   decrypt_limit_reached: "출력 횟수를 다 써서 열리지 않았어요",
+  address_mismatch: "주소 주인이 맞지 않아 송장에 쓰지 않았어요",
 };
 
 const REQUESTER_TEXT: Record<AccessRequester, string> = { owner: "대표 계정", other: "대표가 아닌 계정" };
