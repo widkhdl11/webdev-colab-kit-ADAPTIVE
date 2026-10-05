@@ -1,4 +1,4 @@
-import { MAX_DECRYPTS_PER_ORDER, type AccessDenyReason } from "@/entities/address/model/access-log";
+import { MAX_DECRYPTS_PER_BOX, type AccessDenyReason } from "@/entities/address/model/access-log";
 import { readOpenedOrderNo } from "@/entities/revgift/model/sealed-address";
 
 // 역조공 몫의 주소를 여는 조건(reverse-gift INV-R7). 크리에이터 주소의 판정(authorize-decrypt)과 같은 자리에서 부른다 —
@@ -37,7 +37,7 @@ export function authorizeRevgiftDecrypt(req: RevgiftDecryptRequest): RevgiftDecr
   const s = req.share;
   if (!s.inspected || s.shipped || s.returned || s.cancelled) return { ok: false, reason: "order_not_printable" };
   // 상한 3회(INV-P5 와 같은 규칙)
-  if (req.decryptCount >= MAX_DECRYPTS_PER_ORDER) return { ok: false, reason: "decrypt_limit_reached" };
+  if (req.decryptCount >= MAX_DECRYPTS_PER_BOX) return { ok: false, reason: "decrypt_limit_reached" };
   return { ok: true, isReprint: req.decryptCount > 0 };
 }
 

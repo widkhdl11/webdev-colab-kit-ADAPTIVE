@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
-import { adminClient, deleteTestOrders, holdRowLock, psql, signedInClient } from "./helpers";
+import { adminClient, deleteTestOrders, holdRowLock, psql, psqlError, signedInClient } from "./helpers";
 import {
   decryptFileText,
   HARU_CREATOR_ID,
@@ -186,6 +186,69 @@ describe("INV-P5: 최대 3번, 출고 확정 뒤에는 열리지 않는다", () 
     expect(results.filter((r) => r.kind === "printed")).toHaveLength(1);
     expect(results.filter((r) => r.kind === "denied" && r.reason === "decrypt_limit_reached")).toHaveLength(1);
     expect(psql(`select count(*) from public.decrypt_log where order_id = '${g.orderId}' and result = 'opened'`)).toBe("3");
+  });
+});
+
+describe("INV-P5: 횟수는 상자마다 따로 센다 (카드 d30)", () => {
+  /** 결제·승인 뒤 상자 boxCount 개를 모두 입고·부착·검수까지. 상자마다 QR 을 돌려준다. */
+  async function inspectedBoxes(boxCount: number): Promise<Unit & { qrs: string[] }> {
+    const g = await paidGift(boxCount);
+    await approve(g);
+    const staff = await signedInClient("fankkuk_staff");
+    const qrs: string[] = [];
+    for (const boxId of g.boxIds) {
+      const no = waybill();
+      await fanSetsWaybill(boxId, no);
+      const qr = await receiveAndLabel(staff, no);
+      expect(await inspect(staff, qr, FAN_PASS)).toBe("inspected");
+      qrs.push(qr);
+    }
+    return { ...g, qrs };
+  }
+
+  it("INV-P5 (S5e): 상자 4개 주문은 네 상자 모두 송장이 나온다", async () => {
+    const g = await inspectedBoxes(4);
+    const results = [];
+    for (const qr of g.qrs) results.push(await print(qr));
+    expect(results.map((r) => r.kind)).toEqual(["printed", "printed", "printed", "printed"]);
+    expect(results.map((r) => (r.kind === "printed" ? r.reprint : null))).toEqual([false, false, false, false]);
+    expect(g.qrs.map((qr) => parcelState(qr))).toEqual(["label_printed", "label_printed", "label_printed", "label_printed"]);
+    expect(logRows(g.orderId)).toEqual([1, 1, 1, 1].map((n) => `opened:${n}:${OWNER_ID}`));
+  });
+
+  it("INV-P5 (S5f, 실패경로): 한 상자가 3번을 다 써도 그 상자만 막히고 옆 상자는 열린다", async () => {
+    const g = await inspectedBoxes(2);
+    const [a, b] = g.qrs as [string, string];
+    for (let i = 0; i < 3; i++) expect((await print(a)).kind).toBe("printed");
+    expect(await print(a)).toEqual({ kind: "denied", reason: "decrypt_limit_reached" });
+    expect(await print(b)).toMatchObject({ kind: "printed", reprint: false });
+    // 기록 줄마다 어느 상자의 몇 번째인지 남는다
+    expect(
+      psql(
+        `select string_agg(b.seq || ':' || l.result || ':' || coalesce(l.print_no::text, l.deny_reason), ',' order by l.id) from public.decrypt_log l join public.boxes b on b.id = l.box_id where l.order_id = '${g.orderId}'`,
+      ),
+    ).toBe("1:opened:1,1:opened:2,1:opened:3,1:denied:decrypt_limit_reached,2:opened:1");
+  });
+
+  it("INV-P5 (S5g, 실패경로): 먼저 출고한 상자는 남은 횟수가 있어도 닫히고, 아직 안 나간 옆 상자는 열린다", async () => {
+    const g = await inspectedBoxes(2);
+    const [a, b] = g.qrs as [string, string];
+    const first = await print(a);
+    if (first.kind !== "printed") throw new Error("열리지 않음");
+    const staff = await signedInClient("fankkuk_staff");
+    expect((await staff.rpc("office_confirm_shipment", { p_qr: a, p_waybill: first.waybill })).error).toBeNull();
+    expect(await print(a)).toEqual({ kind: "denied", reason: "order_not_printable" });
+    expect(await print(b)).toMatchObject({ kind: "printed", reprint: false });
+  });
+
+  it("INV-P5 (실패경로): 어느 상자인지 없는 「연 줄」은 DB 가 받지 않는다 — 그런 줄은 어느 상자의 횟수에도 안 잡힌다", async () => {
+    const g = await paidGift();
+    expect(
+      psqlError(
+        `set role address_decryptor; insert into public.decrypt_log (order_id, requester_id, result, print_no) values ('${g.orderId}', '${OWNER_ID}', 'opened', 1);`,
+      ),
+    ).toMatch(/decrypt_log_opened_has_box/);
+    expect(logRows(g.orderId)).toEqual([]);
   });
 });
 

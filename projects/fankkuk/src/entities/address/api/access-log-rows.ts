@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   ACCESS_DENY_REASONS,
   ACCESS_REQUESTERS,
-  MAX_DECRYPTS_PER_ORDER,
+  MAX_DECRYPTS_PER_BOX,
   type AccessMonthSummary,
   type AddressAccessEntry,
 } from "../model/access-log";
@@ -20,7 +20,7 @@ const rowSchema = z.discriminatedUnion("result", [
     at,
     order_no: z.string().min(1),
     result: z.literal("opened"),
-    print_no: z.number().int().min(1).max(MAX_DECRYPTS_PER_ORDER),
+    print_no: z.number().int().min(1).max(MAX_DECRYPTS_PER_BOX),
     deny_reason: z.null(),
     requester,
   }),

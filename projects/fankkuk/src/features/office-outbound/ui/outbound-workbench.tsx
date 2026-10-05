@@ -254,7 +254,7 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
                 </button>
               </div>
               <p className={a.hint} style={{ marginTop: 6 }}>
-                받는 사람의 주소는 화면에 보이지 않고 송장에만 찍혀요. 주소는 송장을 출력할 때만 열려요(다시 출력 포함 최대 3번).
+                받는 사람의 주소는 화면에 보이지 않고 송장에만 찍혀요. 주소는 송장을 출력할 때만 열려요(이 상자는 다시 출력 포함 최대 3번).
               </p>
             </div>
           ) : (

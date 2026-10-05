@@ -16,6 +16,7 @@ const HARU_PROFILE = "00000000-0000-4000-a000-000000000011";
 const HARU = "00000000-0000-4000-b000-000000000001";
 const DALBIT = "00000000-0000-4000-b000-000000000002";
 const ORDER_ID = "11111111-1111-4111-8111-111111111111";
+const BOX_ID = "22222222-2222-4222-8222-222222222222";
 const ORDER_NO = "FC-AAAAA";
 const QR = "Q-000123";
 const NEW_WAYBILL = "555566667777";
@@ -45,6 +46,7 @@ function goodContext(patch: Context = {}): Context {
   return {
     kind: "gift",
     order_id: ORDER_ID,
+    box_id: BOX_ID,
     order_no: ORDER_NO,
     order_status: "inspected",
     parcel_state: "inspected",
@@ -146,7 +148,7 @@ describe("송장 출력 — 거부 (INV-P4·P7·P8)", () => {
     const { db, calls, logs } = fakeDb(goodContext(), await openedClaim(1));
     const u = countingUnwrapper();
     expect(await printCreatorLabel(deps(db, { unwrapper: u.unwrapper }), { qr: QR, accessToken: "staff-token" })).toEqual({ kind: "denied", reason: "not_owner" });
-    expect(logs).toEqual([{ order_id: ORDER_ID, requester_id: STAFF, result: "denied", deny_reason: "not_owner" }]);
+    expect(logs).toEqual([{ order_id: ORDER_ID, box_id: BOX_ID, requester_id: STAFF, result: "denied", deny_reason: "not_owner" }]);
     expect(fnNames(calls)).toEqual(["invoice_print_context", "insert:decrypt_log"]);
     expect(u.count()).toBe(0);
   });
@@ -181,7 +183,7 @@ describe("송장 출력 — 거부 (INV-P4·P7·P8)", () => {
       const { db, calls, logs } = fakeDb(goodContext(patch), await openedClaim(1));
       const u = countingUnwrapper();
       expect(await printCreatorLabel(deps(db, { unwrapper: u.unwrapper }), ask)).toEqual({ kind: "denied", reason });
-      expect(logs).toEqual([{ order_id: ORDER_ID, requester_id: OWNER, result: "denied", deny_reason: reason }]);
+      expect(logs).toEqual([{ order_id: ORDER_ID, box_id: BOX_ID, requester_id: OWNER, result: "denied", deny_reason: reason }]);
       expect(fnNames(calls)).not.toContain("invoice_claim_print");
       expect(u.count()).toBe(0);
     });
@@ -207,7 +209,7 @@ describe("송장 출력 — 거부 (INV-P4·P7·P8)", () => {
     const res = await printCreatorLabel(deps(db), ask);
     expect(res).toEqual({ kind: "denied", reason: "address_mismatch" });
     expect(JSON.stringify(res)).not.toContain(fields.address1);
-    expect(logs).toEqual([{ order_id: ORDER_ID, requester_id: OWNER, result: "denied", deny_reason: "address_mismatch" }]);
+    expect(logs).toEqual([{ order_id: ORDER_ID, box_id: BOX_ID, requester_id: OWNER, result: "denied", deny_reason: "address_mismatch" }]);
     expect(fnNames(calls)).not.toContain("invoice_finish_print");
   });
 

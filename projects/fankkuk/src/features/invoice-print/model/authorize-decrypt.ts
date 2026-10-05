@@ -1,4 +1,4 @@
-import { MAX_DECRYPTS_PER_ORDER, type AccessDenyReason } from "@/entities/address/model/access-log";
+import { MAX_DECRYPTS_PER_BOX, type AccessDenyReason } from "@/entities/address/model/access-log";
 import { checkApprovalSignature, type VerifiedSignature } from "@/entities/order/model/evaluate-approval";
 import { isPrintable, type OrderStatus } from "@/entities/order/model/order-status";
 
@@ -48,7 +48,7 @@ export function authorizeDecrypt(req: DecryptRequest): DecryptDecision {
   if (req.differenceUnpaid) return { ok: false, reason: "difference_unpaid" };
 
   // INV-P5: 상한.
-  if (req.decryptCount >= MAX_DECRYPTS_PER_ORDER) return { ok: false, reason: "decrypt_limit_reached" };
+  if (req.decryptCount >= MAX_DECRYPTS_PER_BOX) return { ok: false, reason: "decrypt_limit_reached" };
 
   return { ok: true, isReprint: req.decryptCount > 0 };
 }

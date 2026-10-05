@@ -1,8 +1,8 @@
 // 주소 열람 기록 한 줄 — INV-P7: 시각, 주문번호, 요청자 계정, 결과, 거부 사유.
 // 주소 자체(평문·암호문)는 들어가지 않는다(INV-P10). 크리에이터 화면은 이 모양만 받는다.
 
-/** INV-P5: 승인 1건당 주소를 여는 상한 — 첫 출력 + 재출력 2회. 기록 줄의 출력 순번(print_no)도 여기까지다. */
-export const MAX_DECRYPTS_PER_ORDER = 3;
+/** INV-P5: 상자 하나에서 주소를 여는 상한 — 첫 출력 + 재출력 2회(상자마다 따로 — 카드 d30). 기록 줄의 출력 순번(print_no)도 여기까지다. */
+export const MAX_DECRYPTS_PER_BOX = 3;
 
 /**
  * 복호화 함수가 거부한 이유. 송장 출력 판정(authorizeDecrypt)의 거부 사유와 같은 이름을 쓴다.
@@ -32,7 +32,7 @@ export type AddressAccessEntry = {
    * other 는 대표 계정이 아닌 요청이 거부된 줄(not_owner)이다.
    */
   requester: AccessRequester;
-  /** printNo: 이 주문의 몇 번째 출력인가. 2부터 재출력(INV-P5). */
+  /** printNo: 그 상자의 몇 번째 출력인가(횟수는 상자마다 — 카드 d30). 2부터 재출력(INV-P5). */
   result: { kind: "opened"; printNo: number } | { kind: "denied"; reason: AccessDenyReason };
 };
 

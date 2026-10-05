@@ -16,8 +16,15 @@ function appendLog(orderId: string, requesterId: string, values: { result: "open
       ? `'opened', ${values.printNo}, null`
       : `'denied', null, '${values.reason}'`;
   psql(
-    `set role address_decryptor; insert into public.decrypt_log (order_id, requester_id, result, print_no, deny_reason) values ('${orderId}', '${requesterId}', ${cols});`,
+    `set role address_decryptor; insert into public.decrypt_log (order_id, box_id, requester_id, result, print_no, deny_reason) values ('${orderId}', ${firstBoxOf(orderId)}, '${requesterId}', ${cols});`,
   );
+}
+
+/** 주소를 연 줄은 어느 상자의 출력인지가 반드시 있어야 한다(INV-P5 — 횟수는 상자마다). 시험 주문의 첫 상자를 쓴다. */
+function firstBoxOf(orderId: string): string {
+  const id = psql(`select id from public.boxes where order_id = '${orderId}' order by seq limit 1`);
+  if (!id) throw new Error("시험 주문에 상자가 없다");
+  return `'${id}'`;
 }
 
 /** 하루의 시험 주문 하나에 성공 1·2회째 출력 1·거부 1, 대표 아닌 계정의 거부 1 을 남긴다. */
@@ -130,7 +137,7 @@ const seoulMonthStartPlus = (offset: string) =>
 
 function appendLogAt(orderId: string, at: string, cols: string): void {
   psql(
-    `set role address_decryptor; insert into public.decrypt_log (at, order_id, requester_id, result, print_no, deny_reason) values (${at}, '${orderId}', '${OPERATOR_ID}', ${cols});`,
+    `set role address_decryptor; insert into public.decrypt_log (at, order_id, box_id, requester_id, result, print_no, deny_reason) values (${at}, '${orderId}', ${firstBoxOf(orderId)}, '${OPERATOR_ID}', ${cols});`,
   );
 }
 

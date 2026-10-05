@@ -44,6 +44,7 @@ const ORDER_STATUSES = ["registered", "approved", "received", "labeled", "inspec
 const giftContext = z.object({
   kind: z.literal("gift"),
   order_id: z.string(),
+  box_id: z.string(),
   order_no: z.string(),
   order_status: z.string(),
   creator_profile_id: z.string(),
@@ -78,8 +79,11 @@ function storedSignature(ctx: GiftContext, signer: ApprovalSigner | null): Verif
   return { signedContent: new TextEncoder().encode(ctx.signed_content), signerId: ctx.signer_id };
 }
 
-async function logDenied(deps: CreatorLabelDeps, orderId: string, requesterId: string, reason: AccessDenyReason): Promise<void> {
-  const { error } = await deps.db.from("decrypt_log").insert({ order_id: orderId, requester_id: requesterId, result: "denied", deny_reason: reason });
+/** 거부 줄에도 어느 상자의 출력이었는지 남긴다(INV-P5 — 횟수는 상자마다, 카드 d30). */
+async function logDenied(deps: CreatorLabelDeps, ctx: GiftContext, requesterId: string, reason: AccessDenyReason): Promise<void> {
+  const { error } = await deps.db
+    .from("decrypt_log")
+    .insert({ order_id: ctx.order_id, box_id: ctx.box_id, requester_id: requesterId, result: "denied", deny_reason: reason });
   if (error) throw new Error("열람 기록을 남기지 못했다");
 }
 
@@ -112,7 +116,7 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
     differenceUnpaid: ctx.difference_unpaid,
   });
   if (!decision.ok) {
-    await logDenied(deps, ctx.order_id, requesterId, decision.reason);
+    await logDenied(deps, ctx, requesterId, decision.reason);
     return { kind: "denied", reason: decision.reason };
   }
 
@@ -142,7 +146,7 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
   // INV-P14: 봉인 속 크리에이터가 그 주소 칸의 크리에이터와 다르면 쓰지 않는다 — 출력 단계로 넘기지 않는다.
   const opened = checkOpenedCreatorAddress({ slotCreatorId: claim.data.creator_id, plaintext });
   if (!opened.ok) {
-    await logDenied(deps, ctx.order_id, requesterId, opened.reason);
+    await logDenied(deps, ctx, requesterId, opened.reason);
     return { kind: "denied", reason: opened.reason };
   }
 

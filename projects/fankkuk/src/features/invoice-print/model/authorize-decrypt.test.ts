@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildSigningPayload } from "@/entities/order/model/signing-payload";
 import type { VerifiedSignature } from "@/entities/order/model/evaluate-approval";
-import { MAX_DECRYPTS_PER_ORDER } from "@/entities/address/model/access-log";
+import { MAX_DECRYPTS_PER_BOX } from "@/entities/address/model/access-log";
 import { authorizeDecrypt, type DecryptRequest } from "./authorize-decrypt";
 
 const OWNER = "user-owner";
@@ -70,7 +70,7 @@ describe("복호화 허용 판정", () => {
   });
 
   it("INV-P5: 상한은 3회다", () => {
-    expect(MAX_DECRYPTS_PER_ORDER).toBe(3);
+    expect(MAX_DECRYPTS_PER_BOX).toBe(3);
   });
 
   it("INV-P5 (S5d): 2회째·3회째 출력은 재출력으로 표시된다", () => {
