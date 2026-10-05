@@ -135,5 +135,5 @@ img.asset { display: block; object-fit: contain; }
   body:has(.print-only) * { visibility: hidden; }
   /* 위 줄과 같은 앞머리를 붙여야 이긴다 — `:has()` 안의 클래스도 선택자 점수에 들어가서, `.print-only` 만 쓰면 위 줄에 져 라벨까지 가려진다 */
   body:has(.print-only) .print-only, body:has(.print-only) .print-only * { visibility: visible; }
-  .print-only { display: grid; gap: 6px; position: absolute; left: 0; top: 0; width: 100%; padding: 16px; background: #fff; color: #000; font-size: 16px; }
+  .print-only { display: grid; gap: 6px; position: absolute; left: 0; top: 0; width: 100%; padding: 16px; background: var(--white); color: var(--print-ink); font-size: 16px; }
 }

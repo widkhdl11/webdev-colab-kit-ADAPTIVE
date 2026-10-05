@@ -13,6 +13,7 @@
   --surface: #f6f6f8; /* 옅은 회색 면 */
   --surface-hover: #ecedf1;
   --white: #ffffff;
+  --print-ink: #000000; /* 종이에 찍는 글자 — 송장 라벨처럼 스캐너·사람이 읽는 인쇄물은 순검정 */
   --on-brand: #ffffff;
   --disabled: #c5cbc8;
   --disabled-ink: #3f4a45;

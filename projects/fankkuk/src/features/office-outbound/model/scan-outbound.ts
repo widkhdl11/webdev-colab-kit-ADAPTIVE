@@ -43,7 +43,7 @@ const DENY_MESSAGE: Record<Exclude<AccessDenyReason, "not_owner">, string> = {
   order_mismatch: "승인 서명의 주문번호가 이 상자의 주문과 달라 주소를 열지 않았어요.",
   order_not_printable: "지금은 송장을 출력할 수 없는 단계예요.",
   difference_unpaid: "차액이 결제되지 않아 송장을 출력할 수 없어요.",
-  decrypt_limit_reached: "이 주문의 송장 출력 횟수(다시 출력 포함 3번)를 다 썼어요.",
+  decrypt_limit_reached: "이 상자의 송장 출력 횟수(다시 출력 포함 3번)를 다 썼어요.",
   address_mismatch: "주소 주인이 맞지 않아 송장에 쓰지 않았어요. 개발 담당에게 알려 주세요.",
 };
 const MESSAGE_NO_ADDRESS = "크리에이터가 아직 배송 주소를 등록하지 않았어요.";

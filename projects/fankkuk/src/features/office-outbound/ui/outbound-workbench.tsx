@@ -11,6 +11,7 @@ import a from "@/shared/ui/admin.module.css";
 import { ScanInput, type ScanInputHandle } from "@/shared/ui/scan-input";
 import w from "@/shared/ui/work.module.css";
 import { postOutbound } from "../api/post-outbound-client";
+import { canReprintCreatorLabel } from "../model/label-print-access";
 import { printedReplyFromBody, returnPrintedReplyFromBody, type PrintedLabel } from "../model/outbound-reply";
 
 // 출고 작업 화면 (office-workflow INV-W1·W3·W8, design-rules 8-1, 시안 admin/work-outbound.html).
@@ -299,14 +300,14 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
                 <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
                   화면 인쇄
                 </button>
-                {access === "owner" && parcel.kind === "gift" && (
+                {canReprintCreatorLabel(access, parcel.kind) && (
                   <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => onPrint("print_label")} aria-disabled={busy}>
                     {busy ? "출력하는 중…" : "송장 다시 출력"}
                   </button>
                 )}
               </div>
             )}
-            {!opened && access === "owner" && parcel.kind === "gift" && (
+            {!opened && canReprintCreatorLabel(access, parcel.kind) && (
               <p className={a.hint}>프린터가 걸렸거나 라벨이 망가졌을 때만 다시 출력해요. 다시 출력하면 주소를 한 번 더 열고 열람 기록에 남아요(첫 출력 포함 최대 3번).</p>
             )}
           </div>

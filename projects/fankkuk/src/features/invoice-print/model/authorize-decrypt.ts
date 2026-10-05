@@ -14,7 +14,7 @@ export type DecryptRequest = {
   registeredSignerId: string;
   orderStatus: OrderStatus;
   fanBlocked: boolean;
-  /** 이 주문에서 지금까지 성공한 복호화 횟수 */
+  /** 이 상자에서 지금까지 주소를 연 횟수(상자마다 따로 — 카드 d30) */
   decryptCount: number;
   /** 도착 실측 차액 요청이 있고 아직 결제되지 않았는가 */
   differenceUnpaid: boolean;

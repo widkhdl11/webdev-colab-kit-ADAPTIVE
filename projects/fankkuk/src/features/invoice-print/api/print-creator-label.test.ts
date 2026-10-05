@@ -69,7 +69,9 @@ async function openedClaim(printNo = 1, sealedFor = HARU): Promise<Claim> {
   return { result: "opened", print_no: printNo, order_id: ORDER_ID, creator_id: HARU, envelope };
 }
 
-function fakeDb(context: Context | null, claim: Claim, finish: string = NEW_WAYBILL) {
+type Finish = { waybill: string; first: boolean } | string;
+
+function fakeDb(context: Context | null, claim: Claim, finish: Finish = { waybill: NEW_WAYBILL, first: true }) {
   const calls: { fn: string; args: unknown }[] = [];
   const logs: Record<string, unknown>[] = [];
   const db = {
@@ -131,9 +133,33 @@ describe("송장 출력 — 주소 열기 (INV-P4·P5·P14)", () => {
     expect(logs).toEqual([]);
   });
 
-  it("INV-P5 (S5d): 2회째 출력은 재출력 표시, 송장번호는 DB 가 돌려준 처음 번호", async () => {
-    const { db } = fakeDb(goodContext({ decrypt_count: 1, parcel_state: "label_printed", order_status: "label_printed" }), await openedClaim(2), OLD_WAYBILL);
-    expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "printed", waybill: OLD_WAYBILL, reprint: true, label: fields });
+  it("INV-P5 (S5d): 2회째 출력은 재출력 표시, 송장번호는 DB 가 돌려준 처음 번호 — 새 번호는 받지 않는다", async () => {
+    const { db, calls } = fakeDb(
+      goodContext({ decrypt_count: 1, parcel_state: "label_printed", order_status: "label_printed" }),
+      await openedClaim(2),
+      { waybill: OLD_WAYBILL, first: false },
+    );
+    let issued = 0;
+    const res = await printCreatorLabel(deps(db, { newWaybill: () => (issued++, NEW_WAYBILL) }), ask);
+    expect(res).toEqual({ kind: "printed", waybill: OLD_WAYBILL, reprint: true, label: fields });
+    expect(issued).toBe(0);
+    expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: null });
+  });
+
+  it("INV-P5: 재출력 표시는 출력 순번이 아니라 이 출력이 상자의 첫 송장인지로 정한다 — 앞선 시도가 송장 없이 끝났으면 2번째 열기도 첫 출력", async () => {
+    const { db } = fakeDb(goodContext({ decrypt_count: 1 }), await openedClaim(2), { waybill: NEW_WAYBILL, first: true });
+    expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: fields });
+  });
+
+  it("INV-P5 (실패경로): 송장 마무리 응답을 읽지 못하면 실패로 끝난다", async () => {
+    const { db } = fakeDb(goodContext(), await openedClaim(1), NEW_WAYBILL);
+    expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "failed" });
+  });
+
+  it("INV-P7 (실패경로): 거부 줄을 남기지 못하면 「거부」로 끝내지 않고 실패한다 — 기록 없는 거부를 만들지 않는다", async () => {
+    const { db } = fakeDb(goodContext({ decrypt_count: 3 }), null);
+    const failingInsert = { ...db, from: () => ({ insert: async () => ({ error: { code: "42501", message: "거부" } }) }) };
+    await expect(printCreatorLabel(deps(failingInsert as unknown as CreatorLabelDeps["db"]), ask)).rejects.toThrow("열람 기록");
   });
 
   it("INV-P10: 돌려주는 값에 크리에이터 식별값·암호문·데이터 키가 없다", async () => {

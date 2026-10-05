@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ACCESS_DENY_REASONS, type AccessDenyReason } from "@/entities/address/model/access-log";
 import type { CreatorAddressLabel } from "@/entities/address/model/creator-address-plaintext";
 import type { VerifiedSignature } from "@/entities/order/model/evaluate-approval";
-import type { OrderStatus } from "@/entities/order/model/order-status";
+import { ORDER_STATUSES, type OrderStatus } from "@/entities/order/model/order-status";
 import type { ApprovalSigner } from "@/shared/api/approval-signer/signer";
 import type { KeyUnwrapper } from "@/shared/lib/envelope/dev-key-unwrapper";
 import { openEnvelope, parseEnvelope } from "@/shared/lib/envelope/envelope";
@@ -39,14 +39,13 @@ export type CreatorLabelResult =
   | { kind: "no_address" }
   | { kind: "failed" };
 
-const ORDER_STATUSES = ["registered", "approved", "received", "labeled", "inspected", "label_printed", "shipped", "rejected", "expired", "canceled"] as const;
-
 const giftContext = z.object({
   kind: z.literal("gift"),
   order_id: z.string(),
   box_id: z.string(),
   order_no: z.string(),
   order_status: z.string(),
+  parcel_state: z.string(),
   creator_profile_id: z.string(),
   difference_unpaid: z.boolean(),
   decrypt_count: z.number().int().nonnegative(),
@@ -57,6 +56,8 @@ const giftContext = z.object({
 });
 const contextShape = z.union([giftContext, z.object({ kind: z.literal("share") })]);
 
+const finishShape = z.object({ waybill: z.string().min(1), first: z.boolean() });
+
 const claimShape = z.union([
   z.object({ result: z.literal("opened"), print_no: z.number().int().min(1), creator_id: z.string(), envelope: z.unknown() }),
   z.object({ result: z.literal("denied"), reason: z.enum(ACCESS_DENY_REASONS) }),
@@ -66,6 +67,8 @@ const claimShape = z.union([
 type GiftContext = z.infer<typeof giftContext>;
 
 /** 모르는 상태 값(결제 전 등)은 출력할 수 없는 상태로 본다 — 「모르는 값이면 연다」가 되지 않게. */
+
+/** 목록에 없는 상태(DB 에 새로 생긴 상태 등)는 출력할 수 없는 상태로 친다 — 판정이 거부하고 거부 줄을 남긴다(INV-P4 (c)·P7). */
 function orderStatusOf(raw: string): OrderStatus {
   return (ORDER_STATUSES as readonly string[]).includes(raw) ? (raw as OrderStatus) : "canceled";
 }
@@ -150,8 +153,13 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
     return { kind: "denied", reason: opened.reason };
   }
 
-  // 첫 출력이면 새 송장번호로 송장 출력 단계로 넘기고, 재출력이면 DB 가 처음 번호를 돌려준다.
-  const finish = await deps.db.rpc("invoice_finish_print", { p_qr: input.qr, p_waybill: deps.newWaybill() });
-  if (finish.error || typeof finish.data !== "string" || finish.data === "") return { kind: "failed" };
-  return { kind: "printed", waybill: finish.data, reprint: claim.data.print_no > 1, label: opened.label };
+  // 첫 출력이면 새 송장번호로 송장 출력 단계로 넘기고, 재출력이면 DB 가 처음 번호를 돌려준다 — 재출력에는 새 번호를 받지 않는다.
+  // 재출력인지는 DB 가 잠근 자리에서 정한다(first). 몇 번째로 주소를 열었는지로 정하면, 송장 없이 끝난 앞선 시도가 있을 때
+  // 첫 송장이 「재출력」으로 찍힌다. 판정 재료를 읽은 뒤 다른 요청이 먼저 출력했으면 넘긴 번호는 쓰이지 않는다.
+  const waybill = ctx.parcel_state === "label_printed" ? null : deps.newWaybill();
+  const finish = await deps.db.rpc("invoice_finish_print", { p_qr: input.qr, p_waybill: waybill });
+  if (finish.error) return { kind: "failed" };
+  const finished = finishShape.safeParse(finish.data);
+  if (!finished.success) return { kind: "failed" };
+  return { kind: "printed", waybill: finished.data.waybill, reprint: !finished.data.first, label: opened.label };
 }

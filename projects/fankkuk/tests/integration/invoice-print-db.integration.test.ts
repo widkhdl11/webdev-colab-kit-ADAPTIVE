@@ -125,6 +125,45 @@ describe("INV-P4 (a)(b): 승인 서명을 직접 다시 본다", () => {
   });
 });
 
+describe("INV-P4 (a)·S12: 서명 재검증 재료는 저장된 서명에서 온다", () => {
+  it("INV-P4 (실패경로 a)·INV-S12: 저장된 승인 원문만 다른 주문 것으로 바꾸면(서명은 그대로) 서명 불일치로 거부 — 주문번호 판정까지 가지 않는다", async () => {
+    const a = await inspectedGift();
+    const b = await inspectedGift();
+    const payloadA = psql(`select payload from public.approval_requests where request_id = '${a.requestId}'`);
+    psql(
+      `begin; set local session_replication_role = replica; update public.approval_requests set payload = '${payloadA.replace(/'/g, "''")}' where request_id = '${b.requestId}'; commit;`,
+    );
+    expect(await print(b.qr)).toEqual({ kind: "denied", reason: "no_valid_approval" });
+    expect(logRows(b.orderId)).toEqual([`denied:no_valid_approval:${OWNER_ID}`]);
+  });
+});
+
+describe("INV-M12·W3: 차액을 내지 않은 상자는 송장이 나오지 않는다", () => {
+  const unpaidDifference = (g: Unit) =>
+    psql(
+      `insert into public.payments (order_id, kind, box_id, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status) values ('${g.orderId}', 'difference', '${g.boxIds[0]}', 'pay_test_diff_${g.orderNo.slice(4).toLowerCase()}', 2000, 0, 500, 0, 1500, 'pending')`,
+    );
+
+  it("INV-M12 (실패경로): 출력 함수가 판정 재료에서 미납 차액을 보고 거부한다", async () => {
+    const g = await inspectedGift();
+    unpaidDifference(g);
+    // 판정 재료가 미납을 알려야 한다 — 뒤의 DB 재확인이 같은 거부를 만들어 결과만으로는 이 칸이 비어도 구분되지 않는다
+    expect(psql(`set role address_decryptor; select public.invoice_print_context('${g.qr}') ->> 'difference_unpaid';`).split(/\r?\n/).pop()).toBe("true");
+    expect(await print(g.qr)).toEqual({ kind: "denied", reason: "difference_unpaid" });
+    expect(logRows(g.orderId)).toEqual([`denied:difference_unpaid:${OWNER_ID}`]);
+    expect(parcelState(g.qr)).toBe("inspected");
+  });
+
+  it("INV-M12 (실패경로): 주소를 내주는 DB 함수도 잠근 자리에서 미납 차액을 다시 보고 거부한다(앱 판정을 건너뛴 호출)", async () => {
+    const g = await inspectedGift();
+    unpaidDifference(g);
+    const reply = psql(`set role address_decryptor; select public.invoice_claim_print('${g.qr}', '${OWNER_ID}')::text;`);
+    // psql 은 「SET」 줄 뒤에 결과를 찍는다 — 마지막 줄이 함수 결과다
+    expect(JSON.parse(reply.split(/\r?\n/).pop() ?? "")).toEqual({ result: "denied", reason: "difference_unpaid" });
+    expect(logRows(g.orderId)).toEqual([`denied:difference_unpaid:${OWNER_ID}`]);
+  });
+});
+
 describe("INV-P8: 대표만 — 판단은 송장 출력 함수 설정의 대표 ID", () => {
   it("INV-P8 (S8, 실패경로)·INV-P7: 직원 계정이면 거부, 기록 줄의 요청자는 그 직원", async () => {
     const g = await inspectedGift();
@@ -146,7 +185,9 @@ describe("INV-P8: 대표만 — 판단은 송장 출력 함수 설정의 대표 
 
   it("INV-P8 (실패경로): 로그인 토큰이 위조면 DB 를 부르지 않는다 — 기록 줄도 없다", async () => {
     const g = await inspectedGift();
-    expect(await decryptor({ qr: g.qr, accessToken: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.forged" })).toEqual({ kind: "unauthenticated" });
+    // 내용은 대표 ID 다 — 토큰 내용만 읽고 서명을 확인하지 않는 구현이면 여기서 열린다
+    const body = Buffer.from(JSON.stringify({ sub: OWNER_ID, role: "authenticated" })).toString("base64url");
+    expect(await decryptor({ qr: g.qr, accessToken: `eyJhbGciOiJIUzI1NiJ9.${body}.forged` })).toEqual({ kind: "unauthenticated" });
     expect(logRows(g.orderId)).toEqual([]);
   });
 });
