@@ -288,9 +288,10 @@ describe("INV-P5: 횟수는 상자마다 따로 센다 (카드 d30)", () => {
 
   it("INV-P5 (실패경로): 어느 상자인지 없는 「연 줄」은 DB 가 받지 않는다 — 그런 줄은 어느 상자의 횟수에도 안 잡힌다", async () => {
     const g = await paidGift();
+    // 복호화 전용 역할은 연 줄을 직접 넣지 못한다(INV-P15 (a)) — 표 주인으로 넣어 조건 자체를 본다
     expect(
       psqlError(
-        `set role address_decryptor; insert into public.decrypt_log (order_id, requester_id, result, print_no) values ('${g.orderId}', '${OWNER_ID}', 'opened', 1);`,
+        `insert into public.decrypt_log (order_id, requester_id, result, print_no) values ('${g.orderId}', '${OWNER_ID}', 'opened', 1);`,
       ),
     ).toMatch(/decrypt_log_opened_has_box/);
     expect(logRows(g.orderId)).toEqual([]);

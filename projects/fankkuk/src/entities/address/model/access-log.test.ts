@@ -10,6 +10,11 @@ describe("printLabelOf — 열람 기록 줄의 출력 라벨 (INV-P5)", () => {
     expect(printLabelOf(2)).toEqual({ reprint: true, text: "재출력 2번째" });
     expect(printLabelOf(3)).toEqual({ reprint: true, text: "재출력 3번째" });
   });
+
+  it("INV-P15 (S15): 돌려준 줄은 순번과 상관없이 「출력 실패」, 재출력 표시가 없다", () => {
+    expect(printLabelOf(1, true)).toEqual({ reprint: false, text: "출력 실패" });
+    expect(printLabelOf(2, true)).toEqual({ reprint: false, text: "출력 실패" });
+  });
 });
 
 describe("서울 기준 달", () => {

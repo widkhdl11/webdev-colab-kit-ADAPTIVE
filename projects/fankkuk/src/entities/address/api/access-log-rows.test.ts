@@ -8,6 +8,7 @@ const opened = {
   print_no: 2,
   deny_reason: null,
   requester: "owner",
+  released: false,
 };
 const denied = {
   at: "2026-10-03T06:00:00+00:00",
@@ -16,14 +17,25 @@ const denied = {
   print_no: null,
   deny_reason: "not_owner",
   requester: "other",
+  released: false,
 };
 
 describe("열람 기록 응답", () => {
   it("열림·거부 줄을 화면 모양으로. 시각은 ISO(Z)", () => {
     expect(parseAccessLogRows([opened, denied])).toEqual([
-      { at: "2026-10-03T05:32:00.000Z", orderNo: "FC-4T7NX", requester: "owner", result: { kind: "opened", printNo: 2 } },
+      { at: "2026-10-03T05:32:00.000Z", orderNo: "FC-4T7NX", requester: "owner", result: { kind: "opened", printNo: 2, released: false } },
       { at: "2026-10-03T06:00:00.000Z", orderNo: "FC-4T7NX", requester: "other", result: { kind: "denied", reason: "not_owner" } },
     ]);
+  });
+
+  it("INV-P15 (S15): 돌려준 연 줄은 released 로 온다 — 화면이 「출력 실패」로 그린다", () => {
+    expect(parseAccessLogRows([{ ...opened, print_no: 1, released: true }])[0]?.result).toEqual({ kind: "opened", printNo: 1, released: true });
+  });
+
+  it("INV-P15 (실패경로): 거부 줄이 돌려줌으로 오거나 돌려줌 칸이 없으면 받지 않는다", () => {
+    expect(() => parseAccessLogRows([{ ...denied, released: true }])).toThrow();
+    const { released: _omit, ...noFlag } = opened;
+    expect(() => parseAccessLogRows([noFlag])).toThrow();
   });
 
   it("열림인데 출력 순번이 없거나 거부인데 사유가 없으면 받지 않는다", () => {

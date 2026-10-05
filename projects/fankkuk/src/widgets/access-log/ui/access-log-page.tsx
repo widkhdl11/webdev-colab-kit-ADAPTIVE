@@ -31,7 +31,7 @@ function ResultTag({ e }: { e: AddressAccessEntry }) {
 
 function Note({ e }: { e: AddressAccessEntry }) {
   if (e.result.kind === "denied") return <>{DENY_TEXT[e.result.reason]}</>;
-  const label = printLabelOf(e.result.printNo);
+  const label = printLabelOf(e.result.printNo, e.result.released);
   return label.reprint ? <span className="tag">{label.text}</span> : <>{label.text}</>;
 }
 

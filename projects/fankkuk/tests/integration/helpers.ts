@@ -86,6 +86,8 @@ export function deleteTestOrders(): void {
     [
       "begin;",
       "set local session_replication_role = replica;",
+      // 돌려줌 줄이 열람 기록 줄을 가리키므로 먼저 지운다 — replica 에서는 외래 키 검사가 꺼진다(INV-P15)
+      `delete from public.decrypt_releases where opened_log_id in (select id from public.decrypt_log where order_id in (${ids}));`,
       `delete from public.decrypt_log where order_id in (${ids});`,
       // 사무실 작업 기록(검수·파쇄·라벨)은 추가만 되는 표라 같은 자리에서 지운다(INV-W4·W8)
       ...officeRowsDelete(`select id from public.boxes where order_id in (${ids})`, "box_id"),

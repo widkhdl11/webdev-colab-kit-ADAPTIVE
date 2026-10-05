@@ -13,6 +13,7 @@ import { checkOpenedCreatorAddress } from "../model/check-opened-address";
 // 송장 출력 함수 — 크리에이터 주소를 여는 유일한 서버 코드(address-protection INV-P4·P5·P7·P8·P14, office-workflow INV-W3).
 // 순서: 로그인 토큰 검증 → 판정 재료 읽기 → 판정(대표·서명 재검증·주문번호·단계·차액·횟수) → 거부면 기록 한 줄
 //       → DB 가 잠근 자리에서 다시 확인하고 횟수를 올리며 봉투를 내줌 → 봉투 열기 → 봉인 속 크리에이터 대조 → 출력 단계로 넘기기.
+//       봉투를 연 뒤 송장이 나오기 전에 실패하면 그 「연 줄」을 돌려받는다(INV-P15 — 조건은 DB 가 상자를 잠근 자리에서 본다).
 // DB 자격은 복호화 전용 역할(address_decryptor) — 앱 서버 키로는 이 함수들과 열람 기록 쓰기가 막혀 있다.
 // 평문은 이 호출 안에서만 쓰고 라벨 다섯 칸만 돌려준다. 로그·오류·기록 줄에 넣지 않는다(INV-P10).
 
@@ -59,7 +60,15 @@ const contextShape = z.union([giftContext, z.object({ kind: z.literal("share") }
 const finishShape = z.object({ waybill: z.string().min(1), first: z.boolean() });
 
 const claimShape = z.union([
-  z.object({ result: z.literal("opened"), print_no: z.number().int().min(1), creator_id: z.string(), envelope: z.unknown() }),
+  z.object({
+    result: z.literal("opened"),
+    print_no: z.number().int().min(1),
+    creator_id: z.string(),
+    envelope: z.unknown(),
+    // INV-P15: 이번에 남긴 「연 줄」의 id — 송장이 안 나오면 이 줄을 돌려받는다.
+    // 주소를 내주는 DB 함수가 아직 이 값을 주지 않으면(manual/0010 적용 전) 돌려주기를 건너뛰고 지금처럼 출력한다.
+    log_id: z.number().int().positive().optional(),
+  }),
   z.object({ result: z.literal("denied"), reason: z.enum(ACCESS_DENY_REASONS) }),
   z.object({ result: z.literal("no_address") }),
 ]);
@@ -88,6 +97,18 @@ async function logDenied(deps: CreatorLabelDeps, ctx: GiftContext, requesterId: 
     .from("decrypt_log")
     .insert({ order_id: ctx.order_id, box_id: ctx.box_id, requester_id: requesterId, result: "denied", deny_reason: reason });
   if (error) throw new Error("열람 기록을 남기지 못했다");
+}
+
+/**
+ * INV-P15: 주소를 연 뒤 송장이 나오기 전에 실패했다 — 그 「연 줄」을 돌려받아 상자의 횟수를 되돌린다.
+ * 돌려줄 수 있는지는 DB 가 상자를 잠근 자리에서 정한다(이미 돌려줌·최근 줄 아님·재출력·돌려주기 2번 등은 거부).
+ * 거부·오류여도 이 출력의 결과는 「실패」 그대로다 — 돌려받지 못한 시도는 횟수에 남을 뿐 주소가 더 열리지는 않는다.
+ */
+async function releaseOpened(deps: CreatorLabelDeps, logId: number | undefined, requesterId: string): Promise<CreatorLabelResult> {
+  if (logId !== undefined) {
+    await deps.db.rpc("invoice_release_print", { p_log_id: logId, p_requester: requesterId });
+  }
+  return { kind: "failed" };
 }
 
 export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: string; accessToken: string }): Promise<CreatorLabelResult> {
@@ -132,8 +153,9 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
   if (claim.data.result === "no_address") return { kind: "no_address" };
   if (claim.data.result === "denied") return { kind: "denied", reason: claim.data.reason };
 
+  const logId = claim.data.log_id;
   const envelope = parseEnvelope(claim.data.envelope);
-  if (!envelope) return { kind: "failed" };
+  if (!envelope) return releaseOpened(deps, logId, requesterId);
   let plaintext: string;
   try {
     const dek = await deps.unwrapper.unwrap(envelope.wrappedKey);
@@ -143,10 +165,11 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
       dek.fill(0);
     }
   } catch {
-    return { kind: "failed" };
+    return releaseOpened(deps, logId, requesterId);
   }
 
   // INV-P14: 봉인 속 크리에이터가 그 주소 칸의 크리에이터와 다르면 쓰지 않는다 — 출력 단계로 넘기지 않는다.
+  // 이것은 실패가 아니라 거부다 — 연 줄을 돌려주지 않는다(INV-P15).
   const opened = checkOpenedCreatorAddress({ slotCreatorId: claim.data.creator_id, plaintext });
   if (!opened.ok) {
     await logDenied(deps, ctx, requesterId, opened.reason);
@@ -158,8 +181,9 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
   // 첫 송장이 「재출력」으로 찍힌다. 판정 재료를 읽은 뒤 다른 요청이 먼저 출력했으면 넘긴 번호는 쓰이지 않는다.
   const waybill = ctx.parcel_state === "label_printed" ? null : deps.newWaybill();
   const finish = await deps.db.rpc("invoice_finish_print", { p_qr: input.qr, p_waybill: waybill });
-  if (finish.error) return { kind: "failed" };
+  if (finish.error) return releaseOpened(deps, logId, requesterId);
   const finished = finishShape.safeParse(finish.data);
-  if (!finished.success) return { kind: "failed" };
+  // 응답만 깨지고 상자는 넘어갔을 수 있다 — 그러면 DB 가 (d)로 돌려주기를 거부한다
+  if (!finished.success) return releaseOpened(deps, logId, requesterId);
   return { kind: "printed", waybill: finished.data.waybill, reprint: !finished.data.first, label: opened.label };
 }

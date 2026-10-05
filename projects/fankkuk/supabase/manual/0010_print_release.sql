@@ -1,0 +1,80 @@
+-- 송장이 안 나온 출력 시도 돌려주기 — 결정 카드 fankkuk-20261001-1-d31. 스펙: docs/specs/address-protection.md (INV-P5·P15)
+-- 사람이 직접 적용한다(.claude/rules/supabase-fankkuk.md). 마이그레이션 20261006000004_print_release.sql(돌려줌 표·돌려주기 함수) 다음에 적용한다.
+--
+-- 적용(로컬, bash):
+--   docker exec -i supabase_db_fankkuk psql -U postgres -d postgres -v ON_ERROR_STOP=1 < /c/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/projects/fankkuk/supabase/manual/0010_print_release.sql
+--
+-- 0009 에서 바뀌는 것은 두 군데다:
+--   · 횟수 = 이 상자의 연 줄 − 이 상자의 돌려준 줄(INV-P5). 잠금은 그대로다 — 상자(office_lock_qr)와 주문을 잠근 자리에서 센다.
+--     돌려주기 함수도 같은 순서로 잠그므로 세는 동안 돌려줌 줄이 끼어들지 않는다.
+--   · 연 줄의 id 를 돌려준다(log_id). 출력 함수는 송장이 안 나오면 이 id 로 돌려주기를 부른다(INV-P15).
+-- 파일 전체가 한 트랜잭션이다 — 중간에 실패하면 아무것도 남지 않는다.
+
+begin;
+
+-- 마이그레이션 20 이 먼저 적용됐는지 본다. 없으면 여기서 멈춘다(아래 함수는 만들어져도 실행 때마다 실패하기 때문).
+do $$
+begin
+  if to_regclass('public.decrypt_releases') is null then
+    raise exception '돌려줌 표(decrypt_releases)가 없다 — 마이그레이션 20261006000004_print_release.sql 을 먼저 적용한다';
+  end if;
+end $$;
+
+create or replace function public.invoice_claim_print(p_qr text, p_requester uuid)
+returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v public.office_parcels;
+  v_order public.orders;
+  v_count integer;
+  v_reason text;
+  v_address pii.creator_addresses;
+  v_log_id bigint;
+begin
+  if p_requester is null then
+    raise exception '요청자가 없다' using errcode = '22023';
+  end if;
+  v := public.office_lock_qr(p_qr);
+  if v.box_id is null then
+    raise exception '팬 선물 상자가 아니다' using errcode = '22023';
+  end if;
+  select o.* into v_order from public.orders o join public.boxes b on b.order_id = o.id where b.id = v.box_id for update of o;
+
+  -- INV-P5: 이 상자에서 연 횟수(상자마다 따로 — 카드 d30) = 연 줄 − 돌려준 줄(INV-P15)
+  select (select count(*) from public.decrypt_log where box_id = v.box_id and result = 'opened')
+       - (select count(*) from public.decrypt_releases where box_id = v.box_id)
+    into v_count;
+
+  -- INV-P4 (c): 검수 완료 ~ 출고 확정 전. 출고 조건(W3 — 승인·거절 아님·차액)도 잠근 뒤 다시 본다.
+  if v.state not in ('inspected', 'label_printed') or v_order.status not in ('inspected', 'label_printed') then
+    v_reason := 'order_not_printable';
+  elsif exists (select 1 from public.payments d where d.order_id = v_order.id and d.kind = 'difference' and d.status <> 'done') then
+    v_reason := 'difference_unpaid';
+  elsif not public.office_parcel_shippable(v) then
+    v_reason := 'order_not_printable';
+  elsif v_count >= 3 then
+    v_reason := 'decrypt_limit_reached';
+  end if;
+  if v_reason is not null then
+    insert into public.decrypt_log (order_id, box_id, requester_id, result, deny_reason) values (v_order.id, v.box_id, p_requester, 'denied', v_reason);
+    return jsonb_build_object('result', 'denied', 'reason', v_reason);
+  end if;
+
+  select * into v_address from pii.creator_addresses where creator_id = v_order.creator_id;
+  if v_address.creator_id is null then
+    return jsonb_build_object('result', 'no_address');
+  end if;
+
+  insert into public.decrypt_log (order_id, box_id, requester_id, result, print_no) values (v_order.id, v.box_id, p_requester, 'opened', v_count + 1)
+    returning id into v_log_id;
+  return jsonb_build_object('result', 'opened', 'print_no', v_count + 1, 'log_id', v_log_id, 'creator_id', v_address.creator_id, 'envelope', v_address.envelope);
+end $$;
+
+-- create or replace 는 권한을 그대로 두지만, 0009 와 같은 상태임을 여기서도 못박는다
+revoke all on function public.invoice_claim_print(text, uuid) from public, anon, authenticated, service_role;
+grant execute on function public.invoice_claim_print(text, uuid) to address_decryptor;
+
+notify pgrst, 'reload schema';
+
+commit;

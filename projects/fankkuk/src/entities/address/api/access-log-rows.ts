@@ -23,6 +23,8 @@ const rowSchema = z.discriminatedUnion("result", [
     print_no: z.number().int().min(1).max(MAX_DECRYPTS_PER_BOX),
     deny_reason: z.null(),
     requester,
+    // INV-P15: 송장이 안 나와 돌려받은 줄
+    released: z.boolean(),
   }),
   z.object({
     at,
@@ -31,6 +33,8 @@ const rowSchema = z.discriminatedUnion("result", [
     print_no: z.null(),
     deny_reason: z.enum(ACCESS_DENY_REASONS),
     requester,
+    // 거부 줄은 돌려줄 것이 없다
+    released: z.literal(false),
   }),
 ]);
 
@@ -42,7 +46,7 @@ export function parseAccessLogRows(rows: unknown): AddressAccessEntry[] {
       at: new Date(r.at).toISOString(),
       orderNo: r.order_no,
       requester: r.requester,
-      result: r.result === "opened" ? { kind: "opened", printNo: r.print_no } : { kind: "denied", reason: r.deny_reason },
+      result: r.result === "opened" ? { kind: "opened", printNo: r.print_no, released: r.released } : { kind: "denied", reason: r.deny_reason },
     }));
 }
 

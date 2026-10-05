@@ -32,15 +32,22 @@ export type AddressAccessEntry = {
    * other 는 대표 계정이 아닌 요청이 거부된 줄(not_owner)이다.
    */
   requester: AccessRequester;
-  /** printNo: 그 상자의 몇 번째 출력인가(횟수는 상자마다 — 카드 d30). 2부터 재출력(INV-P5). */
-  result: { kind: "opened"; printNo: number } | { kind: "denied"; reason: AccessDenyReason };
+  /**
+   * printNo: 그 상자의 몇 번째 출력인가(횟수는 상자마다 — 카드 d30). 2부터 재출력(INV-P5).
+   * released: 주소를 연 뒤 송장이 안 나와 돌려받은 줄(INV-P15) — 주소는 열렸지만 횟수에서 빠졌다. 화면에는 「출력 실패」.
+   */
+  result: { kind: "opened"; printNo: number; released: boolean } | { kind: "denied"; reason: AccessDenyReason };
 };
 
 /** 열람 기록 화면의 「이번 달」(서울 기준 달력 달) 숫자. DB 가 직접 센다 — 화면이 받은 줄로 세지 않는다. */
 export type AccessMonthSummary = { approvedCount: number; openedCount: number; reprintCount: number; deniedCount: number };
 
-/** 출력 순번 → 줄 라벨. 1 = 첫 출력, 2부터 재출력(INV-P5). 크리에이터 메인과 열람 기록 화면이 같이 쓴다. */
-export function printLabelOf(printNo: number): { reprint: boolean; text: string } {
+/**
+ * 출력 순번 → 줄 라벨. 1 = 첫 출력, 2부터 재출력(INV-P5). 돌려받은 줄은 순번과 상관없이 「출력 실패」(INV-P15).
+ * 크리에이터 메인과 열람 기록 화면이 같이 쓴다.
+ */
+export function printLabelOf(printNo: number, released = false): { reprint: boolean; text: string } {
+  if (released) return { reprint: false, text: "출력 실패" };
   return printNo >= 2 ? { reprint: true, text: `재출력 ${printNo}번째` } : { reprint: false, text: "첫 출력" };
 }
 

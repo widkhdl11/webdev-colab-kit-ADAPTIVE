@@ -90,7 +90,7 @@ function ProgressTrack({ request }: { request: ApprovalRequestView }) {
 
 function logNote(e: AddressAccessEntry): string {
   if (e.result.kind === "denied") return "열리지 않았어요";
-  return printLabelOf(e.result.printNo).text;
+  return printLabelOf(e.result.printNo, e.result.released).text;
 }
 
 export function CreatorHomePage({ nickname, requests, accessLog, notices, sentGifts }: Props) {

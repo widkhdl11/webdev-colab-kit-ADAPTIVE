@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { SEED, adminClient, anonClient, approveRpc, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
 
 // 크리에이터 열람 기록 읽기(my_access_log) — 주소 보호 스펙 INV-P7(크리에이터는 자기 주문의 기록 전부를 본다)·
-// INV-P5(2회째부터 「재출력」). 기록 줄은 복호화 전용 역할로 넣는다 — 앱 서버 키로는 쓸 수 없다.
+// INV-P5(2회째부터 「재출력」). 거부 줄은 복호화 전용 역할로 넣는다 — 앱 서버 키로는 쓸 수 없다.
+// 「연 줄」은 그 역할도 직접 넣을 수 없다(INV-P15 (a) — 주소를 내주는 함수만 넣는다). 시험 준비로 표 주인(postgres)이 넣는다.
 // 시험 주문에 딸린 기록은 끝난 뒤 deleteTestOrders 가 트리거를 끄고 지운다.
 
 const OPERATOR_ID = "00000000-0000-4000-a000-000000000021"; // 팬꾹 운영(대표 계정 자리)
@@ -16,8 +17,13 @@ function appendLog(orderId: string, requesterId: string, values: { result: "open
       ? `'opened', ${values.printNo}, null`
       : `'denied', null, '${values.reason}'`;
   psql(
-    `set role address_decryptor; insert into public.decrypt_log (order_id, box_id, requester_id, result, print_no, deny_reason) values ('${orderId}', ${firstBoxOf(orderId)}, '${requesterId}', ${cols});`,
+    `${roleFor(values.result)}insert into public.decrypt_log (order_id, box_id, requester_id, result, print_no, deny_reason) values ('${orderId}', ${firstBoxOf(orderId)}, '${requesterId}', ${cols});`,
   );
+}
+
+/** 거부 줄은 복호화 전용 역할로, 연 줄은 표 주인으로 넣는다(INV-P15 (a)). */
+function roleFor(result: "opened" | "denied"): string {
+  return result === "denied" ? "set role address_decryptor; " : "";
 }
 
 /** 주소를 연 줄은 어느 상자의 출력인지가 반드시 있어야 한다(INV-P5 — 횟수는 상자마다). 시험 주문의 첫 상자를 쓴다. */
@@ -72,7 +78,7 @@ describe("INV-P7: 크리에이터는 자기 주문의 열람 기록 전부를 �
     expect(new Set(mine.map((r) => r.requester))).toEqual(new Set(["owner", "other"]));
     expect(mine.find((r) => r.deny_reason === "not_owner")?.requester).toBe("other");
     for (const r of mine) {
-      expect(Object.keys(r).sort()).toEqual(["at", "deny_reason", "order_no", "print_no", "requester", "result"]);
+      expect(Object.keys(r).sort()).toEqual(["at", "deny_reason", "order_no", "print_no", "released", "requester", "result"]);
       const text = JSON.stringify(r);
       for (const leak of [OPERATOR_ID, OTHER_ACCOUNT_ID, "fankkuk_admin", "fankkuk_staff", "@fankkuk.test", "팬꾹 운영", "팬꾹 직원"]) {
         expect(text).not.toContain(leak);
@@ -137,7 +143,7 @@ const seoulMonthStartPlus = (offset: string) =>
 
 function appendLogAt(orderId: string, at: string, cols: string): void {
   psql(
-    `set role address_decryptor; insert into public.decrypt_log (at, order_id, box_id, requester_id, result, print_no, deny_reason) values (${at}, '${orderId}', ${firstBoxOf(orderId)}, '${OPERATOR_ID}', ${cols});`,
+    `${roleFor(cols.startsWith("'opened'") ? "opened" : "denied")}insert into public.decrypt_log (at, order_id, box_id, requester_id, result, print_no, deny_reason) values (${at}, '${orderId}', ${firstBoxOf(orderId)}, '${OPERATOR_ID}', ${cols});`,
   );
 }
 

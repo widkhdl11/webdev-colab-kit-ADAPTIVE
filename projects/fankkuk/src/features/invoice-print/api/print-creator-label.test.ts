@@ -64,22 +64,36 @@ function goodContext(patch: Context = {}): Context {
 
 type Claim = Record<string, unknown> | null;
 
-async function openedClaim(printNo = 1, sealedFor = HARU): Promise<Claim> {
+const LOG_ID = 4242;
+
+/** logId 를 null 로 주면 「연 줄」의 id 를 돌려주지 않는 옛 DB 함수(manual/0010 적용 전)의 응답이다. */
+async function openedClaim(printNo = 1, sealedFor = HARU, logId: number | null = LOG_ID): Promise<Claim> {
   const envelope = await sealEnvelope(creatorAddressPlaintext({ creatorId: sealedFor, ...fields }), keys.publicKey);
-  return { result: "opened", print_no: printNo, order_id: ORDER_ID, creator_id: HARU, envelope };
+  const claim: Record<string, unknown> = { result: "opened", print_no: printNo, order_id: ORDER_ID, creator_id: HARU, envelope };
+  if (logId !== null) claim.log_id = logId;
+  return claim;
 }
 
 type Finish = { waybill: string; first: boolean } | string;
 
-function fakeDb(context: Context | null, claim: Claim, finish: Finish = { waybill: NEW_WAYBILL, first: true }) {
+type Reply = { data: unknown; error: { code: string; message: string } | null };
+
+function fakeDb(
+  context: Context | null,
+  claim: Claim,
+  finish: Finish | Reply = { waybill: NEW_WAYBILL, first: true },
+  release: Reply = { data: { result: "released" }, error: null },
+) {
   const calls: { fn: string; args: unknown }[] = [];
   const logs: Record<string, unknown>[] = [];
+  const isReply = (v: Finish | Reply): v is Reply => typeof v === "object" && "error" in v;
   const db = {
     rpc: async (fn: string, args: unknown) => {
       calls.push({ fn, args });
       if (fn === "invoice_print_context") return { data: context, error: null };
       if (fn === "invoice_claim_print") return { data: claim, error: null };
-      if (fn === "invoice_finish_print") return { data: finish, error: null };
+      if (fn === "invoice_finish_print") return isReply(finish) ? finish : { data: finish, error: null };
+      if (fn === "invoice_release_print") return release;
       return { data: null, error: { code: "42883", message: "없는 함수" } };
     },
     from: (table: string) => ({
@@ -251,5 +265,85 @@ describe("송장 출력 — 거부 (INV-P4·P7·P8)", () => {
     expect(fnNames(share.calls)).toEqual(["invoice_print_context"]);
     const none = fakeDb(null, null);
     expect(await printCreatorLabel(deps(none.db), ask)).toEqual({ kind: "not_found" });
+  });
+});
+
+describe("송장 출력 — 송장이 안 나온 시도 돌려주기 (INV-P15)", () => {
+  const releaseCall = { fn: "invoice_release_print", args: { p_log_id: LOG_ID, p_requester: OWNER } };
+  const finishFailed: Reply = { data: null, error: { code: "22023", message: "송장번호는 숫자 10~14자리다" } };
+
+  it("INV-P15 (S15): 주소를 연 뒤 송장 마무리가 실패하면 그 「연 줄」을 돌려주고 실패로 끝난다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1), finishFailed);
+    expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "failed" });
+    expect(calls.at(-1)).toEqual(releaseCall);
+    expect(fnNames(calls)).toEqual(["invoice_print_context", "invoice_claim_print", "invoice_finish_print", "invoice_release_print"]);
+  });
+
+  it("INV-P15 (S15): 송장 마무리 응답을 읽지 못해도 돌려준다(상자가 이미 넘어갔으면 DB 가 거부한다)", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1), NEW_WAYBILL);
+    expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "failed" });
+    expect(calls.at(-1)).toEqual(releaseCall);
+  });
+
+  it("INV-P15 (S15): 봉투 꼴이 깨져 있으면 돌려주고, 키를 풀지 않는다", async () => {
+    const claim = { result: "opened", print_no: 1, creator_id: HARU, envelope: { broken: true }, log_id: LOG_ID };
+    const { db, calls } = fakeDb(goodContext(), claim);
+    const u = countingUnwrapper();
+    expect(await printCreatorLabel(deps(db, { unwrapper: u.unwrapper }), ask)).toEqual({ kind: "failed" });
+    expect(u.count()).toBe(0);
+    expect(fnNames(calls)).not.toContain("invoice_finish_print");
+    expect(calls.at(-1)).toEqual(releaseCall);
+  });
+
+  it("INV-P15 (S15): 키를 풀지 못하면 돌려주고 출력 단계를 넘기지 않는다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1));
+    const broken: KeyUnwrapper = { unwrap: async () => Promise.reject(new Error("키 서버 응답 없음")) };
+    expect(await printCreatorLabel(deps(db, { unwrapper: broken }), ask)).toEqual({ kind: "failed" });
+    expect(fnNames(calls)).not.toContain("invoice_finish_print");
+    expect(calls.at(-1)).toEqual(releaseCall);
+  });
+
+  it("INV-P15 (S15): 봉투를 열지 못하면(다른 키로 봉인됨) 돌려준다", async () => {
+    const other = await keyPair();
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1));
+    const wrongKey = createDevKeyUnwrapper({ privateKeyPem: other.privatePem, env: { NODE_ENV: "development" } });
+    expect(await printCreatorLabel(deps(db, { unwrapper: wrongKey }), ask)).toEqual({ kind: "failed" });
+    expect(calls.at(-1)).toEqual(releaseCall);
+  });
+
+  it("INV-P15 (실패경로): 봉인 속 크리에이터가 다르면(INV-P14) 실패가 아니라 거부다 — 돌려주지 않는다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1, DALBIT));
+    expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "denied", reason: "address_mismatch" });
+    expect(fnNames(calls)).not.toContain("invoice_release_print");
+  });
+
+  it("INV-P15 (실패경로): 송장이 나오면 돌려주지 않는다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1));
+    expect((await printCreatorLabel(deps(db), ask)).kind).toBe("printed");
+    expect(fnNames(calls)).not.toContain("invoice_release_print");
+  });
+
+  it("INV-P15: DB 가 「연 줄」 id 를 주지 않으면(옛 DB 함수) 돌려주기를 건너뛰고 지금처럼 실패로 끝난다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedClaim(1, HARU, null), finishFailed);
+    expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "failed" });
+    expect(fnNames(calls)).not.toContain("invoice_release_print");
+  });
+
+  it("INV-P15: 돌려주기가 거부되거나 오류여도 결과는 실패 그대로다 — 던지지 않는다", async () => {
+    for (const release of [
+      { data: { result: "denied", reason: "not_inspected" }, error: null },
+      { data: null, error: { code: "42501", message: "거부" } },
+    ] satisfies Reply[]) {
+      const { db, calls } = fakeDb(goodContext(), await openedClaim(1), finishFailed, release);
+      expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "failed" });
+      expect(calls.at(-1)).toEqual(releaseCall);
+    }
+  });
+
+  it("INV-P15: 「연 줄」 id 가 정수가 아니면 응답을 받지 않는다(돌려주기를 엉뚱한 줄로 부르지 않는다)", async () => {
+    const claim = { ...(await openedClaim(1)), log_id: "4242; drop" };
+    const { db, calls } = fakeDb(goodContext(), claim);
+    expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "failed" });
+    expect(fnNames(calls)).not.toContain("invoice_release_print");
   });
 });
