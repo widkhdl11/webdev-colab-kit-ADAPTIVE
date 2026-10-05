@@ -67,8 +67,8 @@ export async function registerGift(
     } catch (e) {
       if (e instanceof PriceChangedError) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
       if (e instanceof SenderRefusedError) {
-        // 없는 크리에이터는 팬이 보낼 때 DB 가 처음 판정하는 정상 경로다. 나머지는 서버 판정이 빠졌다는 뜻이다
-        if (e.reason !== "unknown_creator") console.error(`선물 등록: 서버 판정을 지나 DB 가 거부했다 (${e.reason})`);
+        // 없는 크리에이터(팬이 보낼 때)와 채널 이사 중(INV-V12)은 DB 가 처음 판정하는 정상 경로다. 나머지는 서버 판정이 빠졌다는 뜻이다
+        if (e.reason !== "unknown_creator" && e.reason !== "moving") console.error(`선물 등록: 서버 판정을 지나 DB 가 거부했다 (${e.reason})`);
         return { ok: false, status: refusalStatus(e.reason), message: SENDER_REFUSAL_MESSAGE[e.reason] };
       }
       if (!(e instanceof OrderNoTakenError) || attempt >= 3) throw e;

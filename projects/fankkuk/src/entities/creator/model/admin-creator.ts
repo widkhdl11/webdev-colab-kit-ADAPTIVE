@@ -17,7 +17,8 @@ export type AdminCreator = {
   lastActorNickname: string | null;
 };
 
-export const VERIFICATION_ACTIONS = ["approve", "revoke"] as const;
+// creator-verification INV-V6·V9·V13·V14: 승인·반려·닫힘(다른 계정의 로그인 확인)·승인 취소
+export const VERIFICATION_ACTIONS = ["approve", "reject", "close", "revoke"] as const;
 export type VerificationAction = (typeof VERIFICATION_ACTIONS)[number];
 
 export type VerificationEvent = {
@@ -26,7 +27,15 @@ export type VerificationEvent = {
   creatorId: string;
   creatorName: string;
   action: VerificationAction;
+  /** 운영자 메모(운영자만 본다, INV-V9). 없으면 "" */
   reason: string;
+  /** 사유 목록 값 — 반려·닫힘·취소. 승인이나 옛 기록이면 null */
+  reasonCode: string | null;
+  /** 확인 방법(INV-V13). 옛 기록이면 null */
+  method: "code" | "login" | null;
+  /** 그때의 채널 주소·코드(INV-V6). 옛 기록·로그인 확인이면 null */
+  channelUrl: string | null;
+  code: string | null;
 };
 
 const creatorRow = z.object({
@@ -48,6 +57,10 @@ const eventRow = z.object({
   creator_name: z.string(),
   action: z.enum(VERIFICATION_ACTIONS),
   reason: z.string(),
+  reason_code: z.string().nullable(),
+  method: z.enum(["code", "login"]).nullable(),
+  channel_url: z.string().nullable(),
+  code: z.string().nullable(),
 });
 
 export function adminCreatorsFromRows(rows: unknown): AdminCreator[] | null {
@@ -76,5 +89,21 @@ export function verificationEventsFromRows(rows: unknown): VerificationEvent[] |
     creatorName: r.creator_name,
     action: r.action,
     reason: r.reason,
+    reasonCode: r.reason_code,
+    method: r.method,
+    channelUrl: r.channel_url,
+    code: r.code,
   }));
+}
+
+/**
+ * 크리에이터마다 가장 최근 승인 기록(누가·언제). 승인된 크리에이터 표의 「승인한 사람」 칸 — 마지막 처리가 이사 신청의 반려일 수 있어
+ * 마지막 처리 한 줄(lastActionAt) 대신 승인 줄만 본다. 기록은 최근 것부터 온다.
+ */
+export function latestApprovals(events: readonly VerificationEvent[]): Map<string, { at: string; actorNickname: string }> {
+  const out = new Map<string, { at: string; actorNickname: string }>();
+  for (const e of events) {
+    if (e.action === "approve" && !out.has(e.creatorId)) out.set(e.creatorId, { at: e.at, actorNickname: e.actorNickname });
+  }
+  return out;
 }

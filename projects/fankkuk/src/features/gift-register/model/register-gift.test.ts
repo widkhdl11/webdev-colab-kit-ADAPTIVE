@@ -120,6 +120,17 @@ describe("크리에이터가 보내는 선물 (INV-L8·INV-L9)", () => {
   });
 });
 
+describe("채널 이사 중인 크리에이터 (creator-verification INV-V12)", () => {
+  it("INV-V12 (S12, 실패경로): DB 등록 함수가 이사 중으로 거부하면 409 와 서버 문구를 그대로 돌려준다 — 팬·크리에이터 둘 다", async () => {
+    for (const viewer of [FAN, CREATOR]) {
+      const { deps } = setup(relationIs({ receiverIsSelf: false, followEitherWay: true }));
+      const refusing: PaymentStore = { ...deps.store, create: async () => { throw new SenderRefusedError("moving"); } };
+      const r = await registerGift({ ...deps, store: refusing, viewer }, form);
+      expect(r).toEqual({ ok: false, status: 409, message: "채널을 옮기는 중인 크리에이터라 지금은 선물을 받을 수 없어요. 채널 확인이 끝나면 다시 보내 주세요." });
+    }
+  });
+});
+
 describe("요금표 (admin-console INV-K3)", () => {
   it("INV-K3: 금액은 요청마다 읽은 요금표로 계산한다 — 표가 바뀌면 등록 금액도 바뀐다", async () => {
     const { deps, store } = setup();

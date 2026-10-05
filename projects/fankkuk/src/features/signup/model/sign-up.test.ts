@@ -35,7 +35,7 @@ function harness(opts: {
       async rpc(fn: string, args: Record<string, unknown>) {
         rpcCalls.push({ fn, args });
         if (fn === "usable_phone_verification") return { data: verifiedPhone, error: null };
-        if (fn === "create_account") return { data: null, error: opts.createAccountError ?? null };
+        if (fn === "create_account" || fn === "create_creator_account") return { data: null, error: opts.createAccountError ?? null };
         if (fn === "issue_email_verification") {
           return { data: [{ token: "a".repeat(64), email: "new.fan@example.com", nickname: "newfan" }], error: null };
         }
@@ -256,10 +256,11 @@ describe("INV-U5·U6: 입력 경계", () => {
     }
   });
 
-  it("INV-U5: 크리에이터 가입은 역할만 크리에이터 — 공개 정보는 만들지 않는다", async () => {
+  it("INV-U5: 크리에이터 가입은 확인 안 된 공개 정보 행까지 만든다 — 역할 칸 없이 create_creator_account 가 크리에이터로 만든다(creator-verification INV-V1)", async () => {
     const h = harness();
-    await signUp(h.deps, body({ role: "creator" }));
-    expect(h.rpcCalls.find((c) => c.fn === "create_account")?.args.p_role).toBe("creator");
+    await signUp(h.deps, body({ role: "creator", creator: { name: "꿀단지", channelTitle: "꿀단지TV", category: "먹방" } }));
+    expect(h.rpcCalls.find((c) => c.fn === "create_account")).toBeUndefined();
+    expect(h.rpcCalls.find((c) => c.fn === "create_creator_account")?.args).not.toHaveProperty("p_role");
   });
 
   it("INV-U6 (S6, 실패경로): 짧은 비밀번호·아이디와 같은 비밀번호·필수 약관 빠짐·꼴이 틀린 칸은 각각 거부", async () => {
@@ -305,5 +306,67 @@ describe("가입 뒤", () => {
     const h = harness({ signInOk: false });
     expect(await signUp(h.deps, body())).toEqual({ ok: true, loggedIn: false, mailSent: true });
     expect(h.deleted).toEqual([]);
+  });
+});
+
+describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV-V1, signup INV-U5)", () => {
+  const creator = { name: " 꿀단지 ", channelTitle: "꿀단지TV", category: "먹방" };
+
+  it("INV-V1: 크리에이터면 create_creator_account 로 계정과 공개 정보(이름·채널 이름·분야, 앞뒤 공백 뗌)를 한 번에 만든다", async () => {
+    const h = harness();
+    const r = await signUp(h.deps, body({ role: "creator", creator }));
+    expect(r).toMatchObject({ ok: true });
+    expect(h.rpcCalls.filter((c) => c.fn === "create_account")).toEqual([]);
+    const call = h.rpcCalls.find((c) => c.fn === "create_creator_account");
+    expect(call?.args).toEqual({
+      p_user_id: USER_ID,
+      p_login_id: "newfan",
+      p_email: "new.fan@example.com",
+      p_phone: "01055556666",
+      p_verification_id: VID,
+      p_terms: [
+        { key: "service", version: "2026-10-01" },
+        { key: "privacy", version: "2026-10-01" },
+      ],
+      p_name: "꿀단지",
+      p_channel_title: "꿀단지TV",
+      p_category: "먹방",
+    });
+  });
+
+  it("INV-V1: 팬이면 크리에이터 칸이 와도 create_account 를 부르고 공개 정보 칸을 넘기지 않는다", async () => {
+    const h = harness();
+    await signUp(h.deps, body({ role: "fan", creator }));
+    expect(h.rpcCalls.filter((c) => c.fn === "create_creator_account")).toEqual([]);
+    expect(h.rpcCalls.find((c) => c.fn === "create_account")?.args).toMatchObject({ p_role: "fan" });
+    expect(h.rpcCalls.find((c) => c.fn === "create_account")?.args).not.toHaveProperty("p_name");
+  });
+
+  it("INV-V1 (실패경로): 크리에이터인데 공개 정보가 없거나 한도를 넘으면 그 칸으로 400 — 로그인 정보를 만들지 않는다", async () => {
+    for (const [extra, field] of [
+      [{}, "creatorName"],
+      [{ creator: { ...creator, name: "  " } }, "creatorName"],
+      [{ creator: { ...creator, name: "가".repeat(21) } }, "creatorName"],
+      [{ creator: { ...creator, channelTitle: "가".repeat(41) } }, "channelTitle"],
+      [{ creator: { ...creator, category: "" } }, "category"],
+    ] as const) {
+      const h = harness();
+      const r = await signUp(h.deps, body({ role: "creator", ...extra }));
+      expect(r).toMatchObject({ ok: false, status: 400, field });
+      expect(h.created).toEqual([]);
+    }
+  });
+
+  it("INV-V1: 한도 끝 값(이름 20자·채널 이름 40자·분야 20자)은 받는다", async () => {
+    const h = harness();
+    const r = await signUp(h.deps, body({ role: "creator", creator: { name: "가".repeat(20), channelTitle: "나".repeat(40), category: "다".repeat(20) } }));
+    expect(r).toMatchObject({ ok: true });
+  });
+
+  it("INV-V1 (실패경로): 공개 정보 만들기가 실패하면 방금 만든 로그인 정보를 지운다", async () => {
+    const h = harness({ createAccountError: { code: "22023" } });
+    const r = await signUp(h.deps, body({ role: "creator", creator }));
+    expect(r).toMatchObject({ ok: false, status: 400 });
+    expect(h.deleted).toEqual([USER_ID]);
   });
 });

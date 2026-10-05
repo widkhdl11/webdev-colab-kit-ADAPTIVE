@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { completeSignup } from "@/features/signup/api/complete-signup";
 import { requestPhoneVerification } from "@/features/signup/api/signup-client";
-import { checkDetails, type DetailsField } from "@/features/signup/model/signup-input";
+import { checkDetails, CREATOR_PROFILE_LIMITS, type DetailsField } from "@/features/signup/model/signup-input";
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import s from "./signup.module.css";
 
@@ -50,6 +50,10 @@ export function SignupPage() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [phone, setPhone] = useState("");
+  // 크리에이터로 가입할 때만 받는 기본 공개 정보(creator-verification INV-V1). 채널 주소는 가입 뒤 본인 확인 때 받는다.
+  const [creatorName, setCreatorName] = useState("");
+  const [channelTitle, setChannelTitle] = useState("");
+  const [category, setCategory] = useState("");
   const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({ service: false, privacy: false, news: false });
   // 인증 요청을 보냈는가. 번호표 자체는 서버가 쿠키로 들고 있다(INV-U1). 번호를 고치면 요청부터 다시 —
   // 다른 번호의 확인으로 가입하지 않게(서버도 번호 대조로 막는다).
@@ -80,7 +84,8 @@ export function SignupPage() {
     setErrorSeq((n) => n + 1);
   };
 
-  const details = () => checkDetails({ loginId, email, password, passwordConfirm, phone, terms: agreed });
+  const creatorProfile = () => (role === "creator" ? { name: creatorName, channelTitle, category } : undefined);
+  const details = () => checkDetails({ loginId, email, password, passwordConfirm, phone, terms: agreed, creator: creatorProfile() });
 
   const sendRequest = async () => {
     if (busy) return;
@@ -103,6 +108,7 @@ export function SignupPage() {
       password,
       phone,
       terms: agreed,
+      creator: creatorProfile(),
     });
     if (r.ok) {
       router.push(r.loggedIn ? "/" : "/login"); // 「/」 가 역할별 첫 화면으로 나눈다
@@ -323,6 +329,59 @@ export function SignupPage() {
                     선물 소식을 카카오톡 알림톡으로 보내 드릴 번호예요. 실명·주소처럼 따로 나눠 보관해요.
                   </p>
                 </div>
+                {role === "creator" ? (
+                  <>
+                    <div className="field">
+                      <label htmlFor={f("cr-name")}>공개 이름</label>
+                      <input
+                        className="input"
+                        id={f("cr-name")}
+                        type="text"
+                        autoComplete="off"
+                        maxLength={CREATOR_PROFILE_LIMITS.name}
+                        value={creatorName}
+                        onChange={(e) => setCreatorName(e.target.value)}
+                        aria-describedby={f("cr-name-h")}
+                        {...invalid("creatorName")}
+                      />
+                      <p className="hint" id={f("cr-name-h")}>
+                        팬에게 보이는 이름이에요. {CREATOR_PROFILE_LIMITS.name}자까지 적을 수 있어요.
+                      </p>
+                    </div>
+                    <div className="field">
+                      <label htmlFor={f("cr-channel")}>채널 이름</label>
+                      <input
+                        className="input"
+                        id={f("cr-channel")}
+                        type="text"
+                        autoComplete="off"
+                        placeholder="예: 꿀단지TV"
+                        maxLength={CREATOR_PROFILE_LIMITS.channelTitle}
+                        value={channelTitle}
+                        onChange={(e) => setChannelTitle(e.target.value)}
+                        aria-describedby={f("cr-channel-h")}
+                        {...invalid("channelTitle")}
+                      />
+                      <p className="hint" id={f("cr-channel-h")}>
+                        채널 주소는 가입한 뒤 본인 확인 때 받아요.
+                      </p>
+                    </div>
+                    <div className="field">
+                      <label htmlFor={f("cr-category")}>분야</label>
+                      <input
+                        className="input"
+                        id={f("cr-category")}
+                        type="text"
+                        autoComplete="off"
+                        placeholder="예: 게임, 먹방, 그림"
+                        maxLength={CREATOR_PROFILE_LIMITS.category}
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        {...invalid("category")}
+                      />
+                    </div>
+                  </>
+                ) : null}
                 <div className="field" role="group" aria-labelledby={f("terms")}>
                   <p className="label" id={f("terms")}>
                     약관 동의

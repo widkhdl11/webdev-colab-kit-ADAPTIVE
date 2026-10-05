@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkoutRequesterId, creatorSendList, sendAvailabilityOf } from "./sender-rule";
+import { checkoutRequesterId, creatorSendList, movingNotice, refusalStatus, sendAvailabilityOf } from "./sender-rule";
 
 const OWN = "00000000-0000-4000-b000-000000000001";
 const MOMO = "00000000-0000-4000-b000-000000000002";
@@ -41,5 +41,20 @@ describe("크리에이터의 선물 보내기 목록", () => {
   });
   it("미리 고른 사람이 자기 자신이면 보낼 수 있다고 와도 뺀다", () => {
     expect(creatorSendList(cards, OWN, { id: OWN, canSend: true }).map((c) => c.id)).toEqual([MOMO]);
+  });
+});
+
+describe("채널 이사 중 안내 (creator-verification INV-V12 화면 표시)", () => {
+  it("INV-V12: 고른 크리에이터가 이사 중이면 안내 문구, 아니면·안 골랐으면 null", () => {
+    expect(movingNotice({ moving: true })).toContain("채널을 옮기는 중");
+    expect(movingNotice({ moving: false })).toBeNull();
+    expect(movingNotice({})).toBeNull();
+    expect(movingNotice(undefined)).toBeNull();
+  });
+
+  it("INV-V12: 이사 중 거부는 409 — 없는 크리에이터(404)·보내는 사람 거부(403)와 다르다", () => {
+    expect(refusalStatus("moving")).toBe(409);
+    expect(refusalStatus("unknown_creator")).toBe(404);
+    expect(refusalStatus("no_follow")).toBe(403);
   });
 });

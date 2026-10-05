@@ -14,13 +14,33 @@ describe("관리자 크리에이터 확인 읽기 (INV-K10·K8)", () => {
   });
 
   it("INV-K10: 처리 기록 — 승인·취소와 사유", () => {
-    const rows = [{ at: "t", actor_nickname: "라임", creator_id: ID, creator_name: "달무리", action: "revoke", reason: "코드가 사라짐" }];
-    expect(verificationEventsFromRows(rows)).toEqual([{ at: "t", actorNickname: "라임", creatorId: ID, creatorName: "달무리", action: "revoke", reason: "코드가 사라짐" }]);
+    const rows = [
+      { at: "t", actor_nickname: "라임", creator_id: ID, creator_name: "달무리", action: "revoke", reason: "코드가 사라짐", reason_code: "code_removed", method: null, channel_url: null, code: null, application_id: null },
+    ];
+    expect(verificationEventsFromRows(rows)).toEqual([
+      { at: "t", actorNickname: "라임", creatorId: ID, creatorName: "달무리", action: "revoke", reason: "코드가 사라짐", reasonCode: "code_removed", method: null, channelUrl: null, code: null },
+    ]);
+  });
+
+  it("INV-V6·V9·V13: 처리 기록은 반려·닫힘도 읽는다 — 그때의 채널 주소·코드·확인 방법과 함께", () => {
+    const base = { at: "t", actor_nickname: "모아", creator_id: ID, creator_name: "꿀단지", reason: "", method: "code", channel_url: "https://www.youtube.com/@ggul", code: "FK-7H3Q-92" };
+    const rows = [
+      { ...base, action: "reject", reason: "다른 계정과 대조함", reason_code: "code_not_found" },
+      { ...base, action: "close", reason_code: "owner_confirmed_elsewhere" },
+      { ...base, action: "approve", reason_code: null, method: "login", code: null },
+    ];
+    expect(verificationEventsFromRows(rows)?.map((e) => [e.action, e.reasonCode, e.method, e.code])).toEqual([
+      ["reject", "code_not_found", "code", "FK-7H3Q-92"],
+      ["close", "owner_confirmed_elsewhere", "code", "FK-7H3Q-92"],
+      ["approve", null, "login", null],
+    ]);
   });
 
   it("INV-K10 (실패경로): 꼴이 다른 줄이 있으면 null", () => {
     expect(adminCreatorsFromRows(undefined)).toBeNull();
     expect(adminCreatorsFromRows([{ id: ID, verified: "yes" }])).toBeNull();
-    expect(verificationEventsFromRows([{ at: "t", actor_nickname: "라임", creator_id: ID, creator_name: "달무리", action: "reject", reason: "" }])).toBeNull();
+    const ev = { at: "t", actor_nickname: "라임", creator_id: ID, creator_name: "달무리", reason: "", reason_code: null, method: null, channel_url: null, code: null };
+    expect(verificationEventsFromRows([{ ...ev, action: "unknown" }])).toBeNull();
+    expect(verificationEventsFromRows([{ ...ev, action: "approve", method: "phone" }])).toBeNull();
   });
 });

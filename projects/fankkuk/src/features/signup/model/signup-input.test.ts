@@ -31,3 +31,13 @@ describe("INV-U6: 화면의 2단계 미리 보기 — 서버와 같은 규칙", 
     expect(checkDetails({ ...ok, terms: { service: true, privacy: false } })?.field).toBe("terms");
   });
 });
+
+describe("INV-V1: 크리에이터 공개 정보 미리 보기 — 서버와 같은 규칙", () => {
+  const creator = { name: "꿀단지", channelTitle: "꿀단지TV", category: "먹방" };
+  it("INV-V1: 맞는 입력은 통과, 틀린 칸을 알려 준다", () => {
+    expect(checkDetails({ ...ok, creator })).toBeNull();
+    expect(checkDetails({ ...ok, creator: { ...creator, name: " " } })?.field).toBe("creatorName");
+    expect(checkDetails({ ...ok, creator: { ...creator, channelTitle: "가".repeat(41) } })?.field).toBe("channelTitle");
+    expect(checkDetails({ ...ok, creator: { ...creator, category: "가".repeat(21) } })?.field).toBe("category");
+  });
+});

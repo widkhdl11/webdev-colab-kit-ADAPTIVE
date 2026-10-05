@@ -10,7 +10,7 @@ import { consentRows, detailsFieldOf, signupInputSchema, type DetailsField } fro
 // 2) 번호표가 쓸 수 있는지, 확인된 번호가 입력 번호와 같은지 본다(INV-U1·U2). 아니면 로그인 정보를 만들지 않는다.
 //    번호 중복은 이 확인을 통과한 뒤에만 알려 준다(INV-U11).
 // 3) Supabase Auth 에 로그인 정보를 만든다 — 주소는 아이디로 만든 예약 도메인 주소(INV-U8). 이미 있으면 「쓰는 아이디」.
-// 4) create_account 가 프로필·연락처·확인 메일 기록·약관 동의를 한 번에 만들고 번호표를 「씀」으로 바꾼다(INV-U4).
+// 4) create_account(크리에이터면 create_creator_account — 확인 안 된 공개 정보 행까지) 가 프로필·연락처·확인 메일 기록·약관 동의를 한 번에 만들고 번호표를 「씀」으로 바꾼다(INV-U4).
 //    실패하면 3)에서 만든 로그인 정보를 지운다 — 로그인은 되는데 프로필이 없는 계정이 남지 않게.
 // 5) 그 사람으로 로그인해 세션 쿠키를 쓴다. 6) 확인 메일을 보낸다(INV-U7). 5·6 이 실패해도 계정은 그대로 둔다.
 
@@ -88,15 +88,24 @@ export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpRes
 
   let account: Awaited<ReturnType<Rpc>>;
   try {
-    account = await deps.admin.rpc("create_account", {
+    const common = {
       p_user_id: userId,
       p_login_id: input.loginId,
-      p_role: input.role,
       p_email: input.email,
       p_phone: input.phone,
       p_verification_id: input.verificationId,
       p_terms: consentRows(input.terms),
-    });
+    };
+    // creator-verification INV-V1·signup INV-U5: 크리에이터는 계정과 확인 안 된 공개 정보 행을 한 처리에서 만든다
+    account =
+      input.role === "creator" && input.creator
+        ? await deps.admin.rpc("create_creator_account", {
+            ...common,
+            p_name: input.creator.name,
+            p_channel_title: input.creator.channelTitle,
+            p_category: input.creator.category,
+          })
+        : await deps.admin.rpc("create_account", { ...common, p_role: input.role });
   } catch (e) {
     await removeAuthUser(deps, userId);
     throw e;

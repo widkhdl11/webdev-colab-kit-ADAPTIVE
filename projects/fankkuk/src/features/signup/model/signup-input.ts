@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { SIGNUP_LOGIN_ID_PATTERN } from "@/entities/session/model/login-id";
 import { EMAIL_SHAPE } from "@/shared/lib/validation/email-shape";
+import { charCount } from "@/shared/lib/validation/char-count";
 import { MOBILE_PHONE_SHAPE } from "@/shared/lib/validation/phone-shape";
 
 // 가입 입력 경계(INV-U5·U6). 앱 서버가 먼저 검사하고, DB 함수 create_account 가 같은 규칙으로 다시 검사한다.
@@ -38,6 +39,29 @@ const detailsObject = z.object({
   }),
 });
 
+/**
+ * 크리에이터 기본 공개 정보 — 가입 때 받는다(creator-verification INV-V1, 「정한 것」 2026-10-05).
+ * 이름 1~20자 · 채널 이름 1~40자 · 분야 1~20자(앞뒤 공백 뗀 글자 수). DB 함수 create_creator_account 가 같은 기준으로 다시 검사한다.
+ */
+export const CREATOR_PROFILE_LIMITS = { name: 20, channelTitle: 40, category: 20 } as const;
+
+const trimmedWithin = (max: number, message: string) =>
+  z
+    .string()
+    .trim()
+    .refine((s) => charCount(s) >= 1 && charCount(s) <= max, message);
+
+export const creatorProfileSchema = z.object({
+  name: trimmedWithin(CREATOR_PROFILE_LIMITS.name, `공개 이름을 1~${CREATOR_PROFILE_LIMITS.name}자로 적어 주세요.`),
+  channelTitle: trimmedWithin(CREATOR_PROFILE_LIMITS.channelTitle, `채널 이름을 1~${CREATOR_PROFILE_LIMITS.channelTitle}자로 적어 주세요.`),
+  category: trimmedWithin(CREATOR_PROFILE_LIMITS.category, `분야를 1~${CREATOR_PROFILE_LIMITS.category}자로 적어 주세요.`),
+});
+
+export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
+
+const CREATOR_REQUIRED = { message: "크리에이터 정보를 적어 주세요.", path: ["creator", "name"] };
+const creatorWhenCreator = (v: { role?: string; creator?: unknown }) => v.role !== "creator" || v.creator !== undefined;
+
 const passwordNotLoginId = <T extends { loginId: string; password: string }>(v: T) => v.password !== v.loginId;
 const PASSWORD_IS_ID = { message: "비밀번호를 아이디와 다르게 적어 주세요.", path: ["password"] };
 
@@ -45,19 +69,36 @@ export const signupInputSchema = detailsObject
   .extend({
     role: z.enum(["fan", "creator"], { message: "회원 유형을 골라 주세요." }),
     verificationId: verificationIdSchema,
+    // 팬이면 와도 쓰지 않는다(sign-up 이 크리에이터일 때만 넘긴다)
+    creator: creatorProfileSchema.optional(),
   })
-  .refine(passwordNotLoginId, PASSWORD_IS_ID);
+  .refine(passwordNotLoginId, PASSWORD_IS_ID)
+  .refine(creatorWhenCreator, CREATOR_REQUIRED);
 
 export type SignupInput = z.infer<typeof signupInputSchema>;
 
 /** 입력 오류가 가리키는 칸. 서버 응답과 화면이 같은 이름을 쓴다. */
-export type DetailsField = "loginId" | "email" | "password" | "passwordConfirm" | "phone" | "terms";
+export type DetailsField =
+  | "loginId"
+  | "email"
+  | "password"
+  | "passwordConfirm"
+  | "phone"
+  | "terms"
+  | "creatorName"
+  | "channelTitle"
+  | "category";
 
 const DETAILS_FIELDS: readonly string[] = ["loginId", "email", "password", "phone", "terms"];
+const CREATOR_FIELDS: Record<string, DetailsField> = { name: "creatorName", channelTitle: "channelTitle", category: "category" };
 
 /** zod 오류의 첫 칸 이름. 2단계 칸이 아니면 null. */
 export function detailsFieldOf(path: readonly PropertyKey[]): DetailsField | null {
   const head = path[0];
+  if (head === "creator") {
+    const sub = path[1];
+    return typeof sub === "string" ? (CREATOR_FIELDS[sub] ?? "creatorName") : "creatorName";
+  }
   return typeof head === "string" && DETAILS_FIELDS.includes(head) ? (head as DetailsField) : null;
 }
 
@@ -72,8 +113,13 @@ export function checkDetails(v: {
   passwordConfirm: string;
   phone: string;
   terms: { service: boolean; privacy: boolean };
+  /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름·분야(INV-V1) */
+  creator?: { name: string; channelTitle: string; category: string };
 }): { field: DetailsField; message: string } | null {
-  const parsed = detailsObject.refine(passwordNotLoginId, PASSWORD_IS_ID).safeParse(v);
+  const parsed = detailsObject
+    .extend({ creator: creatorProfileSchema.optional() })
+    .refine(passwordNotLoginId, PASSWORD_IS_ID)
+    .safeParse(v);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     return { field: detailsFieldOf(issue?.path ?? []) ?? "loginId", message: issue?.message ?? "입력을 확인해 주세요." };

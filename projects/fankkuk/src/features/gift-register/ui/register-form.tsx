@@ -12,12 +12,16 @@ import { OVERSIZE_RULE, PARCEL_TIER_GUIDE, RETURN_ON_INSPECTION_NOTICE } from "@
 import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
 import { summarizeBoxes } from "../model/box-summary";
+import { movingNotice } from "../model/sender-rule";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
 import f from "./register-form.module.css";
 
 /** 고를 수 있는 크리에이터 한 명. 소개 칸(분야·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
 export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "approvalMinutes"> &
-  Partial<Pick<CreatorCard, "category" | "channelTitle" | "alias">>;
+  Partial<Pick<CreatorCard, "category" | "channelTitle" | "alias">> & {
+    /** 채널 이사 중(creator-verification INV-V12) — 찾기에는 나오지만 지금은 선물을 받지 않는다 */
+    moving?: boolean;
+  };
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const COUNT_FIELD = { small: "smallCount", medium: "mediumCount", large: "largeCount" } as const;
@@ -89,6 +93,7 @@ export function RegisterForm({
     setValue,
     trigger,
     getValues,
+    setError,
     formState: { errors },
   } = useForm<RegisterFormValues, unknown, RegisterFormOutput>({
     resolver: zodResolver(registerFormSchema),
@@ -113,6 +118,12 @@ export function RegisterForm({
   const next = async () => {
     if (step === 4) return;
     const ok = await trigger(STEP_FIELDS[step], { shouldFocus: true });
+    // INV-V12: 채널 이사 중인 크리에이터는 1단계에서 안내하고 넘어가지 않는다(등록은 DB 가 다시 막는다)
+    const moving = step === 1 && ok ? movingNotice(creators.find((c) => c.id === getValues("creatorId"))) : null;
+    if (moving) {
+      setError("creatorId", { message: moving }, { shouldFocus: true });
+      return;
+    }
     if (ok) go((step + 1) as StepNo);
   };
 
@@ -298,7 +309,7 @@ export function RegisterForm({
                         <span className={f["pick-text"]}>
                           <strong>{c.name}</strong>
                           <small>
-                            {[c.category, c.channelTitle ?? c.platform, approvalTimeText(c.approvalMinutes)]
+                            {[c.category, c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : approvalTimeText(c.approvalMinutes)]
                               .filter(Boolean)
                               .join(" · ")}
                           </small>

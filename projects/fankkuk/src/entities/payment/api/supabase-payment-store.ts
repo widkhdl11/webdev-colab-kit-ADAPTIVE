@@ -74,6 +74,8 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
       if (error?.code === "P0011") throw new SenderRefusedError("self");
       if (error?.code === "P0012") throw new SenderRefusedError("no_follow");
       if (error?.code === "42501") throw new SenderRefusedError("role");
+      // creator-verification INV-V12: 받는 크리에이터가 채널 이사 중
+      if (error?.code === "FKV10") throw new SenderRefusedError("moving");
       // 22023 은 상자 수 경계와 같이 쓰지만 상자 수는 입력 검사가 먼저 막는다 — 남는 것은 받을 수 없는 크리에이터다
       if (error?.code === "22023" && error.message.includes("받을 수 없는 크리에이터")) throw new SenderRefusedError("unknown_creator");
       if (error) throw new Error(`선물을 등록하지 못했다: ${error.code}`);

@@ -80,8 +80,13 @@ const profileCount = (loginId: string) => psql(`select count(*) from public.prof
 const authCount = (loginId: string) => psql(`select count(*) from auth.users where email = '${loginId}@login.fankkuk.invalid';`);
 const usedAt = (vid: string) => psql(`select coalesce(used_at::text, '') from pii.phone_verifications where id = '${vid}';`);
 
-beforeEach(deleteTestSignups);
-afterAll(deleteTestSignups);
+// 크리에이터 가입이 만든 공개 정보 행을 먼저 지운다(계정을 지우기 전에)
+function cleanup(): void {
+  psql(`delete from public.creators where profile_id in (select id from public.profiles where login_id = 'it_lima')`);
+  deleteTestSignups();
+}
+beforeEach(cleanup);
+afterAll(cleanup);
 
 describe("INV-U1: 서버가 확인한 번호로만 계정이 생긴다", () => {
   it("INV-U1 (S1): 가입 한 바퀴 — 계정·연락처 번호·약관 동의가 생기고, 그 아이디로 로그인된다", async () => {
@@ -270,13 +275,19 @@ describe("INV-U5·U6: 역할과 입력 경계는 DB 도 다시 본다", () => {
     expect(usedAt(vid)).toBe("");
   });
 
-  it("INV-U5 (S5b): 크리에이터로 가입해도 크리에이터 찾기에 나오지 않는다", async () => {
+  it("INV-U5 (S5b)·creator-verification INV-V1: 크리에이터로 가입하면 확인 안 된 공개 정보 행이 생기고, 크리에이터 찾기에는 나오지 않는다", async () => {
     const p = phone();
-    expect((await signUp(signUpDeps(), signupBody("it_lima", p, await verified(p), { role: "creator" }))).ok).toBe(true);
+    const creator = { name: "리마시험", channelTitle: "리마 채널", category: "시험" };
+    expect((await signUp(signUpDeps(), signupBody("it_lima", p, await verified(p), { role: "creator", creator }))).ok).toBe(true);
     expect(psql(`select role from public.profiles where login_id = 'it_lima';`)).toBe("creator");
     const listed = (await anonClient().rpc("list_creators")).data as { name?: string; slug?: string }[] | null;
     expect(JSON.stringify(listed ?? [])).not.toContain("it_lima");
-    expect(psql(`select count(*) from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_lima';`)).toBe("0");
+    expect(JSON.stringify(listed ?? [])).not.toContain("리마시험");
+    expect(
+      psql(
+        `select c.name || '|' || c.channel_title || '|' || c.category || '|' || c.identity_verified || '|' || coalesce(c.channel_url, '-') from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_lima';`,
+      ),
+    ).toBe("리마시험|리마 채널|시험|false|-");
   });
 
   it("INV-U6 (S6, 실패경로): 필수 약관이 빠지거나 아이디 꼴이 틀리면 DB 가 거부", async () => {

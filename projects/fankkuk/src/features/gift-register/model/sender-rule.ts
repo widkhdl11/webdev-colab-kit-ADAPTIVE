@@ -8,7 +8,8 @@ import type { ViewerRole } from "@/entities/session/model/viewer";
 /** 보내는 크리에이터와 받는 크리에이터 사이. 팬이 보낼 때는 읽지 않는다. */
 export type CreatorRelation = { receiverIsSelf: boolean; followEitherWay: boolean };
 
-export type SenderRefusal = "role" | "self" | "no_follow" | "unknown_creator";
+/** moving = 받는 크리에이터가 채널 이사 중(creator-verification INV-V12) — DB 등록 함수만 판정한다(화면은 안내만). */
+export type SenderRefusal = "role" | "self" | "no_follow" | "unknown_creator" | "moving";
 export type SenderVerdict = { ok: true } | { ok: false; reason: SenderRefusal };
 
 /** 역할만으로 정해지는 부분. 크리에이터면 관계를 더 봐야 한다(needsRelation). */
@@ -35,11 +36,21 @@ export const SENDER_REFUSAL_MESSAGE: Record<SenderRefusal, string> = {
   self: "자기 자신에게는 선물을 보낼 수 없어요.",
   no_follow: "서로 팔로우하거나 한쪽이라도 팔로우한 크리에이터에게만 선물을 보낼 수 있어요.",
   unknown_creator: "선물을 받을 수 없는 크리에이터예요.",
+  moving: "채널을 옮기는 중인 크리에이터라 지금은 선물을 받을 수 없어요. 채널 확인이 끝나면 다시 보내 주세요.",
 };
 
-/** 거부 응답 상태 — 없는(또는 본인 확인 전) 크리에이터는 404, 나머지는 403. */
-export function refusalStatus(reason: SenderRefusal): 403 | 404 {
+/** 거부 응답 상태 — 없는(또는 본인 확인 전) 크리에이터는 404, 채널 이사 중은 409(때가 지나면 풀린다), 나머지는 403. */
+export function refusalStatus(reason: SenderRefusal): 403 | 404 | 409 {
+  if (reason === "moving") return 409;
   return reason === "unknown_creator" ? 404 : 403;
+}
+
+/**
+ * INV-V12: 고른 크리에이터가 채널 이사 중이면 1단계에서 넘어가지 못하게 할 안내 문구. 아니면 null.
+ * 화면 안내일 뿐이다 — 등록은 DB 등록 함수가 같은 처리 안에서 다시 판정한다(화면을 연 뒤 이사가 시작돼도 막힌다).
+ */
+export function movingNotice(picked: { moving?: boolean } | undefined): string | null {
+  return picked?.moving ? SENDER_REFUSAL_MESSAGE.moving : null;
 }
 
 // ── 화면 표시용 (판정은 등록 때 서버·DB 가 다시 한다) ─────────────

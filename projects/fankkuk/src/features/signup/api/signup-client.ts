@@ -10,11 +10,25 @@ export type SignupBody = {
   password: string;
   phone: string;
   terms: { service: boolean; privacy: boolean; news: boolean };
+  /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름·분야 */
+  creator?: { name: string; channelTitle: string; category: string };
 };
 
 const FALLBACK = "잠시 문제가 생겼어요. 조금 뒤 다시 해 주세요.";
 
-const FIELDS: readonly SignUpField[] = ["verification", "loginId", "email", "password", "passwordConfirm", "phone", "terms", "form"];
+const FIELDS: readonly SignUpField[] = [
+  "verification",
+  "loginId",
+  "email",
+  "password",
+  "passwordConfirm",
+  "phone",
+  "terms",
+  "creatorName",
+  "channelTitle",
+  "category",
+  "form",
+];
 
 async function post(url: string, body: unknown): Promise<{ status: number; data: Record<string, unknown> | null }> {
   const res = await fetch(url, {
