@@ -1,9 +1,10 @@
-// 승인 요청 화면 안에서의 결정 상태. 받지 않기는 서버에 저장한 뒤에 여기 적는다(decline-block).
-// 승인 버튼의 결과는 아직 "서명 대기"(signing) 표시뿐이다 — 승인은 서명이 서버 검증을 통과했을 때만 일어난다(INV-S7).
+// 승인 요청 화면 안에서의 결정 상태. 받지 않기와 승인은 서버에 저장한 뒤에 여기 적는다(decline-block · approval-signature INV-S11).
+// signing(서명 대기)은 실제 카카오 서명이 붙으면 쓰는 자리다 — 서명이 서버 검증을 통과했을 때만 승인된다(INV-S7).
 
 export type LocalDecision =
   | { kind: "pending" }
   | { kind: "signing" }
+  | { kind: "approved" }
   | { kind: "declined"; blocked: boolean }
   | { kind: "blocked_elsewhere" }; // 같은 팬의 다른 요청을 거절하며 차단했다
 

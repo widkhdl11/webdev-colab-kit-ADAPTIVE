@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { adminClient, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
+import { adminClient, approveRpc, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
 import { payTestRevgift, PROFILE, registerTestRevgift } from "./revgift-helpers";
 
 // 사무실 작업 흐름 통합 시험 공용 (office-workflow INV-W1~W8).
@@ -44,7 +44,7 @@ export async function creatorSetsWaybill(shareId: string, no: string): Promise<v
 }
 
 export async function approve(unit: Unit): Promise<void> {
-  const r = await adminClient().rpc("approve_request", { p_request_id: unit.requestId });
+  const r = await approveRpc(unit.requestId);
   if (r.error || r.data !== "approved") throw new Error(`approve_request 실패: ${r.error?.message ?? String(r.data)}`);
 }
 

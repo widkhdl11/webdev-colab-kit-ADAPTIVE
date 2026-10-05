@@ -89,6 +89,8 @@ export function deleteTestOrders(): void {
       `delete from public.decrypt_log where order_id in (${ids});`,
       // 사무실 작업 기록(검수·파쇄·라벨)은 추가만 되는 표라 같은 자리에서 지운다(INV-W4·W8)
       ...officeRowsDelete(`select id from public.boxes where order_id in (${ids})`, "box_id"),
+      // 승인 서명도 추가만 되는 표다(approval-signature INV-S12)
+      `delete from public.approval_signatures where request_id in (select request_id from public.approval_requests where order_id in (${ids}));`,
       "set local session_replication_role = origin;",
       `delete from public.approval_requests where order_id in (${ids});`,
       `delete from public.refunds where payment_id in (select id from public.payments where order_id in (${ids}));`,
@@ -194,4 +196,30 @@ export async function payTestOrder(o: { orderNo: string; tossOrderId: string }):
   });
   if (error) throw new Error(`settle_payment 실패: ${error.message}`);
   return requestId;
+}
+
+/**
+ * 그 주문의 크리에이터로, 가짜 서명(원문 그대로·서명자 fake:<크리에이터 계정>)을 붙여 승인 함수를 부른다(approval-signature INV-S11·S12).
+ * 크리에이터 계정이 없는 요청이면 actor 가 비어 not_found 가 돌아온다.
+ */
+export function approveArgs(requestId: string): { p_request_id: string; p_actor_id: string | null; p_signed_content: string; p_signer_id: string; p_method: string } {
+  const row = psql(
+    `select coalesce(c.profile_id::text, '') || '|' || q.payload from public.approval_requests q join public.orders o on o.id = q.order_id join public.creators c on c.id = o.creator_id where q.request_id = '${requestId}'`,
+  );
+  const cut = row.indexOf("|");
+  const actor = cut < 0 ? "" : row.slice(0, cut);
+  const payload = cut < 0 ? "" : row.slice(cut + 1);
+  return { p_request_id: requestId, p_actor_id: actor || null, p_signed_content: payload, p_signer_id: `fake:${actor}`, p_method: "fake" };
+}
+
+/** approveArgs 로 승인 함수를 부른다. 결과는 rpc 응답 그대로. */
+export function approveRpc(requestId: string) {
+  return adminClient().rpc("approve_request", approveArgs(requestId));
+}
+
+/** 같은 호출을 SQL 한 문장으로(다른 연결에서 잠금을 쥔 채 부를 때). */
+export function approveSql(requestId: string): string {
+  const a = approveArgs(requestId);
+  const q = (v: string) => `'${v.replace(/'/g, "''")}'`;
+  return `select public.approve_request(${q(a.p_request_id)}, ${a.p_actor_id ? q(a.p_actor_id) + "::uuid" : "null"}, ${q(a.p_signed_content)}, ${q(a.p_signer_id)}, 'fake')`;
 }

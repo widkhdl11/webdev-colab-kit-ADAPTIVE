@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adminClient, anonClient, payTestOrder, psql, registerTestOrder, SEED, signedInClient } from "./helpers";
+import { SEED, adminClient, anonClient, approveRpc, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
 
 // 크리에이터 열람 기록 읽기(my_access_log) — 주소 보호 스펙 INV-P7(크리에이터는 자기 주문의 기록 전부를 본다)·
 // INV-P5(2회째부터 「재출력」). 기록 줄은 복호화 전용 역할로 넣는다 — 앱 서버 키로는 쓸 수 없다.
@@ -141,7 +141,7 @@ describe("열람 기록 화면의 「이번 달」 숫자 (my_access_month_summa
 
     const o = await registerTestOrder();
     const requestId = await payTestOrder(o);
-    const approved = await adminClient().rpc("approve_request", { p_request_id: requestId });
+    const approved = await approveRpc(requestId);
     expect(approved.data).toBe("approved");
 
     expect((await readSummary("haru_creator")).approved_count).toBe(before.approved_count + 1);

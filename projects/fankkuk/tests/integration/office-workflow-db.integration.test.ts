@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { adminClient, anonClient, deleteTestOrders, holdRowLock, psql, signedInClient } from "./helpers";
+import { adminClient, anonClient, approveRpc, deleteTestOrders, holdRowLock, psql, signedInClient } from "./helpers";
 import {
   approve,
   creatorSetsWaybill,
@@ -496,7 +496,7 @@ describe("7일 자동 처리 (INV-W6)", () => {
   it("INV-W6 (실패경로): 기한이 지난 뒤에는 자동 처리 전이라도 승인이 거부된다", async () => {
     const g = await paidGift();
     backdateGift(g.orderId, "168 hours 1 minute");
-    const r = await adminClient().rpc("approve_request", { p_request_id: g.requestId });
+    const r = await approveRpc(g.requestId);
     expect(r.data).not.toBe("approved");
     expect(psql(`select approved_at is null from public.orders where id = '${g.orderId}'`)).toBe("t");
   });
@@ -506,7 +506,7 @@ describe("7일 자동 처리 (INV-W6)", () => {
       const g = await paidGift();
       backdateGift(g.orderId, "167 hours 59 minutes 59.9 seconds");
       const staff = await signedInClient("fankkuk_staff");
-      await Promise.all([adminClient().rpc("approve_request", { p_request_id: g.requestId }), staff.rpc("office_run_expiry")]);
+      await Promise.all([approveRpc(g.requestId), staff.rpc("office_run_expiry")]);
       const both = psql(`select (approved_at is not null) || '/' || status from public.orders where id = '${g.orderId}'`);
       const req = requestStatus(g.requestId);
       expect([

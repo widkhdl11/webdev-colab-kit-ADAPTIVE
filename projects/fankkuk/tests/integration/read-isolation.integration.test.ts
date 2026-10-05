@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adminClient, anonClient, payTestOrder, registerTestOrder, signedInClient } from "./helpers";
+import { adminClient, anonClient, approveArgs, payTestOrder, registerTestOrder, signedInClient } from "./helpers";
 
 // 카드 d9 완료 조건: 화면은 표를 직접 읽지 못하고, 읽기 함수는 로그인한 사람의 것만 돌려준다.
 
@@ -81,7 +81,7 @@ describe("읽기 함수는 로그인한 사람의 것만 돌려준다", () => {
         const r = await client.from(t).select("*").limit(1);
         expect(r.error?.code, t).toBe("42501");
       }
-      const w = await client.rpc("approve_request", { p_request_id: "apr_FCP4X7N" });
+      const w = await client.rpc("approve_request", approveArgs("apr_FCP4X7N"));
       expect(w.error?.code).toBe("42501");
       const c = await client.rpc("claim_payment", { p_toss_order_id: "pay_seed_fcp4x7n" });
       expect(c.error?.code).toBe("42501");

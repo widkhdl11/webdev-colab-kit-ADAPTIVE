@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { adminClient, deleteTestBlocks, deleteTestOrders, holdRowLock, payTestOrder, psql, registerTestOrder, SEED, signedInClient } from "./helpers";
+import { SEED, adminClient, approveRpc, approveSql, deleteTestBlocks, deleteTestOrders, holdRowLock, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
 import { approve, FAN_PASS, inspect, orderStatus, parcelState, receiveAndLabel, waybill, type Unit } from "./office-helpers";
 
 // 거절·팬 차단 스펙(docs/specs/decline-block.md) 중 DB 가 지키는 것.
@@ -224,7 +224,7 @@ describe("INV-D3: 거절은 요청·주문·상자를 한 처리에서 바꾸고
     const qr = await inspectedBox(g);
     expect(await decline(haru, g.requestId)).toBe("declined");
 
-    expect((await adminClient().rpc("approve_request", { p_request_id: g.requestId })).data).toBe("not_approvable");
+    expect((await approveRpc(g.requestId)).data).toBe("not_approvable");
     const mine = await fan.rpc("my_gift", { p_order_no: g.orderNo });
     expect(mine.data).toHaveLength(1);
     expect(mine.data[0].status).toBe("rejected");
@@ -257,7 +257,7 @@ describe("INV-D4: 한 승인 요청은 한 번만 결정된다", () => {
     const hold = await holdRowLock(`select 1 from public.approval_requests where request_id = '${g.requestId}' for update`, 1.5);
     const t0 = Date.now();
     const [a, d] = await Promise.all([
-      adminClient().rpc("approve_request", { p_request_id: g.requestId }).then((r) => ({ data: r.data as unknown, ms: Date.now() - t0 })),
+      approveRpc(g.requestId).then((r) => ({ data: r.data as unknown, ms: Date.now() - t0 })),
       haru
         .rpc("decline_gift", { p_request_id: g.requestId, p_block: false })
         .then((r) => ({ data: (r.data as DeclineReply | null)?.result, error: r.error, ms: Date.now() - t0 })),
@@ -306,7 +306,7 @@ describe("INV-D4: 한 승인 요청은 한 번만 결정된다", () => {
     expect(await decline(haru, g.requestId)).toBe("declined");
     const before = [requestRow(g.requestId), orderRow(g.orderId)];
     expect(await decline(haru, g.requestId, true)).toBe("already");
-    expect((await adminClient().rpc("approve_request", { p_request_id: g.requestId })).data).toBe("not_approvable");
+    expect((await approveRpc(g.requestId)).data).toBe("not_approvable");
     expect([requestRow(g.requestId), orderRow(g.orderId)]).toEqual(before);
     expect(activeBlocks()).toEqual([]);
   });
@@ -588,7 +588,7 @@ describe("INV-D8: 차단하면 그 팬의 아직 승인하지 않은 진행 중 
     const racingQr = await inspectedBox(racing);
     const trigger = await giftFrom();
     // 다른 연결이 승인 함수를 부르고 끝내기 전에 멈춘다(요청 줄·주문 줄을 쥔 채) — 차단은 이 주문을 후보로 고른 뒤 잠금에서 기다린다
-    const hold = await holdRowLock(`select public.approve_request('${racing.requestId}')`, 1.5);
+    const hold = await holdRowLock(approveSql(racing.requestId), 1.5);
     const t0 = Date.now();
     const reply = await declineFull(haru, trigger.requestId, true);
     expect(Date.now() - t0).toBeGreaterThan(900);

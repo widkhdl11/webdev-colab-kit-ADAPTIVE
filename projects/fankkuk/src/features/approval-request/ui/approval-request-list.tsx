@@ -11,12 +11,14 @@ import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
+import { sendApprove } from "../api/send-approve";
 import { sendDecline } from "../api/send-decline";
 import { applyDecision, type LocalDecision } from "../model/local-decision";
 import a from "./approval-request.module.css";
 
 // 크리에이터 승인 요청 목록(시안 v4 creator-requests.html).
-// 받지 않기(+차단)는 서버에 저장한다(decline-block). 승인 버튼은 아직 서명 대기 표시까지다 — 서버에 보내지 않는다.
+// 받지 않기(+차단)는 서버에 저장한다(decline-block). 승인도 서버에 보낸다 — 카카오 연결 전에는 로컬에서만 가짜 서명 창구가
+// 서명을 대신하고(INV-S11, 카드 d28), 운영에서는 서버가 거부한다. 저장된 뒤에만 그 줄을 「승인함」으로 바꾼다.
 //
 // 승인 버튼은 승인하지 않는다. 카카오톡 인증서 서명 요청을 보내는 것까지이고, 승인은 서명이
 // 서버 검증을 통과했을 때만 일어난다(INV-S7: 승인 상태를 바꾸는 경로는 서명 검증을 통과한 승인 처리 하나뿐).
@@ -91,6 +93,7 @@ export function ApprovalRequestList({
   const [block, setBlock] = useState(false);
   const [saving, setSaving] = useState(false);
   const [declineError, setDeclineError] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("wait");
   const tabRefs = useRef(new Map<TabKey, HTMLButtonElement>());
 
@@ -128,6 +131,24 @@ export function ApprovalRequestList({
       return;
     }
     setDeclineError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
+  };
+  // 서명 창구를 거쳐 서버가 승인을 저장한 뒤에만 화면을 바꾼다. 실패하면 창을 닫지 않고 이유를 보인다.
+  const confirmApprove = async (req: ApprovalRequestView) => {
+    if (saving) return;
+    setSaving(true);
+    setApproveError(null);
+    const r = await sendApprove(req.requestId);
+    setSaving(false);
+    if (r.kind === "ok") {
+      decide(req, { kind: "approved" });
+      router.refresh();
+      return;
+    }
+    if (r.kind === "login") {
+      router.push("/login");
+      return;
+    }
+    setApproveError(r.kind === "refused" ? r.message : "승인하지 못했어요. 잠시 뒤 다시 해 주세요.");
   };
   const cancelSigning = (req: ApprovalRequestView) => {
     setStates((prev) => ({ ...prev, [req.orderNo]: { kind: "pending" } }));
@@ -228,7 +249,9 @@ export function ApprovalRequestList({
                         tabIndex={-1}
                         className={a.result}
                       >
-                        {st.kind === "blocked_elsewhere"
+                        {st.kind === "approved"
+                          ? "승인했어요. 검수를 마치면 출고돼요"
+                          : st.kind === "blocked_elsewhere"
                           ? `${r.fanNickname}님을 차단해서 이 선물도 받지 않아요`
                           : st.blocked
                             ? `받지 않기로 했어요. ${r.fanNickname}님의 선물은 앞으로 등록되지 않아요`
@@ -246,7 +269,10 @@ export function ApprovalRequestList({
                         }}
                         className="btn btn--kakao"
                         type="button"
-                        onClick={() => setSheet({ kind: "approve", req: r })}
+                        onClick={() => {
+                          setApproveError(null);
+                          setSheet({ kind: "approve", req: r });
+                        }}
                       >
                         <KakaoBubble />
                         카카오톡으로 승인
@@ -270,7 +296,9 @@ export function ApprovalRequestList({
                       </button>
                     </div>
                   ) : (
-                    <span className={`tag ${a["done-tag"]}`}>{st.kind === "declined" && !st.blocked ? "받지 않음" : "차단함"}</span>
+                    <span className={`tag ${st.kind === "approved" ? "tag--brand" : ""} ${a["done-tag"]}`}>
+                      {st.kind === "approved" ? "승인함" : st.kind === "declined" && !st.blocked ? "받지 않음" : "차단함"}
+                    </span>
                   )}
                 </li>
               );
@@ -316,11 +344,19 @@ export function ApprovalRequestList({
               승인이 끝나요.
             </p>
             <p className={`sub ${a.reason}`}>승인한 선물만 송장을 출력할 때 주소가 열리고, 그 기록은 열람 기록에서 볼 수 있어요.</p>
+            {approveError ? (
+              <p className={a.error} role="alert">
+                <span className={a["error-mark"]} aria-hidden="true">
+                  !
+                </span>
+                {approveError}
+              </p>
+            ) : null}
             <div className={a["sheet-btns"]}>
               <button className="btn btn--soft" type="button" onClick={() => setSheet(null)}>
                 돌아가기
               </button>
-              <button className="btn btn--kakao" type="button" onClick={() => decide(sheet.req, { kind: "signing" })}>
+              <button className="btn btn--kakao" type="button" disabled={saving} onClick={() => void confirmApprove(sheet.req)}>
                 <KakaoBubble />
                 서명 요청 보내기
               </button>
