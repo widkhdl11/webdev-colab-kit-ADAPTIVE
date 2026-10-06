@@ -120,7 +120,8 @@ span.search-go:hover { background: var(--brand); }
 
 /* 10 입력 */
 .field label, .field .label { display: block; margin-bottom: 8px; font-weight: 600; }
-.input { display: block; width: 100%; height: 56px; padding: 0 20px; border: 0; border-radius: var(--r-btn); background: var(--surface); box-shadow: var(--field); font-size: 17px; }
+.input { display: block; width: 100%; height: 56px; padding: 0 20px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: 17px; }
+.input::placeholder { color: var(--faint); opacity: 1; }
 .input:focus { outline: 3px solid var(--ink); outline-offset: 2px; }
 .hint { margin-top: 8px; color: var(--sub); }
 

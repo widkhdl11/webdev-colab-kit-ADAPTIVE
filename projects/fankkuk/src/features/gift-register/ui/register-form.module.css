@@ -39,7 +39,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .pick-list { display: grid; gap: 4px; max-height: 328px; overflow-y: auto; margin: 0; padding: 8px 12px 12px; }
 .pick { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px; border-radius: var(--r-box); cursor: pointer; }
 .pick:hover { background: var(--surface); }
-.pick:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 2px var(--brand); }
+.pick:has(input:checked) { background: var(--surface-hover); box-shadow: inset 0 0 0 2px var(--brand); }
 .pick:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
 .pick input { width: 24px; height: 24px; accent-color: var(--brand); flex-shrink: 0; margin: 0; }
 .pick input:focus-visible { outline: none; }

@@ -26,7 +26,6 @@
 .finder { margin-top: 16px; padding: 24px; border-radius: var(--r-card); background: var(--surface); }
 .finder-q { font-size: 18px; font-weight: 700; }
 .finder form { display: grid; gap: 16px; margin-top: 20px; }
-.finder :global(.input) { background: var(--white); }
 .finder-none { margin-top: 8px; color: var(--sub); }
 .result { margin-top: 16px; padding: 16px 20px; border-radius: var(--r-box); background: var(--white); }
 .result:focus { outline: 3px solid var(--ink); outline-offset: 2px; }

@@ -1,6 +1,5 @@
 /* 내 정보 안에서 펼치는 번호 바꾸기 칸. 비밀번호 변경 칸(features/password-change)과 같은 모양 */
 .panel { display: grid; gap: 16px; margin-top: 16px; padding: 20px; border-radius: var(--r-box); background: var(--surface); }
-.panel :global(.input) { background: var(--white); }
 .msg { margin: 0; font-weight: 700; }
 .error { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: var(--ink); font-weight: 700; }
 .error::before { content: "!"; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
