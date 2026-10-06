@@ -23,6 +23,16 @@ export function formatDate(isoOrDate: string): string {
   return `${get("month")} ${get("day")}일 (${get("weekday")})`;
 }
 
+const deadline = new Intl.DateTimeFormat("ko-KR", { timeZone: TZ, month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", hour12: true });
+
+/** "10월 8일 오전 10시" / "10월 8일 오후 3시 30분" — 알림 본문의 기한처럼 문장 안에 넣는 시각 */
+export function formatDeadline(iso: string): string {
+  const parts = deadline.formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const minute = Number(get("minute"));
+  return `${get("month")}월 ${get("day")}일 ${get("dayPeriod")} ${get("hour")}시${minute ? ` ${minute}분` : ""}`;
+}
+
 /** 분 → "약 40분" / "약 3시간" / "약 2일" */
 export function formatDuration(minutes: number): string {
   // 반올림한 뒤 단위를 고른다 — 먼저 고르면 59.6분이 「약 60분」이 된다

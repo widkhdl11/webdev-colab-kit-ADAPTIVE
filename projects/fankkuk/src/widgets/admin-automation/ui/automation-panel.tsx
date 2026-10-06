@@ -1,4 +1,5 @@
 import { dueUrgency, remainingText, type ExpiryCategory, type ExpiryDue } from "@/entities/parcel/model/office-lists";
+import { SendNotificationsButton } from "@/features/notification-dispatch/ui/send-notifications-button";
 import { RunExpiryButton } from "@/features/office-expiry-run/ui/run-expiry-button";
 import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
@@ -50,6 +51,15 @@ export function AutomationPanel({ rows, now }: Props) {
       </div>
 
       <div className={a.stack}>
+        <section aria-labelledby="auto-notifications">
+          <div className={a.sectionH}>
+            <h2 id="auto-notifications">알림 보내기</h2>
+          </div>
+          <p className={a.hint} style={{ margin: "-4px 0 8px" }}>
+            선물 단계가 바뀔 때 쌓인 알림을 보내요. 72시간 지난 승인 요청 재알림도 이때 만들어져요.
+          </p>
+          <SendNotificationsButton />
+        </section>
         {SECTIONS.map((s) => {
           const list = rows.filter((r) => r.category === s.category);
           const headId = `auto-${s.category}`;
