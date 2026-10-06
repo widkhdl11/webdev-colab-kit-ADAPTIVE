@@ -215,13 +215,15 @@ export function CreatorSettingsPage({
             <div className={s["s-head"]}>
               <h3 id="alarm-h">알림 받기</h3>
             </div>
-            <Switch
-              id="sw-a1"
-              title="새 승인 요청"
-              desc="팬이 선물을 등록하면 카카오톡으로 알려드려요."
-              checked={notify.newRequest}
-              onChange={(v) => setNotify((n) => ({ ...n, newRequest: v }))}
-            />
+            {/* 승인 요청과 그 재알림은 꼭 가는 알림이라 끄는 스위치를 두지 않는다(notifications INV-N6, 결정 d33 ②) */}
+            <div className={s["switch-row"]}>
+              <div className={s.txt}>
+                <strong>새 승인 요청</strong>
+                <span className="sub">
+                  팬이 선물을 보내면 알려드려요. 놓치면 {APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려되기 때문에, 승인 요청은 알림을 꺼 두어도 가요.
+                </span>
+              </div>
+            </div>
             <Switch
               id="sw-a2"
               title="자동 반려 하루 전"

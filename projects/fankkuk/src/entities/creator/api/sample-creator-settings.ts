@@ -6,7 +6,7 @@ export type CreatorSettingsView = {
   channelTitle: string;
   verifiedAt: string | null;
   visibleInSearch: boolean;
-  notify: { newRequest: boolean; expiringSoon: boolean; addressOpened: boolean };
+  notify: { expiringSoon: boolean; addressOpened: boolean };
 };
 
 /** 예시 크리에이터(하루)의 설정. */
@@ -15,5 +15,5 @@ export const SAMPLE_CREATOR_SETTINGS: CreatorSettingsView = {
   channelTitle: "하루의 놀이터",
   verifiedAt: "2026-09-02T03:00:00.000Z",
   visibleInSearch: true,
-  notify: { newRequest: true, expiringSoon: true, addressOpened: true },
+  notify: { expiringSoon: true, addressOpened: true },
 };

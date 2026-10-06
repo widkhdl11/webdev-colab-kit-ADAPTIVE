@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import a from "@/shared/ui/admin.module.css";
 import { postDispatch, type DispatchCountsView } from "../api/post-dispatch-client";
@@ -16,6 +17,7 @@ function summary(c: DispatchCountsView): string {
 }
 
 export function SendNotificationsButton() {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -26,6 +28,8 @@ export function SendNotificationsButton() {
     const outcome = await postDispatch();
     setBusy(false);
     setMessage(outcome.kind === "ok" ? { ok: true, text: summary(outcome.counts) } : { ok: false, text: outcome.message });
+    // 보내지 못한 알림 목록을 새로 읽는다
+    router.refresh();
   }
 
   return (

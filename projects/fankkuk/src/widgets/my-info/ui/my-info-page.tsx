@@ -157,7 +157,7 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
               <input type="checkbox" name="notifyEmail" defaultChecked={account.notifyEmail} />
               이메일로 받기
             </label>
-            <p className={`hint ${s["hint-tight"]}`}>승인 결과, 입고, 출고, 배송 완료 소식을 보내 드려요.</p>
+            <p className={`hint ${s["hint-tight"]}`}>보낸 선물이 사무실에 도착하고, 검수를 마치고, 크리에이터에게 출발할 때 알려 드려요.</p>
           </div>
         </div>
       </div>
