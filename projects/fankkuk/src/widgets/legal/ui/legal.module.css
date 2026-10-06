@@ -1,0 +1,53 @@
+/* 이용약관·개인정보처리방침 공용. 값은 공지사항(notices.module.css)·고객센터(support.module.css) 시안 값을 그대로 옮겼다. */
+
+/* 제목 줄 + 오른쪽 아이콘 칸 */
+.lead { margin-top: 8px; max-width: 760px; }
+.facts { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 16px; }
+.facts div { display: flex; gap: 8px; }
+.facts dt { color: var(--sub); }
+.facts dd { font-weight: 600; }
+.tile-ico { display: grid; place-items: center; width: 104px; height: 104px; border-radius: var(--r-tile); background: var(--surface); flex-shrink: 0; align-self: flex-start; }
+.tile-ico img { width: 72px; height: 72px; }
+
+/* 목차 + 본문 */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; align-items: start; }
+.toc { padding: 24px; border-radius: var(--r-tile); background: var(--surface); }
+.toc-h { font-size: 18px; font-weight: 700; }
+.toc ol { display: grid; gap: 2px; margin-top: 8px; }
+.toc a { display: flex; align-items: center; min-height: 44px; padding-block: 6px; color: var(--sub); text-decoration: none; }
+.toc a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+
+.body { display: grid; gap: 48px; min-width: 0; max-width: 760px; }
+/* 위에 붙어 있는 헤더(72px)에 제목이 가리지 않게 */
+.sec { display: grid; gap: 12px; scroll-margin-top: 96px; }
+.sec h2 { margin-bottom: 4px; font-size: 24px; line-height: 1.4; letter-spacing: -.5px; }
+
+.dots { display: grid; gap: 8px; }
+.dots li { display: flex; gap: 12px; }
+.dots li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+
+.steps { display: grid; gap: 8px; counter-reset: step; }
+.steps li { display: flex; gap: 12px; counter-increment: step; }
+.steps li::before { content: counter(step) "."; min-width: 20px; font-weight: 700; color: var(--brand); flex-shrink: 0; }
+
+/* 이름·값 줄 묶음 — 고객센터 연락처 칸의 dl 과 같은 줄 모양 */
+.rows { border-top: 1px solid var(--divider); }
+.row { padding-block: 16px; border-bottom: 1px solid var(--divider); }
+.row-t { font-size: inherit; font-weight: 700; }
+.row dl { display: grid; gap: 4px; margin-top: 8px; }
+.row dl div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; }
+.row dt { color: var(--sub); }
+
+@media (min-width: 1024px) {
+  .layout { grid-template-columns: 264px minmax(0, 1fr); gap: 64px; }
+  .toc { position: sticky; top: 96px; max-height: calc(100dvh - 120px); overflow-y: auto; }
+}
+
+@media (max-width: 767px) {
+  .tile-ico { width: 72px; height: 72px; border-radius: var(--r-card); }
+  .tile-ico img { width: 48px; height: 48px; }
+  .toc { padding: 20px; border-radius: var(--r-card); }
+  .body { gap: 40px; }
+  .sec h2 { font-size: 22px; }
+  .row dl div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}

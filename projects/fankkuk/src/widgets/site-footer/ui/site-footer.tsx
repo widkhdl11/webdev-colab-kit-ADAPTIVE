@@ -31,8 +31,8 @@ export function SiteFooter() {
             </dl>
           </div>
           <nav className="footer-links" aria-label="서비스 정책">
-            <a href="#">이용약관</a>
-            <a href="#">개인정보처리방침</a>
+            <Link href="/terms">이용약관</Link>
+            <Link href="/privacy">개인정보처리방침</Link>
             <Link href="/support">고객센터</Link>
             <Link href="/about">팬꾹 소개</Link>
           </nav>

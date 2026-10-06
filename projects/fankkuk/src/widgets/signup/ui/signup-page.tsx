@@ -21,10 +21,10 @@ type TermKey = "service" | "privacy" | "news";
 type Role = "fan" | "creator";
 type ErrorField = DetailsField | "verification" | "form";
 
-// 약관 전문 화면이 아직 없다 — href 가 없는 항목의 「보기」는 링크가 아니라 흐린 글자로 둔다. 전문이 생기면 href 만 채운다.
+// href 가 없는 항목(선택 동의)의 「보기」는 링크가 아니라 흐린 글자로 둔다. 전문 화면이 생기면 href 만 채운다.
 const TERMS: ReadonlyArray<{ key: TermKey; label: string; required: boolean; href?: string }> = [
-  { key: "service", label: "이용약관", required: true },
-  { key: "privacy", label: "개인정보 수집·이용", required: true },
+  { key: "service", label: "이용약관", required: true, href: "/terms" },
+  { key: "privacy", label: "개인정보 수집·이용", required: true, href: "/privacy" },
   { key: "news", label: "이벤트·소식 알림 받기", required: false },
 ];
 
@@ -408,7 +408,13 @@ export function SignupPage() {
                           </span>
                         </label>
                         {t.href ? (
-                          <Link className={s.link} href={t.href} aria-label={`${t.label} 보기`}>
+                          <Link
+                            className={s.link}
+                            href={t.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`${t.label} 보기 (새 창)`}
+                          >
                             보기
                           </Link>
                         ) : (
