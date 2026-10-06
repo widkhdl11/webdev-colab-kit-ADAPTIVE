@@ -5,10 +5,13 @@ import { useId, useState } from "react";
 import { CHANNEL_PLATFORM_LABEL, CHANNEL_URL_EXAMPLES, CHANNEL_URL_MESSAGE, parseChannelUrl } from "@/entities/creator/model/channel-url";
 import {
   attemptNumber,
+  attemptNumberAfterRegenerate,
   lastOutcomeText,
   myVerificationPanel,
+  needsProfessionalAccountNote,
   platformLabel,
   verifyRoutes,
+  VERIFICATION_CODE_DAYS,
   VERIFICATION_STATUS_LABEL,
   VERIFICATION_TRIES,
   type MyVerification,
@@ -17,7 +20,7 @@ import {
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { sendVerification } from "../api/send-verification";
-import type { VerificationAction } from "../model/run-verification-action";
+import { NOT_FOUND_IN_BIO, type VerificationAction } from "../model/run-verification-action";
 import s from "./verification-panel.module.css";
 
 // 크리에이터 「채널 본인 확인」 칸 (creator-verification INV-V1·V4·V5·V9·V12·V14·V15·V16). 주소와 설정 화면에 들어간다.
@@ -50,7 +53,8 @@ export function VerificationPanel({
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<Note>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
-  const [copied, setCopied] = useState(false);
+  // 복사한 코드 — 코드를 다시 받으면 새 코드에는 「복사했어요」가 붙지 않는다
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const parsed = url.trim() === "" ? null : parseChannelUrl(url.trim());
   const routes = parsed?.ok ? verifyRoutes(parsed.channel.platform, apiSet) : [];
@@ -68,8 +72,8 @@ export function VerificationPanel({
         return;
       }
       setNote({ tone: "error", text: r.message });
-      // 다른 처리가 먼저 끝났으면(409·404) 지금 상태를 다시 읽는다
-      if (r.status === 409 || r.status === 404) router.refresh();
+      // 다른 처리가 먼저 끝났거나(409·404) DB 는 처리했는데 응답만 실패했을 수 있다 — 지금 상태를 다시 읽는다
+      router.refresh();
       return;
     }
     setSheet(null);
@@ -82,9 +86,9 @@ export function VerificationPanel({
   async function copyCode(code: string) {
     try {
       await navigator.clipboard.writeText(code);
-      setCopied(true);
+      setCopiedCode(code);
     } catch {
-      setCopied(false);
+      setCopiedCode(null);
     }
   }
 
@@ -157,7 +161,7 @@ export function VerificationPanel({
                       코드 복사
                     </button>
                     <span className="sub" role="status">
-                      {copied ? "복사했어요" : ""}
+                      {copiedCode === live.code ? "복사했어요" : ""}
                     </span>
                   </div>
                 </div>
@@ -181,7 +185,7 @@ export function VerificationPanel({
             panel.canAutoCheck ? (
               <div className={s.steps}>
                 <p>채널 소개란에 코드를 잠깐 붙이고 「확인」을 눌러 주세요. 확인되면 바로 지워도 돼요.</p>
-                {live.platform === "instagram" ? <p className="sub">인스타그램은 프로페셔널 계정만 자동으로 확인돼요. 개인 계정이면 아래 「운영자에게 확인 요청」을 써 주세요.</p> : null}
+                {needsProfessionalAccountNote(live.platform) ? <p className="sub">인스타그램은 프로페셔널 계정만 자동으로 확인돼요. 개인 계정이면 아래 「운영자에게 확인 요청」을 써 주세요.</p> : null}
                 <button
                   className={`btn ${s["btn-wide"]}`}
                   type="button"
@@ -190,7 +194,7 @@ export function VerificationPanel({
                     void run({ action: "auto_check", applicationId: live.id }, (body) =>
                       body.result === "approved"
                         ? { tone: "ok", text: "확인됐어요. 소개란의 코드는 지워도 돼요." }
-                        : { tone: "error", text: typeof body.message === "string" ? body.message : "아직 소개란에서 코드를 찾지 못했어요." },
+                        : { tone: "error", text: typeof body.message === "string" ? body.message : NOT_FOUND_IN_BIO },
                     )
                   }
                 >
@@ -304,12 +308,12 @@ export function VerificationPanel({
                     type="button"
                     aria-disabled={busy}
                     onClick={() =>
-                      void run({ action: "login", channelUrl: parsed.channel.channelUrl }, () => ({ tone: "ok", text: "채널 주인으로 확인됐어요." }))
+                      void run({ action: "login", channelUrl: parsed.channel.channelUrl }, () => null)
                     }
                   >
                     {CHANNEL_PLATFORM_LABEL[parsed.channel.platform]}로 확인하기
                   </button>
-                  {parsed.channel.platform === "instagram" ? (
+                  {needsProfessionalAccountNote(parsed.channel.platform) ? (
                     <p className="sub">인스타그램은 프로페셔널 계정만 로그인으로 확인돼요. 개인 계정이면 아래 「코드로 확인하기」를 써 주세요.</p>
                   ) : null}
                   <div className={s.or}>
@@ -348,15 +352,15 @@ export function VerificationPanel({
       <BottomSheet open={sheet !== null} title={sheet?.kind === "regenerate" ? "코드를 다시 받을까요?" : "신청을 거둘까요?"} onClose={() => setSheet(null)}>
         {sheet?.kind === "regenerate" ? (
           <>
-            <p>지금 코드는 바로 쓸 수 없게 되고, 새 코드와 새 7일이 시작돼요.</p>
+            <p>지금 코드는 바로 쓸 수 없게 되고, 새 코드와 새 {VERIFICATION_CODE_DAYS}일이 시작돼요.</p>
             <p className={`sub ${s["sheet-sub"]}`}>
-              지금 신청은 이 채널의 신청 횟수 하나로 세요. 새 코드는 {VERIFICATION_TRIES}번 가운데 {attemptNumber((live?.remainingCount ?? 1) - 1)}번째 신청이 돼요.
+              지금 신청도 이 채널 신청 1번으로 쳐요. 새 코드는 {VERIFICATION_TRIES}번 가운데 {attemptNumberAfterRegenerate(live?.remainingCount ?? 0)}번째 신청이 돼요.
             </p>
           </>
         ) : (
           <>
             <p>거두면 이 채널을 다른 사람도 신청할 수 있게 되고, 이 신청은 다시 살아나지 않아요.</p>
-            <p className={`sub ${s["sheet-sub"]}`}>거둔 신청은 이 채널의 신청 횟수 하나로 세요.</p>
+            <p className={`sub ${s["sheet-sub"]}`}>거둔 신청도 이 채널 신청 1번으로 쳐요.</p>
           </>
         )}
         <div role="status">{sheet ? noteLine : null}</div>

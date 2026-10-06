@@ -153,7 +153,7 @@ export function CreatorsPanel({ creators, verifications, events }: Props) {
             <h2 id="h-cv-issued" tabIndex={-1}>
               코드 받음 <span>{issued.length}건</span>
             </h2>
-            <span>아직 「확인 요청」을 누르지 않은 신청이에요. 승인은 확인 요청 뒤에만 할 수 있어요. 자동 확인이 되는 플랫폼은 여기서 바로 승인될 수 있어요</span>
+            <span>아직 「확인 요청」을 누르지 않은 신청이에요. 운영자 승인은 확인 요청 뒤에만 할 수 있어요. 크리에이터가 자동 확인에 성공하면 확인 요청 없이 승인돼 이 표에서 빠져요</span>
           </div>
           <div className={a.tblWrap}>
             <table className={a.tbl} style={{ minWidth: 820 }}>

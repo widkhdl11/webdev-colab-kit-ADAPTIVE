@@ -105,7 +105,7 @@ export function CreatorSettingsPage({
     <div>
       <div className="panel-title">
         <h2 className="panel-h">주소와 설정</h2>
-        <p>선물을 받을 주소와 차단한 팬, 프로필, 알림을 한곳에서 관리해요.</p>
+        <p>채널 본인 확인, 선물을 받을 주소, 차단한 팬, 프로필, 알림을 한곳에서 관리해요.</p>
         {/* 프로필·알림은 아직 DB 에 연결되지 않아 지어낸 값이다 */}
         <p className="hint">프로필과 알림은 아직 예시예요. 저장 기능을 연결하면 실제 값이 보여요.</p>
       </div>
@@ -197,8 +197,7 @@ export function CreatorSettingsPage({
                 <dd>
                   {verification.state.verified ? (
                     <>
-                      <span className="tag tag--brand">확인 완료</span>{" "}
-                      {verification.state.verifiedAt ? <span className="sub">{formatDate(verification.state.verifiedAt)} 채널 확인</span> : null}
+                      <span className="tag tag--brand">확인 완료</span>
                     </>
                   ) : (
                     <span className="tag">확인 전</span>
@@ -262,7 +261,7 @@ export function CreatorSettingsPage({
               <button className="btn btn--soft" type="button" onClick={() => setSheet(null)}>
                 돌아가기
               </button>
-              <button className="btn" type="button" disabled={saving} onClick={() => void confirmUnblock(sheet.fan)}>
+              <button className="btn" type="button" aria-disabled={saving} onClick={() => void confirmUnblock(sheet.fan)}>
                 {saving ? "저장하는 중…" : "차단 풀기"}
               </button>
             </div>

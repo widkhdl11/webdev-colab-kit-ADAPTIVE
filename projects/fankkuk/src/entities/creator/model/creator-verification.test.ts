@@ -3,6 +3,7 @@ import {
   adminVerificationsFromRows,
   adminVerificationTables,
   attemptNumber,
+  attemptNumberAfterRegenerate,
   eventReasonLabel,
   lastOutcomeText,
   myVerificationPanel,
@@ -218,5 +219,12 @@ describe("attemptNumber — 진행 중인 코드 신청이 이 채널로 몇 번
   it("INV-V15 (실패경로): 남은 횟수가 0 이하로 와도 상한을 넘는 번호를 만들지 않는다", () => {
     expect(attemptNumber(0)).toBe(3);
     expect(attemptNumber(-1)).toBe(3);
+  });
+});
+
+describe("attemptNumberAfterRegenerate — 코드를 다시 받으면 새 신청이 몇 번째인지 (INV-V15)", () => {
+  it("INV-V15: 다시 받기는 지금 신청을 한 번으로 치므로 새 신청은 다음 번째", () => {
+    expect(attemptNumberAfterRegenerate(3)).toBe(2);
+    expect(attemptNumberAfterRegenerate(2)).toBe(3);
   });
 });

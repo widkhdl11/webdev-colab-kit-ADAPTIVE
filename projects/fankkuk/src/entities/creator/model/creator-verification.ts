@@ -70,6 +70,19 @@ export function attemptNumber(remainingCount: number): number {
   return Math.min(VERIFICATION_TRIES, VERIFICATION_TRIES - remainingCount + 1);
 }
 
+/** INV-V15: 코드를 다시 받으면 지금 신청이 한 번으로 세어지므로, 새 신청은 그다음 번째다. */
+export function attemptNumberAfterRegenerate(remainingCount: number): number {
+  return attemptNumber(remainingCount - 1);
+}
+
+/** INV-V4: 코드 신청의 확인 기한(DB 의 cv_post_window 와 같은 기준). */
+export const VERIFICATION_CODE_DAYS = 7;
+
+/** 인스타그램은 프로페셔널 계정만 플랫폼 API 로 확인된다 — 그 플랫폼이면 화면이 덧붙일 안내 대상인지. */
+export function needsProfessionalAccountNote(platform: string): boolean {
+  return platform === "instagram";
+}
+
 export function platformLabel(platform: string): string {
   return isChannelPlatform(platform) ? CHANNEL_PLATFORM_LABEL[platform] : platform;
 }
@@ -235,7 +248,7 @@ export function lastOutcomeText(v: MyVerification): string | null {
   if (v.status === "approved") return reason ? `승인이 취소됐어요 — ${reason}` : null;
   if (v.status === "rejected") return reason ? `반려됐어요 — ${reason}` : "반려됐어요";
   if (v.status === "closed") return `신청이 닫혔어요 — ${reason ?? CLOSE_REASON_LABEL}`;
-  if (v.status === "expired") return "7일 안에 확인을 마치지 않아 기간이 지났어요";
+  if (v.status === "expired") return `${VERIFICATION_CODE_DAYS}일 안에 확인을 마치지 않아 기간이 지났어요`;
   if (v.status === "withdrawn") return "신청을 거뒀어요";
   return null;
 }

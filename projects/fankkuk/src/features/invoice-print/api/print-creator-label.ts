@@ -75,8 +75,6 @@ const claimShape = z.union([
 
 type GiftContext = z.infer<typeof giftContext>;
 
-/** 모르는 상태 값(결제 전 등)은 출력할 수 없는 상태로 본다 — 「모르는 값이면 연다」가 되지 않게. */
-
 /** 목록에 없는 상태(DB 에 새로 생긴 상태 등)는 출력할 수 없는 상태로 친다 — 판정이 거부하고 거부 줄을 남긴다(INV-P4 (c)·P7). */
 function orderStatusOf(raw: string): OrderStatus {
   return (ORDER_STATUSES as readonly string[]).includes(raw) ? (raw as OrderStatus) : "canceled";
