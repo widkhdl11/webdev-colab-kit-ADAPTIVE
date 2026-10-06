@@ -6,10 +6,11 @@ import { CHANNEL_PLATFORM_LABEL, CHANNEL_URL_EXAMPLES, CHANNEL_URL_MESSAGE, pars
 import {
   attemptNumber,
   attemptNumberAfterRegenerate,
-  lastOutcomeText,
   myVerificationPanel,
   needsProfessionalAccountNote,
+  panelOutcomeText,
   platformLabel,
+  selfCheckPlatforms,
   verifyRoutes,
   VERIFICATION_CODE_DAYS,
   VERIFICATION_STATUS_LABEL,
@@ -46,7 +47,8 @@ export function VerificationPanel({
 }) {
   const router = useRouter();
   const ids = useId();
-  const apiSet = new Set(apiPlatforms);
+  // 위반 취소 뒤에는(INV-V10, d32) 스스로 확인하는 길이 없다 — 로그인·코드 자동 확인 버튼이 사라진다
+  const apiSet = selfCheckPlatforms(state, new Set(apiPlatforms));
   const panel = myVerificationPanel(state, rows, apiSet);
   const live = panel.live;
   const [url, setUrl] = useState("");
@@ -58,7 +60,7 @@ export function VerificationPanel({
 
   const parsed = url.trim() === "" ? null : parseChannelUrl(url.trim());
   const routes = parsed?.ok ? verifyRoutes(parsed.channel.platform, apiSet) : [];
-  const outcome = panel.last ? lastOutcomeText(panel.last) : null;
+  const outcome = panelOutcomeText(state, panel.last);
 
   async function run(action: VerificationAction, after?: (body: Record<string, unknown>) => Note) {
     if (busy) return;
@@ -330,7 +332,12 @@ export function VerificationPanel({
                 </>
               ) : (
                 <>
-                  <p className="sub">이 플랫폼은 로그인 확인이 없어 운영자가 확인해요. 코드를 받아 소개란에 붙이거나 팬꾹 공식 계정 DM 으로 보내 주세요.</p>
+                  <p className="sub">
+                    {state.operatorOnly
+                      ? "이용 규칙 위반으로 확인이 취소돼 이번에는 운영자가 확인해요."
+                      : "이 플랫폼은 로그인 확인이 없어 운영자가 확인해요."}{" "}
+                    코드를 받아 소개란에 붙이거나 팬꾹 공식 계정 DM 으로 보내 주세요.
+                  </p>
                   <button
                     className={`btn ${s["btn-wide"]}`}
                     type="button"

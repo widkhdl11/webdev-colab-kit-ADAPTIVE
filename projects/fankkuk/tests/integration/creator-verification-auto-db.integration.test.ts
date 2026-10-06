@@ -1,6 +1,8 @@
+import { spawn } from "node:child_process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   appRowLockSql,
+  approve,
   appStatus,
   as,
   autoClaim,
@@ -9,10 +11,12 @@ import {
   createCvAccounts,
   CV,
   dropCvAccounts,
+  loginConfirm,
   post,
   reject,
   requestOk,
   resetCv,
+  revoke,
   shiftApp,
   STAFF,
   verified,
@@ -207,5 +211,108 @@ describe("코드 자동 확인 (INV-V16)", () => {
     expect(psql(`select channel_url from public.creators where id = '${CV.haru.creatorId}'`)).toBe(YT("harunew"));
     expect(claimOf("youtube", "haruold")).toBe("");
     expect(claimOf("youtube", "harunew")).toBe(`verified:${CV.haru.id}:${CV.haru.creatorId}`);
+  });
+});
+
+describe("「이용 규칙 위반」 취소 뒤에는 운영자 확인만 (INV-V10, 결정 d32)", () => {
+  const STAFF_UID = "00000000-0000-4000-a000-000000000022";
+
+  async function verifiedThenRevoked(reason: string): Promise<void> {
+    expect((await loginConfirm("ggul", "youtube", "ggulpolicy")).error).toBeNull();
+    expect(verified("ggul")).toBe("t");
+    expect((await revoke(CV.ggul.creatorId, reason)).error).toBeNull();
+    expect(verified("ggul")).toBe("f");
+  }
+
+  it("INV-V10 (S10d, 실패경로): 위반 취소 뒤 로그인 확인은 거부, 확인 전 그대로", async () => {
+    await verifiedThenRevoked("policy_violation");
+    const r = await loginConfirm("ggul", "youtube", "ggulpolicy");
+    expect(r.error?.code).toBe("FKV16");
+    expect(r.error?.message).toContain("운영자 확인으로만 다시 확인할 수 있어요");
+    expect(verified("ggul")).toBe("f");
+  });
+
+  it("INV-V10 (S10d, 실패경로): 위반 취소 뒤 자동 확인은 1분 제한을 쓰기 전에 거부", async () => {
+    await verifiedThenRevoked("policy_violation");
+    const a = await requestOk("ggul", YT("ggulpolicy2"));
+    const c = await autoClaim("ggul", a.application_id);
+    expect(c.error?.code).toBe("FKV16");
+    expect(psql(`select last_auto_check_at is null from public.creator_verification_applications where id = '${a.application_id}'`)).toBe("t");
+  });
+
+  it("INV-V10 (S10d, 실패경로): 자동 확인 ② 승인 함수도 따로 막는다 — ① 을 건너뛰고 「찾았음」을 넘겨도 승인되지 않는다", async () => {
+    await verifiedThenRevoked("policy_violation");
+    const a = await requestOk("ggul", YT("ggulpolicy3"));
+    const r = await autoConfirm(a.application_id, true);
+    expect(r.error?.code).toBe("FKV16");
+    expect(appStatus(a.application_id)).toBe("issued");
+    expect(verified("ggul")).toBe("f");
+  });
+
+  it("INV-V10 (S10e): 위반 취소 뒤에도 코드 신청 → 확인 요청 → 운영자 승인은 되고, 그 뒤로는 로그인 확인이 다시 된다", async () => {
+    await verifiedThenRevoked("policy_violation");
+    const a = await requestOk("ggul", YT("ggulpolicy4"));
+    expect((await post("ggul", a.application_id)).error).toBeNull();
+    expect((await approve(a.application_id)).error).toBeNull();
+    expect(verified("ggul")).toBe("t");
+    expect((await loginConfirm("ggul", "youtube", "ggulpolicy5")).error).toBeNull();
+    expect(verified("ggul")).toBe("t");
+  });
+
+  it("INV-V10 (S10d, 실패경로): 위반 취소 뒤 운영자가 새 신청을 반려해도 제한은 그대로 — 반려는 승인이 아니다", async () => {
+    await verifiedThenRevoked("policy_violation");
+    const a = await requestOk("ggul", YT("ggulpolicy9"));
+    expect((await post("ggul", a.application_id)).error).toBeNull();
+    expect((await reject(a.application_id)).error).toBeNull();
+    expect((await loginConfirm("ggul", "youtube", "ggulpolicy9")).error?.code).toBe("FKV16");
+  });
+
+  it("INV-V10 (S10d): 내 확인 상태 읽기가 operator_only 를 알려 준다 — 화면이 두 버튼을 감추는 근거", async () => {
+    const before = await (await as("ggul")).rpc("my_creator_verification_state");
+    expect((before.data as { operator_only: boolean }[])[0]?.operator_only).toBe(false);
+    await verifiedThenRevoked("policy_violation");
+    const after = await (await as("ggul")).rpc("my_creator_verification_state");
+    expect((after.data as { operator_only: boolean }[])[0]?.operator_only).toBe(true);
+  });
+
+  it("INV-V10 (S10f): 다른 사유(채널 주인 아님·채널 사라짐)로 취소되면 로그인 확인이 그대로 된다", async () => {
+    await verifiedThenRevoked("not_owner_confirmed");
+    expect((await loginConfirm("ggul", "youtube", "ggulpolicy")).error).toBeNull();
+    expect(verified("ggul")).toBe("t");
+    expect((await revoke(CV.ggul.creatorId, "channel_gone")).error).toBeNull();
+    const a = await requestOk("ggul", YT("ggulpolicy6"));
+    await claimOk("ggul", a.application_id);
+    // ② 승인 함수도 다른 사유면 승인한다
+    expect((await autoConfirm(a.application_id, true)).data).toBe("approved");
+    expect(verified("ggul")).toBe("t");
+  });
+
+  it("INV-V10 (S10g, 동시): 위반 취소 거래가 먼저 시작했는데 로그인 확인이 먼저 끝나도, 그 뒤로는 운영자 확인만 — 기록의 시각이 아니라 들어간 순서로 판정", async () => {
+    expect((await loginConfirm("ggul", "youtube", "ggulpolicy")).error).toBeNull();
+    // 취소 거래: 지금 시작(기록 시각은 이 시작 시각)하고 1.5초 쉰 뒤 취소한다
+    const revoking = new Promise<void>((resolve, reject) => {
+      const sql = `begin; set local role authenticated; select set_config('request.jwt.claims', '{"sub":"${STAFF_UID}","role":"authenticated"}', true); select pg_sleep(1.5); select public.admin_revoke_creator('${CV.ggul.creatorId}', 'policy_violation', ''); commit;`;
+      const child = spawn("docker", ["exec", "-i", "supabase_db_fankkuk", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-q", "-c", sql], { stdio: ["ignore", "ignore", "pipe"] });
+      child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`취소 거래 실패 (${code})`))));
+    });
+    await new Promise((r) => setTimeout(r, 400));
+    // 그 사이 로그인 확인(새 채널)이 먼저 끝난다 — 승인 기록의 시각이 취소 기록보다 늦다
+    expect((await loginConfirm("ggul", "youtube", "ggulpolicy8")).error).toBeNull();
+    await revoking;
+    expect(verified("ggul")).toBe("f");
+    expect(psql(`select public.cv_operator_only('${CV.ggul.creatorId}')`)).toBe("t");
+    expect((await loginConfirm("ggul", "youtube", "ggulpolicy8")).error?.code).toBe("FKV16");
+  });
+
+  it("INV-V10 (S10g, 동시): 위반 취소가 공개 정보 행을 잡고 있는 사이 온 로그인 확인은 기다렸다가 거부된다", async () => {
+    expect((await loginConfirm("ggul", "youtube", "ggulpolicy")).error).toBeNull();
+    const held = await holdRowLock(
+      `set local role authenticated; select set_config('request.jwt.claims', '{"sub":"${STAFF_UID}","role":"authenticated"}', true); select public.admin_revoke_creator('${CV.ggul.creatorId}', 'policy_violation', '')`,
+      2,
+    );
+    const r = await loginConfirm("ggul", "youtube", "ggulpolicy7");
+    await held.released;
+    expect(r.error?.code).toBe("FKV16");
+    expect(verified("ggul")).toBe("f");
   });
 });

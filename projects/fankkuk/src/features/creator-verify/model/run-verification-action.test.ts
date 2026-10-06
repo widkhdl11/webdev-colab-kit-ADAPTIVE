@@ -185,6 +185,15 @@ describe("코드 자동 확인 (INV-V16)", () => {
     expect(s.calls.map((c) => c.fn)).toEqual(["claim_creator_verification_auto_check"]);
   });
 
+  it("INV-V10 (S10d, 실패경로): 위반 취소 뒤 자동 확인은 운영자 확인 안내, 플랫폼 API 를 부르지 않는다", async () => {
+    const s = setup({ replies: { claim_creator_verification_auto_check: { error: { code: "FKV16" } } } });
+    expect(await runVerificationAction(s.deps, { action: "auto_check", applicationId: APP })).toEqual({
+      status: 409,
+      body: { message: "운영자 확인으로만 다시 확인할 수 있어요. 코드를 받아 「확인 요청」을 눌러 주세요." },
+    });
+    expect(s.bioReads).toEqual([]);
+  });
+
   it("INV-V16 (S16c, 실패경로): API 확인이 없는 플랫폼은 「확인 요청」 안내, 플랫폼 API 를 부르지 않는다", async () => {
     const s = setup({ replies: { claim_creator_verification_auto_check: { error: { code: "FKV14" } } } });
     expect((await runVerificationAction(s.deps, { action: "auto_check", applicationId: APP })).body.message).toContain("확인 요청");

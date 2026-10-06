@@ -8,7 +8,10 @@ import {
   lastOutcomeText,
   myVerificationPanel,
   myVerificationsFromRows,
+  myVerificationStateFromRows,
+  panelOutcomeText,
   reasonLabel,
+  selfCheckPlatforms,
   REVOKE_REASONS,
   VERIFICATION_METHOD_LABEL,
   verifyRoutes,
@@ -226,5 +229,46 @@ describe("attemptNumberAfterRegenerate — 코드를 다시 받으면 새 신청
   it("INV-V15: 다시 받기는 지금 신청을 한 번으로 치므로 새 신청은 다음 번째", () => {
     expect(attemptNumberAfterRegenerate(3)).toBe(2);
     expect(attemptNumberAfterRegenerate(2)).toBe(3);
+  });
+});
+
+describe("위반 취소 뒤 운영자 확인만 (INV-V10, 결정 d32)", () => {
+  const row = {
+    creator_id: "c1", name: "꿀단지", channel_title: "꿀단지TV", verified: false, platform: null, channel_url: null, verified_at: null,
+  };
+
+  it("INV-V10: 확인 상태가 operator_only 를 그대로 옮긴다", () => {
+    expect(myVerificationStateFromRows([{ ...row, operator_only: true }])?.operatorOnly).toBe(true);
+    expect(myVerificationStateFromRows([{ ...row, operator_only: false }])?.operatorOnly).toBe(false);
+  });
+
+  it("INV-V10 (실패경로): operator_only 칸이 없거나 값이 아니면 모양이 다르다(undefined) — 몰래 「제한 없음」이 되지 않게", () => {
+    expect(myVerificationStateFromRows([row])).toBeUndefined();
+    expect(myVerificationStateFromRows([{ ...row, operator_only: null }])).toBeUndefined();
+  });
+
+  it("INV-V10 (S10d): 운영자 확인만이면 스스로 확인할 플랫폼이 없다 — 로그인·코드 자동 확인 버튼이 사라지고 운영자 길만 남는다", () => {
+    const api = new Set(["youtube", "chzzk"]);
+    const only = selfCheckPlatforms({ operatorOnly: true }, api);
+    expect([...only]).toEqual([]);
+    expect(verifyRoutes("youtube", only)).toEqual(["operator"]);
+    expect(myVerificationPanel({ verified: false }, [mine({ status: "issued" })], only).canAutoCheck).toBe(false);
+  });
+
+  it("INV-V10 (S10f): 운영자 확인만이 아니면 「API 확인」 플랫폼 그대로", () => {
+    const api = new Set(["youtube"]);
+    expect([...selfCheckPlatforms({ operatorOnly: false }, api)]).toEqual(["youtube"]);
+  });
+});
+
+describe("panelOutcomeText — 확인 칸 맨 위 한 줄 (INV-V10, 결정 d32)", () => {
+  it("INV-V10 (S10d): 운영자 확인만이고 확인 전이면, 지난 신청이 거둠이어도 위반 취소를 알린다", () => {
+    expect(panelOutcomeText({ verified: false, operatorOnly: true }, mine({ status: "withdrawn" }))).toBe(
+      "이용 규칙 위반으로 승인이 취소됐어요. 다시 확인은 운영자가 해요.",
+    );
+  });
+  it("INV-V10 (S10f): 운영자 확인만이 아니면 지난 신청의 한 줄 그대로", () => {
+    expect(panelOutcomeText({ verified: false, operatorOnly: false }, mine({ status: "withdrawn" }))).toBe("신청을 거뒀어요");
+    expect(panelOutcomeText({ verified: false, operatorOnly: false }, null)).toBeNull();
   });
 });

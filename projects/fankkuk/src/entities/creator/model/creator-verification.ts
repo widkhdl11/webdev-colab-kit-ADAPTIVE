@@ -156,6 +156,8 @@ export type MyVerificationState = {
   platform: string | null;
   channelUrl: string | null;
   verifiedAt: string | null;
+  /** INV-V10(d32): 마지막 결정이 「이용 규칙 위반」 취소 — 운영자 승인으로만 다시 확인된다. */
+  operatorOnly: boolean;
 };
 
 const stateRow = z
@@ -167,6 +169,7 @@ const stateRow = z
     platform: z.string().nullable(),
     channel_url: z.string().nullable(),
     verified_at: z.string().nullable(),
+    operator_only: z.boolean(),
   })
   .strict();
 
@@ -183,6 +186,7 @@ export function myVerificationStateFromRows(rows: unknown): MyVerificationState 
     platform: r.platform,
     channelUrl: r.channel_url,
     verifiedAt: r.verified_at,
+    operatorOnly: r.operator_only,
   };
 }
 
@@ -238,8 +242,25 @@ export function myVerificationPanel(
  */
 export type VerifyRoute = "login" | "auto_code" | "operator";
 
+/**
+ * INV-V10(d32): 이 크리에이터가 스스로(플랫폼 로그인·코드 자동 확인) 확인할 수 있는 플랫폼.
+ * 운영자 확인만이면 빈 집합 — 확인 길과 패널 판단이 모두 운영자 길만 남긴다. 거부는 DB 가 다시 한다.
+ */
+export function selfCheckPlatforms(state: Pick<MyVerificationState, "operatorOnly">, apiPlatforms: ReadonlySet<string>): ReadonlySet<string> {
+  return state.operatorOnly ? new Set() : apiPlatforms;
+}
+
 export function verifyRoutes(platform: string, apiPlatforms: ReadonlySet<string>): VerifyRoute[] {
   return isChannelPlatform(platform) && apiPlatforms.has(platform) ? ["login", "auto_code", "operator"] : ["operator"];
+}
+
+/**
+ * 확인 칸 맨 위 한 줄. 운영자 확인만이고 아직 확인 전이면(INV-V10, d32) 지난 신청보다 위반 취소를 먼저 알린다 —
+ * 지난 신청은 발급 순서로 골라서, 취소 전에 거둔 신청이 있으면 그 줄이 대신 보이기 때문이다.
+ */
+export function panelOutcomeText(state: Pick<MyVerificationState, "verified" | "operatorOnly">, last: MyVerification | null): string | null {
+  if (!state.verified && state.operatorOnly) return "이용 규칙 위반으로 승인이 취소됐어요. 다시 확인은 운영자가 해요.";
+  return last ? lastOutcomeText(last) : null;
 }
 
 /** 지난 신청이 화면에 알릴 한 줄 — 승인 취소·반려·닫힘·기간 지남·거둠. 승인됐고 취소되지 않았으면 null. */
