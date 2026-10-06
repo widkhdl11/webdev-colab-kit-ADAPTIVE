@@ -1,6 +1,6 @@
 import type { OrderStatus } from "./order-status";
 
-// 주문 한 건의 저장 모양. DB 전에는 예시 데이터(api/sample-orders)가 이 모양을 따른다.
+// 주문 한 건의 저장 모양 — fan-view·creator-view 시험과 변환 함수가 입력으로 쓴다.
 // 팬·크리에이터 화면은 이 기록을 그대로 받지 않는다 — fan-view / creator-view 가 보여 줄 칸만 골라낸다.
 export type OrderRecord = {
   orderNo: string;
