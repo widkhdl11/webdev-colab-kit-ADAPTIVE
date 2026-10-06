@@ -21,7 +21,7 @@
   /* 텍스트 */
   --text-primary: #343039;
   --text-secondary: #665D65;
-  --text-muted: #7A7078;
+  --text-muted: #6B6169; /* 2026-10-07 #7A7078 에서 조정 — 대비 미달 */
   --text-inverse: #FFFFFF;
 
   /* 주요 행동 */
@@ -33,11 +33,11 @@
   /* 보조 행동 */
   --secondary: #FDE9E5;
   --secondary-hover: #FADBD5;
-  --secondary-foreground: #B84F48;
+  --secondary-foreground: #A4433D; /* 2026-10-07 #B84F48 에서 조정 — 옅은 코랄 면 위 대비 미달 */
 
   /* 경계·포커스 */
   --border: #EADDD7;
-  --border-input: #BFAFAA;
+  --border-input: #8C7B76; /* 2026-10-07 #BFAFAA 에서 조정 — 3:1 미달 */
   --focus-ring: #B84F48;
 
   /* 비활성 */
