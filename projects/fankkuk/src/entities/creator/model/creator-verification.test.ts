@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   adminVerificationsFromRows,
   adminVerificationTables,
+  attemptNumber,
   eventReasonLabel,
   lastOutcomeText,
   myVerificationPanel,
@@ -205,5 +206,17 @@ describe("운영자 신청 표 (INV-V6·V11·V15)", () => {
   it("INV-V15 (실패경로): 같은 계정·채널에 살아 있는 신청이 있으면 끝난 줄에 풀기 버튼을 두지 않는다", () => {
     const t = adminVerificationTables([adm({ id: "live", status: "issued", usedCount: 2 }), adm({ id: "ended", usedCount: 2 })]);
     expect(t.ended.find((r) => r.id === "ended")?.unlockable).toBe(false);
+  });
+});
+
+describe("attemptNumber — 진행 중인 코드 신청이 이 채널로 몇 번째인지 (INV-V15)", () => {
+  it("INV-V15: 끝난 신청이 없으면 첫 번째, 둘이면 세 번째(마지막)", () => {
+    expect(attemptNumber(3)).toBe(1);
+    expect(attemptNumber(2)).toBe(2);
+    expect(attemptNumber(1)).toBe(3);
+  });
+  it("INV-V15 (실패경로): 남은 횟수가 0 이하로 와도 상한을 넘는 번호를 만들지 않는다", () => {
+    expect(attemptNumber(0)).toBe(3);
+    expect(attemptNumber(-1)).toBe(3);
   });
 });

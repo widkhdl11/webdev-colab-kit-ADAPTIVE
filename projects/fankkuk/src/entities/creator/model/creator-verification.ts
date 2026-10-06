@@ -62,6 +62,14 @@ export const VERIFICATION_MEMO_MAX = 200;
 /** INV-V15: 한 계정·한 채널의 코드 신청 횟수. */
 export const VERIFICATION_TRIES = 3;
 
+/**
+ * INV-V15: 진행 중인 코드 신청이 이 채널로 몇 번째인지. 남은 횟수는 끝난 신청만 빼서 오므로(진행 중인 신청은 아직 안 빠짐)
+ * 화면에 「남은 3번」을 그대로 쓰면 이번 신청이 안 됐을 때 한 번 더 있는 것처럼 읽힌다.
+ */
+export function attemptNumber(remainingCount: number): number {
+  return Math.min(VERIFICATION_TRIES, VERIFICATION_TRIES - remainingCount + 1);
+}
+
 export function platformLabel(platform: string): string {
   return isChannelPlatform(platform) ? CHANNEL_PLATFORM_LABEL[platform] : platform;
 }

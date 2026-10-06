@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { CHANNEL_PLATFORM_LABEL, CHANNEL_URL_EXAMPLES, CHANNEL_URL_MESSAGE, parseChannelUrl } from "@/entities/creator/model/channel-url";
 import {
+  attemptNumber,
   lastOutcomeText,
   myVerificationPanel,
   platformLabel,
   verifyRoutes,
   VERIFICATION_STATUS_LABEL,
+  VERIFICATION_TRIES,
   type MyVerification,
   type MyVerificationState,
 } from "@/entities/creator/model/creator-verification";
@@ -160,8 +162,14 @@ export function VerificationPanel({
                   </div>
                 </div>
                 <div className={s.facts}>
-                  {live.postDeadline ? <span className="sub">{formatDateTime(live.postDeadline)}까지 확인을 마쳐 주세요</span> : null}
-                  <span className="sub">이 채널로 남은 신청 {live.remainingCount}번</span>
+                  {live.postDeadline ? (
+                    <span className="sub">
+                      {formatDateTime(live.postDeadline)}까지 {panel.canAutoCheck ? "확인을 마쳐 주세요" : "확인 요청을 보내 주세요"}
+                    </span>
+                  ) : null}
+                  <span className="sub">
+                    이 채널로 {VERIFICATION_TRIES}번 가운데 {attemptNumber(live.remainingCount)}번째 신청
+                  </span>
                 </div>
               </>
             ) : (
@@ -223,12 +231,18 @@ export function VerificationPanel({
 
           <div className={s.side}>
             {panel.canRegenerate ? (
-              <button className="btn btn--soft btn--sm" type="button" onClick={() => setSheet({ kind: "regenerate" })}>
+              <button className="btn btn--soft btn--sm" type="button" onClick={() => {
+                  setNote(null);
+                  setSheet({ kind: "regenerate" });
+                }}>
                 코드 다시 받기
               </button>
             ) : null}
             {panel.canWithdraw ? (
-              <button className="btn btn--text btn--sm" type="button" onClick={() => setSheet({ kind: "withdraw" })}>
+              <button className="btn btn--text btn--sm" type="button" onClick={() => {
+                  setNote(null);
+                  setSheet({ kind: "withdraw" });
+                }}>
                 신청 거두기
               </button>
             ) : null}
@@ -336,7 +350,7 @@ export function VerificationPanel({
           <>
             <p>지금 코드는 바로 쓸 수 없게 되고, 새 코드와 새 7일이 시작돼요.</p>
             <p className={`sub ${s["sheet-sub"]}`}>
-              지금 신청은 이 채널의 신청 횟수 하나로 세요. 남은 신청 {live?.remainingCount ?? 0}번 가운데 하나를 써요.
+              지금 신청은 이 채널의 신청 횟수 하나로 세요. 새 코드는 {VERIFICATION_TRIES}번 가운데 {attemptNumber((live?.remainingCount ?? 1) - 1)}번째 신청이 돼요.
             </p>
           </>
         ) : (
@@ -357,7 +371,7 @@ export function VerificationPanel({
             onClick={() =>
               live
                 ? void run(sheet?.kind === "regenerate" ? { action: "regenerate" } : { action: "withdraw", applicationId: live.id }, () =>
-                    sheet?.kind === "regenerate" ? { tone: "ok", text: "새 코드를 받았어요." } : { tone: "ok", text: "신청을 거뒀어요." },
+                    sheet?.kind === "regenerate" ? { tone: "ok", text: "새 코드를 받았어요." } : null,
                   )
                 : setSheet(null)
             }
