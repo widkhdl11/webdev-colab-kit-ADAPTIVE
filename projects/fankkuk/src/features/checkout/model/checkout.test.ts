@@ -105,6 +105,38 @@ describe("결제 흐름", () => {
     expect([a.ok, b.ok].filter(Boolean).length).toBeGreaterThanOrEqual(1);
   });
 
+  it("INV-M15 S15b (실패경로): 24시간이 지나 실패로 닫힌 주문은 성공 주소로 돌아와도 승인 API 를 부르지 않는다", async () => {
+    const { deps, store, toss } = setup();
+    const p = await pendingFor(store, ["small"]);
+    // 자동 처리가 결제 대기를 실패로 닫았다
+    expect(await store.settle(p.orderId, { status: "failed" })).toBe(true);
+
+    const res = await confirmPayment(deps, "fan-byeolbit", { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
+
+    expect(res).toEqual({ ok: false, reason: "not_approved" });
+    expect(toss.calls).toHaveLength(0);
+    expect((await store.find(p.orderId))?.status).toBe("failed");
+    expect(store.approvalRequests()).toEqual([]);
+  });
+
+  it("INV-M15 S15c (실패경로): 읽은 뒤 승인 권리를 얻기 전에 닫혔으면 승인 API 를 부르지 않는다", async () => {
+    const { store, toss } = setup();
+    const p = await pendingFor(store, ["small"]);
+    // 결제 기록을 읽은 직후 자동 처리가 닫는다 — 승인 권리(결제 대기일 때만)를 얻지 못한다
+    const racing: PaymentStore = {
+      ...store,
+      find: async (id) => {
+        const found = await store.find(id);
+        await store.settle(id, { status: "failed" });
+        return found;
+      },
+    };
+    const res = await confirmPayment({ store: racing, toss: toss.client }, "fan-byeolbit", { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
+    expect(res.ok).toBe(false);
+    expect(toss.calls).toHaveLength(0);
+    expect((await store.find(p.orderId))?.status).toBe("failed");
+  });
+
   it("INV-M2 (S2b, 실패경로): 없는 orderId 로 오면 승인 API 를 부르지 않는다", async () => {
     const { deps, toss } = setup();
     const res = await confirmPayment(deps, "fan-byeolbit", { orderId: "pay_nope00", amount: "6900", paymentKey: "tgen_1" });

@@ -65,7 +65,8 @@ export function isUnmatchedUrgent(left: number): boolean {
 
 // ── 자동 처리 예정 (INV-W6) ──
 
-export const EXPIRY_CATEGORIES = ["gift", "revgift", "difference"] as const;
+// unpaid: 만든 지 24시간 지난 결제 대기(payment INV-M15 · reverse-gift INV-R15) — 처리하면 결제 실패로 닫힌다.
+export const EXPIRY_CATEGORIES = ["gift", "revgift", "difference", "unpaid"] as const;
 export type ExpiryCategory = (typeof EXPIRY_CATEGORIES)[number];
 
 export type ExpiryDue = {

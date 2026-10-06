@@ -4,7 +4,7 @@ import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 import { MESSAGE_NOT_FOUND, pgErrorReply } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
 
-// 7일 자동 처리를 지금 돌리기 (office-workflow INV-W6). 운영자(대표·직원) 누구나.
+// 7일 자동 처리를 지금 돌리기 (office-workflow INV-W6). 운영자(대표·직원) 누구나. 24시간 지난 결제 대기 닫기(payment INV-M15 · reverse-gift INV-R15)도 같이 돈다.
 // 주문번호를 주면 그 주문(역조공은 그 몫)만, 안 주면 전부. 같은 대상을 두 번 처리하지 않는 것과
 // 사람의 처리(승인·받기·매칭·차액 결제)와 겹칠 때 하나만 반영되는 것은 DB 자동 처리 함수가 지킨다.
 
@@ -16,7 +16,15 @@ const FAILED = "자동 처리를 돌리지 못했어요. 잠시 뒤 다시 해 �
 const bodyShape = z.object({ orderNo: z.string().regex(/^[A-Z0-9-]+$/).max(ORDER_NO_MAX).optional() }).strict();
 export type ExpiryRunWrite = z.input<typeof bodyShape>;
 
-const counts = z.object({ gifts: z.number().int(), unmatched: z.number().int(), differences: z.number().int(), revgifts: z.number().int() });
+const counts = z.object({
+  gifts: z.number().int(),
+  unmatched: z.number().int(),
+  differences: z.number().int(),
+  revgifts: z.number().int(),
+  // 24시간 지난 결제 대기를 닫은 수(payment INV-M15 · reverse-gift INV-R15)
+  pending_gifts: z.number().int(),
+  pending_revgifts: z.number().int(),
+});
 
 export async function runExpiry(client: Pick<SupabaseClient, "rpc">, body: unknown): Promise<JsonReply> {
   if ((await readAdminAccess(client)) === "not_found") return { status: 404, body: { message: MESSAGE_NOT_FOUND } };

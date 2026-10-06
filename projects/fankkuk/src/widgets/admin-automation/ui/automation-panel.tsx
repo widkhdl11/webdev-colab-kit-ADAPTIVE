@@ -6,8 +6,9 @@ import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 
 // 관리자 「자동 처리 현황」 (office-workflow INV-W6, 시안 admin/automation.html).
-// 다섯 묶음: 알림 지금 보내기(notifications INV-N5) · 보내지 못한 알림(INV-N10) · 7일 미승인 팬 선물 반려 · 역조공 받기 기한 · 차액 미납 반송. 줄마다 「지금 돌리기」(그 주문만, 확인 창).
-// 기한은 서버 시각 기준 168시간(INV-W6). now 는 서버가 그린 시각.
+// 여섯 묶음: 알림 지금 보내기(notifications INV-N5) · 보내지 못한 알림(INV-N10) · 7일 미승인 팬 선물 반려 · 역조공 받기 기한 · 차액 미납 반송
+// · 결제하지 않은 주문 닫기(payment INV-M15 · reverse-gift INV-R15). 줄마다 「지금 돌리기」(그 주문만, 확인 창).
+// 기한은 서버 시각 기준 168시간(INV-W6), 결제 대기는 24시간. now 는 서버가 그린 시각.
 
 const SECTIONS: readonly { category: ExpiryCategory; title: string; hint: string; sender: string; receiver: string; after: string }[] = [
   {
@@ -34,7 +35,18 @@ const SECTIONS: readonly { category: ExpiryCategory; title: string; hint: string
     receiver: "받는 크리에이터",
     after: "반송 예정",
   },
+  {
+    category: "unpaid",
+    title: "결제하지 않은 주문 닫기",
+    hint: "결제창을 열고 24시간 안에 결제를 끝내지 않은 주문이에요. 닫으면 결제 실패로 남아요. 결제를 끝내지 않은 주문은 팬·크리에이터 화면에 원래 나오지 않아요.",
+    sender: "보낸 사람",
+    receiver: "받는 사람",
+    after: "결제 실패",
+  },
 ];
+
+// 금액 칸이 있는 묶음과 그 칸 이름
+const DETAIL_HEAD: Partial<Record<ExpiryCategory, string>> = { difference: "신고→실측 · 미납 차액", unpaid: "결제할 금액" };
 
 type Props = { rows: readonly ExpiryDue[]; failures: readonly NotificationFailure[]; now: string };
 
@@ -127,7 +139,7 @@ export function AutomationPanel({ rows, failures, now }: Props) {
                       <th scope="col">주문번호</th>
                       <th scope="col">{s.sender}</th>
                       <th scope="col">{s.receiver}</th>
-                      {s.category === "difference" && <th scope="col">신고→실측 · 미납 차액</th>}
+                      {DETAIL_HEAD[s.category] && <th scope="col">{DETAIL_HEAD[s.category]}</th>}
                       <th scope="col">기한</th>
                       <th scope="col">남은 시간</th>
                       <th scope="col">처리 후</th>
@@ -139,7 +151,7 @@ export function AutomationPanel({ rows, failures, now }: Props) {
                   <tbody>
                     {list.length === 0 ? (
                       <tr>
-                        <td colSpan={s.category === "difference" ? 8 : 7} className={a.empty}>
+                        <td colSpan={DETAIL_HEAD[s.category] ? 8 : 7} className={a.empty}>
                           처리할 줄이 없어요.
                         </td>
                       </tr>
@@ -154,7 +166,7 @@ export function AutomationPanel({ rows, failures, now }: Props) {
                             </td>
                             <td>{r.senderNickname}</td>
                             <td>{r.receiverName}</td>
-                            {s.category === "difference" && <td>{r.detail ?? "—"}</td>}
+                            {DETAIL_HEAD[s.category] && <td>{r.detail ?? "—"}</td>}
                             <td className={`${a.mono} ${a.nowrap}`}>{formatStamp(r.dueAt)}</td>
                             <td>{urgency === "past" ? <span className={`${a.tag} ${a.tagInk}`}>{left}</span> : urgency === "soon" ? <span className={`${a.tag} ${a.tagWarn}`}>{left}</span> : left}</td>
                             <td>{s.after}</td>

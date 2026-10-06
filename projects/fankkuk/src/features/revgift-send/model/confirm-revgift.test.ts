@@ -74,6 +74,31 @@ describe("역조공 결제 확정 (payment INV-M2·M3·M5 를 역조공 결제�
     expect(store.row.status).toBe("done");
   });
 
+  it("INV-R15 S15b (실패경로): 24시간이 지나 실패로 닫힌 보내기는 성공 주소로 돌아와도 승인 API 를 부르지 않는다", async () => {
+    const store = memoryStore({ ...pending, status: "failed" });
+    const toss = fakeToss(done);
+    const r = await confirmRevgiftPayment({ store, toss: toss.client }, "creator-haru", { orderId: "rgpay_1", amount: "10800", paymentKey: "pk" });
+    expect(r).toEqual({ ok: false, reason: "not_approved" });
+    expect(toss.calls).toHaveLength(0);
+    expect(store.row.status).toBe("failed");
+  });
+
+  it("INV-R15 S15c (실패경로): 읽은 뒤 승인 권리를 얻기 전에 닫혔으면 승인 API 를 부르지 않는다", async () => {
+    const store = memoryStore(pending);
+    // 결제 기록을 읽은 직후 자동 처리가 닫는다 — 승인 권리(결제 대기일 때만)를 얻지 못한다
+    const find = store.find.bind(store);
+    store.find = async (id) => {
+      const found = await find(id);
+      store.row.status = "failed";
+      return found;
+    };
+    const toss = fakeToss(done);
+    const r = await confirmRevgiftPayment({ store, toss: toss.client }, "creator-haru", { orderId: "rgpay_1", amount: "10800", paymentKey: "pk" });
+    expect(r.ok).toBe(false);
+    expect(toss.calls).toHaveLength(0);
+    expect(store.row.status).toBe("failed");
+  });
+
   it("INV-R1 (실패경로): 보낸 크리에이터가 아니면 없는 결제와 같다", async () => {
     const store = memoryStore(pending);
     const toss = fakeToss(done);

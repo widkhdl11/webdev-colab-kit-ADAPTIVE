@@ -16,7 +16,7 @@ function fakeClient(reply: Reply, who = { operator: true, owner: false }) {
   return { calls, client };
 }
 
-const COUNTS = { gifts: 1, unmatched: 0, differences: 0, revgifts: 0 };
+const COUNTS = { gifts: 1, unmatched: 0, differences: 0, revgifts: 0, pending_gifts: 0, pending_revgifts: 0 };
 
 describe("자동 처리 지금 돌리기 (office-workflow INV-W6)", () => {
   it("INV-W6: 한 줄만 — 주문번호를 넘기고 처리 건수를 돌려준다", async () => {
