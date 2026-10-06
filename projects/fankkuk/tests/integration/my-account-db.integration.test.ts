@@ -135,17 +135,45 @@ describe("INV-A3: 로그인 토큰이 확인한 사람 것만 읽고 고친다",
 const WRITES_PHONE = /(update\s+pii\.account_contacts\s+(?:as\s+)?(?:\w+\s+)?set\b[^;]*\bphone\s*=)|(insert\s+into\s+pii\.account_contacts\s*\([^)]*\bphone\b)/i;
 
 describe("INV-A4: 이 경로로 고칠 수 있는 칸은 닉네임·확인 대기 이메일·알림뿐이다", () => {
+  // 이 경로의 함수는 아이디·역할·번호 인자를 받지 않는다 — 그런 인자를 붙이면 PostgREST 가 맞는 함수를 못 찾아 PGRST202 로 거부한다.
+  // 오류가 「함수가 아예 없음」으로 나서 통과하지 않게, 같은 클라이언트로 정상 인자 호출이 먼저 성공하는 것을 본다(그 호출이 번호를 안 바꾸는 것도).
   it("INV-A4 S4: 아이디·역할·휴대폰 번호를 넣어도 셋 다 그대로다", async () => {
     const fan = await signedInClient("byeolbit_fan");
+    const ok = await fan.rpc("update_my_account", validEdit(BYEOL_EMAIL, "바뀐별빛"));
+    expect(ok.error).toBeNull(); // 고치기 함수는 있고, 이 사람이 부를 수 있다
+    expect(nicknameOf(SEED.fanId)).toBe("바뀐별빛"); // 실제로 고쳐졌다 — 아래 「그대로」가 호출이 안 돼서가 아니다
     const { error } = await fan.rpc("update_my_account", {
       ...validEdit(BYEOL_EMAIL),
       p_login_id: "hacked_id",
       p_role: "creator",
       p_phone: "01099998888",
     });
-    expect(error).not.toBeNull();
+    expect(error?.code).toBe("PGRST202"); // 그런 인자를 받는 고치기 함수가 없다
     expect(psql(`select login_id || '|' || role from public.profiles where id = '${SEED.fanId}';`)).toBe("byeolbit_fan|fan");
     expect(contactOf(SEED.fanId).phone).toBe("01012345678");
+  });
+
+  it("INV-A4: 로그인한 사람이 부를 수 있는 고치기 함수들을 실제로 불러도 번호는 그대로다", async () => {
+    const fan = await signedInClient("byeolbit_fan");
+    const calls = [
+      fan.rpc("update_my_account", validEdit("other.byeol@example.com", "별빛둘")),
+      fan.rpc("update_my_account", { ...validEdit(BYEOL_EMAIL), p_notify_kakao: false, p_notify_email: false }),
+    ];
+    for (const r of await Promise.all(calls)) expect(r.error).toBeNull();
+    expect(contactOf(SEED.fanId).phone).toBe("01012345678");
+    // 크리에이터 알림 고치기(하루) — 시드 값(알림 두 칸·수정 시각)을 적어 두었다가 그대로 되돌린다
+    const creator = await signedInClient("haru_creator");
+    const row = () => psql(`select coalesce(phone, '') || '|' || notify_kakao || '|' || notify_email || '|' || updated_at from pii.account_contacts where account_id = '${SEED.creatorProfileId}'`);
+    const seed = row();
+    const [phone, kakao, email, updatedAt] = seed.split("|");
+    try {
+      expect((await creator.rpc("update_my_creator_notify", { p_notify_kakao: kakao !== "true", p_notify_email: email !== "true" })).error).toBeNull();
+      expect(row().split("|")[1]).toBe(kakao === "true" ? "false" : "true"); // 실제로 고쳐졌다
+      expect(row().split("|")[0]).toBe(phone);
+    } finally {
+      psql(`update pii.account_contacts set notify_kakao = '${kakao}', notify_email = '${email}', updated_at = '${updatedAt}' where account_id = '${SEED.creatorProfileId}'`);
+    }
+    expect(row()).toBe(seed);
   });
 
   it("INV-A4: 확인된 이메일은 고치기로 바뀌지 않는다 — 확인 대기로만 간다", async () => {
@@ -162,19 +190,24 @@ describe("INV-A4: 이 경로로 고칠 수 있는 칸은 닉네임·확인 대�
     expect(WRITES_PHONE.test("update pii.account_contacts set email = v, phone = p_phone where account_id = v_uid")).toBe(true);
     expect(WRITES_PHONE.test("insert into pii.account_contacts (account_id, phone) values (v_uid, p_phone)")).toBe(true);
     expect(WRITES_PHONE.test("update pii.account_contacts set notify_kakao = p_notify_kakao where account_id = v_uid")).toBe(false);
+    // 스키마 전체 — 시스템 스키마(pg_catalog·information_schema)만 뺀다. Auth·저장소 등 Supabase 스키마의 함수도 훑는다.
     const sources = psql(
-      `select string_agg(p.proname || E'\\n' || p.prosrc, E'\\n----\\n') from pg_proc p where p.pronamespace in ('public'::regnamespace, 'pii'::regnamespace) and has_function_privilege('authenticated', p.oid, 'execute');`,
+      `select string_agg(n.nspname || '.' || p.proname || E'\\n' || p.prosrc, E'\\n----\\n') from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname not in ('pg_catalog', 'information_schema') and has_function_privilege('authenticated', p.oid, 'execute');`,
     );
-    expect(sources).toContain("update_my_account"); // 훑을 대상이 실제로 읽혔다
+    expect(sources).toContain("public.update_my_account"); // 훑을 대상이 실제로 읽혔다
+    expect(sources).toMatch(/^(?!public\.|pii\.)\w+\./m); // public·pii 밖의 함수도 읽혔다
     expect(WRITES_PHONE.test(sources)).toBe(false);
   });
 
-  it("INV-A4: 휴대폰 칸을 쓰는 함수(가입)는 로그인 사용자가 부를 수 없다", () => {
+  // 번호를 쓰는 함수는 가입(create_account)과 번호 바꾸기(change_my_phone, signup INV-U12 — manual 0013) 둘뿐이고, 둘 다 앱 서버 키 전용이다.
+  // 번호 바꾸기는 사람이 manual 0013 을 적용해야 생기므로 아직 없어도 통과한다 — 있으면 같은 조건을 지켜야 한다.
+  it("INV-A4: 휴대폰 칸을 쓰는 함수(가입·번호 바꾸기)는 로그인 사용자가 부를 수 없다", () => {
     const rows = psql(
-      `select string_agg(p.proname || ':' || has_function_privilege('authenticated', p.oid, 'execute') || ':' || has_function_privilege('anon', p.oid, 'execute') || E'\\n' || p.prosrc, E'\\n----\\n' order by p.proname) from pg_proc p where p.pronamespace in ('public'::regnamespace, 'pii'::regnamespace);`,
+      `select string_agg(p.proname || ':' || has_function_privilege('authenticated', p.oid, 'execute') || ':' || has_function_privilege('anon', p.oid, 'execute') || E'\\n' || p.prosrc, E'\\n----\\n' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname not in ('pg_catalog', 'information_schema');`,
     ).split("\n----\n");
     const writers = rows.filter((r) => WRITES_PHONE.test(r)).map((r) => r.split("\n")[0]);
-    expect(writers).toEqual(["create_account:false:false"]);
+    expect(writers).toContain("create_account:false:false");
+    for (const w of writers) expect(["create_account:false:false", "change_my_phone:false:false"]).toContain(w);
   });
 });
 

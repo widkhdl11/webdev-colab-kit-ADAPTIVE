@@ -3,18 +3,18 @@ import { createInvoiceDecryptor } from "@/features/invoice-print/api/invoice-dec
 import { adminClient, deleteTestOrders, holdRowLock, psql, psqlError, signedInClient } from "./helpers";
 import {
   decryptFileText,
-  HARU_CREATOR_ID,
+  ADDRESS_CREATOR_ID,
+  ADDRESS_CREATOR_LOGIN,
   logRows,
   OWNER_ID,
-  putHaruEnvelope,
-  restoreHaruAddress,
-  saveHaruAddress,
+  putTestEnvelope,
   sealTestAddress,
   STAFF_ID,
   testKeyPair,
   type TestKeys,
 } from "./invoice-helpers";
 import { approve, deleteTestUnmatched, FAN_PASS, fanSetsWaybill, inspect, paidGift, parcelState, receiveAndLabel, waybill, type Unit } from "./office-helpers";
+import { createTestCreator, removeTestCreator } from "./test-creator";
 
 // 송장이 안 나온 출력 시도 돌려주기 (address-protection INV-P15, INV-P5 「횟수 = 연 줄 − 돌려준 줄」, INV-P7).
 // 돌려줌은 열람 기록 표가 아니라 따로 둔 「돌려줌」 표에 남고, 그 표에는 돌려주기 함수만 쓴다.
@@ -22,14 +22,15 @@ import { approve, deleteTestUnmatched, FAN_PASS, fanSetsWaybill, inspect, paidGi
 // 돌려준 줄을 횟수에서 빼야 통과한다. 그 파일이 적용되기 전에는 빨간불이 맞다.
 
 let keys: TestKeys;
-let saved: ReturnType<typeof saveHaruAddress>;
 
 const env = () => ({ NODE_ENV: "development", SUPABASE_URL: process.env.FK_TEST_API_URL, SUPABASE_ANON_KEY: process.env.FK_TEST_ANON_KEY });
 
 beforeAll(async () => {
   keys = await testKeyPair();
-  saved = saveHaruAddress();
-  putHaruEnvelope(await sealTestAddress(keys, HARU_CREATOR_ID));
+  deleteTestOrders();
+  removeTestCreator();
+  createTestCreator();
+  putTestEnvelope(await sealTestAddress(keys, ADDRESS_CREATOR_ID));
 });
 
 afterEach(() => {
@@ -38,7 +39,8 @@ afterEach(() => {
 });
 
 afterAll(() => {
-  restoreHaruAddress(saved);
+  deleteTestOrders();
+  removeTestCreator();
 });
 
 async function tokenOf(loginId: string): Promise<string> {
@@ -49,9 +51,9 @@ async function tokenOf(loginId: string): Promise<string> {
   return token;
 }
 
-/** 결제·승인·입고·부착·검수까지 끝난 하루 선물 상자 하나. */
+/** 결제·승인·입고·부착·검수까지 끝난 시험 크리에이터 선물 상자 하나. */
 async function inspectedGift(): Promise<Unit & { qr: string; boxId: string }> {
-  const g = await paidGift();
+  const g = await paidGift(1, ADDRESS_CREATOR_ID);
   await approve(g);
   const no = waybill();
   await fanSetsWaybill(g.boxIds[0]!, no);
@@ -108,8 +110,8 @@ describe("INV-P15 (S15): 송장이 안 나온 시도는 돌려받는다", () => 
     claim(g.qr);
     release(latestOpened(g.boxId));
     claim(g.qr);
-    const haru = await signedInClient("haru_creator");
-    const { data, error } = await haru.rpc("my_access_log");
+    const creator = await signedInClient(ADDRESS_CREATOR_LOGIN);
+    const { data, error } = await creator.rpc("my_access_log");
     expect(error).toBeNull();
     const mine = (data as { order_no: string; result: string; released: boolean }[]).filter((r) => r.order_no === g.orderNo);
     // 최신 줄부터
@@ -121,15 +123,15 @@ describe("INV-P15 (S15): 송장이 안 나온 시도는 돌려받는다", () => 
 
   it("INV-P15 (S15): 이번 달 숫자에서 돌려준 줄은 재출력으로 세지 않는다(열림으로는 센다 — 주소는 열렸다)", async () => {
     const g = await inspectedGift();
-    const haru = await signedInClient("haru_creator");
-    const before = ((await haru.rpc("my_access_month_summary")).data as { opened_count: number; reprint_count: number }[])[0]!;
+    const creator = await signedInClient(ADDRESS_CREATOR_LOGIN);
+    const before = ((await creator.rpc("my_access_month_summary")).data as { opened_count: number; reprint_count: number }[])[0]!;
     // 앞선 시도가 돌려지지 않은 채 남으면 다음 연 줄은 2번째다 — 그 줄이 실패해 돌려지면 재출력이 아니다
     psql(
       `insert into public.decrypt_log (order_id, box_id, requester_id, result, print_no) values ('${g.orderId}', '${g.boxId}', '${OWNER_ID}', 'opened', 1)`,
     );
     claim(g.qr);
     expect(release(latestOpened(g.boxId))).toEqual({ result: "released" });
-    const after = ((await haru.rpc("my_access_month_summary")).data as { opened_count: number; reprint_count: number }[])[0]!;
+    const after = ((await creator.rpc("my_access_month_summary")).data as { opened_count: number; reprint_count: number }[])[0]!;
     expect(after.opened_count - before.opened_count).toBe(2);
     expect(after.reprint_count - before.reprint_count).toBe(0);
   });

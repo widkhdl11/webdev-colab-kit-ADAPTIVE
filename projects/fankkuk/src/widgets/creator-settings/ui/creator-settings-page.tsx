@@ -87,6 +87,8 @@ export function CreatorSettingsPage({
   const router = useRouter();
   const [sheet, setSheet] = useState<SheetState>(null);
   const [addressRegistered, setAddressRegistered] = useState(address.registered);
+  // 저장된 뒤에만 띄우는 확인 문구 — 바꾼 뒤에도 같은 「등록됨」이라 문구가 없으면 바뀌었는지 알 수 없다
+  const [addressMsg, setAddressMsg] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(blockedFans);
   const [saving, setSaving] = useState(false);
   const [unblockError, setUnblockError] = useState<string | null>(null);
@@ -184,10 +186,22 @@ export function CreatorSettingsPage({
                 </p>
               </div>
             </div>
-            <p className={`sub ${s.note}`}>아직 출력하지 않은 주문은 바뀐 주소로 나가요.</p>
-            <button className="btn btn--line" type="button" onClick={() => setSheet({ kind: "address" })}>
+            <p className={`sub ${s.note}`}>
+              {addressRegistered ? "아직 출력하지 않은 주문은 바뀐 주소로 나가요." : "등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}
+            </p>
+            <button
+              className="btn btn--line"
+              type="button"
+              onClick={() => {
+                setAddressMsg(null);
+                setSheet({ kind: "address" });
+              }}
+            >
               {addressRegistered ? "주소 바꾸기" : "주소 등록하기"}
             </button>
+            <p className={`sub ${s["save-msg"]}`} role="status">
+              {addressMsg ?? ""}
+            </p>
           </section>
 
           <section id="blocked" className={s.anchor} aria-labelledby="block-h">
@@ -367,13 +381,18 @@ export function CreatorSettingsPage({
         ) : (
           <>
             <p>주소를 {addressRegistered ? "바꾸" : "등록하"}려면 카카오톡 인증서 서명이 필요해요. 로그인만으로는 바꿀 수 없어요.</p>
-            <p className={`sub ${s["sheet-sub"]}`}>새 주소도 이 브라우저에서 잠가서 보내요. 아직 출력하지 않은 주문은 바뀐 주소로 나가요.</p>
+            <p className={`sub ${s["sheet-sub"]}`}>
+              {addressRegistered
+                ? "새 주소도 이 브라우저에서 잠가서 보내요. 아직 출력하지 않은 주문은 바뀐 주소로 나가요."
+                : "주소는 이 브라우저에서 잠가서 보내요. 등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}
+            </p>
             {sealingKeyPem ? (
               <AddressChangeForm
                 creatorId={address.creatorId}
                 sealingKeyPem={sealingKeyPem}
                 onSaved={() => {
                   // 서버에 저장된 뒤에만 「등록됨」으로 바꾼다
+                  setAddressMsg(addressRegistered ? "주소를 바꿨어요." : "주소를 등록했어요.");
                   setAddressRegistered(true);
                   setSheet(null);
                   router.refresh();

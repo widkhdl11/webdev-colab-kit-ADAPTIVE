@@ -13,9 +13,9 @@ export function waybill(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => String(b % 10)).join("");
 }
 
-/** 결제까지 끝난 팬 선물(별빛 → 하루). 상자 n 개. */
-export async function paidGift(boxCount = 1): Promise<Unit> {
-  const o = await registerTestOrder(boxCount);
+/** 결제까지 끝난 팬 선물(별빛 → 하루, creatorId 를 주면 그 크리에이터). 상자 n 개. */
+export async function paidGift(boxCount = 1, creatorId?: string): Promise<Unit> {
+  const o = await registerTestOrder(boxCount, creatorId ? { creatorId } : {});
   const requestId = await payTestOrder(o);
   const boxIds = psql(`select string_agg(id::text, ',' order by seq) from public.boxes where order_id = '${o.orderId}'`).split(",");
   return { kind: "box", orderId: o.orderId, orderNo: o.orderNo, requestId, boxIds };

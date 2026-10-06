@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SIGNUP_LOGIN_ID_PATTERN } from "@/entities/session/model/login-id";
+import { PASSWORD_MAX, PASSWORD_MIN, PASSWORD_SAME_AS_ID, PASSWORD_TOO_LONG, PASSWORD_TOO_SHORT } from "@/entities/session/model/password-rule";
 import { EMAIL_SHAPE } from "@/shared/lib/validation/email-shape";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { MOBILE_PHONE_SHAPE } from "@/shared/lib/validation/phone-shape";
@@ -30,7 +31,7 @@ const detailsObject = z.object({
     .string()
     .trim()
     .refine((s) => s.length <= 254 && EMAIL_SHAPE.test(s), "이메일 주소를 확인해 주세요."),
-  password: z.string().min(10, "비밀번호는 10자 이상으로 적어 주세요.").max(72, "비밀번호는 72자까지 쓸 수 있어요."),
+  password: z.string().min(PASSWORD_MIN, PASSWORD_TOO_SHORT).max(PASSWORD_MAX, PASSWORD_TOO_LONG),
   phone: phoneSchema,
   terms: z.object({
     service: z.literal(true, { message: "필수 약관에 동의해 주세요." }),
@@ -63,7 +64,7 @@ const CREATOR_REQUIRED = { message: "크리에이터 정보를 적어 주세요.
 const creatorWhenCreator = (v: { role?: string; creator?: unknown }) => v.role !== "creator" || v.creator !== undefined;
 
 const passwordNotLoginId = <T extends { loginId: string; password: string }>(v: T) => v.password !== v.loginId;
-const PASSWORD_IS_ID = { message: "비밀번호를 아이디와 다르게 적어 주세요.", path: ["password"] };
+const PASSWORD_IS_ID = { message: PASSWORD_SAME_AS_ID, path: ["password"] };
 
 export const signupInputSchema = detailsObject
   .extend({

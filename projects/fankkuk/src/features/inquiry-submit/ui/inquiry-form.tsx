@@ -154,7 +154,8 @@ export function InquiryForm({ signedIn }: { signedIn: boolean }) {
           {busy ? "보내는 중…" : "문의 남기기"}
         </button>
       ) : (
-        <Link className="btn btn--block" href="/login">
+        // 로그인한 뒤 고객센터로 돌아온다 — 로그인 링크에는 경로만 싣는다(session-login INV-L13)
+        <Link className="btn btn--block" href="/login?next=/support">
           로그인하고 문의 남기기
         </Link>
       )}

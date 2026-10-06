@@ -2,13 +2,17 @@ import { createHmac } from "node:crypto";
 import { creatorAddressPlaintext } from "@/entities/address/model/creator-address-plaintext";
 import { importSealingPublicKey, sealEnvelope, type Envelope } from "@/shared/lib/envelope/envelope";
 import { psql } from "./helpers";
+import { TEST_CREATOR } from "./test-creator";
 
 // 송장 출력(주소 열기) 통합 시험 공용 — address-protection INV-P4·P5·P7·P8·P12·P14.
-// 시험은 자기 키 쌍을 만들어 하루의 주소 칸에 넣고, 끝나면 원래 값(화면 확인용 주소)으로 되돌린다.
+// 시험은 자기 키 쌍을 만들어 시험 전용 크리에이터(test-creator.ts)의 주소 칸에 넣는다.
+// 시드 크리에이터(하루)의 주소 칸은 건드리지 않는다 — 화면 확인용 진짜 봉투가 있다.
 
 export const OWNER_ID = "00000000-0000-4000-a000-000000000021"; // 팬꾹 운영(대표)
 export const STAFF_ID = "00000000-0000-4000-a000-000000000022"; // 팬꾹 직원
-export const HARU_CREATOR_ID = "00000000-0000-4000-b000-000000000001";
+/** 주소 칸을 쓰는 시험 크리에이터. 선물은 별빛 → 이 크리에이터로 등록한다. */
+export const ADDRESS_CREATOR_ID = TEST_CREATOR.creatorId;
+export const ADDRESS_CREATOR_LOGIN = TEST_CREATOR.loginId;
 export const MOMO_CREATOR_ID = "00000000-0000-4000-b000-000000000002";
 
 export const LABEL = {
@@ -41,28 +45,10 @@ export function sealTestAddress(keys: TestKeys, creatorId: string): Promise<Enve
 
 const q = (v: string) => `'${v.replace(/'/g, "''")}'`;
 
-/** 하루의 주소 칸을 봉투로 바꾼다(등록 기록은 남기지 않는다 — 시험 준비). */
-export function putHaruEnvelope(envelope: Envelope): void {
+/** 시험 크리에이터의 주소 칸을 봉투로 바꾼다(등록 기록은 남기지 않는다 — 시험 준비). */
+export function putTestEnvelope(envelope: Envelope): void {
   psql(
-    `insert into pii.creator_addresses (creator_id, envelope, updated_at) values ('${HARU_CREATOR_ID}', ${q(JSON.stringify(envelope))}::jsonb, now()) on conflict (creator_id) do update set envelope = excluded.envelope`,
-  );
-}
-
-/** 지금 하루의 주소 칸(없으면 null) — 끝에 되돌리려고 적어 둔다. */
-export function saveHaruAddress(): { envelope: string; updatedAt: string } | null {
-  const row = psql(`select envelope::text || '|' || updated_at::text from pii.creator_addresses where creator_id = '${HARU_CREATOR_ID}'`);
-  if (row === "") return null;
-  const cut = row.lastIndexOf("|");
-  return { envelope: row.slice(0, cut), updatedAt: row.slice(cut + 1) };
-}
-
-export function restoreHaruAddress(saved: { envelope: string; updatedAt: string } | null): void {
-  if (!saved) {
-    psql(`delete from pii.creator_addresses where creator_id = '${HARU_CREATOR_ID}'`);
-    return;
-  }
-  psql(
-    `update pii.creator_addresses set envelope = ${q(saved.envelope)}::jsonb, updated_at = ${q(saved.updatedAt)}::timestamptz where creator_id = '${HARU_CREATOR_ID}'`,
+    `insert into pii.creator_addresses (creator_id, envelope, updated_at) values ('${ADDRESS_CREATOR_ID}', ${q(JSON.stringify(envelope))}::jsonb, now()) on conflict (creator_id) do update set envelope = excluded.envelope`,
   );
 }
 

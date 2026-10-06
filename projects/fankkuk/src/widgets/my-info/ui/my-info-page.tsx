@@ -6,11 +6,14 @@ import { useId, useState, type FormEvent } from "react";
 import type { MyAccount } from "@/entities/fan/model/my-account";
 import { postAccount } from "@/features/account-edit/api/save-account-client";
 import { accountInputSchema } from "@/features/account-edit/model/account-input";
+import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
+import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
 import s from "./my-info.module.css";
 
 // 내 정보 — 개인정보 본문. 시안: docs/design/mockups/site/v4/my-info.html
 // 닉네임·이메일·알림 둘을 저장한다(/api/me). 이메일은 바로 바뀌지 않고 확인 메일의 링크를 눌러야 바뀐다(my-account INV-A7).
-// 번호 바꾸기(카카오 재인증)·비밀번호 변경은 계정 스펙 몫이라 아직 아무 일도 하지 않는다.
+// 「번호 바꾸기」(카카오 재인증 + 지금 비밀번호, signup INV-U12)·「비밀번호 변경」(session-login INV-L12)은 버튼을 누르면 그 줄 아래에 칸이 펼쳐진다.
+// 두 칸은 저장하기와 따로 서버에 보낸다 — 입력칸에 name 이 없어 아래 「저장하기」에 실리지 않는다.
 // 「되돌리기」는 폼 기본 동작(reset)으로 처음 값에 돌아간다.
 
 type Notice = { tone: "ok" | "error"; text: string } | null;
@@ -21,6 +24,9 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
+  const [open, setOpen] = useState<"phone" | "password" | null>(null);
+  const toggle = (which: "phone" | "password") => setOpen((cur) => (cur === which ? null : which));
+  const toLogin = () => router.push("/login?next=/me");
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,7 +47,7 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
     const outcome = await postAccount(parsed.data);
     setSaving(false);
     if (outcome.kind === "login") {
-      router.push("/login");
+      toLogin();
       return;
     }
     if (outcome.kind === "failed") {
@@ -126,22 +132,24 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
           </label>
           <div>
             <div className={s["with-btn"]}>
-              <input className="input" id={f("tel")} type="text" defaultValue={account.phoneMasked ?? ""} readOnly aria-describedby={f("tel-h")} />
-              <button className="btn btn--soft" type="button">
+              <input className="input" id={f("tel")} type="text" value={account.phoneMasked ?? ""} readOnly aria-describedby={f("tel-h")} />
+              <button className="btn btn--soft" type="button" aria-expanded={open === "phone"} aria-controls={f("tel-panel")} onClick={() => toggle("phone")}>
                 번호 바꾸기
               </button>
             </div>
             <p className="hint" id={f("tel-h")}>
               바꾸려면 카카오 인증을 다시 받아요.
             </p>
+            {open === "phone" && <PhoneChangePanel id={f("tel-panel")} onLoginExpired={toLogin} onChanged={() => router.refresh()} />}
           </div>
         </div>
         <div className={s.row}>
           <span className={s.lb}>비밀번호</span>
           <div>
-            <button className="btn btn--soft" type="button">
+            <button className="btn btn--soft" type="button" aria-expanded={open === "password"} aria-controls={f("pw-panel")} onClick={() => toggle("password")}>
               비밀번호 변경
             </button>
+            {open === "password" && <PasswordChangePanel id={f("pw-panel")} onLoginExpired={toLogin} />}
           </div>
         </div>
         <div className={s.row} role="group" aria-labelledby={f("noti")} aria-describedby={f("noti-hint")}>

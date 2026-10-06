@@ -19,5 +19,6 @@ export async function POST(req: NextRequest) {
   const supabase = await createRequestSupabase();
   const result = await signIn({ auth: supabase.auth, env: process.env }, body);
   if (!result.ok) return NextResponse.json({ message: result.message }, { status: result.status, headers: { "Cache-Control": "no-store" } });
-  return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
+  // 돌아갈 주소는 경로 그대로 준다 — 사이트 주소에 붙여 만들지 않는다(INV-L13)
+  return NextResponse.json({ ok: true, next: result.next }, { headers: { "Cache-Control": "no-store" } });
 }

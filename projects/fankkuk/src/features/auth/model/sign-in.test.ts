@@ -19,7 +19,7 @@ describe("아이디 로그인", () => {
   it("아이디를 정해진 주소로 바꿔 Supabase Auth 에 넘긴다 — 가입 계정 주소가 먼저, 첫 성공에서 멈춘다", async () => {
     const { auth, calls } = recordingAuth("ok");
     const r = await signIn({ auth, env: dev }, { loginId: "newfan", password: "pw-1234" });
-    expect(r).toEqual({ ok: true });
+    expect(r).toEqual({ ok: true, next: "/" });
     expect(calls).toEqual([{ email: "newfan@login.fankkuk.invalid", password: "pw-1234" }]);
   });
 
@@ -31,7 +31,7 @@ describe("아이디 로그인", () => {
         return c.email.endsWith("@fankkuk.test") ? { error: null } : { error: { code: "invalid_credentials" } };
       },
     };
-    expect(await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).toEqual({ ok: true });
+    expect(await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).toEqual({ ok: true, next: "/" });
     expect(calls).toEqual(["byeolbit_fan@login.fankkuk.invalid", "byeolbit_fan@fankkuk.test"]);
   });
 
@@ -74,13 +74,33 @@ describe("INV-L6: 시험 계정은 운영 환경에서 로그인할 수 없다",
 
   it("INV-L6: 개발 환경에서는 시험 계정이 들어간다", async () => {
     const { auth, calls } = recordingAuth("ok");
-    expect(await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).toEqual({ ok: true });
+    expect(await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).toEqual({ ok: true, next: "/" });
     expect(calls).toHaveLength(1);
   });
 
   it("INV-U8 (S8): 운영에서 가입 계정은 가입 계정 주소로 들어간다", async () => {
     const { auth, calls } = recordingAuth("ok");
-    expect(await signIn({ auth, env: { NODE_ENV: "production" } }, { loginId: "newfan", password: "pw" })).toEqual({ ok: true });
+    expect(await signIn({ auth, env: { NODE_ENV: "production" } }, { loginId: "newfan", password: "pw" })).toEqual({ ok: true, next: "/" });
     expect(calls).toEqual([{ email: "newfan@login.fankkuk.invalid", password: "pw" }]);
+  });
+});
+
+describe("INV-L13: 로그인 뒤 돌아갈 주소는 같은 사이트의 경로만", () => {
+  it("INV-L13 S11: 성공하면 검사를 통과한 경로를 그대로 돌려준다", async () => {
+    const { auth } = recordingAuth("ok");
+    expect(await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw", next: "/support" })).toEqual({ ok: true, next: "/support" });
+  });
+
+  it("INV-L13 S11 (실패경로): 다른 사이트로 가는 값은 메인으로 바꿔 돌려준다", async () => {
+    const { auth } = recordingAuth("ok");
+    for (const next of ["//evil.example", "/\\evil.example", "https://evil.example", "/%2F%2Fevil.example", 42]) {
+      expect(await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw", next })).toEqual({ ok: true, next: "/" });
+    }
+  });
+
+  it("INV-L13 (실패경로): 돌아갈 주소는 실패 응답을 바꾸지 않는다(INV-L5 그대로)", async () => {
+    const { auth } = recordingAuth("invalid_credentials");
+    const r = await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw", next: "/support" });
+    expect(r).toEqual({ ok: false, status: 401, message: SIGN_IN_FAILED_MESSAGE });
   });
 });

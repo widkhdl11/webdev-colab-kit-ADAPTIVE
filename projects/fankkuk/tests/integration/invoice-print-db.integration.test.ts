@@ -3,45 +3,47 @@ import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoic
 import { adminClient, deleteTestOrders, holdRowLock, psql, psqlError, signedInClient } from "./helpers";
 import {
   decryptFileText,
-  HARU_CREATOR_ID,
+  ADDRESS_CREATOR_ID,
+  ADDRESS_CREATOR_LOGIN,
   LABEL,
   logRows,
   MOMO_CREATOR_ID,
   OWNER_ID,
-  putHaruEnvelope,
-  restoreHaruAddress,
-  saveHaruAddress,
+  putTestEnvelope,
   sealTestAddress,
   STAFF_ID,
   testKeyPair,
   type TestKeys,
 } from "./invoice-helpers";
 import { approve, deleteTestUnmatched, FAN_PASS, fanSetsWaybill, inspect, orderStatus, paidGift, parcelState, receiveAndLabel, waybill, type Unit } from "./office-helpers";
+import { createTestCreator, removeTestCreator } from "./test-creator";
 
 // 송장 출력 = 크리에이터 주소 열기 (address-protection INV-P4·P5·P7·P8·P12·P14, approval-signature INV-S11·S12, office-workflow INV-W3).
 // 송장 출력 함수를 실제 DB(복호화 전용 역할 토큰)·실제 로그인 검증·실제 봉투로 돌린다. 키 쌍은 시험이 만든다.
 
 let keys: TestKeys;
-let saved: ReturnType<typeof saveHaruAddress>;
 let decryptor: InvoiceDecryptor;
 
 const env = () => ({ NODE_ENV: "development", SUPABASE_URL: process.env.FK_TEST_API_URL, SUPABASE_ANON_KEY: process.env.FK_TEST_ANON_KEY });
 
 beforeAll(async () => {
   keys = await testKeyPair();
-  saved = saveHaruAddress();
-  putHaruEnvelope(await sealTestAddress(keys, HARU_CREATOR_ID));
+  deleteTestOrders();
+  removeTestCreator();
+  createTestCreator();
+  putTestEnvelope(await sealTestAddress(keys, ADDRESS_CREATOR_ID));
   decryptor = createInvoiceDecryptor(env(), () => decryptFileText(keys), waybill);
 });
 
 afterEach(async () => {
   deleteTestOrders();
   deleteTestUnmatched();
-  putHaruEnvelope(await sealTestAddress(keys, HARU_CREATOR_ID));
+  putTestEnvelope(await sealTestAddress(keys, ADDRESS_CREATOR_ID));
 });
 
 afterAll(() => {
-  restoreHaruAddress(saved);
+  deleteTestOrders();
+  removeTestCreator();
 });
 
 async function tokenOf(loginId: string): Promise<string> {
@@ -52,9 +54,9 @@ async function tokenOf(loginId: string): Promise<string> {
   return token;
 }
 
-/** 결제·(승인)·입고·부착·검수까지 끝난 하루 선물 상자 하나. */
+/** 결제·(승인)·입고·부착·검수까지 끝난 시험 크리에이터 선물 상자 하나. */
 async function inspectedGift(opts: { approved?: boolean } = {}): Promise<Unit & { qr: string }> {
-  const g = await paidGift();
+  const g = await paidGift(1, ADDRESS_CREATOR_ID);
   if (opts.approved !== false) await approve(g);
   const no = waybill();
   await fanSetsWaybill(g.boxIds[0]!, no);
@@ -66,7 +68,7 @@ async function inspectedGift(opts: { approved?: boolean } = {}): Promise<Unit & 
 
 const print = async (qr: string, login = "fankkuk_admin") => decryptor({ qr, accessToken: await tokenOf(login) });
 
-describe("INV-P4·S12: 조건이 모두 맞으면 대표의 송장 출력이 하루의 주소를 연다", () => {
+describe("INV-P4·S12: 조건이 모두 맞으면 대표의 송장 출력이 크리에이터의 주소를 연다", () => {
   it("INV-P4·INV-S12·S12 (S1 흐름): 봉인한 주소가 라벨 칸으로 열리고, 상자는 송장 출력 단계로, 열람 기록 1줄", async () => {
     const g = await inspectedGift();
     const res = await print(g.qr);
@@ -233,7 +235,7 @@ describe("INV-P5: 최대 3번, 출고 확정 뒤에는 열리지 않는다", () 
 describe("INV-P5: 횟수는 상자마다 따로 센다 (카드 d30)", () => {
   /** 결제·승인 뒤 상자 boxCount 개를 모두 입고·부착·검수까지. 상자마다 QR 을 돌려준다. */
   async function inspectedBoxes(boxCount: number): Promise<Unit & { qrs: string[] }> {
-    const g = await paidGift(boxCount);
+    const g = await paidGift(boxCount, ADDRESS_CREATOR_ID);
     await approve(g);
     const staff = await signedInClient("fankkuk_staff");
     const qrs: string[] = [];
@@ -287,7 +289,7 @@ describe("INV-P5: 횟수는 상자마다 따로 센다 (카드 d30)", () => {
   });
 
   it("INV-P5 (실패경로): 어느 상자인지 없는 「연 줄」은 DB 가 받지 않는다 — 그런 줄은 어느 상자의 횟수에도 안 잡힌다", async () => {
-    const g = await paidGift();
+    const g = await paidGift(1, ADDRESS_CREATOR_ID);
     // 복호화 전용 역할은 연 줄을 직접 넣지 못한다(INV-P15 (a)) — 표 주인으로 넣어 조건 자체를 본다
     expect(
       psqlError(
@@ -300,7 +302,7 @@ describe("INV-P5: 횟수는 상자마다 따로 센다 (카드 d30)", () => {
 
 describe("INV-P4 (c): 검수 완료 ~ 출고 전에만", () => {
   it("INV-P4 (S4c, 실패경로 c): 승인됐지만 검수 전인 상자는 거부", async () => {
-    const g = await paidGift();
+    const g = await paidGift(1, ADDRESS_CREATOR_ID);
     await approve(g);
     const no = waybill();
     await fanSetsWaybill(g.boxIds[0]!, no);
@@ -313,8 +315,8 @@ describe("INV-P4 (c): 검수 완료 ~ 출고 전에만", () => {
 });
 
 describe("INV-P14: 봉인 속 크리에이터가 주소 칸의 크리에이터와 다르면 쓰지 않는다", () => {
-  it("INV-P14 (S14, 실패경로): 모모의 봉인을 하루 칸에 옮겨 붙이면 라벨을 주지 않고, 상자는 그대로, 거부 줄이 남는다", async () => {
-    putHaruEnvelope(await sealTestAddress(keys, MOMO_CREATOR_ID));
+  it("INV-P14 (S14, 실패경로): 모모의 봉인을 시험 크리에이터 칸에 옮겨 붙이면 라벨을 주지 않고, 상자는 그대로, 거부 줄이 남는다", async () => {
+    putTestEnvelope(await sealTestAddress(keys, MOMO_CREATOR_ID));
     const g = await inspectedGift();
     const res = await print(g.qr);
     expect(res).toEqual({ kind: "denied", reason: "address_mismatch" });
@@ -329,8 +331,8 @@ describe("INV-P7: 기록은 송장 출력 함수만 쓴다 — 성공·거부 �
     await print(g.qr, "fankkuk_staff");
     await print(g.qr);
     expect(logRows(g.orderId)).toEqual([`denied:not_owner:${STAFF_ID}`, `opened:1:${OWNER_ID}`]);
-    const haru = await signedInClient("haru_creator");
-    const { data } = await haru.rpc("my_access_log");
+    const creator = await signedInClient(ADDRESS_CREATOR_LOGIN);
+    const { data } = await creator.rpc("my_access_log");
     const mine = (data as { order_no: string; result: string }[]).filter((r) => r.order_no === g.orderNo);
     expect(mine.map((r) => r.result).sort()).toEqual(["denied", "opened"]);
   });
@@ -360,7 +362,7 @@ describe("INV-P12: 개발용 키는 운영에서 만드는 순간 실패한다",
 
 describe("주소가 없는 크리에이터", () => {
   it("주소 칸이 비어 있으면 열 것이 없다고 답하고, 횟수를 쓰지 않고, 상자는 그대로", async () => {
-    psql(`delete from pii.creator_addresses where creator_id = '${HARU_CREATOR_ID}'`);
+    psql(`delete from pii.creator_addresses where creator_id = '${ADDRESS_CREATOR_ID}'`);
     const g = await inspectedGift();
     expect(await print(g.qr)).toEqual({ kind: "no_address" });
     expect(logRows(g.orderId)).toEqual([]);

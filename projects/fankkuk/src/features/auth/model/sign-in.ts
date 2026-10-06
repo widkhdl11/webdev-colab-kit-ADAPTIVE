@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { loginEmailCandidates } from "@/entities/session/model/login-id";
+import { safeNextPath } from "@/entities/session/model/safe-next-path";
 import type { DeployEnv } from "@/shared/lib/env/is-production";
 
 // 아이디·비밀번호 로그인. 비밀번호 확인은 Supabase Auth 가 하고, 성공하면 그 클라이언트가 세션 쿠키를 쓴다.
@@ -8,7 +9,8 @@ export type PasswordAuth = {
   signInWithPassword(credentials: { email: string; password: string }): Promise<{ error: unknown }>;
 };
 
-export type SignInResult = { ok: true } | { ok: false; status: 400 | 401; message: string };
+/** next: 로그인 뒤 돌아갈 같은 사이트 경로(INV-L13). 검사를 통과하지 못하면 메인(/). */
+export type SignInResult = { ok: true; next: string } | { ok: false; status: 400 | 401; message: string };
 
 /** INV-L5: 아이디가 없든 비밀번호가 틀렸든 이 문구 하나. */
 export const SIGN_IN_FAILED_MESSAGE = "아이디 또는 비밀번호가 맞지 않아요.";
@@ -16,6 +18,8 @@ export const SIGN_IN_FAILED_MESSAGE = "아이디 또는 비밀번호가 맞지 �
 const inputSchema = z.object({
   loginId: z.string().max(100),
   password: z.string().max(200),
+  /** 로그인 뒤 돌아갈 주소 — 꼴 검사는 safeNextPath 하나가 한다(INV-L13). 성공 뒤에만 쓴다. */
+  next: z.unknown().optional(),
 });
 
 const failed = { ok: false, status: 401, message: SIGN_IN_FAILED_MESSAGE } as const;
@@ -34,7 +38,7 @@ export async function signIn(deps: { auth: PasswordAuth; env: DeployEnv }, input
   for (const email of candidates) {
     try {
       const { error } = await deps.auth.signInWithPassword({ email, password: parsed.data.password });
-      if (!error) return { ok: true };
+      if (!error) return { ok: true, next: safeNextPath(parsed.data.next) };
     } catch {
       // 다음 후보로 — 모두 실패하면 같은 실패 응답(INV-L5)
     }

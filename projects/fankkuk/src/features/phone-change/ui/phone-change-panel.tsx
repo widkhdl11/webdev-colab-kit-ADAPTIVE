@@ -1,0 +1,164 @@
+"use client";
+
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { checkPhoneChangeVerification, requestPhoneChangeVerification, sendPhoneChange, type PhoneChangeField } from "../api/phone-change-client";
+import s from "./phone-change.module.css";
+
+// 내 정보의 「번호 바꾸기」(signup INV-U12). 새 번호로 카카오톡 본인 확인 → 지금 비밀번호 → 바꾸기.
+// 인증이 됐는지는 서버가 카카오에게 묻는다 — 이 화면은 「인증했어요」를 누르면 서버에 확인을 맡기고, 확인되면 바꾸기를 보낸다.
+// 내 정보 저장 폼 안에 놓이므로 폼을 따로 두지 않는다(버튼은 type="button", Enter 는 이 칸의 다음 단계).
+// 포커스: 요청을 보내면 「지금 비밀번호」 칸으로, 「번호 다시 적기」를 누르면 번호 칸으로 옮긴다.
+// 실패하면 문구는 role="alert" 로 읽히고, 서버가 알려 준 칸(입력칸이 없는 본인 확인 실패나 모르면 번호 칸)에 aria-invalid 를 달고 포커스를 옮긴다.
+
+type InputKey = "phone" | "pw";
+type Notice = { kind: "ok"; text: string } | { kind: "error"; input: InputKey; text: string } | null;
+
+const inputOf = (field: PhoneChangeField | null): InputKey => (field === "currentPassword" ? "pw" : "phone");
+
+export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string; onLoginExpired: () => void; onChanged: () => void }) {
+  const uid = useId();
+  const f = (name: string) => `${uid}-${name}`;
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [requested, setRequested] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<Notice>(null);
+  // 포커스를 옮길 칸 — 그 칸이 그려진 뒤(지금 비밀번호 칸은 요청 뒤에 생긴다)에 옮기려고 상태로 둔다
+  const [focusTo, setFocusTo] = useState<{ input: InputKey } | null>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const pwRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!focusTo) return;
+    (focusTo.input === "pw" ? pwRef : phoneRef).current?.focus();
+  }, [focusTo]);
+
+  const fail = (field: PhoneChangeField | null, text: string) => {
+    const input = field === "currentPassword" && !requested ? "phone" : inputOf(field);
+    setNotice({ kind: "error", input, text });
+    setFocusTo({ input });
+  };
+
+  const requestVerification = async () => {
+    if (busy) return;
+    setBusy(true);
+    setNotice(null);
+    const r = await requestPhoneChangeVerification(phone);
+    setBusy(false);
+    if (r.kind === "login") return onLoginExpired();
+    if (r.kind === "failed") return fail(r.field, r.message);
+    setRequested(true);
+    setNotice({ kind: "ok", text: "카카오톡으로 인증 요청을 보냈어요. 카카오톡에서 인증한 뒤 지금 비밀번호를 적고 아래 버튼을 눌러 주세요." });
+    setFocusTo({ input: "pw" });
+  };
+
+  const change = async () => {
+    if (busy) return;
+    setBusy(true);
+    setNotice(null);
+    const checked = await checkPhoneChangeVerification();
+    if (checked.kind === "login") return onLoginExpired();
+    if (checked.kind === "failed") {
+      setBusy(false);
+      return fail(checked.field ?? "verification", checked.message);
+    }
+    if (!checked.verified) {
+      setBusy(false);
+      return fail("verification", "아직 카카오톡 인증이 끝나지 않았어요. 카카오톡에서 인증한 뒤 다시 눌러 주세요.");
+    }
+    const r = await sendPhoneChange(phone, password);
+    setBusy(false);
+    if (r.kind === "login") return onLoginExpired();
+    if (r.kind === "failed") return fail(r.field, r.message);
+    setPassword("");
+    setNotice({ kind: "ok", text: "휴대폰 번호를 바꿨어요." });
+    onChanged();
+  };
+
+  const onEnter = (next: () => Promise<void>) => (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    void next();
+  };
+
+  const invalid = (input: InputKey) => notice?.kind === "error" && notice.input === input;
+  const describedBy = (input: InputKey, hint?: string) => [hint, invalid(input) ? f("err") : null].filter(Boolean).join(" ") || undefined;
+
+  return (
+    <div className={s.panel} id={id} role="group" aria-label="휴대폰 번호 바꾸기">
+      <div className="field">
+        <label htmlFor={f("phone")}>새 휴대폰 번호</label>
+        <input
+          ref={phoneRef}
+          className="input"
+          id={f("phone")}
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel"
+          placeholder="010-0000-0000"
+          maxLength={13}
+          value={phone}
+          readOnly={requested}
+          onChange={(e) => setPhone(e.target.value)}
+          onKeyDown={onEnter(requestVerification)}
+          aria-invalid={invalid("phone") || undefined}
+          aria-describedby={describedBy("phone", f("phone-h"))}
+        />
+        <p className="hint" id={f("phone-h")}>
+          새 번호의 카카오톡으로 본인 확인을 받아요. 가입할 때와 같은 방법이에요.
+        </p>
+      </div>
+      {requested && (
+        <div className="field">
+          <label htmlFor={f("pw")}>지금 비밀번호</label>
+          <input
+            ref={pwRef}
+            className="input"
+            id={f("pw")}
+            type="password"
+            autoComplete="current-password"
+            maxLength={72}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={onEnter(change)}
+            aria-invalid={invalid("pw") || undefined}
+            aria-describedby={describedBy("pw")}
+          />
+        </div>
+      )}
+      <div>
+        <p className={s.error} id={f("err")} role="alert">
+          {notice?.kind === "error" ? notice.text : ""}
+        </p>
+        <p className={s.msg} role="status">
+          {notice?.kind === "ok" ? notice.text : ""}
+        </p>
+      </div>
+      <div className={s.actions}>
+        {requested ? (
+          <>
+            <button className="btn" type="button" onClick={() => void change()} aria-disabled={busy} aria-busy={busy || undefined}>
+              {busy ? "바꾸는 중" : "인증했어요, 번호 바꾸기"}
+            </button>
+            <button
+              className="btn btn--text"
+              type="button"
+              onClick={() => {
+                setRequested(false);
+                setPassword("");
+                setNotice(null);
+                setFocusTo({ input: "phone" });
+              }}
+            >
+              번호 다시 적기
+            </button>
+          </>
+        ) : (
+          <button className="btn" type="button" onClick={() => void requestVerification()} aria-disabled={busy} aria-busy={busy || undefined}>
+            {busy ? "보내는 중" : "카카오톡으로 인증 요청 보내기"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
