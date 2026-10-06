@@ -65,6 +65,10 @@ describe("toCreatorCards", () => {
     expect(cards[0]?.approvalMinutes).toBe(45);
     expect(cards[1]?.approvalMinutes).toBe(240);
   });
+  it("승인 기록도 소개 칸 값도 없는 새 크리에이터는 평균 승인 시간을 비워 둔다 — 「약 1분」처럼 빨리 승인될 것처럼 보이지 않게", () => {
+    const fresh = [{ ...profiles[0]!, creatorId: "c2", avgApprovalHours: null }];
+    expect(toCreatorCards(creators, fresh, [], { c2: null }).find((c) => c.id === "c2")?.approvalMinutes).toBeNull();
+  });
   it("소개가 없는 크리에이터는 목록에 넣지 않는다", () => {
     expect(toCreatorCards(creators, profiles, []).some((c) => c.id === "c9")).toBe(false);
   });

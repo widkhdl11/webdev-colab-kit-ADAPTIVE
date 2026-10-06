@@ -40,7 +40,7 @@ export async function readCreatorCards(client: Pick<SupabaseClient, "rpc">, opts
     channelTitle: r.channel_title,
     intro: r.intro,
     alias: r.alias,
-    avgApprovalHours: r.avg_approval_hours ?? 0,
+    avgApprovalHours: r.avg_approval_hours,
     faceTone: r.face_tone,
   }));
   const minutes = Object.fromEntries(rows.map((r) => [r.id, r.approval_minutes_from_orders]));

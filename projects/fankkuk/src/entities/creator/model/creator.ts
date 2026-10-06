@@ -11,8 +11,8 @@ export type CreatorProfile = {
   intro: string;
   /** 검색에 같이 걸리는 로마자 이름. */
   alias: string;
-  /** 소개 칸에 적힌 평균 승인 시간(시간 단위). 주문 기록으로 계산한 값이 있으면 그쪽을 쓴다(approvalTimeOf). */
-  avgApprovalHours: number;
+  /** 소개 칸에 적힌 평균 승인 시간(시간 단위). 주문 기록으로 계산한 값이 있으면 그쪽을 쓴다(approvalTimeOf). 새 크리에이터는 null. */
+  avgApprovalHours: number | null;
   /** 얼굴 자리표시 동그라미 색 — 프로필 사진이 붙으면 사라질 값이라 토큰이 아니라 데이터로 둔다. */
   faceTone: string;
 };

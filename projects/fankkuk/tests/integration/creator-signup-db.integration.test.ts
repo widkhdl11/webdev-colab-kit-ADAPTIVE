@@ -69,6 +69,8 @@ describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", (
     const r = await adminClient().rpc("create_creator_account", body);
     expect(r.error).toBeNull();
     expect(psql(`select role from public.profiles where id = '${userId}'`)).toBe("creator");
+    // 머리 메뉴·인사말이 쓰는 닉네임도 공개 이름이다 — 로그인 아이디를 자른 값(it_cv_ggul)이 아니다
+    expect(psql(`select nickname from public.profiles where id = '${userId}'`)).toBe("꿀단지");
     const row = psql(
       `select name || '|' || channel_title || '|' || category || '|' || identity_verified || '|' || coalesce(channel_url, '-') || '|' || intro || '|' || slug from public.creators where profile_id = '${userId}'`,
     );
