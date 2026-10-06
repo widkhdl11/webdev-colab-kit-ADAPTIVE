@@ -37,7 +37,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
           <div className="container">
             <h1 className="page-h">이메일 확인</h1>
             <p>
-              이메일을 바꾼 계정으로 <Link href="/login">로그인</Link>한 뒤, 메일의 링크를 다시 눌러 주세요.
+              메일을 받은 계정으로 <Link href="/login">로그인</Link>한 뒤, 메일의 링크를 다시 눌러 주세요.
             </p>
           </div>
         </main>

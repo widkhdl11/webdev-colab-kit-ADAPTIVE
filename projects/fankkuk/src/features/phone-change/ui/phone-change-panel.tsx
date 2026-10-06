@@ -21,6 +21,9 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [requested, setRequested] = useState(false);
+  // 카카오 인증이 서버에서 한 번 확인되면 기억한다 — 서버는 같은 번호표를 두 번 확인해 주지 않으므로,
+  // 지금 비밀번호를 틀려 다시 누를 때 확인부터 다시 보내면 「본인 확인을 다시」로 막힌다. 번호표가 아직 쓸 수 있는지는 바꾸기 처리가 DB 에서 다시 본다.
+  const [verified, setVerified] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
   // 포커스를 옮길 칸 — 그 칸이 그려진 뒤(지금 비밀번호 칸은 요청 뒤에 생긴다)에 옮기려고 상태로 둔다
@@ -56,20 +59,27 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
     if (busy) return;
     setBusy(true);
     setNotice(null);
-    const checked = await checkPhoneChangeVerification();
-    if (checked.kind === "login") return onLoginExpired();
-    if (checked.kind === "failed") {
-      setBusy(false);
-      return fail(checked.field ?? "verification", checked.message);
-    }
-    if (!checked.verified) {
-      setBusy(false);
-      return fail("verification", "아직 카카오톡 인증이 끝나지 않았어요. 카카오톡에서 인증한 뒤 다시 눌러 주세요.");
+    if (!verified) {
+      const checked = await checkPhoneChangeVerification();
+      if (checked.kind === "login") return onLoginExpired();
+      if (checked.kind === "failed") {
+        setBusy(false);
+        return fail(checked.field ?? "verification", checked.message);
+      }
+      if (!checked.verified) {
+        setBusy(false);
+        return fail("verification", "아직 카카오톡 인증이 끝나지 않았어요. 카카오톡에서 인증한 뒤 다시 눌러 주세요.");
+      }
+      setVerified(true);
     }
     const r = await sendPhoneChange(phone, password);
     setBusy(false);
     if (r.kind === "login") return onLoginExpired();
-    if (r.kind === "failed") return fail(r.field, r.message);
+    if (r.kind === "failed") {
+      // 본인 확인이 쓸 수 없게 됐으면(10분 지남 등) 다음 누름에는 확인부터 다시 한다
+      if (r.field === "verification") setVerified(false);
+      return fail(r.field, r.message);
+    }
     setPassword("");
     setNotice({ kind: "ok", text: "휴대폰 번호를 바꿨어요." });
     onChanged();
@@ -145,6 +155,7 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
               type="button"
               onClick={() => {
                 setRequested(false);
+                setVerified(false);
                 setPassword("");
                 setNotice(null);
                 setFocusTo({ input: "phone" });

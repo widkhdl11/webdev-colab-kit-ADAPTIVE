@@ -34,7 +34,7 @@ export function ConfirmEmailPanel({ token }: { token: string }) {
       </h2>
       {state.kind !== "done" && <p className={s.msg}>버튼을 누르면 확인 메일을 받은 주소가 내 계정의 이메일이 돼요.</p>}
       <p className={s.msg} role="status">
-        {state.kind === "done" ? `이메일을 새 주소(${state.email})로 바꿨어요.` : ""}
+        {state.kind === "done" ? `이메일 주소(${state.email})를 확인했어요.` : ""}
       </p>
       <p className={s.error} role="alert">
         {state.kind === "failed" ? state.message : ""}
@@ -46,7 +46,7 @@ export function ConfirmEmailPanel({ token }: { token: string }) {
           </Link>
         ) : (
           <button className="btn" type="button" onClick={confirm} aria-disabled={state.kind === "sending"} aria-busy={state.kind === "sending"}>
-            {state.kind === "sending" ? "확인하는 중" : "이 주소로 바꾸기"}
+            {state.kind === "sending" ? "확인하는 중" : "이 주소 확인하기"}
           </button>
         )}
       </div>
