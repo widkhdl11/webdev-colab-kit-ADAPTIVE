@@ -27,12 +27,21 @@ describe("운영자 실패 목록 읽기 (INV-N10)", () => {
 
   it("(실패경로): DB 오류나 꼴이 다른 응답이면 던진다 — 빈 목록으로 보이게 하지 않는다", async () => {
     await expect(readNotificationFailures(client({ data: null, error: { code: "42501" } }))).rejects.toThrow();
-    await expect(readNotificationFailures(client({ data: [{ ...ROW, status: "sent" }], error: null }))).rejects.toThrow();
+    for (const bad of [{ status: "sent" }, { channel: "sms" }, { attempts: "5" }, { order_no: null }, { kind: "Approval Request" }]) {
+      await expect(readNotificationFailures(client({ data: [{ ...ROW, ...bad }], error: null }))).rejects.toThrow();
+    }
+  });
+
+  it("INV-N10: 모르는 종류(나중에 더한 알림)가 와도 목록은 열린다 — 종류 코드를 그대로 보인다", async () => {
+    const rows = await readNotificationFailures(client({ data: [{ ...ROW, kind: "revgift_received" }], error: null }));
+    expect(kindLabel(rows[0]!.kind, rows[0]!.round)).toBe("revgift_received");
   });
 
   it("종류와 오류 코드를 사람 말로 — 모르는 코드는 코드 그대로", () => {
     expect(kindLabel("approval_request", 3)).toBe("승인 요청 (3차 재알림)");
     expect(kindLabel("approval_request", 1)).toBe("승인 요청");
+    expect(kindLabel("approval_request", 2)).toBe("승인 요청 (도착 재알림)");
+    expect(kindLabel("arrived")).toBe("입고");
     expect(kindLabel("hold")).toBe("보관");
     expect(errorCodeLabel("no_contact")).toMatch(/꺼|이메일/);
     expect(errorCodeLabel("request_not_waiting")).toMatch(/승인/);

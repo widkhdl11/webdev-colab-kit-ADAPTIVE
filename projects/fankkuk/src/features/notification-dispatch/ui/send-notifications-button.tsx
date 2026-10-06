@@ -37,19 +37,20 @@ export function SendNotificationsButton() {
       <button type="button" className={`${a.btn} ${a.btnSm}`} onClick={send} aria-disabled={busy} aria-busy={busy}>
         {busy ? "보내는 중…" : "알림 지금 보내기"}
       </button>
+      {/* 두 칸은 늘 그려 둔다 — 칸이 새로 생기면 화면 읽기 프로그램이 읽지 않는 경우가 있다. 실패만 급하게 읽는다. */}
       <div role="status" style={{ marginTop: 8 }}>
         {busy && <p className={a.hint}>알림을 보내는 중이에요.</p>}
-        {message &&
-          (message.ok ? (
-            <p className={a.hint}>{message.text}</p>
-          ) : (
-            <p className={a.errorLine}>
-              <span className={a.errorMark} aria-hidden="true">
-                !
-              </span>
-              {message.text}
-            </p>
-          ))}
+        {message?.ok && <p className={a.hint}>{message.text}</p>}
+      </div>
+      <div role="alert">
+        {message && !message.ok && (
+          <p className={a.errorLine}>
+            <span className={a.errorMark} aria-hidden="true">
+              !
+            </span>
+            {message.text}
+          </p>
+        )}
       </div>
     </div>
   );

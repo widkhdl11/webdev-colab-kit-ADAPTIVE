@@ -68,7 +68,8 @@ export function AutomationPanel({ rows, failures, now }: Props) {
             <span>{failures.length}건</span>
           </div>
           <div className={a.tblWrap}>
-            <table className={a.tbl} style={{ minWidth: 760 }} aria-labelledby="auto-notification-failures">
+            <table className={a.tbl} style={{ minWidth: 760 }}>
+              <caption className="sr-only">보내지 못한 알림</caption>
               <thead>
                 <tr>
                   <th scope="col">주문번호</th>

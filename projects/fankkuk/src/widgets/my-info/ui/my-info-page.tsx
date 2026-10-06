@@ -144,7 +144,7 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
             </button>
           </div>
         </div>
-        <div className={s.row} role="group" aria-labelledby={f("noti")}>
+        <div className={s.row} role="group" aria-labelledby={f("noti")} aria-describedby={f("noti-hint")}>
           <span className={s.lb} id={f("noti")}>
             알림 받기
           </span>
@@ -157,7 +157,7 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
               <input type="checkbox" name="notifyEmail" defaultChecked={account.notifyEmail} />
               이메일로 받기
             </label>
-            <p className={`hint ${s["hint-tight"]}`}>보낸 선물이 사무실에 도착하고, 검수를 마치고, 크리에이터에게 출발할 때 알려 드려요.</p>
+            <p className={`hint ${s["hint-tight"]}`} id={f("noti-hint")}>보낸 선물이 사무실에 도착하고, 검수를 마치고, 크리에이터에게 출발할 때 알려 드려요.</p>
           </div>
         </div>
       </div>

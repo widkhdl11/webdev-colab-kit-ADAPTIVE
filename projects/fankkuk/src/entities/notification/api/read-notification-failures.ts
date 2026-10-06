@@ -9,7 +9,8 @@ const KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transi
 export type NotificationKindName = (typeof KINDS)[number];
 
 const row = z.object({
-  kind: z.enum(KINDS),
+  // 모르는 종류(새로 더한 알림)가 와도 화면 전체를 오류로 만들지 않는다 — 종류 코드를 그대로 보여 준다
+  kind: z.string().regex(/^[a-z_]{1,40}$/),
   order_no: z.string(),
   round: z.number().int(),
   channel: z.enum(["email", "kakao"]),
@@ -20,7 +21,7 @@ const row = z.object({
 });
 
 export type NotificationFailure = {
-  kind: NotificationKindName;
+  kind: string;
   orderNo: string;
   round: number;
   channel: "email" | "kakao";
@@ -57,7 +58,12 @@ const KIND_LABEL: Record<NotificationKindName, string> = {
   hold: "보관",
 };
 
-export function kindLabel(kind: NotificationKindName, round = 1): string {
+function isKnownKind(kind: string): kind is NotificationKindName {
+  return (KINDS as readonly string[]).includes(kind);
+}
+
+export function kindLabel(kind: string, round = 1): string {
+  if (!isKnownKind(kind)) return kind;
   const base = KIND_LABEL[kind];
   if (kind !== "approval_request" || round === 1) return base;
   return `${base} (${round === 2 ? "도착 재알림" : "3차 재알림"})`;
