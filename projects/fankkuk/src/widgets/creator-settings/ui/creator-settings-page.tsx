@@ -279,7 +279,7 @@ export function CreatorSettingsPage({
             <Switch
               id="sw-find"
               title="크리에이터 찾기에 보이기"
-              desc="끄면 크리에이터 찾기 목록에서만 빠져요.내 페이지 링크·팔로우·선물 받기는 그대로예요. 본인 확인을 마쳐야 찾기에 보여요."
+              desc="끄면 크리에이터 찾기 목록에서만 빠져요. 내 페이지 링크·팔로우·선물 받기는 그대로예요. 본인 확인을 마쳐야 찾기에 보여요."
               checked={visible}
               onChange={setVisible}
             />
