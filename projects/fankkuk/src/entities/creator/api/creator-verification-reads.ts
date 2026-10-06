@@ -47,3 +47,12 @@ export async function readMovingCreatorIds(client: Pick<SupabaseClient, "rpc">):
   if (error) throw new Error(`채널 이사 중인 크리에이터를 읽지 못했다: ${error.code}`);
   return z.array(movingRow).parse(data).map((r) => r.creator_id);
 }
+
+const platformRow = z.object({ platform: z.string(), api_check: z.boolean() }).strict();
+
+/** INV-V2 표의 「API 확인」이 있는 플랫폼 — 화면이 「○○로 확인하기」·「코드로 확인하기」를 보일지 정한다. 판정은 DB 함수가 다시 한다. */
+export async function readApiCheckPlatforms(client: Pick<SupabaseClient, "rpc">): Promise<Set<string>> {
+  const { data, error } = await client.rpc("creator_verification_platforms");
+  if (error) throw new Error(`본인 확인 플랫폼을 읽지 못했다: ${error.code}`);
+  return new Set(z.array(platformRow).parse(data).filter((r) => r.api_check).map((r) => r.platform));
+}

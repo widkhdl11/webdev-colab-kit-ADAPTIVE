@@ -9,7 +9,9 @@ import { formatDate } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import type { MyAddressStatus } from "@/entities/creator/api/my-address-status";
+import type { MyVerification, MyVerificationState } from "@/entities/creator/model/creator-verification";
 import { AddressChangeForm } from "@/features/creator-address/ui/address-change-form";
+import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
 import { sendUnblock } from "@/features/creator-unblock/api/send-unblock";
 import s from "./creator-settings.module.css";
 
@@ -20,6 +22,8 @@ import s from "./creator-settings.module.css";
 // 「등록됨」은 서버에 저장된 뒤에만 바뀐다. 처음 그리는 값은 DB 읽기 함수(my_creator_address_status)의 등록 여부다.
 // 차단 풀기는 로그인 세션으로 저장한다(decline-block INV-D10, 카드 d26) — 풀어도 주소는 열리지 않고, 새 선물은 건마다 서명 승인이 있어야 나간다.
 // 주소는 값을 받지 않는다 — 「등록돼 있는가」만 보여 준다. 프로필 저장·알림 스위치는 아직 예시라 서버에 보내지 않는다.
+// 채널 본인 확인(creator-verification)은 DB 읽기 함수(my_creator_verification_state · my_creator_verifications)의 값이다 —
+// 프로필 칸의 방송 채널·본인 확인도 그 값을 쓴다.
 
 type SheetState = { kind: "address" } | { kind: "unblock"; fan: BlockedFan } | null;
 
@@ -59,12 +63,14 @@ export function CreatorSettingsPage({
   address,
   sealingKeyPem,
   blockedFans,
+  verification,
 }: {
   settings: CreatorSettingsView;
   address: MyAddressStatus;
   /** 주소 봉인 공개키(PEM). 없으면 주소 입력 대신 안내만 보인다. */
   sealingKeyPem: string | null;
   blockedFans: readonly BlockedFan[];
+  verification: { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[] };
 }) {
   const router = useRouter();
   const [sheet, setSheet] = useState<SheetState>(null);
@@ -106,6 +112,8 @@ export function CreatorSettingsPage({
 
       <div className={s["set-grid"]}>
         <div className={s.col}>
+          <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
+
           <section aria-labelledby="addr-h">
             <div className={s["s-head"]}>
               <h3 id="addr-h">받는 주소</h3>
@@ -182,14 +190,15 @@ export function CreatorSettingsPage({
             <dl className={s.kv}>
               <div>
                 <dt>방송 채널</dt>
-                <dd>{settings.channelTitle}</dd>
+                <dd>{verification.state.channelTitle}</dd>
               </div>
               <div>
                 <dt>본인 확인</dt>
                 <dd>
-                  {settings.verifiedAt ? (
+                  {verification.state.verified ? (
                     <>
-                      <span className="tag tag--brand">확인 완료</span> <span className="sub">{formatDate(settings.verifiedAt)} 방송 채널 인증</span>
+                      <span className="tag tag--brand">확인 완료</span>{" "}
+                      {verification.state.verifiedAt ? <span className="sub">{formatDate(verification.state.verifiedAt)} 채널 확인</span> : null}
                     </>
                   ) : (
                     <span className="tag">확인 전</span>

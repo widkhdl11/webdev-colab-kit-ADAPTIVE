@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VERIFICATION_METHODS, type VerificationMethod } from "./creator-verification";
 
 // 관리자 「크리에이터 확인」 화면이 읽는 줄 (admin-console INV-K10·K8). 사람은 닉네임·아이디로만 나온다.
 // 꼴이 다른 줄이 하나라도 있으면 null — 처리 기록이 몰래 빠지지 않게.
@@ -32,7 +33,7 @@ export type VerificationEvent = {
   /** 사유 목록 값 — 반려·닫힘·취소. 승인이나 옛 기록이면 null */
   reasonCode: string | null;
   /** 확인 방법(INV-V13). 옛 기록이면 null */
-  method: "code" | "login" | null;
+  method: VerificationMethod | null;
   /** 그때의 채널 주소·코드(INV-V6). 옛 기록·로그인 확인이면 null */
   channelUrl: string | null;
   code: string | null;
@@ -58,7 +59,7 @@ const eventRow = z.object({
   action: z.enum(VERIFICATION_ACTIONS),
   reason: z.string(),
   reason_code: z.string().nullable(),
-  method: z.enum(["code", "login"]).nullable(),
+  method: z.enum(VERIFICATION_METHODS).nullable(),
   channel_url: z.string().nullable(),
   code: z.string().nullable(),
 });

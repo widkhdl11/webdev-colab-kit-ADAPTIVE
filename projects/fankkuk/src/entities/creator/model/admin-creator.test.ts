@@ -15,10 +15,10 @@ describe("관리자 크리에이터 확인 읽기 (INV-K10·K8)", () => {
 
   it("INV-K10: 처리 기록 — 승인·취소와 사유", () => {
     const rows = [
-      { at: "t", actor_nickname: "라임", creator_id: ID, creator_name: "달무리", action: "revoke", reason: "코드가 사라짐", reason_code: "code_removed", method: null, channel_url: null, code: null, application_id: null },
+      { at: "t", actor_nickname: "라임", creator_id: ID, creator_name: "달무리", action: "revoke", reason: "채널이 삭제됨", reason_code: "channel_gone", method: null, channel_url: null, code: null, application_id: null },
     ];
     expect(verificationEventsFromRows(rows)).toEqual([
-      { at: "t", actorNickname: "라임", creatorId: ID, creatorName: "달무리", action: "revoke", reason: "코드가 사라짐", reasonCode: "code_removed", method: null, channelUrl: null, code: null },
+      { at: "t", actorNickname: "라임", creatorId: ID, creatorName: "달무리", action: "revoke", reason: "채널이 삭제됨", reasonCode: "channel_gone", method: null, channelUrl: null, code: null },
     ]);
   });
 
@@ -28,11 +28,13 @@ describe("관리자 크리에이터 확인 읽기 (INV-K10·K8)", () => {
       { ...base, action: "reject", reason: "다른 계정과 대조함", reason_code: "code_not_found" },
       { ...base, action: "close", reason_code: "owner_confirmed_elsewhere" },
       { ...base, action: "approve", reason_code: null, method: "login", code: null },
+      { ...base, action: "approve", reason_code: null, method: "auto_code" },
     ];
     expect(verificationEventsFromRows(rows)?.map((e) => [e.action, e.reasonCode, e.method, e.code])).toEqual([
       ["reject", "code_not_found", "code", "FK-7H3Q-92"],
       ["close", "owner_confirmed_elsewhere", "code", "FK-7H3Q-92"],
       ["approve", null, "login", null],
+      ["approve", null, "auto_code", "FK-7H3Q-92"],
     ]);
   });
 

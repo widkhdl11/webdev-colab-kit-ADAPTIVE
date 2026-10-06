@@ -7,6 +7,9 @@ import {
   myVerificationPanel,
   myVerificationsFromRows,
   reasonLabel,
+  REVOKE_REASONS,
+  VERIFICATION_METHOD_LABEL,
+  verifyRoutes,
   type AdminVerification,
   type MyVerification,
 } from "./creator-verification";
@@ -60,6 +63,45 @@ describe("사유 문구 (creator-verification INV-V9·V14)", () => {
   });
 });
 
+describe("취소 사유 목록 (INV-V9, 2026-10-06)", () => {
+  it("INV-V9: 취소 사유는 넷 — 「채널이 없어졌거나 다른 사람에게 넘어감」이 들어가고 「채널에서 코드가 사라짐」은 빠졌다", () => {
+    expect([...REVOKE_REASONS]).toEqual(["channel_gone", "not_owner_confirmed", "policy_violation", "other"]);
+    expect(reasonLabel("approved", "channel_gone")).toBe("채널이 없어졌거나 다른 사람에게 넘어감");
+    expect(eventReasonLabel("revoke", "channel_gone")).toBe("채널이 없어졌거나 다른 사람에게 넘어감");
+  });
+});
+
+describe("확인 방법 (INV-V13)", () => {
+  it("INV-V13: 확인 방법은 셋 — 인증 코드·코드 자동 확인·플랫폼 로그인", () => {
+    expect(VERIFICATION_METHOD_LABEL).toEqual({ code: "인증 코드", auto_code: "코드 자동 확인", login: "플랫폼 로그인" });
+    const row = { id: "a1", platform: "youtube", channel_url: "u", code: "FK-7H3Q-92", method: "auto_code", status: "approved", issued_at: "t", post_deadline: "t2", reason_code: null, remaining_count: 3 };
+    expect(myVerificationsFromRows([row])?.[0]?.method).toBe("auto_code");
+    expect(myVerificationsFromRows([{ ...row, method: "oauth" }])).toBeNull();
+  });
+});
+
+describe("확인 길 고르기 (INV-V2 「API 확인」·V14·V16)", () => {
+  const API = new Set(["youtube", "chzzk", "instagram"]);
+
+  it("INV-V14·V16: API 가 있는 플랫폼은 플랫폼 로그인이 먼저, 그다음 코드 자동 확인, 그래도 안 되면 운영자 확인", () => {
+    expect(verifyRoutes("youtube", API)).toEqual(["login", "auto_code", "operator"]);
+    expect(verifyRoutes("instagram", API)).toEqual(["login", "auto_code", "operator"]);
+  });
+
+  it("INV-V16 (실패경로): API 가 없는 플랫폼(SOOP)·모르는 플랫폼은 운영자 확인뿐", () => {
+    expect(verifyRoutes("soop", API)).toEqual(["operator"]);
+    expect(verifyRoutes("tiktok", API)).toEqual(["operator"]);
+    expect(verifyRoutes("youtube", new Set())).toEqual(["operator"]);
+  });
+
+  it("INV-V16: 코드 받음 신청이면 API 있는 플랫폼에서만 「확인」(자동 확인)을 연다, 확인 대기면 닫는다", () => {
+    expect(myVerificationPanel({ verified: false }, [mine({ status: "issued" })], API).canAutoCheck).toBe(true);
+    expect(myVerificationPanel({ verified: false }, [mine({ status: "issued", platform: "soop" })], API).canAutoCheck).toBe(false);
+    expect(myVerificationPanel({ verified: false }, [mine({ status: "posted" })], API).canAutoCheck).toBe(false);
+    expect(myVerificationPanel({ verified: false }, [], API).canAutoCheck).toBe(false);
+  });
+});
+
 describe("크리에이터 신청 읽기 (INV-V11)", () => {
   it("INV-V11: 정해진 칸만 받는다 — 메모·상대 계정 같은 칸이 끼어 있으면 null", () => {
     const row = {
@@ -108,7 +150,7 @@ describe("크리에이터 확인 칸의 판단 (INV-V4·V5·V15)", () => {
     expect(lastOutcomeText(mine({ status: "approved", reasonCode: "policy_violation" }))).toBe("승인이 취소됐어요 — 이용 규칙 위반");
     expect(lastOutcomeText(mine({ status: "approved" }))).toBeNull();
     expect(lastOutcomeText(mine({ status: "closed", reasonCode: "owner_confirmed_elsewhere" }))).toContain("다른 계정이 채널 주인 확인을 마쳤어요");
-    expect(lastOutcomeText(mine({ status: "expired" }))).toContain("기간이 지났어요");
+    expect(lastOutcomeText(mine({ status: "expired" }))).toBe("7일 안에 확인을 마치지 않아 기간이 지났어요");
   });
 });
 
@@ -153,6 +195,11 @@ describe("운영자 신청 표 (INV-V6·V11·V15)", () => {
       adm({ id: "login", method: "login", status: "approved", loginId: "z", code: null, usedCount: 2 }),
     ]);
     expect(t.ended.filter((r) => r.unlockable).map((r) => r.id)).toEqual(["new"]);
+  });
+
+  it("INV-V15·V16: 자동 확인으로 승인된 줄도 코드 신청이다 — 그 쌍의 가장 최근 줄로 친다", () => {
+    const t = adminVerificationTables([adm({ id: "auto", method: "auto_code", status: "approved", usedCount: 2 }), adm({ id: "older", usedCount: 2 })]);
+    expect(t.ended.filter((r) => r.unlockable).map((r) => r.id)).toEqual(["auto"]);
   });
 
   it("INV-V15 (실패경로): 같은 계정·채널에 살아 있는 신청이 있으면 끝난 줄에 풀기 버튼을 두지 않는다", () => {

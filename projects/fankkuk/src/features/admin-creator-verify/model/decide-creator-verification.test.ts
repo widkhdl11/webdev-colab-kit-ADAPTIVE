@@ -41,8 +41,8 @@ describe("운영자의 본인 확인 처리 (creator-verification INV-V6·V9·V1
 
   it("INV-V9·V10: 승인 취소는 취소 사유 목록 값 + 메모로 admin_revoke_creator 를 부른다", async () => {
     const { calls, client } = fakeClient(null);
-    expect((await decideCreatorVerification(client, { action: "revoke", creatorId: CREATOR, reasonCode: "code_removed", memo: "" })).status).toBe(200);
-    expect(calls).toEqual([{ fn: "admin_revoke_creator", args: { p_creator_id: CREATOR, p_reason_code: "code_removed", p_memo: "" } }]);
+    expect((await decideCreatorVerification(client, { action: "revoke", creatorId: CREATOR, reasonCode: "channel_gone", memo: "" })).status).toBe(200);
+    expect(calls).toEqual([{ fn: "admin_revoke_creator", args: { p_creator_id: CREATOR, p_reason_code: "channel_gone", p_memo: "" } }]);
   });
 
   it("INV-V15: 횟수 풀기는 신청 식별값과 메모로", async () => {
@@ -57,7 +57,9 @@ describe("운영자의 본인 확인 처리 (creator-verification INV-V6·V9·V1
       { action: "reject", applicationId: APP, memo: "" },
       { action: "reject", applicationId: APP, reasonCode: "not_owner", memo: "" },
       { action: "revoke", creatorId: CREATOR, reasonCode: "code_not_found", memo: "" },
-      { action: "reject", applicationId: APP, reasonCode: "code_removed", memo: "" },
+      { action: "reject", applicationId: APP, reasonCode: "channel_gone", memo: "" },
+      // 2026-10-06 취소 사유에서 뺀 값 — 화면도 보내지 않는다
+      { action: "revoke", creatorId: CREATOR, reasonCode: "code_removed", memo: "" },
       { action: "reject", applicationId: APP, reasonCode: "other", memo: "가".repeat(201) },
       { action: "unlock", applicationId: APP, memo: "가".repeat(201) },
       { action: "unlock", applicationId: "x", memo: "" },

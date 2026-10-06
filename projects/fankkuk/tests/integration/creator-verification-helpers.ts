@@ -135,7 +135,7 @@ export async function reject(applicationId: string, reasonCode = "code_not_found
   return (await as(by)).rpc("admin_reject_creator_verification", { p_application_id: applicationId, p_reason_code: reasonCode, p_memo: memo });
 }
 
-export async function revoke(creatorId: string, reasonCode = "code_removed", memo = "", by: string = STAFF) {
+export async function revoke(creatorId: string, reasonCode = "channel_gone", memo = "", by: string = STAFF) {
   return (await as(by)).rpc("admin_revoke_creator", { p_creator_id: creatorId, p_reason_code: reasonCode, p_memo: memo });
 }
 
@@ -146,6 +146,16 @@ export async function unlock(applicationId: string, memo = "문의 확인", by: 
 /** 플랫폼 로그인 확인 — 서버 관리자 키로만(INV-V14). */
 export function loginConfirm(who: CvWho, platform: string, channelKey: string) {
   return adminClient().rpc("confirm_creator_channel_by_login", { p_account_id: CV[who].id, p_platform: platform, p_channel_key: channelKey });
+}
+
+/** 자동 확인 ① — 1분 제한을 잡고 읽을 채널·찾을 코드를 받는다. 서버 관리자 키로만(INV-V16). */
+export function autoClaim(who: CvWho, applicationId: string) {
+  return adminClient().rpc("claim_creator_verification_auto_check", { p_account_id: CV[who].id, p_application_id: applicationId });
+}
+
+/** 자동 확인 ② — 소개란에서 코드를 찾았는지만 넘긴다. 서버 관리자 키로만(INV-V16). */
+export function autoConfirm(applicationId: string, found: boolean) {
+  return adminClient().rpc("confirm_creator_verification_auto_check", { p_application_id: applicationId, p_found: found });
 }
 
 /** 신청 → 코드 올렸어요 → 운영자 승인. 확인된 크리에이터를 만든다. */

@@ -26,7 +26,7 @@ export function RevokeButton({ creatorId, creatorName, returnFocusId, onDone }: 
       reasons={REVOKE_REASONS}
       reasonLabels={REVOKE_REASON_LABEL}
       memoLabel="메모 (운영자만 봐요, 적지 않아도 돼요)"
-      memoPlaceholder="예: 인증 코드가 게시물에서 사라짐"
+      memoPlaceholder="예: 채널이 삭제됨 · 다른 사람에게 넘어갔다는 문의 확인"
       decision={(reasonCode, memo) => ({ action: "revoke", creatorId, reasonCode: reasonCode ?? "other", memo })}
       doneText={`${creatorName}님의 승인을 취소했어요.`}
       returnFocusId={returnFocusId}

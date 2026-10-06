@@ -506,9 +506,9 @@ describe("사유 (INV-V9)", () => {
 
   it("INV-V9 (S9b): 승인 취소 사유는 크리에이터에게 보이고 메모는 없다", async () => {
     const a = await verifyVia("ggul", YT("ggulrevoke"));
-    expect((await revoke(CV.ggul.creatorId, "code_removed", MEMO)).error).toBeNull();
+    expect((await revoke(CV.ggul.creatorId, "channel_gone", MEMO)).error).toBeNull();
     const rows = await mine("ggul");
-    expect(rows.find((m) => m.id === a.application_id)).toMatchObject({ reason_code: "code_removed" });
+    expect(rows.find((m) => m.id === a.application_id)).toMatchObject({ reason_code: "channel_gone" });
     expect(JSON.stringify(rows)).not.toContain(MEMO);
   });
 
@@ -522,7 +522,8 @@ describe("사유 (INV-V9)", () => {
     expect(appStatus(a.application_id)).toBe("posted");
 
     await verifyVia("haru", YT("harunoreason"));
-    for (const code of ["", "nope", "code_not_found"]) {
+    // 2026-10-06 취소 사유에서 「채널에서 코드가 사라짐」(code_removed)을 뺐다 — 승인 뒤 소개란 코드는 지워도 된다(INV-V16)
+    for (const code of ["", "nope", "code_not_found", "code_removed"]) {
       expect((await revoke(CV.haru.creatorId, code)).error?.code).toBe("22023");
     }
     expect(verified("haru")).toBe("t");
@@ -590,7 +591,7 @@ describe("승인 취소 뒤 (INV-V10)", () => {
   it("INV-V10 (실패경로): 취소는 운영자만, 확인 안 된 크리에이터 취소는 「이미 처리됨」", async () => {
     await verifyVia("ggul", YT("ggulonlyop"));
     for (const who of [CV.ggul.login, "byeolbit_fan"]) {
-      expect((await revoke(CV.ggul.creatorId, "code_removed", "", who)).error?.code).toBe("42501");
+      expect((await revoke(CV.ggul.creatorId, "channel_gone", "", who)).error?.code).toBe("42501");
     }
     expect(verified("ggul")).toBe("t");
     expect((await revoke(CV.summer.creatorId)).error?.code).toBe("55000");
@@ -757,7 +758,18 @@ describe("확인 방법 칸 (INV-V13)", () => {
     expect(psql(`select method from public.creator_verification_applications where id = '${a.application_id}'`)).toBe("code");
   });
 
-  it("INV-V13 (실패경로): 확인 방법 칸은 두 값만 받는다", () => {
+  it("INV-V13 (실패경로): 결정 기록의 확인 방법 칸은 인증 코드·코드 자동 확인·플랫폼 로그인 셋만 받는다", async () => {
+    const a = await verifyVia("ggul", YT("ggulm3"));
+    const insert = (m: string) =>
+      psqlError(
+        `insert into public.creator_verification_events (creator_id, acted_by, action, application_id, method) values ('${CV.ggul.creatorId}', '${CV.ggul.id}', 'approve', '${a.application_id}', '${m}')`,
+      );
+    expect(insert("oauth")).toMatch(/check constraint/);
+    // 받는 값은 셋 — 직접 넣은 줄은 시험이 끝나면 정리 단계가 지운다
+    expect(insert("auto_code")).toBeNull();
+  });
+
+  it("INV-V13 (실패경로): 신청 줄의 확인 방법 칸은 두 값만 받는다", () => {
     const err = psqlError(
       `insert into public.creator_verification_applications (account_id, platform, channel_key, channel_url, code, method, status) values ('${CV.ggul.id}', 'youtube', 'methodx', 'https://www.youtube.com/@methodx', 'FK-ZZZZ-03', 'oauth', 'rejected')`,
     );

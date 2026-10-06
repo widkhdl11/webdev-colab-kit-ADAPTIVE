@@ -5,6 +5,7 @@ import { latestApprovals, type AdminCreator, type VerificationEvent } from "@/en
 import {
   adminVerificationTables,
   eventReasonLabel,
+  isCodeApplication,
   isLive,
   platformLabel,
   VERIFICATION_METHOD_LABEL,
@@ -20,9 +21,10 @@ import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 
 // 관리자 「크리에이터 확인」 본문 (creator-verification INV-V5·V6·V9·V11·V13·V15, admin-console INV-K10·K8, 시안 admin/creators.html).
-// 확인 대기(올림) 표 = 시안의 승인 대기 표 — 인증 코드·게시물 열기·승인·반려. 시안에 없던 표는 같은 표 모양으로 더했다:
-// 코드 받음(아직 안 올림 — 반려만), 끝난 신청(횟수 풀기). 사람은 닉네임·아이디로만(INV-K8).
-// 「게시물 열기」는 서버가 채널 키로 다시 만든 주소만 연다(INV-V2) — 크리에이터가 적은 문자열이 아니다.
+// 확인 대기(올림) 표 = 시안의 승인 대기 표 — 인증 코드·채널 열기·승인·반려. 시안에 없던 표는 같은 표 모양으로 더했다:
+// 코드 받음(아직 확인 요청 전 — 반려만), 끝난 신청(횟수 풀기). 사람은 닉네임·아이디로만(INV-K8).
+// 2026-10-06 확인 방법을 API 여부로 가른 뒤로 크리에이터는 코드를 공개 게시물이 아니라 채널 소개란에 붙이거나 팬꾹 공식 계정 DM 으로 보낸다.
+// 「채널 열기」는 서버가 채널 키로 다시 만든 주소만 연다(INV-V2) — 크리에이터가 적은 문자열이 아니다.
 
 type Props = { creators: readonly AdminCreator[]; verifications: readonly AdminVerification[]; events: readonly VerificationEvent[] };
 
@@ -51,7 +53,7 @@ function Channel({ v }: { v: AdminVerification }) {
 function OpenChannel({ v }: { v: AdminVerification }) {
   return (
     <a className={a.link} href={v.channelUrl} target="_blank" rel="noopener noreferrer" aria-label={`${v.creatorName ?? v.nickname} 채널 새 창으로 열기`}>
-      게시물 열기 ↗
+      채널 열기 ↗
     </a>
   );
 }
@@ -92,18 +94,18 @@ export function CreatorsPanel({ creators, verifications, events }: Props) {
             <h2 id="h-cv-posted" tabIndex={-1}>
               확인 대기 <span>{posted.length}건</span>
             </h2>
-            <span>채널 설명란이나 최신 게시물에 인증 코드가 있는지 확인해 주세요</span>
+            <span>채널 소개란이나 팬꾹 공식 계정 DM 에 인증 코드가 있는지 확인해 주세요</span>
           </div>
           <div className={a.tblWrap}>
             <table className={a.tbl} style={{ minWidth: 980 }}>
-              <caption className="sr-only">확인 대기 신청 — 크리에이터가 코드를 올렸다고 알린 신청</caption>
+              <caption className="sr-only">확인 대기 신청 — 크리에이터가 운영자 확인을 요청한 신청</caption>
               <thead>
                 <tr>
                   <th scope="col">닉네임</th>
                   <th scope="col">채널</th>
                   <th scope="col">인증 코드</th>
-                  <th scope="col">게시 확인</th>
-                  <th scope="col">올린 시각</th>
+                  <th scope="col">채널 확인</th>
+                  <th scope="col">요청 시각</th>
                   <th scope="col">쓴 횟수</th>
                   <th scope="col">
                     <span className="sr-only">처리</span>
@@ -151,11 +153,11 @@ export function CreatorsPanel({ creators, verifications, events }: Props) {
             <h2 id="h-cv-issued" tabIndex={-1}>
               코드 받음 <span>{issued.length}건</span>
             </h2>
-            <span>아직 「코드 올렸어요」를 누르지 않은 신청이에요. 승인은 올린 뒤에만 할 수 있어요</span>
+            <span>아직 「확인 요청」을 누르지 않은 신청이에요. 승인은 확인 요청 뒤에만 할 수 있어요. 자동 확인이 되는 플랫폼은 여기서 바로 승인될 수 있어요</span>
           </div>
           <div className={a.tblWrap}>
             <table className={a.tbl} style={{ minWidth: 820 }}>
-              <caption className="sr-only">코드 받음 신청 — 발급 뒤 7일 안에 올려야 하는 신청</caption>
+              <caption className="sr-only">코드 받음 신청 — 발급 뒤 7일 안에 확인을 마쳐야 하는 신청</caption>
               <thead>
                 <tr>
                   <th scope="col">닉네임</th>
@@ -310,7 +312,7 @@ export function CreatorsPanel({ creators, verifications, events }: Props) {
                       <td>
                         <span className={v.status === "approved" ? `${a.tag} ${a.tagBrand}` : a.tag}>{VERIFICATION_STATUS_LABEL[v.status]}</span>
                       </td>
-                      <td className={`${a.mono} ${a.nowrap}`}>{v.method === "code" ? tries(v) : "—"}</td>
+                      <td className={`${a.mono} ${a.nowrap}`}>{isCodeApplication(v.method) ? tries(v) : "—"}</td>
                       <td className={a.act}>
                         {v.unlockable ? (
                           <UnlockButton

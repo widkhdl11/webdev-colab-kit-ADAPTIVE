@@ -148,12 +148,12 @@ describe("보낼 수 없는 물품 목록 (INV-K9)", () => {
 describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
   // 승인은 신청을 거쳐서만 된다(creator-verification INV-V6) — 승인 쪽 시험은 creator-verification-db 에 있다.
   // 여기서는 취소(INV-K10 + INV-V9 사유)와 옛 승인 함수가 신청 없는 승인을 거부하는지를 본다.
-  const revokeArgs = (memo = "", code = "code_removed") => ({ p_creator_id: TEST_CREATOR_ID, p_reason_code: code, p_memo: memo });
+  const revokeArgs = (memo = "", code = "channel_gone") => ({ p_creator_id: TEST_CREATOR_ID, p_reason_code: code, p_memo: memo });
 
   it("INV-K10 (S10): 승인을 취소하면 팬의 찾기에서 사라지고 새 선물 등록·팔로우가 막힌다", async () => {
     insertTestCreator(true);
     const staff = await signedInClient("fankkuk_staff");
-    const r = await staff.rpc("admin_revoke_creator", revokeArgs("코드가 사라짐"));
+    const r = await staff.rpc("admin_revoke_creator", revokeArgs("채널이 삭제됨"));
     expect(r.error).toBeNull();
 
     const fan = await signedInClient("byeolbit_fan");
@@ -208,7 +208,7 @@ describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
     insertTestCreator(true);
     const owner = await signedInClient("fankkuk_admin");
     const staff = await signedInClient("fankkuk_staff");
-    expect((await staff.rpc("admin_revoke_creator", revokeArgs("코드가 사라짐"))).error).toBeNull();
+    expect((await staff.rpc("admin_revoke_creator", revokeArgs("채널이 삭제됨"))).error).toBeNull();
     const events = ((await staff.rpc("admin_creator_verification_events")).data as {
       actor_nickname: string;
       creator_id: string;
@@ -217,7 +217,7 @@ describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
       reason_code: string;
       at: string;
     }[]).filter((e) => e.creator_id === TEST_CREATOR_ID);
-    expect(events.map((e) => [e.action, e.actor_nickname, e.reason_code, e.reason])).toEqual([["revoke", "팬꾹 직원", "code_removed", "코드가 사라짐"]]);
+    expect(events.map((e) => [e.action, e.actor_nickname, e.reason_code, e.reason])).toEqual([["revoke", "팬꾹 직원", "channel_gone", "채널이 삭제됨"]]);
     expect(events.every((e) => !Number.isNaN(Date.parse(e.at)))).toBe(true);
     const row = ((await owner.rpc("admin_creators")).data as { id: string; verified: boolean; last_actor_nickname: string | null }[]).find(
       (c) => c.id === TEST_CREATOR_ID,
