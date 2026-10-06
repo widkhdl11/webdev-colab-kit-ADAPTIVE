@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { readMyGiftBoxes } from "@/entities/parcel/api/box-reads";
+import { readMyDifferences } from "@/entities/payment/api/read-my-differences";
 import { isOrderNo } from "@/entities/order/model/order-no";
 import { senderRoleAllowed } from "@/features/gift-register/model/sender-rule";
 import { GiftStatusPage } from "@/widgets/gift-status/ui/gift-status-page";
@@ -12,8 +13,17 @@ export const dynamic = "force-dynamic";
 
 // 선물 하나 — 보낸 사람(팬·크리에이터)이 본다. 읽기 함수가 로그인한 사람이 보낸 주문만 돌려주므로 남의 주문번호는 없는 주소와 같다.
 // 헤더도 같은 목록을 쓰므로 목록을 한 번 읽어 둘 다에 넘긴다.
-export default async function Page({ params }: { params: Promise<{ orderNo: string }> }) {
+const DIFFERENCE_NOTICES = ["paid", "failed", "in_progress", "closed"] as const;
+
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ orderNo: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { orderNo } = await params;
+  const { difference: differenceParam } = await searchParams;
   const { supabase, viewer } = await loadSession();
   if (!viewer || !senderRoleAllowed(viewer.role)) redirect("/login");
   const gifts = await readMyGiftViews(supabase);
@@ -21,10 +31,14 @@ export default async function Page({ params }: { params: Promise<{ orderNo: stri
   if (!view) notFound();
   // 상자별 원 송장번호·상태 — 읽기 함수가 로그인한 사람의 주문이 아니면 빈 목록을 준다. 출고 운송장은 오지 않는다.
   const boxes = await readMyGiftBoxes(supabase, view.orderNo);
+  // 상자별 차액 요청(payment INV-M11) — 읽기 함수가 로그인한 사람의 주문이 아니면 빈 목록을 준다
+  const differences = await readMyDifferences(supabase, view.orderNo);
+  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
+  const notice = DIFFERENCE_NOTICES.find((n) => n === differenceParam) ?? null;
   return (
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", gifts)} />
-      <GiftStatusPage view={view} boxes={boxes} />
+      <GiftStatusPage view={view} boxes={boxes} difference={{ differences, clientKey, notice }} />
       <SiteFooter />
     </>
   );

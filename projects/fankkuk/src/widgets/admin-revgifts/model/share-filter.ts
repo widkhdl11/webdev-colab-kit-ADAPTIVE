@@ -24,3 +24,9 @@ export function countByShareTab(rows: readonly RevgiftShare[]): Record<ShareTab,
   for (const r of rows) counts[r.reply] += 1;
   return counts;
 }
+
+/** 받기 기한(reverse-gift INV-R10)이 지났는데 아직 답이 없는 몫 — 이 화면에서 「지금 돌리기」로 기한 처리를 부를 수 있다.
+ *  실제 판정은 DB 기한 처리 함수가 서버 시각으로 다시 한다(버튼이 보여도 기한 전이면 아무것도 바뀌지 않는다). now 는 서버가 그린 시각. */
+export function needsExpiryRun(row: Pick<RevgiftShare, "reply" | "deadlineAt">, now: string): boolean {
+  return row.reply === "waiting" && Date.parse(now) >= Date.parse(row.deadlineAt);
+}

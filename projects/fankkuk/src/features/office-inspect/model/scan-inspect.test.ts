@@ -104,3 +104,36 @@ describe("검수 (office-workflow INV-W1·W4)", () => {
     expect(calls).toEqual([]);
   });
 });
+
+describe("실측 기록 (payment INV-M11, admin-console INV-K1)", () => {
+  it("INV-M11: 고른 구간만 DB 에 넘기고, DB 가 정한 차액 금액을 그대로 돌려준다", async () => {
+    const { calls, client } = fakeClient({ office_record_measurement: { data: { result: "difference", amount_krw: 2000 }, error: null } });
+    const reply = await scanInspect(client, { kind: "measure", qr: "Q-000123", tier: "medium" });
+    expect(reply).toEqual({ status: 200, body: { measurement: { result: "difference", amountKrw: 2000 } } });
+    expect(calls).toEqual([{ fn: "office_record_measurement", args: { p_qr: "Q-000123", p_tier: "medium" } }]);
+  });
+
+  it("INV-M11 (실패경로): 금액을 본문에 넣거나 모르는 구간이면 DB 를 부르지 않고 400", async () => {
+    for (const body of [
+      { kind: "measure", qr: "Q-000123", tier: "medium", amountKrw: 1 },
+      { kind: "measure", qr: "Q-000123", tier: "huge" },
+    ]) {
+      const { calls, client } = fakeClient({});
+      expect((await scanInspect(client, body)).status).toBe(400);
+      expect(calls).toEqual([]);
+    }
+  });
+
+  it("INV-M11 (실패경로): 두 번째 실측은 DB 가 막고 409, 답의 꼴이 다르면 500", async () => {
+    const twice = await scanInspect(fakeClient({ office_record_measurement: { error: { code: "55000" } } }).client, { kind: "measure", qr: "Q-000123", tier: "small" });
+    expect(twice.status).toBe(409);
+    const odd = await scanInspect(fakeClient({ office_record_measurement: { data: { result: "difference" }, error: null } }).client, { kind: "measure", qr: "Q-000123", tier: "large" });
+    expect(odd.status).toBe(500);
+  });
+
+  it("INV-K1 (실패경로): 운영자가 아니면 404, DB 를 부르지 않는다", async () => {
+    const { calls, client } = fakeClient({}, { operator: false, owner: false });
+    expect((await scanInspect(client, { kind: "measure", qr: "Q-000123", tier: "medium" })).status).toBe(404);
+    expect(calls).toEqual([]);
+  });
+});

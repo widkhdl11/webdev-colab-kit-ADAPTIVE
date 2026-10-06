@@ -12,6 +12,7 @@ import a from "@/shared/ui/admin.module.css";
 import { ScanInput, type ScanInputHandle } from "@/shared/ui/scan-input";
 import w from "@/shared/ui/work.module.css";
 import { postInspect } from "../api/post-inspect-client";
+import { MEASURED_TIERS, measurementFromBody, type MeasuredTier, type Measurement } from "../model/measurement";
 
 // 검수 작업 화면 (office-workflow INV-W1·W4, design-rules 8-1, 시안 admin/work-inspect.html).
 // 라벨 QR 로 상자를 불러와 검수 기록을 저장하고, 같은 QR 을 한 번 더 스캔하면 DB 가 다음 상태(검수 완료·반송 대기·보관)를 정한다.
@@ -61,6 +62,13 @@ function MarkChoice({ name, legend, foundLabel, clearLabel, value, disabled, onC
   );
 }
 
+// 실측 결과 문구(payment INV-M11·M12). 금액은 서버가 요금표로 정한 값이다.
+function measurementText(m: Measurement): string {
+  if (m.result === "difference") return `차액 ${m.amountKrw.toLocaleString("ko-KR")}원 결제를 팬에게 요청했어요. 팬이 내기 전에는 송장이 나가지 않아요.`;
+  if (m.result === "none") return "신고한 구간 이하라 차액이 없어요.";
+  return "대형을 넘어 검수 불합격이에요. 검수 결과와 상관없이 QR 을 다시 스캔하면 반송 대기로 가요.";
+}
+
 const CLEAR_GIFT: InspectionChecks = { kind: "gift", bluetooth: "clear", rf: "clear", metal: "clear" };
 const CLEAR_REVGIFT: InspectionChecks = { kind: "revgift", surface: "clear", prohibited: "clear" };
 
@@ -75,6 +83,8 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [finished, setFinished] = useState<Finished | null>(null);
   const [error, setError] = useState<{ title: string; message: string; unknown?: true } | null>(null); // unknown: 서버는 반영했을 수 있는데 응답을 못 읽음
+  const [measuredTier, setMeasuredTier] = useState<MeasuredTier | null>(null);
+  const [measurement, setMeasurement] = useState<Measurement | null>(null);
 
   const allowed = allowedOutcomes(checks);
   const chosen = inspectionResultOf(checks, outcome).outcome;
@@ -147,6 +157,29 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
     setPhase("form");
     setSavedAt(null);
     setFinished(null);
+    setMeasuredTier(null);
+    setMeasurement(null);
+  }
+
+  /** 실측 구간 기록(payment INV-M11). 상자마다 한 번 — 두 번째는 서버가 거부한다. */
+  async function saveMeasurement() {
+    if (!parcel || busy || !measuredTier) return;
+    setBusy(true);
+    setError(null);
+    const saved = await postInspect({ kind: "measure", qr: parcel.qr, tier: measuredTier });
+    setBusy(false);
+    // 성공·실패 모두 스캔 칸으로 — 다음 동작(검수 기록·QR 다시 스캔)이 스캐너에서 시작한다
+    scan.current?.focus();
+    if (saved.kind === "failed") {
+      setError({ title: "실측을 기록하지 못했어요", message: saved.message });
+      return;
+    }
+    const m = measurementFromBody(saved.body);
+    if (!m) {
+      setError({ title: "결과를 읽지 못했어요", message: "반영됐을 수 있어요. QR 을 다시 스캔해 상자 상태를 확인해 주세요.", unknown: true });
+      return;
+    }
+    setMeasurement(m);
   }
 
   async function save() {
@@ -177,9 +210,11 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
       ? FINISHED[finished.state].title
       : phase === "saved"
         ? "검수 기록이 남았어요"
-        : parcel
-          ? `상자 불러옴 ${parcel.orderNo}`
-          : "";
+        : measurement
+          ? `실측을 기록했어요. ${measurementText(measurement)}`
+          : parcel
+            ? `상자 불러옴 ${parcel.orderNo}`
+            : "";
 
   return (
     <div className={w.work}>
@@ -251,6 +286,48 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
               </div>
             )}
           </section>
+        )}
+
+        {/* 실측 구간(payment INV-M11) — 팬 선물만. 신고보다 크면 차액 결제 요청, 대형 초과면 검수 불합격 */}
+        {parcel && canInspect && phase !== "finished" && parcel.kind === "gift" && (
+          <form
+            className={w.result}
+            aria-labelledby="measure-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void saveMeasurement();
+            }}
+          >
+            <h2 id="measure-form" className={w.formTitle}>
+              실측 구간
+            </h2>
+            <fieldset className={w.choice} disabled={measurement !== null}>
+              <legend>재어 본 크기·무게로 고른 구간 (신고 {TIER_LABEL[parcel.tier]})</legend>
+              <div className={w.opts}>
+                {MEASURED_TIERS.map((t) => (
+                  <label key={t} className={w.opt}>
+                    <input type="radio" name="measured" value={t} checked={measuredTier === t} onChange={() => setMeasuredTier(t)} />
+                    {TIER_LABEL[t]}
+                  </label>
+                ))}
+              </div>
+              <p className={a.hint}>신고보다 크면 차액만 팬에게 따로 결제 요청돼요. 신고 이하면 차액도 환불도 없어요. 실측은 상자마다 한 번만 기록해요.</p>
+            </fieldset>
+            {measurement ? (
+              <div className={`${a.note} ${measurement.result === "none" ? a.noteOk : w.noteWarn}`}>
+                <InfoIcon />
+                <p>
+                  <strong>실측을 기록했어요.</strong> {measurementText(measurement)}
+                </p>
+              </div>
+            ) : (
+              <div className={a.btnRow}>
+                <button className={a.btn} type="submit" aria-disabled={busy || measuredTier === null}>
+                  {busy ? "기록하는 중…" : "실측 기록"}
+                </button>
+              </div>
+            )}
+          </form>
         )}
 
         {parcel && canInspect && phase !== "finished" && (

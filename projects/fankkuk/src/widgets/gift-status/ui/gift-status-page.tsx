@@ -18,7 +18,9 @@ import { formatWaybill } from "@/entities/parcel/model/waybill-no";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
+import { visibleDifferences, type GiftDifference } from "@/entities/payment/model/difference-rows";
 import { CopyButton } from "./copy-button";
+import { DifferenceSection, type DifferenceNotice } from "./difference-section";
 import s from "./gift-status.module.css";
 
 // 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v4/gift.html
@@ -40,7 +42,9 @@ const STEP_CLASS = { done: s["is-done"], current: s["is-current"], stopped: s["i
 
 const APPROVAL_TEXT = { done: "승인됨", waiting: "기다리는 중", todo: "출고 전에 받아요" } as const;
 
-export function GiftStatusPage({ view, boxes }: { view: FanGiftView; boxes: readonly GiftBox[] }) {
+type DifferenceProps = { differences: readonly GiftDifference[]; clientKey: string; notice: DifferenceNotice };
+
+export function GiftStatusPage({ view, boxes, difference }: { view: FanGiftView; boxes: readonly GiftBox[]; difference?: DifferenceProps }) {
   const badge = fanBadge(view);
   const progress = fanProgress(view);
   const current = view.steps.find((st) => st.state === "current");
@@ -52,6 +56,8 @@ export function GiftStatusPage({ view, boxes }: { view: FanGiftView; boxes: read
     const tierName = boxTierName(b.tier);
     return { boxId: b.boxId, label: b.label, name: tierName ? `${b.label} · ${tierName}` : b.label };
   });
+  // 차액 줄은 고른 뒤의 길이로 섹션을 그릴지 정한다 — 끝난 주문에 낸 기록이 없으면 빈 섹션을 그리지 않는다
+  const shownDifferences = difference ? visibleDifferences(difference.differences, view.outcome === "in_progress") : [];
   // 단계 막대와 상자별 상태는 같은 경우(진행 중·돌려보냄)에만 보인다
   const showsProgress = showsSteps(view);
   const recipient = `팬꾹 ${view.orderNo}`;
@@ -125,6 +131,15 @@ export function GiftStatusPage({ view, boxes }: { view: FanGiftView; boxes: read
 
           <div className={s.two}>
             <div>
+              {/* 차액 결제(payment INV-M11·M12·M13) — 차액 요청이 있는 주문에만. 진행 중이 아니면 낸 기록만 남는다 */}
+              {difference && shownDifferences.length > 0 ? (
+                <DifferenceSection
+                  orderNo={view.orderNo}
+                  differences={shownDifferences}
+                  clientKey={difference.clientKey}
+                  notice={difference.notice}
+                />
+              ) : null}
               {view.outcome === "returned" ? (
                 <div className={s.part}>
                   <h2>돌려보내 드렸어요</h2>

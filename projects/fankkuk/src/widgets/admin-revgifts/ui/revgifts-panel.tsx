@@ -5,13 +5,15 @@ import type { RevgiftShare } from "@/entities/parcel/model/office-lists";
 import { TIER_LABEL } from "@/entities/parcel/model/office-labels";
 import { canRefundShare } from "@/features/admin-refund/model/refund-access";
 import { RefundButton } from "@/features/admin-refund/ui/refund-button";
+import { RunExpiryButton } from "@/features/office-expiry-run/ui/run-expiry-button";
 import { formatMonthDay, formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
-import { countByShareTab, filterShares, SHARE_TABS, type ShareTab } from "../model/share-filter";
+import { countByShareTab, filterShares, needsExpiryRun, SHARE_TABS, type ShareTab } from "../model/share-filter";
 
 // 관리자 「역조공 처리」 (office-workflow INV-W3·W6, reverse-gift INV-R10·R11, 시안 admin/revgifts.html).
 // 몫마다 팬의 답·받기 기한·입고. 환불은 팬이 받지 않은(거절·기한 지남) 몫에만, 대표에게만 버튼이 보인다(design-rules 8절).
 // 금액은 몫 상태로 서버가 정한다 — 입력 칸이 없다. 반송은 출고 화면에서 QR 스캔으로만 한다(이 화면에 반송 버튼은 없다).
+// 받기 기한이 지났는데 답이 없는 몫에는 「지금 돌리기」(기한 처리, INV-R10)가 보인다 — 운영자 누구나, 판정은 DB 가 서버 시각으로.
 
 const REPLY_TAG: Record<RevgiftShare["reply"], { text: string; className: string }> = {
   waiting: { text: "기다리는 중", className: `${a.tag} ${a.tagWarn}` },
@@ -44,9 +46,9 @@ function SearchIcon() {
   );
 }
 
-type Props = { rows: readonly RevgiftShare[]; access: "staff" | "owner" };
+type Props = { rows: readonly RevgiftShare[]; access: "staff" | "owner"; now: string };
 
-export function RevgiftsPanel({ rows, access }: Props) {
+export function RevgiftsPanel({ rows, access, now }: Props) {
   const [tab, setTab] = useState<ShareTab>("all");
   const [query, setQuery] = useState("");
   const shown = filterShares(rows, tab, query);
@@ -137,6 +139,7 @@ export function RevgiftsPanel({ rows, access }: Props) {
                       <td className={`${a.mono} ${a.nowrap}`}>{r.receivedAt ? formatStamp(r.receivedAt) : <span className={a.faint}>미입고</span>}</td>
                       <td>{refund ? <span className={refund.className}>{refund.text}</span> : <span className={a.faint}>—</span>}</td>
                       <td className={`${a.act} ${a.stickyEnd}`}>
+                        {needsExpiryRun(r, now) && <RunExpiryButton orderNo={r.orderNo} returnFocusId="revgifts-title" />}
                         {canRefundShare(access, r) && (
                           <RefundButton
                             unitKind="revgift"
@@ -158,7 +161,7 @@ export function RevgiftsPanel({ rows, access }: Props) {
           </table>
         </div>
         <p className={a.hint}>
-          환불은 팬이 받지 않은(거절·기한 지남) 몫에만 켜지고 대표만 해요. 받지 않은 몫의 상자는 출고 화면에서 QR 을 스캔하면 크리에이터 쪽 반송 송장이 나와요 — 이 화면에 반송 버튼은 없어요. 환불 금액은 몫의 상태로 서버가 정해요. 팬의 주소는 이 화면에 없어요.
+          기한이 지났는데 답이 없는 몫은 「지금 돌리기」로 받지 않은 것으로 처리해요. 환불은 팬이 받지 않은(거절·기한 지남) 몫에만 켜지고 대표만 해요. 받지 않은 몫의 상자는 출고 화면에서 QR 을 스캔하면 크리에이터 쪽 반송 송장이 나와요 — 이 화면에 반송 버튼은 없어요. 환불 금액은 몫의 상태로 서버가 정해요. 팬의 주소는 이 화면에 없어요.
         </p>
       </div>
     </>
