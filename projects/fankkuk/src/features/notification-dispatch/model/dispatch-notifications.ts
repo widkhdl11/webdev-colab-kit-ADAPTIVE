@@ -50,10 +50,13 @@ const claimedRow = z.object({
   order_no: z.string(),
   nickname: z.string(),
   auto_reject_at: z.string().nullable(),
+  /** 꺼낸 시각 — 끝내기에 그대로 돌려준다. 다른 일꾼이 다시 꺼낸 줄이면 DB 가 이 결과를 받지 않는다(INV-N5). 문자열 그대로 둔다(밀리초로 바꾸면 값이 달라진다). */
+  claimed_at: z.string(),
 });
 type ClaimedRow = z.infer<typeof claimedRow>;
 
 const rowId = z.object({ id: z.string() });
+const claimToken = z.object({ id: z.string(), claimed_at: z.string() });
 const templateRow = z.object({ kind: z.string(), template_code: z.string() });
 
 type Outcome = { outcome: "sent"; providerMessageId: string | null; fake: boolean } | { outcome: "skipped" | "error"; code: string };
@@ -149,7 +152,7 @@ export async function dispatchNotifications(deps: DispatchDeps): Promise<Dispatc
       if (!Array.isArray(rows) || rows.length === 0) break;
       for (const raw of rows) {
         const parsed = claimedRow.safeParse(raw);
-        const id = rowId.safeParse(raw);
+        const id = claimToken.safeParse(raw);
         if (!id.success) {
           counts.unfinished += 1;
           continue;
@@ -157,6 +160,7 @@ export async function dispatchNotifications(deps: DispatchDeps): Promise<Dispatc
         const o: Outcome = parsed.success ? await sendRow(deps, origin, channels, templates, parsed.data) : { outcome: "error", code: "row_unreadable" };
         const fin = await deps.admin.rpc("notification_finish", {
           p_id: id.data.id,
+          p_claimed_at: id.data.claimed_at,
           p_outcome: o.outcome,
           p_provider_message_id: o.outcome === "sent" ? o.providerMessageId : null,
           p_error_code: o.outcome === "sent" ? null : o.code,

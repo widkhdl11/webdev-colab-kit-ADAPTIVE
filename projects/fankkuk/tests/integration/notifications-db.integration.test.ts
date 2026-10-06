@@ -91,6 +91,7 @@ type Claimed = {
   auto_reject_at: string | null;
   must_deliver: boolean;
   attempts: number;
+  claimed_at: string;
 };
 
 /** 이 줄만 꺼낼 수 있게 다른 대기 줄을 뒤로 미룬 뒤 하나를 꺼낸다. */
@@ -109,9 +110,11 @@ async function claimOne(id: string): Promise<Claimed> {
   return rows[0]!;
 }
 
-function finish(id: string, outcome: string, extra: { provider?: string; error?: string; fake?: boolean } = {}) {
+/** 끝내기. 꺼낸 시각(표)은 기본으로 줄의 지금 값을 쓴다 — 늦게 온 끝내기를 흉내 낼 때만 claimedAt 을 준다. */
+function finish(id: string, outcome: string, extra: { provider?: string; error?: string; fake?: boolean; claimedAt?: string } = {}) {
   return adminClient().rpc("notification_finish", {
     p_id: id,
+    p_claimed_at: extra.claimedAt ?? (psql(`select claimed_at::text from ${OUTBOX} where id = '${id}'`) || null),
     p_outcome: outcome,
     p_provider_message_id: extra.provider ?? null,
     p_error_code: extra.error ?? null,
@@ -434,7 +437,7 @@ describe("꺼내기·끝내기 (INV-N5·N1)", () => {
   it("INV-N1: 꺼낸 줄은 본문에 쓸 값만 돌려준다 — 승인 요청은 자동 반려 예정 시각과 꼭 가는 알림 표시, 연락처는 없다", async () => {
     const g = await paidGift();
     const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
-    expect(Object.keys(c).sort()).toEqual(["attempts", "auto_reject_at", "channel", "id", "kind", "must_deliver", "nickname", "order_no", "round"]);
+    expect(Object.keys(c).sort()).toEqual(["attempts", "auto_reject_at", "channel", "claimed_at", "id", "kind", "must_deliver", "nickname", "order_no", "round"]);
     expect(c).toMatchObject({ kind: "approval_request", channel: "email", round: 1, order_no: g.orderNo, nickname: "하루", must_deliver: true, attempts: 0 });
     const expected = psql(`select extract(epoch from registered_at + interval '168 hours') from public.orders where id = '${g.orderId}'`);
     expect(new Date(c.auto_reject_at!).getTime() / 1000).toBeCloseTo(Number(expected), 3);
@@ -461,11 +464,19 @@ describe("꺼내기·끝내기 (INV-N5·N1)", () => {
     const g = await paidGift();
     const id = rowId(g.orderId, "approval_request", "haru_creator");
     onlyThisDue(id);
+    // 다른 처리가 줄을 잠그고 있는 동안: 꺼내기는 기다리지 않고 그 줄을 건너뛴다 — 줄은 대기 그대로
     const { released } = await holdRowLock(`select 1 from ${OUTBOX} where id = '${id}' for update`, 2);
     const sentAt = Date.now();
-    const rs = await Promise.all([adminClient().rpc("notification_claim", { p_limit: 1 }), adminClient().rpc("notification_claim", { p_limit: 1 })]);
+    const locked = await Promise.all([adminClient().rpc("notification_claim", { p_limit: 1 }), adminClient().rpc("notification_claim", { p_limit: 1 })]);
+    expect(Date.now() - sentAt).toBeLessThan(1500);
+    expect(locked.map((r) => [r.error, r.data])).toEqual([
+      [null, []],
+      [null, []],
+    ]);
+    expect(rowField(id, "status")).toBe("pending");
     await released;
-    expect(Date.now() - sentAt).toBeGreaterThanOrEqual(1000);
+    // 잠금이 풀린 뒤 둘이 동시에 꺼내면 한쪽만 가져간다
+    const rs = await Promise.all([adminClient().rpc("notification_claim", { p_limit: 1 }), adminClient().rpc("notification_claim", { p_limit: 1 })]);
     expect(rs.map((r) => r.error)).toEqual([null, null]);
     const got = rs.map((r) => (r.data as Claimed[]).map((c) => c.id));
     expect(got.flat()).toEqual([id]);
@@ -546,11 +557,11 @@ describe("꺼내기·끝내기 (INV-N5·N1)", () => {
     expect((await adminClient().rpc("notification_claim", { p_limit: 5 })).data).toEqual([]);
   });
 
-  it("INV-N5 (실패경로): 사건 뒤 24시간이 지났으면 첫 실패에서 실패로 끝난다", async () => {
+  it("INV-N5 (실패경로): 보내는 중에 사건 뒤 24시간이 지났으면 첫 실패에서 실패로 끝난다", async () => {
     const g = await paidGift();
     const id = rowId(g.orderId, "approval_request", "haru_creator");
-    forceRow(id, "event_at = now() - interval '24 hours 1 minute'");
     await claimOne(id);
+    forceRow(id, "event_at = now() - interval '24 hours 1 minute'");
     expect((await finish(id, "error", { error: "provider_5xx" })).data).toBe("failed");
   });
 
@@ -576,6 +587,7 @@ describe("멈춘 줄 정리 (INV-N5 S5d·S5e)", () => {
     forceRow(b, "claimed_at = now() - interval '9 minutes'");
     const r = await adminClient().rpc("notification_requeue_stale");
     expect(r.error).toBeNull();
+    expect(r.data).toBe(1); // 되돌린 줄 수
     expect(rowField(a, "status || '|' || attempts || '|' || (claimed_at is null)")).toBe("pending|1|true");
     expect(rowField(b, "status || '|' || attempts")).toBe("sending|0");
   });
@@ -626,21 +638,31 @@ describe("가짜 발송 표시는 허용 줄이 있는 DB 에서만 (INV-N11)", 
     expect(rowField(id, "status || '|' || fake")).toBe("sent|true");
   });
 
-  it("INV-N11 (S11b, 실패경로): 허용 줄이 없는 DB(운영과 같은 상태)에서는 가짜 표시를 거부하고 줄은 그대로", async () => {
+  it("INV-N11 (S11b, 실패경로): 허용 줄이 없는 DB(운영과 같은 상태)에서 가짜 통로의 「보냄」은 받지 않는다 — 줄은 대기로 돌아가 다시 보낼 차례", async () => {
     const g = await paidGift();
     const id = rowId(g.orderId, "approval_request", "haru_creator");
-    await claimOne(id);
-    const err = psqlError(
-      `begin; delete from public.local_dev_flags where flag = 'allow_fake_notifications'; select public.notification_finish('${id}', 'sent', null, null, true); rollback;`,
+    const c = await claimOne(id);
+    // 허용 줄을 지운 같은 처리 안에서 끝내 보고 되돌린다(로컬 seed 의 허용 줄은 그대로 남는다)
+    const out = values(
+      psql(
+        `begin; delete from public.local_dev_flags where flag = 'allow_fake_notifications'; select public.notification_finish('${id}', '${c.claimed_at}', 'sent', null, null, true); select status || '|' || fake || '|' || attempts || '|' || error_code from ${OUTBOX} where id = '${id}'; rollback;`,
+      ),
     );
-    expect(err).toMatch(/가짜/);
+    expect(out.slice(-2)).toEqual(["pending", "pending|false|1|fake_rejected"]);
     expect(rowField(id, "status || '|' || fake")).toBe("sending|false");
     expect(psql(`select count(*) from public.local_dev_flags where flag = 'allow_fake_notifications'`)).toBe("1");
     // 가짜 서명 허용 줄만으로는 가짜 알림을 받지 않는다(허용 줄이 따로다)
-    const err2 = psqlError(
-      `begin; delete from public.local_dev_flags where flag = 'allow_fake_notifications'; select count(*) from public.local_dev_flags where flag = 'allow_fake_signatures'; select public.notification_finish('${id}', 'sent', null, null, true); rollback;`,
+    const out2 = values(
+      psql(
+        `begin; delete from public.local_dev_flags where flag = 'allow_fake_notifications'; select public.notification_finish('${id}', '${c.claimed_at}', 'sent', null, null, true); rollback;`,
+      ),
     );
-    expect(err2).toMatch(/가짜/);
+    expect(out2.slice(-1)).toEqual(["pending"]);
+    // 가짜 표시를 직접 쓰는 갱신은 지킴이가 거부한다
+    const pending = rowId((await paidGift()).orderId, "approval_request", "haru_creator");
+    expect(
+      psqlError(`begin; delete from public.local_dev_flags where flag = 'allow_fake_notifications'; update ${OUTBOX} set fake = true where id = '${pending}'; rollback;`),
+    ).toMatch(/가짜/);
   });
 });
 
@@ -686,7 +708,7 @@ describe("화면 쪽 키로는 발송 기록·설정·일꾼 함수에 닿지 �
     const id = rowId(g.orderId, "approval_request", "haru_creator");
     const fan = await signedInClient("byeolbit_fan");
     for (const c of [fan, anonClient()]) {
-      expect((await c.rpc("notification_finish", { p_id: id, p_outcome: "sent", p_provider_message_id: null, p_error_code: null, p_fake: false })).error?.code).toBe("42501");
+      expect((await c.rpc("notification_finish", { p_id: id, p_claimed_at: null, p_outcome: "sent", p_provider_message_id: null, p_error_code: null, p_fake: false })).error?.code).toBe("42501");
       expect((await c.rpc("notification_resolve_stale", { p_id: id, p_delivered: true })).error?.code).toBe("42501");
     }
     expect(rowField(id, "status")).toBe("pending");
@@ -839,3 +861,139 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
   });
 });
 
+
+// ── 리뷰 반영 (20261006000011): 꺼낸 표·24시간·잠금 건너뛰기·빈 갈래 ─────────
+
+describe("일꾼 함수 고침 (INV-N5·N8) — 20261006000011", () => {
+  it("INV-N5 (실패경로): 다른 일꾼이 다시 꺼낸 줄에 늦게 온 끝내기는 받지 않는다 — 새로 꺼낸 쪽의 줄이 그대로", async () => {
+    const g = await paidGift();
+    const id = rowId(g.orderId, "approval_request", "haru_creator");
+    const first = await claimOne(id);
+    // 일꾼 A 가 멈춰 10분이 지나고, 정리가 대기로 되돌린 뒤 일꾼 B 가 다시 꺼낸다
+    forceRow(id, "claimed_at = now() - interval '11 minutes'");
+    const stale = rowField(id, "claimed_at::text");
+    expect((await adminClient().rpc("notification_requeue_stale")).error).toBeNull();
+    onlyThisDue(id);
+    forceRow(id, "next_attempt_at = now() - interval '1 second'");
+    const second = await claimOne(id);
+    expect(second.claimed_at).not.toBe(first.claimed_at);
+    // A 의 늦은 오류 끝내기
+    const late = await finish(id, "error", { error: "provider_timeout", claimedAt: stale });
+    expect(late.error?.code).toBe("55000");
+    expect(rowField(id, "status || '|' || attempts")).toBe("sending|1");
+    // 꺼낸 시각 없이도 받지 않는다
+    expect((await adminClient().rpc("notification_finish", { p_id: id, p_claimed_at: null, p_outcome: "sent" })).error?.code).toBe("55000");
+    // B 의 끝내기는 받는다
+    expect((await finish(id, "sent", { provider: "msg_b" })).data).toBe("sent");
+    expect(rowField(id, "status || '|' || provider_message_id")).toBe("sent|msg_b");
+  });
+
+  it("INV-N5: 사건 뒤 24시간이 지난 대기 줄은 꺼낼 때 보내지 않고 실패로 끝낸다 — 24시간 안 된 줄은 꺼낸다", async () => {
+    const old = await paidGift();
+    const fresh = await paidGift();
+    const a = rowId(old.orderId, "approval_request", "haru_creator");
+    const b = rowId(fresh.orderId, "approval_request", "haru_creator");
+    psql(`update ${OUTBOX} set next_attempt_at = now() + interval '1 day' where status = 'pending'`);
+    forceRow(a, "event_at = now() - interval '24 hours 1 second', next_attempt_at = now() - interval '1 minute'");
+    forceRow(b, "event_at = now() - interval '23 hours 59 minutes', next_attempt_at = now() - interval '1 minute'");
+    const r = await adminClient().rpc("notification_claim", { p_limit: 5 });
+    expect(r.error).toBeNull();
+    expect((r.data as Claimed[]).map((c) => c.id)).toEqual([b]);
+    expect(rowField(a, "status || '|' || error_code || '|' || (finished_at is not null)")).toBe("failed|expired|true");
+  });
+
+  it("INV-N8: 3차 재알림 함수는 실제로 넣은 줄 수를 돌려준다 — 두 번째 부르면 0", async () => {
+    setTemplate("approval_request", "TPL_APPROVAL_1");
+    const g = await paidGift();
+    psql(`update public.orders set registered_at = now() - interval '73 hours' where id = '${g.orderId}'`);
+    // 시드의 오래된 대기 요청 몫을 먼저 만들어 두고, 이 주문 몫만 지운 뒤 센다
+    psql(`select public.notification_enqueue_due()`);
+    psql(`delete from ${OUTBOX} where order_id = '${g.orderId}' and round = 3`);
+    expect((await adminClient().rpc("notification_enqueue_due")).data).toBe(2); // 이메일 + 카카오
+    expect((await adminClient().rpc("notification_enqueue_due")).data).toBe(0);
+  });
+
+  it("INV-N5: 건너뛴 승인 요청 줄에는 이유 코드 request_not_waiting 이 남는다", async () => {
+    const g = await paidGift();
+    const id = rowId(g.orderId, "approval_request", "haru_creator");
+    await approve(g);
+    onlyThisDue(id);
+    expect((await adminClient().rpc("notification_claim", { p_limit: 5 })).data).toEqual([]);
+    expect(rowField(id, "status || '|' || error_code")).toBe("skipped|request_not_waiting");
+  });
+
+  it("INV-N5: 다시 보낼 간격은 1분·4분·16분 — 꺼낼 때 시도 횟수를 돌려준다", async () => {
+    const g = await paidGift();
+    const id = rowId(g.orderId, "approval_request", "haru_creator");
+    const gaps: number[] = [];
+    for (let i = 0; i < 3; i += 1) {
+      const c = await claimOne(id);
+      expect(c.attempts).toBe(i);
+      await finish(id, "error", { error: "provider_timeout" });
+      gaps.push(Number(rowField(id, "round(extract(epoch from next_attempt_at - now()))")));
+      forceRow(id, "next_attempt_at = now() - interval '1 second'");
+    }
+    expect(gaps.map((s) => Math.round(s / 60))).toEqual([1, 4, 16]);
+  });
+
+  it("INV-N5 (S5e): 조회 목록에는 10분 지난 카카오 줄만 — 10분 안 된 카카오 줄과 메일 줄은 없다", async () => {
+    setTemplate("approval_request", "TPL_APPROVAL_1");
+    const g = await paidGift();
+    const k = rowId(g.orderId, "approval_request", "haru_creator", "kakao");
+    const e = rowId(g.orderId, "approval_request", "haru_creator", "email");
+    await claimOne(k);
+    await claimOne(e);
+    forceRow(e, "claimed_at = now() - interval '11 minutes'");
+    const ids = async () => ((await adminClient().rpc("notification_stale_lookups")).data as { id: string }[]).map((r) => r.id);
+    expect(await ids()).not.toContain(k); // 아직 10분 안 됨
+    expect(await ids()).not.toContain(e); // 메일은 조회가 없다
+    forceRow(k, "claimed_at = now() - interval '10 minutes 1 second'");
+    expect(await ids()).toContain(k);
+  });
+
+  it("INV-N3: 송장만 출력된 주문(출고 전)에는 출고 알림이 없다 — 출고돼야 생긴다", async () => {
+    const { g, staff, qrs } = await arrivedGift();
+    await inspect(staff, qrs[0]!, FAN_PASS);
+    const parcel = psql(`select id from public.office_parcels where qr_code = '${qrs[0]}'`);
+    psql(`begin; set local session_replication_role = replica; update public.office_parcels set state = 'label_printed', printed_at = now(), outbound_waybill_no = '${waybill()}' where id = '${parcel}'; commit;`);
+    psql(`select public.office_sync_order('${g.orderId}')`);
+    expect(orderStatus(g.orderId)).toBe("label_printed");
+    expect(outboxRows(g.orderId).filter((r) => r.startsWith("shipped|"))).toEqual([]);
+    psql(`begin; set local session_replication_role = replica; update public.office_parcels set state = 'shipped', shipped_at = now() where id = '${parcel}'; commit;`);
+    psql(`select public.office_sync_order('${g.orderId}')`);
+    expect(outboxRows(g.orderId).filter((r) => r.startsWith("shipped|"))).toEqual(["shipped|1|byeolbit_fan|email|pending"]);
+  });
+
+  it("INV-N4 (동시): 같은 주문의 상자 둘이 동시에 입고돼도 팬 입고 줄은 정확히 하나", async () => {
+    const g = await paidGift(2);
+    // 한 사람은 라벨 대기 하나만 가질 수 있다 — 직원과 대표가 한 상자씩 동시에 받는다
+    const people = [await signedInClient("fankkuk_staff"), await signedInClient("fankkuk_admin")];
+    const nos = [waybill(), waybill()];
+    await fanSetsWaybill(g.boxIds[0]!, nos[0]!);
+    await fanSetsWaybill(g.boxIds[1]!, nos[1]!);
+    await Promise.all(nos.map((no, i) => receiveAndLabel(people[i]!, no)));
+    expect(orderStatus(g.orderId)).toBe("labeled");
+    expect(outboxRows(g.orderId).filter((r) => r.startsWith("arrived|"))).toEqual(["arrived|1|byeolbit_fan|email|pending"]);
+  });
+
+  it("INV-N3 (실패경로): 줄 넣기·재시도 함수는 누구에게도 실행 권한이 없다 — 사건 처리 안에서만 불린다", () => {
+    for (const fn of ["public.notification_enqueue(text, uuid, uuid, smallint, uuid, timestamptz)", "public.notification_retry_or_fail(public.notification_outbox, text)"]) {
+      for (const role of ["anon", "authenticated", "service_role"]) {
+        expect(psql(`select has_function_privilege('${role}', '${fn}', 'execute')`)).toBe("f");
+      }
+    }
+    // 앱 서버 키는 발송 기록을 지우지도 못한다
+    expect(psql(`select has_table_privilege('service_role', '${OUTBOX}', 'delete')`)).toBe("f");
+  });
+
+  it("INV-N5 (실패경로): 지킴이 — 대기 아닌 상태로 넣기, 사건 시각 바꾸기는 거부", async () => {
+    const g = await paidGift();
+    const id = rowId(g.orderId, "approval_request", "haru_creator");
+    expect(
+      psqlError(
+        `insert into ${OUTBOX} (kind, order_id, round, account_id, channel, event_at, status) values ('arrived', '${g.orderId}', 1, '${SEED.fanId}', 'email', now(), 'sent')`,
+      ),
+    ).toMatch(/대기로만/);
+    expect(psqlError(`update ${OUTBOX} set event_at = event_at + interval '1 day' where id = '${id}'`)).toMatch(/이름은 바꿀 수 없다/);
+  });
+});

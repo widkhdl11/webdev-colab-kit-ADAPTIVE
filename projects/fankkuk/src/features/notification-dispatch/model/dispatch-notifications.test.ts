@@ -15,9 +15,12 @@ type Row = {
   auto_reject_at: string | null;
   must_deliver: boolean;
   attempts: number;
+  claimed_at: string;
 };
 
-const ROW: Row = { id: "row-1", kind: "arrived", channel: "email", round: 1, order_no: "FC-7K3M9", nickname: "별빛", auto_reject_at: null, must_deliver: false, attempts: 0 };
+const CLAIMED = "2026-10-06T06:00:00.123456+00:00";
+
+const ROW: Row = { id: "row-1", kind: "arrived", channel: "email", round: 1, order_no: "FC-7K3M9", nickname: "별빛", auto_reject_at: null, must_deliver: false, attempts: 0, claimed_at: "2026-10-06T06:00:00.123456+00:00" };
 
 type Call = { fn: string; args: unknown };
 
@@ -108,7 +111,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(email.sent).toHaveLength(1);
     expect(email.sent[0]!.to).toBe("byeolbit@example.com");
     expect(email.sent[0]!.outboxId).toBe("row-1");
-    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_outcome: "sent", p_provider_message_id: "prov-1", p_error_code: null, p_fake: false }]);
+    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "sent", p_provider_message_id: "prov-1", p_error_code: null, p_fake: false }]);
     expect(result).toEqual({ ok: true, counts: { sent: 1, skipped: 0, retrying: 0, failed: 0, unfinished: 0, staleResolved: 0, staleUnchecked: 0 } });
   });
 
@@ -117,7 +120,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const { admin, calls } = fakeAdmin({ rows: [ROW], contacts: { "row-1": null } });
     const result = await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(email.sent).toHaveLength(0);
-    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_outcome: "skipped", p_provider_message_id: null, p_error_code: "no_contact", p_fake: false }]);
+    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "skipped", p_provider_message_id: null, p_error_code: "no_contact", p_fake: false }]);
     expect(result.ok && result.counts.skipped).toBe(1);
   });
 
@@ -135,7 +138,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(kakao.sent.map((m) => [m.outboxId, m.templateCode])).toEqual([["k", "TPL_ARRIVED_1"]]);
     expect(email.sent.map((m) => [m.outboxId, m.templateCode])).toEqual([["e", null]]);
     // 가짜 통로로 보낸 줄은 가짜로 남는다(INV-N11)
-    expect(finishes(calls)).toContainEqual({ p_id: "k", p_outcome: "sent", p_provider_message_id: null, p_error_code: null, p_fake: true });
+    expect(finishes(calls)).toContainEqual({ p_id: "k", p_claimed_at: CLAIMED, p_outcome: "sent", p_provider_message_id: null, p_error_code: null, p_fake: true });
   });
 
   it("INV-N7 (S7b, 실패경로): 카카오가 오류를 내도 이메일로 갈아타지 않는다 — 같은 줄을 오류로 끝내 DB 가 다시 보낼 차례를 정한다", async () => {
@@ -148,7 +151,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     });
     const result = await dispatchNotifications(deps(admin, { email, kakao }));
     expect(email.sent).toHaveLength(0);
-    expect(finishes(calls)).toEqual([{ p_id: "k", p_outcome: "error", p_provider_message_id: null, p_error_code: "provider_error", p_fake: false }]);
+    expect(finishes(calls)).toEqual([{ p_id: "k", p_claimed_at: CLAIMED, p_outcome: "error", p_provider_message_id: null, p_error_code: "provider_error", p_fake: false }]);
     expect(result.ok && result.counts.retrying).toBe(1);
   });
 
@@ -157,7 +160,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const { admin, calls } = fakeAdmin({ rows: [{ ...ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" } });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(email.sent).toHaveLength(0);
-    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_outcome: "error", p_provider_message_id: null, p_error_code: "channel_unavailable", p_fake: false }]);
+    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "error", p_provider_message_id: null, p_error_code: "channel_unavailable", p_fake: false }]);
   });
 
   it("INV-N7 (실패경로): 꺼낸 뒤 그 종류의 템플릿 코드가 지워졌으면 카카오로 보내지 않는다", async () => {
@@ -165,7 +168,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const { admin, calls } = fakeAdmin({ rows: [{ ...ROW, channel: "kakao" }], contacts: { "row-1": "01012345678" }, templates: [] });
     await dispatchNotifications(deps(admin, { email: channel(), kakao }));
     expect(kakao.sent).toHaveLength(0);
-    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_outcome: "error", p_provider_message_id: null, p_error_code: "template_missing", p_fake: false }]);
+    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "error", p_provider_message_id: null, p_error_code: "template_missing", p_fake: false }]);
   });
 
   it("INV-N1: 본문을 만들 수 없는 줄(배송중·수령 — 경로 미정, 꼴이 틀린 주문번호)은 보내지 않고 건너뜀 — 다시 해도 결과가 같다", async () => {
@@ -199,7 +202,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     (admin as { rpc: unknown }).rpc = async (fn: string, args: unknown) =>
       fn === "notification_finish" ? (calls.push({ fn, args }), { data: "failed", error: null }) : finish(fn as never, args as never);
     const result = await dispatchNotifications(deps(admin, { email: channel(false, "smtp_error"), kakao: null }));
-    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_outcome: "error", p_provider_message_id: null, p_error_code: "smtp_error", p_fake: false }]);
+    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "error", p_provider_message_id: null, p_error_code: "smtp_error", p_fake: false }]);
     expect(result.ok && result.counts.failed).toBe(1);
   });
 
@@ -214,7 +217,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const { admin, calls } = fakeAdmin({ rows: [ROW], contacts: { "row-1": "byeolbit@example.com" } });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(JSON.stringify(finishes(calls))).not.toContain("byeolbit@example.com");
-    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_outcome: "error", p_provider_message_id: null, p_error_code: "send_failed", p_fake: false }]);
+    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "error", p_provider_message_id: null, p_error_code: "send_failed", p_fake: false }]);
   });
 
   it("INV-N5: 끝내기가 실패한 줄은 「보내는 중」에 남는다 — 멈춘 줄 정리가 맡고, 끝나지 않은 줄로 센다", async () => {
@@ -278,7 +281,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     const { admin, calls } = fakeAdmin({ rows: [{ ...ROW, kind: "approval_request", auto_reject_at: "2026-10-08T01:00:00Z", must_deliver: true }], fail: { notification_contact: { code: "57014" } } });
     const result = await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(email.sent).toHaveLength(0);
-    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_outcome: "error", p_provider_message_id: null, p_error_code: "contact_failed", p_fake: false }]);
+    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_claimed_at: CLAIMED, p_outcome: "error", p_provider_message_id: null, p_error_code: "contact_failed", p_fake: false }]);
     expect(result.ok && result.counts.retrying).toBe(1);
   });
 
