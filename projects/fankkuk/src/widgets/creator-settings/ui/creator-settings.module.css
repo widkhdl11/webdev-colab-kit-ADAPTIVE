@@ -22,6 +22,8 @@
 
 .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; padding-block: 14px; border-top: 1px solid var(--divider); }
 .txt { display: grid; }
+.switch-row :global(.btn) { flex-shrink: 0; white-space: nowrap; } /* 계정 보안 줄 — 좁은 폭에서 버튼 글자가 꺾이지 않게 */
+.sec-panel { padding-bottom: 16px; } /* 펼친 바꾸기 칸이 다음 줄 구분선에 붙지 않게 */
 .txt strong { font-weight: 600; }
 .switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 52px; height: 32px; margin: 0; border-radius: var(--r-pill); background: var(--field-line); cursor: pointer; transition: background .15s; }
 .switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--white); transition: transform .15s; }

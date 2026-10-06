@@ -7,4 +7,6 @@ export type CreatorSettingsView = {
   visibleInSearch: boolean;
   /** 알림 두 칸 — 팬과 같다. 승인 요청은 두 칸이 꺼져도 간다(notifications INV-N6). */
   notify: { kakao: boolean; email: boolean };
+  /** 가운데를 가린 휴대폰 번호(010-****-5678) — 팬 내 정보와 같은 값. 번호 바꾸기 칸 옆에 보인다. */
+  phoneMasked: string | null;
 };

@@ -13,6 +13,8 @@ import { FaceAvatar } from "@/shared/ui/face-avatar";
 import type { MyAddressStatus } from "@/entities/creator/api/my-address-status";
 import type { MyVerification, MyVerificationState } from "@/entities/creator/model/creator-verification";
 import { AddressChangeForm } from "@/features/creator-address/ui/address-change-form";
+import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
+import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
 import { sendUnblock } from "@/features/creator-unblock/api/send-unblock";
 import s from "./creator-settings.module.css";
@@ -86,6 +88,9 @@ export function CreatorSettingsPage({
 }) {
   const router = useRouter();
   const [sheet, setSheet] = useState<SheetState>(null);
+  const [security, setSecurity] = useState<"phone" | "password" | null>(null);
+  const toggleSecurity = (which: "phone" | "password") => setSecurity((cur) => (cur === which ? null : which));
+  const toLogin = () => router.push("/login?next=/creator/settings");
   const [addressRegistered, setAddressRegistered] = useState(address.registered);
   // 저장된 뒤에만 띄우는 확인 문구 — 바꾼 뒤에도 같은 「등록됨」이라 문구가 없으면 바뀌었는지 알 수 없다
   const [addressMsg, setAddressMsg] = useState<string | null>(null);
@@ -165,7 +170,7 @@ export function CreatorSettingsPage({
     <div>
       <div className="panel-title">
         <h2 className="panel-h">주소와 설정</h2>
-        <p>채널 본인 확인, 선물을 받을 주소, 차단한 팬, 프로필, 알림을 한곳에서 관리해요.</p>
+        <p>채널 본인 확인, 선물을 받을 주소, 차단한 팬, 프로필, 알림, 계정 보안을 한곳에서 관리해요.</p>
       </div>
 
       <div className={s["set-grid"]}>
@@ -348,6 +353,54 @@ export function CreatorSettingsPage({
               ) : null}
               {notifyMsg?.text}
             </p>
+          </section>
+
+          {/* 번호 바꾸기(signup INV-U12)·비밀번호 바꾸기(session-login INV-L12)는 팬 내 정보와 같은 칸을 그대로 쓴다 —
+              두 서버 처리 모두 로그인 토큰의 사람 것만 바꾸고 역할을 가리지 않는다 */}
+          <section aria-labelledby="security-h">
+            <div className={s["s-head"]}>
+              <h3 id="security-h">계정 보안</h3>
+            </div>
+            <div className={s["switch-row"]}>
+              <div className={s.txt}>
+                <strong>휴대폰 번호</strong>
+                <span className="sub">{settings.phoneMasked ?? "등록된 번호가 없어요"} · 바꾸려면 카카오 인증을 다시 받아요.</span>
+              </div>
+              <button
+                className="btn btn--soft btn--sm"
+                type="button"
+                aria-expanded={security === "phone"}
+                aria-controls="security-phone"
+                onClick={() => toggleSecurity("phone")}
+              >
+                번호 바꾸기
+              </button>
+            </div>
+            {security === "phone" && (
+              <div className={s["sec-panel"]}>
+                <PhoneChangePanel id="security-phone" onLoginExpired={toLogin} onChanged={() => router.refresh()} />
+              </div>
+            )}
+            <div className={s["switch-row"]}>
+              <div className={s.txt}>
+                <strong>비밀번호</strong>
+                <span className="sub">바꾸면 다른 기기의 로그인은 모두 끝나요.</span>
+              </div>
+              <button
+                className="btn btn--soft btn--sm"
+                type="button"
+                aria-expanded={security === "password"}
+                aria-controls="security-password"
+                onClick={() => toggleSecurity("password")}
+              >
+                비밀번호 변경
+              </button>
+            </div>
+            {security === "password" && (
+              <div className={s["sec-panel"]}>
+                <PasswordChangePanel id="security-password" onLoginExpired={toLogin} />
+              </div>
+            )}
           </section>
         </div>
       </div>
