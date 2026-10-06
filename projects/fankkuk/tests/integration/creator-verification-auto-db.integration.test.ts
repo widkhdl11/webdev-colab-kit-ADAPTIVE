@@ -140,6 +140,9 @@ describe("코드 자동 확인 (INV-V16)", () => {
     const again = await autoClaim("ggul", a.application_id);
     expect(again.error?.code).toBe("FKV15");
     expect(again.error?.message).toContain("잠시 뒤 다시 눌러 주세요");
+    // 1분 바로 앞(59초)도 막는다 — 간격을 줄인 구현이 통과하지 않게
+    shiftApp(a.application_id, "last_auto_check_at = now() - interval '59 seconds'");
+    expect((await autoClaim("ggul", a.application_id)).error?.code).toBe("FKV15");
     shiftApp(a.application_id, "last_auto_check_at = now() - interval '61 seconds'");
     await claimOk("ggul", a.application_id);
   });

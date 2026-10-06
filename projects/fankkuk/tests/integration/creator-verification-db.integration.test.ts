@@ -929,6 +929,54 @@ describe("코드 신청 횟수 (INV-V15)", () => {
     ).toBe(`00000000-0000-4000-a000-000000000022|${CV.ggul.id}|youtube|cntx|본인 문의 확인|true`);
     expect(psqlError(`update public.creator_verification_unlocks set memo = 'x' where account_id = '${CV.ggul.id}'`)).toMatch(/고치거나 지울 수 없다/);
     expect(psqlError(`delete from public.creator_verification_unlocks where account_id = '${CV.ggul.id}'`)).toMatch(/고치거나 지울 수 없다/);
+    // 풀기는 0 으로 영원히 돌리는 것이 아니다 — 풀린 뒤에도 끝난 신청 3건이면 다시 막힌다
+    expect((await reject(a.application_id)).error).toBeNull();
+    await ended("rejected");
+    await ended("rejected");
+    expect((await request("ggul", YT("cntx"))).error?.code).toBe("FKV04");
+  });
+
+  it("INV-V15 (S15e, 실패경로): 한 채널을 풀어도 같은 계정의 다른 채널은 그대로 막혀 있다", async () => {
+    await ended("rejected", "cnty");
+    await ended("rejected", "cnty");
+    await ended("rejected", "cnty");
+    await ended("rejected");
+    await ended("rejected");
+    const last = await ended("rejected");
+    expect((await unlock(last, "본인 문의 확인")).error).toBeNull();
+    expect((await request("ggul", YT("cnty"))).error?.code).toBe("FKV04");
+    await requestOk("ggul", YT("cntx"));
+  });
+
+  it("INV-V15 (S15c): 끝난 신청 1건 + 살아 있는 1건이면 다시 받기가 된다", async () => {
+    await ended("rejected");
+    const live = await requestOk("ggul", YT("cntx"));
+    const r = await regenerate("ggul");
+    expect(r.error).toBeNull();
+    expect(appStatus(live.application_id)).toBe("withdrawn");
+    expect(liveCount("ggul")).toBe(1);
+  });
+
+  it("INV-V4 (동시, 실패경로): 다시 받기가 채널 잠금을 기다리는 사이 「확인 요청」이 끝나면 다시 받기는 거부되고 확인 대기 신청은 그대로", async () => {
+    const live = await requestOk("ggul", YT("regenrace"));
+    const held = await holdRowLock(`select pg_advisory_xact_lock(hashtextextended('cv_channel:youtube:regenrace', 0))`, 2);
+    const regen = regenerate("ggul");
+    // 다시 받기가 신청 상태를 읽고 채널 잠금 앞에서 기다리게 둔다
+    await new Promise((r) => setTimeout(r, 600));
+    expect((await post("ggul", live.application_id)).error).toBeNull();
+    await held.released;
+    const r = await regen;
+    expect(r.error?.code).toBe("55000");
+    expect(appStatus(live.application_id)).toBe("posted");
+    expect(liveCount("ggul")).toBe(1);
+  });
+
+  it("INV-V14: 같은 채널에 낸 내 코드 신청은 로그인 확인이 이기면 「거둠」으로 끝나고 닫힘 기록이 없다", async () => {
+    const a = await requestOk("ggul", YT("ownlogin"));
+    expect((await loginConfirm("ggul", "youtube", "ownlogin")).error).toBeNull();
+    expect(appStatus(a.application_id)).toBe("withdrawn");
+    expect(verified("ggul")).toBe("t");
+    expect(psql(`select count(*) from public.creator_verification_events where application_id = '${a.application_id}' and action = 'close'`)).toBe("0");
   });
 
   it("INV-V15 (S15f, 실패경로): 크리에이터·팬은 횟수를 풀 수 없고 기록 0줄", async () => {

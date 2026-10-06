@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createInvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
-import { adminClient, deleteTestOrders, psql, psqlError, signedInClient } from "./helpers";
+import { adminClient, deleteTestOrders, holdRowLock, psql, psqlError, signedInClient } from "./helpers";
 import {
   decryptFileText,
   HARU_CREATOR_ID,
@@ -230,6 +230,19 @@ describe("INV-P15 (b)~(e): 돌려주기의 조건은 상자를 잠근 자리에�
     const older = latestOpened(g.boxId);
     claim(g.qr);
     expect(release(older)).toEqual({ result: "denied", reason: "not_latest" });
+    expect(releaseRows(g.boxId)).toEqual([]);
+    expect(contextCount(g.qr)).toBe(2);
+  });
+
+  it("INV-P15 (동시, 실패경로 c): 새 출력이 상자를 잠근 채 끝나기 전에 옛 줄 돌려주기가 오면, 기다렸다가 「최신 줄 아님」으로 거부", async () => {
+    const g = await inspectedGift();
+    claim(g.qr);
+    const older = latestOpened(g.boxId);
+    // 새 출력이 상자를 잠그고 연 줄을 넣은 뒤 2초 동안 끝내지 않는다
+    const held = await holdRowLock(`set role address_decryptor; select public.invoice_claim_print('${g.qr}', '${OWNER_ID}')`, 2);
+    // 돌려주기는 상자 잠금에서 기다렸다가 새 출력이 끝난 뒤 조건을 본다 — 잠그지 않고 보면 옛 줄이 아직 최신이라 돌려준다
+    expect(release(older)).toEqual({ result: "denied", reason: "not_latest" });
+    await held.released;
     expect(releaseRows(g.boxId)).toEqual([]);
     expect(contextCount(g.qr)).toBe(2);
   });
