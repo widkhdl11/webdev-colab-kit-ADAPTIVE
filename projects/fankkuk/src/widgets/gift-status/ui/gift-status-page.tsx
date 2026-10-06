@@ -248,7 +248,7 @@ export function GiftStatusPage({
                       </div>
                     </dl>
                     <div className={s["addr-copy"]}>
-                      <CopyButton className="btn btn--soft btn--sm" text={`${view.officeAddress}\n${recipient}`} label="주소 복사하기" />
+                      <CopyButton className="btn btn--soft btn--sm" text={`${view.officeAddress}\n${recipient}`} label="주소 복사하기" copiedMessage="주소를 복사했어요." failedMessage="복사하지 못했어요. 위 주소를 직접 옮겨 적어 주세요." />
                     </div>
                   </div>
                   <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`}>

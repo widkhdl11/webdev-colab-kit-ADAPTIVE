@@ -93,7 +93,13 @@ export function shareReply(orderNo: string): string {
 
 export function deleteTestRevgifts(): void {
   const shares = "select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_test_rg_%'";
-  psql(["begin;", "set local session_replication_role = replica;", ...officeRowsDelete(shares, "share_id"), "commit;"].join(" "));
+  // 몫 전용 열람 기록·돌려줌 줄(INV-R7·R13)은 고칠 수도 지울 수도 없게 막혀 있다 — 시험 몫의 줄만 replica 안에서 지운다
+  const printRows = [
+    `delete from public.revgift_decrypt_releases where share_id in (${shares});`,
+    `delete from public.revgift_decrypt_log where share_id in (${shares});`,
+  ];
+  const printTables = psql("select to_regclass('public.revgift_decrypt_log') is not null") === "t" ? printRows : [];
+  psql(["begin;", "set local session_replication_role = replica;", ...printTables, ...officeRowsDelete(shares, "share_id"), "commit;"].join(" "));
   psql(
     "delete from public.refunds where share_id in (select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_test_rg_%'); " +
       "delete from public.revgift_sends where toss_order_id like 'pay_test_rg_%'",

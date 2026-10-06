@@ -27,14 +27,21 @@ export function sealedAddressPlaintext(input: RevgiftAddressInput): string {
   return JSON.stringify(plaintextSchema.parse({ v: 1, ...input }));
 }
 
-/** 연 평문에서 주문번호를 꺼낸다. 꼴이 틀리면 null — 송장 출력이 그 내용을 쓰지 않는다. */
-export function readOpenedOrderNo(plaintext: string): string | null {
+/** 택배 라벨에 찍는 칸 — 송장 출력이 화면(인쇄)으로 넘기는 것은 이 다섯 칸뿐이다(주문번호·암호문은 빠진다). */
+export type RevgiftAddressLabel = Omit<RevgiftAddressInput, "orderNo">;
+
+/** 연 평문을 주문번호와 라벨 칸으로 나눈다. 꼴이 틀리면 null — 송장 출력이 그 내용을 쓰지 않는다(INV-R7 b). */
+export function readOpenedRevgiftAddress(plaintext: string): { orderNo: string; label: RevgiftAddressLabel } | null {
+  let raw: unknown;
   try {
-    const parsed = plaintextSchema.safeParse(JSON.parse(plaintext));
-    return parsed.success ? parsed.data.orderNo : null;
+    raw = JSON.parse(plaintext);
   } catch {
     return null;
   }
+  const parsed = plaintextSchema.safeParse(raw);
+  if (!parsed.success) return null;
+  const { orderNo, recipientName, phone, zipCode, address1, address2 } = parsed.data;
+  return { orderNo, label: { recipientName, phone, zipCode, address1, address2 } };
 }
 
 /** 받기 요청 본문. 봉인 형식이 아니면 거부한다(INV-R5) — 평문 주소가 들어올 자리가 없다. */

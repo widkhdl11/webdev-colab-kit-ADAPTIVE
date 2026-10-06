@@ -194,12 +194,18 @@ describe("INV-R15: 24시간 지난 역조공 결제 대기는 「지금 돌리�
     const closed = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
     backdateSend(closed.sendId, 25);
     await runFor(closed.orderNos[0]!);
+    expect(sendStatus(closed.sendId)).toBe("failed");
+    // 같은 때 결제가 끝난 보내기는 두 목록에 나온다 — 읽기가 결제 완료만 거르는지를 붙든다(닫힌 줄이 원래 안 보이는 것과 구분)
+    const paid = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
+    await payTestRevgift(paid);
     const fan = await signedInClient("byeolbit_fan");
     const received = ((await fan.rpc("my_received_revgifts")).data as { order_no: string }[]).map((r) => r.order_no);
     expect(received).not.toContain(closed.orderNos[0]);
+    expect(received).toContain(paid.orderNos[0]);
     const haru = await signedInClient("haru_creator");
     const sent = ((await haru.rpc("my_sent_revgifts")).data as { order_no: string }[]).map((r) => r.order_no);
     expect(sent).not.toContain(closed.orderNos[0]);
+    expect(sent).toContain(paid.orderNos[0]);
   });
 
   it("INV-R15 S15c (동시): 기한 직후 결제 확정 시작과 자동 처리가 겹쳐도 하나만 반영된다", async () => {

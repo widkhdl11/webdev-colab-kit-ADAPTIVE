@@ -79,7 +79,7 @@ function OfficeAddress({ address, headId }: { address: string; headId: string })
       </dl>
       <p className={s["addr-note"]}>팬이 받기를 누를 때까지 기다리지 않고 보내셔도 돼요. 받지 않은 팬의 상자는 돌려보내고 그 상자 요금은 환불돼요.</p>
       <div className={s["addr-copy"]}>
-        <CopyButton className="btn btn--soft btn--sm" text={`${address}\n팬꾹`} label="주소 복사하기" />
+        <CopyButton className="btn btn--soft btn--sm" text={`${address}\n팬꾹`} label="주소 복사하기" copiedMessage="주소를 복사했어요." failedMessage="복사하지 못했어요. 위 주소를 직접 옮겨 적어 주세요." />
       </div>
     </div>
   );

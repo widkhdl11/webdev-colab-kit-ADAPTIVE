@@ -29,6 +29,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
         // 팬이 아닌 계정(크리에이터)에는 팬 메뉴 틀을 씌우지 않는다 — 링크의 계정과 맞는지는 서버가 가린다
         <main id="main">
           <div className="container">
+            <h1 className="page-h">이메일 확인</h1>
             <ConfirmEmailPanel token={token} />
           </div>
         </main>

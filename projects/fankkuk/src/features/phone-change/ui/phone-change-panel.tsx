@@ -61,7 +61,10 @@ export function PhoneChangePanel({ id, onLoginExpired, onChanged }: { id: string
     setNotice(null);
     if (!verified) {
       const checked = await checkPhoneChangeVerification();
-      if (checked.kind === "login") return onLoginExpired();
+      if (checked.kind === "login") {
+        setBusy(false);
+        return onLoginExpired();
+      }
       if (checked.kind === "failed") {
         setBusy(false);
         return fail(checked.field ?? "verification", checked.message);

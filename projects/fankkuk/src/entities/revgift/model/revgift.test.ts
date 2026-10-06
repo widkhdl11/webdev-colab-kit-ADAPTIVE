@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importSealingPublicKey, sealEnvelope } from "@/shared/lib/envelope/envelope";
-import { parseAcceptInput, sealedAddressPlaintext, readOpenedOrderNo } from "./sealed-address";
+import { parseAcceptInput, sealedAddressPlaintext, readOpenedRevgiftAddress } from "./sealed-address";
 import { isRevgiftOrderNo, newRevgiftOrderNo, revgiftQrContent } from "./revgift-order-no";
 import { buildRevgiftNotice } from "./revgift-notice";
 import { parseSentRows, parseReceivedRows } from "./revgift-rows";
@@ -66,9 +66,10 @@ describe("INV-R5: 팬 주소는 주문번호와 함께 봉인된 뒤에만 서�
   });
 
   it("INV-R5·R7 (b): 연 내용에서 주문번호를 꺼낸다 — 꼴이 틀리면 null", () => {
-    expect(readOpenedOrderNo(sealedAddressPlaintext(ADDRESS))).toBe("RG-ABC123");
-    expect(readOpenedOrderNo("서울 마포구")).toBeNull();
-    expect(readOpenedOrderNo(JSON.stringify({ v: 1, orderNo: "FC-7K3M9" }))).toBeNull();
+    const { orderNo, ...label } = ADDRESS;
+    expect(readOpenedRevgiftAddress(sealedAddressPlaintext(ADDRESS))).toEqual({ orderNo, label });
+    expect(readOpenedRevgiftAddress("서울 마포구")).toBeNull();
+    expect(readOpenedRevgiftAddress(JSON.stringify({ v: 1, orderNo: "FC-7K3M9" }))).toBeNull();
   });
 });
 

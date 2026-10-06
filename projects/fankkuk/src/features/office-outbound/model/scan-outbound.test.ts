@@ -20,20 +20,23 @@ function fakeClient(replies: Record<string, Reply>, who = { operator: true, owne
 
 const NEW_WAYBILL = "555566667777";
 const LABEL = { recipientName: "김하루", phone: "01012345678", zipCode: "06236", address1: "서울시 강남구 테헤란로 123", address2: "101동" };
-type GiftOutcome = Awaited<ReturnType<OutboundDeps["printGiftLabel"]>>;
-function giftPrinter(outcome: GiftOutcome) {
+type LabelOutcome = Awaited<ReturnType<OutboundDeps["printLabel"]>>;
+function giftPrinter(outcome: LabelOutcome) {
   const asked: string[] = [];
-  return { asked, printGiftLabel: async (qr: string) => (asked.push(qr), outcome) };
+  return { asked, printLabel: async (qr: string) => (asked.push(qr), outcome) };
 }
-const deps = (client: never, printer = giftPrinter({ kind: "not_gift" })) => ({ client, newWaybill: () => NEW_WAYBILL, printGiftLabel: printer.printGiftLabel });
+const deps = (client: never, printer = giftPrinter({ kind: "failed" })) => ({ client, newWaybill: () => NEW_WAYBILL, printLabel: printer.printLabel });
 
 describe("출고 (office-workflow INV-W1·W3·W8)", () => {
-  it("INV-W3: 역조공 상자의 송장 출력 → 서버가 만든 송장번호를 DB 에 넘기고 돌려준다(주소 열기는 아직 없음)", async () => {
+  it("INV-R7·W3: 역조공 상자도 송장 출력 함수가 팬 주소를 열어 라벨 칸을 돌려준다 — 주소 없이 출력 단계로 넘기는 DB 함수는 부르지 않는다", async () => {
     const { calls, client } = fakeClient({ office_print_label: { error: null } });
-    const printer = giftPrinter({ kind: "not_gift" });
-    expect(await scanOutbound(deps(client, printer), { kind: "print_label", qr: "Q-000123" })).toEqual({ status: 200, body: { waybill: NEW_WAYBILL } });
+    const printer = giftPrinter({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: LABEL });
+    expect(await scanOutbound(deps(client, printer), { kind: "print_label", qr: "Q-000123" })).toEqual({
+      status: 200,
+      body: { waybill: NEW_WAYBILL, reprint: false, label: LABEL },
+    });
     expect(printer.asked).toEqual(["Q-000123"]);
-    expect(calls).toEqual([{ fn: "office_print_label", args: { p_qr: "Q-000123", p_waybill: NEW_WAYBILL } }]);
+    expect(calls).toEqual([]);
   });
 
   it("INV-P4·W3: 팬 선물 상자의 송장 출력은 송장 출력 함수가 주소를 열어 라벨 칸을 돌려준다 — 앱 서버는 DB 출력 함수를 따로 부르지 않는다", async () => {
@@ -83,14 +86,13 @@ describe("출고 (office-workflow INV-W1·W3·W8)", () => {
     expect(printer.asked).toEqual([]);
   });
 
-  it("INV-W3 S3·S3b (실패경로): 출고 조건이 안 되면 409(P0041), 검수 완료가 아니면 409(55000)", async () => {
-    const notYet = fakeClient({ office_print_label: { error: { code: "P0041" } } });
-    expect(await scanOutbound(deps(notYet.client), { kind: "print_label", qr: "Q-000123" })).toEqual({
-      status: 409,
-      body: { message: "출고 조건이 아직 안 됐어요.", reason: "not_shippable" },
+  it("INV-R13 (실패경로): 송장 출력 함수가 실패하면 500 — 주소 없이 DB 출력 함수로 대신 넘기지 않는다", async () => {
+    const { calls, client } = fakeClient({ office_print_label: { error: null } });
+    expect(await scanOutbound(deps(client, giftPrinter({ kind: "failed" })), { kind: "print_label", qr: "Q-000123" })).toEqual({
+      status: 500,
+      body: { message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." },
     });
-    const wrongStep = fakeClient({ office_print_label: { error: { code: "55000" } } });
-    expect((await scanOutbound(deps(wrongStep.client), { kind: "print_label", qr: "Q-000123" })).status).toBe(409);
+    expect(calls).toEqual([]);
   });
 
   it("INV-W1: 출력한 송장 바코드 스캔 → 출고 확정. 이 상자 송장이 아니면 400(P0043)", async () => {

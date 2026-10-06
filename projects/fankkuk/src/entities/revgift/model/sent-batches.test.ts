@@ -31,6 +31,11 @@ describe("toSentBatches", () => {
     expect(late?.officeAddress).toBeNull();
   });
 
+  it("INV-R14: 보낼 상자 여부가 섞인 묶음은 하나라도 남았으면 주소가 붙는다 — 첫 몫이 받지 않음이어도", () => {
+    const rows = [share("RG-AAA111", EARLY, "not_received", false), share("RG-CCC333", EARLY, "waiting", true)];
+    expect(toSentBatches(rows, OFFICE)[0]?.officeAddress).toBe(OFFICE);
+  });
+
   it("INV-R14 S14b (실패경로): 묶음의 몫이 모두 보낼 상자가 아니면 주소가 없다", () => {
     const rows = [share("RG-AAA111", EARLY, "not_received", false), share("RG-CCC333", EARLY, "not_received", false)];
     expect(toSentBatches(rows, OFFICE)[0]?.officeAddress).toBeNull();

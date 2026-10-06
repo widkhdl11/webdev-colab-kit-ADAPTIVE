@@ -48,7 +48,10 @@ describe("INV-R7: 몫의 주소를 여는 조건", () => {
   it("INV-R7 S7c (b, 실패경로): 연 내용의 주문번호가 요청한 몫과 다르면(옮겨 붙인 암호문) 쓰지 않는다", () => {
     const opened = JSON.stringify({ v: 1, orderNo: "RG-OTHER1", recipientName: "a", phone: "01012345678", zipCode: "04001", address1: "x", address2: "" });
     expect(checkOpenedRevgift({ requestedOrderNo: "RG-ABC123", openedPlaintext: opened })).toEqual({ ok: false, reason: "order_mismatch" });
-    expect(checkOpenedRevgift({ requestedOrderNo: "RG-OTHER1", openedPlaintext: opened })).toEqual({ ok: true });
+    expect(checkOpenedRevgift({ requestedOrderNo: "RG-OTHER1", openedPlaintext: opened })).toEqual({
+      ok: true,
+      label: { recipientName: "a", phone: "01012345678", zipCode: "04001", address1: "x", address2: "" },
+    });
     expect(checkOpenedRevgift({ requestedOrderNo: "RG-ABC123", openedPlaintext: "서울" })).toEqual({ ok: false, reason: "order_mismatch" });
   });
 });

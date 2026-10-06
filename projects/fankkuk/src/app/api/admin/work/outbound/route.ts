@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { createInvoiceDecryptor, readDecryptFile, type InvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
 import { devWaybillNo } from "@/features/office-outbound/model/dev-waybill";
-import { scanOutbound, type GiftLabelOutcome } from "@/features/office-outbound/model/scan-outbound";
+import { scanOutbound, type LabelOutcome } from "@/features/office-outbound/model/scan-outbound";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 
@@ -29,12 +29,12 @@ function invoiceDecryptor(): InvoiceDecryptor | null {
 export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async (body) => {
     const client = await createRequestSupabase();
-    const printGiftLabel = async (qr: string): Promise<GiftLabelOutcome> => {
+    const printLabel = async (qr: string): Promise<LabelOutcome> => {
       const run = invoiceDecryptor();
       if (!run) return { kind: "failed" };
       const { data } = await client.auth.getSession();
       return run({ qr, accessToken: data.session?.access_token ?? "" });
     };
-    return scanOutbound({ client, newWaybill: devWaybillNo, printGiftLabel }, body);
+    return scanOutbound({ client, newWaybill: devWaybillNo, printLabel }, body);
   });
 }

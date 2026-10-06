@@ -1,5 +1,5 @@
 import { MAX_DECRYPTS_PER_BOX, type AccessDenyReason } from "@/entities/address/model/access-log";
-import { readOpenedOrderNo } from "@/entities/revgift/model/sealed-address";
+import { readOpenedRevgiftAddress, type RevgiftAddressLabel } from "@/entities/revgift/model/sealed-address";
 
 // 역조공 몫의 주소를 여는 조건(reverse-gift INV-R7). 크리에이터 주소의 판정(authorize-decrypt)과 같은 자리에서 부른다 —
 // 승인 서명 대신 「팬이 받기를 하며 넣은 암호문」이 근거다.
@@ -41,7 +41,14 @@ export function authorizeRevgiftDecrypt(req: RevgiftDecryptRequest): RevgiftDecr
   return { ok: true, isReprint: req.decryptCount > 0 };
 }
 
-/** (b) 연 내용의 주문번호가 요청한 몫과 같아야 그 주소를 쓴다 — 다른 몫에서 옮겨 붙인 암호문을 막는다. */
-export function checkOpenedRevgift(input: { requestedOrderNo: string; openedPlaintext: string }): { ok: true } | { ok: false; reason: "order_mismatch" } {
-  return readOpenedOrderNo(input.openedPlaintext) === input.requestedOrderNo ? { ok: true } : { ok: false, reason: "order_mismatch" };
+/**
+ * (b) 연 내용의 주문번호가 요청한 몫과 같아야 그 주소를 쓴다 — 다른 몫에서 옮겨 붙인 암호문을 막는다.
+ * 같으면 라벨 다섯 칸만 돌려준다(주문번호·평문 전체는 넘기지 않는다). 꼴이 틀린 내용도 같은 거부다.
+ */
+export function checkOpenedRevgift(input: {
+  requestedOrderNo: string;
+  openedPlaintext: string;
+}): { ok: true; label: RevgiftAddressLabel } | { ok: false; reason: "order_mismatch" } {
+  const opened = readOpenedRevgiftAddress(input.openedPlaintext);
+  return opened && opened.orderNo === input.requestedOrderNo ? { ok: true, label: opened.label } : { ok: false, reason: "order_mismatch" };
 }
