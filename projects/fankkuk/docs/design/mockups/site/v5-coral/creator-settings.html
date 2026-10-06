@@ -1,0 +1,222 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v4 — 크리에이터 · 주소와 설정 (2026-10-02)
+  사용자 지시: 「심플, 세련됨, 귀여움으로」. 원본의 카드 4장을 버리고 구간마다 제목 + 내용만(선으로 나눔).
+  회색 판은 「받는 주소」 하나 — 거기에만 자물쇠 그림. 차단한 팬은 얼굴 아바타 줄 목록.
+  사실: 주소 내용은 화면에 보이지 않는다(등록됨 상태만, address-protection INV-P1) / 주소 바꾸기·차단 풀기는 카카오 서명(INV-P11, 브리프) /
+  아직 출력하지 않은 주문은 바뀐 주소로 나간다. 교체할 그림 자리는 data-asset 속성(목록: v4/_assets-creator.md).
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 주소와 설정</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="v5.css">
+  <style>
+    /* 크리에이터 공통 — 헤더 승인 요청 수 알약 (v4.css 의 .gift-badge 는 휴대폰 전용이라 여기서 따로) */
+    .req-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 8px; border-radius: 9999px; background: var(--surface-subtle); color: var(--ink); font-weight: 700; text-decoration: none; }
+    .req-pill:hover { background: var(--secondary-hover); }
+    .req-pill .glyph { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: var(--text-inverse); }
+    .btn-kakao { background: #FEE500; color: #191919; box-shadow: none; }
+    .btn-kakao:hover { background: #F3D900; }
+    .link-in { color: var(--brand); font-weight: 600; text-underline-offset: 4px; }
+    .set-grid { margin-top: 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(40px, 6vw, 96px); align-items: start; }
+    .col { display: grid; gap: clamp(48px, 5vw, 72px); }
+    .s-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .s-head h2 { font-size: 26px; letter-spacing: -.6px; }
+    .addr { display: flex; align-items: center; gap: 20px; padding: 28px; border-radius: var(--r-tile); background: var(--surface-subtle); }
+    .addr .ico { width: 72px; height: 72px; }
+    .addr-t { margin-bottom: 4px; font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
+    .mask { margin-block: 4px; letter-spacing: .2em; color: var(--sub); user-select: none; }
+    .note { margin-block: 16px 20px; }
+    .blist { border-top: 1px solid var(--border); }
+    .brow { display: flex; align-items: center; gap: 16px; padding-block: 16px; border-bottom: 1px solid var(--border); }
+    .brow .who { flex: 1; min-width: 0; display: grid; }
+    .kv { margin-top: 24px; }
+    .kv > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; padding-block: 14px; border-top: 1px solid var(--border); }
+    .kv dt { color: var(--sub); }
+    .kv dd { font-weight: 600; }
+    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; padding-block: 14px; border-top: 1px solid var(--border); }
+    .switch-row .txt { display: grid; }
+    .switch-row .txt strong { font-weight: 600; }
+    .switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 52px; height: 32px; margin: 0; border-radius: 9999px; background: var(--border-input); cursor: pointer; transition: background .15s; }
+    .switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
+    .switch:checked { background: var(--brand); }
+    .switch:checked::after { transform: translateX(20px); }
+    .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+    @media (min-width: 768px) {
+      #addr-sheet { align-items: center; }
+      #addr-sheet .sheet { max-width: 480px; border-radius: var(--r-panel); padding: 28px 28px 32px; }
+      #addr-sheet .sheet-grip { display: none; }
+    }
+    @media (max-width: 1023px) { .set-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 767px) {
+      .addr { padding: 20px; gap: 16px; }
+      .addr .ico { width: 56px; height: 56px; }
+      .kv > div { grid-template-columns: 1fr; gap: 2px; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.500 3.500 9.500 3.500 12 0" stroke="#333D39" stroke-width="2.600" stroke-linecap="round" fill="none"/><circle cx="12.500" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.500" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="20" ry="3" fill="#333D39" opacity=".10"/><path d="M36 7l23 8v19c0 14-10 24-23 30C23 58 13 48 13 34V15z" fill="#3DBE8B" stroke="#3DBE8B" stroke-width="4" stroke-linejoin="round"/><path d="M36 7l23 8v19c0 14-10 24-23 30z" fill="#2FA676"/><path d="M25 35l8 8 15-16" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19 19v11" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/></symbol>
+    <symbol id="i-log" viewBox="0 0 72 72"><ellipse cx="36" cy="68" rx="24" ry="2.500" fill="#333D39" opacity=".10"/><path d="M5 28Q36 2 67 28Q36 54 5 28z" fill="#fff" stroke="#4FA3F7" stroke-width="5" stroke-linejoin="round"/><circle cx="36" cy="28" r="12" fill="#3B82F6"/><circle cx="36" cy="28" r="5.500" fill="#1D3E8F"/><circle cx="40" cy="24" r="3" fill="#fff"/><path d="M46 49v-5a8 8 0 0 1 16 0v5" stroke="#8A96A3" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="42" y="47" width="24" height="19" rx="6" fill="#FFB020"/><path d="M42 60h24a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6z" fill="#E59400"/><circle cx="54" cy="55" r="3" fill="#9A5B00"/><rect x="53" y="56" width="2" height="5" rx="1" fill="#9A5B00"/></symbol>
+  </defs>
+</svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="creator-requests.html" aria-label="팬꾹 크리에이터 처음 화면"><svg width="32" height="32" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/>
+<path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/>
+<circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/>
+<path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/>
+<path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/>
+<path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+          <li><a href="creator-requests.html">승인 요청</a></li>
+          <li><a href="creator-log.html">열람 기록</a></li>
+          <li><a href="creator-settings.html" aria-current="page">주소와 설정</a></li>
+          <li><a href="../notices.html">공지사항</a></li>
+          <li><a href="../support.html">고객센터</a></li>
+        </ul></nav>
+      <div class="header-actions">
+        <a class="req-pill" href="creator-requests.html" aria-label="승인 대기 4건"><span class="glyph" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.400 4.800L14.500 12l2.100.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.400-4.800L9.500 12l-2.100-.2A6 6 0 0 1 5 7V2Z"/></svg></span>대기 4건</a>
+        <div class="user-menu">
+          <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown" aria-haspopup="true">
+            <span class="avatar" aria-hidden="true">하</span><span class="nick">하루</span>
+            <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" hidden>
+            <p class="who">하루님 · 크리에이터</p>
+            <a href="creator-settings.html">주소와 설정</a>
+            <hr>
+            <a href="landing.html">로그아웃</a>
+          </div>
+        </div>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="10.500" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.500" fill="currentColor"/></svg></button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="creator-requests.html">승인 요청 (대기 4건)</a>
+      <a href="creator-log.html">열람 기록</a>
+      <a href="creator-settings.html">주소와 설정</a>
+      <a href="../notices.html">공지사항</a>
+      <a href="../support.html">고객센터</a>
+      <a href="landing.html">로그아웃</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <div class="page-title">
+        <h1 class="page-h">주소와 설정</h1>
+        <p>선물을 받을 주소와 차단한 팬, 프로필, 알림을 한곳에서 관리해요.</p>
+      </div>
+
+      <div class="set-grid">
+        <div class="col">
+          <section aria-labelledby="addr-h">
+            <div class="s-head"><h2 id="addr-h">받는 주소</h2><span class="tag tag--success tag--brand">등록됨</span></div>
+            <div class="addr">
+              <img class="ico asset" src="../v4/img/icon-address-lock.png" alt="" aria-hidden="true" data-asset="icon-address-lock">
+              <div>
+                <p class="addr-t">주소가 안전하게 등록돼 있어요</p>
+                <p class="sub">브라우저에서 잠가 보냈어요. 저희 화면에는 보이지 않아요.</p>
+              </div>
+            </div>
+            <p class="sub note">아직 출력하지 않은 주문은 바뀐 주소로 나가요.</p>
+            <button class="btn btn--line" type="button" data-sheet-open="addr-sheet">주소 바꾸기</button>
+          </section>
+
+          <section id="blocked" aria-labelledby="block-h">
+            <div class="s-head"><h2 id="block-h">차단한 팬</h2><span class="tag">3명</span></div>
+            <ul class="blist">
+          <li class="brow"><svg class="face" style="--c:#FAD2BA" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg><div class="who"><strong>잠꾸러기</strong><span class="sub">2026.09.20 차단</span></div><button class="btn btn--soft btn--sm" type="button" aria-label="잠꾸러기님 차단 풀기">차단 풀기</button></li>
+          <li class="brow"><svg class="face" style="--c:#F7C8D4" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg><div class="who"><strong>라떼한잔</strong><span class="sub">2026.09.02 차단</span></div><button class="btn btn--soft btn--sm" type="button" aria-label="라떼한잔님 차단 풀기">차단 풀기</button></li>
+          <li class="brow"><svg class="face" style="--c:#CFE3FA" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg><div class="who"><strong>밤하늘</strong><span class="sub">2026.08.17 차단</span></div><button class="btn btn--soft btn--sm" type="button" aria-label="밤하늘님 차단 풀기">차단 풀기</button></li>
+            </ul>
+            <p class="sub note">차단을 풀 때도 카카오톡 인증서 서명이 필요해요.</p>
+          </section>
+        </div>
+
+        <div class="col">
+          <section aria-labelledby="prof-h">
+            <div class="s-head"><h2 id="prof-h">프로필</h2></div>
+            <div class="field">
+              <label for="pub-name">공개 이름</label>
+              <input class="input" id="pub-name" value="하루">
+              <p class="hint">팬에게 보이는 이름이에요.</p>
+            </div>
+            <dl class="kv">
+              <div><dt>방송 채널</dt><dd>하루의 놀이터</dd></div>
+              <div><dt>본인 확인</dt><dd><span class="tag tag--success tag--brand">확인 완료</span> <span class="sub">2026.09.02 방송 채널 인증</span></dd></div>
+            </dl>
+          <div class="switch-row"><label class="txt" for="sw-find"><strong>크리에이터 찾기에 보이기</strong><span class="sub">끄면 검색 결과에 나타나지 않아요.</span></label><input class="switch" type="checkbox" role="switch" id="sw-find" checked></div>
+            <button class="btn" type="button" style="margin-top:24px">프로필 저장</button>
+          </section>
+
+          <section aria-labelledby="alarm-h">
+            <div class="s-head"><h2 id="alarm-h">알림 받기</h2></div>
+          <div class="switch-row"><label class="txt" for="sw-a1"><strong>새 승인 요청</strong><span class="sub">팬이 선물을 등록하면 카카오톡으로 알려드려요.</span></label><input class="switch" type="checkbox" role="switch" id="sw-a1" checked></div>
+          <div class="switch-row"><label class="txt" for="sw-a2"><strong>자동 반려 하루 전</strong><span class="sub">7일이 다 되어 가는 요청을 알려드려요.</span></label><input class="switch" type="checkbox" role="switch" id="sw-a2" checked></div>
+          <div class="switch-row"><label class="txt" for="sw-a3"><strong>주소가 열릴 때</strong><span class="sub">송장을 출력해 주소가 열릴 때마다 알려드려요.</span></label><input class="switch" type="checkbox" role="switch" id="sw-a3" checked></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="page-end"></div>
+  </main>
+
+  <div class="sheet-root" id="addr-sheet" hidden>
+    <div class="sheet-scrim" data-sheet-close></div>
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="addr-title">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 id="addr-title">주소를 바꿀까요?</h2>
+        <button class="sheet-close" type="button" data-sheet-close aria-label="닫기"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="2.500" stroke-linecap="round"/></svg></button>
+      </div>
+      <p>주소를 바꾸려면 카카오톡 인증서 서명이 필요해요. 로그인만으로는 바꿀 수 없어요.</p>
+      <p class="sub" style="margin-top:8px">새 주소도 이 브라우저에서 잠가서 보내요. 아직 출력하지 않은 주문은 바뀐 주소로 나가요.</p>
+      <div class="sheet-btns">
+        <button class="btn btn--soft" type="button" data-sheet-close>돌아가기</button>
+        <button class="btn btn-kakao" type="button" data-sheet-close><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" data-asset="icon-kakao-bubble"><path fill="currentColor" d="M10 2C5.600 2 2 4.900 2 8.500c0 2.300 1.500 4.300 3.700 5.500l-.9 3.300 3.900-2.200c.4.100.8.100 1.300.1 4.400 0 8-2.900 8-6.700S14.400 2 10 2Z"/></svg>카카오톡으로 서명하기</button>
+      </div>
+    </section>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/>
+<path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/>
+<circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/>
+<path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/>
+<path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/>
+<path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="../support.html">고객센터</a>
+          <a href="../about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v4 — 크리에이터 · 주소 열람 기록 (2026-10-02)
+  사용자 지시: 「심플, 세련됨, 귀여움으로」. 원본의 통계 카드 4장·굵은 왼쪽 선 약속 문구를 버리고,
+  이번 달 숫자는 회색 판 하나 안에 나란히(그림은 열람 기록 아이콘 하나), 약속 문구는 제목 아래 굵은 글자 한 줄.
+  PC 는 표(선만), 휴대폰(767 이하)은 줄 목록. 예시 숫자는 표와 맞춘다: 승인 6건 = 주문 6개, 주소 열림 7번 = 첫 출력 6 + 재출력 1, 거부 1번.
+  사실: 한 주문 최대 3회, 출고 확정 뒤 안 열림(address-protection INV-P5), 요청자는 대표 계정(INV-P8).
+  교체할 그림 자리는 data-asset 속성(목록: v4/_assets-creator.md).
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 주소 열람 기록</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="v5.css">
+  <style>
+    /* 크리에이터 공통 — 헤더 승인 요청 수 알약 (v4.css 의 .gift-badge 는 휴대폰 전용이라 여기서 따로) */
+    .req-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 8px; border-radius: 9999px; background: var(--surface-subtle); color: var(--ink); font-weight: 700; text-decoration: none; }
+    .req-pill:hover { background: var(--secondary-hover); }
+    .req-pill .glyph { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: var(--text-inverse); }
+    .btn-kakao { background: #FEE500; color: #191919; box-shadow: none; }
+    .btn-kakao:hover { background: #F3D900; }
+    .link-in { color: var(--brand); font-weight: 600; text-underline-offset: 4px; }
+    .strong { color: var(--ink); font-weight: 700; }
+    .month { display: flex; align-items: center; gap: clamp(20px, 3vw, 40px); padding: clamp(24px, 3vw, 40px); border-radius: var(--r-tile); background: var(--surface-subtle); }
+    .month .ico { width: 96px; height: 96px; }
+    .month-body { flex: 1; min-width: 0; }
+    .month h2 { font-size: 22px; letter-spacing: -.3px; }
+    .nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+    .nums dt { color: var(--sub); font-weight: 600; }
+    .nums dd { font-size: clamp(32px, 3.4vw, 44px); line-height: 1.2; font-weight: 800; letter-spacing: -1.5px; font-variant-numeric: tabular-nums; }
+    .nums small { margin-left: 4px; font-size: 18px; font-weight: 700; letter-spacing: 0; color: var(--sub); }
+    .rules { margin-top: 16px; }
+    .log-table { width: 100%; border-collapse: collapse; }
+    .log-table th { padding: 12px 16px 12px 0; text-align: left; color: var(--sub); font-weight: 600; border-bottom: 1px solid var(--border); }
+    .log-table td { padding: 18px 16px 18px 0; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .log-table .nw { white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .log-list { display: none; border-top: 1px solid var(--border); margin-top: 8px; }
+    .lrow { display: grid; gap: 2px; padding-block: 18px; border-bottom: 1px solid var(--border); }
+    .lrow .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    @media (max-width: 1023px) { .nums { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 767px) {
+      .month .ico { display: none; }
+      .log-table { display: none; }
+      .log-list { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.500 3.500 9.500 3.500 12 0" stroke="#333D39" stroke-width="2.600" stroke-linecap="round" fill="none"/><circle cx="12.500" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.500" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="20" ry="3" fill="#333D39" opacity=".10"/><path d="M36 7l23 8v19c0 14-10 24-23 30C23 58 13 48 13 34V15z" fill="#3DBE8B" stroke="#3DBE8B" stroke-width="4" stroke-linejoin="round"/><path d="M36 7l23 8v19c0 14-10 24-23 30z" fill="#2FA676"/><path d="M25 35l8 8 15-16" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19 19v11" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/></symbol>
+    <symbol id="i-log" viewBox="0 0 72 72"><ellipse cx="36" cy="68" rx="24" ry="2.500" fill="#333D39" opacity=".10"/><path d="M5 28Q36 2 67 28Q36 54 5 28z" fill="#fff" stroke="#4FA3F7" stroke-width="5" stroke-linejoin="round"/><circle cx="36" cy="28" r="12" fill="#3B82F6"/><circle cx="36" cy="28" r="5.500" fill="#1D3E8F"/><circle cx="40" cy="24" r="3" fill="#fff"/><path d="M46 49v-5a8 8 0 0 1 16 0v5" stroke="#8A96A3" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="42" y="47" width="24" height="19" rx="6" fill="#FFB020"/><path d="M42 60h24a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6z" fill="#E59400"/><circle cx="54" cy="55" r="3" fill="#9A5B00"/><rect x="53" y="56" width="2" height="5" rx="1" fill="#9A5B00"/></symbol>
+  </defs>
+</svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="creator-requests.html" aria-label="팬꾹 크리에이터 처음 화면"><svg width="32" height="32" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/>
+<path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/>
+<circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/>
+<path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/>
+<path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/>
+<path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+          <li><a href="creator-requests.html">승인 요청</a></li>
+          <li><a href="creator-log.html" aria-current="page">열람 기록</a></li>
+          <li><a href="creator-settings.html">주소와 설정</a></li>
+          <li><a href="../notices.html">공지사항</a></li>
+          <li><a href="../support.html">고객센터</a></li>
+        </ul></nav>
+      <div class="header-actions">
+        <a class="req-pill" href="creator-requests.html" aria-label="승인 대기 4건"><span class="glyph" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.400 4.800L14.500 12l2.100.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.400-4.800L9.500 12l-2.100-.2A6 6 0 0 1 5 7V2Z"/></svg></span>대기 4건</a>
+        <div class="user-menu">
+          <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown" aria-haspopup="true">
+            <span class="avatar" aria-hidden="true">하</span><span class="nick">하루</span>
+            <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" hidden>
+            <p class="who">하루님 · 크리에이터</p>
+            <a href="creator-settings.html">주소와 설정</a>
+            <hr>
+            <a href="landing.html">로그아웃</a>
+          </div>
+        </div>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="10.500" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.500" fill="currentColor"/></svg></button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="creator-requests.html">승인 요청 (대기 4건)</a>
+      <a href="creator-log.html">열람 기록</a>
+      <a href="creator-settings.html">주소와 설정</a>
+      <a href="../notices.html">공지사항</a>
+      <a href="../support.html">고객센터</a>
+      <a href="landing.html">로그아웃</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <div class="page-title">
+        <h1 class="page-h">주소 열람 기록</h1>
+        <p><strong class="strong">승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.</p>
+      </div>
+
+      <section class="month" aria-labelledby="sum-h">
+        <img class="ico asset" src="../v4/img/icon-log.png" alt="" aria-hidden="true" data-asset="icon-log">
+        <div class="month-body">
+          <h2 id="sum-h">이번 달 (2026년 9월)</h2>
+          <dl class="nums">
+            <div><dt>승인</dt><dd>6<small>건</small></dd></div>
+            <div><dt>주소 열림</dt><dd>7<small>번</small></dd></div>
+            <div><dt>재출력</dt><dd>1<small>번</small></dd></div>
+            <div><dt>거부</dt><dd>1<small>번</small></dd></div>
+          </dl>
+        </div>
+      </section>
+      <p class="sub rules">한 주문의 주소는 첫 출력과 재출력을 합쳐 최대 3번까지 열려요. 출고가 확정되면 남은 횟수가 있어도 더는 열리지 않아요.</p>
+
+      <section class="block" aria-label="열람 기록">
+        <table class="log-table">
+          <caption class="sr-only">주소 열람 기록. 최근 순</caption>
+          <thead><tr><th scope="col">시각</th><th scope="col">주문번호</th><th scope="col">누가</th><th scope="col">결과</th><th scope="col">비고</th></tr></thead>
+          <tbody>
+            <tr><td class="nw">2026.09.30 14:32</td><td class="nw">FC-4T7NX</td><td>대표 계정</td><td><span class="tag tag--info tag--brand">열림</span></td><td>첫 출력</td></tr>
+            <tr><td class="nw">2026.09.29 16:08</td><td class="nw">FC-9B2KR</td><td>대표 계정</td><td><span class="tag tag--info tag--brand">열림</span></td><td><span class="tag tag--info">재출력</span> 2번째 출력</td></tr>
+            <tr><td class="nw">2026.09.29 15:41</td><td class="nw">FC-9B2KR</td><td>대표 계정</td><td><span class="tag tag--info tag--brand">열림</span></td><td>첫 출력</td></tr>
+            <tr><td class="nw">2026.09.28 10:05</td><td class="nw">FC-6H3LM</td><td>대표 계정</td><td><span class="tag tag--info tag--brand">열림</span></td><td>첫 출력</td></tr>
+            <tr><td class="nw">2026.09.26 18:20</td><td class="nw">FC-3W8DY</td><td>대표 계정</td><td><span class="tag tag--danger">거부</span></td><td>출고 확정 뒤라 열리지 않았어요</td></tr>
+            <tr><td class="nw">2026.09.24 13:12</td><td class="nw">FC-3W8DY</td><td>대표 계정</td><td><span class="tag tag--info tag--brand">열림</span></td><td>첫 출력</td></tr>
+            <tr><td class="nw">2026.09.19 11:47</td><td class="nw">FC-8Q5ZE</td><td>대표 계정</td><td><span class="tag tag--info tag--brand">열림</span></td><td>첫 출력</td></tr>
+            <tr><td class="nw">2026.09.12 17:03</td><td class="nw">FC-1R6VA</td><td>대표 계정</td><td><span class="tag tag--info tag--brand">열림</span></td><td>첫 출력</td></tr>
+          </tbody>
+        </table>
+        <ul class="log-list" aria-label="주소 열람 기록">
+          <li class="lrow"><div class="top"><strong>2026.09.30 14:32</strong><span class="tag tag--info tag--brand">열림</span></div><p class="sub">FC-4T7NX · 대표 계정</p><p>첫 출력</p></li>
+          <li class="lrow"><div class="top"><strong>2026.09.29 16:08</strong><span class="tag tag--info tag--brand">열림</span></div><p class="sub">FC-9B2KR · 대표 계정</p><p><span class="tag tag--info">재출력</span> 2번째 출력</p></li>
+          <li class="lrow"><div class="top"><strong>2026.09.29 15:41</strong><span class="tag tag--info tag--brand">열림</span></div><p class="sub">FC-9B2KR · 대표 계정</p><p>첫 출력</p></li>
+          <li class="lrow"><div class="top"><strong>2026.09.28 10:05</strong><span class="tag tag--info tag--brand">열림</span></div><p class="sub">FC-6H3LM · 대표 계정</p><p>첫 출력</p></li>
+          <li class="lrow"><div class="top"><strong>2026.09.26 18:20</strong><span class="tag tag--danger">거부</span></div><p class="sub">FC-3W8DY · 대표 계정</p><p>출고 확정 뒤라 열리지 않았어요</p></li>
+          <li class="lrow"><div class="top"><strong>2026.09.24 13:12</strong><span class="tag tag--info tag--brand">열림</span></div><p class="sub">FC-3W8DY · 대표 계정</p><p>첫 출력</p></li>
+          <li class="lrow"><div class="top"><strong>2026.09.19 11:47</strong><span class="tag tag--info tag--brand">열림</span></div><p class="sub">FC-8Q5ZE · 대표 계정</p><p>첫 출력</p></li>
+          <li class="lrow"><div class="top"><strong>2026.09.12 17:03</strong><span class="tag tag--info tag--brand">열림</span></div><p class="sub">FC-1R6VA · 대표 계정</p><p>첫 출력</p></li>
+        </ul>
+      </section>
+    </div>
+    <div class="page-end"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/>
+<path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/>
+<circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/>
+<path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/>
+<path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/>
+<path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="../support.html">고객센터</a>
+          <a href="../about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+
+</body>
+</html>
