@@ -197,3 +197,7 @@ select set_config('fankkuk.approving', '', false);
 -- 가짜 서명 허용 (approval-signature INV-S11, 마이그레이션 20261005000016). 이 파일은 로컬 db reset 에서만 돈다 —
 -- 운영 DB 에는 이 줄이 없어 가짜 서명 승인이 거부된다.
 insert into public.local_dev_flags (flag) values ('allow_fake_signatures') on conflict do nothing;
+
+-- 가짜 발송 허용 (notifications INV-N11, 마이그레이션 20261006000009). 로컬에서 알림을 가짜 창구로 「보냄」 표시할 때만 쓴다 —
+-- 운영 DB 에는 이 줄이 없어 가짜 표시가 거부된다.
+insert into public.local_dev_flags (flag) values ('allow_fake_notifications') on conflict do nothing;
