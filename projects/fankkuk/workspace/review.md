@@ -1,9 +1,28 @@
 ---
 project: fankkuk
 status: passed
-basis: 57cb9d760e27
+basis: 410730411be0
 reviewers: [security-reviewer, code-reviewer, test-auditor, ui-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-07, 계정 보안 화면 확인 · 결제 대기 닫기 · 역조공 주소 안내 · 역조공 송장 출력)
+
+이번 사인오프가 덮는 변경: 커밋 2c430ae 뒤의 전부 — 번호 바꾸기 화면(비밀번호 오타 뒤 재인증 요구)·이메일 확인 문구(b53d019),
+24시간 지난 결제 대기 닫기 M15·R15(f4f4b5a, 마이그레이션 0020), 보낸 역조공 사무실 주소 안내 R14(8a54c4e, 0021),
+역조공 송장 출력 R7·R13(def777b, 0022 · manual/0014 사용자 적용) 과 리뷰 반영.
+
+닿은 표면: 개인정보(팬 주소 복호화 — 대표만·몫마다 3번·봉인 속 주문번호 대조·평문이 기록/응답에 안 남음) · 권한(복호화 역할만 부르는 함수,
+보낸 역조공은 보낸 사람 것만) · 동시성(결제 확정 시작과 닫기, 같은 몫 출력 둘, 돌려주기와 출력의 잠금 순서) · 결제(닫힌 결제는 승인 API 안 부름).
+
+리뷰어 넷 — security 고칠 것 0·권고 1 · code 고칠 것 0·권고 6 · test-auditor 빈 갈래 7 · ui 고칠 것 0·권고 2.
+반영: 빈 갈래 6 보강, 권고 5. 미룬 것 3(BACKLOG — 임시 출력 함수 office_print_label 닫기, 토큰 확인 두 번, 돌려주기·출력 동시 시험).
+
+실행 근거:
+- `npx vitest run` → 1068 통과 · `npx tsc --noEmit` 오류 0 · spec-coverage 통과
+- 통합(하나씩): revgift-print 24 · pending-close 11 · revgift-office-address 6 · revgift 34 · revgift-close 16 · office-workflow 54 · invoice-print 25 · invoice-release 15
+- 변이: 0020 8·0021 5·0022 12·출력 함수 8·확정 흐름 2·번호 바꾸기 3 — 모두 잡힘(0022 첫 실행은 create table 에서 멈춰 무효, 함수만 떼어 다시)
+- 화면: 새 팬 계정 가입→이메일 확인→재설정 메일→새 비밀번호→로그인·번호 바꾸기·비밀번호 바꾸기·돌아갈 주소(//evil 은 메인), 직원 자동 처리 현황에서 FC-TVT4J 닫기,
+  하루 보낸 역조공 주소 블록(기다리는 묶음만). 역조공 송장 출력은 화면으로 눌러 보지 않았다(통합 시험이 실제 출력 함수·DB 로 돈다).
 
 # 리뷰 사인오프 — fankkuk (2026-10-06, 알림 — 카카오 알림톡과 이메일 대체)
 
