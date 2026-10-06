@@ -8,7 +8,7 @@ function session(who: { operator: boolean | null }) {
   return { rpc: async (fn: string) => (fn === "is_operator" ? { data: who.operator, error: null } : { data: false, error: null }) } as never;
 }
 
-const COUNTS = { sent: 2, skipped: 1, retrying: 0, failed: 0, unfinished: 0, staleResolved: 0 };
+const COUNTS = { sent: 2, skipped: 1, retrying: 0, failed: 0, unfinished: 0, staleResolved: 0, staleUnchecked: 0 };
 
 function dispatcher(result: DispatchResult) {
   const calls: number[] = [];
@@ -39,11 +39,13 @@ describe("알림 지금 보내기 (운영자)", () => {
   });
 
   it("INV-N11: 설정 오류·DB 오류는 500 과 사람 말 — 설정 값이나 오류 문장은 응답에 넣지 않는다", async () => {
-    const config = await runDispatch(session({ operator: true }), {}, dispatcher({ ok: false, reason: "config" }).dispatch);
+    const config = await runDispatch(session({ operator: true }), {}, dispatcher({ ok: false, reason: "config", counts: COUNTS }).dispatch);
     expect(config.status).toBe(500);
     expect(config.body.message).toMatch(/설정/);
-    const db = await runDispatch(session({ operator: true }), {}, dispatcher({ ok: false, reason: "db" }).dispatch);
+    const db = await runDispatch(session({ operator: true }), {}, dispatcher({ ok: false, reason: "db", counts: COUNTS }).dispatch);
     expect(db.status).toBe(500);
     expect(db.body.message).not.toMatch(/설정/);
+    // 멈추기 전까지 보낸 건수는 같이 준다
+    expect(db.body.counts).toEqual(COUNTS);
   });
 });

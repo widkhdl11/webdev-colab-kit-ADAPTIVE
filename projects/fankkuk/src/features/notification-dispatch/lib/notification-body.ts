@@ -44,7 +44,8 @@ const FAN_STEP = {
 
 type Draft = { subject: string; lines: string[]; buttonLabel: string; path: string; must: boolean };
 
-function siteOrigin(appOrigin: string): string {
+/** 알림 링크에 쓸 사이트 주소 — 경로 없는 http(s) 주소만(INV-N9). 아니면 던진다. */
+export function siteOrigin(appOrigin: string): string {
   let url: URL;
   try {
     url = new URL(appOrigin);
@@ -102,4 +103,9 @@ export function buildNotificationBody(input: NotificationBodyInput): Notificatio
     buttonLabel: d.buttonLabel,
     link,
   };
+}
+
+/** 받는 사람별 경로가 정해진 종류인가 — 배송중·수령은 택배사 연결 때 정한다(INV-N12) */
+export function kindHasPath(kind: NotificationKind): boolean {
+  return kind !== "in_transit" && kind !== "delivered";
 }

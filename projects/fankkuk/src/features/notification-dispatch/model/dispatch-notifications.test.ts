@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { ChannelError, type ChannelMessage, type NotificationChannel, type NotificationChannels } from "@/shared/api/notification-channel/channels";
-import { dispatchNotifications, type DispatchDeps } from "./dispatch-notifications";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ChannelError, type ChannelMessage, type NotificationChannel, type NotificationChannels } from "@/features/notification-dispatch/api/channels";
+import { dispatchNotifications, TIME_BUDGET_MS, type DispatchDeps } from "./dispatch-notifications";
 
 // 보내는 일꾼 (notifications INV-N5·N6·N7·N10). DB 함수(꺼내기·끝내기·멈춘 줄 정리)가 줄의 상태를 지키고,
 // 일꾼은 꺼낸 줄마다 연락처를 읽고 → 본문을 만들고 → 통로로 보내고 → 결과를 끝내기로 남긴다.
@@ -109,7 +109,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(email.sent[0]!.to).toBe("byeolbit@example.com");
     expect(email.sent[0]!.outboxId).toBe("row-1");
     expect(finishes(calls)).toEqual([{ p_id: "row-1", p_outcome: "sent", p_provider_message_id: "prov-1", p_error_code: null, p_fake: false }]);
-    expect(result).toEqual({ ok: true, counts: { sent: 1, skipped: 0, retrying: 0, failed: 0, unfinished: 0, staleResolved: 0 } });
+    expect(result).toEqual({ ok: true, counts: { sent: 1, skipped: 0, retrying: 0, failed: 0, unfinished: 0, staleResolved: 0, staleUnchecked: 0 } });
   });
 
   it("INV-N6 (S6·S6b): 연락처가 빈 값(칸이 꺼짐·확인된 이메일 없음)이면 보내지 않고 건너뜀으로 끝낸다", async () => {
@@ -168,7 +168,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(finishes(calls)).toEqual([{ p_id: "row-1", p_outcome: "error", p_provider_message_id: null, p_error_code: "template_missing", p_fake: false }]);
   });
 
-  it("INV-N1: 본문을 만들 수 없는 줄(배송중·수령 — 경로 미정, 꼴이 틀린 주문번호)은 보내지 않고 오류로 끝낸다", async () => {
+  it("INV-N1: 본문을 만들 수 없는 줄(배송중·수령 — 경로 미정, 꼴이 틀린 주문번호)은 보내지 않고 건너뜀 — 다시 해도 결과가 같다", async () => {
     const email = channel();
     const { admin, calls } = fakeAdmin({
       rows: [{ ...ROW, id: "t", kind: "in_transit" }, { ...ROW, id: "bad", order_no: "../admin" }],
@@ -176,7 +176,9 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     });
     await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(email.sent).toHaveLength(0);
-    expect(finishes(calls).map((a) => (a as { p_error_code: string }).p_error_code)).toEqual(["body_unavailable", "body_unavailable"]);
+    expect(finishes(calls).map((a) => { const f = a as { p_outcome: string; p_error_code: string }; return `${f.p_outcome}:${f.p_error_code}`; })).toEqual(["skipped:kind_not_ready", "skipped:body_unavailable"]);
+    // 경로 없는 종류는 연락처도 읽지 않는다
+    expect(calls.filter((c) => c.fn === "notification_contact").map((c) => c.args)).toEqual([{ p_outbox_id: "bad" }]);
   });
 
   it("INV-N1·N8: 승인 요청 줄은 자동 반려 예정 시각을 본문에 넣고, 꺼낸 값 말고는 본문에 쓰지 않는다", async () => {
@@ -259,15 +261,97 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
         throw new Error("카카오 템플릿 코드가 설정돼 있는데 알림톡 대행사 설정(KAKAO_ALIMTALK_*)이 없다");
       },
     });
-    expect(result).toEqual({ ok: false, reason: "config" });
+    expect(result).toMatchObject({ ok: false, reason: "config" });
     expect(calls.some((c) => c.fn === "notification_claim")).toBe(false);
   });
 
   it("INV-N5: DB 함수가 실패하면 거기서 멈추고 실패를 돌려준다", async () => {
     const { admin, calls } = fakeAdmin({ rows: [ROW], fail: { notification_claim: { code: "42501" } } });
     const email = channel();
-    expect(await dispatchNotifications(deps(admin, { email, kakao: null }))).toEqual({ ok: false, reason: "db" });
+    expect(await dispatchNotifications(deps(admin, { email, kakao: null }))).toMatchObject({ ok: false, reason: "db" });
     expect(email.sent).toHaveLength(0);
     expect(calls.some((c) => c.fn === "notification_contact")).toBe(false);
   });
+
+  it("INV-N6·N5 (실패경로): 연락처 함수가 실패하면 건너뛰지 않고 오류로 끝낸다 — 빈 값(보낼 곳 없음)과 구분해 다시 보낼 차례로", async () => {
+    const email = channel();
+    const { admin, calls } = fakeAdmin({ rows: [{ ...ROW, kind: "approval_request", auto_reject_at: "2026-10-08T01:00:00Z", must_deliver: true }], fail: { notification_contact: { code: "57014" } } });
+    const result = await dispatchNotifications(deps(admin, { email, kakao: null }));
+    expect(email.sent).toHaveLength(0);
+    expect(finishes(calls)).toEqual([{ p_id: "row-1", p_outcome: "error", p_provider_message_id: null, p_error_code: "contact_failed", p_fake: false }]);
+    expect(result.ok && result.counts.retrying).toBe(1);
+  });
+
+  it("INV-N9·N11: 사이트 주소 설정이 틀렸으면 줄을 꺼내기 전에 설정 오류로 멈춘다", async () => {
+    for (const appOrigin of ["https://fankkuk.example.com/evil", "ftp://fankkuk.example.com", "fankkuk"]) {
+      const { admin, calls } = fakeAdmin({ rows: [ROW], contacts: { "row-1": "a@example.com" } });
+      const result = await dispatchNotifications({ ...deps(admin, { email: channel(), kakao: null }), appOrigin });
+      expect(result).toMatchObject({ ok: false, reason: "config" });
+      expect(calls).toEqual([]);
+    }
+  });
+
+  it("INV-N5: 30초가 지나면 새 묶음을 꺼내지 않는다 — 이번에 실패한 줄을 같은 호출에서 다시 꺼내지 않는다", async () => {
+    let t = 0;
+    let claims = 0;
+    const rows = (n: number) => [{ ...ROW, id: `r${n}` }];
+    const { admin } = fakeAdmin({});
+    const base = admin.rpc.bind(admin);
+    (admin as { rpc: unknown }).rpc = async (fn: string, args: unknown) => {
+      if (fn === "notification_claim") {
+        claims += 1;
+        t += TIME_BUDGET_MS / 2; // 묶음 하나에 15초가 걸린다고 치고
+        return { data: rows(claims), error: null };
+      }
+      if (fn === "notification_contact") return { data: "a@example.com", error: null };
+      return base(fn as never, args as never);
+    };
+    await dispatchNotifications({ ...deps(admin, { email: channel(), kakao: null }), now: () => t });
+    expect(claims).toBe(2);
+  });
+
+  it("INV-N5: 두 번째 묶음에서 DB 가 실패해도 첫 묶음에서 보낸 건수는 돌려준다", async () => {
+    let claims = 0;
+    const { admin } = fakeAdmin({ contacts: { "row-1": "a@example.com" } });
+    const base = admin.rpc.bind(admin);
+    (admin as { rpc: unknown }).rpc = async (fn: string, args: unknown) => {
+      if (fn === "notification_claim") {
+        claims += 1;
+        return claims === 1 ? { data: [ROW], error: null } : { data: null, error: { code: "08006" } };
+      }
+      return base(fn as never, args as never);
+    };
+    const result = await dispatchNotifications(deps(admin, { email: channel(), kakao: null }));
+    expect(result).toMatchObject({ ok: false, reason: "db", counts: { sent: 1 } });
+  });
+
+  it("INV-N5: 조회할 카카오 통로가 없는 멈춘 줄은 건드리지 않고 「확인 못 함」으로 센다", async () => {
+    const { admin, calls } = fakeAdmin({ stale: [{ id: "x", channel: "kakao", provider_message_id: null }] });
+    const result = await dispatchNotifications(deps(admin, { email: channel(), kakao: null }));
+    expect(calls.some((c) => c.fn === "notification_resolve_stale")).toBe(false);
+    expect(result.ok && result.counts.staleUnchecked).toBe(1);
+  });
 });
+
+describe("INV-N10: 일꾼은 아무것도 찍지 않는다", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("INV-N10 (S10): 보냄·실패·연락처 오류를 거쳐도 console 에 한 줄도 남기지 않는다", async () => {
+    const spies = (["log", "info", "warn", "error", "debug"] as const).map((m) => vi.spyOn(console, m).mockImplementation(() => {}));
+    const email: NotificationChannel = {
+      fake: false,
+      send: async (m) => {
+        if (m.outboxId === "boom") throw new Error("550 byeolbit@example.com 01012345678");
+        return { providerMessageId: null };
+      },
+      lookup: null,
+    };
+    const { admin } = fakeAdmin({
+      rows: [ROW, { ...ROW, id: "boom" }, { ...ROW, id: "nocontact" }],
+      contacts: { "row-1": "byeolbit@example.com", boom: "byeolbit@example.com" },
+    });
+    await dispatchNotifications(deps(admin, { email, kakao: null }));
+    for (const s of spies) expect(s).not.toHaveBeenCalled();
+  });
+});
+

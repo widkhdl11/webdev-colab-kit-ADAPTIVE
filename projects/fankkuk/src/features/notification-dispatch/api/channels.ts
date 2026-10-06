@@ -1,5 +1,5 @@
 import { isProduction, type DeployEnv } from "@/shared/lib/env/is-production";
-import type { SendMail } from "../mail/smtp";
+import type { SendMail } from "@/shared/api/mail/smtp";
 
 // 알림 발송 통로 (notifications INV-N7·N10·N11). 통로를 고르는 곳은 이 함수 하나다.
 // 카카오 알림톡 대행사는 아직 정하지 않았다(스펙 비범위 — 사람이 고른다). 그래서 지금 카카오 통로는 로컬의 가짜뿐이고,
@@ -38,9 +38,11 @@ export class ChannelError extends Error {
 /** 로컬 가짜 카카오가 보내는 메일 주소. 받는 사람 번호는 메일 주소로도, 본문으로도 쓰지 않는다. */
 export const FAKE_KAKAO_INBOX = "kakao-fake@fankkuk.test";
 
-function emailChannel(sendMail: SendMail): NotificationChannel {
+// fake: 운영이 아닌 서버가 보낸 메일은 가짜로 기록한다 — 개발 기본값은 로컬 메일 확인 화면이라, 로컬 서버가 운영 DB 키로 떠 있으면
+// 운영 줄이 실제로는 아무에게도 안 갔는데 「보냄」이 된다. 가짜 표시는 운영 DB 가 거부하므로 그 줄은 보냄이 되지 않는다(INV-N11).
+function emailChannel(sendMail: SendMail, fake: boolean): NotificationChannel {
   return {
-    fake: false,
+    fake,
     async send({ to, subject, text }) {
       try {
         await sendMail({ to, subject, text });
@@ -71,7 +73,7 @@ function fakeKakaoChannel(sendMail: SendMail): NotificationChannel {
 }
 
 export function chooseNotificationChannels(env: DeployEnv, deps: { sendMail: SendMail; hasKakaoTemplates: boolean }): NotificationChannels {
-  const email = emailChannel(deps.sendMail);
+  const email = emailChannel(deps.sendMail, !isProduction(env));
   if (isProduction(env)) {
     // 실제 알림톡 대행사가 붙으면 여기서 그 통로를 돌려준다
     if (deps.hasKakaoTemplates) throw new Error("카카오 템플릿 코드가 설정돼 있는데 알림톡 대행사 설정(KAKAO_ALIMTALK_*)이 없다");

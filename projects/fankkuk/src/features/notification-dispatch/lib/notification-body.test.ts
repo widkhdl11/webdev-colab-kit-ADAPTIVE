@@ -76,13 +76,13 @@ describe("알림 링크 (INV-N9)", () => {
   });
 
   it("INV-N9 (실패경로): 주문번호 꼴이 아닌 값은 경로에 넣지 않는다 — 경로를 바꾸는 글자로 다른 화면을 가리키게 할 수 없다", () => {
-    for (const orderNo of ["../admin", "FC-1?x=1", "FC-1#a", "fc 1", ""]) {
+    for (const orderNo of ["../admin", "FC-1?x=1", "FC-1#a", "fc 1", "", `FC-${"A".repeat(38)}`]) {
       expect(() => buildNotificationBody({ ...inputFor("arrived"), orderNo })).toThrow(/주문번호/);
     }
   });
 
   it("INV-N9 (실패경로): 사이트 주소가 경로 없는 주소가 아니면 만들지 않는다", () => {
-    for (const appOrigin of ["https://fankkuk.example.com/evil", "fankkuk", "javascript:alert(1)"]) {
+    for (const appOrigin of ["https://fankkuk.example.com/evil", "fankkuk", "javascript:alert(1)", "ftp://fankkuk.example.com"]) {
       expect(() => buildNotificationBody({ ...inputFor("arrived"), appOrigin })).toThrow(/사이트 주소/);
     }
   });

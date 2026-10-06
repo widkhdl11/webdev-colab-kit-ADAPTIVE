@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { OutgoingMail } from "../mail/smtp";
+import type { OutgoingMail } from "@/shared/api/mail/smtp";
 import { ChannelError, chooseNotificationChannels } from "./channels";
 
 // 알림 발송 통로 고르기 (notifications INV-N7·N10·N11). 고르는 곳은 이 함수 하나다.
@@ -16,7 +16,8 @@ describe("알림 발송 통로 고르기 (INV-N11)", () => {
     const box = mailbox();
     const ch = chooseNotificationChannels({ NODE_ENV: "development" }, { sendMail: box.sendMail, hasKakaoTemplates: true });
     expect(ch.kakao?.fake).toBe(true);
-    expect(ch.email.fake).toBe(false);
+    // 운영이 아닌 서버의 메일도 가짜로 남는다 — 로컬 서버가 운영 DB 키로 떠 있어도 운영 DB 가 그 표시를 거부한다(INV-N11)
+    expect(ch.email.fake).toBe(true);
     await ch.kakao!.send({ ...MESSAGE, to: "01012345678", templateCode: "TPL_ARRIVED_1" });
     expect(box.sent).toHaveLength(1);
     expect(box.sent[0]!.subject).toContain("카카오 알림톡 대신");
@@ -40,6 +41,13 @@ describe("알림 발송 통로 고르기 (INV-N11)", () => {
     const env = { NODE_ENV: "production", FAKE_NOTIFICATIONS: "1", NOTIFICATION_FAKE: "true", KAKAO_FAKE: "1" };
     const ch = chooseNotificationChannels(env, { sendMail: mailbox().sendMail, hasKakaoTemplates: false });
     expect(ch.kakao).toBeNull();
+  });
+
+  it("INV-N3·N7: 메일 통로는 받은 주소 하나로 제목·본문 그대로 보낸다", async () => {
+    const box = mailbox();
+    const ch = chooseNotificationChannels({ NODE_ENV: "production" }, { sendMail: box.sendMail, hasKakaoTemplates: false });
+    expect(await ch.email.send(MESSAGE)).toEqual({ providerMessageId: null });
+    expect(box.sent).toEqual([{ to: "haru@example.com", subject: "[팬꾹] 제목", text: "본문" }]);
   });
 
   it("INV-N7: 템플릿 코드 없이 카카오로 보내려 하면 보내지 않고 오류 코드", async () => {

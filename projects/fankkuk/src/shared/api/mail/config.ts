@@ -2,6 +2,8 @@
 // 개발에서는 값이 없으면 로컬 Supabase 의 메일 확인 화면(Mailpit, config.toml [local_smtp])으로 보낸다.
 // 운영에서는 기본값을 쓰지 않는다 — 빠진 값이 있으면 시작하지 않는다. 값은 오류 메시지에 넣지 않는다. 이름만.
 
+import { isProduction } from "@/shared/lib/env/is-production";
+
 type EnvLike = Record<string, string | undefined>;
 
 export type MailConfig = {
@@ -21,7 +23,7 @@ const DEV_DEFAULTS = {
 } as const;
 
 export function readMailConfig(env: EnvLike): MailConfig {
-  const production = env.NODE_ENV === "production";
+  const production = isProduction(env);
   const pick = (name: keyof typeof DEV_DEFAULTS): string => {
     const value = env[name] ?? (production ? undefined : DEV_DEFAULTS[name]);
     if (!value) throw new Error(`${name} 이 없다`);

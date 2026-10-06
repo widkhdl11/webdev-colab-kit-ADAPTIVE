@@ -28,6 +28,10 @@ describe("메일 설정 읽기", () => {
     ).toThrow(/https/);
   });
 
+  it("운영 판정은 앱 전체와 같다 — VERCEL_ENV 만 운영이어도 기본값을 쓰지 않는다", () => {
+    expect(() => readMailConfig({ VERCEL_ENV: "production" })).toThrow(/이 없다/);
+  });
+
   it("포트가 숫자가 아니면 시작하지 않는다", () => {
     expect(() => readMailConfig({ SMTP_PORT: "abc" })).toThrow(/SMTP_PORT/);
   });

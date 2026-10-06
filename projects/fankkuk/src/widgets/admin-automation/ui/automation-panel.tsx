@@ -5,7 +5,7 @@ import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 
 // 관리자 「자동 처리 현황」 (office-workflow INV-W6, 시안 admin/automation.html).
-// 세 묶음: 7일 미승인 팬 선물 반려 · 역조공 받기 기한 · 차액 미납 반송. 줄마다 「지금 돌리기」(그 주문만, 확인 창).
+// 네 묶음: 알림 지금 보내기(notifications INV-N5) · 7일 미승인 팬 선물 반려 · 역조공 받기 기한 · 차액 미납 반송. 줄마다 「지금 돌리기」(그 주문만, 확인 창).
 // 기한은 서버 시각 기준 168시간(INV-W6). now 는 서버가 그린 시각.
 
 const SECTIONS: readonly { category: ExpiryCategory; title: string; hint: string; sender: string; receiver: string; after: string }[] = [

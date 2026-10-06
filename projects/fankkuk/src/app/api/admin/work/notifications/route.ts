@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
-import { dispatchNotifications } from "@/features/notification-dispatch/model/dispatch-notifications";
+import { dispatchNotifications, emptyCounts } from "@/features/notification-dispatch/model/dispatch-notifications";
 import { runDispatch } from "@/features/notification-dispatch/model/run-dispatch";
 import { readMailConfig } from "@/shared/api/mail/config";
 import { createSmtpSender } from "@/shared/api/mail/smtp";
-import { chooseNotificationChannels } from "@/shared/api/notification-channel/channels";
+import { chooseNotificationChannels } from "@/features/notification-dispatch/api/channels";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       try {
         mail = readMailConfig(process.env);
       } catch {
-        return { ok: false, reason: "config" };
+        return { ok: false, reason: "config", counts: emptyCounts() };
       }
       const sendMail = createSmtpSender(mail);
       return dispatchNotifications({

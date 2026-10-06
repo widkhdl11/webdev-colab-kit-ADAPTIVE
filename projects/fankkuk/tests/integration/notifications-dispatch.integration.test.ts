@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { dispatchNotifications, type DispatchDeps } from "@/features/notification-dispatch/model/dispatch-notifications";
-import type { ChannelMessage, NotificationChannel } from "@/shared/api/notification-channel/channels";
-import { adminClient, deleteTestOrders, psql } from "./helpers";
-import { approve, deleteTestUnmatched, paidGift } from "./office-helpers";
+import type { ChannelMessage, NotificationChannel } from "@/features/notification-dispatch/api/channels";
+import { adminClient, deleteTestOrders, psql, signedInClient } from "./helpers";
+import { approve, deleteTestUnmatched, fanSetsWaybill, paidGift, receiveAndLabel, waybill } from "./office-helpers";
 
 // 보내는 일꾼 — 실제 DB 함수와 맞물려 (notifications INV-N3·N5·N6·N8·N10).
 // 통로는 보낸 것을 모으는 가짜로 바꿔 끼운다. 연락처를 읽는 함수(manual/0011)가 적용된 로컬 DB 에서 돈다.
@@ -99,7 +99,7 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     expect(email.sent.find((m) => m.outboxId === idOf(waiting.orderId, "approval_request", "email", 3))!.subject).toContain("아직");
   });
 
-  it("INV-N6·N7: 템플릿 코드가 있으면 카카오 줄은 휴대폰 번호로 가짜 카카오에, 카카오 칸이 꺼진 사람은 건너뜀", async () => {
+  it("INV-N7: 템플릿 코드가 있으면 카카오 줄은 휴대폰 번호로 가짜 카카오에", async () => {
     psql(`insert into ${TEMPLATES} (kind, template_code) values ('approval_request', 'TPL_APPROVAL_1')`);
     const g = await paidGift();
     const email = capture(false);
@@ -110,6 +110,45 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     expect(k?.to).toMatch(/^01\d{8,9}$/);
     expect(statusOf(g.orderId, "approval_request", "kakao")).toBe("sent");
     expect(psql(`select fake from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "kakao")}'`)).toBe("t");
+  });
+
+  it("INV-N6 (S6c): 두 칸을 다 끈 크리에이터에게도 승인 요청은 간다 — 꼭 가는 알림", async () => {
+    psql(`insert into ${TEMPLATES} (kind, template_code) values ('approval_request', 'TPL_APPROVAL_1')`);
+    const haru = `(select id from public.profiles where login_id = 'haru_creator')`;
+    const saved = psql(`select notify_kakao || '|' || notify_email from pii.account_contacts where account_id = ${haru}`);
+    psql(`update pii.account_contacts set notify_kakao = false, notify_email = false where account_id = ${haru}`);
+    try {
+      const g = await paidGift();
+      await dispatchNotifications(depsWith(capture(false), capture(true)));
+      expect(statusOf(g.orderId, "approval_request", "email")).toBe("sent");
+      expect(statusOf(g.orderId, "approval_request", "kakao")).toBe("sent");
+    } finally {
+      const [k, m] = saved.split("|");
+      psql(`update pii.account_contacts set notify_kakao = ${k === "t"}, notify_email = ${m === "t"} where account_id = ${haru}`);
+    }
+  });
+
+  it("INV-N6 (S6): 카카오 칸을 끈 팬의 입고 카카오 줄은 건너뛰고 이메일 줄은 보낸다", async () => {
+    psql(`insert into ${TEMPLATES} (kind, template_code) values ('arrived', 'TPL_ARRIVED_1')`);
+    const fan = `(select id from public.profiles where login_id = 'byeolbit_fan')`;
+    const saved = psql(`select notify_kakao from pii.account_contacts where account_id = ${fan}`);
+    psql(`update pii.account_contacts set notify_kakao = false where account_id = ${fan}`);
+    try {
+      const g = await paidGift();
+      const staff = await signedInClient("fankkuk_staff");
+      const no = waybill();
+      await fanSetsWaybill(g.boxIds[0]!, no);
+      await receiveAndLabel(staff, no);
+      const kakao = capture(true);
+      await dispatchNotifications(depsWith(capture(false), kakao));
+      const k = idOf(g.orderId, "arrived", "kakao");
+      expect(statusOf(g.orderId, "arrived", "kakao")).toBe("skipped");
+      expect(psql(`select error_code from ${OUTBOX} where id = '${k}'`)).toBe("no_contact");
+      expect(kakao.sent.some((m) => m.outboxId === k)).toBe(false);
+      expect(statusOf(g.orderId, "arrived", "email")).toBe("sent");
+    } finally {
+      psql(`update pii.account_contacts set notify_kakao = ${saved === "t"} where account_id = ${fan}`);
+    }
   });
 
   it("INV-N10 (S10): 일꾼이 끝낸 줄에는 휴대폰·이메일 꼴의 값과 본문 문장이 없다", async () => {
