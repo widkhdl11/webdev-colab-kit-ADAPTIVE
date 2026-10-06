@@ -165,7 +165,7 @@ describe("INV-R8: 크리에이터에게는 팬 아이디·닉네임·상태 셋�
     const mine = (data as Record<string, unknown>[]).filter((r) => send.orderNos.includes(r.order_no as string));
     expect(mine).toHaveLength(3);
     for (const row of mine) {
-      expect(Object.keys(row).sort()).toEqual(["fan_login_id", "fan_nickname", "order_no", "sent_at", "state", "tier"]);
+      expect(Object.keys(row).sort()).toEqual(["fan_login_id", "fan_nickname", "order_no", "sent_at", "ship_to_office", "state", "tier"]);
     }
     const stateOf = (no: string) => mine.find((r) => r.order_no === no)?.state;
     expect(stateOf(declined)).toBe("not_received");

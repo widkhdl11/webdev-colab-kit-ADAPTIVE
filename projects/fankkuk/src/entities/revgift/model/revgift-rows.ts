@@ -17,6 +17,8 @@ const sentRow = z
     tier,
     // INV-R8: 크리에이터에게는 세 가지뿐 — 거절과 기한 지남을 구분하지 않는다
     state: z.enum(["waiting", "accepted", "not_received"]),
+    // INV-R14: 이 몫이 든 보내기에 사무실로 보낼 상자가 남았는지(보내기 단위 — DB 가 판정)
+    ship_to_office: z.boolean(),
   })
   .strict();
 
@@ -27,13 +29,14 @@ export type SentRevgift = {
   fanNickname: string;
   tier: z.infer<typeof tier>;
   state: z.infer<typeof sentRow>["state"];
+  shipToOffice: boolean;
 };
 
 export function parseSentRows(data: unknown): SentRevgift[] {
   return z
     .array(sentRow)
     .parse(data)
-    .map((r) => ({ orderNo: r.order_no, sentAt: r.sent_at, fanLoginId: r.fan_login_id, fanNickname: r.fan_nickname, tier: r.tier, state: r.state }));
+    .map((r) => ({ orderNo: r.order_no, sentAt: r.sent_at, fanLoginId: r.fan_login_id, fanNickname: r.fan_nickname, tier: r.tier, state: r.state, shipToOffice: r.ship_to_office }));
 }
 
 const receivedRow = z

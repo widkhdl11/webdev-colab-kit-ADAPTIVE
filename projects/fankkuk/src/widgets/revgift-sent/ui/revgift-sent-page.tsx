@@ -5,6 +5,7 @@ import { countBatchStates, toSentBatches } from "@/entities/revgift/model/sent-b
 import { sentStateTag } from "@/entities/revgift/ui/received-status";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDateTime } from "@/shared/lib/format/datetime";
+import { CopyButton } from "@/shared/ui/copy-button";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import s from "./revgift-sent.module.css";
 
@@ -13,6 +14,8 @@ import s from "./revgift-sent.module.css";
 // 몫마다 원 송장번호 줄이 붙는다(시안 creator-revgift-boxes.html). 입고 전엔 넣고 고치고, 입고되면 「입고됨」으로 잠긴다.
 // 택배사 고르는 칸은 DB 에 그 칸이 없어 뺐다.
 // 묶음 나누기와 상태 세기는 entities/revgift/model/sent-batches.ts — 여기서는 문구만 조립한다.
+// 사무실 주소는 묶음에 officeAddress 가 있을 때(결제가 끝났고 보낼 상자가 남은 묶음)만 그린다(INV-R14).
+// 팬의 받기를 기다리지 않는다 — 받기는 출고 전에만 있으면 된다. 모양은 팬 선물의 「보내실 주소」와 같다.
 
 function Check() {
   return (
@@ -58,8 +61,42 @@ function batchSummary(shares: readonly SentRevgift[]): string {
   return n.not_received ? `${parts.join(" · ")} (받지 않은 상자 요금은 환불돼요)` : parts.join(" · ");
 }
 
-export function RevgiftSentPage({ rows, boxes, paid }: { rows: readonly SentRevgift[]; boxes: readonly ShareBox[]; paid: boolean }) {
-  const batches = toSentBatches(rows);
+function OfficeAddress({ address, headId }: { address: string; headId: string }) {
+  return (
+    <div className={s.addr} role="group" aria-labelledby={headId}>
+      <p className={s["addr-title"]} id={headId}>
+        이 주소로 보내 주세요
+      </p>
+      <dl>
+        <div>
+          <dt>받는 곳</dt>
+          <dd>{address}</dd>
+        </div>
+        <div>
+          <dt>받는 사람</dt>
+          <dd>팬꾹 + 그 상자 팬의 주문번호 (상자마다 따로 적어 주세요)</dd>
+        </div>
+      </dl>
+      <p className={s["addr-note"]}>팬이 받기를 누를 때까지 기다리지 않고 보내셔도 돼요. 받지 않은 팬의 상자는 돌려보내고 그 상자 요금은 환불돼요.</p>
+      <div className={s["addr-copy"]}>
+        <CopyButton className="btn btn--soft btn--sm" text={`${address}\n팬꾹`} label="주소 복사하기" />
+      </div>
+    </div>
+  );
+}
+
+export function RevgiftSentPage({
+  rows,
+  boxes,
+  paid,
+  officeAddress,
+}: {
+  rows: readonly SentRevgift[];
+  boxes: readonly ShareBox[];
+  paid: boolean;
+  officeAddress: string;
+}) {
+  const batches = toSentBatches(rows, officeAddress);
   const boxByOrder = new Map(boxes.map((b) => [b.orderNo, b]));
   return (
     <div>
@@ -75,7 +112,7 @@ export function RevgiftSentPage({ rows, boxes, paid }: { rows: readonly SentRevg
       {paid ? (
         <p className={s.paid} role="status">
           <strong>결제가 끝났어요.</strong>
-          <span>팬마다 상자를 따로 포장하고, 상자 겉에 그 팬의 주문번호를 적어 팬꾹 사무실로 보내 주세요.</span>
+          <span>팬마다 상자를 따로 포장하고, 상자 겉에 그 팬의 주문번호를 적어 아래 팬꾹 사무실 주소로 보내 주세요.</span>
         </p>
       ) : null}
       <div className={s["rule-line"]}>
@@ -97,6 +134,7 @@ export function RevgiftSentPage({ rows, boxes, paid }: { rows: readonly SentRevg
               <h3 id={`rv-batch-${bi}`}>{formatDateTime(b.sentAt)} 보낸 역조공</h3>
               <p className={s.facts}>팬 {b.shares.length}명</p>
             </div>
+            {b.officeAddress ? <OfficeAddress address={b.officeAddress} headId={`rv-addr-${bi}`} /> : null}
             <ul className={s.shares}>
               {b.shares.map((x, i) => {
                 const tag = sentStateTag(x.state);

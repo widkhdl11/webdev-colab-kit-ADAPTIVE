@@ -7,7 +7,7 @@ import { parseReceivedRows, parseSentRows } from "@/entities/revgift/model/revgi
 // 역조공 읽기 경계는 다른 슬라이스의 목록을 가져다 쓸 수 없어 따로 적는다 — 한쪽만 바뀌면 여기서 빨개진다.
 
 const sent = (tier: string) => [
-  { order_no: "RG-ABC123", sent_at: "2026-10-04T00:00:00Z", fan_login_id: "fan", fan_nickname: "별빛", tier, state: "waiting" },
+  { order_no: "RG-ABC123", sent_at: "2026-10-04T00:00:00Z", fan_login_id: "fan", fan_nickname: "별빛", tier, state: "waiting", ship_to_office: true },
 ];
 const received = (tier: string) => [
   {

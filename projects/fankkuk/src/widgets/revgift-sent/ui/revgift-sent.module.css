@@ -32,3 +32,14 @@
   .tag { grid-column: 2; justify-self: start; }
   .share-inv { margin-left: 0; }
 }
+
+/* 사무실 주소 안내(INV-R14) — 팬 선물 「보내실 주소」와 같은 모양 */
+.addr { margin-bottom: 16px; padding: 24px; border-radius: var(--r-card); box-shadow: var(--hair); }
+.addr-title { font-size: 18px; font-weight: 700; }
+.addr dl { display: grid; gap: 12px; margin-top: 12px; }
+.addr dl div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; }
+.addr dt { color: var(--sub); }
+.addr dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.addr-note { margin-top: 12px; color: var(--sub); }
+.addr-copy { margin-top: 16px; }
+@media (max-width: 767px) { .addr dl div { grid-template-columns: minmax(0, 1fr); gap: 0; } }

@@ -20,7 +20,7 @@ import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { visibleDifferences, type GiftDifference } from "@/entities/payment/model/difference-rows";
 import type { GiftPayment } from "@/entities/payment/model/gift-payment";
-import { CopyButton } from "./copy-button";
+import { CopyButton } from "@/shared/ui/copy-button";
 import { DifferenceSection, type DifferenceNotice } from "./difference-section";
 import { PaymentSummary } from "./payment-summary";
 import s from "./gift-status.module.css";
