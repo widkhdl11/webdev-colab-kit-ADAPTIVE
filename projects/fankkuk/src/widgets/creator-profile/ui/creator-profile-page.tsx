@@ -56,9 +56,9 @@ export function CreatorProfilePage({
             <h1 className="page-h" id="creator-name">
               {creator.name}
             </h1>
-            <p className={`lead ${s.intro}`}>
-              {creator.intro} {creator.channelTitle}
-            </p>
+            {/* 소개글은 크리에이터가 직접 쓰는 글이라(my-account INV-A9) 채널 이름과 한 문장으로 잇지 않고 줄을 나눈다 */}
+            {creator.intro ? <p className={`lead ${s.intro}`}>{creator.intro}</p> : null}
+            <p className={`lead ${s.intro}`}>{creator.channelTitle}</p>
             <div className={s.tags}>
               <span className="tag tag--brand">
                 <CheckIcon />

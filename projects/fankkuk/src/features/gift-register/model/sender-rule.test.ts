@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkoutRequesterId, creatorSendList, movingNotice, refusalStatus, sendAvailabilityOf } from "./sender-rule";
+import { checkoutRequesterId, creatorSendList, fanSendList, movingNotice, refusalStatus, sendAvailabilityOf } from "./sender-rule";
 
 const OWN = "00000000-0000-4000-b000-000000000001";
 const MOMO = "00000000-0000-4000-b000-000000000002";
@@ -41,6 +41,19 @@ describe("크리에이터의 선물 보내기 목록", () => {
   });
   it("미리 고른 사람이 자기 자신이면 보낼 수 있다고 와도 뺀다", () => {
     expect(creatorSendList(cards, OWN, { id: OWN, canSend: true }).map((c) => c.id)).toEqual([MOMO]);
+  });
+});
+
+describe("팬의 선물 보내기 목록 (my-account INV-A10)", () => {
+  const found = [{ id: MOMO }, { id: SAEBYEOK }];
+  it("INV-A10: 찾기 목록 그대로 — 노출을 끈 크리에이터는 미리 고르지 않으면 나오지 않는다", () => {
+    expect(fanSendList(found, null).map((c) => c.id)).toEqual([MOMO, SAEBYEOK]);
+  });
+  it("INV-A10: 링크로 미리 고른 사람은 노출을 껐어도 맨 앞에 한 명 더한다", () => {
+    expect(fanSendList(found, { id: OWN }).map((c) => c.id)).toEqual([OWN, MOMO, SAEBYEOK]);
+  });
+  it("미리 고른 사람이 이미 찾기 목록에 있으면 두 번 넣지 않는다", () => {
+    expect(fanSendList(found, { id: MOMO }).map((c) => c.id)).toEqual([MOMO, SAEBYEOK]);
   });
 });
 

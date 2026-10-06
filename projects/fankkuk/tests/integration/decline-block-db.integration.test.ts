@@ -565,6 +565,21 @@ describe("INV-D8: 차단하면 그 팬의 아직 승인하지 않은 진행 중 
     expect(orderStatus(printed.orderId)).toBe("shipped");
   });
 
+  it("INV-W9·D8 (실패경로): 결제 전에 차단으로 거절된 주문(등록 시각 없음)은 크리에이터의 받은 선물 읽기에 없고, 결제한 뒤 거절된 주문은 「끝남」으로 있다", async () => {
+    const paid = await giftFrom();
+    const unpaid = await registerTestOrder(1, { senderId: SENDER });
+    const reply = await declineFull(haru, paid.requestId, true);
+    expect(reply.also_declined).toContain(unpaid.orderNo);
+    // 결제 전에 거절된 주문은 상태가 거절이고 등록 시각(결제 완료 시각)이 없다 — 상태만으로는 걸러지지 않는다
+    expect(psql(`select status || '|' || (registered_at is null) from public.orders where id = '${unpaid.orderId}'`)).toBe("rejected|true");
+    const r = await haru.rpc("my_incoming_gifts");
+    expect(r.error).toBeNull();
+    const rows = r.data as { order_no: string; stage: string }[];
+    expect(rows.find((x) => x.order_no === unpaid.orderNo)).toBeUndefined();
+    // 결제한 주문은 거절돼도 보인다(조건이 없어서 안 나온 것이 아니다)
+    expect(rows.find((x) => x.order_no === paid.orderNo)?.stage).toBe("closed");
+  });
+
   it("INV-D8: 상자 둘 중 하나만 출고 송장이 나온 승인 주문도 그대로 간다 — 나머지 상자는 검수를 거쳐 출고할 수 있다", async () => {
     const both = await giftFrom(2);
     const firstQr = await inspectedBox(both, 0);

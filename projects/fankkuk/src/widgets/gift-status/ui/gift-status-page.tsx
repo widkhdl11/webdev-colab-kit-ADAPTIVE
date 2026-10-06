@@ -19,8 +19,10 @@ import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { visibleDifferences, type GiftDifference } from "@/entities/payment/model/difference-rows";
+import type { GiftPayment } from "@/entities/payment/model/gift-payment";
 import { CopyButton } from "./copy-button";
 import { DifferenceSection, type DifferenceNotice } from "./difference-section";
+import { PaymentSummary } from "./payment-summary";
 import s from "./gift-status.module.css";
 
 // 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v4/gift.html
@@ -29,6 +31,7 @@ import s from "./gift-status.module.css";
 // 상자별 원 송장번호·내 물건 찾기 시안: docs/design/mockups/site/v4/gift-boxes.html (택배사 고르는 칸은 DB 에 그 칸이 없어 뺐다).
 // 사무실 주소는 view.officeAddress 가 있을 때(결제가 끝난 진행 중 주문)만 그린다(INV-S9). 헤더·푸터는 라우트가 붙인다.
 // 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 검수와 출고 사이에서 갈라져 붙는 칸으로 그린다.
+// 결제 내역은 결제할 때 저장한 금액만 보인다(payment INV-M14, my_gift_payment) — 주문 정보 회색 판 안에 붙인다.
 
 function Check({ size = 18 }: { size?: number }) {
   return (
@@ -44,7 +47,18 @@ const APPROVAL_TEXT = { done: "승인됨", waiting: "기다리는 중", todo: "�
 
 type DifferenceProps = { differences: readonly GiftDifference[]; clientKey: string; notice: DifferenceNotice };
 
-export function GiftStatusPage({ view, boxes, difference }: { view: FanGiftView; boxes: readonly GiftBox[]; difference?: DifferenceProps }) {
+export function GiftStatusPage({
+  view,
+  boxes,
+  difference,
+  payment = null,
+}: {
+  view: FanGiftView;
+  boxes: readonly GiftBox[];
+  difference?: DifferenceProps;
+  /** 결제 금액(저장된 값). 없으면 결제 내역을 그리지 않는다. */
+  payment?: GiftPayment | null;
+}) {
   const badge = fanBadge(view);
   const progress = fanProgress(view);
   const current = view.steps.find((st) => st.state === "current");
@@ -281,6 +295,7 @@ export function GiftStatusPage({ view, boxes, difference }: { view: FanGiftView;
                     <dd>{formatDateTime(view.registeredAt)}</dd>
                   </div>
                 </dl>
+                {payment ? <PaymentSummary payment={payment} differences={difference?.differences ?? []} /> : null}
                 <span className="tag">
                   <Check size={16} />
                   추적 장치 검수 포함

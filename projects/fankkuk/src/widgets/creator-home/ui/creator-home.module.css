@@ -40,6 +40,9 @@
 .fork { position: absolute; left: 50%; top: 12px; display: grid; justify-items: center; transform: translateX(-50%); }
 .fork::before { content: ""; width: 2px; height: 50px; background: var(--track); }
 .fork-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: var(--r-pill); background: var(--white); border: 2px dashed var(--field-line); color: var(--ink); font-weight: 700; white-space: nowrap; }
+/* 승인 완료 — 시안 creator-home.html .fork.is-done (초록 태그 면·글자) */
+.fork.is-done::before { background: var(--brand); }
+.fork.is-done .fork-chip { border: 0; background: var(--brand-soft); color: var(--brand-ink); }
 
 /* 3 열람 기록 · 4 공지 — PC 두 칸 */
 .two-col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 clamp(32px, 5vw, 72px); }

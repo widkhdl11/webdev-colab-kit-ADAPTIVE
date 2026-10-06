@@ -1,23 +1,28 @@
 import type { FanStepKey } from "./fan-view";
-import type { ApprovalRequestView } from "./creator-view";
+import type { IncomingGiftView } from "./incoming-gift";
 
-// 크리에이터 메인 「진행 중인 선물」 한 줄의 단계. 지금 크리에이터가 읽을 수 있는 것은 승인 요청(my_approval_requests)
-// 뿐이라 확실히 아는 것만 칠한다: 등록은 늘 끝났고, 입고는 사무실 도착 시각이 있으면 끝났다.
-// 검수·출고·배송은 이 읽기에 칸이 없다 — 끝났는지 모르는 단계는 끝난 것으로 칠하지 않는다.
-// 승인은 단계가 아니라 출고의 조건이다(팬 화면과 같은 모양). 승인 요청 목록에 있다 = 아직 승인 전.
+// 크리에이터 메인 「진행 중인 선물」 한 줄의 단계. 받은 선물 읽기(my_incoming_gifts, office-workflow INV-W9)의 단계 시각으로 칠한다.
+// 등록은 늘 끝났다(결제가 끝난 주문만 온다). 검수는 통과·보관이면 끝났고, 반송이면 끝난 것으로 칠하지 않는다.
+// 승인은 단계가 아니라 출고의 조건이다(팬 화면과 같은 모양). 승인 요청 목록에 있으면 아직 승인 전, 없으면 승인한 것이다 —
+// 진행 중인 선물 중 승인 요청 목록에 없는 것은 승인을 마친 것뿐이다(거절·반려는 진행 중이 아니다).
 
 export type CreatorStep = { key: FanStepKey; state: "done" | "current" | "todo" };
 
-export type CreatorProgress = { steps: CreatorStep[]; doneCount: number; approval: "waiting" };
+export type CreatorProgress = { steps: CreatorStep[]; doneCount: number; approval: "waiting" | "done" };
 
-const ORDER: readonly FanStepKey[] = ["registered", "received", "inspected", "shipped", "in_transit", "delivered"];
+type ProgressInput = Pick<IncomingGiftView, "receivedAt" | "inspection" | "shippedAt" | "delivery">;
 
-export function creatorProgressOf(request: Pick<ApprovalRequestView, "receivedAt">): CreatorProgress {
-  const arrived = request.receivedAt !== null;
-  const steps = ORDER.map((key): CreatorStep => {
-    if (key === "registered") return { key, state: "done" };
-    if (key === "received") return { key, state: arrived ? "done" : "current" };
-    return { key, state: "todo" };
-  });
-  return { steps, doneCount: steps.filter((s) => s.state === "done").length, approval: "waiting" };
+export function creatorProgressOf(gift: ProgressInput, approvalWaiting: boolean): CreatorProgress {
+  const done: Record<FanStepKey, boolean> = {
+    registered: true,
+    received: gift.receivedAt !== null,
+    inspected: gift.inspection === "passed" || gift.inspection === "held",
+    shipped: gift.shippedAt !== null,
+    in_transit: gift.delivery !== null,
+    delivered: gift.delivery === "delivered",
+  };
+  const order: readonly FanStepKey[] = ["registered", "received", "inspected", "shipped", "in_transit", "delivered"];
+  const currentIndex = order.findIndex((key) => !done[key]);
+  const steps = order.map((key, i): CreatorStep => ({ key, state: done[key] ? "done" : i === currentIndex ? "current" : "todo" }));
+  return { steps, doneCount: steps.filter((s) => s.state === "done").length, approval: approvalWaiting ? "waiting" : "done" };
 }

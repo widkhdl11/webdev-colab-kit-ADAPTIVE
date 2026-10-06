@@ -7,7 +7,7 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
 
-// 크리에이터 목록은 DB(본인 확인을 마친 크리에이터)에서 읽는다. 로그인했으면 팔로우 여부가 붙는다.
+// 크리에이터 목록은 DB(본인 확인을 마쳤고 찾기 노출을 켠 크리에이터 — my-account INV-A10)에서 읽는다. 로그인했으면 팔로우 여부가 붙는다.
 // 로그인하지 않아도 찾을 수 있다 — 팔로우 버튼은 누르면 로그인으로 보낸다.
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
@@ -15,7 +15,7 @@ export default async function Page() {
   // 팔로우한 경우는 크리에이터 페이지에서 한 명씩 확인한다)
   const [header, creators, ownCreatorId] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creators"),
-    readCreatorCards(supabase, { signedIn: viewer !== null }),
+    readCreatorCards(supabase, { signedIn: viewer !== null, forSearch: true }),
     viewer?.role === "creator" ? readOwnCreatorId(supabase) : Promise.resolve(null),
   ]);
   return (

@@ -45,9 +45,18 @@ function setOrder(orderId: string, sql: string): void {
   psql(`update public.orders set ${sql} where id = '${orderId}'`);
 }
 
-/** 상품 대금 칸이 있는 결제로 바꾼다(네 칸 합 = 결제 금액은 그대로 지킨다). */
+/**
+ * 상품 대금 칸이 있는 결제로 바꾼다(네 칸 합 = 결제 금액은 그대로 지킨다).
+ * 상자 금액의 합 = 첫 결제 금액(payment INV-M14)도 지키도록 같은 처리에서 마지막 상자 금액을 같이 올린다 — 확인은 처리 끝에 한다.
+ */
 function addGoods(paymentId: string, goods: number): void {
-  psql(`update public.payments set goods_krw = ${goods}, amount_krw = amount_krw + ${goods} where id = '${paymentId}'`);
+  psql(
+    `begin;
+     update public.payments set goods_krw = ${goods}, amount_krw = amount_krw + ${goods} where id = '${paymentId}';
+     update public.boxes set price_krw = price_krw + ${goods}
+      where id = (select b.id from public.boxes b join public.payments p on p.order_id = b.order_id where p.id = '${paymentId}' order by b.seq desc limit 1);
+     commit;`,
+  );
 }
 
 function shareId(orderNo: string): string {

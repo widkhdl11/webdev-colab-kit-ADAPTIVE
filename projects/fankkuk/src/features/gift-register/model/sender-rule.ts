@@ -84,6 +84,17 @@ export function creatorSendList<T extends { id: string; following: boolean }>(
   );
 }
 
+/**
+ * 팬·손님이 보는 선물 보내기 목록: 크리에이터 찾기 목록(본인 확인됨 그리고 찾기 노출 켜짐, my-account INV-A10)
+ * + 크리에이터 페이지에서 미리 고른 사람(?creator=<id>) 한 명. 노출을 끈 크리에이터는 검색으로 나오지 않지만,
+ * 링크를 아는 팬은 그 사람을 미리 고른 채로 보낼 수 있다(INV-A10 — 끈 동안에도 새 선물 등록은 그대로다).
+ * preselected 는 본인 확인을 마친 크리에이터 전체 목록에서 찾은 그 사람(없으면 null). 등록 판정은 DB 가 다시 한다.
+ */
+export function fanSendList<T extends { id: string }>(searchCards: readonly T[], preselected: T | null): T[] {
+  if (preselected === null || searchCards.some((c) => c.id === preselected.id)) return [...searchCards];
+  return [preselected, ...searchCards];
+}
+
 /** 결제 확정을 요청한 사람 — 선물을 보낼 수 있는 역할(팬·크리에이터)이면 그 ID, 아니면 null(확정하지 않는다, INV-L3). */
 export function checkoutRequesterId(viewer: { userId: string; role: ViewerRole } | null): string | null {
   return viewer && senderRoleAllowed(viewer.role) ? viewer.userId : null;

@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { BlockedFan } from "@/entities/creator/api/blocked-senders";
-import type { CreatorSettingsView } from "@/entities/creator/api/sample-creator-settings";
+import type { CreatorSettingsView } from "@/entities/creator/model/creator-settings";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
+import { sendCreatorNotify, sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
+import { clipChars, countChars, INTRO_MAX, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
 import { formatDate } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
@@ -21,7 +23,11 @@ import s from "./creator-settings.module.css";
 // 카카오 재서명 자리는 지금 로컬 가짜 서명 창구가 맡고(카드 d28), 운영에서는 서버가 창구가 없어 거부한다.
 // 「등록됨」은 서버에 저장된 뒤에만 바뀐다. 처음 그리는 값은 DB 읽기 함수(my_creator_address_status)의 등록 여부다.
 // 차단 풀기는 로그인 세션으로 저장한다(decline-block INV-D10, 카드 d26) — 풀어도 주소는 열리지 않고, 새 선물은 건마다 서명 승인이 있어야 나간다.
-// 주소는 값을 받지 않는다 — 「등록돼 있는가」만 보여 준다. 프로필 저장·알림 스위치는 아직 예시라 서버에 보내지 않는다.
+// 주소는 값을 받지 않는다 — 「등록돼 있는가」만 보여 준다.
+// 프로필(공개 이름·소개글·찾기 노출)은 「프로필 저장」으로 보낸다(my-account INV-A9·A10). 공개 이름은 운영자 확인 없이 바뀌고 바꾼 기록이 남는다.
+// 찾기 노출을 끄면 크리에이터 찾기 목록에서만 빠진다 — 페이지·팔로우·새 선물은 그대로다.
+// 알림은 카카오·이메일 두 스위치이고 누르는 즉시 저장한다(INV-A11). 저장에 실패하면 스위치를 되돌리고 이유를 보인다.
+// 승인 요청은 두 칸이 꺼져도 가므로 끄는 스위치가 없다(notifications INV-N6).
 // 채널 본인 확인(creator-verification)은 DB 읽기 함수(my_creator_verification_state · my_creator_verifications)의 값이다 —
 // 프로필 칸의 방송 채널·본인 확인도 그 값을 쓴다.
 
@@ -33,12 +39,15 @@ function Switch({
   desc,
   checked,
   onChange,
+  busy = false,
 }: {
   id: string;
   title: string;
   desc: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  /** 저장하는 동안 — 겹쳐 누르지 않게 막는다(포커스는 남긴다). */
+  busy?: boolean;
 }) {
   return (
     <div className={s["switch-row"]}>
@@ -52,7 +61,10 @@ function Switch({
         role="switch"
         id={id}
         checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
+        aria-disabled={busy}
+        onChange={(e) => {
+          if (!busy) onChange(e.target.checked);
+        }}
       />
     </div>
   );
@@ -98,16 +110,60 @@ export function CreatorSettingsPage({
     setUnblockError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
   };
   const [publicName, setPublicName] = useState(settings.publicName);
+  const [intro, setIntro] = useState(settings.intro);
   const [visible, setVisible] = useState(settings.visibleInSearch);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMsg, setProfileMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [notify, setNotify] = useState(settings.notify);
+  const [notifySaving, setNotifySaving] = useState(false);
+  const [notifyMsg, setNotifyMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // 서버가 저장한 뒤에만 「저장했어요」. 입력 검사는 서버가 다시 한다 — 화면은 서버가 준 문구를 그대로 보인다.
+  const saveProfile = async () => {
+    if (profileSaving) return;
+    setProfileSaving(true);
+    setProfileMsg(null);
+    const r = await sendCreatorProfile({ name: publicName, intro, searchable: visible });
+    setProfileSaving(false);
+    if (r.kind === "login") {
+      router.push("/login");
+      return;
+    }
+    if (r.kind === "ok") {
+      setProfileMsg({ ok: true, text: "프로필을 저장했어요." });
+      router.refresh(); // 머리 메뉴의 이름도 새 공개 이름으로
+      return;
+    }
+    setProfileMsg({ ok: false, text: r.message });
+  };
+
+  // 스위치는 누르는 즉시 저장한다. 실패하면 화면 값을 저장된 값으로 되돌린다.
+  const toggleNotify = async (key: "kakao" | "email", value: boolean) => {
+    if (notifySaving) return;
+    const before = notify;
+    const next = { ...notify, [key]: value };
+    setNotify(next);
+    setNotifySaving(true);
+    setNotifyMsg(null);
+    const r = await sendCreatorNotify(next);
+    setNotifySaving(false);
+    if (r.kind === "login") {
+      router.push("/login");
+      return;
+    }
+    if (r.kind === "ok") {
+      setNotifyMsg({ ok: true, text: "알림 설정을 저장했어요." });
+      return;
+    }
+    setNotify(before);
+    setNotifyMsg({ ok: false, text: r.message });
+  };
 
   return (
     <div>
       <div className="panel-title">
         <h2 className="panel-h">주소와 설정</h2>
         <p>채널 본인 확인, 선물을 받을 주소, 차단한 팬, 프로필, 알림을 한곳에서 관리해요.</p>
-        {/* 프로필·알림은 아직 DB 에 연결되지 않아 지어낸 값이다 */}
-        <p className="hint">프로필과 알림은 아직 예시예요. 저장 기능을 연결하면 실제 값이 보여요.</p>
       </div>
 
       <div className={s["set-grid"]}>
@@ -180,11 +236,26 @@ export function CreatorSettingsPage({
                 className="input"
                 id="pub-name"
                 value={publicName}
-                onChange={(e) => setPublicName(e.target.value)}
+                // 글자 수는 저장 검사와 같은 셈(코드 포인트)으로 막는다 — maxLength 는 이모지를 두 글자로 센다
+                onChange={(e) => setPublicName(clipChars(e.target.value, PUBLIC_NAME_MAX))}
                 aria-describedby="pub-name-hint"
               />
               <p className="hint" id="pub-name-hint">
-                팬에게 보이는 이름이에요.
+                팬에게 보이는 이름이에요. {PUBLIC_NAME_MAX}자까지, 언제든 바꿀 수 있어요. 바꾼 기록은 운영팀이 볼 수 있어요.
+              </p>
+            </div>
+            <div className={`field ${s["intro-field"]}`}>
+              <label htmlFor="pub-intro">소개글</label>
+              <textarea
+                className={`input ${s.textarea}`}
+                id="pub-intro"
+                rows={3}
+                value={intro}
+                onChange={(e) => setIntro(clipChars(e.target.value, INTRO_MAX))}
+                aria-describedby="pub-intro-hint"
+              />
+              <p className="hint" id="pub-intro-hint">
+                크리에이터 페이지에 보여요. {INTRO_MAX}자까지 적을 수 있어요({countChars(intro.trim())}/{INTRO_MAX}).
               </p>
             </div>
             <dl className={s.kv}>
@@ -205,17 +276,32 @@ export function CreatorSettingsPage({
                 </dd>
               </div>
             </dl>
-            <Switch id="sw-find" title="크리에이터 찾기에 보이기" desc="끄면 검색 결과에 나타나지 않아요." checked={visible} onChange={setVisible} />
-            <button className={`btn ${s.save}`} type="button">
-              프로필 저장
+            <Switch
+              id="sw-find"
+              title="크리에이터 찾기에 보이기"
+              desc="끄면 크리에이터 찾기 목록에서만 빠져요.내 페이지 링크·팔로우·선물 받기는 그대로예요. 본인 확인을 마쳐야 찾기에 보여요."
+              checked={visible}
+              onChange={setVisible}
+            />
+            <button className={`btn ${s.save}`} type="button" aria-disabled={profileSaving} onClick={() => void saveProfile()}>
+              {profileSaving ? "저장하는 중…" : "프로필 저장"}
             </button>
+            <p className={profileMsg && !profileMsg.ok ? s.error : `sub ${s["save-msg"]}`} role="status">
+              {profileMsg && !profileMsg.ok ? (
+                <span className={s["error-mark"]} aria-hidden="true">
+                  !
+                </span>
+              ) : null}
+              {profileMsg?.text}
+            </p>
           </section>
 
           <section aria-labelledby="alarm-h">
             <div className={s["s-head"]}>
               <h3 id="alarm-h">알림 받기</h3>
             </div>
-            {/* 승인 요청과 그 재알림은 꼭 가는 알림이라 끄는 스위치를 두지 않는다(notifications INV-N6, 결정 d33 ②) */}
+            {/* 승인 요청과 그 재알림은 꼭 가는 알림이라 끄는 스위치를 두지 않는다(notifications INV-N6, 결정 d33 ②).
+                알림 스펙에 없는 종류(자동 반려 하루 전·주소가 열릴 때)의 스위치는 두지 않는다(my-account INV-A11) */}
             <div className={s["switch-row"]}>
               <div className={s.txt}>
                 <strong>새 승인 요청</strong>
@@ -225,19 +311,29 @@ export function CreatorSettingsPage({
               </div>
             </div>
             <Switch
-              id="sw-a2"
-              title="자동 반려 하루 전"
-              desc={`${APPROVAL_DEADLINE_DAYS}일이 다 되어 가는 요청을 알려드려요.`}
-              checked={notify.expiringSoon}
-              onChange={(v) => setNotify((n) => ({ ...n, expiringSoon: v }))}
+              id="sw-kakao"
+              title="카카오톡 알림"
+              desc="선물 보관·반송 같은 다른 소식을 카카오톡으로 알려드려요."
+              checked={notify.kakao}
+              busy={notifySaving}
+              onChange={(v) => void toggleNotify("kakao", v)}
             />
             <Switch
-              id="sw-a3"
-              title="주소가 열릴 때"
-              desc="송장을 출력해 주소가 열릴 때마다 알려드려요."
-              checked={notify.addressOpened}
-              onChange={(v) => setNotify((n) => ({ ...n, addressOpened: v }))}
+              id="sw-email"
+              title="이메일 알림"
+              desc="같은 소식을 확인된 이메일로 알려드려요."
+              checked={notify.email}
+              busy={notifySaving}
+              onChange={(v) => void toggleNotify("email", v)}
             />
+            <p className={notifyMsg && !notifyMsg.ok ? s.error : `sub ${s["save-msg"]}`} role="status">
+              {notifyMsg && !notifyMsg.ok ? (
+                <span className={s["error-mark"]} aria-hidden="true">
+                  !
+                </span>
+              ) : null}
+              {notifyMsg?.text}
+            </p>
           </section>
         </div>
       </div>

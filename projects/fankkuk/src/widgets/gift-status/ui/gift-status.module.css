@@ -89,3 +89,14 @@
 .info-row dd { margin: 0; font-weight: 600; text-align: right; }
 .info :global(.tag) { margin-top: 12px; }
 .info-note { margin-top: 12px; color: var(--sub); }
+
+/* 결제 내역 — 시안 gift.html .pay 의 줄 모양. 주문 정보와 같은 회색 판 안에 둔다 */
+.pay { margin-top: 32px; }
+.pay h3 { margin-bottom: 8px; font-size: 20px; letter-spacing: -.3px; }
+.sum-line { display: flex; justify-content: space-between; gap: 12px; padding: 14px 0; border-top: 1px solid var(--divider); }
+.sum-line small { display: block; color: var(--sub); font-size: 16px; }
+.amt { font-weight: 600; text-align: right; white-space: nowrap; }
+.sum-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--divider-strong); font-weight: 700; }
+.big { font-size: 24px; font-weight: 800; letter-spacing: -.5px; white-space: nowrap; }
+.pay-extra { margin-top: 16px; }
+.pay-note { margin-top: 12px; color: var(--sub); }

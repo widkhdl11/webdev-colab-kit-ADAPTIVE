@@ -2,7 +2,7 @@ import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creat
 import { readMovingCreatorIds } from "@/entities/creator/api/creator-verification-reads";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { canSendGiftTo } from "@/features/gift-register/api/can-send";
-import { creatorSendList } from "@/features/gift-register/model/sender-rule";
+import { creatorSendList, fanSendList } from "@/features/gift-register/model/sender-rule";
 import { GiftRegisterPage } from "@/widgets/gift-register/ui/gift-register-page";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
@@ -22,13 +22,16 @@ const PAYMENT_NOTICE: Record<string, string> = {
 // 로그인하지 않았어도 폼은 보인다 — 「결제하기」에서 서버가 로그인을 요구한다(INV-L3).
 // 크리에이터에게는 내가 팔로우한 크리에이터 + 크리에이터 페이지에서 미리 고른 사람(보낼 수 있으면)만 나온다
 // (INV-L8·L9 — 판정은 등록 때 서버·DB 가 다시 한다. 나를 팔로우한 사람을 목록으로 모아 보여 주지 않는다).
+// 팬·손님에게는 크리에이터 찾기 목록(찾기 노출을 켠 사람만, my-account INV-A10) + 미리 고른 한 명이 나온다 —
+// 노출을 끈 크리에이터는 검색으로 찾지 못하지만, 링크를 아는 팬은 그 사람을 미리 고른 채로 보낼 수 있다.
 export default async function Page({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const { creator, payment } = await searchParams;
   const { supabase, viewer } = await loadSession();
   const creatorSender = viewer?.role === "creator";
   const preselectedId = typeof creator === "string" ? creator : null;
+  const signedIn = viewer !== null;
   const [cards, ownCreatorId, preselectedCanSend, prices, movingIds] = await Promise.all([
-    readCreatorCards(supabase, { signedIn: viewer !== null }),
+    readCreatorCards(supabase, { signedIn, forSearch: !creatorSender }),
     creatorSender ? readOwnCreatorId(supabase) : Promise.resolve(null),
     creatorSender && preselectedId ? canSendGiftTo(supabase, preselectedId).catch(() => false) : Promise.resolve(false),
     readPublicPrices(supabase),
@@ -36,8 +39,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   ]);
   // INV-V12: 채널 이사 중인 크리에이터는 목록에 그대로 두고 표시만 붙인다 — 고르면 안내하고 넘어가지 않는다(등록은 DB 가 막는다)
   const moving = new Set(movingIds);
+  // 팬: 미리 고른 사람이 찾기 목록에 없으면(노출을 껐으면) 본인 확인을 마친 전체 목록에서 그 한 명만 찾아 더한다
+  const fanPreselected =
+    !creatorSender && preselectedId && !cards.some((c) => c.id === preselectedId)
+      ? ((await readCreatorCards(supabase, { signedIn })).find((c) => c.id === preselectedId) ?? null)
+      : null;
   const creators = (
-    creatorSender ? creatorSendList(cards, ownCreatorId, preselectedId ? { id: preselectedId, canSend: preselectedCanSend } : null) : cards
+    creatorSender
+      ? creatorSendList(cards, ownCreatorId, preselectedId ? { id: preselectedId, canSend: preselectedCanSend } : null)
+      : fanSendList(cards, fanPreselected)
   ).map((c) => ({ ...c, moving: moving.has(c.id) }));
   const initialCreatorId = typeof creator === "string" && creators.some((c) => c.id === creator) ? creator : "";
   const notice = typeof payment === "string" ? PAYMENT_NOTICE[payment] : undefined;

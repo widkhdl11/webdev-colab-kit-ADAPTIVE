@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { latestApprovals, type AdminCreator, type VerificationEvent } from "@/entities/creator/model/admin-creator";
+import { latestApprovals, type AdminCreator, type NameChange, type VerificationEvent } from "@/entities/creator/model/admin-creator";
 import {
   adminVerificationTables,
   eventReasonLabel,
@@ -26,7 +26,13 @@ import a from "@/shared/ui/admin.module.css";
 // 2026-10-06 확인 방법을 API 여부로 가른 뒤로 크리에이터는 코드를 공개 게시물이 아니라 채널 소개란에 붙이거나 팬꾹 공식 계정 DM 으로 보낸다.
 // 「채널 열기」는 서버가 채널 키로 다시 만든 주소만 연다(INV-V2) — 크리에이터가 적은 문자열이 아니다.
 
-type Props = { creators: readonly AdminCreator[]; verifications: readonly AdminVerification[]; events: readonly VerificationEvent[] };
+type Props = {
+  creators: readonly AdminCreator[];
+  verifications: readonly AdminVerification[];
+  events: readonly VerificationEvent[];
+  /** 공개 이름 바꾼 기록(my-account INV-A9) — 크리에이터가 운영자 확인 없이 바꾼다. 사칭 신고가 오면 이 기록으로 판단한다. */
+  nameChanges: readonly NameChange[];
+};
 
 function Who({ v }: { v: AdminVerification }) {
   return (
@@ -67,7 +73,7 @@ function actionTag(action: VerificationEvent["action"]) {
   return <span className={a.tag}>닫힘</span>;
 }
 
-export function CreatorsPanel({ creators, verifications, events }: Props) {
+export function CreatorsPanel({ creators, verifications, events, nameChanges }: Props) {
   const { posted, issued, ended } = adminVerificationTables(verifications);
   const approved = creators.filter((c) => c.verified);
   const approvals = latestApprovals(events);
@@ -385,6 +391,52 @@ export function CreatorsPanel({ creators, verifications, events }: Props) {
                       </tr>
                     );
                   })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="h-creators-names">
+          <div className={a.sectionH}>
+            <h2 id="h-creators-names">공개 이름 바꾼 기록</h2>
+            <span>크리에이터가 직접 바꿔요 · 채널은 승인으로만 바뀌어요</span>
+          </div>
+          <div className={a.tblWrap}>
+            <table className={a.tbl} style={{ minWidth: 640 }}>
+              <caption className="sr-only">크리에이터 공개 이름 바꾼 기록 — 언제·전·후</caption>
+              <thead>
+                <tr>
+                  <th scope="col">시각</th>
+                  <th scope="col">크리에이터</th>
+                  <th scope="col">바꾸기 전</th>
+                  <th scope="col">바꾼 뒤</th>
+                </tr>
+              </thead>
+              <tbody>
+                {nameChanges.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className={a.empty}>
+                      아직 공개 이름을 바꾼 크리에이터가 없어요.
+                    </td>
+                  </tr>
+                ) : (
+                  nameChanges.map((n, i) => (
+                    <tr key={`${n.at}-${n.creatorId}-${i}`}>
+                      <td className={`${a.mono} ${a.nowrap}`}>{formatStamp(n.at)}</td>
+                      <td>
+                        <strong>{n.creatorName}</strong>
+                        {n.loginId ? (
+                          <>
+                            <br />
+                            <span className={`${a.mono} ${a.sub}`}>{n.loginId}</span>
+                          </>
+                        ) : null}
+                      </td>
+                      <td>{n.beforeName}</td>
+                      <td>{n.afterName}</td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

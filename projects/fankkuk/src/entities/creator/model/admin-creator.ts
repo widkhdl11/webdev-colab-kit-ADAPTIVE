@@ -97,6 +97,31 @@ export function verificationEventsFromRows(rows: unknown): VerificationEvent[] |
   }));
 }
 
+/** 공개 이름 바꾼 기록 한 줄(my-account INV-A9) — 운영자만 본다. 사칭 신고가 오면 이 기록으로 판단한다. */
+export type NameChange = { at: string; creatorId: string; creatorName: string; loginId: string | null; beforeName: string; afterName: string };
+
+const nameChangeRow = z.object({
+  at: z.string(),
+  creator_id: z.string(),
+  creator_name: z.string(),
+  login_id: z.string().nullable(),
+  before_name: z.string(),
+  after_name: z.string(),
+});
+
+export function nameChangesFromRows(rows: unknown): NameChange[] | null {
+  const parsed = z.array(nameChangeRow).safeParse(rows);
+  if (!parsed.success) return null;
+  return parsed.data.map((r) => ({
+    at: r.at,
+    creatorId: r.creator_id,
+    creatorName: r.creator_name,
+    loginId: r.login_id,
+    beforeName: r.before_name,
+    afterName: r.after_name,
+  }));
+}
+
 /**
  * 크리에이터마다 가장 최근 승인 기록(누가·언제). 승인된 크리에이터 표의 「승인한 사람」 칸 — 마지막 처리가 이사 신청의 반려일 수 있어
  * 마지막 처리 한 줄(lastActionAt) 대신 승인 줄만 본다. 기록은 최근 것부터 온다.

@@ -3,6 +3,7 @@ import { printLabelOf, type AddressAccessEntry } from "@/entities/address/model/
 import { creatorProgressOf } from "@/entities/order/model/creator-progress";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
+import { incomingNoteOf, isIncomingInProgress, type IncomingGiftView } from "@/entities/order/model/incoming-gift";
 import { FAN_STEP_LABEL, fanBadge } from "@/entities/order/ui/fan-stage-copy";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
@@ -11,7 +12,8 @@ import s from "./creator-home.module.css";
 // 크리에이터 메인 — 로그인하면 먼저 나오는 첫 화면. 시안: docs/design/mockups/site/v4/creator-home.html (카드 d17)
 // 구역: 1 오늘 승인할 선물 / 2 진행 중인 선물 / 3 최근 열람 기록 + 4 공지(PC 두 칸) / 5 내가 보낸 선물.
 // 전체 승인 버튼은 없다. 이 화면에는 서명 버튼도 두지 않는다 — 승인은 승인 요청 화면에서 한 건씩 서명한다.
-// 「진행 중인 선물」은 지금 읽을 수 있는 승인 요청으로만 그린다 — 승인한 뒤의 단계(검수·출고·배송)를 크리에이터가 읽는 함수가 아직 없다.
+// 「진행 중인 선물」은 받은 선물 읽기(my_incoming_gifts, office-workflow INV-W9)로 그린다 — 결제 완료부터 배송중까지.
+// 그 읽기에는 물품 종류·실명·주소·송장번호가 없다. 승인 여부는 승인 요청 목록에 그 주문이 있는지로 가른다.
 // 헤더·푸터는 라우트(app)가 붙인다.
 
 export type CreatorHomeNotice = { id: string; title: string; date: string };
@@ -23,6 +25,8 @@ type Props = {
   /** 최근 열람 기록, 최근 순(최대 CREATOR_HOME_LOG_ROWS 줄). */
   accessLog: readonly AddressAccessEntry[];
   notices: readonly CreatorHomeNotice[];
+  /** 나에게 온 선물의 진행 단계, 최신 등록 순(끝난 것 포함 — 진행 중인 것만 이 화면이 고른다). */
+  incoming: readonly IncomingGiftView[];
   /** 내가(로그인한 사람이) 보낸 선물, 최신 순. */
   sentGifts: readonly FanGiftView[];
 };
@@ -56,19 +60,20 @@ function WaitGlyph() {
 
 const STEP_CLASS = { done: s["is-done"], current: s["is-now"], todo: undefined } as const;
 
-function ProgressTrack({ request }: { request: ApprovalRequestView }) {
-  const p = creatorProgressOf(request);
+function ProgressTrack({ gift, approvalWaiting }: { gift: IncomingGiftView; approvalWaiting: boolean }) {
+  const p = creatorProgressOf(gift, approvalWaiting);
   const now = p.steps.find((st) => st.state === "current");
-  const where = now ? `${FAN_STEP_LABEL[now.key]} 기다리는 중` : `${FAN_STEP_LABEL[p.steps[p.doneCount - 1]?.key ?? "registered"]}까지 확인됨`;
+  const where = now ? `${FAN_STEP_LABEL[now.key]} 기다리는 중` : `${FAN_STEP_LABEL[p.steps[p.doneCount - 1]?.key ?? "registered"]}까지 끝남`;
+  const approval = p.approval === "waiting" ? "승인 대기" : "승인 완료";
   return (
     <div
       className={s.track}
       role="progressbar"
-      aria-label={`${request.fanNickname}님의 선물 진행 단계`}
+      aria-label={`${gift.senderNickname}님의 선물 진행 단계`}
       aria-valuemin={0}
       aria-valuemax={p.steps.length}
       aria-valuenow={p.doneCount}
-      aria-valuetext={`${p.steps.length}단계 중 ${p.doneCount}단계 완료, ${where}. 승인 대기`}
+      aria-valuetext={`${p.steps.length}단계 중 ${p.doneCount}단계 완료, ${where}. ${approval}`}
     >
       <ul aria-hidden="true">
         {p.steps.map((st) => (
@@ -78,10 +83,10 @@ function ProgressTrack({ request }: { request: ApprovalRequestView }) {
           </li>
         ))}
       </ul>
-      <div className={s.fork} aria-hidden="true">
+      <div className={`${s.fork} ${p.approval === "done" ? s["is-done"] : ""}`} aria-hidden="true">
         <span className={s["fork-chip"]}>
-          <WaitGlyph />
-          승인 대기
+          {p.approval === "done" ? <CheckGlyph size={16} /> : <WaitGlyph />}
+          {approval}
         </span>
       </div>
     </div>
@@ -93,8 +98,10 @@ function logNote(e: AddressAccessEntry): string {
   return printLabelOf(e.result.printNo, e.result.released).text;
 }
 
-export function CreatorHomePage({ nickname, requests, accessLog, notices, sentGifts }: Props) {
+export function CreatorHomePage({ nickname, requests, accessLog, notices, incoming, sentGifts }: Props) {
   const waiting = requests.length;
+  const waitingOrders = new Set(requests.map((r) => r.orderNo));
+  const ongoing = incoming.filter(isIncomingInProgress);
   return (
     <main id="main">
       <section className={s.greet} aria-labelledby="hello-title">
@@ -172,29 +179,32 @@ export function CreatorHomePage({ nickname, requests, accessLog, notices, sentGi
         <div className="container">
           <div className="block-head">
             <h2 id="prog-title">진행 중인 선물</h2>
-            <Link className="link-arrow" href="/creator/requests">
+            {/* 시안은 선물 상세(gift.html)로 잇지만, 선물 상세(/gifts/[orderNo])는 보낸 사람 전용이라 받는 크리에이터가 열 수 있는
+                상세가 아직 없다. 받은 선물을 한 건씩 보는 가장 가까운 화면인 승인 요청(대기·결정한 요청)으로 잇는다 — BACKLOG */}
+            <Link className="link-arrow" href="/creator/requests" aria-label="받은 선물 전체 보기 — 승인 요청 화면">
               전체 보기
             </Link>
           </div>
           <p className={s["track-note"]}>승인은 출고 전에만 마치면 돼요. 입고나 검수 중에 먼저 해도 괜찮아요.</p>
-          {waiting === 0 ? (
+          {ongoing.length === 0 ? (
             <p className={s.empty}>지금 진행 중인 선물이 없어요.</p>
           ) : (
             <ul className={s.rows}>
-              {requests.slice(0, MAX_ROWS).map((r, i) => (
-                <li key={r.orderNo} className={s["prog-row"]}>
+              {ongoing.slice(0, MAX_ROWS).map((g, i) => (
+                <li key={g.orderNo} className={s["prog-row"]}>
                   <FaceAvatar index={i} />
                   <div>
-                    <p className={s.who}>{r.fanNickname}님의 선물</p>
+                    <p className={s.who}>{g.senderNickname}님의 선물</p>
                     <p className={s.says}>
-                      {r.itemKind} · 상자 {r.boxCount}개 · {r.orderNo} · {r.receivedAt ? "사무실에 도착했어요." : "사무실 도착을 기다려요."}
+                      상자 {g.boxCount}개 · {g.orderNo} · {incomingNoteOf(g)}
                     </p>
                   </div>
-                  <ProgressTrack request={r} />
+                  <ProgressTrack gift={g} approvalWaiting={waitingOrders.has(g.orderNo)} />
                 </li>
               ))}
             </ul>
           )}
+          {ongoing.length > MAX_ROWS ? <p className={s["track-note"]}>진행 중인 선물 {ongoing.length}개 중 최근 {MAX_ROWS}개예요.</p> : null}
         </div>
       </section>
 
