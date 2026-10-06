@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
+import { approvalTimeLeftLabel, isApprovalDeadlinePassed } from "@/entities/order/model/approval-time-left";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
 import type { DecidedOutcome, DecidedRequestView } from "@/entities/order/model/decided-request";
 import { NOT_ACCEPTED_TEXT } from "@/entities/order/ui/fan-stage-copy";
@@ -68,9 +69,11 @@ function DecidedNote({ d }: { d: DecidedRequestView }) {
 export function ApprovalRequestList({
   requests,
   decided,
+  now,
 }: {
   requests: readonly ApprovalRequestView[];
   decided: readonly DecidedRequestView[];
+  now: string;
 }) {
   const router = useRouter();
   const [states, setStates] = useState<Record<string, LocalDecision>>({});
@@ -206,6 +209,8 @@ export function ApprovalRequestList({
             {rows.map((r, i) => {
               const st = stateOf(r.orderNo);
               const requested = `${formatDateTime(r.registeredAt)} 요청`;
+              // 기한이 지나면 승인 함수가 받지 않는다 — 버튼을 두면 누를 때마다 실패한다. 받지 않기는 그대로 된다.
+              const lapsed = isApprovalDeadlinePassed(r.registeredAt, now);
               return (
                 <li key={r.orderNo} className={a.req}>
                   <FaceAvatar index={i} />
@@ -217,9 +222,11 @@ export function ApprovalRequestList({
 
                     {st.kind === "pending" ? (
                       <p className={a.meta}>
-                        {r.receivedAt ? <span className="tag tag--brand">{formatDateTime(r.receivedAt)} 사무실 도착</span> : null}
+                        <span className="tag tag--brand">{approvalTimeLeftLabel(r.registeredAt, now)}</span>
+                        {r.receivedAt ? <span className="tag">{formatDateTime(r.receivedAt)} 사무실 도착</span> : null}
                         {r.hasElectronicsOrMetal ? <span className="tag">전자기기·금속 있음</span> : null}
                         <span className="sub">{requested}</span>
+                        {lapsed ? <span className="sub">기한이 지나 승인할 수 없어요. 곧 자동으로 받지 않음 처리돼요.</span> : null}
                       </p>
                     ) : st.kind === "signing" ? (
                       <>
@@ -262,21 +269,23 @@ export function ApprovalRequestList({
 
                   {st.kind === "pending" ? (
                     <div className={a.act}>
-                      <button
-                        ref={(el) => {
-                          if (el) approveRefs.current.set(r.orderNo, el);
-                          else approveRefs.current.delete(r.orderNo);
-                        }}
-                        className="btn btn--kakao"
-                        type="button"
-                        onClick={() => {
-                          setApproveError(null);
-                          setSheet({ kind: "approve", req: r });
-                        }}
-                      >
-                        <KakaoBubble />
-                        카카오톡으로 승인
-                      </button>
+                      {lapsed ? null : (
+                        <button
+                          ref={(el) => {
+                            if (el) approveRefs.current.set(r.orderNo, el);
+                            else approveRefs.current.delete(r.orderNo);
+                          }}
+                          className="btn btn--kakao"
+                          type="button"
+                          onClick={() => {
+                            setApproveError(null);
+                            setSheet({ kind: "approve", req: r });
+                          }}
+                        >
+                          <KakaoBubble />
+                          카카오톡으로 승인
+                        </button>
+                      )}
                       <button
                         className="btn btn--soft"
                         type="button"

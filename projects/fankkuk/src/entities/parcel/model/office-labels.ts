@@ -31,6 +31,7 @@ export const NEXT_STEP_TEXT: Record<NextStep, string> = {
   inspect: "검수 화면에서 QR 스캔 뒤 검수 기록",
   print_label: "출고 화면에서 QR 스캔",
   wait_approval: "크리에이터 승인을 기다려요",
+  wait_difference: "팬의 차액 결제를 기다려요",
   wait_accept: "팬의 받기를 기다려요",
   wait_expiry: "자동 처리 대기(반송 예정)",
   held: "추적 장치가 나와 사무실에 보관해요",

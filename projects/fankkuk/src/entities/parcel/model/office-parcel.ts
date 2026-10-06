@@ -19,6 +19,7 @@ export const NEXT_STEPS = [
   "inspect",
   "print_label",
   "wait_approval",
+  "wait_difference",
   "wait_accept",
   "wait_expiry",
   "held",

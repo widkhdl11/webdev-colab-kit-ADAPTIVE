@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { printLabelOf, type AddressAccessEntry } from "@/entities/address/model/access-log";
+import { approvalTimeLeftLabel } from "@/entities/order/model/approval-time-left";
 import { creatorProgressOf } from "@/entities/order/model/creator-progress";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
@@ -29,6 +30,8 @@ type Props = {
   incoming: readonly IncomingGiftView[];
   /** 내가(로그인한 사람이) 보낸 선물, 최신 순. */
   sentGifts: readonly FanGiftView[];
+  /** 승인 대기의 남은 기간을 세는 기준 시각 — 화면을 그리는 서버가 넘긴다 */
+  now: string;
 };
 
 const MAX_ROWS = 3;
@@ -98,7 +101,7 @@ function logNote(e: AddressAccessEntry): string {
   return printLabelOf(e.result.printNo, e.result.released).text;
 }
 
-export function CreatorHomePage({ nickname, requests, accessLog, notices, incoming, sentGifts }: Props) {
+export function CreatorHomePage({ nickname, requests, accessLog, notices, incoming, sentGifts, now }: Props) {
   const waiting = requests.length;
   const waitingOrders = new Set(requests.map((r) => r.orderNo));
   const ongoing = incoming.filter(isIncomingInProgress);
@@ -143,7 +146,7 @@ export function CreatorHomePage({ nickname, requests, accessLog, notices, incomi
             {waiting === 0 ? (
               <p className={s["todo-empty"]}>기다리는 승인 요청이 없어요.</p>
             ) : (
-              <ul className={s["todo-rows"]} aria-label="승인 대기 선물, 오래 기다린 순서">
+              <ul className={s["todo-rows"]} aria-label="승인 대기 선물, 남은 기간이 짧은 순서">
                 {requests.slice(0, MAX_ROWS).map((r, i) => (
                   <li key={r.orderNo} className={s["todo-row"]}>
                     <FaceAvatar index={i} />
@@ -153,7 +156,8 @@ export function CreatorHomePage({ nickname, requests, accessLog, notices, incomi
                         {r.itemKind} · 상자 {r.boxCount}개 · {r.orderNo}
                       </p>
                       <p className={s.meta}>
-                        {r.receivedAt ? <span className="tag tag--brand">{formatDateTime(r.receivedAt)} 사무실 도착</span> : null}
+                        <span className="tag tag--brand">{approvalTimeLeftLabel(r.registeredAt, now)}</span>
+                        {r.receivedAt ? <span className="tag">{formatDateTime(r.receivedAt)} 사무실 도착</span> : null}
                         <span className="sub">{formatDateTime(r.registeredAt)} 요청</span>
                       </p>
                     </div>

@@ -20,7 +20,7 @@ export default async function Page() {
     <>
       <SiteHeader role="creator" current="/creator/requests" nickname={viewer.nickname ?? ""} pendingCount={requests.length} />
       <MyShell role="creator" current="/creator/requests">
-        <ApprovalRequestsPage requests={requests} decided={decided} />
+        <ApprovalRequestsPage requests={requests} decided={decided} now={new Date().toISOString()} />
       </MyShell>
       <SiteFooter />
     </>

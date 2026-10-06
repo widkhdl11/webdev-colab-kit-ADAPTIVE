@@ -270,9 +270,52 @@ describe("INV-M12: 차액 결제가 끝나기 전에는 송장을 출력하지 �
       if (status === "confirming") expect((await adminClient().rpc("claim_difference_payment", { p_toss_order_id: toss })).data).toBe(true);
       else expect((await adminClient().rpc("settle_difference_payment", { p_toss_order_id: toss, p_status: "failed", p_payment_key: null })).data).toBe(true);
       expect(differenceRow(g.orderId)).toBe(`2000/0/500/500/1000/${status}`);
+      // 출고 화면 안내도 승인 대기가 아니라 차액 대기 — 결제 중·실패도 「아직 안 끝난 차액」이다
+      expect(((await staff.rpc("office_parcel_by_qr", { p_qr: qr })).data as { next_step: string }[])[0]?.next_step).toBe("wait_difference");
       expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0041");
       expect(parcelState(qr)).toBe("inspected");
     }
+  });
+});
+
+describe("출고 화면 안내: 승인은 끝났고 차액만 미납이면 「차액 결제 대기」(BACKLOG 2026-10-06)", () => {
+  it("같은 상자의 다음 할 일이 승인 전 wait_approval → 승인 뒤 wait_difference → 차액을 내면 print_label", async () => {
+    const g = await paidOrder(["small"]);
+    const qr = await labeled(g.boxIds[0]!);
+    await measure(qr, "medium");
+    const staff = await signedInClient("fankkuk_staff");
+    expect(await inspect(staff, qr, FAN_PASS)).toBe("inspected");
+    const nextStep = async () => ((await staff.rpc("office_parcel_by_qr", { p_qr: qr })).data as { next_step: string }[])[0]?.next_step;
+
+    expect(await nextStep()).toBe("wait_approval");
+    expect((await approveRpc(g.requestId)).data).toBe("approved");
+    expect(await nextStep()).toBe("wait_difference");
+    expect((await payDifference(g.boxIds[0]!)).out.ok).toBe(true);
+    expect(await nextStep()).toBe("print_label");
+  });
+
+  it("(실패경로) 차액 기한(요청 + 168시간)이 지났는데 7일 처리 전이면 wait_expiry — 더 낼 수 없는 차액을 기다리라고 하지 않는다", async () => {
+    const g = await paidOrder(["small"]);
+    const qr = await labeled(g.boxIds[0]!);
+    await measure(qr, "medium");
+    const staff = await signedInClient("fankkuk_staff");
+    expect(await inspect(staff, qr, FAN_PASS)).toBe("inspected");
+    expect((await approveRpc(g.requestId)).data).toBe("approved");
+    const nextStep = async () => ((await staff.rpc("office_parcel_by_qr", { p_qr: qr })).data as { next_step: string }[])[0]?.next_step;
+    psql(`update public.payments set created_at = now() - interval '167 hours' where order_id = '${g.orderId}' and kind = 'difference'`);
+    expect(await nextStep()).toBe("wait_difference");
+    psql(`update public.payments set created_at = now() - interval '168 hours 1 minute' where order_id = '${g.orderId}' and kind = 'difference'`);
+    expect(await nextStep()).toBe("wait_expiry");
+  });
+
+  it("(실패경로) 차액이 없는 상자는 승인 뒤 바로 print_label — wait_difference 로 새지 않는다", async () => {
+    const g = await paidOrder(["small"]);
+    const qr = await labeled(g.boxIds[0]!);
+    await measure(qr, "small");
+    const staff = await signedInClient("fankkuk_staff");
+    expect(await inspect(staff, qr, FAN_PASS)).toBe("inspected");
+    expect((await approveRpc(g.requestId)).data).toBe("approved");
+    expect(((await staff.rpc("office_parcel_by_qr", { p_qr: qr })).data as { next_step: string }[])[0]?.next_step).toBe("print_label");
   });
 });
 

@@ -221,7 +221,8 @@ export function myVerificationPanel(
   apiPlatforms: ReadonlySet<string> = new Set(),
 ): MyVerificationPanel {
   const live = rows.find(isLive) ?? null;
-  // 줄은 발급 시각이 늦은 순서로 온다. 플랫폼 로그인으로 승인된 줄도 보여 줄 「지난 신청」이 될 수 있다.
+  // 줄은 마지막으로 일어난 일(취소·끝남·기간 지남·발급)이 늦은 순서로 온다(DB 읽기 함수가 정렬). 그래서 첫 줄이 가장 최근 결정이다.
+  // 플랫폼 로그인으로 승인된 줄도 보여 줄 「지난 신청」이 될 수 있다.
   const last = live ? null : (rows[0] ?? null);
   return {
     mode: state.verified ? "move" : "verify",
@@ -256,7 +257,7 @@ export function verifyRoutes(platform: string, apiPlatforms: ReadonlySet<string>
 
 /**
  * 확인 칸 맨 위 한 줄. 운영자 확인만이고 아직 확인 전이면(INV-V10, d32) 지난 신청보다 위반 취소를 먼저 알린다 —
- * 지난 신청은 발급 순서로 골라서, 취소 전에 거둔 신청이 있으면 그 줄이 대신 보이기 때문이다.
+ * 지난 신청 줄로는 「취소됐다」까지만 알릴 수 있고, 다시 확인을 운영자만 한다는 안내는 이 상태에서만 붙는다.
  */
 export function panelOutcomeText(state: Pick<MyVerificationState, "verified" | "operatorOnly">, last: MyVerification | null): string | null {
   if (!state.verified && state.operatorOnly) return "이용 규칙 위반으로 승인이 취소됐어요. 다시 확인은 운영자가 해요.";

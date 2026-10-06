@@ -10,9 +10,12 @@ import s from "./approval-requests.module.css";
 export function ApprovalRequestsPage({
   requests,
   decided,
+  now,
 }: {
   requests: readonly ApprovalRequestView[];
   decided: readonly DecidedRequestView[];
+  /** 남은 기간을 세는 기준 시각 — 화면을 그리는 서버가 넘긴다 */
+  now: string;
 }) {
   return (
     <div>
@@ -28,7 +31,7 @@ export function ApprovalRequestsPage({
         </p>
       </div>
 
-      <ApprovalRequestList requests={requests} decided={decided} />
+      <ApprovalRequestList requests={requests} decided={decided} now={now} />
     </div>
   );
 }

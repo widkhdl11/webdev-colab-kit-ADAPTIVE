@@ -512,6 +512,39 @@ describe("사유 (INV-V9)", () => {
     expect(JSON.stringify(rows)).not.toContain(MEMO);
   });
 
+  it("INV-V9 화면 맨 위 줄: 이사 신청을 거둔 뒤 승인이 취소되면, 내 신청 읽기의 첫 줄은 거둔 신청이 아니라 취소된 승인이다", async () => {
+    const a = await verifyVia("ggul", YT("ggulfirst"));
+    const move = await requestOk("ggul", YT("ggulmove"));
+    expect((await withdraw("ggul", move.application_id)).error).toBeNull();
+    expect((await revoke(CV.ggul.creatorId, "channel_gone")).error).toBeNull();
+    const rows = await mine("ggul");
+    // 발급은 이사 신청이 나중이지만, 마지막으로 일어난 일은 승인 취소다
+    expect(rows[0]).toMatchObject({ id: a.application_id, status: "approved", reason_code: "channel_gone" });
+    expect(rows[1]).toMatchObject({ id: move.application_id, status: "withdrawn" });
+  });
+
+  it("INV-V9 화면 맨 위 줄: 끝난 시각(거둠·반려)이 발급보다 늦으면 그 시각으로 줄을 세운다", async () => {
+    const a = await requestOk("ggul", YT("ggulended1"));
+    expect((await withdraw("ggul", a.application_id)).error).toBeNull();
+    const b = await requestOk("ggul", YT("ggulended2"));
+    expect((await withdraw("ggul", b.application_id)).error).toBeNull();
+    // 발급은 b 가 나중이다. a 가 가장 늦게 끝난 것으로 만든다(끝난 시각만 옮김).
+    shiftApp(a.application_id, "ended_at = now() + interval '1 minute'");
+    expect((await mine("ggul"))[0]).toMatchObject({ id: a.application_id, status: "withdrawn" });
+  });
+
+  it("INV-V9 화면 맨 위 줄: 기간 지남은 「발급 + 게시 기한」 시각으로 센다 — 오래전에 발급돼 방금 기간이 지난 신청이 위에 온다", async () => {
+    const b = await requestOk("ggul", YT("ggulexp2"));
+    expect((await withdraw("ggul", b.application_id)).error).toBeNull();
+    shiftApp(b.application_id, "issued_at = now() - interval '3 hours', ended_at = now() - interval '3 hours'");
+    const a = await requestOk("ggul", YT("ggulexp1"));
+    // a 를 7일 1시간 전에 발급한 것으로 — 읽을 때 기간 지남, 기간이 지난 시각은 1시간 전(b 가 끝난 3시간 전보다 늦다)
+    shiftApp(a.application_id, "issued_at = now() - interval '7 days 1 hour'");
+    const rows = await mine("ggul");
+    expect(rows[0]).toMatchObject({ id: a.application_id, status: "expired" });
+    expect(rows[1]).toMatchObject({ id: b.application_id, status: "withdrawn" });
+  });
+
   it("INV-V9 (S9c, 실패경로): 사유 없이·목록 밖 값·서로 바뀐 목록·201자 메모로 반려·취소하면 거부, 아무것도 안 바뀜", async () => {
     const a = await requestOk("ggul", YT("ggulnoreason"));
     expect((await post("ggul", a.application_id)).error).toBeNull();

@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { needsReload } from "@/entities/parcel/model/office-error";
+import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
 import { KIND_LABEL, NEXT_STEP_TEXT, STATE_LABEL, TIER_LABEL } from "@/entities/parcel/model/office-labels";
-import { parcelFromLookupBody, type ParcelDetail } from "@/entities/parcel/model/office-parcel";
+import { parcelFromLookupBody, type NextStep, type ParcelDetail } from "@/entities/parcel/model/office-parcel";
 import { readScan } from "@/entities/parcel/model/scan-code";
 import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
@@ -41,6 +42,20 @@ function PrintLabel({ orderNo, opened }: { orderNo: string; opened: OpenedLabel 
     </div>
   );
 }
+
+// 출고 안 되는 상자 중 「기다리는 중」 세 갈래의 제목과 안내. 차액 미납은 승인과 따로 안내한다 — 승인은 끝났는데
+// 「승인을 기다려요」라고 하면 운영자가 크리에이터 쪽을 확인하러 간다.
+type WaitStep = Extract<NextStep, "wait_approval" | "wait_difference" | "wait_accept">;
+const WAIT_HEADING: Record<WaitStep, string> = {
+  wait_approval: "크리에이터 승인을 기다리고 있어요",
+  wait_difference: "팬의 차액 결제를 기다리고 있어요",
+  wait_accept: "팬이 받기를 누르기 전이에요",
+};
+const WAIT_GUIDE: Record<WaitStep, string> = {
+  wait_approval: "상자를 그대로 두세요. 승인이 나면 이 상자는 출고할 수 있게 돼요. 송장 출력 버튼은 나오지 않아요.",
+  wait_difference: `상자를 그대로 두세요. 승인은 끝났고, 실측이 신고보다 커서 요청한 차액을 팬이 아직 내지 않았어요. 내면 출고할 수 있고, ${DIFFERENCE_DEADLINE_DAYS}일 안에 내지 않으면 반송 대기로 바뀌어요.`,
+  wait_accept: "상자를 그대로 두세요. 팬이 받기를 하면 출고할 수 있어요. 기한 안에 받지 않으면 반송 대기로 바뀌어요.",
+};
 
 function InfoIcon() {
   return (
@@ -384,12 +399,13 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
       );
 
     case "wait_approval":
+    case "wait_difference":
     case "wait_accept":
       return (
         <section className={`${w.result} ${w.resultNo}`} aria-labelledby="out-wait">
           <div className={w.resultHead}>
             <span className={`${a.tag} ${a.tagInk}`}>출고 안 됨</span>
-            <h2 id="out-wait">{parcel.nextStep === "wait_approval" ? "크리에이터 승인을 기다리고 있어요" : "팬이 받기를 누르기 전이에요"}</h2>
+            <h2 id="out-wait">{WAIT_HEADING[parcel.nextStep]}</h2>
           </div>
           <dl className={a.kv}>
             <dt>주문번호</dt>
@@ -402,9 +418,7 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
           <div className={w.nextStep}>
             <h3>이렇게 하세요</h3>
             <p>
-              {parcel.nextStep === "wait_approval"
-                ? "상자를 그대로 두세요. 승인이 나면 이 상자는 출고할 수 있게 돼요. 송장 출력 버튼은 나오지 않아요."
-                : "상자를 그대로 두세요. 팬이 받기를 하면 출고할 수 있어요. 기한 안에 받지 않으면 반송 대기로 바뀌어요."}
+              {WAIT_GUIDE[parcel.nextStep]}
             </p>
           </div>
         </section>

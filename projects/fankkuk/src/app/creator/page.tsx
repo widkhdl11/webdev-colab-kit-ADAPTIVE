@@ -41,6 +41,7 @@ export default async function Page() {
         notices={notices}
         incoming={incoming}
         sentGifts={sentGifts}
+        now={new Date().toISOString()}
       />
       <SiteFooter />
     </>
