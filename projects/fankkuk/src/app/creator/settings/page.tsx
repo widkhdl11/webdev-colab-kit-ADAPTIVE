@@ -37,7 +37,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell role="creator" current="/creator/settings">
+      <MyShell role="creator" current="/creator/settings" nickname={viewer.nickname}>
         <CreatorSettingsPage
           settings={settings}
           tagOptions={tagOptions}

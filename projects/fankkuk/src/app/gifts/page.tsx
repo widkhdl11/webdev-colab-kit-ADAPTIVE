@@ -21,11 +21,11 @@ export default async function Page() {
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", gifts)} />
       {viewer.role === "fan" ? (
-        <MyShell role="fan" current="/gifts">
+        <MyShell role="fan" current="/gifts" nickname={viewer.nickname}>
           <GiftListPage gifts={gifts} faceToneByName={faceToneByName} />
         </MyShell>
       ) : (
-        <MyShell role="creator" current="/gifts">
+        <MyShell role="creator" current="/gifts" nickname={viewer.nickname}>
           <GiftListPage gifts={gifts} faceToneByName={faceToneByName} title="보낸 선물" />
         </MyShell>
       )}

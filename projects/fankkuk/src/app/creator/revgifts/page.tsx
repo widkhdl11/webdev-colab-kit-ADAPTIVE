@@ -28,7 +28,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell role="creator" current="/creator/revgifts">
+      <MyShell role="creator" current="/creator/revgifts" nickname={viewer.nickname}>
         <RevgiftSentPage rows={rows} boxes={boxes} paid={paid === "1"} officeAddress={OFFICE_ADDRESS} />
       </MyShell>
       <SiteFooter />

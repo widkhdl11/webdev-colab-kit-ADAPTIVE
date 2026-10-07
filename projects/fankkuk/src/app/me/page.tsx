@@ -22,7 +22,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell role="fan" current="/me">
+      <MyShell role="fan" current="/me" nickname={viewer.nickname}>
         <MyInfoPanel account={account} />
       </MyShell>
       <SiteFooter />

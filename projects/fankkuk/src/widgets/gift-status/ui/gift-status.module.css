@@ -1,69 +1,71 @@
-/* 선물 하나 상세 — 시안 docs/design/mockups/site/v4/gift.html <style> */
-.crumb a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 16px; color: var(--sub); font-weight: 600; text-decoration: none; }
+/* 선물 하나 상세 — 시안 docs/design/mockups/site/v9-pages/gift-a.html (design-rules 5절 「남은 화면 네 곳」, 카드 d45) */
+.crumb a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 12px; color: var(--sub); font-weight: 600; text-decoration: none; }
 .crumb a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
-.ico-tile { display: grid; place-items: center; width: 64px; height: 64px; border-radius: var(--r-card); background: var(--surface); flex-shrink: 0; }
+.ico-tile { display: grid; place-items: center; width: 64px; height: 64px; border-radius: var(--r-card); background: var(--surface-brand); flex-shrink: 0; }
 .ico-tile img { width: 44px; height: 44px; }
 
-.g-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; padding-block: 8px 40px; }
-.meta { color: var(--sub); }
-.g-lead { margin-top: 4px; }
-.g-state { min-height: 36px; padding-inline: 14px; font-size: 17px; }
+/* 첫 판 — 옅은 코랄 판 하나에 머리·지금 상황·진행 줄 */
+.g-panel { margin-top: 8px; padding: clamp(24px, 4vw, 48px); border-radius: var(--r-panel); background: var(--surface-brand); }
+.g-top { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 16px; align-items: center; }
+.meta { color: var(--sub); font-weight: 600; }
+.g-title { margin-top: 8px; font-size: clamp(28px, 3vw, 42px); line-height: 1.25; font-weight: 800; letter-spacing: -1px; overflow-wrap: anywhere; }
+.g-lead { margin-top: 8px; font-size: 18px; color: var(--sub); }
+.g-now { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 20px; }
+.g-state { min-height: 32px; padding-inline: 12px; white-space: nowrap; }
+.g-now strong { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.g-art { position: relative; height: 160px; }
+.g-art img { position: absolute; object-fit: contain; }
+.a1 { inset: 0; width: 100%; height: 100%; }
+.a2 { width: 36%; height: auto; left: 0; top: 0; }
 
-.stepper { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding-block: 8px 32px; }
-/* 승인 칸이 붙는 진행 중 선물은 아래에 갈래 칸 자리를 둔다 */
-.stepper:has(.branch) { padding-bottom: 96px; }
-.stepper li { position: relative; display: grid; justify-items: center; gap: 10px; text-align: center; color: var(--sub); font-weight: 600; }
-.stepper li::before { content: ""; position: absolute; top: 18px; left: -50%; width: 100%; height: 3px; background: var(--track); }
-.stepper li:first-child::before { display: none; }
-.stepper li.is-done::before, .stepper li.is-current::before { background: var(--brand); }
+/* 진행 줄 — 흰 카드 안. 끝낸 단계 초록, 현재 단계 코랄 테두리 */
+.track { margin-top: 28px; padding: 28px 16px 20px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.stepper { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.stepper li { position: relative; display: grid; justify-items: center; align-content: start; gap: 8px; text-align: center; color: var(--sub); font-weight: 600; }
+.stepper li::after { content: ""; position: absolute; top: 19px; left: calc(50% + 28px); right: calc(-50% + 28px); height: 3px; border-radius: 2px; background: var(--border); }
+.stepper li:last-child::after { display: none; }
+.stepper li.is-done::after { background: var(--success); }
 .sn { position: relative; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface); color: var(--sub); font-weight: 700; }
-.is-done .sn { background: var(--brand); color: var(--on-brand); }
+.is-done .sn { background: var(--success); color: var(--on-brand); }
 .stepper li.is-current { color: var(--ink); font-weight: 700; }
 .is-current .sn { background: var(--white); color: var(--brand); box-shadow: inset 0 0 0 3px var(--brand); }
 .stepper li.is-stopped { color: var(--ink); font-weight: 700; }
 .is-stopped .sn { background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 3px var(--ink); }
-
-/* 크리에이터 승인 — 검수(3번째)와 출고(4번째) 사이 경계(= 가로 50%)에서 아래로 갈라진다 */
-.stepper li.branch { position: absolute; left: 50%; top: 28px; display: grid; justify-items: center; transform: translateX(-50%); }
-.stepper li.branch::before { display: none; }
-.branch-line { width: 0; height: 56px; border-left: 2px dashed var(--field-line); }
-.branch[data-state="done"] .branch-line { border-left-style: solid; border-left-color: var(--brand); }
-.branch-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: var(--r-pill); background: var(--white); color: var(--ink); font-weight: 700; white-space: nowrap; box-shadow: inset 0 0 0 2px var(--field-line); }
-.branch[data-state="waiting"] .branch-pill { box-shadow: inset 0 0 0 2px var(--ink); }
-.branch[data-state="done"] .branch-pill { background: var(--brand-soft); color: var(--brand-ink); box-shadow: none; }
-.branch-state { color: var(--sub); font-weight: 600; }
-.branch[data-state="done"] .branch-state { color: var(--brand-ink); }
+.step-text { min-width: 0; overflow-wrap: anywhere; }
+.t { display: block; font-weight: 400; line-height: 1.4; color: var(--sub); }
+.appr { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 20px; padding: 16px 8px 0; border-top: 1px solid var(--border); font-weight: 600; }
+.appr :global(.tag) { min-height: 32px; padding-inline: 12px; white-space: nowrap; }
+.appr .t { display: inline; }
 
 @media (max-width: 767px) {
-  .stepper { grid-template-columns: minmax(0, 1fr); padding-bottom: 16px; }
-  .stepper:has(.branch) { padding-bottom: 16px; }
-  /* 휴대폰 — 검수 아래에 들여쓴 갈래 줄. 본 줄 선은 출고까지 이어진다 */
-  .stepper li.branch { position: static; display: flex; align-items: center; height: 56px; padding-left: 20px; transform: none; }
-  .branch-line { width: 24px; height: 0; border-left: 0; border-top: 2px dashed var(--field-line); }
-  .branch[data-state="done"] .branch-line { border-top-style: solid; border-top-color: var(--brand); }
-  .branch-pill { white-space: normal; }
-  .stepper li.branch + li::before { top: -84px; height: 112px; }
-  .stepper li { grid-auto-flow: column; justify-content: start; justify-items: start; align-items: center; gap: 16px; height: 56px; padding-block: 8px; text-align: left; }
-  .stepper li::before { top: -28px; left: 18px; width: 3px; height: 56px; }
+  .g-top { grid-template-columns: minmax(0, 1fr); }
+  .g-art { height: 120px; order: -1; margin-bottom: -4px; }
+  .g-panel { padding: 24px 20px; border-radius: var(--r-panel-sm); }
+  .track { padding: 20px 16px 16px; }
+  .stepper { grid-template-columns: minmax(0, 1fr); }
+  .stepper li { grid-template-columns: 40px minmax(0, 1fr); justify-items: start; align-items: start; column-gap: 16px; padding-bottom: 20px; text-align: left; }
+  .stepper li:last-child { padding-bottom: 0; }
+  .stepper li::after { top: 44px; bottom: 4px; left: 18px; right: auto; width: 3px; height: auto; }
+  .step-text { display: grid; align-content: center; min-height: 40px; }
+  .appr { padding-inline: 0; }
 }
-.step-note { text-align: center; color: var(--sub); }
-.step-note strong { color: var(--ink); }
-@media (max-width: 767px) { .step-note { text-align: left; } }
 
-.two { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 6vw, 80px); align-items: start; margin-top: clamp(40px, 5vw, 72px); }
+/* 아래 두 칸 — 왼쪽 흰 카드들 / 오른쪽 도착 예정일 카드 + 중립 면 주문 정보 카드 */
+.two { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 24px; align-items: start; margin-top: 24px; }
+.stack { display: grid; gap: 24px; min-width: 0; }
 @media (max-width: 1023px) { .two { grid-template-columns: minmax(0, 1fr); } }
-.part { padding-block: 40px; border-top: 1px solid var(--divider); }
-.part:first-child { border-top: 0; padding-top: 0; }
-.part h2 { font-size: 28px; letter-spacing: -.8px; }
+.part { padding: clamp(20px, 3vw, 32px); border-radius: var(--r-tile); background: var(--white); box-shadow: var(--hair); }
+.part h2 { font-size: 22px; letter-spacing: -.3px; font-weight: 700; }
 .sub-t { margin-top: 8px; color: var(--sub); }
 .sub-t--gap { margin-top: 16px; }
 
-.box-rows { margin-top: 16px; }
-.box-row { padding-block: 24px; border-top: 1px solid var(--divider); }
+.box-rows { margin-top: 12px; }
+.box-row { padding-block: 20px; border-top: 1px solid var(--border); }
 .box-row:first-child { border-top: 0; padding-top: 8px; }
-.box-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.box-top h3 { font-size: 20px; }
+.box-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.box-top h3 { font-size: 18px; font-weight: 700; }
+.box-top :global(.tag) { white-space: nowrap; }
 /* 입고된 상자의 원 송장번호 — 시안 gift-boxes.html .inv-fixed (고치는 칸은 features/box-waybill) */
 .inv-fixed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 12px; }
 .no { font-size: 20px; font-weight: 700; letter-spacing: .3px; font-variant-numeric: tabular-nums; }
@@ -77,23 +79,25 @@
 .addr-copy { margin-top: 16px; }
 @media (max-width: 767px) { .addr dl div { grid-template-columns: minmax(0, 1fr); gap: 0; } }
 
-.eta { display: flex; align-items: center; gap: 20px; margin-bottom: 40px; }
-.eta h2 { font-size: 18px; font-weight: 600; letter-spacing: 0; }
+.eta { display: flex; align-items: center; gap: 16px; padding: clamp(20px, 3vw, 32px); border-radius: var(--r-tile); background: var(--white); box-shadow: var(--hair); }
+.eta h2 { font-size: 16px; font-weight: 600; letter-spacing: 0; color: var(--sub); }
 .eta strong { display: block; font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
 
-/* 회색 판은 하나 — 주문 정보 */
-.info { padding: 32px; border-radius: var(--r-tile); background: var(--surface-brand); }
-.info h2 { margin-bottom: 8px; font-size: 24px; letter-spacing: -.5px; }
-.info-row { display: flex; justify-content: space-between; gap: 12px; padding: 14px 0; border-top: 1px solid var(--divider); }
+/* 중립 면 카드 — 주문 정보(+ 결제 내역) */
+.info { padding: clamp(20px, 3vw, 32px); border-radius: var(--r-tile); background: var(--surface); box-shadow: var(--hair); }
+.info h2 { margin-bottom: 4px; font-size: 22px; letter-spacing: -.3px; font-weight: 700; }
+.info-row { display: flex; justify-content: space-between; gap: 16px; padding-block: 10px; border-top: 1px solid var(--border); }
+.info dl .info-row:first-child { border-top: 0; }
 .info-row dt { color: var(--sub); }
 .info-row dd { margin: 0; font-weight: 600; text-align: right; }
-.info :global(.tag) { margin-top: 12px; }
+.info > :global(.tag) { margin-top: 16px; }
 .info-note { margin-top: 12px; color: var(--sub); }
 
-/* 결제 내역 — 시안 gift.html .pay 의 줄 모양. 주문 정보와 같은 회색 판 안에 둔다 */
-.pay { margin-top: 32px; }
-.pay h3 { margin-bottom: 8px; font-size: 20px; letter-spacing: -.3px; }
-.sum-line { display: flex; justify-content: space-between; gap: 12px; padding: 14px 0; border-top: 1px solid var(--divider); }
+/* 결제 내역 — 시안 gift-a.html .pay. 주문 정보와 같은 중립 면 카드 안에 둔다 */
+.pay { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.pay h3 { margin-bottom: 4px; font-size: 18px; font-weight: 700; }
+.sum-line { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.pay h3 + .sum-line { border-top: 0; }
 .sum-line small { display: block; color: var(--sub); font-size: 16px; }
 .amt { font-weight: 600; text-align: right; white-space: nowrap; }
 .sum-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--divider-strong); font-weight: 700; }

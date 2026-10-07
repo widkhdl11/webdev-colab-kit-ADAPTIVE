@@ -1,6 +1,5 @@
-import { statusTagClass } from "@/shared/ui/status-tone";
+import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
 import Link from "next/link";
-import { Fragment } from "react";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import {
   APPROVAL_LABEL,
@@ -26,13 +25,13 @@ import { DifferenceSection, type DifferenceNotice } from "./difference-section";
 import { PaymentSummary } from "./payment-summary";
 import s from "./gift-status.module.css";
 
-// 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v4/gift.html
+// 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v9-pages/gift-a.html (design-rules 5절, 카드 d45 — 시안은 한 상태의 예시, 칸이 나오는 조건은 아래 그대로)
 // 문의하지 않아도 지금 어디까지 왔는지 알 수 있게(성공 기준 3).
 // 크리에이터에게 보내는 송장번호는 이 화면에 오지 않는다 — toFanView·my_gift_boxes 가 걸러서 넘긴다.
 // 상자별 원 송장번호·내 물건 찾기 시안: docs/design/mockups/site/v4/gift-boxes.html (택배사 고르는 칸은 DB 에 그 칸이 없어 뺐다).
 // 사무실 주소는 view.officeAddress 가 있을 때(결제가 끝난 진행 중 주문)만 그린다(INV-S9). 헤더·푸터는 라우트가 붙인다.
-// 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 검수와 출고 사이에서 갈라져 붙는 칸으로 그린다.
-// 결제 내역은 결제할 때 저장한 금액만 보인다(payment INV-M14, my_gift_payment) — 주문 정보 회색 판 안에 붙인다.
+// 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 진행 줄 아래 따로 한 줄로 그린다.
+// 결제 내역은 결제할 때 저장한 금액만 보인다(payment INV-M14, my_gift_payment) — 주문 정보 중립 면 카드 안에 붙인다.
 
 function Check({ size = 18 }: { size?: number }) {
   return (
@@ -45,6 +44,8 @@ function Check({ size = 18 }: { size?: number }) {
 const STEP_CLASS = { done: s["is-done"], current: s["is-current"], stopped: s["is-stopped"], todo: undefined } as const;
 
 const APPROVAL_TEXT = { done: "승인됨", waiting: "기다리는 중", todo: "출고 전에 받아요" } as const;
+
+const APPROVAL_TONE = { done: "success", waiting: "warn", todo: "plain" } as const satisfies Record<keyof typeof APPROVAL_TEXT, StatusTone>;
 
 type DifferenceProps = { differences: readonly GiftDifference[]; clientKey: string; notice: DifferenceNotice };
 
@@ -62,8 +63,6 @@ export function GiftStatusPage({
 }) {
   const badge = fanBadge(view);
   const progress = fanProgress(view);
-  const current = view.steps.find((st) => st.state === "current");
-  const currentDetail = current ? fanStepDetail(current, view) : null;
   // 상자별 원 송장번호는 입고 전까지만 고친다(design-rules 8-1). 출고 운송장은 읽기 함수가 주지 않는다.
   const editableBoxes = view.outcome === "in_progress" ? boxes.filter((b) => isWaybillEditable(b.state)) : [];
   const anyEditable = editableBoxes.length > 0;
@@ -85,67 +84,66 @@ export function GiftStatusPage({
 
       <section aria-labelledby="g-title">
         <div className="container">
-          <div className={s["g-head"]}>
-            <div>
-              <p className={s.meta}>
-                주문번호 {view.orderNo} · 등록 {formatDate(view.registeredAt)}
-              </p>
-              <h1 className="page-h" id="g-title">
-                {view.creatorName}님께 보내는 선물
-              </h1>
-              <p className={`lead ${s["g-lead"]}`}>
-                {view.itemKind} · 상자 {view.boxCount}개
-              </p>
+          <div className={s["g-panel"]}>
+            <div className={s["g-top"]}>
+              <div>
+                <p className={s.meta}>
+                  주문번호 {view.orderNo} · 등록 {formatDate(view.registeredAt)}
+                </p>
+                <h1 className={s["g-title"]} id="g-title">
+                  {view.creatorName}님께 보내는 선물
+                </h1>
+                <p className={s["g-lead"]}>
+                  {view.itemKind} · 상자 {view.boxCount}개
+                </p>
+                <div className={s["g-now"]}>
+                  <span className={statusTagClass(badge.tone, s["g-state"])}>
+                    {view.outcome === "in_progress" ? `${badge.text} · ${progress.done}/${progress.total}` : badge.text}
+                  </span>
+                  <strong>{fanHeadline(view)}</strong>
+                </div>
+              </div>
+              <div className={s["g-art"]} aria-hidden="true">
+                <img className={`asset ${s.a1}`} src="/img/icon-truck.png" alt="" width={200} height={160} />
+                <img className={`asset ${s.a2}`} src="/img/icon-gift.png" alt="" width={72} height={72} />
+              </div>
             </div>
-            <span className={statusTagClass(badge.tone, s["g-state"])}>
-              {view.outcome === "in_progress" ? `${badge.text} · ${progress.done}/${progress.total}` : badge.text}
-            </span>
-          </div>
 
-          {showsProgress ? (
-            <>
-              <ol className={s.stepper} aria-label={`선물 진행 단계 ${progress.total}단계 중 ${progress.done}단계 완료`}>
-                {view.steps.map((st, i) => (
-                  <Fragment key={st.key}>
-                    <li className={STEP_CLASS[st.state]} aria-current={st.state === "current" ? "step" : undefined}>
-                      <span className={s.sn}>{st.state === "done" ? <Check /> : i + 1}</span>
-                      <span>
-                        {FAN_STEP_LABEL[st.key]}
-                        {st.state === "done" ? <span className="sr-only"> 완료</span> : null}
-                        {st.state === "stopped" ? <span className="sr-only"> 멈춤</span> : null}
-                      </span>
-                    </li>
-                    {st.key === "inspected" && view.outcome === "in_progress" ? (
-                      <li className={s.branch} data-state={view.approval.state}>
-                        <span className={s["branch-line"]} aria-hidden="true" />
-                        <span className={s["branch-pill"]}>
-                          {view.approval.state === "done" ? <Check size={16} /> : null}
-                          {APPROVAL_LABEL}
-                          <span className={s["branch-state"]}>
-                            <span className="sr-only">: </span>
-                            {view.approval.state === "done" && view.approval.at
-                              ? `${APPROVAL_TEXT.done} · ${formatDate(view.approval.at)}`
-                              : APPROVAL_TEXT[view.approval.state]}
-                          </span>
+            {showsProgress ? (
+              <div className={s.track}>
+                <ol className={s.stepper} aria-label={`선물 진행 단계 ${progress.total}단계 중 ${progress.done}단계 완료`}>
+                  {view.steps.map((st, i) => {
+                    const detail = fanStepDetail(st, view);
+                    return (
+                      <li key={st.key} className={STEP_CLASS[st.state]} aria-current={st.state === "current" ? "step" : undefined}>
+                        <span className={s.sn}>{st.state === "done" ? <Check /> : i + 1}</span>
+                        <span className={s["step-text"]}>
+                          {FAN_STEP_LABEL[st.key]}
+                          {st.state === "done" ? <span className="sr-only"> 완료</span> : null}
+                          {st.state === "stopped" ? <span className="sr-only"> 멈춤</span> : null}
+                          {detail ? <span className={s.t}>{detail}</span> : null}
                         </span>
                       </li>
-                    ) : null}
-                  </Fragment>
-                ))}
-              </ol>
-              <p className={s["step-note"]}>
-                <strong>{fanHeadline(view)}</strong>
-                {currentDetail ? ` · ${currentDetail}` : null}
-              </p>
-            </>
-          ) : (
-            <p className={s["step-note"]}>
-              <strong>{fanHeadline(view)}</strong>
-            </p>
-          )}
+                    );
+                  })}
+                </ol>
+                {/* 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 진행 줄 아래 따로 한 줄로 */}
+                {view.outcome === "in_progress" ? (
+                  <p className={s.appr}>
+                    <span className={statusTagClass(APPROVAL_TONE[view.approval.state])}>
+                      {view.approval.state === "done" ? <Check size={16} /> : null}
+                      {APPROVAL_TEXT[view.approval.state]}
+                    </span>
+                    {APPROVAL_LABEL}
+                    {view.approval.state === "done" && view.approval.at ? <span className={s.t}> · {formatDate(view.approval.at)}</span> : null}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
 
           <div className={s.two}>
-            <div>
+            <div className={s.stack}>
               {/* 차액 결제(payment INV-M11·M12·M13) — 차액 요청이 있는 주문에만. 진행 중이 아니면 낸 기록만 남는다 */}
               {difference && shownDifferences.length > 0 ? (
                 <DifferenceSection
@@ -260,7 +258,7 @@ export function GiftStatusPage({
               ) : null}
             </div>
 
-            <div>
+            <div className={s.stack}>
               {view.expectedArrivalDate ? (
                 <div className={s.eta}>
                   <span className={s["ico-tile"]} aria-hidden="true">

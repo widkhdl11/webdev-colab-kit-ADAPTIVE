@@ -19,7 +19,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell role="fan" current="/me/following">
+      <MyShell role="fan" current="/me/following" nickname={viewer.nickname}>
         <MyFollowingPanel creators={followed} />
       </MyShell>
       <SiteFooter />
