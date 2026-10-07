@@ -1,0 +1,145 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v9-pages me-a (2026-10-07) — 내 팬꾹(팬) 틀 + 본문 「선물 내역」
+  방향 A「조용한 목록」: 메뉴는 글자만(현재 항목만 옅은 코랄 면), 본문은 흰 바탕에 선물이 한 줄에 하나·가는 선으로 구분 — 지금 v8 모양을 메인 v9 헤더·알약 탭(선택은 차콜)에 맞춰 정돈.
+  전달받은 피드백 흐름: 「아동사이트 같은 느낌」 싫음 / 「너무 배송업무 중심이면 정나미 없다」 / 원하는 느낌 「심플, 세련됨, 귀여움」.
+  틀(h1 「내 팬꾹」 · 왼쪽 메뉴 4개 · .my-body)은 다른 메뉴에도 그대로, 본문만 바뀐다. 767px 이하는 메뉴가 위 탭.
+  새 기능 없음: 실제 위젯(gift-list-page) 데이터만 — 이름·상자 수·등록일·주문번호·7칸 진행·상태·「상세 보기」·「선물 보내기」(빈 목록에도 있는 링크).
+  색·반경·글자는 design-rules.md 그대로, 16px 미만 글자 없음, 상태 배지 4색(진행 파랑·대기 노랑·완료 초록·거절 빨강).
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 내 팬꾹 · 선물 내역</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="../v8-white/v8.css">
+<style>
+/* 헤더 오른쪽 = v9-header 「B + 가는 선 선물 아이콘」 (home-b 와 같음) */
+.h-gift { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+.h-gift:hover, .h-user:hover { background: var(--surface-neutral); }
+.h-num { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 9999px; background: var(--ink); color: var(--text-inverse); font-size: 16px; font-weight: 700; line-height: 1; }
+.h-sep { width: 1px; height: 16px; background: var(--border); margin-inline: 4px; }
+.h-user { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+.h-user svg { color: var(--faint); }
+@media (max-width: 767px) { .h-user, .h-sep { display: none; } .h-gift-t { display: none; } .h-gift::after { content: "선물"; } .h-gift .h-num { order: 3; } }
+
+/* 틀 공통: 제목 + 왼쪽 메뉴 + 본문 (메뉴가 바뀌어도 이 틀은 그대로, 본문 .my-body 만 갈아 끼움) */
+.my-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: clamp(72px, 9vw, 128px); }
+.my-body { min-width: 0; }
+.my-h { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+.my-h h2 { font-size: 28px; line-height: 1.3; letter-spacing: -.8px; }
+.who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.says { color: var(--sub); }
+small { font-size: 16px; }
+.note-line { margin-top: 16px; color: var(--sub); }
+
+/* A: 조용한 목록 — 메뉴는 글자만, 본문은 흰 바탕에 한 줄에 하나(줄 사이 가는 선) */
+.side ul { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); box-shadow: 0 1px 0 var(--border); }
+.side ul::-webkit-scrollbar { display: none; }
+.side a { display: flex; align-items: center; min-height: 52px; padding: 0 14px; white-space: nowrap; border-bottom: 3px solid transparent; color: var(--sub); font-weight: 600; text-decoration: none; }
+.side a:hover { color: var(--ink); }
+.side a[aria-current="page"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--brand); }
+@media (min-width: 768px) {
+  .my-grid { grid-template-columns: 224px minmax(0, 1fr); gap: 40px; }
+  .side { position: sticky; top: 96px; align-self: start; }
+  .side ul { flex-direction: column; overflow: visible; margin: 0; padding: 0; box-shadow: none; }
+  .side a { min-height: 48px; border-radius: 12px; border-bottom: 0; }
+  .side a:hover { background: var(--surface-hover); }
+  .side a[aria-current="page"] { background: var(--surface-selected); color: var(--brand-ink); }
+}
+@media (min-width: 1100px) { .my-grid { gap: 64px; } }
+.tabs { display: flex; gap: 8px; margin: 16px 0 8px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 0; border-radius: 9999px; background: var(--surface-neutral); color: var(--sub); font-weight: 600; cursor: pointer; }
+.tab:hover { background: var(--surface-hover); }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--text-inverse); font-weight: 700; }
+.rows { margin-top: 8px; border-top: 1px solid var(--border); }
+.r { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; align-items: center; gap: 12px 24px; padding-block: 24px; border-bottom: 1px solid var(--border); }
+.r .meter { display: grid; justify-items: end; gap: 4px; }
+.r .meter small { color: var(--sub); }
+.r .go { white-space: nowrap; }
+@media (max-width: 1099px) {
+  .r { grid-template-columns: 48px minmax(0, 1fr); gap: 12px 16px; padding-block: 20px; }
+  .r .meter { grid-column: 2; justify-items: start; }
+  .r .go { grid-column: 2; justify-self: start; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.500 3.500 9.500 3.500 12 0" stroke="#333D39" stroke-width="2.600" stroke-linecap="round" fill="none"/><circle cx="12.500" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.500" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+<symbol id="l-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></symbol>
+<symbol id="l-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="l-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="l-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol>
+<symbol id="l-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.500 15.400 12 20 12 20z"/></symbol>
+<symbol id="l-return" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></symbol>
+</defs></svg>
+<a class="skip-link" href="#main">본문 바로가기</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="logo" href="../v9-home/home-b.html" aria-label="팬꾹 메인"><svg width="32" height="32" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</a>
+    <nav class="nav" aria-label="주요 메뉴"><ul>
+      <li><a href="../v8-white/creators.html">크리에이터 찾기</a></li>
+      <li><a href="../v8-white/send.html">선물 보내기</a></li>
+      <li><a href="../v8-white/notices.html">공지사항</a></li>
+      <li><a href="../v8-white/about.html">팬꾹 소개</a></li>
+      <li><a href="../v8-white/support.html">고객센터</a></li>
+    </ul></nav>
+    <div class="header-actions">
+      <a class="h-gift" href="../v8-white/my-gifts.html" aria-label="진행 중인 선물 4개"><svg width="22" height="22" aria-hidden="true"><use href="#l-box"/></svg><span class="h-gift-t">진행 중인 선물</span><span class="h-num">4</span></a>
+      <span class="h-sep" aria-hidden="true"></span>
+      <a class="h-user" href="../v8-white/my-info.html">별빛님<svg width="16" height="16" aria-hidden="true"><use href="#l-down"/></svg></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" aria-hidden="true"><use href="#l-menu"/></svg></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobile-menu" hidden>
+    <a href="../v8-white/creators.html">크리에이터 찾기</a><a href="../v8-white/send.html">선물 보내기</a><a href="../v8-white/notices.html">공지사항</a><a href="../v8-white/about.html">팬꾹 소개</a><a href="../v8-white/support.html">고객센터</a>
+    <p class="group-label">내 팬꾹 · 별빛님</p>
+    <a href="../v8-white/my-info.html">개인정보</a><a href="../v8-white/my-following.html">팔로우한 크리에이터</a><a href="../v8-white/my-gifts.html">선물 내역</a><a href="../v8-white/my-revgifts.html">받은 역조공</a><a href="../v8-white/landing.html">로그아웃</a>
+  </div>
+</header>
+<main id="main">
+<div class="container page-title"><h1 class="page-h">내 팬꾹</h1></div>
+<div class="container my-grid">
+  <nav class="side" aria-label="내 팬꾹 메뉴"><ul>
+<li><a href="../v8-white/my-info.html">개인정보</a></li>
+<li><a href="../v8-white/my-following.html">팔로우한 크리에이터</a></li>
+<li><a href="../v8-white/my-gifts.html" aria-current="page">선물 내역</a></li>
+<li><a href="../v8-white/my-revgifts.html">받은 역조공</a></li>
+  </ul></nav>
+  <div class="my-body">
+    <div class="my-h"><h2>선물 내역</h2><a class="link-arrow" href="../v8-white/send.html">선물 보내기 ›</a></div>
+    <div class="tabs" role="tablist" aria-label="선물 내역 분류">
+  <button class="tab" role="tab" id="t1" aria-selected="true" aria-controls="p1" type="button">진행 중 4</button>
+  <button class="tab" role="tab" id="t2" aria-selected="false" aria-controls="p2" tabindex="-1" type="button">끝난 선물 3</button>
+  <button class="tab" role="tab" id="t3" aria-selected="false" aria-controls="p3" tabindex="-1" type="button">받지 않은 선물 2</button>
+</div>
+<div role="tabpanel" id="p1" aria-labelledby="t1"><ul class="rows"><li class="r"><svg class="face" style="--c:#F7C8D4" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><p class="who">하루님께</p><p class="says">소형 1, 중형 1 · 상자 2개 · 등록 09.29 · 주문번호 FC-7K3M9</p></div><div class="meter"><div class="dots" role="progressbar" aria-label="하루님께 보낸 선물 FC-7K3M9 진행 단계" aria-valuemin="0" aria-valuemax="7" aria-valuenow="3" aria-valuetext="7단계 중 3단계 완료, 입고"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span></div><small>입고 · 3/7</small></div><a class="link-arrow go" href="../v8-white/gift.html" aria-label="하루님께 보낸 선물 FC-7K3M9 상세">상세 보기 ›</a></li>
+<li class="r"><svg class="face" style="--c:#F7C8D4" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><p class="who">하루님께</p><p class="says">중형 1 · 상자 1개 · 등록 09.28 · 주문번호 FC-5D1H6</p></div><div class="meter"><div class="dots" role="progressbar" aria-label="하루님께 보낸 선물 FC-5D1H6 진행 단계" aria-valuemin="0" aria-valuemax="7" aria-valuenow="6" aria-valuetext="7단계 중 6단계 완료, 배송중"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><small>배송중 · 6/7</small></div><a class="link-arrow go" href="../v8-white/gift.html" aria-label="하루님께 보낸 선물 FC-5D1H6 상세">상세 보기 ›</a></li>
+<li class="r"><svg class="face" style="--c:#CFE3FA" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><p class="who">모모님께</p><p class="says">소형 1 · 상자 1개 · 등록 10.01 · 주문번호 FC-2P8Q4</p></div><div class="meter"><div class="dots" role="progressbar" aria-label="모모님께 보낸 선물 FC-2P8Q4 진행 단계" aria-valuemin="0" aria-valuemax="7" aria-valuenow="2" aria-valuetext="7단계 중 2단계 완료, 승인 대기"><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span><span></span></div><small>승인 대기 · 2/7</small></div><a class="link-arrow go" href="../v8-white/gift.html" aria-label="모모님께 보낸 선물 FC-2P8Q4 상세">상세 보기 ›</a></li>
+<li class="r"><svg class="face" style="--c:#FBE3A8" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><p class="who">별이님께</p><p class="says">소형 3 · 상자 3개 · 등록 09.29 · 주문번호 FC-9X5T1</p></div><div class="meter"><div class="dots" role="progressbar" aria-label="별이님께 보낸 선물 FC-9X5T1 진행 단계" aria-valuemin="0" aria-valuemax="7" aria-valuenow="3" aria-valuetext="7단계 중 3단계 완료, 입고 대기"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span></div><small>입고 대기 · 3/7</small></div><a class="link-arrow go" href="../v8-white/gift.html" aria-label="별이님께 보낸 선물 FC-9X5T1 상세">상세 보기 ›</a></li></ul></div>
+<div role="tabpanel" id="p2" aria-labelledby="t2" hidden><ul class="rows"><li class="r"><svg class="face" style="--c:#C9ECDD" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><p class="who">새벽달님께</p><p class="says">중형 1 · 상자 1개 · 등록 09.20 · 주문번호 FC-4B7N2</p></div><div class="meter"><span class="tag tag--success">수령 완료</span></div><a class="link-arrow go" href="../v8-white/gift.html" aria-label="새벽달님께 보낸 선물 FC-4B7N2 상세">상세 보기 ›</a></li>
+<li class="r"><svg class="face" style="--c:#DCD3F6" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><p class="who">도담님께</p><p class="says">소형 2 · 상자 2개 · 등록 09.12 · 주문번호 FC-1C6V8</p></div><div class="meter"><span class="tag tag--success">수령 완료</span></div><a class="link-arrow go" href="../v8-white/gift.html" aria-label="도담님께 보낸 선물 FC-1C6V8 상세">상세 보기 ›</a></li>
+<li class="r"><svg class="face" style="--c:#FAD2BA" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><p class="who">솜사탕님께</p><p class="says">소형 1 · 상자 1개 · 등록 08.30 · 주문번호 FC-8R3J5</p></div><div class="meter"><span class="tag tag--success">수령 완료</span></div><a class="link-arrow go" href="../v8-white/gift.html" aria-label="솜사탕님께 보낸 선물 FC-8R3J5 상세">상세 보기 ›</a></li></ul></div>
+<div role="tabpanel" id="p3" aria-labelledby="t3" hidden><p class="note-line">크리에이터가 받지 않기로 했거나 승인 시간이 지난 선물이에요. 사무실 도착 전이면 결제 금액을 모두, 도착 뒤면 반송 택배비를 뺀 금액을 돌려드려요.</p><ul class="rows"><li class="r"><svg class="face" style="--c:#BDE6EE" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><p class="who">라온님께</p><p class="says">소형 1 · 상자 1개 · 등록 09.18 · 주문번호 FC-3M9L7</p></div><div class="meter"><span class="tag tag--danger">받지 않아요</span></div><a class="link-arrow go" href="../v8-white/gift.html" aria-label="라온님께 보낸 선물 FC-3M9L7 상세">상세 보기 ›</a></li>
+<li class="r"><svg class="face" style="--c:#F2CBE4" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><p class="who">시월님께</p><p class="says">중형 1 · 상자 1개 · 등록 09.05 · 주문번호 FC-6Y2W4</p></div><div class="meter"><span class="tag tag--danger">받지 않아요</span></div><a class="link-arrow go" href="../v8-white/gift.html" aria-label="시월님께 보낸 선물 FC-6Y2W4 상세">상세 보기 ›</a></li></ul></div>
+  </div>
+</div>
+</main>
+<footer class="site-footer"><div class="container">
+  <div class="footer-grid"><div><p class="footer-logo"><svg width="28" height="28" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</p>
+  <dl class="biz"><div><dt>상호</dt><dd>네오코드</dd></div><div><dt>대표자</dt><dd>(출시 전 기재)</dd></div><div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div><div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div><div><dt>주소</dt><dd>(출시 전 기재)</dd></div><div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div></dl></div>
+  <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="../v8-white/support.html">고객센터</a><a href="../v8-white/about.html">팬꾹 소개</a></nav></div>
+  <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p></div></footer>
+<script>
+/* 시안용: 모바일 메뉴 열기 + 선물 분류 탭 전환(좌우 화살표)만 */
+var t=document.querySelector('.menu-toggle'),m=document.getElementById('mobile-menu');
+t.addEventListener('click',function(){var o=m.hidden;m.hidden=!o;t.setAttribute('aria-expanded',String(o));});
+var tabs=[].slice.call(document.querySelectorAll('[role=tab]'));
+function pick(i){tabs.forEach(function(b,j){var on=i===j;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;document.getElementById(b.getAttribute('aria-controls')).hidden=!on;});tabs[i].focus();}
+tabs.forEach(function(b,i){b.addEventListener('click',function(){pick(i);});b.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){e.preventDefault();pick((i+1)%tabs.length);}if(e.key==='ArrowLeft'){e.preventDefault();pick((i+tabs.length-1)%tabs.length);}});});
+</script>
+</body>
+</html>

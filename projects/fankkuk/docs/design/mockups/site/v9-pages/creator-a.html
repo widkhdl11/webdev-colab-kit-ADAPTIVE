@@ -1,0 +1,183 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v9-pages — 크리에이터 페이지 (/creators/[id]) A (2026-10-07)
+  A 방향: 「첫 판 + 요금 카드」 — 메인(home-b)처럼 첫 줄을 둘로 나눈다. 왼쪽 옅은 코랄 판에 프로필·버튼, 오른쪽 중립 카드에 상자 요금. 아래는 설명을 카드 3장으로, 마지막은 다른 크리에이터 카드. 이 안은 「팔로우 중」 상태(선물 보내기 가능).
+  배경 피드백(원문): 「아동사이트 같은 느낌」 싫음 / 「너무 내정보 페이지 같아」 / 「서비스 플랫폼이다. 너무 배송업무 중심이면 정나미 없다」 / 원하는 느낌 「심플, 세련됨, 귀여움」. 정책: 선물은 팔로우한 크리에이터에게만.
+  색·글자·반경은 design-rules.md(v8 흰 바탕) 그대로. 새 기능 없음: 실제 화면에 있는 소개·분야·승인 시간·팔로우·선물 보내기·보낼 수 없는 것·요금·확인 안내·다른 크리에이터만.
+  주소 약속 문구는 6절 한계 그대로(「승인 없이는 저희 시스템이 주소를 열지 않습니다」). 헤더는 home-b 와 같다(크리에이터 찾기가 현재 메뉴).
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 하루 — 크리에이터 페이지 (A)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="../v8-white/v8.css">
+<style>
+/* 헤더 오른쪽 = v9-header 「B + 가는 선 선물 아이콘」 (면·동그라미·알약 없음, 글자 16px 하한) */
+.h-gift { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+.h-gift:hover, .h-user:hover { background: var(--surface-neutral); }
+.h-num { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 9999px; background: var(--ink); color: var(--text-inverse); font-size: 16px; font-weight: 700; line-height: 1; }
+.h-sep { width: 1px; height: 16px; background: var(--border); margin-inline: 4px; }
+.h-user { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+.h-user svg { color: var(--faint); }
+@media (max-width: 767px) { .h-user, .h-sep { display: none; } .h-gift-t { display: none; } .h-gift::after { content: "선물"; } .h-gift .h-num { order: 3; } }
+
+.face--xl { width: 96px; height: 96px; }
+.crumb a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 16px; color: var(--sub); font-weight: 600; text-decoration: none; }
+.crumb a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* 첫 줄: 프로필 판 + 요금 카드 */
+.top { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 20px; align-items: stretch; margin-top: 8px; }
+.p-panel { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 24px 28px; align-items: start; padding: clamp(28px, 3.6vw, 48px); border-radius: var(--r-panel); background: var(--surface-brand); }
+.p-panel h1 { font-size: clamp(30px, 3vw, 40px); line-height: 1.2; font-weight: 800; letter-spacing: -1px; }
+.p-panel .intro { margin-top: 8px; color: var(--ink); font-size: 18px; }
+.p-panel .ch { color: var(--sub); }
+.p-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.p-tags .tag--brand { background: var(--white); box-shadow: var(--hair); color: var(--sub); }
+.p-avg { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--sub); }
+.p-avg svg { color: var(--brand); flex-shrink: 0; }
+.p-btns { grid-column: 2; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn--on { background: var(--white); color: var(--ink); box-shadow: var(--hair); }
+.btn--on:hover { background: var(--surface-hover); }
+.btn--on svg { color: var(--brand); }
+.fee-card { display: flex; flex-direction: column; gap: 4px; padding: 28px; border-radius: var(--r-tile); background: var(--surface-neutral); box-shadow: var(--hair); }
+.fee-card h2 { font-size: 22px; letter-spacing: -.3px; font-weight: 700; }
+.fee-card > p { color: var(--sub); }
+.fee-rows { margin-top: 12px; }
+.fee-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 16px; border-top: 1px solid var(--border); }
+.fee-row small { display: block; color: var(--sub); font-size: 16px; }
+.fee-row b { font-size: 24px; font-weight: 800; letter-spacing: -.5px; white-space: nowrap; }
+.fee-card .tag { background: var(--white); box-shadow: var(--hair); }
+.fee-card .note { margin-top: 12px; color: var(--sub); }
+@media (max-width: 1023px) { .top { grid-template-columns: 1fr; } }
+@media (max-width: 767px) {
+  .p-panel { grid-template-columns: 72px minmax(0, 1fr); gap: 16px; padding: 24px 20px; }
+  .face--xl { width: 72px; height: 72px; }
+  .p-btns { grid-column: 1 / -1; margin-top: 4px; }
+  .p-btns .btn { flex: 1 1 100%; }
+  .fee-card { padding: 20px; }
+}
+
+/* 설명 카드 3장 */
+.info { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 24px; }
+.i-card { display: flex; flex-direction: column; gap: 12px; padding: 28px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.i-card img { width: 64px; height: 64px; }
+.i-card h3 { font-size: 22px; letter-spacing: -.3px; }
+.i-card p, .i-card li { color: var(--sub); }
+.no-list { display: grid; gap: 4px; }
+.no-list li { display: flex; align-items: center; gap: 12px; min-height: 40px; color: var(--ink); }
+.no-list .x { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-neutral); color: var(--sub); flex-shrink: 0; }
+.i-card .notes { margin-top: 0; }
+@media (max-width: 1023px) { .info { grid-template-columns: repeat(2, minmax(0, 1fr)); } .i-card:last-child { grid-column: 1 / -1; } }
+@media (max-width: 767px) { .info { grid-template-columns: 1fr; gap: 12px; } .i-card { padding: 20px; } }
+
+/* 다른 크리에이터 카드 (home-b 와 같은 카드) */
+.c-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 24px; }
+.c-card { display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: var(--r-card); background: var(--surface-neutral); box-shadow: var(--hair); }
+.c-top { display: flex; align-items: center; gap: 16px; }
+.c-top h3 a { text-decoration: none; } .c-top h3 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.c-meta { color: var(--sub); }
+.c-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+.c-time { color: var(--sub); }
+@media (max-width: 1023px) { .c-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .c-card:nth-child(3) { display: none; } }
+@media (max-width: 767px) { .c-grid { grid-template-columns: 1fr; gap: 12px; } .c-card { padding: 20px; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.500 3.500 9.500 3.500 12 0" stroke="#333D39" stroke-width="2.600" stroke-linecap="round" fill="none"/><circle cx="12.500" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.500" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+<symbol id="l-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></symbol>
+<symbol id="l-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="l-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+</defs></svg>
+<a class="skip-link" href="#main">본문 바로가기</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="logo" href="../v9-home/home-b.html" aria-label="팬꾹 메인"><svg width="32" height="32" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</a>
+    <nav class="nav" aria-label="주요 메뉴"><ul>
+      <li><a href="../v8-white/creators.html" aria-current="page">크리에이터 찾기</a></li>
+      <li><a href="../v8-white/send.html">선물 보내기</a></li>
+      <li><a href="../v8-white/notices.html">공지사항</a></li>
+      <li><a href="../v8-white/about.html">팬꾹 소개</a></li>
+      <li><a href="../v8-white/support.html">고객센터</a></li>
+    </ul></nav>
+    <div class="header-actions">
+      <a class="h-gift" href="../v8-white/my-gifts.html" aria-label="진행 중인 선물 4개"><svg width="22" height="22" aria-hidden="true"><use href="#l-box"/></svg><span class="h-gift-t">진행 중인 선물</span><span class="h-num">4</span></a>
+      <span class="h-sep" aria-hidden="true"></span>
+      <a class="h-user" href="../v8-white/my-info.html">별빛님<svg width="16" height="16" aria-hidden="true"><use href="#l-down"/></svg></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" aria-hidden="true"><use href="#l-menu"/></svg></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobile-menu" hidden>
+    <a href="../v8-white/creators.html">크리에이터 찾기</a><a href="../v8-white/send.html">선물 보내기</a><a href="../v8-white/notices.html">공지사항</a><a href="../v8-white/about.html">팬꾹 소개</a><a href="../v8-white/support.html">고객센터</a>
+    <p class="group-label">내 정보 · 별빛님</p>
+    <a href="../v8-white/my-info.html">내 정보</a><a href="../v8-white/my-following.html">팔로우한 크리에이터</a><a href="../v8-white/my-gifts.html">선물 내역</a><a href="../v8-white/landing.html">로그아웃</a>
+  </div>
+</header>
+<main id="main">
+<div class="container crumb"><a href="../v8-white/creators.html">‹ 크리에이터 찾기로</a></div>
+<section aria-labelledby="name"><div class="container"><div class="top">
+  <div class="p-panel">
+    <svg class="face face--xl" style="--c:#F7C8D4" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>
+    <div>
+      <h1 id="name">하루</h1>
+      <p class="intro">느긋하게 즐기는 게임 방송을 해요.</p>
+      <p class="ch">하루의 놀이터</p>
+      <div class="p-tags"><span class="tag tag--success"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 본인 확인 완료</span><span class="tag tag--brand">게임</span></div>
+      <p class="p-avg"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.5V12l3.5 2.5" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 평균 승인 약 2시간 <span class="faint">(최근 30일)</span></p>
+    </div>
+    <div class="p-btns">
+      <a class="btn" href="../v8-white/send.html">선물 보내기</a>
+      <button class="btn btn--on" type="button" aria-pressed="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 팔로우 중</button>
+    </div>
+  </div>
+  <aside class="fee-card" aria-labelledby="fee-title">
+    <h2 id="fee-title">요금 안내</h2>
+    <p>상자마다 배송비가 포함돼 있어요.</p>
+    <div class="fee-rows">
+      <div class="fee-row"><span><strong>소형 상자</strong><small>세 변 합 100cm · 5kg 이하</small></span><b>6,900원</b></div>
+      <div class="fee-row"><span><strong>중형 상자</strong><small>세 변 합 100cm · 10kg 이하</small></span><b>8,900원</b></div>
+    </div>
+    <p><span class="tag"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 추적 장치 검수 포함</span></p>
+    <p class="note">크기와 무게 중 큰 쪽으로 정해져요. 중형보다 큰 상자는 받지 않아요. 도착한 상자를 재어 보니 구간이 더 크면 차액만 따로 결제해요.</p>
+  </aside>
+</div></div></section>
+
+<section class="block" aria-labelledby="gift-title"><div class="container">
+  <div class="block-head"><h2 id="gift-title">하루님께 선물을 보내려면</h2></div>
+  <div class="info">
+    <article class="i-card"><img src="../v4/img/icon-gift.png" alt="" aria-hidden="true"><h3>받는 선물</h3><p>편지, 인형, 손수건, 책, 그림 같은 작은 선물을 상자에 담아 보내 주세요. 상자는 소형과 중형 두 가지예요.</p></article>
+    <article class="i-card"><h3>보낼 수 없는 것</h3><ul class="no-list">
+      <li><span class="x" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 20 20"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span> 음식과 신선식품 (유통기한이 있는 것 모두)</li>
+      <li><span class="x" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 20 20"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span> 살아 있는 동물과 식물</li>
+      <li><span class="x" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 20 20"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span> 폭발·인화성 물질 등 위험물</li>
+      <li><span class="x" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 20 20"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span> 현금과 상품권</li></ul></article>
+    <article class="i-card"><img src="../v4/img/icon-inspect.png" alt="" aria-hidden="true"><h3>상자는 이렇게 확인해요</h3><ul class="notes">
+      <li>팬꾹 사무실에 상자가 도착하면 겉에 붙은 송장을 떼고 겉면을 검사해요.</li>
+      <li>추적 장치가 의심되는 상자만 열어 확인하고, 문제가 없으면 새 송장을 붙여 크리에이터에게 보내 드려요.</li>
+      <li>승인 없이는 저희 시스템이 크리에이터의 주소를 열지 않습니다.</li></ul></article>
+  </div>
+</div></section>
+
+<section class="block" aria-labelledby="sim-title"><div class="container">
+  <div class="block-head"><h2 id="sim-title">이런 크리에이터도 있어요</h2><a class="link-arrow" href="../v8-white/creators.html">전체 보기 ›</a></div>
+  <ul class="c-grid">
+    <li class="c-card"><div class="c-top"><svg class="face face--lg" style="--c:#CFE3FA" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><h3><a href="creator-a.html">모모</a></h3><p class="c-meta">노래 · 모모네 거실</p></div></div><div class="c-foot"><span class="c-time">평균 승인 약 4시간</span><a class="btn btn--soft btn--sm" href="creator-a.html" aria-label="모모님 페이지 보기">페이지 보기</a></div></li>
+    <li class="c-card"><div class="c-top"><svg class="face face--lg" style="--c:#C9ECDD" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><h3><a href="creator-a.html">새벽달</a></h3><p class="c-meta">토크 · 새벽달 라디오</p></div></div><div class="c-foot"><span class="c-time">평균 승인 약 1시간</span><a class="btn btn--soft btn--sm" href="creator-a.html" aria-label="새벽달님 페이지 보기">페이지 보기</a></div></li>
+    <li class="c-card"><div class="c-top"><svg class="face face--lg" style="--c:#FBE3A8" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div><h3><a href="creator-a.html">별이</a></h3><p class="c-meta">그림 · 별이의 그림방</p></div></div><div class="c-foot"><span class="c-time">평균 승인 약 5시간</span><a class="btn btn--soft btn--sm" href="creator-a.html" aria-label="별이님 페이지 보기">페이지 보기</a></div></li>
+  </ul>
+</div></section><div class="page-end"></div>
+</main>
+<footer class="site-footer"><div class="container">
+  <div class="footer-grid"><div><p class="footer-logo"><svg width="28" height="28" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</p>
+  <dl class="biz"><div><dt>상호</dt><dd>네오코드</dd></div><div><dt>대표자</dt><dd>(출시 전 기재)</dd></div><div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div><div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div><div><dt>주소</dt><dd>(출시 전 기재)</dd></div><div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div></dl></div>
+  <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="../v8-white/support.html">고객센터</a><a href="../v8-white/about.html">팬꾹 소개</a></nav></div>
+  <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p></div></footer>
+<script>
+/* 시안용 메뉴 열기·닫기만 */
+var t=document.querySelector('.menu-toggle'),m=document.getElementById('mobile-menu');
+t.addEventListener('click',function(){var o=m.hidden;m.hidden=!o;t.setAttribute('aria-expanded',String(o));});
+</script>
+</body>
+</html>

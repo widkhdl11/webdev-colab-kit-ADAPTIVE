@@ -1,0 +1,139 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v9-pages 크리에이터 찾기 (/creators) B안 (2026-10-07)
+  배경: 헤더·메인을 v9 로 맞춘 뒤 이 화면만 v8 그대로 → 같은 느낌으로. 사용자 말: 「아동사이트 같은 느낌 싫다」 「너무 내정보 페이지 같아」 「서비스 플랫폼이다」, 원하는 느낌 「심플, 세련됨, 귀여움」.
+  A: 메인과 같은 틀 — 옅은 코랄 첫 판(제목+검색+3D 그림) 아래 분야 칩, 크리에이터를 카드 격자(PC 3열·태블릿 2열·폰 1열)로 둘러보게.
+  B: 판 없이 깔끔한 목록형 — 왼쪽에 검색+분야 세로 메뉴(PC), 오른쪽에 한 줄에 한 명 목록(폰은 위 칩+목록). 한눈에 훑고 바로 팔로우.
+  화면에 실제 있는 것만: 검색·분야 필터·팔로우·선물 보내기(팔로우한 사람에게만, INV-L9)·평균 승인 시간. 인기·랭킹·추천 없음. 정적 시안(칩 선택·검색 동작 없음, 빈 결과는 hidden).
+  색·반경·글자는 design-rules.md 그대로: 흰 바탕, 옅은 코랄은 첫 판에만(A), 선택 칩 차콜(A)/선택 면(B), 16px 미만 글자 없음.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 크리에이터 찾기 (B 목록)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="../v8-white/v8.css">
+<style>
+/* 헤더 오른쪽 = v9-header 「B + 가는 선 선물 아이콘」 (면·동그라미·알약 없음, 글자 16px 하한) */
+.h-gift { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+.h-gift:hover, .h-user:hover { background: var(--surface-neutral); }
+.h-num { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 9999px; background: var(--ink); color: var(--text-inverse); font-size: 16px; font-weight: 700; line-height: 1; }
+.h-sep { width: 1px; height: 16px; background: var(--border); margin-inline: 4px; }
+.h-user { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+.h-user svg { color: var(--faint); }
+@media (max-width: 767px) { .h-user, .h-sep { display: none; } .h-gift-t { display: none; } .h-gift::after { content: "선물"; } .h-gift .h-num { order: 3; } }
+
+.btn--on { background: var(--surface-selected); color: var(--secondary-foreground); box-shadow: none; }
+.btn--on:hover { background: var(--secondary-hover); }
+.btn--on svg { color: var(--brand); }
+.btn--line { background: #fff; box-shadow: var(--field); }
+.verify { display: flex; align-items: center; gap: 8px; margin-top: 16px; color: var(--sub); font-weight: 600; }
+.verify svg { color: var(--brand); flex-shrink: 0; }
+.search { margin: 0; max-width: 560px; }
+.count { font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+.empty { display: grid; justify-items: center; gap: 8px; padding: 56px 0 24px; text-align: center; }
+.empty[hidden] { display: none; }
+.empty h2 { font-size: 22px; letter-spacing: -.3px; }
+.empty .ico-tile { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 28px; background: var(--surface-neutral); box-shadow: var(--hair); margin-bottom: 8px; }
+.empty .ico-tile img { width: 64px; height: 64px; }
+.chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chips .chip { flex: 0 0 auto; min-height: 44px; padding-inline: 18px; border: 0; cursor: pointer; font-size: 16px; }
+.chips .chip:hover { background: var(--secondary-hover); }
+.chips .chip[aria-pressed="true"] { background: var(--ink); color: var(--text-inverse); }
+@media (max-width: 767px) { .chips { margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); } }
+
+.top-b { padding-block: clamp(32px, 4vw, 56px) 0; }
+.top-b h1 { font-size: clamp(32px, 3.6vw, 48px); line-height: 1.25; font-weight: 800; letter-spacing: -1.2px; }
+.top-b .lead { margin-top: 12px; }
+.split { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: clamp(32px, 4vw, 56px); align-items: start; padding-block: 32px clamp(72px, 9vw, 120px); }
+.side { position: sticky; top: 88px; display: grid; gap: 8px; }
+.side .search { max-width: none; height: 56px; }
+.side h2 { margin-top: 24px; padding-inline: 16px; color: var(--sub); font-size: 16px; font-weight: 700; }
+.cat { display: flex; flex-direction: column; gap: 2px; }
+.cat .chip { justify-content: flex-start; min-height: 44px; padding-inline: 16px; border: 0; border-radius: 12px; background: none; color: var(--ink); font-size: 16px; font-weight: 600; cursor: pointer; }
+.cat .chip:hover { background: var(--surface-neutral); }
+.cat .chip[aria-pressed="true"] { background: var(--surface-selected); color: var(--secondary-foreground); }
+.bar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 12px; }
+.r-list { border-radius: var(--r-card); background: #fff; box-shadow: var(--hair); padding-inline: 24px; }
+.r-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px 20px; padding-block: 20px; border-top: 1px solid var(--border); }
+.r-row:first-child { border-top: 0; }
+.nm { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.nm a { text-decoration: none; } .nm a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.nm .tag { font-size: 16px; font-weight: 600; letter-spacing: 0; }
+.r-sub { color: var(--sub); }
+.r-acts { display: flex; gap: 8px; }
+@media (max-width: 1023px) { .split { grid-template-columns: 1fr; gap: 20px; } .side { position: static; } .side h2 { display: none; } .cat { flex-direction: row; gap: 8px; overflow-x: auto; scrollbar-width: none; } .cat::-webkit-scrollbar { display: none; } .cat .chip { flex: 0 0 auto; background: var(--surface-neutral); border-radius: 9999px; padding-inline: 18px; } .cat .chip[aria-pressed="true"] { background: var(--ink); color: var(--text-inverse); } }
+@media (max-width: 767px) { .cat { margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); } .r-list { padding-inline: 16px; } .r-row { grid-template-columns: 48px minmax(0, 1fr); } .r-acts { grid-column: 1 / -1; } .r-acts .btn { flex: 1 1 0; justify-content: center; } .nm { font-size: 18px; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.500 3.500 9.500 3.500 12 0" stroke="#333D39" stroke-width="2.600" stroke-linecap="round" fill="none"/><circle cx="12.500" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.500" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+<symbol id="l-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></symbol>
+<symbol id="l-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="l-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+</defs></svg>
+<a class="skip-link" href="#main">본문 바로가기</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="logo" href="../v9-home/home-b.html" aria-label="팬꾹 메인"><svg width="32" height="32" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</a>
+    <nav class="nav" aria-label="주요 메뉴"><ul>
+      <li><a href="../v8-white/creators.html" aria-current="page">크리에이터 찾기</a></li>
+      <li><a href="../v8-white/send.html">선물 보내기</a></li>
+      <li><a href="../v8-white/notices.html">공지사항</a></li>
+      <li><a href="../v8-white/about.html">팬꾹 소개</a></li>
+      <li><a href="../v8-white/support.html">고객센터</a></li>
+    </ul></nav>
+    <div class="header-actions">
+      <a class="h-gift" href="../v8-white/my-gifts.html" aria-label="진행 중인 선물 4개"><svg width="22" height="22" aria-hidden="true"><use href="#l-box"/></svg><span class="h-gift-t">진행 중인 선물</span><span class="h-num">4</span></a>
+      <span class="h-sep" aria-hidden="true"></span>
+      <a class="h-user" href="../v8-white/my-info.html">별빛님<svg width="16" height="16" aria-hidden="true"><use href="#l-down"/></svg></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" aria-hidden="true"><use href="#l-menu"/></svg></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobile-menu" hidden>
+    <a href="../v8-white/creators.html">크리에이터 찾기</a><a href="../v8-white/send.html">선물 보내기</a><a href="../v8-white/notices.html">공지사항</a><a href="../v8-white/about.html">팬꾹 소개</a><a href="../v8-white/support.html">고객센터</a>
+    <p class="group-label">내 정보 · 별빛님</p>
+    <a href="../v8-white/my-info.html">내 정보</a><a href="../v8-white/my-following.html">팔로우한 크리에이터</a><a href="../v8-white/my-gifts.html">선물 내역</a><a href="../v8-white/landing.html">로그아웃</a>
+  </div>
+</header>
+
+<main id="main">
+<section class="top-b" aria-labelledby="find-title"><div class="container"><h1 id="find-title">나의 크리에이터를<br>찾아요</h1><p class="lead">이름이나 채널 이름을 입력하면 아래 목록이 바로 걸러져요.</p><p class="verify"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>방송 채널 본인 확인을 마친 크리에이터만 보여요.</p></div></section>
+<div class="container split">
+  <div class="side"><div class="search"><label class="sr-only" for="q">크리에이터 이름 또는 채널 이름</label><input id="q" type="search" placeholder="예: 하루, 게임, 새벽달 라디오" autocomplete="off"><span class="search-go" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span></div><h2>분야</h2><div class="cat" role="group" aria-label="분야로 걸러 보기"><button class="chip" type="button" aria-pressed="true">전체</button><button class="chip" type="button" aria-pressed="false">게임</button><button class="chip" type="button" aria-pressed="false">노래</button><button class="chip" type="button" aria-pressed="false">토크</button><button class="chip" type="button" aria-pressed="false">그림</button><button class="chip" type="button" aria-pressed="false">먹방</button><button class="chip" type="button" aria-pressed="false">운동</button><button class="chip" type="button" aria-pressed="false">여행</button><button class="chip" type="button" aria-pressed="false">공부</button><button class="chip" type="button" aria-pressed="false">음악</button><button class="chip" type="button" aria-pressed="false">일상</button><button class="chip" type="button" aria-pressed="false">요리</button></div></div>
+  <section aria-label="검색 결과">
+    <div class="bar"><strong class="count" role="status" aria-live="polite">전체 12명</strong></div>
+    <ul class="r-list">
+<li class="r-row"><svg class="face" style="--c:#F7C8D4" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">하루</a></p><p class="r-sub">게임 · 하루의 놀이터 · 평균 승인 약 2시간</p></div><div class="r-acts"><button class="btn btn--sm btn--on" type="button" aria-pressed="true" aria-label="하루 팔로우 중"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>팔로우 중</button><a class="btn btn--sm" href="../v8-white/send.html" aria-label="하루님께 선물 보내기">선물 보내기</a></div></li>
+<li class="r-row"><svg class="face" style="--c:#CFE3FA" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">모모</a></p><p class="r-sub">노래 · 모모네 거실 · 평균 승인 약 4시간</p></div><div class="r-acts"><button class="btn btn--sm btn--on" type="button" aria-pressed="true" aria-label="모모 팔로우 중"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>팔로우 중</button><a class="btn btn--sm" href="../v8-white/send.html" aria-label="모모님께 선물 보내기">선물 보내기</a></div></li>
+<li class="r-row"><svg class="face" style="--c:#C9ECDD" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">새벽달</a></p><p class="r-sub">토크 · 새벽달 라디오 · 평균 승인 약 1시간</p></div><div class="r-acts"><button class="btn btn--sm btn--on" type="button" aria-pressed="true" aria-label="새벽달 팔로우 중"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>팔로우 중</button><a class="btn btn--sm" href="../v8-white/send.html" aria-label="새벽달님께 선물 보내기">선물 보내기</a></div></li>
+<li class="r-row"><svg class="face" style="--c:#FBE3A8" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">별이</a></p><p class="r-sub">그림 · 별이의 작업실 · 평균 승인 약 3시간</p></div><div class="r-acts"><button class="btn btn--sm btn--on" type="button" aria-pressed="true" aria-label="별이 팔로우 중"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>팔로우 중</button><a class="btn btn--sm" href="../v8-white/send.html" aria-label="별이님께 선물 보내기">선물 보내기</a></div></li>
+<li class="r-row"><svg class="face" style="--c:#FAD2BA" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">솜사탕</a></p><p class="r-sub">먹방 · 솜사탕 식탁 · 평균 승인 약 6시간</p></div><div class="r-acts"><button class="btn btn--sm btn--line" type="button" aria-pressed="false" aria-label="솜사탕 팔로우">팔로우</button></div></li>
+<li class="r-row"><svg class="face" style="--c:#DCD3F6" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">도담</a></p><p class="r-sub">운동 · 도담 홈트 · 평균 승인 약 2시간</p></div><div class="r-acts"><button class="btn btn--sm btn--line" type="button" aria-pressed="false" aria-label="도담 팔로우">팔로우</button></div></li>
+<li class="r-row"><svg class="face" style="--c:#D3E8B4" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">보리</a></p><p class="r-sub">여행 · 보리의 지구본 · 평균 승인 약 5시간</p></div><div class="r-acts"><button class="btn btn--sm btn--line" type="button" aria-pressed="false" aria-label="보리 팔로우">팔로우</button></div></li>
+<li class="r-row"><svg class="face" style="--c:#BDE6EE" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">라온</a></p><p class="r-sub">게임 · 라온 아케이드 · 평균 승인 약 3시간</p></div><div class="r-acts"><button class="btn btn--sm btn--line" type="button" aria-pressed="false" aria-label="라온 팔로우">팔로우</button></div></li>
+<li class="r-row"><svg class="face" style="--c:#E4D2BC" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">나무</a></p><p class="r-sub">공부 · 나무 스터디룸 · 평균 승인 약 1시간</p></div><div class="r-acts"><button class="btn btn--sm btn--line" type="button" aria-pressed="false" aria-label="나무 팔로우">팔로우</button></div></li>
+<li class="r-row"><svg class="face" style="--c:#F2CBE4" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">시월</a></p><p class="r-sub">음악 · 시월 라이브 · 평균 승인 약 8시간</p></div><div class="r-acts"><button class="btn btn--sm btn--line" type="button" aria-pressed="false" aria-label="시월 팔로우">팔로우</button></div></li>
+<li class="r-row"><svg class="face" style="--c:#D6DCE8" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">구름</a></p><p class="r-sub">일상 · 구름 브이로그 · 평균 승인 약 4시간</p></div><div class="r-acts"><button class="btn btn--sm btn--line" type="button" aria-pressed="false" aria-label="구름 팔로우">팔로우</button></div></li>
+<li class="r-row"><svg class="face" style="--c:#F5DCAE" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><div class="r-who"><p class="nm"><a href="../v8-white/creator.html">해든</a></p><p class="r-sub">요리 · 해든 부엌 · 평균 승인 약 2시간</p></div><div class="r-acts"><button class="btn btn--sm btn--line" type="button" aria-pressed="false" aria-label="해든 팔로우">팔로우</button></div></li>
+    </ul>
+    <div class="empty" hidden role="status"><span class="ico-tile" aria-hidden="true"><img class="asset" src="../v4/img/illust-empty-search.png" alt="" aria-hidden="true"></span><h2>찾는 크리에이터가 아직 없어요</h2><p class="sub">이름 철자를 다시 확인해 보세요. 본인 확인을 마치지 않은 크리에이터는 검색되지 않아요.</p><a class="btn btn--soft" style="margin-top:16px" href="../v8-white/support.html">크리에이터를 초대하고 싶어요</a></div>
+  </section>
+</div>
+</main>
+<footer class="site-footer"><div class="container">
+  <div class="footer-grid"><div><p class="footer-logo"><svg width="28" height="28" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</p>
+  <dl class="biz"><div><dt>상호</dt><dd>네오코드</dd></div><div><dt>대표자</dt><dd>(출시 전 기재)</dd></div><div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div><div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div><div><dt>주소</dt><dd>(출시 전 기재)</dd></div><div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div></dl></div>
+  <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="../v8-white/support.html">고객센터</a><a href="../v8-white/about.html">팬꾹 소개</a></nav></div>
+  <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p></div></footer>
+
+<script>
+/* 시안용 메뉴 열기·닫기만 */
+var t=document.querySelector('.menu-toggle'),m=document.getElementById('mobile-menu');
+t.addEventListener('click',function(){var o=m.hidden;m.hidden=!o;t.setAttribute('aria-expanded',String(o));});
+</script>
+</body>
+</html>
