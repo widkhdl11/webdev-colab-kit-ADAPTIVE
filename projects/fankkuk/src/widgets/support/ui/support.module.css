@@ -11,7 +11,7 @@
 .tabs::-webkit-scrollbar { display: none; }
 .tab { flex: 0 0 auto; min-height: 44px; padding: 0 22px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-weight: 600; cursor: pointer; }
 .tab:hover { background: var(--surface-hover); }
-.tab[aria-selected="true"] { background: var(--brand); color: var(--on-brand); font-weight: 700; }
+.tab[aria-selected="true"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: 700; }
 .faq { margin-top: 16px; border-top: 1px solid var(--divider); }
 .faq details { border-bottom: 1px solid var(--divider); }
 .faq summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 68px; padding-block: 12px; font-size: 18px; font-weight: 600; letter-spacing: -.2px; cursor: pointer; list-style: none; }
@@ -38,7 +38,7 @@
 .mine-text { margin-top: 8px; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
 .mine-reply { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--divider); }
 .mine-reply-h { font-weight: 700; color: var(--ink); }
-.contact { padding: 32px; border-radius: var(--r-tile); background: var(--surface); }
+.contact { padding: 32px; border-radius: var(--r-tile); background: var(--surface-brand); }
 .contact h2 { font-size: 24px; letter-spacing: -.5px; }
 .contact dl { margin-top: 16px; }
 .contact dl div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding-block: 12px; border-top: 1px solid var(--divider); }

@@ -8,8 +8,8 @@
 .steps { display: flex; flex-wrap: wrap; gap: 8px; }
 .st { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px 0 8px; border: 0; border-radius: var(--r-pill); background: none; color: var(--sub); font-weight: 600; cursor: default; }
 .dot { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); color: var(--sub); font-size: 16px; font-weight: 700; line-height: 1; }
-.st.is-done { background: var(--surface); color: var(--ink); cursor: pointer; }
-.st.is-done .dot { background: var(--white); color: var(--brand); }
+.st.is-done { background: var(--success-soft); color: var(--success); cursor: pointer; }
+.st.is-done .dot { background: var(--white); color: var(--success); }
 .st.is-done:hover .lbl { text-decoration: underline; text-underline-offset: 4px; }
 .st[aria-current="step"] { background: var(--brand); color: var(--on-brand); font-weight: 700; }
 .st[aria-current="step"] .dot { background: var(--white); color: var(--brand); }

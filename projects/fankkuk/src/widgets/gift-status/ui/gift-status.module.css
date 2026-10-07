@@ -82,7 +82,7 @@
 .eta strong { display: block; font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
 
 /* 회색 판은 하나 — 주문 정보 */
-.info { padding: 32px; border-radius: var(--r-tile); background: var(--surface); }
+.info { padding: 32px; border-radius: var(--r-tile); background: var(--surface-brand); }
 .info h2 { margin-bottom: 8px; font-size: 24px; letter-spacing: -.5px; }
 .info-row { display: flex; justify-content: space-between; gap: 12px; padding: 14px 0; border-top: 1px solid var(--divider); }
 .info-row dt { color: var(--sub); }

@@ -6,7 +6,7 @@
 .tabs::-webkit-scrollbar { display: none; }
 .tab { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-weight: 600; cursor: pointer; }
 .tab:hover { background: var(--surface-hover); }
-.tab[aria-selected="true"] { background: var(--ink); color: var(--on-brand); font-weight: 700; }
+.tab[aria-selected="true"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: 700; }
 
 .rows { margin-top: 16px; border-top: 1px solid var(--divider); }
 .row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; align-items: center; gap: 12px 24px; padding-block: 24px; border-bottom: 1px solid var(--divider); }

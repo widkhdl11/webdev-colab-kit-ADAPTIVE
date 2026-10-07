@@ -1,7 +1,7 @@
 /* 받은 역조공 받기 — 시안 v4 revgift-receive.html <style> */
 .rcv { max-width: 800px; margin-inline: auto; padding-bottom: clamp(72px, 9vw, 128px); }
 
-.hero { margin-top: 24px; padding: clamp(24px, 4vw, 48px); border-radius: var(--r-panel); background: var(--surface); }
+.hero { margin-top: 24px; padding: clamp(24px, 4vw, 48px); border-radius: var(--r-panel); background: var(--surface-brand); }
 .hero-top { display: flex; align-items: center; gap: 24px; }
 .gift { width: 96px; height: 96px; flex-shrink: 0; }
 .hero-top h1 { font-size: clamp(28px, 3.2vw, 40px); line-height: 1.25; font-weight: 800; letter-spacing: -1px; }
@@ -25,7 +25,7 @@
 .panel h2 { font-size: 28px; letter-spacing: -.8px; }
 .panel h2:focus { outline: none; }
 .sub { margin-top: 12px; color: var(--sub); font-size: 18px; }
-.sec-note { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; align-items: start; margin-top: 24px; padding: 20px 24px; border-radius: var(--r-box); background: var(--surface); }
+.sec-note { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; align-items: start; margin-top: 24px; padding: 20px 24px; border-radius: var(--r-box); background: var(--surface-brand); }
 .sec-note img { width: 56px; height: 56px; }
 .sec-note p { font-weight: 600; }
 .sec-note small { display: block; margin-top: 4px; color: var(--sub); font-size: 16px; font-weight: 400; }

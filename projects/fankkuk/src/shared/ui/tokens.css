@@ -11,19 +11,21 @@
   --brand: #b84f48; /* 진한 코랄 — 주 버튼·링크·강조 글자. 흰 글자 4.94:1. 밝은 코랄(#F58278)에는 흰 글자를 올리지 않는다 */
   --brand-hover: #a4433d;
   --brand-active: #903832;
-  --brand-soft: #fde9e5; /* 코랄 태그·선택 면 */
+  --brand-soft: #fcece8; /* 코랄 태그 면 (= 선택 면) */
   --brand-ink: #a4433d; /* 코랄 태그 글자 — 태그 면 위 5.2:1 */
-  --avatar-soft: #fde9e5; /* 이름 첫 글자 동그라미 면 */
+  --avatar-soft: #fcece8; /* 이름 첫 글자 동그라미 면 */
   --ink: #343039; /* 본문 */
   --sub: #665d65; /* 보조 글 — 보조 면 위 5.8:1 */
   --faint: #6b6169; /* 흐린 글 — 바탕 5.7:1, 보조 면 5.5:1, 선택 면 5.1:1. 이보다 옅게 쓰지 않는다 (문서 값 #7A7078 은 미달이라 진하게) */
   --background: #ffffff; /* 페이지 바탕 — 흰색 (2026-10-07 사용자 「배경을 하얗게」, 아이보리 #FFFAF7 에서) */
-  --surface: #fff3ee; /* 옅은 코랄 보조 면 (v4 의 회색 면 자리) */
-  --surface-hover: #fde9e5;
+  --surface: #f7f7f8; /* 옅은 중립 면 — 아이콘 칸·비선택 탭·빈 목록·푸터 같은 일반 칸 (시안 v8) */
+  --surface-hover: #f0eff1; /* 일반 칸 마우스 올림 */
+  --surface-brand: #fff5f1; /* 옅은 코랄 면 — 주소 보호·개인정보 안내, 금액·업무 요약에만 */
+  --surface-selected: #fcece8; /* 선택된 탭·메뉴·항목 */
   --white: #ffffff; /* 카드·입력창·헤더 */
   --print-ink: #000000; /* 종이에 찍는 글자 — 송장 라벨처럼 스캐너·사람이 읽는 인쇄물은 순검정 */
   --on-brand: #ffffff;
-  --disabled: #f0e8e4;
+  --disabled: #f0eff1;
   --disabled-ink: #665d65; /* 비활성 면 위 5.2:1 */
   --warn-soft: #fff5db;
   --warn-ink: #805b16; /* 5.6:1 */
@@ -48,11 +50,11 @@
   --divider-strong: rgb(52 48 57 / 0.2);
   --line-button: rgb(52 48 57 / 0.22); /* 흰 보조 버튼 테두리 */
   --field-line: #8c7b76; /* 입력창 경계 — 흰 바탕 위 4.0:1 (문서 값 #BFAFAA 는 3:1 미달이라 진하게) */
-  --track: #eaddd7; /* 진행 막대 빈 칸 */
-  --grip: #eaddd7;
+  --track: #e8e6ea; /* 진행 막대 빈 칸 */
+  --grip: #dfdce0;
 
   /* 그림자 */
-  --border: #eaddd7; /* 카드·구분 경계 — 장식용 */
+  --border: #dfdce0; /* 카드·구분 경계 — 장식용, 중립색 */
   --hair: inset 0 0 0 1px var(--border); /* 테두리 대신. 아이보리 바탕 위 흰 카드 가장자리가 보이게 불투명 */
   --field: inset 0 0 0 1px var(--field-line);
   --lift: 0 6px 16px rgb(184 79 72 / 0.24); /* 주 버튼에만 */

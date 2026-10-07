@@ -22,7 +22,7 @@
 .arrow { color: var(--faint); }
 
 /* 구간 2: 약속 — 회색 큰 판 하나 */
-.panel { padding: clamp(32px, 5vw, 72px); border-radius: var(--r-panel); background: var(--surface); }
+.panel { padding: clamp(32px, 5vw, 72px); border-radius: var(--r-panel); background: var(--surface-brand); }
 .panel-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(32px, 6vw, 96px); align-items: start; }
 .panel-lead { margin-top: 20px; }
 .panel-cta { margin-top: 32px; }

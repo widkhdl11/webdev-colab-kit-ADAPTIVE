@@ -7,8 +7,8 @@
 .steps { display: flex; flex-wrap: wrap; gap: 8px; }
 .st { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px 0 8px; border: 0; border-radius: var(--r-pill); background: none; color: var(--sub); font-weight: 600; cursor: default; }
 .dot { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); color: var(--sub); font-size: 16px; font-weight: 700; line-height: 1; }
-.st.is-done { background: var(--surface); color: var(--ink); cursor: pointer; }
-.st.is-done .dot { background: var(--white); color: var(--brand); }
+.st.is-done { background: var(--success-soft); color: var(--success); cursor: pointer; }
+.st.is-done .dot { background: var(--white); color: var(--success); }
 .st.is-done:hover .lbl { text-decoration: underline; text-underline-offset: 4px; }
 .st[aria-current="step"] { background: var(--brand); color: var(--on-brand); font-weight: 700; }
 .st[aria-current="step"] .dot { background: var(--white); color: var(--brand); }
@@ -19,7 +19,7 @@
 .send-section { padding-block: 8px clamp(72px, 9vw, 128px); }
 .send-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
 @media (min-width: 1024px) { .send-grid { grid-template-columns: minmax(0, 1fr) 360px; } }
-.summary { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-tile); background: var(--surface); }
+.summary { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-tile); background: var(--surface-brand); }
 .summary h2 { font-size: 24px; letter-spacing: -.5px; }
 .summary-rows { margin-top: 12px; }
 @media (max-width: 1023px) { .summary { display: none; } }
@@ -39,7 +39,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .pick-list { display: grid; gap: 4px; max-height: 328px; overflow-y: auto; margin: 0; padding: 8px 12px 12px; }
 .pick { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px; border-radius: var(--r-box); cursor: pointer; }
 .pick:hover { background: var(--surface); }
-.pick:has(input:checked) { background: var(--surface-hover); box-shadow: inset 0 0 0 2px var(--brand); }
+.pick:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand); }
 .pick:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
 .pick input { width: 24px; height: 24px; accent-color: var(--brand); flex-shrink: 0; margin: 0; }
 .pick input:focus-visible { outline: none; }
@@ -53,7 +53,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .metal-q { margin-bottom: 8px; font-weight: 700; }
 .radios { display: flex; flex-wrap: wrap; gap: 12px; }
 .radios label { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px 0 16px; border-radius: var(--r-pill); background: var(--surface); font-weight: 600; cursor: pointer; margin: 0; }
-.radios label:has(input:checked) { box-shadow: inset 0 0 0 2px var(--brand); }
+.radios label:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand); }
 .radios label:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
 .radios input { width: 22px; height: 22px; accent-color: var(--brand); margin: 0; }
 .radios input:focus-visible { outline: none; }
@@ -68,7 +68,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 /* 끝에 닿으면 흐리게만 — disabled 를 쓰지 않아 키보드 포커스가 남는다 */
 .qty-btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
 .qty output { min-width: 32px; text-align: center; font-size: 24px; font-weight: 800; }
-.rule-note { margin-top: 24px; padding: 20px 24px; border-radius: var(--r-box); background: var(--surface); }
+.rule-note { margin-top: 24px; padding: 20px 24px; border-radius: var(--r-box); background: var(--surface-brand); }
 .rule-note ul { display: grid; gap: 4px; margin-top: 8px; color: var(--sub); }
 .rule-note li { display: flex; gap: 12px; }
 .rule-note li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }

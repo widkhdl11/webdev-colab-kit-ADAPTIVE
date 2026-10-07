@@ -36,7 +36,7 @@
 .no-list { display: flex; gap: 12px; align-items: flex-start; margin-top: 24px; padding: 16px 20px; border-radius: var(--r-box); background: var(--surface); font-weight: 600; }
 .no-list svg { flex-shrink: 0; color: var(--brand); margin-top: 2px; }
 
-.pay { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-tile); background: var(--surface); }
+.pay { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-tile); background: var(--surface-brand); }
 .pay h2 { font-size: 24px; letter-spacing: -.5px; }
 .inc { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--brand); font-weight: 700; }
 .lines { margin-top: 16px; }

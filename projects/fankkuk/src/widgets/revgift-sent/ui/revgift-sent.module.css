@@ -20,7 +20,7 @@
 .empty { margin-top: 40px; padding: 48px 24px; border-radius: var(--r-card); background: var(--surface); text-align: center; }
 .empty h3 { font-size: 22px; letter-spacing: -.3px; }
 .empty p { margin-top: 8px; }
-.foot-note { margin-top: 56px; padding: 20px 24px; border-radius: var(--r-box); background: var(--surface); }
+.foot-note { margin-top: 56px; padding: 20px 24px; border-radius: var(--r-box); background: var(--surface-brand); }
 .foot-note ul { display: grid; gap: 4px; margin-top: 8px; padding: 0; list-style: none; color: var(--sub); }
 .foot-note li { display: flex; gap: 12px; }
 .foot-note li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }

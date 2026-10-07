@@ -31,7 +31,7 @@
 .notes li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
 
 /* 요금 — 회색 판 하나 */
-.fee { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-tile); background: var(--surface); }
+.fee { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-tile); background: var(--surface-brand); }
 @media (max-width: 1023px) { .fee { position: static; } }
 .fee h2 { font-size: 28px; letter-spacing: -.8px; }
 .fee > p { margin-top: 8px; color: var(--sub); }

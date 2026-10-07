@@ -14,7 +14,7 @@
   .side ul { flex-direction: column; overflow: visible; margin: 0; padding: 0; box-shadow: none; }
   .side a { min-height: 48px; border-radius: var(--r-btn); border-bottom: 0; }
   .side a:hover { background: var(--surface); }
-  .side a[aria-current="page"] { background: var(--surface-hover); }
+  .side a[aria-current="page"] { background: var(--surface-selected); }
   .side a:focus-visible { outline-offset: 2px; }
 }
 .body { min-width: 0; }

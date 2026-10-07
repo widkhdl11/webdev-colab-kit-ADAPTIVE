@@ -10,7 +10,7 @@
 .rows { border-top: 1px solid var(--divider); }
 
 /* 1 오늘 승인할 선물 — 회색 판 하나 */
-.todo { padding: clamp(24px, 3vw, 40px); border-radius: var(--r-tile); background: var(--surface); }
+.todo { padding: clamp(24px, 3vw, 40px); border-radius: var(--r-tile); background: var(--surface-brand); }
 .todo-head { margin-bottom: 16px; }
 .todo-h { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .rule-line { display: flex; align-items: center; gap: 16px; padding-bottom: 8px; }

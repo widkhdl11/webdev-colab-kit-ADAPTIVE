@@ -5,7 +5,7 @@
 .tabs-row { display: flex; gap: 8px; margin-bottom: 8px; }
 .tab { min-height: 44px; padding: 0 18px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-weight: 600; cursor: pointer; }
 .tab:hover { background: var(--surface-hover); }
-.tab[aria-selected="true"] { background: var(--ink); color: var(--on-brand); font-weight: 700; }
+.tab[aria-selected="true"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: 700; }
 .tab[aria-selected="true"]:focus-visible { outline-offset: 4px; }
 
 .rows { border-top: 1px solid var(--divider); }

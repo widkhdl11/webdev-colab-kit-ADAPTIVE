@@ -2,7 +2,7 @@
 .records { margin-top: 32px; }
 .strong { color: var(--ink); font-weight: 700; }
 
-.month { display: flex; align-items: center; gap: clamp(20px, 3vw, 40px); padding: clamp(24px, 3vw, 40px); border-radius: var(--r-tile); background: var(--surface); }
+.month { display: flex; align-items: center; gap: clamp(20px, 3vw, 40px); padding: clamp(24px, 3vw, 40px); border-radius: var(--r-tile); background: var(--surface-brand); }
 .ico { width: 96px; height: 96px; }
 .month-body { flex: 1; min-width: 0; }
 .month-h { font-size: 22px; letter-spacing: -.3px; }
