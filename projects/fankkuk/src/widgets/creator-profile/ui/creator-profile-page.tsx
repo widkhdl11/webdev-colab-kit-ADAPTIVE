@@ -1,16 +1,18 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
-import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
+import { approvalDurationText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
+import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
+import { lowestPriceKrw, PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import { FollowButton, type FollowMode } from "@/features/creator-follow/ui/follow-button";
 import s from "./creator-profile.module.css";
 
-// 크리에이터 페이지. 시안: docs/design/mockups/site/v4/creator.html
+// 크리에이터 페이지. 시안: docs/design/mockups/site/v9-pages/creator-b.html (카드 d45) · 태그 아이콘·색 tags-b.html (카드 d46)
+// 얼굴·이름·소개·태그·주 버튼을 가운데로, 그 아래 요약 칸 셋(태그 · 평균 승인 · 「N원부터」 — N 은 지금 공개 요금표의 최저값).
 // 보낼 수 없는 것은 운영자가 관리자 화면에서 고치는 DB 목록을(INV-K9), 요금은 결제와 같은 DB 요금표의 공개 칸(서버 page 가 읽어 넘긴다)을, 구간 기준은 size-tier 를 읽는다 — 화면 숫자와 결제가 어긋나지 않게.
 // 문구 한계(design-rules 6절): "승인 없이는 저희 시스템이 주소를 열지 않습니다"는 쓰고 "절대 유출되지 않는다"는 쓰지 않는다.
 
@@ -52,15 +54,13 @@ export function CreatorProfilePage({
       </div>
 
       <section aria-labelledby="creator-name">
-        <div className={`container ${s.prof}`}>
-          <CreatorFace tone={creator.faceTone} className={s["prof-face"]} />
-          <div>
-            <h1 className="page-h" id="creator-name">
-              {creator.name}
-            </h1>
+        <div className="container">
+          <div className={s.center}>
+            <CreatorFace tone={creator.faceTone} className={s["prof-face"]} />
+            <h1 id="creator-name">{creator.name}</h1>
             {/* 소개글은 크리에이터가 직접 쓰는 글이라(my-account INV-A9) 채널 이름과 한 문장으로 잇지 않고 줄을 나눈다 */}
-            {creator.intro ? <p className={`lead ${s.intro}`}>{creator.intro}</p> : null}
-            <p className={`lead ${s.intro}`}>{creator.channelTitle}</p>
+            {creator.intro ? <p className={s.intro}>{creator.intro}</p> : null}
+            <p className={s.ch}>{creator.channelTitle}</p>
             <div className={s.tags}>
               <span className={statusTagClass("success")}>
                 <CheckIcon />
@@ -68,42 +68,74 @@ export function CreatorProfilePage({
               </span>
               {/* 태그 — 숨기지 않은 선택지만 온다(creator-tags INV-T4). 채널 이름은 위 줄에 있다 */}
               {creator.tags.map((t) => (
-                <span key={t} className="tag">
-                  {t}
-                </span>
+                <CreatorTag key={t} name={t} />
               ))}
             </div>
-            <p className={s.avg}>
-              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" fill="currentColor" />
-                <path d="M12 6.5V12l3.5 2.5" fill="none" stroke="var(--white)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {approvalTimeText(creator.approvalMinutes)} <span className="faint">(최근 30일)</span>
-            </p>
+            <div className={s.acts}>
+              {send === "open" ? (
+                <Link className="btn" href={sendHref}>
+                  선물 보내기
+                </Link>
+              ) : null}
+              {send === "self" ? <span className="tag">내 크리에이터 페이지예요</span> : null}
+              {send === "needs_follow" ? (
+                <FollowThenSend creatorId={creator.id} creatorName={creator.name} signedIn={followMode !== "login"} />
+              ) : null}
+              <FollowButton creatorId={creator.id} creatorName={creator.name} initialFollowing={creator.following} variant="profile" mode={followMode} />
+            </div>
+            {send === "needs_follow" ? <p className={s["acts-note"]}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p> : null}
           </div>
-          <div className={s.acts}>
-            {send === "open" ? (
-              <Link className="btn" href={sendHref}>
-                선물 보내기
-              </Link>
+
+          <ul className={s.stats}>
+            {creator.tags.length > 0 ? (
+              <li className={s.stat}>
+                <span className={s["stat-ic"]} aria-hidden="true">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="7" width="18" height="12" rx="3" />
+                    <path d="M8 12v3M6.5 13.5h3M15.5 12.5h.01M17.5 14.5h.01" />
+                  </svg>
+                </span>
+                <span>
+                  <small>태그</small>
+                  <b>{creator.tags.join(" · ")}</b>
+                </span>
+              </li>
             ) : null}
-            {send === "self" ? <span className="tag">내 크리에이터 페이지예요</span> : null}
-            {send === "needs_follow" ? (
-              <FollowThenSend creatorId={creator.id} creatorName={creator.name} signedIn={followMode !== "login"} />
-            ) : null}
-            <FollowButton creatorId={creator.id} creatorName={creator.name} initialFollowing={creator.following} variant="profile" mode={followMode} />
-          </div>
+            <li className={s.stat}>
+              <span className={s["stat-ic"]} aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+              </span>
+              <span>
+                <small>평균 승인 (최근 30일)</small>
+                <b>{approvalDurationText(creator.approvalMinutes)}</b>
+              </span>
+            </li>
+            <li className={s.stat}>
+              <span className={s["stat-ic"]} aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
+                  <path d="M12 22V12" />
+                  <path d="m3.3 7 8.7 5 8.7-5" />
+                </svg>
+              </span>
+              <span>
+                <small>상자 배송비 포함</small>
+                <b>{lowestPriceKrw(prices).toLocaleString("ko-KR")}원부터</b>
+              </span>
+            </li>
+          </ul>
         </div>
       </section>
 
-      <section aria-label="받는 선물 안내와 요금">
+      <section className={s.body} aria-label="받는 선물 안내와 요금">
         <div className={`container ${s.two}`}>
           <div>
             <div className={s.part}>
               <div className={s["part-h"]}>
-                <span className={s["ico-tile"]} aria-hidden="true">
-                  <img className="asset" src="/img/icon-gift.png" alt="" width={44} height={44} />
-                </span>
+                <img className="asset" src="/img/icon-gift.png" alt="" aria-hidden="true" width={56} height={56} />
                 <h2>{creator.name}님이 받는 선물</h2>
               </div>
               <p>편지, 인형, 손수건, 책, 그림 같은 작은 선물을 상자에 담아 보내 주세요. {TIER_SENTENCE}</p>
@@ -111,7 +143,7 @@ export function CreatorProfilePage({
               {prohibited.length > 0 && (
                 <>
               <h3 className={s["no-h"]}>보낼 수 없는 것</h3>
-              <ul className={s["no-list"]}>
+              <ul className={s.nos}>
                 {prohibited.map((item) => (
                   <li key={item.id}>
                     <span className={s.x} aria-hidden="true">
@@ -121,7 +153,7 @@ export function CreatorProfilePage({
                     </span>
                     <span>
                       {item.name}
-                      {item.description ? <span className={s["no-desc"]}>{item.description}</span> : null}
+                      {item.description ? <span className={s["no-desc"]}> ({item.description})</span> : null}
                     </span>
                   </li>
                 ))}
@@ -131,16 +163,14 @@ export function CreatorProfilePage({
             </div>
             <div className={s.part}>
               <div className={s["part-h"]}>
-                <span className={s["ico-tile"]} aria-hidden="true">
-                  <img className="asset" src="/img/icon-inspect.png" alt="" width={44} height={44} />
-                </span>
+                <img className="asset" src="/img/icon-inspect.png" alt="" aria-hidden="true" width={56} height={56} />
                 <h2>상자는 이렇게 확인해요</h2>
               </div>
-              <ul className={s.notes}>
+              <ol className={s.steps}>
                 <li>팬꾹 사무실에 상자가 도착하면 겉에 붙은 송장을 떼고 겉면을 검사해요.</li>
                 <li>추적 장치가 의심되는 상자만 열어 확인하고, 문제가 없으면 새 송장을 붙여 크리에이터에게 보내 드려요.</li>
                 <li>승인 없이는 저희 시스템이 크리에이터의 주소를 열지 않습니다.</li>
-              </ul>
+              </ol>
             </div>
           </div>
 

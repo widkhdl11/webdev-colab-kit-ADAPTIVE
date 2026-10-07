@@ -97,3 +97,8 @@ export function publicPriceTableFromRows(rows: unknown): PublicPriceTable | null
   const table = parsed.data;
   return PRICED_TIERS.every((t) => table[t].revgiftPriceKrw <= table[t].priceKrw) ? table : null;
 }
+
+/** 크리에이터 페이지 요약 칸 「N원부터」 — 지금 공개 요금표에서 가장 싼 구간의 받는 값(design-rules 5절 creator-b). */
+export function lowestPriceKrw(prices: PublicPriceTable): number {
+  return Math.min(...PRICED_TIERS.map((t) => prices[t].priceKrw));
+}

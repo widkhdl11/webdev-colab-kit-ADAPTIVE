@@ -1,48 +1,65 @@
-/* 크리에이터 페이지 — 시안 docs/design/mockups/site/v4/creator.html 의 <style> + v4.css 13절(follow-row) */
+/* 크리에이터 페이지 — 시안 docs/design/mockups/site/v9-pages/creator-b.html (카드 d45) + 태그 줄 tags-b.html 3절 (카드 d46) */
 .crumb a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 16px; color: var(--sub); font-weight: 600; text-decoration: none; }
 .crumb a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
-.prof { display: grid; grid-template-columns: 96px minmax(0, 1fr) 240px; align-items: center; gap: 24px 32px; padding-block: 24px clamp(40px, 5vw, 64px); }
+/* 가운데 프로필 — 판 없이 */
+.center { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 16px; }
 .prof-face { width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0; }
-.intro { margin-top: 4px; }
-.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-.avg { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--sub); }
-.avg svg { color: var(--brand); }
-.acts { display: grid; gap: 12px; }
-@media (max-width: 767px) { .prof { grid-template-columns: 72px minmax(0, 1fr); gap: 20px 16px; } .prof-face { width: 72px; height: 72px; } .acts { grid-column: 1 / -1; } }
+.center h1 { margin-top: 20px; font-size: clamp(32px, 3.4vw, 46px); line-height: 1.2; font-weight: 800; letter-spacing: -1.2px; }
+.intro { margin-top: 12px; max-width: 560px; font-size: 18px; color: var(--ink); }
+.ch { color: var(--sub); }
+.tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+.tags :global(.tag) { min-height: 32px; }
+.acts { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
+.acts-note { margin-top: 12px; color: var(--sub); }
 
-.two { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 6vw, 88px); align-items: start; }
+/* 요약 칸 셋 — 중립 면 */
+.stats { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 16px; margin-top: 48px; }
+.stat { display: flex; align-items: center; gap: 16px; padding: 20px 24px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--hair); }
+.stat-ic { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--r-box); background: var(--white); box-shadow: var(--hair); color: var(--brand); flex-shrink: 0; }
+.stat small { display: block; color: var(--sub); font-size: 16px; }
+.stat b { display: block; font-size: 20px; font-weight: 800; letter-spacing: -.3px; }
+@media (max-width: 767px) {
+  .stats { grid-auto-flow: row; gap: 8px; margin-top: 32px; }
+  .stat { padding: 16px 20px; }
+  .acts > :global(.btn) { flex: 1 1 100%; }
+}
+
+/* 본문 두 칸 */
+.body { padding-top: clamp(48px, 6vw, 80px); }
+.two { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 5vw, 72px); align-items: start; }
 @media (max-width: 1023px) { .two { grid-template-columns: minmax(0, 1fr); } }
-.part { padding-block: 40px; border-top: 1px solid var(--divider); }
-.part:first-child { border-top: 0; padding-top: 0; }
+.part + .part { margin-top: 48px; }
 .part-h { display: flex; align-items: center; gap: 16px; }
+.part-h img { width: 56px; height: 56px; flex-shrink: 0; }
 .part-h h2 { font-size: 28px; letter-spacing: -.8px; }
 .part > p { margin-top: 16px; color: var(--sub); }
-.ico-tile { display: grid; place-items: center; width: 64px; height: 64px; border-radius: var(--r-card); background: var(--surface); flex-shrink: 0; }
-.ico-tile img { width: 44px; height: 44px; }
-.no-h { margin-top: 32px; }
-.no-list { display: grid; gap: 8px; margin-top: 16px; }
-.no-list li { display: flex; align-items: center; gap: 12px; min-height: 44px; }
-/* 설명이 있는 줄 — 이름 아래 작은 회색 글자 */
-.no-desc { display: block; margin-top: 2px; font-size: 16px; color: var(--sub); }
-.x { flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); color: var(--sub); }
-.notes { display: grid; gap: 8px; margin-top: 16px; color: var(--sub); }
-.notes li { display: flex; gap: 12px; }
-.notes li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+.no-h { margin-top: 28px; }
+/* 보낼 수 없는 것 — 알약 */
+.nos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.nos li { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px 8px 10px; border-radius: var(--r-pill); background: var(--surface); box-shadow: var(--hair); color: var(--ink); }
+.no-desc { color: var(--sub); }
+.x { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--white); color: var(--sub); flex-shrink: 0; }
+/* 확인 절차 — 번호 줄 */
+.steps { display: grid; gap: 12px; margin-top: 20px; counter-reset: step; }
+.steps li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; padding: 16px 20px 16px 16px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--hair); color: var(--ink); }
+.steps li::before { counter-increment: step; content: counter(step); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-selected); color: var(--brand-ink); font-weight: 800; }
 
-/* 요금 — 회색 판 하나 */
-.fee { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-tile); background: var(--surface-brand); }
+/* 요금 — 옅은 코랄 판 */
+.fee { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-panel); background: var(--surface-brand); }
 @media (max-width: 1023px) { .fee { position: static; } }
+@media (max-width: 767px) { .fee { padding: 24px 20px; } .part-h h2 { font-size: 24px; } }
 .fee h2 { font-size: 28px; letter-spacing: -.8px; }
 .fee > p { margin-top: 8px; color: var(--sub); }
-.fee-rows { margin-top: 20px; }
-.fee-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 18px; border-top: 1px solid var(--divider); }
+.fee-rows { margin-top: 16px; }
+.fee-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 18px; border-top: 1px solid var(--border); }
 .fee-row small { display: block; font-size: 16px; color: var(--sub); }
 .fee-row b { font-size: 26px; font-weight: 800; letter-spacing: -.6px; white-space: nowrap; }
 .fee .fee-tag { margin-top: 8px; }
-.fee-tag :global(.tag) { background: var(--brand-soft); color: var(--brand-ink); }
+.fee-tag :global(.tag) { background: var(--white); box-shadow: var(--hair); }
 .fee .note { margin-top: 16px; color: var(--sub); }
 .fee-go { margin-top: 24px; }
+.fee .fee-go:global(.sub) { color: var(--ink); font-weight: 600; }
 
 /* 이런 크리에이터도 있어요 — 어느 폭에서도 한 줄 */
 .strip { padding-block: clamp(48px, 6vw, 72px) clamp(72px, 9vw, 128px); }

@@ -1,36 +1,59 @@
-/* 크리에이터 찾기 — 시안 docs/design/mockups/site/v4/creators.html 의 <style> */
-.find { padding-block: clamp(40px, 5vw, 72px) 0; text-align: center; }
-.find h1 { font-size: clamp(32px, 3.6vw, 48px); line-height: 1.25; font-weight: 800; letter-spacing: -1.2px; }
-.find :global(.lead) { margin-top: 12px; }
-.find :global(.search) { margin-top: 32px; }
-.verify { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 16px; color: var(--sub); font-weight: 600; }
-.verify svg { color: var(--brand); }
+/* 크리에이터 찾기 — 시안 docs/design/mockups/site/v9-pages/creators-b.html (카드 d45) + 태그 아이콘·색 tags-b.html 2절 (카드 d46) */
+.top { padding-block: clamp(32px, 4vw, 56px) 0; }
+.top h1 { font-size: clamp(32px, 3.6vw, 48px); line-height: 1.25; font-weight: 800; letter-spacing: -1.2px; }
+.top :global(.lead) { margin-top: 12px; }
+.verify { display: flex; align-items: center; gap: 8px; margin-top: 16px; color: var(--sub); font-weight: 600; }
+.verify svg { color: var(--brand); flex-shrink: 0; }
 
-/* 분야 칩 — 어느 폭에서도 한 줄, 좁으면 옆으로 민다 */
-.chips { display: flex; gap: 8px; margin: 32px auto 0; width: fit-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
-.chips::-webkit-scrollbar { display: none; }
-.chips :global(.chip) { flex: 0 0 auto; min-height: 44px; padding-inline: 18px; border: 0; cursor: pointer; font-size: 16px; }
-.chips :global(.chip):hover { background: var(--surface-hover); }
-.chips :global(.chip)[aria-pressed="true"] { background: var(--ink); color: var(--white); }
-@media (max-width: 767px) { .chips { width: auto; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); } }
+/* PC = 왼쪽 열(검색 + 태그 세로 메뉴) · 오른쪽 목록 */
+.split { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: clamp(32px, 4vw, 56px); align-items: start; padding-block: 32px clamp(72px, 9vw, 120px); }
+.side { position: sticky; top: 88px; display: grid; gap: 8px; }
+.side :global(.search) { max-width: none; height: 56px; margin: 0; }
+.side-h { margin-top: 24px; padding-inline: 16px; color: var(--sub); font-size: 16px; font-weight: 700; }
 
-.result { padding-block: clamp(40px, 5vw, 64px) clamp(72px, 9vw, 128px); }
-.result-bar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.result-bar strong { font-size: 22px; letter-spacing: -.3px; }
+.cat { display: flex; flex-direction: column; gap: 2px; }
+.cat :global(.chip) { display: flex; align-items: center; justify-content: flex-start; gap: 10px; min-height: 44px; padding-inline: 16px; border: 0; border-radius: var(--r-btn); background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+.cat :global(.chip)[data-icon="true"] { padding-inline: 10px 16px; }
+.cat :global(.chip):hover { background: var(--surface); }
+/* 고른 태그 = 그 플랫폼 색 2px 테두리 + 옅은 면. 「전체」·아이콘 없는 태그는 선택 면 */
+.cat :global(.chip)[aria-pressed="true"] { background: var(--pf, var(--surface-selected)); box-shadow: inset 0 0 0 2px var(--pc, transparent); color: var(--pk, var(--brand-ink)); }
 
-/* 한 줄에 한 명 */
-.list { border-top: 1px solid var(--divider); }
-.row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px 20px; padding-block: 20px; border-bottom: 1px solid var(--divider); }
+.bar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 12px; }
+.count { font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+
+/* 한 줄에 한 명 — 경계 카드 안. 걸러진 줄이 맨 위여도 위 선이 남지 않게 줄마다 위 선을 1px 겹쳐 두고 카드가 자른다 */
+.list { overflow: hidden; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); padding-inline: 24px; }
+.row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px 20px; margin-top: -1px; padding-block: 20px; border-top: 1px solid var(--border); }
 .off { display: none; } /* 검색에 걸러진 줄 — 지우지 않고 숨긴다(팔로우 상태 유지) */
 .who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
 .who a { text-decoration: none; }
 .who a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.says { color: var(--sub); }
+.says { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 4px; color: var(--sub); }
+.sep { color: var(--faint); }
 .acts { display: flex; gap: 8px; }
-@media (max-width: 767px) { .row { grid-template-columns: 48px minmax(0, 1fr); } .acts { grid-column: 2; } }
 
 .empty { display: grid; justify-items: center; gap: 8px; padding: 56px 0 24px; text-align: center; }
 .empty h2 { font-size: 22px; letter-spacing: -.3px; }
-.empty-ico { display: grid; place-items: center; width: 96px; height: 96px; border-radius: var(--r-tile); background: var(--surface); margin-bottom: 8px; }
+.empty-ico { display: grid; place-items: center; width: 96px; height: 96px; border-radius: var(--r-tile); background: var(--surface); box-shadow: var(--hair); margin-bottom: 8px; }
 .empty-ico img { width: 64px; height: 64px; }
 .empty-cta { margin-top: 16px; }
+
+/* 1023px 이하 = 위 칩 줄 + 목록 */
+@media (max-width: 1023px) {
+  .split { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .side { position: static; }
+  .side-h { display: none; }
+  .cat { flex-direction: row; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .cat::-webkit-scrollbar { display: none; }
+  .cat :global(.chip) { flex: 0 0 auto; background: var(--surface); border-radius: var(--r-pill); padding-inline: 18px; }
+  .cat :global(.chip)[data-icon="true"] { padding-inline: 10px 16px; }
+  .cat :global(.chip)[aria-pressed="true"] { background: var(--pf, var(--ink)); color: var(--pk, var(--white)); }
+}
+@media (max-width: 767px) {
+  .cat { margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
+  .list { padding-inline: 16px; }
+  .row { grid-template-columns: 48px minmax(0, 1fr); }
+  .acts { grid-column: 1 / -1; }
+  .acts > :global(*) { flex: 1 1 0; justify-content: center; }
+  .who { font-size: 18px; }
+}

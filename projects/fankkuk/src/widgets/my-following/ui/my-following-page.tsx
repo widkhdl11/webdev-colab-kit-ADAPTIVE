@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
+import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { saveFollow } from "@/features/creator-follow/api/save-follow";
 import s from "./my-following.module.css";
 
@@ -54,7 +55,18 @@ export function MyFollowingPanel({ creators }: { creators: readonly CreatorCard[
                   <Link href={`/creators/${c.id}`}>{c.name}</Link>
                 </p>
                 <p className={s.says}>
-                  {[...c.tags, c.channelTitle, approvalTimeText(c.approvalMinutes)].filter(Boolean).join(" · ")}
+                  {c.tags.map((t) => (
+                    <CreatorTag key={t} name={t} />
+                  ))}
+                  {c.channelTitle ? (
+                    <>
+                      <span>{c.channelTitle}</span>
+                      <span className={s.sep} aria-hidden="true">
+                        ·
+                      </span>
+                    </>
+                  ) : null}
+                  <span>{approvalTimeText(c.approvalMinutes)}</span>
                 </p>
               </div>
               <div className={s.acts}>

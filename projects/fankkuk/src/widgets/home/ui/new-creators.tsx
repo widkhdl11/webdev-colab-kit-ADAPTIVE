@@ -7,9 +7,11 @@ import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import type { SendAvailability } from "@/features/gift-register/model/sender-rule";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
+import { CreatorTag, hasTagIcon, TagChipBody, tagStyle } from "@/entities/creator/ui/creator-tag";
 import s from "./home.module.css";
 
 // 메인의 「새로 들어온 크리에이터」 — 태그 칩(creator-tags INV-T4)으로 거른 뒤 앞의 MAX_CARDS 명. 시안: docs/design/mockups/site/v9-home/home-b.html
+// 태그 칩·카드 태그의 아이콘·플랫폼 색은 v9-pages/tags-b.html 4절 (카드 d46).
 
 /** 카드 수. PC 3열 두 줄. 나머지는 「전체 보기」(크리에이터 찾기)에서. */
 const MAX_CARDS = 6;
@@ -35,8 +37,16 @@ export function NewCreators({ creators, chips, sendOf = {} }: Props) {
     <>
       <div className={s.chips} role="group" aria-label="태그">
         {[ALL, ...chips].map((c) => (
-          <button key={c} className="chip" type="button" aria-pressed={c === tag} onClick={() => setTag(c)}>
-            {c}
+          <button
+            key={c}
+            className="chip"
+            type="button"
+            aria-pressed={c === tag}
+            data-icon={c !== ALL && hasTagIcon(c)}
+            style={c === ALL ? undefined : tagStyle(c)}
+            onClick={() => setTag(c)}
+          >
+            {c === ALL ? c : <TagChipBody name={c} pressed={c === tag} />}
           </button>
         ))}
       </div>
@@ -52,11 +62,16 @@ export function NewCreators({ creators, chips, sendOf = {} }: Props) {
                   <h3>
                     <Link href={`/creators/${c.id}`}>{c.name}</Link>
                   </h3>
-                  <p className={s["c-meta"]}>
-                    {[...c.tags, c.channelTitle].filter(Boolean).join(" · ")}
-                  </p>
+                  {c.channelTitle ? <p className={s.sub}>{c.channelTitle}</p> : null}
                 </div>
               </div>
+              {c.tags.length > 0 ? (
+                <p className={s["c-meta"]}>
+                  {c.tags.map((t) => (
+                    <CreatorTag key={t} name={t} />
+                  ))}
+                </p>
+              ) : null}
               <p>{c.intro}</p>
               <div className={s["c-foot"]}>
                 <span className={s.sub}>{approvalTimeText(c.approvalMinutes)}</span>

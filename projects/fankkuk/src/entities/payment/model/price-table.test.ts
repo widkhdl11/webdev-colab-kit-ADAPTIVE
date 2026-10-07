@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeCharge, computeRevgiftCharge } from "./charge";
-import { checkPriceTable, isPricedTier, priceTableFromRows, publicPriceTableFromRows, type PriceTable } from "./price-table";
+import { checkPriceTable, isPricedTier, lowestPriceKrw, priceTableFromRows, publicPriceTableFromRows, type PriceTable } from "./price-table";
 
 // 첫 요금표(admin-console INV-K6 · payment INV-M1·M7). 운영 값은 DB 요금표에서만 온다 — 여기 값은 시험용이다.
 const FIRST: PriceTable = {
@@ -120,5 +120,14 @@ describe("공개 요금표 (INV-K3 화면용)", () => {
     expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r, i) => (i === 1 ? { ...r, revgift_price_krw: "6900" } : r)))).toBeNull();
     expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r, i) => (i === 2 ? { ...r, revgift_price_krw: 11000 } : r)))).toBeNull();
     expect(publicPriceTableFromRows(null)).toBeNull();
+  });
+});
+
+describe("lowestPriceKrw", () => {
+  it("공개 요금표에서 가장 싼 구간의 받는 값 — 구간 순서와 상관없이 최솟값", () => {
+    const row = (priceKrw: number) => ({ priceKrw, revgiftPriceKrw: priceKrw - 500 });
+    expect(lowestPriceKrw({ small: row(6900), medium: row(8900), large: row(12900) })).toBe(6900);
+    expect(lowestPriceKrw({ small: row(9000), medium: row(7000), large: row(8000) })).toBe(7000);
+    expect(lowestPriceKrw({ small: row(9000), medium: row(9500), large: row(4000) })).toBe(4000);
   });
 });

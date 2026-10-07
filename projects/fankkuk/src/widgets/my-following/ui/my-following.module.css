@@ -8,7 +8,8 @@
 .who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
 .who a { text-decoration: none; }
 .who a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.says { color: var(--sub); }
+.says { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 4px; color: var(--sub); } /* 태그는 아이콘·플랫폼 색(시안 v9-pages/tags-b.html, 카드 d46) */
+.sep { color: var(--faint); }
 .acts { display: flex; gap: 8px; }
 @media (max-width: 767px) { .row { grid-template-columns: 48px minmax(0, 1fr); } .acts { grid-column: 2; } }
 

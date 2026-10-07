@@ -1,0 +1,12 @@
+/* 크리에이터 태그 아이콘·색 — 시안 docs/design/mockups/site/v9-pages/tags-b.html 의 .pb · .ptag */
+.badge { display: inline-grid; place-items: center; flex: 0 0 auto; width: 20px; height: 20px; border-radius: var(--r-tag); overflow: hidden; }
+.badge img { display: block; }
+.app img { width: 100%; height: 100%; }
+.glyph img { width: 12px; height: 12px; filter: brightness(0) invert(1); }
+.virtual { background: var(--surface-hover); color: var(--ink); }
+.virtual svg { width: 16px; height: 16px; }
+.check { flex: 0 0 auto; }
+
+.tag { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px 0 6px; border-radius: var(--r-tag); background: var(--pf, var(--surface)); color: var(--pt, var(--sub)); font-size: 16px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.plain { padding-inline: 10px; }
+
