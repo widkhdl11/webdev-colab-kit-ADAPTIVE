@@ -4,7 +4,9 @@ import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { fanBadge } from "@/entities/order/ui/fan-stage-copy";
 import { statusTagClass } from "@/shared/ui/status-tone";
+import { BrandPanel } from "./brand-panel";
 import s from "./home.module.css";
+import { HomeNotices, type HomeNotice } from "./home-notices";
 import { NewCreators } from "./new-creators";
 
 // 메인(로그인 뒤, 팬). 시안: docs/design/mockups/site/v9-home/home-b.html
@@ -12,7 +14,6 @@ import { NewCreators } from "./new-creators";
 // 팬 화면이라 선물은 팬용 모양(toFanView)만 받는다 — 크리에이터행 송장번호·주소가 여기 닿지 않는다.
 
 export type HomeFollow = { id: string; name: string; faceTone: string };
-export type HomeNotice = { id: string; title: string; date: string };
 
 type Props = {
   nickname: string;
@@ -36,9 +37,6 @@ const STEPS = [
   { icon: "icon-inspect", label: "3단계 · 검수", text: "사무실에서 검수한 뒤 출고해요." },
   { icon: "icon-truck", label: "4단계 · 배송", text: "크리에이터의 주소는 팬에게 보이지 않아요." },
 ] as const;
-
-/** "2026-09-28" → "09.28" */
-const shortDate = (date: string) => date.slice(5).replace("-", ".");
 
 function MyCard({ nickname, gifts, following, faceToneByName }: Pick<Props, "nickname" | "gifts" | "following" | "faceToneByName">) {
   return (
@@ -97,34 +95,7 @@ export function HomePage({ nickname, gifts, following, faceToneByName, newest, n
       <section className={s["hero-wrap"]} aria-labelledby="hero-title">
         <div className="container">
           <div className={s.hero}>
-            <div className={s.panel}>
-              <div>
-                <p className="kicker">좋아하는 마음이 상자에 담겨 닿는 곳</p>
-                <h1 className={s.title} id="hero-title">
-                  좋아하는 크리에이터에게
-                  <br />
-                  선물을 보내 보세요
-                </h1>
-                <p className={`lead ${s.lead}`}>
-                  크리에이터가 승인한 선물만 배송해요.
-                  <br />
-                  서로의 주소는 보이지 않아요.
-                </p>
-                <div className={s.btns}>
-                  <Link className="btn" href="/gifts/new">
-                    선물 보내기
-                  </Link>
-                  <Link className="btn btn--soft" href="/creators">
-                    크리에이터 찾기
-                  </Link>
-                </div>
-              </div>
-              <div className={s.art} aria-hidden="true">
-                <img className={s.a1} src="/img/icon-gift.png" width={200} height={200} alt="" />
-                <img className={s.a2} src="/img/icon-truck.png" width={88} height={88} alt="" />
-                <img className={s.a3} src="/img/icon-approve.png" width={88} height={88} alt="" />
-              </div>
-            </div>
+            <BrandPanel />
             <MyCard nickname={nickname} gifts={gifts} following={following} faceToneByName={faceToneByName} />
           </div>
         </div>
@@ -164,26 +135,7 @@ export function HomePage({ nickname, gifts, following, faceToneByName, newest, n
         </div>
       </section>
 
-      <section className="block" aria-labelledby="notice-title">
-        <div className="container">
-          <div className="block-head">
-            <h2 id="notice-title">공지사항</h2>
-            <Link className="link-arrow" href="/notices">
-              전체 보기 ›
-            </Link>
-          </div>
-          <ul className={s["notice-list"]}>
-            {notices.map((n) => (
-              <li key={n.id}>
-                <Link href="/notices">
-                  <span className={s.t}>{n.title}</span>
-                  <span className={s.d}>{shortDate(n.date)}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      <HomeNotices notices={notices} />
       <div className="page-end" />
     </main>
   );
