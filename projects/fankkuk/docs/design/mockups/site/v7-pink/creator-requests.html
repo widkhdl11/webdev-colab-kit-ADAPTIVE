@@ -1,0 +1,279 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v4 — 크리에이터 · 승인 요청 (2026-10-02)
+  사용자 지시: 「심플, 세련됨, 귀여움으로」 「크리에이터 목록도 한줄로… 두~세줄되면 이상해」 「옆으로 2줄로 나오니까 꽉꽉 채워넣은거 같다」
+  -> 원본의 3열 카드 격자를 버리고 한 줄에 한 건인 세로 목록으로. 회색 면은 쓰지 않고(탭 알약만), 귀여움은 얼굴 아바타와 방패 아이콘 하나.
+  사실: 전체 승인 없음, 승인은 카카오톡 인증서로 한 건씩(approval-signature), 거절은 서명 불필요·이유는 팬에게 알리지 않음.
+  「카카오톡으로 승인」은 서명 요청을 보낼 뿐 승인하지 않는다 — 그래서 한 건은 「서명 대기」 상태로 그렸다.
+  카카오 인증 버튼만 노랑 #FEE500 + 글자 #191919. 교체할 그림 자리는 data-asset 속성(목록: v4/_assets-creator.md).
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 승인 요청</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="v7.css">
+  <style>
+    /* 크리에이터 공통 — 헤더 승인 요청 수 알약 (v4.css 의 .gift-badge 는 휴대폰 전용이라 여기서 따로) */
+    .req-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 8px; border-radius: 9999px; background: var(--surface-subtle); color: var(--ink); font-weight: 700; text-decoration: none; }
+    .req-pill:hover { background: var(--secondary-hover); }
+    .req-pill .glyph { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: var(--on-brand-main); }
+    .btn-kakao { background: var(--kakao-background); color: var(--on-kakao); box-shadow: none; }
+    .btn-kakao:hover { background: var(--kakao-hover); }
+    .link-in { color: var(--brand-point); font-weight: 600; text-underline-offset: 4px; }
+    .rule-line { display: flex; align-items: center; gap: 16px; padding-block: 8px 24px; }
+    .rule-line .ico { width: 56px; height: 56px; }
+    .rule-line p { display: grid; }
+    .rule-line strong { font-size: 18px; letter-spacing: -.3px; }
+    .tabs-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .tab { min-height: 44px; padding: 0 18px; border: 0; border-radius: 9999px; background: var(--surface-subtle); color: var(--sub); font-weight: 600; cursor: pointer; }
+    .tab:hover { background: var(--secondary-hover); }
+    .tab[aria-selected="true"] { background: var(--ink); color: var(--text-inverse); font-weight: 700; }
+    .req-rows { border-top: 1px solid var(--border); }
+    .req { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 16px 24px; padding-block: 24px; border-bottom: 1px solid var(--border); }
+    .req .who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+    .req .says { color: var(--sub); }
+    .req .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
+    .req-act { display: flex; gap: 8px; }
+    .signing { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .signing .sg { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-subtle); color: var(--sub); }
+    .check-row { display: flex; align-items: flex-start; gap: 12px; margin-top: 16px; padding: 16px 20px; border-radius: 16px; background: var(--surface-subtle); cursor: pointer; font-weight: 600; }
+    .check-row input { width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--brand); flex-shrink: 0; }
+    .check-row:has(input:checked) { box-shadow: inset 0 0 0 2px var(--brand); }
+    .check-row:has(input:focus-visible) { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+    .check-row small { display: block; margin-top: 4px; color: var(--sub); font-size: 16px; font-weight: 400; }
+    .reason { margin-top: 12px; }
+    .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+    @media (min-width: 768px) {
+      #decline-sheet { align-items: center; }
+      #decline-sheet .sheet { max-width: 480px; border-radius: var(--r-panel); padding: 28px 28px 32px; }
+      #decline-sheet .sheet-grip { display: none; }
+    }
+    @media (max-width: 767px) {
+      .rule-line .ico { width: 48px; height: 48px; }
+      .req { grid-template-columns: 48px minmax(0, 1fr); gap: 12px 16px; padding-block: 20px; }
+      .req-act { grid-column: 1 / -1; flex-direction: column; }
+      .req-act .btn { width: 100%; }
+      .req--done .tag { grid-column: 2; justify-self: start; }
+    }
+  </style>
+</head>
+<body class="page-creator-requests">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="var(--art-ink)"/><circle cx="31" cy="22" r="2.6" fill="var(--art-ink)"/><path d="M18 29c2.500 3.500 9.500 3.500 12 0" stroke="var(--art-ink)" stroke-width="2.600" stroke-linecap="round" fill="none"/><circle cx="12.500" cy="28" r="3" fill="var(--art-white)" opacity=".45"/><circle cx="35.500" cy="28" r="3" fill="var(--art-white)" opacity=".45"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="20" ry="3" fill="var(--art-ink)" opacity=".10"/><path d="M36 7l23 8v19c0 14-10 24-23 30C23 58 13 48 13 34V15z" fill="var(--art-shield)" stroke="var(--art-shield)" stroke-width="4" stroke-linejoin="round"/><path d="M36 7l23 8v19c0 14-10 24-23 30z" fill="var(--art-shield-shade)"/><path d="M25 35l8 8 15-16" stroke="var(--art-white)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19 19v11" stroke="var(--art-white)" stroke-width="4" stroke-linecap="round" opacity=".5"/></symbol>
+    <symbol id="i-log" viewBox="0 0 72 72"><ellipse cx="36" cy="68" rx="24" ry="2.500" fill="var(--art-ink)" opacity=".10"/><path d="M5 28Q36 2 67 28Q36 54 5 28z" fill="var(--art-white)" stroke="var(--art-eye-outline)" stroke-width="5" stroke-linejoin="round"/><circle cx="36" cy="28" r="12" fill="var(--art-eye-iris)"/><circle cx="36" cy="28" r="5.500" fill="var(--art-eye-pupil)"/><circle cx="40" cy="24" r="3" fill="var(--art-white)"/><path d="M46 49v-5a8 8 0 0 1 16 0v5" stroke="var(--art-lock-shackle)" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="42" y="47" width="24" height="19" rx="6" fill="var(--art-lock-gold)"/><path d="M42 60h24a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6z" fill="var(--art-lock-shade)"/><circle cx="54" cy="55" r="3" fill="var(--art-lock-keyhole)"/><rect x="53" y="56" width="2" height="5" rx="1" fill="var(--art-lock-keyhole)"/></symbol>
+  </defs>
+</svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="creator-requests.html" aria-label="팬꾹 크리에이터 처음 화면"><svg width="32" height="32" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="var(--brand-coral)"/>
+<path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="var(--brand-ivory)"/>
+<circle cx="199.5" cy="189.5" r="15.5" fill="var(--brand-charcoal)"/><circle cx="310.5" cy="189.5" r="15.5" fill="var(--brand-charcoal)"/>
+<path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="var(--brand-deep-coral)"/>
+<path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="var(--brand-ivory)"/>
+<path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="var(--brand-deep-coral)"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+          <li><a href="creator-requests.html" aria-current="page">승인 요청</a></li>
+          <li><a href="creator-log.html">열람 기록</a></li>
+          <li><a href="creator-settings.html">주소와 설정</a></li>
+          <li><a href="../notices.html">공지사항</a></li>
+          <li><a href="../support.html">고객센터</a></li>
+        </ul></nav>
+      <div class="header-actions">
+        <a class="req-pill" href="creator-requests.html" aria-label="승인 대기 4건"><span class="glyph" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.400 4.800L14.500 12l2.100.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.400-4.800L9.500 12l-2.100-.2A6 6 0 0 1 5 7V2Z"/></svg></span>대기 4건</a>
+        <div class="user-menu">
+          <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown" aria-haspopup="true">
+            <span class="avatar" aria-hidden="true">하</span><span class="nick">하루</span>
+            <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" hidden>
+            <p class="who">하루님 · 크리에이터</p>
+            <a href="creator-settings.html">주소와 설정</a>
+            <hr>
+            <a href="landing.html">로그아웃</a>
+          </div>
+        </div>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="10.500" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.500" fill="currentColor"/></svg></button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="creator-requests.html">승인 요청 (대기 4건)</a>
+      <a href="creator-log.html">열람 기록</a>
+      <a href="creator-settings.html">주소와 설정</a>
+      <a href="../notices.html">공지사항</a>
+      <a href="../support.html">고객센터</a>
+      <a href="landing.html">로그아웃</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <div class="page-title">
+        <h1 class="page-h">승인 요청</h1>
+        <p>팬이 보낸 선물을 받을지 정하는 곳이에요. 7일 안에 정하지 않으면 자동으로 받지 않음 처리돼요.</p>
+      </div>
+
+      <div class="rule-line">
+        <img class="ico asset" src="../v4/img/icon-approve.png" alt="" aria-hidden="true" data-asset="icon-approve">
+        <p><strong>승인은 한 건씩, 카카오톡 인증서로 서명해요.</strong></p>
+      </div>
+
+      <div class="tabs-row" role="tablist" data-tabs aria-label="요청 구분">
+        <button class="tab" role="tab" id="t-wait" aria-selected="true" aria-controls="p-wait" type="button">승인 대기 <span>4</span></button>
+        <button class="tab" role="tab" id="t-done" aria-selected="false" tabindex="-1" aria-controls="p-done" type="button">처리한 요청</button>
+      </div>
+
+      <div role="tabpanel" id="p-wait" aria-labelledby="t-wait">
+        <ul class="req-rows">
+          <li class="req">
+            <svg class="face" style="--c:var(--face-3)" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg>
+            <div class="req-main">
+              <p class="who">별이님의 선물</p>
+              <p class="says">손편지와 간식 세트 · 상자 2개 · FC-4T7NX</p>
+              <p class="meta"><span class="tag tag--warning">남은 기간 6일</span><span class="sub">2026.09.30 14:20 요청</span></p>
+            </div>
+            <div class="req-act">
+              <button class="btn btn-kakao" type="button"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" data-asset="icon-kakao-bubble"><path fill="currentColor" d="M10 2C5.600 2 2 4.900 2 8.500c0 2.300 1.500 4.300 3.700 5.500l-.9 3.300 3.900-2.200c.4.100.8.100 1.300.1 4.400 0 8-2.900 8-6.700S14.400 2 10 2Z"/></svg>카카오톡으로 승인</button>
+              <button class="btn btn--soft" type="button" data-sheet-open="decline-sheet" data-fan="별이">받지 않기</button>
+            </div>
+          </li>
+          <li class="req">
+            <svg class="face" style="--c:var(--face-5)" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg>
+            <div class="req-main">
+              <p class="who">달콤이님의 선물</p>
+              <p class="says">직접 뜬 목도리 · 상자 1개 · FC-7M2JC</p>
+              <p class="signing" role="status"><span class="sg"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" data-asset="icon-hourglass-wait"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.400 4.800L14.500 12l2.100.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.400-4.800L9.500 12l-2.100-.2A6 6 0 0 1 5 7V2Z"/></svg></span><strong>카카오톡에서 서명을 기다리고 있어요</strong></p>
+              <p class="meta"><span class="sub">서명을 마치기 전에는 아무것도 바뀌지 않아요. · 2026.09.30 11:05 요청</span></p>
+            </div>
+            <div class="req-act"><button class="btn btn--soft" type="button">서명 요청 취소</button></div>
+          </li>
+          <li class="req">
+            <svg class="face" style="--c:var(--face-2)" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg>
+            <div class="req-main">
+              <p class="who">구름빵님의 선물</p>
+              <p class="says">무선 이어폰 · 상자 1개 · FC-2X9PB</p>
+              <p class="meta"><span class="tag tag--warning">남은 기간 5일</span><span class="tag">전자기기·금속 있음</span><span class="sub">2026.09.29 21:48 요청</span></p>
+            </div>
+            <div class="req-act">
+              <button class="btn btn-kakao" type="button"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" data-asset="icon-kakao-bubble"><path fill="currentColor" d="M10 2C5.600 2 2 4.900 2 8.500c0 2.300 1.500 4.300 3.700 5.500l-.9 3.300 3.900-2.200c.4.100.8.100 1.300.1 4.400 0 8-2.900 8-6.700S14.400 2 10 2Z"/></svg>카카오톡으로 승인</button>
+              <button class="btn btn--soft" type="button" data-sheet-open="decline-sheet" data-fan="구름빵">받지 않기</button>
+            </div>
+          </li>
+          <li class="req">
+            <svg class="face" style="--c:var(--face-1)" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg>
+            <div class="req-main">
+              <p class="who">솜사탕님의 선물</p>
+              <p class="says">키링과 엽서 모음 · 상자 3개 · FC-6H3LM</p>
+              <p class="meta"><span class="tag tag--warning">남은 기간 3일</span><span class="tag">전자기기·금속 있음</span><span class="sub">2026.09.28 09:12 요청</span></p>
+            </div>
+            <div class="req-act">
+              <button class="btn btn-kakao" type="button"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" data-asset="icon-kakao-bubble"><path fill="currentColor" d="M10 2C5.600 2 2 4.900 2 8.500c0 2.300 1.500 4.300 3.700 5.500l-.9 3.300 3.900-2.200c.4.100.8.100 1.300.1 4.400 0 8-2.900 8-6.700S14.400 2 10 2Z"/></svg>카카오톡으로 승인</button>
+              <button class="btn btn--soft" type="button" data-sheet-open="decline-sheet" data-fan="솜사탕">받지 않기</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div role="tabpanel" id="p-done" aria-labelledby="t-done" hidden>
+        <ul class="req-rows">
+          <li class="req req--done">
+            <svg class="face" style="--c:var(--face-4)" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg>
+            <div class="req-main">
+              <p class="who">도토리님의 선물</p>
+              <p class="says">수제 쿠키 세트 · 상자 1개 · FC-9B2KR</p>
+              <p class="meta"><span class="sub">2026.09.27 처리 · 카카오톡 서명으로 승인했어요.</span></p>
+            </div>
+            <span class="tag tag--success">승인함</span>
+          </li>
+          <li class="req req--done">
+            <svg class="face" style="--c:var(--face-6)" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg>
+            <div class="req-main">
+              <p class="who">라떼한잔님의 선물</p>
+              <p class="says">인형 · 상자 1개 · FC-5L4GT</p>
+              <p class="meta"><span class="sub">2026.09.25 처리 · 팬에게는 이유를 알리지 않았어요.</span></p>
+            </div>
+            <span class="tag tag--danger">받지 않음</span>
+          </li>
+          <li class="req req--done">
+            <svg class="face" style="--c:var(--face-1)" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg>
+            <div class="req-main"><p class="who">잠꾸러기님의 선물</p><p class="says">스티커 묶음 · 상자 1개 · FC-3N8HU</p><p class="meta"><span class="sub">2026.09.20 처리 · 앞으로 이 팬의 선물은 받지 않아요. 풀려면 <a class="link-in" href="creator-settings.html#blocked">주소와 설정</a>에서 해요.</span></p></div>
+            <span class="tag tag--danger">차단함</span>
+          </li>
+          <li class="req req--done">
+            <svg class="face" style="--c:var(--face-2)" aria-hidden="true" focusable="false" data-asset="avatar-face"><use href="#i-face"/></svg>
+            <div class="req-main">
+              <p class="who">밤하늘님의 선물</p>
+              <p class="says">그림 액자 · 상자 1개 · FC-8F1WS</p>
+              <p class="meta"><span class="sub">2026.09.14 자동 처리 · 7일 안에 정하지 않아 자동으로 받지 않음 처리됐어요.</span></p>
+            </div>
+            <span class="tag tag--danger">자동 반려</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="page-end"></div>
+  </main>
+
+  <div class="sheet-root" id="decline-sheet" hidden>
+    <div class="sheet-scrim" data-sheet-close></div>
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="decline-title">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 id="decline-title"><span id="decline-fan">별이</span>님의 선물을 받지 않을까요?</h2>
+        <button class="sheet-close" type="button" data-sheet-close aria-label="닫기"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="2.500" stroke-linecap="round"/></svg></button>
+      </div>
+      <p class="sub">받지 않는 데에는 카카오톡 서명이 필요 없어요.</p>
+      <label class="check-row">
+        <input type="checkbox">
+        <span>이 팬의 선물을 앞으로 받지 않기(차단)<small>차단한 팬은 선물을 보낼 수 없어요. 풀기는 주소와 설정에서 해요.</small></span>
+      </label>
+      <p class="sub reason">팬에게는 이유를 알리지 않아요.</p>
+      <div class="sheet-btns">
+        <button class="btn btn--soft" type="button" data-sheet-close>돌아가기</button>
+        <button class="btn" type="button" data-sheet-close>받지 않기</button>
+      </div>
+    </section>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="var(--brand-coral)"/>
+<path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="var(--brand-ivory)"/>
+<circle cx="199.5" cy="189.5" r="15.5" fill="var(--brand-charcoal)"/><circle cx="310.5" cy="189.5" r="15.5" fill="var(--brand-charcoal)"/>
+<path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="var(--brand-deep-coral)"/>
+<path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="var(--brand-ivory)"/>
+<path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="var(--brand-deep-coral)"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="../support.html">고객센터</a>
+          <a href="../about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+  <script>
+    // 시트 제목에 누른 줄의 팬 이름을 넣는 시연용 코드 (서버 호출 없음)
+    document.querySelectorAll('[data-fan]').forEach(function (b) {
+      b.addEventListener('click', function () { document.getElementById('decline-fan').textContent = b.getAttribute('data-fan'); });
+    });
+  </script>
+</body>
+</html>
