@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>헤더 비교 v9</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+/* 헤더 오른쪽(로그인 표시·선물 상태)만 비교하는 시안. 토큰 값은 src/shared/ui/tokens.css 와 같다. */
+:root {
+  --brand:#b84f48; --ink:#343039; --sub:#665d65; --faint:#6b6169;
+  --surface:#f7f7f8; --surface-hover:#f0eff1; --white:#fff; --on-brand:#fff;
+  --divider:rgb(52 48 57 / .08); --border:#dfdce0; --field-line:#8c7b76;
+  --warn:#c98a12; --info:#315e86; --success:#276749;
+  --warn-soft:#fff5db; --warn-ink:#805b16; --info-soft:#edf4fa; --success-soft:#eaf5ee;
+  --float:0 10px 28px rgb(52 48 57 / .16); --hair:inset 0 0 0 1px var(--border);
+  --logo-coral:#f58278; --logo-ivory:#fff8f0; --logo-charcoal:#343039; --logo-deep-coral:#be514a;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:#eceaee; color:var(--ink); font-family:"Pretendard Variable",Pretendard,sans-serif; font-size:16px; line-height:1.6; word-break:keep-all; }
+ul { list-style:none; margin:0; padding:0; }
+a { color:inherit; }
+.page { max-width:1240px; margin:0 auto; padding:32px 16px 80px; }
+h1 { font-size:26px; margin:0 0 4px; }
+.lead { color:var(--sub); margin:0 0 32px; }
+.opt { margin-bottom:48px; }
+.opt h2 { font-size:20px; margin:0 0 2px; }
+.opt h2 .rec { display:inline-block; margin-left:8px; padding:2px 8px; border-radius:6px; background:var(--brand); color:#fff; font-size:13px; vertical-align:2px; }
+.opt p.desc { margin:0 0 12px; color:var(--sub); }
+.row-label { font-size:13px; font-weight:700; color:var(--faint); margin:12px 0 6px; }
+.frame { background:var(--white); border-radius:12px; overflow:visible; box-shadow:0 1px 0 var(--divider); }
+.mob { width:375px; }
+.hdr { display:flex; align-items:center; gap:24px; min-height:72px; padding:0 24px; position:relative; }
+.mob .hdr { gap:12px; padding:0 16px; }
+.logo { display:inline-flex; align-items:center; gap:8px; font-size:24px; font-weight:800; letter-spacing:-.5px; text-decoration:none; }
+.nav { flex:1; display:flex; gap:2px; }
+.nav a { padding:10px 14px; font-weight:600; text-decoration:none; }
+.mob .nav { display:none; }
+.acts { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.toggle { display:none; }
+.mob .toggle { display:grid; place-items:center; width:44px; height:44px; border:0; background:none; color:var(--ink); }
+.cols { display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; }
+.cols > div:first-child { flex:1; min-width:600px; }
+
+/* ── 지금 ── */
+.c-gi { display:grid; place-items:center; width:44px; height:44px; border-radius:50%; background:var(--surface); color:var(--brand); }
+.c-gi.wait { background:#fff; color:var(--sub); border:2px dashed var(--field-line); }
+.c-gi.done { background:var(--brand); color:#fff; }
+.c-user { display:inline-flex; align-items:center; gap:8px; min-height:48px; padding:4px 12px 4px 4px; border-radius:9999px; background:var(--surface); font-weight:600; }
+.c-av { display:grid; place-items:center; width:40px; height:40px; border-radius:50%; background:#fcece8; font-weight:700; }
+.c-badge { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 16px 0 8px; border-radius:9999px; background:var(--surface); font-weight:700; }
+.c-badge .g { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; background:var(--brand); color:#fff; }
+.c-login { padding:10px 14px; font-weight:700; }
+.c-join { padding:10px 18px; border-radius:10px; background:var(--brand); color:#fff; font-weight:700; }
+
+/* ── A 얇은 선 아이콘 ── */
+.a-gi { position:relative; display:grid; place-items:center; width:40px; height:40px; border-radius:10px; color:var(--ink); }
+.a-gi:hover { background:var(--surface); }
+.a-gi .dot { position:absolute; top:8px; right:7px; width:8px; height:8px; border-radius:50%; box-shadow:0 0 0 2px #fff; }
+.a-sep { width:1px; height:20px; background:var(--border); margin:0 8px; }
+.a-user { display:inline-flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; font-size:15px; font-weight:600; }
+.a-user:hover { background:var(--surface); }
+.a-av { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:var(--surface); box-shadow:var(--hair); font-size:13px; font-weight:700; color:var(--sub); }
+.a-login { padding:8px 12px; font-size:15px; font-weight:600; color:var(--sub); }
+.a-join { padding:8px 14px; border-radius:10px; box-shadow:inset 0 0 0 1px rgb(52 48 57 / .22); font-size:15px; font-weight:700; }
+.a-count { display:inline-flex; align-items:center; gap:6px; padding:8px 10px; border-radius:10px; font-size:15px; font-weight:600; }
+
+/* ── B 글자 중심 ── */
+.b-link { display:inline-flex; align-items:center; gap:6px; padding:8px 10px; border-radius:10px; font-size:15px; font-weight:600; text-decoration:none; }
+.b-link:hover, .b-link.open { background:var(--surface); }
+.b-num { display:inline-grid; place-items:center; min-width:20px; height:20px; padding:0 6px; border-radius:9999px; background:var(--ink); color:#fff; font-size:12px; font-weight:700; }
+.b-sep { width:1px; height:14px; background:var(--border); }
+.b-txt { padding:8px 10px; font-size:15px; font-weight:600; color:var(--sub); text-decoration:none; }
+.b-txt.strong { color:var(--ink); }
+.b-drop { position:absolute; right:150px; top:62px; width:320px; padding:8px; background:#fff; border-radius:16px; box-shadow:var(--float),var(--hair); z-index:5; }
+.b-drop li { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:10px; }
+.b-drop li:hover { background:var(--surface); }
+.b-drop small { display:block; color:var(--faint); font-size:13px; }
+.tag { padding:2px 8px; border-radius:6px; font-size:13px; font-weight:700; white-space:nowrap; }
+.tag.wait { background:var(--warn-soft); color:var(--warn-ink); }
+.tag.move { background:var(--info-soft); color:var(--info); }
+.tag.done { background:var(--success-soft); color:var(--success); }
+.b-all { display:block; margin-top:4px; padding:10px 12px; border-top:1px solid var(--divider); font-size:14px; font-weight:600; color:var(--sub); text-decoration:none; }
+.spacer { height:230px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="var(--logo-coral)"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="var(--logo-ivory)"/><circle cx="199.5" cy="189.5" r="15.5" fill="var(--logo-charcoal)"/><circle cx="310.5" cy="189.5" r="15.5" fill="var(--logo-charcoal)"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="var(--logo-deep-coral)"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="var(--logo-ivory)"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="var(--logo-deep-coral)"/></symbol>
+    <!-- 지금 쓰는 굵은 채움 그림 -->
+    <symbol id="c-move" viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.5" r="3" fill="currentColor" stroke="#f7f7f8" stroke-width="2"/><circle cx="18" cy="18.5" r="3" fill="currentColor" stroke="#f7f7f8" stroke-width="2"/></symbol>
+    <symbol id="c-wait" viewBox="0 0 24 24"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.4 4.8L14.5 12l2.1.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.4-4.8L9.5 12l-2.1-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="#fff"/></symbol>
+    <symbol id="c-done" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <!-- 얇은 선 그림 -->
+    <symbol id="l-move" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+    <symbol id="l-wait" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="l-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 5-5"/></symbol>
+    <symbol id="l-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></symbol>
+    <symbol id="l-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="l-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="c-menu" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<div class="page">
+  <h1>헤더 오른쪽 비교 — 로그인 표시 · 선물 상태</h1>
+  <p class="lead">왼쪽 로고와 가운데 메뉴는 그대로 두고, 오른쪽 끝만 바꿉니다. 팬 계정에 진행 중인 선물이 3개(승인 대기 1 · 배송 중 1 · 배송 완료 1) 있다고 가정했습니다.</p>
+
+  <!-- 지금 -->
+  <section class="opt">
+    <h2>지금</h2>
+    <p class="desc">속이 꽉 찬 굵은 그림이 코랄·점선 동그라미 안에 들어 있고, 내 정보는 회색 알약 안에 이름 첫 글자 동그라미가 있습니다.</p>
+    <div class="row-label">PC · 팬</div>
+    <div class="frame"><div class="hdr">
+      <a class="logo"><svg width="32" height="32"><use href="#logo"/></svg>팬꾹</a>
+      <nav class="nav"><a>크리에이터 찾기</a><a>선물 보내기</a><a>공지사항</a><a>팬꾹 소개</a><a>고객센터</a></nav>
+      <div class="acts">
+        <span class="c-gi wait"><svg width="24" height="24"><use href="#c-wait"/></svg></span>
+        <span class="c-gi"><svg width="24" height="24"><use href="#c-move"/></svg></span>
+        <span class="c-gi done"><svg width="24" height="24"><use href="#c-done"/></svg></span>
+        <span class="c-user" style="margin-left:4px"><span class="c-av">하</span>하루<svg width="16" height="16" style="color:var(--sub)"><use href="#l-down"/></svg></span>
+      </div>
+    </div></div>
+    <div class="row-label">PC · 로그인 전</div>
+    <div class="frame"><div class="hdr">
+      <a class="logo"><svg width="32" height="32"><use href="#logo"/></svg>팬꾹</a>
+      <nav class="nav"><a>크리에이터 찾기</a><a>선물 보내기</a><a>공지사항</a><a>팬꾹 소개</a><a>고객센터</a></nav>
+      <div class="acts"><span class="c-login">로그인</span><span class="c-join">회원가입</span></div>
+    </div></div>
+    <div class="row-label">모바일 · 팬</div>
+    <div class="frame mob"><div class="hdr">
+      <a class="logo"><svg width="32" height="32"><use href="#logo"/></svg>팬꾹</a>
+      <div class="acts"><span class="c-badge"><span class="g"><svg width="18" height="18"><use href="#c-move"/></svg></span>선물 3</span>
+      <span class="toggle" style="background:var(--surface);border-radius:12px"><svg width="24" height="24"><use href="#c-menu"/></svg></span></div>
+    </div></div>
+  </section>
+
+  <!-- A -->
+  <section class="opt">
+    <h2>A. 얇은 선 아이콘</h2>
+    <p class="desc">선물마다 아이콘 하나씩은 그대로 둡니다. 그림만 가는 선으로 바꾸고 동그라미 면을 없앴습니다. 상태는 오른쪽 위 작은 점 색으로 구분합니다(노랑 대기 · 파랑 배송 중 · 초록 완료, 상태 배지 색과 같음). 마우스를 올리면 지금처럼 말풍선이 뜹니다. 내 정보는 알약을 없애고 작은 이름 동그라미와 닉네임만 남겼습니다.</p>
+    <div class="row-label">PC · 팬</div>
+    <div class="frame"><div class="hdr">
+      <a class="logo"><svg width="32" height="32"><use href="#logo"/></svg>팬꾹</a>
+      <nav class="nav"><a>크리에이터 찾기</a><a>선물 보내기</a><a>공지사항</a><a>팬꾹 소개</a><a>고객센터</a></nav>
+      <div class="acts" style="gap:2px">
+        <span class="a-gi"><svg width="22" height="22"><use href="#l-wait"/></svg><span class="dot" style="background:var(--warn)"></span></span>
+        <span class="a-gi"><svg width="22" height="22"><use href="#l-move"/></svg><span class="dot" style="background:var(--info)"></span></span>
+        <span class="a-gi"><svg width="22" height="22"><use href="#l-done"/></svg><span class="dot" style="background:var(--success)"></span></span>
+        <span class="a-sep"></span>
+        <span class="a-user"><span class="a-av">하</span>하루<svg width="16" height="16" style="color:var(--faint)"><use href="#l-down"/></svg></span>
+      </div>
+    </div></div>
+    <div class="row-label">PC · 로그인 전</div>
+    <div class="frame"><div class="hdr">
+      <a class="logo"><svg width="32" height="32"><use href="#logo"/></svg>팬꾹</a>
+      <nav class="nav"><a>크리에이터 찾기</a><a>선물 보내기</a><a>공지사항</a><a>팬꾹 소개</a><a>고객센터</a></nav>
+      <div class="acts"><span class="a-login">로그인</span><span class="a-join">회원가입</span></div>
+    </div></div>
+    <div class="row-label">모바일 · 팬</div>
+    <div class="frame mob"><div class="hdr">
+      <a class="logo"><svg width="32" height="32"><use href="#logo"/></svg>팬꾹</a>
+      <div class="acts" style="gap:0"><span class="a-count"><svg width="20" height="20"><use href="#l-box"/></svg>선물 3</span>
+      <span class="toggle"><svg width="24" height="24"><use href="#l-menu"/></svg></span></div>
+    </div></div>
+  </section>
+
+  <!-- B -->
+  <section class="opt">
+    <h2>B. 글자 중심 (쇼핑몰 헤더 방식)<span class="rec">추천</span></h2>
+    <p class="desc">선물마다 아이콘을 늘어놓지 않고 「진행 중인 선물 3」 한 줄로 묶습니다. 누르거나 마우스를 올리면 목록이 펼쳐지고, 상태는 이미 쓰고 있는 상태 배지 4색으로 보여 줍니다. 내 정보는 「하루님」 글자와 작은 꺾쇠만 남깁니다. 로그인 전에는 「로그인 | 회원가입」 글자 두 개만 둡니다.</p>
+    <div class="row-label">PC · 팬 (선물 목록 펼친 상태)</div>
+    <div class="frame"><div class="hdr">
+      <a class="logo"><svg width="32" height="32"><use href="#logo"/></svg>팬꾹</a>
+      <nav class="nav"><a>크리에이터 찾기</a><a>선물 보내기</a><a>공지사항</a><a>팬꾹 소개</a><a>고객센터</a></nav>
+      <div class="acts" style="gap:4px">
+        <a class="b-link open"><svg width="20" height="20"><use href="#l-box"/></svg>진행 중인 선물<span class="b-num">3</span></a>
+        <span class="b-sep"></span>
+        <a class="b-link">하루님<svg width="16" height="16" style="color:var(--faint)"><use href="#l-down"/></svg></a>
+      </div>
+      <div class="b-drop" style="right:96px">
+        <ul>
+          <li><span>모모님께<small>10월 5일 결제</small></span><span class="tag wait">승인 대기</span></li>
+          <li><span>별빛님께<small>10월 2일 결제</small></span><span class="tag move">배송 중</span></li>
+          <li><span>하나님께<small>9월 28일 결제</small></span><span class="tag done">배송 완료</span></li>
+        </ul>
+        <a class="b-all">선물 내역 전체 보기 →</a>
+      </div>
+    </div></div>
+    <div class="spacer"></div>
+    <div class="row-label">PC · 로그인 전</div>
+    <div class="frame"><div class="hdr">
+      <a class="logo"><svg width="32" height="32"><use href="#logo"/></svg>팬꾹</a>
+      <nav class="nav"><a>크리에이터 찾기</a><a>선물 보내기</a><a>공지사항</a><a>팬꾹 소개</a><a>고객센터</a></nav>
+      <div class="acts" style="gap:2px"><a class="b-txt">로그인</a><span class="b-sep"></span><a class="b-txt strong">회원가입</a></div>
+    </div></div>
+    <div class="row-label">모바일 · 팬</div>
+    <div class="frame mob"><div class="hdr">
+      <a class="logo"><svg width="32" height="32"><use href="#logo"/></svg>팬꾹</a>
+      <div class="acts" style="gap:0"><a class="b-link"><svg width="20" height="20"><use href="#l-box"/></svg>선물<span class="b-num">3</span></a>
+      <span class="toggle"><svg width="24" height="24"><use href="#l-menu"/></svg></span></div>
+    </div></div>
+  </section>
+</div>
+</body>
+</html>

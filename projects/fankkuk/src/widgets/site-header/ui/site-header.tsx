@@ -34,39 +34,58 @@ export type SiteHeaderProps =
   | { role: "fan"; current?: string; nickname: string; gifts: HeaderGift[] }
   | { role: "creator"; current?: string; nickname: string; pendingCount: number };
 
-function GiftGlyph({ state, size = 24, hole = "var(--gi-hole)" }: { state: HeaderGiftState; size?: number; hole?: string }) {
+// 가는 선 그림(시안 v9-header). 상태 색은 그림이 아니라 .gift-icon 의 작은 점이 맡는다.
+function LineIcon({ size, children }: { size: number; children: ReactNode }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {children}
+    </svg>
+  );
+}
+
+function GiftGlyph({ state, size = 22 }: { state: HeaderGiftState; size?: number }) {
   if (state === "wait") {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          fill="currentColor"
-          d="M5 2h14v5a6 6 0 0 1-2.4 4.8L14.5 12l2.1.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.4-4.8L9.5 12l-2.1-.2A6 6 0 0 1 5 7V2Z"
-        />
-        <path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill={hole} />
-      </svg>
+      <LineIcon size={size}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </LineIcon>
     );
   }
   if (state === "done") {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-        <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <LineIcon size={size}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="m8.5 12 2.5 2.5 5-5" />
+      </LineIcon>
     );
   }
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor" />
-      <path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor" />
-      <circle cx="7" cy="18.5" r="3" fill="currentColor" stroke={hole} strokeWidth="2" />
-      <circle cx="18" cy="18.5" r="3" fill="currentColor" stroke={hole} strokeWidth="2" />
-    </svg>
+    <LineIcon size={size}>
+      <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+      <path d="M15 18H9" />
+      <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+      <circle cx="17" cy="18" r="2" />
+      <circle cx="7" cy="18" r="2" />
+    </LineIcon>
+  );
+}
+
+/** 상자 그림 — 모바일 「선물 N」·크리에이터 「승인 대기 N」 앞 */
+function BoxGlyph({ size = 20 }: { size?: number }) {
+  return (
+    <LineIcon size={size}>
+      <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
+      <path d="M12 22V12" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+    </LineIcon>
   );
 }
 
 function Caret() {
   return (
     <svg className="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-      <path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -218,10 +237,7 @@ function UserMenu({ nickname, roleLabel, items, current }: { nickname: string; r
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="avatar" aria-hidden="true">
-          {nickname.slice(0, 1)}
-        </span>
-        <span className="nick">{nickname}</span>
+        <span className="nick">{nickname}님</span>
         <Caret />
       </button>
       {/* tabIndex -1: 패널 안을 눌러도 포커스가 패널에 머물러 onBlur 가 닫지 않게(포커스를 옮기지 않는 브라우저 대비) */}
@@ -291,10 +307,11 @@ export function SiteHeader(props: SiteHeaderProps) {
         <div className="header-actions">
           {props.role === "guest" ? (
             <>
-              <Link className="btn btn--text btn--sm hide-sm" href="/login" aria-current={props.current === "/login" ? "page" : undefined}>
+              <Link className="text-link hide-sm" href="/login" aria-current={props.current === "/login" ? "page" : undefined}>
                 로그인
               </Link>
-              <Link className="btn btn--sm hide-sm" href="/signup" aria-current={props.current === "/signup" ? "page" : undefined}>
+              <span className="action-sep hide-sm" aria-hidden="true" />
+              <Link className="text-link text-link--strong hide-sm" href="/signup" aria-current={props.current === "/signup" ? "page" : undefined}>
                 회원가입
               </Link>
             </>
@@ -306,23 +323,23 @@ export function SiteHeader(props: SiteHeaderProps) {
                 className="gift-badge"
                 type="button"
                 aria-haspopup="dialog"
+                aria-label={`진행 중인 선물 ${props.gifts.length}개 보기`}
                 onClick={() => setSheetOpen(true)}
               >
-                <span className="glyph" aria-hidden="true">
-                  <GiftGlyph state="move" size={18} hole="var(--brand)" />
-                </span>
-                선물 {props.gifts.length}
+                <BoxGlyph />
+                선물
+                <span className="count">{props.gifts.length}</span>
               </button>
             </>
           ) : null}
           {props.role === "creator" ? (
             <Link className="req-pill" href="/creator/requests" aria-label={`승인 대기 ${props.pendingCount}건`}>
-              <span className="glyph" aria-hidden="true">
-                <GiftGlyph state="wait" size={16} hole="var(--brand)" />
-              </span>
-              대기 {props.pendingCount}건
+              <BoxGlyph />
+              <span className="hide-sm">승인 </span>대기
+              <span className="count">{props.pendingCount}</span>
             </Link>
           ) : null}
+          {props.role !== "guest" ? <span className="action-sep hide-sm" aria-hidden="true" /> : null}
           {props.role === "fan" ? <UserMenu nickname={props.nickname} roleLabel="팬" items={FAN_MY_MENU} current={props.current} /> : null}
           {props.role === "creator" ? <UserMenu nickname={props.nickname} roleLabel="크리에이터" items={CREATOR_MY_MENU} current={props.current} /> : null}
           <button
@@ -334,11 +351,9 @@ export function SiteHeader(props: SiteHeaderProps) {
             aria-label={menuOpen ? "메뉴 닫기" : "메뉴 열기"}
             onClick={() => setMenuOpen((v) => !v)}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor" />
-              <rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor" />
-              <rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor" />
-            </svg>
+            <LineIcon size={24}>
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </LineIcon>
           </button>
         </div>
       </div>

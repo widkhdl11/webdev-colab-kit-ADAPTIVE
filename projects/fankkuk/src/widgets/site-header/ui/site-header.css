@@ -1,4 +1,4 @@
-/* 사이트 헤더·선물 상태 아이콘(전역 클래스) — 시안 docs/design/mockups/site/v4/v4.css 4·5절 을 옮김. 색·반경은 tokens.css 토큰으로. */
+/* 사이트 헤더·선물 상태 아이콘(전역 클래스) — 시안 docs/design/mockups/site/v4/v4.css 4·5절, 오른쪽 끝은 v9-header. 색·반경은 tokens.css 토큰으로. */
 /* 4 헤더 — guest / fan 이 같은 구조 */
 .site-header { position: sticky; top: 0; z-index: 40; background: var(--white); box-shadow: 0 1px 0 var(--divider); }
 .header-inner { display: flex; align-items: center; gap: 24px; min-height: 72px; }
@@ -8,11 +8,18 @@
 .nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: var(--r-btn-sm); font-weight: 600; text-decoration: none; }
 .nav a:hover { background: var(--surface); }
 .nav a[aria-current="page"] { color: var(--brand); font-weight: 700; }
-.header-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+/* 오른쪽 끝은 글자 중심(시안 v9-header) — 면·동그라미 없이 글자와 가는 선 그림만 */
+.action-sep { width: 1px; height: 16px; margin-inline: 6px; background: var(--border); }
+.text-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: var(--r-btn-sm); color: var(--sub); font-size: 16px; font-weight: 600; text-decoration: none; }
+.text-link:hover { background: var(--surface); color: var(--ink); }
+.text-link--strong { color: var(--ink); }
+.header-actions .count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px; border-radius: var(--r-pill); background: var(--ink); color: var(--on-brand); font-size: 16px; font-weight: 700; line-height: 1; }
 
 .user-menu { position: relative; }
-.user-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 4px 12px 4px 4px; border: 0; border-radius: var(--r-pill); background: var(--surface); cursor: pointer; font-weight: 600; }
-.user-btn .caret { color: var(--sub); }
+.user-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--r-btn-sm); background: none; color: var(--ink); cursor: pointer; font-size: 16px; font-weight: 600; }
+.user-btn:hover, .user-btn[aria-expanded="true"] { background: var(--surface); }
+.user-btn .caret { color: var(--faint); }
 .user-dropdown { position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; min-width: 220px; padding: 8px; background: var(--white); border-radius: var(--r-box); box-shadow: var(--float), var(--hair); }
 .user-dropdown a, .user-dropdown .menu-action { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: var(--r-btn-sm); text-decoration: none; }
 .user-dropdown a:hover, .user-dropdown .menu-action:hover { background: var(--surface); }
@@ -21,13 +28,12 @@
 .user-dropdown hr { border: 0; border-top: 1px solid var(--divider); margin: 8px 0; }
 .user-dropdown .who { padding: 8px 12px; color: var(--sub); }
 
-.menu-toggle { display: none; place-items: center; width: 44px; height: 44px; border: 0; border-radius: var(--r-btn); background: var(--surface); cursor: pointer; }
+.menu-toggle { display: none; place-items: center; width: 44px; height: 44px; border: 0; border-radius: var(--r-btn-sm); background: none; color: var(--ink); cursor: pointer; }
+.menu-toggle:hover { background: var(--surface); }
 .mobile-menu { display: none; }
 @media (min-width: 768px) and (max-width: 1023px) {   /* 로고·액션 한 줄 + 네비 두 번째 줄 */
   .header-inner { flex-wrap: wrap; gap: 0 16px; }
   .nav { order: 3; flex-basis: 100%; padding-bottom: 8px; }
-  .user-btn .nick { display: none; }
-  .user-btn { padding-right: 8px; }
 }
 @media (max-width: 767px) {
   .header-inner { gap: 12px; }
@@ -41,25 +47,26 @@
 }
 
 /* 5 헤더 선물 상태 아이콘 + 말풍선 (기능 유지: 마우스·키보드 말풍선 「선물 4개 중 1번째 · 하루님께 · 배송중」) */
-.gift-status { display: flex; align-items: center; gap: 8px; margin-right: 4px; }
+.gift-status { display: flex; align-items: center; gap: 2px; }
 .gift-item { position: relative; }
-.gift-icon { --gi-hole: var(--surface); display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--surface); color: var(--brand); text-decoration: none; }
-.gift-icon:hover { background: var(--surface-hover); }
-.gift-icon[data-state="wait"] { --gi-hole: var(--white); background: var(--white); color: var(--sub); box-shadow: none; border: 2px dashed var(--field-line); }   /* 승인 대기 — 점선 */
-.gift-icon[data-state="done"] { background: var(--brand); color: var(--on-brand); }                                                                   /* 배송 완료 — 초록 채움, 3일 뒤 사라짐 */
-.gift-more { display: inline-grid; place-items: center; min-width: 44px; height: 44px; padding-inline: 8px; border-radius: var(--r-pill); background: var(--surface); font-weight: 700; text-decoration: none; }
-.gift-more:hover { background: var(--surface-hover); }
+/* 가는 선 그림 + 오른쪽 위 상태 점(상태 배지 색: 대기 노랑 · 배송 중 파랑 · 완료 초록). 상태 글은 말풍선·바텀시트가 맡는다 */
+.gift-icon { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--r-btn-sm); color: var(--ink); text-decoration: none; }
+.gift-icon:hover { background: var(--surface); }
+.gift-icon::after { content: ""; position: absolute; top: 9px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--info); box-shadow: 0 0 0 2px var(--white); }
+.gift-icon[data-state="wait"]::after { background: var(--warn-ink); }
+.gift-icon[data-state="done"]::after { background: var(--success); }   /* 배송 완료 — 3일 뒤 사라짐 */
+.gift-more { display: inline-grid; place-items: center; min-width: 44px; height: 44px; padding-inline: 8px; border-radius: var(--r-btn-sm); color: var(--sub); font-size: 16px; font-weight: 600; text-decoration: none; }
+.gift-more:hover { background: var(--surface); color: var(--ink); }
 .tip { position: absolute; top: 100%; left: 50%; z-index: 60; padding-top: 8px; transform: translateX(-50%); display: none; }
 .tip.is-open { display: block; }
 .tip-body { display: block; padding: 8px 12px; border-radius: var(--r-btn-sm); background: var(--ink); color: var(--on-brand); font-size: 16px; font-weight: 600; line-height: 1.5; white-space: nowrap; }
 .tip-body::before { content: ""; position: absolute; top: 2px; left: var(--tip-arrow, 50%); width: 12px; height: 12px; background: var(--ink); transform: translateX(-50%) rotate(45deg); }
-.gift-badge { display: none; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 8px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--ink); font-weight: 700; cursor: pointer; }
-.gift-badge .glyph { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: var(--on-brand); }
+.gift-badge { display: none; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--r-btn-sm); background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+.gift-badge:hover { background: var(--surface); }
 @media (max-width: 767px) { .gift-badge { display: inline-flex; } .gift-status { display: none; } }
 
 
-/* 크리에이터 헤더 — 승인 대기 건수 (시안 creator-requests.html) */
-.req-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 8px; border-radius: var(--r-pill); background: var(--surface); color: var(--ink); font-weight: 700; text-decoration: none; }
-.req-pill .glyph { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: var(--on-brand); }
-.req-pill:hover { background: var(--surface-hover); }
+/* 크리에이터 헤더 — 승인 대기 건수 (시안 v9-header 글자 방식) */
+.req-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border-radius: var(--r-btn-sm); color: var(--ink); font-size: 16px; font-weight: 600; text-decoration: none; }
+.req-pill:hover { background: var(--surface); }
 .sheet-all { margin-top: 12px; }
