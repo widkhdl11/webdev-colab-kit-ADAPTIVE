@@ -4,7 +4,7 @@
 .title { padding-block: clamp(32px, 4vw, 56px) 24px; }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: clamp(72px, 9vw, 128px); }
 .me { display: none; }
-.side ul { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding: 4px var(--gutter); }
+.side ul { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding: 6px var(--gutter); } /* 가로로 밀리는 줄 — 위아래 포커스 테두리(3px + 2px 띄움)가 잘리지 않게 */
 .side ul::-webkit-scrollbar { display: none; }
 .side li { flex: 0 0 auto; }
 .side a { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); font-weight: 600; text-decoration: none; white-space: nowrap; }

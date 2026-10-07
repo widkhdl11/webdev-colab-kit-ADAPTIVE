@@ -68,7 +68,8 @@
 .follow:hover { background: var(--surface); }
 .follow small { display: block; color: var(--sub); font-size: 16px; font-weight: 400; }
 @media (max-width: 1023px) {
-  .follow-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scrollbar-width: none; }
+  /* 가로로 밀리는 줄 — 위아래 포커스 테두리(3px + 2px 띄움)가 잘리지 않게 padding-block 을 둔다 */
+  .follow-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-block: 6px 8px; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scrollbar-width: none; }
   .follow-row::-webkit-scrollbar { display: none; }
   .follow-row > li { flex: 0 0 104px; scroll-snap-align: start; }
 }

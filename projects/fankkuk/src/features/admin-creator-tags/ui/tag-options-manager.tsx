@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { TAG_CUSTOM_MAX, type AdminTagOption, type CustomTagCount } from "@/entities/creator/model/creator-tags";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
@@ -63,10 +63,15 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
   const [draft, setDraft] = useState("");
   const [newName, setNewName] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
+  // 오류 줄이 어느 칸 것인지 — 마지막으로 보낸 양식. 새 선택지 칸의 aria-invalid 에 쓴다
+  const [lastForm, setLastForm] = useState<"rename" | "add" | null>(null);
+  // 「그만두기」 뒤 포커스를 돌려줄 줄마다의 「이름 고치기」 버튼
+  const renameButtons = useRef(new Map<string, HTMLButtonElement>());
   const message = localError ?? error;
 
   async function rename(e: FormEvent, option: AdminTagOption) {
     e.preventDefault();
+    setLastForm("rename");
     if (!nameOk(draft)) {
       setLocalError(NAME_LIMIT);
       return;
@@ -77,6 +82,7 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
 
   async function add(e: FormEvent) {
     e.preventDefault();
+    setLastForm("add");
     if (!nameOk(newName)) {
       setLocalError(NAME_LIMIT);
       return;
@@ -133,7 +139,14 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
                         <button type="submit" className={`${a.btn} ${a.btnSm}`} aria-disabled={busy}>
                           저장
                         </button>
-                        <button type="button" className={`${a.btn} ${a.btnSm} ${a.btnLine}`} onClick={() => setEditingId(null)}>
+                        <button
+                          type="button"
+                          className={`${a.btn} ${a.btnSm} ${a.btnLine}`}
+                          onClick={() => {
+                            setEditingId(null);
+                            renameButtons.current.get(o.id)?.focus();
+                          }}
+                        >
                           그만두기
                         </button>
                       </form>
@@ -166,6 +179,10 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
                       type="button"
                       className={`${a.btn} ${a.btnSm} ${a.btnSoft}`}
                       aria-label={`${o.name} 이름 고치기`}
+                      ref={(el) => {
+                        if (el) renameButtons.current.set(o.id, el);
+                        else renameButtons.current.delete(o.id);
+                      }}
                       onClick={() => {
                         setEditingId(o.id);
                         setDraft(o.name);
@@ -204,6 +221,7 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
             placeholder="예: 팬더TV"
             autoComplete="off"
             value={newName}
+            aria-invalid={message !== null && lastForm === "add" ? true : undefined}
             aria-describedby={message ? "tag-options-error" : undefined}
             onChange={(e) => {
               setNewName(e.target.value);

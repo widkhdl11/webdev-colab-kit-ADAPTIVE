@@ -30,6 +30,35 @@ export const TAG_COUNT_MESSAGE = `태그를 1~${TAG_TOTAL_MAX}개 골라 주세�
 export type TagSelection = { ok: true; tagIds: string[]; customTag: string | null; count: number } | { ok: false; message: string };
 
 /**
+ * S3c: 직접 입력(앞뒤 공백을 뺀 값)을 고른 선택지와 합친다 — 선택지 이름과 같으면(tagKey) 그 선택지를 고른 것으로, 이미 골랐으면 한 번만.
+ * 꼴 검사는 하지 않는다(부르는 쪽 몫).
+ */
+function mergeCustomTag(options: readonly TagOption[], picked: readonly string[], custom: string): { tagIds: string[]; customTag: string | null } {
+  const tagIds = [...picked];
+  if (custom === "") return { tagIds, customTag: null };
+  const same = options.find((o) => tagKey(o.name) === tagKey(custom));
+  if (!same) return { tagIds, customTag: custom };
+  if (!tagIds.includes(same.id)) tagIds.push(same.id);
+  return { tagIds, customTag: null };
+}
+
+/**
+ * INV-T3: 화면에 보일 「지금 몇 개」 — 저장할 때(resolveTagSelection)와 같은 셈이다. 같은 선택지를 두 번 고른 것과
+ * 고른 선택지와 같은 이름의 직접 입력은 하나로 센다. 꼴이 틀리거나 개수가 넘쳐도 센다(그 판정은 resolveTagSelection).
+ */
+export function countTagSelection(options: readonly TagOption[], picked: readonly string[], customInput: string): number {
+  const { tagIds, customTag } = mergeCustomTag(options, [...new Set(picked)], customInput.trim());
+  return tagIds.length + (customTag === null ? 0 : 1);
+}
+
+/**
+ * INV-T4: 찾기·메인에서 칩 하나를 골랐을 때 이 크리에이터가 보이는지 — 그 태그를 가졌으면. tag = null 은 「전체」(누구나 보인다).
+ */
+export function hasPickedTag(card: { tags: readonly string[] }, tag: string | null): boolean {
+  return tag === null || card.tags.includes(tag);
+}
+
+/**
  * INV-T3: 화면에서 고른 선택지와 직접 입력을 저장할 값으로 바꾼다. options = 고를 수 있는 선택지(숨긴 것은 없다).
  * 직접 입력이 선택지 이름과 같으면 그 선택지를 고른 것으로 센다(S3c, DB 와 같다). 어기면 문구.
  */
@@ -37,18 +66,11 @@ export function resolveTagSelection(options: readonly TagOption[], picked: reado
   if (new Set(picked).size !== picked.length) return { ok: false, message: "같은 태그를 두 번 고를 수 없어요." };
   if (!picked.every((id) => options.some((o) => o.id === id))) return { ok: false, message: "고를 수 없는 태그가 있어요. 새로 고침해 주세요." };
   const custom = customInput.trim();
-  const tagIds = [...picked];
-  let customTag: string | null = null;
   if (custom !== "") {
     const problem = customTagProblem(custom);
     if (problem) return { ok: false, message: problem };
-    const same = options.find((o) => tagKey(o.name) === tagKey(custom));
-    if (same) {
-      if (!tagIds.includes(same.id)) tagIds.push(same.id);
-    } else {
-      customTag = custom;
-    }
   }
+  const { tagIds, customTag } = mergeCustomTag(options, picked, custom);
   const count = tagIds.length + (customTag === null ? 0 : 1);
   if (count < 1 || count > TAG_TOTAL_MAX) return { ok: false, message: TAG_COUNT_MESSAGE };
   return { ok: true, tagIds, customTag, count };

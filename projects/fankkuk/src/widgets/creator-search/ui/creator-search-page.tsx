@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useId, useState } from "react";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
-import { tagChips, type TagOption } from "@/entities/creator/model/creator-tags";
+import { hasPickedTag, tagChips, type TagOption } from "@/entities/creator/model/creator-tags";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorTag, hasTagIcon, TagChipBody, tagStyle } from "@/entities/creator/ui/creator-tag";
@@ -43,7 +43,7 @@ export function CreatorSearchPage({
   const [tag, setTag] = useState("");
   const inputId = useId();
   const chips = tagChips(tagOptions, creators);
-  const shown = new Set(creators.filter((c) => matchesCreatorQuery(c, query) && (tag === "" || c.tags.includes(tag))).map((c) => c.id));
+  const shown = new Set(creators.filter((c) => matchesCreatorQuery(c, query) && hasPickedTag(c, tag === "" ? null : tag)).map((c) => c.id));
   const count = query.trim() || tag ? `검색 결과 ${shown.size}명` : `전체 ${creators.length}명`;
 
   return (
@@ -97,7 +97,7 @@ export function CreatorSearchPage({
                 style={t === "" ? undefined : tagStyle(t)}
                 onClick={() => setTag(t)}
               >
-                {t === "" ? "전체" : <TagChipBody name={t} pressed={tag === t} check={false} />}
+                {t === "" ? "전체" : <TagChipBody name={t} pressed={tag === t} />}
               </button>
             ))}
           </div>

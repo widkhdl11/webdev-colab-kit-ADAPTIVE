@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveTagSelection, TAG_CUSTOM_MAX, TAG_TOTAL_MAX, tagChips, tagSelectionSchema } from "./creator-tags";
+import { countTagSelection, hasPickedTag, resolveTagSelection, TAG_CUSTOM_MAX, TAG_TOTAL_MAX, tagChips, tagSelectionSchema } from "./creator-tags";
 
 const ID = {
   soop: "11111111-1111-4111-8111-000000000001",
@@ -78,6 +78,27 @@ describe("INV-T3: 태그 고르기 — 합쳐 1~5개", () => {
     // 화면은 이름을 알므로 같은 입력을 하나로 합친다
     expect(resolveTagSelection(OPTIONS, five, "유튜브")).toEqual({ ok: true, tagIds: five, customTag: null, count: 5 });
   });
+
+  it("INV-T3 S3c: 화면의 「지금 몇 개」는 저장할 때와 같은 셈 — 겹친 직접 입력·같은 선택지 두 번은 하나로, 꼴이 틀리거나 넘쳐도 센다", () => {
+    const five = [ID.soop, ID.chzzk, ID.youtube, ID.x, ID.virtual];
+    expect(countTagSelection(OPTIONS, [], "")).toBe(0);
+    expect(countTagSelection(OPTIONS, [], "   ")).toBe(0);
+    expect(countTagSelection(OPTIONS, [ID.chzzk], " 팝콘TV ")).toBe(2);
+    // 고른 선택지와 같은 이름(공백·영문 대소문자 무시)의 직접 입력은 하나 — 5개를 다 골라도 6이 되지 않는다
+    expect(countTagSelection(OPTIONS, five, " 유튜브 ")).toBe(5);
+    expect(countTagSelection(OPTIONS, [ID.chzzk], "x")).toBe(2);
+    // 고르지 않은 선택지 이름의 직접 입력은 그 선택지 하나로 센다
+    expect(countTagSelection(OPTIONS, [], "틱톡")).toBe(1);
+    expect(countTagSelection(OPTIONS, [ID.chzzk, ID.chzzk], "")).toBe(1);
+    // 저장이 거부되는 입력도 개수는 보여 준다(넘친 6개, 21자 직접 입력)
+    expect(countTagSelection(OPTIONS, five, "팝콘TV")).toBe(6);
+    expect(countTagSelection(OPTIONS, [ID.chzzk], "가".repeat(21))).toBe(2);
+    // 저장이 받아들여지는 입력은 resolveTagSelection 의 count 와 같다
+    for (const [ids, custom] of [[five, " 유튜브 "], [[ID.youtube], "YouTube"], [[ID.chzzk], "x"], [[], "팝콘TV"]] as [string[], string][]) {
+      const r = resolveTagSelection(OPTIONS, ids, custom);
+      expect(r.ok && r.count).toBe(countTagSelection(OPTIONS, ids, custom));
+    }
+  });
 });
 
 describe("INV-T4: 찾기·메인 칩 — 숨기지 않은 선택지 중 공개 크리에이터가 1명 이상인 것만, 선택지 순서", () => {
@@ -89,5 +110,14 @@ describe("INV-T4: 찾기·메인 칩 — 숨기지 않은 선택지 중 공개 �
   it("INV-T4 S4 (실패경로): 선택지 목록에 없는 말(직접 입력·숨긴 선택지)은 카드에 붙어 와도 칩이 되지 않는다", () => {
     expect(tagChips(OPTIONS, [{ tags: ["팝콘TV", "치지직"] }])).toEqual(["치지직"]);
     expect(tagChips([], [{ tags: ["치지직"] }])).toEqual([]);
+  });
+
+  it("INV-T4: 칩 하나를 고르면 그 태그를 가진 크리에이터만 — 「전체」(null)는 모두, 태그 없는 크리에이터는 칩을 고르면 빠진다", () => {
+    const cards = [{ tags: ["버추얼", "치지직"] }, { tags: ["SOOP"] }, { tags: [] }];
+    expect(cards.filter((c) => hasPickedTag(c, null))).toHaveLength(3);
+    expect(cards.filter((c) => hasPickedTag(c, "치지직"))).toEqual([{ tags: ["버추얼", "치지직"] }]);
+    expect(cards.filter((c) => hasPickedTag(c, "틱톡"))).toEqual([]);
+    // 이름은 그대로 비교한다 — 칩 이름은 카드 태그와 같은 선택지 이름에서 온다
+    expect(hasPickedTag({ tags: ["SOOP"] }, "soop")).toBe(false);
   });
 });

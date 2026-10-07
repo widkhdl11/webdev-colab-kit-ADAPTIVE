@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
+import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE, RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
 import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
@@ -317,11 +318,17 @@ export function RegisterForm({
                         <CreatorFace tone={c.faceTone ?? "var(--face-1)"} className={`face ${f["pick-face"]}`} />
                         <span className={f["pick-text"]}>
                           <strong>{c.name}</strong>
-                          <small>
-                            {[...(c.tags ?? []), c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : approvalTimeText(c.approvalMinutes)]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </small>
+                          {/* 태그는 다른 화면과 같은 태그 부품(아이콘·플랫폼 색, design-rules 5절) */}
+                          <span className={f["pick-meta"]}>
+                            {(c.tags ?? []).map((t) => (
+                              <CreatorTag key={t} name={t} />
+                            ))}
+                            <small>
+                              {[c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : approvalTimeText(c.approvalMinutes)]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </small>
+                          </span>
                         </span>
                       </label>
                     </li>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
+import { hasPickedTag } from "@/entities/creator/model/creator-tags";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import type { SendAvailability } from "@/features/gift-register/model/sender-rule";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
@@ -31,7 +32,7 @@ type Props = {
 
 export function NewCreators({ creators, chips, sendOf = {} }: Props) {
   const [tag, setTag] = useState(ALL);
-  const shown = creators.filter((c) => tag === ALL || c.tags.includes(tag)).slice(0, MAX_CARDS);
+  const shown = creators.filter((c) => hasPickedTag(c, tag === ALL ? null : tag)).slice(0, MAX_CARDS);
 
   return (
     <>

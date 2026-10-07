@@ -62,7 +62,9 @@
 .c-top h3 a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .c-top .sub { margin-top: 2px; }
 .c-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.c-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+/* 버튼 글자는 한 줄 — 승인 시간 글과 한 줄에 못 들어가면 버튼이 다음 줄로 내려간다 */
+.c-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+.c-foot :global(.btn) { white-space: nowrap; }
 
 /* 배송 단계 — 안내라서 옅은 코랄 판 하나 */
 .panel2 { padding: clamp(32px, 5vw, 56px); border-radius: var(--r-panel); background: var(--surface-brand); }
@@ -92,6 +94,7 @@
   .chips { margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
   .c-grid { grid-template-columns: 1fr; gap: 12px; }
   .c-card { padding: 20px; }
+  .c-foot :global(.btn) { flex: 1 0 auto; }
   .how { grid-template-columns: 1fr; gap: 16px; }
   .how li { grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 16px; }
   .how img { width: 64px; height: 64px; }

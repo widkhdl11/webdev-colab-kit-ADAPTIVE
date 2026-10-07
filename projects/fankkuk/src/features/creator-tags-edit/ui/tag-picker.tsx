@@ -1,6 +1,6 @@
 "use client";
 
-import { resolveTagSelection, TAG_CUSTOM_MAX, TAG_TOTAL_MAX, type TagOption } from "@/entities/creator/model/creator-tags";
+import { countTagSelection, TAG_CUSTOM_MAX, TAG_TOTAL_MAX, type TagOption } from "@/entities/creator/model/creator-tags";
 import { hasTagIcon, TagChipBody, tagStyle } from "@/entities/creator/ui/creator-tag";
 import { charCount } from "@/shared/lib/validation/char-count";
 import s from "./tag-picker.module.css";
@@ -24,8 +24,7 @@ type Props = {
 };
 
 export function TagPicker({ idBase, options, picked, custom, onPickedChange, onCustomChange, invalid = null }: Props) {
-  const resolved = resolveTagSelection(options, picked, custom);
-  const count = resolved.ok ? resolved.count : picked.length + (custom.trim() === "" ? 0 : 1);
+  const count = countTagSelection(options, picked, custom);
   const full = count >= TAG_TOTAL_MAX;
   const hintId = `${idBase}-hint`;
 
