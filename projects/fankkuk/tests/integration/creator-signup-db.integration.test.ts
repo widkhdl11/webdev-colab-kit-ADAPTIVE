@@ -111,29 +111,33 @@ describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", (
 
   it("INV-V1 INV-T3 (실패경로): 이름·채널 이름이 비었거나 길거나, 태그가 0개·6개·직접 입력 21자·숨긴 선택지면 거부하고 아무것도 남지 않는다", async () => {
     psql(`update public.creator_tag_options set hidden = true where name = '틱톡'`);
-    const six = ["SOOP", "치지직", "유튜브", "알플레이", "X"].map(optionId);
-    const cases: Record<string, unknown>[] = [
-      { p_name: "" },
-      { p_name: "가".repeat(21) },
-      { p_channel_title: "  " },
-      { p_channel_title: "가".repeat(41) },
-      { p_tag_ids: [], p_custom_tag: null },
-      { p_tag_ids: [], p_custom_tag: "  " },
-      { p_custom_tag: "가".repeat(21) },
-      { p_tag_ids: six, p_custom_tag: "요리" },
-      { p_tag_ids: [optionId("틱톡")], p_custom_tag: null },
-      { p_tag_ids: [optionId("유튜브"), optionId("유튜브")], p_custom_tag: null },
-    ];
-    let i = 0;
-    for (const extra of cases) {
-      i += 1;
-      const { userId, body } = await args(`it_cv_bad${i}`, extra);
-      const r = await adminClient().rpc("create_creator_account", body);
-      expect([extra, r.error?.code]).toEqual([extra, "22023"]);
-      expect(psql(`select count(*) from public.profiles where id = '${userId}'`)).toBe("0");
-      expect(psql(`select count(*) from public.creators where profile_id = '${userId}'`)).toBe("0");
+    try {
+      const five = ["SOOP", "치지직", "유튜브", "알플레이", "X"].map(optionId);
+      const cases: Record<string, unknown>[] = [
+        { p_name: "" },
+        { p_name: "가".repeat(21) },
+        { p_channel_title: "  " },
+        { p_channel_title: "가".repeat(41) },
+        { p_tag_ids: [], p_custom_tag: null },
+        { p_tag_ids: [], p_custom_tag: "  " },
+        { p_custom_tag: "가".repeat(21) },
+        { p_tag_ids: five, p_custom_tag: "요리" },
+        { p_tag_ids: [...five, optionId("버추얼")], p_custom_tag: null }, // 선택지 6개 — 검사 전에 개수로 바로 거부
+        { p_tag_ids: [optionId("틱톡")], p_custom_tag: null },
+        { p_tag_ids: [optionId("유튜브"), optionId("유튜브")], p_custom_tag: null },
+      ];
+      let i = 0;
+      for (const extra of cases) {
+        i += 1;
+        const { userId, body } = await args(`it_cv_bad${i}`, extra);
+        const r = await adminClient().rpc("create_creator_account", body);
+        expect([extra, r.error?.code]).toEqual([extra, "22023"]);
+        expect(psql(`select count(*) from public.profiles where id = '${userId}'`)).toBe("0");
+        expect(psql(`select count(*) from public.creators where profile_id = '${userId}'`)).toBe("0");
+      }
+    } finally {
+      psql(`update public.creator_tag_options set hidden = false where name = '틱톡'`);
     }
-    psql(`update public.creator_tag_options set hidden = false where name = '틱톡'`);
   });
 
   it("INV-V1 (실패경로): slug·확인됨 값을 붙여 보내면 거부된다(인자가 없다)", async () => {

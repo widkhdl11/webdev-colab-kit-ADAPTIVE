@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkDetails } from "./signup-input";
+import { checkDetails, creatorProfileSchema } from "./signup-input";
 
 // 시험용 비밀번호(실제 계정 아님). 비밀번호 칸에 긴 문자열을 바로 적으면 시크릿 검사에 걸려 상수로 둔다.
 const TEST_PW = "long-enough-pw";
@@ -41,15 +41,21 @@ describe("INV-V1·creator-tags INV-T3: 크리에이터 공개 정보 미리 보�
     expect(checkDetails({ ...ok, creator: { ...creator, channelTitle: "가".repeat(41) } })?.field).toBe("channelTitle");
   });
   it("INV-T3 (실패경로): 태그 0개 · 6개 · 같은 선택지 두 번 · 직접 입력 21자는 태그 칸을 가리킨다", () => {
-    const six = ["1", "2", "3", "4", "5"].map((n) => `11111111-1111-4111-8111-00000000000${n}`);
+    const six = ["1", "2", "3", "4", "5", "6"].map((n) => `11111111-1111-4111-8111-00000000000${n}`);
     for (const bad of [
       { tagIds: [], customTag: "" },
       { tagIds: [], customTag: "  " },
-      { tagIds: six, customTag: "먹방" },
+      { tagIds: six, customTag: "" },
       { tagIds: ["11111111-1111-4111-8111-000000000001", "11111111-1111-4111-8111-000000000001"], customTag: "" },
       { tagIds: ["11111111-1111-4111-8111-000000000002"], customTag: "가".repeat(21) },
     ]) {
       expect([bad, checkDetails({ ...ok, creator: { ...creator, ...bad } })?.field]).toEqual([bad, "tags"]);
     }
+  });
+
+  it("INV-T3 S3c: 서버 검사는 선택지 5개 + 직접 입력을 6개로 세지 않는다 — 직접 입력이 고른 선택지(유튜브)와 같으면 화면·DB 가 하나로 합친다", () => {
+    const five = ["1", "2", "3", "4", "5"].map((n) => `11111111-1111-4111-8111-00000000000${n}`);
+    expect(checkDetails({ ...ok, creator: { ...creator, tagIds: five, customTag: "유튜브" } })).toBeNull();
+    expect(creatorProfileSchema.safeParse({ ...creator, tagIds: five, customTag: " 유튜브 " }).data).toMatchObject({ tagIds: five, customTag: "유튜브" });
   });
 });

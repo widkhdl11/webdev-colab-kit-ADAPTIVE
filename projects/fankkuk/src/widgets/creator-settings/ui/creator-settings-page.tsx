@@ -10,8 +10,9 @@ import { sendCreatorTags } from "@/features/creator-tags-edit/api/send-creator-t
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { sendCreatorNotify, sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
-import { clipChars, countChars, INTRO_MAX, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
+import { clipChars, INTRO_MAX, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
 import { formatDate } from "@/shared/lib/format/datetime";
+import { charCount } from "@/shared/lib/validation/char-count";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import type { MyAddressStatus } from "@/entities/creator/api/my-address-status";
@@ -298,7 +299,7 @@ export function CreatorSettingsPage({
                 aria-describedby="pub-intro-hint"
               />
               <p className="hint" id="pub-intro-hint">
-                크리에이터 페이지에 보여요. {INTRO_MAX}자까지 적을 수 있어요({countChars(intro.trim())}/{INTRO_MAX}).
+                크리에이터 페이지에 보여요. {INTRO_MAX}자까지 적을 수 있어요({charCount(intro.trim())}/{INTRO_MAX}).
               </p>
             </div>
             <div className={s["tags-field"]}>

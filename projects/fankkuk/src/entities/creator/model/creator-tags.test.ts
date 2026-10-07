@@ -59,7 +59,6 @@ describe("INV-T3: 태그 고르기 — 합쳐 1~5개", () => {
     const bad: unknown[] = [
       { tagIds: [], customTag: "" },
       { tagIds: [ID.chzzk, ID.chzzk], customTag: "" },
-      { tagIds: [ID.soop, ID.chzzk, ID.youtube, ID.x, ID.virtual], customTag: "팝콘TV" },
       { tagIds: [ID.soop, ID.chzzk, ID.youtube, ID.x, ID.virtual, ID.tiktok], customTag: "" },
       { tagIds: ["not-a-uuid"], customTag: "" },
       { tagIds: [ID.chzzk], customTag: "가".repeat(21) },
@@ -68,6 +67,16 @@ describe("INV-T3: 태그 고르기 — 합쳐 1~5개", () => {
       { customTag: "팝콘TV" },
     ];
     for (const b of bad) expect([b, tagSelectionSchema.safeParse(b).success]).toEqual([b, false]);
+  });
+
+  it("INV-T3 S3c: 서버 개수 검사는 직접 입력을 고른 선택지와 겹칠 수 있는 것으로 본다 — 선택지 5개 + 직접 입력 「유튜브」(겹침)를 6개로 세어 거부하지 않는다", () => {
+    const five = [ID.soop, ID.chzzk, ID.youtube, ID.x, ID.virtual];
+    expect(tagSelectionSchema.safeParse({ tagIds: five, customTag: " 유튜브 " }).data).toEqual({ tagIds: five, customTag: "유튜브" });
+    expect(tagSelectionSchema.safeParse({ tagIds: five, customTag: "YOUTUBE" }).success).toBe(true);
+    // 앱 서버는 선택지 이름을 모른다 — 겹치지 않는 6개(직접 입력 「팝콘TV」)는 DB 가 22023 으로 거부한다(통합 시험)
+    expect(tagSelectionSchema.safeParse({ tagIds: five, customTag: "팝콘TV" }).success).toBe(true);
+    // 화면은 이름을 알므로 같은 입력을 하나로 합친다
+    expect(resolveTagSelection(OPTIONS, five, "유튜브")).toEqual({ ok: true, tagIds: five, customTag: null, count: 5 });
   });
 });
 

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { anonClient, psql, signedInClient } from "./helpers";
+import { anonClient, holdRowLock, psql, signedInClient } from "./helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 
 // 크리에이터 태그 (docs/specs/creator-tags.md INV-T1~T6, S1~S6).
@@ -10,6 +10,7 @@ const HARU = CV.haru; // 「하루시험」
 const MOMO = CV.summer; // 「여름밤」 — 시나리오의 모모 자리
 const BYEOL = CV.ggul; // 「꿀단지」 — 시나리오의 별이 자리
 const SEED_MOMO_CREATOR_ID = "00000000-0000-4000-b000-000000000002";
+const STAFF_UID = "00000000-0000-4000-a000-000000000022"; // 시드 fankkuk_staff(운영자) — psql 세션에서 운영자로 부를 때
 const INITIAL = ["SOOP", "치지직", "유튜브", "알플레이", "인스타그램", "X", "스레드", "틱톡", "버추얼"] as const;
 const CV_IDS = Object.values(CV).map((a) => `'${a.creatorId}'`).join(", ");
 
@@ -104,6 +105,13 @@ describe("INV-T1: 선택지는 운영자만 바꾼다", () => {
     expect(optionNames()).toEqual([...INITIAL]);
   });
 
+  it("INV-T1 (실패경로): 보이지 않는 글자가 든 이름(「팝콘​TV」)은 추가·이름 고치기 모두 22023, 목록 그대로", async () => {
+    const zeroWidth = "팝콘​TV";
+    expect((await operator("admin_add_creator_tag_option", { p_name: zeroWidth })).error?.code).toBe("22023");
+    expect((await operator("admin_rename_creator_tag_option", { p_id: optionId("틱톡"), p_name: zeroWidth })).error?.code).toBe("22023");
+    expect(optionNames()).toEqual([...INITIAL]);
+  });
+
   it("INV-T1: 운영자가 이름 고치기 · 숨기기 · 다시 보이기 · 순서 바꾸기를 한다", async () => {
     expect((await operator("admin_rename_creator_tag_option", { p_id: optionId("X"), p_name: "X(트위터)" })).error).toBeNull();
     expect((await operator("admin_set_creator_tag_option_hidden", { p_id: optionId("틱톡"), p_hidden: true })).error).toBeNull();
@@ -175,8 +183,9 @@ describe("INV-T2: 태그 고치기는 로그인한 크리에이터 자기 줄만
     expect(tagsOf(SEED_MOMO_CREATOR_ID)).toEqual(seedMomo);
   });
 
-  it("INV-T2 S2b (실패경로): 팬이 부르면 거부, 로그인 안 하면 부를 수 없다", async () => {
+  it("INV-T2 S2b (실패경로): 팬·운영자가 부르면 거부, 로그인 안 하면 부를 수 없다", async () => {
     expect((await saveTags("byeolbit_fan", { p_option_ids: [optionId("치지직")], p_custom_tag: null })).error?.code).toBe("42501");
+    expect((await saveTags("fankkuk_staff", { p_option_ids: [optionId("치지직")], p_custom_tag: null })).error?.code).toBe("42501");
     expect((await anonClient().rpc("update_my_creator_tags", { p_option_ids: [optionId("치지직")], p_custom_tag: null })).error).not.toBeNull();
   });
 
@@ -211,8 +220,9 @@ describe("INV-T3: 태그는 합쳐 1~5개 — 선택지 0~5 + 직접 입력 0~1"
     expect(tagsOf(HARU.creatorId)).toEqual([`직접:${"가".repeat(20)}`]);
   });
 
-  it("INV-T3 S3b (실패경로): 선택지 5 + 직접 1 / 0개 / 같은 선택지 두 번 / 숨긴 선택지 / 직접 입력 21자 / 없는 선택지 → 거부, 태그 그대로", async () => {
-    expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: null })).error).toBeNull();
+  it("INV-T3 S3b (실패경로): 선택지 5 + 직접 1 / 0개 / 같은 선택지 두 번 / 숨긴 선택지 / 직접 입력 21자 / 없는 선택지 / 선택지 6개 → 거부, 치지직 + 직접 입력 팝콘TV 그대로", async () => {
+    expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: "팝콘TV" })).error).toBeNull();
+    expect(tagsOf(HARU.creatorId)).toEqual(["치지직", "직접:팝콘TV"]);
     await operator("admin_set_creator_tag_option_hidden", { p_id: optionId("틱톡"), p_hidden: true });
     const five = ["SOOP", "치지직", "유튜브", "알플레이", "버추얼"].map(optionId);
     const cases: Record<string, unknown>[] = [
@@ -231,7 +241,54 @@ describe("INV-T3: 태그는 합쳐 1~5개 — 선택지 0~5 + 직접 입력 0~1"
       const r = await saveTags(HARU.login, args);
       expect([args, r.error?.code]).toEqual([args, "22023"]);
     }
-    expect(tagsOf(HARU.creatorId)).toEqual(["치지직"]);
+    expect(tagsOf(HARU.creatorId)).toEqual(["치지직", "직접:팝콘TV"]);
+  });
+
+  it("INV-T3 S3c: 선택지 5개(유튜브 포함) + 직접 입력 「유튜브」 → 겹친 것은 하나로 세어 성공, 5개 저장", async () => {
+    const five = ["SOOP", "치지직", "유튜브", "알플레이", "버추얼"].map(optionId);
+    expect((await saveTags(HARU.login, { p_option_ids: five, p_custom_tag: " 유튜브 " })).error).toBeNull();
+    expect(tagsOf(HARU.creatorId)).toEqual(["SOOP", "치지직", "유튜브", "알플레이", "버추얼"]);
+  });
+
+  it("INV-T3: 숨긴 선택지와 같은 말을 직접 입력하면 직접 입력으로 남고 공개 목록에는 나오지 않는다 — 틱톡 숨김 + {치지직, 「틱톡」}", async () => {
+    verify(HARU.creatorId, "cvt-haru");
+    expect((await operator("admin_set_creator_tag_option_hidden", { p_id: optionId("틱톡"), p_hidden: true })).error).toBeNull();
+    try {
+      expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: "틱톡" })).error).toBeNull();
+      expect(tagsOf(HARU.creatorId)).toEqual(["치지직", "직접:틱톡"]);
+      const row = ((await anonClient().rpc("find_creators")).data as { id: string; tags: string[] }[]).find((x) => x.id === HARU.creatorId);
+      expect(row?.tags).toEqual(["치지직"]);
+      expect(JSON.stringify(row)).not.toContain("틱톡");
+    } finally {
+      psql(`update public.creator_tag_options set hidden = false where name = '틱톡'`);
+    }
+  });
+
+  it("INV-T3·T5 동시성: 운영자가 「버추얼」을 숨기는 처리가 끝나기 전에 크리에이터가 버추얼을 넣어 저장하면 — 숨김이 끝난 뒤 판정해 거부(22023)되거나 버추얼이 붙지 않는다", async () => {
+    const virtual = optionId("버추얼");
+    expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: null })).error).toBeNull();
+    try {
+      // 다른 연결에서 운영자로 숨기고 2초 동안 처리를 열어 둔다
+      const hold = await holdRowLock(
+        `set local role authenticated; select set_config('request.jwt.claims', '{"sub":"${STAFF_UID}","role":"authenticated"}', true); select public.admin_set_creator_tag_option_hidden('${virtual}', true)`,
+        2,
+      );
+      // 숨김 함수가 선택지 표를 잠근 것을 확인한 뒤에 저장을 보낸다 — 앞뒤로 비껴 가서 통과하지 않게
+      for (let i = 0; i < 100; i++) {
+        const n = psql(
+          `select count(*) from pg_locks l join pg_class c on c.oid = l.relation where c.relname = 'creator_tag_options' and l.mode = 'ShareRowExclusiveLock' and l.granted`,
+        );
+        if (n !== "0") break;
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      const r = await saveTags(HARU.login, { p_option_ids: [optionId("치지직"), virtual], p_custom_tag: null });
+      await hold.released;
+      expect(psql(`select hidden from public.creator_tag_options where id = '${virtual}'`)).toBe("t");
+      if (r.error) expect(r.error.code).toBe("22023");
+      expect(tagsOf(HARU.creatorId)).not.toContain("버추얼");
+    } finally {
+      psql(`update public.creator_tag_options set hidden = false where id = '${virtual}'`);
+    }
   });
 
   it("INV-T3 S3c: 직접 입력 「 유튜브 」·「x」 는 그 선택지를 고른 것으로 저장되고 직접 입력은 남지 않는다", async () => {
@@ -385,6 +442,8 @@ describe("INV-T6: 숨겨도 고른 기록은 남는다", () => {
 
     expect((await operator("admin_set_creator_tag_option_hidden", { p_id: virtual, p_hidden: false })).error).toBeNull();
     expect(await tags()).toEqual(["치지직", "버추얼"]);
+    const again = ((await (await signedInClient(HARU.login)).rpc("my_creator_settings")).data as { tag_ids: string[] }[])[0];
+    expect(again?.tag_ids).toEqual([optionId("치지직"), virtual]); // 다시 보이면 설정 화면에도 고른 것으로 돌아온다
   });
 
   it("INV-T6: 숨긴 동안 크리에이터가 태그를 고치면 숨긴 선택지는 빠진다 — 되돌려도 돌아오지 않는다", async () => {

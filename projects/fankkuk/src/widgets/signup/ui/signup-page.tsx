@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import type { TagOption } from "@/entities/creator/model/creator-tags";
+import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { completeSignup } from "@/features/signup/api/complete-signup";
 import { requestPhoneVerification } from "@/features/signup/api/signup-client";
@@ -88,8 +88,22 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     setErrorSeq((n) => n + 1);
   };
 
-  const creatorProfile = () => (role === "creator" ? { name: creatorName, channelTitle, tagIds, customTag } : undefined);
-  const details = () => checkDetails({ loginId, email, password, passwordConfirm, phone, terms: agreed, creator: creatorProfile() });
+  // 태그는 화면에서 먼저 합친다(creator-tags INV-T3) — 직접 입력이 선택지 이름과 같으면 그 선택지로 세어 보낸다.
+  // 합칠 수 없으면(숨긴 선택지·개수 초과 등) 고른 그대로 두고, details() 가 태그 칸에 문구를 띄운다.
+  const tagSelection = () => resolveTagSelection(tagOptions, tagIds, customTag);
+  const creatorProfile = () => {
+    if (role !== "creator") return undefined;
+    const t = tagSelection();
+    return t.ok
+      ? { name: creatorName, channelTitle, tagIds: t.tagIds, customTag: t.customTag ?? "" }
+      : { name: creatorName, channelTitle, tagIds, customTag };
+  };
+  const details = (): { field: DetailsField; message: string } | null => {
+    const problem = checkDetails({ loginId, email, password, passwordConfirm, phone, terms: agreed, creator: creatorProfile() });
+    if (problem || role !== "creator") return problem;
+    const t = tagSelection();
+    return t.ok ? null : { field: "tags", message: t.message };
+  };
 
   const sendRequest = async () => {
     if (busy) return;
