@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";
 import { newestSearchable } from "@/entities/creator/model/newest-creators";
+import { sendAvailabilityOf } from "@/features/gift-register/model/sender-rule";
 import { readNotices } from "@/entities/notice/api/notice-reads";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { fanGiftBucket } from "@/entities/order/ui/fan-stage-copy";
@@ -26,6 +27,10 @@ export default async function Page() {
     readCreatorCards(supabase, { signedIn: false, forSearch: true }),
   ]);
   const newest = newestSearchable(cards, searchable);
+  // 「선물 보내기」 자리는 크리에이터 페이지와 같은 판단 — 팔로우했으면 선물 보내기, 아니면 팔로우하고 선물 보내기(INV-L9)
+  const sendOf = Object.fromEntries(
+    newest.map((c) => [c.id, sendAvailabilityOf({ viewerRole: "fan", creatorId: c.id, ownCreatorId: null, following: c.following })]),
+  );
   const following = cards.filter((c) => c.following).map(({ id, name, faceTone }) => ({ id, name, faceTone }));
   const faceToneByName = Object.fromEntries(cards.map((c) => [c.name, c.faceTone]));
   const notices = (await readNotices(supabase))
@@ -35,7 +40,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/home", all)} />
-      <HomePage nickname={viewer.nickname ?? ""} gifts={gifts} following={following} faceToneByName={faceToneByName} newest={newest} notices={notices} />
+      <HomePage nickname={viewer.nickname ?? ""} gifts={gifts} following={following} faceToneByName={faceToneByName} newest={newest} sendOf={sendOf} notices={notices} />
       <SiteFooter />
     </>
   );

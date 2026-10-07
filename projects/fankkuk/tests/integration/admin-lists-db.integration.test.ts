@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { orderArgs, SMALL_FIRST } from "./admin-pricing-helpers";
-import { adminClient, anonClient, deleteTestOrders, psql, psqlError, SEED, signedInClient } from "./helpers";
+import { adminClient, anonClient, deleteTestOrders, followForTest, psql, psqlError, SEED, signedInClient } from "./helpers";
 
 // 관리자 3단계 — 보낼 수 없는 물품(INV-K9) · 크리에이터 본인 확인(INV-K10) · 공지·1:1 문의(INV-K11).
 // 시드: fankkuk_admin = 대표 운영자, fankkuk_staff = 직원 운영자, byeolbit_fan = 별빛, daltokki_fan = 달토끼.
@@ -162,6 +162,7 @@ describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
     expect((await fan.rpc("set_follow", { p_creator_id: TEST_CREATOR_ID, p_following: true })).error).not.toBeNull();
     expect(psql(`select count(*) from public.follows where creator_id = '${TEST_CREATOR_ID}'`)).toBe("0");
 
+    followForTest(SEED.fanId, TEST_CREATOR_ID);
     const reg = await adminClient().rpc("register_order", { ...orderArgs(["small"], SMALL_FIRST), p_creator_id: TEST_CREATOR_ID });
     expect(reg.error).not.toBeNull();
     expect(psql(`select count(*) from public.orders where creator_id = '${TEST_CREATOR_ID}'`)).toBe("0");
@@ -181,6 +182,7 @@ describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
 
   it("INV-K10: 이미 등록된 주문은 취소 뒤에도 그대로 간다", async () => {
     insertTestCreator(true);
+    followForTest(SEED.fanId, TEST_CREATOR_ID);
     const reg = await adminClient().rpc("register_order", { ...orderArgs(["small"], SMALL_FIRST), p_creator_id: TEST_CREATOR_ID });
     expect(reg.error).toBeNull();
     const staff = await signedInClient("fankkuk_staff");

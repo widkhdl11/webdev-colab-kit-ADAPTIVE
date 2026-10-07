@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
+import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import type { SendAvailability } from "@/features/gift-register/model/sender-rule";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
@@ -19,7 +20,7 @@ type Props = {
   creators: readonly CreatorCard[];
   /**
    * 카드마다 「선물 보내기」 자리(sendAvailabilityOf — 크리에이터 페이지와 같은 판단). 없으면 open.
-   * needs_follow 면 「선물 보내기」 대신 크리에이터 페이지로 잇는다 — 받는 쪽만 팔로우한 경우는 그 페이지에서 한 명씩 확인한다(INV-L9).
+   * needs_follow 면 「팔로우하고 선물 보내기」 — 팔로우한 크리에이터에게만 보낸다(INV-L9). 메인은 로그인한 사람만 본다.
    */
   sendOf?: Readonly<Record<string, SendAvailability>>;
 };
@@ -59,9 +60,7 @@ export function NewCreators({ creators, sendOf = {} }: Props) {
               <div className={s["c-foot"]}>
                 <span className={s.sub}>{approvalTimeText(c.approvalMinutes)}</span>
                 {sendOf[c.id] === "needs_follow" ? (
-                  <Link className="btn btn--soft btn--sm" href={`/creators/${c.id}`} aria-label={`${c.name}님 페이지 보기`}>
-                    페이지 보기
-                  </Link>
+                  <FollowThenSend creatorId={c.id} creatorName={c.name} signedIn className="btn btn--soft btn--sm" />
                 ) : (
                   <Link className="btn btn--soft btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
                     선물 보내기

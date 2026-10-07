@@ -7,6 +7,7 @@ import { createCreatorRelationReader } from "@/features/gift-register/api/creato
 import { adminClient, deleteTestOrders, psql, SEED, signedInClient } from "./helpers";
 
 // session-login INV-L3·INV-L8·INV-L9: 크리에이터도 다른 크리에이터에게 선물을 보낸다.
+// INV-L9(2026-10-07 바뀜, 카드 d41): 팬·크리에이터 모두 보내는 사람이 받는 크리에이터를 팔로우하고 있어야 한다.
 // DB 등록 함수(두 번째 장치)와 앱 서버의 관계 읽기(첫 번째 장치)를 각각 실제 DB 로 본다.
 // 하루(계정 …a011, 크리에이터 …b001) → 모모(계정 …a012, 크리에이터 …b002). 팔로우는 시험마다 새로 깔고 지운다.
 
@@ -41,8 +42,9 @@ function follow(fanId: string, creatorId: string) {
   psql(`insert into public.follows (fan_id, creator_id) values ('${fanId}', '${creatorId}') on conflict do nothing`);
 }
 
+// 달토끼(팬)는 시드에서 아무도 팔로우하지 않는다 — 이 시험이 깐 팔로우만 지운다
 function clearCreatorFollows() {
-  psql(`delete from public.follows where fan_id in ('${HARU_PROFILE}', '${MOMO_PROFILE}')`);
+  psql(`delete from public.follows where fan_id in ('${HARU_PROFILE}', '${MOMO_PROFILE}', '${SEED.otherFanId}')`);
 }
 
 function ordersFrom(senderId: string): number {
@@ -80,25 +82,27 @@ describe("DB 등록 함수 — 보내는 사람 판정", () => {
     expect(ordersFrom(HARU_PROFILE)).toBe(1);
   });
 
-  it("INV-L9 (S3f): 받는 쪽만 보내는 쪽을 팔로우해도 등록", async () => {
+  it("INV-L9 (S3f, 실패경로): 받는 쪽만 보내는 쪽을 팔로우하면 거부", async () => {
     follow(MOMO_PROFILE, HARU_PAGE);
     const r = await register(HARU_PROFILE, MOMO_PAGE);
-    expect(r.error).toBeNull();
-    expect(ordersFrom(HARU_PROFILE)).toBe(1);
-  });
-
-  it("INV-L9 (S3g): 팔로우가 양쪽 다 없으면 거부 — 같은 조건에서 팬은 보낸다", async () => {
-    const refused = await register(HARU_PROFILE, MOMO_PAGE);
-    expect(refused.error?.code).toBe("P0012");
+    expect(r.error?.code).toBe("P0012");
     expect(ordersFrom(HARU_PROFILE)).toBe(0);
-    const fan = await register(SEED.otherFanId, MOMO_PAGE);
-    expect(fan.error).toBeNull();
   });
 
-  it("INV-L9: 모모가 하루를 팔로우한 것은 하루 → 모모에만 쓰인다 — 하루가 새벽달에게 보내는 조건이 아니다", async () => {
-    follow(MOMO_PROFILE, HARU_PAGE);
-    expect((await register(HARU_PROFILE, NO_ACCOUNT_PAGE)).error?.code).toBe("P0012");
-    expect((await register(HARU_PROFILE, MOMO_PAGE)).error).toBeNull();
+  it("INV-L9 (S3g, 실패경로): 팬도 팔로우하지 않은 크리에이터에게는 거부 — 팔로우한 뒤에는 등록", async () => {
+    const refused = await register(SEED.otherFanId, MOMO_PAGE);
+    expect(refused.error?.code).toBe("P0012");
+    expect(ordersFrom(SEED.otherFanId)).toBe(0);
+    follow(SEED.otherFanId, MOMO_PAGE);
+    expect((await register(SEED.otherFanId, MOMO_PAGE)).error).toBeNull();
+    expect(ordersFrom(SEED.otherFanId)).toBe(1);
+  });
+
+  it("INV-L9 (S3h): 등록 뒤 팔로우를 끊어도 이미 만든 주문은 그대로 남는다", async () => {
+    follow(SEED.otherFanId, MOMO_PAGE);
+    expect((await register(SEED.otherFanId, MOMO_PAGE)).error).toBeNull();
+    psql(`delete from public.follows where fan_id = '${SEED.otherFanId}' and creator_id = '${MOMO_PAGE}'`);
+    expect(ordersFrom(SEED.otherFanId)).toBe(1);
   });
 
   it("INV-L9: 다른 크리에이터를 팔로우한 것은 조건이 되지 않는다 — 둘 사이 팔로우만 센다", async () => {
@@ -112,33 +116,27 @@ describe("앱 서버의 관계 읽기 — DB 함수를 부르지 않고 표로 �
   const read = () => createCreatorRelationReader(adminClient());
 
   it("INV-L8: 자기 자신이면 receiverIsSelf", async () => {
-    expect(await read()(HARU_PROFILE, HARU_PAGE)).toEqual({ receiverIsSelf: true, followEitherWay: false });
+    expect(await read()(HARU_PROFILE, HARU_PAGE)).toEqual({ receiverIsSelf: true, senderFollows: false });
   });
 
-  it("INV-L9: 보내는 쪽 팔로우 / 받는 쪽 팔로우 / 없음", async () => {
-    expect(await read()(HARU_PROFILE, MOMO_PAGE)).toEqual({ receiverIsSelf: false, followEitherWay: false });
+  it("INV-L9: 보내는 쪽 팔로우만 센다 — 받는 쪽이 보내는 쪽을 팔로우한 것은 아니다", async () => {
+    expect(await read()(HARU_PROFILE, MOMO_PAGE)).toEqual({ receiverIsSelf: false, senderFollows: false });
+    follow(MOMO_PROFILE, HARU_PAGE);
+    expect(await read()(HARU_PROFILE, MOMO_PAGE)).toEqual({ receiverIsSelf: false, senderFollows: false });
     follow(HARU_PROFILE, MOMO_PAGE);
-    expect(await read()(HARU_PROFILE, MOMO_PAGE)).toEqual({ receiverIsSelf: false, followEitherWay: true });
-    clearCreatorFollows();
-    follow(MOMO_PROFILE, HARU_PAGE);
-    expect(await read()(HARU_PROFILE, MOMO_PAGE)).toEqual({ receiverIsSelf: false, followEitherWay: true });
+    expect(await read()(HARU_PROFILE, MOMO_PAGE)).toEqual({ receiverIsSelf: false, senderFollows: true });
   });
 
-  it("INV-L9: 모모가 하루를 팔로우해도 하루 → 새벽달은 아니다", async () => {
-    follow(MOMO_PROFILE, HARU_PAGE);
-    expect(await read()(HARU_PROFILE, NO_ACCOUNT_PAGE)).toEqual({ receiverIsSelf: false, followEitherWay: false });
+  it("INV-L9: 팬도 같은 판정 — 팔로우 없음 / 있음", async () => {
+    expect(await read()(SEED.otherFanId, MOMO_PAGE)).toEqual({ receiverIsSelf: false, senderFollows: false });
+    follow(SEED.otherFanId, MOMO_PAGE);
+    expect(await read()(SEED.otherFanId, MOMO_PAGE)).toEqual({ receiverIsSelf: false, senderFollows: true });
   });
 
   it("INV-L9: 다른 크리에이터를 팔로우한 것은 세지 않는다", async () => {
     follow(HARU_PROFILE, NO_ACCOUNT_PAGE);
     follow(MOMO_PROFILE, NO_ACCOUNT_PAGE);
-    expect(await read()(HARU_PROFILE, MOMO_PAGE)).toEqual({ receiverIsSelf: false, followEitherWay: false });
-  });
-
-  it("INV-L9: 계정 없는 크리에이터에게는 보내는 쪽 팔로우만 센다", async () => {
-    expect(await read()(HARU_PROFILE, NO_ACCOUNT_PAGE)).toEqual({ receiverIsSelf: false, followEitherWay: false });
-    follow(HARU_PROFILE, NO_ACCOUNT_PAGE);
-    expect(await read()(HARU_PROFILE, NO_ACCOUNT_PAGE)).toEqual({ receiverIsSelf: false, followEitherWay: true });
+    expect(await read()(HARU_PROFILE, MOMO_PAGE)).toEqual({ receiverIsSelf: false, senderFollows: false });
   });
 
   it("없는 크리에이터면 null", async () => {
@@ -181,9 +179,7 @@ describe("DB 거부를 앱 오류 종류로 — 서버 판정을 건너뛰고 �
   });
 });
 
-describe("화면용 읽기 — 내 크리에이터 id 와 한 명씩 「보낼 수 있나」", () => {
-  const UNVERIFIED = "00000000-0000-4000-b000-0000000000f2";
-
+describe("화면용 읽기 — 내 크리에이터 id 와 최근에 선물한 크리에이터", () => {
   it("하루의 크리에이터 id 는 하루 페이지, 팬은 없음", async () => {
     const haru = await signedInClient("haru_creator");
     expect((await haru.rpc("my_creator_id")).data).toEqual([{ creator_id: HARU_PAGE }]);
@@ -191,33 +187,25 @@ describe("화면용 읽기 — 내 크리에이터 id 와 한 명씩 「보낼 �
     expect((await fan.rpc("my_creator_id")).data).toEqual([]);
   });
 
-  it("팔로우가 한쪽이라도 있으면 참, 없으면 거짓, 자기 자신은 팔로우가 있어도 거짓", async () => {
+  it("INV-L9 정리: 한 명씩 「반대쪽 팔로우」를 묻던 함수는 없다", async () => {
     const haru = await signedInClient("haru_creator");
-    const can = async (id: string) => (await haru.rpc("can_send_gift_to", { p_creator_id: id })).data;
-    expect(await can(MOMO_PAGE)).toBe(false);
-    follow(MOMO_PROFILE, HARU_PAGE);
-    expect(await can(MOMO_PAGE)).toBe(true);
-    expect(await can(NO_ACCOUNT_PAGE)).toBe(false);
-    follow(HARU_PROFILE, HARU_PAGE);
-    expect(await can(HARU_PAGE)).toBe(false);
+    expect((await haru.rpc("can_send_gift_to", { p_creator_id: MOMO_PAGE })).error).not.toBeNull();
   });
 
-  it("본인 확인 전 크리에이터는 팔로우가 있어도 거짓", async () => {
-    psql(
-      `insert into public.creators (id, slug, name, channel, identity_verified) values ('${UNVERIFIED}', 'unverified-cg', '미인증', '유튜브', false) on conflict (id) do nothing`,
-    );
-    try {
-      follow(HARU_PROFILE, UNVERIFIED);
-      const haru = await signedInClient("haru_creator");
-      expect((await haru.rpc("can_send_gift_to", { p_creator_id: UNVERIFIED })).data).toBe(false);
-    } finally {
-      clearCreatorFollows();
-      psql(`delete from public.creators where id = '${UNVERIFIED}'`);
-    }
-  });
-
-  it("팬에게는 늘 거짓 — 팬은 이 판정을 쓰지 않는다", async () => {
-    const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("can_send_gift_to", { p_creator_id: MOMO_PAGE })).data).toBe(false);
+  it("my_recent_recipients: 로그인한 사람이 보낸 크리에이터만, 마지막으로 보낸 순 — 사람 ID 인자 없음", async () => {
+    follow(SEED.otherFanId, MOMO_PAGE);
+    follow(SEED.otherFanId, NO_ACCOUNT_PAGE);
+    expect((await register(SEED.otherFanId, MOMO_PAGE)).error).toBeNull();
+    expect((await register(SEED.otherFanId, NO_ACCOUNT_PAGE)).error).toBeNull();
+    // 결제 전 주문(registered_at 없음)도 「보낸 적」으로 센다 — 결제를 마치지 못하고 다시 보내는 사람을 위로
+    psql(`update public.orders set created_at = now() - interval '1 day' where fan_id = '${SEED.otherFanId}' and creator_id = '${MOMO_PAGE}' and item_kind = '시험 선물'`);
+    const fan = await signedInClient("daltokki_fan");
+    const rows = (await fan.rpc("my_recent_recipients")).data as { creator_id: string }[];
+    // 달토끼에게는 시드 주문(하루에게)이 이미 있다 — 방금 보낸 둘이 맨 앞에, 마지막으로 보낸 순으로 오고 같은 사람은 한 번만
+    const ids = rows.map((r) => r.creator_id);
+    expect(ids.slice(0, 2)).toEqual([NO_ACCOUNT_PAGE, MOMO_PAGE]);
+    expect(new Set(ids).size).toBe(ids.length);
+    const other = await signedInClient("haru_creator");
+    expect((await other.rpc("my_recent_recipients")).data).toEqual([]);
   });
 });

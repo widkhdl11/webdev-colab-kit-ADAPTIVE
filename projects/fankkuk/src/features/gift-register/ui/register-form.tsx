@@ -27,8 +27,10 @@ export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "appr
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const COUNT_FIELD = { small: "smallCount", medium: "mediumCount", large: "largeCount" } as const;
 
-/** 1단계 목록에서 처음에 보이는 사람 수. 나머지는 「N명 더 보기」나 검색으로(2026-10-07 사용자 「12명이 나오니까 너무 길다」). */
+/** 1단계 목록에서 처음에 보이는 사람 수. 나머지는 「N명 더 보기」(PICKS_STEP 명씩)나 검색으로
+ * (2026-10-07 사용자 「12명이 나오니까 너무 길다」 · 「팔로우 중인 사람이 30명이면」 → 카드 d41). */
 const VISIBLE_PICKS = 5;
+const PICKS_STEP = 10;
 
 type StepNo = 1 | 2 | 3 | 4;
 const STEP_NOS: readonly StepNo[] = [1, 2, 3, 4];
@@ -72,7 +74,7 @@ export function RegisterForm({
   const [step, setStep] = useState<StepNo>(1);
   const [reached, setReached] = useState<StepNo>(1);
   const [query, setQuery] = useState("");
-  const [showAll, setShowAll] = useState(false);
+  const [pickLimit, setPickLimit] = useState(VISIBLE_PICKS);
   const [submitError, setSubmitError] = useState<{ message: string; needsLogin: boolean } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // 다시 그려지기 전에 Enter·클릭이 연달아 와도 한 번만 보내게 — state 는 다음 그리기까지 옛 값이다
@@ -197,11 +199,10 @@ export function RegisterForm({
 
   // 크리에이터 찾기 화면과 같은 검색 규칙(이름·로마자 이름·분야·채널 이름·플랫폼)
   const matches = creators.filter((c) => matchesCreatorQuery(c, query));
-  // 검색하지 않을 때는 앞의 VISIBLE_PICKS 명만(미리 고른 사람·팔로우한 크리에이터가 앞에 온다). 고른 사람은 접어도 보이게 남긴다.
+  // 검색하지 않을 때는 앞의 pickLimit 명만(미리 고른 사람·최근에 선물한 사람이 앞에 온다). 고른 사람은 접어도 보이게 남긴다.
   const searching = query.trim() !== "";
-  const visible =
-    searching || showAll ? matches : matches.filter((c, i) => i < VISIBLE_PICKS || c.id === creatorId);
-  const hiddenCount = creators.length - VISIBLE_PICKS;
+  const visible = searching ? matches : matches.filter((c, i) => i < pickLimit || c.id === creatorId);
+  const hiddenCount = Math.max(0, creators.length - pickLimit);
   const picked = creators.find((c) => c.id === creatorId);
   const metalText = metal === "yes" ? "네, 있어요" : metal === "no" ? "아니요, 없어요" : "아직 안 골랐어요";
   const boxesText =
@@ -277,7 +278,7 @@ export function RegisterForm({
               <legend className="sr-only">받는 크리에이터</legend>
               <div className={f["step-h"]}>
                 {heading(1, "누구에게 보낼까요?")}
-                <p>본인 확인을 마친 크리에이터만 찾을 수 있어요.</p>
+                <p>팔로우한 크리에이터 중에서 골라요.</p>
               </div>
               <div className="search search--field">
                 <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
@@ -302,7 +303,7 @@ export function RegisterForm({
               </div>
               <div className={f["pick-box"]}>
                 <div className={f["pick-box-head"]}>
-                  <span>크리에이터 목록</span>
+                  <span>팔로우한 크리에이터</span>
                   <p className="hint" role="status" aria-live="polite">
                     {query.trim() ? `검색 결과 ${matches.length}명` : `전체 ${creators.length}명`}
                   </p>
@@ -315,10 +316,7 @@ export function RegisterForm({
                         <input type="radio" value={c.id} {...register("creatorId")} />
                         <CreatorFace tone={c.faceTone ?? "var(--face-1)"} className={`face ${f["pick-face"]}`} />
                         <span className={f["pick-text"]}>
-                          <strong>
-                            {c.name}
-                            {c.following ? <span className={`tag tag--brand ${f["follow-tag"]}`}>팔로우 중</span> : null}
-                          </strong>
+                          <strong>{c.name}</strong>
                           <small>
                             {[c.category, c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : approvalTimeText(c.approvalMinutes)]
                               .filter(Boolean)
@@ -329,14 +327,20 @@ export function RegisterForm({
                     </li>
                   ))}
                 </ul>
-                {!searching && hiddenCount > 0 ? (
-                  <button className={f["more-picks"]} type="button" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
-                    {showAll ? "접기" : `${hiddenCount}명 더 보기`}
-                  </button>
+                {!searching && creators.length > VISIBLE_PICKS ? (
+                  hiddenCount > 0 ? (
+                    <button className={f["more-picks"]} type="button" onClick={() => setPickLimit((n) => n + PICKS_STEP)}>
+                      {Math.min(PICKS_STEP, hiddenCount)}명 더 보기 <span className={f["more-left"]}>(남은 {hiddenCount}명)</span>
+                    </button>
+                  ) : (
+                    <button className={f["more-picks"]} type="button" onClick={() => setPickLimit(VISIBLE_PICKS)}>
+                      접기
+                    </button>
+                  )
                 ) : null}
                 {matches.length === 0 ? (
                   <p className={f["empty-mini"]} role="status">
-                    찾는 크리에이터가 없어요. 본인 확인을 마친 크리에이터만 선택할 수 있어요.
+                    찾는 크리에이터가 없어요. 팔로우한 크리에이터만 고를 수 있어요.
                   </p>
                 ) : null}
               </div>

@@ -76,7 +76,11 @@ export function FollowButton({
     setFailed(false);
     const outcome = await saveFollow(creatorId, next);
     savingRef.current = false;
-    if (outcome === "ok") return;
+    // 팔로우가 바뀌면 화면의 「선물 보내기」 자리도 바뀐다(INV-L9 — 팔로우한 사람에게만 보낸다) — 서버가 다시 그리게 한다
+    if (outcome === "ok") {
+      router.refresh();
+      return;
+    }
     setFollowing(!next);
     if (outcome === "login") router.push("/login");
     else setFailed(true);

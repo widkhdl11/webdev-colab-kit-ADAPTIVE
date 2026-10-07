@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkoutRequesterId, creatorSendList, fanSendList, movingNotice, refusalStatus, sendAvailabilityOf } from "./sender-rule";
+import { checkoutRequesterId, movingNotice, refusalStatus, sendAvailabilityOf, sendList } from "./sender-rule";
 
 const OWN = "00000000-0000-4000-b000-000000000001";
 const MOMO = "00000000-0000-4000-b000-000000000002";
@@ -15,45 +15,31 @@ describe("결제 확정을 요청한 사람 (INV-L3)", () => {
 });
 
 describe("크리에이터 페이지의 선물 보내기 자리 (INV-L8·INV-L9 화면 표시)", () => {
-  it("팬·손님은 늘 열림 — 팔로우 조건이 없다", () => {
-    expect(sendAvailabilityOf({ viewerRole: "fan", creatorId: MOMO, ownCreatorId: null, canSend: false })).toBe("open");
-    expect(sendAvailabilityOf({ viewerRole: null, creatorId: MOMO, ownCreatorId: null, canSend: false })).toBe("open");
+  it("INV-L9: 팬·크리에이터 모두 — 팔로우했으면 열림, 아니면 팔로우 필요", () => {
+    expect(sendAvailabilityOf({ viewerRole: "fan", creatorId: MOMO, ownCreatorId: null, following: true })).toBe("open");
+    expect(sendAvailabilityOf({ viewerRole: "fan", creatorId: MOMO, ownCreatorId: null, following: false })).toBe("needs_follow");
+    expect(sendAvailabilityOf({ viewerRole: "creator", creatorId: MOMO, ownCreatorId: OWN, following: true })).toBe("open");
+    expect(sendAvailabilityOf({ viewerRole: "creator", creatorId: MOMO, ownCreatorId: OWN, following: false })).toBe("needs_follow");
   });
-  it("크리에이터: 자기 페이지 / 보낼 수 있음 / 팔로우 필요", () => {
-    expect(sendAvailabilityOf({ viewerRole: "creator", creatorId: OWN, ownCreatorId: OWN, canSend: true })).toBe("self");
-    expect(sendAvailabilityOf({ viewerRole: "creator", creatorId: MOMO, ownCreatorId: OWN, canSend: true })).toBe("open");
-    expect(sendAvailabilityOf({ viewerRole: "creator", creatorId: MOMO, ownCreatorId: OWN, canSend: false })).toBe("needs_follow");
+  it("손님은 팔로우할 수 없으니 팔로우 필요(누르면 로그인으로)", () => {
+    expect(sendAvailabilityOf({ viewerRole: null, creatorId: MOMO, ownCreatorId: null, following: false })).toBe("needs_follow");
+  });
+  it("INV-L8: 크리에이터 자기 페이지는 팔로우와 상관없이 self", () => {
+    expect(sendAvailabilityOf({ viewerRole: "creator", creatorId: OWN, ownCreatorId: OWN, following: true })).toBe("self");
   });
 });
 
-describe("크리에이터의 선물 보내기 목록", () => {
+describe("선물 보내기 목록 (INV-L8·INV-L9)", () => {
   const cards = [
     { id: OWN, following: true },
     { id: MOMO, following: true },
     { id: SAEBYEOK, following: false },
   ];
-  it("팔로우한 사람만, 자기 자신은 빼고", () => {
-    expect(creatorSendList(cards, OWN, null).map((c) => c.id)).toEqual([MOMO]);
+  it("INV-L9: 팔로우한 사람만 — 팬은 자기 크리에이터 id 가 없다", () => {
+    expect(sendList(cards, null).map((c) => c.id)).toEqual([OWN, MOMO]);
   });
-  it("미리 고른 사람은 보낼 수 있을 때만 더한다 — 받는 쪽만 팔로우한 경우", () => {
-    expect(creatorSendList(cards, OWN, { id: SAEBYEOK, canSend: true }).map((c) => c.id)).toEqual([MOMO, SAEBYEOK]);
-    expect(creatorSendList(cards, OWN, { id: SAEBYEOK, canSend: false }).map((c) => c.id)).toEqual([MOMO]);
-  });
-  it("미리 고른 사람이 자기 자신이면 보낼 수 있다고 와도 뺀다", () => {
-    expect(creatorSendList(cards, OWN, { id: OWN, canSend: true }).map((c) => c.id)).toEqual([MOMO]);
-  });
-});
-
-describe("팬의 선물 보내기 목록 (my-account INV-A10)", () => {
-  const found = [{ id: MOMO }, { id: SAEBYEOK }];
-  it("INV-A10: 찾기 목록 그대로 — 노출을 끈 크리에이터는 미리 고르지 않으면 나오지 않는다", () => {
-    expect(fanSendList(found, null).map((c) => c.id)).toEqual([MOMO, SAEBYEOK]);
-  });
-  it("INV-A10: 링크로 미리 고른 사람은 노출을 껐어도 맨 앞에 한 명 더한다", () => {
-    expect(fanSendList(found, { id: OWN }).map((c) => c.id)).toEqual([OWN, MOMO, SAEBYEOK]);
-  });
-  it("미리 고른 사람이 이미 찾기 목록에 있으면 두 번 넣지 않는다", () => {
-    expect(fanSendList(found, { id: MOMO }).map((c) => c.id)).toEqual([MOMO, SAEBYEOK]);
+  it("INV-L8: 크리에이터는 자기 자신을 뺀다", () => {
+    expect(sendList(cards, OWN).map((c) => c.id)).toEqual([MOMO]);
   });
 });
 

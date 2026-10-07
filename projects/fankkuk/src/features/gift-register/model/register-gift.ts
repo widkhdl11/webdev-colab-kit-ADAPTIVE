@@ -6,7 +6,7 @@ import { PRICE_CHANGED_MESSAGE, quotedTotalSchema, type PriceTable } from "@/ent
 import type { Viewer } from "@/entities/session/model/viewer";
 import type { CreatorRelationReader } from "../api/creator-relation";
 import { parseRegisterInput, type RegisterFormValues } from "./register-input";
-import { decideSender, needsRelation, refusalStatus, SENDER_REFUSAL_MESSAGE, senderRoleAllowed } from "./sender-rule";
+import { decideSender, refusalStatus, SENDER_REFUSAL_MESSAGE, senderRoleAllowed } from "./sender-rule";
 
 // 선물 등록 = 주문 + 상자 + 결제 대기를 한 번에 만든다. 결제가 끝나야 크리에이터에게 승인 요청이 간다(INV-M6).
 
@@ -50,8 +50,9 @@ export async function registerGift(
   if (!quoted.success) return { ok: false, status: 400, errors: {} };
 
   const { creatorId, itemKind, boxes, hasElectronicsOrMetal } = parsed.data;
-  // INV-L8·INV-L9: 크리에이터가 보낼 때는 받는 사람과의 관계를 서버가 읽어 판정한다(DB 등록 함수도 따로 막는다)
-  const relation = needsRelation(deps.viewer.role) ? await deps.creatorRelation(deps.viewer.userId, creatorId) : null;
+  // INV-L8·INV-L9: 받는 크리에이터와의 관계(자기 자신인가·팔로우했는가)를 로그인한 사람 기준으로 서버가 읽어 판정한다
+  // (DB 등록 함수도 따로 막는다)
+  const relation = await deps.creatorRelation(deps.viewer.userId, creatorId);
   const verdict = decideSender(deps.viewer.role, relation);
   if (!verdict.ok) return { ok: false, status: refusalStatus(verdict.reason), message: SENDER_REFUSAL_MESSAGE[verdict.reason] };
 
@@ -67,7 +68,7 @@ export async function registerGift(
     } catch (e) {
       if (e instanceof PriceChangedError) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
       if (e instanceof SenderRefusedError) {
-        // 없는 크리에이터(팬이 보낼 때)와 채널 이사 중(INV-V12)은 DB 가 처음 판정하는 정상 경로다. 나머지는 서버 판정이 빠졌다는 뜻이다
+        // 본인 확인 전·차단(unknown_creator)과 채널 이사 중(INV-V12)은 DB 가 처음 판정하는 정상 경로다. 나머지는 서버 판정이 빠졌다는 뜻이다
         if (e.reason !== "unknown_creator" && e.reason !== "moving") console.error(`선물 등록: 서버 판정을 지나 DB 가 거부했다 (${e.reason})`);
         return { ok: false, status: refusalStatus(e.reason), message: SENDER_REFUSAL_MESSAGE[e.reason] };
       }

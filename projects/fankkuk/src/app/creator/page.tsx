@@ -33,12 +33,12 @@ export default async function Page() {
     readCreatorCards(supabase, { signedIn: false, forSearch: true }),
     readOwnCreatorId(supabase),
   ]);
-  // 「선물 보내기」 자리는 크리에이터 페이지와 같은 판단(sendAvailabilityOf). 목록에서 보낼 수 있는 기준은 크리에이터 찾기와 같이 「내가 팔로우함」이다.
+  // 「선물 보내기」 자리는 크리에이터 페이지와 같은 판단(sendAvailabilityOf — 내가 팔로우했는가, INV-L9).
   const ordered = newestSearchable(cards, searchable);
   const sendOf = Object.fromEntries(
     ordered.map((c) => [
       c.id,
-      sendAvailabilityOf({ viewerRole: "creator", creatorId: c.id, ownCreatorId, canSend: c.following }),
+      sendAvailabilityOf({ viewerRole: "creator", creatorId: c.id, ownCreatorId, following: c.following }),
     ]),
   );
   const newest = ordered.filter((c) => sendOf[c.id] !== "self");

@@ -3,6 +3,7 @@ import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { fanBadge } from "@/entities/order/ui/fan-stage-copy";
+import type { SendAvailability } from "@/features/gift-register/model/sender-rule";
 import { statusTagClass } from "@/shared/ui/status-tone";
 import { BrandPanel } from "./brand-panel";
 import s from "./home.module.css";
@@ -24,6 +25,8 @@ type Props = {
   faceToneByName: Readonly<Record<string, string>>;
   /** 찾기에 나오는 크리에이터, 최근에 들어온 순. */
   newest: readonly CreatorCard[];
+  /** 카드마다 「선물 보내기」 자리 — 라우트가 sendAvailabilityOf 로 정한다(INV-L9). */
+  sendOf: Readonly<Record<string, SendAvailability>>;
   notices: readonly HomeNotice[];
 };
 
@@ -89,7 +92,7 @@ function MyCard({ nickname, gifts, following, faceToneByName }: Pick<Props, "nic
   );
 }
 
-export function HomePage({ nickname, gifts, following, faceToneByName, newest, notices }: Props) {
+export function HomePage({ nickname, gifts, following, faceToneByName, newest, sendOf, notices }: Props) {
   return (
     <main id="main">
       <section className={s["hero-wrap"]} aria-labelledby="hero-title">
@@ -109,7 +112,7 @@ export function HomePage({ nickname, gifts, following, faceToneByName, newest, n
               전체 보기 ›
             </Link>
           </div>
-          <NewCreators creators={newest} />
+          <NewCreators creators={newest} sendOf={sendOf} />
         </div>
       </section>
 

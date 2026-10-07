@@ -24,13 +24,10 @@ export function CreatorSearchPage({
   creators,
   followMode,
   ownCreatorId = null,
-  sendOnlyToFollowed = false,
 }: {
   creators: readonly CreatorCard[];
   followMode: FollowMode;
   ownCreatorId?: string | null;
-  /** 크리에이터가 볼 때 — 팔로우한 줄에만 선물 보내기를 둔다(INV-L9). 받는 쪽만 팔로우한 경우는 크리에이터 페이지에서 확인한다 */
-  sendOnlyToFollowed?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const inputId = useId();
@@ -109,7 +106,8 @@ export function CreatorSearchPage({
                 ) : (
                   <div className={s.acts}>
                     <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing={c.following} variant="row" mode={followMode} />
-                    {!sendOnlyToFollowed || c.following ? (
+                    {/* 팔로우한 줄에만 선물 보내기 — 팔로우한 크리에이터에게만 보낸다(INV-L9). 팔로우하면 화면이 다시 그려져 나타난다 */}
+                    {c.following ? (
                       <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
                         선물 보내기
                       </Link>

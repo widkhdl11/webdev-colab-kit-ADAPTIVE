@@ -6,6 +6,7 @@ import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
+import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import { FollowButton, type FollowMode } from "@/features/creator-follow/ui/follow-button";
 import s from "./creator-profile.module.css";
 
@@ -36,7 +37,7 @@ export function CreatorProfilePage({
   creator: CreatorCard;
   others: readonly CreatorCard[];
   followMode: FollowMode;
-  /** open = 선물 보내기 / self = 크리에이터 자기 페이지(보내지 않음) / needs_follow = 크리에이터인데 팔로우가 한쪽도 없음(INV-L9) */
+  /** open = 선물 보내기 / self = 크리에이터 자기 페이지(보내지 않음) / needs_follow = 팔로우하지 않음 → 「팔로우하고 선물 보내기」(INV-L9) */
   send?: "open" | "self" | "needs_follow";
   /** 지금 공개 요금표 — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
   prices: PublicPriceTable;
@@ -84,7 +85,9 @@ export function CreatorProfilePage({
               </Link>
             ) : null}
             {send === "self" ? <span className="tag">내 크리에이터 페이지예요</span> : null}
-            {send === "needs_follow" ? <p className="sub">팔로우하면 선물을 보낼 수 있어요.</p> : null}
+            {send === "needs_follow" ? (
+              <FollowThenSend creatorId={creator.id} creatorName={creator.name} signedIn={followMode !== "login"} />
+            ) : null}
             <FollowButton creatorId={creator.id} creatorName={creator.name} initialFollowing={creator.following} variant="profile" mode={followMode} />
           </div>
         </div>
@@ -166,6 +169,12 @@ export function CreatorProfilePage({
               <Link className={`btn btn--block ${s["fee-go"]}`} href={sendHref}>
                 {creator.name}님께 선물 보내기
               </Link>
+            ) : null}
+            {send === "needs_follow" ? (
+              <>
+                <p className={`sub ${s["fee-go"]}`}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p>
+                <FollowThenSend creatorId={creator.id} creatorName={creator.name} signedIn={followMode !== "login"} className="btn btn--block" />
+              </>
             ) : null}
           </aside>
         </div>

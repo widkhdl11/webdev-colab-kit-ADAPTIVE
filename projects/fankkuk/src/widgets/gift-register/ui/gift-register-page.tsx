@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 import { PaymentStep } from "@/features/checkout/ui/payment-step";
+import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import { RegisterForm, type CreatorOption, type RegisteredGift } from "@/features/gift-register/ui/register-form";
 import s from "./gift-register-page.module.css";
 
@@ -16,7 +17,8 @@ export function GiftRegisterPage({
   initialCreatorId,
   clientKey,
   notice,
-  creatorSender = false,
+  signedIn = true,
+  followFirst = null,
 }: {
   creators: readonly CreatorOption[];
   /** 지금 공개 요금표 — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
@@ -25,8 +27,10 @@ export function GiftRegisterPage({
   /** 토스 결제창 공개 키. 없으면 결제창 대신 안내만 보인다. */
   clientKey: string;
   notice?: string;
-  /** 크리에이터가 보내는 중 — 목록은 이미 팔로우가 한쪽이라도 있는 크리에이터로 걸러져 온다(INV-L9). */
-  creatorSender?: boolean;
+  /** 로그인했는가 — 아니면 팔로우한 사람이 없으니 로그인 안내를 보여 준다. */
+  signedIn?: boolean;
+  /** 크리에이터 페이지에서 미리 고르고 왔는데 아직 팔로우하지 않은 사람 — 「팔로우하고 선물 보내기」를 따로 보여 준다(INV-L9). */
+  followFirst?: { id: string; name: string } | null;
 }) {
   const [registered, setRegistered] = useState<RegisteredGift | null>(null);
 
@@ -35,21 +39,41 @@ export function GiftRegisterPage({
       <div className="container page-title">
         <h1 className="page-h">선물 보내기</h1>
         <p>{registered ? `주문번호 ${registered.orderNo} — 결제하면 등록이 끝나요.` : "누구에게, 무엇을, 몇 상자 보낼지 알려 주세요."}</p>
-        {creatorSender && !registered ? (
-          <p className="sub">서로 팔로우하거나 한쪽이라도 팔로우한 크리에이터에게만 보낼 수 있어요.</p>
-        ) : null}
+        {!registered ? <p className="sub">팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p> : null}
       </div>
-      {creatorSender && creators.length === 0 ? (
+      {followFirst && !registered ? (
+        <div className="container">
+          <div className={s["follow-first"]} role="status">
+            <p>
+              <strong>{followFirst.name}님</strong>을 팔로우하면 바로 선물을 보낼 수 있어요.
+            </p>
+            <FollowThenSend creatorId={followFirst.id} creatorName={followFirst.name} signedIn={signedIn} className="btn btn--sm" />
+          </div>
+        </div>
+      ) : null}
+      {creators.length === 0 && !registered ? (
         <div className="container">
           <div className={s["empty-box"]}>
             <span className={s["ico-tile"]} aria-hidden="true">
               <img className="asset" src="/img/icon-gift.png" alt="" aria-hidden="true" width={64} height={64} />
             </span>
-            <h2>아직 선물을 보낼 수 있는 크리에이터가 없어요</h2>
-            <p className="sub">크리에이터를 팔로우하면 여기에 나와요. 나를 팔로우한 크리에이터에게는 그 크리에이터 페이지에서 보낼 수 있어요.</p>
-            <Link className="btn" href="/creators">
-              크리에이터 찾기
-            </Link>
+            {signedIn ? (
+              <>
+                <h2>아직 팔로우한 크리에이터가 없어요</h2>
+                <p className="sub">선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 좋아하는 크리에이터를 찾아 팔로우해 보세요.</p>
+                <Link className="btn" href="/creators">
+                  크리에이터 찾기
+                </Link>
+              </>
+            ) : (
+              <>
+                <h2>로그인하고 선물을 보내 주세요</h2>
+                <p className="sub">선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 로그인하면 팔로우한 크리에이터가 여기에 나와요.</p>
+                <Link className="btn" href="/login">
+                  로그인
+                </Link>
+              </>
+            )}
           </div>
         </div>
       ) : registered ? (

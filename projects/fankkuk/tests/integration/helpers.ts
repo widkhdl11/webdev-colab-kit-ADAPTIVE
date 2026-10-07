@@ -79,7 +79,30 @@ export const TEST_ITEM_KINDS = ["시험 선물", "통합 시험 선물"] as cons
  * 열람 기록은 DB 가 수정·삭제를 막아 두었으므로(INV-P7) 그 한 줄만 트리거를 끄고 지운다.
  * 로컬 컨테이너에만 붙는 psql 로 실행하므로 호스팅 DB 에는 닿지 않는다.
  */
+// session-login INV-L9(2026-10-07): 보내는 사람이 받는 크리에이터를 팔로우해야 등록된다.
+// 시험 주문을 만들기 전에 그 쌍의 팔로우를 깔아 두고(없을 때만), 시험이 깐 것만 기억해 deleteTestOrders 가 같이 지운다 — 시드 팔로우는 건드리지 않는다.
+const testFollows = new Set<string>();
+
+/** 보내는 사람 → 받는 크리에이터 팔로우가 없으면 시험용으로 깐다. */
+export function followForTest(senderId: string, creatorId: string): void {
+  const inserted = psql(
+    `insert into public.follows (fan_id, creator_id) values ('${senderId}', '${creatorId}') on conflict do nothing returning 1`,
+  );
+  // 이미 있으면 「INSERT 0 0」만, 새로 깔았으면 첫 줄이 RETURNING 의 1
+  if (inserted.split("\n")[0] === "1") testFollows.add(`${senderId}|${creatorId}`);
+}
+
+/** followForTest 가 깐 팔로우만 지운다. */
+export function deleteTestFollows(): void {
+  for (const pair of testFollows) {
+    const [senderId, creatorId] = pair.split("|");
+    psql(`delete from public.follows where fan_id = '${senderId}' and creator_id = '${creatorId}'`);
+  }
+  testFollows.clear();
+}
+
 export function deleteTestOrders(): void {
+  deleteTestFollows();
   const kinds = TEST_ITEM_KINDS.map((k) => `'${k}'`).join(", ");
   const ids = `select id from public.orders where item_kind in (${kinds})`;
   psql(
@@ -162,6 +185,7 @@ export async function registerTestOrder(
 ): Promise<{ orderId: string; orderNo: string; tossOrderId: string }> {
   const orderNo = `FC-T${randomCode(6)}`;
   const tossOrderId = `pay_test_${randomCode(12).toLowerCase()}`;
+  followForTest(who.senderId ?? SEED.fanId, who.creatorId ?? SEED.haruCreatorId);
   const { data, error } = await adminClient().rpc("register_order", {
     p_fan_id: who.senderId ?? SEED.fanId,
     p_creator_id: who.creatorId ?? SEED.haruCreatorId,
