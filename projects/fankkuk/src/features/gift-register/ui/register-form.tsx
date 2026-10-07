@@ -27,6 +27,9 @@ export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "appr
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const COUNT_FIELD = { small: "smallCount", medium: "mediumCount", large: "largeCount" } as const;
 
+/** 1단계 목록에서 처음에 보이는 사람 수. 나머지는 「N명 더 보기」나 검색으로(2026-10-07 사용자 「12명이 나오니까 너무 길다」). */
+const VISIBLE_PICKS = 5;
+
 type StepNo = 1 | 2 | 3 | 4;
 const STEP_NOS: readonly StepNo[] = [1, 2, 3, 4];
 const STEP_LABEL: Record<StepNo, string> = { 1: "크리에이터", 2: "선물", 3: "상자", 4: "결제" };
@@ -69,6 +72,7 @@ export function RegisterForm({
   const [step, setStep] = useState<StepNo>(1);
   const [reached, setReached] = useState<StepNo>(1);
   const [query, setQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const [submitError, setSubmitError] = useState<{ message: string; needsLogin: boolean } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // 다시 그려지기 전에 Enter·클릭이 연달아 와도 한 번만 보내게 — state 는 다음 그리기까지 옛 값이다
@@ -193,6 +197,11 @@ export function RegisterForm({
 
   // 크리에이터 찾기 화면과 같은 검색 규칙(이름·로마자 이름·분야·채널 이름·플랫폼)
   const matches = creators.filter((c) => matchesCreatorQuery(c, query));
+  // 검색하지 않을 때는 앞의 VISIBLE_PICKS 명만(미리 고른 사람·팔로우한 크리에이터가 앞에 온다). 고른 사람은 접어도 보이게 남긴다.
+  const searching = query.trim() !== "";
+  const visible =
+    searching || showAll ? matches : matches.filter((c, i) => i < VISIBLE_PICKS || c.id === creatorId);
+  const hiddenCount = creators.length - VISIBLE_PICKS;
   const picked = creators.find((c) => c.id === creatorId);
   const metalText = metal === "yes" ? "네, 있어요" : metal === "no" ? "아니요, 없어요" : "아직 안 골랐어요";
   const boxesText =
@@ -301,7 +310,7 @@ export function RegisterForm({
                 {/* 걸러진 줄은 지우지 않고 숨긴다 — 고른 값이 그대로 남게 */}
                 <ul className={f["pick-list"]}>
                   {creators.map((c) => (
-                    <li key={c.id} hidden={!matches.includes(c)}>
+                    <li key={c.id} hidden={!visible.includes(c)}>
                       <label className={f.pick}>
                         <input type="radio" value={c.id} {...register("creatorId")} />
                         <CreatorFace tone={c.faceTone ?? "var(--face-1)"} className={`face ${f["pick-face"]}`} />
@@ -320,6 +329,11 @@ export function RegisterForm({
                     </li>
                   ))}
                 </ul>
+                {!searching && hiddenCount > 0 ? (
+                  <button className={f["more-picks"]} type="button" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
+                    {showAll ? "접기" : `${hiddenCount}명 더 보기`}
+                  </button>
+                ) : null}
                 {matches.length === 0 ? (
                   <p className={f["empty-mini"]} role="status">
                     찾는 크리에이터가 없어요. 본인 확인을 마친 크리에이터만 선택할 수 있어요.
