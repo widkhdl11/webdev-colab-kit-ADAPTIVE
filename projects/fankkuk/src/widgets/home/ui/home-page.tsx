@@ -1,169 +1,166 @@
 import Link from "next/link";
+import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
-import { fanBadge, fanHeadline, fanProgress } from "@/entities/order/ui/fan-stage-copy";
+import { fanBadge } from "@/entities/order/ui/fan-stage-copy";
+import { statusTagClass } from "@/shared/ui/status-tone";
 import s from "./home.module.css";
+import { NewCreators } from "./new-creators";
 
-// 메인(로그인 뒤, 팬). 시안: docs/design/mockups/site/v4/home.html
+// 메인(로그인 뒤, 팬). 시안: docs/design/mockups/site/v9-home/home-b.html
+// 둘러보는 첫 화면이 주인공이고 내 것은 오른쪽 작은 카드 하나로 줄였다(사용자 「너무 내정보 페이지 같아」 → B안).
 // 팬 화면이라 선물은 팬용 모양(toFanView)만 받는다 — 크리에이터행 송장번호·주소가 여기 닿지 않는다.
 
-export type HomeFollow = { id: string; name: string; category: string; faceTone: string };
+export type HomeFollow = { id: string; name: string; faceTone: string };
 export type HomeNotice = { id: string; title: string; date: string };
 
 type Props = {
   nickname: string;
-  /** 진행 중인 선물 전부(최신순). 줄에는 앞의 MAX_ROWS 개만 보인다. */
+  /** 진행 중인 선물 전부(최신순). 내 카드에는 앞의 MAX_GIFTS 개만 보인다. */
   gifts: readonly FanGiftView[];
   following: readonly HomeFollow[];
-  /** 크리에이터 이름 → 얼굴 자리표시 색. 선물 줄의 얼굴이 팔로우 줄·크리에이터 찾기와 같은 색이 되게. */
+  /** 크리에이터 이름 → 얼굴 자리표시 색. 선물 줄의 얼굴이 크리에이터 찾기와 같은 색이 되게. */
   faceToneByName: Readonly<Record<string, string>>;
+  /** 찾기에 나오는 크리에이터, 최근에 들어온 순. */
+  newest: readonly CreatorCard[];
   notices: readonly HomeNotice[];
 };
 
-const MAX_ROWS = 3;
-/** 팔로우 줄에 보이는 사람 수. 「더 찾기」 칸과 합쳐 PC 한 줄 7칸을 넘지 않게. 나머지는 「전체 보기」에서. */
-const MAX_FOLLOWS = 6;
+const MAX_GIFTS = 2;
+/** 내 카드의 겹친 얼굴 수 */
+const MAX_FACES = 4;
 
-const TILES = [
-  { href: "/gifts/new", label: "선물 보내기", icon: "icon-gift" },
-  { href: "/creators", label: "크리에이터 찾기", icon: "icon-find" },
-  { href: "/gifts", label: "내 선물", icon: "icon-truck" },
-  { href: "/about", label: "요금 안내", icon: "icon-fee" },
-  { href: "/about", label: "안심 약속", icon: "icon-approve" },
-  { href: "/support", label: "고객센터", icon: "icon-help" },
+const STEPS = [
+  { icon: "icon-gift", label: "1단계 · 보내기", text: "크리에이터와 선물을 고르고 결제해요." },
+  { icon: "icon-approve", label: "2단계 · 승인", text: "크리에이터가 승인한 선물만 배송해요." },
+  { icon: "icon-inspect", label: "3단계 · 검수", text: "사무실에서 검수한 뒤 출고해요." },
+  { icon: "icon-truck", label: "4단계 · 배송", text: "크리에이터의 주소는 팬에게 보이지 않아요." },
 ] as const;
 
 /** "2026-09-28" → "09.28" */
 const shortDate = (date: string) => date.slice(5).replace("-", ".");
 
-export function HomePage({ nickname, gifts, following, faceToneByName, notices }: Props) {
+function MyCard({ nickname, gifts, following, faceToneByName }: Pick<Props, "nickname" | "gifts" | "following" | "faceToneByName">) {
+  return (
+    <aside className={s["me-card"]} aria-labelledby="me-title">
+      <div className={s.hi}>
+        <h2 id="me-title">{nickname}님</h2>
+        <Link className="link-arrow" href="/gifts">
+          진행 중인 선물 {gifts.length}개 ›
+        </Link>
+      </div>
+      {gifts.length === 0 ? (
+        <p className={`${s.sub} ${s["me-empty"]}`}>지금 진행 중인 선물이 없어요.</p>
+      ) : (
+        <ul className={s["me-gifts"]}>
+          {gifts.slice(0, MAX_GIFTS).map((g) => {
+            const badge = fanBadge(g);
+            return (
+              <li key={g.orderNo}>
+                <Link href={`/gifts/${g.orderNo}`} aria-label={`${g.creatorName}님께 보낸 선물 · ${badge.text}`}>
+                  <CreatorFace tone={faceToneByName[g.creatorName] ?? "var(--face-1)"} className={`face ${s["face-sm"]}`} />
+                  <span className={s.w}>{g.creatorName}님께</span>
+                  <span className={statusTagClass(badge.tone)}>{badge.text}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {following.length === 0 ? (
+        <Link className={s["me-fol"]} href="/creators">
+          <span className={s.t}>아직 팔로우한 크리에이터가 없어요</span>
+          <span className={s.accent} aria-hidden="true">
+            ›
+          </span>
+        </Link>
+      ) : (
+        <Link className={s["me-fol"]} href="/me/following" aria-label={`팔로우 ${following.length}명 · 팔로우한 크리에이터 보기`}>
+          <span className={s.stack}>
+            {following.slice(0, MAX_FACES).map((f) => (
+              <CreatorFace key={f.id} tone={f.faceTone} className={`face ${s["face-xs"]}`} />
+            ))}
+          </span>
+          <span className={s.t}>팔로우 {following.length}명</span>
+          <span className={s.accent} aria-hidden="true">
+            ›
+          </span>
+        </Link>
+      )}
+    </aside>
+  );
+}
+
+export function HomePage({ nickname, gifts, following, faceToneByName, newest, notices }: Props) {
   return (
     <main id="main">
-      <section className={s.greet} aria-labelledby="hello-title">
+      <section className={s["hero-wrap"]} aria-labelledby="hero-title">
         <div className="container">
-          <h1 id="hello-title">
-            {nickname}님, 오늘은 누구에게
-            <br />
-            선물을 보낼까요?
-          </h1>
-          <p className={`lead ${s["greet-lead"]}`}>
-            {gifts.length > 0 ? `지금 진행 중인 선물이 ${gifts.length}개 있어요.` : "지금 진행 중인 선물이 없어요."}
-          </p>
-          <form className={`search ${s.search}`} role="search" action="/creators">
-            <label className="sr-only" htmlFor="home-q">
-              크리에이터 검색
-            </label>
-            <input id="home-q" type="search" name="q" placeholder="나의 크리에이터를 찾아보세요" autoComplete="off" />
-            <button className="search-go" type="submit" aria-label="크리에이터 찾기">
-              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="3" />
-                <path d="m15.5 15.5 5 5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              </svg>
-            </button>
-          </form>
-          <ul className={`tiles tiles--6 ${s.tiles}`} aria-label="바로가기">
-            {TILES.map((t) => (
-              <li key={t.label}>
-                <Link className="tile" href={t.href}>
-                  <span>{t.label}</span>
-                  <img className="ico asset" src={`/img/${t.icon}.png`} width={88} height={88} alt="" aria-hidden="true" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className="block" aria-labelledby="gifts-title">
-        <div className="container">
-          <div className="block-head">
-            <h2 id="gifts-title">진행 중인 선물</h2>
-          </div>
-          {gifts.length === 0 ? (
-            <p className={s.empty}>지금 진행 중인 선물이 없어요.</p>
-          ) : (
-            <ul className={s["gift-rows"]}>
-              {gifts.slice(0, MAX_ROWS).map((g) => {
-                const badge = fanBadge(g);
-                const { done, total } = fanProgress(g);
-                return (
-                  <li key={g.orderNo} className={s["gift-row"]}>
-                    <CreatorFace tone={faceToneByName[g.creatorName] ?? "var(--face-1)"} />
-                    <div>
-                      <p className={s.who}>{g.creatorName}님께</p>
-                      <p className={s.says}>{fanHeadline(g)}</p>
-                    </div>
-                    <div className={s.meter}>
-                      <div
-                        className="dots"
-                        role="progressbar"
-                        aria-label={`${g.creatorName}님께 보낸 선물 진행 단계`}
-                        aria-valuemin={1}
-                        aria-valuemax={total}
-                        aria-valuenow={done}
-                        aria-valuetext={`${total}단계 중 ${done}단계, ${badge.text}`}
-                      >
-                        {g.steps.map((st) => (
-                          <span key={st.key} className={st.state === "done" ? "on" : undefined} />
-                        ))}
-                      </div>
-                      <small>
-                        {badge.text} · {done}/{total}
-                      </small>
-                    </div>
-                    <Link
-                      className={`link-arrow ${s.go}`}
-                      href={`/gifts/${g.orderNo}`}
-                      aria-label={`${g.creatorName}님께 보낸 선물 상세`}
-                    >
-                      상세 보기 ›
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          <div className={s["more-wrap"]}>
-            <Link className="btn btn--soft" href="/gifts">
-              더 보기
-            </Link>
+          <div className={s.hero}>
+            <div className={s.panel}>
+              <div>
+                <p className="kicker">좋아하는 마음이 상자에 담겨 닿는 곳</p>
+                <h1 className={s.title} id="hero-title">
+                  좋아하는 크리에이터에게
+                  <br />
+                  선물을 보내 보세요
+                </h1>
+                <p className={`lead ${s.lead}`}>
+                  크리에이터가 승인한 선물만 배송해요.
+                  <br />
+                  서로의 주소는 보이지 않아요.
+                </p>
+                <div className={s.btns}>
+                  <Link className="btn" href="/gifts/new">
+                    선물 보내기
+                  </Link>
+                  <Link className="btn btn--soft" href="/creators">
+                    크리에이터 찾기
+                  </Link>
+                </div>
+              </div>
+              <div className={s.art} aria-hidden="true">
+                <img className={s.a1} src="/img/icon-gift.png" width={200} height={200} alt="" />
+                <img className={s.a2} src="/img/icon-truck.png" width={88} height={88} alt="" />
+                <img className={s.a3} src="/img/icon-approve.png" width={88} height={88} alt="" />
+              </div>
+            </div>
+            <MyCard nickname={nickname} gifts={gifts} following={following} faceToneByName={faceToneByName} />
           </div>
         </div>
       </section>
 
-      <section className="block" aria-labelledby="follow-title">
+      <section className="block" aria-labelledby="new-title">
         <div className="container">
           <div className="block-head">
-            <h2 id="follow-title">팔로우한 크리에이터</h2>
-            <Link className="link-arrow" href="/me/following">
-              전체 보기
+            <h2 id="new-title">새로 들어온 크리에이터</h2>
+            <Link className="link-arrow" href="/creators">
+              전체 보기 ›
             </Link>
           </div>
-          <ul className={s["follow-row"]}>
-            {following.slice(0, MAX_FOLLOWS).map((f) => (
-              <li key={f.id}>
-                <Link className={s.follow} href={`/gifts/new?creator=${f.id}`} aria-label={`${f.name}님께 선물 보내기`}>
-                  <CreatorFace tone={f.faceTone} className="face face--lg" />
-                  <span>
-                    {f.name}
-                    <small>{f.category}</small>
-                  </span>
-                </Link>
-              </li>
-            ))}
-            <li>
-              <Link className={s.follow} href="/creators" aria-label="크리에이터 더 찾기">
-                <span className={`face face--lg ${s["add-face"]}`}>
-                  <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-                    <path d="M14 5v18M5 14h18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                  </svg>
-                </span>
-                <span>
-                  더 찾기<small>&nbsp;</small>
-                </span>
-              </Link>
-            </li>
-          </ul>
+          <NewCreators creators={newest} />
+        </div>
+      </section>
+
+      <section className="block" aria-labelledby="how-title">
+        <div className="container">
+          <div className={s.panel2}>
+            <h2 id="how-title">선물은 이렇게 도착해요</h2>
+            <ol className={s.how}>
+              {STEPS.map((st) => (
+                <li key={st.icon}>
+                  <img className="asset" src={`/img/${st.icon}.png`} width={88} height={88} alt="" aria-hidden="true" />
+                  <div>
+                    <p className={s.num}>{st.label}</p>
+                    <p>{st.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <Link className="link-arrow" href="/about">
+              팬꾹 안심 약속 보기 ›
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -172,7 +169,7 @@ export function HomePage({ nickname, gifts, following, faceToneByName, notices }
           <div className="block-head">
             <h2 id="notice-title">공지사항</h2>
             <Link className="link-arrow" href="/notices">
-              전체 보기
+              전체 보기 ›
             </Link>
           </div>
           <ul className={s["notice-list"]}>

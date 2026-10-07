@@ -14,7 +14,7 @@
 .text-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: var(--r-btn-sm); color: var(--sub); font-size: 16px; font-weight: 600; text-decoration: none; }
 .text-link:hover { background: var(--surface); color: var(--ink); }
 .text-link--strong { color: var(--ink); }
-.header-actions .count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px; border-radius: var(--r-pill); background: var(--ink); color: var(--on-brand); font-size: 16px; font-weight: 700; line-height: 1; }
+.header-actions .count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--ink); color: var(--on-brand); font-size: 16px; font-weight: 700; line-height: 1; }
 
 .user-menu { position: relative; }
 .user-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--r-btn-sm); background: none; color: var(--ink); cursor: pointer; font-size: 16px; font-weight: 600; }
