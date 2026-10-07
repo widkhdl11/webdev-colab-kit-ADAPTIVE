@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { adminClient, anonClient, approveRpc, deleteTestOrders, holdRowLock, psql, signedInClient } from "./helpers";
 import {
   approve,
@@ -6,12 +7,15 @@ import {
   deleteTestUnmatched,
   FAN_PASS,
   fanSetsWaybill,
+  HOLD_DETAILS,
   inspect,
   orderStatus,
   paidGift,
   paidShare,
   parcelState,
   receiveAndLabel,
+  scanInbound,
+  sentWithAddress,
   SHARE_PASS,
   waybill,
 } from "./office-helpers";
@@ -37,7 +41,7 @@ describe("상태 전환표 (INV-W1)", () => {
     const no = waybill();
     await fanSetsWaybill(g.boxIds[0], no);
     const staff = await signedInClient("fankkuk_staff");
-    const r = await staff.rpc("office_scan_inbound", { p_waybill: no });
+    const r = await scanInbound(staff, no);
     expect(r.error).toBeNull();
     const out = r.data as { result: string; qr: string; order_no: string };
     expect(out.result).toBe("received");
@@ -85,7 +89,7 @@ describe("상태 전환표 (INV-W1)", () => {
     const no = waybill();
     await fanSetsWaybill(g.boxIds[0], no);
     const staff = await signedInClient("fankkuk_staff");
-    const qr = ((await staff.rpc("office_scan_inbound", { p_waybill: no })).data as { qr: string }).qr;
+    const qr = ((await scanInbound(staff, no)).data as { qr: string }).qr;
     const owner = await signedInClient("fankkuk_admin");
     expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("55000");
     expect((await staff.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: no })).error?.code).toBe("55000");
@@ -100,8 +104,8 @@ describe("상태 전환표 (INV-W1)", () => {
     await fanSetsWaybill(g.boxIds[1], b);
     const staff = await signedInClient("fankkuk_staff");
     const owner = await signedInClient("fankkuk_admin");
-    const qrA = ((await staff.rpc("office_scan_inbound", { p_waybill: a })).data as { qr: string }).qr;
-    const qrB = ((await owner.rpc("office_scan_inbound", { p_waybill: b })).data as { qr: string }).qr;
+    const qrA = ((await scanInbound(staff, a)).data as { qr: string }).qr;
+    const qrB = ((await scanInbound(owner, b)).data as { qr: string }).qr;
     expect((await staff.rpc("office_confirm_label", { p_qr: qrB })).error?.code).toBe("P0043");
     expect(parcelState(qrB)).toBe("received");
     expect((await staff.rpc("office_confirm_label", { p_qr: qrA })).error).toBeNull();
@@ -115,7 +119,7 @@ describe("상태 전환표 (INV-W1)", () => {
     await fanSetsWaybill(g.boxIds[1], b);
     const staff = await signedInClient("fankkuk_staff");
     const labeledQr = await receiveAndLabel(staff, a);
-    const awaitingQr = psql(`select qr_code from public.office_parcels where inbound_waybill_no = '${b}'`);
+    const awaitingQr = psql(`select qr_code from public.office_parcels where tracking_no = '${b}'`);
     for (const [qr, state] of [
       [labeledQr, "labeled"],
       [awaitingQr, "awaiting"],
@@ -154,8 +158,8 @@ describe("상태 전환표 (INV-W1)", () => {
     const no = waybill();
     await fanSetsWaybill(g.boxIds[0], no);
     const owner = await signedInClient("fankkuk_admin");
-    await owner.from("office_parcels").update({ state: "shipped" }).eq("inbound_waybill_no", no);
-    expect(psql(`select state from public.office_parcels where inbound_waybill_no = '${no}'`)).toBe("awaiting");
+    await owner.from("office_parcels").update({ state: "shipped" }).eq("tracking_no", no);
+    expect(psql(`select state from public.office_parcels where tracking_no = '${no}'`)).toBe("awaiting");
   });
 
   it("INV-W1 (실패경로): 팬·크리에이터·손님은 작업 함수를 부를 수 없다", async () => {
@@ -164,15 +168,15 @@ describe("상태 전환표 (INV-W1)", () => {
     await fanSetsWaybill(g.boxIds[0], no);
     for (const who of ["byeolbit_fan", "haru_creator"]) {
       const c = await signedInClient(who);
-      expect((await c.rpc("office_scan_inbound", { p_waybill: no })).error?.code).toBe("42501");
+      expect((await scanInbound(c, no)).error?.code).toBe("42501");
     }
-    expect((await anonClient().rpc("office_scan_inbound", { p_waybill: no })).error).not.toBeNull();
-    expect(psql(`select state from public.office_parcels where inbound_waybill_no = '${no}'`)).toBe("awaiting");
+    expect((await scanInbound(anonClient(), no)).error).not.toBeNull();
+    expect(psql(`select state from public.office_parcels where tracking_no = '${no}'`)).toBe("awaiting");
   });
 
   it("INV-W1 (실패경로): 스캔 값 꼴이 다르면 거부(송장 10~14자리 숫자, QR Q-000000)", async () => {
     const staff = await signedInClient("fankkuk_staff");
-    expect((await staff.rpc("office_scan_inbound", { p_waybill: "12-34" })).error?.code).toBe("22023");
+    expect((await scanInbound(staff, "12-34")).error?.code).toBe("22023");
     expect((await staff.rpc("office_confirm_label", { p_qr: "FC-1234" })).error?.code).toBe("22023");
   });
 });
@@ -211,11 +215,11 @@ describe("한 번만·한 상자씩 (INV-W2)", () => {
     const staff = await signedInClient("fankkuk_staff");
     const owner = await signedInClient("fankkuk_admin");
     // 다른 연결이 줄을 잠근 동안 둘을 보내 확실히 겹치게 한다 — 앞뒤로 오면 잠금 없이도 통과한다
-    const { released } = await holdRowLock(`select 1 from public.office_parcels where inbound_waybill_no = '${no}' for update`, 3);
+    const { released } = await holdRowLock(`select 1 from public.office_parcels where tracking_no = '${no}' for update`, 3);
     const sentAt = Date.now();
     const rs = await Promise.all([
-      staff.rpc("office_scan_inbound", { p_waybill: no }),
-      owner.rpc("office_scan_inbound", { p_waybill: no }),
+      scanInbound(staff, no),
+      scanInbound(owner, no),
     ]);
     await released;
     // 잠금 뒤에 줄 서 있었다는 증거 — 잠금이 풀린 뒤에 도착했다면 겹치지 않은 것이라 이 시험은 아무것도 못 본다
@@ -225,9 +229,9 @@ describe("한 번만·한 상자씩 (INV-W2)", () => {
     expect((ok[0]!.data as { result: string }).result).toBe("received");
     // 늦은 쪽은 줄을 잠그고 기다렸다가 「이미 처리됨」을 받는다 — 라벨 표 제약에 걸린 알 수 없는 오류가 아니다
     expect(rs.find((r) => r.error)?.error?.code).toBe("55000");
-    expect(psql(`select state from public.office_parcels where inbound_waybill_no = '${no}'`)).toBe("received");
+    expect(psql(`select state from public.office_parcels where tracking_no = '${no}'`)).toBe("received");
     expect(
-      psql(`select count(*) from public.office_label_pending l join public.office_parcels p on p.id = l.parcel_id where p.inbound_waybill_no = '${no}'`),
+      psql(`select count(*) from public.office_label_pending l join public.office_parcels p on p.id = l.parcel_id where p.tracking_no = '${no}'`),
     ).toBe("1");
   });
 
@@ -237,12 +241,12 @@ describe("한 번만·한 상자씩 (INV-W2)", () => {
     await fanSetsWaybill(g.boxIds[0], a);
     await fanSetsWaybill(g.boxIds[1], b);
     const staff = await signedInClient("fankkuk_staff");
-    await staff.rpc("office_scan_inbound", { p_waybill: a });
-    expect((await staff.rpc("office_scan_inbound", { p_waybill: b })).error?.code).toBe("P0042");
-    expect(psql(`select state from public.office_parcels where inbound_waybill_no = '${b}'`)).toBe("awaiting");
+    await scanInbound(staff, a);
+    expect((await scanInbound(staff, b)).error?.code).toBe("P0042");
+    expect(psql(`select state from public.office_parcels where tracking_no = '${b}'`)).toBe("awaiting");
     // 다른 작업자는 받을 수 있다
     const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("office_scan_inbound", { p_waybill: b })).error).toBeNull();
+    expect((await scanInbound(owner, b)).error).toBeNull();
   });
 
   it("INV-W2 (실패경로): 이미 입고된 원 송장을 다시 스캔하면 「이미 처리됨」", async () => {
@@ -251,7 +255,7 @@ describe("한 번만·한 상자씩 (INV-W2)", () => {
     await fanSetsWaybill(g.boxIds[0], no);
     const staff = await signedInClient("fankkuk_staff");
     await receiveAndLabel(staff, no);
-    expect((await staff.rpc("office_scan_inbound", { p_waybill: no })).error?.code).toBe("55000");
+    expect((await scanInbound(staff, no)).error?.code).toBe("55000");
   });
 });
 
@@ -395,27 +399,31 @@ describe("검수 기록 (INV-W4)", () => {
 });
 
 describe("미확인 입고 (INV-W5)", () => {
-  it("INV-W5 (S5): 안 맞는 송장을 입고 스캔하면 미확인으로 알리고, 기록은 발신인 앞 한 글자만", async () => {
+  // inbound-address-code(2026-10-07): 6자리로 이어지지 않은 상자가 보류(미확인 입고)다. 입고 스캔이 그 자리에서 기록하고,
+  // 팬은 「받는 주소 없이 보냈어요」에 송장번호·택배사·이름 앞 1글자를 넣어 찾는다(INV-C4 ②).
+  const find = (c: SupabaseClient, boxId: string, no: string) =>
+    c.rpc("find_held_parcel", { p_box_id: boxId, p_share_id: null, p_waybill: no, p_carrier: "cj", p_sender_initial: "별" });
+
+  it("INV-W5 (S5): 6자리 없는 상자를 입고 스캔하면 보류로 기록되고, 기록은 발신인 앞 한 글자만", async () => {
     const staff = await signedInClient("fankkuk_staff");
     const no = waybill();
-    const r = await staff.rpc("office_scan_inbound", { p_waybill: no });
-    expect((r.data as { result: string }).result).toBe("unmatched");
-    expect((await staff.rpc("office_record_unmatched", { p_waybill: no, p_sender_initial: "별", p_shelf: "T-A1" })).error).toBeNull();
+    const r = await scanInbound(staff, no, { carrier: "cj", initial: "별", shelf: "T-A1" });
+    expect((r.data as { result: string }).result).toBe("hold");
     expect(psql(`select sender_initial || '/' || shelf from public.office_unmatched where waybill_no = '${no}'`)).toBe("별/T-A1");
-    expect((await staff.rpc("office_record_unmatched", { p_waybill: waybill(), p_sender_initial: "별빛", p_shelf: "T-A2" })).error?.code).toBe("22023");
+    expect((await scanInbound(staff, waybill(), { carrier: "cj", initial: "별빛", shelf: "T-A2" })).error?.code).toBe("22023");
   });
 
-  it("INV-W5 (S5b): 별빛이 자기 결제 완료 상자에 그 송장번호를 넣으면 이어지고 입고 완료", async () => {
+  it("INV-W5 (S5b): 별빛이 자기 결제 완료 상자로 그 송장번호·택배사·이름 앞 1글자를 넣으면 이어지고 입고 완료", async () => {
     const g = await paidGift();
     const no = waybill();
     const staff = await signedInClient("fankkuk_staff");
-    await staff.rpc("office_record_unmatched", { p_waybill: no, p_sender_initial: "별", p_shelf: "T-B1" });
+    await scanInbound(staff, no, { ...HOLD_DETAILS, shelf: "T-B1" });
     const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("match_unmatched", { p_box_id: g.boxIds[0], p_waybill: no })).data).toBe("matched");
+    expect((await find(fan, g.boxIds[0], no)).data).toBe("matched");
     expect(psql(`select state from public.office_parcels where box_id = '${g.boxIds[0]}'`)).toBe("received");
     expect(psql(`select matched_parcel_id is not null from public.office_unmatched where waybill_no = '${no}'`)).toBe("t");
     // 직원이 선반에서 꺼내 원 송장을 다시 스캔하면 라벨이 나온다
-    const again = await staff.rpc("office_scan_inbound", { p_waybill: no });
+    const again = await scanInbound(staff, no);
     expect((again.data as { result: string }).result).toBe("reprinted");
     expect(pendingLabels("fankkuk_staff")).toBe("1");
   });
@@ -424,31 +432,31 @@ describe("미확인 입고 (INV-W5)", () => {
     const g = await paidGift();
     const no = waybill();
     const staff = await signedInClient("fankkuk_staff");
-    await staff.rpc("office_record_unmatched", { p_waybill: no, p_sender_initial: "별", p_shelf: "T-C1" });
+    await scanInbound(staff, no, { ...HOLD_DETAILS, shelf: "T-C1" });
     const dal = await signedInClient("daltokki_fan");
-    expect((await dal.rpc("match_unmatched", { p_box_id: g.boxIds[0], p_waybill: no })).data).toBe("not_found");
+    expect((await find(dal, g.boxIds[0], no)).data).toBe("not_found");
     expect(psql(`select matched_parcel_id is null from public.office_unmatched where waybill_no = '${no}'`)).toBe("t");
   });
 
-  it("INV-W5 (실패경로): 운영자가 손으로 잇는 길은 없다 — 운영자가 부르면 자기 상자가 아니라 거부", async () => {
+  it("INV-W5 (실패경로): 운영자가 손으로 잇는 길은 없다 — 운영자가 부르면 자기 상자가 아니라 거부, 표 직접 고치기도 거부", async () => {
     const g = await paidGift();
     const no = waybill();
     const owner = await signedInClient("fankkuk_admin");
-    await owner.rpc("office_record_unmatched", { p_waybill: no, p_sender_initial: "별", p_shelf: "T-D1" });
-    expect((await owner.rpc("match_unmatched", { p_box_id: g.boxIds[0], p_waybill: no })).data).toBe("not_found");
+    await scanInbound(owner, no, { ...HOLD_DETAILS, shelf: "T-D1" });
+    expect((await find(owner, g.boxIds[0], no)).data).toBe("not_found");
     await owner.from("office_unmatched").update({ matched_parcel_id: null }).eq("waybill_no", no);
-    expect(psql(`select count(*) from public.office_parcels where box_id = '${g.boxIds[0]}'`)).toBe("0");
+    expect(psql(`select state from public.office_parcels where box_id = '${g.boxIds[0]}'`)).toBe("awaiting");
   });
 
-  it("INV-W5 (실패경로): 없는 송장번호로 찾으면 오류, 이미 이어진 미확인은 다시 못 잇는다", async () => {
+  it("INV-W5 (실패경로): 없는 송장번호로 찾으면 못 찾고, 이미 이어진 보류 상자는 다시 못 잇는다", async () => {
     const g = await paidGift(2);
     const no = waybill();
     const staff = await signedInClient("fankkuk_staff");
-    await staff.rpc("office_record_unmatched", { p_waybill: no, p_sender_initial: "별", p_shelf: "T-E1" });
+    await scanInbound(staff, no, { ...HOLD_DETAILS, shelf: "T-E1" });
     const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("match_unmatched", { p_box_id: g.boxIds[0], p_waybill: waybill() })).data).toBe("not_found");
-    expect((await fan.rpc("match_unmatched", { p_box_id: g.boxIds[0], p_waybill: no })).data).toBe("matched");
-    expect((await fan.rpc("match_unmatched", { p_box_id: g.boxIds[1], p_waybill: no })).data).toBe("not_found");
+    expect((await find(fan, g.boxIds[0], waybill())).data).toBe("not_found");
+    expect((await find(fan, g.boxIds[0], no)).data).toBe("matched");
+    expect((await find(fan, g.boxIds[1], no)).data).toBe("not_found");
   });
 });
 
@@ -520,10 +528,11 @@ describe("7일 자동 처리 (INV-W6)", () => {
     const g = await paidGift();
     const no = waybill();
     const staff = await signedInClient("fankkuk_staff");
-    await staff.rpc("office_record_unmatched", { p_waybill: no, p_sender_initial: "별", p_shelf: "T-F1" });
+    await scanInbound(staff, no, { ...HOLD_DETAILS, shelf: "T-F1" });
     psql(`update public.office_unmatched set arrived_at = now() - interval '168 hours' where waybill_no = '${no}'`);
     const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("match_unmatched", { p_box_id: g.boxIds[0], p_waybill: no })).data).toBe("not_found");
+    const found = await fan.rpc("find_held_parcel", { p_box_id: g.boxIds[0], p_share_id: null, p_waybill: no, p_carrier: "cj", p_sender_initial: "별" });
+    expect(found.data).toBe("not_found");
     const r = (await staff.rpc("office_run_expiry")).data as { unmatched: number };
     expect(r.unmatched).toBeGreaterThanOrEqual(1);
     expect(psql(`select expired_at is not null from public.office_unmatched where waybill_no = '${no}'`)).toBe("t");
@@ -636,33 +645,38 @@ describe("상자 송장번호 입력", () => {
   it("INV-W5: 팬은 자기 결제 완료 상자에만 송장번호를 넣는다 — 남의 상자·결제 전·입고 뒤는 거부", async () => {
     const g = await paidGift();
     const dal = await signedInClient("daltokki_fan");
-    expect((await dal.rpc("set_box_waybill", { p_box_id: g.boxIds[0], p_waybill: waybill() })).error?.code).toBe("P0002");
+    // 남의 상자·입고 뒤는 오류가 아니라 값으로 거부한다 — 시도 기록(하루 10번)이 되돌려지지 않게(inbound-address-code 리뷰 반영)
+    expect((await dal.rpc("set_box_waybill", { p_box_id: g.boxIds[0], p_waybill: waybill() })).data).toBe("not_found");
     const fan = await signedInClient("byeolbit_fan");
     expect((await fan.rpc("set_box_waybill", { p_box_id: g.boxIds[0], p_waybill: "123" })).error?.code).toBe("22023");
     const no = waybill();
     await fanSetsWaybill(g.boxIds[0], no);
     // 입고 전에는 고칠 수 있다
     const fixed = waybill();
-    expect((await fan.rpc("set_box_waybill", { p_box_id: g.boxIds[0], p_waybill: fixed })).error).toBeNull();
+    expect((await fan.rpc("set_box_waybill", { p_box_id: g.boxIds[0], p_waybill: fixed })).data).toBe("saved");
     const staff = await signedInClient("fankkuk_staff");
+    sentWithAddress(fixed, { boxId: g.boxIds[0] });
     await receiveAndLabel(staff, fixed);
-    expect((await fan.rpc("set_box_waybill", { p_box_id: g.boxIds[0], p_waybill: waybill() })).error?.code).toBe("55000");
+    expect((await fan.rpc("set_box_waybill", { p_box_id: g.boxIds[0], p_waybill: waybill() })).data).toBe("already_received");
   });
 
-  it("INV-W5 (실패경로): 다른 상자가 이미 쓰는 송장번호는 넣을 수 없다", async () => {
+  // inbound-address-code INV-C7(2026-10-07): 다른 상자가 이미 쓰는 송장번호도 거부하지 않는다 — 「이미 등록됨」 응답이
+  // 남의 송장번호 등록 여부를 알려 주기 때문이다. 받되 두 상자를 같은 송장번호 분쟁으로 표시한다(옛 시험은 23505 거부를 봤다).
+  it("INV-C7 (실패경로): 다른 상자가 이미 쓰는 송장번호도 같은 응답으로 받고, 두 상자를 분쟁으로 표시한다", async () => {
     const g = await paidGift(2);
     const no = waybill();
     await fanSetsWaybill(g.boxIds[0], no);
     const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("set_box_waybill", { p_box_id: g.boxIds[1], p_waybill: no })).error?.code).toBe("23505");
+    expect((await fan.rpc("set_box_waybill", { p_box_id: g.boxIds[1], p_waybill: no })).data).toBe("saved");
+    expect(psql(`select count(*) from public.office_parcels where tracking_no = '${no}' and tracking_dispute`)).toBe("2");
   });
 
   it("INV-W5 (실패경로): 역조공 몫의 송장번호는 보낸 크리에이터만", async () => {
     const s = await paidShare();
     const momo = await signedInClient("momo_creator");
-    expect((await momo.rpc("set_share_waybill", { p_share_id: s.shareId, p_waybill: waybill() })).error?.code).toBe("P0002");
+    expect((await momo.rpc("set_share_waybill", { p_share_id: s.shareId, p_waybill: waybill() })).data).toBe("not_found");
     const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("set_share_waybill", { p_share_id: s.shareId, p_waybill: waybill() })).error?.code).toBe("P0002");
+    expect((await fan.rpc("set_share_waybill", { p_share_id: s.shareId, p_waybill: waybill() })).data).toBe("not_found");
   });
 });
 
@@ -671,7 +685,7 @@ describe("개인정보 없음 (INV-W7)", () => {
     const g = await paidGift();
     await fanSetsWaybill(g.boxIds[0], waybill());
     const staff = await signedInClient("fankkuk_staff");
-    await staff.rpc("office_record_unmatched", { p_waybill: waybill(), p_sender_initial: "별", p_shelf: "T-G1" });
+    await scanInbound(staff, waybill(), { ...HOLD_DETAILS, shelf: "T-G1" });
     for (const fn of ["admin_office_parcels", "admin_unmatched_parcels"]) {
       const rows = (await staff.rpc(fn)).data as Record<string, unknown>[];
       expect(rows.length).toBeGreaterThan(0);
@@ -684,12 +698,16 @@ describe("개인정보 없음 (INV-W7)", () => {
     const cols = psql(
       "select string_agg(column_name, ',' order by column_name) from information_schema.columns where table_schema = 'public' and table_name = 'office_unmatched'",
     );
-    expect(cols.split(",")).toEqual(["arrived_at", "expired_at", "id", "matched_at", "matched_parcel_id", "recorded_by", "sender_initial", "shelf", "waybill_no"]);
+    // 택배사·보류 사유·붙어 온 6자리 줄·도용 의심 표시는 inbound-address-code(INV-C5·C9)가 더한 대조용 칸이다 — 사람 칸이 아니다.
+    // returned_by 는 「반송으로 넘기기」를 누른 운영자(recorded_by 와 같은 작업자 칸)다.
+    expect(cols.split(",")).toEqual([
+      "arrived_at", "carrier", "code_id", "expired_at", "id", "matched_at", "matched_parcel_id", "reason", "recorded_by", "returned_by", "sender_initial", "shelf", "suspected_theft", "waybill_no",
+    ]);
   });
 
   it("INV-W7 (실패경로): 팬·크리에이터는 작업 목록·미확인 목록을 읽지 못한다(빈 결과)", async () => {
     const staff = await signedInClient("fankkuk_staff");
-    await staff.rpc("office_record_unmatched", { p_waybill: waybill(), p_sender_initial: "별", p_shelf: "T-H1" });
+    await scanInbound(staff, waybill(), { ...HOLD_DETAILS, shelf: "T-H1" });
     for (const who of ["byeolbit_fan", "haru_creator"]) {
       const c = await signedInClient(who);
       expect((await c.rpc("admin_unmatched_parcels")).data).toEqual([]);

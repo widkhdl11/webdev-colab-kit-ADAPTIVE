@@ -30,6 +30,7 @@ const WORK_PAGE: Partial<Record<OfficeParcel["nextStep"], string>> = {
   print_return: "/admin/work/outbound",
   confirm_return: "/admin/work/outbound",
   confirm_shipment: "/admin/work/outbound",
+  on_hold: "/admin/unmatched",
 };
 
 function NextStepCell({ parcel }: { parcel: OfficeParcel }) {

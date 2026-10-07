@@ -38,3 +38,25 @@
   .share { margin-left: 0; }
   .finder { padding: 20px; }
 }
+
+/* 이 선물의 받는 주소(inbound-address-code INV-C2) — 상자마다 한 칸. 끝 6자리는 눌러야 보인다. 모양은 선물 상세의 「보내실 주소」 칸과 같다 */
+.addr { margin-top: 16px; padding: 20px 24px; border-radius: var(--r-card); box-shadow: var(--hair); }
+.addr-title { font-size: 18px; font-weight: 700; }
+.addr dl { display: grid; gap: 12px; margin-top: 12px; }
+.addr dl div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; }
+.addr dt { color: var(--sub); }
+.addr dd { margin: 0; font-weight: 600; word-break: keep-all; overflow-wrap: anywhere; }
+.code { font-size: 20px; font-weight: 800; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+.addr-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 12px; margin-top: 16px; }
+.addr-note { margin-top: 12px; color: var(--sub); }
+
+/* 제가 보낸 게 아니에요 — 확인 한 번 */
+.notmine { margin-top: 12px; }
+.notmine-ask { margin-top: 12px; padding: 16px 20px; border-radius: var(--r-box); background: var(--surface); }
+.notmine-ask p { color: var(--ink); }
+.notmine-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+@media (max-width: 767px) {
+  .addr { padding: 20px; }
+  .addr dl div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}

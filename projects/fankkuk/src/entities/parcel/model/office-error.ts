@@ -14,7 +14,19 @@ export const OFFICE_MESSAGE = {
   noInspection: "검수 기록을 먼저 저장해 주세요.",
 } as const;
 
-export type OfficeRejectReason = "wrong_step" | "not_shippable" | "pending_label" | "wrong_code" | "no_inspection";
+// code_format · code_check: 입고 때 넣은 받는 주소 6자리가 20자 밖 글자를 품었거나 확인 문자가 틀림(inbound-address-code INV-C1·C5) —
+// 상태는 그대로이고, 화면은 6자리 칸을 비우지 않고 그 자리에서 다시 입력받는다.
+export type OfficeRejectReason = "wrong_step" | "not_shippable" | "pending_label" | "wrong_code" | "no_inspection" | "code_format" | "code_check";
+
+export const OFFICE_REJECT_REASONS: readonly OfficeRejectReason[] = [
+  "wrong_step",
+  "not_shippable",
+  "pending_label",
+  "wrong_code",
+  "no_inspection",
+  "code_format",
+  "code_check",
+];
 
 function reject(status: number, message: string, reason: OfficeRejectReason): JsonReply {
   return { status, body: { message, reason } };

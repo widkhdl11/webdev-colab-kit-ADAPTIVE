@@ -23,6 +23,8 @@ export const NEXT_STEPS = [
   "wait_accept",
   "wait_expiry",
   "held",
+  // 보류(inbound-address-code INV-C5·C8): 같은 6자리·같은 송장번호 분쟁이거나 주인이 「제가 보낸 게 아니에요」를 눌러 출고를 멈춘 상자
+  "on_hold",
   "print_return",
   "confirm_return",
   "confirm_shipment",

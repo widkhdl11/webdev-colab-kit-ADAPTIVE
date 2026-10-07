@@ -5,7 +5,9 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 // 품목·상대방·주소·연락처·운송장 번호가 섞일 자리를 만들지 않는다. 누가 무엇을 보냈는지는 링크를 열고 로그인한 뒤에만 보인다.
 // 링크는 설정의 사이트 주소 + 고정 경로(+주문번호)뿐이다. 요청 헤더로 만들지 않고, 링크 자체로는 아무것도 처리하지 않는다(INV-N9).
 
-export const NOTIFICATION_KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transit", "delivered", "hold"] as const;
+// box_arrived: 상자 하나가 입고됐다고 그 주문의 주인(보낸 팬 · 역조공이면 보낸 크리에이터)에게 한 번(inbound-address-code INV-C8).
+//   본문에 받는 주소 6자리·사무실 주소를 넣지 않는다(INV-C2) — 이 틀에는 그 칸이 아예 없다.
+export const NOTIFICATION_KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transit", "delivered", "hold", "box_arrived"] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export type NotificationBodyInput = {
@@ -41,6 +43,9 @@ const FAN_STEP = {
   inspected: ["[팬꾹] 보낸 선물의 검수가 끝났어요", "보내신 선물의 검수가 끝났어요."],
   shipped: ["[팬꾹] 보낸 선물이 출고됐어요", "보내신 선물이 크리에이터에게 출발했어요."],
 } as const;
+
+/** 역조공 주문번호(RG-…)인가 — 역조공 상자 도착 알림은 보낸 크리에이터의 「보낸 역조공」 화면으로 잇는다 */
+const REVGIFT_ORDER_NO = /^RG-/;
 
 type Draft = { subject: string; lines: string[]; buttonLabel: string; path: string; must: boolean };
 
@@ -82,6 +87,15 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
       const [subject, first] = FAN_STEP[kind];
       return { subject, lines: [greet, first, order], buttonLabel: "선물 보기", path: `/gifts/${orderNo}`, must: false };
     }
+    case "box_arrived":
+      // 상자 하나가 사무실에 도착해 입고됐다. 「제가 보낸 게 아니에요」는 링크를 열고 로그인한 뒤에만 누를 수 있다.
+      return {
+        subject: "[팬꾹] 보낸 상자가 팬꾹 사무실에 도착했어요",
+        lines: [greet, "보내신 상자 하나가 팬꾹 사무실에 도착했어요.", order, "보낸 적 없는 상자라면 링크를 열어 알려 주세요."],
+        buttonLabel: "상자 확인하기",
+        path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : `/gifts/${orderNo}`,
+        must: false,
+      };
     case "hold":
       // 무엇이 나왔는지·보낸 팬은 쓰지 않는다(INV-N13)
       return { subject: "[팬꾹] 확인할 선물이 있어요", lines: [greet, "확인이 필요한 선물이 있어요.", order], buttonLabel: "확인하기", path: "/creator", must: false };

@@ -2,17 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
+import { CARRIER_LABEL, CARRIERS, isCarrier, type Carrier } from "@/entities/parcel/model/carrier";
 import { parseWaybillInput } from "@/entities/parcel/model/waybill-no";
-import { postMatch } from "../api/post-waybill-client";
+import { charCount } from "@/shared/lib/validation/char-count";
+import { postFind } from "../api/post-waybill-client";
+import type { FinderBox } from "../model/box-targets";
 import s from "./box-waybill.module.css";
 
-// 내 물건 찾기 (office-workflow INV-W5, 시안 gift-boxes.html). 사무실에 도착했는데 주문과 이어지지 않은 상자를
-// 팬이 직접 잇는다 — 아직 입고되지 않은 내 상자 하나를 고르고, 그 상자를 보낸 원 송장번호를 넣는다.
-// 이어도 되는지는 DB 매칭 함수가 본인 토큰으로 판정한다. 못 찾으면 이유(남의 상자·아직 안 옴·기한 지남)를 나누지 않는다.
-// 하루 실패 횟수 한도를 넘으면 서버가 429 와 문구를 준다 — 오류 줄에 그대로 보인다.
+// 받는 주소 없이 보냈어요 (inbound-address-code INV-C4 ②·C10, 시안 gift-boxes.html 의 「내 물건 찾기」 자리).
+// 받는 주소(6자리) 없이 보낸 상자는 사무실에서 보류로 들어간다. 주인이 아직 입고되지 않은 내 상자 하나를 고르고,
+// 그 상자를 보낸 송장번호·택배사·원 송장의 보낸 사람 이름 앞 한 글자를 넣어 셋 다 맞으면 이어진다.
+// 이어도 되는지는 DB 찾기 함수가 본인 토큰으로 판정한다. 못 찾으면 이유(남의 상자·아직 안 옴·기한 지남)를 나누지 않는다.
+// 보류 상자 목록은 어디에도 보여 주지 않는다(INV-C10). 하루 5번을 넘으면 서버가 429 와 문구를 준다 — 오류 줄에 그대로 보인다.
 
-/** label = 상자 번호(FC-7K3M9-2), name = 고르는 칸에 보이는 이름(번호 · 구간) */
-export type FinderBox = { boxId: string; label: string; name: string };
+export type { FinderBox } from "../model/box-targets";
 
 type Result = { kind: "ok"; label: string } | { kind: "no"; message: string };
 
@@ -20,6 +23,7 @@ export function FindMyBox({ boxes }: { boxes: readonly FinderBox[] }) {
   const id = useId();
   const router = useRouter();
   const [picked, setPicked] = useState<string | null>(null);
+  const [carrier, setCarrier] = useState<Carrier | "">("");
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,27 +36,36 @@ export function FindMyBox({ boxes }: { boxes: readonly FinderBox[] }) {
     resultRef.current?.focus();
   }, [result]);
   // 찾은 상자는 다시 읽으면 목록에서 빠진다 — 고른 상자가 없어졌으면 첫 상자로
-  const current = boxes.find((b) => b.boxId === picked) ?? boxes[0] ?? null;
+  const current = boxes.find((b) => b.target.id === picked) ?? boxes[0] ?? null;
 
   async function submit(form: HTMLFormElement) {
     if (busy || !current) return;
-    const value = new FormData(form).get("waybill");
-    const parsed = parseWaybillInput(typeof value === "string" ? value : "");
+    const data = new FormData(form);
+    const waybill = data.get("waybill");
+    const initial = data.get("initial");
+    const parsed = parseWaybillInput(typeof waybill === "string" ? waybill : "");
     if (!parsed.ok) {
       setError(parsed.message);
+      setResult(null);
+      return;
+    }
+    const initialText = typeof initial === "string" ? initial.trim() : "";
+    if (!carrier || charCount(initialText) !== 1) {
+      setError("택배사를 고르고, 보낸 사람 이름은 앞 한 글자만 적어 주세요.");
       setResult(null);
       return;
     }
     setBusy(true);
     setError(null);
     setResult(null);
-    const outcome = await postMatch(current.boxId, parsed.value);
+    const outcome = await postFind(current.target, parsed.value, carrier, initialText);
     setBusy(false);
     if (outcome.kind === "ok") {
       moved.current = true;
       if (outcome.body.matched === true) {
         setResult({ kind: "ok", label: current.label });
         form.reset();
+        setCarrier("");
         router.refresh();
         return;
       }
@@ -67,10 +80,11 @@ export function FindMyBox({ boxes }: { boxes: readonly FinderBox[] }) {
 
   return (
     <div className={s.finder}>
-      <h3 className={s["finder-q"]}>사무실에 도착했는데 주문을 못 찾은 상자가 있어요</h3>
+      {/* 바로 위에 「받는 주소 없이 보냈어요」 제목이 있다 — 같은 뜻의 제목을 한 단계 더 두지 않고 안내 문단으로 둔다 */}
+      <p className={s["finder-q"]}>받는 주소를 쓰지 않고 상자를 보냈다면</p>
       {current ? (
         <form
-          aria-label="내 물건 찾기"
+          aria-label="받는 주소 없이 보낸 상자 찾기"
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
@@ -82,12 +96,12 @@ export function FindMyBox({ boxes }: { boxes: readonly FinderBox[] }) {
             <select
               id={`${id}-box`}
               className="input"
-              value={current.boxId}
+              value={current.target.id}
               onChange={(e) => setPicked(e.currentTarget.value)}
               aria-describedby={`${id}-box-hint`}
             >
               {boxes.map((b) => (
-                <option key={b.boxId} value={b.boxId}>
+                <option key={b.target.id} value={b.target.id}>
                   {b.name}
                 </option>
               ))}
@@ -109,15 +123,33 @@ export function FindMyBox({ boxes }: { boxes: readonly FinderBox[] }) {
               aria-invalid={error ? true : undefined}
               aria-describedby={error ? `${id}-error` : undefined}
             />
-            {error ? (
-              <p className={s.error} id={`${id}-error`} role="alert">
-                <span className={s["error-mark"]} aria-hidden="true">
-                  !
-                </span>
-                {error}
-              </p>
-            ) : null}
           </div>
+          <div className="field">
+            <label htmlFor={`${id}-carrier`}>택배사</label>
+            <select id={`${id}-carrier`} className="input" value={carrier} onChange={(e) => setCarrier(isCarrier(e.currentTarget.value) ? e.currentTarget.value : "")}>
+              <option value="">고르세요</option>
+              {CARRIERS.map((c) => (
+                <option key={c} value={c}>
+                  {CARRIER_LABEL[c]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor={`${id}-initial`}>송장에 적은 보낸 사람 이름의 첫 글자</label>
+            <input id={`${id}-initial`} name="initial" className="input" type="text" maxLength={2} autoComplete="off" placeholder="예: 별" aria-describedby={`${id}-initial-hint`} />
+            <p className="hint" id={`${id}-initial-hint`}>
+              택배 송장의 보내는 사람 칸에 적은 이름의 첫 글자 하나만 넣어 주세요.
+            </p>
+          </div>
+          {error ? (
+            <p className={s.error} id={`${id}-error`} role="alert">
+              <span className={s["error-mark"]} aria-hidden="true">
+                !
+              </span>
+              {error}
+            </p>
+          ) : null}
           <button type="submit" className="btn" aria-disabled={busy}>
             {busy ? "찾는 중…" : "찾기"}
           </button>

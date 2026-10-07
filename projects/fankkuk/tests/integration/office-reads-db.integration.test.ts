@@ -11,6 +11,7 @@ import {
   paidShare,
   parcelState,
   receiveAndLabel,
+  scanInbound,
   SHARE_PASS,
   waybill,
 } from "./office-helpers";
@@ -38,7 +39,8 @@ describe("작업 함수는 운영자만 (INV-W1)", () => {
     const c = await signedInClient(who);
     const calls: [string, Record<string, unknown>][] = [
       ["office_confirm_label", { p_qr: qr }],
-      ["office_record_unmatched", { p_waybill: waybill(), p_sender_initial: "별", p_shelf: "T-X1" }],
+      // 옛 미확인 기록 함수 자리 — 입고 스캔이 보류 기록을 겸한다(inbound-address-code INV-C5)
+      ["office_scan_inbound", { p_barcode: waybill(), p_code: null, p_carrier: "cj", p_sender_initial: "별", p_shelf: "T-X1" }],
       ["office_record_inspection", { p_qr: qr, p_result: FAN_PASS }],
       ["office_scan_inspect", { p_qr: qr }],
       ["office_confirm_shipment", { p_qr: qr, p_waybill: waybill() }],
@@ -61,8 +63,8 @@ describe("한 번만 (INV-W2)", () => {
     await fanSetsWaybill(g.boxIds[0], no);
     const staff = await signedInClient("fankkuk_staff");
     const owner = await signedInClient("fankkuk_admin");
-    await staff.rpc("office_scan_inbound", { p_waybill: no });
-    expect((await owner.rpc("office_scan_inbound", { p_waybill: no })).error?.code).toBe("55000");
+    await scanInbound(staff, no);
+    expect((await scanInbound(owner, no)).error?.code).toBe("55000");
     expect(psql("select count(*) from public.office_label_pending")).toBe("1");
   });
 });
@@ -109,7 +111,7 @@ describe("작업 화면 읽기 (INV-W1·W7)", () => {
     const no = waybill();
     await fanSetsWaybill(g.boxIds[0], no);
     const staff = await signedInClient("fankkuk_staff");
-    const qr = ((await staff.rpc("office_scan_inbound", { p_waybill: no })).data as { qr: string }).qr;
+    const qr = ((await scanInbound(staff, no)).data as { qr: string }).qr;
     expect(((await staff.rpc("office_my_pending_label")).data as { qr: string }[]).map((r) => r.qr)).toEqual([qr]);
     const owner = await signedInClient("fankkuk_admin");
     expect((await owner.rpc("office_my_pending_label")).data).toEqual([]);
@@ -190,9 +192,10 @@ describe("내 상자 읽기 (INV-W5·W7)", () => {
     await fanSetsWaybill(g.boxIds[0], no);
     const fan = await signedInClient("byeolbit_fan");
     const rows = (await fan.rpc("my_gift_boxes", { p_order_no: g.orderNo })).data as Record<string, unknown>[];
+    // 결제 때 상자마다 작업 줄('입고 전')이 생긴다(inbound-address-code INV-C1) — 송장번호를 안 넣은 상자도 awaiting
     expect(rows.map((r) => [r.label, r.waybill_no, r.state])).toEqual([
       [`${g.orderNo}-1`, no, "awaiting"],
-      [`${g.orderNo}-2`, null, "no_waybill"],
+      [`${g.orderNo}-2`, null, "awaiting"],
     ]);
     for (const k of Object.keys(rows[0])) expect(k).not.toMatch(/outbound|return_waybill/);
   });

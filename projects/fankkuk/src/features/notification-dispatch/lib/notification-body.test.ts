@@ -72,7 +72,24 @@ describe("알림 링크 (INV-N9)", () => {
     }
     expect(paths.get("approval_request")!.pathname).toBe("/creator/requests");
     expect(paths.get("hold")!.pathname).toBe("/creator");
-    for (const k of ["arrived", "inspected", "shipped"] as const) expect(paths.get(k)!.pathname).toBe("/gifts/FC-7K3M9");
+    for (const k of ["arrived", "inspected", "shipped", "box_arrived"] as const) expect(paths.get(k)!.pathname).toBe("/gifts/FC-7K3M9");
+  });
+
+  it("INV-C8: 역조공 상자 도착 알림은 보낸 크리에이터의 「보낸 역조공」 화면으로 잇는다", () => {
+    const b = buildNotificationBody({ ...inputFor("box_arrived"), orderNo: "RG-7K3M9" });
+    expect(new URL(b.link).pathname).toBe("/creator/revgifts");
+  });
+
+  it("INV-C2 (S2b): 상자 도착 알림 본문에 받는 주소 6자리·사무실 주소가 없다 — 틀에 그 칸이 없다", () => {
+    const b = buildNotificationBody({
+      ...inputFor("box_arrived"),
+      // @ts-expect-error 본문 틀에는 받는 주소 칸이 없다
+      addressCode: "K7M3XA",
+    });
+    const all = [b.subject, b.text, b.buttonLabel, b.link].join(" ");
+    expect(all).not.toContain("K7M3XA");
+    expect(all).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
+    expect(all).not.toMatch(/강남구|검수센터/);
   });
 
   it("INV-N9 (실패경로): 주문번호 꼴이 아닌 값은 경로에 넣지 않는다 — 경로를 바꾸는 글자로 다른 화면을 가리키게 할 수 없다", () => {

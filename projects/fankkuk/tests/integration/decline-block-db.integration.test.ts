@@ -1,8 +1,20 @@
 import { spawn } from "node:child_process";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { SEED, adminClient, approveRpc, approveSql, deleteTestBlocks, deleteTestOrders, holdRowLock, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
-import { approve, FAN_PASS, inspect, orderStatus, parcelState, receiveAndLabel, waybill, type Unit } from "./office-helpers";
+import { SEED, adminClient, approveRpc, approveSql, clearWaybillAttempts, deleteTestBlocks, deleteTestOrders, holdRowLock, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
+import {
+  approve,
+  deleteTestUnmatched,
+  FAN_PASS,
+  inspect,
+  orderStatus,
+  parcelState,
+  receiveAndLabel,
+  scanInbound,
+  sentWithAddress,
+  waybill,
+  type Unit,
+} from "./office-helpers";
 
 // 거절·팬 차단 스펙(docs/specs/decline-block.md) 중 DB 가 지키는 것.
 // 스펙의 이름 → 시드 계정: 하루 = haru_creator(받는 크리에이터) · 달빛·모모 = momo_creator(다른 크리에이터) · 별빛 = haneul_fan(보낸 사람).
@@ -39,6 +51,7 @@ beforeAll(async () => {
 
 afterEach(() => {
   deleteTestBlocks();
+  deleteTestUnmatched();
 });
 
 afterAll(() => {
@@ -72,8 +85,18 @@ async function giftFrom(boxCount = 1, who: { senderId?: string; creatorId?: stri
 
 /** 보낸 사람(하늘)이 상자 송장번호를 넣는다. */
 async function setWaybill(boxId: string, no: string): Promise<void> {
+  clearWaybillAttempts(); // 준비 단계의 등록이 하루 10번 한도에 걸리지 않게
   const r = await fan.rpc("set_box_waybill", { p_box_id: boxId, p_waybill: no });
-  if (r.error) throw new Error(`set_box_waybill 실패: ${r.error.code} ${r.error.message}`);
+  if (r.error || r.data !== "saved") throw new Error(`set_box_waybill 실패: ${r.error?.code ?? String(r.data)} ${r.error?.message ?? ""}`);
+  sentWithAddress(no, { boxId }); // 그 송장으로 온 상자는 이 상자의 받는 주소(6자리)를 달고 온다
+}
+
+/** 주문의 상자별 받는 주소 6자리 상태(상자 순서). 발급되지 않았으면 빈 목록 */
+function codeStates(orderId: string): string[] {
+  const out = psql(
+    `select string_agg(c.state, ',' order by b.seq) from public.inbound_codes c join public.boxes b on b.id = c.box_id where b.order_id = '${orderId}'`,
+  );
+  return out === "" ? [] : out.split(",");
 }
 
 function requestRow(requestId: string): string {
@@ -203,7 +226,10 @@ describe("INV-D2: 거절할 수 있는 주문의 조건", () => {
 });
 
 describe("INV-D3: 거절은 요청·주문·상자를 한 처리에서 바꾸고, 그 뒤는 기존 약속이 따른다", () => {
-  it("INV-D3 S3: 검수 완료 상자는 반송 대기로, 도착 전 상자는 도착 뒤 검수를 거쳐 반송 대기로", async () => {
+  // inbound-address-code INV-C3·C5·C6(2026-10-07 승인)이 뒤 절반을 바꿨다: 거절과 같은 처리에서 그 주문의 6자리가 무효가 되고,
+  // 도착 전이던 상자는 도착하면 주문에 입고되지 않고 보류(무효 6자리) → 7일 뒤 착불 반송이다.
+  // 옛 시험은 「도착 뒤 검수를 거쳐 반송 대기」를 봤다 — decline-block INV-D3 S3 문장은 아직 옛 흐름이다(스펙 갱신 필요).
+  it("INV-D3 S3: 검수 완료 상자는 반송 대기로, 도착 전 상자는 도착해도 주문에 입고되지 않고 보류(inbound-address-code INV-C3)", async () => {
     const g = await giftFrom(2);
     const qr1 = await inspectedBox(g, 0);
     const no2 = waybill();
@@ -214,8 +240,9 @@ describe("INV-D3: 거절은 요청·주문·상자를 한 처리에서 바꾸고
     expect(orderStatus(g.orderId)).toBe("rejected");
     expect(parcelState(qr1)).toBe("return_waiting");
 
-    const qr2 = await receiveAndLabel(staff, no2);
-    expect(await inspect(staff, qr2, FAN_PASS)).toBe("return_waiting");
+    const late = await scanInbound(staff, no2, { carrier: "cj", initial: "하", shelf: "T-D3" });
+    expect(late.data).toMatchObject({ result: "hold", reason: "void_code" });
+    expect(psql(`select state from public.office_parcels where box_id = '${g.boxIds[1]}'`)).toBe("awaiting");
     expect(orderStatus(g.orderId)).toBe("rejected");
   });
 
@@ -355,7 +382,10 @@ describe("INV-D5: 팬에게는 거절·7일 반려·차단에 따른 거절이 �
       ].sort(),
     );
     const boxes = await fan.rpc("my_gift_boxes", { p_order_no: orderNos[2] });
-    expect(Object.keys(boxes.data[0]).sort()).toEqual(["box_id", "label", "state", "tier", "waybill_no"]);
+    // 받는 주소 6자리 칸(inbound-address-code INV-C2)은 거절된 주문에서는 비어 있다(INV-C3) — 거절 이유·차단 칸은 여전히 없다.
+    // reported_not_mine 은 그 팬 자신이 「제가 보낸 게 아니에요」를 눌렀는지다(INV-C8).
+    expect(Object.keys(boxes.data[0]).sort()).toEqual(["address_code", "box_id", "label", "reported_not_mine", "state", "tier", "waybill_no"]);
+    expect(boxes.data[0].address_code).toBeNull();
   });
 });
 
@@ -632,9 +662,19 @@ describe("INV-D8: 차단하면 그 팬의 아직 승인하지 않은 진행 중 
   it("INV-D8 S8b: 차단 때 결제 대기였던 주문은 결제가 끝나도 거절 그대로, 대기 요청 0건, 환불은 전액", async () => {
     const trigger = await giftFrom();
     const unpaid = await registerTestOrder(1, { senderId: SENDER });
-    expect(await decline(haru, trigger.requestId, true)).toBe("declined");
+    // 함께 거절될 결제 완료 주문(상자 둘) — 받는 주소 6자리가 발급돼 유효한 상태
+    const alsoPaid = await giftFrom(2);
+    expect(codeStates(alsoPaid.orderId)).toEqual(["valid", "valid"]);
+    const reply = await declineFull(haru, trigger.requestId, true);
+    expect(reply.result).toBe("declined");
+    expect([...reply.also_declined].sort()).toEqual([alsoPaid.orderNo, unpaid.orderNo].sort());
+    // inbound-address-code INV-C3: 차단으로 함께 거절된 주문의 6자리도 같은 처리에서 전부 무효
+    expect(codeStates(alsoPaid.orderId)).toEqual(["void", "void"]);
+    expect(codeStates(trigger.orderId)).toEqual(["void"]);
     await payTestOrder(unpaid);
     expect(orderStatus(unpaid.orderId)).toBe("rejected");
+    // 거절된 뒤 결제가 끝난 주문에는 6자리를 발급하지 않는다
+    expect(codeStates(unpaid.orderId)).toEqual([]);
     expect(psql(`select count(*) from public.approval_requests where order_id = '${unpaid.orderId}' and status = 'waiting'`)).toBe("0");
     const [amount, due] = psql(
       `select p.amount_krw || '|' || public.refund_due_of_payment(p.id) from public.payments p where p.order_id = '${unpaid.orderId}' and p.kind = 'initial'`,

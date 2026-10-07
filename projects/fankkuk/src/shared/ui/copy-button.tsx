@@ -6,12 +6,15 @@ import { useState } from "react";
 export function CopyButton({
   text,
   label,
+  ariaLabel,
   className,
   copiedMessage,
   failedMessage,
 }: {
   text: string;
   label: string;
+  /** 같은 버튼이 여러 개일 때 낭독기가 구분하도록 붙이는 이름(보이는 글자를 포함해야 한다) */
+  ariaLabel?: string;
   className?: string;
   copiedMessage: string;
   failedMessage: string;
@@ -22,6 +25,7 @@ export function CopyButton({
       <button
         type="button"
         className={className}
+        aria-label={ariaLabel}
         onClick={() => {
           const failed = failedMessage;
           // http 주소·오래된 브라우저에는 navigator.clipboard 자체가 없다 — 그때도 같은 안내를 띄운다

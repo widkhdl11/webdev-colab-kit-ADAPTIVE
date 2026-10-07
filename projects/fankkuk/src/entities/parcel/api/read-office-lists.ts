@@ -2,10 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { officeParcelsFromRows, type OfficeParcel } from "../model/office-parcel";
 import {
   expiryDueFromRows,
+  findFlagsFromRows,
+  inboundMetricsFromRows,
   pendingLabelFromRows,
   revgiftSharesFromRows,
   unmatchedFromRows,
   type ExpiryDue,
+  type FindFlag,
+  type InboundMetrics,
   type PendingLabel,
   type RevgiftShare,
   type UnmatchedParcel,
@@ -28,8 +32,19 @@ export function readOfficeParcels(client: Rpc): Promise<OfficeParcel[]> {
   return readRows(client, "admin_office_parcels", "들어온 상자 목록", officeParcelsFromRows);
 }
 
+/** 운영자 확인 목록 — 보류 상자(미확인 입고 + 출고를 멈춘 상자). inbound-address-code INV-C9: 주문번호·닉네임·6자리는 오지 않는다. */
 export function readUnmatchedParcels(client: Rpc): Promise<UnmatchedParcel[]> {
-  return readRows(client, "admin_unmatched_parcels", "미확인 입고 목록", unmatchedFromRows);
+  return readRows(client, "admin_unmatched_parcels", "보류 상자 목록", unmatchedFromRows);
+}
+
+/** INV-C10: 찾기 실패가 반복돼 확인 대상으로 표시된 계정 */
+export function readFindFlags(client: Rpc): Promise<FindFlag[]> {
+  return readRows(client, "admin_find_flags", "찾기 실패 반복 계정", findFlagsFromRows);
+}
+
+/** 측정 숫자(최근 30일) */
+export function readInboundMetrics(client: Rpc): Promise<InboundMetrics> {
+  return readRows(client, "admin_inbound_metrics", "입고 측정 숫자", inboundMetricsFromRows);
 }
 
 export function readExpiryDue(client: Rpc): Promise<ExpiryDue[]> {

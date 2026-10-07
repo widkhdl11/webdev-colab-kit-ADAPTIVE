@@ -124,6 +124,15 @@ export function deleteTestOrders(): void {
       "commit;",
     ].join(" "),
   );
+  clearWaybillAttempts();
+}
+
+/**
+ * 송장번호 등록 시도 기록(계정마다 24시간 10번 — inbound-address-code INV-C10 과 같은 방식)을 지운다.
+ * 남겨 두면 같은 시드 계정으로 송장번호를 넣는 다음 시험이 한도에 걸린다. 로컬 DB 에만 붙는다.
+ */
+export function clearWaybillAttempts(): void {
+  psql("delete from public.office_waybill_attempts");
 }
 
 /** 상자(또는 몫) id 목록에 딸린 사무실 작업 줄을 지우는 문장들. replica 역할 안에서 부른다 — 외래 키 연쇄 삭제가 꺼지므로 자식부터 지운다. */
@@ -135,6 +144,10 @@ export function officeRowsDelete(unitIds: string, column: "box_id" | "share_id")
     `delete from public.office_hold_alerts where parcel_id in (${parcels});`,
     `delete from public.office_label_pending where parcel_id in (${parcels});`,
     `delete from public.office_unmatched where matched_parcel_id in (${parcels});`,
+    // 상자별 받는 주소(inbound-address-code): 「제가 보낸 게 아니에요」 기록(추가만)·상자 도착 알림 줄(역조공은 주문 줄이 없다)
+    `delete from public.office_not_mine_reports where parcel_id in (${parcels});`,
+    `delete from public.notification_outbox where parcel_id in (${parcels});`,
+    `update public.inbound_codes set first_parcel_id = null where first_parcel_id in (${parcels});`,
     `delete from public.office_parcels where ${column} in (${unitIds});`,
   ];
 }

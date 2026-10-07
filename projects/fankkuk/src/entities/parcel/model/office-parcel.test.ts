@@ -49,6 +49,11 @@ describe("들어온 상자 읽기 (office-workflow INV-W1·W7)", () => {
     expect(parsed?.[0]).toMatchObject({ qr: null, state: "no_waybill", receivedAt: null, nextStep: "wait_waybill" });
   });
 
+  it("INV-C5·C8: 출고를 멈춘 보류 상자는 다음 단계 on_hold — 하나 때문에 목록 읽기가 깨지지 않는다", () => {
+    const parsed = officeParcelsFromRows([ROW, { ...ROW, state: "inspected", next_step: "on_hold" }]);
+    expect(parsed?.[1]).toMatchObject({ state: "inspected", nextStep: "on_hold" });
+  });
+
   it("INV-W1 (실패경로): 모르는 상태·다음 단계·종류가 하나라도 있으면 null — 화면이 짐작하지 않는다", () => {
     expect(officeParcelsFromRows(null)).toBeNull();
     expect(officeParcelsFromRows([{ ...ROW, state: "teleported" }])).toBeNull();

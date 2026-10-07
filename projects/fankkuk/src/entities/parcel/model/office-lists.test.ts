@@ -1,15 +1,47 @@
 import { describe, expect, it } from "vitest";
-import { daysLeft, dueUrgency, isUnmatchedUrgent, expiryDueFromRows, pendingLabelFromRows, remainingText, revgiftSharesFromRows, unmatchedFromRows } from "./office-lists";
+import {
+  canReturnHeld,
+  daysLeft,
+  dueUrgency,
+  expiryDueFromRows,
+  findFlagsFromRows,
+  inboundMetricsFromRows,
+  isUnmatchedUrgent,
+  pendingLabelFromRows,
+  ratePercent,
+  remainingText,
+  revgiftSharesFromRows,
+  unmatchedFromRows,
+} from "./office-lists";
 
 const UNMATCHED = {
   id: "3f1c2b7a-9d4e-4c1a-8b2f-0a1b2c3d4e5f",
+  source: "unmatched",
+  qr: null,
   waybill_no: "123456789012",
+  carrier: "cj",
   arrived_at: "2026-10-03T01:00:00+00:00",
   sender_initial: "별",
   shelf: "A-03",
+  reason: "no_code",
+  suspected_theft: false,
   state: "waiting",
   deadline_at: "2026-10-10T01:00:00+00:00",
-  matched_order_no: null,
+};
+
+const HELD_PARCEL = {
+  id: "4f1c2b7a-9d4e-4c1a-8b2f-0a1b2c3d4e5f",
+  source: "parcel",
+  qr: "Q-000123",
+  waybill_no: "123456789013",
+  carrier: null,
+  arrived_at: "2026-10-03T02:00:00+00:00",
+  sender_initial: null,
+  shelf: null,
+  reason: "not_mine",
+  suspected_theft: true,
+  state: "on_hold",
+  deadline_at: null,
 };
 
 const DUE = {
@@ -33,26 +65,59 @@ const SHARE = {
   refund_status: null,
 };
 
-describe("미확인 입고 읽기 (office-workflow INV-W5·W6·W7)", () => {
-  it("INV-W5·W7: 보낸 사람은 앞 한 글자만 옮긴다 — 다른 칸은 버린다", () => {
-    expect(unmatchedFromRows([{ ...UNMATCHED, sender_name: "별빛나" }])).toEqual([
+describe("보류 상자 읽기 (office-workflow INV-W5·W6·W7, inbound-address-code INV-C9)", () => {
+  it("INV-C9·W7: 보낸 사람은 앞 한 글자만 옮긴다 — 주문번호·닉네임 같은 다른 칸은 버린다", () => {
+    expect(unmatchedFromRows([{ ...UNMATCHED, sender_name: "별빛나", order_no: "FC-7K3M9" }])).toEqual([
       {
         id: UNMATCHED.id,
+        source: "unmatched",
+        qr: null,
         waybillNo: "123456789012",
+        carrier: "cj",
         arrivedAt: UNMATCHED.arrived_at,
         senderInitial: "별",
         shelf: "A-03",
+        reason: "no_code",
+        suspectedTheft: false,
         state: "waiting",
         deadlineAt: UNMATCHED.deadline_at,
-        matchedOrderNo: null,
       },
     ]);
   });
 
-  it("INV-W7 (실패경로): 보낸 사람이 한 글자가 아니거나 모르는 상태면 null", () => {
+  it("INV-C8·C9: 출고를 멈춘 묶인 상자(「제가 보낸 게 아니에요」 등)도 같은 목록 — 보낸 사람·선반·기한 없이", () => {
+    expect(unmatchedFromRows([HELD_PARCEL])?.[0]).toMatchObject({ source: "parcel", qr: "Q-000123", reason: "not_mine", suspectedTheft: true, state: "on_hold", senderInitial: null, deadlineAt: null });
+  });
+
+  it("INV-W7 (실패경로): 보낸 사람이 한 글자가 아니거나 모르는 상태·사유·택배사면 null", () => {
     expect(unmatchedFromRows([{ ...UNMATCHED, sender_initial: "별빛" }])).toBeNull();
     expect(unmatchedFromRows([{ ...UNMATCHED, state: "lost" }])).toBeNull();
+    expect(unmatchedFromRows([{ ...UNMATCHED, reason: "guess" }])).toBeNull();
+    expect(unmatchedFromRows([{ ...UNMATCHED, carrier: "fedex" }])).toBeNull();
     expect(unmatchedFromRows("x")).toBeNull();
+  });
+
+  it("INV-C9: 「반송으로 넘기기」는 아직 이어지지 않은 미확인 입고에만 — 묶인 상자·이어진 줄·반송 대상은 아니다", () => {
+    expect(canReturnHeld({ source: "unmatched", state: "waiting" })).toBe(true);
+    expect(canReturnHeld({ source: "unmatched", state: "matched" })).toBe(false);
+    expect(canReturnHeld({ source: "unmatched", state: "expired" })).toBe(false);
+    expect(canReturnHeld({ source: "parcel", state: "on_hold" })).toBe(false);
+  });
+
+  it("INV-C10: 찾기 실패가 반복된 계정은 닉네임·24시간 실패 수만", () => {
+    expect(findFlagsFromRows([{ nickname: "달토끼", failures_24h: 3, last_flagged_at: "2026-10-03T01:00:00+00:00", profile_id: "x" }])).toEqual([
+      { nickname: "달토끼", failures24h: 3, lastFlaggedAt: "2026-10-03T01:00:00+00:00" },
+    ]);
+    expect(findFlagsFromRows([{ nickname: "달토끼", failures_24h: -1, last_flagged_at: "x" }])).toBeNull();
+  });
+
+  it("측정: 한 줄짜리 답을 숫자로 — 0줄(운영자 아님)이면 null, 비율은 분모 0이면 null", () => {
+    const row = { since: "2026-09-08T00:00:00+00:00", arrived_total: 40, arrived_without_code: 6, code_inputs: 37, code_check_rejects: 3, code_format_rejects: 1, not_mine_reports: 2 };
+    expect(inboundMetricsFromRows([row])).toEqual({ since: row.since, arrivedTotal: 40, arrivedWithoutCode: 6, codeInputs: 37, codeCheckRejects: 3, codeFormatRejects: 1, notMineReports: 2 });
+    expect(inboundMetricsFromRows([])).toBeNull();
+    expect(ratePercent(6, 40)).toBe(15);
+    expect(ratePercent(3, 37)).toBe(8.1);
+    expect(ratePercent(0, 0)).toBeNull();
   });
 
   it("INV-W6: 남은 날은 168시간 기한까지 올림으로 센다 — 지났으면 0", () => {

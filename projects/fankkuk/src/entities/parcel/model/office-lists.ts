@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { charCount } from "@/shared/lib/validation/char-count";
+import { CARRIERS, type Carrier } from "./carrier";
 import { PARCEL_TIERS, type OfficeTier } from "./office-parcel";
 import { QR_PATTERN } from "./scan-code";
 
@@ -9,31 +10,65 @@ import { QR_PATTERN } from "./scan-code";
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
-// ── 미확인 입고 (INV-W5) ──
+// ── 보류 상자 — 운영자 확인 목록 (INV-W5, inbound-address-code INV-C5·C8·C9) ──
+// 두 갈래가 한 목록에 온다.
+//   unmatched = 6자리로 이어지지 않아 보류로 들어온 상자(미확인 입고) — 선반에 있고, 7일 안에 이어지지 않으면 반송 대상.
+//   parcel    = 주문에 묶여 있는데 출고를 멈춘 상자(같은 6자리·같은 송장번호 분쟁, 「제가 보낸 게 아니에요」, 주문에서 떼어 낸 상자).
+// 칸은 도착 시각·원 송장 바코드·택배사·보류 사유·발신인 앞 한 글자(+ 선반·봉투 번호)뿐이다(INV-C9·W7). 주문번호·닉네임·6자리는 오지 않는다.
 
-export const UNMATCHED_STATES = ["waiting", "matched", "expired"] as const;
+/** 보류 사유. 앞 일곱은 보류로 들어올 때(입고 함수), 뒤 둘은 묶인 상자가 멈출 때. */
+export const HOLD_REASONS = [
+  "no_code",
+  "unknown_code",
+  "void_code",
+  "used_code",
+  "code_dispute",
+  "barcode_bound",
+  "waybill_dispute",
+  "not_mine",
+  "detached",
+] as const;
+export type HoldReason = (typeof HOLD_REASONS)[number];
+
+export const UNMATCHED_STATES = ["waiting", "matched", "expired", "on_hold"] as const;
 export type UnmatchedState = (typeof UNMATCHED_STATES)[number];
+
+export const HELD_SOURCES = ["unmatched", "parcel"] as const;
+export type HeldSource = (typeof HELD_SOURCES)[number];
 
 export type UnmatchedParcel = {
   id: string;
-  waybillNo: string;
-  arrivedAt: string;
-  senderInitial: string;
-  shelf: string;
+  source: HeldSource;
+  /** 묶인 상자(parcel)의 내부 QR = 봉투 번호. 미확인 입고에는 없다. */
+  qr: string | null;
+  waybillNo: string | null;
+  carrier: Carrier | null;
+  arrivedAt: string | null;
+  senderInitial: string | null;
+  shelf: string | null;
+  reason: HoldReason;
+  suspectedTheft: boolean;
   state: UnmatchedState;
-  deadlineAt: string;
-  matchedOrderNo: string | null;
+  /** 미확인 입고만 — 도착 + 168시간 */
+  deadlineAt: string | null;
 };
 
 const unmatchedRow = z.object({
   id: z.string(),
-  waybill_no: z.string(),
-  arrived_at: z.string(),
-  sender_initial: z.string().refine((s) => charCount(s) === 1),
-  shelf: z.string(),
+  source: z.enum(HELD_SOURCES),
+  qr: z.string().nullable(),
+  waybill_no: z.string().nullable(),
+  carrier: z.enum(CARRIERS).nullable(),
+  arrived_at: z.string().nullable(),
+  sender_initial: z
+    .string()
+    .refine((s) => charCount(s) === 1)
+    .nullable(),
+  shelf: z.string().nullable(),
+  reason: z.enum(HOLD_REASONS),
+  suspected_theft: z.boolean(),
   state: z.enum(UNMATCHED_STATES),
-  deadline_at: z.string(),
-  matched_order_no: z.string().nullable(),
+  deadline_at: z.string().nullable(),
 });
 
 export function unmatchedFromRows(rows: unknown): UnmatchedParcel[] | null {
@@ -41,14 +76,80 @@ export function unmatchedFromRows(rows: unknown): UnmatchedParcel[] | null {
   if (!parsed.success) return null;
   return parsed.data.map((r) => ({
     id: r.id,
+    source: r.source,
+    qr: r.qr,
     waybillNo: r.waybill_no,
+    carrier: r.carrier,
     arrivedAt: r.arrived_at,
     senderInitial: r.sender_initial,
     shelf: r.shelf,
+    reason: r.reason,
+    suspectedTheft: r.suspected_theft,
     state: r.state,
     deadlineAt: r.deadline_at,
-    matchedOrderNo: r.matched_order_no,
   }));
+}
+
+/** 「반송으로 넘기기」를 누를 수 있는 줄 — 아직 이어지지 않은 미확인 입고만(DB 가 다시 판정한다). 묶인 상자는 여기서 반송하지 않는다. */
+export function canReturnHeld(row: Pick<UnmatchedParcel, "source" | "state">): boolean {
+  return row.source === "unmatched" && row.state === "waiting";
+}
+
+// ── 찾기 실패가 반복된 계정 (inbound-address-code INV-C10) ──
+
+export type FindFlag = { nickname: string; failures24h: number; lastFlaggedAt: string };
+
+const findFlagRow = z.object({ nickname: z.string(), failures_24h: z.number().int().min(0), last_flagged_at: z.string() });
+
+export function findFlagsFromRows(rows: unknown): FindFlag[] | null {
+  const parsed = z.array(findFlagRow).safeParse(rows);
+  if (!parsed.success) return null;
+  return parsed.data.map((r) => ({ nickname: r.nickname, failures24h: r.failures_24h, lastFlaggedAt: r.last_flagged_at }));
+}
+
+// ── 측정 숫자 (inbound-address-code 「측정」 절 — 최근 30일) ──
+
+export type InboundMetrics = {
+  since: string;
+  arrivedTotal: number;
+  arrivedWithoutCode: number;
+  codeInputs: number;
+  codeCheckRejects: number;
+  codeFormatRejects: number;
+  notMineReports: number;
+};
+
+const count = z.number().int().min(0);
+const metricsRow = z.object({
+  since: z.string(),
+  arrived_total: count,
+  arrived_without_code: count,
+  code_inputs: count,
+  code_check_rejects: count,
+  code_format_rejects: count,
+  not_mine_reports: count,
+});
+
+/** 한 줄짜리 답. 운영자가 아니면 DB 가 0줄을 준다 — 그때도 null. */
+export function inboundMetricsFromRows(rows: unknown): InboundMetrics | null {
+  const parsed = z.array(metricsRow).length(1).safeParse(rows);
+  if (!parsed.success) return null;
+  const r = parsed.data[0];
+  return {
+    since: r.since,
+    arrivedTotal: r.arrived_total,
+    arrivedWithoutCode: r.arrived_without_code,
+    codeInputs: r.code_inputs,
+    codeCheckRejects: r.code_check_rejects,
+    codeFormatRejects: r.code_format_rejects,
+    notMineReports: r.not_mine_reports,
+  };
+}
+
+/** 비율(%) — 분모가 0이면 null(「아직 없음」). 소수 첫째 자리까지. */
+export function ratePercent(part: number, whole: number): number | null {
+  if (whole <= 0) return null;
+  return Math.round((part / whole) * 1000) / 10;
 }
 
 /** INV-W6: 기한(도착 + 168시간)까지 남은 날 — 올림. 지났으면 0. */

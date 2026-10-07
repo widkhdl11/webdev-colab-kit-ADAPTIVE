@@ -1,3 +1,4 @@
+import type { HoldReason } from "./office-lists";
 import type { NextStep, OfficeTier, ParcelKind, ParcelState } from "./office-parcel";
 
 // 사무실 상자의 화면 문구 (design-rules 8절·8-1, 시안 admin/parcels.html). 상태를 바꾸는 버튼 대신
@@ -35,8 +36,22 @@ export const NEXT_STEP_TEXT: Record<NextStep, string> = {
   wait_accept: "팬의 받기를 기다려요",
   wait_expiry: "자동 처리 대기(반송 예정)",
   held: "추적 장치가 나와 사무실에 보관해요",
+  on_hold: "보류 중이라 출고하지 않아요 — 미확인 입고 화면에서 확인",
   print_return: "출고 화면에서 QR 스캔하면 반송 송장 출력",
   confirm_return: "출고 화면에서 반송 송장 바코드 스캔",
   confirm_shipment: "출고 화면에서 출력한 송장 바코드 스캔",
   done: "",
+};
+
+/** 보류 사유 (inbound-address-code INV-C5·C7·C8). 운영자 화면에만 쓴다 — 팬·크리에이터 화면에는 보류 목록이 없다(INV-C10). */
+export const HOLD_REASON_LABEL: Record<HoldReason, string> = {
+  no_code: "받는 주소 6자리 없음",
+  unknown_code: "발급되지 않은 6자리",
+  void_code: "무효가 된 6자리(거절·반려·취소)",
+  used_code: "이미 쓰인 6자리(첫 상자 출고 뒤)",
+  code_dispute: "같은 6자리 분쟁",
+  barcode_bound: "다른 상자에 묶인 송장",
+  waybill_dispute: "같은 송장번호 분쟁",
+  not_mine: "주인이 「제가 보낸 게 아니에요」",
+  detached: "주문에서 떼어 낸 상자",
 };

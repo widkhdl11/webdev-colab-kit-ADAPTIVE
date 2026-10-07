@@ -1,0 +1,7 @@
+/* 운영자 확인 목록 위 측정 숫자 셋 (inbound-address-code 「측정」 절). 관리자 화면 토큰 그대로, 표 위에 한 줄 */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.stat { display: grid; gap: 4px; padding: 16px 20px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.statLabel { font-size: 13px; font-weight: 700; color: var(--sub); }
+.statValue { font-size: 26px; font-weight: 800; letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
+.statSub { font-size: 13px; color: var(--sub); }
+@media (max-width: 767px) { .stats { grid-template-columns: minmax(0, 1fr); } }

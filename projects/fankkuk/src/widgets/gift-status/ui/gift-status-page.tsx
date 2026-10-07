@@ -12,15 +12,17 @@ import {
   RETURN_ON_REJECT_NOTICE,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
-import { boxTierName, hasArrived, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
+import { boxTierName, canReportNotMine, hasArrived, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
+import { giftAddressCode, giftFinderBoxes } from "@/features/box-waybill/model/box-targets";
 import { RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
 import { formatWaybill } from "@/entities/parcel/model/waybill-no";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
+import { NotMineButton } from "@/features/box-waybill/ui/not-mine-button";
+import { ReceivingAddress } from "@/features/box-waybill/ui/receiving-address";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { visibleDifferences, type GiftDifference } from "@/entities/payment/model/difference-rows";
 import type { GiftPayment } from "@/entities/payment/model/gift-payment";
-import { CopyButton } from "@/shared/ui/copy-button";
 import { DifferenceSection, type DifferenceNotice } from "./difference-section";
 import { PaymentSummary } from "./payment-summary";
 import s from "./gift-status.module.css";
@@ -28,8 +30,11 @@ import s from "./gift-status.module.css";
 // 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v9-pages/gift-a.html (design-rules 5절, 카드 d45 — 시안은 한 상태의 예시, 칸이 나오는 조건은 아래 그대로)
 // 문의하지 않아도 지금 어디까지 왔는지 알 수 있게(성공 기준 3).
 // 크리에이터에게 보내는 송장번호는 이 화면에 오지 않는다 — toFanView·my_gift_boxes 가 걸러서 넘긴다.
-// 상자별 원 송장번호·내 물건 찾기 시안: docs/design/mockups/site/v4/gift-boxes.html (택배사 고르는 칸은 DB 에 그 칸이 없어 뺐다).
-// 사무실 주소는 view.officeAddress 가 있을 때(결제가 끝난 진행 중 주문)만 그린다(INV-S9). 헤더·푸터는 라우트가 붙인다.
+// 상자별 칸 시안: docs/design/mockups/site/v4/gift-boxes.html. 헤더·푸터는 라우트가 붙인다.
+// 받는 주소(inbound-address-code INV-C2·C3): 결제가 끝난 진행 중 주문의 상자마다 「이 선물의 받는 주소」(사무실 주소 + 6자리).
+//   6자리는 my_gift_boxes 가 로그인한 주인에게, 유효할 때만 준다 — 없으면 그 상자의 주소 칸을 그리지 않는다. 6자리 빠진 기본 사무실 주소는 그리지 않는다.
+// 송장번호는 배송 조회를 보고 싶을 때만 넣는 선택 칸이다(INV-C7). 받는 주소 없이 보낸 상자는 「받는 주소 없이 보냈어요」로 찾는다(INV-C4 ②).
+// 입고된 뒤 출고 확정 전에는 상자마다 「제가 보낸 게 아니에요」(INV-C8).
 // 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 진행 줄 아래 따로 한 줄로 그린다.
 // 결제 내역은 결제할 때 저장한 금액만 보인다(payment INV-M14, my_gift_payment) — 주문 정보 중립 면 카드 안에 붙인다.
 
@@ -64,17 +69,16 @@ export function GiftStatusPage({
   const badge = fanBadge(view);
   const progress = fanProgress(view);
   // 상자별 원 송장번호는 입고 전까지만 고친다(design-rules 8-1). 출고 운송장은 읽기 함수가 주지 않는다.
-  const editableBoxes = view.outcome === "in_progress" ? boxes.filter((b) => isWaybillEditable(b.state)) : [];
-  const anyEditable = editableBoxes.length > 0;
-  const finderBoxes = editableBoxes.map((b) => {
-    const tierName = boxTierName(b.tier);
-    return { boxId: b.boxId, label: b.label, name: tierName ? `${b.label} · ${tierName}` : b.label };
-  });
+  const inProgress = view.outcome === "in_progress";
+  // 찾기 대상·받는 주소 판정은 features/box-waybill/model/box-targets.ts (INV-C3·C4 ②)
+  const finderBoxes = giftFinderBoxes(boxes, inProgress);
+  const anyEditable = finderBoxes.length > 0;
+  const officeAddress = inProgress ? view.officeAddress : null;
+  const anyAddress = officeAddress !== null && boxes.some((b) => giftAddressCode(b, officeAddress, inProgress) !== null);
   // 차액 줄은 고른 뒤의 길이로 섹션을 그릴지 정한다 — 끝난 주문에 낸 기록이 없으면 빈 섹션을 그리지 않는다
   const shownDifferences = difference ? visibleDifferences(difference.differences, view.outcome === "in_progress") : [];
   // 단계 막대와 상자별 상태는 같은 경우(진행 중·돌려보냄)에만 보인다
   const showsProgress = showsSteps(view);
-  const recipient = `팬꾹 ${view.orderNo}`;
 
   return (
     <main id="main">
@@ -172,10 +176,16 @@ export function GiftStatusPage({
               {showsProgress && boxes.length > 0 ? (
                 <div className={s.part}>
                   <h2>상자별 상태</h2>
-                  {anyEditable ? <p className={s["sub-t"]}>상자마다 보낸 택배의 송장번호를 넣어 주세요. 사무실에서 상자를 찾는 데 쓰여요.</p> : null}
+                  {anyAddress ? (
+                    <p className={s["sub-t"]}>
+                      상자마다 받는 주소가 달라요. 상자에 맞는 주소를 끝 6자리까지 그대로 써서 보내 주세요. {view.creatorName}님의 승인은 기다리지 않고 보내셔도 돼요 — 승인은 출고 전까지만 나면 돼요.
+                    </p>
+                  ) : null}
+                  {anyEditable ? <p className={s["sub-t"]}>송장번호는 배송 조회를 보고 싶을 때만 넣으면 돼요.</p> : null}
                   <div className={s["box-rows"]}>
                     {boxes.map((b) => {
                       const tierName = boxTierName(b.tier);
+                      const addressCode = giftAddressCode(b, officeAddress, inProgress);
                       return (
                         <div key={b.boxId} className={s["box-row"]}>
                           <div className={s["box-top"]}>
@@ -192,13 +202,16 @@ export function GiftStatusPage({
                               <span className="tag">아직 도착 전</span>
                             )}
                           </div>
-                          {isWaybillEditable(b.state) && view.outcome === "in_progress" ? (
+                          {officeAddress && addressCode ? (
+                            <ReceivingAddress officeAddress={officeAddress} code={addressCode} boxName={b.label} multiple={boxes.length > 1} />
+                          ) : null}
+                          {isWaybillEditable(b.state) && inProgress ? (
                             <WaybillEditor
                               target={{ kind: "box", id: b.boxId }}
                               boxName={b.label}
                               initial={b.waybillNo}
                               layout="box"
-                              hint="상자 하나에 송장번호 하나예요. 상자가 여러 개면 상자마다 따로 넣어 주세요."
+                              hint="선택이에요. 넣으면 배송 조회로 팬꾹까지 오는 길을 보여 드려요."
                             />
                           ) : b.waybillNo ? (
                             <>
@@ -209,6 +222,9 @@ export function GiftStatusPage({
                               {hasArrived(b.state) ? <p className="hint">입고된 상자는 송장번호를 고칠 수 없어요.</p> : null}
                             </>
                           ) : null}
+                          {inProgress && canReportNotMine(b.state) ? (
+                            <NotMineButton target={{ kind: "box", id: b.boxId }} boxName={b.label} reported={b.reportedNotMine} />
+                          ) : null}
                         </div>
                       );
                     })}
@@ -216,43 +232,24 @@ export function GiftStatusPage({
                 </div>
               ) : null}
 
-              {/* 내 물건 찾기(office-workflow INV-W5) — 진행 중 주문이면 늘 그린다. 마지막 상자를 찾아 고를 상자가 없어져도
+              {/* 받는 주소 없이 보냈어요(inbound-address-code INV-C4 ②) — 진행 중 주문이면 늘 그린다. 마지막 상자를 찾아 고를 상자가 없어져도
                   결과 안내가 남아 있게, 빈 목록은 칸 안에서 처리한다. 잇는 판정은 DB 가 한다 */}
-              {showsProgress && view.outcome === "in_progress" && boxes.length > 0 ? (
+              {showsProgress && inProgress && boxes.length > 0 ? (
                 <div className={s.part}>
-                  <h2>내 물건 찾기</h2>
-                  <p className={s["sub-t"]}>보낸 상자가 사무실에 도착했는데 주문과 이어지지 않았을 때 쓰는 칸이에요.</p>
+                  <h2>받는 주소 없이 보냈어요</h2>
+                  <p className={s["sub-t"]}>받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 내 상자로 이어져요.</p>
                   <FindMyBox boxes={finderBoxes} />
                   <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`}>
-                    사무실에서 보이는 건 도착 시각과 보낸 사람 이름 앞 한 글자, 보관 선반 번호뿐이에요. 주소와 전화번호는 남기지 않아요.
+                    하루에 다섯 번까지 찾을 수 있어요. 사무실에는 도착 시각·택배사·보낸 사람 이름 첫 글자만 남기고, 주소와 전화번호는 남기지 않아요.
                   </p>
                 </div>
               ) : null}
 
-              {/* 결제가 끝난 진행 중 주문에 주소가 온다 — 승인을 기다리지 않는다(INV-S9). 도착한 뒤에는 더 보낼 일이 없어 접는다 */}
-              {view.officeAddress && view.canEnterTrackingNo ? (
+              {/* 결제가 끝난 진행 중 주문 — 상자를 더 보내는 길은 없다(스펙 비범위: 상자 추가). 도착한 뒤에는 더 보낼 일이 없어 접는다 */}
+              {anyAddress && view.canEnterTrackingNo ? (
                 <div className={s.part}>
-                  <h2>보내실 주소</h2>
-                  <p className={s["sub-t"]}>이 선물에만 쓰는 팬꾹 사무실 주소예요. {view.creatorName}님의 승인은 기다리지 않고 보내 주세요 — 출고 전에 받아요.</p>
-                  <div className={s.addr}>
-                    <p className={s["addr-title"]}>이 주소로 보내 주세요</p>
-                    <dl>
-                      <div>
-                        <dt>받는 곳</dt>
-                        <dd>{view.officeAddress}</dd>
-                      </div>
-                      <div>
-                        <dt>받는 사람</dt>
-                        <dd>{recipient} (주문번호를 꼭 같이 적어 주세요)</dd>
-                      </div>
-                    </dl>
-                    <div className={s["addr-copy"]}>
-                      <CopyButton className="btn btn--soft btn--sm" text={`${view.officeAddress}\n${recipient}`} label="주소 복사하기" copiedMessage="주소를 복사했어요." failedMessage="복사하지 못했어요. 위 주소를 직접 옮겨 적어 주세요." />
-                    </div>
-                  </div>
-                  <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`}>
-                    받는 사람 이름에 주문번호가 있어야 도착한 상자를 바로 찾을 수 있어요.
-                  </p>
+                  <h2>보내기 전에 알아 두세요</h2>
+                  <p className={s["sub-t"]}>상자를 더 보내려면 새로 등록해 주세요. 상자마다 받는 주소가 달라요.</p>
                   <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`}>{RETURN_ON_REJECT_NOTICE}</p>
                 </div>
               ) : null}

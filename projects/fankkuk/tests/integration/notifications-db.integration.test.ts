@@ -22,6 +22,7 @@ import {
   orderStatus,
   paidGift,
   receiveAndLabel,
+  scanInbound,
   waybill,
   type Unit,
 } from "./office-helpers";
@@ -48,9 +49,10 @@ afterEach(() => {
 });
 
 /** 주문의 발송 대기 줄을 「종류|차례|받는 계정 아이디|통로|상태」로. */
+/** 주문 단위 알림 줄(상자마다 가는 「상자 도착」은 inbound-code-db 시험이 따로 본다 — INV-N14). */
 function outboxRows(orderId: string): string[] {
   const out = psql(
-    `select o.kind || '|' || o.round || '|' || p.login_id || '|' || o.channel || '|' || o.status from ${OUTBOX} o join public.profiles p on p.id = o.account_id where o.order_id = '${orderId}' order by o.kind, o.round, p.login_id, o.channel`,
+    `select o.kind || '|' || o.round || '|' || p.login_id || '|' || o.channel || '|' || o.status from ${OUTBOX} o join public.profiles p on p.id = o.account_id where o.order_id = '${orderId}' and o.kind <> 'box_arrived' order by o.kind, o.round, p.login_id, o.channel`,
   );
   return out === "" ? [] : out.split("\n");
 }
@@ -169,6 +171,7 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
         "kind",
         "next_attempt_at",
         "order_id",
+        "parcel_id", // 상자 도착 줄이 가리키는 상자(INV-N14) — 연락처·본문 칸이 아니다
         "provider_message_id",
         "round",
         "status",
@@ -227,7 +230,7 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
     const no = waybill();
     await fanSetsWaybill(g.boxIds[0]!, no);
     const staff = await signedInClient("fankkuk_staff");
-    await staff.rpc("office_scan_inbound", { p_waybill: no });
+    await scanInbound(staff, no);
     expect(outboxRows(g.orderId)).toEqual(["approval_request|1|haru_creator|email|pending", "arrived|1|byeolbit_fan|email|pending"]);
   });
 
@@ -272,7 +275,7 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
     const no = waybill();
     await fanSetsWaybill(g.boxIds[0]!, no);
     const inside = psql(
-      `begin; ${staffClaims()} select public.office_scan_inbound('${no}') is not null; select count(*) from ${OUTBOX} where order_id = '${g.orderId}' and kind = 'arrived'; rollback;`,
+      `begin; ${staffClaims()} select public.office_scan_inbound('${no}', (select code from public.inbound_codes where box_id = '${g.boxIds[0]}')) is not null; select count(*) from ${OUTBOX} where order_id = '${g.orderId}' and kind = 'arrived'; rollback;`,
     );
     expect(values(inside)).toEqual(["t", "1"]);
     expect(orderStatus(g.orderId)).toBe("registered");
