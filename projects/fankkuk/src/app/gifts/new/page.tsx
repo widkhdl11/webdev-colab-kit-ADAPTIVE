@@ -2,6 +2,7 @@ import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creat
 import { readMovingCreatorIds } from "@/entities/creator/api/creator-verification-reads";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { canSendGiftTo } from "@/features/gift-register/api/can-send";
+import { pickOrder } from "@/features/gift-register/model/pick-order";
 import { creatorSendList, fanSendList } from "@/features/gift-register/model/sender-rule";
 import { GiftRegisterPage } from "@/widgets/gift-register/ui/gift-register-page";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
@@ -49,7 +50,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
       ? creatorSendList(cards, ownCreatorId, preselectedId ? { id: preselectedId, canSend: preselectedCanSend } : null)
       : fanSendList(cards, fanPreselected)
   ).map((c) => ({ ...c, moving: moving.has(c.id) }));
-  const initialCreatorId = typeof creator === "string" && creators.some((c) => c.id === creator) ? creator : "";
+  // 미리 고른 사람 → 내가 팔로우한 크리에이터 → 나머지 순으로 보여 준다(표시 순서만 — 보낼 수 있는지는 위에서 정했다)
+  const ordered = pickOrder(creators, preselectedId);
+  const initialCreatorId = typeof creator === "string" && ordered.some((c) => c.id === creator) ? creator : "";
   const notice = typeof payment === "string" ? PAYMENT_NOTICE[payment] : undefined;
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   if (!clientKey) console.warn("NEXT_PUBLIC_TOSS_CLIENT_KEY 가 없어 결제창을 열 수 없다");
@@ -57,7 +60,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts/new")} />
       <GiftRegisterPage
-        creators={creators}
+        creators={ordered}
         prices={prices}
         initialCreatorId={initialCreatorId}
         clientKey={clientKey}

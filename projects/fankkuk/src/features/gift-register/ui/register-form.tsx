@@ -11,6 +11,7 @@ import { RETURN_ON_REJECT_NOTICE } from "@/entities/order/ui/fan-stage-copy";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE, RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
 import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
+import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { summarizeBoxes } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
@@ -18,7 +19,7 @@ import f from "./register-form.module.css";
 
 /** 고를 수 있는 크리에이터 한 명. 소개 칸(분야·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
 export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "approvalMinutes"> &
-  Partial<Pick<CreatorCard, "category" | "channelTitle" | "alias">> & {
+  Partial<Pick<CreatorCard, "category" | "channelTitle" | "alias" | "faceTone" | "following">> & {
     /** 채널 이사 중(creator-verification INV-V12) — 찾기에는 나오지만 지금은 선물을 받지 않는다 */
     moving?: boolean;
   };
@@ -303,11 +304,12 @@ export function RegisterForm({
                     <li key={c.id} hidden={!matches.includes(c)}>
                       <label className={f.pick}>
                         <input type="radio" value={c.id} {...register("creatorId")} />
-                        <span className="avatar" aria-hidden="true">
-                          {c.name.slice(0, 1)}
-                        </span>
+                        <CreatorFace tone={c.faceTone ?? "var(--face-1)"} className={`face ${f["pick-face"]}`} />
                         <span className={f["pick-text"]}>
-                          <strong>{c.name}</strong>
+                          <strong>
+                            {c.name}
+                            {c.following ? <span className={`tag tag--brand ${f["follow-tag"]}`}>팔로우 중</span> : null}
+                          </strong>
                           <small>
                             {[c.category, c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : approvalTimeText(c.approvalMinutes)]
                               .filter(Boolean)
@@ -549,7 +551,8 @@ export function RegisterForm({
             </div>
           </form>
 
-          <aside className={f.summary} aria-labelledby="sum-title">
+          {/* 4단계는 왼쪽 확인 표가 같은 내용을 보여 주므로 요약을 숨긴다 */}
+          <aside className={f.summary} aria-labelledby="sum-title" hidden={step === 4}>
             <h2 id="sum-title">지금까지 고른 것</h2>
             {/* 지난 단계만큼 채운다 */}
             <dl className={f["summary-rows"]}>

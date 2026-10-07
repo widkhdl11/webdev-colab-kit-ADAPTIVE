@@ -19,6 +19,7 @@
 .send-section { padding-block: 8px clamp(72px, 9vw, 128px); }
 .send-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
 @media (min-width: 1024px) { .send-grid { grid-template-columns: minmax(0, 1fr) 360px; } }
+.summary[hidden] { display: none; }
 .summary { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-tile); background: var(--surface-brand); }
 .summary h2 { font-size: 24px; letter-spacing: -.5px; }
 .summary-rows { margin-top: 12px; }
@@ -36,7 +37,8 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .pick-box { margin-top: 16px; border-radius: var(--r-card); box-shadow: var(--hair); }
 .pick-box-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 16px 20px 8px; font-weight: 700; }
 .pick-box-head :global(.hint) { margin: 0; font-weight: 500; }
-.pick-list { display: grid; gap: 4px; max-height: 328px; overflow-y: auto; margin: 0; padding: 8px 12px 12px; }
+/* 안쪽 스크롤 없이 펼친다 — 페이지가 스크롤된다(2026-10-07, 다섯 번째 줄이 잘려 보였다) */
+.pick-list { display: grid; gap: 4px; margin: 0; padding: 8px 12px 12px; }
 .pick { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px; border-radius: var(--r-box); cursor: pointer; }
 .pick:hover { background: var(--surface); }
 .pick:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand); }
@@ -44,6 +46,8 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .pick input { width: 24px; height: 24px; accent-color: var(--brand); flex-shrink: 0; margin: 0; }
 .pick input:focus-visible { outline: none; }
 .pick-text { display: grid; min-width: 0; }
+.pick-face { width: 40px; height: 40px; flex-shrink: 0; }
+.follow-tag { margin-left: 8px; vertical-align: 2px; }
 .pick-text small { color: var(--sub); font-size: 16px; }
 .empty-mini { margin: 12px; padding: 16px; text-align: center; border-radius: var(--r-box); background: var(--surface); color: var(--sub); }
 
@@ -95,12 +99,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .pay-note { margin-top: 16px; color: var(--sub); }
 .summary-note { margin-top: 8px; color: var(--sub); }
 
-/* 카드 안 이전·다음 — 「다음」은 모든 단계에서 카드 오른쪽 아래 */
-@media (min-width: 768px) {   /* 1~3단계는 카드 높이를 같게 — 「다음」이 같은 높이에 (4단계 확인 화면만 더 길다) */
-  .send-form { display: flex; flex-direction: column; min-height: 744px; }
-  .send-form .step-actions { margin-top: auto; }
-  .send-form > .step:not([hidden]) { margin-bottom: 32px; }
-}
+/* 카드 안 이전·다음 — 「다음」은 모든 단계에서 카드 오른쪽 아래. 카드 높이는 내용만큼(2026-10-07 고정 높이를 풀었다 — 2단계 아래가 비었다) */
 .step-actions { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--divider); }
 .step-actions :global(.btn) { min-width: 120px; }
 .step-actions .next { margin-left: auto; }
