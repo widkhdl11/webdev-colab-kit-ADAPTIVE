@@ -1,0 +1,274 @@
+<!doctype html>
+<!--
+  v4 시안 — 크리에이터 · 보낸 역조공, 몫마다 원 송장번호 입력 (2026-10-04). 바탕: creator-revgift-list.html (묶음·몫 줄·상태 셋은 그대로).
+  근거: specs/office-workflow.md INV-W1(입고는 원 송장 바코드 스캔으로) INV-W7(실명·주소·전화 없음), design-rules.md v4.
+  사실: 크리에이터는 자기가 보낸 택배의 송장번호만 넣는다. 팬의 주소·실명·전화는 여전히 보이지 않는다.
+  바뀐 곳: 몫(팬 한 명) 줄마다 「송장번호」 줄이 붙는다. 입고되기 전까지만 고칠 수 있고 입고되면 「입고됨」으로 잠긴다.
+  새로 제안: 몫 줄의 송장번호 입력/고치기/입고됨 세 상태, 맨 위 새 묶음(아직 송장 미등록 상태를 보여 주려고 추가).
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 보낸 역조공 (송장번호)</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="v6.css">
+  <style>
+    .req-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 8px; border-radius: 9999px; background: var(--surface-subtle); color: var(--ink); font-weight: 700; text-decoration: none; }
+    .req-pill:hover { background: var(--secondary-hover); }
+    .req-pill .glyph { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: var(--text-inverse); }
+
+    .top-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; }
+    .top-row .page-title { padding-right: 0; }
+    .top-row .btn { margin-bottom: 24px; }
+    .rule-line { display: flex; align-items: center; gap: 16px; padding-block: 8px 8px; }
+    .rule-line .ico { width: 56px; height: 56px; }
+    .rule-line strong { display: block; font-size: 18px; letter-spacing: -.3px; }
+    .rule-line span { color: var(--sub); }
+
+    .batch { margin-top: 40px; }
+    .batch-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding-bottom: 12px; }
+    .batch-head h2 { font-size: 24px; letter-spacing: -.5px; }
+    .batch-head .facts { color: var(--sub); }
+    .shares { border-top: 1px solid var(--border); }
+    .share { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; padding-block: 20px; border-bottom: 1px solid var(--border); }
+    .share .nick { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+    .share .says { color: var(--sub); overflow-wrap: anywhere; }
+    .share .tag { justify-self: end; }
+    .batch-sum { margin-top: 12px; color: var(--sub); }
+    .foot-note { margin-top: 56px; padding: 20px 24px; border-radius: 16px; background: var(--surface-subtle); }
+    .foot-note ul { display: grid; gap: 4px; margin-top: 8px; color: var(--sub); }
+    .foot-note li { display: flex; gap: 12px; }
+    .foot-note li::before { content: ""; width: 6px; height: 6px; margin-top: 11px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+    @media (max-width: 767px) {
+      .top-row .btn { width: 100%; margin-bottom: 8px; }
+      .batch { margin-top: 32px; }
+      .batch-head h2 { font-size: 22px; }
+      .share { grid-template-columns: 48px minmax(0, 1fr); }
+      .share .tag { grid-column: 2; justify-self: start; }
+    }
+
+    .share-inv { grid-column: 1 / -1; margin-left: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+    .share-inv .lab { color: var(--sub); }
+    .share-inv .no { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .3px; }
+    .share-inv .in { display: grid; grid-template-columns: 140px minmax(0, 320px) auto; gap: 8px; width: 100%; }
+    .share-inv .in .input { height: 52px; }
+    .share-inv .in .btn { height: 52px; }
+    .share-inv .btn-soft { min-height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--surface-subtle); font-weight: 700; cursor: pointer; }
+    .share-inv .btn-soft:hover { background: var(--secondary-hover); }
+    .share-inv .hint { width: 100%; margin: 0; color: var(--sub); }
+    @media (max-width: 767px) { .share-inv { margin-left: 0; } .share-inv .in { grid-template-columns: minmax(0, 1fr); } }
+  </style>
+</head>
+<body class="page-creator-revgift-boxes">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.500 3.500 9.500 3.500 12 0" stroke="#333D39" stroke-width="2.600" stroke-linecap="round" fill="none"/><circle cx="12.500" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.500" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="20" ry="3" fill="#333D39" opacity=".10"/><path d="M36 7l23 8v19c0 14-10 24-23 30C23 58 13 48 13 34V15z" fill="#3DBE8B" stroke="#3DBE8B" stroke-width="4" stroke-linejoin="round"/><path d="M36 7l23 8v19c0 14-10 24-23 30z" fill="#2FA676"/><path d="M25 35l8 8 15-16" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19 19v11" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/></symbol>
+    <symbol id="i-log" viewBox="0 0 72 72"><ellipse cx="36" cy="68" rx="24" ry="2.500" fill="#333D39" opacity=".10"/><path d="M5 28Q36 2 67 28Q36 54 5 28z" fill="#fff" stroke="#4FA3F7" stroke-width="5" stroke-linejoin="round"/><circle cx="36" cy="28" r="12" fill="#3B82F6"/><circle cx="36" cy="28" r="5.500" fill="#1D3E8F"/><circle cx="40" cy="24" r="3" fill="#fff"/><path d="M46 49v-5a8 8 0 0 1 16 0v5" stroke="#8A96A3" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="42" y="47" width="24" height="19" rx="6" fill="#FFB020"/><path d="M42 60h24a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6z" fill="#E59400"/><circle cx="54" cy="55" r="3" fill="#9A5B00"/><rect x="53" y="56" width="2" height="5" rx="1" fill="#9A5B00"/></symbol>
+  </defs>
+</svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="creator-requests.html" aria-label="팬꾹 크리에이터 처음 화면"><svg width="32" height="32" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/>
+<path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/>
+<circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/>
+<path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/>
+<path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/>
+<path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+          <li><a href="creator-requests.html">승인 요청</a></li>
+          <li><a href="creator-revgift-list.html" aria-current="page">역조공</a></li>
+          <li><a href="creator-log.html">열람 기록</a></li>
+          <li><a href="creator-settings.html">주소와 설정</a></li>
+          <li><a href="notices.html">공지사항</a></li>
+          <li><a href="support.html">고객센터</a></li>
+        </ul></nav>
+      <div class="header-actions">
+        <a class="req-pill" href="creator-requests.html" aria-label="승인 대기 4건"><span class="glyph" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.400 4.800L14.500 12l2.100.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.400-4.800L9.500 12l-2.100-.2A6 6 0 0 1 5 7V2Z"/></svg></span>대기 4건</a>
+        <div class="user-menu">
+          <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown" aria-haspopup="true">
+            <span class="avatar" aria-hidden="true">하</span><span class="nick">하루</span>
+            <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" hidden>
+            <p class="who">하루님 · 크리에이터</p>
+            <a href="creator-settings.html">주소와 설정</a>
+            <hr>
+            <a href="landing.html">로그아웃</a>
+          </div>
+        </div>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="10.500" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.500" fill="currentColor"/></svg></button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="creator-requests.html">승인 요청 (대기 4건)</a>
+      <a href="creator-revgift-list.html" aria-current="page">역조공</a>
+      <a href="creator-log.html">열람 기록</a>
+      <a href="creator-settings.html">주소와 설정</a>
+      <a href="notices.html">공지사항</a>
+      <a href="support.html">고객센터</a>
+      <a href="landing.html">로그아웃</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <div class="top-row">
+        <div class="page-title">
+          <h1 class="page-h">보낸 역조공</h1>
+          <p>팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
+        </div>
+        <a class="btn" href="creator-revgift-new.html">역조공 보내기</a>
+      </div>
+
+      <div class="rule-line">
+        <img class="ico asset" src="../v4/img/icon-address-lock.png" alt="" aria-hidden="true" data-asset="icon-address-lock">
+        <p><strong>팬의 주소와 실명은 보이지 않아요.</strong><span>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span></p>
+      </div>
+
+      <section class="batch" aria-labelledby="b0">
+        <div class="batch-head">
+          <h2 id="b0">2026.10.04 보낸 역조공</h2>
+          <p class="facts">팬 3명 · 21,400원</p>
+        </div>
+        <ul class="shares">
+          <li class="share">
+            <svg class="face" style="--c:#C9ECDD" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>
+            <div><p class="nick">초코우유</p><p class="says">@choco_fan · 주문번호 FC-R8N5W</p></div>
+            <span class="tag tag--warning">기다리는 중</span>
+            <div class="share-inv" id="v-a"><span class="lab">송장번호</span><span class="no">6401 9988 2271</span><span class="lab">한진택배 · 등록됨</span><button class="btn-soft" type="button" data-edit="a">고치기</button></div><div class="share-inv" id="e-a" hidden><div class="in"><select class="input" aria-label="택배사"><option>한진택배</option><option>한진택배</option><option>CJ대한통운</option><option>우체국택배</option><option>롯데택배</option></select><input class="input" type="text" inputmode="numeric" value="6401 9988 2271" aria-label="송장번호 고치기" autocomplete="off"><button class="btn btn--sm" type="button" data-save="a">저장</button></div><p class="hint">사무실에 도착하기 전까지만 고칠 수 있어요.</p></div>
+          </li>
+          <li class="share">
+            <svg class="face" style="--c:#DCD3F6" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>
+            <div><p class="nick">보리차</p><p class="says">@boricha_fan · 주문번호 FC-R3J7D</p></div>
+            <span class="tag tag--warning">기다리는 중</span>
+            <div class="share-inv"><div class="in"><select class="input" aria-label="택배사"><option>한진택배</option><option>CJ대한통운</option><option>우체국택배</option><option>롯데택배</option></select><input class="input" type="text" inputmode="numeric" placeholder="이 상자의 송장번호 (숫자만)" aria-label="송장번호" autocomplete="off"><button class="btn btn--sm" type="button">등록</button></div><p class="hint">팬 한 명마다 상자가 따로예요. 이 팬에게 보내는 상자의 송장번호를 넣어 주세요.</p></div>
+          </li>
+          <li class="share">
+            <svg class="face" style="--c:#FBE3A8" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>
+            <div><p class="nick">푸딩</p><p class="says">@pudding_fan · 주문번호 FC-R1Q6S</p></div>
+            <span class="tag tag--warning">기다리는 중</span>
+            <div class="share-inv"><div class="in"><select class="input" aria-label="택배사"><option>한진택배</option><option>CJ대한통운</option><option>우체국택배</option><option>롯데택배</option></select><input class="input" type="text" inputmode="numeric" placeholder="이 상자의 송장번호 (숫자만)" aria-label="송장번호" autocomplete="off"><button class="btn btn--sm" type="button">등록</button></div><p class="hint">팬 한 명마다 상자가 따로예요. 이 팬에게 보내는 상자의 송장번호를 넣어 주세요.</p></div>
+          </li>
+        </ul>
+        <p class="batch-sum">송장번호를 넣으면 사무실에서 도착한 상자를 바로 찾아요 · 등록 1명 · 아직 안 넣은 팬 2명</p>
+      </section>
+
+      <section class="batch" aria-labelledby="b1">
+        <div class="batch-head">
+          <h2 id="b1">2026.10.01 보낸 역조공</h2>
+          <p class="facts">팬 3명 · 22,700원</p>
+        </div>
+        <ul class="shares">
+          <li class="share">
+            <svg class="face" style="--c:#FBE3A8" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>
+            <div><p class="nick">별빛</p><p class="says">@byeolbit_fan · 주문번호 FC-R4T8K</p></div>
+            <span class="tag tag--success tag--brand">받았어요</span>
+          <div class="share-inv"><span class="lab">송장번호</span><span class="tag tag--success tag--brand"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>입고됨</span><span class="lab">사무실에 도착해 확인했어요</span></div>
+          </li>
+          <li class="share">
+            <svg class="face" style="--c:#DCD3F6" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>
+            <div><p class="nick">달콤이</p><p class="says">@dalkong_fan · 주문번호 FC-R7M2C</p></div>
+            <span class="tag tag--warning">기다리는 중</span>
+          <div class="share-inv"><span class="lab">송장번호</span><span class="tag tag--success tag--brand"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>입고됨</span><span class="lab">사무실에 도착해 확인했어요</span></div>
+          </li>
+          <li class="share">
+            <svg class="face" style="--c:#CFE3FA" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>
+            <div><p class="nick">구름빵</p><p class="says">@cloud_fan · 주문번호 FC-R2X9P</p></div>
+            <span class="tag tag--danger">받지 않았어요</span>
+          <div class="share-inv"><span class="lab">송장번호</span><span class="tag tag--success tag--brand"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>입고됨</span><span class="lab">사무실에 도착해 확인했어요</span></div>
+          </li>
+        </ul>
+        <p class="batch-sum">받은 팬 1명 · 기다리는 중 1명 · 받지 않은 팬 1명 (받지 않은 상자 요금은 환불돼요)</p>
+      </section>
+
+      <section class="batch" aria-labelledby="b2">
+        <div class="batch-head">
+          <h2 id="b2">2026.09.24 보낸 역조공</h2>
+          <p class="facts">팬 2명 · 15,800원</p>
+        </div>
+        <ul class="shares">
+          <li class="share">
+            <svg class="face" style="--c:#FAD2BA" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>
+            <div><p class="nick">솜사탕</p><p class="says">@somsa_fan · 주문번호 FC-R6H3L</p></div>
+            <span class="tag tag--success tag--brand">받았어요</span>
+          <div class="share-inv"><span class="lab">송장번호</span><span class="tag tag--success tag--brand"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>입고됨</span><span class="lab">사무실에 도착해 확인했어요</span></div>
+          </li>
+          <li class="share">
+            <svg class="face" style="--c:#C9ECDD" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>
+            <div><p class="nick">비온뒤</p><p class="says">@rain_fan · 주문번호 FC-R9B2K</p></div>
+            <span class="tag tag--success tag--brand">받았어요</span>
+          <div class="share-inv"><span class="lab">송장번호</span><span class="tag tag--success tag--brand"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>입고됨</span><span class="lab">사무실에 도착해 확인했어요</span></div>
+          </li>
+        </ul>
+        <p class="batch-sum">두 팬 모두 받았어요</p>
+      </section>
+
+      <section class="batch" aria-labelledby="b3">
+        <div class="batch-head">
+          <h2 id="b3">2026.09.12 보낸 역조공</h2>
+          <p class="facts">팬 1명 · 8,900원</p>
+        </div>
+        <ul class="shares">
+          <li class="share">
+            <svg class="face" style="--c:#F7C8D4" aria-hidden="true" focusable="false"><use href="#i-face"/></svg>
+            <div><p class="nick">라떼한잔</p><p class="says">@latte_fan · 주문번호 FC-R5L4G</p></div>
+            <span class="tag tag--danger">받지 않았어요</span>
+          <div class="share-inv"><span class="lab">송장번호</span><span class="tag tag--success tag--brand"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>입고됨</span><span class="lab">사무실에 도착해 확인했어요</span></div>
+          </li>
+        </ul>
+        <p class="batch-sum">받지 않은 상자 요금은 환불됐어요</p>
+      </section>
+
+      <div class="foot-note">
+        <strong>알아 두세요</strong>
+        <ul>
+          <li>「받지 않았어요」는 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
+          <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
+          <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
+          <li>송장번호는 상자가 사무실에 도착하기 전까지만 고칠 수 있어요. 도착해서 입고되면 「입고됨」으로 바뀌고 잠겨요.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="page-end"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/>
+<path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/>
+<circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/>
+<path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/>
+<path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/>
+<path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="support.html">고객센터</a>
+          <a href="about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+  <script>
+  /* 시안용 동작: 송장번호 고치기 열기/저장 */
+  document.querySelectorAll('[data-edit]').forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.edit; document.getElementById('v-' + k).hidden = true; document.getElementById('e-' + k).hidden = false; document.querySelector('#e-' + k + ' input').focus(); }); });
+  document.querySelectorAll('[data-save]').forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.save; document.getElementById('e-' + k).hidden = true; document.getElementById('v-' + k).hidden = false; }); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,388 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v4 — 팬 · 역조공 받기 (2026-10-03)
+  근거: design-rules.md(v4 승인 기준), specs/reverse-gift.md INV-R4~R6, R9, R10.
+  사실: 주소는 「받기」를 누른 뒤 이 화면에서 입력하고, 브라우저에서 암호화돼 서버로 간다. 몫(주문번호) 하나에만 묶이고 미리 저장하지 않는다.
+        받지 않기는 하루님에게 이유를 알리지 않는다. 받지 않은 몫에는 주소를 넣을 수 없다.
+  상태 넷(받기 전 / 주소 입력 / 받기 완료 / 받지 않음)을 같은 화면에서 바꾼다. 맨 위 점선 줄은 시안 설명용 토글이다.
+-->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬꾹 — 하루님이 선물을 보냈어요</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="v6.css">
+  <style>
+    .rcv { max-width: 800px; margin-inline: auto; padding-bottom: clamp(72px, 9vw, 128px); }
+    .mock-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 24px; padding: 12px 16px; border: 2px dashed var(--border-input); border-radius: 16px; color: var(--sub); }
+    .mock-bar strong { color: var(--ink); }
+    .mock-bar button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 9999px; background: var(--surface-subtle); color: var(--sub); font-weight: 600; cursor: pointer; }
+    .mock-bar button:hover { background: var(--secondary-hover); }
+    .mock-bar button[aria-pressed="true"] { background: var(--ink); color: var(--text-inverse); font-weight: 700; }
+
+    #flow[data-state="wait"] [data-for]:not([data-for~="wait"]) { display: none; }
+    #flow[data-state="form"] [data-for]:not([data-for~="form"]) { display: none; }
+    #flow[data-state="done"] [data-for]:not([data-for~="done"]) { display: none; }
+    #flow[data-state="declined"] [data-for]:not([data-for~="declined"]) { display: none; }
+
+    .hero-card { margin-top: 24px; padding: clamp(24px, 4vw, 48px); border-radius: var(--r-panel); background: var(--surface); }
+    .hero-top { display: flex; align-items: center; gap: 24px; }
+    .hero-top .gift { width: 96px; height: 96px; flex-shrink: 0; }
+    .hero-top h1 { font-size: clamp(28px, 3.2vw, 40px); line-height: 1.25; font-weight: 800; letter-spacing: -1px; }
+    .hero-top p { margin-top: 8px; color: var(--sub); font-size: 18px; }
+    .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 32px; }
+    .facts div { padding: 16px 20px; border-radius: var(--r-card); background: var(--white); }
+    .facts dt { color: var(--sub); }
+    .facts dd { margin-top: 4px; font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+    .facts dd small { display: block; margin-top: 2px; color: var(--sub); font-size: 16px; font-weight: 400; letter-spacing: 0; }
+    .facts .tag { min-height: 32px; font-size: 18px; font-weight: 700; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .actions .btn { min-width: 200px; }
+    .hero-card .btn--soft { background: var(--white); }   /* 회색 판 위에서도 버튼 모양이 보이게 */
+
+    .panel-in { margin-top: 24px; padding: 40px; border-radius: var(--r-panel); background: var(--white); box-shadow: var(--hair); }
+    .panel-in h2 { font-size: 28px; letter-spacing: -.8px; }
+    .panel-in:focus { outline: none; }
+    .panel-in h2:focus { outline: none; }
+    .sec-note { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; align-items: start; margin-top: 24px; padding: 20px 24px; border-radius: 16px; background: var(--surface-subtle); }
+    .sec-note img, .sec-note svg { width: 56px; height: 56px; }
+    .sec-note p { font-weight: 600; }
+    .sec-note small { display: block; margin-top: 4px; color: var(--sub); font-size: 16px; font-weight: 400; }
+    .form-grid { display: grid; gap: 20px; margin-top: 28px; }
+    .zip-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+    .input[readonly] { background: var(--secondary-hover); color: var(--ink); }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .form-actions .btn:first-child { flex: 1 1 280px; }
+    .once { margin-top: 16px; color: var(--sub); }
+
+    .done-top { display: flex; align-items: center; gap: 20px; }
+    .done-top svg { width: 72px; height: 72px; }
+    .done-top p { margin-top: 4px; color: var(--sub); font-size: 18px; }
+    .next { display: grid; gap: 16px; margin-top: 32px; counter-reset: nx; }
+    .next li { position: relative; padding-left: 48px; counter-increment: nx; }
+    .next li::before { content: counter(nx); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-subtle); color: var(--brand); font-weight: 800; }
+    .next strong { display: block; font-size: 18px; letter-spacing: -.3px; }
+    .next p { margin-top: 2px; color: var(--sub); }
+    .done-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+
+    #flow [data-for="declined"].panel-in .sub { margin-top: 12px; font-size: 18px; }
+
+    #decline-sheet .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+    @media (min-width: 768px) {
+      #decline-sheet { align-items: center; }
+      #decline-sheet .sheet { max-width: 480px; border-radius: var(--r-panel); padding: 28px 28px 32px; }
+      #decline-sheet .sheet-grip { display: none; }
+    }
+    @media (max-width: 767px) {
+      .hero-top { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .hero-top .gift { width: 72px; height: 72px; }
+      .facts { grid-template-columns: 1fr; gap: 12px; }
+      .actions .btn { width: 100%; }
+      .panel-in { padding: 24px 20px; border-radius: 24px; }
+      .panel-in h2 { font-size: 24px; }
+      .zip-row { grid-template-columns: 1fr; }
+      .two { grid-template-columns: 1fr; }
+      .sec-note { grid-template-columns: 1fr; }
+      .sec-note img, .sec-note svg { width: 48px; height: 48px; }
+      .form-actions .btn { width: 100%; flex-basis: auto; }
+      .done-top { align-items: flex-start; }
+      .done-top svg { width: 56px; height: 56px; }
+      .done-links .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body class="page-revgift-receive">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-gift" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M13 31h46v24a7 7 0 0 1-7 7H20a7 7 0 0 1-7-7z" fill="#FF6F9A"/><path d="M13 52h46v3a7 7 0 0 1-7 7H20a7 7 0 0 1-7-7z" fill="#E9487B"/><rect x="9" y="22" width="54" height="13" rx="6" fill="#FF8FB1"/><path d="M9 31h54a6 6 0 0 1-6 4H15a6 6 0 0 1-6-4z" fill="#F0608F"/><rect x="31" y="22" width="10" height="40" fill="#FFD04D"/><rect x="37" y="22" width="4" height="40" fill="#F5B52A" opacity=".55"/><ellipse cx="27" cy="17" rx="9" ry="6.5" transform="rotate(-20 27 17)" fill="#FFD04D" stroke="#F5B52A" stroke-width="2.5"/><ellipse cx="45" cy="17" rx="9" ry="6.5" transform="rotate(20 45 17)" fill="#FFD04D" stroke="#F5B52A" stroke-width="2.5"/><circle cx="36" cy="20" r="5" fill="#FFC22E"/><rect x="17" y="38" width="5" height="14" rx="2.5" fill="#fff" opacity=".5"/><rect x="13" y="25" width="13" height="3.5" rx="1.75" fill="#fff" opacity=".55"/></symbol>
+    <symbol id="i-find" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M45 45l15 15" stroke="#FFB020" stroke-width="10" stroke-linecap="round"/><path d="M47 43l12 12" stroke="#FFD25E" stroke-width="3" stroke-linecap="round"/><circle cx="30" cy="30" r="19" fill="#E3F0FF" stroke="#4C8DF6" stroke-width="7"/><path d="M30 42C23 37 19 33.5 19 29a5.5 5.5 0 0 1 11-1.5A5.5 5.5 0 0 1 41 29c0 4.5-4 8-11 13z" fill="#FF5C86"/><path d="M23.500 27.500a3 3 0 0 1 2.500-2" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none" opacity=".7"/><path d="M13.500 23.500A19 19 0 0 1 22 13.500" stroke="#fff" stroke-width="2.500" stroke-linecap="round" fill="none" opacity=".65"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="28" ry="3" fill="#333D39" opacity=".10"/><rect x="5" y="20" width="37" height="30" rx="6" fill="#FF9F43"/><path d="M5 44h37a6 6 0 0 1-6 6H11a6 6 0 0 1-6-6z" fill="#F08423"/><path d="M44 28h10a4 4 0 0 1 3.400 1.900L66 41v9H44z" fill="#FFC15E"/><path d="M48 32h6l6 8.500H48z" fill="#CFE8FF"/><path d="M23 42c-4.500-3.200-6.500-5.500-6.500-8a3.300 3.300 0 0 1 6.500-.9 3.300 3.300 0 0 1 6.500.9c0 2.500-2 4.800-6.500 8z" fill="#fff"/><rect x="9" y="24" width="9" height="3.500" rx="1.750" fill="#fff" opacity=".5"/><circle cx="20" cy="52" r="8" fill="#3A4540"/><circle cx="20" cy="52" r="3" fill="#D9DEDC"/><circle cx="54" cy="52" r="8" fill="#3A4540"/><circle cx="54" cy="52" r="3" fill="#D9DEDC"/></symbol>
+    <symbol id="i-price" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M10 7h34v50l-5.700-4-5.700 4-5.700-4-5.700 4-5.700-4L10 57z" fill="#EEF3FF" stroke="#A9BDF2" stroke-width="2.500" stroke-linejoin="round"/><rect x="17" y="17" width="20" height="4" rx="2" fill="#B9C8EE"/><rect x="17" y="26" width="13" height="4" rx="2" fill="#B9C8EE"/><rect x="17" y="35" width="18" height="4" rx="2" fill="#B9C8EE"/><circle cx="48" cy="44" r="18" fill="#FFC83D"/><path d="M30 44a18 18 0 0 0 18 18 18 18 0 0 0 18-18c0 8-8 12-18 12s-18-4-18-12z" fill="#F2A900" opacity=".55"/><circle cx="48" cy="43" r="12" fill="none" stroke="#F2A900" stroke-width="3"/><text x="48" y="50" font-size="18" font-weight="800" text-anchor="middle" fill="#C77F00" font-family="Pretendard Variable, Pretendard, sans-serif">₩</text><path d="M36 33a14 14 0 0 1 7-5" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".7"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="20" ry="3" fill="#333D39" opacity=".10"/><path d="M36 7l23 8v19c0 14-10 24-23 30C23 58 13 48 13 34V15z" fill="#3DBE8B" stroke="#3DBE8B" stroke-width="4" stroke-linejoin="round"/><path d="M36 7l23 8v19c0 14-10 24-23 30z" fill="#2FA676"/><path d="M25 35l8 8 15-16" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19 19v11" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".5"/></symbol>
+    <symbol id="i-inspect" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><rect x="6" y="28" width="40" height="32" rx="6" fill="#E9A765"/><path d="M6 54h40a6 6 0 0 1-6 6H12a6 6 0 0 1-6-6z" fill="#D58C47"/><rect x="4" y="24" width="44" height="11" rx="5" fill="#F3BE85"/><rect x="21" y="24" width="8" height="36" fill="#FFE08A" opacity=".9"/><rect x="10" y="39" width="5" height="12" rx="2.500" fill="#fff" opacity=".4"/><path d="M57 38l9 9" stroke="#6D3FE0" stroke-width="9" stroke-linecap="round"/><circle cx="47" cy="27" r="14" fill="#EEE6FF" stroke="#8B5CF6" stroke-width="6"/><path d="M41 27.500l4.500 4.500 8-9" stroke="#8B5CF6" stroke-width="3.500" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M36.500 22A13 13 0 0 1 42 16.500" stroke="#fff" stroke-width="2.500" stroke-linecap="round" fill="none" opacity=".7"/></symbol>
+    <symbol id="i-log" viewBox="0 0 72 72"><ellipse cx="36" cy="68" rx="24" ry="2.500" fill="#333D39" opacity=".10"/><path d="M5 28Q36 2 67 28Q36 54 5 28z" fill="#fff" stroke="#4FA3F7" stroke-width="5" stroke-linejoin="round"/><circle cx="36" cy="28" r="12" fill="#3B82F6"/><circle cx="36" cy="28" r="5.500" fill="#1D3E8F"/><circle cx="40" cy="24" r="3" fill="#fff"/><path d="M46 49v-5a8 8 0 0 1 16 0v5" stroke="#8A96A3" stroke-width="5" stroke-linecap="round" fill="none"/><rect x="42" y="47" width="24" height="19" rx="6" fill="#FFB020"/><path d="M42 60h24a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6z" fill="#E59400"/><circle cx="54" cy="55" r="3" fill="#9A5B00"/><rect x="53" y="56" width="2" height="5" rx="1" fill="#9A5B00"/></symbol>
+    <symbol id="i-support" viewBox="0 0 72 72"><ellipse cx="36" cy="66" rx="22" ry="3" fill="#333D39" opacity=".10"/><path d="M22 44l-4 16 18-14z" fill="#25B3A8"/><rect x="6" y="9" width="60" height="40" rx="16" fill="#2DBFB3"/><path d="M6 37h60v-0a16 16 0 0 1-16 12H22A16 16 0 0 1 6 37z" fill="#25B3A8" opacity=".75"/><circle cx="24" cy="29" r="4.500" fill="#fff"/><circle cx="36" cy="29" r="4.500" fill="#fff"/><circle cx="48" cy="29" r="4.500" fill="#fff"/><rect x="12" y="14" width="16" height="4" rx="2" fill="#fff" opacity=".45"/></symbol>
+    <!-- 동그란 얼굴: 색은 --c 로 -->
+    <symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.500 3.500 9.500 3.500 12 0" stroke="#333D39" stroke-width="2.600" stroke-linecap="round" fill="none"/><circle cx="12.500" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.500" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+  </defs>
+</svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="home.html" aria-label="팬꾹 메인"><svg width="32" height="32" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/>
+<path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/>
+<circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/>
+<path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/>
+<path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/>
+<path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+          <li><a href="creators.html">크리에이터 찾기</a></li>
+          <li><a href="send.html">선물 보내기</a></li>
+          <li><a href="notices.html">공지사항</a></li>
+          <li><a href="about.html">팬꾹 소개</a></li>
+          <li><a href="support.html">고객센터</a></li>
+        </ul></nav>
+      <div class="header-actions">
+        <ul class="gift-status" aria-label="진행 중인 선물 4개">
+          <li class="gift-item">
+            <a class="gift-icon" data-state="move" href="gift.html" aria-label="하루님께 보낸 선물" aria-describedby="tip-1"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/><circle cx="18" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/></svg></a>
+            <span class="tip" role="tooltip" id="tip-1"><span class="tip-body">선물 4개 중 1번째 · 하루님께 · 배송중</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-icon" data-state="wait" href="gift.html" aria-label="모모님께 보낸 선물" aria-describedby="tip-2"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.400 4.800L14.500 12l2.100.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.400-4.800L9.500 12l-2.100-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="var(--gi-hole)"/></svg></a>
+            <span class="tip" role="tooltip" id="tip-2"><span class="tip-body">선물 4개 중 2번째 · 모모님께 · 승인 대기</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-icon" data-state="done" href="gift.html" aria-label="새벽달님께 보낸 선물" aria-describedby="tip-3"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.500 4.500 4.500L19 7" fill="none" stroke="currentColor" stroke-width="3.500" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <span class="tip" role="tooltip" id="tip-3"><span class="tip-body">선물 4개 중 3번째 · 새벽달님께 · 배송 완료</span></span>
+          </li>
+          <li class="gift-item">
+            <a class="gift-more" href="my-gifts.html" aria-label="선물 1개 더 보기" aria-describedby="tip-4">+1</a>
+            <span class="tip" role="tooltip" id="tip-4"><span class="tip-body">선물 4개 중 4번째 · 별이님께 · 입고 대기</span></span>
+          </li>
+        </ul>
+        <button class="gift-badge" type="button" data-sheet-open="gift-sheet" aria-haspopup="dialog">
+          <span class="glyph" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.500" r="3" fill="currentColor" stroke="var(--brand)" stroke-width="2"/><circle cx="18" cy="18.500" r="3" fill="currentColor" stroke="var(--brand)" stroke-width="2"/></svg></span>선물 4
+        </button>
+        <div class="user-menu">
+          <button class="user-btn" type="button" aria-expanded="false" aria-controls="user-dropdown" aria-haspopup="true">
+            <span class="avatar" aria-hidden="true">민</span><span class="nick">민지</span>
+            <svg class="caret" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" hidden>
+            <p class="who">민지님 · 팬</p>
+            <a href="my-info.html">내 정보</a>
+            <a href="my-following.html">팔로우한 크리에이터</a>
+            <a href="my-gifts.html">선물 내역</a>
+            <a href="my-revgifts.html">받은 역조공</a>
+            <hr>
+            <a href="landing.html">로그아웃</a>
+          </div>
+        </div>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="10.500" width="18" height="3" rx="1.500" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.500" fill="currentColor"/></svg></button>
+      </div>
+    </div>
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <a href="creators.html">크리에이터 찾기</a>
+          <a href="send.html">선물 보내기</a>
+          <a href="notices.html">공지사항</a>
+          <a href="about.html">팬꾹 소개</a>
+          <a href="support.html">고객센터</a>
+      <p class="group-label">내 정보 · 민지님</p>
+      <a href="my-info.html">내 정보</a>
+      <a href="my-following.html">팔로우한 크리에이터</a>
+      <a href="my-gifts.html">선물 내역</a>
+      <a href="my-revgifts.html">받은 역조공</a>
+      <a href="landing.html">로그아웃</a>
+    </div>
+    <div class="sheet-root" id="gift-sheet" hidden>
+      <div class="sheet-scrim" data-sheet-close></div>
+      <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="gift-sheet-title">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="sheet-head">
+          <h2 id="gift-sheet-title">진행 중인 선물 4개</h2>
+          <button class="sheet-close" type="button" data-sheet-close aria-label="닫기"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="2.500" stroke-linecap="round"/></svg></button>
+        </div>
+        <ul class="sheet-list">
+          <li><a href="gift.html"><span class="gift-icon" data-state="move"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/><circle cx="18" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/></svg></span><span><strong>하루님께</strong><small>배송중</small></span></a></li>
+          <li><a href="gift.html"><span class="gift-icon" data-state="wait"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14v5a6 6 0 0 1-2.400 4.800L14.500 12l2.100.2A6 6 0 0 1 19 17v5H5v-5a6 6 0 0 1 2.400-4.800L9.500 12l-2.100-.2A6 6 0 0 1 5 7V2Z"/><path d="M8 5h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V5Z" fill="var(--gi-hole)"/></svg></span><span><strong>모모님께</strong><small>승인 대기</small></span></a></li>
+          <li><a href="gift.html"><span class="gift-icon" data-state="done"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.500 4.500 4.500L19 7" fill="none" stroke="currentColor" stroke-width="3.500" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>새벽달님께</strong><small>배송 완료</small></span></a></li>
+          <li><a href="gift.html"><span class="gift-icon" data-state="move"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="3" fill="currentColor"/><path d="M15 9h4l4 4v3a2 2 0 0 1-2 2h-6V9Z" fill="currentColor"/><circle cx="7" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/><circle cx="18" cy="18.500" r="3" fill="currentColor" stroke="var(--gi-hole)" stroke-width="2"/></svg></span><span><strong>별이님께</strong><small>입고 대기</small></span></a></li>
+        </ul>
+        <a class="btn btn--soft btn--block" style="margin-top:12px" href="my-gifts.html">선물 내역 전체 보기</a>
+      </section>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <div class="rcv" id="flow" data-state="wait">
+
+        <div class="mock-bar" role="group" aria-label="시안 보기 전환">
+          <strong>시안 보기</strong>
+          <button type="button" data-go="wait" aria-pressed="true">받기 전</button>
+          <button type="button" data-go="form" aria-pressed="false">주소 입력</button>
+          <button type="button" data-go="done" aria-pressed="false">받기 완료</button>
+          <button type="button" data-go="declined" aria-pressed="false">받지 않음</button>
+        </div>
+
+        <!-- 선물 소개: 모든 상태에서 보인다 -->
+        <section class="hero-card" aria-labelledby="rcv-title" data-for="wait form done declined">
+          <div class="hero-top">
+            <img class="gift asset" src="../v4/img/icon-gift.png" alt="" aria-hidden="true" data-asset="icon-gift">
+            <div>
+              <h1 id="rcv-title">하루님이 선물을 보냈어요</h1>
+              <p>내가 팔로우한 크리에이터가 보낸 선물이에요.</p>
+            </div>
+          </div>
+          <dl class="facts">
+            <div><dt>보낸 사람</dt><dd>하루님</dd></div>
+            <div><dt>상자 크기</dt><dd>소형 상자<small>세 변 합 100cm · 5kg 이하</small></dd></div>
+            <div>
+              <dt>상태</dt>
+              <dd>
+                <span class="tag tag--warning tag--brand" data-for="wait form">5일 남음</span>
+                <span class="tag tag--success tag--brand" data-for="done">받았어요</span>
+                <span class="tag tag--danger" data-for="declined">받지 않았어요</span>
+                <small data-for="wait form">10월 8일 오후 3시까지 정해 주세요</small>
+              </dd>
+            </div>
+          </dl>
+          <div class="actions" data-for="wait">
+            <button class="btn" type="button" id="take">받기</button>
+            <button class="btn btn--soft" type="button" data-sheet-open="decline-sheet">받지 않기</button>
+          </div>
+          <p class="once" data-for="wait">기한 안에 정하지 않으면 자동으로 받지 않음 처리돼요. 받기 전에는 주소를 입력하지 않아도 돼요.</p>
+        </section>
+
+        <!-- 주소 입력 -->
+        <section class="panel-in" id="form-panel" aria-labelledby="form-title" tabindex="-1" data-for="form">
+          <h2 id="form-title" tabindex="-1">받을 주소를 알려 주세요</h2>
+          <div class="sec-note">
+            <img class="asset" src="../v4/img/icon-address-lock.png" alt="" aria-hidden="true" data-asset="icon-address-lock">
+            <p>주소는 이 브라우저에서 암호화돼요. 팬꾹도 송장을 뽑는 순간에만 열 수 있고, 출고되면 지워요. 하루님에게는 보이지 않아요.
+              <small>이 주소는 이번 선물에만 쓰이고, 내 정보에 저장되지 않아요.</small></p>
+          </div>
+
+          <form id="addr-form" class="form-grid">
+            <div class="field">
+              <label for="zip">우편번호</label>
+              <div class="zip-row">
+                <input class="input" id="zip" name="zip" type="text" inputmode="numeric" autocomplete="postal-code" readonly required placeholder="우편번호 찾기를 눌러 주세요">
+                <button class="btn btn--soft" type="button" id="find-zip">우편번호 찾기</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="addr1">기본 주소</label>
+              <input class="input" id="addr1" name="addr1" type="text" autocomplete="address-line1" readonly required placeholder="우편번호를 찾으면 채워져요">
+            </div>
+            <div class="field">
+              <label for="addr2">상세 주소</label>
+              <input class="input" id="addr2" name="addr2" type="text" autocomplete="address-line2" required placeholder="동·호수 등을 적어 주세요">
+            </div>
+            <div class="two">
+              <div class="field">
+                <label for="rname">받는 사람 이름</label>
+                <input class="input" id="rname" name="rname" type="text" autocomplete="name" required placeholder="택배에 적힐 이름">
+              </div>
+              <div class="field">
+                <label for="rtel">전화번호</label>
+                <input class="input" id="rtel" name="rtel" type="tel" inputmode="tel" autocomplete="tel" required placeholder="010-0000-0000">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn" type="submit">이 주소로 받기</button>
+              <button class="btn btn--soft" type="button" data-sheet-open="decline-sheet">받지 않기</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- 받기 완료 -->
+        <section class="panel-in" aria-labelledby="done-title" data-for="done">
+          <div class="done-top">
+            <svg aria-hidden="true" focusable="false" data-asset="icon-approve"><use href="#i-shield"/></svg>
+            <div>
+              <h2 id="done-title" tabindex="-1">받기가 끝났어요</h2>
+              <p>하루님의 선물이 곧 준비돼요. 주소를 다시 입력하지 않아도 돼요.</p>
+            </div>
+          </div>
+          <ol class="next">
+            <li><strong>상자가 팬꾹 사무실에 도착해요</strong><p>하루님이 보낸 상자를 받으면 검수를 시작해요.</p></li>
+            <li><strong>검수를 마치면 송장을 뽑아 보내 드려요</strong><p>이때만 입력한 주소를 열어요. 출고되면 주소는 지워져요.</p></li>
+            <li><strong>배송이 시작되면 알려 드려요</strong><p>선물이 도착할 때까지 받은 역조공에서 확인할 수 있어요.</p></li>
+          </ol>
+          <div class="done-links">
+            <a class="btn" href="my-revgifts.html">받은 역조공 보기</a>
+            <a class="btn btn--soft" href="home.html">메인으로</a>
+          </div>
+        </section>
+
+        <!-- 받지 않음 -->
+        <section class="panel-in" aria-labelledby="decl-title" data-for="declined">
+          <h2 id="decl-title" tabindex="-1">받지 않기로 했어요</h2>
+          <p class="sub">하루님에게는 받지 않은 이유를 알리지 않아요. 입력한 주소는 없어요.</p>
+          <div class="done-links">
+            <a class="btn" href="my-revgifts.html">받은 역조공 보기</a>
+            <a class="btn btn--soft" href="home.html">메인으로</a>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- 받지 않기 확인: 휴대폰은 아래에서 올라오고 PC 는 가운데 모달 -->
+  <div class="sheet-root" id="decline-sheet" hidden>
+    <div class="sheet-scrim" data-sheet-close></div>
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="decline-title">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 id="decline-title">하루님의 선물을 받지 않을까요?</h2>
+        <button class="sheet-close" type="button" data-sheet-close aria-label="닫기"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="2.500" stroke-linecap="round"/></svg></button>
+      </div>
+      <p class="sub">받지 않아도 하루님에게 이유는 알리지 않아요. 한 번 받지 않으면 다시 받을 수 없어요.</p>
+      <div class="sheet-btns">
+        <button class="btn btn--soft" type="button" data-sheet-close>돌아가기</button>
+        <button class="btn" type="button" id="confirm-decline" data-sheet-close>받지 않기</button>
+      </div>
+    </section>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#F58278"/>
+<path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/>
+<circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/>
+<path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/>
+<path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/>
+<path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>네오코드</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+          <a href="support.html">고객센터</a>
+          <a href="about.html">팬꾹 소개</a>
+        </nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+  <script>
+    // 시안용 상태 전환 (서버·암호화 없음)
+    (function () {
+      var flow = document.getElementById('flow');
+      var bar = Array.prototype.slice.call(document.querySelectorAll('.mock-bar [data-go]'));
+      var focusTarget = { form: 'form-title', done: 'done-title', declined: 'decl-title', wait: 'rcv-title' };
+      function go(state, moveFocus) {
+        flow.setAttribute('data-state', state);
+        bar.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-go') === state)); });
+        if (moveFocus) {
+          var t = document.getElementById(focusTarget[state]);
+          if (t) { t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: false }); }
+        }
+      }
+      bar.forEach(function (b) { b.addEventListener('click', function () { go(b.getAttribute('data-go'), false); }); });
+      document.getElementById('take').addEventListener('click', function () { go('form', true); });
+      document.getElementById('find-zip').addEventListener('click', function () {
+        document.getElementById('zip').value = '04000';
+        document.getElementById('addr1').value = '서울특별시 마포구 예시로 12';
+        document.getElementById('addr2').focus();
+      });
+      document.getElementById('addr-form').addEventListener('submit', function (e) { e.preventDefault(); go('done', true); });
+      document.getElementById('confirm-decline').addEventListener('click', function () { setTimeout(function () { go('declined', true); }, 0); });
+    })();
+  </script>
+</body>
+</html>
