@@ -1,3 +1,4 @@
+import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { printLabelOf, type AddressAccessEntry } from "@/entities/address/model/access-log";
 import { approvalTimeLeftLabel } from "@/entities/order/model/approval-time-left";
@@ -134,7 +135,7 @@ export function CreatorHomePage({ nickname, requests, accessLog, notices, incomi
           <div className={s.todo}>
             <div className={`block-head ${s["todo-head"]}`}>
               <h2 id="todo-title" className={s["todo-h"]}>
-                오늘 승인할 선물 <span className="tag tag--brand">대기 {waiting}건</span>
+                오늘 승인할 선물 <span className={statusTagClass("warn")}>대기 {waiting}건</span>
               </h2>
             </div>
             <div className={s["rule-line"]}>
@@ -156,7 +157,7 @@ export function CreatorHomePage({ nickname, requests, accessLog, notices, incomi
                         {r.itemKind} · 상자 {r.boxCount}개 · {r.orderNo}
                       </p>
                       <p className={s.meta}>
-                        <span className="tag tag--brand">{approvalTimeLeftLabel(r.registeredAt, now)}</span>
+                        <span className={statusTagClass("warn")}>{approvalTimeLeftLabel(r.registeredAt, now)}</span>
                         {r.receivedAt ? <span className="tag">{formatDateTime(r.receivedAt)} 사무실 도착</span> : null}
                         <span className="sub">{formatDateTime(r.registeredAt)} 요청</span>
                       </p>
@@ -231,7 +232,7 @@ export function CreatorHomePage({ nickname, requests, accessLog, notices, incomi
                   <li key={`${i}-${e.at}-${e.orderNo}`} className={s.lrow}>
                     <div className={s.top}>
                       <strong>{formatDateTime(e.at)}</strong>
-                      {e.result.kind === "opened" ? <span className="tag tag--brand">열림</span> : <span className="tag">거부</span>}
+                      {e.result.kind === "opened" ? <span className={statusTagClass("info")}>열림</span> : <span className={statusTagClass("danger")}>거부</span>}
                     </div>
                     <p className="sub">
                       {e.orderNo} · {e.requester === "owner" ? "대표 계정" : "대표가 아닌 계정"} · {logNote(e)}
@@ -301,7 +302,7 @@ export function CreatorHomePage({ nickname, requests, accessLog, notices, incomi
                         {g.itemKind} · 상자 {g.boxCount}개 · {formatDate(g.registeredAt)} 보냄
                       </p>
                     </div>
-                    <span className={`tag ${badge.tone === "brand" ? "tag--brand" : ""}`}>{badge.text}</span>
+                    <span className={statusTagClass(badge.tone)}>{badge.text}</span>
                     <Link className="link-arrow" href={`/gifts/${encodeURIComponent(g.orderNo)}`} aria-label={`${g.creatorName}님께 보낸 선물 상세 보기`}>
                       상세 보기 ›
                     </Link>

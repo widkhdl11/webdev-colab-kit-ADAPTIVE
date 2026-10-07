@@ -1,3 +1,4 @@
+import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { isWaybillEditable, type ShareBox } from "@/entities/parcel/model/box-rows";
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
@@ -42,7 +43,7 @@ function ShareWaybill({ box, fanNickname, shareState }: { box: ShareBox; fanNick
   return (
     <div className={s["share-inv"]}>
       <span className={s.lab}>송장번호</span>
-      <span className="tag tag--brand">
+      <span className={statusTagClass("success")}>
         <Check />
         입고됨
       </span>
@@ -148,7 +149,7 @@ export function RevgiftSentPage({
                         @{x.fanLoginId} · 주문번호 {x.orderNo}
                       </p>
                     </div>
-                    <span className={`tag ${tag.brand ? "tag--brand" : ""} ${s.tag}`}>{tag.tag}</span>
+                    <span className={statusTagClass(tag.tone, s.tag)}>{tag.tag}</span>
                     {box ? <ShareWaybill box={box} fanNickname={x.fanNickname} shareState={x.state} /> : null}
                   </li>
                 );

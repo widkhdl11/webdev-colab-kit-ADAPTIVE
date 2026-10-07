@@ -1,3 +1,4 @@
+import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
@@ -60,7 +61,7 @@ export function CreatorProfilePage({
             {creator.intro ? <p className={`lead ${s.intro}`}>{creator.intro}</p> : null}
             <p className={`lead ${s.intro}`}>{creator.channelTitle}</p>
             <div className={s.tags}>
-              <span className="tag tag--brand">
+              <span className={statusTagClass("success")}>
                 <CheckIcon />
                 본인 확인 완료
               </span>

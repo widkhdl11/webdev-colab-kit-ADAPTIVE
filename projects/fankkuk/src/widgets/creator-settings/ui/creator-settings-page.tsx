@@ -1,5 +1,6 @@
 "use client";
 
+import { statusTagClass } from "@/shared/ui/status-tone";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { BlockedFan } from "@/entities/creator/api/blocked-senders";
@@ -180,7 +181,7 @@ export function CreatorSettingsPage({
           <section aria-labelledby="addr-h">
             <div className={s["s-head"]}>
               <h3 id="addr-h">받는 주소</h3>
-              {addressRegistered ? <span className="tag tag--brand">등록됨</span> : <span className="tag">등록 전</span>}
+              {addressRegistered ? <span className={statusTagClass("success")}>등록됨</span> : <span className={statusTagClass("plain")}>등록 전</span>}
             </div>
             <div className={s.addr}>
               <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
@@ -287,7 +288,7 @@ export function CreatorSettingsPage({
                 <dd>
                   {verification.state.verified ? (
                     <>
-                      <span className="tag tag--brand">확인 완료</span>
+                      <span className={statusTagClass("success")}>확인 완료</span>
                     </>
                   ) : (
                     <span className="tag">확인 전</span>

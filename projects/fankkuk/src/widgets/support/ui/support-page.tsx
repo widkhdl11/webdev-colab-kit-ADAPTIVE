@@ -1,5 +1,6 @@
 "use client";
 
+import { statusTagClass } from "@/shared/ui/status-tone";
 import { useRef, useState, type KeyboardEvent } from "react";
 import { INQUIRY_KIND_LABELS } from "@/entities/inquiry/model/inquiry-kind";
 import type { MyInquiry } from "@/entities/inquiry/model/my-inquiry";
@@ -128,7 +129,7 @@ function MyInquiries({ inquiries }: { inquiries: readonly MyInquiry[] }) {
               <summary>
                 <span className={s["mine-title"]}>
                   <span>{q.title}</span>
-                  {q.status === "answered" ? <span className="tag tag--brand">답변 완료</span> : <span className="tag">답변 대기</span>}
+                  {q.status === "answered" ? <span className={statusTagClass("success")}>답변 완료</span> : <span className={statusTagClass("warn")}>답변 대기</span>}
                 </span>
                 <Chevron className={s.chev} />
               </summary>

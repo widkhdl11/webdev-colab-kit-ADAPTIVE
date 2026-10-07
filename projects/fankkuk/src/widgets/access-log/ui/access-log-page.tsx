@@ -1,3 +1,4 @@
+import { statusTagClass } from "@/shared/ui/status-tone";
 import {
   MAX_DECRYPTS_PER_BOX,
   printLabelOf,
@@ -26,7 +27,7 @@ const DENY_TEXT: Record<AccessDenyReason, string> = {
 const REQUESTER_TEXT: Record<AccessRequester, string> = { owner: "대표 계정", other: "대표가 아닌 계정" };
 
 function ResultTag({ e }: { e: AddressAccessEntry }) {
-  return e.result.kind === "opened" ? <span className="tag tag--brand">열림</span> : <span className="tag">거부</span>;
+  return e.result.kind === "opened" ? <span className={statusTagClass("info")}>열림</span> : <span className={statusTagClass("danger")}>거부</span>;
 }
 
 function Note({ e }: { e: AddressAccessEntry }) {

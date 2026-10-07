@@ -1,5 +1,6 @@
 "use client";
 
+import { statusTagClass } from "@/shared/ui/status-tone";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { CHANNEL_PLATFORM_LABEL, CHANNEL_URL_EXAMPLES, CHANNEL_URL_MESSAGE, parseChannelUrl } from "@/entities/creator/model/channel-url";
@@ -98,7 +99,7 @@ export function VerificationPanel({
     live ? (
       <span className="tag">이사 확인 중</span>
     ) : (
-      <span className="tag tag--brand">확인 완료</span>
+      <span className={statusTagClass("success")}>확인 완료</span>
     )
   ) : live ? (
     <span className="tag">{VERIFICATION_STATUS_LABEL[live.status]}</span>

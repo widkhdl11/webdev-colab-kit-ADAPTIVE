@@ -1,4 +1,5 @@
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
+import type { StatusTone } from "@/shared/ui/status-tone";
 import { APPROVAL_DEADLINE_DAYS } from "../config/approval-deadline";
 import type { FanGiftView, FanStep, FanStepKey } from "../model/fan-view";
 
@@ -44,17 +45,17 @@ export function fanHeadline(view: FanGiftView): string {
   }
 }
 
-/** 목록의 짧은 상태 표시. */
-export function fanBadge(view: FanGiftView): { text: string; tone: "brand" | "plain" } {
-  if (view.outcome === "not_accepted") return { text: "받지 않음", tone: "plain" };
-  if (view.outcome === "returned") return { text: "반송", tone: "plain" };
+/** 목록의 짧은 상태 표시. 색 갈래: 끝남 success · 팬/크리에이터를 기다림 warn · 거절·반송 danger · 진행 단계 info · 취소·등록 plain. */
+export function fanBadge(view: FanGiftView): { text: string; tone: StatusTone } {
+  if (view.outcome === "not_accepted") return { text: "받지 않음", tone: "danger" };
+  if (view.outcome === "returned") return { text: "반송", tone: "danger" };
   if (view.outcome === "canceled") return { text: "취소", tone: "plain" };
   const current = currentKey(view);
-  if (!current) return { text: "수령 완료", tone: "brand" };
-  if (current === "shipped" && view.approval.state !== "done") return { text: "승인 대기", tone: "plain" };
-  if (current === "received") return { text: view.fanTrackingNo ? "도착 대기" : "보내 주세요", tone: "brand" };
+  if (!current) return { text: "수령 완료", tone: "success" };
+  if (current === "shipped" && view.approval.state !== "done") return { text: "승인 대기", tone: "warn" };
+  if (current === "received") return { text: view.fanTrackingNo ? "도착 대기" : "보내 주세요", tone: "warn" };
   const lastDone = [...view.steps].reverse().find((st) => st.state === "done");
-  return { text: lastDone ? FAN_STEP_LABEL[lastDone.key] : "등록", tone: "brand" };
+  return lastDone ? { text: FAN_STEP_LABEL[lastDone.key], tone: "info" } : { text: "등록", tone: "plain" };
 }
 
 /** 단계 아래 한 줄 설명. 없으면 null. */

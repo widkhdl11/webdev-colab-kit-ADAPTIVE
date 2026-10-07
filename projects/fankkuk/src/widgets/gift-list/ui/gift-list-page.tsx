@@ -1,3 +1,4 @@
+import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
@@ -44,7 +45,7 @@ function GiftRow({ gift, faceTone }: { gift: FanGiftView; faceTone: string | und
             </small>
           </>
         ) : (
-          <span className={badge.tone === "brand" ? "tag tag--brand" : "tag"}>{badge.text}</span>
+          <span className={statusTagClass(badge.tone)}>{badge.text}</span>
         )}
       </div>
       <Link className={`link-arrow ${s.go}`} href={`/gifts/${gift.orderNo}`} aria-label={`${who} 보낸 선물 ${gift.orderNo} 상세`}>

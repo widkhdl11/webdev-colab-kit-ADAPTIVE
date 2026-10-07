@@ -76,3 +76,17 @@ describe("승인 대기 문구", () => {
     expect(fanBadge(v).text).not.toBe("승인 대기");
   });
 });
+
+describe("상태 배지 색 갈래", () => {
+  it("끝남은 success, 기다림은 warn, 진행 단계는 info", () => {
+    expect(fanBadge(view(6)).tone).toBe("success"); // 수령 완료
+    expect(fanBadge(view(1)).tone).toBe("warn"); // 보내 주세요
+    expect(fanBadge(view(3, "in_progress", { state: "waiting", at: null })).tone).toBe("warn"); // 승인 대기
+    expect(fanBadge(view(2)).tone).toBe("info"); // 입고
+  });
+  it("받지 않음·반송은 danger, 취소는 무색", () => {
+    expect(fanBadge(view(1, "not_accepted")).tone).toBe("danger");
+    expect(fanBadge(view(3, "returned")).tone).toBe("danger");
+    expect(fanBadge(view(1, "canceled")).tone).toBe("plain");
+  });
+});

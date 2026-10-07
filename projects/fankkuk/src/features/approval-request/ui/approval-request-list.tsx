@@ -1,5 +1,6 @@
 "use client";
 
+import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
@@ -32,11 +33,11 @@ const TABS: readonly TabKey[] = ["wait", "done"];
 // 처리 뒤 포커스를 옮길 곳. 같은 줄을 두 번 처리해도 effect 가 다시 돌게 매번 새 객체로 둔다.
 type FocusTarget = { orderNo: string; where: "result" | "approve" };
 
-const DECIDED_TAG: Record<DecidedOutcome, { text: string; brand: boolean }> = {
-  approved: { text: "승인함", brand: true },
-  declined: { text: "받지 않음", brand: false },
-  blocked: { text: "차단함", brand: false },
-  expired: { text: "자동 반려", brand: false },
+const DECIDED_TAG: Record<DecidedOutcome, { text: string; tone: StatusTone }> = {
+  approved: { text: "승인함", tone: "success" },
+  declined: { text: "받지 않음", tone: "danger" },
+  blocked: { text: "차단함", tone: "danger" },
+  expired: { text: "자동 반려", tone: "danger" },
 };
 
 function HourglassGlyph() {
@@ -222,7 +223,7 @@ export function ApprovalRequestList({
 
                     {st.kind === "pending" ? (
                       <p className={a.meta}>
-                        <span className="tag tag--brand">{approvalTimeLeftLabel(r.registeredAt, now)}</span>
+                        <span className={statusTagClass("warn")}>{approvalTimeLeftLabel(r.registeredAt, now)}</span>
                         {r.receivedAt ? <span className="tag">{formatDateTime(r.receivedAt)} 사무실 도착</span> : null}
                         {r.hasElectronicsOrMetal ? <span className="tag">전자기기·금속 있음</span> : null}
                         <span className="sub">{requested}</span>
@@ -305,7 +306,7 @@ export function ApprovalRequestList({
                       </button>
                     </div>
                   ) : (
-                    <span className={`tag ${st.kind === "approved" ? "tag--brand" : ""} ${a["done-tag"]}`}>
+                    <span className={statusTagClass(st.kind === "approved" ? "success" : "danger", a["done-tag"])}>
                       {st.kind === "approved" ? "승인함" : st.kind === "declined" && !st.blocked ? "받지 않음" : "차단함"}
                     </span>
                   )}
@@ -337,7 +338,7 @@ export function ApprovalRequestList({
                       </span>
                     </p>
                   </div>
-                  <span className={`tag ${tag.brand ? "tag--brand" : ""} ${a["done-tag"]}`}>{tag.text}</span>
+                  <span className={statusTagClass(tag.tone, a["done-tag"])}>{tag.text}</span>
                 </li>
               );
             })}

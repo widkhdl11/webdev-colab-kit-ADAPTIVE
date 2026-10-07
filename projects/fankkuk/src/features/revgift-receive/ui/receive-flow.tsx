@@ -1,5 +1,6 @@
 "use client";
 
+import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
@@ -204,10 +205,10 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
             <dt>상태</dt>
             <dd>
               {settled ? (
-                <span className={`tag ${settled.brand ? "tag--brand" : ""} ${s.tag}`}>{settled.tag}</span>
+                <span className={statusTagClass(settled.tone, s.tag)}>{settled.tag}</span>
               ) : (
                 <>
-                  <span className={`tag tag--brand ${s.tag}`}>{daysLeftText}</span>
+                  <span className={statusTagClass("warn", s.tag)}>{daysLeftText}</span>
                   <small>{deadlineText}</small>
                 </>
               )}

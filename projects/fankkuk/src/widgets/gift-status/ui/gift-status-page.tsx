@@ -1,3 +1,4 @@
+import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { Fragment } from "react";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
@@ -96,7 +97,7 @@ export function GiftStatusPage({
                 {view.itemKind} · 상자 {view.boxCount}개
               </p>
             </div>
-            <span className={`tag ${badge.tone === "brand" ? "tag--brand" : ""} ${s["g-state"]}`}>
+            <span className={statusTagClass(badge.tone, s["g-state"])}>
               {view.outcome === "in_progress" ? `${badge.text} · ${progress.done}/${progress.total}` : badge.text}
             </span>
           </div>
@@ -185,7 +186,7 @@ export function GiftStatusPage({
                               {tierName ? <p className="sub">{tierName}</p> : null}
                             </div>
                             {hasArrived(b.state) ? (
-                              <span className="tag tag--brand">
+                              <span className={statusTagClass("success")}>
                                 <Check size={16} />
                                 입고됨
                               </span>

@@ -1,3 +1,4 @@
+import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import type { ReceivedRevgift } from "@/entities/revgift/model/revgift-rows";
@@ -26,7 +27,7 @@ function RowList({ rows }: { rows: readonly Row[] }) {
             </p>
           </div>
           <div className={s.state}>
-            <span className={`tag ${copy.brand ? "tag--brand" : ""}`}>{copy.tag}</span>
+            <span className={statusTagClass(copy.tone)}>{copy.tag}</span>
             <small className={copy.urgent ? s.urgent : undefined}>{copy.note}</small>
           </div>
           {waiting ? (

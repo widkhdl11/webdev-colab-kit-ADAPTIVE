@@ -1,5 +1,6 @@
 "use client";
 
+import { statusTagClass } from "@/shared/ui/status-tone";
 import { useState } from "react";
 import type { GiftDifference } from "@/entities/payment/model/difference-rows";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
@@ -28,10 +29,10 @@ const NOTICE_TEXT: Record<Exclude<DifferenceNotice, null>, string> = {
 };
 
 const STATE_TAG = {
-  due: { text: "결제 필요", className: "tag" },
-  paying: { text: "결제 확인 중", className: "tag" },
-  paid: { text: "결제 완료", className: "tag tag--brand" },
-  closed: { text: "기한 지남", className: "tag" },
+  due: { text: "결제 필요", className: statusTagClass("warn") },
+  paying: { text: "결제 확인 중", className: statusTagClass("warn") },
+  paid: { text: "결제 완료", className: statusTagClass("success") },
+  closed: { text: "기한 지남", className: statusTagClass("danger") },
 } as const;
 
 type Props = { orderNo: string; differences: readonly GiftDifference[]; clientKey: string; notice: DifferenceNotice };
