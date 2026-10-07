@@ -6,7 +6,7 @@ const card = (id: string): CreatorCard => ({
   id,
   name: id,
   platform: "치지직",
-  category: "게임",
+  tags: ["치지직"],
   channelTitle: "",
   intro: "",
   alias: "",

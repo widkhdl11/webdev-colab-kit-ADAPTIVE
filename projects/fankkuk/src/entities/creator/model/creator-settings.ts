@@ -5,6 +5,10 @@ export type CreatorSettingsView = {
   publicName: string;
   intro: string;
   visibleInSearch: boolean;
+  /** 고른 선택지 id — 숨기지 않은 것만(숨긴 선택지는 고를 수 없다, creator-tags INV-T6). */
+  tagIds: readonly string[];
+  /** 직접 입력한 태그(없으면 ""). 본인 설정 화면과 운영자 화면에서만 읽힌다(INV-T4). */
+  customTag: string;
   /** 알림 두 칸 — 팬과 같다. 승인 요청은 두 칸이 꺼져도 간다(notifications INV-N6). */
   notify: { kakao: boolean; email: boolean };
   /** 가운데를 가린 휴대폰 번호(010-****-5678) — 팬 내 정보와 같은 값. 번호 바꾸기 칸 옆에 보인다. */

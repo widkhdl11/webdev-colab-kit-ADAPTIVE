@@ -258,7 +258,7 @@ describe("INV-U5·U6: 입력 경계", () => {
 
   it("INV-U5: 크리에이터 가입은 확인 안 된 공개 정보 행까지 만든다 — 역할 칸 없이 create_creator_account 가 크리에이터로 만든다(creator-verification INV-V1)", async () => {
     const h = harness();
-    await signUp(h.deps, body({ role: "creator", creator: { name: "꿀단지", channelTitle: "꿀단지TV", category: "먹방" } }));
+    await signUp(h.deps, body({ role: "creator", creator: { name: "꿀단지", channelTitle: "꿀단지TV", tagIds: ["11111111-1111-4111-8111-000000000001"], customTag: "" } }));
     expect(h.rpcCalls.find((c) => c.fn === "create_account")).toBeUndefined();
     expect(h.rpcCalls.find((c) => c.fn === "create_creator_account")?.args).not.toHaveProperty("p_role");
   });
@@ -310,9 +310,9 @@ describe("가입 뒤", () => {
 });
 
 describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV-V1, signup INV-U5)", () => {
-  const creator = { name: " 꿀단지 ", channelTitle: "꿀단지TV", category: "먹방" };
+  const creator = { name: " 꿀단지 ", channelTitle: "꿀단지TV", tagIds: ["11111111-1111-4111-8111-000000000001", "11111111-1111-4111-8111-000000000002"], customTag: " 먹방 " };
 
-  it("INV-V1: 크리에이터면 create_creator_account 로 계정과 공개 정보(이름·채널 이름·분야, 앞뒤 공백 뗌)를 한 번에 만든다", async () => {
+  it("INV-V1 INV-T3: 크리에이터면 create_creator_account 로 계정과 공개 정보(이름·채널 이름·태그, 앞뒤 공백 뗌)를 한 번에 만든다", async () => {
     const h = harness();
     const r = await signUp(h.deps, body({ role: "creator", creator }));
     expect(r).toMatchObject({ ok: true });
@@ -330,8 +330,15 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
       ],
       p_name: "꿀단지",
       p_channel_title: "꿀단지TV",
-      p_category: "먹방",
+      p_tag_ids: ["11111111-1111-4111-8111-000000000001", "11111111-1111-4111-8111-000000000002"],
+      p_custom_tag: "먹방",
     });
+  });
+
+  it("INV-T3: 직접 입력이 없으면 빈 값이 아니라 null 로 넘긴다", async () => {
+    const h = harness();
+    await signUp(h.deps, body({ role: "creator", creator: { ...creator, customTag: "  " } }));
+    expect(h.rpcCalls.find((c) => c.fn === "create_creator_account")?.args).toMatchObject({ p_tag_ids: ["11111111-1111-4111-8111-000000000001", "11111111-1111-4111-8111-000000000002"], p_custom_tag: null });
   });
 
   it("INV-V1: 팬이면 크리에이터 칸이 와도 create_account 를 부르고 공개 정보 칸을 넘기지 않는다", async () => {
@@ -348,7 +355,9 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
       [{ creator: { ...creator, name: "  " } }, "creatorName"],
       [{ creator: { ...creator, name: "가".repeat(21) } }, "creatorName"],
       [{ creator: { ...creator, channelTitle: "가".repeat(41) } }, "channelTitle"],
-      [{ creator: { ...creator, category: "" } }, "category"],
+      [{ creator: { ...creator, tagIds: [], customTag: "" } }, "tags"],
+      [{ creator: { ...creator, customTag: "가".repeat(21) } }, "tags"],
+      [{ creator: { ...creator, tagIds: ["not-a-uuid"] } }, "tags"],
     ] as const) {
       const h = harness();
       const r = await signUp(h.deps, body({ role: "creator", ...extra }));
@@ -357,9 +366,10 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
     }
   });
 
-  it("INV-V1: 한도 끝 값(이름 20자·채널 이름 40자·분야 20자)은 받는다", async () => {
+  it("INV-V1 INV-T3: 한도 끝 값(이름 20자·채널 이름 40자·직접 입력 20자 + 선택지 4개 = 태그 5개)은 받는다", async () => {
     const h = harness();
-    const r = await signUp(h.deps, body({ role: "creator", creator: { name: "가".repeat(20), channelTitle: "나".repeat(40), category: "다".repeat(20) } }));
+    const four = ["1", "2", "3", "4"].map((n) => `11111111-1111-4111-8111-00000000000${n}`);
+    const r = await signUp(h.deps, body({ role: "creator", creator: { name: "가".repeat(20), channelTitle: "나".repeat(40), tagIds: four, customTag: "다".repeat(20) } }));
     expect(r).toMatchObject({ ok: true });
   });
 

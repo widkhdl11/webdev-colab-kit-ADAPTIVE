@@ -32,6 +32,7 @@
 .save { margin-top: 24px; }
 .save-msg { margin-top: 12px; }
 .intro-field { margin-top: 20px; }
+.tags-field { margin-top: 20px; }
 /* 소개글 — 문의 글상자와 같은 모양(inquiry-form .textarea) */
 .textarea { height: auto; padding: 16px 20px; line-height: 1.6; resize: vertical; }
 

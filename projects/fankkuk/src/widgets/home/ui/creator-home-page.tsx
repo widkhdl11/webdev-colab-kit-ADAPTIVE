@@ -36,6 +36,8 @@ type Props = {
   /** 찾기에 나오는 크리에이터, 최근에 들어온 순. */
   /** 자기 자신은 뺀 목록. */
   newest: readonly CreatorCard[];
+  /** 태그 칩 — 숨기지 않은 선택지 가운데 위 크리에이터 1명 이상이 가진 것, 선택지 순서(creator-tags INV-T4, tagChips). */
+  chips: readonly string[];
   /** 카드마다 「선물 보내기」 자리 — 라우트가 sendAvailabilityOf 로 정한다. */
   sendOf: Readonly<Record<string, SendAvailability>>;
   /** 승인 대기의 남은 기간을 세는 기준 시각 — 화면을 그리는 서버가 넘긴다 */
@@ -48,7 +50,7 @@ const MAX_REQUESTS = 2;
 /** 「최근 열람 기록」은 한 줄만 쓴다 — 라우트가 이만큼만 읽는다. */
 export const CREATOR_HOME_LOG_ROWS = 1;
 
-function MyCard({ nickname, requests, accessLog, incoming, sentGifts, now }: Omit<Props, "notices" | "newest" | "sendOf">) {
+function MyCard({ nickname, requests, accessLog, incoming, sentGifts, now }: Omit<Props, "notices" | "newest" | "chips" | "sendOf">) {
   const waiting = requests.length;
   const ongoing = incoming.filter(isIncomingInProgress).length;
   const lastLog = accessLog[0];
@@ -114,7 +116,7 @@ function MyCard({ nickname, requests, accessLog, incoming, sentGifts, now }: Omi
   );
 }
 
-export function CreatorHomePage({ notices, newest, sendOf, ...mine }: Props) {
+export function CreatorHomePage({ notices, newest, chips, sendOf, ...mine }: Props) {
   return (
     <main id="main">
       <section className={s["hero-wrap"]} aria-labelledby="hero-title">
@@ -134,7 +136,7 @@ export function CreatorHomePage({ notices, newest, sendOf, ...mine }: Props) {
               전체 보기 ›
             </Link>
           </div>
-          <NewCreators creators={newest} sendOf={sendOf} />
+          <NewCreators creators={newest} chips={chips} sendOf={sendOf} />
         </div>
       </section>
 

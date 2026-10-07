@@ -5,7 +5,7 @@ const haru: CreatorCard = {
   id: "c1",
   name: "하루",
   platform: "치지직",
-  category: "게임",
+  tags: ["치지직", "버추얼"],
   channelTitle: "하루의 놀이터",
   intro: "게임 방송을 해요.",
   alias: "haru",
@@ -19,10 +19,10 @@ describe("matchesCreatorQuery — 크리에이터 찾기 실시간 검색", () =
     expect(matchesCreatorQuery(haru, "")).toBe(true);
     expect(matchesCreatorQuery(haru, "   ")).toBe(true);
   });
-  it("이름·로마자 이름·분야·채널 이름 어느 것으로도 걸린다", () => {
+  it("이름·로마자 이름·태그·채널 이름 어느 것으로도 걸린다", () => {
     expect(matchesCreatorQuery(haru, "하루")).toBe(true);
     expect(matchesCreatorQuery(haru, "HARU")).toBe(true);
-    expect(matchesCreatorQuery(haru, "게임")).toBe(true);
+    expect(matchesCreatorQuery(haru, "버추얼")).toBe(true);
     expect(matchesCreatorQuery(haru, "놀이터")).toBe(true);
   });
   it("방송 플랫폼 이름으로도 걸린다 — 선물 보내기의 크리에이터 고르기와 같은 규칙", () => {
@@ -51,14 +51,14 @@ describe("toCreatorCards", () => {
     { id: "c9", name: "소개없음", channel: "SOOP" },
   ];
   const profiles = [
-    { creatorId: "c2", category: "노래", channelTitle: "모모네 거실", intro: "", alias: "momo", avgApprovalHours: 4, faceTone: "#111111" },
-    { creatorId: "c1", category: "게임", channelTitle: "하루의 놀이터", intro: "", alias: "haru", avgApprovalHours: 2, faceTone: "#222222" },
+    { creatorId: "c2", tags: ["유튜브"], channelTitle: "모모네 거실", intro: "", alias: "momo", avgApprovalHours: 4, faceTone: "#111111" },
+    { creatorId: "c1", tags: ["치지직", "버추얼"], channelTitle: "하루의 놀이터", intro: "", alias: "haru", avgApprovalHours: 2, faceTone: "#222222" },
   ];
   it("크리에이터 순서를 지키고 소개를 id 로 붙이며, 팔로우 여부를 표시한다", () => {
     const cards = toCreatorCards(creators, profiles, ["c2"]);
     expect(cards.map((c) => c.id)).toEqual(["c1", "c2"]);
-    expect(cards[0]).toMatchObject({ name: "하루", platform: "치지직", category: "게임", faceTone: "#222222", following: false });
-    expect(cards[1]).toMatchObject({ name: "모모", category: "노래", following: true });
+    expect(cards[0]).toMatchObject({ name: "하루", platform: "치지직", tags: ["치지직", "버추얼"], faceTone: "#222222", following: false });
+    expect(cards[1]).toMatchObject({ name: "모모", tags: ["유튜브"], following: true });
   });
   it("평균 승인 시간은 주문 기록의 평균을 먼저 쓰고, 없으면 소개 칸 값을 쓴다", () => {
     const cards = toCreatorCards(creators, profiles, [], { c1: 45, c2: null });

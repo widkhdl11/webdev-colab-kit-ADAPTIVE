@@ -34,6 +34,13 @@ async function authUser(loginId: string): Promise<string> {
   return r.data.user.id;
 }
 
+/** 선택지 id(이름으로). 가입 때 태그는 선택지 id 목록 + 직접 입력으로 받는다(creator-tags INV-T3). */
+function optionId(name: string): string {
+  const id = psql(`select id from public.creator_tag_options where name = '${name}'`);
+  if (!id) throw new Error(`선택지 없음: ${name}`);
+  return id;
+}
+
 async function args(loginId: string, extra: Record<string, unknown> = {}) {
   const p = phone();
   const verificationId = await verifiedPhone(p);
@@ -49,7 +56,8 @@ async function args(loginId: string, extra: Record<string, unknown> = {}) {
       p_terms: TERMS,
       p_name: "꿀단지",
       p_channel_title: "꿀단지의 부엌",
-      p_category: "요리",
+      p_tag_ids: [optionId("유튜브")],
+      p_custom_tag: "요리",
       ...extra,
     },
   };
@@ -64,7 +72,7 @@ beforeEach(cleanup);
 afterAll(cleanup);
 
 describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", () => {
-  it("INV-V1: 크리에이터로 가입하면 이름·채널 이름·분야가 든 공개 정보 행이 확인 안 됨으로 생기고, slug 는 서버가 정한다", async () => {
+  it("INV-V1 INV-T3: 크리에이터로 가입하면 이름·채널 이름·태그가 든 공개 정보 행이 확인 안 됨으로 생기고, slug 는 서버가 정한다", async () => {
     const { userId, body } = await args("it_cv_ggul");
     const r = await adminClient().rpc("create_creator_account", body);
     expect(r.error).toBeNull();
@@ -72,10 +80,15 @@ describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", (
     // 머리 메뉴·인사말이 쓰는 닉네임도 공개 이름이다 — 로그인 아이디를 자른 값(it_cv_ggul)이 아니다
     expect(psql(`select nickname from public.profiles where id = '${userId}'`)).toBe("꿀단지");
     const row = psql(
-      `select name || '|' || channel_title || '|' || category || '|' || identity_verified || '|' || coalesce(channel_url, '-') || '|' || intro || '|' || slug from public.creators where profile_id = '${userId}'`,
+      `select name || '|' || channel_title || '|' || identity_verified || '|' || coalesce(channel_url, '-') || '|' || intro || '|' || slug from public.creators where profile_id = '${userId}'`,
     );
-    const [name, title, category, verified, url, intro, slug] = row.split("|");
-    expect([name, title, category, verified, url, intro]).toEqual(["꿀단지", "꿀단지의 부엌", "요리", "false", "-", ""]);
+    const [name, title, verified, url, intro, slug] = row.split("|");
+    expect([name, title, verified, url, intro]).toEqual(["꿀단지", "꿀단지의 부엌", "false", "-", ""]);
+    // 태그 — 선택지 유튜브 + 직접 입력 「요리」. 분야 칸은 더는 쓰지 않는다(처음 값 그대로)
+    const creatorId = psql(`select id from public.creators where profile_id = '${userId}'`);
+    expect(psql(`select string_agg(o.name, '|') from public.creator_tags t join public.creator_tag_options o on o.id = t.option_id where t.creator_id = '${creatorId}'`)).toBe("유튜브");
+    expect(psql(`select tag from public.creator_custom_tags where creator_id = '${creatorId}'`)).toBe("요리");
+    expect(psql(`select category from public.creators where id = '${creatorId}'`)).toBe("");
     expect(slug).toMatch(/^c-[0-9a-f]{10}$/);
     // 찾기에 나오지 않는다(INV-U5)
     const found = (await anonClient().rpc("list_creators")).data as { slug: string }[];
@@ -96,14 +109,20 @@ describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", (
     );
   });
 
-  it("INV-V1 (실패경로): 이름·채널 이름·분야가 비었거나 길면 거부하고 아무것도 남지 않는다", async () => {
+  it("INV-V1 INV-T3 (실패경로): 이름·채널 이름이 비었거나 길거나, 태그가 0개·6개·직접 입력 21자·숨긴 선택지면 거부하고 아무것도 남지 않는다", async () => {
+    psql(`update public.creator_tag_options set hidden = true where name = '틱톡'`);
+    const six = ["SOOP", "치지직", "유튜브", "알플레이", "X"].map(optionId);
     const cases: Record<string, unknown>[] = [
       { p_name: "" },
       { p_name: "가".repeat(21) },
       { p_channel_title: "  " },
       { p_channel_title: "가".repeat(41) },
-      { p_category: "" },
-      { p_category: "가".repeat(21) },
+      { p_tag_ids: [], p_custom_tag: null },
+      { p_tag_ids: [], p_custom_tag: "  " },
+      { p_custom_tag: "가".repeat(21) },
+      { p_tag_ids: six, p_custom_tag: "요리" },
+      { p_tag_ids: [optionId("틱톡")], p_custom_tag: null },
+      { p_tag_ids: [optionId("유튜브"), optionId("유튜브")], p_custom_tag: null },
     ];
     let i = 0;
     for (const extra of cases) {
@@ -114,6 +133,7 @@ describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", (
       expect(psql(`select count(*) from public.profiles where id = '${userId}'`)).toBe("0");
       expect(psql(`select count(*) from public.creators where profile_id = '${userId}'`)).toBe("0");
     }
+    psql(`update public.creator_tag_options set hidden = false where name = '틱톡'`);
   });
 
   it("INV-V1 (실패경로): slug·확인됨 값을 붙여 보내면 거부된다(인자가 없다)", async () => {
@@ -121,6 +141,9 @@ describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", (
     expect((await adminClient().rpc("create_creator_account", body)).error).not.toBeNull();
     const { body: b2 } = await args("it_cv_ver", { p_identity_verified: true });
     expect((await adminClient().rpc("create_creator_account", b2)).error).not.toBeNull();
+    // 예전 분야 칸은 이제 받지 않는다
+    const { body: b3 } = await args("it_cv_cat", { p_category: "게임" });
+    expect((await adminClient().rpc("create_creator_account", b3)).error).not.toBeNull();
     expect(psql(`select count(*) from public.profiles where id = '${userId}'`)).toBe("0");
   });
 

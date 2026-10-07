@@ -55,20 +55,40 @@ insert into public.owner_setting (owner_user_id) values ('00000000-0000-4000-a00
 -- 확인된 크리에이터는 승인 함수로만 생긴다(creator-verification INV-V6). 시험 데이터를 넣는 동안만 그 막음을 끈다.
 select set_config('fankkuk.verifying', 'on', false);
 
-insert into public.creators (id, profile_id, slug, name, channel, channel_title, category, intro, alias, avg_approval_hours, face_tone, identity_verified)
+insert into public.creators (id, profile_id, slug, name, channel, channel_title, intro, alias, avg_approval_hours, face_tone, identity_verified)
 values
-  ('00000000-0000-4000-b000-000000000001', '00000000-0000-4000-a000-000000000011', 'haru', '하루', '치지직', '하루의 놀이터', '게임', '게임 방송을 해요.', 'haru', 2, 'var(--face-6)', true),
-  ('00000000-0000-4000-b000-000000000002', '00000000-0000-4000-a000-000000000012', 'momo', '모모', '유튜브', '모모네 거실', '노래', '노래 방송을 해요.', 'momo', 4, 'var(--face-3)', true),
-  ('00000000-0000-4000-b000-000000000003', null, 'saebyeokdal', '새벽달', 'SOOP', '새벽달 라디오', '토크', '새벽에 이야기를 나눠요.', 'saebyeokdal', 1, 'var(--face-5)', true),
-  ('00000000-0000-4000-b000-000000000004', null, 'byeol', '별이', '유튜브', '별이의 작업실', '그림', '그림 그리는 방송을 해요.', 'byeol', 3, 'var(--face-1)', true),
-  ('00000000-0000-4000-b000-000000000005', null, 'somsatang', '솜사탕', '치지직', '솜사탕 식탁', '먹방', '맛있는 걸 같이 먹어요.', 'somsatang', 6, 'var(--face-4)', true),
-  ('00000000-0000-4000-b000-000000000006', null, 'dodam', '도담', '유튜브', '도담 홈트', '운동', '집에서 같이 운동해요.', 'dodam', 2, 'var(--face-2)', true),
-  ('00000000-0000-4000-b000-000000000007', null, 'bori', '보리', 'SOOP', '보리의 지구본', '여행', '여행 이야기를 들려 드려요.', 'bori', 5, 'var(--face-1)', true),
-  ('00000000-0000-4000-b000-000000000008', null, 'raon', '라온', '치지직', '라온 아케이드', '게임', '옛날 게임을 해요.', 'raon', 3, 'var(--face-2)', true),
-  ('00000000-0000-4000-b000-000000000009', null, 'namu', '나무', '유튜브', '나무 스터디룸', '공부', '같이 공부해요.', 'namu', 1, 'var(--face-3)', true),
-  ('00000000-0000-4000-b000-000000000010', null, 'siwol', '시월', 'SOOP', '시월 라이브', '음악', '직접 연주해요.', 'siwol', 8, 'var(--face-4)', true),
-  ('00000000-0000-4000-b000-000000000011', null, 'gureum', '구름', '유튜브', '구름 브이로그', '일상', '하루하루를 기록해요.', 'gureum', 4, 'var(--face-5)', true),
-  ('00000000-0000-4000-b000-000000000012', null, 'haedeun', '해든', '치지직', '해든 부엌', '요리', '집밥을 만들어요.', 'haedeun', 2, 'var(--face-6)', true);
+  ('00000000-0000-4000-b000-000000000001', '00000000-0000-4000-a000-000000000011', 'haru', '하루', '치지직', '하루의 놀이터', '게임 방송을 해요.', 'haru', 2, 'var(--face-6)', true),
+  ('00000000-0000-4000-b000-000000000002', '00000000-0000-4000-a000-000000000012', 'momo', '모모', '유튜브', '모모네 거실', '노래 방송을 해요.', 'momo', 4, 'var(--face-3)', true),
+  ('00000000-0000-4000-b000-000000000003', null, 'saebyeokdal', '새벽달', 'SOOP', '새벽달 라디오', '새벽에 이야기를 나눠요.', 'saebyeokdal', 1, 'var(--face-5)', true),
+  ('00000000-0000-4000-b000-000000000004', null, 'byeol', '별이', '유튜브', '별이의 작업실', '그림 그리는 방송을 해요.', 'byeol', 3, 'var(--face-1)', true),
+  ('00000000-0000-4000-b000-000000000005', null, 'somsatang', '솜사탕', '치지직', '솜사탕 식탁', '맛있는 걸 같이 먹어요.', 'somsatang', 6, 'var(--face-4)', true),
+  ('00000000-0000-4000-b000-000000000006', null, 'dodam', '도담', '유튜브', '도담 홈트', '집에서 같이 운동해요.', 'dodam', 2, 'var(--face-2)', true),
+  ('00000000-0000-4000-b000-000000000007', null, 'bori', '보리', 'SOOP', '보리의 지구본', '여행 이야기를 들려 드려요.', 'bori', 5, 'var(--face-1)', true),
+  ('00000000-0000-4000-b000-000000000008', null, 'raon', '라온', '치지직', '라온 아케이드', '옛날 게임을 해요.', 'raon', 3, 'var(--face-2)', true),
+  ('00000000-0000-4000-b000-000000000009', null, 'namu', '나무', '유튜브', '나무 스터디룸', '같이 공부해요.', 'namu', 1, 'var(--face-3)', true),
+  ('00000000-0000-4000-b000-000000000010', null, 'siwol', '시월', 'SOOP', '시월 라이브', '직접 연주해요.', 'siwol', 8, 'var(--face-4)', true),
+  ('00000000-0000-4000-b000-000000000011', null, 'gureum', '구름', '유튜브', '구름 브이로그', '하루하루를 기록해요.', 'gureum', 4, 'var(--face-5)', true),
+  ('00000000-0000-4000-b000-000000000012', null, 'haedeun', '해든', '치지직', '해든 부엌', '집밥을 만들어요.', 'haedeun', 2, 'var(--face-6)', true);
+
+-- 크리에이터 태그(creator-tags) — 각자 방송 플랫폼 + 몇 명은 다른 곳·버추얼. 틱톡은 아무도 고르지 않았다(찾기 칩에 안 나오는지 볼 때, S4b).
+insert into public.creator_tags (creator_id, option_id)
+select c.id, o.id
+from (values
+  ('haru', '치지직'), ('haru', '버추얼'),
+  ('momo', '유튜브'), ('momo', '인스타그램'),
+  ('saebyeokdal', 'SOOP'),
+  ('byeol', '유튜브'), ('byeol', '버추얼'),
+  ('somsatang', '치지직'), ('somsatang', 'X'),
+  ('dodam', '유튜브'), ('dodam', '인스타그램'),
+  ('bori', 'SOOP'), ('bori', '유튜브'),
+  ('raon', '치지직'),
+  ('namu', '유튜브'),
+  ('siwol', 'SOOP'), ('siwol', '알플레이'),
+  ('gureum', '유튜브'), ('gureum', '인스타그램'), ('gureum', '스레드'),
+  ('haedeun', '치지직'), ('haedeun', '스레드')
+) v(slug, tag)
+join public.creators c on c.slug = v.slug
+join public.creator_tag_options o on o.name = v.tag;
 
 -- 확인된 크리에이터의 예시 채널 주소와 채널 점유(creator-verification INV-V8 — 점유 표의 「채널 키마다 한 줄」이 이들도 검사한다).
 -- 유튜브·SOOP 은 slug 를 핸들·아이디로, 치지직은 slug 로 만든 32자리 16진수를 채널 ID 로 쓴다(지어낸 값).

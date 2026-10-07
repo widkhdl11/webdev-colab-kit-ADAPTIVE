@@ -1,4 +1,5 @@
 import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
+import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
 import { followModeOf } from "@/features/creator-follow/model/follow-mode";
 import { CreatorSearchPage } from "@/widgets/creator-search/ui/creator-search-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -12,16 +13,18 @@ export const dynamic = "force-dynamic";
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   // 크리에이터는 자기 줄에서 팔로우·선물 보내기를 보지 않는다(INV-L8). 팔로우하지 않은 줄에는 선물 보내기가 없다(INV-L9 — 팬도 같다)
-  const [header, creators, ownCreatorId] = await Promise.all([
+  const [header, creators, ownCreatorId, tagOptions] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creators"),
     readCreatorCards(supabase, { signedIn: viewer !== null, forSearch: true }),
     viewer?.role === "creator" ? readOwnCreatorId(supabase) : Promise.resolve(null),
+    readTagOptions(supabase), // 태그 칩 순서(creator-tags INV-T4)
   ]);
   return (
     <>
       <SiteHeader {...header} />
       <CreatorSearchPage
         creators={creators}
+        tagOptions={tagOptions}
         followMode={followModeOf(viewer)}
         ownCreatorId={ownCreatorId}
       />

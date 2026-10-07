@@ -1,0 +1,7 @@
+/* 태그 고르기 — 찾기·메인의 칩과 같은 모양(알약, 선택은 차콜 면). 칩이 많아 가로로 넘치지 않고 줄을 바꾼다. */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips :global(.chip) { min-height: 44px; padding-inline: 18px; border: 0; font: inherit; font-weight: 600; cursor: pointer; }
+.chips :global(.chip):hover { background: var(--surface-hover); }
+.chips :global(.chip)[aria-pressed="true"] { background: var(--ink); color: var(--white); }
+.chips :global(.chip)[aria-disabled="true"] { cursor: not-allowed; }
+.custom { margin-top: 16px; }

@@ -103,7 +103,8 @@ export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpRes
             ...common,
             p_name: input.creator.name,
             p_channel_title: input.creator.channelTitle,
-            p_category: input.creator.category,
+            p_tag_ids: input.creator.tagIds,
+            p_custom_tag: input.creator.customTag === "" ? null : input.creator.customTag,
           })
         : await deps.admin.rpc("create_account", { ...common, p_role: input.role });
   } catch (e) {
@@ -115,7 +116,11 @@ export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpRes
     if (account.error.code === "FKU01") return REVERIFY;
     if (account.error.code === "FKU02") return PHONE_TAKEN;
     if (account.error.code === "FKU03") return ID_TAKEN;
-    if (account.error.code === "22023") return { ok: false, status: 400, field: "form", message: "입력을 확인해 주세요." };
+    // 이름·채널 이름은 위에서 같은 규칙으로 걸렀다 — DB 가 거부하면 태그다(그 사이 숨긴 선택지 등, creator-tags INV-T3)
+    if (account.error.code === "22023")
+      return input.role === "creator"
+        ? { ok: false, status: 400, field: "tags", message: "고를 수 없는 태그가 있어요. 새로 고침한 뒤 다시 골라 주세요." }
+        : { ok: false, status: 400, field: "form", message: "입력을 확인해 주세요." };
     throw new Error(`계정을 만들지 못했다: ${account.error.code}`);
   }
 

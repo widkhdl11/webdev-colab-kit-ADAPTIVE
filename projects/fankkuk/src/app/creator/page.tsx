@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { readMyAccessLog } from "@/entities/address/api/access-log-rows";
 import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
+import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
+import { tagChips } from "@/entities/creator/model/creator-tags";
 import { newestSearchable } from "@/entities/creator/model/newest-creators";
 import { sendAvailabilityOf } from "@/features/gift-register/model/sender-rule";
 import { readNotices } from "@/entities/notice/api/notice-reads";
@@ -23,7 +25,7 @@ export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect("/login");
-  const [requests, incoming, accessLog, sentGifts, allNotices, cards, searchable, ownCreatorId] = await Promise.all([
+  const [requests, incoming, accessLog, sentGifts, allNotices, cards, searchable, ownCreatorId, tagOptions] = await Promise.all([
     readMyApprovalRequests(supabase),
     readMyIncomingGifts(supabase),
     readMyAccessLog(supabase, CREATOR_HOME_LOG_ROWS),
@@ -32,6 +34,7 @@ export default async function Page() {
     readCreatorCards(supabase, { signedIn: true }),
     readCreatorCards(supabase, { signedIn: false, forSearch: true }),
     readOwnCreatorId(supabase),
+    readTagOptions(supabase),
   ]);
   // 「선물 보내기」 자리는 크리에이터 페이지와 같은 판단(sendAvailabilityOf — 내가 팔로우했는가, INV-L9).
   const ordered = newestSearchable(cards, searchable);
@@ -42,6 +45,7 @@ export default async function Page() {
     ]),
   );
   const newest = ordered.filter((c) => sendOf[c.id] !== "self");
+  const chips = tagChips(tagOptions, newest); // creator-tags INV-T4
   const notices = allNotices
     .toSorted((a, b) => b.date.localeCompare(a.date))
     .slice(0, 3)
@@ -57,6 +61,7 @@ export default async function Page() {
         incoming={incoming}
         sentGifts={sentGifts}
         newest={newest}
+        chips={chips}
         sendOf={sendOf}
         now={new Date().toISOString()}
       />

@@ -10,7 +10,7 @@ const rowSchema = z.object({
   name: z.string(),
   channel: z.string(),
   channel_title: z.string(),
-  category: z.string(),
+  tags: z.array(z.string()),
   intro: z.string(),
   alias: z.string(),
   avg_approval_hours: z.number().int().nullable(),
@@ -43,7 +43,7 @@ export async function readCreatorCards(
   const summaries: CreatorSummary[] = rows.map((r) => ({ id: r.id, name: r.name, channel: r.channel }));
   const profiles: CreatorProfile[] = rows.map((r) => ({
     creatorId: r.id,
-    category: r.category,
+    tags: r.tags,
     channelTitle: r.channel_title,
     intro: r.intro,
     alias: r.alias,

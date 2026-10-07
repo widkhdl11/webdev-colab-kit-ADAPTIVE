@@ -1,0 +1,84 @@
+import { describe, expect, it } from "vitest";
+import { resolveTagSelection, TAG_CUSTOM_MAX, TAG_TOTAL_MAX, tagChips, tagSelectionSchema } from "./creator-tags";
+
+const ID = {
+  soop: "11111111-1111-4111-8111-000000000001",
+  chzzk: "11111111-1111-4111-8111-000000000002",
+  youtube: "11111111-1111-4111-8111-000000000003",
+  x: "11111111-1111-4111-8111-000000000004",
+  virtual: "11111111-1111-4111-8111-000000000005",
+  tiktok: "11111111-1111-4111-8111-000000000006",
+};
+const OPTIONS = [
+  { id: ID.soop, name: "SOOP" },
+  { id: ID.chzzk, name: "치지직" },
+  { id: ID.youtube, name: "유튜브" },
+  { id: ID.x, name: "X" },
+  { id: ID.virtual, name: "버추얼" },
+  { id: ID.tiktok, name: "틱톡" },
+];
+
+describe("INV-T3: 태그 고르기 — 합쳐 1~5개", () => {
+  it("INV-T3: 상한은 합쳐 5개, 직접 입력은 20자다", () => {
+    expect(TAG_TOTAL_MAX).toBe(5);
+    expect(TAG_CUSTOM_MAX).toBe(20);
+  });
+
+  it("INV-T3 S3: 선택지 4개 + 직접 입력 「팝콘TV」 → 5개, 직접 입력은 앞뒤 공백을 뺀다", () => {
+    const r = resolveTagSelection(OPTIONS, [ID.soop, ID.chzzk, ID.youtube, ID.virtual], "  팝콘TV ");
+    expect(r).toEqual({ ok: true, tagIds: [ID.soop, ID.chzzk, ID.youtube, ID.virtual], customTag: "팝콘TV", count: 5 });
+  });
+
+  it("INV-T3 S3c: 직접 입력이 선택지 이름과 같으면(공백·영문 대소문자 무시) 그 선택지를 고른 것으로 — 이미 골랐으면 한 번만", () => {
+    expect(resolveTagSelection(OPTIONS, [], " 유튜브 ")).toEqual({ ok: true, tagIds: [ID.youtube], customTag: null, count: 1 });
+    expect(resolveTagSelection(OPTIONS, [ID.chzzk], "x")).toEqual({ ok: true, tagIds: [ID.chzzk, ID.x], customTag: null, count: 2 });
+    expect(resolveTagSelection(OPTIONS, [ID.youtube], "YouTube")).toMatchObject({ ok: true, customTag: "YouTube", count: 2 });
+    expect(resolveTagSelection(OPTIONS, [ID.youtube], "유튜브")).toEqual({ ok: true, tagIds: [ID.youtube], customTag: null, count: 1 });
+  });
+
+  it("INV-T3 S3b (실패경로): 0개 / 선택지 5 + 직접 1 / 같은 선택지 두 번 / 목록에 없는(숨긴) 선택지 / 직접 입력 21자 / 보이지 않는 글자 → 거부", () => {
+    const five = [ID.soop, ID.chzzk, ID.youtube, ID.x, ID.virtual];
+    const bad: [string[], string][] = [
+      [[], ""],
+      [[], "   "],
+      [five, "팝콘TV"],
+      [[ID.chzzk, ID.chzzk], ""],
+      [["99999999-9999-4999-8999-999999999999"], ""],
+      [[ID.chzzk], "가".repeat(21)],
+      [[ID.chzzk], "팝콘​TV"],
+    ];
+    for (const [ids, custom] of bad) {
+      expect([ids, custom, resolveTagSelection(OPTIONS, ids, custom).ok]).toEqual([ids, custom, false]);
+    }
+    expect(resolveTagSelection(OPTIONS, [], "가".repeat(20)).ok).toBe(true);
+  });
+
+  it("INV-T3: 서버 입력 꼴 — 선택지 id 목록과 직접 입력, 합쳐 1~5개 · 같은 id 두 번 금지 · 직접 입력 1~20자", () => {
+    expect(tagSelectionSchema.safeParse({ tagIds: [ID.chzzk], customTag: " 팝콘TV " }).data).toEqual({ tagIds: [ID.chzzk], customTag: "팝콘TV" });
+    expect(tagSelectionSchema.safeParse({ tagIds: [], customTag: "팝콘TV" }).success).toBe(true);
+    const bad: unknown[] = [
+      { tagIds: [], customTag: "" },
+      { tagIds: [ID.chzzk, ID.chzzk], customTag: "" },
+      { tagIds: [ID.soop, ID.chzzk, ID.youtube, ID.x, ID.virtual], customTag: "팝콘TV" },
+      { tagIds: [ID.soop, ID.chzzk, ID.youtube, ID.x, ID.virtual, ID.tiktok], customTag: "" },
+      { tagIds: ["not-a-uuid"], customTag: "" },
+      { tagIds: [ID.chzzk], customTag: "가".repeat(21) },
+      { tagIds: [ID.chzzk], customTag: "팝콘​TV" },
+      { tagIds: [ID.chzzk] },
+      { customTag: "팝콘TV" },
+    ];
+    for (const b of bad) expect([b, tagSelectionSchema.safeParse(b).success]).toEqual([b, false]);
+  });
+});
+
+describe("INV-T4: 찾기·메인 칩 — 숨기지 않은 선택지 중 공개 크리에이터가 1명 이상인 것만, 선택지 순서", () => {
+  it("INV-T4 S4b: 아무도 고르지 않은 「틱톡」은 칩에 없고, 순서는 크리에이터 순서가 아니라 선택지 순서다", () => {
+    const cards = [{ tags: ["버추얼", "치지직"] }, { tags: ["SOOP"] }, { tags: [] }];
+    expect(tagChips(OPTIONS, cards)).toEqual(["SOOP", "치지직", "버추얼"]);
+  });
+
+  it("INV-T4 S4 (실패경로): 선택지 목록에 없는 말(직접 입력·숨긴 선택지)은 카드에 붙어 와도 칩이 되지 않는다", () => {
+    expect(tagChips(OPTIONS, [{ tags: ["팝콘TV", "치지직"] }])).toEqual(["치지직"]);
+    expect(tagChips([], [{ tags: ["치지직"] }])).toEqual([]);
+  });
+});

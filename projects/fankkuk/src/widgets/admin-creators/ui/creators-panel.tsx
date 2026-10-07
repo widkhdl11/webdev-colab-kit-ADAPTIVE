@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { latestApprovals, type AdminCreator, type NameChange, type VerificationEvent } from "@/entities/creator/model/admin-creator";
+import type { AdminTagOption, CustomTagCount } from "@/entities/creator/model/creator-tags";
 import {
   adminVerificationTables,
   eventReasonLabel,
@@ -17,6 +18,7 @@ import { ApproveButton } from "@/features/admin-creator-verify/ui/approve-button
 import { RejectButton } from "@/features/admin-creator-verify/ui/reject-button";
 import { RevokeButton } from "@/features/admin-creator-verify/ui/revoke-button";
 import { UnlockButton } from "@/features/admin-creator-verify/ui/unlock-button";
+import { CustomTagsTable, TagOptionsTable } from "@/features/admin-creator-tags/ui/tag-options-manager";
 import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 
@@ -32,6 +34,9 @@ type Props = {
   events: readonly VerificationEvent[];
   /** 공개 이름 바꾼 기록(my-account INV-A9) — 크리에이터가 운영자 확인 없이 바꾼다. 사칭 신고가 오면 이 기록으로 판단한다. */
   nameChanges: readonly NameChange[];
+  /** 태그 선택지(숨긴 것 포함, 순서대로)와 크리에이터가 직접 입력한 태그(같은 말 묶음) — creator-tags INV-T1·T5 */
+  tagOptions: readonly AdminTagOption[];
+  customTags: readonly CustomTagCount[];
 };
 
 function Who({ v }: { v: AdminVerification }) {
@@ -73,7 +78,7 @@ function actionTag(action: VerificationEvent["action"]) {
   return <span className={a.tag}>닫힘</span>;
 }
 
-export function CreatorsPanel({ creators, verifications, events, nameChanges }: Props) {
+export function CreatorsPanel({ creators, verifications, events, nameChanges, tagOptions, customTags }: Props) {
   const { posted, issued, ended } = adminVerificationTables(verifications);
   const approved = creators.filter((c) => c.verified);
   const approvals = latestApprovals(events);
@@ -395,6 +400,26 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges }: 
               </tbody>
             </table>
           </div>
+        </section>
+
+        <section aria-labelledby="h-creator-tags">
+          <div className={a.sectionH}>
+            <h2 id="h-creator-tags">
+              태그 선택지 <span>{tagOptions.length}개</span>
+            </h2>
+            <span>크리에이터가 고르는 목록이자 찾기·메인의 칩이에요 · 숨겨도 고른 기록은 남아요</span>
+          </div>
+          <TagOptionsTable options={tagOptions} onDone={setDone} />
+        </section>
+
+        <section aria-labelledby="h-creator-custom-tags">
+          <div className={a.sectionH}>
+            <h2 id="h-creator-custom-tags">
+              직접 입력한 태그 <span>{customTags.length}개</span>
+            </h2>
+            <span>공개 화면에는 나오지 않아요 · 선택지에 넣으면 같은 말을 적은 크리에이터 모두의 태그로 공개돼요</span>
+          </div>
+          <CustomTagsTable rows={customTags} onDone={setDone} />
         </section>
 
         <section aria-labelledby="h-creators-names">

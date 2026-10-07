@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { useId, useState } from "react";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
+import { tagChips, type TagOption } from "@/entities/creator/model/creator-tags";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { FollowButton, type FollowMode } from "@/features/creator-follow/ui/follow-button";
 import s from "./creator-search.module.css";
 
 // 크리에이터 찾기. 시안: docs/design/mockups/site/v4/creators.html
-// 검색창에 치는 대로 목록이 걸러진다(시안 site.js 의 실시간 검색). 분야 칩은 검색창에 그 말을 채운다.
+// 검색창에 치는 대로 목록이 걸러진다(시안 site.js 의 실시간 검색).
+// 태그 칩(creator-tags INV-T4)은 숨기지 않은 선택지 가운데 이 목록의 크리에이터 1명 이상이 가진 것만, 선택지 순서. 칩 하나를 고르면
+// 그 태그를 가진 크리에이터만 — 검색어와 함께 걸린다. 칩은 한 번에 하나(여러 개 고르는 검색은 비범위).
 
 function CheckIcon({ size }: { size: number }) {
   return (
@@ -19,21 +22,27 @@ function CheckIcon({ size }: { size: number }) {
   );
 }
 
-/** ownCreatorId: 로그인한 크리에이터 자신의 줄 — 팔로우·선물 보내기를 보이지 않는다(자기 자신은 팔로우·선물 불가). */
+/**
+ * ownCreatorId: 로그인한 크리에이터 자신의 줄 — 팔로우·선물 보내기를 보이지 않는다(자기 자신은 팔로우·선물 불가).
+ * tagOptions: 숨기지 않은 태그 선택지(선택지 순서) — 칩 순서를 정한다.
+ */
 export function CreatorSearchPage({
   creators,
+  tagOptions,
   followMode,
   ownCreatorId = null,
 }: {
   creators: readonly CreatorCard[];
+  tagOptions: readonly TagOption[];
   followMode: FollowMode;
   ownCreatorId?: string | null;
 }) {
   const [query, setQuery] = useState("");
+  const [tag, setTag] = useState("");
   const inputId = useId();
-  const categories = [...new Set(creators.map((c) => c.category))];
-  const shown = new Set(creators.filter((c) => matchesCreatorQuery(c, query)).map((c) => c.id));
-  const count = query.trim() ? `검색 결과 ${shown.size}명` : `전체 ${creators.length}명`;
+  const chips = tagChips(tagOptions, creators);
+  const shown = new Set(creators.filter((c) => matchesCreatorQuery(c, query) && (tag === "" || c.tags.includes(tag))).map((c) => c.id));
+  const count = query.trim() || tag ? `검색 결과 ${shown.size}명` : `전체 ${creators.length}명`;
 
   return (
     <main id="main">
@@ -52,7 +61,7 @@ export function CreatorSearchPage({
             <input
               id={inputId}
               type="search"
-              placeholder="예: 하루, 게임, 새벽달 라디오"
+              placeholder="예: 하루, 치지직, 새벽달 라디오"
               autoComplete="off"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -69,10 +78,10 @@ export function CreatorSearchPage({
             <CheckIcon size={20} />
             방송 채널 본인 확인을 마친 크리에이터만 보여요.
           </p>
-          <div className={s.chips} role="group" aria-label="분야로 걸러 보기">
-            {["", ...categories].map((cat) => (
-              <button key={cat || "all"} className="chip" type="button" aria-pressed={query === cat} onClick={() => setQuery(cat)}>
-                {cat || "전체"}
+          <div className={s.chips} role="group" aria-label="태그로 걸러 보기">
+            {["", ...chips].map((t) => (
+              <button key={t || "all"} className="chip" type="button" aria-pressed={tag === t} onClick={() => setTag(t)}>
+                {t || "전체"}
               </button>
             ))}
           </div>
@@ -96,7 +105,7 @@ export function CreatorSearchPage({
                     <Link href={`/creators/${c.id}`}>{c.name}</Link>
                   </p>
                   <p className={s.says}>
-                    {c.category} · {c.channelTitle} · {approvalTimeText(c.approvalMinutes)}
+                    {[...c.tags, c.channelTitle, approvalTimeText(c.approvalMinutes)].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 {c.id === ownCreatorId ? (

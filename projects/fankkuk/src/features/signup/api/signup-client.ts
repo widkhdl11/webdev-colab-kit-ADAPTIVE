@@ -1,4 +1,5 @@
 import type { SignUpField } from "../model/sign-up";
+import type { CreatorProfileBody } from "../model/signup-input";
 
 // 브라우저에서 가입 단계를 서버에 보낸다. 서버가 준 문구를 그대로 보여 준다.
 // 번호표는 브라우저 스크립트가 만지지 않는다 — 서버가 쿠키로 주고 쿠키에서 읽는다(signup INV-U1, S1c).
@@ -10,8 +11,8 @@ export type SignupBody = {
   password: string;
   phone: string;
   terms: { service: boolean; privacy: boolean; news: boolean };
-  /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름·분야 */
-  creator?: { name: string; channelTitle: string; category: string };
+  /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름·태그(선택지 id + 직접 입력) */
+  creator?: CreatorProfileBody;
 };
 
 const FALLBACK = "잠시 문제가 생겼어요. 조금 뒤 다시 해 주세요.";
@@ -26,7 +27,7 @@ const FIELDS: readonly SignUpField[] = [
   "terms",
   "creatorName",
   "channelTitle",
-  "category",
+  "tags",
   "form",
 ];
 

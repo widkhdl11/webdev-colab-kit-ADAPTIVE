@@ -6,7 +6,8 @@ export type CreatorSummary = { id: string; name: string; channel: string };
 /** 목록·크리에이터 페이지에 보이는 소개 칸. CreatorSummary 와 id 로 잇는다. */
 export type CreatorProfile = {
   creatorId: string;
-  category: string;
+  /** 태그 — 숨기지 않은 선택지 이름, 선택지 순서(creator-tags INV-T4). 직접 입력은 공개 목록에 오지 않는다. */
+  tags: readonly string[];
   channelTitle: string;
   intro: string;
   /** 검색에 같이 걸리는 로마자 이름. */

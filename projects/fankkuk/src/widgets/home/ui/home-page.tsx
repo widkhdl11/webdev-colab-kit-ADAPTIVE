@@ -25,6 +25,8 @@ type Props = {
   faceToneByName: Readonly<Record<string, string>>;
   /** 찾기에 나오는 크리에이터, 최근에 들어온 순. */
   newest: readonly CreatorCard[];
+  /** 태그 칩 — 숨기지 않은 선택지 가운데 위 크리에이터 1명 이상이 가진 것, 선택지 순서(creator-tags INV-T4, tagChips). */
+  chips: readonly string[];
   /** 카드마다 「선물 보내기」 자리 — 라우트가 sendAvailabilityOf 로 정한다(INV-L9). */
   sendOf: Readonly<Record<string, SendAvailability>>;
   notices: readonly HomeNotice[];
@@ -92,7 +94,7 @@ function MyCard({ nickname, gifts, following, faceToneByName }: Pick<Props, "nic
   );
 }
 
-export function HomePage({ nickname, gifts, following, faceToneByName, newest, sendOf, notices }: Props) {
+export function HomePage({ nickname, gifts, following, faceToneByName, newest, chips, sendOf, notices }: Props) {
   return (
     <main id="main">
       <section className={s["hero-wrap"]} aria-labelledby="hero-title">
@@ -112,7 +114,7 @@ export function HomePage({ nickname, gifts, following, faceToneByName, newest, s
               전체 보기 ›
             </Link>
           </div>
-          <NewCreators creators={newest} sendOf={sendOf} />
+          <NewCreators creators={newest} chips={chips} sendOf={sendOf} />
         </div>
       </section>
 

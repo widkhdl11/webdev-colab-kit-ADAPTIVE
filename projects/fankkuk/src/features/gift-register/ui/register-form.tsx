@@ -17,9 +17,9 @@ import { movingNotice } from "../model/sender-rule";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
 import f from "./register-form.module.css";
 
-/** 고를 수 있는 크리에이터 한 명. 소개 칸(분야·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
+/** 고를 수 있는 크리에이터 한 명. 소개 칸(태그·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
 export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "approvalMinutes"> &
-  Partial<Pick<CreatorCard, "category" | "channelTitle" | "alias" | "faceTone" | "following">> & {
+  Partial<Pick<CreatorCard, "tags" | "channelTitle" | "alias" | "faceTone" | "following">> & {
     /** 채널 이사 중(creator-verification INV-V12) — 찾기에는 나오지만 지금은 선물을 받지 않는다 */
     moving?: boolean;
   };
@@ -197,7 +197,7 @@ export function RegisterForm({
     if (hasCountError) void trigger(["smallCount", "mediumCount", "largeCount"]);
   };
 
-  // 크리에이터 찾기 화면과 같은 검색 규칙(이름·로마자 이름·분야·채널 이름·플랫폼)
+  // 크리에이터 찾기 화면과 같은 검색 규칙(이름·로마자 이름·태그·채널 이름·플랫폼)
   const matches = creators.filter((c) => matchesCreatorQuery(c, query));
   // 검색하지 않을 때는 앞의 pickLimit 명만(미리 고른 사람·최근에 선물한 사람이 앞에 온다). 고른 사람은 접어도 보이게 남긴다.
   const searching = query.trim() !== "";
@@ -318,7 +318,7 @@ export function RegisterForm({
                         <span className={f["pick-text"]}>
                           <strong>{c.name}</strong>
                           <small>
-                            {[c.category, c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : approvalTimeText(c.approvalMinutes)]
+                            {[...(c.tags ?? []), c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : approvalTimeText(c.approvalMinutes)]
                               .filter(Boolean)
                               .join(" · ")}
                           </small>

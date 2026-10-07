@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { BlockedFan } from "@/entities/creator/api/blocked-senders";
 import type { CreatorSettingsView } from "@/entities/creator/model/creator-settings";
+import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
+import { sendCreatorTags } from "@/features/creator-tags-edit/api/send-creator-tags";
+import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { sendCreatorNotify, sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
 import { clipChars, countChars, INTRO_MAX, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
@@ -75,12 +78,15 @@ function Switch({
 
 export function CreatorSettingsPage({
   settings,
+  tagOptions,
   address,
   sealingKeyPem,
   blockedFans,
   verification,
 }: {
   settings: CreatorSettingsView;
+  /** 고를 수 있는 태그 선택지(숨기지 않은 것, 선택지 순서 — creator-tags INV-T3) */
+  tagOptions: readonly TagOption[];
   address: MyAddressStatus;
   /** 주소 봉인 공개키(PEM). 없으면 주소 입력 대신 안내만 보인다. */
   sealingKeyPem: string | null;
@@ -120,6 +126,9 @@ export function CreatorSettingsPage({
   const [publicName, setPublicName] = useState(settings.publicName);
   const [intro, setIntro] = useState(settings.intro);
   const [visible, setVisible] = useState(settings.visibleInSearch);
+  const [tagIds, setTagIds] = useState<string[]>([...settings.tagIds]);
+  const [customTag, setCustomTag] = useState(settings.customTag);
+  const [tagsBad, setTagsBad] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [notify, setNotify] = useState(settings.notify);
@@ -127,22 +136,36 @@ export function CreatorSettingsPage({
   const [notifyMsg, setNotifyMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   // 서버가 저장한 뒤에만 「저장했어요」. 입력 검사는 서버가 다시 한다 — 화면은 서버가 준 문구를 그대로 보인다.
+  // 태그(creator-tags INV-T3)는 화면에서 먼저 1~5개인지 보고, 프로필을 저장한 뒤 이어서 저장한다(서로 다른 DB 함수).
   const saveProfile = async () => {
     if (profileSaving) return;
-    setProfileSaving(true);
     setProfileMsg(null);
+    const tags = resolveTagSelection(tagOptions, tagIds, customTag);
+    setTagsBad(!tags.ok);
+    if (!tags.ok) {
+      setProfileMsg({ ok: false, text: tags.message });
+      return;
+    }
+    setProfileSaving(true);
     const r = await sendCreatorProfile({ name: publicName, intro, searchable: visible });
+    const t = r.kind === "ok" ? await sendCreatorTags({ tagIds: tags.tagIds, customTag: tags.customTag }) : r;
     setProfileSaving(false);
-    if (r.kind === "login") {
+    if (r.kind === "login" || t.kind === "login") {
       router.push("/login");
       return;
     }
-    if (r.kind === "ok") {
-      setProfileMsg({ ok: true, text: "프로필을 저장했어요." });
-      router.refresh(); // 머리 메뉴의 이름도 새 공개 이름으로
+    if (r.kind === "failed") {
+      setProfileMsg({ ok: false, text: r.message });
       return;
     }
-    setProfileMsg({ ok: false, text: r.message });
+    if (t.kind === "failed") {
+      setTagsBad(true);
+      setProfileMsg({ ok: false, text: t.message });
+      router.refresh(); // 공개 이름은 저장됐다 — 머리 메뉴를 새로. 태그 선택지가 바뀌었으면 새 목록으로
+      return;
+    }
+    setProfileMsg({ ok: true, text: "프로필을 저장했어요." });
+    router.refresh(); // 머리 메뉴의 이름도 새 공개 이름으로
   };
 
   // 스위치는 누르는 즉시 저장한다. 실패하면 화면 값을 저장된 값으로 되돌린다.
@@ -278,6 +301,23 @@ export function CreatorSettingsPage({
                 크리에이터 페이지에 보여요. {INTRO_MAX}자까지 적을 수 있어요({countChars(intro.trim())}/{INTRO_MAX}).
               </p>
             </div>
+            <div className={s["tags-field"]}>
+              <TagPicker
+                idBase="pub-tags"
+                options={tagOptions}
+                picked={tagIds}
+                custom={customTag}
+                onPickedChange={(next) => {
+                  setTagIds(next);
+                  setTagsBad(false);
+                }}
+                onCustomChange={(next) => {
+                  setCustomTag(next);
+                  setTagsBad(false);
+                }}
+                invalid={tagsBad ? { describedBy: "prof-msg" } : null}
+              />
+            </div>
             <dl className={s.kv}>
               <div>
                 <dt>방송 채널</dt>
@@ -306,7 +346,7 @@ export function CreatorSettingsPage({
             <button className={`btn ${s.save}`} type="button" aria-disabled={profileSaving} onClick={() => void saveProfile()}>
               {profileSaving ? "저장하는 중…" : "프로필 저장"}
             </button>
-            <p className={profileMsg && !profileMsg.ok ? s.error : `sub ${s["save-msg"]}`} role="status">
+            <p className={profileMsg && !profileMsg.ok ? s.error : `sub ${s["save-msg"]}`} role="status" id="prof-msg">
               {profileMsg && !profileMsg.ok ? (
                 <span className={s["error-mark"]} aria-hidden="true">
                   !

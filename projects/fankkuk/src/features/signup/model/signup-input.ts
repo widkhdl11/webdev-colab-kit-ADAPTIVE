@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TAG_COUNT_MESSAGE, tagCountWithin, tagSelectionFields } from "@/entities/creator/model/creator-tags";
 import { SIGNUP_LOGIN_ID_PATTERN } from "@/entities/session/model/login-id";
 import { PASSWORD_MAX, PASSWORD_MIN, PASSWORD_SAME_AS_ID, PASSWORD_TOO_LONG, PASSWORD_TOO_SHORT } from "@/entities/session/model/password-rule";
 import { EMAIL_SHAPE } from "@/shared/lib/validation/email-shape";
@@ -42,9 +43,10 @@ const detailsObject = z.object({
 
 /**
  * 크리에이터 기본 공개 정보 — 가입 때 받는다(creator-verification INV-V1, 「정한 것」 2026-10-05).
- * 이름 1~20자 · 채널 이름 1~40자 · 분야 1~20자(앞뒤 공백 뗀 글자 수). DB 함수 create_creator_account 가 같은 기준으로 다시 검사한다.
+ * 이름 1~20자 · 채널 이름 1~40자(앞뒤 공백 뗀 글자 수) · 태그 1~5개(creator-tags INV-T3 — 선택지 id + 직접 입력 0~1개).
+ * DB 함수 create_creator_account 가 같은 기준으로 다시 검사한다(선택지가 있는지·숨겼는지도 DB 가 본다).
  */
-export const CREATOR_PROFILE_LIMITS = { name: 20, channelTitle: 40, category: 20 } as const;
+export const CREATOR_PROFILE_LIMITS = { name: 20, channelTitle: 40 } as const;
 
 const trimmedWithin = (max: number, message: string) =>
   z
@@ -52,13 +54,18 @@ const trimmedWithin = (max: number, message: string) =>
     .trim()
     .refine((s) => charCount(s) >= 1 && charCount(s) <= max, message);
 
-export const creatorProfileSchema = z.object({
-  name: trimmedWithin(CREATOR_PROFILE_LIMITS.name, `공개 이름을 1~${CREATOR_PROFILE_LIMITS.name}자로 적어 주세요.`),
-  channelTitle: trimmedWithin(CREATOR_PROFILE_LIMITS.channelTitle, `채널 이름을 1~${CREATOR_PROFILE_LIMITS.channelTitle}자로 적어 주세요.`),
-  category: trimmedWithin(CREATOR_PROFILE_LIMITS.category, `분야를 1~${CREATOR_PROFILE_LIMITS.category}자로 적어 주세요.`),
-});
+export const creatorProfileSchema = z
+  .object({
+    name: trimmedWithin(CREATOR_PROFILE_LIMITS.name, `공개 이름을 1~${CREATOR_PROFILE_LIMITS.name}자로 적어 주세요.`),
+    channelTitle: trimmedWithin(CREATOR_PROFILE_LIMITS.channelTitle, `채널 이름을 1~${CREATOR_PROFILE_LIMITS.channelTitle}자로 적어 주세요.`),
+    ...tagSelectionFields,
+  })
+  .refine(tagCountWithin, { message: TAG_COUNT_MESSAGE, path: ["tagIds"] });
 
 export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
+
+/** 화면이 보내는 크리에이터 공개 정보 — 태그는 고른 선택지 id 와 직접 입력(없으면 ""). */
+export type CreatorProfileBody = { name: string; channelTitle: string; tagIds: readonly string[]; customTag: string };
 
 const CREATOR_REQUIRED = { message: "크리에이터 정보를 적어 주세요.", path: ["creator", "name"] };
 const creatorWhenCreator = (v: { role?: string; creator?: unknown }) => v.role !== "creator" || v.creator !== undefined;
@@ -88,10 +95,10 @@ export type DetailsField =
   | "terms"
   | "creatorName"
   | "channelTitle"
-  | "category";
+  | "tags";
 
 const DETAILS_FIELDS: readonly string[] = ["loginId", "email", "password", "phone", "terms"];
-const CREATOR_FIELDS: Record<string, DetailsField> = { name: "creatorName", channelTitle: "channelTitle", category: "category" };
+const CREATOR_FIELDS: Record<string, DetailsField> = { name: "creatorName", channelTitle: "channelTitle", tagIds: "tags", customTag: "tags" };
 
 /** zod 오류의 첫 칸 이름. 2단계 칸이 아니면 null. */
 export function detailsFieldOf(path: readonly PropertyKey[]): DetailsField | null {
@@ -114,8 +121,8 @@ export function checkDetails(v: {
   passwordConfirm: string;
   phone: string;
   terms: { service: boolean; privacy: boolean };
-  /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름·분야(INV-V1) */
-  creator?: { name: string; channelTitle: string; category: string };
+  /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름(INV-V1)·태그(creator-tags INV-T3) */
+  creator?: CreatorProfileBody;
 }): { field: DetailsField; message: string } | null {
   const parsed = detailsObject
     .extend({ creator: creatorProfileSchema.optional() })

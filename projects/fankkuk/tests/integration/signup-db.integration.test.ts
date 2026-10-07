@@ -275,9 +275,10 @@ describe("INV-U5·U6: 역할과 입력 경계는 DB 도 다시 본다", () => {
     expect(usedAt(vid)).toBe("");
   });
 
-  it("INV-U5 (S5b)·creator-verification INV-V1: 크리에이터로 가입하면 확인 안 된 공개 정보 행이 생기고, 크리에이터 찾기에는 나오지 않는다", async () => {
+  it("INV-U5 (S5b)·creator-verification INV-V1·creator-tags INV-T3: 크리에이터로 가입하면 확인 안 된 공개 정보 행과 태그가 생기고, 크리에이터 찾기에는 나오지 않는다", async () => {
     const p = phone();
-    const creator = { name: "리마시험", channelTitle: "리마 채널", category: "시험" };
+    const soop = psql(`select id from public.creator_tag_options where name = 'SOOP'`);
+    const creator = { name: "리마시험", channelTitle: "리마 채널", tagIds: [soop], customTag: " 시험 " };
     expect((await signUp(signUpDeps(), signupBody("it_lima", p, await verified(p), { role: "creator", creator }))).ok).toBe(true);
     expect(psql(`select role from public.profiles where login_id = 'it_lima';`)).toBe("creator");
     const listed = (await anonClient().rpc("list_creators")).data as { name?: string; slug?: string }[] | null;
@@ -285,9 +286,12 @@ describe("INV-U5·U6: 역할과 입력 경계는 DB 도 다시 본다", () => {
     expect(JSON.stringify(listed ?? [])).not.toContain("리마시험");
     expect(
       psql(
-        `select c.name || '|' || c.channel_title || '|' || c.category || '|' || c.identity_verified || '|' || coalesce(c.channel_url, '-') from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_lima';`,
+        `select c.name || '|' || c.channel_title || '|' || c.identity_verified || '|' || coalesce(c.channel_url, '-') || '|' ||
+           (select string_agg(o.name, ',') from public.creator_tags t join public.creator_tag_options o on o.id = t.option_id where t.creator_id = c.id) || '|' ||
+           (select x.tag from public.creator_custom_tags x where x.creator_id = c.id)
+         from public.creators c join public.profiles p on p.id = c.profile_id where p.login_id = 'it_lima';`,
       ),
-    ).toBe("리마시험|리마 채널|시험|false|-");
+    ).toBe("리마시험|리마 채널|false|-|SOOP|시험");
   });
 
   it("INV-U6 (S6, 실패경로): 필수 약관이 빠지거나 아이디 꼴이 틀리면 DB 가 거부", async () => {

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import type { TagOption } from "@/entities/creator/model/creator-tags";
+import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { completeSignup } from "@/features/signup/api/complete-signup";
 import { requestPhoneVerification } from "@/features/signup/api/signup-client";
 import { checkDetails, CREATOR_PROFILE_LIMITS, type DetailsField } from "@/features/signup/model/signup-input";
@@ -37,7 +39,8 @@ function CheckIcon({ size }: { size: number }) {
   );
 }
 
-export function SignupPage() {
+/** tagOptions: 크리에이터가 고를 수 있는 태그 선택지(숨기지 않은 것, 선택지 순서 — creator-tags INV-T3) */
+export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] }) {
   const router = useRouter();
   const id = useId();
   const f = (name: string) => `${id}-${name}`;
@@ -53,7 +56,8 @@ export function SignupPage() {
   // 크리에이터로 가입할 때만 받는 기본 공개 정보(creator-verification INV-V1). 채널 주소는 가입 뒤 본인 확인 때 받는다.
   const [creatorName, setCreatorName] = useState("");
   const [channelTitle, setChannelTitle] = useState("");
-  const [category, setCategory] = useState("");
+  const [tagIds, setTagIds] = useState<string[]>([]);
+  const [customTag, setCustomTag] = useState("");
   const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({ service: false, privacy: false, news: false });
   // 인증 요청을 보냈는가. 번호표 자체는 서버가 쿠키로 들고 있다(INV-U1). 번호를 고치면 요청부터 다시 —
   // 다른 번호의 확인으로 가입하지 않게(서버도 번호 대조로 막는다).
@@ -84,7 +88,7 @@ export function SignupPage() {
     setErrorSeq((n) => n + 1);
   };
 
-  const creatorProfile = () => (role === "creator" ? { name: creatorName, channelTitle, category } : undefined);
+  const creatorProfile = () => (role === "creator" ? { name: creatorName, channelTitle, tagIds, customTag } : undefined);
   const details = () => checkDetails({ loginId, email, password, passwordConfirm, phone, terms: agreed, creator: creatorProfile() });
 
   const sendRequest = async () => {
@@ -367,20 +371,15 @@ export function SignupPage() {
                         채널 주소는 가입한 뒤 본인 확인 때 받아요.
                       </p>
                     </div>
-                    <div className="field">
-                      <label htmlFor={f("cr-category")}>분야</label>
-                      <input
-                        className="input"
-                        id={f("cr-category")}
-                        type="text"
-                        autoComplete="off"
-                        placeholder="예: 게임, 먹방, 그림"
-                        maxLength={CREATOR_PROFILE_LIMITS.category}
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        {...invalid("category")}
-                      />
-                    </div>
+                    <TagPicker
+                      idBase={f("cr-tags")}
+                      options={tagOptions}
+                      picked={tagIds}
+                      custom={customTag}
+                      onPickedChange={setTagIds}
+                      onCustomChange={setCustomTag}
+                      invalid={error?.field === "tags" ? { describedBy: f("error") } : null}
+                    />
                   </>
                 ) : null}
                 <div className="field" role="group" aria-labelledby={f("terms")}>

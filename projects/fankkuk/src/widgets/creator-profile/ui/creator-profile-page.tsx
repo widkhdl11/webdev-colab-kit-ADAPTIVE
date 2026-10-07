@@ -66,9 +66,12 @@ export function CreatorProfilePage({
                 <CheckIcon />
                 본인 확인 완료
               </span>
-              <span className="tag">
-                {creator.category} · {creator.channelTitle}
-              </span>
+              {/* 태그 — 숨기지 않은 선택지만 온다(creator-tags INV-T4). 채널 이름은 위 줄에 있다 */}
+              {creator.tags.map((t) => (
+                <span key={t} className="tag">
+                  {t}
+                </span>
+              ))}
             </div>
             <p className={s.avg}>
               <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
@@ -196,7 +199,7 @@ export function CreatorProfilePage({
                     <CreatorFace tone={o.faceTone} className="face face--lg" />
                     <span>
                       {o.name}
-                      <small>{o.category}</small>
+                      {o.tags.length > 0 ? <small>{o.tags.join(" · ")}</small> : null}
                     </span>
                   </Link>
                 </li>

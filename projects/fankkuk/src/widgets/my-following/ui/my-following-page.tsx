@@ -54,7 +54,7 @@ export function MyFollowingPanel({ creators }: { creators: readonly CreatorCard[
                   <Link href={`/creators/${c.id}`}>{c.name}</Link>
                 </p>
                 <p className={s.says}>
-                  {c.category} · {c.channelTitle} · {approvalTimeText(c.approvalMinutes)}
+                  {[...c.tags, c.channelTitle, approvalTimeText(c.approvalMinutes)].filter(Boolean).join(" · ")}
                 </p>
               </div>
               <div className={s.acts}>

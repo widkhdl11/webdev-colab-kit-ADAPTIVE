@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";
+import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
+import { tagChips } from "@/entities/creator/model/creator-tags";
 import { newestSearchable } from "@/entities/creator/model/newest-creators";
 import { sendAvailabilityOf } from "@/features/gift-register/model/sender-rule";
 import { readNotices } from "@/entities/notice/api/notice-reads";
@@ -22,11 +24,13 @@ export default async function Page() {
   if (viewer?.role !== "fan") redirect("/login");
   const all = await readMyGiftViews(supabase);
   const gifts = all.filter((v) => fanGiftBucket(v) === "ongoing");
-  const [cards, searchable] = await Promise.all([
+  const [cards, searchable, tagOptions] = await Promise.all([
     readCreatorCards(supabase, { signedIn: true }),
     readCreatorCards(supabase, { signedIn: false, forSearch: true }),
+    readTagOptions(supabase),
   ]);
   const newest = newestSearchable(cards, searchable);
+  const chips = tagChips(tagOptions, newest); // creator-tags INV-T4
   // 「선물 보내기」 자리는 크리에이터 페이지와 같은 판단 — 팔로우했으면 선물 보내기, 아니면 팔로우하고 선물 보내기(INV-L9)
   const sendOf = Object.fromEntries(
     newest.map((c) => [c.id, sendAvailabilityOf({ viewerRole: "fan", creatorId: c.id, ownCreatorId: null, following: c.following })]),
@@ -40,7 +44,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/home", all)} />
-      <HomePage nickname={viewer.nickname ?? ""} gifts={gifts} following={following} faceToneByName={faceToneByName} newest={newest} sendOf={sendOf} notices={notices} />
+      <HomePage nickname={viewer.nickname ?? ""} gifts={gifts} following={following} faceToneByName={faceToneByName} newest={newest} chips={chips} sendOf={sendOf} notices={notices} />
       <SiteFooter />
     </>
   );

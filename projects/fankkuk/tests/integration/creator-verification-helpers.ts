@@ -67,8 +67,8 @@ export function createCvAccounts(): void {
     with a(id, login_id, nickname) as (values ${ALL.map((x) => `('${x.id}'::uuid, '${x.login}', '${x.name}')`).join(", ")})
     insert into public.profiles (id, login_id, nickname, role) select a.id, a.login_id, a.nickname, 'creator' from a on conflict (id) do nothing;
     with a(id, creator_id, login_id, nickname) as (values ${ALL.map((x) => `('${x.id}'::uuid, '${x.creatorId}'::uuid, '${x.login}', '${x.name}')`).join(", ")})
-    insert into public.creators (id, profile_id, slug, name, channel, channel_title, category)
-    select a.creator_id, a.id, replace(a.login_id, '_', '-'), a.nickname, '', a.nickname || ' 채널', '시험' from a on conflict (id) do nothing;
+    insert into public.creators (id, profile_id, slug, name, channel, channel_title)
+    select a.creator_id, a.id, replace(a.login_id, '_', '-'), a.nickname, '', a.nickname || ' 채널' from a on conflict (id) do nothing;
   `);
 }
 
