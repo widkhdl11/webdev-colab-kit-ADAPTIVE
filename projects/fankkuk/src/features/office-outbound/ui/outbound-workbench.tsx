@@ -339,7 +339,7 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
             </h2>
           </div>
           <Facts parcel={parcel} />
-          <p className={a.hint}>{parcel.kind === "gift" ? "보낸 팬의 원 송장 주소로 착불 반송해요." : "보낸 크리에이터 쪽으로 반송해요."}</p>
+          <p className={a.hint}>{parcel.kind === "gift" ? "보낸 팬의 원 송장 주소로 반송해요. 택배비는 팬꾹이 먼저 내요(선불) — 환불에서 빠져요." : "보낸 크리에이터 쪽으로 반송해요."}</p>
           <div className={a.btnRow}>
             <button className={`${a.btn} ${a.btnLg}`} type="button" onClick={() => onPrint("print_return")} aria-disabled={busy}>
               {busy ? "출력하는 중…" : "반송 송장 출력"}

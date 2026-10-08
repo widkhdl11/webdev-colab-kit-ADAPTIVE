@@ -8,7 +8,7 @@ import { FAN_PASS, inspect, parcelState, waybill } from "./office-helpers";
 
 // 차액 결제 (payment INV-M2·M3·M5·M7·M8·M11·M12·M13, admin-console INV-K1).
 // 운영자가 검수 때 실측 구간을 기록하면 DB 가 차액 요청(결제 대기)을 만든다 → 팬이 선물 상세에서 차액을 결제한다(토스 승인 API 만 가짜)
-// → 차액이 끝나야 송장이 나간다 → 7일 미납이면 그 주문은 반송 대상, 환불은 배송비 칸만.
+// → 차액이 끝나야 송장이 나간다 → 7일 미납이면 그 주문은 반송 대상, 환불은 상품 대금 칸만(선불 반송 — 2026-10-08 정책 ③).
 // 시드 주문은 건드리지 않는다 — 시험마다 새 주문(물건 이름 「시험 선물」)을 만들고 끝나면 지운다.
 
 /** 가짜 토스 승인 API. totalAmount 를 주면 요청 금액 대신 그 금액을 돌려준다(위조·오류 응답). 받은 멱등 키 헤더도 남긴다. */
@@ -319,7 +319,7 @@ describe("출고 화면 안내: 승인은 끝났고 차액만 미납이면 「�
   });
 });
 
-describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 환불은 배송비 칸만", () => {
+describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 환불은 상품 대금 칸만", () => {
   async function inspectedWithDifference() {
     const g = await paidOrder(["small"]);
     const qr = await labeled(g.boxIds[0]!);
@@ -388,12 +388,13 @@ describe("INV-M13 · INV-M8: 차액 요청 뒤 7일 미납이면 반송 대상, 
     expect(parcelState(qr)).toBe("inspected");
   });
 
-  it("INV-M8 S8: 차액 미납 반송의 환불은 첫 결제의 배송비 칸만 — 반송 전에는 환불 대상이 아니다", async () => {
+  it("INV-M8 S8: 차액 미납 반송의 환불은 첫 결제의 상품 대금 칸만 — 배송비 칸은 선불 반송에 쓰인다, 반송 전에는 환불 대상이 아니다", async () => {
     const { g } = await inspectedWithDifference();
     expect(refundDue(g.orderId)).toBe("none");
     backdate(g.orderId, "168 hours");
     await (await signedInClient("fankkuk_staff")).rpc("office_run_expiry", { p_order_no: g.orderNo });
-    expect(refundDue(g.orderId)).toBe("4000");
+    expect(refundDue(g.orderId)).toBe(psql(`select goods_krw from public.payments where order_id = '${g.orderId}' and kind = 'initial'`));
+    expect(refundDue(g.orderId)).not.toBe(psql(`select shipping_fee_krw from public.payments where order_id = '${g.orderId}' and kind = 'initial'`));
     // 내지 않은 차액 결제 자체는 환불할 것이 없다
     expect(psql(`select coalesce(public.refund_due_of_payment(p.id)::text, 'none') from public.payments p where p.order_id = '${g.orderId}' and p.kind = 'difference'`)).toBe(
       "none",
