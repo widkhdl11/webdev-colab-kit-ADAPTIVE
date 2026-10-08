@@ -90,9 +90,18 @@ export function unmatchedFromRows(rows: unknown): UnmatchedParcel[] | null {
   }));
 }
 
-/** 「반송으로 넘기기」를 누를 수 있는 줄 — 아직 이어지지 않은 미확인 입고만(DB 가 다시 판정한다). 묶인 상자는 여기서 반송하지 않는다. */
-export function canReturnHeld(row: Pick<UnmatchedParcel, "source" | "state">): boolean {
-  return row.source === "unmatched" && row.state === "waiting";
+/** 기다리지 않고 바로 넘길 수 있는 묶인 상자의 보류 사유 — 주인이 아니라고 했거나 이미 주문에서 떨어진 상자(INV-C9 S9c). */
+const RETURN_ANYTIME: readonly HoldReason[] = ["not_mine", "detached"];
+
+/**
+ * 「반송으로 넘기기」를 누를 수 있는 줄(inbound-address-code INV-C9). DB 가 잠금 뒤 다시 판정한다 — 여기는 버튼을 그릴지만 정한다.
+ * 미확인 입고는 대기 중이면. 주문에 묶인 보류 상자는 「아니에요」·떼어 낸 상자면 바로, 분쟁이면 기한(보류 + 168시간)이 지난 뒤.
+ */
+export function canReturnHeld(row: Pick<UnmatchedParcel, "source" | "state" | "reason" | "deadlineAt">, now: string): boolean {
+  if (row.source === "unmatched") return row.state === "waiting";
+  if (row.state !== "on_hold") return false;
+  if (RETURN_ANYTIME.includes(row.reason)) return true;
+  return row.deadlineAt !== null && Date.parse(row.deadlineAt) <= Date.parse(now);
 }
 
 // ── 찾기 실패가 반복된 계정 (inbound-address-code INV-C10) ──

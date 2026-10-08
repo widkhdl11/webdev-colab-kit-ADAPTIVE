@@ -20,12 +20,26 @@ function fakeClient(reply: { error: { code: string } | null }, operator = true) 
 describe("반송으로 넘기기 (inbound-address-code INV-C6·C9)", () => {
   it("INV-C9: 운영자가 보류 줄 id 하나로 DB 함수를 부른다", async () => {
     const { calls, client } = fakeClient({ error: null });
-    expect(await returnHeld(client, { kind: "return", id: ID })).toEqual({ status: 200, body: { ok: true } });
+    expect(await returnHeld(client, { kind: "return", source: "unmatched", id: ID })).toEqual({ status: 200, body: { ok: true } });
     expect(calls).toEqual([{ fn: "admin_return_unmatched", args: { p_id: ID } }]);
   });
 
+  it("INV-C9 (S9b·S9c): 주문에 묶인 보류 상자(source parcel)는 상자 줄 id 로 그 DB 함수를 부른다", async () => {
+    const { calls, client } = fakeClient({ error: null });
+    expect(await returnHeld(client, { kind: "return", source: "parcel", id: ID })).toEqual({ status: 200, body: { ok: true } });
+    expect(calls).toEqual([{ fn: "admin_return_held_parcel", args: { p_id: ID } }]);
+  });
+
   it("INV-C4·C9 (실패경로): 주문번호·상자 칸을 붙이거나 꼴이 틀리면 DB 를 부르지 않고 400 — 손으로 잇는 길은 없다", async () => {
-    for (const body of [null, { kind: "return" }, { kind: "return", id: "x" }, { kind: "return", id: ID, orderNo: "FC-1" }, { kind: "match", id: ID, boxId: ID }]) {
+    for (const body of [
+      null,
+      { kind: "return" },
+      { kind: "return", source: "unmatched", id: "x" },
+      { kind: "return", source: "unmatched", id: ID, orderNo: "FC-1" },
+      { kind: "return", source: "order", id: ID },
+      { kind: "return", id: ID },
+      { kind: "match", source: "unmatched", id: ID, boxId: ID },
+    ]) {
       const { calls, client } = fakeClient({ error: null });
       expect((await returnHeld(client, body)).status).toBe(400);
       expect(calls).toEqual([]);
@@ -34,12 +48,12 @@ describe("반송으로 넘기기 (inbound-address-code INV-C6·C9)", () => {
 
   it("INV-C9 (실패경로): 운영자가 아니면 404 — 쓰기 함수를 부르지 않는다", async () => {
     const { calls, client } = fakeClient({ error: null }, false);
-    expect((await returnHeld(client, { kind: "return", id: ID })).status).toBe(404);
+    expect((await returnHeld(client, { kind: "return", source: "unmatched", id: ID })).status).toBe(404);
     expect(calls).toEqual([]);
   });
 
   it("INV-C9 (실패경로): 이미 이어졌거나 반송 대상(55000)이면 409, 없는 줄은 404", async () => {
-    expect(await returnHeld(fakeClient({ error: { code: "55000" } }).client, { kind: "return", id: ID })).toEqual({ status: 409, body: { message: MESSAGE_ALREADY_CLOSED } });
-    expect((await returnHeld(fakeClient({ error: { code: "P0002" } }).client, { kind: "return", id: ID })).status).toBe(404);
+    expect(await returnHeld(fakeClient({ error: { code: "55000" } }).client, { kind: "return", source: "unmatched", id: ID })).toEqual({ status: 409, body: { message: MESSAGE_ALREADY_CLOSED } });
+    expect((await returnHeld(fakeClient({ error: { code: "P0002" } }).client, { kind: "return", source: "unmatched", id: ID })).status).toBe(404);
   });
 });

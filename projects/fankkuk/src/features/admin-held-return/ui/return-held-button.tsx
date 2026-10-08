@@ -6,12 +6,12 @@ import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import a from "@/shared/ui/admin.module.css";
 import { postHeldReturn } from "../api/post-held-return-client";
 
-// 「반송으로 넘기기」 버튼 + 확인 창 (inbound-address-code INV-C6·C9). 아직 이어지지 않은 보류 상자에만 부르는 쪽이 그린다.
+// 「반송으로 넘기기」 버튼 + 확인 창 (inbound-address-code INV-C6·C9). 넘길 수 있는 보류 줄에만 부르는 쪽이 그린다(canReturnHeld).
 // 넘기는 중에는 창을 닫을 수 없다(결과를 놓치지 않게). 누가 넘겼는지는 DB 가 남긴다.
 
-type Props = { id: string; waybillNo: string | null };
+type Props = { source: "unmatched" | "parcel"; id: string; waybillNo: string | null };
 
-export function ReturnHeldButton({ id, waybillNo }: Props) {
+export function ReturnHeldButton({ source, id, waybillNo }: Props) {
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState(false);
@@ -28,7 +28,7 @@ export function ReturnHeldButton({ id, waybillNo }: Props) {
     if (busy) return;
     setBusy(true);
     setError(null);
-    const outcome = await postHeldReturn(id);
+    const outcome = await postHeldReturn(source, id);
     setBusy(false);
     if (outcome.kind === "ok") {
       dialog.current?.close();
@@ -63,7 +63,17 @@ export function ReturnHeldButton({ id, waybillNo }: Props) {
         <div className={a.dlgBody}>
           <h2 id={titleId}>반송으로 넘길까요?</h2>
           <p>
-            <b className={a.mono}>{name}</b> 상자를 7일을 기다리지 않고 반송 대상으로 넘겨요. 원 송장 주소로 착불 반송하고, 넘긴 뒤에는 주인이 찾아도 이어지지 않아요.
+            {source === "parcel" ? (
+              <>
+                <b className={a.mono}>{name}</b> 상자를 주문에서 떼어 반송 대상으로 넘겨요. 원 송장 주소로 착불 반송하고, 넘긴 뒤에는 주인이 찾아도 이어지지
+                않아요. 주문의 환불은 생기지 않아요.
+              </>
+            ) : (
+              <>
+                <b className={a.mono}>{name}</b> 상자를 7일을 기다리지 않고 반송 대상으로 넘겨요. 원 송장 주소로 착불 반송하고, 넘긴 뒤에는 주인이 찾아도
+                이어지지 않아요.
+              </>
+            )}
           </p>
           <div role="status">
             {error && (

@@ -106,6 +106,97 @@ describe("INV-C9 반송으로 넘기기 — 운영자만, 아직 이어지지 �
   });
 });
 
+/** 6자리로 입고하고 라벨 부착 확인까지 — 다음 입고가 막히지 않게(INV-W2) */
+async function receiveLabeled(op: SupabaseClient, boxId: string): Promise<void> {
+  const r = await scanInbound(op, waybill(), { code: codeOf({ boxId }) });
+  expect(r.data).toMatchObject({ result: "received" });
+  const labeled = await op.rpc("office_confirm_label", { p_qr: (r.data as { qr: string }).qr });
+  expect(labeled.error).toBeNull();
+}
+
+/** 6자리로 첫 상자를 입고하고, 같은 6자리로 둘째 상자를 넣어 첫 상자를 「같은 6자리 분쟁」으로 멈춘다. 돌려주는 값은 첫 상자 줄 id. */
+async function disputedParcel(op: SupabaseClient): Promise<{ parcelId: string; orderId: string }> {
+  const g = await paidGift();
+  const code = codeOf({ boxId: g.boxIds[0] })!;
+  await receiveLabeled(op, g.boxIds[0]);
+  const second = await scanInbound(op, waybill(), { code, ...HOLD_DETAILS });
+  if (second.error) throw new Error(`둘째 입고 실패: ${second.error.code} ${second.error.message}`);
+  expect(second.data).toMatchObject({ result: "hold", reason: "code_dispute" });
+  return { parcelId: psql(`select id from public.office_parcels where box_id = '${g.boxIds[0]}'`), orderId: g.orderId };
+}
+
+/** 6자리로 입고한 뒤 주인이 「제가 보낸 게 아니에요」를 누른 상자. */
+async function notMineParcel(op: SupabaseClient): Promise<{ parcelId: string; orderId: string }> {
+  const g = await paidGift();
+  await receiveLabeled(op, g.boxIds[0]);
+  const r = await (await signedInClient("byeolbit_fan")).rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null });
+  expect(r.error).toBeNull();
+  return { parcelId: psql(`select id from public.office_parcels where box_id = '${g.boxIds[0]}'`), orderId: g.orderId };
+}
+
+const backdateHold = (parcelId: string, hours: number) => psql(`update public.office_parcels set hold_at = now() - interval '${hours} hours' where id = '${parcelId}'`);
+const closed = (parcelId: string) =>
+  psql(`select (box_id is null) || '|' || (hold_closed_at is not null) from public.office_parcels where id = '${parcelId}'`);
+
+describe("INV-C9 주문에 묶인 채 멈춘 상자의 반송 (정책 질문 12)", () => {
+  it("INV-C9 (S9b): 같은 6자리 분쟁 상자는 보류 + 168시간 전에는 운영자도 넘길 수 없고, 지나면 넘겨진다 — 주문에서 떨어지고 환불은 없다", async () => {
+    const op = await staff();
+    const { parcelId, orderId } = await disputedParcel(op);
+    backdateHold(parcelId, 167);
+    expect((await op.rpc("admin_return_held_parcel", { p_id: parcelId })).error?.code).toBe("55000");
+    expect(closed(parcelId)).toBe("false|false");
+    backdateHold(parcelId, 168);
+    expect((await op.rpc("admin_return_held_parcel", { p_id: parcelId })).error).toBeNull();
+    expect(closed(parcelId)).toBe("true|true");
+    expect(psql(`select hold_closed_by = (select id from public.profiles where login_id = 'fankkuk_staff') from public.office_parcels where id = '${parcelId}'`)).toBe("t");
+    const list = (await op.rpc("admin_unmatched_parcels")).data as { id: string; state: string }[];
+    expect(list.find((x) => x.id === parcelId)?.state).toBe("expired");
+    expect(psql(`select coalesce(public.refund_due_of_payment(p.id)::text, 'none') from public.payments p where p.order_id = '${orderId}' and p.kind = 'initial'`)).toBe("none");
+  });
+
+  it("INV-C9 (S9c): 「제가 보낸 게 아니에요」 상자는 운영자가 바로 넘길 수 있다", async () => {
+    const op = await staff();
+    const { parcelId } = await notMineParcel(op);
+    expect((await op.rpc("admin_return_held_parcel", { p_id: parcelId })).error).toBeNull();
+    expect(closed(parcelId)).toBe("true|true");
+  });
+
+  it("INV-C9 (S9c): 아무도 넘기지 않으면 보류 + 168시간에 자동 처리가 넘긴다 — 167시간이면 그대로, 두 번 돌려도 한 번", async () => {
+    const op = await staff();
+    const mine = await notMineParcel(op);
+    const dispute = await disputedParcel(op);
+    backdateHold(mine.parcelId, 167);
+    backdateHold(dispute.parcelId, 167);
+    await op.rpc("office_run_expiry", {});
+    expect(closed(mine.parcelId)).toBe("false|false");
+    backdateHold(mine.parcelId, 168);
+    backdateHold(dispute.parcelId, 168);
+    const first = (await op.rpc("office_run_expiry", {})).data as { held_parcels: number };
+    expect(first.held_parcels).toBeGreaterThanOrEqual(2);
+    expect(closed(mine.parcelId)).toBe("true|true");
+    expect(closed(dispute.parcelId)).toBe("true|true");
+    expect(psql(`select count(*) from public.office_parcels where id in ('${mine.parcelId}', '${dispute.parcelId}') and hold_closed_by is null`)).toBe("2");
+    expect(((await op.rpc("office_run_expiry", {})).data as { held_parcels: number }).held_parcels).toBe(0);
+  });
+
+  it("INV-C9 (S9d, 실패경로): 팬·크리에이터·손님은 넘길 수 없고, 이미 넘긴 상자는 55000, 보류가 아닌 상자는 55000", async () => {
+    const op = await staff();
+    const { parcelId } = await notMineParcel(op);
+    for (const who of ["byeolbit_fan", "haru_creator"]) {
+      expect((await (await signedInClient(who)).rpc("admin_return_held_parcel", { p_id: parcelId })).error?.code).toBe("42501");
+    }
+    expect((await anonClient().rpc("admin_return_held_parcel", { p_id: parcelId })).error).not.toBeNull();
+    expect(closed(parcelId)).toBe("false|false");
+    expect((await op.rpc("admin_return_held_parcel", { p_id: parcelId })).error).toBeNull();
+    expect((await op.rpc("admin_return_held_parcel", { p_id: parcelId })).error?.code).toBe("55000");
+    const g = await paidGift();
+    await receiveLabeled(op, g.boxIds[0]);
+    const normal = psql(`select id from public.office_parcels where box_id = '${g.boxIds[0]}'`);
+    expect((await op.rpc("admin_return_held_parcel", { p_id: normal })).error?.code).toBe("55000");
+    expect((await op.rpc("admin_return_held_parcel", { p_id: "3f1c2b7a-9d4e-4c1a-8b2f-0a1b2c3d4e5f" })).error?.code).toBe("P0002");
+  });
+});
+
 describe("측정 — 6자리 입력 기록과 숫자 셋(최근 30일)", () => {
   it("입력 결과만 남기고(값은 남기지 않는다), 숫자에 그대로 더해진다", async () => {
     const op = await staff();

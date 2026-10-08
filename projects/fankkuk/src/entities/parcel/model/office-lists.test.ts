@@ -97,11 +97,27 @@ describe("보류 상자 읽기 (office-workflow INV-W5·W6·W7, inbound-address-
     expect(unmatchedFromRows("x")).toBeNull();
   });
 
-  it("INV-C9: 「반송으로 넘기기」는 아직 이어지지 않은 미확인 입고에만 — 묶인 상자·이어진 줄·반송 대상은 아니다", () => {
-    expect(canReturnHeld({ source: "unmatched", state: "waiting" })).toBe(true);
-    expect(canReturnHeld({ source: "unmatched", state: "matched" })).toBe(false);
-    expect(canReturnHeld({ source: "unmatched", state: "expired" })).toBe(false);
-    expect(canReturnHeld({ source: "parcel", state: "on_hold" })).toBe(false);
+  it("INV-C9: 「반송으로 넘기기」 — 미확인 입고는 대기 중이면, 이어진 줄·반송 대상은 아니다", () => {
+    const now = "2026-10-08T00:00:00Z";
+    expect(canReturnHeld({ source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: null }, now)).toBe(true);
+    expect(canReturnHeld({ source: "unmatched", state: "matched", reason: "no_code", deadlineAt: null }, now)).toBe(false);
+    expect(canReturnHeld({ source: "unmatched", state: "expired", reason: "no_code", deadlineAt: null }, now)).toBe(false);
+  });
+
+  it("INV-C9 (S9b·S9c): 주문에 묶인 보류 상자 — 「아니에요」·떼어 낸 상자는 바로, 분쟁은 기한(보류 + 168시간)이 지나야, 넘긴 상자는 아니다", () => {
+    const now = "2026-10-08T00:00:00Z";
+    const before = "2026-10-08T00:00:01Z";
+    const after = "2026-10-07T23:59:59Z";
+    for (const reason of ["not_mine", "detached"] as const) {
+      expect(canReturnHeld({ source: "parcel", state: "on_hold", reason, deadlineAt: before }, now)).toBe(true);
+    }
+    for (const reason of ["code_dispute", "waybill_dispute"] as const) {
+      expect(canReturnHeld({ source: "parcel", state: "on_hold", reason, deadlineAt: before }, now)).toBe(false);
+      expect(canReturnHeld({ source: "parcel", state: "on_hold", reason, deadlineAt: now }, now)).toBe(true);
+      expect(canReturnHeld({ source: "parcel", state: "on_hold", reason, deadlineAt: after }, now)).toBe(true);
+      expect(canReturnHeld({ source: "parcel", state: "on_hold", reason, deadlineAt: null }, now)).toBe(false);
+    }
+    expect(canReturnHeld({ source: "parcel", state: "expired", reason: "not_mine", deadlineAt: after }, now)).toBe(false);
   });
 
   it("INV-C10: 찾기 실패가 반복된 계정은 닉네임·24시간 실패 수만", () => {

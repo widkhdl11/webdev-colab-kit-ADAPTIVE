@@ -122,7 +122,8 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
                         <td>{r.senderInitial ? `${r.senderInitial}*` : "—"}</td>
                         <td className={a.mono}>{r.shelf ?? (r.qr ? `봉투 ${r.qr}` : "—")}</td>
                         <td>
-                          {r.state === "waiting" && left !== null ? (
+                          {/* 미확인 입고는 7일 반송까지, 주문에 묶인 보류 상자는 보류 + 168시간(분쟁은 그때부터 넘길 수 있고, 아무도 안 넘기면 자동) */}
+                          {(r.state === "waiting" || r.state === "on_hold") && left !== null ? (
                             <div className={a.barRow}>
                               <span className={urgent ? `${a.bar} ${a.barHot}` : a.bar} role="progressbar" aria-label="남은 날" aria-valuemin={0} aria-valuemax={TOTAL_DAYS} aria-valuenow={left}>
                                 <i style={{ width: `${(Math.min(left, TOTAL_DAYS) / TOTAL_DAYS) * 100}%` }} />
@@ -137,7 +138,7 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
                         <td>
                           <span className={tag.className}>{tag.text}</span>
                         </td>
-                        <td className={a.act}>{canReturnHeld(r) ? <ReturnHeldButton id={r.id} waybillNo={r.waybillNo} /> : null}</td>
+                        <td className={a.act}>{canReturnHeld(r, now) ? <ReturnHeldButton source={r.source} id={r.id} waybillNo={r.waybillNo} /> : null}</td>
                       </tr>
                     );
                   })
