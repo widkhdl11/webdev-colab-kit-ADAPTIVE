@@ -18,6 +18,7 @@ const row = {
   refund_status: "due",
   refund_krw: 6900,
   refund_error: null,
+  needs_review: false,
 };
 
 describe("INV-K8: 정해진 칸으로만 받는다", () => {
@@ -36,6 +37,7 @@ describe("INV-K8: 정해진 칸으로만 받는다", () => {
         shippingFeeKrw: 4000,
         paidAt: row.paid_at,
         refund: { status: "due", amountKrw: 6900, error: null },
+        needsReview: false,
       },
     ]);
   });
@@ -66,6 +68,12 @@ describe("INV-K8: 정해진 칸으로만 받는다", () => {
     expect(r?.unitKind).toBe("gift_box");
     expect(r?.paymentKind).toBe("late_box");
     expect(r?.refund).toEqual({ status: "due", amountKrw: 2900, error: null });
+  });
+
+  it("INV-M19 (S19d): 결제사와 금액이 달라 확인 필요인 줄은 표시를 단다 — 빠지면 받지 않는다", () => {
+    expect(paymentRowsFrom([{ ...row, refund_status: "none", refund_krw: null, needs_review: true }])?.[0]?.needsReview).toBe(true);
+    const { needs_review: _drop, ...missing } = row;
+    expect(paymentRowsFrom([missing])).toBeNull();
   });
 
   it("환불 대상이 아닌 줄은 금액이 없다", () => {

@@ -3,9 +3,10 @@ import type { RefundStatus } from "@/entities/payment/model/payment-rows";
 
 // 환불 버튼을 누가 어느 줄에서 볼 수 있나 (admin-console INV-K2·K7, design-rules 8절 — 대표만 하는 동작은 직원에게 버튼 자체가 없다).
 
-/** INV-K2·K7: 환불 버튼은 대표에게만, 환불 대기·실패 줄에만. 판정은 DB 가 다시 한다. */
-export function canRefund(access: "staff" | "owner", status: RefundStatus): boolean {
-  return access === "owner" && (status === "due" || status === "failed");
+/** INV-K2·K7: 환불 버튼은 대표에게만, 환불 대기·실패 줄에만. 판정은 DB 가 다시 한다.
+ *  payment INV-M19: 결제사 기록과 달라 확인 필요인 줄은 결제가 끝나지 않았다 — 환불 버튼이 없다(결제사 관리 화면에서 처리). */
+export function canRefund(access: "staff" | "owner", status: RefundStatus, needsReview: boolean): boolean {
+  return access === "owner" && !needsReview && (status === "due" || status === "failed");
 }
 
 /** 역조공 몫 환불 버튼(시안 admin/revgifts.html): 대표에게만, 팬이 받지 않은(거절·기한 지남) 몫의 환불 전·실패 줄에만.

@@ -36,6 +36,14 @@ async function draftApprovalRequest(record: StoredPayment): Promise<ApprovalRequ
 }
 
 /**
+ * 팬 선물 결제를 완료로 기록한다 — 같은 처리 안에서 주문 등록·승인 요청 생성(INV-M6). 이번 호출이 기록을 바꿨는지 돌려준다.
+ * 성공 주소의 확정(confirmPayment)과 결과를 모르는 결제 다시 확인(features/payment-reconcile, INV-M19)이 같이 쓴다.
+ */
+export async function settleGiftDone(store: PaymentStore, record: StoredPayment, paymentKey: string): Promise<boolean> {
+  return store.settle(record.orderId, { status: "done", paymentKey, approvalRequest: await draftApprovalRequest(record) });
+}
+
+/**
  * 성공 주소로 돌아온 결제를 승인한다. 공통 흐름은 entities/payment/model/confirm-flow 가 맡는다.
  * requesterId: 서버가 확인한 로그인 사용자(INV-L2). 그 팬이 등록한 결제만 처리한다 — 남의 결제는 없는 결제와 같다(INV-L3).
  * 완료로 기록할 때 같은 처리 안에서 승인 요청을 만든다(INV-M6).
@@ -46,8 +54,7 @@ export async function confirmPayment(deps: CheckoutDeps, requesterId: string | n
       find: (id) => deps.store.find(id),
       claim: (id) => deps.store.claim(id),
       settleFailed: (id) => deps.store.settle(id, { status: "failed" }),
-      settleDone: async (record, paymentKey) =>
-        deps.store.settle(record.orderId, { status: "done", paymentKey, approvalRequest: await draftApprovalRequest(record) }),
+      settleDone: (record, paymentKey) => settleGiftDone(deps.store, record, paymentKey),
       toss: deps.toss,
     },
     (record) => requesterId !== null && record.fanId === requesterId,

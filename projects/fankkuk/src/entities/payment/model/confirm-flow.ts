@@ -54,7 +54,8 @@ export async function runConfirmFlow<R extends PendingPayment>(
     });
   } catch {
     // 결과를 모른다(시간 초과·연결 끊김) — 토스에서는 승인됐을 수 있으므로 실패로 닫지 않고 승인 중으로 남긴다.
-    // 같은 멱등 키로 다시 확인해 확정하는 경로는 BACKLOG(「결과를 모르는 결제 확정」).
+    // 승인 중이 된 지 10분이 지나면 결제 다시 확인(features/payment-reconcile, INV-M19 — 5분 예약 실행·「지금 돌리기」)이
+    // 결제사 결제 조회로 완료·실패·확인 필요를 정한다. 그때 완료 반영은 여기와 같은 settleDone 이다.
     return { ok: false, reason: "in_progress" };
   }
 

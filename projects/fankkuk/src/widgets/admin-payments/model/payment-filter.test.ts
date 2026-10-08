@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { PaymentRow, RefundStatus } from "@/entities/payment/model/payment-rows";
-import { countByTab, filterPayments } from "./payment-filter";
+import { countByTab, filterPayments, REVIEW_NOTICE } from "./payment-filter";
 
-function row(orderNo: string, payer: string, status: RefundStatus): PaymentRow {
+function row(orderNo: string, payer: string, status: RefundStatus, needsReview = false): PaymentRow {
   return {
     unitKind: "gift",
     unitId: `00000000-0000-4000-a000-0000000000${orderNo.slice(-2)}`,
@@ -16,6 +16,7 @@ function row(orderNo: string, payer: string, status: RefundStatus): PaymentRow {
     shippingFeeKrw: 4000,
     paidAt: "2026-10-04T03:20:00Z",
     refund: { status, amountKrw: status === "none" ? null : 6900, error: null },
+    needsReview,
   };
 }
 
@@ -38,6 +39,14 @@ describe("결제·환불 내역 거르기", () => {
   });
 
   it("탭별 개수", () => {
-    expect(countByTab(rows)).toEqual({ all: 5, due: 2, failed: 1, done: 1, none: 1 });
+    expect(countByTab(rows)).toEqual({ all: 5, due: 2, failed: 1, done: 1, none: 1, review: 0 });
+  });
+
+  it("INV-M19 (S19d): 결제사와 금액이 달라 확인 필요인 줄은 「확인 필요」 탭에만 — 환불 없음 탭에 섞이지 않는다", () => {
+    const withReview = [...rows, row("FC-AAA06", "별빛", "none", true)];
+    expect(filterPayments(withReview, "review", "").map((r) => r.orderNo)).toEqual(["FC-AAA06"]);
+    expect(filterPayments(withReview, "none", "").map((r) => r.orderNo)).toEqual(["FC-AAA05"]);
+    expect(countByTab(withReview)).toEqual({ all: 6, due: 2, failed: 1, done: 1, none: 1, review: 1 });
+    expect(REVIEW_NOTICE).toBe("결제사 기록과 달라 확인 필요");
   });
 });

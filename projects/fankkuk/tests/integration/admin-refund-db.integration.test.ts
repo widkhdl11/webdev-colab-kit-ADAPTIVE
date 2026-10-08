@@ -373,6 +373,8 @@ describe("INV-K1 · INV-K8: 결제·환불 내역 읽기", () => {
     "amount_krw",
     "goods_krw",
     "inspection_fee_krw",
+    // payment INV-M19: 결제사와 금액이 달라 확인 필요인 결제 표시
+    "needs_review",
     "order_no",
     "paid_at",
     "payer_nickname",

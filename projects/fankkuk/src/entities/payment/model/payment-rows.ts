@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-// 관리자 「결제·환불」 내역의 줄 (admin-console INV-K1·K7·K8). DB 읽기 함수 admin_payment_rows 의 열네 칸만 받는다 —
+// 관리자 「결제·환불」 내역의 줄 (admin-console INV-K1·K7·K8). DB 읽기 함수 admin_payment_rows 의 열다섯 칸만 받는다 —
 // 칸이 하나라도 더 오면(주소·전화 같은) 통째로 받지 않는다.
 // 팬 선물은 결제 한 건이 한 줄(첫 결제·차액 결제), 역조공은 몫 하나가 한 줄.
 // 도착하지 않음으로 닫힌 팬 선물 상자(office-workflow INV-W10)는 상자 하나가 한 줄 — 상자 환불(payment INV-M8·M9)의 단위다.
+// 결제사 조회로 다시 확인했더니 승인됐는데 금액·주문번호가 기록과 달라 「확인 필요」로 표시된 결제(payment INV-M19)도 한 줄로 나온다(needsReview).
 
 export const REFUND_STATUSES = ["none", "due", "requesting", "failed", "done"] as const;
 export type RefundStatus = (typeof REFUND_STATUSES)[number];
@@ -23,6 +24,8 @@ export type PaymentRow = {
   paidAt: string;
   /** amountKrw: 기록된 환불액, 기록 전이면 지금 상태로 계산한 금액. 환불 대상이 아니면 null */
   refund: { status: RefundStatus; amountKrw: number | null; error: string | null };
+  /** INV-M19: 결제사와 금액이 달라 확인 필요 — 사람이 결제사 관리 화면에서 처리한다 */
+  needsReview: boolean;
 };
 
 const won = z.number().int().min(0);
@@ -42,6 +45,7 @@ const rowShape = z
     refund_status: z.enum(REFUND_STATUSES),
     refund_krw: won.nullable(),
     refund_error: z.string().nullable(),
+    needs_review: z.boolean(),
   })
   .strict();
 
@@ -61,5 +65,6 @@ export function paymentRowsFrom(data: unknown): PaymentRow[] | null {
     shippingFeeKrw: r.shipping_fee_krw,
     paidAt: r.paid_at,
     refund: { status: r.refund_status, amountKrw: r.refund_krw, error: r.refund_error },
+    needsReview: r.needs_review,
   }));
 }

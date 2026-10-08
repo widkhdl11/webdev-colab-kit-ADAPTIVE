@@ -17,6 +17,11 @@ export interface DifferencePaymentStore {
   settle(tossOrderId: string, outcome: { status: "done"; paymentKey: string } | { status: "failed" }): Promise<boolean>;
 }
 
+/** 차액 결제를 완료로 기록한다. 성공 주소의 확정과 결과를 모르는 결제 다시 확인(INV-M19)이 같이 쓴다. */
+export function settleDifferenceDone(store: DifferencePaymentStore, tossOrderId: string, paymentKey: string): Promise<boolean> {
+  return store.settle(tossOrderId, { status: "done", paymentKey });
+}
+
 /** closed: 승인 권리를 못 얻었는데 기록이 여전히 결제 대기다 — 기한이 지났거나 상자가 돌려보내는 쪽으로 갔다(INV-M13). */
 export type DifferenceConfirmOutcome = { ok: true; orderNo: string } | { ok: false; reason: ConfirmFailure | "closed" };
 
@@ -31,7 +36,7 @@ export async function confirmDifferencePayment(
       find: (id) => deps.store.find(id),
       claim: (id) => deps.store.claim(id),
       settleFailed: (id) => deps.store.settle(id, { status: "failed" }),
-      settleDone: (record, paymentKey) => deps.store.settle(record.orderId, { status: "done", paymentKey }),
+      settleDone: (record, paymentKey) => settleDifferenceDone(deps.store, record.orderId, paymentKey),
       toss: deps.toss,
     },
     (record) => requesterId !== null && record.senderId === requesterId,

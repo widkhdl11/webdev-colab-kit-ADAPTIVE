@@ -90,3 +90,64 @@ describe("토스페이먼츠 클라이언트", () => {
     expect(calls[0]!.init.signal).toBeInstanceOf(AbortSignal);
   });
 });
+
+describe("결제 조회 (payment INV-M19)", () => {
+  const PAYMENT = { status: "DONE", orderId: "pay_x1", totalAmount: 6900, paymentKey: "pk_toss", method: "카드" };
+
+  it("INV-M19: 주문번호로 GET 조회 — Basic 인증, 본문 없음, 시간 제한", async () => {
+    const { calls, fetchImpl } = recordingFetch(PAYMENT);
+    const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl });
+    const r = await client.getByOrderId("pay_x1");
+    expect(r).toEqual({ kind: "found", payment: { status: "DONE", orderId: "pay_x1", totalAmount: 6900, paymentKey: "pk_toss" } });
+    expect(calls[0]!.url).toBe("https://api.tosspayments.com/v1/payments/orders/pay_x1");
+    expect(calls[0]!.init.method).toBe("GET");
+    expect(calls[0]!.init.body).toBeUndefined();
+    expect(new Headers(calls[0]!.init.headers).get("authorization")).toBe(`Basic ${btoa("test_gsk_x:")}`);
+    expect(calls[0]!.init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("INV-M19: 주문번호는 주소에 그대로 끼우지 않고 인코딩한다", async () => {
+    const { calls, fetchImpl } = recordingFetch(PAYMENT);
+    const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl });
+    await client.getByOrderId("a/b?c");
+    expect(calls[0]!.url).toBe("https://api.tosspayments.com/v1/payments/orders/a%2Fb%3Fc");
+  });
+
+  it("INV-M19 (S19c): 404 NOT_FOUND_PAYMENT·NOT_FOUND 는 「없음」", async () => {
+    for (const code of ["NOT_FOUND_PAYMENT", "NOT_FOUND"]) {
+      const { fetchImpl } = recordingFetch({ code, message: "존재하지 않는 결제 정보 입니다." }, 404);
+      const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl });
+      expect(await client.getByOrderId("pay_x1")).toEqual({ kind: "not_found" });
+    }
+  });
+
+  it("INV-M19 (S19b, 실패경로): 다른 오류 응답·꼴이 다른 응답·모르는 상태·연결 끊김은 「조회 오류」", async () => {
+    const cases: [unknown, number][] = [
+      [{ code: "UNAUTHORIZED_KEY" }, 401],
+      [{ code: "FAILED_PAYMENT_INTERNAL_SYSTEM_PROCESSING" }, 500],
+      [{ code: "SOMETHING_ELSE" }, 404],
+      [{ status: "DONE", orderId: "pay_x1" }, 200],
+      [{ ...PAYMENT, status: "WHATEVER" }, 200],
+      [{ ...PAYMENT, totalAmount: "6900" }, 200],
+      [{ ...PAYMENT, paymentKey: "" }, 200],
+    ];
+    for (const [body, status] of cases) {
+      const { fetchImpl } = recordingFetch(body, status);
+      const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl });
+      expect(await client.getByOrderId("pay_x1")).toEqual({ kind: "error" });
+    }
+    const broken = (async () => {
+      throw new TypeError("fetch failed");
+    }) as unknown as typeof fetch;
+    const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl: broken });
+    expect(await client.getByOrderId("pay_x1")).toEqual({ kind: "error" });
+  });
+
+  it("INV-M19: 조회 상태 여덟 가지를 그대로 받는다", async () => {
+    for (const status of ["DONE", "ABORTED", "EXPIRED", "CANCELED", "PARTIAL_CANCELED", "READY", "IN_PROGRESS", "WAITING_FOR_DEPOSIT"]) {
+      const { fetchImpl } = recordingFetch({ ...PAYMENT, status });
+      const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl });
+      expect(await client.getByOrderId("pay_x1")).toMatchObject({ kind: "found", payment: { status } });
+    }
+  });
+});
