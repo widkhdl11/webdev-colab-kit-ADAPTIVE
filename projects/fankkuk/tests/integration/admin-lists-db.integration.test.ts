@@ -147,6 +147,17 @@ describe("보낼 수 없는 물품 목록 (INV-K9)", () => {
   });
 });
 
+describe("보낼 수 없는 물품 — 처음 목록 (INV-K9, DECISIONS 2026-10-08 정책 ④)", () => {
+  it("INV-K9: 택배 표준약관 수탁 거절 품목과 상하는 음식이 공개 목록에 있다", async () => {
+    const r = await anonClient().rpc("list_prohibited_items");
+    expect(r.error).toBeNull();
+    const names = (r.data as Item[]).map((x) => x.name);
+    for (const n of ["음식과 신선식품", "살아 있는 동물·동물 사체와 식물", "폭발·인화성 물질 등 위험물", "현금·카드·상품권·유가증권", "위법한 물건", "다시 만들 수 없는 서류", "가액이 300만 원을 넘는 물건"]) {
+      expect(names).toContain(n);
+    }
+  });
+});
+
 describe("크리에이터 본인 확인 승인·취소 (INV-K10)", () => {
   // 승인은 신청을 거쳐서만 된다(creator-verification INV-V6) — 승인 쪽 시험은 creator-verification-db 에 있다.
   // 여기서는 취소(INV-K10 + INV-V9 사유)와 옛 승인 함수가 신청 없는 승인을 거부하는지를 본다.
