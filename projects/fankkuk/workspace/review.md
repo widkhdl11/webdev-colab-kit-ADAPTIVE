@@ -1,9 +1,33 @@
 ---
 project: fankkuk
 status: passed
-basis: 7bcfbf053fb6
+basis: 1b1c42f4a4b5
 reviewers: [security-reviewer, code-reviewer, test-auditor, ui-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-08, 정책 질문 반영 8개 — 카드 d49 「추천대로 전부」)
+
+이번 사인오프가 덮는 변경: 지난 사인오프(basis 7bcfbf053fb6) 뒤 커밋 ed092a9 · b2a96ec · c3bec66 · c81abb2 · 21b767e · e9620ec · 43e2ec3 · d6549d2 · fd46a84
+(마이그레이션 20261008000002~08). ⑥ 노출 끈 크리에이터 목록(my-account INV-A10 S10b) · ④ 금지 물품 처음 목록(admin-console INV-K9) ·
+⑨ 직원 출력 거부 기록(address-protection INV-P7 S7c) · ⑤ 실측 필수(office-workflow INV-W4 S4d·S4e) · ⑦ 비밀번호 시도 횟수(session-login INV-L14) ·
+③ 선불 반송 환불(payment INV-M8) · ② 추적 장치 보관 168시간·팬 알림(INV-W4·W6 S4f, notifications INV-N13) · 질문 12 멈춘 보류 상자 반송(inbound-address-code INV-C9 S9b~S9d).
+
+- 닿은 표면: auth(INV-L14) · authz(목록 노출·보류 넘기기·직원 출력) · payment(환불 갈래) · concurrency(L14 잠금·C9 잠금 순서) · 화면 · 도메인 — 넷 모두 파견.
+- security-reviewer: 높음·중간 0 · 낮음 1(시도 기록이 쌓이기만 함) → 하루 지난 줄을 시작마다 100줄씩 지움, 시험 1.
+- code-reviewer: high 2 → 떼어 낸 상자의 주문(·몫)에 상자가 안 남으면 「등록」으로 되돌리고 입고·검수 표시 지움(반려 때 전액 환불), 시험 2. medium 2 → 주문번호 지정 자동 처리에 몫 상자 포함, creator_by_id 가 id 를 안으로 넘김.
+  low 1(보관이면서 보류인 상자의 잠금 순서 — 드묾) → 그대로, 보고.
+- test-auditor: 빈틈 4 → 3 보강(기록 오류 때 Auth 에 묻지 않음 · 어댑터 null · 화면이 읽는 거부 이유 목록 — 변이 셋 모두 잡음).
+  남김 1: 페이지(/creators·/creators/[id]·/gifts/new)가 어느 읽기 함수를 부르는지 보는 시험이 없다 — 화면 확인(모모 노출 끄기)으로 대신 봄.
+- ui-reviewer: 위반 0. 참고 1(미확인 입고 안내 문구가 출고 멈춤 상자 규칙을 빠뜨림) → 문구 고침.
+- 강제 장치 변이: L14 DB 8 · C9 DB 6 · 앱 3 모두 빨간불, 복원 뒤 초록. 직원 출력 경로는 옛 코드에서 새 시험이 실패함을 확인.
+- 순서 고백: ⑤⑥⑦②③12 는 시험을 먼저 써 빨간불을 본 뒤 구현. 1:1 문의 제한(앞 사인오프)과 달리 이번에는 DB 도 시험이 먼저였다.
+
+실행 근거:
+- `npm test` → 153 파일 1192 통과 · `npx tsc --noEmit` → 오류 0
+- `npm run test:integration` → 1151 통과 · 1 실패(read-isolation 「모모의 요청은 하루에게 안 보인다」 — 시드 FC-W5N3T 가 이미 승인된 상태, BACKLOG 기존 건)
+- 화면: 모모 노출 끔 → 찾기 목록에 없음·페이지 200·이상한 주소 404 / 검수 화면 실측 없이 완료 → 「실측이 먼저 있어야 해요」, 기록 뒤 완료 /
+  로그인 5번 틀린 뒤 맞는 비밀번호 → 막힘 안내 / 미확인 입고 화면에서 「아니에요」 상자 넘기기 → 반송 대상·넘긴 사람 기록. 확인용 계정·주문은 지움.
+
 
 # 리뷰 사인오프 — fankkuk (2026-10-08, 1:1 문의 제한 — admin-console INV-K12)
 
