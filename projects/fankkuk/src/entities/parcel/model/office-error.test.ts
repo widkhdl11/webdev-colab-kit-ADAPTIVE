@@ -14,6 +14,7 @@ describe("사무실 작업 오류 코드 → 응답 (office-workflow INV-W1·W2�
       ["P0042", 409, "앞 상자 라벨 부착을 먼저 확인해 주세요."],
       ["P0043", 400, "이 상자의 라벨·송장이 아니에요."],
       ["P0044", 409, "검수 기록을 먼저 저장해 주세요."],
+      ["P0053", 409, "실측 구간을 먼저 기록해 주세요."],
       ["XX000", 500, "처리하지 못했어요."],
     ];
     for (const [code, status, message] of cases) {
@@ -26,6 +27,7 @@ describe("사무실 작업 오류 코드 → 응답 (office-workflow INV-W1·W2�
   it("INV-W2: 앞 상자 라벨 대기·검수 기록 없음은 화면이 카드를 고를 수 있게 이유를 같이 준다", () => {
     expect(officeErrorReply("P0042", MESSAGES).body.reason).toBe("pending_label");
     expect(officeErrorReply("P0044", MESSAGES).body.reason).toBe("no_inspection");
+    expect(officeErrorReply("P0053", MESSAGES).body.reason).toBe("no_measurement"); // INV-W4 S4d
     expect(officeErrorReply("55000", MESSAGES).body.reason).toBe("wrong_step");
     expect(officeErrorReply(undefined, MESSAGES).body.reason).toBeUndefined();
   });
@@ -48,6 +50,7 @@ describe("동시 처리 충돌·화면 다시 읽기 (office-workflow INV-W2)", 
     expect(needsReload({ status: 404, reason: null })).toBe(true);
     expect(needsReload({ status: 409, reason: "not_shippable" })).toBe(true);
     expect(needsReload({ status: 409, reason: "no_inspection" })).toBe(false);
+    expect(needsReload({ status: 409, reason: "no_measurement" })).toBe(false); // 실측 칸을 그대로 두고 기록하게
     expect(needsReload({ status: 400, reason: "wrong_code" })).toBe(false);
     expect(needsReload({ status: 500, reason: null })).toBe(false);
   });

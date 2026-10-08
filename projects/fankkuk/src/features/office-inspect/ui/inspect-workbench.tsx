@@ -118,7 +118,9 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
       setBusy(false);
       scan.current?.focus();
       if (done.kind === "failed") {
-        setError({ title: done.reason === "no_inspection" ? "검수 기록이 먼저 있어야 해요" : "반영되지 않았어요", message: done.message });
+        const title =
+          done.reason === "no_inspection" ? "검수 기록이 먼저 있어야 해요" : done.reason === "no_measurement" ? "실측이 먼저 있어야 해요" : "반영되지 않았어요";
+        setError({ title, message: done.message });
         if (needsReload(done)) {
           await reload(code.value);
           router.refresh();
@@ -311,7 +313,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
                   </label>
                 ))}
               </div>
-              <p className={a.hint}>신고보다 크면 차액만 팬에게 따로 결제 요청돼요. 신고 이하면 차액도 환불도 없어요. 실측은 상자마다 한 번만 기록해요.</p>
+              <p className={a.hint}>검수 완료 전에 꼭 기록해요. 신고보다 크면 차액만 팬에게 따로 결제 요청돼요. 신고 이하면 차액도 환불도 없어요. 실측은 상자마다 한 번만 기록해요.</p>
             </fieldset>
             {measurement ? (
               <div className={`${a.note} ${measurement.result === "none" ? a.noteOk : w.noteWarn}`}>

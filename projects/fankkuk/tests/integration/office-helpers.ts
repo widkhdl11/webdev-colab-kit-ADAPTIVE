@@ -108,6 +108,13 @@ export async function receiveAndLabel(staff: SupabaseClient, no: string): Promis
 /** 검수 기록 → 검수 스캔. 돌려주는 값은 바뀐 상태. */
 export async function inspect(staff: SupabaseClient, qr: string, result: Record<string, string>): Promise<string> {
   await ok(staff.rpc("office_record_inspection", { p_qr: qr, p_result: result }), "office_record_inspection");
+  // 팬 선물이 통과로 끝나려면 실측이 있어야 한다(office-workflow INV-W4 S4d) — 아직 없으면 신고 구간 그대로 잰 것으로 친다
+  if (result.outcome === "pass") {
+    const declared = psql(
+      `select b.declared_tier from public.office_parcels p join public.boxes b on b.id = p.box_id where p.qr_code = '${qr}' and b.measured_tier is null`,
+    );
+    if (declared !== "") await ok(staff.rpc("office_record_measurement", { p_qr: qr, p_tier: declared }), "office_record_measurement");
+  }
   return (await ok(staff.rpc("office_scan_inspect", { p_qr: qr }), "office_scan_inspect")) as string;
 }
 

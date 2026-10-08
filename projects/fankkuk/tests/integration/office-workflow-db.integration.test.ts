@@ -369,6 +369,22 @@ describe("검수 기록 (INV-W4)", () => {
     }
   });
 
+  it("INV-W4 (S4d, 실패경로): 팬 선물은 실측을 기록하지 않으면 검수 완료가 거부되고, 기록하면 완료된다", async () => {
+    const { staff, qr } = await labeledGift();
+    expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: FAN_PASS })).error).toBeNull();
+    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).error?.code).toBe("P0053");
+    expect(parcelState(qr)).toBe("labeled");
+    expect((await staff.rpc("office_record_measurement", { p_qr: qr, p_tier: "small" })).error).toBeNull();
+    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("inspected");
+  });
+
+  it("INV-W4 (S4e): 보관(추적 장치) 결과는 실측 없이도 넘어간다", async () => {
+    const { staff, qr } = await labeledGift();
+    const hold = { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" };
+    expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: hold })).error).toBeNull();
+    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("held");
+  });
+
   it("INV-W4 (S4c): 추적 장치가 나온 팬 선물은 반송 대기가 아니라 보관, 크리에이터 알림 1건", async () => {
     const { staff, qr } = await labeledGift();
     expect(await inspect(staff, qr, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" })).toBe("held");

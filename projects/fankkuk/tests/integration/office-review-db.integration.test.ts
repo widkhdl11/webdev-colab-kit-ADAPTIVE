@@ -43,6 +43,7 @@ describe("검수 기록은 한 번 (INV-W4)", () => {
     const second = await staff.rpc("office_record_inspection", { p_qr: qrs[0], p_result: { ...FAN_PASS, outcome: "return" } });
     expect(second.error?.code).toBe("55000");
     expect(psql(`select count(*) from public.office_inspections i join public.office_parcels p on p.id = i.parcel_id where p.qr_code = '${qrs[0]}'`)).toBe("1");
+    await staff.rpc("office_record_measurement", { p_qr: qrs[0], p_tier: "small" }); // 통과는 실측이 있어야 한다(S4d)
     expect((await staff.rpc("office_scan_inspect", { p_qr: qrs[0] })).data).toBe("inspected");
   });
 
