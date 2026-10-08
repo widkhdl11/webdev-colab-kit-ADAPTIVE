@@ -1,0 +1,181 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { afterEach, describe, expect, it } from "vitest";
+import { anonClient, deleteTestOrders, holdRowLock, psql, registerTestOrder, signedInClient } from "./helpers";
+import { codeOf, deleteTestUnmatched, FAN_PASS, HOLD_DETAILS, inspect, paidGift, parcelState, scanInbound, waybill } from "./office-helpers";
+
+// 취소 (payment INV-M16 팬의 입고 전 취소 S16~S16c · INV-M17 대표의 입고 뒤 취소 S17·S17b, 정책 ①).
+
+afterEach(() => {
+  deleteTestOrders();
+  deleteTestUnmatched();
+});
+
+async function staff(): Promise<SupabaseClient> {
+  return signedInClient("fankkuk_staff");
+}
+
+/** 6자리로 입고 + 라벨 부착 확인. 돌려주는 값은 내부 QR. */
+async function receive(op: SupabaseClient, boxId: string): Promise<string> {
+  const r = await scanInbound(op, waybill(), { code: codeOf({ boxId }) });
+  expect(r.data).toMatchObject({ result: "received" });
+  const qr = (r.data as { qr: string }).qr;
+  expect((await op.rpc("office_confirm_label", { p_qr: qr })).error).toBeNull();
+  return qr;
+}
+
+/** 트리거를 거치지 않고 주문 상태만 바꾼다 — 그 상태에 이르는 길이 아니라 그 상태에서의 판정을 볼 때만 */
+const forceStatus = (orderId: string, status: string) =>
+  psql(`begin; set local session_replication_role = replica; update public.orders set status = '${status}' where id = '${orderId}'; commit;`);
+
+const status = (orderId: string) => psql(`select status from public.orders where id = '${orderId}'`);
+const codeState = (boxId: string) => psql(`select state from public.inbound_codes where box_id = '${boxId}'`);
+const orderRefundDue = (orderId: string) =>
+  psql(`select coalesce(public.refund_due_of_payment(p.id)::text, 'none') from public.payments p where p.order_id = '${orderId}' and p.kind = 'initial'`);
+const paid = (orderId: string) => psql(`select amount_krw from public.payments where order_id = '${orderId}' and kind = 'initial'`);
+
+describe("팬의 입고 전 취소 (INV-M16)", () => {
+  it("INV-M16 (S16): 입고 전 주문을 보낸 팬이 취소하면 주문 취소, 6자리 전부 무효, 환불 대상은 결제 금액 전액", async () => {
+    const g = await paidGift(2);
+    const fan = await signedInClient("byeolbit_fan");
+    expect((await fan.rpc("cancel_my_gift", { p_order_no: g.orderNo })).error).toBeNull();
+    expect(status(g.orderId)).toBe("canceled");
+    expect(codeState(g.boxIds[0]!)).toBe("void");
+    expect(codeState(g.boxIds[1]!)).toBe("void");
+    expect(orderRefundDue(g.orderId)).toBe(paid(g.orderId));
+    // 두 번 눌러도 같은 거부(이미 끝난 주문)
+    expect((await fan.rpc("cancel_my_gift", { p_order_no: g.orderNo })).error?.code).toBe("P0002");
+  });
+
+  it("INV-M16 (S16b, 실패경로): 상자 하나라도 입고된 주문은 취소할 수 없고, 남의 팬·크리에이터·익명도 거부 — 그대로 남는다", async () => {
+    const op = await staff();
+    const g = await paidGift(2);
+    await receive(op, g.boxIds[0]!);
+    const fan = await signedInClient("byeolbit_fan");
+    expect((await fan.rpc("cancel_my_gift", { p_order_no: g.orderNo })).error?.code).toBe("P0002");
+    expect(status(g.orderId)).not.toBe("canceled");
+
+    const other = await paidGift(1);
+    for (const c of [await signedInClient("daltokki_fan"), await signedInClient("haru_creator")]) {
+      expect((await c.rpc("cancel_my_gift", { p_order_no: other.orderNo })).error?.code).toBe("P0002");
+    }
+    expect((await anonClient().rpc("cancel_my_gift", { p_order_no: other.orderNo })).error).not.toBeNull();
+    expect(status(other.orderId)).toBe("registered");
+    expect(codeState(other.boxIds[0]!)).toBe("valid");
+  });
+
+  it("INV-M16 (S16b, 실패경로): 결제가 끝나지 않은 주문과 입고 없이 거절·반려로 끝난 주문은 취소할 수 없다", async () => {
+    const fan = await signedInClient("byeolbit_fan");
+    const unpaid = await registerTestOrder(1);
+    expect((await fan.rpc("cancel_my_gift", { p_order_no: unpaid.orderNo })).error?.code).toBe("P0002");
+    expect(status(unpaid.orderId)).toBe("pending_payment");
+    for (const ended of ["rejected", "expired"]) {
+      const g = await paidGift(1);
+      forceStatus(g.orderId, ended);
+      expect((await fan.rpc("cancel_my_gift", { p_order_no: g.orderNo })).error?.code).toBe("P0002");
+      expect(status(g.orderId)).toBe(ended);
+    }
+  });
+
+  it("INV-M16 (S16c, 동시): 그 상자의 입고와 팬의 취소가 겹치면 하나만 — 취소됐으면 상자는 보류, 입고됐으면 취소는 거부", async () => {
+    const op = await staff();
+    const g = await paidGift(1);
+    const fan = await signedInClient("byeolbit_fan");
+    // 둘이 운 좋게 앞뒤로 오지 않게 상자 줄을 잠근 뒤에 보내 잠금 뒤에 줄 세운다
+    const lock = await holdRowLock(`select 1 from public.boxes where id = '${g.boxIds[0]}' for update`, 2);
+    const [canceled, scanned] = await Promise.all([
+      fan.rpc("cancel_my_gift", { p_order_no: g.orderNo }),
+      scanInbound(op, waybill(), { code: codeOf({ boxId: g.boxIds[0]! }), ...HOLD_DETAILS }),
+    ]);
+    await lock.released;
+    expect(scanned.error).toBeNull();
+    const result = (scanned.data as { result: string }).result;
+    if (canceled.error === null) {
+      expect(status(g.orderId)).toBe("canceled");
+      expect(result).toBe("hold");
+    } else {
+      expect(canceled.error.code).toBe("P0002");
+      expect(result).toBe("received");
+      expect(status(g.orderId)).not.toBe("canceled");
+    }
+  });
+});
+
+describe("대표의 입고 뒤 취소 (INV-M17)", () => {
+  it("INV-M17: 검수를 마친 상자는 취소와 함께 반송 대기로, 아직 검수 전인 상자는 검수 뒤 자동 처리가 반송 대기로 보낸다", async () => {
+    const op = await staff();
+    const g = await paidGift(2);
+    const done = await receive(op, g.boxIds[0]!);
+    const later = await receive(op, g.boxIds[1]!);
+    await inspect(op, done, FAN_PASS);
+    expect(parcelState(done)).toBe("inspected");
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "1:1 문의" })).error).toBeNull();
+    expect(parcelState(done)).toBe("return_waiting");
+    expect(parcelState(later)).toBe("labeled");
+    await inspect(op, later, FAN_PASS);
+    await op.rpc("office_run_expiry", { p_order_no: g.orderNo });
+    expect(parcelState(later)).toBe("return_waiting");
+  });
+
+  it("INV-M17 (S17b, 실패경로): 출고 송장을 출력한 상자가 하나라도 있으면 주문이 아직 출고 전이어도 거부", async () => {
+    const op = await staff();
+    const g = await paidGift(2);
+    const qr = await receive(op, g.boxIds[0]!);
+    await receive(op, g.boxIds[1]!);
+    psql(`begin; set local session_replication_role = replica; update public.office_parcels set state = 'label_printed' where qr_code = '${qr}'; commit;`);
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "1:1 문의" })).error?.code).toBe("P0002");
+    expect(status(g.orderId)).not.toBe("canceled");
+    expect(psql(`select count(*) from public.order_cancellations where order_id = '${g.orderId}'`)).toBe("0");
+  });
+
+  it("INV-M8·M17: 차액 결제를 마친 주문을 입고 뒤 취소하면 차액 결제의 환불은 그 결제의 검수비·배송비 칸을 뺀 값", async () => {
+    const op = await staff();
+    const g = await paidGift(1);
+    await receive(op, g.boxIds[0]!);
+    // 차액 결제가 끝난 상태(소형 → 중형: 배송비 1,000 · 검수비 500 · 기본 서비스료 500)
+    psql(
+      `insert into public.payments (order_id, kind, box_id, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status, payment_key, settled_at)
+       values ('${g.orderId}', 'difference', '${g.boxIds[0]}', 'pay_diff_${g.orderNo.replace("-", "").toLowerCase()}', 2000, 0, 500, 500, 1000, 'done', 'pk_diff_${g.orderId}', now())`,
+    );
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "1:1 문의" })).error).toBeNull();
+    const diffDue = psql(`select coalesce(public.refund_due_of_payment(p.id)::text, 'none') from public.payments p where p.order_id = '${g.orderId}' and p.kind = 'difference'`);
+    expect(diffDue).toBe("500");
+  });
+
+  it("INV-M17 (S17): 상자 2개 중 1개 입고된 주문을 대표가 사유와 함께 취소 — 기록 한 줄, 환불은 도착한 상자의 검수비·배송비만 뺀 값", async () => {
+    const op = await staff();
+    const g = await paidGift(2);
+    await receive(op, g.boxIds[0]!);
+    const owner = await signedInClient("fankkuk_admin");
+    const r = await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "1:1 문의로 취소 요청" });
+    expect(r.error).toBeNull();
+    expect(status(g.orderId)).toBe("canceled");
+    expect(psql(`select count(*) from public.order_cancellations where order_id = '${g.orderId}'`)).toBe("1");
+    expect(codeState(g.boxIds[1]!)).toBe("void");
+    const fee = Number(psql(`select inspection_fee_krw + shipping_fee_krw from public.boxes where id = '${g.boxIds[0]}'`));
+    // 소형 2개 13,800원이면 13,800 − (1,500 + 4,000) = 8,300
+    expect(Number(orderRefundDue(g.orderId))).toBe(Number(paid(g.orderId)) - fee);
+  });
+
+  it("INV-M17 (S17b, 실패경로): 출고된 주문·입고 전 주문은 거부, 직원·팬은 42501, 사유가 없으면 22023 — 그대로 남는다", async () => {
+    const op = await staff();
+    const owner = await signedInClient("fankkuk_admin");
+    const g = await paidGift(1);
+    await receive(op, g.boxIds[0]!);
+    for (const who of ["fankkuk_staff", "byeolbit_fan"]) {
+      expect((await (await signedInClient(who)).rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "사유" })).error?.code).toBe("42501");
+    }
+    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: " " })).error?.code).toBe("22023");
+    expect(status(g.orderId)).not.toBe("canceled");
+
+    const notYet = await paidGift(1);
+    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: notYet.orderNo, p_reason: "사유" })).error?.code).toBe("P0002");
+
+    psql(`begin; set local session_replication_role = replica; update public.orders set status = 'shipped', shipped_at = now() where id = '${g.orderId}'; commit;`);
+    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "사유" })).error?.code).toBe("P0002");
+    expect(status(g.orderId)).toBe("shipped");
+    expect(psql(`select count(*) from public.order_cancellations where order_id in ('${g.orderId}', '${notYet.orderId}')`)).toBe("0");
+  });
+});

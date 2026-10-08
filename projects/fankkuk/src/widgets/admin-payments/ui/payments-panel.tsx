@@ -4,12 +4,14 @@ import { useState } from "react";
 import type { PaymentRow, RefundStatus } from "@/entities/payment/model/payment-rows";
 import { canRefund } from "@/features/admin-refund/model/refund-access";
 import { RefundButton } from "@/features/admin-refund/ui/refund-button";
+import { ReceivedCancelForm } from "@/features/admin-order-cancel/ui/received-cancel-form";
 import a from "@/shared/ui/admin.module.css";
 import { countByTab, filterPayments, PAYMENT_TABS, type PaymentTab } from "../model/payment-filter";
 
 // 관리자 「결제·환불」 본문 (admin-console INV-K1·K7·K8, 시안 admin/payments.html).
 // 결제 금액은 네 칸으로 나눠 보인다. 환불 금액은 서버가 주문 상태로 정한 값이고 이 화면에서 바꿀 수 없다.
 // 환불 버튼은 대표에게만 보인다(design-rules 8절) — 판정은 서버·DB 가 다시 한다. 사람은 닉네임으로만(INV-K8).
+// 「입고 뒤 취소」 양식(payment INV-M17)도 대표에게만 — 표 아래에 둔다.
 
 const won = new Intl.NumberFormat("ko-KR");
 const stamp = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
@@ -188,6 +190,7 @@ export function PaymentsPanel({ rows, access }: Props) {
         <p className={a.hint}>
           네 칸을 더하면 결제 금액이에요. 역조공은 받는 팬 한 명 몫이 한 줄이고 검수비가 없어요. 요금표를 바꿔도 이미 결제한 주문의 칸은 그대로예요.
         </p>
+        {access === "owner" && <ReceivedCancelForm />}
       </div>
     </>
   );

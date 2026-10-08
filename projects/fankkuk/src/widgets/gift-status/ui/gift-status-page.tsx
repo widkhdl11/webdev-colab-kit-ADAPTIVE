@@ -15,6 +15,8 @@ import {
 import { boxTierName, canReportNotMine, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
 import { giftAddressCode, giftFinderBoxes, needsEarlySendAck } from "@/features/box-waybill/model/box-targets";
 import { EarlySendGate } from "@/features/box-waybill/ui/early-send-gate";
+import { canCancelGift } from "@/features/gift-cancel/model/cancellable";
+import { CancelGiftButton } from "@/features/gift-cancel/ui/cancel-gift-button";
 import { RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
 import { formatWaybill } from "@/entities/parcel/model/waybill-no";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
@@ -38,6 +40,7 @@ import s from "./gift-status.module.css";
 // 입고된 뒤 출고 확정 전에는 상자마다 「제가 보낸 게 아니에요」(INV-C8).
 // 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 진행 줄 아래 따로 한 줄로 그린다.
 // 결제 내역은 결제할 때 저장한 금액만 보인다(payment INV-M14, my_gift_payment) — 주문 정보 중립 면 카드 안에 붙인다.
+// 진행 중이고 도착한 상자가 없으면 주문 정보 카드 끝에 「취소하기」(payment INV-M16, 판정은 features/gift-cancel/model/cancellable.ts).
 
 function Check({ size = 18 }: { size?: number }) {
   return (
@@ -83,6 +86,7 @@ export function GiftStatusPage({
   const shownDifferences = difference ? visibleDifferences(difference.differences, view.outcome === "in_progress") : [];
   // 단계 막대와 상자별 상태는 같은 경우(진행 중·돌려보냄)에만 보인다
   const showsProgress = showsSteps(view);
+  const cancelable = canCancelGift(boxes, inProgress);
 
   return (
     <main id="main">
@@ -315,6 +319,7 @@ export function GiftStatusPage({
                     화면에서 확인할 수 있어요.
                   </p>
                 ) : null}
+                {cancelable ? <CancelGiftButton orderNo={view.orderNo} /> : null}
               </section>
             </div>
           </div>

@@ -226,16 +226,18 @@ describe("상자 환불과 주문 환불의 합 (INV-M9)", () => {
     expect(Number(orderRefundDue(g.orderId)) + boxAmount).toBe(amount! - (shipping! - boxShipping));
   });
 
-  it("INV-M9 (S8d, 입고 뒤 취소): 주문 환불은 배송비 칸 − 닫힌 상자의 배송비 — 닫힌 상자의 배송비를 두 번 빼지 않는다", async () => {
+  it("INV-M9·M17 (S8d, 입고 뒤 취소): 주문 환불은 (결제 금액 − 닫힌 상자 금액) − 도착한 상자의 검수비·배송비 — 닫힌 상자의 칸을 두 번 빼지 않는다", async () => {
     const op = await staff();
     const g = await approvedGift(2);
     await receive(op, g.boxIds[0]!);
     backdate(g.orderId, 720);
     await runExpiry(g.orderNo);
     psql(`begin; set local session_replication_role = replica; update public.orders set status = 'canceled' where id = '${g.orderId}'; commit;`);
-    const shipping = Number(psql(`select shipping_fee_krw from public.payments where order_id = '${g.orderId}' and kind = 'initial'`));
-    const boxShipping = Number(psql(`select shipping_fee_krw from public.boxes where id = '${g.boxIds[1]}'`));
-    expect(Number(orderRefundDue(g.orderId))).toBe(shipping - boxShipping);
+    const amount = Number(psql(`select amount_krw from public.payments where order_id = '${g.orderId}' and kind = 'initial'`));
+    const closedPrice = Number(psql(`select price_krw from public.boxes where id = '${g.boxIds[1]}'`));
+    const arrivedFees = Number(psql(`select inspection_fee_krw + shipping_fee_krw from public.boxes where id = '${g.boxIds[0]}'`));
+    // 소형 2개 13,800원이면 (13,800 − 6,900) − (1,500 + 4,000) = 1,400 — 도착한 상자의 기본 서비스료만 남는다
+    expect(Number(orderRefundDue(g.orderId))).toBe(amount - closedPrice - arrivedFees);
     // 입고가 있는 주문이라 닫힌 상자의 환불은 그대로 그 상자 금액
     expect(boxRefundDue(g.boxIds[1]!)).toBe(psql(`select price_krw from public.boxes where id = '${g.boxIds[1]}'`));
   });
