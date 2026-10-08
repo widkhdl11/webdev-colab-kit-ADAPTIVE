@@ -10,9 +10,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: "1:1 문의 · 팬꾹 관리자" };
 }
 
-// 1:1 문의 (admin-console INV-K11·K8). 읽기는 로그인한 운영자의 세션으로 — 운영자가 아니면 그 전에 404 다.
+// 1:1 문의 (admin-console INV-K11·K8·K12 — 문의 제한 버튼은 대표에게만). 읽기는 로그인한 운영자의 세션으로 — 운영자가 아니면 그 전에 404 다.
 export default async function Page() {
-  const { supabase } = await loadAdminSession();
+  const { supabase, access } = await loadAdminSession();
   const inquiries = await readAdminInquiries(supabase);
-  return <InquiriesPanel inquiries={inquiries} />;
+  return <InquiriesPanel inquiries={inquiries} canRestrict={access === "owner"} />;
 }

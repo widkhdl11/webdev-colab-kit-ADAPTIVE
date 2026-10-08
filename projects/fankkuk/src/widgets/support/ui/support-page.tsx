@@ -160,10 +160,12 @@ export function SupportPage({
   prices,
   signedIn,
   myInquiries,
+  inquiryRestricted,
 }: {
   prices: PublicPriceTable;
   signedIn: boolean;
   myInquiries: readonly MyInquiry[];
+  inquiryRestricted: boolean;
 }) {
   const categories = categoriesFor(prices);
   const [selected, setSelected] = useState(0);
@@ -246,7 +248,7 @@ export function SupportPage({
         <div className={`container ${s.help}`}>
           <div className={s.ask}>
             <h2 id="inquiry-title">1:1 문의</h2>
-            <InquiryForm signedIn={signedIn} />
+            <InquiryForm signedIn={signedIn} restricted={inquiryRestricted} />
             {signedIn && <MyInquiries inquiries={myInquiries} />}
           </div>
           <aside className={s.contact} aria-labelledby="contact-title">

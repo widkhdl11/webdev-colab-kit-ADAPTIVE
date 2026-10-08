@@ -5,6 +5,7 @@ import type { AdminInquiry } from "@/entities/inquiry/model/admin-inquiry";
 import type { InquiryStatus } from "@/entities/inquiry/model/inquiry-row";
 import { INQUIRY_KIND_LABELS } from "@/entities/inquiry/model/inquiry-kind";
 import { AnswerForm } from "@/features/admin-inquiry-answer/ui/answer-form";
+import { RestrictionForm } from "@/features/admin-inquiry-restrict/ui/restriction-form";
 import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 
@@ -12,6 +13,7 @@ import a from "@/shared/ui/admin.module.css";
 // 왼쪽 목록(답변 대기가 먼저 — DB 순서) + 오른쪽 상세. 답이 달린 문의는 보낸 답을 읽기만 한다.
 // 쓴 사람은 닉네임·아이디로만. 분류·주문번호는 쓴 사람이 고른·적은 그대로 보인다(주문번호는 실제 주문과 잇지 않는다 — 결정 d25).
 // 「자주 쓰는 답 넣기」는 아직 자료가 없어 뺐다.
+// 쓴 사람이 문의 제한 중이면 목록·상세에 표시하고 사유를 보인다. 제한·풀기 버튼은 대표 화면에만(INV-K12 — 최종 판정은 DB).
 
 type Tab = "all" | InquiryStatus;
 
@@ -25,7 +27,7 @@ function StatusTag({ status }: { status: InquiryStatus }) {
   return status === "open" ? <span className={`${a.tag} ${a.tagWarn}`}>답변 대기</span> : <span className={a.tag}>답변 완료</span>;
 }
 
-export function InquiriesPanel({ inquiries }: { inquiries: readonly AdminInquiry[] }) {
+export function InquiriesPanel({ inquiries, canRestrict }: { inquiries: readonly AdminInquiry[]; canRestrict: boolean }) {
   const [tab, setTab] = useState<Tab>("all");
   const [pickedId, setPickedId] = useState<string | null>(inquiries[0]?.id ?? null);
 
@@ -95,7 +97,8 @@ export function InquiriesPanel({ inquiries }: { inquiries: readonly AdminInquiry
                             <StatusTag status={q.status} />
                           </span>
                           <span className={a.pickMeta}>
-                            {INQUIRY_KIND_LABELS[q.kind]} · {q.authorNickname} · {formatStamp(q.createdAt)}
+                            {INQUIRY_KIND_LABELS[q.kind]} · {q.authorNickname}
+                            {q.authorRestricted && " (문의 제한 중)"} · {formatStamp(q.createdAt)}
                           </span>
                         </button>
                       </td>
@@ -127,6 +130,22 @@ export function InquiriesPanel({ inquiries }: { inquiries: readonly AdminInquiry
                 <dd className={picked.orderNo ? a.mono : a.sub}>{picked.orderNo ?? "적지 않음"}</dd>
                 <dt>쓴 시각</dt>
                 <dd className={a.mono}>{formatStamp(picked.createdAt)}</dd>
+                <dt>문의 제한</dt>
+                <dd>
+                  {picked.authorRestricted ? (
+                    <>
+                      <span className={`${a.tag} ${a.tagWarn}`}>제한 중</span>{" "}
+                      <span className={a.sub}>{picked.authorRestrictionReason}</span>
+                    </>
+                  ) : (
+                    <span className={a.sub}>없음</span>
+                  )}
+                  {canRestrict && (
+                    <div style={{ marginTop: 8 }}>
+                      <RestrictionForm key={picked.id} inquiryId={picked.id} restricted={picked.authorRestricted} />
+                    </div>
+                  )}
+                </dd>
               </dl>
               <div className={a.bubble}>{picked.body}</div>
               {picked.status === "answered" ? (

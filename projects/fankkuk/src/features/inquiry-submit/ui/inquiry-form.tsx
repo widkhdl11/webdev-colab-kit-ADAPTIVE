@@ -6,11 +6,13 @@ import { useState, type FormEvent } from "react";
 import { INQUIRY_KIND_LABELS, INQUIRY_KINDS } from "@/entities/inquiry/model/inquiry-kind";
 import { postInquiry } from "../api/post-inquiry-client";
 import { checkInquiryInput, type InquiryField } from "../model/inquiry-input";
+import { MESSAGE_RESTRICTED } from "../model/submit-inquiry";
 import s from "./inquiry-form.module.css";
 
 // 1:1 문의 양식 (admin-console INV-K11, 결정 d25). 시안: docs/design/mockups/site/v4/support.html
 // 로그인하지 않았으면 칸은 보이되 버튼이 로그인 화면으로 간다. 로그인했으면 실제로 보낸다 —
 // 보내기 전에 서버와 같은 검사를 하고, 성공하면 칸을 비우고 화면을 다시 읽어 「내 문의」에 새 문의가 보이게 한다.
+// 문의가 제한된 계정이면(admin-console INV-K12) 양식 대신 안내만 보인다 — 다 적고 나서 거부되지 않게.
 
 function Chevron({ className }: { className: string }) {
   return (
@@ -28,7 +30,7 @@ const EMPTY: Draft = { kind: "", orderNo: "", title: "", body: "" };
 
 const FIELD_IDS: Readonly<Record<InquiryField, string>> = { kind: "q-cat", orderNo: "q-order", title: "q-title", body: "q-body" };
 
-export function InquiryForm({ signedIn }: { signedIn: boolean }) {
+export function InquiryForm({ signedIn, restricted = false }: { signedIn: boolean; restricted?: boolean }) {
   const router = useRouter();
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [busy, setBusy] = useState(false);
@@ -62,13 +64,23 @@ export function InquiryForm({ signedIn }: { signedIn: boolean }) {
     const outcome = await postInquiry(draft);
     setBusy(false);
     if (outcome.kind === "failed") {
-      // 보내기 전에 서버와 같은 검사를 했으므로 여기 오는 것은 로그인 만료·연결 실패 같은 것이다 — 문구만 보인다
+      // 보내기 전에 서버와 같은 검사를 했으므로 여기 오는 것은 로그인 만료·연결 실패, 또는 화면을 연 뒤 걸린 문의 제한(403, INV-K12)이다.
+      // 제한이면 다시 읽어 양식 대신 안내를 보인다 — 같은 거부를 되풀이하지 않게.
       setError({ field: null, message: outcome.message });
+      if (outcome.status === 403) router.refresh();
       return;
     }
     setDraft(EMPTY);
     setDone(true);
     router.refresh(); // 「내 문의」에 방금 남긴 문의가 보이게 다시 읽는다
+  }
+
+  if (signedIn && restricted) {
+    return (
+      <p className={s.error} role="note">
+        {MESSAGE_RESTRICTED} 지난 문의와 답변은 아래 「내 문의」에서 볼 수 있어요.
+      </p>
+    );
   }
 
   return (

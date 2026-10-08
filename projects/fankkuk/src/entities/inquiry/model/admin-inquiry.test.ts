@@ -16,6 +16,8 @@ const OPEN = {
   author_login_id: "dal_tokki",
   author_nickname: "달토끼",
   answered_by_nickname: null,
+  author_restricted: false,
+  author_restriction_reason: null,
 };
 
 describe("관리자 1:1 문의 읽기 (INV-K11·K8)", () => {
@@ -34,6 +36,8 @@ describe("관리자 1:1 문의 읽기 (INV-K11·K8)", () => {
         authorLoginId: "dal_tokki",
         authorNickname: "달토끼",
         answeredByNickname: null,
+        authorRestricted: false,
+        authorRestrictionReason: null,
       },
     ]);
   });
@@ -52,5 +56,16 @@ describe("관리자 1:1 문의 읽기 (INV-K11·K8)", () => {
 
   it("결정 d25: 분류·주문번호를 옮긴다", () => {
     expect(adminInquiriesFromRows([{ ...OPEN, kind: "shipping", order_no: "FC-7K3M9" }])?.[0]).toMatchObject({ kind: "shipping", orderNo: "FC-7K3M9" });
+  });
+
+  it("INV-K12: 쓴 사람이 문의 제한 중인지와 사유를 옮긴다", () => {
+    const row = { ...OPEN, author_restricted: true, author_restriction_reason: "같은 문의를 하루 100건" };
+    expect(adminInquiriesFromRows([row])?.[0]).toMatchObject({ authorRestricted: true, authorRestrictionReason: "같은 문의를 하루 100건" });
+  });
+
+  it("INV-K12 (실패경로): 제한 칸이 없거나 꼴이 다르면 null — 제한 중인 사람을 「제한 안 됨」으로 그리지 않는다", () => {
+    const { author_restricted: _dropped, ...noFlag } = OPEN;
+    expect(adminInquiriesFromRows([noFlag])).toBeNull();
+    expect(adminInquiriesFromRows([{ ...OPEN, author_restricted: "true" }])).toBeNull();
   });
 });

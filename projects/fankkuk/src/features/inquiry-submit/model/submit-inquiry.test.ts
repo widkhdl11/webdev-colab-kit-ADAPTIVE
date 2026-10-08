@@ -39,4 +39,11 @@ describe("1:1 문의 남기기 (INV-K11, 결정 d25)", () => {
     expect((await submitInquiry(fakeClient({ code: "22023" }).client, OK)).status).toBe(400);
     expect((await submitInquiry(fakeClient({ code: "XX000" }).client, OK)).status).toBe(500);
   });
+
+  it("INV-K12 (실패경로): 문의가 제한된 계정(DB P0051)이면 403 「지금은 1:1 문의를 남길 수 없어요.」", async () => {
+    expect(await submitInquiry(fakeClient({ code: "P0051" }).client, OK)).toEqual({
+      status: 403,
+      body: { message: "지금은 1:1 문의를 남길 수 없어요." },
+    });
+  });
 });

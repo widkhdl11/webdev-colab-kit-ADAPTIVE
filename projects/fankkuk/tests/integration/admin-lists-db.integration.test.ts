@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { orderArgs, SMALL_FIRST } from "./admin-pricing-helpers";
 import { adminClient, anonClient, deleteTestOrders, followForTest, psql, psqlError, SEED, signedInClient } from "./helpers";
 
-// 관리자 3단계 — 보낼 수 없는 물품(INV-K9) · 크리에이터 본인 확인(INV-K10) · 공지·1:1 문의(INV-K11).
+// 관리자 3단계 — 보낼 수 없는 물품(INV-K9) · 크리에이터 본인 확인(INV-K10) · 공지·1:1 문의(INV-K11) · 문의 제한(INV-K12).
 // 시드: fankkuk_admin = 대표 운영자, fankkuk_staff = 직원 운영자, byeolbit_fan = 별빛, daltokki_fan = 달토끼.
 
 type Item = { id: string; name: string; description: string };
@@ -31,6 +31,8 @@ function cleanup(): void {
       `delete from public.creators where id = '${TEST_CREATOR_ID}';`,
       `delete from public.notices where title like '${TEST_PREFIX}%';`,
       `delete from public.inquiries where title like '${TEST_PREFIX}%';`,
+      `delete from public.inquiry_restriction_events where reason like '${TEST_PREFIX}%';`,
+      `delete from public.inquiry_restrictions where reason like '${TEST_PREFIX}%';`,
       "commit;",
     ].join(" "),
   );
@@ -595,5 +597,142 @@ describe("문의 작성자는 로그인한 사람 (INV-K11)", () => {
   it("INV-K11: 작성자 칸은 로그인한 사람 ID 다", async () => {
     const id = await writeInquiry("byeolbit_fan");
     expect(psql(`select author_id from public.inquiries where id = '${id}'`)).toBe(SEED.fanId);
+  });
+});
+
+type RestrictedRow = Inquiry & { author_restricted: boolean; author_restriction_reason: string | null };
+
+function restrictionArgs(inquiryId: string, restricted: boolean, reason = `${TEST_PREFIX}같은 문의 반복`) {
+  return { p_inquiry_id: inquiryId, p_restricted: restricted, p_reason: reason };
+}
+
+function restrictionEvents(): string {
+  return psql(`select count(*) from public.inquiry_restriction_events where reason like '${TEST_PREFIX}%'`);
+}
+
+function fanRestricted(): string {
+  return psql(`select count(*) from public.inquiry_restrictions where account_id = '${SEED.fanId}'`);
+}
+
+describe("1:1 문의 제한 (INV-K12)", () => {
+  it("INV-K12 (S12): 대표가 제한하면 새 문의는 거부, 지난 문의는 읽히고 고칠 수 있다 — 풀면 다시 남긴다", async () => {
+    const id = await writeInquiry("byeolbit_fan");
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_set_inquiry_restriction", restrictionArgs(id, true))).error).toBeNull();
+
+    const me = await signedInClient("byeolbit_fan");
+    expect((await me.rpc("my_inquiry_restricted")).data).toBe(true);
+    expect((await me.rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}제한 중`, "본문"))).error?.code).toBe("P0051");
+    expect(psql(`select count(*) from public.inquiries where title = '${TEST_PREFIX}제한 중'`)).toBe("0");
+    expect(((await me.rpc("my_inquiries")).data as Inquiry[]).map((q) => q.id)).toContain(id);
+    expect((await me.rpc("edit_my_inquiry", { p_id: id, p_title: `${TEST_PREFIX}고침`, p_body: "고쳤어요" })).error).toBeNull();
+
+    // 다른 사람은 그대로
+    const dal = await signedInClient("daltokki_fan");
+    expect((await dal.rpc("my_inquiry_restricted")).data).toBe(false);
+    expect((await dal.rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}달토끼`, "본문"))).error).toBeNull();
+
+    const staff = await signedInClient("fankkuk_staff");
+    const row = ((await staff.rpc("admin_inquiries")).data as RestrictedRow[]).find((q) => q.id === id);
+    expect(row).toMatchObject({ author_restricted: true, author_restriction_reason: `${TEST_PREFIX}같은 문의 반복` });
+    expect(restrictionEvents()).toBe("1");
+    expect(psql(`select restricted::text || '/' || (acted_by = (select owner_user_id from public.owner_setting))::text from public.inquiry_restriction_events where reason like '${TEST_PREFIX}%'`)).toBe(
+      "true/true",
+    );
+
+    expect((await owner.rpc("admin_set_inquiry_restriction", restrictionArgs(id, false, `${TEST_PREFIX}풀어 줌`))).error).toBeNull();
+    expect((await me.rpc("my_inquiry_restricted")).data).toBe(false);
+    expect((await me.rpc("create_inquiry", inquiryArgs(`${TEST_PREFIX}다시`, "본문"))).error).toBeNull();
+    expect(restrictionEvents()).toBe("2");
+    // 두 줄 모두 막힌 사람(별빛)·한 사람(대표)이 맞고, 순서대로 제한 → 풀기다
+    expect(
+      psql(
+        `select string_agg(restricted::text || '/' || (account_id = '${SEED.fanId}')::text || '/' || (acted_by = (select owner_user_id from public.owner_setting))::text, ',' order by id) from public.inquiry_restriction_events where reason like '${TEST_PREFIX}%'`,
+      ),
+    ).toBe("true/true/true,false/true/true");
+    const after = ((await staff.rpc("admin_inquiries")).data as RestrictedRow[]).find((q) => q.id === id);
+    expect(after).toMatchObject({ author_restricted: false, author_restriction_reason: null });
+  });
+
+  it("INV-K12 (S12b, 실패경로): 직원 운영자·팬·크리에이터·손님은 제한할 수 없고 기록도 남지 않는다", async () => {
+    const id = await writeInquiry("byeolbit_fan");
+    for (const who of ["fankkuk_staff", "daltokki_fan", "byeolbit_fan", "haru_creator"]) {
+      const c = await signedInClient(who);
+      expect((await c.rpc("admin_set_inquiry_restriction", restrictionArgs(id, true))).error?.code).toBe("42501");
+    }
+    expect((await anonClient().rpc("admin_set_inquiry_restriction", restrictionArgs(id, true))).error).not.toBeNull();
+    expect(fanRestricted()).toBe("0");
+    expect(restrictionEvents()).toBe("0");
+  });
+
+  it.each([
+    ["빈칸", ""],
+    ["공백만", "   "],
+    ["201자", `${TEST_PREFIX}${"가".repeat(201 - TEST_PREFIX.length)}`],
+  ])("INV-K12 (S12b, 실패경로): 사유 %s → 거부", async (_label, reason) => {
+    const id = await writeInquiry("byeolbit_fan");
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_set_inquiry_restriction", restrictionArgs(id, true, reason))).error?.code).toBe("22023");
+    expect(fanRestricted()).toBe("0");
+  });
+
+  it("INV-K12: 사유 200자는 받는다", async () => {
+    const id = await writeInquiry("byeolbit_fan");
+    const owner = await signedInClient("fankkuk_admin");
+    const reason = `${TEST_PREFIX}${"가".repeat(200 - TEST_PREFIX.length)}`;
+    expect((await owner.rpc("admin_set_inquiry_restriction", restrictionArgs(id, true, reason))).error).toBeNull();
+    expect(fanRestricted()).toBe("1");
+  });
+
+  it("INV-K12 (S12b, 실패경로): 운영자가 쓴 문의로는 제한할 수 없다", async () => {
+    const id = await writeInquiry("fankkuk_staff");
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_set_inquiry_restriction", restrictionArgs(id, true))).error?.code).toBe("P0052");
+    expect(restrictionEvents()).toBe("0");
+  });
+
+  it("INV-K12 (S12b, 실패경로): 이미 그 상태면 거부하고 기록은 그대로 — 없는 문의는 P0002", async () => {
+    const id = await writeInquiry("byeolbit_fan");
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_set_inquiry_restriction", restrictionArgs(id, false))).error?.code).toBe("55000");
+    expect((await owner.rpc("admin_set_inquiry_restriction", restrictionArgs(id, true))).error).toBeNull();
+    expect((await owner.rpc("admin_set_inquiry_restriction", restrictionArgs(id, true, `${TEST_PREFIX}또`))).error?.code).toBe("55000");
+    expect(restrictionEvents()).toBe("1");
+    expect(psql(`select reason from public.inquiry_restrictions where account_id = '${SEED.fanId}'`)).toBe(`${TEST_PREFIX}같은 문의 반복`);
+    const missing = "00000000-0000-4000-8000-0000000000ff";
+    expect((await owner.rpc("admin_set_inquiry_restriction", restrictionArgs(missing, true))).error?.code).toBe("P0002");
+  });
+
+  it("INV-K12 (동시): 같은 제한을 두 번 동시에 눌러도 하나만 받고 기록도 하나", async () => {
+    const id = await writeInquiry("byeolbit_fan");
+    const [a, b] = await Promise.all([signedInClient("fankkuk_admin"), signedInClient("fankkuk_admin")]);
+    const results = await Promise.all([
+      a.rpc("admin_set_inquiry_restriction", restrictionArgs(id, true)),
+      b.rpc("admin_set_inquiry_restriction", restrictionArgs(id, true)),
+    ]);
+    expect(results.map((r) => r.error?.code ?? "ok").sort()).toEqual(["55000", "ok"]);
+    expect(restrictionEvents()).toBe("1");
+  });
+
+  it("INV-K12 (S12c, 실패경로): 제한 기록은 고치거나 지울 수 없다 — DB 소유자도", async () => {
+    const id = await writeInquiry("byeolbit_fan");
+    const owner = await signedInClient("fankkuk_admin");
+    await owner.rpc("admin_set_inquiry_restriction", restrictionArgs(id, true));
+    for (const sql of [
+      `update public.inquiry_restriction_events set reason = '${TEST_PREFIX}바꿈' where reason like '${TEST_PREFIX}%'`,
+      `delete from public.inquiry_restriction_events where reason like '${TEST_PREFIX}%'`,
+    ]) {
+      expect(() => psql(sql)).toThrow();
+    }
+    expect(restrictionEvents()).toBe("1");
+  });
+
+  it("INV-K12 (실패경로): 제한 표·기록 표는 로그인한 사람도 직접 읽거나 쓸 수 없다", async () => {
+    const me = await signedInClient("byeolbit_fan");
+    const insert = await me.from("inquiry_restrictions").insert({ account_id: SEED.fanId, restricted_by: SEED.fanId, reason: "x" });
+    expect(insert.error).not.toBeNull();
+    expect((await me.from("inquiry_restriction_events").select("id")).error).not.toBeNull();
+    expect((await anonClient().rpc("my_inquiry_restricted")).error).not.toBeNull();
+    expect(fanRestricted()).toBe("0");
   });
 });
