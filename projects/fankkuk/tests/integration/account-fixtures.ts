@@ -1,3 +1,4 @@
+import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { AccountPasswordDeps, DetachedAuth } from "@/entities/session/api/account-password";
 import type { SendMail } from "@/shared/api/mail/smtp";
@@ -92,6 +93,7 @@ export async function stillSignedIn(client: SupabaseClient): Promise<boolean> {
 export function accountPasswordDeps(): AccountPasswordDeps {
   return {
     authAdmin: adminClient().auth.admin,
+    attempts: passwordAttemptsOf(adminClient()),
     makeDetachedAuth: (): DetachedAuth =>
       createClient(process.env.FK_TEST_API_URL ?? "", process.env.FK_TEST_ANON_KEY ?? "", {
         auth: { persistSession: false, autoRefreshToken: false },

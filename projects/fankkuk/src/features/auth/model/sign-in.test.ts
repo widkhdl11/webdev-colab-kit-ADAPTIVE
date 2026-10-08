@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { fakePasswordAttempts } from "@/entities/session/api/password-attempts-fake";
+import { PASSWORD_LOCKED_MESSAGE } from "@/entities/session/api/password-attempts";
 import { SIGN_IN_FAILED_MESSAGE, signIn, type PasswordAuth } from "./sign-in";
 
 // 비밀번호 확인 자체는 Supabase Auth 가 한다. 여기서 보는 것은 그 앞뒤의 판정 — 무엇을 넘기고, 실패를 어떻게 돌려주나.
@@ -18,7 +20,7 @@ const dev = { NODE_ENV: "development" };
 describe("아이디 로그인", () => {
   it("아이디를 정해진 주소로 바꿔 Supabase Auth 에 넘긴다 — 가입 계정 주소가 먼저, 첫 성공에서 멈춘다", async () => {
     const { auth, calls } = recordingAuth("ok");
-    const r = await signIn({ auth, env: dev }, { loginId: "newfan", password: "pw-1234" });
+    const r = await signIn({ attempts: fakePasswordAttempts().attempts, auth, env: dev }, { loginId: "newfan", password: "pw-1234" });
     expect(r).toEqual({ ok: true, next: "/" });
     expect(calls).toEqual([{ email: "newfan@login.fankkuk.invalid", password: "pw-1234" }]);
   });
@@ -31,24 +33,24 @@ describe("아이디 로그인", () => {
         return c.email.endsWith("@fankkuk.test") ? { error: null } : { error: { code: "invalid_credentials" } };
       },
     };
-    expect(await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).toEqual({ ok: true, next: "/" });
+    expect(await signIn({ attempts: fakePasswordAttempts().attempts, auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).toEqual({ ok: true, next: "/" });
     expect(calls).toEqual(["byeolbit_fan@login.fankkuk.invalid", "byeolbit_fan@fankkuk.test"]);
   });
 
   it("빈 칸이면 Auth 를 부르지 않고 입력 안내를 돌려준다", async () => {
     const { auth, calls } = recordingAuth("ok");
-    const r = await signIn({ auth, env: dev }, { loginId: "", password: "" });
+    const r = await signIn({ attempts: fakePasswordAttempts().attempts, auth, env: dev }, { loginId: "", password: "" });
     expect(r).toMatchObject({ ok: false, status: 400 });
     expect(calls).toEqual([]);
-    expect((await signIn({ auth, env: dev }, "not an object")).ok).toBe(false);
+    expect((await signIn({ attempts: fakePasswordAttempts().attempts, auth, env: dev }, "not an object")).ok).toBe(false);
   });
 });
 
 describe("INV-L5: 실패 응답은 아이디 없음과 비밀번호 틀림을 구분하지 않는다", () => {
   it("INV-L5 (S5): 없는 아이디·틀린 비밀번호·꼴이 다른 아이디가 모두 같은 응답이다", async () => {
-    const wrongPw = await signIn({ auth: recordingAuth("invalid_credentials").auth, env: dev }, { loginId: "byeolbit_fan", password: "x" });
-    const noUser = await signIn({ auth: recordingAuth("user_not_found").auth, env: dev }, { loginId: "nobody_here", password: "x" });
-    const badShape = await signIn({ auth: recordingAuth("ok").auth, env: dev }, { loginId: "Nobody Here!", password: "x" });
+    const wrongPw = await signIn({ attempts: fakePasswordAttempts().attempts, auth: recordingAuth("invalid_credentials").auth, env: dev }, { loginId: "byeolbit_fan", password: "x" });
+    const noUser = await signIn({ attempts: fakePasswordAttempts().attempts, auth: recordingAuth("user_not_found").auth, env: dev }, { loginId: "nobody_here", password: "x" });
+    const badShape = await signIn({ attempts: fakePasswordAttempts().attempts, auth: recordingAuth("ok").auth, env: dev }, { loginId: "Nobody Here!", password: "x" });
     expect(wrongPw).toEqual({ ok: false, status: 401, message: SIGN_IN_FAILED_MESSAGE });
     expect(noUser).toEqual(wrongPw);
     expect(badShape).toEqual(wrongPw);
@@ -66,7 +68,7 @@ describe("INV-L6: 시험 계정은 운영 환경에서 로그인할 수 없다",
           return c.email.endsWith("@fankkuk.test") ? { error: null } : { error: { code: "invalid_credentials" } };
         },
       };
-      const r = await signIn({ auth, env }, { loginId: "byeolbit_fan", password: "pw-1234" });
+      const r = await signIn({ attempts: fakePasswordAttempts().attempts, auth, env }, { loginId: "byeolbit_fan", password: "pw-1234" });
       expect(r).toEqual({ ok: false, status: 401, message: SIGN_IN_FAILED_MESSAGE });
       expect(calls).toEqual(["byeolbit_fan@login.fankkuk.invalid"]);
     }
@@ -74,13 +76,13 @@ describe("INV-L6: 시험 계정은 운영 환경에서 로그인할 수 없다",
 
   it("INV-L6: 개발 환경에서는 시험 계정이 들어간다", async () => {
     const { auth, calls } = recordingAuth("ok");
-    expect(await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).toEqual({ ok: true, next: "/" });
+    expect(await signIn({ attempts: fakePasswordAttempts().attempts, auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).toEqual({ ok: true, next: "/" });
     expect(calls).toHaveLength(1);
   });
 
   it("INV-U8 (S8): 운영에서 가입 계정은 가입 계정 주소로 들어간다", async () => {
     const { auth, calls } = recordingAuth("ok");
-    expect(await signIn({ auth, env: { NODE_ENV: "production" } }, { loginId: "newfan", password: "pw" })).toEqual({ ok: true, next: "/" });
+    expect(await signIn({ attempts: fakePasswordAttempts().attempts, auth, env: { NODE_ENV: "production" } }, { loginId: "newfan", password: "pw" })).toEqual({ ok: true, next: "/" });
     expect(calls).toEqual([{ email: "newfan@login.fankkuk.invalid", password: "pw" }]);
   });
 });
@@ -88,19 +90,57 @@ describe("INV-L6: 시험 계정은 운영 환경에서 로그인할 수 없다",
 describe("INV-L13: 로그인 뒤 돌아갈 주소는 같은 사이트의 경로만", () => {
   it("INV-L13 S11: 성공하면 검사를 통과한 경로를 그대로 돌려준다", async () => {
     const { auth } = recordingAuth("ok");
-    expect(await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw", next: "/support" })).toEqual({ ok: true, next: "/support" });
+    expect(await signIn({ attempts: fakePasswordAttempts().attempts, auth, env: dev }, { loginId: "byeolbit_fan", password: "pw", next: "/support" })).toEqual({ ok: true, next: "/support" });
   });
 
   it("INV-L13 S11 (실패경로): 다른 사이트로 가는 값은 메인으로 바꿔 돌려준다", async () => {
     const { auth } = recordingAuth("ok");
     for (const next of ["//evil.example", "/\\evil.example", "https://evil.example", "/%2F%2Fevil.example", 42]) {
-      expect(await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw", next })).toEqual({ ok: true, next: "/" });
+      expect(await signIn({ attempts: fakePasswordAttempts().attempts, auth, env: dev }, { loginId: "byeolbit_fan", password: "pw", next })).toEqual({ ok: true, next: "/" });
     }
   });
 
   it("INV-L13 (실패경로): 돌아갈 주소는 실패 응답을 바꾸지 않는다(INV-L5 그대로)", async () => {
     const { auth } = recordingAuth("invalid_credentials");
-    const r = await signIn({ auth, env: dev }, { loginId: "byeolbit_fan", password: "pw", next: "/support" });
+    const r = await signIn({ attempts: fakePasswordAttempts().attempts, auth, env: dev }, { loginId: "byeolbit_fan", password: "pw", next: "/support" });
     expect(r).toEqual({ ok: false, status: 401, message: SIGN_IN_FAILED_MESSAGE });
+  });
+});
+
+describe("INV-L14: 비밀번호 확인 횟수 — 아이디마다", () => {
+  it("INV-L14 (S12): 막힌 아이디는 Auth 를 부르지 않고 429 와 안내 문구 — 맞는 비밀번호여도", async () => {
+    const { auth, calls } = recordingAuth("ok");
+    const limiter = fakePasswordAttempts({ locked: true });
+    expect(await signIn({ attempts: limiter.attempts, auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).toEqual({
+      ok: false,
+      status: 429,
+      message: PASSWORD_LOCKED_MESSAGE,
+    });
+    expect(calls).toEqual([]);
+  });
+
+  it("INV-L14: 아이디는 앞뒤 공백을 떼고 소문자로 세고, 결과(틀림·맞음)를 적는다", async () => {
+    const wrong = fakePasswordAttempts();
+    await signIn({ attempts: wrong.attempts, auth: recordingAuth("invalid_credentials").auth, env: dev }, { loginId: " ByeolBit_Fan ", password: "x" });
+    expect(wrong.calls).toEqual(["begin:byeolbit_fan", "finish:1:false"]);
+    const right = fakePasswordAttempts();
+    await signIn({ attempts: right.attempts, auth: recordingAuth("ok").auth, env: dev }, { loginId: "newfan", password: "pw" });
+    expect(right.calls).toEqual(["begin:newfan", "finish:1:true"]);
+  });
+
+  it("INV-L14 (S12c)·L5: 없는 아이디·꼴이 다른 아이디도 똑같이 센다", async () => {
+    const odd = fakePasswordAttempts();
+    expect(await signIn({ attempts: odd.attempts, auth: recordingAuth("ok").auth, env: dev }, { loginId: "Nobody Here!", password: "x" })).toEqual({
+      ok: false,
+      status: 401,
+      message: SIGN_IN_FAILED_MESSAGE,
+    });
+    expect(odd.calls).toEqual(["begin:nobody here!", "finish:1:false"]);
+  });
+
+  it("INV-L14: 빈 칸이면 세지 않는다(Auth 도 부르지 않는다)", async () => {
+    const limiter = fakePasswordAttempts();
+    await signIn({ attempts: limiter.attempts, auth: recordingAuth("ok").auth, env: dev }, { loginId: " ", password: "" });
+    expect(limiter.calls).toEqual([]);
   });
 });

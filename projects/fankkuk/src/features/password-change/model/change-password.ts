@@ -1,3 +1,4 @@
+import { PASSWORD_LOCKED_MESSAGE } from "@/entities/session/api/password-attempts";
 import { z } from "zod";
 import {
   loginEmailOf,
@@ -29,7 +30,7 @@ export type ChangePasswordDeps = AccountPasswordDeps & { viewer: Viewer | null; 
 
 export type ChangePasswordField = "currentPassword" | "newPassword" | "newPasswordConfirm";
 
-export type ChangePasswordResult = { ok: true; message?: string } | { ok: false; status: 400 | 401; field?: ChangePasswordField; message: string };
+export type ChangePasswordResult = { ok: true; message?: string } | { ok: false; status: 400 | 401 | 429; field?: ChangePasswordField; message: string };
 
 export { CURRENT_PASSWORD_WRONG };
 
@@ -54,9 +55,10 @@ export async function changePassword(deps: ChangePasswordDeps, body: unknown): P
   if (problem) return { ok: false, status: 400, field: "newPassword", message: problem };
   if (newPassword !== newPasswordConfirm) return { ok: false, status: 400, field: "newPasswordConfirm", message: "새 비밀번호가 서로 달라요." };
 
-  if (!(await passwordMatches(deps, userId, currentPassword))) {
-    return { ok: false, status: 400, field: "currentPassword", message: CURRENT_PASSWORD_WRONG };
-  }
+  const check = await passwordMatches(deps, userId, currentPassword);
+  // INV-L14: 아이디별 확인 횟수를 넘겼으면 묻지 않았다
+  if (check === "locked") return { ok: false, status: 429, field: "currentPassword", message: PASSWORD_LOCKED_MESSAGE };
+  if (check === "wrong") return { ok: false, status: 400, field: "currentPassword", message: CURRENT_PASSWORD_WRONG };
 
   const updated = await deps.sessionAuth.updateUser({ password: newPassword });
   if (updated.error) throw new Error("비밀번호를 바꾸지 못했다");

@@ -1,3 +1,5 @@
+import { fakePasswordAttempts } from "@/entities/session/api/password-attempts-fake";
+import { PASSWORD_LOCKED_MESSAGE } from "@/entities/session/api/password-attempts";
 import { describe, expect, it, vi } from "vitest";
 import { PASSWORD_CHANGED_RELOGIN, type DetachedAuth } from "@/entities/session/api/account-password";
 import { RESET_LINK_INVALID, resetPassword } from "./reset-password";
@@ -10,6 +12,7 @@ const ACCOUNT = "22222222-2222-4222-8222-222222222222";
 const TOKEN = "a".repeat(64);
 
 function fakes(opts: { globalSignOutErrors?: number; claimCode?: string } = {}) {
+  const limiter = fakePasswordAttempts({ locked: false });
   const calls: string[] = [];
   let signOutFailuresLeft = opts.globalSignOutErrors ?? 0;
   const detached: DetachedAuth = {
@@ -45,8 +48,9 @@ function fakes(opts: { globalSignOutErrors?: number; claimCode?: string } = {}) 
       },
     },
     makeDetachedAuth: () => detached,
+    attempts: limiter.attempts,
   };
-  return { deps, calls };
+  return { deps, limiter, calls };
 }
 
 const NEW_PW = "new-pass-1234";
@@ -63,6 +67,15 @@ describe("INV-L11: 재설정이 끝나면 그 계정의 모든 세션을 끝낸�
       "detached.signIn:new-pass-1234",
       "detached.signOut:global",
     ]);
+  });
+
+  it("INV-L14 (S12c): 재설정이 끝나면 그 아이디의 비밀번호 확인 막힘을 푼다 — 링크가 거부되면 풀지 않는다", async () => {
+    const done = fakes();
+    expect(await resetPassword(done.deps, body)).toEqual({ ok: true });
+    expect(done.limiter.calls).toEqual(["clear:it_owner"]);
+    const refused = fakes({ claimCode: "P0002" });
+    await resetPassword(refused.deps, body);
+    expect(refused.limiter.calls).toEqual([]);
   });
 
   it("INV-L11 (실패경로): 모든 기기 로그아웃이 한 번 실패하면 한 번 더 해서 끝낸다", async () => {

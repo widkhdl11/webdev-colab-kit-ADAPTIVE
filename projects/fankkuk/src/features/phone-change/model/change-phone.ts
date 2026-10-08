@@ -1,3 +1,4 @@
+import { PASSWORD_LOCKED_MESSAGE } from "@/entities/session/api/password-attempts";
 import { z } from "zod";
 import { passwordMatches, type AccountPasswordDeps } from "@/entities/session/api/account-password";
 import { CURRENT_PASSWORD_EMPTY, CURRENT_PASSWORD_WRONG } from "@/entities/session/model/password-rule";
@@ -21,7 +22,7 @@ export type ChangePhoneDeps = AccountPasswordDeps & {
 
 export type ChangePhoneField = "phone" | "verification" | "currentPassword";
 
-export type ChangePhoneResult = { ok: true } | { ok: false; status: 400 | 401 | 409 | 503; field?: ChangePhoneField; message: string };
+export type ChangePhoneResult = { ok: true } | { ok: false; status: 400 | 401 | 409 | 429 | 503; field?: ChangePhoneField; message: string };
 
 export const PHONE_CHANGE_CLOSED = "지금은 휴대폰 번호를 바꿀 수 없어요. 준비가 끝나면 알려 드릴게요.";
 export const VERIFY_AGAIN = "본인 확인을 다시 해 주세요.";
@@ -50,9 +51,10 @@ export async function changePhone(deps: ChangePhoneDeps, body: unknown, verifica
   if (parsed.data.currentPassword === "") {
     return { ok: false, status: 400, field: "currentPassword", message: CURRENT_PASSWORD_EMPTY };
   }
-  if (!(await passwordMatches(deps, deps.viewer.userId, parsed.data.currentPassword))) {
-    return { ok: false, status: 400, field: "currentPassword", message: CURRENT_PASSWORD_WRONG };
-  }
+  const check = await passwordMatches(deps, deps.viewer.userId, parsed.data.currentPassword);
+  // INV-L14: 아이디별 확인 횟수를 넘겼으면 묻지 않았다
+  if (check === "locked") return { ok: false, status: 429, field: "currentPassword", message: PASSWORD_LOCKED_MESSAGE };
+  if (check === "wrong") return { ok: false, status: 400, field: "currentPassword", message: CURRENT_PASSWORD_WRONG };
 
   const changed = await deps.admin.rpc("change_my_phone", {
     p_account_id: deps.viewer.userId,

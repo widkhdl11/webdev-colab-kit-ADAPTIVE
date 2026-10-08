@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
 import { signIn } from "@/features/auth/model/sign-in";
+import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import { isSameOriginJson } from "@/shared/lib/http/same-origin";
 
@@ -17,7 +19,8 @@ export async function POST(req: NextRequest) {
     body = null;
   }
   const supabase = await createRequestSupabase();
-  const result = await signIn({ auth: supabase.auth, env: process.env }, body);
+  // INV-L14: 아이디별 확인 횟수는 서버 전용 키로 센다
+  const result = await signIn({ attempts: passwordAttemptsOf(createAdminSupabase()), auth: supabase.auth, env: process.env }, body);
   if (!result.ok) return NextResponse.json({ message: result.message }, { status: result.status, headers: { "Cache-Control": "no-store" } });
   // 돌아갈 주소는 경로 그대로 준다 — 사이트 주소에 붙여 만들지 않는다(INV-L13)
   return NextResponse.json({ ok: true, next: result.next }, { headers: { "Cache-Control": "no-store" } });

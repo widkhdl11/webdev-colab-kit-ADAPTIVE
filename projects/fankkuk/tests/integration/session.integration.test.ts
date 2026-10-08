@@ -1,10 +1,11 @@
+import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
 import type { CookieMethodsServer } from "@supabase/ssr";
 import { describe, expect, it } from "vitest";
 import { readVerifiedUserId } from "@/entities/session/model/viewer";
 import { signIn } from "@/features/auth/model/sign-in";
 import { signOut } from "@/features/auth/model/sign-out";
 import { createSessionClient } from "@/shared/api/supabase/session-cookies";
-import { SEED } from "./helpers";
+import { adminClient, SEED } from "./helpers";
 
 // 로그인 스펙(docs/specs/session-login.md)을 실제 로컬 Supabase Auth 로 확인한다.
 // 쿠키는 브라우저 대신 메모리 저장소가 들고 있다 — 앱의 라우트가 Next 쿠키 저장소를 넘기는 자리와 같은 자리다.
@@ -32,7 +33,7 @@ function client(jar: Jar) {
 
 async function signedInJar(loginId: string): Promise<Jar> {
   const jar: Jar = new Map();
-  const r = await signIn({ auth: client(jar).auth, env: dev }, { loginId, password: "fankkuk-local-1234" });
+  const r = await signIn({ attempts: passwordAttemptsOf(adminClient()), auth: client(jar).auth, env: dev }, { loginId, password: "fankkuk-local-1234" });
   if (!r.ok) throw new Error(`로그인 실패: ${loginId}`);
   return jar;
 }
@@ -80,8 +81,8 @@ describe("INV-L2: 서버는 Supabase Auth 로 확인한 사용자만 쓴다", ()
 
 describe("INV-L5: 실패 응답은 하나", () => {
   it("INV-L5 (S5): 실제 Auth 에서도 없는 아이디와 틀린 비밀번호의 응답이 같다", async () => {
-    const wrongPw = await signIn({ auth: client(new Map()).auth, env: dev }, { loginId: "byeolbit_fan", password: "wrong-password" });
-    const noUser = await signIn({ auth: client(new Map()).auth, env: dev }, { loginId: "nobody_here", password: "wrong-password" });
+    const wrongPw = await signIn({ attempts: passwordAttemptsOf(adminClient()), auth: client(new Map()).auth, env: dev }, { loginId: "byeolbit_fan", password: "wrong-password" });
+    const noUser = await signIn({ attempts: passwordAttemptsOf(adminClient()), auth: client(new Map()).auth, env: dev }, { loginId: "nobody_here", password: "wrong-password" });
     expect(wrongPw.ok).toBe(false);
     expect(noUser).toEqual(wrongPw);
   });

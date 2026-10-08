@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
 import type { NextRequest } from "next/server";
 import { readViewer } from "@/entities/session/model/viewer";
 import { PHONE_CHANGE_COOKIE, phoneChangeCookieOptions } from "@/features/phone-change/lib/verification-cookie";
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
         admin,
         authAdmin: admin.auth.admin,
         makeDetachedAuth: createDetachedAuth,
+        attempts: passwordAttemptsOf(admin),
         viewer: await readViewer(supabase),
         verifierReady: choosePhoneVerifier(process.env) !== null,
       },

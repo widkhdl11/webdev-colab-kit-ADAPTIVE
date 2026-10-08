@@ -9,6 +9,8 @@ function cleanup(): void {
   deleteTestBlocks();
   removeTestCreator(); // 주소 시험 전용 크리에이터 — 지난 실행이 끊겨 남았으면 주소째 지운다
   removeTestAccounts(); // 비밀번호·번호 바꾸기 시험 계정(it_)과 그 기록 — 지난 실행이 끊겨 남았으면 지운다
+  // 비밀번호 확인 횟수(session-login INV-L14) — 틀린 비밀번호를 넣는 시험이 시드 아이디를 막아 둔 채로 남지 않게(로컬 DB 에만 붙는다)
+  psql("do $$ begin if to_regclass('public.password_attempts') is not null then delete from public.password_attempts; end if; end $$;");
   const left = countTestOrders();
   if (left !== 0) throw new Error(`시험 주문 ${left}건이 지워지지 않았다`);
 }

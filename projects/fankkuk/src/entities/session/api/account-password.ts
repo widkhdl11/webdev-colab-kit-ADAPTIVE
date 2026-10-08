@@ -2,6 +2,9 @@
 // 비밀번호 확인은 Supabase Auth 의 로그인으로 한다 — 일회용 클라이언트로 잠깐 로그인해 보고 그 세션은 바로 끝낸다.
 // (DB 에서 비밀번호 해시를 직접 비교하면 Auth 의 로그인 시도 제한을 거치지 않아, 세션 하나로 비밀번호를 끝없이 맞춰 볼 수 있다.)
 // 계정 ID 는 부르는 쪽이 세션에서 확인한 ID(INV-L2) 또는 DB 가 링크로 정한 ID 만 넘긴다.
+// INV-L14: 지금 비밀번호 확인도 로그인과 같은 아이디별 횟수를 거친다(attempts).
+
+import type { PasswordAttempts } from "./password-attempts";
 
 type AuthError = { message?: string } | null;
 
@@ -15,7 +18,10 @@ export type DetachedAuth = {
   signOut(o: { scope: "local" | "global" | "others" }): PromiseLike<{ error: AuthError }>;
 };
 
-export type AccountPasswordDeps = { authAdmin: AccountAuthAdmin; makeDetachedAuth: () => DetachedAuth };
+export type AccountPasswordDeps = { authAdmin: AccountAuthAdmin; makeDetachedAuth: () => DetachedAuth; attempts: PasswordAttempts };
+
+/** 지금 비밀번호 확인의 결과. locked = 아이디별 확인 횟수를 넘겨 묻지 않았다(INV-L14). */
+export type PasswordCheck = "ok" | "wrong" | "locked";
 
 /** 그 계정의 로그인 주소(아이디@...). 없으면 null. */
 export async function loginEmailOf(authAdmin: AccountAuthAdmin, userId: string): Promise<string | null> {
@@ -32,17 +38,21 @@ export function loginIdOfEmail(email: string): string {
 
 /**
  * 그 계정의 지금 비밀번호가 맞는가. 맞으면 확인에 쓴 세션은 바로 끝낸다(그 세션 하나만).
- * 로그인된 계정이 그 계정이 아니면 아니다로 본다.
+ * 로그인된 계정이 그 계정이 아니면 틀림으로 본다. 아이디별 확인 횟수를 넘겼으면 묻지 않고 locked(INV-L14).
  */
-export async function passwordMatches(deps: AccountPasswordDeps, userId: string, password: string): Promise<boolean> {
-  if (password === "") return false;
+export async function passwordMatches(deps: AccountPasswordDeps, userId: string, password: string): Promise<PasswordCheck> {
+  if (password === "") return "wrong";
   const email = await loginEmailOf(deps.authAdmin, userId);
-  if (!email) return false;
+  if (!email) return "wrong";
+  const attempt = await deps.attempts.begin(loginIdOfEmail(email));
+  if (attempt === null) return "locked";
   const auth = deps.makeDetachedAuth();
   const { data, error } = await auth.signInWithPassword({ email, password });
-  if (error || data.user?.id !== userId) return false;
+  const ok = !error && data.user?.id === userId;
+  await deps.attempts.finish(attempt, ok);
+  if (!ok) return "wrong";
   await auth.signOut({ scope: "local" });
-  return true;
+  return "ok";
 }
 
 /**

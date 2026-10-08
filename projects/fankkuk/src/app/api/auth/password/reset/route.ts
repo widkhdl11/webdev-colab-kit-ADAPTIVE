@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
 import { resetPassword } from "@/features/password-reset/model/reset-password";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createDetachedAuth } from "@/shared/api/supabase/detached";
@@ -10,7 +11,10 @@ import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async (body) => {
     const admin = createAdminSupabase();
-    const result = await resetPassword({ admin, authAdmin: admin.auth.admin, makeDetachedAuth: createDetachedAuth }, body);
+    const result = await resetPassword(
+      { admin, authAdmin: admin.auth.admin, makeDetachedAuth: createDetachedAuth, attempts: passwordAttemptsOf(admin) },
+      body,
+    );
     // 바뀌었지만 세션을 끝내지 못했으면 다시 로그인하라는 문구가 실린다(message)
     if (result.ok) return { status: 200, body: result.message ? { ok: true, message: result.message } : { ok: true } };
     return { status: result.status, body: { field: result.field, message: result.message } };

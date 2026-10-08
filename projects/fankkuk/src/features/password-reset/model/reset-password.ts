@@ -56,6 +56,8 @@ export async function resetPassword(deps: ResetPasswordDeps, body: unknown): Pro
   if (updated.error) {
     return { ok: false, status: 502, field: "link", message: "비밀번호를 바꾸지 못했어요. 로그인 화면에서 재설정 메일을 다시 받아 주세요." };
   }
+  // INV-L14: 재설정이 끝났으니 그 아이디의 비밀번호 확인 막힘을 푼다 — 못 풀어도 비밀번호는 이미 바뀌었다(15분 뒤 풀린다)
+  await retryOnce("password-reset: 확인 막힘 풀기", () => deps.attempts.clear(loginId));
   const ended = await retryOnce("password-reset: 세션 끝내기", () => endAllSessions(deps, accountId, password));
   return ended ? { ok: true } : { ok: true, message: PASSWORD_CHANGED_RELOGIN };
 }

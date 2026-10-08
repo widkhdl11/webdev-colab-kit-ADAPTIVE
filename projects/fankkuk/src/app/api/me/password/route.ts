@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
 import { readViewer } from "@/entities/session/model/viewer";
 import { changePassword } from "@/features/password-change/model/change-password";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
         sessionAuth: supabase.auth,
         authAdmin: createAdminSupabase().auth.admin,
         makeDetachedAuth: createDetachedAuth,
+        attempts: passwordAttemptsOf(createAdminSupabase()),
       },
       body,
     );

@@ -1,3 +1,5 @@
+import { fakePasswordAttempts } from "@/entities/session/api/password-attempts-fake";
+import { PASSWORD_LOCKED_MESSAGE } from "@/entities/session/api/password-attempts";
 import { describe, expect, it } from "vitest";
 import type { DetachedAuth } from "@/entities/session/api/account-password";
 import { CURRENT_PASSWORD_WRONG } from "@/entities/session/model/password-rule";
@@ -11,7 +13,8 @@ const OTHER = "55555555-5555-4555-8555-555555555555";
 const TICKET = "66666666-6666-4666-8666-666666666666";
 const CURRENT = "my-current-1";
 
-function fakes(opts: { rpcCode?: string; passwordOk?: boolean } = {}) {
+function fakes(opts: { rpcCode?: string; passwordOk?: boolean; locked?: boolean } = {}) {
+  const limiter = fakePasswordAttempts({ locked: opts.locked });
   const rpcCalls: { fn: string; args: Record<string, unknown> }[] = [];
   const detached: DetachedAuth = {
     async signInWithPassword() {
@@ -39,8 +42,9 @@ function fakes(opts: { rpcCode?: string; passwordOk?: boolean } = {}) {
       },
     },
     makeDetachedAuth: () => detached,
+    attempts: limiter.attempts,
   };
-  return { deps, rpcCalls };
+  return { deps, limiter, rpcCalls };
 }
 
 const body = { phone: "010-9000-1234", currentPassword: CURRENT };
@@ -57,6 +61,13 @@ describe("INV-U12: 번호 바꾸기는 로그인한 사람 자신의 번호만",
     const { deps, rpcCalls } = fakes({ passwordOk: false });
     expect(await changePhone(deps, body, TICKET)).toEqual({ ok: false, status: 400, field: "currentPassword", message: CURRENT_PASSWORD_WRONG });
     expect(rpcCalls).toEqual([]);
+  });
+
+  it("INV-L14 (S12b): 막힌 아이디면 지금 비밀번호를 확인하지 않고 429·안내, DB 함수도 부르지 않는다", async () => {
+    const { deps, rpcCalls, limiter } = fakes({ locked: true });
+    expect(await changePhone(deps, body, TICKET)).toEqual({ ok: false, status: 429, field: "currentPassword", message: PASSWORD_LOCKED_MESSAGE });
+    expect(rpcCalls).toEqual([]);
+    expect(limiter.calls).toEqual(["begin:it_me"]);
   });
 
   it("INV-U12 (실패경로): 로그인 안 함·번호표 없음·번호 꼴 틀림 → DB 함수를 부르지 않는다", async () => {

@@ -1,3 +1,4 @@
+import { passwordAttemptsOf } from "@/entities/session/api/password-attempts";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { signIn } from "@/features/auth/model/sign-in";
 import { checkPhoneVerification, startPhoneVerification } from "@/features/signup/model/phone-verification";
@@ -99,7 +100,7 @@ describe("INV-U1: 서버가 확인한 번호로만 계정이 생긴다", () => {
     expect(
       psql(`select string_agg(term_key || ':' || version, ',' order by term_key) from public.terms_consents t join public.profiles p on p.id = t.account_id where p.login_id = 'it_alpha';`),
     ).toBe("news:2026-10-01,privacy:2026-10-01,service:2026-10-01");
-    expect(await signIn({ auth: anonClient().auth, env: dev }, { loginId: "it_alpha", password: "long-enough-pw" })).toEqual({ ok: true, next: "/" });
+    expect(await signIn({ attempts: passwordAttemptsOf(adminClient()), auth: anonClient().auth, env: dev }, { loginId: "it_alpha", password: "long-enough-pw" })).toEqual({ ok: true, next: "/" });
   });
 
   it("INV-U1 (실패경로): 카카오가 확인한 번호가 요청한 번호와 다르면 확인으로 치지 않는다", async () => {
