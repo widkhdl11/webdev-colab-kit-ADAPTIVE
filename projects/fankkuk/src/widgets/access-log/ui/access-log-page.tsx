@@ -2,11 +2,10 @@ import { statusTagClass } from "@/shared/ui/status-tone";
 import {
   MAX_DECRYPTS_PER_BOX,
   printLabelOf,
-  type AccessDenyReason,
   type AccessMonthSummary,
-  type AccessRequester,
   type AddressAccessEntry,
 } from "@/entities/address/model/access-log";
+import { ACCESS_DENY_TEXT, ACCESS_REQUESTER_TEXT } from "@/entities/address/ui/access-log-text";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import s from "./access-log.module.css";
 
@@ -14,24 +13,12 @@ import s from "./access-log.module.css";
 // 시안: docs/design/mockups/site/v4/creator-log.html
 // 문구 한계(design-rules 6절): "승인 없이는 저희 시스템이 주소를 열지 않습니다"는 쓰고 "절대 유출되지 않습니다"는 쓰지 않는다.
 
-const DENY_TEXT: Record<AccessDenyReason, string> = {
-  not_owner: "대표 계정이 아니라 열리지 않았어요",
-  no_valid_approval: "승인 서명이 확인되지 않아 열리지 않았어요",
-  order_mismatch: "서명한 주문과 달라 열리지 않았어요",
-  order_not_printable: "지금은 주소를 열 수 없는 단계라 열리지 않았어요",
-  difference_unpaid: "차액이 결제되지 않아 열리지 않았어요",
-  decrypt_limit_reached: "출력 횟수를 다 써서 열리지 않았어요",
-  address_mismatch: "주소 주인이 맞지 않아 송장에 쓰지 않았어요",
-};
-
-const REQUESTER_TEXT: Record<AccessRequester, string> = { owner: "대표 계정", other: "대표가 아닌 계정" };
-
 function ResultTag({ e }: { e: AddressAccessEntry }) {
   return e.result.kind === "opened" ? <span className={statusTagClass("info")}>열림</span> : <span className={statusTagClass("danger")}>거부</span>;
 }
 
 function Note({ e }: { e: AddressAccessEntry }) {
-  if (e.result.kind === "denied") return <>{DENY_TEXT[e.result.reason]}</>;
+  if (e.result.kind === "denied") return <>{ACCESS_DENY_TEXT[e.result.reason]}</>;
   const label = printLabelOf(e.result.printNo, e.result.released);
   return label.reprint ? <span className="tag">{label.text}</span> : <>{label.text}</>;
 }
@@ -117,7 +104,7 @@ export function AccessLogPage({
                   <tr key={`${i}-${e.orderNo}-${e.at}`}>
                     <td className={s.nw}>{formatDateTime(e.at)}</td>
                     <td className={s.nw}>{e.orderNo}</td>
-                    <td>{REQUESTER_TEXT[e.requester]}</td>
+                    <td>{ACCESS_REQUESTER_TEXT[e.requester]}</td>
                     <td>
                       <ResultTag e={e} />
                     </td>
@@ -136,7 +123,7 @@ export function AccessLogPage({
                     <ResultTag e={e} />
                   </div>
                   <p className="sub">
-                    {e.orderNo} · {REQUESTER_TEXT[e.requester]}
+                    {e.orderNo} · {ACCESS_REQUESTER_TEXT[e.requester]}
                   </p>
                   <p>
                     <Note e={e} />

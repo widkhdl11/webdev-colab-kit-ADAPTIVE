@@ -3,7 +3,7 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
+import { useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
 import { z } from "zod";
 import { sealedAddressPlaintext, type RevgiftAddressInput } from "@/entities/revgift/model/sealed-address";
 import type { ReceivedStage } from "@/entities/revgift/model/received-stage";
@@ -30,6 +30,8 @@ export type ReceiveFlowProps = {
   deadlineText: string;
   /** 주소 봉인 공개키(PEM). 없으면 받기 폼 대신 안내만 보인다. */
   sealingKeyPem: string | null;
+  /** 받기 판들 아래에 붙는 칸(내 주소 열람 기록 — 위젯이 넣는다). */
+  children?: ReactNode;
 };
 
 type FieldName = keyof Omit<RevgiftAddressInput, "orderNo">;
@@ -329,6 +331,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
           </button>
         </div>
       </BottomSheet>
+      {props.children}
     </div>
   );
 }

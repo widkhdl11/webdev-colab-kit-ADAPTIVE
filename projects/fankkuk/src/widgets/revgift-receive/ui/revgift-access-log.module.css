@@ -1,0 +1,19 @@
+/* 받은 역조공 상세 — 내 주소 열람 기록. 받기 화면의 판(.panel)과 크리에이터 열람 기록 표(access-log.module.css)를 따른다 */
+.panel { margin-top: 24px; padding: 40px; border-radius: var(--r-panel); background: var(--white); box-shadow: var(--hair); }
+.panel h2 { font-size: 28px; letter-spacing: -.8px; }
+.lead { margin-top: 8px; }
+.empty { padding-block: 24px 0; }
+
+.log-table { width: 100%; margin-top: 16px; border-collapse: collapse; }
+.log-table th { padding: 12px 16px 12px 0; text-align: left; color: var(--sub); font-weight: 600; border-bottom: 1px solid var(--divider-mid); }
+.log-table td { padding: 18px 16px 18px 0; border-bottom: 1px solid var(--divider); vertical-align: middle; }
+.nw { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.log-list { display: none; margin-top: 8px; border-top: 1px solid var(--divider); }
+.lrow { display: grid; gap: 2px; padding-block: 18px; border-bottom: 1px solid var(--divider); }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+@media (max-width: 767px) {
+  .panel { padding: 24px 20px; border-radius: var(--r-panel-sm); }
+  .log-table { display: none; }
+  .log-list { display: block; }
+}

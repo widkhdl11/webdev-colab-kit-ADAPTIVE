@@ -1,12 +1,25 @@
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import type { FanAccessEntry } from "@/entities/revgift/model/fan-access-log";
 import type { ReceivedRevgift } from "@/entities/revgift/model/revgift-rows";
 import { daysLeft, receivedStage } from "@/entities/revgift/model/received-stage";
 import { replyDeadlineText } from "@/entities/revgift/ui/received-status";
 import { ReceiveFlow } from "@/features/revgift-receive/ui/receive-flow";
+import { RevgiftAccessLog } from "./revgift-access-log";
 
 // 받은 역조공 하나(팬). 시안: docs/design/mockups/site/v4/revgift-receive.html
 // 남은 날·기한 문구는 서버에서 한 번 계산해 넘긴다 — 브라우저 시계로 다시 계산하면 첫 화면과 글자가 달라질 수 있다.
-export function RevgiftReceivePage({ item, nowMs, sealingKeyPem }: { item: ReceivedRevgift; nowMs: number; sealingKeyPem: string | null }) {
+// accessLog: 이 몫의 내 주소 열람 기록(INV-R16). null 이면 읽지 못한 것 — 그 칸만 안내로 바뀐다.
+export function RevgiftReceivePage({
+  item,
+  nowMs,
+  sealingKeyPem,
+  accessLog,
+}: {
+  item: ReceivedRevgift;
+  nowMs: number;
+  sealingKeyPem: string | null;
+  accessLog: readonly FanAccessEntry[] | null;
+}) {
   const tierRule = PARCEL_TIER_GUIDE[item.tier].rule;
   const stage = receivedStage(item, nowMs);
   return (
@@ -23,7 +36,9 @@ export function RevgiftReceivePage({ item, nowMs, sealingKeyPem }: { item: Recei
           daysLeftText={`${daysLeft(item.deadline, nowMs)}일 남음`}
           deadlineText={replyDeadlineText(item.deadline)}
           sealingKeyPem={sealingKeyPem}
-        />
+        >
+          <RevgiftAccessLog entries={accessLog} finished={stage !== "waiting" && stage !== "accepted"} />
+        </ReceiveFlow>
       </div>
     </main>
   );
