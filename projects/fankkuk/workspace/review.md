@@ -21,6 +21,7 @@ payment INV-M8·M9·M18(S18~S18g) · inbound-address-code INV-C3(S3c) · office-
 실행 근거:
 - `npm test` → 160 파일 1234 통과 · `npx tsc --noEmit` → 오류 0
 - `npm run test:integration` (단독, 리뷰 반영 전 DB) → 1199 통과 · 1 실패(read-isolation 「모모의 요청은 하루에게 안 보인다」 — 시드 FC-W5N3T, BACKLOG 기존 건)
-- 리뷰 반영 뒤(환불 함수 둘 다시 적용) 단독: partial-reject-db 20/20 · admin-refund-db 38/38 · decline-block-db 42/42 · box-missing-db 13/13 · cancel-db 10/10. 반영 뒤 통합 전체는 다시 돌리지 않았다.
+- 리뷰 반영 뒤(환불 함수 둘 다시 적용) 단독: partial-reject-db 20/20 · admin-refund-db 38/38 · decline-block-db 42/42 · box-missing-db 13/13 · cancel-db 10/10.
+- 리뷰 반영 뒤 통합 전체(단독, 커밋 2b7037f 뒤) → 1203 통과 · 2 실패: read-isolation(같은 시드 건) · notifications-dispatch S10 — 무작위 주문 ID ef0160445216 안의 숫자를 휴대폰 꼴로 잡은 시험 정규식(이번 변경과 무관) → 정규식만 고쳐 그 파일 단독 7/7.
 - 화면(로컬, addr1008·fankkuk_admin, 주문 FC-T4WJY1F — 소형 2개 중 A 만 도착·검수 통과 뒤 하루가 거절): 대표 결제 화면 주문 환불 2,900 · 「거절된 선물의 아직 안 온 상자」에 B · 처리 확인 창 → B 가 「도착하지 않은 상자」 6,900 환불 대기, 목록 비움, B 6자리 void · 팬 상세 B 「도착하지 않음」·주소 안 보임·새 거절 안내 세 문단 · 안내 알림 줄(gift_pending_box) 1개.
   안 해 본 것: 늦게 온 상자의 입고 → 반송을 화면으로(같은 상자로 닫기와 둘 다 볼 수 없어 닫기를 골랐다 — DB 시험 S18b 가 본다), 리뷰 반영 뒤 화면 문구 다시 보기.

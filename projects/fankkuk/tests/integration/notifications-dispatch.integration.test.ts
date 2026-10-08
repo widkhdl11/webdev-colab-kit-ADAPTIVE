@@ -158,7 +158,8 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     await dispatchNotifications(depsWith(capture(false), failing));
     const dump = psql(`select row_to_json(o)::text from ${OUTBOX} o where order_id = '${g.orderId}'`);
     expect(dump).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/);
-    expect(dump).not.toMatch(/01\d{8,9}/);
+    // 앞뒤가 16진수 글자면 ID(UUID)의 일부다 — 무작위 ID 안의 「01…」을 번호로 잡지 않는다(2026-10-08 ef0160445216 으로 한 번 실패)
+    expect(dump).not.toMatch(/(?<![0-9a-f])01\d{8,9}(?![0-9a-f])/i);
     expect(dump).not.toContain("승인");
     expect(psql(`select error_code from ${OUTBOX} where id = '${idOf(g.orderId, "approval_request", "kakao")}'`)).toBe("send_failed");
   });
