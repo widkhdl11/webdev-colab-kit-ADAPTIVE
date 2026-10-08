@@ -5,7 +5,7 @@ import { MESSAGE_NOT_FOUND } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
 import type { DispatchResult } from "./dispatch-notifications";
 
-// 알림 지금 보내기 (notifications INV-N5). 운영자(대표·직원) 누구나. 정해진 시각마다 부르는 장치는 배포 방식과 함께 정한다(스펙 비범위).
+// 알림 지금 보내기 (notifications INV-N5). 운영자(대표·직원) 누구나. 5분마다 저절로 부르는 쪽은 예약 발송 입구다(run-scheduled-dispatch, INV-N16).
 // 운영자 판정은 로그인한 사람의 세션 클라이언트로 한다. 일꾼은 앱 서버 키로 돌지만, 받는 사람·통로를 고르는 칸은 받지 않는다(INV-N3) —
 // 무엇을 누구에게 보낼지는 발송 대기 줄이 이미 정했다.
 

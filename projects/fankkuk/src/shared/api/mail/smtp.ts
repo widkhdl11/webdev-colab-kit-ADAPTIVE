@@ -8,7 +8,8 @@ export type OutgoingMail = { to: string; subject: string; text: string };
 export type SendMail = (mail: OutgoingMail) => Promise<void>;
 
 export function createSmtpSender(config: Pick<MailConfig, "host" | "port" | "from">): SendMail {
-  const transport = createTransport({ host: config.host, port: config.port, secure: false });
+  // 메일 서버가 느려도 한 통이 오래 붙잡지 않게 — 기본값(연결 2분·응답 10분)이면 부르는 쪽의 시간 제한을 쉽게 넘긴다
+  const transport = createTransport({ host: config.host, port: config.port, secure: false, connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 15_000 });
   return async (mail) => {
     // 받는 사람은 주소 하나로만 넘긴다 — 글자 그대로 넘기면 「이름 <주소>」·쉼표 목록으로 해석된다.
     await transport.sendMail({ from: config.from, to: { name: "", address: mail.to }, subject: mail.subject, text: mail.text });

@@ -313,6 +313,18 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(claims).toBe(2);
   });
 
+  it("INV-N5·N16: 묶음 안에서도 줄마다 시간을 본다 — 30초가 지나면 남은 줄은 보내지 않고 「끝나지 않음」으로 센다(멈춘 줄 정리가 나중에 다시 보낸다)", async () => {
+    let t = 0;
+    const rows = [ROW, { ...ROW, id: "row-2" }, { ...ROW, id: "row-3" }];
+    const { admin, calls } = fakeAdmin({ rows, contacts: { "row-1": "a@example.com", "row-2": "b@example.com", "row-3": "c@example.com" } });
+    const email = channel();
+    const slow = { ...email, send: async (m: ChannelMessage) => { t += TIME_BUDGET_MS; return email.send(m); } };
+    const r = await dispatchNotifications({ ...deps(admin, { email: slow, kakao: null }), now: () => t });
+    expect(email.sent).toHaveLength(1);
+    expect(finishes(calls)).toHaveLength(1);
+    expect(r).toMatchObject({ ok: true, counts: { sent: 1, unfinished: 2 } });
+  });
+
   it("INV-N5: 두 번째 묶음에서 DB 가 실패해도 첫 묶음에서 보낸 건수는 돌려준다", async () => {
     let claims = 0;
     const { admin } = fakeAdmin({ contacts: { "row-1": "a@example.com" } });

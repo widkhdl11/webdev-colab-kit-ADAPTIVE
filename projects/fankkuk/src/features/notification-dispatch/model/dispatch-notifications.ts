@@ -153,7 +153,9 @@ export async function dispatchNotifications(deps: DispatchDeps): Promise<Dispatc
       for (const raw of rows) {
         const parsed = claimedRow.safeParse(raw);
         const id = claimToken.safeParse(raw);
-        if (!id.success) {
+        // 묶음 안에서도 줄마다 시간을 본다 — 예약 발송(INV-N16)은 DB 쪽 60초·배포처 함수 시간 안에 끝나야 한다.
+        // 남은 줄은 보내지 않았으니 「보내는 중」으로 두면 멈춘 줄 정리(INV-N5)가 나중에 다시 보낸다 — 두 번 가지 않는다.
+        if (!id.success || now() >= deadline) {
           counts.unfinished += 1;
           continue;
         }

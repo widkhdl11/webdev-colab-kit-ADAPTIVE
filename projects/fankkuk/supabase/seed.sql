@@ -221,3 +221,8 @@ insert into public.local_dev_flags (flag) values ('allow_fake_signatures') on co
 -- 가짜 발송 허용 (notifications INV-N11, 마이그레이션 20261006000009). 로컬에서 알림을 가짜 창구로 「보냄」 표시할 때만 쓴다 —
 -- 운영 DB 에는 이 줄이 없어 가짜 표시가 거부된다.
 insert into public.local_dev_flags (flag) values ('allow_fake_notifications') on conflict do nothing;
+
+-- 예약 작업 끄기 (office-workflow INV-W11 · notifications INV-N16, 마이그레이션 20261008000012). 로컬에서는 5분마다 도는 자동 처리가
+-- 시드 주문(시험이 기대는 미승인 주문)을 7일 뒤 반려하고, 통합 시험 도중에 끼어든다. 운영 DB 는 시드를 돌리지 않아 켜진 채로 남는다.
+-- 시험은 작업 명령을 직접 돌려 확인한다(tests/integration/schedule-db).
+select cron.alter_job(j.jobid, active := false) from cron.job j where j.jobname in ('fankkuk-expiry', 'fankkuk-notify');
