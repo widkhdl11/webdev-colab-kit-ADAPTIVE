@@ -9,7 +9,21 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 //   본문에 받는 주소 6자리·사무실 주소를 넣지 않는다(INV-C2) — 이 틀에는 그 칸이 아예 없다.
 // hold_fan: 추적 장치로 상자가 보관됐을 때 보낸 팬에게 「돌려보낼 상자」(INV-N13, 2026-10-08) — 무엇이 나왔는지 쓰는 칸이 없다.
 // box_missing: 결제 완료 + 14일에 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N15, 2026-10-08 카드 d50). 6자리·주소 칸이 없다.
-export const NOTIFICATION_KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transit", "delivered", "hold", "box_arrived", "hold_fan", "box_missing"] as const;
+// gift_pending_box: 상자가 하나라도 도착한 주문이 거절·반려될 때 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N17, 2026-10-08 카드 d52).
+//   거절·7일 반려·차단 거절 모두 같은 종류·같은 본문이다(INV-N2). 6자리·주소 칸이 없다.
+export const NOTIFICATION_KINDS = [
+  "approval_request",
+  "arrived",
+  "inspected",
+  "shipped",
+  "in_transit",
+  "delivered",
+  "hold",
+  "box_arrived",
+  "hold_fan",
+  "box_missing",
+  "gift_pending_box",
+] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export type NotificationBodyInput = {
@@ -119,6 +133,21 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
           "아직 도착하지 않은 상자가 있어요.",
           "결제하고 30일이 지나도 도착하지 않으면 그 상자는 닫히고 그 상자 금액을 돌려드려요.",
           "상자가 하나도 도착하지 않았다면 선물이 취소되고 결제 금액을 모두 돌려드려요.",
+          order,
+        ],
+        buttonLabel: "선물 보기",
+        path: `/gifts/${orderNo}`,
+        must: false,
+      };
+    case "gift_pending_box":
+      // 거절의 종류는 쓰지 않는다(INV-N2). 늦게 온 상자는 선불 반송, 끝내 안 오면 대표가 확인한 뒤 닫는다(payment INV-M18)
+      return {
+        subject: "[팬꾹] 아직 도착하지 않은 상자가 있어요",
+        lines: [
+          greet,
+          "아직 도착하지 않은 상자가 있어요.",
+          "이미 보내셨다면 도착하는 대로 돌려보내고 택배비를 뺀 금액을 돌려드려요.",
+          "보내지 않으셨다면 1:1 문의로 알려 주세요. 확인한 뒤 그 상자 금액을 모두 돌려드려요.",
           order,
         ],
         buttonLabel: "선물 보기",

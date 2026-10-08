@@ -99,6 +99,21 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
   });
 
+  it("INV-N17 (S17): 아직 안 온 상자 안내 — 선물 상세 링크, 보냈으면 반송·택배비 뺀 환불, 안 보냈으면 1:1 문의라는 말뿐이고 거절 종류·6자리는 없다", () => {
+    const b = buildNotificationBody({
+      ...inputFor("gift_pending_box"),
+      // @ts-expect-error 본문 틀에는 받는 주소 칸이 없다
+      addressCode: "K7M3XA",
+    });
+    expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    expect(b.subject).toBe("[팬꾹] 아직 도착하지 않은 상자가 있어요");
+    expect(b.text).toContain("아직 도착하지 않은 상자가 있어요.");
+    expect(b.text).toContain("이미 보내셨다면 도착하는 대로 돌려보내고 택배비를 뺀 금액을 돌려드려요.");
+    expect(b.text).toContain("보내지 않으셨다면 1:1 문의로 알려 주세요. 확인한 뒤 그 상자 금액을 모두 돌려드려요.");
+    for (const word of ["거절", "반려", "차단", "K7M3XA"]) expect(b.text).not.toContain(word);
+    expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
+  });
+
   it("INV-C8: 역조공 상자 도착 알림은 보낸 크리에이터의 「보낸 역조공」 화면으로 잇는다", () => {
     const b = buildNotificationBody({ ...inputFor("box_arrived"), orderNo: "RG-7K3M9" });
     expect(new URL(b.link).pathname).toBe("/creator/revgifts");

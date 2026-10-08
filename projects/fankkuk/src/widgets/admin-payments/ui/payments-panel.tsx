@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import type { PaymentRow, RefundStatus } from "@/entities/payment/model/payment-rows";
+import type { PendingBox } from "@/entities/payment/model/pending-boxes";
 import { canRefund } from "@/features/admin-refund/model/refund-access";
 import { RefundButton } from "@/features/admin-refund/ui/refund-button";
 import { ReceivedCancelForm } from "@/features/admin-order-cancel/ui/received-cancel-form";
+import { PendingBoxesSection } from "@/features/admin-pending-box/ui/pending-boxes-section";
 import a from "@/shared/ui/admin.module.css";
 import { countByTab, filterPayments, PAYMENT_TABS, type PaymentTab } from "../model/payment-filter";
 
@@ -31,7 +33,7 @@ const STATUS_TAG: Record<RefundStatus, { text: string; className: string } | nul
   done: { text: "환불 완료", className: a.tagBrand },
 };
 
-const KIND_LABEL: Record<PaymentRow["paymentKind"], string | null> = { initial: null, difference: "차액", missing_box: "도착하지 않은 상자", revgift: "역조공" };
+const KIND_LABEL: Record<PaymentRow["paymentKind"], string | null> = { initial: null, difference: "차액", missing_box: "도착하지 않은 상자", late_box: "늦게 온 상자", revgift: "역조공" };
 
 function InfoIcon() {
   return (
@@ -51,9 +53,9 @@ function SearchIcon() {
   );
 }
 
-type Props = { rows: readonly PaymentRow[]; access: "staff" | "owner" };
+type Props = { rows: readonly PaymentRow[]; pendingBoxes: readonly PendingBox[]; access: "staff" | "owner" };
 
-export function PaymentsPanel({ rows, access }: Props) {
+export function PaymentsPanel({ rows, pendingBoxes, access }: Props) {
   const [tab, setTab] = useState<PaymentTab>("all");
   const [query, setQuery] = useState("");
   const shown = filterPayments(rows, tab, query);
@@ -75,7 +77,7 @@ export function PaymentsPanel({ rows, access }: Props) {
           <div className={a.note}>
             <InfoIcon />
             <p>
-              <b>직원으로 보고 있어요.</b> 환불은 대표만 실행해요. 내역은 볼 수 있어요.
+              <b>직원으로 보고 있어요.</b> 환불과 상자의 도착하지 않음 처리는 대표만 해요. 내역은 볼 수 있어요.
             </p>
           </div>
         )}
@@ -190,6 +192,7 @@ export function PaymentsPanel({ rows, access }: Props) {
         <p className={a.hint}>
           네 칸을 더하면 결제 금액이에요. 역조공은 받는 팬 한 명 몫이 한 줄이고 검수비가 없어요. 요금표를 바꿔도 이미 결제한 주문의 칸은 그대로예요.
         </p>
+        <PendingBoxesSection boxes={pendingBoxes} access={access} />
         {access === "owner" && <ReceivedCancelForm />}
       </div>
     </>

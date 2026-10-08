@@ -13,7 +13,7 @@ export type PaymentRow = {
   unitKind: RefundUnitKind;
   unitId: string;
   orderNo: string;
-  paymentKind: "initial" | "difference" | "missing_box" | "revgift";
+  paymentKind: "initial" | "difference" | "missing_box" | "late_box" | "revgift";
   payerNickname: string;
   amountKrw: number;
   goodsKrw: number;
@@ -31,7 +31,7 @@ const rowShape = z
     unit_kind: z.enum(["gift", "gift_box", "revgift"]),
     unit_id: z.uuid(),
     order_no: z.string().min(1),
-    payment_kind: z.enum(["initial", "difference", "missing_box", "revgift"]),
+    payment_kind: z.enum(["initial", "difference", "missing_box", "late_box", "revgift"]),
     payer_nickname: z.string(),
     amount_krw: won,
     goods_krw: won,

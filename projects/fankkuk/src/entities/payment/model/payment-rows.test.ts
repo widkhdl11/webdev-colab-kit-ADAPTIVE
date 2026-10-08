@@ -60,6 +60,14 @@ describe("INV-K8: 정해진 칸으로만 받는다", () => {
     expect(r?.refund).toEqual({ status: "due", amountKrw: 6900, error: null });
   });
 
+  it("INV-M18: 거절 뒤 늦게 온 상자도 상자 하나가 한 줄 — 종류 gift_box · late_box", () => {
+    const box = { ...row, unit_kind: "gift_box", order_no: "FC-ABC123-2", payment_kind: "late_box", refund_krw: 2900 };
+    const [r] = paymentRowsFrom([box]) ?? [];
+    expect(r?.unitKind).toBe("gift_box");
+    expect(r?.paymentKind).toBe("late_box");
+    expect(r?.refund).toEqual({ status: "due", amountKrw: 2900, error: null });
+  });
+
   it("환불 대상이 아닌 줄은 금액이 없다", () => {
     expect(paymentRowsFrom([{ ...row, refund_status: "none", refund_krw: null }])?.[0]?.refund).toEqual({ status: "none", amountKrw: null, error: null });
   });

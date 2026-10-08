@@ -226,10 +226,10 @@ describe("INV-D2: 거절할 수 있는 주문의 조건", () => {
 });
 
 describe("INV-D3: 거절은 요청·주문·상자를 한 처리에서 바꾸고, 그 뒤는 기존 약속이 따른다", () => {
-  // inbound-address-code INV-C3·C5·C6(2026-10-07 승인)이 뒤 절반을 바꿨다: 거절과 같은 처리에서 그 주문의 6자리가 무효가 되고,
-  // 도착 전이던 상자는 도착하면 주문에 입고되지 않고 보류(무효 6자리) → 7일 뒤 착불 반송이다.
-  // 옛 시험은 「도착 뒤 검수를 거쳐 반송 대기」를 봤다 — decline-block INV-D3 S3 문장은 아직 옛 흐름이다(스펙 갱신 필요).
-  it("INV-D3 S3: 검수 완료 상자는 반송 대기로, 도착 전 상자는 도착해도 주문에 입고되지 않고 보류(inbound-address-code INV-C3)", async () => {
+  // 카드 d52(2026-10-08)가 뒤 절반을 다시 바꿨다: 상자가 하나라도 도착한 주문이면 도착 전 상자의 6자리는 살아 있어,
+  // 늦게 오면 그 주문 상자로 입고 → 검수 → 반송 대기(선불, payment INV-M18). 상자가 하나도 오지 않은 주문의 거절은
+  // 지금처럼 6자리 전부 무효(INV-C3 — 아래 S8b 와 partial-reject-db S18f 가 본다).
+  it("INV-D3 S3: 검수 완료 상자는 반송 대기로, 도착 전 상자는 6자리가 살아 있어 도착하면 그 주문 상자로 입고 → 검수 → 반송 대기(payment INV-M18)", async () => {
     const g = await giftFrom(2);
     const qr1 = await inspectedBox(g, 0);
     const no2 = waybill();
@@ -239,10 +239,10 @@ describe("INV-D3: 거절은 요청·주문·상자를 한 처리에서 바꾸고
     expect(requestRow(g.requestId)).toMatch(/^declined\|\d/);
     expect(orderStatus(g.orderId)).toBe("rejected");
     expect(parcelState(qr1)).toBe("return_waiting");
+    expect(codeStates(g.orderId)).toEqual(["used", "valid"]);
 
-    const late = await scanInbound(staff, no2, { carrier: "cj", initial: "하", shelf: "T-D3" });
-    expect(late.data).toMatchObject({ result: "hold", reason: "void_code" });
-    expect(psql(`select state from public.office_parcels where box_id = '${g.boxIds[1]}'`)).toBe("awaiting");
+    const qr2 = await receiveAndLabel(staff, no2);
+    expect(await inspect(staff, qr2, FAN_PASS)).toBe("return_waiting");
     expect(orderStatus(g.orderId)).toBe("rejected");
   });
 
