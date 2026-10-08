@@ -14,20 +14,21 @@ const OTHERS_SHOWN = 6;
 
 export const dynamic = "force-dynamic";
 
-// 크리에이터 목록(DB)에서 이 id 를 찾는다. 목록에 없는 id(본인 확인 전·없는 사람)는 없는 주소로 취급한다.
+// 이 id 의 크리에이터를 한 명 읽기(DB)로 찾는다 — 찾기 노출을 껐어도 주소로는 열린다(my-account INV-A10 S10b).
+// 본인 확인 전·없는 사람은 없는 주소로 취급한다. 「이런 크리에이터도 있어요」는 목록 읽기에서 고른다.
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { supabase, viewer } = await loadSession();
   const { id } = await params;
   // 크리에이터가 자기 페이지를 보면 팔로우·선물 보내기를 숨긴다(INV-L8). 팔로우하지 않았으면 「팔로우하고 선물 보내기」(INV-L9)
   const asCreator = viewer?.role === "creator";
-  const [header, cards, ownCreatorId, prices, prohibited] = await Promise.all([
+  const [header, [creator], cards, ownCreatorId, prices, prohibited] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creators"),
+    readCreatorCards(supabase, { signedIn: viewer !== null, onlyId: id }),
     readCreatorCards(supabase, { signedIn: viewer !== null }),
     asCreator ? readOwnCreatorId(supabase) : Promise.resolve(null),
     readPublicPrices(supabase),
     readProhibitedItems(supabase),
   ]);
-  const creator = cards.find((c) => c.id === id);
   if (!creator) notFound();
   const others = cards.filter((c) => c.id !== id).slice(0, OTHERS_SHOWN);
   const send = sendAvailabilityOf({ viewerRole: viewer?.role ?? null, creatorId: id, ownCreatorId, following: creator.following });

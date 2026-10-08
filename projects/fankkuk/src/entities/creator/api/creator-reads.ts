@@ -3,7 +3,7 @@ import { z } from "zod";
 import { toCreatorCards, type CreatorCard } from "../model/creator-card";
 import type { CreatorProfile, CreatorSummary } from "../model/creator";
 
-// 크리에이터 목록을 DB 읽기 함수(list_creators·my_follows)로 읽는다. 응답은 신뢰 경계 밖이라 형식을 검사한다.
+// 크리에이터 목록을 DB 읽기 함수(find_creators·list_creators·creator_by_id, 팔로우는 my_follows)로 읽는다. 응답은 신뢰 경계 밖이라 형식을 검사한다.
 
 const rowSchema = z.object({
   id: z.string().uuid(),
@@ -23,13 +23,18 @@ const followSchema = z.object({ creator_id: z.string().uuid() });
 /**
  * 본인 확인을 마친 크리에이터 카드. 로그인한 팬이면 팔로우 여부가 붙는다.
  * forSearch = 크리에이터 찾기 목록 — 「본인 확인됨 그리고 찾기 노출 켜짐」만(find_creators, my-account INV-A10).
- * 그 밖(크리에이터 페이지·선물 보내기·팔로우 목록)은 노출을 끈 크리에이터도 그대로 나온다(list_creators).
+ * 그 밖의 목록(메인·선물 보내기·팔로우 목록)은 노출 켜짐 + 내가 팔로우한 사람 + 나 자신(list_creators, INV-A10 S10b).
+ * onlyId = 페이지 주소로 여는 한 명 — 노출과 상관없이 본인 확인됨이면 나온다(creator_by_id). 없으면 빈 배열.
  */
 export async function readCreatorCards(
   client: Pick<SupabaseClient, "rpc">,
-  opts: { signedIn: boolean; forSearch?: boolean },
+  opts: { signedIn: boolean; forSearch?: boolean; onlyId?: string },
 ): Promise<CreatorCard[]> {
-  const { data, error } = await client.rpc(opts.forSearch ? "find_creators" : "list_creators");
+  // 주소에서 온 값이라 꼴부터 본다 — ID 꼴이 아니면 DB 가 오류를 내 페이지가 500 이 된다
+  if (opts.onlyId !== undefined && !z.string().uuid().safeParse(opts.onlyId).success) return [];
+  const { data, error } = opts.onlyId
+    ? await client.rpc("creator_by_id", { p_id: opts.onlyId })
+    : await client.rpc(opts.forSearch ? "find_creators" : "list_creators");
   if (error) throw new Error(`크리에이터 목록을 읽지 못했다: ${error.code}`);
   const rows = z.array(rowSchema).parse(data);
 

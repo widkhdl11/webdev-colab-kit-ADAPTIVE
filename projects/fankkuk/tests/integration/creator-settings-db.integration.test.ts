@@ -197,11 +197,36 @@ describe("INV-A10: 찾기 목록 = 본인 확인됨 그리고 찾기 노출 켜�
     expect(await found()).not.toContain(ME.creatorId);
   });
 
-  it("INV-A10 S10 (실패경로): 확인됨 + 꺼짐 → 찾기에 안 나오지만 크리에이터 페이지 목록에는 남는다", async () => {
+  it("INV-A10 S10 (실패경로): 확인됨 + 꺼짐 → 찾기에도, 손님의 목록 읽기에도 안 나온다", async () => {
     verify(ME.creatorId, "cvt-haru");
     expect((await save(ME.login, { p_name: ME.name, p_intro: "", p_searchable: false })).error).toBeNull();
     expect(await found()).not.toContain(ME.creatorId);
-    expect(await listed()).toContain(ME.creatorId);
+    expect(await listed()).not.toContain(ME.creatorId);
+  });
+
+  it("INV-A10 S10b: 노출을 꺼도 팔로우한 팬·본인의 목록에는 나오고, 팔로우 안 한 팬에게는 안 나온다", async () => {
+    verify(ME.creatorId, "cvt-haru");
+    await save(ME.login, { p_name: ME.name, p_intro: "", p_searchable: false });
+    const ids = async (login: string) => (((await (await signedInClient(login)).rpc("list_creators")).data ?? []) as { id: string }[]).map((x) => x.id);
+    const fan = await signedInClient("byeolbit_fan");
+    expect((await fan.rpc("set_follow", { p_creator_id: ME.creatorId, p_following: true })).error).toBeNull();
+    try {
+      expect(await ids("byeolbit_fan")).toContain(ME.creatorId);
+      expect(await ids("daltokki_fan")).not.toContain(ME.creatorId);
+      expect(await ids(ME.login)).toContain(ME.creatorId);
+    } finally {
+      await fan.rpc("set_follow", { p_creator_id: ME.creatorId, p_following: false });
+    }
+  });
+
+  it("INV-A10 S10b: 한 명 읽기는 노출과 상관없이 확인됨이면 누구에게나 나온다 — 확인 전이면 빈 결과", async () => {
+    const one = async () => ((await anonClient().rpc("creator_by_id", { p_id: ME.creatorId })).data ?? []) as { id: string; name: string }[];
+    expect(await one()).toEqual([]);
+    verify(ME.creatorId, "cvt-haru");
+    await save(ME.login, { p_name: ME.name, p_intro: "", p_searchable: false });
+    expect((await one()).map((x) => x.id)).toEqual([ME.creatorId]);
+    const fan = await signedInClient("daltokki_fan");
+    expect((((await fan.rpc("creator_by_id", { p_id: ME.creatorId })).data ?? []) as { id: string }[]).map((x) => x.id)).toEqual([ME.creatorId]);
   });
 
   it("INV-A10 S10: 확인됨 + 켜짐 → 찾기에 나온다", async () => {

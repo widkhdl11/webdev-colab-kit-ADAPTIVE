@@ -46,7 +46,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   }));
   const initialCreatorId = preselectedId && ordered.some((c) => c.id === preselectedId) ? preselectedId : "";
   // 미리 고른 사람을 아직 팔로우하지 않았으면(자기 자신이 아니면) 그 사람만 따로 — 팔로우하고 보내게
-  const pickedCard = preselectedId && !initialCreatorId ? cards.find((c) => c.id === preselectedId && c.id !== ownCreatorId) : undefined;
+  // 노출을 끄고 팔로우하지 않은 크리에이터는 목록에 없다 — 주소로 고른 사람은 한 명 읽기로 찾는다(my-account INV-A10 S10b)
+  const pickedCard =
+    preselectedId && !initialCreatorId && preselectedId !== ownCreatorId
+      ? (cards.find((c) => c.id === preselectedId) ?? (await readCreatorCards(supabase, { signedIn, onlyId: preselectedId }))[0])
+      : undefined;
   const followFirst = pickedCard ? { id: pickedCard.id, name: pickedCard.name } : null;
   const notice = typeof payment === "string" ? PAYMENT_NOTICE[payment] : undefined;
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
