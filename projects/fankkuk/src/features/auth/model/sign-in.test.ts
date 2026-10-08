@@ -143,4 +143,10 @@ describe("INV-L14: 비밀번호 확인 횟수 — 아이디마다", () => {
     await signIn({ attempts: limiter.attempts, auth: recordingAuth("ok").auth, env: dev }, { loginId: " ", password: "" });
     expect(limiter.calls).toEqual([]);
   });
+
+  it("INV-L14 (실패경로): 횟수 기록이 실패하면 Auth 에 묻지 않고 오류로 끝난다 — 막힘을 확인하지 못한 채 통과시키지 않는다", async () => {
+    const { auth, calls } = recordingAuth("ok");
+    await expect(signIn({ attempts: fakePasswordAttempts({ broken: true }).attempts, auth, env: dev }, { loginId: "byeolbit_fan", password: "pw" })).rejects.toThrow();
+    expect(calls).toEqual([]);
+  });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { needsReload, officeErrorReply } from "./office-error";
+import { needsReload, OFFICE_REJECT_REASONS, officeErrorReply } from "./office-error";
 
 const MESSAGES = { limit: "꼴이 맞지 않아요.", failed: "처리하지 못했어요." };
 
@@ -53,5 +53,12 @@ describe("동시 처리 충돌·화면 다시 읽기 (office-workflow INV-W2)", 
     expect(needsReload({ status: 409, reason: "no_measurement" })).toBe(false); // 실측 칸을 그대로 두고 기록하게
     expect(needsReload({ status: 400, reason: "wrong_code" })).toBe(false);
     expect(needsReload({ status: 500, reason: null })).toBe(false);
+  });
+
+  it("INV-W2·W4: 서버가 주는 거부 이유는 모두 화면이 읽는 목록에 있다 — 빠지면 화면이 이유를 모른 채 상자를 다시 읽는다", () => {
+    for (const code of ["55000", "23505", "P0041", "P0042", "P0043", "P0044", "P0053"]) {
+      const reason = officeErrorReply(code, MESSAGES).body.reason as string;
+      expect(OFFICE_REJECT_REASONS).toContain(reason);
+    }
   });
 });

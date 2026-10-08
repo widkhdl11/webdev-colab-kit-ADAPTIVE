@@ -117,6 +117,13 @@ describe("비밀번호 확인 횟수 (INV-L14)", () => {
     }
   });
 
+  it("INV-L14: 하루 지난 기록은 시도가 시작될 때 지워진다 — 표가 끝없이 커지지 않게", async () => {
+    await fail(2, "pa_old_one");
+    rewind(25 * 60, "pa_old_one");
+    await begin();
+    expect(psql("select count(*) from public.password_attempts where login_key = 'pa_old_one'")).toBe("0");
+  });
+
   it("INV-L14 (실패경로): 빈 아이디·101자 아이디는 거부", async () => {
     for (const key of ["", "   ", "a".repeat(101)]) {
       expect((await adminClient().rpc("password_attempt_begin", { p_login_key: key })).error?.code).toBe("22023");

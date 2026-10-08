@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { anonClient, deleteTestOrders, psql, signedInClient } from "./helpers";
-import { codeOf, deleteTestUnmatched, HOLD_DETAILS, paidGift, scanInbound, waybill } from "./office-helpers";
+import { codeOf, deleteTestUnmatched, HOLD_DETAILS, paidGift, paidShare, scanInbound, waybill } from "./office-helpers";
 import { deleteTestRevgifts } from "./revgift-helpers";
 
 // 받는 주소 6자리 — 운영자 도구 (docs/specs/inbound-address-code.md INV-C6·C8·C9·C10, 「측정」 절, 마이그레이션 20261007000009).
@@ -152,6 +152,29 @@ describe("INV-C9 주문에 묶인 채 멈춘 상자의 반송 (정책 질문 12)
     const list = (await op.rpc("admin_unmatched_parcels")).data as { id: string; state: string }[];
     expect(list.find((x) => x.id === parcelId)?.state).toBe("expired");
     expect(psql(`select coalesce(public.refund_due_of_payment(p.id)::text, 'none') from public.payments p where p.order_id = '${orderId}' and p.kind = 'initial'`)).toBe("none");
+  });
+
+  it("INV-C9: 하나뿐인 상자를 떼어 내면 주문은 「상자가 아직 오지 않음」으로 돌아간다 — 그 뒤 반려되면 전액 환불", async () => {
+    const op = await staff();
+    const { parcelId, orderId } = await notMineParcel(op);
+    expect(psql(`select received_at is not null from public.orders where id = '${orderId}'`)).toBe("t");
+    expect((await op.rpc("admin_return_held_parcel", { p_id: parcelId })).error).toBeNull();
+    expect(psql(`select status || '|' || (received_at is null) || '|' || (inspected_at is null) from public.orders where id = '${orderId}'`)).toBe("registered|true|true");
+    psql(`begin; set local session_replication_role = replica; update public.orders set status = 'expired' where id = '${orderId}'; commit;`);
+    expect(psql(`select public.refund_due_of_payment(p.id) = p.amount_krw from public.payments p where p.order_id = '${orderId}' and p.kind = 'initial'`)).toBe("t");
+  });
+
+  it("INV-C9: 역조공 몫 상자를 떼어 내면 몫의 입고·검수 표시도 지운다", async () => {
+    const op = await staff();
+    const s = await paidShare();
+    const r = await scanInbound(op, waybill(), { code: codeOf({ shareId: s.shareId }) });
+    expect(r.data).toMatchObject({ result: "received" });
+    expect(psql(`select received_at is not null from public.revgift_shares where id = '${s.shareId}'`)).toBe("t");
+    const parcelId = psql(`select id from public.office_parcels where share_id = '${s.shareId}'`);
+    // 몫 상자의 「아니에요」는 보낸 크리에이터가 누른다 — 여기서는 넘기기의 끝만 본다
+    psql(`update public.office_parcels set hold_reason = 'not_mine', hold_at = now() where id = '${parcelId}'`);
+    expect((await op.rpc("admin_return_held_parcel", { p_id: parcelId })).error).toBeNull();
+    expect(psql(`select (received_at is null) || '|' || (inspected_at is null) from public.revgift_shares where id = '${s.shareId}'`)).toBe("true|true");
   });
 
   it("INV-C9 (S9c): 「제가 보낸 게 아니에요」 상자는 운영자가 바로 넘길 수 있다", async () => {

@@ -8,6 +8,7 @@
 --    (t − 10분, t] 안에 5개 이상이고 지금이 t + 15분 전이면. 결과 전 줄을 실패로 세므로 동시에 들어와도 한도를 넘지 않는다.
 -- 3) password_attempt_finish(id, 맞음) — 결과 전 줄에만 결과를 적는다(한 번만). 이미 결과가 있으면 아무것도 바꾸지 않는다.
 -- 4) password_attempt_clear(아이디) — 비밀번호 재설정이 끝났을 때 「맞음」 줄을 넣어 막힘을 푼다.
+-- 하루 지난 줄은 시작 함수가 100줄씩 지운다(엉터리 아이디를 바꿔 가며 보내도 표가 끝없이 커지지 않게 — 보안 리뷰 2026-10-08).
 -- 세 함수는 서버 전용 키(service_role)로만 부른다 — 손님 키로 부를 수 있으면 남의 아이디를 일부러 막을 수 있다.
 --
 -- 오류 꼴: 22023 아이디 꼴(앞뒤 공백을 뗀 1~100자)
@@ -19,6 +20,7 @@ create table public.password_attempts (
   at timestamptz not null default now()
 );
 create index password_attempts_key_at_idx on public.password_attempts (login_key, at desc);
+create index password_attempts_at_idx on public.password_attempts (at);
 alter table public.password_attempts enable row level security;
 revoke all on public.password_attempts from public, anon, authenticated;
 
@@ -64,6 +66,9 @@ begin
   end if;
 
   insert into public.password_attempts (login_key) values (v_key) returning id into v_id;
+  -- 하루 지난 줄은 판정에 쓰이지 않는다(막힘은 최대 25분 전까지만 본다) — 시작마다 100줄씩 지워 표가 끝없이 커지지 않게
+  delete from public.password_attempts a
+  where a.id in (select o.id from public.password_attempts o where o.at < now() - interval '1 day' order by o.at limit 100);
   return v_id;
 end $$;
 

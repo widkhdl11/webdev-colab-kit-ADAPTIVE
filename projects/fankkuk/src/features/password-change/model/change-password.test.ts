@@ -101,4 +101,11 @@ describe("INV-L12: 바꾸기는 요청한 사람의 세션으로, 바꾼 뒤 다
     await changePassword(wrong.deps, body);
     expect(wrong.limiter.calls).toEqual(["begin:it_me", "finish:1:false"]);
   });
+
+  it("INV-L14 (실패경로): 횟수 기록이 실패하면 지금 비밀번호를 묻지 않고 오류로 끝난다", async () => {
+    const broken = fakes();
+    const limiter = fakePasswordAttempts({ broken: true });
+    await expect(changePassword({ ...broken.deps, attempts: limiter.attempts }, body)).rejects.toThrow();
+    expect(broken.calls).not.toContain("detached.signIn");
+  });
 });

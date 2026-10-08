@@ -3,8 +3,11 @@
 -- 상자 작업 줄(office_parcels)에 보류 표시가 붙은 상자 — 같은 6자리 분쟁 · 같은 송장번호 분쟁 · 「제가 보낸 게 아니에요」 · 분쟁 끝에 떼어 낸 상자 —
 -- 는 끝이 없었다. 그래서:
 -- 1) 넘긴 표시 두 칸(hold_closed_at · hold_closed_by — 자동 처리면 비어 있다).
--- 2) office_close_held_parcel — 안에서만 쓰는 넘기기: 상자를 주문(·몫)에서 떼어 내고 넘긴 표시를 적은 뒤 주문을 다시 집계한다.
---    이 반송은 주문 환불을 만들지 않는다(주문 쪽에서는 그 상자가 아직 오지 않은 것으로 돌아간다). 떼어 낸 상자는 착불 반송(office-workflow 원칙 2).
+-- 2) office_close_held_parcel — 안에서만 쓰는 넘기기: 상자를 주문(·몫)에서 떼어 내고 넘긴 표시를 적는다.
+--    이 반송은 주문 환불을 만들지 않는다. 주문 쪽에서는 그 상자가 아직 오지 않은 것으로 돌아간다 — 주문 집계는 단계를 뒤로 돌리지 않으므로,
+--    그 주문(·몫)에 남은 상자 줄이 없으면 여기서 직접 「등록」으로 되돌리고 입고·검수 시각과 검수 결과를 지운다(코드 리뷰 2026-10-08 —
+--    그대로 두면 나중에 반려될 때 오지도 않은 상자의 반송비를 빼고 환불한다). 남은 상자가 있으면 주문 집계에 맡긴다.
+--    떼어 낸 상자는 착불 반송(office-workflow 원칙 2).
 -- 3) admin_return_held_parcel(상자 줄 id) — 운영자만. 분쟁 둘은 보류 + 168시간이 지나야, 「아니에요」·떼어 낸 상자는 바로.
 -- 4) office_run_expiry — 20261008000007 과 같고, 보류 + 168시간 지난 상자를 넘기는 단계를 더했다(돌려주는 값 held_parcels).
 -- 5) admin_unmatched_parcels — 상자 줄의 「넘김」을 반송 대상(expired)으로, 기한(보류 + 168시간)을 채운다.
@@ -30,20 +33,23 @@ as $$
 declare
   v public.office_parcels;
   v_box_id uuid;
+  v_share_id uuid;
   v_order_id uuid;
 begin
-  -- 잠금 순서: 상자 → 승인 요청 → 주문 → 상자 작업 줄(find_held_parcel 과 같다)
-  select p.box_id into v_box_id from public.office_parcels p where p.id = p_id;
+  -- 잠금 순서: 상자(또는 몫) → 승인 요청 → 주문 → 상자 작업 줄(find_held_parcel 과 같다)
+  select p.box_id, p.share_id into v_box_id, v_share_id from public.office_parcels p where p.id = p_id;
   if v_box_id is not null then
     select b.order_id into v_order_id from public.boxes b where b.id = v_box_id for update;
     perform 1 from public.approval_requests r where r.order_id = v_order_id for key share;
     perform 1 from public.orders o where o.id = v_order_id for update;
+  elsif v_share_id is not null then
+    perform 1 from public.revgift_shares s where s.id = v_share_id for update;
   end if;
   select * into v from public.office_parcels p where p.id = p_id for update;
   if v.id is null then
     raise exception '없는 상자 줄이다' using errcode = 'P0002';
   end if;
-  if v.hold_reason is null or v.hold_closed_at is not null or v.box_id is distinct from v_box_id then
+  if v.hold_reason is null or v.hold_closed_at is not null or v.box_id is distinct from v_box_id or v.share_id is distinct from v_share_id then
     return false;
   end if;
   if p_require_due and v.hold_reason in ('code_dispute', 'waybill_dispute') and v.hold_at > now() - interval '168 hours' then
@@ -54,7 +60,17 @@ begin
   set box_id = null, share_id = null, hold_closed_at = now(), hold_closed_by = p_by
   where id = v.id;
   if v_order_id is not null then
-    perform public.office_sync_order(v_order_id);
+    if exists (select 1 from public.boxes b join public.office_parcels x on x.box_id = b.id where b.order_id = v_order_id) then
+      perform public.office_sync_order(v_order_id);
+    else
+      update public.orders o
+      set status = 'registered', received_at = null, inspected_at = null, inspection_result = null
+      where o.id = v_order_id and o.status in ('received', 'labeled', 'inspected', 'label_printed');
+    end if;
+  elsif v_share_id is not null and not exists (select 1 from public.office_parcels x where x.share_id = v_share_id) then
+    update public.revgift_shares s
+    set received_at = null, inspected_at = null
+    where s.id = v_share_id and s.shipped_at is null and s.returned_at is null;
   end if;
   return true;
 end $$;
@@ -206,7 +222,8 @@ begin
     select p.id from public.office_parcels p
     where p.hold_reason is not null and p.hold_closed_at is null and p.hold_at <= now() - interval '168 hours'
       and (p_order_no is null
-           or exists (select 1 from public.boxes b join public.orders o on o.id = b.order_id where b.id = p.box_id and o.order_no = p_order_no))
+           or exists (select 1 from public.boxes b join public.orders o on o.id = b.order_id where b.id = p.box_id and o.order_no = p_order_no)
+           or exists (select 1 from public.revgift_shares s where s.id = p.share_id and s.order_no = p_order_no))
     order by p.hold_at, p.id
   loop
     if public.office_close_held_parcel(v_parcel, null, true) then
