@@ -6,8 +6,8 @@ const data = {
   paid_krw: 15800,
   paid_at: "2026-10-06T01:00:00+00:00",
   boxes: [
-    { label: "FC-T4X7N2-1", tier: "small", amount_krw: 6900 },
-    { label: "FC-T4X7N2-2", tier: "medium", amount_krw: 8900 },
+    { label: "FC-T4X7N2-1", tier: "small", amount_krw: 6900, missing: false },
+    { label: "FC-T4X7N2-2", tier: "medium", amount_krw: 8900, missing: false },
   ],
   refunds: [{ amount_krw: 5400, status: "done", at: "2026-10-07T01:00:00+00:00" }],
 };
@@ -19,8 +19,8 @@ describe("선물 결제 금액 응답 (payment INV-M14)", () => {
       paidKrw: 15800,
       paidAt: "2026-10-06T01:00:00.000Z",
       boxes: [
-        { label: "FC-T4X7N2-1", tier: "small", amountKrw: 6900 },
-        { label: "FC-T4X7N2-2", tier: "medium", amountKrw: 8900 },
+        { label: "FC-T4X7N2-1", tier: "small", amountKrw: 6900, missing: false },
+        { label: "FC-T4X7N2-2", tier: "medium", amountKrw: 8900, missing: false },
       ],
       refunds: [{ amountKrw: 5400, state: "done", at: "2026-10-07T01:00:00.000Z" }],
     });
@@ -49,15 +49,28 @@ describe("선물 결제 금액 응답 (payment INV-M14)", () => {
   it("같은 구간·같은 금액은 한 줄로, 저장된 금액이 다르면 다른 줄로 묶는다", () => {
     expect(
       paymentLines([
-        { label: "a", tier: "small", amountKrw: 6900 },
-        { label: "b", tier: "small", amountKrw: 6900 },
-        { label: "c", tier: "small", amountKrw: 7400 },
-        { label: "d", tier: "medium", amountKrw: 8900 },
+        { label: "a", tier: "small", amountKrw: 6900, missing: false },
+        { label: "b", tier: "small", amountKrw: 6900, missing: false },
+        { label: "c", tier: "small", amountKrw: 7400, missing: false },
+        { label: "d", tier: "medium", amountKrw: 8900, missing: false },
       ]),
     ).toEqual([
-      { tier: "small", unitKrw: 6900, count: 2 },
-      { tier: "small", unitKrw: 7400, count: 1 },
-      { tier: "medium", unitKrw: 8900, count: 1 },
+      { tier: "small", unitKrw: 6900, count: 2, missing: false },
+      { tier: "small", unitKrw: 7400, count: 1, missing: false },
+      { tier: "medium", unitKrw: 8900, count: 1, missing: false },
     ]);
+  });
+
+  it("INV-W10·M14: 도착하지 않음으로 닫힌 상자는 그 상자 줄에 표시된다 — 같은 구간·금액이어도 따로 묶는다", () => {
+    const p = parseGiftPayment({ ...data, boxes: [data.boxes[0], { ...data.boxes[0], label: "FC-T4X7N2-2", missing: true }] });
+    expect(p?.boxes.map((b) => b.missing)).toEqual([false, true]);
+    expect(paymentLines(p!.boxes)).toEqual([
+      { tier: "small", unitKrw: 6900, count: 1, missing: false },
+      { tier: "small", unitKrw: 6900, count: 1, missing: true },
+    ]);
+  });
+
+  it("INV-W10 (실패경로): 닫힘 표시가 없는 상자 줄은 받지 않는다", () => {
+    expect(() => parseGiftPayment({ ...data, boxes: [{ label: "x", tier: "small", amount_krw: 6900 }] })).toThrow();
   });
 });

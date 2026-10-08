@@ -29,7 +29,7 @@ const STATUS_TAG: Record<RefundStatus, { text: string; className: string } | nul
   done: { text: "환불 완료", className: a.tagBrand },
 };
 
-const KIND_LABEL: Record<PaymentRow["paymentKind"], string | null> = { initial: null, difference: "차액", revgift: "역조공" };
+const KIND_LABEL: Record<PaymentRow["paymentKind"], string | null> = { initial: null, difference: "차액", missing_box: "도착하지 않은 상자", revgift: "역조공" };
 
 function InfoIcon() {
   return (

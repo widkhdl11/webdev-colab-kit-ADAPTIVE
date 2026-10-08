@@ -2,7 +2,7 @@ import type { OrderRecord } from "./order-record";
 
 // 팬 상태 화면이 받는 모양. 주문 기록에서 팬이 봐도 되는 칸만 골라낸다.
 // - 크리에이터에게 보내는 송장번호는 넣지 않는다(택배사 조회로 수령지 일부가 보인다).
-// - 사무실 주소는 결제가 끝난 진행 중 주문에 넣는다 — 승인을 기다리지 않는다(INV-S9, 2026-10-02 개정).
+// - 사무실 주소는 결제가 끝난 진행 중 주문에 넣는다 — 6자리는 승인 전이면 「먼저 보내기」 뒤에만 DB 가 준다(INV-S9, 2026-10-08 개정).
 //   거절·반려·취소·검수 반송된 주문에는 넣지 않는다. 운영에서는 서버의 주소 안내 조회가 같은 판정을 쓴다.
 // - 거절과 7일 자동 반려는 같은 모습이다 — 거절 이유는 물론 거절했다는 사실도 드러내지 않는다.
 
@@ -28,6 +28,8 @@ export type FanGiftView = {
   canEnterTrackingNo: boolean;
   fanTrackingNo: string | null;
   expectedArrivalDate: string | null;
+  /** 승인 전 진행 중 주문인데 「먼저 보내기」를 아직 누르지 않았다 — 받는 주소가 아직 없으니 「보내 주세요」라고 하지 않는다(INV-S9) */
+  earlySendPending: boolean;
 };
 
 /** 팬 화면이 읽는 칸만. 크리에이터행 송장번호·팬 닉네임·크리에이터 id 는 이 모양에 없다 — DB 읽기 함수도 이 칸만 돌려준다. */
@@ -76,5 +78,6 @@ export function toFanView(r: FanOrderRecord, officeAddress: string): FanGiftView
     canEnterTrackingNo: outcome === "in_progress" && r.receivedAt === null,
     fanTrackingNo: r.fanTrackingNo,
     expectedArrivalDate: r.expectedArrivalDate,
+    earlySendPending: outcome === "in_progress" && r.approvedAt === null && r.fanSendAckAt === null,
   };
 }

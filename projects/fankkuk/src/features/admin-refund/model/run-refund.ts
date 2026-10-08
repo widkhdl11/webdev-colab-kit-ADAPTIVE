@@ -37,7 +37,8 @@ const MESSAGE = {
 } as const;
 
 // 금액 칸이 섞여 오면 받지 않는다(strict) — 금액은 DB 가 정한다(INV-K7).
-const bodyShape = z.object({ kind: z.enum(["gift", "revgift"]), unitId: z.uuid() }).strict();
+// gift_box = 도착하지 않음으로 닫힌 상자의 환불(payment INV-M8·M9) — ID 는 상자 ID 다.
+const bodyShape = z.object({ kind: z.enum(["gift", "gift_box", "revgift"]), unitId: z.uuid() }).strict();
 const claimShape = z.array(z.object({ refund_id: z.uuid(), payment_key: z.string().min(1), amount_krw: z.number().int().positive() }).strict()).length(1);
 
 /** DB 잡기 오류 코드 → 응답. */

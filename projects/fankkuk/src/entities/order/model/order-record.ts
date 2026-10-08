@@ -20,4 +20,5 @@ export type OrderRecord = {
   delivery: "in_transit" | "delivered" | null; // 택배사 조회 결과 — 단계만
   outboundWaybillNo: string | null; // 크리에이터에게 보내는 송장. 팬에게는 보여주지 않는다
   fanTrackingNo: string | null; // 팬이 사무실로 보낸 택배의 송장번호
+  fanSendAckAt: string | null; // 승인 전에 팬이 「먼저 보내기」를 누른 시각(approval-signature INV-S9)
 };

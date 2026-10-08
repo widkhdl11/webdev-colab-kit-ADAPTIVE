@@ -20,6 +20,7 @@ const base: OrderRecord = {
   delivery: null,
   outboundWaybillNo: null,
   fanTrackingNo: "987654321098",
+  fanSendAckAt: null,
 };
 
 describe("pendingApprovalRequests — 크리에이터 승인 요청 목록", () => {

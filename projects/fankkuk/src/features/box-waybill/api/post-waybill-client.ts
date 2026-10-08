@@ -25,3 +25,8 @@ export function postNotMine(target: WaybillTarget): Promise<PostJsonOutcome> {
   const write: NotMineWrite = target.kind === "box" ? { boxId: target.id } : { shareId: target.id };
   return postJson("/api/gifts/boxes/not-mine", write, "알리지 못했어요. 잠시 뒤 다시 해 주세요.");
 }
+
+/** 「먼저 보내기」(approval-signature INV-S9) — 승인 전 주문의 받는 주소를 연다. 주문번호만 보낸다. */
+export function postEarlySend(orderNo: string): Promise<PostJsonOutcome> {
+  return postJson("/api/gifts/early-send", { orderNo }, "처리하지 못했어요. 잠시 뒤 다시 해 주세요.");
+}

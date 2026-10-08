@@ -52,6 +52,14 @@ describe("INV-K8: 정해진 칸으로만 받는다", () => {
     expect(paymentRowsFrom(null)).toBeNull();
   });
 
+  it("INV-M8·M9: 도착하지 않음으로 닫힌 상자는 상자 하나가 한 줄 — 종류 gift_box · missing_box", () => {
+    const box = { ...row, unit_kind: "gift_box", order_no: "FC-ABC123-2", payment_kind: "missing_box", service_fee_krw: 0, inspection_fee_krw: 0, shipping_fee_krw: 0 };
+    const [r] = paymentRowsFrom([box]) ?? [];
+    expect(r?.unitKind).toBe("gift_box");
+    expect(r?.paymentKind).toBe("missing_box");
+    expect(r?.refund).toEqual({ status: "due", amountKrw: 6900, error: null });
+  });
+
   it("환불 대상이 아닌 줄은 금액이 없다", () => {
     expect(paymentRowsFrom([{ ...row, refund_status: "none", refund_krw: null }])?.[0]?.refund).toEqual({ status: "none", amountKrw: null, error: null });
   });

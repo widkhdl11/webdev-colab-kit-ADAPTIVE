@@ -23,6 +23,11 @@ export function giftFinderBoxes(boxes: readonly GiftBox[], inProgress: boolean):
     });
 }
 
+/** 받는 주소 대신 「먼저 보내기」 안내를 그릴 때 — 진행 중 주문이고 DB 가 아직 누르지 않았다고 할 때(approval-signature INV-S9) */
+export function needsEarlySendAck(boxes: readonly GiftBox[], inProgress: boolean): boolean {
+  return inProgress && boxes.some((b) => b.sendAckNeeded);
+}
+
 /** 팬 선물 상자 하나의 받는 주소 6자리 — 진행 중 주문이고 사무실 주소가 있을 때만. 없으면 null(주소 칸을 그리지 않는다) */
 export function giftAddressCode(box: GiftBox, officeAddress: string | null, inProgress: boolean): string | null {
   return inProgress && officeAddress !== null ? box.addressCode : null;

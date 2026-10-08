@@ -97,6 +97,12 @@ describe("INV-K7: 화면은 금액을 보내지 않는다", () => {
 });
 
 describe("INV-K7 · INV-M9: 결제사 취소는 한 번, 멱등 키 = 환불 기록 ID", () => {
+  it("INV-M9: 닫힌 상자의 환불(gift_box)도 종류와 상자 ID 만 넘긴다", async () => {
+    const s = setup();
+    await runRefund(s.deps, { kind: "gift_box", unitId: UNIT });
+    expect(s.session.calls.find((c) => c.fn === "admin_claim_refund")?.args).toEqual({ p_kind: "gift_box", p_unit_id: UNIT });
+  });
+
   it("INV-K7 S7: 잡히면 결제사 취소를 한 번 — DB 가 정한 금액·결제 키·환불 기록 ID 로", async () => {
     const s = setup();
     const reply = await runRefund(s.deps, body);

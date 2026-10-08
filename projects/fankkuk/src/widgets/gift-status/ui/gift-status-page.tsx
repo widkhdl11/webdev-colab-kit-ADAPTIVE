@@ -12,8 +12,9 @@ import {
   RETURN_ON_REJECT_NOTICE,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
-import { boxTierName, canReportNotMine, hasArrived, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
-import { giftAddressCode, giftFinderBoxes } from "@/features/box-waybill/model/box-targets";
+import { boxTierName, canReportNotMine, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
+import { giftAddressCode, giftFinderBoxes, needsEarlySendAck } from "@/features/box-waybill/model/box-targets";
+import { EarlySendGate } from "@/features/box-waybill/ui/early-send-gate";
 import { RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
 import { formatWaybill } from "@/entities/parcel/model/waybill-no";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
@@ -66,7 +67,6 @@ export function GiftStatusPage({
   /** 결제 금액(저장된 값). 없으면 결제 내역을 그리지 않는다. */
   payment?: GiftPayment | null;
 }) {
-  const badge = fanBadge(view);
   const progress = fanProgress(view);
   // 상자별 원 송장번호는 입고 전까지만 고친다(design-rules 8-1). 출고 운송장은 읽기 함수가 주지 않는다.
   const inProgress = view.outcome === "in_progress";
@@ -74,6 +74,10 @@ export function GiftStatusPage({
   const finderBoxes = giftFinderBoxes(boxes, inProgress);
   const anyEditable = finderBoxes.length > 0;
   const officeAddress = inProgress ? view.officeAddress : null;
+  const earlySendAck = needsEarlySendAck(boxes, inProgress);
+  // 「먼저 보내기」 전이면 위쪽도 승인 대기로 보인다 — 판정은 fan-stage-copy(view.earlySendPending, INV-S9)
+  const badge = fanBadge(view);
+  const headline = fanHeadline(view);
   const anyAddress = officeAddress !== null && boxes.some((b) => giftAddressCode(b, officeAddress, inProgress) !== null);
   // 차액 줄은 고른 뒤의 길이로 섹션을 그릴지 정한다 — 끝난 주문에 낸 기록이 없으면 빈 섹션을 그리지 않는다
   const shownDifferences = difference ? visibleDifferences(difference.differences, view.outcome === "in_progress") : [];
@@ -104,7 +108,7 @@ export function GiftStatusPage({
                   <span className={statusTagClass(badge.tone, s["g-state"])}>
                     {view.outcome === "in_progress" ? `${badge.text} · ${progress.done}/${progress.total}` : badge.text}
                   </span>
-                  <strong>{fanHeadline(view)}</strong>
+                  <strong>{headline}</strong>
                 </div>
               </div>
               <div className={s["g-art"]} aria-hidden="true">
@@ -175,10 +179,14 @@ export function GiftStatusPage({
 
               {showsProgress && boxes.length > 0 ? (
                 <div className={s.part}>
-                  <h2>상자별 상태</h2>
+                  {/* 「먼저 보내기」를 누르면 안내 칸이 사라진다 — 포커스는 그대로 남는 이 제목으로 옮긴다 */}
+                  <h2 id="box-status-title" tabIndex={-1}>
+                    상자별 상태
+                  </h2>
+                  {earlySendAck ? <EarlySendGate orderNo={view.orderNo} creatorName={view.creatorName} focusAfterId="box-status-title" /> : null}
                   {anyAddress ? (
                     <p className={s["sub-t"]}>
-                      상자마다 받는 주소가 달라요. 상자에 맞는 주소를 끝 6자리까지 그대로 써서 보내 주세요. {view.creatorName}님의 승인은 기다리지 않고 보내셔도 돼요 — 승인은 출고 전까지만 나면 돼요.
+                      상자마다 받는 주소가 달라요. 상자에 맞는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 승인은 출고 전까지만 나면 돼요.
                     </p>
                   ) : null}
                   {anyEditable ? <p className={s["sub-t"]}>송장번호는 배송 조회를 보고 싶을 때만 넣으면 돼요.</p> : null}
@@ -198,10 +206,15 @@ export function GiftStatusPage({
                                 <Check size={16} />
                                 입고됨
                               </span>
+                            ) : isMissing(b.state) ? (
+                              <span className={statusTagClass("warn")}>도착하지 않음</span>
                             ) : (
                               <span className="tag">아직 도착 전</span>
                             )}
                           </div>
+                          {isMissing(b.state) ? (
+                            <p className="hint">결제하고 30일이 지나도 도착하지 않아 이 상자는 닫혔어요. 이 상자 금액을 돌려드려요. 이제 이 상자를 보내도 받지 않고 돌려보내요.</p>
+                          ) : null}
                           {officeAddress && addressCode ? (
                             <ReceivingAddress officeAddress={officeAddress} code={addressCode} boxName={b.label} multiple={boxes.length > 1} />
                           ) : null}

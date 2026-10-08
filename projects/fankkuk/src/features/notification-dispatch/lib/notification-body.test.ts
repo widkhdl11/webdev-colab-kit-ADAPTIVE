@@ -84,6 +84,21 @@ describe("알림 링크 (INV-N9)", () => {
     for (const word of ["추적", "블루투스", "금속", "크리에이터가"]) expect(b.text).not.toContain(word);
   });
 
+  it("INV-N15 (S15): 도착하지 않은 상자 알림 — 선물 상세 링크, 30일이 지나면 닫히고 그 상자 금액을 돌려준다는 말뿐이다", () => {
+    const b = buildNotificationBody({
+      ...inputFor("box_missing"),
+      // @ts-expect-error 본문 틀에는 받는 주소 칸이 없다
+      addressCode: "K7M3XA",
+    });
+    expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    expect(b.subject).toBe("[팬꾹] 아직 도착하지 않은 상자가 있어요");
+    expect(b.text).toContain("아직 도착하지 않은 상자가 있어요.");
+    expect(b.text).toContain("결제하고 30일이 지나도 도착하지 않으면 그 상자는 닫히고 그 상자 금액을 돌려드려요.");
+    expect(b.text).toContain("상자가 하나도 도착하지 않았다면 선물이 취소되고 결제 금액을 모두 돌려드려요.");
+    expect(b.text).not.toContain("K7M3XA");
+    expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
+  });
+
   it("INV-C8: 역조공 상자 도착 알림은 보낸 크리에이터의 「보낸 역조공」 화면으로 잇는다", () => {
     const b = buildNotificationBody({ ...inputFor("box_arrived"), orderNo: "RG-7K3M9" });
     expect(new URL(b.link).pathname).toBe("/creator/revgifts");

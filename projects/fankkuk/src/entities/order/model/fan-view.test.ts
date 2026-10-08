@@ -22,6 +22,7 @@ const base: OrderRecord = {
   delivery: null,
   outboundWaybillNo: null,
   fanTrackingNo: null,
+  fanSendAckAt: null,
 };
 
 const shipped: OrderRecord = {
@@ -35,11 +36,19 @@ const shipped: OrderRecord = {
   delivery: "in_transit",
   outboundWaybillNo: "123456789012",
   fanTrackingNo: "987654321098",
+  fanSendAckAt: null,
 };
 
 describe("toFanView — 팬에게 보이는 것", () => {
   it("INV-S9 (S9): 결제가 끝난 주문은 승인 전이라도 사무실 주소가 나온다 — 승인을 기다리지 않고 보낸다", () => {
     expect(toFanView(base, OFFICE).officeAddress).toBe(OFFICE);
+  });
+
+  it("INV-S9 (S9): 승인 전·「먼저 보내기」 전인 진행 중 주문은 earlySendPending — 누르거나 승인되면 아니다", () => {
+    expect(toFanView(base, OFFICE).earlySendPending).toBe(true);
+    expect(toFanView({ ...base, fanSendAckAt: "2026-10-01T02:00:00.000Z" }, OFFICE).earlySendPending).toBe(false);
+    expect(toFanView({ ...base, approvedAt: "2026-10-01T03:00:00.000Z" }, OFFICE).earlySendPending).toBe(false);
+    expect(toFanView({ ...base, status: "rejected" }, OFFICE).earlySendPending).toBe(false);
   });
 
   it("INV-S9: 승인된 주문도 사무실 주소가 나온다", () => {

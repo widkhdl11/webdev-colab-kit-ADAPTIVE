@@ -60,3 +60,9 @@
   .addr { padding: 20px; }
   .addr dl div { grid-template-columns: minmax(0, 1fr); gap: 0; }
 }
+
+/* 「먼저 보내기」 안내 (approval-signature INV-S9) — 「아니에요」 묻는 칸과 같은 판 */
+.early { margin-top: 12px; padding: 16px 20px; border-radius: var(--r-box); background: var(--surface); }
+.early p:not(:global(.hint)) { color: var(--ink); }
+.early p + p { margin-top: 8px; }
+.early-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }

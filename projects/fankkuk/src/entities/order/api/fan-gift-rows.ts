@@ -25,6 +25,7 @@ const rowSchema = z.object({
   expected_arrival_date: z.string().nullable(),
   delivery: z.enum(["in_transit", "delivered"]).nullable(),
   fan_tracking_no: z.string().nullable(),
+  fan_send_ack_at: ts.nullable(),
 });
 
 /** DB 시각(+00:00)을 화면 코드가 쓰는 ISO(Z) 꼴로. */
@@ -47,6 +48,7 @@ function toRecord(r: z.infer<typeof rowSchema>): FanOrderRecord {
     expectedArrivalDate: r.expected_arrival_date,
     delivery: r.delivery,
     fanTrackingNo: r.fan_tracking_no,
+    fanSendAckAt: isoOrNull(r.fan_send_ack_at),
   };
 }
 

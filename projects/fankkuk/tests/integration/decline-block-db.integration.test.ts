@@ -384,7 +384,7 @@ describe("INV-D5: 팬에게는 거절·7일 반려·차단에 따른 거절이 �
     const boxes = await fan.rpc("my_gift_boxes", { p_order_no: orderNos[2] });
     // 받는 주소 6자리 칸(inbound-address-code INV-C2)은 거절된 주문에서는 비어 있다(INV-C3) — 거절 이유·차단 칸은 여전히 없다.
     // reported_not_mine 은 그 팬 자신이 「제가 보낸 게 아니에요」를 눌렀는지다(INV-C8).
-    expect(Object.keys(boxes.data[0]).sort()).toEqual(["address_code", "box_id", "label", "reported_not_mine", "state", "tier", "waybill_no"]);
+    expect(Object.keys(boxes.data[0]).sort()).toEqual(["address_code", "box_id", "label", "reported_not_mine", "send_ack_needed", "state", "tier", "waybill_no"]);
     expect(boxes.data[0].address_code).toBeNull();
   });
 });

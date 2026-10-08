@@ -19,11 +19,12 @@ export function PaymentSummary({ payment, differences }: Props) {
     <section className={s.pay} aria-labelledby="pay-title">
       <h3 id="pay-title">결제 내역</h3>
       {lines.map((l) => (
-        <div key={`${l.tier}-${l.unitKrw}`} className={s["sum-line"]}>
+        <div key={`${l.tier}-${l.unitKrw}-${l.missing}`} className={s["sum-line"]}>
           <span>
             {PARCEL_TIER_GUIDE[l.tier].name} 상자{" "}
             <small>
               {won(l.unitKrw)} × {l.count}
+              {l.missing ? " · 도착하지 않음" : ""}
             </small>
           </span>
           <span className={s.amt}>{won(l.unitKrw * l.count)}</span>

@@ -3,16 +3,17 @@ import { z } from "zod";
 // 관리자 「결제·환불」 내역의 줄 (admin-console INV-K1·K7·K8). DB 읽기 함수 admin_payment_rows 의 열네 칸만 받는다 —
 // 칸이 하나라도 더 오면(주소·전화 같은) 통째로 받지 않는다.
 // 팬 선물은 결제 한 건이 한 줄(첫 결제·차액 결제), 역조공은 몫 하나가 한 줄.
+// 도착하지 않음으로 닫힌 팬 선물 상자(office-workflow INV-W10)는 상자 하나가 한 줄 — 상자 환불(payment INV-M8·M9)의 단위다.
 
 export const REFUND_STATUSES = ["none", "due", "requesting", "failed", "done"] as const;
 export type RefundStatus = (typeof REFUND_STATUSES)[number];
-export type RefundUnitKind = "gift" | "revgift";
+export type RefundUnitKind = "gift" | "gift_box" | "revgift";
 
 export type PaymentRow = {
   unitKind: RefundUnitKind;
   unitId: string;
   orderNo: string;
-  paymentKind: "initial" | "difference" | "revgift";
+  paymentKind: "initial" | "difference" | "missing_box" | "revgift";
   payerNickname: string;
   amountKrw: number;
   goodsKrw: number;
@@ -27,10 +28,10 @@ export type PaymentRow = {
 const won = z.number().int().min(0);
 const rowShape = z
   .object({
-    unit_kind: z.enum(["gift", "revgift"]),
+    unit_kind: z.enum(["gift", "gift_box", "revgift"]),
     unit_id: z.uuid(),
     order_no: z.string().min(1),
-    payment_kind: z.enum(["initial", "difference", "revgift"]),
+    payment_kind: z.enum(["initial", "difference", "missing_box", "revgift"]),
     payer_nickname: z.string(),
     amount_krw: won,
     goods_krw: won,

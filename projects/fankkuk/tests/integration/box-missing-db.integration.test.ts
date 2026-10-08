@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it } from "vitest";
-import { deleteTestOrders, psql, signedInClient } from "./helpers";
+import { deleteTestOrders, holdRowLock, psql, signedInClient } from "./helpers";
 import { approve, codeOf, deleteTestUnmatched, FAN_PASS, HOLD_DETAILS, inspect, paidGift, scanInbound, waybill, type Unit } from "./office-helpers";
 
 // 승인 뒤 도착하지 않은 상자 (office-workflow INV-W10 S10~S10c · payment INV-M8·M9 S8d·S8e · notifications INV-N15 S15, 카드 d50).
@@ -109,6 +109,12 @@ describe("도착하지 않은 상자 닫기 (INV-W10 · INV-M8·M9)", () => {
     expect(codeState(g.boxIds[1]!)).toBe("void");
     expect(orderRefundDue(g.orderId)).toBe(psql(`select amount_krw from public.payments where order_id = '${g.orderId}' and kind = 'initial'`));
     expect(boxRefundDue(g.boxIds[0]!)).toBe("none");
+    // 대표가 상자 환불을 청구해도 거부 — 주문 환불이 전액을 맡는다
+    const owner = await signedInClient("fankkuk_admin");
+    for (const boxId of g.boxIds) {
+      expect((await owner.rpc("admin_claim_refund", { p_kind: "gift_box", p_unit_id: boxId })).error?.code).toBe("P0022");
+    }
+    expect(psql(`select count(*) from public.refunds where box_id in ('${g.boxIds.join("','")}')`)).toBe("0");
   });
 
   it("INV-W10 (S10c, 실패경로): 결제 + 720시간이 지났어도 입고된 상자는 닫지 않고, 출고된 주문은 건드리지 않는다", async () => {
@@ -143,8 +149,55 @@ describe("도착하지 않은 상자 닫기 (INV-W10 · INV-M8·M9)", () => {
       p_carrier: HOLD_DETAILS.carrier,
       p_sender_initial: HOLD_DETAILS.initial,
     });
-    expect((found.data as { result?: string } | null)?.result ?? found.error?.code).not.toBe("matched");
+    expect(found.error).toBeNull();
+    expect(found.data).toBe("not_found");
+    // 닫힌 상자에는 배송 조회용 송장번호도 넣을 수 없다(화면을 거치지 않고 불러도)
+    const set = await (await signedInClient("byeolbit_fan")).rpc("set_box_waybill", { p_box_id: g.boxIds[1], p_waybill: waybill() });
+    expect(set.data).toBe("not_found");
     expect(psql(`select count(*) from public.office_parcels where box_id = '${g.boxIds[1]}' and state <> 'awaiting'`)).toBe("0");
+  });
+});
+
+describe("닫기와 입고가 겹칠 때 (INV-W10 동시)", () => {
+  it("INV-W10 (동시): 같은 상자의 30일 닫기와 입고가 겹치면 둘 중 하나만 반영된다 — 닫히고 입고되거나, 입고되고 닫히지 않는다", async () => {
+    const op = await staff();
+    const g = await approvedGift(2);
+    await receive(op, g.boxIds[0]!);
+    backdate(g.orderId, 720);
+    // 두 처리가 운 좋게 앞뒤로 오지 않게, 그 상자 줄을 잠근 뒤에 둘을 보내 잠금 뒤에 줄 세운다
+    const lock = await holdRowLock(`select 1 from public.boxes where id = '${g.boxIds[1]}' for update`, 2);
+    const [closed, scanned] = await Promise.all([runExpiry(g.orderNo), scanInbound(op, waybill(), { code: codeOf({ boxId: g.boxIds[1]! }), ...HOLD_DETAILS })]);
+    await lock.released;
+    expect(scanned.error).toBeNull();
+    const result = (scanned.data as { result: string }).result;
+    const arrived = psql(`select count(*) from public.office_parcels where box_id = '${g.boxIds[1]}' and state <> 'awaiting'`);
+    if (missing(g.boxIds[1]!) === "t") {
+      expect(closed.boxes_missing).toBe(1);
+      expect(result).toBe("hold");
+      expect(arrived).toBe("0");
+    } else {
+      expect(closed.boxes_missing).toBe(0);
+      expect(result).toBe("received");
+      expect(arrived).toBe("1");
+    }
+  });
+});
+
+describe("상자마다 나눠 저장한 요금 칸 (INV-M14, 카드 d51)", () => {
+  it("INV-M14: 상자마다 등록 순간의 배송비·검수비가 저장되고, 상자 칸의 합은 결제의 칸과 같다", async () => {
+    const g = await paidGift(2);
+    const sums = psql(
+      `select sum(b.shipping_fee_krw) = p.shipping_fee_krw and sum(b.inspection_fee_krw) = p.inspection_fee_krw and sum(b.price_krw) = p.amount_krw
+       from public.boxes b join public.payments p on p.order_id = b.order_id and p.kind = 'initial' where b.order_id = '${g.orderId}' group by p.id`,
+    );
+    expect(sums).toBe("t");
+  });
+
+  it("INV-M14 (실패경로): 상자 칸의 합이 결제의 칸과 다르면 DB 가 받지 않는다", async () => {
+    const g = await paidGift(2);
+    expect(() =>
+      psql(`update public.boxes set shipping_fee_krw = shipping_fee_krw + 100, inspection_fee_krw = inspection_fee_krw - 100 where id = '${g.boxIds[0]}'`),
+    ).toThrow(/23514|INV-M14/);
   });
 });
 
@@ -163,11 +216,58 @@ describe("상자 환불과 주문 환불의 합 (INV-M9)", () => {
     // 같은 상자를 또 청구하면 새 환불을 만들지 않는다
     await owner.rpc("admin_claim_refund", { p_kind: "gift_box", p_unit_id: g.boxIds[1] });
     expect(psql(`select count(*) from public.refunds where box_id = '${g.boxIds[1]}'`)).toBe("1");
-    // 그 뒤 주문이 반려된 것처럼 — 주문 환불 = 표대로 정한 값 − 상자 환불
+    // 그 뒤 도착한 상자가 거절된 것처럼 — 거절 규칙(반송 택배비만 뺀다)을 남은 상자 몫에만 적용한다(카드 d51).
+    // 닫힌 상자의 배송비는 이미 상자 환불에 들어 있으니 다시 빼지 않는다. 소형 2개 13,800원이면 상자 환불 6,900 + 주문 환불 2,900.
     psql(`begin; set local session_replication_role = replica; update public.orders set status = 'rejected' where id = '${g.orderId}'; commit;`);
     const [amount, shipping] = psql(`select amount_krw || '|' || shipping_fee_krw from public.payments where order_id = '${g.orderId}' and kind = 'initial'`).split("|").map(Number);
-    expect(Number(orderRefundDue(g.orderId))).toBe(amount! - shipping! - boxAmount);
-    expect(Number(orderRefundDue(g.orderId)) + boxAmount).toBeLessThanOrEqual(amount!);
+    const boxShipping = Number(psql(`select shipping_fee_krw from public.boxes where id = '${g.boxIds[1]}'`));
+    expect(boxShipping).toBeGreaterThan(0);
+    expect(Number(orderRefundDue(g.orderId))).toBe(amount! - boxAmount - (shipping! - boxShipping));
+    expect(Number(orderRefundDue(g.orderId)) + boxAmount).toBe(amount! - (shipping! - boxShipping));
+  });
+
+  it("INV-M9 (S8d, 입고 뒤 취소): 주문 환불은 배송비 칸 − 닫힌 상자의 배송비 — 닫힌 상자의 배송비를 두 번 빼지 않는다", async () => {
+    const op = await staff();
+    const g = await approvedGift(2);
+    await receive(op, g.boxIds[0]!);
+    backdate(g.orderId, 720);
+    await runExpiry(g.orderNo);
+    psql(`begin; set local session_replication_role = replica; update public.orders set status = 'canceled' where id = '${g.orderId}'; commit;`);
+    const shipping = Number(psql(`select shipping_fee_krw from public.payments where order_id = '${g.orderId}' and kind = 'initial'`));
+    const boxShipping = Number(psql(`select shipping_fee_krw from public.boxes where id = '${g.boxIds[1]}'`));
+    expect(Number(orderRefundDue(g.orderId))).toBe(shipping - boxShipping);
+    // 입고가 있는 주문이라 닫힌 상자의 환불은 그대로 그 상자 금액
+    expect(boxRefundDue(g.boxIds[1]!)).toBe(psql(`select price_krw from public.boxes where id = '${g.boxIds[1]}'`));
+  });
+
+  it("INV-M9 (동시): 같은 결제의 주문 환불과 상자 환불을 동시에 청구하면 하나는 「처리 중」으로 거부 — 차례로 하면 둘 다, 합계는 결제 금액 이하", async () => {
+    const op = await staff();
+    const g = await approvedGift(2);
+    await receive(op, g.boxIds[0]!);
+    backdate(g.orderId, 720);
+    await runExpiry(g.orderNo);
+    psql(`begin; set local session_replication_role = replica; update public.orders set status = 'rejected' where id = '${g.orderId}'; commit;`);
+    const paymentId = psql(`select id from public.payments where order_id = '${g.orderId}' and kind = 'initial'`);
+    const owner = await signedInClient("fankkuk_admin");
+    const lock = await holdRowLock(`select 1 from public.payments where id = '${paymentId}' for update`, 2);
+    const both = await Promise.all([
+      owner.rpc("admin_claim_refund", { p_kind: "gift", p_unit_id: paymentId }),
+      owner.rpc("admin_claim_refund", { p_kind: "gift_box", p_unit_id: g.boxIds[1] }),
+    ]);
+    await lock.released;
+    expect(both.filter((r) => r.error === null)).toHaveLength(1);
+    expect(both.filter((r) => r.error?.code === "P0024")).toHaveLength(1);
+    expect(psql(`select count(*) from public.refunds where payment_id = '${paymentId}'`)).toBe("1");
+    // 앞 청구가 2분 지나 「처리 중」이 풀린 것처럼 — 차례로 하면 남은 쪽도 들어간다
+    psql(`update public.refunds set claimed_at = now() - interval '3 minutes' where payment_id = '${paymentId}'`);
+    await owner.rpc("admin_claim_refund", { p_kind: "gift", p_unit_id: paymentId });
+    psql(`update public.refunds set claimed_at = now() - interval '3 minutes' where payment_id = '${paymentId}'`);
+    await owner.rpc("admin_claim_refund", { p_kind: "gift_box", p_unit_id: g.boxIds[1] });
+    expect(psql(`select count(*) from public.refunds where payment_id = '${paymentId}'`)).toBe("2");
+    const [amount, shipping] = psql(`select amount_krw || '|' || shipping_fee_krw from public.payments where id = '${paymentId}'`).split("|").map(Number);
+    const boxShipping = Number(psql(`select shipping_fee_krw from public.boxes where id = '${g.boxIds[1]}'`));
+    // 소형 2개 13,800원이면 6,900 + 2,900 = 9,800 — 빠진 것은 반송한 상자 하나의 택배비
+    expect(Number(psql(`select sum(amount_krw) from public.refunds where payment_id = '${paymentId}'`))).toBe(amount! - (shipping! - boxShipping));
   });
 
   it("INV-M9 (실패경로): 닫히지 않은 상자·직원·팬은 상자 환불을 청구할 수 없다", async () => {

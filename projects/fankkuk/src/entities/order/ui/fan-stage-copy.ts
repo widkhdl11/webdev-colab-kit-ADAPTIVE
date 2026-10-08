@@ -24,6 +24,10 @@ export const NOT_ACCEPTED_TEXT = "크리에이터가 이 선물을 받지 않아
 
 const currentKey = (view: FanGiftView) => view.steps.find((st) => st.state === "current")?.key;
 
+/** 승인 전 주문에서 「먼저 보내기」를 아직 누르지 않았을 때의 상단 표시(approval-signature INV-S9) — 받는 주소가 아직 없으니 「보내 주세요」라고 하지 않는다. */
+export const EARLY_SEND_WAIT_BADGE: { text: string; tone: StatusTone } = { text: "승인 대기", tone: "warn" };
+export const EARLY_SEND_WAIT_HEADLINE = "크리에이터의 승인을 기다리는 중이에요";
+
 /** 지금 상황 한 줄. "지금 단계"는 아직 끝나지 않은 단계라, 그 단계를 기다리는 말로 쓴다. */
 export function fanHeadline(view: FanGiftView): string {
   if (view.outcome === "not_accepted") return NOT_ACCEPTED_TEXT;
@@ -31,6 +35,7 @@ export function fanHeadline(view: FanGiftView): string {
   if (view.outcome === "canceled") return "취소된 선물이에요";
   switch (currentKey(view)) {
     case "received":
+      if (view.earlySendPending) return EARLY_SEND_WAIT_HEADLINE;
       return view.fanTrackingNo ? "보내 주셨군요! 사무실 도착을 기다려요" : "사무실로 보내 주세요";
     case "inspected":
       return "사무실에 도착했어요. 검수하고 있어요";
@@ -53,6 +58,7 @@ export function fanBadge(view: FanGiftView): { text: string; tone: StatusTone } 
   const current = currentKey(view);
   if (!current) return { text: "수령 완료", tone: "success" };
   if (current === "shipped" && view.approval.state !== "done") return { text: "승인 대기", tone: "warn" };
+  if (current === "received" && view.earlySendPending) return EARLY_SEND_WAIT_BADGE;
   if (current === "received") return { text: view.fanTrackingNo ? "도착 대기" : "보내 주세요", tone: "warn" };
   const lastDone = [...view.steps].reverse().find((st) => st.state === "done");
   return lastDone ? { text: FAN_STEP_LABEL[lastDone.key], tone: "info" } : { text: "등록", tone: "plain" };

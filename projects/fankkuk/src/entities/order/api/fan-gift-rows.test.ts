@@ -18,6 +18,7 @@ const row = {
   expected_arrival_date: null,
   delivery: null,
   fan_tracking_no: "584012379911",
+  fan_send_ack_at: null,
 };
 
 describe("my_gifts 응답 → 팬 화면", () => {

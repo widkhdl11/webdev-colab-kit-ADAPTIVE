@@ -9,8 +9,9 @@ export const PARCEL_KINDS = ["gift", "revgift"] as const;
 export type ParcelKind = (typeof PARCEL_KINDS)[number];
 
 // 상자 상태 목록의 정본은 box-rows.ts(BOX_STATES) — 팬·크리에이터 화면과 같은 목록을 쓴다.
-export const PARCEL_STATES = BOX_STATES;
-export type ParcelState = BoxState;
+// 도착하지 않음으로 닫힌 상자(INV-W10)는 사무실 목록에 오지 않는다(admin_office_parcels 가 뺀다) — 그 값이 오면 꼴이 다른 줄로 버린다.
+export const PARCEL_STATES = BOX_STATES.filter((s): s is Exclude<BoxState, "missing"> => s !== "missing");
+export type ParcelState = Exclude<BoxState, "missing">;
 
 export const NEXT_STEPS = [
   "wait_waybill",

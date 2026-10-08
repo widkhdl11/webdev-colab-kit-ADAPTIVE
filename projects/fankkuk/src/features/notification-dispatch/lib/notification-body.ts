@@ -8,7 +8,8 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 // box_arrived: 상자 하나가 입고됐다고 그 주문의 주인(보낸 팬 · 역조공이면 보낸 크리에이터)에게 한 번(inbound-address-code INV-C8).
 //   본문에 받는 주소 6자리·사무실 주소를 넣지 않는다(INV-C2) — 이 틀에는 그 칸이 아예 없다.
 // hold_fan: 추적 장치로 상자가 보관됐을 때 보낸 팬에게 「돌려보낼 상자」(INV-N13, 2026-10-08) — 무엇이 나왔는지 쓰는 칸이 없다.
-export const NOTIFICATION_KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transit", "delivered", "hold", "box_arrived", "hold_fan"] as const;
+// box_missing: 결제 완료 + 14일에 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N15, 2026-10-08 카드 d50). 6자리·주소 칸이 없다.
+export const NOTIFICATION_KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transit", "delivered", "hold", "box_arrived", "hold_fan", "box_missing"] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export type NotificationBodyInput = {
@@ -105,6 +106,21 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
       return {
         subject: "[팬꾹] 돌려보낼 상자가 있어요",
         lines: [greet, "검수를 통과하지 못한 상자가 있어요.", "168시간 뒤 보내신 주소로 돌려보내요.", order],
+        buttonLabel: "선물 보기",
+        path: `/gifts/${orderNo}`,
+        must: false,
+      };
+    case "box_missing":
+      // 30일(720시간)이 지나면 자동 처리가 그 상자를 닫는다(office-workflow INV-W10 · payment INV-M8)
+      return {
+        subject: "[팬꾹] 아직 도착하지 않은 상자가 있어요",
+        lines: [
+          greet,
+          "아직 도착하지 않은 상자가 있어요.",
+          "결제하고 30일이 지나도 도착하지 않으면 그 상자는 닫히고 그 상자 금액을 돌려드려요.",
+          "상자가 하나도 도착하지 않았다면 선물이 취소되고 결제 금액을 모두 돌려드려요.",
+          order,
+        ],
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
         must: false,

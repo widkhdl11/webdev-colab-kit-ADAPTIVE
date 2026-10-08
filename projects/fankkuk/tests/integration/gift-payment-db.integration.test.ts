@@ -136,7 +136,7 @@ describe("INV-M14 S14b: 남의 주문·결제 전 주문은 읽히지 않고 칸
     const p = await paymentOf("byeolbit_fan", o.orderNo);
     expect(p).not.toBeNull();
     expect(Object.keys(p ?? {}).sort()).toEqual(["boxes", "order_no", "paid_at", "paid_krw", "refunds"]);
-    for (const b of p?.boxes ?? []) expect(Object.keys(b).sort()).toEqual(["amount_krw", "label", "tier"]);
+    for (const b of p?.boxes ?? []) expect(Object.keys(b).sort()).toEqual(["amount_krw", "label", "missing", "tier"]);
     const text = JSON.stringify(p);
     for (const leak of ["goods", "service", "inspection", "shipping", "carrier", "3300", "3500", "9000", "toss", "payment_key"]) {
       expect(text).not.toContain(leak);

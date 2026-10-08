@@ -28,8 +28,22 @@ function view(
     canEnterTrackingNo: false,
     fanTrackingNo: null,
     expectedArrivalDate: null,
+    earlySendPending: false,
   };
 }
+
+describe("INV-S9: 「먼저 보내기」 전 표시", () => {
+  it("INV-S9: 입고 전·승인 전이고 「먼저 보내기」를 아직 누르지 않았으면 「승인 대기 · 승인을 기다리는 중」 — 「보내 주세요」라고 하지 않는다", () => {
+    const v = { ...view(1), earlySendPending: true };
+    expect(fanBadge(v)).toEqual({ text: "승인 대기", tone: "warn" });
+    expect(fanHeadline(v)).toBe("크리에이터의 승인을 기다리는 중이에요");
+  });
+
+  it("INV-S9 (실패경로): 누른 뒤에는 그대로 「보내 주세요」", () => {
+    expect(fanBadge(view(1)).text).toBe("보내 주세요");
+    expect(fanHeadline(view(1))).toBe("사무실로 보내 주세요");
+  });
+});
 
 describe("headerGiftState", () => {
   it("검수를 마치고 승인을 기다리는 선물은 모래시계(wait)", () => {

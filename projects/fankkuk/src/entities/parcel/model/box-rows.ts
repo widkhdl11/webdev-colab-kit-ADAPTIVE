@@ -18,6 +18,8 @@ export const BOX_STATES = [
   "returned",
   "label_printed",
   "shipped",
+  // 결제 + 30일이 지나도 오지 않아 닫힌 팬 선물 상자(office-workflow INV-W10). 6자리는 무효, 그 상자 금액은 환불 대상.
+  "missing",
 ] as const;
 
 export type BoxState = (typeof BOX_STATES)[number];
@@ -33,9 +35,14 @@ export function isWaybillEditable(s: BoxState): boolean {
   return s === "no_waybill" || s === "awaiting";
 }
 
+/** 도착하지 않음으로 닫힌 상자(INV-W10) — 입고 전도 입고 뒤도 아니다. */
+export function isMissing(s: BoxState): boolean {
+  return s === "missing";
+}
+
 /** 사무실에 도착해 입고 확인을 받은 뒤의 상태 전부. */
 export function hasArrived(s: BoxState): boolean {
-  return !isWaybillEditable(s);
+  return !isWaybillEditable(s) && !isMissing(s);
 }
 
 export function boxTierName(t: BoxTier): string | null {
@@ -51,7 +58,16 @@ export function canReportNotMine(s: BoxState): boolean {
 const addressCode = z.string().regex(ADDRESS_CODE_PATTERN).nullable();
 
 const giftBoxRow = z
-  .object({ box_id: z.string().uuid(), label: z.string(), tier, waybill_no: waybill, state, address_code: addressCode, reported_not_mine: z.boolean() })
+  .object({
+    box_id: z.string().uuid(),
+    label: z.string(),
+    tier,
+    waybill_no: waybill,
+    state,
+    address_code: addressCode,
+    reported_not_mine: z.boolean(),
+    send_ack_needed: z.boolean(),
+  })
   .strict();
 
 export type GiftBox = {
@@ -64,6 +80,8 @@ export type GiftBox = {
   addressCode: string | null;
   /** 「제가 보낸 게 아니에요」를 이미 눌렀다 */
   reportedNotMine: boolean;
+  /** 승인 전 주문인데 「먼저 보내기」를 아직 누르지 않았다 — 받는 주소 대신 안내와 버튼을 그린다(approval-signature INV-S9) */
+  sendAckNeeded: boolean;
 };
 
 export function parseGiftBoxRows(data: unknown): GiftBox[] {
@@ -78,6 +96,7 @@ export function parseGiftBoxRows(data: unknown): GiftBox[] {
       state: r.state,
       addressCode: r.address_code,
       reportedNotMine: r.reported_not_mine,
+      sendAckNeeded: r.send_ack_needed,
     }));
 }
 

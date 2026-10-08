@@ -196,6 +196,8 @@ describe("INV-C2 6자리는 그 주문의 주인에게만", () => {
     const g = await paidGift();
     const code = codeOf({ boxId: g.boxIds[0] })!;
     const fan = await signedInClient("byeolbit_fan");
+    // 승인 전 주문은 「먼저 보내기」를 눌러야 6자리가 나온다(approval-signature INV-S9)
+    expect((await fan.rpc("ack_early_send", { p_order_no: g.orderNo })).error).toBeNull();
     const mine = await fan.rpc("my_gift_boxes", { p_order_no: g.orderNo });
     expect(mine.error).toBeNull();
     expect((mine.data as { address_code: string | null }[])[0].address_code).toBe(code);
@@ -219,6 +221,8 @@ describe("INV-C2 6자리는 그 주문의 주인에게만", () => {
     const { payTestOrder } = await import("./helpers");
     await payTestOrder(own);
     const haru = await signedInClient("haru_creator");
+    // 하루가 보낸 주문도 승인 전이라 「먼저 보내기」를 눌러야 6자리가 나온다(approval-signature INV-S9)
+    expect((await haru.rpc("ack_early_send", { p_order_no: own.orderNo })).error).toBeNull();
 
     const incoming = await haru.rpc("my_incoming_gifts");
     const haruBoxesOfByeol = await haru.rpc("my_gift_boxes", { p_order_no: g.orderNo });
@@ -287,6 +291,7 @@ describe("INV-C3 거절·반려·취소 때 그 주문의 6자리 전부 무효"
   it("INV-C3 (S3): 결제 완료·승인 전에 보이던 6자리가 크리에이터 거절과 같은 처리에서 전부 무효, 주소 칸이 사라진다", async () => {
     const g = await paidGift(2);
     const fan = await signedInClient("byeolbit_fan");
+    expect((await fan.rpc("ack_early_send", { p_order_no: g.orderNo })).error).toBeNull();
     const before = (await fan.rpc("my_gift_boxes", { p_order_no: g.orderNo })).data as { address_code: string | null }[];
     expect(before.every((b) => b.address_code !== null)).toBe(true);
 
