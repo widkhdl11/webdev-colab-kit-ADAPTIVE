@@ -2,13 +2,18 @@
 
 ## 현재 상태
 
-- **오늘의 목표**: 정책 질문 답 반영(fankkuk-policy-11, 카드 d49 「추천대로 전부」 — I1 닫힘, I2 진행 중)
-- **완료**: (10-08) ⑧ 1:1 문의 제한(대표 직접) · ⑥④⑨⑤⑦③② · 질문 12 반영, 리뷰 넷 반영 fd46a84, 사인오프 24165a3(basis 1b1c42f4a4b5). 마이그레이션 20261008000001~08. 통합 1151/1152(알려진 FC-W5N3T 1건)
-- **멈춘 지점**: I2 중 ①(약관 빈칸 문구 + 입고 전 팬 직접 「취소하기」·입고 뒤 취소 환불)과 ⑪(시간 규칙 DB 예약 작업) 남음. 프론티어 deploy — 배포는 사용자가 말할 때
-- **다음 할 일**: ⑪ 시간 규칙 자동 실행부터 — DB 예약 작업으로 office_run_expiry 를 5분마다(알림 발송은 앱 서버라 연결 확인), 그다음 ①(결제 표면, payment 스펙 먼저)
-- **대기 중인 결정**: d50 — 승인 뒤 상자가 끝내 오지 않는 주문의 기한(추천: 14일 알림 · 30일 그 상자 닫고 상자 금액 전액 환불)
+- **오늘의 목표**: 정책 질문 답 반영(fankkuk-policy-11, I2 진행 중) + 카드 d50 「추천대로」(fankkuk-box-never-arrived — 승인 뒤 안 온 상자 14일 알림·30일 닫기)
+- **완료**: (10-08) 정책 8개 반영·사인오프 24165a3. d50 답 받음 → DECISIONS, 스펙 payment INV-M8·M9·M14(S8d·S8e) · office-workflow INV-W10(S10~S10c) · notifications INV-N15(S15), 시험 tests/integration/box-missing-db.integration.test.ts 8개(7 빨간불 — 구현 전)
+- **멈춘 지점**: d50 구현 전. 정한 설계 — boxes.missing_at, office_run_expiry 에 14일 알림(box_missing)·30일 닫기(상자 줄 잠금, 6자리 무효, 상자가 하나도 안 왔으면 주문 canceled), refunds 를 결제마다 주문 환불 하나 + 상자마다 상자 환불 하나로(refund_due_of_box · admin_claim_refund 'gift_box' · 주문 환불에서 상자 환불 차감), office_sync_order 와 find_held_parcel 에서 닫힌 상자 제외
+- **다음 할 일**: d50 마이그레이션을 써서 box-missing-db 시험 8개를 초록으로, 그다음 앱(알림 본문 box_missing·환불 화면 상자 단위·선물 상세 「도착하지 않음」) → security-reviewer 포함 리뷰. 그 뒤 I2 의 ⑪·①
+- **대기 중인 결정**: 없음
 
 ## 로그
+
+### 2026-10-08 (3) — 카드 d50 답, 스펙·시험까지
+
+- 「d50 이 뭐지」 → 실제 예시로 설명 → 「추천대로」 → 카드 닫고 DECISIONS → 환불 표가 결제마다 하나뿐(refunds_payment_id_key)인 것을 확인, 상자 환불 단위를 더하기로 → 스펙 세 곳 → 시험 8개(7 빨간불) → 사용자 「일단 wrap-up 하고 다음 세션에서」.
+- 찾은 것: 닫힌 상자를 주문 집계(office_sync_order)에서 빼지 않으면 남은 상자가 출고로 못 간다 · 주인의 찾기(find_held_parcel)가 「입고 전」 줄에 늦게 온 상자를 이을 수 있다 — 둘 다 구현 때 같이 고친다.
 
 ### 2026-10-08 (2) — 정책 질문 답 반영 (카드 d49)
 
