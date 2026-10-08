@@ -2,24 +2,23 @@
 project: fankkuk
 status: passed
 basis: fa390a3408a3
-reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
+reviewers: [security-reviewer, code-reviewer, test-auditor]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-09, 역조공 팬 열람 기록)
+# 리뷰 사인오프 — fankkuk (2026-10-09, 잠금 순서 하나)
 
-이번 사인오프가 덮는 변경: 지난 사인오프(basis 60d6e62af7e8, 커밋 ea50972) 뒤 스펙 커밋 bc531b1 + 이번 구현.
-reverse-gift INV-R16(S16·S16b) — 팬이 받은 역조공 상세에서 자기 몫 주소의 연 줄·거부 줄·돌려준 줄·지운 줄을 본다.
+이번 사인오프가 덮는 변경: 지난 사인오프(basis fa390a3408a3, 커밋 a31c2d9) 뒤 office-workflow INV-W12(S12·S12b) — 같은 주문을 만지는
+쓰기 처리가 모두 「상자 → 승인 요청 → 주문(몫) → 6자리 → 사무소 상자 줄」 순으로 잠근다. 마이그레이션 20261009000002_lock_order.
 
-- 닿은 표면: authz(읽기 함수가 auth.uid() 로 몫의 팬만, 사람 ID 인자 없음) · 개인정보 열람 기록 노출 범위(주소·운송장·요청자 계정 없음) · 받은 역조공 상세의 새 섹션.
-- security-reviewer: 결함 0 — 남의 몫·없는 몫 모두 빈 목록, 반환 칸 7개에 민감 칸 없음, 실행 권한 authenticated 만, 화면은 받은 역조공이 없으면 404 로 존재를 드러내지 않음.
-- code-reviewer: high 1 → 함수가 language sql 이라 사람이 적용하는 표(지운 기록)를 만들 때 검사해 새 DB 에서 마이그레이션이 실패하던 것 → plpgsql + return query. medium 1 → 읽기 실패를 null 로 삼킬 때 원인을 서버 로그(코드·경로만)에. low 2 → 끝난 몫(출고·받지 않음·기한 지남·반송·취소)에서 「출력할 때마다」 안내를 바꿈 · 두 읽기를 동시에.
-- ui-reviewer: 중간 2 → 「대표」를 「팬꾹 대표 계정」으로(크리에이터 쪽 사람으로 읽히지 않게) · 좁은 화면 여백·모서리를 위 판과 같게. 낮음 → 지운 줄 「누가」 칸 「없음」 · 「받기로 하며 입력한 주소가 없어…」. 18px 여백은 크리에이터 화면과 같은 값이라 그대로.
-- test-auditor: 중간 2 → 돌려준 줄을 실제로 만들어 그 연 줄만 표시 · 대표의 거부 줄(no_valid_approval)이 대표로 나옴. 낮음 2 → 읽기 함수 유닛(오류면 null·넘기는 인자) · 같은 시각이면 지운 줄이 위.
-- 강제 장치 변이: 팬 판정 제거·요청자 id 칸 추가·anon 허용·authenticated 회수·파서 strict 제거·돌려줌 무시·모든 거부를 대표 아님으로·같은 시각 순서 뒤집기 → 각각 빨간불, 원복. 옛 sql 판은 지운 기록 표가 없을 때 생성 실패, 새 판은 성공(rollback 으로 확인).
-
-실행 근거:
-- `npm test` → 166 파일 1289 통과 · `npx tsc --noEmit` → 오류 0 (직접)
-- `revgift-fan-log-db` 단독 → 6/6 (직접, 리뷰 반영 뒤) · `revgift-print-db` 24/24 · `revgift-close-db` 16/16 (구현 에이전트, 리뷰 반영 뒤)
-- `npm run test:integration` (단독, 리뷰 반영 전) → 1232 통과 · 1 실패(read-isolation 시드 FC-W5N3T, BACKLOG 기존 건)
-- 화면(로컬): 시험 준비 함수로 하루 → 구름빵(시험 계정) 몫 RG-TLFPC4A0 을 받기·검수까지 만들고 대표 1회 출력·직원 1회 시도. 구름빵으로 /me/revgifts/RG-TLFPC4A0 → 「내 주소 열람 기록」 두 줄(거부 · 팬꾹 대표가 아닌 계정 · 「팬꾹 대표 계정이 아니라 열리지 않았어요」 / 열림 · 팬꾹 대표 계정 · 첫 출력), 최근 순, PC·390px 폭 모두 확인. 그 뒤 시험 데이터 정리(RG-T 몫 0건).
-  addr1008 로 보지 못한 이유: 그 계정의 비밀번호가 기록에 없다(사람 계정). 안 해 본 것: 지운 줄·돌려준 줄을 화면으로(통합 시험 S16 이 값까지 본다).
+- 닿은 표면: concurrency(잠금 순서) · authz 는 판정 글자 그대로(대표 취소 is_owner·사유 검사, 자동 처리의 운영자 판정 — 본문 복사, 바꾸지 않음).
+- ui-reviewer 는 뺐다 — 화면을 건드리지 않았다.
+- security-reviewer: 막을 결함 0. 낮음 1 → 다시 읽기 루프의 둘째 바퀴가 사무소 상자 줄을 쥔 채 새 상자를 잠가 순서가 거꾸로 됨 → 루프를 없애고 바로 40001(다시 스캔).
+  실행 권한(create or replace 가 revoke 유지)·잠그기 전 읽은 값으로 판단하는 곳 없음 확인. 새 함수 office_lock_parcel 은 public·anon·authenticated revoke.
+- code-reviewer: high 1 → 자동 처리(office_run_expiry)의 7일 반려·보관 168시간·나갈 수 없는 상자 단계가 새 순서와 반대(주문 → 상자, 사무소 상자 줄 → 주문)
+  → 세 단계를 주문마다·상자마다 반복하며 같은 순서로 잠그고 조건을 다시 봄, 미확인 입고 기한은 맨 뒤로. low 2 → 대표 취소가 6자리 줄을 사무소 상자 줄 앞에서 잠금 · 루프 전제(위와 같이 없앰).
+- test-auditor: 빈 갈래 5 → 동시 시험(S12b)을 줄 세우기로 결정적으로 · 상자 줄을 쥔 채 주문 줄도 확인 · 승인 요청·역조공 몫·대표 취소의 상자 갈래 시험 추가.
+- 변이 12개(갈래마다 하나): QR 잠금의 주문·승인 요청·상자·몫 잠금 빠짐, 사무소 상자 줄 먼저 · 대표 취소의 사무소 상자 줄 주문 앞, 상자·승인 요청·6자리 빠짐 ·
+  자동 처리 1단계 상자 빠짐, 5단계·마지막 단계 잠금 빠짐 → 12/12 빨간불(처음 11/12, 살아남은 6자리 갈래는 시험을 더해 잡음).
+- 실행 근거: `npx vitest run --config vitest.integration.config.mts tests/integration/lock-order-db.integration.test.ts` → 10/10 ·
+  통합 전체(옛 정의 중간본) 1241/1245(실패 = read-isolation 시드 1건 + 실행 중 추가한 자동 처리 시험 3건이 적용 전 정의에 빨간불) ·
+  `npm test` 1289/1289 · `tsc --noEmit` 0. 통합 전체(최종 정의) 1243/1245 — 실패 2: read-isolation 시드(BACKLOG 기존) · INV-W7 무작위 송장번호가 전화번호 꼴과 우연히 맞음(그 파일 단독 57/57, BACKLOG 등재)
