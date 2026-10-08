@@ -117,10 +117,13 @@ describe("INV-M8 · INV-K7: 금액은 DB 가 주문 상태로 정한다 — 팬 
     expect((await asOwner("gift", returned.paymentId)).code).toBe("P0022");
   });
 
-  it("INV-M8: 입고 뒤 팬 취소는 배송비 칸만", async () => {
+  // 「입고 뒤 팬 취소 = 배송비 칸만」 줄은 정책 ①(카드 d49)에서 「입고 뒤 취소 = 결제 − 도착한 상자의 검수비·배송비」로 바뀌었다.
+  // 도착한 상자를 빼는 쪽은 cancel-db(S17)가 본다. 여기서는 도착한 상자가 없으면 아무것도 빼지 않는지만 본다.
+  it("INV-M8: 입고 뒤 취소 — 도착한 상자가 없으면 결제 금액 전부(오지 않은 상자의 칸은 빼지 않는다)", async () => {
     const g = await paidGift();
     setOrder(g.orderId, "status = 'canceled', received_at = now()");
-    expect((await asOwner("gift", g.paymentId)).claim?.amount_krw).toBe(4000);
+    const paidKrw = Number(psql(`select amount_krw from public.payments where id = '${g.paymentId}'`));
+    expect((await asOwner("gift", g.paymentId)).claim?.amount_krw).toBe(paidKrw);
   });
 
   it("INV-M8 (실패경로): 출고된 주문은 환불하지 않는다 — 거부, 기록 없음", async () => {

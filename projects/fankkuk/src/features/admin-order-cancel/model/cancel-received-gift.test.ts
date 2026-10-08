@@ -67,11 +67,23 @@ describe("INV-M17: 대표의 입고 뒤 취소", () => {
     }
   });
 
-  it("INV-M17 (S17b, 실패경로): DB 오류 — P0002 409, 22023 사유 400, 42501 대표 문구 403, 그 밖 500", async () => {
+  it("INV-M17 (실패경로): 주문번호 칸이 빠지거나 문자열이 아니면 사유가 아니라 주문번호 안내 400", async () => {
+    for (const body of [{ reason: "x" }, { orderNo: 123, reason: "x" }, { orderNo: null, reason: "x" }]) {
+      const { calls, client } = fakeClient(null);
+      expect(await cancelReceivedGift(client, body)).toEqual(ORDER_NO_REPLY);
+      expect(calls).toEqual([]);
+    }
+  });
+
+  it("INV-M17 (S17b, 실패경로): DB 오류 — P0002·P0061(S17c) 409, 22023 사유 400, 42501 대표 문구 403, 그 밖 500", async () => {
     const body = { orderNo: "FC-7K3M9", reason: "x" };
     expect(await cancelReceivedGift(fakeClient({ code: "P0002" }).client, body)).toEqual({
       status: 409,
       body: { message: "입고 뒤 취소를 할 수 있는 주문이 아니에요. 상자가 도착했는지, 송장을 출력하지 않았는지 확인해 주세요." },
+    });
+    expect(await cancelReceivedGift(fakeClient({ code: "P0061" }).client, body)).toEqual({
+      status: 409,
+      body: { message: "검수에서 걸린 상자가 있어 취소할 수 없어요. 이 주문은 검수 불합격 반송으로 처리돼요." },
     });
     expect(await cancelReceivedGift(fakeClient({ code: "22023" }).client, body)).toEqual(REASON_REPLY);
     expect(await cancelReceivedGift(fakeClient({ code: "42501" }).client, body)).toEqual({ status: 403, body: { message: "입고 뒤 취소는 대표만 할 수 있어요." } });

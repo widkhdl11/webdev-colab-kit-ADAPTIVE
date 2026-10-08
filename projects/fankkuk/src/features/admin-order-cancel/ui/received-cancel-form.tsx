@@ -7,15 +7,13 @@ import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
 import a from "@/shared/ui/admin.module.css";
 import { postReceivedGiftCancel } from "../api/post-order-cancel-client";
-import { CANCEL_REASON_MAX } from "../model/cancel-received-gift";
+import { CANCEL_REASON_MAX, MESSAGE_ORDER_NO, MESSAGE_REASON } from "../model/cancel-received-gift";
 
 // 대표의 입고 뒤 취소 (payment INV-M17). 대표 화면에만 그린다(부르는 쪽이 고른다 — 최종 판정은 DB).
 // 버튼을 누르면 주문번호·사유 칸이 열리고, 둘 다 적어 확인해야 취소된다. 환불 금액은 DB 가 도착한 상자의 칸을 빼서 정한다.
 // 양식이 닫히면(취소·저장) 포커스를 다시 보이는 버튼으로 돌려준다.
 
 const FIELD_ID = "received-cancel";
-const MESSAGE_REASON = `사유를 1~${CANCEL_REASON_MAX}자로 적어 주세요.`;
-const MESSAGE_ORDER_NO = "주문번호를 FC-7K3M9 꼴 그대로 적어 주세요.";
 
 export function ReceivedCancelForm() {
   const router = useRouter();

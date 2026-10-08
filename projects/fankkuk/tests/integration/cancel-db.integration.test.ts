@@ -122,9 +122,21 @@ describe("대표의 입고 뒤 취소 (INV-M17)", () => {
     const g = await paidGift(2);
     const qr = await receive(op, g.boxIds[0]!);
     await receive(op, g.boxIds[1]!);
-    psql(`begin; set local session_replication_role = replica; update public.office_parcels set state = 'label_printed' where qr_code = '${qr}'; commit;`);
+    psql(`begin; set local session_replication_role = replica; update public.office_parcels set state = 'label_printed', outbound_waybill_no = '700000000001' where qr_code = '${qr}'; commit;`);
     const owner = await signedInClient("fankkuk_admin");
     expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "1:1 문의" })).error?.code).toBe("P0002");
+    expect(status(g.orderId)).not.toBe("canceled");
+    expect(psql(`select count(*) from public.order_cancellations where order_id = '${g.orderId}'`)).toBe("0");
+  });
+
+  it("INV-M17 (S17c, 실패경로): 검수에 걸린 상자가 하나라도 있으면 남은 상자가 검수 전이어도 거부", async () => {
+    const op = await staff();
+    const g = await paidGift(2);
+    const caught = await receive(op, g.boxIds[0]!);
+    await receive(op, g.boxIds[1]!);
+    await inspect(op, caught, { bluetooth: "clear", rf: "clear", metal: "found", outcome: "return" });
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "1:1 문의" })).error?.code).toBe("P0061");
     expect(status(g.orderId)).not.toBe("canceled");
     expect(psql(`select count(*) from public.order_cancellations where order_id = '${g.orderId}'`)).toBe("0");
   });

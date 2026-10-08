@@ -10,6 +10,7 @@
 --    오지 않은 상자의 칸은 빼지 않는다. 차액 결제는 그 결제의 검수비·배송비 칸을 뺀다.
 --
 -- 오류 꼴: 42501 로그인 안 함·대표 아님 · 22023 사유 꼴 · P0002 내 주문이 아니거나 취소할 수 있는 상태가 아님
+--         · P0061 검수에 걸린 상자가 있는 주문(입고 뒤 취소 — 검수 불합격 반송으로만 끝난다, 카드 d53)
 
 -- ── 1) 대표 취소 기록 ──────────────────────────────────
 
@@ -86,7 +87,17 @@ begin
   end if;
   perform 1 from public.boxes b where b.order_id = v_order_id order by b.seq for update;
   perform 1 from public.approval_requests r where r.order_id = v_order_id for key share;
+  -- 사무소 상자 줄을 주문보다 먼저 잠근다 — 송장 출력이 상자 줄 → 주문 순으로 잠그므로 순서가 반대면 서로 기다린다
+  perform 1 from public.office_parcels x join public.boxes b on b.id = x.box_id
+  where b.order_id = v_order_id order by x.id for update of x;
   perform 1 from public.orders o where o.id = v_order_id for update;
+  -- 검수에 걸린 상자가 하나라도 있으면 취소하지 않는다 — 그 주문은 검수 불합격 반송으로만 끝난다(INV-M17, 카드 d53)
+  if exists (select 1 from public.boxes b
+             join public.office_parcels x on x.box_id = b.id
+             join public.office_inspections i on i.parcel_id = x.id
+             where b.order_id = v_order_id and i.outcome = 'return') then
+    raise exception '검수에 걸린 상자가 있는 주문은 취소하지 않는다' using errcode = 'P0061';
+  end if;
   update public.orders o
   set status = 'canceled'
   where o.id = v_order_id
