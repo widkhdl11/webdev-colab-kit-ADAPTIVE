@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
+import { scanOutbound } from "@/features/office-outbound/model/scan-outbound";
 import { adminClient, deleteTestOrders, holdRowLock, psql, psqlError, signedInClient } from "./helpers";
 import {
   decryptFileText,
@@ -167,6 +168,19 @@ describe("INV-M12·W3: 차액을 내지 않은 상자는 송장이 나오지 않
 });
 
 describe("INV-P8: 대표만 — 판단은 송장 출력 함수 설정의 대표 ID", () => {
+  it("INV-P7 (S7c, 실패경로): 직원이 출고 화면에서 송장 출력을 누르면 403·라벨 없음, 열람 기록에 「대표 아님」 거부 줄 1줄", async () => {
+    const g = await inspectedGift();
+    const staff = await signedInClient("fankkuk_staff");
+    const token = await tokenOf("fankkuk_staff");
+    const reply = await scanOutbound(
+      { client: staff, newWaybill: waybill, printLabel: (qr) => decryptor({ qr, accessToken: token }) },
+      { kind: "print_label", qr: g.qr },
+    );
+    expect(reply).toEqual({ status: 403, body: { message: "송장 출력은 대표만 할 수 있어요." } });
+    expect(logRows(g.orderId)).toEqual([`denied:not_owner:${STAFF_ID}`]);
+    expect(parcelState(g.qr)).toBe("inspected");
+  });
+
   it("INV-P8 (S8, 실패경로)·INV-P7: 직원 계정이면 거부, 기록 줄의 요청자는 그 직원", async () => {
     const g = await inspectedGift();
     expect(await print(g.qr, "fankkuk_staff")).toEqual({ kind: "denied", reason: "not_owner" });

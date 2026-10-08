@@ -11,7 +11,8 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 
 // 출고 화면의 서버 쪽 (office-workflow INV-W1·W2·W3·W8).
 // - lookup: 라벨 QR 로 상자를 불러온다(그 상자가 지금 할 수 있는 일만 화면에 나온다)
-// - print_label: 송장 출력(주소 열기 1회) — 대표만(INV-W3, address-protection INV-P8). 직원이면 DB 를 부르지 않고 403.
+// - print_label: 송장 출력(주소 열기 1회) — 대표만(INV-W3, address-protection INV-P8). 직원이 눌러도 송장 출력 함수까지 보낸다 —
+//   그 함수가 대표가 아니라고 거부하며 열람 기록에 거부 줄을 남긴다(INV-P7, 정책 ⑨). 직원에게는 어떤 결과든 라벨을 내주지 않는다.
 //   송장 출력 함수(printLabel)가 상자 종류대로 주소를 열고(팬 선물은 크리에이터 주소, 역조공은 팬 주소 — reverse-gift INV-R7)
 //   출력 단계까지 넘긴다. 앱 서버는 그 결과(라벨 칸)를 화면에 넘기기만 하고, 주소 없이 출력 단계로 넘기는 DB 함수(office_print_label)는
 //   부르지 않는다 — 그 함수는 DB 에 아직 남아 대표 계정이면 직접 부를 수 있다(BACKLOG 「임시 송장 출력 함수 닫기」).
@@ -77,9 +78,10 @@ export async function scanOutbound(deps: OutboundDeps, body: unknown): Promise<J
       return lookupParcelReply(client, input.qr);
 
     case "print_label": {
-      // INV-W3: 직원은 송장 출력 함수까지 가지 않는다(송장 출력 함수도 자기 설정의 대표 ID 로 다시 본다 — INV-P8)
-      if (access !== "owner") return { status: 403, body: { message: MESSAGE_OWNER_ONLY } };
+      // INV-P7: 직원의 시도도 송장 출력 함수가 판정하고 거부 줄을 남긴다(그 함수가 자기 설정의 대표 ID 로 본다 — INV-P8).
       const printed = await deps.printLabel(input.qr);
+      // INV-W3: 그 함수가 어떤 답을 하든 직원에게는 라벨을 내주지 않는다(두 겹)
+      if (access !== "owner") return { status: 403, body: { message: MESSAGE_OWNER_ONLY } };
       switch (printed.kind) {
         case "printed":
           // 라벨 다섯 칸만 — 응답은 캐시하지 않는다(private-json 의 no-store)
