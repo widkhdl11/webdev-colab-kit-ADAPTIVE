@@ -7,7 +7,8 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 
 // box_arrived: 상자 하나가 입고됐다고 그 주문의 주인(보낸 팬 · 역조공이면 보낸 크리에이터)에게 한 번(inbound-address-code INV-C8).
 //   본문에 받는 주소 6자리·사무실 주소를 넣지 않는다(INV-C2) — 이 틀에는 그 칸이 아예 없다.
-export const NOTIFICATION_KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transit", "delivered", "hold", "box_arrived"] as const;
+// hold_fan: 추적 장치로 상자가 보관됐을 때 보낸 팬에게 「돌려보낼 상자」(INV-N13, 2026-10-08) — 무엇이 나왔는지 쓰는 칸이 없다.
+export const NOTIFICATION_KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transit", "delivered", "hold", "box_arrived", "hold_fan"] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export type NotificationBodyInput = {
@@ -99,6 +100,15 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
     case "hold":
       // 무엇이 나왔는지·보낸 팬은 쓰지 않는다(INV-N13)
       return { subject: "[팬꾹] 확인할 선물이 있어요", lines: [greet, "확인이 필요한 선물이 있어요.", order], buttonLabel: "확인하기", path: "/creator", must: false };
+    case "hold_fan":
+      // 무엇이 나왔는지·크리에이터가 알았다는 사실은 쓰지 않는다(INV-N13). 보관 상자는 168시간 뒤 반송된다(office-workflow INV-W4)
+      return {
+        subject: "[팬꾹] 돌려보낼 상자가 있어요",
+        lines: [greet, "검수를 통과하지 못한 상자가 있어요.", "168시간 뒤 보내신 주소로 돌려보내요.", order],
+        buttonLabel: "선물 보기",
+        path: `/gifts/${orderNo}`,
+        must: false,
+      };
     case "in_transit":
     case "delivered":
       // 팬과 크리에이터 둘 다 받는 종류인데 화면이 달라 받는 사람별 경로가 필요하다. 택배사 연결(INV-N12) 때 정한다.

@@ -75,6 +75,15 @@ describe("알림 링크 (INV-N9)", () => {
     for (const k of ["arrived", "inspected", "shipped", "box_arrived"] as const) expect(paths.get(k)!.pathname).toBe("/gifts/FC-7K3M9");
   });
 
+  it("INV-N13 (S13): 팬의 「돌려보낼 상자」 알림 — 선물 상세 링크, 168시간 뒤 돌려보낸다는 말뿐이고 무엇이 나왔는지는 없다", () => {
+    const b = buildNotificationBody(inputFor("hold_fan"));
+    expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    expect(b.subject).toBe("[팬꾹] 돌려보낼 상자가 있어요");
+    expect(b.text).toContain("검수를 통과하지 못한 상자가 있어요.");
+    expect(b.text).toContain("168시간 뒤 보내신 주소로 돌려보내요.");
+    for (const word of ["추적", "블루투스", "금속", "크리에이터가"]) expect(b.text).not.toContain(word);
+  });
+
   it("INV-C8: 역조공 상자 도착 알림은 보낸 크리에이터의 「보낸 역조공」 화면으로 잇는다", () => {
     const b = buildNotificationBody({ ...inputFor("box_arrived"), orderNo: "RG-7K3M9" });
     expect(new URL(b.link).pathname).toBe("/creator/revgifts");

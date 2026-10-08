@@ -385,6 +385,23 @@ describe("검수 기록 (INV-W4)", () => {
     expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("held");
   });
 
+  it("INV-W4·W6 (S4f): 보관된 상자는 보관 + 168시간에 자동 처리가 반송 대기로 — 167시간이면 그대로, 환불은 상품 대금 칸만", async () => {
+    const { g, staff, qr } = await labeledGift();
+    expect(await inspect(staff, qr, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" })).toBe("held");
+    const backdate = (h: number) => psql(`update public.office_parcels set inspected_at = now() - interval '${h} hours' where qr_code = '${qr}'`);
+    backdate(167);
+    await staff.rpc("office_run_expiry", { p_order_no: g.orderNo });
+    expect(parcelState(qr)).toBe("held");
+    backdate(168);
+    const r = await staff.rpc("office_run_expiry", { p_order_no: g.orderNo });
+    expect((r.data as { held: number }).held).toBe(1);
+    expect(parcelState(qr)).toBe("return_waiting");
+    expect(psql(`select inspection_result from public.orders where id = '${g.orderId}'`)).toBe("returned");
+    expect(psql(`select public.refund_due_of_payment(p.id) = p.goods_krw from public.payments p where p.order_id = '${g.orderId}' and p.kind = 'initial'`)).toBe("t");
+    // 두 번 돌려도 같은 상자를 다시 처리하지 않는다(INV-W6)
+    expect(((await staff.rpc("office_run_expiry", { p_order_no: g.orderNo })).data as { held: number }).held).toBe(0);
+  });
+
   it("INV-W4 (S4c): 추적 장치가 나온 팬 선물은 반송 대기가 아니라 보관, 크리에이터 알림 1건", async () => {
     const { staff, qr } = await labeledGift();
     expect(await inspect(staff, qr, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" })).toBe("held");

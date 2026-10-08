@@ -348,17 +348,17 @@ describe("팬에게 승인·거절 종류 줄은 없다 (INV-N2)", () => {
 
 // ── 보관(추적 장치) 알림 ───────────────────────────────────
 
-describe("보관 알림은 크리에이터에게만 (INV-N13)", () => {
-  it("INV-N13 (S13): 추적 장치가 나와 보관 → 보관 기록 1줄과 하루 몫 보관 줄 1개, 별빛 몫 보관 줄은 없고 팬 몫은 통과 주문과 같다", async () => {
+describe("보관 알림 — 크리에이터에게 보관, 팬에게 돌려보낼 상자 (INV-N13)", () => {
+  it("INV-N13 (S13): 추적 장치가 나와 보관 → 보관 기록 1줄, 하루 몫 보관 줄 1개, 별빛 몫 「돌려보낼 상자」 줄 1개 — 나머지 팬 줄은 통과 주문과 같다", async () => {
     const held = await arrivedGift();
     expect(await inspect(held.staff, held.qrs[0]!, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" })).toBe("held");
     expect(psql(`select count(*) from public.office_hold_alerts a join public.office_parcels p on p.id = a.parcel_id where p.qr_code = '${held.qrs[0]}'`)).toBe("1");
     const rows = outboxRows(held.g.orderId);
     expect(rows.filter((r) => r.startsWith("hold|"))).toEqual(["hold|1|haru_creator|email|pending"]);
-    // 팬이 받는 줄은 통과한 주문과 똑같다 — 보관 여부가 팬 알림으로 드러나지 않는다
+    expect(rows.filter((r) => r.startsWith("hold_fan|"))).toEqual(["hold_fan|1|byeolbit_fan|email|pending"]);
     const passed = await arrivedGift();
     await inspect(passed.staff, passed.qrs[0]!, FAN_PASS);
-    const fanKinds = (orderId: string) => outboxRows(orderId).filter((r) => r.includes("|byeolbit_fan|"));
+    const fanKinds = (orderId: string) => outboxRows(orderId).filter((r) => r.includes("|byeolbit_fan|") && !r.startsWith("hold_fan|"));
     expect(fanKinds(held.g.orderId)).toEqual(fanKinds(passed.g.orderId));
   });
 
@@ -368,6 +368,7 @@ describe("보관 알림은 크리에이터에게만 (INV-N13)", () => {
     await inspect(staff, qrs[0]!, hold);
     await inspect(staff, qrs[1]!, hold);
     expect(outboxRows(g.orderId).filter((r) => r.startsWith("hold|"))).toEqual(["hold|1|haru_creator|email|pending"]);
+    expect(outboxRows(g.orderId).filter((r) => r.startsWith("hold_fan|"))).toEqual(["hold_fan|1|byeolbit_fan|email|pending"]);
   });
 
   it("INV-N13 (S13b, 실패경로): 보관 기록 처리가 취소되면 보관 줄도 없다 — 같은 처리 안에서는 있었다", async () => {
