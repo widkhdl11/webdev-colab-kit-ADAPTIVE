@@ -9,6 +9,7 @@ import { ReceivedCancelForm } from "@/features/admin-order-cancel/ui/received-ca
 import { PendingBoxesSection } from "@/features/admin-pending-box/ui/pending-boxes-section";
 import a from "@/shared/ui/admin.module.css";
 import { countByTab, filterPayments, PAYMENT_TABS, REVIEW_NOTICE, type PaymentTab } from "../model/payment-filter";
+import { splitRefundError } from "../model/refund-error-text";
 
 // 관리자 「결제·환불」 본문 (admin-console INV-K1·K7·K8, 시안 admin/payments.html).
 // 결제 금액은 네 칸으로 나눠 보인다. 환불 금액은 서버가 주문 상태로 정한 값이고 이 화면에서 바꿀 수 없다.
@@ -153,7 +154,7 @@ export function PaymentsPanel({ rows, pendingBoxes, access }: Props) {
                         <strong>{r.orderNo}</strong>
                         {kind && <span className={a.sub}> · {kind}</span>}
                       </td>
-                      <td>{r.payerNickname}</td>
+                      <td className={a.nowrap}>{r.payerNickname}</td>
                       <td className={`${a.num} ${a.mono}`}>
                         <b>{won.format(r.amountKrw)}</b>
                       </td>
@@ -170,9 +171,7 @@ export function PaymentsPanel({ rows, pendingBoxes, access }: Props) {
                           <span className={a.faint}>—</span>
                         )}
                         {r.refund.status === "failed" && r.refund.error && (
-                          <span className={a.sub} style={{ display: "block", fontSize: 13, marginTop: 2 }}>
-                            {r.refund.error}
-                          </span>
+                          <RefundErrorText raw={r.refund.error} />
                         )}
                       </td>
                       <td className={`${a.num} ${a.mono}`}>{r.refund.amountKrw === null ? "—" : `${won.format(r.refund.amountKrw)}원`}</td>
@@ -207,5 +206,16 @@ export function PaymentsPanel({ rows, pendingBoxes, access }: Props) {
         {access === "owner" && <ReceivedCancelForm />}
       </div>
     </>
+  );
+}
+
+// 결제사 답은 사람 말을 먼저, 코드는 결제사 문의용으로 뒤에 흐리게
+function RefundErrorText({ raw }: { raw: string }) {
+  const { message, code } = splitRefundError(raw);
+  return (
+    <span className={a.sub} style={{ display: "block", fontSize: 13, marginTop: 2 }}>
+      {message}
+      {code && <span className={a.faint}> · 결제사 코드 {code}</span>}
+    </span>
   );
 }

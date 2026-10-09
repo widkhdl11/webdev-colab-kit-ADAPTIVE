@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { LogoMark } from "@/shared/ui/logo";
 import { AdminCrumb, AdminNav } from "./admin-nav";
 import s from "./admin-shell.module.css";
 
@@ -19,11 +20,7 @@ export function AdminShell({ nickname, access, children }: Props) {
       </div>
       <aside className={s.side} aria-label="관리자 메뉴">
         <Link className={s.sideLogo} href="/admin">
-          <span className={s.mark}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.8 6.6 4.8c2 0 3.6 1.1 5.4 3 1.8-1.9 3.4-3 5.4-3 3.6 0 5.7 3.6 4.2 7C19.5 16.4 12 21 12 21z" />
-            </svg>
-          </span>
+          <LogoMark size={28} />
           팬꾹<small>관리자</small>
         </Link>
         <AdminNav />

@@ -71,6 +71,9 @@ export function GiftStatusPage({
   payment?: GiftPayment | null;
 }) {
   const progress = fanProgress(view);
+  // 배지의 「N/6」은 지금 있는 단계 번호다 — 끝낸 단계 수(4)를 쓰면 아래 진행 줄의 현재 단계(5번 배송중)와 숫자가 어긋났다(2026-10-09 디자인 점검)
+  const currentIdx = view.steps.findIndex((st) => st.state === "current");
+  const stepNo = currentIdx >= 0 ? currentIdx + 1 : progress.done;
   // 상자별 원 송장번호는 입고 전까지만 고친다(design-rules 8-1). 출고 운송장은 읽기 함수가 주지 않는다.
   const inProgress = view.outcome === "in_progress";
   // 찾기 대상·받는 주소 판정은 features/box-waybill/model/box-targets.ts (INV-C3·C4 ②)
@@ -110,7 +113,7 @@ export function GiftStatusPage({
                 </p>
                 <div className={s["g-now"]}>
                   <span className={statusTagClass(badge.tone, s["g-state"])}>
-                    {view.outcome === "in_progress" ? `${badge.text} · ${progress.done}/${progress.total}` : badge.text}
+                    {view.outcome === "in_progress" ? `${badge.text} · ${stepNo}/${progress.total}` : badge.text}
                   </span>
                   <strong>{headline}</strong>
                 </div>

@@ -7,7 +7,7 @@
 
 /* PC = 왼쪽 열(검색 + 태그 세로 메뉴) · 오른쪽 목록 */
 .split { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: clamp(32px, 4vw, 56px); align-items: start; padding-block: 32px clamp(72px, 9vw, 120px); }
-.side { position: sticky; top: 88px; display: grid; gap: 8px; }
+.side { position: sticky; top: 88px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; } /* 칸 폭을 280 으로 묶는다 — 기본 auto 칸은 검색창이 열 밖으로 밀고 나갔다 */
 .side :global(.search) { max-width: none; height: 56px; margin: 0; }
 .side-h { margin-top: 24px; padding-inline: 16px; color: var(--sub); font-size: 16px; font-weight: 700; }
 

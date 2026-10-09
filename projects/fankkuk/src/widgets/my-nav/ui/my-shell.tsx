@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { CREATOR_MY_MENU, FAN_MY_MENU, MY_PAGE_TITLE, type CreatorMyHref, type FanMyHref } from "@/entities/session/model/my-menu";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
+import { CurrentChipIntoView } from "./current-chip-into-view";
 import s from "./my-nav.module.css";
 
 // 「내 팬꾹」 화면들이 같이 쓰는 틀 — 제목 + 왼쪽 메뉴 + 본문 칸. 시안: docs/design/mockups/site/v9-pages/me-b.html
@@ -95,6 +96,7 @@ export function MyShell({ role, current, nickname, children }: Props) {
               </li>
             ))}
           </ul>
+          <CurrentChipIntoView />
         </nav>
         <div className={s.body}>{children}</div>
       </div>
