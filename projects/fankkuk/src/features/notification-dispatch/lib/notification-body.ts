@@ -11,6 +11,8 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 // box_missing: 결제 완료 + 14일에 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N15, 2026-10-08 카드 d50). 6자리·주소 칸이 없다.
 // gift_pending_box: 상자가 하나라도 도착한 주문이 거절·반려될 때 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N17, 2026-10-08 카드 d52).
 //   거절·7일 반려·차단 거절 모두 같은 종류·같은 본문이다(INV-N2). 6자리·주소 칸이 없다.
+// difference_due: 사무실 실측이 신고보다 커서 차액 결제 요청이 생기면 보낸 팬에게 상자마다 한 번(INV-N18, 2026-10-09 카드 d55).
+//   금액·실측 구간 칸이 없다 — 선물 상세를 열면 보인다.
 export const NOTIFICATION_KINDS = [
   "approval_request",
   "arrived",
@@ -23,6 +25,7 @@ export const NOTIFICATION_KINDS = [
   "hold_fan",
   "box_missing",
   "gift_pending_box",
+  "difference_due",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -151,6 +154,21 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
           order,
         ],
         buttonLabel: "선물 보기",
+        path: `/gifts/${orderNo}`,
+        must: false,
+      };
+    case "difference_due":
+      // 결제가 끝나야 송장이 나가고(payment INV-M12), 168시간 미납이면 반송 대상이다(INV-M13)
+      return {
+        subject: "[팬꾹] 추가 결제가 필요한 상자가 있어요",
+        lines: [
+          greet,
+          "보내신 상자가 신청하신 크기보다 커서 추가 결제가 필요해요.",
+          "추가 결제가 끝나면 크리에이터에게 보내 드려요.",
+          "7일 안에 결제하지 않으면 보내신 주소로 돌려보내요.",
+          order,
+        ],
+        buttonLabel: "추가 결제하기",
         path: `/gifts/${orderNo}`,
         must: false,
       };

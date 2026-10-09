@@ -99,6 +99,22 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
   });
 
+  it("INV-N18 (S18): 차액 결제 요청 알림 — 선물 상세 링크, 추가 결제·결제 뒤 출고·7일 미납 반송이라는 말뿐이고 금액·크기는 없다", () => {
+    const b = buildNotificationBody({
+      ...inputFor("difference_due"),
+      // @ts-expect-error 본문 틀에는 금액·구간 칸이 없다
+      amountKrw: 2000,
+      measuredTier: "medium",
+    });
+    expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    expect(b.subject).toBe("[팬꾹] 추가 결제가 필요한 상자가 있어요");
+    expect(b.text).toContain("보내신 상자가 신청하신 크기보다 커서 추가 결제가 필요해요.");
+    expect(b.text).toContain("추가 결제가 끝나면 크리에이터에게 보내 드려요.");
+    expect(b.text).toContain("7일 안에 결제하지 않으면 보내신 주소로 돌려보내요.");
+    expect(b.text).toContain("알림은 내 정보에서 끌 수 있어요."); // 꼭 가는 알림이 아니다(INV-N6)
+    for (const word of ["2000", "2,000", "원", "중형", "medium", "소형", "대형"]) expect(b.text).not.toContain(word);
+  });
+
   it("INV-N17 (S17): 아직 안 온 상자 안내 — 선물 상세 링크, 보냈으면 반송·택배비 뺀 환불, 안 보냈으면 1:1 문의라는 말뿐이고 거절 종류·6자리는 없다", () => {
     const b = buildNotificationBody({
       ...inputFor("gift_pending_box"),

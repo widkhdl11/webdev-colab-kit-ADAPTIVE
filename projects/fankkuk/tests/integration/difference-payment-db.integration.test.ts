@@ -113,6 +113,40 @@ describe("INV-M11: 차액은 서버가 상자마다 실측 − 신고로 계산�
   });
 });
 
+/** 그 주문의 차액 결제 요청 알림 줄(이메일 통로)의 받는 계정 ID 들. */
+function differenceAlerts(orderId: string): string[] {
+  const out = psql(
+    `select coalesce(string_agg(account_id::text, ',' order by account_id), '') from public.notification_outbox where order_id = '${orderId}' and kind = 'difference_due' and channel = 'email'`,
+  );
+  return out ? out.split(",") : [];
+}
+
+describe("notifications INV-N18: 차액 결제 요청이 생기면 보낸 팬에게 상자마다 알림 한 번", () => {
+  it("INV-N18 S18: 소형 신고 → 실측 중형이면 차액 줄과 함께 별빛에게만 알림 줄 하나(크리에이터에게는 없음)", async () => {
+    const g = await paidOrder(["small"]);
+    const qr = await labeled(g.boxIds[0]!);
+    expect((await measure(qr, "medium")).data).toEqual({ result: "difference", amount_krw: 2000 });
+    expect(differenceAlerts(g.orderId)).toEqual([SEED.fanId]);
+    expect(psql(`select count(*) from public.notification_outbox where order_id = '${g.orderId}' and kind = 'difference_due' and account_id <> '${SEED.fanId}'`)).toBe("0");
+  });
+
+  it("INV-N18 S18b (실패경로): 실측이 신고와 같거나 작으면 · 대형을 넘어 검수 불합격이면 알림이 없다", async () => {
+    const same = await paidOrder(["small"]);
+    expect((await measure(await labeled(same.boxIds[0]!), "small")).data).toEqual({ result: "none" });
+    const smaller = await paidOrder(["medium"]);
+    expect((await measure(await labeled(smaller.boxIds[0]!), "small")).data).toEqual({ result: "none" });
+    const over = await paidOrder(["small"]);
+    expect((await measure(await labeled(over.boxIds[0]!), "oversize")).data).toEqual({ result: "inspection_failed" });
+    for (const g of [same, smaller, over]) expect(differenceAlerts(g.orderId)).toEqual([]);
+  });
+
+  it("INV-N18 S18b: 상자 둘이 모두 크게 실측되면 상자마다 한 줄씩 두 줄", async () => {
+    const g = await paidOrder(["small", "small"]);
+    for (const boxId of g.boxIds) expect((await measure(await labeled(boxId), "medium")).data).toEqual({ result: "difference", amount_krw: 2000 });
+    expect(differenceAlerts(g.orderId)).toEqual([SEED.fanId, SEED.fanId]);
+  });
+});
+
 describe("차액 결제 — 첫 결제와 같은 대조·한 번만 확정 (INV-M2·M3·M5)", () => {
   async function withDifference() {
     const g = await paidOrder(["small"]);

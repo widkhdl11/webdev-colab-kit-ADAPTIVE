@@ -4,6 +4,7 @@ import type { ChannelMessage, NotificationChannel } from "@/features/notificatio
 import { adminClient, deleteTestOrders, psql, signedInClient } from "./helpers";
 import { approve, deleteTestUnmatched, fanSetsWaybill, paidGift, receiveAndLabel, waybill } from "./office-helpers";
 import { PHONE_IN_TEXT } from "./pii-shape";
+import { labeled, measure, paidOrder } from "./difference-helpers";
 
 // 보내는 일꾼 — 실제 DB 함수와 맞물려 (notifications INV-N3·N5·N6·N8·N10).
 // 통로는 보낸 것을 모으는 가짜로 바꿔 끼운다. 연락처를 읽는 함수(manual/0011)가 적용된 로컬 DB 에서 돈다.
@@ -127,6 +128,20 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
       const [k, m] = saved.split("|");
       psql(`update pii.account_contacts set notify_kakao = ${k === "t"}, notify_email = ${m === "t"} where account_id = ${haru}`);
     }
+  });
+
+  it("INV-N18 (S18): 차액이 생기면 일꾼이 별빛의 확인된 이메일로 추가 결제 알림을 한 번 보낸다 — 선물 상세 링크, 금액은 없다", async () => {
+    const g = await paidOrder(["small"]);
+    expect((await measure(await labeled(g.boxIds[0]!), "medium")).data).toEqual({ result: "difference", amount_krw: 2000 });
+    const email = capture(false);
+    await dispatchNotifications(depsWith(email));
+    const mine = email.sent.filter((m) => m.outboxId === idOf(g.orderId, "difference_due"));
+    expect(mine).toHaveLength(1);
+    expect(mine[0]!.to).toBe(psql(`select c.email from pii.account_contacts c join public.profiles p on p.id = c.account_id where p.login_id = 'byeolbit_fan'`));
+    expect(mine[0]!.text).toContain("추가 결제가 필요해요");
+    expect(mine[0]!.text).toContain(`http://127.0.0.1:3311/gifts/${g.orderNo}`);
+    expect(mine[0]!.text).not.toMatch(/2,?000/);
+    expect(statusOf(g.orderId, "difference_due")).toBe("sent");
   });
 
   it("INV-N6 (S6): 카카오 칸을 끈 팬의 입고 카카오 줄은 건너뛰고 이메일 줄은 보낸다", async () => {
