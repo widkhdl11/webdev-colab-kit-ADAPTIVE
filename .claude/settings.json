@@ -109,6 +109,10 @@
           {
             "type": "command",
             "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/.claude/hooks/session-size.mjs\""
+          },
+           {
+            "type": "command",
+            "command": "node \"C:/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/scripts/check-progress-fresh.mjs\""
           }
         ]
       }
