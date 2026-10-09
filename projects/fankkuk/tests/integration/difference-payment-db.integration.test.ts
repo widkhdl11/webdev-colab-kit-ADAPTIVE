@@ -140,6 +140,15 @@ describe("notifications INV-N18: 차액 결제 요청이 생기면 보낸 팬에
     for (const g of [same, smaller, over]) expect(differenceAlerts(g.orderId)).toEqual([]);
   });
 
+  it("INV-N18 S18b (실패경로): 하루가 거절한 주문의 상자는 크게 실측돼도 차액도 알림도 없다", async () => {
+    const g = await paidOrder(["small"]);
+    const qr = await labeled(g.boxIds[0]!);
+    expect((await (await signedInClient("haru_creator")).rpc("decline_gift", { p_request_id: g.requestId, p_block: false })).error).toBeNull();
+    expect((await measure(qr, "medium")).data).toEqual({ result: "none" });
+    expect(differenceRow(g.orderId)).toBe("");
+    expect(differenceAlerts(g.orderId)).toEqual([]);
+  });
+
   it("INV-N18 S18b: 상자 둘이 모두 크게 실측되면 상자마다 한 줄씩 두 줄", async () => {
     const g = await paidOrder(["small", "small"]);
     for (const boxId of g.boxIds) expect((await measure(await labeled(boxId), "medium")).data).toEqual({ result: "difference", amount_krw: 2000 });

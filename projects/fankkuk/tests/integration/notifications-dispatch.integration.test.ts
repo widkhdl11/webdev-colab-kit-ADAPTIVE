@@ -144,6 +144,22 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     expect(statusOf(g.orderId, "difference_due")).toBe("sent");
   });
 
+  it("INV-N18 · INV-N6 (실패경로): 이메일 알림을 끈 별빛에게는 추가 결제 알림도 가지 않는다 — 꼭 가는 알림이 아니다", async () => {
+    const fan = `(select id from public.profiles where login_id = 'byeolbit_fan')`;
+    const saved = psql(`select notify_email from pii.account_contacts where account_id = ${fan}`);
+    psql(`update pii.account_contacts set notify_email = false where account_id = ${fan}`);
+    try {
+      const g = await paidOrder(["small"]);
+      await measure(await labeled(g.boxIds[0]!), "medium");
+      const email = capture(false);
+      await dispatchNotifications(depsWith(email));
+      expect(statusOf(g.orderId, "difference_due")).toBe("skipped");
+      expect(email.sent.some((m) => m.outboxId === idOf(g.orderId, "difference_due"))).toBe(false);
+    } finally {
+      psql(`update pii.account_contacts set notify_email = ${saved === "t"} where account_id = ${fan}`);
+    }
+  });
+
   it("INV-N6 (S6): 카카오 칸을 끈 팬의 입고 카카오 줄은 건너뛰고 이메일 줄은 보낸다", async () => {
     psql(`insert into ${TEMPLATES} (kind, template_code) values ('arrived', 'TPL_ARRIVED_1')`);
     const fan = `(select id from public.profiles where login_id = 'byeolbit_fan')`;
