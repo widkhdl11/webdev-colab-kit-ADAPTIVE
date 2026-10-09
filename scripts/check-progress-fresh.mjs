@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-// @check-role: pending
-// @check-backlog: 사인오프 뒤 PROGRESS 가 낡은 채 남는다
+// @check-role: standing
 //
 // check-progress-fresh.mjs — Stop 훅. 기능 하나를 끝냈는데(review 사인오프) PROGRESS 「현재 상태」가
 // 그 전 그대로면 턴을 끝내지 못하게 한다.
