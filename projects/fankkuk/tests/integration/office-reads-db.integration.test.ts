@@ -14,6 +14,7 @@ import {
   scanInbound,
   SHARE_PASS,
   waybill,
+  finishPrint,
 } from "./office-helpers";
 import { deleteTestRevgifts } from "./revgift-helpers";
 
@@ -76,8 +77,7 @@ describe("출고 조건의 갈래 (INV-W3)", () => {
     psql(
       `begin; set local fankkuk.approving = 'on'; update public.approval_requests set status = 'approved', decided_at = now() where request_id = '${g.requestId}'; commit;`,
     );
-    const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0041");
+    expect(finishPrint(qr, waybill())).toBe("P0041");
   });
 
   it("INV-W3 (실패경로): 승인된 뒤 거절·반려로 바뀐 주문의 검수 완료 상자는 송장 출력 거부", async () => {
@@ -85,8 +85,7 @@ describe("출고 조건의 갈래 (INV-W3)", () => {
     await inspect(staff, qr, FAN_PASS);
     await approve(g);
     psql(`update public.orders set status = 'rejected' where id = '${g.orderId}'`);
-    const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0041");
+    expect(finishPrint(qr, waybill())).toBe("P0041");
   });
 });
 

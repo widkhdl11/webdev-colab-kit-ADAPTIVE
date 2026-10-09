@@ -14,6 +14,7 @@ import {
   sentWithAddress,
   waybill,
   type Unit,
+  finishPrint,
 } from "./office-helpers";
 
 // 거절·팬 차단 스펙(docs/specs/decline-block.md) 중 DB 가 지키는 것.
@@ -38,7 +39,6 @@ let haru: SupabaseClient;
 let momo: SupabaseClient;
 let fan: SupabaseClient;
 let staff: SupabaseClient;
-let owner: SupabaseClient;
 
 beforeAll(async () => {
   seedBefore = seedSnapshot();
@@ -46,7 +46,6 @@ beforeAll(async () => {
   momo = await signedInClient("momo_creator");
   fan = await signedInClient("haneul_fan");
   staff = await signedInClient("fankkuk_staff");
-  owner = await signedInClient("fankkuk_admin");
 });
 
 afterEach(() => {
@@ -211,7 +210,7 @@ describe("INV-D2: 거절할 수 있는 주문의 조건", () => {
     const g = await giftFrom();
     const qr = await inspectedBox(g);
     await approve(g);
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error).toBeNull();
+    expect(finishPrint(qr, waybill())).toBeNull();
     expect(await decline(haru, g.requestId, true)).toBe("already");
     expect(parcelState(qr)).toBe("label_printed");
     expect(orderStatus(g.orderId)).toBe("label_printed");
@@ -256,8 +255,8 @@ describe("INV-D3: 거절은 요청·주문·상자를 한 처리에서 바꾸고
     expect(mine.data).toHaveLength(1);
     expect(mine.data[0].status).toBe("rejected");
     expect(mine.data[0].approved_at).toBeNull();
-    const print = await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() });
-    expect(print.error?.code).toBe("55000");
+    const print = finishPrint(qr, waybill());
+    expect(print).toBe("55000");
   });
 
   it("INV-D3 S3c: 입고 전 거절은 전액, 입고 뒤 거절은 반송 택배비를 뺀 금액을 환불한다", async () => {
@@ -565,7 +564,7 @@ describe("INV-D8: 차단하면 그 팬의 아직 승인하지 않은 진행 중 
     const printedQr = await inspectedBox(printed);
     await approve(printed);
     const outbound = waybill();
-    expect((await owner.rpc("office_print_label", { p_qr: printedQr, p_waybill: outbound })).error).toBeNull();
+    expect(finishPrint(printedQr, outbound)).toBeNull();
 
     const reply = await declineFull(haru, waiting.requestId, true);
     expect(reply.result).toBe("declined");
@@ -580,7 +579,7 @@ describe("INV-D8: 차단하면 그 팬의 아직 승인하지 않은 진행 중 
     expect(orderRow(approved.orderId)).toMatch(/^inspected\|\d/);
     expect(requestRow(approved.requestId)).toMatch(/^approved\|/);
     expect(parcelState(approvedQr)).toBe("inspected");
-    expect((await owner.rpc("office_print_label", { p_qr: approvedQr, p_waybill: waybill() })).error).toBeNull();
+    expect(finishPrint(approvedQr, waybill())).toBeNull();
     expect(parcelState(approvedQr)).toBe("label_printed");
 
     // INV-D5: 결제한 적 없는 거절 주문은 차단으로만 생긴다 — 팬 목록·상자 읽기에 나오면 차단을 짐작한다
@@ -616,7 +615,7 @@ describe("INV-D8: 차단하면 그 팬의 아직 승인하지 않은 진행 중 
     const second = waybill();
     await setWaybill(both.boxIds[1], second);
     await approve(both);
-    expect((await owner.rpc("office_print_label", { p_qr: firstQr, p_waybill: waybill() })).error).toBeNull();
+    expect(finishPrint(firstQr, waybill())).toBeNull();
     // 주문 상태는 덜 간 상자를 따라 아직 「등록」이다 — 상태만 보고 거르면 이 주문이 거절된다
     expect(orderStatus(both.orderId)).toBe("registered");
 
@@ -790,7 +789,7 @@ describe("처리한 요청 목록의 「차단함」 (스펙 「지금 코드와
     const printed = await giftFrom();
     const qr = await inspectedBox(printed);
     await approve(printed);
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error).toBeNull();
+    expect(finishPrint(qr, waybill())).toBeNull();
     const trigger = await giftFrom();
     expect(await decline(haru, trigger.requestId, true)).toBe("declined");
 

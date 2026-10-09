@@ -15,6 +15,7 @@ import {
   receiveAndLabel,
   scanInbound,
   waybill,
+  finishPrint,
 } from "./office-helpers";
 import { deleteTestRevgifts } from "./revgift-helpers";
 
@@ -132,9 +133,8 @@ describe("주문 상태 맞추기 (INV-W1)", () => {
     expect(await inspect(staff, qrs[0], { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" })).toBe("held");
     expect(await inspect(staff, qrs[1], FAN_PASS)).toBe("inspected");
     await approve(g);
-    const owner = await signedInClient("fankkuk_admin");
     const out = waybill();
-    await owner.rpc("office_print_label", { p_qr: qrs[1], p_waybill: out });
+    expect(finishPrint(qrs[1], out)).toBeNull();
     await staff.rpc("office_confirm_shipment", { p_qr: qrs[1], p_waybill: out });
     expect(orderStatus(g.orderId)).toBe("shipped");
   });

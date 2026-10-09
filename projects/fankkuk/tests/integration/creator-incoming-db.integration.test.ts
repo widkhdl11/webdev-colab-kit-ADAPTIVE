@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { anonClient, deleteTestOrders, payTestOrder, psql, registerTestOrder, SEED, signedInClient } from "./helpers";
-import { approve, deleteTestUnmatched, FAN_PASS, fanSetsWaybill, inspect, paidGift, receiveAndLabel, waybill } from "./office-helpers";
+import { approve, deleteTestUnmatched, FAN_PASS, fanSetsWaybill, finishPrint, inspect, paidGift, receiveAndLabel, waybill } from "./office-helpers";
 
 // 크리에이터가 받은 선물의 진행 단계 읽기 (office-workflow INV-W9, S9·S9b).
 // 함수는 인자를 받지 않고 로그인 토큰의 크리에이터에게 온 주문만, 정해진 칸만 돌려준다. 결제 대기 주문은 없다.
@@ -64,10 +64,9 @@ async function inspectedGift() {
 async function shippedGift() {
   const r = await inspectedGift();
   await approve(r.g);
-  const owner = await signedInClient("fankkuk_admin");
   const out = waybill();
-  const printed = await owner.rpc("office_print_label", { p_qr: r.qr, p_waybill: out });
-  if (printed.error) throw new Error(`office_print_label 실패: ${printed.error.code} ${printed.error.message}`);
+  const printed = finishPrint(r.qr, out);
+  if (printed) throw new Error(`finishPrint 실패: ${printed}`);
   const shipped = await r.staff.rpc("office_confirm_shipment", { p_qr: r.qr, p_waybill: out });
   if (shipped.error) throw new Error(`office_confirm_shipment 실패: ${shipped.error.code} ${shipped.error.message}`);
   return { ...r, outboundNo: out };

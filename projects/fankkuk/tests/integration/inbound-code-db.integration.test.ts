@@ -16,6 +16,7 @@ import {
   scanInbound,
   sentWithAddress,
   waybill,
+  finishPrint,
 } from "./office-helpers";
 import { deleteTestRevgifts } from "./revgift-helpers";
 
@@ -90,10 +91,9 @@ async function receiveWithCode(client: SupabaseClient, boxId: string, barcode = 
 async function shipAll(client: SupabaseClient, unit: Awaited<ReturnType<typeof paidGift>>, qr: string): Promise<void> {
   await inspect(client, qr, FAN_PASS);
   await approve(unit);
-  const owner = await signedInClient("fankkuk_admin");
   const out = waybill();
-  const printed = await owner.rpc("office_print_label", { p_qr: qr, p_waybill: out });
-  if (printed.error) throw new Error(`office_print_label 실패: ${printed.error.code} ${printed.error.message}`);
+  const printed = finishPrint(qr, out);
+  if (printed) throw new Error(`finishPrint 실패: ${printed}`);
   const shipped = await client.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out });
   if (shipped.error) throw new Error(`office_confirm_shipment 실패: ${shipped.error.code} ${shipped.error.message}`);
 }
@@ -435,8 +435,7 @@ describe("INV-C5 입고 — 바코드 + 6자리", () => {
     await approve(g);
     const list = (await op.rpc("admin_office_parcels")).data as { qr: string | null; next_step: string }[];
     expect(list.find((x) => x.qr === qr)?.next_step).toBe("on_hold");
-    const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0041");
+    expect(finishPrint(qr, waybill())).toBe("P0041");
   });
 
   it("INV-C5 (S5d): 같은 6자리의 첫 상자가 출고 확정이면 둘째만 보류 + 도용 의심, 첫 상자는 그대로", async () => {
@@ -805,7 +804,7 @@ describe("INV-C8 상자 도착 알림 · 「제가 보낸 게 아니에요」", 
     expect(parcelOf(g.boxIds[0]).hold).toBe("not_mine");
     const list = (await op.rpc("admin_office_parcels")).data as { qr: string | null; next_step: string }[];
     expect(list.find((x) => x.qr === qr)?.next_step).toBe("on_hold");
-    expect((await (await signedInClient("fankkuk_admin")).rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0041");
+    expect(finishPrint(qr, waybill())).toBe("P0041");
     const held = (await op.rpc("admin_unmatched_parcels")).data as { qr: string | null; reason: string; suspected_theft: boolean }[];
     expect(held.find((x) => x.qr === qr)).toMatchObject({ reason: "not_mine", suspected_theft: true });
     const parcel = parcelOf(g.boxIds[0]).id;
@@ -820,7 +819,7 @@ describe("INV-C8 상자 도착 알림 · 「제가 보낸 게 아니에요」", 
     await inspect(op, qr, FAN_PASS);
     await approve(g);
     const out = waybill();
-    expect((await (await signedInClient("fankkuk_admin")).rpc("office_print_label", { p_qr: qr, p_waybill: out })).error).toBeNull();
+    expect(finishPrint(qr, out)).toBeNull();
     await (await signedInClient("byeolbit_fan")).rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null });
     expect((await op.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out })).error?.code).toBe("P0041");
     expect(parcelOf(g.boxIds[0]).state).toBe("label_printed");

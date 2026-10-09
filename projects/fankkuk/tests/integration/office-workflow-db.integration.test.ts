@@ -9,6 +9,7 @@ import {
   fanSetsWaybill,
   HOLD_DETAILS,
   inspect,
+  finishPrint,
   orderStatus,
   paidGift,
   paidShare,
@@ -62,9 +63,8 @@ describe("상태 전환표 (INV-W1)", () => {
     expect(await inspect(staff, qr, FAN_PASS)).toBe("inspected");
     expect(orderStatus(g.orderId)).toBe("inspected");
     await approve(g);
-    const owner = await signedInClient("fankkuk_admin");
     const out = waybill();
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: out })).error).toBeNull();
+    expect(finishPrint(qr, out)).toBeNull();
     expect(parcelState(qr)).toBe("label_printed");
     expect((await staff.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out })).error).toBeNull();
     expect(parcelState(qr)).toBe("shipped");
@@ -90,8 +90,7 @@ describe("상태 전환표 (INV-W1)", () => {
     await fanSetsWaybill(g.boxIds[0], no);
     const staff = await signedInClient("fankkuk_staff");
     const qr = ((await scanInbound(staff, no)).data as { qr: string }).qr;
-    const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("55000");
+    expect(finishPrint(qr, waybill())).toBe("55000");
     expect((await staff.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: no })).error?.code).toBe("55000");
     expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).error?.code).toBe("55000");
     expect(parcelState(qr)).toBe("received");
@@ -147,8 +146,7 @@ describe("상태 전환표 (INV-W1)", () => {
     const qr = await receiveAndLabel(staff, no);
     await inspect(staff, qr, FAN_PASS);
     await approve(g);
-    const owner = await signedInClient("fankkuk_admin");
-    await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() });
+    expect(finishPrint(qr, waybill())).toBeNull();
     expect((await staff.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0043");
     expect(parcelState(qr)).toBe("label_printed");
   });
@@ -192,7 +190,7 @@ describe("한 번만·한 상자씩 (INV-W2)", () => {
     await approve(g);
     const owner = await signedInClient("fankkuk_admin");
     const out = waybill();
-    await owner.rpc("office_print_label", { p_qr: qr, p_waybill: out });
+    expect(finishPrint(qr, out)).toBeNull();
     // 다른 연결이 줄을 잠근 동안 둘을 보내 확실히 겹치게 한다 — 앞뒤로 오면 잠금 없이도 통과한다
     const { released } = await holdRowLock(`select 1 from public.office_parcels where qr_code = '${qr}' for update`, 3);
     const sentAt = Date.now();
@@ -273,7 +271,7 @@ describe("출고 조건 (INV-W3)", () => {
   it("INV-W3 (S3, 실패경로): 승인 없는 검수 완료 팬 선물은 송장 출력 거부, 출고 목록에 없음", async () => {
     const { qr } = await inspectedGift();
     const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0041");
+    expect(finishPrint(qr, waybill())).toBe("P0041");
     expect(parcelState(qr)).toBe("inspected");
     const rows = (await owner.rpc("admin_office_parcels")).data as { qr: string | null; next_step: string }[];
     expect(rows.find((r) => r.qr === qr)?.next_step).toBe("wait_approval");
@@ -287,12 +285,29 @@ describe("출고 조건 (INV-W3)", () => {
     expect(rows.find((r) => r.qr === qr)?.next_step).toBe("print_label");
   });
 
-  it("INV-W3 (실패경로): 송장 출력은 대표만 — 직원은 승인된 상자도 거부", async () => {
+  // 송장 출력은 주소를 여는 함수(대표만, address-protection INV-P8)를 거쳐야만 출력 단계로 간다.
+  // 로그인 키로 부를 수 있던 옛 출력 함수(주소를 열지 않고 열람 기록도 없이 「송장 출력함」으로 넘김)는 지웠다.
+  it("INV-W3 (실패경로): 직원도 대표도 로그인 키로는 주소를 열지 않고 상자를 송장 출력 단계로 넘길 수 없다", async () => {
     const { g, qr } = await inspectedGift();
     await approve(g);
-    const staff = await signedInClient("fankkuk_staff");
-    expect((await staff.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("42501");
+    for (const login of ["fankkuk_staff", "fankkuk_admin"]) {
+      const client = await signedInClient(login);
+      // 옛 출력 함수는 없다
+      expect((await client.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code, login).toBe("PGRST202");
+      // 출력 마무리 함수는 주소 열기 계정만 부른다
+      expect((await client.rpc("invoice_finish_print", { p_qr: qr, p_waybill: waybill() })).error?.code, login).toBe("42501");
+      expect((await client.rpc("revgift_finish_print", { p_qr: qr, p_waybill: waybill() })).error?.code, login).toBe("42501");
+    }
     expect(parcelState(qr)).toBe("inspected");
+    // 데이터 API 의 함수 목록이 낡아도 속지 않게 DB 에 직접 묻는다
+    expect(psql("select count(*) from pg_proc where proname = 'office_print_label'")).toBe("0");
+    for (const fn of ["invoice_finish_print", "revgift_finish_print"]) {
+      expect(psql(`select has_function_privilege('authenticated', 'public.${fn}(text, text)', 'execute')`), fn).toBe("f");
+      expect(psql(`select has_function_privilege('anon', 'public.${fn}(text, text)', 'execute')`), fn).toBe("f");
+    }
+    // 같은 상자가 출고 조건은 지키고 있다 — 막힌 것은 길이지 상자가 아니다
+    expect(finishPrint(qr, waybill())).toBeNull();
+    expect(parcelState(qr)).toBe("label_printed");
   });
 
   it("INV-W3 (실패경로): 차액 미납이면 승인돼 있어도 송장 출력 거부(payment INV-M12)", async () => {
@@ -301,8 +316,7 @@ describe("출고 조건 (INV-W3)", () => {
     psql(
       `insert into public.payments (order_id, kind, box_id, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status) values ('${g.orderId}', 'difference', '${g.boxIds[0]}', 'pay_test_diff_${g.orderNo.slice(4).toLowerCase()}', 2000, 0, 500, 0, 1500, 'pending')`,
     );
-    const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0041");
+    expect(finishPrint(qr, waybill())).toBe("P0041");
   });
 
   it("INV-W3 (실패경로): 거절된 주문의 상자는 검수 스캔에서 반송 대기로 가고 출고되지 않는다", async () => {
@@ -322,10 +336,9 @@ describe("출고 조건 (INV-W3)", () => {
     const staff = await signedInClient("fankkuk_staff");
     const qr = await receiveAndLabel(staff, no);
     expect(await inspect(staff, qr, SHARE_PASS)).toBe("inspected");
-    const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0041");
+    expect(finishPrint(qr, waybill())).toBe("P0041");
     psql(`update public.revgift_shares set reply = 'accepted', replied_at = now() where id = '${s.shareId}'`);
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error).toBeNull();
+    expect(finishPrint(qr, waybill())).toBeNull();
     expect(psql(`select received_at is not null and inspected_at is not null from public.revgift_shares where id = '${s.shareId}'`)).toBe("t");
   });
 });
@@ -658,9 +671,8 @@ describe("원 송장 봉투와 반송 (INV-W8)", () => {
     const qr = await receiveAndLabel(staff, no);
     await inspect(staff, qr, FAN_PASS);
     await approve(g);
-    const owner = await signedInClient("fankkuk_admin");
     const out = waybill();
-    await owner.rpc("office_print_label", { p_qr: qr, p_waybill: out });
+    expect(finishPrint(qr, out)).toBeNull();
     await staff.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out });
     const where = `parcel_id = (select id from public.office_parcels where qr_code = '${qr}')`;
     expect(psql(`select count(*) || '/' || max(p.login_id) from public.office_envelope_shreds s join public.profiles p on p.id = s.shredded_by where ${where}`)).toBe("1/fankkuk_staff");

@@ -25,6 +25,7 @@ import {
   scanInbound,
   waybill,
   type Unit,
+  finishPrint,
 } from "./office-helpers";
 
 // 알림 — DB 층 (docs/specs/notifications.md INV-N2~N13 중 DB 가 지키는 것).
@@ -238,9 +239,8 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
     const { g, staff, qrs } = await arrivedGift();
     await inspect(staff, qrs[0]!, FAN_PASS);
     await approve(g);
-    const owner = await signedInClient("fankkuk_admin");
     const out = waybill();
-    expect((await owner.rpc("office_print_label", { p_qr: qrs[0], p_waybill: out })).error).toBeNull();
+    expect(finishPrint(qrs[0], out)).toBeNull();
     expect((await staff.rpc("office_confirm_shipment", { p_qr: qrs[0], p_waybill: out })).error).toBeNull();
     expect(orderStatus(g.orderId)).toBe("shipped");
     expect(outboxRows(g.orderId)).toEqual([
@@ -299,7 +299,7 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
     await approve(g);
     const owner = await signedInClient("fankkuk_admin");
     const out = waybill();
-    await owner.rpc("office_print_label", { p_qr: qrs[0], p_waybill: out });
+    expect(finishPrint(qrs[0], out)).toBeNull();
     const { released } = await holdRowLock(`select 1 from public.office_parcels where qr_code = '${qrs[0]}' for update`, 2);
     const sentAt = Date.now();
     const rs = await Promise.all([

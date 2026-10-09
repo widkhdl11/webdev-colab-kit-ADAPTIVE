@@ -118,6 +118,21 @@ export async function inspect(staff: SupabaseClient, qr: string, result: Record<
   return (await ok(staff.rpc("office_scan_inspect", { p_qr: qr }), "office_scan_inspect")) as string;
 }
 
+/**
+ * 송장 출력의 DB 마무리 단계 — 상자를 「송장 출력함」으로 넘긴다. 앱은 주소를 연 뒤 주소 열기 계정으로만 이 단계를 부른다
+ * (팬 선물 invoice_finish_print · 역조공 revgift_finish_print). 시험은 주소 열기 없이 DB 관리자 연결로 부른다 — 출고 조건·단계 검사는 같다.
+ * 성공하면 null, 거부되면 SQLSTATE(예: P0041 출고 조건, 55000 단계).
+ */
+export function finishPrint(qr: string, waybillNo: string): string | null {
+  const fn = psql(`select case when share_id is null then 'invoice_finish_print' else 'revgift_finish_print' end from public.office_parcels where qr_code = '${qr}'`) || "invoice_finish_print";
+  const state = psql(
+    `do $$ begin perform public.${fn}('${qr}', '${waybillNo}'); perform set_config('fankkuk_test.state', 'ok', false); exception when others then perform set_config('fankkuk_test.state', sqlstate, false); end $$; select current_setting('fankkuk_test.state')`,
+  );
+  // psql 은 DO 의 명령 꼬리표를 먼저 찍는다 — 마지막 줄이 결과다
+  const last = state.split("\n").pop() ?? "";
+  return last === "ok" ? null : last;
+}
+
 export function parcelState(qr: string): string {
   return psql(`select state from public.office_parcels where qr_code = '${qr}'`);
 }

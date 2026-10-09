@@ -4,7 +4,7 @@ import { confirmDifferencePayment } from "@/features/difference-pay/model/confir
 import { createTossPaymentsClient } from "@/shared/api/toss-payments/client";
 import { code, differenceRow, differenceToss, labeled, measure, paidOrder, prepare } from "./difference-helpers";
 import { adminClient, approveRpc, deleteTestOrders, psql, psqlError, SEED, signedInClient } from "./helpers";
-import { FAN_PASS, inspect, parcelState, waybill } from "./office-helpers";
+import { FAN_PASS, finishPrint, inspect, parcelState, waybill } from "./office-helpers";
 
 // 차액 결제 (payment INV-M2·M3·M5·M7·M8·M11·M12·M13, admin-console INV-K1).
 // 운영자가 검수 때 실측 구간을 기록하면 DB 가 차액 요청(결제 대기)을 만든다 → 팬이 선물 상세에서 차액을 결제한다(토스 승인 API 만 가짜)
@@ -248,18 +248,16 @@ describe("INV-M12: 차액 결제가 끝나기 전에는 송장을 출력하지 �
     const staff = await signedInClient("fankkuk_staff");
     expect(await inspect(staff, qr, FAN_PASS)).toBe("inspected");
     expect((await approveRpc(g.requestId)).data).toBe("approved");
-    const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0041");
+    expect(finishPrint(qr, waybill())).toBe("P0041");
     const claim = psql(`set role address_decryptor; select public.invoice_claim_print('${qr}', '00000000-0000-4000-a000-000000000021')::text;`);
     expect(JSON.parse(claim.split(/\r?\n/).pop() ?? "")).toEqual({ result: "denied", reason: "difference_unpaid" });
 
     expect((await payDifference(g.boxIds[0]!)).out.ok).toBe(true);
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error).toBeNull();
+    expect(finishPrint(qr, waybill())).toBeNull();
   });
 
   it("INV-M12 (실패경로): 실패로 끝난 차액·결제 확인 중인 차액이 있어도 송장 출력은 거부된다", async () => {
     const staff = await signedInClient("fankkuk_staff");
-    const owner = await signedInClient("fankkuk_admin");
     for (const status of ["failed", "confirming"] as const) {
       const g = await paidOrder(["small"]);
       const qr = await labeled(g.boxIds[0]!);
@@ -272,7 +270,7 @@ describe("INV-M12: 차액 결제가 끝나기 전에는 송장을 출력하지 �
       expect(differenceRow(g.orderId)).toBe(`2000/0/500/500/1000/${status}`);
       // 출고 화면 안내도 승인 대기가 아니라 차액 대기 — 결제 중·실패도 「아직 안 끝난 차액」이다
       expect(((await staff.rpc("office_parcel_by_qr", { p_qr: qr })).data as { next_step: string }[])[0]?.next_step).toBe("wait_difference");
-      expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0041");
+      expect(finishPrint(qr, waybill())).toBe("P0041");
       expect(parcelState(qr)).toBe("inspected");
     }
   });

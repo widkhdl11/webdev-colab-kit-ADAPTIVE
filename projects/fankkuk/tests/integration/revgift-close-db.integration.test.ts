@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { adminClient, holdRowLock, psql, signedInClient } from "./helpers";
-import { creatorSetsWaybill, inspect, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
+import { creatorSetsWaybill, finishPrint, inspect, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
 import {
   backdateSettlement,
   deleteTestRevgifts,
@@ -62,9 +62,8 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
     const { orderNo, qr } = await acceptedAndLabeled();
     const staff = await signedInClient("fankkuk_staff");
     expect(await inspect(staff, qr, SHARE_PASS)).toBe("inspected");
-    const owner = await signedInClient("fankkuk_admin");
     const out = waybill();
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: out })).error).toBeNull();
+    expect(finishPrint(qr, out)).toBeNull();
     expect(addressCount(orderNo)).toBe(1);
 
     expect((await staff.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out })).error).toBeNull();
@@ -91,8 +90,8 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
     const { orderNo, qr } = await acceptedAndLabeled();
     const staff = await signedInClient("fankkuk_staff");
     await inspect(staff, qr, SHARE_PASS);
-    const owner = await signedInClient("fankkuk_admin");
-    await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() });
+    expect(finishPrint(qr, waybill())).toBeNull();
+    expect(psql(`select state from public.office_parcels where qr_code = '${qr}'`)).toBe("label_printed");
     expect(addressCount(orderNo)).toBe(1);
     expect(closeEvents(orderNo)).toBe("");
   });
@@ -101,11 +100,10 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
     const { orderNo, qr } = await acceptedAndLabeled();
     const staff = await signedInClient("fankkuk_staff");
     await inspect(staff, qr, SHARE_PASS);
-    const owner = await signedInClient("fankkuk_admin");
     const out = waybill();
-    await owner.rpc("office_print_label", { p_qr: qr, p_waybill: out });
+    expect(finishPrint(qr, out)).toBeNull();
     expect((await staff.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out })).error).toBeNull();
-    expect((await owner.rpc("office_print_label", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("55000");
+    expect(finishPrint(qr, waybill())).toBe("55000");
     expect(psql(`select state from public.office_parcels where qr_code = '${qr}'`)).toBe("shipped");
     expect(closeEvents(orderNo)).toBe("deleted,shipped");
   });

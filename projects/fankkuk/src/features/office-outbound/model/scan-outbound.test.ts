@@ -29,7 +29,7 @@ const deps = (client: never, printer = giftPrinter({ kind: "failed" })) => ({ cl
 
 describe("출고 (office-workflow INV-W1·W3·W8)", () => {
   it("INV-R7·W3: 역조공 상자도 송장 출력 함수가 팬 주소를 열어 라벨 칸을 돌려준다 — 주소 없이 출력 단계로 넘기는 DB 함수는 부르지 않는다", async () => {
-    const { calls, client } = fakeClient({ office_print_label: { error: null } });
+    const { calls, client } = fakeClient({});
     const printer = giftPrinter({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: LABEL });
     expect(await scanOutbound(deps(client, printer), { kind: "print_label", qr: "Q-000123" })).toEqual({
       status: 200,
@@ -40,7 +40,7 @@ describe("출고 (office-workflow INV-W1·W3·W8)", () => {
   });
 
   it("INV-P4·W3: 팬 선물 상자의 송장 출력은 송장 출력 함수가 주소를 열어 라벨 칸을 돌려준다 — 앱 서버는 DB 출력 함수를 따로 부르지 않는다", async () => {
-    const { calls, client } = fakeClient({ office_print_label: { error: null } });
+    const { calls, client } = fakeClient({});
     const printer = giftPrinter({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: LABEL });
     expect(await scanOutbound(deps(client, printer), { kind: "print_label", qr: "Q-000123" })).toEqual({
       status: 200,
@@ -79,7 +79,7 @@ describe("출고 (office-workflow INV-W1·W3·W8)", () => {
   });
 
   it("INV-W3·P7 (실패경로): 직원이 송장 출력을 누르면 송장 출력 함수가 거부(not_owner)하고 403 — 거부 줄은 그 함수가 남긴다", async () => {
-    const { calls, client } = fakeClient({ office_print_label: { error: null } }, { operator: true, owner: false });
+    const { calls, client } = fakeClient({}, { operator: true, owner: false });
     const printer = giftPrinter({ kind: "denied", reason: "not_owner" });
     expect(await scanOutbound(deps(client, printer), { kind: "print_label", qr: "Q-000123" })).toEqual({ status: 403, body: { message: "송장 출력은 대표만 할 수 있어요." } });
     expect(printer.asked).toEqual(["Q-000123"]);
@@ -95,7 +95,7 @@ describe("출고 (office-workflow INV-W1·W3·W8)", () => {
   });
 
   it("INV-R13 (실패경로): 송장 출력 함수가 실패하면 500 — 주소 없이 DB 출력 함수로 대신 넘기지 않는다", async () => {
-    const { calls, client } = fakeClient({ office_print_label: { error: null } });
+    const { calls, client } = fakeClient({});
     expect(await scanOutbound(deps(client, giftPrinter({ kind: "failed" })), { kind: "print_label", qr: "Q-000123" })).toEqual({
       status: 500,
       body: { message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." },
