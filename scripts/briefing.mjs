@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 // 세션 브리핑 — SessionStart 훅과 /status가 호출. 사람과 Claude가 같은 그림으로 시작한다.
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
-import { join, posix } from "node:path";
+import { dirname, join, posix, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { GRAPH } from "../graph.mjs";
 import { topoSort, isSatisfied, isPending } from "../gates/propagate.mjs";
 
-const ROOT = process.cwd();
+// 레포 위치는 이 파일 자리에서 잡는다. 작업 폴더로 잡으면 projects/<이름> 에서 시작한 세션이
+// ACTIVE 를 못 찾아 「활성 프로젝트 없음」만 띄운다(2026-10-09 요약 직후 브리핑이 빈 채로 나왔다).
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => (existsSync(join(ROOT, p)) ? readFileSync(join(ROOT, p), "utf-8") : "");
 
 // 0. 활성 프로젝트 — 루트 ACTIVE 파일이 가리킨다(한 줄, 프로젝트 이름).
