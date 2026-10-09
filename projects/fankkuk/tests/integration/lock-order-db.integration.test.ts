@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it } from "vitest";
-import { deleteTestOrders, holdRowLock, psql, psqlError, signedInClient } from "./helpers";
+import { deleteTestBlocks, deleteTestOrders, holdRowLock, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
 import { approve, codeOf, deleteTestUnmatched, FAN_PASS, inspect, paidGift, paidShare, parcelState, scanInbound, waybill } from "./office-helpers";
 import { deleteTestRevgifts } from "./revgift-helpers";
 
@@ -13,9 +13,12 @@ afterEach(() => {
   deleteTestOrders();
   deleteTestRevgifts();
   deleteTestUnmatched();
+  deleteTestBlocks();
 });
 
-type RpcResult = { error: { code?: string; message: string } | null };
+const HANEUL = "00000000-0000-4000-a000-000000000005"; // 하늘 — 하루에게 보낸 시드 주문이 없다
+
+type RpcResult ={ error: { code?: string; message: string } | null };
 
 /** 6자리로 입고 + 라벨 부착 확인. 돌려주는 값은 내부 QR. */
 async function receive(op: SupabaseClient, unit: string | { shareId: string }): Promise<string> {
@@ -193,6 +196,76 @@ describe("INV-W12 동시 — 같은 주문의 실측과 대표 취소", () => {
     expect(c.error).toBeNull();
     expect(m.error).toBeNull();
     expect(psql(`select status from public.orders where id = '${g.orderId}'`)).toBe("canceled");
+  });
+});
+
+// 크리에이터의 거절(차단 포함)은 상자 줄을 잠그지 않고 승인 요청 → 주문 → 6자리(트리거) → 사무소 상자 줄 순이다 — 같은 순서에서 상자만 뺀 꼴.
+// 검수 완료 상자가 있는 주문을 거절하면 그 사무소 상자 줄을 반송 대기로 바꾸므로, 그 줄을 쥔 QR 처리와 겹칠 수 있다.
+describe("INV-W12 거절 — 크리에이터 거절도 같은 순서로", () => {
+  const decline = (haru: SupabaseClient, requestId: string) => () => haru.rpc("decline_gift", { p_request_id: requestId, p_block: false });
+
+  it("INV-W12: 승인 요청 줄·주문 줄 어느 것을 다른 처리가 쥐고 있어도 거절은 그 뒤 단계 줄을 잡기 전에 기다린다", async () => {
+    const op = await staff();
+    const haru = await signedInClient("haru_creator");
+    // 6자리 줄은 빠진다 — 입고 때 이미 사용됨이 되어, 거절의 무효 트리거는 유효한 6자리만 건드린다
+    for (const hold of ["approval_requests", "orders"] as const) {
+      const g = await paidGift(1);
+      const qr = await receive(op, g.boxIds[0]!);
+      expect(await inspect(op, qr, FAN_PASS)).toBe("inspected");
+      const where = {
+        approval_requests: `order_id = '${g.orderId}'`,
+        orders: `id = '${g.orderId}'`,
+      }[hold];
+      const r = await whileBlocked(`select 1 from public.${hold} where ${where} for update`, "decline_gift", decline(haru, g.requestId), () => {
+        // 승인 요청 줄에서 기다리면 주문 줄은 아직 비어 있다(승인 요청 → 주문)
+        if (hold === "approval_requests") expect(probeOrder(g.orderId), hold).toBeNull();
+        expect(probeParcel(qr), hold).toBeNull();
+      });
+      expect(r.error, hold).toBeNull();
+      expect(parcelState(qr), hold).toBe("return_waiting");
+    }
+  });
+
+  // 차단은 같은 팬의 다른 진행 중 주문도 거절한다 — 그 주문들도 승인 요청 줄 → 주문 줄 순으로(승인과 같은 순서).
+  it("INV-W12: 차단이 함께 거절하는 다른 주문의 주문 줄을 다른 처리가 쥐고 있으면, 차단은 그 주문의 승인 요청 줄을 먼저 잠그고 기다린다", async () => {
+    const haru = await signedInClient("haru_creator");
+    // 차단은 그 쌍의 진행 중 주문을 전부 거절한다 — 시드 주문이 없는 쌍(하늘 → 하루)으로. 기본 쌍(별빛 → 하루)이면 시드 FC-P4X7N 까지 거절된다.
+    const fromHaneul = async () => {
+      const o = await registerTestOrder(1, { senderId: HANEUL });
+      return { ...o, requestId: await payTestOrder(o) };
+    };
+    const a = await fromHaneul();
+    const b = await fromHaneul();
+    const probeRequest = () => psqlError(`select 1 from public.approval_requests where order_id = '${b.orderId}' for update nowait`);
+    expect(probeRequest()).toBeNull();
+    const r = await whileBlocked(`select 1 from public.orders where id = '${b.orderId}' for update`, "decline_gift", () => haru.rpc("decline_gift", { p_request_id: a.requestId, p_block: true }), () => {
+      expect(probeRequest()).not.toBeNull();
+    });
+    expect(r.error).toBeNull();
+    expect(r).toMatchObject({ data: { result: "declined", also_declined: [b.orderNo] } });
+  });
+
+  // 거절이 승인 요청 줄 앞에 먼저 서고, 검수 완료 스캔이 그 뒤에 선다. 옛 순서에서는 스캔이 사무소 상자 줄을 먼저 쥐고
+  // 승인 요청 줄을 기다리므로, 승인 요청·주문 줄을 받은 거절이 사무소 상자 줄에서 스캔을 기다려 교착이 났다.
+  it("INV-W12 (동시): 거절과 검수 완료 스캔이 같은 승인 요청 줄을 기다리다 풀려도 교착(40P01) 없이 거절이 끝난다", async () => {
+    const op = await staff();
+    const haru = await signedInClient("haru_creator");
+    const g = await paidGift(1);
+    const qr = await receive(op, g.boxIds[0]!);
+    expect(await inspect(op, qr, FAN_PASS)).toBe("inspected");
+    const lock = await holdRowLock(`select 1 from public.approval_requests where order_id = '${g.orderId}' for update`, 2);
+    const declined = Promise.resolve(decline(haru, g.requestId)());
+    await waitUntilBlocked("decline_gift");
+    const scanned = Promise.resolve(op.rpc("office_scan_inspect", { p_qr: qr }));
+    await waitUntilBlocked("office_scan_inspect");
+    await lock.released;
+    const [d, s] = await Promise.all([declined, scanned]);
+    // 스캔은 거절이 끝난 뒤의 상태(반송 대기)를 보고 단계 오류로 거부한다 — 교착이나 다른 잠금 오류가 아니다
+    expect(s.error?.code).toBe("55000");
+    expect(d.error).toBeNull();
+    expect(d.data).toMatchObject({ result: "declined" });
+    expect(psql(`select status from public.orders where id = '${g.orderId}'`)).toBe("rejected");
+    expect(parcelState(qr)).toBe("return_waiting");
   });
 });
 

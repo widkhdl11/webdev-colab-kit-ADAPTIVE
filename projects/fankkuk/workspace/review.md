@@ -22,3 +22,15 @@ reviewers: [security-reviewer, code-reviewer, test-auditor]
 - 실행 근거: `npx vitest run --config vitest.integration.config.mts tests/integration/lock-order-db.integration.test.ts` → 10/10 ·
   통합 전체(옛 정의 중간본) 1241/1245(실패 = read-isolation 시드 1건 + 실행 중 추가한 자동 처리 시험 3건이 적용 전 정의에 빨간불) ·
   `npm test` 1289/1289 · `tsc --noEmit` 0. 통합 전체(최종 정의) 1243/1245 — 실패 2: read-isolation 시드(BACKLOG 기존) · INV-W7 무작위 송장번호가 전화번호 꼴과 우연히 맞음(그 파일 단독 57/57, BACKLOG 등재)
+
+## 덧붙임 (2026-10-09, 거절·차단 잠금 순서 — BACKLOG 닫음)
+
+시험만 더했다(함수 정의는 그대로). 크리에이터 거절은 승인 요청 → 주문 → (6자리 트리거) → 사무소 상자 줄로, INV-W12 순서에서 상자만 뺀 꼴이다.
+
+- 더한 시험 셋(lock-order-db): 승인 요청·주문 줄을 쥐면 거절이 그 뒤 단계 줄을 잡기 전에 기다림 · 차단이 함께 거절하는 다른 주문도 승인 요청 줄을 먼저 잠금 ·
+  거절과 검수 완료 스캔이 같은 승인 요청 줄 앞에 줄 서도 교착 없이 거절이 끝나고 스캔은 55000(바뀐 상태를 보고 거부).
+- test-auditor: medium 2 → 거절이 주문 줄을 승인 요청 줄보다 먼저 잠가도 통과(승인 요청 줄을 쥐고 주문 줄 탐침 추가) · 스캔 결과가 「40P01 아님」만 봄(55000 으로 정확히).
+  low 2 → 6자리 줄 쥐기: 입고된 상자의 6자리는 이미 사용됨이라 거절 트리거가 건드리지 않아 해당 없음 · 함께 거절되는 주문에 입고 상자가 없음: 남김(차단 반복의 사무소 상자 줄은 return_inspected_boxes 한 곳이고 주문 줄 잠금 뒤다).
+- 사고 하나: 처음 차단 시험이 기본 쌍(별빛 → 하루)을 써서 시드 FC-P4X7N·FC-YVLMH 를 함께 거절했다 → 시험 전 값으로 로컬 복구(6자리 97W9M3 포함), 시험은 시드 주문이 없는 하늘 → 하루 쌍으로.
+- 변이 넷(갈래마다 하나): QR 잠금 옛 순서 → 8 실패 · 거절이 사무소 상자 줄을 주문 앞에서 · 거절이 주문 줄을 승인 요청 앞에서 · 차단 반복의 승인 요청 잠금 빠짐 → 각 1 실패. 4/4 빨간불, 실행 전후 시드 주문 해시 같음.
+- 실행 근거: `npx vitest run --config vitest.integration.config.mts tests/integration/lock-order-db.integration.test.ts tests/integration/decline-block-db.integration.test.ts` → 55/55 · `tsc --noEmit` 0.
