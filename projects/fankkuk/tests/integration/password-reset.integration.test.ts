@@ -20,6 +20,7 @@ import {
 import { adminClient, anonClient, holdRowLock, psql, signedInClient } from "./helpers";
 import { putTestEnvelope, sealTestAddress, testKeyPair } from "./invoice-helpers";
 import { createTestCreator, removeTestCreator, TEST_CREATOR } from "./test-creator";
+import { PHONE_IN_TEXT } from "./pii-shape";
 
 // 비밀번호 재설정(session-login INV-L10·L11)을 실제 DB·실제 Auth·실제 메일 서버(로컬 Mailpit)로 돈다.
 // 링크 만들기(request_password_reset)는 연락처(pii)를 읽어 사람이 적용하는 supabase/manual/0013 에 있다 —
@@ -143,7 +144,7 @@ describe("INV-L10: 재설정 요청은 아이디+이메일, 응답은 언제나 
     expect(text).toContain("body님");
     expect(text).toMatch(/http:\/\/127\.0\.0\.1:3311\/password\/reset\?token=[0-9a-f]{64}/);
     // 링크 값(64자리 16진수)의 숫자가 번호 꼴로 우연히 읽히지 않게, 링크를 뺀 본문에서 번호를 찾는다
-    expect(text.replace(/http\S+/g, "")).not.toMatch(/01[016789][- ]?\d{3,4}[- ]?\d{4}/);
+    expect(text.replace(/http\S+/g, "")).not.toMatch(PHONE_IN_TEXT);
     expect(text).not.toContain(a.loginEmail);
   });
 

@@ -19,6 +19,7 @@ import {
   finishPrint,
 } from "./office-helpers";
 import { deleteTestRevgifts } from "./revgift-helpers";
+import { PHONE_IN_TEXT } from "./pii-shape";
 
 // 상자별 받는 주소 6자리 (docs/specs/inbound-address-code.md INV-C1~C10, notifications INV-N14).
 // 시드: 별빛(byeolbit_fan) = 시험 주문의 팬, 달토끼(daltokki_fan) = 다른 팬, 하루(haru_creator) = 받는 크리에이터,
@@ -872,7 +873,7 @@ describe("INV-C9 운영자 확인 목록 — 보이는 값과 손으로 잇는 �
     expect(text).toContain("code_dispute");
     expect(text).not.toContain(code);
     expect(text).not.toContain(g.orderNo);
-    expect(text).not.toMatch(/01[016789]-?\d{3,4}-?\d{4}/);
+    expect(text).not.toMatch(PHONE_IN_TEXT);
     expect(text).not.toMatch(/(서울|경기|부산)[^"]*(로|길)\s?\d/);
   });
 

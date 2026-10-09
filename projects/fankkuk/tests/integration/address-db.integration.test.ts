@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { adminClient, anonClient, psql, psqlError, registerTestOrder, SEED, signedInClient } from "./helpers";
+import { PHONE_IN_TEXT } from "./pii-shape";
 
 // 주소 보호 스펙(docs/specs/address-protection.md) 중 지금 DB 로 지킬 수 있는 것.
 
@@ -51,7 +52,8 @@ describe("INV-P7: 열람 기록은 복호화 쪽만 쓰고 아무도 고치거�
 
 // 실명·주소·전화번호 꼴의 칸이나 값. 응답 하나를 통째로 훑는다.
 const PII_KEY = /(real_?name|phone|mobile|address|addr|ciphertext|wrapped_key)/i;
-const PII_VALUE = /(01[016789][- ]?\d{3,4}[- ]?\d{4})|([가-힣]+(시|도)\s[가-힣]+(구|군|시)\s)/;
+const ADDRESS_IN_TEXT = /([가-힣]+(시|도)\s[가-힣]+(구|군|시)\s)/;
+const PII_VALUE = new RegExp(`${PHONE_IN_TEXT.source}|${ADDRESS_IN_TEXT.source}`, "i");
 
 function piiFindings(value: unknown, path = "$"): string[] {
   if (Array.isArray(value)) return value.flatMap((v, i) => piiFindings(v, `${path}[${i}]`));

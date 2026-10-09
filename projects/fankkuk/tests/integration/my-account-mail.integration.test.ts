@@ -2,6 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { saveAccount } from "@/features/account-edit/model/save-account";
 import { createSmtpSender } from "@/shared/api/mail/smtp";
 import { adminClient, psql, SEED, signedInClient } from "./helpers";
+import { PHONE_IN_TEXT } from "./pii-shape";
 
 // 내 정보 저장 → 확인 메일 → 링크 확인을 실제 DB·실제 메일 서버(로컬 Mailpit)로 한 바퀴 돈다.
 // 메일 확인 화면 API: http://127.0.0.1:55324 (config.toml [local_smtp]). 보내는 포트 55325.
@@ -58,7 +59,7 @@ describe("INV-A7: 이메일을 바꾸면 새 주소로 확인 메일이 가고, 
     expect(token).toBeDefined();
 
     // INV-A8 S8b: 메일 본문에 번호·주소 꼴이 없다
-    expect(text).not.toMatch(/01[016789][- ]?\d{3,4}[- ]?\d{4}/);
+    expect(text).not.toMatch(PHONE_IN_TEXT);
 
     // 링크를 누르기 전에는 원래 주소 그대로
     const before = await fan.rpc("my_account");

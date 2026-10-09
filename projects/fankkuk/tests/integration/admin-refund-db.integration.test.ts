@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { adminClient, anonClient, deleteTestOrders, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
 import { deleteTestRevgifts, followHaru, payTestRevgift, PROFILE, registerTestRevgift, shareReply, unfollowHaru } from "./revgift-helpers";
+import { PHONE_IN_TEXT } from "./pii-shape";
 
 // 환불 DB (admin-console INV-K2·K7·K8, payment INV-M8·M9, reverse-gift INV-R11).
 // 잡기(admin_claim_refund) = 대표 로그인 토큰으로 금액을 정하고 기록을 「처리 중」으로 잡는다.
@@ -461,7 +462,7 @@ describe("INV-K1 · INV-K8: 결제·환불 내역 읽기", () => {
     expect(rows.length).toBeGreaterThan(0);
     for (const r of rows) expect(Object.keys(r).sort()).toEqual(COLUMNS);
     const text = JSON.stringify(rows);
-    expect(text).not.toMatch(/01[016789]-?\d{3,4}-?\d{4}/);
+    expect(text).not.toMatch(PHONE_IN_TEXT);
     expect(text).not.toMatch(/(시|도|구|로|길)\s?\d/);
   });
 });

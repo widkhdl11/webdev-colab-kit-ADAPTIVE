@@ -21,6 +21,7 @@ import {
   waybill,
 } from "./office-helpers";
 import { deleteTestRevgifts } from "./revgift-helpers";
+import { PHONE_IN_TEXT } from "./pii-shape";
 
 // 사무실 작업 흐름 (office-workflow INV-W1~W8). 상자는 「스캔 → 서버가 허용해야 다음 단계」로만 움직인다.
 
@@ -735,7 +736,7 @@ describe("개인정보 없음 (INV-W7)", () => {
       const rows = (await staff.rpc(fn)).data as Record<string, unknown>[];
       expect(rows.length).toBeGreaterThan(0);
       for (const k of Object.keys(rows[0])) expect(k).not.toMatch(/^(name|real_?name|full_?name)$|phone|address|email|zip/);
-      for (const r of rows) for (const v of Object.values(r)) expect(String(v)).not.toMatch(/01[016789]-?\d{3,4}-?\d{4}/);
+      for (const r of rows) for (const v of Object.values(r)) expect(String(v)).not.toMatch(PHONE_IN_TEXT);
     }
   });
 
