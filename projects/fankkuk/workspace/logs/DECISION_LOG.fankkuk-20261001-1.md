@@ -286,3 +286,13 @@
 - auto | office_print_label 은 권한만 걷지 않고 지움(drop if exists) — 부르는 곳 없음, 남겨 두면 다시 열리는 길이 생김 | 근거: 최소 권한·안 쓰는 경로 제거(업계 표준)
 - auto | 시험 준비는 실제 마무리 함수(invoice_finish_print·revgift_finish_print)를 DB 관리자 연결로 — 주소 열기까지 태우면 시험 35곳에 키·봉투 준비가 필요, 출고 조건·단계 검사는 같은 함수 | 근거: 시험 고정물은 검증 대상 밖 단계를 줄인다
 - 리뷰 | security 결함 0 · low 2(마무리 함수가 열람 기록을 안 봄 → BACKLOG · service_role 직접 갱신은 Supabase 설계) / test-auditor medium 1(출력 결과를 버리던 호출) · low 2 → 모두 반영
+
+### 2026-10-09 — 배포 전 개인정보 노출 검사 (address-protection INV-P9 · S9)
+
+- auto | 손으로 적은 함수 목록 대신 데이터 API 의 권한별 목록(OpenAPI)에서 자동 수집, 함수는 GET(읽기 전용 거래)으로만 | 근거: 설계 「배포 규칙」 2번 「모든 공개 엔드포인트」, 업계 표준(권한별 응답 스캔)
+- auto | 읽기 전용 확인은 크리에이터 알림을 지금 값 그대로 다시 저장하는 GET — 전제가 깨져 써져도 바뀌는 값이 없다(security medium: 처음엔 인증 코드 다시 만들기·7일 처리로 확인했다)
+- auto | 쓰기 함수는 응답을 볼 수 없으니 구조 검사로 — 로그인 키 함수 중 pii 에 닿는 것(거쳐 닿는 것 포함)은 이유 적은 허용 목록에만, 낡은 항목도 실패 · public 표에 개인정보 꼴 칸 이름 없음 | 근거: security high(쓰고 돌려주는 함수 못 봄 — 지운 office_print_label 꼴)
+- auto | 허용 칸: my_account 의 가린 번호·본인 이메일만, 값이 그 꼴일 때만 | 근거: my-account INV-A2·A4·A7
+- auto | 실패 출력에 값 대신 자리·종류·길이 | 근거: address-protection INV-P10
+- auto | 앱 POST 경로·GraphQL·Storage·realtime 은 이번 범위 밖 → BACKLOG | 근거: POST 는 부르면 쓰기, 나머지는 쓰는 곳 없음·로컬 꺼짐
+- 리뷰 | security high 1·medium 3·low 4 / code high 3·medium 2·low 1 / test-auditor high 2·medium 2 → 모두 반영(low 일부 BACKLOG). 변이 17/17(처음 16, 「실패 응답도 성공으로」는 단언을 더해 잡음)

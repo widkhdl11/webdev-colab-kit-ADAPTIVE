@@ -46,3 +46,16 @@ reviewers: [security-reviewer, test-auditor]
   대표만 출력은 주소 열기 함수 시험(invoice-print-db·revgift-print-db)이 붙들고 있음 확인.
 - 변이 3(옛 함수 되살림 · invoice_finish_print 를 authenticated 에 · revgift_finish_print 를 authenticated 에) → 3/3 빨간불, 되돌린 뒤 통과.
 - 실행 근거: 통합 전체 1247/1248(실패 = read-isolation 시드, BACKLOG 기존) · 감사 반영 뒤 바뀐 4파일 157/157 · `npm test` 1289/1289 · `tsc --noEmit` 0.
+
+## 덧붙임 (2026-10-09, 배포 전 개인정보 노출 검사 — BACKLOG 닫음)
+
+새 파일 scripts/pii-exposure.mjs(`npm run check:pii`) · tests/integration/pii-exposure-check.integration.test.ts · package.json 실행 이름 하나. 닿은 표면: authz·개인정보(검사 도구, 운영 코드 변화 없음). ui-reviewer 는 뺐다 — 화면 변화 없음.
+
+- 응답 검사: 권한마다 데이터 API 목록(OpenAPI)에서 열린 표·함수를 모두 찾아 GET(읽기 전용)으로 부르고 개인정보 꼴 칸·값을 찾는다. 인자는 앞선 성공 응답 값으로 채운다.
+  성공(2xx)만 부름으로, 함수가 낸 거부(P0002·55000·25006 — 데이터 API 가 500 으로 줌)는 거부로, 코드 없는 5xx·XX/53/57/58/08 계열은 서버 오류로 실패.
+- 구조 검사: 로그인 키 함수 중 pii 에 닿는 13개(직접 6 · office_sync → close_revgift_share 로 닿는 사무실 함수 7) 모두 허용 목록 · public 표에 개인정보 꼴 칸 0.
+- security-reviewer: high 1(쓰고 돌려주는 함수 못 봄 → 구조 검사) · medium 3(출력에 값 → 자리·종류만 / 읽기 전용 확인이 실제 쓰기 → 같은 값 다시 저장 / 칸·값 꼴 빈틈 → recipient·zip·email·+82·점 구분·「구 로 번지」) · low 4(표 1000줄 넘으면 실패 · 로그아웃 · 허용 칸 함수로 좁힘 · 검사 밖의 길 BACKLOG).
+- code-reviewer: high 3(실패 응답을 부름으로 셈 · 목록이 비면 통과 · 인자에 오류 본문 값) · medium 2(못 부름 — 구조 검사로 · 로그인 없으면 바로 멈춤) · low(설정 형식·꺼진 Supabase 안내·로그인 응답 처리) 반영.
+- test-auditor: high 2(앱 GET 검사 · 읽기 전용 확인을 붙든 시험 없음) · medium 2(인자 채우기 · 칸 이름 갈래) 반영.
+- 변이 17(칸 이름 실명·암호문 / 값 검사 / 표 / 가린 칸 / 로그인 없음 / 참거짓 / 읽기 전용 확인 / 인자 채우기 / 실패를 성공으로 / 구조 닿음·거쳐 닿음·낡은 목록·public 칸 / 앱 돌려보내는 주소 / 서버 오류 / 허용 칸 함수) → 17/17 빨간불(처음 16).
+- 실행 근거: `npm run check:pii -- --app http://localhost:3000` → 익명 8·로그인 117 함수, 개인정보 꼴 0건, 구조 통과 · 시험 파일 13/13 · `tsc --noEmit` 0.
