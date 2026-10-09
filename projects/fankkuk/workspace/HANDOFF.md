@@ -11,7 +11,7 @@
   },
   "spec": {
     "status": "clean",
-    "hash": "c7451158968d"
+    "hash": "7757089d5177"
   },
   "design": {
     "status": "clean",
@@ -23,19 +23,19 @@
   },
   "design/schema-designer": {
     "status": "clean",
-    "hash": "a4a506bbe00d"
+    "hash": "8c6264722210"
   },
   "implement": {
     "status": "clean",
-    "hash": "0c9cf541f026"
+    "hash": "c65cf3a2f7d6"
   },
   "qa": {
     "status": "clean",
-    "hash": "6b1c14a06d5a"
+    "hash": "61bd59278073"
   },
   "review": {
     "status": "clean",
-    "hash": "c217032c0a40"
+    "hash": "341a4dfc2b00"
   },
   "deploy": {
     "status": "dirty",

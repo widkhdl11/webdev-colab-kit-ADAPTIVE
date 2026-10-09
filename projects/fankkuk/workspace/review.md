@@ -1,11 +1,27 @@
 ---
 project: fankkuk
 status: passed
-basis: 0c9cf541f026
-reviewers: [security-reviewer, test-auditor]
+basis: c65cf3a2f7d6
+reviewers: [security-reviewer, test-auditor, code-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-09, 잠금 순서 하나)
+# 리뷰 사인오프 — fankkuk (2026-10-09, 차액 결제 요청 알림)
+
+이번 사인오프가 덮는 변경: 지난 사인오프(basis 0c9cf541f026) 뒤 notifications INV-N18(S18·S18b) — 사무실 실측이 신고보다 커서
+차액 결제 줄이 생기면 그 주문의 팬에게 상자마다 알림 한 줄(difference_due). 마이그레이션 20261009000004_difference_alert.
+같은 사이에 시험용 휴대폰 번호 꼴을 tests/integration/pii-shape.ts 하나로 모음(시험만 바뀜).
+
+- 닿은 표면: authz(알림을 누구에게 보내는가) · 개인정보(본문에 무엇이 들어가는가). 결제 금액 계산은 글자 그대로(알림 블록 말고 원본과 같음 — 두 리뷰어가 대조).
+- ui-reviewer 는 뺐다 — 화면을 건드리지 않았다(알림 본문 문구만).
+- security-reviewer: 지적 없음. 받는 사람은 주문의 fan_id 하나뿐이고 인자로 넘길 자리가 없음, 줄에 금액·구간 없음, 상자 칸 제약 변경이 다른 종류에 같은 결과, 권한(security definer·grant) 원본과 같음.
+- code-reviewer: 지적 없음. low 1 → 알림 줄 넣는 같은 insert 가 세 곳 — BACKLOG 로.
+- test-auditor: 빈 갈래 2 → 거절된 주문엔 알림 없음 · 이메일을 끈 팬에겐 건너뜀(꼭 가는 알림 아님) 시험 추가.
+- 변이 5개(갈래마다 하나): 알림 줄 넣기 삭제 · 상자 칸 null · 알림 넣기를 주문 상태 검사 앞으로 · 연락처 함수에서 차액 알림을 꼭 가는 알림으로 · 상자 칸을 첫 상자로 고정 → 모두 빨간불, 되돌린 뒤 통과.
+  (표시용 값 notification_claim 의 꼭 가는 알림 칸을 바꾼 변이는 통과 — 실제 판정은 연락처 함수에 있어 발송에 영향이 없다.)
+- 실행 근거: `npx vitest run` → 단위 1292/1292 · `npm run test:integration` → 1264/1265(실패 1 = BACKLOG 시드 FC-W5N3T 읽기 격리, 기존) ·
+  추가 시험 뒤 INV-N18 묶음 6/6, notifications-dispatch 9/9. 발송 경로 시험(S18)이 가짜 이메일 통로로 실제 본문을 받아 링크·금액 없음 확인.
+
+## 이전 사인오프 (2026-10-09, 잠금 순서 하나 — basis 0c9cf541f026)
 
 이번 사인오프가 덮는 변경: 지난 사인오프(basis fa390a3408a3, 커밋 a31c2d9) 뒤 office-workflow INV-W12(S12·S12b) — 같은 주문을 만지는
 쓰기 처리가 모두 「상자 → 승인 요청 → 주문(몫) → 6자리 → 사무소 상자 줄」 순으로 잠근다. 마이그레이션 20261009000002_lock_order.
