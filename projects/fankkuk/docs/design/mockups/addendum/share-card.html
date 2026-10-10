@@ -1,0 +1,221 @@
+<!doctype html>
+<!--
+  팬꾹 시안 addendum — 답장 공유 카드 (2026-10-10)
+  근거: 원문 F-5 (크리에이터 프로필 사진·닉네임·답장 문구·날짜·팬꾹 로고, 팬 닉네임은 팬이 선택) / 불변식 17·22(날짜만).
+  판 4장: 정사각 1080 x 1080 / X 용 1200 x 675, 각각 팬 닉네임 있는 판과 없는 판.
+  배경 --surface-brand(#FFF5F1), 문구 칸 흰색 반경 48(큰 판 32의 이미지용 확대), 문구 --ink, 「님께」 줄 --secondary-foreground.
+  이미지 안 글자는 가장 작은 것도 32px(절반으로 줄어도 읽힘).
+  주의: 답장 한 줄 칸(80자)을 가득 채우면 문구 칸을 넘칠 수 있다 -> 구현 때 글자 크기를 단계로 줄이는 규칙 필요. 시안은 보통 길이로 그렸다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 답장 공유 카드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="../site/v8-white/v8.css">
+<style>
+small { font-size: 16px; }
+/* ===== 공통 (헤더 오른쪽 = 글자 중심, 사이트 v9 와 같음) ===== */
+.h-gift { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+.h-gift:hover, .h-user:hover, .h-auth a:hover { background: var(--surface-neutral); }
+.h-num { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 9999px; background: var(--ink); color: var(--text-inverse); font-size: 16px; font-weight: 700; line-height: 1; }
+.h-sep { width: 1px; height: 16px; background: var(--border); margin-inline: 4px; }
+.h-user, .h-auth a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+.h-auth { display: inline-flex; align-items: center; }
+.h-auth .h-login { color: var(--sub); }
+.h-user svg { color: var(--faint); }
+@media (max-width: 767px) { .h-user, .h-sep, .h-auth { display: none; } .h-gift-t { display: none; } .h-gift::after { content: "선물"; } .h-gift .h-num { order: 3; } }
+.tag--hair { background: var(--white); box-shadow: var(--hair); }
+.photo { --d: 96px; display: grid; place-items: center; width: var(--d); height: var(--d); border-radius: 50%; background: var(--c, #F7C8D4); color: var(--ink); font-weight: 800; font-size: calc(var(--d) * .42); line-height: 1; flex-shrink: 0; user-select: none; }
+.ic-tile { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--white); box-shadow: var(--hair); color: var(--brand); flex-shrink: 0; }
+.h2-sec { font-size: 28px; letter-spacing: -.8px; line-height: 1.3; }
+@media (max-width: 767px) { .h2-sec { font-size: 24px; } }
+
+/* ===== 시안 도구줄 (시안에서만 — 실제 화면에는 없다) ===== */
+.mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px var(--gutter); background: var(--ink); color: var(--text-inverse); }
+.mk-bar b { font-weight: 800; }
+.mk-bar .mk-title { color: #E4DFE6; }
+.mk-grp { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: rgb(255 255 255 / 12%); }
+.mk-grp button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 9px; background: none; color: #fff; font-weight: 600; cursor: pointer; }
+.mk-grp button[aria-pressed="true"] { background: #fff; color: var(--ink); font-weight: 700; }
+.mk-grp button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.mk-bar .mk-sp { margin-left: auto; }
+#mk-split { display: none; padding: 24px var(--gutter) 48px; background: var(--surface-neutral); }
+.split #mk-split { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start; }
+.split body > *:not(.mk-bar):not(#mk-split):not(script):not(svg) { display: none !important; }
+.embed .mk-bar { display: none; }
+.mk-frame figcaption { margin-bottom: 8px; font-weight: 700; }
+.mk-frame iframe { display: block; border: 0; background: #fff; box-shadow: var(--hair); }
+.mk-frame--m iframe { border-radius: 28px; box-shadow: 0 0 0 8px var(--ink); }
+.mk-frame--m { padding: 8px; }
+.mk-pcbox { overflow: hidden; border-radius: 12px; box-shadow: var(--hair); }
+.mk-pcbox iframe { transform-origin: 0 0; }
+@media print { .mk-bar, #mk-split { display: none !important; } }
+
+.fit { --s: .4; width: calc(var(--w) * var(--s) * 1px); height: calc(var(--h) * var(--s) * 1px); overflow: hidden; border-radius: 12px; box-shadow: var(--hair); flex-shrink: 0; }
+.fit > .art { width: calc(var(--w) * 1px); height: calc(var(--h) * 1px); transform: scale(var(--s)); transform-origin: 0 0; position: relative; overflow: hidden; }
+.art svg.lg { display: block; }
+.art, .art * { font-family: "Pretendard Variable", Pretendard, -apple-system, "Malgun Gothic", sans-serif; }
+.wrap { padding-block: clamp(32px, 4vw, 56px) clamp(72px, 9vw, 128px); }
+.wrap h1 { font-size: clamp(30px, 3vw, 40px); font-weight: 800; letter-spacing: -1px; line-height: 1.25; }
+.wrap .lead { margin-top: 8px; }
+.sec { margin-top: clamp(40px, 5vw, 64px); }
+.sec h2 { font-size: 24px; letter-spacing: -.5px; }
+.sec .cap { margin-top: 4px; color: var(--sub); }
+.row-arts { display: flex; flex-wrap: wrap; gap: 24px 32px; align-items: flex-start; margin-top: 20px; }
+.art-cap { margin-top: 8px; color: var(--sub); max-width: 480px; }
+.art-cap b { color: var(--ink); }
+@media (max-width: 1100px) { .fit.og-fit { --s: .55 !important; } }
+@media (max-width: 767px) { .fit, .fit.og-fit { --s: .29 !important; } .fit.sq-fit { --s: .32 !important; } .fit.guide-fit { --s: 1 !important; } .fit.guide-fit.post { --s: .62 !important; } .snip { width: 100%; } }
+
+.sc { background: #FFF5F1; color: #343039; }
+.sc-photo { width: 176px; height: 176px; border-radius: 50%; background: var(--c); display: grid; place-items: center; font-size: 76px; font-weight: 800; color: #343039; box-shadow: 0 0 0 10px #fff; flex-shrink: 0; }
+.sc-who b { display: block; font-weight: 800; letter-spacing: -1px; line-height: 1.15; }
+.sc-who span { display: block; color: #665D65; font-weight: 600; }
+.sc-panel { background: #fff; border-radius: 48px; display: flex; flex-direction: column; justify-content: center; }
+.sc-to { color: #A4433D; font-weight: 800; letter-spacing: -.5px; }
+.sc-q { font-weight: 800; letter-spacing: -1.6px; line-height: 1.3; word-break: keep-all; }
+.sc-m { font-weight: 500; line-height: 1.5; color: #343039; word-break: keep-all; }
+.sc-date { color: #665D65; font-weight: 600; }
+.sc-logo { display: flex; align-items: center; font-weight: 800; letter-spacing: -1px; }
+/* 정사각 1080 */
+.sc-sq { width: 1080px; height: 1080px; }
+.sc-sq .sc-top { position: absolute; left: 72px; top: 72px; right: 72px; display: flex; align-items: center; gap: 36px; }
+.sc-sq .sc-who b { font-size: 68px; }
+.sc-sq .sc-who span { margin-top: 4px; font-size: 40px; }
+.sc-sq .sc-panel { position: absolute; left: 72px; right: 72px; top: 296px; height: 584px; padding: 56px 64px; }
+.sc-sq .sc-to { font-size: 44px; margin-bottom: 20px; }
+.sc-sq .sc-q { font-size: 80px; }
+.sc-sq .sc-m { margin-top: 24px; font-size: 42px; }
+.sc-sq .sc-foot { position: absolute; left: 72px; right: 72px; bottom: 64px; display: flex; align-items: center; justify-content: space-between; }
+.sc-sq .sc-date { font-size: 40px; }
+.sc-sq .sc-logo { gap: 16px; font-size: 48px; }
+/* X 가로 1200x675 */
+.sc-x { width: 1200px; height: 675px; }
+.sc-x .sc-left { position: absolute; left: 72px; top: 72px; bottom: 60px; width: 296px; display: flex; flex-direction: column; align-items: flex-start; }
+.sc-x .sc-photo { width: 200px; height: 200px; font-size: 84px; }
+.sc-x .sc-who { margin-top: 28px; }
+.sc-x .sc-who b { font-size: 52px; }
+.sc-x .sc-who span { margin-top: 2px; font-size: 32px; }
+.sc-x .sc-date { margin-top: auto; font-size: 32px; }
+.sc-x .sc-panel { position: absolute; left: 424px; right: 72px; top: 72px; bottom: 72px; padding: 48px 56px; border-radius: 40px; }
+.sc-x .sc-to { font-size: 36px; margin-bottom: 16px; }
+.sc-x .sc-q { font-size: 64px; }
+.sc-x .sc-m { margin-top: 20px; font-size: 34px; }
+.sc-x .sc-logo { position: absolute; right: 88px; bottom: 90px; gap: 12px; font-size: 36px; display: none; }
+.sc-x .sc-logo-l { display: flex; margin-top: 16px; gap: 12px; font-size: 36px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+<symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.5 3.5 9.5 3.5 12 0" stroke="#333D39" stroke-width="2.6" stroke-linecap="round" fill="none"/><circle cx="12.5" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.5" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+<symbol id="l-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></symbol>
+<symbol id="l-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="l-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="l-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="l-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+<symbol id="l-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></symbol>
+<symbol id="l-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="l-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol>
+<symbol id="l-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol>
+<symbol id="l-sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M19 16v4M17 18h4"/></symbol>
+<symbol id="l-hourglass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12"/><path d="M7 3v3a5 5 0 0 0 2 4l3 2-3 2a5 5 0 0 0-2 4v3M17 3v3a5 5 0 0 1-2 4l-3 2 3 2a5 5 0 0 1 2 4v3"/></symbol>
+<symbol id="l-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+<symbol id="l-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></symbol>
+<symbol id="l-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/></symbol>
+<symbol id="l-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="l-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+<symbol id="l-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></symbol>
+<symbol id="l-return" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"/><path d="M4 12h11a5 5 0 0 1 5 5v1"/></symbol>
+<symbol id="l-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="l-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+<symbol id="l-approve" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+</defs></svg>
+
+<div class="mk-bar" role="region" aria-label="시안 도구"><b>시안</b><span class="mk-title">답장 공유 카드 (share-card)</span></div><div id="mk-split" aria-label="PC와 모바일 나란히 보기"></div>
+<a class="skip-link" href="#main">본문 바로가기</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="logo" href="#" aria-label="팬꾹 메인"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+    <nav class="nav" aria-label="주요 메뉴"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav>
+    <div class="header-actions"><a class="h-gift" href="#" aria-label="진행 중인 선물 2개"><svg width="22" height="22" aria-hidden="true"><use href="#l-box"/></svg><span class="h-gift-t">진행 중인 선물</span><span class="h-num">2</span></a><span class="h-sep" aria-hidden="true"></span><a class="h-user" href="#">별빛님<svg width="16" height="16" aria-hidden="true"><use href="#l-down"/></svg></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" aria-hidden="true"><use href="#l-menu"/></svg></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobile-menu" hidden><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><p class="group-label">내 팬꾹 · 별빛님</p><a href="#">개인정보</a><a href="#">팔로우한 크리에이터</a><a href="#">선물 내역</a><a href="#">받은 역조공</a></div>
+</header>
+<main id="main" class="container wrap">
+  <h1>답장 공유 카드</h1>
+  <p class="lead sub">팬이 「함께한 시간」에서 「카드로 공유」를 누르면 만들어져요. 정사각형(1080×1080)과 X 용 가로(1200×675), 팬 닉네임은 팬이 고른 경우에만 들어가요.</p>
+
+  <section class="sec" aria-labelledby="s1"><h2 id="s1">정사각형 1080×1080</h2>
+    <div class="row-arts">
+      <div><div class="fit sq-fit" style="--w:1080;--h:1080;--s:.4" role="img" aria-label="정사각 공유 카드, 팬 닉네임 있는 판"><div class="art" aria-hidden="true"><div class="sc sc-sq">
+  <div class="sc-top"><div class="sc-photo" style="--c:#F7C8D4">하</div><div class="sc-who"><b>하루님이 남긴</b><span>감사 답장</span></div></div>
+  <div class="sc-panel"><p class="sc-to">별빛님께</p><p class="sc-q">너무 마음에 들어요</p><p class="sc-m">손편지 읽다가 울컥했어요. 정말 고마워요!</p></div>
+  <div class="sc-foot"><span class="sc-date">2026.10.05</span><span class="sc-logo"><svg class="lg" width="72" height="72"><use href="#logo"/></svg>팬꾹</span></div>
+</div></div></div><p class="art-cap"><b>팬 닉네임 있는 판</b> · 팬이 이름 공개를 고른 경우</p></div>
+      <div><div class="fit sq-fit" style="--w:1080;--h:1080;--s:.4" role="img" aria-label="정사각 공유 카드, 팬 닉네임 없는 판"><div class="art" aria-hidden="true"><div class="sc sc-sq">
+  <div class="sc-top"><div class="sc-photo" style="--c:#F7C8D4">하</div><div class="sc-who"><b>하루님이 남긴</b><span>감사 답장</span></div></div>
+  <div class="sc-panel"><p class="sc-q">너무 마음에 들어요</p><p class="sc-m">손편지 읽다가 울컥했어요. 정말 고마워요!</p></div>
+  <div class="sc-foot"><span class="sc-date">2026.10.05</span><span class="sc-logo"><svg class="lg" width="72" height="72"><use href="#logo"/></svg>팬꾹</span></div>
+</div></div></div><p class="art-cap"><b>없는 판</b> · 이름 줄을 지우고 문구가 가운데에 와요</p></div>
+    </div></section>
+
+  <section class="sec" aria-labelledby="s2"><h2 id="s2">X 용 가로 1200×675</h2>
+    <div class="row-arts">
+      <div><div class="fit " style="--w:1200;--h:675;--s:.4" role="img" aria-label="X 용 공유 카드, 팬 닉네임 있는 판"><div class="art" aria-hidden="true"><div class="sc sc-x">
+  <div class="sc-left"><div class="sc-photo" style="--c:#F7C8D4">하</div><div class="sc-who"><b>하루님이 남긴</b><span>감사 답장</span></div><span class="sc-date">2026.10.05</span><span class="sc-logo sc-logo-l"><svg class="lg" width="48" height="48"><use href="#logo"/></svg>팬꾹</span></div>
+  <div class="sc-panel"><p class="sc-to">별빛님께</p><p class="sc-q">너무 마음에 들어요</p><p class="sc-m">손편지 읽다가 울컥했어요. 정말 고마워요!</p></div>
+</div></div></div><p class="art-cap"><b>팬 닉네임 있는 판</b></p></div>
+      <div><div class="fit " style="--w:1200;--h:675;--s:.4" role="img" aria-label="X 용 공유 카드, 팬 닉네임 없는 판"><div class="art" aria-hidden="true"><div class="sc sc-x">
+  <div class="sc-left"><div class="sc-photo" style="--c:#F7C8D4">하</div><div class="sc-who"><b>하루님이 남긴</b><span>감사 답장</span></div><span class="sc-date">2026.10.05</span><span class="sc-logo sc-logo-l"><svg class="lg" width="48" height="48"><use href="#logo"/></svg>팬꾹</span></div>
+  <div class="sc-panel"><p class="sc-q">너무 마음에 들어요</p><p class="sc-m">손편지 읽다가 울컥했어요. 정말 고마워요!</p></div>
+</div></div></div><p class="art-cap"><b>없는 판</b></p></div>
+    </div></section>
+
+  <section class="sec" aria-labelledby="s3"><h2 id="s3">카드에 들어가는 것</h2>
+    <ul class="art-cap" style="max-width:none;list-style:disc;padding-left:22px">
+      <li>크리에이터 프로필 사진·이름, 답장 문구(고른 문구 + 한 줄), 답장 날짜(날짜만, 시각 없음), 팬꾹 로고</li>
+      <li>팬 이름은 팬이 고른 경우에만. 주소·주문번호·운송장·팬이 올린 사진은 카드에 없어요.</li>
+      <li>「#팬꾹」 문구와 크리에이터 계정 태그는 이미지가 아니라 X 글쓰기 창의 글에 채워져요.</li>
+    </ul></section>
+</main>
+<footer class="site-footer"><div class="container">
+  <div class="footer-grid"><div><p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+  <dl class="biz"><div><dt>상호</dt><dd>네오코드</dd></div><div><dt>대표자</dt><dd>(출시 전 기재)</dd></div><div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div><div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div><div><dt>주소</dt><dd>(출시 전 기재)</dd></div><div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div></dl></div>
+  <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav></div>
+  <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p></div></footer>
+<script>
+(function(){
+  var root=document.documentElement, q=new URLSearchParams(location.search);
+  if(q.get('embed')) root.classList.add('embed');
+  var firstState=document.querySelector('[data-set-state]');
+  var state=q.get('state')||(firstState?firstState.getAttribute('data-set-state'):'');
+  function setState(s){state=s;root.setAttribute('data-state',s);
+    document.querySelectorAll('[data-set-state]').forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-set-state')===s));});
+    if(root.classList.contains('split')) buildSplit();}
+  document.querySelectorAll('[data-set-state]').forEach(function(b){b.addEventListener('click',function(){setState(b.getAttribute('data-set-state'));});});
+  function url(){return location.pathname+'?embed=1'+(state?'&state='+state:'');}
+  function buildSplit(){
+    var box=document.getElementById('mk-split'); if(!box) return;
+    var avail=Math.max(320,window.innerWidth-390-140), s=Math.min(1,avail/1280), h=860;
+    box.innerHTML='<figure class="mk-frame"><figcaption>PC 1280px'+(s<1?' (축소 보기)':'')+'</figcaption><div class="mk-pcbox" style="width:'+Math.round(1280*s)+'px;height:'+Math.round(h*s)+'px"><iframe title="PC 폭 미리보기" src="'+url()+'" width="1280" height="'+h+'" style="transform:scale('+s+')"></iframe></div></figure>'
+      +'<figure class="mk-frame mk-frame--m"><figcaption>모바일 390px</figcaption><iframe title="모바일 폭 미리보기" src="'+url()+'" width="390" height="'+h+'"></iframe></figure>';
+  }
+  document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){
+    var split=b.getAttribute('data-view')==='split';
+    root.classList.toggle('split',split);
+    document.querySelectorAll('[data-view]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});
+    if(split) buildSplit(); else document.getElementById('mk-split').innerHTML='';
+  });});
+  if(state) root.setAttribute('data-state',state);
+  var t=document.querySelector('.menu-toggle'),m=document.getElementById('mobile-menu');
+  if(t&&m) t.addEventListener('click',function(){var o=m.hidden;m.hidden=!o;t.setAttribute('aria-expanded',String(o));});
+  if(state){document.querySelectorAll('[data-set-state]').forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-set-state')===state));});}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!doctype html>
+<!--
+  팬꾹 시안 addendum — 선물 링크 페이지 (fankkuk.kr/{링크 아이디}) = 지금 크리에이터 페이지를 합친 것 (2026-10-10)
+  근거: 원문 F-1 화면 순서 / workspace/addendum-screens/README.md 추천 ⑤(둘을 하나로) ⑥(소개 40자) ⑦(팔로우해야 보냄 유지) ⑪(주소 열람 요약 줄 뺌)
+  색·글자·반경·버튼은 design-rules.md 그대로(v8 흰 바탕). 이 파일의 새 요소는 "새 요소" 표시(CSS 주석)로 구분.
+
+  순서(F-1): 사진(가장 크게)·이름·한 줄 소개(40자) -> 감사 문장(고정) -> 받는 상태 -> 받기 어려운 품목(있을 때만) -> 기념일 D-day(30일 안일 때만)
+             -> 이번 달 N명(0이면 숨김) -> 감사 답장 모음(양쪽 동의한 것만) -> 선물 보내기
+  PC 는 왼쪽 흐름 + 오른쪽 "선물 보내기" 카드(고정). 모바일은 F-1 순서 그대로 한 줄로 내려오며 선물 보내기가 마지막.
+
+  지금 페이지에 있던 항목의 새 자리
+   - 팔로우 버튼: 따로 두지 않는다. 주 버튼이 "팔로우하고 선물 보내기"(이미 팔로우했으면 "선물 보내기")
+   - 평균 승인 시간 · 최저 요금: 선물 보내기 카드 안 요약 두 줄
+   - 보낼 수 없는 것 · 확인 절차: 선물 보내기 카드 맨 아래 접이식(기본 접힘)
+   - 비슷한 크리에이터: 맨 아래 한 줄 (이 줄을 지우는 안도 가능)
+   - 태그(플랫폼) · 본인 확인 완료: 이름 아래 한 줄 칩
+  쉬는 중 변형: 도구줄의 "쉬는 중" — 받는 상태 문구가 바뀌고, 받기 어려운 품목 줄과 선물 보내기 버튼이 사라진다(F-1 9번, 1차는 버튼 숨김).
+  자리표시: 프로필 사진은 단색 원 + 이니셜.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 하루 — 선물 링크 페이지</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="../site/v8-white/v8.css">
+<style>
+small { font-size: 16px; }
+/* ===== 공통 (헤더 오른쪽 = 글자 중심, 사이트 v9 와 같음) ===== */
+.h-gift { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+.h-gift:hover, .h-user:hover, .h-auth a:hover { background: var(--surface-neutral); }
+.h-num { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 9999px; background: var(--ink); color: var(--text-inverse); font-size: 16px; font-weight: 700; line-height: 1; }
+.h-sep { width: 1px; height: 16px; background: var(--border); margin-inline: 4px; }
+.h-user, .h-auth a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+.h-auth { display: inline-flex; align-items: center; }
+.h-auth .h-login { color: var(--sub); }
+.h-user svg { color: var(--faint); }
+@media (max-width: 767px) { .h-user, .h-sep, .h-auth { display: none; } .h-gift-t { display: none; } .h-gift::after { content: "선물"; } .h-gift .h-num { order: 3; } }
+.tag--hair { background: var(--white); box-shadow: var(--hair); }
+.photo { --d: 96px; display: grid; place-items: center; width: var(--d); height: var(--d); border-radius: 50%; background: var(--c, #F7C8D4); color: var(--ink); font-weight: 800; font-size: calc(var(--d) * .42); line-height: 1; flex-shrink: 0; user-select: none; }
+.ic-tile { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--white); box-shadow: var(--hair); color: var(--brand); flex-shrink: 0; }
+.h2-sec { font-size: 28px; letter-spacing: -.8px; line-height: 1.3; }
+@media (max-width: 767px) { .h2-sec { font-size: 24px; } }
+
+/* ===== 시안 도구줄 (시안에서만 — 실제 화면에는 없다) ===== */
+.mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px var(--gutter); background: var(--ink); color: var(--text-inverse); }
+.mk-bar b { font-weight: 800; }
+.mk-bar .mk-title { color: #E4DFE6; }
+.mk-grp { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: rgb(255 255 255 / 12%); }
+.mk-grp button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 9px; background: none; color: #fff; font-weight: 600; cursor: pointer; }
+.mk-grp button[aria-pressed="true"] { background: #fff; color: var(--ink); font-weight: 700; }
+.mk-grp button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.mk-bar .mk-sp { margin-left: auto; }
+#mk-split { display: none; padding: 24px var(--gutter) 48px; background: var(--surface-neutral); }
+.split #mk-split { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start; }
+.split body > *:not(.mk-bar):not(#mk-split):not(script):not(svg) { display: none !important; }
+.embed .mk-bar { display: none; }
+.mk-frame figcaption { margin-bottom: 8px; font-weight: 700; }
+.mk-frame iframe { display: block; border: 0; background: #fff; box-shadow: var(--hair); }
+.mk-frame--m iframe { border-radius: 28px; box-shadow: 0 0 0 8px var(--ink); }
+.mk-frame--m { padding: 8px; }
+.mk-pcbox { overflow: hidden; border-radius: 12px; box-shadow: var(--hair); }
+.mk-pcbox iframe { transform-origin: 0 0; }
+@media print { .mk-bar, #mk-split { display: none !important; } }
+
+/* 이 화면 전용 */
+.photo--hero { --d: 176px; }
+@media (max-width: 767px) { .photo--hero { --d: 152px; } }
+.hero-l { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: clamp(32px, 5vw, 64px); }
+.hero-l h1 { margin-top: 24px; font-size: clamp(36px, 4vw, 52px); font-weight: 800; letter-spacing: -1.4px; line-height: 1.2; }
+.hero-l .handle { margin-top: 8px; color: var(--sub); font-weight: 600; }
+.hero-l .intro { margin-top: 16px; max-width: 560px; font-size: 20px; line-height: 1.5; }
+.hero-l .p-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+.hero-l .thanks { margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--secondary-foreground); }
+.link-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(24px, 4vw, 56px); align-items: start; margin-top: clamp(32px, 5vw, 56px); }
+@media (max-width: 1023px) { .link-grid { grid-template-columns: minmax(0, 1fr); } }
+.flow { display: grid; gap: 12px; }
+.info { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px; border-radius: var(--r-card); background: var(--surface-neutral); box-shadow: var(--hair); }
+.info small { display: block; color: var(--sub); font-size: 16px; }
+.info p { font-size: 18px; font-weight: 700; line-height: 1.5; letter-spacing: -.2px; }
+.info .sub { margin-top: 4px; font-weight: 400; font-size: 16px; }
+.info--ok { background: var(--success-background); box-shadow: none; }
+.info--ok .ic-tile { color: var(--success); }
+.info--rest { background: var(--warning-background); box-shadow: none; }
+.info--rest .ic-tile { color: var(--warning); }
+.info--dday .dd { margin-left: auto; align-self: center; flex-shrink: 0; }
+.dd-tag { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 9999px; background: var(--surface-selected); color: var(--secondary-foreground); font-size: 20px; font-weight: 800; }
+.month-n b { color: var(--brand); font-size: 22px; font-weight: 800; }
+.replies { margin-top: 36px; }
+.replies .sub { margin-top: 4px; color: var(--sub); }
+.rp-list { display: grid; gap: 12px; margin-top: 16px; }
+.rp { padding: 20px 24px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.rp q { display: block; quotes: none; font-size: 20px; font-weight: 700; line-height: 1.5; letter-spacing: -.3px; }
+.rp .by { margin-top: 12px; color: var(--sub); }
+.send { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-panel); background: var(--surface-brand); }
+@media (max-width: 1023px) { .send { position: static; } }
+@media (max-width: 767px) { .send { padding: 24px 20px; } }
+.send h2 { font-size: 28px; letter-spacing: -.8px; }
+.send .btn { margin-top: 20px; }
+.send .need { margin-top: 12px; color: var(--sub); }
+.sum { margin-top: 20px; }
+.sum-row { display: flex; align-items: center; gap: 16px; padding-block: 16px; border-top: 1px solid var(--border); }
+.sum-row small { display: block; color: var(--sub); }
+.sum-row b { display: block; font-size: 20px; font-weight: 800; letter-spacing: -.3px; }
+.rest-note { margin-top: 20px; padding: 16px 20px; border-radius: 16px; background: var(--white); box-shadow: var(--hair); font-weight: 700; }
+.fold { margin-top: 12px; border-top: 1px solid var(--border); }
+.fold summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; cursor: pointer; font-weight: 700; list-style: none; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary svg { color: var(--sub); transition: transform .2s; }
+.fold[open] summary svg { transform: rotate(180deg); }
+.fold summary:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-radius: 8px; }
+.nos { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 12px; }
+.nos li { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 10px; border-radius: 9999px; background: var(--white); box-shadow: var(--hair); }
+.nos .x { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-neutral); color: var(--sub); flex-shrink: 0; }
+.fold-steps { display: grid; gap: 8px; padding-bottom: 16px; counter-reset: s; }
+.fold-steps li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; }
+.fold-steps li::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-selected); color: var(--secondary-foreground); font-weight: 800; }
+.similar { padding-top: clamp(56px, 7vw, 96px); }
+.similar .follow-row { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 1023px) { .similar .follow-row { display: flex; } .similar .follow-row li { flex: 0 0 104px; } }
+.page-end { height: clamp(72px, 9vw, 128px); }
+/* 상태 변형: 쉬는 중이면 받는 중 전용 칸을 숨기고 쉬는 중 전용 칸을 보인다 */
+.only-rest { display: none; }
+[data-state="rest"] .only-rest { display: flex; }
+[data-state="rest"] .only-recv { display: none; }
+[data-state="rest"] .rest-note.only-rest { display: block; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+<symbol id="i-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#333D39"/><circle cx="31" cy="22" r="2.6" fill="#333D39"/><path d="M18 29c2.5 3.5 9.5 3.5 12 0" stroke="#333D39" stroke-width="2.6" stroke-linecap="round" fill="none"/><circle cx="12.5" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.5" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+<symbol id="l-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></symbol>
+<symbol id="l-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="l-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="l-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="l-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+<symbol id="l-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></symbol>
+<symbol id="l-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="l-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol>
+<symbol id="l-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol>
+<symbol id="l-sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M19 16v4M17 18h4"/></symbol>
+<symbol id="l-hourglass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12"/><path d="M7 3v3a5 5 0 0 0 2 4l3 2-3 2a5 5 0 0 0-2 4v3M17 3v3a5 5 0 0 1-2 4l-3 2 3 2a5 5 0 0 1 2 4v3"/></symbol>
+<symbol id="l-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+<symbol id="l-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></symbol>
+<symbol id="l-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/></symbol>
+<symbol id="l-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="l-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+<symbol id="l-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></symbol>
+<symbol id="l-return" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"/><path d="M4 12h11a5 5 0 0 1 5 5v1"/></symbol>
+<symbol id="l-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="l-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+<symbol id="l-approve" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+</defs></svg>
+
+<div class="mk-bar" role="region" aria-label="시안 도구"><b>시안</b><span class="mk-title">선물 링크 페이지 (creator-link)</span><div class="mk-grp" role="group" aria-label="상태 바꿔 보기"><button type="button" data-set-state="recv" aria-pressed="true">받는 중</button><button type="button" data-set-state="rest" aria-pressed="false">쉬는 중 (10월 21일부터)</button></div><div class="mk-grp mk-sp" role="group" aria-label="폭 바꿔 보기"><button type="button" data-view="one" aria-pressed="true">한 화면</button><button type="button" data-view="split" aria-pressed="false">PC · 모바일 390 나란히</button></div></div><div id="mk-split" aria-label="PC와 모바일 나란히 보기"></div>
+<a class="skip-link" href="#main">본문 바로가기</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="logo" href="#" aria-label="팬꾹 메인"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+    <nav class="nav" aria-label="주요 메뉴"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav>
+    <div class="header-actions"><nav class="h-auth" aria-label="계정"><a class="h-login" href="#">로그인</a><span class="h-sep" aria-hidden="true"></span><a href="#">회원가입</a></nav>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="메뉴 열기"><svg width="24" height="24" aria-hidden="true"><use href="#l-menu"/></svg></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobile-menu" hidden><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><div class="btn-row"><a class="btn btn--line" href="#">로그인</a><a class="btn" href="#">회원가입</a></div></div>
+</header>
+<main id="main">
+<section class="container hero-l" aria-labelledby="name">
+  <div class="photo photo--hero" style="--c:#F7C8D4" role="img" aria-label="프로필 사진 자리 (이니셜 하)">하</div>
+  <h1 id="name">하루</h1>
+  <p class="handle">fankkuk.kr/haru_play</p>
+  <p class="intro">느긋하게 게임하는 방송이에요. 오늘도 같이 놀아요!</p>
+  <div class="p-tags"><span class="tag tag--success"><svg width="16" height="16" aria-hidden="true"><use href="#l-check"/></svg>본인 확인 완료</span><span class="tag">치지직</span><span class="tag">버추얼</span></div>
+  <p class="thanks">보내주시는 마음 늘 감사해요</p>
+</section>
+
+<div class="container link-grid">
+  <div class="flow">
+    <div class="info info--ok only-recv"><span class="ic-tile" aria-hidden="true"><svg width="24" height="24"><use href="#l-check"/></svg></span><div><small>받는 상태</small><p>지금 선물을 받고 있어요</p></div></div>
+    <div class="info info--rest only-rest"><span class="ic-tile" aria-hidden="true"><svg width="24" height="24"><use href="#l-clock"/></svg></span><div><small>받는 상태</small><p>잠시 선물 받기를 쉬고 있어요. 10월 21일부터 다시 받을게요</p></div></div>
+
+    <div class="info only-recv"><span class="ic-tile" aria-hidden="true"><svg width="24" height="24"><use href="#l-box"/></svg></span><div><small>받기 어려운 품목</small><p>지금은 인형·쿠션, 대형 물품을 받기 어려워요 ㅠㅠ 보관할 곳이 부족해요</p></div></div>
+
+    <div class="info info--dday"><span class="ic-tile" aria-hidden="true"><svg width="24" height="24"><use href="#l-calendar"/></svg></span><div><small>다가오는 기념일</small><p>데뷔 3주년 (10월 22일)</p></div><span class="dd"><span class="dd-tag" aria-label="12일 남음">D-12</span></span></div>
+
+    <div class="info month-n"><span class="ic-tile" aria-hidden="true"><svg width="24" height="24"><use href="#l-heart"/></svg></span><div><p>이번 달 <b>38명</b>의 팬이 마음을 보냈어요</p></div></div>
+
+    <section class="replies" aria-labelledby="rp-h">
+      <h2 class="h2-sec" id="rp-h">감사 답장 모음</h2>
+      <p class="sub">하루님이 팬에게 남긴 답장 중, 팬이 공개를 허락한 것만 보여요. 최신순이에요.</p>
+      <ul class="rp-list">
+        <li class="rp"><q>잘 받았어요, 고마워요. 손편지 읽다가 울컥했어요.</q><p class="by">별빛님에게 · 2026.10.05</p></li>
+        <li class="rp"><q>너무 마음에 들어요. 방송에 달고 나올게요!</q><p class="by">익명의 팬에게 · 2026.10.02</p></li>
+        <li class="rp"><q>잘 쓸게요. 덕분에 힘이 났어요.</q><p class="by">달콤이님에게 · 2026.09.28</p></li>
+      </ul>
+    </section>
+  </div>
+
+  <aside class="send" aria-labelledby="send-h">
+    <h2 id="send-h">선물 보내기</h2>
+    <a class="btn btn--block only-recv" href="#">팔로우하고 선물 보내기</a>
+    <p class="need only-recv">팔로우한 크리에이터에게만 선물을 보낼 수 있어요. (이미 팔로우했다면 버튼이 「선물 보내기」로 바뀌어요)</p>
+    <p class="rest-note only-rest">10월 21일부터 다시 받아요. 그때 다시 찾아와 주세요.</p>
+    <div class="sum">
+      <div class="sum-row"><span class="ic-tile" aria-hidden="true"><svg width="24" height="24"><use href="#l-clock"/></svg></span><span><small>평균 승인 시간 (최근 30일)</small><b>약 2시간</b></span></div>
+      <div class="sum-row"><span class="ic-tile" aria-hidden="true"><svg width="24" height="24"><use href="#l-box"/></svg></span><span><small>상자마다 배송비 포함</small><b>6,900원부터</b></span></div>
+    </div>
+    <details class="fold"><summary>보낼 수 없는 것<svg width="20" height="20" aria-hidden="true"><use href="#l-down"/></svg></summary>
+      <ul class="nos"><li><span class="x" aria-hidden="true"><svg width="14" height="14" aria-hidden="true"><use href="#l-x"/></svg></span>음식과 신선식품</li><li><span class="x" aria-hidden="true"><svg width="14" height="14" aria-hidden="true"><use href="#l-x"/></svg></span>살아 있는 동물과 식물</li><li><span class="x" aria-hidden="true"><svg width="14" height="14" aria-hidden="true"><use href="#l-x"/></svg></span>폭발·인화성 물질 등 위험물</li><li><span class="x" aria-hidden="true"><svg width="14" height="14" aria-hidden="true"><use href="#l-x"/></svg></span>현금과 상품권</li></ul></details>
+    <details class="fold"><summary>상자는 이렇게 확인해요<svg width="20" height="20" aria-hidden="true"><use href="#l-down"/></svg></summary>
+      <ol class="fold-steps"><li>팬꾹 사무실에 상자가 도착하면 겉에 붙은 송장을 떼고 겉면을 검사해요.</li><li>추적 장치가 의심되는 상자만 열어 확인하고, 문제가 없으면 새 송장을 붙여 보내 드려요.</li><li>승인 없이는 저희 시스템이 크리에이터의 주소를 열지 않습니다.</li></ol></details>
+  </aside>
+</div>
+
+<section class="container similar" aria-labelledby="sim-h">
+  <div class="block-head"><h2 class="h2-sec" id="sim-h">이런 크리에이터도 있어요</h2><a class="link-arrow" href="#">전체 보기 ›</a></div>
+  <ul class="follow-row"><li><a class="follow" href="#" aria-label="모모님의 선물 링크 페이지"><svg class="face face--lg" style="--c:#CFE3FA" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><span>모모<small>유튜브</small></span></a></li><li><a class="follow" href="#" aria-label="새벽달님의 선물 링크 페이지"><svg class="face face--lg" style="--c:#C9ECDD" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><span>새벽달<small>SOOP</small></span></a></li><li><a class="follow" href="#" aria-label="별이님의 선물 링크 페이지"><svg class="face face--lg" style="--c:#FBE3A8" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><span>별이<small>유튜브</small></span></a></li><li><a class="follow" href="#" aria-label="솜사탕님의 선물 링크 페이지"><svg class="face face--lg" style="--c:#FAD2BA" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><span>솜사탕<small>치지직</small></span></a></li><li><a class="follow" href="#" aria-label="도담님의 선물 링크 페이지"><svg class="face face--lg" style="--c:#DCD3F6" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><span>도담<small>유튜브</small></span></a></li><li><a class="follow" href="#" aria-label="보리님의 선물 링크 페이지"><svg class="face face--lg" style="--c:#D3E8B4" aria-hidden="true" focusable="false"><use href="#i-face"/></svg><span>보리<small>SOOP</small></span></a></li></ul>
+</section>
+<div class="page-end"></div>
+</main>
+<footer class="site-footer"><div class="container">
+  <div class="footer-grid"><div><p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+  <dl class="biz"><div><dt>상호</dt><dd>네오코드</dd></div><div><dt>대표자</dt><dd>(출시 전 기재)</dd></div><div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div><div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div><div><dt>주소</dt><dd>(출시 전 기재)</dd></div><div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div></dl></div>
+  <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav></div>
+  <p class="footer-copy">&copy; 2026 네오코드. All rights reserved.</p></div></footer>
+<script>
+(function(){
+  var root=document.documentElement, q=new URLSearchParams(location.search);
+  if(q.get('embed')) root.classList.add('embed');
+  var firstState=document.querySelector('[data-set-state]');
+  var state=q.get('state')||(firstState?firstState.getAttribute('data-set-state'):'');
+  function setState(s){state=s;root.setAttribute('data-state',s);
+    document.querySelectorAll('[data-set-state]').forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-set-state')===s));});
+    if(root.classList.contains('split')) buildSplit();}
+  document.querySelectorAll('[data-set-state]').forEach(function(b){b.addEventListener('click',function(){setState(b.getAttribute('data-set-state'));});});
+  function url(){return location.pathname+'?embed=1'+(state?'&state='+state:'');}
+  function buildSplit(){
+    var box=document.getElementById('mk-split'); if(!box) return;
+    var avail=Math.max(320,window.innerWidth-390-140), s=Math.min(1,avail/1280), h=860;
+    box.innerHTML='<figure class="mk-frame"><figcaption>PC 1280px'+(s<1?' (축소 보기)':'')+'</figcaption><div class="mk-pcbox" style="width:'+Math.round(1280*s)+'px;height:'+Math.round(h*s)+'px"><iframe title="PC 폭 미리보기" src="'+url()+'" width="1280" height="'+h+'" style="transform:scale('+s+')"></iframe></div></figure>'
+      +'<figure class="mk-frame mk-frame--m"><figcaption>모바일 390px</figcaption><iframe title="모바일 폭 미리보기" src="'+url()+'" width="390" height="'+h+'"></iframe></figure>';
+  }
+  document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){
+    var split=b.getAttribute('data-view')==='split';
+    root.classList.toggle('split',split);
+    document.querySelectorAll('[data-view]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});
+    if(split) buildSplit(); else document.getElementById('mk-split').innerHTML='';
+  });});
+  if(state) root.setAttribute('data-state',state);
+  var t=document.querySelector('.menu-toggle'),m=document.getElementById('mobile-menu');
+  if(t&&m) t.addEventListener('click',function(){var o=m.hidden;m.hidden=!o;t.setAttribute('aria-expanded',String(o));});
+  if(state){document.querySelectorAll('[data-set-state]').forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-set-state')===state));});}
+})();
+</script>
+</body>
+</html>
