@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ANNIVERSARY_MAX, ANNIVERSARY_NAME_MAX, MONTHLY_LIMIT_MAX } from "@/entities/creator/model/receiving";
+import { ANNIVERSARY_MAX, ANNIVERSARY_NAME_MAX, MONTHLY_LIMIT_MAX, parseIsoDate } from "@/entities/creator/model/receiving";
 import { charCount } from "@/shared/lib/validation/char-count";
 
 // 크리에이터 받는 양 조절 입력 경계 (creator-receiving INV-B3·B5·B7). 앱 서버가 먼저 꼴을 보고, DB 함수가 같은 규칙으로 다시 검사한다
@@ -9,7 +9,11 @@ import { charCount } from "@/shared/lib/validation/char-count";
 export const receivingInputSchema = z
   .object({
     resting: z.boolean(),
-    resumeOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "다시 받는 날을 골라 주세요.").nullable(),
+    // 꼴(YYYY-MM-DD)과 달력에 있는 날(2026-02-30 거부)을 같이 본다
+    resumeOn: z
+      .string()
+      .refine((s) => parseIsoDate(s) !== null, "다시 받는 날을 골라 주세요.")
+      .nullable(),
     monthlyLimit: z.number().int().min(1).max(MONTHLY_LIMIT_MAX).nullable(),
   })
   .refine((v) => !v.resting || v.resumeOn !== null, { message: "쉬는 동안에는 다시 받는 날을 꼭 골라 주세요.", path: ["resumeOn"] });

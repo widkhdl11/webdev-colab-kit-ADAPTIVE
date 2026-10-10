@@ -228,6 +228,12 @@ describe("받는 양 조절 (creator-receiving INV-B2·B4·B6·B9)", () => {
     expect(r).toEqual({ ok: false, status: 409, message: "이번 달은 이미 마음을 충분히 보내셨어요. 11월 1일부터 다시 보낼 수 있어요" });
   });
 
+  it("INV-B6 S6b: 다음 달 1일은 한국 시간으로 정한다 — UTC 10월 31일 16시(한국 11월 1일 1시)면 「12월 1일」", async () => {
+    const { deps } = setup();
+    const r = await registerGift({ ...deps, store: refusingStore("limit"), viewer: FAN, now: () => new Date("2026-10-31T16:00:00Z") }, form);
+    expect(r).toEqual({ ok: false, status: 409, message: "이번 달은 이미 마음을 충분히 보내셨어요. 12월 1일부터 다시 보낼 수 있어요" });
+  });
+
   it("INV-B9: 고른 기념일 표시는 이름 그대로 등록에 넘긴다(7일 안인지는 DB 가 그날 다시 본다)", async () => {
     const { deps, store } = setup();
     expect((await registerGift({ ...deps, viewer: FAN }, { ...form, anniversaryName: " 데뷔일 " })).ok).toBe(true);

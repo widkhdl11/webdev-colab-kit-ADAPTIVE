@@ -13,7 +13,7 @@ import { OVERSIZE_RULE, PARCEL_TIER_GUIDE, RETURN_ON_INSPECTION_NOTICE } from "@
 import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
-import { anniversaryInWeek, isResting, restingMessage, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import { anniversaryInWeek, restingNotice, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import { receivingNotice } from "../model/receiving-notice";
 import { summarizeBoxes } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
@@ -358,9 +358,7 @@ export function RegisterForm({
                                 c.channelTitle ?? c.platform,
                                 c.moving
                                   ? "채널 이사 중 · 지금은 선물을 받지 않아요"
-                                  : c.receiving && isResting(c.receiving.resumeOn, today) && c.receiving.resumeOn
-                                    ? restingMessage(c.receiving.resumeOn)
-                                    : approvalTimeText(c.approvalMinutes),
+                                  : (restingNotice(c.receiving?.resumeOn ?? null, today) ?? approvalTimeText(c.approvalMinutes)),
                               ]
                                 .filter(Boolean)
                                 .join(" · ")}
@@ -440,10 +438,15 @@ export function RegisterForm({
               {anniversaryMark ? (
                 <div className={`field ${f.metal}`}>
                   <label className={f.mark}>
-                    <input type="checkbox" checked={markAnniversary} onChange={(e) => setMarkedFor(e.currentTarget.checked ? creatorId : null)} />
+                    <input
+                      type="checkbox"
+                      checked={markAnniversary}
+                      onChange={(e) => setMarkedFor(e.currentTarget.checked ? creatorId : null)}
+                      aria-describedby="mark-hint"
+                    />
                     「{anniversaryMark} 선물」로 표시해서 보내기
                   </label>
-                  <p className="hint">{picked?.name}님의 「{anniversaryMark}」까지 7일이 남지 않았어요. 고르면 크리에이터가 승인할 때 이 표시가 보여요.</p>
+                  <p className="hint" id="mark-hint">{picked?.name}님의 「{anniversaryMark}」까지 7일이 남지 않았어요. 고르면 크리에이터가 승인할 때 이 표시가 보여요.</p>
                 </div>
               ) : null}
             </fieldset>

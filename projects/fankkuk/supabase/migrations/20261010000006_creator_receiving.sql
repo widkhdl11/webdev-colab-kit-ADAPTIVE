@@ -45,14 +45,24 @@ alter table public.orders add column if not exists anniversary_name text check (
 
 -- ── 날짜 도우미 ──────────────────────────────────
 
--- 한국 시간 오늘
+-- 그 시각의 한국 시간 날짜 — 세션 시간대와 상관없다. 시험이 경계 시각(UTC 15:00 = 한국 다음 날 0시)을 직접 넣어 본다.
+create or replace function public.receiving_today_at(p_now timestamptz)
+returns date
+language sql
+stable
+set search_path = ''
+as $$
+  select (p_now at time zone 'Asia/Seoul')::date;
+$$;
+
+-- 한국 시간 오늘 — 저장·등록·읽기 함수가 쓴다
 create or replace function public.receiving_today()
 returns date
 language sql
 stable
 set search_path = ''
 as $$
-  select (now() at time zone 'Asia/Seoul')::date;
+  select public.receiving_today_at(now());
 $$;
 
 -- 월·일이 달력에 있는 날인가 — 2월 29일은 있다(윤년에 있는 날)
@@ -110,6 +120,7 @@ as $$
                      where p.order_id = o.id and p.kind = 'initial' and p.status in ('pending', 'confirming', 'done')));
 $$;
 
+revoke all on function public.receiving_today_at(timestamptz) from public, anon, authenticated;
 revoke all on function public.receiving_today() from public, anon, authenticated;
 revoke all on function public.receiving_valid_month_day(integer, integer) from public, anon, authenticated;
 revoke all on function public.receiving_next_date(integer, integer, date) from public, anon, authenticated;
@@ -376,10 +387,12 @@ begin
   end if;
   -- creator-receiving INV-B9: 표시는 서버가 그날 다시 계산한다 — 그 크리에이터의 기념일 중 이름이 같고 D-7 ~ D-day 인 것만.
   -- 아니면 표시 없이 저장한다(거부하지 않는다). 이름은 지금 기념일 이름을 복사해 둔다.
+  -- 이름은 지금 필터를 다시 거친다 — 저장 뒤 금칙어가 늘어 공개 읽기(creator_receiving)에서 빠진 이름은 표시로도 붙지 않는다.
   if p_anniversary_name is not null then
     select a.name into v_mark
     from public.creator_anniversaries a
     where a.creator_id = p_creator_id and a.name = public.app_trim(p_anniversary_name)
+      and public.creator_tag_text_problem(a.name) is null
       and public.receiving_next_date(a.month, a.day, v_today) - v_today between 0 and 7
     order by a.position
     limit 1;

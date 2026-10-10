@@ -1,5 +1,7 @@
 import { z } from "zod";
 import type { PricedTier } from "@/entities/payment/model/price-table";
+import { ANNIVERSARY_NAME_MAX } from "@/entities/creator/model/receiving";
+import { charCount } from "@/shared/lib/validation/char-count";
 
 // 선물 등록 폼의 입력 경계. 폼은 문자열을 보내고, 여기서 한 번 검증해 상자 구간 목록·참거짓으로 바꾼다.
 // 금액 칸은 받지 않는다 — 결제 금액은 서버 요금표로만 계산한다(INV-M1).
@@ -23,7 +25,12 @@ export const registerFormSchema = z
     largeCount: count,
     electronicsOrMetal: z.enum(["yes", "no"], { message: "전자기기나 금속 제품이 들어 있는지 골라 주세요." }),
     // creator-receiving INV-B9: 「{기념일} 선물」 표시 — 고른 기념일 이름. 7일 안인지는 DB 가 그날 다시 계산한다
-    anniversaryName: z.string().trim().min(1).max(12).optional(),
+    // 길이는 글자 수(코드 포인트)로 센다 — DB char_length 와 같은 기준(INV-B7)
+    anniversaryName: z
+      .string()
+      .trim()
+      .refine((s) => charCount(s) >= 1 && charCount(s) <= ANNIVERSARY_NAME_MAX)
+      .optional(),
   })
   .superRefine((v, ctx) => {
     const total = v.smallCount + v.mediumCount + v.largeCount;

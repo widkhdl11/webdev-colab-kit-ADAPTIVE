@@ -72,3 +72,17 @@ describe("크리에이터 칸", () => {
     expect(parseRegisterInput({ ...base, creatorId: "00000000-0000-4000-b000-000000000001" }).success).toBe(true);
   });
 });
+
+describe("기념일 표시 이름 (creator-receiving INV-B9·B7)", () => {
+  const base = { ...ok, creatorId: "00000000-0000-4000-b000-000000000001" };
+
+  it("INV-B9: 이름 길이는 글자 수로 센다 — 이모지 12개(UTF-16 24단위)는 받는다", () => {
+    const r = parseRegisterInput({ ...base, anniversaryName: "🎂".repeat(12) });
+    expect(r.success && r.data.anniversaryName).toBe("🎂".repeat(12));
+  });
+
+  it("INV-B9 (실패경로): 이모지 13개·빈 이름은 받지 않는다", () => {
+    expect(parseRegisterInput({ ...base, anniversaryName: "🎂".repeat(13) }).success).toBe(false);
+    expect(parseRegisterInput({ ...base, anniversaryName: "  " }).success).toBe(false);
+  });
+});

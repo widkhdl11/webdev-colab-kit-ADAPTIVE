@@ -1,4 +1,4 @@
-import { isResting, limitReachedMessage, restingMessage, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import { limitReachedMessage, restingNotice, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 
 /**
  * 고른 크리에이터에게 지금 보낼 수 없으면 그 안내, 아니면 null (creator-receiving INV-B2·B6).
@@ -9,8 +9,8 @@ export function receivingNotice(
   picked: { receiving?: CreatorReceiving; limitReached?: boolean } | undefined,
   today: CalendarDate,
 ): string | null {
-  const resumeOn = picked?.receiving?.resumeOn ?? null;
-  if (resumeOn !== null && isResting(resumeOn, today)) return restingMessage(resumeOn);
+  const resting = restingNotice(picked?.receiving?.resumeOn ?? null, today);
+  if (resting !== null) return resting;
   if (picked?.limitReached) return limitReachedMessage(today);
   return null;
 }

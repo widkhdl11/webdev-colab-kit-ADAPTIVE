@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ANNIVERSARY_MAX,
   ANNIVERSARY_NAME_MAX,
@@ -19,23 +19,30 @@ import s from "./creator-settings.module.css";
 // 저장은 로그인 세션으로만 — 크리에이터 ID 를 보내지 않는다. 범위 검사는 서버·DB 가 한국 시간 오늘로 다시 한다.
 // 한도 숫자는 이 본인 화면에만 보인다(INV-B6).
 
-type Msg = { ok: boolean; text: string } | null;
+/** field 가 있으면 그 칸의 오류다(칸에 aria-invalid·aria-describedby 를 건다). */
+type Msg = { ok: boolean; text: string; field?: "resumeOn" } | null;
 type AnniversaryDraft = { key: number; name: string; month: number; day: number };
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 const LIMITS = Array.from({ length: MONTHLY_LIMIT_MAX }, (_, i) => i + 1);
 const daysOf = (month: number) => Array.from({ length: daysInMonth(month) }, (_, i) => i + 1);
 
+/** 저장됨은 상태 줄(role=status, 늘 있음)로 조용히, 오류는 오류 줄(role=alert, id = `${id}-err`)로 바로 읽힌다. */
 function SaveMessage({ id, msg }: { id: string; msg: Msg }) {
   return (
-    <p className={msg && !msg.ok ? s.error : `sub ${s["save-msg"]}`} role="status" id={id}>
+    <>
+      <p className={`sub ${s["save-msg"]}`} role="status" id={id}>
+        {msg?.ok ? msg.text : null}
+      </p>
       {msg && !msg.ok ? (
-        <span className={s["error-mark"]} aria-hidden="true">
-          !
-        </span>
+        <p className={s.error} role="alert" id={`${id}-err`}>
+          <span className={s["error-mark"]} aria-hidden="true">
+            !
+          </span>
+          {msg.text}
+        </p>
       ) : null}
-      {msg?.text}
-    </p>
+    </>
   );
 }
 
@@ -105,6 +112,8 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
   const [limit, setLimit] = useState<number | null>(initial.monthlyLimit);
   const [recvSaving, setRecvSaving] = useState(false);
   const [recvMsg, setRecvMsg] = useState<Msg>(null);
+  const resumeRef = useRef<HTMLInputElement>(null);
+  const resumeInvalid = recvMsg?.field === "resumeOn";
 
   const [bMonth, setBMonth] = useState<number | null>(initial.birthday?.month ?? null);
   const [bDay, setBDay] = useState<number | null>(initial.birthday?.day ?? null);
@@ -117,7 +126,8 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
     if (recvSaving) return;
     setRecvMsg(null);
     if (resting && resumeOn === "") {
-      setRecvMsg({ ok: false, text: "쉬는 동안에는 다시 받는 날을 꼭 골라 주세요." });
+      setRecvMsg({ ok: false, text: "쉬는 동안에는 다시 받는 날을 꼭 골라 주세요.", field: "resumeOn" });
+      resumeRef.current?.focus();
       return;
     }
     setRecvSaving(true);
@@ -178,14 +188,19 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
           <div className={`field ${s["recv-field"]}`}>
             <label htmlFor="recv-resume">다시 받는 날</label>
             <input
+              ref={resumeRef}
               id="recv-resume"
               className="input"
               type="date"
               min={range.min}
               max={range.max}
               value={resumeOn}
-              onChange={(e) => setResumeOn(e.currentTarget.value)}
-              aria-describedby="recv-resume-hint"
+              onChange={(e) => {
+                setResumeOn(e.currentTarget.value);
+                if (resumeInvalid) setRecvMsg(null);
+              }}
+              aria-invalid={resumeInvalid || undefined}
+              aria-describedby={resumeInvalid ? "recv-resume-hint recv-msg-err" : "recv-resume-hint"}
             />
             <p className="hint" id="recv-resume-hint">
               내일부터 1년 안으로 골라요. 이날 0시부터 다시 받아요. 쉬는 동안에도 이미 받은 선물의 승인·거절은 그대로 할 수 있어요.

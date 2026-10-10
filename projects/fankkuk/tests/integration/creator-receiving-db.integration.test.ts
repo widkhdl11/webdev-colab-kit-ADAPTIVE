@@ -1,5 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createSupabasePaymentStore } from "@/entities/payment/api/supabase-payment-store";
+import { SenderRefusedError } from "@/entities/payment/api/payment-store";
+import { readTierPrices } from "@/entities/payment/api/read-tier-prices";
+import { computeCharge } from "@/entities/payment/model/charge";
 import { adminClient, anonClient, followForTest, holdRowLock, payTestOrder, psql, SEED, signedInClient } from "./helpers";
 import { approveRpc } from "./helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
@@ -314,6 +318,43 @@ describe("INV-B4: 한도에 닿은 팬은 이번 달 새 주문을 만들 수 �
     expect((await register(FAN_X.id, A.creatorId)).error?.code).toBe("FKR02");
   });
 
+  /** 그 주문의 상태·만든 시각을 시험이 정한다(트리거 없이). */
+  function setOrder(orderId: string, set: string): void {
+    psql(`begin; set local session_replication_role = replica; update public.orders set ${set} where id = '${orderId}'; commit;`);
+  }
+
+  it("INV-B4 S4b: 반려(7일 자동, expired)로 끝난 주문은 세지 않는다", async () => {
+    await setLimit(1);
+    const o = await registerOk(FAN_X.id, A.creatorId);
+    setOrder(o.orderId, "status = 'expired', registered_at = now()");
+    expect((await register(FAN_X.id, A.creatorId)).error).toBeNull();
+    expect((await register(FAN_X.id, A.creatorId)).error?.code).toBe("FKR02");
+  });
+
+  it("INV-B4 S4b: 취소(canceled)로 끝난 주문은 세지 않는다", async () => {
+    await setLimit(1);
+    const o = await registerOk(FAN_X.id, A.creatorId);
+    setOrder(o.orderId, "status = 'canceled', registered_at = now()");
+    expect((await register(FAN_X.id, A.creatorId)).error).toBeNull();
+    expect((await register(FAN_X.id, A.creatorId)).error?.code).toBe("FKR02");
+  });
+
+  const kstMonthStart = "(date_trunc('month', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul')";
+
+  it("INV-B4: 이번 달은 한국 시간 1일 0시부터 — 그 1분 뒤 주문은 센다", async () => {
+    await setLimit(1);
+    const o = await registerOk(FAN_X.id, A.creatorId);
+    setOrder(o.orderId, `created_at = ${kstMonthStart} + interval '1 minute'`);
+    expect((await register(FAN_X.id, A.creatorId)).error?.code).toBe("FKR02");
+  });
+
+  it("INV-B4 (실패경로): 한국 시간 1일 0시 1분 전 주문은 지난달이라 세지 않는다", async () => {
+    await setLimit(1);
+    const o = await registerOk(FAN_X.id, A.creatorId);
+    setOrder(o.orderId, `created_at = ${kstMonthStart} - interval '1 minute'`);
+    expect((await register(FAN_X.id, A.creatorId)).error).toBeNull();
+  });
+
   it("INV-B4 S4c (동시): 한도 1, 이번 달 주문 0 에서 같은 팬이 동시에 두 번 등록하면 하나만 만들어진다", async () => {
     await setLimit(1);
     followForTest(FAN_X.id, A.creatorId);
@@ -509,11 +550,94 @@ describe("INV-B9: 기념일 7일 안이면 「{기념일} 선물」 표시, 서�
     expect(markOf((await registerOk(FAN_X.id, A.creatorId)).orderId)).toBe("(없음)");
   });
 
+  it("INV-B9 (실패경로): 저장한 뒤 금칙어가 더해진 기념일 이름은 7일 안이어도 표시 없이 저장된다(공개 읽기와 같은 필터)", async () => {
+    const word = "렌틸콩시험";
+    await anniversaryIn(3, word);
+    psql(`insert into public.creator_tag_banned_words (word) values ('${word}')`);
+    try {
+      expect(markOf((await registerOk(FAN_X.id, A.creatorId, { p_anniversary_name: word })).orderId)).toBe("(없음)");
+    } finally {
+      psql(`delete from public.creator_tag_banned_words where word = '${word}'`);
+    }
+    // 금칙어가 없으면 같은 이름이 붙는다 — 위 「없음」이 필터 때문임을 확인
+    expect(markOf((await registerOk(FAN_X.id, A.creatorId, { p_anniversary_name: word })).orderId)).toBe(word);
+  });
+
   it("INV-B9 S9c: 표시가 붙은 주문은 크리에이터가 그 기념일을 지워도 표시가 남는다", async () => {
     await anniversaryIn(4);
     const o = await registerOk(FAN_X.id, A.creatorId, { p_anniversary_name: "데뷔일" });
     expect((await saveDays(A.login, { p_birthday_month: null, p_birthday_day: null, p_anniversaries: [] })).error).toBeNull();
     expect(anniversariesOf(A.creatorId)).toBe("");
     expect(markOf(o.orderId)).toBe("데뷔일");
+  });
+});
+
+describe("서버의 「오늘」은 한국 날짜 (INV-B2·B3·B9)", () => {
+  const todayAt = (ts: string) => psql(`select public.receiving_today_at('${ts}'::timestamptz)::text`);
+
+  it("INV-B2·B3·B9: UTC 15:30 은 한국 다음 날 0:30 — 날짜가 넘어간다, UTC 14:59 는 아직 그날", () => {
+    expect(todayAt("2026-10-10T15:30:00Z")).toBe("2026-10-11");
+    expect(todayAt("2026-10-10T14:59:00Z")).toBe("2026-10-10");
+    expect(todayAt("2026-12-31T15:00:00Z")).toBe("2027-01-01");
+    expect(todayAt("2026-02-28T15:00:00Z")).toBe("2026-03-01");
+  });
+
+  it("INV-B2·B3·B9: 저장·등록이 쓰는 오늘(receiving_today)은 세션 시간대와 상관없이 지금 시각의 한국 날짜", () => {
+    // UTC-12 와 UTC+14 두 시간대면 하루 중 어느 때든 둘 중 하나는 세션 날짜가 한국 날짜와 다르다
+    for (const tz of ["Etc/GMT+12", "Etc/GMT-14"]) {
+      // psql 은 SET 의 결과 줄(「SET」)도 찍는다 — 마지막 줄이 비교 결과다
+      const r = psql(
+        `set timezone = '${tz}'; select (public.receiving_today() = public.receiving_today_at(now()) and public.receiving_today() = (now() at time zone 'Asia/Seoul')::date)::text`,
+      )
+        .split("\n")
+        .pop();
+      expect([tz, r]).toEqual([tz, "true"]);
+    }
+  });
+
+  it("INV-B2: 기준 시각을 받는 내부 함수는 로그인한 사람·로그인 안 한 사람이 부를 수 없다", () => {
+    for (const role of ["anon", "authenticated"]) {
+      expect([role, psql(`select has_function_privilege('${role}', 'public.receiving_today_at(timestamptz)', 'execute')::text`)]).toEqual([role, "false"]);
+    }
+  });
+});
+
+describe("서버의 2월 29일 처리 (INV-B8·B9)", () => {
+  const next = (m: number, d: number, today: string) => psql(`select public.receiving_next_date(${m}, ${d}, '${today}')::text`);
+
+  it("INV-B8·B9: 2월 29일은 평년에 2월 28일, 윤년에 2월 29일", () => {
+    expect(next(2, 29, "2027-02-28")).toBe("2027-02-28");
+    expect(next(2, 29, "2027-01-10")).toBe("2027-02-28");
+    expect(next(2, 29, "2027-03-01")).toBe("2028-02-29");
+    expect(next(2, 29, "2028-02-28")).toBe("2028-02-29");
+    expect(next(2, 29, "2100-01-01")).toBe("2100-02-28");
+  });
+
+  it("INV-B8·B9: 다른 날은 그대로 — 지났으면 다음 해", () => {
+    expect(next(10, 15, "2026-10-15")).toBe("2026-10-15");
+    expect(next(10, 15, "2026-10-16")).toBe("2027-10-15");
+  });
+});
+
+describe("DB 거부를 앱 오류 종류로 — 실제 저장소로 등록 (INV-B2·B6)", () => {
+  async function storeCreate(creatorId: string) {
+    followForTest(FAN_X.id, creatorId);
+    return createSupabasePaymentStore(adminClient()).create({
+      orderId: `pay_rcv_store_${uniq("").toLowerCase()}`,
+      orderNo: `FC-S${uniq("").slice(0, 8)}`.slice(0, 13),
+      charge: computeCharge(await readTierPrices(adminClient()), { boxes: ["small"] }),
+      registration: { fanId: FAN_X.id, creatorId, itemKind: "시험 선물", hasElectronicsOrMetal: false, boxes: ["small"], anniversaryName: null },
+    });
+  }
+
+  it("INV-B2 (실패경로): 쉬는 중이면 SenderRefusedError(resting)", async () => {
+    expect((await saveReceiving(A.login, restingArgs(kstDate(2)))).error).toBeNull();
+    await expect(storeCreate(A.creatorId)).rejects.toSatisfy((e) => e instanceof SenderRefusedError && e.reason === "resting");
+  });
+
+  it("INV-B6 (실패경로): 한도에 닿았으면 SenderRefusedError(limit)", async () => {
+    expect((await saveReceiving(A.login, { p_resting: false, p_resume_on: null, p_monthly_limit: 1 })).error).toBeNull();
+    await registerOk(FAN_X.id, A.creatorId);
+    await expect(storeCreate(A.creatorId)).rejects.toSatisfy((e) => e instanceof SenderRefusedError && e.reason === "limit");
   });
 });

@@ -83,9 +83,12 @@ export function anniversaryInWeek(today: CalendarDate, anniversaries: readonly A
   return best?.name ?? null;
 }
 
-function parseIsoDate(iso: string): CalendarDate | null {
+/** YYYY-MM-DD → 날짜. 달력에 없는 날(2026-02-30·13월)은 null — 날짜로 바꿨다가 다시 글자로 만들어 같은지 본다. */
+export function parseIsoDate(iso: string): CalendarDate | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  return m ? { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) } : null;
+  if (!m) return null;
+  const d = { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) };
+  return toIsoDate(addDays(d, 0)) === iso ? d : null;
 }
 
 /** INV-B2: 다시 받는 날이 오늘보다 뒤면 쉬는 중. 그날 0시부터는 받는 중. */
@@ -99,6 +102,11 @@ export function restingMessage(resumeOn: string): string {
   const r = parseIsoDate(resumeOn);
   const when = r ? `${r.month}월 ${r.day}일` : resumeOn;
   return `잠시 선물 받기를 쉬고 있어요. ${when}부터 다시 받을게요`;
+}
+
+/** INV-B2: 쉬는 중이면 그 안내, 아니면 null — 크리에이터 페이지·등록 화면 목록·고른 크리에이터 안내가 같이 쓴다. */
+export function restingNotice(resumeOn: string | null, today: CalendarDate): string | null {
+  return resumeOn !== null && isResting(resumeOn, today) ? restingMessage(resumeOn) : null;
 }
 
 /** 다음 달 1일. */

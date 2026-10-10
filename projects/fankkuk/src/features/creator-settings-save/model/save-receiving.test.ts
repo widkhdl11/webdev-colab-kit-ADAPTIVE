@@ -55,6 +55,20 @@ describe("INV-B3·B5: 받는 상태 입력 경계", () => {
     }
   });
 
+  it("INV-B3 (실패경로): 달력에 없는 날(2026-02-30·2026-13-01·2026-04-31)은 400, DB 를 부르지 않는다", async () => {
+    for (const d of ["2026-02-30", "2026-13-01", "2026-04-31", "2026-00-10"]) {
+      const f = fakeClient();
+      expect([d, await saveCreatorReceiving({ client: f.client, viewer: HARU }, { resting: true, resumeOn: d, monthlyLimit: null })]).toMatchObject([d, { ok: false, status: 400 }]);
+      expect([d, f.calls]).toEqual([d, []]);
+    }
+  });
+
+  it("INV-B3: 윤년 2월 29일(2028-02-29)은 꼴 검사를 통과해 DB 로 간다", async () => {
+    const f = fakeClient();
+    expect(await saveCreatorReceiving({ client: f.client, viewer: HARU }, { resting: true, resumeOn: "2028-02-29", monthlyLimit: null })).toEqual({ ok: true });
+    expect(f.calls).toHaveLength(1);
+  });
+
   it("INV-B3: DB 가 날짜 범위로 거부(22023)하면 400 과 범위 안내", async () => {
     const f = fakeClient({ code: "22023" });
     const r = await saveCreatorReceiving({ client: f.client, viewer: HARU }, { resting: true, resumeOn: "2020-01-01", monthlyLimit: null });

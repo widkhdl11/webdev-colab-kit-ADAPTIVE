@@ -1,7 +1,7 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
-import { ddayLabel, isResting, restingMessage, upcomingDday, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import { ddayLabel, restingNotice, upcomingDday, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import { approvalDurationText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
@@ -55,7 +55,7 @@ export function CreatorProfilePage({
 }) {
   const sendHref = `/gifts/new?creator=${creator.id}`;
   // INV-B2: 쉬는 중이면 「선물 보내기」 자리를 비우고 안내 문구를 보인다(등록은 DB 가 막는다). 팔로우는 그대로.
-  const restingText = receiving?.resumeOn && isResting(receiving.resumeOn, today) ? restingMessage(receiving.resumeOn) : null;
+  const restingText = restingNotice(receiving?.resumeOn ?? null, today);
   const sendShown = restingText ? "hidden" : send;
   // INV-B8: 가장 가까운 생일·기념일 하나를 D-30 ~ D-day 동안 — 등록 화면과 같은 계산 함수
   const dday = receiving ? upcomingDday(today, receiving.birthday, receiving.anniversaries) : null;
@@ -102,9 +102,7 @@ export function CreatorProfilePage({
             </div>
             {sendShown === "needs_follow" ? <p className={s["acts-note"]}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p> : null}
             {restingText ? (
-              <p className={s["acts-note"]} role="status">
-                {restingText}
-              </p>
+              <p className={s["acts-note"]}>{restingText}</p>
             ) : null}
           </div>
 
