@@ -195,7 +195,7 @@ describe("INV-L11: 재설정 링크는 한 번·1시간·그 계정 하나, 끝�
     const a = await createTestAccount({ tag: "expired", email: mail });
     const token = issueReset(a.userId);
     psql(`update public.password_resets set sent_at = now() - interval '61 minutes', expires_at = now() - interval '1 minute' where account_id = '${a.userId}'`);
-    expect(await reset(token, "new-pass-expired")).toMatchObject({ ok: false, field: "link" });
+    expect(await reset(token, "new-pass-expired-7")).toMatchObject({ ok: false, field: "link" });
     expect(await canSignIn(a.loginEmail, FIXTURE_PASSWORD)).toBe(true);
   });
 
@@ -224,16 +224,16 @@ describe("INV-L11: 재설정 링크는 한 번·1시간·그 계정 하나, 끝�
     await settledMailsTo(mail, 2);
     const second = await latestResetToken(mail);
     expect(second).not.toBe(first);
-    expect(await reset(first, "new-pass-first")).toMatchObject({ ok: false, field: "link" });
+    expect(await reset(first, "new-pass-first-7")).toMatchObject({ ok: false, field: "link" });
     expect(await canSignIn(a.loginEmail, FIXTURE_PASSWORD)).toBe(true);
-    expect(await reset(second, "new-pass-second")).toEqual({ ok: true });
+    expect(await reset(second, "new-pass-second-7")).toEqual({ ok: true });
   });
 
   it("INV-L11 S9b (실패경로): 무효 표시가 된 링크(새 요청이 나온 링크)는 거부, 비밀번호 그대로", async () => {
     const a = await createTestAccount({ tag: "revokedd", email: testEmail("revokedd") });
     const token = issueReset(a.userId);
     psql(`update public.password_resets set revoked_at = now() where account_id = '${a.userId}'`);
-    expect(await reset(token, "new-pass-revoked")).toMatchObject({ ok: false, field: "link", message: RESET_LINK_INVALID });
+    expect(await reset(token, "new-pass-revoked-7")).toMatchObject({ ok: false, field: "link", message: RESET_LINK_INVALID });
     expect(await canSignIn(a.loginEmail, FIXTURE_PASSWORD)).toBe(true);
   });
 
@@ -242,11 +242,11 @@ describe("INV-L11: 재설정 링크는 한 번·1시간·그 계정 하나, 끝�
     const victim = await createTestAccount({ tag: "victim", email: testEmail("victim") });
     const c = await createTestAccount({ tag: "ownerc", email: mailC });
     const token = issueReset(c.userId);
-    const r = await reset(token, "new-pass-owner-c", { accountId: victim.userId, userId: victim.userId, loginId: victim.loginId });
+    const r = await reset(token, "new-pass-owner-c-7", { accountId: victim.userId, userId: victim.userId, loginId: victim.loginId });
     expect(r).toEqual({ ok: true });
     expect(await canSignIn(victim.loginEmail, FIXTURE_PASSWORD)).toBe(true);
-    expect(await canSignIn(victim.loginEmail, "new-pass-owner-c")).toBe(false);
-    expect(await canSignIn(c.loginEmail, "new-pass-owner-c")).toBe(true);
+    expect(await canSignIn(victim.loginEmail, "new-pass-owner-c-7")).toBe(false);
+    expect(await canSignIn(c.loginEmail, "new-pass-owner-c-7")).toBe(true);
   });
 
   it("INV-L11 S9b (실패경로): DB 에는 링크 원문이 없다 — 해시만", async () => {
@@ -263,9 +263,9 @@ describe("INV-L11: 재설정 링크는 한 번·1시간·그 계정 하나, 끝�
     const token = issueReset(a.userId);
     expect(await reset(token, "short-9")).toMatchObject({ ok: false, field: "password" });
     expect(await reset(token, a.loginId)).toMatchObject({ ok: false, field: "password", message: "비밀번호를 아이디와 다르게 적어 주세요." });
-    expect(await reset(token, "new-pass-bounds", { passwordConfirm: "new-pass-other" })).toMatchObject({ ok: false, field: "passwordConfirm" });
+    expect(await reset(token, "new-pass-bounds-7", { passwordConfirm: "new-pass-other-7" })).toMatchObject({ ok: false, field: "passwordConfirm" });
     expect(await canSignIn(a.loginEmail, FIXTURE_PASSWORD)).toBe(true);
-    expect(await reset(token, "new-pass-bounds")).toEqual({ ok: true });
+    expect(await reset(token, "new-pass-bounds-7")).toEqual({ ok: true });
   });
 
   it("INV-L11 (실패경로): 같은 링크로 동시에 두 번 저장하면 하나만 지나간다", async () => {
@@ -273,11 +273,11 @@ describe("INV-L11: 재설정 링크는 한 번·1시간·그 계정 하나, 끝�
     const token = issueReset(a.userId);
     // 링크 줄을 다른 연결에서 잠가 두 저장을 그 뒤에 줄 세운다 — 운 좋게 앞뒤로 와서 통과하지 않게
     const lock = await holdRowLock(`select 1 from public.password_resets where account_id = '${a.userId}' for update`, 2);
-    const results = await Promise.all([reset(token, "new-pass-race-a"), reset(token, "new-pass-race-b")]);
+    const results = await Promise.all([reset(token, "new-pass-race-a-7"), reset(token, "new-pass-race-b-7")]);
     await lock.released;
     expect(results.filter((r) => r.ok)).toHaveLength(1);
-    const winner = results[0]!.ok ? "new-pass-race-a" : "new-pass-race-b";
-    const loser = winner === "new-pass-race-a" ? "new-pass-race-b" : "new-pass-race-a";
+    const winner = results[0]!.ok ? "new-pass-race-a-7" : "new-pass-race-b-7";
+    const loser = winner === "new-pass-race-a-7" ? "new-pass-race-b-7" : "new-pass-race-a-7";
     expect(await canSignIn(a.loginEmail, winner)).toBe(true);
     expect(await canSignIn(a.loginEmail, loser)).toBe(false);
   });
@@ -342,7 +342,7 @@ describe("INV-L11: 재설정 링크는 한 번·1시간·그 계정 하나, 끝�
     expect(confirm.error).toBeNull();
     expect(psql(`select email from pii.account_contacts where account_id = '${a.userId}'`)).toBe(next);
     expect(await peek()).toBeNull();
-    expect(await reset(token, "new-pass-mailrev")).toMatchObject({ ok: false, field: "link", message: RESET_LINK_INVALID });
+    expect(await reset(token, "new-pass-mailrev-7")).toMatchObject({ ok: false, field: "link", message: RESET_LINK_INVALID });
     expect(await canSignIn(a.loginEmail, FIXTURE_PASSWORD)).toBe(true);
   });
 

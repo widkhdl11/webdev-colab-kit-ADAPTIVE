@@ -59,12 +59,12 @@ describe("INV-L12: 비밀번호 바꾸기는 로그인한 사람 자신의 것�
       userId: other.userId,
       accountId: other.userId,
       currentPassword: otherPassword,
-      newPassword: "new-pass-hijack",
-      newPasswordConfirm: "new-pass-hijack",
+      newPassword: "new-pass-hijack-7",
+      newPasswordConfirm: "new-pass-hijack-7",
     });
     expect(r).toMatchObject({ ok: false, field: "currentPassword", message: CURRENT_PASSWORD_WRONG });
     expect(await canSignIn(other.loginEmail, otherPassword)).toBe(true);
-    expect(await canSignIn(other.loginEmail, "new-pass-hijack")).toBe(false);
+    expect(await canSignIn(other.loginEmail, "new-pass-hijack-7")).toBe(false);
     expect(await canSignIn(d.loginEmail, FIXTURE_PASSWORD)).toBe(true);
   });
 
