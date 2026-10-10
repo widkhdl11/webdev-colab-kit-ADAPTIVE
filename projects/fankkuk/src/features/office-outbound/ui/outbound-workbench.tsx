@@ -425,6 +425,45 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
       );
 
     default:
+      // INV-P5 (2026-10-10): 출고 확정된 팬 선물 상자도 택배 기사가 가져가기 전이면 남은 횟수 안에서 대표가 다시 출력한다
+      if (parcel.kind === "gift" && parcel.state === "shipped" && canReprintLabel(access)) {
+        return (
+          <section className={w.result} aria-labelledby="out-shipped">
+            <div className={w.resultHead}>
+              <span className={`${a.tag} ${a.tagBrand}`}>출고 확정</span>
+              <h2 id="out-shipped" className={a.mono}>
+                {parcel.orderNo}
+              </h2>
+            </div>
+            <Facts parcel={parcel} />
+            {parcel.outboundWaybillNo && <WaybillBox label="출력한 송장번호 (개발용 — 택배사 연동 전)" waybill={parcel.outboundWaybillNo} />}
+            <div className={w.nextStep}>
+              {opened ? (
+                <>
+                  <PrintLabel orderNo={parcel.orderNo} opened={opened} />
+                  <div className={a.btnRow}>
+                    <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
+                      송장 인쇄
+                    </button>
+                  </div>
+                  <p className={a.hint}>받는 사람 주소는 화면에 보이지 않고 인쇄에만 찍혀요. 송장번호는 처음 것과 같아요.</p>
+                </>
+              ) : (
+                <>
+                  <h3>출고 확정된 상자예요</h3>
+                  <p>택배 기사가 가져가기 전에 송장이 젖거나 망가졌을 때만 다시 출력해요. 송장번호는 처음 것 그대로예요.</p>
+                  <div className={a.btnRow}>
+                    <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => onPrint("print_label")} aria-disabled={busy}>
+                      {busy ? "출력하는 중…" : "송장 다시 출력"}
+                    </button>
+                  </div>
+                  <p className={a.hint}>다시 출력하면 주소를 한 번 더 열고 열람 기록에 남아요(첫 출력 포함 최대 3번).</p>
+                </>
+              )}
+            </div>
+          </section>
+        );
+      }
       return (
         <section className={w.result} aria-labelledby="out-other">
           <div className={w.resultHead}>

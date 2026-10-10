@@ -13,6 +13,8 @@ export type DecryptRequest = {
   signature: VerifiedSignature | null;
   registeredSignerId: string;
   orderStatus: OrderStatus;
+  /** 이 상자의 사무실 단계(office_parcels.state) — 출고 확정 뒤 재출력을 가른다 */
+  parcelState: string;
   fanBlocked: boolean;
   /** 이 상자에서 지금까지 주소를 연 횟수(상자마다 따로 — 카드 d30) */
   decryptCount: number;
@@ -28,6 +30,14 @@ export type DecryptDecision =
       reason: AccessDenyReason;
     };
 
+function beforeShipment(req: DecryptRequest): boolean {
+  return isPrintable(req.orderStatus) && (req.parcelState === "inspected" || req.parcelState === "label_printed");
+}
+
+function reprintAfterShipment(req: DecryptRequest): boolean {
+  return req.parcelState === "shipped" && req.decryptCount > 0 && (req.orderStatus === "label_printed" || req.orderStatus === "shipped");
+}
+
 /** 복호화 함수 진입부 판정. 하나라도 어긋나면 열지 않는다. 동시 요청의 원자성은 저장소 쪽이 맡는다. */
 export function authorizeDecrypt(req: DecryptRequest): DecryptDecision {
   // INV-P8: 대표 계정만. 판단 근거는 복호화 함수 설정의 대표 ID 하나.
@@ -41,8 +51,9 @@ export function authorizeDecrypt(req: DecryptRequest): DecryptDecision {
   // INV-P4 (b): 서명 원문의 주문번호가 요청한 주문번호와 같아야 한다.
   if (approval.orderNo !== req.requestedOrderNo) return { ok: false, reason: "order_mismatch" };
 
-  // INV-P4 (c)·INV-P5: 검수 완료 ~ 출고 확정 전에만. 출고 확정되면 남은 횟수는 소멸. 차단된 팬의 주문도 거부.
-  if (req.fanBlocked || !isPrintable(req.orderStatus)) return { ok: false, reason: "order_not_printable" };
+  // INV-P4 (c)·INV-P5: 검수 완료 ~ 출고 확정 전, 또는 출고 확정된 상자의 재출력(2026-10-10 — 택배사 집하 확인 전에는 남은 횟수 안에서).
+  // 출고 확정된 상자의 첫 출력은 없다. 차단된 팬의 주문도 거부.
+  if (req.fanBlocked || !(beforeShipment(req) || reprintAfterShipment(req))) return { ok: false, reason: "order_not_printable" };
 
   // INV-M12: 차액을 덜 낸 주문은 출고하지 않는다 — 송장 출력(=주소 열기)도 하지 않는다.
   if (req.differenceUnpaid) return { ok: false, reason: "difference_unpaid" };

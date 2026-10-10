@@ -131,6 +131,7 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
     signature,
     registeredSignerId: deps.signer ? deps.signer.registeredSignerIdOf(ctx.creator_profile_id) : "",
     orderStatus: orderStatusOf(ctx.order_status),
+    parcelState: ctx.parcel_state,
     // 차단은 승인 전 주문을 거절로 바꿀 뿐이고 승인된 주문은 그대로 출고한다(decline-block INV-D8, 카드 d27) —
     // 차단으로 거절된 주문은 위 상태 판정에서 이미 걸린다.
     fanBlocked: false,
@@ -177,7 +178,7 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
   // 첫 출력이면 새 송장번호로 송장 출력 단계로 넘기고, 재출력이면 DB 가 처음 번호를 돌려준다 — 재출력에는 새 번호를 받지 않는다.
   // 재출력인지는 DB 가 잠근 자리에서 정한다(first). 몇 번째로 주소를 열었는지로 정하면, 송장 없이 끝난 앞선 시도가 있을 때
   // 첫 송장이 「재출력」으로 찍힌다. 판정 재료를 읽은 뒤 다른 요청이 먼저 출력했으면 넘긴 번호는 쓰이지 않는다.
-  const waybill = ctx.parcel_state === "label_printed" ? null : deps.newWaybill();
+  const waybill = ctx.parcel_state === "label_printed" || ctx.parcel_state === "shipped" ? null : deps.newWaybill();
   const finish = await deps.db.rpc("invoice_finish_print", { p_qr: input.qr, p_waybill: waybill });
   if (finish.error) return releaseOpened(deps, logId, requesterId);
   const finished = finishShape.safeParse(finish.data);

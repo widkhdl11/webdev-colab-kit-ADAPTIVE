@@ -221,15 +221,19 @@ describe("INV-P5: 최대 3번, 출고 확정 뒤에는 열리지 않는다", () 
     expect(logRows(g.orderId)).toEqual([`opened:1:${OWNER_ID}`, `opened:2:${OWNER_ID}`, `opened:3:${OWNER_ID}`, `denied:decrypt_limit_reached:${OWNER_ID}`]);
   });
 
-  it("INV-P5 (S5c, 실패경로): 1회 출력 후 출고 확정하면 남은 2회는 쓸 수 없다", async () => {
+  it("INV-P5 (S5c·S5h): 1회 출력 후 출고 확정해도 남은 2회는 재출력된다 — 처음 송장번호 그대로, 상자는 출고 확정 그대로, 4번째는 거부", async () => {
     const g = await inspectedGift();
     const first = await print(g.qr);
     if (first.kind !== "printed") throw new Error("열리지 않음");
     const staff = await signedInClient("fankkuk_staff");
     expect((await staff.rpc("office_confirm_shipment", { p_qr: g.qr, p_waybill: first.waybill })).error).toBeNull();
     expect(orderStatus(g.orderId)).toBe("shipped");
-    expect(await print(g.qr)).toEqual({ kind: "denied", reason: "order_not_printable" });
-    expect(logRows(g.orderId)).toEqual([`opened:1:${OWNER_ID}`, `denied:order_not_printable:${OWNER_ID}`]);
+    expect(await print(g.qr)).toMatchObject({ kind: "printed", reprint: true, waybill: first.waybill });
+    expect(await print(g.qr)).toMatchObject({ kind: "printed", reprint: true, waybill: first.waybill });
+    expect(parcelState(g.qr)).toBe("shipped");
+    expect(orderStatus(g.orderId)).toBe("shipped");
+    expect(await print(g.qr)).toEqual({ kind: "denied", reason: "decrypt_limit_reached" });
+    expect(logRows(g.orderId)).toEqual([`opened:1:${OWNER_ID}`, `opened:2:${OWNER_ID}`, `opened:3:${OWNER_ID}`, `denied:decrypt_limit_reached:${OWNER_ID}`]);
   });
 
   it("INV-P5 (S5b, 동시): 상한 직전에 출력 요청 두 개가 겹쳐도 열리는 것은 하나, 나머지는 잠근 자리에서 거부", async () => {
@@ -289,17 +293,16 @@ describe("INV-P5: 횟수는 상자마다 따로 센다 (카드 d30)", () => {
     expect(boxLogRows(g.orderId)).toBe("1:opened:1,1:opened:2,1:opened:3,1:denied:decrypt_limit_reached,2:opened:1");
   });
 
-  it("INV-P5 (S5g, 실패경로): 먼저 출고한 상자는 남은 횟수가 있어도 닫히고, 아직 안 나간 옆 상자는 열린다", async () => {
+  it("INV-P5 (S5g): 먼저 출고한 상자는 재출력(2번째)이고, 아직 안 나간 옆 상자는 첫 출력으로 열린다", async () => {
     const g = await inspectedBoxes(2);
     const [a, b] = g.qrs as [string, string];
     const first = await print(a);
     if (first.kind !== "printed") throw new Error("열리지 않음");
     const staff = await signedInClient("fankkuk_staff");
     expect((await staff.rpc("office_confirm_shipment", { p_qr: a, p_waybill: first.waybill })).error).toBeNull();
-    expect(await print(a)).toEqual({ kind: "denied", reason: "order_not_printable" });
+    expect(await print(a)).toMatchObject({ kind: "printed", reprint: true, waybill: first.waybill });
     expect(await print(b)).toMatchObject({ kind: "printed", reprint: false });
-    // 상자 1의 거부는 DB 가 잠근 자리에서 남긴 줄이다(주문은 상자 2 때문에 아직 출고 전이라 앱 판정은 통과한다) — 그 줄에도 상자가 있어야 한다
-    expect(boxLogRows(g.orderId)).toBe("1:opened:1,1:denied:order_not_printable,2:opened:1");
+    expect(boxLogRows(g.orderId)).toBe("1:opened:1,1:opened:2,2:opened:1");
   });
 
   it("INV-P5 (실패경로): 어느 상자인지 없는 「연 줄」은 DB 가 받지 않는다 — 그런 줄은 어느 상자의 횟수에도 안 잡힌다", async () => {

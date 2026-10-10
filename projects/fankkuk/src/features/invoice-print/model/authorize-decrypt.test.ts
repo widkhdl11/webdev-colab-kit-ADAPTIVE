@@ -28,6 +28,7 @@ const ok: DecryptRequest = {
   signature: signatureOver(payloadFor("FC-AAAAA")),
   registeredSignerId: CREATOR_SIGNER,
   orderStatus: "inspected",
+  parcelState: "inspected",
   fanBlocked: false,
   decryptCount: 0,
   differenceUnpaid: false,
@@ -91,11 +92,23 @@ describe("복호화 허용 판정", () => {
     });
   });
 
-  it("INV-P5 (S5c, 실패경로): 1회 출력 후 출고 확정된 주문은 남은 횟수가 있어도 거부된다", () => {
-    expect(authorizeDecrypt({ ...ok, orderStatus: "shipped", decryptCount: 1 })).toEqual({
+  it("INV-P5 (S5c): 1회 출력 후 출고 확정된 상자는 남은 횟수 안에서 재출력된다", () => {
+    expect(authorizeDecrypt({ ...ok, orderStatus: "shipped", parcelState: "shipped", decryptCount: 1 })).toEqual({ ok: true, isReprint: true });
+    // 옆 상자가 아직 안 나가 주문은 송장 출력 단계여도 같다
+    expect(authorizeDecrypt({ ...ok, orderStatus: "label_printed", parcelState: "shipped", decryptCount: 2 })).toEqual({ ok: true, isReprint: true });
+  });
+
+  it("INV-P5 (S5h, 실패경로): 출고 확정 뒤 재출력도 상한 3번을 넘지 않는다", () => {
+    expect(authorizeDecrypt({ ...ok, orderStatus: "shipped", parcelState: "shipped", decryptCount: 3 })).toEqual({
       ok: false,
-      reason: "order_not_printable",
+      reason: "decrypt_limit_reached",
     });
+  });
+
+  it("INV-P4 (c, 실패경로): 출고 확정된 상자의 첫 출력은 없다 · 주문이 출고됐는데 이 상자가 출고 확정이 아니면 거부", () => {
+    expect(authorizeDecrypt({ ...ok, orderStatus: "shipped", parcelState: "shipped", decryptCount: 0 })).toEqual({ ok: false, reason: "order_not_printable" });
+    expect(authorizeDecrypt({ ...ok, orderStatus: "shipped", parcelState: "inspected", decryptCount: 1 })).toEqual({ ok: false, reason: "order_not_printable" });
+    expect(authorizeDecrypt({ ...ok, orderStatus: "rejected", parcelState: "shipped", decryptCount: 1 })).toEqual({ ok: false, reason: "order_not_printable" });
   });
 
   it("INV-P8 (S8, 실패경로): 대표가 아닌 계정의 요청은 거부된다", () => {

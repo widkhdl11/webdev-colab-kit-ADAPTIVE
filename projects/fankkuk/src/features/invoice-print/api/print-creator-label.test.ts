@@ -147,6 +147,19 @@ describe("송장 출력 — 주소 열기 (INV-P4·P5·P14)", () => {
     expect(logs).toEqual([]);
   });
 
+  it("INV-P5 (S5c): 출고 확정된 상자의 재출력도 처음 송장번호 그대로 — 새 번호는 받지 않는다", async () => {
+    const { db, calls } = fakeDb(
+      goodContext({ decrypt_count: 1, parcel_state: "shipped", order_status: "shipped" }),
+      await openedClaim(2),
+      { waybill: OLD_WAYBILL, first: false },
+    );
+    let issued = 0;
+    const res = await printCreatorLabel(deps(db, { newWaybill: () => (issued++, NEW_WAYBILL) }), ask);
+    expect(res).toEqual({ kind: "printed", waybill: OLD_WAYBILL, reprint: true, label: fields });
+    expect(issued).toBe(0);
+    expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: null });
+  });
+
   it("INV-P5 (S5d): 2회째 출력은 재출력 표시, 송장번호는 DB 가 돌려준 처음 번호 — 새 번호는 받지 않는다", async () => {
     const { db, calls } = fakeDb(
       goodContext({ decrypt_count: 1, parcel_state: "label_printed", order_status: "label_printed" }),
@@ -212,7 +225,7 @@ describe("송장 출력 — 거부 (INV-P4·P7·P8)", () => {
     ["INV-P4 (실패경로 a): 서명 방식이 지금 창구와 다르면(카카오 서명인데 창구는 가짜)", { signer_method: "kakao" }, "no_valid_approval"],
     ["INV-P4 (S4b, 실패경로 b): 서명 원문의 주문번호가 출력하는 주문과 다르면", { stored_payload: payloadFor("FC-BBBBB"), signed_content: payloadFor("FC-BBBBB") }, "order_mismatch"],
     ["INV-P4 (S4c, 실패경로 c): 검수 완료 전이면", { order_status: "labeled" }, "order_not_printable"],
-    ["INV-P4 (S5c, 실패경로 c): 출고 확정 뒤면", { order_status: "shipped" }, "order_not_printable"],
+    ["INV-P4 (실패경로 c): 주문은 출고됐는데 이 상자는 출고 확정 상자가 아니면", { order_status: "shipped", decrypt_count: 1 }, "order_not_printable"],
     ["INV-P4 (S4c, 실패경로 c): 거절된 주문이면", { order_status: "rejected" }, "order_not_printable"],
     ["INV-P4 (실패경로 c): 모르는 상태 값이면", { order_status: "pending_payment" }, "order_not_printable"],
     ["INV-M12 (실패경로): 차액이 덜 냈으면", { difference_unpaid: true }, "difference_unpaid"],
