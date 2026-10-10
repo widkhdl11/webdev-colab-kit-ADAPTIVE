@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: passed
-basis: c3ed31a2997b
+basis: e50487eadb4e
 reviewers: [security-reviewer, code-reviewer, test-auditor, ui-reviewer]
 ---
 
@@ -21,11 +21,18 @@ reviewers: [security-reviewer, code-reviewer, test-auditor, ui-reviewer]
 - code-reviewer: 중 1 → 관리자 결제 목록의 late_box 갈래가 실행될 일 없음(로컬 DB 에 닫히지 않은 상자의 환불 기록 0건 확인) → SQL·타입·라벨에서 뺌.
   낮음 2 → 낡은 주석 둘(2fd4150). 잠금 순서(INV-W12)·환불 합계는 맞음.
 - test-auditor: 빈 갈래 5 → 시험 추가(986ed87), 갈래마다 변이 따로 → 모두 빨간불, 원본 복구 바이트 비교 일치.
-  예외: 출고 상자 복호화 거부 시험은 지금 DB 에서 출고 상자가 통째로 거부돼 변이가 의미 없음 — manual/0015 적용 뒤 변이 필요.
+  출고 상자 복호화 거부 시험은 manual/0015 적용 뒤 변이를 돌렸더니 DB 쪽 조건을 빼도 통과했다 — 앱 판정이 같은 조건으로 먼저 막았다.
+  DB 함수 직접 호출 단언을 더해 변이 셋(열었는지·출고 상자의 주문 단계·검수 완료 허용)이 각각 다른 시험에서 빨간불(f3fd9fc).
+
+## 0015 적용 뒤 추가(f3fd9fc)
+- 0015 를 적용하자 S5g 가 실패 — 상자 둘 중 먼저 출고한 상자의 재출력이 거부됐다. 주문 단계는 가장 덜 나간 상자를 따르는데
+  0015·앱 판정 둘 다 주문 「송장 출력·출고」만 받았다(impl). 「검수 완료」도 받게 고치고 0015 는 사람이 다시 적용.
+- security-reviewer(이 커밋만): 지적 없음. 거절·만료·취소는 따로 있는 단계 · 출고 뒤 거절·취소는 주문 단계를 바꾸지 않음 · 출고 상자엔 새 차액이 안 생김.
+  참고 1 → 옆 상자 미납 차액이 출고 상자 재출력도 막는 어긋남(막는 쪽) — BACKLOG.
 
 ## 실행 근거
 - A4: `vitest --config vitest.integration.config.mts creator-tags-db creator-signup-db signup-db` → 72/72, 허용 목록 비우기 변이 → S7b 빨간불, 복구 뒤 41/41
-- 시험 보강 뒤 한 파일씩: decline-block 45/45 · approval 22/22 · invoice-print 26/28(S5c·S5g — manual/0015 적용 전이라 예고된 실패) ·
+- 시험 보강 뒤 한 파일씩: decline-block 45/45 · approval 22/22 · invoice-print 28/28(0015 적용·수정 뒤, 변이 셋 확인) ·
   cancel 12/12 · password-reset 27/27 · password-change 7/7 · partial-reject 24/24 · revgift-close 18/18
-- `tsc --noEmit` 통과 · 단위 payment·order 160/160
+- `tsc --noEmit` 통과 · 단위 payment·order 160/160 · invoice-print 84/84
 - 통합 전체는 이번에 돌리지 않았다(바꾼 파일만).
