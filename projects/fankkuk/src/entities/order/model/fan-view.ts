@@ -4,7 +4,7 @@ import type { OrderRecord } from "./order-record";
 // - 크리에이터에게 보내는 송장번호는 넣지 않는다(택배사 조회로 수령지 일부가 보인다).
 // - 사무실 주소는 결제가 끝난 진행 중 주문에 넣는다 — 6자리는 승인 전이면 「먼저 보내기」 뒤에만 DB 가 준다(INV-S9, 2026-10-08 개정).
 //   거절·반려·취소·검수 반송된 주문에는 넣지 않는다. 운영에서는 서버의 주소 안내 조회가 같은 판정을 쓴다.
-// - 거절과 7일 자동 반려는 같은 모습이다 — 거절 이유는 물론 거절했다는 사실도 드러내지 않는다.
+// - 거절(직접·차단)과 7일 자동 반려는 나눠 보인다(decline-block INV-D5) — 차단은 거절과 같은 모습이고, 거절 이유는 드러내지 않는다.
 
 export type FanStepKey = "registered" | "received" | "inspected" | "shipped" | "in_transit" | "delivered";
 

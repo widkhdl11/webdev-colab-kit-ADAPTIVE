@@ -80,7 +80,7 @@ export function AccessLogPage({
         </div>
       </section>
       <p className={`sub ${s.rules}`}>
-        주소는 선물 상자마다 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_BOX}번까지 열려요. 상자가 출고되면 남은 횟수가 있어도 그 상자로는 더 열리지 않아요.
+        주소는 선물 상자마다 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_BOX}번까지 열려요. 택배 기사가 상자를 가져가면 남은 횟수가 있어도 그 상자로는 더 열리지 않아요.
       </p>
 
       <section className={s.records} aria-label="열람 기록">

@@ -199,10 +199,10 @@ AS $function$
     left join public.refunds r on r.payment_id = p.id and r.box_id is null
     where p.status = 'done' or (p.review_at is not null and p.status = 'confirming')
     union all
-    -- 상자마다 한 줄(INV-M8·M18): 도착하지 않음으로 닫힌 상자('missing_box'), 거절·반려 뒤 늦게 도착한 상자('late_box').
+    -- 상자마다 한 줄(INV-M8·M9): 도착하지 않음으로 닫힌 상자('missing_box'). 늦게 온 상자는 주문 환불에서 배송비를 뺀 몫으로만 돌려주고 상자 줄을 따로 만들지 않는다.
     -- 금액은 그 상자 금액, 칸은 상자에 저장한 값(INV-M14).
     select 'gift_box', b.id, o.order_no || case when n.cnt > 1 then '-' || b.seq else '' end,
-           case when b.missing_at is not null then 'missing_box' else 'late_box' end, fp.nickname,
+           'missing_box', fp.nickname,
            b.price_krw, 0, b.price_krw - b.shipping_fee_krw - b.inspection_fee_krw, b.inspection_fee_krw, b.shipping_fee_krw, p.settled_at,
            public.refund_due_of_box(b.id), r.status, r.amount_krw, r.last_error, false
     from public.boxes b
@@ -211,7 +211,7 @@ AS $function$
     join public.profiles fp on fp.id = o.fan_id
     cross join lateral (select count(*) as cnt from public.boxes x where x.order_id = o.id) n
     left join public.refunds r on r.box_id = b.id
-    -- 상자 환불은 닫힌 상자에만 있다(INV-M9, 2026-10-10) — 늦게 온 상자 줄은 더 생기지 않는다
+    -- 상자 환불은 닫힌 상자에만 있다(INV-M9, 2026-10-10)
     where b.missing_at is not null
     union all
     select 'revgift', s.id, s.order_no, 'revgift', cp.nickname,
