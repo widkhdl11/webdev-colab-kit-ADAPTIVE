@@ -288,8 +288,20 @@ describe("INV-C2 6자리는 그 주문의 주인에게만", () => {
   });
 });
 
-describe("INV-C3 거절·반려·취소 때 그 주문의 6자리 전부 무효", () => {
-  it("INV-C3 (S3): 결제 완료·승인 전에 보이던 6자리가 크리에이터 거절과 같은 처리에서 전부 무효, 주소 칸이 사라진다", async () => {
+describe("INV-C3 거절·반려·취소 때 — 받는 주소를 본 적이 없으면 전부 무효, 본 적이 있으면 안 온 상자는 살려 둔다", () => {
+  it("INV-C3 (S3): 「먼저 보내기」를 안 누른 승인 전 주문은 6자리가 보이지 않고, 크리에이터 거절과 같은 처리에서 전부 무효", async () => {
+    const g = await paidGift(2);
+    const fan = await signedInClient("byeolbit_fan");
+    const before = (await fan.rpc("my_gift_boxes", { p_order_no: g.orderNo })).data as { address_code: string | null }[];
+    expect(before.every((b) => b.address_code === null)).toBe(true);
+
+    const haru = await signedInClient("haru_creator");
+    const d = await haru.rpc("decline_gift", { p_request_id: g.requestId, p_block: false });
+    expect(d.error).toBeNull();
+    for (const id of g.boxIds) expect(codeState(id)).toBe("void");
+  });
+
+  it("INV-C3 (S3d): 「먼저 보내기」로 6자리를 본 주문은 거절돼도 6자리를 살려 두고, 팬 화면에서는 주소 칸이 사라진다", async () => {
     const g = await paidGift(2);
     const fan = await signedInClient("byeolbit_fan");
     expect((await fan.rpc("ack_early_send", { p_order_no: g.orderNo })).error).toBeNull();
@@ -297,9 +309,8 @@ describe("INV-C3 거절·반려·취소 때 그 주문의 6자리 전부 무효"
     expect(before.every((b) => b.address_code !== null)).toBe(true);
 
     const haru = await signedInClient("haru_creator");
-    const d = await haru.rpc("decline_gift", { p_request_id: g.requestId, p_block: false });
-    expect(d.error).toBeNull();
-    for (const id of g.boxIds) expect(codeState(id)).toBe("void");
+    expect((await haru.rpc("decline_gift", { p_request_id: g.requestId, p_block: false })).error).toBeNull();
+    for (const id of g.boxIds) expect(codeState(id)).toBe("valid");
     const after = (await fan.rpc("my_gift_boxes", { p_order_no: g.orderNo })).data as { address_code: string | null }[];
     expect(after).toHaveLength(2);
     expect(after.every((b) => b.address_code === null)).toBe(true);
@@ -315,12 +326,16 @@ describe("INV-C3 거절·반려·취소 때 그 주문의 6자리 전부 무효"
 
   // 팬 선물 주문을 취소하는 함수(주문 상태를 canceled 로 바꾸는 길)는 아직 없다 — 그 길이 생기면 그 함수로 바꾼다.
   // 지금은 무효 처리가 상태 전이 자체(트리거)에 붙어 있음을 직접 갱신으로 본다. 역조공 몫 취소는 실제 취소 함수로 아래에서 본다.
-  it("INV-C3 (S3b): 주문 취소도 같다 — 이미 입고에 쓰인 6자리는 사용됨 그대로", async () => {
+  it("INV-C3 (S3b·S3d): 주문 취소 — 상자가 하나도 안 왔고 주소를 본 적이 없으면 전부 무효, 상자가 하나라도 왔으면 쓰인 6자리는 사용됨·안 온 상자는 살려 둠", async () => {
+    const none = await paidGift(2);
+    psql(`update public.orders set status = 'canceled' where id = '${none.orderId}'`);
+    expect([codeState(none.boxIds[0]), codeState(none.boxIds[1])]).toEqual(["void", "void"]);
+
     const g = await paidGift(2);
     await receiveWithCode(await staff(), g.boxIds[0]);
     psql(`update public.orders set status = 'canceled' where id = '${g.orderId}'`);
     expect(codeState(g.boxIds[0])).toBe("used");
-    expect(codeState(g.boxIds[1])).toBe("void");
+    expect(codeState(g.boxIds[1])).toBe("valid");
   });
 
   it("INV-C3 (S3b): 역조공 몫을 실제 취소 함수(close_revgift_share 'cancelled', 앱 서버 키)로 취소하면 그 몫의 6자리가 무효, 주소 칸이 사라진다", async () => {
@@ -336,11 +351,14 @@ describe("INV-C3 거절·반려·취소 때 그 주문의 6자리 전부 무효"
     expect(after?.address_code).toBeNull();
   });
 
-  it("INV-C3: 역조공 몫을 팬이 받지 않으면 그 몫의 6자리가 무효", async () => {
+  it("INV-C3 (S3d): 역조공 몫을 팬이 받지 않아도 그 몫의 6자리는 살려 둔다 — 크리에이터 화면에서는 주소 칸이 사라진다(reverse-gift INV-R11·R14)", async () => {
     const s = await paidShare();
     const fan = await signedInClient("byeolbit_fan");
     expect((await fan.rpc("decline_revgift", { p_order_no: s.orderNo })).error).toBeNull();
-    expect(psql(`select state from public.inbound_codes where share_id = '${s.shareId}'`)).toBe("void");
+    expect(psql(`select state || '|' || (kept_at is not null) from public.inbound_codes where share_id = '${s.shareId}'`)).toBe("valid|true");
+    const haru = await signedInClient("haru_creator");
+    const after = ((await haru.rpc("my_share_boxes")).data as { share_id: string; address_code: string | null }[]).find((x) => x.share_id === s.shareId);
+    expect(after?.address_code ?? null).toBeNull();
   });
 
   it("INV-C3: 무효가 된 6자리로 온 상자는 입고되지 않고 보류", async () => {

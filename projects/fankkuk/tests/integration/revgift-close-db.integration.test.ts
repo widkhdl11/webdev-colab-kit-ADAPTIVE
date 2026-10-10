@@ -4,6 +4,7 @@ import { creatorSetsWaybill, finishPrint, inspect, receiveAndLabel, SHARE_PASS, 
 import {
   backdateSettlement,
   deleteTestRevgifts,
+  keptSince,
   followHaru,
   payTestRevgift,
   PROFILE,
@@ -171,7 +172,7 @@ describe("INV-R10 · INV-K1: 역조공 받기 기한 처리는 운영자가 관�
     expect(shareReply(send.orderNos[0]!)).toBe("waiting");
   });
 
-  it("INV-R11 S11: 기한 처리로 받지 않음이 된 몫만 환불 대상이 되고, 금액은 그 몫의 요금(입고 전 = 전액)이다", async () => {
+  it("INV-R11 S11·S11e: 기한 처리로 받지 않음이 된 몫은 상자가 안 온 채 168시간이 지나 닫힐 때 환불 대상(그 몫 전액)이 된다 — 그 전에는 아니다", async () => {
     const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "medium" }]);
     await payTestRevgift(send);
     const other = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
@@ -182,8 +183,31 @@ describe("INV-R10 · INV-K1: 역조공 받기 기한 처리는 운영자가 관�
     expect(due(send.orderNos[0]!)).toBe("none");
     const staff = await signedInClient("fankkuk_staff");
     await staff.rpc("office_run_expiry", { p_order_no: send.orderNos[0] });
+    // 받지 않음이 됐어도 상자가 오는 중일 수 있어 6자리를 살려 두고 환불을 미룬다
+    expect(due(send.orderNos[0]!)).toBe("none");
+    keptSince(send.orderNos[0]!, 167);
+    await staff.rpc("office_run_expiry", { p_order_no: send.orderNos[0] });
+    expect(due(send.orderNos[0]!)).toBe("none");
+    keptSince(send.orderNos[0]!, 169);
+    await staff.rpc("office_run_expiry", { p_order_no: send.orderNos[0] });
+    expect(psql(`select state from public.inbound_codes c join public.revgift_shares s on s.id = c.share_id where s.order_no = '${send.orderNos[0]}'`)).toBe("void");
     expect(due(send.orderNos[0]!)).toBe("6900");
     expect(due(other.orderNos[0]!)).toBe("none");
+  });
+
+  it("INV-R11 S11d: 받지 않음이 된 몫의 상자가 살려 둔 6자리로 오면 그 몫 상자로 입고 → 반송 대기, 환불 = 반송 택배비를 뺀 금액", async () => {
+    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
+    await payTestRevgift(send);
+    const no = send.orderNos[0]!;
+    const due = () => psql(`select coalesce(public.refund_due_of_share(s.id)::text, 'none') from public.revgift_shares s where s.order_no = '${no}'`);
+    const shareIdOf = () => psql(`select id from public.revgift_shares where order_no = '${no}'`);
+    await (await signedInClient("byeolbit_fan")).rpc("decline_revgift", { p_order_no: no });
+    expect(due()).toBe("none");
+    const staff = await signedInClient("fankkuk_staff");
+    const w = waybill();
+    await creatorSetsWaybill(shareIdOf(), w);
+    await receiveAndLabel(staff, w);
+    expect(due()).toBe(String(5400 - 4000));
   });
 
   it("INV-R10 · INV-W6: 같은 몫을 두 번 돌려도 두 번째는 0건이다", async () => {
@@ -255,6 +279,8 @@ describe("INV-R11: 기한 처리로 받지 않음이 된 몫의 환불은 그 �
     await payTestRevgift(send);
     backdateSettlement(send, 168, 1);
     await (await signedInClient("fankkuk_staff")).rpc("office_run_expiry", { p_order_no: send.orderNos[2] });
+    keptSince(send.orderNos[2]!, 169);
+    await (await signedInClient("fankkuk_staff")).rpc("office_run_expiry", { p_order_no: send.orderNos[2] });
     expect(send.orderNos.map((no) => due(no))).toEqual(["none", "none", "6900"]);
     expect(await claim(shareIdOf(send.orderNos[2]!))).toEqual({ amount: 6900, code: null });
   });
@@ -280,6 +306,8 @@ describe("INV-R11: 기한 처리로 받지 않음이 된 몫의 환불은 그 �
     for (const send of [one, two]) {
       await payTestRevgift(send);
       backdateSettlement(send, 168, 1);
+      await staff.rpc("office_run_expiry", { p_order_no: send.orderNos[0] });
+      keptSince(send.orderNos[0]!, 169);
       await staff.rpc("office_run_expiry", { p_order_no: send.orderNos[0] });
     }
     const first = shareIdOf(one.orderNos[0]!);

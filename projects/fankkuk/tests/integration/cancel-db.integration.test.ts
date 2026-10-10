@@ -34,7 +34,7 @@ const orderRefundDue = (orderId: string) =>
 const paid = (orderId: string) => psql(`select amount_krw from public.payments where order_id = '${orderId}' and kind = 'initial'`);
 
 describe("팬의 입고 전 취소 (INV-M16)", () => {
-  it("INV-M16 (S16): 입고 전 주문을 보낸 팬이 취소하면 주문 취소, 6자리 전부 무효, 환불 대상은 결제 금액 전액", async () => {
+  it("INV-M16 (S16): 받는 주소를 본 적이 없는(승인 전·「먼저 보내기」 안 누름) 입고 전 주문을 보낸 팬이 취소하면 주문 취소, 6자리 전부 무효, 환불 대상은 결제 금액 전액", async () => {
     const g = await paidGift(2);
     const fan = await signedInClient("byeolbit_fan");
     expect((await fan.rpc("cancel_my_gift", { p_order_no: g.orderNo })).error).toBeNull();
@@ -44,6 +44,27 @@ describe("팬의 입고 전 취소 (INV-M16)", () => {
     expect(orderRefundDue(g.orderId)).toBe(paid(g.orderId));
     // 두 번 눌러도 같은 거부(이미 끝난 주문)
     expect((await fan.rpc("cancel_my_gift", { p_order_no: g.orderNo })).error?.code).toBe("P0002");
+  });
+
+  it("INV-M16·M18 (S16d): 받는 주소를 본 적이 있으면(「먼저 보내기」·승인) 팬이 취소해도 6자리를 살려 두고, 환불 대상 = 결제 금액 − 상자마다 배송비 칸, 늦게 온 상자는 그 주문 상자로 입고", async () => {
+    const op = await staff();
+    const fan = await signedInClient("byeolbit_fan");
+    const early = await paidGift(2);
+    expect((await fan.rpc("ack_early_send", { p_order_no: early.orderNo })).error).toBeNull();
+    expect((await fan.rpc("cancel_my_gift", { p_order_no: early.orderNo })).error).toBeNull();
+    expect(status(early.orderId)).toBe("canceled");
+    expect([codeState(early.boxIds[0]!), codeState(early.boxIds[1]!)]).toEqual(["valid", "valid"]);
+    // 소형 2개 13,800원이면 13,800 − 4,000 × 2 = 5,800
+    expect(Number(orderRefundDue(early.orderId))).toBe(Number(paid(early.orderId)) - 8000);
+    const late = await receive(op, early.boxIds[0]!);
+    expect(await inspect(op, late, FAN_PASS)).toBe("return_waiting");
+    expect(Number(orderRefundDue(early.orderId))).toBe(Number(paid(early.orderId)) - 8000);
+
+    const approved = await paidGift(1);
+    psql(`update public.orders set approved_at = now() where id = '${approved.orderId}'`);
+    expect((await fan.rpc("cancel_my_gift", { p_order_no: approved.orderNo })).error).toBeNull();
+    expect(codeState(approved.boxIds[0]!)).toBe("valid");
+    expect(Number(orderRefundDue(approved.orderId))).toBe(2900);
   });
 
   it("INV-M16 (S16b, 실패경로): 상자 하나라도 입고된 주문은 취소할 수 없고, 남의 팬·크리에이터·익명도 거부 — 그대로 남는다", async () => {
@@ -129,16 +150,26 @@ describe("대표의 입고 뒤 취소 (INV-M17)", () => {
     expect(psql(`select count(*) from public.order_cancellations where order_id = '${g.orderId}'`)).toBe("0");
   });
 
-  it("INV-M17 (S17c, 실패경로): 검수에 걸린 상자가 하나라도 있으면 남은 상자가 검수 전이어도 거부", async () => {
-    const op = await staff();
-    const g = await paidGift(2);
-    const caught = await receive(op, g.boxIds[0]!);
-    await receive(op, g.boxIds[1]!);
-    await inspect(op, caught, { bluetooth: "clear", rf: "clear", metal: "found", outcome: "return" });
-    const owner = await signedInClient("fankkuk_admin");
-    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "1:1 문의" })).error?.code).toBe("P0061");
-    expect(status(g.orderId)).not.toBe("canceled");
-    expect(psql(`select count(*) from public.order_cancellations where order_id = '${g.orderId}'`)).toBe("0");
+  it("INV-M17 (S17c): 검수에 걸린 상자가 있어도 취소된다 — 걸린 상자는 0, 검수 전인 상자는 기본 서비스료 칸만 돌려준다", async () => {
+    for (const caughtResult of [
+      { bluetooth: "clear", rf: "clear", metal: "found", outcome: "return" },
+      { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" },
+    ] as const) {
+      const op = await staff();
+      const g = await paidGift(2);
+      const caught = await receive(op, g.boxIds[0]!);
+      const other = await receive(op, g.boxIds[1]!);
+      await inspect(op, caught, caughtResult);
+      const owner = await signedInClient("fankkuk_admin");
+      expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "1:1 문의" })).error).toBeNull();
+      expect(status(g.orderId)).toBe("canceled");
+      expect(psql(`select count(*) from public.order_cancellations where order_id = '${g.orderId}'`)).toBe("1");
+      // 소형: B 6,900 − 검수비 1,500 − 배송비 4,000 = 1,400, A 는 0
+      expect(Number(orderRefundDue(g.orderId))).toBe(1400);
+      await inspect(op, other, FAN_PASS);
+      await op.rpc("office_run_expiry", { p_order_no: g.orderNo });
+      expect(parcelState(other)).toBe("return_waiting");
+    }
   });
 
   it("INV-M8·M17: 차액 결제를 마친 주문을 입고 뒤 취소하면 차액 결제의 환불은 그 결제의 검수비·배송비 칸을 뺀 값", async () => {
@@ -156,7 +187,7 @@ describe("대표의 입고 뒤 취소 (INV-M17)", () => {
     expect(diffDue).toBe("500");
   });
 
-  it("INV-M17 (S17): 상자 2개 중 1개 입고된 주문을 대표가 사유와 함께 취소 — 기록 한 줄, 환불은 도착한 상자의 검수비·배송비만 뺀 값", async () => {
+  it("INV-M17 (S17): 상자 2개 중 1개 입고된 주문을 대표가 사유와 함께 취소 — 기록 한 줄, 도착한 상자는 검수비·배송비를 뺀 값, 안 온 상자는 살려 두고 배송비만 뺀 값", async () => {
     const op = await staff();
     const g = await paidGift(2);
     await receive(op, g.boxIds[0]!);
@@ -165,10 +196,12 @@ describe("대표의 입고 뒤 취소 (INV-M17)", () => {
     expect(r.error).toBeNull();
     expect(status(g.orderId)).toBe("canceled");
     expect(psql(`select count(*) from public.order_cancellations where order_id = '${g.orderId}'`)).toBe("1");
-    expect(codeState(g.boxIds[1]!)).toBe("void");
-    const fee = Number(psql(`select inspection_fee_krw + shipping_fee_krw from public.boxes where id = '${g.boxIds[0]}'`));
-    // 소형 2개 13,800원이면 13,800 − (1,500 + 4,000) = 8,300
-    expect(Number(orderRefundDue(g.orderId))).toBe(Number(paid(g.orderId)) - fee);
+    expect(codeState(g.boxIds[1]!)).toBe("valid");
+    const feeA = Number(psql(`select inspection_fee_krw + shipping_fee_krw from public.boxes where id = '${g.boxIds[0]}'`));
+    const shipB = Number(psql(`select shipping_fee_krw from public.boxes where id = '${g.boxIds[1]}'`));
+    // 소형 2개 13,800원이면 13,800 − (1,500 + 4,000) − 4,000 = 4,300
+    expect(Number(orderRefundDue(g.orderId))).toBe(Number(paid(g.orderId)) - feeA - shipB);
+    expect(Number(orderRefundDue(g.orderId))).toBe(4300);
   });
 
   it("INV-M17 (S17b, 실패경로): 출고된 주문·입고 전 주문은 거부, 직원·팬은 42501, 사유가 없으면 22023 — 그대로 남는다", async () => {

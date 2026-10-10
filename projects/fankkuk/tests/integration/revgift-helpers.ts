@@ -111,3 +111,11 @@ export function sampleEnvelope(): Record<string, unknown> {
   const b64 = (n: number) => Buffer.from(crypto.getRandomValues(new Uint8Array(n))).toString("base64");
   return { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: b64(256), iv: b64(12), ciphertext: b64(40) };
 }
+
+/** 받지 않음·기한 지남으로 살려 둔 몫의 6자리를 hours 시간 전에 살려 둔 것처럼 옮긴다(reverse-gift INV-R11 — 168시간 뒤 자동 처리가 닫는다). */
+export function keptSince(orderNo: string, hours: number): void {
+  psql(
+    `begin; set local session_replication_role = replica; update public.inbound_codes c set kept_at = now() - interval '${hours} hours' from public.revgift_shares s where s.id = c.share_id and s.order_no = '${orderNo}' and c.kept_at is not null; commit;`,
+  );
+}
+
