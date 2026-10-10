@@ -8,8 +8,9 @@ import s from "./gift-cancel.module.css";
 
 // 팬의 입고 전 취소 (payment INV-M16). 그릴지는 부르는 쪽이 model/cancellable 로 정한다 — 최종 판정은 DB.
 // 누르면 바로 취소하지 않고 한 번 묻는다 — 취소는 되돌릴 수 없다. 성공하면 화면을 다시 읽어 취소된 상태로 그린다.
+// addressShown: 받는 주소가 보인 뒤(승인·「먼저 보내기」)면 상자가 이미 오고 있을 수 있어 택배비를 뺀 금액을 먼저 돌려준다(payment INV-M16·M18).
 
-export function CancelGiftButton({ orderNo }: { orderNo: string }) {
+export function CancelGiftButton({ orderNo, addressShown }: { orderNo: string; addressShown: boolean }) {
   const id = useId();
   const router = useRouter();
   const [asking, setAsking] = useState(false);
@@ -64,8 +65,11 @@ export function CancelGiftButton({ orderNo }: { orderNo: string }) {
       ) : (
         <div ref={askRef} tabIndex={-1} className={s.ask} role="group" aria-labelledby={`${id}-q`}>
           <p id={`${id}-q`}>
-            <strong>이 선물을 취소할까요?</strong> 아직 사무실에 도착한 상자가 없어 결제 금액을 모두 돌려드려요. 환불은 팬꾹이 확인한 뒤
-            진행돼요. 이미 보낸 상자가 있다면 도착한 뒤 보낸 주소로 착불로 돌려보내요. 취소는 되돌릴 수 없어요.
+            <strong>이 선물을 취소할까요?</strong>{" "}
+            {addressShown
+              ? "상자가 이미 오고 있을 수 있어 상자마다 택배비를 뺀 금액을 먼저 돌려드려요. 이미 보낸 상자는 도착하는 대로 돌려보내 드리고, 7일 안에 도착하지 않으면 택배비도 돌려드려요."
+              : "아직 받는 주소가 보이기 전이라 결제 금액을 모두 돌려드려요."}{" "}
+            환불은 팬꾹이 확인한 뒤 진행돼요. 취소는 되돌릴 수 없어요.
           </p>
           <div className={s.row}>
             <button type="button" className="btn btn--sm" aria-disabled={busy} onClick={() => void confirm()}>

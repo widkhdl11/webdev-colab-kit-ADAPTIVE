@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { adminClient, anonClient, deleteTestOrders, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
-import { deleteTestRevgifts, followHaru, payTestRevgift, PROFILE, registerTestRevgift, shareReply, unfollowHaru } from "./revgift-helpers";
+import { closeKeptShares, deleteTestRevgifts, followHaru, payTestRevgift, PROFILE, registerTestRevgift, shareReply, unfollowHaru } from "./revgift-helpers";
+import { codeOf, deleteTestUnmatched, inspect, paidGift as officeGift, scanInbound, waybill } from "./office-helpers";
 import { PHONE_IN_TEXT } from "./pii-shape";
 
 // 환불 DB (admin-console INV-K2·K7·K8, payment INV-M8·M9, reverse-gift INV-R11).
@@ -17,6 +18,7 @@ beforeAll(() => {
 afterEach(() => {
   deleteTestOrders();
   deleteTestRevgifts();
+  deleteTestUnmatched();
 });
 
 afterAll(() => {
@@ -40,6 +42,26 @@ async function paidGift(): Promise<{ paymentId: string; orderId: string }> {
   await payTestOrder(o);
   const paymentId = psql(`select id from public.payments where toss_order_id = '${o.tossOrderId}'`);
   return { paymentId, orderId: o.orderId };
+}
+
+/**
+ * 입고 뒤 판정은 상자마다 도착 기록을 본다(INV-M9) — 주문 칸을 직접 찍지 않고 실제 경로로 만든다:
+ * 6자리로 입고 + 라벨 부착 → 검수(outcome) → 크리에이터 거절(decline=true 일 때). 돌려주는 값: 첫 결제 ID.
+ */
+async function receivedGift(opts: { outcome: "pass" | "return"; decline: boolean; goods?: number }): Promise<{ paymentId: string; orderId: string }> {
+  const g = await officeGift(1);
+  const paymentId = psql(`select id from public.payments where order_id = '${g.orderId}' and kind = 'initial'`);
+  if (opts.goods) addGoods(paymentId, opts.goods);
+  const op = await signedInClient("fankkuk_staff");
+  const r = await scanInbound(op, waybill(), { code: codeOf({ boxId: g.boxIds[0]! }) });
+  const qr = (r.data as { qr: string }).qr;
+  expect((await op.rpc("office_confirm_label", { p_qr: qr })).error).toBeNull();
+  await inspect(op, qr, { bluetooth: "clear", rf: "clear", metal: opts.outcome === "return" ? "found" : "clear", outcome: opts.outcome });
+  if (opts.decline) {
+    const d = await (await signedInClient("haru_creator")).rpc("decline_gift", { p_request_id: g.requestId, p_block: false });
+    expect(d.error).toBeNull();
+  }
+  return { paymentId, orderId: g.orderId };
 }
 
 function setOrder(orderId: string, sql: string): void {
@@ -96,15 +118,12 @@ describe("INV-M8 · INV-K7: 금액은 DB 가 주문 상태로 정한다 — 팬 
   });
 
   it("INV-M8: 입고 뒤 거절은 반송 택배비(배송비 칸)를 뺀 금액", async () => {
-    const g = await paidGift();
-    setOrder(g.orderId, "status = 'rejected', received_at = now()");
+    const g = await receivedGift({ outcome: "pass", decline: true });
     expect((await asOwner("gift", g.paymentId)).claim?.amount_krw).toBe(6900 - 4000);
   });
 
   it("INV-M8: 입고 뒤 검수 불합격 반송은 상품 대금 칸만", async () => {
-    const g = await paidGift();
-    addGoods(g.paymentId, 25000);
-    setOrder(g.orderId, "status = 'rejected', received_at = now(), inspection_result = 'returned', inspected_at = now()");
+    const g = await receivedGift({ outcome: "return", decline: false, goods: 25000 });
     expect((await asOwner("gift", g.paymentId)).claim?.amount_krw).toBe(25000);
   });
 
@@ -139,9 +158,8 @@ describe("INV-M8 · INV-K7: 금액은 DB 가 주문 상태로 정한다 — 팬 
     expect((await asOwner("gift", g.paymentId)).code).toBe("P0022");
   });
 
-  it("INV-M8 (실패경로): 돌려줄 금액이 0 원이면 기록을 만들지 않는다(검수 불합격인데 상품 대금 칸이 0)", async () => {
-    const g = await paidGift();
-    setOrder(g.orderId, "status = 'rejected', received_at = now(), inspection_result = 'returned', inspected_at = now()");
+  it("INV-M8 (실패경로): 돌려줄 금액이 0 원이면 기록을 만들지 않는다(검수에 걸린 뒤 거절 — 걸린 상자는 0, INV-M9)", async () => {
+    const g = await receivedGift({ outcome: "return", decline: true });
     expect((await asOwner("gift", g.paymentId)).code).toBe("P0022");
     expect(refundCount(`payment_id = '${g.paymentId}'`)).toBe("0");
   });
@@ -168,6 +186,7 @@ describe("INV-R11: 역조공은 몫마다 따로", () => {
     await payTestRevgift(send);
     const medium = send.orderNos[2]!;
     psql(`update public.revgift_shares set reply = 'expired', replied_at = now() where order_no = '${medium}'`);
+    closeKeptShares(`s.order_no = '${medium}'`);
     const { claim, code } = await asOwner("revgift", shareId(medium));
     expect(code).toBeNull();
     expect(claim?.amount_krw).toBe(6900);
@@ -199,6 +218,7 @@ describe("INV-R11: 역조공은 몫마다 따로", () => {
     const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
     const no = send.orderNos[0]!;
     psql(`update public.revgift_shares set reply = 'declined', replied_at = now() where order_no = '${no}'`);
+    closeKeptShares(`s.order_no = '${no}'`);
     expect((await asOwner("revgift", shareId(no))).code).toBe("P0022");
   });
 });
@@ -311,6 +331,7 @@ describe("INV-K7 · INV-M9: 같은 환불은 한 번만", () => {
     await payTestRevgift(send);
     const no = send.orderNos[0]!;
     psql(`update public.revgift_shares set reply = 'expired', replied_at = now() where order_no = '${no}'`);
+    closeKeptShares(`s.order_no = '${no}'`);
     const id = shareId(no);
     const results = await Promise.all([asOwner("revgift", id), asOwner("revgift", id)]);
     expect(results.filter((r) => r.code === null)).toHaveLength(1);
@@ -399,8 +420,7 @@ describe("INV-K1 · INV-K8: 결제·환불 내역 읽기", () => {
   it("INV-K1 S1: 직원 운영자는 환불 대기·완료·실패를 금액과 함께 본다", async () => {
     const due = await paidGift();
     setOrder(due.orderId, "status = 'rejected'");
-    const done = await paidGift();
-    setOrder(done.orderId, "status = 'rejected', received_at = now()");
+    const done = await receivedGift({ outcome: "pass", decline: true });
     const doneClaim = (await asOwner("gift", done.paymentId)).claim!;
     await settle(doneClaim.refund_id, true);
     const failed = await paidGift();
@@ -424,6 +444,7 @@ describe("INV-K1 · INV-K8: 결제·환불 내역 읽기", () => {
     ]);
     await payTestRevgift(send);
     psql(`update public.revgift_shares set reply = 'declined', replied_at = now() where order_no = '${send.orderNos[1]}'`);
+    closeKeptShares(`s.order_no = '${send.orderNos[1]}'`);
     const rows = await rowsAs("fankkuk_admin");
     const medium = rows.find((r) => r.order_no === send.orderNos[1]);
     expect(medium).toMatchObject({

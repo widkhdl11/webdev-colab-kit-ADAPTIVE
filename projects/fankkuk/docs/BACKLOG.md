@@ -154,3 +154,4 @@
   ① 앱 서버 설정에 `FANKKUK_SCHEDULE_SECRET`(32자 이상 무작위 값) ② DB 비밀 보관소에 같은 값 — `select vault.create_secret('<값>', 'fankkuk_schedule_secret')` ③ 보관소에 앱 주소 — `select vault.create_secret('https://<사이트 주소>', 'fankkuk_app_origin')`.
   셋 중 하나라도 없으면 발송 예약은 아무것도 하지 않는다(운영자 「알림 지금 보내기」는 그대로). 로컬은 seed.sql 이 두 예약 작업을 꺼 둔다.
   확인: `select status_code from net._http_response order by id desc limit 1` 이 200 이면 앱까지 닿아 발송이 돈 것이다.
+- [ ] **시드 주문이 날짜가 지나 자동 반려된다** (2026-10-10 발견) — 시드 FC-L5T6B 는 등록 시각이 2026-10-02 로 박혀 있어 7일이 지나자 자동 처리가 반려했고, read-isolation 시험 「크리에이터는 자기에게 온 요청만 본다」가 그 주문을 대기 목록에서 찾다 실패한다. 시드 시각을 「지금 기준 상대값」으로 바꾸거나 시험이 시드 대신 새 주문을 만들게 한다.

@@ -119,3 +119,12 @@ export function keptSince(orderNo: string, hours: number): void {
   );
 }
 
+/**
+ * 받지 않음·기한 지남으로 살려 둔 몫의 6자리를 168시간이 지나 자동 처리가 닫은 상태로 만든다(reverse-gift INV-R11) — 그 뒤에야 환불 대상이 된다.
+ * 닫는 경로 자체는 revgift-close-db 가 본다. 여기서는 환불 시험의 준비만. where 는 revgift_shares 별칭 s 에 거는 조건.
+ */
+export function closeKeptShares(where: string): void {
+  psql(
+    `update public.inbound_codes c set state = 'void', voided_at = now() from public.revgift_shares s where s.id = c.share_id and (${where}) and c.kept_at is not null and c.state = 'valid'`,
+  );
+}

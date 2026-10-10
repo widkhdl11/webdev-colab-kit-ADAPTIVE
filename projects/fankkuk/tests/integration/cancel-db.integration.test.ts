@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it } from "vitest";
 import { anonClient, deleteTestOrders, holdRowLock, psql, registerTestOrder, signedInClient } from "./helpers";
-import { codeOf, deleteTestUnmatched, FAN_PASS, HOLD_DETAILS, inspect, paidGift, parcelState, scanInbound, waybill } from "./office-helpers";
+import { approve, codeOf, deleteTestUnmatched, FAN_PASS, HOLD_DETAILS, inspect, paidGift, parcelState, scanInbound, waybill } from "./office-helpers";
 
 // 취소 (payment INV-M16 팬의 입고 전 취소 S16~S16c · INV-M17 대표의 입고 뒤 취소 S17·S17b, 정책 ①).
 
@@ -61,7 +61,7 @@ describe("팬의 입고 전 취소 (INV-M16)", () => {
     expect(Number(orderRefundDue(early.orderId))).toBe(Number(paid(early.orderId)) - 8000);
 
     const approved = await paidGift(1);
-    psql(`update public.orders set approved_at = now() where id = '${approved.orderId}'`);
+    await approve(approved);
     expect((await fan.rpc("cancel_my_gift", { p_order_no: approved.orderNo })).error).toBeNull();
     expect(codeState(approved.boxIds[0]!)).toBe("valid");
     expect(Number(orderRefundDue(approved.orderId))).toBe(2900);

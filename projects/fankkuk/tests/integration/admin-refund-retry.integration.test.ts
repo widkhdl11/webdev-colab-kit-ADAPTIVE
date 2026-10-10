@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { adminClient, deleteTestOrders, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
-import { deleteTestRevgifts, followHaru, payTestRevgift, PROFILE, registerTestRevgift, unfollowHaru } from "./revgift-helpers";
+import { closeKeptShares, deleteTestRevgifts, followHaru, payTestRevgift, PROFILE, registerTestRevgift, unfollowHaru } from "./revgift-helpers";
 
 // 환불 DB — 다시 시도의 경계·결과 기록·내역 금액 (admin-console INV-K1·K2·K7, payment INV-M9, reverse-gift INV-R11).
 // admin-refund-db 의 짝이다. 리뷰(2026-10-04)가 찾은 빈 갈래와 15일 멱등 키 만료를 붙든다.
@@ -147,6 +147,7 @@ describe("INV-R11: 역조공 몫의 다시 시도·완료", () => {
     await payTestRevgift(send);
     const no = send.orderNos[0]!;
     psql(`update public.revgift_shares set reply = 'declined', replied_at = now() where order_no = '${no}'`);
+    closeKeptShares(`s.order_no = '${no}'`);
     return shareId(no);
   }
 
@@ -173,6 +174,7 @@ describe("INV-R11: 역조공 몫의 다시 시도·완료", () => {
     ]);
     await payTestRevgift(send);
     psql(`update public.revgift_shares set reply = 'declined', replied_at = now() where send_id = '${send.sendId}'`);
+    closeKeptShares(`s.send_id = '${send.sendId}'`);
     const a = shareId(send.orderNos[0]!);
     const b = shareId(send.orderNos[1]!);
     const first = (await asOwner("revgift", a)).claim!;

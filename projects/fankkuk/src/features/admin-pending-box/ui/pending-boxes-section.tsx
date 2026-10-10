@@ -9,7 +9,7 @@ import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import a from "@/shared/ui/admin.module.css";
 import { postClosePendingBox } from "../api/post-close-pending-box-client";
 
-// 거절·반려 때 아직 안 온 상자 (payment INV-M18). 팬에게 안내가 간 뒤(notifications INV-N17) 대표가 확인하고 「도착하지 않음」으로 닫는다.
+// 거절·반려·취소 때 아직 안 온 상자 (payment INV-M18). 168시간 안에 안 오면 자동 처리가 닫고, 그 전에 대표가 확인해 「도착하지 않음」으로 닫을 수도 있다.
 // 닫으면 그 상자 금액 전액이 위 표의 환불 대기로 올라온다. 직원에게는 목록만 보이고 닫기 버튼은 대표에게만 그린다(최종 판정은 DB).
 // 그 사이 상자가 도착하면 그 주문 상자로 입고돼 반송되고, 닫기는 거부된다.
 
@@ -25,12 +25,12 @@ export function PendingBoxesSection({ boxes, access }: Props) {
     <section className={a.card} aria-labelledby={`${SECTION_ID}-title`}>
       <div className={a.sectionH}>
         <h2 id={`${SECTION_ID}-title`} tabIndex={-1}>
-          거절된 선물의 아직 안 온 상자
+          끝난 선물의 아직 안 온 상자
         </h2>
       </div>
       <p className={a.hint} style={{ margin: "0 0 12px" }}>
-        거절·자동 반려 때 아직 도착하지 않은 상자예요. 팬에게 안내가 갔어요. 늦게 도착하면 그 선물의 상자로 입고해 돌려보내고, 보내지 않았다고 1:1 문의가 오면
-        여기서 「도착하지 않음 처리」를 눌러 주세요. 그 상자 금액 전액이 환불 대기로 올라와요.
+        거절·자동 반려·취소 때 아직 도착하지 않은 상자예요. 택배비를 뺀 금액은 이미 환불 대기로 올라갔어요. 늦게 도착하면 그 선물의 상자로 입고해
+        돌려보내요. 7일 안에 오지 않으면 자동으로 닫히고 남겨 둔 택배비가 환불 대기로 올라와요. 그 전에 팬이 보내지 않았다고 알려 오면 「도착하지 않음 처리」를 눌러 주세요.
       </p>
       <div role="status">
         {failure && (
@@ -44,7 +44,7 @@ export function PendingBoxesSection({ boxes, access }: Props) {
       </div>
       <div className={a.tblWrap}>
         <table className={a.tbl}>
-          <caption className="sr-only">거절된 선물의 아직 안 온 상자</caption>
+          <caption className="sr-only">끝난 선물의 아직 안 온 상자</caption>
           <thead>
             <tr>
               <th scope="col">상자</th>

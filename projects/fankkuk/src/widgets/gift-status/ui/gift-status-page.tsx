@@ -177,12 +177,12 @@ export function GiftStatusPage({
               {view.outcome === "declined" || view.outcome === "expired" ? (
                 <div className={s.part}>
                   <h2>이 선물은 보내지 마세요</h2>
-                  {/* 거절·자동 반려 모두 같은 안내 — 거절인지 기간 지남인지는 위 한 줄이 말한다(decline-block INV-D5). 상자마다 돌려준다(payment INV-M8·M18) */}
-                  <p className={s["sub-t"]}>상자가 하나도 도착하지 않았다면 결제 금액을 모두 돌려드려요.</p>
+                  {/* 거절·자동 반려 모두 같은 안내 — 거절인지 기간 지남인지는 위 한 줄이 말한다(decline-block INV-D5). 상자마다 돌려준다(payment INV-M8·M18, 2026-10-10 늦게 오는 상자) */}
+                  <p className={s["sub-t"]}>받는 주소가 보이기 전에 끝났다면 결제 금액을 모두 돌려드려요.</p>
                   <p className={s["sub-t"]}>사무실에 도착한 상자는 보낸 주소로 돌려보내 드리고, 그 상자의 반송 택배비를 뺀 금액을 돌려드려요.</p>
                   <p className={s["sub-t"]}>
-                    일부만 도착했고 남은 상자를 이미 보내셨다면, 도착하는 대로 같은 방식으로 돌려보내 드려요. 남은 상자를 보내지 않으셨다면 1:1 문의로
-                    알려 주세요. 확인한 뒤 그 상자 금액을 모두 돌려드려요.
+                    아직 도착하지 않은 상자는 택배비를 뺀 금액을 먼저 돌려드려요. 이미 보내셨다면 도착하는 대로 돌려보내 드리고, 7일 안에 도착하지 않으면
+                    택배비도 돌려드려요.
                   </p>
                 </div>
               ) : null}
@@ -325,7 +325,7 @@ export function GiftStatusPage({
                     화면에서 확인할 수 있어요.
                   </p>
                 ) : null}
-                {cancelable ? <CancelGiftButton orderNo={view.orderNo} /> : null}
+                {cancelable ? <CancelGiftButton orderNo={view.orderNo} addressShown={!view.earlySendPending} /> : null}
               </section>
             </div>
           </div>
