@@ -73,7 +73,7 @@ export function TagPicker({ idBase, options, picked, custom, onPickedChange, onC
       </div>
       <p className="hint" id={hintId}>
         활동하는 곳과 방송 종류를 골라 주세요. 고른 것과 직접 입력을 합쳐 1~{TAG_TOTAL_MAX}개(지금 {count}개), 직접 입력은 {TAG_CUSTOM_MAX}자까지예요
-        {charCount(custom.trim()) > 0 ? `(${charCount(custom.trim())}자)` : ""}. 직접 입력한 태그는 운영팀이 확인한 뒤에 공개돼요.
+        {charCount(custom.trim()) > 0 ? `(${charCount(custom.trim())}자)` : ""}. 직접 입력한 태그는 고른 태그 뒤에 보여요. 욕설·연락처·주소는 쓸 수 없어요.
       </p>
     </div>
   );

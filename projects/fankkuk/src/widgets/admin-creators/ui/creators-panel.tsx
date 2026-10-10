@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { latestApprovals, type AdminCreator, type NameChange, type VerificationEvent } from "@/entities/creator/model/admin-creator";
-import type { AdminTagOption, CustomTagCount } from "@/entities/creator/model/creator-tags";
+import type { AdminTagOption, BannedWord, CustomTagCount } from "@/entities/creator/model/creator-tags";
 import {
   adminVerificationTables,
   eventReasonLabel,
@@ -18,7 +18,7 @@ import { ApproveButton } from "@/features/admin-creator-verify/ui/approve-button
 import { RejectButton } from "@/features/admin-creator-verify/ui/reject-button";
 import { RevokeButton } from "@/features/admin-creator-verify/ui/revoke-button";
 import { UnlockButton } from "@/features/admin-creator-verify/ui/unlock-button";
-import { CustomTagsTable, TagOptionsTable } from "@/features/admin-creator-tags/ui/tag-options-manager";
+import { BANNED_TITLE_ID, BannedWordsTable, CustomTagsTable, TagOptionsTable } from "@/features/admin-creator-tags/ui/tag-options-manager";
 import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 
@@ -37,6 +37,7 @@ type Props = {
   /** 태그 선택지(숨긴 것 포함, 순서대로)와 크리에이터가 직접 입력한 태그(같은 말 묶음) — creator-tags INV-T1·T5 */
   tagOptions: readonly AdminTagOption[];
   customTags: readonly CustomTagCount[];
+  bannedWords: readonly BannedWord[];
 };
 
 function Who({ v }: { v: AdminVerification }) {
@@ -78,7 +79,7 @@ function actionTag(action: VerificationEvent["action"]) {
   return <span className={a.tag}>닫힘</span>;
 }
 
-export function CreatorsPanel({ creators, verifications, events, nameChanges, tagOptions, customTags }: Props) {
+export function CreatorsPanel({ creators, verifications, events, nameChanges, tagOptions, customTags, bannedWords }: Props) {
   const { posted, issued, ended } = adminVerificationTables(verifications);
   const approved = creators.filter((c) => c.verified);
   const approvals = latestApprovals(events);
@@ -417,9 +418,19 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
             <h2 id="h-creator-custom-tags">
               직접 입력한 태그 <span>{customTags.length}개</span>
             </h2>
-            <span>공개 화면에는 나오지 않아요 · 선택지에 넣으면 같은 말을 적은 크리에이터 모두의 태그로 공개돼요</span>
+            <span>카드에 선택지 뒤로 보여요(찾기 칩은 아니에요) · 선택지에 넣으면 칩이 되고, 지우면 적은 크리에이터 모두의 태그에서 빠져요</span>
           </div>
           <CustomTagsTable rows={customTags} onDone={setDone} />
+        </section>
+
+        <section aria-labelledby={BANNED_TITLE_ID}>
+          <div className={a.sectionH}>
+            <h2 id={BANNED_TITLE_ID} tabIndex={-1}>
+              태그 금칙어 <span>{bannedWords.length}개</span>
+            </h2>
+            <span>직접 입력과 선택지 이름에 쓸 수 없어요 · 띄어쓰기·기호는 무시하고 비교해요 · 전화번호·이메일·주소 꼴은 따로 막아요</span>
+          </div>
+          <BannedWordsTable words={bannedWords} onDone={setDone} />
         </section>
 
         <section aria-labelledby="h-creators-names">

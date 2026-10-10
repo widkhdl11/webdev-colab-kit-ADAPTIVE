@@ -375,6 +375,13 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
     expect(r).toMatchObject({ ok: true });
   });
 
+  it("creator-tags INV-T7 (실패경로): 직접 입력이 태그 필터에 걸리면 태그 칸에 사유 문구, 방금 만든 로그인 정보는 지운다", async () => {
+    const h = harness({ createAccountError: { code: "P0082" } });
+    const r = await signUp(h.deps, body({ role: "creator", creator }));
+    expect(r).toEqual({ ok: false, status: 400, field: "tags", message: "전화번호·이메일·인터넷 주소는 태그에 쓸 수 없어요." });
+    expect(h.deleted).toEqual([USER_ID]);
+  });
+
   it("INV-V1 (실패경로): 공개 정보 만들기가 실패하면 방금 만든 로그인 정보를 지운다", async () => {
     const h = harness({ createAccountError: { code: "22023" } });
     const r = await signUp(h.deps, body({ role: "creator", creator }));

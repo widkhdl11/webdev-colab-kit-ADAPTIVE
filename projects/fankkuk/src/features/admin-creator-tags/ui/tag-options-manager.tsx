@@ -1,15 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
-import { TAG_CUSTOM_MAX, type AdminTagOption, type CustomTagCount } from "@/entities/creator/model/creator-tags";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { TAG_CUSTOM_MAX, type AdminTagOption, type BannedWord, type CustomTagCount } from "@/entities/creator/model/creator-tags";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import { charCount } from "@/shared/lib/validation/char-count";
 import a from "@/shared/ui/admin.module.css";
 import { postTagOptions } from "../api/post-tag-options-client";
 import type { TagOptionWrite } from "../model/save-tag-options";
 
-// 운영자 「크리에이터 태그」 — 선택지 관리(creator-tags INV-T1)와 직접 입력한 태그 목록·선택지에 넣기(INV-T5).
+// 운영자 「크리에이터 태그」 — 선택지 관리(creator-tags INV-T1)와 직접 입력한 태그 목록·선택지에 넣기(INV-T5)·지우기(INV-T8), 금칙어 목록(INV-T7·T8).
 // 처리 결과 문구는 부르는 쪽 알림 칸(onDone)에 띄운다 — 처리한 줄은 다시 읽으면 순서·표가 바뀌기 때문이다.
 // 판정(운영자인지·이름 겹침·글자 수)과 크리에이터 바꾸기는 서버·DB 가 한다. 화면은 글자 수만 먼저 센다(DB 와 같은 셈).
 
@@ -238,14 +238,32 @@ export function TagOptionsTable({ options, onDone }: { options: readonly AdminTa
   );
 }
 
-/** 크리에이터가 직접 입력한 태그 — 같은 말끼리 묶은 인원수. 「선택지에 넣기」를 누르면 같은 말을 적은 크리에이터 모두의 태그가 그 선택지로 바뀐다. */
+/**
+ * 크리에이터가 직접 입력한 태그 — 같은 말끼리 묶은 인원수. 공개 화면에 선택지 뒤로 보인다(INV-T4).
+ * 「선택지에 넣기」를 누르면 같은 말을 적은 크리에이터 모두의 태그가 그 선택지로 바뀐다(INV-T5).
+ * 「지우기」는 같은 말을 적은 크리에이터 모두의 직접 입력을 지운다(INV-T8) — 되돌릴 수 없어 그 줄에서 한 번 더 묻는다.
+ */
 export function CustomTagsTable({ rows, onDone }: { rows: readonly CustomTagCount[]; onDone: Done }) {
   const { busy, error, send } = useSend(onDone);
+  const [confirming, setConfirming] = useState<string | null>(null);
+  // 묻는 줄이 열리고 닫힐 때 누른 버튼이 사라진다 — 포커스를 바뀐 버튼으로 옮긴다(열리면 「지우기」 확인, 닫히면 원래 「지우기」)
+  const deleteButtons = useRef(new Map<string, HTMLButtonElement>());
+  const confirmButton = useRef<HTMLButtonElement>(null);
+  const lastConfirmed = useRef<string | null>(null);
+  useEffect(() => {
+    if (confirming !== null) {
+      lastConfirmed.current = confirming;
+      confirmButton.current?.focus();
+    } else if (lastConfirmed.current !== null) {
+      deleteButtons.current.get(lastConfirmed.current)?.focus();
+      lastConfirmed.current = null;
+    }
+  }, [confirming]);
   return (
     <div className={a.stack} style={{ gap: 16 }}>
       <div className={a.tblWrap}>
         <table className={a.tbl} style={{ minWidth: 520 }}>
-          <caption className="sr-only">크리에이터가 직접 입력한 태그 — 공개 화면에는 나오지 않는다</caption>
+          <caption className="sr-only">크리에이터가 직접 입력한 태그 — 공개 화면에 선택지 뒤로 보인다</caption>
           <thead>
             <tr>
               <th scope="col">적은 말</th>
@@ -270,17 +288,56 @@ export function CustomTagsTable({ rows, onDone }: { rows: readonly CustomTagCoun
                   </td>
                   <td className={`${a.mono} ${a.nowrap}`}>{r.creatorCount}명</td>
                   <td className={a.act}>
-                    <button
-                      type="button"
-                      className={`${a.btn} ${a.btnSm}`}
-                      aria-label={`${r.tag} 선택지에 넣기`}
-                      aria-disabled={busy}
-                      onClick={() =>
-                        void send({ kind: "promote", tag: r.tag }, `「${r.tag}」을 선택지에 넣었어요. 적은 크리에이터 ${r.creatorCount}명의 태그로 공개돼요.`)
-                      }
-                    >
-                      선택지에 넣기
-                    </button>
+                    {confirming === r.tag ? (
+                      <span className={a.btnRow}>
+                        <span className={a.sub} id={`custom-tag-ask-${r.creatorCount}-${r.tag.length}`}>
+                          {r.creatorCount}명의 태그에서 지울까요?
+                        </span>
+                        <button
+                          ref={confirmButton}
+                          type="button"
+                          className={`${a.btn} ${a.btnSm}`}
+                          aria-label={`${r.tag} 정말 지우기`}
+                          aria-describedby={`custom-tag-ask-${r.creatorCount}-${r.tag.length}`}
+                          aria-disabled={busy}
+                          onClick={() =>
+                            void send({ kind: "delete_custom", tag: r.tag }, `「${r.tag}」을 적은 크리에이터 ${r.creatorCount}명의 태그에서 지웠어요.`).then(() => setConfirming(null))
+                          }
+                        >
+                          지우기
+                        </button>
+                        <button type="button" className={`${a.btn} ${a.btnSm} ${a.btnLine}`} onClick={() => setConfirming(null)}>
+                          그만두기
+                        </button>
+                      </span>
+                    ) : (
+                      <span className={a.btnRow}>
+                        <button
+                          type="button"
+                          className={`${a.btn} ${a.btnSm}`}
+                          aria-label={`${r.tag} 선택지에 넣기`}
+                          aria-disabled={busy}
+                          onClick={() =>
+                            void send({ kind: "promote", tag: r.tag }, `「${r.tag}」을 선택지에 넣었어요. 적은 크리에이터 ${r.creatorCount}명의 태그로 공개돼요.`)
+                          }
+                        >
+                          선택지에 넣기
+                        </button>
+                        <button
+                          ref={(el) => {
+                            if (el) deleteButtons.current.set(r.tag, el);
+                            else deleteButtons.current.delete(r.tag);
+                          }}
+                          type="button"
+                          className={`${a.btn} ${a.btnSm} ${a.btnLine}`}
+                          aria-label={`${r.tag} 지우기`}
+                          aria-disabled={busy}
+                          onClick={() => setConfirming(r.tag)}
+                        >
+                          지우기
+                        </button>
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))
@@ -289,6 +346,86 @@ export function CustomTagsTable({ rows, onDone }: { rows: readonly CustomTagCoun
         </table>
       </div>
       <ErrorLine id="custom-tags-error" message={error} />
+    </div>
+  );
+}
+
+/**
+ * 금칙어 목록(INV-T7·T8) — 크리에이터가 직접 입력하는 태그와 선택지 이름에 쓸 수 없는 말. 띄어쓰기·기호·영문 대소문자는 무시하고 비교한다.
+ * 더하면 이미 저장된 직접 입력도 그때부터 공개 화면에서 빠진다(본인 설정 화면에는 남는다).
+ */
+/** 금칙어 섹션 제목 id — 부르는 쪽(위젯)이 제목에 붙인다. 「빼기」 뒤 포커스가 돌아갈 곳 */
+export const BANNED_TITLE_ID = "h-creator-banned-words";
+
+export function BannedWordsTable({ words, onDone }: { words: readonly BannedWord[]; onDone: Done }) {
+  const { busy, error, send } = useSend(onDone);
+  const [newWord, setNewWord] = useState("");
+  const [localError, setLocalError] = useState<string | null>(null);
+  // 오류 줄이 어느 쪽 것인지 — 입력칸의 aria-invalid 는 더하기에서 난 오류일 때만
+  const [lastForm, setLastForm] = useState<"add" | "remove" | null>(null);
+  const message = localError ?? error;
+
+  async function remove(w: BannedWord) {
+    setLastForm("remove");
+    // 뺀 말은 목록에서 사라진다 — 포커스를 섹션 제목으로
+    if (await send({ kind: "ban_remove", id: w.id }, `「${w.word}」을 금칙어에서 뺐어요.`)) document.getElementById(BANNED_TITLE_ID)?.focus();
+  }
+
+  async function add(e: FormEvent) {
+    e.preventDefault();
+    setLastForm("add");
+    if (!nameOk(newWord)) {
+      setLocalError(`금칙어는 1~${TAG_CUSTOM_MAX}자로 적어 주세요.`);
+      return;
+    }
+    setLocalError(null);
+    if (await send({ kind: "ban_add", word: newWord }, `「${newWord.trim()}」을 금칙어에 더했어요.`)) setNewWord("");
+  }
+
+  return (
+    <div className={a.stack} style={{ gap: 16 }}>
+      {/* 말이 짧고 수십 개라 표 대신 한 줄에 흘려 보인다 — 말마다 「빼기」 */}
+      {words.length === 0 ? (
+        <p className={a.empty}>금칙어가 없어요.</p>
+      ) : (
+        <ul className={a.btnRow} aria-label="태그 금칙어 — 직접 입력과 선택지 이름에 쓸 수 없는 말" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {words.map((w) => (
+            <li key={w.id} className={a.btnRow} style={{ gap: 4 }}>
+              <span className={a.tag}>{w.word}</span>
+              <button
+                type="button"
+                className={`${a.btn} ${a.btnSm} ${a.btnLine}`}
+                aria-label={`${w.word} 금칙어에서 빼기`}
+                aria-disabled={busy}
+                onClick={() => void remove(w)}
+              >
+                빼기
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form className={a.btnRow} onSubmit={(e) => void add(e)} noValidate>
+        <div className={a.field} style={{ flex: 1 }}>
+          <label htmlFor="tag-banned-new">새 금칙어 (1~{TAG_CUSTOM_MAX}자)</label>
+          <input
+            id="tag-banned-new"
+            className={a.input}
+            autoComplete="off"
+            value={newWord}
+            aria-invalid={message !== null && lastForm === "add" ? true : undefined}
+            aria-describedby={message ? "tag-banned-error" : undefined}
+            onChange={(e) => {
+              setNewWord(e.target.value);
+              setLocalError(null);
+            }}
+          />
+        </div>
+        <button type="submit" className={a.btn} aria-disabled={busy}>
+          {busy ? "저장하는 중…" : "더하기"}
+        </button>
+      </form>
+      <ErrorLine id="tag-banned-error" message={message} />
     </div>
   );
 }

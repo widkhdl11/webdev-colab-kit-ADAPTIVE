@@ -119,3 +119,20 @@ export type AdminTagOption = { id: string; name: string; hidden: boolean; creato
 
 /** 운영자 「직접 입력한 태그」 한 줄 — 같은 말(tagKey)끼리 묶은 인원수. */
 export type CustomTagCount = { tag: string; creatorCount: number };
+
+/**
+ * creator-tags INV-T7: DB 필터의 거부 사유(오류 코드) → 화면 문구. 필터 사유가 아니면 null.
+ * P0081 금칙어 · P0082 전화번호·이메일·인터넷 주소 꼴 · P0083 글자·숫자 없음. 어느 금칙어에 걸렸는지는 말하지 않는다.
+ */
+const TAG_FILTER_MESSAGES: Record<string, string> = {
+  P0081: "쓸 수 없는 말이 들어 있어요. 다른 말로 적어 주세요.",
+  P0082: "전화번호·이메일·인터넷 주소는 태그에 쓸 수 없어요.",
+  P0083: "글자나 숫자를 넣어 적어 주세요.",
+};
+
+export function tagFilterMessage(code: string | undefined): string | null {
+  return code !== undefined && Object.hasOwn(TAG_FILTER_MESSAGES, code) ? TAG_FILTER_MESSAGES[code]! : null;
+}
+
+/** creator-tags INV-T8: 운영자 화면의 금칙어 한 줄 */
+export type BannedWord = { id: string; word: string };

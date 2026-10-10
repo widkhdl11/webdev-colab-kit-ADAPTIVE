@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { anonClient, holdRowLock, psql, signedInClient } from "./helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 
@@ -304,7 +304,12 @@ describe("INV-T3: 태그는 합쳐 1~5개 — 선택지 0~5 + 직접 입력 0~1"
   });
 });
 
-describe("INV-T4: 공개 화면에는 숨기지 않은 선택지만", () => {
+afterEach(() => {
+  // 시험이 더한 금칙어만 지운다(처음 목록은 그대로)
+  psql(`delete from public.creator_tag_banned_words where word in ('팝콘', '광고', 'Pop Corn')`);
+});
+
+describe("INV-T4: 공개 화면에는 숨기지 않은 선택지 뒤에 필터를 통과한 직접 입력", () => {
   type PublicRow = { id: string; tags: string[] } & Record<string, unknown>;
   async function publicRow(fn: "find_creators" | "list_creators", creatorId: string): Promise<PublicRow | undefined> {
     const r = await anonClient().rpc(fn);
@@ -312,13 +317,12 @@ describe("INV-T4: 공개 화면에는 숨기지 않은 선택지만", () => {
     return (r.data as PublicRow[]).find((x) => x.id === creatorId);
   }
 
-  it("INV-T4 S4: 하루 = 치지직 + 직접 입력 「팝콘TV」 → 찾기·크리에이터 목록에 「치지직」만, 「팝콘TV」는 어떤 칸에도 없다", async () => {
+  it("INV-T4 S4: 하루 = 치지직 + 직접 입력 「팝콘TV」 → 찾기·크리에이터 목록에 「치지직 · 팝콘TV」 순서, 칩 목록에는 팝콘TV 가 없다", async () => {
     verify(HARU.creatorId, "cvt-haru");
     expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: "팝콘TV" })).error).toBeNull();
     for (const fn of ["find_creators", "list_creators"] as const) {
       const row = await publicRow(fn, HARU.creatorId);
-      expect(row?.tags).toEqual(["치지직"]);
-      expect(JSON.stringify(row)).not.toContain("팝콘");
+      expect(row?.tags).toEqual(["치지직", "팝콘TV"]);
       expect(row).not.toHaveProperty("category");
       expect(row).not.toHaveProperty("custom_tag");
     }
@@ -327,7 +331,25 @@ describe("INV-T4: 공개 화면에는 숨기지 않은 선택지만", () => {
     expect(options.map((o) => o.name)).not.toContain("팝콘TV");
   });
 
-  it("INV-T4 (실패경로): 직접 입력은 다른 크리에이터·팬이 읽는 어떤 길로도 나오지 않는다", async () => {
+  it("INV-T4·T7 S4c: 운영자가 금칙어를 더하면 이미 저장된 직접 입력도 공개 화면에서 빠지고, 본인 설정 화면에는 그대로다", async () => {
+    verify(HARU.creatorId, "cvt-haru");
+    expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: "팝콘TV" })).error).toBeNull();
+    expect((await operator("admin_add_tag_banned_word", { p_word: "팝콘" })).error).toBeNull();
+    for (const fn of ["find_creators", "list_creators"] as const) {
+      expect((await publicRow(fn, HARU.creatorId))?.tags).toEqual(["치지직"]);
+    }
+    const mine = (await (await signedInClient(HARU.login)).rpc("my_creator_settings")).data as { custom_tag: string | null }[];
+    expect(mine[0]?.custom_tag).toBe("팝콘TV");
+  });
+
+  it("INV-T4 (실패경로): 숨긴 선택지와 같은 말(대소문자 무시)의 직접 입력은 공개 화면에 붙지 않는다", async () => {
+    verify(HARU.creatorId, "cvt-haru");
+    expect((await operator("admin_set_creator_tag_option_hidden", { p_id: optionId("SOOP"), p_hidden: true })).error).toBeNull();
+    expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: "soop" })).error).toBeNull();
+    expect((await publicRow("find_creators", HARU.creatorId))?.tags).toEqual(["치지직"]);
+  });
+
+  it("INV-T4 (실패경로): 직접 입력 칸 자체는 다른 크리에이터·팬에게 나오지 않는다(공개 태그 목록 끝에 붙는 것 말고는)", async () => {
     await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: "팝콘TV" });
     for (const login of ["byeolbit_fan", MOMO.login]) {
       const c = await signedInClient(login);
@@ -453,5 +475,105 @@ describe("INV-T6: 숨겨도 고른 기록은 남는다", () => {
     expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직"), optionId("SOOP")], p_custom_tag: null })).error).toBeNull();
     await operator("admin_set_creator_tag_option_hidden", { p_id: virtual, p_hidden: false });
     expect(tagsOf(HARU.creatorId)).toEqual(["SOOP", "치지직"]);
+  });
+});
+
+describe("INV-T7: 직접 입력 필터(업계 기본)", () => {
+  const blocked: [string, string][] = [
+    ["시발", "P0081"],
+    ["시 발", "P0081"],
+    ["S.E.X", "P0081"],
+    ["010-1234-5678", "P0082"],
+    ["01012345678", "P0082"],
+    ["a@b.kr", "P0082"],
+    ["a@b", "P0082"],
+    ["123456789", "P0082"],
+    ["1234 5678 9", "P0082"],
+    ["ＳＥＸ방송", "P0081"],
+    ["연락０１０１２３４５６７８", "P0082"],
+    ["a＠b", "P0082"],
+    ["popcorn . tv", "P0082"],
+    ["www.x", "P0082"],
+    ["http://a", "P0082"],
+    ["popcorn.tv", "P0082"],
+    ["!!★", "P0083"],
+  ];
+
+  it("INV-T7 S7: 금칙어(띄어쓰기·기호·대소문자를 섞어도)·연락처·주소 꼴·기호만은 거부되고 사유가 셋으로 나뉜다 — 태그 그대로", async () => {
+    expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: null })).error).toBeNull();
+    for (const [text, code] of blocked) {
+      const r = await saveTags(HARU.login, { p_option_ids: [optionId("SOOP")], p_custom_tag: text });
+      expect([text, r.error?.code]).toEqual([text, code]);
+      expect(tagsOf(HARU.creatorId)).toEqual(["치지직"]);
+    }
+  });
+
+  it("INV-T7 S7b: 숫자 몇 개·보통 이름은 저장된다", async () => {
+    for (const text of ["2024 게임", "12345678", "20242025 시즌1", "팝콘TV", "먹방", "V-Tuber", "ホロライブ", "原神", "sussex", "시발점", "토토로"]) {
+      const r = await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: text });
+      expect([text, r.error]).toEqual([text, null]);
+      expect(tagsOf(HARU.creatorId)).toEqual(["치지직", `직접:${text}`]);
+    }
+  });
+
+  it("INV-T7 S7: 금칙어 쪽도 비교 키로 — 운영자가 「Pop Corn」을 더하면 「popcorn」이 걸린다", async () => {
+    expect((await operator("admin_add_tag_banned_word", { p_word: "Pop Corn" })).error).toBeNull();
+    expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: "popcorn방송" })).error?.code).toBe("P0081");
+  });
+
+  it("INV-T7 S7c: 선택지에 넣기(올리기)도 같은 필터 — 금칙어면 거부", async () => {
+    expect((await operator("admin_promote_custom_creator_tag", { p_tag: "시발" })).error?.code).toBe("P0081");
+  });
+
+  it("INV-T7 S7c: 운영자도 금칙어·연락처 꼴 이름으로 선택지를 만들거나 바꿀 수 없다", async () => {
+    expect((await operator("admin_add_creator_tag_option", { p_name: "시발TV" })).error?.code).toBe("P0081");
+    expect((await operator("admin_rename_creator_tag_option", { p_id: optionId("틱톡"), p_name: "a@b.kr" })).error?.code).toBe("P0082");
+    expect(optionNames()).toContain("틱톡");
+  });
+});
+
+describe("INV-T8: 금칙어 목록·직접 입력 지우기는 운영자만", () => {
+  it("INV-T8 S8: 운영자가 직접 입력을 지우면 같은 말(대소문자 무시)을 적은 크리에이터 모두에서 한 번에 지워지고, 다른 말은 그대로다", async () => {
+    expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: "AdText" })).error).toBeNull();
+    expect((await saveTags(BYEOL.login, { p_option_ids: [], p_custom_tag: "adtext" })).error).toBeNull();
+    expect((await saveTags(MOMO.login, { p_option_ids: [optionId("SOOP")], p_custom_tag: "팝콘TV" })).error).toBeNull();
+    const r = await operator("admin_delete_custom_creator_tag", { p_tag: "ADTEXT" });
+    expect(r.error).toBeNull();
+    expect(r.data).toBe(2);
+    expect(tagsOf(HARU.creatorId)).toEqual(["치지직"]);
+    expect(tagsOf(MOMO.creatorId)).toEqual(["SOOP", "직접:팝콘TV"]);
+    // 직접 입력만 갖고 있던 크리에이터는 태그가 0개가 된다 — 다음 저장 때 INV-T3
+    expect(tagsOf(BYEOL.creatorId)).toEqual([]);
+  });
+
+  it("INV-T8 S8: 운영자는 금칙어를 보고·더하고·지운다 — 처음 목록이 채워져 있다", async () => {
+    const list = async () => ((await operator("admin_tag_banned_words", {})).data as { id: string; word: string }[]) ?? [];
+    expect((await list()).map((w) => w.word)).toEqual(expect.arrayContaining(["시발", "sex"]));
+    const added = await operator("admin_add_tag_banned_word", { p_word: " 광고 " });
+    expect(added.error).toBeNull();
+    const row = (await list()).find((w) => w.word === "광고");
+    expect(row).toBeDefined();
+    // 같은 말(비교 방법)은 두 번 들어가지 않는다
+    expect((await operator("admin_add_tag_banned_word", { p_word: "광 고" })).error?.code).toBe("23505");
+    expect((await operator("admin_remove_tag_banned_word", { p_id: row!.id })).error).toBeNull();
+    expect((await list()).map((w) => w.word)).not.toContain("광고");
+  });
+
+  it("INV-T8 S8b (실패경로): 크리에이터·팬은 금칙어를 보거나 바꾸지 못하고 직접 입력도 지우지 못한다", async () => {
+    expect((await saveTags(HARU.login, { p_option_ids: [optionId("치지직")], p_custom_tag: "광고문구" })).error).toBeNull();
+    const firstId = psql(`select id from public.creator_tag_banned_words order by word limit 1`);
+    expect((await anonClient().rpc("admin_tag_banned_words")).error).not.toBeNull();
+    expect((await anonClient().rpc("admin_add_tag_banned_word", { p_word: "광고" })).error).not.toBeNull();
+    for (const login of [HARU.login, "byeolbit_fan"]) {
+      const c = await signedInClient(login);
+      expect((await c.rpc("admin_tag_banned_words")).error?.code).toBe("42501");
+      expect((await c.rpc("admin_add_tag_banned_word", { p_word: "광고" })).error?.code).toBe("42501");
+      expect((await c.rpc("admin_remove_tag_banned_word", { p_id: firstId })).error?.code).toBe("42501");
+      expect((await c.rpc("admin_delete_custom_creator_tag", { p_tag: "광고문구" })).error?.code).toBe("42501");
+      expect((await c.from("creator_tag_banned_words").select("word")).data ?? []).toEqual([]);
+    }
+    expect(psql(`select count(*) from public.creator_tag_banned_words where id = '${firstId}'`)).toBe("1");
+    expect(psql(`select count(*) from public.creator_tag_banned_words where word = '광고'`)).toBe("0");
+    expect(tagsOf(HARU.creatorId)).toEqual(["치지직", "직접:광고문구"]);
   });
 });

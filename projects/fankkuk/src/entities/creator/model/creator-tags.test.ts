@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { countTagSelection, hasPickedTag, resolveTagSelection, TAG_CUSTOM_MAX, TAG_TOTAL_MAX, tagChips, tagSelectionSchema } from "./creator-tags";
+import { tagFilterMessage } from "./creator-tags";
 
 const ID = {
   soop: "11111111-1111-4111-8111-000000000001",
@@ -119,5 +120,20 @@ describe("INV-T4: 찾기·메인 칩 — 숨기지 않은 선택지 중 공개 �
     expect(cards.filter((c) => hasPickedTag(c, "틱톡"))).toEqual([]);
     // 이름은 그대로 비교한다 — 칩 이름은 카드 태그와 같은 선택지 이름에서 온다
     expect(hasPickedTag({ tags: ["SOOP"] }, "soop")).toBe(false);
+  });
+});
+
+describe("INV-T7: 태그 필터 거부 사유 → 화면 문구", () => {
+  it("INV-T7 S7: 사유 셋(금칙어·연락처·주소·기호만)을 서로 다른 문구로 — 어느 금칙어인지는 말하지 않는다", () => {
+    const banned = tagFilterMessage("P0081");
+    const contact = tagFilterMessage("P0082");
+    const symbols = tagFilterMessage("P0083");
+    expect(banned).toBe("쓸 수 없는 말이 들어 있어요. 다른 말로 적어 주세요.");
+    expect(contact).toBe("전화번호·이메일·인터넷 주소는 태그에 쓸 수 없어요.");
+    expect(symbols).toBe("글자나 숫자를 넣어 적어 주세요.");
+  });
+
+  it("INV-T7 (실패경로): 필터 사유가 아닌 코드는 null — 부르는 쪽이 원래 처리를 한다", () => {
+    for (const code of ["22023", "42501", "P0002", undefined]) expect(tagFilterMessage(code)).toBeNull();
   });
 });

@@ -72,6 +72,18 @@ describe("크리에이터 태그 저장 (creator-tags INV-T2·T3)", () => {
     expect(f.calls).toEqual([{ fn: "update_my_creator_tags", args: { p_option_ids: five, p_custom_tag: "유튜브" } }]);
   });
 
+  it("INV-T7 (실패경로): 직접 입력이 필터에 걸리면 400 과 사유 문구(금칙어·연락처·기호만)", async () => {
+    expect(await saveCreatorTags({ client: fakeClient({ code: "P0081" }).client, viewer: HARU }, { tagIds: [CHZZK], customTag: "x" })).toEqual({
+      ok: false,
+      status: 400,
+      message: "쓸 수 없는 말이 들어 있어요. 다른 말로 적어 주세요.",
+    });
+    expect(await saveCreatorTags({ client: fakeClient({ code: "P0083" }).client, viewer: HARU }, { tagIds: [CHZZK], customTag: "x" })).toMatchObject({
+      status: 400,
+      message: "글자나 숫자를 넣어 적어 주세요.",
+    });
+  });
+
   it("INV-T2·T3 (실패경로): DB 가 거부하면(숨긴 선택지 등 22023) 400, 로그인 끊김(42501)은 401, 크리에이터 아님(42501)은 403", async () => {
     expect(await saveCreatorTags({ client: fakeClient({ code: "22023" }).client, viewer: HARU }, { tagIds: [CHZZK], customTag: "" })).toMatchObject({
       ok: false,

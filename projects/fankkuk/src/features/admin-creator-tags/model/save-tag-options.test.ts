@@ -77,3 +77,37 @@ describe("태그 선택지 관리 (creator-tags INV-T1·T5)", () => {
     expect((await saveTagOptions(fakeClient({ error: { code: "42501" } }).client, { kind: "add", name: "팬더TV" })).status).toBe(403);
   });
 });
+
+describe("금칙어·직접 입력 지우기 (creator-tags INV-T7·T8)", () => {
+  it("INV-T8 S8: 금칙어 추가·삭제, 직접 입력 지우기를 각각의 DB 함수로 — 앞뒤 공백을 뗀다", async () => {
+    const cases: [unknown, string, unknown][] = [
+      [{ kind: "ban_add", word: " 광고 " }, "admin_add_tag_banned_word", { p_word: "광고" }],
+      [{ kind: "ban_remove", id: ID }, "admin_remove_tag_banned_word", { p_id: ID }],
+      [{ kind: "delete_custom", tag: " 광고문구 " }, "admin_delete_custom_creator_tag", { p_tag: "광고문구" }],
+    ];
+    for (const [body, fn, args] of cases) {
+      const { calls, client } = fakeClient({ error: null });
+      expect((await saveTagOptions(client, body)).status).toBe(200);
+      expect(calls).toEqual([{ fn, args }]);
+    }
+  });
+
+  it("INV-T8 (실패경로): 이미 있는 금칙어(같은 비교 키)는 409, 운영자가 아니면 404 — 쓰기 함수를 부르지 않는다", async () => {
+    expect(await saveTagOptions(fakeClient({ error: { code: "23505" } }).client, { kind: "ban_add", word: "광고" })).toEqual({
+      status: 409,
+      body: { message: "이미 있는 금칙어예요." },
+    });
+    for (const body of [{ kind: "ban_add", word: "광고" }, { kind: "ban_remove", id: ID }, { kind: "delete_custom", tag: "광고" }]) {
+      const { calls, client } = fakeClient({ error: null }, false);
+      expect((await saveTagOptions(client, body)).status).toBe(404);
+      expect(calls).toEqual([]);
+    }
+  });
+
+  it("INV-T7 S7c (실패경로): 선택지 이름이 필터에 걸리면 400 과 사유 문구", async () => {
+    expect(await saveTagOptions(fakeClient({ error: { code: "P0082" } }).client, { kind: "add", name: "a@b.kr" })).toEqual({
+      status: 400,
+      body: { message: "전화번호·이메일·인터넷 주소는 태그에 쓸 수 없어요." },
+    });
+  });
+});

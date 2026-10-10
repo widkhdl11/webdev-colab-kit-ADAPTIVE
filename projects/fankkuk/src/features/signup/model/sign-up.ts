@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { tagFilterMessage } from "@/entities/creator/model/creator-tags";
 import { accountLoginEmail } from "@/entities/session/model/login-id";
 import type { SendMail } from "@/shared/api/mail/smtp";
 import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
@@ -116,6 +117,9 @@ export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpRes
     if (account.error.code === "FKU01") return REVERIFY;
     if (account.error.code === "FKU02") return PHONE_TAKEN;
     if (account.error.code === "FKU03") return ID_TAKEN;
+    // 직접 입력이 태그 필터에 걸림(creator-tags INV-T7) — 사유마다 문구
+    const filtered = tagFilterMessage(account.error.code);
+    if (filtered && input.role === "creator") return { ok: false, status: 400, field: "tags", message: filtered };
     // 이름·채널 이름은 위에서 같은 규칙으로 걸렀다 — DB 가 거부하면 태그다(그 사이 숨긴 선택지 등, creator-tags INV-T3)
     if (account.error.code === "22023")
       return input.role === "creator"

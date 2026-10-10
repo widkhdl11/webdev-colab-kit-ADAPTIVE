@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { TAG_CUSTOM_MAX } from "@/entities/creator/model/creator-tags";
+import { TAG_CUSTOM_MAX, tagFilterMessage } from "@/entities/creator/model/creator-tags";
 import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 import { MESSAGE_NOT_FOUND, pgErrorReply } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
@@ -10,10 +10,12 @@ import { HIDDEN_CHAR } from "@/shared/lib/validation/hidden-char";
 // 크리에이터 태그 선택지 관리 (creator-tags INV-T1) · 직접 입력을 선택지에 넣기 (INV-T5). 운영자(대표·직원)면 누구나 한다.
 // 서버는 먼저 운영자인지 DB 에 묻고(아니면 404), 몸통 꼴과 글자 수를 확인해 어긋난 입력은 DB 까지 보내지 않는다.
 // 최종 판정(운영자인지·이름 겹침·글자 수)과 「선택지에 넣기」의 크리에이터 바꾸기는 DB 함수가 한 처리 안에서 한다.
+// 금칙어 추가·삭제와 직접 입력 지우기(INV-T8)도 같은 입구다. 선택지 이름도 태그 필터(INV-T7)를 거친다.
 
 const MESSAGES = {
   limit: `태그 이름은 1~${TAG_CUSTOM_MAX}자로 적어 주세요. 보이지 않는 글자는 쓸 수 없어요.`,
   conflict: "같은 이름의 선택지가 이미 있어요.",
+  bannedExists: "이미 있는 금칙어예요.",
   failed: "저장하지 못했어요. 잠시 뒤 다시 해 주세요.",
 };
 
@@ -29,6 +31,9 @@ const bodyShape = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("hide"), id, hidden: z.boolean() }).strict(),
   z.object({ kind: z.literal("move"), id, up: z.boolean() }).strict(),
   z.object({ kind: z.literal("promote"), tag: name }).strict(),
+  z.object({ kind: z.literal("ban_add"), word: name }).strict(),
+  z.object({ kind: z.literal("ban_remove"), id }).strict(),
+  z.object({ kind: z.literal("delete_custom"), tag: name }).strict(),
 ]);
 
 export type TagOptionWrite = z.input<typeof bodyShape>;
@@ -45,6 +50,12 @@ function rpcOf(w: z.output<typeof bodyShape>): { fn: string; args: Record<string
       return { fn: "admin_move_creator_tag_option", args: { p_id: w.id, p_up: w.up } };
     case "promote":
       return { fn: "admin_promote_custom_creator_tag", args: { p_tag: w.tag } };
+    case "ban_add":
+      return { fn: "admin_add_tag_banned_word", args: { p_word: w.word } };
+    case "ban_remove":
+      return { fn: "admin_remove_tag_banned_word", args: { p_id: w.id } };
+    case "delete_custom":
+      return { fn: "admin_delete_custom_creator_tag", args: { p_tag: w.tag } };
   }
 }
 
@@ -56,6 +67,12 @@ export async function saveTagOptions(client: Pick<SupabaseClient, "rpc">, body: 
   if (!shaped.success) return { status: 400, body: { message: MESSAGES.limit } };
   const { fn, args } = rpcOf(shaped.data);
   const { error } = await client.rpc(fn, args);
-  if (error) return pgErrorReply(error.code, MESSAGES);
+  if (error) {
+    const filtered = tagFilterMessage(error.code);
+    if (filtered) return { status: 400, body: { message: filtered } };
+    // 23505: 같은 비교 키의 금칙어가 이미 있다(유일 색인)
+    if (error.code === "23505" && shaped.data.kind === "ban_add") return { status: 409, body: { message: MESSAGES.bannedExists } };
+    return pgErrorReply(error.code, MESSAGES);
+  }
   return { status: 200, body: { ok: true } };
 }

@@ -66,7 +66,7 @@ export function CreatorProfilePage({
                 <CheckIcon />
                 본인 확인 완료
               </span>
-              {/* 태그 — 숨기지 않은 선택지만 온다(creator-tags INV-T4). 채널 이름은 위 줄에 있다 */}
+              {/* 태그 — 숨기지 않은 선택지 뒤에 필터를 통과한 직접 입력(creator-tags INV-T4). 채널 이름은 위 줄에 있다 */}
               {creator.tags.map((t) => (
                 <CreatorTag key={t} name={t} />
               ))}
