@@ -31,7 +31,7 @@
   },
   "qa": {
     "status": "clean",
-    "hash": "3a350e99b971"
+    "hash": "439e15cabb47"
   },
   "review": {
     "status": "dirty",

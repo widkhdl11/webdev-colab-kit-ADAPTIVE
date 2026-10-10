@@ -55,8 +55,16 @@ const tossStatus = (orderId: string, amount: number, status: string): TossReply 
 });
 const tossNotFound: TossReply = { status: 404, body: { code: "NOT_FOUND_PAYMENT", message: "존재하지 않는 결제 정보 입니다." } };
 
+/**
+ * 마이그레이션 파일의 「1) 칸」 부분 그대로(칸 더하기 + 빈 시각 채우기). 파일 전체를 다시 돌리면 그 뒤 마이그레이션이 바꾼 함수
+ * (관리자 결제 목록 등)가 옛 정의로 덮여 다른 시험이 순서에 따라 깨진다(2026-10-10) — 확인할 문장만 잘라 돌린다.
+ */
 function readMigration(): string {
-  return readFileSync(new URL("../../supabase/migrations/20261008000015_payment_reconcile.sql", import.meta.url), "utf8");
+  const text = readFileSync(new URL("../../supabase/migrations/20261008000015_payment_reconcile.sql", import.meta.url), "utf8");
+  const start = text.indexOf("-- ── 1) 칸");
+  const end = text.indexOf("-- ── 2)", start);
+  if (start < 0 || end < 0) throw new Error("「1) 칸」 부분을 찾지 못했다");
+  return text.slice(start, end);
 }
 
 /** 「승인 중」이 된 시각을 과거로 옮긴다(승인 호출이 끊긴 채 n 분이 지난 것처럼). */
