@@ -21,8 +21,11 @@ export const TOSS_PAYMENT_STATUSES = [
 ] as const;
 export type TossPaymentStatus = (typeof TOSS_PAYMENT_STATUSES)[number];
 
-/** 결제 조회 응답에서 쓰는 칸만. 나머지 칸은 버린다. */
-export type TossPaymentView = { status: TossPaymentStatus; orderId: string; totalAmount: number; paymentKey: string };
+/**
+ * 결제 조회 응답에서 쓰는 칸만. 나머지 칸은 버린다.
+ * balanceAmount = 취소·부분 취소 뒤 남은 취소 가능 금액(2026-10-10 공식 문서). 응답에 없으면 null — 모르는 값으로 취소하지 않는다(payment INV-M20 ①).
+ */
+export type TossPaymentView = { status: TossPaymentStatus; orderId: string; totalAmount: number; balanceAmount: number | null; paymentKey: string };
 
 /** 결제 조회 결과. not_found 는 결제사가 「그런 결제 없음」이라고 답한 것뿐 — 그 밖의 오류·시간 초과·꼴이 다른 응답은 error. */
 export type TossLookup = { kind: "found"; payment: TossPaymentView } | { kind: "not_found" } | { kind: "error" };
@@ -31,6 +34,11 @@ const paymentShape = z.object({
   status: z.enum(TOSS_PAYMENT_STATUSES),
   orderId: z.string(),
   totalAmount: z.number().int(),
+  balanceAmount: z
+    .number()
+    .int()
+    .nullish()
+    .transform((v) => v ?? null),
   paymentKey: z.string().min(1),
 });
 const errorShape = z.object({ code: z.string() });
@@ -40,7 +48,8 @@ type EnvLike = { NODE_ENV?: string; VERCEL_ENV?: string };
 
 export type TossPaymentsClient = {
   confirm(req: { paymentKey: string; orderId: string; amount: number; idempotencyKey: string }): Promise<unknown>;
-  cancel(req: { paymentKey: string; cancelAmount: number; cancelReason: string; idempotencyKey: string }): Promise<unknown>;
+  /** cancelAmount 를 비우면 남은 금액 전부를 취소한다(결제사 문서 「값이 없으면 전액 취소」). */
+  cancel(req: { paymentKey: string; cancelAmount?: number; cancelReason: string; idempotencyKey: string }): Promise<unknown>;
   /** 주문번호로 결제 하나를 조회한다. 돈을 움직이지 않아 몇 번 불러도 같다. 던지지 않는다. */
   getByOrderId(orderId: string): Promise<TossLookup>;
 };

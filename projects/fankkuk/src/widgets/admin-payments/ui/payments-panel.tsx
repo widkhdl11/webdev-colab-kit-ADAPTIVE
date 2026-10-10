@@ -3,19 +3,22 @@
 import { useState } from "react";
 import type { PaymentRow, RefundStatus } from "@/entities/payment/model/payment-rows";
 import type { PendingBox } from "@/entities/payment/model/pending-boxes";
+import type { ReviewPayment } from "@/entities/payment/model/review-payments";
 import { canRefund } from "@/features/admin-refund/model/refund-access";
 import { RefundButton } from "@/features/admin-refund/ui/refund-button";
 import { ReceivedCancelForm } from "@/features/admin-order-cancel/ui/received-cancel-form";
 import { PendingBoxesSection } from "@/features/admin-pending-box/ui/pending-boxes-section";
+import { ReviewPaymentsSection } from "@/features/admin-review-cancel/ui/review-payments-section";
 import a from "@/shared/ui/admin.module.css";
 import { countByTab, filterPayments, PAYMENT_TABS, REVIEW_NOTICE, type PaymentTab } from "../model/payment-filter";
-import { splitRefundError } from "../model/refund-error-text";
+import { splitPgError } from "@/shared/lib/format/pg-error-text";
 
 // 관리자 「결제·환불」 본문 (admin-console INV-K1·K7·K8, 시안 admin/payments.html).
 // 결제 금액은 네 칸으로 나눠 보인다. 환불 금액은 서버가 주문 상태로 정한 값이고 이 화면에서 바꿀 수 없다.
 // 환불 버튼은 대표에게만 보인다(design-rules 8절) — 판정은 서버·DB 가 다시 한다. 사람은 닉네임으로만(INV-K8).
 // 「입고 뒤 취소」 양식(payment INV-M17)도 대표에게만 — 표 아래에 둔다.
 // 결제사 기록과 달라 확인 필요인 줄(payment INV-M19)은 환불 상태 칸에 그 표시를 단다 — 환불 버튼은 없다(결제가 끝나지 않았다, canRefund).
+// 그 결제의 전액 취소는 표 아래 「확인 필요 결제」 칸에서 한다(INV-M20).
 // 그 줄의 시각은 결제 시각이 아니라 승인을 시도한 시각이라 「(승인 시도)」를 붙인다.
 
 const won = new Intl.NumberFormat("ko-KR");
@@ -56,9 +59,9 @@ function SearchIcon() {
   );
 }
 
-type Props = { rows: readonly PaymentRow[]; pendingBoxes: readonly PendingBox[]; access: "staff" | "owner" };
+type Props = { rows: readonly PaymentRow[]; pendingBoxes: readonly PendingBox[]; reviewPayments: readonly ReviewPayment[]; access: "staff" | "owner" };
 
-export function PaymentsPanel({ rows, pendingBoxes, access }: Props) {
+export function PaymentsPanel({ rows, pendingBoxes, reviewPayments, access }: Props) {
   const [tab, setTab] = useState<PaymentTab>("all");
   const [query, setQuery] = useState("");
   const shown = filterPayments(rows, tab, query);
@@ -200,8 +203,9 @@ export function PaymentsPanel({ rows, pendingBoxes, access }: Props) {
           </table>
         </div>
         <p className={a.hint}>
-          네 칸을 더하면 결제 금액이에요. 역조공은 받는 팬 한 명 몫이 한 줄이고 검수비가 없어요. 요금표를 바꿔도 이미 결제한 주문의 칸은 그대로예요. 확인 필요 줄은 결제가 끝나지 않아 여기서 환불할 수 없어요. 결제사 관리 화면에서 처리해요.
+          네 칸을 더하면 결제 금액이에요. 역조공은 받는 팬 한 명 몫이 한 줄이고 검수비가 없어요. 요금표를 바꿔도 이미 결제한 주문의 칸은 그대로예요. 확인 필요 줄은 결제가 끝나지 않아 여기서 환불하지 않고, 아래 「확인 필요 결제」에서 전액 취소해요.
         </p>
+        <ReviewPaymentsSection rows={reviewPayments} access={access} />
         <PendingBoxesSection boxes={pendingBoxes} access={access} />
         {access === "owner" && <ReceivedCancelForm />}
       </div>
@@ -211,7 +215,7 @@ export function PaymentsPanel({ rows, pendingBoxes, access }: Props) {
 
 // 결제사 답은 사람 말을 먼저, 코드는 결제사 문의용으로 뒤에 흐리게
 function RefundErrorText({ raw }: { raw: string }) {
-  const { message, code } = splitRefundError(raw);
+  const { message, code } = splitPgError(raw);
   return (
     <span className={a.sub} style={{ display: "block", fontSize: 13, marginTop: 2 }}>
       {message}

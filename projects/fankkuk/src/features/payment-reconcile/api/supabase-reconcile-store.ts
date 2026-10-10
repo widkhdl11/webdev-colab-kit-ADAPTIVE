@@ -32,8 +32,13 @@ export function createSupabaseReconcileStore(admin: Pick<SupabaseClient, "rpc">)
       const { error } = await admin.rpc("payment_mark_checked", { p_source: source, p_toss_order_id: tossOrderId });
       if (error) throw new Error(`확인한 시각을 남기지 못했다: ${error.code}`);
     },
-    async markReview(source: ReconcileSourceKind, tossOrderId: string) {
-      const { data, error } = await admin.rpc("payment_mark_review", { p_source: source, p_toss_order_id: tossOrderId });
+    async markReview(source: ReconcileSourceKind, tossOrderId: string, paymentKey: string, balanceKrw: number | null) {
+      const { data, error } = await admin.rpc("payment_mark_review", {
+        p_source: source,
+        p_toss_order_id: tossOrderId,
+        p_payment_key: paymentKey,
+        p_balance_krw: balanceKrw,
+      });
       if (error) throw new Error(`확인 필요 표시를 달지 못했다: ${error.code}`);
       return data === true;
     },

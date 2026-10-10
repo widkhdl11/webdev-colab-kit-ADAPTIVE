@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { readAdminAccess } from "@/entities/session/api/read-admin-access";
+import { cancelOutcome } from "@/shared/api/toss-payments/cancel-outcome";
 import type { TossPaymentsClient } from "@/shared/api/toss-payments/client";
 
 // 환불 실행 (admin-console INV-K2·K7, payment INV-M8·M9, reverse-gift INV-R11).
@@ -50,49 +51,6 @@ function claimErrorReply(code: string | undefined): RefundReply {
   if (code === "P0024") return { status: 409, body: { message: MESSAGE.inProgress } };
   if (code === "P0025") return { status: 409, body: { message: MESSAGE.tooOld } };
   return { status: 500, body: { message: MESSAGE.failed } };
-}
-
-const cancelShape = z.object({
-  paymentKey: z.string(),
-  status: z.string(),
-  cancels: z.array(z.object({ cancelAmount: z.number(), cancelStatus: z.string(), canceledAt: z.string().optional() })),
-});
-const errorShape = z.object({ code: z.string(), message: z.string() });
-
-/**
- * 결제사 취소 응답이 이 환불의 성공인가. 결제 키가 같고, 취소 상태(전체·부분)이고, **마지막(가장 늦은) 취소 줄**이
- * 이 금액의 취소 완료여야 성공. 역조공은 몫들이 결제 하나를 같이 써서 앞선 다른 몫의 취소 줄이 같이 온다 —
- * 같은 결제의 취소는 DB 가 한 번에 하나만 내보내므로(잡기 함수) 이번 요청의 줄이 마지막이다.
- * 실패면 기록에 남길 오류 문구(200자 안).
- */
-type CancelLine = { cancelAmount: number; cancelStatus: string; canceledAt?: string | undefined };
-
-/** 가장 늦은 취소 줄. 시각이 있으면 시각으로, 없으면 배열의 마지막. */
-function latestCancel(lines: readonly CancelLine[]): CancelLine | undefined {
-  let latest: CancelLine | undefined;
-  for (const line of lines) {
-    if (!latest || (line.canceledAt && latest.canceledAt ? Date.parse(line.canceledAt) >= Date.parse(latest.canceledAt) : true)) latest = line;
-  }
-  return latest;
-}
-
-function isThisCancel(line: CancelLine | undefined, amountKrw: number): boolean {
-  return line !== undefined && line.cancelAmount === amountKrw && line.cancelStatus === "DONE";
-}
-
-export function cancelOutcome(res: unknown, paymentKey: string, amountKrw: number): { ok: true } | { ok: false; error: string } {
-  const done = cancelShape.safeParse(res);
-  if (
-    done.success &&
-    done.data.paymentKey === paymentKey &&
-    (done.data.status === "CANCELED" || done.data.status === "PARTIAL_CANCELED") &&
-    isThisCancel(latestCancel(done.data.cancels), amountKrw)
-  ) {
-    return { ok: true };
-  }
-  const err = errorShape.safeParse(res);
-  const text = err.success ? `${err.data.code} ${err.data.message}` : "결제사 응답을 알아볼 수 없음";
-  return { ok: false, error: text.slice(0, 200) };
 }
 
 export async function runRefund(deps: RefundDeps, body: unknown): Promise<RefundReply> {

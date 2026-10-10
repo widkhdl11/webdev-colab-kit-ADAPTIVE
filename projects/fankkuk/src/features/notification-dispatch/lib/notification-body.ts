@@ -13,6 +13,8 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 //   거절·7일 반려·차단 거절 모두 같은 종류·같은 본문이다(INV-N2). 6자리·주소 칸이 없다.
 // difference_due: 사무실 실측이 신고보다 커서 차액 결제 요청이 생기면 보낸 팬에게 상자마다 한 번(INV-N18, 2026-10-09 카드 d55).
 //   금액·실측 구간 칸이 없다 — 선물 상세를 열면 보인다.
+// payment_canceled · difference_canceled: 「확인 필요」 결제를 대표가 전액 취소했을 때 보낸 팬에게 한 번(INV-N19, payment INV-M20, 2026-10-10).
+//   첫 결제면 결제 전 주문이라 팬 화면에 없다 — 링크는 선물 등록. 차액이면 선물 상세. 금액 칸이 없다.
 export const NOTIFICATION_KINDS = [
   "approval_request",
   "arrived",
@@ -26,6 +28,8 @@ export const NOTIFICATION_KINDS = [
   "box_missing",
   "gift_pending_box",
   "difference_due",
+  "payment_canceled",
+  "difference_canceled",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -127,6 +131,23 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         path: `/gifts/${orderNo}`,
         must: false,
       };
+    case "payment_canceled":
+    case "difference_canceled": {
+      const first = kind === "payment_canceled";
+      return {
+        subject: "[팬꾹] 결제를 취소했어요",
+        lines: [
+          greet,
+          "결제 금액을 확인하지 못해 결제를 모두 취소했어요.",
+          "카드사에 따라 돌려받기까지 며칠 걸릴 수 있어요.",
+          first ? "선물을 보내시려면 다시 등록해 주세요." : "추가 결제를 다시 해 주세요.",
+          order,
+        ],
+        buttonLabel: first ? "선물 다시 등록하기" : "선물 보기",
+        path: first ? "/gifts/new" : `/gifts/${orderNo}`,
+        must: false,
+      };
+    }
     case "box_missing":
       // 30일(720시간)이 지나면 자동 처리가 그 상자를 닫는다(office-workflow INV-W10 · payment INV-M8)
       return {

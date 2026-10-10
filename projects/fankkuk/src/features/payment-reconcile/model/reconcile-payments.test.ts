@@ -14,7 +14,7 @@ const target = (source: ReconcileSourceKind, id: string, minutes = 11, amountKrw
 });
 const doneLookup = (id: string, amount = 6900): TossLookup => ({
   kind: "found",
-  payment: { status: "DONE", orderId: id, totalAmount: amount, paymentKey: `pk_toss_${id}` },
+  payment: { status: "DONE", orderId: id, totalAmount: amount, balanceAmount: null, paymentKey: `pk_toss_${id}` },
 });
 
 function harness(targets: ReconcileTarget[], lookups: Record<string, TossLookup | Error>, settleResult = true, clock: () => Date = () => NOW) {
@@ -39,8 +39,8 @@ function harness(targets: ReconcileTarget[], lookups: Record<string, TossLookup 
     markChecked: async (source, id) => {
       touched.push(`${source}:${id}`);
     },
-    markReview: async (source, id) => {
-      log.push(`${source}:review:${id}`);
+    markReview: async (source, id, key, balance) => {
+      log.push(`${source}:review:${id}:${key}:${String(balance)}`);
       return true;
     },
     lookup: async (id) => {
@@ -76,19 +76,19 @@ describe("INV-M19: 다시 확인 실행", () => {
 
   it("INV-M19 (S19b): 만료는 실패 반영, 진행 중은 아무것도 부르지 않는다", async () => {
     const h = harness([target("initial", "g1"), target("revgift", "r1")], {
-      g1: { kind: "found", payment: { status: "EXPIRED", orderId: "g1", totalAmount: 6900, paymentKey: "pk" } },
-      r1: { kind: "found", payment: { status: "IN_PROGRESS", orderId: "r1", totalAmount: 6900, paymentKey: "pk" } },
+      g1: { kind: "found", payment: { status: "EXPIRED", orderId: "g1", totalAmount: 6900, balanceAmount: null, paymentKey: "pk" } },
+      r1: { kind: "found", payment: { status: "IN_PROGRESS", orderId: "r1", totalAmount: 6900, balanceAmount: null, paymentKey: "pk" } },
     });
     const r = await reconcilePayments(h.deps, null);
     expect(r.counts).toEqual({ checked: 2, done: 0, failed: 1, review: 0, kept: 1, errors: 0, skipped: 0 });
     expect(h.log).toEqual(["lookup:g1", "initial:failed:g1", "lookup:r1"]);
   });
 
-  it("INV-M19 (S19d, 실패경로): 금액이 다르면 완료·실패 대신 확인 필요 표시만", async () => {
+  it("INV-M19 (S19d, 실패경로) · INV-M20 ①: 금액이 다르면 완료·실패 대신 확인 필요 표시만 — 조회 응답의 결제 키와 취소 가능 금액을 같이 남긴다", async () => {
     const h = harness([target("difference", "d1", 11, 2000)], { d1: doneLookup("d1", 1000) });
     const r = await reconcilePayments(h.deps, null);
     expect(r.counts).toMatchObject({ review: 1, done: 0, failed: 0 });
-    expect(h.log).toEqual(["lookup:d1", "difference:review:d1"]);
+    expect(h.log).toEqual(["lookup:d1", "difference:review:d1:pk_toss_d1:1000"]);
   });
 
   it("INV-M19 (S19c): 결제사에 없음 — 30분 전이면 그대로, 지나면 실패", async () => {

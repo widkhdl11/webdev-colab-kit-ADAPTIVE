@@ -27,7 +27,8 @@ export type ReconcileDeps = {
   listTargets(orderNo: string | null): Promise<ReconcileTarget[]>;
   /** 결제사를 부르기 직전에 그 줄의 「확인한 시각」을 지금으로 */
   markChecked(source: ReconcileSourceKind, tossOrderId: string): Promise<void>;
-  markReview(source: ReconcileSourceKind, tossOrderId: string): Promise<boolean>;
+  /** 확인 필요 표시 — 결제 키와 취소 가능 금액을 같이 남긴다(payment INV-M20 ①) */
+  markReview(source: ReconcileSourceKind, tossOrderId: string, paymentKey: string, balanceKrw: number | null): Promise<boolean>;
   lookup(tossOrderId: string): Promise<TossLookup>;
   settlers: Record<ReconcileSourceKind, ReconcileSettler>;
   now(): Date;
@@ -56,7 +57,7 @@ export async function reconcilePayments(deps: ReconcileDeps, orderNo: string | n
       let changed = false;
       if (decision.kind === "done") changed = await settler.settleDone(t.tossOrderId, decision.paymentKey);
       else if (decision.kind === "failed") changed = await settler.settleFailed(t.tossOrderId);
-      else if (decision.kind === "needs_review") changed = await deps.markReview(t.source, t.tossOrderId);
+      else if (decision.kind === "needs_review") changed = await deps.markReview(t.source, t.tossOrderId, decision.paymentKey, decision.balanceKrw);
       // 바꾸지 못했으면(다른 처리가 먼저 반영) 그대로 둔 것으로 센다
       if (changed && decision.kind === "done") counts.done += 1;
       else if (changed && decision.kind === "failed") counts.failed += 1;

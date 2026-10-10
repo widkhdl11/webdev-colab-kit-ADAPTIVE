@@ -7,10 +7,15 @@ import { judgeReconcile, NOT_FOUND_FAIL_AFTER_MINUTES } from "./reconcile";
 const NOW = new Date("2026-10-08T03:00:00Z");
 const minutesAgo = (m: number) => new Date(NOW.getTime() - m * 60_000);
 const record = (m = 11) => ({ orderId: "pay_x1", amountKrw: 6900, confirmingAt: minutesAgo(m) });
-const found = (status: TossPaymentStatus, over: Partial<{ orderId: string; totalAmount: number; paymentKey: string }> = {}): TossLookup => ({
+const found = (
+  status: TossPaymentStatus,
+  over: Partial<{ orderId: string; totalAmount: number; balanceAmount: number | null; paymentKey: string }> = {},
+): TossLookup => ({
   kind: "found",
-  payment: { status, orderId: "pay_x1", totalAmount: 6900, paymentKey: "pk_from_toss", ...over },
+  payment: { status, orderId: "pay_x1", totalAmount: 6900, balanceAmount: null, paymentKey: "pk_from_toss", ...over },
 });
+// INV-M20 ①: 확인 필요에는 결제 키와 취소 가능 금액(남은 금액)이 같이 실린다
+const review = (balanceKrw: number | null) => ({ kind: "needs_review", paymentKey: "pk_from_toss", balanceKrw });
 
 describe("INV-M19: 조회 결과 판정", () => {
   it("INV-M19 (S19): 승인됨 + 주문번호·금액 일치 → 완료, 결제 키는 조회 응답의 값", () => {
@@ -18,12 +23,12 @@ describe("INV-M19: 조회 결과 판정", () => {
   });
 
   it("INV-M19 (S19d, 실패경로): 승인됨인데 금액이 다르면 완료도 실패도 아닌 확인 필요", () => {
-    expect(judgeReconcile(found("DONE", { totalAmount: 100 }), record(), NOW)).toEqual({ kind: "needs_review" });
-    expect(judgeReconcile(found("DONE", { totalAmount: 6901 }), record(), NOW)).toEqual({ kind: "needs_review" });
+    expect(judgeReconcile(found("DONE", { totalAmount: 100, balanceAmount: 100 }), record(), NOW)).toEqual(review(100));
+    expect(judgeReconcile(found("DONE", { totalAmount: 6901, balanceAmount: 6901 }), record(), NOW)).toEqual(review(6901));
   });
 
   it("INV-M19 (S19d, 실패경로): 승인됨인데 주문번호가 다르면 확인 필요", () => {
-    expect(judgeReconcile(found("DONE", { orderId: "pay_other" }), record(), NOW)).toEqual({ kind: "needs_review" });
+    expect(judgeReconcile(found("DONE", { orderId: "pay_other", balanceAmount: 6900 }), record(), NOW)).toEqual(review(6900));
   });
 
   it("INV-M19 (S19b): 승인 실패·만료·취소는 실패로 닫는다", () => {
@@ -40,8 +45,15 @@ describe("INV-M19: 조회 결과 판정", () => {
   });
 
   it("INV-M19 (S19d, 실패경로): 부분 취소(승인 뒤 결제사 쪽에서 일부 취소)는 금액이 같아도 확인 필요", () => {
-    expect(judgeReconcile(found("PARTIAL_CANCELED"), record(), NOW)).toEqual({ kind: "needs_review" });
-    expect(judgeReconcile(found("PARTIAL_CANCELED", { totalAmount: 100 }), record(), NOW)).toEqual({ kind: "needs_review" });
+    expect(judgeReconcile(found("PARTIAL_CANCELED", { balanceAmount: 4000 }), record(), NOW)).toEqual(review(4000));
+    expect(judgeReconcile(found("PARTIAL_CANCELED", { totalAmount: 100, balanceAmount: 40 }), record(), NOW)).toEqual(review(40));
+  });
+
+  it("INV-M20 ①: 남은 금액 칸이 없으면 승인됨은 결제 금액, 부분 취소는 모름(null) — 모르는 금액으로 취소하지 않는다", () => {
+    expect(judgeReconcile(found("DONE", { totalAmount: 100 }), record(), NOW)).toEqual(review(100));
+    expect(judgeReconcile(found("PARTIAL_CANCELED"), record(), NOW)).toEqual(review(null));
+    // 남은 금액이 0 이하면 취소할 것이 없다 — 모름과 같다
+    expect(judgeReconcile(found("PARTIAL_CANCELED", { balanceAmount: 0 }), record(), NOW)).toEqual(review(null));
   });
 
   it("INV-M19 (S19c, 실패경로): 결제사에 없음 — 20분이면 그대로, 31분이면 실패", () => {

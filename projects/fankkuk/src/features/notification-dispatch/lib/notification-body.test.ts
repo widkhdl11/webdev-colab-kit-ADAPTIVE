@@ -115,6 +115,27 @@ describe("알림 링크 (INV-N9)", () => {
     for (const word of ["2000", "2,000", "원", "중형", "medium", "소형", "대형"]) expect(b.text).not.toContain(word);
   });
 
+  it("INV-N19 (S19): 첫 결제 전액 취소 안내 — 선물 등록 링크, 취소·돌려받는 기간·다시 등록이라는 말뿐이고 금액은 없다", () => {
+    const b = buildNotificationBody(inputFor("payment_canceled"));
+    expect(new URL(b.link).pathname).toBe("/gifts/new");
+    expect(b.subject).toBe("[팬꾹] 결제를 취소했어요");
+    expect(b.text).toContain("결제 금액을 확인하지 못해 결제를 모두 취소했어요.");
+    expect(b.text).toContain("카드사에 따라 돌려받기까지 며칠 걸릴 수 있어요.");
+    expect(b.text).toContain("선물을 보내시려면 다시 등록해 주세요.");
+    expect(b.text).not.toMatch(/\d[\d,]*원/);
+    expect(b.text).toContain("알림은 내 정보에서 끌 수 있어요."); // 꼭 가는 알림이 아니다(INV-N6)
+  });
+
+  it("INV-N19 (S19): 차액 결제 전액 취소 안내 — 선물 상세 링크, 추가 결제를 다시 해 달라는 말", () => {
+    const b = buildNotificationBody(inputFor("difference_canceled"));
+    expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    expect(b.text).toContain("결제 금액을 확인하지 못해 결제를 모두 취소했어요.");
+    expect(b.text).toContain("추가 결제를 다시 해 주세요.");
+    expect(b.text).not.toContain("다시 등록");
+    expect(b.text).not.toMatch(/\d[\d,]*원/);
+    expect(b.text).toContain("알림은 내 정보에서 끌 수 있어요."); // 꼭 가는 알림이 아니다(INV-N6)
+  });
+
   it("INV-N17 (S17): 아직 안 온 상자 안내 — 선물 상세 링크, 택배비 뺀 금액을 먼저 돌려준다·늦게 오면 반송·7일 안에 안 오면 택배비도라는 말뿐이고 거절 종류·6자리는 없다", () => {
     const b = buildNotificationBody({
       ...inputFor("gift_pending_box"),

@@ -61,6 +61,14 @@ describe("토스페이먼츠 클라이언트", () => {
     expect(JSON.parse(String(call!.init.body))).toEqual({ paymentKey: "tgen_abc", orderId: "FC-7K3M9-p1", amount: 9000 });
   });
 
+  it("INV-M20: 취소 금액을 비우면 본문에 금액 칸이 없다 — 결제사가 남은 금액 전부를 취소한다", async () => {
+    const { calls, fetchImpl } = recordingFetch({ paymentKey: "tgen_abc", status: "CANCELED", cancels: [] });
+    const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl });
+    await client.cancel({ paymentKey: "tgen_abc", cancelReason: "전액 취소", idempotencyKey: "rc-1" });
+    expect(JSON.parse(String(calls[0]!.init.body))).toEqual({ cancelReason: "전액 취소" });
+    expect(new Headers(calls[0]!.init.headers).get("idempotency-key")).toBe("rc-1");
+  });
+
   it("INV-M9: 환불 호출은 금액과 환불별 멱등 키를 붙여 cancel 로 보낸다", async () => {
     const { calls, fetchImpl } = recordingFetch({ status: "PARTIAL_CANCELED" });
     const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl });
@@ -98,12 +106,22 @@ describe("결제 조회 (payment INV-M19)", () => {
     const { calls, fetchImpl } = recordingFetch(PAYMENT);
     const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl });
     const r = await client.getByOrderId("pay_x1");
-    expect(r).toEqual({ kind: "found", payment: { status: "DONE", orderId: "pay_x1", totalAmount: 6900, paymentKey: "pk_toss" } });
+    expect(r).toEqual({ kind: "found", payment: { status: "DONE", orderId: "pay_x1", totalAmount: 6900, balanceAmount: null, paymentKey: "pk_toss" } });
     expect(calls[0]!.url).toBe("https://api.tosspayments.com/v1/payments/orders/pay_x1");
     expect(calls[0]!.init.method).toBe("GET");
     expect(calls[0]!.init.body).toBeUndefined();
     expect(new Headers(calls[0]!.init.headers).get("authorization")).toBe(`Basic ${btoa("test_gsk_x:")}`);
     expect(calls[0]!.init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("INV-M20 ①: 조회 응답의 남은 금액(balanceAmount)을 읽는다 — 정수가 아니면 꼴이 다른 응답(조회 오류)", async () => {
+    const ok = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl: recordingFetch({ ...PAYMENT, status: "PARTIAL_CANCELED", balanceAmount: 4000 }).fetchImpl });
+    expect(await ok.getByOrderId("pay_x1")).toEqual({
+      kind: "found",
+      payment: { status: "PARTIAL_CANCELED", orderId: "pay_x1", totalAmount: 6900, balanceAmount: 4000, paymentKey: "pk_toss" },
+    });
+    const bad = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl: recordingFetch({ ...PAYMENT, balanceAmount: "4000" }).fetchImpl });
+    expect(await bad.getByOrderId("pay_x1")).toEqual({ kind: "error" });
   });
 
   it("INV-M19: 주문번호는 주소에 그대로 끼우지 않고 인코딩한다", async () => {

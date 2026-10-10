@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { cancelOutcome, runRefund, type RefundDeps } from "./run-refund";
+import { cancelOutcome } from "@/shared/api/toss-payments/cancel-outcome";
+import { runRefund, type RefundDeps } from "./run-refund";
 
 // 환불 실행 (admin-console INV-K2·K7, payment INV-M9). DB 는 가짜로 세우고 결제사 호출은 기록만 한다 —
 // 시험 대상은 runRefund 의 순서·판정이다(대표 확인 → 잡기 → 결제사 취소 한 번 → 결과 기록).
