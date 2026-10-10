@@ -68,6 +68,12 @@ async function inspectedGift(opts: { approved?: boolean } = {}): Promise<Unit & 
 }
 
 const print = async (qr: string, login = "fankkuk_admin") => decryptor({ qr, accessToken: await tokenOf(login) });
+// 앱 판정을 건너뛰고 주소를 내주는 DB 함수를 바로 부른다 — 같은 조건이 앱과 DB 두 겹이라 앱 경로만 보면 DB 쪽 조건이 빠져도 통과한다
+const claimDirect = (qr: string): unknown => {
+  const reply = psql(`set role address_decryptor; select public.invoice_claim_print('${qr}', '${OWNER_ID}')::text;`);
+  // psql 은 「SET」 줄 뒤에 결과를 찍는다 — 마지막 줄이 함수 결과다
+  return JSON.parse(reply.split(/\r?\n/).pop() ?? "");
+};
 
 describe("INV-P4·S12: 조건이 모두 맞으면 대표의 송장 출력이 크리에이터의 주소를 연다", () => {
   it("INV-P4·INV-S12·S12 (S1 흐름): 봉인한 주소가 라벨 칸으로 열리고, 상자는 송장 출력 단계로, 열람 기록 1줄", async () => {
@@ -338,6 +344,9 @@ describe("INV-P4 (c): 검수 완료 ~ 출고 전에만", () => {
     expect(await print(g.qr)).toEqual({ kind: "denied", reason: "order_not_printable" });
     expect(logRows(g.orderId)).toEqual([`denied:order_not_printable:${OWNER_ID}`]);
     expect(parcelState(g.qr)).toBe("shipped");
+    // DB 함수도 스스로 거부한다(앱 판정을 건너뛴 호출)
+    expect(claimDirect(g.qr)).toEqual({ result: "denied", reason: "order_not_printable" });
+    expect(parcelState(g.qr)).toBe("shipped");
   });
 
   it("INV-P4 (c) (실패경로): 거절된 주문은 거부 — 검수 완료 상자도, 한 번 열고 출고 확정된 상자의 재출력도", async () => {
@@ -356,6 +365,9 @@ describe("INV-P4 (c): 검수 완료 ~ 출고 전에만", () => {
     expect(await print(b.qr)).toEqual({ kind: "denied", reason: "order_not_printable" });
     expect(logRows(b.orderId)).toEqual([`opened:1:${OWNER_ID}`, `denied:order_not_printable:${OWNER_ID}`]);
     expect(parcelState(b.qr)).toBe("shipped");
+    // DB 함수도 스스로 거부한다(앱 판정을 건너뛴 호출) — 검수 완료 상자, 출고 확정 상자의 재출력 둘 다
+    expect(claimDirect(a.qr)).toEqual({ result: "denied", reason: "order_not_printable" });
+    expect(claimDirect(b.qr)).toEqual({ result: "denied", reason: "order_not_printable" });
   });
 });
 

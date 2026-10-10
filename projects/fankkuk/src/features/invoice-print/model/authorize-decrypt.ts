@@ -34,8 +34,10 @@ function beforeShipment(req: DecryptRequest): boolean {
   return isPrintable(req.orderStatus) && (req.parcelState === "inspected" || req.parcelState === "label_printed");
 }
 
+// 주문 단계는 가장 덜 나간 상자를 따른다 — 옆 상자가 출력 전이면 출고한 상자가 있어도 주문은 검수 완료다(S5g).
+// 거절·반려·취소는 따로 있는 단계라 여기서 열리지 않는다.
 function reprintAfterShipment(req: DecryptRequest): boolean {
-  return req.parcelState === "shipped" && req.decryptCount > 0 && (req.orderStatus === "label_printed" || req.orderStatus === "shipped");
+  return req.parcelState === "shipped" && req.decryptCount > 0 && (isPrintable(req.orderStatus) || req.orderStatus === "shipped");
 }
 
 /** 복호화 함수 진입부 판정. 하나라도 어긋나면 열지 않는다. 동시 요청의 원자성은 저장소 쪽이 맡는다. */

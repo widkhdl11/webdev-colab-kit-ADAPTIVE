@@ -98,6 +98,11 @@ describe("복호화 허용 판정", () => {
     expect(authorizeDecrypt({ ...ok, orderStatus: "label_printed", parcelState: "shipped", decryptCount: 2 })).toEqual({ ok: true, isReprint: true });
   });
 
+  it("INV-P5 (S5g): 옆 상자가 아직 검수 완료라 주문이 검수 완료 단계여도 출고한 상자는 재출력된다", () => {
+    // 주문 단계는 가장 덜 나간 상자를 따른다 — 상자 1 출고, 상자 2 출력 전이면 주문은 검수 완료
+    expect(authorizeDecrypt({ ...ok, orderStatus: "inspected", parcelState: "shipped", decryptCount: 1 })).toEqual({ ok: true, isReprint: true });
+  });
+
   it("INV-P5 (S5h, 실패경로): 출고 확정 뒤 재출력도 상한 3번을 넘지 않는다", () => {
     expect(authorizeDecrypt({ ...ok, orderStatus: "shipped", parcelState: "shipped", decryptCount: 3 })).toEqual({
       ok: false,

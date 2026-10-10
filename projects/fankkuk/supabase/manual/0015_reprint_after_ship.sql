@@ -5,7 +5,7 @@
 --   docker exec -i supabase_db_fankkuk psql -U postgres -d postgres -v ON_ERROR_STOP=1 < /c/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/projects/fankkuk/supabase/manual/0015_reprint_after_ship.sql
 --
 -- 0010 에서 바뀌는 것은 한 군데다 — 주소를 내주는 조건:
---   · 출고 확정(shipped) 상자는 이미 한 번 이상 열었고 주문이 송장 출력·출고 단계면 남은 횟수 안에서 다시 연다(재출력).
+--   · 출고 확정(shipped) 상자는 이미 한 번 이상 열었고 주문이 검수 완료·송장 출력·출고 단계면 남은 횟수 안에서 다시 연다(재출력).
 --   · 출고 확정 상자의 첫 출력은 없다(연 적이 없으면 거부). 횟수·잠금·기록 줄은 그대로다.
 -- 부분 적용:
 --   · 마이그레이션만 적용(이 파일 전) — 재출력은 지금처럼 거부된다(order_not_printable). 주소가 열리지 않으니 안전하다.
@@ -50,10 +50,11 @@ begin
     into v_count;
 
   -- INV-P4 (c)·INV-P5: ① 검수 완료 ~ 출고 확정 전 — 출고 조건(W3 — 승인·거절 아님·차액)도 잠근 뒤 다시 본다.
-  -- ② 출고 확정된 상자의 재출력(2026-10-10) — 이미 한 번 이상 열었고 주문이 송장 출력·출고 단계일 때만. 첫 출력은 없다.
+  -- ② 출고 확정된 상자의 재출력(2026-10-10) — 이미 한 번 이상 열었고 주문이 검수 완료·송장 출력·출고 단계일 때만. 첫 출력은 없다.
   --    출고 확정은 출고 조건을 지킨 상자만 되므로 W3 은 다시 보지 않는다(승인 뒤라 거절·반려로 바뀌지 않는다).
   if v.state = 'shipped' then
-    if v_count < 1 or v_order.status not in ('label_printed', 'shipped') then
+    -- 주문 단계는 가장 덜 나간 상자를 따른다 — 옆 상자가 출력 전이면 주문은 검수 완료(S5g). 거절·반려·취소는 따로 있는 단계다.
+    if v_count < 1 or v_order.status not in ('inspected', 'label_printed', 'shipped') then
       v_reason := 'order_not_printable';
     elsif v_count >= 3 then
       v_reason := 'decrypt_limit_reached';
