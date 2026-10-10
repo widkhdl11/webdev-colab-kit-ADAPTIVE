@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { changePassword, CURRENT_PASSWORD_WRONG } from "@/features/password-change/model/change-password";
 import { accountPasswordDeps, canSignIn, createTestAccount, device, FIXTURE_PASSWORD, removeTestAccounts, stillSignedIn, testEmail } from "./account-fixtures";
 import { psql } from "./helpers";
+import { PASSWORD_WEAK } from "@/entities/session/model/password-rule";
 
 // 로그인한 사람의 비밀번호 바꾸기(session-login INV-L12)를 실제 Auth 로 돈다. 시험 전용 계정(it_ 접두어)만 쓴다.
 // 「기기」는 그 계정으로 로그인한 클라이언트 하나다. 바꾸기는 그 기기의 세션으로 부른다 — 앱 서버의 라우트가 요청한 사람의 세션 클라이언트를 넘기는 자리.
@@ -45,6 +46,19 @@ describe("INV-L12: 비밀번호 바꾸기는 로그인한 사람 자신의 것�
       ok: false,
       field: "newPasswordConfirm",
     });
+    expect(await canSignIn(d.loginEmail, FIXTURE_PASSWORD)).toBe(true);
+  });
+
+  it("INV-L12·signup INV-U6 (실패경로): 8자 이상이어도 영문·숫자 2종류뿐인 새 비밀번호는 거부, 비밀번호 그대로", async () => {
+    const d = await createTestAccount({ tag: "s10kinds", email: testEmail("s10kinds") });
+    const me = await device(d.loginEmail);
+    expect(await change(d, me, { currentPassword: FIXTURE_PASSWORD, newPassword: "abcdefgh12", newPasswordConfirm: "abcdefgh12" })).toEqual({
+      ok: false,
+      status: 400,
+      field: "newPassword",
+      message: PASSWORD_WEAK,
+    });
+    expect(await canSignIn(d.loginEmail, "abcdefgh12")).toBe(false);
     expect(await canSignIn(d.loginEmail, FIXTURE_PASSWORD)).toBe(true);
   });
 

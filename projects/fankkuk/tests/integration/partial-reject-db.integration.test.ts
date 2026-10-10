@@ -70,6 +70,19 @@ const pendingAlerts = (orderId: string) =>
   psql(
     `select string_agg(o.kind || '|' || p.login_id || '|' || o.channel, ',' order by o.channel) from public.notification_outbox o join public.profiles p on p.id = o.account_id where o.order_id = '${orderId}' and o.kind = 'gift_pending_box'`,
   );
+
+/**
+ * 살려 둔 시각을 「지금 − gap」으로 옮기고 같은 처리 안에서 자동 처리를 돌린다(돌려주는 값은 닫은 수).
+ * 한 처리 안의 now() 는 한 값이라 경계를 밀리초 오차 없이 본다 — 따로 돌리면 그 사이 흐른 시간만큼 기한이 지나 버린다.
+ */
+function keepThenExpiry(boxId: string, orderNo: string, gap: string): string {
+  const out = psql(
+    `begin; set local session_replication_role = replica; update public.inbound_codes set kept_at = now() - interval '${gap}' where box_id = '${boxId}'; set local session_replication_role = origin; select set_config('request.jwt.claims', '{"role":"service_role"}', true); select public.office_run_expiry('${orderNo}') ->> 'kept_closed'; commit;`,
+  );
+  const lines = out.split(/\r?\n/);
+  return lines[lines.length - 2]!.trim(); // 마지막 줄은 COMMIT
+}
+
 const parcelOf = (boxId: string) => psql(`select coalesce(state::text, '') from public.office_parcels where box_id = '${boxId}'`);
 
 describe("거절 때 아직 안 온 상자 (payment INV-M18 · INV-M8 · inbound-address-code INV-C3)", () => {
@@ -379,6 +392,46 @@ describe("거절 때 아직 안 온 상자 (payment INV-M18 · INV-M8 · inbound
     expect(Number(orderRefundDue(g.orderId))).toBe(5800);
     const late = await scanInbound(op, waybill(), { code: codeOf({ boxId: g.boxIds[1]! }), ...HOLD_DETAILS });
     expect(late.data).toMatchObject({ result: "hold", reason: "void_code" });
+  });
+
+  it("INV-M18 (S18h, 경계): 살려 둔 때부터 168시간 「안에」 안 오면 닫는다 — 167시간 59분 59초면 그대로, 정확히 168시간이면 닫힌다", async () => {
+    const g = await paidGift(2);
+    await aArrived(g);
+    expect(await declineAs("haru_creator", g.requestId)).toBe("declined");
+    expect(keepThenExpiry(g.boxIds[1]!, g.orderNo, "167 hours 59 minutes 59 seconds")).toBe("0");
+    expect(missing(g.boxIds[1]!)).toBe("f");
+    expect(codeState(g.boxIds[1]!)).toBe("valid");
+    expect(keepThenExpiry(g.boxIds[1]!, g.orderNo, "168 hours")).toBe("1");
+    expect(missing(g.boxIds[1]!)).toBe("t");
+    expect(codeState(g.boxIds[1]!)).toBe("void");
+    expect(Number(boxRefundDue(g.boxIds[1]!))).toBe(4000);
+  });
+
+  it("INV-M18 ③ (S16d·S17 뒤): 취소로 살려 둔 상자도 168시간 안에 안 오면 자동 처리가 닫는다 — 팬의 취소(「먼저 보내기」 뒤)·대표의 입고 뒤 취소 둘 다", async () => {
+    const op = await staff();
+    const fan = await signedInClient("byeolbit_fan");
+    const byFan = await paidGift(2);
+    expect((await fan.rpc("ack_early_send", { p_order_no: byFan.orderNo })).error).toBeNull();
+    expect((await fan.rpc("cancel_my_gift", { p_order_no: byFan.orderNo })).error).toBeNull();
+    const byOwner = await paidGift(2);
+    await receive(op, byOwner.boxIds[0]!);
+    expect((await (await owner()).rpc("admin_cancel_received_gift", { p_order_no: byOwner.orderNo, p_reason: "1:1 문의" })).error).toBeNull();
+    const keptBoxes = [...byFan.boxIds, byOwner.boxIds[1]!];
+    expect(keptBoxes.map(codeState)).toEqual(["valid", "valid", "valid"]);
+    const fanOrderDue = orderRefundDue(byFan.orderId);
+    const ownerOrderDue = orderRefundDue(byOwner.orderId);
+
+    psql(`begin; set local session_replication_role = replica; update public.inbound_codes set kept_at = now() - interval '169 hours' where box_id in ('${keptBoxes.join("','")}'); commit;`);
+    expect((await runExpiry(byFan.orderNo)).kept_closed).toBe(2);
+    expect((await runExpiry(byOwner.orderNo)).kept_closed).toBe(1);
+    expect(keptBoxes.map(missing)).toEqual(["t", "t", "t"]);
+    expect(keptBoxes.map(codeState)).toEqual(["void", "void", "void"]);
+    // 닫히면 남겨 둔 배송비 칸이 상자 환불이 되고, 주문 환불은 그대로(먼저 넣은 몫)
+    expect(keptBoxes.map((b) => Number(boxRefundDue(b)))).toEqual([4000, 4000, 4000]);
+    expect(orderRefundDue(byFan.orderId)).toBe(fanOrderDue);
+    expect(orderRefundDue(byOwner.orderId)).toBe(ownerOrderDue);
+    expect(status(byFan.orderId)).toBe("canceled");
+    expect(status(byOwner.orderId)).toBe("canceled");
   });
 
   it("INV-C3 (실패경로): 살려 둔 표시는 한 번 적으면 바꾸거나 지울 수 없고, 유효한 6자리에만 적을 수 있다", async () => {

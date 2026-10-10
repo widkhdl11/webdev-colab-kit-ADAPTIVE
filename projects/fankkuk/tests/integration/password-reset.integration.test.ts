@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { requestPasswordReset, RESET_REQUESTED_MESSAGE } from "@/features/password-reset/model/request-reset";
 import { RESET_LINK_INVALID, resetPassword } from "@/features/password-reset/model/reset-password";
 import { changePassword } from "@/features/password-change/model/change-password";
+import { PASSWORD_WEAK } from "@/entities/session/model/password-rule";
 import {
   accountPasswordDeps,
   canSignIn,
@@ -266,6 +267,15 @@ describe("INV-L11: 재설정 링크는 한 번·1시간·그 계정 하나, 끝�
     expect(await reset(token, "new-pass-bounds-7", { passwordConfirm: "new-pass-other-7" })).toMatchObject({ ok: false, field: "passwordConfirm" });
     expect(await canSignIn(a.loginEmail, FIXTURE_PASSWORD)).toBe(true);
     expect(await reset(token, "new-pass-bounds-7")).toEqual({ ok: true });
+  });
+
+  it("INV-L11·signup INV-U6 (실패경로): 8자 이상이어도 영문·숫자 2종류뿐이면 거부되고, 비밀번호 그대로, 링크는 버려지지 않는다", async () => {
+    const a = await createTestAccount({ tag: "kinds", email: testEmail("kinds") });
+    const token = issueReset(a.userId);
+    expect(await reset(token, "abcdefgh12")).toEqual({ ok: false, status: 400, field: "password", message: PASSWORD_WEAK });
+    expect(await canSignIn(a.loginEmail, "abcdefgh12")).toBe(false);
+    expect(await canSignIn(a.loginEmail, FIXTURE_PASSWORD)).toBe(true);
+    expect(await reset(token, "abcdefgh12!")).toEqual({ ok: true });
   });
 
   it("INV-L11 (실패경로): 같은 링크로 동시에 두 번 저장하면 하나만 지나간다", async () => {

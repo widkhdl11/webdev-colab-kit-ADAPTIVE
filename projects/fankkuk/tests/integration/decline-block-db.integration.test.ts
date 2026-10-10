@@ -239,6 +239,24 @@ describe("INV-D2: 거절할 수 있는 주문의 조건", () => {
     expect([requestRow(old.requestId), orderRow(old.orderId)]).toEqual(before);
     expect(orderStatus(waiting.orderId)).toBe("rejected");
   });
+
+  it("INV-D2 S2d (경계): 결제 뒤 167시간이면 아직 기한 안 — 거절된다", async () => {
+    const g = await giftFrom();
+    psql(`update public.orders set registered_at = now() - interval '167 hours' where id = '${g.orderId}'`);
+    expect(await decline(haru, g.requestId)).toBe("declined");
+    expect(requestRow(g.requestId)).toMatch(/^declined\|/);
+    expect(orderStatus(g.orderId)).toBe("rejected");
+  });
+
+  it("INV-D2 S2e (경계): 차단으로 함께 거절할 때 결제 뒤 167시간인 다른 주문은 아직 함께 거절된다", async () => {
+    const near = await giftFrom();
+    psql(`update public.orders set registered_at = now() - interval '167 hours' where id = '${near.orderId}'`);
+    const trigger = await giftFrom();
+    const reply = await declineFull(haru, trigger.requestId, true);
+    expect(reply.result).toBe("declined");
+    expect(reply.also_declined).toContain(near.orderNo);
+    expect(orderStatus(near.orderId)).toBe("rejected");
+  });
 });
 
 describe("INV-D3: 거절은 요청·주문·상자를 한 처리에서 바꾸고, 그 뒤는 기존 약속이 따른다", () => {

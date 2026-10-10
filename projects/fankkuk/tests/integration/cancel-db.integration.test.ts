@@ -172,6 +172,23 @@ describe("대표의 입고 뒤 취소 (INV-M17)", () => {
     }
   });
 
+  it("INV-M17 (S17c): 중형 초과로 실측된 상자가 있어도 취소된다 — 그 상자는 0, 검수 전인 상자는 기본 서비스료 칸만 돌려준다", async () => {
+    const op = await staff();
+    const g = await paidGift(2);
+    const over = await receive(op, g.boxIds[0]!);
+    const other = await receive(op, g.boxIds[1]!);
+    expect((await op.rpc("office_record_measurement", { p_qr: over, p_tier: "oversize" })).data).toEqual({ result: "inspection_failed" });
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "1:1 문의" })).error).toBeNull();
+    expect(status(g.orderId)).toBe("canceled");
+    expect(psql(`select count(*) from public.order_cancellations where order_id = '${g.orderId}'`)).toBe("1");
+    // 소형: B 6,900 − 검수비 1,500 − 배송비 4,000 = 1,400, 중형 초과 A 는 0(검수 불합격 줄)
+    expect(Number(orderRefundDue(g.orderId))).toBe(1400);
+    await inspect(op, other, FAN_PASS);
+    await op.rpc("office_run_expiry", { p_order_no: g.orderNo });
+    expect(parcelState(other)).toBe("return_waiting");
+  });
+
   it("INV-M8·M17: 차액 결제를 마친 주문을 입고 뒤 취소하면 차액 결제의 환불은 그 결제의 검수비·배송비 칸을 뺀 값", async () => {
     const op = await staff();
     const g = await paidGift(1);

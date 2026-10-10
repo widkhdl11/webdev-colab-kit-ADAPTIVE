@@ -74,6 +74,14 @@ describe("INV-S6: 승인할 수 없는 주문은 승인하지 않는다", () => 
     expect(data?.status).not.toBe("expired"); // 반려는 자동 처리가 한다
   });
 
+  it("INV-S6 S6c (경계): 결제 뒤 167시간이면 아직 기한 안 — 승인된다", async () => {
+    const o = await paidOrder();
+    psql(`update public.orders set registered_at = now() - interval '167 hours' where id = '${o.orderId}'`);
+    expect((await approveRpc(o.requestId)).data).toBe("approved");
+    const { data } = await adminClient().from("orders").select("approved_at").eq("id", o.orderId).single();
+    expect(data?.approved_at).not.toBeNull();
+  });
+
   it("INV-S6: 이미 받지 않음으로 처리된 요청은 승인되지 않는다", async () => {
     const o = await paidOrder();
     await adminClient().from("approval_requests").update({ status: "declined", decided_at: new Date().toISOString() }).eq("request_id", o.requestId);

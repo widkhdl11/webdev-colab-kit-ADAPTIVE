@@ -329,6 +329,34 @@ describe("INV-P4 (c): 검수 완료 ~ 출고 전에만", () => {
     expect(logRows(g.orderId)).toEqual([`denied:order_not_printable:${OWNER_ID}`]);
     expect(parcelState(qr)).toBe("labeled");
   });
+
+  it("INV-P4 (c)·INV-P5 (실패경로): 연 줄이 0개인 출고 확정 상자는 첫 출력이 없다 — 거부, 상자는 출고 확정 그대로", async () => {
+    const g = await inspectedGift();
+    // 출력 없이 출고 확정에 이르는 길은 화면에 없다 — DB 상태를 직접 만들어 함수의 조건만 본다(주문은 출고 단계)
+    psql(`update public.office_parcels set state = 'shipped', outbound_waybill_no = '${waybill()}', shipped_at = now() where qr_code = '${g.qr}'`);
+    psql(`update public.orders set status = 'shipped' where id = '${g.orderId}'`);
+    expect(await print(g.qr)).toEqual({ kind: "denied", reason: "order_not_printable" });
+    expect(logRows(g.orderId)).toEqual([`denied:order_not_printable:${OWNER_ID}`]);
+    expect(parcelState(g.qr)).toBe("shipped");
+  });
+
+  it("INV-P4 (c) (실패경로): 거절된 주문은 거부 — 검수 완료 상자도, 한 번 열고 출고 확정된 상자의 재출력도", async () => {
+    const a = await inspectedGift();
+    psql(`update public.orders set status = 'rejected' where id = '${a.orderId}'`);
+    expect(await print(a.qr)).toEqual({ kind: "denied", reason: "order_not_printable" });
+    expect(logRows(a.orderId)).toEqual([`denied:order_not_printable:${OWNER_ID}`]);
+    expect(parcelState(a.qr)).toBe("inspected");
+
+    const b = await inspectedGift();
+    const first = await print(b.qr);
+    if (first.kind !== "printed") throw new Error("열리지 않음");
+    const staff = await signedInClient("fankkuk_staff");
+    expect((await staff.rpc("office_confirm_shipment", { p_qr: b.qr, p_waybill: first.waybill })).error).toBeNull();
+    psql(`update public.orders set status = 'rejected' where id = '${b.orderId}'`);
+    expect(await print(b.qr)).toEqual({ kind: "denied", reason: "order_not_printable" });
+    expect(logRows(b.orderId)).toEqual([`opened:1:${OWNER_ID}`, `denied:order_not_printable:${OWNER_ID}`]);
+    expect(parcelState(b.qr)).toBe("shipped");
+  });
 });
 
 describe("INV-P14: 봉인 속 크리에이터가 주소 칸의 크리에이터와 다르면 쓰지 않는다", () => {

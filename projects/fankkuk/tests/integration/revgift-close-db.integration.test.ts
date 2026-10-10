@@ -195,6 +195,31 @@ describe("INV-R10 · INV-K1: 역조공 받기 기한 처리는 운영자가 관�
     expect(due(other.orderNos[0]!)).toBe("none");
   });
 
+  it("INV-R11 (S11e, 경계): 살려 둔 때부터 168시간 「안에」 안 오면 닫는다 — 167시간 59분 59초면 그대로, 정확히 168시간이면 6자리 무효·몫 전액", async () => {
+    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "medium" }]);
+    await payTestRevgift(send);
+    const no = send.orderNos[0]!;
+    backdateSettlement(send, 168, 1);
+    await (await signedInClient("fankkuk_staff")).rpc("office_run_expiry", { p_order_no: no });
+    const due = () => psql(`select coalesce(public.refund_due_of_share(s.id)::text, 'none') from public.revgift_shares s where s.order_no = '${no}'`);
+    const code = () => psql(`select state from public.inbound_codes c join public.revgift_shares s on s.id = c.share_id where s.order_no = '${no}'`);
+    // 살려 둔 시각을 옮기고 같은 처리 안에서 자동 처리를 돌린다 — 한 처리 안의 now() 는 한 값이라 경계를 오차 없이 본다
+    const keepThenExpiry = (gap: string) =>
+      psql(
+        `begin; set local session_replication_role = replica; update public.inbound_codes c set kept_at = now() - interval '${gap}' from public.revgift_shares s where s.id = c.share_id and s.order_no = '${no}' and c.kept_at is not null; set local session_replication_role = origin; select set_config('request.jwt.claims', '{"role":"service_role"}', true); select public.office_run_expiry('${no}') ->> 'kept_closed'; commit;`,
+      )
+        .split(/\r?\n/)
+        .slice(-2)[0]!
+        .trim(); // 마지막 줄은 COMMIT
+    expect(code()).toBe("valid");
+    expect(keepThenExpiry("167 hours 59 minutes 59 seconds")).toBe("0");
+    expect(code()).toBe("valid");
+    expect(due()).toBe("none");
+    expect(keepThenExpiry("168 hours")).toBe("1");
+    expect(code()).toBe("void");
+    expect(due()).toBe("6900");
+  });
+
   it("INV-R11 S11d: 받지 않음이 된 몫의 상자가 살려 둔 6자리로 오면 그 몫 상자로 입고 → 반송 대기, 환불 = 반송 택배비를 뺀 금액", async () => {
     const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
     await payTestRevgift(send);
