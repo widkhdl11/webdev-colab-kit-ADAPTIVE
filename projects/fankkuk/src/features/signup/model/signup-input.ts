@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TAG_COUNT_MESSAGE, tagCountWithin, tagSelectionFields } from "@/entities/creator/model/creator-tags";
 import { SIGNUP_LOGIN_ID_PATTERN } from "@/entities/session/model/login-id";
-import { PASSWORD_MAX, PASSWORD_MIN, PASSWORD_SAME_AS_ID, PASSWORD_TOO_LONG, PASSWORD_TOO_SHORT } from "@/entities/session/model/password-rule";
+import { PASSWORD_KINDS, PASSWORD_MAX, PASSWORD_MIN, PASSWORD_SAME_AS_ID, PASSWORD_TOO_LONG, PASSWORD_TOO_SHORT, PASSWORD_WEAK, passwordKinds } from "@/entities/session/model/password-rule";
 import { EMAIL_SHAPE } from "@/shared/lib/validation/email-shape";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { MOBILE_PHONE_SHAPE } from "@/shared/lib/validation/phone-shape";
@@ -32,7 +32,11 @@ const detailsObject = z.object({
     .string()
     .trim()
     .refine((s) => s.length <= 254 && EMAIL_SHAPE.test(s), "이메일 주소를 확인해 주세요."),
-  password: z.string().min(PASSWORD_MIN, PASSWORD_TOO_SHORT).max(PASSWORD_MAX, PASSWORD_TOO_LONG),
+  password: z
+    .string()
+    .min(PASSWORD_MIN, PASSWORD_TOO_SHORT)
+    .max(PASSWORD_MAX, PASSWORD_TOO_LONG)
+    .refine((v) => passwordKinds(v) >= PASSWORD_KINDS, PASSWORD_WEAK),
   phone: phoneSchema,
   terms: z.object({
     service: z.literal(true, { message: "필수 약관에 동의해 주세요." }),

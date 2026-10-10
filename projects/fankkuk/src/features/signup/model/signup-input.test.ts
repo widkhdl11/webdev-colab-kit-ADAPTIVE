@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { checkDetails, creatorProfileSchema } from "./signup-input";
 
 // 시험용 비밀번호(실제 계정 아님). 비밀번호 칸에 긴 문자열을 바로 적으면 시크릿 검사에 걸려 상수로 둔다.
-const TEST_PW = "long-enough-pw";
+const TEST_PW = "long-enough-pw1";
 const NINE_CHARS = "123456789";
 const SAME_AS_ID = "samepassword";
 

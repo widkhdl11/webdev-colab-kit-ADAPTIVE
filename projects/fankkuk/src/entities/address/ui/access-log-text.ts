@@ -4,7 +4,7 @@ import type { AccessDenyReason, AccessRequester } from "../model/access-log";
 
 /** 거부 사유 → 문구. */
 export const ACCESS_DENY_TEXT: Record<AccessDenyReason, string> = {
-  not_owner: "대표 계정이 아니라 열리지 않았어요",
+  not_owner: "권한이 없는 계정이라 열리지 않았어요",
   no_valid_approval: "승인 서명이 확인되지 않아 열리지 않았어요",
   order_mismatch: "서명한 주문과 달라 열리지 않았어요",
   order_not_printable: "지금은 주소를 열 수 없는 단계라 열리지 않았어요",
@@ -14,4 +14,4 @@ export const ACCESS_DENY_TEXT: Record<AccessDenyReason, string> = {
 };
 
 /** 누가 — 계정 id·아이디·닉네임 없이 대표인지 아닌지만(INV-P8). */
-export const ACCESS_REQUESTER_TEXT: Record<AccessRequester, string> = { owner: "대표 계정", other: "대표가 아닌 계정" };
+export const ACCESS_REQUESTER_TEXT: Record<AccessRequester, string> = { owner: "대표 계정", other: "권한이 없는 계정" };

@@ -3,9 +3,10 @@ import type { OutgoingMail } from "@/shared/api/mail/smtp";
 import { signUp, type SignUpDeps } from "./sign-up";
 
 // 시험용 비밀번호(실제 계정 아님). 비밀번호 칸에 긴 문자열을 바로 적으면 시크릿 검사에 걸려 상수로 둔다.
-const TEST_PW = "long-enough-pw";
-const NINE_CHARS = "123456789";
-const SAME_AS_ID = "samepassword";
+const TEST_PW = "long-enough-pw1";
+const SEVEN_CHARS = "ab1!cd2";
+const TWO_KINDS = "abcdefgh1";
+const SAME_AS_ID = "same_pw_01";
 
 // DB 함수의 판정(잠금·유일·한 번만)은 통합 테스트(tests/integration/signup-db)가 본다.
 // 여기서 보는 것은 앱 서버의 판정 — 무엇을 믿고, 무엇을 어떤 순서로 부르고, 실패하면 무엇을 되돌리나.
@@ -265,7 +266,8 @@ describe("INV-U5·U6: 입력 경계", () => {
 
   it("INV-U6 (S6, 실패경로): 짧은 비밀번호·아이디와 같은 비밀번호·필수 약관 빠짐·꼴이 틀린 칸은 각각 거부", async () => {
     const bad = [
-      body({ password: NINE_CHARS }),
+      body({ password: SEVEN_CHARS }),
+      body({ password: TWO_KINDS }),
       body({ password: "x".repeat(73) }),
       body({ loginId: SAME_AS_ID, password: SAME_AS_ID }),
       body({ terms: { service: true, privacy: false } }),
@@ -285,8 +287,8 @@ describe("INV-U5·U6: 입력 경계", () => {
     }
   });
 
-  it("INV-U6: 비밀번호 10자, 72자는 받는다", async () => {
-    for (const password of ["x".repeat(10), "y".repeat(72)]) {
+  it("INV-U6 (S6b): 세 종류를 섞은 8자, 72자 비밀번호는 받는다", async () => {
+    for (const password of ["abc12!@#", `Aa1!${"y".repeat(68)}`]) {
       expect((await signUp(harness().deps, body({ password }))).ok).toBe(true);
     }
   });

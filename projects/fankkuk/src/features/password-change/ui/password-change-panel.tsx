@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, type KeyboardEvent } from "react";
-import { PASSWORD_MIN } from "@/entities/session/model/password-rule";
+import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
 import { sendPasswordChange, type ChangePasswordField } from "../api/change-password-client";
 import s from "./password-change.module.css";
 
@@ -79,7 +79,7 @@ export function PasswordChangePanel({ id, onLoginExpired }: { id: string; onLogi
   return (
     <div className={s.panel} id={id} role="group" aria-label="비밀번호 변경">
       {field("currentPassword", "지금 비밀번호", "current-password")}
-      {field("newPassword", "새 비밀번호", "new-password", `${PASSWORD_MIN}자 이상, 아이디와 다르게 적어 주세요. 바꾸면 다른 기기에서는 로그아웃돼요.`)}
+      {field("newPassword", "새 비밀번호", "new-password", `${PASSWORD_HINT} 바꾸면 다른 기기에서는 로그아웃돼요.`)}
       {field("newPasswordConfirm", "새 비밀번호 확인", "new-password")}
       <div>
         <p className={s.error} id={f("err")} role="alert">

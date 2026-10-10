@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
 import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { completeSignup } from "@/features/signup/api/complete-signup";
@@ -311,7 +312,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     {...invalid("password")}
                   />
                   <p className="hint" id={f("pw-h")}>
-                    10자 이상으로 적어 주세요. 아이디와 같은 비밀번호는 쓸 수 없어요.
+                    {PASSWORD_HINT}
                   </p>
                 </div>
                 <div className="field">

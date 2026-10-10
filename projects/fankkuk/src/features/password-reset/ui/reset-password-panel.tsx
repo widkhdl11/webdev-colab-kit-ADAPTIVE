@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { PASSWORD_MIN } from "@/entities/session/model/password-rule";
+import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
 import { sendNewPassword, type NewPasswordField } from "../api/reset-client";
 import s from "./reset-password.module.css";
 
@@ -93,7 +93,7 @@ export function ResetPasswordPanel({ token }: { token: string }) {
             aria-describedby={fieldError("password") ? `${f("pw-h")} ${f("err")}` : f("pw-h")}
           />
           <p className="hint" id={f("pw-h")}>
-            {PASSWORD_MIN}자 이상, 아이디와 다르게 적어 주세요.
+            {PASSWORD_HINT}
           </p>
         </div>
         <div className="field">

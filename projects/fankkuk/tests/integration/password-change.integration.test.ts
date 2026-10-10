@@ -35,7 +35,7 @@ describe("INV-L12: 비밀번호 바꾸기는 로그인한 사람 자신의 것�
     const d = await createTestAccount({ tag: "s10bound", email: testEmail("s10bound") });
     const me = await device(d.loginEmail);
     const base = { currentPassword: FIXTURE_PASSWORD };
-    expect(await change(d, me, { ...base, newPassword: "short-9ch", newPasswordConfirm: "short-9ch" })).toMatchObject({ ok: false, field: "newPassword" });
+    expect(await change(d, me, { ...base, newPassword: "short-9", newPasswordConfirm: "short-9" })).toMatchObject({ ok: false, field: "newPassword" });
     expect(await change(d, me, { ...base, newPassword: d.loginId, newPasswordConfirm: d.loginId })).toMatchObject({
       ok: false,
       field: "newPassword",
@@ -91,7 +91,7 @@ describe("INV-L12: 비밀번호 바꾸기는 로그인한 사람 자신의 것�
     const me = await device(d.loginEmail);
     const sessions = async () => Number(psql(`select count(*) from auth.sessions where user_id = '${d.userId}'`));
     expect(await sessions()).toBe(1);
-    await change(d, me, { currentPassword: FIXTURE_PASSWORD, newPassword: "short-9ch", newPasswordConfirm: "short-9ch" });
+    await change(d, me, { currentPassword: FIXTURE_PASSWORD, newPassword: "short-9", newPasswordConfirm: "short-9" });
     expect(await sessions()).toBe(1);
     await change(d, me, { currentPassword: FIXTURE_PASSWORD, newPassword: "new-pass-sess-01", newPasswordConfirm: "new-pass-sess-01" });
     expect(await sessions()).toBe(1);

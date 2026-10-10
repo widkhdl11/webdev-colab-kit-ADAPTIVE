@@ -17,10 +17,9 @@ import s from "./revgift-access-log.module.css";
 
 // 크리에이터 화면의 사유 문구를 그대로 쓰되, 팬 선물의 「승인 서명」·「서명한 주문」에 기대는 둘은 역조공에서 뜻이 달라 바꾼다 —
 // 역조공의 no_valid_approval 은 받기로 넣은 주소가 없을 때, order_mismatch 는 봉인 속 주문번호가 이 선물과 다를 때다(INV-R7 a·b).
-// 「대표」는 크리에이터에게는 자기 계정 이야기지만 팬에게는 누구 대표인지 모호해 「팬꾹 대표」로 쓴다.
+// 「대표」는 크리에이터에게는 자기 계정 이야기지만 팬에게는 누구 대표인지 모호해 「팬꾹 대표」로 쓴다. 거부 사유 not_owner 는 크리에이터 화면과 같은 「권한이 없는 계정」.
 const DENY_TEXT: Record<RevgiftDenyReason, string> = {
   ...ACCESS_DENY_TEXT,
-  not_owner: "팬꾹 대표 계정이 아니라 열리지 않았어요",
   no_valid_approval: "받기로 하며 입력한 주소가 없어 열리지 않았어요",
   order_mismatch: "다른 선물의 주소라 열리지 않았어요",
 };
@@ -31,7 +30,7 @@ const DELETE_TEXT: Record<RevgiftDeleteOutcome, string> = {
   cancelled: "취소되어 주소를 지웠어요",
 };
 
-const REQUESTER_TEXT: Record<FanAccessRequester, string> = { owner: "팬꾹 대표 계정", other: "팬꾹 대표가 아닌 계정" };
+const REQUESTER_TEXT: Record<FanAccessRequester, string> = { owner: "팬꾹 대표 계정", other: "권한이 없는 계정" };
 
 function Who({ e }: { e: FanAccessEntry }) {
   return <>{e.kind === "deleted" ? "없음" : REQUESTER_TEXT[e.requester]}</>;

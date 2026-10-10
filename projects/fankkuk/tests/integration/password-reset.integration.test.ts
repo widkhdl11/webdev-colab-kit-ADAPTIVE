@@ -261,7 +261,7 @@ describe("INV-L11: 재설정 링크는 한 번·1시간·그 계정 하나, 끝�
     const mail = testEmail("bounds");
     const a = await createTestAccount({ tag: "bounds", email: mail });
     const token = issueReset(a.userId);
-    expect(await reset(token, "short-9ch")).toMatchObject({ ok: false, field: "password" });
+    expect(await reset(token, "short-9")).toMatchObject({ ok: false, field: "password" });
     expect(await reset(token, a.loginId)).toMatchObject({ ok: false, field: "password", message: "비밀번호를 아이디와 다르게 적어 주세요." });
     expect(await reset(token, "new-pass-bounds", { passwordConfirm: "new-pass-other" })).toMatchObject({ ok: false, field: "passwordConfirm" });
     expect(await canSignIn(a.loginEmail, FIXTURE_PASSWORD)).toBe(true);
