@@ -174,10 +174,10 @@ export function GiftStatusPage({
                   <p className={s["sub-t"]}>{RETURN_ON_INSPECTION_NOTICE}</p>
                 </div>
               ) : null}
-              {view.outcome === "not_accepted" ? (
+              {view.outcome === "declined" || view.outcome === "expired" ? (
                 <div className={s.part}>
                   <h2>이 선물은 보내지 마세요</h2>
-                  {/* 거절·자동 반려·차단 거절 모두 같은 문구(notifications INV-N2). 상자마다 돌려준다(payment INV-M8·M18) */}
+                  {/* 거절·자동 반려 모두 같은 안내 — 거절인지 기간 지남인지는 위 한 줄이 말한다(decline-block INV-D5). 상자마다 돌려준다(payment INV-M8·M18) */}
                   <p className={s["sub-t"]}>상자가 하나도 도착하지 않았다면 결제 금액을 모두 돌려드려요.</p>
                   <p className={s["sub-t"]}>사무실에 도착한 상자는 보낸 주소로 돌려보내 드리고, 그 상자의 반송 택배비를 뺀 금액을 돌려드려요.</p>
                   <p className={s["sub-t"]}>

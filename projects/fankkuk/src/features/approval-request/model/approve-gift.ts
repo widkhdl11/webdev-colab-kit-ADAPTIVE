@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { APPROVAL_EXPIRED_MESSAGE } from "@/entities/order/config/approval-deadline";
 import { checkApprovalSignature } from "@/entities/order/model/evaluate-approval";
 import type { Viewer } from "@/entities/session/model/viewer";
 import type { ApprovalSigner } from "@/shared/api/approval-signer/signer";
@@ -10,7 +11,7 @@ import type { ApprovalSigner } from "@/shared/api/approval-signer/signer";
 // 원문은 그 주문의 크리에이터일 때만 DB 가 돌려주고, 승인 함수가 같은 확인과 원문 일치를 한 번 더 본 뒤 서명과 승인을 한 처리에서 저장한다.
 
 const inputSchema = z.object({ requestId: z.string().regex(/^apr_[0-9A-Za-z]{1,40}$/) });
-const resultSchema = z.enum(["approved", "already", "not_approvable", "not_found", "signature_mismatch"]);
+const resultSchema = z.enum(["approved", "already", "not_approvable", "expired", "not_found", "signature_mismatch"]);
 
 export type ApproveGiftResult = { ok: true } | { ok: false; status: 400 | 401 | 403 | 404 | 409 | 503; message: string };
 
@@ -53,6 +54,8 @@ export async function approveGift(
   if (result === "approved") return { ok: true };
   if (result === "not_found") return NOT_FOUND;
   if (result === "already") return { ok: false, status: 409, message: "이미 처리된 요청이에요. 새로 고침하면 결과가 보여요." };
+  // INV-S6: 168시간이 지났으면 자동 처리 전이라도 승인하지 않는다 — 거절과 같은 문구
+  if (result === "expired") return { ok: false, status: 409, message: APPROVAL_EXPIRED_MESSAGE };
   if (result === "not_approvable") return { ok: false, status: 409, message: "지금은 승인할 수 없는 선물이에요. 새로 고침해 주세요." };
   return { ok: false, status: 409, message: "서명을 확인하지 못했어요. 다시 해 주세요." };
 }

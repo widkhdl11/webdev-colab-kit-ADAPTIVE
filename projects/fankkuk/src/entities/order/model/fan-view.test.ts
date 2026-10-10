@@ -86,11 +86,12 @@ describe("toFanView — 팬에게 보이는 것", () => {
     expect(toFanView(shipped, OFFICE).fanTrackingNo).toBe("987654321098");
   });
 
-  it("거절과 7일 자동 반려는 팬에게 같은 모습이다 — 크리에이터가 직접 거절했는지 드러나지 않는다", () => {
+  it("decline-block INV-D5: 거절(직접·차단 모두 rejected)은 declined, 7일 자동 반려는 expired 로 따로 보인다", () => {
     const rejected = toFanView({ ...base, status: "rejected" }, OFFICE);
     const expired = toFanView({ ...base, status: "expired" }, OFFICE);
-    expect(rejected.outcome).toBe("not_accepted");
-    expect(expired).toEqual(rejected);
+    expect(rejected.outcome).toBe("declined");
+    expect(expired.outcome).toBe("expired");
+    expect({ ...expired, outcome: "declined" }).toEqual(rejected); // 다른 것은 결과 값 하나뿐 — 이유·차단 칸이 없다
   });
 
   it("본 단계는 등록부터 수령까지 여섯 개이고, 승인은 단계가 아니라 따로 붙는다", () => {

@@ -85,6 +85,14 @@ describe("승인 저장 (approval-signature INV-S11·S12)", () => {
     }
   });
 
+  it("INV-S6 S6c (실패경로): 168시간이 지난 요청은 409 「기간이 지나 자동으로 반려된 선물이에요」", async () => {
+    expect(await approveGift({ admin: fakeAdmin(PAYLOAD, "expired").admin, viewer: HARU, signer }, { requestId: "apr_FCA" })).toEqual({
+      ok: false,
+      status: 409,
+      message: "기간이 지나 자동으로 반려된 선물이에요.",
+    });
+  });
+
   it("DB 결과를 문구로 — 이미 처리됨·승인 불가·서명 불일치는 409, 모르는 결과는 던진다", async () => {
     for (const [result, status] of [
       ["already", 409],

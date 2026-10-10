@@ -56,7 +56,8 @@ describe("headerGiftState", () => {
     expect(headerGiftState(view(KEYS.length))).toBe("done");
   });
   it("받지 않음·반송·취소는 헤더에 띄우지 않는다", () => {
-    expect(headerGiftState(view(1, "not_accepted"))).toBeNull();
+    expect(headerGiftState(view(1, "declined"))).toBeNull();
+    expect(headerGiftState(view(1, "expired"))).toBeNull();
     expect(headerGiftState(view(3, "returned"))).toBeNull();
     expect(headerGiftState(view(1, "canceled"))).toBeNull();
   });
@@ -74,7 +75,8 @@ describe("fanGiftBucket", () => {
   it("반송·취소는 ended, 거절·자동 반려는 not_accepted", () => {
     expect(fanGiftBucket(view(3, "returned"))).toBe("ended");
     expect(fanGiftBucket(view(1, "canceled"))).toBe("ended");
-    expect(fanGiftBucket(view(1, "not_accepted"))).toBe("not_accepted");
+    expect(fanGiftBucket(view(1, "declined"))).toBe("not_accepted");
+    expect(fanGiftBucket(view(1, "expired"))).toBe("not_accepted");
   });
 });
 
@@ -99,8 +101,21 @@ describe("상태 배지 색 갈래", () => {
     expect(fanBadge(view(2)).tone).toBe("info"); // 입고
   });
   it("받지 않음·반송은 danger, 취소는 무색", () => {
-    expect(fanBadge(view(1, "not_accepted")).tone).toBe("danger");
+    expect(fanBadge(view(1, "declined")).tone).toBe("danger");
+    expect(fanBadge(view(1, "expired")).tone).toBe("danger");
     expect(fanBadge(view(3, "returned")).tone).toBe("danger");
     expect(fanBadge(view(1, "canceled")).tone).toBe("plain");
   });
 });
+
+describe("decline-block INV-D5: 팬에게 보이는 거절과 기간 지남", () => {
+  it("거절은 크리에이터 이름으로 부드럽게 말하되 거절했다는 뜻을 전한다", () => {
+    expect(fanHeadline(view(1, "declined"))).toBe("하루님이 선물을 원하지 않아요");
+    expect(fanBadge(view(1, "declined")).text).toBe("거절");
+  });
+  it("7일 자동 반려는 기간이 지났다고 따로 말한다", () => {
+    expect(fanHeadline(view(1, "expired"))).toBe("기간이 지나 반려됐어요");
+    expect(fanBadge(view(1, "expired")).text).toBe("기간 지남");
+  });
+});
+

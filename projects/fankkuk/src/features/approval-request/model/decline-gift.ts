@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { APPROVAL_EXPIRED_MESSAGE } from "@/entities/order/config/approval-deadline";
 import type { Viewer } from "@/entities/session/model/viewer";
 
 // 받지 않기(거절)와 「앞으로 받지 않기(차단)」 저장 (decline-block INV-D1·D2·D4·D8).
@@ -13,7 +14,7 @@ const inputSchema = z.object({
 });
 
 const replySchema = z.object({
-  result: z.enum(["declined", "already", "not_declinable", "not_found"]),
+  result: z.enum(["declined", "already", "not_declinable", "expired", "not_found"]),
   also_declined: z.array(z.string()),
 });
 
@@ -41,6 +42,8 @@ export async function declineGift(
   const reply = replySchema.parse(data);
   if (reply.result === "not_found") return { ok: false, status: 404, message: "찾을 수 없는 요청이에요." };
   if (reply.result === "already") return { ok: false, status: 409, message: "이미 처리된 요청이에요. 새로 고침하면 결과가 보여요." };
+  // INV-D2: 168시간이 지났으면 자동 처리 전이라도 거절하지 않는다 — 승인과 같은 문구
+  if (reply.result === "expired") return { ok: false, status: 409, message: APPROVAL_EXPIRED_MESSAGE };
   if (reply.result === "not_declinable") return { ok: false, status: 409, message: "지금은 받지 않기로 할 수 없는 선물이에요. 새로 고침해 주세요." };
   return { ok: true, alsoDeclinedOrderNos: reply.also_declined };
 }

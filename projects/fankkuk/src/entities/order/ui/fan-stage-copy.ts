@@ -20,7 +20,13 @@ export const RETURN_ON_REJECT_NOTICE = `크리에이터가 받지 않기로 하�
 /** 본 단계 옆에 따로 붙는 승인 칸의 이름. */
 export const APPROVAL_LABEL = "크리에이터 승인";
 
-export const NOT_ACCEPTED_TEXT = "크리에이터가 이 선물을 받지 않아요";
+/** 거절(직접·차단 모두) — 부드럽게 말하되 거절했다는 뜻은 분명히(decline-block INV-D5, 2026-10-10 사용자 「"OO님이 선물을 원하지 않아요" 같은 대사로」). */
+export function declinedText(creatorName: string): string {
+  return `${creatorName}님이 선물을 원하지 않아요`;
+}
+
+/** 7일 자동 반려 — 거절과 따로 보인다(decline-block INV-D5). */
+export const EXPIRED_TEXT = "기간이 지나 반려됐어요";
 
 const currentKey = (view: FanGiftView) => view.steps.find((st) => st.state === "current")?.key;
 
@@ -30,7 +36,8 @@ export const EARLY_SEND_WAIT_HEADLINE = "크리에이터의 승인을 기다리�
 
 /** 지금 상황 한 줄. "지금 단계"는 아직 끝나지 않은 단계라, 그 단계를 기다리는 말로 쓴다. */
 export function fanHeadline(view: FanGiftView): string {
-  if (view.outcome === "not_accepted") return NOT_ACCEPTED_TEXT;
+  if (view.outcome === "declined") return declinedText(view.creatorName);
+  if (view.outcome === "expired") return EXPIRED_TEXT;
   if (view.outcome === "returned") return "검수에서 보낼 수 없는 물품이 확인돼 돌려보냈어요";
   if (view.outcome === "canceled") return "취소된 선물이에요";
   switch (currentKey(view)) {
@@ -52,7 +59,8 @@ export function fanHeadline(view: FanGiftView): string {
 
 /** 목록의 짧은 상태 표시. 색 갈래: 끝남 success · 팬/크리에이터를 기다림 warn · 거절·반송 danger · 진행 단계 info · 취소·등록 plain. */
 export function fanBadge(view: FanGiftView): { text: string; tone: StatusTone } {
-  if (view.outcome === "not_accepted") return { text: "받지 않음", tone: "danger" };
+  if (view.outcome === "declined") return { text: "거절", tone: "danger" };
+  if (view.outcome === "expired") return { text: "기간 지남", tone: "danger" };
   if (view.outcome === "returned") return { text: "반송", tone: "danger" };
   if (view.outcome === "canceled") return { text: "취소", tone: "plain" };
   const current = currentKey(view);
@@ -113,7 +121,7 @@ export function headerGiftState(view: FanGiftView): HeaderGiftState | null {
 export type FanGiftBucket = "ongoing" | "ended" | "not_accepted";
 
 export function fanGiftBucket(view: FanGiftView): FanGiftBucket {
-  if (view.outcome === "not_accepted") return "not_accepted";
+  if (view.outcome === "declined" || view.outcome === "expired") return "not_accepted";
   if (view.outcome !== "in_progress") return "ended";
   return currentKey(view) ? "ongoing" : "ended";
 }

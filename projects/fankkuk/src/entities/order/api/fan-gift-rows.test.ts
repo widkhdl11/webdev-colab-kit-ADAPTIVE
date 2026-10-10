@@ -32,7 +32,7 @@ describe("my_gifts 응답 → 팬 화면", () => {
 
   it("거절된 선물에는 사무실 주소를 넣지 않는다(INV-S9, S9b)", () => {
     const [view] = parseFanGiftRows([{ ...row, status: "rejected", received_at: null, inspection_result: null, inspected_at: null }], "사무실 주소");
-    expect(view!.outcome).toBe("not_accepted");
+    expect(view!.outcome).toBe("declined");
     expect(view!.officeAddress).toBeNull();
   });
 

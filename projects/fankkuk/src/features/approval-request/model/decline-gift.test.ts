@@ -65,6 +65,11 @@ describe("받지 않기 저장 (decline-block)", () => {
     expect(notDeclinable).toMatchObject({ ok: false, status: 409, message: expect.stringContaining("받지 않기로 할 수 없는") });
   });
 
+  it("INV-D2 S2d (실패경로): 168시간이 지난 요청은 409 「기간이 지나 자동으로 반려된 선물이에요」", async () => {
+    const r = await declineGift({ client: fakeClient(reply("expired")).client, viewer: HARU }, { requestId: "apr_FCA", block: true });
+    expect(r).toEqual({ ok: false, status: 409, message: "기간이 지나 자동으로 반려된 선물이에요." });
+  });
+
   it("모르는 결과 값·꼴이 다른 응답이면 성공으로 치지 않는다", async () => {
     for (const data of [reply("approved"), "declined", { result: "declined" }, null]) {
       await expect(declineGift({ client: fakeClient(data).client, viewer: HARU }, { requestId: "apr_FCA", block: false })).rejects.toThrow();

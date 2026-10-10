@@ -21,7 +21,8 @@ export type FanGiftView = {
   itemKind: string;
   boxCount: number;
   registeredAt: string;
-  outcome: "in_progress" | "not_accepted" | "returned" | "canceled";
+  /** declined = 크리에이터 거절(직접·차단 모두 — 차단은 구분하지 않는다), expired = 7일 자동 반려 (decline-block INV-D5) */
+  outcome: "in_progress" | "declined" | "expired" | "returned" | "canceled";
   steps: FanStep[];
   approval: FanApproval;
   officeAddress: string | null;
@@ -36,7 +37,8 @@ export type FanGiftView = {
 export type FanOrderRecord = Omit<OrderRecord, "creatorId" | "fanNickname" | "outboundWaybillNo">;
 
 function outcomeOf(r: FanOrderRecord): FanGiftView["outcome"] {
-  if (r.status === "rejected" || r.status === "expired") return "not_accepted";
+  if (r.status === "rejected") return "declined";
+  if (r.status === "expired") return "expired";
   if (r.status === "canceled") return "canceled";
   if (r.inspection?.result === "returned") return "returned";
   return "in_progress";
@@ -44,7 +46,7 @@ function outcomeOf(r: FanOrderRecord): FanGiftView["outcome"] {
 
 export function toFanView(r: FanOrderRecord, officeAddress: string): FanGiftView {
   const outcome = outcomeOf(r);
-  const approved = r.approvedAt !== null && outcome !== "not_accepted" && outcome !== "canceled";
+  const approved = r.approvedAt !== null && outcome !== "declined" && outcome !== "expired" && outcome !== "canceled";
 
   const raw: Array<{ key: FanStepKey; done: boolean; at: string | null }> = [
     { key: "registered", done: true, at: r.registeredAt },

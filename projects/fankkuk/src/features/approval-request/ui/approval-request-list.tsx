@@ -8,7 +8,6 @@ import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadlin
 import { approvalTimeLeftLabel, isApprovalDeadlinePassed } from "@/entities/order/model/approval-time-left";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
 import type { DecidedOutcome, DecidedRequestView } from "@/entities/order/model/decided-request";
-import { NOT_ACCEPTED_TEXT } from "@/entities/order/ui/fan-stage-copy";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
@@ -391,7 +390,7 @@ export function ApprovalRequestList({
               </span>
             </label>
             <p className={`sub ${a.reason}`}>
-              팬에게는 이유를 알리지 않아요. {sheet.req.fanNickname}님에게는 &ldquo;{NOT_ACCEPTED_TEXT}&rdquo;만 전해져요.
+              {sheet.req.fanNickname}님에게는 선물을 원하지 않는다는 것만 전해지고, 이유와 차단 여부는 알리지 않아요.
             </p>
             {declineError ? (
               <p className={a.error} role="alert">

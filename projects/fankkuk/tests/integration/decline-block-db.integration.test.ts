@@ -216,11 +216,28 @@ describe("INV-D2: 거절할 수 있는 주문의 조건", () => {
     expect(orderStatus(g.orderId)).toBe("label_printed");
   });
 
-  it("INV-D2 S2d: 168시간이 지났어도 자동 처리 전이면 거절된다", async () => {
+  it("INV-D2 S2d (실패경로): 168시간이 지나면 자동 처리 전이라도 거절하지 않고 expired — 요청·주문 그대로, 차단도 생기지 않는다", async () => {
     const g = await giftFrom();
     pastDeadline(g.orderId);
-    expect(await decline(haru, g.requestId)).toBe("declined");
-    expect(orderStatus(g.orderId)).toBe("rejected");
+    const before = [requestRow(g.requestId), orderRow(g.orderId)];
+    expect(await decline(haru, g.requestId)).toBe("expired");
+    expect(await decline(haru, g.requestId, true)).toBe("expired");
+    expect([requestRow(g.requestId), orderRow(g.orderId)]).toEqual(before);
+    expect(activeBlocks()).not.toContain(SENDER);
+  });
+
+  it("INV-D2 S2e: 차단으로 함께 거절할 때 168시간이 지난 다른 주문은 건드리지 않는다", async () => {
+    const old = await giftFrom();
+    pastDeadline(old.orderId);
+    const waiting = await giftFrom();
+    const trigger = await giftFrom();
+    const before = [requestRow(old.requestId), orderRow(old.orderId)];
+    const reply = await declineFull(haru, trigger.requestId, true);
+    expect(reply.result).toBe("declined");
+    expect(reply.also_declined).toContain(waiting.orderNo);
+    expect(reply.also_declined).not.toContain(old.orderNo);
+    expect([requestRow(old.requestId), orderRow(old.orderId)]).toEqual(before);
+    expect(orderStatus(waiting.orderId)).toBe("rejected");
   });
 });
 
@@ -338,7 +355,7 @@ describe("INV-D4: 한 승인 요청은 한 번만 결정된다", () => {
   });
 });
 
-describe("INV-D5: 팬에게는 거절·7일 반려·차단에 따른 거절이 같은 값이다", () => {
+describe("INV-D5: 팬에게는 직접 거절과 차단 거절이 같은 값(거절)이고 7일 반려만 기간 지남이다", () => {
   async function threeWays(): Promise<string[]> {
     const manual = await giftFrom();
     expect(await decline(haru, manual.requestId)).toBe("declined");
@@ -354,19 +371,20 @@ describe("INV-D5: 팬에게는 거절·7일 반려·차단에 따른 거절이 �
     return [manual.orderNo, expired.orderNo, blockedWaiting.orderNo];
   }
 
-  it("INV-D5 S5: 세 경우의 상태 값과 승인 칸이 목록과 상세에서 같다", async () => {
-    const orderNos = await threeWays();
+  it("INV-D5 S5: 직접 거절·차단 거절은 rejected 로 같고, 7일 반려만 expired — 목록과 상세가 같다", async () => {
+    const [manualNo, expiredNo, blockedNo] = await threeWays();
+    const want: Record<string, string> = { [manualNo!]: "rejected", [expiredNo!]: "expired", [blockedNo!]: "rejected" };
     const list = await fan.rpc("my_gifts");
     expect(list.error).toBeNull();
-    const rows = (list.data as Record<string, unknown>[]).filter((r) => orderNos.includes(r.order_no as string));
+    const rows = (list.data as Record<string, unknown>[]).filter((r) => (r.order_no as string) in want);
     expect(rows).toHaveLength(3);
     for (const r of rows) {
-      expect(r.status).toBe("rejected");
+      expect(r.status, r.order_no as string).toBe(want[r.order_no as string]);
       expect(r.approved_at).toBeNull();
     }
-    for (const no of orderNos) {
+    for (const [no, status] of Object.entries(want)) {
       const one = await fan.rpc("my_gift", { p_order_no: no });
-      expect(one.data[0].status).toBe("rejected");
+      expect(one.data[0].status, no).toBe(status);
       expect(one.data[0].approved_at).toBeNull();
     }
   });
@@ -523,9 +541,10 @@ describe("INV-D7: 차단된 보낸 사람의 새 등록은 DB 등록 함수가 �
     } else {
       expect(reg.error.message).toContain("받을 수 없는 크리에이터");
     }
-    // 검수 불합격으로 반송 중인 주문과 승인된 주문은 차단해도 그대로다(INV-D2·D8) — 앞 시험이 남긴 그런 주문은 세지 않는다
+    // 검수 불합격으로 반송 중인 주문, 승인된 주문, 168시간이 지나 자동 반려를 기다리는 주문은 차단해도 그대로다(INV-D2·D8)
+    // — 앞 시험이 남긴 그런 주문은 세지 않는다
     const left = psql(
-      `select count(*) from public.orders where fan_id = '${SENDER}' and creator_id = '${SEED.haruCreatorId}' and item_kind = '시험 선물' and approved_at is null and status in ('pending_payment', 'registered', 'received', 'labeled', 'inspected') and inspection_result is distinct from 'returned'`,
+      `select count(*) from public.orders where fan_id = '${SENDER}' and creator_id = '${SEED.haruCreatorId}' and item_kind = '시험 선물' and approved_at is null and status in ('pending_payment', 'registered', 'received', 'labeled', 'inspected') and inspection_result is distinct from 'returned' and (registered_at is null or registered_at > now() - interval '168 hours')`,
     );
     expect(left).toBe("0");
   });
