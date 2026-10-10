@@ -1,11 +1,30 @@
 ---
 project: fankkuk
 status: passed
-basis: e50487eadb4e
+basis: de83f5e3abe5
 reviewers: [security-reviewer, code-reviewer, test-auditor, ui-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-10, 문제집 메모 A~C 반영분)
+# 리뷰 사인오프 — fankkuk (2026-10-10 (2), 크리에이터 받는 양 조절)
+
+이번 사인오프가 덮는 변경: 지난 사인오프(basis e50487eadb4e) 뒤 추가분 F-4·F-6 — 스펙 creator-receiving INV-B1~B9.
+800dbc1(구현) · 5268a16(리뷰 반영). 문서만 바뀐 커밋(추가분 원문·정리·시안 511ee58)은 산출물이 아니다.
+
+- 닿은 표면: authz(본인만 바꾸기) · concurrency(한도 직전 동시 등록 — 팬·크리에이터 쌍 잠금) · 시변 상태(쉬는 중 해제·D-day·한국 시간 달) · 화면(설정·등록·크리에이터 페이지).
+- security-reviewer: 지적 없음. 저장 함수에 크리에이터 ID 인자 없음·표 직접 쓰기 불가 · 한도 판정은 본인 것만, 공개 응답에 한도 칸 없음 · register_order 는 service_role 만, 옛 판 drop · 잠금 순서가 INV-W12 와 겹치지 않음.
+  참고 1(등록 때 기념일 이름을 다시 거르지 않음) → code-reviewer 2번과 같은 곳, 고침.
+- code-reviewer: 중 1(이모지 기념일 이름 길이 — zod 4.6.5 는 이미 코드 포인트로 세어 실제 실패는 없었으나 저장 쪽과 같은 함수로 맞춤) · 낮음 3(등록 때 금칙어 · 달력에 없는 날짜 · 쉬는 중 문구 중복) → 전부 반영.
+- ui-reviewer: 중 1(쉬는 중 날짜 오류가 칸에 연결 안 됨) · 낮음 2 → 전부 반영.
+- test-auditor: 빈 갈래 6(반려·취소 따로 · 한국 시간 월초 · 서버 「오늘」 · 서버 2월 29일 · 다음 달 1일 · 거부 코드 연결) → 시험 추가, 서버 「오늘」은 기준 시각을 받는 내부 함수로 나눠 경계 시각을 직접 넣어 본다.
+
+## 실행 근거
+- 구현: 통합 creator-receiving-db 먼저 34 빨간불 → 34 통과. register_order 쓰는 기존 통합 28파일 + 3 통과, read-isolation 7/8(시드 기존 건). 변이 20 모두 빨간불.
+- 화면 직접(모모·별빛, Playwright): 쉬는 중 저장 → 크리에이터 페이지 문구·버튼 숨김 → 등록 화면 안내 / 한도 3·「데뷔일 선물」 주문 → 한도 문구.
+- 리뷰 반영 뒤: tsc 0 · npm test 1366 · creator-receiving-db 46/46(본체가 다시 돌림) · gift-payment-db 15 · payment-db 10 · gift-checkout 10. 변이 13 모두 빨간불, DB 함수 원본 바이트 일치 복구.
+
+---
+
+## 이전 사인오프 — fankkuk (2026-10-10, 문제집 메모 A~C 반영분)
 
 이번 사인오프가 덮는 변경: 지난 사인오프(basis c65cf3a2f7d6, 차액 결제 알림) 뒤 들어온 것 전부.
 

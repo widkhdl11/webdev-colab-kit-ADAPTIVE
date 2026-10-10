@@ -7,11 +7,11 @@
 {
   "product": {
     "status": "clean",
-    "hash": "3d5d3630c61d"
+    "hash": "d0539654274a"
   },
   "spec": {
     "status": "clean",
-    "hash": "404718cb1961"
+    "hash": "f7e3280134b9"
   },
   "design": {
     "status": "clean",
@@ -23,19 +23,19 @@
   },
   "design/schema-designer": {
     "status": "clean",
-    "hash": "d28812af175b"
+    "hash": "1345a57cdbbb"
   },
   "implement": {
     "status": "clean",
-    "hash": "e50487eadb4e"
+    "hash": "de83f5e3abe5"
   },
   "qa": {
     "status": "clean",
-    "hash": "4150aff69235"
+    "hash": "a09a8e908669"
   },
   "review": {
     "status": "clean",
-    "hash": "7f45dd4f1555"
+    "hash": "1b8c628550bb"
   },
   "deploy": {
     "status": "dirty",
