@@ -22,9 +22,12 @@ import { PasswordChangePanel } from "@/features/password-change/ui/password-chan
 import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
 import { sendUnblock } from "@/features/creator-unblock/api/send-unblock";
+import type { CalendarDate, MyCreatorReceiving } from "@/entities/creator/model/receiving";
+import { ReceivingSection } from "./receiving-section";
 import s from "./creator-settings.module.css";
 
 // 크리에이터 — 주소와 설정. 시안: docs/design/mockups/site/v4/creator-settings.html
+// 선물 받기·생일과 기념일(creator-receiving)은 같은 칸 언어(제목 줄·필드·저장 버튼·상태 문구)로 왼쪽 열 끝에 둔다(receiving-section).
 //
 // 주소 등록·변경(address-protection INV-P13): 확인 창에서 주소를 입력하고 「카카오톡으로 서명하기」를 누르면 이 브라우저에서 봉인해 보낸다.
 // 카카오 재서명 자리는 지금 로컬 가짜 서명 창구가 맡고(카드 d28), 운영에서는 서버가 창구가 없어 거부한다.
@@ -84,8 +87,14 @@ export function CreatorSettingsPage({
   sealingKeyPem,
   blockedFans,
   verification,
+  receiving,
+  today,
 }: {
   settings: CreatorSettingsView;
+  /** 받는 상태·팬당 한도·생일·기념일 — 로그인한 크리에이터 본인 것(creator-receiving) */
+  receiving: MyCreatorReceiving;
+  /** 한국 시간 오늘 — 서버가 정해 넘긴다(다시 받는 날 범위) */
+  today: CalendarDate;
   /** 고를 수 있는 태그 선택지(숨기지 않은 것, 선택지 순서 — creator-tags INV-T3) */
   tagOptions: readonly TagOption[];
   address: MyAddressStatus;
@@ -267,6 +276,8 @@ export function CreatorSettingsPage({
             )}
             <p className={`sub ${s.note}`}>차단을 풀어도 주소는 열리지 않아요. 새 선물도 한 건씩 카카오톡 서명으로 승인해야 나가요.</p>
           </section>
+
+          <ReceivingSection initial={receiving} today={today} />
         </div>
 
         <div className={s.col}>

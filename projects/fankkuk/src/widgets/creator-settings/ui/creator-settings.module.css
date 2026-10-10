@@ -41,6 +41,18 @@
 .error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
 .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
 
+/* 선물 받기·생일과 기념일 (creator-receiving) — 받는 상태 고르기는 선물 보내기의 알약 라디오(register-form .radios)와 같은 모양 */
+.radios { display: flex; flex-wrap: wrap; gap: 12px; }
+.radios label { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px 0 16px; border-radius: var(--r-pill); background: var(--surface); font-weight: 600; cursor: pointer; margin: 0; }
+.radios label:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand); }
+.radios label:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
+.radios input { width: 22px; height: 22px; accent-color: var(--brand); margin: 0; }
+.radios input:focus-visible { outline: none; }
+.recv-field { margin-top: 20px; }
+.md-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.ann-list { display: grid; gap: 12px; margin-bottom: 12px; }
+.ann-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+
 @media (max-width: 1023px) {
   .set-grid { grid-template-columns: 1fr; }
 }
@@ -48,4 +60,6 @@
   .addr { gap: 16px; padding: 20px; }
   .addr-ico { width: 56px; height: 56px; }
   .kv > div { grid-template-columns: 1fr; gap: 2px; }
+  .ann-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .ann-row > .md-row { grid-column: 1 / -1; grid-row: 2; }
 }

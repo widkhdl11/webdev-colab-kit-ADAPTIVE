@@ -22,6 +22,8 @@ export const registerFormSchema = z
     mediumCount: count,
     largeCount: count,
     electronicsOrMetal: z.enum(["yes", "no"], { message: "전자기기나 금속 제품이 들어 있는지 골라 주세요." }),
+    // creator-receiving INV-B9: 「{기념일} 선물」 표시 — 고른 기념일 이름. 7일 안인지는 DB 가 그날 다시 계산한다
+    anniversaryName: z.string().trim().min(1).max(12).optional(),
   })
   .superRefine((v, ctx) => {
     const total = v.smallCount + v.mediumCount + v.largeCount;
@@ -39,6 +41,7 @@ export type RegisterInput = {
   itemKind: string;
   boxes: PricedTier[];
   hasElectronicsOrMetal: boolean;
+  anniversaryName: string | null;
 };
 
 export type RegisterParseResult =
@@ -54,7 +57,7 @@ export function boxesFromCounts(counts: Readonly<Record<PricedTier, number>>): P
   ];
 }
 
-const FIELDS = ["creatorId", "itemKind", "smallCount", "mediumCount", "largeCount", "electronicsOrMetal"] as const;
+const FIELDS = ["creatorId", "itemKind", "smallCount", "mediumCount", "largeCount", "electronicsOrMetal", "anniversaryName"] as const;
 
 /** 서버 쪽 등록 처리(DB 연결 때)가 쓰는 경계 — 폼은 같은 스키마를 zodResolver 로 쓴다. 브라우저 검증만 믿지 않는다. */
 export function parseRegisterInput(input: unknown): RegisterParseResult {
@@ -67,9 +70,15 @@ export function parseRegisterInput(input: unknown): RegisterParseResult {
     }
     return { success: false, errors };
   }
-  const { creatorId, itemKind, smallCount, mediumCount, largeCount, electronicsOrMetal } = parsed.data;
+  const { creatorId, itemKind, smallCount, mediumCount, largeCount, electronicsOrMetal, anniversaryName } = parsed.data;
   return {
     success: true,
-    data: { creatorId, itemKind, boxes: boxesFromCounts({ small: smallCount, medium: mediumCount, large: largeCount }), hasElectronicsOrMetal: electronicsOrMetal === "yes" },
+    data: {
+      creatorId,
+      itemKind,
+      boxes: boxesFromCounts({ small: smallCount, medium: mediumCount, large: largeCount }),
+      hasElectronicsOrMetal: electronicsOrMetal === "yes",
+      anniversaryName: anniversaryName ?? null,
+    },
   };
 }

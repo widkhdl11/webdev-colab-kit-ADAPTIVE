@@ -10,6 +10,7 @@
 .ch { color: var(--sub); }
 .tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
 .tags :global(.tag) { min-height: 32px; }
+.dday { margin-top: 12px; } /* 생일·기념일 D-day 한 줄(creator-receiving INV-B8) */
 .acts { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
 .acts-note { margin-top: 12px; color: var(--sub); }
 

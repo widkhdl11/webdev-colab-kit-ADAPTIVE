@@ -13,6 +13,8 @@ import { OVERSIZE_RULE, PARCEL_TIER_GUIDE, RETURN_ON_INSPECTION_NOTICE } from "@
 import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
+import { anniversaryInWeek, isResting, restingMessage, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import { receivingNotice } from "../model/receiving-notice";
 import { summarizeBoxes } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
@@ -23,6 +25,10 @@ export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "appr
   Partial<Pick<CreatorCard, "tags" | "channelTitle" | "alias" | "faceTone" | "following">> & {
     /** 채널 이사 중(creator-verification INV-V12) — 찾기에는 나오지만 지금은 선물을 받지 않는다 */
     moving?: boolean;
+    /** 공개 받는 상태 — 쉬는 중 날짜·생일·기념일(creator-receiving). 한도 칸은 없다(INV-B6) */
+    receiving?: CreatorReceiving;
+    /** 로그인한 내가 이번 달 이 크리에이터의 한도에 닿았는가 — 내 등록 화면에만 쓴다(INV-B6) */
+    limitReached?: boolean;
   };
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
@@ -61,6 +67,7 @@ export function RegisterForm({
   initialCreatorId = "",
   notice,
   onRegistered,
+  today,
 }: {
   creators: readonly CreatorOption[];
   /** 지금 공개 요금표(받는 값만) — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
@@ -70,6 +77,8 @@ export function RegisterForm({
   /** 결제창에서 돌아온 실패 안내 */
   notice?: string;
   onRegistered: (gift: RegisteredGift) => void;
+  /** 한국 시간 오늘 — 서버가 정해 넘긴다(쉬는 중·기념일 7일·다음 달 1일 계산, creator-receiving) */
+  today: CalendarDate;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<StepNo>(1);
@@ -81,6 +90,8 @@ export function RegisterForm({
   // 다시 그려지기 전에 Enter·클릭이 연달아 와도 한 번만 보내게 — state 는 다음 그리기까지 옛 값이다
   const submittingRef = useRef(false);
   const [noticeShown, setNoticeShown] = useState(true);
+  // creator-receiving INV-B9: 「{기념일} 선물」 표시를 고른 크리에이터 — 다른 크리에이터로 바꾸면 고른 것이 풀린다
+  const [markedFor, setMarkedFor] = useState<string | null>(null);
 
   const stepsWrap = useRef<HTMLElement>(null);
   const headings = useRef<Partial<Record<StepNo, HTMLHeadingElement | null>>>({});
@@ -132,6 +143,12 @@ export function RegisterForm({
       setError("creatorId", { message: moving }, { shouldFocus: true });
       return;
     }
+    // creator-receiving INV-B2·B6: 쉬는 중이거나 내가 이번 달 한도에 닿았으면 안내하고 넘어가지 않는다(등록은 DB 가 다시 막는다)
+    const blocked = step === 1 && ok ? receivingNotice(creators.find((c) => c.id === getValues("creatorId")), today) : null;
+    if (blocked) {
+      setError("creatorId", { message: blocked }, { shouldFocus: true });
+      return;
+    }
     if (ok) go((step + 1) as StepNo);
   };
 
@@ -164,7 +181,17 @@ export function RegisterForm({
       const res = await fetch("/api/gifts", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ creatorId, itemKind, smallCount, mediumCount, largeCount, electronicsOrMetal, quotedTotalKrw: summary.totalKrw }),
+        body: JSON.stringify({
+          creatorId,
+          itemKind,
+          smallCount,
+          mediumCount,
+          largeCount,
+          electronicsOrMetal,
+          quotedTotalKrw: summary.totalKrw,
+          // INV-B9: 고른 표시만 이름으로 보낸다. 7일 안인지는 DB 가 그날 다시 계산해 아니면 표시 없이 저장한다
+          ...(anniversaryMark && markAnniversary ? { anniversaryName: anniversaryMark } : {}),
+        }),
       });
       const body = (await res.json().catch(() => ({}))) as RegisterResponse;
       if (res.ok && body.orderId && body.orderNo && typeof body.amountKrw === "number") {
@@ -205,6 +232,9 @@ export function RegisterForm({
   const visible = searching ? matches : matches.filter((c, i) => i < pickLimit || c.id === creatorId);
   const hiddenCount = Math.max(0, creators.length - pickLimit);
   const picked = creators.find((c) => c.id === creatorId);
+  // INV-B9: 고른 크리에이터의 기념일이 7일 안(D-7 ~ D-day)이면 표시를 고를 수 있다 — 크리에이터 페이지 D-day 와 같은 계산
+  const anniversaryMark = picked?.receiving ? anniversaryInWeek(today, picked.receiving.anniversaries) : null;
+  const markAnniversary = markedFor !== null && markedFor === creatorId;
   const metalText = metal === "yes" ? "네, 있어요" : metal === "no" ? "아니요, 없어요" : "아직 안 골랐어요";
   const boxesText =
     PRICED_TIERS.filter((t) => summary.counts[t] > 0)
@@ -324,7 +354,14 @@ export function RegisterForm({
                               <CreatorTag key={t} name={t} />
                             ))}
                             <small>
-                              {[c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : approvalTimeText(c.approvalMinutes)]
+                              {[
+                                c.channelTitle ?? c.platform,
+                                c.moving
+                                  ? "채널 이사 중 · 지금은 선물을 받지 않아요"
+                                  : c.receiving && isResting(c.receiving.resumeOn, today) && c.receiving.resumeOn
+                                    ? restingMessage(c.receiving.resumeOn)
+                                    : approvalTimeText(c.approvalMinutes),
+                              ]
                                 .filter(Boolean)
                                 .join(" · ")}
                             </small>
@@ -400,6 +437,15 @@ export function RegisterForm({
                 </p>
                 {err("metal-error", errors.electronicsOrMetal?.message)}
               </div>
+              {anniversaryMark ? (
+                <div className={`field ${f.metal}`}>
+                  <label className={f.mark}>
+                    <input type="checkbox" checked={markAnniversary} onChange={(e) => setMarkedFor(e.currentTarget.checked ? creatorId : null)} />
+                    「{anniversaryMark} 선물」로 표시해서 보내기
+                  </label>
+                  <p className="hint">{picked?.name}님의 「{anniversaryMark}」까지 7일이 남지 않았어요. 고르면 크리에이터가 승인할 때 이 표시가 보여요.</p>
+                </div>
+              ) : null}
             </fieldset>
 
             {/* 3 상자 */}
@@ -487,6 +533,13 @@ export function RegisterForm({
                   <dd>{boxesText}</dd>
                   {fix(3, "상자 수")}
                 </div>
+                {anniversaryMark && markAnniversary ? (
+                  <div className={f["sum-row"]}>
+                    <dt>표시</dt>
+                    <dd>「{anniversaryMark} 선물」</dd>
+                    {fix(2, "기념일 표시")}
+                  </div>
+                ) : null}
               </dl>
               {/* 요금은 배송비를 포함한 한 금액(사용자 결정 d7) — 서비스료·배송비 나눔은 기록에만 있다 */}
               <div className={f["pay-lines"]}>

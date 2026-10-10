@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { CalendarDate } from "@/entities/creator/model/receiving";
 import type { PublicPriceTable } from "@/entities/payment/model/price-table";
+import { receivingNotice } from "@/features/gift-register/model/receiving-notice";
 import { PaymentStep } from "@/features/checkout/ui/payment-step";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import { RegisterForm, type CreatorOption, type RegisteredGift } from "@/features/gift-register/ui/register-form";
@@ -19,6 +21,7 @@ export function GiftRegisterPage({
   notice,
   signedIn = true,
   followFirst = null,
+  today,
 }: {
   creators: readonly CreatorOption[];
   /** 지금 공개 요금표 — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다. */
@@ -31,8 +34,16 @@ export function GiftRegisterPage({
   signedIn?: boolean;
   /** 크리에이터 페이지에서 미리 고르고 왔는데 아직 팔로우하지 않은 사람 — 「팔로우하고 선물 보내기」를 따로 보여 준다(INV-L9). */
   followFirst?: { id: string; name: string } | null;
+  /** 한국 시간 오늘 — 서버가 정해 넘긴다(creator-receiving 계산) */
+  today: CalendarDate;
 }) {
   const [registered, setRegistered] = useState<RegisteredGift | null>(null);
+  // creator-receiving INV-B2·B6: 크리에이터 페이지에서 미리 고르고 왔는데 쉬는 중이거나 내가 이번 달 한도에 닿았으면 폼 대신 안내.
+  // 「다른 크리에이터에게 보내기」를 누르면 미리 고른 것을 비우고 폼을 연다.
+  const preselected = creators.find((c) => c.id === initialCreatorId);
+  const preselectedNotice = receivingNotice(preselected, today);
+  const [pickOther, setPickOther] = useState(false);
+  const blockedNotice = pickOther ? null : preselectedNotice;
 
   return (
     <main id="main">
@@ -84,8 +95,34 @@ export function GiftRegisterPage({
             지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.
           </p>
         )
+      ) : blockedNotice && preselected ? (
+        <div className="container">
+          <div className={s["empty-box"]} role="status">
+            <span className={s["ico-tile"]} aria-hidden="true">
+              <img className="asset" src="/img/icon-gift.png" alt="" aria-hidden="true" width={64} height={64} />
+            </span>
+            <h2>{preselected.name}님</h2>
+            <p>{blockedNotice}</p>
+            {creators.length > 1 ? (
+              <button className="btn" type="button" onClick={() => setPickOther(true)}>
+                다른 크리에이터에게 보내기
+              </button>
+            ) : (
+              <Link className="btn" href={`/creators/${preselected.id}`}>
+                크리에이터 페이지로
+              </Link>
+            )}
+          </div>
+        </div>
       ) : (
-        <RegisterForm creators={creators} prices={prices} initialCreatorId={initialCreatorId} notice={notice} onRegistered={setRegistered} />
+        <RegisterForm
+          creators={creators}
+          prices={prices}
+          initialCreatorId={pickOther ? "" : initialCreatorId}
+          notice={notice}
+          onRegistered={setRegistered}
+          today={today}
+        />
       )}
     </main>
   );

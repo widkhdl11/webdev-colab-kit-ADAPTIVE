@@ -1,6 +1,7 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
+import { ddayLabel, isResting, restingMessage, upcomingDday, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import { approvalDurationText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
@@ -35,6 +36,8 @@ export function CreatorProfilePage({
   send = "open",
   prices,
   prohibited,
+  receiving = null,
+  today,
 }: {
   creator: CreatorCard;
   others: readonly CreatorCard[];
@@ -45,8 +48,17 @@ export function CreatorProfilePage({
   prices: PublicPriceTable;
   /** 보낼 수 없는 물품 — 서버 page 가 DB 공개 읽기 함수로 읽어 넘긴다(INV-K9). */
   prohibited: readonly ProhibitedItem[];
+  /** 공개 받는 상태(creator-receiving) — 쉬는 중 날짜·생일·기념일. 한도는 없다(INV-B6) */
+  receiving?: CreatorReceiving | null;
+  /** 한국 시간 오늘 — 서버가 정해 넘긴다 */
+  today: CalendarDate;
 }) {
   const sendHref = `/gifts/new?creator=${creator.id}`;
+  // INV-B2: 쉬는 중이면 「선물 보내기」 자리를 비우고 안내 문구를 보인다(등록은 DB 가 막는다). 팔로우는 그대로.
+  const restingText = receiving?.resumeOn && isResting(receiving.resumeOn, today) ? restingMessage(receiving.resumeOn) : null;
+  const sendShown = restingText ? "hidden" : send;
+  // INV-B8: 가장 가까운 생일·기념일 하나를 D-30 ~ D-day 동안 — 등록 화면과 같은 계산 함수
+  const dday = receiving ? upcomingDday(today, receiving.birthday, receiving.anniversaries) : null;
   return (
     <main id="main">
       <div className={`container ${s.crumb}`}>
@@ -71,19 +83,29 @@ export function CreatorProfilePage({
                 <CreatorTag key={t} name={t} />
               ))}
             </div>
+            {dday ? (
+              <p className={s.dday}>
+                <span className="tag tag--brand">{ddayLabel(dday)}</span>
+              </p>
+            ) : null}
             <div className={s.acts}>
-              {send === "open" ? (
+              {sendShown === "open" ? (
                 <Link className="btn" href={sendHref}>
                   선물 보내기
                 </Link>
               ) : null}
               {send === "self" ? <span className="tag">내 크리에이터 페이지예요</span> : null}
-              {send === "needs_follow" ? (
+              {sendShown === "needs_follow" ? (
                 <FollowThenSend creatorId={creator.id} creatorName={creator.name} signedIn={followMode !== "login"} />
               ) : null}
               <FollowButton creatorId={creator.id} creatorName={creator.name} initialFollowing={creator.following} variant="profile" mode={followMode} />
             </div>
-            {send === "needs_follow" ? <p className={s["acts-note"]}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p> : null}
+            {sendShown === "needs_follow" ? <p className={s["acts-note"]}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p> : null}
+            {restingText ? (
+              <p className={s["acts-note"]} role="status">
+                {restingText}
+              </p>
+            ) : null}
           </div>
 
           <ul className={s.stats}>
@@ -198,12 +220,13 @@ export function CreatorProfilePage({
               크기와 무게 중 큰 쪽으로 정해져요. {OVERSIZE_RULE}는 받지 않아요. 도착한 상자를 재어 보니 구간이 더 크면 차액만 따로
               결제해요.
             </p>
-            {send === "open" ? (
+            {sendShown === "open" ? (
               <Link className={`btn btn--block ${s["fee-go"]}`} href={sendHref}>
                 {creator.name}님께 선물 보내기
               </Link>
             ) : null}
-            {send === "needs_follow" ? (
+            {restingText ? <p className={`sub ${s["fee-go"]}`}>{restingText}</p> : null}
+            {sendShown === "needs_follow" ? (
               <>
                 <p className={`sub ${s["fee-go"]}`}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p>
                 <FollowThenSend creatorId={creator.id} creatorName={creator.name} signedIn={followMode !== "login"} className="btn btn--block" />

@@ -1,6 +1,8 @@
 import { readCreatorCards, readMyFollowIds, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
 import { readMyRecentRecipientIds } from "@/entities/order/api/recent-recipients";
 import { readMovingCreatorIds } from "@/entities/creator/api/creator-verification-reads";
+import { readCreatorReceiving, readMyLimitReached } from "@/entities/creator/api/receiving-reads";
+import { kstToday } from "@/entities/creator/model/receiving";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { pickOrder } from "@/features/gift-register/model/pick-order";
 import { sendList } from "@/features/gift-register/model/sender-rule";
@@ -23,6 +25,7 @@ const PAYMENT_NOTICE: Record<string, string> = {
 // 순서: ?creator=<id> 로 미리 고른 사람 → 최근에 선물한 사람 → 최근에 팔로우한 사람(pickOrder).
 // 미리 고른 사람을 팔로우하지 않았으면 목록에 넣지 않고 「팔로우하고 선물 보내기」를 따로 보여 준다.
 // 채널 이사 중(creator-verification INV-V12)인 크리에이터에는 표시를 붙인다(moving_creator_ids).
+// 쉬는 중·기념일(creator_receiving)과 내 한도 판정(my_gift_limit_reached, 로그인한 나만)도 붙인다 — creator-receiving INV-B2·B6·B9.
 // 로그인하지 않았어도 화면은 보인다 — 팔로우한 사람이 없으니 로그인 안내가 나온다(INV-L3).
 export default async function Page({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const { creator, payment } = await searchParams;
@@ -40,9 +43,19 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   ]);
   // INV-V12: 채널 이사 중인 크리에이터는 목록에 그대로 두고 표시만 붙인다 — 고르면 안내하고 넘어가지 않는다(등록은 DB 가 막는다)
   const moving = new Set(movingIds);
-  const ordered = pickOrder(sendList(cards, ownCreatorId), { pinnedId: preselectedId, recentRecipientIds, followIds }).map((c) => ({
+  const sendable = pickOrder(sendList(cards, ownCreatorId), { pinnedId: preselectedId, recentRecipientIds, followIds });
+  // creator-receiving: 공개 받는 상태(쉬는 중·기념일)와, 로그인한 나만의 한도 판정(INV-B6 — 내 세션으로만 읽힌다)
+  const ids = sendable.map((c) => c.id);
+  const [receiving, reachedIds] = await Promise.all([
+    readCreatorReceiving(supabase, ids),
+    signedIn ? readMyLimitReached(supabase, ids) : Promise.resolve<string[]>([]),
+  ]);
+  const reached = new Set(reachedIds);
+  const ordered = sendable.map((c) => ({
     ...c,
     moving: moving.has(c.id),
+    receiving: receiving.get(c.id),
+    limitReached: reached.has(c.id),
   }));
   const initialCreatorId = preselectedId && ordered.some((c) => c.id === preselectedId) ? preselectedId : "";
   // 미리 고른 사람을 아직 팔로우하지 않았으면(자기 자신이 아니면) 그 사람만 따로 — 팔로우하고 보내게
@@ -66,6 +79,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
         notice={notice}
         signedIn={signedIn}
         followFirst={followFirst}
+        today={kstToday(new Date())}
       />
       <SiteFooter />
     </>

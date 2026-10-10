@@ -1,4 +1,5 @@
 import type { NotifyInput, ProfileInput } from "../model/creator-settings-input";
+import type { DaysInput, ReceivingInput } from "../model/receiving-input";
 
 // 브라우저에서 크리에이터 설정을 저장한다(/api/creator/profile · /api/creator/notify). 서버가 준 문구를 그대로 보여 준다.
 // ok = 저장됨 / login = 세션이 끝났다 / failed = 저장하지 못했다(문구를 보인다)
@@ -26,4 +27,12 @@ export function sendCreatorProfile(input: ProfileInput): Promise<SendSettingsOut
 
 export function sendCreatorNotify(input: NotifyInput): Promise<SendSettingsOutcome> {
   return post("/api/creator/notify", input);
+}
+
+export function sendCreatorReceiving(input: ReceivingInput): Promise<SendSettingsOutcome> {
+  return post("/api/creator/receiving", input);
+}
+
+export function sendCreatorDays(input: DaysInput): Promise<SendSettingsOutcome> {
+  return post("/api/creator/days", input);
 }

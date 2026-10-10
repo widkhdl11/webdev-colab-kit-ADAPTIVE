@@ -4,6 +4,7 @@ import { computeCharge } from "@/entities/payment/model/charge";
 import { z } from "zod";
 import { PRICE_CHANGED_MESSAGE, quotedTotalSchema, type PriceTable } from "@/entities/payment/model/price-table";
 import type { Viewer } from "@/entities/session/model/viewer";
+import { kstToday, limitReachedMessage } from "@/entities/creator/model/receiving";
 import type { CreatorRelationReader } from "../api/creator-relation";
 import { parseRegisterInput, type RegisterFormValues } from "./register-input";
 import { decideSender, refusalStatus, SENDER_REFUSAL_MESSAGE, senderRoleAllowed } from "./sender-rule";
@@ -37,6 +38,8 @@ export async function registerGift(
     creatorRelation: CreatorRelationReader;
     readPrices: () => Promise<PriceTable>;
     newOrderNo?: () => string;
+    /** 한도 문구의 「다음 달 1일」을 정할 지금 시각(시험이 고정한다) */
+    now?: () => Date;
   },
   body: unknown,
 ): Promise<RegisterGiftResult> {
@@ -49,7 +52,7 @@ export async function registerGift(
   const quoted = quotedShape.safeParse(body);
   if (!quoted.success) return { ok: false, status: 400, errors: {} };
 
-  const { creatorId, itemKind, boxes, hasElectronicsOrMetal } = parsed.data;
+  const { creatorId, itemKind, boxes, hasElectronicsOrMetal, anniversaryName } = parsed.data;
   // INV-L8·INV-L9: 받는 크리에이터와의 관계(자기 자신인가·팔로우했는가)를 로그인한 사람 기준으로 서버가 읽어 판정한다
   // (DB 등록 함수도 따로 막는다)
   const relation = await deps.creatorRelation(deps.viewer.userId, creatorId);
@@ -58,7 +61,7 @@ export async function registerGift(
 
   const charge = computeCharge(await deps.readPrices(), { boxes });
   if (charge.totalKrw !== quoted.data.quotedTotalKrw) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
-  const registration = { fanId: deps.viewer.userId, creatorId, itemKind, hasElectronicsOrMetal, boxes };
+  const registration = { fanId: deps.viewer.userId, creatorId, itemKind, hasElectronicsOrMetal, boxes, anniversaryName };
   // 주문번호가 겹치면(다섯 자리 무작위) 새 번호로 두 번까지 다시 시도한다
   for (let attempt = 1; ; attempt += 1) {
     try {
@@ -69,8 +72,12 @@ export async function registerGift(
       if (e instanceof PriceChangedError) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
       if (e instanceof SenderRefusedError) {
         // 본인 확인 전·차단(unknown_creator)과 채널 이사 중(INV-V12)은 DB 가 처음 판정하는 정상 경로다. 나머지는 서버 판정이 빠졌다는 뜻이다
-        if (e.reason !== "unknown_creator" && e.reason !== "moving") console.error(`선물 등록: 서버 판정을 지나 DB 가 거부했다 (${e.reason})`);
-        return { ok: false, status: refusalStatus(e.reason), message: SENDER_REFUSAL_MESSAGE[e.reason] };
+        // 쉬는 중·한도(creator-receiving INV-B2·B4)도 DB 만 판정하는 정상 경로다
+        const dbOnly = e.reason === "unknown_creator" || e.reason === "moving" || e.reason === "resting" || e.reason === "limit";
+        if (!dbOnly) console.error(`선물 등록: 서버 판정을 지나 DB 가 거부했다 (${e.reason})`);
+        // INV-B6: 한도 문구는 하나 — 다음 달 1일만 넣고 한도 숫자·남은 개수는 넣지 않는다
+        const message = e.reason === "limit" ? limitReachedMessage(kstToday((deps.now ?? (() => new Date()))())) : SENDER_REFUSAL_MESSAGE[e.reason];
+        return { ok: false, status: refusalStatus(e.reason), message };
       }
       if (!(e instanceof OrderNoTakenError) || attempt >= 3) throw e;
     }

@@ -7,7 +7,7 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
   it("정상 입력은 상자 구간 목록·참거짓으로 바뀐다 (소형 먼저)", () => {
     expect(parseRegisterInput(ok)).toEqual({
       success: true,
-      data: { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "인형", boxes: ["small", "small", "medium"], hasElectronicsOrMetal: false },
+      data: { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "인형", boxes: ["small", "small", "medium"], hasElectronicsOrMetal: false, anniversaryName: null },
     });
   });
 
@@ -60,7 +60,7 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
 
   it("모르는 칸(금액·대형 초과 상자 수 등)은 결과에 들어오지 않는다 — 결제 금액은 서버 요금표로만 계산한다", () => {
     const r = parseRegisterInput({ ...ok, totalKrw: "100", oversizeCount: "3" });
-    expect(r.success && Object.keys(r.data).sort()).toEqual(["boxes", "creatorId", "hasElectronicsOrMetal", "itemKind"]);
+    expect(r.success && Object.keys(r.data).sort()).toEqual(["anniversaryName", "boxes", "creatorId", "hasElectronicsOrMetal", "itemKind"]);
     expect(r.success && r.data.boxes).toHaveLength(3);
   });
 });

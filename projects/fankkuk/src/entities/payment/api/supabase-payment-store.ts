@@ -67,6 +67,7 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
         p_inspection_fee_krw: charge.inspectionFeeKrw,
         p_shipping_fee_krw: charge.shippingFeeKrw,
         p_amount_krw: charge.totalKrw,
+        p_anniversary_name: registration.anniversaryName,
       });
       if (error?.code === "23505" && error.message.includes("orders_order_no_key")) throw new OrderNoTakenError();
       // INV-K3: 등록 순간의 요금표로 다시 계산한 금액과 다르다 — 요금이 방금 바뀌었다
@@ -76,6 +77,9 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
       if (error?.code === "42501") throw new SenderRefusedError("role");
       // creator-verification INV-V12: 받는 크리에이터가 채널 이사 중
       if (error?.code === "FKV10") throw new SenderRefusedError("moving");
+      // creator-receiving INV-B2: 쉬는 중 · INV-B4: 이번 달 한도에 닿았다
+      if (error?.code === "FKR01") throw new SenderRefusedError("resting");
+      if (error?.code === "FKR02") throw new SenderRefusedError("limit");
       // 22023 은 상자 수 경계와 같이 쓰지만 상자 수는 입력 검사가 먼저 막는다 — 남는 것은 받을 수 없는 크리에이터다
       if (error?.code === "22023" && error.message.includes("받을 수 없는 크리에이터")) throw new SenderRefusedError("unknown_creator");
       if (error) throw new Error(`선물을 등록하지 못했다: ${error.code}`);

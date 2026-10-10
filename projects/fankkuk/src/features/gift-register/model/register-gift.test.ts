@@ -209,3 +209,35 @@ describe("주문번호", () => {
     expect(store.registrations()).toHaveLength(2);
   });
 });
+
+describe("받는 양 조절 (creator-receiving INV-B2·B4·B6·B9)", () => {
+  function refusingStore(reason: "resting" | "limit"): PaymentStore {
+    const base = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
+    return { ...base, create: async () => { throw new SenderRefusedError(reason); } };
+  }
+
+  it("INV-B2 S2 (실패경로): DB 가 쉬는 중으로 거부하면 409 와 쉬는 중 안내", async () => {
+    const { deps } = setup();
+    const r = await registerGift({ ...deps, store: refusingStore("resting"), viewer: FAN }, form);
+    expect(r).toEqual({ ok: false, status: 409, message: "지금은 잠시 선물 받기를 쉬고 있는 크리에이터예요." });
+  });
+
+  it("INV-B6 S6b (실패경로): DB 가 한도로 거부하면 409 와 문구 하나 — 다음 달 1일, 숫자 없음", async () => {
+    const { deps } = setup();
+    const r = await registerGift({ ...deps, store: refusingStore("limit"), viewer: FAN, now: () => new Date("2026-10-10T03:00:00Z") }, form);
+    expect(r).toEqual({ ok: false, status: 409, message: "이번 달은 이미 마음을 충분히 보내셨어요. 11월 1일부터 다시 보낼 수 있어요" });
+  });
+
+  it("INV-B9: 고른 기념일 표시는 이름 그대로 등록에 넘긴다(7일 안인지는 DB 가 그날 다시 본다)", async () => {
+    const { deps, store } = setup();
+    expect((await registerGift({ ...deps, viewer: FAN }, { ...form, anniversaryName: " 데뷔일 " })).ok).toBe(true);
+    expect((await registerGift({ ...deps, newOrderNo: () => "FC-TEST2", viewer: FAN }, form)).ok).toBe(true);
+    expect(store.registrations().map((x) => x.anniversaryName)).toEqual(["데뷔일", null]);
+  });
+
+  it("INV-B9 (실패경로): 13자 넘는 표시 이름은 400, 저장하지 않는다", async () => {
+    const { deps, store } = setup();
+    expect(await registerGift({ ...deps, viewer: FAN }, { ...form, anniversaryName: "가".repeat(13) })).toMatchObject({ ok: false, status: 400 });
+    expect(store.registrations()).toEqual([]);
+  });
+});

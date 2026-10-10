@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
+import { readCreatorReceiving } from "@/entities/creator/api/receiving-reads";
+import { kstToday } from "@/entities/creator/model/receiving";
 import { readProhibitedItems } from "@/entities/parcel/api/read-prohibited-items";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { followModeOf } from "@/features/creator-follow/model/follow-mode";
@@ -21,13 +23,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const { id } = await params;
   // 크리에이터가 자기 페이지를 보면 팔로우·선물 보내기를 숨긴다(INV-L8). 팔로우하지 않았으면 「팔로우하고 선물 보내기」(INV-L9)
   const asCreator = viewer?.role === "creator";
-  const [header, [creator], cards, ownCreatorId, prices, prohibited] = await Promise.all([
+  const [header, [creator], cards, ownCreatorId, prices, prohibited, receiving] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creators"),
     readCreatorCards(supabase, { signedIn: viewer !== null, onlyId: id }),
     readCreatorCards(supabase, { signedIn: viewer !== null }),
     asCreator ? readOwnCreatorId(supabase) : Promise.resolve(null),
     readPublicPrices(supabase),
     readProhibitedItems(supabase),
+    // creator-receiving: 쉬는 중 날짜·생일·기념일만 — 한도는 이 페이지 응답에 넣지 않는다(INV-B6)
+    readCreatorReceiving(supabase, [id]),
   ]);
   if (!creator) notFound();
   const others = cards.filter((c) => c.id !== id).slice(0, OTHERS_SHOWN);
@@ -42,6 +46,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         send={send}
         prices={prices}
         prohibited={prohibited}
+        receiving={receiving.get(id) ?? null}
+        today={kstToday(new Date())}
       />
       <SiteFooter />
     </>
