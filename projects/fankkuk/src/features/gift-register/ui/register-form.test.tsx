@@ -162,6 +162,31 @@ describe("metrics INV-Q5: 안내가 뜬 품목을 등록에 같이 보낸다", (
     expect(sent()).not.toHaveProperty("hardNoticeCategory");
   });
 
+  it("INV-Q5 (실패경로): 꽃이 받기 어려운 크리에이터에게 처음부터 인형을 골라 결제하면 안내 품목을 보내지 않는다", async () => {
+    await render("notice");
+    await toStep2("doll");
+    expect(host.querySelector("#hard-note")).toBeNull();
+    await click(button("다음"));
+    await click(button("다음"));
+    await pay();
+    expect(sent()).toMatchObject({ creatorId: HARU, itemCategory: "doll" });
+    expect(sent()).not.toHaveProperty("hardNoticeCategory");
+  });
+
+  it("INV-Q5 (실패경로): 꽃을 고른 뒤 1단계에서 꽃이 받기 어려운 크리에이터로 바꾸고 결제로 바로 가면 — 안내가 화면에 뜬 적이 없으니 보내지 않는다", async () => {
+    await render("notice", MOMO);
+    await toStep2("flower");
+    await click(button("다음"));
+    await click(button("다음"));
+    expect(visibleStep()).toEqual([4]);
+    await click(stepButton("크리에이터"));
+    await click(radio(HARU));
+    await click(stepButton("결제"));
+    await pay();
+    expect(sent()).toMatchObject({ creatorId: HARU, itemCategory: "flower" });
+    expect(sent()).not.toHaveProperty("hardNoticeCategory");
+  });
+
   it("INV-Q5 (실패경로): 안내를 본 뒤 다른 크리에이터로 바꾸면 그 안내는 보내지 않는다", async () => {
     await render("notice");
     await toStep2("flower");

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createTestAccount, removeTestAccounts, type TestAccount } from "./account-fixtures";
+import { createTestAccount, removeTestAccounts, testEmail, testPhone, type TestAccount } from "./account-fixtures";
 import { deleteTestOrders, psql, SEED } from "./helpers";
 import { sessionCookie } from "./together-helpers";
 
@@ -106,5 +106,59 @@ describe("INV-Q4 — 공유 링크 utm 쿠키(처음 들어온 순간)", () => {
 
   it("INV-Q4: utm 이 없는 주소는 쿠키를 만들지 않는다", async () => {
     expect(utmSetCookie(await open("/about"))).toBeNull();
+  });
+});
+
+describe("INV-Q4 — 가입이 끝나면 utm 쿠키를 지운다(개인정보처리방침 「가입할 때 한 번 읽어 계정에 붙인 뒤 지우고」)", () => {
+  afterAll(() => removeTestAccounts());
+
+  /** 같은 사이트 화면이 보낸 것처럼 JSON 을 보낸다. */
+  function postJson(path: string, body: unknown, cookie?: string): Promise<Response> {
+    return fetch(`${APP}${path}`, {
+      method: "POST",
+      redirect: "manual",
+      headers: { origin: APP, "content-type": "application/json", ...(cookie ? { cookie } : {}) },
+      body: JSON.stringify(body),
+    });
+  }
+  const cookiePair = (res: Response, name: string) => res.headers.getSetCookie().find((c) => c.startsWith(`${name}=`))?.split(";")[0] ?? null;
+
+  it("INV-Q4: 본인 확인 → 가입이 성공하면 응답이 utm 쿠키를 같은 옵션으로 지우고, 그 값은 계정에 붙는다", async () => {
+    const phone = testPhone();
+    const requested = await postJson("/api/signup/phone", { phone });
+    expect(requested.status).toBe(200);
+    const ticket = cookiePair(requested, "fk_signup_verification");
+    expect(ticket).not.toBeNull();
+    expect((await postJson("/api/signup/phone/check", {}, ticket!)).status).toBe(200);
+
+    const loginId = `it_mqs${Date.now().toString(36).slice(-6)}`;
+    const res = await postJson(
+      "/api/signup",
+      { role: "fan", loginId, email: testEmail("mqs"), password: "Fk-signup-9876", phone, terms: { service: true, privacy: true }, heardFrom: "friend" },
+      `${ticket}; fk_utm=x_share.social.launch-1`,
+    );
+    expect(res.status).toBe(200);
+    const line = utmSetCookie(res);
+    expect(line).not.toBeNull();
+    expect(line).toMatch(/^fk_utm=;/);
+    expect(line).toMatch(/Max-Age=0/i);
+    expect(line).toMatch(/Path=\//i);
+    expect(line).toMatch(/HttpOnly/i);
+    expect(line).toMatch(/SameSite=lax/i);
+    expect(
+      psql(
+        `select s.heard_from || '|' || s.utm_source || '|' || s.utm_medium || '|' || s.utm_campaign from public.signup_sources s join public.profiles p on p.id = s.account_id where p.login_id = '${loginId}'`,
+      ),
+    ).toBe("friend|x_share|social|launch-1");
+  });
+
+  it("INV-Q4 (실패경로): 가입이 실패하면(본인 확인 없음) utm 쿠키를 지우지 않는다 — 다시 가입할 때 읽는다", async () => {
+    const res = await postJson(
+      "/api/signup",
+      { role: "fan", loginId: `it_mqf${Date.now().toString(36).slice(-6)}`, email: testEmail("mqf"), password: "Fk-signup-9876", phone: testPhone(), terms: { service: true, privacy: true } },
+      "fk_utm=x_share..",
+    );
+    expect(res.status).toBe(400);
+    expect(utmSetCookie(res)).toBeNull();
   });
 });

@@ -289,8 +289,9 @@ export function RegisterForm({
   // hard-items INV-H8: 고른 종류가 크리에이터의 받기 어려운 품목과 겹치면 결제 전에 안내 — 「등록 막기」면 넘어가지 않는다
   const hardOverlap = picked ? hardItemOverlap(picked.name, picked.hardItems, itemCategory) : null;
   // metrics INV-Q5: 안내가 처음 뜬 순간의 품목을 기억한다 — 다른 크리에이터로 바꾸면 그 크리에이터 기준으로 다시 잡는다.
+  // 안내 줄은 2단계에만 보인다 — 다른 단계에서 크리에이터를 바꿔 겹침이 생겨도 화면에 뜬 적이 없으니 기억하지 않는다.
   // 그리는 중에 한 번만 바꾸는 이전 값 맞추기(조건이 맞으면 다음 그리기에서 더 바뀌지 않는다)
-  if (hardOverlap && itemCategory && creatorId && noticed?.creatorId !== creatorId) setNoticed({ creatorId, category: itemCategory });
+  if (step === 2 && hardOverlap && itemCategory && creatorId && noticed?.creatorId !== creatorId) setNoticed({ creatorId, category: itemCategory });
   const itemText = itemCategory === null ? "" : itemCategory === "other" ? itemOther.trim() || ITEM_CATEGORY_LABEL.other : ITEM_CATEGORY_LABEL[itemCategory];
   const metalForced = forcesMetalReport(itemCategory);
   const metalText = metal === "yes" ? "네, 있어요" : metal === "no" ? "아니요, 없어요" : "아직 안 골랐어요";

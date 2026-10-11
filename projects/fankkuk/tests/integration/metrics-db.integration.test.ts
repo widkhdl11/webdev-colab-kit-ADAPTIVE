@@ -77,6 +77,8 @@ function received(orderId: string, reply: "replied" | "deleted" | "none", seqNo 
 }
 
 let NOW = "";
+/** DB 시계로 1분 뒤 — 방금 넣은 줄이 기준 시각 안에 들게. 시험 기계 시계와 DB 시계가 어긋나도 같은 달로 묶인다. */
+const dbSoon = () => psql("select (now() + interval '1 minute')::text");
 /** 기준 시각에서 days 일 전(SQL 식). */
 const ago = (days: number, extra = "0 minutes") => `('${NOW}'::timestamptz - interval '${days} days' + interval '${extra}')`;
 
@@ -111,7 +113,9 @@ beforeAll(() => {
 afterEach(() => {
   // 목록 종류로 등록한 주문은 물품 이름이 종류 이름이라 정리 기준 이름으로 바꾼 뒤 지운다
   psql(`update public.orders set item_kind = '${KINDS}' where creator_id = '${A.creatorId}'`);
-  psql(`do $$ begin if to_regclass('public.creator_hard_items') is not null then delete from public.creator_hard_items where creator_id = '${A.creatorId}'; end if; end $$;`);
+  psql(
+    `do $$ begin if to_regclass('public.creator_hard_items') is not null then delete from public.creator_hard_items where creator_id in ('${A.creatorId}', '${HARU}'); end if; end $$;`,
+  );
   deleteTestOrders();
   clearSignupSources();
 });
@@ -126,7 +130,7 @@ afterAll(() => {
 describe("INV-Q1 — 집계는 운영자만", () => {
   it("INV-Q1 (S1, 실패경로): 로그인 안 함은 집계 함수를 부를 수 없다", async () => {
     const r = await anonClient().rpc("admin_metrics");
-    expect(r.error).not.toBeNull();
+    expect(r.error?.code).toBe("42501");
     expect(r.data).toBeNull();
   });
 
@@ -152,9 +156,9 @@ describe("INV-Q1 — 집계는 운영자만", () => {
 
   it("INV-Q1 (실패경로): 기준 시각을 받는 내부 함수는 화면 쪽 키·앱 서버 키 누구도 부를 수 없다", async () => {
     const args = { p_now: new Date().toISOString() };
-    expect((await anonClient().rpc("metrics_rows_at", args)).error).not.toBeNull();
-    expect((await (await client("fankkuk_admin")).rpc("metrics_rows_at", args)).error).not.toBeNull();
-    expect((await adminClient().rpc("metrics_rows_at", args)).error).not.toBeNull();
+    expect((await anonClient().rpc("metrics_rows_at", args)).error?.code).toBe("42501");
+    expect((await (await client("fankkuk_admin")).rpc("metrics_rows_at", args)).error?.code).toBe("42501");
+    expect((await adminClient().rpc("metrics_rows_at", args)).error?.code).toBe("42501");
   });
 });
 
@@ -282,15 +286,61 @@ describe("INV-Q3 — 재발송률·답장 여부별·감사 답장률", () => {
     expect(delta(before, rowsAt(NOW), "reply")).toEqual({ n: 1, d: 3 });
   });
 
-  it("INV-Q3: 재발송률 달마다는 첫 선물의 한국 시간 달로 묶는다", async () => {
+  /** 60일이 다 지난 가장 최근 첫 선물 달(한국 시간) — 그 달 마지막 날 + 60일이 기준 시각보다 앞이다. */
+  const newestClosedCohort = () =>
+    psql(
+      `select to_char(d, 'YYYY-MM') from generate_series(date_trunc('month', '${NOW}'::timestamptz at time zone 'Asia/Seoul') - interval '6 months',
+         date_trunc('month', '${NOW}'::timestamptz at time zone 'Asia/Seoul'), interval '1 month') as g(d)
+       where ((d + interval '1 month') at time zone 'Asia/Seoul') + interval '60 days' <= '${NOW}'::timestamptz
+       order by d desc limit 1`,
+    );
+
+  it("INV-Q3: 재발송률 달마다는 첫 선물의 한국 시간 달로 묶는다 — 달 1일 0시 30분(한국)의 첫 선물은 그 달, 다른 달의 두 번째 선물은 그 달로 세지 않는다", async () => {
     const fa = await newFan();
-    const month = psql(`select to_char((('${NOW}'::timestamptz - interval '70 days') at time zone 'Asia/Seoul'), 'YYYY-MM')`);
+    const month = newestClosedCohort();
+    const firstKst = `((to_date('${month}', 'YYYY-MM')::timestamp + interval '30 minutes') at time zone 'Asia/Seoul')`;
     const before = rowsAt(NOW);
-    order(fa, { registeredAt: ago(70) });
-    // 최근 3개월 밖 달이면 「전체」에만 들어간다 — 그 달 줄이 있으면 그 달에도
+    order(fa, { registeredAt: firstKst });
+    order(fa, { registeredAt: `(${firstKst} + interval '40 days')` }); // 다음 달, 60일 안
     const after = rowsAt(NOW);
-    expect(delta(before, after, "resend")).toEqual({ n: 0, d: 1 });
-    if (after.some((r) => r.metric === "resend" && r.period === month)) expect(delta(before, after, "resend", month)).toEqual({ n: 0, d: 1 });
+    expect(delta(before, after, "resend")).toEqual({ n: 1, d: 1 });
+    expect(delta(before, after, "resend", month)).toEqual({ n: 1, d: 1 });
+    // 달마다 칸을 다 더해도 한 번만 — 다른 달(UTC 로 묶으면 앞 달, 두 번째 선물로 묶으면 다음 달)에는 없다
+    const months = [...new Set(after.filter((r) => r.metric === "resend" && r.period !== "all").map((r) => r.period))];
+    const sum = months.reduce((acc, p) => ({ n: acc.n + delta(before, after, "resend", p).n, d: acc.d + delta(before, after, "resend", p).d }), { n: 0, d: 0 });
+    expect(sum).toEqual({ n: 1, d: 1 });
+  });
+
+  it("INV-Q3: 재발송률 세 줄의 달마다 칸은 60일이 다 지난 최근 3개 첫 선물 달 — 다른 지표는 최근 3개월 그대로", () => {
+    const rows = rowsAt(NOW);
+    const periodsOf = (metric: string) => [...new Set(rows.filter((r) => r.metric === metric && r.period !== "all").map((r) => r.period))];
+    const ym = (y: number, m0: number) => `${y}-${String(m0 + 1).padStart(2, "0")}`;
+    // 한국 시간은 서머타임이 없어 늘 UTC+9 다
+    const nowMs = Date.parse(psql(`select to_char('${NOW}'::timestamptz at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`));
+    const kst = new Date(nowMs + 9 * 3600_000);
+    const monthAgo = (k: number) => new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth() - k, 1));
+    const closed = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1) - 9 * 3600_000 + 60 * 86400_000 <= nowMs;
+    const expected: string[] = [];
+    for (let k = 0; expected.length < 3; k += 1) {
+      const d = monthAgo(k);
+      if (closed(d)) expected.push(ym(d.getUTCFullYear(), d.getUTCMonth()));
+    }
+    for (const m of ["resend", "resend_replied", "resend_not_replied"]) expect(periodsOf(m)).toEqual(expected);
+    const recent = [0, 1, 2].map((k) => ym(monthAgo(k).getUTCFullYear(), monthAgo(k).getUTCMonth()));
+    for (const m of ["reply", "notice_changed", "decline", "signup_source"]) expect(periodsOf(m)).toEqual(recent);
+  });
+
+  it("INV-Q3 (경계): 기준 시각 뒤에 단 답장은 그 시각의 답장이 아니다 — 감사 답장률·답장 여부별 둘 다", async () => {
+    const fa = await newFan();
+    // 받았어요 2일 전, 답장 1일 전 — 기준 시각을 36시간 전으로 두면 받았어요는 안, 답장은 밖
+    const at = psql(`select ('${NOW}'::timestamptz - interval '36 hours')::text`);
+    const before = rowsAt(at);
+    const a1 = order(fa, { status: "shipped", registeredAt: ago(80) });
+    received(a1.id, "replied");
+    const after = rowsAt(at);
+    expect(delta(before, after, "reply")).toEqual({ n: 0, d: 1 });
+    expect(delta(before, after, "resend_replied")).toEqual({ n: 0, d: 0 });
+    expect(delta(before, after, "resend_not_replied")).toEqual({ n: 0, d: 1 });
   });
 });
 
@@ -340,6 +390,13 @@ describe("INV-Q4 — 가입 경로·utm", () => {
     expect(psqlError(`insert into public.signup_sources (account_id, utm_source, utm_medium, utm_campaign) values ('${fan}', 'x_share', 'social-1', '${"a".repeat(50)}')`)).toBeNull();
   });
 
+  it("INV-Q4 (실패경로): 51자 utm 은 오류 없이 그 칸만 비우고 저장한다 — 50자는 남는다", async () => {
+    const fan = await newFan();
+    const r = await record(fan, { p_heard_from: "friend", p_utm_source: "a".repeat(51), p_utm_medium: "b".repeat(50), p_utm_campaign: "c".repeat(51) });
+    expect(r.error).toBeNull();
+    expect(sourceOf(fan)).toBe(`friend|-|${"b".repeat(50)}|-`);
+  });
+
   it("INV-Q4 (실패경로): 처음 기록이 있으면 덮어쓰지 않는다", async () => {
     const fan = await newFan();
     await record(fan, { p_heard_from: "friend", p_utm_source: "first" });
@@ -358,14 +415,16 @@ describe("INV-Q4 — 가입 경로·utm", () => {
 
   it("INV-Q4: 가입 경로 집계 — 묶음별 건수와 전체 가입 수", async () => {
     const [f1, f2, f3] = [await newFan(), await newFan(), await newFan()];
-    const before = rowsAt(new Date(Date.now() + 60_000).toISOString());
+    const before = rowsAt(dbSoon());
     await record(f1, { p_heard_from: "creator_stream", p_utm_source: "x_share" });
     await record(f2, { p_heard_from: "creator_stream" });
     await record(f3, {});
-    const after = rowsAt(new Date(Date.now() + 60_000).toISOString());
+    const after = rowsAt(dbSoon());
     expect(delta(before, after, "signup_source", "all", "creator_stream")).toEqual({ n: 2, d: 3 });
     expect(delta(before, after, "signup_source", "all", "none")).toEqual({ n: 1, d: 3 });
     expect(delta(before, after, "utm_source", "all", "x_share")).toEqual({ n: 1, d: 3 });
+    // utm 은 전체 기간만 센다(화면이 전체만 쓴다)
+    expect(after.filter((r) => r.metric.startsWith("utm_") && r.period !== "all")).toEqual([]);
   });
 });
 
@@ -395,10 +454,10 @@ describe("INV-Q5 — 받기 어려운 품목 안내 뒤 바꾼 비율·거절률
   /** 결제가 끝난 것처럼 — 등록 시각을 넣는다. */
   const pay = (no: string) =>
     psql(`begin; set local session_replication_role = replica; update public.orders set status = 'registered', registered_at = now() where order_no = '${no}'; commit;`);
-  function hardItems(categories: string[], action: "notice" | "block"): void {
+  function hardItems(categories: string[], action: "notice" | "block", creatorId: string = A.creatorId): void {
     psql(
       `insert into public.creator_hard_items (creator_id, categories, reason, period, ends_on, action)
-       values ('${A.creatorId}', array[${categories.map((c) => `'${c}'`).join(",")}], 'many', 'manual', null, '${action}')
+       values ('${creatorId}', array[${categories.map((c) => `'${c}'`).join(",")}], 'many', 'manual', null, '${action}')
        on conflict (creator_id) do update set categories = excluded.categories, action = excluded.action, ends_on = null, period = 'manual'`,
     );
   }
@@ -417,6 +476,13 @@ describe("INV-Q5 — 받기 어려운 품목 안내 뒤 바꾼 비율·거절률
   });
 
   it("INV-Q5 (S5, 실패경로): 받기 어려운 품목이 없는데 화면이 안내 값을 보내면 버린다", async () => {
+    const r = await register(SEED.fanId, "doll", "flower");
+    expect(r.error).toBeNull();
+    expect(noticeOf(r.no)).toBe("-|doll");
+  });
+
+  it("INV-Q5 (실패경로): 다른 크리에이터에게 꽃이 받기 어려운 품목이어도, 받기 어려운 품목이 없는 크리에이터에게 꽃 안내를 보내면 버린다", async () => {
+    hardItems(["flower"], "notice", HARU);
     const r = await register(SEED.fanId, "doll", "flower");
     expect(r.error).toBeNull();
     expect(noticeOf(r.no)).toBe("-|doll");
@@ -448,7 +514,7 @@ describe("INV-Q5 — 받기 어려운 품목 안내 뒤 바꾼 비율·거절률
 
   it("INV-Q5: 바꾼 비율 = 안내가 뜬 뒤 결제까지 간 주문 가운데 품목을 바꾼 주문 — 결제 전 주문은 세지 않는다", async () => {
     hardItems(["flower"], "notice");
-    const before = rowsAt(new Date(Date.now() + 60_000).toISOString());
+    const before = rowsAt(dbSoon());
     const changed = await register(SEED.fanId, "doll", "flower");
     const kept = await register(SEED.fanId, "flower", "flower");
     const unpaid = await register(SEED.fanId, "clothing", "flower");
@@ -457,7 +523,7 @@ describe("INV-Q5 — 받기 어려운 품목 안내 뒤 바꾼 비율·거절률
     pay(changed.no);
     pay(kept.no);
     pay(noNotice.no);
-    const after = rowsAt(new Date(Date.now() + 60_000).toISOString());
+    const after = rowsAt(dbSoon());
     expect(delta(before, after, "notice_changed")).toEqual({ n: 1, d: 2 });
   });
 
@@ -473,13 +539,17 @@ describe("INV-Q5 — 받기 어려운 품목 안내 뒤 바꾼 비율·거절률
     expect(delta(before, rowsAt(NOW), "decline")).toEqual({ n: 2, d: 3 });
   });
 
-  it("INV-Q5: 거절률 달마다는 한국 시간 달 — 그달 1일 0시 30분(한국)에 등록한 주문은 그달이다", async () => {
+  it("INV-Q5: 거절률 달마다는 한국 시간 달 — 지난달 1일 0시 30분(한국)에 등록한 주문은 지난달이다", async () => {
     const fan = await newFan();
-    const month = psql(`select to_char('${NOW}'::timestamptz at time zone 'Asia/Seoul', 'YYYY-MM')`);
-    const firstKst = `((date_trunc('month', '${NOW}'::timestamptz at time zone 'Asia/Seoul') + interval '30 minutes') at time zone 'Asia/Seoul')`;
-    const before = rowsAt(NOW);
-    order(fan, { status: "rejected", registeredAt: firstKst });
-    const after = rowsAt(NOW);
+    const at = dbSoon();
+    // 지난달을 쓴다 — 이번 달 1일 0시~0시 30분에 돌려도 등록 시각이 기준 시각보다 앞이다
+    const firstOfLast = `(date_trunc('month', '${at}'::timestamptz at time zone 'Asia/Seoul') - interval '1 month')`;
+    const month = psql(`select to_char(${firstOfLast}, 'YYYY-MM')`);
+    const prev = psql(`select to_char(${firstOfLast} - interval '1 month', 'YYYY-MM')`);
+    const before = rowsAt(at);
+    order(fan, { status: "rejected", registeredAt: `((${firstOfLast} + interval '30 minutes') at time zone 'Asia/Seoul')` });
+    const after = rowsAt(at);
     expect(delta(before, after, "decline", month)).toEqual({ n: 1, d: 1 });
+    expect(delta(before, after, "decline", prev)).toEqual({ n: 0, d: 0 });
   });
 });

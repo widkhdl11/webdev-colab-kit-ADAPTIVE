@@ -10,6 +10,11 @@
 .sectionH h2 { font-size: 17px; line-height: 1.5; font-weight: 800; letter-spacing: -.3px; }
 .sectionH span { font-size: 13px; color: var(--sub); }
 .hint { font-size: 13px; color: var(--sub); }
+/* 표 위 지표 설명 — 이름(굵게)과 설명을 한 줄씩. 행 머리에는 이름만 둔다 */
+.defs { display: grid; gap: 4px; margin: 0 0 8px; font-size: 13px; color: var(--sub); }
+.defs dt { display: inline; font-weight: 700; color: var(--ink); }
+.defs dt::after { content: " — "; font-weight: 400; color: var(--sub); }
+.defs dd { display: inline; margin: 0; }
 .sub { color: var(--sub); }
 .faint { color: var(--faint); }
 .num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
