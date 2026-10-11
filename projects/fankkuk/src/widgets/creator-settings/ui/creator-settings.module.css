@@ -77,5 +77,8 @@
 .photo-field { margin-top: 28px; }
 .photo-row { display: flex; align-items: center; gap: 20px; }
 .photo-prev { width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
-.photo-ctl { display: grid; gap: 12px; min-width: 0; }
-.file { max-width: 100%; font-size: 16px; }
+.photo-ctl { flex: 1; display: grid; gap: 12px; min-width: 0; }
+/* 파일 칸은 sr-only 로 숨기고 라벨(.pick)을 버튼 모양으로 — 키보드 포커스는 라벨에 그린다 */
+.file:focus-visible + .pick { outline: 3px solid var(--ink); outline-offset: 2px; }
+.photo-ctl .pick { display: inline-flex; margin-bottom: 0; font-weight: 700; cursor: pointer; } /* .field label(칸 이름 모양)을 버튼 모양으로 되돌린다 */
+.file-name { overflow-wrap: anywhere; }

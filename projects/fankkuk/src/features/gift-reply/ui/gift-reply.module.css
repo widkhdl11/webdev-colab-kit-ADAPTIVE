@@ -11,13 +11,15 @@
 .row { padding-block: 24px; border-bottom: 1px solid var(--border); }
 .main { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 16px 24px; }
 .who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.who:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; border-radius: 4px; } /* 저장 뒤 포커스가 옮겨 오는 줄 제목 */
 .says { color: var(--sub); }
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
 .act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .sent { margin-top: 12px; margin-left: 72px; padding: 14px 18px; border-radius: 16px; background: var(--surface); box-shadow: var(--hair); }
-.sent small { display: block; color: var(--sub); }
+.sent small { display: block; color: var(--sub); font-size: 16px; }
 .sent q { quotes: none; font-weight: 700; }
 .empty { padding-block: 32px; color: var(--sub); }
+.capped { margin-top: 12px; color: var(--sub); }
 
 .form { margin: 16px 0 0 72px; padding: 24px; border-radius: var(--r-card); background: var(--surface-brand); }
 .form h3 { font-size: 20px; }
@@ -36,7 +38,9 @@
 .line-field :global(.input) { background: var(--white); }
 .count { margin-top: 6px; text-align: right; color: var(--sub); }
 .form-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
-.error { margin-top: 12px; color: var(--danger); font-weight: 700; }
+/* 오류 문구 — 지금 화면들 방식(본문색 굵은 글자 + 「!」 원, creator-settings .error) */
+.error { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; color: var(--ink); font-weight: 700; }
+.error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
 .status { margin-top: 12px; }
 
 /* ── 팬: 상자별 받았어요 · 답장 카드 ── */

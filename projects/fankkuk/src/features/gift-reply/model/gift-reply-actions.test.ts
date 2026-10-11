@@ -99,10 +99,24 @@ describe("답장 지우기 (INV-G4)", () => {
 describe("공개 동의 (INV-G8)", () => {
   it("INV-G8: 상자·두 칸만 넘긴다 — 크리에이터 계정이 보낸 선물도 있어 역할로 막지 않고 DB 가 보낸 사람인지 본다", async () => {
     for (const viewer of [FAN, HARU]) {
-      const f = fakeClient({ data: null });
-      expect(await saveReplyConsent({ client: f.client, viewer }, { boxId: BOX, isPublic: true, showNickname: false, fanId: "other" })).toEqual({ ok: true });
+      const f = fakeClient({ data: [{ fan_public: true, fan_show_nickname: false }] });
+      expect(await saveReplyConsent({ client: f.client, viewer }, { boxId: BOX, isPublic: true, showNickname: false, fanId: "other" })).toEqual({
+        ok: true,
+        consent: { isPublic: true, showNickname: false },
+      });
       expect(f.calls).toEqual([{ fn: "set_gift_reply_consent", args: { p_box_id: BOX, p_public: true, p_show_nickname: false } }]);
     }
+  });
+
+  it("INV-G8: 고른 값을 그대로 넘기고, 돌려줄 값은 DB 가 저장한 값이다 — 공개를 끄면서 닉네임 보이기를 켜 보내도 DB 가 끈 값을 돌려준다", async () => {
+    const f = fakeClient({ data: [{ fan_public: false, fan_show_nickname: false }] });
+    expect(await saveReplyConsent({ client: f.client, viewer: FAN }, { boxId: BOX, isPublic: false, showNickname: true })).toEqual({
+      ok: true,
+      consent: { isPublic: false, showNickname: false },
+    });
+    expect(f.calls[0].args).toEqual({ p_box_id: BOX, p_public: false, p_show_nickname: true });
+    // 저장 결과가 정해진 꼴이 아니면 성공으로 보지 않는다
+    await expect(saveReplyConsent({ client: fakeClient({ data: null }).client, viewer: FAN }, { boxId: BOX, isPublic: true, showNickname: true })).rejects.toThrow();
   });
 
   it("INV-G8 S8 (실패경로): 로그인 안 함 401, 남의 답장 404, 꼴이 다르면 400", async () => {

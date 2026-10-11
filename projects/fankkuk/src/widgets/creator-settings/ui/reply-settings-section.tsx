@@ -74,7 +74,7 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
             spellCheck={false}
             maxLength={16}
             value={xHandle}
-            aria-describedby="reply-x-hint"
+            aria-describedby={msg && !msg.ok ? "reply-x-hint reply-set-msg-err" : "reply-x-hint"}
             aria-invalid={handleOk ? undefined : true}
             onChange={(e) => setXHandle(e.currentTarget.value)}
           />
@@ -103,6 +103,7 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
           {saving ? "저장하는 중…" : "감사 답장 설정 저장"}
         </button>
       </div>
+      {/* 오류 문구는 reply-set-msg-err 로 그려진다 — X 계정 칸이 그 문구를 가리킨다 */}
       <SaveMessage id="reply-set-msg" msg={msg} />
     </section>
   );

@@ -13,8 +13,9 @@ import s from "./gift-reply.module.css";
 // 팬 — 보낸 선물의 상자별 받았어요·답장(gift-reply INV-G6·G8·G9). 시안: docs/design/mockups/addendum/together.html(답장 카드) · share-card.html.
 // 「함께한 시간」 화면(together)이 생기기 전까지는 선물 상세에 둔다 — 같은 읽기 함수(my_gift_replies)를 쓴다.
 // 상자 상태는 받았어요 기록이나 배송 수령 중 하나라도 있으면 「받았어요」, 날짜만 보이고 시각은 없다(INV-G6 — 읽기 함수가 날짜만 준다).
-// 공개 동의 두 칸은 누르는 즉시 저장하고(INV-G8), 실패하면 되돌린다. 공유 카드는 보낸 사람 본인만 만들 수 있다 — 이미지 주소가 로그인 세션으로 주인을 확인한다(INV-G9).
+// 공개 동의 두 칸은 누르는 즉시 저장하고(INV-G8), 실패하면 되돌린다. 공개를 끄면 닉네임 보이기도 꺼지는 것은 DB 가 정하고, 저장된 두 값을 그린다. 공유 카드는 보낸 사람 본인만 만들 수 있다 — 이미지 주소가 로그인 세션으로 주인을 확인한다(INV-G9).
 // 「#팬꾹」·「@계정」은 이미지가 아니라 X 글쓰기 창의 글에 채운다(shareTextOf).
+// 세션이 끝나 다시 로그인하면 돌아올 주소(returnPath)는 그리는 화면이 정한다 — 선물 상세와 「함께한 시간」이 같이 쓴다.
 
 const SIZE_LABEL: Record<CardSize, string> = { square: "정사각형", wide: "X 용 가로" };
 
@@ -67,7 +68,9 @@ function SharePanel({ row, id }: { row: FanBoxReply; id: string }) {
   );
 }
 
-function ReplyCard({ row, photoBase }: { row: FanBoxReply; photoBase: string }) {
+type Reply = NonNullable<FanBoxReply["reply"]>;
+
+function ReplyCard({ row, reply, photoBase, returnPath }: { row: FanBoxReply; reply: Reply; photoBase: string; returnPath: string }) {
   const router = useRouter();
   const uid = useId();
   const [isPublic, setIsPublic] = useState(row.fanPublic);
@@ -75,7 +78,6 @@ function ReplyCard({ row, photoBase }: { row: FanBoxReply; photoBase: string }) 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
-  if (!row.reply) return null;
   const name = creatorNameOrWithdrawn(row.creatorName);
   const errId = `${uid}-err`;
 
@@ -88,22 +90,26 @@ function ReplyCard({ row, photoBase }: { row: FanBoxReply; photoBase: string }) 
     setError(null);
     const r = await sendReplyConsent({ boxId: row.boxId, ...next });
     setBusy(false);
-    if (r.kind === "ok") return;
+    if (r.kind === "ok") {
+      setIsPublic(r.value.isPublic);
+      setShowNickname(r.value.showNickname);
+      return;
+    }
     setIsPublic(before.isPublic);
     setShowNickname(before.showNickname);
-    if (r.kind === "login") router.push(`/login?next=/gifts/${row.orderNo}`);
+    if (r.kind === "login") router.push(`/login?next=${returnPath}`);
     else setError(r.message);
   };
 
   return (
-    <div className={s.reply} role="group" aria-label={`${monthDayText(row.reply.repliedOn)} ${name}님의 답장`}>
+    <div className={s.reply} role="group" aria-label={`${monthDayText(reply.repliedOn)} ${name}님의 답장`}>
       <div className={s["reply-top"]}>
         <CreatorPhoto photoUrl={creatorPhotoUrl(photoBase, row.creatorPhotoPath)} tone="var(--face-6)" className={`face ${s["reply-photo"]}`} />
         <b>{name}님의 답장</b>
-        <span className={s.d}>{dotDate(row.reply.repliedOn)}</span>
+        <span className={s.d}>{dotDate(reply.repliedOn)}</span>
       </div>
-      <q>{REPLY_PHRASE_TEXT[row.reply.phrase]}</q>
-      {row.reply.line ? <p className={s.more}>{row.reply.line}</p> : null}
+      <q>{REPLY_PHRASE_TEXT[reply.phrase]}</q>
+      {reply.line ? <p className={s.more}>{reply.line}</p> : null}
 
       <div className={s.consent}>
         <label className={s.check}>
@@ -112,7 +118,7 @@ function ReplyCard({ row, photoBase }: { row: FanBoxReply; photoBase: string }) 
             checked={isPublic}
             aria-disabled={busy}
             aria-describedby={`${uid}-pub-hint${error ? ` ${errId}` : ""}`}
-            onChange={(e) => void save({ isPublic: e.currentTarget.checked, showNickname: e.currentTarget.checked ? showNickname : false })}
+            onChange={(e) => void save({ isPublic: e.currentTarget.checked, showNickname })}
           />
           공개해도 괜찮아요
         </label>
@@ -125,7 +131,7 @@ function ReplyCard({ row, photoBase }: { row: FanBoxReply; photoBase: string }) 
             checked={showNickname}
             disabled={!isPublic}
             aria-disabled={busy}
-            aria-describedby={`${uid}-nick-hint`}
+            aria-describedby={`${uid}-nick-hint${error ? ` ${errId}` : ""}`}
             onChange={(e) => void save({ isPublic, showNickname: e.currentTarget.checked })}
           />
           닉네임도 보이기
@@ -135,6 +141,9 @@ function ReplyCard({ row, photoBase }: { row: FanBoxReply; photoBase: string }) 
         </p>
         {error ? (
           <p className={s.error} id={errId} role="alert">
+            <span className={s["error-mark"]} aria-hidden="true">
+              !
+            </span>
             {error}
           </p>
         ) : null}
@@ -151,7 +160,16 @@ function ReplyCard({ row, photoBase }: { row: FanBoxReply; photoBase: string }) 
   );
 }
 
-export function FanBoxReplies({ rows, photoBase }: { rows: readonly FanBoxReply[]; photoBase: string }) {
+export function FanBoxReplies({
+  rows,
+  photoBase,
+  returnPath,
+}: {
+  rows: readonly FanBoxReply[];
+  photoBase: string;
+  /** 다시 로그인한 뒤 돌아올 주소 */
+  returnPath: string;
+}) {
   return (
     <div className={s.boxes}>
       {rows.map((row) => (
@@ -165,7 +183,7 @@ export function FanBoxReplies({ rows, photoBase }: { rows: readonly FanBoxReply[
             )}
           </div>
           {row.reply ? (
-            <ReplyCard row={row} photoBase={photoBase} />
+            <ReplyCard row={row} reply={row.reply} photoBase={photoBase} returnPath={returnPath} />
           ) : row.received ? (
             <p className={s.wait}>답장은 크리에이터가 남기면 여기에 보여요. 답장 없이 받았다고만 확인할 수도 있어요.</p>
           ) : null}

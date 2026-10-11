@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { normalizeReplyLine, REPLY_PHRASES, replyLineProblem } from "@/entities/gift-reply/model/reply";
+import { normalizeReplyLine, REPLY_INPUT_MESSAGE, REPLY_PHRASES, replyLineProblem } from "@/entities/gift-reply/model/reply";
 import type { Viewer } from "@/entities/session/model/viewer";
 
 // 받았어요 · 답장 · 답장 지우기 · 공개 동의 저장 (gift-reply INV-G1·G2·G3·G4·G8).
@@ -15,9 +15,9 @@ const boxId = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}
 const confirmSchema = z
   .object({ boxId, phrase: z.enum(REPLY_PHRASES).nullable(), line: z.string().max(400).nullable().optional() })
   .transform((v) => ({ boxId: v.boxId, phrase: v.phrase, line: normalizeReplyLine(v.line) }))
-  .refine((v) => v.phrase !== null || v.line === null, "한 줄은 답장 문구를 고른 뒤에 쓸 수 있어요.")
-  .refine((v) => replyLineProblem(v.line) !== "too_long", "한 줄은 80자까지 쓸 수 있어요.")
-  .refine((v) => replyLineProblem(v.line) !== "forbidden_chars", "한 줄에는 줄바꿈이나 보이지 않는 글자를 쓸 수 없어요.");
+  .refine((v) => v.phrase !== null || v.line === null, REPLY_INPUT_MESSAGE.lineWithoutPhrase)
+  .refine((v) => replyLineProblem(v.line) !== "too_long", REPLY_INPUT_MESSAGE.tooLong)
+  .refine((v) => replyLineProblem(v.line) !== "forbidden_chars", REPLY_INPUT_MESSAGE.forbiddenChars);
 
 // DB 오류 코드 → 사람이 읽는 문구. 남의 상자와 없는 상자는 같은 404 로(있는지 알리지 않는다).
 const MESSAGES: Readonly<Record<string, { status: Refusal["status"]; message: string }>> = {
@@ -71,20 +71,27 @@ export async function deleteGiftReply(deps: GiftReplyDeps, body: unknown): Promi
 }
 
 const consentSchema = z.object({ boxId, isPublic: z.boolean(), showNickname: z.boolean() });
+const consentRow = z.array(z.object({ fan_public: z.boolean(), fan_show_nickname: z.boolean() }).strict()).length(1);
+
+export type ReplyConsent = { isPublic: boolean; showNickname: boolean };
 
 /**
  * INV-G8: 공개 동의(「공개해도 괜찮아요」·「닉네임도 보이기」). 크리에이터 계정도 선물을 보낼 수 있어 역할로 막지 않는다 —
- * 그 선물을 보낸 사람인지는 DB 가 로그인 토큰으로 본다.
+ * 그 선물을 보낸 사람인지는 DB 가 로그인 토큰으로 본다. 공개를 끄면 닉네임 보이기도 꺼지는 것도 DB 가 정하고,
+ * 저장된 두 값을 돌려준다 — 화면은 이 값을 그린다.
  */
-export async function saveReplyConsent(deps: GiftReplyDeps, body: unknown): Promise<{ ok: true } | Refusal> {
+export async function saveReplyConsent(deps: GiftReplyDeps, body: unknown): Promise<{ ok: true; consent: ReplyConsent } | Refusal> {
   if (!deps.viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
   const parsed = consentSchema.safeParse(body);
   if (!parsed.success) return { ok: false, status: 400, message: "잘못된 요청이에요." };
-  const { error } = await deps.client.rpc("set_gift_reply_consent", {
+  const { data, error } = await deps.client.rpc("set_gift_reply_consent", {
     p_box_id: parsed.data.boxId,
     p_public: parsed.data.isPublic,
     p_show_nickname: parsed.data.showNickname,
   });
   if (error) return refusalOf(error.code, "set_gift_reply_consent");
-  return { ok: true };
+  const parsedRow = consentRow.safeParse(data);
+  if (!parsedRow.success) throw new Error("공개 동의 저장 결과를 알 수 없다");
+  const [row] = parsedRow.data;
+  return { ok: true, consent: { isPublic: row.fan_public, showNickname: row.fan_show_nickname } };
 }

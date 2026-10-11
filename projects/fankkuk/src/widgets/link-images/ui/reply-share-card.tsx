@@ -1,10 +1,11 @@
 // 답장 공유 카드 (gift-reply INV-G9). 시안: docs/design/mockups/addendum/share-card.html — 정사각형 1080×1080 · X 용 가로 1200×675.
 // 그리는 값은 replyCardInput 의 결과(크리에이터 이름·사진·문구·한 줄·날짜, 팬이 고른 경우에만 팬 닉네임)와 로고·정해진 문구뿐이다.
-// 답장 글자는 길이에 따라 줄인다(cardTextSizes, DECISIONS 2026-10-11). 답장 속 팬 닉네임은 그대로 둔다(사용자 결정).
+// 답장 글자는 길이에 따라 줄인다(cardTextSizes, DECISIONS 2026-10-11). 크리에이터 이름도 길이에 따라 줄이고(cardNameSize — 20자도 가로 카드 왼쪽 열 296px 안),
+// 칸보다 긴 낱말은 그 안에서 줄을 바꾼다(break-word). 답장 속 팬 닉네임은 그대로 둔다(사용자 결정).
 // next/og 는 CSS 변수를 읽지 못해 색을 값으로 적는다 — design-rules 토큰과 같은 값이다
 // (bg = --surface-brand · ink = --ink · sub = --sub · accent = --brand-ink · white = --white · photo = --face-6, 사진이 없을 때 원 바탕).
 
-import { cardTextSizes, type CardSize } from "@/entities/gift-reply/model/reply";
+import { cardNameSize, cardTextSizes, type CardSize } from "@/entities/gift-reply/model/reply";
 import type { ReplyCardInput } from "@/entities/gift-reply/model/reply-card";
 
 const COLOR = { bg: "#FFF5F1", ink: "#343039", sub: "#665D65", accent: "#A4433D", white: "#FFFFFF", photo: "#F7C8D4" } as const;
@@ -41,8 +42,10 @@ function Panel({ card, size, style }: { card: ReplyCardInput; size: CardSize; st
 function Who({ card, size }: { card: ReplyCardInput; size: CardSize }) {
   const square = size === "square";
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", fontSize: square ? 68 : 52, fontWeight: 800, letterSpacing: -1, lineHeight: 1.15, color: COLOR.ink, wordBreak: "keep-all" }}>{card.creatorName}님이 남긴</div>
+    <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div style={{ display: "flex", fontSize: cardNameSize(card.creatorName, size), fontWeight: 800, letterSpacing: -1, lineHeight: 1.15, color: COLOR.ink, wordBreak: "break-word" }}>
+        {card.creatorName}님이 남긴
+      </div>
       <div style={{ display: "flex", marginTop: square ? 4 : 2, fontSize: square ? 40 : 32, color: COLOR.sub }}>감사 답장</div>
     </div>
   );
@@ -63,7 +66,7 @@ export function ReplyShareCard({ card, size, photo, logo }: { card: ReplyCardInp
       <div style={{ width: 1080, height: 1080, display: "flex", position: "relative", background: COLOR.bg, fontFamily: FONT }}>
         <div style={{ position: "absolute", left: 72, top: 72, right: 72, display: "flex", alignItems: "center" }}>
           <Photo src={photo} initial={card.initial} size={176} ring={10} />
-          <div style={{ display: "flex", marginLeft: 36 }}>
+          <div style={{ display: "flex", flex: 1, minWidth: 0, marginLeft: 36 }}>
             <Who card={card} size={size} />
           </div>
         </div>
@@ -79,7 +82,7 @@ export function ReplyShareCard({ card, size, photo, logo }: { card: ReplyCardInp
     <div style={{ width: 1200, height: 675, display: "flex", position: "relative", background: COLOR.bg, fontFamily: FONT }}>
       <div style={{ position: "absolute", left: 72, top: 72, bottom: 60, width: 296, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
         <Photo src={photo} initial={card.initial} size={200} ring={10} />
-        <div style={{ display: "flex", marginTop: 28 }}>
+        <div style={{ display: "flex", width: 296, marginTop: 28 }}>
           <Who card={card} size={size} />
         </div>
         <div style={{ display: "flex", marginTop: "auto", fontSize: 32, color: COLOR.sub }}>{card.date}</div>

@@ -41,6 +41,33 @@ export function replyLineProblem(line: string | null): "too_long" | "forbidden_c
   return null;
 }
 
+/** 답장 입력 검사 문구 — 화면(먼저 보기)과 서버(본문 검사)가 같은 글을 쓴다. */
+export const REPLY_INPUT_MESSAGE = {
+  phraseMissing: "보낼 답장 문구를 하나 골라 주세요.",
+  lineWithoutPhrase: "한 줄은 답장 문구를 고른 뒤에 쓸 수 있어요.",
+  tooLong: `한 줄은 ${REPLY_LINE_MAX}자까지 쓸 수 있어요.`,
+  forbiddenChars: "한 줄에는 줄바꿈이나 보이지 않는 글자를 쓸 수 없어요.",
+} as const;
+
+/** 한 줄의 꼴 문제를 사람이 읽는 문구로. 문제가 없으면 null. */
+export function replyLineMessage(line: string | null): string | null {
+  const problem = replyLineProblem(line);
+  if (problem === "too_long") return REPLY_INPUT_MESSAGE.tooLong;
+  if (problem === "forbidden_chars") return REPLY_INPUT_MESSAGE.forbiddenChars;
+  return null;
+}
+
+/**
+ * 크리에이터 화면에 보이는 받은 상자 수의 상한 — DB 읽기 함수(my_received_boxes)가 최근 출고 순으로 이만큼 준다.
+ * 「아직 답장 안 한 선물」 수는 전체를 센다(INV-G10) — 목록이 상한에 닿으면 화면이 「최근 N개만 보여요」를 알린다.
+ */
+export const RECEIVED_BOXES_MAX = 200;
+
+/** 받은 상자 목록이 상한에 닿았는가 — 닿았으면 더 오래된 상자가 목록 밖에 있을 수 있다. */
+export function receivedListCapped(count: number): boolean {
+  return count >= RECEIVED_BOXES_MAX;
+}
+
 /** 크리에이터 화면의 상자 답장 상태 — 아무것도 없음 · 확인만 · 답장함 · 답장 지움. */
 export type ReplyState = "none" | "confirmed" | "replied" | "deleted";
 
@@ -100,6 +127,20 @@ export function cardTextSizes(phraseText: string, line: string | null, size: Car
   // 짝수 픽셀로 맞춘다(design-rules 간격 규칙과 같은 단위)
   const even = (n: number) => Math.round(n / 2) * 2;
   return { phrase: even(base.phrase * scale), line: even(base.line * scale) };
+}
+
+/** 카드 크리에이터 이름의 최대 글자 수 — DB 공개 이름 칸과 같다(1~20자). */
+export const CARD_NAME_MAX = 20;
+
+/**
+ * 카드 크리에이터 이름 글자 크기 — 이름이 길수록 줄인다(답장 글자와 같은 방식, cardTextSizes).
+ * 이름 줄은 「{이름}님이 남긴」이다. 20자 이름도 가로 카드 왼쪽 열(296px)·정사각 카드 머리(사진 옆 692px)를 넘지 않고
+ * 가로는 세 줄, 정사각은 두 줄 안에 들어가는 크기까지 내려간다. 시안 크기(정사각 68 · 가로 52)가 가장 크다.
+ */
+export function cardNameSize(name: string, size: CardSize): number {
+  const n = charCount(name);
+  if (size === "square") return n <= 8 ? 68 : n <= 12 ? 60 : 52;
+  return n <= 8 ? 52 : n <= 12 ? 44 : 36;
 }
 
 /** 카드·모음에 쓰는 날짜 — 「2026.10.05」. YYYY-MM-DD 만 받는다(시각은 화면에 오지 않는다, INV-G6). */

@@ -1,15 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
+  CARD_NAME_MAX,
+  cardNameSize,
   cardTextSizes,
   creatorNameOrWithdrawn,
   dotDate,
   normalizeReplyLine,
   monthDayText,
   normalizeXHandle,
+  RECEIVED_BOXES_MAX,
+  receivedListCapped,
+  REPLY_INPUT_MESSAGE,
   REPLY_LINE_MAX,
   REPLY_PHRASE_TEXT,
   REPLY_PHRASES,
   replyActionsOf,
+  replyLineMessage,
   replyLineProblem,
   shareTextOf,
   X_HANDLE_PATTERN,
@@ -100,5 +106,47 @@ describe("크리에이터가 상자에 할 수 있는 일 (INV-G2·G4)", () => {
   it("날짜는 「10월 8일」, 시각이 섞인 값은 그리지 않는다", () => {
     expect(monthDayText("2026-10-08")).toBe("10월 8일");
     expect(monthDayText("2026-10-08T01:00:00Z")).toBe("");
+  });
+});
+
+describe("INV-G9: 카드 크리에이터 이름 글자 크기", () => {
+  it("INV-G9: 8자까지는 시안 크기(정사각 68 · 가로 52), 길수록 줄이고 20자에서 가장 작다 — 모두 짝수", () => {
+    expect([cardNameSize("하루", "square"), cardNameSize("하루", "wide")]).toEqual([68, 52]);
+    expect([cardNameSize("가".repeat(8), "square"), cardNameSize("가".repeat(8), "wide")]).toEqual([68, 52]);
+    expect([cardNameSize("가".repeat(9), "square"), cardNameSize("가".repeat(9), "wide")]).toEqual([60, 44]);
+    expect([cardNameSize("가".repeat(12), "square"), cardNameSize("가".repeat(12), "wide")]).toEqual([60, 44]);
+    expect([cardNameSize("가".repeat(13), "square"), cardNameSize("가".repeat(13), "wide")]).toEqual([52, 36]);
+    expect([cardNameSize("가".repeat(CARD_NAME_MAX), "square"), cardNameSize("가".repeat(CARD_NAME_MAX), "wide")]).toEqual([52, 36]);
+    // 글자 수는 코드 포인트로 센다(이모지 하나 = 한 글자)
+    expect(cardNameSize("😀".repeat(9), "wide")).toBe(44);
+  });
+
+  it("INV-G9: 1~20자 한글 이름 「{이름}님이 남긴」이 가로 카드 왼쪽 열(296px)에서 세 줄·170px 안, 정사각 머리(692px)에서 두 줄 안에 들어간다", () => {
+    // 한글 한 글자 폭은 글자 크기의 0.96배로 넉넉히 잡는다(Pretendard ExtraBold 실측은 그보다 좁다), 글자 사이 -1px
+    const lines = (n: number, font: number, width: number) => Math.ceil((n + 2) / Math.floor(width / (font * 0.96 - 1)));
+    for (let n = 1; n <= CARD_NAME_MAX; n++) {
+      const name = "가".repeat(n);
+      const wide = cardNameSize(name, "wide");
+      expect([n, lines(n, wide, 296) <= 3 && lines(n, wide, 296) * wide * 1.15 <= 170]).toEqual([n, true]);
+      expect([n, lines(n, cardNameSize(name, "square"), 692) <= 2]).toEqual([n, true]);
+      expect(wide % 2).toBe(0);
+    }
+  });
+});
+
+describe("검사 문구 · 받은 상자 목록 상한", () => {
+  it("INV-G3: 한 줄의 꼴 문제를 화면·서버가 같이 쓰는 문구로 — 문제가 없으면 null", () => {
+    expect(replyLineMessage("가".repeat(REPLY_LINE_MAX + 1))).toBe(REPLY_INPUT_MESSAGE.tooLong);
+    expect(REPLY_INPUT_MESSAGE.tooLong).toBe("한 줄은 80자까지 쓸 수 있어요.");
+    expect(replyLineMessage("첫 줄" + String.fromCharCode(10) + "둘째 줄")).toBe(REPLY_INPUT_MESSAGE.forbiddenChars);
+    expect(replyLineMessage("가".repeat(REPLY_LINE_MAX))).toBeNull();
+    expect(replyLineMessage(null)).toBeNull();
+  });
+
+  it("INV-G10: 받은 상자 목록이 상한(DB 읽기 함수의 200개)에 닿으면 「최근 N개만」을 알린다 — 아직 답장 안 한 수는 전체를 센다", () => {
+    expect(RECEIVED_BOXES_MAX).toBe(200);
+    expect(receivedListCapped(199)).toBe(false);
+    expect(receivedListCapped(200)).toBe(true);
+    expect(receivedListCapped(0)).toBe(false);
   });
 });

@@ -15,6 +15,7 @@ import s from "./creator-settings.module.css";
 // 선물 링크·프로필 사진·공지 이미지 (creator-link INV-E2~E4·E9·E10). 「주소와 설정」 오른쪽 열 맨 위 — 같은 칸 언어(제목 줄·필드·저장 버튼·상태 문구).
 // 링크용 아이디는 저장 전에 「정하면 30일 동안 바꿀 수 없어요」를 확인 창으로 보인다(스펙 「스스로 정한 것」). 저장 검사는 DB 가 다시 한다.
 // 사진은 서버가 열어 보고 사진 정보를 지운 512 정사각만 저장한다 — 화면은 파일을 서버로 보내기만 한다.
+// 파일 칸은 브라우저 기본 모양이 좁은 폭에서 가로로 넘쳐 화면에서 숨기고(sr-only, 키보드·화면 읽기는 그대로), 「사진 고르기」 라벨을 버튼 모양으로 보인다. 고른 파일 이름은 따로 적는다.
 // 공지 이미지는 링크 주소가 있고 본인 확인을 마쳤을 때만 내려받는다(INV-E10).
 
 export function LinkSection({
@@ -38,6 +39,7 @@ export function LinkSection({
   const [photoPath, setPhotoPath] = useState(initial.photoPath);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoMsg, setPhotoMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const locked = lockedDays > 0;
 
@@ -92,6 +94,7 @@ export function LinkSection({
     }
     setPhotoPath(r.photoPath);
     if (fileRef.current) fileRef.current.value = "";
+    setFileName(null);
     setPhotoMsg({ ok: true, text: "프로필 사진을 바꿨어요. 사진 정보(촬영 위치 등)는 지우고 저장했어요." });
   };
 
@@ -177,13 +180,26 @@ export function LinkSection({
         {msg?.text}
       </p>
 
-      <div className={`field ${s["photo-field"]}`}>
-        <label htmlFor="link-photo">프로필 사진</label>
+      <div className={`field ${s["photo-field"]}`} role="group" aria-labelledby="link-photo-title">
+        <p className="label" id="link-photo-title">
+          프로필 사진
+        </p>
         <div className={s["photo-row"]}>
           <CreatorPhoto photoUrl={photoUrl} tone="var(--face-1)" className={s["photo-prev"]} />
           <div className={s["photo-ctl"]}>
-            <input className={s.file} id="link-photo" ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="link-photo-hint link-photo-msg" />
             <div className={s["save-row"]}>
+              <input
+                className={`sr-only ${s.file}`}
+                id="link-photo"
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-describedby="link-photo-name link-photo-hint link-photo-msg"
+                onChange={(e) => setFileName(e.currentTarget.files?.[0]?.name ?? null)}
+              />
+              <label className={`btn btn--soft btn--sm ${s.pick}`} htmlFor="link-photo">
+                사진 고르기
+              </label>
               <button className="btn btn--soft btn--sm" type="button" aria-disabled={photoBusy} onClick={() => void uploadPhoto()}>
                 {photoBusy ? "저장하는 중…" : "사진 올리기"}
               </button>
@@ -193,6 +209,9 @@ export function LinkSection({
                 </button>
               ) : null}
             </div>
+            <p className={`sub ${s["file-name"]}`} id="link-photo-name">
+              {fileName ? `고른 사진: ${fileName}` : "아직 고른 사진이 없어요."}
+            </p>
           </div>
         </div>
         <p className="hint" id="link-photo-hint">

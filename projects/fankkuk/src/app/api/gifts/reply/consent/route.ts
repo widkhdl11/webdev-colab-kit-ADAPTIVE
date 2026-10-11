@@ -8,6 +8,7 @@ export async function POST(req: Request) {
   return handlePrivateJsonPost(req, async (body) => {
     const supabase = await createRequestSupabase();
     const r = await saveReplyConsent({ client: supabase, viewer: await readViewer(supabase) }, body);
-    return r.ok ? { status: 200, body: { saved: true } } : { status: r.status, body: { message: r.message } };
+    // 저장된 두 값을 돌려준다 — 공개를 끄면 닉네임 보이기도 꺼진다(DB 가 정한다)
+    return r.ok ? { status: 200, body: { saved: true, ...r.consent } } : { status: r.status, body: { message: r.message } };
   });
 }

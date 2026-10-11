@@ -34,7 +34,14 @@ export async function sendDeleteGiftReply(boxId: string): Promise<SendReplyOutco
   return r.kind === "ok" ? { kind: "ok", value: undefined } : r;
 }
 
-export async function sendReplyConsent(input: { boxId: string; isPublic: boolean; showNickname: boolean }): Promise<SendReplyOutcome> {
+/** 공개 동의 저장 — 서버가 저장한 두 값(공개를 끄면 닉네임 보이기도 꺼진 값)을 돌려준다. */
+export async function sendReplyConsent(input: {
+  boxId: string;
+  isPublic: boolean;
+  showNickname: boolean;
+}): Promise<SendReplyOutcome<{ isPublic: boolean; showNickname: boolean }>> {
   const r = await post("/api/gifts/reply/consent", input);
-  return r.kind === "ok" ? { kind: "ok", value: undefined } : r;
+  if (r.kind !== "ok") return r;
+  const { isPublic, showNickname } = r.data;
+  return typeof isPublic === "boolean" && typeof showNickname === "boolean" ? { kind: "ok", value: { isPublic, showNickname } } : { kind: "failed", message: FALLBACK };
 }

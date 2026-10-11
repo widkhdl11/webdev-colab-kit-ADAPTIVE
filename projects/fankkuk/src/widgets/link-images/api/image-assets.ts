@@ -40,3 +40,31 @@ export async function readPhotoDataUrl(photoUrl: string | null): Promise<string 
     return null;
   }
 }
+
+/** 사진 캐시에 들고 있는 최대 장수 — 넘치면 가장 먼저 넣은 것부터 버린다. */
+const PHOTO_CACHE_MAX = 256;
+const photoCache = new Map<string, string>();
+
+/**
+ * readPhotoDataUrl 을 사진 주소(= 저장소 경로)별로 이 프로세스 안에 들고 있는다 — 공유 카드처럼 같은 사진을 자주 다시 그리는 라우트용.
+ * 사진 경로에는 사진 판 번호가 들어 있어(새로 올리면 경로가 바뀐다) 옛 사진이 남지 않는다. 못 읽은 경우(null)는 들고 있지 않는다.
+ * 응답 캐시와는 따로다 — 응답(답장 내용)은 캐시하지 않고, 사진 바이트만 다시 받지 않는다.
+ */
+export async function readPhotoDataUrlCached(photoUrl: string | null, read: (url: string | null) => Promise<string | null> = readPhotoDataUrl): Promise<string | null> {
+  if (!photoUrl) return null;
+  const hit = photoCache.get(photoUrl);
+  if (hit !== undefined) return hit;
+  const data = await read(photoUrl);
+  if (data === null) return null;
+  if (photoCache.size >= PHOTO_CACHE_MAX) {
+    const oldest = photoCache.keys().next().value;
+    if (oldest !== undefined) photoCache.delete(oldest);
+  }
+  photoCache.set(photoUrl, data);
+  return data;
+}
+
+/** 시험용 — 사진 캐시를 비운다. */
+export function clearPhotoCache(): void {
+  photoCache.clear();
+}

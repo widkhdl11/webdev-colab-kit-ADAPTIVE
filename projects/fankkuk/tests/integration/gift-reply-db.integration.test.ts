@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readMyGiftReplies, readMyReceivedBoxes, readMyReplyCard, readMyReplyPending, readReplyWall } from "@/entities/gift-reply/api/gift-reply-reads";
-import { insertOrder, linkClient, verifyCreator } from "./creator-link-helpers";
+import { linkClient, verifyCreator } from "./creator-link-helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
-import { anonClient, deleteTestOrders, holdRowLock, psql, SEED } from "./helpers";
+import { FAN_X, FAN_Y, giftBoxes, kstTodayAt, receivedDaysAgo, resetReplySettings } from "./gift-reply-helpers";
+import { anonClient, deleteTestOrders, holdRowLock, psql } from "./helpers";
 
 // 받았어요 · 감사 답장 · 답장 공유 카드 · 감사 답장 모음 (docs/specs/gift-reply.md INV-G1~G10, S1~S10) 중 DB 가 지키는 것.
 // 알림 본문 틀(INV-G5 본문)과 공유 문구(INV-G9 S9b 의 글)는 src 단위 시험(notification-body.test.ts · entities/gift-reply/model/reply.test.ts)에도 있다.
@@ -12,52 +13,8 @@ import { anonClient, deleteTestOrders, holdRowLock, psql, SEED } from "./helpers
 
 const A = CV.haru; // 받는 크리에이터
 const B = CV.summer; // 다른 크리에이터
-const FAN_X = { id: SEED.fanId, login: "byeolbit_fan", nickname: "별빛" };
-const FAN_Y = { id: SEED.otherFanId, login: "daltokki_fan", nickname: "달토끼" };
 const client = linkClient;
 const IDS = [A, B].map((c) => `'${c.creatorId}'`).join(", ");
-
-let waybillSeq = 0;
-function waybill(): string {
-  waybillSeq += 1;
-  return `9${String(Date.now()).slice(-8)}${String(waybillSeq).padStart(3, "0")}`;
-}
-
-/** psql 출력에서 RETURNING 으로 돌려받은 uuid 한 줄. */
-function uuidLine(out: string): string {
-  const hit = out.split("\n").find((l) => /^[0-9a-f-]{36}$/.test(l));
-  if (!hit) throw new Error(`uuid 를 돌려받지 못했다: ${out}`);
-  return hit;
-}
-
-type Box = { orderNo: string; orderId: string; boxId: string; parcelId: string };
-
-/**
- * 결제가 끝난 주문 하나와 상자 n 개를 넣는다. state 는 사무실 상자 상태(shipped = 출고, inspected = 검수 완료).
- * 출고 상자는 사무실 상자 줄이 출고 상태이고 출고 운송장이 있다.
- */
-function giftBoxes(fanId: string, creatorId: string, n: number, state: "shipped" | "inspected" = "shipped"): Box[] {
-  const orderNo = insertOrder(fanId, creatorId, state === "shipped" ? "shipped" : "inspected", "now() - interval '5 days'");
-  const orderId = psql(`select id from public.orders where order_no = '${orderNo}'`);
-  const boxes: Box[] = [];
-  for (let seq = 1; seq <= n; seq++) {
-    const boxId = uuidLine(psql(
-      `begin; set local session_replication_role = replica;
-       insert into public.boxes (order_id, seq, declared_tier, price_krw, shipping_fee_krw, inspection_fee_krw)
-       values ('${orderId}', ${seq}, 'small', 6900, 4000, 2900) returning id; commit;`,
-    ));
-    const shipped = state === "shipped";
-    const parcelId = uuidLine(psql(
-      `begin; set local session_replication_role = replica;
-       insert into public.office_parcels (box_id, state, received_at, inspected_at, printed_at, shipped_at, outbound_waybill_no)
-       values ('${boxId}', '${state}', now() - interval '4 days', now() - interval '3 days',
-               ${shipped ? "now() - interval '2 days'" : "null"}, ${shipped ? "now() - interval '2 days'" : "null"}, ${shipped ? `'${waybill()}'` : "null"})
-       returning id; commit;`,
-    ));
-    boxes.push({ orderNo, orderId, boxId, parcelId });
-  }
-  return boxes;
-}
 
 async function confirm(login: string, boxId: string, phrase: string | null = null, line: string | null = null) {
   return (await client(login)).rpc("confirm_gift_box", { p_box_id: boxId, p_phrase: phrase, p_line: line });
@@ -79,16 +36,6 @@ function mailKinds(parcelId: string): string {
   return psql(`select coalesce(string_agg(kind, ',' order by created_at, kind), '') from public.notification_outbox where parcel_id = '${parcelId}' and channel = 'email'`);
 }
 
-function resetReplySettings(): void {
-  psql(
-    `do $$ begin
-       if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'creators' and column_name = 'reply_wall_visible') then
-         execute $q$update public.creators set reply_wall_visible = false, x_handle = null, x_tag_allowed = false where id in (${IDS})$q$;
-       end if;
-     end $$;`,
-  );
-}
-
 async function wallOf(creatorId: string): Promise<{ phrase: string; line: string | null; replied_on: string; fan_nickname: string | null }[]> {
   const r = await anonClient().rpc("creator_reply_wall", { p_creator_id: creatorId });
   if (r.error) throw new Error(`답장 모음 읽기 실패: ${r.error.code}`);
@@ -103,28 +50,19 @@ async function consent(login: string, boxId: string, isPublic: boolean, showNick
   return (await client(login)).rpc("set_gift_reply_consent", { p_box_id: boxId, p_public: isPublic, p_show_nickname: showNickname });
 }
 
-/** 받았어요 시각을 한국 시간 오늘에서 days 일 전 그날의 시각(HH:MI)으로 옮긴다 — 3일 경계 시험용. */
-function receivedDaysAgo(boxId: string, days: number, time: string): void {
-  psql(
-    `begin; set local session_replication_role = replica;
-     update public.gift_replies set received_at = ((public.receiving_today() - ${days})::timestamp + time '${time}') at time zone 'Asia/Seoul'
-     where box_id = '${boxId}'; commit;`,
-  );
-}
-
 beforeAll(() => {
   createCvAccounts();
 });
 beforeEach(() => {
   deleteTestOrders();
   resetCv();
-  resetReplySettings();
+  resetReplySettings(IDS);
   verifyCreator(A.creatorId, "cvt-reply-a");
   verifyCreator(B.creatorId, "cvt-reply-b");
 });
 afterAll(() => {
   deleteTestOrders();
-  resetReplySettings();
+  resetReplySettings(IDS);
   dropCvAccounts();
 });
 
@@ -155,6 +93,20 @@ describe("INV-G1: 받았어요·답장은 받는 크리에이터 본인만, 출�
     expect(ok.error).toBeNull();
     expect(ok.data).toBe("received");
     expect(replyRow(shipped.boxId)).toBe("-|-|false|false");
+  });
+
+  it("INV-G1 S1b (실패경로): 주문은 출고인데 상자 둘 중 하나가 검수 완료면 그 상자 받았어요는 거부된다 — 주문 상태가 아니라 상자 상태로 판단한다", async () => {
+    const [sent, waiting] = giftBoxes(FAN_X.id, A.creatorId, 2);
+    psql(
+      `begin; set local session_replication_role = replica;
+       update public.office_parcels set state = 'inspected', printed_at = null, shipped_at = null, outbound_waybill_no = null where id = '${waiting.parcelId}'; commit;`,
+    );
+    expect(psql(`select status::text from public.orders where id = '${sent.orderId}'`)).toBe("shipped");
+    expect((await confirm(A.login, waiting.boxId)).error?.code).toBe("P0100");
+    expect((await confirm(A.login, waiting.boxId, "thanks", null)).error?.code).toBe("P0100");
+    expect(replyRows(waiting.boxId)).toBe(0);
+    expect(mailKinds(waiting.parcelId)).toBe("");
+    expect((await confirm(A.login, sent.boxId)).data).toBe("received");
   });
 });
 
@@ -258,6 +210,19 @@ describe("INV-G4: 답장은 지우기만, 지운 상자엔 다시 쓰지 않는�
     expect(mailKinds(box.parcelId)).toBe("gift_reply");
   });
 
+  it("INV-G4: 지운 뒤 공개 동의 칸을 DB 에서 직접 다시 켜도 모음은 빈 목록이다 — 모음은 지우지 않은 답장만 읽는다", async () => {
+    const [box] = giftBoxes(FAN_X.id, A.creatorId, 1);
+    expect((await settings(A.login, true)).error).toBeNull();
+    expect((await confirm(A.login, box.boxId, "touched", "지울 답장")).error).toBeNull();
+    expect((await consent(FAN_X.login, box.boxId, true, true)).error).toBeNull();
+    receivedDaysAgo(box.boxId, 4, "10:00");
+    expect((await wallOf(A.creatorId)).length).toBe(1);
+    expect((await (await client(A.login)).rpc("delete_gift_reply", { p_box_id: box.boxId })).error).toBeNull();
+    psql(`begin; set local session_replication_role = replica; update public.gift_replies set fan_public = true, fan_show_nickname = true where box_id = '${box.boxId}'; commit;`);
+    expect(psql(`select fan_public::text || '|' || (deleted_at is not null)::text from public.gift_replies where box_id = '${box.boxId}'`)).toBe("true|true");
+    expect(await wallOf(A.creatorId)).toEqual([]);
+  });
+
   it("INV-G4 (실패경로): 남의 답장·답장 없는 상자는 지울 수 없다", async () => {
     const [box, bare] = giftBoxes(FAN_X.id, A.creatorId, 2);
     expect((await confirm(A.login, box.boxId, "thanks", null)).error).toBeNull();
@@ -304,13 +269,77 @@ describe("INV-G6: 팬 화면 — 받았어요 기록이나 배송 수령, 날짜
     expect(JSON.stringify(rows)).not.toMatch(/T\d{2}:\d{2}|\d{2}:\d{2}:\d{2}/);
   });
 
-  it("INV-G6: 배송 수령만 있어도 「받았어요」(날짜 없음) — 다른 팬·크리에이터에게는 빈 목록", async () => {
+  it("INV-G6: 배송 수령만 있어도 「받았어요」이고 날짜는 수령 날짜(한국 시간) — 다른 팬·크리에이터에게는 빈 목록", async () => {
     const [box] = giftBoxes(FAN_X.id, A.creatorId, 1);
-    psql(`begin; set local session_replication_role = replica; update public.orders set delivery = 'delivered' where id = '${box.orderId}'; commit;`);
+    const today = psql("select to_char(public.receiving_today(), 'YYYY-MM-DD')");
+    psql(`begin; set local session_replication_role = replica; update public.orders set delivery = 'delivered', delivered_at = ${kstTodayAt("00:30")} where id = '${box.orderId}'; commit;`);
     const rows = await readMyGiftReplies(await client(FAN_X.login), box.orderNo);
-    expect(rows.map((r) => [r.received, r.receivedOn])).toEqual([[true, null]]);
+    expect(rows.map((r) => [r.received, r.receivedOn])).toEqual([[true, today]]);
     expect(await readMyGiftReplies(await client(FAN_Y.login), box.orderNo)).toEqual([]);
     expect(await readMyGiftReplies(await client(A.login), box.orderNo)).toEqual([]);
+  });
+
+  it("INV-G6: 받았어요 기록과 배송 수령이 둘 다 있으면 받았어요 날짜 그대로 · 수령 시각이 기록되기 전에 수령된 주문은 「받았어요」만(날짜 없음)", async () => {
+    const [both, legacy] = [giftBoxes(FAN_X.id, A.creatorId, 1)[0], giftBoxes(FAN_X.id, A.creatorId, 1)[0]];
+    expect((await confirm(A.login, both.boxId)).error).toBeNull();
+    receivedDaysAgo(both.boxId, 2, "10:00");
+    const twoDaysAgo = psql("select to_char(public.receiving_today() - 2, 'YYYY-MM-DD')");
+    psql(`begin; set local session_replication_role = replica; update public.orders set delivery = 'delivered', delivered_at = ${kstTodayAt("09:00")} where id = '${both.orderId}'; commit;`);
+    psql(`begin; set local session_replication_role = replica; update public.orders set delivery = 'delivered', delivered_at = null where id = '${legacy.orderId}'; commit;`);
+    expect((await readMyGiftReplies(await client(FAN_X.login), both.orderNo)).map((r) => [r.received, r.receivedOn])).toEqual([[true, twoDaysAgo]]);
+    expect((await readMyGiftReplies(await client(FAN_X.login), legacy.orderNo)).map((r) => [r.received, r.receivedOn])).toEqual([[true, null]]);
+  });
+
+  it("INV-G6: 택배사 연결이 배송 수령으로 바꾸면 그 시각이 저절로 기록되고, 수령에서 벗어나면 지워진다", async () => {
+    const [box] = giftBoxes(FAN_X.id, A.creatorId, 1);
+    psql(`update public.orders set delivery = 'in_transit' where id = '${box.orderId}'`);
+    expect(psql(`select coalesce(delivered_at::text, '-') from public.orders where id = '${box.orderId}'`)).toBe("-");
+    psql(`update public.orders set delivery = 'delivered' where id = '${box.orderId}'`);
+    expect(psql(`select (delivered_at between now() - interval '1 minute' and now() + interval '1 minute')::text from public.orders where id = '${box.orderId}'`)).toBe("true");
+    const today = psql("select to_char(public.receiving_today(), 'YYYY-MM-DD')");
+    expect((await readMyGiftReplies(await client(FAN_X.login), box.orderNo)).map((r) => r.receivedOn)).toEqual([today]);
+    psql(`update public.orders set delivery = 'in_transit' where id = '${box.orderId}'`);
+    expect(psql(`select coalesce(delivered_at::text, '-') from public.orders where id = '${box.orderId}'`)).toBe("-");
+  });
+
+  it("INV-G6: 받았어요·답장 시각이 한국 시간 오늘 00:30 이면 팬 화면·공유 카드·답장 모음·크리에이터 화면의 날짜가 모두 오늘이다(UTC 로 자르면 어제)", async () => {
+    const [box, walled] = giftBoxes(FAN_X.id, A.creatorId, 2);
+    const today = psql("select to_char(public.receiving_today(), 'YYYY-MM-DD')");
+    expect((await settings(A.login, true)).error).toBeNull();
+    expect((await confirm(A.login, box.boxId, "thanks", "새벽 답장")).error).toBeNull();
+    expect((await confirm(A.login, walled.boxId, "love_it", "모음 답장")).error).toBeNull();
+    psql(
+      `begin; set local session_replication_role = replica;
+       update public.gift_replies set received_at = ${kstTodayAt("00:30")}, replied_at = ${kstTodayAt("00:30")} where box_id = '${box.boxId}';
+       update public.gift_replies set replied_at = ${kstTodayAt("00:30")} where box_id = '${walled.boxId}'; commit;`,
+    );
+    receivedDaysAgo(walled.boxId, 3, "00:30"); // 모음은 받았어요 3일째부터 — 답장 날짜만 오늘 00:30
+    expect((await consent(FAN_X.login, walled.boxId, true, false)).error).toBeNull();
+
+    const fan = (await readMyGiftReplies(await client(FAN_X.login), box.orderNo)).find((r) => r.boxId === box.boxId);
+    expect([fan?.receivedOn, fan?.reply?.repliedOn]).toEqual([today, today]);
+    expect((await readMyReplyCard(await client(FAN_X.login), box.boxId))?.repliedOn).toBe(today);
+    expect((await wallOf(A.creatorId)).map((w) => [w.line, w.replied_on])).toEqual([["모음 답장", today]]);
+    const mine = (await readMyReceivedBoxes(await client(A.login))).find((b) => b.boxId === box.boxId);
+    expect([mine?.receivedOn, mine?.reply?.repliedOn]).toEqual([today, today]);
+  });
+
+  it("INV-G6: 크리에이터를 주면 그 크리에이터에게 보낸 상자만 온다 — 주문번호만 주던 호출·아무것도 안 준 호출은 그대로", async () => {
+    const [toA] = giftBoxes(FAN_X.id, A.creatorId, 1);
+    const [toB] = giftBoxes(FAN_X.id, B.creatorId, 1);
+    const fan = await client(FAN_X.login);
+    expect((await readMyGiftReplies(fan, null, A.creatorId)).map((r) => r.boxId)).toEqual([toA.boxId]);
+    expect((await readMyGiftReplies(fan, null, B.creatorId)).map((r) => r.boxId)).toEqual([toB.boxId]);
+    expect((await readMyGiftReplies(fan, toA.orderNo, B.creatorId)).map((r) => r.boxId)).toEqual([]);
+    expect((await readMyGiftReplies(fan, toB.orderNo)).map((r) => r.boxId)).toEqual([toB.boxId]);
+    // 아무것도 안 주면 이 팬의 모든 출고 상자(시드 주문 포함) — 두 상자가 다 있다
+    expect((await readMyGiftReplies(fan)).map((r) => r.boxId)).toEqual(expect.arrayContaining([toA.boxId, toB.boxId]));
+    // 주문번호만 주는 예전 호출 꼴도 그대로 동작한다
+    const raw = await fan.rpc("my_gift_replies", { p_order_no: toA.orderNo });
+    expect(raw.error).toBeNull();
+    expect((raw.data as { box_id: string }[]).map((r) => r.box_id)).toEqual([toA.boxId]);
+    // 다른 팬은 같은 크리에이터로 걸러도 빈 목록
+    expect(await readMyGiftReplies(await client(FAN_Y.login), null, A.creatorId)).toEqual([]);
   });
 });
 
@@ -374,6 +403,18 @@ describe("INV-G8: 공개 동의는 보낸 팬만, 모음·X 설정은 크리에�
     expect(psql(`select fan_public::text || fan_show_nickname::text from public.gift_replies where box_id = '${box.boxId}'`)).toBe("falsefalse");
     expect((await consent(FAN_X.login, box.boxId, true, true)).error).toBeNull();
     expect(psql(`select fan_public::text || fan_show_nickname::text from public.gift_replies where box_id = '${box.boxId}'`)).toBe("truetrue");
+  });
+
+  it("INV-G8: 공개를 끄면 닉네임 보이기도 꺼진다 — DB 가 정하고 저장된 두 값을 돌려준다", async () => {
+    const [box] = giftBoxes(FAN_X.id, A.creatorId, 1);
+    expect((await confirm(A.login, box.boxId, "thanks", null)).error).toBeNull();
+    const stored = () => psql(`select fan_public::text || '|' || fan_show_nickname::text from public.gift_replies where box_id = '${box.boxId}'`);
+    const on = await consent(FAN_X.login, box.boxId, true, true);
+    expect([on.error, on.data]).toEqual([null, [{ fan_public: true, fan_show_nickname: true }]]);
+    expect(stored()).toBe("true|true");
+    const off = await consent(FAN_X.login, box.boxId, false, true);
+    expect([off.error, off.data]).toEqual([null, [{ fan_public: false, fan_show_nickname: false }]]);
+    expect(stored()).toBe("false|false");
   });
 
   it("INV-G8 (실패경로): 팬·로그인 안 함은 모음·X 설정을 바꿀 수 없고, X 계정은 영문·숫자·밑줄 1~15자", async () => {

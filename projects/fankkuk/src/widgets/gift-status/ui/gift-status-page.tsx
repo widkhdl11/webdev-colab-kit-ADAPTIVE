@@ -172,7 +172,7 @@ export function GiftStatusPage({
                 <section className={s.part} aria-labelledby="reply-title">
                   <h2 id="reply-title">받았어요 · 답장</h2>
                   <p className={s["sub-t"]}>크리에이터가 상자를 받았다고 남기면 날짜가 보여요. 답장이 오면 공개할지 정하고 카드로 공유할 수 있어요.</p>
-                  <FanBoxReplies rows={replies} photoBase={photoBase} />
+                  <FanBoxReplies rows={replies} photoBase={photoBase} returnPath={`/gifts/${view.orderNo}`} />
                 </section>
               ) : null}
               {/* 차액 결제(payment INV-M11·M12·M13) — 차액 요청이 있는 주문에만. 진행 중이 아니면 낸 기록만 남는다 */}

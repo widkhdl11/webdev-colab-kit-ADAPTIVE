@@ -6,7 +6,8 @@ import { REPLY_PHRASES, type ReplyPhrase, type ReplyState } from "../model/reply
 // 받았어요·답장 읽기 (gift-reply INV-G6·G7·G9·G10). 모두 DB 읽기 함수다 — 사람은 로그인 토큰으로 정해지고(공개 모음만 로그인 없이),
 // 함수가 정한 칸만 돌려준다. 응답은 여기서 꼴을 검사한다: 정해지지 않은 칸이 섞여 오면(strict) 받지 않고,
 // 날짜 칸은 YYYY-MM-DD 만 받는다 — 시각이 섞여 오면 오류로 던진다(INV-G6 「날짜만」).
-// 팬 쪽 읽기(readMyGiftReplies)는 주문번호를 빼고 부르면 그 팬의 모든 상자를 준다 — 「함께한 시간」(together)이 같은 함수를 쓴다.
+// 팬 쪽 읽기(readMyGiftReplies)는 주문번호를 빼고 부르면 그 팬의 모든 상자를 준다 — 「함께한 시간」(together)이 같은 함수를 쓰고,
+// 크리에이터를 주면 그 크리에이터에게 보낸 상자만 준다(크리에이터별 받은 답장 수, together INV-F3).
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const phrase = z.enum(REPLY_PHRASES);
@@ -92,7 +93,7 @@ export type FanBoxReply = {
   boxCount: number;
   /** INV-G6: 받았어요 기록이나 배송 수령 중 하나라도 있으면 참 */
   received: boolean;
-  /** 받았어요 날짜(한국 시간). 배송 수령만 있으면 null */
+  /** 받았어요 날짜(한국 시간) — 받았어요 기록이 있으면 그 날짜, 없고 배송 수령만 있으면 수령 날짜. 수령 시각이 기록되기 전에 수령된 주문은 null */
   receivedOn: string | null;
   /** 탈퇴한 크리에이터면 null */
   creatorName: string | null;
@@ -146,9 +147,16 @@ export function parseFanBoxReplies(rows: unknown): FanBoxReply[] {
     }));
 }
 
-/** 로그인한 사람이 보낸 주문의 출고 상자. orderNo 를 주면 그 주문만(남의 주문번호면 빈 목록). */
-export async function readMyGiftReplies(client: Pick<SupabaseClient, "rpc">, orderNo?: string): Promise<FanBoxReply[]> {
-  const { data, error } = await client.rpc("my_gift_replies", { p_order_no: orderNo ?? null });
+/**
+ * 로그인한 사람이 보낸 주문의 출고 상자. orderNo 를 주면 그 주문만(남의 주문번호면 빈 목록),
+ * creatorId 를 주면 그 크리에이터에게 보낸 것만.
+ */
+export async function readMyGiftReplies(
+  client: Pick<SupabaseClient, "rpc">,
+  orderNo?: string | null,
+  creatorId?: string | null,
+): Promise<FanBoxReply[]> {
+  const { data, error } = await client.rpc("my_gift_replies", { p_order_no: orderNo ?? null, p_creator_id: creatorId ?? null });
   if (error) fail("받았어요·답장", error.code);
   return parseFanBoxReplies(data);
 }

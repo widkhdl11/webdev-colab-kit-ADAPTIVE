@@ -4,7 +4,19 @@ import { useRouter } from "next/navigation";
 import { useId, useRef, useState } from "react";
 import type { ReceivedBox } from "@/entities/gift-reply/api/gift-reply-reads";
 import { ITEM_CATEGORY_LABEL } from "@/entities/gift-item/model/item-category";
-import { monthDayText, normalizeReplyLine, REPLY_LINE_MAX, REPLY_PHRASE_TEXT, REPLY_PHRASES, replyActionsOf, replyLineProblem, type ReplyPhrase } from "@/entities/gift-reply/model/reply";
+import {
+  monthDayText,
+  normalizeReplyLine,
+  RECEIVED_BOXES_MAX,
+  receivedListCapped,
+  REPLY_INPUT_MESSAGE,
+  REPLY_LINE_MAX,
+  REPLY_PHRASE_TEXT,
+  REPLY_PHRASES,
+  replyActionsOf,
+  replyLineMessage,
+  type ReplyPhrase,
+} from "@/entities/gift-reply/model/reply";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { statusTagClass } from "@/shared/ui/status-tone";
@@ -15,6 +27,10 @@ import s from "./gift-reply.module.css";
 // 출고된 상자마다 한 줄. 「받았어요」를 누르면 그 자리에 답장 칸이 열리고, 「답장 보내기」나 「답장 없이 확인만」을 눌러야 확정된다(INV-G2 — 여는 것만으로는 아니다).
 // 확인만 한 상자는 「답장 남기기」로 한 번 더할 수 있고, 답장은 고칠 수 없고 지우기만 된다(INV-G4). 무엇을 할 수 있는지는 replyActionsOf 가 정한다.
 // 저장은 로그인 세션으로만 — 크리에이터 ID 를 보내지 않는다(INV-G1). 저장된 뒤 서버에서 다시 읽는다(위 「아직 답장 안 한 선물」 숫자도 DB 가 센다, INV-G10).
+// 저장하면 누른 버튼이 사라지므로(답장 칸이 닫히거나 지우기 버튼이 없어진다), 포커스를 그 줄의 제목(늘 남는 요소)으로 옮긴다.
+
+/** 세션이 끝났을 때 — 다시 로그인한 뒤 이 화면으로 돌아온다 */
+const LOGIN_AGAIN = "/login?next=/creator/requests";
 
 function MailIcon() {
   return (
@@ -22,6 +38,14 @@ function MailIcon() {
       <rect x="3" y="5" width="18" height="14" rx="3" />
       <path d="m4 8 8 6 8-6" />
     </svg>
+  );
+}
+
+function ErrorMark() {
+  return (
+    <span className={s["error-mark"]} aria-hidden="true">
+      !
+    </span>
   );
 }
 
@@ -48,17 +72,16 @@ function ReplyForm({ box, mode, onDone }: { box: ReceivedBox; mode: FormMode; on
     setError(null);
     const normalized = withReply ? normalizeReplyLine(line) : null;
     if (withReply && !phrase) {
-      setError("보낼 답장 문구를 하나 골라 주세요.");
+      setError(REPLY_INPUT_MESSAGE.phraseMissing);
       return;
     }
-    const problem = replyLineProblem(normalized);
-    if (problem === "too_long") return setError(`한 줄은 ${REPLY_LINE_MAX}자까지 쓸 수 있어요.`);
-    if (problem === "forbidden_chars") return setError("한 줄에는 줄바꿈이나 보이지 않는 글자를 쓸 수 없어요.");
+    const problem = replyLineMessage(normalized);
+    if (problem) return setError(problem);
     setBusy(true);
     const r = await sendConfirmGiftBox({ boxId: box.boxId, phrase: withReply ? phrase : null, line: normalized });
     setBusy(false);
     if (r.kind === "login") {
-      router.push("/login?next=/creator/requests");
+      router.push(LOGIN_AGAIN);
       return;
     }
     if (r.kind === "failed") {
@@ -108,6 +131,7 @@ function ReplyForm({ box, mode, onDone }: { box: ReceivedBox; mode: FormMode; on
       </div>
       {error ? (
         <p className={s.error} id={errorId} role="alert">
+          <ErrorMark />
           {error}
         </p>
       ) : null}
@@ -130,7 +154,7 @@ function ReceivedRow({ box, index, onStatus }: { box: ReceivedBox; index: number
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const openButton = useRef<HTMLButtonElement>(null);
+  const title = useRef<HTMLParagraphElement>(null);
   const actions = replyActionsOf(box.replyState);
   const formMode: FormMode = actions.confirm ? "confirm" : "add";
 
@@ -142,13 +166,14 @@ function ReceivedRow({ box, index, onStatus }: { box: ReceivedBox; index: number
     const r = await sendDeleteGiftReply(box.boxId);
     setBusy(false);
     if (r.kind === "login") {
-      router.push("/login?next=/creator/requests");
+      router.push(LOGIN_AGAIN);
       return;
     }
     if (r.kind === "failed") {
       setError(r.message);
       return;
     }
+    title.current?.focus();
     onStatus("답장을 지웠어요.");
     router.refresh();
   };
@@ -158,7 +183,9 @@ function ReceivedRow({ box, index, onStatus }: { box: ReceivedBox; index: number
       <div className={s.main}>
         <FaceAvatar index={index} />
         <div>
-          <p className={s.who}>{box.senderNickname}님의 선물</p>
+          <p className={s.who} ref={title} tabIndex={-1}>
+            {box.senderNickname}님의 선물
+          </p>
           <p className={s.says}>{boxText(box)}</p>
           <p className={s.meta}>
             {box.replyState === "none" ? (
@@ -173,13 +200,7 @@ function ReceivedRow({ box, index, onStatus }: { box: ReceivedBox; index: number
         </div>
         <div className={s.act}>
           {(actions.confirm || actions.addReply) && !open ? (
-            <button
-              ref={openButton}
-              className={actions.confirm ? "btn" : "btn btn--soft"}
-              type="button"
-              aria-expanded={open}
-              onClick={() => setOpen(true)}
-            >
+            <button className={actions.confirm ? "btn" : "btn btn--soft"} type="button" onClick={() => setOpen(true)}>
               {actions.confirm ? "받았어요" : "답장 남기기"}
             </button>
           ) : null}
@@ -199,6 +220,7 @@ function ReceivedRow({ box, index, onStatus }: { box: ReceivedBox; index: number
       ) : null}
       {error ? (
         <p className={s.error} role="alert">
+          <ErrorMark />
           {error}
         </p>
       ) : null}
@@ -208,6 +230,7 @@ function ReceivedRow({ box, index, onStatus }: { box: ReceivedBox; index: number
           mode={formMode}
           onDone={(text) => {
             setOpen(false);
+            title.current?.focus();
             onStatus(text);
           }}
         />
@@ -230,6 +253,9 @@ export function ReceivedBoxList({ boxes, pending }: { boxes: readonly ReceivedBo
           <small>답장은 꼭 남기지 않아도 돼요. 이 숫자는 나만 볼 수 있어요.</small>
         </div>
       </div>
+      {receivedListCapped(boxes.length) ? (
+        <p className={s.capped}>최근에 출고된 {RECEIVED_BOXES_MAX}개까지 보여요. 아직 답장 안 한 선물 수는 그보다 오래된 상자까지 모두 센 숫자예요.</p>
+      ) : null}
       <p className={`sr-only ${s.status}`} role="status">
         {status}
       </p>
