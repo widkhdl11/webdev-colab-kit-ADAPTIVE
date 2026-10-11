@@ -150,7 +150,7 @@ describe("DB 거부를 앱 오류 종류로 — 서버 판정을 건너뛰고 �
       orderId: `pay_test_cg_store_${Date.now().toString(36)}`,
       orderNo: `FC-S${Date.now().toString(36).toUpperCase().slice(-5)}`,
       charge: computeCharge(await readTierPrices(adminClient()), { boxes: ["small"] }),
-      registration: { fanId: HARU_PROFILE, creatorId, itemCategory: "other", itemOther: "시험 선물", hasElectronicsOrMetal: false, boxes: ["small"] },
+      registration: { fanId: HARU_PROFILE, creatorId, itemCategory: "other", itemOther: "시험 선물", hasElectronicsOrMetal: false, anniversaryName: null, boxes: ["small"] },
     });
 
   it("admin-console INV-K3: 금액이 등록 순간의 요금표와 다르면 → PriceChangedError", async () => {
@@ -161,7 +161,7 @@ describe("DB 거부를 앱 오류 종류로 — 서버 판정을 건너뛰고 �
         orderId: `pay_test_cg_price_${Date.now().toString(36)}`,
         orderNo: `FC-P${Date.now().toString(36).toUpperCase().slice(-5)}`,
         charge: computeCharge(stale, { boxes: ["small"] }),
-        registration: { fanId: HARU_PROFILE, creatorId: MOMO_PAGE, itemCategory: "other", itemOther: "시험 선물", hasElectronicsOrMetal: false, boxes: ["small"] },
+        registration: { fanId: HARU_PROFILE, creatorId: MOMO_PAGE, itemCategory: "other", itemOther: "시험 선물", hasElectronicsOrMetal: false, anniversaryName: null, boxes: ["small"] },
       }),
     ).rejects.toBeInstanceOf(PriceChangedError);
   });
