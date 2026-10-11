@@ -4,7 +4,7 @@ import { deleteTestBlocks, deleteTestOrders, holdRowLock, payTestOrder, psql, re
 import { codeOf, deleteTestUnmatched, FAN_PASS, HOLD_DETAILS, inspect, paidGift, parcelState, scanInbound, waybill, type Unit } from "./office-helpers";
 
 // 끝난 주문의 늦게 오는 상자 (카드 d52 → 2026-10-10 문제집 메모 B8·C10·D10)
-// payment INV-M8·M9·M18 S18~S18i · inbound-address-code INV-C3 S3c·S3d·S3e · office-workflow INV-W10 S10d · decline-block INV-D3 · notifications INV-N17 S17.
+// payment INV-M8·M9·M18 S18~S18i · inbound-address-code INV-C3 S3c·S3d·S3e · office-workflow INV-W10 S10d · decline-block INV-D3 · notifications INV-N17 S17·S17b (② 거절 알림 2026-10-12).
 // 받는 주소를 본 적이 있는 주문(승인·「먼저 보내기」·도착한 상자 있음)이 끝나면 안 온 상자는 6자리를 살려 두고,
 // 주문 환불에 그 상자 금액 − 배송비 칸을 먼저 넣는다. 늦게 오면 선불 반송(더 돌려줄 것 없음), 168시간 안에 안 오면 닫히고 배송비 칸이 상자 환불이 된다.
 // 시험 주문은 소형 상자(6,900원 = 배송비 4,000 + 검수비 1,500 + 기본 서비스료 1,400). 기본 팬은 별빛 → 하루.
@@ -66,6 +66,10 @@ const orderRefundDue = (orderId: string) =>
   psql(`select coalesce(public.refund_due_of_payment(p.id)::text, 'none') from public.payments p where p.order_id = '${orderId}' and p.kind = 'initial'`);
 const paid = (orderId: string) => Number(psql(`select amount_krw from public.payments where order_id = '${orderId}' and kind = 'initial'`));
 const boxFees = (boxId: string) => psql(`select price_krw || '|' || shipping_fee_krw from public.boxes where id = '${boxId}'`).split("|").map(Number) as [number, number];
+const undeliveredAlerts = (orderId: string) =>
+  psql(
+    `select coalesce(string_agg(o.kind || '|' || p.login_id || '|' || o.channel, ',' order by o.channel), '') from public.notification_outbox o join public.profiles p on p.id = o.account_id where o.order_id = '${orderId}' and o.kind = 'gift_undelivered'`,
+  );
 const pendingAlerts = (orderId: string) =>
   psql(
     `select string_agg(o.kind || '|' || p.login_id || '|' || o.channel, ',' order by o.channel) from public.notification_outbox o join public.profiles p on p.id = o.account_id where o.order_id = '${orderId}' and o.kind = 'gift_pending_box'`,
@@ -500,6 +504,8 @@ describe("아직 안 온 상자 안내 (notifications INV-N17)", () => {
     expect(status(o2.orderId)).toBe("rejected");
     expect(pendingAlerts(o1.orderId)).toBe("gift_pending_box|haneul_fan|email");
     expect(pendingAlerts(o2.orderId)).toBe("gift_pending_box|haneul_fan|email");
+    // 상자가 일부라도 온 주문에는 거절 알림(INV-N17 ②)이 따로 가지 않는다 — 알림은 주문마다 하나
+    for (const id of [declined.orderId, expired.orderId, o1.orderId, o2.orderId]) expect(undeliveredAlerts(id)).toBe("");
   });
 
   it("INV-N17 (S17, 실패경로): 상자가 모두 도착한 주문·「먼저 보내기」 없이 하나도 안 온 주문의 거절, 팬의 취소에는 안내가 없다", async () => {
@@ -519,5 +525,44 @@ describe("아직 안 온 상자 안내 (notifications INV-N17)", () => {
     expect((await fan.rpc("cancel_my_gift", { p_order_no: self.orderNo })).error).toBeNull();
     expect(codeState(self.boxIds[0]!)).toBe("valid");
     expect(pendingAlerts(self.orderId)).toBe("");
+    // 상자가 모두 도착한 주문·팬의 취소에는 거절 알림도 없다
+    expect(undeliveredAlerts(all.orderId)).toBe("");
+    expect(undeliveredAlerts(self.orderId)).toBe("");
+  });
+
+  it("INV-N17 ② (S17b, 실패경로): 「먼저 보내기」를 누르고 하나도 안 온 주문의 거절은 안 온 상자 안내 하나뿐 — 거절 알림은 없다", async () => {
+    const g = await paidGift(1);
+    const fan = await signedInClient("byeolbit_fan");
+    expect((await fan.rpc("ack_early_send", { p_order_no: g.orderNo })).error).toBeNull();
+    expect(await declineAs("haru_creator", g.requestId)).toBe("declined");
+    expect(pendingAlerts(g.orderId)).toBe("gift_pending_box|byeolbit_fan|email");
+    expect(undeliveredAlerts(g.orderId)).toBe("");
+  });
+
+  it("INV-N17 ② (S2): 「먼저 보내기」 없이 하나도 안 온 주문의 거절은 거절 알림 하나 — 안 온 상자 안내는 없다", async () => {
+    const g = await paidGift(2);
+    expect(await declineAs("haru_creator", g.requestId)).toBe("declined");
+    expect(undeliveredAlerts(g.orderId)).toBe("gift_undelivered|byeolbit_fan|email");
+    expect(pendingAlerts(g.orderId)).toBe("");
+  });
+
+  it("INV-N17 ② (S17b, 실패경로): 결제 전 주문이 차단으로 함께 거절되면 알림이 없다 — 차단을 부른 결제된 주문에는 거절 알림", async () => {
+    const o1 = await registerTestOrder(1, { senderId: HANEUL });
+    const r1 = await payTestOrder(o1);
+    const unpaid = await registerTestOrder(1, { senderId: HANEUL });
+    expect(status(unpaid.orderId)).toBe("pending_payment");
+    expect(await declineAs("haru_creator", r1, true)).toBe("declined");
+    expect(status(unpaid.orderId)).toBe("rejected");
+    expect(undeliveredAlerts(unpaid.orderId)).toBe("");
+    expect(pendingAlerts(unpaid.orderId)).toBe("");
+    expect(undeliveredAlerts(o1.orderId)).toBe("gift_undelivered|haneul_fan|email");
+  });
+
+  it("INV-N17 ② (S17b, 실패경로): 팬이 「먼저 보내기」 없이 스스로 취소한 주문에는 알림이 없다", async () => {
+    const g = await paidGift(1);
+    expect((await (await signedInClient("byeolbit_fan")).rpc("cancel_my_gift", { p_order_no: g.orderNo })).error).toBeNull();
+    expect(status(g.orderId)).toBe("canceled");
+    expect(undeliveredAlerts(g.orderId)).toBe("");
+    expect(pendingAlerts(g.orderId)).toBe("");
   });
 });

@@ -1,12 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { NOTIFICATION_KINDS, type NotificationKind } from "../model/delivery-policy";
 
 // 운영자 실패 목록 읽기 (notifications INV-N10). 로그인한 운영자의 세션 클라이언트로 부른다 — 운영자가 아니면 DB 가 거부한다.
 // 보이는 것은 종류·주문번호·차례·통로·상태·시도 횟수·오류 코드·끝난 시각뿐이다. 받는 사람·연락처·본문은 DB 가 돌려주지 않고,
 // 응답에 다른 칸이 섞여 와도 여기서 꺼내지 않는다. 꼴이 다른 답은 오류로 던진다(빈 목록으로 보이게 하지 않는다).
 
-const KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transit", "delivered", "hold", "box_arrived", "hold_fan", "box_missing", "gift_pending_box", "difference_due", "payment_canceled", "difference_canceled", "gift_reply", "gift_received"] as const;
-export type NotificationKindName = (typeof KINDS)[number];
+const KINDS = NOTIFICATION_KINDS;
+export type NotificationKindName = NotificationKind;
 
 const row = z.object({
   // 모르는 종류(새로 더한 알림)가 와도 화면 전체를 오류로 만들지 않는다 — 종류 코드를 그대로 보여 준다
@@ -60,6 +61,7 @@ const KIND_LABEL: Record<NotificationKindName, string> = {
   hold_fan: "돌려보낼 상자",
   box_missing: "도착하지 않은 상자",
   gift_pending_box: "거절 뒤 남은 상자",
+  gift_undelivered: "선물이 전해지지 못함",
   difference_due: "추가 결제 요청",
   payment_canceled: "결제 취소",
   difference_canceled: "추가 결제 취소",

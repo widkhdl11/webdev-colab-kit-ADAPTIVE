@@ -8,6 +8,7 @@ import { labeled, measure, paidOrder } from "./difference-helpers";
 
 // 보내는 일꾼 — 실제 DB 함수와 맞물려 (notifications INV-N3·N5·N6·N8·N10).
 // 통로는 보낸 것을 모으는 가짜로 바꿔 끼운다. 연락처를 읽는 함수(manual/0011)가 적용된 로컬 DB 에서 돈다.
+// 「manual/0016 뒤」가 붙은 시험은 꼭 가는 알림을 넓힌 연락처 함수(2026-10-12, 사람이 적용)가 있어야 통과한다.
 // 시드 주문은 건드리지 않는다 — 새 시험 주문만 쓰고, 시드 대기 요청에 생기는 재알림 줄은 정리 단계가 지운다.
 
 const OUTBOX = "public.notification_outbox";
@@ -126,7 +127,7 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
       expect(statusOf(g.orderId, "approval_request", "kakao")).toBe("sent");
     } finally {
       const [k, m] = saved.split("|");
-      psql(`update pii.account_contacts set notify_kakao = ${k === "t"}, notify_email = ${m === "t"} where account_id = ${haru}`);
+      psql(`update pii.account_contacts set notify_kakao = ${k === "true"}, notify_email = ${m === "true"} where account_id = ${haru}`);
     }
   });
 
@@ -144,19 +145,62 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     expect(statusOf(g.orderId, "difference_due")).toBe("sent");
   });
 
-  it("INV-N18 · INV-N6 (실패경로): 이메일 알림을 끈 별빛에게는 추가 결제 알림도 가지 않는다 — 꼭 가는 알림이 아니다", async () => {
+  it("INV-N18 · INV-N6 (S6e, manual/0016 뒤): 알림을 모두 끈 별빛에게도 추가 결제 알림은 간다 — 꼭 가는 알림(2026-10-12)", async () => {
     const fan = `(select id from public.profiles where login_id = 'byeolbit_fan')`;
-    const saved = psql(`select notify_email from pii.account_contacts where account_id = ${fan}`);
-    psql(`update pii.account_contacts set notify_email = false where account_id = ${fan}`);
+    const saved = psql(`select notify_kakao || '|' || notify_email from pii.account_contacts where account_id = ${fan}`);
+    psql(`update pii.account_contacts set notify_kakao = false, notify_email = false where account_id = ${fan}`);
     try {
       const g = await paidOrder(["small"]);
       await measure(await labeled(g.boxIds[0]!), "medium");
       const email = capture(false);
       await dispatchNotifications(depsWith(email));
-      expect(statusOf(g.orderId, "difference_due")).toBe("skipped");
-      expect(email.sent.some((m) => m.outboxId === idOf(g.orderId, "difference_due"))).toBe(false);
+      expect(statusOf(g.orderId, "difference_due")).toBe("sent");
+      expect(email.sent.filter((m) => m.outboxId === idOf(g.orderId, "difference_due"))).toHaveLength(1);
     } finally {
-      psql(`update pii.account_contacts set notify_email = ${saved === "t"} where account_id = ${fan}`);
+      const [k, m] = saved.split("|");
+      psql(`update pii.account_contacts set notify_kakao = ${k === "true"}, notify_email = ${m === "true"} where account_id = ${fan}`);
+    }
+  });
+
+  it("INV-N17 ② · INV-N6 (S2·S6e, manual/0016 뒤): 상자가 하나도 안 온 주문을 거절하면 알림을 모두 끈 별빛에게도 거절 알림이 한 번 간다 — 거절 종류는 본문에 없다", async () => {
+    const fan = `(select id from public.profiles where login_id = 'byeolbit_fan')`;
+    const saved = psql(`select notify_kakao || '|' || notify_email from pii.account_contacts where account_id = ${fan}`);
+    psql(`update pii.account_contacts set notify_kakao = false, notify_email = false where account_id = ${fan}`);
+    try {
+      const g = await paidGift();
+      expect((await (await signedInClient("haru_creator")).rpc("decline_gift", { p_request_id: g.requestId, p_block: false })).error).toBeNull();
+      const email = capture(false);
+      await dispatchNotifications(depsWith(email));
+      const mine = email.sent.filter((m) => m.outboxId === idOf(g.orderId, "gift_undelivered"));
+      expect(mine).toHaveLength(1);
+      expect(mine[0]!.subject).toBe("[팬꾹] 선물이 전해지지 못했어요");
+      expect(mine[0]!.text).toContain("결제 금액은 돌려드려요.");
+      expect(mine[0]!.text).toContain(`http://127.0.0.1:3311/gifts/${g.orderNo}`);
+      for (const word of ["거절", "반려", "차단", "하루"]) expect(mine[0]!.text).not.toContain(word);
+      expect(statusOf(g.orderId, "gift_undelivered")).toBe("sent");
+    } finally {
+      const [k, m] = saved.split("|");
+      psql(`update pii.account_contacts set notify_kakao = ${k === "true"}, notify_email = ${m === "true"} where account_id = ${fan}`);
+    }
+  });
+
+  it("INV-N6 (S6b, 실패경로): 알림을 모두 끈 별빛에게 입고 알림(끌 수 있는 알림)은 가지 않는다", async () => {
+    const fan = `(select id from public.profiles where login_id = 'byeolbit_fan')`;
+    const saved = psql(`select notify_kakao || '|' || notify_email from pii.account_contacts where account_id = ${fan}`);
+    psql(`update pii.account_contacts set notify_kakao = false, notify_email = false where account_id = ${fan}`);
+    try {
+      const g = await paidGift();
+      const staff = await signedInClient("fankkuk_staff");
+      const no = waybill();
+      await fanSetsWaybill(g.boxIds[0]!, no);
+      await receiveAndLabel(staff, no);
+      const email = capture(false);
+      await dispatchNotifications(depsWith(email));
+      expect(statusOf(g.orderId, "arrived")).toBe("skipped");
+      expect(email.sent.some((m) => m.outboxId === idOf(g.orderId, "arrived"))).toBe(false);
+    } finally {
+      const [k, m] = saved.split("|");
+      psql(`update pii.account_contacts set notify_kakao = ${k === "true"}, notify_email = ${m === "true"} where account_id = ${fan}`);
     }
   });
 

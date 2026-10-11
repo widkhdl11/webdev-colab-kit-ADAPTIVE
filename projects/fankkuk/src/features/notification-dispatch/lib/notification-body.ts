@@ -1,3 +1,4 @@
+import { isMustDeliver, type NotificationKind } from "@/entities/notification/model/delivery-policy";
 import { formatDeadline } from "@/shared/lib/format/datetime";
 
 // 알림 본문 틀 (notifications INV-N1·N9). 카카오 알림톡과 이메일이 같은 틀을 쓴다(INV-N7) — 카카오 템플릿도 이 문구로 심사받는다.
@@ -11,31 +12,17 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 // box_missing: 결제 완료 + 14일에 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N15, 2026-10-08 카드 d50). 6자리·주소 칸이 없다.
 // gift_pending_box: 받는 주소를 본 적이 있는 주문이 거절·반려될 때 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N17, 2026-10-10).
 //   거절·7일 반려·차단 거절 모두 같은 종류·같은 본문이다(INV-N2). 6자리·주소 칸이 없다.
+// gift_undelivered: 받는 주소를 본 적이 없는(상자가 하나도 오지 않은) 주문이 거절·반려될 때 보낸 팬에게 한 번(INV-N17 ②, 2026-10-12 문제집 D11).
+//   거절·7일 반려·차단 거절 모두 같은 본문이다(INV-N2) — 거절 종류를 받는 칸이 없다.
+// 꼭 가는 알림(INV-N6 표)에는 「꺼 두어도 가요」, 나머지에는 「끌 수 있어요」를 붙인다 — 종류별 판정은 entities/notification 하나.
 // difference_due: 사무실 실측이 신고보다 커서 차액 결제 요청이 생기면 보낸 팬에게 상자마다 한 번(INV-N18, 2026-10-09 카드 d55).
 //   금액·실측 구간 칸이 없다 — 선물 상세를 열면 보인다.
 // payment_canceled · difference_canceled: 「확인 필요」 결제를 대표가 전액 취소했을 때 보낸 팬에게 한 번(INV-N19, payment INV-M20, 2026-10-10).
 //   첫 결제면 결제 전 주문이라 팬 화면에 없다 — 링크는 선물 등록. 차액이면 선물 상세. 금액 칸이 없다.
 // gift_reply · gift_received: 크리에이터가 상자에 「받았어요」를 남길 때 보낸 팬에게 상자마다 한 번(gift-reply INV-G5, 2026-10-11).
 //   답장이 있으면 「답장이 왔어요」, 확인만이면 「도착했다고 확인됐어요」. 크리에이터 이름·답장 내용 칸이 없다 — 선물 상세를 열면 보인다.
-export const NOTIFICATION_KINDS = [
-  "approval_request",
-  "arrived",
-  "inspected",
-  "shipped",
-  "in_transit",
-  "delivered",
-  "hold",
-  "box_arrived",
-  "hold_fan",
-  "box_missing",
-  "gift_pending_box",
-  "difference_due",
-  "payment_canceled",
-  "difference_canceled",
-  "gift_reply",
-  "gift_received",
-] as const;
-export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
+// 종류 목록과 꼭 가는 알림 판정은 entities/notification 이 정본이다(INV-N6 표).
+export { NOTIFICATION_KINDS, type NotificationKind } from "@/entities/notification/model/delivery-policy";
 
 export type NotificationBodyInput = {
   kind: NotificationKind;
@@ -56,7 +43,7 @@ const ORDER_NO = /^[A-Z0-9][A-Z0-9-]{0,39}$/;
 
 const FOOTER = "이 알림에는 선물 내용과 보낸 분·받는 분 정보를 담지 않아요. 자세한 내용은 로그인한 뒤 위 링크에서 확인해 주세요.";
 const FOOTER_OPTIONAL = "알림은 내 정보에서 끌 수 있어요.";
-const FOOTER_MUST = "승인 요청 알림은 알림을 꺼 두어도 가요.";
+const FOOTER_MUST = "이 알림은 알림을 꺼 두어도 가요.";
 
 const APPROVAL_SUBJECT = {
   1: "[팬꾹] 새 선물 승인 요청이 왔어요",
@@ -74,7 +61,7 @@ const FAN_STEP = {
 /** 역조공 주문번호(RG-…)인가 — 역조공 상자 도착 알림은 보낸 크리에이터의 「보낸 역조공」 화면으로 잇는다 */
 const REVGIFT_ORDER_NO = /^RG-/;
 
-type Draft = { subject: string; lines: string[]; buttonLabel: string; path: string; must: boolean };
+type Draft = { subject: string; lines: string[]; buttonLabel: string; path: string };
 
 /** 알림 링크에 쓸 사이트 주소 — 경로 없는 http(s) 주소만(INV-N9). 아니면 던진다. */
 export function siteOrigin(appOrigin: string): string {
@@ -106,13 +93,12 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         ],
         buttonLabel: "승인 요청 보기",
         path: "/creator/requests",
-        must: true,
       };
     case "arrived":
     case "inspected":
     case "shipped": {
       const [subject, first] = FAN_STEP[kind];
-      return { subject, lines: [greet, first, order], buttonLabel: "선물 보기", path: `/gifts/${orderNo}`, must: false };
+      return { subject, lines: [greet, first, order], buttonLabel: "선물 보기", path: `/gifts/${orderNo}` };
     }
     case "box_arrived":
       // 상자 하나가 사무실에 도착해 입고됐다. 「제가 보낸 게 아니에요」는 링크를 열고 로그인한 뒤에만 누를 수 있다.
@@ -121,11 +107,10 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         lines: [greet, "보내신 상자 하나가 팬꾹 사무실에 도착했어요.", order, "보낸 적 없는 상자라면 링크를 열어 알려 주세요."],
         buttonLabel: "상자 확인하기",
         path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : `/gifts/${orderNo}`,
-        must: false,
       };
     case "hold":
       // 무엇이 나왔는지·보낸 팬은 쓰지 않는다(INV-N13)
-      return { subject: "[팬꾹] 확인할 선물이 있어요", lines: [greet, "확인이 필요한 선물이 있어요.", order], buttonLabel: "확인하기", path: "/creator", must: false };
+      return { subject: "[팬꾹] 확인할 선물이 있어요", lines: [greet, "확인이 필요한 선물이 있어요.", order], buttonLabel: "확인하기", path: "/creator" };
     case "hold_fan":
       // 무엇이 나왔는지·크리에이터가 알았다는 사실은 쓰지 않는다(INV-N13). 보관 상자는 168시간 뒤 반송된다(office-workflow INV-W4)
       return {
@@ -133,7 +118,6 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         lines: [greet, "검수를 통과하지 못한 상자가 있어요.", "168시간 뒤 보내신 주소로 돌려보내요.", order],
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
-        must: false,
       };
     case "payment_canceled":
     case "difference_canceled": {
@@ -149,7 +133,6 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         ],
         buttonLabel: first ? "선물 다시 등록하기" : "선물 보기",
         path: first ? "/gifts/new" : `/gifts/${orderNo}`,
-        must: false,
       };
     }
     case "box_missing":
@@ -165,7 +148,6 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         ],
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
-        must: false,
       };
     case "gift_pending_box":
       // 거절의 종류는 쓰지 않는다(INV-N2). 상자 금액 − 배송비를 먼저 돌려주고, 늦게 오면 반송, 168시간 안에 안 오면 배송비도(payment INV-M18)
@@ -180,7 +162,14 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         ],
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
-        must: false,
+      };
+    case "gift_undelivered":
+      // 거절의 종류·크리에이터는 쓰지 않는다(INV-N2). 받는 주소를 본 적이 없는 주문이라 결제 금액 전부가 돌아간다(payment INV-M8)
+      return {
+        subject: "[팬꾹] 선물이 전해지지 못했어요",
+        lines: [greet, "선물이 전해지지 못했어요.", "결제 금액은 돌려드려요.", order],
+        buttonLabel: "선물 보기",
+        path: `/gifts/${orderNo}`,
       };
     case "difference_due":
       // 결제가 끝나야 송장이 나가고(payment INV-M12), 168시간 미납이면 반송 대상이다(INV-M13)
@@ -195,7 +184,6 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         ],
         buttonLabel: "추가 결제하기",
         path: `/gifts/${orderNo}`,
-        must: false,
       };
     case "gift_reply":
       return {
@@ -203,7 +191,6 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         lines: [greet, "보내신 선물에 답장이 왔어요.", order],
         buttonLabel: "답장 보기",
         path: `/gifts/${orderNo}`,
-        must: false,
       };
     case "gift_received":
       return {
@@ -211,7 +198,6 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         lines: [greet, "보내신 선물을 크리에이터가 받았다고 확인했어요.", order],
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
-        must: false,
       };
     case "in_transit":
     case "delivered":
@@ -227,7 +213,7 @@ export function buildNotificationBody(input: NotificationBodyInput): Notificatio
   const link = `${origin}${d.path}`;
   return {
     subject: d.subject,
-    text: [...d.lines, "", link, "", FOOTER, d.must ? FOOTER_MUST : FOOTER_OPTIONAL].join("\n"),
+    text: [...d.lines, "", link, "", FOOTER, isMustDeliver(input.kind) ? FOOTER_MUST : FOOTER_OPTIONAL].join("\n"),
     buttonLabel: d.buttonLabel,
     link,
   };

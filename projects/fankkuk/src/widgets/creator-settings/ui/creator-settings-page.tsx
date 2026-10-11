@@ -8,6 +8,7 @@ import type { CreatorSettingsView } from "@/entities/creator/model/creator-setti
 import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
 import { sendCreatorTags } from "@/features/creator-tags-edit/api/send-creator-tags";
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
+import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notice";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { sendCreatorNotify, sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
 import { clipChars, INTRO_MAX, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
@@ -394,20 +395,21 @@ export function CreatorSettingsPage({
             <div className={s["s-head"]}>
               <h3 id="alarm-h">알림 받기</h3>
             </div>
-            {/* 승인 요청과 그 재알림은 꼭 가는 알림이라 끄는 스위치를 두지 않는다(notifications INV-N6, 결정 d33 ②).
+            {/* 꼭 가는 알림(승인 요청·확인할 선물 등)은 끄는 스위치를 두지 않고 「끌 수 없는 알림」으로 알린다(notifications INV-N6 표, 2026-10-12 문제집 D7).
                 알림 스펙에 없는 종류(자동 반려 하루 전·주소가 열릴 때)의 스위치는 두지 않는다(my-account INV-A11) */}
             <div className={s["switch-row"]}>
-              <div className={s.txt}>
-                <strong>새 승인 요청</strong>
-                <span className="sub">
-                  팬이 선물을 보내면 알려드려요. 놓치면 {APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려되기 때문에, 승인 요청은 알림을 꺼 두어도 가요.
-                </span>
-              </div>
+              <MustDeliverNotice
+                audience="creator"
+                id="alarm-must"
+                className={s.txt}
+                bodyClassName="sub"
+                extra={`승인 요청은 놓치면 ${APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려돼요.`}
+              />
             </div>
             <Switch
               id="sw-kakao"
               title="카카오톡 알림"
-              desc="선물 보관·반송 같은 다른 소식을 카카오톡으로 알려드려요."
+              desc="그 밖의 소식을 카카오톡으로 알려드려요."
               checked={notify.kakao}
               busy={notifySaving}
               onChange={(v) => void toggleNotify("kakao", v)}

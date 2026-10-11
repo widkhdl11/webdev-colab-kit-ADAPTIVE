@@ -13,6 +13,7 @@ import {
   SEED,
   signedInClient,
 } from "./helpers";
+import { isMustDeliver, NOTIFICATION_KINDS } from "@/entities/notification/model/delivery-policy";
 import {
   approve,
   deleteTestUnmatched,
@@ -32,6 +33,7 @@ import {
 // 발송 대기 줄은 사건(결제 완료·주문 상태 전환·보관)과 같은 처리에서 생기고, 보내는 일꾼 함수(앱 서버 키 전용)로만 움직인다.
 // 「(manual/0011 뒤)」가 붙은 시험은 연락처를 읽는 함수(pii 를 읽는다 — 사람이 적용)가 있어야 통과한다.
 // supabase/manual/0011_notification_contact.sql 이 적용되기 전에는 빨간불이 맞다.
+// 「(manual/0016 뒤)」는 꼭 가는 알림을 넓힌 연락처 함수(2026-10-12 문제집 D7, 사람이 적용)가 있어야 통과한다.
 
 const OUTBOX = "public.notification_outbox";
 const TEMPLATES = "public.notification_kakao_templates";
@@ -320,7 +322,7 @@ describe("팬에게 승인·거절 종류 줄은 없다 (INV-N2)", () => {
   // 모두 거절하므로, 별빛으로 하면 시드의 별빛 → 하루 대기 요청까지 거절된다.
   const fanRows = (orderId: string) => outboxRows(orderId).filter((r) => !r.includes("|haru_creator|"));
 
-  it("INV-N2 (S2): 크리에이터 거절·7일 반려·차단 거절 — 세 주문의 팬 몫 줄이 같다(셋 다 없음)", async () => {
+  it("INV-N2·N17 ② (S2): 상자가 하나도 안 온 주문의 크리에이터 거절·7일 반려·차단 거절 — 세 주문의 팬 몫 줄이 같다(거절 알림 하나씩)", async () => {
     const haru = await signedInClient("haru_creator");
     const declined = await paidGift();
     expect((await haru.rpc("decline_gift", { p_request_id: declined.requestId, p_block: false })).error).toBeNull();
@@ -332,10 +334,18 @@ describe("팬에게 승인·거절 종류 줄은 없다 (INV-N2)", () => {
     const blockedOrder = await registerTestOrder(1, { senderId: HANEUL_FAN_ID });
     const blocked = { ...blockedOrder, requestId: await payTestOrder(blockedOrder) };
     expect((await haru.rpc("decline_gift", { p_request_id: blocked.requestId, p_block: true })).error).toBeNull();
-    const all = [declined, expired, blocked].map((g) => fanRows(g.orderId));
-    expect(all).toEqual([[], [], []]);
-    // 거절 사건이 크리에이터 몫 줄도 더 만들지 않는다 — 결제 완료 때의 승인 요청 줄 하나뿐
-    for (const g of [declined, expired, blocked]) expect(outboxRows(g.orderId)).toEqual(["approval_request|1|haru_creator|email|pending"]);
+    // 받는 팬이 다르다(별빛·하늘) — 받는 사람 칸을 지우고 종류·차례·통로·상태를 비교한다
+    const all = [declined, expired, blocked].map((g) => fanRows(g.orderId).map((r) => r.replace(/\|[a-z]+_fan\|/, "|팬|")));
+    expect(all).toEqual([0, 1, 2].map(() => ["gift_undelivered|1|팬|email|pending"]));
+    expect(fanRows(declined.orderId)).toEqual(["gift_undelivered|1|byeolbit_fan|email|pending"]);
+    expect(fanRows(blocked.orderId)).toEqual(["gift_undelivered|1|haneul_fan|email|pending"]);
+    // 거절 사건이 크리에이터 몫 줄은 더 만들지 않는다 — 결제 완료 때의 승인 요청 줄 하나뿐
+    for (const g of [declined, expired, blocked]) {
+      expect(outboxRows(g.orderId).filter((r) => r.includes("|haru_creator|"))).toEqual(["approval_request|1|haru_creator|email|pending"]);
+    }
+    // 7일 자동 처리를 다시 돌려도 거절 알림은 그대로 하나(INV-N4)
+    expect((await owner.rpc("office_run_expiry", { p_order_no: expired.orderNo })).error).toBeNull();
+    expect(fanRows(expired.orderId)).toEqual(["gift_undelivered|1|byeolbit_fan|email|pending"]);
   });
 
   it("INV-N2 (S2b, 실패경로): 크리에이터가 승인해도 팬에게 승인 사실을 알리는 줄이 없다", async () => {
@@ -343,6 +353,34 @@ describe("팬에게 승인·거절 종류 줄은 없다 (INV-N2)", () => {
     await approve(g);
     expect(fanRows(g.orderId)).toEqual([]);
     expect(outboxRows(g.orderId)).toEqual(["approval_request|1|haru_creator|email|pending"]);
+  });
+});
+
+// ── 꼭 가는 알림 판정 (INV-N6 S6f, 2026-10-12) ─────────────────
+
+describe("꼭 가는 알림 판정 — DB 와 앱 목록이 같다 (INV-N6)", () => {
+  it("INV-N6 (S6f): 종류마다 DB 판정 함수가 앱의 표와 같다 — 표에 없는 종류는 꼭 가는 알림이 아니다", () => {
+    const out = psql(
+      `select string_agg(k || '=' || public.notification_kind_must_deliver(k)::text, ',' order by k) from unnest(array[${NOTIFICATION_KINDS.map((k) => `'${k}'`).join(",")}, 'no_such_kind']) as k`,
+    );
+    const db = new Map(out.split(",").map((pair) => pair.split("=") as [string, string]));
+    for (const kind of NOTIFICATION_KINDS) expect([kind, db.get(kind)]).toEqual([kind, isMustDeliver(kind) ? "true" : "false"]);
+    expect(db.get("no_such_kind")).toBe("false");
+  });
+
+  it("INV-N6 (S6f): 판정 함수는 화면 쪽 키로 부를 수 없다", async () => {
+    const r = await anonClient().rpc("notification_kind_must_deliver", { p_kind: "approval_request" });
+    expect(r.error).not.toBeNull();
+    expect(psql(`select public.notification_kind_must_deliver('approval_request')`)).toBe("t");
+  });
+
+  it("INV-N6 (S6f): 꺼낸 줄의 꼭 가는 알림 표시도 같은 판정이다 — 거절 알림은 참, 입고는 거짓", async () => {
+    const declined = await paidGift();
+    expect((await (await signedInClient("haru_creator")).rpc("decline_gift", { p_request_id: declined.requestId, p_block: false })).error).toBeNull();
+    const c = await claimOne(rowId(declined.orderId, "gift_undelivered", "byeolbit_fan"));
+    expect(c).toMatchObject({ kind: "gift_undelivered", must_deliver: true, nickname: "별빛", order_no: declined.orderNo });
+    const { g } = await arrivedGift();
+    expect((await claimOne(rowId(g.orderId, "arrived", "byeolbit_fan"))).must_deliver).toBe(false);
   });
 });
 
@@ -833,13 +871,27 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
     });
   });
 
-  it("INV-N6 (S6d, manual/0011 뒤): 두 칸 모두 꺼진 하루가 받는 꼭 가는 알림이 아닌 종류(보관) → 빈 값", async () => {
+  it("INV-N6 (S6d, manual/0016 뒤): 두 칸 모두 꺼진 하루에게도 보관(확인할 선물)은 간다 — 꼭 가는 알림(2026-10-12)", async () => {
     await withContact("haru_creator", { notify_kakao: false, notify_email: false }, async () => {
       const { g, staff, qrs } = await arrivedGift();
       await inspect(staff, qrs[0]!, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" });
       const id = rowId(g.orderId, "hold", "haru_creator");
       await claimOne(id);
-      expect((await contactValue(id))).toBeNull();
+      expect((await contactValue(id))).toBe("haru.creator@example.com");
+    });
+  });
+
+  it("INV-N6 (S6e, manual/0016 뒤): 두 칸 모두 꺼진 별빛 — 거절 알림은 확인된 이메일로 가고, 같은 별빛의 입고 줄은 빈 값", async () => {
+    await withContact("byeolbit_fan", { notify_kakao: false, notify_email: false }, async () => {
+      const declined = await paidGift();
+      expect((await (await signedInClient("haru_creator")).rpc("decline_gift", { p_request_id: declined.requestId, p_block: false })).error).toBeNull();
+      const must = rowId(declined.orderId, "gift_undelivered", "byeolbit_fan");
+      await claimOne(must);
+      expect((await contactValue(must))).toBe("byeolbit.fan@example.com");
+      const { g } = await arrivedGift();
+      const optional = rowId(g.orderId, "arrived", "byeolbit_fan");
+      await claimOne(optional);
+      expect((await contactValue(optional))).toBeNull();
     });
   });
 

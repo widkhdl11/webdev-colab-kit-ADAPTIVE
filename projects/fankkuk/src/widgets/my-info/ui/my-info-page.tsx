@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import type { MyAccount } from "@/entities/fan/model/my-account";
+import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notice";
 import { postAccount } from "@/features/account-edit/api/save-account-client";
 import { accountInputSchema } from "@/features/account-edit/model/account-input";
 import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
@@ -152,7 +153,7 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
             {open === "password" && <PasswordChangePanel id={f("pw-panel")} onLoginExpired={toLogin} />}
           </div>
         </div>
-        <div className={s.row} role="group" aria-labelledby={f("noti")} aria-describedby={f("noti-hint")}>
+        <div className={s.row} role="group" aria-labelledby={f("noti")} aria-describedby={`${f("noti-hint")} ${f("noti-must")}`}>
           <span className={s.lb} id={f("noti")}>
             알림 받기
           </span>
@@ -166,6 +167,8 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
               이메일로 받기
             </label>
             <p className={`hint ${s["hint-tight"]}`} id={f("noti-hint")}>보낸 선물이 사무실에 도착하고, 검수를 마치고, 크리에이터에게 출발할 때 알려 드려요.</p>
+            {/* 꼭 가는 알림은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) */}
+            <MustDeliverNotice audience="fan" id={f("noti-must")} className="hint" />
           </div>
         </div>
       </div>

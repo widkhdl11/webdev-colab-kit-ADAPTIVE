@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { isMustDeliver } from "@/entities/notification/model/delivery-policy";
 import { buildNotificationBody, NOTIFICATION_KINDS, type NotificationBodyInput } from "./notification-body";
 
 // 알림 본문 틀 (notifications INV-N1·N9). 본문은 잠금 화면·메일함·대행사 서버에 남는다 —
@@ -48,7 +49,7 @@ describe("알림 본문 틀 (INV-N1)", () => {
   it("INV-N8: 승인 요청은 차례마다 제목이 다르고, 셋 다 「꺼도 간다」는 안내를 붙인다", () => {
     const subjects = ([1, 2, 3] as const).map((r) => buildNotificationBody(inputFor("approval_request", r)).subject);
     expect(new Set(subjects).size).toBe(3);
-    for (const r of [1, 2, 3] as const) expect(buildNotificationBody(inputFor("approval_request", r)).text).toContain("꺼 두어도 가요");
+    for (const r of [1, 2, 3] as const) expect(buildNotificationBody(inputFor("approval_request", r)).text).toContain("이 알림은 알림을 꺼 두어도 가요.");
     expect(buildNotificationBody(inputFor("arrived")).text).not.toContain("꺼 두어도 가요");
   });
 
@@ -111,7 +112,7 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).toContain("보내신 상자가 신청하신 크기보다 커서 추가 결제가 필요해요.");
     expect(b.text).toContain("추가 결제가 끝나면 크리에이터에게 보내 드려요.");
     expect(b.text).toContain("7일 안에 결제하지 않으면 보내신 주소로 돌려보내요.");
-    expect(b.text).toContain("알림은 내 정보에서 끌 수 있어요."); // 꼭 가는 알림이 아니다(INV-N6)
+    expect(b.text).toContain("이 알림은 알림을 꺼 두어도 가요."); // 꼭 가는 알림이다(INV-N6, 2026-10-12)
     for (const word of ["2000", "2,000", "원", "중형", "medium", "소형", "대형"]) expect(b.text).not.toContain(word);
   });
 
@@ -123,7 +124,7 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).toContain("카드사에 따라 돌려받기까지 며칠 걸릴 수 있어요.");
     expect(b.text).toContain("선물을 보내시려면 다시 등록해 주세요.");
     expect(b.text).not.toMatch(/\d[\d,]*원/);
-    expect(b.text).toContain("알림은 내 정보에서 끌 수 있어요."); // 꼭 가는 알림이 아니다(INV-N6)
+    expect(b.text).toContain("이 알림은 알림을 꺼 두어도 가요."); // 꼭 가는 알림이다(INV-N6, 2026-10-12)
   });
 
   it("INV-N19 (S19): 차액 결제 전액 취소 안내 — 선물 상세 링크, 추가 결제를 다시 해 달라는 말", () => {
@@ -133,7 +134,7 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).toContain("추가 결제를 다시 해 주세요.");
     expect(b.text).not.toContain("다시 등록");
     expect(b.text).not.toMatch(/\d[\d,]*원/);
-    expect(b.text).toContain("알림은 내 정보에서 끌 수 있어요."); // 꼭 가는 알림이 아니다(INV-N6)
+    expect(b.text).toContain("이 알림은 알림을 꺼 두어도 가요."); // 꼭 가는 알림이다(INV-N6, 2026-10-12)
   });
 
   it("INV-N17 (S17): 아직 안 온 상자 안내 — 선물 상세 링크, 택배비 뺀 금액을 먼저 돌려준다·늦게 오면 반송·7일 안에 안 오면 택배비도라는 말뿐이고 거절 종류·6자리는 없다", () => {
@@ -150,6 +151,29 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).not.toContain("1:1 문의");
     for (const word of ["거절", "반려", "차단", "K7M3XA"]) expect(b.text).not.toContain(word);
     expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
+  });
+
+  it("INV-N17 ② (S2): 거절 알림 — 선물 상세 링크, 「선물이 전해지지 못했어요」·「결제 금액은 돌려드려요」뿐이고 거절 종류·크리에이터·6자리는 없다", () => {
+    const b = buildNotificationBody({
+      ...inputFor("gift_undelivered"),
+      // @ts-expect-error 본문 틀에는 거절 종류 칸이 없다
+      byBlock: true,
+    });
+    expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    expect(b.subject).toBe("[팬꾹] 선물이 전해지지 못했어요");
+    expect(b.text).toContain("선물이 전해지지 못했어요.");
+    expect(b.text).toContain("결제 금액은 돌려드려요.");
+    for (const word of ["거절", "반려", "차단", "기간", "true"]) expect(b.text).not.toContain(word);
+    expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
+  });
+
+  it("INV-N6: 꼭 가는 알림에는 「꺼 두어도 가요」, 끌 수 있는 알림에는 「끌 수 있어요」 — 종류별 표 그대로", () => {
+    for (const kind of SENDABLE) {
+      const text = buildNotificationBody(inputFor(kind)).text;
+      const must = isMustDeliver(kind);
+      expect([kind, text.includes("이 알림은 알림을 꺼 두어도 가요.")]).toEqual([kind, must]);
+      expect([kind, text.includes("알림은 내 정보에서 끌 수 있어요.")]).toEqual([kind, !must]);
+    }
   });
 
   it("INV-C8: 역조공 상자 도착 알림은 보낸 크리에이터의 「보낸 역조공」 화면으로 잇는다", () => {
