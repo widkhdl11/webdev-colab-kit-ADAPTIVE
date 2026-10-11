@@ -17,3 +17,18 @@ export function isSameOriginJson(headers: Headers): boolean {
     return false;
   }
 }
+
+/**
+ * 같은 사이트의 화면이 보낸 요청인가 — 본문 종류는 보지 않는다(파일 올리기처럼 JSON 이 아닌 요청).
+ * Origin 이 없거나 요청이 들어온 주소와 다르면 받지 않는다. 다른 사이트의 폼이 로그인한 사람 몰래 올리지 못하게.
+ */
+export function isSameOrigin(headers: Headers): boolean {
+  const origin = headers.get("origin");
+  const host = headers.get("host");
+  if (!origin || !host) return false;
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}

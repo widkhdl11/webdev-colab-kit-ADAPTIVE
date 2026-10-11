@@ -17,7 +17,8 @@ export function clipChars(s: string, max: number): string {
 export { HIDDEN_CHAR };
 
 export const PUBLIC_NAME_MAX = 20;
-export const INTRO_MAX = 200;
+/** 한 줄 소개 — 40자, 줄바꿈 없음(creator-link INV-E6). DB 함수가 같은 길이와 태그 필터로 다시 검사한다. */
+export const INTRO_MAX = 40;
 
 export const profileInputSchema = z.object({
   name: z
@@ -28,7 +29,8 @@ export const profileInputSchema = z.object({
   intro: z
     .string()
     .trim()
-    .refine((s) => charCount(s) <= INTRO_MAX, `소개글은 ${INTRO_MAX}자까지 적을 수 있어요.`),
+    .refine((s) => charCount(s) <= INTRO_MAX, `한 줄 소개는 ${INTRO_MAX}자까지 적을 수 있어요.`)
+    .refine((s) => !HIDDEN_CHAR.test(s) && !/[\u2028\u2029]/.test(s), "한 줄 소개에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요."),
   searchable: z.boolean(),
 });
 

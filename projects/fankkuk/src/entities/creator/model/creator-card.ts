@@ -17,6 +17,10 @@ export type CreatorCard = {
   approvalMinutes: number | null;
   faceTone: string;
   following: boolean;
+  /** 링크용 아이디 — 없으면 null(creator-link INV-E5: 링크는 creatorPagePath 로 만든다). */
+  handle: string | null;
+  /** 프로필 사진 저장소 경로 — 없으면 null(INV-E9). */
+  photoPath: string | null;
 };
 
 /**
@@ -45,6 +49,8 @@ export function toCreatorCards(
         approvalMinutes: approvalTimeOf(orderApprovalMinutes[c.id] ?? null, p.avgApprovalHours),
         faceTone: p.faceTone,
         following: followed.has(c.id),
+        handle: p.handle ?? null,
+        photoPath: p.photoPath ?? null,
       },
     ];
   });

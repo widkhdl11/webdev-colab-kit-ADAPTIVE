@@ -7,6 +7,8 @@ import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
 import { readMyCreatorReceiving } from "@/entities/creator/api/receiving-reads";
 import { kstToday } from "@/entities/creator/model/receiving";
 import { readMyHardItems } from "@/entities/gift-item/api/hard-items-reads";
+import { readMyCreatorLink } from "@/entities/creator/api/creator-link-reads";
+import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
 import { CreatorSettingsPage } from "@/widgets/creator-settings/ui/creator-settings-page";
@@ -27,7 +29,7 @@ export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect("/login");
-  const [header, blockedFans, address, state, rows, apiPlatforms, settings, tagOptions, receiving, hardItems] = await Promise.all([
+  const [header, blockedFans, address, state, rows, apiPlatforms, settings, tagOptions, receiving, hardItems, link] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creator/settings"),
     readMyBlockedSenders(supabase),
     readMyAddressStatus(supabase),
@@ -38,9 +40,11 @@ export default async function Page() {
     readTagOptions(supabase),
     readMyCreatorReceiving(supabase),
     readMyHardItems(supabase),
+    // creator-link: 링크용 아이디·남은 잠금 날·사진 경로 — 본인 것만(INV-E1·E4)
+    readMyCreatorLink(supabase),
   ]);
   // 크리에이터 역할인데 크리에이터 줄이 없으면 이 화면을 그릴 수 없다 — 숨기지 않고 오류로 드러낸다
-  if (!address || !state || !settings || !receiving) throw new Error("크리에이터 줄을 찾지 못했다");
+  if (!address || !state || !settings || !receiving || !link) throw new Error("크리에이터 줄을 찾지 못했다");
   return (
     <>
       <SiteHeader {...header} />
@@ -55,6 +59,8 @@ export default async function Page() {
           receiving={receiving}
           hardItems={hardItems}
           today={kstToday(new Date())}
+          link={link}
+          photoBase={readPublicStorageBase()}
         />
       </MyShell>
       <SiteFooter />

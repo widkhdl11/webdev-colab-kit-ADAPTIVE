@@ -67,3 +67,15 @@
 .fs { border: 0; padding: 0; margin-inline: 0; min-width: 0; }
 .fs > legend { padding: 0; margin-bottom: 8px; }
 .save-row { display: flex; flex-wrap: wrap; gap: 12px; }
+/* 선물 링크·프로필 사진·공지 이미지 (creator-link) — 주소 앞부분(fankkuk.kr/)은 칸 왼쪽에 붙인 글자 */
+.handle-row { display: flex; align-items: center; gap: 8px; }
+.handle-host { flex-shrink: 0; color: var(--sub); font-weight: 600; }
+.handle-row :global(.input) { flex: 1; min-width: 0; }
+.link-now { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; padding: 16px 20px; border-radius: var(--r-box); background: var(--surface-brand); }
+.link-now > span { display: grid; min-width: 0; }
+.link-now strong { overflow-wrap: anywhere; }
+.photo-field { margin-top: 28px; }
+.photo-row { display: flex; align-items: center; gap: 20px; }
+.photo-prev { width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
+.photo-ctl { display: grid; gap: 12px; min-width: 0; }
+.file { max-width: 100%; font-size: 16px; }

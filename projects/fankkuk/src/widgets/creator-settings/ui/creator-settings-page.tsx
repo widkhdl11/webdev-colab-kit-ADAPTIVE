@@ -25,6 +25,8 @@ import { sendUnblock } from "@/features/creator-unblock/api/send-unblock";
 import type { CalendarDate, MyCreatorReceiving } from "@/entities/creator/model/receiving";
 import { ReceivingSection } from "./receiving-section";
 import { HardItemsSection } from "./hard-items-section";
+import { LinkSection } from "./link-section";
+import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
 import s from "./creator-settings.module.css";
 
@@ -92,8 +94,14 @@ export function CreatorSettingsPage({
   receiving,
   hardItems,
   today,
+  link,
+  photoBase,
 }: {
   settings: CreatorSettingsView;
+  /** 링크용 아이디·남은 잠금 날·사진 경로 — 로그인한 크리에이터 본인 것(creator-link) */
+  link: MyCreatorLink;
+  /** 공개 저장소 주소 — 프로필 사진 미리보기 */
+  photoBase: string;
   /** 받는 상태·팬당 한도·생일·기념일 — 로그인한 크리에이터 본인 것(creator-receiving) */
   receiving: MyCreatorReceiving;
   /** 살아 있는 받기 어려운 품목 — 로그인한 크리에이터 본인 것(hard-items). 없거나 끝났으면 null */
@@ -287,6 +295,8 @@ export function CreatorSettingsPage({
         </div>
 
         <div className={s.col}>
+          <LinkSection initial={link} photoBase={photoBase} verified={verification.state.verified} />
+
           <section aria-labelledby="prof-h">
             <div className={s["s-head"]}>
               <h3 id="prof-h">프로필</h3>
@@ -306,17 +316,17 @@ export function CreatorSettingsPage({
               </p>
             </div>
             <div className={`field ${s["intro-field"]}`}>
-              <label htmlFor="pub-intro">소개글</label>
-              <textarea
-                className={`input ${s.textarea}`}
+              <label htmlFor="pub-intro">한 줄 소개</label>
+              <input
+                className="input"
                 id="pub-intro"
-                rows={3}
                 value={intro}
-                onChange={(e) => setIntro(clipChars(e.target.value, INTRO_MAX))}
+                // 한 줄 — 붙여 넣은 줄바꿈은 띄어쓰기로 바꾼다(creator-link INV-E6)
+                onChange={(e) => setIntro(clipChars(e.target.value.replace(/[\r\n\u2028\u2029]+/g, " "), INTRO_MAX))}
                 aria-describedby="pub-intro-hint"
               />
               <p className="hint" id="pub-intro-hint">
-                크리에이터 페이지에 보여요. {INTRO_MAX}자까지 적을 수 있어요({charCount(intro.trim())}/{INTRO_MAX}).
+                선물 링크 페이지에 이름 아래 한 줄로 보여요. {INTRO_MAX}자까지 적을 수 있어요({charCount(intro.trim())}/{INTRO_MAX}). 전화번호·이메일·인터넷 주소는 쓸 수 없어요.
               </p>
             </div>
             <div className={s["tags-field"]}>

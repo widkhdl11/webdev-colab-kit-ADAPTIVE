@@ -11,3 +11,17 @@ export function createDetachedAuth(): SupabaseClient["auth"] {
   const { url, anonKey } = readSupabaseConfig(process.env);
   return createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } }).auth;
 }
+
+/**
+ * 쿠키 없이 브라우저 키로 부르는 공개 읽기 클라이언트 — 로그인과 상관없는 공개 이미지 라우트용.
+ * 공개 읽기 함수만 부른다. 요청마다 새로 만든다.
+ */
+export function createPublicReadSupabase(): SupabaseClient {
+  const { url, anonKey } = readSupabaseConfig(process.env);
+  return createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+/** 공개 저장소 주소의 앞부분(Supabase 주소) — 공개 파일 주소를 만든다. */
+export function readPublicStorageBase(): string {
+  return readSupabaseConfig(process.env).url;
+}

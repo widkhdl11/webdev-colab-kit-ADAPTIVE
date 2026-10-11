@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { creatorPagePath } from "@/entities/creator/model/creator-handle";
 import type { CalendarDate } from "@/entities/creator/model/receiving";
 import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 import { receivingNotice } from "@/features/gift-register/model/receiving-notice";
@@ -108,7 +109,7 @@ export function GiftRegisterPage({
                 다른 크리에이터에게 보내기
               </button>
             ) : (
-              <Link className="btn" href={`/creators/${preselected.id}`}>
+              <Link className="btn" href={creatorPagePath({ id: preselected.id, handle: preselected.handle ?? null })}>
                 크리에이터 페이지로
               </Link>
             )}

@@ -4,6 +4,7 @@ import { SendNotificationsButton } from "@/features/notification-dispatch/ui/sen
 import { RunExpiryButton } from "@/features/office-expiry-run/ui/run-expiry-button";
 import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
+import type { UnsignedOpenAlert } from "@/entities/address/api/unsigned-open-alerts";
 
 // 관리자 「자동 처리 현황」 (office-workflow INV-W6, 시안 admin/automation.html).
 // 여섯 묶음: 알림 지금 보내기(notifications INV-N5) · 보내지 못한 알림(INV-N10) · 7일 미승인 팬 선물 반려 · 역조공 받기 기한 · 차액 미납 반송
@@ -48,9 +49,15 @@ const SECTIONS: readonly { category: ExpiryCategory; title: string; hint: string
 // 금액 칸이 있는 묶음과 그 칸 이름
 const DETAIL_HEAD: Partial<Record<ExpiryCategory, string>> = { difference: "신고→실측 · 미납 차액", unpaid: "결제할 금액" };
 
-type Props = { rows: readonly ExpiryDue[]; failures: readonly NotificationFailure[]; now: string };
+type Props = {
+  rows: readonly ExpiryDue[];
+  failures: readonly NotificationFailure[];
+  now: string;
+  /** 승인 서명 없이 열린 주소 열람 줄(creator-link INV-E11) — 수와 마지막 시각만 */
+  unsignedOpens: UnsignedOpenAlert;
+};
 
-export function AutomationPanel({ rows, failures, now }: Props) {
+export function AutomationPanel({ rows, failures, now, unsignedOpens }: Props) {
   const at = new Date(now);
   return (
     <>
@@ -64,6 +71,24 @@ export function AutomationPanel({ rows, failures, now }: Props) {
       </div>
 
       <div className={a.stack}>
+        {/* creator-link INV-E11: 승인 서명 없이 열린 주소 열람 줄 — 하나라도 있으면 경보. 공개 화면에는 열람 건수를 쓰지 않는다 */}
+        <section aria-labelledby="auto-unsigned-open">
+          <div className={a.sectionH}>
+            <h2 id="auto-unsigned-open">승인 서명 없이 열린 주소</h2>
+            {unsignedOpens.openRows > 0 ? <span className={`${a.tag} ${a.tagWarn}`}>경보 {unsignedOpens.openRows}건</span> : <span>0건</span>}
+          </div>
+          {unsignedOpens.openRows > 0 ? (
+            <p className={a.errorLine} role="alert">
+              <span className={a.errorMark} aria-hidden="true">
+                !
+              </span>
+              승인 서명 없이 주소가 열린 기록이 {unsignedOpens.openRows}건 있어요
+              {unsignedOpens.latestAt ? ` (마지막 ${formatStamp(unsignedOpens.latestAt)})` : ""}. 열람 기록에서 어느 주문인지 확인해 주세요.
+            </p>
+          ) : (
+            <p className={a.hint}>모든 주소 열람이 서명된 승인 뒤에 일어났어요.</p>
+          )}
+        </section>
         <section aria-labelledby="auto-notifications">
           <div className={a.sectionH}>
             <h2 id="auto-notifications">알림 보내기</h2>

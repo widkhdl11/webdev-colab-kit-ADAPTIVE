@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { creatorPagePath } from "@/entities/creator/model/creator-handle";
 import { useState } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { hasPickedTag } from "@/entities/creator/model/creator-tags";
@@ -61,7 +62,7 @@ export function NewCreators({ creators, chips, sendOf = {} }: Props) {
                 <CreatorFace tone={c.faceTone} className="face face--lg" />
                 <div>
                   <h3>
-                    <Link href={`/creators/${c.id}`}>{c.name}</Link>
+                    <Link href={creatorPagePath(c)}>{c.name}</Link>
                   </h3>
                   {c.channelTitle ? <p className={s.sub}>{c.channelTitle}</p> : null}
                 </div>

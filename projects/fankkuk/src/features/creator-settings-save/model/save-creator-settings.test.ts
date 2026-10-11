@@ -27,11 +27,12 @@ describe("크리에이터 공개 정보 저장 (my-account INV-A9)", () => {
     expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_name: "하루달", p_intro: "안녕하세요", p_searchable: false } }]);
   });
 
-  it("INV-A9 S9b (실패경로): 공개 이름 21자·빈 이름·소개글 201자·노출 빈 값은 400, DB 를 부르지 않는다", async () => {
+  it("INV-A9 S9b (실패경로): 공개 이름 21자·빈 이름·소개 41자·소개 줄바꿈·노출 빈 값은 400, DB 를 부르지 않는다", async () => {
     for (const body of [
       { name: "가".repeat(21), intro: "", searchable: true },
       { name: "   ", intro: "", searchable: true },
-      { name: "하루달", intro: "가".repeat(201), searchable: true },
+      { name: "하루달", intro: "가".repeat(41), searchable: true },
+      { name: "하루달", intro: "첫 줄\n둘째 줄", searchable: true },
       { name: "하루달", intro: "", searchable: "yes" },
       { name: "하루달", searchable: true },
       null,
@@ -42,10 +43,10 @@ describe("크리에이터 공개 정보 저장 (my-account INV-A9)", () => {
     }
   });
 
-  it("INV-A9: 경계 안 — 공개 이름 20자(이모지 한 글자 포함)·소개글 200자는 넘긴다", async () => {
+  it("INV-A9: 경계 안 — 공개 이름 20자(이모지 한 글자 포함)·한 줄 소개 40자는 넘긴다 (creator-link INV-E6)", async () => {
     const f = fakeClient();
     const name = "가".repeat(19) + "🎁";
-    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name, intro: "나".repeat(200), searchable: true })).toEqual({ ok: true });
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name, intro: "나".repeat(40), searchable: true })).toEqual({ ok: true });
     expect(f.calls).toHaveLength(1);
   });
 

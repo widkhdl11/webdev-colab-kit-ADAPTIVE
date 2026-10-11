@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSameOriginJson } from "./same-origin";
+import { isSameOrigin, isSameOriginJson } from "./same-origin";
 
 const req = (headers: Record<string, string>) => new Headers({ host: "fankkuk.kr", ...headers });
 
@@ -21,5 +21,18 @@ describe("같은 사이트에서 보낸 JSON 요청만", () => {
     expect(isSameOriginJson(req({ "content-type": "application/json" }))).toBe(false);
     expect(isSameOriginJson(req({ origin: "null", "content-type": "application/json" }))).toBe(false);
     expect(isSameOriginJson(new Headers({ origin: "https://fankkuk.kr", "content-type": "application/json" }))).toBe(false);
+  });
+});
+
+describe("같은 사이트에서 보낸 요청만 — 본문 종류 무관(파일 올리기)", () => {
+  it("Origin 이 요청이 들어온 주소와 같으면 받는다", () => {
+    expect(isSameOrigin(req({ origin: "https://fankkuk.kr", "content-type": "multipart/form-data; boundary=x" }))).toBe(true);
+  });
+
+  it("Origin 이 없거나 다르면 받지 않는다", () => {
+    expect(isSameOrigin(req({}))).toBe(false);
+    expect(isSameOrigin(req({ origin: "https://evil.example" }))).toBe(false);
+    expect(isSameOrigin(req({ origin: "https://fankkuk.kr.evil.example" }))).toBe(false);
+    expect(isSameOrigin(req({ origin: "not a url" }))).toBe(false);
   });
 });

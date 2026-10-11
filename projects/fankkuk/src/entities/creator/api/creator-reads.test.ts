@@ -12,6 +12,8 @@ const ROW = {
   avg_approval_hours: 2,
   face_tone: "var(--face-6)",
   approval_minutes_from_orders: null,
+  handle: null,
+  photo_path: null,
 };
 
 function fakeClient() {

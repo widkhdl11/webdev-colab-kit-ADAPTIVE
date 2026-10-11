@@ -16,4 +16,8 @@ export type CreatorProfile = {
   avgApprovalHours: number | null;
   /** 얼굴 자리표시 동그라미 색 — 프로필 사진이 붙으면 사라질 값이라 토큰이 아니라 데이터로 둔다. */
   faceTone: string;
+  /** 링크용 아이디(creator-link INV-E2) — 없으면 null. 목록·페이지의 링크 주소를 정한다(INV-E5). */
+  handle?: string | null;
+  /** 프로필 사진의 공개 저장소 경로({크리에이터 ID}/{판}.webp) — 없으면 null(INV-E9). */
+  photoPath?: string | null;
 };

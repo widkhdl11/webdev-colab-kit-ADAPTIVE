@@ -100,12 +100,12 @@ describe("INV-A9: 크리에이터 공개 정보 고치기", () => {
     expect(creatorRow(ME.creatorId)).toBe(meBefore);
   });
 
-  it("INV-A9 S9b (실패경로): 공개 이름 21자·빈 이름·소개글 201자는 거부되고 아무 칸도 안 바뀐다", async () => {
+  it("INV-A9 S9b (실패경로): 공개 이름 21자·빈 이름·소개 41자는 거부되고 아무 칸도 안 바뀐다", async () => {
     const before = creatorRow(ME.creatorId);
     for (const args of [
       { p_name: "가".repeat(21), p_intro: "바뀌면 안 됨", p_searchable: false },
       { p_name: "   ", p_intro: "바뀌면 안 됨", p_searchable: false },
-      { p_name: "하루달", p_intro: "가".repeat(201), p_searchable: false },
+      { p_name: "하루달", p_intro: "가".repeat(41), p_searchable: false },
       { p_name: "하루달", p_intro: "", p_searchable: null },
     ]) {
       const r = await save(ME.login, args);
@@ -116,10 +116,10 @@ describe("INV-A9: 크리에이터 공개 정보 고치기", () => {
     expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("0");
   });
 
-  it("INV-A9: 경계 안 — 공개 이름 20자·소개글 200자는 저장된다", async () => {
-    const r = await save(ME.login, { p_name: "가".repeat(20), p_intro: "나".repeat(200), p_searchable: true });
+  it("INV-A9: 경계 안 — 공개 이름 20자·한 줄 소개 40자는 저장된다 (creator-link INV-E6)", async () => {
+    const r = await save(ME.login, { p_name: "가".repeat(20), p_intro: "나".repeat(40), p_searchable: true });
     expect(r.error).toBeNull();
-    expect(psql(`select char_length(name) || '|' || char_length(intro) from public.creators where id = '${ME.creatorId}'`)).toBe("20|200");
+    expect(psql(`select char_length(name) || '|' || char_length(intro) from public.creators where id = '${ME.creatorId}'`)).toBe("20|40");
   });
 
   it("INV-A9: DB 함수도 앞뒤의 탭·줄바꿈·전각 공백을 앱과 같은 범위로 빼고 저장한다", async () => {

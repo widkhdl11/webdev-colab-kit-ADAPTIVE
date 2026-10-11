@@ -115,9 +115,18 @@ smtp_port = 55325
 # sender_name = "Admin"
 
 [storage]
-enabled = false
+# 2026-10-11 creator-link: 프로필 사진만 공개 저장소에 둔다(DECISIONS 2026-10-11 ⑫ — 공개 저장소 금지의 유일한 예외).
+# 쓰기는 앱 서버의 비밀 키로만 한다 — 저장소 쓰기 정책을 두지 않는다(creator-link INV-E1).
+enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
+
+# 프로필 사진 버킷(creator-link INV-E9) — 마이그레이션 20261011000002 도 같은 버킷을 만든다(호스팅 DB 용).
+# 로컬은 저장소 서비스가 마이그레이션보다 늦게 표를 만들 수 있어 여기서도 만든다.
+[storage.buckets.creator-photos]
+public = true
+file_size_limit = "1MiB"
+allowed_mime_types = ["image/webp"]
 
 # Uncomment to configure local storage buckets
 # [storage.buckets.images]

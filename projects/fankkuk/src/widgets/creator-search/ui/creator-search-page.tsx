@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { creatorPagePath } from "@/entities/creator/model/creator-handle";
 import { useId, useState } from "react";
 import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
 import { hasPickedTag, tagChips, type TagOption } from "@/entities/creator/model/creator-tags";
@@ -116,7 +117,7 @@ export function CreatorSearchPage({
                 <CreatorFace tone={c.faceTone} />
                 <div>
                   <p className={s.who}>
-                    <Link href={`/creators/${c.id}`}>{c.name}</Link>
+                    <Link href={creatorPagePath(c)}>{c.name}</Link>
                   </p>
                   <p className={s.says}>
                     {c.tags.map((t) => (

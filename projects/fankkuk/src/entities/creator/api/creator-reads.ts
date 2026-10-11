@@ -6,7 +6,7 @@ import type { CreatorProfile, CreatorSummary } from "../model/creator";
 // 크리에이터 목록을 DB 읽기 함수(find_creators·list_creators·creator_by_id, 팔로우는 my_follows)로 읽는다. 응답은 신뢰 경계 밖이라 형식을 검사한다.
 
 const rowSchema = z.object({
-  id: z.string().uuid(),
+  id: z.guid(),
   name: z.string(),
   channel: z.string(),
   channel_title: z.string(),
@@ -16,9 +16,12 @@ const rowSchema = z.object({
   avg_approval_hours: z.number().int().nullable(),
   face_tone: z.string(),
   approval_minutes_from_orders: z.number().int().nullable(),
+  // creator-link: 링크용 아이디·사진 경로(아이디나 사진이 없으면 null)
+  handle: z.string().nullable(),
+  photo_path: z.string().nullable(),
 });
 
-const followSchema = z.object({ creator_id: z.string().uuid() });
+const followSchema = z.object({ creator_id: z.guid() });
 
 /**
  * 본인 확인을 마친 크리에이터 카드. 로그인한 팬이면 팔로우 여부가 붙는다.
@@ -31,7 +34,7 @@ export async function readCreatorCards(
   opts: { signedIn: boolean; forSearch?: boolean; onlyId?: string },
 ): Promise<CreatorCard[]> {
   // 주소에서 온 값이라 꼴부터 본다 — ID 꼴이 아니면 DB 가 오류를 내 페이지가 500 이 된다
-  if (opts.onlyId !== undefined && !z.string().uuid().safeParse(opts.onlyId).success) return [];
+  if (opts.onlyId !== undefined && !z.guid().safeParse(opts.onlyId).success) return [];
   const { data, error } = opts.onlyId
     ? await client.rpc("creator_by_id", { p_id: opts.onlyId })
     : await client.rpc(opts.forSearch ? "find_creators" : "list_creators");
@@ -54,12 +57,14 @@ export async function readCreatorCards(
     alias: r.alias,
     avgApprovalHours: r.avg_approval_hours,
     faceTone: r.face_tone,
+    handle: r.handle,
+    photoPath: r.photo_path,
   }));
   const minutes = Object.fromEntries(rows.map((r) => [r.id, r.approval_minutes_from_orders]));
   return toCreatorCards(summaries, profiles, followedIds, minutes);
 }
 
-const creatorIdSchema = z.object({ creator_id: z.string().uuid() });
+const creatorIdSchema = z.object({ creator_id: z.guid() });
 
 /** 로그인한 크리에이터 자신의 크리에이터 id(없으면 null). 자기 줄·자기 페이지에서 팔로우·선물 보내기를 숨기는 데 쓴다. */
 export async function readOwnCreatorId(client: Pick<SupabaseClient, "rpc">): Promise<string | null> {

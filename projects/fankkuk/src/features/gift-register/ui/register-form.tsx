@@ -25,7 +25,7 @@ import f from "./register-form.module.css";
 
 /** 고를 수 있는 크리에이터 한 명. 소개 칸(태그·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
 export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "approvalMinutes"> &
-  Partial<Pick<CreatorCard, "tags" | "channelTitle" | "alias" | "faceTone" | "following">> & {
+  Partial<Pick<CreatorCard, "tags" | "channelTitle" | "alias" | "faceTone" | "following" | "handle">> & {
     /** 채널 이사 중(creator-verification INV-V12) — 찾기에는 나오지만 지금은 선물을 받지 않는다 */
     moving?: boolean;
     /** 공개 받는 상태 — 쉬는 중 날짜·생일·기념일(creator-receiving). 한도 칸은 없다(INV-B6) */
