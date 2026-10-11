@@ -1,11 +1,12 @@
 ---
 feature: 받았어요 · 감사 답장 · 답장 공유 카드 · 감사 답장 모음
-status: draft
+status: approved
 # 이력:
 #   2026-10-11 초안 — 사용자 추가분 「팬·크리에이터 화면 기능」(docs/reference/addendum-2026-10-02-screens.md) F-5·불변식 20·22 와
 #              부딪히는 곳 ⑧⑨⑭ 에 대한 사용자 답 「7곳 전부 추천대로 해」(DECISIONS 2026-10-11)를 받아적었다. 시안: mockups/addendum/creator-received.html·share-card.html.
 #              추가분에 없던 세부는 스스로 정했다 — 아래 「스스로 정한 것」. 사용자 지시를 받아적은 것이라 승인 카드는 열지 않는다.
 #              앞 기능(creator-link)이 끝나 이 기능 차례가 되면 approved 로 바꾼다(승인된 스펙은 불변식마다 시험이 있어야 해서, 시험을 쓰기 직전에 바꾼다).
+#   2026-10-11 approved — creator-link 가 끝나 이 기능 차례(사용자 「계속」).
 surfaces: [authz, concurrency]
 # authz: 받았어요·답장은 그 선물을 받은 크리에이터만, 공유 카드는 그 선물을 보낸 팬만 만든다. 틀리면 남의 선물에 답장하거나 남의 답장을 퍼뜨린다.
 # concurrency: INV-G2 — 「받았어요」를 두 번 눌러도 알림이 두 번 가지 않는다. 시변: INV-G7 — 수령 확인 3일 뒤부터 공개.
