@@ -12,6 +12,7 @@ import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
 import { lowestPriceKrw, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import type { FollowMode } from "@/features/creator-follow/ui/follow-button";
+import type { LinkPageSend } from "@/features/gift-register/model/sender-rule";
 import s from "./creator-profile.module.css";
 
 // 선물 링크 페이지 = 크리에이터 페이지 (creator-link). 시안: docs/design/mockups/addendum/creator-link.html (PC·모바일)
@@ -27,8 +28,11 @@ export type CreatorProfilePageProps = {
   creator: CreatorLinkView;
   others: readonly CreatorLinkView[];
   followMode: FollowMode;
-  /** open = 선물 보내기 / self = 크리에이터 자기 페이지(보내지 않음) / needs_follow = 팔로우하지 않음 → 「팔로우하고 선물 보내기」(INV-L9) */
-  send?: "open" | "self" | "needs_follow";
+  /**
+   * open = 선물 보내기 / self = 크리에이터 자기 페이지(보내지 않음) / needs_follow = 팔로우하지 않음 → 「팔로우하고 선물 보내기」(INV-L9)
+   * / hidden = 쉬는 중이라 자리를 비움(INV-B2). 판단은 서버가 sendOnLinkPage 로 한다.
+   */
+  send?: LinkPageSend;
   /** 지금 공개 요금표 — 서버가 DB 공개 읽기 함수로 읽어 넘긴다. */
   prices: PublicPriceTable;
   /** 보낼 수 없는 물품 — 서버가 DB 공개 읽기 함수로 읽어 넘긴다(INV-K9). */
@@ -70,7 +74,7 @@ function Chevron() {
 }
 
 /** 주 버튼 — 보낼 수 있으면 「선물 보내기」, 팔로우하지 않았으면 「팔로우하고 선물 보내기」, 자기 페이지면 안내 태그. 쉬는 중이면 그리지 않는다. */
-function SendButton({ shown, creator, followMode }: { shown: "open" | "self" | "needs_follow" | "hidden"; creator: CreatorLinkView; followMode: FollowMode }) {
+function SendButton({ shown, creator, followMode }: { shown: LinkPageSend; creator: CreatorLinkView; followMode: FollowMode }) {
   if (shown === "open") {
     return (
       <Link className="btn btn--block" href={`/gifts/new?creator=${creator.id}`}>
@@ -97,9 +101,8 @@ export function CreatorProfilePage({
   monthFans,
   today,
 }: CreatorProfilePageProps) {
-  // INV-B2: 쉬는 중이면 「선물 보내기」 자리를 비우고 안내 문구를 보인다(등록은 DB 가 막는다). 받기 어려운 품목 줄도 숨긴다(시안 쉬는 중 변형).
+  // INV-B2: 쉬는 중이면 안내 문구를 보이고 받기 어려운 품목 줄을 숨긴다(시안 쉬는 중 변형). 「선물 보내기」 자리를 비울지는 send 가 이미 정해 왔다.
   const restingText = restingNotice(receiving?.resumeOn ?? null, today);
-  const shown = restingText && send !== "self" ? "hidden" : send;
   // INV-B8: 가장 가까운 생일·기념일 하나를 D-30 ~ D-day 동안 — 등록 화면과 같은 계산 함수
   const dday = receiving ? upcomingDday(today, receiving.birthday, receiving.anniversaries) : null;
   const ddayDate = dday ? addDays(today, dday.daysLeft) : null;
@@ -125,9 +128,9 @@ export function CreatorProfilePage({
         </div>
         <p className={s.thanks}>보내주시는 마음 늘 감사해요</p>
         {/* 모바일·좁은 폭: 긴 페이지라 첫 화면에도 주 버튼을 둔다(DECISIONS 2026-10-11). 넓은 폭에서는 오른쪽 판에 있어 숨긴다 */}
-        {shown === "open" || shown === "needs_follow" ? (
+        {send === "open" || send === "needs_follow" ? (
           <div className={s["top-send"]}>
-            <SendButton shown={shown} creator={creator} followMode={followMode} />
+            <SendButton shown={send} creator={creator} followMode={followMode} />
           </div>
         ) : null}
       </section>
@@ -171,8 +174,9 @@ export function CreatorProfilePage({
                 </p>
               </div>
               <span className={s.dd}>
-                <span className={s["dd-tag"]} aria-label={dday.daysLeft === 0 ? "오늘" : `${dday.daysLeft}일 남음`}>
-                  {dday.daysLeft === 0 ? "D-day" : `D-${dday.daysLeft}`}
+                <span className={s["dd-tag"]}>
+                  <span aria-hidden="true">{dday.daysLeft === 0 ? "D-day" : `D-${dday.daysLeft}`}</span>
+                  <span className="sr-only">{dday.daysLeft === 0 ? "오늘" : `${dday.daysLeft}일 남음`}</span>
                 </span>
               </span>
             </div>
@@ -194,9 +198,9 @@ export function CreatorProfilePage({
         <aside className={s.send} aria-labelledby="send-h">
           <h2 id="send-h">선물 보내기</h2>
           <div className={s["send-btn"]}>
-            <SendButton shown={shown} creator={creator} followMode={followMode} />
+            <SendButton shown={send} creator={creator} followMode={followMode} />
           </div>
-          {shown === "needs_follow" ? <p className={s.need}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p> : null}
+          {send === "needs_follow" ? <p className={s.need}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p> : null}
           {restingText ? <p className={s["rest-note"]}>{restingText}</p> : null}
           <div className={s.sum}>
             <div className={s["sum-row"]}>

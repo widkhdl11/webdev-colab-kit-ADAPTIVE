@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
-import { HANDLE_LOCK_DAYS, HANDLE_MAX, HANDLE_RETIRE_DAYS, LINK_HOST, linkText } from "@/entities/creator/model/creator-handle";
+import { canDownloadNotice, HANDLE_LOCK_DAYS, HANDLE_MAX, HANDLE_RETIRE_DAYS, isSameHandle, LINK_HOST, linkText, normalizeHandle } from "@/entities/creator/model/creator-handle";
 import { creatorPhotoUrl } from "@/entities/creator/model/link-images";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
 import { deleteCreatorPhoto, sendCreatorPhoto } from "@/features/creator-photo/api/send-creator-photo";
@@ -43,7 +43,7 @@ export function LinkSection({
 
   const askSave = () => {
     setMsg(null);
-    if (draft.trim().toLowerCase() === handle) {
+    if (isSameHandle(draft, handle)) {
       setMsg({ ok: false, text: "지금 쓰는 링크 주소와 같아요." });
       return;
     }
@@ -114,7 +114,7 @@ export function LinkSection({
   };
 
   const photoUrl = creatorPhotoUrl(photoBase, photoPath);
-  const noticeReady = handle !== null && verified;
+  const noticeReady = canDownloadNotice({ handle, verified });
 
   return (
     <section aria-labelledby="link-h">
@@ -144,7 +144,7 @@ export function LinkSection({
         <p className="hint" id="link-handle-hint">
           {locked
             ? `링크 주소는 ${lockedDays}일 뒤에 바꿀 수 있어요.`
-            : `영문·숫자·밑줄(_)로 3~${HANDLE_MAX}자. 방송·SNS 에 붙일 주소예요. 로그인 아이디와 다른 값으로 정해 주세요.`}
+            : `${LINK_HOST}/ 뒤에 붙는 주소예요. 영문·숫자·밑줄(_)로 3~${HANDLE_MAX}자. 방송·SNS 에 붙일 주소라 로그인 아이디와 다른 값으로 정해 주세요.`}
         </p>
       </div>
       {handle ? (
@@ -182,7 +182,7 @@ export function LinkSection({
         <div className={s["photo-row"]}>
           <CreatorPhoto photoUrl={photoUrl} tone="var(--face-1)" className={s["photo-prev"]} />
           <div className={s["photo-ctl"]}>
-            <input className={s.file} id="link-photo" ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="link-photo-hint" />
+            <input className={s.file} id="link-photo" ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="link-photo-hint link-photo-msg" />
             <div className={s["save-row"]}>
               <button className="btn btn--soft btn--sm" type="button" aria-disabled={photoBusy} onClick={() => void uploadPhoto()}>
                 {photoBusy ? "저장하는 중…" : "사진 올리기"}
@@ -199,7 +199,7 @@ export function LinkSection({
           jpg·png·webp, 10MB 까지. 가운데를 정사각으로 잘라 저장하고, 촬영 위치 같은 사진 정보는 지워요. 링크 미리보기에도 이 사진이 들어가요.
         </p>
       </div>
-      <p className={photoMsg && !photoMsg.ok ? s.error : `sub ${s["save-msg"]}`} role="status">
+      <p className={photoMsg && !photoMsg.ok ? s.error : `sub ${s["save-msg"]}`} role="status" id="link-photo-msg">
         {photoMsg && !photoMsg.ok ? (
           <span className={s["error-mark"]} aria-hidden="true">
             !
@@ -222,7 +222,7 @@ export function LinkSection({
         ) : null}
       </div>
 
-      <BottomSheet open={confirming} title={`${linkText(draft.trim().toLowerCase() || "…")} 로 정할까요?`} onClose={() => setConfirming(false)}>
+      <BottomSheet open={confirming} title={`${linkText(normalizeHandle(draft) || "…")} 로 정할까요?`} onClose={() => setConfirming(false)}>
         <p>정하면 {HANDLE_LOCK_DAYS}일 동안 바꿀 수 없어요.</p>
         <p className={`sub ${s["sheet-sub"]}`}>
           {handle ? `지금 주소(${linkText(handle)})로 들어온 팬은 ${HANDLE_RETIRE_DAYS}일 동안 새 주소로 넘겨 드려요.` : "방송·SNS 에 붙이기 전에 철자를 한 번 더 확인해 주세요."}

@@ -23,14 +23,29 @@ export function isHandleShape(handle: string): boolean {
   return SHAPE.test(handle);
 }
 
+/** 고쳐 쓴 값이 지금 아이디와 같은가 — 저장 때와 같은 정리(normalizeHandle) 뒤에 비교한다. 아이디가 없으면 늘 다르다. */
+export function isSameHandle(draft: string, current: string | null): boolean {
+  return current !== null && normalizeHandle(draft) === current;
+}
+
 /** 화면에 보이는 링크 주소(fankkuk.kr/haru). */
 export function linkText(handle: string): string {
   return `${LINK_HOST}/${handle}`;
 }
 
+/** 링크 주소의 경로(/haru). */
+function linkPath(handle: string): string {
+  return `/${handle}`;
+}
+
 /** 크리에이터 페이지로 가는 주소 — 아이디가 있으면 링크 주소, 없으면 옛 페이지 주소(INV-E5). */
 export function creatorPagePath(c: { id: string; handle: string | null }): string {
-  return c.handle ? `/${c.handle}` : `/creators/${c.id}`;
+  return c.handle ? linkPath(c.handle) : `/creators/${c.id}`;
+}
+
+/** 공지 이미지를 내려받을 수 있는가 — 링크 주소가 있고 본인 확인을 마쳤을 때만(INV-E10. 본인 확인 전에는 링크가 열리지 않는다, INV-E5). */
+export function canDownloadNotice(c: { handle: string | null; verified: boolean }): boolean {
+  return c.handle !== null && c.verified;
 }
 
 /** DB 가 찾은 아이디 — creatorId 와 그 크리에이터의 지금 아이디. 없거나 본인 확인 전이면 null. */
@@ -46,13 +61,13 @@ export type LinkRoute = { kind: "redirect"; to: string } | { kind: "not_found" }
  */
 export function linkRouteOf(param: string, resolved: ResolvedHandle | null): LinkRoute {
   const lower = param.toLowerCase();
-  if (lower !== param && isHandleShape(lower)) return { kind: "redirect", to: `/${lower}` };
+  if (lower !== param && isHandleShape(lower)) return { kind: "redirect", to: linkPath(lower) };
   if (!isHandleShape(param) || !resolved) return { kind: "not_found" };
-  if (resolved.handle !== param) return { kind: "redirect", to: `/${resolved.handle}` };
+  if (resolved.handle !== param) return { kind: "redirect", to: linkPath(resolved.handle) };
   return { kind: "show", creatorId: resolved.creatorId };
 }
 
 /** 옛 페이지 주소(/creators/{id})로 들어왔을 때 — 아이디가 있으면 링크 주소로 넘기고, 없으면 그 주소가 그대로 페이지다(INV-E5 S5). */
 export function oldPageRouteOf(c: { handle: string | null }): { kind: "redirect"; to: string } | { kind: "show" } {
-  return c.handle ? { kind: "redirect", to: `/${c.handle}` } : { kind: "show" };
+  return c.handle ? { kind: "redirect", to: linkPath(c.handle) } : { kind: "show" };
 }

@@ -28,13 +28,29 @@ export function previewImagePath(c: Pick<PublicCreatorLink, "id" | "photoPath">)
   return `/api/og/${c.id}?v=${photoVersionOf(c.photoPath)}`;
 }
 
+/**
+ * 미리보기 이미지 주소로 들어온 v 가 지금 사진 판과 같은가. 다르거나 없으면 라우트가 지금 판 주소로 넘긴다 —
+ * 같은 v 주소는 늘 같은 사진을 가리키게 되어 공유 캐시에 오래 둘 수 있다(INV-E9).
+ */
+export function isCurrentPreviewVersion(requested: string | null, photoPath: string | null): boolean {
+  return requested !== null && /^(0|[1-9][0-9]{0,8})$/.test(requested) && Number(requested) === photoVersionOf(photoPath);
+}
+
+/** 사진이 없을 때 기본 이미지(단색 원)에 넣는 이름 첫 글자. */
+export function nameInitial(name: string): string {
+  return [...name.trim()][0] ?? "";
+}
+
 /** 미리보기 이미지에 넘기는 값 — 공개 이름과 사진 주소뿐(INV-E10). 고정 문구·로고는 그리는 쪽에 있다. */
 export function previewImageInput(c: PublicCreatorLink, storageBase: string): { name: string; photoUrl: string | null } {
   return { name: c.name, photoUrl: creatorPhotoUrl(storageBase, c.photoPath) };
 }
 
-/** 공지 이미지에 넘기는 값 — 사진 주소와 링크 주소뿐. 링크용 아이디가 없으면 null(내려받기 없음, INV-E10). */
-export function noticeImageInput(c: PublicCreatorLink, storageBase: string): { photoUrl: string | null; linkText: string } | null {
+/**
+ * 공지 이미지에 넘기는 값 — 사진 주소·링크 주소, 그리고 사진이 없을 때 기본 이미지에 넣을 이름 첫 글자(공개 이름 전체는 넘기지 않는다).
+ * 링크용 아이디가 없으면 null(내려받기 없음, INV-E10).
+ */
+export function noticeImageInput(c: PublicCreatorLink, storageBase: string): { photoUrl: string | null; linkText: string; initial: string } | null {
   if (!c.handle) return null;
-  return { photoUrl: creatorPhotoUrl(storageBase, c.photoPath), linkText: linkText(c.handle) };
+  return { photoUrl: creatorPhotoUrl(storageBase, c.photoPath), linkText: linkText(c.handle), initial: nameInitial(c.name) };
 }

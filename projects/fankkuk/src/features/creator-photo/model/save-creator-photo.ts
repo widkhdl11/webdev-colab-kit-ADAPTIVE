@@ -17,7 +17,8 @@ export type PhotoResult = { ok: true; photoPath: string | null } | { ok: false; 
 
 const nextSchema = z.array(z.object({ creator_id: z.guid(), next_version: z.number().int().positive() }));
 
-function gate(viewer: Viewer | null): PhotoResult | null {
+/** 사진을 바꿀 수 있는 사람인가 — 로그인한 크리에이터만. 라우트가 본문(파일)을 읽기 전에 먼저 부르고, 저장·지우기도 다시 부른다. */
+export function photoGate(viewer: Viewer | null): Extract<PhotoResult, { ok: false }> | null {
   if (!viewer) return { ok: false, status: 401, message: "로그인이 필요해요." };
   if (viewer.role !== "creator") return { ok: false, status: 403, message: "크리에이터 계정만 프로필 사진을 바꿀 수 있어요." };
   return null;
@@ -31,7 +32,7 @@ async function removeOld(admin: PhotoDeps["admin"], oldPath: unknown): Promise<v
 }
 
 export async function saveCreatorPhoto(deps: PhotoDeps, file: Blob | null): Promise<PhotoResult> {
-  const denied = gate(deps.viewer);
+  const denied = photoGate(deps.viewer);
   if (denied) return denied;
   if (!file) return { ok: false, status: 400, message: "사진 파일을 골라 주세요." };
   const processed = await processProfilePhoto(new Uint8Array(await file.arrayBuffer()));
@@ -59,7 +60,7 @@ export async function saveCreatorPhoto(deps: PhotoDeps, file: Blob | null): Prom
 }
 
 export async function removeCreatorPhoto(deps: PhotoDeps): Promise<PhotoResult> {
-  const denied = gate(deps.viewer);
+  const denied = photoGate(deps.viewer);
   if (denied) return denied;
   const set = await deps.admin.rpc("set_creator_photo", { p_profile_id: deps.viewer!.userId, p_version: null });
   if (set.error) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { creatorPagePath, HANDLE_MAX, HANDLE_MIN, isHandleShape, linkRouteOf, normalizeHandle, oldPageRouteOf } from "./creator-handle";
+import { canDownloadNotice, creatorPagePath, HANDLE_MAX, HANDLE_MIN, isHandleShape, isSameHandle, linkRouteOf, normalizeHandle, oldPageRouteOf } from "./creator-handle";
 
 // 선물 링크 주소 판정 (creator-link INV-E2·E3·E5). 저장 검사의 정본은 DB 함수이고(통합 시험 creator-link-db),
 // 여기서는 화면·서버가 주소를 고르는 갈래를 본다.
@@ -48,5 +48,19 @@ describe("INV-E5: 옛 페이지 주소와 링크", () => {
   it("INV-E5: 크리에이터 페이지로 가는 링크는 아이디가 있으면 링크 주소, 없으면 옛 페이지 주소", () => {
     expect(creatorPagePath({ id: "c1", handle: "haru" })).toBe("/haru");
     expect(creatorPagePath({ id: "c1", handle: null })).toBe("/creators/c1");
+  });
+});
+
+describe("INV-E2·E10: 설정 화면이 묻는 판단", () => {
+  it("INV-E2: 고쳐 쓴 값은 저장 때와 같이 앞뒤 공백을 빼고 소문자로 바꾼 뒤 지금 아이디와 비교한다", () => {
+    expect(isSameHandle("  HaRu ", "haru")).toBe(true);
+    expect(isSameHandle("haru2", "haru")).toBe(false);
+    expect(isSameHandle("haru", null)).toBe(false);
+  });
+
+  it("INV-E10 S10 (실패경로): 공지 이미지는 링크 주소가 있고 본인 확인을 마쳤을 때만 내려받는다", () => {
+    expect(canDownloadNotice({ handle: "haru", verified: true })).toBe(true);
+    expect(canDownloadNotice({ handle: null, verified: true })).toBe(false);
+    expect(canDownloadNotice({ handle: "haru", verified: false })).toBe(false);
   });
 });

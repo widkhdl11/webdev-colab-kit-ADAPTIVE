@@ -72,6 +72,17 @@ export function sendAvailabilityOf(input: {
   return input.following ? "open" : "needs_follow";
 }
 
+/** 선물 링크 페이지의 「선물 보내기」 자리 — 카드와 같은 판단에 「쉬는 중이면 숨김」(hidden)이 더해진다. */
+export type LinkPageSend = SendAvailability | "hidden";
+
+/**
+ * creator-receiving INV-B2: 받는 크리에이터가 쉬는 중이면 선물 보내기 자리를 비운다(안내 문구만 보인다 — 등록은 DB 가 막는다).
+ * 크리에이터가 자기 페이지를 볼 때(self)는 쉬는 중이어도 「내 크리에이터 페이지예요」를 그대로 둔다.
+ */
+export function sendOnLinkPage(availability: SendAvailability, resting: boolean): LinkPageSend {
+  return resting && availability !== "self" ? "hidden" : availability;
+}
+
 /** 선물 보내기 목록: 내가 팔로우한 크리에이터만(INV-L9), 크리에이터면 자기 자신은 뺀다(INV-L8). 등록 판정은 서버·DB 가 다시 한다. */
 export function sendList<T extends { id: string; following: boolean }>(cards: readonly T[], ownCreatorId: string | null): T[] {
   return cards.filter((c) => c.following && c.id !== ownCreatorId);

@@ -12,8 +12,9 @@ import { CreatorProfilePage } from "@/widgets/creator-profile/ui/creator-profile
 import { ImageResponse } from "next/og";
 import { readImageFont, readLogoDataUrl, readPhotoDataUrl } from "@/widgets/link-images/api/image-assets";
 import { NoticeImageCard, PreviewImageCard } from "@/widgets/link-images/ui/link-image-cards";
+import { clearPhotos, insertOrder, linkClient, PHOTO_BUCKET_NAME, resetLink, setHandle, setHandleOk, unlockHandle, verifyCreator } from "./creator-link-helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
-import { adminClient, anonClient, deleteTestOrders, psql, SEED, signedInClient } from "./helpers";
+import { adminClient, anonClient, deleteTestOrders, psql, SEED } from "./helpers";
 
 // 선물 링크 페이지 (docs/specs/creator-link.md INV-E1~E11, S1~S11) 중 DB·저장소·서버가 지키는 것.
 // 주소 판정(대문자·옛 아이디 넘기기)의 갈래는 src 단위 시험(entities/creator/model/creator-handle.test.ts)에도 있다.
@@ -26,71 +27,15 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => undefined, r
 const A = CV.haru;
 const B = CV.summer;
 const C = CV.ggul; // 본인 확인 전으로 두는 크리에이터
-const ALL = [CV.haru, CV.summer, CV.ggul, CV.dawn];
-const IDS = ALL.map((c) => `'${c.creatorId}'`).join(", ");
-const BUCKET = "creator-photos";
+const BUCKET = PHOTO_BUCKET_NAME;
 const FAN_X = SEED.fanId; // 별빛 (byeolbit_fan)
 const FAN_Y = SEED.otherFanId; // 달토끼 (daltokki_fan)
-
-function verify(creatorId: string, slug: string): void {
-  psql(
-    `begin; set local session_replication_role = replica; update public.creators set identity_verified = true, searchable = true, channel = 'https://www.youtube.com/@${slug}' where id = '${creatorId}'; commit;`,
-  );
-}
-
-/** 아이디 표·잠금·사진 칸·소개를 되돌린다 — 표·칸이 없을 때(구현 전 빨간불)도 멈추지 않게. */
-function resetLink(): void {
-  psql(
-    [
-      "begin;",
-      "set local session_replication_role = replica;",
-      "do $$ begin",
-      `if to_regclass('public.creator_handles') is not null then execute $q$delete from public.creator_handles where creator_id in (${IDS})$q$; end if;`,
-      `if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'creators' and column_name = 'photo_path') then
-         execute $q$update public.creators set handle_changed_at = null, photo_path = null, photo_version = 0 where id in (${IDS})$q$;
-       end if;`,
-      `update public.creators set intro = '' where id in (${IDS});`,
-      "end $$;",
-      "commit;",
-    ].join(" "),
-  );
-}
-
-async function clearPhotos(): Promise<void> {
-  const admin = adminClient();
-  for (const c of ALL) {
-    const listed = await admin.storage.from(BUCKET).list(c.creatorId);
-    const names = (listed.data ?? []).map((f) => `${c.creatorId}/${f.name}`);
-    if (names.length > 0) await admin.storage.from(BUCKET).remove(names);
-  }
-}
-
-const clients = new Map<string, SupabaseClient>();
-async function client(login: string): Promise<SupabaseClient> {
-  const hit = clients.get(login);
-  if (hit) return hit;
-  const c = await signedInClient(login);
-  clients.set(login, c);
-  return c;
-}
-
-async function setHandle(login: string, handle: string) {
-  return (await client(login)).rpc("update_my_creator_handle", { p_handle: handle });
-}
-
-async function setHandleOk(login: string, handle: string): Promise<string> {
-  const r = await setHandle(login, handle);
-  if (r.error) throw new Error(`아이디 저장 실패: ${r.error.code} ${r.error.message}`);
-  return r.data as string;
-}
+const verify = verifyCreator;
+const client = linkClient;
+const unlock = unlockHandle;
 
 function currentHandle(creatorId: string): string {
   return psql(`select coalesce((select handle from public.creator_handles where creator_id = '${creatorId}' and retired_until is null), '')`);
-}
-
-/** 잠금을 풀어 다음 바꾸기를 허용한다(30일이 지난 것처럼). */
-function unlock(creatorId: string): void {
-  psql(`update public.creators set handle_changed_at = now() - interval '31 days' where id = '${creatorId}'`);
 }
 
 async function resolve(handle: string): Promise<{ creator_id: string; handle: string }[]> {
@@ -102,24 +47,6 @@ async function resolve(handle: string): Promise<{ creator_id: string; handle: st
 async function saveProfile(login: string, intro: string) {
   const name = Object.values(CV).find((c) => c.login === login)?.name ?? "시험";
   return (await client(login)).rpc("update_my_creator_profile", { p_name: name, p_intro: intro, p_searchable: true });
-}
-
-let seq = 0;
-function orderNo(): string {
-  seq += 1;
-  return `FC-L${Date.now().toString(36).toUpperCase().slice(-4)}${seq}`.slice(0, 13);
-}
-
-/** 상태·결제 시각을 정해 주문을 바로 넣는다. registeredAt 은 SQL 식(null 이면 결제 전). */
-function insertOrder(fanId: string, creatorId: string, status: string, registeredAt: string | null, extra: { waybill?: string; tracking?: string } = {}): string {
-  const no = orderNo();
-  psql(
-    `begin; set local session_replication_role = replica;
-     insert into public.orders (order_no, fan_id, creator_id, item_kind, has_electronics_or_metal, status, registered_at, outbound_waybill_no, fan_tracking_no)
-     values ('${no}', '${fanId}', '${creatorId}', '시험 선물', false, '${status}', ${registeredAt ?? "null"}, ${extra.waybill ? `'${extra.waybill}'` : "null"}, ${extra.tracking ? `'${extra.tracking}'` : "null"});
-     commit;`,
-  );
-  return no;
 }
 
 async function monthFans(creatorId: string): Promise<number> {
@@ -300,6 +227,37 @@ describe("INV-E3: 한 아이디는 한 크리에이터 — 옛 아이디는 90�
       expect(Number(psql(`select count(*) from public.creator_handles where handle = '${handle}${round}'`))).toBe(1);
     }
   });
+
+  it("INV-E3 (실패경로): 같은 아이디를 「지금 아이디 줄」과 「묶인 옛 아이디 줄」로 직접 넣으면 고유 목록이 거부한다(23505)", () => {
+    /** 오류가 나면 그 SQLSTATE 를, 아니면 ok 를 돌려준다. */
+    const insertState = (sql: string) =>
+      psql(`do $$ begin ${sql}; raise notice 'ok'; exception when others then raise exception 'sqlstate=%', sqlstate; end $$; select 'ok'`)
+        .split(/\r?\n/)
+        .at(-1);
+    expect(insertState(`insert into public.creator_handles (handle, creator_id) values ('dup_e3', '${A.creatorId}')`)).toBe("ok");
+    const asRetired = `insert into public.creator_handles (handle, creator_id, retired_until) values ('dup_e3', '${B.creatorId}', now() + interval '90 days')`;
+    expect(() => insertState(asRetired)).toThrow(/sqlstate=23505/);
+    // 반대 순서(옛 아이디 줄이 먼저)도 같다
+    psql(`delete from public.creator_handles where handle = 'dup_e3'`);
+    expect(insertState(asRetired)).toBe("ok");
+    expect(() => insertState(`insert into public.creator_handles (handle, creator_id) values ('dup_e3', '${A.creatorId}')`)).toThrow(/sqlstate=23505/);
+    expect(psql(`select creator_id || ':' || (retired_until is not null) from public.creator_handles where handle = 'dup_e3'`)).toBe(`${B.creatorId}:true`);
+  });
+
+  it("INV-E3 (동시): A 가 아이디를 바꾸는 저장과 B 가 A 의 옛 아이디를 고르는 저장이 겹쳐도 B 는 거부되고 옛 주소는 A 에게 간다", async () => {
+    const base = `conc_${Date.now().toString(36).slice(-5)}`;
+    for (let round = 0; round < 5; round++) {
+      resetLink();
+      const oldHandle = `${base}o${round}`;
+      await setHandleOk(A.login, oldHandle);
+      unlock(A.creatorId);
+      const [ra, rb] = await Promise.all([setHandle(A.login, `${base}n${round}`), setHandle(B.login, oldHandle)]);
+      expect([round, ra.error]).toEqual([round, null]);
+      expect([round, rb.error?.code]).toEqual([round, "P0092"]);
+      expect(currentHandle(B.creatorId)).toBe("");
+      expect(await resolve(oldHandle)).toEqual([{ creator_id: A.creatorId, handle: `${base}n${round}` }]);
+    }
+  });
 });
 
 describe("INV-E4: 정하거나 바꾸면 30일 잠금", () => {
@@ -381,7 +339,7 @@ describe("INV-E8: 이번 달 N명의 팬", () => {
     insertOrder(FAN_X, A.creatorId, "shipped", "(date_trunc('month', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul') - interval '1 hour'");
     expect(await monthFans(A.creatorId)).toBe(0);
     const page = await loadCreatorLinkPage({ client: anonClient(), viewer: null, creatorId: A.creatorId, photoBase: "http://photo.test" });
-    expect(page?.monthFans).toBe(0);
+    expect(page?.props.monthFans).toBe(0);
     const html = renderToStaticMarkup(createElement(CreatorProfilePage, page!.props));
     expect(html).not.toContain("마음을 보냈어요");
   });
@@ -394,6 +352,44 @@ describe("INV-E8: 이번 달 N명의 팬", () => {
     const html = renderToStaticMarkup(createElement(CreatorProfilePage, page!.props));
     expect(html).toContain("1명");
     expect(html).toContain("마음을 보냈어요");
+  });
+
+  // 한국 시간 달 시작 = UTC 로는 전달 마지막 날 15시. 그 +1시간은 UTC 달력으로는 아직 전달이라, UTC 로 달을 자르는 구현이면 빠진다.
+  // (UTC 로도 아직 전달인 한국 시간 1일 0~9시에 돌리면 이 시험은 두 구현을 가르지 못한다 — 그 아홉 시간 말고는 가른다)
+  it("INV-E8: 한국 시간 달 시작 +1시간에 결제된 선물은 이번 달로 세고, 시작 -1시간은 세지 않는다", async () => {
+    const kstMonthStart = "(date_trunc('month', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul')";
+    insertOrder(FAN_X, A.creatorId, "registered", `${kstMonthStart} + interval '1 hour'`);
+    insertOrder(FAN_Y, A.creatorId, "registered", `${kstMonthStart} - interval '1 hour'`);
+    expect(await monthFans(A.creatorId)).toBe(1);
+  });
+
+  // 스펙 「스스로 정한 것」: 거절·반려된 주문도 넣는다. expired 는 「결제 뒤 7일 안에 승인하지 않아 반려」(office_run_expiry)라 넣는 쪽이다.
+  // 빼는 것은 결제가 끝나지 않은 주문(pending_payment — 결제 실패도 이 상태로 남는다)과 취소뿐이다.
+  it("INV-E8: 기한이 지나 반려된 선물(expired)은 마음을 보낸 것으로 세고, 결제가 끝나지 않은 주문·취소는 세지 않는다", async () => {
+    insertOrder(FAN_X, A.creatorId, "expired", "now()");
+    insertOrder(FAN_Y, A.creatorId, "pending_payment", null);
+    insertOrder(CV.dawn.id, A.creatorId, "canceled", "now()");
+    expect(await monthFans(A.creatorId)).toBe(1);
+  });
+});
+
+describe("이런 크리에이터도 있어요 — 링크 페이지 아래 줄", () => {
+  it("INV-E7: 아래 줄은 그 크리에이터를 뺀 목록의 앞 6명이고, 목록 전체를 읽던 때와 같은 사람·같은 순서다", async () => {
+    const page = await loadCreatorLinkPage({ client: anonClient(), viewer: null, creatorId: A.creatorId, photoBase: "http://photo.test" });
+    const all = (await anonClient().rpc("list_creators")).data as { id: string }[];
+    const expected = all.filter((c) => c.id !== A.creatorId).slice(0, 6).map((c) => c.id);
+    expect(all.length).toBeGreaterThan(2);
+    expect(page!.props.others.map((o) => o.id)).toEqual(expected);
+    expect(page!.props.others.some((o) => o.id === A.creatorId)).toBe(false);
+  });
+
+  it("INV-E7: 로그인한 팬에게는 팔로우 여부가 크리에이터와 아래 줄에 같이 붙는다", async () => {
+    const fan = await client("byeolbit_fan");
+    const follows = ((await fan.rpc("my_follows")).data as { creator_id: string }[]).map((f) => f.creator_id);
+    const page = await loadCreatorLinkPage({ client: fan, viewer: { userId: FAN_X, role: "fan" }, creatorId: A.creatorId, photoBase: "http://photo.test" });
+    expect(page!.props.creator.following).toBe(follows.includes(A.creatorId));
+    for (const o of page!.props.others) expect([o.id, o.following]).toEqual([o.id, follows.includes(o.id)]);
+    expect(page!.props.others.some((o) => o.following)).toBe(follows.some((id) => page!.props.others.some((o) => o.id === id)));
   });
 });
 
@@ -500,7 +496,7 @@ describe("INV-E10: 이미지 생성에 넘기는 값", () => {
     await setHandleOk(A.login, "haru_s10");
     const after = await loadCreatorLinkPage({ client: anonClient(), viewer: null, creatorId: A.creatorId, photoBase: "http://photo.test" });
     const notice = noticeImageInput(after!.props.creator, "http://photo.test");
-    expect(notice).toEqual({ photoUrl: null, linkText: "fankkuk.kr/haru_s10" });
+    expect(notice).toEqual({ photoUrl: null, linkText: "fankkuk.kr/haru_s10", initial: [...A.name][0] });
     expect(JSON.stringify(previewImageInput(after!.props.creator, "http://photo.test"))).not.toContain("느긋하게");
   });
 });
@@ -520,7 +516,7 @@ describe("INV-E10: 사진이 있는 크리에이터의 이미지가 실제로 �
     const fonts = [{ name: "Pretendard", data: await readImageFont(), weight: 800 as const, style: "normal" as const }];
     const shots = [
       new ImageResponse(createElement(PreviewImageCard, { name: preview.name, photo, logo: await readLogoDataUrl() }), { width: 1200, height: 630, fonts }),
-      new ImageResponse(createElement(NoticeImageCard, { photo: await readPhotoDataUrl(notice.photoUrl), linkText: notice.linkText }), { width: 1080, height: 1080, fonts }),
+      new ImageResponse(createElement(NoticeImageCard, { photo: await readPhotoDataUrl(notice.photoUrl), initial: notice.initial, linkText: notice.linkText }), { width: 1080, height: 1080, fonts }),
     ];
     const sizes: [number, number][] = [];
     for (const shot of shots) {
@@ -542,28 +538,39 @@ describe("INV-E11: 승인 서명 없이 열린 열람 줄 경보", () => {
       if (r.error) throw new Error(`경보 읽기 실패: ${r.error.code}`);
       return (r.data as { open_rows: number }[])[0]?.open_rows ?? 0;
     };
-    /** 상자 하나와 열린 열람 줄 하나. signed 면 열기 한 시간 전에 서명이 붙은 승인을 먼저 둔다. */
-    const opened = (signed: boolean) => {
+    /**
+     * 상자 하나와 열린 열람 줄 하나(열린 시각 = 지금). 그 주문의 승인 상태:
+     * signed = 열기 한 시간 전에 승인·서명 / none = 승인 없음 / unsigned = 승인만 있고 서명 없음 / late = 승인했지만 서명 시각이 열람보다 한 시간 늦음.
+     */
+    const opened = (approval: "signed" | "none" | "unsigned" | "late") => {
       const no = insertOrder(FAN_X, A.creatorId, "label_printed", "now()");
       const req = `apr_${no.replaceAll("-", "")}`;
+      const request =
+        approval === "none"
+          ? ""
+          : `insert into public.approval_requests (request_id, order_id, payload, created_at, status, decided_at) select '${req}', id, 'p', now() - interval '2 hours', 'approved', now() - interval '1 hour' from public.orders where order_no = '${no}';`;
+      const signedAt = approval === "signed" ? "now() - interval '1 hour'" : approval === "late" ? "now() + interval '1 hour'" : null;
+      const signature = signedAt
+        ? `insert into public.approval_signatures (request_id, signed_content, signer_id, method, signed_at) values ('${req}', 'p', 'fake:${A.id}', 'fake', ${signedAt});`
+        : "";
       psql(
         `begin; set local session_replication_role = replica;
          insert into public.boxes (order_id, seq, declared_tier, price_krw, shipping_fee_krw, inspection_fee_krw) select id, 1, 'small', 6900, 4000, 1500 from public.orders where order_no = '${no}';
-         ${
-           signed
-             ? `insert into public.approval_requests (request_id, order_id, payload, created_at, status, decided_at) select '${req}', id, 'p', now() - interval '2 hours', 'approved', now() - interval '1 hour' from public.orders where order_no = '${no}';
-                insert into public.approval_signatures (request_id, signed_content, signer_id, method, signed_at) values ('${req}', 'p', 'fake:${A.id}', 'fake', now() - interval '1 hour');`
-             : ""
-         }
+         ${request}
+         ${signature}
          insert into public.decrypt_log (order_id, requester_id, result, print_no, box_id) select o.id, '${A.id}', 'opened', 1, b.id from public.orders o join public.boxes b on b.order_id = o.id where o.order_no = '${no}';
          commit;`,
       );
     };
     const before = await read();
-    opened(true);
+    opened("signed");
     expect(await read()).toBe(before); // 서명된 승인 뒤의 열람은 경보가 아니다
-    opened(false);
+    opened("none");
     expect(await read()).toBe(before + 1);
+    opened("unsigned");
+    expect(await read()).toBe(before + 2); // 승인만 있고 서명이 없는 열람도 경보
+    opened("late");
+    expect(await read()).toBe(before + 3); // 서명이 열람보다 늦게 붙은 열람도 경보
     expect((await (await client(A.login)).rpc("admin_unsigned_open_alerts")).data ?? []).toEqual([]);
     expect((await anonClient().rpc("admin_unsigned_open_alerts")).error).not.toBeNull();
   });

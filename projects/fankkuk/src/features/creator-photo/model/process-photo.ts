@@ -1,12 +1,11 @@
 import sharp from "sharp";
+import { PHOTO_MAX_BYTES } from "./photo-limits";
 
 // 프로필 사진 처리 (creator-link INV-E9). 서버의 사진 저장 경로 하나만 부른다.
 // 받은 바이트를 실제로 열어 보고(그림 크기 상한), 방향을 바로잡은 뒤 가운데 정사각으로 잘라 512×512 webp 로 다시 만든다.
 // sharp 는 따로 지시하지 않으면 사진 정보(EXIF·GPS·ICC·XMP)를 결과에 옮기지 않는다 — 결과에 남는 것은 그림뿐이다.
 // 원본 바이트는 이 함수 밖으로 나가지 않는다(저장하지 않는다).
 
-/** 올릴 수 있는 크기 — 10MB. */
-export const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
 /** 열어 볼 그림 크기 상한 — 4천만 화소(압축 폭탄 방어). */
 export const PHOTO_MAX_PIXELS = 40_000_000;
 /** 저장하는 정사각 한 변. */

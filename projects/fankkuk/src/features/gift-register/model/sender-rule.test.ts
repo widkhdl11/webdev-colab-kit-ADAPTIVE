@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkoutRequesterId, movingNotice, refusalStatus, sendAvailabilityOf, sendList } from "./sender-rule";
+import { checkoutRequesterId, movingNotice, refusalStatus, sendAvailabilityOf, sendList, sendOnLinkPage } from "./sender-rule";
 
 const OWN = "00000000-0000-4000-b000-000000000001";
 const MOMO = "00000000-0000-4000-b000-000000000002";
@@ -55,5 +55,18 @@ describe("채널 이사 중 안내 (creator-verification INV-V12 화면 표시)"
     expect(refusalStatus("moving")).toBe(409);
     expect(refusalStatus("unknown_creator")).toBe(404);
     expect(refusalStatus("no_follow")).toBe(403);
+  });
+});
+
+describe("INV-B2: 선물 링크 페이지의 선물 보내기 자리 — 쉬는 중이면 숨김", () => {
+  it("INV-B2 (실패경로): 쉬는 중이면 보낼 수 있던 자리(open·needs_follow)를 숨긴다", () => {
+    expect(sendOnLinkPage("open", true)).toBe("hidden");
+    expect(sendOnLinkPage("needs_follow", true)).toBe("hidden");
+  });
+
+  it("INV-B2: 받는 중이면 그대로, 자기 페이지는 쉬는 중이어도 그대로", () => {
+    expect(sendOnLinkPage("open", false)).toBe("open");
+    expect(sendOnLinkPage("needs_follow", false)).toBe("needs_follow");
+    expect(sendOnLinkPage("self", true)).toBe("self");
   });
 });
