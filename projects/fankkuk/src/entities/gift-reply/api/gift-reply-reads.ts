@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { ITEM_CATEGORIES, type ItemCategory } from "@/entities/gift-item/model/item-category";
 import { REPLY_PHRASES, type ReplyPhrase, type ReplyState } from "../model/reply";
 
 // 받았어요·답장 읽기 (gift-reply INV-G6·G7·G9·G10). 모두 DB 읽기 함수다 — 사람은 로그인 토큰으로 정해지고(공개 모음만 로그인 없이),
@@ -24,7 +23,8 @@ export type ReceivedBox = {
   boxSeq: number;
   boxCount: number;
   senderNickname: string;
-  itemCategory: ItemCategory | null;
+  /** 물품 종류 코드 그대로(together 읽기와 같다). 이름표로 바꾸는 일은 부르는 쪽이 gift-item 으로 한다. */
+  itemCategory: string | null;
   itemKind: string;
   shippedOn: string;
   receivedOn: string | null;
@@ -39,7 +39,7 @@ const receivedRow = z
     box_seq: z.number().int().positive(),
     box_count: z.number().int().positive(),
     sender_nickname: z.string(),
-    item_category: z.enum(ITEM_CATEGORIES).nullable(),
+    item_category: z.string().max(40).nullable(),
     item_kind: z.string(),
     shipped_on: day,
     received_on: day.nullable(),

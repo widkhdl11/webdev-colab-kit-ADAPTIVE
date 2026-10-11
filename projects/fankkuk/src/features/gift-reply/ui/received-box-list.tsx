@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useRef, useState } from "react";
 import type { ReceivedBox } from "@/entities/gift-reply/api/gift-reply-reads";
-import { ITEM_CATEGORY_LABEL } from "@/entities/gift-item/model/item-category";
+import { ITEM_CATEGORY_LABEL, isItemCategory } from "@/entities/gift-item/model/item-category";
 import {
   monthDayText,
   normalizeReplyLine,
@@ -50,7 +50,7 @@ function ErrorMark() {
 }
 
 function boxText(b: ReceivedBox): string {
-  const what = b.itemCategory ? ITEM_CATEGORY_LABEL[b.itemCategory] : b.itemKind;
+  const what = isItemCategory(b.itemCategory) ? ITEM_CATEGORY_LABEL[b.itemCategory] : b.itemKind;
   return b.boxCount > 1 ? `${what} · 상자 ${b.boxCount}개 중 ${b.boxSeq}번째` : `${what} · 상자 1개`;
 }
 

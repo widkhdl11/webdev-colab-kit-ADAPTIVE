@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { readMyReplyCard } from "@/entities/gift-reply/api/gift-reply-reads";
 import { isCardSize, CARD_SIZES } from "@/entities/gift-reply/model/reply";
+import { creatorPhotoUrl } from "@/entities/creator/model/link-images";
 import { replyCardInput } from "@/entities/gift-reply/model/reply-card";
 import { readViewer } from "@/entities/session/model/viewer";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
@@ -26,7 +27,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ boxId: string }
   if (!viewer) return Response.json({ message: "로그인이 필요해요." }, { status: 401, headers: NO_STORE });
   const row = await readMyReplyCard(supabase, boxId);
   if (!row) return Response.json({ message: "답장을 찾을 수 없어요." }, { status: 404, headers: NO_STORE });
-  const card = replyCardInput(row, { withName: url.searchParams.get("name") === "1", storageBase: readPublicStorageBase() });
+  const card = replyCardInput(row, { withName: url.searchParams.get("name") === "1", photoUrl: creatorPhotoUrl(readPublicStorageBase(), row.creatorPhotoPath) });
   const [font, logo, photo] = await Promise.all([readImageFont(), readLogoDataUrl(), readPhotoDataUrlCached(card.photoUrl)]);
   const { width, height } = CARD_SIZES[sizeParam];
   const disposition = url.searchParams.get("download") === "1" ? `attachment; filename="fankkuk-reply-${sizeParam}.png"` : "inline";

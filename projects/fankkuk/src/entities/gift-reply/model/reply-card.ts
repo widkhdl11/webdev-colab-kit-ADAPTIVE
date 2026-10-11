@@ -1,4 +1,4 @@
-import { creatorPhotoUrl, nameInitial } from "@/entities/creator/model/link-images";
+import { nameInitial } from "@/shared/lib/format/name-initial";
 import { creatorNameOrWithdrawn, dotDate, REPLY_PHRASE_TEXT, type ReplyPhrase } from "./reply";
 
 // 답장 공유 카드에 넘기는 값 (gift-reply INV-G9). 카드 라우트는 DB 가 주인(보낸 팬)을 확인해 돌려준 줄을 여기에 넘기고, 돌아온 칸만 그린다 —
@@ -25,12 +25,13 @@ export type ReplyCardInput = {
   fanNickname: string | null;
 };
 
-export function replyCardInput(row: ReplyCardSource, opts: { withName: boolean; storageBase: string }): ReplyCardInput {
+export function replyCardInput(row: ReplyCardSource, opts: { withName: boolean; photoUrl: string | null }): ReplyCardInput {
   const creatorName = creatorNameOrWithdrawn(row.creatorName);
   return {
     creatorName,
-    // 탈퇴한 크리에이터는 DB 가 사진 경로를 비워 보낸다 — 기본 이미지
-    photoUrl: creatorPhotoUrl(opts.storageBase, row.creatorPhotoPath),
+    // 사진 주소는 부르는 쪽이 creatorPhotoPath 로 만들어 넘긴다(크리에이터 저장소 규칙은 creator 쪽에 있다).
+    // 탈퇴한 크리에이터는 DB 가 사진 경로를 비워 보내 null — 기본 이미지
+    photoUrl: opts.photoUrl,
     initial: row.creatorName ? nameInitial(row.creatorName) : "",
     phraseText: REPLY_PHRASE_TEXT[row.phrase],
     line: row.line,

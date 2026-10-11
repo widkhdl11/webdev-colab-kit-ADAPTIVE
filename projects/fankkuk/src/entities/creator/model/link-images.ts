@@ -1,3 +1,4 @@
+import { nameInitial } from "@/shared/lib/format/name-initial";
 import { linkText } from "./creator-handle";
 
 // 공개 화면 이미지(미리보기·공지)와 프로필 사진 주소 (creator-link INV-E7·E9·E10).
@@ -36,10 +37,7 @@ export function isCurrentPreviewVersion(requested: string | null, photoPath: str
   return requested !== null && /^(0|[1-9][0-9]{0,8})$/.test(requested) && Number(requested) === photoVersionOf(photoPath);
 }
 
-/** 사진이 없을 때 기본 이미지(단색 원)에 넣는 이름 첫 글자. */
-export function nameInitial(name: string): string {
-  return [...name.trim()][0] ?? "";
-}
+export { nameInitial };
 
 /** 미리보기 이미지에 넘기는 값 — 공개 이름과 사진 주소뿐(INV-E10). 고정 문구·로고는 그리는 쪽에 있다. */
 export function previewImageInput(c: PublicCreatorLink, storageBase: string): { name: string; photoUrl: string | null } {
