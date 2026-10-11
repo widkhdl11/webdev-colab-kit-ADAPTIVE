@@ -25,6 +25,54 @@ export function paidOrder(fanId: string, creatorId: string, registeredAt: string
   return insertOrder(fanId, creatorId, status, registeredAt);
 }
 
+let pendingSeq = 0;
+
+/**
+ * 결제 대기 주문 하나(등록 시각 없음). payment 를 주면 그 상태의 첫 결제 줄을 같이 넣는다(등록 화면이 만드는 꼴).
+ * 물품 이름 「시험 선물」 — deleteTestOrders 가 결제 줄과 함께 지운다.
+ */
+export function pendingOrder(fanId: string, creatorId: string, payment: "pending" | "confirming" | "failed" | null): string {
+  pendingSeq += 1;
+  const no = `FC-TP${Date.now().toString(36).toUpperCase().slice(-5)}${pendingSeq}`.slice(0, 13);
+  psql(
+    `begin; set local session_replication_role = replica;
+     insert into public.orders (order_no, fan_id, creator_id, item_kind, has_electronics_or_metal, status, registered_at)
+     values ('${no}', '${fanId}', '${creatorId}', '시험 선물', false, 'pending_payment', null);
+     commit;`,
+  );
+  if (payment) setInitialPayment(no, payment);
+  return no;
+}
+
+/** 그 주문의 첫 결제 줄 상태를 정한다(없으면 만든다). */
+export function setInitialPayment(orderNo: string, status: "pending" | "confirming" | "failed"): void {
+  psql(
+    `begin; set local session_replication_role = replica;
+     delete from public.payments where order_id = (select id from public.orders where order_no = '${orderNo}') and kind = 'initial';
+     insert into public.payments (order_id, kind, toss_order_id, amount_krw, goods_krw, service_fee_krw, shipping_fee_krw, inspection_fee_krw, status)
+     select id, 'initial', 'tp_' || replace(order_no, '-', '_') || '_' || floor(random() * 1e9)::text, 13800, 0, 6900, 4000, 2900, '${status}'
+     from public.orders where order_no = '${orderNo}';
+     commit;`,
+  );
+}
+
+/** 저장소 전체(모든 버킷)의 파일 — 버킷/경로. 올리기 전후를 견줘 늘어난 파일을 본다. */
+export function allStoredObjects(): string[] {
+  const out = psql(`select coalesce(string_agg(bucket_id || '/' || name, ',' order by bucket_id, name), '') from storage.objects`);
+  return out === "" ? [] : out.split(",");
+}
+
+/** 지울 사진 목록에서 그 계정들 폴더의 줄을 지운다(앞 시험이 남긴 줄이 숫자를 흐리지 않게). */
+export function clearPhotoTrash(fanIds: readonly string[]): void {
+  for (const id of fanIds) psql(`delete from public.gift_photo_trash where path like '${id}/%'`);
+}
+
+/** 지울 사진 목록 가운데 그 계정 폴더의 경로. */
+export function photoTrash(fanId: string): string[] {
+  const out = psql(`select coalesce(string_agg(path, ',' order by path), '') from public.gift_photo_trash where path like '${fanId}/%'`);
+  return out === "" ? [] : out.split(",");
+}
+
 export function orderIdOf(orderNo: string): string {
   return psql(`select id from public.orders where order_no = '${orderNo}'`);
 }

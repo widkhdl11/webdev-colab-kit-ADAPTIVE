@@ -7,6 +7,7 @@
 /* 파일 칸은 sr-only 로 숨기고 라벨(.pick)을 버튼 모양으로 — 키보드 포커스는 라벨에 그린다 */
 .file:focus-visible + .pick { outline: 3px solid var(--ink); outline-offset: 2px; }
 .pick { cursor: pointer; }
+.pick[aria-disabled="true"] { cursor: progress; }
 .hint { margin-top: 8px; color: var(--sub); }
 /* 오류 문구 — 지금 화면들 방식(본문색 굵은 글자 + 「!」 원) */
 .error { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; color: var(--ink); font-weight: 700; }

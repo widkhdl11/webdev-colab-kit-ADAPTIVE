@@ -47,3 +47,11 @@ describe("giftProgressOf", () => {
     expect(giftProgressOf({ ...base, outcome: "declined" }, 1)).toEqual({ kind: "note", text: "받지 않은 선물이에요" });
   });
 });
+
+describe("giftProgressOf — 출고 뒤 상자별 칸이 비었을 때", () => {
+  it("출고 단계인데 상자별 줄이 0개면 빈 칸이 아니라 출고 문구 한 줄", () => {
+    for (const stage of ["shipped", "in_transit", "delivered"] as const) {
+      expect(giftProgressOf({ ...base, stage, shippedOn: "2026-10-05" }, 0), stage).toEqual({ kind: "note", text: "사무실에서 출고했어요" });
+    }
+  });
+});

@@ -2,6 +2,8 @@
 // 크리에이터 페이지와 등록 화면이 같은 함수를 쓴다(INV-B8). 등록 때의 판정은 DB 가 다시 한다(INV-B2·B4·B9) — 여기는 표시만.
 // 날짜는 전부 한국 시간 달력 날짜다.
 
+import { isLeapYear, splitIsoDate } from "@/shared/lib/date/calendar";
+
 export type CalendarDate = { year: number; month: number; day: number };
 export type MonthDay = { month: number; day: number };
 export type Anniversary = { name: string; month: number; day: number };
@@ -28,17 +30,13 @@ export function kstToday(now: Date): CalendarDate {
   return { year: k.getUTCFullYear(), month: k.getUTCMonth() + 1, day: k.getUTCDate() };
 }
 
-function isLeap(year: number): boolean {
-  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-}
-
 function serial(d: CalendarDate): number {
   return Date.UTC(d.year, d.month - 1, d.day) / DAY_MS;
 }
 
 /** 그해의 그 월·일 — 2월 29일은 윤년이 아닌 해에 2월 28일로 친다(INV-B8). */
 function inYear(year: number, md: MonthDay): CalendarDate {
-  if (md.month === 2 && md.day === 29 && !isLeap(year)) return { year, month: 2, day: 28 };
+  if (md.month === 2 && md.day === 29 && !isLeapYear(year)) return { year, month: 2, day: 28 };
   return { year, month: md.month, day: md.day };
 }
 
@@ -85,10 +83,8 @@ export function anniversaryInWeek(today: CalendarDate, anniversaries: readonly A
 
 /** YYYY-MM-DD → 날짜. 달력에 없는 날(2026-02-30·13월)은 null — 날짜로 바꿨다가 다시 글자로 만들어 같은지 본다. */
 export function parseIsoDate(iso: string): CalendarDate | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (!m) return null;
-  const d = { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) };
-  return toIsoDate(addDays(d, 0)) === iso ? d : null;
+  const d = splitIsoDate(iso);
+  return d && toIsoDate(addDays(d, 0)) === iso ? d : null;
 }
 
 /** INV-B2: 다시 받는 날이 오늘보다 뒤면 쉬는 중. 그날 0시부터는 받는 중. */

@@ -1,18 +1,38 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { NextRequest } from "next/server";
 import sharp from "sharp";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { POST as cronPayments } from "@/app/api/cron/payments/route";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseTogetherGifts, parseTogetherSummaries } from "@/entities/together/api/together-reads";
 import { specialMoments } from "@/entities/together/model/special-moment";
+import { replyCardInput } from "@/entities/gift-reply/model/reply-card";
 import { removeGiftPhoto, saveGiftPhoto, signGiftPhoto } from "@/features/gift-photo/model/save-gift-photo";
+import { sweepGiftPhotos } from "@/features/gift-photo/model/sweep-gift-photos";
 import { linkClient, resetLink, verifyCreator } from "./creator-link-helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 import { FAN_X, FAN_Y, giftBoxes, resetReplySettings } from "./gift-reply-helpers";
 import { adminClient, anonClient, deleteTestOrders, psql, psqlError } from "./helpers";
-import { clearGiftPhotos, GIFT_PHOTO_BUCKET, jpegWithGps, kstDateDaysAgo, kstDaysAgoAt, orderIdOf, paidOrder, photoFiles } from "./together-helpers";
+import {
+  clearGiftPhotos,
+  clearPhotoTrash,
+  GIFT_PHOTO_BUCKET,
+  jpegWithGps,
+  kstDateDaysAgo,
+  kstDaysAgoAt,
+  orderIdOf,
+  paidOrder,
+  pendingOrder,
+  photoFiles,
+  photoTrash,
+  setInitialPayment,
+} from "./together-helpers";
 
 // 함께한 시간 — DB 읽기 함수·사진 저장 (docs/specs/together.md INV-F1·F2·F3·F4·F6).
 // 읽기는 시험 계정의 로그인 클라이언트로 실제 함수를 부른다. 사진은 서버의 사진 저장 경로(saveGiftPhoto)를 실제 저장소로 돌리고,
 // 저장된 파일을 서버 키로 내려받아 사진 정보가 남았는지 연다.
+
+// 예약 실행 라우트를 이 과정 안에서 부른다 — 서버 키 클라이언트는 시험의 서버 키 클라이언트로(결제 다시 확인 시험과 같은 방식)
+vi.mock("@/shared/api/supabase/admin", () => ({ createAdminSupabase: () => adminClient() }));
 
 const A = CV.haru;
 const B = CV.summer;
@@ -32,8 +52,8 @@ async function giftsOf(login: string, creatorId: string) {
   return parseTogetherGifts(await rpcOk(await linkClient(login), "my_together_gifts", { p_creator_id: creatorId }));
 }
 
-async function reply(boxId: string, phrase = "thanks"): Promise<void> {
-  await rpcOk(await linkClient(A.login), "confirm_gift_box", { p_box_id: boxId, p_phrase: phrase, p_line: null });
+async function reply(boxId: string, phrase = "thanks", creatorLogin: string = A.login): Promise<void> {
+  await rpcOk(await linkClient(creatorLogin), "confirm_gift_box", { p_box_id: boxId, p_phrase: phrase, p_line: null });
 }
 
 function viewerOf(f: { id: string }) {
@@ -57,6 +77,7 @@ beforeEach(async () => {
   resetLink();
   resetReplySettings(IDS);
   await clearGiftPhotos([FAN_X.id, FAN_Y.id]);
+  clearPhotoTrash([FAN_X.id, FAN_Y.id]);
   verifyCreator(A.creatorId, "cvt-tg-a");
   verifyCreator(B.creatorId, "cvt-tg-b");
 });
@@ -85,9 +106,12 @@ describe("개인 기록 숫자 (INV-F3)", () => {
        insert into public.gift_replies (box_id, order_id, phrase, replied_at) select id, order_id, 'thanks', now() from b;
        commit;`,
     );
-    // 다른 팬이 같은 크리에이터에게, 같은 팬이 다른 크리에이터에게 보낸 주문은 섞이지 않는다
-    paidOrder(FAN_Y.id, A.creatorId, "now() - interval '1 day'");
-    paidOrder(FAN_X.id, B.creatorId, "now() - interval '1 day'");
+    // 다른 팬이 같은 크리에이터에게, 같은 팬이 다른 크리에이터에게 보낸 주문 — 둘 다 답장까지 달려 있어도 섞이지 않는다
+    const otherFan = giftBoxes(FAN_Y.id, A.creatorId, 1)[0]!;
+    const otherCreator = giftBoxes(FAN_X.id, B.creatorId, 1)[0]!;
+    await reply(otherFan.boxId, "thanks");
+    await reply(otherCreator.boxId, "love_it", B.login);
+    expect(psql(`select count(*) from public.gift_replies where box_id in ('${otherFan.boxId}', '${otherCreator.boxId}') and phrase is not null and deleted_at is null`)).toBe("2");
 
     const [s] = await summaryOf(FAN_X.login, A.creatorId);
     expect(s).toMatchObject({ creatorId: A.creatorId, creatorName: A.name, giftCount: 4, replyCount: 2 });
@@ -115,6 +139,23 @@ describe("개인 기록 숫자 (INV-F3)", () => {
     expect(s!.dayCount).toBe(11);
     const gifts = await giftsOf(FAN_X.login, A.creatorId);
     expect(gifts.map((g) => g.registeredOn).sort()).toEqual([kstDateDaysAgo(10), kstDateDaysAgo(3)]);
+  });
+
+  it("INV-F3 (실패경로): DB 연결의 시간대가 달라도 처음 선물한 날·며칠째는 같다 — 키리티마티(UTC+14)·파고파고(UTC-11) 두 번", () => {
+    // 한국 시간 00:30 주문 — 파고파고 날짜로는 전날이다. 키리티마티의 「오늘」은 파고파고의 「오늘」보다 하루 이상 앞선다
+    paidOrder(FAN_X.id, A.creatorId, kstDaysAgoAt(10, "00:30"));
+    paidOrder(FAN_X.id, A.creatorId, kstDaysAgoAt(2, "21:30"));
+    const inZone = (zone: string) =>
+      psql(
+        `set role authenticated; select set_config('request.jwt.claims', '{"sub":"${FAN_X.id}","role":"authenticated"}', false);
+         set timezone = '${zone}'; select first_gift_on || '|' || day_count from public.my_together('${A.creatorId}')`,
+      )
+        .split("\n")
+        .at(-1);
+    const kiritimati = inZone("Pacific/Kiritimati");
+    const pagoPago = inZone("Pacific/Pago_Pago");
+    expect(kiritimati).toBe(pagoPago);
+    expect(kiritimati).toBe(`${kstDateDaysAgo(10)}|11`);
   });
 
   it("INV-F3 (실패경로): 결제 대기·취소만 있으면 기록이 없다 — 크리에이터 줄 자체가 없다", async () => {
@@ -176,10 +217,18 @@ describe("특별 카드 (INV-F4)", () => {
     expect([...specialMoments(gifts, s!.firstGiftOn).entries()]).toEqual([[10, "tenth"]]);
   });
 
-  it("INV-F4 S4 (실패경로): 공유 카드 재료에는 순번·횟수 칸이 없다", () => {
-    const cols = psql(`select pg_get_function_result('public.my_gift_reply_card(uuid)'::regprocedure)`);
-    expect(cols).not.toMatch(/gift_no|seq|count|_no\b/);
-    expect(cols).toMatch(/phrase/);
+  it("INV-F4 S4 (실패경로): 공유 카드 재료에는 순번·횟수 칸이 없다 — DB 결과 칸과 카드 입력 칸을 통째로 고정", () => {
+    const result = psql(`select pg_get_function_result('public.my_gift_reply_card(uuid)'::regprocedure)`);
+    const cols = result
+      .replace(/^TABLE\(|\)$/g, "")
+      .split(", ")
+      .map((c) => c.split(" ")[0]);
+    expect(cols).toEqual(["creator_name", "creator_photo_path", "phrase", "line", "replied_on", "fan_nickname", "x_tag"]);
+    const input = replyCardInput(
+      { creatorName: "하루", creatorPhotoPath: null, phrase: "thanks", line: null, repliedOn: "2026-10-01", fanNickname: "별빛" },
+      { withName: true, photoUrl: null },
+    );
+    expect(Object.keys(input)).toEqual(["creatorName", "photoUrl", "initial", "phraseText", "line", "date", "fanNickname"]);
   });
 });
 
@@ -324,5 +373,113 @@ describe("팬이 올린 선물 사진 (INV-F2)", () => {
     const err = psqlError(`select public.set_gift_photo('${id}', '${FAN_Y.id}/${orderIdOf(other)}/00000000-0000-4000-8000-000000000000.webp')`);
     expect(err).not.toBeNull();
     expect(psql(`select count(*) from public.gift_photos`)).toBe("0");
+  });
+});
+
+describe("끝난 주문의 사진 정리 (INV-F2)", () => {
+  const photo = async (orderNo: string) => {
+    const r = await saveGiftPhoto(await photoDeps(FAN_X.login, FAN_X), orderNo, jpegBlob(await jpegWithGps(640, 480)));
+    expect(r, orderNo).toMatchObject({ ok: true });
+  };
+  const photoRows = (orderNo: string) => psql(`select count(*) from public.gift_photos where order_id = '${orderIdOf(orderNo)}'`);
+  const setStatus = (orderNo: string, status: string) =>
+    psql(`begin; set local session_replication_role = replica; update public.orders set status = '${status}' where order_no = '${orderNo}'; commit;`);
+  const ageOrder = (orderNo: string) =>
+    psql(`begin; set local session_replication_role = replica; update public.orders set created_at = now() - interval '25 hours' where order_no = '${orderNo}'; commit;`);
+
+  it("INV-F2 (실패경로): 취소된 주문의 사진은 정리 때 기록과 저장소 파일이 모두 지워진다 — 살아 있는 주문의 사진은 그대로", async () => {
+    const canceled = paidOrder(FAN_X.id, A.creatorId, "now() - interval '2 days'");
+    const live = paidOrder(FAN_X.id, A.creatorId, "now() - interval '1 day'");
+    await photo(canceled);
+    await photo(live);
+    setStatus(canceled, "canceled");
+    expect(await photoFiles(FAN_X.id)).toHaveLength(2);
+    const r = await sweepGiftPhotos(adminClient());
+    expect(r.removed).toBeGreaterThanOrEqual(1);
+    const left = await photoFiles(FAN_X.id);
+    expect(left).toHaveLength(1);
+    expect(left[0]).toContain(orderIdOf(live));
+    expect(photoRows(canceled)).toBe("0");
+    expect(photoRows(live)).toBe("1");
+    expect(photoTrash(FAN_X.id)).toEqual([]);
+  });
+
+  it("INV-F2 (실패경로): 결제가 실패한 주문의 사진은 지워지고, 결제 중인 주문의 사진은 남는다", async () => {
+    const order = pendingOrder(FAN_X.id, A.creatorId, "pending");
+    await photo(order);
+    await sweepGiftPhotos(adminClient());
+    expect(await photoFiles(FAN_X.id)).toHaveLength(1);
+    setInitialPayment(order, "failed");
+    await sweepGiftPhotos(adminClient());
+    expect(await photoFiles(FAN_X.id)).toEqual([]);
+    expect(photoRows(order)).toBe("0");
+  });
+
+  it("INV-F2 (실패경로): 결제하지 않은 채 24시간이 지난 주문의 사진은 지워진다 — 결제사 확인 중인 결제는 기다린다", async () => {
+    const abandoned = pendingOrder(FAN_X.id, A.creatorId, "pending");
+    const confirming = pendingOrder(FAN_X.id, A.creatorId, "confirming");
+    await photo(abandoned);
+    await photo(confirming);
+    ageOrder(abandoned);
+    ageOrder(confirming);
+    await sweepGiftPhotos(adminClient());
+    const left = await photoFiles(FAN_X.id);
+    expect(left).toHaveLength(1);
+    expect(left[0]).toContain(orderIdOf(confirming));
+    expect(photoRows(abandoned)).toBe("0");
+  });
+
+  it("INV-F2 (실패경로): 주문 줄을 지우면 같이 사라진 사진 기록의 파일도 정리 때 저장소에서 지워진다", async () => {
+    const order = paidOrder(FAN_X.id, A.creatorId, "now() - interval '1 day'");
+    await photo(order);
+    const [path] = await photoFiles(FAN_X.id);
+    psql(`delete from public.orders where order_no = '${order}'`);
+    expect(photoTrash(FAN_X.id)).toEqual([path]);
+    await sweepGiftPhotos(adminClient());
+    expect(await photoFiles(FAN_X.id)).toEqual([]);
+    expect(photoTrash(FAN_X.id)).toEqual([]);
+  });
+
+  it("INV-F2 (실패경로): 끝난 주문에는 사진을 새로 붙이지 않는다 — 본인 읽기도, 서버 기록 함수도", async () => {
+    const failed = pendingOrder(FAN_X.id, A.creatorId, "failed");
+    expect(await rpcOk(await linkClient(FAN_X.login), "my_gift_photo", { p_order_no: failed })).toEqual([]);
+    expect(await saveGiftPhoto(await photoDeps(FAN_X.login, FAN_X), failed, jpegBlob(await jpegWithGps(640, 480)))).toMatchObject({ ok: false, status: 404 });
+    expect(await photoFiles(FAN_X.id)).toEqual([]);
+    const id = orderIdOf(failed);
+    expect(psqlError(`select public.set_gift_photo('${id}', '${FAN_X.id}/${id}/00000000-0000-4000-8000-000000000000.webp')`)).not.toBeNull();
+    expect(photoRows(failed)).toBe("0");
+  });
+
+  it("INV-F2 (실패경로): 정리 함수와 지울 목록은 서버 키로만 — 팬·익명은 부를 수 없다", async () => {
+    for (const c of [await linkClient(FAN_X.login), anonClient()]) {
+      expect((await c.rpc("sweep_gift_photos", { p_limit: 10 })).error).not.toBeNull();
+      expect((await c.rpc("gift_photo_trash_done", { p_paths: ["x"] })).error).not.toBeNull();
+    }
+    expect(psqlError(`set role authenticated; select * from public.gift_photo_trash`)).not.toBeNull();
+  });
+
+  it("INV-F2: 결제 예약 실행(api/cron/payments)이 다시 확인 뒤에 사진 정리를 한다", async () => {
+    const order = paidOrder(FAN_X.id, A.creatorId, "now() - interval '1 day'");
+    await photo(order);
+    setStatus(order, "canceled");
+    const secret = "t".repeat(40);
+    const before = process.env.FANKKUK_SCHEDULE_SECRET;
+    try {
+      process.env.FANKKUK_SCHEDULE_SECRET = secret;
+      const res = await cronPayments(
+        new NextRequest("http://127.0.0.1:3311/api/cron/payments", {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${secret}` },
+          body: "{}",
+        }),
+      );
+      const body = (await res.json()) as { photos?: { removed: number } };
+      expect(res.status).toBe(200);
+      expect(body.photos?.removed).toBeGreaterThanOrEqual(1);
+    } finally {
+      if (before === undefined) delete process.env.FANKKUK_SCHEDULE_SECRET;
+      else process.env.FANKKUK_SCHEDULE_SECRET = before;
+    }
+    expect(await photoFiles(FAN_X.id)).toEqual([]);
   });
 });

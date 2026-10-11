@@ -23,7 +23,7 @@ function TogetherLinks({ creators }: { creators: readonly TogetherLink[] }) {
       <ul className={s["by-list"]}>
         {creators.map((c) => (
           <li key={c.creatorId}>
-            <Link className={s["by-row"]} href={c.href} aria-label={`${c.name}님과 함께한 시간`}>
+            <Link className={s["by-row"]} href={c.href}>
               <CreatorPhoto photoUrl={c.photoUrl} tone="var(--face-6)" className={`face ${s["by-face"]}`} />
               <span className={s["by-text"]}>
                 <strong>{c.name}님과 함께한 시간</strong>

@@ -86,6 +86,13 @@ export async function readOwnCreatorId(client: Pick<SupabaseClient, "rpc">): Pro
   return z.array(creatorIdSchema).parse(own.data)[0]?.creator_id ?? null;
 }
 
+/** 로그인한 사람이 그 크리에이터를 팔로우하는지 하나만(my_follows_creator — 팔로우 목록 전체를 읽지 않는다). */
+export async function readFollowsCreator(client: Pick<SupabaseClient, "rpc">, creatorId: string): Promise<boolean> {
+  const r = await client.rpc("my_follows_creator", { p_creator_id: creatorId });
+  if (r.error) throw new Error(`팔로우 여부를 읽지 못했다: ${r.error.code}`);
+  return z.boolean().parse(r.data);
+}
+
 /** 로그인한 사람이 팔로우한 크리에이터 id, 팔로우한 순서(오래된 것부터 — my_follows). 로그인하지 않았으면 부르지 않는다. */
 export async function readMyFollowIds(client: Pick<SupabaseClient, "rpc">): Promise<string[]> {
   const r = await client.rpc("my_follows");

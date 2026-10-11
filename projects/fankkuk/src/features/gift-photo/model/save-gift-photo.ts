@@ -2,11 +2,12 @@ import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Viewer } from "@/entities/session/model/viewer";
-import { reencodePhoto, type ReencodeProblem } from "@/shared/lib/image/reencode-photo";
+import { PHOTO_PROBLEM_MESSAGE } from "@/shared/lib/image/photo-problem";
+import { reencodePhoto } from "@/shared/lib/image/reencode-photo";
 
 // 팬이 올리는 선물 사진 (together INV-F2). 사진 저장소에 쓰고 서명 주소를 내주는 길은 이것 하나다.
 // - 사람은 세션에서 확인한 사람(viewer)이고, 그 주문이 그 사람의 것인지는 로그인 클라이언트로 부르는 DB 본인 읽기 함수(my_gift_photo)가 정한다 —
-//   남의 주문·취소된 주문·없는 주문은 모두 404(있는지도 알리지 않는다).
+//   남의 주문·끝난 주문(취소·결제 실패·결제 없이 24시간)·없는 주문은 모두 404(있는지도 알리지 않는다).
 // - 저장소는 비공개이고 쓰기 정책이 없다 — 쓰기·서명은 서버의 비밀 키 클라이언트로만 한다. 사진 기록(set_gift_photo·clear_gift_photo)도 비밀 키로만 부른다.
 // - 경로는 {팬 ID}/{주문 ID}/{무작위}.webp — 기록 함수가 그 주문의 팬·주문 폴더가 아닌 경로를 거부한다. 같은 이름으로 덮어쓰지 않는다(upsert 끔).
 // - 받은 사진은 열어 보고 사진 정보를 지운 뒤 긴 변 1280 webp 로 다시 만든다(reencodePhoto). 원본은 저장하지 않는다.
@@ -27,14 +28,6 @@ export type GiftPhotoDeps = {
 
 type Refusal = { ok: false; status: 400 | 401 | 404 | 409; message: string };
 export type GiftPhotoResult = { ok: true; version: number | null } | Refusal;
-
-const MESSAGE: Record<ReencodeProblem, string> = {
-  empty: "사진 파일을 골라 주세요.",
-  too_large_file: "사진은 10MB 까지 올릴 수 있어요.",
-  not_supported: "jpg·png·webp 사진만 올릴 수 있어요.",
-  too_many_pixels: "사진이 너무 커요. 더 작은 사진으로 올려 주세요.",
-  unreadable: "사진을 열 수 없어요. 다른 사진으로 올려 주세요.",
-};
 
 const LOGIN: Refusal = { ok: false, status: 401, message: "로그인이 필요해요." };
 const NOT_FOUND: Refusal = { ok: false, status: 404, message: "선물을 찾지 못했어요." };
@@ -70,9 +63,9 @@ export async function saveGiftPhoto(deps: GiftPhotoDeps, orderNo: string, file: 
   if (denied) return denied;
   const slot = await mySlot(deps.client, orderNo);
   if (!slot) return NOT_FOUND;
-  if (!file) return { ok: false, status: 400, message: MESSAGE.empty };
+  if (!file) return { ok: false, status: 400, message: PHOTO_PROBLEM_MESSAGE.empty };
   const processed = await reencodePhoto(new Uint8Array(await file.arrayBuffer()), { kind: "fit", longSide: GIFT_PHOTO_LONG_SIDE });
-  if (!processed.ok) return { ok: false, status: 400, message: MESSAGE[processed.problem] };
+  if (!processed.ok) return { ok: false, status: 400, message: PHOTO_PROBLEM_MESSAGE[processed.problem] };
 
   const path = `${deps.viewer!.userId}/${slot.orderId}/${randomUUID()}.webp`;
   const up = await deps.admin.storage.from(GIFT_PHOTO_BUCKET).upload(path, processed.webp, { contentType: "image/webp", upsert: false });

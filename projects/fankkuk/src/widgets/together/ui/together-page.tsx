@@ -8,6 +8,7 @@ import { FanBoxReplies } from "@/features/gift-reply/ui/fan-box-replies";
 import { GiftPhotoManager } from "@/features/gift-photo/ui/gift-photo-manager";
 import { statusTagClass } from "@/shared/ui/status-tone";
 import type { TogetherCard, TogetherPageProps } from "../api/load-together";
+import { OlderRecords } from "./older-records";
 import s from "./together.module.css";
 
 // 「○○님과 함께한 시간」 — 팬 본인 전용 (together, 추가분 F-7). 시안: docs/design/mockups/addendum/together.html (PC·모바일)
@@ -48,7 +49,7 @@ function SendSpot({ props }: { props: TogetherPageProps }) {
 function GiftItem({ card, props }: { card: TogetherCard; props: TogetherPageProps }) {
   const { summary, path, photoBase } = props;
   const p = card.progress;
-  const isFirst = card.giftNo === 1;
+  const { isFirst } = card;
   return (
     <li className={`${s.item} ${card.moment ? s["item--moment"] : ""}`}>
       <div className={s.date}>
@@ -100,7 +101,7 @@ function GiftItem({ card, props }: { card: TogetherCard; props: TogetherPageProp
             </div>
           </div>
         ) : null}
-        {p.kind === "boxes" && card.boxes.length > 0 ? (
+        {p.kind === "boxes" ? (
           <div className={s.boxes}>
             {card.shippedOn ? <p className={s.shipped}>{monthDayText(card.shippedOn)}에 출고됐어요</p> : null}
             <FanBoxReplies rows={card.boxes} photoBase={photoBase} returnPath={path} />
@@ -173,7 +174,7 @@ export function TogetherPage(props: TogetherPageProps) {
               </p>
               <p>다음 추억을 남겨 볼까요</p>
             </div>
-            {anniversary.resumeText ? <p className={s["rest-msg"]}>{anniversary.resumeText}</p> : <SendSpot props={props} />}
+            {props.send === "hidden" && anniversary.resumeText ? <p className={s["rest-msg"]}>{anniversary.resumeText}</p> : <SendSpot props={props} />}
           </section>
         ) : null}
 
@@ -189,17 +190,20 @@ export function TogetherPage(props: TogetherPageProps) {
           </ol>
         ) : null}
         {older.length > 0 ? (
-          <details className={s.fold}>
-            <summary>
-              이전 기록 {older.length}개 더 보기
-              <Icon d={PATH.down} size={20} />
-            </summary>
+          <OlderRecords
+            summary={
+              <>
+                이전 기록 {older.length}개 더 보기
+                <Icon d={PATH.down} size={20} />
+              </>
+            }
+          >
             <ol className={s.tl} aria-label="이전 기록">
               {older.map((c) => (
                 <GiftItem key={c.orderNo} card={c} props={props} />
               ))}
             </ol>
-          </details>
+          </OlderRecords>
         ) : null}
         {first ? (
           <ol className={s.tl} aria-label="첫 선물">

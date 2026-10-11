@@ -5,7 +5,7 @@ import { resetLink, setHandleOk, verifyCreator } from "./creator-link-helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 import { giftBoxes, resetReplySettings } from "./gift-reply-helpers";
 import { deleteTestBlocks, deleteTestOrders, psql, signedInClient } from "./helpers";
-import { clearGiftPhotos, jpegWithGps, kstDateDaysAgo, paidOrder, photoFiles, sessionCookie } from "./together-helpers";
+import { allStoredObjects, clearGiftPhotos, jpegWithGps, kstDateDaysAgo, paidOrder, photoFiles, sessionCookie } from "./together-helpers";
 
 // 함께한 시간 화면·사진 라우트를 떠 있는 개발 서버(기본 http://localhost:3000, FK_TEST_APP_URL)에 실제 HTTP 로 연다
 // (docs/specs/together.md INV-F1·F2·F5·F6, 「내 선물」 묶음). 로그인은 시험 계정으로 받은 세션 쿠키를 Cookie 머리줄에 싣는다.
@@ -24,31 +24,35 @@ let fanA: TestAccount;
 let fanB: TestAccount;
 const cookies = new Map<string, string>();
 
-async function cookieOf(who: "fanA" | "fanB" | "creator"): Promise<string> {
+type Who = "fanA" | "fanB" | "creator" | "operator";
+
+async function cookieOf(who: Who): Promise<string> {
   const hit = cookies.get(who);
   if (hit) return hit;
   const c =
     who === "creator"
       ? await sessionCookie(`${A.login}@fankkuk.test`, "fankkuk-local-1234")
-      : await sessionCookie((who === "fanA" ? fanA : fanB).loginEmail, FIXTURE_PASSWORD);
+      : who === "operator"
+        ? await sessionCookie("fankkuk_staff@fankkuk.test", "fankkuk-local-1234")
+        : await sessionCookie((who === "fanA" ? fanA : fanB).loginEmail, FIXTURE_PASSWORD);
   cookies.set(who, c);
   return c;
 }
 
-async function open(path: string, who: "fanA" | "fanB" | "creator" | null): Promise<Response> {
+async function open(path: string, who: Who | null): Promise<Response> {
   const headers: Record<string, string> = { accept: "text/html" };
   if (who) headers.cookie = await cookieOf(who);
   return fetch(`${APP}${path}`, { redirect: "manual", headers });
 }
 
-async function html(path: string, who: "fanA" | "fanB" | "creator"): Promise<string> {
+async function html(path: string, who: Who): Promise<string> {
   const res = await open(path, who);
   expect(res.status, path).toBe(200);
   return res.text();
 }
 
 /** 넘기기 응답의 상태와 넘어갈 경로(+물음표 뒤). */
-async function redirectOf(path: string, who: "fanA" | "fanB" | "creator" | null): Promise<[number, string]> {
+async function redirectOf(path: string, who: Who | null): Promise<[number, string]> {
   const res = await open(path, who);
   const loc = res.headers.get("location");
   const u = loc ? new URL(loc, APP) : null;
@@ -128,12 +132,25 @@ describe("함께한 시간 화면 — 본인만 (INV-F1)", () => {
       const res = await open(`/gifts/with/${HANDLE}`, who);
       expect(res.status, who).toBe(404);
       expect(visibleText(await res.text()), who).not.toContain("함께한 시간");
-      const byId = await open(`/gifts/with/${A.creatorId}`, who);
-      expect(byId.status, `${who} id`).toBe(404);
+      // ID 주소는 기록을 읽기 전에 공개 링크 주소로 넘긴다(링크 주소는 크리에이터 페이지 주소라 공개다) — 넘겨진 주소에서 없는 페이지
+      expect(await redirectOf(`/gifts/with/${A.creatorId}`, who), `${who} id`).toEqual([307, `/gifts/with/${HANDLE}`]);
     }
     const [status, to] = await redirectOf(`/gifts/with/${HANDLE}`, null);
     expect(status).toBe(307);
     expect(to).toBe(`/login?next=/gifts/with/${HANDLE}`);
+  });
+
+  it("INV-F1·F2 (실패경로): 운영자 세션으로 함께한 시간 화면과 사진 주소를 열면 404", async () => {
+    const orderNo = paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
+    expect((await upload(orderNo, "fanA", await jpegWithGps(640, 480))).status).toBe(200);
+    for (const path of [`/gifts/with/${HANDLE}`, `/gifts/with/${A.creatorId}`]) {
+      const res = await open(path, "operator");
+      expect(res.status, path).toBe(404);
+      expect(visibleText(await res.text()), path).not.toContain("함께한 시간");
+    }
+    const photo = await open(`/api/gifts/photo/${orderNo}`, "operator");
+    expect(photo.status).toBe(404);
+    expect(photo.headers.get("location")).toBeNull();
   });
 
   it("INV-F1: 크리에이터 ID 주소로 열면 링크 주소로 넘긴다 · 꼴이 틀린 주소는 없는 페이지", async () => {
@@ -149,6 +166,13 @@ describe("「내 선물」 크리에이터별 묶음", () => {
     expect(await redirectOf("/gifts", "fanA")).toEqual([307, `/gifts/with/${HANDLE}`]);
     const list = visibleText(await html("/gifts?view=all", "fanA"));
     expect(list).toContain("선물 내역");
+  });
+
+  it("INV-F1 (실패경로): 본인 확인이 풀린 크리에이터는 링크 주소가 열리지 않으니 「내 선물」이 ID 주소로 보내고, 그 주소는 열린다", async () => {
+    paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
+    psql(`begin; set local session_replication_role = replica; update public.creators set identity_verified = false where id = '${A.creatorId}'; commit;`);
+    expect(await redirectOf("/gifts", "fanA")).toEqual([307, `/gifts/with/${A.creatorId}`]);
+    expect(visibleText(await html(`/gifts/with/${A.creatorId}`, "fanA"))).toContain(`${A.name}님과 함께한 시간`);
   });
 
   it("크리에이터가 둘이면 목록 위에 크리에이터마다 함께한 시간으로 가는 줄이 있다", async () => {
@@ -202,7 +226,77 @@ describe("다음 기념일 칸·선물 보내기 (INV-F5)", () => {
   });
 });
 
+describe("「선물 보내기」 — 크리에이터 페이지와 같은 판정 (INV-F5)", () => {
+  /** 화면의 보내기 자리: 「선물 보내기」 링크가 있는가 · 「팔로우하고 선물 보내기」 버튼이 있는가. 없는 페이지면 둘 다 없음. */
+  async function sendSpot(path: string): Promise<[boolean, boolean] | "missing"> {
+    const res = await open(path, "fanA");
+    if (res.status === 404) return "missing";
+    expect(res.status, path).toBe(200);
+    const page = await res.text();
+    return [page.includes(`href="/gifts/new?creator=${A.creatorId}"`), page.includes(`aria-label="${A.name}님 팔로우하고 선물 보내기"`)];
+  }
+  const spotOf = (r: [boolean, boolean] | "missing"): [boolean, boolean] => (r === "missing" ? [false, false] : r);
+
+  const states: { name: string; setup: () => void; expected: [boolean, boolean]; togetherPath: string }[] = [
+    { name: "팔로우함·받는 중", setup: () => follow(fanA.userId), expected: [true, false], togetherPath: `/gifts/with/${HANDLE}` },
+    { name: "팔로우 안 함", setup: () => undefined, expected: [false, true], togetherPath: `/gifts/with/${HANDLE}` },
+    {
+      name: "쉬는 중",
+      setup: () => {
+        follow(fanA.userId);
+        psql(`update public.creators set resume_on = public.receiving_today() + 5 where id = '${A.creatorId}'`);
+      },
+      expected: [false, false],
+      togetherPath: `/gifts/with/${HANDLE}`,
+    },
+    {
+      // 본인 확인이 풀린 크리에이터 — 크리에이터 페이지가 없다. 함께한 시간은 ID 주소로 남고 버튼은 없다
+      name: "본인 확인 전",
+      setup: () => {
+        follow(fanA.userId);
+        psql(`begin; set local session_replication_role = replica; update public.creators set identity_verified = false where id = '${A.creatorId}'; commit;`);
+      },
+      expected: [false, false],
+      togetherPath: `/gifts/with/${A.creatorId}`,
+    },
+  ];
+
+  for (const st of states) {
+    it(`INV-F5 (실패경로): ${st.name} — 함께한 시간과 크리에이터 페이지의 보내기 자리가 같다`, async () => {
+      paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
+      psql(
+        `update public.creators set birthday_month = extract(month from public.receiving_today() + 12)::smallint,
+           birthday_day = extract(day from public.receiving_today() + 12)::smallint where id = '${A.creatorId}'`,
+      );
+      st.setup();
+      const creatorPage = spotOf(await sendSpot(`/${HANDLE}`));
+      const together = await sendSpot(st.togetherPath);
+      expect(together, "함께한 시간은 기록이 있으니 열린다").not.toBe("missing");
+      expect(creatorPage, "크리에이터 페이지").toEqual(st.expected);
+      expect(together, "함께한 시간").toEqual(creatorPage);
+    });
+  }
+});
+
+describe("특별 카드 화면 (INV-F4)", () => {
+  it("INV-F4 S4: 선물 10개 화면에 「10번째 선물이에요」가 딱 한 번", async () => {
+    for (let i = 10; i >= 1; i--) paidOrder(fanA.userId, A.creatorId, `now() - interval '${i} days'`);
+    const text = visibleText(await html(`/gifts/with/${HANDLE}`, "fanA"));
+    expect(text.split("10번째 선물이에요").length - 1).toBe(1);
+    expect(text).not.toContain("30번째 선물이에요");
+  });
+});
+
 describe("화면에 금액·시각 없음 (INV-F6)", () => {
+  it("INV-F6 S6 (실패경로): 원본 HTML 전체(스크립트 포함)에 등록 시각·상자 값 칸 이름과 ISO 시각 꼴이 없다", async () => {
+    giftBoxes(fanA.userId, A.creatorId, 2);
+    paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
+    const page = await html(`/gifts/with/${HANDLE}`, "fanA");
+    expect(page).toContain("함께한 시간");
+    for (const leak of ["registered_at", "registeredAt", "price_krw", "priceKrw", "shipped_at", "replied_at"]) expect(page, leak).not.toContain(leak);
+    expect(page).not.toMatch(/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/);
+  });
+
   it("INV-F6 S6 (실패경로): 출고 상자가 있는 기록 화면에도 상자 값이 나오지 않는다", async () => {
     giftBoxes(fanA.userId, A.creatorId, 2);
     const text = visibleText(await html(`/gifts/with/${HANDLE}`, "fanA"));
@@ -216,16 +310,26 @@ describe("화면에 금액·시각 없음 (INV-F6)", () => {
 describe("사진 라우트 (INV-F2)", () => {
   it("INV-F2 S2b: 개발 서버로 올린 위치 정보 사진 — 저장 파일에 사진 정보가 없고, 본인은 짧은 서명 주소로 넘겨받아 연다", async () => {
     const orderNo = paidOrder(fanA.userId, A.creatorId, "now() - interval '1 day'");
+    const before = new Set(allStoredObjects());
     const up = await upload(orderNo, "fanA", await jpegWithGps());
     expect(up.status).toBe(200);
     expect(up.headers.get("cache-control")).toBe("no-store");
     expect(await photoFiles(fanA.userId)).toHaveLength(1);
+    // 모든 버킷을 통틀어 늘어난 파일은 선물 사진 webp 하나뿐이다 — 원본은 어디에도 저장되지 않는다
+    const added = allStoredObjects().filter((o) => !before.has(o));
+    expect(added).toHaveLength(1);
+    expect(added[0]).toMatch(new RegExp(`^gift-photos/${fanA.userId}/[0-9a-f-]{36}/[0-9a-f-]{36}\\.webp$`));
     const res = await open(`/api/gifts/photo/${orderNo}`, "fanA");
     expect(res.status).toBe(302);
     expect(res.headers.get("cache-control")).toBe("no-store");
     const signed = res.headers.get("location") ?? "";
     expect(signed).toMatch(/\/storage\/v1\/object\/sign\/gift-photos\//);
     expect(signed).toMatch(/[?&]token=/);
+    // 서명 주소의 토큰(JWT)을 풀어 유효 시간을 본다 — 짧게(60초 이하)
+    const token = new URL(signed).searchParams.get("token") ?? "";
+    const claims = JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString("utf8")) as { iat: number; exp: number };
+    expect(claims.exp - claims.iat).toBeGreaterThan(0);
+    expect(claims.exp - claims.iat).toBeLessThanOrEqual(60);
     const img = await fetch(signed);
     expect(img.status).toBe(200);
     const meta = await sharp(Buffer.from(await img.arrayBuffer())).metadata();

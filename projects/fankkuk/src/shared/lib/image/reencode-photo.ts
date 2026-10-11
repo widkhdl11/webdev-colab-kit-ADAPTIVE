@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import { PHOTO_MAX_BYTES, PHOTO_MAX_PIXELS } from "./photo-limits";
+import type { PhotoProblem } from "./photo-problem";
 
 // 올린 사진을 서버에서 다시 만든다 — 받은 바이트를 실제로 열어 보고(그림 크기 상한), 방향을 바로잡은 뒤 크기를 맞춰 webp 로 새로 쓴다.
 // sharp 는 따로 지시하지 않으면 사진 정보(EXIF·GPS·ICC·XMP)를 결과에 옮기지 않는다 — 결과에 남는 것은 그림뿐이다.
@@ -8,8 +9,7 @@ import { PHOTO_MAX_BYTES, PHOTO_MAX_PIXELS } from "./photo-limits";
 
 export type Reencode = { kind: "square"; side: number } | { kind: "fit"; longSide: number };
 
-export type ReencodeProblem = "empty" | "too_large_file" | "not_supported" | "too_many_pixels" | "unreadable";
-export type ReencodeResult = { ok: true; webp: Buffer } | { ok: false; problem: ReencodeProblem };
+export type ReencodeResult = { ok: true; webp: Buffer } | { ok: false; problem: PhotoProblem };
 
 const ACCEPTED = new Set(["jpeg", "png", "webp"]);
 

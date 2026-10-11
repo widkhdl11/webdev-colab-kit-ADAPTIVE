@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { readMyFollowIds, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
+import { readFollowsCreator, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
 import { readCreatorReceiving } from "@/entities/creator/api/receiving-reads";
 import { creatorPhotoUrl } from "@/entities/creator/model/link-images";
 import { isResting, kstToday, parseIsoDate, upcomingDday } from "@/entities/creator/model/receiving";
@@ -14,15 +14,23 @@ import { sendAvailabilityOf, sendOnLinkPage, type LinkPageSend } from "@/feature
 // 「○○님과 함께한 시간」 한 장의 읽기 (together INV-F1·F3·F4·F5·F6).
 // - 기록 숫자·선물 카드는 DB 본인 읽기 함수(로그인 토큰의 계정 주문만)가 준다. 그 크리에이터에게 센 선물이 없으면 null — 없는 페이지(INV-F1).
 // - 상자별 받았어요·답장은 선물 상세와 같은 읽기(my_gift_replies, 크리에이터별)를 쓴다.
-// - 다음 기념일 칸·「선물 보내기」는 크리에이터 페이지와 같은 판정이다(INV-F5): 팔로우 → 「선물 보내기」/「팔로우하고 선물 보내기」,
-//   쉬는 중이면 버튼 대신 「{날짜}부터 다시 받아요」. 차단은 여기서 가르지 않는다 — 등록 때 서버·DB 가 「선물을 받을 수 없는 크리에이터예요」로 막는다(decline-block INV-D7).
-//   기념일 칸은 30일 안에 생일·기념일이 있을 때만 그린다(추가분 F-7 그대로).
-// - 특별 카드는 화면 쪽 계산 함수 하나(specialMoments)로 정한다(INV-F4).
+// - 다음 기념일 칸·「선물 보내기」는 크리에이터 페이지와 같은 판정이다(INV-F5): 팔로우 → 「선물 보내기」/「팔로우하고 선물 보내기」, 쉬는 중이면 버튼 대신 「{날짜}부터 다시 받아요」.
+//   차단은 여기서 가르지 않는다 — 등록 때 서버·DB 가 「선물을 받을 수 없는 크리에이터예요」로 막는다(decline-block INV-D7).
+//   기념일 칸은 30일 안에 생일·기념일이 있을 때만 그린다(추가분 F-7 그대로). 「선물 보내기」·「다시 받아요」는 그 칸 안에만 있다.
+//   크리에이터 페이지가 없는(본인 확인 전) 크리에이터는 공개 받는 상태(creator_receiving)가 비어 기념일 칸이 없으니 보내기 자리도 없다.
+// - 특별 카드는 화면 쪽 계산 함수 하나(specialMoments)로 정한다(INV-F4). 첫 선물 카드(순번 1)도 여기서 고른다.
+// - 읽기는 한 번에 같이 보낸다. 기록이 없으면(없는 페이지) 나머지 결과는 버린다 — 모두 로그인한 사람 본인의 것이라 새어 나갈 것이 없다.
 
 /** 처음에 펼쳐 보이는 최근 기록 수. 나머지(첫 선물 빼고)는 「이전 기록 N개 더 보기」로 접는다(시안 together.html). */
 const RECENT_SHOWN = 4;
 
-export type TogetherCard = TogetherGift & { moment: SpecialMoment | null; progress: GiftProgress; boxes: FanBoxReply[] };
+export type TogetherCard = TogetherGift & {
+  moment: SpecialMoment | null;
+  progress: GiftProgress;
+  boxes: FanBoxReply[];
+  /** 그 크리에이터에게 처음 보낸 선물(맨 아래 카드) */
+  isFirst: boolean;
+};
 
 export type TogetherPageProps = {
   summary: TogetherSummary;
@@ -46,6 +54,16 @@ function resumeTextOf(resumeOn: string | null, today: ReturnType<typeof kstToday
   return d ? `${d.month}월 ${d.day}일부터 다시 받아요` : null;
 }
 
+function repliesByOrder(rows: readonly FanBoxReply[]): Map<string, FanBoxReply[]> {
+  const out = new Map<string, FanBoxReply[]>();
+  for (const r of rows) {
+    const list = out.get(r.orderNo);
+    if (list) list.push(r);
+    else out.set(r.orderNo, [r]);
+  }
+  return out;
+}
+
 export async function loadTogetherPage(input: {
   client: Pick<SupabaseClient, "rpc">;
   viewer: Viewer;
@@ -53,29 +71,28 @@ export async function loadTogetherPage(input: {
   photoBase: string;
 }): Promise<TogetherPageProps | null> {
   const { client, viewer, creatorId, photoBase } = input;
-  const [summary] = await readMyTogether(client, creatorId);
-  if (!summary) return null;
-  const [gifts, replies, followedIds, receiving, ownCreatorId] = await Promise.all([
+  const [summaries, gifts, replies, following, receiving, ownCreatorId] = await Promise.all([
+    readMyTogether(client, creatorId),
     readMyTogetherGifts(client, creatorId),
     readMyGiftReplies(client, null, creatorId),
-    readMyFollowIds(client),
+    readFollowsCreator(client, creatorId),
     readCreatorReceiving(client, [creatorId]),
     viewer.role === "creator" ? readOwnCreatorId(client) : Promise.resolve(null),
   ]);
+  const [summary] = summaries;
+  if (!summary) return null;
   const today = kstToday(new Date());
   const receivingOf = receiving.get(creatorId) ?? null;
   const resumeText = resumeTextOf(receivingOf?.resumeOn ?? null, today);
   const dday = receivingOf ? upcomingDday(today, receivingOf.birthday, receivingOf.anniversaries) : null;
-  const send = sendOnLinkPage(
-    sendAvailabilityOf({ viewerRole: viewer.role, creatorId, ownCreatorId, following: followedIds.includes(creatorId) }),
-    resumeText !== null,
-  );
+  const send = sendOnLinkPage(sendAvailabilityOf({ viewerRole: viewer.role, creatorId, ownCreatorId, following }), resumeText !== null);
   const moments = specialMoments(gifts, summary.firstGiftOn);
+  const boxesOf = repliesByOrder(replies);
   const cards: TogetherCard[] = gifts.map((g) => {
-    const boxes = replies.filter((r) => r.orderNo === g.orderNo);
-    return { ...g, moment: moments.get(g.giftNo) ?? null, progress: giftProgressOf(g, boxes.length), boxes };
+    const boxes = boxesOf.get(g.orderNo) ?? [];
+    return { ...g, moment: moments.get(g.giftNo) ?? null, progress: giftProgressOf(g, boxes.length), boxes, isFirst: g.giftNo === 1 };
   });
-  const firstCard = cards.find((c) => c.giftNo === 1) ?? null;
+  const firstCard = cards.find((c) => c.isFirst) ?? null;
   const rest = firstCard ? cards.filter((c) => c !== firstCard) : cards;
   // 선물이 적으면 접지 않는다 — 첫 선물까지 모두 펼친다
   const fold = rest.length > RECENT_SHOWN + 1;
