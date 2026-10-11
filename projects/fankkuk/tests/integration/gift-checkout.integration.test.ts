@@ -23,7 +23,7 @@ function fakeToss(status = "DONE") {
 
 const form = (extra: Record<string, unknown> = {}) => ({
   creatorId: SEED.haruCreatorId,
-  itemKind: "통합 시험 선물",
+  itemCategory: "other", itemOther: "통합 시험 선물",
   smallCount: "1",
   mediumCount: "1",
   largeCount: "0",

@@ -42,7 +42,7 @@ describe("채널 이사 중 안내 읽기 (INV-V12)", () => {
       orderId: `pay_test_${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`,
       orderNo: `FC-T${crypto.randomUUID().replaceAll("-", "").slice(0, 6).toUpperCase()}`,
       charge,
-      registration: { fanId: SEED.fanId, creatorId: CV.haru.creatorId, itemKind: "시험 선물", hasElectronicsOrMetal: false, boxes: ["small"] },
+      registration: { fanId: SEED.fanId, creatorId: CV.haru.creatorId, itemCategory: "other", itemOther: "시험 선물", hasElectronicsOrMetal: false, boxes: ["small"] },
     });
     await expect(attempt).rejects.toBeInstanceOf(SenderRefusedError);
     await expect(attempt).rejects.toMatchObject({ reason: "moving" });

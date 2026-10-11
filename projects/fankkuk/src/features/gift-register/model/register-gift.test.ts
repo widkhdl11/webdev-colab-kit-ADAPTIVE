@@ -14,7 +14,7 @@ const PRICES: PriceTable = {
 const readPrices = async (): Promise<PriceTable> => PRICES;
 
 const FAN = { userId: "fan-byeolbit", role: "fan" } as const;
-const form = { creatorId: "00000000-0000-4000-b000-000000000001", itemKind: "손편지", smallCount: "2", mediumCount: "1", largeCount: "0", electronicsOrMetal: "no", quotedTotalKrw: 22700 };
+const form = { creatorId: "00000000-0000-4000-b000-000000000001", itemCategory: "other", itemOther: "손편지", smallCount: "2", mediumCount: "1", largeCount: "0", electronicsOrMetal: "no", quotedTotalKrw: 22700 };
 
 // INV-L9: 팬·크리에이터 모두 관계(받는 크리에이터를 팔로우했는가)를 읽는다. 기본은 팔로우한 상태
 const FOLLOWING = async (): Promise<CreatorRelation | null> => ({ receiverIsSelf: false, senderFollows: true });
@@ -211,7 +211,7 @@ describe("주문번호", () => {
 });
 
 describe("받는 양 조절 (creator-receiving INV-B2·B4·B6·B9)", () => {
-  function refusingStore(reason: "resting" | "limit"): PaymentStore {
+  function refusingStore(reason: "resting" | "limit" | "hard_item"): PaymentStore {
     const base = createMemoryPaymentStore({ env: { NODE_ENV: "test" } });
     return { ...base, create: async () => { throw new SenderRefusedError(reason); } };
   }
@@ -232,6 +232,22 @@ describe("받는 양 조절 (creator-receiving INV-B2·B4·B6·B9)", () => {
     const { deps } = setup();
     const r = await registerGift({ ...deps, store: refusingStore("limit"), viewer: FAN, now: () => new Date("2026-10-31T16:00:00Z") }, form);
     expect(r).toEqual({ ok: false, status: 409, message: "이번 달은 이미 마음을 충분히 보내셨어요. 12월 1일부터 다시 보낼 수 있어요" });
+  });
+
+  it("INV-H7 S7 (실패경로): DB 가 받기 어려운 품목으로 거부하면 409 와 고른 품목을 넣은 문구", async () => {
+    const { deps } = setup();
+    const r = await registerGift({ ...deps, store: refusingStore("hard_item"), viewer: FAN }, { ...form, itemCategory: "flower" });
+    expect(r).toEqual({ ok: false, status: 409, message: "지금 꽃은 받기 어려운 크리에이터예요. 다른 선물을 골라 주세요." });
+  });
+
+  it("INV-H1: 종류 코드와 기타 글을 등록에 넘긴다 — 기타가 아니면 글은 null", async () => {
+    const { deps, store } = setup();
+    expect((await registerGift({ ...deps, viewer: FAN }, form)).ok).toBe(true);
+    expect((await registerGift({ ...deps, newOrderNo: () => "FC-TEST2", viewer: FAN }, { ...form, itemCategory: "electronics", itemOther: "무시" })).ok).toBe(true);
+    expect(store.registrations().map((x) => [x.itemCategory, x.itemOther, x.hasElectronicsOrMetal])).toEqual([
+      ["other", "손편지", false],
+      ["electronics", null, true],
+    ]);
   });
 
   it("INV-B9: 고른 기념일 표시는 이름 그대로 등록에 넘긴다(7일 안인지는 DB 가 그날 다시 본다)", async () => {

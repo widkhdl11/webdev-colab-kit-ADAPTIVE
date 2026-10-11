@@ -2,6 +2,8 @@ import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { ddayLabel, restingNotice, upcomingDday, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import type { HardItems } from "@/entities/gift-item/model/hard-items";
+import { HardItemsLine } from "@/entities/gift-item/ui/hard-items-line";
 import { approvalDurationText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
@@ -37,6 +39,7 @@ export function CreatorProfilePage({
   prices,
   prohibited,
   receiving = null,
+  hardItems = null,
   today,
 }: {
   creator: CreatorCard;
@@ -50,6 +53,8 @@ export function CreatorProfilePage({
   prohibited: readonly ProhibitedItem[];
   /** 공개 받는 상태(creator-receiving) — 쉬는 중 날짜·생일·기념일. 한도는 없다(INV-B6) */
   receiving?: CreatorReceiving | null;
+  /** 살아 있는 받기 어려운 품목(hard-items) — 공개 문구 한 줄. 끝나는 날은 없다(INV-H6) */
+  hardItems?: HardItems | null;
   /** 한국 시간 오늘 — 서버가 정해 넘긴다 */
   today: CalendarDate;
 }) {
@@ -83,6 +88,8 @@ export function CreatorProfilePage({
                 <CreatorTag key={t} name={t} />
               ))}
             </div>
+            {/* hard-items INV-H6: 정해진 틀의 문구 한 줄 — 설정이 살아 있을 때만(끝난 설정은 서버가 빼서 보낸다) */}
+            <HardItemsLine hardItems={hardItems} className={s.hard} />
             {dday ? (
               <p className={s.dday}>
                 <span className="tag tag--brand">{ddayLabel(dday)}</span>

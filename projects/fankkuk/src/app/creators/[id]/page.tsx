@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
 import { readCreatorReceiving } from "@/entities/creator/api/receiving-reads";
 import { kstToday } from "@/entities/creator/model/receiving";
+import { readCreatorHardItems } from "@/entities/gift-item/api/hard-items-reads";
 import { readProhibitedItems } from "@/entities/parcel/api/read-prohibited-items";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { followModeOf } from "@/features/creator-follow/model/follow-mode";
@@ -23,7 +24,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const { id } = await params;
   // 크리에이터가 자기 페이지를 보면 팔로우·선물 보내기를 숨긴다(INV-L8). 팔로우하지 않았으면 「팔로우하고 선물 보내기」(INV-L9)
   const asCreator = viewer?.role === "creator";
-  const [header, [creator], cards, ownCreatorId, prices, prohibited, receiving] = await Promise.all([
+  const [header, [creator], cards, ownCreatorId, prices, prohibited, receiving, hardItems] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creators"),
     readCreatorCards(supabase, { signedIn: viewer !== null, onlyId: id }),
     readCreatorCards(supabase, { signedIn: viewer !== null }),
@@ -32,6 +33,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     readProhibitedItems(supabase),
     // creator-receiving: 쉬는 중 날짜·생일·기념일만 — 한도는 이 페이지 응답에 넣지 않는다(INV-B6)
     readCreatorReceiving(supabase, [id]),
+    // hard-items: 살아 있는 받기 어려운 품목의 품목·이유만 — 끝나는 날은 이 응답에 없다(INV-H6)
+    readCreatorHardItems(supabase, [id]),
   ]);
   if (!creator) notFound();
   const others = cards.filter((c) => c.id !== id).slice(0, OTHERS_SHOWN);
@@ -47,6 +50,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         prices={prices}
         prohibited={prohibited}
         receiving={receiving.get(id) ?? null}
+        hardItems={hardItems.get(id) ?? null}
         today={kstToday(new Date())}
       />
       <SiteFooter />

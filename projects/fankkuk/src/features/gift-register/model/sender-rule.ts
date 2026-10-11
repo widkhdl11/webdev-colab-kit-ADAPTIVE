@@ -11,7 +11,8 @@ export type CreatorRelation = { receiverIsSelf: boolean; senderFollows: boolean 
 
 /** moving = 받는 크리에이터가 채널 이사 중(creator-verification INV-V12) — DB 등록 함수만 판정한다(화면은 안내만). */
 /** resting·limit = 받는 크리에이터가 쉬는 중·이번 달 한도에 닿음(creator-receiving INV-B2·B4) — 역시 DB 등록 함수가 판정한다. */
-export type SenderRefusal = "role" | "self" | "no_follow" | "unknown_creator" | "moving" | "resting" | "limit";
+/** hard_item = 고른 종류를 크리에이터가 「등록 막기」로 둠(hard-items INV-H7) — DB 등록 함수가 판정한다. */
+export type SenderRefusal = "role" | "self" | "no_follow" | "unknown_creator" | "moving" | "resting" | "limit" | "hard_item";
 export type SenderVerdict = { ok: true } | { ok: false; reason: SenderRefusal };
 
 /** 역할만으로 정해지는 부분. 허락된 역할이면 관계(decideSender)를 더 본다. */
@@ -37,11 +38,13 @@ export const SENDER_REFUSAL_MESSAGE: Record<SenderRefusal, string> = {
   resting: "지금은 잠시 선물 받기를 쉬고 있는 크리에이터예요.",
   // INV-B6: 실제 문구는 다음 달 1일을 넣어 등록 처리가 만든다(limitReachedMessage) — 이 값은 날짜를 모를 때만
   limit: "이번 달은 이미 마음을 충분히 보내셨어요. 다음 달 1일부터 다시 보낼 수 있어요",
+  // hard-items INV-H7: 실제 문구는 고른 품목을 넣어 등록 처리가 만든다(hardItemRefusalMessage) — 이 값은 품목을 모를 때만
+  hard_item: "지금은 이 품목을 받기 어려운 크리에이터예요. 다른 선물을 골라 주세요.",
 };
 
-/** 거부 응답 상태 — 없는(또는 본인 확인 전) 크리에이터는 404, 채널 이사 중·쉬는 중·한도는 409(때가 지나면 풀린다), 나머지는 403. */
+/** 거부 응답 상태 — 없는(또는 본인 확인 전) 크리에이터는 404, 채널 이사 중·쉬는 중·한도·받기 어려운 품목은 409(때가 지나면 풀린다), 나머지는 403. */
 export function refusalStatus(reason: SenderRefusal): 403 | 404 | 409 {
-  if (reason === "moving" || reason === "resting" || reason === "limit") return 409;
+  if (reason === "moving" || reason === "resting" || reason === "limit" || reason === "hard_item") return 409;
   return reason === "unknown_creator" ? 404 : 403;
 }
 

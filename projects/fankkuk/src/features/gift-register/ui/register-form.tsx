@@ -14,6 +14,9 @@ import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceT
 import { formatDuration } from "@/shared/lib/format/datetime";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { anniversaryInWeek, restingNotice, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import { hardItemOverlap, type HardItems } from "@/entities/gift-item/model/hard-items";
+import { forcesMetalReport, isItemCategory, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, ITEM_OTHER_MAX } from "@/entities/gift-item/model/item-category";
+import { charCount } from "@/shared/lib/validation/char-count";
 import { receivingNotice } from "../model/receiving-notice";
 import { summarizeBoxes } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
@@ -29,6 +32,8 @@ export type CreatorOption = Pick<CreatorCard, "id" | "name" | "platform" | "appr
     receiving?: CreatorReceiving;
     /** 로그인한 내가 이번 달 이 크리에이터의 한도에 닿았는가 — 내 등록 화면에만 쓴다(INV-B6) */
     limitReached?: boolean;
+    /** 살아 있는 받기 어려운 품목(hard-items) — 고른 종류가 겹치면 결제 전에 안내한다(INV-H8) */
+    hardItems?: HardItems;
   };
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
@@ -45,7 +50,7 @@ const STEP_LABEL: Record<StepNo, string> = { 1: "크리에이터", 2: "선물", 
 /** 「다음」을 누르면 그 단계 칸만 검증한다. 4단계(결제)는 제출 때 전체를 다시 검증한다. */
 const STEP_FIELDS: Record<Exclude<StepNo, 4>, (keyof RegisterFormValues)[]> = {
   1: ["creatorId"],
-  2: ["itemKind", "electronicsOrMetal"],
+  2: ["itemCategory", "itemOther", "electronicsOrMetal"],
   3: ["smallCount", "mediumCount", "largeCount"],
 };
 
@@ -94,6 +99,7 @@ export function RegisterForm({
   const [markedFor, setMarkedFor] = useState<string | null>(null);
 
   const stepsWrap = useRef<HTMLElement>(null);
+  const categoryFirst = useRef<HTMLInputElement | null>(null);
   const headings = useRef<Partial<Record<StepNo, HTMLHeadingElement | null>>>({});
   const pendingFocus = useRef(false);
 
@@ -117,10 +123,13 @@ export function RegisterForm({
   } = useForm<RegisterFormValues, unknown, RegisterFormOutput>({
     resolver: zodResolver(registerFormSchema),
     // 전자기기 신고는 기본값이 없다 — 팬이 직접 골라야 한다
-    defaultValues: { creatorId: initialCreatorId, itemKind: "", smallCount: "1", mediumCount: "0", largeCount: "0" },
+    // 물품 종류도 기본값이 없다 — 팬이 목록에서 직접 고른다(hard-items INV-H1)
+    defaultValues: { creatorId: initialCreatorId, itemOther: "", smallCount: "1", mediumCount: "0", largeCount: "0" },
   });
   const creatorId = useWatch({ control, name: "creatorId" });
-  const itemKind = useWatch({ control, name: "itemKind" }) ?? "";
+  const watchedCategory = useWatch({ control, name: "itemCategory" });
+  const itemCategory = isItemCategory(watchedCategory) ? watchedCategory : null;
+  const itemOther = useWatch({ control, name: "itemOther" }) ?? "";
   const metal = useWatch({ control, name: "electronicsOrMetal" });
   const summary = summarizeBoxes(prices, {
     small: useWatch({ control, name: "smallCount" }),
@@ -147,6 +156,12 @@ export function RegisterForm({
     const blocked = step === 1 && ok ? receivingNotice(creators.find((c) => c.id === getValues("creatorId")), today) : null;
     if (blocked) {
       setError("creatorId", { message: blocked }, { shouldFocus: true });
+      return;
+    }
+    // hard-items INV-H8: 고른 종류를 크리에이터가 「등록 막기」로 두었으면 2단계에서 넘어가지 않는다(안내는 종류 아래에 이미 보인다).
+    // 「안내만」이면 그대로 넘어간다. 등록은 DB 가 다시 막는다(INV-H7)
+    if (step === 2 && ok && hardOverlap?.blocks) {
+      categoryFirst.current?.focus();
       return;
     }
     if (ok) go((step + 1) as StepNo);
@@ -177,13 +192,15 @@ export function RegisterForm({
     setSubmitError(null);
     setNoticeShown(false);
     try {
-      const { creatorId, itemKind, smallCount, mediumCount, largeCount, electronicsOrMetal } = getValues();
+      const { creatorId, itemCategory: category, itemOther: other, smallCount, mediumCount, largeCount, electronicsOrMetal } = getValues();
       const res = await fetch("/api/gifts", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           creatorId,
-          itemKind,
+          itemCategory: category,
+          // 기타 글은 기타일 때만 보낸다 — 다른 종류면 DB 가 종류 이름을 물품 이름으로 적는다
+          ...(category === "other" ? { itemOther: other } : {}),
           smallCount,
           mediumCount,
           largeCount,
@@ -235,6 +252,10 @@ export function RegisterForm({
   // INV-B9: 고른 크리에이터의 기념일이 7일 안(D-7 ~ D-day)이면 표시를 고를 수 있다 — 크리에이터 페이지 D-day 와 같은 계산
   const anniversaryMark = picked?.receiving ? anniversaryInWeek(today, picked.receiving.anniversaries) : null;
   const markAnniversary = markedFor !== null && markedFor === creatorId;
+  // hard-items INV-H8: 고른 종류가 크리에이터의 받기 어려운 품목과 겹치면 결제 전에 안내 — 「등록 막기」면 넘어가지 않는다
+  const hardOverlap = picked ? hardItemOverlap(picked.name, picked.hardItems, itemCategory) : null;
+  const itemText = itemCategory === null ? "" : itemCategory === "other" ? itemOther.trim() || ITEM_CATEGORY_LABEL.other : ITEM_CATEGORY_LABEL[itemCategory];
+  const metalForced = forcesMetalReport(itemCategory);
   const metalText = metal === "yes" ? "네, 있어요" : metal === "no" ? "아니요, 없어요" : "아직 안 골랐어요";
   const boxesText =
     PRICED_TIERS.filter((t) => summary.counts[t] > 0)
@@ -396,23 +417,78 @@ export function RegisterForm({
                 {heading(2, "어떤 선물인가요?")}
                 <p>크리에이터가 승인할 때 이 내용을 봐요. 검수에서 추적 장치와 구분하는 데도 써요.</p>
               </div>
-              <div className="field">
-                <label htmlFor="itemKind">선물 종류 (30자까지)</label>
-                <input
-                  id="itemKind"
-                  className="input"
-                  type="text"
-                  maxLength={30}
-                  placeholder="예: 손뜨개 인형과 편지"
-                  aria-invalid={errors.itemKind ? true : undefined}
-                  aria-describedby={errors.itemKind ? "itemKind-count itemKind-error" : "itemKind-count"}
-                  {...register("itemKind")}
-                />
-                <p className={f["char-count"]} id="itemKind-count">
-                  {itemKind.length} / 30자
+              {/* hard-items INV-H1: 물품 종류는 고정 목록에서 고른다. 냉장·냉동·음식·액체는 목록에 없다. 기타만 직접 적는다 */}
+              <div
+                className="field"
+                role="radiogroup"
+                aria-labelledby="category-q"
+                aria-describedby={[errors.itemCategory ? "category-error" : "", hardOverlap ? "hard-note" : ""].filter(Boolean).join(" ") || undefined}
+              >
+                <p className={f["metal-q"]} id="category-q">
+                  선물 종류
                 </p>
-                {err("itemKind-error", errors.itemKind?.message)}
+                <div className={f.radios}>
+                  {ITEM_CATEGORIES.map((c, i) => {
+                    const field = register("itemCategory", {
+                      // INV-H2: 전자기기를 고르면 신고를 「있어요」로 정한다(DB 등록 함수도 켠다)
+                      onChange: (e: { target: { value: string } }) => {
+                        if (forcesMetalReport(isItemCategory(e.target.value) ? e.target.value : null)) {
+                          setValue("electronicsOrMetal", "yes", { shouldValidate: errors.electronicsOrMetal !== undefined });
+                        }
+                      },
+                    });
+                    return (
+                      <label key={c}>
+                        <input
+                          type="radio"
+                          value={c}
+                          {...field}
+                          ref={(el) => {
+                            field.ref(el);
+                            if (i === 0) categoryFirst.current = el;
+                          }}
+                        />{" "}
+                        {ITEM_CATEGORY_LABEL[c]}
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="hint">음식·음료·냉장·냉동이 필요한 것과 액체는 받지 않아요.</p>
+                {err("category-error", errors.itemCategory?.message)}
+                {hardOverlap ? (
+                  hardOverlap.blocks ? (
+                    <p className={f.error} id="hard-note" role="alert">
+                      {hardOverlap.message} 지금은 이 종류로 보낼 수 없어요.
+                    </p>
+                  ) : (
+                    <div className={f["rule-note"]} id="hard-note" role="status">
+                      <p>
+                        <strong>{hardOverlap.message}</strong>
+                      </p>
+                      <p className={f["rule-note-sub"]}>그대로 보내도 돼요. 받을지는 크리에이터가 승인할 때 정해요.</p>
+                    </div>
+                  )
+                ) : null}
               </div>
+              {itemCategory === "other" ? (
+                <div className="field">
+                  <label htmlFor="itemOther">어떤 선물인가요? ({ITEM_OTHER_MAX}자까지)</label>
+                  <input
+                    id="itemOther"
+                    className="input"
+                    type="text"
+                    maxLength={ITEM_OTHER_MAX * 2}
+                    placeholder="예: 손편지와 사진"
+                    aria-invalid={errors.itemOther ? true : undefined}
+                    aria-describedby={errors.itemOther ? "itemOther-count itemOther-error" : "itemOther-count"}
+                    {...register("itemOther")}
+                  />
+                  <p className={f["char-count"]} id="itemOther-count">
+                    {charCount(itemOther)} / {ITEM_OTHER_MAX}자
+                  </p>
+                  {err("itemOther-error", errors.itemOther?.message)}
+                </div>
+              ) : null}
               <div
                 className={`field ${f.metal}`}
                 role="radiogroup"
@@ -427,11 +503,13 @@ export function RegisterForm({
                     <input type="radio" value="yes" {...register("electronicsOrMetal")} /> 네, 있어요
                   </label>
                   <label>
-                    <input type="radio" value="no" {...register("electronicsOrMetal")} /> 아니요, 없어요
+                    <input type="radio" value="no" disabled={metalForced} {...register("electronicsOrMetal")} /> 아니요, 없어요
                   </label>
                 </div>
                 <p className="hint" id="metal-hint">
-                  검수할 때 참고해요. 신고한 상자는 검수에 시간이 조금 더 걸릴 수 있어요.
+                  {metalForced
+                    ? "전자기기를 골라서 「있어요」로 정해졌어요. 신고한 상자는 검수에 시간이 조금 더 걸릴 수 있어요."
+                    : "검수할 때 참고해요. 신고한 상자는 검수에 시간이 조금 더 걸릴 수 있어요."}
                 </p>
                 {err("metal-error", errors.electronicsOrMetal?.message)}
               </div>
@@ -523,7 +601,7 @@ export function RegisterForm({
                 </div>
                 <div className={f["sum-row"]}>
                   <dt>선물 종류</dt>
-                  <dd>{itemKind || "아직 안 적었어요"}</dd>
+                  <dd>{itemText || "아직 안 골랐어요"}</dd>
                   {fix(2, "선물 종류")}
                 </div>
                 <div className={f["sum-row"]}>
@@ -645,7 +723,7 @@ export function RegisterForm({
                 <>
                   <div className={f["sum-row"]}>
                     <dt>선물 종류</dt>
-                    <dd>{itemKind || "아직 안 적었어요"}</dd>
+                    <dd>{itemText || "아직 안 골랐어요"}</dd>
                   </div>
                   <div className={f["sum-row"]}>
                     <dt>전자기기·금속</dt>

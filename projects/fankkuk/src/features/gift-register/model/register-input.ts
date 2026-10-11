@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { PricedTier } from "@/entities/payment/model/price-table";
 import { ANNIVERSARY_NAME_MAX } from "@/entities/creator/model/receiving";
 import { charCount } from "@/shared/lib/validation/char-count";
+import { forcesMetalReport, ITEM_CATEGORIES, ITEM_OTHER_MAX, type ItemCategory } from "@/entities/gift-item/model/item-category";
 
 // 선물 등록 폼의 입력 경계. 폼은 문자열을 보내고, 여기서 한 번 검증해 상자 구간 목록·참거짓으로 바꾼다.
 // 금액 칸은 받지 않는다 — 결제 금액은 서버 요금표로만 계산한다(INV-M1).
@@ -19,7 +20,9 @@ export const registerFormSchema = z
   .object({
     // 크리에이터 id 는 DB 의 uuid — 꼴이 다르면 고르지 않은 것과 같다(DB 형식 오류가 서버 오류로 번지지 않게)
     creatorId: z.string().uuid("선물을 받을 크리에이터를 골라 주세요."),
-    itemKind: z.string().trim().min(1, "어떤 선물인지 적어 주세요.").max(30, "30자 안으로 적어 주세요."),
+    // hard-items INV-H1: 물품 종류는 고정 목록에서 고른다. 기타만 30자까지 직접 적는다(아래 superRefine)
+    itemCategory: z.enum(ITEM_CATEGORIES, { message: "선물 종류를 골라 주세요." }),
+    itemOther: z.string().trim().optional(),
     smallCount: count,
     mediumCount: count,
     largeCount: count,
@@ -33,6 +36,12 @@ export const registerFormSchema = z
       .optional(),
   })
   .superRefine((v, ctx) => {
+    // 기타 글 길이는 글자 수(코드 포인트)로 센다 — DB char_length 와 같은 기준
+    if (v.itemCategory === "other") {
+      const n = charCount(v.itemOther ?? "");
+      if (n === 0) ctx.addIssue({ code: "custom", path: ["itemOther"], message: "어떤 선물인지 적어 주세요." });
+      else if (n > ITEM_OTHER_MAX) ctx.addIssue({ code: "custom", path: ["itemOther"], message: `${ITEM_OTHER_MAX}자 안으로 적어 주세요.` });
+    }
     const total = v.smallCount + v.mediumCount + v.largeCount;
     if (total === 0) ctx.addIssue({ code: "custom", path: ["smallCount"], message: "상자를 하나 이상 골라 주세요." });
     if (total > MAX_BOX_COUNT) {
@@ -45,7 +54,9 @@ export type RegisterFormOutput = z.output<typeof registerFormSchema>;
 
 export type RegisterInput = {
   creatorId: string;
-  itemKind: string;
+  itemCategory: ItemCategory;
+  /** 기타일 때만 팬이 적은 글. 다른 종류면 null(DB 가 종류 이름을 물품 이름으로 적는다) */
+  itemOther: string | null;
   boxes: PricedTier[];
   hasElectronicsOrMetal: boolean;
   anniversaryName: string | null;
@@ -64,7 +75,7 @@ export function boxesFromCounts(counts: Readonly<Record<PricedTier, number>>): P
   ];
 }
 
-const FIELDS = ["creatorId", "itemKind", "smallCount", "mediumCount", "largeCount", "electronicsOrMetal", "anniversaryName"] as const;
+const FIELDS = ["creatorId", "itemCategory", "itemOther", "smallCount", "mediumCount", "largeCount", "electronicsOrMetal", "anniversaryName"] as const;
 
 /** 서버 쪽 등록 처리(DB 연결 때)가 쓰는 경계 — 폼은 같은 스키마를 zodResolver 로 쓴다. 브라우저 검증만 믿지 않는다. */
 export function parseRegisterInput(input: unknown): RegisterParseResult {
@@ -77,14 +88,16 @@ export function parseRegisterInput(input: unknown): RegisterParseResult {
     }
     return { success: false, errors };
   }
-  const { creatorId, itemKind, smallCount, mediumCount, largeCount, electronicsOrMetal, anniversaryName } = parsed.data;
+  const { creatorId, itemCategory, itemOther, smallCount, mediumCount, largeCount, electronicsOrMetal, anniversaryName } = parsed.data;
   return {
     success: true,
     data: {
       creatorId,
-      itemKind,
+      itemCategory,
+      itemOther: itemCategory === "other" ? (itemOther ?? null) : null,
       boxes: boxesFromCounts({ small: smallCount, medium: mediumCount, large: largeCount }),
-      hasElectronicsOrMetal: electronicsOrMetal === "yes",
+      // INV-H2: 전자기기를 고르면 신고를 켠다(DB 등록 함수도 켠다)
+      hasElectronicsOrMetal: electronicsOrMetal === "yes" || forcesMetalReport(itemCategory),
       anniversaryName: anniversaryName ?? null,
     },
   };

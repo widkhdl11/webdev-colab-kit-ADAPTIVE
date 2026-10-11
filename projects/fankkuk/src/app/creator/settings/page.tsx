@@ -6,6 +6,7 @@ import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-setting
 import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
 import { readMyCreatorReceiving } from "@/entities/creator/api/receiving-reads";
 import { kstToday } from "@/entities/creator/model/receiving";
+import { readMyHardItems } from "@/entities/gift-item/api/hard-items-reads";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
 import { CreatorSettingsPage } from "@/widgets/creator-settings/ui/creator-settings-page";
@@ -21,11 +22,12 @@ export const dynamic = "force-dynamic";
 // 공개 이름·소개글·찾기 노출·태그(my_creator_settings)와 알림 두 칸(my_account)도 DB 에서 — 로그인한 크리에이터의 것만(my-account INV-A9~A11).
 // 태그 선택지는 고를 수 있는 것(숨기지 않은 것)만 — creator-tags INV-T3.
 // 받는 상태·팬당 한도·생일·기념일(my_creator_receiving)도 로그인한 크리에이터 본인 것만(creator-receiving INV-B1·B6).
+// 받기 어려운 품목(my_creator_hard_items)도 본인 것만 — 남은 기간은 이 화면에만(hard-items INV-H3·H6).
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect("/login");
-  const [header, blockedFans, address, state, rows, apiPlatforms, settings, tagOptions, receiving] = await Promise.all([
+  const [header, blockedFans, address, state, rows, apiPlatforms, settings, tagOptions, receiving, hardItems] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creator/settings"),
     readMyBlockedSenders(supabase),
     readMyAddressStatus(supabase),
@@ -35,6 +37,7 @@ export default async function Page() {
     readMyCreatorSettings(supabase),
     readTagOptions(supabase),
     readMyCreatorReceiving(supabase),
+    readMyHardItems(supabase),
   ]);
   // 크리에이터 역할인데 크리에이터 줄이 없으면 이 화면을 그릴 수 없다 — 숨기지 않고 오류로 드러낸다
   if (!address || !state || !settings || !receiving) throw new Error("크리에이터 줄을 찾지 못했다");
@@ -50,6 +53,7 @@ export default async function Page() {
           blockedFans={blockedFans}
           verification={{ state, rows, apiPlatforms: [...apiPlatforms] }}
           receiving={receiving}
+          hardItems={hardItems}
           today={kstToday(new Date())}
         />
       </MyShell>

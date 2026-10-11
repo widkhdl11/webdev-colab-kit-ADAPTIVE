@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Viewer } from "@/entities/session/model/viewer";
 import { notifyInputSchema, profileInputSchema } from "./creator-settings-input";
 import { daysInputSchema, receivingInputSchema } from "./receiving-input";
+import { hardItemsInputSchema } from "./hard-items-input";
 
 // 크리에이터 설정 저장 (my-account INV-A9 공개 정보 · INV-A11 알림).
 // 요청한 사람의 세션 클라이언트로 DB 함수를 부른다 — DB 가 로그인 토큰으로 크리에이터를 정하고 입력을 다시 검사한다.
@@ -81,5 +82,20 @@ export async function saveCreatorDays(deps: SaveCreatorSettingsDeps, body: unkno
       P0082: "기념일 이름에 전화번호·이메일·인터넷 주소는 쓸 수 없어요.",
       P0083: "기념일 이름에 글자나 숫자를 하나 이상 넣어 주세요.",
     },
+  );
+}
+
+// hard-items INV-H3·H4: 받기 어려운 품목 — 품목·이유·기간·동작만. 품목이 비면 지운다. 크리에이터 ID 는 넘기지 않는다 — DB 가 로그인 토큰으로 정한다.
+export async function saveCreatorHardItems(deps: SaveCreatorSettingsDeps, body: unknown): Promise<SaveCreatorSettingsResult> {
+  const denied = gate(deps.viewer);
+  if (denied) return denied;
+  const parsed = hardItemsInputSchema.safeParse(body);
+  if (!parsed.success) return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "입력을 확인해 주세요." };
+  const { categories, reason, period, action } = parsed.data;
+  return call(
+    deps,
+    "update_my_creator_hard_items",
+    { p_categories: categories, p_reason: reason, p_period: period, p_action: action },
+    { "22023": "품목·이유·기간·동작을 목록에서 골라 주세요." },
   );
 }

@@ -24,6 +24,8 @@ import { VerificationPanel } from "@/features/creator-verify/ui/verification-pan
 import { sendUnblock } from "@/features/creator-unblock/api/send-unblock";
 import type { CalendarDate, MyCreatorReceiving } from "@/entities/creator/model/receiving";
 import { ReceivingSection } from "./receiving-section";
+import { HardItemsSection } from "./hard-items-section";
+import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
 import s from "./creator-settings.module.css";
 
 // 크리에이터 — 주소와 설정. 시안: docs/design/mockups/site/v4/creator-settings.html
@@ -88,11 +90,14 @@ export function CreatorSettingsPage({
   blockedFans,
   verification,
   receiving,
+  hardItems,
   today,
 }: {
   settings: CreatorSettingsView;
   /** 받는 상태·팬당 한도·생일·기념일 — 로그인한 크리에이터 본인 것(creator-receiving) */
   receiving: MyCreatorReceiving;
+  /** 살아 있는 받기 어려운 품목 — 로그인한 크리에이터 본인 것(hard-items). 없거나 끝났으면 null */
+  hardItems: MyHardItems | null;
   /** 한국 시간 오늘 — 서버가 정해 넘긴다(다시 받는 날 범위) */
   today: CalendarDate;
   /** 고를 수 있는 태그 선택지(숨기지 않은 것, 선택지 순서 — creator-tags INV-T3) */
@@ -278,6 +283,7 @@ export function CreatorSettingsPage({
           </section>
 
           <ReceivingSection initial={receiving} today={today} />
+          <HardItemsSection initial={hardItems} today={today} />
         </div>
 
         <div className={s.col}>

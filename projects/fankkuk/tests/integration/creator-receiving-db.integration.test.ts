@@ -626,7 +626,7 @@ describe("DB 거부를 앱 오류 종류로 — 실제 저장소로 등록 (INV-
       orderId: `pay_rcv_store_${uniq("").toLowerCase()}`,
       orderNo: `FC-S${uniq("").slice(0, 8)}`.slice(0, 13),
       charge: computeCharge(await readTierPrices(adminClient()), { boxes: ["small"] }),
-      registration: { fanId: FAN_X.id, creatorId, itemKind: "시험 선물", hasElectronicsOrMetal: false, boxes: ["small"], anniversaryName: null },
+      registration: { fanId: FAN_X.id, creatorId, itemCategory: "other", itemOther: "시험 선물", hasElectronicsOrMetal: false, boxes: ["small"], anniversaryName: null },
     });
   }
 

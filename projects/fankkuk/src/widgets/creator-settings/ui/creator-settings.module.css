@@ -63,3 +63,7 @@
   .ann-row { grid-template-columns: minmax(0, 1fr) auto; }
   .ann-row > .md-row { grid-column: 1 / -1; grid-row: 2; }
 }
+/* 받기 어려운 품목 (hard-items) — 고르는 묶음은 테두리 없는 fieldset, 제목(legend)은 칸 이름(label)과 같은 모양 */
+.fs { border: 0; padding: 0; margin-inline: 0; min-width: 0; }
+.fs > legend { padding: 0; margin-bottom: 8px; }
+.save-row { display: flex; flex-wrap: wrap; gap: 12px; }

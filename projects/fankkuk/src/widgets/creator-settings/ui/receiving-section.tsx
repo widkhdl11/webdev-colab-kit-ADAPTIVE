@@ -21,6 +21,8 @@ import s from "./creator-settings.module.css";
 
 /** field 가 있으면 그 칸의 오류다(칸에 aria-invalid·aria-describedby 를 건다). */
 type Msg = { ok: boolean; text: string; field?: "resumeOn" } | null;
+/** 저장 결과 줄 — 받기 어려운 품목 칸(hard-items-section)도 같은 줄을 쓴다. */
+export type SaveMsg = Msg;
 type AnniversaryDraft = { key: number; name: string; month: number; day: number };
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -28,7 +30,7 @@ const LIMITS = Array.from({ length: MONTHLY_LIMIT_MAX }, (_, i) => i + 1);
 const daysOf = (month: number) => Array.from({ length: daysInMonth(month) }, (_, i) => i + 1);
 
 /** 저장됨은 상태 줄(role=status, 늘 있음)로 조용히, 오류는 오류 줄(role=alert, id = `${id}-err`)로 바로 읽힌다. */
-function SaveMessage({ id, msg }: { id: string; msg: Msg }) {
+export function SaveMessage({ id, msg }: { id: string; msg: Msg }) {
   return (
     <>
       <p className={`sub ${s["save-msg"]}`} role="status" id={id}>

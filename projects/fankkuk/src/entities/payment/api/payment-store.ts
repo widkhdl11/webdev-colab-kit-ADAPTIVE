@@ -18,10 +18,10 @@ export class PriceChangedError extends Error {
 
 /** DB 등록 함수가 보내는 사람을 거부했다 — 자기 자신(self)·팔로우 없음(no_follow)·보낼 수 없는 계정(role)·받을 수 없는 크리에이터(unknown_creator — 없거나 본인 확인 전)·
  * 받는 크리에이터가 채널 이사 중(moving — creator-verification INV-V12, 이것만은 DB 만 판정하는 정상 경로다)·
- * 쉬는 중(resting — creator-receiving INV-B2)·이번 달 한도(limit — INV-B4) — 이 둘도 DB 가 판정하는 정상 경로다.
+ * 쉬는 중(resting — creator-receiving INV-B2)·이번 달 한도(limit — INV-B4)·받기 어려운 품목 등록 막기(hard_item — hard-items INV-H7) — 이 셋도 DB 가 판정하는 정상 경로다.
  * 앱 서버 판정이 먼저 막으므로 정상 흐름에서는 나오지 않는다. 나오면 서버 판정이 빠진 것이다(INV-L3·L8·L9 두 번째 장치). */
 export class SenderRefusedError extends Error {
-  constructor(readonly reason: "role" | "self" | "no_follow" | "unknown_creator" | "moving" | "resting" | "limit") {
+  constructor(readonly reason: "role" | "self" | "no_follow" | "unknown_creator" | "moving" | "resting" | "limit" | "hard_item") {
     super(`DB 가 보내는 사람을 거부했다: ${reason}`);
   }
 }
@@ -30,7 +30,10 @@ export class SenderRefusedError extends Error {
 export type GiftRegistration = {
   fanId: string;
   creatorId: string;
-  itemKind: string;
+  /** 물품 종류 코드(hard-items INV-H1) — DB 등록 함수가 목록으로 다시 검사하고 물품 이름을 정한다 */
+  itemCategory: string;
+  /** 기타일 때만 팬이 적은 글, 아니면 null */
+  itemOther: string | null;
   hasElectronicsOrMetal: boolean;
   boxes: PricedTier[];
   /** 팬이 고른 「{기념일} 선물」 표시 — 7일 안인지는 DB 등록 함수가 그날 다시 계산한다(creator-receiving INV-B9). 고르지 않았으면 null. */

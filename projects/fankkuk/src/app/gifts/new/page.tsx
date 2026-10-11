@@ -3,6 +3,7 @@ import { readMyRecentRecipientIds } from "@/entities/order/api/recent-recipients
 import { readMovingCreatorIds } from "@/entities/creator/api/creator-verification-reads";
 import { readCreatorReceiving, readMyLimitReached } from "@/entities/creator/api/receiving-reads";
 import { kstToday } from "@/entities/creator/model/receiving";
+import { readCreatorHardItems } from "@/entities/gift-item/api/hard-items-reads";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { pickOrder } from "@/features/gift-register/model/pick-order";
 import { sendList } from "@/features/gift-register/model/sender-rule";
@@ -46,9 +47,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   const sendable = pickOrder(sendList(cards, ownCreatorId), { pinnedId: preselectedId, recentRecipientIds, followIds });
   // creator-receiving: 공개 받는 상태(쉬는 중·기념일)와, 로그인한 나만의 한도 판정(INV-B6 — 내 세션으로만 읽힌다)
   const ids = sendable.map((c) => c.id);
-  const [receiving, reachedIds] = await Promise.all([
+  // hard-items: 살아 있는 받기 어려운 품목 — 고른 종류가 겹치면 결제 전에 안내한다(INV-H8). 등록은 DB 가 다시 판정한다(INV-H7)
+  const [receiving, reachedIds, hardItems] = await Promise.all([
     readCreatorReceiving(supabase, ids),
     signedIn ? readMyLimitReached(supabase, ids) : Promise.resolve<string[]>([]),
+    readCreatorHardItems(supabase, ids),
   ]);
   const reached = new Set(reachedIds);
   const ordered = sendable.map((c) => ({
@@ -56,6 +59,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
     moving: moving.has(c.id),
     receiving: receiving.get(c.id),
     limitReached: reached.has(c.id),
+    hardItems: hardItems.get(c.id),
   }));
   const initialCreatorId = preselectedId && ordered.some((c) => c.id === preselectedId) ? preselectedId : "";
   // 미리 고른 사람을 아직 팔로우하지 않았으면(자기 자신이 아니면) 그 사람만 따로 — 팔로우하고 보내게

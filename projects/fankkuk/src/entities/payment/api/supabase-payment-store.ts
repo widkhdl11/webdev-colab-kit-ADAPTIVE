@@ -58,7 +58,8 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
         p_fan_id: registration.fanId,
         p_creator_id: registration.creatorId,
         p_order_no: orderNo,
-        p_item_kind: registration.itemKind,
+        // hard-items INV-H1: 종류 코드를 넘기고, 기타 글만 p_item_kind 로 — 물품 이름은 DB 가 정한다
+        p_item_kind: registration.itemOther,
         p_has_electronics_or_metal: registration.hasElectronicsOrMetal,
         p_tiers: registration.boxes,
         p_toss_order_id: orderId,
@@ -68,6 +69,7 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
         p_shipping_fee_krw: charge.shippingFeeKrw,
         p_amount_krw: charge.totalKrw,
         p_anniversary_name: registration.anniversaryName,
+        p_item_category: registration.itemCategory,
       });
       if (error?.code === "23505" && error.message.includes("orders_order_no_key")) throw new OrderNoTakenError();
       // INV-K3: 등록 순간의 요금표로 다시 계산한 금액과 다르다 — 요금이 방금 바뀌었다
@@ -80,6 +82,8 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
       // creator-receiving INV-B2: 쉬는 중 · INV-B4: 이번 달 한도에 닿았다
       if (error?.code === "FKR01") throw new SenderRefusedError("resting");
       if (error?.code === "FKR02") throw new SenderRefusedError("limit");
+      // hard-items INV-H7: 받기 어려운 품목을 「등록 막기」로 둔 크리에이터
+      if (error?.code === "FKR03") throw new SenderRefusedError("hard_item");
       // 22023 은 상자 수 경계와 같이 쓰지만 상자 수는 입력 검사가 먼저 막는다 — 남는 것은 받을 수 없는 크리에이터다
       if (error?.code === "22023" && error.message.includes("받을 수 없는 크리에이터")) throw new SenderRefusedError("unknown_creator");
       if (error) throw new Error(`선물을 등록하지 못했다: ${error.code}`);
