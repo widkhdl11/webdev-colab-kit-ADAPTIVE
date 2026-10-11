@@ -49,6 +49,7 @@ export function InspectionCardSheet() {
               max={MAX_CARD_COUNT}
               value={countInput}
               onChange={(e) => setCountInput(e.target.valueAsNumber)}
+              onBlur={() => setCountInput(count)}
             />
           </div>
           <button type="button" className={a.btn} onClick={() => window.print()}>
