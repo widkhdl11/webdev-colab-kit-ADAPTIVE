@@ -23,7 +23,7 @@ vi.mock("@/features/creator-photo/model/save-creator-photo", async (importOrigin
 });
 
 const { POST } = await import("./route");
-const { PHOTO_BODY_LIMIT } = await import("@/features/creator-photo/model/photo-limits");
+const { PHOTO_BODY_LIMIT } = await import("@/shared/lib/image/photo-limits");
 
 const SITE = "http://127.0.0.1:3311";
 
@@ -86,7 +86,7 @@ describe("POST /api/creator/photo — 본문을 읽기 전에 거른다", () => 
 
 describe("본문 상한 — 프록시가 자르는 크기와 맞춘다 (S9)", () => {
   it("INV-E9 S9: 라우트 본문 상한은 사진 상한 10MB 에 양식 머리줄 몫을 더한 값이고, Next 프록시 본문 상한이 같은 값이다", async () => {
-    const { PHOTO_MAX_BYTES } = await import("@/features/creator-photo/model/photo-limits");
+    const { PHOTO_MAX_BYTES } = await import("@/shared/lib/image/photo-limits");
     expect(PHOTO_MAX_BYTES).toBe(10 * 1024 * 1024);
     expect(PHOTO_BODY_LIMIT).toBeGreaterThan(PHOTO_MAX_BYTES);
     const config = (await import("../../../../../next.config")).default;

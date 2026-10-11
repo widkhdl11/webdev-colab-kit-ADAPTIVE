@@ -17,6 +17,8 @@ import { anniversaryInWeek, restingNotice, type CalendarDate, type CreatorReceiv
 import { hardItemOverlap, type HardItems } from "@/entities/gift-item/model/hard-items";
 import { forcesMetalReport, isItemCategory, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, ITEM_OTHER_MAX } from "@/entities/gift-item/model/item-category";
 import { charCount } from "@/shared/lib/validation/char-count";
+import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
+import { photoPickProblem } from "@/shared/lib/image/photo-pick";
 import { receivingNotice } from "../model/receiving-notice";
 import { summarizeBoxes } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
@@ -81,7 +83,8 @@ export function RegisterForm({
   initialCreatorId?: string;
   /** 결제창에서 돌아온 실패 안내 */
   notice?: string;
-  onRegistered: (gift: RegisteredGift) => void;
+  /** 등록이 끝나면 — 고른 선물 사진(선택)도 같이 넘긴다. 사진은 받는 쪽이 등록된 주문에 올린다(together INV-F2) */
+  onRegistered: (gift: RegisteredGift, photo: File | null) => void | Promise<void>;
   /** 한국 시간 오늘 — 서버가 정해 넘긴다(쉬는 중·기념일 7일·다음 달 1일 계산, creator-receiving) */
   today: CalendarDate;
 }) {
@@ -97,6 +100,10 @@ export function RegisterForm({
   const [noticeShown, setNoticeShown] = useState(true);
   // creator-receiving INV-B9: 「{기념일} 선물」 표시를 고른 크리에이터 — 다른 크리에이터로 바꾸면 고른 것이 풀린다
   const [markedFor, setMarkedFor] = useState<string | null>(null);
+  // together INV-F2: 선물 사진(선택, 팬 기록 전용) — 등록이 끝난 뒤 그 주문에 올린다. 보내기 전에 종류·크기만 미리 본다(서버가 다시 연다)
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
 
   const stepsWrap = useRef<HTMLElement>(null);
   const hardNote = useRef<HTMLElement | null>(null);
@@ -229,7 +236,7 @@ export function RegisterForm({
       });
       const body = (await res.json().catch(() => ({}))) as RegisterResponse;
       if (res.ok && body.orderId && body.orderNo && typeof body.amountKrw === "number") {
-        onRegistered({ orderId: body.orderId, orderNo: body.orderNo, amountKrw: body.amountKrw });
+        await onRegistered({ orderId: body.orderId, orderNo: body.orderNo, amountKrw: body.amountKrw }, photo);
         return;
       }
       if (res.status === 401) setSubmitError({ message: "로그인하면 선물을 보낼 수 있어요.", needsLogin: true });
@@ -286,6 +293,19 @@ export function RegisterForm({
       .join(" · ") || "없음";
   const totalText = summary.totalKrw !== null ? won(summary.totalKrw) : summary.overLimit ? `${MAX_BOX_COUNT}개 초과` : "—";
   const boxError = errors.smallCount?.message ?? errors.mediumCount?.message ?? errors.largeCount?.message;
+
+  const pickPhoto = (file: File | undefined) => {
+    if (!file) return;
+    const problem = photoPickProblem(file);
+    setPhotoError(problem);
+    setPhoto(problem ? null : file);
+    if (problem && photoRef.current) photoRef.current.value = "";
+  };
+  const clearPhoto = () => {
+    setPhoto(null);
+    setPhotoError(null);
+    if (photoRef.current) photoRef.current.value = "";
+  };
 
   const err = (id: string, message: string | undefined) =>
     message ? (
@@ -560,6 +580,38 @@ export function RegisterForm({
                   <p className="hint" id="mark-hint">{picked?.name}님의 「{anniversaryMark}」까지 7일이 남지 않았어요. 고르면 크리에이터가 승인할 때 이 표시가 보여요.</p>
                 </div>
               ) : null}
+              {/* together INV-F2: 선물 사진(선택) — 「함께한 시간」에서 나만 본다. 파일 칸은 좁은 폭에서 넘치지 않게 숨기고 라벨을 버튼 모양으로(크리에이터 설정 「사진 고르기」 방식) */}
+              <div className={`field ${f.metal}`} role="group" aria-labelledby="photo-q">
+                <p className={f["metal-q"]} id="photo-q">
+                  선물 사진 <span className={f["photo-opt"]}>(선택)</span>
+                </p>
+                <div className={f["photo-row"]}>
+                  <input
+                    className={`sr-only ${f["photo-file"]}`}
+                    id="gift-photo"
+                    ref={photoRef}
+                    type="file"
+                    accept={PHOTO_ACCEPT}
+                    aria-describedby={["photo-name", "photo-hint", photoError ? "photo-error" : ""].filter(Boolean).join(" ")}
+                    onChange={(e) => pickPhoto(e.currentTarget.files?.[0])}
+                  />
+                  <label className={`btn btn--line btn--sm ${f["photo-pick"]}`} htmlFor="gift-photo">
+                    {photo ? "다른 사진 고르기" : "사진 고르기"}
+                  </label>
+                  {photo ? (
+                    <button className="btn btn--text btn--sm" type="button" onClick={clearPhoto}>
+                      사진 빼기
+                    </button>
+                  ) : null}
+                </div>
+                <p className={`sub ${f["photo-name"]}`} id="photo-name">
+                  {photo ? `고른 사진: ${photo.name}` : "고른 사진이 없어요."}
+                </p>
+                <p className="hint" id="photo-hint">
+                  상자·송장이 아니라 선물만 찍어 주세요. jpg·png·webp, 10MB 까지. 촬영 위치 같은 사진 정보는 지우고 저장하고, 크리에이터에게도 보이지 않아요 — 「함께한 시간」에서 나만 봐요.
+                </p>
+                {err("photo-error", photoError ?? undefined)}
+              </div>
             </fieldset>
 
             {/* 3 상자 */}
@@ -647,6 +699,13 @@ export function RegisterForm({
                   <dd>{boxesText}</dd>
                   {fix(3, "상자 수")}
                 </div>
+                {photo ? (
+                  <div className={f["sum-row"]}>
+                    <dt>선물 사진</dt>
+                    <dd className={f["photo-name"]}>{photo.name}</dd>
+                    {fix(2, "선물 사진")}
+                  </div>
+                ) : null}
                 {anniversaryMark && markAnniversary ? (
                   <div className={f["sum-row"]}>
                     <dt>표시</dt>

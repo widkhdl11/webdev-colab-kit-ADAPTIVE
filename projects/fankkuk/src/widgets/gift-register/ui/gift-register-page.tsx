@@ -7,6 +7,7 @@ import type { CalendarDate } from "@/entities/creator/model/receiving";
 import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 import { receivingNotice } from "@/features/gift-register/model/receiving-notice";
 import { PaymentStep } from "@/features/checkout/ui/payment-step";
+import { sendGiftPhoto } from "@/features/gift-photo/api/send-gift-photo";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import { RegisterForm, type CreatorOption, type RegisteredGift } from "@/features/gift-register/ui/register-form";
 import s from "./gift-register-page.module.css";
@@ -14,6 +15,8 @@ import s from "./gift-register-page.module.css";
 // 선물 보내기 본문(팬·크리에이터). 시안: docs/design/mockups/site/v4/send.html (4단계, 카드 안 이전·다음, PC 오른쪽 요약)
 // 4단계에서 「결제하기」를 누르면 서버에 등록되고(결제 대기), 같은 자리에 결제창이 뜬다.
 // 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리 import 하지 않게.
+// 선물 사진(선택)을 골랐으면 등록 직후 그 주문에 올린 뒤 결제창을 연다(together INV-F2 — 서버가 열어 보고 사진 정보를 지워 저장한다).
+// 사진을 올리지 못해도 결제는 그대로 진행하고 「함께한 시간」에서 다시 올릴 수 있다고 알린다.
 export function GiftRegisterPage({
   creators,
   prices,
@@ -39,6 +42,14 @@ export function GiftRegisterPage({
   today: CalendarDate;
 }) {
   const [registered, setRegistered] = useState<RegisteredGift | null>(null);
+  const [photoNote, setPhotoNote] = useState<string | null>(null);
+  const onRegistered = async (gift: RegisteredGift, photo: File | null) => {
+    if (photo) {
+      const r = await sendGiftPhoto(gift.orderNo, photo);
+      setPhotoNote(r.kind === "ok" ? null : "선물 사진은 올리지 못했어요. 결제한 뒤 「함께한 시간」에서 다시 올릴 수 있어요.");
+    }
+    setRegistered(gift);
+  };
   // creator-receiving INV-B2·B6: 크리에이터 페이지에서 미리 고르고 왔는데 쉬는 중이거나 내가 이번 달 한도에 닿았으면 폼 대신 안내.
   // 「다른 크리에이터에게 보내기」를 누르면 미리 고른 것을 비우고 폼을 연다.
   const preselected = creators.find((c) => c.id === initialCreatorId);
@@ -90,7 +101,14 @@ export function GiftRegisterPage({
         </div>
       ) : registered ? (
         clientKey ? (
-          <PaymentStep clientKey={clientKey} pending={registered} />
+          <>
+            {photoNote ? (
+              <p className={`container ${s["photo-note"]}`} role="status">
+                {photoNote}
+              </p>
+            ) : null}
+            <PaymentStep clientKey={clientKey} pending={registered} />
+          </>
         ) : (
           <p className="container" role="alert">
             지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.
@@ -121,7 +139,7 @@ export function GiftRegisterPage({
           prices={prices}
           initialCreatorId={pickOther ? "" : initialCreatorId}
           notice={notice}
-          onRegistered={setRegistered}
+          onRegistered={onRegistered}
           today={today}
         />
       )}

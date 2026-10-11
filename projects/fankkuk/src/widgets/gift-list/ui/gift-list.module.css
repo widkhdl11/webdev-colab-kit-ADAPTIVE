@@ -32,3 +32,15 @@
   .g-who { flex-basis: calc(100% - 64px); }
   .g-top .badge { margin-left: 64px; }
 }
+
+/* 크리에이터별로 보기 — 「함께한 시간」으로 가는 줄(한 줄에 하나, design-rules 2절) */
+.by { margin-top: 16px; }
+.by h3 { font-size: 20px; letter-spacing: -.3px; }
+.by-list { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.by-row { display: flex; align-items: center; gap: 16px; min-height: 72px; padding: 12px 20px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--hair); color: var(--ink); text-decoration: none; }
+.by-row:hover { background: var(--surface-hover); }
+.by-row:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.by-face { width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; object-fit: cover; }
+.by-text { display: grid; flex: 1; min-width: 0; }
+.by-text strong { overflow-wrap: anywhere; }
+.by-go { color: var(--sub); font-size: 24px; line-height: 1; }

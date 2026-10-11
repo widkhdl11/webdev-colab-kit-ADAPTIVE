@@ -1,5 +1,5 @@
 import { readViewer, type Viewer } from "@/entities/session/model/viewer";
-import { PHOTO_BODY_LIMIT } from "@/features/creator-photo/model/photo-limits";
+import { PHOTO_BODY_LIMIT } from "@/shared/lib/image/photo-limits";
 import { photoGate, removeCreatorPhoto, saveCreatorPhoto, type PhotoResult } from "@/features/creator-photo/model/save-creator-photo";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createRequestSupabase } from "@/shared/api/supabase/server";

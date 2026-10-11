@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { PHOTO_BODY_LIMIT } from "./src/features/creator-photo/model/photo-limits";
+import { PHOTO_BODY_LIMIT } from "./src/shared/lib/image/photo-limits";
 
 const nextConfig: NextConfig = {
   // 개발 서버는 localhost 가 아닌 주소에서 오는 개발용 파일 요청을 막는다. 127.0.0.1 로 열면 화면 스크립트가
