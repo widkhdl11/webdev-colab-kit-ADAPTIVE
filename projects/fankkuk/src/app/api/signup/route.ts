@@ -6,11 +6,13 @@ import { readMailConfig } from "@/shared/api/mail/config";
 import { createSmtpSender } from "@/shared/api/mail/smtp";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
+import { decodeUtm, UTM_COOKIE } from "@/shared/lib/attribution/utm";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 
 // 가입(signup 스펙). 같은 사이트의 JSON 만, 응답은 캐시하지 않는다(INV-U11).
 // 번호표는 쿠키에서만 읽는다(S1c). 계정 만들기는 앱 서버 키로 한다 — 가입하는 사람은 아직 로그인 전이다.
 // 성공하면 요청한 브라우저의 세션으로 로그인하고, 다 쓴 번호표 쿠키를 지운다.
+// 처음 들어온 공유 링크의 utm 쿠키(metrics INV-Q4)도 여기서 읽어 계정에 붙인다.
 export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async (body) => {
     const jar = await cookies();
@@ -26,6 +28,8 @@ export async function POST(req: NextRequest) {
         },
       },
       withVerificationFromCookie(body, jar.get(VERIFICATION_COOKIE)?.value),
+      // metrics INV-Q4: 처음 들어온 공유 링크의 utm 은 쿠키에서만 읽고 다시 거른다
+      decodeUtm(jar.get(UTM_COOKIE)?.value),
     );
     if (!result.ok) return { status: result.status, body: { field: result.field, message: result.message } };
     jar.set(VERIFICATION_COOKIE, "", { ...verificationCookieOptions(process.env), maxAge: 0 });

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TAG_COUNT_MESSAGE, tagCountWithin, tagSelectionFields } from "@/entities/creator/model/creator-tags";
+import { HEARD_FROM } from "@/entities/metrics/model/signup-source";
 import { SIGNUP_LOGIN_ID_PATTERN } from "@/entities/session/model/login-id";
 import { PASSWORD_KINDS, PASSWORD_MAX, PASSWORD_MIN, PASSWORD_SAME_AS_ID, PASSWORD_TOO_LONG, PASSWORD_TOO_SHORT, PASSWORD_WEAK, passwordKinds } from "@/entities/session/model/password-rule";
 import { EMAIL_SHAPE } from "@/shared/lib/validation/email-shape";
@@ -83,6 +84,8 @@ export const signupInputSchema = detailsObject
     verificationId: verificationIdSchema,
     // 팬이면 와도 쓰지 않는다(sign-up 이 크리에이터일 때만 넘긴다)
     creator: creatorProfileSchema.optional(),
+    // metrics INV-Q4: 「어디서 알게 되셨나요」 — 고르는 것 하나, 답하지 않아도 된다(빈 값 = 고르지 않음). DB 가 같은 목록으로 다시 검사한다
+    heardFrom: z.enum(HEARD_FROM, { message: "어디서 알게 되셨는지는 목록에서 골라 주세요." }).nullable().optional(),
   })
   .refine(passwordNotLoginId, PASSWORD_IS_ID)
   .refine(creatorWhenCreator, CREATOR_REQUIRED);

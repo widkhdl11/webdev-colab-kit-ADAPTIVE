@@ -38,6 +38,8 @@ export type GiftRegistration = {
   boxes: PricedTier[];
   /** 팬이 고른 「{기념일} 선물」 표시 — 7일 안인지는 DB 등록 함수가 그날 다시 계산한다(creator-receiving INV-B9). 고르지 않았으면 null. */
   anniversaryName: string | null;
+  /** 받기 어려운 품목 안내가 뜬 품목(metrics INV-Q5). DB 등록 함수가 그때 살아 있는 받기 어려운 품목에 있을 때만 남긴다. 안내가 없었으면 null. */
+  hardNoticeCategory: string | null;
 };
 
 /** 결제가 끝나는 순간 같이 만드는 승인 요청(INV-M6). 원문은 buildSigningPayload 가 만든다(INV-S1). */

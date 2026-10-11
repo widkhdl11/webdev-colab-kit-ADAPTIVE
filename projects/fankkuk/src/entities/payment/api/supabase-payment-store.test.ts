@@ -30,6 +30,7 @@ const input = {
     hasElectronicsOrMetal: false,
     boxes: ["small" as const],
     anniversaryName: null,
+    hardNoticeCategory: null,
   },
 };
 
@@ -51,5 +52,14 @@ describe("hard-items INV-H7: DB 의 「등록 막기」 거부를 앱 오류로"
     const { store } = storeReturning("FKR01");
     const err = await store.create(input).catch((e: unknown) => e);
     expect((err as SenderRefusedError).reason).toBe("resting");
+  });
+});
+
+describe("metrics INV-Q5: 안내가 뜬 품목을 등록 함수에 넘긴다", () => {
+  it("INV-Q5: p_hard_notice_category 로 넘긴다 — 안내가 없었으면 null", async () => {
+    const { store, calls } = storeReturning("FKR03");
+    await store.create({ ...input, registration: { ...input.registration, hardNoticeCategory: "flower" } }).catch(() => null);
+    await store.create(input).catch(() => null);
+    expect(calls.map((c) => c.args.p_hard_notice_category)).toEqual(["flower", null]);
   });
 });

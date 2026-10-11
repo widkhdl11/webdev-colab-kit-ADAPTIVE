@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
 import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
+import { HEARD_FROM, HEARD_FROM_LABEL, isHeardFrom, type HeardFrom } from "@/entities/metrics/model/signup-source";
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { completeSignup } from "@/features/signup/api/complete-signup";
 import { requestPhoneVerification } from "@/features/signup/api/signup-client";
@@ -60,6 +61,8 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
   const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({ service: false, privacy: false, news: false });
+  // metrics INV-Q4: 「어디서 알게 되셨나요」 — 고르지 않아도 가입된다
+  const [heardFrom, setHeardFrom] = useState<HeardFrom | null>(null);
   // 인증 요청을 보냈는가. 번호표 자체는 서버가 쿠키로 들고 있다(INV-U1). 번호를 고치면 요청부터 다시 —
   // 다른 번호의 확인으로 가입하지 않게(서버도 번호 대조로 막는다).
   const [requested, setRequested] = useState(false);
@@ -128,6 +131,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
       phone,
       terms: agreed,
       creator: creatorProfile(),
+      heardFrom,
     });
     if (r.ok) {
       router.push(r.loggedIn ? "/" : "/login"); // 「/」 가 역할별 첫 화면으로 나눈다
@@ -397,6 +401,28 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     />
                   </>
                 ) : null}
+                <div className="field">
+                  <label htmlFor={f("heard")}>
+                    어디서 팬꾹을 알게 되셨나요? <span className="sub">(선택)</span>
+                  </label>
+                  <select
+                    className="input"
+                    id={f("heard")}
+                    value={heardFrom ?? ""}
+                    onChange={(e) => setHeardFrom(isHeardFrom(e.currentTarget.value) ? e.currentTarget.value : null)}
+                    aria-describedby={f("heard-h")}
+                  >
+                    <option value="">고르지 않을래요</option>
+                    {HEARD_FROM.map((k) => (
+                      <option key={k} value={k}>
+                        {HEARD_FROM_LABEL[k]}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="hint" id={f("heard-h")}>
+                    답하지 않아도 가입돼요. 어떤 길로 많이 찾아오시는지만 모아서 봐요.
+                  </p>
+                </div>
                 <div className="field" role="group" aria-labelledby={f("terms")}>
                   <p className="label" id={f("terms")}>
                     약관 동의

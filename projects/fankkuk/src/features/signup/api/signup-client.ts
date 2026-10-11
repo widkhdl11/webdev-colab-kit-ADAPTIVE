@@ -1,3 +1,4 @@
+import type { HeardFrom } from "@/entities/metrics/model/signup-source";
 import type { SignUpField } from "../model/sign-up";
 import type { CreatorProfileBody } from "../model/signup-input";
 
@@ -13,6 +14,8 @@ export type SignupBody = {
   terms: { service: boolean; privacy: boolean; news: boolean };
   /** 크리에이터로 가입할 때만 — 공개 이름·채널 이름·태그(선택지 id + 직접 입력) */
   creator?: CreatorProfileBody;
+  /** 「어디서 알게 되셨나요」(metrics INV-Q4) — 고르지 않으면 null */
+  heardFrom: HeardFrom | null;
 };
 
 const FALLBACK = "잠시 문제가 생겼어요. 조금 뒤 다시 해 주세요.";

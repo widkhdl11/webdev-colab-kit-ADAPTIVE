@@ -60,6 +60,8 @@ export type RegisterInput = {
   boxes: PricedTier[];
   hasElectronicsOrMetal: boolean;
   anniversaryName: string | null;
+  /** 받기 어려운 품목 안내가 뜬 품목(metrics INV-Q5) — 화면이 보낸 값. 맞는지는 DB 등록 함수가 그때의 설정과 다시 맞춰 본다 */
+  hardNoticeCategory: ItemCategory | null;
 };
 
 export type RegisterParseResult =
@@ -74,6 +76,9 @@ export function boxesFromCounts(counts: Readonly<Record<PricedTier, number>>): P
     ...Array<PricedTier>(counts.large).fill("large"),
   ];
 }
+
+// metrics INV-Q5: 안내가 뜬 품목은 측정용이다 — 목록 밖 값·꼴이 틀린 값은 버리고(null) 등록은 막지 않는다
+const noticeSchema = z.object({ hardNoticeCategory: z.enum(ITEM_CATEGORIES) });
 
 const FIELDS = ["creatorId", "itemCategory", "itemOther", "smallCount", "mediumCount", "largeCount", "electronicsOrMetal", "anniversaryName"] as const;
 
@@ -99,6 +104,7 @@ export function parseRegisterInput(input: unknown): RegisterParseResult {
       // INV-H2: 전자기기를 고르면 신고를 켠다(DB 등록 함수도 켠다)
       hasElectronicsOrMetal: electronicsOrMetal === "yes" || forcesMetalReport(itemCategory),
       anniversaryName: anniversaryName ?? null,
+      hardNoticeCategory: noticeSchema.safeParse(input).data?.hardNoticeCategory ?? null,
     },
   };
 }

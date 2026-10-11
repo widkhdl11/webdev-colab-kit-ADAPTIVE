@@ -70,6 +70,8 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
         p_amount_krw: charge.totalKrw,
         p_anniversary_name: registration.anniversaryName,
         p_item_category: registration.itemCategory,
+        // metrics INV-Q5: 안내가 뜬 품목 — DB 가 그때의 받기 어려운 품목과 다시 맞춰 보고 아니면 버린다
+        p_hard_notice_category: registration.hardNoticeCategory,
       });
       if (error?.code === "23505" && error.message.includes("orders_order_no_key")) throw new OrderNoTakenError();
       // INV-K3: 등록 순간의 요금표로 다시 계산한 금액과 다르다 — 요금이 방금 바뀌었다

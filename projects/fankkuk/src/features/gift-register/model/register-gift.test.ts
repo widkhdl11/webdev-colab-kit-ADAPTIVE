@@ -255,6 +255,16 @@ describe("받는 양 조절 (creator-receiving INV-B2·B4·B6·B9)", () => {
     ]);
   });
 
+  it("metrics INV-Q5: 화면이 보낸 안내 품목을 등록에 넘긴다 — 목록 밖 값은 버린다", async () => {
+    const { deps, store } = setup();
+    expect((await registerGift({ ...deps, viewer: FAN }, { ...form, itemCategory: "doll", hardNoticeCategory: "flower" })).ok).toBe(true);
+    expect((await registerGift({ ...deps, newOrderNo: () => "FC-TEST2", viewer: FAN }, { ...form, hardNoticeCategory: "<b>" })).ok).toBe(true);
+    expect(store.registrations().map((x) => [x.itemCategory, x.hardNoticeCategory])).toEqual([
+      ["doll", "flower"],
+      ["other", null],
+    ]);
+  });
+
   it("INV-B9: 고른 기념일 표시는 이름 그대로 등록에 넘긴다(7일 안인지는 DB 가 그날 다시 본다)", async () => {
     const { deps, store } = setup();
     expect((await registerGift({ ...deps, viewer: FAN }, { ...form, anniversaryName: " 데뷔일 " })).ok).toBe(true);

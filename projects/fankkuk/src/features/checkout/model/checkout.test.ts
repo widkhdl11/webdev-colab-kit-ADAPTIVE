@@ -37,7 +37,7 @@ async function pendingFor(store: PaymentStore, boxes: ("small" | "medium")[]) {
     orderId: `pay_test${String(seq).padStart(4, "0")}`,
     orderNo: "FC-7K3M9",
     charge: computeCharge(PRICES, { boxes }),
-    registration: { fanId: "fan-byeolbit", creatorId: "creator-1", itemCategory: "other", itemOther: "손편지", hasElectronicsOrMetal: false, boxes, anniversaryName: null },
+    registration: { fanId: "fan-byeolbit", creatorId: "creator-1", itemCategory: "other", itemOther: "손편지", hasElectronicsOrMetal: false, boxes, anniversaryName: null, hardNoticeCategory: null },
   });
 }
 

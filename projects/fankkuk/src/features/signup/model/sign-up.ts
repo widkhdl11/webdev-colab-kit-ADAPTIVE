@@ -2,6 +2,7 @@ import { z } from "zod";
 import { tagFilterMessage } from "@/entities/creator/model/creator-tags";
 import { accountLoginEmail } from "@/entities/session/model/login-id";
 import type { SendMail } from "@/shared/api/mail/smtp";
+import type { Utm } from "@/shared/lib/attribution/utm";
 import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
 import { buildSignupMail } from "../lib/signup-mail";
 import { consentRows, detailsFieldOf, signupInputSchema, type DetailsField } from "./signup-input";
@@ -13,7 +14,8 @@ import { consentRows, detailsFieldOf, signupInputSchema, type DetailsField } fro
 // 3) Supabase Auth 에 로그인 정보를 만든다 — 주소는 아이디로 만든 예약 도메인 주소(INV-U8). 이미 있으면 「쓰는 아이디」.
 // 4) create_account(크리에이터면 create_creator_account — 확인 안 된 공개 정보 행까지) 가 프로필·연락처·확인 메일 기록·약관 동의를 한 번에 만들고 번호표를 「씀」으로 바꾼다(INV-U4).
 //    실패하면 3)에서 만든 로그인 정보를 지운다 — 로그인은 되는데 프로필이 없는 계정이 남지 않게.
-// 5) 그 사람으로 로그인해 세션 쿠키를 쓴다. 6) 확인 메일을 보낸다(INV-U7). 5·6 이 실패해도 계정은 그대로 둔다.
+// 5) 가입 경로(고른 답)와 처음 들어온 공유 링크의 utm(쿠키에서 거른 값)을 계정에 붙인다(metrics INV-Q4). 실패해도 가입은 그대로다.
+// 6) 그 사람으로 로그인해 세션 쿠키를 쓴다. 7) 확인 메일을 보낸다(INV-U7). 5~7 이 실패해도 계정은 그대로 둔다.
 
 type Rpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { code?: string } | null }>;
 
@@ -55,7 +57,8 @@ const PHONE_TAKEN = { ok: false, status: 409, field: "phone", message: "이미 �
 
 const issuedSchema = z.array(z.object({ token: z.string(), email: z.string(), nickname: z.string() })).length(1);
 
-export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpResult> {
+/** utm: 처음 들어온 공유 링크의 utm — 라우트가 쿠키에서 읽어 다시 거른 값(없으면 null). 본문의 utm 칸은 읽지 않는다. */
+export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = null): Promise<SignUpResult> {
   if (!choosePhoneVerifier(deps.env)) return CLOSED;
 
   const parsed = signupInputSchema.safeParse(body);
@@ -128,6 +131,8 @@ export async function signUp(deps: SignUpDeps, body: unknown): Promise<SignUpRes
     throw new Error(`계정을 만들지 못했다: ${account.error.code}`);
   }
 
+  await recordSignupSource(deps, userId, input.heardFrom ?? null, utm);
+
   let loggedIn = false;
   try {
     const signedIn = await deps.auth.signInWithPassword({ email: loginEmail, password: input.password });
@@ -150,6 +155,22 @@ async function removeAuthUser(deps: SignUpDeps, userId: string): Promise<void> {
     }
   }
   throw new Error(`계정 만들기 실패 뒤 로그인 정보를 지우지 못했다: ${userId}`);
+}
+
+/** metrics INV-Q4: 가입 경로·utm 기록. 측정용이라 실패해도 가입을 되돌리지 않는다 — 서버 기록에만 남긴다. */
+async function recordSignupSource(deps: SignUpDeps, userId: string, heardFrom: string | null, utm: Utm | null): Promise<void> {
+  try {
+    const { error } = await deps.admin.rpc("record_signup_source", {
+      p_account_id: userId,
+      p_heard_from: heardFrom,
+      p_utm_source: utm?.source ?? null,
+      p_utm_medium: utm?.medium ?? null,
+      p_utm_campaign: utm?.campaign ?? null,
+    });
+    if (error) console.error(`가입 경로를 기록하지 못했다: ${error.code ?? "코드 없음"}`);
+  } catch {
+    console.error("가입 경로를 기록하지 못했다");
+  }
 }
 
 async function sendSignupMail(deps: SignUpDeps, userId: string): Promise<boolean> {

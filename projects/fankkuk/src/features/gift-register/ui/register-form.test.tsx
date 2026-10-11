@@ -137,3 +137,42 @@ describe("결제 직전에 다시 본다 — 4단계까지 간 뒤 크리에이�
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({ creatorId: MOMO, itemCategory: "stationery" });
   });
 });
+
+describe("metrics INV-Q5: 안내가 뜬 품목을 등록에 같이 보낸다", () => {
+  const pay = () => click([...host.querySelectorAll("button")].find((b) => b.textContent?.includes("결제하기")));
+  const sent = () => JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
+
+  it("INV-Q5 (S5): 꽃에서 안내를 보고 인형으로 바꿔 결제하면 안내 품목 꽃·마지막 인형을 보낸다", async () => {
+    await render("notice");
+    await toStep2("flower");
+    expect(host.querySelector("#hard-note")).not.toBeNull();
+    await click(radio("doll"));
+    await click(button("다음"));
+    await click(button("다음"));
+    await pay();
+    expect(sent()).toMatchObject({ creatorId: HARU, itemCategory: "doll", hardNoticeCategory: "flower" });
+  });
+
+  it("INV-Q5 (실패경로): 안내가 뜨지 않았으면 안내 품목을 보내지 않는다", async () => {
+    await render("notice", MOMO);
+    await toStep2("flower");
+    await click(button("다음"));
+    await click(button("다음"));
+    await pay();
+    expect(sent()).not.toHaveProperty("hardNoticeCategory");
+  });
+
+  it("INV-Q5 (실패경로): 안내를 본 뒤 다른 크리에이터로 바꾸면 그 안내는 보내지 않는다", async () => {
+    await render("notice");
+    await toStep2("flower");
+    expect(host.querySelector("#hard-note")).not.toBeNull();
+    await click(stepButton("크리에이터"));
+    await click(radio(MOMO));
+    await click(button("다음"));
+    await click(button("다음"));
+    await click(button("다음"));
+    await pay();
+    expect(sent()).toMatchObject({ creatorId: MOMO, itemCategory: "flower" });
+    expect(sent()).not.toHaveProperty("hardNoticeCategory");
+  });
+});

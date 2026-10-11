@@ -7,7 +7,7 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
   it("정상 입력은 상자 구간 목록·참거짓으로 바뀐다 (소형 먼저)", () => {
     expect(parseRegisterInput(ok)).toEqual({
       success: true,
-      data: { creatorId: "00000000-0000-4000-b000-000000000001", itemCategory: "doll", itemOther: null, boxes: ["small", "small", "medium"], hasElectronicsOrMetal: false, anniversaryName: null },
+      data: { creatorId: "00000000-0000-4000-b000-000000000001", itemCategory: "doll", itemOther: null, boxes: ["small", "small", "medium"], hasElectronicsOrMetal: false, anniversaryName: null, hardNoticeCategory: null },
     });
   });
 
@@ -87,7 +87,7 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
 
   it("모르는 칸(금액·대형 초과 상자 수 등)은 결과에 들어오지 않는다 — 결제 금액은 서버 요금표로만 계산한다", () => {
     const r = parseRegisterInput({ ...ok, totalKrw: "100", oversizeCount: "3" });
-    expect(r.success && Object.keys(r.data).sort()).toEqual(["anniversaryName", "boxes", "creatorId", "hasElectronicsOrMetal", "itemCategory", "itemOther"]);
+    expect(r.success && Object.keys(r.data).sort()).toEqual(["anniversaryName", "boxes", "creatorId", "hardNoticeCategory", "hasElectronicsOrMetal", "itemCategory", "itemOther"]);
     expect(r.success && r.data.boxes).toHaveLength(3);
   });
 });
@@ -111,5 +111,25 @@ describe("기념일 표시 이름 (creator-receiving INV-B9·B7)", () => {
   it("INV-B9 (실패경로): 이모지 13개·빈 이름은 받지 않는다", () => {
     expect(parseRegisterInput({ ...base, anniversaryName: "🎂".repeat(13) }).success).toBe(false);
     expect(parseRegisterInput({ ...base, anniversaryName: "  " }).success).toBe(false);
+  });
+});
+
+describe("받기 어려운 품목 안내가 뜬 품목 (metrics INV-Q5)", () => {
+  it("INV-Q5: 화면이 보낸 안내 품목을 목록 값이면 넘긴다 — 맞는지는 DB 가 그때의 설정과 다시 맞춰 본다", () => {
+    const r = parseRegisterInput({ ...ok, hardNoticeCategory: "flower" });
+    expect(r.success && r.data.hardNoticeCategory).toBe("flower");
+  });
+
+  it("INV-Q5 (실패경로): 목록 밖 값·꼴이 틀린 값은 버린다 — 등록은 막지 않는다", () => {
+    for (const bad of ["<script>", "rose", 3, { a: 1 }, ""]) {
+      const r = parseRegisterInput({ ...ok, hardNoticeCategory: bad });
+      expect(r.success).toBe(true);
+      expect(r.success && r.data.hardNoticeCategory).toBeNull();
+    }
+  });
+
+  it("INV-Q5: 안 보내면 없음", () => {
+    const r = parseRegisterInput(ok);
+    expect(r.success && r.data.hardNoticeCategory).toBeNull();
   });
 });

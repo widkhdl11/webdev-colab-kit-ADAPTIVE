@@ -22,6 +22,8 @@ function harness(opts: {
   createAccountError?: { code: string } | null;
   signInOk?: boolean;
   production?: boolean;
+  /** 가입 경로 기록이 실패한다(metrics INV-Q4) */
+  recordFails?: boolean;
 } = {}) {
   const rpcCalls: RpcCall[] = [];
   const created: { email: string; password: string; email_confirm?: boolean }[] = [];
@@ -37,6 +39,7 @@ function harness(opts: {
         rpcCalls.push({ fn, args });
         if (fn === "usable_phone_verification") return { data: verifiedPhone, error: null };
         if (fn === "create_account" || fn === "create_creator_account") return { data: null, error: opts.createAccountError ?? null };
+        if (fn === "record_signup_source") return { data: null, error: opts.recordFails ? { code: "XX000" } : null };
         if (fn === "issue_email_verification") {
           return { data: [{ token: "a".repeat(64), email: "new.fan@example.com", nickname: "newfan" }], error: null };
         }
@@ -387,5 +390,54 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
     const r = await signUp(h.deps, body({ role: "creator", creator }));
     expect(r).toMatchObject({ ok: false, status: 400 });
     expect(h.deleted).toEqual([USER_ID]);
+  });
+});
+
+describe("metrics INV-Q4: 가입 경로·utm 은 가입할 때 계정에 붙는다", () => {
+  const UTM = { source: "x_share", medium: "social", campaign: null };
+
+  it("INV-Q4: 고른 가입 경로와 쿠키의 utm 을 방금 만든 계정에 기록한다", async () => {
+    const h = harness();
+    const r = await signUp(h.deps, body({ heardFrom: "creator_stream" }), UTM);
+    expect(r).toMatchObject({ ok: true });
+    expect(h.rpcCalls.filter((c) => c.fn === "record_signup_source")).toEqual([
+      {
+        fn: "record_signup_source",
+        args: { p_account_id: USER_ID, p_heard_from: "creator_stream", p_utm_source: "x_share", p_utm_medium: "social", p_utm_campaign: null },
+      },
+    ]);
+  });
+
+  it("INV-Q4 (S4): 가입 경로를 고르지 않아도 가입된다 — 빈 값으로 기록", async () => {
+    const h = harness();
+    const r = await signUp(h.deps, body(), null);
+    expect(r).toEqual({ ok: true, loggedIn: true, mailSent: true });
+    expect(h.rpcCalls.find((c) => c.fn === "record_signup_source")?.args).toEqual({
+      p_account_id: USER_ID,
+      p_heard_from: null,
+      p_utm_source: null,
+      p_utm_medium: null,
+      p_utm_campaign: null,
+    });
+  });
+
+  it("INV-Q4 (실패경로): 목록에 없는 가입 경로는 입력 경계에서 거부한다 — 계정을 만들지 않는다", async () => {
+    const h = harness();
+    const r = await signUp(h.deps, body({ heardFrom: "<script>" }));
+    expect(r).toMatchObject({ ok: false, status: 400 });
+    expect(h.created).toEqual([]);
+  });
+
+  it("INV-Q4 (실패경로): 기록이 실패해도 가입은 그대로 끝난다 — 답하기 싫은 사람·기록 오류가 가입을 막지 않는다", async () => {
+    const h = harness({ recordFails: true });
+    const r = await signUp(h.deps, body({ heardFrom: "x" }), UTM);
+    expect(r).toEqual({ ok: true, loggedIn: true, mailSent: true });
+    expect(h.deleted).toEqual([]);
+  });
+
+  it("INV-Q4 (실패경로): 계정 만들기가 실패하면 기록하지 않는다", async () => {
+    const h = harness({ createAccountError: { code: "FKU02" } });
+    await signUp(h.deps, body({ heardFrom: "x" }), UTM);
+    expect(h.rpcCalls.some((c) => c.fn === "record_signup_source")).toBe(false);
   });
 });

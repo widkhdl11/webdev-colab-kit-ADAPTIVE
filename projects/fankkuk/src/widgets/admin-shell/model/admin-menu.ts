@@ -33,7 +33,14 @@ export const ADMIN_MENU: readonly AdminMenuGroup[] = [
       { href: "/admin/creators", label: "크리에이터 확인" },
     ],
   },
-  { name: "관리", items: [{ href: "/admin/prohibited", label: "보낼 수 없는 물품" }] },
+  {
+    name: "관리",
+    items: [
+      { href: "/admin/prohibited", label: "보낼 수 없는 물품" },
+      // metrics INV-Q1: 집계는 운영자 틀 안에서만
+      { href: "/admin/metrics", label: "측정" },
+    ],
+  },
 ];
 
 /** 지금 주소가 어느 묶음의 어느 화면인가. 하위 주소(/admin/parcels/123)는 그 화면으로 본다. */

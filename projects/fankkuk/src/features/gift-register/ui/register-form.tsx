@@ -15,7 +15,7 @@ import { formatDuration } from "@/shared/lib/format/datetime";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { anniversaryInWeek, restingNotice, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import { hardItemOverlap, type HardItems } from "@/entities/gift-item/model/hard-items";
-import { forcesMetalReport, isItemCategory, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, ITEM_OTHER_MAX } from "@/entities/gift-item/model/item-category";
+import { forcesMetalReport, isItemCategory, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, ITEM_OTHER_MAX, type ItemCategory } from "@/entities/gift-item/model/item-category";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
@@ -104,6 +104,8 @@ export function RegisterForm({
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const photoRef = useRef<HTMLInputElement>(null);
+  // metrics INV-Q5: 받기 어려운 품목 안내가 처음 뜬 품목 — 크리에이터마다 하나. 바꾸고 결제하면 「바꿨다」로 센다(DB 가 그때의 설정과 다시 맞춰 본다)
+  const [noticed, setNoticed] = useState<{ creatorId: string; category: ItemCategory } | null>(null);
 
   const stepsWrap = useRef<HTMLElement>(null);
   const hardNote = useRef<HTMLElement | null>(null);
@@ -232,6 +234,8 @@ export function RegisterForm({
           quotedTotalKrw: summary.totalKrw,
           // INV-B9: 고른 표시만 이름으로 보낸다. 7일 안인지는 DB 가 그날 다시 계산해 아니면 표시 없이 저장한다
           ...(anniversaryMark && markAnniversary ? { anniversaryName: anniversaryMark } : {}),
+          // metrics INV-Q5: 이 크리에이터에게서 안내가 뜬 품목(없으면 보내지 않는다)
+          ...(noticed && noticed.creatorId === creatorId ? { hardNoticeCategory: noticed.category } : {}),
         }),
       });
       const body = (await res.json().catch(() => ({}))) as RegisterResponse;
@@ -284,6 +288,9 @@ export function RegisterForm({
   const markAnniversary = markedFor !== null && markedFor === creatorId;
   // hard-items INV-H8: 고른 종류가 크리에이터의 받기 어려운 품목과 겹치면 결제 전에 안내 — 「등록 막기」면 넘어가지 않는다
   const hardOverlap = picked ? hardItemOverlap(picked.name, picked.hardItems, itemCategory) : null;
+  // metrics INV-Q5: 안내가 처음 뜬 순간의 품목을 기억한다 — 다른 크리에이터로 바꾸면 그 크리에이터 기준으로 다시 잡는다.
+  // 그리는 중에 한 번만 바꾸는 이전 값 맞추기(조건이 맞으면 다음 그리기에서 더 바뀌지 않는다)
+  if (hardOverlap && itemCategory && creatorId && noticed?.creatorId !== creatorId) setNoticed({ creatorId, category: itemCategory });
   const itemText = itemCategory === null ? "" : itemCategory === "other" ? itemOther.trim() || ITEM_CATEGORY_LABEL.other : ITEM_CATEGORY_LABEL[itemCategory];
   const metalForced = forcesMetalReport(itemCategory);
   const metalText = metal === "yes" ? "네, 있어요" : metal === "no" ? "아니요, 없어요" : "아직 안 골랐어요";
