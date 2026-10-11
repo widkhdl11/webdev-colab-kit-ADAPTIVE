@@ -58,7 +58,7 @@ const STEP_FIELDS: Record<Exclude<StepNo, 4>, (keyof RegisterFormValues)[]> = {
 /** 등록이 끝나 결제창으로 넘길 값. 금액은 서버가 계산한 것이다. */
 export type RegisteredGift = { orderId: string; orderNo: string; amountKrw: number };
 
-type RegisterResponse = Partial<RegisteredGift> & { message?: string };
+type RegisterResponse = Partial<RegisteredGift> & { message?: string; reason?: "hard_item" };
 
 // 선물 보내기 4단계(크리에이터·선물·상자·결제 확인). 「결제하기」를 누르면 서버(/api/gifts)에 등록하고 결제창으로 넘긴다.
 // 결제는 등록 때 받는다(결제 스펙). 화면의 금액은 결제와 같은 계산(chargeLines)에 화면을 열 때 읽은 공개 요금표(prices)를 넣은 안내다.
@@ -99,15 +99,17 @@ export function RegisterForm({
   const [markedFor, setMarkedFor] = useState<string | null>(null);
 
   const stepsWrap = useRef<HTMLElement>(null);
-  const categoryFirst = useRef<HTMLInputElement | null>(null);
+  const hardNote = useRef<HTMLElement | null>(null);
   const headings = useRef<Partial<Record<StepNo, HTMLHeadingElement | null>>>({});
-  const pendingFocus = useRef(false);
+  // 단계를 바꾼 뒤 어디로 포커스할지 — 보통은 새 단계 제목, 받기 어려운 품목으로 2단계에 돌아왔으면 그 안내 줄
+  const pendingFocus = useRef<false | "heading" | "hard-note">(false);
 
   // 단계가 바뀌면 새 단계 제목으로 포커스 — 화면 낭독기가 바뀐 내용을 처음부터 읽게
   useEffect(() => {
     if (!pendingFocus.current) return;
+    const target = pendingFocus.current;
     pendingFocus.current = false;
-    headings.current[step]?.focus({ preventScroll: true });
+    (target === "hard-note" && hardNote.current ? hardNote.current : headings.current[step])?.focus({ preventScroll: true });
     stepsWrap.current?.scrollIntoView({ block: "start", behavior: "instant" });
   }, [step]);
 
@@ -137,8 +139,8 @@ export function RegisterForm({
     large: useWatch({ control, name: "largeCount" }),
   });
 
-  const go = (n: StepNo) => {
-    pendingFocus.current = true;
+  const go = (n: StepNo, focus: "heading" | "hard-note" = "heading") => {
+    pendingFocus.current = focus;
     setStep(n);
     setReached((r) => (n > r ? n : r));
   };
@@ -146,25 +148,27 @@ export function RegisterForm({
   const next = async () => {
     if (step === 4) return;
     const ok = await trigger(STEP_FIELDS[step], { shouldFocus: true });
-    // INV-V12: 채널 이사 중인 크리에이터는 1단계에서 안내하고 넘어가지 않는다(등록은 DB 가 다시 막는다)
-    const moving = step === 1 && ok ? movingNotice(creators.find((c) => c.id === getValues("creatorId"))) : null;
-    if (moving) {
-      setError("creatorId", { message: moving }, { shouldFocus: true });
-      return;
-    }
-    // creator-receiving INV-B2·B6: 쉬는 중이거나 내가 이번 달 한도에 닿았으면 안내하고 넘어가지 않는다(등록은 DB 가 다시 막는다)
-    const blocked = step === 1 && ok ? receivingNotice(creators.find((c) => c.id === getValues("creatorId")), today) : null;
+    const blocked = step === 1 && ok ? creatorBlock() : null;
     if (blocked) {
       setError("creatorId", { message: blocked }, { shouldFocus: true });
       return;
     }
-    // hard-items INV-H8: 고른 종류를 크리에이터가 「등록 막기」로 두었으면 2단계에서 넘어가지 않는다(안내는 종류 아래에 이미 보인다).
+    // hard-items INV-H8: 고른 종류를 크리에이터가 「등록 막기」로 두었으면 2단계에서 넘어가지 않는다 — 포커스를 그 안내 줄로 옮긴다.
     // 「안내만」이면 그대로 넘어간다. 등록은 DB 가 다시 막는다(INV-H7)
     if (step === 2 && ok && hardOverlap?.blocks) {
-      categoryFirst.current?.focus();
+      hardNote.current?.focus();
       return;
     }
     if (ok) go((step + 1) as StepNo);
+  };
+
+  /**
+   * 고른 크리에이터에게 지금 보낼 수 없으면 그 안내(아니면 null). 1단계 「다음」과 결제 직전이 같이 쓴다.
+   * INV-V12 채널 이사 중 → creator-receiving INV-B2·B6 쉬는 중·내 한도 순. 등록은 DB 가 다시 막는다.
+   */
+  const creatorBlock = (): string | null => {
+    const c = creators.find((x) => x.id === getValues("creatorId"));
+    return movingNotice(c) ?? receivingNotice(c, today);
   };
 
   // 지난 단계로 돌아가 칸을 비운 뒤 결제로 건너뛴 경우 — 오류가 있는 첫 단계로 보낸다
@@ -178,6 +182,19 @@ export function RegisterForm({
     if (step < 4) {
       e.preventDefault();
       void next();
+      return;
+    }
+    // 4단계까지 간 뒤 1단계에서 크리에이터를 바꾸고 단계 버튼으로 결제에 바로 오면 「다음」의 판정을 건너뛴다 — 결제 직전에 다시 본다
+    const blocked = creatorBlock();
+    if (blocked) {
+      e.preventDefault();
+      setError("creatorId", { message: blocked });
+      go(1);
+      return;
+    }
+    if (hardOverlap?.blocks) {
+      e.preventDefault();
+      go(2, "hard-note");
       return;
     }
     void handleSubmit(() => submit(), onInvalid)(e);
@@ -219,6 +236,12 @@ export function RegisterForm({
       else if (res.status === 403) setSubmitError({ message: body.message ?? "팬 계정으로 로그인해 주세요.", needsLogin: false });
       // 받을 수 없는 크리에이터 — 본인 확인 전이거나 이 사람을 차단했다. 둘을 가르지 않는 서버 문구를 그대로 보인다(decline-block INV-D7)
       else if (res.status === 404) setSubmitError({ message: body.message ?? "선물을 받을 수 없는 크리에이터예요.", needsLogin: false });
+      else if (res.status === 409 && body.reason === "hard_item") {
+        // hard-items INV-H7: 화면을 연 뒤 크리에이터가 이 품목을 「등록 막기」로 바꿨다 — 새 설정을 다시 읽고 2단계로 돌아가 안내한다
+        setSubmitError({ message: body.message ?? "다른 선물을 골라 주세요.", needsLogin: false });
+        router.refresh();
+        go(2, "hard-note");
+      }
       else if (res.status === 409) {
         // 화면을 연 뒤 요금이 바뀌었다(INV-K3) — 서버 page 를 다시 그려 새 요금표로 금액을 보여 준다. 고른 값은 그대로 남는다
         setSubmitError({ message: body.message ?? PRICE_CHANGED_MESSAGE, needsLogin: false });
@@ -422,13 +445,13 @@ export function RegisterForm({
                 className="field"
                 role="radiogroup"
                 aria-labelledby="category-q"
-                aria-describedby={[errors.itemCategory ? "category-error" : "", hardOverlap ? "hard-note" : ""].filter(Boolean).join(" ") || undefined}
+                aria-describedby={["category-hint", errors.itemCategory ? "category-error" : "", hardOverlap ? "hard-note" : ""].filter(Boolean).join(" ")}
               >
                 <p className={f["metal-q"]} id="category-q">
                   선물 종류
                 </p>
                 <div className={f.radios}>
-                  {ITEM_CATEGORIES.map((c, i) => {
+                  {ITEM_CATEGORIES.map((c) => {
                     const field = register("itemCategory", {
                       // INV-H2: 전자기기를 고르면 신고를 「있어요」로 정한다(DB 등록 함수도 켠다)
                       onChange: (e: { target: { value: string } }) => {
@@ -439,29 +462,39 @@ export function RegisterForm({
                     });
                     return (
                       <label key={c}>
-                        <input
-                          type="radio"
-                          value={c}
-                          {...field}
-                          ref={(el) => {
-                            field.ref(el);
-                            if (i === 0) categoryFirst.current = el;
-                          }}
-                        />{" "}
+                        <input type="radio" value={c} {...field} />{" "}
                         {ITEM_CATEGORY_LABEL[c]}
                       </label>
                     );
                   })}
                 </div>
-                <p className="hint">음식·음료·냉장·냉동이 필요한 것과 액체는 받지 않아요.</p>
+                <p className="hint" id="category-hint">
+                  음식·음료·냉장·냉동이 필요한 것과 액체는 받지 않아요.
+                </p>
                 {err("category-error", errors.itemCategory?.message)}
                 {hardOverlap ? (
                   hardOverlap.blocks ? (
-                    <p className={f.error} id="hard-note" role="alert">
-                      {hardOverlap.message} 지금은 이 종류로 보낼 수 없어요.
+                    <p
+                      className={f.error}
+                      id="hard-note"
+                      role="alert"
+                      tabIndex={-1}
+                      ref={(el) => {
+                        hardNote.current = el;
+                      }}
+                    >
+                      {hardOverlap.message}
                     </p>
                   ) : (
-                    <div className={f["rule-note"]} id="hard-note" role="status">
+                    <div
+                      className={f["rule-note"]}
+                      id="hard-note"
+                      role="status"
+                      tabIndex={-1}
+                      ref={(el) => {
+                        hardNote.current = el;
+                      }}
+                    >
                       <p>
                         <strong>{hardOverlap.message}</strong>
                       </p>

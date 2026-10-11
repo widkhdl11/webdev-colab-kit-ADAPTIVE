@@ -5,7 +5,6 @@ import { z } from "zod";
 import { PRICE_CHANGED_MESSAGE, quotedTotalSchema, type PriceTable } from "@/entities/payment/model/price-table";
 import type { Viewer } from "@/entities/session/model/viewer";
 import { kstToday, limitReachedMessage } from "@/entities/creator/model/receiving";
-import { hardItemRefusalMessage } from "@/entities/gift-item/model/hard-items";
 import type { CreatorRelationReader } from "../api/creator-relation";
 import { parseRegisterInput, type RegisterFormValues } from "./register-input";
 import { decideSender, refusalStatus, SENDER_REFUSAL_MESSAGE, senderRoleAllowed } from "./sender-rule";
@@ -14,7 +13,7 @@ import { decideSender, refusalStatus, SENDER_REFUSAL_MESSAGE, senderRoleAllowed 
 
 export type RegisterGiftResult =
   | { ok: true; orderId: string; orderNo: string; amountKrw: number }
-  | { ok: false; status: 401 | 403 | 404 | 409; message: string }
+  | { ok: false; status: 401 | 403 | 404 | 409; message: string; reason?: "hard_item" }
   | { ok: false; status: 400; errors: Partial<Record<keyof RegisterFormValues, string>> };
 
 const quotedShape = z.object({ quotedTotalKrw: quotedTotalSchema });
@@ -79,13 +78,9 @@ export async function registerGift(
           e.reason === "unknown_creator" || e.reason === "moving" || e.reason === "resting" || e.reason === "limit" || e.reason === "hard_item";
         if (!dbOnly) console.error(`선물 등록: 서버 판정을 지나 DB 가 거부했다 (${e.reason})`);
         // INV-B6: 한도 문구는 하나 — 다음 달 1일만 넣고 한도 숫자·남은 개수는 넣지 않는다
-        const message =
-          e.reason === "limit"
-            ? limitReachedMessage(kstToday((deps.now ?? (() => new Date()))()))
-            : e.reason === "hard_item"
-              ? hardItemRefusalMessage(itemCategory)
-              : SENDER_REFUSAL_MESSAGE[e.reason];
-        return { ok: false, status: refusalStatus(e.reason), message };
+        const message = e.reason === "limit" ? limitReachedMessage(kstToday((deps.now ?? (() => new Date()))())) : SENDER_REFUSAL_MESSAGE[e.reason];
+        // hard-items INV-H7: 화면이 이유를 알아야 2단계로 돌아가 안내를 다시 보인다(요금 변경 409 와 가르기)
+        return { ok: false, status: refusalStatus(e.reason), message, ...(e.reason === "hard_item" ? { reason: "hard_item" as const } : {}) };
       }
       if (!(e instanceof OrderNoTakenError) || attempt >= 3) throw e;
     }

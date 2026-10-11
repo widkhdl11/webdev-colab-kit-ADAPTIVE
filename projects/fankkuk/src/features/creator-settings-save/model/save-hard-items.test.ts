@@ -32,6 +32,7 @@ describe("INV-H3: 정해진 네 칸만 넘기고 크리에이터 ID 는 넘기�
   it("INV-H3 S3b (실패경로): 팬·로그인 안 함은 DB 를 부르지 않고 403·401", async () => {
     const f = fakeClient();
     expect(await saveCreatorHardItems({ client: f.client, viewer: { userId: "fan", role: "fan" } }, ok)).toMatchObject({ ok: false, status: 403 });
+    expect(await saveCreatorHardItems({ client: f.client, viewer: { userId: "staff", role: "operator" } }, ok)).toMatchObject({ ok: false, status: 403 });
     expect(await saveCreatorHardItems({ client: f.client, viewer: null }, ok)).toMatchObject({ ok: false, status: 401 });
     expect(f.calls).toEqual([]);
   });
@@ -42,6 +43,9 @@ describe("INV-H4: 고르는 값으로만", () => {
     const bad = [
       { ...ok, categories: ["food"] },
       { ...ok, categories: ["flower", "flower"] },
+      { ...ok, categories: ["doll", "flower", "clothing", "beauty", "large", "stationery", "electronics", "other", "doll"] },
+      { ...ok, categories: ["doll", null] },
+      { ...ok, categories: null },
       { ...ok, reason: "택배가 너무 많아요" },
       { ...ok, period: "week3" },
       { ...ok, action: "hide" },

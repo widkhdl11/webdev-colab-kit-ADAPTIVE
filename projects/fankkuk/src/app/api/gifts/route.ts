@@ -34,5 +34,5 @@ export async function POST(req: NextRequest) {
   const headers = { "Cache-Control": "no-store" };
   if (result.ok) return NextResponse.json({ orderId: result.orderId, orderNo: result.orderNo, amountKrw: result.amountKrw }, { headers });
   if (result.status === 400) return NextResponse.json({ errors: result.errors }, { status: 400, headers });
-  return NextResponse.json({ message: result.message }, { status: result.status, headers });
+  return NextResponse.json({ message: result.message, ...(result.reason ? { reason: result.reason } : {}) }, { status: result.status, headers });
 }

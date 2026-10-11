@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hardItemFanMessage, hardItemOverlap, hardItemRefusalMessage, hardItemsNotice, hardItemsRemaining } from "./hard-items";
+import { hardItemFanMessage, hardItemOverlap, hardItemsNotice, hardItemsRemaining } from "./hard-items";
 import { forcesMetalReport, hasFinalConsonant, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, sortCategories, withObjectParticle, withTopicParticle } from "./item-category";
 
 // docs/specs/hard-items.md — 화면 쪽 문구(INV-H6)·안내 판정(INV-H8)·종류 목록(INV-H1)·전자기기 신고(INV-H2).
@@ -64,9 +64,9 @@ describe("INV-H8: 등록 화면 안내", () => {
     });
   });
 
-  it("INV-H8 S8b (실패경로): 「등록 막기」면 같은 안내에 막는다", () => {
+  it("INV-H8 S8b (실패경로): 「등록 막기」면 묻지 않고 「다른 선물을 골라 주세요」로 끝나는 안내에 막는다", () => {
     expect(hardItemOverlap("하루", hard("block"), "doll")).toEqual({
-      message: "하루님이 지금 인형·쿠션은 받기 어렵대요. 다른 선물을 고르시겠어요?",
+      message: "하루님이 지금 인형·쿠션은 받기 어렵대요. 다른 선물을 골라 주세요.",
       blocks: true,
     });
   });
@@ -81,9 +81,6 @@ describe("INV-H8: 등록 화면 안내", () => {
     expect(hardItemFanMessage("여름밤", "clothing")).toBe("여름밤님이 지금 의류는 받기 어렵대요. 다른 선물을 고르시겠어요?");
   });
 
-  it("INV-H7: 서버 거부 문구에는 크리에이터 이름이 없고 품목이 있다", () => {
-    expect(hardItemRefusalMessage("flower")).toBe("지금 꽃은 받기 어려운 크리에이터예요. 다른 선물을 골라 주세요.");
-  });
 });
 
 describe("INV-H5: 설정 화면의 남은 기간", () => {

@@ -234,10 +234,15 @@ describe("받는 양 조절 (creator-receiving INV-B2·B4·B6·B9)", () => {
     expect(r).toEqual({ ok: false, status: 409, message: "이번 달은 이미 마음을 충분히 보내셨어요. 12월 1일부터 다시 보낼 수 있어요" });
   });
 
-  it("INV-H7 S7 (실패경로): DB 가 받기 어려운 품목으로 거부하면 409 와 고른 품목을 넣은 문구", async () => {
+  it("INV-H7 S7 (실패경로): DB 가 받기 어려운 품목으로 거부하면 409 와 이유(hard_item) — 화면이 요금 변경과 가른다", async () => {
     const { deps } = setup();
     const r = await registerGift({ ...deps, store: refusingStore("hard_item"), viewer: FAN }, { ...form, itemCategory: "flower" });
-    expect(r).toEqual({ ok: false, status: 409, message: "지금 꽃은 받기 어려운 크리에이터예요. 다른 선물을 골라 주세요." });
+    expect(r).toEqual({ ok: false, status: 409, message: "지금은 이 품목을 받기 어려운 크리에이터예요. 다른 선물을 골라 주세요.", reason: "hard_item" });
+  });
+
+  it("INV-H7: 다른 409(쉬는 중)에는 이유 칸이 없다", async () => {
+    const { deps } = setup();
+    expect(await registerGift({ ...deps, store: refusingStore("resting"), viewer: FAN }, form)).not.toHaveProperty("reason");
   });
 
   it("INV-H1: 종류 코드와 기타 글을 등록에 넘긴다 — 기타가 아니면 글은 null", async () => {

@@ -38,14 +38,13 @@ export function hardItemsNotice(h: Pick<HardItems, "categories" | "reason"> | nu
   return h.reason === "none" ? head : `${head} ${HARD_REASON_LABEL[h.reason]}`;
 }
 
-/** INV-H8: 등록 화면 안내 — 「{공개 이름}님이 지금 {품목}은 받기 어렵대요. 다른 선물을 고르시겠어요?」(받침에 따라 은/는). */
-export function hardItemFanMessage(creatorName: string, category: ItemCategory): string {
-  return `${creatorName}님이 지금 ${withTopicParticle(ITEM_CATEGORY_LABEL[category])} 받기 어렵대요. 다른 선물을 고르시겠어요?`;
-}
-
-/** INV-H7: 서버가 「등록 막기」로 거부했을 때의 문구 — 서버는 크리에이터 이름을 쓰지 않는다. */
-export function hardItemRefusalMessage(category: ItemCategory): string {
-  return `지금 ${withTopicParticle(ITEM_CATEGORY_LABEL[category])} 받기 어려운 크리에이터예요. 다른 선물을 골라 주세요.`;
+/**
+ * INV-H8: 등록 화면 안내 — 「{공개 이름}님이 지금 {품목}은 받기 어렵대요. 다른 선물을 고르시겠어요?」(받침에 따라 은/는).
+ * 「등록 막기」면 그대로 보낼 수 없으니 묻지 않고 「… 받기 어렵대요. 다른 선물을 골라 주세요.」로 끝낸다.
+ */
+export function hardItemFanMessage(creatorName: string, category: ItemCategory, blocks = false): string {
+  const head = `${creatorName}님이 지금 ${withTopicParticle(ITEM_CATEGORY_LABEL[category])} 받기 어렵대요.`;
+  return blocks ? `${head} 다른 선물을 골라 주세요.` : `${head} 다른 선물을 고르시겠어요?`;
 }
 
 /**
@@ -58,10 +57,11 @@ export function hardItemOverlap(
   category: ItemCategory | null | undefined,
 ): { message: string; blocks: boolean } | null {
   if (!hard || !category || !hard.categories.includes(category)) return null;
-  return { message: hardItemFanMessage(creatorName, category), blocks: hard.action === "block" };
+  const blocks = hard.action === "block";
+  return { message: hardItemFanMessage(creatorName, category, blocks), blocks };
 }
 
-/** 설정 화면의 남은 기간 — 「10월 18일까지 (7일 남음)」. 직접 해제면 「직접 해제할 때까지」. today 는 한국 시간 날짜. */
+/** 설정 화면의 남은 기간 — 끝나는 날이 10월 18일이면 오늘(10월 11일) 「10월 17일까지 (7일 남음)」. 직접 해제면 「직접 해제할 때까지」. today 는 한국 시간 날짜. */
 export function hardItemsRemaining(endsOn: string | null, today: { year: number; month: number; day: number }): string {
   if (endsOn === null) return "직접 해제할 때까지";
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(endsOn);

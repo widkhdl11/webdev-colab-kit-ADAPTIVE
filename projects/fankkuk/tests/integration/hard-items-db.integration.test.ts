@@ -433,3 +433,30 @@ describe("INV-H1·H7: 옛 호출(종류 없이 물품 이름만)은 기타로 �
     expect(orderItemOf(r.orderNo)).toBe("other|시험 선물|false");
   });
 });
+
+describe("INV-H5: 등록·읽기·저장은 한국 시간 오늘(receiving_today)로 판정한다", () => {
+  it("INV-H5: 한 처리 안에서 오늘을 2030-01-10 으로 바꿔 끼우면 — 끝나는 날 2030-01-05 설정은 공개·본인 읽기에 없고 등록을 막지 않으며, 새로 저장한 1주는 2030-01-17 에 끝난다(되돌림)", () => {
+    followForTest(FAN_X.id, A.creatorId);
+    const claims = JSON.stringify({ sub: A.id, role: "authenticated" });
+    const out = psql(
+      [
+        "begin;",
+        // DB 날짜(current_date 등)를 쓰면 2026 년이라 2030-01-05 설정이 살아 있는 것으로 보이고, 저장한 끝나는 날도 2026 년이 된다
+        "create or replace function public.receiving_today() returns date language sql stable set search_path = '' as $f$ select date '2030-01-10' $f$;",
+        `insert into public.creator_hard_items (creator_id, categories, reason, period, ends_on, action) values ('${A.creatorId}', array['flower'], 'many', 'week1', date '2030-01-05', 'block');`,
+        `select 'pub=' || count(*) from public.creator_hard_items(array['${A.creatorId}']::uuid[]);`,
+        `select 'cfg=' || length(set_config('request.jwt.claims', '${claims}', true)) || length(set_config('request.jwt.claim.sub', '${A.id}', true));`,
+        "select 'mine=' || count(*) from public.my_creator_hard_items();",
+        `select 'reg=' || (public.register_order('${FAN_X.id}', '${A.creatorId}', 'FC-HTODAY', null, false, array['small']::public.parcel_tier[], 'pay_hard_today', 0, 1400, 1500, 4000, 6900, null, 'flower') is not null);`,
+        "select 'save=done' from (select public.update_my_creator_hard_items(array['doll'], 'many', 'week1', 'notice')) s;",
+        `select 'ends=' || ends_on from public.creator_hard_items where creator_id = '${A.creatorId}';`,
+        "rollback;",
+      ].join(" "),
+    );
+    const got = out.split("\n").filter((l) => /^(pub|mine|reg|save|ends)=/.test(l));
+    expect(got).toEqual(["pub=0", "mine=0", "reg=true", "save=done", "ends=2030-01-17"]);
+    // 되돌렸으니 함수도 설정도 그대로다
+    expect(psql("select public.receiving_today() = (now() at time zone 'Asia/Seoul')::date")).toBe("t");
+    expect(hardItemsOf(A.creatorId)).toBe("");
+  });
+});

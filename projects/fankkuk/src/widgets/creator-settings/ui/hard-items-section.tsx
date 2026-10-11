@@ -41,6 +41,11 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
   const save = async (clear: boolean) => {
     if (saving) return;
     setMsg(null);
+    // 저장된 설정이 없는데 아무것도 고르지 않고 저장하면 지울 것도 없다 — 「해제했어요」 대신 고르라고 안내한다
+    if (!clear && !initial && categories.length === 0) {
+      setMsg({ ok: false, text: "받기 어려운 품목을 하나 이상 골라 주세요." });
+      return;
+    }
     setSaving(true);
     const r = await sendCreatorHardItems({ categories: clear ? [] : categories, reason, period, action });
     setSaving(false);
@@ -95,7 +100,7 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
         </div>
       </fieldset>
 
-      <fieldset className={`field ${s["recv-field"]} ${s.fs}`}>
+      <fieldset className={`field ${s["recv-field"]} ${s.fs}`} aria-describedby="hard-period-hint">
         <legend className="label">기간</legend>
         <div className={s.radios}>
           {HARD_PERIODS.map((p) => (
@@ -104,10 +109,12 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
             </label>
           ))}
         </div>
-        <p className="hint">저장한 날부터 세요. 다시 저장하면 그날부터 다시 세고, 기간이 끝나면 문구가 저절로 사라져요.</p>
+        <p className="hint" id="hard-period-hint">
+          저장한 날부터 계산해요. 다시 저장하면 그날부터 다시 계산하고, 기간이 끝나면 문구가 저절로 사라져요.
+        </p>
       </fieldset>
 
-      <fieldset className={`field ${s["recv-field"]} ${s.fs}`}>
+      <fieldset className={`field ${s["recv-field"]} ${s.fs}`} aria-describedby="hard-action-hint">
         <legend className="label">팬이 이 품목을 고르면</legend>
         <div className={s.radios}>
           {HARD_ACTIONS.map((a) => (
@@ -116,14 +123,16 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
             </label>
           ))}
         </div>
-        <p className="hint">
-          안내만이면 팬이 결제 전에 안내를 보고 그대로 보낼 수도 있어요. 등록 막기면 그 품목으로는 등록되지 않아요. 어느 쪽이든 받을지는 승인할 때 정해요.
+        <p className="hint" id="hard-action-hint">
+          「안내만」을 고르면 팬이 결제 전에 안내를 보고 그대로 보낼 수도 있어요. 「등록 막기」를 고르면 그 품목으로는 등록되지 않아요. 어느 쪽이든 받을지는
+          승인할 때 정해요.
         </p>
       </fieldset>
 
       <div className={`field ${s["recv-field"]}`}>
         <span className="label">미리보기</span>
-        <p role="status">{preview ?? "품목을 고르면 여기에 문구가 보여요."}</p>
+        {/* 고를 때마다 바뀌는 미리보기라 알림(role=status)으로 읽히게 하지 않는다 — 알리는 것은 저장 결과 줄뿐이다 */}
+        <p>{preview ?? "품목을 고르면 여기에 문구가 보여요."}</p>
       </div>
 
       <div className={`${s.save} ${s["save-row"]}`}>

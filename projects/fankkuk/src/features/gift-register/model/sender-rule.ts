@@ -38,7 +38,7 @@ export const SENDER_REFUSAL_MESSAGE: Record<SenderRefusal, string> = {
   resting: "지금은 잠시 선물 받기를 쉬고 있는 크리에이터예요.",
   // INV-B6: 실제 문구는 다음 달 1일을 넣어 등록 처리가 만든다(limitReachedMessage) — 이 값은 날짜를 모를 때만
   limit: "이번 달은 이미 마음을 충분히 보내셨어요. 다음 달 1일부터 다시 보낼 수 있어요",
-  // hard-items INV-H7: 실제 문구는 고른 품목을 넣어 등록 처리가 만든다(hardItemRefusalMessage) — 이 값은 품목을 모를 때만
+  // hard-items INV-H7: 화면을 건너뛴 등록만 여기 닿는다 — 화면은 이 응답을 받으면 2단계로 돌아가 크리에이터 이름·품목을 넣은 안내를 다시 보인다
   hard_item: "지금은 이 품목을 받기 어려운 크리에이터예요. 다른 선물을 골라 주세요.",
 };
 
