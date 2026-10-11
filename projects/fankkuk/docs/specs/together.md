@@ -1,11 +1,12 @@
 ---
 feature: ○○님과 함께한 시간 — 팬 본인만 보는 크리에이터별 기록 · 팬이 올리는 선물 사진
-status: draft
+status: approved
 # 이력:
 #   2026-10-11 초안 — 사용자 추가분 「팬·크리에이터 화면 기능」(docs/reference/addendum-2026-10-02-screens.md) F-7·불변식 18·19·23 과
 #              부딪히는 곳 ⑫⑬⑭ 에 대한 사용자 답 「7곳 전부 추천대로 해」(DECISIONS 2026-10-11)를 받아적었다. 시안: mockups/addendum/together.html.
 #              추가분에 없던 세부는 스스로 정했다 — 아래 「스스로 정한 것」. 사용자 지시를 받아적은 것이라 승인 카드는 열지 않는다.
 #              앞 기능(gift-reply)이 끝나 이 기능 차례가 되면 approved 로 바꾼다.
+#   2026-10-11 approved — gift-reply 가 끝나 이 기능 차례(사용자 「계속」).
 surfaces: [authz]
 # authz: 이 화면과 팬이 올린 선물 사진은 그 팬 본인만 본다(크리에이터도 못 본다). 틀리면 팬의 선물 기록·사진이 남에게 보인다.
 ---
