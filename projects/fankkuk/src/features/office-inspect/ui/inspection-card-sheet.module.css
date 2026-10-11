@@ -1,0 +1,23 @@
+/* 검수 완료 카드 — 흰 종이, 글자 --print-ink, 날짜 --sub (시안 inspection-card.html). 종이 크기는 mm 로 적어 인쇄 때 실제 크기가 된다. */
+.controls { margin-bottom: 20px; }
+.sizes { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; border: 0; padding: 0; margin: 0; }
+.sizes legend { width: 100%; margin-bottom: 4px; }
+.sizeOpt { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font-size: 14px; cursor: pointer; }
+.count { width: 96px; }
+.sheet { display: flex; flex-wrap: wrap; gap: 12px; }
+.biz, .post { display: flex; align-items: center; background: var(--white); color: var(--print-ink); box-shadow: var(--hair); break-inside: avoid; }
+.biz { width: 90mm; height: 50mm; gap: 6mm; padding-left: 7mm; }
+.post { width: 148mm; height: 100mm; flex-direction: column; justify-content: center; text-align: center; gap: 6mm; }
+.title { font-weight: 800; letter-spacing: -.5px; line-height: 1.3; }
+.biz .title { font-size: 16pt; }
+.post .title { font-size: 26pt; }
+.date { margin-top: 1.5mm; font-weight: 600; color: var(--sub); }
+.biz .date { font-size: 10pt; }
+.post .date { font-size: 16pt; }
+
+@media print {
+  body:has(.sheet) * { visibility: hidden; }
+  body:has(.sheet) .sheet, body:has(.sheet) .sheet * { visibility: visible; }
+  body:has(.sheet) .sheet { position: absolute; left: 0; top: 0; gap: 0; }
+  .biz, .post { box-shadow: none; outline: 0.2mm dashed #c9c4cb; }
+}
