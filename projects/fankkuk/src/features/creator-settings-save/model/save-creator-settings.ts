@@ -4,6 +4,7 @@ import { notifyInputSchema, profileInputSchema } from "./creator-settings-input"
 import { daysInputSchema, receivingInputSchema } from "./receiving-input";
 import { hardItemsInputSchema } from "./hard-items-input";
 import { handleInputSchema } from "./handle-input";
+import { replySettingsInputSchema } from "./reply-settings-input";
 
 // 크리에이터 설정 저장 (my-account INV-A9 공개 정보 · INV-A11 알림).
 // 요청한 사람의 세션 클라이언트로 DB 함수를 부른다 — DB 가 로그인 토큰으로 크리에이터를 정하고 입력을 다시 검사한다.
@@ -134,5 +135,20 @@ export async function saveCreatorHardItems(deps: SaveCreatorSettingsDeps, body: 
     "update_my_creator_hard_items",
     { p_categories: categories, p_reason: reason, p_period: period, p_action: action },
     { "22023": "품목·이유·기간·동작을 목록에서 골라 주세요." },
+  );
+}
+
+// gift-reply INV-G8: 답장 모음 보이기 · X 계정 · 태그 허용 — 세 칸만 넘긴다. 크리에이터는 DB 가 로그인 토큰으로 정한다.
+export async function saveCreatorReplySettings(deps: SaveCreatorSettingsDeps, body: unknown): Promise<SaveCreatorSettingsResult> {
+  const denied = gate(deps.viewer);
+  if (denied) return denied;
+  const parsed = replySettingsInputSchema.safeParse(body);
+  if (!parsed.success) return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "입력을 확인해 주세요." };
+  const { wallVisible, xHandle, xTagAllowed } = parsed.data;
+  return call(
+    deps,
+    "update_my_reply_settings",
+    { p_wall_visible: wallVisible, p_x_handle: xHandle, p_x_tag_allowed: xTagAllowed },
+    { "22023": "X 계정은 영문·숫자·밑줄 1~15자로 적어 주세요." },
   );
 }

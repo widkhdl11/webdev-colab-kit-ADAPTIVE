@@ -8,6 +8,7 @@ import { readMyCreatorReceiving } from "@/entities/creator/api/receiving-reads";
 import { kstToday } from "@/entities/creator/model/receiving";
 import { readMyHardItems } from "@/entities/gift-item/api/hard-items-reads";
 import { readMyCreatorLink } from "@/entities/creator/api/creator-link-reads";
+import { readMyReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
@@ -29,7 +30,7 @@ export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect("/login");
-  const [header, blockedFans, address, state, rows, apiPlatforms, settings, tagOptions, receiving, hardItems, link] = await Promise.all([
+  const [header, blockedFans, address, state, rows, apiPlatforms, settings, tagOptions, receiving, hardItems, link, replySettings] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creator/settings"),
     readMyBlockedSenders(supabase),
     readMyAddressStatus(supabase),
@@ -42,9 +43,11 @@ export default async function Page() {
     readMyHardItems(supabase),
     // creator-link: 링크용 아이디·남은 잠금 날·사진 경로 — 본인 것만(INV-E1·E4)
     readMyCreatorLink(supabase),
+    // gift-reply: 답장 모음 보이기·X 계정·태그 허용 — 본인 것만(INV-G8)
+    readMyReplySettings(supabase),
   ]);
   // 크리에이터 역할인데 크리에이터 줄이 없으면 이 화면을 그릴 수 없다 — 숨기지 않고 오류로 드러낸다
-  if (!address || !state || !settings || !receiving || !link) throw new Error("크리에이터 줄을 찾지 못했다");
+  if (!address || !state || !settings || !receiving || !link || !replySettings) throw new Error("크리에이터 줄을 찾지 못했다");
   return (
     <>
       <SiteHeader {...header} />
@@ -61,6 +64,7 @@ export default async function Page() {
           today={kstToday(new Date())}
           link={link}
           photoBase={readPublicStorageBase()}
+          replySettings={replySettings}
         />
       </MyShell>
       <SiteFooter />

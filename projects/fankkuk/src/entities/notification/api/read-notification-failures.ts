@@ -5,7 +5,7 @@ import { z } from "zod";
 // 보이는 것은 종류·주문번호·차례·통로·상태·시도 횟수·오류 코드·끝난 시각뿐이다. 받는 사람·연락처·본문은 DB 가 돌려주지 않고,
 // 응답에 다른 칸이 섞여 와도 여기서 꺼내지 않는다. 꼴이 다른 답은 오류로 던진다(빈 목록으로 보이게 하지 않는다).
 
-const KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transit", "delivered", "hold", "box_arrived", "hold_fan", "box_missing", "gift_pending_box", "difference_due", "payment_canceled", "difference_canceled"] as const;
+const KINDS = ["approval_request", "arrived", "inspected", "shipped", "in_transit", "delivered", "hold", "box_arrived", "hold_fan", "box_missing", "gift_pending_box", "difference_due", "payment_canceled", "difference_canceled", "gift_reply", "gift_received"] as const;
 export type NotificationKindName = (typeof KINDS)[number];
 
 const row = z.object({
@@ -63,6 +63,8 @@ const KIND_LABEL: Record<NotificationKindName, string> = {
   difference_due: "추가 결제 요청",
   payment_canceled: "결제 취소",
   difference_canceled: "추가 결제 취소",
+  gift_reply: "답장",
+  gift_received: "받았어요 확인",
 };
 
 function isKnownKind(kind: string): kind is NotificationKindName {

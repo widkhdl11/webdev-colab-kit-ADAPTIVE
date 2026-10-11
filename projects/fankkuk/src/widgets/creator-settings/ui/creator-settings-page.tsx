@@ -26,6 +26,8 @@ import type { CalendarDate, MyCreatorReceiving } from "@/entities/creator/model/
 import { ReceivingSection } from "./receiving-section";
 import { HardItemsSection } from "./hard-items-section";
 import { LinkSection } from "./link-section";
+import { ReplySettingsSection } from "./reply-settings-section";
+import type { ReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
 import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
 import s from "./creator-settings.module.css";
@@ -96,8 +98,11 @@ export function CreatorSettingsPage({
   today,
   link,
   photoBase,
+  replySettings,
 }: {
   settings: CreatorSettingsView;
+  /** 답장 모음 보이기·X 계정·태그 허용 — 로그인한 크리에이터 본인 것(gift-reply INV-G8) */
+  replySettings: ReplySettings;
   /** 링크용 아이디·남은 잠금 날·사진 경로 — 로그인한 크리에이터 본인 것(creator-link) */
   link: MyCreatorLink;
   /** 공개 저장소 주소 — 프로필 사진 미리보기 */
@@ -292,6 +297,7 @@ export function CreatorSettingsPage({
 
           <ReceivingSection initial={receiving} today={today} />
           <HardItemsSection initial={hardItems} today={today} />
+          <ReplySettingsSection initial={replySettings} />
         </div>
 
         <div className={s.col}>

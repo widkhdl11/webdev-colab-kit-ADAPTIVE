@@ -26,6 +26,8 @@ import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { visibleDifferences, type GiftDifference } from "@/entities/payment/model/difference-rows";
 import type { GiftPayment } from "@/entities/payment/model/gift-payment";
+import type { FanBoxReply } from "@/entities/gift-reply/api/gift-reply-reads";
+import { FanBoxReplies } from "@/features/gift-reply/ui/fan-box-replies";
 import { DifferenceSection, type DifferenceNotice } from "./difference-section";
 import { PaymentSummary } from "./payment-summary";
 import s from "./gift-status.module.css";
@@ -63,12 +65,18 @@ export function GiftStatusPage({
   boxes,
   difference,
   payment = null,
+  replies = [],
+  photoBase = "",
 }: {
   view: FanGiftView;
   boxes: readonly GiftBox[];
   difference?: DifferenceProps;
   /** 결제 금액(저장된 값). 없으면 결제 내역을 그리지 않는다. */
   payment?: GiftPayment | null;
+  /** 출고된 상자별 받았어요·답장(gift-reply — 보낸 사람 본인 것만, my_gift_replies). 없으면 칸을 그리지 않는다. */
+  replies?: readonly FanBoxReply[];
+  /** 공개 저장소 주소 — 답장 카드의 크리에이터 사진 */
+  photoBase?: string;
 }) {
   const progress = fanProgress(view);
   // 배지의 「N/6」은 지금 있는 단계 번호다 — 끝낸 단계 수(4)를 쓰면 아래 진행 줄의 현재 단계(5번 배송중)와 숫자가 어긋났다(2026-10-09 디자인 점검)
@@ -159,6 +167,14 @@ export function GiftStatusPage({
 
           <div className={s.two}>
             <div className={s.stack}>
+              {/* 받았어요·답장(gift-reply INV-G6·G8·G9) — 출고된 상자가 있을 때만. 날짜만, 시각은 없다 */}
+              {replies.length > 0 ? (
+                <section className={s.part} aria-labelledby="reply-title">
+                  <h2 id="reply-title">받았어요 · 답장</h2>
+                  <p className={s["sub-t"]}>크리에이터가 상자를 받았다고 남기면 날짜가 보여요. 답장이 오면 공개할지 정하고 카드로 공유할 수 있어요.</p>
+                  <FanBoxReplies rows={replies} photoBase={photoBase} />
+                </section>
+              ) : null}
               {/* 차액 결제(payment INV-M11·M12·M13) — 차액 요청이 있는 주문에만. 진행 중이 아니면 낸 기록만 남는다 */}
               {difference && shownDifferences.length > 0 ? (
                 <DifferenceSection

@@ -4,6 +4,8 @@ import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { creatorPagePath, linkText } from "@/entities/creator/model/creator-handle";
 import { addDays, restingNotice, upcomingDday, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import type { HardItems } from "@/entities/gift-item/model/hard-items";
+import type { WallReply } from "@/entities/gift-reply/api/gift-reply-reads";
+import { ANONYMOUS_FAN, dotDate, REPLY_PHRASE_TEXT } from "@/entities/gift-reply/model/reply";
 import { HardItemsLine } from "@/entities/gift-item/ui/hard-items-line";
 import { approvalDurationText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
@@ -17,7 +19,7 @@ import s from "./creator-profile.module.css";
 
 // 선물 링크 페이지 = 크리에이터 페이지 (creator-link). 시안: docs/design/mockups/addendum/creator-link.html (PC·모바일)
 // 순서(추가분 F-1): 사진·이름·링크 주소·한 줄 소개 → 감사 문장 → 받는 상태 → 받기 어려운 품목(있을 때만) → 기념일 D-day(30일 안일 때만)
-// → 이번 달 N명(0이면 숨김) → 감사 답장 모음(F-5 — gift-reply 에서 채운다, 지금은 그리지 않는다) → 선물 보내기.
+// → 이번 달 N명(0이면 숨김) → 감사 답장 모음(F-5 — 양쪽이 동의하고 받았어요 3일이 지난 답장만, 없으면 숨김) → 선물 보내기.
 // PC 는 왼쪽 흐름 + 오른쪽 「선물 보내기」 판. 모바일은 한 줄로 내려오고, 맨 위에도 「선물 보내기」를 하나 더 둔다(DECISIONS 2026-10-11).
 // 공개 화면이라 크리에이터 공개 이름·링크용 아이디·사진·소개·켠 항목·정해진 문구·집계 숫자·요금만 그린다(INV-E7). 주소 열람 건수는 없다(INV-E11).
 // 문구 한계(design-rules 6절): "승인 없이는 저희 시스템이 주소를 열지 않습니다"는 쓰고 "절대 유출되지 않는다"는 쓰지 않는다.
@@ -43,6 +45,8 @@ export type CreatorProfilePageProps = {
   hardItems?: HardItems | null;
   /** 이번 달 마음을 보낸 서로 다른 팬 수(INV-E8) — 0 이면 줄을 그리지 않는다 */
   monthFans: number;
+  /** 감사 답장 모음(gift-reply INV-G7) — DB 공개 읽기 함수가 고른 최신 20개. 비면 칸을 그리지 않는다 */
+  replies?: readonly WallReply[];
   /** 한국 시간 오늘 — 서버가 정해 넘긴다 */
   today: CalendarDate;
 };
@@ -99,6 +103,7 @@ export function CreatorProfilePage({
   receiving = null,
   hardItems = null,
   monthFans,
+  replies = [],
   today,
 }: CreatorProfilePageProps) {
   // INV-B2: 쉬는 중이면 안내 문구를 보이고 받기 어려운 품목 줄을 숨긴다(시안 쉬는 중 변형). 「선물 보내기」 자리를 비울지는 send 가 이미 정해 왔다.
@@ -192,7 +197,28 @@ export function CreatorProfilePage({
               </div>
             </div>
           ) : null}
-          {/* 감사 답장 모음(F-5) 자리 — 양쪽이 공개에 동의한 답장만 보일 곳. gift-reply 스펙에서 채운다 */}
+          {/* 감사 답장 모음(F-5, gift-reply INV-G7) — 보이는 칸은 정해진 문구·한 줄·날짜·팬 닉네임(또는 익명의 팬)뿐. 최신순만 */}
+          {replies.length > 0 ? (
+            <section className={s.replies} aria-labelledby="replies-h">
+              <h2 id="replies-h" className={s["h2-sec"]}>
+                감사 답장 모음
+              </h2>
+              <p className="sub">{creator.name}님이 팬에게 남긴 답장 중, 팬이 공개를 허락한 것만 보여요. 최신순이에요.</p>
+              <ul className={s["rp-list"]}>
+                {replies.map((r, i) => (
+                  <li key={`${r.repliedOn}-${i}`} className={s.rp}>
+                    <q>
+                      {REPLY_PHRASE_TEXT[r.phrase]}
+                      {r.line ? `. ${r.line}` : null}
+                    </q>
+                    <p className={s.by}>
+                      {r.fanNickname ? `${r.fanNickname}님에게` : `${ANONYMOUS_FAN}에게`} · {dotDate(r.repliedOn)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         </div>
 
         <aside className={s.send} aria-labelledby="send-h">

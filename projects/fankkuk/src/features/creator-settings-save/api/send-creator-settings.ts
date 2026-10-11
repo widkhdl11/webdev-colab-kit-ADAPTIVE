@@ -2,6 +2,7 @@ import type { NotifyInput, ProfileInput } from "../model/creator-settings-input"
 import type { DaysInput, ReceivingInput } from "../model/receiving-input";
 import type { HardItemsInput } from "../model/hard-items-input";
 import type { HandleInput } from "../model/handle-input";
+import type { ReplySettingsInput } from "../model/reply-settings-input";
 
 // 브라우저에서 크리에이터 설정을 저장한다(/api/creator/profile · /api/creator/notify). 서버가 준 문구를 그대로 보여 준다.
 // ok = 저장됨 / login = 세션이 끝났다 / failed = 저장하지 못했다(문구를 보인다)
@@ -41,6 +42,11 @@ export function sendCreatorDays(input: DaysInput): Promise<SendSettingsOutcome> 
 
 export function sendCreatorHardItems(input: HardItemsInput): Promise<SendSettingsOutcome> {
   return post("/api/creator/hard-items", input);
+}
+
+// gift-reply: 답장 모음 보이기 · X 계정 · 태그 허용
+export function sendCreatorReplySettings(input: ReplySettingsInput): Promise<SendSettingsOutcome> {
+  return post("/api/creator/reply-settings", input);
 }
 
 // creator-link: 링크용 아이디 저장 — 저장된 값(소문자로 바뀐 아이디)을 돌려받는다

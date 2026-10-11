@@ -75,3 +75,9 @@
 }
 @media (max-width: 767px) { .follow-row > li { flex-basis: 88px; } }
 .page-end { height: clamp(72px, 9vw, 128px); }
+/* 감사 답장 모음 (gift-reply INV-G7) — 시안 addendum/creator-link.html .replies */
+.replies { margin-top: 24px; }
+.rp-list { display: grid; gap: 12px; margin-top: 16px; }
+.rp { padding: 20px 24px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.rp q { display: block; quotes: none; font-size: 20px; font-weight: 700; line-height: 1.5; letter-spacing: -.3px; overflow-wrap: anywhere; }
+.by { margin-top: 12px; color: var(--sub); }

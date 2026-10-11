@@ -181,3 +181,28 @@ describe("알림 링크 (INV-N9)", () => {
     }
   });
 });
+
+describe("받았어요·답장 알림 (gift-reply INV-G5)", () => {
+  it("INV-G5 S5: gift_reply 는 「답장이 왔어요」, gift_received 는 「보낸 선물이 도착했다고 확인됐어요」 — 선물 상세로 잇는다", () => {
+    const reply = buildNotificationBody(inputFor("gift_reply"));
+    expect(reply.subject).toBe("[팬꾹] 보낸 선물에 답장이 왔어요");
+    expect(reply.text).toContain("답장이 왔어요");
+    expect(reply.link).toBe(`${ORIGIN}/gifts/FC-7K3M9`);
+    const received = buildNotificationBody(inputFor("gift_received"));
+    expect(received.subject).toBe("[팬꾹] 보낸 선물이 도착했다고 확인됐어요");
+    expect(received.text).not.toContain("답장");
+    expect(received.link).toBe(`${ORIGIN}/gifts/FC-7K3M9`);
+  });
+
+  it("INV-G5 (실패경로): 크리에이터 이름·답장 내용을 넘겨도 본문에 섞이지 않는다 — 틀에 그 칸이 없다", () => {
+    for (const kind of ["gift_reply", "gift_received"] as const) {
+      const b = buildNotificationBody({
+        ...inputFor(kind),
+        // @ts-expect-error 본문 틀에는 크리에이터 이름·답장 칸이 없다
+        creatorName: "하루시험",
+        replyLine: "손편지 읽고 울컥했어요",
+      });
+      expect([b.subject, b.text, b.buttonLabel, b.link].join("\n")).not.toMatch(/하루시험|손편지|울컥/);
+    }
+  });
+});
