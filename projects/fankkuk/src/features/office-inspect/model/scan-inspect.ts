@@ -13,7 +13,7 @@ import { MEASURED_TIERS, measurementFromDb } from "./measurement";
 // - lookup: 라벨 QR 로 상자를 불러온다
 // - record: 검수 기록 저장(고치거나 지울 수 없다 — DB 표는 추가만). 결론이 검사 결과와 맞아야 한다
 // - measure: 상자 실측 구간 기록(payment INV-M11) — 신고보다 크면 DB 가 차액 결제 요청을 만든다. 상자마다 한 번, 팬 선물만
-// - complete: 같은 QR 을 다시 스캔 → 검수 완료·반송 대기·보관 중 DB 가 정한 곳으로. 기록이 없으면 P0044
+// - complete: 같은 QR 을 다시 스캔 → 검수 완료·반송 대기 중 DB 가 정한 곳으로(추적기 반송도 반송 대기, 2026-10-12 D2). 기록이 없으면 P0044
 // 운영자가 아니면 404. 상태를 고르는 칸은 없다(INV-W1).
 
 const MESSAGE_SHAPE = "스캔한 값이나 검수 기록의 꼴이 맞지 않아요.";
@@ -33,7 +33,7 @@ const bodyShape = z.discriminatedUnion("kind", [
 
 export type InspectWrite = z.input<typeof bodyShape>;
 
-const afterInspect = z.enum(["inspected", "return_waiting", "held"]);
+const afterInspect = z.enum(["inspected", "return_waiting"]);
 
 export async function scanInspect(client: Pick<SupabaseClient, "rpc">, body: unknown): Promise<JsonReply> {
   if ((await readAdminAccess(client)) === "not_found") return { status: 404, body: { message: MESSAGE_NOT_FOUND } };

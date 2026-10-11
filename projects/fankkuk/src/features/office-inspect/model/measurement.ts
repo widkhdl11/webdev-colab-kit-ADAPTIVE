@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { OfficeTier } from "@/entities/parcel/model/office-parcel";
 
 // 검수 때 기록하는 상자 실측 구간 (payment INV-M11, admin-console INV-K1·K6).
 // 차액 금액은 DB 가 기록하는 순간의 요금표로 정한다 — 화면은 구간만 고른다. 실측이 신고 이하면 차액이 없고,
@@ -6,6 +7,14 @@ import { z } from "zod";
 
 export const MEASURED_TIERS = ["small", "medium", "large", "oversize"] as const;
 export type MeasuredTier = (typeof MEASURED_TIERS)[number];
+
+/**
+ * 검수 화면이 열릴 때 실측 구간에 미리 골라 둘 값 — 팬이 신고한 구간(office-workflow INV-W4 S4h, 2026-10-12 문제집 D5).
+ * 직원은 재어 보고 다를 때만 바꾼다. 기록은 「실측 기록」을 눌러야 남는다(저장 규칙 그대로).
+ */
+export function initialMeasuredTier(declared: OfficeTier): MeasuredTier {
+  return declared;
+}
 
 export type Measurement = { result: "difference"; amountKrw: number } | { result: "none" } | { result: "inspection_failed" };
 

@@ -392,46 +392,96 @@ describe("검수 기록 (INV-W4)", () => {
     expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("inspected");
   });
 
-  it("INV-W4 (S4e): 보관(추적 장치) 결과는 실측 없이도 넘어간다", async () => {
+  const TRACKER = { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" } as const;
+  const verdictOf = (qr: string) =>
+    psql(`select coalesce(i.tracker_verdict, '-') from public.office_inspections i join public.office_parcels p on p.id = i.parcel_id where p.qr_code = '${qr}'`);
+
+  it("INV-W4 (S4e): 추적기 반송 결과는 실측 없이도 반송 대기로 넘어간다", async () => {
     const { staff, qr } = await labeledGift();
-    const hold = { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" };
-    expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: hold })).error).toBeNull();
-    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("held");
+    expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: TRACKER })).error).toBeNull();
+    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("return_waiting");
   });
 
-  it("INV-W4·W6 (S4f): 보관된 상자는 보관 + 168시간에 자동 처리가 반송 대기로 — 167시간이면 그대로, 환불은 상품 대금 칸만", async () => {
+  it("INV-W4 (S4c): 추적기로 판정한 팬 선물은 보관 없이 바로 반송 대기, 추적기 기록 1줄, 주문의 검수 결과 「반송」, 판정 값이 기록에 남는다", async () => {
     const { g, staff, qr } = await labeledGift();
-    expect(await inspect(staff, qr, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" })).toBe("held");
-    const backdate = (h: number) => psql(`update public.office_parcels set inspected_at = now() - interval '${h} hours' where qr_code = '${qr}'`);
-    backdate(167);
-    await staff.rpc("office_run_expiry", { p_order_no: g.orderNo });
-    expect(parcelState(qr)).toBe("held");
-    backdate(168);
-    const r = await staff.rpc("office_run_expiry", { p_order_no: g.orderNo });
-    expect((r.data as { held: number }).held).toBe(1);
+    expect(await inspect(staff, qr, TRACKER)).toBe("return_waiting");
     expect(parcelState(qr)).toBe("return_waiting");
+    expect(psql(`select count(*) from public.office_hold_alerts a join public.office_parcels p on p.id = a.parcel_id where p.qr_code = '${qr}'`)).toBe("1");
     expect(psql(`select inspection_result from public.orders where id = '${g.orderId}'`)).toBe("returned");
-    expect(psql(`select public.refund_due_of_payment(p.id) = p.goods_krw from public.payments p where p.order_id = '${g.orderId}' and p.kind = 'initial'`)).toBe("t");
-    // 두 번 돌려도 같은 상자를 다시 처리하지 않는다(INV-W6)
-    expect(((await staff.rpc("office_run_expiry", { p_order_no: g.orderNo })).data as { held: number }).held).toBe(0);
+    expect(verdictOf(qr)).toBe("tracker");
   });
 
-  it("INV-W4 (S4c): 추적 장치가 나온 팬 선물은 반송 대기가 아니라 보관, 크리에이터 알림 1건", async () => {
+  it("INV-W4 (S4f): 추적기 반송의 환불은 상품 대금 칸만이고, 자동 처리를 돌려도 바뀌는 것이 없다", async () => {
+    const { g, staff, qr } = await labeledGift();
+    expect(await inspect(staff, qr, TRACKER)).toBe("return_waiting");
+    expect(psql(`select public.refund_due_of_payment(p.id) = p.goods_krw from public.payments p where p.order_id = '${g.orderId}' and p.kind = 'initial'`)).toBe("t");
+    psql(`update public.office_parcels set inspected_at = now() - interval '169 hours' where qr_code = '${qr}'`);
+    const r = await staff.rpc("office_run_expiry", { p_order_no: g.orderNo });
+    expect(r.error).toBeNull();
+    expect((r.data as { held: number }).held).toBe(0);
+    expect(parcelState(qr)).toBe("return_waiting");
+  });
+
+  it("INV-W4 (S4g): 블루투스 반응이지만 「추적기 아님」이면 일반 상품처럼 — 실측 뒤 통과로 검수 완료, 판정 값이 기록에 남고 추적기 기록은 없다", async () => {
     const { staff, qr } = await labeledGift();
-    expect(await inspect(staff, qr, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" })).toBe("held");
-    expect(psql(`select count(*) from public.office_hold_alerts a join public.office_parcels p on p.id = a.parcel_id where p.qr_code = '${qr}'`)).toBe("1");
+    const result = { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "pass" };
+    expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: result })).error).toBeNull();
+    // 실측 기록 규칙은 그대로다(S4d)
+    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).error?.code).toBe("P0053");
+    expect((await staff.rpc("office_record_measurement", { p_qr: qr, p_tier: "small" })).error).toBeNull();
+    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("inspected");
+    expect(verdictOf(qr)).toBe("not_tracker");
+    expect(psql(`select count(*) from public.office_hold_alerts a join public.office_parcels p on p.id = a.parcel_id where p.qr_code = '${qr}'`)).toBe("0");
+  });
+
+  it("INV-W4 (S4g): RF 반응 · 「추적기 아님」 · 반송도 고를 수 있다 — 일반 반송 대기", async () => {
+    const { staff, qr } = await labeledGift();
+    expect(await inspect(staff, qr, { bluetooth: "clear", rf: "found", metal: "clear", tracker_verdict: "not_tracker", outcome: "return" })).toBe("return_waiting");
+    expect(verdictOf(qr)).toBe("not_tracker");
   });
 
   it.each([
-    ["추적 장치가 나왔는데 통과", { bluetooth: "clear", rf: "found", metal: "clear", outcome: "pass" }],
-    ["추적 장치가 나왔는데 반송", { bluetooth: "found", rf: "clear", metal: "clear", outcome: "return" }],
-    ["아무것도 없는데 보관", { ...FAN_PASS, outcome: "hold" }],
+    ["반응이 있는데 판정 없이 추적기 반송", { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" }],
+    ["반응이 있는데 판정 없이 통과", { bluetooth: "clear", rf: "found", metal: "clear", outcome: "pass" }],
+    ["추적기인데 통과", { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "pass" }],
+    ["추적기인데 일반 반송", { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "return" }],
+    ["추적기 아닌데 추적기 반송", { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "hold" }],
+    ["반응이 없는데 판정", { ...FAN_PASS, tracker_verdict: "not_tracker" }],
+    ["모르는 판정 값", { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "maybe", outcome: "pass" }],
+    ["아무것도 없는데 추적기 반송", { ...FAN_PASS, outcome: "hold" }],
     ["팬 선물에 단계 결과 빠짐", { bluetooth: "clear", outcome: "pass" }],
     ["모르는 값", { bluetooth: "maybe", rf: "clear", metal: "clear", outcome: "pass" }],
-  ])("INV-W4 (실패경로): %s → 기록 거부", async (_label, result) => {
+  ])("INV-W4 (S4g, 실패경로): %s → 기록 거부", async (_label, result) => {
     const { staff, qr } = await labeledGift();
     expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: result })).error?.code).toBe("22023");
     expect(psql(`select count(*) from public.office_inspections i join public.office_parcels p on p.id = i.parcel_id where p.qr_code = '${qr}'`)).toBe("0");
+  });
+
+  it.each([
+    ["추적기 판정인데 결론이 통과", "'found', 'clear', 'clear', null, null, 'tracker', 'pass'", "office_inspections_tracker_verdict_outcome"],
+    ["추적기 아님인데 결론이 추적기 반송", "'found', 'clear', 'clear', null, null, 'not_tracker', 'hold'", "office_inspections_tracker_verdict_outcome"],
+    ["역조공 칸에 판정", "null, null, null, 'clear', 'clear', 'not_tracker', 'pass'", "office_inspections_tracker_verdict_gift"],
+  ])("INV-W4 (S4g, 실패경로): 표 검사도 막는다 — %s", async (_label, values, constraint) => {
+    const { qr } = await labeledGift();
+    let err = "";
+    try {
+      psql(
+        `insert into public.office_inspections (parcel_id, inspected_by, bluetooth, rf, metal, surface, prohibited, tracker_verdict, outcome)
+         select p.id, (select id from public.profiles where login_id = 'fankkuk_staff'), ${values} from public.office_parcels p where p.qr_code = '${qr}'`,
+      );
+    } catch (e) {
+      err = String((e as { stderr?: string }).stderr ?? e);
+    }
+    expect(err).toContain(constraint);
+  });
+
+  it("INV-W4 (S4g, 실패경로): 역조공 기록에 판정 칸을 붙이면 거부", async () => {
+    const s = await paidShare();
+    const no = waybill();
+    await creatorSetsWaybill(s.shareId, no);
+    const staff = await signedInClient("fankkuk_staff");
+    const qr = await receiveAndLabel(staff, no);
+    expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: { ...SHARE_PASS, tracker_verdict: "not_tracker" } })).error?.code).toBe("22023");
   });
 
   it("INV-W4: 역조공은 겉면·금지 물품만 본다 — 금지 물품이 나오면 반송 대기", async () => {

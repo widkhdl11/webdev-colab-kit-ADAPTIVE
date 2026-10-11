@@ -128,15 +128,23 @@ describe("미확인 입고 (INV-W5)", () => {
 });
 
 describe("주문 상태 맞추기 (INV-W1)", () => {
-  it("INV-W1: 보관된 상자가 있어도 나머지 상자가 출고되면 주문은 출고", async () => {
+  it("INV-W1·W4: 추적기 반송 상자는 다른 검수 반송과 같다 — 승인된 주문은 나머지 상자가 출고되고, 주문은 반송이 끝나기 전까지 출고로 가지 않는다", async () => {
     const { g, staff, qrs } = await labeledGift(2);
-    expect(await inspect(staff, qrs[0], { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" })).toBe("held");
-    expect(await inspect(staff, qrs[1], FAN_PASS)).toBe("inspected");
     await approve(g);
+    expect(await inspect(staff, qrs[0], { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" })).toBe("return_waiting");
+    expect(await inspect(staff, qrs[1], FAN_PASS)).toBe("inspected");
     const out = waybill();
     expect(finishPrint(qrs[1], out)).toBeNull();
     await staff.rpc("office_confirm_shipment", { p_qr: qrs[1], p_waybill: out });
-    expect(orderStatus(g.orderId)).toBe("shipped");
+    expect(orderStatus(g.orderId)).toBe("inspected");
+    expect(psql(`select inspection_result from public.orders where id = '${g.orderId}'`)).toBe("returned");
+  });
+
+  it("INV-W4 (실패경로): 승인 전 주문의 상자가 추적기로 반송되면 다른 검수 반송처럼 그 주문은 더 승인할 수 없다", async () => {
+    const { g, staff, qrs } = await labeledGift(2);
+    expect(await inspect(staff, qrs[0], { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" })).toBe("return_waiting");
+    expect(await inspect(staff, qrs[1], FAN_PASS)).toBe("inspected");
+    await expect(approve(g)).rejects.toThrow(/not_approvable/);
   });
 
   it("INV-W1: 상자 줄 없이 이미 앞 단계에 있던 주문은 상자 하나를 스캔해도 뒤로 가지 않는다", async () => {

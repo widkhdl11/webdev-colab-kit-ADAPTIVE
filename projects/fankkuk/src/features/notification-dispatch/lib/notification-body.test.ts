@@ -76,13 +76,21 @@ describe("알림 링크 (INV-N9)", () => {
     for (const k of ["arrived", "inspected", "shipped", "box_arrived"] as const) expect(paths.get(k)!.pathname).toBe("/gifts/FC-7K3M9");
   });
 
-  it("INV-N13 (S13): 팬의 「돌려보낼 상자」 알림 — 선물 상세 링크, 168시간 뒤 돌려보낸다는 말뿐이고 무엇이 나왔는지는 없다", () => {
+  it("INV-N13 (S13): 팬의 「돌려보낼 상자」 알림 — 선물 상세 링크, 보내신 주소로 돌려보낸다는 말뿐이고 무엇이 나왔는지·기다리는 시간은 없다", () => {
     const b = buildNotificationBody(inputFor("hold_fan"));
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
     expect(b.subject).toBe("[팬꾹] 돌려보낼 상자가 있어요");
     expect(b.text).toContain("검수를 통과하지 못한 상자가 있어요.");
-    expect(b.text).toContain("168시간 뒤 보내신 주소로 돌려보내요.");
-    for (const word of ["추적", "블루투스", "금속", "크리에이터가"]) expect(b.text).not.toContain(word);
+    expect(b.text).toContain("보내신 주소로 돌려보내요.");
+    for (const word of ["추적", "블루투스", "금속", "크리에이터가", "168시간", "보관"]) expect(b.text).not.toContain(word);
+  });
+
+  it("INV-N13 (S13): 크리에이터의 추적기 반송 알림 — 확인을 부탁하지 않고 돌려보낸다는 사실, 무엇이 나왔는지·보낸 팬은 없다", () => {
+    const b = buildNotificationBody(inputFor("hold"));
+    expect(new URL(b.link).pathname).toBe("/creator");
+    expect(b.subject).toBe("[팬꾹] 검수를 통과하지 못한 선물이 있어요");
+    expect(b.text).toContain("검수를 통과하지 못해 보낸 분에게 돌려보내는 상자가 있어요.");
+    for (const word of ["확인할", "확인이 필요한", "추적", "블루투스", "보관", "별빛"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
   });
 
   it("INV-N15 (S15): 도착하지 않은 상자 알림 — 선물 상세 링크, 30일이 지나면 닫히고 그 상자 금액을 돌려준다는 말뿐이다", () => {

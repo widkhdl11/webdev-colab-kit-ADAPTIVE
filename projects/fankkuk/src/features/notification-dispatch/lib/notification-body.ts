@@ -116,13 +116,18 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : `/gifts/${orderNo}`,
       };
     case "hold":
-      // 무엇이 나왔는지·보낸 팬은 쓰지 않는다(INV-N13)
-      return { subject: "[팬꾹] 확인할 선물이 있어요", lines: [greet, "확인이 필요한 선물이 있어요.", order], buttonLabel: "확인하기", path: "/creator" };
+      // 추적기 반송 — 확인을 부탁하지 않고 돌려보낸다는 사실만. 무엇이 나왔는지·보낸 팬은 쓰지 않는다(INV-N13, 2026-10-12 D2)
+      return {
+        subject: "[팬꾹] 검수를 통과하지 못한 선물이 있어요",
+        lines: [greet, "검수를 통과하지 못해 보낸 분에게 돌려보내는 상자가 있어요.", order],
+        buttonLabel: "선물 보기",
+        path: "/creator",
+      };
     case "hold_fan":
-      // 무엇이 나왔는지·크리에이터가 알았다는 사실은 쓰지 않는다(INV-N13). 보관 상자는 168시간 뒤 반송된다(office-workflow INV-W4)
+      // 무엇이 나왔는지·크리에이터가 알았다는 사실은 쓰지 않는다(INV-N13). 추적기 상자는 보관 없이 바로 반송 대기로 간다(office-workflow INV-W4)
       return {
         subject: "[팬꾹] 돌려보낼 상자가 있어요",
-        lines: [greet, "검수를 통과하지 못한 상자가 있어요.", "168시간 뒤 보내신 주소로 돌려보내요.", order],
+        lines: [greet, "검수를 통과하지 못한 상자가 있어요.", "보내신 주소로 돌려보내요.", order],
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
       };

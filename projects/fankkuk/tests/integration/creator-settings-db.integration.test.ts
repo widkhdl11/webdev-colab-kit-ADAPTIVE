@@ -296,7 +296,7 @@ describe("INV-A11: 크리에이터 알림은 카카오·이메일 두 칸 (manua
     await fanSetsWaybill(boxId, no);
     const staff = await signedInClient("fankkuk_staff");
     const qr = await receiveAndLabel(staff, no);
-    await inspect(staff, qr, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" });
+    await inspect(staff, qr, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" });
 
     const outbox = (kind: string) =>
       psql(`select id from public.notification_outbox where order_id = '${o.orderId}' and kind = '${kind}' and account_id = '${ME.id}' and channel = 'email' and round = 1`);

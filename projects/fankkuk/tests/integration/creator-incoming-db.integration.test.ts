@@ -126,11 +126,11 @@ describe("INV-W9: 크리에이터는 자기에게 온 주문의 진행 단계만
     expect(pick(rows, "FC-A1B2C")).toMatchObject({ stage: "delivered", delivery: "delivered" });
   });
 
-  it("INV-W9: 추적 장치가 나와 보관한 상자는 검수 결과가 「보관」이다(통과로 보이지 않는다)", async () => {
+  it("INV-W9·W4: 위치 추적기로 판정된 상자는 보관 없이 반송 — 검수 결과가 「반송」이다(통과로 보이지 않는다, 2026-10-12 D2)", async () => {
     const r = await receivedGift();
-    await inspect(r.staff, r.qr, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" });
+    await inspect(r.staff, r.qr, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" });
     const row = pick(await readAs("haru_creator"), r.g.orderNo);
-    expect(row?.inspection_result).toBe("held");
+    expect(row?.inspection_result).toBe("returned");
     expect(row?.inspected_at).not.toBeNull();
   });
 

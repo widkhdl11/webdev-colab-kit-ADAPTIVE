@@ -31,7 +31,7 @@ const counts = z.object({
   // 24시간 지난 결제 대기를 닫은 수(payment INV-M15 · reverse-gift INV-R15)
   pending_gifts: z.number().int(),
   pending_revgifts: z.number().int(),
-  // 168시간 지나 반송 대기로 넘긴 보관(추적 장치) 상자 수(office-workflow INV-W4·W6)
+  // 168시간 지나 반송 대기로 넘긴 옛 보관(추적 장치) 상자 수 — 2026-10-12 부터 추적기는 바로 반송이라 언제나 0(office-workflow INV-W4)
   held: z.number().int(),
 });
 

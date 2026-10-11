@@ -120,8 +120,8 @@ describe("거절 때 아직 안 온 상자 (payment INV-M18 · INV-M8 · inbound
   it("INV-M9·M18 (S18g, 실패경로): 거절 전에 도착한 A 가 검수에 걸렸으면(반송·보관) 주문 환불에 A 몫이 없다 — 늦게 온 상자와 같은 판정", async () => {
     for (const outcome of [
       { bluetooth: "clear", rf: "clear", metal: "found", outcome: "return" },
-      { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" },
-    ] as const) {
+      { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" },
+    ] as Record<string, string>[]) {
       const op = await staff();
       const g = await paidGift(2);
       const qrA = await receive(op, g.boxIds[0]!);
@@ -251,7 +251,7 @@ describe("거절 때 아직 안 온 상자 (payment INV-M18 · INV-M8 · inbound
     await aArrived(g);
     expect(await declineAs("haru_creator", g.requestId)).toBe("declined");
     const qrB = await receive(op, g.boxIds[1]!);
-    await inspect(op, qrB, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" });
+    await inspect(op, qrB, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" });
     expect(boxRefundDue(g.boxIds[1]!)).toBe("none");
     expect(Number(orderRefundDue(g.orderId))).toBe(5800);
   });

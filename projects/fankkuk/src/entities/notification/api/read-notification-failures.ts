@@ -53,7 +53,7 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   shipped: "출고",
   in_transit: "배송중",
   delivered: "수령",
-  hold: "보관",
+  hold: "추적기 반송",
   box_arrived: "상자 도착",
   hold_fan: "돌려보낼 상자",
   box_missing: "도착하지 않은 상자",

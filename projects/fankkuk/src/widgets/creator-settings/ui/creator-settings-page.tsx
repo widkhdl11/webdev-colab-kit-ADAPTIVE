@@ -399,7 +399,7 @@ export function CreatorSettingsPage({
             <div className={s["s-head"]}>
               <h3 id="alarm-h">알림 받기</h3>
             </div>
-            {/* 꼭 가는 알림(승인 요청·사무실이 보관 중인 상자 등)은 끄는 스위치를 두지 않고 「끌 수 없는 알림」으로 알린다(notifications INV-N6 표, 2026-10-12 문제집 D7).
+            {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 끄는 스위치를 두지 않고 「끌 수 없는 알림」으로 알린다(notifications INV-N6 표, 2026-10-12 문제집 D7).
                 알림 스펙에 없는 종류(자동 반려 하루 전·주소가 열릴 때)의 스위치는 두지 않는다(my-account INV-A11) */}
             <div className={s["switch-row"]}>
               <MustDeliverNotice

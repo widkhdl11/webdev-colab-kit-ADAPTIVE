@@ -18,10 +18,10 @@ describe("끌 수 없는 알림 안내", () => {
     expect(html).toContain('id="must-fan"');
   });
 
-  it("INV-N6: 크리에이터 화면 — 승인 요청과 사무실이 보관 중인 상자", () => {
+  it("INV-N6: 크리에이터 화면 — 승인 요청과 돌려보내는 선물", () => {
     const html = renderToStaticMarkup(<MustDeliverNotice audience="creator" id="must-creator" />);
     expect(html).toContain("끌 수 없는 알림");
     expect(html).toContain("승인 요청");
-    expect(html).toContain("사무실이 보관 중인 상자");
+    expect(html).toContain("돌려보내는 선물");
   });
 });

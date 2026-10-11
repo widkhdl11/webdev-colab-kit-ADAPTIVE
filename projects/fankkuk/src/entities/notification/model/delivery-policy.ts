@@ -37,8 +37,8 @@ type Policy = {
 // 새 종류를 더하면 여기서 타입 오류가 난다 — 끌 수 있는지를 정하지 않은 종류는 만들 수 없다.
 export const NOTIFICATION_POLICY: Record<NotificationKind, Policy> = {
   approval_request: { mustDeliver: true, label: "승인 요청", audience: "creator" },
-  // 지금은 추적 장치로 사무실이 보관 중인 상자다(문제집 D2·D3 반영 때 바로 반송으로 바뀐다)
-  hold: { mustDeliver: true, label: "사무실이 보관 중인 상자", audience: "creator" },
+  // 검수에서 위치 추적기가 나와 보낸 팬에게 돌려보내는 상자(INV-N13, 2026-10-12 문제집 D2 — 보관 없이 바로 반송). 종류 코드는 처음 이름 그대로
+  hold: { mustDeliver: true, label: "돌려보내는 선물", audience: "creator" },
   hold_fan: { mustDeliver: true, label: "돌려보낼 상자", audience: "fan" },
   box_missing: { mustDeliver: true, label: "아직 도착하지 않은 상자", audience: "fan" },
   // 같은 이름으로 보인다 — 14일 안내와 거절 뒤 안내는 팬에게 같은 「아직 도착하지 않은 상자」다

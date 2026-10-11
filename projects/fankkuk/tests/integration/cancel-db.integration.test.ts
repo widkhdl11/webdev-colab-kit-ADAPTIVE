@@ -153,8 +153,8 @@ describe("대표의 입고 뒤 취소 (INV-M17)", () => {
   it("INV-M17 (S17c): 검수에 걸린 상자가 있어도 취소된다 — 걸린 상자는 0, 검수 전인 상자는 기본 서비스료 칸만 돌려준다", async () => {
     for (const caughtResult of [
       { bluetooth: "clear", rf: "clear", metal: "found", outcome: "return" },
-      { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" },
-    ] as const) {
+      { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" },
+    ] as Record<string, string>[]) {
       const op = await staff();
       const g = await paidGift(2);
       const caught = await receive(op, g.boxIds[0]!);

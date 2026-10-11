@@ -148,12 +148,13 @@ describe("INV-W12 자동 처리 — 주문마다·상자마다 같은 순서로"
     expect(psql(`select status from public.orders where id = '${g.orderId}'`)).toBe("expired");
   });
 
-  it("INV-W12 (S12): 보관 168시간 반송 대기는 주문 줄을 쥐고 있으면 사무소 상자 줄을 잡기 전에 기다린다", async () => {
+  it("INV-W12 (S12): 옛 보관 상자(2026-10-12 전 데이터)의 168시간 반송 대기도 주문 줄을 쥐고 있으면 사무소 상자 줄을 잡기 전에 기다린다", async () => {
     const op = await staff();
     const g = await paidGift(1);
     const qr = await receive(op, g.boxIds[0]!);
-    expect(await inspect(op, qr, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" })).toBe("held");
-    psql(`update public.office_parcels set inspected_at = now() - interval '169 hours' where qr_code = '${qr}'`);
+    expect(await inspect(op, qr, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" })).toBe("return_waiting");
+    // 이제 검수로는 보관 상태가 생기지 않는다(INV-W4) — 자동 처리에 남은 옛 단계의 잠금 순서만 본다
+    psql(`update public.office_parcels set state = 'held', inspected_at = now() - interval '169 hours' where qr_code = '${qr}'`);
     const r = await whileBlocked(holdOrder(g.orderId), "office_run_expiry", runExpiry(op, g.orderNo), () => expect(probeParcel(qr)).toBeNull());
     expect(r.error).toBeNull();
     expect(parcelState(qr)).toBe("return_waiting");
