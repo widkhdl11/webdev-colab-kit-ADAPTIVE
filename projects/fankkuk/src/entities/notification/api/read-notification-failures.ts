@@ -6,9 +6,6 @@ import { NOTIFICATION_KINDS, type NotificationKind } from "../model/delivery-pol
 // 보이는 것은 종류·주문번호·차례·통로·상태·시도 횟수·오류 코드·끝난 시각뿐이다. 받는 사람·연락처·본문은 DB 가 돌려주지 않고,
 // 응답에 다른 칸이 섞여 와도 여기서 꺼내지 않는다. 꼴이 다른 답은 오류로 던진다(빈 목록으로 보이게 하지 않는다).
 
-const KINDS = NOTIFICATION_KINDS;
-export type NotificationKindName = NotificationKind;
-
 const row = z.object({
   // 모르는 종류(새로 더한 알림)가 와도 화면 전체를 오류로 만들지 않는다 — 종류 코드를 그대로 보여 준다
   kind: z.string().regex(/^[a-z_]{1,40}$/),
@@ -49,7 +46,7 @@ export async function readNotificationFailures(client: Pick<SupabaseClient, "rpc
   }));
 }
 
-const KIND_LABEL: Record<NotificationKindName, string> = {
+const KIND_LABEL: Record<NotificationKind, string> = {
   approval_request: "승인 요청",
   arrived: "입고",
   inspected: "검수",
@@ -69,8 +66,8 @@ const KIND_LABEL: Record<NotificationKindName, string> = {
   gift_received: "받았어요 확인",
 };
 
-function isKnownKind(kind: string): kind is NotificationKindName {
-  return (KINDS as readonly string[]).includes(kind);
+function isKnownKind(kind: string): kind is NotificationKind {
+  return (NOTIFICATION_KINDS as readonly string[]).includes(kind);
 }
 
 export function kindLabel(kind: string, round = 1): string {

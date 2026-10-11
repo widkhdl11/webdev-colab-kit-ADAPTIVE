@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { openItems, TO_DECIDE, TO_FILL, type LegalDoc } from "./legal-doc";
 import { PRIVACY_DOC } from "./privacy-doc";
 import { termsDoc } from "./terms-doc";
+import { mustDeliverLabels } from "@/entities/notification/model/delivery-policy";
 
 const prices = {
   small: { priceKrw: 6900, revgiftPriceKrw: 5400 },
@@ -28,6 +29,17 @@ describe("약관·개인정보처리방침 글", () => {
       [expect.stringContaining("10kg"), "8,900원", "6,900원"],
       [expect.stringContaining("20kg"), "12,345원", "9,876원"],
     ]);
+  });
+
+  it("notifications INV-N6: 꺼도 가는 알림의 예시는 설정 화면의 이름 그대로이고, 이유는 「조치가 필요하거나 돈·상자가 걸려 있기 때문」", () => {
+    const names = new Set([...mustDeliverLabels("fan"), ...mustDeliverLabels("creator")]);
+    for (const doc of docs) {
+      const line = JSON.stringify(doc).match(/다만 ([^"]+?) 같은 알림은 조치가 필요하거나 돈·상자가 걸려 있기 때문에 꺼도 갑니다/);
+      expect(line, doc.title).not.toBeNull();
+      const examples = line![1]!.split("·");
+      expect(examples).toContain("추가 결제 취소");
+      for (const name of examples) expect([doc.title, name, names.has(name)]).toEqual([doc.title, name, true]);
+    }
   });
 
   it("빈칸 표시가 있는 문장만 모은다", () => {

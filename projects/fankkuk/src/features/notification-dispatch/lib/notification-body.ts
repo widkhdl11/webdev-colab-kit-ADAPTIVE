@@ -1,4 +1,4 @@
-import { isMustDeliver, type NotificationKind } from "@/entities/notification/model/delivery-policy";
+import { NOTIFICATION_POLICY, type NotificationAudience, type NotificationKind } from "@/entities/notification/model/delivery-policy";
 import { formatDeadline } from "@/shared/lib/format/datetime";
 
 // 알림 본문 틀 (notifications INV-N1·N9). 카카오 알림톡과 이메일이 같은 틀을 쓴다(INV-N7) — 카카오 템플릿도 이 문구로 심사받는다.
@@ -14,7 +14,9 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 //   거절·7일 반려·차단 거절 모두 같은 종류·같은 본문이다(INV-N2). 6자리·주소 칸이 없다.
 // gift_undelivered: 받는 주소를 본 적이 없는(상자가 하나도 오지 않은) 주문이 거절·반려될 때 보낸 팬에게 한 번(INV-N17 ②, 2026-10-12 문제집 D11).
 //   거절·7일 반려·차단 거절 모두 같은 본문이다(INV-N2) — 거절 종류를 받는 칸이 없다.
-// 꼭 가는 알림(INV-N6 표)에는 「꺼 두어도 가요」, 나머지에는 「끌 수 있어요」를 붙인다 — 종류별 판정은 entities/notification 하나.
+// 꼭 가는 알림에는 「꺼 두어도 가요」, 나머지에는 「끌 수 있어요」를 붙인다 — 고르는 값은 꺼낸 줄의 must_deliver(DB 판정, INV-N6)다.
+//   연락처를 내줄지도 같은 DB 판정이 정하므로, 앱 목록이 DB 와 어긋나도 본문 안내는 실제 발송과 같다.
+//   「끌 수 있어요」는 받는 사람의 설정 자리를 가리킨다 — 팬은 내 팬꾹, 크리에이터는 내 팬꾹의 주소와 설정(design-rules 5절).
 // difference_due: 사무실 실측이 신고보다 커서 차액 결제 요청이 생기면 보낸 팬에게 상자마다 한 번(INV-N18, 2026-10-09 카드 d55).
 //   금액·실측 구간 칸이 없다 — 선물 상세를 열면 보인다.
 // payment_canceled · difference_canceled: 「확인 필요」 결제를 대표가 전액 취소했을 때 보낸 팬에게 한 번(INV-N19, payment INV-M20, 2026-10-10).
@@ -33,6 +35,8 @@ export type NotificationBodyInput = {
   orderNo: string;
   /** 승인 요청만 — 자동 반려 예정 시각(결제 완료 + 168시간) */
   autoRejectAt: string | null;
+  /** 꺼낸 줄의 꼭 가는 알림 표시(DB 판정, INV-N6) */
+  mustDeliver: boolean;
   /** 설정의 사이트 주소(APP_ORIGIN) */
   appOrigin: string;
 };
@@ -42,8 +46,11 @@ export type NotificationBody = { subject: string; text: string; buttonLabel: str
 const ORDER_NO = /^[A-Z0-9][A-Z0-9-]{0,39}$/;
 
 const FOOTER = "이 알림에는 선물 내용과 보낸 분·받는 분 정보를 담지 않아요. 자세한 내용은 로그인한 뒤 위 링크에서 확인해 주세요.";
-const FOOTER_OPTIONAL = "알림은 내 정보에서 끌 수 있어요.";
-const FOOTER_MUST = "이 알림은 알림을 꺼 두어도 가요.";
+const FOOTER_OPTIONAL: Record<NotificationAudience, string> = {
+  fan: "알림은 내 팬꾹에서 끌 수 있어요.",
+  creator: "알림은 내 팬꾹의 주소와 설정에서 끌 수 있어요.",
+};
+const FOOTER_MUST = "이 알림은 꺼 두어도 가요.";
 
 const APPROVAL_SUBJECT = {
   1: "[팬꾹] 새 선물 승인 요청이 왔어요",
@@ -206,6 +213,12 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
   }
 }
 
+/** 받는 사람 — 종류별 표의 받는 쪽. 역조공 상자 도착은 보낸 크리에이터가 받는다 */
+function audienceOf({ kind, orderNo }: NotificationBodyInput): NotificationAudience {
+  if (kind === "box_arrived" && REVGIFT_ORDER_NO.test(orderNo)) return "creator";
+  return NOTIFICATION_POLICY[kind].audience;
+}
+
 export function buildNotificationBody(input: NotificationBodyInput): NotificationBody {
   if (!ORDER_NO.test(input.orderNo)) throw new Error("알림 링크에 넣을 주문번호 꼴이 아니다");
   const origin = siteOrigin(input.appOrigin);
@@ -213,7 +226,7 @@ export function buildNotificationBody(input: NotificationBodyInput): Notificatio
   const link = `${origin}${d.path}`;
   return {
     subject: d.subject,
-    text: [...d.lines, "", link, "", FOOTER, isMustDeliver(input.kind) ? FOOTER_MUST : FOOTER_OPTIONAL].join("\n"),
+    text: [...d.lines, "", link, "", FOOTER, input.mustDeliver ? FOOTER_MUST : FOOTER_OPTIONAL[audienceOf(input)]].join("\n"),
     buttonLabel: d.buttonLabel,
     link,
   };

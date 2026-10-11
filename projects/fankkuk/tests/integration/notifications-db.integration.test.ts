@@ -322,7 +322,7 @@ describe("팬에게 승인·거절 종류 줄은 없다 (INV-N2)", () => {
   // 모두 거절하므로, 별빛으로 하면 시드의 별빛 → 하루 대기 요청까지 거절된다.
   const fanRows = (orderId: string) => outboxRows(orderId).filter((r) => !r.includes("|haru_creator|"));
 
-  it("INV-N2·N17 ② (S2): 상자가 하나도 안 온 주문의 크리에이터 거절·7일 반려·차단 거절 — 세 주문의 팬 몫 줄이 같다(거절 알림 하나씩)", async () => {
+  it("INV-N2·N17 ② (S2): 상자가 하나도 안 온 주문의 크리에이터 거절·7일 반려·차단 거절·차단 뒤 결제 — 네 주문의 팬 몫 줄이 같다(거절 알림 하나씩)", async () => {
     const haru = await signedInClient("haru_creator");
     const declined = await paidGift();
     expect((await haru.rpc("decline_gift", { p_request_id: declined.requestId, p_block: false })).error).toBeNull();
@@ -333,12 +333,21 @@ describe("팬에게 승인·거절 종류 줄은 없다 (INV-N2)", () => {
     expect(orderStatus(expired.orderId)).toBe("expired");
     const blockedOrder = await registerTestOrder(1, { senderId: HANEUL_FAN_ID });
     const blocked = { ...blockedOrder, requestId: await payTestOrder(blockedOrder) };
+    // 차단 때 결제 대기였다가 그 뒤 결제가 끝나 전액 환불되는 주문(decline-block S8b) — 결제가 끝나는 순간 같은 거절 알림
+    const latePaid = await registerTestOrder(1, { senderId: HANEUL_FAN_ID });
     expect((await haru.rpc("decline_gift", { p_request_id: blocked.requestId, p_block: true })).error).toBeNull();
+    expect(orderStatus(latePaid.orderId)).toBe("rejected");
+    expect(fanRows(latePaid.orderId)).toEqual([]); // 결제 전에는 돌려줄 금액이 없어 아직 알림이 없다
+    await payTestOrder(latePaid);
+    expect(orderStatus(latePaid.orderId)).toBe("rejected");
     // 받는 팬이 다르다(별빛·하늘) — 받는 사람 칸을 지우고 종류·차례·통로·상태를 비교한다
-    const all = [declined, expired, blocked].map((g) => fanRows(g.orderId).map((r) => r.replace(/\|[a-z]+_fan\|/, "|팬|")));
-    expect(all).toEqual([0, 1, 2].map(() => ["gift_undelivered|1|팬|email|pending"]));
+    const all = [declined, expired, blocked, latePaid].map((g) => fanRows(g.orderId).map((r) => r.replace(/\|[a-z]+_fan\|/, "|팬|")));
+    expect(all).toEqual([0, 1, 2, 3].map(() => ["gift_undelivered|1|팬|email|pending"]));
     expect(fanRows(declined.orderId)).toEqual(["gift_undelivered|1|byeolbit_fan|email|pending"]);
     expect(fanRows(blocked.orderId)).toEqual(["gift_undelivered|1|haneul_fan|email|pending"]);
+    expect(fanRows(latePaid.orderId)).toEqual(["gift_undelivered|1|haneul_fan|email|pending"]);
+    // 결제가 끝난 거절 주문에는 승인 요청이 없다 — 크리에이터 몫 줄도 없다
+    expect(outboxRows(latePaid.orderId).filter((r) => r.includes("|haru_creator|"))).toEqual([]);
     // 거절 사건이 크리에이터 몫 줄은 더 만들지 않는다 — 결제 완료 때의 승인 요청 줄 하나뿐
     for (const g of [declined, expired, blocked]) {
       expect(outboxRows(g.orderId).filter((r) => r.includes("|haru_creator|"))).toEqual(["approval_request|1|haru_creator|email|pending"]);
@@ -366,6 +375,26 @@ describe("꼭 가는 알림 판정 — DB 와 앱 목록이 같다 (INV-N6)", ()
     const db = new Map(out.split(",").map((pair) => pair.split("=") as [string, string]));
     for (const kind of NOTIFICATION_KINDS) expect([kind, db.get(kind)]).toEqual([kind, isMustDeliver(kind) ? "true" : "false"]);
     expect(db.get("no_such_kind")).toBe("false");
+  });
+
+  /** DB 종류 제약(발송 대기 줄·카카오 템플릿 표)이 허용하는 종류 */
+  const dbKinds = (table: string, constraint: string): string[] => {
+    const def = psql(`select pg_get_constraintdef(oid) from pg_constraint where conrelid = '${table}'::regclass and conname = '${constraint}'`);
+    return [...def.matchAll(/'([a-z_]+)'::text/g)].map((m) => m[1]!).sort();
+  };
+
+  it("INV-N6 (S6f): DB 종류 제약 두 곳과 앱의 종류 목록이 같은 집합이다", () => {
+    const app = [...NOTIFICATION_KINDS].sort();
+    expect(dbKinds(OUTBOX, "notification_outbox_kind_check")).toEqual(app);
+    expect(dbKinds(TEMPLATES, "notification_kakao_templates_kind_check")).toEqual(app);
+  });
+
+  it("INV-N6 (S6f): DB 쪽 전체 종류로 판정 함수를 돌려 앱 목록과 맞댄다 — 앱이 모르는 종류가 DB 에 있어도 걸린다", () => {
+    const kinds = dbKinds(OUTBOX, "notification_outbox_kind_check");
+    expect(kinds.length).toBeGreaterThan(0);
+    const out = psql(`select string_agg(k || '=' || public.notification_kind_must_deliver(k)::text, ',' order by k) from unnest(array[${kinds.map((k) => `'${k}'`).join(",")}]) as k`);
+    const db = out.split(",").map((pair) => pair.split("="));
+    expect(db.map(([k, v]) => [k, v === "true"])).toEqual(kinds.map((k) => [k, isMustDeliver(k)]));
   });
 
   it("INV-N6 (S6f): 판정 함수는 화면 쪽 키로 부를 수 없다", async () => {
@@ -871,13 +900,45 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
     });
   });
 
-  it("INV-N6 (S6d, manual/0016 뒤): 두 칸 모두 꺼진 하루에게도 보관(확인할 선물)은 간다 — 꼭 가는 알림(2026-10-12)", async () => {
+  it("INV-N6 (S6d, manual/0016 뒤): 두 칸 모두 꺼진 하루에게도 보관(사무실이 보관 중인 상자)은 간다 — 팬으로 받는 출고는 빈 값 — 꼭 가는 알림(2026-10-12)", async () => {
     await withContact("haru_creator", { notify_kakao: false, notify_email: false }, async () => {
       const { g, staff, qrs } = await arrivedGift();
       await inspect(staff, qrs[0]!, { bluetooth: "found", rf: "clear", metal: "clear", outcome: "hold" });
       const id = rowId(g.orderId, "hold", "haru_creator");
       await claimOne(id);
       expect((await contactValue(id))).toBe("haru.creator@example.com");
+      // 같은 하루가 팬으로 받는 출고 알림(끌 수 있는 알림)은 빈 값 — 연락처는 받는 계정과 종류로만 정해진다
+      const shipped = psql(
+        `insert into ${OUTBOX} (kind, order_id, round, account_id, channel, event_at) select 'shipped', '${g.orderId}', 1, id, 'email', now() from public.profiles where login_id = 'haru_creator' returning id`,
+      ).split(/\r?\n/)[0]!;
+      await claimOne(shipped);
+      expect((await contactValue(shipped))).toBeNull();
+    });
+  });
+
+  it("INV-N6 (S6d·S6e, manual/0016 뒤): 두 칸 모두 꺼진 별빛 — DB 의 종류마다 줄을 넣고 꺼내면 연락처는 판정 함수가 참일 때만 나온다", async () => {
+    await withContact("byeolbit_fan", { notify_kakao: false, notify_email: false }, async () => {
+      const { g } = await arrivedGift();
+      const requestId = psql(`select id from public.approval_requests where order_id = '${g.orderId}' and status = 'waiting'`);
+      const parcelId = psql(`select p.id from public.office_parcels p join public.boxes b on b.id = p.box_id where b.order_id = '${g.orderId}' limit 1`);
+      const parcelKinds = psql(`select pg_get_constraintdef(oid) from pg_constraint where conrelid = '${OUTBOX}'::regclass and conname = 'notification_outbox_parcel_kind'`);
+      const kindDef = psql(`select pg_get_constraintdef(oid) from pg_constraint where conrelid = '${OUTBOX}'::regclass and conname = 'notification_outbox_kind_check'`);
+      const kinds = [...kindDef.matchAll(/'([a-z_]+)'::text/g)].map((m) => m[1]!);
+      expect(kinds.length).toBe(NOTIFICATION_KINDS.length);
+      const seen: [string, boolean, unknown][] = [];
+      for (const kind of kinds) {
+        const request = kind === "approval_request" ? `'${requestId}'` : "null";
+        const parcel = parcelKinds.includes(`'${kind}'`) ? `'${parcelId}'` : "null";
+        psql(
+          `insert into ${OUTBOX} (kind, order_id, approval_request_id, parcel_id, round, account_id, channel, event_at) select '${kind}', '${g.orderId}', ${request}, ${parcel}, 1, id, 'email', now() from public.profiles where login_id = 'byeolbit_fan' on conflict do nothing`,
+        );
+        const id = rowId(g.orderId, kind, "byeolbit_fan");
+        await claimOne(id);
+        const must = psql(`select public.notification_kind_must_deliver('${kind}')`) === "t";
+        seen.push([kind, must, await contactValue(id)]);
+      }
+      expect(seen.filter(([, must]) => must)).toHaveLength(9);
+      expect(seen).toEqual(seen.map(([kind, must]) => [kind, must, must ? "byeolbit.fan@example.com" : null]));
     });
   });
 

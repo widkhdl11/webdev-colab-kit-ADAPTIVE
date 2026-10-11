@@ -10,16 +10,18 @@ describe("끌 수 없는 알림 안내", () => {
     expect(html).toContain("끌 수 없는 알림");
     expect(html).toContain("추가 결제 요청");
     expect(html).toContain("돌려보낼 상자");
-    expect(html).toContain("선물이 전해지지 못했다는 알림");
-    expect(html).toContain("꺼 두어도");
+    expect(html).toContain("전해지지 못한 선물");
+    expect(html).toContain("돈·상자가 걸린 일이라 꺼 두어도 가요.");
+    // 「알림」을 한 문장에 거듭 쓰지 않는다(제목 「끌 수 없는 알림」 뒤 본문에는 없다)
+    expect(html.split("끌 수 없는 알림</strong>")[1]).not.toContain("알림");
     expect(html).not.toContain("승인 요청");
     expect(html).toContain('id="must-fan"');
   });
 
-  it("INV-N6: 크리에이터 화면 — 승인 요청과 확인할 선물", () => {
+  it("INV-N6: 크리에이터 화면 — 승인 요청과 사무실이 보관 중인 상자", () => {
     const html = renderToStaticMarkup(<MustDeliverNotice audience="creator" id="must-creator" />);
     expect(html).toContain("끌 수 없는 알림");
     expect(html).toContain("승인 요청");
-    expect(html).toContain("확인할 선물");
+    expect(html).toContain("사무실이 보관 중인 상자");
   });
 });

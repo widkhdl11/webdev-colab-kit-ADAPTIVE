@@ -30,7 +30,7 @@ describe("꼭 가는 알림 목록 (INV-N6)", () => {
     for (const kind of NOTIFICATION_KINDS) expect([kind, NOTIFICATION_POLICY[kind].mustDeliver]).toEqual([kind, table.get(kind)]);
   });
 
-  it("INV-N6: 끌 수 없는 알림은 아홉 — 승인 요청·확인할 선물·돌려보낼 상자·안 온 상자 둘·거절 알림·추가 결제·결제 취소 둘", () => {
+  it("INV-N6: 끌 수 없는 알림은 아홉 — 승인 요청·보관 중인 상자·돌려보낼 상자·안 온 상자 둘·거절 알림·추가 결제·결제 취소 둘", () => {
     expect([...MUST_DELIVER_KINDS].sort()).toEqual(
       ["approval_request", "hold", "hold_fan", "box_missing", "gift_pending_box", "gift_undelivered", "difference_due", "payment_canceled", "difference_canceled"].sort(),
     );
@@ -43,11 +43,14 @@ describe("꼭 가는 알림 목록 (INV-N6)", () => {
     expect(isMustDeliver("no_such_kind")).toBe(false);
   });
 
-  it("INV-N6: 설정 화면의 안내 목록 — 팬은 팬이 받는 끌 수 없는 알림, 크리에이터는 승인 요청·확인할 선물이 맨 앞", () => {
+  it("INV-N6: 설정 화면의 안내 목록 — 팬은 팬이 받는 끌 수 없는 알림, 크리에이터는 승인 요청·사무실이 보관 중인 상자", () => {
     const fan = mustDeliverLabels("fan");
-    for (const label of ["추가 결제 요청", "돌려보낼 상자", "아직 도착하지 않은 상자", "선물이 전해지지 못했다는 알림", "결제 취소"]) expect(fan).toContain(label);
-    expect(fan).not.toContain("승인 요청");
-    const creator = mustDeliverLabels("creator");
-    expect(creator.slice(0, 2)).toEqual(["승인 요청", "확인할 선물"]);
+    expect(fan).toEqual(["돌려보낼 상자", "아직 도착하지 않은 상자", "전해지지 못한 선물", "추가 결제 요청", "결제 취소", "추가 결제 취소"]);
+    expect(mustDeliverLabels("creator")).toEqual(["승인 요청", "사무실이 보관 중인 상자"]);
+  });
+
+  it("INV-N6: 설정 화면 이름이 운영자 화면·스펙 표와 같다 — 추가 결제 취소는 「추가 결제 취소」", () => {
+    expect(NOTIFICATION_POLICY.difference_canceled.label).toBe("추가 결제 취소");
+    expect(NOTIFICATION_POLICY.payment_canceled.label).toBe("결제 취소");
   });
 });

@@ -20,7 +20,7 @@ export function MustDeliverNotice({ audience, id, className, titleClassName, bod
     <p id={id} className={className}>
       <strong className={titleClassName}>끌 수 없는 알림</strong>{" "}
       <span className={bodyClassName}>
-        {labels.join(", ")} — 선물을 진행하는 데 필요하거나 돈·상자가 걸린 알림이라 알림을 꺼 두어도 가요.{extra ? ` ${extra}` : ""}
+        {labels.join(", ")} — 선물을 진행하는 데 필요하거나 돈·상자가 걸린 일이라 꺼 두어도 가요.{extra ? ` ${extra}` : ""}
       </span>
     </p>
   );

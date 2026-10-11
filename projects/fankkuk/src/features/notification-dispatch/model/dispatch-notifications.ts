@@ -50,6 +50,8 @@ const claimedRow = z.object({
   order_no: z.string(),
   nickname: z.string(),
   auto_reject_at: z.string().nullable(),
+  /** 꼭 가는 알림인가 — DB 가 줄의 종류로 정한 값(public.notification_kind_must_deliver). 본문 끝 안내는 이것을 따른다(INV-N6). */
+  must_deliver: z.boolean(),
   /** 꺼낸 시각 — 끝내기에 그대로 돌려준다. 다른 일꾼이 다시 꺼낸 줄이면 DB 가 이 결과를 받지 않는다(INV-N5). 문자열 그대로 둔다(밀리초로 바꾸면 값이 달라진다). */
   claimed_at: z.string(),
 });
@@ -85,7 +87,7 @@ async function sendRow(deps: DispatchDeps, origin: string, channels: Notificatio
 
   let body: NotificationBody;
   try {
-    body = buildNotificationBody({ kind: row.kind, round: row.round, nickname: row.nickname, orderNo: row.order_no, autoRejectAt: row.auto_reject_at, appOrigin: origin });
+    body = buildNotificationBody({ kind: row.kind, round: row.round, nickname: row.nickname, orderNo: row.order_no, autoRejectAt: row.auto_reject_at, mustDeliver: row.must_deliver, appOrigin: origin });
   } catch {
     return { outcome: "skipped", code: "body_unavailable" };
   }

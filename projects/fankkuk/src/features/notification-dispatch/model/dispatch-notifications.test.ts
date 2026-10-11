@@ -196,6 +196,30 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(email.sent[0]!.text).not.toContain("haru@example.com"); // 받는 주소는 본문에 없다
   });
 
+  it("INV-N6: 본문 끝 「꺼 두어도 가요」는 꺼낸 줄의 must_deliver(DB 판정)로 고른다 — 앱 목록을 다시 보지 않는다", async () => {
+    const email = channel();
+    const { admin } = fakeAdmin({
+      rows: [
+        { ...ROW, id: "must", kind: "arrived", must_deliver: true },
+        { ...ROW, id: "optional", kind: "difference_due", must_deliver: false },
+      ],
+      contacts: { must: "a@example.com", optional: "b@example.com" },
+    });
+    await dispatchNotifications(deps(admin, { email, kakao: null }));
+    const text = (id: string) => email.sent.find((m) => m.outboxId === id)!.text;
+    expect(text("must")).toContain("이 알림은 꺼 두어도 가요.");
+    expect(text("optional")).not.toContain("꺼 두어도 가요");
+  });
+
+  it("INV-N6 (실패경로): 꺼낸 줄에 must_deliver 가 없으면 꼴이 다른 줄이라 보내지 않는다", async () => {
+    const email = channel();
+    const noFlag: Record<string, unknown> = { ...ROW };
+    delete noFlag.must_deliver;
+    const { admin } = fakeAdmin({ rows: [noFlag as typeof ROW], contacts: { "row-1": "a@example.com" } });
+    await dispatchNotifications(deps(admin, { email, kakao: null }));
+    expect(email.sent).toHaveLength(0);
+  });
+
   it("INV-N5: 메일 서버 오류는 코드로 끝내고, DB 가 실패로 끝냈으면 실패로 센다", async () => {
     const { admin, calls } = fakeAdmin({ rows: [ROW], contacts: { "row-1": "a@example.com" } });
     const finish = admin.rpc.bind(admin);

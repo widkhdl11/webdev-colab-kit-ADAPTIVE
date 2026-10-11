@@ -70,6 +70,13 @@ const undeliveredAlerts = (orderId: string) =>
   psql(
     `select coalesce(string_agg(o.kind || '|' || p.login_id || '|' || o.channel, ',' order by o.channel), '') from public.notification_outbox o join public.profiles p on p.id = o.account_id where o.order_id = '${orderId}' and o.kind = 'gift_undelivered'`,
   );
+/** 주문의 보낸 팬이 받는 알림 줄 전부(「상자 도착」은 상자마다라 뺀다)를 「종류|팬 아이디|통로」로 */
+const fanAlerts = (orderId: string): string[] => {
+  const out = psql(
+    `select string_agg(n.kind || '|' || p.login_id || '|' || n.channel, ',' order by n.kind, n.channel) from public.notification_outbox n join public.orders o on o.id = n.order_id join public.profiles p on p.id = n.account_id where n.order_id = '${orderId}' and n.account_id = o.fan_id and n.kind <> 'box_arrived'`,
+  );
+  return out === "" ? [] : out.split(",");
+};
 const pendingAlerts = (orderId: string) =>
   psql(
     `select string_agg(o.kind || '|' || p.login_id || '|' || o.channel, ',' order by o.channel) from public.notification_outbox o join public.profiles p on p.id = o.account_id where o.order_id = '${orderId}' and o.kind = 'gift_pending_box'`,
@@ -530,13 +537,29 @@ describe("아직 안 온 상자 안내 (notifications INV-N17)", () => {
     expect(undeliveredAlerts(self.orderId)).toBe("");
   });
 
-  it("INV-N17 ② (S17b, 실패경로): 「먼저 보내기」를 누르고 하나도 안 온 주문의 거절은 안 온 상자 안내 하나뿐 — 거절 알림은 없다", async () => {
-    const g = await paidGift(1);
-    const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("ack_early_send", { p_order_no: g.orderNo })).error).toBeNull();
-    expect(await declineAs("haru_creator", g.requestId)).toBe("declined");
-    expect(pendingAlerts(g.orderId)).toBe("gift_pending_box|byeolbit_fan|email");
-    expect(undeliveredAlerts(g.orderId)).toBe("");
+  it("INV-N17 ② · INV-N2 (S17b, 실패경로): 「먼저 보내기」를 누르고 하나도 안 온 주문 — 직접 거절·차단 거절·7일 반려 세 경로 모두 팬 몫 줄은 안 온 상자 안내 하나뿐", async () => {
+    // 직접 거절
+    const declined = await paidGift(1);
+    expect((await (await signedInClient("byeolbit_fan")).rpc("ack_early_send", { p_order_no: declined.orderNo })).error).toBeNull();
+    expect(await declineAs("haru_creator", declined.requestId)).toBe("declined");
+
+    // 차단 거절 — 차단은 그 팬의 진행 중 주문을 모두 거절하므로 하루에게 진행 중 시드 주문이 없는 하늘로 본다
+    const o = await registerTestOrder(1, { senderId: HANEUL });
+    const blockedRequest = await payTestOrder(o);
+    expect((await (await signedInClient("haneul_fan")).rpc("ack_early_send", { p_order_no: o.orderNo })).error).toBeNull();
+    expect(await declineAs("haru_creator", blockedRequest, true)).toBe("declined");
+
+    // 7일 반려
+    const expired = await paidGift(1);
+    expect((await (await signedInClient("byeolbit_fan")).rpc("ack_early_send", { p_order_no: expired.orderNo })).error).toBeNull();
+    psql(`update public.orders set registered_at = now() - interval '169 hours' where id = '${expired.orderId}'`);
+    expect((await runExpiry(expired.orderNo)).gifts).toBe(1);
+
+    for (const [id, want] of [[declined.orderId, "rejected"], [o.orderId, "rejected"], [expired.orderId, "expired"]] as const) expect(status(id)).toBe(want);
+    // 받는 팬이 다르다(별빛·하늘) — 받는 사람 칸을 지우고 팬 몫 줄 전체(종류·통로)를 비교한다
+    const rows = [declined.orderId, o.orderId, expired.orderId].map((id) => fanAlerts(id).map((r) => r.replace(/\|[a-z]+_fan\|/, "|팬|")));
+    expect(rows).toEqual([0, 1, 2].map(() => ["gift_pending_box|팬|email"]));
+    expect(fanAlerts(o.orderId)).toEqual(["gift_pending_box|haneul_fan|email"]);
   });
 
   it("INV-N17 ② (S2): 「먼저 보내기」 없이 하나도 안 온 주문의 거절은 거절 알림 하나 — 안 온 상자 안내는 없다", async () => {
@@ -546,16 +569,23 @@ describe("아직 안 온 상자 안내 (notifications INV-N17)", () => {
     expect(pendingAlerts(g.orderId)).toBe("");
   });
 
-  it("INV-N17 ② (S17b, 실패경로): 결제 전 주문이 차단으로 함께 거절되면 알림이 없다 — 차단을 부른 결제된 주문에는 거절 알림", async () => {
+  it("INV-N17 ② · INV-N2 (S17b): 결제 전 주문이 차단으로 함께 거절되면 그때는 알림이 없고, 그 뒤 결제가 끝나 전액 환불되면 거절 알림 하나 — 차단을 부른 주문과 같은 줄", async () => {
     const o1 = await registerTestOrder(1, { senderId: HANEUL });
     const r1 = await payTestOrder(o1);
     const unpaid = await registerTestOrder(1, { senderId: HANEUL });
     expect(status(unpaid.orderId)).toBe("pending_payment");
     expect(await declineAs("haru_creator", r1, true)).toBe("declined");
     expect(status(unpaid.orderId)).toBe("rejected");
+    // 결제 전 — 돌려줄 결제 금액이 아직 없다
     expect(undeliveredAlerts(unpaid.orderId)).toBe("");
     expect(pendingAlerts(unpaid.orderId)).toBe("");
     expect(undeliveredAlerts(o1.orderId)).toBe("gift_undelivered|haneul_fan|email");
+    // 결제가 끝나면 주문은 거절 그대로, 환불은 전액(decline-block S8b) — 직접 거절·7일 반려와 같은 거절 알림
+    await payTestOrder(unpaid);
+    expect(status(unpaid.orderId)).toBe("rejected");
+    expect(orderRefundDue(unpaid.orderId)).toBe(String(paid(unpaid.orderId)));
+    expect(fanAlerts(unpaid.orderId)).toEqual(fanAlerts(o1.orderId));
+    expect(fanAlerts(unpaid.orderId)).toEqual(["gift_undelivered|haneul_fan|email"]);
   });
 
   it("INV-N17 ② (S17b, 실패경로): 팬이 「먼저 보내기」 없이 스스로 취소한 주문에는 알림이 없다", async () => {
