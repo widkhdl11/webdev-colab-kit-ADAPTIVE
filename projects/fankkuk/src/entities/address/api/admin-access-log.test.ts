@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { parseAdminAccessLogRows, readAdminAccessLog } from "./admin-access-log";
+import { ADMIN_ACCESS_LOG_LIMIT, parseAdminAccessLogRows, readAdminAccessLog } from "./admin-access-log";
 
 // 운영자 내부 주소 열람 기록 — INV-P7(2026-10-12 문제집 D12): 거부 줄과 대표·직원 구분은 여기에만 있다.
 
@@ -62,10 +62,11 @@ describe("INV-P7 (D12): 운영자 내부 열람 기록 응답", () => {
     expect(() => parseAdminAccessLogRows([row])).toThrow();
   });
 
-  it("INV-P7 (D12): admin_access_log 를 인자 없이 부르고, 오류면 코드만 담아 던진다", async () => {
+  it("INV-P7 (D12): admin_access_log 를 앱 상수 줄 수(200)로 부르고, 오류면 코드만 담아 던진다", async () => {
+    expect(ADMIN_ACCESS_LOG_LIMIT).toBe(200);
     const rpc = vi.fn().mockResolvedValue({ data: [opened], error: null });
     expect(await readAdminAccessLog({ rpc } as never)).toHaveLength(1);
-    expect(rpc).toHaveBeenCalledWith("admin_access_log");
+    expect(rpc).toHaveBeenCalledWith("admin_access_log", { p_limit: ADMIN_ACCESS_LOG_LIMIT });
     const failing = vi.fn().mockResolvedValue({ data: null, error: { code: "42501", message: "운영자만 본다" } });
     await expect(readAdminAccessLog({ rpc: failing } as never)).rejects.toThrow("42501");
   });

@@ -158,7 +158,7 @@ describe("INV-R7: 역조공 몫의 주소는 조건이 모두 참일 때만 열�
     expect(logRows(s.shareId)).toEqual([`denied:order_not_printable:${OWNER_ID}`, `denied:order_not_printable:${OWNER_ID}`]);
   });
 
-  it("INV-R7 S7c (실패경로): 다른 몫의 암호문을 옮겨 붙이면 풀린 주문번호가 달라 거부 — 이 시도는 돌려주지 않는다(INV-R13)", async () => {
+  it("INV-R7 S7c (실패경로): 다른 몫의 암호문을 옮겨 붙이면 풀린 주문번호가 달라 거부 — 송장이 안 나왔으니 그 연 줄은 출력 실패처럼 돌려받는다(INV-R13, D12 반영)", async () => {
     const a = await inspectedShare();
     const b = await inspectedShare();
     psql(
@@ -166,8 +166,19 @@ describe("INV-R7: 역조공 몫의 주소는 조건이 모두 참일 때만 열�
     );
     expect(await print(b.qr)).toEqual({ kind: "denied", reason: "order_mismatch" });
     expect(logRows(b.shareId)).toEqual([`opened:1:${OWNER_ID}`, `denied:order_mismatch:${OWNER_ID}`]);
-    expect(contextCount(b.qr)).toBe(1);
+    expect(contextCount(b.qr)).toBe(0);
     expect(parcelState(b.qr)).toBe("inspected");
+    // 받는 팬의 열람 기록에 그 줄은 「출력 실패」(돌려받은 줄)
+    const fan = await signedInClient("byeolbit_fan");
+    const seen = await fan.rpc("my_revgift_access_log", { p_order_no: b.orderNo });
+    expect(seen.error).toBeNull();
+    expect((seen.data as { kind: string; print_no: number; released: boolean }[]).map((x) => `${x.kind}:${x.print_no}:${x.released}`)).toEqual(["opened:1:true"]);
+
+    // 시험 준비: 그 몫의 바른 봉인으로 바꿔 넣으면 다음 출력은 첫 출력
+    psql(`update pii.revgift_addresses set envelope = ${q(JSON.stringify(await sealFor(b.orderNo)))}::jsonb where share_id = '${b.shareId}'`);
+    const r = await print(b.qr);
+    expect(r.kind).toBe("printed");
+    if (r.kind === "printed") expect(r.reprint).toBe(false);
   });
 
   it("INV-R7 S7f (동시): 상한 직전인 몫에 출력 요청 둘이 겹쳐도 열리는 것은 하나다", async () => {

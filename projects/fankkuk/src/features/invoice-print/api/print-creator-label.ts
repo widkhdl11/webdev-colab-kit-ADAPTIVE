@@ -13,7 +13,7 @@ import { checkOpenedCreatorAddress } from "../model/check-opened-address";
 // 송장 출력 함수 — 크리에이터 주소를 여는 유일한 서버 코드(address-protection INV-P4·P5·P7·P8·P14, office-workflow INV-W3).
 // 순서: 로그인 토큰 검증 → 판정 재료 읽기 → 판정(대표·서명 재검증·주문번호·단계·차액·횟수) → 거부면 기록 한 줄
 //       → DB 가 잠근 자리에서 다시 확인하고 횟수를 올리며 봉투를 내줌 → 봉투 열기 → 봉인 속 크리에이터 대조 → 출력 단계로 넘기기.
-//       봉투를 연 뒤 송장이 나오기 전에 실패하면 그 「연 줄」을 돌려받는다(INV-P15 — 조건은 DB 가 상자를 잠근 자리에서 본다).
+//       봉투를 연 뒤 송장이 나오기 전에 실패하거나 주소 주인이 달라 쓰지 않으면 그 「연 줄」을 돌려받는다(INV-P15 — 조건은 DB 가 상자를 잠근 자리에서 본다).
 // DB 자격은 복호화 전용 역할(address_decryptor) — 앱 서버 키로는 이 함수들과 열람 기록 쓰기가 막혀 있다.
 // 평문은 이 호출 안에서만 쓰고 라벨 다섯 칸만 돌려준다. 로그·오류·기록 줄에 넣지 않는다(INV-P10).
 
@@ -103,10 +103,15 @@ async function logDenied(deps: CreatorLabelDeps, ctx: GiftContext, requesterId: 
  * 거부·오류여도 이 출력의 결과는 「실패」 그대로다 — 돌려받지 못한 시도는 횟수에 남을 뿐 주소가 더 열리지는 않는다.
  */
 async function releaseOpened(deps: CreatorLabelDeps, logId: number | undefined, requesterId: string): Promise<CreatorLabelResult> {
+  await returnOpenedLog(deps, logId, requesterId);
+  return { kind: "failed" };
+}
+
+/** 돌려주기 자체 — 결과는 보지 않는다(거부·오류여도 그 시도가 횟수에 남을 뿐이다). */
+async function returnOpenedLog(deps: CreatorLabelDeps, logId: number | undefined, requesterId: string): Promise<void> {
   if (logId !== undefined) {
     await deps.db.rpc("invoice_release_print", { p_log_id: logId, p_requester: requesterId });
   }
-  return { kind: "failed" };
 }
 
 export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: string; accessToken: string }): Promise<CreatorLabelResult> {
@@ -168,9 +173,11 @@ export async function printCreatorLabel(deps: CreatorLabelDeps, input: { qr: str
   }
 
   // INV-P14: 봉인 속 크리에이터가 그 주소 칸의 크리에이터와 다르면 쓰지 않는다 — 출력 단계로 넘기지 않는다.
-  // 이것은 실패가 아니라 거부다 — 연 줄을 돌려주지 않는다(INV-P15).
+  // 답은 거부지만 송장은 안 나왔다 — 다른 출력 실패와 같이 그 「연 줄」을 돌려받는다(INV-P15, D12 반영).
+  // 그래서 크리에이터 열람 기록에 그 줄은 「출력 실패」이고, 다음 송장은 첫 출력이다. 거부 사유는 운영자 내부 기록에 남긴다.
   const opened = checkOpenedCreatorAddress({ slotCreatorId: claim.data.creator_id, plaintext });
   if (!opened.ok) {
+    await returnOpenedLog(deps, logId, requesterId);
     await logDenied(deps, ctx, requesterId, opened.reason);
     return { kind: "denied", reason: opened.reason };
   }

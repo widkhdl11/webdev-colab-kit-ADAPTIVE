@@ -35,17 +35,25 @@ const ENTRIES: AddressAccessEntry[] = [
 ];
 
 describe("INV-P7: 크리에이터 열람 기록 화면", () => {
-  it("INV-P7 (D12): 표 칸은 시각·주문번호·결과·비고 — 「누가」 칸은 없고, 줄마다 열림과 몇 번째 출력", () => {
+  it("INV-P7 (D12): 표 칸은 시각·주문번호·비고 셋 — 늘 「열림」인 결과 칸·배지와 「누가」 칸은 없고, 비고에 몇 번째 출력·출력 실패", () => {
     render(ENTRIES);
-    expect([...host.querySelectorAll("thead th")].map((th) => th.textContent)).toEqual(["시각", "주문번호", "결과", "비고"]);
+    expect([...host.querySelectorAll("thead th")].map((th) => th.textContent)).toEqual(["시각", "주문번호", "비고"]);
     const rows = [...host.querySelectorAll("tbody tr")].map((tr) => [...tr.querySelectorAll("td")].slice(1).map((td) => td.textContent));
     expect(rows).toEqual([
-      ["FC-4T7NX", "열림", "재출력 2번째"],
-      ["FC-4T7NX", "열림", "출력 실패"],
-      ["FC-9QW2E", "열림", "첫 출력"],
+      ["FC-4T7NX", "재출력 2번째"],
+      ["FC-4T7NX", "출력 실패"],
+      ["FC-9QW2E", "첫 출력"],
     ]);
-    // 좁은 화면 목록도 같은 세 줄
-    expect(host.querySelectorAll("li").length).toBe(3);
+    // 좁은 화면 목록도 같은 세 줄, 「열림」 배지 없이 비고만
+    const items = [...host.querySelectorAll("li")];
+    expect(items.length).toBe(3);
+    expect(items.map((li) => li.textContent)).toEqual([
+      expect.stringContaining("재출력 2번째"),
+      expect.stringContaining("출력 실패"),
+      expect.stringContaining("첫 출력"),
+    ]);
+    for (const li of items) expect(li.textContent).not.toContain("열림");
+    expect(host.querySelectorAll("table .tag--info, li .tag--info").length).toBe(0);
     expect(host.textContent).not.toMatch(/대표 계정|권한이 없는 계정|거부/);
   });
 

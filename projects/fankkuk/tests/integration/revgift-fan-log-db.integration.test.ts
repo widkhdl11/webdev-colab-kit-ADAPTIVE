@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { sealedAddressPlaintext } from "@/entities/revgift/model/sealed-address";
 import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
 import { sealEnvelope } from "@/shared/lib/envelope/envelope";
-import { anonClient, deleteTestOrders, psql, signedInClient } from "./helpers";
+import { anonClient, deleteTestOrders, psql, registerTestOrder, signedInClient } from "./helpers";
 import { decryptFileText, LABEL, OWNER_ID, testKeyPair, type TestKeys } from "./invoice-helpers";
 import { creatorSetsWaybill, deleteTestUnmatched, inspect, paidShare, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
 import { deleteTestRevgifts, followHaru, payTestRevgift, PROFILE, registerTestRevgift, unfollowHaru } from "./revgift-helpers";
@@ -64,7 +64,7 @@ async function inspectedShare(): Promise<{ orderNo: string; shareId: string; qr:
   return { orderNo: s.orderNo, shareId: s.shareId, qr };
 }
 
-/** S16 의 Given: 대표가 한 번 열고, 직원 시도가 한 번 거부된 뒤, 출고 확정. */
+/** S16 의 Given: 대표가 한 번 열고, 직원 시도가 한 번 거부된 뒤, 출고 확정, 그 뒤 대표 본인의 시도도 한 번 거부. */
 async function openedDeniedShipped(): Promise<{ orderNo: string; shareId: string; outbound: string }> {
   const s = await inspectedShare();
   const first = await print(s.qr, "fankkuk_admin");
@@ -74,6 +74,10 @@ async function openedDeniedShipped(): Promise<{ orderNo: string; shareId: string
   const staff = await signedInClient("fankkuk_staff");
   const shipped = await staff.rpc("office_confirm_shipment", { p_qr: s.qr, p_waybill: first.waybill });
   if (shipped.error) throw new Error(`office_confirm_shipment 실패: ${shipped.error.code} ${shipped.error.message}`);
+  // 대표 본인의 거부 줄(대표 아님이 아닌 사유) — 이것도 팬에게 가지 않는다(D12)
+  const ownerDenied = await print(s.qr, "fankkuk_admin");
+  expect(ownerDenied.kind).toBe("denied");
+  if (ownerDenied.kind === "denied") expect(ownerDenied.reason).not.toBe("not_owner");
   return { orderNo: s.orderNo, shareId: s.shareId, outbound: first.waybill };
 }
 
@@ -107,6 +111,7 @@ describe("INV-R16: 팬은 자기 몫 주소의 열람 기록을 본다", () => {
     expect(text0(rows)).not.toMatch(/not_owner|denied|owner|other/);
     // 기록 표에는 직원 거부 줄이 그대로 있다 — 팬 응답에서만 빠진다
     expect(psql(`select count(*) from public.revgift_decrypt_log where share_id = '${s.shareId}' and deny_reason = 'not_owner'`)).toBe("1");
+    expect(psql(`select count(*) from public.revgift_decrypt_log where share_id = '${s.shareId}' and result = 'denied' and deny_reason <> 'not_owner'`)).toBe("1");
     const text = JSON.stringify(rows);
     expect(text).not.toContain(OWNER_ID);
     for (const v of Object.values(LABEL)) expect(text).not.toContain(v);
@@ -186,7 +191,7 @@ describe("INV-R16: 팬은 자기 몫 주소의 열람 기록을 본다", () => {
 });
 
 describe("INV-R16 (D12): 몫의 거부 줄과 대표·직원 구분은 운영자 내부 기록에만 있다", () => {
-  it("INV-R16 S16c (D12): 운영자는 그 몫의 연 줄(대표)과 직원 거부 줄(대표 아님)을 본다 — 계정 id 없이", async () => {
+  it("INV-R16 S16c (D12): 운영자는 그 몫의 연 줄(대표)·직원 거부 줄(대표 아님)·출고 뒤 대표 거부 줄(대표)을 본다 — 계정 id 없이", async () => {
     const s = await openedDeniedShipped();
     for (const login of ["fankkuk_admin", "fankkuk_staff"]) {
       const client = await signedInClient(login);
@@ -196,6 +201,7 @@ describe("INV-R16 (D12): 몫의 거부 줄과 대표·직원 구분은 운영자
         (r) => r.order_no === s.orderNo,
       );
       expect(rows.map((r) => `${r.target}:${r.result}:${r.deny_reason ?? "-"}:${r.requester}`), login).toEqual([
+        "revgift:denied:order_not_printable:owner",
         "revgift:denied:not_owner:other",
         "revgift:opened:-:owner",
       ]);
@@ -212,5 +218,29 @@ describe("INV-R16 (D12): 몫의 거부 줄과 대표·직원 구분은 운영자
       expect(error?.code, login).toBe("42501");
       expect(data, login).toBeNull();
     }
+  });
+});
+
+type AdminRow = { at: string; target: string; order_no: string };
+
+describe("INV-P7·INV-R16 (D12): 운영자 내부 기록은 팬 선물과 역조공 줄을 섞어 시각 역순으로", () => {
+  it("INV-P7 (D12): 팬 선물 줄이 더 나중이면 위, 같은 시각이면 역조공 줄이 위", async () => {
+    const gift = await registerTestOrder();
+    const share = await paidShare();
+    const box = psql(`select id from public.boxes where order_id = '${gift.orderId}' order by seq limit 1`);
+    expect(box).not.toBe("");
+    // 다른 줄보다 위에 오도록 앞으로 1시간 뒤 시각에 남긴다(시험 준비 — 표 주인이 넣는다)
+    const at = (sec: number) => `now() + interval '1 hour' + make_interval(secs => ${sec})`;
+    psql(
+      `insert into public.decrypt_log (at, order_id, box_id, requester_id, result, print_no) values (${at(1)}, '${gift.orderId}', '${box}', '${OWNER_ID}', 'opened', 1), (${at(2)}, '${gift.orderId}', '${box}', '${OWNER_ID}', 'opened', 2);
+       insert into public.revgift_decrypt_log (at, share_id, requester_id, result, print_no) values (${at(1)}, '${share.shareId}', '${OWNER_ID}', 'opened', 1);`,
+    );
+    const admin = await signedInClient("fankkuk_admin");
+    const { data, error } = await admin.rpc("admin_access_log");
+    expect(error).toBeNull();
+    const mine = (data as AdminRow[]).filter((r) => r.order_no === gift.orderNo || r.order_no === share.orderNo);
+    expect(mine.map((r) => r.target)).toEqual(["gift", "revgift", "gift"]);
+    expect(Date.parse(mine[1]?.at ?? "")).toBe(Date.parse(mine[2]?.at ?? ""));
+    expect(Date.parse(mine[0]?.at ?? "")).toBeGreaterThan(Date.parse(mine[1]?.at ?? ""));
   });
 });

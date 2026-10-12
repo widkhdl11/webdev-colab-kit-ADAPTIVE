@@ -19,9 +19,8 @@
 .nw { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .log-list { display: none; margin-top: 8px; border-top: 1px solid var(--divider); }
 .lrow { display: grid; gap: 2px; padding-block: 18px; border-bottom: 1px solid var(--divider); }
-.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
-/* 「내 팬꾹」 왼쪽 메뉴 옆이라 1023px 이하에서는 본문 칸이 4칸 표에 좁다 — 거기서부터 목록으로 */
+/* 「내 팬꾹」 왼쪽 메뉴 옆이라 1023px 이하에서는 본문 칸이 표에 좁다 — 거기서부터 목록으로 */
 @media (max-width: 1023px) {
   .log-table { display: none; }
   .log-list { display: block; }

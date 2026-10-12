@@ -380,6 +380,39 @@ describe("INV-P14: 봉인 속 크리에이터가 주소 칸의 크리에이터�
     expect(parcelState(g.qr)).toBe("inspected");
     expect(logRows(g.orderId)).toEqual([`opened:1:${OWNER_ID}`, `denied:address_mismatch:${OWNER_ID}`]);
   });
+
+  it("INV-P14·INV-P15 S15g (D12 반영): 주소 주인이 달라 송장이 안 나온 줄은 「출력 실패」 — 돌려받아 횟수가 되돌고, 다음 송장이 첫 출력, 이번 달 재출력은 늘지 않는다", async () => {
+    const creator = await signedInClient(ADDRESS_CREATOR_LOGIN);
+    const summary = async () => {
+      const { data, error } = await creator.rpc("my_access_month_summary");
+      expect(error).toBeNull();
+      return (data as { reprint_count: number; opened_count: number }[])[0];
+    };
+    const before = await summary();
+    putTestEnvelope(await sealTestAddress(keys, MOMO_CREATOR_ID));
+    const g = await inspectedGift();
+    expect(await print(g.qr)).toEqual({ kind: "denied", reason: "address_mismatch" });
+    // 기존 출력 실패와 같은 장치 — 그 연 줄에 돌려줌 줄 하나
+    expect(psql(`select count(*) from public.decrypt_releases r join public.decrypt_log l on l.id = r.opened_log_id where l.order_id = '${g.orderId}'`)).toBe("1");
+
+    // 시험 준비: 바른 봉인으로 되돌린 뒤 다시 출력
+    putTestEnvelope(await sealTestAddress(keys, ADDRESS_CREATOR_ID));
+    const r = await print(g.qr);
+    expect(r.kind).toBe("printed");
+    if (r.kind === "printed") expect(r.reprint).toBe(false);
+    expect(logRows(g.orderId)).toEqual([`opened:1:${OWNER_ID}`, `denied:address_mismatch:${OWNER_ID}`, `opened:1:${OWNER_ID}`]);
+
+    const { data } = await creator.rpc("my_access_log");
+    const mine = (data as { order_no: string; print_no: number; released: boolean }[]).filter((x) => x.order_no === g.orderNo);
+    // 최신 줄부터: 실제 첫 송장(첫 출력) · 주소 주인 불일치 줄(출력 실패)
+    expect(mine.map((x) => ({ print_no: x.print_no, released: x.released }))).toEqual([
+      { print_no: 1, released: false },
+      { print_no: 1, released: true },
+    ]);
+    const after = await summary();
+    expect(after?.opened_count).toBe((before?.opened_count ?? 0) + 2);
+    expect(after?.reprint_count).toBe(before?.reprint_count);
+  });
 });
 
 describe("INV-P7: 기록은 송장 출력 함수만 쓴다 — 성공·거부 한 줄씩", () => {

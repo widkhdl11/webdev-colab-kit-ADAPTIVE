@@ -324,10 +324,13 @@ describe("송장 출력 — 송장이 안 나온 시도 돌려주기 (INV-P15)",
     expect(calls.at(-1)).toEqual(releaseCall);
   });
 
-  it("INV-P15 (실패경로): 봉인 속 크리에이터가 다르면(INV-P14) 실패가 아니라 거부다 — 돌려주지 않는다", async () => {
-    const { db, calls } = fakeDb(goodContext(), await openedClaim(1, DALBIT));
+  it("INV-P15 (D12 반영): 봉인 속 크리에이터가 다르면(INV-P14) 거부로 답하되, 송장이 안 나왔으니 그 「연 줄」은 출력 실패처럼 돌려준다", async () => {
+    const { db, calls, logs } = fakeDb(goodContext(), await openedClaim(1, DALBIT));
     expect(await printCreatorLabel(deps(db), ask)).toEqual({ kind: "denied", reason: "address_mismatch" });
-    expect(fnNames(calls)).not.toContain("invoice_release_print");
+    expect(calls).toContainEqual(releaseCall);
+    expect(fnNames(calls)).toEqual(["invoice_print_context", "invoice_claim_print", "invoice_release_print", "insert:decrypt_log"]);
+    // 거부 사유는 운영자 내부 기록에 남는다
+    expect(logs).toEqual([{ order_id: ORDER_ID, box_id: BOX_ID, requester_id: OWNER, result: "denied", deny_reason: "address_mismatch" }]);
   });
 
   it("INV-P15 (실패경로): 송장이 나오면 돌려주지 않는다", async () => {

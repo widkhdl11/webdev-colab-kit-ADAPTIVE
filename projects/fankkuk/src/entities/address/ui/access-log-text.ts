@@ -14,5 +14,11 @@ export const ACCESS_DENY_TEXT: Record<AccessDenyReason, string> = {
   address_mismatch: "주소 주인이 맞지 않아 송장에 쓰지 않았어요",
 };
 
+/** 역조공 몫의 두 사유는 팬 선물과 뜻이 달라 바꿔 쓴다 — 받는 팬 화면이 쓰던 문구와 같다(reverse-gift INV-R7 a·b). 나머지 사유는 ACCESS_DENY_TEXT. */
+export const REVGIFT_ACCESS_DENY_TEXT: Partial<Record<AccessDenyReason, string>> = {
+  no_valid_approval: "받기로 하며 입력한 주소가 없어 열리지 않았어요",
+  order_mismatch: "다른 선물의 주소라 열리지 않았어요",
+};
+
 /** 운영자 내부 기록의 「누가」 — 대표 계정인지 아닌지(INV-P8). 닉네임은 따로 붙인다. */
 export const ACCESS_REQUESTER_TEXT: Record<AccessRequester, string> = { owner: "대표", other: "대표 아님" };

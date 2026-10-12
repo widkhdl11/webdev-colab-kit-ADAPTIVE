@@ -143,10 +143,11 @@ describe("역조공 송장 출력 — 팬 주소 열기 (INV-R7)", () => {
     }
   });
 
-  it("INV-R7 S7c (실패경로): 봉인 속 주문번호가 다르면 거부 줄을 남기고, 연 줄은 돌려주지 않는다(INV-R13)", async () => {
+  it("INV-R7 S7c (실패경로): 봉인 속 주문번호가 다르면 거부로 답하고 거부 줄을 남기되, 송장이 안 나왔으니 그 연 줄은 출력 실패처럼 돌려준다(INV-R13, D12 반영)", async () => {
     const { db, calls } = fakeDb(goodContext(), await openedClaim("RG-OTHER1"));
     expect(await printShareLabel(deps(db), ask)).toEqual({ kind: "denied", reason: "order_mismatch" });
-    expect(fnNames(calls)).toEqual(["revgift_print_context", "revgift_claim_print", "insert:revgift_decrypt_log"]);
+    expect(fnNames(calls)).toEqual(["revgift_print_context", "revgift_claim_print", "revgift_release_print", "insert:revgift_decrypt_log"]);
+    expect(calls[2]?.args).toEqual({ p_log_id: LOG_ID, p_requester: OWNER });
   });
 
   it("INV-R7 (실패경로): DB 가 잠근 자리에서 거부하면 그대로 거부 — 앱은 거부 줄을 또 남기지 않는다", async () => {

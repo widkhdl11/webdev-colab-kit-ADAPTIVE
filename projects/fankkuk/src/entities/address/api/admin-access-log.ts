@@ -7,6 +7,9 @@ import { ACCESS_DENY_REASONS, ACCESS_REQUESTERS, MAX_DECRYPTS_PER_BOX, type Acce
 // 여기, 운영자만 부를 수 있는 DB 함수(admin_access_log)로만 읽는다 — 운영자가 아니면 DB 가 42501 로 거부한다.
 // 사람은 닉네임으로만 온다(admin-console INV-K8). 계정 id·주소·운송장 번호는 어느 칸에도 없다.
 
+/** 화면이 한 번에 읽는 줄 수 — DB 함수의 기본값(200)과 같고, 이 값을 p_limit 으로 넘긴다. 화면 안내 문구도 이 값을 쓴다. DB 범위는 1~500. */
+export const ADMIN_ACCESS_LOG_LIMIT = 200;
+
 /** gift = 팬 선물(크리에이터 주소), revgift = 역조공 몫(팬 주소). 역조공의 거부 사유는 팬 선물 목록 안에 있다. */
 export type AdminAccessTarget = "gift" | "revgift";
 
@@ -60,9 +63,9 @@ export function parseAdminAccessLogRows(rows: unknown): AdminAccessEntry[] {
     }));
 }
 
-/** 최신 200줄(팬 선물·역조공 합쳐서). 읽지 못하면 오류 코드만 담아 던진다. */
+/** 최신 ADMIN_ACCESS_LOG_LIMIT 줄(팬 선물·역조공 합쳐서). 읽지 못하면 오류 코드만 담아 던진다. */
 export async function readAdminAccessLog(client: Pick<SupabaseClient, "rpc">): Promise<AdminAccessEntry[]> {
-  const { data, error } = await client.rpc("admin_access_log");
+  const { data, error } = await client.rpc("admin_access_log", { p_limit: ADMIN_ACCESS_LOG_LIMIT });
   if (error) throw new Error(`내부 열람 기록을 읽지 못했다: ${error.code}`);
   return parseAdminAccessLogRows(data);
 }

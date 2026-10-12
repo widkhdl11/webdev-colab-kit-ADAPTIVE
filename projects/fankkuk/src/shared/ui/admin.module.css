@@ -63,6 +63,9 @@
 .tagBrand { background: var(--brand-soft); color: var(--brand-ink); box-shadow: none; }
 .tagWarn { background: var(--warn-soft); color: var(--warn-ink); box-shadow: none; }
 .tagInk { background: var(--ink); color: var(--white); box-shadow: none; }
+/* 상태 배지 4색(design-rules — 거절 빨강·진행 파랑). base.css 의 .tag--danger·.tag--info 와 같은 토큰 */
+.tagDanger { background: var(--danger-soft); color: var(--danger); box-shadow: none; }
+.tagInfo { background: var(--info-soft); color: var(--info); box-shadow: none; }
 
 /* 도구줄(탭·검색) */
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }

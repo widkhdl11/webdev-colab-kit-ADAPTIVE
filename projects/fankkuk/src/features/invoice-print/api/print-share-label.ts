@@ -8,7 +8,7 @@ import type { CreatorLabelDeps } from "./print-creator-label";
 // 역조공 송장 출력 — 팬 주소(몫 하나)를 여는 유일한 서버 코드(reverse-gift INV-R7·R13).
 // 순서는 팬 선물 송장 출력(print-creator-label)과 같다: 로그인 토큰 검증 → 판정 재료 읽기 → 판정(대표·받기·단계·횟수) → 거부면 기록 한 줄
 //   → DB 가 몫을 잠근 자리에서 다시 확인하고 횟수를 올리며 봉투를 내줌 → 봉투 열기 → 봉인 속 주문번호 대조 → 출력 단계로 넘기기.
-//   봉투를 연 뒤 송장이 나오기 전에 실패하면 그 「연 줄」을 돌려받는다(INV-R13 — 조건은 DB 가 몫을 잠근 자리에서 본다).
+//   봉투를 연 뒤 송장이 나오기 전에 실패하거나 봉인 속 주문번호가 달라 쓰지 않으면 그 「연 줄」을 돌려받는다(INV-R13 — 조건은 DB 가 몫을 잠근 자리에서 본다).
 // DB 자격은 복호화 전용 역할(address_decryptor). 평문은 이 호출 안에서만 쓰고 라벨 다섯 칸만 돌려준다 — 로그·오류·기록 줄에 넣지 않는다.
 
 export type ShareLabelDeps = Omit<CreatorLabelDeps, "signer">;
@@ -67,8 +67,13 @@ async function logDenied(deps: ShareLabelDeps, ctx: ShareContext, requesterId: s
  * 돌려줄 수 있는지는 DB 가 몫을 잠근 자리에서 정한다. 거부·오류여도 이 출력의 결과는 「실패」 그대로다.
  */
 async function releaseOpened(deps: ShareLabelDeps, logId: number, requesterId: string): Promise<ShareLabelResult> {
-  await deps.db.rpc("revgift_release_print", { p_log_id: logId, p_requester: requesterId });
+  await returnOpenedLog(deps, logId, requesterId);
   return { kind: "failed" };
+}
+
+/** 돌려주기 자체 — 결과는 보지 않는다(거부·오류여도 그 시도가 횟수에 남을 뿐이다). */
+async function returnOpenedLog(deps: ShareLabelDeps, logId: number, requesterId: string): Promise<void> {
+  await deps.db.rpc("revgift_release_print", { p_log_id: logId, p_requester: requesterId });
 }
 
 export async function printShareLabel(deps: ShareLabelDeps, input: { qr: string; accessToken: string }): Promise<ShareLabelResult> {
@@ -128,9 +133,10 @@ export async function printShareLabel(deps: ShareLabelDeps, input: { qr: string;
   }
 
   // INV-R7 (b): 봉인 속 주문번호가 잠근 자리의 몫 주문번호와 다르면(옮겨 붙인 암호문) 쓰지 않는다.
-  // 이것은 실패가 아니라 거부다 — 연 줄을 돌려주지 않는다(INV-R13).
+  // 답은 거부지만 송장은 안 나왔다 — 다른 출력 실패와 같이 그 「연 줄」을 돌려받는다(INV-R13, D12 반영). 거부 사유는 운영자 내부 기록에.
   const opened = checkOpenedRevgift({ requestedOrderNo: claim.data.order_no, openedPlaintext: plaintext });
   if (!opened.ok) {
+    await returnOpenedLog(deps, logId, requesterId);
     await logDenied(deps, ctx, requesterId, opened.reason);
     return { kind: "denied", reason: opened.reason };
   }

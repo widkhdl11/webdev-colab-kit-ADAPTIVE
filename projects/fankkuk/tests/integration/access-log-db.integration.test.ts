@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ADMIN_ACCESS_LOG_LIMIT } from "@/entities/address/api/admin-access-log";
 import { SEED, adminClient, anonClient, approveRpc, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
 
 // 크리에이터 열람 기록 읽기(my_access_log) — 주소 보호 스펙 INV-P7(크리에이터는 자기 주문의 주소가 열린 줄을 전부 본다.
@@ -246,6 +247,9 @@ describe("INV-P7 (D12): 거부 줄과 대표·직원 구분은 운영자만 읽�
     const o = await loggedOrder();
     const staffNickname = psql(`select nickname from public.profiles where id = '${OTHER_ACCOUNT_ID}';`);
     expect(staffNickname).not.toBe("");
+    const ownerNickname = psql(`select nickname from public.profiles where id = '${OPERATOR_ID}';`);
+    expect(ownerNickname).not.toBe("");
+    expect(ownerNickname).not.toBe(staffNickname);
     for (const login of ["fankkuk_admin", "fankkuk_staff"]) {
       const { data, error } = await readAdminLog(login);
       expect(error, login).toBeNull();
@@ -257,6 +261,9 @@ describe("INV-P7 (D12): 거부 줄과 대표·직원 구분은 운영자만 읽�
       }
       const notOwner = rows.find((r) => r.deny_reason === "not_owner");
       expect(notOwner).toMatchObject({ result: "denied", requester: "other", requester_nickname: staffNickname });
+      // 대표 본인의 거부 줄은 거부여도 「대표」다 — 대표 아님은 not_owner 거부 줄뿐
+      const ownerDenied = rows.find((r) => r.deny_reason === "order_not_printable");
+      expect(ownerDenied).toMatchObject({ result: "denied", requester: "owner", requester_nickname: ownerNickname });
       expect(rows.filter((r) => r.result === "opened").map((r) => r.requester)).toEqual(["owner", "owner"]);
       expect(rows.filter((r) => r.result === "denied").map((r) => r.deny_reason).sort()).toEqual(["not_owner", "order_not_printable"]);
       // 계정 id 는 내부 기록에도 싣지 않는다 — 사람은 닉네임으로만(admin-console INV-K8)
@@ -283,6 +290,30 @@ describe("INV-P7 (D12): 거부 줄과 대표·직원 구분은 운영자만 읽�
     const adminRows = (data as AdminRow[]).filter((r) => r.order_no === o.orderNo);
     expect(creatorRows.map((r) => r.at).sort()).toEqual(adminRows.filter((r) => r.result === "opened").map((r) => r.at).sort());
     expect(JSON.stringify(creatorRows)).not.toMatch(/not_owner|order_not_printable|denied|other|owner/);
+  });
+});
+
+describe("INV-P7 (D12): 운영자 내부 기록은 최근 줄부터 정해진 줄 수까지", () => {
+  it("INV-P7 (D12): 연 줄이 201개 넘게 있어도 인자 없이 부르면 200줄 — 앱이 넘기는 줄 수 상수와 같다", async () => {
+    const o = await registerTestOrder();
+    psql(
+      `insert into public.decrypt_log (at, order_id, box_id, requester_id, result, print_no, deny_reason) select now() - make_interval(secs => g), '${o.orderId}', ${firstBoxOf(o.orderId)}, '${OPERATOR_ID}', 'opened', 1, null from generate_series(1, 201) g;`,
+    );
+    const { data, error } = await readAdminLog("fankkuk_admin");
+    expect(error).toBeNull();
+    expect(data as AdminRow[]).toHaveLength(200);
+    expect(ADMIN_ACCESS_LOG_LIMIT).toBe(200);
+    const client = await signedInClient("fankkuk_admin");
+    const withLimit = await client.rpc("admin_access_log", { p_limit: ADMIN_ACCESS_LOG_LIMIT });
+    expect(withLimit.error).toBeNull();
+    expect(withLimit.data).toEqual(data);
+  });
+
+  it.each([0, 501])("INV-P7 (D12, 실패경로): p_limit %i 은 22023 으로 거부", async (limit) => {
+    const client = await signedInClient("fankkuk_admin");
+    const { data, error } = await client.rpc("admin_access_log", { p_limit: limit });
+    expect(error?.code).toBe("22023");
+    expect(data).toBeNull();
   });
 });
 

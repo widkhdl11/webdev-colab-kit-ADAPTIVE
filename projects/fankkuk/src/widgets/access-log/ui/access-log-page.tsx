@@ -1,4 +1,3 @@
-import { statusTagClass } from "@/shared/ui/status-tone";
 import {
   MAX_DECRYPTS_PER_BOX,
   printLabelOf,
@@ -10,12 +9,9 @@ import s from "./access-log.module.css";
 
 // 크리에이터 — 주소 열람 기록. 주소가 열린 줄이 전부 한 줄씩 보인다(INV-P7). 주소 값은 이 화면에 오지 않는다.
 // 거부된 시도와 대표·직원 구분은 운영자 내부 기록에만 있다(2026-10-12 문제집 D12) — 그래서 「누가」 칸도 없다.
+// 줄은 전부 주소가 열린 줄이라 「결과」 칸·「열림」 배지도 두지 않는다 — 비고 칸이 몇 번째 출력과 「출력 실패」(돌려받은 줄, INV-P15)를 보인다.
 // 시안: docs/design/mockups/site/v4/creator-log.html
 // 문구 한계(design-rules 6절): "승인 없이는 저희 시스템이 주소를 열지 않습니다"는 쓰고 "절대 유출되지 않습니다"는 쓰지 않는다.
-
-function ResultTag() {
-  return <span className={statusTagClass("info")}>열림</span>;
-}
 
 function Note({ e }: { e: AddressAccessEntry }) {
   const label = printLabelOf(e.printNo, e.released);
@@ -86,7 +82,6 @@ export function AccessLogPage({
                 <tr>
                   <th scope="col">시각</th>
                   <th scope="col">주문번호</th>
-                  <th scope="col">결과</th>
                   <th scope="col">비고</th>
                 </tr>
               </thead>
@@ -95,9 +90,6 @@ export function AccessLogPage({
                   <tr key={`${i}-${e.orderNo}-${e.at}`}>
                     <td className={s.nw}>{formatDateTime(e.at)}</td>
                     <td className={s.nw}>{e.orderNo}</td>
-                    <td>
-                      <ResultTag />
-                    </td>
                     <td>
                       <Note e={e} />
                     </td>
@@ -108,10 +100,7 @@ export function AccessLogPage({
             <ul className={s["log-list"]} aria-label="주소 열람 기록">
               {entries.map((e, i) => (
                 <li key={`${i}-${e.orderNo}-${e.at}`} className={s.lrow}>
-                  <div className={s.top}>
-                    <strong>{formatDateTime(e.at)}</strong>
-                    <ResultTag />
-                  </div>
+                  <strong>{formatDateTime(e.at)}</strong>
                   <p className="sub">{e.orderNo}</p>
                   <p>
                     <Note e={e} />
