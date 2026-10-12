@@ -174,7 +174,7 @@ describe("INV-M12·W3: 차액을 내지 않은 상자는 송장이 나오지 않
 });
 
 describe("INV-P8: 대표만 — 판단은 송장 출력 함수 설정의 대표 ID", () => {
-  it("INV-P7 (S7c, 실패경로): 직원이 출고 화면에서 송장 출력을 누르면 403·라벨 없음, 열람 기록에 「대표 아님」 거부 줄 1줄", async () => {
+  it("INV-P7 (S7c, 실패경로): 직원이 출고 화면에서 송장 출력을 누르면 403·라벨 없음, 기록 표(운영자 내부 기록)에 「대표 아님」 거부 줄 1줄", async () => {
     const g = await inspectedGift();
     const staff = await signedInClient("fankkuk_staff");
     const token = await tokenOf("fankkuk_staff");
@@ -383,15 +383,20 @@ describe("INV-P14: 봉인 속 크리에이터가 주소 칸의 크리에이터�
 });
 
 describe("INV-P7: 기록은 송장 출력 함수만 쓴다 — 성공·거부 한 줄씩", () => {
-  it("INV-P7 (S7): 거부 1번(직원)·성공 1번(대표) → 두 줄, 크리에이터 열람 기록에 둘 다 보인다", async () => {
+  it("INV-P7 (S7): 거부 1번(직원)·성공 1번(대표) → 두 줄, 크리에이터 열람 기록에는 연 줄만, 운영자 내부 기록에는 둘 다(D12)", async () => {
     const g = await inspectedGift();
     await print(g.qr, "fankkuk_staff");
     await print(g.qr);
     expect(logRows(g.orderId)).toEqual([`denied:not_owner:${STAFF_ID}`, `opened:1:${OWNER_ID}`]);
     const creator = await signedInClient(ADDRESS_CREATOR_LOGIN);
     const { data } = await creator.rpc("my_access_log");
-    const mine = (data as { order_no: string; result: string }[]).filter((r) => r.order_no === g.orderNo);
-    expect(mine.map((r) => r.result).sort()).toEqual(["denied", "opened"]);
+    const mine = (data as { order_no: string; print_no: number }[]).filter((r) => r.order_no === g.orderNo);
+    expect(mine.map((r) => r.print_no)).toEqual([1]);
+    const owner = await signedInClient("fankkuk_admin");
+    const internal = await owner.rpc("admin_access_log");
+    expect(internal.error).toBeNull();
+    const rows = (internal.data as { order_no: string; result: string; deny_reason: string | null; requester: string }[]).filter((r) => r.order_no === g.orderNo);
+    expect(rows.map((r) => `${r.result}:${r.deny_reason ?? "-"}:${r.requester}`)).toEqual(["opened:-:owner", "denied:not_owner:other"]);
   });
 
   it("INV-P7 (S7b, 실패경로): 앱 서버 키·대표 로그인으로는 출력 함수를 부를 수도, 기록을 넣을 수도 없다", async () => {

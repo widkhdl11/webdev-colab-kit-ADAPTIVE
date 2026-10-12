@@ -27,39 +27,30 @@ function render(entries: readonly FanAccessEntry[] | null, finished = false) {
 const rowsOf = () => [...host.querySelectorAll("tbody tr")].map((tr) => [...tr.querySelectorAll("td")].slice(1).map((td) => td.textContent));
 
 describe("INV-R16: 받은 역조공 상세의 「내 주소 열람 기록」", () => {
-  it("INV-R16 S16: 지운 줄·거부 줄·연 줄이 받은 순서대로, 누가는 대표인지 아닌지만, 사유와 까닭은 사람 말로", () => {
+  it("INV-R16 S16: 지운 줄·연 줄이 받은 순서대로 시각·결과·비고 세 칸 — 「누가」 칸(대표·직원 구분)은 없다(D12)", () => {
     render([
       { at: "2026-10-09T06:00:00.000Z", kind: "deleted", outcome: "shipped" },
-      { at: "2026-10-09T05:40:00.000Z", kind: "denied", reason: "not_owner", requester: "other" },
-      { at: "2026-10-09T05:32:00.000Z", kind: "opened", printNo: 1, released: false, requester: "owner" },
+      { at: "2026-10-09T05:32:00.000Z", kind: "opened", printNo: 1, released: false },
     ]);
     expect(host.querySelector("h2")?.textContent).toBe("내 주소 열람 기록");
+    expect([...host.querySelectorAll("thead th")].map((th) => th.textContent)).toEqual(["시각", "결과", "비고"]);
     expect(rowsOf()).toEqual([
-      ["없음", "지움", "출고되어 주소를 지웠어요"],
-      ["권한이 없는 계정", "거부", "권한이 없는 계정이라 열리지 않았어요"],
-      ["팬꾹 대표 계정", "열림", "첫 출력"],
+      ["지움", "출고되어 주소를 지웠어요"],
+      ["열림", "첫 출력"],
     ]);
-    // 좁은 화면용 목록에도 같은 세 줄
-    expect(host.querySelectorAll("li").length).toBe(3);
+    // 좁은 화면용 목록에도 같은 두 줄, 대표·직원 표시 없이
+    expect(host.querySelectorAll("li").length).toBe(2);
+    expect(host.textContent).not.toMatch(/대표 계정|권한이 없는 계정|거부/);
   });
 
-  it("INV-R16: 재출력·돌려받은 줄·반송·취소·역조공 거부 사유 문구", () => {
+  it("INV-R16: 재출력·돌려받은 줄·반송·취소 문구", () => {
     render([
       { at: "2026-10-09T08:00:00.000Z", kind: "deleted", outcome: "cancelled" },
       { at: "2026-10-09T07:30:00.000Z", kind: "deleted", outcome: "returned" },
-      { at: "2026-10-09T07:00:00.000Z", kind: "denied", reason: "no_valid_approval", requester: "owner" },
-      { at: "2026-10-09T06:30:00.000Z", kind: "denied", reason: "order_mismatch", requester: "owner" },
-      { at: "2026-10-09T06:00:00.000Z", kind: "opened", printNo: 2, released: true, requester: "owner" },
-      { at: "2026-10-09T05:00:00.000Z", kind: "opened", printNo: 3, released: false, requester: "owner" },
+      { at: "2026-10-09T06:00:00.000Z", kind: "opened", printNo: 2, released: true },
+      { at: "2026-10-09T05:00:00.000Z", kind: "opened", printNo: 3, released: false },
     ]);
-    expect(rowsOf().map((r) => r[2])).toEqual([
-      "취소되어 주소를 지웠어요",
-      "반송되어 주소를 지웠어요",
-      "받기로 하며 입력한 주소가 없어 열리지 않았어요",
-      "다른 선물의 주소라 열리지 않았어요",
-      "출력 실패",
-      "재출력 3번째",
-    ]);
+    expect(rowsOf().map((r) => r[1])).toEqual(["취소되어 주소를 지웠어요", "반송되어 주소를 지웠어요", "출력 실패", "재출력 3번째"]);
   });
 
   it("INV-R16: 빈 목록이면 아직 열린 적이 없다는 안내, 표는 없다", () => {
@@ -73,7 +64,7 @@ describe("INV-R16: 받은 역조공 상세의 「내 주소 열람 기록」", (
     expect(host.textContent).toContain("이 선물에서는 주소가 열린 적이 없어요");
     expect(host.textContent).not.toContain("송장을 출력할 때마다");
     render([{ at: "2026-10-09T06:00:00.000Z", kind: "deleted", outcome: "returned" }], true);
-    expect(rowsOf()).toEqual([["없음", "지움", "반송되어 주소를 지웠어요"]]);
+    expect(rowsOf()).toEqual([["지움", "반송되어 주소를 지웠어요"]]);
     expect(host.textContent).not.toContain("송장을 출력할 때마다");
   });
 

@@ -9,7 +9,8 @@ import { deleteTestRevgifts, followHaru, payTestRevgift, PROFILE, registerTestRe
 
 // 팬이 자기 몫 주소의 열람 기록을 본다 (reverse-gift INV-R16).
 // 읽기 함수(my_revgift_access_log)는 사람 ID 를 받지 않고, 로그인 토큰의 계정이 받는 팬인 몫의 기록만 돌려준다.
-// 연 줄·거부 줄은 몫 전용 열람 기록, 지운 줄은 몫 주소 지운 기록에서 온다. 주소·운송장·요청자 계정 칸은 없다.
+// 연 줄은 몫 전용 열람 기록, 지운 줄은 몫 주소 지운 기록에서 온다. 주소·운송장·요청자 계정 칸은 없다.
+// 거부 줄과 대표·직원 구분은 팬에게 오지 않고 운영자만 읽는 내부 기록(admin_access_log)에 있다(2026-10-12 문제집 D12).
 // 시드 주문·계정은 바꾸지 않는다 — 시험마다 새 보내기(RG-T…)를 만들고 끝나면 지운다.
 
 let keys: TestKeys;
@@ -81,27 +82,31 @@ function asDecryptor(sql: string): string {
   return psql(`set role address_decryptor; ${sql}`).split(/\r?\n/).pop() ?? "";
 }
 
+const text0 = (rows: unknown) => JSON.stringify(rows);
+
 async function readAs(loginId: string, orderNo: string) {
   const client = await signedInClient(loginId);
   return client.rpc("my_revgift_access_log", { p_order_no: orderNo });
 }
 
 describe("INV-R16: 팬은 자기 몫 주소의 열람 기록을 본다", () => {
-  it("INV-R16 S16: 연 줄(1번째, 대표) · 거부 줄(대표 아님) · 지운 줄(출고)이 시각 역순으로, 주소·운송장·요청자 계정 없이 온다", async () => {
+  it("INV-R16 S16: 연 줄(1번째) · 지운 줄(출고) 두 줄만 시각 역순으로 — 직원 거부 줄·대표 표시·주소·운송장·요청자 계정 없이 온다", async () => {
     const s = await openedDeniedShipped();
     const { data, error } = await readAs("byeolbit_fan", s.orderNo);
     expect(error).toBeNull();
     const rows = data as Record<string, unknown>[];
     expect(rows.map((r) => ({ ...r, at: undefined }))).toEqual([
-      { at: undefined, kind: "deleted", print_no: null, deny_reason: null, outcome: "shipped", requester: null, released: false },
-      { at: undefined, kind: "denied", print_no: null, deny_reason: "not_owner", outcome: null, requester: "other", released: false },
-      { at: undefined, kind: "opened", print_no: 1, deny_reason: null, outcome: null, requester: "owner", released: false },
+      { at: undefined, kind: "deleted", print_no: null, outcome: "shipped", released: false },
+      { at: undefined, kind: "opened", print_no: 1, outcome: null, released: false },
     ]);
     const times = rows.map((r) => Date.parse(String(r.at)));
     expect(times.every((t) => Number.isFinite(t))).toBe(true);
     expect([...times].sort((a, b) => b - a)).toEqual(times);
-    // 칸은 정해진 일곱 개뿐 — 주소·운송장·요청자 계정 id 가 섞여 오지 않는다(INV-R7·R8)
-    for (const r of rows) expect(Object.keys(r).sort()).toEqual(["at", "deny_reason", "kind", "outcome", "print_no", "released", "requester"]);
+    // 칸은 정해진 다섯 개뿐 — 대표·직원 구분·거부 사유·주소·운송장·요청자 계정 id 가 섞여 오지 않는다(INV-R7·R8, D12)
+    for (const r of rows) expect(Object.keys(r).sort()).toEqual(["at", "kind", "outcome", "print_no", "released"]);
+    expect(text0(rows)).not.toMatch(/not_owner|denied|owner|other/);
+    // 기록 표에는 직원 거부 줄이 그대로 있다 — 팬 응답에서만 빠진다
+    expect(psql(`select count(*) from public.revgift_decrypt_log where share_id = '${s.shareId}' and deny_reason = 'not_owner'`)).toBe("1");
     const text = JSON.stringify(rows);
     expect(text).not.toContain(OWNER_ID);
     for (const v of Object.values(LABEL)) expect(text).not.toContain(v);
@@ -134,15 +139,14 @@ describe("INV-R16: 팬은 자기 몫 주소의 열람 기록을 본다", () => {
     await payTestRevgift(send);
     const otherOrderNo = send.orderNos[0];
     const shareId = psql(`select id from public.revgift_shares where order_no = '${otherOrderNo}'`);
+    // 연 줄은 복호화 전용 역할도 직접 넣지 못한다(INV-R13 a) — 시험 준비로 표 주인이 넣는다
     psql(
-      `set role address_decryptor; insert into public.revgift_decrypt_log (share_id, requester_id, result, deny_reason) values ('${shareId}', '${OWNER_ID}', 'denied', 'no_valid_approval');`,
+      `insert into public.revgift_decrypt_log (share_id, requester_id, result, print_no) values ('${shareId}', '${OWNER_ID}', 'opened', 1);`,
     );
-    // 그 몫의 주인은 자기 기록을 본다 — 줄이 실제로 있다는 확인. 대표가 받기 전에 시도한 거부(no_valid_approval)는 요청자가 대표다
+    // 그 몫의 주인은 자기 기록을 본다 — 줄이 실제로 있다는 확인
     const own = await readAs("gureumppang_fan", otherOrderNo);
     expect(own.error).toBeNull();
-    expect(own.data).toEqual([
-      expect.objectContaining({ kind: "denied", deny_reason: "no_valid_approval", requester: "owner", released: false }),
-    ]);
+    expect(own.data).toEqual([expect.objectContaining({ kind: "opened", print_no: 1, released: false })]);
 
     for (const no of [otherOrderNo, "RG-TNOPE000", "FC-P4X7N"]) {
       const { data, error } = await readAs("byeolbit_fan", no);
@@ -166,17 +170,47 @@ describe("INV-R16: 팬은 자기 몫 주소의 열람 기록을 본다", () => {
     ]);
   });
 
-  it("INV-R16: 같은 시각이면 지운 줄이 위, 기록 줄끼리는 나중에 남은 줄이 위", async () => {
+  it("INV-R16: 같은 시각이면 지운 줄이 위, 연 줄끼리는 나중에 남은 줄이 위", async () => {
     const s = await paidShare();
     const t = "2026-10-09 12:00:00+00";
-    asDecryptor(
-      `insert into public.revgift_decrypt_log (at, share_id, requester_id, result, deny_reason) values ('${t}', '${s.shareId}', '${OWNER_ID}', 'denied', 'no_valid_approval'), ('${t}', '${s.shareId}', '${OWNER_ID}', 'denied', 'order_not_printable');`,
+    psql(
+      `insert into public.revgift_decrypt_log (at, share_id, requester_id, result, print_no) values ('${t}', '${s.shareId}', '${OWNER_ID}', 'opened', 1), ('${t}', '${s.shareId}', '${OWNER_ID}', 'opened', 2);`,
     );
     psql(`insert into public.revgift_address_events (share_id, event, outcome, at) values ('${s.shareId}', 'deleted', 'cancelled', '${t}')`);
     const { data, error } = await readAs("byeolbit_fan", s.orderNo);
     expect(error).toBeNull();
-    const rows = data as { at: string; kind: string; deny_reason: string | null }[];
+    const rows = data as { at: string; kind: string; print_no: number | null }[];
     expect(new Set(rows.map((r) => Date.parse(r.at))).size).toBe(1);
-    expect(rows.map((r) => r.deny_reason ?? r.kind)).toEqual(["deleted", "order_not_printable", "no_valid_approval"]);
+    expect(rows.map((r) => r.print_no ?? r.kind)).toEqual(["deleted", 2, 1]);
+  });
+});
+
+describe("INV-R16 (D12): 몫의 거부 줄과 대표·직원 구분은 운영자 내부 기록에만 있다", () => {
+  it("INV-R16 S16c (D12): 운영자는 그 몫의 연 줄(대표)과 직원 거부 줄(대표 아님)을 본다 — 계정 id 없이", async () => {
+    const s = await openedDeniedShipped();
+    for (const login of ["fankkuk_admin", "fankkuk_staff"]) {
+      const client = await signedInClient(login);
+      const { data, error } = await client.rpc("admin_access_log");
+      expect(error, login).toBeNull();
+      const rows = (data as { target: string; order_no: string; result: string; deny_reason: string | null; requester: string }[]).filter(
+        (r) => r.order_no === s.orderNo,
+      );
+      expect(rows.map((r) => `${r.target}:${r.result}:${r.deny_reason ?? "-"}:${r.requester}`), login).toEqual([
+        "revgift:denied:not_owner:other",
+        "revgift:opened:-:owner",
+      ]);
+      expect(JSON.stringify(rows)).not.toContain(OWNER_ID);
+      for (const v of Object.values(LABEL)) expect(JSON.stringify(rows)).not.toContain(v);
+    }
+  });
+
+  it("INV-R16 S16c (D12, 실패경로): 받는 팬·보낸 크리에이터는 내부 기록을 부르면 거부된다", async () => {
+    await openedDeniedShipped();
+    for (const login of ["byeolbit_fan", "haru_creator"]) {
+      const client = await signedInClient(login);
+      const { data, error } = await client.rpc("admin_access_log");
+      expect(error?.code, login).toBe("42501");
+      expect(data, login).toBeNull();
+    }
   });
 });

@@ -1,15 +1,27 @@
 import { describe, expect, it } from "vitest";
 import { SEED, adminClient, anonClient, approveRpc, payTestOrder, psql, registerTestOrder, signedInClient } from "./helpers";
 
-// 크리에이터 열람 기록 읽기(my_access_log) — 주소 보호 스펙 INV-P7(크리에이터는 자기 주문의 기록 전부를 본다)·
-// INV-P5(2회째부터 「재출력」). 거부 줄은 복호화 전용 역할로 넣는다 — 앱 서버 키로는 쓸 수 없다.
+// 크리에이터 열람 기록 읽기(my_access_log) — 주소 보호 스펙 INV-P7(크리에이터는 자기 주문의 주소가 열린 줄을 전부 본다.
+// 거부 줄과 대표·직원 구분은 운영자만 읽는 내부 기록 — 2026-10-12 문제집 D12)·INV-P5(2회째부터 「재출력」).
+// 거부 줄은 복호화 전용 역할로 넣는다 — 앱 서버 키로는 쓸 수 없다.
 // 「연 줄」은 그 역할도 직접 넣을 수 없다(INV-P15 (a) — 주소를 내주는 함수만 넣는다). 시험 준비로 표 주인(postgres)이 넣는다.
 // 시험 주문에 딸린 기록은 끝난 뒤 deleteTestOrders 가 트리거를 끄고 지운다.
 
 const OPERATOR_ID = "00000000-0000-4000-a000-000000000021"; // 팬꾹 운영(대표 계정 자리)
 const OTHER_ACCOUNT_ID = "00000000-0000-4000-a000-000000000022"; // 팬꾹 직원
 
-type LogRow = { at: string; order_no: string; result: string; print_no: number | null; deny_reason: string | null; requester: string };
+type LogRow = { at: string; order_no: string; print_no: number; released: boolean };
+type AdminRow = {
+  at: string;
+  target: string;
+  order_no: string;
+  result: string;
+  print_no: number | null;
+  deny_reason: string | null;
+  requester: string;
+  requester_nickname: string | null;
+  released: boolean;
+};
 
 function appendLog(orderId: string, requesterId: string, values: { result: "opened"; printNo: number } | { result: "denied"; reason: string }): void {
   const cols =
@@ -50,18 +62,18 @@ async function readLog(loginId: string): Promise<LogRow[]> {
   return data as LogRow[];
 }
 
-describe("INV-P7: 크리에이터는 자기 주문의 열람 기록 전부를 본다", () => {
-  it("INV-P7 S7: 하루는 자기 주문의 성공·거부 줄을 모두 본다", async () => {
+describe("INV-P7: 크리에이터는 자기 주문의 주소가 열린 줄을 전부 본다", () => {
+  it("INV-P7 S7: 하루는 자기 주문의 연 줄 둘만 보고, 거부 줄(대표 아님·단계 아님)은 보지 않는다", async () => {
     const o = await loggedOrder();
     const mine = (await readLog("haru_creator")).filter((r) => r.order_no === o.orderNo);
-    expect(mine).toHaveLength(4);
-    expect(mine.filter((r) => r.result === "opened")).toHaveLength(2);
-    expect(mine.filter((r) => r.result === "denied").map((r) => r.deny_reason).sort()).toEqual(["not_owner", "order_not_printable"]);
+    expect(mine).toHaveLength(2);
+    // 기록 표에는 넷이 그대로 있다 — 크리에이터 응답에서만 빠진다
+    expect(psql(`select count(*) from public.decrypt_log where order_id = '${o.orderId}';`)).toBe("4");
   });
 
   it("INV-P5 S5d: 2회째 출력 줄은 print_no 2 로 나온다", async () => {
     const o = await loggedOrder();
-    const opened = (await readLog("haru_creator")).filter((r) => r.order_no === o.orderNo && r.result === "opened");
+    const opened = (await readLog("haru_creator")).filter((r) => r.order_no === o.orderNo);
     expect(opened.map((r) => r.print_no).sort()).toEqual([1, 2]);
   });
 
@@ -72,13 +84,12 @@ describe("INV-P7: 크리에이터는 자기 주문의 열람 기록 전부를 �
     expect(times).toEqual([...times].sort((a, b) => b - a));
   });
 
-  it("INV-P7: 요청자는 「대표」인지 아닌지만 나오고 계정 아이디·이메일·닉네임 칸은 없다", async () => {
+  it("INV-P7 (D12): 응답 칸은 시각·주문번호·몇 번째·돌려받음뿐 — 대표·직원 구분·결과·거부 사유·계정 칸은 없다", async () => {
     const o = await loggedOrder();
     const mine = (await readLog("haru_creator")).filter((r) => r.order_no === o.orderNo);
-    expect(new Set(mine.map((r) => r.requester))).toEqual(new Set(["owner", "other"]));
-    expect(mine.find((r) => r.deny_reason === "not_owner")?.requester).toBe("other");
+    expect(mine.length).toBeGreaterThan(0);
     for (const r of mine) {
-      expect(Object.keys(r).sort()).toEqual(["at", "deny_reason", "order_no", "print_no", "released", "requester", "result"]);
+      expect(Object.keys(r).sort()).toEqual(["at", "order_no", "print_no", "released"]);
       const text = JSON.stringify(r);
       for (const leak of [OPERATOR_ID, OTHER_ACCOUNT_ID, "fankkuk_admin", "fankkuk_staff", "@fankkuk.test", "팬꾹 운영", "팬꾹 직원"]) {
         expect(text).not.toContain(leak);
@@ -126,7 +137,7 @@ describe("INV-P7 S7b: 로그인한 사용자도 기록 표를 직접 읽거나 �
   });
 });
 
-type MonthSummary = { approved_count: number; opened_count: number; reprint_count: number; denied_count: number };
+type MonthSummary = { approved_count: number; opened_count: number; reprint_count: number };
 
 async function readSummary(loginId: string): Promise<MonthSummary> {
   const client = await signedInClient(loginId);
@@ -134,6 +145,8 @@ async function readSummary(loginId: string): Promise<MonthSummary> {
   expect(error).toBeNull();
   const rows = data as MonthSummary[];
   expect(rows).toHaveLength(1);
+  // D12: 거부 숫자는 크리에이터에게 오지 않는다 — 칸은 셋뿐
+  expect(Object.keys(rows[0] ?? {}).sort()).toEqual(["approved_count", "opened_count", "reprint_count"]);
   return rows[0] as MonthSummary;
 }
 
@@ -163,13 +176,12 @@ describe("열람 기록 화면의 「이번 달」 숫자 (my_access_month_summa
     expect(anon.error).not.toBeNull();
   });
 
-  it("INV-P5: 이번 달 줄을 DB 가 센다 — 열림(첫 출력·재출력)·재출력·거부", async () => {
+  it("INV-P5: 이번 달 줄을 DB 가 센다 — 열림(첫 출력·재출력)·재출력, 거부 줄은 세지도 내보내지도 않는다(D12)", async () => {
     const before = await readSummary("haru_creator");
     await loggedOrder(); // 지금 시각으로 첫 출력 1·재출력 1·거부 2
     const after = await readSummary("haru_creator");
     expect(after.opened_count - before.opened_count).toBe(2);
     expect(after.reprint_count - before.reprint_count).toBe(1);
-    expect(after.denied_count - before.denied_count).toBe(2);
   });
 
   it("서울 경계: 서울 1일 00:30(UTC 로는 전달 말일 15:30)은 이번 달, 서울 전달 말일 23:30 은 빠진다", async () => {
@@ -187,7 +199,6 @@ describe("열람 기록 화면의 「이번 달」 숫자 (my_access_month_summa
     const after = await readSummary("haru_creator");
     expect(after.opened_count - before.opened_count).toBe(2);
     expect(after.reprint_count - before.reprint_count).toBe(1);
-    expect(after.denied_count - before.denied_count).toBe(0);
   });
 });
 
@@ -195,11 +206,11 @@ describe("INV-P7: 기록 전부 · 읽을 줄 수(p_limit)", () => {
   it("INV-P7: 301줄이 넘어도 인자 없이 부르면 전부 돌려준다", async () => {
     const o = await registerTestOrder();
     psql(
-      `set role address_decryptor; insert into public.decrypt_log (at, order_id, requester_id, result, print_no, deny_reason) select now() - make_interval(secs => g), '${o.orderId}', '${OPERATOR_ID}', 'denied', null, 'order_not_printable' from generate_series(1, 301) g;`,
+      `insert into public.decrypt_log (at, order_id, box_id, requester_id, result, print_no, deny_reason) select now() - make_interval(secs => g), '${o.orderId}', ${firstBoxOf(o.orderId)}, '${OPERATOR_ID}', 'opened', 1, null from generate_series(1, 301) g;`,
     );
     const total = Number(
       psql(
-        `select count(*) from public.decrypt_log l join public.orders o on o.id = l.order_id where o.creator_id = '${SEED.haruCreatorId}';`,
+        `select count(*) from public.decrypt_log l join public.orders o on o.id = l.order_id where o.creator_id = '${SEED.haruCreatorId}' and l.result = 'opened';`,
       ),
     );
     expect(total).toBeGreaterThan(300);
@@ -222,6 +233,56 @@ describe("INV-P7: 기록 전부 · 읽을 줄 수(p_limit)", () => {
     const { data, error } = await client.rpc("my_access_log", { p_limit: limit });
     expect(error?.code).toBe("22023");
     expect(data).toBeNull();
+  });
+});
+
+async function readAdminLog(loginId: string) {
+  const client = await signedInClient(loginId);
+  return client.rpc("admin_access_log");
+}
+
+describe("INV-P7 (D12): 거부 줄과 대표·직원 구분은 운영자만 읽는 내부 기록에 있다", () => {
+  it("INV-P7 S7d (D12): 대표·직원 운영자는 같은 주문의 네 줄 — 연 줄 둘(대표)·거부 줄 둘(대표 아님 포함)을 본다", async () => {
+    const o = await loggedOrder();
+    const staffNickname = psql(`select nickname from public.profiles where id = '${OTHER_ACCOUNT_ID}';`);
+    expect(staffNickname).not.toBe("");
+    for (const login of ["fankkuk_admin", "fankkuk_staff"]) {
+      const { data, error } = await readAdminLog(login);
+      expect(error, login).toBeNull();
+      const rows = (data as AdminRow[]).filter((r) => r.order_no === o.orderNo);
+      expect(rows, login).toHaveLength(4);
+      for (const r of rows) {
+        expect(Object.keys(r).sort()).toEqual(["at", "deny_reason", "order_no", "print_no", "released", "requester", "requester_nickname", "result", "target"]);
+        expect(r.target).toBe("gift");
+      }
+      const notOwner = rows.find((r) => r.deny_reason === "not_owner");
+      expect(notOwner).toMatchObject({ result: "denied", requester: "other", requester_nickname: staffNickname });
+      expect(rows.filter((r) => r.result === "opened").map((r) => r.requester)).toEqual(["owner", "owner"]);
+      expect(rows.filter((r) => r.result === "denied").map((r) => r.deny_reason).sort()).toEqual(["not_owner", "order_not_printable"]);
+      // 계정 id 는 내부 기록에도 싣지 않는다 — 사람은 닉네임으로만(admin-console INV-K8)
+      expect(JSON.stringify(rows)).not.toContain(OTHER_ACCOUNT_ID);
+    }
+  });
+
+  it("INV-P7 S7d (D12, 실패경로): 크리에이터·팬은 내부 기록을 부르면 거부되고, 로그인하지 않으면 부를 수 없다", async () => {
+    await loggedOrder();
+    for (const login of ["haru_creator", "byeolbit_fan"]) {
+      const { data, error } = await readAdminLog(login);
+      expect(error?.code, login).toBe("42501");
+      expect(data, login).toBeNull();
+    }
+    const anon = await anonClient().rpc("admin_access_log");
+    expect(anon.error).not.toBeNull();
+    expect(anon.data).toBeNull();
+  });
+
+  it("INV-P7 (D12): 같은 주문을 크리에이터는 연 줄 둘로, 운영자는 네 줄로 본다 — 크리에이터 응답에 대표 아님 거부가 섞이지 않는다", async () => {
+    const o = await loggedOrder();
+    const creatorRows = (await readLog("haru_creator")).filter((r) => r.order_no === o.orderNo);
+    const { data } = await readAdminLog("fankkuk_admin");
+    const adminRows = (data as AdminRow[]).filter((r) => r.order_no === o.orderNo);
+    expect(creatorRows.map((r) => r.at).sort()).toEqual(adminRows.filter((r) => r.result === "opened").map((r) => r.at).sort());
+    expect(JSON.stringify(creatorRows)).not.toMatch(/not_owner|order_not_printable|denied|other|owner/);
   });
 });
 

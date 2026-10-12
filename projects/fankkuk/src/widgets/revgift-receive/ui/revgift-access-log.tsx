@@ -1,28 +1,13 @@
 import { printLabelOf } from "@/entities/address/model/access-log";
-import { ACCESS_DENY_TEXT } from "@/entities/address/ui/access-log-text";
-import {
-  REVGIFT_MAX_DECRYPTS,
-  type FanAccessEntry,
-  type FanAccessRequester,
-  type RevgiftDeleteOutcome,
-  type RevgiftDenyReason,
-} from "@/entities/revgift/model/fan-access-log";
+import { REVGIFT_MAX_DECRYPTS, type FanAccessEntry, type RevgiftDeleteOutcome } from "@/entities/revgift/model/fan-access-log";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import { statusTagClass } from "@/shared/ui/status-tone";
 import s from "./revgift-access-log.module.css";
 
-// 받은 역조공 상세 — 내 주소 열람 기록(reverse-gift INV-R16). 연 줄·거부 줄·지운 줄이 한 줄씩 보인다.
+// 받은 역조공 상세 — 내 주소 열람 기록(reverse-gift INV-R16). 연 줄·지운 줄이 한 줄씩 보인다.
+// 거부된 시도와 대표·직원 구분은 운영자 내부 기록에만 있어 「누가」 칸이 없다(2026-10-12 문제집 D12).
 // 크리에이터 열람 기록 화면(widgets/access-log)과 같은 표·문구를 쓴다. 주소 값·운송장 번호는 이 화면에 오지 않는다.
 // 문구 한계(design-rules 6절): 주소는 「송장을 출력할 때만」 열린다고 쓰고 「절대 유출되지 않습니다」는 쓰지 않는다.
-
-// 크리에이터 화면의 사유 문구를 그대로 쓰되, 팬 선물의 「승인 서명」·「서명한 주문」에 기대는 둘은 역조공에서 뜻이 달라 바꾼다 —
-// 역조공의 no_valid_approval 은 받기로 넣은 주소가 없을 때, order_mismatch 는 봉인 속 주문번호가 이 선물과 다를 때다(INV-R7 a·b).
-// 「대표」는 크리에이터에게는 자기 계정 이야기지만 팬에게는 누구 대표인지 모호해 「팬꾹 대표」로 쓴다. 거부 사유 not_owner 는 크리에이터 화면과 같은 「권한이 없는 계정」.
-const DENY_TEXT: Record<RevgiftDenyReason, string> = {
-  ...ACCESS_DENY_TEXT,
-  no_valid_approval: "받기로 하며 입력한 주소가 없어 열리지 않았어요",
-  order_mismatch: "다른 선물의 주소라 열리지 않았어요",
-};
 
 const DELETE_TEXT: Record<RevgiftDeleteOutcome, string> = {
   shipped: "출고되어 주소를 지웠어요",
@@ -30,20 +15,12 @@ const DELETE_TEXT: Record<RevgiftDeleteOutcome, string> = {
   cancelled: "취소되어 주소를 지웠어요",
 };
 
-const REQUESTER_TEXT: Record<FanAccessRequester, string> = { owner: "팬꾹 대표 계정", other: "권한이 없는 계정" };
-
-function Who({ e }: { e: FanAccessEntry }) {
-  return <>{e.kind === "deleted" ? "없음" : REQUESTER_TEXT[e.requester]}</>;
-}
-
 function ResultTag({ e }: { e: FanAccessEntry }) {
   if (e.kind === "opened") return <span className={statusTagClass("info")}>열림</span>;
-  if (e.kind === "denied") return <span className={statusTagClass("danger")}>거부</span>;
   return <span className={statusTagClass("plain")}>지움</span>;
 }
 
 function Note({ e }: { e: FanAccessEntry }) {
-  if (e.kind === "denied") return <>{DENY_TEXT[e.reason]}</>;
   if (e.kind === "deleted") return <>{DELETE_TEXT[e.outcome]}</>;
   const label = printLabelOf(e.printNo, e.released);
   return label.reprint ? <span className="tag">{label.text}</span> : <>{label.text}</>;
@@ -75,7 +52,6 @@ export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanA
             <thead>
               <tr>
                 <th scope="col">시각</th>
-                <th scope="col">누가</th>
                 <th scope="col">결과</th>
                 <th scope="col">비고</th>
               </tr>
@@ -84,9 +60,6 @@ export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanA
               {entries.map((e, i) => (
                 <tr key={`${i}-${e.at}`}>
                   <td className={s.nw}>{formatDateTime(e.at)}</td>
-                  <td>
-                    <Who e={e} />
-                  </td>
                   <td>
                     <ResultTag e={e} />
                   </td>
@@ -104,11 +77,6 @@ export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanA
                   <strong>{formatDateTime(e.at)}</strong>
                   <ResultTag e={e} />
                 </div>
-                {e.kind === "deleted" ? null : (
-                  <p className="sub">
-                    <Who e={e} />
-                  </p>
-                )}
                 <p>
                   <Note e={e} />
                 </p>

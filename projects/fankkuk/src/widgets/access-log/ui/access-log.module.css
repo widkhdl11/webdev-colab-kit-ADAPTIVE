@@ -6,7 +6,7 @@
 .ico { width: 96px; height: 96px; }
 .month-body { flex: 1; min-width: 0; }
 .month-h { font-size: 22px; letter-spacing: -.3px; }
-.nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
 .nums dt { color: var(--sub); font-weight: 600; }
 .nums dd { font-size: clamp(32px, 3.4vw, 44px); line-height: 1.2; font-weight: 800; letter-spacing: -1.5px; font-variant-numeric: tabular-nums; }
 .nums small { margin-left: 4px; font-size: 18px; font-weight: 700; letter-spacing: 0; color: var(--sub); }
@@ -21,9 +21,8 @@
 .lrow { display: grid; gap: 2px; padding-block: 18px; border-bottom: 1px solid var(--divider); }
 .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
-/* 「내 팬꾹」 왼쪽 메뉴 옆이라 1023px 이하에서는 본문 칸이 5칸 표에 좁다 — 거기서부터 목록으로 */
+/* 「내 팬꾹」 왼쪽 메뉴 옆이라 1023px 이하에서는 본문 칸이 4칸 표에 좁다 — 거기서부터 목록으로 */
 @media (max-width: 1023px) {
-  .nums { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .log-table { display: none; }
   .log-list { display: block; }
 }

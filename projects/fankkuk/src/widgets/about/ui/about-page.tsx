@@ -136,7 +136,7 @@ export function AboutPage() {
             </div>
             <h2 id="log-title">주소를 연 기록은 크리에이터에게 전부 공개해요</h2>
             <p>
-              언제, 어느 주문의 주소를, 누가 열었는지 크리에이터가 언제든 확인할 수 있어요. 승인한 적 없는 주문이 기록에 보이면
+              언제, 어느 주문의 주소가 몇 번째로 열렸는지 크리에이터가 언제든 확인할 수 있어요. 승인한 적 없는 주문이 기록에 보이면
               바로 알아챌 수 있어요.
             </p>
             <Link className={`btn ${s["log-cta"]}`} href="/signup">
@@ -151,8 +151,7 @@ export function AboutPage() {
                   <tr>
                     <th scope="col">열린 시각</th>
                     <th scope="col">주문번호</th>
-                    <th scope="col">연 사람</th>
-                    <th scope="col">사유</th>
+                    <th scope="col">비고</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -160,8 +159,7 @@ export function AboutPage() {
                     <tr key={orderNo}>
                       <td>{at}</td>
                       <td>{orderNo}</td>
-                      <td>대표 계정</td>
-                      <td>송장 출력</td>
+                      <td>첫 출력</td>
                     </tr>
                   ))}
                 </tbody>

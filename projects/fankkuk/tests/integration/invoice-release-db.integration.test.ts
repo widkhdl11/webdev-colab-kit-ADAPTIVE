@@ -113,11 +113,11 @@ describe("INV-P15 (S15): 송장이 안 나온 시도는 돌려받는다", () => 
     const creator = await signedInClient(ADDRESS_CREATOR_LOGIN);
     const { data, error } = await creator.rpc("my_access_log");
     expect(error).toBeNull();
-    const mine = (data as { order_no: string; result: string; released: boolean }[]).filter((r) => r.order_no === g.orderNo);
-    // 최신 줄부터
-    expect(mine.map((r) => [r.result, r.released])).toEqual([
-      ["opened", false],
-      ["opened", true],
+    const mine = (data as { order_no: string; print_no: number; released: boolean }[]).filter((r) => r.order_no === g.orderNo);
+    // 최신 줄부터 — 돌려받은 줄 다음 출력은 다시 첫 출력이다
+    expect(mine.map((r) => [r.print_no, r.released])).toEqual([
+      [1, false],
+      [1, true],
     ]);
   });
 

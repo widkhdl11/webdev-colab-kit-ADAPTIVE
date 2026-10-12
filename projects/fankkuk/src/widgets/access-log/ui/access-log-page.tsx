@@ -5,21 +5,20 @@ import {
   type AccessMonthSummary,
   type AddressAccessEntry,
 } from "@/entities/address/model/access-log";
-import { ACCESS_DENY_TEXT, ACCESS_REQUESTER_TEXT } from "@/entities/address/ui/access-log-text";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import s from "./access-log.module.css";
 
-// 크리에이터 — 주소 열람 기록. 성공·거부 모두 한 줄씩 보인다(INV-P7). 주소 값은 이 화면에 오지 않는다.
+// 크리에이터 — 주소 열람 기록. 주소가 열린 줄이 전부 한 줄씩 보인다(INV-P7). 주소 값은 이 화면에 오지 않는다.
+// 거부된 시도와 대표·직원 구분은 운영자 내부 기록에만 있다(2026-10-12 문제집 D12) — 그래서 「누가」 칸도 없다.
 // 시안: docs/design/mockups/site/v4/creator-log.html
 // 문구 한계(design-rules 6절): "승인 없이는 저희 시스템이 주소를 열지 않습니다"는 쓰고 "절대 유출되지 않습니다"는 쓰지 않는다.
 
-function ResultTag({ e }: { e: AddressAccessEntry }) {
-  return e.result.kind === "opened" ? <span className={statusTagClass("info")}>열림</span> : <span className={statusTagClass("danger")}>거부</span>;
+function ResultTag() {
+  return <span className={statusTagClass("info")}>열림</span>;
 }
 
 function Note({ e }: { e: AddressAccessEntry }) {
-  if (e.result.kind === "denied") return <>{ACCESS_DENY_TEXT[e.result.reason]}</>;
-  const label = printLabelOf(e.result.printNo, e.result.released);
+  const label = printLabelOf(e.printNo, e.released);
   return label.reprint ? <span className="tag">{label.text}</span> : <>{label.text}</>;
 }
 
@@ -69,13 +68,6 @@ export function AccessLogPage({
                 <small>번</small>
               </dd>
             </div>
-            <div>
-              <dt>거부</dt>
-              <dd>
-                {summary.deniedCount}
-                <small>번</small>
-              </dd>
-            </div>
           </dl>
         </div>
       </section>
@@ -94,7 +86,6 @@ export function AccessLogPage({
                 <tr>
                   <th scope="col">시각</th>
                   <th scope="col">주문번호</th>
-                  <th scope="col">누가</th>
                   <th scope="col">결과</th>
                   <th scope="col">비고</th>
                 </tr>
@@ -104,9 +95,8 @@ export function AccessLogPage({
                   <tr key={`${i}-${e.orderNo}-${e.at}`}>
                     <td className={s.nw}>{formatDateTime(e.at)}</td>
                     <td className={s.nw}>{e.orderNo}</td>
-                    <td>{ACCESS_REQUESTER_TEXT[e.requester]}</td>
                     <td>
-                      <ResultTag e={e} />
+                      <ResultTag />
                     </td>
                     <td>
                       <Note e={e} />
@@ -120,11 +110,9 @@ export function AccessLogPage({
                 <li key={`${i}-${e.orderNo}-${e.at}`} className={s.lrow}>
                   <div className={s.top}>
                     <strong>{formatDateTime(e.at)}</strong>
-                    <ResultTag e={e} />
+                    <ResultTag />
                   </div>
-                  <p className="sub">
-                    {e.orderNo} · {ACCESS_REQUESTER_TEXT[e.requester]}
-                  </p>
+                  <p className="sub">{e.orderNo}</p>
                   <p>
                     <Note e={e} />
                   </p>

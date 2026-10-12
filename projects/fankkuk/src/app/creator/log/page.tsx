@@ -10,8 +10,8 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
 
-// 열람 기록(my_access_log)은 로그인한 크리에이터의 주문 기록만 온다(INV-P7). 주소 값은 없다 — 시각·주문번호·요청자·결과만.
-// 「이번 달」은 서울 기준 달력 달이고, 숫자 넷(승인·열림·재출력·거부)은 DB 가 그 달로 직접 센다(my_access_month_summary).
+// 열람 기록(my_access_log)은 로그인한 크리에이터의 주문에서 주소가 열린 줄만 온다(INV-P7, D12). 주소 값은 없다 — 시각·주문번호·몇 번째 출력만.
+// 「이번 달」은 서울 기준 달력 달이고, 숫자 셋(승인·열림·재출력)은 DB 가 그 달로 직접 센다(my_access_month_summary).
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);

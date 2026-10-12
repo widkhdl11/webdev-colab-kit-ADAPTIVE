@@ -1,5 +1,6 @@
-// 주소 열람 기록 한 줄 — INV-P7: 시각, 주문번호, 요청자 계정, 결과, 거부 사유.
-// 주소 자체(평문·암호문)는 들어가지 않는다(INV-P10). 크리에이터 화면은 이 모양만 받는다.
+// 주소 열람 기록 — INV-P7. 기록 표에는 성공·거부 모두 시각·주문번호·요청자 계정·결과·거부 사유가 남지만,
+// 크리에이터에게는 주소가 열린 줄(시각·주문번호·몇 번째)만 간다. 거부 줄과 대표·직원 구분은 운영자 내부 기록에만 있다(2026-10-12 문제집 D12).
+// 주소 자체(평문·암호문)는 들어가지 않는다(INV-P10).
 
 /** INV-P5: 상자 하나에서 주소를 여는 상한 — 첫 출력 + 재출력 2회(상자마다 따로 — 카드 d30). 기록 줄의 출력 순번(print_no)도 여기까지다. */
 export const MAX_DECRYPTS_PER_BOX = 3;
@@ -20,27 +21,22 @@ export const ACCESS_DENY_REASONS = [
 ] as const;
 export type AccessDenyReason = (typeof ACCESS_DENY_REASONS)[number];
 
-/** owner = 대표 계정의 요청, other = 대표가 아닌 계정의 요청(not_owner 로 거부된 줄). */
+/** 운영자 내부 기록에서 요청자 구분 — owner = 대표 계정의 요청, other = 대표가 아닌 계정의 요청(not_owner 로 거부된 줄). */
 export const ACCESS_REQUESTERS = ["owner", "other"] as const;
 export type AccessRequester = (typeof ACCESS_REQUESTERS)[number];
 
+/** 크리에이터 열람 기록의 한 줄 — 주소가 열린 줄이다(INV-P7, D12). */
 export type AddressAccessEntry = {
   at: string;
   orderNo: string;
-  /**
-   * 요청한 계정이 대표 계정인지(INV-P8). 계정 id·아이디·닉네임은 화면에 오지 않는다.
-   * other 는 대표 계정이 아닌 요청이 거부된 줄(not_owner)이다.
-   */
-  requester: AccessRequester;
-  /**
-   * printNo: 그 상자의 몇 번째 출력인가(횟수는 상자마다 — 카드 d30). 2부터 재출력(INV-P5).
-   * released: 주소를 연 뒤 송장이 안 나와 돌려받은 줄(INV-P15) — 주소는 열렸지만 횟수에서 빠졌다. 화면에는 「출력 실패」.
-   */
-  result: { kind: "opened"; printNo: number; released: boolean } | { kind: "denied"; reason: AccessDenyReason };
+  /** 그 상자의 몇 번째 출력인가(횟수는 상자마다 — 카드 d30). 2부터 재출력(INV-P5). */
+  printNo: number;
+  /** 주소를 연 뒤 송장이 안 나와 돌려받은 줄(INV-P15) — 주소는 열렸지만 횟수에서 빠졌다. 화면에는 「출력 실패」. */
+  released: boolean;
 };
 
-/** 열람 기록 화면의 「이번 달」(서울 기준 달력 달) 숫자. DB 가 직접 센다 — 화면이 받은 줄로 세지 않는다. */
-export type AccessMonthSummary = { approvedCount: number; openedCount: number; reprintCount: number; deniedCount: number };
+/** 열람 기록 화면의 「이번 달」(서울 기준 달력 달) 숫자. DB 가 직접 센다 — 화면이 받은 줄로 세지 않는다. 거부 숫자는 없다(D12). */
+export type AccessMonthSummary = { approvedCount: number; openedCount: number; reprintCount: number };
 
 /**
  * 출력 순번 → 줄 라벨. 1 = 첫 출력, 2부터 재출력(INV-P5). 돌려받은 줄은 순번과 상관없이 「출력 실패」(INV-P15).
