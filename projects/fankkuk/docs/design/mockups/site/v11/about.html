@@ -1,0 +1,186 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v11 팬꾹 소개 (2026-10-12)
+  문구는 about-page.tsx · site-copy.ts 그대로. 공통 CSS v11.css.
+  사용자 불만(원문): 「좁은 공간에 설명을 덕지덕지 붙여놓은 것 같아서 한눈에 들어오지 않고, 설명글 같이만 보여. 그리고 정렬이 맞지도 않아」
+  바꾼 것 (지금 소개 화면 → 이 시안):
+   - 왼쪽 제목 / 오른쪽 이야기  →  제목 아래에 같은 크기 카드 셋으로 쌓음
+   - 주소 흐름 판의 왼쪽 설명 / 오른쪽 단계 목록  →  제목 → 한 줄 설명 → 번호 가로 단계(PC) / 세로(1023px 이하)
+   - 열람 기록 구간의 왼쪽 글 / 오른쪽 표  →  아이콘 → 제목 → 설명 → 표 → 버튼 순으로 쌓음
+   - 하지 않는 것 여섯 줄  →  같은 크기 카드 격자 (PC 3열 · 태블릿 2열 · 휴대폰 1열)
+  정렬: 첫 화면과 마무리는 가운데, 나머지 구간은 모두 왼쪽 하나.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 소개 — 시안 v11</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="v11.css">
+<style>
+  /* 화면 전용: 소개 첫 화면 */
+  .about-hero .t-lead{max-width:640px;margin:24px auto 0}
+  .story p{color:var(--ink)}
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+        <li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#" aria-current="page">팬꾹 소개</a></li><li><a href="#">고객센터</a></li>
+      </ul></nav>
+      <div class="header-actions">
+        <a class="hd-link hd-link--sub hide-sm" href="#">로그인</a><span class="hd-sep hide-sm" aria-hidden="true"></span><a class="hd-link hd-link--strong hide-sm" href="#">회원가입</a>
+        <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+          <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#" aria-current="page">팬꾹 소개</a><a href="#">고객센터</a>
+            <div class="btn-row"><a class="btn btn--line" href="#">로그인</a><a class="btn" href="#">회원가입</a></div></div>
+        </details>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- 1. 첫 화면 (가운데) -->
+    <section class="hero about-hero" aria-labelledby="about-title">
+      <div class="container">
+        <h1 class="t-hero" id="about-title">선물은 따뜻하게,<br>주소는 조심스럽게</h1>
+        <p class="t-lead t-desc">팬꾹은 팬의 선물을 검수하고 크리에이터에게 대신 보내는 서비스예요. 크리에이터 주소는 팬에게 공개되지 않습니다. 팬꾹이 만들고 운영합니다.</p>
+      </div>
+    </section>
+
+    <!-- 2. 왜 만들었나 — 제목 → 같은 크기 카드 셋 -->
+    <section class="section section--flush-top" aria-labelledby="why-title">
+      <div class="container">
+        <div class="sec-head">
+          <h2 id="why-title">&ldquo;택배에 내 주소가 적히는 게 걱정이에요&rdquo;</h2>
+        </div>
+        <div class="grid cols-3 story">
+          <div class="card"><p>팬이 보내 주는 선물은 늘 고맙지만, 그 상자 겉면에는 크리에이터의 이름과 집 주소가 그대로 적혀요. 송장은 택배사 직원, 이웃, 버려진 상자를 본 누구에게나 보일 수 있어요.</p></div>
+          <div class="card"><p>그래서 많은 크리에이터가 선물 받기를 망설이거나, 주소를 숨기려고 번거로운 방법을 써요. 팬도 마음을 전하고 싶은데 어디로 보내야 할지 몰라 포기하고요.</p></div>
+          <div class="card card--soft"><p>그래서 팬꾹이 팬과 크리에이터 사이에 들어가기로 했어요. 팬은 주소를 몰라도 선물을 보낼 수 있고, 크리에이터는 주소를 드러내지 않고 받을 수 있어요.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 주소는 송장 출력 때만 — 제목 → 한 줄 설명 → 번호 단계 -->
+    <section aria-labelledby="once-title">
+      <div class="container">
+        <div class="panel">
+          <div class="sec-head">
+            <h2 id="once-title">주소는 송장을 출력할 때만 <span class="accent">열립니다</span></h2>
+            <p class="t-lead t-desc">승인 전까지 주소는 노출되지 않습니다. 승인한 선물도 송장을 출력할 때만 열려요.</p>
+          </div>
+          <ol class="flow" aria-label="주소가 열리기까지의 흐름">
+            <li><span class="n" aria-hidden="true">1</span><div><h3>입력하자마자 잠가요</h3><p>크리에이터가 입력한 주소는 팬꾹으로 오기 전에 잠겨요.</p></div></li>
+            <li><span class="n" aria-hidden="true">2</span><div><h3>잠긴 채 보관해요</h3><p>승인 전까지 주소는 노출되지 않습니다.</p></div></li>
+            <li><span class="n" aria-hidden="true">3</span><div><h3>크리에이터가 승인해요</h3><p>선물마다 카카오톡으로 한 번 더 확인해요.</p></div></li>
+            <li class="on"><span class="n" aria-hidden="true">4</span><div><h3>송장 출력 때만 열려요</h3><p>열릴 때마다 기록이 남아요.</p><span class="tag tag--brand">출력할 때만</span></div></li>
+            <li><span class="n" aria-hidden="true">5</span><div><h3>팬꾹 송장으로 출고해요</h3><p>승인과 검수를 모두 통과한 선물만 출고합니다.</p></div></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 검수 — 아이콘 → 제목 → 설명 → 카드 셋 → 개봉 검수 카드 -->
+    <section class="section" aria-labelledby="inspect-title">
+      <div class="container">
+        <div class="sec-head">
+          <img class="sec-icon" src="../v4/img/icon-inspect.png" alt="" aria-hidden="true">
+          <h2 id="inspect-title">검수는 이렇게 해요</h2>
+          <p class="t-lead t-desc">모든 선물은 팬꾹에서 검수한 뒤 보냅니다.</p>
+        </div>
+        <ol class="grid cols-3 keep">
+          <li class="card"><span class="tag tag--brand">1</span><h3 style="margin-top:12px">송장 제거</h3><p>원래 송장은 떼어서 파쇄해요.</p></li>
+          <li class="card"><span class="tag tag--brand">2</span><h3 style="margin-top:12px">겉면 검사</h3><p>숨겨진 연락처나 이상한 부착물이 없는지 봐요.</p></li>
+          <li class="card"><span class="tag tag--brand">3</span><h3 style="margin-top:12px">추적 장치 탐지</h3><p>모든 상자를 탐지기로 검사해요.</p></li>
+        </ol>
+        <div class="card card--soft" style="margin-top:24px"><h3>반응이 있으면 개봉 검수</h3><p>탐지기 반응이 있으면 개봉 검수합니다.</p></div>
+      </div>
+    </section>
+
+    <!-- 5. 열람 기록 — 아이콘 → 제목 → 설명 → 표 → 버튼 -->
+    <section class="section section--flush-top" aria-labelledby="log-title">
+      <div class="container">
+        <div class="sec-head">
+          <img class="sec-icon" src="../v4/img/icon-log.png" alt="" aria-hidden="true">
+          <h2 id="log-title">주소를 연 기록은 크리에이터에게 전부 공개해요</h2>
+          <p class="t-lead t-desc">언제, 어느 주문의 주소가 몇 번째로 열렸는지 크리에이터가 언제든 확인할 수 있어요. 승인한 적 없는 주문이 기록에 보이면 바로 알아챌 수 있어요.</p>
+        </div>
+        <div style="max-width:760px">
+          <div class="table-wrap" tabindex="0" role="region" aria-label="주소 열람 기록 예시 표">
+            <table class="table">
+              <caption class="sr-only">주소 열람 기록 예시</caption>
+              <thead><tr><th scope="col">열린 시각</th><th scope="col">주문번호</th><th scope="col">비고</th></tr></thead>
+              <tbody>
+                <tr><td>10.28 14:32</td><td>FC-7K3M9</td><td>첫 출력</td></tr>
+                <tr><td>10.27 11:05</td><td>FC-5D1H6</td><td>첫 출력</td></tr>
+                <tr><td>10.25 16:48</td><td>FC-2P8QW</td><td>첫 출력</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="t-meta" style="margin-top:12px">예시 화면이에요. 실제 기록은 크리에이터 화면에서 볼 수 있어요.</p>
+        </div>
+        <div class="sec-foot"><a class="btn" href="#">크리에이터로 가입하기</a></div>
+      </div>
+    </section>
+
+    <!-- 6. 하지 않는 것 — 같은 크기 카드 격자 -->
+    <section class="section section--flush-top" aria-labelledby="not-title">
+      <div class="container">
+        <div class="sec-head">
+          <h2 id="not-title">팬꾹이 하지 않는 것</h2>
+          <p class="t-lead t-desc">약속만큼 중요한 건 하지 않는 일이에요.</p>
+        </div>
+        <ul class="grid cols-3">
+          <li class="card"><span class="card-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></span><h3>승인 전에는 주소를 열지 않습니다</h3><p>크리에이터 주소는 팬에게 공개되지 않습니다.</p></li>
+          <li class="card"><span class="card-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></span><h3>한꺼번에 승인하지 않습니다</h3><p>선물마다 카카오톡으로 따로 확인해요.</p></li>
+          <li class="card"><span class="card-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></span><h3>받지 않은 이유를 팬에게 알리지 않습니다</h3><p>크리에이터가 받지 않은 선물은 배송하지 않아요.</p></li>
+          <li class="card"><span class="card-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></span><h3>필요 없이 상자를 열지 않습니다</h3><p>탐지기 반응이 있는 상자만 열어요.</p></li>
+          <li class="card"><span class="card-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></span><h3>크리에이터에게 가는 송장번호는 공개하지 않습니다</h3><p>팬에게 보이는 주소는 팬꾹 주소뿐이에요.</p></li>
+          <li class="card"><span class="card-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></span><h3>검수를 뺀 요금제는 만들지 않습니다</h3><p>모든 요금에 검수가 포함돼요.</p></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 7. 마무리 (가운데) -->
+    <section class="section center" style="padding-top:0" aria-labelledby="cta-title">
+      <div class="container">
+        <div class="panel">
+          <h2 id="cta-title">마음을 담아, 꾹.</h2>
+          <div class="hero-actions">
+            <a class="btn btn--wide" href="#">지금 바로 선물 보내러 가기</a>
+            <a class="btn btn--line btn--wide" href="#">나의 크리에이터 찾으러 가기</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

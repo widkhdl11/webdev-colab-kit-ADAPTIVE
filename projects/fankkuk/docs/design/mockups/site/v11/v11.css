@@ -1,0 +1,231 @@
+/* 팬꾹 사이트 시안 v11 공통 CSS (2026-10-12)
+   이 파일이 나머지 화면 시안의 공통 틀이다. 화면 파일은 이 파일의 클래스만 쓰고, 화면 전용 CSS 는 각 html 의 <style> 에 최소로만 둔다.
+   근거: 색·반경·그림 = design-rules.md 1~3절 / 글자 체계 A = v10-type/landing-a.html (사용자 선택) / 글꼴 = 티머니 둥근바람 (400·800).
+   글꼴 링크(화면 파일 <head> 에 둔다):
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">  (로고 글자 전용)
+   차례: 1 토큰 / 2 바탕 / 3 글자 단계 / 4 레이아웃 / 5 헤더 / 6 바닥글 / 7 버튼·태그·입력창·카드 / 8 첫 화면 부품 / 9 번호 단계 */
+
+/* ---------- 1. 토큰 (src/shared/ui/tokens.css 와 같은 값) ---------- */
+:root{
+  --brand:#b84f48;--brand-hover:#a4433d;--brand-active:#903832;--brand-ink:#a4433d;--brand-soft:#fcece8;
+  --ink:#343039;--sub:#665d65;--faint:#6b6169;
+  --background:#fff;--surface:#f7f7f8;--surface-hover:#f0eff1;--surface-brand:#fff5f1;--surface-selected:#fcece8;
+  --border:#dfdce0;--field-line:#8c7b76;--on-brand:#fff;
+  --success:#276749;--success-soft:#eaf5ee;--warn-ink:#805b16;--warn-soft:#fff5db;--danger:#b42318;--danger-soft:#feece9;--info:#315e86;--info-soft:#edf4fa;
+  --hair:inset 0 0 0 1px var(--border);--field:inset 0 0 0 1px var(--field-line);
+  --lift:0 6px 16px rgb(184 79 72/.24);--float:0 10px 28px rgb(52 48 57/.16);
+  --r-panel:32px;--r-tile:28px;--r-card:20px;--r-btn:12px;--r-btn-sm:10px;--r-tag:6px;--r-pill:9999px;
+  --maxw:1200px;--gutter:24px;--header-h:72px;
+  /* 글자 크기 — 화면 한 장에 쓰는 크기는 PC 40·28·20·18·16 다섯 가지, 휴대폰 30·24·20·18·16 */
+  --fs-hero:40px;--fs-title:28px;--fs-card:20px;--fs-lead:18px;--fs-body:16px;
+  --ls-title:-0.02em; /* 음수 자간은 첫 화면·구간 제목에만, 이 값 하나 */
+  --sec-pad:clamp(72px,9vw,128px);
+}
+@media(max-width:767px){:root{--gutter:16px;--fs-hero:30px;--fs-title:24px}}
+
+/* ---------- 2. 바탕 ---------- */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--background);color:var(--ink);
+  font-family:"Tmoney Round Wind","Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  font-size:var(--fs-body);font-weight:400;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere;font-synthesis:none}
+h1,h2,h3,p,ol,ul,dl,dd,figure{margin:0}
+ul,ol{padding:0;list-style:none}
+a{color:inherit}
+img,svg{display:block;max-width:100%}svg{flex-shrink:0}
+button,input{font:inherit;color:inherit}
+b,strong,th,dt{font-weight:800}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip-link{position:absolute;left:16px;top:-64px;z-index:200;background:var(--ink);color:#fff;padding:12px 16px;border-radius:var(--r-btn-sm)}.skip-link:focus{top:8px}
+
+/* ---------- 3. 글자 단계 (클래스 이름으로 쓴다) ----------
+   .t-hero  첫 화면 제목   40 / 30   800  줄간격 1.25  자간 -0.02em
+   .t-title 페이지·구간 제목 28 / 24   800  줄간격 1.3   자간 -0.02em
+   .t-card  카드 제목      20        800  줄간격 1.4
+   .t-lead  리드           18        400  줄간격 1.6
+   .t-body  본문·버튼·네비·보조 16     400  줄간격 1.6   (.t-meta = 같은 크기, 색만 --sub)
+   h1 = .t-hero, h2 = .t-title, h3 = .t-card 가 기본값이다 (페이지 제목이 h1 이면 .t-title 을 같이 단다). */
+.t-hero,h1{font-size:var(--fs-hero);line-height:1.25;font-weight:800;letter-spacing:var(--ls-title)}
+.t-title,h2{font-size:var(--fs-title);line-height:1.3;font-weight:800;letter-spacing:var(--ls-title)}
+.t-card,h3{font-size:var(--fs-card);line-height:1.4;font-weight:800;letter-spacing:0}
+.t-lead{font-size:var(--fs-lead);line-height:1.6;font-weight:400}
+.t-body{font-size:var(--fs-body);line-height:1.6;font-weight:400}
+.t-meta{font-size:var(--fs-body);line-height:1.6;font-weight:400;color:var(--sub)}
+.t-strong{font-weight:800}
+/* 글자색: 본문 기본은 --ink. --sub 는 제목 아래 설명(.t-desc)·메타(.t-meta)에만. 코랄(.accent)은 구간마다 한 곳 */
+.t-desc{color:var(--sub)}
+.accent{color:var(--brand)}
+.tint .accent,.panel .accent{color:var(--brand-ink)}
+
+/* ---------- 4. 레이아웃 ---------- */
+.container{width:100%;max-width:calc(var(--maxw) + 2*var(--gutter));margin-inline:auto;padding-inline:var(--gutter)}
+.section{padding-block:var(--sec-pad)}
+.section--flush-top{padding-top:0}
+.center{text-align:center}
+/* 구간 머리: 제목 → 한 줄 설명. 정렬은 구간 안에서 하나(왼쪽 기본, .center 를 구간에 달면 가운데) */
+.sec-head{margin-bottom:clamp(32px,4vw,56px)}
+.sec-head .t-lead,.sec-head .t-desc{margin-top:16px;max-width:640px}
+.center .sec-head .t-lead,.center .sec-head .t-desc,.center.sec-head .t-lead{margin-inline:auto}
+.sec-head .sec-icon{width:72px;height:72px;margin-bottom:16px;object-fit:contain}
+.center .sec-head .sec-icon,.center.sec-head .sec-icon{margin-inline:auto}
+.sec-foot{margin-top:clamp(32px,4vw,48px)}
+.center .sec-foot{display:grid;justify-items:center;gap:12px}
+/* 같은 크기 카드 격자 */
+.grid{display:grid;gap:24px;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr))}
+.cols-2{--cols:2}.cols-3{--cols:3}.cols-4{--cols:4}
+@media(max-width:1023px){.cols-4{--cols:2}.cols-3{--cols:2}.cols-3.keep{--cols:3}}
+@media(max-width:767px){.cols-2,.cols-3,.cols-4,.cols-3.keep{--cols:1}.grid{gap:16px}}
+/* 옅은 코랄 큰 판 — 의미 있는 곳(약속·요약)에만 */
+.panel{padding:clamp(32px,5vw,72px);border-radius:var(--r-panel);background:var(--surface-brand)}
+@media(max-width:767px){.panel{border-radius:24px}}
+
+/* ---------- 5. 헤더 (세 상태: 비로그인 / 팬 / 크리에이터) ---------- */
+.site-header{position:sticky;top:0;z-index:40;background:#fff;box-shadow:0 1px 0 var(--border)}
+.site-header--static{position:relative}
+.header-inner{display:flex;align-items:center;gap:24px;min-height:var(--header-h)}
+/* 로고 글자는 라이선스상 Pretendard (티머니 둥근바람은 로고에 쓰지 않는다) */
+.logo{display:inline-flex;align-items:center;gap:8px;font-family:"Pretendard Variable",Pretendard,sans-serif;font-size:var(--fs-card);font-weight:800;line-height:1;letter-spacing:0;text-decoration:none;color:var(--ink)}
+.nav{flex:1}.nav ul{display:flex;gap:2px}
+.nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:var(--r-btn-sm);text-decoration:none}
+.nav a:hover{background:var(--surface-hover)}
+.nav a[aria-current="page"]{background:var(--surface-selected);color:var(--brand-ink)}
+.header-actions{margin-left:auto;display:flex;align-items:center;gap:4px}
+/* 오른쪽 끝은 글자 중심 — 면·동그라미·알약을 두지 않는다(design-rules 5절). 마우스 올림만 옅은 면 */
+.hd-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border-radius:var(--r-btn-sm);text-decoration:none;background:none;border:0;cursor:pointer;color:var(--ink)}
+.hd-link:hover{background:var(--surface)}
+.hd-link--sub{color:var(--sub)}
+.hd-link--strong{font-weight:800}
+.hd-sep{width:1px;height:20px;margin-inline:8px;background:var(--border)}
+.hd-gift{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 8px;border-radius:var(--r-btn-sm);text-decoration:none;color:var(--ink)}
+.hd-gift:hover{background:var(--surface)}
+.hd-ico{position:relative;display:grid;place-items:center;width:36px;height:36px}
+.hd-ico svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.hd-ico::after{content:"";position:absolute;right:2px;top:2px;width:8px;height:8px;border-radius:50%;background:var(--dot,var(--warn-ink));box-shadow:0 0 0 2px #fff}
+.hd-ico--wait{--dot:var(--warn-ink)}.hd-ico--move{--dot:var(--info)}.hd-ico--done{--dot:var(--success)}
+.hd-ico--plain::after{display:none}
+.hd-count{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 8px;border-radius:var(--r-pill);background:var(--ink);color:#fff;font-weight:800;line-height:1}
+.hd-icons{display:inline-flex}
+.hd-compact{display:none}
+.hd-user{position:relative}
+.hd-user summary{list-style:none}.hd-user summary::-webkit-details-marker{display:none}
+.hd-user summary svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hd-user[open] summary{background:var(--surface)}
+.hd-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:60;min-width:224px;padding:8px;border-radius:var(--r-box,16px);background:#fff;box-shadow:var(--float),var(--hair)}
+.hd-menu a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:var(--r-btn-sm);text-decoration:none}
+.hd-menu a:hover{background:var(--surface)}
+.hd-menu hr{height:1px;margin:8px 0;border:0;background:var(--border)}
+/* 휴대폰 메뉴 */
+.mm{display:none}
+.mm summary{list-style:none;display:grid;place-items:center;width:44px;height:44px;border-radius:var(--r-btn);background:var(--surface);cursor:pointer}
+.mm summary::-webkit-details-marker{display:none}
+.mm-body{position:fixed;left:0;right:0;top:var(--header-h);z-index:50;max-height:calc(100vh - var(--header-h));overflow:auto;background:#fff;box-shadow:0 1px 0 var(--border);padding:8px var(--gutter) 24px}
+.site-header--static .mm-body{position:absolute}
+.mm-body a:not(.btn){display:flex;align-items:center;min-height:52px;border-bottom:1px solid var(--border);text-decoration:none}
+.mm-body .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+@media(max-width:767px){
+  .nav,.hide-sm{display:none}.mm{display:block}.header-inner{gap:12px}
+  .hd-icons{display:none}.hd-compact{display:inline-flex;align-items:center;gap:8px}
+}
+
+/* ---------- 6. 바닥글 ---------- */
+.site-footer{border-top:1px solid var(--border);background:var(--surface);color:var(--sub)}
+.footer-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:40px;padding-block:56px 24px}
+.footer-logo{display:flex;align-items:center;gap:8px;margin-bottom:20px;font-family:"Pretendard Variable",Pretendard,sans-serif;font-size:var(--fs-card);font-weight:800;line-height:1;color:var(--ink)}
+.biz{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 32px}
+.biz div{display:flex;gap:12px}.biz dt{color:var(--ink);flex-shrink:0}
+.footer-links{display:grid;gap:4px;align-content:start}
+.footer-links a{display:flex;align-items:center;min-height:44px;text-decoration:none}.footer-links a:hover{color:var(--ink);text-decoration:underline}
+.footer-copy{padding-bottom:40px}
+@media(max-width:767px){.footer-grid{grid-template-columns:1fr;gap:16px;padding-block:40px 16px}.biz{grid-template-columns:1fr}}
+
+/* ---------- 7. 버튼 · 태그 · 입력창 · 카드 ---------- */
+/* 버튼: 주(코랄 면)·보조(.btn--line 흰 면+경계)·글자만(.btn--text). 높이 52, 작은 것(.btn--sm) 44 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 28px;border:0;border-radius:var(--r-btn);background:var(--brand);color:var(--on-brand);font-size:var(--fs-body);font-weight:800;line-height:1.2;text-decoration:none;cursor:pointer;box-shadow:var(--lift)}
+.btn:hover{background:var(--brand-hover)}.btn:active{background:var(--brand-active)}
+.btn--line{background:#fff;color:var(--ink);box-shadow:var(--hair)}.btn--line:hover{background:var(--surface-hover)}.btn--line:active{background:var(--surface-hover)}
+.btn--text{background:none;color:var(--ink);box-shadow:none;padding-inline:14px}.btn--text:hover{background:var(--surface-hover)}.btn--text:active{background:var(--surface-hover)}
+.btn--sm{min-height:44px;padding:0 18px;border-radius:var(--r-btn-sm);box-shadow:none}
+.btn--wide{min-width:360px}
+.btn--block{width:100%}
+@media(max-width:767px){.btn--wide{min-width:0;width:100%}}
+/* 태그: 상태 4색 + 코랄(상태가 아닌 강조에만) + 중립 */
+.tag{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:var(--r-tag);background:var(--surface);color:var(--sub);font-weight:800;line-height:1.2}
+.tag--brand{background:var(--surface-selected);color:var(--brand-ink)}
+.tag--success{background:var(--success-soft);color:var(--success)}
+.tag--warn{background:var(--warn-soft);color:var(--warn-ink)}
+.tag--danger{background:var(--danger-soft);color:var(--danger)}
+.tag--info{background:var(--info-soft);color:var(--info)}
+.chip{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:var(--r-pill);background:var(--surface);color:var(--ink)}
+/* 입력창: 흰 바탕 + 또렷한 경계, 안내 글자는 --faint */
+.field{display:block;width:100%;min-height:52px;padding:0 16px;border:0;border-radius:var(--r-btn);background:#fff;box-shadow:var(--field);font-size:var(--fs-body);color:var(--ink)}
+.field::placeholder{color:var(--faint);opacity:1}
+.field:focus{outline:3px solid var(--ink);outline-offset:3px}
+.label{display:block;margin-bottom:8px;font-weight:800}
+/* 카드: 경계 1px, 떠 있는 그림자 없음 */
+.card{padding:28px;border-radius:var(--r-card);background:#fff;box-shadow:var(--hair)}
+.card .t-card + p{margin-top:8px}
+.card--soft{background:var(--surface-brand);box-shadow:none}
+.card-icon{display:grid;place-items:center;width:44px;height:44px;margin-bottom:16px;border-radius:50%;background:var(--surface);color:var(--ink)}
+.card-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round}
+/* 표 */
+.table-wrap{overflow-x:auto;border-radius:var(--r-card);box-shadow:var(--hair);background:#fff}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:14px 20px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.table thead th{background:var(--surface)}
+.table tbody tr:last-child td{border-bottom:0}
+@media(max-width:767px){.table th,.table td{padding:12px 12px}}
+
+/* ---------- 8. 첫 화면 부품 ---------- */
+.hero{padding-block:clamp(48px,7vw,96px) clamp(56px,7vw,96px);text-align:center}
+.hero .t-lead{margin-bottom:16px}
+.hero-line{margin-top:20px;font-size:var(--fs-card);line-height:1.4;font-weight:800;color:var(--brand)}
+.hero-desc{max-width:640px;margin:24px auto 0}
+.search{display:flex;align-items:center;gap:12px;width:100%;max-width:640px;height:60px;margin:clamp(32px,4vw,48px) auto 0;padding:0 8px 0 24px;border-radius:var(--r-pill);background:#fff;box-shadow:var(--field)}
+.search:focus-within{box-shadow:0 0 0 3px var(--ink)}
+.search input{flex:1;min-width:0;height:100%;border:0;background:none;font-size:var(--fs-lead);color:var(--ink)}
+.search input::placeholder{color:var(--faint);opacity:1}.search input:focus{outline:none}
+.search-go{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:var(--brand);color:#fff;cursor:pointer;flex-shrink:0}
+.tiles{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:12px;max-width:1100px;margin:32px auto 0}
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px;min-height:152px;padding:16px 4px 12px;border-radius:var(--r-tile);background:var(--surface);box-shadow:var(--hair);text-align:center;text-decoration:none;line-height:1.35}
+.tile:hover{background:var(--surface-brand)}
+.tile img{width:88px;height:88px;object-fit:contain}
+.hero-actions{display:grid;justify-items:center;gap:12px;margin-top:40px}
+@media(max-width:1023px){.tiles{gap:8px}}
+@media(max-width:767px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.tile{min-height:124px;padding:12px 2px 10px}.tile img{width:64px;height:64px}}
+@media(max-width:480px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* 그림이 붙은 단계 열 */
+.step-col img{width:80px;height:80px;margin-bottom:16px;object-fit:contain}
+.step-col .label-num{margin-bottom:4px;font-weight:800}
+.step-col h3 + p{margin-top:8px}
+.steps-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:48px}
+.steps-line .lab{margin-right:4px;font-weight:800}
+.steps-line .arrow{color:var(--faint)}
+/* 요금 카드 */
+.price .price-amount{margin-top:16px;font-size:var(--fs-hero);font-weight:800;line-height:1.15;letter-spacing:0}
+.price .price-amount span{margin-left:4px;font-size:var(--fs-card);line-height:1.4}
+.price .inc{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:800}
+.price .inc svg{color:var(--brand)}
+.price .spec{margin-top:20px;padding-top:20px;border-top:1px solid var(--border);color:var(--sub)}
+.notes{display:grid;gap:8px;margin-top:28px;color:var(--sub)}
+.notes li{display:flex;gap:12px}
+.notes li::before{content:"";width:6px;height:6px;margin-top:11px;border-radius:50%;background:var(--faint);flex-shrink:0}
+
+/* ---------- 9. 번호 단계 (PC 가로 / 1023px 이하 세로) ---------- */
+.flow{display:grid;grid-template-columns:repeat(var(--steps,5),minmax(0,1fr));gap:16px}
+.flow li{position:relative}
+.flow .n{position:relative;z-index:1;display:grid;place-items:center;width:40px;height:40px;margin-bottom:16px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 2px var(--ink);font-weight:800;line-height:1}
+.flow li:not(:last-child)::after{content:"";position:absolute;left:48px;top:19px;width:calc(100% - 48px + 16px);height:2px;background:var(--border)}
+.flow li.on .n{background:var(--brand);color:var(--on-brand);box-shadow:none}
+.flow h3 + p{margin-top:8px}
+.flow .tag{margin-top:12px}
+@media(max-width:1023px){
+  .flow{grid-template-columns:1fr;gap:0}
+  .flow li{display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:16px;padding-bottom:28px}
+  .flow li:last-child{padding-bottom:0}
+  .flow .n{margin-bottom:0}
+  .flow li:not(:last-child)::after{left:19px;top:48px;bottom:8px;width:2px;height:auto}
+}
+
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}

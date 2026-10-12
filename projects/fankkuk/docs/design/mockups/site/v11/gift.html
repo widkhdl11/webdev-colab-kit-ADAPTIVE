@@ -1,0 +1,244 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v11 선물 상세 (2026-10-12)
+  /gifts/[orderNo] — 보낸 사람이 보는 선물 하나. 문구는 gift-status-page.tsx · fan-stage-copy.ts · difference-section.tsx · payment-summary.tsx 그대로.
+  보여 주는 상태: 상자 3개 중 2개 입고, 1개는 아직 도착 전, 상자 하나에 차액 요청, 크리에이터 승인 기다리는 중.
+  좌우 분할 없음: 위 판(제목·상황·진행 줄) → 차액 → 상자별 → 주소 없이 보냄 → 주문/결제(같은 크기 카드 둘) → 알아 두세요.
+  지금 코드의 오른쪽 열(도착 예정일·주문 정보)은 아래로 내렸다. 도착 예정일 카드는 출고 뒤에만 나와서 이 상태에는 없다.
+  글자 체계 A(40/28/20/18/16) · 티머니 둥근바람 400·800 · 공통 CSS v11.css 만 사용, 화면 전용 스타일은 아래 <style> 에 둔다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v11 선물 상세</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="v11.css">
+<style>
+  .stack{display:grid;gap:24px}
+  .part{padding:clamp(24px,3vw,40px);border-radius:var(--r-card);background:#fff;box-shadow:var(--hair)}
+  .part > .t-desc,.part > .t-meta{margin-top:8px}
+  .part--soft{background:var(--surface-brand);box-shadow:none}
+  .crumb{padding-top:24px}
+  .crumb a{display:inline-flex;align-items:center;min-height:44px;color:var(--sub);text-decoration:none}
+  .crumb a:hover{color:var(--ink);text-decoration:underline}
+  .page-top{padding-block:clamp(32px,4vw,56px) clamp(24px,3vw,40px)}
+  .page-top .t-lead{margin-top:12px}
+  .page-end{padding-bottom:var(--sec-pad)}
+  .face{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--f,#f6d6cf);color:var(--ink);font-weight:800;line-height:1;flex-shrink:0}
+  .face--lg{width:72px;height:72px;font-size:var(--fs-card)}
+  .kv > div{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--border)}
+  .kv > div:last-child{border-bottom:0}
+  .kv dd{overflow-wrap:anywhere}
+  .btnrow{display:flex;flex-wrap:wrap;gap:12px}
+  .actions{display:flex;justify-content:flex-end;gap:12px;margin-top:32px}
+  .field-block + .field-block{margin-top:24px}
+  .hint{margin-top:8px;color:var(--sub)}
+  .step-h{margin-bottom:24px}
+  .dots{display:flex;gap:4px}
+  .dots span{flex:1;height:8px;border-radius:4px;background:var(--border)}
+  .dots span.on{background:var(--brand)}
+  .flow li.done .n{background:var(--success);color:#fff;box-shadow:none}
+  .flow li.done:not(:last-child)::after{background:var(--success)}
+  @media(max-width:1023px){.flow li > p{grid-column:2}.flow li > .n{grid-row:1 / span 3}.flow--mini li > p{grid-column:auto}.flow--mini li > .n{grid-row:auto}}
+  .check{display:inline-flex;align-items:center;gap:8px}
+  .check input{width:24px;height:24px;margin:0;accent-color:var(--brand);flex-shrink:0}
+  .check + .check{margin-top:12px}
+  @media(max-width:767px){
+    .kv > div{grid-template-columns:1fr;gap:4px}
+    .actions{display:grid;grid-template-columns:1fr 2fr}
+    .actions .btn:only-child{grid-column:1/-1}
+  }
+  .gtop{padding:clamp(28px,5vw,64px)}
+  .g-art{width:88px;height:88px;margin-bottom:16px;object-fit:contain}
+  .gnow{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:20px}
+  .gtop .flow{margin-top:40px}
+  .appr{margin-top:32px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+  .box-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+  .box + .box{margin-top:16px}
+  .addr{margin-top:20px}
+  .addr .kv > div{grid-template-columns:120px minmax(0,1fr);padding:10px 0}
+  .addr .kv > div{border-bottom-color:rgb(52 48 57/.12)}
+  .wb{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;margin-top:20px}
+  .find{display:grid;gap:16px;margin-top:20px}
+  @media(max-width:767px){.wb{grid-template-columns:1fr}.addr .kv > div{grid-template-columns:1fr}}
+  .lines > div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .lines .total{border-bottom:0;padding-top:20px;align-items:baseline}
+  .lines .amt{font-weight:800;white-space:nowrap}
+  .total .amt{font-size:var(--fs-title);line-height:1.3;color:var(--brand-ink)}
+  .cancel{margin-top:24px}
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 9h4l3 3v4h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4v9l-9 4-9-4zM3 8l9 4 9-4M12 12v9"/></symbol>
+    <symbol id="i-down" viewBox="0 0 16 16"><path d="m3 6 5 5 5-5"/></symbol>
+  </defs></svg>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="check" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="currentColor"/><path d="m5 10 3 3 7-7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="m-me" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol>
+  <symbol id="m-follow" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/></symbol>
+  <symbol id="m-gift" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></symbol>
+  <symbol id="m-rev" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></symbol>
+</defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header"><div class="header-inner">
+          <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+          <nav class="nav" aria-label="주요 메뉴(팬)"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav>
+          <div class="header-actions">
+            <a class="hd-gift" href="#" aria-label="진행 중인 선물 3개">
+              <span class="hd-icons"><span class="hd-ico hd-ico--wait"><svg width="24" height="24"><use href="#i-clock"/></svg></span><span class="hd-ico hd-ico--move"><svg width="24" height="24"><use href="#i-truck"/></svg></span><span class="hd-ico hd-ico--done"><svg width="24" height="24"><use href="#i-done"/></svg></span></span>
+              <span class="hd-compact"><span class="hd-ico hd-ico--plain"><svg width="24" height="24"><use href="#i-box"/></svg></span>선물<span class="hd-count">3</span></span>
+            </a>
+            <span class="hd-sep hide-sm" aria-hidden="true"></span>
+            <details class="hd-user hide-sm"><summary class="hd-link hd-link--strong">하루님 <svg aria-hidden="true"><use href="#i-down"/></svg></summary>
+              <div class="hd-menu"><a href="#">개인정보</a><a href="#">팔로우한 크리에이터</a><a href="#">선물 내역</a><a href="#">받은 역조공</a><hr><a href="#">로그아웃</a></div></details>
+            <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+              <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><a href="#">내 팬꾹</a><a href="#">로그아웃</a></div></details>
+          </div>
+        </div></header>
+  <main id="main">
+    <div class="container crumb"><a href="#">‹ 선물 내역으로</a></div>
+    <div class="container" style="margin-top:8px">
+      <div class="stack">
+        <section class="panel gtop" aria-labelledby="g-title">
+          <img class="g-art" src="../v4/img/icon-truck.png" alt="" aria-hidden="true">
+          <p class="t-meta">주문번호 FC-7K3M9 · 등록 10월 8일</p>
+          <h1 class="t-title" id="g-title">별빛님께 보내는 선물</h1>
+          <p class="t-lead" style="margin-top:8px">인형·쿠션 · 상자 3개</p>
+          <p class="gnow"><span class="tag tag--warn">보내 주세요 · 2/6</span><strong class="t-card">사무실로 보내 주세요</strong></p>
+          <ol class="flow" style="--steps:6" aria-label="선물 진행 단계 6단계 중 1단계 완료">
+            <li class="done"><span class="n" aria-hidden="true">✓</span><p class="t-strong">등록<span class="sr-only"> 완료</span></p><p class="t-meta">10월 8일 오후 2:10</p></li>
+            <li class="on" aria-current="step"><span class="n">2</span><p class="t-strong">입고</p><p class="t-meta">도착하면 시각이 여기에 표시돼요</p></li>
+            <li><span class="n">3</span><p class="t-strong">검수</p></li>
+            <li><span class="n">4</span><p class="t-strong">출고</p></li>
+            <li><span class="n">5</span><p class="t-strong">배송중</p></li>
+            <li><span class="n">6</span><p class="t-strong">수령</p></li>
+          </ol>
+          <p class="appr"><span class="tag tag--warn">기다리는 중</span><span>크리에이터 승인</span></p>
+        </section>
+
+        <section class="part" aria-labelledby="diff-title">
+          <h2 class="t-title" id="diff-title">차액 결제</h2>
+          <p class="t-lead t-desc">사무실에서 잰 상자가 고른 크기보다 커서 추가 결제가 필요해요. 결제를 마치면 바로 보내 드려요. 기한 안에 결제하지 않으면 상자를 돌려보내고 배송비를 환불해 드려요.</p>
+          <div class="card card--soft" style="margin-top:24px;display:grid;gap:12px">
+            <div class="box-head"><h3>상자 2 · 2,000원</h3><span class="tag tag--warn">결제 필요</span></div>
+            <p class="t-meta">보낼 때 고른 크기 소형 → 재어 본 크기 중형 · 10월 14일 오후 11:59까지</p>
+            <div><button class="btn" type="button">2,000원 차액 결제하기</button></div>
+          </div>
+        </section>
+
+        <section class="part" aria-labelledby="box-title">
+          <h2 class="t-title" id="box-title" tabindex="-1">상자별 상태</h2>
+          <p class="t-lead t-desc">상자마다 받는 주소가 달라요. 상자에 맞는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 승인은 출고 전까지만 나면 돼요.</p>
+          <p class="t-meta">송장번호는 배송 조회를 보고 싶을 때만 넣으면 돼요.</p>
+          <div style="margin-top:24px">
+            <div class="card box">
+              <div class="box-head"><h3>상자 1</h3><span class="tag tag--success"><svg width="16" height="16" aria-hidden="true" style="margin-right:6px"><use href="#check"/></svg>입고됨</span></div>
+              <p class="t-meta">소형</p>
+              <dl class="kv" style="margin-top:12px"><div><dt>송장번호</dt><dd>1234-5678-9012</dd></div></dl>
+              <p class="hint">입고된 상자는 송장번호를 고칠 수 없어요.</p>
+            </div>
+            <div class="card box">
+              <div class="box-head"><h3>상자 2</h3><span class="tag tag--success"><svg width="16" height="16" aria-hidden="true" style="margin-right:6px"><use href="#check"/></svg>입고됨</span></div>
+              <p class="t-meta">소형</p>
+              <dl class="kv" style="margin-top:12px"><div><dt>송장번호</dt><dd>9876-5432-1098</dd></div></dl>
+              <p class="hint">입고된 상자는 송장번호를 고칠 수 없어요.</p>
+            </div>
+            <div class="card box">
+              <div class="box-head"><h3>상자 3</h3><span class="tag">아직 도착 전</span></div>
+              <p class="t-meta">중형</p>
+              <div class="addr card card--soft">
+                <h3>이 선물의 받는 주소<span class="sr-only"> · 상자 3</span></h3>
+                <dl class="kv" style="margin-top:8px">
+                  <div><dt>받는 곳</dt><dd>서울특별시 성동구 아차산로 00, 팬꾹 사무실 <span aria-hidden="true">●●●●●●</span><span class="sr-only">끝 6자리 가려짐</span></dd></div>
+                  <div><dt>받는 사람</dt><dd>팬꾹</dd></div>
+                </dl>
+                <div class="btnrow" style="margin-top:12px">
+                  <button class="btn btn--line btn--sm" type="button" aria-label="상자 3 받는 주소 끝 6자리 보기">6자리 보기</button>
+                  <button class="btn btn--line btn--sm" type="button" aria-label="상자 3 주소 한 번에 복사">주소 한 번에 복사</button>
+                </div>
+                <p class="hint">끝 6자리까지 꼭 그대로 적어 주세요. 이 6자리로 사무실에서 이 상자를 찾아요. 다른 사람에게 알려 주지 마세요.</p>
+              </div>
+              <div class="wb">
+                <div><label class="label" for="wb3">송장번호 (선택)</label><input class="field" id="wb3" type="text" inputmode="numeric" placeholder="숫자만 적어 주세요"></div>
+                <button class="btn btn--line" type="button">저장하기</button>
+              </div>
+              <p class="hint">선택이에요. 넣으면 배송 조회로 팬꾹까지 오는 길을 보여 드려요.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="part" aria-labelledby="find-title">
+          <h2 class="t-title" id="find-title">받는 주소 없이 보냈어요</h2>
+          <p class="t-lead t-desc">받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 내 상자로 이어져요.</p>
+          <div class="grid cols-3" style="margin-top:24px">
+            <div><label class="label" for="f-no">송장번호</label><input class="field" id="f-no" type="text" inputmode="numeric" placeholder="숫자만 적어 주세요"></div>
+            <div><label class="label" for="f-co">택배사</label><input class="field" id="f-co" type="text" placeholder="예: 한진택배"></div>
+            <div><label class="label" for="f-nm">보낸 사람 이름 첫 글자</label><input class="field" id="f-nm" type="text" maxlength="1" placeholder="예: 하"></div>
+          </div>
+          <div class="btnrow" style="margin-top:20px"><button class="btn" type="button">내 상자 찾기</button></div>
+          <p class="hint">하루에 다섯 번까지 찾을 수 있어요. 사무실에는 도착 시각·택배사·보낸 사람 이름 첫 글자만 남기고, 주소와 전화번호는 남기지 않아요.</p>
+        </section>
+
+        <div class="grid cols-2">
+          <section class="card" aria-labelledby="info-title">
+            <h2 class="t-card" id="info-title" style="font-size:var(--fs-card);line-height:1.4;letter-spacing:0">주문 정보</h2>
+            <dl class="kv" style="margin-top:8px">
+              <div><dt>주문번호</dt><dd>FC-7K3M9</dd></div>
+              <div><dt>받는 크리에이터</dt><dd>별빛</dd></div>
+              <div><dt>선물</dt><dd>인형·쿠션</dd></div>
+              <div><dt>상자</dt><dd>3개</dd></div>
+              <div><dt>등록</dt><dd>10월 8일 오후 2:10</dd></div>
+            </dl>
+            <div class="cancel"><button class="btn btn--line btn--sm" type="button">취소하기</button></div>
+          </section>
+          <section class="card" aria-labelledby="pay-title">
+            <h2 class="t-card" id="pay-title" style="font-size:var(--fs-card);line-height:1.4;letter-spacing:0">결제 내역</h2>
+            <div class="lines" style="margin-top:8px">
+              <div><span>소형 상자 2개 <span class="t-meta">6,900원 × 2</span></span><span class="amt">13,800원</span></div>
+              <div><span>중형 상자 1개 <span class="t-meta">8,900원 × 1</span></span><span class="amt">8,900원</span></div>
+              <div class="total"><span class="t-strong">합계</span><span class="amt">22,700원</span></div>
+            </div>
+            <p style="margin-top:12px"><span class="tag"><svg width="16" height="16" aria-hidden="true" style="margin-right:6px"><use href="#check"/></svg>검수 포함</span></p>
+            <p class="t-meta" style="margin-top:12px">10월 8일에 결제했어요.</p>
+            <p class="t-meta" style="margin-top:4px">도착한 상자를 재어 보니 구간이 더 크면, 차액만 따로 결제해요.</p>
+          </section>
+        </div>
+
+        <section class="part part--soft" aria-labelledby="know-title">
+          <h2 class="t-title" id="know-title">보내기 전에 알아 두세요</h2>
+          <p class="t-lead t-desc">상자를 더 보내려면 새로 등록해 주세요. 상자마다 받는 주소가 달라요.</p>
+          <p style="margin-top:8px">크리에이터가 받지 않기로 하거나 7일 안에 승인하지 않으면, 선물은 보낸 주소로 돌려보내 드리고 결제 금액에서 반송 택배비를 뺀 금액을 돌려드려요.</p>
+        </section>
+      </div>
+    </div>
+    <div class="page-end"></div>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

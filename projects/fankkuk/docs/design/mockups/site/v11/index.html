@@ -1,0 +1,139 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v11 목록 (2026-10-12) — 공통 틀(v11.css) + 화면 시안. 화면이 늘면 아래 목록에 줄을 더한다.
+  아래 「헤더 세 상태」는 공통 틀 확인용이다(design-rules 5절). 화면 시안은 비로그인 헤더로 만들고, 로그인 화면은 이 중 하나를 쓴다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 시안 v11 목록</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="v11.css">
+<style>
+  .list a{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;padding:0 20px;border-radius:var(--r-card);box-shadow:var(--hair);text-decoration:none}
+  .list a:hover{background:var(--surface)}
+  .list li + li{margin-top:12px}
+  .state{margin-top:32px}
+  .state .t-meta{margin-bottom:8px}
+  .state .site-header{box-shadow:var(--hair);border-radius:var(--r-card)}
+  .state .header-inner{padding-inline:20px}
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 9h4l3 3v4h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4v9l-9 4-9-4zM3 8l9 4 9-4M12 12v9"/></symbol>
+    <symbol id="i-down" viewBox="0 0 16 16"><path d="m3 6 5 5 5-5"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <main id="main" class="section">
+    <div class="container">
+      <div class="sec-head">
+        <h1 class="t-title">팬꾹 사이트 시안 v11</h1>
+        <p class="t-lead t-desc">공통 틀(v11.css) 위에 화면을 하나씩 얹습니다. 지금 두 장입니다.</p>
+      </div>
+      <h3 class="t-card" style="margin:32px 0 12px">공개·둘러보기 (13)</h3>
+      <ul class="list">
+        <li><a href="landing.html"><span class="t-strong">landing.html</span><span class="t-meta">랜딩 (비로그인 첫 화면)</span></a></li>
+        <li><a href="about.html"><span class="t-strong">about.html</span><span class="t-meta">팬꾹 소개</span></a></li>
+        <li><a href="home-fan.html"><span class="t-strong">home-fan.html</span><span class="t-meta">팬 메인 · /home</span></a></li>
+        <li><a href="home-creator.html"><span class="t-strong">home-creator.html</span><span class="t-meta">크리에이터 메인 · /creator</span></a></li>
+        <li><a href="creators.html"><span class="t-strong">creators.html</span><span class="t-meta">크리에이터 찾기</span></a></li>
+        <li><a href="creator.html"><span class="t-strong">creator.html</span><span class="t-meta">크리에이터 페이지</span></a></li>
+        <li><a href="link.html"><span class="t-strong">link.html</span><span class="t-meta">선물 링크 페이지 · /[handle]</span></a></li>
+        <li><a href="notices.html"><span class="t-strong">notices.html</span><span class="t-meta">공지사항</span></a></li>
+        <li><a href="support.html"><span class="t-strong">support.html</span><span class="t-meta">고객센터</span></a></li>
+        <li><a href="legal.html"><span class="t-strong">legal.html</span><span class="t-meta">이용약관·개인정보처리방침</span></a></li>
+        <li><a href="login.html"><span class="t-strong">login.html</span><span class="t-meta">로그인</span></a></li>
+        <li><a href="signup.html"><span class="t-strong">signup.html</span><span class="t-meta">회원가입 (세 단계를 펼침)</span></a></li>
+        <li><a href="password-reset.html"><span class="t-strong">password-reset.html</span><span class="t-meta">비밀번호 재설정</span></a></li>
+      </ul>
+      <h3 class="t-card" style="margin:32px 0 12px">팬 — 선물·내 팬꾹 (9)</h3>
+      <ul class="list">
+        <li><a href="send.html"><span class="t-strong">send.html</span><span class="t-meta">선물 보내기 (1단계·4단계)</span></a></li>
+        <li><a href="gifts.html"><span class="t-strong">gifts.html</span><span class="t-meta">선물 내역</span></a></li>
+        <li><a href="gift.html"><span class="t-strong">gift.html</span><span class="t-meta">선물 상세</span></a></li>
+        <li><a href="gift-with.html"><span class="t-strong">gift-with.html</span><span class="t-meta">함께 보내는 선물 · /gifts/with</span></a></li>
+        <li><a href="me.html"><span class="t-strong">me.html</span><span class="t-meta">개인정보</span></a></li>
+        <li><a href="me-following.html"><span class="t-strong">me-following.html</span><span class="t-meta">팔로우한 크리에이터</span></a></li>
+        <li><a href="me-revgifts.html"><span class="t-strong">me-revgifts.html</span><span class="t-meta">받은 역조공</span></a></li>
+        <li><a href="revgift-receive.html"><span class="t-strong">revgift-receive.html</span><span class="t-meta">역조공 받기</span></a></li>
+        <li><a href="email-confirm.html"><span class="t-strong">email-confirm.html</span><span class="t-meta">메일 확인</span></a></li>
+      </ul>
+      <h3 class="t-card" style="margin:32px 0 12px">크리에이터 (6)</h3>
+      <ul class="list">
+        <li><a href="creator-requests.html"><span class="t-strong">creator-requests.html</span><span class="t-meta">승인 요청 (확인창 포함)</span></a></li>
+        <li><a href="creator-boxes.html"><span class="t-strong">creator-boxes.html</span><span class="t-meta">받은 선물</span></a></li>
+        <li><a href="creator-log.html"><span class="t-strong">creator-log.html</span><span class="t-meta">열람 기록</span></a></li>
+        <li><a href="creator-settings.html"><span class="t-strong">creator-settings.html</span><span class="t-meta">주소와 설정</span></a></li>
+        <li><a href="creator-revgifts.html"><span class="t-strong">creator-revgifts.html</span><span class="t-meta">보낸 역조공</span></a></li>
+        <li><a href="creator-revgift-new.html"><span class="t-strong">creator-revgift-new.html</span><span class="t-meta">역조공 보내기</span></a></li>
+      </ul>
+
+      <h2 class="t-title" style="margin-top:72px">헤더 세 상태</h2>
+      <p class="t-lead t-desc" style="margin-top:16px">비로그인 · 팬 · 크리에이터. 구조가 같고 오른쪽 끝만 다릅니다. 폭을 줄이면 휴대폰 형태로 바뀝니다.</p>
+
+      <div class="state">
+        <p class="t-meta">비로그인</p>
+        <header class="site-header site-header--static"><div class="header-inner">
+          <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+          <nav class="nav" aria-label="주요 메뉴(비로그인)"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav>
+          <div class="header-actions">
+            <a class="hd-link hd-link--sub hide-sm" href="#">로그인</a><span class="hd-sep hide-sm" aria-hidden="true"></span><a class="hd-link hd-link--strong hide-sm" href="#">회원가입</a>
+            <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+              <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><div class="btn-row"><a class="btn btn--line" href="#">로그인</a><a class="btn" href="#">회원가입</a></div></div></details>
+          </div>
+        </div></header>
+      </div>
+
+      <div class="state">
+        <p class="t-meta">팬 — 선물 상태 아이콘(대기 · 이동 중 · 완료, 최대 3개) + 닉네임 메뉴</p>
+        <header class="site-header site-header--static"><div class="header-inner">
+          <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+          <nav class="nav" aria-label="주요 메뉴(팬)"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav>
+          <div class="header-actions">
+            <a class="hd-gift" href="#" aria-label="진행 중인 선물 3개">
+              <span class="hd-icons"><span class="hd-ico hd-ico--wait"><svg width="24" height="24"><use href="#i-clock"/></svg></span><span class="hd-ico hd-ico--move"><svg width="24" height="24"><use href="#i-truck"/></svg></span><span class="hd-ico hd-ico--done"><svg width="24" height="24"><use href="#i-done"/></svg></span></span>
+              <span class="hd-compact"><span class="hd-ico hd-ico--plain"><svg width="24" height="24"><use href="#i-box"/></svg></span>선물<span class="hd-count">3</span></span>
+            </a>
+            <span class="hd-sep hide-sm" aria-hidden="true"></span>
+            <details class="hd-user hide-sm"><summary class="hd-link hd-link--strong">하루님 <svg aria-hidden="true"><use href="#i-down"/></svg></summary>
+              <div class="hd-menu"><a href="#">개인정보</a><a href="#">팔로우한 크리에이터</a><a href="#">선물 내역</a><a href="#">받은 역조공</a><hr><a href="#">로그아웃</a></div></details>
+            <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+              <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><a href="#">내 팬꾹</a><a href="#">로그아웃</a></div></details>
+          </div>
+        </div></header>
+      </div>
+
+      <div class="state">
+        <p class="t-meta">크리에이터 — 상자 그림 + 승인 대기 + 숫자 + 닉네임 메뉴</p>
+        <header class="site-header site-header--static"><div class="header-inner">
+          <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+          <nav class="nav" aria-label="주요 메뉴(크리에이터)"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav>
+          <div class="header-actions">
+            <a class="hd-gift" href="#" aria-label="승인 대기 3건"><span class="hd-ico hd-ico--plain"><svg width="24" height="24"><use href="#i-box"/></svg></span><span class="hide-sm">승인 대기</span><span class="hd-count">3</span></a>
+            <span class="hd-sep hide-sm" aria-hidden="true"></span>
+            <details class="hd-user hide-sm"><summary class="hd-link hd-link--strong">별빛님 <svg aria-hidden="true"><use href="#i-down"/></svg></summary>
+              <div class="hd-menu"><a href="#">승인·받은 선물</a><a href="#">보낸 선물</a><a href="#">보낸 역조공</a><a href="#">열람 기록</a><a href="#">주소와 설정</a><hr><a href="#">로그아웃</a></div></details>
+            <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+              <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><a href="#">내 팬꾹</a><a href="#">로그아웃</a></div></details>
+          </div>
+        </div></header>
+      </div>
+
+      <h2 class="t-title" style="margin-top:72px">공통 부품</h2>
+      <div class="grid cols-3" style="margin-top:32px">
+        <div class="card"><h3>버튼</h3><div style="display:grid;gap:12px;margin-top:16px"><a class="btn" href="#">주 버튼 52</a><a class="btn btn--line" href="#">보조 버튼 52</a><a class="btn btn--text" href="#">글자만</a><a class="btn btn--sm" href="#">작은 버튼 44</a></div></div>
+        <div class="card"><h3>태그 4색 + 코랄</h3><p style="display:flex;flex-wrap:wrap;gap:8px"><span class="tag tag--success">완료</span><span class="tag tag--warn">대기</span><span class="tag tag--danger">거절</span><span class="tag tag--info">진행</span><span class="tag tag--brand">강조</span></p></div>
+        <div class="card"><h3>입력창</h3><label class="label" for="demo-in" style="margin-top:12px">닉네임</label><input class="field" id="demo-in" placeholder="2자 이상 입력해 주세요"></div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
