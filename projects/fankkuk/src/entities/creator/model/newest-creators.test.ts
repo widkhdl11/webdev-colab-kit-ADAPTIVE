@@ -13,6 +13,8 @@ const card = (id: string): CreatorCard => ({
   approvalMinutes: null,
   faceTone: "",
   following: false,
+  handle: null,
+  photoPath: null,
 });
 
 describe("newestSearchable", () => {

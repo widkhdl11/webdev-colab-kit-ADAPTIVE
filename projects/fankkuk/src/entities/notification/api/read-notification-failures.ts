@@ -64,6 +64,7 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   difference_canceled: "추가 결제 취소",
   gift_reply: "답장",
   gift_received: "받았어요 확인",
+  creator_check: "확인할 선물",
 };
 
 function isKnownKind(kind: string): kind is NotificationKind {

@@ -12,6 +12,8 @@ const haru: CreatorCard = {
   approvalMinutes: 120,
   faceTone: "#000000",
   following: false,
+  handle: null,
+  photoPath: null,
 };
 
 describe("matchesCreatorQuery — 크리에이터 찾기 실시간 검색", () => {
