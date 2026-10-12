@@ -1,11 +1,29 @@
 ---
 project: fankkuk
 status: passed
-basis: 4f8f605cae41
-reviewers: [security-reviewer, code-reviewer, test-auditor, ui-reviewer]
+basis: 11f9cac5038c
+reviewers: [security-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-12 (3), 문제집 D 메모 추가 답 — D3 ② · D11 문구)
+# 리뷰 사인오프 — fankkuk (2026-10-12 (4), 미룬 문서 정리)
+
+이번 사인오프가 덮는 변경: 지난 사인오프(basis 4f8f605cae41) 뒤 4498cd0(스펙 넷·약관 제10조·「출고 확정」 문장·정책 안내서·문제집 해설, 시험 이름 하나) · f724fee(약관 제15조·처리방침 주소 열람 문장).
+로직 변경 없음 — 바뀐 산출물은 약관·처리방침 문장과 시험 이름 한 줄(본문 그대로)뿐이다.
+
+- 닿은 표면: 약관이 이용자에게 하는 약속(주소 열람·환불). 코드·화면·DB 는 그대로.
+- security-reviewer: 높음 0. 중 1 — 「택배사가 가져가면 더 열리지 않는다」는 택배사 연결 전에는 지켜지지 않음(출고 확정 뒤에도 횟수만 봄) → 「연결된 뒤에는」으로 고침. 낮음 1 — 출력 안 된 시도는 상자마다 2번까지 횟수에서 빠짐(INV-P15)을 약관에 안 적음 → 한 줄 더함. 제10조·제9조 환불 표는 코드와 일치.
+- code-reviewer·ui-reviewer·test-auditor 는 보내지 않음: 로직·화면·시험 내용 변경이 없어 읽을 것이 없다.
+
+## 미룬 문서 — 비움
+- 아래 두 목록 중 design-rules 136줄만 남음 — 재승인 카드 d60 대기.
+
+## 실행 근거
+- `node gates/run-gates.mjs` 통과(tsc 4/4 · test 4/4) · `npx vitest run src/widgets/legal` 4/4(문장 고친 뒤 다시) · `node gates/spec-coverage.mjs` 출력 없음 · 문제집 D.json 파싱 확인.
+
+---
+
+
+## 이전 사인오프 — fankkuk (2026-10-12 (3), 문제집 D 메모 추가 답 — D3 ② · D11 문구)
 
 이번 사인오프가 덮는 변경: 지난 사인오프(basis 02d1037c982f) 뒤 사용자가 메모마다 단 D 추가 답(DECISIONS 「2026-10-12 (2) — 문제집 D 메모 추가 답」).
 e2b7858(구현) · 7d8729b(리뷰 반영) · a8ef35c(개인정보 노출 검사 허용 목록). 문서만 바뀐 커밋(f257e74 결정 기록)은 산출물이 아니다.
@@ -17,7 +35,7 @@ e2b7858(구현) · 7d8729b(리뷰 반영) · a8ef35c(개인정보 노출 검사 
 - test-auditor: 빈 갈래 6(표 제약 not_tracker+pass · 168시간 경계 · 기한 지남 환불 · 승인된 주문 다른 상자 · 끝난 주문의 답 · 확인 화면 렌더) → 시험 추가, 변이 18/18.
 - 사인오프 전체 실행이 잡은 것: pii-exposure-check INV-P9 S9 — answer_creator_check 가 office_sync → close_revgift_share(역조공 몫 주소 지우기) 경로로 개인정보 구역에 닿음. 돌려주는 값은 결과 글자 여섯 가지뿐임을 함수 정의로 확인하고 허용 목록에 이유와 함께 올림(a8ef35c). 구현·반영의 관련 시험 목록에 이 검사가 없었다 — 지시 양식에 규칙 추가.
 
-## 미룬 문서 (이번 묶음 추가분 — 아래 「문제집 D·E」 목록과 합쳐서 비운다)
+## 미룬 문서 (이번 묶음 추가분) — 2026-10-12 (4) 4498cd0 에서 비움
 - `docs/specs/office-workflow.md` INV-W4·S4g·W6·W3 — 추적기 아님 → 크리에이터 확인·반송, 확인 대기의 뜻, 168시간 무응답 반송, 기한 지난 답 expired, 나갈 수 없는 상자 목록 제외, 표 제약, 주문 단계 계산.
 - `docs/specs/notifications.md` INV-N13·S13c·N17 ②·N2·N1 — creator_check(상자마다 한 번), 돌려보내기·기한 지남에도 hold_fan, 거절 문구 두 갈래와 갈래 값.
 - `docs/specs/decline-block.md` INV-D5 — 알림도 화면과 같은 거절 문구.
