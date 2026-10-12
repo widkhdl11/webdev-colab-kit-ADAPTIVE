@@ -10,7 +10,6 @@ export const PARCEL_TABS: readonly { key: ParcelFilterTab; label: string }[] = [
   { key: "inspect", label: "검수 대기" },
   { key: "outbound", label: "출고 대기" },
   { key: "shipped", label: "출고함" },
-  { key: "held", label: "보관" },
   { key: "return", label: "반송" },
 ];
 
@@ -24,7 +23,7 @@ export function filterParcels(rows: readonly OfficeParcel[], tab: ParcelFilterTa
 }
 
 export function countByParcelTab(rows: readonly OfficeParcel[]): Record<ParcelFilterTab, number> {
-  const counts: Record<ParcelFilterTab, number> = { all: rows.length, inbound: 0, inspect: 0, outbound: 0, shipped: 0, held: 0, return: 0 };
+  const counts: Record<ParcelFilterTab, number> = { all: rows.length, inbound: 0, inspect: 0, outbound: 0, shipped: 0, return: 0 };
   for (const r of rows) counts[parcelTabOf(r.state)] += 1;
   return counts;
 }

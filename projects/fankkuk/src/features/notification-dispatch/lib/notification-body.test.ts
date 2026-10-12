@@ -86,7 +86,13 @@ describe("알림 링크 (INV-N9)", () => {
   });
 
   it("INV-N13 (S13): 크리에이터의 추적기 반송 알림 — 확인을 부탁하지 않고 돌려보낸다는 사실, 무엇이 나왔는지·보낸 팬은 없다", () => {
-    const b = buildNotificationBody(inputFor("hold"));
+    // 보낸 팬의 닉네임을 칸 밖으로 실제로 넘겨도 본문에 섞이지 않는다 — 넘기지 않으면 「별빛」 부재는 늘 참이다
+    const b = buildNotificationBody({
+      ...inputFor("hold"),
+      // @ts-expect-error 본문 틀에는 보낸 팬 칸이 없다
+      senderNickname: "별빛",
+      fanNickname: "별빛",
+    });
     expect(new URL(b.link).pathname).toBe("/creator");
     expect(b.subject).toBe("[팬꾹] 검수를 통과하지 못한 선물이 있어요");
     expect(b.text).toContain("검수를 통과하지 못해 보낸 분에게 돌려보내는 상자가 있어요.");

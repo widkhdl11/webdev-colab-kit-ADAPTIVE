@@ -9,13 +9,26 @@
 --    반응 있음 ⇔ 판정 있음, 판정 「추적기」 ⇔ 결론 「추적기 반송」(hold). 「추적기 아님」이면 통과·반송.
 -- 3) office_scan_inspect — 20261008000007 과 같고, 추적기 반송(hold)이면 보관(held) 대신 바로 반송 대기로 넘긴다.
 --    추적기 기록 줄·크리에이터 hold·팬 hold_fan 알림 줄은 지금처럼 같은 처리에서 넣는다(주문 단위 한 번).
--- 4) 이미 보관 중인 상자는 바로 반송 대기로 넘긴다 — 새 규칙(보관 없이 반송)과 같은 끝이고, 알림은 보관 때 이미 갔다.
---    자동 처리(office_run_expiry)의 「보관 + 168시간」 단계는 대상이 없어 아무 일도 하지 않는다. 큰 함수를 다시 쓰는 위험에 비해 얻는 것이 없어 그대로 둔다.
+-- 4) 이 뒤로 보관(held) 상자는 생기지 않는다. 배포 전이라 운영 DB 에 보관 상자가 없고 로컬도 0개라 옮기는 데이터 처리는 넣지 않았다
+--    (한 번짜리 데이터 정정은 마이그레이션에 넣지 않는다). 자동 처리(office_run_expiry)의 「보관 + 168시간」 단계는 대상이 없어
+--    아무 일도 하지 않는다. 큰 함수를 다시 쓰는 위험에 비해 얻는 것이 없어 그대로 둔다.
+-- 5) my_incoming_gifts — 20261006000015 와 같고, 검수 결과의 「보관」(held) 갈래를 뺐다. 추적기 상자도 반송 대기로 가서 「반송」으로 읽힌다.
+--    같은 주문의 다른 상자가 통과해도 금속·금지 물품 반송과 똑같이 주문이 「반송」 단계가 된다(BACKLOG — 둘 다 같은 문제).
+--
+-- 다시 돌려도 멈추지 않는다 — 칸은 if not exists, 제약은 지운 뒤 다시 넣고, 함수는 create or replace.
 
 alter table public.office_inspections
-  add column tracker_verdict text check (tracker_verdict in ('tracker', 'not_tracker'));
+  add column if not exists tracker_verdict text;
+alter table public.office_inspections
+  drop constraint if exists office_inspections_tracker_verdict_check;
+alter table public.office_inspections
+  add constraint office_inspections_tracker_verdict_check check (tracker_verdict in ('tracker', 'not_tracker'));
+alter table public.office_inspections
+  drop constraint if exists office_inspections_tracker_verdict_gift;
 alter table public.office_inspections
   add constraint office_inspections_tracker_verdict_gift check (tracker_verdict is null or bluetooth is not null);
+alter table public.office_inspections
+  drop constraint if exists office_inspections_tracker_verdict_outcome;
 alter table public.office_inspections
   add constraint office_inspections_tracker_verdict_outcome check (tracker_verdict is null or ((tracker_verdict = 'tracker') = (outcome = 'hold')));
 
@@ -126,19 +139,57 @@ begin
   return v_next::text;
 end $$;
 
--- 4) 보관 중이던 상자 → 반송 대기. 주문 집계도 다시 맞춘다(검수 결과 「반송」 — 환불은 검수 불합격 줄 그대로).
-do $$
-declare
-  v_order uuid;
-begin
-  for v_order in
-    with moved as (
-      update public.office_parcels p set state = 'return_waiting'
-      where p.state = 'held'
-      returning p.box_id
-    )
-    select distinct b.order_id from moved m join public.boxes b on b.id = m.box_id
-  loop
-    perform public.office_sync_order(v_order);
-  end loop;
-end $$;
+create or replace function public.my_incoming_gifts()
+returns table (
+  order_no text,
+  sender_nickname text,
+  box_count integer,
+  stage text,
+  paid_at timestamptz,
+  received_at timestamptz,
+  inspected_at timestamptz,
+  shipped_at timestamptz,
+  inspection_result text,
+  delivery text
+)
+language sql stable security definer set search_path = ''
+as $$
+  with mine as (
+    select o.*,
+           exists (select 1 from public.boxes b join public.office_parcels p on p.box_id = b.id
+                   where b.order_id = o.id and p.state in ('return_waiting', 'return_printed', 'returned')) as any_returned
+    from public.orders o
+    join public.creators c on c.id = o.creator_id
+    join public.profiles me on me.id = c.profile_id
+    where c.profile_id = auth.uid()
+      and me.role = 'creator'
+      and o.registered_at is not null
+      and o.status <> 'pending_payment'
+  )
+  select m.order_no,
+         f.nickname,
+         (select count(*)::integer from public.boxes b where b.order_id = m.id),
+         case
+           when m.status in ('rejected', 'expired', 'canceled') then 'closed'
+           when m.any_returned or m.inspection_result = 'returned' then 'returned'
+           when m.delivery = 'delivered' then 'delivered'
+           when m.delivery = 'in_transit' then 'in_transit'
+           when m.status = 'shipped' then 'shipped'
+           when m.status in ('inspected', 'label_printed') then 'inspected'
+           when m.status in ('received', 'labeled') then 'received'
+           else 'paid'
+         end,
+         m.registered_at,
+         m.received_at,
+         m.inspected_at,
+         m.shipped_at,
+         case
+           when m.any_returned or m.inspection_result = 'returned' then 'returned'
+           when m.inspection_result = 'passed' then 'passed'
+           else null
+         end,
+         m.delivery
+  from mine m
+  join public.profiles f on f.id = m.fan_id
+  order by m.registered_at desc;
+$$;

@@ -11,6 +11,7 @@ import {
   type InspectionChecks,
   type InspectionOutcome,
   type TrackerVerdict,
+  withoutStaleVerdict,
 } from "@/entities/parcel/model/inspection";
 import { needsReload } from "@/entities/parcel/model/office-error";
 import { KIND_LABEL, NEXT_STEP_TEXT, STATE_LABEL, TIER_LABEL } from "@/entities/parcel/model/office-labels";
@@ -80,6 +81,9 @@ function measurementText(m: Measurement): string {
   return "대형을 넘어 검수 불합격이에요. 검수 결과와 상관없이 QR 을 다시 스캔하면 반송 대기로 가요.";
 }
 
+/** 판정 칸의 첫 선택지 — 판정 없이 저장하면 여기로 커서를 옮긴다 */
+const VERDICT_FIRST_ID = "tracker-verdict-tracker";
+
 const CLEAR_GIFT: InspectionChecks = { kind: "gift", bluetooth: "clear", rf: "clear", metal: "clear", trackerVerdict: null };
 const CLEAR_REVGIFT: InspectionChecks = { kind: "revgift", surface: "clear", prohibited: "clear" };
 
@@ -93,7 +97,10 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   const [phase, setPhase] = useState<Phase>("form");
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [finished, setFinished] = useState<Finished | null>(null);
-  const [error, setError] = useState<{ title: string; message: string; unknown?: true } | null>(null); // unknown: 서버는 반영했을 수 있는데 응답을 못 읽음
+  // unknown: 서버는 반영했을 수 있는데 응답을 못 읽음 · local: 서버에 보내기 전에 화면에서 막힘(서버 거절이 아니다)
+  const [error, setError] = useState<{ title: string; message: string; unknown?: true; local?: true } | null>(null);
+  // 반응이 나왔는데 판정 없이 저장을 눌렀다 — 판정 칸을 오류로 표시한다(판정을 고르거나 반응이 없어지면 풀린다)
+  const [verdictMissing, setVerdictMissing] = useState(false);
   const [measuredTier, setMeasuredTier] = useState<MeasuredTier | null>(null);
   const [measurement, setMeasurement] = useState<Measurement | null>(null);
 
@@ -103,8 +110,11 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   const reacted = checks.kind === "gift" && trackerReacted(checks);
   const canInspect = parcel !== null && parcel.state === "labeled";
 
-  function updateChecks(next: InspectionChecks) {
+  function updateChecks(changed: InspectionChecks) {
+    // 반응이 없어지면 고른 판정을 비운다 — 다시 반응이 나와도 기본값 없이 비어 있다(INV-W4)
+    const next = withoutStaleVerdict(changed);
     setChecks(next);
+    setVerdictMissing(false);
     const r = inspectionResultOf(next, outcome);
     if (r) setOutcome(r.outcome);
   }
@@ -120,7 +130,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   async function onScan(raw: string) {
     const code = readScan(raw);
     if (code.kind !== "qr") {
-      setError({ title: "라벨 QR 을 스캔해 주세요", message: "검수 화면은 상자에 붙인 라벨 QR(Q-여섯 자리)만 받아요." });
+      setError({ title: "라벨 QR 을 스캔해 주세요", message: "검수 화면은 상자에 붙인 라벨 QR(Q-여섯 자리)만 받아요.", local: true });
       return;
     }
     setError(null);
@@ -169,6 +179,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
     setParcel(next);
     setChecks(next.kind === "gift" ? CLEAR_GIFT : CLEAR_REVGIFT);
     setOutcome("pass");
+    setVerdictMissing(false);
     setPhase("form");
     setSavedAt(null);
     setFinished(null);
@@ -202,7 +213,9 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
     if (!parcel || busy) return;
     const result = inspectionResultOf(checks, outcome);
     if (!result) {
-      setError({ title: "추적기인지 먼저 골라 주세요", message: "블루투스·RF 반응이 나온 상자는 위치 추적기인지 판정해야 기록할 수 있어요." });
+      setError({ title: "추적기인지 먼저 골라 주세요", message: "블루투스·RF 반응이 나온 상자는 위치 추적기인지 판정해야 기록할 수 있어요.", local: true });
+      setVerdictMissing(true);
+      document.getElementById(VERDICT_FIRST_ID)?.focus();
       return;
     }
     setBusy(true);
@@ -225,7 +238,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   const stepIndex = !parcel ? 0 : phase === "form" ? 1 : phase === "saved" ? 3 : 4;
   const steps = ["QR 스캔", "검수 기록", "기록 저장", "QR 다시 스캔해 검수 완료"];
   const announce = error
-    ? `${error.unknown ? "확인 필요" : "거부"}: ${error.title}`
+    ? `${error.unknown || error.local ? "확인 필요" : "거부"}: ${error.title}`
     : phase === "finished" && finished
       ? FINISHED[finished.state].title
       : phase === "saved"
@@ -264,12 +277,12 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
         {error && (
           <div className={`${w.result} ${w.resultNo} ${w.resultHeadSm}`}>
             <div className={w.resultHead}>
-              <span className={`${a.tag} ${a.tagInk}`}>{error.unknown ? "확인 필요" : "거부"}</span>
+              <span className={`${a.tag} ${a.tagInk}`}>{error.unknown || error.local ? "확인 필요" : "거부"}</span>
               <h2>{error.title}</h2>
             </div>
             <p>
               {error.message}
-              {error.unknown ? "" : " 상자 상태는 그대로예요."}
+              {error.unknown || error.local ? "" : " 상자 상태는 그대로예요."}
             </p>
           </div>
         )}
@@ -321,17 +334,22 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
             <h2 id="measure-form" className={w.formTitle}>
               실측 구간
             </h2>
-            <fieldset className={w.choice} disabled={measurement !== null}>
-              <legend>재어 본 크기·무게로 고른 구간 (신고 {TIER_LABEL[parcel.tier]})</legend>
+            <fieldset className={w.choice} disabled={measurement !== null} aria-describedby="measure-hint">
+              <legend>재어 본 크기·무게로 고른 구간</legend>
               <div className={w.opts}>
                 {MEASURED_TIERS.map((t) => (
                   <label key={t} className={w.opt}>
                     <input type="radio" name="measured" value={t} checked={measuredTier === t} onChange={() => setMeasuredTier(t)} />
-                    {TIER_LABEL[t]}
+                    {t === parcel.tier ? `${TIER_LABEL[t]} (신고)` : TIER_LABEL[t]}
                   </label>
                 ))}
               </div>
-              <p className={a.hint}>신고한 구간을 미리 골라 뒀어요. 재어 보고 다를 때만 바꿔요. 검수 완료 전에 꼭 「실측 기록」을 눌러요. 신고보다 크면 차액만 팬에게 따로 결제 요청돼요. 신고 이하면 차액도 환불도 없어요. 실측은 상자마다 한 번만 기록해요.</p>
+              <div id="measure-hint">
+                <p className={a.hint}>
+                  <strong>재어 본 뒤 맞으면 그대로 기록해요.</strong>
+                </p>
+                <p className={a.hint}>신고한 구간을 미리 골라 뒀어요. 다를 때만 바꿔요. 검수 완료 전에 꼭 「실측 기록」을 눌러요. 신고보다 크면 차액만 팬에게 따로 결제 요청돼요. 신고 이하면 차액도 환불도 없어요. 실측은 상자마다 한 번만 기록해요.</p>
+              </div>
             </fieldset>
             {measurement ? (
               <div className={`${a.note} ${measurement.result === "none" ? a.noteOk : w.noteWarn}`}>
@@ -376,17 +394,42 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
             )}
 
             {reacted && checks.kind === "gift" && (
-              <fieldset className={w.choice} disabled={phase !== "form"}>
+              <fieldset
+                id="tracker-verdict"
+                // aria-invalid 를 읽게 라디오 묶음 역할을 준다
+                role="radiogroup"
+                className={w.choice}
+                disabled={phase !== "form"}
+                aria-invalid={verdictMissing ? true : undefined}
+                aria-describedby={verdictMissing ? "tracker-verdict-error tracker-verdict-hint" : "tracker-verdict-hint"}
+              >
                 <legend>추적기 판정 — 블루투스·RF 반응이 나왔어요</legend>
                 <div className={w.opts}>
                   {(["tracker", "not_tracker"] as const).map((v) => (
                     <label key={v} className={w.opt}>
-                      <input type="radio" name="tracker" value={v} checked={checks.trackerVerdict === v} onChange={() => updateChecks({ ...checks, trackerVerdict: v })} />
+                      <input
+                        id={v === "tracker" ? VERDICT_FIRST_ID : undefined}
+                        type="radio"
+                        name="tracker"
+                        value={v}
+                        checked={checks.trackerVerdict === v}
+                        onChange={() => updateChecks({ ...checks, trackerVerdict: v })}
+                      />
                       {VERDICT_LABEL[v]}
                     </label>
                   ))}
                 </div>
-                <p className={a.hint}>에어태그·스마트태그 같은 위치 추적기인지 상자를 열어 확인해요. 고른 판정은 검수 기록에 같이 남아요.</p>
+                {verdictMissing && (
+                  <p id="tracker-verdict-error" className={a.errorLine}>
+                    <span className={a.errorMark} aria-hidden="true">
+                      !
+                    </span>
+                    위치 추적기인지 골라 주세요.
+                  </p>
+                )}
+                <p id="tracker-verdict-hint" className={a.hint}>
+                  에어태그·스마트태그 같은 위치 추적기인지 상자를 열어 확인해요. 고른 판정은 검수 기록에 같이 남아요.
+                </p>
               </fieldset>
             )}
 
@@ -425,7 +468,9 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
                   ? "위치 추적기가 나온 상자는 보낸 팬의 주소로 바로 돌려보내요."
                   : restriction === "return_only"
                     ? "문제가 나온 역조공 상자는 반송 대기로 넘어가요."
-                    : "통과하면 출고 단계로 넘어가요. 반송은 반송 대기로 넘어가요. 추적기 반송은 위치 추적기로 판정했을 때만 있어요."}
+                    : restriction === "needs_verdict"
+                      ? "추적기 판정을 먼저 고르면 결과를 고를 수 있어요."
+                      : "통과하면 출고 단계로 넘어가요. 반송은 반송 대기로 넘어가요. 추적기 반송은 위치 추적기로 판정했을 때만 고를 수 있어요."}
               </p>
             </fieldset>
 

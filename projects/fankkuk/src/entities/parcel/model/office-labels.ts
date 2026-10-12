@@ -16,6 +16,7 @@ export const STATE_LABEL: Record<ParcelState, { text: string; tone: StateTone }>
   received: { text: "라벨 부착 대기", tone: "warn" },
   labeled: { text: "검수 대기", tone: "warn" },
   inspected: { text: "검수 완료", tone: "brand" },
+  // 옛 기록 표시용 — 추적기 상자도 이제 보관 없이 바로 반송 대기로 간다(INV-W4, 2026-10-12 D2). DB 상태 값은 남아 있다
   held: { text: "보관", tone: "ink" },
   return_waiting: { text: "반송 대기", tone: "warn" },
   return_printed: { text: "반송 송장 출력함", tone: "warn" },
@@ -35,6 +36,7 @@ export const NEXT_STEP_TEXT: Record<NextStep, string> = {
   wait_difference: "팬의 차액 결제를 기다려요",
   wait_accept: "팬의 받기를 기다려요",
   wait_expiry: "자동 처리 대기(반송 예정)",
+  // 옛 기록 표시용 — 새로 보관되는 상자는 없다(INV-W4, 2026-10-12 D2)
   held: "추적 장치가 나와 사무실에 보관해요",
   on_hold: "보류 중이라 출고하지 않아요 — 미확인 입고 화면에서 확인",
   print_return: "출고 화면에서 QR 스캔하면 반송 송장 출력",

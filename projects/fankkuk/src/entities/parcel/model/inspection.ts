@@ -20,6 +20,11 @@ export function trackerReacted(checks: Pick<GiftChecks, "bluetooth" | "rf">): bo
   return checks.bluetooth === "found" || checks.rf === "found";
 }
 
+/** 반응이 없어진 팬 선물의 남은 추적기 판정을 비운다 — 다시 반응이 나오면 판정은 기본값 없이 비어 있어야 한다 */
+export function withoutStaleVerdict(checks: InspectionChecks): InspectionChecks {
+  return checks.kind === "gift" && !trackerReacted(checks) && checks.trackerVerdict !== null ? { ...checks, trackerVerdict: null } : checks;
+}
+
 export function allowedOutcomes(checks: InspectionChecks): readonly InspectionOutcome[] {
   if (checks.kind === "gift") {
     if (!trackerReacted(checks)) return ["pass", "return"];

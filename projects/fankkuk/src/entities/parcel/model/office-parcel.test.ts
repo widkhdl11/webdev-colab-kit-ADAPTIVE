@@ -95,7 +95,7 @@ describe("들어온 상자 읽기 (office-workflow INV-W1·W7)", () => {
     expect(parcelTabOf("inspected")).toBe("outbound");
     expect(parcelTabOf("label_printed")).toBe("outbound");
     expect(parcelTabOf("shipped")).toBe("shipped");
-    expect(parcelTabOf("held")).toBe("held");
+    expect(parcelTabOf("held")).toBe("return"); // 옛 기록의 보관 상자 — 보관 탭이 없어졌고 끝은 반송이다(2026-10-12 D2)
     expect(parcelTabOf("return_waiting")).toBe("return");
     expect(parcelTabOf("return_printed")).toBe("return");
     expect(parcelTabOf("returned")).toBe("return");

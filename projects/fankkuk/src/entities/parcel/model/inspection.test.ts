@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowedOutcomes, inspectionResultOf, inspectionResultShape, outcomeRestriction, type GiftChecks } from "./inspection";
+import { allowedOutcomes, inspectionResultOf, inspectionResultShape, outcomeRestriction, withoutStaleVerdict, type GiftChecks } from "./inspection";
 
 // 2026-10-12 문제집 D2: 블루투스·RF 반응이 나오면 직원이 위치 추적기인지 판정한다. 추적기면 「추적기 반송」(DB 값 hold — 바로 반송 대기),
 // 「추적기 아님」이면 반응이 없던 상자처럼 통과·반송. 판정 값은 검수 기록에 남는다(tracker_verdict).
@@ -102,5 +102,15 @@ describe("검수 결론 고르기 (office-workflow INV-W4)", () => {
     expect(outcomeRestriction({ kind: "revgift", surface: "clear", prohibited: "found" })).toBe("return_only");
     expect(outcomeRestriction(gift({ metal: "found" }))).toBeNull();
     expect(outcomeRestriction({ kind: "revgift", surface: "clear", prohibited: "clear" })).toBeNull();
+  });
+
+  it("INV-W4: 반응이 없어지면 남은 추적기 판정을 비운다 — 다시 반응이 나와도 판정은 기본값 없이 비어 있다", () => {
+    expect(withoutStaleVerdict(gift({ trackerVerdict: "tracker" }))).toEqual(gift());
+    expect(withoutStaleVerdict(gift({ trackerVerdict: "not_tracker" }))).toEqual(gift());
+    // 반응이 남아 있으면 판정을 그대로 둔다
+    expect(withoutStaleVerdict(gift({ bluetooth: "found", trackerVerdict: "tracker" }))).toEqual(gift({ bluetooth: "found", trackerVerdict: "tracker" }));
+    expect(withoutStaleVerdict(gift({ rf: "found", trackerVerdict: "not_tracker" }))).toEqual(gift({ rf: "found", trackerVerdict: "not_tracker" }));
+    const rev = { kind: "revgift", surface: "found", prohibited: "clear" } as const;
+    expect(withoutStaleVerdict(rev)).toEqual(rev);
   });
 });

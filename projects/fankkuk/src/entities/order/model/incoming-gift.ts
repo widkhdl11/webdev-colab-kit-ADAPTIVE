@@ -5,7 +5,8 @@
  *  · returned 검수에서 반송 · closed 거절·7일 반려·취소 */
 export type IncomingStage = "paid" | "received" | "inspected" | "shipped" | "in_transit" | "delivered" | "returned" | "closed";
 
-export type IncomingInspection = "passed" | "held" | "returned";
+/** 검수 결과. 추적기 상자도 보관 없이 바로 반송 대기로 가므로 「반송」이다(INV-W4, 2026-10-12 문제집 D2) — 보관 값은 없다 */
+export type IncomingInspection = "passed" | "returned";
 
 export type IncomingGiftView = {
   orderNo: string;
@@ -33,14 +34,7 @@ const STAGE_NOTE: Partial<Record<IncomingStage, string>> = {
   in_transit: "지금 가고 있어요.",
 };
 
-/**
- * 크리에이터 메인 「진행 중인 선물」 한 줄의 지금 상황. 단계 문구가 먼저다.
- * 보관(추적 장치) 상자가 있어도 다른 상자는 단계를 따라 계속 가므로, 보관 문구는 단계가 입고(received)일 때만 대신 쓰고
- * 그 밖의 단계에서는 단계 문구 뒤에 「상자 일부 보관」을 붙인다.
- */
+/** 크리에이터 메인 「진행 중인 선물」 한 줄의 지금 상황 — 단계 문구. */
 export function incomingNoteOf(g: Pick<IncomingGiftView, "stage" | "inspection">): string {
-  const held = g.inspection === "held";
-  if (held && g.stage === "received") return "추적 장치가 나와 사무실에 보관하고 있어요.";
-  const note = STAGE_NOTE[g.stage] ?? "";
-  return held ? `${note} 상자 일부 보관`.trim() : note;
+  return STAGE_NOTE[g.stage] ?? "";
 }

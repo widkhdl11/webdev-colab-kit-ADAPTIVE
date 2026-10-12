@@ -430,6 +430,14 @@ describe("추적기 반송 알림 — 크리에이터에게 돌려보내는 선�
     expect(fanKinds(held.g.orderId)).toEqual(fanKinds(returned.g.orderId));
   });
 
+  it("INV-N13 (S13): 하루 몫 hold 줄을 꺼내면 닉네임은 하루 자신이다 — 보낸 팬(별빛)의 닉네임이 본문에 실리지 않는다", async () => {
+    const { g, staff, qrs } = await arrivedGift();
+    await inspect(staff, qrs[0]!, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" });
+    const c = await claimOne(rowId(g.orderId, "hold", "haru_creator"));
+    expect(c).toMatchObject({ kind: "hold", nickname: "하루", order_no: g.orderNo });
+    expect(c.nickname).not.toBe("별빛");
+  });
+
   it("INV-N13 (S13c, 실패경로): 블루투스 반응이지만 「추적기 아님」이면 hold·hold_fan 줄도 추적기 기록도 없다 — 통과든 반송이든", async () => {
     for (const outcome of ["pass", "return"] as const) {
       const { g, staff, qrs } = await arrivedGift();

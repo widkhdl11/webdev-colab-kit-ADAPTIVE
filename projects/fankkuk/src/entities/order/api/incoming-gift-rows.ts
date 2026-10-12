@@ -20,7 +20,7 @@ const rowSchema = z
     received_at: ts.nullable(),
     inspected_at: ts.nullable(),
     shipped_at: ts.nullable(),
-    inspection_result: z.enum(["passed", "held", "returned"]).nullable(),
+    inspection_result: z.enum(["passed", "returned"]).nullable(),
     delivery: z.enum(["in_transit", "delivered"]).nullable(),
   })
   .strict();

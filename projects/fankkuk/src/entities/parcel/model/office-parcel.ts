@@ -112,7 +112,7 @@ export function parcelDetailFromData(data: unknown): ParcelDetail | null {
   };
 }
 
-export type ParcelTab = "inbound" | "inspect" | "outbound" | "shipped" | "held" | "return";
+export type ParcelTab = "inbound" | "inspect" | "outbound" | "shipped" | "return";
 
 /** 「들어온 상자」 목록의 탭. 승인·받기를 기다리는 검수 완료 상자도 출고 대기에 둔다(INV-W3 S3c — 출고 화면에서만 막힌다). */
 export function parcelTabOf(state: ParcelState): ParcelTab {
@@ -128,8 +128,8 @@ export function parcelTabOf(state: ParcelState): ParcelTab {
       return "outbound";
     case "shipped":
       return "shipped";
+    // 보관(held)은 옛 기록뿐이다 — 추적기 상자도 보관 없이 바로 반송 대기로 간다(INV-W4, 2026-10-12 D2). 끝이 반송이라 반송 탭에 둔다
     case "held":
-      return "held";
     case "return_waiting":
     case "return_printed":
     case "returned":

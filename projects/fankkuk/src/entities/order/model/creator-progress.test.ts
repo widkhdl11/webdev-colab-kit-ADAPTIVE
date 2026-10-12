@@ -33,8 +33,8 @@ describe("크리에이터 메인 — 진행 단계 (office-workflow INV-W9)", ()
     expect(moving.steps.find((s) => s.state === "current")?.key).toBe("delivered");
   });
 
-  it("INV-W9: 보관은 검수를 마친 것으로, 반송은 검수를 마친 것으로 칠하지 않는다", () => {
-    expect(states({ ...base, receivedAt: T, inspection: "held" })[2]).toBe("inspected:done");
+  it("INV-W9: 통과는 검수를 마친 것으로, 반송은 검수를 마친 것으로 칠하지 않는다", () => {
+    expect(states({ ...base, receivedAt: T, inspection: "passed" })[2]).toBe("inspected:done");
     expect(states({ ...base, receivedAt: T, inspection: "returned" })[2]).toBe("inspected:current");
   });
 
