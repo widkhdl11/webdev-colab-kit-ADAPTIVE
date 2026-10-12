@@ -16,61 +16,24 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link rel="stylesheet" href="v11.css">
 <style>
-  .stack{display:grid;gap:24px}
-  .part{padding:clamp(24px,3vw,40px);border-radius:var(--r-card);background:#fff;box-shadow:var(--hair)}
-  .part > .t-desc,.part > .t-meta{margin-top:8px}
-  .part--soft{background:var(--surface-brand);box-shadow:none}
-  .crumb{padding-top:24px}
-  .crumb a{display:inline-flex;align-items:center;min-height:44px;color:var(--sub);text-decoration:none}
-  .crumb a:hover{color:var(--ink);text-decoration:underline}
-  .page-top{padding-block:clamp(32px,4vw,56px) clamp(24px,3vw,40px)}
-  .page-top .t-lead{margin-top:12px}
-  .page-end{padding-bottom:var(--sec-pad)}
-  .face{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--f,#f6d6cf);color:var(--ink);font-weight:800;line-height:1;flex-shrink:0}
-  .face--lg{width:72px;height:72px;font-size:var(--fs-card)}
-  .kv > div{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--border)}
-  .kv > div:last-child{border-bottom:0}
-  .kv dd{overflow-wrap:anywhere}
-  .btnrow{display:flex;flex-wrap:wrap;gap:12px}
-  .actions{display:flex;justify-content:flex-end;gap:12px;margin-top:32px}
-  .field-block + .field-block{margin-top:24px}
-  .hint{margin-top:8px;color:var(--sub)}
-  .step-h{margin-bottom:24px}
-  .dots{display:flex;gap:4px}
-  .dots span{flex:1;height:8px;border-radius:4px;background:var(--border)}
-  .dots span.on{background:var(--brand)}
-  .flow li.done .n{background:var(--success);color:#fff;box-shadow:none}
-  .flow li.done:not(:last-child)::after{background:var(--success)}
-  @media(max-width:1023px){.flow li > p{grid-column:2}.flow li > .n{grid-row:1 / span 3}.flow--mini li > p{grid-column:auto}.flow--mini li > .n{grid-row:auto}}
-  .check{display:inline-flex;align-items:center;gap:8px}
-  .check input{width:24px;height:24px;margin:0;accent-color:var(--brand);flex-shrink:0}
-  .check + .check{margin-top:12px}
-  @media(max-width:767px){
-    .kv > div{grid-template-columns:1fr;gap:4px}
-    .actions{display:grid;grid-template-columns:1fr 2fr}
-    .actions .btn:only-child{grid-column:1/-1}
-  }
-  .gtop{padding:clamp(28px,5vw,64px)}
-  .g-art{width:88px;height:88px;margin-bottom:16px;object-fit:contain}
-  .gnow{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:20px}
-  .gtop .flow{margin-top:40px}
-  .appr{margin-top:32px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
-  .box-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
-  .box + .box{margin-top:16px}
-  .addr{margin-top:20px}
-  .addr .kv > div{grid-template-columns:120px minmax(0,1fr);padding:10px 0}
-  .addr .kv > div{border-bottom-color:rgb(52 48 57/.12)}
-  .wb{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;margin-top:20px}
-  .find{display:grid;gap:16px;margin-top:20px}
-  @media(max-width:767px){.wb{grid-template-columns:1fr}.addr .kv > div{grid-template-columns:1fr}}
-  .lines > div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--border)}
-  .lines .total{border-bottom:0;padding-top:20px;align-items:baseline}
-  .lines .amt{font-weight:800;white-space:nowrap}
-  .total .amt{font-size:var(--fs-title);line-height:1.3;color:var(--brand-ink)}
-  .cancel{margin-top:24px}
+.gtop{padding:clamp(28px,5vw,64px)}
+.g-art{width:88px;height:88px;margin-bottom:16px;object-fit:contain}
+.gnow{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:24px}
+.gtop .flow{margin-top:40px}
+.appr{margin-top:32px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.box-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.box + .box{margin-top:16px}
+.addr{margin-top:24px}
+.addr .kv > div{grid-template-columns:120px minmax(0,1fr);padding:10px 0}
+.addr .kv > div{border-bottom-color:rgb(52 48 57/.12)}
+.wb{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;margin-top:24px}
+.find{display:grid;gap:16px;margin-top:24px}
+@media(max-width:767px){.wb{grid-template-columns:1fr}}
+@media(max-width:767px){.addr .kv > div{grid-template-columns:1fr}}
+.cancel{margin-top:24px}
 </style>
 </head>
-<body>
+<body class="page-gift">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
     <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
@@ -182,7 +145,7 @@
             <div><label class="label" for="f-co">택배사</label><input class="field" id="f-co" type="text" placeholder="예: 한진택배"></div>
             <div><label class="label" for="f-nm">보낸 사람 이름 첫 글자</label><input class="field" id="f-nm" type="text" maxlength="1" placeholder="예: 하"></div>
           </div>
-          <div class="btnrow" style="margin-top:20px"><button class="btn" type="button">내 상자 찾기</button></div>
+          <div class="btnrow" style="margin-top:24px"><button class="btn" type="button">내 상자 찾기</button></div>
           <p class="hint">하루에 다섯 번까지 찾을 수 있어요. 사무실에는 도착 시각·택배사·보낸 사람 이름 첫 글자만 남기고, 주소와 전화번호는 남기지 않아요.</p>
         </section>
 

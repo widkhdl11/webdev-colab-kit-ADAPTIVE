@@ -1,0 +1,64 @@
+// 정적 HTML이 제공하는 펼침·선택·키보드 포커스만 검사한다.
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const {pathToFileURL}=require('node:url');
+(async()=>{
+ const browser=await chromium.launch({channel:'msedge',headless:true});
+ const page=await browser.newPage({viewport:{width:390,height:844}});
+ const root=path.resolve(__dirname,'..');
+ const open=async file=>{await page.goto(pathToFileURL(path.join(root,file)).href);await page.evaluate(()=>document.fonts.ready)};
+ const checks=[];
+ await open('landing.html');
+ await page.keyboard.press('Tab');
+ assert.equal(await page.locator(':focus').getAttribute('class'),'skip-link');
+ await page.keyboard.press('Enter');
+ checks.push('본문 바로가기 키보드 접근');
+ await page.locator('.mm summary').click();
+ assert.equal(await page.locator('.mm').getAttribute('open'),'');
+ assert.ok(await page.locator('.mm-body').isVisible());
+ assert.ok(await page.locator('.mm-body').evaluate(el=>el.getBoundingClientRect().right<=innerWidth));
+ checks.push('휴대폰 메뉴 펼침 및 화면 폭');
+ await open('support.html');
+ for(const radio of await page.locator('input[name=cat]').all()){
+  const id=await radio.getAttribute('id');
+  await page.locator(`label[for="${id}"]`).click();assert.ok(await radio.isChecked());
+ }
+ checks.push('고객센터 분류 선택');
+ await open('notices.html');
+ const summary=page.locator('.acc summary').first();
+ await summary.focus();
+ assert.equal(await summary.evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
+ const wasOpen=await summary.evaluate(el=>el.parentElement.open);
+ await page.keyboard.press('Enter');
+ assert.equal(await summary.evaluate(el=>el.parentElement.open),!wasOpen);
+ checks.push('공지 키보드 펼침 및 포커스 테두리');
+ await open('send.html');
+ const radio=page.locator('input[name=creator]').nth(1);
+ await page.locator('.pick').nth(1).click();assert.ok(await radio.isChecked());
+ await radio.focus();
+ await page.keyboard.press('Tab');
+ await page.keyboard.press('Shift+Tab');
+ assert.equal(await page.locator('.pick').nth(1).evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
+ assert.ok(await page.locator('.pick--off input').isDisabled());
+ checks.push('선물 수신자 선택·비활성·키보드 포커스');
+ await page.emulateMedia({reducedMotion:'reduce'});
+ assert.equal(await page.locator('.btn').first().evaluate(el=>getComputedStyle(el).transitionDuration),'0s');
+ checks.push('움직임 줄이기 설정');
+ await page.setViewportSize({width:1440,height:1000});
+ await open('creators.html');
+ const geometry=await page.evaluate(()=>{
+  const cards=[...document.querySelectorAll('.grid > .ccard')].map(el=>el.getBoundingClientRect());
+  const last=cards.slice(-2);const head=document.querySelector('.sec-head').getBoundingClientRect();
+  return {heights:cards.slice(0,3).map(r=>r.height),lastCenter:(last[0].left+last[1].right)/2,headCenter:(head.left+head.right)/2,searchCenter:(()=>{const r=document.querySelector('.search').getBoundingClientRect();return (r.left+r.right)/2})()};
+ });
+ assert.ok(Math.max(...geometry.heights)-Math.min(...geometry.heights)<1);
+ assert.ok(Math.abs(geometry.lastCenter-geometry.headCenter)<1);
+ assert.ok(Math.abs(geometry.searchCenter-geometry.headCenter)<1);
+ checks.push('카드 첫 줄 높이·마지막 줄 중앙·검색창 중앙');
+ const result={passed:checks,geometry};
+ fs.writeFileSync(path.join(__dirname,'interactions.json'),JSON.stringify(result,null,2));
+ console.log(JSON.stringify(result));
+ await browser.close();
+})().catch(error=>{console.error(error);process.exit(1)});

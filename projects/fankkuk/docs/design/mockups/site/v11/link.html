@@ -14,92 +14,9 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link rel="stylesheet" href="v11.css">
-<style>
-  /* 안쪽 화면은 첫 화면보다 구간 여백을 줄인다 */
-  .section{padding-block:clamp(48px,6vw,88px)}
-  .section + .section{padding-top:0}
-  .row-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:32px}
-  .link-line{display:inline-flex;align-items:center;min-height:44px;font-weight:800;color:var(--brand-ink)}
-  /* 얼굴 자리표시 */
-  .face{width:56px;height:56px;flex-shrink:0}.face--sm{width:40px;height:40px}.face--xl{width:120px;height:120px}
-  /* 크리에이터 태그 (플랫폼 색, design-rules 5절 표와 같은 값) */
-  .ctags{display:flex;flex-wrap:wrap;gap:8px}
-  .ctag{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 10px 0 4px;border-radius:var(--r-tag);background:var(--f,#f2f2f3);color:var(--k,#343039);font-weight:800;line-height:1.2}
-  .ctag .bd{display:grid;place-items:center;width:20px;height:20px;border-radius:5px;overflow:hidden}
-  .ctag .bd img{width:100%;height:100%;object-fit:cover}.ctag .bd.glyph img{width:12px;height:12px}
-  .ctag svg{width:20px;height:20px;padding:2px}
-  /* 크리에이터 카드 — 같은 크기 격자 */
-  .ccard{display:flex;flex-direction:column;gap:16px}
-  .ccard-top{display:flex;align-items:center;gap:16px}
-  .ccard-top h3 a{text-decoration:none}.ccard-top h3 a:hover{text-decoration:underline}
-  .ccard-foot{display:grid;gap:12px;margin-top:auto}
-  .ccard-foot.two{grid-template-columns:1fr 1fr}
-  .ccard .intro{flex:1}
-  /* 칩 줄 */
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
-  .chips .chip{min-height:44px;padding:0 18px;border:0;cursor:pointer}
-  .chips .chip:hover{background:var(--surface-hover)}
-  .chips .chip[aria-pressed="true"]{background:var(--ink);color:#fff}
-  /* 펼치는 줄 (공지·질문) */
-  .acc details{border-radius:var(--r-card);box-shadow:var(--hair);background:#fff}
-  .acc details + details,.acc > * + *{margin-top:12px}
-  .acc summary{display:flex;align-items:center;gap:16px;min-height:72px;padding:16px 24px;cursor:pointer;list-style:none}
-  .acc summary::-webkit-details-marker{display:none}
-  .acc summary .q{flex:1;min-width:0}
-  .acc summary .q b{display:block}
-  .acc summary svg{width:20px;height:20px;transition:transform .15s}
-  .acc details[open] summary svg{transform:rotate(180deg)}
-  .acc .ans{padding:0 24px 24px;display:grid;gap:12px}
-  /* 글 본문 */
-  .prose{display:grid;gap:12px;max-width:760px}
-  .prose .dots{display:grid;gap:8px}
-  .prose .dots li{display:flex;gap:12px}
-  .prose .dots li::before{content:"";width:6px;height:6px;margin-top:11px;border-radius:50%;background:var(--faint);flex-shrink:0}
-  /* 인증 화면 */
-  .auth{max-width:480px;margin-inline:auto}
-  .auth .card{padding:clamp(24px,4vw,40px)}
-  .auth .head{text-align:center;margin-bottom:32px}
-  .auth .head img{width:72px;height:72px;margin:0 auto 16px;object-fit:contain}
-  .auth .head .t-lead{margin-top:12px}
-  .form{display:grid;gap:20px}
-  .hint{margin-top:8px;color:var(--sub)}
-  .check{display:flex;align-items:center;gap:12px;min-height:44px}
-  .check input{width:24px;height:24px;accent-color:var(--brand)}
-  .err{padding:12px 16px;border-radius:var(--r-btn);background:var(--danger-soft);color:var(--danger);font-weight:800}
-  .okmsg{padding:12px 16px;border-radius:var(--r-btn);background:var(--success-soft);color:var(--success);font-weight:800}
-  select.field{appearance:auto}
-  textarea.field{padding-block:14px;min-height:160px;resize:vertical;line-height:1.6}
 
-  .pf{padding-block:clamp(40px,6vw,80px) clamp(32px,4vw,56px);text-align:center}
-  .pf .face--xl{margin:0 auto 20px}
-  .pf .handle{margin-top:8px}
-  .pf .t-lead{margin-top:16px}
-  .pf .ctags{justify-content:center;margin-top:20px}
-  .pf .thanks{margin-top:24px;font-size:var(--fs-card);line-height:1.4;font-weight:800;color:var(--brand-ink)}
-  .pf .row-btns{margin-top:24px}
-  .pf .note{margin-top:12px;color:var(--sub)}
-  .info h3{display:flex;align-items:center;gap:8px}
-  .info .big{margin-top:8px;font-size:var(--fs-card);line-height:1.4;font-weight:800}
-  .info .ic{display:grid;place-items:center;width:44px;height:44px;margin-bottom:16px;border-radius:50%;background:var(--surface)}
-  .info .ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  .info.ok .ic{background:var(--success-soft);color:var(--success)}
-  .info.rest .ic{background:var(--warn-soft);color:var(--warn-ink)}
-  .info .dd{margin-top:12px}
-  .quote q{display:block;font-weight:800;font-size:var(--fs-lead);line-height:1.5;quotes:"“" "”"}
-  .quote .by{margin-top:12px}
-  .nos{display:grid;gap:8px}
-  .nos li{display:flex;gap:12px;align-items:flex-start}
-  .nos .x{display:grid;place-items:center;width:24px;height:24px;margin-top:1px;border-radius:50%;background:var(--danger-soft);color:var(--danger);flex-shrink:0}
-  .steps-ol{display:grid;gap:12px;counter-reset:s}
-  .steps-ol li{display:flex;gap:12px}
-  .steps-ol li::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;font-weight:800;flex-shrink:0}
-  .other{text-decoration:none;display:flex;align-items:center;gap:16px}
-  .other:hover{background:var(--surface)}
-  .other small{display:block;color:var(--sub);font-size:var(--fs-body)}
-  .panel .center-in{display:grid;justify-items:center;gap:16px;text-align:center}
-</style>
 </head>
-<body>
+<body class="page-link">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
     <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
     <symbol id="check" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="currentColor"/><path d="m5 10 3 3 7-7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -128,7 +45,7 @@
       </div>
     </section>
 
-    <section class="section" aria-labelledby="info-title">
+    <section class="section section--compact" aria-labelledby="info-title">
       <div class="container">
         <div class="sec-head"><h2 id="info-title">새벽달님은 지금</h2></div>
         <div class="grid cols-3">
@@ -139,7 +56,7 @@
       </div>
     </section>
 
-    <section class="section" aria-labelledby="fold-title">
+    <section class="section section--compact" aria-labelledby="fold-title">
       <div class="container">
         <div class="sec-head"><h2 id="fold-title">보내기 전에 알아 두세요</h2></div>
 
@@ -178,7 +95,7 @@
       </div>
     </section>
 
-    <section class="section" aria-labelledby="similar-title">
+    <section class="section section--compact" aria-labelledby="similar-title">
       <div class="container">
         <div class="sec-head"><h2 id="similar-title">이런 크리에이터도 있어요</h2></div>
         <ul class="grid cols-4">
