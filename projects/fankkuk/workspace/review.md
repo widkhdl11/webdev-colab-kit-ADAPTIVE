@@ -15,7 +15,7 @@ reviewers: [security-reviewer]
 - code-reviewer·ui-reviewer·test-auditor 는 보내지 않음: 로직·화면·시험 내용 변경이 없어 읽을 것이 없다.
 
 ## 미룬 문서 — 비움
-- 아래 두 목록 중 design-rules 136줄만 남음 — 재승인 카드 d60 대기.
+- 비었다 — design-rules 136줄은 카드 d60 「고쳐」로 고침.
 
 ## 실행 근거
 - `node gates/run-gates.mjs` 통과(tsc 4/4 · test 4/4) · `npx vitest run src/widgets/legal` 4/4(문장 고친 뒤 다시) · `node gates/spec-coverage.mjs` 출력 없음 · 문제집 D.json 파싱 확인.
