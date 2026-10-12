@@ -283,7 +283,9 @@ describe("INV-A11: 크리에이터 알림은 카카오·이메일 두 칸 (manua
     expect(await myAccount(ME.login)).toMatchObject({ notify_kakao: true, notify_email: true });
   });
 
-  it("INV-A11 S11 (manual/0012 뒤): 두 칸을 다 끈 크리에이터 — 보관 알림은 건너뛰고 승인 요청은 간다", async () => {
+  // 2026-10-12 문제집 D7(notifications INV-N6 표): 추적기 반송(hold)은 끌 수 없는 알림이 됐다.
+  // 크리에이터가 끌 수 있는 알림(배송중·수령)은 택배사 연결 전이라 흐름에서 생기지 않아, 수령 줄을 직접 넣어 건너뛰는 쪽을 본다.
+  it("INV-A11 S11 (manual/0012·0016 뒤): 두 칸을 다 끈 크리에이터 — 수령 알림은 건너뛰고 승인 요청·추적기 반송은 간다", async () => {
     verify(ME.creatorId, "cvt-haru");
     psql(`insert into pii.account_contacts (account_id, email, phone) values ('${ME.id}', 'cvt.haru@example.com', '01077770003')`);
     const me = await signedInClient(ME.login);
@@ -304,10 +306,16 @@ describe("INV-A11: 크리에이터 알림은 카카오·이메일 두 칸 (manua
     const holdRow = outbox("hold");
     expect(approvalRow).not.toBe("");
     expect(holdRow).not.toBe("");
+    const deliveredRow = psql(
+      `insert into public.notification_outbox (order_id, account_id, kind, channel, round, status, next_attempt_at, event_at)
+       values ('${o.orderId}', '${ME.id}', 'delivered', 'email', 1, 'pending', now() + interval '1 day', now()) returning id`,
+    ).split("\n")[0]; // psql 이 id 뒤에 「INSERT 0 1」을 붙인다
+    expect(deliveredRow).not.toBe("");
     try {
       for (const [id, expected] of [
         [approvalRow, "cvt.haru@example.com"],
-        [holdRow, null],
+        [holdRow, "cvt.haru@example.com"],
+        [deliveredRow, null],
       ] as const) {
         // 이 줄만 꺼낼 수 있게 다른 대기 줄을 뒤로 미룬다
         psql(
