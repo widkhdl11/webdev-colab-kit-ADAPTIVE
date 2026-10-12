@@ -20,6 +20,8 @@
 
 .bar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 12px; }
 .count { font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+/* 팔로우하면 닉네임이 보인다는 안내(reverse-gift INV-R2) — 목록 테두리와 띄운다 */
+.nick-note { margin: 0 0 16px; }
 
 /* 한 줄에 한 명 — 경계 카드 안. 걸러진 줄이 맨 위여도 위 선이 남지 않게 줄마다 위 선을 1px 겹쳐 두고 카드가 자른다 */
 .list { overflow: hidden; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); padding-inline: 24px; }

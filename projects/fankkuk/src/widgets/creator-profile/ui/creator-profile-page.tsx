@@ -12,6 +12,7 @@ import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
 import { lowestPriceKrw, type PublicPriceTable } from "@/entities/payment/model/price-table";
+import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import type { FollowMode } from "@/features/creator-follow/ui/follow-button";
 import type { LinkPageSend } from "@/features/gift-register/model/sender-rule";
@@ -227,6 +228,7 @@ export function CreatorProfilePage({
             <SendButton shown={send} creator={creator} followMode={followMode} />
           </div>
           {send === "needs_follow" ? <p className={s.need}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p> : null}
+          {send === "needs_follow" && followMode === "save" ? <p className={s.need}>{FOLLOW_NICKNAME_NOTICE}</p> : null}
           {restingText ? <p className={s["rest-note"]}>{restingText}</p> : null}
           <div className={s.sum}>
             <div className={s["sum-row"]}>

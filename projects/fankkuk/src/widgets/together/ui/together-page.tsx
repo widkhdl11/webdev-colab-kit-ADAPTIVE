@@ -3,6 +3,7 @@ import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
 import { dotDate, monthDayText } from "@/entities/gift-reply/model/reply";
 import { SPECIAL_MOMENT_TEXT } from "@/entities/together/model/special-moment";
 import { ALL_GIFTS_PATH } from "@/entities/together/model/together-path";
+import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import { FanBoxReplies } from "@/features/gift-reply/ui/fan-box-replies";
 import { GiftPhotoManager } from "@/features/gift-photo/ui/gift-photo-manager";
@@ -41,7 +42,12 @@ function SendSpot({ props }: { props: TogetherPageProps }) {
     );
   }
   if (send === "needs_follow") {
-    return <FollowThenSend creatorId={summary.creatorId} creatorName={summary.creatorName} signedIn={signedIn} className={`btn ${s["ann-btn"]}`} />;
+    return (
+      <div className={s["ann-btn"]}>
+        <FollowThenSend creatorId={summary.creatorId} creatorName={summary.creatorName} signedIn={signedIn} className="btn btn--block" />
+        {signedIn ? <p className="hint">{FOLLOW_NICKNAME_NOTICE}</p> : null}
+      </div>
+    );
   }
   return null;
 }

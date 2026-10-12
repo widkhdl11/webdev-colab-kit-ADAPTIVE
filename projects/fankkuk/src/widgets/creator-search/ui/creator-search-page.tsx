@@ -9,6 +9,7 @@ import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorTag, hasTagIcon, TagChipBody, tagStyle } from "@/entities/creator/ui/creator-tag";
 import { FollowButton, type FollowMode } from "@/features/creator-follow/ui/follow-button";
+import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import s from "./creator-search.module.css";
 
 // 크리에이터 찾기. 시안: docs/design/mockups/site/v9-pages/creators-b.html (카드 d45) · 태그 아이콘·색 tags-b.html (카드 d46)
@@ -110,6 +111,7 @@ export function CreatorSearchPage({
               {count}
             </strong>
           </div>
+          {followMode === "save" ? <p className={`hint ${s["nick-note"]}`}>{FOLLOW_NICKNAME_NOTICE}</p> : null}
           {/* 걸러진 줄은 지우지 않고 숨긴다 — 지우면 팔로우 버튼이 사라지며 누른 상태·저장 중 표시를 잃는다 */}
           <ul className={s.list} hidden={shown.size === 0}>
             {creators.map((c) => (

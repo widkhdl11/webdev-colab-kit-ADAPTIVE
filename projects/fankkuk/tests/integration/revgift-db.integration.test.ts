@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { adminClient, psql, signedInClient } from "./helpers";
+import { adminClient, anonClient, psql, signedInClient } from "./helpers";
 import {
   backdateSettlement,
   deleteTestRevgifts,
@@ -19,7 +19,6 @@ const ADDED_FOLLOWERS = [PROFILE.gureumppang, PROFILE.somsatang, PROFILE.momo];
 
 beforeAll(() => {
   deleteTestRevgifts();
-  psql(`delete from public.revgift_fan_lookups where creator_profile_id = '${PROFILE.haru}'`);
   followHaru(ADDED_FOLLOWERS);
 });
 
@@ -68,33 +67,85 @@ describe("INV-R1: 받는 사람은 등록하는 순간 나를 팔로우하는 �
   });
 });
 
-describe("INV-R2: 받는 팬은 아이디를 정확히 입력해서만 찾고, 못 찾는 경우는 모두 같은 응답이다", () => {
-  it("INV-R2 S2: 하루가 byeolbit_fan 을 입력하면 별빛이 나온다", async () => {
-    const haru = await signedInClient("haru_creator");
-    const { data, error } = await haru.rpc("find_revgift_fan", { p_login_id: "byeolbit_fan" });
-    expect(error).toBeNull();
-    expect(data).toEqual([{ fan_id: PROFILE.byeolbit, login_id: "byeolbit_fan", nickname: "별빛" }]);
+const MOMO_CREATOR_ID = "00000000-0000-4000-b000-000000000002";
+
+type FollowerRow = { fan_id: string; nickname: string };
+
+async function haruFollowers(): Promise<FollowerRow[]> {
+  const { data, error } = await (await signedInClient("haru_creator")).rpc("my_revgift_followers");
+  expect(error).toBeNull();
+  return data as FollowerRow[];
+}
+
+describe("INV-R2: 받는 팬은 내 팔로워 목록에서 고르고, 목록에는 닉네임만 나온다", () => {
+  it("INV-R2 S2: 하루의 목록에 하루를 팔로우하는 팬(별빛·구름빵·솜사탕)이 나온다", async () => {
+    const ids = (await haruFollowers()).map((r) => r.fan_id);
+    expect(ids).toEqual(expect.arrayContaining([PROFILE.byeolbit, PROFILE.gureumppang, PROFILE.somsatang]));
+    expect((await haruFollowers()).find((r) => r.fan_id === PROFILE.byeolbit)?.nickname).toBe("별빛");
   });
 
-  it("INV-R2 S2b (실패경로): 없는 아이디·팔로우 안 한 팬·크리에이터 아이디는 응답이 똑같다", async () => {
-    const haru = await signedInClient("haru_creator");
-    const answers = await Promise.all(
-      ["no_such_fan_zz", "daltokki_fan", "momo_creator"].map((id) => haru.rpc("find_revgift_fan", { p_login_id: id })),
-    );
-    for (const a of answers) {
-      expect({ status: a.status, data: a.data, error: a.error }).toEqual({ status: answers[0]!.status, data: [], error: null });
+  it("INV-R2 S2b (실패경로): 목록 한 줄에는 계정 ID 와 닉네임만 있다 — 아이디·이메일·연락처·주소 칸이 없다", async () => {
+    const rows = await haruFollowers();
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) expect(Object.keys(r).sort()).toEqual(["fan_id", "nickname"]);
+  });
+
+  it("INV-R2 S2c (실패경로): 하루를 팔로우한 크리에이터 계정(모모)과 팔로우하지 않은 팬(달토끼)은 목록에 없다", async () => {
+    const ids = (await haruFollowers()).map((r) => r.fan_id);
+    expect(ids).not.toContain(PROFILE.momo);
+    expect(ids).not.toContain(PROFILE.daltokki);
+    expect(ids).not.toContain(PROFILE.haru);
+  });
+
+  it("INV-R2 S2d (실패경로): 다른 크리에이터(모모)의 팔로워는 하루 목록에 없고, 그 ID 로 등록하면 거부된다", async () => {
+    psql(`insert into public.follows (fan_id, creator_id) values ('${PROFILE.daltokki}', '${MOMO_CREATOR_ID}') on conflict do nothing`);
+    try {
+      const momo = await signedInClient("momo_creator");
+      const momoIds = ((await momo.rpc("my_revgift_followers")).data as FollowerRow[]).map((r) => r.fan_id);
+      expect(momoIds).toContain(PROFILE.daltokki);
+      expect((await haruFollowers()).map((r) => r.fan_id)).not.toContain(PROFILE.daltokki);
+      const args = revgiftArgs([{ fanId: PROFILE.daltokki, tier: "small" }]);
+      const { error } = await adminClient().rpc("register_revgift", args);
+      expect(error?.code).toBe("P0021");
+      expect(psql(`select count(*) from public.revgift_sends where toss_order_id = '${args.p_toss_order_id}'`)).toBe("0");
+    } finally {
+      psql(`delete from public.follows where fan_id = '${PROFILE.daltokki}' and creator_id = '${MOMO_CREATOR_ID}'`);
     }
   });
 
-  it("INV-R2 S2c (실패경로): 아이디 앞부분만 넣으면 아무도 나오지 않는다", async () => {
-    const haru = await signedInClient("haru_creator");
-    expect((await haru.rpc("find_revgift_fan", { p_login_id: "byeol" })).data).toEqual([]);
-    expect((await haru.rpc("find_revgift_fan", { p_login_id: "byeol%" })).data).toEqual([]);
+  it("INV-R2 S2e (실패경로): 팔로우를 끊은 팬은 목록에서 빠지고, 그 뒤 등록하면 거부된다", async () => {
+    followHaru([PROFILE.daltokki]);
+    try {
+      expect((await haruFollowers()).map((r) => r.fan_id)).toContain(PROFILE.daltokki);
+    } finally {
+      unfollowHaru([PROFILE.daltokki]);
+    }
+    expect((await haruFollowers()).map((r) => r.fan_id)).not.toContain(PROFILE.daltokki);
+    const { error } = await adminClient().rpc("register_revgift", revgiftArgs([{ fanId: PROFILE.daltokki, tier: "small" }]));
+    expect(error?.code).toBe("P0021");
   });
 
-  it("INV-R2 (실패경로): 크리에이터가 아니면 찾기 결과가 늘 비어 있다", async () => {
+  it("INV-R2 S2f (실패경로): 크리에이터가 아니면 목록이 늘 비어 있고, 로그인하지 않으면 부를 수 없다", async () => {
     const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("find_revgift_fan", { p_login_id: "gureumppang_fan" })).data).toEqual([]);
+    expect((await fan.rpc("my_revgift_followers")).data).toEqual([]);
+    expect((await anonClient().rpc("my_revgift_followers")).error).not.toBeNull();
+  });
+
+  it("INV-R2 S2g: 차단은 역조공과 상관없다(decline-block) — 하루가 별빛을 차단해도 목록에 남고 보낼 수 있다", async () => {
+    psql(`insert into public.creator_blocks (creator_id, sender_id) values ('${HARU_CREATOR_ID}', '${PROFILE.byeolbit}')`);
+    try {
+      expect((await haruFollowers()).map((r) => r.fan_id)).toContain(PROFILE.byeolbit);
+      await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
+    } finally {
+      psql(`delete from public.creator_blocks where creator_id = '${HARU_CREATOR_ID}' and sender_id = '${PROFILE.byeolbit}'`);
+    }
+  });
+
+  it("INV-R2 S2h (실패경로): 아이디로 팬을 찾는 함수는 없다", async () => {
+    const haru = await signedInClient("haru_creator");
+    const { data, error } = await haru.rpc("find_revgift_fan", { p_login_id: "byeolbit_fan" });
+    expect(data).toBeNull();
+    expect(error?.code).toBe("PGRST202");
   });
 });
 
@@ -346,16 +397,5 @@ describe("리뷰 뒤 보강 (2026-10-03)", () => {
     expect((mine.data as { order_no: string }[]).map((r) => r.order_no)).toEqual([no]);
     const other = await (await signedInClient("daltokki_fan")).rpc("my_received_revgift", { p_order_no: no });
     expect(other.data).toEqual([]);
-  });
-
-  it("INV-R2 (실패경로): 팬 찾기는 10분에 30번까지 — 넘으면 거부되어 아이디를 대량으로 넣어 보며 팔로워를 모을 수 없다", async () => {
-    psql(`delete from public.revgift_fan_lookups where creator_profile_id = '${PROFILE.haru}'`);
-    const haru = await signedInClient("haru_creator");
-    for (let i = 0; i < 30; i += 1) {
-      expect((await haru.rpc("find_revgift_fan", { p_login_id: `nobody_${i}` })).error).toBeNull();
-    }
-    expect((await haru.rpc("find_revgift_fan", { p_login_id: "byeolbit_fan" })).error?.code).toBe("P0029");
-    psql(`delete from public.revgift_fan_lookups where creator_profile_id = '${PROFILE.haru}'`);
-    expect((await haru.rpc("find_revgift_fan", { p_login_id: "byeolbit_fan" })).data).toHaveLength(1);
   });
 });

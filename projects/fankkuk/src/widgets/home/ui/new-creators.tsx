@@ -5,6 +5,7 @@ import { creatorPagePath } from "@/entities/creator/model/creator-handle";
 import { useState } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { hasPickedTag } from "@/entities/creator/model/creator-tags";
+import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import type { SendAvailability } from "@/features/gift-register/model/sender-rule";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
@@ -52,6 +53,7 @@ export function NewCreators({ creators, chips, sendOf = {} }: Props) {
           </button>
         ))}
       </div>
+      {shown.some((c) => sendOf[c.id] === "needs_follow") ? <p className="hint">{FOLLOW_NICKNAME_NOTICE}</p> : null}
       {shown.length === 0 ? (
         <p className={s.empty}>아직 소개할 크리에이터가 없어요.</p>
       ) : (

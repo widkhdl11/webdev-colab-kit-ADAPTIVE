@@ -8,6 +8,7 @@ import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 import { receivingNotice } from "@/features/gift-register/model/receiving-notice";
 import { PaymentStep } from "@/features/checkout/ui/payment-step";
 import { sendGiftPhoto } from "@/features/gift-photo/api/send-gift-photo";
+import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import { RegisterForm, type CreatorOption, type RegisteredGift } from "@/features/gift-register/ui/register-form";
 import s from "./gift-register-page.module.css";
@@ -69,6 +70,8 @@ export function GiftRegisterPage({
           <div className={s["follow-first"]} role="status">
             <p>
               <strong>{followFirst.name}님</strong>을 팔로우하면 바로 선물을 보낼 수 있어요.
+              <br />
+              <span className="sub">{FOLLOW_NICKNAME_NOTICE}</span>
             </p>
             <FollowThenSend creatorId={followFirst.id} creatorName={followFirst.name} signedIn={signedIn} className="btn btn--sm" />
           </div>

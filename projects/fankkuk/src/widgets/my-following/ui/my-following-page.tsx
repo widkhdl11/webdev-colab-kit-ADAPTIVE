@@ -9,6 +9,7 @@ import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { saveFollow } from "@/features/creator-follow/api/save-follow";
+import { FOLLOWING_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import s from "./my-following.module.css";
 
 // 내 정보 — 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/v4/my-following.html
@@ -43,6 +44,7 @@ export function MyFollowingPanel({ creators }: { creators: readonly CreatorCard[
           크리에이터 더 찾기
         </Link>
       </div>
+      <p className="sub">{FOLLOWING_NICKNAME_NOTICE}</p>
       <p className="hint" role="status">
         {failedName ? `${failedName}님 팔로우를 끊지 못했어요. 잠시 뒤 다시 눌러 주세요.` : ""}
       </p>

@@ -40,22 +40,19 @@ export async function readMyRevgiftAccessLog(client: Pick<SupabaseClient, "rpc">
   });
 }
 
-/** 팬 찾기 한도를 넘었다(10분에 30번, INV-R2). */
-export class FanLookupLimitError extends Error {
-  constructor() {
-    super("팬 찾기 한도를 넘었다");
-  }
-}
+const followerRow = z.object({ fan_id: z.string().uuid(), nickname: z.string() }).strict();
 
-const fanRow = z.object({ fan_id: z.string().uuid(), login_id: z.string(), nickname: z.string() }).strict();
+export type RevgiftFollower = { fanId: string; nickname: string };
 
-export type RevgiftFan = { fanId: string; loginId: string; nickname: string };
-
-/** INV-R2: 아이디를 정확히 넣었을 때 나를 팔로우하는 팬이면 그 팬, 아니면 null. 못 찾는 이유는 구분하지 않는다. */
-export async function findRevgiftFan(client: SupabaseClient, loginId: string): Promise<RevgiftFan | null> {
-  const { data, error } = await client.rpc("find_revgift_fan", { p_login_id: loginId });
-  if (error?.code === "P0029") throw new FanLookupLimitError();
-  if (error) throw new Error(`팬을 찾지 못했다: ${error.code}`);
-  const row = z.array(fanRow).max(1).parse(data)[0];
-  return row ? { fanId: row.fan_id, loginId: row.login_id, nickname: row.nickname } : null;
+/**
+ * INV-R2: 로그인한 크리에이터를 지금 팔로우하는 팬 목록(최근 팔로우 순). 누구의 팔로워인지는 DB 가 로그인 토큰으로 정한다 —
+ * 크리에이터가 아니면 빈 목록. 한 줄에는 계정 ID 와 닉네임만 온다(그 밖의 칸이 오면 꼴 오류로 멈춘다).
+ */
+export async function readRevgiftFollowers(client: Pick<SupabaseClient, "rpc">): Promise<RevgiftFollower[]> {
+  const { data, error } = await client.rpc("my_revgift_followers");
+  if (error) throw new Error(`팔로워 목록을 읽지 못했다: ${error.code}`);
+  return z
+    .array(followerRow)
+    .parse(data)
+    .map((r) => ({ fanId: r.fan_id, nickname: r.nickname }));
 }
