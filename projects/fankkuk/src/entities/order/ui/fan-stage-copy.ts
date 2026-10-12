@@ -20,9 +20,12 @@ export const RETURN_ON_REJECT_NOTICE = `크리에이터가 받지 않기로 하�
 /** 본 단계 옆에 따로 붙는 승인 칸의 이름. */
 export const APPROVAL_LABEL = "크리에이터 승인";
 
+/** 거절의 뜻 — 화면(C2)과 거절 알림(gift_undelivered, 2026-10-12 (2) D11)이 같은 말을 쓴다. 알림에는 크리에이터 이름을 넣지 않는다(notifications INV-N1). */
+export const DECLINED_PHRASE = "선물을 원하지 않아요";
+
 /** 거절(직접·차단 모두) — 부드럽게 말하되 거절했다는 뜻은 분명히(decline-block INV-D5, 2026-10-10 사용자 「"OO님이 선물을 원하지 않아요" 같은 대사로」). */
 export function declinedText(creatorName: string): string {
-  return `${creatorName}님이 선물을 원하지 않아요`;
+  return `${creatorName}님이 ${DECLINED_PHRASE}`;
 }
 
 /** 7일 자동 반려 — 거절과 따로 보인다(decline-block INV-D5). */

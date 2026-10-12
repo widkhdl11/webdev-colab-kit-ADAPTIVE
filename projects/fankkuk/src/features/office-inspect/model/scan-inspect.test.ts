@@ -32,7 +32,7 @@ function fakeClient(replies: Record<string, Reply>, who = { operator: true, owne
 }
 
 const TRACKER = { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" };
-const NOT_TRACKER = { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "pass" };
+const NOT_TRACKER = { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "confirm" };
 
 describe("검수 (office-workflow INV-W1·W4)", () => {
   it("INV-W1: QR 로 상자를 불러온다", async () => {
@@ -48,7 +48,7 @@ describe("검수 (office-workflow INV-W1·W4)", () => {
     expect((await scanInspect(fakeClient({ office_parcel_by_qr: { data: [], error: null } }).client, { kind: "lookup", qr: "Q-000123" })).status).toBe(500);
   });
 
-  it("INV-W4 S4c·S4g: 추적기 판정이 든 기록(추적기 반송 · 추적기 아님 통과)을 그대로 DB 에 넘긴다", async () => {
+  it("INV-W4 S4c·S4g: 추적기 판정이 든 기록(추적기 반송 · 추적기 아님 크리에이터 확인)을 그대로 DB 에 넘긴다", async () => {
     for (const result of [TRACKER, NOT_TRACKER]) {
       const { calls, client } = fakeClient({ office_record_inspection: { error: null } });
       expect(await scanInspect(client, { kind: "record", qr: "Q-000123", result })).toEqual({ status: 200, body: { ok: true } });
@@ -59,6 +59,7 @@ describe("검수 (office-workflow INV-W1·W4)", () => {
   it("INV-W4 (실패경로): 검사 결과와 맞지 않는 결론·모르는 칸은 DB 를 부르지 않고 400", async () => {
     const bad: unknown[] = [
       { kind: "record", qr: "Q-000123", result: { ...TRACKER, outcome: "pass" } },
+      { kind: "record", qr: "Q-000123", result: { ...NOT_TRACKER, outcome: "pass" } }, // 추적기 아님은 바로 통과하지 않는다(D3 ②)
       { kind: "record", qr: "Q-000123", result: { bluetooth: "found", rf: "clear", metal: "clear", outcome: "pass" } }, // 판정 빠짐
       { kind: "record", qr: "Q-000123", result: { surface: "found", prohibited: "clear", outcome: "pass" } },
       { kind: "record", qr: "Q-000123", result: { ...TRACKER, inspector: "라임" } },
@@ -81,8 +82,8 @@ describe("검수 (office-workflow INV-W1·W4)", () => {
     expect(calls).toEqual([{ fn: "office_record_inspection", args: { p_qr: "Q-000123", p_result: TRACKER } }]);
   });
 
-  it("INV-W1·W4: QR 다시 스캔 → DB 가 정한 다음 상태(검수 완료·반송 대기)를 돌려준다 — 보관은 더 없다(2026-10-12 D2)", async () => {
-    for (const state of ["inspected", "return_waiting"]) {
+  it("INV-W1·W4: QR 다시 스캔 → DB 가 정한 다음 상태(검수 완료·반송 대기·크리에이터 확인 대기)를 돌려준다(2026-10-12 (2) D3 ②)", async () => {
+    for (const state of ["inspected", "return_waiting", "held"]) {
       const { calls, client } = fakeClient({ office_scan_inspect: { data: state, error: null } });
       expect(await scanInspect(client, { kind: "complete", qr: "Q-000123" })).toEqual({ status: 200, body: { state } });
       expect(calls).toEqual([{ fn: "office_scan_inspect", args: { p_qr: "Q-000123" } }]);
@@ -98,7 +99,7 @@ describe("검수 (office-workflow INV-W1·W4)", () => {
   });
 
   it("INV-W1 (실패경로): DB 가 모르는 상태를 돌려주면 500", async () => {
-    for (const data of ["shipped", "held"]) {
+    for (const data of ["shipped", "returned"]) {
       const { client } = fakeClient({ office_scan_inspect: { data, error: null } });
       expect((await scanInspect(client, { kind: "complete", qr: "Q-000123" })).status).toBe(500);
     }

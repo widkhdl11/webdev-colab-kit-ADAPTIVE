@@ -9,7 +9,7 @@
 }
 
 /* 승인·받은 선물 탭 — 시안 addendum/creator-received.html (선물 내역 탭과 같은 모양, 두 칸) */
-.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 16px 0 24px; padding: 4px; border-radius: var(--r-box); background: var(--surface); box-shadow: var(--hair); }
+.tabs { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 4px; margin: 16px 0 24px; padding: 4px; border-radius: var(--r-box); background: var(--surface); box-shadow: var(--hair); }
 .tab { min-height: 48px; padding: 0 8px; border: 0; border-radius: 12px; background: none; color: var(--sub); font-weight: 600; cursor: pointer; }
 .tab:hover { background: var(--surface-hover); }
 .tab[aria-selected="true"] { background: var(--white); color: var(--ink); font-weight: 700; box-shadow: var(--hair); }

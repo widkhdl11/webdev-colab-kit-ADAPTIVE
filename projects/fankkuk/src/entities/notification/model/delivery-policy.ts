@@ -21,6 +21,7 @@ export const NOTIFICATION_KINDS = [
   "difference_canceled",
   "gift_reply",
   "gift_received",
+  "creator_check",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -40,6 +41,8 @@ export const NOTIFICATION_POLICY: Record<NotificationKind, Policy> = {
   // 검수에서 위치 추적기가 나와 보낸 팬에게 돌려보내는 상자(INV-N13, 2026-10-12 문제집 D2 — 보관 없이 바로 반송). 종류 코드는 처음 이름 그대로
   hold: { mustDeliver: true, label: "돌려보내는 선물", audience: "creator" },
   hold_fan: { mustDeliver: true, label: "돌려보낼 상자", audience: "fan" },
+  // 추적기 아님 블루투스·RF 상자를 받을지 묻는다 — 7일 안에 답이 없으면 반송(2026-10-12 (2) D3 ②)
+  creator_check: { mustDeliver: true, label: "확인할 선물", audience: "creator" },
   box_missing: { mustDeliver: true, label: "아직 도착하지 않은 상자", audience: "fan" },
   // 같은 이름으로 보인다 — 14일 안내와 거절 뒤 안내는 팬에게 같은 「아직 도착하지 않은 상자」다
   gift_pending_box: { mustDeliver: true, label: "아직 도착하지 않은 상자", audience: "fan" },

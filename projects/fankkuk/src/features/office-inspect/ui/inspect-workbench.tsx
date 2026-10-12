@@ -13,6 +13,7 @@ import {
   type TrackerVerdict,
   withoutStaleVerdict,
 } from "@/entities/parcel/model/inspection";
+import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
 import { needsReload } from "@/entities/parcel/model/office-error";
 import { KIND_LABEL, NEXT_STEP_TEXT, STATE_LABEL, TIER_LABEL } from "@/entities/parcel/model/office-labels";
 import { parcelFromLookupBody, type ParcelDetail } from "@/entities/parcel/model/office-parcel";
@@ -27,22 +28,28 @@ import { initialMeasuredTier, MEASURED_TIERS, measurementFromBody, type Measured
 // 검수 작업 화면 (office-workflow INV-W1·W4, design-rules 8-1, 시안 admin/work-inspect.html).
 // 라벨 QR 로 상자를 불러와 검수 기록을 저장하고, 같은 QR 을 한 번 더 스캔하면 DB 가 다음 상태(검수 완료·반송 대기)를 정한다.
 // 블루투스·RF 반응이 나오면 직원이 위치 추적기인지 판정한다 — 추적기면 「추적기 반송」만(보관 없이 바로 반송 대기),
-// 추적기가 아니면 일반 상품처럼 통과·반송(2026-10-12 문제집 D2). 역조공에서 걸리면 반송만. 저장한 기록은 고칠 수 없다.
+// 추적기가 아니면 「크리에이터 확인」(크리에이터에게 받을지 묻는다, 7일 안에 답이 없으면 반송)·반송(2026-10-12 (2) 문제집 D3 ②).
+// 역조공에서 걸리면 반송만. 저장한 기록은 고칠 수 없다.
 // 실측 구간은 팬이 신고한 구간을 미리 골라 둔다 — 다를 때만 바꾼다(INV-W4 S4h, 문제집 D5).
 
 type Phase = "form" | "saved" | "finished";
-type Finished = { state: "inspected" | "return_waiting" };
+type Finished = { state: "inspected" | "return_waiting" | "held" };
 
-const OUTCOME_LABEL: Record<InspectionOutcome, string> = { pass: "통과", return: "반송", hold: "추적기 반송" };
+const OUTCOME_LABEL: Record<InspectionOutcome, string> = { pass: "통과", return: "반송", hold: "추적기 반송", confirm: "크리에이터 확인" };
 const SAVED_TEXT: Record<InspectionOutcome, string> = {
   pass: "통과 — 출고 단계로 넘어갈 수 있어요.",
   return: "반송 — 반송 대기로 넘어가요.",
   hold: "추적기 반송 — 보관하지 않고 바로 반송 대기로 넘어가요.",
+  confirm: "크리에이터 확인 — 크리에이터에게 받을지 물어요.",
 };
 const VERDICT_LABEL: Record<TrackerVerdict, string> = { tracker: "위치 추적기예요", not_tracker: "추적기가 아니에요" };
 const FINISHED: Record<Finished["state"], { title: string; text: string }> = {
   inspected: { title: "검수 완료", text: "출고 단계에서 이 상자를 스캔할 수 있어요." },
   return_waiting: { title: "반송 대기로 넘어갔어요", text: "출고 화면에서 반송 송장을 출력해요." },
+  held: {
+    title: "크리에이터 확인을 기다려요",
+    text: `크리에이터가 받기를 고르면 검수 완료로, 돌려보내기를 고르면 반송 대기로 넘어가요. ${CREATOR_CHECK_DAYS}일 안에 답이 없으면 반송 대기로 넘어가요.`,
+  },
 };
 
 function InfoIcon() {
@@ -151,7 +158,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
         return;
       }
       const state = done.body.state;
-      if (state === "inspected" || state === "return_waiting") {
+      if (state === "inspected" || state === "return_waiting" || state === "held") {
         setFinished({ state });
         // 상자 정보 칸의 상태 표시도 끝난 상태로. nextStep 은 옛 값이지만 finished 단계에서는 「검수 단계가 아니에요」 안내가 가려져 쓰이지 않는다
         setParcel({ ...parcel, state });
@@ -441,6 +448,10 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
                     <>
                       <strong>위치 추적기라 「추적기 반송」만 고를 수 있어요.</strong> 보관하지 않고 바로 반송 대기로 가고, 크리에이터와 보낸 팬에게 알림이 가요.
                     </>
+                  ) : restriction === "creator_confirm" ? (
+                    <>
+                      <strong>추적기가 아니어도 바로 통과하지 않아요.</strong> 「크리에이터 확인」을 고르면 크리에이터에게 받을지 묻고, {CREATOR_CHECK_DAYS}일 안에 답이 없으면 반송해요.
+                    </>
                   ) : restriction === "needs_verdict" ? (
                     <strong>블루투스·RF 반응이 나왔어요. 위치 추적기인지 먼저 골라 주세요.</strong>
                   ) : (
@@ -453,7 +464,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
             <fieldset className={w.choice} disabled={phase !== "form"}>
               <legend>검수 결과</legend>
               <div className={w.opts}>
-                {(checks.kind === "gift" ? (["pass", "return", "hold"] as const) : (["pass", "return"] as const)).map((o) => {
+                {(checks.kind === "gift" ? (["pass", "return", "hold", "confirm"] as const) : (["pass", "return"] as const)).map((o) => {
                   const off = !allowed.includes(o);
                   return (
                     <label key={o} className={off ? `${w.opt} ${w.optOff}` : w.opt}>
@@ -466,11 +477,13 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
               <p className={a.hint}>
                 {restriction === "tracker_only"
                   ? "위치 추적기가 나온 상자는 보낸 팬의 주소로 바로 돌려보내요."
+                  : restriction === "creator_confirm"
+                    ? "크리에이터 확인은 사무실에 둔 채 크리에이터의 답을 기다려요. 반송은 바로 반송 대기로 넘어가요."
                   : restriction === "return_only"
                     ? "문제가 나온 역조공 상자는 반송 대기로 넘어가요."
                     : restriction === "needs_verdict"
                       ? "추적기 판정을 먼저 고르면 결과를 고를 수 있어요."
-                      : "통과하면 출고 단계로 넘어가요. 반송은 반송 대기로 넘어가요. 추적기 반송은 위치 추적기로 판정했을 때만 고를 수 있어요."}
+                      : "통과하면 출고 단계로 넘어가요. 반송은 반송 대기로 넘어가요. 추적기 반송은 위치 추적기로 판정했을 때만 고를 수 있어요. 크리에이터 확인은 추적기가 아니라고 판정했을 때만 골라요."}
               </p>
             </fieldset>
 
@@ -518,6 +531,12 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
               <h2>{FINISHED[finished.state].title}</h2>
             </div>
             <p>{FINISHED[finished.state].text}</p>
+            {finished.state === "held" && (
+              <div className={`${a.note} ${a.noteOk}`}>
+                <InfoIcon />
+                <p>크리에이터({parcel.receiverName})에게 받을지 묻는 알림이 갔어요. 답이 올 때까지 상자는 검수 선반에 두세요.</p>
+              </div>
+            )}
             {finished.state === "return_waiting" && chosen === "hold" && parcel.kind === "gift" && (
               <div className={`${a.note} ${a.noteOk}`}>
                 <InfoIcon />

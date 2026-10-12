@@ -109,7 +109,8 @@ export async function receiveAndLabel(staff: SupabaseClient, no: string): Promis
 export async function inspect(staff: SupabaseClient, qr: string, result: Record<string, string>): Promise<string> {
   await ok(staff.rpc("office_record_inspection", { p_qr: qr, p_result: result }), "office_record_inspection");
   // 팬 선물이 통과로 끝나려면 실측이 있어야 한다(office-workflow INV-W4 S4d) — 아직 없으면 신고 구간 그대로 잰 것으로 친다
-  if (result.outcome === "pass") {
+  // 크리에이터 확인(confirm)도 받으면 그대로 출고되므로 같은 규칙이다(2026-10-12 (2) D3 ②)
+  if (result.outcome === "pass" || result.outcome === "confirm") {
     const declared = psql(
       `select b.declared_tier from public.office_parcels p join public.boxes b on b.id = p.box_id where p.qr_code = '${qr}' and b.measured_tier is null`,
     );

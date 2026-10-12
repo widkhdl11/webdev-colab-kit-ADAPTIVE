@@ -122,14 +122,14 @@ export function parcelTabOf(state: ParcelState): ParcelTab {
       return "inbound";
     case "received":
     case "labeled":
+    // 크리에이터 확인 대기 — 검수 결론이 아직 나지 않았다(2026-10-12 (2) D3 ②). 받으면 출고 대기, 돌려보내면 반송으로 옮긴다
+    case "held":
       return "inspect";
     case "inspected":
     case "label_printed":
       return "outbound";
     case "shipped":
       return "shipped";
-    // 보관(held)은 옛 기록뿐이다 — 추적기 상자도 보관 없이 바로 반송 대기로 간다(INV-W4, 2026-10-12 D2). 끝이 반송이라 반송 탭에 둔다
-    case "held":
     case "return_waiting":
     case "return_printed":
     case "returned":

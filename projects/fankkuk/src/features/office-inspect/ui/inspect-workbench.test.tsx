@@ -182,3 +182,51 @@ describe("추적기 판정 (INV-W4 S4c, 문제집 D2)", () => {
     expect(writesOf("record")).toEqual([]);
   });
 });
+
+async function rescan() {
+  const scan = host.querySelector<HTMLInputElement>("#inspect-scan")!;
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+  act(() => {
+    setter?.call(scan, QR);
+    scan.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await act(async () => {
+    scan.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  });
+}
+
+describe("추적기 아님 → 크리에이터 확인 (INV-W4, 2026-10-12 (2) 문제집 D3 ②)", () => {
+  it("INV-W4: 「추적기가 아니에요」면 「크리에이터 확인」이 골라지고 「통과」는 고를 수 없다 — 그대로 저장하면 confirm 으로 기록", async () => {
+    await loadBox();
+    pick("bt", "found");
+    pick("tracker", "not_tracker");
+    expect(radio("res", "confirm").checked).toBe(true);
+    expect(radio("res", "pass").disabled).toBe(true);
+    expect(radio("res", "confirm").closest("label")?.textContent).toBe("크리에이터 확인");
+    api.postInspect.mockResolvedValueOnce({ kind: "ok", body: { ok: true } });
+    await click("기록 저장");
+    expect(writesOf("record")).toEqual([
+      { kind: "record", qr: QR, result: { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "confirm" } },
+    ]);
+  });
+
+  it("INV-W4 (실패경로): 반응이 없는 상자에는 「크리에이터 확인」을 고를 수 없다", async () => {
+    await loadBox();
+    expect(radio("res", "confirm").disabled).toBe(true);
+    expect(radio("res", "pass").checked).toBe(true);
+  });
+
+  it("INV-W4·W6: 다시 스캔해 크리에이터 확인 대기로 넘어가면 그 사실과 168시간 뒤 반송을 알린다", async () => {
+    await loadBox();
+    pick("bt", "found");
+    pick("tracker", "not_tracker");
+    api.postInspect.mockResolvedValueOnce({ kind: "ok", body: { ok: true } });
+    await click("기록 저장");
+    api.postInspect.mockResolvedValueOnce({ kind: "ok", body: { state: "held" } });
+    await rescan();
+    expect(writesOf("complete")).toEqual([{ kind: "complete", qr: QR }]);
+    expect(host.textContent).toContain("크리에이터 확인을 기다려요");
+    expect(host.textContent).toContain("7일 안에 답이 없으면 반송 대기로 넘어가요.");
+    expect(host.textContent).not.toContain("결과를 읽지 못했어요");
+  });
+});

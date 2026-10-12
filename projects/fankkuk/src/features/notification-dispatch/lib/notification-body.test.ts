@@ -9,7 +9,14 @@ const ORIGIN = "https://fankkuk.example.com";
 const base = { nickname: "하루", orderNo: "FC-7K3M9", appOrigin: ORIGIN } as const;
 
 function inputFor(kind: NotificationBodyInput["kind"], round: 1 | 2 | 3 = 1): NotificationBodyInput {
-  return { ...base, kind, round, autoRejectAt: kind === "approval_request" ? "2026-10-08T01:00:00Z" : null, mustDeliver: isMustDeliver(kind) };
+  return {
+    ...base,
+    kind,
+    round,
+    autoRejectAt: kind === "approval_request" ? "2026-10-08T01:00:00Z" : null,
+    undeliveredReason: kind === "gift_undelivered" ? "declined" : null,
+    mustDeliver: isMustDeliver(kind),
+  };
 }
 
 const SENDABLE = NOTIFICATION_KINDS.filter((k) => k !== "in_transit" && k !== "delivered");
@@ -167,18 +174,47 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
   });
 
-  it("INV-N17 ② (S2): 거절 알림 — 선물 상세 링크, 「선물이 전해지지 못했어요」·「결제 금액은 돌려드려요」뿐이고 거절 종류·크리에이터·6자리는 없다", () => {
+  it("INV-N17 ② (S2) · decline-block INV-D5: 직접·차단 거절 알림 — 화면(C2)과 같은 「선물을 원하지 않아요」와 결제 금액을 돌려준다는 말, 차단·크리에이터 닉네임·6자리는 없다", () => {
     const b = buildNotificationBody({
       ...inputFor("gift_undelivered"),
-      // @ts-expect-error 본문 틀에는 거절 종류 칸이 없다
+      // @ts-expect-error 본문 틀에는 차단 칸이 없다 — 차단 거절도 사유 값은 declined 다(DB 가 주문 상태로만 정한다)
       byBlock: true,
+      creatorNickname: "별빛",
     });
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
-    expect(b.subject).toBe("[팬꾹] 선물이 전해지지 못했어요");
-    expect(b.text).toContain("선물이 전해지지 못했어요.");
+    expect(b.subject).toBe("[팬꾹] 크리에이터가 선물을 원하지 않아요");
+    expect(b.text).toContain("크리에이터가 선물을 원하지 않아요.");
     expect(b.text).toContain("결제 금액은 돌려드려요.");
-    for (const word of ["거절", "반려", "차단", "기간", "true"]) expect(b.text).not.toContain(word);
+    for (const word of ["차단", "기간", "반려", "별빛", "true"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
     expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
+  });
+
+  it("INV-N17 ② (S2) · decline-block INV-D5: 7일 자동 반려 알림 — 「기간이 지나 반려됐어요」와 결제 금액을 돌려준다는 말, 거절했다는 말은 없다", () => {
+    const b = buildNotificationBody({ ...inputFor("gift_undelivered"), undeliveredReason: "expired" });
+    expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    expect(b.subject).toBe("[팬꾹] 보낸 선물이 기간이 지나 반려됐어요");
+    expect(b.text).toContain("보내신 선물이 기간이 지나 반려됐어요.");
+    expect(b.text).toContain("결제 금액은 돌려드려요.");
+    for (const word of ["원하지", "차단", "거절"]) expect([word, b.text.includes(word)]).toEqual([word, false]);
+  });
+
+  it("INV-N17 ② (실패경로): 사유 값이 없는 거절 알림은 만들지 않는다 — 어느 문구인지 모르는 채 보내지 않는다", () => {
+    expect(() => buildNotificationBody({ ...inputFor("gift_undelivered"), undeliveredReason: null })).toThrow();
+  });
+
+  it("INV-N1 · INV-N13: 크리에이터의 「확인할 선물」 알림 — 받을지 정해 달라는 말과 7일 뒤 반송, 상대 닉네임·검출 내용은 없다(2026-10-12 (2) D3 ②)", () => {
+    const b = buildNotificationBody({
+      ...inputFor("creator_check"),
+      // @ts-expect-error 본문 틀에는 보낸 팬·검출 내용 칸이 없다
+      senderNickname: "별빛",
+      detected: "블루투스",
+    });
+    expect(new URL(b.link).pathname).toBe("/creator/requests");
+    expect(b.subject).toBe("[팬꾹] 받을지 정해 주실 선물이 있어요");
+    expect(b.text).toContain("받을지 정해 주실 상자가 있어요.");
+    expect(b.text).toContain("7일 안에 정하지 않으면 보낸 분에게 돌려보내요.");
+    expect(b.text).toContain("이 알림은 꺼 두어도 가요.");
+    for (const word of ["별빛", "블루투스", "RF", "추적", "전자"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
   });
 
   it("INV-N6: 꼭 가는 알림에는 「꺼 두어도 가요」, 끌 수 있는 알림에는 「끌 수 있어요」 — 종류별 표 그대로", () => {

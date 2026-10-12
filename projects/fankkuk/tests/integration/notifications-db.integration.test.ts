@@ -94,6 +94,7 @@ type Claimed = {
   order_no: string;
   nickname: string;
   auto_reject_at: string | null;
+  undelivered_reason: string | null;
   must_deliver: boolean;
   attempts: number;
   claimed_at: string;
@@ -355,6 +356,13 @@ describe("팬에게 승인·거절 종류 줄은 없다 (INV-N2)", () => {
     // 7일 자동 처리를 다시 돌려도 거절 알림은 그대로 하나(INV-N4)
     expect((await owner.rpc("office_run_expiry", { p_order_no: expired.orderNo })).error).toBeNull();
     expect(fanRows(expired.orderId)).toEqual(["gift_undelivered|1|byeolbit_fan|email|pending"]);
+    // 꺼낼 때 DB 가 주문 상태로 문구 갈래를 정한다(2026-10-12 (2) D11) — 직접 거절·차단 거절·차단 뒤 결제는 같은 「declined」, 7일 반려만 「expired」.
+    // 차단 여부는 갈래 값으로 새지 않는다(decline-block INV-D5)
+    const reasons = [];
+    for (const [g, fan] of [[declined, "byeolbit_fan"], [blocked, "haneul_fan"], [latePaid, "haneul_fan"], [expired, "byeolbit_fan"]] as const) {
+      reasons.push((await claimOne(rowId(g.orderId, "gift_undelivered", fan))).undelivered_reason);
+    }
+    expect(reasons).toEqual(["declined", "declined", "declined", "expired"]);
   });
 
   it("INV-N2 (S2b, 실패경로): 크리에이터가 승인해도 팬에게 승인 사실을 알리는 줄이 없다", async () => {
@@ -438,14 +446,25 @@ describe("추적기 반송 알림 — 크리에이터에게 돌려보내는 선�
     expect(c.nickname).not.toBe("별빛");
   });
 
-  it("INV-N13 (S13c, 실패경로): 블루투스 반응이지만 「추적기 아님」이면 hold·hold_fan 줄도 추적기 기록도 없다 — 통과든 반송이든", async () => {
-    for (const outcome of ["pass", "return"] as const) {
+  it("INV-N13 (S13c, 실패경로): 블루투스 반응이지만 「추적기 아님」이면 hold·hold_fan 줄도 추적기 기록도 없다 — 크리에이터 확인이든 반송이든", async () => {
+    for (const outcome of ["confirm", "return"] as const) {
       const { g, staff, qrs } = await arrivedGift();
       const state = await inspect(staff, qrs[0]!, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome });
-      expect(state).toBe(outcome === "pass" ? "inspected" : "return_waiting");
+      expect(state).toBe(outcome === "confirm" ? "held" : "return_waiting");
       expect(outboxRows(g.orderId).filter((r) => r.startsWith("hold"))).toEqual([]);
       expect(psql(`select count(*) from public.office_hold_alerts a join public.office_parcels p on p.id = a.parcel_id where p.qr_code = '${qrs[0]}'`)).toBe("0");
     }
+  });
+
+  it("INV-N6 · INV-N1 (2026-10-12 (2) D3 ②): 크리에이터 확인 대기 → 하루에게 「확인할 선물」(creator_check) 줄 하나, 상자 둘이어도 주문 단위로 한 번, 꺼낸 닉네임은 하루 자신이고 꼭 가는 알림", async () => {
+    const { g, staff, qrs } = await arrivedGift(2);
+    const confirm = { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "confirm" };
+    expect(await inspect(staff, qrs[0]!, confirm)).toBe("held");
+    expect(await inspect(staff, qrs[1]!, confirm)).toBe("held");
+    expect(outboxRows(g.orderId).filter((r) => r.startsWith("creator_check|"))).toEqual(["creator_check|1|haru_creator|email|pending"]);
+    expect(outboxRows(g.orderId).filter((r) => r.includes("|byeolbit_fan|") && r.startsWith("hold"))).toEqual([]);
+    const c = await claimOne(rowId(g.orderId, "creator_check", "haru_creator"));
+    expect(c).toMatchObject({ kind: "creator_check", nickname: "하루", order_no: g.orderNo, must_deliver: true, undelivered_reason: null });
   });
 
   it("INV-N13 (실패경로): 상자 둘이 모두 추적기여도 주문 단위로 한 번", async () => {
@@ -527,8 +546,8 @@ describe("꺼내기·끝내기 (INV-N5·N1)", () => {
   it("INV-N1: 꺼낸 줄은 본문에 쓸 값만 돌려준다 — 승인 요청은 자동 반려 예정 시각과 꼭 가는 알림 표시, 연락처는 없다", async () => {
     const g = await paidGift();
     const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
-    expect(Object.keys(c).sort()).toEqual(["attempts", "auto_reject_at", "channel", "claimed_at", "id", "kind", "must_deliver", "nickname", "order_no", "round"]);
-    expect(c).toMatchObject({ kind: "approval_request", channel: "email", round: 1, order_no: g.orderNo, nickname: "하루", must_deliver: true, attempts: 0 });
+    expect(Object.keys(c).sort()).toEqual(["attempts", "auto_reject_at", "channel", "claimed_at", "id", "kind", "must_deliver", "nickname", "order_no", "round", "undelivered_reason"]);
+    expect(c).toMatchObject({ kind: "approval_request", channel: "email", round: 1, order_no: g.orderNo, nickname: "하루", must_deliver: true, attempts: 0, undelivered_reason: null });
     const expected = psql(`select extract(epoch from registered_at + interval '168 hours') from public.orders where id = '${g.orderId}'`);
     expect(new Date(c.auto_reject_at!).getTime() / 1000).toBeCloseTo(Number(expected), 3);
     expect(rowField(c.id, "status")).toBe("sending");
@@ -956,7 +975,7 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
         const must = psql(`select public.notification_kind_must_deliver('${kind}')`) === "t";
         seen.push([kind, must, await contactValue(id)]);
       }
-      expect(seen.filter(([, must]) => must)).toHaveLength(9);
+      expect(seen.filter(([, must]) => must)).toHaveLength(10);
       expect(seen).toEqual(seen.map(([kind, must]) => [kind, must, must ? "byeolbit.fan@example.com" : null]));
     });
   });

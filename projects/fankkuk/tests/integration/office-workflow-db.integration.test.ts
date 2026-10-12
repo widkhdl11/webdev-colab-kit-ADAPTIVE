@@ -422,16 +422,17 @@ describe("검수 기록 (INV-W4)", () => {
     expect(parcelState(qr)).toBe("return_waiting");
   });
 
-  it("INV-W4 (S4g): 블루투스 반응이지만 「추적기 아님」이면 일반 상품처럼 — 실측 뒤 통과로 검수 완료, 판정 값이 기록에 남고 추적기 기록은 없다", async () => {
+  it("INV-W4 (S4g): 블루투스 반응이지만 「추적기 아님」이면 크리에이터 확인 — 실측 뒤 검수 스캔으로 확인 대기(held), 판정 값이 기록에 남고 추적기 기록은 없다", async () => {
     const { staff, qr } = await labeledGift();
-    const result = { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "pass" };
+    const result = { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "confirm" };
     expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: result })).error).toBeNull();
-    // 실측 기록 규칙은 그대로다(S4d)
+    // 받으면 그대로 출고되므로 실측 기록 규칙이 같다(S4d)
     expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).error?.code).toBe("P0053");
     expect((await staff.rpc("office_record_measurement", { p_qr: qr, p_tier: "small" })).error).toBeNull();
-    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("inspected");
+    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("held");
     expect(verdictOf(qr)).toBe("not_tracker");
     expect(psql(`select count(*) from public.office_hold_alerts a join public.office_parcels p on p.id = a.parcel_id where p.qr_code = '${qr}'`)).toBe("0");
+    expect(psql(`select count(*) from public.office_creator_checks k join public.office_parcels p on p.id = k.parcel_id where p.qr_code = '${qr}' and k.answer is null`)).toBe("1");
   });
 
   it("INV-W4 (S4g): RF 반응 · 「추적기 아님」 · 반송도 고를 수 있다 — 일반 반송 대기", async () => {
@@ -446,6 +447,9 @@ describe("검수 기록 (INV-W4)", () => {
     ["추적기인데 통과", { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "pass" }],
     ["추적기인데 일반 반송", { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "return" }],
     ["추적기 아닌데 추적기 반송", { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "hold" }],
+    ["추적기 아닌데 바로 통과(D3 ②)", { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "pass" }],
+    ["추적기인데 크리에이터 확인", { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "confirm" }],
+    ["반응이 없는데 크리에이터 확인", { ...FAN_PASS, outcome: "confirm" }],
     ["반응이 없는데 판정", { ...FAN_PASS, tracker_verdict: "not_tracker" }],
     ["모르는 판정 값", { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "maybe", outcome: "pass" }],
     ["아무것도 없는데 추적기 반송", { ...FAN_PASS, outcome: "hold" }],
@@ -461,6 +465,7 @@ describe("검수 기록 (INV-W4)", () => {
     ["추적기 판정인데 결론이 통과", "'found', 'clear', 'clear', null, null, 'tracker', 'pass'", "office_inspections_tracker_verdict_outcome"],
     ["추적기 아님인데 결론이 추적기 반송", "'found', 'clear', 'clear', null, null, 'not_tracker', 'hold'", "office_inspections_tracker_verdict_outcome"],
     ["역조공 칸에 판정", "null, null, null, 'clear', 'clear', 'not_tracker', 'pass'", "office_inspections_tracker_verdict_gift"],
+    ["판정 없이 크리에이터 확인", "'clear', 'clear', 'clear', null, null, null, 'confirm'", "office_inspections_confirm_verdict"],
   ])("INV-W4 (S4g, 실패경로): 표 검사도 막는다 — %s", async (_label, values, constraint) => {
     const { qr } = await labeledGift();
     let err = "";
@@ -482,6 +487,7 @@ describe("검수 기록 (INV-W4)", () => {
     const staff = await signedInClient("fankkuk_staff");
     const qr = await receiveAndLabel(staff, no);
     expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: { ...SHARE_PASS, tracker_verdict: "not_tracker" } })).error?.code).toBe("22023");
+    expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: { ...SHARE_PASS, outcome: "confirm" } })).error?.code).toBe("22023");
   });
 
   it("INV-W4: 역조공은 겉면·금지 물품만 본다 — 금지 물품이 나오면 반송 대기", async () => {
@@ -670,6 +676,194 @@ describe("7일 자동 처리 (INV-W6)", () => {
   it("INV-W6 (실패경로): 팬·크리에이터는 자동 처리를 돌릴 수 없다", async () => {
     const fan = await signedInClient("byeolbit_fan");
     expect((await fan.rpc("office_run_expiry")).error?.code).toBe("42501");
+  });
+});
+
+describe("크리에이터 확인 — 추적기 아님 블루투스·RF 상자 (INV-W4·W6, 2026-10-12 (2) 문제집 D3 ②)", () => {
+  const CONFIRM = { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "confirm" } as const;
+
+  /** 상자 n개 주문 — 모두 입고·라벨 부착까지. 돌려주는 qrs 는 상자 순서대로 */
+  async function labeledBoxes(n = 1) {
+    const g = await paidGift(n);
+    const staff = await signedInClient("fankkuk_staff");
+    const qrs: string[] = [];
+    for (const boxId of g.boxIds) {
+      const no = waybill();
+      await fanSetsWaybill(boxId, no);
+      qrs.push(await receiveAndLabel(staff, no));
+    }
+    return { g, staff, qrs };
+  }
+
+  const answer = async (login: string, orderNo: string, seq: number, a: string) =>
+    (await signedInClient(login)).rpc("answer_creator_check", { p_order_no: orderNo, p_box_seq: seq, p_answer: a });
+  const checkAnswer = (qr: string) =>
+    psql(`select coalesce(k.answer, '-') from public.office_creator_checks k join public.office_parcels p on p.id = k.parcel_id where p.qr_code = '${qr}'`);
+  const refundDue = (orderId: string) =>
+    psql(`select coalesce(public.refund_due_of_payment(p.id)::text, '-') from public.payments p where p.order_id = '${orderId}' and p.kind = 'initial'`);
+  const fanAlerts = (orderId: string, kind: string) =>
+    psql(
+      `select count(*) from public.notification_outbox n join public.profiles pr on pr.id = n.account_id where n.order_id = '${orderId}' and n.kind = '${kind}' and pr.login_id = 'byeolbit_fan' and n.channel = 'email'`,
+    );
+
+  it("INV-W4: 확인 대기 상자는 주문을 검수 단계에 멈춰 둔다 — 주문은 「라벨」, 검수 결과는 비어 있다", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    expect(await inspect(staff, qrs[0]!, CONFIRM)).toBe("held");
+    expect(orderStatus(g.orderId)).toBe("labeled");
+    expect(psql(`select coalesce(inspection_result, '-') from public.orders where id = '${g.orderId}'`)).toBe("-");
+    expect(psql(`select public.office_next_step(p, 'gift') from public.office_parcels p where p.qr_code = '${qrs[0]}'`)).toBe("held");
+  });
+
+  it("INV-W4: 크리에이터가 「받기」 → 그 상자는 검수 완료, 주문은 검수 결과 「통과」로 진행하고 승인 뒤 출고할 수 있다", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    const r = await answer("haru_creator", g.orderNo, 1, "accept");
+    expect(r.error).toBeNull();
+    expect(r.data).toBe("accepted");
+    expect(parcelState(qrs[0]!)).toBe("inspected");
+    expect(checkAnswer(qrs[0]!)).toBe("accept");
+    expect(orderStatus(g.orderId)).toBe("inspected");
+    expect(psql(`select inspection_result from public.orders where id = '${g.orderId}'`)).toBe("passed");
+    expect(fanAlerts(g.orderId, "hold_fan")).toBe("0");
+    await approve(g);
+    expect(finishPrint(qrs[0]!, waybill())).toBeNull();
+  });
+
+  it("INV-W4: 크리에이터가 「돌려보내기」 → 반송 대기, 금속 반송과 같은 돈 처리(상품 대금 칸만)와 팬 「돌려보낼 상자」 알림, 승인 전 주문은 더 승인할 수 없다", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    const r = await answer("haru_creator", g.orderNo, 1, "return");
+    expect(r.error).toBeNull();
+    expect(r.data).toBe("returned");
+    expect(parcelState(qrs[0]!)).toBe("return_waiting");
+    expect(checkAnswer(qrs[0]!)).toBe("return");
+    expect(psql(`select inspection_result from public.orders where id = '${g.orderId}'`)).toBe("returned");
+    expect(psql(`select public.refund_due_of_payment(p.id) = p.goods_krw from public.payments p where p.order_id = '${g.orderId}' and p.kind = 'initial'`)).toBe("t");
+    expect(fanAlerts(g.orderId, "hold_fan")).toBe("1");
+    expect((await approveRpc(g.requestId)).data).toBe("not_approvable");
+  });
+
+  it("INV-W4 (실패경로): 돌려보낸 상자의 주문이 7일 반려로 끝나도 그 상자는 검수 불합격 줄 — 환불 0(금속 반송과 같다)", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    expect((await answer("haru_creator", g.orderNo, 1, "return")).data).toBe("returned");
+    psql(`update public.orders set registered_at = now() - interval '169 hours' where id = '${g.orderId}'`);
+    expect((await staff.rpc("office_run_expiry", { p_order_no: g.orderNo })).error).toBeNull();
+    expect(orderStatus(g.orderId)).toBe("expired");
+    expect(refundDue(g.orderId)).toBe("0");
+  });
+
+  it("INV-W6: 168시간 안에 답이 없으면 자동 처리가 반송 대기로 — 답은 「기한 지남」, 팬 알림·돈 처리는 돌려보내기와 같고 두 번 돌려도 한 번", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    psql(`update public.office_parcels set inspected_at = now() - interval '169 hours' where qr_code = '${qrs[0]}'`);
+    const owner = await signedInClient("fankkuk_admin");
+    const first = await owner.rpc("office_run_expiry", { p_order_no: g.orderNo });
+    expect(first.error).toBeNull();
+    expect((first.data as { held: number }).held).toBe(1);
+    expect(parcelState(qrs[0]!)).toBe("return_waiting");
+    expect(checkAnswer(qrs[0]!)).toBe("expired");
+    expect(psql(`select inspection_result from public.orders where id = '${g.orderId}'`)).toBe("returned");
+    expect(fanAlerts(g.orderId, "hold_fan")).toBe("1");
+    const again = await owner.rpc("office_run_expiry", { p_order_no: g.orderNo });
+    expect((again.data as { held: number }).held).toBe(0);
+    expect(fanAlerts(g.orderId, "hold_fan")).toBe("1");
+  });
+
+  it("INV-W6 (실패경로): 168시간이 지나면 자동 처리 전이라도 답을 받지 않는다 — 상자는 그대로 확인 대기", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    psql(`update public.office_parcels set inspected_at = now() - interval '169 hours' where qr_code = '${qrs[0]}'`);
+    expect((await answer("haru_creator", g.orderNo, 1, "accept")).data).toBe("expired");
+    expect(parcelState(qrs[0]!)).toBe("held");
+    expect(checkAnswer(qrs[0]!)).toBe("-");
+  });
+
+  it("INV-W4 (실패경로): 다른 크리에이터·보낸 팬은 답할 수 없고(없는 것과 같은 답), 두 번째 답은 「이미」, 모르는 답은 거부", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    expect((await answer("momo_creator", g.orderNo, 1, "accept")).data).toBe("not_found");
+    expect((await answer("byeolbit_fan", g.orderNo, 1, "return")).data).toBe("not_found");
+    expect((await answer("haru_creator", g.orderNo, 2, "accept")).data).toBe("not_found");
+    expect((await answer("haru_creator", g.orderNo, 1, "maybe")).error?.code).toBe("22023");
+    expect(parcelState(qrs[0]!)).toBe("held");
+    expect((await answer("haru_creator", g.orderNo, 1, "accept")).data).toBe("accepted");
+    expect((await answer("haru_creator", g.orderNo, 1, "return")).data).toBe("already");
+    expect(parcelState(qrs[0]!)).toBe("inspected");
+    const anon = await anonClient().rpc("answer_creator_check", { p_order_no: g.orderNo, p_box_seq: 1, p_answer: "accept" });
+    expect(anon.error).not.toBeNull();
+  });
+
+  it("INV-W3·W4: 승인된 주문 — 다른 상자는 확인을 기다리지 않고 출고할 수 있고, 돌려보내면 금속 반송처럼 주문 검수 결과가 「반송」", async () => {
+    const { g, staff, qrs } = await labeledBoxes(2);
+    await approve(g);
+    expect(await inspect(staff, qrs[0]!, FAN_PASS)).toBe("inspected");
+    expect(await inspect(staff, qrs[1]!, CONFIRM)).toBe("held");
+    expect(orderStatus(g.orderId)).toBe("labeled");
+    expect(finishPrint(qrs[0]!, waybill())).toBeNull();
+    // 확인 대기 상자는 출고 단계에서 거부된다
+    expect(finishPrint(qrs[1]!, waybill())).not.toBeNull();
+    expect((await answer("haru_creator", g.orderNo, 2, "return")).data).toBe("returned");
+    expect(psql(`select inspection_result from public.orders where id = '${g.orderId}'`)).toBe("returned");
+  });
+
+  it("INV-W4: 확인을 기다리는 동안 주문이 거절되면 질문은 닫히고 상자는 바로 반송 대기 — 검수 불합격이 아니라 거절 환불(배송비 칸만 뺀다)", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    expect((await (await signedInClient("haru_creator")).rpc("decline_gift", { p_request_id: g.requestId, p_block: false })).error).toBeNull();
+    expect(parcelState(qrs[0]!)).toBe("return_waiting");
+    expect(checkAnswer(qrs[0]!)).toBe("-");
+    expect((await answer("haru_creator", g.orderNo, 1, "accept")).data).toBe("closed");
+    expect(refundDue(g.orderId)).toBe(psql(`select (sum(b.price_krw - b.shipping_fee_krw))::text from public.boxes b where b.order_id = '${g.orderId}'`));
+  });
+
+  it("INV-W4 (실패경로): 나갈 수 없게 된 상자(차액 기한 지남)는 자동 처리가 옮기기 전이라도 답을 받지 않는다 — 「끝남」, 상자는 그대로", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    expect((await staff.rpc("office_record_measurement", { p_qr: qrs[0], p_tier: "medium" })).error).toBeNull();
+    expect(await inspect(staff, qrs[0]!, CONFIRM)).toBe("held");
+    psql(`update public.payments set expired_at = now() where order_id = '${g.orderId}' and kind = 'difference'`);
+    expect((await answer("haru_creator", g.orderNo, 1, "accept")).data).toBe("closed");
+    expect(parcelState(qrs[0]!)).toBe("held");
+    expect(checkAnswer(qrs[0]!)).toBe("-");
+  });
+
+  it("INV-W6: 확인을 기다리는 동안 주문이 7일 반려되면 자동 처리가 상자를 반송 대기로 — 답은 비어 있고 팬 「돌려보낼 상자」 알림은 없다", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    // 확인 기한도 함께 지났다 — 끝난 주문의 상자는 「기한 지남」이 아니라 닫힌 질문이다
+    psql(`update public.orders set registered_at = now() - interval '200 hours' where id = '${g.orderId}'`);
+    psql(`update public.office_parcels set inspected_at = now() - interval '169 hours' where qr_code = '${qrs[0]}'`);
+    expect((await staff.rpc("office_run_expiry", { p_order_no: g.orderNo })).error).toBeNull();
+    expect(orderStatus(g.orderId)).toBe("expired");
+    expect(parcelState(qrs[0]!)).toBe("return_waiting");
+    expect(checkAnswer(qrs[0]!)).toBe("-");
+    expect(fanAlerts(g.orderId, "hold_fan")).toBe("0");
+  });
+
+  it("INV-W4: 대표의 입고 뒤 취소도 확인 대기 상자를 바로 반송 대기로 넘긴다", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "시험" })).error).toBeNull();
+    expect(parcelState(qrs[0]!)).toBe("return_waiting");
+  });
+
+  it("INV-W4: 크리에이터 읽기 — 하루는 보낸 팬 닉네임·상자 순번·반응 종류·기한을 보고, 다른 크리에이터·팬에게는 줄이 없다", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, { ...CONFIRM, bluetooth: "clear", rf: "found" });
+    const mine = (await (await signedInClient("haru_creator")).rpc("my_creator_checks")).data as Record<string, unknown>[];
+    const row = mine.find((r) => r.order_no === g.orderNo);
+    expect(row).toMatchObject({ order_no: g.orderNo, box_seq: 1, sender_nickname: "별빛", bluetooth: false, rf: true });
+    const due = psql(`select extract(epoch from inspected_at + interval '168 hours') from public.office_parcels where qr_code = '${qrs[0]}'`);
+    expect(new Date(String(row!.due_at)).getTime() / 1000).toBeCloseTo(Number(due), 2);
+    for (const login of ["momo_creator", "byeolbit_fan"]) {
+      const other = (await (await signedInClient(login)).rpc("my_creator_checks")).data as Record<string, unknown>[] | null;
+      expect([login, (other ?? []).some((r) => r.order_no === g.orderNo)]).toEqual([login, false]);
+    }
+    // 답한 뒤에는 목록에서 빠진다
+    await answer("haru_creator", g.orderNo, 1, "accept");
+    const after = (await (await signedInClient("haru_creator")).rpc("my_creator_checks")).data as Record<string, unknown>[];
+    expect(after.some((r) => r.order_no === g.orderNo)).toBe(false);
   });
 });
 

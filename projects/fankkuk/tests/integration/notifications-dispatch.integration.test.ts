@@ -173,10 +173,11 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
       await dispatchNotifications(depsWith(email));
       const mine = email.sent.filter((m) => m.outboxId === idOf(g.orderId, "gift_undelivered"));
       expect(mine).toHaveLength(1);
-      expect(mine[0]!.subject).toBe("[팬꾹] 선물이 전해지지 못했어요");
+      // 거절했다는 뜻은 전하되(2026-10-12 (2) D11 — 화면 C2 와 같은 「선물을 원하지 않아요」) 차단·크리에이터 닉네임은 없다
+      expect(mine[0]!.subject).toBe("[팬꾹] 크리에이터가 선물을 원하지 않아요");
       expect(mine[0]!.text).toContain("결제 금액은 돌려드려요.");
       expect(mine[0]!.text).toContain(`http://127.0.0.1:3311/gifts/${g.orderNo}`);
-      for (const word of ["거절", "반려", "차단", "하루"]) expect(mine[0]!.text).not.toContain(word);
+      for (const word of ["차단", "반려", "하루"]) expect(mine[0]!.text).not.toContain(word);
       expect(statusOf(g.orderId, "gift_undelivered")).toBe("sent");
     } finally {
       const [k, m] = saved.split("|");

@@ -13,6 +13,7 @@ type Row = {
   order_no: string;
   nickname: string;
   auto_reject_at: string | null;
+  undelivered_reason?: string | null;
   must_deliver: boolean;
   attempts: number;
   claimed_at: string;
@@ -194,6 +195,25 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(email.sent[0]!.text).toContain("10월 8일 오전 10시까지");
     expect(email.sent[0]!.text).toContain("하루님");
     expect(email.sent[0]!.text).not.toContain("haru@example.com"); // 받는 주소는 본문에 없다
+  });
+
+  it("INV-N17 ② · decline-block INV-D5: 거절 알림 문구는 꺼낸 줄의 undelivered_reason(DB 값)으로 고르고, 값이 없는 줄은 보내지 않는다(2026-10-12 (2) D11)", async () => {
+    const email = channel();
+    const { admin, calls } = fakeAdmin({
+      rows: [
+        { ...ROW, id: "declined", kind: "gift_undelivered", undelivered_reason: "declined", must_deliver: true },
+        { ...ROW, id: "expired", kind: "gift_undelivered", undelivered_reason: "expired", must_deliver: true },
+        { ...ROW, id: "missing", kind: "gift_undelivered", must_deliver: true },
+      ],
+      contacts: { declined: "a@example.com", expired: "b@example.com", missing: "c@example.com" },
+    });
+    await dispatchNotifications(deps(admin, { email, kakao: null }));
+    const subject = (id: string) => email.sent.find((m) => m.outboxId === id)?.subject;
+    expect(subject("declined")).toBe("[팬꾹] 크리에이터가 선물을 원하지 않아요");
+    expect(subject("expired")).toBe("[팬꾹] 보낸 선물이 기간이 지나 반려됐어요");
+    expect(subject("missing")).toBeUndefined();
+    const missing = finishes(calls).find((a) => (a as { p_id: string }).p_id === "missing") as { p_outcome: string; p_error_code: string };
+    expect(`${missing.p_outcome}:${missing.p_error_code}`).toBe("skipped:body_unavailable");
   });
 
   it("INV-N6: 본문 끝 「꺼 두어도 가요」는 꺼낸 줄의 must_deliver(DB 판정)로 고른다 — 앱 목록을 다시 보지 않는다", async () => {

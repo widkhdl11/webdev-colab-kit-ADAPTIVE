@@ -1,4 +1,6 @@
 import { NOTIFICATION_POLICY, type NotificationAudience, type NotificationKind } from "@/entities/notification/model/delivery-policy";
+import { DECLINED_PHRASE, EXPIRED_TEXT } from "@/entities/order/ui/fan-stage-copy";
+import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
 import { formatDeadline } from "@/shared/lib/format/datetime";
 
 // 알림 본문 틀 (notifications INV-N1·N9). 카카오 알림톡과 이메일이 같은 틀을 쓴다(INV-N7) — 카카오 템플릿도 이 문구로 심사받는다.
@@ -13,7 +15,11 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 // gift_pending_box: 받는 주소를 본 적이 있는 주문이 거절·반려될 때 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N17, 2026-10-10).
 //   거절·7일 반려·차단 거절 모두 같은 종류·같은 본문이다(INV-N2). 6자리·주소 칸이 없다.
 // gift_undelivered: 받는 주소를 본 적이 없는(상자가 하나도 오지 않은) 주문이 거절·반려될 때 보낸 팬에게 한 번(INV-N17 ②, 2026-10-12 문제집 D11).
-//   거절·7일 반려·차단 거절 모두 같은 본문이다(INV-N2) — 거절 종류를 받는 칸이 없다.
+//   화면(C2)과 같은 뜻을 전한다(2026-10-12 (2) D11) — 직접·차단 거절은 「선물을 원하지 않아요」, 7일 반려는 「기간이 지나 반려됐어요」.
+//   어느 문구인지는 꺼낸 줄의 undelivered_reason(DB 가 주문 상태로 정한 값)이 정한다. 차단 거절도 declined 라 차단은 드러나지 않는다(decline-block INV-D5).
+//   크리에이터 이름은 넣지 않는다(INV-N1) — 화면의 「OO님이」 대신 「크리에이터가」.
+// creator_check: 추적기 아님 블루투스·RF 상자를 받을지 크리에이터에게 묻는다(2026-10-12 (2) D3 ②). 보낸 팬·검출 내용 칸이 없다(INV-N1) —
+//   무엇이 나왔는지는 승인·받은 선물 화면을 열면 보인다.
 // 꼭 가는 알림에는 「꺼 두어도 가요」, 나머지에는 「끌 수 있어요」를 붙인다 — 고르는 값은 꺼낸 줄의 must_deliver(DB 판정, INV-N6)다.
 //   연락처를 내줄지도 같은 DB 판정이 정하므로, 앱 목록이 DB 와 어긋나도 본문 안내는 실제 발송과 같다.
 //   「끌 수 있어요」는 받는 사람의 설정 자리를 가리킨다 — 팬은 내 팬꾹, 크리에이터는 내 팬꾹의 주소와 설정(design-rules 5절).
@@ -35,6 +41,8 @@ export type NotificationBodyInput = {
   orderNo: string;
   /** 승인 요청만 — 자동 반려 예정 시각(결제 완료 + 168시간) */
   autoRejectAt: string | null;
+  /** 거절 알림(gift_undelivered)만 — 직접·차단 거절 declined · 7일 반려 expired. DB 가 정한 값이다 */
+  undeliveredReason: "declined" | "expired" | null;
   /** 꺼낸 줄의 꼭 가는 알림 표시(DB 판정, INV-N6) */
   mustDeliver: boolean;
   /** 설정의 사이트 주소(APP_ORIGIN) */
@@ -84,7 +92,7 @@ export function siteOrigin(appOrigin: string): string {
   return url.origin;
 }
 
-function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationBodyInput): Draft {
+function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReason }: NotificationBodyInput): Draft {
   const greet = `${nickname}님,`;
   const order = `주문번호 ${orderNo}`;
   switch (kind) {
@@ -175,13 +183,24 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt }: NotificationB
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
       };
-    case "gift_undelivered":
-      // 거절의 종류·크리에이터는 쓰지 않는다(INV-N2). 받는 주소를 본 적이 없는 주문이라 결제 금액 전부가 돌아간다(payment INV-M8)
+    case "gift_undelivered": {
+      // 거절했다는 뜻은 전하고(화면 C2 와 같은 말) 차단·크리에이터 이름은 쓰지 않는다(INV-N1·N2). 받는 주소를 본 적이 없는 주문이라 결제 금액 전부가 돌아간다(payment INV-M8)
+      if (!undeliveredReason) throw new Error("거절 알림에 문구 갈래가 없다");
+      const first = undeliveredReason === "expired" ? `보내신 선물이 ${EXPIRED_TEXT}` : `크리에이터가 ${DECLINED_PHRASE}`;
       return {
-        subject: "[팬꾹] 선물이 전해지지 못했어요",
-        lines: [greet, "선물이 전해지지 못했어요.", "결제 금액은 돌려드려요.", order],
+        subject: undeliveredReason === "expired" ? `[팬꾹] 보낸 선물이 ${EXPIRED_TEXT}` : `[팬꾹] 크리에이터가 ${DECLINED_PHRASE}`,
+        lines: [greet, `${first}.`, "결제 금액은 돌려드려요.", order],
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
+      };
+    }
+    case "creator_check":
+      // 받을지 정해 달라는 말과 기한뿐 — 보낸 팬·무엇이 나왔는지는 쓰지 않는다(INV-N1). 화면은 승인·받은 선물의 「확인할 선물」 탭
+      return {
+        subject: "[팬꾹] 받을지 정해 주실 선물이 있어요",
+        lines: [greet, "받을지 정해 주실 상자가 있어요.", `${CREATOR_CHECK_DAYS}일 안에 정하지 않으면 보낸 분에게 돌려보내요.`, order],
+        buttonLabel: "확인하기",
+        path: "/creator/requests",
       };
     case "difference_due":
       // 결제가 끝나야 송장이 나가고(payment INV-M12), 168시간 미납이면 반송 대상이다(INV-M13)

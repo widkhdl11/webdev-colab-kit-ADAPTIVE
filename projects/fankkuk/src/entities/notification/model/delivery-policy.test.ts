@@ -30,9 +30,9 @@ describe("꼭 가는 알림 목록 (INV-N6)", () => {
     for (const kind of NOTIFICATION_KINDS) expect([kind, NOTIFICATION_POLICY[kind].mustDeliver]).toEqual([kind, table.get(kind)]);
   });
 
-  it("INV-N6: 끌 수 없는 알림은 아홉 — 승인 요청·돌려보내는 선물·돌려보낼 상자·안 온 상자 둘·거절 알림·추가 결제·결제 취소 둘", () => {
+  it("INV-N6: 끌 수 없는 알림은 열 — 승인 요청·돌려보내는 선물·확인할 선물·돌려보낼 상자·안 온 상자 둘·거절 알림·추가 결제·결제 취소 둘", () => {
     expect([...MUST_DELIVER_KINDS].sort()).toEqual(
-      ["approval_request", "hold", "hold_fan", "box_missing", "gift_pending_box", "gift_undelivered", "difference_due", "payment_canceled", "difference_canceled"].sort(),
+      ["approval_request", "hold", "creator_check", "hold_fan", "box_missing", "gift_pending_box", "gift_undelivered", "difference_due", "payment_canceled", "difference_canceled"].sort(),
     );
   });
 
@@ -43,10 +43,10 @@ describe("꼭 가는 알림 목록 (INV-N6)", () => {
     expect(isMustDeliver("no_such_kind")).toBe(false);
   });
 
-  it("INV-N6: 설정 화면의 안내 목록 — 팬은 팬이 받는 끌 수 없는 알림, 크리에이터는 승인 요청·돌려보내는 선물(INV-N13, 2026-10-12 D2)", () => {
+  it("INV-N6: 설정 화면의 안내 목록 — 팬은 팬이 받는 끌 수 없는 알림, 크리에이터는 승인 요청·돌려보내는 선물·확인할 선물(INV-N13, 2026-10-12 D2·D3 ②)", () => {
     const fan = mustDeliverLabels("fan");
     expect(fan).toEqual(["돌려보낼 상자", "아직 도착하지 않은 상자", "전해지지 못한 선물", "추가 결제 요청", "결제 취소", "추가 결제 취소"]);
-    expect(mustDeliverLabels("creator")).toEqual(["승인 요청", "돌려보내는 선물"]);
+    expect(mustDeliverLabels("creator")).toEqual(["승인 요청", "돌려보내는 선물", "확인할 선물"]);
   });
 
   it("INV-N6: 설정 화면 이름이 운영자 화면·스펙 표와 같다 — 추가 결제 취소는 「추가 결제 취소」", () => {

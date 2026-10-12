@@ -142,6 +142,8 @@ export function officeRowsDelete(unitIds: string, column: "box_id" | "share_id")
     `delete from public.office_inspections where parcel_id in (${parcels});`,
     `delete from public.office_envelope_shreds where parcel_id in (${parcels});`,
     `delete from public.office_hold_alerts where parcel_id in (${parcels});`,
+    // 크리에이터 확인 줄(2026-10-12 (2) D3 ②) — 표가 아직 없을 때(구현 전 빨간불)도 정리가 멈추지 않게 표가 있을 때만
+    `do $$ begin if to_regclass('public.office_creator_checks') is not null then delete from public.office_creator_checks where parcel_id in (${parcels}); end if; end $$;`,
     `delete from public.office_label_pending where parcel_id in (${parcels});`,
     `delete from public.office_unmatched where matched_parcel_id in (${parcels});`,
     // 상자별 받는 주소(inbound-address-code): 「제가 보낸 게 아니에요」 기록(추가만)·상자 도착 알림 줄(역조공은 주문 줄이 없다)

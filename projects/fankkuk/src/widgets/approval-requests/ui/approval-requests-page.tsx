@@ -2,12 +2,15 @@ import type { ReceivedBox } from "@/entities/gift-reply/api/gift-reply-reads";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import type { DecidedRequestView } from "@/entities/order/model/decided-request";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
+import type { CreatorCheckView } from "@/entities/parcel/model/creator-check";
 import { ApprovalRequestList } from "@/features/approval-request/ui/approval-request-list";
+import { CreatorCheckList } from "@/features/creator-check/ui/creator-check-list";
 import { ReceivedBoxList } from "@/features/gift-reply/ui/received-box-list";
 import { CreatorGiftTabs } from "./creator-gift-tabs";
 import s from "./approval-requests.module.css";
 
-// 크리에이터 — 승인·받은 선물. 탭 둘: 승인 요청(한 건씩 보고 승인·거절, 전체 승인은 없다) · 받은 선물(출고된 상자마다 받았어요·답장, gift-reply).
+// 크리에이터 — 승인·받은 선물. 탭: 승인 요청(한 건씩 보고 승인·거절, 전체 승인은 없다) · 확인할 선물(추적기 아님 블루투스·RF 상자를 받을지 —
+// 답을 기다리는 상자가 있거나 그 탭으로 들어왔을 때만, 2026-10-12 (2) D3 ②) · 받은 선물(출고된 상자마다 받았어요·답장, gift-reply).
 // 시안: docs/design/mockups/site/v4/creator-requests.html(승인 요청) · docs/design/mockups/addendum/creator-received.html(탭·받은 선물)
 // 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리는 서로 import 하지 않는다(FSD).
 export function ApprovalRequestsPage({
@@ -16,6 +19,7 @@ export function ApprovalRequestsPage({
   now,
   received,
   replyPending,
+  checks = [],
   initialTab = "requests",
 }: {
   requests: readonly ApprovalRequestView[];
@@ -26,8 +30,11 @@ export function ApprovalRequestsPage({
   received: readonly ReceivedBox[];
   /** 아직 답장 안 한 선물 수(본인 것만, INV-G10) */
   replyPending: number;
-  initialTab?: "requests" | "received";
+  /** 답을 기다리는 확인할 선물(본인 것만, my_creator_checks) */
+  checks?: readonly CreatorCheckView[];
+  initialTab?: "requests" | "checks" | "received";
 }) {
+  const showChecks = checks.length > 0 || initialTab === "checks";
   return (
     <div>
       <div className="panel-title">
@@ -55,6 +62,9 @@ export function ApprovalRequestsPage({
               </>
             ),
           },
+          ...(showChecks
+            ? [{ id: "checks" as const, label: "확인할 선물", count: checks.length, panel: <CreatorCheckList checks={checks} now={now} /> }]
+            : []),
           { id: "received", label: "받은 선물", count: received.length, panel: <ReceivedBoxList boxes={received} pending={replyPending} /> },
         ]}
       />
