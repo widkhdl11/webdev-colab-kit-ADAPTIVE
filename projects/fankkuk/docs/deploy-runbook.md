@@ -21,7 +21,7 @@
 `projects/fankkuk` 에서:
 
 ```
-npx supabase link --project-ref <프로젝트 ref>      # DB 비밀번호를 묻는다
+npx supabase link --project-ref <프로젝트 ref>
 npx supabase db push
 ```
 
@@ -31,17 +31,10 @@ npx supabase db push
 
 개인정보 구역(pii)을 만들고 다루는 파일이라 사람이 직접 적용한다.
 
-DB 접속 주소는 Supabase 대시보드 → 상단 **Connect** → **Session pooler** 의 주소를 쓴다
-(Direct connection 은 IPv6 전용이라 집 PC·Docker 에서 안 닿는 경우가 많다). `[YOUR-PASSWORD]` 자리에 DB 비밀번호를 넣는다.
-
-psql 은 로컬 Supabase 컨테이너 안의 것을 빌려 쓴다(로컬 Supabase 가 켜져 있어야 한다). Git Bash 에서, `projects/fankkuk` 에서:
+CLI 가 Supabase 계정에 로그인돼 있으면 DB 비밀번호 없이 들어간다(관리 기능으로 임시 접속 계정을 만든다 — 출력의 `Initialising login role...`). `projects/fankkuk` 에서:
 
 ```
-DB='<Session pooler 주소>'
-for f in $(ls supabase/manual/*.sql | grep -v local-seed); do
-  echo "== $f"
-  docker exec -i supabase_db_fankkuk psql "$DB" -v ON_ERROR_STOP=1 -q < "$f" || break
-done
+for f in $(ls supabase/manual/*.sql | grep -v local-seed); do echo "== $f"; npx supabase db query --linked -f "$f" > /dev/null || break; done
 ```
 
 실패하면 그 파일에서 멈춘다. 파일마다 한 트랜잭션이라 실패한 파일은 아무것도 남기지 않는다 — 원인을 고치고 그 파일부터 다시 돌린다.
@@ -49,10 +42,13 @@ done
 ## 3. 구조 확인
 
 ```
-docker exec -i supabase_db_fankkuk psql "$DB" -At -c "select (select count(*) from pg_tables where schemaname in ('public','pii'))||' 표 · '||(select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','pii'))||' 함수 · '||(select count(*) from pg_policies where schemaname in ('public','pii','storage'))||' 정책 · '||(select count(*) from cron.job)||' 예약 · '||(select count(*) from storage.buckets)||' 버킷';"
+npx supabase db query --linked -o csv "select (select count(*) from pg_tables where schemaname in ('public','pii'))||' 표 · '||(select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','pii'))||' 함수 · '||(select count(*) from pg_policies where schemaname in ('public','pii','storage'))||' 정책 · '||(select count(*) from cron.job)||' 예약 · '||(select count(*) from storage.buckets)||' 버킷'"
 ```
 
-2026-10-12 기준 기대값: `74 표 · 345 함수 · 4 정책 · 3 예약 · 2 버킷`
+2026-10-12 기준 기대값: `74 표 · 345 함수 · 4 정책 · 3 예약 · 2 버킷` (마이그레이션만 들어간 상태는 `66 표 · 318 함수`).
+
+2026-10-12 첫 운영 DB(enpghaykwlklnogcscpw)에 이 순서로 깔았고 기대값이 그대로 나왔다. 공개 키로 개인정보 구역을 부르면
+「노출된 구역은 public, graphql_public 뿐」(406)으로 거부되는 것도 확인했다.
 
 ## 4. 대표 계정
 
