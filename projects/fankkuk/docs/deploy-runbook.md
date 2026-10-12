@@ -29,7 +29,7 @@ npx supabase db push
 
 ## 2. manual 파일 (사람이 직접 적용)
 
-개인정보 구역(pii)을 만들고 다루는 파일이라 에이전트가 적용하지 않는다(.claude/rules/supabase-fankkuk.md).
+개인정보 구역(pii)을 만들고 다루는 파일이라 사람이 직접 적용한다.
 
 DB 접속 주소는 Supabase 대시보드 → 상단 **Connect** → **Session pooler** 의 주소를 쓴다
 (Direct connection 은 IPv6 전용이라 집 PC·Docker 에서 안 닿는 경우가 많다). `[YOUR-PASSWORD]` 자리에 DB 비밀번호를 넣는다.
