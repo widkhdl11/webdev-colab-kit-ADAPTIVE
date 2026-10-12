@@ -1,11 +1,42 @@
 ---
 project: fankkuk
 status: passed
-basis: 02d1037c982f
+basis: 4f8f605cae41
 reviewers: [security-reviewer, code-reviewer, test-auditor, ui-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-12 (2), 문제집 메모 D·E)
+# 리뷰 사인오프 — fankkuk (2026-10-12 (3), 문제집 D 메모 추가 답 — D3 ② · D11 문구)
+
+이번 사인오프가 덮는 변경: 지난 사인오프(basis 02d1037c982f) 뒤 사용자가 메모마다 단 D 추가 답(DECISIONS 「2026-10-12 (2) — 문제집 D 메모 추가 답」).
+e2b7858(구현) · 7d8729b(리뷰 반영) · a8ef35c(개인정보 노출 검사 허용 목록). 문서만 바뀐 커밋(f257e74 결정 기록)은 산출물이 아니다.
+
+- 닿은 표면: authz(크리에이터는 본인 주문의 확인 대기 상자에만 답) · concurrency(두 번 누름·168시간 자동 반송과의 경합 — 상자→주문→사무소 상자 잠금) · 시변 상태(168시간 기한) · 개인정보(알림 본문, 노출 검사) · 화면.
+- security-reviewer: 높음·중간 없음. 낮음 3 — 승인 스펙 INV-W4 가 코드와 반대(미룬 문서) · 금속 반응 상자도 크리에이터 받기로 출고 가능(이전부터 있던 길, 정책 확인 BACKLOG) · 40001 → 409 반영.
+- code-reviewer: 중 1(확인 알림이 주문 단위라 두 번째 상자에 안 감 → 상자 단위로) · 낮음 3(기한 지남 줄 답 expired · 탭 id 기억 · 주석) 반영.
+- ui-reviewer: 중 1(탭을 순서 번호로 기억 → id) · 낮음 3(기한 판정 entities 로 · tabpanel tabIndex · 390px 탭 줄바꿈) 반영.
+- test-auditor: 빈 갈래 6(표 제약 not_tracker+pass · 168시간 경계 · 기한 지남 환불 · 승인된 주문 다른 상자 · 끝난 주문의 답 · 확인 화면 렌더) → 시험 추가, 변이 18/18.
+- 사인오프 전체 실행이 잡은 것: pii-exposure-check INV-P9 S9 — answer_creator_check 가 office_sync → close_revgift_share(역조공 몫 주소 지우기) 경로로 개인정보 구역에 닿음. 돌려주는 값은 결과 글자 여섯 가지뿐임을 함수 정의로 확인하고 허용 목록에 이유와 함께 올림(a8ef35c). 구현·반영의 관련 시험 목록에 이 검사가 없었다 — 지시 양식에 규칙 추가.
+
+## 미룬 문서 (이번 묶음 추가분 — 아래 「문제집 D·E」 목록과 합쳐서 비운다)
+- `docs/specs/office-workflow.md` INV-W4·S4g·W6·W3 — 추적기 아님 → 크리에이터 확인·반송, 확인 대기의 뜻, 168시간 무응답 반송, 기한 지난 답 expired, 나갈 수 없는 상자 목록 제외, 표 제약, 주문 단계 계산.
+- `docs/specs/notifications.md` INV-N13·S13c·N17 ②·N2·N1 — creator_check(상자마다 한 번), 돌려보내기·기한 지남에도 hold_fan, 거절 문구 두 갈래와 갈래 값.
+- `docs/specs/decline-block.md` INV-D5 — 알림도 화면과 같은 거절 문구.
+- `docs/specs/payment.md` INV-M9·M12 — 돌려보냄·기한 지남 상자는 검수 불합격 줄, 확인 대기 상자 차액 허용.
+- `src/widgets/legal/model/terms-doc.ts` 약관 제10조 — 크리에이터 확인 절차.
+- `docs/policy/D-office-automation.md` 2-9절·거절 알림 표·205행, `docs/policy/README.md` 89행, `docs/policy/quiz/D.json` D3·D11 해설(+ D4·D13 해설 약속분).
+
+## 배포 전 확인 (운영 DB)
+- 새 표 제약(추적기 아님 + 통과 금지, 상자 칸 있는 creator_check 줄)을 걸기 전에 위반 줄을 센다. 로컬은 0건.
+
+## 실행 근거
+- 구현 e2b7858: tsc 0 · 단위 1615 · 관련 통합 25파일 통과 · 변이 40/40 · Playwright PC 1280·모바일 390(직원 검수 → 크리에이터 받기·돌려보내기 → 팬 거절 메일 둘).
+- 반영 7d8729b: 관련 통합 13파일 439/439 · `npx vitest run` 1624 · tsc 0 · `node gates/run-gates.mjs` 통과 · 변이 18/18.
+- 사인오프: `npx vitest run --config vitest.integration.config.mts` 1649 중 3 실패 → pii-exposure-check 1(위 허용 목록으로 해결, 다시 돌려 13/13) · read-isolation 2(알려진 시드 건).
+
+---
+
+## 이전 사인오프 — fankkuk (2026-10-12 (2), 문제집 메모 D·E)
+
 
 이번 사인오프가 덮는 변경: 지난 사인오프(basis 07f7f0e08933, 추가분) 뒤 문제집 D·E 결정(카드 d59 「추천대로 전부」) 구현 네 묶음. 묶음마다 리뷰 넷을 따로 돌리고 지적을 반영한 뒤 다음 묶음으로 갔다.
 문서만 바뀐 커밋(980c55c 결정 기록)은 산출물이 아니다.
