@@ -162,7 +162,7 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     }
   });
 
-  it("INV-N17 ② · INV-N6 (S2·S6e, manual/0016 뒤): 상자가 하나도 안 온 주문을 거절하면 알림을 모두 끈 별빛에게도 거절 알림이 한 번 간다 — 거절 종류는 본문에 없다", async () => {
+  it("INV-N17 ② · INV-N6 (S2·S6e, manual/0016 뒤): 상자가 하나도 안 온 주문을 거절하면 알림을 모두 끈 별빛에게도 거절 알림이 한 번 간다 — 본문은 거절 문구이고 차단 여부는 없다", async () => {
     const fan = `(select id from public.profiles where login_id = 'byeolbit_fan')`;
     const saved = psql(`select notify_kakao || '|' || notify_email from pii.account_contacts where account_id = ${fan}`);
     psql(`update pii.account_contacts set notify_kakao = false, notify_email = false where account_id = ${fan}`);
