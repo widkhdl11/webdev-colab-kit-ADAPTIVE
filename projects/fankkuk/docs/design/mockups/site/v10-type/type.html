@@ -1,0 +1,93 @@
+<!doctype html>
+<!-- 팬꾹 시안 v10-type — 글자 단계표 (A 차분 / B 또렷), 2026-10-12. 예시 문장은 각 안의 실제 값으로 그려진다. -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 글자 단계표 A·B</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+*{box-sizing:border-box}
+:root{--brand:#b84f48;--ink:#343039;--sub:#665d65;--faint:#6b6169;--surface:#f7f7f8;--border:#dfdce0}
+body{margin:0;color:var(--ink);font:400 16px/1.6 "Pretendard Variable",Pretendard,-apple-system,"Malgun Gothic",sans-serif;word-break:keep-all;overflow-wrap:anywhere}
+h1,h2,p{margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding:40px 24px 80px}
+h1{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.intro{margin-top:12px;color:var(--sub);max-width:720px}
+.links{margin-top:16px;display:flex;gap:16px;flex-wrap:wrap}.links a{color:var(--brand);font-weight:600}
+.head,.row{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1fr);gap:24px}
+.head{margin-top:40px;padding-bottom:12px;border-bottom:2px solid var(--ink);font-weight:700}
+.row{padding-block:28px;border-bottom:1px solid var(--border);align-items:start}
+.role{font-weight:700}
+.spec{margin-top:12px;color:var(--sub)}
+.spec b{color:var(--ink);font-weight:600}
+.a{--fs-hero:40px;--fs-h2:28px;--wh:700;--wh2:700;--wh3:600;--wb:600;--ls:-.02em;--ls3:0}
+.b{--fs-hero:48px;--fs-h2:32px;--wh:800;--wh2:800;--wh3:700;--wb:700;--ls:-.025em;--ls3:-.025em}
+.ex-hero{font-size:var(--fs-hero);font-weight:var(--wh);letter-spacing:var(--ls);line-height:1.25}
+.ex-h2{font-size:var(--fs-h2);font-weight:var(--wh2);letter-spacing:var(--ls);line-height:1.3}
+.ex-h3{font-size:20px;font-weight:var(--wh3);letter-spacing:var(--ls3);line-height:1.4}
+.ex-lead{font-size:18px}
+.ex-body{font-size:16px}
+.ex-btn{display:inline-flex;align-items:center;min-height:52px;padding:0 28px;border-radius:12px;background:var(--brand);color:#fff;font-weight:var(--wb)}
+.ex-meta-sub{color:var(--sub)}.ex-meta-faint{color:var(--faint)}
+.note{margin-top:32px;padding:20px 24px;border-radius:16px;background:var(--surface)}
+.note li{margin-top:4px}.note ul{margin:8px 0 0;padding-left:20px}
+@media(max-width:767px){.head{display:none}.row{grid-template-columns:1fr;gap:16px}.row>div[data-l]::before{content:attr(data-l);display:block;margin-bottom:8px;font-weight:700;color:var(--faint)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>글자 단계표 — A 차분 / B 또렷</h1>
+  <p class="intro">지금 사이트는 글자 크기 35가지, 굵기 5가지에 글 대부분이 회색입니다. 아래 두 안은 크기 5가지, 굵기 3가지로 줄이고 본문을 진한 색으로 바꿨습니다. 글씨체는 둘 다 Pretendard 하나입니다. 예시는 PC 크기로 그려집니다.</p>
+  <p class="links"><a href="landing-a.html">A 랜딩 보기</a><a href="landing-b.html">B 랜딩 보기</a></p>
+
+  <div class="head"><div>역할</div><div>A 차분</div><div>B 또렷</div></div>
+
+  <div class="row">
+    <div class="role">첫 화면 제목</div>
+    <div class="a" data-l="A 차분"><p class="ex-hero">승인한 선물만 배송합니다</p><p class="spec"><b>PC 40 / 휴대폰 30</b> · 700 · 진한 글자색 · 자간 -0.02em</p></div>
+    <div class="b" data-l="B 또렷"><p class="ex-hero">승인한 선물만 배송합니다</p><p class="spec"><b>PC 48 / 휴대폰 34</b> · 800 · 진한 글자색 · 자간 -0.025em</p></div>
+  </div>
+  <div class="row">
+    <div class="role">구간 제목</div>
+    <div class="a" data-l="A 차분"><p class="ex-h2">모든 요금에 <span style="color:var(--brand)">검수가</span> 포함됩니다</p><p class="spec"><b>PC 28 / 휴대폰 24</b> · 700 · 진한 글자색 + 코랄 한 곳 · 자간 -0.02em</p></div>
+    <div class="b" data-l="B 또렷"><p class="ex-h2">모든 요금에 <span style="color:var(--brand)">검수가</span> 포함됩니다</p><p class="spec"><b>PC 32 / 휴대폰 26</b> · 800 · 진한 글자색 + 코랄 한 곳 · 자간 -0.025em</p></div>
+  </div>
+  <div class="row">
+    <div class="role">카드 제목</div>
+    <div class="a" data-l="A 차분"><p class="ex-h3">주소는 잠긴 채 보관합니다</p><p class="spec"><b>20 / 20</b> · 600 · 진한 글자색 · 자간 0</p></div>
+    <div class="b" data-l="B 또렷"><p class="ex-h3">주소는 잠긴 채 보관합니다</p><p class="spec"><b>20 / 20</b> · 700 · 진한 글자색 · 자간 -0.025em</p></div>
+  </div>
+  <div class="row">
+    <div class="role">리드 문장</div>
+    <div class="a" data-l="A 차분"><p class="ex-lead">승인 전까지 주소는 노출되지 않습니다.</p><p class="spec"><b>18 / 18</b> · 400 · 진한 글자색(제목 아래 설명은 보조색)</p></div>
+    <div class="b" data-l="B 또렷"><p class="ex-lead">승인 전까지 주소는 노출되지 않습니다.</p><p class="spec"><b>18 / 18</b> · 400 · 진한 글자색(제목 아래 설명은 보조색)</p></div>
+  </div>
+  <div class="row">
+    <div class="role">본문</div>
+    <div class="a" data-l="A 차분"><p class="ex-body">승인된 선물의 송장을 출력할 때만 열려요.</p><p class="spec"><b>16 / 16</b> · 400 · 진한 글자색</p></div>
+    <div class="b" data-l="B 또렷"><p class="ex-body" style="color:var(--sub)">승인된 선물의 송장을 출력할 때만 열려요.</p><p class="spec"><b>16 / 16</b> · 400 · 보조색 (카드 안 설명)</p></div>
+  </div>
+  <div class="row">
+    <div class="role">버튼 · 네비</div>
+    <div class="a" data-l="A 차분"><span class="ex-btn">크리에이터로 가입하기</span><p class="spec"><b>16 / 16</b> · 600 · 흰 글자 / 진한 글자색</p></div>
+    <div class="b" data-l="B 또렷"><span class="ex-btn">크리에이터로 가입하기</span><p class="spec"><b>16 / 16</b> · 700 · 흰 글자 / 진한 글자색</p></div>
+  </div>
+  <div class="row">
+    <div class="role">보조 · 메타</div>
+    <div class="a" data-l="A 차분"><p class="ex-body ex-meta-sub">세 변 합 100cm·5kg 이하</p><p class="spec"><b>16 / 16</b> · 400 · 보조색 (제목 아래 설명·메타에만)</p></div>
+    <div class="b" data-l="B 또렷"><p class="ex-body ex-meta-faint">세 변 합 100cm·5kg 이하</p><p class="spec"><b>16 / 16</b> · 400 · 흐린 글자색 (아주 작은 메타만)</p></div>
+  </div>
+
+  <div class="note">
+    <p><b>두 안 공통</b></p>
+    <ul>
+      <li>글씨체 Pretendard 하나, 16px 미만 글자 없음, 한 화면 크기 5가지(40·28·20·18·16 / 48·32·20·18·16).</li>
+      <li>자간은 제목용 하나와 0 두 값만. 본문·버튼·메타는 0.</li>
+      <li>코랄 글자는 흰 바탕 위에서만 쓰고, 옅은 면 위에서는 한 단계 진한 코랄(#a4433d)을 씁니다.</li>
+      <li>A는 굵기 700·600·400 / 글자색 둘, B는 굵기 800·700·400 / 글자색 셋 + 구간 바탕 교차.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
