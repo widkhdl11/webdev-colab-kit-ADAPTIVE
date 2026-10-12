@@ -61,6 +61,8 @@ export const PII_FUNCTIONS = {
   office_print_return_label: "반송 송장 출력 → 몫 닫기, 돌려주는 것은 원 송장 봉투 번호",
   office_scan_inbound: "입고 스캔 → 몫 닫기, 돌려주는 것은 결과·QR(office-workflow INV-W1)",
   office_scan_inspect: "검수 완료 스캔 → 몫 닫기, 돌려주는 것은 다음 단계 글자",
+  // 크리에이터가 블루투스 제품 확인에 답한다(문제집 D3 ②). 같은 office_sync 경로로 닿는다 — 크리에이터 확인은 역조공 몫에 생기지 않지만 공통 정리를 부른다
+  answer_creator_check: "크리에이터 확인 답(받기·돌려보내기) → 몫 닫기, 돌려주는 것은 결과 글자 여섯 가지(not_found·expired·already·closed·accepted·returned)",
 };
 
 /** 응답 하나를 통째로 훑어 개인정보 꼴이 있는 자리를 돌려준다(값은 찍지 않는다). 칸 이름이 걸려도 값이 참·거짓·빈 값이면 개인정보가 아니다. */
