@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { chooseApprovalSigner } from "./signer";
+import { TEST_SITE_ORIGINS } from "@/shared/lib/env/test-site";
 
 describe("INV-S11: 가짜 서명 창구는 운영에서 켜질 수 없다", () => {
   it("INV-S11 S11c: 운영 표시가 있으면 창구가 없다 — 가짜로 넘어가지 않는다", () => {
@@ -26,5 +27,15 @@ describe("가짜 서명 창구", () => {
     expect(new TextDecoder().decode(r.signedContent)).toBe("apr_X|FC-1|2026|h");
     expect(r.signerId).toBe(s.registeredSignerIdOf("u1"));
     expect(r.signerId).not.toBe(s.registeredSignerIdOf("u2"));
+  });
+});
+
+describe("INV-TS2: 시험 사이트에서는 가짜 서명 창구가 열린다", () => {
+  it("INV-TS2 (S2): 시험 사이트면 운영 빌드라도 가짜 서명 창구가 나온다", () => {
+    expect(chooseApprovalSigner({ NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: TEST_SITE_ORIGINS[0] })?.kind).toBe("fake");
+  });
+
+  it("INV-TS2 (S2b, 실패경로): 시험 주소가 아니면 설정값이 있어도 창구가 없다", () => {
+    expect(chooseApprovalSigner({ NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: "https://fankkuk.com" })).toBeNull();
   });
 });

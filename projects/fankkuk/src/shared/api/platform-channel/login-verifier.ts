@@ -1,9 +1,9 @@
-import { isProduction, type DeployEnv } from "@/shared/lib/env/is-production";
+import { allowsFakeChannels, type TestSiteEnv } from "@/shared/lib/env/test-site";
 
 // 플랫폼 로그인 창구 (creator-verification INV-V14). 플랫폼 계정 로그인 연결(OAuth)은 외부 연결 때 붙인다 —
 // 그때까지 로컬에서는 가짜 창구를 쓴다. 승인 서명의 가짜 서명 창구(approval-signer)와 같은 꼴이다.
 // 창구는 서버에서만 쓴다. 고르는 곳은 이 함수 하나다 — 운영에서는 실제 창구가 붙기 전까지 창구가 없고, 로그인 확인은 거부된다.
-// 운영에서 가짜를 켜는 설정은 일부러 두지 않는다.
+// 운영에서 가짜를 켜는 길은 시험 사이트 판정(test-site INV-TS1) 하나뿐이다 — 따로 켜는 설정은 두지 않는다.
 
 export type OwnedChannel = { platform: string; channelKey: string };
 
@@ -24,7 +24,7 @@ const fakeVerifier: ChannelLoginVerifier = {
   },
 };
 
-export function chooseChannelLoginVerifier(env: DeployEnv): ChannelLoginVerifier | null {
-  if (isProduction(env)) return null; // 실제 플랫폼 로그인 연결이 생기면 여기서 그 창구를 돌려준다
+export function chooseChannelLoginVerifier(env: TestSiteEnv): ChannelLoginVerifier | null {
+  if (!allowsFakeChannels(env)) return null; // 실제 플랫폼 로그인 연결이 생기면 여기서 그 창구를 돌려준다
   return fakeVerifier;
 }

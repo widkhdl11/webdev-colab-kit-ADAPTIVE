@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { OutgoingMail } from "@/shared/api/mail/smtp";
 import { ChannelError, chooseNotificationChannels } from "./channels";
+import { TEST_SITE_ORIGINS } from "@/shared/lib/env/test-site";
 
 // 알림 발송 통로 고르기 (notifications INV-N7·N10·N11). 고르는 곳은 이 함수 하나다.
 
@@ -74,5 +75,16 @@ describe("알림 발송 통로 고르기 (INV-N11)", () => {
     const ch = chooseNotificationChannels({}, { sendMail: mailbox().sendMail, hasKakaoTemplates: true });
     expect(ch.email.lookup).toBeNull();
     expect(await ch.kakao!.lookup!(MESSAGE.outboxId)).toBe(false);
+  });
+});
+
+// 변수로 둔다 — 이 함수들의 설정 형식에는 시험 사이트 칸이 없고, 넘겨도 쓰지 않는다는 것이 시험의 요점이다
+const testSiteEnv = { NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: TEST_SITE_ORIGINS[0] };
+
+describe("INV-TS2: 시험 사이트에서도 알림 창구는 운영과 같다", () => {
+  it("INV-TS2 (S2c, 실패경로): 시험 사이트라도 가짜 알림톡 창구가 나오지 않는다", () => {
+    const ch = chooseNotificationChannels(testSiteEnv, { sendMail: async () => undefined, hasKakaoTemplates: false });
+    expect(ch.kakao).toBeNull();
+    expect(ch.email.fake).toBe(false);
   });
 });

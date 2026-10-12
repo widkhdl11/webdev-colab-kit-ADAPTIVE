@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { TestSiteBand } from "@/shared/ui/test-site-band";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a className="skip-link" href="#main">
           본문 바로가기
         </a>
+        <TestSiteBand />
         {children}
       </body>
     </html>

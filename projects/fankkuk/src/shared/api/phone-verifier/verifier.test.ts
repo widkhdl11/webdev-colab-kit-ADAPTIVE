@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { choosePhoneVerifier } from "./verifier";
+import { TEST_SITE_ORIGINS } from "@/shared/lib/env/test-site";
 
 describe("INV-U9: 가짜 본인 확인은 운영에서 켜질 수 없다", () => {
   it("INV-U9 (S9): 운영 표시가 있으면 확인 창구가 없다 — 가짜로 넘어가지 않는다", () => {
@@ -30,5 +31,15 @@ describe("가짜 확인 창구", () => {
     const v = choosePhoneVerifier({ NODE_ENV: "development" })!;
     expect(await v.result("kakao_real_tx_123")).toEqual({ status: "failed" });
     expect(await v.result("fake:not-a-phone:x")).toEqual({ status: "failed" });
+  });
+});
+
+describe("INV-TS2: 시험 사이트에서는 가짜 본인 확인이 열린다", () => {
+  it("INV-TS2 (S2): 시험 사이트면 운영 빌드라도 가짜 확인 창구가 나온다", () => {
+    expect(choosePhoneVerifier({ NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: TEST_SITE_ORIGINS[0] })?.kind).toBe("fake");
+  });
+
+  it("INV-TS2 (S2b, 실패경로): 시험 주소가 아니면 설정값이 있어도 창구가 없다", () => {
+    expect(choosePhoneVerifier({ NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: "https://fankkuk.com" })).toBeNull();
   });
 });

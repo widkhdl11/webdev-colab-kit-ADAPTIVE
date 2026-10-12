@@ -67,11 +67,27 @@ insert into public.owner_setting (owner_user_id) select id from public.profiles 
 - 크리에이터 한 줄 소개의 줄바꿈 금지 정규식: 로컬은 특수 줄바꿈 문자 두 개가 글자 그대로, 새 DB 는 `  ` 표기. 뜻이 같다.
 - 예약 작업 두 개(`fankkuk-expiry`·`fankkuk-notify`)가 로컬에서는 꺼져 있다 — 로컬 시드가 끈다. 새 DB 에서는 켜진 채로 생긴다.
 
+## 시험 사이트로 쓸 때 (2026-10-12, test-site 스펙)
+
+시험 사이트에서는 가입(휴대폰 본인 확인)·크리에이터 승인 서명·채널 확인이 가짜로 열린다. 열리려면 두 군데가 다 켜져야 한다:
+
+1. 앱 — Vercel 설정값 두 개: `FANKKUK_TEST_SITE=1`, `APP_ORIGIN=<시험 주소>`. 시험 주소는 코드의 시험 주소 목록에 있어야 한다
+   (2026-10-12: `https://webdev-colab-kit-adaptive-xqne.vercel.app`). 넣은 뒤 다시 배포해야 반영된다.
+2. DB — 가짜 서명을 받는 줄 하나:
+   `npx supabase db query --linked "insert into public.local_dev_flags (flag) values ('allow_fake_signatures') on conflict do nothing"`
+
+**실제 운영 DB 에는 2번 줄을 넣지 않는다. 실제 운영 앱에는 `FANKKUK_TEST_SITE` 를 넣지 않는다.**
+**시험 사이트 DB 는 실제 운영 DB 로 돌려쓰지 않는다 — 실제 운영은 새 Supabase 프로젝트를 만들어 이 문서 1~4번부터 다시 깐다.**
+가짜로 확인한 번호·채널은 DB 에 진짜와 같은 모양으로 남아, 2번 줄을 지워도 가려낼 수 없다.
+시험 사이트 화면 맨 위에는 「시험 사이트」 띠가 뜬다 — 띠가 안 보이면 1번이 안 켜진 것이다.
+
+시험 사이트에서도 송장 출력·메일·알림톡은 운영처럼 닫혀 있다.
+
 ## 지금 배포(시험용)에서 안 되는 것
 
 Vercel 에 올린 사이트는 코드가 운영으로 판정한다. 그래서 일부러 막아 둔 것들이 있다:
 
-- 가입 — 휴대폰 본인 확인이 카카오 연결 전이라 운영에서는 창구가 없다
+- 가입 — 휴대폰 본인 확인이 카카오 연결 전이라 운영에서는 창구가 없다(시험 사이트로 켜면 가짜로 열린다 — 위 절)
 - 크리에이터의 승인 서명 — 같은 이유
 - 송장 출력 — 주소 열쇠 보관처(KMS) 연결 전
 - 메일 — 메일 서비스를 정하기 전

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { readDecryptorSecrets } from "./decryptor-secrets";
+import { TEST_SITE_ORIGINS } from "@/shared/lib/env/test-site";
 
 const OWNER = "00000000-0000-4000-a000-000000000021";
 const PEM_ONE_LINE = "-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADANBg\\n-----END PRIVATE KEY-----";
@@ -52,5 +53,16 @@ describe("송장 출력 함수 자신의 설정 (INV-P12·P8)", () => {
       expect(String(e)).not.toContain("MIIEvQIBADANBg");
       expect(String(e)).not.toContain(OWNER);
     }
+  });
+});
+
+// 변수로 둔다 — 이 함수들의 설정 형식에는 시험 사이트 칸이 없고, 넘겨도 쓰지 않는다는 것이 시험의 요점이다
+const testSiteEnv = { NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: TEST_SITE_ORIGINS[0] };
+
+describe("INV-TS2: 시험 사이트에서도 주소 복호화는 닫혀 있다", () => {
+  it("INV-TS2 (S2c, 실패경로): 시험 사이트라도 운영 빌드면 만드는 순간 실패하고 키 파일을 읽지 않는다", () => {
+    const readFile = vi.fn(() => "");
+    expect(() => readDecryptorSecrets(testSiteEnv, readFile)).toThrow(/KMS/);
+    expect(readFile).not.toHaveBeenCalled();
   });
 });

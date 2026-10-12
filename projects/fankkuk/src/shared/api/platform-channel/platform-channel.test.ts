@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { chooseChannelBioReader, FAKE_NO_CODE_MARK } from "./bio-reader";
 import { chooseChannelLoginVerifier } from "./login-verifier";
+import { TEST_SITE_ORIGINS } from "@/shared/lib/env/test-site";
 
 // 플랫폼 로그인·소개란 읽기 창구 (creator-verification INV-V14·V16). 실제 연결은 외부 연결 때 — 지금은 로컬 가짜 창구뿐이다.
 
@@ -39,5 +40,18 @@ describe("INV-V16: 가짜 소개란 창구는 운영에서 켜질 수 없다", (
     const r = chooseChannelBioReader({ NODE_ENV: "development" })!;
     const p = await r.readProfile({ platform: "youtube", channelKey: `ggul${FAKE_NO_CODE_MARK}`, codeForFake: "FK-AB2C-34" });
     expect(p?.bio).not.toContain("FK-AB2C-34");
+  });
+});
+
+describe("INV-TS2: 시험 사이트에서는 가짜 채널 확인 창구가 열린다", () => {
+  it("INV-TS2 (S2): 시험 사이트면 운영 빌드라도 가짜 플랫폼 로그인·소개란 창구가 나온다", () => {
+    expect(chooseChannelLoginVerifier({ NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: TEST_SITE_ORIGINS[0] })).not.toBeNull();
+    expect(chooseChannelBioReader({ NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: TEST_SITE_ORIGINS[0] })).not.toBeNull();
+  });
+
+  it("INV-TS2 (S2b, 실패경로): 시험 주소가 아니면 설정값이 있어도 창구가 없다", () => {
+    const env = { NODE_ENV: "production", FANKKUK_TEST_SITE: "1", APP_ORIGIN: "https://fankkuk.com" };
+    expect(chooseChannelLoginVerifier(env)).toBeNull();
+    expect(chooseChannelBioReader(env)).toBeNull();
   });
 });

@@ -1,8 +1,8 @@
-import { isProduction, type DeployEnv } from "@/shared/lib/env/is-production";
+import { allowsFakeChannels, type TestSiteEnv } from "@/shared/lib/env/test-site";
 
 // 승인 서명 창구 (approval-signature INV-S11). 카카오 연결 전이라 로컬에서는 가짜 창구를 쓴다(카드 d28).
 // 창구는 서버에서만 쓴다. 고르는 곳은 이 함수 하나다 — 운영에서는 실제 카카오 창구가 붙기 전까지 창구가 없고, 승인 요청은 거부된다.
-// 운영에서 가짜를 켜는 설정은 일부러 두지 않는다(가입의 phone-verifier 와 같은 이유, signup INV-U9).
+// 운영에서 가짜를 켜는 길은 시험 사이트 판정(test-site INV-TS1) 하나뿐이다 — 따로 켜는 설정은 두지 않는다(가입의 phone-verifier 와 같은 이유, signup INV-U9).
 
 /** 서명 검증(INV-S3)을 통과한 결과. evaluate-approval 의 VerifiedSignature 와 같은 꼴이다. */
 export type SignedApproval = {
@@ -28,7 +28,7 @@ const fakeSigner: ApprovalSigner = {
   registeredSignerIdOf: fakeSignerIdOf,
 };
 
-export function chooseApprovalSigner(env: DeployEnv): ApprovalSigner | null {
-  if (isProduction(env)) return null; // 실제 카카오 연결이 생기면 여기서 그 창구를 돌려준다
+export function chooseApprovalSigner(env: TestSiteEnv): ApprovalSigner | null {
+  if (!allowsFakeChannels(env)) return null; // 실제 카카오 연결이 생기면 여기서 그 창구를 돌려준다
   return fakeSigner;
 }
