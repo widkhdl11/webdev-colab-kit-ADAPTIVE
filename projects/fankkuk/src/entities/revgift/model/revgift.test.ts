@@ -74,11 +74,11 @@ describe("INV-R5: 팬 주소는 주문번호와 함께 봉인된 뒤에만 서�
 });
 
 describe("INV-R8: 크리에이터용 보낸 목록은 정해진 칸만 받는다", () => {
-  const row = { order_no: "RG-ABC123", sent_at: "2026-10-03T00:00:00+00:00", fan_login_id: "byeolbit_fan", fan_nickname: "별빛", tier: "small", state: "waiting", ship_to_office: true };
+  const row = { order_no: "RG-ABC123", sent_at: "2026-10-03T00:00:00+00:00", fan_nickname: "별빛", tier: "small", state: "waiting", ship_to_office: true };
 
   it("INV-R8 S8: 정해진 칸의 줄은 화면 값으로 바뀐다", () => {
     expect(parseSentRows([row])).toEqual([
-      { orderNo: "RG-ABC123", sentAt: "2026-10-03T00:00:00+00:00", fanLoginId: "byeolbit_fan", fanNickname: "별빛", tier: "small", state: "waiting", shipToOffice: true },
+      { orderNo: "RG-ABC123", sentAt: "2026-10-03T00:00:00+00:00", fanNickname: "별빛", tier: "small", state: "waiting", shipToOffice: true },
     ]);
   });
 
@@ -86,6 +86,10 @@ describe("INV-R8: 크리에이터용 보낸 목록은 정해진 칸만 받는다
     const { ship_to_office: _dropped, ...without } = row;
     expect(() => parseSentRows([without])).toThrow();
     expect(() => parseSentRows([{ ...row, ship_to_office: "true" }])).toThrow();
+  });
+
+  it("INV-R8 (실패경로): 팬 로그인 아이디 칸이 섞여 오면 목록 전체를 버린다 — 크리에이터는 닉네임만 본다", () => {
+    expect(() => parseSentRows([{ ...row, fan_login_id: "byeolbit_fan" }])).toThrow();
   });
 
   it("INV-R8 (실패경로): 주소·실명·전화·운송장 같은 칸이 섞여 오면 목록 전체를 버린다", () => {

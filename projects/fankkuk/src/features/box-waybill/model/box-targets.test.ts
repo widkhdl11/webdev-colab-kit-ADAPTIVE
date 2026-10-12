@@ -11,6 +11,7 @@ const gift = (over: Partial<GiftBox>): GiftBox => ({
   state: "awaiting",
   addressCode: "K7M3XA",
   reportedNotMine: false,
+  sendAckNeeded: false,
   ...over,
 });
 
@@ -29,7 +30,6 @@ const share = (over: Partial<ShareBox>): ShareBox => ({
 const sent = (over: Partial<SentRevgift>): SentRevgift => ({
   orderNo: "RV-AAAA1",
   sentAt: "2026-10-07T00:00:00Z",
-  fanLoginId: "choco",
   fanNickname: "초코우유",
   tier: "small",
   state: "waiting",

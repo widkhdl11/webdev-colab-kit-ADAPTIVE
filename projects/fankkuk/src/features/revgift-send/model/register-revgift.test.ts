@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PRICE_CHANGED_MESSAGE, type PriceTable } from "@/entities/payment/model/price-table";
 import type { Viewer } from "@/entities/session/model/viewer";
-import { registerRevgift, type RevgiftStore, type RevgiftCreateInput } from "./register-revgift";
+import { MAX_REVGIFT_SHARES, registerRevgift, type RevgiftStore, type RevgiftCreateInput } from "./register-revgift";
 
 // 첫 요금표(시험용 고정값). 운영 값은 DB 요금표에서만 온다.
 const PRICES: PriceTable = {
@@ -69,6 +69,8 @@ describe("역조공 보내기 등록 — 앱 서버 쪽 판정 (INV-R1·R3)", ()
     const { store, created } = memoryStore();
     const call = (shares: unknown) => registerRevgift({ store, viewer: haru, readPrices }, { shares, quotedTotalKrw: 5400 });
     expect((await call([])).ok).toBe(false);
+    // 거부 문구의 인원은 한도 상수에서 온다
+    expect(await call([])).toMatchObject({ status: 400, message: expect.stringContaining(`한 번에 ${MAX_REVGIFT_SHARES}명까지`) });
     expect((await call(Array.from({ length: 11 }, (_, i) => ({ fanId: `${String(i).padStart(8, "0")}-1111-4111-8111-111111111111`, tier: "small" })))).ok).toBe(false);
     expect((await call([{ fanId: FAN_A, tier: "small" }, { fanId: FAN_A, tier: "medium" }])).ok).toBe(false);
     expect((await call([{ fanId: FAN_A, tier: "oversize" }])).ok).toBe(false);

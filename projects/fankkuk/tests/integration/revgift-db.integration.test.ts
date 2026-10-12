@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { adminClient, anonClient, psql, signedInClient } from "./helpers";
+import { adminClient, anonClient, holdRowLock, psql, signedInClient } from "./helpers";
 import {
   backdateSettlement,
   deleteTestRevgifts,
@@ -56,6 +56,22 @@ describe("INV-R1: 받는 사람은 등록하는 순간 나를 팔로우하는 �
     expect(error?.code).toBe("42501");
   });
 
+  it("INV-R1 S1f (동시): 팔로우 끊기가 끝나기 전에 등록이 오면 끊기가 끝날 때까지 기다렸다가 거부된다", async () => {
+    followHaru([PROFILE.daltokki]);
+    try {
+      // 다른 연결이 달토끼의 팔로우 끊기를 하고 아직 끝내지 않았다(2초 뒤 commit)
+      const unfollow = await holdRowLock(`delete from public.follows where fan_id = '${PROFILE.daltokki}' and creator_id = '${HARU_CREATOR_ID}'`, 2);
+      const args = revgiftArgs([{ fanId: PROFILE.daltokki, tier: "small" }]);
+      const pending = Promise.resolve(adminClient().rpc("register_revgift", args));
+      await unfollow.released;
+      const { error } = await pending;
+      expect(error?.code).toBe("P0021");
+      expect(psql(`select count(*) from public.revgift_sends where toss_order_id = '${args.p_toss_order_id}'`)).toBe("0");
+    } finally {
+      unfollowHaru([PROFILE.daltokki]);
+    }
+  });
+
   it("INV-R1 S1e: 등록 뒤 팔로우를 끊어도 몫은 그대로고 팬은 받지 않기를 할 수 있다", async () => {
     followHaru([PROFILE.daltokki]);
     const send = await registerTestRevgift([{ fanId: PROFILE.daltokki, tier: "small" }]);
@@ -68,6 +84,7 @@ describe("INV-R1: 받는 사람은 등록하는 순간 나를 팔로우하는 �
 });
 
 const MOMO_CREATOR_ID = "00000000-0000-4000-b000-000000000002";
+const HANEUL = "00000000-0000-4000-a000-000000000005"; // 팬 하늘 — 하루를 팔로우하지 않는다
 
 type FollowerRow = { fan_id: string; nickname: string };
 
@@ -141,6 +158,34 @@ describe("INV-R2: 받는 팬은 내 팔로워 목록에서 고르고, 목록에�
     }
   });
 
+  it("INV-R2 S2i: 목록은 최근에 팔로우한 팬부터다", async () => {
+    const ids = [PROFILE.byeolbit, PROFILE.gureumppang, PROFILE.somsatang];
+    const saved = ids.map((id) => [id, psql(`select created_at from public.follows where fan_id = '${id}' and creator_id = '${HARU_CREATOR_ID}'`)] as const);
+    // 계정 ID 순서(별빛·구름빵·솜사탕)와도 그 반대와도 다른 순서로 팔로우 시각을 둔다
+    const ago: Record<string, string> = { [PROFILE.somsatang]: "1 day", [PROFILE.byeolbit]: "2 days", [PROFILE.gureumppang]: "3 days" };
+    try {
+      for (const id of ids) psql(`update public.follows set created_at = now() - interval '${ago[id]}' where fan_id = '${id}' and creator_id = '${HARU_CREATOR_ID}'`);
+      const order = (await haruFollowers()).map((r) => r.fan_id).filter((id) => ids.includes(id as (typeof ids)[number]));
+      expect(order).toEqual([PROFILE.somsatang, PROFILE.byeolbit, PROFILE.gureumppang]);
+    } finally {
+      for (const [id, at] of saved) psql(`update public.follows set created_at = '${at}' where fan_id = '${id}' and creator_id = '${HARU_CREATOR_ID}'`);
+    }
+  });
+
+  it("INV-R2 S2j (실패경로): 크리에이터 줄이 붙어 있어도 역할이 팬인 계정은 목록이 비어 있다", async () => {
+    const FAKE_CREATOR_ID = "00000000-0000-4000-b000-0000000000f1";
+    psql(`insert into public.creators (id, profile_id, slug, name, channel) values ('${FAKE_CREATOR_ID}', '${HANEUL}', 'it-fan-with-creator-row', '시험줄', '치지직')`);
+    try {
+      psql(`insert into public.follows (fan_id, creator_id) values ('${PROFILE.byeolbit}', '${FAKE_CREATOR_ID}')`);
+      const haneul = await signedInClient("haneul_fan");
+      const { data, error } = await haneul.rpc("my_revgift_followers");
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
+    } finally {
+      psql(`delete from public.creators where id = '${FAKE_CREATOR_ID}'`);
+    }
+  });
+
   it("INV-R2 S2h (실패경로): 아이디로 팬을 찾는 함수는 없다", async () => {
     const haru = await signedInClient("haru_creator");
     const { data, error } = await haru.rpc("find_revgift_fan", { p_login_id: "byeolbit_fan" });
@@ -199,7 +244,7 @@ describe("INV-R3: 보내기 하나 = 결제 하나, 몫 1~10개, 팬마다 상�
   });
 });
 
-describe("INV-R8: 크리에이터에게는 팬 아이디·닉네임·상태 셋만 보인다", () => {
+describe("INV-R8: 크리에이터에게는 팬 닉네임과 상태 셋만 보인다", () => {
   it("INV-R8 S8·S8b: 보낸 목록의 칸은 정해진 것뿐이고, 거절과 기한 지남은 같은 「받지 않았어요」다", async () => {
     const send = await registerTestRevgift([
       { fanId: PROFILE.byeolbit, tier: "small" },
@@ -216,8 +261,11 @@ describe("INV-R8: 크리에이터에게는 팬 아이디·닉네임·상태 셋�
     const mine = (data as Record<string, unknown>[]).filter((r) => send.orderNos.includes(r.order_no as string));
     expect(mine).toHaveLength(3);
     for (const row of mine) {
-      expect(Object.keys(row).sort()).toEqual(["fan_login_id", "fan_nickname", "order_no", "sent_at", "ship_to_office", "state", "tier"]);
+      // 팬 로그인 아이디는 싣지 않는다 — 팬이 팔로우할 때 들은 말(「닉네임을 볼 수 있어요」)보다 많이 보이지 않게(E4)
+      expect(Object.keys(row).sort()).toEqual(["fan_nickname", "order_no", "sent_at", "ship_to_office", "state", "tier"]);
     }
+    expect(mine.find((r) => r.order_no === declined)?.fan_nickname).toBe("별빛");
+    expect(JSON.stringify(mine)).not.toContain("byeolbit_fan");
     const stateOf = (no: string) => mine.find((r) => r.order_no === no)?.state;
     expect(stateOf(declined)).toBe("not_received");
     expect(stateOf(expired)).toBe("not_received");

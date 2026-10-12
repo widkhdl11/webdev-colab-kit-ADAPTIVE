@@ -29,7 +29,7 @@ export function RevgiftSendPage({
         <p>
           {registered
             ? `팬 ${registered.fanCount}명에게 보내요 — 결제하면 보내기가 끝나요.`
-            : "나를 팔로우한 팬에게 선물을 보내요. 팔로워 목록에서 받을 팬을 골라 주세요."}
+            : "나를 팔로우한 팬에게 선물을 보내요."}
         </p>
       </div>
       {registered ? (

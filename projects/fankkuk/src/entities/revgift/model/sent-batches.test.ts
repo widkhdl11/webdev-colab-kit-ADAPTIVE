@@ -3,7 +3,7 @@ import { countBatchStates, toSentBatches } from "./sent-batches";
 import type { SentRevgift } from "./revgift-rows";
 
 function share(orderNo: string, sentAt: string, state: SentRevgift["state"], shipToOffice = true): SentRevgift {
-  return { orderNo, sentAt, fanLoginId: `fan_${orderNo}`, fanNickname: "팬", tier: "small", state, shipToOffice };
+  return { orderNo, sentAt, fanNickname: "팬", tier: "small", state, shipToOffice };
 }
 
 const OFFICE = "서울 사무실";

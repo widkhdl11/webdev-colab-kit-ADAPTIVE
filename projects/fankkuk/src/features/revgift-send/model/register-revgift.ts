@@ -61,7 +61,7 @@ export async function registerRevgift(
   if (deps.viewer.role !== "creator") return { ok: false, status: 403, message: "역조공은 크리에이터만 보낼 수 있어요." };
 
   const parsed = inputSchema.safeParse(body);
-  if (!parsed.success) return { ok: false, status: 400, message: "받을 팬과 상자를 다시 확인해 주세요. 한 번에 10명까지, 같은 팬은 한 번만 넣을 수 있어요." };
+  if (!parsed.success) return { ok: false, status: 400, message: `받을 팬과 상자를 다시 확인해 주세요. 한 번에 ${MAX_REVGIFT_SHARES}명까지, 같은 팬은 한 번만 넣을 수 있어요.` };
 
   const prices = await deps.readPrices();
   const tiers = parsed.data.shares.map((s) => s.tier as PricedTier);

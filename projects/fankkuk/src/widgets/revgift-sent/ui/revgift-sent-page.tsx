@@ -14,7 +14,7 @@ import { FaceAvatar } from "@/shared/ui/face-avatar";
 import s from "./revgift-sent.module.css";
 
 // 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v4/creator-revgift-list.html
-// 한 줄에 보이는 것은 팬 아이디·닉네임·주문번호·상태 배지(셋 중 하나)뿐이다(reverse-gift INV-R8).
+// 한 줄에 보이는 것은 팬 닉네임·주문번호·상태 배지(셋 중 하나)뿐이다 — 팬 로그인 아이디도 싣지 않는다(reverse-gift INV-R8).
 // 몫마다 송장번호 줄이 붙는다(시안 creator-revgift-boxes.html). 배송 조회를 보고 싶을 때만 넣는 선택 칸이다(inbound-address-code INV-C7).
 // 입고 전엔 넣고 고치고, 입고되면 「입고됨」으로 잠긴다.
 // 묶음 나누기와 상태 세기는 entities/revgift/model/sent-batches.ts — 여기서는 문구만 조립한다.
@@ -122,7 +122,7 @@ export function RevgiftSentPage({
       {batches.length === 0 ? (
         <div className={s.empty}>
           <h3>아직 보낸 역조공이 없어요</h3>
-          <p className="sub">나를 팔로우한 팬의 아이디를 알면 선물을 보낼 수 있어요.</p>
+          <p className="sub">나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
         </div>
       ) : (
         batches.map((b, bi) => (
@@ -143,7 +143,7 @@ export function RevgiftSentPage({
                     <div>
                       <p className={s.nick}>{x.fanNickname}</p>
                       <p className={s.says}>
-                        @{x.fanLoginId} · 주문번호 {x.orderNo}
+                        주문번호 {x.orderNo}
                       </p>
                     </div>
                     <span className={statusTagClass(tag.tone, s.tag)}>{tag.tag}</span>

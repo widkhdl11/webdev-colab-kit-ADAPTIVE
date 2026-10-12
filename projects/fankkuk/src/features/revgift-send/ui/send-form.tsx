@@ -39,7 +39,7 @@ export function RevgiftSendForm({
   onRegistered: (target: RevgiftCheckout) => void;
 }) {
   const router = useRouter();
-  // 고른 팬 → 상자 구간. 화면을 다시 그려 목록에서 빠진 팬(팔로우를 끊음)은 아래 picked 에서 저절로 빠진다
+  // 고른 팬 → 상자 구간. 화면을 다시 그려 목록에서 빠진 팬(팔로우를 끊음)은 아래 picked 에서 빠지고, 다음 체크 때 기록에서도 지운다
   const [tiers, setTiers] = useState<ReadonlyMap<string, PricedTier>>(new Map());
   const [payError, setPayError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
@@ -56,10 +56,12 @@ export function RevgiftSendForm({
   const toggle = (fanId: string, on: boolean) => {
     setNoticeShown(false);
     setPayError(null);
+    const listed = new Set(followers.map((f) => f.fanId));
     setTiers((prev) => {
-      const next = new Map(prev);
-      if (on) next.set(fanId, "small");
-      else next.delete(fanId);
+      // 지금 목록에 없는 팬의 기록은 버린다 — 그 팬이 다시 팔로우해 목록에 돌아왔을 때 예전 체크가 되살아나 10명을 넘지 않게
+      const next = new Map([...prev].filter(([id]) => listed.has(id)));
+      if (!on) next.delete(fanId);
+      else if (next.size < MAX_REVGIFT_SHARES) next.set(fanId, "small");
       return next;
     });
   };
@@ -104,53 +106,60 @@ export function RevgiftSendForm({
           <div role="alert">{notice && noticeShown ? <p className={s.error}>{notice}</p> : null}</div>
           <div className={s["list-head"]}>
             <h3 id="rv-fans-title">받을 팬 {picked.length}명</h3>
-            <span className={s.max} id="rv-fans-max">
+            <span className={s.max} id="rv-fans-max" aria-live="polite">
               {full ? `${MAX_REVGIFT_SHARES}명을 모두 골랐어요. 더 보내려면 결제한 뒤 새로 보내 주세요.` : `최대 ${MAX_REVGIFT_SHARES}명까지 한 번에 보낼 수 있어요`}
             </span>
           </div>
           {followers.length > 0 ? (
-            <ul className={s.fans} aria-labelledby="rv-fans-title" aria-describedby="rv-fans-max">
-              {followers.map((f, i) => {
-                const tier = tiers.get(f.fanId);
-                return (
-                  <li key={f.fanId} className={tier ? `${s["fan-row"]} ${s.on}` : s["fan-row"]}>
-                    <label className={s.pick}>
-                      <input
-                        type="checkbox"
-                        checked={tier !== undefined}
-                        disabled={!tier && full}
-                        onChange={(e) => toggle(f.fanId, e.currentTarget.checked)}
-                      />
-                      <FaceAvatar index={i} />
-                      <span className={s.nick}>{f.nickname}</span>
-                    </label>
-                    {tier ? (
-                      <fieldset className={s.sizes}>
-                        <legend className="sr-only">{f.nickname}님께 보낼 상자 크기</legend>
-                        {TIERS.map((t) => (
-                          <label key={t.tier}>
-                            <input
-                              type="radio"
-                              name={`rv-size-${f.fanId}`}
-                              value={t.tier}
-                              checked={tier === t.tier}
-                              onChange={() => setTier(f.fanId, t.tier)}
-                            />
-                            <span>
-                              {t.name} <span className={s.won}>{won(unitKrw(t.tier))}</span>
-                            </span>
-                          </label>
-                        ))}
-                      </fieldset>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
+            <fieldset className={s.fanset}>
+              <legend className="sr-only">받을 팬</legend>
+              <ul className={s.fans}>
+                {followers.map((f, i) => {
+                  const tier = tiers.get(f.fanId);
+                  // 10명을 다 골랐으면 남은 칸은 잠근다 — disabled 대신 aria-disabled 로 포커스는 남기고 누름만 무시한다(design-rules 2절)
+                  const locked = !tier && full;
+                  return (
+                    <li key={f.fanId} className={tier ? `${s["fan-row"]} ${s.on}` : s["fan-row"]}>
+                      <label className={s.pick}>
+                        <input
+                          type="checkbox"
+                          checked={tier !== undefined}
+                          aria-disabled={locked || undefined}
+                          aria-describedby="rv-fans-max"
+                          // 잠긴 칸을 눌러도(스페이스도) toggle 이 10명 넘게 담지 않는다 — 제어 입력이라 체크 표시도 그대로 돌아간다
+                          onChange={(e) => toggle(f.fanId, e.currentTarget.checked)}
+                        />
+                        <FaceAvatar index={i} />
+                        <span className={s.nick}>{f.nickname}</span>
+                      </label>
+                      {tier ? (
+                        <fieldset className={s.sizes}>
+                          <legend className="sr-only">{f.nickname}님께 보낼 상자 크기</legend>
+                          {TIERS.map((t) => (
+                            <label key={t.tier}>
+                              <input
+                                type="radio"
+                                name={`rv-size-${f.fanId}`}
+                                value={t.tier}
+                                checked={tier === t.tier}
+                                onChange={() => setTier(f.fanId, t.tier)}
+                              />
+                              <span>
+                                {t.name} <span className={s.won}>{won(unitKrw(t.tier))}</span>
+                              </span>
+                            </label>
+                          ))}
+                        </fieldset>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </fieldset>
           ) : (
             <p className={s["empty-fans"]}>아직 나를 팔로우한 팬이 없어요. 팬이 팔로우하면 여기에 나와요.</p>
           )}
-          <p className={s["size-note"]}>{SIZE_NOTE}</p>
+          {followers.length > 0 ? <p className={s["size-note"]}>{SIZE_NOTE}</p> : null}
         </section>
         <section className={s.card} aria-labelledby="rv-how-title">
           <h2 className={s.h} id="rv-how-title">
