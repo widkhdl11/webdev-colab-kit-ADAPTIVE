@@ -118,7 +118,7 @@
 
 - [ ] **크리에이터 메인·머리글에 확인할 선물 수** (2026-10-12 (2) D3 ② 반영 때) — 「승인 대기 N건」 카드와 머리글 숫자는 승인 요청만 센다. 확인할 선물은 「승인·받은 선물」 화면의 탭과 알림으로만 보인다 · 크리에이터가 확인할 선물을 놓친다는 말이 나오면 카드에 한 줄 더한다
 
-- [ ] **Supabase 키 이름을 새 방식에 맞추기** (2026-10-12, 첫 배포 준비) — Supabase 가 anon·service_role 대신 publishable(`sb_publishable_…`)·secret(`sb_secret_…`) 키를 준다. 코드는 값만 받아 클라이언트에 넘기므로 지금은 새 키 값을 `SUPABASE_ANON_KEY` 칸에 넣으면 된다. 이름을 `SUPABASE_PUBLISHABLE_KEY` 로 바꾸려면 config.ts·dev-env.mjs·통합 시험 env 를 함께 고친다 · 같이 볼 것: 새 키는 토큰 꼴이 아니라서 `scripts/pii-exposure.mjs` 가 익명 호출에 키를 `Authorization: Bearer` 로 보내는 부분이 운영 DB 에서 거부될 수 있다 — 운영에 check:pii 를 처음 돌릴 때 확인한다
+- [ ] **개인정보 노출 검사가 Supabase 새 키로 도는지** (2026-10-12, 첫 배포 준비) — 새 프로젝트는 anon 대신 publishable 키(`sb_publishable_…`)를 준다. 앱의 칸 이름은 `SUPABASE_PUBLISHABLE_KEY` 로 바꿨다(52155f8). 새 키는 토큰 꼴이 아니라서 `scripts/pii-exposure.mjs` 가 익명 호출에 키를 `Authorization: Bearer` 로 보내는 부분이 운영 DB 에서 거부될 수 있다 · 운영에 check:pii 를 처음 돌릴 때 확인한다
 
 ## 닫힘
 - [x] **배포 전 개인정보 노출 검사** (2026-10-01) — 공개 엔드포인트가 아직 없다 · 첫 배포 전에 만든다(익명·일반 권한으로 호출해 실명·주소·전화번호가 나오면 배포 실패, 원본 「배포 규칙」 2번) · **닫음 2026-10-09** — `npm run check:pii`(scripts/pii-exposure.mjs). 익명·팬·크리에이터·직원·대표로 데이터 API 에 열린 표·함수를 자동으로 모두 찾아 읽기 전용으로 부르고 응답을 훑는다 + 구조 검사(로그인 키 함수 중 pii 에 닿는 것은 허용 목록에만 · public 표에 개인정보 꼴 칸 없음). 위반을 심는 통합 시험 13개, 변이 17/17. 운영 DB 에서는 PII_CHECK_API_URL·ANON_KEY·DB_URL·LOGINS 를 넣어 돌린다 — 배포 게이트에 붙일지는 사용자가 정한다(보호 파일)
