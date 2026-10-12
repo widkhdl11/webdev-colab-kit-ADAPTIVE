@@ -41,7 +41,10 @@ export function CreatorGiftTabs({ tabs: given, initial }: { tabs: readonly Creat
   useEffect(() => {
     if (tabsKey !== rememberedKey) setRemembered(tabs);
   }, [tabsKey, rememberedKey, tabs]);
-  const [selected, setSelected] = useState(Math.max(0, tabs.findIndex((t) => t.id === initial)));
+  // 고른 탭은 자리가 아니라 탭 id 로 기억한다 — 새로 읽기에서 앞에 탭이 끼어도(확인할 선물이 새로 생김) 보던 탭이 그대로다
+  const [selectedId, setSelectedId] = useState<CreatorGiftTab["id"]>(initial);
+  const found = tabs.findIndex((t) => t.id === selectedId);
+  const selected = found >= 0 ? found : 0;
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
@@ -49,7 +52,7 @@ export function CreatorGiftTabs({ tabs: given, initial }: { tabs: readonly Creat
     if (n === null) return;
     e.preventDefault();
     const next = (n + tabs.length) % tabs.length;
-    setSelected(next);
+    setSelectedId(tabs[next]!.id);
     buttons.current[next]?.focus();
   };
 
@@ -69,7 +72,7 @@ export function CreatorGiftTabs({ tabs: given, initial }: { tabs: readonly Creat
             aria-selected={i === selected}
             aria-controls={`gift-panel-${t.id}`}
             tabIndex={i === selected ? 0 : -1}
-            onClick={() => setSelected(i)}
+            onClick={() => setSelectedId(t.id)}
             onKeyDown={(e) => onKeyDown(e, i)}
           >
             {t.label}
@@ -78,7 +81,14 @@ export function CreatorGiftTabs({ tabs: given, initial }: { tabs: readonly Creat
         ))}
       </div>
       {tabs.map((t, i) => (
-        <div key={t.id} role="tabpanel" id={`gift-panel-${t.id}`} aria-labelledby={`gift-tab-${t.id}`} hidden={i !== selected}>
+        <div
+          key={t.id}
+          role="tabpanel"
+          id={`gift-panel-${t.id}`}
+          aria-labelledby={`gift-tab-${t.id}`}
+          tabIndex={0}
+          hidden={i !== selected}
+        >
           {t.panel}
         </div>
       ))}

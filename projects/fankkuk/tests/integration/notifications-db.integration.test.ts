@@ -456,14 +456,22 @@ describe("추적기 반송 알림 — 크리에이터에게 돌려보내는 선�
     }
   });
 
-  it("INV-N6 · INV-N1 (2026-10-12 (2) D3 ②): 크리에이터 확인 대기 → 하루에게 「확인할 선물」(creator_check) 줄 하나, 상자 둘이어도 주문 단위로 한 번, 꺼낸 닉네임은 하루 자신이고 꼭 가는 알림", async () => {
+  it("INV-N6 · INV-N1 (2026-10-12 (2) D3 ②): 크리에이터 확인 대기 → 하루에게 「확인할 선물」(creator_check) 줄이 상자마다 하나 — 한 주문의 두 상자가 차례로 확인 대기면 줄 2, 꺼낸 닉네임은 하루 자신이고 꼭 가는 알림", async () => {
     const { g, staff, qrs } = await arrivedGift(2);
     const confirm = { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "not_tracker", outcome: "confirm" };
+    const checkRows = () => outboxRows(g.orderId).filter((r) => r.startsWith("creator_check|"));
     expect(await inspect(staff, qrs[0]!, confirm)).toBe("held");
+    expect(checkRows()).toEqual(["creator_check|1|haru_creator|email|pending"]);
     expect(await inspect(staff, qrs[1]!, confirm)).toBe("held");
-    expect(outboxRows(g.orderId).filter((r) => r.startsWith("creator_check|"))).toEqual(["creator_check|1|haru_creator|email|pending"]);
+    expect(checkRows()).toEqual(["creator_check|1|haru_creator|email|pending", "creator_check|1|haru_creator|email|pending"]);
+    expect(
+      psql(`select count(distinct n.parcel_id) from ${OUTBOX} n where n.order_id = '${g.orderId}' and n.kind = 'creator_check' and n.channel = 'email'`),
+    ).toBe("2");
     expect(outboxRows(g.orderId).filter((r) => r.includes("|byeolbit_fan|") && r.startsWith("hold"))).toEqual([]);
-    const c = await claimOne(rowId(g.orderId, "creator_check", "haru_creator"));
+    const first = psql(
+      `select n.id from ${OUTBOX} n join public.office_parcels p on p.id = n.parcel_id where p.qr_code = '${qrs[0]}' and n.kind = 'creator_check' and n.channel = 'email'`,
+    );
+    const c = await claimOne(first);
     expect(c).toMatchObject({ kind: "creator_check", nickname: "하루", order_no: g.orderNo, must_deliver: true, undelivered_reason: null });
   });
 

@@ -8,10 +8,15 @@
   .ico { width: 48px; height: 48px; }
 }
 
-/* 승인·받은 선물 탭 — 시안 addendum/creator-received.html (선물 내역 탭과 같은 모양, 두 칸) */
+/* 승인·받은 선물 탭 — 시안 addendum/creator-received.html (선물 내역 탭과 같은 모양, 확인할 선물이 있으면 세 칸) */
 .tabs { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 4px; margin: 16px 0 24px; padding: 4px; border-radius: var(--r-box); background: var(--surface); box-shadow: var(--hair); }
 .tab { min-height: 48px; padding: 0 8px; border: 0; border-radius: 12px; background: none; color: var(--sub); font-weight: 600; cursor: pointer; }
 .tab:hover { background: var(--surface-hover); }
 .tab[aria-selected="true"] { background: var(--white); color: var(--ink); font-weight: 700; box-shadow: var(--hair); }
 .tab:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 .n { margin-left: 6px; }
+/* 휴대폰 폭에서 세 칸이면 「확인할 선물 12」가 두 줄로 꺾였다(390px 실측) — 안쪽 여백을 줄여 두 자리 수까지 한 줄. 넘치지는 않고 세 자리부터는 꺾인다 */
+@media (max-width: 767px) {
+  .tab { padding: 0 4px; }
+  .n { margin-left: 4px; }
+}

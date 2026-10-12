@@ -464,6 +464,8 @@ describe("검수 기록 (INV-W4)", () => {
   it.each([
     ["추적기 판정인데 결론이 통과", "'found', 'clear', 'clear', null, null, 'tracker', 'pass'", "office_inspections_tracker_verdict_outcome"],
     ["추적기 아님인데 결론이 추적기 반송", "'found', 'clear', 'clear', null, null, 'not_tracker', 'hold'", "office_inspections_tracker_verdict_outcome"],
+    // 함수의 「추적기 아님은 크리에이터 확인 또는 반송」 검사가 빠져도 표가 막는다(2026-10-12 (2) 리뷰)
+    ["추적기 아님인데 결론이 통과", "'found', 'clear', 'clear', null, null, 'not_tracker', 'pass'", "office_inspections_tracker_verdict_outcome"],
     ["역조공 칸에 판정", "null, null, null, 'clear', 'clear', 'not_tracker', 'pass'", "office_inspections_tracker_verdict_gift"],
     ["판정 없이 크리에이터 확인", "'clear', 'clear', 'clear', null, null, null, 'confirm'", "office_inspections_confirm_verdict"],
   ])("INV-W4 (S4g, 실패경로): 표 검사도 막는다 — %s", async (_label, values, constraint) => {
@@ -863,6 +865,113 @@ describe("크리에이터 확인 — 추적기 아님 블루투스·RF 상자 (I
     // 답한 뒤에는 목록에서 빠진다
     await answer("haru_creator", g.orderNo, 1, "accept");
     const after = (await (await signedInClient("haru_creator")).rpc("my_creator_checks")).data as Record<string, unknown>[];
+    expect(after.some((r) => r.order_no === g.orderNo)).toBe(false);
+  });
+
+  // ── 2026-10-12 (2) 리뷰 반영 ──
+
+  /** 한 처리 안에서 검수 완료 시각을 now() − interval 로 두고 바로 답한다 — now() 가 처리 안에서 같아 경계를 정확히 잰다 */
+  function answerAtExactly(qr: string, interval: string, orderNo: string, a: string): string {
+    const haru = psql(`select id from public.profiles where login_id = 'haru_creator'`);
+    const out = psql(
+      `begin; update public.office_parcels set inspected_at = now() - interval '${interval}' where qr_code = '${qr}'; set local request.jwt.claims = '{"sub":"${haru}","role":"authenticated"}'; select public.answer_creator_check('${orderNo}', 1, '${a}'); commit;`,
+    );
+    return out.split("\n").filter((l) => !/^(BEGIN|SET|COMMIT|UPDATE \d+)$/.test(l)).join("|");
+  }
+
+  it("INV-W6: 기한 경계 — 167시간 59분이면 자동 처리는 그대로(held 0), 답은 받는다", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    psql(`update public.office_parcels set inspected_at = now() - interval '167 hours 59 minutes' where qr_code = '${qrs[0]}'`);
+    const run = await staff.rpc("office_run_expiry", { p_order_no: g.orderNo });
+    expect((run.data as { held: number }).held).toBe(0);
+    expect(parcelState(qrs[0]!)).toBe("held");
+    expect((await answer("haru_creator", g.orderNo, 1, "accept")).data).toBe("accepted");
+  });
+
+  it("INV-W6 (실패경로): 기한 경계 — 정확히 168시간이면 답은 「기한 지남」, 상자는 그대로", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    expect(answerAtExactly(qrs[0]!, "168 hours", g.orderNo, "accept")).toBe("expired");
+    expect(parcelState(qrs[0]!)).toBe("held");
+    expect(checkAnswer(qrs[0]!)).toBe("-");
+  });
+
+  it("INV-W6 (실패경로): 자동 처리가 기한 지남으로 닫은 상자에 답하면 「이미」가 아니라 「기한 지남」", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    psql(`update public.office_parcels set inspected_at = now() - interval '169 hours' where qr_code = '${qrs[0]}'`);
+    expect(((await staff.rpc("office_run_expiry", { p_order_no: g.orderNo })).data as { held: number }).held).toBe(1);
+    expect((await answer("haru_creator", g.orderNo, 1, "accept")).data).toBe("expired");
+  });
+
+  it("INV-W6 (실패경로): 확인 기한이 지난 상자의 주문이 그 뒤 7일 반려되면 그 상자는 검수 불합격 줄 — 환불 0", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    psql(`update public.office_parcels set inspected_at = now() - interval '169 hours' where qr_code = '${qrs[0]}'`);
+    expect(((await staff.rpc("office_run_expiry", { p_order_no: g.orderNo })).data as { held: number }).held).toBe(1);
+    expect(checkAnswer(qrs[0]!)).toBe("expired");
+    psql(`update public.orders set registered_at = now() - interval '169 hours' where id = '${g.orderId}'`);
+    expect((await staff.rpc("office_run_expiry", { p_order_no: g.orderNo })).error).toBeNull();
+    expect(orderStatus(g.orderId)).toBe("expired");
+    expect(refundDue(g.orderId)).toBe("0");
+  });
+
+  it("INV-W3·W4: 승인된 주문 — 다른 상자를 송장 출력해도 주문은 「라벨」에 머물고 출고로 끝나지 않는다", async () => {
+    const { g, staff, qrs } = await labeledBoxes(2);
+    await approve(g);
+    expect(await inspect(staff, qrs[0]!, FAN_PASS)).toBe("inspected");
+    expect(await inspect(staff, qrs[1]!, CONFIRM)).toBe("held");
+    expect(finishPrint(qrs[0]!, waybill())).toBeNull();
+    expect(parcelState(qrs[0]!)).toBe("label_printed");
+    expect(orderStatus(g.orderId)).toBe("labeled");
+    expect(psql(`select coalesce(shipped_at::text, '-') from public.orders where id = '${g.orderId}'`)).toBe("-");
+  });
+
+  it("INV-W4: 승인 전 주문 — 확인을 기다리는 동안에도 승인할 수 있고, 상자는 그대로 확인 대기", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    expect((await approveRpc(g.requestId)).data).toBe("approved");
+    expect(parcelState(qrs[0]!)).toBe("held");
+    expect(orderStatus(g.orderId)).toBe("labeled");
+    expect((await answer("haru_creator", g.orderNo, 1, "accept")).data).toBe("accepted");
+  });
+
+  it("INV-W4 (실패경로): 7일 반려로 끝난 주문의 상자에 답하면 「끝남」", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    psql(`update public.orders set registered_at = now() - interval '169 hours' where id = '${g.orderId}'`);
+    expect((await staff.rpc("office_run_expiry", { p_order_no: g.orderNo })).error).toBeNull();
+    expect(orderStatus(g.orderId)).toBe("expired");
+    expect((await answer("haru_creator", g.orderNo, 1, "accept")).data).toBe("closed");
+  });
+
+  it("INV-W4 (실패경로): 대표 취소 뒤 답하면 「끝남」, 보낸 팬 「돌려보낼 상자」 알림은 없다", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    await inspect(staff, qrs[0]!, CONFIRM);
+    const owner = await signedInClient("fankkuk_admin");
+    expect((await owner.rpc("admin_cancel_received_gift", { p_order_no: g.orderNo, p_reason: "시험" })).error).toBeNull();
+    expect((await answer("haru_creator", g.orderNo, 1, "return")).data).toBe("closed");
+    expect(fanAlerts(g.orderId, "hold_fan")).toBe("0");
+  });
+
+  it("INV-W4 (실패경로): 이미 거절된 주문의 상자는 크리에이터 확인 결론이어도 묻지 않고 반송 대기 — 확인 줄·알림 없음", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    expect((await (await signedInClient("haru_creator")).rpc("decline_gift", { p_request_id: g.requestId, p_block: false })).error).toBeNull();
+    expect(await inspect(staff, qrs[0]!, CONFIRM)).toBe("return_waiting");
+    expect(psql(`select count(*) from public.office_creator_checks k join public.office_parcels p on p.id = k.parcel_id where p.qr_code = '${qrs[0]}'`)).toBe("0");
+    expect(psql(`select count(*) from public.notification_outbox where order_id = '${g.orderId}' and kind = 'creator_check'`)).toBe("0");
+  });
+
+  it("INV-W4 (실패경로): 크리에이터 읽기 — 나갈 수 없게 된 상자(차액 기한 지남)는 목록에 없다", async () => {
+    const { g, staff, qrs } = await labeledBoxes();
+    expect((await staff.rpc("office_record_measurement", { p_qr: qrs[0], p_tier: "medium" })).error).toBeNull();
+    expect(await inspect(staff, qrs[0]!, CONFIRM)).toBe("held");
+    const haru = await signedInClient("haru_creator");
+    const before = (await haru.rpc("my_creator_checks")).data as Record<string, unknown>[];
+    expect(before.some((r) => r.order_no === g.orderNo)).toBe(true);
+    psql(`update public.payments set expired_at = now() where order_id = '${g.orderId}' and kind = 'difference'`);
+    const after = (await haru.rpc("my_creator_checks")).data as Record<string, unknown>[];
     expect(after.some((r) => r.order_no === g.orderNo)).toBe(false);
   });
 });

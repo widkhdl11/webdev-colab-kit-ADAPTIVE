@@ -6,6 +6,7 @@ import {
   checkTimeLeftLabel,
   CREATOR_CHECK_DAYS,
   detectedSignalText,
+  isCreatorCheckDeadlinePassed,
   type CreatorCheckAnswer,
   type CreatorCheckView,
 } from "@/entities/parcel/model/creator-check";
@@ -84,7 +85,7 @@ export function CreatorCheckList({ checks, now }: { checks: readonly CreatorChec
           {rows.map((r, i) => {
             const key = keyOf(r);
             const d = done[key];
-            const lapsed = Date.parse(r.dueAt) <= Date.parse(now);
+            const lapsed = isCreatorCheckDeadlinePassed(r.dueAt, now);
             return (
               <li key={key} className={c.row}>
                 <FaceAvatar index={i} />

@@ -39,4 +39,20 @@ describe("승인·받은 선물 탭", () => {
     act(() => root.render(<CreatorGiftTabs initial="requests" tabs={[tab("requests", 1, "요청"), tab("checks", 1, "새"), tab("received", 0, "받음")]} />));
     expect(labels()).toEqual(["requests1", "checks1", "received0"]);
   });
+
+  it("INV-W4: 고른 탭은 자리가 아니라 탭으로 기억한다 — 앞에 탭이 새로 끼어도 보던 탭이 그대로 골라져 있다", () => {
+    act(() => root.render(<CreatorGiftTabs initial="received" tabs={[tab("requests", 1, "요청"), tab("received", 2, "받음")]} />));
+    expect(host.querySelector('[role=tab][aria-selected="true"]')?.textContent).toBe("received2");
+    act(() => root.render(<CreatorGiftTabs initial="received" tabs={[tab("requests", 1, "요청"), tab("checks", 1, "새"), tab("received", 2, "받음")]} />));
+    expect(labels()).toEqual(["requests1", "checks1", "received2"]);
+    expect(host.querySelector('[role=tab][aria-selected="true"]')?.textContent).toBe("received2");
+    expect(host.querySelector<HTMLElement>("#gift-panel-received")?.hidden).toBe(false);
+    expect(host.querySelector<HTMLElement>("#gift-panel-checks")?.hidden).toBe(true);
+  });
+
+  it("탭 패널은 키보드로 들어갈 수 있다(tabIndex 0) — 안에 누를 것이 없는 패널도 읽을 자리로 간다", () => {
+    act(() => root.render(<CreatorGiftTabs initial="requests" tabs={[tab("requests", 1, "요청"), tab("received", 0, "받음")]} />));
+    const panels = [...host.querySelectorAll<HTMLElement>("[role=tabpanel]")];
+    expect(panels.map((p) => p.tabIndex)).toEqual([0, 0]);
+  });
 });

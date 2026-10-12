@@ -35,6 +35,8 @@ export async function answerCreatorCheck(
     p_box_seq: parsed.data.boxSeq,
     p_answer: parsed.data.answer,
   });
+  // 잠그는 사이 상자 연결이 바뀌었다(office_lock_parcel 의 40001) — 다시 하면 된다. 저장되지 않았다
+  if (error?.code === "40001") return { ok: false, status: 409, message: "잠시 뒤 다시 시도해 주세요." };
   if (error) throw new Error(`확인할 선물의 답을 저장하지 못했다: ${error.code}`);
   // 꼴이 다르면 던진다 — 모르는 결과를 성공으로 치지 않는다
   const reply = replySchema.parse(data);

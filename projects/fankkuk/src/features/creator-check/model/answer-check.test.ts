@@ -65,8 +65,16 @@ describe("크리에이터 확인 답 저장 (INV-W4)", () => {
     }
   });
 
-  it("INV-W4 (실패경로): DB 오류·모르는 결과는 던진다 — 성공으로 치지 않는다", async () => {
-    await expect(answerCreatorCheck({ client: fakeClient({ error: { code: "40001" } }).client, viewer: CREATOR }, BODY)).rejects.toThrow();
+  it("INV-W4 (실패경로): 잠그는 사이 상자 연결이 바뀌면(40001) 409 「잠시 뒤 다시」 — 저장된 것으로 치지 않는다", async () => {
+    expect(await answerCreatorCheck({ client: fakeClient({ error: { code: "40001" } }).client, viewer: CREATOR }, BODY)).toEqual({
+      ok: false,
+      status: 409,
+      message: "잠시 뒤 다시 시도해 주세요.",
+    });
+  });
+
+  it("INV-W4 (실패경로): 그 밖의 DB 오류·모르는 결과는 던진다 — 성공으로 치지 않는다", async () => {
+    await expect(answerCreatorCheck({ client: fakeClient({ error: { code: "XX000" } }).client, viewer: CREATOR }, BODY)).rejects.toThrow();
     await expect(answerCreatorCheck({ client: fakeClient({ data: "ok" }).client, viewer: CREATOR }, BODY)).rejects.toThrow();
   });
 });

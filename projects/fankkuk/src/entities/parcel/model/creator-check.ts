@@ -59,6 +59,11 @@ export function detectedSignalText(v: Pick<CreatorCheckView, "bluetooth" | "rf">
 
 const HOUR_MS = 3_600_000;
 
+/** 답할 기한이 지났는가 — 지났으면 받기·돌려보내기 버튼을 두지 않는다. DB(answer_creator_check)도 기한 시각 정각부터 답을 받지 않는다(INV-W6). */
+export function isCreatorCheckDeadlinePassed(dueAt: string, now: string): boolean {
+  return Date.parse(dueAt) <= Date.parse(now);
+}
+
 /** 남은 기간 꼬리표 — 승인 요청과 같은 방식(하루 넘게 남으면 일 내림, 하루 안이면 시간 올림). 기준 시각은 화면을 그리는 서버가 넘긴다. */
 export function checkTimeLeftLabel(dueAt: string, now: string): string {
   const left = Date.parse(dueAt) - Date.parse(now);
