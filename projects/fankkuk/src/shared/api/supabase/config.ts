@@ -8,9 +8,9 @@ export type SupabaseConfig = { url: string; anonKey: string };
 
 export function readSupabaseConfig(env: EnvLike): SupabaseConfig {
   const url = env.SUPABASE_URL;
-  const anonKey = env.SUPABASE_ANON_KEY;
+  const anonKey = env.SUPABASE_PUBLISHABLE_KEY;
   if (!url) throw new Error("SUPABASE_URL 이 없다");
-  if (!anonKey) throw new Error("SUPABASE_ANON_KEY 가 없다");
+  if (!anonKey) throw new Error("SUPABASE_PUBLISHABLE_KEY 가 없다");
   return { url, anonKey };
 }
 

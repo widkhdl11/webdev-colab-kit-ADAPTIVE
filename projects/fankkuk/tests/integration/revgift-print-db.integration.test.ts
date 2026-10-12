@@ -18,7 +18,7 @@ let keys: TestKeys;
 let otherKeys: TestKeys;
 let decryptor: InvoiceDecryptor;
 
-const env = () => ({ NODE_ENV: "development", SUPABASE_URL: process.env.FK_TEST_API_URL, SUPABASE_ANON_KEY: process.env.FK_TEST_ANON_KEY });
+const env = () => ({ NODE_ENV: "development", SUPABASE_URL: process.env.FK_TEST_API_URL, SUPABASE_PUBLISHABLE_KEY: process.env.FK_TEST_ANON_KEY });
 
 beforeAll(async () => {
   keys = await testKeyPair();

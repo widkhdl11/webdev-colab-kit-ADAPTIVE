@@ -1,5 +1,5 @@
 // 로컬 개발 서버 설정을 .env.local 에 채운다. 이미 있는 이름은 건드리지 않는다.
-// - Supabase: `supabase status` 가 알려 주는 로컬 기본값(비밀 아님 — 로컬 DB 전용)
+// - Supabase: `supabase status` 가 알려 주는 로컬 기본값(비밀 아님 — 로컬 DB 전용). 공개 키는 새 이름(publishable)이 있으면 그것, 옛 CLI 면 anon 값
 // - 토스: 토스페이먼츠 공식 예제(github.com/tosspayments/tosspayments-sample)에 공개된 문서용 시험 키. 실제 결제가 일어나지 않는다
 // - 메일: 로컬 Mailpit(SMTP 55325)
 // 실행: node scripts/dev-env.mjs   (projects/fankkuk 에서, 로컬 Supabase 가 켜져 있어야 한다)
@@ -24,7 +24,7 @@ if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(status.API_URL ?? "")) throw new Error("
 
 const wanted = {
   SUPABASE_URL: status.API_URL,
-  SUPABASE_ANON_KEY: status.ANON_KEY,
+  SUPABASE_PUBLISHABLE_KEY: status.PUBLISHABLE_KEY ?? status.ANON_KEY,
   SUPABASE_SECRET_KEY: status.SERVICE_ROLE_KEY,
   TOSS_SECRET_KEY: "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6",
   NEXT_PUBLIC_TOSS_CLIENT_KEY: "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm",
