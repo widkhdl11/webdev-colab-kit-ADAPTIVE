@@ -7,11 +7,11 @@
 {
   "product": {
     "status": "clean",
-    "hash": "d0539654274a"
+    "hash": "3ffe094c33f5"
   },
   "spec": {
     "status": "clean",
-    "hash": "f7e3280134b9"
+    "hash": "dc4e6739027c"
   },
   "design": {
     "status": "clean",
@@ -19,23 +19,23 @@
   },
   "design/page-designer": {
     "status": "clean",
-    "hash": "91ab8550345c"
+    "hash": "3239be6e7701"
   },
   "design/schema-designer": {
     "status": "clean",
-    "hash": "1345a57cdbbb"
+    "hash": "21a1f19f28b9"
   },
   "implement": {
     "status": "clean",
-    "hash": "de83f5e3abe5"
+    "hash": "4f8f605cae41"
   },
   "qa": {
     "status": "clean",
-    "hash": "a09a8e908669"
+    "hash": "7e13be79e8ea"
   },
   "review": {
     "status": "clean",
-    "hash": "1b8c628550bb"
+    "hash": "950035a8a3d9"
   },
   "deploy": {
     "status": "dirty",
