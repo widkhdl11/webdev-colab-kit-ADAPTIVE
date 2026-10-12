@@ -12,6 +12,7 @@ import { FAN_HOME } from "@/entities/session/model/home-path";
 import { importSealingPublicKey, sealEnvelope } from "@/shared/lib/envelope/envelope";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { acceptRevgift, declineRevgift } from "../api/reply-requests";
+import { PROMISE } from "@/shared/config/site-copy";
 import s from "./receive-flow.module.css";
 
 // 받은 역조공 하나 — 받기·받지 않기. 시안: docs/design/mockups/site/v4/revgift-receive.html
@@ -288,12 +289,12 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
               </div>
               <ol className={s.next}>
                 <li>
-                  <strong>상자가 팬꾹 사무실에 도착해요</strong>
-                  <p>{creatorName}님이 보낸 상자를 받으면 검수를 시작해요.</p>
+                  <strong>상자가 팬꾹에 도착해요</strong>
+                  <p>{PROMISE.inspection}</p>
                 </li>
                 <li>
-                  <strong>검수를 마치면 송장을 뽑아 보내 드려요</strong>
-                  <p>이때만 입력한 주소를 열어요. 출고되면 주소는 지워져요.</p>
+                  <strong>검수가 끝나면 보내 드려요</strong>
+                  <p>입력한 주소는 송장을 출력할 때만 열리고, 출고하면 바로 지워요.</p>
                 </li>
                 <li>
                   <strong>배송이 시작되면 받은 역조공에서 확인할 수 있어요</strong>

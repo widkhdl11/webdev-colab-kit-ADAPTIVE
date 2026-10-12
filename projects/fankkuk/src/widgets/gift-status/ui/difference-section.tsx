@@ -77,8 +77,8 @@ export function DifferenceSection({ orderNo, differences, clientKey, notice }: P
     <div className={s.part}>
       <h2>차액 결제</h2>
       <p className={s["sub-t"]}>
-        도착한 상자를 재어 보니 보낼 때 고른 크기보다 커서 차액만 따로 결제해요. 차액을 내야 크리에이터에게 보낼 수 있고, 기한 안에
-        내지 않으면 보낸 주소로 돌려보내고 배송비만 환불해 드려요.
+        사무실에서 잰 상자가 고른 크기보다 커서 추가 결제가 필요해요. 결제를 마치면 바로 보내 드려요. 기한 안에 결제하지 않으면
+        상자를 돌려보내고 배송비를 환불해 드려요.
       </p>
       {notice ? (
         <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`} role={notice === "failed" || notice === "closed" ? "alert" : "status"}>

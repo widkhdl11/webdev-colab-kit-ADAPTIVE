@@ -1,21 +1,23 @@
 import Link from "next/link";
+import { OPERATOR_NAME, PROMISE } from "@/shared/config/site-copy";
+import { withSubjectParticle } from "@/shared/lib/format/subject-particle";
 import s from "./about.module.css";
 
 // 팬꾹 소개. 시안: docs/design/mockups/site/v4/about.html
-// 문구 한계(design-rules 6절): 주소 약속은 「승인 없이는 저희 시스템이 주소를 열지 않습니다」만. 검수는 「걸린 상자만 개봉」.
+// 약속 문장은 shared/config/site-copy 의 고정 문구를 그대로 읽는다(문구 v2). 소개 이야기는 해요체, 약속·하지 않는 것은 합니다체.
 
 const FLOW = [
-  { title: "브라우저에서 잠가요", body: "크리에이터가 주소를 적으면, 크리에이터의 브라우저에서 먼저 잠근 뒤 팬꾹으로 보내요." },
-  { title: "잠긴 채로 보관해요", body: "승인 없이는 저희 시스템이 주소를 열지 않습니다." },
-  { title: "크리에이터가 승인해요", body: "선물 한 건마다 카카오톡 인증서로 서명해요. 전체 승인 버튼은 없어요." },
-  { title: "송장 출력 때 열려요", body: "승인된 건만, 송장을 출력하는 순간에 열려요. 이 순간은 기록으로 남아요.", once: true },
-  { title: "팬꾹 송장으로 출고해요", body: "검수가 끝난 상자를 팬꾹이 대신 보내 드려요." },
+  { title: "입력하자마자 잠가요", body: "크리에이터가 입력한 주소는 팬꾹으로 오기 전에 잠겨요." },
+  { title: "잠긴 채 보관해요", body: PROMISE.address },
+  { title: "크리에이터가 승인해요", body: "선물마다 카카오톡으로 한 번 더 확인해요." },
+  { title: "송장 출력 때만 열려요", body: "열릴 때마다 기록이 남아요.", once: true },
+  { title: "팬꾹 송장으로 출고해요", body: "승인과 검수를 모두 통과한 선물만 출고합니다." },
 ] as const;
 
 const INSPECT = [
-  { title: "송장 제거", body: "상자에 붙어 온 원래 송장을 떼어 파쇄해요. 크리에이터행 송장은 팬꾹 송장 하나만 남아요." },
-  { title: "겉면 검사", body: "상자 겉면에 주소나 연락처가 숨어 있지 않은지, 이상한 부착물이 없는지 살펴봐요." },
-  { title: "추적 장치 검사", body: "위치 추적 장치가 들어 있는지 장비로 검사해요. 이 검수는 요금에 기본으로 포함돼 있어요." },
+  { title: "송장 제거", body: "원래 송장은 떼어서 파쇄해요." },
+  { title: "겉면 검사", body: "숨겨진 연락처나 이상한 부착물이 없는지 봐요." },
+  { title: "추적 장치 탐지", body: "모든 상자를 탐지기로 검사해요." },
 ] as const;
 
 /** 열람 기록 표 예시 — 지어낸 값. 실제 기록은 크리에이터 화면(/creator/log)에 있다. */
@@ -26,12 +28,12 @@ const LOG_EXAMPLE = [
 ] as const;
 
 const NOTS = [
-  { title: "승인 없이 주소를 열지 않아요", body: "승인 없이는 저희 시스템이 주소를 열지 않습니다." },
-  { title: "한꺼번에 승인하지 않아요", body: "전체 승인 버튼은 없어요. 건마다 따로 서명해요." },
-  { title: "거절 이유를 팬에게 알리지 않아요", body: "거절된 선물은 배송되지 않고, 이유는 팬에게 전해지지 않아요." },
-  { title: "모든 상자를 열어 보지 않아요", body: "송장 제거와 겉면 검사를 거치고, 걸린 상자만 열어요." },
-  { title: "크리에이터행 운송장 번호를 팬에게 보여 주지 않아요", body: "팬이 볼 수 있는 주소는 결제 뒤 알려 드리는 팬꾹 사무실의 받는 주소뿐이에요." },
-  { title: "검수를 뺀 요금제를 만들지 않아요", body: "추적 장치 검수는 모든 요금에 포함돼 있어요." },
+  { title: "승인 전에는 주소를 열지 않습니다", body: PROMISE.addressFan },
+  { title: "한꺼번에 승인하지 않습니다", body: "선물마다 카카오톡으로 따로 확인해요." },
+  { title: "받지 않은 이유를 팬에게 알리지 않습니다", body: "크리에이터가 받지 않은 선물은 배송하지 않아요." },
+  { title: "필요 없이 상자를 열지 않습니다", body: "탐지기 반응이 있는 상자만 열어요." },
+  { title: "크리에이터에게 가는 송장번호는 공개하지 않습니다", body: "팬에게 보이는 주소는 팬꾹 주소뿐이에요." },
+  { title: "검수를 뺀 요금제는 만들지 않습니다", body: "모든 요금에 검수가 포함돼요." },
 ] as const;
 
 export function AboutPage() {
@@ -45,8 +47,8 @@ export function AboutPage() {
             주소는 조심스럽게
           </h1>
           <p className={`lead ${s["about-lead"]}`}>
-            팬꾹은 팬이 보내는 마음이 크리에이터의 주소를 위험하게 만들지 않도록, 사이에서 선물을 받아 검수하고 대신 보내
-            드리는 서비스예요. 네오코드가 만들고 운영합니다.
+            팬꾹은 팬의 선물을 검수하고 크리에이터에게 대신 보내는 서비스예요. {PROMISE.addressFan} {withSubjectParticle(OPERATOR_NAME)} 만들고
+            운영합니다.
           </p>
         </div>
       </section>
@@ -64,8 +66,8 @@ export function AboutPage() {
               어디로 보내야 할지 몰라 포기하고요.
             </p>
             <p>
-              팬꾹은 이 사이에 한 단계를 두기로 했어요. 팬은 주소를 알 필요가 없고, 크리에이터는 주소를 내놓지 않아도 선물을 받을
-              수 있게요.
+              그래서 팬꾹이 팬과 크리에이터 사이에 들어가기로 했어요. 팬은 주소를 몰라도 선물을 보낼 수 있고, 크리에이터는 주소를
+              드러내지 않고 받을 수 있어요.
             </p>
           </div>
         </div>
@@ -76,11 +78,11 @@ export function AboutPage() {
           <div className={`${s.panel} ${s["panel-grid"]}`}>
             <div>
               <h2 id="once-title">
-                주소는 송장을 출력하는
-                <br />순간에만 열려요
+                주소는 송장을 출력할 때만
+                <br />열립니다
               </h2>
               <p className={`lead ${s["panel-lead"]}`}>
-                주소는 잠긴 채로 보관되고, 크리에이터가 승인한 건만 송장을 출력하는 순간에 열려요.
+                {PROMISE.address} 승인한 선물도 송장을 출력할 때만 열려요.
               </p>
             </div>
             <ol className={s.flow} aria-label="주소가 열리기까지의 흐름">
@@ -110,7 +112,7 @@ export function AboutPage() {
               <img className="asset" src="/img/icon-inspect.png" width={72} height={72} alt="" aria-hidden="true" />
             </div>
             <h2 id="inspect-title">검수는 이렇게 해요</h2>
-            <p>사무실에 도착한 모든 상자에 같은 순서를 적용해요.</p>
+            <p>{PROMISE.inspection}</p>
           </div>
           <ol className="grid cols-3">
             {INSPECT.map((it, i) => (
@@ -122,8 +124,8 @@ export function AboutPage() {
             ))}
           </ol>
           <div className={s.promise}>
-            <h3>걸린 상자만 열어서 확인해요</h3>
-            <p>검사에서 걸린 상자만 개봉해요. 걸리지 않은 상자는 열지 않고 그대로 출고해요.</p>
+            <h3>반응이 있으면 개봉 검수</h3>
+            <p>{PROMISE.inspectionOpen}</p>
           </div>
         </div>
       </section>

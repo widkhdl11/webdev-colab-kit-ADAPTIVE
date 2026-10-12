@@ -15,6 +15,7 @@ import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import { sendApprove } from "../api/send-approve";
 import { sendDecline } from "../api/send-decline";
 import { applyDecision, type LocalDecision } from "../model/local-decision";
+import { PROMISE } from "@/shared/config/site-copy";
 import a from "./approval-request.module.css";
 
 // 크리에이터 승인 요청 목록(시안 v4 creator-requests.html).
@@ -352,7 +353,9 @@ export function ApprovalRequestList({
               {sheet.req.fanNickname}님의 {sheet.req.itemKind}({sheet.req.orderNo}) 한 건을 승인합니다. 카카오톡 인증서로 서명해야
               승인이 끝나요.
             </p>
-            <p className={`sub ${a.reason}`}>승인한 선물만 송장을 출력할 때 주소가 열리고, 그 기록은 열람 기록에서 볼 수 있어요.</p>
+            <p className={`sub ${a.reason}`}>
+              {PROMISE.address} 승인한 뒤에도 송장을 출력할 때만 열리고, 열린 기록은 열람 기록에서 볼 수 있어요.
+            </p>
             {approveError ? (
               <p className={a.error} role="alert">
                 <span className={a["error-mark"]} aria-hidden="true">

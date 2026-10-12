@@ -23,6 +23,7 @@ import { receivingNotice } from "../model/receiving-notice";
 import { summarizeBoxes } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
+import { PROMISE } from "@/shared/config/site-copy";
 import f from "./register-form.module.css";
 
 /** 고를 수 있는 크리에이터 한 명. 소개 칸(태그·채널 이름·로마자 이름)이 없으면 목록 한 줄에 플랫폼 이름만 보인다. */
@@ -745,7 +746,7 @@ export function RegisterForm({
                   <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  추적 장치 검수 포함
+                  검수 포함
                 </span>
               </p>
               <p className={f["pay-note"]}>
@@ -769,8 +770,8 @@ export function RegisterForm({
                     </strong>
                   </p>
                   <p className={f["rule-note-sub"]}>
-                    결제하면 승인을 기다리는 동안에도 「먼저 보내기」로 받는 주소를 열어 미리 보낼 수 있어요. 승인되면 받는 주소가 바로
-                    보여요. 크리에이터는 출고 전에 카카오톡 인증서로 선물마다 직접 승인해요.
+                    크리에이터가 승인하면 팬꾹 주소가 바로 보여요. 기다리지 않고 「먼저 보내기」로 미리 보낼 수도 있어요.{" "}
+                    {PROMISE.approval}
                   </p>
                 </div>
               ) : null}
@@ -844,7 +845,7 @@ export function RegisterForm({
                   <span>합계</span>
                   <span className={f.big}>{totalText}</span>
                 </div>
-                <p className={f["summary-note"]}>배송비 포함 · 추적 장치 검수 포함</p>
+                <p className={f["summary-note"]}>배송비 포함 · 검수 포함</p>
               </>
             ) : null}
           </aside>

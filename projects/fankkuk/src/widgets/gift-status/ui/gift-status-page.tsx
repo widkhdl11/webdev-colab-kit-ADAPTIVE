@@ -30,6 +30,7 @@ import type { FanBoxReply } from "@/entities/gift-reply/api/gift-reply-reads";
 import { FanBoxReplies } from "@/features/gift-reply/ui/fan-box-replies";
 import { DifferenceSection, type DifferenceNotice } from "./difference-section";
 import { PaymentSummary } from "./payment-summary";
+import { PROMISE } from "@/shared/config/site-copy";
 import s from "./gift-status.module.css";
 
 // 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v9-pages/gift-a.html (design-rules 5절, 카드 d45 — 시안은 한 상태의 예시, 칸이 나오는 조건은 아래 그대로)
@@ -333,12 +334,12 @@ export function GiftStatusPage({
                 {payment ? <PaymentSummary payment={payment} differences={difference?.differences ?? []} /> : null}
                 <span className="tag">
                   <Check size={16} />
-                  추적 장치 검수 포함
+                  검수 포함
                 </span>
                 {hasShipped(view) ? (
                   <p className={s["info-note"]}>
-                    크리에이터의 주소를 지키기 위해, 크리에이터에게 가는 택배의 송장번호는 알려 드리지 않아요. 배송 단계는 이
-                    화면에서 확인할 수 있어요.
+                    {PROMISE.addressFan} 그래서 크리에이터에게 가는 송장번호도 알려 드리지 않아요. 진행 상황은 이 화면에서 볼 수
+                    있어요.
                   </p>
                 ) : null}
                 {cancelable ? <CancelGiftButton orderNo={view.orderNo} addressShown={!view.earlySendPending} /> : null}

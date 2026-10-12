@@ -82,7 +82,7 @@ export function fanStepDetail(step: FanStep, view: FanGiftView): string | null {
   if (step.state === "current") {
     if (step.key === "shipped" && view.approval.state !== "done") return "승인되면 바로 출고하고 알림톡으로 알려 드려요";
     if (step.key === "received") return "도착하면 시각이 여기에 표시돼요";
-    if (step.key === "inspected") return "모든 상자의 원래 송장을 떼고 겉면을 검사해요";
+    if (step.key === "inspected") return "모든 상자를 탐지기로 검수해요";
     return null;
   }
   if (step.state !== "done") return null;

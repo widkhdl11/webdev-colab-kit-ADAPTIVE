@@ -3,10 +3,11 @@ import { Fragment } from "react";
 import { FAN_STEP_LABEL } from "@/entities/order/ui/fan-stage-copy";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
+import { PROMISE } from "@/shared/config/site-copy";
 import s from "./landing.module.css";
 
 // 랜딩(비로그인). 시안: docs/design/mockups/site/v4/landing.html
-// 문구 한계(design-rules 6절): 약속은 「승인 없이는 저희 시스템이 주소를 열지 않습니다」 한 문장만. 「모든 상자를 열어」라고 쓰지 않는다.
+// 약속 문장은 shared/config/site-copy 의 고정 문구를 그대로 읽는다(문구 v2). 첫 화면 = 약속 1·3, 크리에이터 가입 구간 = 약속 2. 「모든 상자를 열어」라고 쓰지 않는다.
 // 요금 숫자는 결제와 같은 DB 요금표(서버 page 가 읽어 넘긴다)를, 구간 기준은 size-tier 를 읽는다 — 화면과 결제가 어긋나지 않게.
 
 const TILES = [
@@ -21,17 +22,17 @@ const TILES = [
 ] as const;
 
 const STEPS = [
-  { icon: "icon-gift", num: "1. 등록", title: "선물을 등록해요", body: "결제하면 상자마다 받는 주소가 생겨요. 승인 전에도 「먼저 보내기」로 미리 보낼 수 있어요." },
-  { icon: "icon-inspect", num: "2. 검수", title: "사무실에서 검수해요", body: "원래 송장을 떼어 파쇄하고 겉면을 검사해요." },
-  { icon: "icon-approve", num: "3. 승인", title: "크리에이터가 승인해요", body: "출고 전에 건마다 직접 승인해요. 거절되면 반송비를 뺀 금액을 돌려드려요." },
-  { icon: "icon-truck", num: "4. 배송", title: "팬꾹이 대신 보내요", body: "검수가 끝난 선물만 출고해요." },
+  { icon: "icon-gift", num: "1. 등록", title: "선물을 등록해요", body: "결제하면 팬꾹 주소가 바로 나와요. 승인 전에도 먼저 보낼 수 있어요." },
+  { icon: "icon-approve", num: "2. 승인", title: "크리에이터가 승인해요", body: PROMISE.approval },
+  { icon: "icon-inspect", num: "3. 검수", title: "모든 선물을 검수해요", body: PROMISE.inspectionOpen },
+  { icon: "icon-truck", num: "4. 배송", title: "팬꾹이 대신 보내요", body: "승인과 검수를 모두 통과한 선물만 출고합니다." },
 ] as const;
 
 const PROMISES = [
-  { title: "주소는 승인된 건만 열려요", body: "주소는 암호화해 보관하고, 승인된 건의 송장을 출력할 때만 열어요." },
-  { title: "연 기록을 전부 보여 드려요", body: "언제, 어느 주문의 주소가 몇 번째로 열렸는지 크리에이터가 확인할 수 있어요." },
-  { title: "추적 장치 검수는 기본이에요", body: "모든 상자의 송장을 떼고 겉면을 검사해요. 걸린 상자만 열어 확인해요." },
-  { title: "한 건씩 카카오톡으로 서명해요", body: "전체 승인 버튼은 없어요. 거절 이유는 팬에게 알리지 않아요." },
+  { title: "주소는 잠긴 채 보관합니다", body: "승인된 선물의 송장을 출력할 때만 열려요." },
+  { title: "주소가 열린 기록은 모두 공개합니다", body: "언제, 어느 주문에서 열렸는지 크리에이터가 직접 볼 수 있어요." },
+  { title: "모든 선물을 검수합니다", body: PROMISE.inspectionOpen },
+  { title: "승인은 한 건씩, 카카오톡으로", body: "한꺼번에 승인하는 버튼은 없어요. 받지 않은 이유는 팬에게 알리지 않아요." },
 ] as const;
 
 function SearchGlyph() {
@@ -61,9 +62,9 @@ export function LandingPage({ prices }: { prices: PublicPriceTable }) {
         <div className="container">
           <p className={`kicker ${s.kicker}`}>크리에이터에게 선물을 보낼 때</p>
           <h1 className="hero-title" id="hero-title">
-            승인한 선물만 전해요
+            승인한 선물만 배송합니다
           </h1>
-          <p className={`green-line ${s["green-line"]}`}>승인 없이는 저희 시스템이 주소를 열지 않습니다</p>
+          <p className={`green-line ${s["green-line"]}`}>{PROMISE.inspection}</p>
 
           <form className={`search ${s.search}`} role="search" action="/creators">
             <label className="sr-only" htmlFor="hero-q">
@@ -102,11 +103,9 @@ export function LandingPage({ prices }: { prices: PublicPriceTable }) {
         <div className="container">
           <div className={s["sec-head"]}>
             <h2 id="how-title">
-              선물은 이렇게
-              <br />
-              <span className="accent">네 걸음</span>으로 전해져요
+              선물은 <span className="accent">4단계</span>로 도착해요
             </h2>
-            <p>팬은 사무실로 보내고, 크리에이터는 승인만 하면 돼요.</p>
+            <p>팬은 팬꾹으로 보내고, 크리에이터는 승인만 하면 돼요.</p>
           </div>
           <ol className="grid cols-4">
             {STEPS.map((st) => (
@@ -140,13 +139,11 @@ export function LandingPage({ prices }: { prices: PublicPriceTable }) {
           <div className={`${s.panel} ${s["panel-grid"]}`}>
             <div>
               <h2 id="promise-title">
-                승인 없이는
+                이제 확인하고
                 <br />
-                주소를 <span className="accent">열지 않습니다</span>
+                <span className="accent">선물을 받으세요</span>
               </h2>
-              <p className={`lead ${s["panel-lead"]}`}>
-                크리에이터가 승인한 선물만 출고해요. 크리에이터의 주소는 팬에게 보이지 않아요.
-              </p>
+              <p className={`lead ${s["panel-lead"]}`}>{PROMISE.address}</p>
               <Link className={`btn ${s["panel-cta"]}`} href="/signup">
                 크리에이터로 가입하기
               </Link>
@@ -168,7 +165,7 @@ export function LandingPage({ prices }: { prices: PublicPriceTable }) {
         <div className="container">
           <div className={s["sec-head"]}>
             <h2 id="price-title">
-              상자마다 <span className="accent">검수까지</span> 담았어요
+              모든 요금에 <span className="accent">검수가</span> 포함됩니다
             </h2>
             <p>배송비를 포함한 금액이에요. 크기와 무게 중 큰 쪽으로 정해져요.</p>
           </div>
@@ -182,7 +179,7 @@ export function LandingPage({ prices }: { prices: PublicPriceTable }) {
                 </p>
                 <p className={s.inc}>
                   <CheckDot />
-                  추적 장치 검수 포함
+                  검수 포함
                 </p>
                 <p className={s.spec}>{PARCEL_TIER_GUIDE[tier].rule}</p>
               </article>

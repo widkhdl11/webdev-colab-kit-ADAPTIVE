@@ -9,6 +9,7 @@ import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-t
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { InquiryForm } from "@/features/inquiry-submit/ui/inquiry-form";
 import { formatDateTime } from "@/shared/lib/format/datetime";
+import { PROMISE } from "@/shared/config/site-copy";
 import s from "./support.module.css";
 
 // 고객센터. 시안: docs/design/mockups/site/v4/support.html
@@ -33,7 +34,7 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
     faqs: [
       {
         q: "선물은 어떻게 보내나요?",
-        a: "크리에이터를 찾아 「선물 보내기」를 누르고, 상자 수와 크기를 등록한 뒤 결제하면 상자마다 받는 주소가 생겨요. 크리에이터가 승인하면 바로 보이고, 승인 전에도 선물 상세에서 「먼저 보내기」를 누르면 열려요. 먼저 보낸 선물이 거절되면 반송하고 반송 택배비를 뺀 금액을 돌려드려요.",
+        a: "크리에이터를 찾아 「선물 보내기」를 누르고 상자 크기를 골라 결제하면 돼요. 결제하면 상자마다 보낼 팬꾹 주소가 나와요. 크리에이터가 승인하면 주소가 바로 보이고, 「먼저 보내기」로 미리 보낼 수도 있어요.",
       },
       {
         q: "크리에이터가 거절하면 어떻게 되나요?",
@@ -72,7 +73,7 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
         q: "크리에이터행 운송장 번호를 볼 수 있나요?",
         a: "팬에게는 크리에이터행 운송장 번호를 보여 드리지 않아요. 팬이 입력하는 것은 사무실로 보내는 상자의 송장번호예요.",
       },
-      { q: "검수는 어떻게 하나요?", a: "상자의 원래 송장을 제거하고, 겉면과 추적 장치를 검사해요. 검사에 걸린 상자만 열어서 확인해요. 추적 장치처럼 보낼 수 없는 물품이 나오면 돌려보내 드리고, 검수비와 반송 택배비를 빼서 돌려드리는 금액이 없어요." },
+      { q: "검수는 어떻게 하나요?", a: `${PROMISE.inspection} 송장을 떼고 겉면과 추적 장치를 검사하고, 탐지기 반응이 있으면 열어서 확인해요. 보낼 수 없는 물품이 나오면 상자를 돌려보내 드려요. 이때는 검수비와 택배비를 빼면 환불 금액이 남지 않아요.` },
     ],
   },
   {

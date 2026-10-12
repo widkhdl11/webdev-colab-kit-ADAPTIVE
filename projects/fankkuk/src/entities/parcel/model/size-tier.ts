@@ -29,4 +29,4 @@ export const OVERSIZE_RULE = `세 변 합 ${LARGE_MAX_SUM_CM}cm나 ${LARGE_MAX_W
 
 /** 보내기 전에 알리는 검수 반송 안내. 추적 장치 등이 나오거나 대형을 넘으면 팬의 위반이라 검수비·반송비를 모두 뺀다(결제 INV-M8).
  *  받지 않는 크기는 OVERSIZE_RULE 에서 만든다 — 구간 기준이 바뀌면 이 안내도 같이 바뀐다. */
-export const RETURN_ON_INSPECTION_NOTICE = `검수에서 추적 장치처럼 보낼 수 없는 물품이 나오거나 ${OVERSIZE_RULE}면 돌려보내 드려요. 이때는 검수비와 반송 택배비를 빼서 돌려드리는 금액이 없어요.`;
+export const RETURN_ON_INSPECTION_NOTICE = `검수에서 추적 장치처럼 보낼 수 없는 물품이 나오거나 ${OVERSIZE_RULE}면 돌려보내 드려요. 이때는 검수비와 택배비를 빼면 환불 금액이 남지 않아요.`;

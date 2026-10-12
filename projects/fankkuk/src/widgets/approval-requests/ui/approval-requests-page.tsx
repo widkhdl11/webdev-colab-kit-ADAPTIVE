@@ -7,6 +7,7 @@ import { ApprovalRequestList } from "@/features/approval-request/ui/approval-req
 import { CreatorCheckList } from "@/features/creator-check/ui/creator-check-list";
 import { ReceivedBoxList } from "@/features/gift-reply/ui/received-box-list";
 import { CreatorGiftTabs } from "./creator-gift-tabs";
+import { PROMISE } from "@/shared/config/site-copy";
 import s from "./approval-requests.module.css";
 
 // 크리에이터 — 승인·받은 선물. 탭: 승인 요청(한 건씩 보고 승인·거절, 전체 승인은 없다) · 확인할 선물(추적기 아님 블루투스·RF 상자를 받을지 —
@@ -55,7 +56,7 @@ export function ApprovalRequestsPage({
                 <div className={s["rule-line"]}>
                   <img className={`asset ${s.ico}`} src="/img/icon-approve.png" alt="" aria-hidden="true" width={56} height={56} />
                   <p>
-                    <strong>승인은 한 건씩, 카카오톡 인증서로 서명해요.</strong>
+                    <strong>선물은 한 건씩, 카카오톡으로 승인해요.</strong> {PROMISE.address}
                   </p>
                 </div>
                 <ApprovalRequestList requests={requests} decided={decided} now={now} />

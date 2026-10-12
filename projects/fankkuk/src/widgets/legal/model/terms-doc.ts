@@ -2,6 +2,7 @@ import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadlin
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { TERMS_VERSIONS } from "@/features/signup/model/signup-input";
+import { OPERATOR_NAME } from "@/shared/config/site-copy";
 import { TO_DECIDE, TO_FILL, type LegalDoc } from "./legal-doc";
 
 // 이용약관. 근거: docs/PRODUCT.md · DECISIONS.md · specs(payment·office-workflow·decline-block·reverse-gift·signup·
@@ -16,7 +17,7 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
     title: "이용약관",
     lead: "팬꾹을 쓰기 전에 알아 두셔야 할 약속을 모았어요. 선물이 어떻게 오가고, 돈은 언제 얼마를 받고 돌려드리는지 적었습니다.",
     facts: [
-      ["운영", "네오코드"],
+      ["운영", OPERATOR_NAME],
       ["시행일", TO_FILL],
       ["동의 기록의 판", TERMS_VERSIONS.service],
     ],

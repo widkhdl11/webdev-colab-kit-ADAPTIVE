@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { OPERATOR_NAME } from "@/shared/config/site-copy";
 import { LogoMark } from "@/shared/ui/logo";
 
 // 사업자 정보는 출시 전에 채운다(통신판매업 표시 의무).
 const BIZ: ReadonlyArray<readonly [string, string]> = [
-  ["상호", "네오코드"],
+  ["상호", OPERATOR_NAME],
   ["대표자", "(출시 전 기재)"],
   ["사업자등록번호", "(출시 전 기재)"],
   ["통신판매업 신고번호", "(출시 전 기재)"],
@@ -37,7 +38,7 @@ export function SiteFooter() {
             <Link href="/about">팬꾹 소개</Link>
           </nav>
         </div>
-        <p className="footer-copy">&copy; 2026 네오코드. All rights reserved.</p>
+        <p className="footer-copy">&copy; 2026 {OPERATOR_NAME}. All rights reserved.</p>
       </div>
     </footer>
   );

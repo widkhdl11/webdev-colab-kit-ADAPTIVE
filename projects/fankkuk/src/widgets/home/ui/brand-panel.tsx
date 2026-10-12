@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PROMISE } from "@/shared/config/site-copy";
 import s from "./home.module.css";
 
 // 메인 첫 줄 왼쪽의 큰 판 — 팬 메인과 크리에이터 메인이 같이 쓴다(시안 v9-home home-b · creator-a).
@@ -14,9 +15,9 @@ export function BrandPanel() {
           선물을 보내 보세요
         </h1>
         <p className={`lead ${s.lead}`}>
-          크리에이터가 승인한 선물만 배송해요.
+          {PROMISE.approval}
           <br />
-          서로의 주소는 보이지 않아요.
+          {PROMISE.address}
         </p>
         <div className={s.btns}>
           <Link className="btn" href="/gifts/new">

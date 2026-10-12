@@ -1,4 +1,5 @@
 import { TERMS_VERSIONS } from "@/features/signup/model/signup-input";
+import { OPERATOR_NAME, PROMISE } from "@/shared/config/site-copy";
 import { TO_DECIDE, TO_FILL, type LegalDoc } from "./legal-doc";
 
 // 개인정보처리방침. 근거: docs/PRODUCT.md · DECISIONS.md · specs(address-protection·reverse-gift·office-workflow INV-W8·
@@ -7,9 +8,9 @@ import { TO_DECIDE, TO_FILL, type LegalDoc } from "./legal-doc";
 
 export const PRIVACY_DOC: LegalDoc = {
   title: "개인정보처리방침",
-  lead: "팬꾹이 어떤 개인정보를 왜 받고, 언제 지우고, 누구에게 맡기는지 적었어요. 주소는 승인 없이는 저희 시스템도 열지 않도록 만들었습니다.",
+  lead: `팬꾹이 어떤 개인정보를 왜 받고, 언제 지우고, 누구에게 맡기는지 적었어요. ${PROMISE.address}`,
   facts: [
-    ["운영", "네오코드"],
+    ["운영", OPERATOR_NAME],
     ["시행일", TO_FILL],
     ["동의 기록의 판", TERMS_VERSIONS.privacy],
   ],

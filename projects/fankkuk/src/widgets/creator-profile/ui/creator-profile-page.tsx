@@ -1,3 +1,4 @@
+import { PROMISE } from "@/shared/config/site-copy";
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
@@ -23,7 +24,7 @@ import s from "./creator-profile.module.css";
 // → 이번 달 N명(0이면 숨김) → 감사 답장 모음(F-5 — 양쪽이 동의하고 받았어요 3일이 지난 답장만, 없으면 숨김) → 선물 보내기.
 // PC 는 왼쪽 흐름 + 오른쪽 「선물 보내기」 판. 모바일은 한 줄로 내려오고, 맨 위에도 「선물 보내기」를 하나 더 둔다(DECISIONS 2026-10-11).
 // 공개 화면이라 크리에이터 공개 이름·링크용 아이디·사진·소개·켠 항목·정해진 문구·집계 숫자·요금만 그린다(INV-E7). 주소 열람 건수는 없다(INV-E11).
-// 문구 한계(design-rules 6절): "승인 없이는 저희 시스템이 주소를 열지 않습니다"는 쓰고 "절대 유출되지 않는다"는 쓰지 않는다.
+// 문구 한계(design-rules 6절): 주소 약속은 shared/config/site-copy 의 고정 문구를 읽고, "절대 유출되지 않는다"는 쓰지 않는다.
 
 export type CreatorLinkView = CreatorCard & { photoUrl: string | null };
 
@@ -277,9 +278,11 @@ export function CreatorProfilePage({
               <Chevron />
             </summary>
             <ol className={s.steps}>
-              <li>팬꾹 사무실에 상자가 도착하면 겉에 붙은 송장을 떼고 겉면을 검사해요.</li>
-              <li>추적 장치가 의심되는 상자만 열어 확인하고, 문제가 없으면 새 송장을 붙여 보내 드려요.</li>
-              <li>승인 없이는 저희 시스템이 크리에이터의 주소를 열지 않습니다.</li>
+              <li>{PROMISE.inspection}</li>
+              <li>{PROMISE.inspectionOpen}</li>
+              <li>
+                {PROMISE.address} {PROMISE.addressFan}
+              </li>
             </ol>
           </details>
         </aside>

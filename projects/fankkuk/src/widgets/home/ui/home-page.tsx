@@ -4,6 +4,7 @@ import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { fanBadge } from "@/entities/order/ui/fan-stage-copy";
 import type { SendAvailability } from "@/features/gift-register/model/sender-rule";
+import { PROMISE } from "@/shared/config/site-copy";
 import { statusTagClass } from "@/shared/ui/status-tone";
 import { BrandPanel } from "./brand-panel";
 import s from "./home.module.css";
@@ -38,9 +39,9 @@ const MAX_FACES = 4;
 
 const STEPS = [
   { icon: "icon-gift", label: "1단계 · 보내기", text: "크리에이터와 선물을 고르고 결제해요." },
-  { icon: "icon-approve", label: "2단계 · 승인", text: "크리에이터가 승인한 선물만 배송해요." },
-  { icon: "icon-inspect", label: "3단계 · 검수", text: "사무실에서 검수한 뒤 출고해요." },
-  { icon: "icon-truck", label: "4단계 · 배송", text: "크리에이터의 주소는 팬에게 보이지 않아요." },
+  { icon: "icon-approve", label: "2단계 · 승인", text: PROMISE.approval },
+  { icon: "icon-inspect", label: "3단계 · 검수", text: PROMISE.inspection },
+  { icon: "icon-truck", label: "4단계 · 배송", text: `팬꾹이 대신 보내요. ${PROMISE.addressFan}` },
 ] as const;
 
 function MyCard({ nickname, gifts, following, faceToneByName }: Pick<Props, "nickname" | "gifts" | "following" | "faceToneByName">) {

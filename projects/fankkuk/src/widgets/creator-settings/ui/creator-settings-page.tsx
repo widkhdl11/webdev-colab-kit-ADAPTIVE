@@ -31,6 +31,7 @@ import { ReplySettingsSection } from "./reply-settings-section";
 import type { ReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
 import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
+import { PROMISE } from "@/shared/config/site-copy";
 import s from "./creator-settings.module.css";
 
 // 크리에이터 — 주소와 설정. 시안: docs/design/mockups/site/v4/creator-settings.html
@@ -244,7 +245,7 @@ export function CreatorSettingsPage({
               <div>
                 <p className={s["addr-t"]}>{addressRegistered ? "주소가 안전하게 등록돼 있어요" : "아직 주소를 등록하지 않았어요"}</p>
                 <p className="sub">
-                  {addressRegistered ? "브라우저에서 잠가 보냈어요. 저희 화면에는 보이지 않아요." : "등록하면 브라우저에서 잠가 보내요. 저희 화면에는 보이지 않아요."}
+                  {addressRegistered ? `주소는 잠가서 보관해요. ${PROMISE.address}` : `등록하면 바로 잠가서 보관해요. ${PROMISE.address}`}
                 </p>
               </div>
             </div>
