@@ -183,3 +183,7 @@ html:not([data-empty="1"]) .empty-block { display: none; }
 .ptag--soop { --f: var(--plat-soop-f); --k: var(--plat-soop-k); }
 .ptag--ig { --f: var(--plat-ig-f); --k: var(--plat-ig-k); }
 .ptag--ig .bd.glyph { background: var(--plat-ig-bg); }
+
+/* 2026-10-13 비교용: 로그인 전 상단 바(64)와 같은 높이의 빈 바 — 본문이 같은 높이에서 시작하게. PC 에서만(휴대폰은 .topbar 가 있다) */
+.sb-headgap { display: var(--app-wide); position: sticky; top: 0; z-index: 30; height: var(--header-h); background: var(--white); border-bottom: var(--bw) solid var(--gray-200); }
+@media (max-width: 768px) { .has-headgap { --topbar-h: var(--header-h); } }   /* 휴대폰 상단 바만 로그인 전 상단 바와 같은 높이로(PC 사이드바는 그대로) */

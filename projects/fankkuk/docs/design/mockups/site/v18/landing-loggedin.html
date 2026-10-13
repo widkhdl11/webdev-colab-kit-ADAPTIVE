@@ -21,7 +21,7 @@
 <script src="font-switch.js" defer></script>
 <link rel="stylesheet" href="v18-app.css">
 </head>
-<body>
+<body class="has-headgap">
   <script>
     /* 8단계 사이드바 상태. 펼침 240 / 접힘 64, 둘 다 본문을 밀고 당긴다(가리지 않음). 접힘 상태 localStorage "sidebar-collapsed"(저장값 우선, 없으면 기본 펼침·1024 이하는 접힘).
        html[data-collapsed] = 접힘(PC), html[data-open] = drawer 열림(휴대폰). 단축키 [ = 펼침/접힘 토글. */
@@ -133,6 +133,7 @@
       </div>
     </aside>
     <div class="sb-wrap">
+    <div class="sb-headgap" aria-hidden="true"></div>
     <!-- 본문 컨테이너: .page-centered (max 1200 가운데) — 사이트 코드의 PageCentered -->
     <main id="main" class="sb-main page-centered">
 
