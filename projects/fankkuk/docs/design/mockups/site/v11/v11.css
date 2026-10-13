@@ -592,3 +592,10 @@ fieldset.part > legend + *{clear:both}
 /* 목록 위 안내 한 줄은 구간 머리의 끝이다 — 화면 머리와 같은 48(휴대폰 32) */
 .section-hint:has(+ :is(.grid,.cards,.list)){margin-bottom:48px}
 @media(max-width:767px){.section-hint:has(+ :is(.grid,.cards,.list)){margin-bottom:32px}}
+
+/* ---------- 15. 구간 사이 여백 (2026-10-13 사용자 「섹션 간격도 조금 띄워줘, 내용이 찌부된 것 같다」) ----------
+   바깥 화면 큰 구간 위아래 88~144 · 화면 안 구간 사이 64(휴대폰 48) · 세로로 쌓인 판·카드 사이 32 */
+:root{--sec-pad:clamp(88px,10vw,144px)}
+section:not(.section) + section:not(.section){margin-top:64px}
+.stack,.block-gap{gap:32px}
+@media(max-width:767px){section:not(.section) + section:not(.section){margin-top:48px}}
