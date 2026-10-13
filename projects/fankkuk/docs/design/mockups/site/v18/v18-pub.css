@@ -81,7 +81,7 @@
 .page-band .sec-head, .center .sec-head, .rv-head, .authbox .head { text-align: center; }
 .page-band .sec-head .t-lead { max-width: var(--hero-max); margin-left: auto; margin-right: auto; }
 .page-band { margin-top: 0; }
-.pub--doc > .section > .container { max-width: var(--page-pane-max); padding: 0 var(--body-pad); }   /* 로그인 후 목록 화면(.page-pane)과 같은 폭 */
+.pub--doc > .section > .container { max-width: var(--container-max); }   /* 2026-10-14 사용자: 상단 바·랜딩 본문(1152)과 같은 폭 */
 .pub .sec-foot { margin-top: var(--sp-32); }
 
 /* ---------- 버튼 · 폼 ---------- */

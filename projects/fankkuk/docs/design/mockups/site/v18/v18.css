@@ -246,5 +246,3 @@ svg.ic { width: var(--mock-ic); height: var(--mock-ic); fill: none; stroke: curr
 [data-font="round"] h1, [data-font="round"] h2, [data-font="round"] h3,
 [data-font="round"] .ph-title, [data-font="round"] .page-title, [data-font="round"] .logo, [data-font="round"] .footer-logo { font-family: var(--font-round); }
 
-/* 2026-10-13 사용자 「컨텍스트 너비부터 아직도 다른데」: 로그인 전 위쪽 메뉴·아래 정보는 로그인 후 목록 화면(.page-pane)과 같은 상한·여백 */
-.site-header .container, .site-footer .container { max-width: var(--page-pane-max); padding: 0 var(--body-pad); }
