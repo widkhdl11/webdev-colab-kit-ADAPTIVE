@@ -99,3 +99,37 @@ v12~v16 과 별개 비교 시안이다. 기존 design-rules 와 다르면 **프�
 - 1440·1280·1024·768·390 가로 넘침 0. 접기 버튼·`[` 단축키로 접히고 새로고침 후 유지, ≤1024 기본 접힘, 390 햄버거 drawer 열림·닫힘, 프로필 드롭다운, ··· 드롭다운을 **직접 눌러** 확인.
 - 대비: gray-400 글자(그룹 라벨·개수·채널명)는 프롬프트 지정이라 그대로 쓰되 실제 대비값을 재서 보고(4.5 미달이면 미달이라고).
 - 하드코딩 px·hex grep 0. 카드 실측 높이. 스크린샷 `_shots/v6-*.png`(1440 펼침·접힘+툴팁, 1024, 390 drawer, 팔로우 카드 1440·1280·390). 보고 한국어 10줄 이내.
+
+---
+
+## 7단계 — 사이드바 수정 (2026-10-13 사용자 추가 프롬프트 「사이드바 수정」) — 6단계 사이드바·본문 규칙을 덮어쓴다
+
+원문은 대화에 있다. 숫자는 프롬프트 그대로(tokens.css 변수로, 화면 CSS 하드코딩 0 유지 — 그림자 rgba(0,0,0,.08) 도 토큰).
+
+### 접힘 상태에서 세로 위치 고정
+- 접을 때 **어떤 요소도 display:none 금지.** 라벨 텍스트만 숨김(opacity 0 + width 0 + overflow hidden, 또는 visibility hidden), 상자 높이 유지. 6단계의 `html[data-rail] … display:none` 규칙 전부 걷어낸다.
+- 상단 56 고정. 펼침: 로고 텍스트 「팬꾹」 + [Pin 토글] + PanelLeftClose. 접힘: 로고 마크 28 하나만 가운데, 마크 hover/focus 시 PanelLeftOpen 아이콘으로 바뀜(누르면 펼침).
+  - 로고 마크는 아직 없다 → 28px primary 둥근 사각(radius 8) 안에 흰 글자 「꾹」(본체 결정, 보고에 적기).
+- 그룹 라벨 영역 32 고정. 접힘에서는 글자 대신 가로선 1px gray-200, 좌우 margin 16, 세로 가운데.
+- 메뉴 항목 36, 하단 프로필 56 고정. **두 상태에서 각 아이콘의 y 좌표가 같은지 실측**(getBoundingClientRect, 항목마다 차이 0).
+- width 전환 200ms ease. 라벨은 전환 뒤 fade-in(지연 100ms). 접을 때는 라벨이 먼저 사라짐(지연 없음). prefers-reduced-motion 이면 전환 없음.
+
+### overlay 방식
+- 사이드바 position fixed, left 0 top 0, height 100vh, z-index 40.
+- 본문 wrapper padding-left 64 고정(사이드바 상태와 무관).
+- 펼침 240 은 본문을 덮는 overlay. 오른쪽 그림자 `0 0 0 1px gray-200, 0 8px 24px rgba(0,0,0,.08)`.
+- 펼친 상태에서 본문 클릭·Esc·메뉴 항목 클릭 → 접힘.
+- Pin 토글(lucide Pin, 접기 버튼 옆, aria-pressed): 고정하면 본문 padding-left 240(push), 본문 클릭으로 안 닫힘(Esc·항목 클릭으로도 안 닫힘). 상태 localStorage `sidebar-pinned`(try/catch).
+- 고정 중 PanelLeftClose 를 누르면 고정 해제 + 접힘(본체 결정).
+- 기본값: 접힘, 고정 해제. 6단계의 `sidebar-collapsed` 키와 「≤1024 기본 접힘」은 없앤다(이제 늘 접힘이 기본). `[` 단축키는 펼침/접힘 토글로 유지.
+- ≤768: 64 레일도 없애고 상단 56 바(로고 + 햄버거). 햄버거 → **전체 폭** drawer(펼친 모양, Esc·X·항목 클릭으로 닫힘). 본문 padding-left 0.
+
+### 본문 컨테이너 두 종류
+- `.page-centered`: max-width 1200, margin 0 auto(가운데). 홈(landing-loggedin.html) — 히어로 글·검색창·버튼·아이콘 카드 4개를 **이 컨테이너 하나 안에**. 팬꾹 소개·공지·고객센터도 이걸 쓰지만 v17 에 아직 그 화면이 없으니 새로 만들지 않는다.
+- `.page-pane`: max-width 1120, 왼쪽 정렬, padding 40. my-*, creator-*.
+- 각 화면 HTML 에서 둘 중 하나를 명시적으로 쓴다(사이트 코드에서는 PageCentered / PagePane 컴포넌트로 나뉜다는 주석 한 줄).
+
+### 검사·보고
+- 1440·1024·768·390 가로 넘침 0. 직접 눌러 확인: 마크 hover → 아이콘 바뀜 → 눌러 펼침(본문 안 밀림, x 좌표 실측) → 본문 클릭/Esc/항목 클릭으로 접힘 → Pin 누르면 본문 240 으로 밀림·본문 클릭에도 유지·새로고침 뒤 유지 → 390 햄버거 전체 폭 drawer.
+- 아이콘 y 좌표 두 상태 비교표(차이 0). display:none 이 사이드바 안에 남아 있는지 grep(0). 하드코딩 grep 0.
+- 스크린샷 `_shots/v7-*.png`: 1440 접힘·펼침(overlay)·고정, 마크 hover, 홈 1440, 390 drawer. 보고 한국어 10줄 이내.

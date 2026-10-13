@@ -76,16 +76,11 @@
   --sidebar-w: 240px;
   --rail-w: 64px;
   --topbar-h: 56px;
-  --sb-width: var(--sidebar-w);
-  --rail-auto: 0;      /* 1 이면 처음부터 접힌 상태(JS 가 읽는다) */
 
   /* 6단계: 앱 사이드바 · 페이지 헤더 · 팔로우 카드 (사용자 프롬프트 「2. 레이아웃 (수정)」 숫자 그대로) */
-  --sb-col: var(--sb-width);
-  --sb-pos: sticky;
   --sb-tx: none;
   --sb-vis: visible;
   --nav-ovf: visible;
-  --app-display: grid;
   --app-wide: flex;     /* 사이드바 접기 버튼 등 PC 전용 */
   --app-narrow: none;   /* 상단 바·닫기 버튼 등 휴대폰 전용 */
   --body-pad: 40px;
@@ -119,26 +114,46 @@
   --icon-clock: 14px;
   --btn-h-sm: 36px;
   --fs-btn-sm: 14px;
+
+  /* 7단계: 사이드바 overlay · 핀 고정 · 접힘에서도 세로 위치 고정 (사용자 프롬프트 「사이드바 수정」 숫자 그대로) */
+  --sb-pad: var(--rail-w);       /* 본문 wrapper 의 왼쪽 padding. 사이드바 펼침/접힘과 무관하게 64 고정, 핀 고정일 때만 240 */
+  --sb-w-col: var(--rail-w);
+  --sb-w-exp: var(--sidebar-w);
+  --z-sidebar: 40;
+  --z-scrim: 39;
+  --mark: 28px;                  /* 접힘 로고 마크 */
+  --group-h: 32px;
+  --prof-h: 56px;
+  --nav-px: calc((var(--rail-w) - 2 * var(--sp-8) - var(--nav-icon)) / 2);   /* 접힘 64 에서 아이콘이 가운데 오는 안쪽 여백 */
+  --prof-px: calc((var(--rail-w) - 2 * var(--sp-8) - var(--avatar-sb)) / 2);
+  --page-pane-max: 1120px;
+  --page-centered-max: 1200px;
+  --shadow-overlay: 0 0 0 1px var(--gray-200), 0 8px 24px var(--shadow-overlay-color);
+  --shadow-overlay-color: rgba(0, 0, 0, .08);
+  --dur-w: 200ms;
+  --dur-fade: 150ms;
+  --dur-fade-out: 100ms;
+  --delay-fade: 100ms;
 }
 
-html[data-rail="1"] { --sb-width: var(--rail-w); }
+html[data-pin="1"] { --sb-pad: var(--sidebar-w); }
 
 @media (max-width: 1280px) {
   :root { --follow-cols: 2; }
 }
 
 @media (max-width: 1024px) {
-  :root { --rail-auto: 1; --app-cols-4: 2; }
+  :root { --app-cols-4: 2; }
 }
 
 /* 6단계 휴대폰 경계는 프롬프트대로 768 이하(기존 767 규칙은 로그인 전 화면용으로 그대로 둔다) */
 @media (max-width: 768px) {
-  :root {
-    --app-display: block;
+  html[data-pin="1"], :root {
     --app-wide: none;
     --app-narrow: flex;
-    --sb-col: 0;
-    --sb-pos: fixed;
+    --sb-pad: 0;
+    --sb-w-col: 100vw;
+    --sb-w-exp: 100vw;
     --sb-tx: translateX(-100%);
     --sb-vis: hidden;
     --nav-ovf: auto;
@@ -169,4 +184,8 @@ html[data-rail="1"] { --sb-width: var(--rail-w); }
     --show-narrow: flex;
     --hero-pad-top: 64px;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-w: 0s; --dur-fade: 0s; --dur-fade-out: 0s; --delay-fade: 0s; }
 }
