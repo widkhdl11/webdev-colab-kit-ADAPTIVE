@@ -1,13 +1,13 @@
-/* 사이트 바닥글(전역 클래스) — 재디자인 v11: 시안 docs/design/mockups/site/v11/v11.css 6절, 마크업은 v11/landing.html 의 footer. 색·반경은 tokens.css 토큰으로. */
-.site-footer { border-top: 1px solid var(--border); background: var(--surface); color: var(--sub); }
-.footer-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; padding-block: 56px 24px; }
-/* 로고 글자는 라이선스상 Pretendard (티머니 둥근바람은 로고에 쓰지 않는다) */
-.footer-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-family: var(--font-logo); font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1; color: var(--ink); }
-.biz { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 32px; }
-.biz div { display: flex; gap: 12px; }
-.biz dt { color: var(--ink); flex-shrink: 0; }
-.footer-links { display: grid; gap: 4px; align-content: start; }
-.footer-links a { display: flex; align-items: center; min-height: 44px; text-decoration: none; }
-.footer-links a:hover { color: var(--ink); text-decoration: underline; }
-.footer-copy { padding-bottom: 40px; }
-@media (max-width: 767px) { .footer-grid { grid-template-columns: 1fr; gap: 16px; padding-block: 40px 16px; } .biz { grid-template-columns: 1fr; } }
+/* 사이트 바닥글(전역 클래스) — v18: 시안 docs/design/mockups/site/v18/v18.css 「바닥글」. 회색 바탕은 화면 끝까지(로그인 후는 사이드바 오른쪽부터 — body 왼쪽 여백),
+   안의 글은 로그인 전 본문과 같은 1152 선(.pub-inner). 로고는 확정 로고 마크 + Pretendard 글자(티머니 둥근바람은 로고에 쓰지 않는다) */
+.site-footer { padding-block: 48px; background: var(--gray-50); border-top: 1px solid var(--gray-200); color: var(--gray-600); }
+.footer-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+.footer-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-family: var(--font-logo); font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1; color: var(--primary); }
+.biz { display: grid; gap: 8px; font-size: var(--fs-caption); line-height: 1.5; }
+.biz div { display: flex; gap: 16px; }
+.biz dt { min-width: 128px; flex-shrink: 0; }
+.footer-links { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; font-size: var(--fs-nav); font-weight: var(--fw-nav); }
+.footer-links a { text-decoration: none; }
+.footer-links a:hover { color: var(--gray-900); }
+.footer-copy { margin-top: 32px; font-size: var(--fs-caption); }
+@media (max-width: 767px) { .footer-grid { grid-template-columns: 1fr; } }

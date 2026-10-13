@@ -192,10 +192,17 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 .my-menu a:focus-visible { outline-offset: 0; }
 .my-menu svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .my-main, .my-body { min-width: 0; }
-.my-body > .sec-head, .my-main > .page-head { padding-bottom: 32px; border-bottom: 1px solid var(--border); }
 .my-body .tabs, .my-main .tabs { justify-content: center; }
-.page-head { margin-bottom: 32px; text-align: center; }
-.page-head .t-lead { margin: 16px auto 0; max-width: 640px; }
+/* v18 페이지 머리 — 로그인 전·후 같은 모양: 제목 24 왼쪽 + (개수) + 오른쪽 주요 버튼 하나 + 설명 한 줄(design-rules 00절, 시안 v18-app.css .page-head·.ph-*) */
+.page-head { margin-bottom: 32px; text-align: left; }
+.page-head > :is(h1, h2), .ph-title { font-size: var(--fs-page); line-height: 1.3; letter-spacing: 0; }
+.page-head > :is(.t-lead, .t-desc, p), .ph-desc { margin: 8px 0 0; max-width: none; font-size: var(--fs-body); color: var(--gray-600); }
+.ph-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.ph-count { margin-left: 8px; font-family: var(--font); font-size: var(--fs-body); font-weight: 400; color: var(--gray-500); }
+/* v18 본문 틀 두 가지 — 목록·관리 화면은 넓은 틀(최대 1440, 안쪽 여백 40), 소개형·입력형은 가운데 틀(최대 1200). 사이드바 화면에서는 사이드바를 뺀 남은 영역의 가운데 */
+.page-pane { width: 100%; min-width: 0; max-width: 1440px; margin-inline: auto; padding: 40px; }
+.page-centered { width: 100%; min-width: 0; max-width: 1200px; margin-inline: auto; padding: 40px var(--gutter); }
+@media (max-width: 768px) { .page-pane { padding: 16px; } }
 .page-top { padding-block: 48px 40px; text-align: center; }
 .page-top .t-lead { margin-top: 12px; }
 .page-end { padding-bottom: var(--sec-pad); }
@@ -420,7 +427,6 @@ a.card:hover, .ccard:focus-within { box-shadow: inset 0 0 0 2px var(--field-line
   .col { padding-block: 32px 56px; }
   .my { padding-block: 32px 56px; }
   .my-grid { padding-bottom: 56px; }
-  .my-body > .sec-head, .my-main > .page-head { padding-bottom: 24px; }
   .my-menu a { min-height: 48px; padding-inline: 16px; }
   .my-menu svg { width: 20px; height: 20px; }
   .tabs { gap: 8px; padding: 0; }

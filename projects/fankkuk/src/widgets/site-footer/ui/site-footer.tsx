@@ -15,7 +15,7 @@ const BIZ: ReadonlyArray<readonly [string, string]> = [
 export function SiteFooter() {
   return (
     <footer className="site-footer">
-      <div className="container">
+      <div className="pub-inner">
         <div className="footer-grid">
           <div>
             <p className="footer-logo">
