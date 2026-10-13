@@ -1,0 +1,174 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v12-A 팬 묶음 creators (2026-10-13) — v11/creators.html 을 A 언어로 옮김
+  지시 원문: 「A 형태로. 다만 박스 안에 있는 아이콘 모양은 나중에 바꾸겠다」 「크리에이터 요청에 의한 광고 배너 운용할 수 있게 배너 칸도 있으면 좋겠다. 너무 크진 않게 귀여운 슬라이드 형식으로」
+  바뀐 것: 머리 글을 옅은 띠 위에 두고 검색창이 띠 아래로 걸침 / 크리에이터 카드는 경계선 대신 겹 그림자 / 목록 위에 광고 배너 칸. 문구·구간 순서·버튼은 v11 그대로, 공통 CSS 는 a.css 다음 a-fan.css.
+-->
+<!--
+  팬꾹 시안 v12-A 크리에이터 찾기 (/creators) (2026-10-12)
+  src/app/creators/page.tsx → CreatorSearchPage 의 내용을 그대로 옮겼다 (검색창 · 본인 확인 안내 · 태그 칩 · 전체 N명 · 크리에이터 줄).
+  좌우로 나눈 구조 없음: 예전 「왼쪽 검색+태그 열 / 오른쪽 한 줄 목록」을 위에서 아래로 풀었다 — 제목 → 검색창 → 태그 칩 → 같은 크기 카드 격자.
+  손님(비로그인) 화면이라 카드 버튼은 「팔로우」 하나, 팔로우한 사람(첫 카드)만 「팔로우 중 + 선물 보내기」 두 개. 맨 아래에 결과가 없을 때 모습을 확인용으로 붙였다.
+  글자 체계 A(40/28/20/18/16) · 티머니 둥근바람 · 공통 CSS v11.css. 화면 전용 스타일은 아래 <style> 에만 둔다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v12-A 크리에이터 찾기 (/creators)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="a.css">
+<style>
+.search.left{margin:0 auto 24px}
+.verify{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:24px;color:var(--success);font-weight:800}
+.bar{margin:0 0 24px;text-align:center}
+</style>
+<link rel="stylesheet" href="a-fan.css">
+<link rel="stylesheet" href="tokens.css">
+<script src="font-switch.js"></script>
+</head>
+<body class="page-creators fan">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+    <symbol id="check" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="currentColor"/><path d="m5 10 3 3 7-7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 9h4l3 3v4h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4v9l-9 4-9-4zM3 8l9 4 9-4M12 12v9"/></symbol>
+    <symbol id="i-down" viewBox="0 0 16 16"><path d="m3 6 5 5 5-5"/></symbol>
+    <symbol id="chev" viewBox="0 0 20 20"><path d="m4 7.5 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" style="fill:var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#343039"/><circle cx="31" cy="22" r="2.6" fill="#343039"/><path d="M18 29c2.5 3.5 9.5 3.5 12 0" stroke="#343039" stroke-width="2.6" stroke-linecap="round" fill="none"/><circle cx="12.5" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.5" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+    <symbol id="virtual" viewBox="0 0 24 24"><path d="M3 9.5C3 8.4 3.9 7.5 5 7.5h14c1.1 0 2 .9 2 2v5c0 1.1-.9 2-2 2h-3.2c-.7 0-1.3-.4-1.7-1l-.7-1.2c-.5-.8-1.7-.8-2.2 0l-.7 1.2c-.4.6-1 1-1.7 1H5c-1.1 0-2-.9-2-2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header"><div class="container header-inner"><a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a><nav class="nav" aria-label="주요 메뉴"><ul><li><a href="#" aria-current="page">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav><div class="header-actions"><a class="hd-link hd-link--sub hide-sm" href="#">로그인</a><span class="hd-sep hide-sm" aria-hidden="true"></span><a class="hd-link hd-link--strong hide-sm" href="#">회원가입</a><details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary><div class="mm-body"><a href="#" aria-current="page">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><div class="btn-row"><a class="btn btn--line" href="#">로그인</a><a class="btn" href="#">회원가입</a></div></div></details></div></div></header>
+  <main id="main">
+    <section class="section section--compact" aria-labelledby="find-title">
+      <div class="container">
+        <div class="sec-head">
+          <h1 class="t-title" id="find-title">나의 크리에이터를 찾아요</h1>
+          <p class="t-lead t-desc">이름이나 채널 이름을 입력하면 아래 목록이 바로 걸러져요.</p>
+          <p class="verify"><svg width="20" height="20" aria-hidden="true"><use href="#check"/></svg>방송 채널 본인 확인을 마친 크리에이터만 보여요.</p>
+        </div>
+        <div class="search left" role="search">
+          <label class="sr-only" for="q">크리에이터 이름 또는 채널 이름</label>
+          <input id="q" type="search" placeholder="예: 하루, 치지직, 새벽달 라디오" autocomplete="off">
+          <span class="search-go" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>
+        </div>
+        <div class="chips" role="group" aria-label="태그로 걸러 보기"><button class="chip" type="button" aria-pressed="true">전체</button><button class="chip" type="button" aria-pressed="false">SOOP</button><button class="chip" type="button" aria-pressed="false">치지직</button><button class="chip" type="button" aria-pressed="false">유튜브</button><button class="chip" type="button" aria-pressed="false">인스타그램</button><button class="chip" type="button" aria-pressed="false">버추얼</button></div>
+        <div class="ad-slot">
+  <section class="ad-banner" aria-roledescription="carousel" aria-label="팬꾹 소식과 크리에이터 광고">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><symbol id="ad-face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#f7c8d4"/><circle cx="17" cy="22" r="2.6" fill="#343039"/><circle cx="31" cy="22" r="2.6" fill="#343039"/><path d="M18 29c2.5 3.5 9.5 3.5 12 0" stroke="#343039" stroke-width="2.6" stroke-linecap="round" fill="none"/><circle cx="12.5" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.5" cy="28" r="3" fill="#fff" opacity=".45"/></symbol></defs></svg>
+    <div class="ad-viewport">
+      <ul class="ad-track" aria-live="off">
+        <li class="ad-slide ad-slide--coral is-on" role="group" aria-roledescription="slide" aria-label="1 / 3">
+          <span class="ico-circle ad-img" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#i-gift"/></svg></span>
+          <div class="ad-txt"><p class="ad-top">팬꾹은 이런 곳이에요</p><p class="ad-sub">승인한 선물만 배송해요.</p><a class="ad-go" href="about.html">보러 가기 <span aria-hidden="true">›</span></a></div>
+        </li>
+        <li class="ad-slide ad-slide--mint" role="group" aria-roledescription="slide" aria-label="2 / 3">
+          <span class="ico-circle ad-img" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#i-receipt"/></svg></span>
+          <div class="ad-txt"><p class="ad-top">모든 요금에 검수가 포함돼요</p><p class="ad-sub">배송비 포함 6,900원부터예요.</p><a class="ad-go" href="landing.html#price">보러 가기 <span aria-hidden="true">›</span></a></div>
+        </li>
+        <li class="ad-slide ad-slide--sun" role="group" aria-roledescription="slide" aria-label="3 / 3">
+          <svg class="ad-face" aria-hidden="true" focusable="false"><use href="#ad-face"/></svg>
+          <div class="ad-txt"><p class="ad-top"><span class="ad-tag">광고</span>하루님 생일 주간</p><p class="ad-sub">10월 20일까지 선물 받아요.</p><a class="ad-go" href="creator.html">보러 가기 <span aria-hidden="true">›</span></a></div>
+        </li>
+      </ul>
+    </div>
+    <div class="ad-ctrl">
+      <button class="ad-btn ad-prev" type="button" aria-label="이전 배너"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+      <button class="ad-btn ad-pause" type="button" aria-label="자동 넘김 멈추기" aria-pressed="false"><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+      <button class="ad-btn ad-next" type="button" aria-label="다음 배너"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
+    </div>
+    <div class="ad-dots" role="group" aria-label="배너 고르기">
+      <button class="ad-dot" type="button" aria-label="1번 배너" aria-current="true"></button><button class="ad-dot" type="button" aria-label="2번 배너"></button><button class="ad-dot" type="button" aria-label="3번 배너"></button>
+    </div>
+  </section>
+</div>
+<script src="banner.js" defer></script>
+        <p class="bar t-strong" role="status">전체 8명</p>
+        <p class="section-hint">팔로우하면 크리에이터가 내 닉네임을 볼 수 있어요.</p>
+        <ul class="grid cols-3">
+          <li class="card ccard">
+            <div class="ccard-top"><svg class="face " style="--c:#f7c8d4" aria-hidden="true" focusable="false"><use href="#face"/></svg><div><h3><a href="#">하루</a></h3><p class="t-meta">하루의 방송국</p></div></div>
+            <p class="ctags"><span class="ctag" style="--f:#E6FFF5;--k:#006B47"><span class="bd"><img src="../../v9-pages/brand/chzzk.png" alt=""></span>치지직</span><span class="ctag" style="--f:#F2F2F3;--k:#343039"><svg aria-hidden="true"><use href="#virtual"/></svg>버추얼</span></p>
+            <p class="intro">매일 밤 9시, 잔잔한 수다 방송이에요.</p>
+            <div class="ccard-foot two"><span class="t-meta">평균 승인 약 2시간</span><a class="btn btn--line btn--sm" href="#" aria-label="하루님 팔로우 취소">팔로우 중</a><a class="btn btn--sm" href="#" aria-label="하루님께 선물 보내기">선물 보내기</a></div>
+          </li>
+          <li class="card ccard">
+            <div class="ccard-top"><svg class="face " style="--c:#cfe3fa" aria-hidden="true" focusable="false"><use href="#face"/></svg><div><h3><a href="#">새벽달</a></h3><p class="t-meta">새벽달 라디오</p></div></div>
+            <p class="ctags"><span class="ctag" style="--f:#FFECEC;--k:#C00000"><span class="bd glyph" style="background:#FF0000"><img src="../../v9-pages/brand/youtube.svg" alt=""></span>유튜브</span></p>
+            <p class="intro">새벽에 듣기 좋은 음악과 이야기를 들려드려요.</p>
+            <div class="ccard-foot"><span class="t-meta">평균 승인 약 5시간</span><a class="btn btn--line btn--sm btn--block" href="#" aria-label="새벽달님 팔로우">팔로우</a></div>
+          </li>
+          <li class="card ccard">
+            <div class="ccard-top"><svg class="face " style="--c:#fbe3a8" aria-hidden="true" focusable="false"><use href="#face"/></svg><div><h3><a href="#">꿀단지</a></h3><p class="t-meta">꿀단지TV</p></div></div>
+            <p class="ctags"><span class="ctag" style="--f:#EAF5FE;--k:#0B5CAD"><span class="bd"><img src="../../v9-pages/brand/soop.png" alt=""></span>SOOP</span></p>
+            <p class="intro">먹방과 요리를 같이 해요. 오늘은 뭐 먹을까요?</p>
+            <div class="ccard-foot"><span class="t-meta">평균 승인 약 1시간</span><a class="btn btn--line btn--sm btn--block" href="#" aria-label="꿀단지님 팔로우">팔로우</a></div>
+          </li>
+          <li class="card ccard">
+            <div class="ccard-top"><svg class="face " style="--c:#dcd3f6" aria-hidden="true" focusable="false"><use href="#face"/></svg><div><h3><a href="#">별빛</a></h3><p class="t-meta">별빛 스튜디오</p></div></div>
+            <p class="ctags"><span class="ctag" style="--f:#FFEBF3;--k:#B8004D"><span class="bd glyph" style="background:radial-gradient(circle at 30% 107%, #FDF497 0%, #FDF497 5%, #FD5949 45%, #D6249F 60%, #285AEB 90%)"><img src="../../v9-pages/brand/instagram.svg" alt=""></span>인스타그램</span><span class="ctag" style="--f:#FFECEC;--k:#C00000"><span class="bd glyph" style="background:#FF0000"><img src="../../v9-pages/brand/youtube.svg" alt=""></span>유튜브</span></p>
+            <p class="intro">그림 그리는 모습을 천천히 보여드려요.</p>
+            <div class="ccard-foot"><span class="t-meta">평균 승인 약 3시간</span><a class="btn btn--line btn--sm btn--block" href="#" aria-label="별빛님 팔로우">팔로우</a></div>
+          </li>
+          <li class="card ccard">
+            <div class="ccard-top"><svg class="face " style="--c:#c9ecdd" aria-hidden="true" focusable="false"><use href="#face"/></svg><div><h3><a href="#">모카</a></h3><p class="t-meta">모카의 게임 일기</p></div></div>
+            <p class="ctags"><span class="ctag" style="--f:#E6FFF5;--k:#006B47"><span class="bd"><img src="../../v9-pages/brand/chzzk.png" alt=""></span>치지직</span></p>
+            <p class="intro">느긋하게 인디 게임을 즐기는 방송이에요.</p>
+            <div class="ccard-foot"><span class="t-meta">평균 승인 약 1일</span><a class="btn btn--line btn--sm btn--block" href="#" aria-label="모카님 팔로우">팔로우</a></div>
+          </li>
+          <li class="card ccard">
+            <div class="ccard-top"><svg class="face " style="--c:#fad2ba" aria-hidden="true" focusable="false"><use href="#face"/></svg><div><h3><a href="#">온새미로</a></h3><p class="t-meta">온새미로 Live</p></div></div>
+            <p class="ctags"><span class="ctag" style="--f:#EAF5FE;--k:#0B5CAD"><span class="bd"><img src="../../v9-pages/brand/soop.png" alt=""></span>SOOP</span><span class="ctag" style="--f:#F2F2F3;--k:#343039"><svg aria-hidden="true"><use href="#virtual"/></svg>버추얼</span></p>
+            <p class="intro">노래하고 수다 떠는 버추얼 가수예요.</p>
+            <div class="ccard-foot"><span class="t-meta">아직 승인 기록이 없어요</span><a class="btn btn--line btn--sm btn--block" href="#" aria-label="온새미로님 팔로우">팔로우</a></div>
+          </li>
+          <li class="card ccard">
+            <div class="ccard-top"><svg class="face " style="--c:#cfe3fa" aria-hidden="true" focusable="false"><use href="#face"/></svg><div><h3><a href="#">라온</a></h3><p class="t-meta">라온 기타교실</p></div></div>
+            <p class="ctags"><span class="ctag" style="--f:#FFECEC;--k:#C00000"><span class="bd glyph" style="background:#FF0000"><img src="../../v9-pages/brand/youtube.svg" alt=""></span>유튜브</span></p>
+            <p class="intro">기타를 처음 잡는 분들과 함께 연습해요.</p>
+            <div class="ccard-foot"><span class="t-meta">평균 승인 약 4시간</span><a class="btn btn--line btn--sm btn--block" href="#" aria-label="라온님 팔로우">팔로우</a></div>
+          </li>
+          <li class="card ccard">
+            <div class="ccard-top"><svg class="face " style="--c:#fbe3a8" aria-hidden="true" focusable="false"><use href="#face"/></svg><div><h3><a href="#">보리</a></h3><p class="t-meta">보리네 하루</p></div></div>
+            <p class="ctags"><span class="ctag" style="--f:#FFEBF3;--k:#B8004D"><span class="bd glyph" style="background:radial-gradient(circle at 30% 107%, #FDF497 0%, #FDF497 5%, #FD5949 45%, #D6249F 60%, #285AEB 90%)"><img src="../../v9-pages/brand/instagram.svg" alt=""></span>인스타그램</span></p>
+            <p class="intro">강아지 보리와 보내는 평범한 하루를 올려요.</p>
+            <div class="ccard-foot"><span class="t-meta">평균 승인 약 6시간</span><a class="btn btn--line btn--sm btn--block" href="#" aria-label="보리님 팔로우">팔로우</a></div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section section--compact" aria-labelledby="empty-title">
+      <div class="container">
+        <p class="t-meta mock-label">시안 확인용 — 검색 결과가 없을 때</p>
+        <div class="empty">
+          <span class="ico-circle ico-circle--72" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#i-search-x"/></svg></span>
+          <h2 class="t-card" id="empty-title">찾는 크리에이터가 아직 없어요</h2>
+          <p class="t-desc">이름 철자를 다시 확인해 보세요. 본인 확인을 마치지 않은 크리에이터는 검색되지 않아요.</p>
+          <a class="btn btn--line" href="#">크리에이터를 초대하고 싶어요</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div><div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div><div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div><div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

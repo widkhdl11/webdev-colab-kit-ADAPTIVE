@@ -1,0 +1,153 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v12-A 팬 묶음 revgift-receive (2026-10-13) — v11/revgift-receive.html 을 A 언어로 옮김
+  지시 원문: 「A 형태로. 다만 박스 안에 있는 아이콘 모양은 나중에 바꾸겠다」 「크리에이터 요청에 의한 광고 배너 운용할 수 있게 배너 칸도 있으면 좋겠다. 너무 크진 않게 귀여운 슬라이드 형식으로」
+  바뀐 것: 머리를 옅은 띠에 두고 첫 카드가 걸침 / 나머지 띄운 흰 카드. 문구·구간 순서·버튼은 v11 그대로, 공통 CSS 는 a.css 다음 a-fan.css.
+-->
+<!--
+  팬꾹 시안 v12-A 역조공 받기 (2026-10-12)
+  /me/revgifts/[orderNo] — 팬이 크리에이터의 역조공을 받거나 받지 않는 화면. 문구는 receive-flow.tsx · revgift-receive-page.tsx · revgift-access-log.tsx 그대로.
+  틀 없이 가운데 좁은 기둥(760px) 한 줄로 위에서 아래로: 제목 → 선물 정보 → 받기/받지 않기 선택 → 주소 입력 → 열람 기록.
+  가장 아래에 「받기를 마쳤을 때」 완료 화면(번호 단계 셋)을 같이 그렸다. 받지 않기 확인 창(바텀시트)은 그리지 않았다.
+  글자 체계 A(40/28/20/18/16) · 티머니 둥근바람 400·800 · 공통 CSS v11.css 만 사용, 화면 전용 스타일은 아래 <style> 에 둔다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v12-A 역조공 받기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="a.css">
+<style>
+.rv-head{text-align:center;padding-block:clamp(40px,6vw,72px) clamp(24px,3vw,40px)}
+.rv-head .t-lead{margin-top:12px}
+.choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice-actions .btn{width:100%}
+.once{margin-top:16px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:24px}
+.form-grid .full{grid-column:1/-1}
+.form-grid .half{grid-column:span 1}
+@media(max-width:767px){.form-grid{grid-template-columns:1fr}}
+@media(max-width:767px){.choice-actions{grid-template-columns:1fr}}
+.form-grid .hint{margin-top:8px}
+.log-empty{margin-top:16px}
+.done-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:32px}
+.done-flow .t-strong + p{margin-top:4px}
+</style>
+<link rel="stylesheet" href="a-fan.css">
+<link rel="stylesheet" href="tokens.css">
+<script src="font-switch.js"></script>
+</head>
+<body class="page-revgift-receive fan">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 9h4l3 3v4h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4v9l-9 4-9-4zM3 8l9 4 9-4M12 12v9"/></symbol>
+    <symbol id="i-down" viewBox="0 0 16 16"><path d="m3 6 5 5 5-5"/></symbol>
+  </defs></svg>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="check" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="currentColor"/><path d="m5 10 3 3 7-7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="m-me" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol>
+  <symbol id="m-follow" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/></symbol>
+  <symbol id="m-gift" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></symbol>
+  <symbol id="m-rev" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></symbol>
+</defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header"><div class="header-inner">
+          <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+          <nav class="nav" aria-label="주요 메뉴(팬)"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav>
+          <div class="header-actions">
+            <a class="hd-gift" href="#" aria-label="진행 중인 선물 3개">
+              <span class="hd-icons"><span class="hd-ico hd-ico--wait"><svg width="24" height="24"><use href="#i-clock"/></svg></span><span class="hd-ico hd-ico--move"><svg width="24" height="24"><use href="#i-truck"/></svg></span><span class="hd-ico hd-ico--done"><svg width="24" height="24"><use href="#i-done"/></svg></span></span>
+              <span class="hd-compact"><span class="hd-ico hd-ico--plain"><svg width="24" height="24"><use href="#i-box"/></svg></span>선물<span class="hd-count">3</span></span>
+            </a>
+            <span class="hd-sep hide-sm" aria-hidden="true"></span>
+            <details class="hd-user hide-sm"><summary class="hd-link hd-link--strong">하루님 <svg aria-hidden="true"><use href="#i-down"/></svg></summary>
+              <div class="hd-menu"><a href="#">개인정보</a><a href="#">팔로우한 크리에이터</a><a href="#">선물 내역</a><a href="#">받은 역조공</a><hr><a href="#">로그아웃</a></div></details>
+            <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+              <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><a href="#">내 팬꾹</a><a href="#">로그아웃</a></div></details>
+          </div>
+        </div></header>
+  <main id="main">
+    <div class="container"><div class="col">
+      <div class="rv-head">
+        <h1 class="t-title" id="rv-title">별빛님이 선물을 보냈어요</h1>
+        <p class="t-lead t-desc">내가 팔로우한 크리에이터가 보낸 선물이에요.</p>
+      </div>
+
+      <div class="stack">
+        <section class="part" aria-labelledby="rv-title">
+          <dl class="kv">
+            <div><dt>보낸 사람</dt><dd>별빛님</dd></div>
+            <div><dt>상자 크기</dt><dd>소형 상자 <span class="t-meta">세 변 합 100cm·5kg 이하</span></dd></div>
+            <div><dt>상태</dt><dd><span class="tag tag--warn">기다리는 중</span></dd></div>
+            <div><dt>기한</dt><dd>10월 13일 오후 3:00까지 정해 주세요 <span class="t-meta">· 1일 남음</span></dd></div>
+          </dl>
+          <div class="choice-actions" style="margin-top:24px">
+            <button class="btn" type="button">받기</button>
+            <button class="btn btn--line" type="button">받지 않기</button>
+          </div>
+          <p class="t-meta once">기한 안에 정하지 않으면 자동으로 받지 않음 처리돼요. 받기 전에는 주소를 입력하지 않아도 돼요.</p>
+        </section>
+
+        <form class="part" aria-labelledby="addr-h" onsubmit="return false">
+          <h2 class="t-title" id="addr-h">받을 주소를 알려 주세요</h2>
+          <p class="t-lead t-desc">주소는 이 브라우저에서 암호화돼요. 팬꾹도 송장을 뽑을 때만 열 수 있고, 출고되면 지워요. 별빛님에게는 보이지 않아요.</p>
+          <p class="t-meta">이 주소는 이번 선물에만 쓰이고, 계정에 저장되지 않아요.</p>
+          <div class="form-grid">
+            <div ><label class="label" for="zip">우편번호</label><input class="field" id="zip" type="text" placeholder="숫자 다섯 자리"></div>
+            <div class="full"><label class="label" for="a1">기본 주소</label><input class="field" id="a1" type="text" placeholder="도로명 주소나 지번 주소"></div>
+            <div class="full"><label class="label" for="a2">상세 주소</label><input class="field" id="a2" type="text" placeholder="동·호수 등을 적어 주세요"></div>
+            <div ><label class="label" for="rn">받는 사람 이름</label><input class="field" id="rn" type="text" placeholder="택배에 적힐 이름"></div>
+            <div ><label class="label" for="ph">휴대폰 번호</label><input class="field" id="ph" type="text" placeholder="010-0000-0000"></div>
+          </div>
+          <div class="actions"><button class="btn btn--line" type="button">받지 않기</button><button class="btn" type="submit">이 주소로 받기</button></div>
+        </form>
+
+        <section class="part" aria-labelledby="rv-log-title">
+          <h2 class="t-title" id="rv-log-title">내 주소 열람 기록</h2>
+          <p class="t-lead t-desc">내 주소는 송장을 출력할 때만 열리고, 재출력을 합쳐 최대 3번까지예요. 출고·반송·취소가 되면 주소를 지워요. 열린 기록은 전부 여기에 보여요.</p>
+          <p class="log-empty">아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
+        </section>
+      </div>
+
+      <p class="t-meta" style="margin-top:72px">시안 안내 · 받기를 마쳤을 때</p>
+      <section class="part part--soft" aria-labelledby="done-h">
+        <div class="done-head"><span class="tag tag--success"><svg width="16" height="16" aria-hidden="true" style="margin-right:6px"><use href="#check"/></svg>받기가 끝났어요</span></div>
+        <h2 class="t-title" id="done-h">별빛님의 선물이 곧 준비돼요</h2>
+        <p class="t-lead t-desc">주소를 다시 입력하지 않아도 돼요.</p>
+        <ol class="flow done-flow" style="--steps:3;margin-top:32px">
+          <li><span class="n">1</span><p class="t-strong">상자가 팬꾹에 도착해요</p></li>
+          <li><span class="n">2</span><p class="t-strong">검수가 끝나면 보내 드려요</p><p>입력한 주소는 송장을 출력할 때만 열리고, 출고하면 바로 지워요.</p></li>
+          <li><span class="n">3</span><p class="t-strong">배송이 시작되면 받은 역조공에서 확인할 수 있어요</p><p>상태가 「출고됨」으로 바뀌어요.</p></li>
+        </ol>
+        <div class="btnrow" style="margin-top:32px"><a class="btn" href="#">받은 역조공 보기</a><a class="btn btn--line" href="#">메인으로</a></div>
+      </section>
+    </div></div>
+    <div class="page-end"></div>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

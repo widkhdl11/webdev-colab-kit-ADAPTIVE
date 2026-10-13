@@ -1,0 +1,81 @@
+/* 팬꾹 시안 v12-A 계정·안내 묶음 (2026-10-13)
+   a.css(층 토큰·그림자·바닥글) 다음에 불러온다. 대상: login · signup · password-reset · email-confirm · legal · notices · support
+   원칙: 업무 화면(폼·로그인·내 팬꾹)은 겹침 없이 「차분한 바탕 + 띄운 흰 카드」, 안내 화면(약관·공지·고객센터)만 옅은 띠 위로 첫 카드가 걸친다.
+   장식 그림은 넣지 않는다(머리 아이콘은 v11 그대로, 나중에 교체 예정). 새 색 없음 — a.css 의 --page·--wash 만 쓴다.
+   차례: 1 폼 화면 / 2 가입 단계 / 3 내 팬꾹 틀(이메일 확인) / 4 안내 화면 머리 띠 / 5 흰 판 / 6 접는 목록 / 7 휴대폰 */
+
+/* ---------- 1. 폼 화면: 로그인 · 가입 · 새 비밀번호 ---------- */
+.auth-page{position:relative;isolation:isolate}
+.auth-page::before{content:"";position:absolute;inset:0 0 auto 0;height:clamp(240px,30vw,360px);z-index:-1;pointer-events:none;
+  background:radial-gradient(800px 260px at 50% 0,#ffe9e2 0,rgb(255 233 226/0) 75%),linear-gradient(180deg,var(--wash),rgb(252 246 244/0))}
+.auth .card{border-radius:var(--r-sheet);padding:clamp(28px,5vw,48px);box-shadow:var(--sh-2)}
+.auth .mock-label{margin-top:40px}
+.reset .form{border-top-color:rgb(var(--shadow-rgb)/.10)}
+.reset summary:hover{color:var(--brand-ink)}
+
+/* ---------- 2. 가입 단계 카드 ---------- */
+.steps{gap:32px}
+.steps .card{padding:clamp(24px,4vw,40px)}
+.choice:not(:has(input:checked)){background:var(--page);box-shadow:none}
+.choice{transition:background-color .15s,box-shadow .15s}
+.cr{background:var(--page)}
+.sh .no{box-shadow:0 6px 12px -4px rgb(var(--shadow-rgb)/.30)}
+
+/* ---------- 3. 내 팬꾹 틀 (이메일 확인) ---------- */
+.page-email-confirm .page-top{padding-bottom:32px}
+.my-side{background:#fff;border-radius:var(--r-tile);box-shadow:var(--sh-1)}
+.my-me{border-bottom-color:rgb(var(--shadow-rgb)/.10)}
+.my-menu a:hover{background:var(--page)}
+.my-body > .sec-head{border-bottom:0;padding-bottom:0}
+.part--soft{background:#fff0eb}
+.part{border-radius:var(--r-tile)}
+.state-label{color:var(--sub)}
+
+/* ---------- 4. 안내 화면 머리: 옅은 띠 위에 제목, 첫 카드가 띠 아래쪽으로 걸친다 ---------- */
+.page-band{padding-bottom:0}
+.page-band .sec-head{margin-bottom:-72px;padding:clamp(36px,5vw,64px) var(--gutter) clamp(112px,12vw,144px);border-radius:var(--r-sheet);
+  background:radial-gradient(700px 300px at 15% 0,#ffe0d6 0,rgb(255 224 214/0) 70%),radial-gradient(600px 300px at 90% 20%,#ffe9dd 0,rgb(255 233 221/0) 70%),linear-gradient(180deg,var(--wash),#fff8f5)}
+.page-band .sec-head ~ *{position:relative;z-index:2}
+/* 머리만 있는 화면(고객센터): 다음 구간이 띠 위로 올라온다 */
+.page-band--sep .sec-head{margin-bottom:0}
+.page-band--sep + .section--compact{margin-top:-72px;position:relative;z-index:2}
+.page-band + .section--compact{padding-top:0}
+/* 약관 개요 3장 */
+.facts .card{box-shadow:var(--sh-2)}
+
+/* ---------- 5. 흰 판: 긴 글·묶음을 큰 둥근 흰 면 한 장에 ---------- */
+.doc{padding-inline:var(--gutter)}
+.doc > .container{max-width:var(--maxw);padding:clamp(24px,5vw,64px);background:#fff;border-radius:var(--r-sheet);box-shadow:var(--sh-2)}
+.doc .art{border-top-color:rgb(var(--shadow-rgb)/.10)}
+.doc .art:first-child{border-top:0;padding-top:0}
+.doc .prose{margin-inline:0}
+.toc.card--soft{box-shadow:none;background:var(--surface-brand)}
+.toc a:hover{color:var(--brand-ink)}
+.doc .sec-head{margin-bottom:32px}
+.doc .tabs label{background:var(--page);box-shadow:none}
+.doc .tabs label:hover{background:var(--surface-selected)}
+.doc .acc details{background:var(--page);box-shadow:none}
+.ask.card{margin-inline:auto}
+.hours .card{box-shadow:var(--sh-1)}
+
+/* ---------- 6. 접는 목록 · 쪽 번호 ---------- */
+.acc details[open] summary{border-bottom-color:rgb(var(--shadow-rgb)/.10)}
+.acc summary:hover{background:var(--wash)}
+.acc details{transition:box-shadow .2s}
+.acc details[open]{box-shadow:var(--sh-2)}
+.doc .acc details[open]{box-shadow:none;background:#fff;outline:0;box-shadow:inset 0 0 0 2px var(--surface-selected)}
+.pager a,.pager span{background:#fff;box-shadow:0 1px 2px rgb(var(--shadow-rgb)/.06),0 4px 10px -2px rgb(var(--shadow-rgb)/.08)}
+.pager span{box-shadow:none;background:none}
+.pager a:hover{background:var(--surface-selected)}
+.pager a[aria-current="page"]{background:var(--ink)}
+
+/* ---------- 7. 휴대폰 ---------- */
+@media(max-width:767px){
+  .page-band .sec-head{margin-bottom:-56px;padding-bottom:104px}
+  .page-band--sep + .section--compact{margin-top:-56px}
+  .doc{padding-inline:12px}
+  .doc > .container{padding:24px 20px}
+  .auth .card{padding:28px 20px}
+  .steps .card{padding:24px 20px}
+  .my-side{padding:12px}
+}

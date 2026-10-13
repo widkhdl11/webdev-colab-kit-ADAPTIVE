@@ -1,0 +1,61 @@
+/* 팬꾹 시안 v12-A 크리에이터 묶음 공통 CSS (2026-10-13)
+   a.css 다음에 불러온다(a.css 는 고치지 않는다). 대상: home-creator · creator-boxes · creator-log · creator-requests · creator-revgift-new · creator-revgifts · creator-settings.
+   업무 화면 기본: 옅은 코랄 바탕(--page) 위에 띄운 흰 카드 + 화면 머리 옅은 띠. 장식 그림은 넣지 않는다(카드 안 안내 그림은 v11 그대로 유지).
+   예외: home-creator 는 첫 화면이 있어 옅은 판 위로 승인 대기 카드가 걸쳐 올라온다. 새 색 없음(--page·--wash·--sh-* 는 a.css 토큰). */
+
+/* ---------- 1. 왼쪽 메뉴: 띄운 흰 카드 ---------- */
+.my{gap:32px}
+.my-side{background:#fff;box-shadow:var(--sh-1);padding:20px 16px}
+.my-me{border-bottom-color:rgb(var(--shadow-rgb)/.10)}
+.my-menu a:hover{background:var(--page)}
+.my-menu a[aria-current="page"]{background:var(--surface-selected)}
+.avatar{box-shadow:0 1px 2px rgb(var(--shadow-rgb)/.08)}
+
+/* ---------- 2. 화면 머리: 옅은 띠 (선 대신 면) ---------- */
+.my-main > .page-head,.col > .page-head{
+  margin-bottom:32px;padding:clamp(32px,4vw,48px) clamp(20px,4vw,48px);border-bottom:0;border-radius:var(--r-sheet);
+  background:radial-gradient(640px 260px at 8% 0%,#ffe3da 0,rgb(255 227 218/0) 70%),linear-gradient(180deg,var(--wash),#fff8f5)}
+.my-main > .page-head .t-lead,.col > .page-head .t-lead{margin-inline:auto}
+.my-main > .page-head .t-desc,.col > .page-head .t-desc{color:#5c5359} /* 옅은 띠 위 회색 글자 대비 보강 */
+.page-head .btn{margin-top:0}
+
+/* ---------- 3. 탭 · 안내 카드 · 상태 표시 ---------- */
+.tabs{padding:6px;border-radius:var(--r-pill);background:#fff;box-shadow:var(--sh-1);width:fit-content;max-width:100%;margin-inline:auto}
+.tabs a{background:transparent;box-shadow:none}
+.tabs a:hover{background:var(--page)}
+.tabs a[aria-current="page"]{background:var(--surface-selected)}
+.tabs .n{background:var(--ink)}
+.card--soft{background:#fff;box-shadow:var(--sh-1)}
+.card--soft .card--soft,.card.inner,.inner.card--soft{background:var(--page);box-shadow:none}
+.signing,.paid{box-shadow:var(--sh-1)}
+.address-box{background:var(--page)}
+.code{box-shadow:0 1px 2px rgb(var(--shadow-rgb)/.10)}
+.scrim{box-shadow:none}
+.dialog{box-shadow:var(--sh-2)}
+.fan.on{background:#fff;box-shadow:inset 0 0 0 2px var(--brand),var(--sh-1)}
+.opt{box-shadow:var(--field),0 1px 2px rgb(var(--shadow-rgb)/.05)}
+.opt:has(input:checked){box-shadow:inset 0 0 0 2px var(--brand)}
+.rule{background:rgb(var(--shadow-rgb)/.10)}
+.total{border-top-color:rgb(var(--shadow-rgb)/.12)}
+
+/* ---------- 4. 크리에이터 메인: 옅은 판 위로 승인 대기 카드가 걸친다 ---------- */
+.page-home-creator .hero-stage{padding-block:clamp(48px,6vw,80px) clamp(128px,13vw,168px)}
+.page-home-creator .hero + .section{position:relative;z-index:2;padding-top:0;margin-top:clamp(-136px,-11vw,-104px)}
+.page-home-creator .hero + .section .sec-head{margin-bottom:28px}
+.page-home-creator .wait{background:#fff;box-shadow:var(--sh-up);border-radius:var(--r-sheet);padding:clamp(28px,4vw,48px)}
+.page-home-creator .mine-list a{background:var(--page)}
+.page-home-creator .ccard .btn--line{box-shadow:0 1px 2px rgb(var(--shadow-rgb)/.06),var(--hair)}
+
+/* ---------- 5. 바닥 여백 · 휴대폰 ---------- */
+@media(max-width:1023px){
+  .my-side{background:none;box-shadow:none;padding:0}
+  .my-menu a{background:#fff;box-shadow:var(--sh-1)}
+  .my-menu a[aria-current="page"]{background:var(--surface-selected)}
+}
+@media(max-width:767px){
+  .my-main > .page-head,.col > .page-head{padding:28px 20px}
+  .tabs{width:100%;border-radius:var(--r-tile)}
+  .page-home-creator .hero-stage{padding-bottom:112px}
+  .page-home-creator .hero + .section{margin-top:-88px}
+  .page-home-creator .wait{padding:24px 20px}
+}
