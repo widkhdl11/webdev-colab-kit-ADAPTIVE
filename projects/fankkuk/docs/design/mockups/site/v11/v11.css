@@ -568,3 +568,11 @@ fieldset.part > legend{float:left;width:100%;margin:0 0 12px;padding:0}
 fieldset.part > legend + *{clear:both}
 .page-support .acc{max-width:720px}
 @media(max-width:767px){.table td:last-child{white-space:normal}}
+
+/* ---------- 13. 플랫폼 뱃지 (2026-10-13 사용자 선택: 테두리 알약, 마우스를 올리면 연한 색 배경) ---------- */
+.ctag{font-weight:400;border-radius:var(--r-pill);padding:4px 12px 4px 4px;gap:6px;background:#fff;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--k,#343039) 30%,#fff);transition:background-color .15s ease}
+.ctag:hover{background:var(--f,#f2f2f3)}
+.ctag .bd{width:24px;height:24px;border-radius:50%}
+.ctag svg{width:24px;height:24px;padding:3px;border-radius:50%;background:#f2f2f3}
+@media (prefers-reduced-motion:reduce){.ctag{transition:none}}
