@@ -8,14 +8,20 @@ export const metadata: Metadata = {
   description: `${PROMISE.approval} ${PROMISE.inspection} ${PROMISE.address}`,
 };
 
+// 로그인 후 사이드바 접힘 상태를 첫 그림 전에 단다 — 안 그러면 펼친 240 으로 그렸다가 64 로 줄어드는 게 보인다.
+// 저장값이 없으면 1024 이하에서 접힘(design-rules 00절). 값을 쓰는 쪽은 widgets/site-header/ui/app-sidebar.tsx
+const SIDEBAR_BOOT = `try{var s=localStorage.getItem("sidebar-collapsed");if(s==="1"||(s!=="0"&&matchMedia("(max-width: 1024px)").matches))document.documentElement.setAttribute("data-collapsed","1")}catch(e){}`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    // suppressHydrationWarning: 위 스크립트가 <html> 에 다는 data-collapsed 는 서버 HTML 에 없다
+    <html lang="ko" suppressHydrationWarning>
       <head>
-        {/* 본문 글꼴 티머니 둥근바람(재디자인 v11) — @font-face 는 shared/ui/base.css. 첫 화면에서 글꼴이 늦게 바뀌지 않게 미리 받는다 */}
+        <script dangerouslySetInnerHTML={{ __html: SIDEBAR_BOOT }} />
+        {/* 제목 글꼴 티머니 둥근바람(v18) — @font-face 는 shared/ui/base.css. 첫 화면에서 글꼴이 늦게 바뀌지 않게 미리 받는다 */}
         <link rel="preload" href="/fonts/TmoneyRoundWindRegular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/TmoneyRoundWindExtraBold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        {/* 로고 글자 전용 Pretendard(티머니는 로고에 쓸 수 없다). 압축본(.min.css)은 jsDelivr 가 그때그때 만들어 해시가 바뀔 수 있어, 고정된 원본 파일에 무결성 해시를 건다 */}
+        {/* 본문·로고 글꼴 Pretendard(v18). 압축본(.min.css)은 jsDelivr 가 그때그때 만들어 해시가 바뀔 수 있어, 고정된 원본 파일에 무결성 해시를 건다 */}
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css"

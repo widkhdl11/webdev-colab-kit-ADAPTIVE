@@ -118,11 +118,43 @@
   --fs-card: 20px; /* 카드 제목 */
   --fs-lead: 18px; /* 리드 */
   --fs-body: 16px; /* 본문·버튼·메뉴·보조 */
+  /* v18 앱 사이드바(로그인 후)·상단 바(로그인 전) — 시안 v18/tokens.css 6~8단계 값 */
+  --sidebar-w: 240px;
+  --rail-w: 64px;
+  --topbar-h: 56px; /* 768 이하 로그인 후 위 막대 */
+  --nav-item-h: 36px;
+  --nav-icon: 18px;
+  --nav-gap-in: 12px;
+  --group-h: 32px;
+  --prof-h: 56px;
+  --mark: 28px;
+  --avatar-sb: 28px;
+  --r-nav: 8px;
+  --menu-w: 192px;
+  --fs-nav: 15px; /* 상단 바 메뉴 — 16px 하한의 예외(design-rules 00절 실측) */
+  --fs-navitem: 14px; /* 사이드바 메뉴 — 같은 예외 */
+  --fs-caption: 13px; /* 캡션 — 같은 예외 */
+  --fs-group: 11px; /* 사이드바 묶음 이름 */
+  --fw-nav: 500;
+  --nav-px: calc((var(--rail-w) - 2 * 8px - var(--nav-icon)) / 2); /* 접힘 64 에서 아이콘이 가운데 오는 안쪽 여백 */
+  --prof-px: calc((var(--rail-w) - 2 * 8px - var(--avatar-sb)) / 2);
+  --dur-w: 200ms;
+  --dur-fade: 150ms;
+  --dur-fade-out: 100ms;
+  --delay-fade: 100ms;
+  --pub-max: 1200px; /* 로그인 전 상단 바·본문·푸터 글의 바깥 폭(양옆 24 → 글 1152) */
+  --nav-gap: 32px;
   /* 로고 글자 「팬꾹」 전용 — 티머니 둥근바람은 라이선스상 로고(BI/CI)에 쓸 수 없다 */
   --font-logo: "Pretendard Variable", Pretendard, sans-serif;
   --ls-title: -0.02em; /* 음수 자간은 첫 화면·구간 제목에만, 이 값 하나 */
   /* 바깥 화면 큰 구간 위아래 여백 88~144 — v11.css 1절 값(72~128)을 15절이 덮어쓴 최종값 */
   --sec-pad: clamp(88px, 10vw, 144px);
+}
+@media (max-width: 1023px) {
+  :root { --nav-gap: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-w: 0s; --dur-fade: 0s; --dur-fade-out: 0s; --delay-fade: 0s; }
 }
 @media (max-width: 767px) {
   :root {
