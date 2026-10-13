@@ -32,44 +32,48 @@ function Note({ e }: { e: FanAccessEntry }) {
  */
 export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanAccessEntry[] | null; finished: boolean }) {
   return (
-    <section className={s.panel} aria-labelledby="rv-log-title">
-      <h2 id="rv-log-title">내 주소 열람 기록</h2>
-      <p className={`sub ${s.lead}`}>
+    <section className="part" aria-labelledby="rv-log-title">
+      <h2 className="t-title" id="rv-log-title">
+        내 주소 열람 기록
+      </h2>
+      <p className={`t-lead t-desc ${s.lead}`}>
         내 주소는 송장을 출력할 때만 열리고, 재출력을 합쳐 최대 {REVGIFT_MAX_DECRYPTS}번까지예요. 출고·반송·취소가 되면 주소를 지워요. 열린 기록은 전부 여기에 보여요.
       </p>
       {entries === null ? (
-        <p className={`sub ${s.empty}`} role="status">
+        <p className={s.empty} role="status">
           열람 기록을 지금 불러오지 못했어요. 잠시 뒤 새로고침해 주세요.
         </p>
       ) : entries.length === 0 ? (
-        <p className={`sub ${s.empty}`}>
+        <p className={s.empty}>
           {finished ? "이 선물에서는 주소가 열린 적이 없어요." : "아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요."}
         </p>
       ) : (
         <>
-          <table className={s["log-table"]}>
-            <caption className="sr-only">내 주소 열람 기록. 최근 순</caption>
-            <thead>
-              <tr>
-                <th scope="col">시각</th>
-                <th scope="col">결과</th>
-                <th scope="col">비고</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e, i) => (
-                <tr key={`${i}-${e.at}`}>
-                  <td className={s.nw}>{formatDateTime(e.at)}</td>
-                  <td>
-                    <ResultTag e={e} />
-                  </td>
-                  <td>
-                    <Note e={e} />
-                  </td>
+          <div className={`table-wrap ${s["log-table"]}`}>
+            <table className="table">
+              <caption className="sr-only">내 주소 열람 기록. 최근 순</caption>
+              <thead>
+                <tr>
+                  <th scope="col">시각</th>
+                  <th scope="col">결과</th>
+                  <th scope="col">비고</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {entries.map((e, i) => (
+                  <tr key={`${i}-${e.at}`}>
+                    <td className={s.nw}>{formatDateTime(e.at)}</td>
+                    <td>
+                      <ResultTag e={e} />
+                    </td>
+                    <td>
+                      <Note e={e} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <ul className={s["log-list"]} aria-label="내 주소 열람 기록">
             {entries.map((e, i) => (
               <li key={`${i}-${e.at}`} className={s.lrow}>

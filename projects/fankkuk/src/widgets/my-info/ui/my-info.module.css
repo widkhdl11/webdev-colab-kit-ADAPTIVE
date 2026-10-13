@@ -1,24 +1,18 @@
-/* 내 정보 — 개인정보. 시안 docs/design/mockups/site/v4/my-info.html 의 <style> */
-.h { margin-bottom: 16px; font-size: 28px; letter-spacing: -.8px; }
-.form { border-top: 1px solid var(--divider); }
-.row { display: grid; grid-template-columns: 160px minmax(0, 520px); gap: 8px 24px; align-items: start; padding-block: 24px; border: 0; border-bottom: 1px solid var(--divider); margin: 0; min-width: 0; }
-.lb { padding: 14px 0 0; font-weight: 600; }
-.row :global(.input)[readonly] { box-shadow: none; color: var(--sub); }
-.with-btn { display: flex; gap: 8px; }
-.with-btn :global(.input) { flex: 1; min-width: 0; }
-.with-btn :global(.btn) { flex-shrink: 0; height: 56px; }
-.checks { display: grid; gap: 4px; }
-.checks label { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
-.checks input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); }
-.checks .hint-tight { margin-top: 4px; }
-.error, .saved { display: flex; align-items: flex-start; gap: 8px; margin: 24px 0 0; color: var(--ink); font-weight: 700; }
-.error::before { content: "!"; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
-.error:empty, .saved:empty { margin: 0; }
-.error:empty::before { content: none; }
-.save-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; }
-.leave { display: inline-flex; align-items: center; min-height: 44px; color: var(--sub); text-decoration: underline; text-underline-offset: 4px; }
+/* 내 정보 — 개인정보. 시안 docs/design/mockups/site/v11/me.html 의 <style>. 칸·판·간격은 전역 클래스(.part·.grid·.stack·.hint·.check)가 정한다 */
+.with-btn { display: flex; gap: 12px; }
+.with-btn :global(.field) { flex: 1; min-width: 0; }
+.with-btn :global(.btn) { flex-shrink: 0; }
+/* 판 제목(.t-card) 아래 버튼 줄·확인칸 묶음 — 시안 margin-top:12px */
+.open { margin-top: 12px; }
+.must { margin-top: 16px; }
+.must-t { color: var(--ink); }
+/* 저장 결과 줄 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다 */
+.msg { margin-top: 24px; }
+.msg:empty { margin: 0; padding: 0; background: none; }
+.save-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; }
+.leave { display: inline-flex; align-items: center; min-height: 44px; color: var(--sub); }
 @media (max-width: 767px) {
-  .row { grid-template-columns: minmax(0, 1fr); }
-  .lb { padding-top: 0; }
-  .save-bar :global(.row) { flex-wrap: nowrap; }
+  .with-btn { flex-direction: column; }
+  .save-bar :global(.btnrow) { width: 100%; }
+  .save-bar :global(.btnrow .btn) { flex: 1; }
 }

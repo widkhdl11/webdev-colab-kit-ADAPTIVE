@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import s from "./my-revgifts.module.css";
 
 // 받은 역조공 분류 탭. 좌우 화살표로 옮겨 가고, 고른 탭만 Tab 순서에 남는다(시안 site.js 5절).
 export type RevgiftTab = { id: string; label: string; panel: ReactNode };
@@ -21,14 +20,14 @@ export function RevgiftTabs({ tabs }: { tabs: readonly RevgiftTab[] }) {
 
   return (
     <>
-      <div className={s.tabs} role="tablist" aria-label="받은 역조공 분류">
+      <div className="tabs" role="tablist" aria-label="받은 역조공 분류">
         {tabs.map((t, i) => (
           <button
             key={t.id}
             ref={(el) => {
               buttons.current[i] = el;
             }}
-            className={s.tab}
+            className="tab"
             role="tab"
             id={`rv-tab-${t.id}`}
             type="button"

@@ -1,20 +1,13 @@
-/* 내 정보 — 팔로우한 크리에이터. 시안 docs/design/mockups/site/v4/my-following.html 의 <style> */
-.head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
-.head h2 { font-size: 28px; letter-spacing: -.8px; }
-.cnt { margin-left: 8px; font-size: 20px; font-weight: 600; color: var(--sub); letter-spacing: 0; }
-
-.list { border-top: 1px solid var(--divider); }
-.row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px 20px; padding-block: 20px; border-bottom: 1px solid var(--divider); }
-.who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
-.who a { text-decoration: none; }
-.who a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.says { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 4px; color: var(--sub); } /* 태그는 아이콘·플랫폼 색(시안 v9-pages/tags-b.html, 카드 d46) */
-.sep { color: var(--faint); }
-.acts { display: flex; gap: 8px; }
-@media (max-width: 767px) { .row { grid-template-columns: 48px minmax(0, 1fr); } .acts { grid-column: 2; } }
-
-.empty { display: grid; justify-items: center; gap: 8px; margin-top: 16px; padding: 48px 24px; border-radius: var(--r-tile); background: var(--surface); text-align: center; }
-.empty h3 { letter-spacing: -.3px; }
-.empty-ico { display: grid; place-items: center; width: 96px; height: 96px; border-radius: var(--r-tile); background: var(--white); margin-bottom: 8px; }
-.empty-ico img { width: 64px; height: 64px; }
-.empty-cta { margin-top: 16px; }
+/* 내 정보 — 팔로우한 크리에이터. 시안 docs/design/mockups/site/v11/me-following.html 의 <style>. 격자·카드·빈 화면은 전역 클래스(.grid.cols-3·.card·.empty) */
+.fc { display: grid; gap: 12px; align-content: start; }
+.top { display: flex; align-items: center; gap: 16px; }
+.top > :last-child { min-width: 0; }
+.name { text-decoration: none; }
+.name:hover { text-decoration: underline; text-underline-offset: 4px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.acts :global(.btn) { padding: 0 8px; }
+.empty p { max-width: 480px; }
+/* 끊기 실패 알림 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다 */
+.msg { margin-bottom: 24px; }
+.msg:empty { margin: 0; padding: 0; background: none; }

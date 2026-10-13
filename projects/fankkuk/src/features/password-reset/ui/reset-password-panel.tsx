@@ -6,7 +6,7 @@ import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
 import { sendNewPassword, type NewPasswordField } from "../api/reset-client";
 import s from "./reset-password.module.css";
 
-// 재설정 메일의 링크로 연 화면(session-login INV-L11). 새 비밀번호를 적고 저장해야 바뀐다 — 링크를 여는 것만으로는 아무것도 바뀌지 않는다.
+// 재설정 메일의 링크로 연 화면(session-login INV-L11). 시안: docs/design/mockups/site/v11/password-reset.html (가운데 기둥 .auth 안 카드 한 장). 새 비밀번호를 적고 저장해야 바뀐다 — 링크를 여는 것만으로는 아무것도 바뀌지 않는다.
 // 링크 값의 꼴·만료·한 번만 쓰기는 서버와 DB 가 본다. 이 화면은 값을 저장 요청에 실어 보내기만 한다.
 // 바뀌면 이 계정의 모든 기기에서 로그아웃되므로 로그인으로 안내하고, 로그인 링크로 포커스를 옮긴다.
 // 저장이 실패하면 틀린 칸(모르면 새 비밀번호 칸)이 오류 문단을 aria-describedby 로 가리키고, 그 칸으로 포커스를 옮긴다.
@@ -54,8 +54,8 @@ export function ResetPasswordPanel({ token }: { token: string }) {
   let body;
   if (token === "") {
     body = (
-      <div className={s.box}>
-        <p className={s.error} role="alert">
+      <div className="form">
+        <p className="err" role="alert">
           링크가 올바르지 않아요. 로그인 화면에서 재설정 메일을 다시 받아 주세요.
         </p>
         <Link className="btn btn--block" href="/login">
@@ -65,8 +65,8 @@ export function ResetPasswordPanel({ token }: { token: string }) {
     );
   } else if (state.kind === "done" || linkDead) {
     body = (
-      <div className={s.box}>
-        <p className={state.kind === "done" ? s.done : s.error} role={state.kind === "done" ? "status" : "alert"}>
+      <div className="form">
+        <p className={state.kind === "done" ? "okmsg" : "err"} role={state.kind === "done" ? "status" : "alert"}>
           {state.kind === "done"
             ? (state.message ?? "비밀번호를 바꿨어요. 모든 기기에서 로그아웃됐으니 새 비밀번호로 로그인해 주세요.")
             : state.message}
@@ -78,11 +78,13 @@ export function ResetPasswordPanel({ token }: { token: string }) {
     );
   } else {
     body = (
-      <form className={s.box} onSubmit={onSubmit}>
-        <div className="field">
-          <label htmlFor={f("pw")}>새 비밀번호</label>
+      <form className="form" onSubmit={onSubmit}>
+        <div>
+          <label className="label" htmlFor={f("pw")}>
+            새 비밀번호
+          </label>
           <input
-            className="input"
+            className="field"
             id={f("pw")}
             type="password"
             autoComplete="new-password"
@@ -96,10 +98,12 @@ export function ResetPasswordPanel({ token }: { token: string }) {
             {PASSWORD_HINT}
           </p>
         </div>
-        <div className="field">
-          <label htmlFor={f("pw2")}>새 비밀번호 확인</label>
+        <div>
+          <label className="label" htmlFor={f("pw2")}>
+            새 비밀번호 확인
+          </label>
           <input
-            className="input"
+            className="field"
             id={f("pw2")}
             type="password"
             autoComplete="new-password"
@@ -110,7 +114,7 @@ export function ResetPasswordPanel({ token }: { token: string }) {
             aria-describedby={fieldError("passwordConfirm") ? f("err") : undefined}
           />
         </div>
-        <p className={s.error} id={f("err")} role="alert">
+        <p className={`err ${s.msg}`} id={f("err")} role="alert">
           {state.kind === "failed" ? state.message : ""}
         </p>
         <button className="btn btn--block" type="submit" aria-disabled={state.kind === "sending"} aria-busy={state.kind === "sending" || undefined}>
@@ -121,12 +125,18 @@ export function ResetPasswordPanel({ token }: { token: string }) {
   }
 
   return (
-    <section className={s.auth} aria-labelledby={f("title")}>
-      <h1 className="page-h" id={f("title")}>
-        새 비밀번호 정하기
-      </h1>
-      <p className="lead">새 비밀번호로 바꾸면 모든 기기에서 로그아웃돼요.</p>
-      {body}
+    <section className="section section--compact" aria-labelledby={f("title")}>
+      <div className="container auth">
+        <div className="card">
+          <div className="head">
+            <h1 className="t-title" id={f("title")}>
+              새 비밀번호 정하기
+            </h1>
+            <p className="t-lead t-desc">새 비밀번호로 바꾸면 모든 기기에서 로그아웃돼요.</p>
+          </div>
+          {body}
+        </div>
+      </div>
     </section>
   );
 }

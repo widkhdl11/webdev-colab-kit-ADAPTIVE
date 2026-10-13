@@ -16,9 +16,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
     <>
       <SiteHeader role="guest" />
       <main id="main">
-        <div className="container">
-          <ResetPasswordPanel token={token} />
-        </div>
+        <ResetPasswordPanel token={token} />
       </main>
       <SiteFooter />
     </>

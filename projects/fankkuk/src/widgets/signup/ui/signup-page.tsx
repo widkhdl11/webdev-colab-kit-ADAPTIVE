@@ -13,7 +13,8 @@ import { checkDetails, CREATOR_PROFILE_LIMITS, type DetailsField } from "@/featu
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import s from "./signup.module.css";
 
-// 회원가입 3단계. 시안: docs/design/mockups/site/v4/signup.html · 스펙: docs/specs/signup.md
+// 회원가입 3단계. 시안: docs/design/mockups/site/v11/signup.html (가운데 기둥 .auth, 단계 카드에 번호 동그라미 + 제목) · 스펙: docs/specs/signup.md
+// 시안은 세 단계를 한 화면에 쌓아 보이지만, 가입은 한 번에 한 단계씩 넘기는 흐름을 그대로 둔다 — 지금 단계의 카드 한 장만 보인다.
 // 3단계: 「인증 요청 보내기」로 카카오톡에 요청 → 카카오톡에서 인증 → 「인증했어요, 가입하기」.
 // 브라우저는 번호표만 들고 있다 — 인증됐는지는 서버가 카카오에게 묻는다(INV-U1).
 // 입력칸에 name 을 두지 않는다 — 폼 기본 제출이 일어나도 값이 주소창에 실리지 않게.
@@ -165,13 +166,14 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const invalid = (field: ErrorField) => (error?.field === field ? { "aria-invalid": true, "aria-describedby": f("error") } : {});
   const errorLine = (show: boolean) =>
     show && error ? (
-      <p className={s.error} id={f("error")} role="alert" key={errorSeq}>
+      <p className={`err ${s.error}`} id={f("error")} role="alert" key={errorSeq}>
         {error.message}
       </p>
     ) : null;
 
   const heading = (n: number, text: string) => (
     <h2
+      className={`t-card ${s.focusable}`}
       ref={(el) => {
         headingRefs.current[n - 1] = el;
       }}
@@ -180,14 +182,21 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
       {text}
     </h2>
   );
+  const stepNo = (n: number) => (
+    <span className={s.no} aria-hidden="true">
+      {n}
+    </span>
+  );
 
   return (
     <main id="main">
-      <div className="container">
-        <div className={s.su}>
-          <div className="page-title">
-            <h1 className="page-h">회원가입</h1>
-            <p>세 단계면 끝나요.</p>
+      <section className="section section--compact" aria-labelledby={f("title")}>
+        <div className="container auth">
+          <div className="head">
+            <h1 className="t-title" id={f("title")}>
+              회원가입
+            </h1>
+            <p className="t-lead t-desc">세 단계면 끝나요.</p>
           </div>
 
           <nav className={s["steps-wrap"]} aria-label="가입 단계" ref={navRef}>
@@ -228,36 +237,30 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
             </ol>
           </nav>
 
-          <form className={s["send-form"]} onSubmit={onSubmit} aria-label="회원가입 입력" noValidate>
+          <form className={`card ${s["send-form"]}`} onSubmit={onSubmit} aria-label="회원가입 입력" noValidate>
             <fieldset className={s.step} hidden={step !== 1}>
               <legend className="sr-only">회원 유형</legend>
-              <div className={s["step-h"]}>{heading(1, "어떤 분이세요?")}</div>
+              <div className={s.sh}>
+                {stepNo(1)}
+                <div>{heading(1, "어떤 분이세요?")}</div>
+              </div>
               <div className={s.choices}>
                 <label className={s.choice}>
-                  <input className="sr-only" type="radio" name="kind" value="fan" checked={role === "fan"} onChange={() => setRole("fan")} />
-                  <span className={s["choice-body"]}>
-                    <img className="asset" src="/img/icon-gift.png" alt="" aria-hidden="true" width={72} height={72} />
+                  <input type="radio" name="kind" value="fan" checked={role === "fan"} onChange={() => setRole("fan")} />
+                  <span>
                     <strong>팬이에요</strong>
-                    <span className="sub">응원하는 크리에이터에게 선물을 보내고 싶어요.</span>
+                    <span className="t-meta">응원하는 크리에이터에게 선물을 보내고 싶어요.</span>
                   </span>
                 </label>
                 <label className={s.choice}>
-                  <input
-                    className="sr-only"
-                    type="radio"
-                    name="kind"
-                    value="creator"
-                    checked={role === "creator"}
-                    onChange={() => setRole("creator")}
-                  />
-                  <span className={s["choice-body"]}>
-                    <img className="asset" src="/img/icon-approve.png" alt="" aria-hidden="true" width={72} height={72} />
+                  <input type="radio" name="kind" value="creator" checked={role === "creator"} onChange={() => setRole("creator")} />
+                  <span>
                     <strong>크리에이터예요</strong>
-                    <span className="sub">팬이 보내는 선물을 안전하게 받고 싶어요.</span>
+                    <span className="t-meta">팬이 보내는 선물을 안전하게 받고 싶어요.</span>
                   </span>
                 </label>
               </div>
-              <p className={`hint ${s["kind-note"]}`}>
+              <p className={s.note}>
                 <strong>크리에이터로 가입하면</strong> 가입한 뒤에 방송 채널 주인이 맞는지 한 번 더 확인해요. 유튜브·치지직은 그 계정으로
                 로그인하면 바로 끝나요(인스타그램은 프로페셔널 계정만). SOOP 은 인증 코드를 채널 소개란에 붙이거나 팬꾹 공식 계정 DM 으로 보내면
                 운영자가 확인해요. 확인이 끝나야 「크리에이터 찾기」에 나타나요.
@@ -266,12 +269,17 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
 
             <fieldset className={s.step} hidden={step !== 2}>
               <legend className="sr-only">가입 정보</legend>
-              <div className={s["step-h"]}>{heading(2, "정보를 입력해 주세요")}</div>
-              <div className={s["form-stack"]}>
-                <div className="field">
-                  <label htmlFor={f("id")}>아이디</label>
+              <div className={s.sh}>
+                {stepNo(2)}
+                <div>{heading(2, "정보를 입력해 주세요")}</div>
+              </div>
+              <div className="form">
+                <div>
+                  <label className="label" htmlFor={f("id")}>
+                    아이디
+                  </label>
                   <input
-                    className="input"
+                    className="field"
                     id={f("id")}
                     type="text"
                     autoComplete="username"
@@ -286,10 +294,12 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     영문 소문자·숫자·밑줄(_)로 4~20자예요. 가입한 뒤에는 아이디를 바꿀 수 없어요.
                   </p>
                 </div>
-                <div className="field">
-                  <label htmlFor={f("mail")}>이메일</label>
+                <div>
+                  <label className="label" htmlFor={f("mail")}>
+                    이메일
+                  </label>
                   <input
-                    className="input"
+                    className="field"
                     id={f("mail")}
                     type="email"
                     autoComplete="email"
@@ -303,10 +313,12 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     가입하면 확인 메일을 보내 드려요. 메일의 링크를 눌러야 이 주소로 선물 소식을 받아요.
                   </p>
                 </div>
-                <div className="field">
-                  <label htmlFor={f("pw")}>비밀번호</label>
+                <div>
+                  <label className="label" htmlFor={f("pw")}>
+                    비밀번호
+                  </label>
                   <input
-                    className="input"
+                    className="field"
                     id={f("pw")}
                     type="password"
                     autoComplete="new-password"
@@ -319,10 +331,12 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     {PASSWORD_HINT}
                   </p>
                 </div>
-                <div className="field">
-                  <label htmlFor={f("pw2")}>비밀번호 확인</label>
+                <div>
+                  <label className="label" htmlFor={f("pw2")}>
+                    비밀번호 확인
+                  </label>
                   <input
-                    className="input"
+                    className="field"
                     id={f("pw2")}
                     type="password"
                     autoComplete="new-password"
@@ -332,10 +346,12 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     {...invalid("passwordConfirm")}
                   />
                 </div>
-                <div className="field">
-                  <label htmlFor={f("tel")}>휴대폰 번호</label>
+                <div>
+                  <label className="label" htmlFor={f("tel")}>
+                    휴대폰 번호
+                  </label>
                   <input
-                    className="input"
+                    className="field"
                     id={f("tel")}
                     type="tel"
                     inputMode="numeric"
@@ -354,11 +370,13 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                   </p>
                 </div>
                 {role === "creator" ? (
-                  <>
-                    <div className="field">
-                      <label htmlFor={f("cr-name")}>공개 이름</label>
+                  <div className={s.cr}>
+                    <div>
+                      <label className="label" htmlFor={f("cr-name")}>
+                        공개 이름
+                      </label>
                       <input
-                        className="input"
+                        className="field"
                         id={f("cr-name")}
                         type="text"
                         autoComplete="off"
@@ -372,10 +390,12 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         팬에게 보이는 이름이에요. {CREATOR_PROFILE_LIMITS.name}자까지 적을 수 있어요.
                       </p>
                     </div>
-                    <div className="field">
-                      <label htmlFor={f("cr-channel")}>채널 이름</label>
+                    <div>
+                      <label className="label" htmlFor={f("cr-channel")}>
+                        채널 이름
+                      </label>
                       <input
-                        className="input"
+                        className="field"
                         id={f("cr-channel")}
                         type="text"
                         autoComplete="off"
@@ -399,14 +419,14 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       onCustomChange={setCustomTag}
                       invalid={error?.field === "tags" ? { describedBy: f("error") } : null}
                     />
-                  </>
+                  </div>
                 ) : null}
-                <div className="field">
-                  <label htmlFor={f("heard")}>
-                    어디서 팬꾹을 알게 되셨나요? <span className="sub">(선택)</span>
+                <div>
+                  <label className="label" htmlFor={f("heard")}>
+                    어디서 팬꾹을 알게 되셨나요? <span className={`t-meta ${s.opt}`}>(선택)</span>
                   </label>
                   <select
-                    className="input"
+                    className="field"
                     id={f("heard")}
                     value={heardFrom ?? ""}
                     onChange={(e) => setHeardFrom(isHeardFrom(e.currentTarget.value) ? e.currentTarget.value : null)}
@@ -423,19 +443,19 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     답하지 않아도 가입돼요. 어떤 길로 많이 찾아오시는지만 모아서 봐요.
                   </p>
                 </div>
-                <div className="field" role="group" aria-labelledby={f("terms")}>
+                <div role="group" aria-labelledby={f("terms")}>
                   <p className="label" id={f("terms")}>
                     약관 동의
                   </p>
                   <div className={s.terms}>
-                    <div className={s.all}>
-                      <label className={s.check}>
+                    <div>
+                      <label className="check">
                         <input type="checkbox" checked={allAgreed} onChange={(e) => setAll(e.target.checked)} /> 전체 동의
                       </label>
                     </div>
                     {TERMS.map((t) => (
-                      <div key={t.key}>
-                        <label className={s.check}>
+                      <div key={t.key} className={s.row}>
+                        <label className="check">
                           <input
                             type="checkbox"
                             aria-required={t.required || undefined}
@@ -449,7 +469,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         </label>
                         {t.href ? (
                           <Link
-                            className={s.link}
+                            className="btn btn--text btn--sm"
                             href={t.href}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -472,15 +492,18 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
 
             <fieldset className={s.step} hidden={step !== 3}>
               <legend className="sr-only">카카오톡 본인 확인</legend>
-              <div className={s["step-h"]}>
-                {heading(3, "카카오톡으로 본인 확인")}
-                <p>휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요.</p>
+              <div className={s.sh}>
+                {stepNo(3)}
+                <div>
+                  {heading(3, "카카오톡으로 본인 확인")}
+                  <p className="t-desc">휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요.</p>
+                </div>
               </div>
-              <ol className={s["kakao-steps"]}>
+              <ol className={s.kakao}>
                 <li className={requested ? s["is-done"] : undefined}>
                   {requested ? (
                     <span className={s.mark}>
-                      <CheckIcon size={20} />
+                      <CheckIcon size={16} />
                     </span>
                   ) : null}
                   <span>
@@ -496,7 +519,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                 </li>
               </ol>
               {requested ? (
-                <p className="hint">
+                <p className={`hint ${s.again}`}>
                   요청이 오지 않았나요?{" "}
                   <button className={s["text-btn"]} type="button" aria-disabled={busy} onClick={() => void sendRequest()}>
                     다시 보내기
@@ -509,7 +532,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
             <div className={step === 1 ? `${s["step-actions"]} ${s["no-prev"]}` : s["step-actions"]}>
               {step > 1 ? (
                 <button
-                  className="btn btn--soft"
+                  className="btn btn--line"
                   type="button"
                   disabled={busy}
                   onClick={() => {
@@ -532,14 +555,11 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
               )}
             </div>
           </form>
-          <p className={s.already}>
-            이미 회원이신가요?{" "}
-            <Link className={s.link} href="/login">
-              로그인
-            </Link>
+          <p className="foot-line">
+            이미 회원이신가요? <Link href="/login">로그인</Link>
           </p>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

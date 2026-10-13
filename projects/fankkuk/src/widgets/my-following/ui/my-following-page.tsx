@@ -12,7 +12,7 @@ import { saveFollow } from "@/features/creator-follow/api/save-follow";
 import { FOLLOWING_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import s from "./my-following.module.css";
 
-// 내 정보 — 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/v4/my-following.html
+// 내 정보 — 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/v11/me-following.html (같은 크기 카드 3열 격자)
 // 「팔로우 끊기」는 줄을 바로 지우고 저장한다. 저장에 실패하면 줄을 제자리에 돌려놓고 알린다. 다 지우면 빈 화면 안내가 나온다.
 
 export function MyFollowingPanel({ creators }: { creators: readonly CreatorCard[] }) {
@@ -36,61 +36,64 @@ export function MyFollowingPanel({ creators }: { creators: readonly CreatorCard[
 
   return (
     <div>
-      <div className={s.head}>
-        <h2 ref={headingRef} tabIndex={-1}>
-          팔로우한 크리에이터<span className={s.cnt}>{list.length}명</span>
+      <div className="sec-head">
+        <h2 className="t-title" ref={headingRef} tabIndex={-1}>
+          팔로우한 크리에이터 <span className="accent">{list.length}명</span>
         </h2>
-        <Link className="link-arrow" href="/creators">
-          크리에이터 더 찾기
-        </Link>
+        <p className="t-lead t-desc">{FOLLOWING_NICKNAME_NOTICE}</p>
       </div>
-      <p className="sub">{FOLLOWING_NICKNAME_NOTICE}</p>
-      <p className="hint" role="status">
+      <p className={`err ${s.msg}`} role="status">
         {failedName ? `${failedName}님 팔로우를 끊지 못했어요. 잠시 뒤 다시 눌러 주세요.` : ""}
       </p>
       {list.length > 0 ? (
-        <ul className={s.list}>
-          {list.map((c) => (
-            <li key={c.id} className={s.row}>
-              <CreatorFace tone={c.faceTone} />
-              <div>
-                <p className={s.who}>
-                  <Link href={creatorPagePath(c)}>{c.name}</Link>
+        <>
+          <ul className="grid cols-3">
+            {list.map((c) => (
+              <li key={c.id} className={`card ${s.fc}`}>
+                <div className={s.top}>
+                  <CreatorFace tone={c.faceTone} className="face face--lg" />
+                  <div>
+                    <p className="t-card">
+                      <Link className={s.name} href={creatorPagePath(c)}>
+                        {c.name}
+                      </Link>
+                    </p>
+                    {c.tags.length > 0 ? (
+                      <p className={s.tags}>
+                        {c.tags.map((t) => (
+                          <CreatorTag key={t} name={t} />
+                        ))}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                <p className="t-meta">
+                  {c.channelTitle ? `${c.channelTitle} · ` : ""}
+                  {approvalTimeText(c.approvalMinutes)}
                 </p>
-                <p className={s.says}>
-                  {c.tags.map((t) => (
-                    <CreatorTag key={t} name={t} />
-                  ))}
-                  {c.channelTitle ? (
-                    <>
-                      <span>{c.channelTitle}</span>
-                      <span className={s.sep} aria-hidden="true">
-                        ·
-                      </span>
-                    </>
-                  ) : null}
-                  <span>{approvalTimeText(c.approvalMinutes)}</span>
-                </p>
-              </div>
-              <div className={s.acts}>
-                <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
-                  선물 보내기
-                </Link>
-                <button className="btn btn--sm btn--soft" type="button" aria-label={`${c.name} 팔로우 끊기`} onClick={() => void unfollow(c)}>
-                  팔로우 끊기
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                <div className={s.acts}>
+                  <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
+                    선물 보내기
+                  </Link>
+                  <button className="btn btn--sm btn--line" type="button" aria-label={`${c.name} 팔로우 끊기`} onClick={() => void unfollow(c)}>
+                    팔로우 끊기
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="sec-foot">
+            <Link className="btn btn--line" href="/creators">
+              크리에이터 더 찾기
+            </Link>
+          </div>
+        </>
       ) : (
-        <div className={s.empty}>
-          <span className={s["empty-ico"]} aria-hidden="true">
-            <img className="asset" src="/img/illust-empty-follow.png" alt="" width={64} height={64} />
-          </span>
+        <div className={`card empty ${s.empty}`}>
+          <img src="/img/illust-empty-follow.png" alt="" aria-hidden="true" width={96} height={96} />
           <h3>아직 팔로우한 크리에이터가 없어요</h3>
-          <p className="sub">좋아하는 크리에이터를 팔로우하면 여기에 모아 두고, 바로 선물을 보낼 수 있어요.</p>
-          <Link className={`btn ${s["empty-cta"]}`} href="/creators">
+          <p className="t-desc">좋아하는 크리에이터를 팔로우하면 여기에 모아 두고, 바로 선물을 보낼 수 있어요.</p>
+          <Link className="btn" href="/creators">
             나의 크리에이터 찾으러 가기
           </Link>
         </div>

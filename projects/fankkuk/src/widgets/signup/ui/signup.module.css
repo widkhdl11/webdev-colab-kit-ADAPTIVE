@@ -1,40 +1,32 @@
-/* 회원가입 — 시안 docs/design/mockups/site/v4/signup.html 의 <style> + v4.css 14절(단계 표시·단계 카드)에서 이 화면이 쓰는 것만 */
-.su { max-width: 720px; margin-inline: auto; padding-bottom: clamp(72px, 9vw, 128px); }
+/* 회원가입 — 시안 docs/design/mockups/site/v11/signup.html 의 <style>. 기둥(.auth)·머리(.auth .head)·카드·폼·확인칸(.check)·오류(.err)·아래 줄(.foot-line)은 전역 클래스.
+   시안은 세 단계 카드를 쌓아 보이지만 가입은 한 단계씩 넘기는 흐름이라, 카드 한 장 안에 지금 단계만 보이고 위에 단계 표시 줄이 있다 */
 
-/* 단계 표시 */
-.steps-wrap { padding-bottom: 24px; scroll-margin-top: 88px; }
-.step-count { display: none; margin-bottom: 12px; font-weight: 700; }
-.step-count span { color: var(--sub); font-weight: 500; }
-.steps { display: flex; flex-wrap: wrap; gap: 8px; }
-.st { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px 0 8px; border: 0; border-radius: var(--r-pill); background: none; color: var(--sub); font-weight: 600; cursor: default; }
-.dot { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); color: var(--sub); font-size: 16px; font-weight: 700; line-height: 1; }
+/* 단계 표시 — 시안의 번호 동그라미(.sh .no)와 같은 모양의 알약 줄. 지금 단계는 선택 면, 지난 단계는 초록 */
+.steps-wrap { margin-bottom: 24px; }
+.step-count { display: none; margin-bottom: 12px; font-weight: 800; }
+.step-count span { color: var(--sub); font-weight: 400; }
+.steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.st { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px 0 8px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); cursor: default; }
+.dot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--sub); font-weight: 800; line-height: 1; }
 .st.is-done { background: var(--success-soft); color: var(--success); cursor: pointer; }
-.st.is-done .dot { background: var(--white); color: var(--success); }
+.st.is-done .dot { color: var(--success); }
 .st.is-done:hover .lbl { text-decoration: underline; text-underline-offset: 4px; }
-.st[aria-current="step"] { background: var(--brand); color: var(--on-brand); font-weight: 700; }
-.st[aria-current="step"] .dot { background: var(--white); color: var(--brand); }
+.st[aria-current="step"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: 800; }
+.st[aria-current="step"] .dot { background: var(--ink); color: var(--on-brand); }
 .st[disabled] { opacity: 1; }
-@media (max-width: 767px) { .step-count { display: block; } .st { flex: 1 1 calc(50% - 8px); } }
+@media (max-width: 767px) { .step-count { display: block; text-align: center; } .st { flex: 1 1 calc(50% - 8px); } }
 
 /* 단계 카드 — 입력과 「이전」「다음」이 한 카드 안 */
-.send-form { padding: 40px; border-radius: var(--r-panel); background: var(--white); box-shadow: var(--hair); }
 .step { margin: 0; padding: 0; border: 0; min-width: 0; }
-.step h2 { font-size: 30px; letter-spacing: -.8px; scroll-margin-top: 160px; }
-.step h2:focus { outline: none; }
-.step h2:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
-.step-h { margin-bottom: 24px; }
-.step-h p { margin-top: 8px; color: var(--sub); }
-.step-actions { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--divider); }
+.focusable { scroll-margin-top: 160px; }
+.focusable:focus { outline: none; }
+.focusable:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+.sh { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.no { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: var(--on-brand); font-weight: 800; line-height: 1; flex-shrink: 0; }
+.step-actions { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
 .step-actions :global(.btn) { min-width: 120px; }
-.step-actions .next { margin-left: auto; }   /* 「다음」은 모든 단계에서 카드 오른쪽 아래 */
-@media (min-width: 768px) {
-  .send-form { display: flex; flex-direction: column; min-height: 640px; }
-  .send-form .step-actions { margin-top: auto; }
-  .send-form > .step:not([hidden]) { margin-bottom: 32px; }
-}
+.step-actions .next { margin-left: auto; } /* 「다음」은 모든 단계에서 카드 오른쪽 아래 */
 @media (max-width: 767px) {
-  .send-form { padding: 24px 20px; border-radius: var(--r-card); }
-  .step h2 { font-size: 26px; }
   .step-actions { display: grid; grid-template-columns: 1fr 2fr; }
   .step-actions.no-prev { grid-template-columns: 1fr; }
   .step-actions .next { margin-left: 0; }
@@ -42,44 +34,32 @@
 }
 
 /* 1단계 — 유형 선택 */
-.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.choice { position: relative; display: block; cursor: pointer; }
-.choice-body { display: grid; justify-items: start; align-content: start; gap: 4px; height: 100%; padding: 24px; border-radius: var(--r-tile); background: var(--surface); }
-.choice-body img { width: 72px; height: 72px; margin-bottom: 12px; }
-.choice-body strong { font-size: 20px; letter-spacing: -.3px; }
-.choice-body :global(.sub) { line-height: 1.5; }
-.choice input:checked + .choice-body { box-shadow: inset 0 0 0 2px var(--brand); }
-.choice input:focus-visible + .choice-body { outline: 3px solid var(--ink); outline-offset: 2px; }
-.kind-note { margin-top: 20px; }
-@media (max-width: 767px) {
-  .choices { grid-template-columns: 1fr; }
-  .choice-body { grid-template-columns: 56px minmax(0, 1fr); column-gap: 16px; align-items: center; padding: 16px; }
-  .choice-body img { grid-row: span 2; width: 56px; height: 56px; margin: 0; }
-}
+.choices { display: grid; gap: 12px; }
+.choice { display: flex; align-items: flex-start; gap: 16px; padding: 20px; border-radius: var(--r-card); box-shadow: var(--hair); cursor: pointer; background: var(--white); }
+.choice:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand); }
+.choice:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 3px; }
+.choice input { width: 24px; height: 24px; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--brand); }
+.choice input:focus-visible { outline: none; }
+.choice strong { display: block; }
+.choice :global(.t-meta) { display: block; }
+.note { margin-top: 16px; color: var(--sub); }
 
 /* 2단계 — 정보 입력 */
-.form-stack { display: grid; gap: 20px; }
-.terms { border-top: 1px solid var(--divider); }
-.terms > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--divider); }
-.terms .all { font-weight: 800; }
-.check { display: flex; flex: 1; min-width: 0; align-items: center; gap: 12px; min-height: 44px; font-weight: 600; cursor: pointer; }
-.check input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); flex-shrink: 0; }
-.req { color: var(--brand); font-weight: 700; }
-.link { color: var(--brand); font-weight: 700; text-underline-offset: 4px; }
-.link-off { color: var(--sub); font-weight: 600; }   /* 아직 갈 곳이 없는 「보기」 — 링크처럼 보이지 않게 */
+.cr { display: grid; gap: 24px; padding: 24px; border-radius: var(--r-card); background: var(--surface-brand); }
+.opt { font-weight: 400; }
+.terms { display: grid; gap: 4px; }
+.row { display: flex; align-items: center; gap: 12px; }
+.row :global(.check) { flex: 1; min-width: 0; }
+.req { color: var(--brand-ink); font-weight: 800; }
+.link-off { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 14px; color: var(--sub); } /* 아직 갈 곳이 없는 「보기」 — 링크처럼 보이지 않게 */
 
 /* 3단계 — 카카오톡 본인 확인 */
-.kakao-steps { counter-reset: k; display: grid; gap: 16px; margin-top: 24px; }
-.kakao-steps li { counter-increment: k; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 16px; align-items: center; }
-.kakao-steps li::before { content: counter(k); display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface); font-weight: 700; }
-
-.kakao-steps li.is-done::before { content: none; }
-.mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--brand); color: var(--on-brand); }
-.sent { font-weight: 700; }
-.text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
-
-/* 오류 문구 — 로그인·내 정보와 같은 모양 */
-.error { display: flex; align-items: flex-start; gap: 8px; margin: 16px 0 0; color: var(--ink); font-weight: 700; }
-.error::before { content: "!"; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
-
-.already { margin-top: 24px; text-align: center; color: var(--sub); }
+.kakao { display: grid; gap: 16px; counter-reset: k; }
+.kakao li { position: relative; min-height: 28px; padding-left: 40px; counter-increment: k; }
+.kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-selected); color: var(--brand-ink); font-weight: 800; }
+.kakao li.is-done::before { content: none; }
+.mark { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--success); color: var(--on-brand); }
+.sent { font-weight: 800; }
+.again { margin-top: 16px; }
+.text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.step > .error { margin-top: 24px; }

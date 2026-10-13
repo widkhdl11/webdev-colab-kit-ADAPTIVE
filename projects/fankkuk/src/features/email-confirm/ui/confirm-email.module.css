@@ -1,9 +1,11 @@
-/* 이메일 확인 — 내 정보(my-info.module.css)의 제목·알림 꼴을 따른다. 빈 알림 칸이 간격을 차지하지 않게 grid 대신 margin 으로 띄운다 */
-.card { max-width: 520px; }
-.h { margin-bottom: 16px; font-size: 28px; letter-spacing: -.8px; }
-.msg { margin: 0 0 16px; }
-.error { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 16px; color: var(--ink); font-weight: 700; }
-.error::before { content: "!"; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
-.msg:empty, .error:empty { margin: 0; }
-.error:empty::before { content: none; }
-.actions { margin-top: 8px; }
+/* 이메일 확인 — 시안 docs/design/mockups/site/v11/email-confirm.html 의 <style>(.page-email-confirm 본문 폭 640 가운데). 머리·판·알림은 전역 클래스.
+   알림 칸(.ok·.err)은 늘 두고 글자만 바꾼다 — 빈 칸은 간격·판을 차지하지 않는다 */
+.narrow { max-width: 640px; margin-inline: auto; }
+.ok { display: flex; align-items: center; gap: 12px; }
+.ok svg { color: var(--success); }
+.msg { margin-top: 16px; }
+.msg:empty { margin: 0; padding: 0; background: none; }
+.actions { margin-top: 24px; }
+/* 시안 .page-email-confirm — 판 안 글·버튼 줄·확인 줄은 가운데 */
+.center { text-align: center; }
+.center .ok, .center :global(.btnrow) { justify-content: center; }
