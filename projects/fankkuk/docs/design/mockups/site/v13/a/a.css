@@ -38,3 +38,30 @@
   .scene-mascot,.scene-mascot .mascot{width:112px;height:112px}
   .flow .step-ic{margin-bottom:8px}
 }
+
+/* v13 A 2단계 — 선물 보내기(로그인 전) · 약속 아이콘 · 요금 상자 그림 */
+.card > .step-ic{margin-bottom:16px;background:var(--surface-brand);box-shadow:none}
+
+/* 로그인 전: 흐린 크리에이터 카드 위에 흰 안내 판 */
+.lo-wrap{padding-bottom:var(--sec-pad)}
+.lo{max-width:760px;margin-inline:auto}
+.ghost{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;filter:blur(1.5px)}
+.ghost-card{display:flex;align-items:center;gap:16px;padding:24px}
+.ghost-card .face{background:#d6d1d7}
+.ghost-lines{display:grid;gap:10px;flex:1;min-width:0}
+.ghost-lines i{display:block;height:14px;border-radius:7px;background:#d6d1d7;width:70%}
+.ghost-lines i + i{width:45%}
+.lo-panel{position:relative;z-index:1;display:grid;justify-items:center;gap:16px;margin:-56px 24px 0;padding:40px 32px;border-radius:var(--r-panel);background:#fff;box-shadow:var(--hair);text-align:center}
+.lo-panel .t-desc{max-width:520px}
+.lo-mascot{width:112px;height:112px;display:block}
+@media(max-width:767px){
+  .ghost{grid-template-columns:1fr}
+  .ghost-card:nth-child(n+4){display:none}
+  .lo-panel{margin:-48px 0 0;padding:32px 20px}
+  .lo-mascot{width:96px;height:96px}
+}
+
+/* 요금 카드: 크기가 다른 상자 + 예시 물건 */
+.sz{display:flex;align-items:flex-end;gap:8px;height:128px;padding-bottom:4px;border-bottom:2px solid var(--border)}
+.sz svg{display:block;flex:none}
+.sz-eg{margin-top:12px;margin-bottom:16px;color:var(--sub)}

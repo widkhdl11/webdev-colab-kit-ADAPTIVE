@@ -37,3 +37,50 @@
   .m-arrow{height:48px}
   .m-arrow .ic{transform:rotate(90deg)}
 }
+
+/* ===== 2단계 (send·landing) — 1단계 모형 언어 이어 쓰기 ===== */
+/* 모형은 눌리는 것처럼 보이지 않게: 커서·선택·포커스 없음 */
+.mock,.mock *{cursor:default;pointer-events:none;user-select:none}
+.mock-tag{display:inline-flex;align-items:center;min-height:32px;padding:4px 10px;border-radius:var(--r-pill);background:var(--surface-hover);color:var(--ink);font-weight:800;line-height:1.5}
+
+/* send: 로그인 전 빈 화면 — 흐린 카드 자리 위에 흰 안내 판 */
+.gate{display:grid;max-width:760px;margin:0 auto 96px}
+.gate > *{grid-area:1/1}
+.ghost{align-self:start;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;filter:blur(1.5px);opacity:.75}
+.g-card{display:flex;align-items:center;gap:16px;min-height:104px;padding:20px;border-radius:var(--r-card);background:#fff;box-shadow:var(--hair)}
+.g-face{width:48px;height:48px;border-radius:50%;background:#e4e0e5;flex:none}
+.g-lines{display:grid;gap:10px;flex:1;min-width:0}
+.g-lines i{display:block;height:14px;border-radius:7px;background:#e4e0e5}
+.g-lines i:nth-child(1){width:55%}.g-lines i:nth-child(2){width:85%}
+.g-tags{display:flex;gap:6px}.g-tags i{width:44px;height:14px}
+.gate-note{position:relative;align-self:center;justify-self:center;width:min(100%,480px);padding:40px 32px;border-radius:var(--r-panel);background:#fff;box-shadow:var(--hair),var(--float);display:grid;justify-items:center;gap:16px;text-align:center}
+.gate-note p{max-width:440px}
+.gate-cap{margin:0 0 12px;display:flex;justify-content:flex-start}
+@media(max-width:767px){
+  .ghost{grid-template-columns:minmax(0,1fr)}
+  .ghost .g-card:nth-child(n+5){display:none}
+  .gate-note{padding:32px 20px;width:calc(100% - 24px)}
+  .gate{margin-bottom:56px}
+}
+
+/* landing 약속: 항목 선 아이콘 + 열람 기록 모형 */
+.card .ic.card-ic{width:32px;height:32px;margin-bottom:16px;color:var(--brand-ink)}
+.mock--log{max-width:600px;margin:0 auto 40px}
+.m-rows{display:grid;gap:8px}
+.m-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:10px 14px;border-radius:var(--r-btn);background:var(--surface)}
+.m-row .ic{width:20px;height:20px;color:var(--brand-ink)}
+.m-row b{font-weight:800}
+.m-row .m-why{color:var(--sub)}
+.m-row:first-child{background:var(--surface-brand);box-shadow:inset 0 0 0 1px #e6b3ad}
+.mock--log .mock-bar{justify-content:space-between}
+
+/* landing 요금: 크기가 다른 상자 + 예시 물건 */
+.box-fig{display:flex;align-items:flex-end;justify-content:center;height:136px;margin-bottom:16px;color:var(--ink)}
+.box-fig svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;width:var(--bw);height:var(--bw);overflow:visible}
+.items{display:flex;align-items:center;gap:8px;margin-top:16px;color:var(--ink)}
+.items .ic{width:28px;height:28px}
+.items span{margin-left:4px}
+.gate .mock{width:100%;max-width:none;margin:0}
+.g-card{background:var(--surface)}
+.g-face,.g-lines i{background:#d6d1d7}
+.gate-note{margin-top:56px}

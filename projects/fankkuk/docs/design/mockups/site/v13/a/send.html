@@ -1,0 +1,76 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v13-A 선물 보내기 · 로그인 전 (2026-10-13)
+  지금 사이트 /gifts/new 로그인 전 빈 화면(_now-send-loggedout.png)의 3D 선물 그림 → 뻐꾸기 마스코트, 그 뒤에 흐린 크리에이터 카드 자리를 깔았다.
+  문구는 그대로(제목·설명 두 줄·안내 문장·「로그인」). 새 글 없음. 흐린 카드는 aria-hidden, 안내 글자는 흰 판 위라 대비 4.5 이상.
+  틀(머리·푸터·글자 체계)은 v11 과 같고 추가 CSS 는 a.css.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v13 A 선물 보내기(로그인 전)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="../../v11/v11.css">
+<link rel="stylesheet" href="a.css">
+</head>
+<body class="page-send">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+        <li><a href="#">크리에이터 찾기</a></li><li><a href="#" aria-current="page">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#" >팬꾹 소개</a></li><li><a href="#">고객센터</a></li>
+      </ul></nav>
+      <div class="header-actions">
+        <a class="hd-link hd-link--sub hide-sm" href="#">로그인</a><span class="hd-sep hide-sm" aria-hidden="true"></span><a class="hd-link hd-link--strong hide-sm" href="#">회원가입</a>
+        <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+          <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#" >팬꾹 소개</a><a href="#">고객센터</a>
+            <div class="btn-row"><a class="btn btn--line" href="#">로그인</a><a class="btn" href="#">회원가입</a></div></div>
+        </details>
+      </div>
+    </div>
+  </header>
+  <main id="main">
+    <div class="container page-top">
+      <h1 class="t-hero">선물 보내기</h1>
+      <p class="t-lead t-desc">누구에게, 무엇을, 몇 상자 보낼지 알려 주세요.</p>
+      <p class="t-meta" style="margin-top:8px">팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p>
+    </div>
+    <div class="container lo-wrap">
+      <div class="lo">
+        <ul class="ghost" aria-hidden="true"><li class="card ghost-card"><span class="face" style="--f:#e6e3e7"></span><span class="ghost-lines"><i></i><i></i></span></li><li class="card ghost-card"><span class="face" style="--f:#e6e3e7"></span><span class="ghost-lines"><i></i><i></i></span></li><li class="card ghost-card"><span class="face" style="--f:#e6e3e7"></span><span class="ghost-lines"><i></i><i></i></span></li><li class="card ghost-card"><span class="face" style="--f:#e6e3e7"></span><span class="ghost-lines"><i></i><i></i></span></li></ul>
+        <div class="lo-panel">
+          <svg class="lo-mascot" viewBox="0 0 512 512" aria-hidden="true"><use href="#logo"/></svg>
+          <h2 class="t-title">로그인하고 선물을 보내 주세요</h2>
+          <p class="t-desc">선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 로그인하면 팔로우한 크리에이터가 여기에 나와요.</p>
+          <a class="btn" href="#">로그인</a>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
