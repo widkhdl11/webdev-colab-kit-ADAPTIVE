@@ -55,7 +55,7 @@ export function DifferenceSection({ orderNo, differences, clientKey, notice }: P
   if (checkout) {
     if (!clientKey) {
       return (
-        <p className={s["sub-t"]} role="alert">
+        <p className="part" role="alert">
           지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.
         </p>
       );
@@ -74,41 +74,39 @@ export function DifferenceSection({ orderNo, differences, clientKey, notice }: P
   }
 
   return (
-    <div className={s.part}>
-      <h2>차액 결제</h2>
-      <p className={s["sub-t"]}>
+    <div className="part">
+      <h2 className="t-title">차액 결제</h2>
+      <p className="t-lead t-desc">
         사무실에서 잰 상자가 고른 크기보다 커서 추가 결제가 필요해요. 결제를 마치면 바로 보내 드려요. 기한 안에 결제하지 않으면
         상자를 돌려보내고 배송비를 환불해 드려요.
       </p>
       {notice ? (
-        <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`} role={notice === "failed" || notice === "closed" ? "alert" : "status"}>
+        <p className={s.more} role={notice === "failed" || notice === "closed" ? "alert" : "status"}>
           <strong>{NOTICE_TEXT[notice]}</strong>
         </p>
       ) : null}
       {error ? (
-        <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`} role="alert">
+        <p className={s.more} role="alert">
           <strong>{error}</strong>
         </p>
       ) : null}
-      <div className={s["box-rows"]}>
+      <div className={s.inner}>
         {differences.map((d) => {
           const tag = STATE_TAG[d.state];
           return (
-            <div key={d.boxId} className={s["box-row"]}>
-              <div className={s["box-top"]}>
-                <div>
-                  <h3>
-                    상자 {d.boxSeq} · {won(d.amountKrw)}
-                  </h3>
-                  <p className="sub">
-                    보낼 때 고른 크기 {tierName(d.declaredTier)} → 재어 본 크기 {tierName(d.measuredTier)}
-                    {d.state === "due" ? ` · ${formatDateTime(d.dueAt)}까지` : null}
-                  </p>
-                </div>
+            <div key={d.boxId} className={`card card--soft ${s.diff}`}>
+              <div className={s["box-head"]}>
+                <h3>
+                  상자 {d.boxSeq} · {won(d.amountKrw)}
+                </h3>
                 <span className={tag.className}>{tag.text}</span>
               </div>
+              <p className="t-meta">
+                보낼 때 고른 크기 {tierName(d.declaredTier)} → 재어 본 크기 {tierName(d.measuredTier)}
+                {d.state === "due" ? ` · ${formatDateTime(d.dueAt)}까지` : null}
+              </p>
               {d.state === "due" ? (
-                <div className={s["inv-fixed"]}>
+                <div>
                   <button className="btn" type="button" onClick={() => void start(d.boxId)} aria-disabled={busyBox !== null} aria-busy={busyBox === d.boxId || undefined}>
                     {busyBox === d.boxId ? "준비하는 중…" : `${won(d.amountKrw)} 차액 결제하기`}
                   </button>

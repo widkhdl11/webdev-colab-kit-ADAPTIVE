@@ -1,5 +1,6 @@
 import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import {
   APPROVAL_LABEL,
@@ -33,7 +34,7 @@ import { PaymentSummary } from "./payment-summary";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./gift-status.module.css";
 
-// 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v9-pages/gift-a.html (design-rules 5절, 카드 d45 — 시안은 한 상태의 예시, 칸이 나오는 조건은 아래 그대로)
+// 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v11/gift.html (design-rules 0절 — 위아래 한 줄로 쌓는다. 시안은 한 상태의 예시, 칸이 나오는 조건은 아래 그대로)
 // 문의하지 않아도 지금 어디까지 왔는지 알 수 있게(성공 기준 3).
 // 크리에이터에게 보내는 송장번호는 이 화면에 오지 않는다 — toFanView·my_gift_boxes 가 걸러서 넘긴다.
 // 상자별 칸 시안: docs/design/mockups/site/v4/gift-boxes.html. 헤더·푸터는 라우트가 붙인다.
@@ -53,7 +54,7 @@ function Check({ size = 18 }: { size?: number }) {
   );
 }
 
-const STEP_CLASS = { done: s["is-done"], current: s["is-current"], stopped: s["is-stopped"], todo: undefined } as const;
+const STEP_CLASS = { done: "done", current: "on", stopped: s.stopped, todo: undefined } as const;
 
 const APPROVAL_TEXT = { done: "승인됨", waiting: "기다리는 중", todo: "출고 전에 받아요" } as const;
 
@@ -102,51 +103,48 @@ export function GiftStatusPage({
 
   return (
     <main id="main">
-      <div className={`container ${s.crumb}`}>
+      <div className="container crumb">
         <Link href="/gifts">‹ 선물 내역으로</Link>
       </div>
 
-      <section aria-labelledby="g-title">
-        <div className="container">
-          <div className={s["g-panel"]}>
-            <div className={s["g-top"]}>
-              <div>
-                <p className={s.meta}>
-                  주문번호 {view.orderNo} · 등록 {formatDate(view.registeredAt)}
-                </p>
-                <h1 className={s["g-title"]} id="g-title">
-                  {view.creatorName}님께 보내는 선물
-                </h1>
-                <p className={s["g-lead"]}>
-                  {view.itemKind} · 상자 {view.boxCount}개
-                </p>
-                <div className={s["g-now"]}>
-                  <span className={statusTagClass(badge.tone, s["g-state"])}>
-                    {view.outcome === "in_progress" ? `${badge.text} · ${stepNo}/${progress.total}` : badge.text}
-                  </span>
-                  <strong>{headline}</strong>
-                </div>
-              </div>
-              <div className={s["g-art"]} aria-hidden="true">
-                <img className={`asset ${s.a1}`} src="/img/icon-truck.png" alt="" width={200} height={160} />
-                <img className={`asset ${s.a2}`} src="/img/icon-gift.png" alt="" width={72} height={72} />
-              </div>
-            </div>
+      <div className={`container ${s.body}`}>
+        <div className="stack">
+          <section className={`panel ${s.gtop}`} aria-labelledby="g-title">
+            <img className={`asset ${s["g-art"]}`} src="/img/icon-truck.png" alt="" aria-hidden="true" width={88} height={88} />
+            <p className="t-meta">
+              주문번호 {view.orderNo} · 등록 {formatDate(view.registeredAt)}
+            </p>
+            <h1 className={`t-title ${s["g-title"]}`} id="g-title">
+              {view.creatorName}님께 보내는 선물
+            </h1>
+            <p className={`t-lead ${s["g-lead"]}`}>
+              {view.itemKind} · 상자 {view.boxCount}개
+            </p>
+            <p className={s.gnow}>
+              <span className={statusTagClass(badge.tone)}>
+                {view.outcome === "in_progress" ? `${badge.text} · ${stepNo}/${progress.total}` : badge.text}
+              </span>
+              <strong className="t-card">{headline}</strong>
+            </p>
 
             {showsProgress ? (
-              <div className={s.track}>
-                <ol className={s.stepper} aria-label={`선물 진행 단계 ${progress.total}단계 중 ${progress.done}단계 완료`}>
+              <>
+                <ol
+                  className={`flow ${s.flow}`}
+                  style={{ "--steps": view.steps.length } as CSSProperties}
+                  aria-label={`선물 진행 단계 ${progress.total}단계 중 ${progress.done}단계 완료`}
+                >
                   {view.steps.map((st, i) => {
                     const detail = fanStepDetail(st, view);
                     return (
                       <li key={st.key} className={STEP_CLASS[st.state]} aria-current={st.state === "current" ? "step" : undefined}>
-                        <span className={s.sn}>{st.state === "done" ? <Check /> : i + 1}</span>
-                        <span className={s["step-text"]}>
+                        <span className="n">{st.state === "done" ? <Check /> : i + 1}</span>
+                        <p className="t-strong">
                           {FAN_STEP_LABEL[st.key]}
                           {st.state === "done" ? <span className="sr-only"> 완료</span> : null}
                           {st.state === "stopped" ? <span className="sr-only"> 멈춤</span> : null}
-                          {detail ? <span className={s.t}>{detail}</span> : null}
-                        </span>
+                        </p>
+                        {detail ? <p className="t-meta">{detail}</p> : null}
                       </li>
                     );
                   })}
@@ -158,197 +156,207 @@ export function GiftStatusPage({
                       {view.approval.state === "done" ? <Check size={16} /> : null}
                       {APPROVAL_TEXT[view.approval.state]}
                     </span>
-                    {APPROVAL_LABEL}
-                    {view.approval.state === "done" && view.approval.at ? <span className={s.t}> · {formatDate(view.approval.at)}</span> : null}
+                    <span>
+                      {APPROVAL_LABEL}
+                      {view.approval.state === "done" && view.approval.at ? <span className="t-meta"> · {formatDate(view.approval.at)}</span> : null}
+                    </span>
                   </p>
                 ) : null}
-              </div>
+              </>
             ) : null}
-          </div>
+          </section>
 
-          <div className={s.two}>
-            <div className={s.stack}>
-              {/* 받았어요·답장(gift-reply INV-G6·G8·G9) — 출고된 상자가 있을 때만. 날짜만, 시각은 없다 */}
-              {replies.length > 0 ? (
-                <section className={s.part} aria-labelledby="reply-title">
-                  <h2 id="reply-title">받았어요 · 답장</h2>
-                  <p className={s["sub-t"]}>크리에이터가 상자를 받았다고 남기면 날짜가 보여요. 답장이 오면 공개할지 정하고 카드로 공유할 수 있어요.</p>
-                  <FanBoxReplies rows={replies} photoBase={photoBase} returnPath={`/gifts/${view.orderNo}`} />
-                </section>
-              ) : null}
-              {/* 차액 결제(payment INV-M11·M12·M13) — 차액 요청이 있는 주문에만. 진행 중이 아니면 낸 기록만 남는다 */}
-              {difference && shownDifferences.length > 0 ? (
-                <DifferenceSection
-                  orderNo={view.orderNo}
-                  differences={shownDifferences}
-                  clientKey={difference.clientKey}
-                  notice={difference.notice}
-                />
-              ) : null}
-              {view.outcome === "returned" ? (
-                <div className={s.part}>
-                  <h2>돌려보내 드렸어요</h2>
-                  <p className={s["sub-t"]}>{RETURN_ON_INSPECTION_NOTICE}</p>
-                </div>
-              ) : null}
-              {view.outcome === "declined" || view.outcome === "expired" ? (
-                <div className={s.part}>
-                  <h2>이 선물은 보내지 마세요</h2>
-                  {/* 거절·자동 반려 모두 같은 안내 — 거절인지 기간 지남인지는 위 한 줄이 말한다(decline-block INV-D5). 상자마다 돌려준다(payment INV-M8·M18, 2026-10-10 늦게 오는 상자) */}
-                  <p className={s["sub-t"]}>받는 주소가 보이기 전에 끝났다면 결제 금액을 모두 돌려드려요.</p>
-                  <p className={s["sub-t"]}>사무실에 도착한 상자는 보낸 주소로 돌려보내 드리고, 그 상자의 반송 택배비를 뺀 금액을 돌려드려요.</p>
-                  <p className={s["sub-t"]}>
-                    아직 도착하지 않은 상자는 택배비를 뺀 금액을 먼저 돌려드려요. 이미 보내셨다면 도착하는 대로 돌려보내 드리고, 7일 안에 도착하지 않으면
-                    택배비도 돌려드려요.
-                  </p>
-                </div>
-              ) : null}
+          {/* 도착 예정일 — 시안에 없는 칸. 같은 판 모양(흰 카드 + 그림)으로 진행 판 바로 아래 */}
+          {view.expectedArrivalDate ? (
+            <div className={`card ${s.eta}`}>
+              <img className="asset" src="/img/icon-truck.png" alt="" aria-hidden="true" width={44} height={44} />
+              <div>
+                <h2 className="t-meta">도착 예정일</h2>
+                <p className="t-card">{formatDate(view.expectedArrivalDate)} 전후</p>
+              </div>
+            </div>
+          ) : null}
 
-              {showsProgress && boxes.length > 0 ? (
-                <div className={s.part}>
-                  {/* 「먼저 보내기」를 누르면 안내 칸이 사라진다 — 포커스는 그대로 남는 이 제목으로 옮긴다 */}
-                  <h2 id="box-status-title" tabIndex={-1}>
-                    상자별 상태
-                  </h2>
-                  {earlySendAck ? <EarlySendGate orderNo={view.orderNo} creatorName={view.creatorName} focusAfterId="box-status-title" /> : null}
-                  {anyAddress ? (
-                    <p className={s["sub-t"]}>
-                      상자마다 받는 주소가 달라요. 상자에 맞는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 승인은 출고 전까지만 나면 돼요.
-                    </p>
-                  ) : null}
-                  {anyEditable ? <p className={s["sub-t"]}>송장번호는 배송 조회를 보고 싶을 때만 넣으면 돼요.</p> : null}
-                  <div className={s["box-rows"]}>
-                    {boxes.map((b) => {
-                      const tierName = boxTierName(b.tier);
-                      const addressCode = giftAddressCode(b, officeAddress, inProgress);
-                      return (
-                        <div key={b.boxId} className={s["box-row"]}>
-                          <div className={s["box-top"]}>
+          {/* 받았어요·답장(gift-reply INV-G6·G8·G9) — 출고된 상자가 있을 때만. 날짜만, 시각은 없다 */}
+          {replies.length > 0 ? (
+            <section className="part" aria-labelledby="reply-title">
+              <h2 className="t-title" id="reply-title">
+                받았어요 · 답장
+              </h2>
+              <p className="t-lead t-desc">크리에이터가 상자를 받았다고 남기면 날짜가 보여요. 답장이 오면 공개할지 정하고 카드로 공유할 수 있어요.</p>
+              <div className={s.inner}>
+                <FanBoxReplies rows={replies} photoBase={photoBase} returnPath={`/gifts/${view.orderNo}`} />
+              </div>
+            </section>
+          ) : null}
+          {/* 차액 결제(payment INV-M11·M12·M13) — 차액 요청이 있는 주문에만. 진행 중이 아니면 낸 기록만 남는다 */}
+          {difference && shownDifferences.length > 0 ? (
+            <DifferenceSection orderNo={view.orderNo} differences={shownDifferences} clientKey={difference.clientKey} notice={difference.notice} />
+          ) : null}
+          {view.outcome === "returned" ? (
+            <div className="part">
+              <h2 className="t-title">돌려보내 드렸어요</h2>
+              <p className="t-lead t-desc">{RETURN_ON_INSPECTION_NOTICE}</p>
+            </div>
+          ) : null}
+          {view.outcome === "declined" || view.outcome === "expired" ? (
+            <div className="part">
+              <h2 className="t-title">이 선물은 보내지 마세요</h2>
+              {/* 거절·자동 반려 모두 같은 안내 — 거절인지 기간 지남인지는 위 한 줄이 말한다(decline-block INV-D5). 상자마다 돌려준다(payment INV-M8·M18, 2026-10-10 늦게 오는 상자) */}
+              <p className="t-lead t-desc">받는 주소가 보이기 전에 끝났다면 결제 금액을 모두 돌려드려요.</p>
+              <p className={s.more}>사무실에 도착한 상자는 보낸 주소로 돌려보내 드리고, 그 상자의 반송 택배비를 뺀 금액을 돌려드려요.</p>
+              <p className={s.more}>
+                아직 도착하지 않은 상자는 택배비를 뺀 금액을 먼저 돌려드려요. 이미 보내셨다면 도착하는 대로 돌려보내 드리고, 7일 안에 도착하지 않으면
+                택배비도 돌려드려요.
+              </p>
+            </div>
+          ) : null}
+
+          {showsProgress && boxes.length > 0 ? (
+            <div className="part">
+              {/* 「먼저 보내기」를 누르면 안내 칸이 사라진다 — 포커스는 그대로 남는 이 제목으로 옮긴다 */}
+              <h2 className="t-title" id="box-status-title" tabIndex={-1}>
+                상자별 상태
+              </h2>
+              {earlySendAck ? <EarlySendGate orderNo={view.orderNo} creatorName={view.creatorName} focusAfterId="box-status-title" /> : null}
+              {anyAddress ? (
+                <p className="t-lead t-desc">
+                  상자마다 받는 주소가 달라요. 상자에 맞는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 승인은 출고 전까지만 나면 돼요.
+                </p>
+              ) : null}
+              {anyEditable ? <p className="t-meta">송장번호는 배송 조회를 보고 싶을 때만 넣으면 돼요.</p> : null}
+              <div className={s.inner}>
+                {boxes.map((b) => {
+                  const tierName = boxTierName(b.tier);
+                  const addressCode = giftAddressCode(b, officeAddress, inProgress);
+                  return (
+                    <div key={b.boxId} className={`card ${s.box}`}>
+                      <div className={s["box-head"]}>
+                        <h3>{b.label}</h3>
+                        {hasArrived(b.state) ? (
+                          <span className={statusTagClass("success")}>
+                            <Check size={16} />
+                            입고됨
+                          </span>
+                        ) : isMissing(b.state) ? (
+                          <span className={statusTagClass("warn")}>도착하지 않음</span>
+                        ) : (
+                          <span className="tag">아직 도착 전</span>
+                        )}
+                      </div>
+                      {tierName ? <p className="t-meta">{tierName}</p> : null}
+                      {isMissing(b.state) ? (
+                        <p className="hint">결제하고 30일이 지나도 도착하지 않아 이 상자는 닫혔어요. 이 상자 금액을 돌려드려요. 이제 이 상자를 보내도 받지 않고 돌려보내요.</p>
+                      ) : null}
+                      {officeAddress && addressCode ? (
+                        <ReceivingAddress officeAddress={officeAddress} code={addressCode} boxName={b.label} multiple={boxes.length > 1} />
+                      ) : null}
+                      {isWaybillEditable(b.state) && inProgress ? (
+                        <WaybillEditor
+                          target={{ kind: "box", id: b.boxId }}
+                          boxName={b.label}
+                          initial={b.waybillNo}
+                          layout="box"
+                          hint="선택이에요. 넣으면 배송 조회로 팬꾹까지 오는 길을 보여 드려요."
+                        />
+                      ) : b.waybillNo ? (
+                        <>
+                          <dl className={`kv ${s["inv-fixed"]}`}>
                             <div>
-                              <h3>{b.label}</h3>
-                              {tierName ? <p className="sub">{tierName}</p> : null}
+                              <dt>송장번호</dt>
+                              <dd className={s.no}>{formatWaybill(b.waybillNo)}</dd>
                             </div>
-                            {hasArrived(b.state) ? (
-                              <span className={statusTagClass("success")}>
-                                <Check size={16} />
-                                입고됨
-                              </span>
-                            ) : isMissing(b.state) ? (
-                              <span className={statusTagClass("warn")}>도착하지 않음</span>
-                            ) : (
-                              <span className="tag">아직 도착 전</span>
-                            )}
-                          </div>
-                          {isMissing(b.state) ? (
-                            <p className="hint">결제하고 30일이 지나도 도착하지 않아 이 상자는 닫혔어요. 이 상자 금액을 돌려드려요. 이제 이 상자를 보내도 받지 않고 돌려보내요.</p>
-                          ) : null}
-                          {officeAddress && addressCode ? (
-                            <ReceivingAddress officeAddress={officeAddress} code={addressCode} boxName={b.label} multiple={boxes.length > 1} />
-                          ) : null}
-                          {isWaybillEditable(b.state) && inProgress ? (
-                            <WaybillEditor
-                              target={{ kind: "box", id: b.boxId }}
-                              boxName={b.label}
-                              initial={b.waybillNo}
-                              layout="box"
-                              hint="선택이에요. 넣으면 배송 조회로 팬꾹까지 오는 길을 보여 드려요."
-                            />
-                          ) : b.waybillNo ? (
-                            <>
-                              <div className={s["inv-fixed"]}>
-                                <span className="sub">송장번호</span>
-                                <span className={s.no}>{formatWaybill(b.waybillNo)}</span>
-                              </div>
-                              {hasArrived(b.state) ? <p className="hint">입고된 상자는 송장번호를 고칠 수 없어요.</p> : null}
-                            </>
-                          ) : null}
-                          {inProgress && canReportNotMine(b.state) ? (
-                            <NotMineButton target={{ kind: "box", id: b.boxId }} boxName={b.label} reported={b.reportedNotMine} />
-                          ) : null}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
-              {/* 받는 주소 없이 보냈어요(inbound-address-code INV-C4 ②) — 진행 중 주문이면 늘 그린다. 마지막 상자를 찾아 고를 상자가 없어져도
-                  결과 안내가 남아 있게, 빈 목록은 칸 안에서 처리한다. 잇는 판정은 DB 가 한다 */}
-              {showsProgress && inProgress && boxes.length > 0 ? (
-                <div className={s.part}>
-                  <h2>받는 주소 없이 보냈어요</h2>
-                  <p className={s["sub-t"]}>받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 내 상자로 이어져요.</p>
-                  <FindMyBox boxes={finderBoxes} />
-                  <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`}>
-                    하루에 다섯 번까지 찾을 수 있어요. 사무실에는 도착 시각·택배사·보낸 사람 이름 첫 글자만 남기고, 주소와 전화번호는 남기지 않아요.
-                  </p>
-                </div>
-              ) : null}
-
-              {/* 결제가 끝난 진행 중 주문 — 상자를 더 보내는 길은 없다(스펙 비범위: 상자 추가). 도착한 뒤에는 더 보낼 일이 없어 접는다 */}
-              {anyAddress && view.canEnterTrackingNo ? (
-                <div className={s.part}>
-                  <h2>보내기 전에 알아 두세요</h2>
-                  <p className={s["sub-t"]}>상자를 더 보내려면 새로 등록해 주세요. 상자마다 받는 주소가 달라요.</p>
-                  <p className={`${s["sub-t"]} ${s["sub-t--gap"]}`}>{RETURN_ON_REJECT_NOTICE}</p>
-                </div>
-              ) : null}
+                          </dl>
+                          {hasArrived(b.state) ? <p className="hint">입고된 상자는 송장번호를 고칠 수 없어요.</p> : null}
+                        </>
+                      ) : null}
+                      {inProgress && canReportNotMine(b.state) ? (
+                        <NotMineButton target={{ kind: "box", id: b.boxId }} boxName={b.label} reported={b.reportedNotMine} />
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
+          ) : null}
 
-            <div className={s.stack}>
-              {view.expectedArrivalDate ? (
-                <div className={s.eta}>
-                  <span className={s["ico-tile"]} aria-hidden="true">
-                    <img className="asset" src="/img/icon-truck.png" alt="" width={44} height={44} />
+          {/* 받는 주소 없이 보냈어요(inbound-address-code INV-C4 ②) — 진행 중 주문이면 늘 그린다. 마지막 상자를 찾아 고를 상자가 없어져도
+              결과 안내가 남아 있게, 빈 목록은 칸 안에서 처리한다. 잇는 판정은 DB 가 한다 */}
+          {showsProgress && inProgress && boxes.length > 0 ? (
+            <div className="part">
+              <h2 className="t-title">받는 주소 없이 보냈어요</h2>
+              <p className="t-lead t-desc">
+                받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 내 상자로 이어져요.
+              </p>
+              <div className={s.inner}>
+                <FindMyBox boxes={finderBoxes} />
+              </div>
+              <p className="hint">
+                하루에 다섯 번까지 찾을 수 있어요. 사무실에는 도착 시각·택배사·보낸 사람 이름 첫 글자만 남기고, 주소와 전화번호는 남기지 않아요.
+              </p>
+            </div>
+          ) : null}
+
+          <div className={`grid ${payment ? "cols-2" : "cols-1"}`}>
+            <section className="card" aria-labelledby="info-title">
+              <h2 className="t-card" id="info-title">
+                주문 정보
+              </h2>
+              <dl className={`kv ${s.kv}`}>
+                <div>
+                  <dt>주문번호</dt>
+                  <dd>{view.orderNo}</dd>
+                </div>
+                <div>
+                  <dt>받는 크리에이터</dt>
+                  <dd>{view.creatorName}</dd>
+                </div>
+                <div>
+                  <dt>선물</dt>
+                  <dd>{view.itemKind}</dd>
+                </div>
+                <div>
+                  <dt>상자</dt>
+                  <dd>{view.boxCount}개</dd>
+                </div>
+                <div>
+                  <dt>등록</dt>
+                  <dd>{formatDateTime(view.registeredAt)}</dd>
+                </div>
+              </dl>
+              {payment ? null : (
+                <p className={s["tag-line"]}>
+                  <span className="tag">
+                    <Check size={16} />
+                    검수 포함
                   </span>
-                  <div>
-                    <h2>도착 예정일</h2>
-                    <strong>{formatDate(view.expectedArrivalDate)} 전후</strong>
-                  </div>
+                </p>
+              )}
+              {hasShipped(view) ? (
+                <p className={`t-meta ${s["tag-line"]}`}>
+                  {PROMISE.addressFan} 그래서 크리에이터에게 가는 송장번호도 알려 드리지 않아요. 진행 상황은 이 화면에서 볼 수 있어요.
+                </p>
+              ) : null}
+              {cancelable ? (
+                <div className={s.cancel}>
+                  <CancelGiftButton orderNo={view.orderNo} addressShown={!view.earlySendPending} />
                 </div>
               ) : null}
-              <section className={s.info} aria-labelledby="info-title">
-                <h2 id="info-title">주문 정보</h2>
-                <dl>
-                  <div className={s["info-row"]}>
-                    <dt>주문번호</dt>
-                    <dd>{view.orderNo}</dd>
-                  </div>
-                  <div className={s["info-row"]}>
-                    <dt>받는 크리에이터</dt>
-                    <dd>{view.creatorName}</dd>
-                  </div>
-                  <div className={s["info-row"]}>
-                    <dt>선물</dt>
-                    <dd>{view.itemKind}</dd>
-                  </div>
-                  <div className={s["info-row"]}>
-                    <dt>상자</dt>
-                    <dd>{view.boxCount}개</dd>
-                  </div>
-                  <div className={s["info-row"]}>
-                    <dt>등록</dt>
-                    <dd>{formatDateTime(view.registeredAt)}</dd>
-                  </div>
-                </dl>
-                {payment ? <PaymentSummary payment={payment} differences={difference?.differences ?? []} /> : null}
-                <span className="tag">
-                  <Check size={16} />
-                  검수 포함
-                </span>
-                {hasShipped(view) ? (
-                  <p className={s["info-note"]}>
-                    {PROMISE.addressFan} 그래서 크리에이터에게 가는 송장번호도 알려 드리지 않아요. 진행 상황은 이 화면에서 볼 수
-                    있어요.
-                  </p>
-                ) : null}
-                {cancelable ? <CancelGiftButton orderNo={view.orderNo} addressShown={!view.earlySendPending} /> : null}
-              </section>
-            </div>
+            </section>
+            {payment ? <PaymentSummary payment={payment} differences={difference?.differences ?? []} /> : null}
           </div>
-          <div className="page-end" />
+
+          {/* 결제가 끝난 진행 중 주문 — 상자를 더 보내는 길은 없다(스펙 비범위: 상자 추가). 도착한 뒤에는 더 보낼 일이 없어 접는다 */}
+          {anyAddress && view.canEnterTrackingNo ? (
+            <div className="part part--soft">
+              <h2 className="t-title">보내기 전에 알아 두세요</h2>
+              <p className="t-lead t-desc">상자를 더 보내려면 새로 등록해 주세요. 상자마다 받는 주소가 달라요.</p>
+              <p className={s.more}>{RETURN_ON_REJECT_NOTICE}</p>
+            </div>
+          ) : null}
         </div>
-      </section>
+      </div>
+      <div className="page-end" />
     </main>
   );
 }

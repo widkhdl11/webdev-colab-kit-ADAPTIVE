@@ -1,46 +1,15 @@
-/* 선물 내역 — 시안 docs/design/mockups/site/v9-pages/me-b.html (design-rules 5절, 카드 d45). 내 팬꾹 틀(제목·메뉴)은 라우트가 붙인다 */
-.my-h { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
-.my-h h2 { font-size: 28px; line-height: 1.3; letter-spacing: -.8px; }
+/* 선물 내역 — 시안 docs/design/mockups/site/v11/gifts.html 화면 전용 <style>. 카드 격자·탭·진행 막대는 base.css 공통 부품. 내 팬꾹 틀(제목·메뉴)은 라우트가 붙인다 */
 
-/* 분류 탭 — 세 칸 묶음 */
-.tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin: 16px 0; padding: 4px; border-radius: var(--r-box); background: var(--surface); box-shadow: var(--hair); }
-.tab { min-height: 48px; padding: 0 8px; border: 0; border-radius: 12px; background: none; color: var(--sub); font-weight: 600; cursor: pointer; }
-.tab:hover { background: var(--surface-hover); }
-.tab[aria-selected="true"] { background: var(--white); color: var(--ink); font-weight: 700; box-shadow: var(--hair); }
-@media (max-width: 480px) { .tab { padding: 0 4px; letter-spacing: -.4px; } }
+/* 크리에이터별로 보기 — 「함께한 시간」으로 가는 3열 카드(휴대폰 1열) */
+.by { margin-bottom: 48px; }
+.tg { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; height: 100%; padding: 20px; text-decoration: none; }
+.tg:hover { background: var(--surface); }
+.tg-text { display: grid; min-width: 0; }
+.tg-text strong { overflow-wrap: anywhere; }
 
-.note-line { margin-top: 16px; color: var(--sub); }
-.empty { margin-top: 16px; padding: 24px; border-radius: var(--r-card); background: var(--surface); color: var(--sub); }
-.empty :global(.link-arrow) { margin-top: 4px; }
+/* 받지 않은 선물 탭 위 안내 한 줄 → 카드 48(휴대폰 32, design-rules 0절 간격 표) */
+.note-line { margin-bottom: 48px; }
+@media (max-width: 767px) { .note-line { margin-bottom: 32px; } }
 
-/* 선물마다 경계 카드 한 장 */
-.rows { display: grid; gap: 12px; margin-top: 16px; }
-.g { padding: 20px 24px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
-.g-top { display: flex; align-items: center; gap: 16px; }
-.g-who { flex: 1; min-width: 0; }
-.who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
-.says { color: var(--sub); overflow-wrap: anywhere; }
-.badge { white-space: nowrap; }
-.g-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border); }
-.meter { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.dots { width: 140px; }
-.meter small { font-size: 16px; color: var(--sub); }
-.go { white-space: nowrap; margin-left: auto; }
-@media (max-width: 767px) {
-  .g { padding: 16px; }
-  .g-top { flex-wrap: wrap; }
-  .g-who { flex-basis: calc(100% - 64px); }
-  .g-top .badge { margin-left: 64px; }
-}
-
-/* 크리에이터별로 보기 — 「함께한 시간」으로 가는 줄(한 줄에 하나, design-rules 2절) */
-.by { margin-top: 16px; }
-.by h3 { font-size: 20px; letter-spacing: -.3px; }
-.by-list { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
-.by-row { display: flex; align-items: center; gap: 16px; min-height: 72px; padding: 12px 20px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--hair); color: var(--ink); text-decoration: none; }
-.by-row:hover { background: var(--surface-hover); }
-.by-row:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-.by-face { width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; object-fit: cover; }
-.by-text { display: grid; flex: 1; min-width: 0; }
-.by-text strong { overflow-wrap: anywhere; }
-.by-go { color: var(--sub); font-size: 24px; line-height: 1; }
+.meter { margin-top: 6px; }
+.go { margin-top: auto; }

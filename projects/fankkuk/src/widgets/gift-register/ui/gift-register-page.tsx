@@ -13,7 +13,7 @@ import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import { RegisterForm, type CreatorOption, type RegisteredGift } from "@/features/gift-register/ui/register-form";
 import s from "./gift-register-page.module.css";
 
-// 선물 보내기 본문(팬·크리에이터). 시안: docs/design/mockups/site/v4/send.html (4단계, 카드 안 이전·다음, PC 오른쪽 요약)
+// 선물 보내기 본문(팬·크리에이터). 시안: docs/design/mockups/site/v11/send.html (4단계, 가운데 한 기둥 — 오른쪽 요약 없음, design-rules 0절)
 // 4단계에서 「결제하기」를 누르면 서버에 등록되고(결제 대기), 같은 자리에 결제창이 뜬다.
 // 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리 import 하지 않게.
 // 선물 사진(선택)을 골랐으면 등록 직후 그 주문에 올린 뒤 결제창을 연다(together INV-F2 — 서버가 열어 보고 사진 정보를 지워 저장한다).
@@ -60,41 +60,39 @@ export function GiftRegisterPage({
 
   return (
     <main id="main">
-      <div className="container page-title">
-        <h1 className="page-h">선물 보내기</h1>
-        <p>{registered ? `주문번호 ${registered.orderNo} — 결제하면 등록이 끝나요.` : "누구에게, 무엇을, 몇 상자 보낼지 알려 주세요."}</p>
-        {!registered ? <p className="sub">팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p> : null}
+      <div className="container page-top">
+        <h1 className="t-hero">선물 보내기</h1>
+        <p className="t-lead t-desc">{registered ? `주문번호 ${registered.orderNo} — 결제하면 등록이 끝나요.` : "누구에게, 무엇을, 몇 상자 보낼지 알려 주세요."}</p>
+        {!registered ? <p className={`t-meta ${s["top-meta"]}`}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p> : null}
       </div>
       {followFirst && !registered ? (
-        <div className="container">
-          <div className={s["follow-first"]} role="status">
+        <div className={`container ${s.col}`}>
+          <div className={`card card--soft ${s["follow-first"]}`} role="status">
             <p>
               <strong>{followFirst.name}님</strong>을 팔로우하면 바로 선물을 보낼 수 있어요.
               <br />
-              <span className="sub">{FOLLOW_NICKNAME_NOTICE}</span>
+              <span className="t-meta">{FOLLOW_NICKNAME_NOTICE}</span>
             </p>
             <FollowThenSend creatorId={followFirst.id} creatorName={followFirst.name} signedIn={signedIn} className="btn btn--sm" />
           </div>
         </div>
       ) : null}
       {creators.length === 0 && !registered ? (
-        <div className="container">
-          <div className={s["empty-box"]}>
-            <span className={s["ico-tile"]} aria-hidden="true">
-              <img className="asset" src="/img/icon-gift.png" alt="" aria-hidden="true" width={64} height={64} />
-            </span>
+        <div className={`container ${s.col}`}>
+          <div className="empty">
+            <img className="asset" src="/img/icon-gift.png" alt="" aria-hidden="true" width={96} height={96} />
             {signedIn ? (
               <>
-                <h2>아직 팔로우한 크리에이터가 없어요</h2>
-                <p className="sub">선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 좋아하는 크리에이터를 찾아 팔로우해 보세요.</p>
+                <h2 className="t-card">아직 팔로우한 크리에이터가 없어요</h2>
+                <p className="t-meta">선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 좋아하는 크리에이터를 찾아 팔로우해 보세요.</p>
                 <Link className="btn" href="/creators">
                   크리에이터 찾기
                 </Link>
               </>
             ) : (
               <>
-                <h2>로그인하고 선물을 보내 주세요</h2>
-                <p className="sub">선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 로그인하면 팔로우한 크리에이터가 여기에 나와요.</p>
+                <h2 className="t-card">로그인하고 선물을 보내 주세요</h2>
+                <p className="t-meta">선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 로그인하면 팔로우한 크리에이터가 여기에 나와요.</p>
                 <Link className="btn" href="/login">
                   로그인
                 </Link>
@@ -106,24 +104,22 @@ export function GiftRegisterPage({
         clientKey ? (
           <>
             {photoNote ? (
-              <p className={`container ${s["photo-note"]}`} role="status">
+              <p className={`container ${s.col} ${s["photo-note"]}`} role="status">
                 {photoNote}
               </p>
             ) : null}
             <PaymentStep clientKey={clientKey} pending={registered} />
           </>
         ) : (
-          <p className="container" role="alert">
+          <p className={`container ${s.col}`} role="alert">
             지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.
           </p>
         )
       ) : blockedNotice && preselected ? (
-        <div className="container">
-          <div className={s["empty-box"]} role="status">
-            <span className={s["ico-tile"]} aria-hidden="true">
-              <img className="asset" src="/img/icon-gift.png" alt="" aria-hidden="true" width={64} height={64} />
-            </span>
-            <h2>{preselected.name}님</h2>
+        <div className={`container ${s.col}`}>
+          <div className="empty" role="status">
+            <img className="asset" src="/img/icon-gift.png" alt="" aria-hidden="true" width={96} height={96} />
+            <h2 className="t-card">{preselected.name}님</h2>
             <p>{blockedNotice}</p>
             {creators.length > 1 ? (
               <button className="btn" type="button" onClick={() => setPickOther(true)}>
@@ -146,6 +142,7 @@ export function GiftRegisterPage({
           today={today}
         />
       )}
+      <div className="page-end" />
     </main>
   );
 }

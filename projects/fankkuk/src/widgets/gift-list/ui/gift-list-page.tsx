@@ -8,8 +8,8 @@ import { formatDate } from "@/shared/lib/format/datetime";
 import { GiftTabs } from "./gift-tabs";
 import s from "./gift-list.module.css";
 
-// 보낸 선물 목록(「내 팬꾹」 안) — 팬은 「선물 내역」, 크리에이터는 「보낸 선물」. 시안: docs/design/mockups/site/v9-pages/me-b.html
-// 진행 중 · 끝난 선물 · 받지 않은 선물, 선물마다 경계 카드 한 장(상태 배지 + 진행 중이면 진행 막대 + 상세 보기). 받지 않은 선물은 거절·자동 반려 모두 같은 모습이다(fan-view).
+// 보낸 선물 목록(「내 팬꾹」 안) — 팬은 「선물 내역」, 크리에이터는 「보낸 선물」. 시안: docs/design/mockups/site/v11/gifts.html (2열 카드 격자, 휴대폰 1열 — design-rules 0절)
+// 진행 중 · 끝난 선물 · 받지 않은 선물, 선물마다 같은 크기 카드 한 장(상태 배지 + 진행 중이면 진행 막대 + 상세 보기). 받지 않은 선물은 거절·자동 반려 모두 같은 모습이다(fan-view).
 // 내 정보 틀(제목·왼쪽 메뉴)과 <main> 은 라우트가 붙인다.
 // 목록 위 「크리에이터별로 보기」 — 선물한 크리에이터마다 「함께한 시간」(together)으로 가는 줄. 숫자는 본인에게만 보이는 기록이다(추가분 F-7).
 
@@ -20,20 +20,18 @@ function TogetherLinks({ creators }: { creators: readonly TogetherLink[] }) {
   return (
     <section className={s.by} aria-labelledby="by-creator-h">
       <h3 id="by-creator-h">크리에이터별로 보기</h3>
-      <ul className={s["by-list"]}>
+      <ul className="grid cols-3">
         {creators.map((c) => (
           <li key={c.creatorId}>
-            <Link className={s["by-row"]} href={c.href}>
-              <CreatorPhoto photoUrl={c.photoUrl} tone="var(--face-6)" className={`face ${s["by-face"]}`} />
-              <span className={s["by-text"]}>
+            <Link className={`card ${s.tg}`} href={c.href}>
+              <CreatorPhoto photoUrl={c.photoUrl} tone="var(--face-6)" className="face" />
+              <span className={s["tg-text"]}>
                 <strong>{c.name}님과 함께한 시간</strong>
-                <span className={s.says}>
+                <span className="t-meta">
                   선물 {c.giftCount}개 · 답장 {c.replyCount}통
                 </span>
               </span>
-              <span className={s["by-go"]} aria-hidden="true">
-                ›
-              </span>
+              <span aria-hidden="true">›</span>
             </Link>
           </li>
         ))}
@@ -47,42 +45,45 @@ function GiftRow({ gift, faceTone }: { gift: FanGiftView; faceTone: string | und
   const progress = fanProgress(gift);
   const who = `${gift.creatorName}님께`;
   return (
-    <li className={s.g}>
-      <div className={s["g-top"]}>
+    <li className="card gcard">
+      <div className="gcard-top">
         <CreatorFace tone={faceTone ?? "var(--face-1)"} />
-        <div className={s["g-who"]}>
-          <p className={s.who}>{who}</p>
-          <p className={s.says}>
-            {gift.itemKind} · 상자 {gift.boxCount}개 · 등록 {formatDate(gift.registeredAt)} · 주문번호 {gift.orderNo}
+        <div>
+          <p className="t-strong">{who}</p>
+          <p className="t-meta">
+            {gift.itemKind} · 상자 {gift.boxCount}개
           </p>
         </div>
-        <span className={statusTagClass(badge.tone, s.badge)}>{badge.text}</span>
       </div>
-      <div className={s["g-foot"]}>
-        {gift.outcome === "in_progress" ? (
-          <div className={s.meter}>
-            <div
-              className={`dots ${s.dots}`}
-              role="progressbar"
-              aria-label={`${who} 보낸 선물 ${gift.orderNo} 진행 단계`}
-              aria-valuemin={0}
-              aria-valuemax={progress.total}
-              aria-valuenow={progress.done}
-              aria-valuetext={`${progress.total}단계 중 ${progress.done}단계 완료, ${badge.text}`}
-            >
-              {gift.steps.map((st) => (
-                <span key={st.key} className={st.state === "done" ? "on" : undefined} />
-              ))}
-            </div>
-            <small>
-              {progress.done}/{progress.total} 단계
-            </small>
+      <p className="t-meta">
+        등록 {formatDate(gift.registeredAt)} · 주문번호 {gift.orderNo}
+      </p>
+      <p>
+        <span className={statusTagClass(badge.tone)}>{badge.text}</span>
+      </p>
+      {gift.outcome === "in_progress" ? (
+        <div>
+          <div
+            className="dots"
+            role="progressbar"
+            aria-label={`${who} 보낸 선물 ${gift.orderNo} 진행 단계`}
+            aria-valuemin={0}
+            aria-valuemax={progress.total}
+            aria-valuenow={progress.done}
+            aria-valuetext={`${progress.total}단계 중 ${progress.done}단계 완료, ${badge.text}`}
+          >
+            {gift.steps.map((st) => (
+              <span key={st.key} className={st.state === "done" ? "on" : undefined} />
+            ))}
           </div>
-        ) : null}
-        <Link className={`link-arrow ${s.go}`} href={`/gifts/${gift.orderNo}`} aria-label={`${who} 보낸 선물 ${gift.orderNo} 상세`}>
-          상세 보기 ›
-        </Link>
-      </div>
+          <p className={`t-meta ${s.meter}`}>
+            {progress.done}/{progress.total} 단계
+          </p>
+        </div>
+      ) : null}
+      <Link className={`btn btn--line btn--sm btn--block ${s.go}`} href={`/gifts/${gift.orderNo}`} aria-label={`${who} 보낸 선물 ${gift.orderNo} 상세`}>
+        상세 보기 ›
+      </Link>
     </li>
   );
 }
@@ -98,7 +99,7 @@ function Rows({
 }) {
   if (gifts.length === 0) {
     return (
-      <div className={s.empty}>
+      <div className="empty">
         <p>{empty}</p>
         <Link className="link-arrow" href="/gifts/new">
           선물 보내기 ›
@@ -107,7 +108,7 @@ function Rows({
     );
   }
   return (
-    <ul className={s.rows}>
+    <ul className="grid cols-2">
       {gifts.map((g) => (
         <GiftRow key={g.orderNo} gift={g} faceTone={faceToneByName[g.creatorName]} />
       ))}
@@ -135,9 +136,9 @@ export function GiftListPage({
   const notAccepted = gifts.filter((g) => fanGiftBucket(g) === "not_accepted");
 
   return (
-    <div>
-      <div className={s["my-h"]}>
-        <h2>{title}</h2>
+    <>
+      <div className="sec-head">
+        <h2 className="t-title">{title}</h2>
       </div>
       {creators.length > 0 ? <TogetherLinks creators={creators} /> : null}
       <GiftTabs
@@ -166,6 +167,6 @@ export function GiftListPage({
           },
         ]}
       />
-    </div>
+    </>
   );
 }

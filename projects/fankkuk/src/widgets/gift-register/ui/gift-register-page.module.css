@@ -1,9 +1,8 @@
-/* 크리에이터가 보낼 수 있는 사람이 없을 때 — 회색 판 + 그림 칸 + 버튼 */
-.empty-box { margin-bottom: 64px; padding: 48px 24px; border-radius: var(--r-tile); background: var(--surface); text-align: center; display: grid; justify-items: center; gap: 8px; }
-.ico-tile { display: grid; place-items: center; width: 96px; height: 96px; border-radius: var(--r-tile); background: var(--white); margin-bottom: 8px; }
-.ico-tile img { width: 64px; height: 64px; }
-.empty-box :global(.btn) { margin-top: 16px; }
-/* 미리 고르고 왔는데 아직 팔로우하지 않은 크리에이터 — 안내라서 옅은 코랄 면 */
-.follow-first { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; margin-bottom: 24px; padding: 16px 20px; border-radius: var(--r-box); background: var(--surface-brand); }
+/* 선물 보내기 바깥 틀 — 시안 docs/design/mockups/site/v11/send.html. 본문 폼은 features/gift-register/ui/register-form */
+/* 가운데 한 기둥 — 시안 .page-send main > .container */
+.col { max-width: calc(720px + 2 * var(--gutter)); }
+.top-meta { margin-top: 8px; }
+/* 미리 고르고 왔는데 아직 팔로우하지 않은 크리에이터 — 안내라서 옅은 코랄 판 */
+.follow-first { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; padding: 24px; }
 /* 선물 사진을 올리지 못했을 때 결제창 위 한 줄 — 결제는 그대로 진행한다 */
-.photo-note { margin-bottom: 16px; font-weight: 700; }
+.photo-note { margin-bottom: 16px; font-weight: 800; }

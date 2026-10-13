@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import s from "./gift-list.module.css";
 
 // 선물 내역 분류 탭. 좌우 화살표로 옮겨 가고, 고른 탭만 Tab 순서에 남는다(시안 site.js 5절).
 export type GiftTab = { id: string; label: string; panel: ReactNode };
@@ -21,14 +20,14 @@ export function GiftTabs({ tabs }: { tabs: readonly GiftTab[] }) {
 
   return (
     <>
-      <div className={s.tabs} role="tablist" aria-label="선물 내역 분류">
+      <div className="tabs" role="tablist" aria-label="선물 내역 분류">
         {tabs.map((t, i) => (
           <button
             key={t.id}
             ref={(el) => {
               buttons.current[i] = el;
             }}
-            className={s.tab}
+            className="tab"
             role="tab"
             id={`tab-${t.id}`}
             type="button"
