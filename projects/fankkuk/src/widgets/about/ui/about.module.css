@@ -96,3 +96,6 @@
 @media (max-width: 767px) {
   .root { --cols-3: 1; --scene-art: 88px; }
 }
+
+/* 옅은 판 — 공개 화면 시안(v18-pub.css .card--soft)은 옅은 빨강. 전역 기본(회색)은 로그인 후 화면 값이다 */
+.root :global(.card--soft) { background: var(--primary-50); box-shadow: none; }

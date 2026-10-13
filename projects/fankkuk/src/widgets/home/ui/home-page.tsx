@@ -82,7 +82,7 @@ function MySection({ nickname, gifts, following, faceToneByName }: Pick<Props, "
           )}
           <div className={s.push}>
             <Link className="btn btn--line btn--sm" href="/gifts">
-              선물 내역 보기
+              보낸 선물 보기
             </Link>
           </div>
         </div>

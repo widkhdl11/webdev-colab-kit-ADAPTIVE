@@ -108,7 +108,7 @@ export function GiftStatusPage({
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="m15 6-6 6 6 6" />
           </svg>
-          선물 내역으로
+          보낸 선물로
         </Link>
         <div className="stack">
           <section className={`card ${s.gtop}`} aria-labelledby="g-title">

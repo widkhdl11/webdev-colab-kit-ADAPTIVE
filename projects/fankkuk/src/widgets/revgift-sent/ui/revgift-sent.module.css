@@ -1,8 +1,5 @@
 /* 보낸 역조공 — 시안 v18 creator-revgifts.html(v18-cre.css). 머리(.page-head·.ph-*)·카드·격자·태그·빈 상태는 base.css 공통 부품 */
 
-/* 이 화면 안의 옅은 판은 v18 크리에이터 묶음 값(회색 면 + 경계) · 카드 격자는 왼쪽부터 채운다(시안은 grid) */
-.root :global(.card--soft) { background: var(--gray-50); box-shadow: var(--hair); }
-.root :global(.grid) { justify-content: flex-start; }
 .batch-h { font-size: var(--fs-card); line-height: 1.4; }
 /* 결제 끝 안내 — 아래 판과 붙지 않게 쌓인 판 사이 간격(32) */
 .paid { margin-bottom: 48px; padding: 16px 24px; border-radius: var(--r-btn); background: var(--primary-50); color: var(--primary-700); } /* v18-cre.css .paid — 색은 빨강+회색만 */

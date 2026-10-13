@@ -165,7 +165,7 @@ describe("「내 선물」 크리에이터별 묶음", () => {
     paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
     expect(await redirectOf("/gifts", "fanA")).toEqual([307, `/gifts/with/${HANDLE}`]);
     const list = visibleText(await html("/gifts?view=all", "fanA"));
-    expect(list).toContain("선물 내역");
+    expect(list).toContain("보낸 선물");
   });
 
   it("INV-F1 (실패경로): 본인 확인이 풀린 크리에이터는 링크 주소가 열리지 않으니 「내 선물」이 ID 주소로 보내고, 그 주소는 열린다", async () => {

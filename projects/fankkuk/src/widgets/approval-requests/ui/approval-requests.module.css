@@ -10,6 +10,3 @@
 .icon { display: grid; place-items: center; width: var(--space-12); height: var(--space-12); border-radius: var(--r-pill); background: var(--primary-50); color: var(--primary); }
 .icon svg { width: var(--space-6); height: var(--space-6); }
 
-/* 이 화면 안의 옅은 판은 v18 크리에이터 묶음 값(회색 면 + 경계) · 카드 격자는 왼쪽부터 채운다(시안은 grid — 홀수 마지막 칸을 가운데로 옮기지 않는다) */
-.root :global(.card--soft) { background: var(--gray-50); box-shadow: var(--hair); }
-.root :global(.grid) { justify-content: flex-start; }

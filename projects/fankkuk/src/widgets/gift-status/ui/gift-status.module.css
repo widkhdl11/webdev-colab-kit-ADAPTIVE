@@ -8,7 +8,6 @@
 .col :global(.part) > h2, .col :global(.card) > h2 { font-size: var(--fs-card); line-height: 1.4; }
 .col :global(.part) > h2 + :global(.t-desc) { margin-top: var(--space-2); }
 .col :global(.part--soft) { background: var(--gray-50); box-shadow: var(--hair); }
-.col :global(.card--soft) { background: var(--gray-50); box-shadow: var(--hair); }
 
 /* 돌아가기 — 시안 .back: 회색 14 + 왼쪽 꺾쇠 */
 .back { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--touch); margin-bottom: var(--space-2); color: var(--gray-600); font-size: var(--fs-navitem); font-weight: var(--fw-nav); text-decoration: none; }

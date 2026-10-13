@@ -7,7 +7,7 @@ export const MY_PAGE_TITLE = "내 팬꾹";
 export const FAN_MY_MENU = [
   { href: "/me", label: "개인정보" },
   { href: "/me/following", label: "팔로우한 크리에이터" },
-  { href: "/gifts", label: "선물 내역" },
+  { href: "/gifts", label: "보낸 선물" },
   { href: "/me/revgifts", label: "받은 역조공" },
 ] as const;
 

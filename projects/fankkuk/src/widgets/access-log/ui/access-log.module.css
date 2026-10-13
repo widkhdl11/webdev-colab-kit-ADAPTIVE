@@ -1,8 +1,6 @@
 /* 주소 열람 기록 화면 전용 — 시안 v18 creator-log.html(v18-cre.css .stat-grid). 머리(.page-head·.ph-*)·카드·표는 base.css 공통 */
 .strong { color: var(--ink); }
 
-/* 이 화면 안의 옅은 판은 v18 크리에이터 묶음 값(회색 면 + 경계) */
-.root :global(.card--soft) { background: var(--gray-50); box-shadow: var(--hair); }
 /* 구간 머리 — v18 작은 제목 20 */
 .sh { font-size: var(--fs-card); line-height: 1.4; }
 

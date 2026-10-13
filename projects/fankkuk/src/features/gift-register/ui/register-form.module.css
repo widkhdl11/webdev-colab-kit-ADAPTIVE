@@ -30,8 +30,6 @@
 .h:focus { outline: none; }
 .h:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
 fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
-/* 안내 판은 옅은 회색(시안 .card--soft — 입력 화면에서는 회색) */
-.root :global(.card--soft) { background: var(--gray-50); box-shadow: var(--hair); }
 
 /* 1 크리에이터 — 고르기 카드(최소 280, 폭에 따라 칸 수가 저절로). 시안 .pick-grid · .pick */
 .pick-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; margin-block: var(--space-4); }

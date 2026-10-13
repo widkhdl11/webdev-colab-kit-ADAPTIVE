@@ -133,7 +133,7 @@ export function TogetherPage(props: TogetherPageProps) {
     <main id="main" className={`page-centered ${s.page}`}>
       <div className={s.col}>
         <Link className={s.back} href={ALL_GIFTS_PATH}>
-          ‹ 선물 내역으로
+          ‹ 보낸 선물로
         </Link>
         <p className={s.priv} role="note">
           <Icon d={PATH.lock} size={20} />

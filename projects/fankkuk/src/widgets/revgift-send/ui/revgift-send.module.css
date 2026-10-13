@@ -1,5 +1,3 @@
 /* 역조공 보내기 — 시안 v18 creator-revgift-new.html(v18-cre.css .form-col). 입력형: 가운데 틀 안 기둥 720 */
 .col { max-width: 720px; margin-inline: auto; }
 
-/* 이 화면 안의 옅은 판(결제 금액)은 v18 크리에이터 묶음 값(회색 면 + 경계) */
-.root :global(.card--soft) { background: var(--gray-50); box-shadow: var(--hair); }

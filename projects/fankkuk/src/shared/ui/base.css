@@ -547,7 +547,7 @@ img.asset { display: block; object-fit: contain; }
    위 2~15절과 「이전 클래스」는 v11 모양이다. 이 절이 같은 이름을 v18 모양으로 덮는다 — 같은 선택자 점수에서 뒤에 오므로 이긴다.
    운영자 화면(.admin-area 안)은 재디자인 대상이 아니라 v11 모양을 그대로 쓴다: 모든 선택자 끝에 :where(:not(.admin-area *)) 를 단다(점수는 그대로).
    시안끼리 값이 다른 이름은 이렇게 골랐다 — 탭: 사이드바 화면의 밑줄 탭(.tab-links) · 상태 태그: 공개 화면 묶음(색은 빨강+회색만) ·
-   .part·.acc·.card--soft: 공개 화면 묶음 · .kv·.lines·.nlist·.mine-list: 팬 화면 묶음 · .opt·.sw-row·.quote·.chips 눌림: 크리에이터 화면 묶음.
+   .part·.acc·.part--soft: 공개 화면 묶음 · .card--soft: 로그인 후 화면 묶음(회색) · .kv·.lines·.nlist·.mine-list: 팬 화면 묶음 · .opt·.sw-row·.quote·.chips 눌림: 크리에이터 화면 묶음.
    글자 13px 은 캡션(시안 --fs-caption 자리: .t-meta·.hint·.tag·표 머리)에만 — 00절의 예외. 시안의 14px(작은 버튼·칩)은 예외가 아니라 16 으로 둔다. */
 
 /* 글자 */
@@ -574,9 +574,13 @@ img.asset { display: block; object-fit: contain; }
 .page-top:where(:not(.admin-area *)) { padding-block: var(--space-12) var(--space-8); }
 .page-top .t-lead:where(:not(.admin-area *)) { margin-top: var(--space-2); }
 
+/* 카드 격자 — v18 시안은 CSS grid 라 마지막 줄을 왼쪽부터 채운다(v11 의 「홀수 마지막 칸 가운데 모음」을 걷는다) */
+.grid:where(:not(.admin-area *)) { justify-content: flex-start; }
+
 /* 카드 · 판 — 1px 회색 경계(gray-200) + 반경 16 + 옅은 그림자. 경계는 v11 처럼 안쪽 그림자 1px 로 그린다(크기 계산이 바뀌지 않게) */
 .card:where(:not(.admin-area *)) { padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
-.card--soft:where(:not(.admin-area *)) { background: var(--primary-50); box-shadow: none; }
+/* 옅은 판 — 로그인 후 화면 시안(v18-fan·v18-cre)의 회색 면 + 경계. 공개 화면 시안(v18-pub)의 옅은 빨강은 소개·약관 모듈이 덮는다 */
+.card--soft:where(:not(.admin-area *)) { background: var(--gray-50); box-shadow: var(--hair); }
 .card .t-card + p:where(:not(.admin-area *)) { margin-top: var(--space-2); }
 .part:where(:not(.admin-area *)) { padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
 .part--soft:where(:not(.admin-area *)) { background: var(--primary-50); box-shadow: none; }

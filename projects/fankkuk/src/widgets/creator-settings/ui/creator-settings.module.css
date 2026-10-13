@@ -1,9 +1,6 @@
 /* 주소와 설정 화면 — 시안 v18 creator-settings.html(v18-cre.css), 이전 v11. 설정 상자는 같은 모양 카드(.card)로 위→아래 한 줄.
    공통 부품(.card·.card--soft·.grid·.opt·.sw-row·.tags·.chip·.field·.hint·.err)은 base.css 가 그린다 — 여기는 이 화면에만 있는 것 */
 
-/* 이 화면 안의 옅은 판은 v18 크리에이터 묶음 값(회색 면 + 경계) — 공통 .card--soft(옅은 빨강)는 공개 화면 묶음 값이다 */
-.root :global(.card--soft) { background: var(--gray-50); box-shadow: var(--hair); }
-
 .set { display: grid; gap: 24px; scroll-margin-top: var(--space-6); }
 .set-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .inner { padding: 24px; }
