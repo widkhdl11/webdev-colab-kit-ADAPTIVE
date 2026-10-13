@@ -56,7 +56,7 @@
 }
 
 /* ---------- 바탕 · 글자 ---------- */
-.pub { padding-top: var(--sp-64); }
+.pub { padding-top: var(--body-pad); }   /* 2026-10-13 사용자: 로그인 후 화면과 위 여백·폭·제목을 맞춘다 */
 .pub--hero { padding-top: 0; }
 .pub .container { position: relative; }
 .pub svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; width: var(--icon-xs); height: var(--icon-xs); flex: none; }
@@ -66,7 +66,7 @@
 .t-lead, .t-desc { font-size: var(--fs-subtitle); font-weight: var(--fw-subtitle); line-height: var(--lh-subtitle); color: var(--gray-600); }
 .t-meta { font-size: var(--fs-caption); font-weight: var(--fw-caption); line-height: var(--lh-caption); color: var(--gray-600); }
 .t-strong { font-weight: var(--fw-btn); color: var(--gray-900); }
-.part .t-title, .rv-head ~ .stack .t-title { font-size: var(--fs-h3); font-weight: var(--fw-h3); line-height: var(--lh-h3); }
+.part .t-title, .page-head ~ .stack .t-title { font-size: var(--fs-h3); font-weight: var(--fw-h3); line-height: var(--lh-h3); }
 .part .t-lead, .part .t-desc { font-size: var(--fs-body); font-weight: var(--fw-body); line-height: var(--lh-body); }
 .part .t-title + .t-lead, .part .t-title + .t-desc { margin-top: var(--sp-8); }
 .art--head { display: block; width: var(--pub-art-head); height: var(--pub-art-head); object-fit: contain; margin: 0 auto var(--sp-16); }
@@ -81,7 +81,7 @@
 .page-band .sec-head, .center .sec-head, .rv-head, .authbox .head { text-align: center; }
 .page-band .sec-head .t-lead { max-width: var(--hero-max); margin-left: auto; margin-right: auto; }
 .page-band { margin-top: 0; }
-.pub--doc > .section > .container { max-width: var(--pub-doc); }
+.pub--doc > .section > .container { max-width: var(--container-max); }
 .pub .sec-foot { margin-top: var(--sp-32); }
 
 /* ---------- 버튼 · 폼 ---------- */
@@ -174,7 +174,7 @@ textarea.field { min-height: var(--pub-textarea); padding: var(--sp-16); resize:
 .toc ol { display: grid; grid-template-columns: repeat(var(--pub-toc-cols), minmax(0, 1fr)); gap: 0 var(--sp-32); margin-top: var(--sp-16); }
 .toc a { display: flex; align-items: center; min-height: var(--touch); }
 .toc a:hover { color: var(--primary); text-decoration: underline; }
-section.art { padding: var(--sp-32) 0; border-top: var(--bw) solid var(--gray-200); scroll-margin-top: calc(var(--header-h) + var(--sp-16)); }
+section.art { width: auto; height: auto; padding: var(--sp-32) 0; border-top: var(--bw) solid var(--gray-200); scroll-margin-top: calc(var(--header-h) + var(--sp-16)); }
 section.art:first-child { border-top: 0; padding-top: 0; }
 section.art h2 { margin-bottom: var(--sp-16); }
 section.art .grid { margin-top: var(--sp-16); }
@@ -366,3 +366,19 @@ section.art .dots { margin-top: var(--sp-16); }
 @media (max-width: 1120px) {
   :root { --pub-pdeco-display: none; }
 }
+
+/* ---------- 로그인 후 화면과 같은 페이지 머리 (v18-app.css .page-head 와 같은 값) ---------- */
+.pub .page-head { margin-bottom: var(--sp-32); text-align: left; }
+.pub .ph-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-16); }
+.pub .ph-title { font-size: var(--fs-page); font-weight: var(--fw-h2); line-height: var(--lh-h2); }
+.pub .ph-desc { margin-top: var(--sp-8); color: var(--gray-600); }
+.pub .ph-sub { margin-top: var(--sp-8); font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+.pub .section.page-first { margin-top: 0; }
+.container.col-form { max-width: calc(var(--pub-form) + 2 * var(--container-pad)); }
+.col-form .gate { max-width: none; }
+/* 페이지 제목(24)보다 큰 소제목이 없게 — 로그인 후 화면의 본문 소제목(.body-block > h2)과 같은 크기 */
+.pub--doc .sec-head h2, .gate-note h2 { font-size: var(--fs-h3); font-weight: var(--fw-h3); line-height: var(--lh-h3); }
+.pub--doc .sec-head .t-lead, .pub--doc .sec-head .t-desc { font-size: var(--fs-body); font-weight: var(--fw-body); line-height: var(--lh-body); }
+.pub--doc .section--compact.doc { margin-top: var(--sp-48); }
+/* 사이드바 화면(email-confirm)에서도 선 아이콘으로 */
+.ok svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
