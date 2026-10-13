@@ -15,7 +15,7 @@ import { acceptRevgift, declineRevgift } from "../api/reply-requests";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./receive-flow.module.css";
 
-// 받은 역조공 하나 — 받기·받지 않기. 시안: docs/design/mockups/site/v11/revgift-receive.html (가운데 한 기둥에 판을 세로로 쌓음)
+// 받은 역조공 하나 — 받기·받지 않기. 시안: docs/design/mockups/site/v18/revgift-receive.html (가운데 한 기둥에 판을 세로로 쌓음)
 // 주소는 이 브라우저에서 봉인한 뒤 봉인된 값만 보낸다(reverse-gift INV-R5). 평문 주소는 서버로 가지 않고, 저장하지도 않는다(INV-R6).
 // 우편번호 찾기 서비스는 아직 붙이지 않았다 — 다섯 자리를 직접 입력한다.
 
@@ -187,13 +187,15 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
 
   return (
     <>
-      <div className={s.head}>
-        <h1 className="t-title" id="rv-title">
-          {creatorName}님이 선물을 보냈어요
-        </h1>
-        <p className="t-lead t-desc">내가 팔로우한 크리에이터가 보낸 선물이에요.</p>
-      </div>
-      <div className="stack">
+      <header className="page-head">
+        <div className="ph-row">
+          <h1 className="ph-title" id="rv-title">
+            {creatorName}님이 선물을 보냈어요
+          </h1>
+        </div>
+        <p className="ph-desc">내가 팔로우한 크리에이터가 보낸 선물이에요.</p>
+      </header>
+      <div className={`stack ${s.flow}`}>
         <section className="part" aria-labelledby="rv-title">
           <dl className="kv">
             <div>

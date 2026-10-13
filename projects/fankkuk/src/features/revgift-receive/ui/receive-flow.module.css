@@ -1,23 +1,29 @@
-/* 받은 역조공 받기 — 시안 docs/design/mockups/site/v11/revgift-receive.html 의 <style>.
-   기둥(.col)·판(.part)·쌓기(.stack)·표(.kv)·번호 단계(.flow)·버튼 묶음(.actions·.btnrow)은 전역 클래스 */
-.head { padding-block: 0 clamp(24px, 3vw, 40px); text-align: center; } /* 시안 .page-revgift-receive .rv-head — 위 여백은 기둥(.col)이 준다 */
-.head :global(.t-lead) { margin-top: 12px; }
-.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+/* 받은 역조공 받기 — 시안 docs/design/mockups/site/v18/revgift-receive.html · v18-pub.css 「이메일 확인 · 역조공 받기」.
+   페이지 머리(.page-head)·판(.part)·쌓기(.stack)·번호 단계(.flow)·버튼 묶음(.actions·.btnrow)은 전역 클래스 */
+/* 판 안 제목은 페이지 제목(24)보다 작게 20, 설명은 본문 16 */
+.flow :global(.part .t-title) { font-size: var(--fs-card); line-height: 1.4; }
+/* 이름·값 — 이름(캡션 회색) 아래 값(굵게) */
+.flow :global(.kv) { display: grid; gap: var(--space-4); }
+.flow :global(.kv > div) { display: block; padding: 0; }
+.flow :global(.kv dt) { color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.flow :global(.kv dd) { margin-top: var(--space-2); font-weight: var(--fw-btn); }
+.flow :global(.kv .t-meta) { font-weight: 400; }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-6); }
 .choice :global(.btn) { width: 100%; }
 .choice > :only-child { grid-column: 1 / -1; }
-.once { margin-top: 16px; }
-.warn { margin-top: 24px; padding: 16px; border-radius: var(--r-btn); background: var(--warn-soft); color: var(--warn-ink); font-weight: var(--fw-bold); }
-.alert { margin-top: 16px; }
-.desc { margin-top: 8px; }
+.once { margin-top: var(--space-4); }
+.warn { margin-top: var(--space-6); padding: var(--space-4); border-radius: var(--r-btn); background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); }
+.alert { margin-top: var(--space-4); }
+.desc { margin-top: var(--space-2); }
 .focusable:focus { outline: none; }
-.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 24px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); margin-top: var(--space-6); }
 .full { grid-column: 1 / -1; }
 /* 칸 하나의 입력 오류 — 칸 바로 아래 한 줄 */
-.error { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; color: var(--danger); font-weight: var(--fw-bold); }
-.next { --steps: 3; margin-top: 32px; }
+.error { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2); color: var(--primary-700); font-weight: var(--fw-btn); }
+.next { --steps: 3; margin-top: var(--space-8); }
 .next :global(.t-strong) + p { margin-top: 4px; }
-.links { justify-content: center; margin-top: 32px; }
-.sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+.links { justify-content: center; margin-top: var(--space-8); }
+.sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-6); }
 @media (max-width: 767px) {
   .form-grid { grid-template-columns: 1fr; }
   .choice { grid-template-columns: 1fr; }

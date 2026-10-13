@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { postEmailConfirm } from "../api/confirm-email-client";
 import s from "./confirm-email.module.css";
 
-// 확인 메일 링크로 연 화면. 시안: docs/design/mockups/site/v11/email-confirm.html (본문 머리 + 판 한 장, 가운데 640). 버튼을 눌러야 바뀐다 — 링크를 여는 것만으로는 아무것도 바뀌지 않는다(메일 검사기가 미리 열어도 안전하게).
+// 확인 메일 링크로 연 화면. 시안: docs/design/mockups/site/v18/email-confirm.html (페이지 머리 + 판 한 장, 가운데 기둥 720, 판 안은 왼쪽 정렬). 버튼을 눌러야 바뀐다 — 링크를 여는 것만으로는 아무것도 바뀌지 않는다(메일 검사기가 미리 열어도 안전하게).
 // 알림 칸 둘은 늘 두고 글자만 바꾼다(새로 생긴 칸은 화면 읽기 프로그램이 읽지 않는 경우가 있다).
 // 결과가 나오면 버튼이 링크로 바뀌므로 포커스를 그 링크로 옮긴다 — 안 옮기면 포커스가 페이지 처음으로 떨어진다.
 
@@ -29,12 +29,14 @@ export function ConfirmEmailPanel({ token }: { token: string }) {
 
   return (
     <>
-      <div className={`sec-head ${s.narrow}`}>
-        <h2 className="t-title" id="confirm-email-h">
-          이메일 확인
-        </h2>
-      </div>
-      <section className={`part ${state.kind === "done" ? "part--soft" : ""} ${s.narrow} ${s.center}`} aria-labelledby="confirm-email-h">
+      <header className={`page-head ${s.narrow}`}>
+        <div className="ph-row">
+          <h2 className="ph-title" id="confirm-email-h">
+            이메일 확인
+          </h2>
+        </div>
+      </header>
+      <section className={`part ${state.kind === "done" ? "part--soft" : ""} ${s.narrow}`} aria-labelledby="confirm-email-h">
         {state.kind !== "done" && <p className="t-lead">버튼을 누르면 확인 메일을 받은 주소가 내 계정의 이메일이 돼요.</p>}
         <p className={`t-lead ${s.ok}`} role="status">
           {state.kind === "done" ? (

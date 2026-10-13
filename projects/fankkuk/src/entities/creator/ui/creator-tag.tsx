@@ -71,7 +71,7 @@ export function TagChipBody({ name, pressed = false, check = true }: { name: str
   );
 }
 
-/** 플랫폼 뱃지 안의 24px 동그란 로고(공통 .ctag 의 .bd · 버추얼은 선 그림 svg). 모양·색은 tagBrandOf 표 그대로. */
+/** 플랫폼 뱃지 안의 18px 동그란 로고(공통 .ctag 의 .bd · 버추얼은 선 그림 svg). 모양·색은 tagBrandOf 표 그대로. */
 function CtagLogo({ icon }: { icon: TagIcon }) {
   if (icon.kind === "virtual") return <VirtualGlyph />;
   if (icon.kind === "app") {
@@ -89,15 +89,15 @@ function CtagLogo({ icon }: { icon: TagIcon }) {
 }
 
 /**
- * 카드·목록·페이지의 태그 하나 = 플랫폼 뱃지(design-rules 0절 — 공통 클래스 .ctag: 흰 바탕 테두리 알약, 마우스를 올리면 옅은 면).
- * --f 옅은 면 · --k 글자·테두리 색. 표에 없는 이름은 로고 없이 중립 뱃지.
+ * 카드·목록·페이지의 태그 하나 = 플랫폼 뱃지 E3(design-rules 00절 — 시안 v18 my-following .ptag: 옅은 플랫폼 면 알약 + 같은 색 테두리, 높이 26·로고 18).
+ * 자리·한 줄 규칙은 공통 클래스 .ctag, E3 모양은 creator-tag.module.css 의 .e3. --f 옅은 면 · --k 글자·테두리 색. 표에 없는 이름은 로고 없이 중립 뱃지.
  */
 export function CreatorTag({ name }: { name: string }) {
   const brand = tagBrandOf(name);
-  if (!brand) return <span className={`ctag ${s.plain}`}>{name}</span>;
+  if (!brand) return <span className={`ctag ${s.e3} ${s.plain}`}>{name}</span>;
   const vars: Record<string, string> = { "--f": brand.fill, "--k": brand.ink };
   return (
-    <span className="ctag" style={vars as CSSProperties}>
+    <span className={`ctag ${s.e3}`} style={vars as CSSProperties}>
       <CtagLogo icon={brand.icon} />
       {name}
     </span>

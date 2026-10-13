@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { OPERATOR_NAME, PROMISE } from "@/shared/config/site-copy";
 import { withSubjectParticle } from "@/shared/lib/format/subject-particle";
+import { AboutIcon, type AboutIconName } from "./about-icons";
 import s from "./about.module.css";
 
-// 팬꾹 소개. 시안: docs/design/mockups/site/v11/about.html
+// 팬꾹 소개. 시안: docs/design/mockups/site/v18/about.html — 본문은 로그인 전 1152 선(.pub-inner). 화면 전용 모양은 about.module.css
 // 약속 문장은 shared/config/site-copy 의 고정 문구를 그대로 읽는다(문구 v2). 소개 이야기는 해요체, 약속·하지 않는 것은 합니다체.
 
-const FLOW = [
-  { title: "입력하자마자 잠가요", body: "크리에이터가 입력한 주소는 팬꾹으로 오기 전에 잠겨요." },
-  { title: "잠긴 채 보관해요", body: PROMISE.address },
-  { title: "크리에이터가 승인해요", body: "선물마다 카카오톡으로 한 번 더 확인해요." },
-  { title: "송장 출력 때만 열려요", body: "열릴 때마다 기록이 남아요.", once: true },
-  { title: "팬꾹 송장으로 출고해요", body: "승인과 검수를 모두 통과한 선물만 출고합니다." },
-] as const;
+const FLOW: readonly { icon: AboutIconName; title: string; body: string; once?: true }[] = [
+  { icon: "lock", title: "입력하자마자 잠가요", body: "크리에이터가 입력한 주소는 팬꾹으로 오기 전에 잠겨요." },
+  { icon: "package", title: "잠긴 채 보관해요", body: PROMISE.address },
+  { icon: "message", title: "크리에이터가 승인해요", body: "선물마다 카카오톡으로 한 번 더 확인해요." },
+  { icon: "printer", title: "송장 출력 때만 열려요", body: "열릴 때마다 기록이 남아요.", once: true },
+  { icon: "truck", title: "팬꾹 송장으로 출고해요", body: "승인과 검수를 모두 통과한 선물만 출고합니다." },
+];
 
 const INSPECT = [
   { title: "송장 제거", body: "원래 송장은 떼어서 파쇄해요." },
@@ -38,37 +39,39 @@ const NOTS = [
 
 const CROSS = (
   <span className="card-icon" aria-hidden="true">
-    <svg viewBox="0 0 16 16">
-      <path d="m3 3 10 10M13 3 3 13" />
-    </svg>
+    <AboutIcon name="x" />
   </span>
 );
 
 export function AboutPage() {
   return (
-    <main id="main">
-      {/* 1. 첫 화면 (가운데) */}
-      <section className={`hero ${s["about-hero"]}`} aria-labelledby="about-title">
-        <div className="container">
-          <h1 className="t-hero" id="about-title">
-            선물은 따뜻하게,
-            <br />
-            주소는 조심스럽게
-          </h1>
-          <p className="t-lead t-desc">
-            팬꾹은 팬의 선물을 검수하고 크리에이터에게 대신 보내는 서비스예요. {PROMISE.addressFan} {withSubjectParticle(OPERATOR_NAME)} 만들고
-            운영합니다.
-          </p>
+    <main id="main" className={s.root}>
+      {/* 1. 첫 화면 (가운데) — 글자 칸 바깥 좌우에 3D 장식 둘(920 이하 숨김) */}
+      <section className={`hero ${s.hero}`} aria-labelledby="about-title">
+        <div className={`pub-inner ${s.decoWrap}`}>
+          <img className={`${s.deco} ${s.decoL}`} src="/img/icon-inspect.png" width={160} height={160} alt="" aria-hidden="true" />
+          <img className={`${s.deco} ${s.decoR}`} src="/img/icon-log.png" width={160} height={160} alt="" aria-hidden="true" />
+          <div className={s.heroText}>
+            <h1 className="t-hero" id="about-title">
+              선물은 따뜻하게,
+              <br />
+              주소는 조심스럽게
+            </h1>
+            <p className="t-lead">
+              팬꾹은 팬의 선물을 검수하고 크리에이터에게 대신 보내는 서비스예요. {PROMISE.addressFan} {withSubjectParticle(OPERATOR_NAME)} 만들고
+              운영합니다.
+            </p>
+          </div>
         </div>
       </section>
 
       {/* 2. 왜 만들었나 — 제목 → 같은 크기 카드 셋 */}
-      <section className="section section--flush-top" aria-labelledby="why-title">
-        <div className="container">
+      <section className={s.near} aria-labelledby="why-title">
+        <div className="pub-inner">
           <div className="sec-head">
             <h2 id="why-title">&ldquo;택배에 내 주소가 적히는 게 걱정이에요&rdquo;</h2>
           </div>
-          <div className={`grid cols-3 ${s.story}`}>
+          <div className={`${s.grid3} ${s.story}`}>
             <div className="card">
               <p>
                 팬이 보내 주는 선물은 늘 고맙지만, 그 상자 겉면에는 크리에이터의 이름과 집 주소가 그대로 적혀요. 송장은 택배사
@@ -91,9 +94,9 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* 3. 주소는 송장 출력 때만 — 제목 → 한 줄 설명 → 번호 단계 */}
-      <section aria-labelledby="once-title">
-        <div className="container">
+      {/* 3. 주소는 송장 출력 때만 — 제목 → 한 줄 설명 → 장면 그림(잠김 → 열림) → 번호 단계 카드 */}
+      <section className={s.near} aria-labelledby="once-title">
+        <div className="pub-inner">
           <div className="panel">
             <div className="sec-head">
               <h2 id="once-title">
@@ -101,16 +104,48 @@ export function AboutPage() {
               </h2>
               <p className="t-lead t-desc">{PROMISE.address} 승인한 선물도 송장을 출력할 때만 열려요.</p>
             </div>
-            <ol className="flow" aria-label="주소가 열리기까지의 흐름">
+            <div className={s.scene} role="group" aria-label="주소가 잠겨 있다가 송장 출력 때만 열리는 예시 그림">
+              <div className={s.mascot} aria-hidden="true">
+                <img src="/img/icon-address-lock.png" width={112} height={112} alt="" />
+              </div>
+              <div className={s.sceneCard} aria-hidden="true">
+                <div className={s.sceneRow}>
+                  <span className="tag">잠김</span>
+                  <AboutIcon name="lock" />
+                </div>
+                <div className={s.mask}>
+                  <i />
+                  <i />
+                </div>
+              </div>
+              <span className={s.sceneArrow} aria-hidden="true">
+                <AboutIcon name="arrow" />
+              </span>
+              <div className={s.sceneCard} aria-hidden="true">
+                <div className={`${s.sceneRow} ${s.sceneOpen}`}>
+                  <span className="tag tag--brand">열림</span>
+                  <AboutIcon name="unlock" />
+                </div>
+                <p className={s.sceneAddr}>서울시 ○○구 ○○로 ●●</p>
+                <p className={s.sceneLog}>
+                  <AboutIcon name="clock" />
+                  <span>10월 14일 14:02 · 주문 FK-2410 · 송장 출력으로 열림</span>
+                </p>
+              </div>
+            </div>
+            <ol className={s.flow} aria-label="주소가 열리기까지의 흐름">
               {FLOW.map((f, i) => (
-                <li key={f.title} className={"once" in f ? "on" : undefined}>
-                  <span className="n" aria-hidden="true">
+                <li key={f.title} className={f.once ? s.on : undefined}>
+                  <span className={s.n} aria-hidden="true">
                     {i + 1}
                   </span>
                   <div>
+                    <span className={s.stepIc} aria-hidden="true">
+                      <AboutIcon name={f.icon} />
+                    </span>
                     <h3>{f.title}</h3>
                     <p>{f.body}</p>
-                    {"once" in f && <span className="tag tag--brand">출력할 때만</span>}
+                    {f.once && <span className="tag tag--brand">출력할 때만</span>}
                   </div>
                 </li>
               ))}
@@ -119,15 +154,15 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* 4. 검수 — 아이콘 → 제목 → 설명 → 카드 셋 → 개봉 검수 카드 */}
-      <section className="section" aria-labelledby="inspect-title">
-        <div className="container">
+      {/* 4. 검수 — 그림 → 제목 → 설명 → 카드 셋 → 개봉 검수 카드 */}
+      <section className={s.far} aria-labelledby="inspect-title">
+        <div className="pub-inner">
           <div className="sec-head">
-            <img className="sec-icon" src="/img/icon-inspect.png" width={72} height={72} alt="" aria-hidden="true" />
+            <img className={s.art} src="/img/icon-inspect.png" width={64} height={64} alt="" aria-hidden="true" />
             <h2 id="inspect-title">검수는 이렇게 해요</h2>
             <p className="t-lead t-desc">{PROMISE.inspection}</p>
           </div>
-          <ol className="grid cols-3 keep">
+          <ol className={s.grid3}>
             {INSPECT.map((it, i) => (
               <li key={it.title} className="card">
                 <span className="tag tag--brand">{i + 1}</span>
@@ -143,18 +178,18 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* 5. 열람 기록 — 아이콘 → 제목 → 설명 → 표 → 버튼 */}
-      <section className="section section--flush-top" aria-labelledby="log-title">
-        <div className="container">
+      {/* 5. 열람 기록 — 그림 → 제목 → 설명 → 표 → 버튼 */}
+      <section className={s.near} aria-labelledby="log-title">
+        <div className="pub-inner">
           <div className="sec-head">
-            <img className="sec-icon" src="/img/icon-log.png" width={72} height={72} alt="" aria-hidden="true" />
+            <img className={s.art} src="/img/icon-log.png" width={64} height={64} alt="" aria-hidden="true" />
             <h2 id="log-title">주소를 연 기록은 크리에이터에게 전부 공개해요</h2>
             <p className="t-lead t-desc">
               언제, 어느 주문의 주소가 몇 번째로 열렸는지 크리에이터가 언제든 확인할 수 있어요. 승인한 적 없는 주문이 기록에 보이면
               바로 알아챌 수 있어요.
             </p>
           </div>
-          <div className={s["log-col"]}>
+          <div>
             <div className="table-wrap" tabIndex={0} role="region" aria-label="주소 열람 기록 예시 표">
               <table className="table">
                 <caption className="sr-only">주소 열람 기록 예시</caption>
@@ -176,9 +211,9 @@ export function AboutPage() {
                 </tbody>
               </table>
             </div>
-            <p className="t-meta">예시 화면이에요. 실제 기록은 크리에이터 화면에서 볼 수 있어요.</p>
+            <p className={`t-meta ${s.tableNote}`}>예시 화면이에요. 실제 기록은 크리에이터 화면에서 볼 수 있어요.</p>
           </div>
-          <div className="sec-foot">
+          <div className={s.foot}>
             <Link className="btn" href="/signup">
               크리에이터로 가입하기
             </Link>
@@ -187,13 +222,13 @@ export function AboutPage() {
       </section>
 
       {/* 6. 하지 않는 것 — 같은 크기 카드 격자 */}
-      <section className="section section--flush-top" aria-labelledby="not-title">
-        <div className="container">
+      <section className={s.near} aria-labelledby="not-title">
+        <div className="pub-inner">
           <div className="sec-head">
             <h2 id="not-title">팬꾹이 하지 않는 것</h2>
             <p className="t-lead t-desc">약속만큼 중요한 건 하지 않는 일이에요.</p>
           </div>
-          <ul className="grid cols-3">
+          <ul className={s.grid3}>
             {NOTS.map((n) => (
               <li key={n.title} className="card">
                 {CROSS}
@@ -205,10 +240,12 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* 7. 마무리 (가운데) */}
-      <section className="section section--flush-top center" aria-labelledby="cta-title">
-        <div className="container">
-          <div className="panel">
+      {/* 7. 마무리 (가운데) — 옅은 빨강 판 + 모서리 장식 둘(1120 이하 숨김) */}
+      <section className={`${s.far} ${s.last} center`} aria-labelledby="cta-title">
+        <div className="pub-inner">
+          <div className={`panel ${s.cta}`}>
+            <img className={`${s.pdeco} ${s.pdecoL}`} src="/img/icon-gift.png" width={96} height={96} alt="" aria-hidden="true" />
+            <img className={`${s.pdeco} ${s.pdecoR}`} src="/img/icon-truck.png" width={96} height={96} alt="" aria-hidden="true" />
             <h2 id="cta-title">마음을 담아, 꾹.</h2>
             <div className="hero-actions">
               <Link className="btn btn--wide" href="/gifts/new">

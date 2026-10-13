@@ -19,8 +19,10 @@ import type { FollowMode } from "@/features/creator-follow/ui/follow-button";
 import type { LinkPageSend } from "@/features/gift-register/model/sender-rule";
 import s from "./creator-profile.module.css";
 
-// 선물 링크 페이지 = 크리에이터 페이지 (creator-link). 시안: docs/design/mockups/site/v11/creator.html · link.html (design-rules 0절)
-// 위에서 아래로 한 줄(오른쪽 판 없음): 사진·이름·링크 주소·한 줄 소개·태그·감사 문장·주 버튼(가운데) → 같은 크기 정보 카드
+// 선물 링크 페이지 = 크리에이터 페이지 (creator-link). 시안: docs/design/mockups/site/v18/link.html(로그인 전) · creator.html(로그인 후) (design-rules 00절)
+// 로그인 전: 1152 선 안에 가운데 프로필 카드, 마지막 선물 보내기는 화면 폭 가득 옅은 빨강 띠. 로그인 후: 가운데 틀(1200)에 왼쪽 정렬 프로필 머리(사진·글·오른쪽 주 버튼),
+// 마지막 선물 보내기는 옅은 빨강 둥근 상자. 어느 쪽인지는 followMode(로그인 안 함 = "login")로 가른다 — 보이는 정보·순서는 같다.
+// 위에서 아래로: 사진·이름·링크 주소·한 줄 소개·태그·감사 문장·주 버튼 → 같은 크기 정보 카드
 // (받는 상태 → 받기 어려운 품목(있을 때만) → 기념일 D-day(30일 안일 때만) → 평균 승인 → 배송비 → 이번 달 N명(0이면 숨김))
 // → 감사 답장 모음(F-5 — 양쪽이 동의하고 받았어요 3일이 지난 답장만, 없으면 숨김, 2열) → 접는 안내 → 마지막 선물 보내기 판 → 비슷한 크리에이터.
 // 공개 화면이라 크리에이터 공개 이름·링크용 아이디·사진·소개·켠 항목·정해진 문구·집계 숫자·요금만 그린다(INV-E7). 주소 열람 건수는 없다(INV-E11).
@@ -115,46 +117,55 @@ export function CreatorProfilePage({
   const dday = receiving ? upcomingDday(today, receiving.birthday, receiving.anniversaries) : null;
   const ddayDate = dday ? addDays(today, dday.daysLeft) : null;
   const needNote = followMode === "save" ? `${NEEDS_FOLLOW_TO_SEND} ${FOLLOW_NICKNAME_NOTICE_SHORT}` : NEEDS_FOLLOW_TO_SEND;
+  const guest = followMode === "login";
+  const wrap = guest ? "pub-inner" : undefined;
+  const sendRow =
+    send === "open" || send === "needs_follow" ? (
+      <div className={s.act}>
+        <SendButton shown={send} creator={creator} followMode={followMode} />
+      </div>
+    ) : null;
+
   return (
-    <main id="main">
-      <section className="pf" aria-labelledby="creator-name">
-        <div className="container">
-          <CreatorPhoto photoUrl={creator.photoUrl} tone={creator.faceTone} className="face face--xl" />
-          <h1 className="t-hero" id="creator-name">
-            {creator.name}
-          </h1>
-          {creator.handle ? <p className="handle t-meta">{linkText(creator.handle)}</p> : null}
-          {/* 한 줄 소개(INV-E6 — 40자, 줄바꿈 없음). 크리에이터가 직접 쓰는 글이라 다른 문장과 잇지 않는다 */}
-          {creator.intro ? <p className="t-lead">{creator.intro}</p> : null}
-          <div className="ctags">
-            <span className={statusTagClass("success", s.verified)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              본인 확인 완료
-            </span>
-            {/* 태그 — 숨기지 않은 선택지 뒤에 필터를 통과한 직접 입력(creator-tags INV-T4) */}
-            {creator.tags.map((t) => (
-              <CreatorTag key={t} name={t} />
-            ))}
-          </div>
-          <p className="thanks">보내주시는 마음 늘 감사해요</p>
-          {/* 첫 화면의 주 버튼(DECISIONS 2026-10-11 — v11 부터 PC 에서도 쓴다). 쉬는 중·자기 페이지면 없다 */}
-          {send === "open" || send === "needs_follow" ? (
-            <div className="row-btns">
-              <SendButton shown={send} creator={creator} followMode={followMode} />
+    <main id="main" className={guest ? s.pub : `page-centered ${s.app}`}>
+      <section className={s.pfSec} aria-labelledby="creator-name">
+        <div className={wrap}>
+          <div className={s.pf}>
+            <CreatorPhoto photoUrl={creator.photoUrl} tone={creator.faceTone} className={`face ${s.photo}`} />
+            <div className={s.pfMain}>
+              <h1 className={s.name} id="creator-name">
+                {creator.name}
+              </h1>
+              {creator.handle ? <p className={s.handle}>{linkText(creator.handle)}</p> : null}
+              {/* 한 줄 소개(INV-E6 — 40자, 줄바꿈 없음). 크리에이터가 직접 쓰는 글이라 다른 문장과 잇지 않는다 */}
+              {creator.intro ? <p className={s.intro}>{creator.intro}</p> : null}
+              <div className={`ctags ${s.tags}`}>
+                <span className={statusTagClass("success", s.verified)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  본인 확인 완료
+                </span>
+                {/* 태그 — 숨기지 않은 선택지 뒤에 필터를 통과한 직접 입력(creator-tags INV-T4) */}
+                {creator.tags.map((t) => (
+                  <CreatorTag key={t} name={t} />
+                ))}
+              </div>
+              <p className={s.thanks}>보내주시는 마음 늘 감사해요</p>
             </div>
-          ) : null}
-          {send === "needs_follow" ? <p className="note">{needNote}</p> : null}
+            {/* 첫 화면의 주 버튼(DECISIONS 2026-10-11). 쉬는 중·자기 페이지면 없다 */}
+            {sendRow}
+            {send === "needs_follow" ? <p className={s.note}>{needNote}</p> : null}
+          </div>
         </div>
       </section>
 
-      <section className="section section--compact" aria-labelledby="state-h">
-        <div className="container">
+      <section className={s.sec} aria-labelledby="state-h">
+        <div className={wrap}>
           <h2 className="sr-only" id="state-h">
             받는 상태와 요금
           </h2>
-          <div className="grid cols-3">
+          <div className={s.infoGrid}>
             {restingText ? (
               <div className="card info rest">
                 <Icon d={PATH.clock} />
@@ -216,13 +227,13 @@ export function CreatorProfilePage({
 
       {/* 감사 답장 모음(F-5, gift-reply INV-G7) — 보이는 칸은 정해진 문구·한 줄·날짜·팬 닉네임(또는 익명의 팬)뿐. 최신순만 */}
       {replies.length > 0 ? (
-        <section className="section section--compact" aria-labelledby="replies-h">
-          <div className="container">
-            <div className="sec-head">
+        <section className={s.sec} aria-labelledby="replies-h">
+          <div className={wrap}>
+            <div className={`sec-head ${s.head}`}>
               <h2 id="replies-h">감사 답장 모음</h2>
               <p className="t-lead t-desc">{creator.name}님이 팬에게 남긴 답장 중, 팬이 공개를 허락한 것만 보여요. 최신순이에요.</p>
             </div>
-            <ul className="grid cols-2">
+            <ul className={s.quoteGrid}>
               {replies.map((r, i) => (
                 <li key={`${r.repliedOn}-${i}`} className={`card quote ${s.quote}`}>
                   <q>
@@ -239,8 +250,8 @@ export function CreatorProfilePage({
         </section>
       ) : null}
 
-      <section className="section section--compact" aria-label="보내기 전 안내">
-        <div className="container">
+      <section className={s.sec} aria-label="보내기 전 안내">
+        <div className={wrap}>
           <div className="acc">
             {/* 운영자가 목록을 다 지웠으면 접이식을 그리지 않는다 */}
             {prohibited.length > 0 ? (
@@ -292,9 +303,15 @@ export function CreatorProfilePage({
       </section>
 
       {/* 마지막 선물 보내기 판 — 비슷한 크리에이터가 없으면 이 판이 마지막이라 아래 여백을 둔다 */}
-      <section className={others.length > 0 ? undefined : `section ${s["last-send"]}`} aria-labelledby="send-h">
-        <div className="container">
-          <div className="panel">
+      <section className={guest ? s.sheet : s.sec} aria-labelledby="send-h">
+        <div className={wrap}>
+          <div className={guest ? s.sheetIn : `panel ${s.cta}`}>
+            {guest ? (
+              <>
+                <img className={`${s.pdeco} ${s.pdecoL}`} src="/img/icon-gift.png" width={96} height={96} alt="" aria-hidden="true" />
+                <img className={`${s.pdeco} ${s.pdecoR}`} src="/img/icon-truck.png" width={96} height={96} alt="" aria-hidden="true" />
+              </>
+            ) : null}
             <div className="center-in">
               <h2 id="send-h">
                 <span className="accent">선물 보내기</span>
@@ -307,25 +324,31 @@ export function CreatorProfilePage({
       </section>
 
       {others.length > 0 ? (
-        <section className="section section--compact" aria-labelledby="similar-title">
-          <div className="container">
-            <div className="sec-head">
+        <section className={s.sec} aria-labelledby="similar-title">
+          <div className={wrap}>
+            <div className={`sec-head ${s.head}`}>
               <h2 id="similar-title">이런 크리에이터도 있어요</h2>
             </div>
-            <ul className="grid cols-4">
+            <ul className={s.otherGrid}>
               {others.map((o) => (
                 <li key={o.id}>
-                  <Link className="card other" href={creatorPagePath(o)} aria-label={`${o.name}님의 선물 링크 페이지`}>
-                    <CreatorPhoto photoUrl={o.photoUrl} tone={o.faceTone} className="face" />
-                    <span className="t-strong">
-                      {o.name}
-                      {o.tags.length > 0 ? <small>{o.tags.join(" · ")}</small> : null}
+                  <Link className={s.other} href={creatorPagePath(o)} aria-label={`${o.name}님의 선물 링크 페이지`}>
+                    <CreatorPhoto photoUrl={o.photoUrl} tone={o.faceTone} className="face face--sm" />
+                    <span className={s.otherWho}>
+                      <b>{o.name}</b>
+                      {o.tags.length > 0 ? (
+                        <span className={s.otherTags}>
+                          {o.tags.map((t) => (
+                            <CreatorTag key={t} name={t} />
+                          ))}
+                        </span>
+                      ) : null}
                     </span>
                   </Link>
                 </li>
               ))}
             </ul>
-            <div className="sec-foot">
+            <div className={s.foot}>
               <Link className="btn btn--line" href="/creators">
                 전체 보기
               </Link>

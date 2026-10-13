@@ -1,18 +1,25 @@
-/* 회원가입 — 시안 docs/design/mockups/site/v11/signup.html 의 <style>. 기둥(.auth)·머리(.auth .head)·카드·폼·확인칸(.check)·오류(.err)·아래 줄(.foot-line)은 전역 클래스.
+/* 회원가입 — 시안 docs/design/mockups/site/v18/signup.html · v18-pub.css 「로그인 · 가입 · 새 비밀번호」. 기둥(.auth)·머리(.auth .head)·카드·폼·확인칸(.check)·오류(.err)·아래 줄(.foot-line)은 전역 클래스.
+   가운데 기둥 720(양옆 여백 포함 768). 상단 바 아래 88, 바닥글까지 96(휴대폰 64). 색은 빨강 한 색 + 회색(끝난 단계도 초록 대신 옅은 빨강).
    시안은 세 단계 카드를 쌓아 보이지만 가입은 한 단계씩 넘기는 흐름이라, 카드 한 장 안에 지금 단계만 보이고 위에 단계 표시 줄이 있다 */
+
+.page { padding: calc(var(--space-10) + var(--space-12)) 0 var(--section-gap); }
+:global(.auth).box { max-width: calc(720px + 2 * var(--gutter)); }
+.box :global(.head) { margin-bottom: var(--space-8); }
+.box :global(.head .t-lead) { margin-top: var(--space-2); font-size: var(--fs-lead); font-weight: var(--fw-sub); line-height: 1.5; }
+@media (max-width: 767px) { .page { padding-top: calc(var(--space-4) + var(--space-12)); } }
 
 /* 단계 표시 — 시안의 번호 동그라미(.sh .no)와 같은 모양의 알약 줄. 지금 단계는 선택 면, 지난 단계는 초록 */
 .steps-wrap { margin-bottom: 24px; }
 .step-count { display: none; margin-bottom: 12px; font-weight: var(--fw-bold); }
-.step-count span { color: var(--sub); font-weight: 400; }
+.step-count span { color: var(--gray-600); font-weight: 400; }
 .steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.st { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px 0 8px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); cursor: default; }
-.dot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--sub); font-weight: var(--fw-bold); line-height: 1; }
-.st.is-done { background: var(--success-soft); color: var(--success); cursor: pointer; }
-.st.is-done .dot { color: var(--success); }
+.st { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px 0 8px; border: 0; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); cursor: default; }
+.dot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--gray-600); font-weight: var(--fw-btn); line-height: 1; }
+.st.is-done { background: var(--primary-50); color: var(--primary-700); cursor: pointer; }
+.st.is-done .dot { color: var(--primary-700); }
 .st.is-done:hover .lbl { text-decoration: underline; text-underline-offset: 4px; }
-.st[aria-current="step"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: var(--fw-bold); }
-.st[aria-current="step"] .dot { background: var(--ink); color: var(--on-brand); }
+.st[aria-current="step"] { background: var(--primary-50); color: var(--primary-700); font-weight: var(--fw-btn); }
+.st[aria-current="step"] .dot { background: var(--gray-900); color: var(--white); }
 .st[disabled] { opacity: 1; }
 @media (max-width: 767px) { .step-count { display: block; text-align: center; } .st { flex: 1 1 calc(50% - 8px); } }
 
@@ -20,10 +27,10 @@
 .step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .focusable { scroll-margin-top: 160px; }
 .focusable:focus { outline: none; }
-.focusable:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+.focusable:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
 .sh { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-.no { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: var(--on-brand); font-weight: var(--fw-bold); line-height: 1; flex-shrink: 0; }
-.step-actions { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+.no { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--gray-900); color: var(--white); font-weight: var(--fw-btn); line-height: 1; flex-shrink: 0; }
+.step-actions { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
 .step-actions :global(.btn) { min-width: 120px; }
 .step-actions .next { margin-left: auto; } /* 「다음」은 모든 단계에서 카드 오른쪽 아래 */
 @media (max-width: 767px) {
@@ -34,32 +41,32 @@
 }
 
 /* 1단계 — 유형 선택 */
-.choices { display: grid; gap: 12px; }
-.choice { display: flex; align-items: flex-start; gap: 16px; padding: 20px; border-radius: var(--r-card); box-shadow: var(--hair); cursor: pointer; background: var(--white); }
-.choice:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand); }
-.choice:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 3px; }
-.choice input { width: 24px; height: 24px; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--brand); }
+.choices { display: grid; gap: var(--space-4); }
+.choice { display: flex; align-items: flex-start; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200); cursor: pointer; background: var(--white); }
+.choice:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--primary); }
+.choice:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+.choice input { width: var(--icon-xs); height: var(--icon-xs); margin: 2px 0 0; flex-shrink: 0; accent-color: var(--primary); }
 .choice input:focus-visible { outline: none; }
 .choice strong { display: block; }
 .choice :global(.t-meta) { display: block; }
-.note { margin-top: 16px; color: var(--sub); }
+.note { margin-top: var(--space-4); color: var(--gray-600); }
 
 /* 2단계 — 정보 입력 */
-.cr { display: grid; gap: 24px; padding: 24px; border-radius: var(--r-card); background: var(--surface-brand); }
+.cr { display: grid; gap: 24px; padding: 24px; border-radius: var(--r-card); background: var(--primary-50); }
 .opt { font-weight: 400; }
 .terms { display: grid; gap: 4px; }
 .row { display: flex; align-items: center; gap: 12px; }
 .row :global(.check) { flex: 1; min-width: 0; }
-.req { color: var(--brand-ink); font-weight: var(--fw-bold); }
-.link-off { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 14px; color: var(--sub); } /* 아직 갈 곳이 없는 「보기」 — 링크처럼 보이지 않게 */
+.req { color: var(--primary-700); font-weight: var(--fw-btn); }
+.link-off { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 14px; color: var(--gray-600); } /* 아직 갈 곳이 없는 「보기」 — 링크처럼 보이지 않게 */
 
 /* 3단계 — 카카오톡 본인 확인 */
 .kakao { display: grid; gap: 16px; counter-reset: k; }
 .kakao li { position: relative; min-height: 28px; padding-left: 40px; counter-increment: k; }
-.kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-selected); color: var(--brand-ink); font-weight: var(--fw-bold); }
+.kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); color: var(--primary-700); font-weight: var(--fw-btn); }
 .kakao li.is-done::before { content: none; }
-.mark { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--success); color: var(--on-brand); }
+.mark { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: var(--white); }
 .sent { font-weight: var(--fw-bold); }
 .again { margin-top: 16px; }
-.text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: var(--fw-bold); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--primary-700); font: inherit; font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .step > .error { margin-top: 24px; }

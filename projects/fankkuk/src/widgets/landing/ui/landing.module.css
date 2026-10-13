@@ -1,0 +1,85 @@
+/* 랜딩 — 시안 docs/design/mockups/site/v18/landing.html · v18.css(히어로·단계·약속·요금·화면 모형) · v18-app.css(.lp 본문 틀).
+   본문은 가운데 틀(.page-centered, 글 1152 선). 구간 사이는 시안처럼 칸 사이 48 + 구간 위 96(휴대폰 64). 화면 전용 크기는 여기 변수로만 둔다 */
+.root {
+  --deco: 160px;
+  --deco-top: 48px;
+  --deco-edge: 0px;
+  --icon-wrap: 64px;
+  --icon: 48px;
+  --mock-max: 600px;
+  --mock-ic: 20px;
+  --cols-4: 4;
+  --cols-3: 3;
+  --cols-2: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-12);
+}
+
+/* 첫 화면 */
+.hero { position: relative; padding-top: var(--space-8); overflow-x: clip; }
+.heroText { max-width: var(--hero-max); margin-inline: auto; }
+.deco { position: absolute; top: var(--deco-top); width: var(--deco); height: var(--deco); object-fit: contain; opacity: 0.55; pointer-events: none; }
+.decoL { left: var(--deco-edge); transform: rotate(-12deg); }
+.decoR { right: var(--deco-edge); transform: rotate(10deg); }
+.tiles { display: grid; grid-template-columns: repeat(var(--cols-4), minmax(0, 1fr)); gap: var(--space-6); margin-top: 64px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); height: 100%; text-align: center; text-decoration: none; color: var(--gray-900); }
+.tile img { width: var(--art); height: var(--art); object-fit: contain; }
+.tileLabel { margin-top: var(--space-2); font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
+.caption { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+
+/* 구간 공통 — 왼쪽 정렬 머리(제목 32 + 설명 18) */
+.block { margin-top: var(--section-gap); }
+.head { margin-bottom: var(--space-12); }
+.head :global(.t-lead) { margin-top: var(--space-2); }
+.muted { color: var(--gray-600); }
+.grid4, .grid3, .grid2 { display: grid; gap: var(--space-6); }
+.grid4 { grid-template-columns: repeat(var(--cols-4), minmax(0, 1fr)); }
+.grid3 { grid-template-columns: repeat(var(--cols-3), minmax(0, 1fr)); }
+.grid2 { grid-template-columns: repeat(var(--cols-2), minmax(0, 1fr)); }
+
+/* 단계 카드 */
+.stepCard { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+.stepCard img { width: var(--art-step); height: var(--art-step); object-fit: contain; }
+.num { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-btn); color: var(--primary); }
+.stepsLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-8); font-size: var(--fs-caption); color: var(--gray-600); }
+
+/* 약속 — 옅은 빨강 둥근 상자 */
+.promise { padding: 64px var(--space-8); border-radius: var(--r-card); background: var(--primary-50); }
+.promise :global(.card) { box-shadow: inset 0 0 0 1px var(--primary-50), var(--shadow); }
+.promiseCard { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+.iconWrap { display: grid; place-items: center; width: var(--icon-wrap); height: var(--icon-wrap); border-radius: var(--r-pill); background: var(--primary-50); color: var(--primary); }
+.iconWrap svg { width: var(--icon); height: var(--icon); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.foot { display: flex; justify-content: center; margin-top: var(--space-12); }
+
+/* 열람 기록 화면 모형(누를 수 없는 예시) */
+.mock { max-width: var(--mock-max); margin: 0 auto var(--space-10); text-align: left; cursor: default; user-select: none; }
+.mock * { pointer-events: none; }
+.mockBar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); font-weight: var(--fw-btn); color: var(--gray-900); }
+.mockTag { display: inline-flex; align-items: center; min-height: 32px; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: var(--lh-caption); }
+.mockCard { display: grid; gap: var(--space-2); padding: var(--space-5); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); }
+.mockRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--gray-50); }
+.mockRow:first-child { background: var(--primary-50); }
+.mockRow b { font-weight: var(--fw-btn); }
+.mockIc { width: var(--mock-ic); height: var(--mock-ic); flex: none; fill: none; stroke: var(--primary); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 요금 */
+.priceCard { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.amount { margin-top: var(--space-2); font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1.3; font-variant-numeric: tabular-nums; }
+.amount span { margin-left: var(--space-2); font-size: var(--fs-card); font-weight: var(--fw-btn); }
+.inc { display: flex; align-items: center; gap: var(--space-2); color: var(--primary); font-weight: var(--fw-btn); }
+.inc svg { width: var(--icon-xs); height: var(--icon-xs); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.notes { display: grid; gap: var(--space-2); margin-top: var(--space-6); color: var(--gray-600); }
+.notes li::before { content: "· "; }
+
+@media (max-width: 1024px) {
+  .root { --cols-4: 2; --deco: 88px; --deco-top: 32px; --deco-edge: 16px; }
+}
+/* 글자 칸 바깥 여백이 장식보다 좁아지는 폭에선 장식을 숨긴다(시안 920 이하) */
+@media (max-width: 920px) {
+  .deco { display: none; }
+}
+@media (max-width: 768px) {
+  .root { --cols-3: 1; --cols-2: 1; padding-top: var(--space-4); }
+  .promise { padding: var(--space-12) var(--space-6); }
+}

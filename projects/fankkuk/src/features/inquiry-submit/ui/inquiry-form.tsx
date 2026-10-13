@@ -9,7 +9,7 @@ import { checkInquiryInput, type InquiryField } from "../model/inquiry-input";
 import { MESSAGE_RESTRICTED } from "../model/submit-inquiry";
 import s from "./inquiry-form.module.css";
 
-// 1:1 문의 양식 (admin-console INV-K11, 결정 d25). 시안: docs/design/mockups/site/v4/support.html
+// 1:1 문의 양식 (admin-console INV-K11, 결정 d25). 시안: docs/design/mockups/site/v18/support.html
 // 로그인하지 않았으면 칸은 보이되 버튼이 로그인 화면으로 간다. 로그인했으면 실제로 보낸다 —
 // 보내기 전에 서버와 같은 검사를 하고, 성공하면 칸을 비우고 화면을 다시 읽어 「내 문의」에 새 문의가 보이게 한다.
 // 문의가 제한된 계정이면(admin-console INV-K12) 양식 대신 안내만 보인다 — 다 적고 나서 거부되지 않게.

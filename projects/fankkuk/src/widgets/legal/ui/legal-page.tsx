@@ -1,10 +1,11 @@
 import type { LegalBlock, LegalDoc } from "../model/legal-doc";
 import s from "./legal.module.css";
 
-// 이용약관·개인정보처리방침 공용 글 화면. 시안: docs/design/mockups/site/v11/legal.html
-// 머리(아이콘·제목·설명) → 사실 카드 셋 → 맨 위 목차 카드 → 조마다 구분선 + 제목 + 글(760 기둥).
+// 이용약관·개인정보처리방침 공용 글 화면. 시안: docs/design/mockups/site/v18/legal.html — 로그인 전 1152 선
+// 페이지 머리(제목 24 왼쪽·설명) → 사실 카드 셋 → 맨 위 목차 카드 → 조마다 구분선 + 제목 + 글(760 기둥).
 // 표는 쓰지 않는다 — 이름·값 줄(rows)은 카드 격자로, 휴대폰 폭에서는 한 줄에 하나씩 쌓여 가로로 밀리지 않는다.
 
+// icon 은 v11 머리 그림 자리였다 — v18 페이지 머리에는 그림이 없어 쓰지 않는다(부르는 쪽 모양은 그대로 둔다)
 type Props = { doc: LegalDoc; icon: string };
 
 function Block({ block }: { block: LegalBlock }) {
@@ -49,19 +50,20 @@ function Block({ block }: { block: LegalBlock }) {
   }
 }
 
-export function LegalPage({ doc, icon }: Props) {
+export function LegalPage({ doc }: Props) {
   return (
-    <main id="main">
-      <section className="section section--compact" aria-labelledby="page-title">
-        <div className="container">
-          <div className={`sec-head ${s.head}`}>
-            <img className="sec-icon" src={icon} width={72} height={72} alt="" aria-hidden="true" />
-            <h1 className="t-title" id="page-title">
-              {doc.title}
-            </h1>
-            <p className="t-lead t-desc">{doc.lead}</p>
-          </div>
-          <dl className={`grid cols-3 keep ${s.facts}`}>
+    <main id="main" className={s.page}>
+      <section aria-labelledby="page-title">
+        <div className="pub-inner">
+          <header className="page-head">
+            <div className="ph-row">
+              <h1 className="ph-title" id="page-title">
+                {doc.title}
+              </h1>
+            </div>
+            <p className="ph-desc">{doc.lead}</p>
+          </header>
+          <dl className={s.facts}>
             {doc.facts.map(([k, v]) => (
               <div key={k} className="card">
                 <dt>{k}</dt>
@@ -72,8 +74,8 @@ export function LegalPage({ doc, icon }: Props) {
         </div>
       </section>
 
-      <section className="section section--compact" aria-labelledby="toc-title">
-        <div className="container">
+      <section className={s.sec} aria-labelledby="toc-title">
+        <div className="pub-inner">
           <nav className={`card card--soft ${s.toc}`} aria-labelledby="toc-title">
             <h2 className="t-card" id="toc-title">
               목차
@@ -89,8 +91,8 @@ export function LegalPage({ doc, icon }: Props) {
         </div>
       </section>
 
-      <section className="section section--compact" aria-label={`${doc.title} 본문`}>
-        <div className="container">
+      <section className={s.sec} aria-label={`${doc.title} 본문`}>
+        <div className="pub-inner">
           {doc.sections.map((sec) => (
             <section key={sec.id} id={sec.id} className={s.art} aria-labelledby={`${sec.id}-h`}>
               <h2 className="t-card" id={`${sec.id}-h`}>

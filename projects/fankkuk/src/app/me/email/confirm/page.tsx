@@ -27,22 +27,22 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
         </MyShell>
       ) : viewer ? (
         // 팬이 아닌 계정(크리에이터)에는 팬 메뉴 틀을 씌우지 않는다 — 링크의 계정과 맞는지는 서버가 가린다
-        <main id="main">
-          <div className="container">
+        <main id="main" className="page-centered">
+          <div>
             <div className="col">
               <div className="page-head">
-                <h1 className="t-title">이메일 확인</h1>
+                <h1 className="ph-title">이메일 확인</h1>
               </div>
               <ConfirmEmailPanel token={token} />
             </div>
           </div>
         </main>
       ) : (
-        <main id="main">
-          <div className="container">
+        <main id="main" className="page-centered">
+          <div>
             <div className="col">
               <div className="page-head">
-                <h1 className="t-title">이메일 확인</h1>
+                <h1 className="ph-title">이메일 확인</h1>
               </div>
               <div className="part center">
                 <p>

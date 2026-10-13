@@ -7,7 +7,7 @@ import { safeNextPath } from "@/entities/session/model/safe-next-path";
 import { sendResetRequest } from "@/features/password-reset/api/reset-client";
 import s from "./login.module.css";
 
-// 로그인. 시안: docs/design/mockups/site/v11/login.html (가운데 기둥 .auth 안 카드 한 장)
+// 로그인. 시안: docs/design/mockups/site/v18/login.html (가운데 카드 480 한 장)
 // 아이디·비밀번호를 앱 서버(/api/auth/login)로 보낸다. 토큰은 서버가 HttpOnly 쿠키로만 쓰고 이 화면은 받지 않는다(INV-L1).
 // 입력칸에 name 을 두지 않아 스크립트가 꺼진 채 기본 제출이 일어나도 값이 주소창에 실리지 않는다.
 // 「로그인 상태 유지」는 아직 겉모양만 있다(지금은 늘 유지).
@@ -70,11 +70,11 @@ export function LoginPage({ next }: { next?: string }) {
 
   return (
     <main id="main">
-      <section className="section section--compact" aria-labelledby={f("title")}>
-        <div className="container auth">
+      <section className={s.page} aria-labelledby={f("title")}>
+        <div className={`container auth ${s.box}`}>
           <div className="card">
             <div className="head">
-              <img src="/img/icon-gift.png" alt="" aria-hidden="true" width={72} height={72} />
+              <img src="/img/icon-gift.png" alt="" aria-hidden="true" width={64} height={64} />
               <h1 className="t-title" id={f("title")}>
                 로그인
               </h1>

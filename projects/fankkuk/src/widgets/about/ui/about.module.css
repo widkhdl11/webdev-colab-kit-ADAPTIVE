@@ -1,10 +1,98 @@
-/* 팬꾹 소개 화면 전용 — 시안 docs/design/mockups/site/v11/about.html 의 <style> 과 v11.css 의 .page-about 규칙. 나머지는 공통 클래스(base.css) */
+/* 팬꾹 소개 화면 전용 — 시안 docs/design/mockups/site/v18/about.html · v18-pub.css 「소개: 히어로 · 장면 · 흐름 · 마무리」.
+   구간 사이: 첫 화면 아래·이어진 구간 64(.near), 큰 구간 96(.far, 휴대폰 64). 카드·판·표·태그는 전역 클래스. 화면 전용 크기는 여기 변수로만 */
+.root {
+  --deco: 160px;
+  --deco-top: 48px;
+  --deco-edge: 0px;
+  --pdeco: 96px;
+  --scene-max: 960px;
+  --scene-art: 112px;
+  --scene-arrow: 40px;
+  --scene-cols: auto minmax(0, 1fr) var(--scene-arrow) minmax(0, 1.35fr);
+  --flow-cols: 5;
+  --flow-dir: column;
+  --cols-3: 3;
+}
+.root :global(.sec-head) { margin-bottom: var(--space-8); }
+.root :global(.sec-head .t-lead) { margin-top: var(--space-2); }
+.root :global(.card p) { color: var(--gray-600); }
+.root :global(.card h3 + p) { margin-top: var(--space-2); }
+.root :global(.card .tag + h3) { margin-top: var(--space-4); }
+.near { margin-top: 64px; }
+.far { margin-top: var(--section-gap); }
+.last { margin-bottom: var(--section-gap); }
+.grid3 { display: grid; grid-template-columns: repeat(var(--cols-3), minmax(0, 1fr)); gap: var(--space-6); }
+.story :global(.card) p { color: var(--gray-900); }
 
-.about-hero :global(.t-lead) { max-width: 640px; margin: 24px auto 0; }
-.story p { color: var(--ink); }
+/* 첫 화면 */
+.hero { padding-bottom: 0; }
+.decoWrap { position: relative; }
+/* 기울인 장식이 좁은 본문(사이드바 화면)에서 오른쪽으로 삐져나와 가로 넘침을 만들지 않게 */
+.hero { overflow-x: clip; }
+.heroText { max-width: var(--hero-max); margin-inline: auto; }
+.heroText :global(.t-lead) { margin-top: var(--space-6); }
+.deco { position: absolute; top: var(--deco-top); width: var(--deco); height: var(--deco); object-fit: contain; opacity: 0.55; pointer-events: none; }
+.decoL { left: var(--deco-edge); transform: rotate(-12deg); }
+.decoR { right: var(--deco-edge); transform: rotate(10deg); }
 
-/* 검수 카드 셋 아래 「반응이 있으면 개봉 검수」 판 — 격자와 같은 24 간격 */
-.opened { margin-top: 24px; }
+/* 장면: 마스코트 + 잠긴 카드 → 열린 카드 */
+.scene { display: grid; grid-template-columns: var(--scene-cols); align-items: center; justify-items: center; gap: var(--space-6); max-width: var(--scene-max); margin: 0 auto var(--space-12); }
+.scene > * { min-width: 0; }
+.mascot img { display: block; width: var(--scene-art); height: var(--scene-art); object-fit: contain; }
+.sceneCard { width: 100%; padding: var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); text-align: left; }
+.sceneRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.sceneRow svg { width: 24px; height: 24px; color: var(--gray-600); }
+.sceneOpen svg { color: var(--primary); }
+.mask { display: grid; gap: var(--space-2); margin-top: var(--space-6); }
+.mask i { display: block; height: 14px; border-radius: var(--r-pill); background: var(--gray-200); }
+.mask i:nth-child(1) { width: 92%; }
+.mask i:nth-child(2) { width: 64%; }
+.sceneAddr { margin-top: var(--space-6); font-weight: var(--fw-btn); color: var(--gray-900); overflow-wrap: anywhere; }
+.sceneLog { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-4); padding: var(--space-4); border-radius: var(--r-btn); background: var(--primary-50); color: var(--gray-900); }
+.sceneLog svg { flex: none; width: var(--icon-xs); height: var(--icon-xs); margin-top: 2px; color: var(--primary); }
+.sceneArrow { display: block; width: var(--scene-arrow); height: var(--scene-arrow); color: var(--primary); }
+.sceneArrow svg { width: 100%; height: 100%; }
 
-/* 열람 기록 예시 표 — 760 기둥을 가운데에 */
-.log-col { max-width: 760px; margin-inline: auto; }
+/* 번호 단계 카드 — PC 다섯 칸 세로 카드, 1023 이하 한 줄씩 가로 */
+.flow { display: grid; grid-template-columns: repeat(var(--flow-cols), minmax(0, 1fr)); gap: var(--space-4); max-width: var(--scene-max); margin: 0 auto; }
+.flow li { display: flex; flex-direction: var(--flow-dir); align-items: flex-start; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); }
+.flow li > div { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; }
+.flow li p { color: var(--gray-600); }
+.n { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); line-height: 1; }
+.flow li.on { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--primary), var(--shadow); }
+.flow li.on .n { background: var(--primary); color: var(--white); }
+.flow li.on p { color: var(--gray-900); }
+.stepIc { display: grid; place-items: center; width: var(--space-12); height: var(--space-12); margin-bottom: var(--space-2); border-radius: var(--r-btn); background: var(--primary-50); color: var(--primary); }
+.stepIc svg { width: 24px; height: 24px; }
+.flow li.on .stepIc { background: var(--white); }
+
+/* 검수 · 열람 기록 */
+.art { display: block; width: var(--art); height: var(--art); margin: 0 auto var(--space-4); object-fit: contain; }
+.opened { margin-top: var(--space-6); }
+.tableNote { margin-top: var(--space-4); }
+.foot { display: flex; justify-content: center; margin-top: var(--space-8); }
+
+/* 마무리 판 + 모서리 장식 */
+.cta { position: relative; }
+.cta :global(.hero-actions) { margin-top: var(--space-8); }
+.pdeco { position: absolute; top: var(--space-4); width: var(--pdeco); height: var(--pdeco); object-fit: contain; opacity: 0.5; pointer-events: none; }
+.pdecoL { left: var(--space-4); transform: rotate(-12deg); }
+.pdecoR { right: var(--space-4); transform: rotate(10deg); }
+
+@media (max-width: 1120px) {
+  .pdeco { display: none; }
+}
+@media (max-width: 1024px) {
+  .root { --deco: 88px; --deco-top: 32px; --deco-edge: 16px; }
+}
+@media (max-width: 1023px) {
+  .root { --flow-cols: 1; --flow-dir: row; --scene-cols: minmax(0, 1fr); }
+  .scene { align-items: stretch; }
+  .sceneArrow { justify-self: center; transform: rotate(90deg); }
+}
+@media (max-width: 920px) {
+  .deco { display: none; }
+}
+@media (max-width: 767px) {
+  .root { --cols-3: 1; --scene-art: 88px; }
+}

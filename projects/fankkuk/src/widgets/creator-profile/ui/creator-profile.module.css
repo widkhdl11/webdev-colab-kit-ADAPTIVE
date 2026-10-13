@@ -1,13 +1,88 @@
-/* 선물 링크 페이지(크리에이터 페이지) 화면 전용 — 시안 docs/design/mockups/site/v11/creator.html · link.html (나머지는 공통 v11 클래스) */
+/* 선물 링크 페이지(크리에이터 페이지) 화면 전용 — 시안 docs/design/mockups/site/v18/link.html(로그인 전, v18-pub.css 「선물 링크 페이지」) ·
+   creator.html(로그인 후, v18-fan.css .pf·.info·.quote·.cta·.other). 카드·태그·접기 목록은 공통 클래스 */
+.pub { padding-bottom: var(--section-gap); }
+.app { padding-bottom: var(--section-gap); }
+.sec { margin-top: var(--space-12); }
+.head:global(.sec-head) { margin-bottom: var(--space-6); }
+.head :global(h2) { font-size: var(--fs-page); line-height: 1.3; }
+.head :global(.t-lead) { margin-top: var(--space-2); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; }
 
-/* 「본인 확인 완료」 체크와 글자 사이(시안 margin-right:4px) */
+/* ---------- 프로필 머리 ---------- */
+.pfSec { padding-top: var(--space-10); }
+.app .pfSec { padding-top: 0; }
+.name { font-size: var(--fs-page); line-height: 1.3; }
+.handle { margin-top: var(--space-2); font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+.intro { margin-top: var(--space-2); color: var(--gray-600); }
+.tags { align-items: center; margin-top: var(--space-4); }
+.thanks { margin-top: var(--space-4); font-weight: var(--fw-btn); color: var(--primary-700); }
+.note { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+/* 「본인 확인 완료」 체크와 글자 사이 */
 .verified svg { margin-right: 4px; }
 
-/* 받기 어려운 품목은 크리에이터가 고른 문장이라 큰 글씨가 아니라 본문 글씨(시안 인라인 스타일) */
+/* 로그인 전 — 가운데 프로필 카드(최대 880) */
+.pub .pf { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); max-width: 880px; margin-inline: auto; padding: var(--space-12) var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); text-align: center; }
+.pub .photo { width: 88px; height: 88px; font-size: var(--fs-page); }
+.pub .pfMain { display: flex; flex-direction: column; align-items: center; }
+.pub .name { font-size: var(--fs-title); }
+.pub .tags { justify-content: center; }
+.pub .act :global(.btn) { min-width: 240px; }
+
+/* 로그인 후 — 왼쪽 정렬 머리: 사진 | 글 | 오른쪽 주 버튼 */
+.app .pf { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--space-2) var(--space-6); }
+.app .photo { width: 64px; height: 64px; }
+.app .act { grid-column: 3; grid-row: 1; }
+.app .note { grid-column: 2 / -1; }
+
+/* ---------- 정보 카드 · 답장 · 비슷한 크리에이터 ---------- */
+.infoGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); }
+.infoGrid :global(.card.info) { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); padding: var(--space-5); border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.infoGrid :global(.info h3) { font-family: var(--font); font-size: var(--fs-navitem); font-weight: var(--fw-nav); line-height: var(--lh-caption); color: var(--gray-600); }
+.infoGrid :global(.info .big) { margin-top: 0; font-size: var(--fs-lead); font-weight: var(--fw-btn); line-height: 1.5; }
+.infoGrid :global(.info .dd) { margin-top: 0; }
+/* 받기 어려운 품목은 크리에이터가 고른 문장이라 큰 글씨가 아니라 본문 글씨 */
 .plain:global(.big) { font-weight: 400; font-size: var(--fs-body); }
 
+.quoteGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.quoteGrid :global(.card.quote) { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.quoteGrid :global(.quote q) { font-weight: 400; }
+.quoteGrid :global(.quote .by) { margin-top: 0; }
 /* 답장 한 줄은 크리에이터가 쓴 글이라 긴 낱말도 칸 안에서 줄을 바꾼다 */
 .quote q { overflow-wrap: anywhere; }
 
-/* 비슷한 크리에이터가 없을 때 — 판이 마지막이라 바닥글과 붙지 않게 아래 여백만 둔다(위는 앞 구간 여백이 있다) */
-.last-send:global(.section) { padding-top: 0; }
+.otherGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.other { display: flex; align-items: center; gap: var(--space-3); height: 100%; padding: var(--space-5); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); text-decoration: none; }
+.other:hover { box-shadow: inset 0 0 0 1px var(--gray-400); }
+.otherWho { display: grid; gap: var(--space-2); min-width: 0; }
+.otherWho b { font-weight: var(--fw-btn); }
+.otherTags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.foot { display: flex; justify-content: center; margin-top: var(--space-8); }
+
+/* ---------- 마지막 선물 보내기 ---------- */
+/* 로그인 후 — 옅은 빨강 둥근 상자 */
+.cta { text-align: center; }
+/* 로그인 전 — 화면 폭 가득 옅은 빨강 띠 + 모서리 장식 둘(1120 이하 숨김) */
+.sheet { position: relative; margin-top: var(--section-gap); padding-block: var(--section-gap); background: var(--primary-50); }
+.sheetIn { position: static; }
+.pdeco { position: absolute; width: 96px; height: 96px; object-fit: contain; opacity: 0.5; pointer-events: none; }
+.pdecoL { left: var(--space-8); top: var(--space-8); transform: rotate(-12deg); }
+.pdecoR { right: var(--space-8); bottom: var(--space-8); transform: rotate(10deg); }
+.sheet + section { margin-top: 64px; }
+
+@media (max-width: 1120px) {
+  .pdeco { display: none; }
+}
+@media (max-width: 1023px) {
+  .infoGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .otherGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .pfSec { padding-top: var(--space-4); }
+  .pub .pf { padding: var(--space-8) var(--space-6); }
+  .pub .photo { width: 72px; height: 72px; }
+  .pub .act, .pub .act :global(.btn) { width: 100%; min-width: 0; }
+  .app .pf { grid-template-columns: auto minmax(0, 1fr); }
+  .app .act { grid-column: 1 / -1; grid-row: auto; }
+  .app .act :global(.btn) { width: 100%; }
+  .app .note { grid-column: 1 / -1; }
+  .infoGrid, .quoteGrid, .otherGrid { grid-template-columns: minmax(0, 1fr); }
+}

@@ -12,7 +12,7 @@ import { formatDateTime } from "@/shared/lib/format/datetime";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./support.module.css";
 
-// 고객센터. 시안: docs/design/mockups/site/v11/support.html
+// 고객센터. 시안: docs/design/mockups/site/v18/support.html — 로그인 전 1152 선, 페이지 머리 + 구간 넷(질문·문의·내 문의·연락처) 사이 48
 // 1:1 문의: 로그인하지 않았으면 버튼이 로그인 화면으로 가고, 로그인했으면 실제로 접수한다(결정 d25).
 // 그 아래 「내 문의」는 자주 묻는 질문과 같은 펼치는 줄로 보인다(쓴 사람 본인 것만 — DB 가 거른다).
 // 요금 답변의 숫자는 결제와 같은 DB 요금표(서버 page 가 읽어 넘긴다)를, 구간 기준은 size-tier 를 읽는다.
@@ -183,21 +183,22 @@ export function SupportPage({
   };
 
   return (
-    <main id="main">
-      <section className="section section--compact" aria-labelledby="page-title">
-        <div className="container">
-          <div className="sec-head">
-            <img className="sec-icon" src="/img/icon-help.png" width={72} height={72} alt="" aria-hidden="true" />
-            <h1 className="t-title" id="page-title">
-              고객센터
-            </h1>
-            <p className="t-lead t-desc">궁금한 점을 먼저 찾아보시고, 없으면 1:1 문의를 남겨 주세요.</p>
-          </div>
+    <main id="main" className={s.page}>
+      <section aria-labelledby="page-title">
+        <div className="pub-inner">
+          <header className="page-head">
+            <div className="ph-row">
+              <h1 className="ph-title" id="page-title">
+                고객센터
+              </h1>
+            </div>
+            <p className="ph-desc">궁금한 점을 먼저 찾아보시고, 없으면 1:1 문의를 남겨 주세요.</p>
+          </header>
         </div>
       </section>
 
-      <section className="section section--compact" aria-labelledby="faq-title">
-        <div className="container">
+      <section className={s.sec} aria-labelledby="faq-title">
+        <div className="pub-inner">
           <div className="sec-head">
             <h2 id="faq-title">자주 묻는 질문</h2>
           </div>
@@ -225,7 +226,7 @@ export function SupportPage({
           {categories.map((c, i) => (
             <div
               key={c.id}
-              className={`acc ${s.col}`}
+              className="acc"
               role="tabpanel"
               id={`p-${c.id}`}
               aria-labelledby={`t-${c.id}`}
@@ -249,8 +250,8 @@ export function SupportPage({
         </div>
       </section>
 
-      <section className="section section--compact" aria-labelledby="inquiry-title">
-        <div className="container">
+      <section className={s.sec} aria-labelledby="inquiry-title">
+        <div className="pub-inner">
           <div className="sec-head">
             <h2 id="inquiry-title">1:1 문의</h2>
             <p className="t-lead t-desc">1:1 문의는 남겨 주신 순서대로 답변드려요. 답변이 달리면 「내 문의」에서 볼 수 있어요.</p>
@@ -264,12 +265,12 @@ export function SupportPage({
         </div>
       </section>
 
-      <section className="section section--compact" aria-labelledby="contact-title">
-        <div className="container">
+      <section className={s.sec} aria-labelledby="contact-title">
+        <div className="pub-inner">
           <div className="sec-head">
             <h2 id="contact-title">운영 시간·연락처</h2>
           </div>
-          <dl className={`grid cols-4 ${s.hours}`}>
+          <dl className={s.hours}>
             {CONTACT.map(([k, v]) => (
               <div key={k} className="card">
                 <dt>{k}</dt>

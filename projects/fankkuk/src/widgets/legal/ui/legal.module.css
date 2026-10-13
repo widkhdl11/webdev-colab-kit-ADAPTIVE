@@ -1,24 +1,35 @@
-/* 이용약관·개인정보처리방침 공용 — 시안 docs/design/mockups/site/v11/legal.html 의 <style>. 카드·격자·긴 글·점 목록은 공통 클래스(base.css) */
+/* 이용약관·개인정보처리방침 공용 — 시안 docs/design/mockups/site/v18/legal.html · v18-pub.css 「약관」. 카드·격자·긴 글·점 목록은 공통 클래스(base.css)
+   본문은 로그인 전 1152 선. 상단 바 아래 40, 구간 사이 48, 바닥글까지 96(휴대폰 64) */
+.page { padding: var(--space-10) 0 var(--section-gap); }
+.sec { margin-top: var(--space-12); }
 
-.head :global(.t-meta) { margin-top: 16px; }
-
-/* 운영·시행일·동의 기록의 판 카드 */
-.facts dt { color: var(--sub); font-weight: 400; }
-.facts dd { margin: 4px 0 0; font-weight: var(--fw-bold); }
+/* 운영·시행일·동의 기록의 판 카드 — 세 칸(767 이하 하나) */
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); }
+.facts dt { color: var(--gray-600); font-size: var(--fs-caption); font-weight: 400; }
+.facts dd { margin: var(--space-2) 0 0; font-weight: var(--fw-btn); }
 
 /* 맨 위 목차 카드 — 3열(1023px 이하 2열, 767px 이하 1열) */
-.toc ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 32px; margin-top: 12px; }
-.toc a { display: flex; align-items: center; min-height: 44px; text-decoration: none; }
-.toc a:hover { text-decoration: underline; }
+.toc ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--space-8); margin-top: var(--space-4); }
+.toc a { display: flex; align-items: center; min-height: var(--touch); text-decoration: none; }
+.toc a:hover { color: var(--primary); text-decoration: underline; }
 @media (max-width: 1023px) { .toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 767px) { .toc ol { grid-template-columns: 1fr; } }
 
 /* 조마다 위 구분선 */
-.art { padding-block: 32px; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--header-h) + 16px); }
-.art > h2 { margin-bottom: 16px; }
+.art { padding-block: var(--space-8); border-top: 1px solid var(--gray-200); scroll-margin-top: calc(var(--header-h) + 16px); }
+.art:first-child { padding-top: 0; border-top: 0; }
+.art > h2 { margin-bottom: var(--space-4); }
+.prose { max-width: none; margin-inline: 0; }
 .prose > * { max-width: 760px; }
-.prose > :global(.grid) { max-width: none; }
+.prose > :global(.grid) { max-width: 760px; }
 
-/* 카드 안 이름·값 — 시안 legal.html <style>. 좁은 카드에서 이름 아래 값이 오는 것은 공통 .kv 가 정한다 */
-.kv { display: grid; gap: 12px; margin-top: 12px; }
-.kv dt { color: var(--sub); font-weight: 400; }
+/* 카드 안 이름·값 — 좁은 카드에서 이름 아래 값 */
+.kv { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
+.art .kv > div { display: block; padding: 0; }
+.kv dt { color: var(--gray-600); font-size: var(--fs-caption); font-weight: 400; }
+.kv dd { margin-top: var(--space-2); font-weight: var(--fw-btn); }
+
+@media (max-width: 767px) {
+  .page { padding-top: var(--space-4); }
+  .facts { grid-template-columns: minmax(0, 1fr); }
+  .toc ol { grid-template-columns: minmax(0, 1fr); }
+}

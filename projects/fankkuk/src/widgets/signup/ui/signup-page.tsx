@@ -13,7 +13,7 @@ import { checkDetails, CREATOR_PROFILE_LIMITS, type DetailsField } from "@/featu
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import s from "./signup.module.css";
 
-// 회원가입 3단계. 시안: docs/design/mockups/site/v11/signup.html (가운데 기둥 .auth, 단계 카드에 번호 동그라미 + 제목) · 스펙: docs/specs/signup.md
+// 회원가입 3단계. 시안: docs/design/mockups/site/v18/signup.html (가운데 기둥 .auth, 단계 카드에 번호 동그라미 + 제목) · 스펙: docs/specs/signup.md
 // 시안은 세 단계를 한 화면에 쌓아 보이지만, 가입은 한 번에 한 단계씩 넘기는 흐름을 그대로 둔다 — 지금 단계의 카드 한 장만 보인다.
 // 3단계: 「인증 요청 보내기」로 카카오톡에 요청 → 카카오톡에서 인증 → 「인증했어요, 가입하기」.
 // 브라우저는 번호표만 들고 있다 — 인증됐는지는 서버가 카카오에게 묻는다(INV-U1).
@@ -190,8 +190,8 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
 
   return (
     <main id="main">
-      <section className="section section--compact" aria-labelledby={f("title")}>
-        <div className="container auth">
+      <section className={s.page} aria-labelledby={f("title")}>
+        <div className={`container auth ${s.box}`}>
           <div className="head">
             <h1 className="t-title" id={f("title")}>
               회원가입

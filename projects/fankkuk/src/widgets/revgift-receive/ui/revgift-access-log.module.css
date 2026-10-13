@@ -1,11 +1,11 @@
-/* 받은 역조공 상세 — 내 주소 열람 기록. 시안 docs/design/mockups/site/v11/revgift-receive.html 의 세 번째 판(.part).
+/* 받은 역조공 상세 — 내 주소 열람 기록. 시안 docs/design/mockups/site/v18/revgift-receive.html 의 세 번째 판(.part).
    표는 전역 .table-wrap·.table. 767px 이하는 표 대신 줄 목록(시간·결과가 한 줄, 비고가 아래) */
 .lead { margin-top: 8px; }
 .empty { margin-top: 16px; }
 .log-table { margin-top: 24px; }
 .nw { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.log-list { display: none; margin-top: 16px; border-top: 1px solid var(--border); }
-.lrow { display: grid; gap: 4px; padding-block: 16px; border-bottom: 1px solid var(--border); }
+.log-list { display: none; margin-top: 16px; border-top: 1px solid var(--gray-200); }
+.lrow { display: grid; gap: 4px; padding-block: 16px; border-bottom: 1px solid var(--gray-200); }
 .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
 @media (max-width: 767px) {
