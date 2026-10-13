@@ -1,10 +1,9 @@
 /* 이메일 확인 — 시안 docs/design/mockups/site/v11/email-confirm.html 의 <style>(.page-email-confirm 본문 폭 640 가운데). 머리·판·알림은 전역 클래스.
-   알림 칸(.ok·.err)은 늘 두고 글자만 바꾼다 — 빈 칸은 간격·판을 차지하지 않는다 */
+   알림 칸(.ok·.err)은 늘 두고 글자만 바꾼다 — 빈 칸이 간격·판을 차지하지 않는 것은 공통 .err:empty 가 정한다 */
 .narrow { max-width: 640px; margin-inline: auto; }
 .ok { display: flex; align-items: center; gap: 12px; }
 .ok svg { color: var(--success); }
 .msg { margin-top: 16px; }
-.msg:empty { margin: 0; padding: 0; background: none; }
 .actions { margin-top: 24px; }
 /* 시안 .page-email-confirm — 판 안 글·버튼 줄·확인 줄은 가운데 */
 .center { text-align: center; }

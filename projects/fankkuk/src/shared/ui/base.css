@@ -265,6 +265,8 @@ textarea.field { padding-block: 14px; min-height: 160px; resize: vertical; line-
 .check + .check { margin-top: 12px; }
 .err { padding: 16px; border-radius: var(--r-btn); background: var(--danger-soft); color: var(--danger); font-weight: 800; }
 .okmsg { padding: 16px; border-radius: var(--r-btn); background: var(--success-soft); color: var(--success); font-weight: 800; }
+/* 알림 칸은 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다 — 빈 칸은 흐름에서 빼 간격·격자 gap 을 차지하지 않는다(낭독기 트리에는 남는다) */
+.err:empty, .okmsg:empty { position: absolute; margin: 0; padding: 0; background: none; }
 .auth { max-width: 640px; margin-inline: auto; }
 .auth .card { padding: 40px; }
 .auth .head { text-align: center; margin-bottom: 32px; }
@@ -345,9 +347,12 @@ textarea.field { padding-block: 14px; min-height: 160px; resize: vertical; line-
 fieldset.part { border: 0; min-width: 0; }
 fieldset.part > legend { float: left; width: 100%; margin: 0 0 12px; padding: 0; }
 fieldset.part > legend + * { clear: both; }
+.kv { container-type: inline-size; }
 .kv > div { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); }
 .kv > div:last-child { border-bottom: 0; }
 .kv dd { min-width: 0; overflow-wrap: anywhere; }
+/* 좁은 칸(카드 격자 안 등)에서는 이름 칸 200 이 값 칸을 0 으로 만든다 — 목록 폭이 480 이하면 이름 아래 값 */
+@container (max-width: 480px) { .kv > div { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
 /* 금액 줄 */
 .lines > div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .lines .total { border-bottom: 0; padding-top: 20px; align-items: baseline; }
@@ -450,8 +455,8 @@ a.card:hover, .ccard:focus-within { box-shadow: inset 0 0 0 2px var(--field-line
 }
 
 /* ---------- 13. 플랫폼 뱃지 (2026-10-13 사용자 선택: 테두리 알약, 마우스를 올리면 연한 색 배경) ----------
-   --f(옅은 면)·--k(글자색)는 플랫폼마다 화면이 넣는다(design-rules 5절) */
-.ctag { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 4px 12px 4px 4px; border-radius: var(--r-pill); background: var(--white); color: var(--k, var(--ink)); font-weight: 400; line-height: 1.5;
+   --f(옅은 면)·--k(글자색)는 플랫폼마다 화면이 넣는다(design-rules 5절). 어느 폭에서도 한 줄 */
+.ctag { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 4px 12px 4px 4px; border-radius: var(--r-pill); background: var(--white); color: var(--k, var(--ink)); font-weight: 400; line-height: 1.5; white-space: nowrap;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--k, var(--ink)) 30%, var(--white)); transition: background-color .15s ease; }
 .ctag:hover { background: var(--f, var(--ctag-face)); }
 .ctag .bd { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; overflow: hidden; }
@@ -460,54 +465,40 @@ a.card:hover, .ccard:focus-within { box-shadow: inset 0 0 0 2px var(--field-line
 .ctag svg { width: 24px; height: 24px; padding: 3px; border-radius: 50%; background: var(--ctag-face); }
 
 /* ---------- 14. 제목·설명 → 아래 내용 간격 (2026-10-13 사용자 「텍스트와 섹션 사이가 너무 가깝다」) ----------
-   큰 구간 머리 64 · 화면 머리 48 · 작은 제목/안내 한 줄 32 · 상자 위 이름표 16 (휴대폰 48 · 32 · 24 · 16).
+   큰 구간 머리 64 · 화면 머리 48 · 작은 제목/안내 한 줄 32 · 상자 위 이름표 16 (휴대폰 48 · 32 · 24 · 16). 빈 목록 안내(.empty)도 판으로 센다.
    화면마다 손으로 간격을 적지 않는다 — 아래 규칙이 정한다. 운영자 화면은 빼 둔다(:where 로 감싸 선택자 점수는 그대로) */
 .sec-head { margin-bottom: 64px; }
 .page-head, .step-h, .auth .head, .my-body > .sec-head { margin-bottom: 48px; }
-:is(h2, h3, .section-hint, .bar):has(+ :is(.grid, .table-wrap, .part, .card, .ccard, form, .stack, .acc, .cards, .steps, .flow, .list)):where(:not(.admin-area *)) { margin-bottom: 32px; }
-.t-meta:has(+ :is(.grid, .table-wrap, .part, .card, .ccard, form, .stack, .acc, .cards, .steps, .flow, .list)):where(:not(.admin-area *)) { margin-bottom: 16px; }
+:is(h2, h3, .section-hint, .bar):has(+ :is(.grid, .table-wrap, .part, .card, .ccard, form, .stack, .acc, .cards, .steps, .flow, .list, .empty)):where(:not(.admin-area *)) { margin-bottom: 32px; }
+.t-meta:has(+ :is(.grid, .table-wrap, .part, .card, .ccard, form, .stack, .acc, .cards, .steps, .flow, .list, .empty)):where(:not(.admin-area *)) { margin-bottom: 16px; }
 .bar:has(+ .section-hint) { margin-bottom: 8px; }
 @media (max-width: 767px) {
   .sec-head { margin-bottom: 48px; }
   .page-head, .step-h, .auth .head, .my-body > .sec-head { margin-bottom: 32px; }
-  :is(h2, h3, .section-hint, .bar):has(+ :is(.grid, .table-wrap, .part, .card, .ccard, form, .stack, .acc, .cards, .steps, .flow, .list)):where(:not(.admin-area *)) { margin-bottom: 24px; }
+  :is(h2, h3, .section-hint, .bar):has(+ :is(.grid, .table-wrap, .part, .card, .ccard, form, .stack, .acc, .cards, .steps, .flow, .list, .empty)):where(:not(.admin-area *)) { margin-bottom: 24px; }
 }
 /* 목록 위 안내 한 줄은 구간 머리의 끝이다 — 화면 머리와 같은 48(휴대폰 32) */
 .section-hint:has(+ :is(.grid, .cards, .list)) { margin-bottom: 48px; }
 @media (max-width: 767px) { .section-hint:has(+ :is(.grid, .cards, .list)) { margin-bottom: 32px; } }
 
 /* ---------- 15. 구간 사이 여백 (2026-10-13 사용자 「섹션 간격도 조금 띄워줘, 내용이 찌부된 것 같다」) ----------
-   바깥 화면 큰 구간 위아래 88~144(--sec-pad, tokens.css) · 화면 안 구간 사이 64(휴대폰 48) · 세로로 쌓인 판·카드 사이 32 */
-section:not(.section):where(:not(.admin-area *)) + section:not(.section) { margin-top: 64px; }
+   바깥 화면 큰 구간 위아래 88~144(--sec-pad, tokens.css) · 화면 안 구간 사이 64(휴대폰 48) · 세로로 쌓인 판·카드 사이 32
+   「구간」은 화면 본문(페이지 본문·「내 팬꾹」 .my-body/.my-main)에 놓인 이웃 section 이다. 다음 section 은 구간이 아니라 판이라 64 를 걸지 않는다:
+   카드 격자·쌓인 판(.grid·.cards·.stack·.block-gap 등)의 바로 아래 칸 — 그 묶음의 gap 이 간격을 정한다 · 판(.card·.part·.panel) 안의 section · 운영자 화면 */
+section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.stack, .block-gap, .grid, .cards, .tiles, .flow, .acc) > *, :is(.card, .part, .panel) *)) { margin-top: 64px; }
 .stack, .block-gap { gap: 32px; }
-@media (max-width: 767px) { section:not(.section):where(:not(.admin-area *)) + section:not(.section) { margin-top: 48px; } }
+@media (max-width: 767px) { section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.stack, .block-gap, .grid, .cards, .tiles, .flow, .acc) > *, :is(.card, .part, .panel) *)) { margin-top: 48px; } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
-/* ========== 이전 클래스 — v11 에 없지만 지금 화면이 쓴다. 크기·굵기만 v11 다섯 단계·두 굵기로 맞췄다 ========== */
+/* ========== 이전 클래스 — v11 에 없지만 지금 화면이 쓴다. 크기·굵기만 v11 다섯 단계·두 굵기로 맞췄다.
+   2026-10-13 화면이 더 쓰지 않는 것(.page-h·.lead·.faint·.kicker·.green-line·.row·.page-title·.panel-head·.panel-h·.panel-title·.block·.block-head·.search--field·.tile .ico)은 지웠다 ========== */
 /* 글자 */
 .hero-title { font-size: var(--fs-hero); line-height: 1.25; font-weight: 800; letter-spacing: var(--ls-title); } /* = .t-hero */
-.page-h { font-size: var(--fs-title); line-height: 1.3; font-weight: 800; letter-spacing: var(--ls-title); } /* = .t-title */
-.lead { font-size: var(--fs-lead); color: var(--sub); }
 .sub { color: var(--sub); }
-.faint { color: var(--faint); }
-.kicker { font-size: var(--fs-card); line-height: 1.4; font-weight: 800; }
-.green-line { font-size: var(--fs-card); line-height: 1.4; font-weight: 800; color: var(--brand); } /* = .hero-line */
-/* 줄·페이지 머리 */
-.row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.page-title { padding-block: clamp(32px, 4vw, 56px) 24px; }
-.page-title p { margin-top: 8px; color: var(--sub); font-size: var(--fs-lead); }
-/* 「내 팬꾹」 왼쪽 메뉴 틀 안의 본문 머리 */
-.panel-head { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; margin-bottom: 24px; }
-.panel-h { font-size: var(--fs-title); }
-.panel-title { margin-bottom: 24px; }
-.panel-title p, .panel-head p { margin-top: 8px; color: var(--sub); }
-.block { padding-block: clamp(56px, 7vw, 96px) 0; }
-.block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
-.block-head h2 { font-size: var(--fs-title); }
 /* 헤더 선물 바텀시트의 목록 줄 — 창 자체는 shared/ui/bottom-sheet */
 .sheet-list a { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 0; border-bottom: 1px solid var(--border); text-decoration: none; }
 .sheet-list li:last-child a { border-bottom: 0; }
@@ -524,9 +515,6 @@ section:not(.section):where(:not(.admin-area *)) + section:not(.section) { margi
 /* 검색창 변형 */
 span.search-go { cursor: default; } /* 누르는 동작이 없는 장식용 돋보기 */
 span.search-go:hover { background: var(--brand); }
-.search--field { max-width: none; height: 56px; margin: 0; } /* 보내기 화면 안 */
-.tile .ico { width: 88px; height: 88px; }
-@media (max-width: 767px) { .tile .ico { width: 64px; height: 64px; } }
 img.face { object-fit: cover; } /* 프로필 사진(512 정사각)을 원 안에 채운다 */
 /* 입력 — 이전 화면은 입력 요소에 .input, 「라벨+입력」 감싸개에 .field 를 쓴다. 모양은 v11 입력창(.field)과 같게 */
 .field > label, .field > .label { display: block; margin-bottom: 8px; font-weight: 800; }

@@ -12,6 +12,3 @@
 
 .nw { font-variant-numeric: tabular-nums; }
 
-/* 작은 제목 → 판 32(휴대폰 24) — 공통 간격 규칙(h3 + .table-wrap)이 빈 안내(.empty)는 세지 않아 같은 값을 둔다 */
-.gap { margin-top: 32px; }
-@media (max-width: 767px) { .gap { margin-top: 24px; } }

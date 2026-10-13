@@ -79,7 +79,7 @@ export function AccessLogPage({
           열람 기록
         </h3>
         {entries.length === 0 ? (
-          <p className={`empty ${s.gap}`}>아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
+          <p className="empty">아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
         ) : (
           <div className="table-wrap" tabIndex={0} role="region" aria-label="주소 열람 기록 표">
             <table className="table">

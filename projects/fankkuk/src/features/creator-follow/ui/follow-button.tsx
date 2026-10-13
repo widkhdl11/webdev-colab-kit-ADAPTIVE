@@ -15,21 +15,6 @@ import s from "./follow-button.module.css";
 
 export type { FollowMode };
 
-function Check() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="m5 12.5 4.5 4.5L19 7"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export function FollowButton({
   creatorId,
   creatorName,
@@ -105,13 +90,13 @@ export function FollowButton({
   return (
     <>
       {following ? (
+        // 팔로우 중 = 선 버튼(시안 v11 creators.html·creator.html). 「팔로우」 버튼과 모양은 같고 글자로 상태를 읽는다
         <button
-          className={`btn btn--sm ${s.on}`}
+          className="btn btn--sm btn--line"
           type="button"
           aria-label={`${creatorName} 팔로우 중`}
           onClick={toggle}
         >
-          <Check />
           팔로우 중
         </button>
       ) : (

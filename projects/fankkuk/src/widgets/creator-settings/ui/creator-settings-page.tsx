@@ -295,10 +295,10 @@ export function CreatorSettingsPage({
       </nav>
 
       <div className={`block-gap ${s.cards}`}>
-        {/* 본인 확인 칸은 자기 section(제목 포함)을 그린다 — 바깥은 이름 없는 section 이라 랜드마크가 되지 않고 카드 사이 간격만 다른 카드와 같아진다 */}
-        <section id="verify" className={`card ${s.set}`}>
+        {/* 본인 확인 칸은 자기 section(제목 포함)을 그린다 — 바깥은 카드 틀(div)만 */}
+        <div id="verify" className={`card ${s.set}`}>
           <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
-        </section>
+        </div>
 
         <section id="addr" className={`card ${s.set}`} aria-labelledby="addr-h">
           <div className={s["set-head"]}>

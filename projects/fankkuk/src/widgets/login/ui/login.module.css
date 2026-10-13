@@ -5,6 +5,4 @@
 .reset[open] summary svg { transform: rotate(180deg); }
 .reset :global(.form) { margin-top: 16px; padding-top: 20px; border-top: 1px solid var(--border); }
 :global(.form) + .reset { margin-top: 24px; }
-/* 재설정 결과 줄 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다 */
-.msg:empty { position: absolute; padding: 0; background: none; } /* 빈 칸은 격자 흐름에서 빼 간격을 차지하지 않게 */
 .link { color: var(--brand-ink); font-weight: 800; text-underline-offset: 4px; }

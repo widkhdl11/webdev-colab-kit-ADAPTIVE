@@ -94,10 +94,10 @@ function CtagLogo({ icon }: { icon: TagIcon }) {
  */
 export function CreatorTag({ name }: { name: string }) {
   const brand = tagBrandOf(name);
-  if (!brand) return <span className={`ctag ${s.ctag} ${s.plain}`}>{name}</span>;
+  if (!brand) return <span className={`ctag ${s.plain}`}>{name}</span>;
   const vars: Record<string, string> = { "--f": brand.fill, "--k": brand.ink };
   return (
-    <span className={`ctag ${s.ctag}`} style={vars as CSSProperties}>
+    <span className="ctag" style={vars as CSSProperties}>
       <CtagLogo icon={brand.icon} />
       {name}
     </span>

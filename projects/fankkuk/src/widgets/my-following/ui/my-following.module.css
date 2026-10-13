@@ -8,6 +8,5 @@
 .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
 .acts :global(.btn) { padding: 0 8px; }
 .empty p { max-width: 480px; }
-/* 끊기 실패 알림 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다 */
+/* 끊기 실패 알림 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다(빈 칸은 공통 .err:empty) */
 .msg { margin-bottom: 24px; }
-.msg:empty { margin: 0; padding: 0; background: none; }

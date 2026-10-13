@@ -167,7 +167,7 @@ export function ApprovalRequestList({
           승인 대기 {waitingCount}
         </h3>
         {rows.length === 0 ? (
-          <p className={`empty ${a.empty}`}>기다리는 승인 요청이 없어요.</p>
+          <p className="empty">기다리는 승인 요청이 없어요.</p>
         ) : (
           <ul className="grid cols-2">
             {rows.map((r, i) => {
@@ -283,7 +283,7 @@ export function ApprovalRequestList({
           처리한 요청
         </h3>
         {decided.length === 0 ? (
-          <p className={`empty ${a.empty}`}>아직 처리한 요청이 없어요.</p>
+          <p className="empty">아직 처리한 요청이 없어요.</p>
         ) : (
           <ul className="grid cols-2">
             {decided.map((d, i) => {

@@ -38,5 +38,3 @@
 .tag-line :global(.tag) { gap: 6px; }
 .pay-extra { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--border); }
 .cancel { margin-top: 24px; }
-/* 판·카드 사이는 .stack·.grid 간격이 정한다 — 이웃 section 에 붙는 공통 「구간 사이 64」를 끈다(점수를 올려 이긴다) */
-.body.body :global(.stack) > section, .body.body :global(.grid) > section { margin-top: 0; }

@@ -19,7 +19,6 @@
 .prose > * { max-width: 760px; }
 .prose > :global(.grid) { max-width: none; }
 
-/* 카드 안 이름·값 — 시안의 200px 이름 칸은 카드 폭(3열 237px)보다 넓어 값 칸이 0이 된다. 카드 안에서는 위아래로 쌓는다 */
+/* 카드 안 이름·값 — 시안 legal.html <style>. 좁은 카드에서 이름 아래 값이 오는 것은 공통 .kv 가 정한다 */
 .kv { display: grid; gap: 12px; margin-top: 12px; }
-dl.kv > div { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 0; border-bottom: 0; }
 .kv dt { color: var(--sub); font-weight: 400; }

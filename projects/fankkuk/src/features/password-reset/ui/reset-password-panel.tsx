@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
 import { sendNewPassword, type NewPasswordField } from "../api/reset-client";
-import s from "./reset-password.module.css";
 
 // 재설정 메일의 링크로 연 화면(session-login INV-L11). 시안: docs/design/mockups/site/v11/password-reset.html (가운데 기둥 .auth 안 카드 한 장). 새 비밀번호를 적고 저장해야 바뀐다 — 링크를 여는 것만으로는 아무것도 바뀌지 않는다.
 // 링크 값의 꼴·만료·한 번만 쓰기는 서버와 DB 가 본다. 이 화면은 값을 저장 요청에 실어 보내기만 한다.
@@ -114,7 +113,7 @@ export function ResetPasswordPanel({ token }: { token: string }) {
             aria-describedby={fieldError("passwordConfirm") ? f("err") : undefined}
           />
         </div>
-        <p className={`err ${s.msg}`} id={f("err")} role="alert">
+        <p className="err" id={f("err")} role="alert">
           {state.kind === "failed" ? state.message : ""}
         </p>
         <button className="btn btn--block" type="submit" aria-disabled={state.kind === "sending"} aria-busy={state.kind === "sending" || undefined}>

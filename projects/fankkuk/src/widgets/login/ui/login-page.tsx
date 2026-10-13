@@ -142,7 +142,7 @@ export function LoginPage({ next }: { next?: string }) {
                   </label>
                   <input className="field" id={f("reset-mail")} type="email" autoComplete="email" placeholder="example@email.com" />
                 </div>
-                <p className={`${resetMsg && !resetMsg.ok ? "err" : "okmsg"} ${s.msg}`} role="status">
+                <p className={resetMsg && !resetMsg.ok ? "err" : "okmsg"} role="status">
                   {resetMsg?.text ?? ""}
                 </p>
                 {resetMsg?.ok && (

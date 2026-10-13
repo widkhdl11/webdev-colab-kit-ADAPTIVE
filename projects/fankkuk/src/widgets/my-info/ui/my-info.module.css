@@ -6,9 +6,8 @@
 .open { margin-top: 12px; }
 .must { margin-top: 16px; }
 .must-t { color: var(--ink); }
-/* 저장 결과 줄 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다 */
+/* 저장 결과 줄 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다(빈 칸은 공통 .err:empty·.okmsg:empty) */
 .msg { margin-top: 24px; }
-.msg:empty { margin: 0; padding: 0; background: none; }
 .save-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; }
 .leave { display: inline-flex; align-items: center; min-height: 44px; color: var(--sub); }
 @media (max-width: 767px) {
