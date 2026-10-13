@@ -1,0 +1,119 @@
+<!doctype html>
+<!--
+  [v12-A 이식 2026-10-13] v11 원본 내용·문구·구간 순서 그대로, 시각 표현만 A 언어(옅은 바탕 · 흰 카드+그림자 · 큰 둥근 면)로. 공통 CSS: a.css + a-account.css.
+  팬꾹 시안 v12-A 이용약관 (/terms · /privacy 공통 틀) (2026-10-12)
+  src/app/terms/page.tsx → LegalPage(termsDoc). /privacy 도 같은 틀에 문서 내용만 바꾼다. 시안은 이용약관 기준, 본문은 terms-doc.ts 에서 제1~5·7·9조를 옮기고 나머지 조는 줄였다.
+  좌우로 나눈 구조 없음: 예전 「왼쪽에 붙어 따라오는 목차」를 맨 위 목차 카드(3열 격자)로 옮겼다. 요금·환불 표(rows)는 같은 크기 카드 격자. 본문 글줄 폭은 760px 로 제한(읽기 편하게), 정렬은 모두 왼쪽.
+  제목 줄 오른쪽 아이콘 칸은 위로 올렸다.
+  글자 체계 A(40/28/20/18/16) · 티머니 둥근바람 · 공통 CSS v11.css. 화면 전용 스타일은 아래 <style> 에만 둔다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v11 이용약관 (/terms · /privacy 공통 틀)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="a.css">
+<link rel="stylesheet" href="a-account.css">
+<link rel="stylesheet" href="tokens.css">
+<script src="font-switch.js"></script>
+<style>
+.prose > *{max-width:760px}
+.prose .grid{max-width:none}
+.facts dt{color:var(--sub);font-weight:400}
+.facts dd{margin:4px 0 0;font-weight:800}
+.toc ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 32px;counter-reset:t}
+.toc a{display:flex;align-items:center;min-height:44px;text-decoration:none}
+.toc a:hover{text-decoration:underline}
+@media(max-width:1023px){.toc ol{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:767px){.toc ol{grid-template-columns:1fr}}
+.art{padding-block:32px;border-top:1px solid var(--border);scroll-margin-top:calc(var(--header-h) + 16px)}
+.art h2{margin-bottom:16px}
+.kv{display:grid;gap:12px;margin-top:12px}
+.kv dt{color:var(--sub);font-weight:400}
+.sec-head .t-meta{margin-top:16px}
+</style>
+</head>
+<body class="page-legal">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+    <symbol id="check" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="currentColor"/><path d="m5 10 3 3 7-7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 9h4l3 3v4h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4v9l-9 4-9-4zM3 8l9 4 9-4M12 12v9"/></symbol>
+    <symbol id="i-down" viewBox="0 0 16 16"><path d="m3 6 5 5 5-5"/></symbol>
+    <symbol id="chev" viewBox="0 0 20 20"><path d="m4 7.5 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="face" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" style="fill:var(--c)"/><circle cx="17" cy="22" r="2.6" fill="#343039"/><circle cx="31" cy="22" r="2.6" fill="#343039"/><path d="M18 29c2.5 3.5 9.5 3.5 12 0" stroke="#343039" stroke-width="2.6" stroke-linecap="round" fill="none"/><circle cx="12.5" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.5" cy="28" r="3" fill="#fff" opacity=".45"/></symbol>
+    <symbol id="virtual" viewBox="0 0 24 24"><path d="M3 9.5C3 8.4 3.9 7.5 5 7.5h14c1.1 0 2 .9 2 2v5c0 1.1-.9 2-2 2h-3.2c-.7 0-1.3-.4-1.7-1l-.7-1.2c-.5-.8-1.7-.8-2.2 0l-.7 1.2c-.4.6-1 1-1.7 1H5c-1.1 0-2-.9-2-2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header"><div class="container header-inner"><a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a><nav class="nav" aria-label="주요 메뉴"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav><div class="header-actions"><a class="hd-link hd-link--sub hide-sm" href="#">로그인</a><span class="hd-sep hide-sm" aria-hidden="true"></span><a class="hd-link hd-link--strong hide-sm" href="#">회원가입</a><details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary><div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><div class="btn-row"><a class="btn btn--line" href="#">로그인</a><a class="btn" href="#">회원가입</a></div></div></details></div></div></header>
+  <main id="main">
+    <section class="section section--compact page-band" aria-labelledby="page-title">
+      <div class="container">
+        <div class="sec-head">
+          <span class="ico-circle ico-3d sec-icon" aria-hidden="true"><img src="../img/icon-notice.png" alt=""></span>
+          <h1 class="t-title" id="page-title">이용약관</h1>
+          <p class="t-lead t-desc">팬꾹을 쓰기 전에 알아 두셔야 할 약속을 모았어요. 선물이 어떻게 오가고, 돈은 언제 얼마를 받고 돌려드리는지 적었습니다.</p>
+        </div>
+        <dl class="grid cols-3 keep facts">
+          <div class="card"><dt>운영</dt><dd>팬꾹</dd></div>
+          <div class="card"><dt>시행일</dt><dd>(출시 전 기재)</dd></div>
+          <div class="card"><dt>동의 기록의 판</dt><dd>2026-10-01</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="section section--compact" aria-labelledby="toc-title">
+      <div class="container">
+        <nav class="toc card card--soft" aria-labelledby="toc-title">
+          <h2 class="t-card" id="toc-title">목차</h2>
+          <ol style="margin-top:12px"><li><a href="#s1">제1조 목적</a></li><li><a href="#s2">제2조 용어</a></li><li><a href="#s3">제3조 약관의 게시와 변경</a></li><li><a href="#s4">제4조 서비스 내용</a></li><li><a href="#s5">제5조 회원가입과 계정</a></li><li><a href="#s6">제6조 크리에이터 본인 확인</a></li><li><a href="#s7">제7조 요금과 결제</a></li><li><a href="#s8">제8조 도착 뒤 실측과 차액</a></li><li><a href="#s9">제9조 거절·자동 반려와 환불</a></li><li><a href="#s10">제10조 검수와 보낼 수 없는 물품</a></li><li><a href="#s11">제11조 차단</a></li><li><a href="#s12">제12조 역조공</a></li><li><a href="#s13">제13조 주인을 모르는 상자</a></li><li><a href="#s14">제14조 알림</a></li><li><a href="#s15">제15조 크리에이터 주소 보호와 열람 기록</a></li><li><a href="#s16">제16조 금지 행위</a></li><li><a href="#s17">제17조 책임과 배상</a></li><li><a href="#s18">제18조 분쟁 해결</a></li><li><a href="#s19">부칙</a></li></ol>
+        </nav>
+      </div>
+    </section>
+
+    <section class="section section--compact doc" aria-label="약관 본문">
+      <div class="container">
+        <section class="art" id="s1" aria-labelledby="s1-h"><h2 class="t-card" id="s1-h">제1조 목적</h2><div class="prose"><p>이 약관은 네오코드(이하 「회사」)가 운영하는 팬꾹 서비스를 이용하는 조건과 절차, 회사와 회원 사이의 권리와 의무를 정합니다.</p></div></section>
+        <section class="art" id="s2" aria-labelledby="s2-h"><h2 class="t-card" id="s2-h">제2조 용어</h2><div class="prose"><ul class="dots"><li>팬꾹: 팬이 크리에이터에게 보내는 선물을 회사 사무실에서 받아 검수한 뒤, 크리에이터의 주소를 팬에게 알리지 않고 다시 보내 주는 선물 배송 대행 서비스입니다.</li><li>회원: 팬꾹에 가입한 팬과 크리에이터입니다.</li><li>선물: 팬이 크리에이터 한 명에게 보내려고 등록한 한 건입니다. 선물마다 주문번호(예: FC-7K3M9)가 붙습니다.</li><li>상자: 선물 한 건은 상자 여러 개로 나눠 보낼 수 있습니다. 요금·입고·검수·송장은 상자마다 따로 처리합니다.</li><li>사무실: 회사가 상자를 받아 검수하고 다시 보내는 곳입니다. 주소는 결제가 끝난 팬에게만 알려 드립니다.</li><li>승인: 크리에이터가 카카오톡 인증서로 전자서명해 선물 한 건을 받겠다고 하는 것입니다.</li><li>역조공: 크리에이터가 자기를 팔로우한 팬에게 보내는 선물입니다.</li></ul></div></section>
+        <section class="art" id="s3" aria-labelledby="s3-h"><h2 class="t-card" id="s3-h">제3조 약관의 게시와 변경</h2><div class="prose"><p>이 약관은 사이트 아래쪽 「이용약관」에 늘 게시합니다. 회원이 가입할 때 동의한 약관의 판과 동의 시각은 회원마다 기록합니다.</p><p>약관을 바꿀 때는 바뀌는 내용과 시행일을 시행 7일 전부터 사이트에 공지합니다. 회원에게 불리하게 바뀌는 경우에는 시행 30일 전부터 공지합니다.</p></div></section>
+        <section class="art" id="s4" aria-labelledby="s4-h"><h2 class="t-card" id="s4-h">제4조 서비스 내용</h2><div class="prose"><p>팬이 크리에이터에게 선물을 보내는 순서는 다음과 같습니다.</p><ol class="steps-ol"><li>팬이 크리에이터를 찾아 선물을 등록하고, 상자 수와 크기를 적은 뒤 결제합니다. 전자기기나 금속 제품이 들어 있는지도 알려 주셔야 합니다.</li><li>결제가 끝나면 상자마다 받는 주소가 생깁니다. 크리에이터가 승인하면 받는 주소가 바로 보이고, 승인 전에는 「먼저 보내기」를 눌러 받는 주소를 열 수 있습니다.</li><li>사무실은 상자를 받으면(입고) 원래 송장을 떼어 따로 보관하고, 상자에 내부 라벨을 붙인 뒤 검수합니다.</li><li>크리에이터는 선물마다 카카오톡 인증서로 서명해 승인하거나, 받지 않기(거절)를 고릅니다. 한꺼번에 승인하는 기능은 없습니다.</li><li>승인과 검수가 모두 끝난 상자만 송장을 출력해 크리에이터에게 보냅니다(출고).</li></ol><ul class="dots"><li>선물이 어디까지 왔는지는 등록 → 입고 → 검수 → 출고 → 배송중 → 수령 여섯 단계로 보여 드립니다.</li><li>팬에게는 크리에이터의 주소와 크리에이터에게 가는 상자의 운송장 번호를 알려 드리지 않습니다.</li><li>크리에이터가 선물을 받는 데 드는 비용은 없습니다.</li></ul></div></section>
+        <section class="art" id="s5" aria-labelledby="s5-h"><h2 class="t-card" id="s5-h">제5조 회원가입과 계정</h2><div class="prose"><ul class="dots"><li>가입할 때 팬과 크리에이터 중 하나를 고르고, 아이디·이메일·비밀번호·휴대폰 번호를 입력한 뒤 카카오톡으로 본인 확인을 합니다.</li><li>휴대폰 번호 하나에 계정 하나만 만들 수 있습니다. 아이디는 바꿀 수 없습니다.</li><li>이메일은 확인 메일의 링크를 눌러야 등록되고, 알림 메일은 확인된 이메일로만 보냅니다.</li><li>아이디와 비밀번호는 회원이 직접 관리합니다.</li></ul></div></section>
+        <section class="art" id="s6" aria-labelledby="s6-h"><h2 class="t-card" id="s6-h">제6조 크리에이터 본인 확인</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s7" aria-labelledby="s7-h"><h2 class="t-card" id="s7-h">제7조 요금과 결제</h2><div class="prose"><p>요금은 상자마다 받고, 배송비와 추적 장치 검수가 포함된 금액입니다. 크기와 무게 중 큰 쪽 구간을 적용합니다.</p><div class="grid cols-3 keep"><div class="card"><h3>소형</h3><dl class="kv"><div><dt>기준</dt><dd>세 변 합 100cm·5kg 이하</dd></div><div><dt>선물</dt><dd>6,900원</dd></div><div><dt>역조공</dt><dd>5,900원</dd></div></dl></div><div class="card"><h3>중형</h3><dl class="kv"><div><dt>기준</dt><dd>세 변 합 100cm·10kg 이하</dd></div><div><dt>선물</dt><dd>8,900원</dd></div><div><dt>역조공</dt><dd>7,900원</dd></div></dl></div><div class="card"><h3>대형</h3><dl class="kv"><div><dt>기준</dt><dd>세 변 합 160cm·20kg 이하</dd></div><div><dt>선물</dt><dd>10,900원</dd></div><div><dt>역조공</dt><dd>9,900원</dd></div></dl></div></div><ul class="dots"><li>세 변 합 160cm나 20kg를 넘는 상자는 받지 않습니다.</li><li>결제는 선물을 등록할 때 합니다. 결제는 결제대행사(토스페이먼츠)를 거칩니다. 가상계좌 입금은 받지 않습니다.</li><li>요금이 바뀌면 바뀐 뒤에 등록한 선물부터 적용합니다. 이미 결제한 선물은 결제할 때의 요금 그대로입니다.</li></ul></div></section>
+        <section class="art" id="s8" aria-labelledby="s8-h"><h2 class="t-card" id="s8-h">제8조 도착 뒤 실측과 차액</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s9" aria-labelledby="s9-h"><h2 class="t-card" id="s9-h">제9조 거절·자동 반려와 환불</h2><div class="prose"><p>돌려드리는 금액은 선물의 상태에 따라 정해지며, 사람이 금액을 따로 정하지 않습니다.</p><div class="grid cols-2"><div class="card"><h3>사무실 도착 전에 거절·자동 반려</h3><dl class="kv"><div><dt>돌려드리는 금액</dt><dd>결제 금액 전액</dd></div><div><dt>「먼저 보내기」를 눌렀다면</dt><dd>아래 「아직 도착하지 않은 상자」대로</dd></div></dl></div><div class="card"><h3>사무실 도착 뒤에 거절·자동 반려</h3><dl class="kv"><div><dt>돌려드리는 금액</dt><dd>도착한 상자마다 그 상자 금액에서 반송 택배비를 뺀 금액</dd></div></dl></div><div class="card"><h3>검수 불합격으로 반송</h3><dl class="kv"><div><dt>돌려드리는 금액</dt><dd>검수비와 반송 택배비를 빼므로 돌려드리는 금액이 없습니다</dd></div></dl></div><div class="card"><h3>차액을 결제하지 않아 반송</h3><dl class="kv"><div><dt>돌려드리는 금액</dt><dd>결제 금액 가운데 배송비 몫</dd></div></dl></div><div class="card"><h3>출고한 뒤</h3><dl class="kv"><div><dt>돌려드리는 금액</dt><dd>없음</dd></div></dl></div></div><ul class="dots"><li>한 결제에서 돌려드리는 금액의 합은 결제 금액을 넘지 않습니다.</li><li>상자를 돌려보낼 때는 회사가 반송 택배비를 먼저 내고, 그 금액을 돌려드리는 금액에서 뺍니다.</li></ul></div></section>
+        <section class="art" id="s10" aria-labelledby="s10-h"><h2 class="t-card" id="s10-h">제10조 검수와 보낼 수 없는 물품</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s11" aria-labelledby="s11-h"><h2 class="t-card" id="s11-h">제11조 차단</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s12" aria-labelledby="s12-h"><h2 class="t-card" id="s12-h">제12조 역조공</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s13" aria-labelledby="s13-h"><h2 class="t-card" id="s13-h">제13조 주인을 모르는 상자</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s14" aria-labelledby="s14-h"><h2 class="t-card" id="s14-h">제14조 알림</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s15" aria-labelledby="s15-h"><h2 class="t-card" id="s15-h">제15조 크리에이터 주소 보호와 열람 기록</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s16" aria-labelledby="s16-h"><h2 class="t-card" id="s16-h">제16조 금지 행위</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s17" aria-labelledby="s17-h"><h2 class="t-card" id="s17-h">제17조 책임과 배상</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s18" aria-labelledby="s18-h"><h2 class="t-card" id="s18-h">제18조 분쟁 해결</h2><div class="prose"><p class="t-meta">시안에서는 본문을 줄였어요. 실제 화면에는 약관 전문이 이 자리에 들어갑니다.</p></div></section>
+        <section class="art" id="s19" aria-labelledby="s19-h"><h2 class="t-card" id="s19-h">부칙</h2><div class="prose"><p>이 약관은 (출시 전 기재)부터 시행합니다.</p></div></section>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div><div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div><div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div><div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

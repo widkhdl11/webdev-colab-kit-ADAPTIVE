@@ -1,0 +1,129 @@
+<!doctype html>
+<!--
+  v12-A 크리에이터 묶음 (2026-10-13, 카드 d70 「A로」): v11 내용·문구·배치 그대로, 시각만 A 언어 — 옅은 코랄 바탕 + 띄운 흰 카드 + 화면 머리 옅은 띠. 공통 CSS a.css + a-creator.css. 아이콘 그림은 v11 그대로(나중에 교체 예정).
+  (아래는 v11 원래 주석)
+  팬꾹 시안 v12-A 열람 기록 (2026-10-12)
+  화면 내용·문구는 실제 코드(src/app/creator/...의 page.tsx 가 부르는 widgets·features)에서 가져왔다. 공통 부품은 v11.css 에 둔다.
+  사용자 불만(원문): 「좁은 공간에 설명을 덕지덕지 붙여놓은 것 같아서 한눈에 들어오지 않고, 설명글 같이만 보여. 그리고 정렬이 맞지도 않아」
+  바꾼 것 (지금 화면 → 이 시안): 이번 달 숫자 셋(왼쪽 그림 / 오른쪽 숫자)을 같은 크기 카드 셋으로, 그림은 규칙 카드 위로 옮겨 위→아래로 쌓음.
+   표는 한 장 그대로(휴대폰에서도 표 안에서만 가로로 밀림). 남긴 좌우 배치: 「내 팬꾹」 왼쪽 메뉴(PC).
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>열람 기록 — 시안 v12-A</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="a.css">
+<link rel="stylesheet" href="a-creator.css">
+<link rel="stylesheet" href="tokens.css">
+<script src="font-switch.js"></script>
+<style>
+.num{margin:4px 0 0;font-size:var(--fs-hero);font-weight:800;line-height:1.2}
+.num small{margin-left:4px;font-size:var(--fs-card);font-weight:800}
+dl.grid{margin:0}
+dd.num{margin-left:0}
+</style>
+</head>
+<body class="page-creator-log">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 9h4l3 3v4h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4v9l-9 4-9-4zM3 8l9 4 9-4M12 12v9"/></symbol>
+    <symbol id="i-down" viewBox="0 0 16 16"><path d="m3 6 5 5 5-5"/></symbol>
+  
+    <symbol id="m-req" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16 10"/></symbol>
+    <symbol id="m-sent" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></symbol>
+    <symbol id="m-rev" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></symbol>
+    <symbol id="m-log" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+    <symbol id="m-set" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+    <symbol id="i-kakao" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 3C6.5 3 2 6.5 2 10.8c0 2.8 1.9 5.2 4.7 6.6l-1 3.6c-.1.4.3.6.6.4l4.2-2.8c.5.1 1 .1 1.5.1 5.5 0 10-3.500 10-7.900S17.500 3 12 3z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="m3 8.500 3.200 3.200L13 4.800"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header"><div class="container header-inner">
+          <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+          <nav class="nav" aria-label="주요 메뉴(크리에이터)"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav>
+          <div class="header-actions">
+            <a class="hd-gift" href="#" aria-label="승인 대기 4건"><span class="hd-ico hd-ico--plain"><svg width="24" height="24"><use href="#i-box"/></svg></span><span class="hide-sm">승인 대기</span><span class="hd-count">4</span></a>
+            <span class="hd-sep hide-sm" aria-hidden="true"></span>
+            <details class="hd-user hide-sm"><summary class="hd-link hd-link--strong">별빛님 <svg aria-hidden="true"><use href="#i-down"/></svg></summary>
+              <div class="hd-menu"><a href="#">승인·받은 선물</a><a href="#">보낸 선물</a><a href="#">보낸 역조공</a><a href="#">열람 기록</a><a href="#">주소와 설정</a><hr><a href="#">로그아웃</a></div></details>
+            <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+              <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><a href="#">내 팬꾹</a><a href="#">로그아웃</a></div></details>
+          </div>
+        </div></header>
+  <main id="main" class="container">
+    <div class="my">
+      <nav class="my-side my-menu" aria-label="내 팬꾹 메뉴">
+        <div class="my-me"><span class="avatar" aria-hidden="true">별</span><div><b>별빛님</b><span class="t-meta">크리에이터</span></div></div>
+        <p class="t-card sr-only">내 팬꾹</p>
+        <ul><li><a href="creator-requests.html"><svg aria-hidden="true"><use href="#m-req"/></svg>승인·받은 선물</a></li><li><a href="#"><svg aria-hidden="true"><use href="#m-sent"/></svg>보낸 선물</a></li><li><a href="creator-revgifts.html"><svg aria-hidden="true"><use href="#m-rev"/></svg>보낸 역조공</a></li><li><a href="creator-log.html" aria-current="page"><svg aria-hidden="true"><use href="#m-log"/></svg>열람 기록</a></li><li><a href="creator-settings.html"><svg aria-hidden="true"><use href="#m-set"/></svg>주소와 설정</a></li></ul>
+      </nav>
+      <div class="my-main">
+
+        <div class="page-head">
+          <h1 class="t-title">주소 열람 기록</h1>
+          <p class="t-lead t-desc"><strong class="t-strong" style="color:var(--ink)">승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.</p>
+        </div>
+
+        <section aria-labelledby="sum-h">
+          <h2 class="t-card" id="sum-h">이번 달 (2026년 10월)</h2>
+          <dl class="grid cols-3 keep">
+            <div class="card"><dt class="t-meta" style="font-weight:400">승인</dt><dd class="num">8<small>건</small></dd></div>
+            <div class="card"><dt class="t-meta" style="font-weight:400">주소 열림</dt><dd class="num">6<small>번</small></dd></div>
+            <div class="card"><dt class="t-meta" style="font-weight:400">재출력</dt><dd class="num">1<small>번</small></dd></div>
+          </dl>
+          <div class="card card--soft" style="margin-top:24px">
+            <span class="ico-circle ico-3d ico-circle--72 ico-circle--mb" aria-hidden="true"><img src="../img/icon-log.png" alt=""></span>
+            <h3>주소는 상자마다 최대 3번까지 열려요</h3>
+            <p class="t-body" style="margin-top:8px">첫 출력과 재출력을 합쳐서 센 횟수예요. 택배 기사가 상자를 가져가면 남은 횟수가 있어도 그 상자로는 더 열리지 않아요.</p>
+          </div>
+        </section>
+
+        <section aria-labelledby="rec-h">
+          <h2 class="t-card" id="rec-h">열람 기록 (최근 순)</h2>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="주소 열람 기록 표">
+            <table class="table">
+              <caption class="sr-only">주소 열람 기록. 최근 순</caption>
+              <thead><tr><th scope="col">시각</th><th scope="col">주문번호</th><th scope="col">비고</th></tr></thead>
+              <tbody>
+                <tr><td>10.11 14:32</td><td>FC-7K3M9</td><td>첫 출력</td></tr>
+                <tr><td>10.10 09:48</td><td>FC-5D1H6</td><td><span class="tag">재출력 2번째</span></td></tr>
+                <tr><td>10.09 16:05</td><td>FC-5D1H6</td><td>첫 출력</td></tr>
+                <tr><td>10.07 11:20</td><td>FC-2P8QW</td><td>첫 출력</td></tr>
+                <tr><td>10.06 15:41</td><td>FC-8N4TR</td><td>출력 실패</td></tr>
+                <tr><td>10.04 10:12</td><td>FC-1A7BX</td><td>첫 출력</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="t-meta" style="margin-top:12px">송장을 출력할 때마다 여기에 한 줄씩 남아요. 승인한 적 없는 주문이 보이면 바로 알아챌 수 있어요.</p>
+        </section>
+
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
