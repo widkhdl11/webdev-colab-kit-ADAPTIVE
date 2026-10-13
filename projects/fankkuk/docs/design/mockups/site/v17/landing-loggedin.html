@@ -1,21 +1,63 @@
 <!doctype html>
 <!--
-  팬꾹 시안 v17 랜딩 (로그인 후) — 로그인 후 (2026-10-13)
-  landing.html 과 본문 동일, GNB 오른쪽만 [알림] [닉네임 ▾ 드롭다운] 으로 교체. 드롭다운은 열린 모습으로 고정(open).
-  사용자 프롬프트 「팬꾹 UI 리디자인」 1~3단계(토큰 -> GNB -> 랜딩). 기준 문구·순서는 v11/landing.html.
-  색·크기·간격은 전부 tokens.css 변수. 3D 그림 대신 lucide 인라인 symbol(path 는 lucide-static 최신판 그대로).
-  메뉴 현재 표시(aria-current)는 밑줄 스타일을 보이려고 「선물 보내기」에 임시로 붙였다.
+  팬꾹 시안 v17 홈 (로그인 후) (2026-10-13, 6단계로 갱신)
+  로그인 후 홈: GNB 를 팬 앱 사이드바로 바꾸고 「홈」 현재 표시. 본문(히어로·카드·요금·바닥글)은 landing.html 과 같은 내용, 앱 본문 규칙(padding 40 / max-width 1120 왼쪽 정렬)만 적용.
+  마케팅형 히어로가 첫 줄이라 페이지 헤더(제목+개수+버튼)는 두지 않았다(확인 포인트). 로그인 전 landing.html 은 그대로(GNB).
 -->
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>팬꾹 — 시안 v17 랜딩</title>
+<title>팬꾹 — 시안 v17 홈 (로그인 후)</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="v17.css">
+<link rel="stylesheet" href="v17-app.css">
 </head>
 <body>
+  <script>
+    /* 접힘 상태: ?rail=1|0(비교용, 저장 안 함) > localStorage "sidebar-collapsed" > 화면 폭 기본값(--rail-auto). 휴대폰(drawer)에서는 접힘 없음. 단축키 [ . */
+    (function () {
+      var KEY = 'sidebar-collapsed', root = document.documentElement;
+      function cssv(n) { return getComputedStyle(root).getPropertyValue(n).trim(); }
+      function narrow() { return cssv('--app-narrow') !== 'none'; }
+      var q = new URLSearchParams(location.search).get('rail'), saved = null;
+      try { saved = localStorage.getItem(KEY); } catch (e) {}
+      var explicit = q === '1' || q === '0' || saved !== null;
+      var collapsed = q === '1' ? true : q === '0' ? false : saved !== null ? saved === '1' : cssv('--rail-auto') === '1';
+      function apply() {
+        if (!explicit) collapsed = cssv('--rail-auto') === '1';
+        var on = collapsed && !narrow();
+        if (on) root.setAttribute('data-rail', '1'); else root.removeAttribute('data-rail');
+        var b = document.getElementById('sb-fold');
+        if (b) { b.setAttribute('aria-expanded', String(!on)); b.setAttribute('aria-label', on ? '사이드바 펼치기' : '사이드바 접기'); }
+      }
+      function toggle() {
+        collapsed = !collapsed; explicit = true;
+        try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch (e) {}
+        apply();
+      }
+      apply();
+      window.addEventListener('resize', apply);
+      document.addEventListener('DOMContentLoaded', function () {
+        apply();
+        var app = document.getElementById('app'), openBtn = document.getElementById('sb-open'), closeBtn = document.getElementById('sb-close'), menu = document.getElementById('sb-menu');
+        function setOpen(v) { app.classList.toggle('is-open', v); openBtn.setAttribute('aria-expanded', String(v)); if (v) closeBtn.focus(); else openBtn.focus(); }
+        document.getElementById('sb-fold').addEventListener('click', toggle);
+        openBtn.addEventListener('click', function () { setOpen(true); });
+        closeBtn.addEventListener('click', function () { setOpen(false); });
+        document.getElementById('sb-scrim').addEventListener('click', function () { setOpen(false); });
+        document.addEventListener('keydown', function (e) {
+          var t = e.target, tag = t && t.tagName;
+          if (e.key === 'Escape') { if (app.classList.contains('is-open')) setOpen(false); document.querySelectorAll('details[open]').forEach(function (d) { d.open = false; }); return; }
+          if (e.key === '[' && !e.ctrlKey && !e.metaKey && !e.altKey && !narrow() && !(t && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable))) toggle();
+        });
+        document.addEventListener('click', function (e) {
+          document.querySelectorAll('details.sb-menu[open], details.fc-more[open]').forEach(function (d) { if (!d.contains(e.target)) d.open = false; });
+        });
+      });
+    })();
+  </script>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
     <symbol id="i-gift" viewBox="0 0 24 24"><path d="M12 7v14" /><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" /><rect x="3" y="7" width="18" height="4" rx="1" /></symbol>
     <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></symbol>
@@ -30,35 +72,58 @@
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
     <symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol>
     <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+  
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><polyline points="3.29 7 12 12 20.71 7" /><path d="m7.5 4.27 9 5.15" /></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></symbol>
+    <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></symbol>
+    <symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /></symbol>
+    <symbol id="i-log-out" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></symbol>
+      <symbol id="i-panel-left-close" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m16 15-3-3 3-3" /></symbol>
+    <symbol id="i-panel-left-open" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m14 9 3 3-3 3" /></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2" /> <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /> <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></symbol>
+    <symbol id="i-list-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /> <path d="M13 6h8" /> <path d="M13 12h8" /> <path d="M13 18h8" /></symbol>
+    <symbol id="i-chevrons-up-down" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></symbol>
+    <symbol id="i-ellipsis" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></symbol>
   </defs></svg>
-  <a class="skip-link" href="#main">본문 바로가기</a>
 
-  <!--HEADER-->
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="logo" href="#" aria-label="팬꾹 처음 화면">팬꾹</a>
-      <nav class="nav" aria-label="주요 메뉴"><ul>
-        <li><a href="#">크리에이터 찾기</a></li><li><a href="#" aria-current="page">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li>
-      </ul></nav>
-      <div class="header-actions">
-        <button class="icon-btn bell" type="button" aria-label="알림 1건"><svg class="ico" aria-hidden="true"><use href="#i-bell"/></svg></button>
-        <details class="user" open>
-          <summary>팬꾹러<svg class="ico" aria-hidden="true"><use href="#i-chevron-down"/></svg></summary>
-          <div class="user-menu"><a href="#">마이꾹</a><a href="#">로그아웃</a></div>
-        </details>
-        <details class="mm">
-          <summary aria-label="메뉴 열기"><svg class="ico i-open" aria-hidden="true"><use href="#i-menu"/></svg><svg class="ico i-close" aria-hidden="true"><use href="#i-x"/></svg></summary>
-          <div class="mm-body">
-            <a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a>
-            <a href="#">마이꾹</a><a href="#">알림</a><div class="btn-row"><a class="btn btn--secondary" href="#">로그아웃</a></div>
-          </div>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="app" id="app">
+    <header class="topbar">
+      <a class="logo" href="landing-loggedin.html" aria-label="팬꾹 홈">팬꾹</a>
+      <button class="icon-btn" id="sb-open" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button>
+    </header>
+    <div class="sb-scrim" id="sb-scrim"></div>
+    <aside class="sidebar" id="sidebar" aria-label="팬 메뉴">
+      <div class="sb-top">
+        <a class="logo" href="landing-loggedin.html" aria-label="팬꾹 홈">팬꾹</a>
+        <button class="sb-btn sb-fold" id="sb-fold" type="button" aria-label="사이드바 접기" aria-expanded="true" aria-controls="sidebar"><svg class="ico i-close" aria-hidden="true"><use href="#i-panel-left-close"/></svg><svg class="ico i-open" aria-hidden="true"><use href="#i-panel-left-open"/></svg></button>
+        <button class="sb-btn sb-close" id="sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </div>
+      <nav class="sb-nav" aria-label="팬 메뉴">
+        <p class="sb-group" id="g1-fan">기본</p>
+        <ul aria-labelledby="g1-fan"><li><a href="landing-loggedin.html" aria-current="page" data-tip="홈"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg><span class="sb-label">홈</span></a></li><li><a href="#" data-tip="크리에이터 찾기"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sb-label">크리에이터 찾기</span></a></li><li><a href="#" data-tip="선물 보내기"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg><span class="sb-label">선물 보내기</span></a></li></ul>
+        <p class="sb-group" id="g2-fan">내 활동</p>
+        <ul aria-labelledby="g2-fan"><li><a href="my-following.html" data-tip="팔로우한 크리에이터"><svg class="ico" aria-hidden="true"><use href="#i-heart"/></svg><span class="sb-label">팔로우한 크리에이터</span></a></li><li><a href="my-gifts.html" data-tip="보낸 선물"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg><span class="sb-label">보낸 선물</span><span class="badge" aria-label="미확인 2건">2</span></a></li><li><a href="#" data-tip="받은 감사 카드"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg><span class="sb-label">받은 감사 카드</span></a></li><li><a href="#" data-tip="문의"><svg class="ico" aria-hidden="true"><use href="#i-message-circle"/></svg><span class="sb-label">문의</span></a></li></ul>
+      </nav>
+      <div class="sb-bottom">
+        <details class="sb-menu" id="sb-menu">
+          <summary aria-label="팬꾹러 계정 메뉴"><span class="sb-avatar" aria-hidden="true">팬</span><span class="sb-name">팬꾹러</span><svg class="ico sb-chev" aria-hidden="true"><use href="#i-chevrons-up-down"/></svg></summary>
+          <div class="sb-menu-list"><a href="my-following.html">계정 설정</a><a href="#">로그아웃</a></div>
         </details>
       </div>
-    </div>
-  </header>
-  <!--/HEADER-->
+    </aside>
+    <main id="main" class="sb-main">
+      <div class="sb-main-inner">
 
-  <main id="main">
+        <div class="sb-stack">
     <section class="hero" aria-labelledby="hero-title">
       <div class="container">
         <div class="hero-text">
@@ -133,9 +198,8 @@
         </ul>
       </div>
     </section>
-  </main>
-
-  <footer class="site-footer">
+  </div>
+        <footer class="site-footer">
     <div class="container">
       <div class="footer-grid">
         <div>
@@ -154,5 +218,8 @@
       <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
     </div>
   </footer>
+      </div>
+    </main>
+  </div>
 </body>
 </html>

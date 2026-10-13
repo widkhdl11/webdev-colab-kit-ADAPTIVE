@@ -76,20 +76,78 @@
   --sidebar-w: 240px;
   --rail-w: 64px;
   --topbar-h: 56px;
-  --app-pad: 32px;
-  --my-cols: var(--lnb-w) minmax(0, 1fr);
-  --my-gap: 48px;
   --sb-width: var(--sidebar-w);
+  --rail-auto: 0;      /* 1 이면 처음부터 접힌 상태(JS 가 읽는다) */
+
+  /* 6단계: 앱 사이드바 · 페이지 헤더 · 팔로우 카드 (사용자 프롬프트 「2. 레이아웃 (수정)」 숫자 그대로) */
   --sb-col: var(--sb-width);
   --sb-pos: sticky;
   --sb-tx: none;
-  --rail-auto: 0;      /* 1 이면 처음부터 접힌 상태(JS 가 읽는다) */
+  --sb-vis: visible;
+  --nav-ovf: visible;
+  --app-display: grid;
+  --app-wide: flex;     /* 사이드바 접기 버튼 등 PC 전용 */
+  --app-narrow: none;   /* 상단 바·닫기 버튼 등 휴대폰 전용 */
+  --body-pad: 40px;
+  --body-max: 1120px;
+  --fs-page: 24px;
+  --fs-count: 16px;
+  --fs-group: 11px;
+  --ls-group: 0.04em;
+  --group-mt: 24px;
+  --nav-item-h: 36px;
+  --nav-pad: 12px;
+  --nav-gap-in: 12px;
+  --nav-gap-item: 2px;
+  --nav-icon: 18px;
+  --fs-navitem: 14px;
+  --r-nav: 8px;
+  --fs-sb-badge: 11px;
+  --badge-dot: 6px;
+  --avatar-sb: 28px;
+  --icon-chev: 16px;
+  --follow-cols: 3;
+  --app-cols-4: 4;
+  --app-cols-3: 3;
+  --app-cols-2: 2;
+  --r-fcard: 12px;
+  --fcard-pad: 20px;
+  --avatar-fc: 40px;
+  --fc-gap: 12px;
+  --fs-chip: 12px;
+  --chip-h: 22px;
+  --icon-clock: 14px;
+  --btn-h-sm: 36px;
+  --fs-btn-sm: 14px;
 }
 
 html[data-rail="1"] { --sb-width: var(--rail-w); }
 
+@media (max-width: 1280px) {
+  :root { --follow-cols: 2; }
+}
+
 @media (max-width: 1024px) {
-  :root { --rail-auto: 1; }
+  :root { --rail-auto: 1; --app-cols-4: 2; }
+}
+
+/* 6단계 휴대폰 경계는 프롬프트대로 768 이하(기존 767 규칙은 로그인 전 화면용으로 그대로 둔다) */
+@media (max-width: 768px) {
+  :root {
+    --app-display: block;
+    --app-wide: none;
+    --app-narrow: flex;
+    --sb-col: 0;
+    --sb-pos: fixed;
+    --sb-tx: translateX(-100%);
+    --sb-vis: hidden;
+    --nav-ovf: auto;
+    --body-pad: 16px;
+    --follow-cols: 1;
+    --app-cols-4: 2;
+    --app-cols-3: 1;
+    --app-cols-2: 1;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -110,11 +168,5 @@ html[data-rail="1"] { --sb-width: var(--rail-w); }
     --show-wide: none;
     --show-narrow: flex;
     --hero-pad-top: 64px;
-    --my-cols: minmax(0, 1fr);
-    --my-gap: 24px;
-    --app-pad: 16px;
-    --sb-col: 0;
-    --sb-pos: fixed;
-    --sb-tx: translateX(-100%);
   }
 }
