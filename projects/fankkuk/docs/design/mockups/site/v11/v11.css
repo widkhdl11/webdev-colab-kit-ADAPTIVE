@@ -576,3 +576,19 @@ fieldset.part > legend + *{clear:both}
 .ctag .bd{width:24px;height:24px;border-radius:50%}
 .ctag svg{width:24px;height:24px;padding:3px;border-radius:50%;background:#f2f2f3}
 @media (prefers-reduced-motion:reduce){.ctag{transition:none}}
+
+/* ---------- 14. 제목·설명 → 아래 내용 간격 (2026-10-13 사용자 「텍스트와 섹션 사이가 너무 가깝다」) ----------
+   큰 구간 머리 64 · 화면 머리 48 · 작은 제목/안내 한 줄 32 · 상자 위 이름표 16 (휴대폰 48 · 32 · 24 · 16) */
+.sec-head{margin-bottom:64px}
+.page-head,.step-h,.auth .head,.my-body > .sec-head{margin-bottom:48px}
+:is(h2,h3,.section-hint,.bar):has(+ :is(.grid,.table-wrap,.part,.card,.ccard,form,.stack,.acc,.cards,.steps,.flow,.list)){margin-bottom:32px}
+.t-meta:has(+ :is(.grid,.table-wrap,.part,.card,.ccard,form,.stack,.acc,.cards,.steps,.flow,.list)){margin-bottom:16px}
+.bar:has(+ .section-hint){margin-bottom:8px}
+@media(max-width:767px){
+  .sec-head{margin-bottom:48px}
+  .page-head,.step-h,.auth .head,.my-body > .sec-head{margin-bottom:32px}
+  :is(h2,h3,.section-hint,.bar):has(+ :is(.grid,.table-wrap,.part,.card,.ccard,form,.stack,.acc,.cards,.steps,.flow,.list)){margin-bottom:24px}
+}
+/* 목록 위 안내 한 줄은 구간 머리의 끝이다 — 화면 머리와 같은 48(휴대폰 32) */
+.section-hint:has(+ :is(.grid,.cards,.list)){margin-bottom:48px}
+@media(max-width:767px){.section-hint:has(+ :is(.grid,.cards,.list)){margin-bottom:32px}}
