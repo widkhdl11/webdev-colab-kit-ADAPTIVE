@@ -15,7 +15,7 @@
 .check-row { display: flex; align-items: flex-start; gap: 12px; margin-top: 16px; padding: 16px 20px; border-radius: var(--r-box); background: var(--surface); cursor: pointer; font-weight: var(--fw-bold); }
 .check-row input { flex-shrink: 0; width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--brand); }
 .check-row:has(input:checked) { box-shadow: inset 0 0 0 2px var(--brand); }
-.check-row:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
+.check-row:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
 .check-row input:focus-visible { outline: none; }
 .check-row small { display: block; margin-top: 4px; color: var(--sub); font-size: 16px; font-weight: 400; }
 .reason { margin-top: 12px; }

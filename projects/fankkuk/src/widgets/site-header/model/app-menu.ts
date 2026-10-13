@@ -65,7 +65,7 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
 export const ACCOUNT_HREF = { fan: "/me", creator: "/creator/settings" } as const;
 
 /**
- * 지금 화면에 해당하는 메뉴 칸 하나. 같은 경로를 가리키는 칸이 여럿이면(승인 대기·승인 내역·받은 선물) 「#」 없는 첫 칸만 고른다 —
+ * 지금 화면에 해당하는 메뉴 칸 하나 — 주소가 current 와 글자 그대로 같은 첫 칸. 「#」 붙은 칸(승인 내역 = /creator/requests#done)은 current 와 같을 수 없어 고르지 않는다 —
  * 한 화면에서 두 칸이 동시에 켜지지 않게.
  */
 export function currentMenuItem(groups: readonly AppMenuGroup[], current: string | undefined): AppMenuItem | null {

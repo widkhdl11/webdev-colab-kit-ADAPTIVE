@@ -47,18 +47,38 @@ export function CreatorGiftTabs({ tabs: given, initial }: { tabs: readonly Creat
   const selected = found >= 0 ? found : 0;
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
 
+  const tabIds = useRef<readonly string[]>([]);
+  tabIds.current = tabs.map((t) => t.id);
+
+  // 처음 그릴 때, 주소의 # 이 손으로 바뀔 때(hashchange), 이 화면 안의 # 링크를 누를 때 본다 —
+  // 같은 화면의 # 링크(사이드바 「승인 내역」)는 Next 가 pushState 로 바꿔 hashchange 가 뜨지 않는다.
   useEffect(() => {
-    const hash = window.location.hash.slice(1);
-    if (!hash) return;
-    const target = document.getElementById(decodeURIComponent(hash));
-    const panel = target?.closest<HTMLElement>("[role=tabpanel]");
-    const id = panel?.id.replace(/^gift-panel-/, "");
-    const hit = tabs.find((t) => t.id === id);
-    if (!target || !hit) return;
-    setSelectedId(hit.id);
-    requestAnimationFrame(() => target.scrollIntoView());
-    // 처음 그릴 때 한 번만 본다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const reveal = (raw: string) => {
+      if (!raw) return;
+      let key: string;
+      try {
+        key = decodeURIComponent(raw);
+      } catch {
+        return;
+      }
+      const target = document.getElementById(key);
+      const id = target?.closest<HTMLElement>("[role=tabpanel]")?.id.replace(/^gift-panel-/, "");
+      if (!target || !id || !tabIds.current.includes(id)) return;
+      setSelectedId(id as CreatorGiftTab["id"]);
+      requestAnimationFrame(() => target.scrollIntoView());
+    };
+    const onHashChange = () => reveal(window.location.hash.slice(1));
+    const onClick = (e: MouseEvent) => {
+      const a = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>("a[href*='#']") : null;
+      if (a && a.pathname === window.location.pathname && a.hash) reveal(a.hash.slice(1));
+    };
+    onHashChange();
+    window.addEventListener("hashchange", onHashChange);
+    document.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("hashchange", onHashChange);
+      document.removeEventListener("click", onClick);
+    };
   }, []);
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
@@ -72,7 +92,7 @@ export function CreatorGiftTabs({ tabs: given, initial }: { tabs: readonly Creat
 
   return (
     <>
-      <div className="tabs" role="tablist" aria-label="승인·받은 선물 구분">
+      <div className="tabs" role="tablist" aria-label="승인 요청 구분">
         {tabs.map((t, i) => (
           <button
             key={t.id}

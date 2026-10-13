@@ -48,11 +48,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
     <>
       <SiteHeader {...header} />
       {viewer.role === "fan" ? (
-        <MyShell role="fan" current="/gifts" nickname={viewer.nickname}>
+        <MyShell>
           <GiftListPage gifts={gifts} faceToneByName={faceToneByName} creators={creators} />
         </MyShell>
       ) : (
-        <MyShell role="creator" current="/gifts" nickname={viewer.nickname}>
+        <MyShell>
           <GiftListPage gifts={gifts} faceToneByName={faceToneByName} creators={creators} />
         </MyShell>
       )}

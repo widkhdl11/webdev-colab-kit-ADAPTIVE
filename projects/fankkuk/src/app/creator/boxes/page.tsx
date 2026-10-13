@@ -23,9 +23,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      {/* MyShell 의 current 는 「내 팬꾹」 메뉴 목록(entities/session/model/my-menu)의 주소만 받는다 — 받은 선물은 그 목록에 아직 없어
-          나누기 전 자리(승인·받은 선물)를 적는다. 사이드바의 현재 칸은 헤더의 current(/creator/boxes)가 정한다 */}
-      <MyShell role="creator" current="/creator/requests" nickname={viewer.nickname}>
+      <MyShell>
         <ReceivedBoxesPage received={received} replyPending={replyPending} />
       </MyShell>
       <SiteFooter />

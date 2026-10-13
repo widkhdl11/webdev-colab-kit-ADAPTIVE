@@ -22,7 +22,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
     <>
       <SiteHeader {...header} />
       {viewer?.role === "fan" ? (
-        <MyShell role="fan" current="/me" nickname={viewer.nickname}>
+        <MyShell>
           <ConfirmEmailPanel token={token} />
         </MyShell>
       ) : viewer ? (

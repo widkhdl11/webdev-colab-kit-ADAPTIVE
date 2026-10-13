@@ -101,6 +101,8 @@ body:has(.sidebar) { --sb-cur: var(--sidebar-w); padding-left: var(--sb-cur); tr
 .sb-scrim { display: none; }
 @media (max-width: 768px) {
   body:has(.sidebar) { --sb-cur: 0px; }
+  /* 손가락으로 누르는 서랍은 메뉴 칸·접기 버튼을 44 로(누름 칸 44px — 시안의 36 은 PC 마우스 기준) */
+  .sidebar { --nav-item-h: 44px; }
   .topbar { position: sticky; top: 0; z-index: 38; display: flex; align-items: center; justify-content: space-between; height: var(--topbar-h); padding: 0 8px 0 16px; background: var(--white); border-bottom: 1px solid var(--gray-200); }
   .sidebar { --w: 100vw; transform: translateX(-100%); visibility: hidden; transition: transform var(--dur-w) ease, visibility 0s linear var(--dur-w); }
   html[data-open="1"] .sidebar { transform: none; visibility: visible; transition: transform var(--dur-w) ease; }

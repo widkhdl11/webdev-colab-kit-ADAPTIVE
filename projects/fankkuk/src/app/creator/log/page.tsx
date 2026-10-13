@@ -24,7 +24,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell role="creator" current="/creator/log" nickname={viewer.nickname}>
+      <MyShell>
         <AccessLogPage
           monthLabel={monthLabelOf(seoulMonthKey(new Date().toISOString()))}
           summary={summary}

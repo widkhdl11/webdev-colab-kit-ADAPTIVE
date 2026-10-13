@@ -86,7 +86,7 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 /* 선물 사진(선택) — 파일 칸은 sr-only 로 숨기고 라벨(.photo-pick)을 버튼 모양으로. 키보드 포커스는 라벨에 그린다 */
 .photo-opt { color: var(--sub); font-weight: 400; }
 .photo-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.photo-file:focus-visible + .photo-pick { outline: 3px solid var(--ink); outline-offset: 2px; }
+.photo-file:focus-visible + .photo-pick { outline: 2px solid var(--primary); outline-offset: 2px; }
 .photo-row .photo-pick { display: inline-flex; margin-bottom: 0; cursor: pointer; }
 .photo-name { margin-top: 8px; overflow-wrap: anywhere; }
 .root :global(.part) { padding: var(--space-6); }

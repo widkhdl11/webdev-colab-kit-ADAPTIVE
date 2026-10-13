@@ -199,9 +199,13 @@ export function AppSidebar({ role, groups, current, homeHref, nickname, counts }
                           <Icon name={it.icon} />
                           <span className="sb-label">{it.label}</span>
                           {n > 0 ? (
-                            <span className="badge" aria-label={it.badge === "pending" ? `대기 ${n}건` : `진행 중 ${n}건`}>
-                              {n}
-                            </span>
+                            <>
+                              {/* 역할 없는 span 의 aria-label 은 낭독기가 대부분 읽지 않는다 — 숫자는 숨기고 뜻을 sr-only 로 */}
+                              <span className="badge" aria-hidden="true">
+                                {n}
+                              </span>
+                              <span className="sr-only">{it.badge === "pending" ? `대기 ${n}건` : `진행 중 ${n}건`}</span>
+                            </>
                           ) : null}
                         </Link>
                       </li>

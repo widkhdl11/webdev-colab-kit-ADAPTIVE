@@ -24,14 +24,14 @@
 .who { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .who > div { min-width: 0; }
 
-/* 스위치 — 입력은 체크박스(role=switch) 그대로, 모양은 v11 .sw 와 같게 */
+/* 스위치 — 입력은 체크박스(role=switch) 그대로, 모양은 v18 공통 .sw(base.css 16절)와 같게: 48×28 · 손잡이 20 */
 .txt { display: grid; gap: 4px; }
 label.txt { cursor: pointer; }
-.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 56px; height: 32px; margin: 0; border-radius: var(--r-pill); background: var(--field-line); cursor: pointer; transition: background .15s; }
-.switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--white); transition: transform .15s; }
+.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 48px; height: 28px; margin: 0; border-radius: var(--r-pill); background: var(--gray-500); cursor: pointer; transition: background .15s; }
+.switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--white); transition: transform .15s; }
 .switch:checked { background: var(--brand); }
-.switch:checked::after { transform: translateX(24px); }
-.switch:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.switch:checked::after { transform: translateX(20px); }
+.switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .switch:disabled { cursor: not-allowed; opacity: .5; }
 
 /* 펼친 번호·비밀번호 바꾸기 칸 */
@@ -56,7 +56,7 @@ label.txt { cursor: pointer; }
 .photo-prev { width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
 .photo-ctl { flex: 1; display: grid; gap: 12px; min-width: 0; }
 /* 파일 칸은 sr-only 로 숨기고 라벨(.pick)을 버튼 모양으로 — 키보드 포커스는 라벨에 그린다 */
-.file:focus-visible + .pick { outline: 3px solid var(--ink); outline-offset: 2px; }
+.file:focus-visible + .pick { outline: 2px solid var(--primary); outline-offset: 2px; }
 .pick { cursor: pointer; }
 .file-name { overflow-wrap: anywhere; }
 
