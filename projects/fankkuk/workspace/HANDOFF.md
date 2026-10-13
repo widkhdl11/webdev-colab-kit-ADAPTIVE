@@ -7,7 +7,7 @@
 {
   "product": {
     "status": "clean",
-    "hash": "3ffe094c33f5"
+    "hash": "4c86b4373191"
   },
   "spec": {
     "status": "clean",
