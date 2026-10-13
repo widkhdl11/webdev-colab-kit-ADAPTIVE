@@ -1,72 +1,75 @@
-/* 사이트 헤더·선물 상태 아이콘(전역 클래스) — 시안 docs/design/mockups/site/v4/v4.css 4·5절, 오른쪽 끝은 v9-header. 색·반경은 tokens.css 토큰으로. */
-/* 4 헤더 — guest / fan 이 같은 구조 */
-.site-header { position: sticky; top: 0; z-index: 40; background: var(--white); box-shadow: 0 1px 0 var(--divider); }
-.header-inner { display: flex; align-items: center; gap: 24px; min-height: 72px; }
-.logo { display: inline-flex; align-items: center; gap: 8px; font-size: 24px; font-weight: 800; letter-spacing: -.5px; text-decoration: none; }
+/* 사이트 헤더(전역 클래스) — 재디자인 v11: 시안 docs/design/mockups/site/v11/v11.css 5절 + 11절의 1100px 접힘, 마크업은 v11/landing.html(비로그인)·home-fan.html(팬)·home-creator.html(크리에이터).
+   시안과 다른 점: 펼침·말풍선·바텀시트는 지금 코드의 동작(버튼 + aria-expanded, 선물마다 말풍선)을 그대로 두고 모양만 맞췄다. 색·반경은 tokens.css 토큰으로. */
+.site-header { position: sticky; top: 0; z-index: 40; background: var(--white); box-shadow: 0 1px 0 var(--border); }
+.header-inner { display: flex; align-items: center; gap: 24px; min-height: var(--header-h); }
+/* 로고 글자는 라이선스상 Pretendard (티머니 둥근바람은 로고에 쓰지 않는다) */
+.logo { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-logo); font-size: var(--fs-card); font-weight: 800; line-height: 1; letter-spacing: 0; text-decoration: none; color: var(--ink); }
 .nav { flex: 1; }
 .nav ul { display: flex; gap: 2px; }
-.nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: var(--r-btn-sm); font-weight: 600; text-decoration: none; }
-.nav a:hover { background: var(--surface); }
-.nav a[aria-current="page"] { color: var(--brand); font-weight: 700; }
+.nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: var(--r-btn-sm); text-decoration: none; }
+.nav a:hover { background: var(--surface-hover); }
+.nav a[aria-current="page"] { background: var(--surface-selected); color: var(--brand-ink); }
 .header-actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
-/* 오른쪽 끝은 글자 중심(시안 v9-header) — 면·동그라미 없이 글자와 가는 선 그림만 */
-.action-sep { width: 1px; height: 16px; margin-inline: 6px; background: var(--border); }
-.text-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: var(--r-btn-sm); color: var(--sub); font-size: 16px; font-weight: 600; text-decoration: none; }
-.text-link:hover { background: var(--surface); color: var(--ink); }
-.text-link--strong { color: var(--ink); }
-.header-actions .count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--ink); color: var(--on-brand); font-size: 16px; font-weight: 700; line-height: 1; }
 
-.user-menu { position: relative; }
-.user-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--r-btn-sm); background: none; color: var(--ink); cursor: pointer; font-size: 16px; font-weight: 600; }
-.user-btn:hover, .user-btn[aria-expanded="true"] { background: var(--surface); }
-.user-btn .caret { color: var(--faint); }
-.user-dropdown { position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; min-width: 220px; padding: 8px; background: var(--white); border-radius: var(--r-box); box-shadow: var(--float), var(--hair); }
-.user-dropdown a, .user-dropdown .menu-action { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: var(--r-btn-sm); text-decoration: none; }
-.user-dropdown a:hover, .user-dropdown .menu-action:hover { background: var(--surface); }
-/* 링크와 같은 모양의 버튼(로그아웃) */
-.menu-action { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.user-dropdown hr { border: 0; border-top: 1px solid var(--divider); margin: 8px 0; }
-.user-dropdown .who { padding: 8px 12px; color: var(--sub); }
+/* 오른쪽 끝은 글자 중심 — 면·동그라미·알약을 두지 않는다(design-rules 5절). 마우스 올림만 옅은 면 */
+.hd-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--r-btn-sm); background: none; color: var(--ink); text-decoration: none; cursor: pointer; }
+.hd-link:hover, .hd-link[aria-expanded="true"] { background: var(--surface); }
+.hd-link--sub { color: var(--sub); }
+.hd-link--strong { font-weight: 800; }
+.hd-link .caret { width: 16px; height: 16px; }
+.hd-sep { width: 1px; height: 20px; margin-inline: 8px; background: var(--border); }
+/* 크리에이터 「승인 대기 N」, 휴대폰 팬 「선물 N」 */
+.hd-gift { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 8px; border: 0; border-radius: var(--r-btn-sm); background: none; color: var(--ink); text-decoration: none; cursor: pointer; }
+.hd-gift:hover { background: var(--surface); }
+.hd-ico { position: relative; display: grid; place-items: center; width: 36px; height: 36px; }
+.hd-count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--ink); color: var(--on-brand); font-weight: 800; line-height: 1; }
 
-.menu-toggle { display: none; place-items: center; width: 44px; height: 44px; border: 0; border-radius: var(--r-btn-sm); background: none; color: var(--ink); cursor: pointer; }
-.menu-toggle:hover { background: var(--surface); }
-.mobile-menu { display: none; }
-@media (min-width: 768px) and (max-width: 1023px) {   /* 로고·액션 한 줄 + 네비 두 번째 줄 */
-  .header-inner { flex-wrap: wrap; gap: 0 16px; }
-  .nav { order: 3; flex-basis: 100%; padding-bottom: 8px; }
-}
-@media (max-width: 767px) {
-  .header-inner { gap: 12px; }
-  .nav, .user-menu, .gift-status, .hide-sm { display: none; }
-  .menu-toggle { display: grid; }
-  .mobile-menu { position: absolute; left: 0; right: 0; top: 100%; display: block; max-height: calc(100vh - 72px); overflow-y: auto; background: var(--white); box-shadow: 0 1px 0 var(--divider); padding: 8px var(--gutter) 24px; }
-  .mobile-menu[hidden] { display: none; }
-  .mobile-menu a:not(.btn), .mobile-menu .menu-action { display: flex; align-items: center; min-height: 52px; border-bottom: 1px solid var(--divider); text-decoration: none; font-weight: 600; }
-  .mobile-menu .group-label { margin-top: 16px; color: var(--sub); font-weight: 600; }
-  .mobile-menu .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-}
-
-/* 5 헤더 선물 상태 아이콘 + 말풍선 (기능 유지: 마우스·키보드 말풍선 「선물 4개 중 1번째 · 하루님께 · 배송중」) */
-.gift-status { display: flex; align-items: center; gap: 2px; }
+/* 팬 — 진행 중인 선물 아이콘(PC). 가는 선 그림 + 오른쪽 위 상태 점(대기 노랑 · 배송 중 파랑 · 완료 초록). 상태 글은 말풍선·바텀시트가 맡는다.
+   시안의 36px 칸을 누르는 칸 44px 안에 둔다 */
+.gift-status { display: flex; align-items: center; }
 .gift-item { position: relative; }
-/* 가는 선 그림 + 오른쪽 위 상태 점(상태 배지 색: 대기 노랑 · 배송 중 파랑 · 완료 초록). 상태 글은 말풍선·바텀시트가 맡는다 */
 .gift-icon { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--r-btn-sm); color: var(--ink); text-decoration: none; }
 .gift-icon:hover { background: var(--surface); }
-.gift-icon::after { content: ""; position: absolute; top: 9px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--info); box-shadow: 0 0 0 2px var(--white); }
+.gift-icon::after { content: ""; position: absolute; right: 6px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--info); box-shadow: 0 0 0 2px var(--white); }
 .gift-icon[data-state="wait"]::after { background: var(--warn-ink); }
-.gift-icon[data-state="done"]::after { background: var(--success); }   /* 배송 완료 — 3일 뒤 사라짐 */
-.gift-more { display: inline-grid; place-items: center; min-width: 44px; height: 44px; padding-inline: 8px; border-radius: var(--r-btn-sm); color: var(--sub); font-size: 16px; font-weight: 600; text-decoration: none; }
+.gift-icon[data-state="done"]::after { background: var(--success); } /* 배송 완료 — 3일 뒤 사라짐 */
+.gift-more { display: inline-grid; place-items: center; min-width: 44px; height: 44px; padding-inline: 8px; border-radius: var(--r-btn-sm); color: var(--sub); text-decoration: none; }
 .gift-more:hover { background: var(--surface); color: var(--ink); }
+.gift-badge { display: none; }
+/* 말풍선 「선물 4개 중 1번째 · 하루님께 · 배송중」 */
 .tip { position: absolute; top: 100%; left: 50%; z-index: 60; padding-top: 8px; transform: translateX(-50%); display: none; }
 .tip.is-open { display: block; }
-.tip-body { display: block; padding: 8px 12px; border-radius: var(--r-btn-sm); background: var(--ink); color: var(--on-brand); font-size: 16px; font-weight: 600; line-height: 1.5; white-space: nowrap; }
+.tip-body { display: block; padding: 8px 12px; border-radius: var(--r-btn-sm); background: var(--ink); color: var(--on-brand); line-height: 1.5; white-space: nowrap; }
 .tip-body::before { content: ""; position: absolute; top: 2px; left: var(--tip-arrow, 50%); width: 12px; height: 12px; background: var(--ink); transform: translateX(-50%) rotate(45deg); }
-.gift-badge { display: none; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--r-btn-sm); background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
-.gift-badge:hover { background: var(--surface); }
-@media (max-width: 767px) { .gift-badge { display: inline-flex; } .gift-status { display: none; } }
 
+/* 이름 펼침 메뉴 */
+.user-menu { position: relative; }
+.hd-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 60; min-width: 224px; padding: 8px; border-radius: var(--r-box); background: var(--white); box-shadow: var(--float), var(--hair); }
+.hd-menu a, .hd-menu .menu-action { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: var(--r-btn-sm); text-decoration: none; }
+.hd-menu a:hover, .hd-menu .menu-action:hover { background: var(--surface); }
+.hd-menu a[aria-current="page"] { background: var(--surface-selected); color: var(--brand-ink); }
+.hd-menu hr { height: 1px; margin: 8px 0; border: 0; background: var(--border); }
+.hd-who { padding: 8px 12px; color: var(--sub); }
+/* 링크와 같은 모양의 버튼(로그아웃) */
+.menu-action { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 
-/* 크리에이터 헤더 — 승인 대기 건수 (시안 v9-header 글자 방식) */
-.req-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border-radius: var(--r-btn-sm); color: var(--ink); font-size: 16px; font-weight: 600; text-decoration: none; }
-.req-pill:hover { background: var(--surface); }
-.sheet-all { margin-top: 12px; }
+/* 접힌 메뉴 (1100px 이하) */
+.menu-toggle { display: none; place-items: center; width: 44px; height: 44px; border: 0; border-radius: var(--r-btn); background: var(--surface); color: var(--ink); cursor: pointer; }
+.menu-toggle:hover { background: var(--surface-hover); }
+.mobile-menu { display: none; }
+
+@media (max-width: 1100px) {
+  .site-header .nav, .site-header .hide-sm, .site-header .user-menu, .site-header .gift-status { display: none; }
+  .menu-toggle { display: grid; }
+  .gift-badge { display: inline-flex; }
+  .mobile-menu { position: absolute; left: 0; right: 0; top: 100%; z-index: 50; display: block; max-height: calc(100vh - var(--header-h)); overflow-y: auto; background: var(--white); box-shadow: 0 1px 0 var(--border); padding: 8px var(--gutter) 24px; }
+  .mobile-menu[hidden] { display: none; }
+  .mobile-menu a:not(.btn), .mobile-menu .menu-action { display: flex; align-items: center; min-height: 52px; border-bottom: 1px solid var(--border); text-decoration: none; }
+  .mobile-menu a[aria-current="page"]:not(.btn) { color: var(--brand-ink); font-weight: 800; }
+  .mobile-menu .group-label { margin-top: 16px; color: var(--sub); }
+  .mobile-menu .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+}
+@media (max-width: 767px) {
+  .header-inner { gap: 8px; }
+  .hd-gift { padding-inline: 0; }
+}

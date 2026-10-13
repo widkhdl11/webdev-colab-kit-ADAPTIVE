@@ -1,5 +1,5 @@
 /* 디자인 토큰 — 값의 정본은 docs/design/design-rules.md (2026-10-07 코랄로 교체, 카드 d36). 여기를 고치면 그 문서도 같이 고친다.
-   시안: docs/design/mockups/site/v5-coral/v5.css 1절. 브랜드 원문: docs/design/refs/fankkuk-design-tokens.md */
+   시안: docs/design/mockups/site/v5-coral/v5.css 1절, 글자·여백은 v11/v11.css 1·15절(2026-10-13 재디자인 v11). 브랜드 원문: docs/design/refs/fankkuk-design-tokens.md */
 :root {
   /* 브랜드 원색 — 로고 안에서만. 버튼·글자에는 아래 --brand 를 쓴다 */
   --logo-coral: #f58278;
@@ -38,6 +38,7 @@
   --kakao: #fee500;
   --kakao-ink: #191919;
   --kakao-hover: #f3d900;
+  --kakao-active: #e6cd00; /* 카카오 버튼 누름 (v11) */
   /* 이름 첫 글자·얼굴 동그라미 바탕 — 사람마다 돌려 쓴다(시안 v4). 글자는 --ink */
   --face-1: #fbe3a8;
   --face-2: #dcd3f6;
@@ -45,6 +46,8 @@
   --face-4: #fad2ba;
   --face-5: #c9ecdd;
   --face-6: #f7c8d4;
+  --face-default: #f6d6cf; /* 얼굴 동그라미에 사람 색(--f)을 안 줬을 때 (v11 .face) */
+  --ctag-face: #f2f2f3; /* 플랫폼 뱃지 — 플랫폼 색(--f)이 없을 때의 옅은 면·로고 바탕 (v11 13절) */
   --divider: rgb(52 48 57 / 0.08); /* 줄 사이 */
   --divider-mid: rgb(52 48 57 / 0.16); /* 표 머리 */
   --divider-strong: rgb(52 48 57 / 0.2);
@@ -85,9 +88,25 @@
 
   --maxw: 1200px;
   --gutter: 24px;
+  --header-h: 72px;
+
+  /* 글자 — 재디자인 v11 (design-rules 0절). 한 화면에 쓰는 크기는 PC 40·28·20·18·16 다섯 가지, 휴대폰 30·24·20·18·16.
+     굵기는 400·800 둘. 16px 미만은 쓰지 않는다 */
+  --fs-hero: 40px; /* 첫 화면 제목 */
+  --fs-title: 28px; /* 페이지·구간 제목 */
+  --fs-card: 20px; /* 카드 제목 */
+  --fs-lead: 18px; /* 리드 */
+  --fs-body: 16px; /* 본문·버튼·메뉴·보조 */
+  /* 로고 글자 「팬꾹」 전용 — 티머니 둥근바람은 라이선스상 로고(BI/CI)에 쓸 수 없다 */
+  --font-logo: "Pretendard Variable", Pretendard, sans-serif;
+  --ls-title: -0.02em; /* 음수 자간은 첫 화면·구간 제목에만, 이 값 하나 */
+  /* 바깥 화면 큰 구간 위아래 여백 88~144 — v11.css 1절 값(72~128)을 15절이 덮어쓴 최종값 */
+  --sec-pad: clamp(88px, 10vw, 144px);
 }
 @media (max-width: 767px) {
   :root {
     --gutter: 16px;
+    --fs-hero: 30px;
+    --fs-title: 24px;
   }
 }

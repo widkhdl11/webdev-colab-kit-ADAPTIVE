@@ -9,8 +9,8 @@ import { LogoutButton } from "@/features/auth/ui/logout-button";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { LogoMark } from "@/shared/ui/logo";
 
-// 사이트 헤더 세 상태(design-rules 5절). 같은 구조에 오른쪽 끝만 다르다.
-// 시안: docs/design/mockups/site/v4/landing.html(비로그인) · home.html(팬) · creator-requests.html(크리에이터)
+// 사이트 헤더 세 상태(design-rules 5절·0절). 같은 구조에 오른쪽 끝만 다르다. 1100px 이하는 메뉴를 접는다.
+// 시안(재디자인 v11): docs/design/mockups/site/v11/landing.html(비로그인) · home-fan.html(팬) · home-creator.html(크리에이터)
 
 export type HeaderGift = { orderNo: string; creatorName: string; state: HeaderGiftState; label: string };
 
@@ -43,7 +43,7 @@ function LineIcon({ size, children }: { size: number; children: ReactNode }) {
   );
 }
 
-function GiftGlyph({ state, size = 22 }: { state: HeaderGiftState; size?: number }) {
+function GiftGlyph({ state, size = 24 }: { state: HeaderGiftState; size?: number }) {
   if (state === "wait") {
     return (
       <LineIcon size={size}>
@@ -71,8 +71,8 @@ function GiftGlyph({ state, size = 22 }: { state: HeaderGiftState; size?: number
   );
 }
 
-/** 상자 그림 — 모바일 「선물 N」·크리에이터 「승인 대기 N」 앞 */
-function BoxGlyph({ size = 20 }: { size?: number }) {
+/** 상자 그림 — 접힌 헤더의 「선물 N」·크리에이터 「승인 대기 N」 앞 */
+function BoxGlyph({ size = 24 }: { size?: number }) {
   return (
     <LineIcon size={size}>
       <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
@@ -166,7 +166,7 @@ function GiftStatus({ gifts }: { gifts: HeaderGift[] }) {
   );
 }
 
-/** 767px 이하 — 「선물 N」 배지가 여는 바텀시트. 공용 확인 창(BottomSheet)의 모달 모드라 포커스가 시트 안에서만 돌고 Esc 로 닫힌다. */
+/** 1100px 이하 — 「선물 N」 배지가 여는 바텀시트. 공용 확인 창(BottomSheet)의 모달 모드라 포커스가 시트 안에서만 돌고 Esc 로 닫힌다. */
 function GiftSheet({ gifts, open, onClose }: { gifts: HeaderGift[]; open: boolean; onClose: () => void }) {
   // 시트가 떠 있는 동안 뒤 페이지가 스크롤되지 않게
   useEffect(() => {
@@ -231,7 +231,7 @@ function UserMenu({ nickname, roleLabel, items, current }: { nickname: string; r
     >
       <button
         ref={btnRef}
-        className="user-btn"
+        className="hd-link hd-link--strong"
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
@@ -241,8 +241,8 @@ function UserMenu({ nickname, roleLabel, items, current }: { nickname: string; r
         <Caret />
       </button>
       {/* tabIndex -1: 패널 안을 눌러도 포커스가 패널에 머물러 onBlur 가 닫지 않게(포커스를 옮기지 않는 브라우저 대비) */}
-      <div className="user-dropdown" id={panelId} hidden={!open} tabIndex={-1}>
-        <p className="who">
+      <div className="hd-menu" id={panelId} hidden={!open} tabIndex={-1}>
+        <p className="hd-who">
           {nickname}님 · {roleLabel}
         </p>
         {items.map((it) => (
@@ -272,7 +272,7 @@ export function SiteHeader(props: SiteHeaderProps) {
       }
     };
     const onResize = () => {
-      if (window.innerWidth > 767) setMenuOpen(false);
+      if (window.innerWidth > 1100) setMenuOpen(false); // 메뉴가 접히는 폭(site-header.css)과 같은 값
     };
     document.addEventListener("keydown", onKey);
     window.addEventListener("resize", onResize);
@@ -307,11 +307,11 @@ export function SiteHeader(props: SiteHeaderProps) {
         <div className="header-actions">
           {props.role === "guest" ? (
             <>
-              <Link className="text-link hide-sm" href="/login" aria-current={props.current === "/login" ? "page" : undefined}>
+              <Link className="hd-link hd-link--sub hide-sm" href="/login" aria-current={props.current === "/login" ? "page" : undefined}>
                 로그인
               </Link>
-              <span className="action-sep hide-sm" aria-hidden="true" />
-              <Link className="text-link text-link--strong hide-sm" href="/signup" aria-current={props.current === "/signup" ? "page" : undefined}>
+              <span className="hd-sep hide-sm" aria-hidden="true" />
+              <Link className="hd-link hd-link--strong hide-sm" href="/signup" aria-current={props.current === "/signup" ? "page" : undefined}>
                 회원가입
               </Link>
             </>
@@ -320,26 +320,30 @@ export function SiteHeader(props: SiteHeaderProps) {
             <>
               <GiftStatus gifts={props.gifts} />
               <button
-                className="gift-badge"
+                className="hd-gift gift-badge"
                 type="button"
                 aria-haspopup="dialog"
                 aria-label={`진행 중인 선물 ${props.gifts.length}개 보기`}
                 onClick={() => setSheetOpen(true)}
               >
-                <BoxGlyph />
+                <span className="hd-ico">
+                  <BoxGlyph />
+                </span>
                 선물
-                <span className="count">{props.gifts.length}</span>
+                <span className="hd-count">{props.gifts.length}</span>
               </button>
             </>
           ) : null}
           {props.role === "creator" ? (
-            <Link className="req-pill" href="/creator/requests" aria-label={`승인 대기 ${props.pendingCount}건`}>
-              <BoxGlyph />
-              <span className="hide-sm">승인 </span>대기
-              <span className="count">{props.pendingCount}</span>
+            <Link className="hd-gift" href="/creator/requests" aria-label={`승인 대기 ${props.pendingCount}건`}>
+              <span className="hd-ico">
+                <BoxGlyph />
+              </span>
+              <span className="hide-sm">승인 대기</span>
+              <span className="hd-count">{props.pendingCount}</span>
             </Link>
           ) : null}
-          {props.role !== "guest" ? <span className="action-sep hide-sm" aria-hidden="true" /> : null}
+          {props.role !== "guest" ? <span className="hd-sep hide-sm" aria-hidden="true" /> : null}
           {props.role === "fan" ? <UserMenu nickname={props.nickname} roleLabel="팬" items={FAN_MY_MENU} current={props.current} /> : null}
           {props.role === "creator" ? <UserMenu nickname={props.nickname} roleLabel="크리에이터" items={CREATOR_MY_MENU} current={props.current} /> : null}
           <button
@@ -351,9 +355,12 @@ export function SiteHeader(props: SiteHeaderProps) {
             aria-label={menuOpen ? "메뉴 닫기" : "메뉴 열기"}
             onClick={() => setMenuOpen((v) => !v)}
           >
-            <LineIcon size={24}>
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            </LineIcon>
+            {/* 시안 v11 — 둥근 막대 셋 */}
+            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor" />
+              <rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor" />
+              <rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor" />
+            </svg>
           </button>
         </div>
       </div>

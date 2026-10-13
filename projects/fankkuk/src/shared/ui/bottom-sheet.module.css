@@ -4,7 +4,7 @@
 .body { padding: 12px 16px 24px; }
 .grip { display: block; width: 40px; height: 4px; margin: 0 auto 12px; border-radius: var(--r-pill); background: var(--grip); }
 .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.title { margin: 0; font-size: 22px; line-height: 1.4; font-weight: 700; letter-spacing: -.3px; }
+.title { margin: 0; font-size: var(--fs-card); line-height: 1.4; font-weight: 800; letter-spacing: 0; } /* v11 카드 제목 단계 */
 .close { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border: 0; border-radius: var(--r-btn); background: var(--surface); color: var(--ink); cursor: pointer; }
 .close:hover { background: var(--surface-hover); }
 

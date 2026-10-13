@@ -1,14 +1,13 @@
-/* 사이트 푸터(전역 클래스) — 시안 docs/design/mockups/site/v4/v4.css 11절 을 옮김. 색·반경은 tokens.css 토큰으로. */
-/* 11 푸터 */
+/* 사이트 바닥글(전역 클래스) — 재디자인 v11: 시안 docs/design/mockups/site/v11/v11.css 6절, 마크업은 v11/landing.html 의 footer. 색·반경은 tokens.css 토큰으로. */
 .site-footer { border-top: 1px solid var(--border); background: var(--surface); color: var(--sub); }
 .footer-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; padding-block: 56px 24px; }
-.footer-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; color: var(--ink); font-size: 20px; font-weight: 800; }
+/* 로고 글자는 라이선스상 Pretendard (티머니 둥근바람은 로고에 쓰지 않는다) */
+.footer-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-family: var(--font-logo); font-size: var(--fs-card); font-weight: 800; line-height: 1; color: var(--ink); }
 .biz { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 32px; }
 .biz div { display: flex; gap: 12px; }
-.biz dt { color: var(--ink); font-weight: 600; flex-shrink: 0; }
+.biz dt { color: var(--ink); flex-shrink: 0; }
 .footer-links { display: grid; gap: 4px; align-content: start; }
 .footer-links a { display: flex; align-items: center; min-height: 44px; text-decoration: none; }
 .footer-links a:hover { color: var(--ink); text-decoration: underline; }
 .footer-copy { padding-bottom: 40px; }
 @media (max-width: 767px) { .footer-grid { grid-template-columns: 1fr; gap: 16px; padding-block: 40px 16px; } .biz { grid-template-columns: 1fr; } }
-

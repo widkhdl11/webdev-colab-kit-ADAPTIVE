@@ -3,11 +3,11 @@
   background: var(--warn-soft);
   color: var(--warn-ink);
   padding: var(--space-2) var(--space-4);
-  font-size: 14px;
+  font-size: var(--fs-body); /* v11: 16px 미만을 쓰지 않는다 */
   line-height: 1.5;
   text-align: center;
 }
 
 .band strong {
-  font-weight: 700;
+  font-weight: 800;
 }
