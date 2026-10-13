@@ -244,5 +244,5 @@ svg.ic { width: var(--mock-ic); height: var(--mock-ic); fill: none; stroke: curr
 
 /* 둥근 제목 글꼴 비교(?font=round -> html[data-font="round"]): 제목·로고 글자만. 본문·버튼·메뉴는 Pretendard 그대로 */
 [data-font="round"] h1, [data-font="round"] h2, [data-font="round"] h3,
-[data-font="round"] .ph-title, [data-font="round"] .page-title, [data-font="round"] .logo, [data-font="round"] .footer-logo { font-family: var(--font-round); }
+[data-font="round"] .ph-title, [data-font="round"] .page-title { font-family: var(--font-round); }   /* 로고 글자는 빼다 — 티머니 둥근바람은 라이선스상 로고 금지(2026-10-14) */
 
