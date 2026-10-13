@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyDecision, type LocalDecision } from "./local-decision";
+import { applyDecision, decidedBelow, type LocalDecision } from "./local-decision";
 
 // 같은 닉네임이라도 같은 팬인지는 화면이 모른다 — 서버가 돌려준 「함께 거절한 주문번호」로만 가린다.
 const NONE: ReadonlySet<string> = new Set();
@@ -38,5 +38,23 @@ describe("applyDecision — 승인 요청 화면 안의 결정과 차단 전파"
     const before: Record<string, LocalDecision> = {};
     applyDecision(before, "A1", { kind: "declined", blocked: true }, new Set(["A2"]));
     expect(before).toEqual({});
+  });
+});
+
+describe("decidedBelow — 처리한 요청 구간", () => {
+  const decided = [{ orderNo: "A1" }, { orderNo: "B1" }];
+
+  it("이 화면에서 방금 처리한 줄은 위 구간에 남으니 아래에서는 뺀다", () => {
+    const states: Record<string, LocalDecision> = { A1: { kind: "declined", blocked: false } };
+    expect(decidedBelow(decided, states).map((d) => d.orderNo)).toEqual(["B1"]);
+  });
+
+  it("함께 막힌 줄도 위 구간에 남으니 뺀다", () => {
+    const states: Record<string, LocalDecision> = { B1: { kind: "blocked_elsewhere" } };
+    expect(decidedBelow(decided, states).map((d) => d.orderNo)).toEqual(["A1"]);
+  });
+
+  it("이 화면에서 건드리지 않은 처리 기록은 그대로 보인다", () => {
+    expect(decidedBelow(decided, {}).map((d) => d.orderNo)).toEqual(["A1", "B1"]);
   });
 });

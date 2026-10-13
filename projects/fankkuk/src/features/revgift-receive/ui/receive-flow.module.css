@@ -15,7 +15,7 @@
 /* 칸 하나의 입력 오류 — 칸 바로 아래 한 줄 */
 .error { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; color: var(--danger); font-weight: 800; }
 .next { --steps: 3; margin-top: 32px; }
-.next .t-strong + p { margin-top: 4px; }
+.next :global(.t-strong) + p { margin-top: 4px; }
 .links { justify-content: center; margin-top: 32px; }
 .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
 @media (max-width: 767px) {

@@ -23,7 +23,7 @@ import { PasswordChangePanel } from "@/features/password-change/ui/password-chan
 import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
 import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
 import { sendUnblock } from "@/features/creator-unblock/api/send-unblock";
-import type { CalendarDate, MyCreatorReceiving } from "@/entities/creator/model/receiving";
+import { isResting, type CalendarDate, type MyCreatorReceiving } from "@/entities/creator/model/receiving";
 import { ReceivingSection } from "./receiving-section";
 import { HardItemsSection } from "./hard-items-section";
 import { LinkSection } from "./link-section";
@@ -253,7 +253,7 @@ export function CreatorSettingsPage({
         <li className="card">
           <p className="t-meta">선물 받기</p>
           <p className={s["status-tag"]}>
-            {receiving.resumeOn === null ? <span className={statusTagClass("info")}>받는 중</span> : <span className={statusTagClass("plain")}>쉬는 중</span>}
+            {isResting(receiving.resumeOn, today) ? <span className={statusTagClass("plain")}>쉬는 중</span> : <span className={statusTagClass("info")}>받는 중</span>}
           </p>
         </li>
       </ul>

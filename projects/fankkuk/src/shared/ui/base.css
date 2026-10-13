@@ -533,3 +533,7 @@ img.asset { display: block; object-fit: contain; }
   body:has(.print-only) .print-only, body:has(.print-only) .print-only * { visibility: visible; }
   .print-only { display: grid; gap: 6px; position: absolute; left: 0; top: 0; width: 100%; padding: 16px; background: var(--white); color: var(--print-ink); font-size: 16px; }
 }
+
+/* 운영자 화면은 이번 재디자인 대상이 아니다(design-rules 0절) — 굵기 600·700 을 쓰는 운영자 화면이 티머니(400·800 뿐)로
+   800 으로 뭉개지지 않게, 예전 글꼴(로고용으로 이미 불러온 Pretendard, 모든 굵기)을 그대로 쓴다. 2026-10-13 화면 리뷰 중 3 */
+.admin-area { font-family: var(--font-logo), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-synthesis: weight; }

@@ -206,7 +206,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
             <ol className={s.steps}>
               {STEPS.map((label, i) => {
                 const k = i + 1;
-                const done = k !== step && k <= reached;
+                const done = k !== step && k < reached; // 지나온 단계만 완료 — 아직 넘지 않은 마지막 단계는 숫자 그대로(선물 보내기와 같은 기준)
                 return (
                   <li key={label}>
                     <button
@@ -227,7 +227,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       }}
                     >
                       <span className={s.dot} aria-hidden="true">
-                        {k < step ? <CheckIcon size={16} /> : k}
+                        {done ? <CheckIcon size={16} /> : k}
                       </span>
                       <span className={s.lbl}>{label}</span>
                     </button>
@@ -237,7 +237,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
             </ol>
           </nav>
 
-          <form className={`card ${s["send-form"]}`} onSubmit={onSubmit} aria-label="회원가입 입력" noValidate>
+          <form className="card" onSubmit={onSubmit} aria-label="회원가입 입력" noValidate>
             <fieldset className={s.step} hidden={step !== 1}>
               <legend className="sr-only">회원 유형</legend>
               <div className={s.sh}>

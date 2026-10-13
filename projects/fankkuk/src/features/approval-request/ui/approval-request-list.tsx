@@ -14,7 +14,7 @@ import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import { sendApprove } from "../api/send-approve";
 import { sendDecline } from "../api/send-decline";
-import { applyDecision, type LocalDecision } from "../model/local-decision";
+import { applyDecision, decidedBelow, type LocalDecision } from "../model/local-decision";
 import { PROMISE } from "@/shared/config/site-copy";
 import a from "./approval-request.module.css";
 
@@ -86,6 +86,7 @@ export function ApprovalRequestList({
     return [...kept, ...requests.filter((r) => !keptNos.has(r.orderNo))];
   }, [requests, seen, states]);
   // 줄 구성이 바뀔 때만 붙들어 둔다 — 매번 새 배열을 넣으면 rows 가 다시 계산돼 끝없이 돈다
+  const below = decidedBelow(decided, states);
   const rowKey = rows.map((r) => r.orderNo).join(",");
   const seenKey = seen.map((r) => r.orderNo).join(",");
   useEffect(() => {
@@ -123,7 +124,7 @@ export function ApprovalRequestList({
     setSaving(false);
     if (r.kind === "ok") {
       decide(req, { kind: "declined", blocked: block }, new Set(r.alsoDeclinedOrderNos));
-      router.refresh(); // 처리한 요청 탭과 머리글의 대기 수를 새로 읽는다
+      router.refresh(); // 처리한 요청 구간과 머리글의 대기 수를 새로 읽는다
       return;
     }
     if (r.kind === "login") {
@@ -282,11 +283,11 @@ export function ApprovalRequestList({
         <h3 className="t-card" id="done-h">
           처리한 요청
         </h3>
-        {decided.length === 0 ? (
+        {below.length === 0 ? (
           <p className="empty">아직 처리한 요청이 없어요.</p>
         ) : (
           <ul className="grid cols-2">
-            {decided.map((d, i) => {
+            {below.map((d, i) => {
               const tag = DECIDED_TAG[d.outcome];
               return (
                 <li key={d.orderNo} className="card card-col">

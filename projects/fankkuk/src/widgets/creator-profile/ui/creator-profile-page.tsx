@@ -149,8 +149,11 @@ export function CreatorProfilePage({
         </div>
       </section>
 
-      <section className="section section--compact" aria-label="받는 상태와 요금">
+      <section className="section section--compact" aria-labelledby="state-h">
         <div className="container">
+          <h2 className="sr-only" id="state-h">
+            받는 상태와 요금
+          </h2>
           <div className="grid cols-3">
             {restingText ? (
               <div className="card info rest">

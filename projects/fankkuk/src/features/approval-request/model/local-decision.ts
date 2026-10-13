@@ -30,3 +30,14 @@ export function applyDecision(
   }
   return next;
 }
+
+/**
+ * 아래 「처리한 요청」 구간에 보일 줄. 이 화면에서 방금 처리한 줄은 위 구간에 결과 문구와 함께 남아 있으므로,
+ * 새로 읽은 처리 목록에 같은 주문이 들어와도 아래에서는 뺀다 — 위아래 두 구간에 겹쳐 보이지 않게(탭일 때는 한쪽이 가려져 있었다).
+ */
+export function decidedBelow<T extends { orderNo: string }>(
+  decided: readonly T[],
+  states: Readonly<Record<string, LocalDecision>>,
+): T[] {
+  return decided.filter((d) => (states[d.orderNo] ?? PENDING).kind === "pending");
+}
