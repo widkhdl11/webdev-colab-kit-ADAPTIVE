@@ -8,9 +8,9 @@ import { formatDate } from "@/shared/lib/format/datetime";
 import { GiftTabs } from "./gift-tabs";
 import s from "./gift-list.module.css";
 
-// 보낸 선물 목록(「내 팬꾹」 안) — 팬은 「선물 내역」, 크리에이터는 「보낸 선물」. 시안: docs/design/mockups/site/v11/gifts.html (2열 카드 격자, 휴대폰 1열 — design-rules 0절)
+// 보낸 선물 목록 — 팬·크리에이터 모두 「보낸 선물」. 시안: docs/design/mockups/site/v18/my-gifts.html (넓은 틀 + 페이지 머리, 2열 카드 격자, 휴대폰 1열 — design-rules 00절)
 // 진행 중 · 끝난 선물 · 받지 않은 선물, 선물마다 같은 크기 카드 한 장(상태 배지 + 진행 중이면 진행 막대 + 상세 보기). 받지 않은 선물은 거절·자동 반려 모두 같은 모습이다(fan-view).
-// 내 정보 틀(제목·왼쪽 메뉴)과 <main> 은 라우트가 붙인다.
+// 본문 틀 <main class="page-pane"> 은 라우트가 MyShell 로 붙인다.
 // 목록 위 「크리에이터별로 보기」 — 선물한 크리에이터마다 「함께한 시간」(together)으로 가는 줄. 숫자는 본인에게만 보이는 기록이다(추가분 F-7).
 
 /** 「함께한 시간」으로 가는 줄 하나 — 라우트가 my_together 로 읽어 넘긴다. */
@@ -19,8 +19,10 @@ export type TogetherLink = { creatorId: string; name: string; href: string; phot
 function TogetherLinks({ creators }: { creators: readonly TogetherLink[] }) {
   return (
     <section className={s.by} aria-labelledby="by-creator-h">
-      <h3 id="by-creator-h">크리에이터별로 보기</h3>
-      <ul className="grid cols-3">
+      <h2 id="by-creator-h" className={s.h}>
+        크리에이터별로 보기
+      </h2>
+      <ul className={s.cards}>
         {creators.map((c) => (
           <li key={c.creatorId}>
             <Link className={`card ${s.tg}`} href={c.href}>
@@ -31,7 +33,9 @@ function TogetherLinks({ creators }: { creators: readonly TogetherLink[] }) {
                   선물 {c.giftCount}개 · 답장 {c.replyCount}통
                 </span>
               </span>
-              <span aria-hidden="true">›</span>
+              <svg className={s.chev} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m9 6 6 6-6 6" />
+              </svg>
             </Link>
           </li>
         ))}
@@ -82,7 +86,7 @@ function GiftRow({ gift, faceTone }: { gift: FanGiftView; faceTone: string | und
         </div>
       ) : null}
       <Link className={`btn btn--line btn--sm btn--block ${s.go}`} href={`/gifts/${gift.orderNo}`} aria-label={`${who} 보낸 선물 ${gift.orderNo} 상세`}>
-        상세 보기 ›
+        상세 보기
       </Link>
     </li>
   );
@@ -108,7 +112,7 @@ function Rows({
     );
   }
   return (
-    <ul className="grid cols-2">
+    <ul className={s.cards}>
       {gifts.map((g) => (
         <GiftRow key={g.orderNo} gift={g} faceTone={faceToneByName[g.creatorName]} />
       ))}
@@ -120,11 +124,11 @@ export function GiftListPage({
   gifts,
   faceToneByName,
   creators = [],
-  title = "선물 내역",
+  title = "보낸 선물",
 }: {
   /** 선물한 크리에이터마다 「함께한 시간」 줄 — 비면 그리지 않는다 */
   creators?: readonly TogetherLink[];
-  /** 본문 머리 — 「내 팬꾹」 메뉴 이름과 같게(팬 「선물 내역」, 크리에이터 「보낸 선물」) */
+  /** 페이지 머리 제목 — 사이드바 메뉴 이름과 같게(팬·크리에이터 모두 「보낸 선물」, design-rules 00절) */
   title?: string;
   gifts: readonly FanGiftView[];
   /** 크리에이터 이름 → 얼굴 면 색. 메인 화면과 같은 색을 쓴다. */
@@ -137,9 +141,18 @@ export function GiftListPage({
 
   return (
     <>
-      <div className="sec-head">
-        <h2 className="t-title">{title}</h2>
-      </div>
+      <header className="page-head">
+        <div className="ph-row">
+          <h1 className="ph-title">
+            {title}
+            <span className="ph-count">{gifts.length}</span>
+          </h1>
+          <Link className="btn btn--sm" href="/gifts/new">
+            선물 보내기
+          </Link>
+        </div>
+        <p className="ph-desc">크리에이터별로 보낸 선물과 받은 답장을 한곳에서 볼 수 있어요.</p>
+      </header>
       {creators.length > 0 ? <TogetherLinks creators={creators} /> : null}
       <GiftTabs
         tabs={[

@@ -1,4 +1,8 @@
-/* 내 정보 — 받은 역조공. 시안 docs/design/mockups/site/v11/me-revgifts.html 의 <style>. 탭·격자·카드는 전역 클래스(.tabs·.grid.cols-2·.gcard) */
-.note { margin-top: 8px; }
-.urgent { color: var(--danger); font-weight: var(--fw-bold); }
-.past-note { margin-top: 24px; }
+/* 받은 선물(팬) — 시안 docs/design/mockups/site/v18/me-revgifts.html. 탭·카드·태그는 전역 클래스(.tabs·.card·.gcard) */
+/* 2열 카드 격자, 휴대폰 1열 — 마지막 카드도 왼쪽부터 */
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+@media (max-width: 767px) { .cards { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); } }
+.note { margin-top: var(--space-4); }
+.urgent { color: var(--primary-700); font-weight: var(--fw-btn); }
+.go { justify-self: start; }
+.past-note { margin-top: var(--space-6); }

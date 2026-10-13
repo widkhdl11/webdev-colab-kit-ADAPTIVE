@@ -385,7 +385,7 @@ export function RegisterForm({
   );
 
   return (
-    <div className={`container ${f.col}`}>
+    <div className={f.root}>
       <nav className={f["steps-wrap"]} aria-label="선물 보내기 단계" ref={stepsWrap}>
         <p className={f["step-count"]}>
           {step} / 4 <span className={f["step-count-unit"]}>단계</span>
@@ -444,12 +444,12 @@ export function RegisterForm({
             </p>
           </div>
           {/* 걸러진 줄은 지우지 않고 숨긴다 — 고른 값이 그대로 남게 */}
-          <ul className="grid cols-2">
+          <ul className={f["pick-grid"]}>
             {creators.map((c) => (
               <li key={c.id} hidden={!visible.includes(c)}>
                 <label className={`card ${f.pick}`}>
                   <input className="sr-only" type="radio" value={c.id} {...register("creatorId")} />
-                  <CreatorFace tone={c.faceTone ?? "var(--face-1)"} className="face" />
+                  <CreatorFace tone={c.faceTone ?? "var(--face-1)"} className={f["pick-face"]} />
                   <span className={f["pick-text"]}>
                     <strong>{c.name}</strong>
                     {/* 태그는 다른 화면과 같은 태그 부품(아이콘·플랫폼 색, design-rules 5절) */}
@@ -470,6 +470,12 @@ export function RegisterForm({
                         .filter(Boolean)
                         .join(" · ")}
                     </span>
+                  </span>
+                  {/* 고른 카드의 오른쪽 체크 — 시안 v18 send.html .pick-ok (모양만, 고른 상태는 라디오가 알린다) */}
+                  <span className={f["pick-ok"]} aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24">
+                      <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </span>
                 </label>
               </li>

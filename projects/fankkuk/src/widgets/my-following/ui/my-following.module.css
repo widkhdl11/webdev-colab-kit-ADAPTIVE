@@ -1,12 +1,20 @@
-/* 내 정보 — 팔로우한 크리에이터. 시안 docs/design/mockups/site/v11/me-following.html 의 <style>. 격자·카드·빈 화면은 전역 클래스(.grid.cols-3·.card·.empty) */
-.fc { display: grid; gap: 12px; align-content: start; }
-.top { display: flex; align-items: center; gap: 16px; }
-.top > :last-child { min-width: 0; }
+/* 팔로우한 크리에이터 — 시안 docs/design/mockups/site/v18/my-following.html (v18-app.css .fgrid · .fcard · .fc-*). 빈 화면은 전역 .empty */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: var(--space-4); }
+.fc { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 20px; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair); }
+.fc:hover { box-shadow: inset 0 0 0 1px var(--gray-400); }
+.top { display: flex; align-items: center; gap: 12px; }
+.face { width: 40px; height: 40px; flex-shrink: 0; }
+.who { min-width: 0; }
+.nameLine { font-weight: var(--fw-btn); line-height: 1.4; }
 .name { text-decoration: none; }
 .name:hover { text-decoration: underline; text-underline-offset: 4px; }
-.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
-.acts :global(.btn) { padding: 0 8px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.info { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) 12px; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+.ch { min-width: 0; overflow-wrap: anywhere; }
+.time { display: inline-flex; align-items: center; gap: var(--space-2); }
+.time svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.acts { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-top: auto; }
+.acts :global(.btn--text) { color: var(--gray-600); }
 .empty p { max-width: 480px; }
 /* 끊기 실패 알림 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다(빈 칸은 공통 .err:empty) */
-.msg { margin-bottom: 24px; }
+.msg { margin-bottom: var(--space-6); }

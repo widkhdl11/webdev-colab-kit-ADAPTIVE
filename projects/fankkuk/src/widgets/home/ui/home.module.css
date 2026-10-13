@@ -1,20 +1,88 @@
-/* 메인(로그인 뒤) 화면 전용 — 시안 docs/design/mockups/site/v11/home-fan.html · home-creator.html.
-   공통 모양(.hero · .sec-head · .grid · .card · .mine-list · .ccard · .nlist · .step-col 등)은 base.css 가 정한다.
-   여기에는 시안의 화면 전용 규칙(body.page-home-fan / page-home-creator 에 걸린 것)과 시안에 없는 태그 칩 모양만 둔다. */
+/* 홈(로그인 뒤) 화면 전용 — 시안 docs/design/mockups/site/v18/home-fan.html · home-creator.html (v18-fan.css · v18-cre.css · v18-app.css).
+   공통 모양(.page-centered · .page-pane · .page-head · .card · .grid · .tag · .hero 등)은 base.css 가 정한다.
+   여기에는 시안의 화면 전용 조각(구간 쌓기·작은 구간 머리·팔로우 카드·내 카드 목록·공지 줄·단계 카드·태그 칩)만 둔다. */
 
-/* 시안 :is(.page-home-fan,.page-home-creator) .hero — 첫 화면 아래 여백 */
-.home :global(.hero) { padding-bottom: 72px; }
-/* 시안 :is(.page-home-fan,.page-home-creator) .card > .btn */
-.home :global(.card) > :global(.btn) { margin-top: 24px; }
+/* 구간 쌓기 — 시안 .sb-stack: 구간 사이 48 */
+.stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-12); }
+.stack > * { min-width: 0; }
+/* 전역의 「구간 + 구간 위 48」 을 걷는다 — 사이는 위 gap 하나로 */
+.stack > section:not(.section) + section:not(.section) { margin-top: 0; }
+/* 팬 홈 첫 화면 — 시안 .hero--home: 본문 틀 위 여백(40)만, 아래 여백 없음 */
+.stack :global(.hero) { padding: 0; }
+.stack :global(.hero) :global(.container) { max-width: none; padding: 0; }
+.heroText { max-width: var(--hero-max); margin-inline: auto; }
 
-/* 내 구간 */
-.role { font-weight: 400; }
-.wait { display: grid; gap: 0; }
-.wait :global(.bignum) { margin-bottom: 4px; }
-.link-card { text-decoration: none; }
+/* 작은 구간 머리 — 시안 .sec-head--sm: 제목 24, 아래 24 (크리에이터 홈은 .body-block 제목 20, 아래 16) */
+.secHead { margin-bottom: var(--space-6); }
+.secHead h2 { font-size: var(--fs-page); line-height: 1.3; }
+.pane .secHead { margin-bottom: var(--space-4); }
+.pane .secHead h2 { font-size: var(--fs-card); line-height: 1.4; }
+.role { margin-left: var(--space-2); font-family: var(--font); font-size: var(--fs-caption); font-weight: 400; color: var(--gray-600); }
+.foot { display: flex; justify-content: center; margin-top: var(--space-8); }
+.pane .foot { margin-top: var(--space-6); }
 
-/* 태그 칩 — 플랫폼 칩은 아이콘 배지가 앞에 붙는다(시안 v9-pages/tags-b 4절, 카드 d46).
-   고른 칩: 「전체」·아이콘 없는 태그는 차콜 면, 플랫폼 태그는 그 색 2px 테두리 + 옅은 면 + 체크 */
-.chips :global(.chip) { gap: 8px; font: inherit; }
-.chips :global(.chip)[data-icon="true"] { padding-inline: 10px 16px; }
-.chips :global(.chip)[aria-pressed="true"] { background: var(--pf, var(--ink)); box-shadow: inset 0 0 0 2px var(--pc, transparent); color: var(--pk, var(--on-brand)); }
+/* 내 카드 — 시안 .card-col: 세로 16, 버튼은 아래 끝 */
+.mine { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+.mine > h3 { margin: 0; font-size: var(--fs-card); }
+.mine > .push { margin-top: auto; }
+.mine :global(.mine-list) { width: 100%; margin-top: 0; }
+.faceSm { width: 40px; height: 40px; flex-shrink: 0; }
+.avStack { display: flex; }
+.avStack > svg { width: 40px; height: 40px; border-radius: var(--r-pill); box-shadow: 0 0 0 2px var(--white); }
+.avStack > svg + svg { margin-left: calc(var(--space-2) * -1); }
+.names { margin: 0; }
+
+/* 크리에이터 홈 내 구간 — 시안 v18-cre.css .card--soft · .big · .wait-list · a.card--link */
+.soft { display: grid; gap: var(--space-4); background: var(--gray-50); box-shadow: var(--hair); }
+.soft > h3 { margin: 0; }
+.big { margin: 0; font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1.2; font-variant-numeric: tabular-nums; }
+.big small { margin-left: var(--space-2); font-size: var(--fs-card); font-weight: var(--fw-btn); color: var(--gray-600); }
+.waitList { display: grid; gap: var(--space-2); }
+.waitList a { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair); text-decoration: none; }
+.waitList a:hover { box-shadow: inset 0 0 0 1px var(--gray-400); }
+.waitList .w { flex: 1; min-width: 0; font-weight: var(--fw-btn); }
+.cards3 { margin-top: var(--space-6); }
+.linkCard { display: block; text-decoration: none; }
+.linkCard > p { margin-top: var(--space-2); }
+
+/* 태그 칩 — 팬 홈: 흰 면 회색 경계, 고른 칩 옅은 빨강(시안 .fchip) · 크리에이터 홈: 회색 면, 고른 칩 빨강(시안 v18-cre .filters).
+   플랫폼 칩은 아이콘 배지가 앞에 붙는다(카드 d46) */
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
+.chips :global(.chip) { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--btn-h-sm); padding: 0 var(--space-4); border: 0; border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font: inherit; font-weight: var(--fw-nav); cursor: pointer; }
+.chips :global(.chip)[data-icon="true"] { padding-left: var(--space-2); }
+.chips :global(.chip):hover { background: var(--gray-50); }
+.chips :global(.chip)[aria-pressed="true"] { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--primary); color: var(--primary-700); }
+.chipsFill :global(.chip) { background: var(--gray-100); box-shadow: none; font-weight: var(--fw-btn); }
+.chipsFill :global(.chip):hover { background: var(--gray-200); }
+.chipsFill :global(.chip)[aria-pressed="true"] { background: var(--primary); box-shadow: none; color: var(--white); }
+.hint { margin: var(--space-4) 0; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+
+/* 팔로우 카드 격자 — 시안 .fgrid · .fcard (최소 폭 300, 폭에 따라 칸 수가 저절로) */
+.fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+.fcard { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 20px; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair); }
+.fcard:hover { box-shadow: inset 0 0 0 1px var(--gray-400); }
+.fcTop { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.fcWho { min-width: 0; }
+.fcName { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
+.fcName a { text-decoration: none; }
+.fcName a:hover { text-decoration: underline; }
+.fcCh { overflow: hidden; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-500); text-overflow: ellipsis; white-space: nowrap; }
+.fcPlats { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; }
+.fcIntro { margin: 0; font-size: var(--fs-navitem); line-height: 1.6; color: var(--gray-600); }
+.fcTime { display: inline-flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
+.fcTime svg { width: 14px; height: 14px; flex-shrink: 0; }
+.fcAct { display: flex; margin-top: auto; }
+.fcAct > * { flex: 1 1 0; min-width: 0; }
+
+/* 단계 카드 — 시안 .step-card */
+.steps { margin: 0; }
+.stepCard { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+.stepCard img { width: var(--art-step); height: var(--art-step); object-fit: contain; }
+.stepCard .num { margin: 0; font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: var(--lh-caption); color: var(--primary-700); }
+.stepCard h3 { margin: 0; }
+.stepCard p:last-child { margin: 0; color: var(--gray-600); }
+
+/* 공지 줄 — 시안 .nlist: 제목 왼쪽 · 날짜 오른쪽 한 줄 */
+.notices :global(.nlist) a { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.notices :global(.nlist) b { min-width: 0; font-weight: var(--fw-nav); }
+.notices :global(.nlist) :global(.t-meta) { flex-shrink: 0; }

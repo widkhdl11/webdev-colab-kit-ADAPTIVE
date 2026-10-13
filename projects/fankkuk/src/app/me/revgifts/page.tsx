@@ -9,7 +9,7 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
 
-// 받은 역조공(팬). DB 읽기 함수가 로그인한 팬이 받는 몫만 돌려준다.
+// 받은 선물(팬 — 크리에이터가 보낸 역조공). DB 읽기 함수가 로그인한 팬이 받는 몫만 돌려준다.
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "creator") redirect(CREATOR_HOME);

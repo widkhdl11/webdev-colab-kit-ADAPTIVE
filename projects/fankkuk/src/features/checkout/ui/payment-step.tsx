@@ -83,7 +83,7 @@ export function PaymentStep({ clientKey, pending, route }: { clientKey: string; 
   }
 
   return (
-    <section className={`container ${s.section}`} aria-labelledby={`pay-h-${id}`}>
+    <section className={s.section} aria-labelledby={`pay-h-${id}`}>
       <div className={s.card}>
         <h2 id={`pay-h-${id}`} className={s.title} ref={title} tabIndex={-1}>
           결제 수단을 골라 주세요

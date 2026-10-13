@@ -102,15 +102,17 @@ export function GiftStatusPage({
   const cancelable = canCancelGift(boxes, inProgress);
 
   return (
-    <main id="main">
-      <div className="container crumb">
-        <Link href="/gifts">‹ 선물 내역으로</Link>
-      </div>
-
-      <div className={`container ${s.body}`}>
+    <main id="main" className="page-centered">
+      <div className={s.col}>
+        <Link className={s.back} href="/gifts">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m15 6-6 6 6 6" />
+          </svg>
+          선물 내역으로
+        </Link>
         <div className="stack">
-          <section className={`panel ${s.gtop}`} aria-labelledby="g-title">
-            <img className={`asset ${s["g-art"]}`} src="/img/icon-truck.png" alt="" aria-hidden="true" width={88} height={88} />
+          <section className={`card ${s.gtop}`} aria-labelledby="g-title">
+            <img className={`asset ${s["g-art"]}`} src="/img/icon-truck.png" alt="" aria-hidden="true" width={56} height={56} />
             <p className="t-meta">
               주문번호 {view.orderNo} · 등록 {formatDate(view.registeredAt)}
             </p>
@@ -356,7 +358,6 @@ export function GiftStatusPage({
           ) : null}
         </div>
       </div>
-      <div className="page-end" />
     </main>
   );
 }

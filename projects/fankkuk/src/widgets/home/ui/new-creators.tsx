@@ -13,10 +13,10 @@ import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorTag, hasTagIcon, TagChipBody, tagStyle } from "@/entities/creator/ui/creator-tag";
 import s from "./home.module.css";
 
-// 메인의 「새로 들어온 크리에이터」 — 태그 칩(creator-tags INV-T4)으로 거른 뒤 앞의 MAX_CARDS 명. 시안: docs/design/mockups/site/v11/home-fan.html (.chips · .grid.cols-3 · .ccard)
+// 메인의 「새로 들어온 크리에이터」 — 태그 칩(creator-tags INV-T4)으로 거른 뒤 앞의 MAX_CARDS 명. 시안: docs/design/mockups/site/v18/home-fan.html (.fchips · .fgrid · .fcard)
 // 태그 칩·카드 태그의 아이콘·플랫폼 색은 v9-pages/tags-b.html 4절 (카드 d46).
 
-/** 카드 수. PC 3열 두 줄. 나머지는 「전체 보기」(크리에이터 찾기)에서. */
+/** 카드 수. 넓은 화면 3열 두 줄. 나머지는 「전체 보기」(크리에이터 찾기)에서. */
 const MAX_CARDS = 6;
 const ALL = "전체";
 
@@ -30,15 +30,27 @@ type Props = {
    * needs_follow 면 「팔로우하고 선물 보내기」 — 팔로우한 크리에이터에게만 보낸다(INV-L9). 메인은 로그인한 사람만 본다.
    */
   sendOf?: Readonly<Record<string, SendAvailability>>;
+  /** 태그 칩 모양 — 팬 홈은 흰 면 경계(line), 크리에이터 홈은 회색 면(fill). 시안 v18 home-fan .fchip · home-creator .filters */
+  chipLook?: "line" | "fill";
 };
 
-export function NewCreators({ creators, chips, sendOf = {} }: Props) {
+/** 평균 승인 시간 앞의 시계(lucide clock) */
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  );
+}
+
+export function NewCreators({ creators, chips, sendOf = {}, chipLook = "line" }: Props) {
   const [tag, setTag] = useState(ALL);
   const shown = creators.filter((c) => hasPickedTag(c, tag === ALL ? null : tag)).slice(0, MAX_CARDS);
 
   return (
     <>
-      <div className={`chips ${s.chips}`} role="group" aria-label="태그">
+      <div className={chipLook === "fill" ? `${s.chips} ${s.chipsFill}` : s.chips} role="group" aria-label="태그">
         {[ALL, ...chips].map((c) => (
           <button
             key={c}
@@ -53,36 +65,39 @@ export function NewCreators({ creators, chips, sendOf = {} }: Props) {
           </button>
         ))}
       </div>
-      {shown.some((c) => sendOf[c.id] === "needs_follow") ? <p className="section-hint">{FOLLOW_NICKNAME_NOTICE}</p> : null}
+      {shown.some((c) => sendOf[c.id] === "needs_follow") ? <p className={s.hint}>{FOLLOW_NICKNAME_NOTICE}</p> : null}
       {shown.length === 0 ? (
         <p className="empty">아직 소개할 크리에이터가 없어요.</p>
       ) : (
-        <ul className="grid cols-3">
+        <ul className={s.fgrid}>
           {shown.map((c) => (
-            <li key={c.id} className="card ccard">
-              <div className="ccard-top">
-                <CreatorFace tone={c.faceTone} />
-                <div>
-                  <h3>
+            <li key={c.id} className={s.fcard}>
+              <div className={s.fcTop}>
+                <CreatorFace tone={c.faceTone} className={s.faceSm} />
+                <div className={s.fcWho}>
+                  <h3 className={s.fcName}>
                     <Link href={creatorPagePath(c)}>{c.name}</Link>
                   </h3>
-                  {c.channelTitle ? <p className="t-meta">{c.channelTitle}</p> : null}
+                  {c.channelTitle ? <p className={s.fcCh}>{c.channelTitle}</p> : null}
                 </div>
               </div>
               {c.tags.length > 0 ? (
-                <p className="ctags">
+                <p className={s.fcPlats}>
                   {c.tags.map((t) => (
                     <CreatorTag key={t} name={t} />
                   ))}
                 </p>
               ) : null}
-              <p className="intro">{c.intro}</p>
-              <div className="ccard-foot">
-                <span className="t-meta">{approvalTimeText(c.approvalMinutes)}</span>
+              <p className={s.fcIntro}>{c.intro}</p>
+              <p className={s.fcTime}>
+                <ClockIcon />
+                {approvalTimeText(c.approvalMinutes)}
+              </p>
+              <div className={s.fcAct}>
                 {sendOf[c.id] === "needs_follow" ? (
                   <FollowThenSend creatorId={c.id} creatorName={c.name} signedIn className="btn btn--line btn--sm btn--block" />
                 ) : (
-                  <Link className="btn btn--line btn--sm btn--block" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
+                  <Link className="btn btn--sm btn--block" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
                     선물 보내기
                   </Link>
                 )}

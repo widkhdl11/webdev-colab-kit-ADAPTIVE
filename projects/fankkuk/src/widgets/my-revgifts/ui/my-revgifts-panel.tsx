@@ -8,7 +8,7 @@ import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { RevgiftTabs } from "./revgift-tabs";
 import s from "./my-revgifts.module.css";
 
-// 내 정보 — 받은 역조공 본문(팬). 시안: docs/design/mockups/site/v11/me-revgifts.html (같은 크기 카드 2열 격자)
+// 받은 선물 본문(팬 — 크리에이터가 보낸 역조공, 메뉴 이름은 design-rules 00절 「받은 선물」). 시안: docs/design/mockups/site/v18/me-revgifts.html (넓은 틀, 2열 카드 격자)
 // 상태는 팬 본인에게는 거절과 기한 지남을 나눠 보여 준다. 행마다 상세(받기 화면)로 간다.
 
 type Row = { item: ReceivedRevgift; copy: ReturnType<typeof receivedStageCopy>; waiting: boolean };
@@ -21,7 +21,7 @@ function RowList({ rows }: { rows: readonly Row[] }) {
       </div>
     );
   return (
-    <ul className="grid cols-2">
+    <ul className={s.cards}>
       {rows.map(({ item, copy, waiting }, i) => (
         <li key={item.orderNo} className="card gcard">
           <div className="gcard-top">
@@ -38,12 +38,12 @@ function RowList({ rows }: { rows: readonly Row[] }) {
             <p className={`t-meta ${s.note}`}>{copy.urgent ? <span className={s.urgent}>{copy.note}</span> : copy.note}</p>
           </div>
           {waiting ? (
-            <Link className="btn btn--sm btn--block" href={`/me/revgifts/${item.orderNo}`} aria-label={`${item.creatorName}님이 보낸 선물 받기`}>
+            <Link className={`btn btn--sm ${s.go}`} href={`/me/revgifts/${item.orderNo}`} aria-label={`${item.creatorName}님이 보낸 선물 받기`}>
               받기
             </Link>
           ) : (
-            <Link className="btn btn--line btn--sm btn--block" href={`/me/revgifts/${item.orderNo}`} aria-label={`${item.creatorName}님이 보낸 선물 자세히 보기`}>
-              자세히 ›
+            <Link className={`btn btn--line btn--sm ${s.go}`} href={`/me/revgifts/${item.orderNo}`} aria-label={`${item.creatorName}님이 보낸 선물 자세히 보기`}>
+              자세히 보기
             </Link>
           )}
         </li>
@@ -61,10 +61,10 @@ export function MyRevgiftsPanel({ items, nowMs }: { items: readonly ReceivedRevg
   const past = rows.filter((r) => !isOngoingStage(r.stage));
   return (
     <div>
-      <div className="sec-head">
-        <h2 className="t-title">받은 역조공</h2>
-        <p className="t-lead t-desc">내가 팔로우한 크리에이터가 나에게 보낸 선물이에요. 받을 때마다 주소를 새로 입력해요.</p>
-      </div>
+      <header className="page-head">
+        <h1 className="ph-title">받은 선물</h1>
+        <p className="ph-desc">내가 팔로우한 크리에이터가 나에게 보낸 선물이에요. 받을 때마다 주소를 새로 입력해요.</p>
+      </header>
       {rows.length === 0 ? (
         <div className="empty">
           <p>아직 받은 역조공이 없어요. 크리에이터가 선물을 보내면 여기에 나와요.</p>

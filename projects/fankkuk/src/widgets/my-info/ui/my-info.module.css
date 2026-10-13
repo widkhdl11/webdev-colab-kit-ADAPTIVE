@@ -1,15 +1,21 @@
-/* 내 정보 — 개인정보. 시안 docs/design/mockups/site/v11/me.html 의 <style>. 칸·판·간격은 전역 클래스(.part·.grid·.stack·.hint·.check)가 정한다 */
+/* 계정 설정 — 시안 docs/design/mockups/site/v18/me.html (v18-fan.css 「입력 · 폼」). 칸·판은 전역 클래스(.part·.stack·.hint·.check) */
+/* 읽는 기둥 880 — 넓은 틀 안 가운데 */
+.col { max-width: 880px; margin-inline: auto; }
+.sub { margin-bottom: var(--space-4); font-size: var(--fs-card); line-height: 1.4; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--space-4); }
+.col :global(.part) { padding: var(--space-6); }
+.col :global(.field[readonly]) { background: var(--gray-50); color: var(--gray-600); }
 .with-btn { display: flex; gap: 12px; }
 .with-btn :global(.field) { flex: 1; min-width: 0; }
 .with-btn :global(.btn) { flex-shrink: 0; }
 /* 판 제목(.t-card) 아래 버튼 줄·확인칸 묶음 — 시안 margin-top:12px */
 .open { margin-top: 12px; }
 .must { margin-top: 16px; }
-.must-t { color: var(--ink); }
+.must-t { color: var(--gray-900); }
 /* 저장 결과 줄 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다(빈 칸은 공통 .err:empty·.okmsg:empty) */
 .msg { margin-top: 24px; }
-.save-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; }
-.leave { display: inline-flex; align-items: center; min-height: 44px; color: var(--sub); }
+.save-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--gray-200); }
+.leave { display: inline-flex; align-items: center; min-height: 44px; color: var(--gray-600); font-size: var(--fs-navitem); }
 @media (max-width: 767px) {
   .with-btn { flex-direction: column; }
   .save-bar :global(.btnrow) { width: 100%; }

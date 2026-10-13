@@ -1,31 +1,57 @@
-/* 선물 하나 상세 — 시안 docs/design/mockups/site/v11/gift.html 화면 전용 <style>. 판·카드·단계·금액 줄은 base.css 공통 부품 */
-.body { margin-top: 8px; }
+/* 선물 하나 상세 — 시안 docs/design/mockups/site/v18/gift.html (v18-fan.css 「선물 상세」). 판·카드·금액 줄·태그는 base.css 공통 부품 */
 
-/* 첫 판 — 옅은 코랄 판 하나에 그림·머리·지금 상황·진행 단계·승인 한 줄 */
-.gtop { padding: clamp(28px, 5vw, 64px); }
-.g-art { width: 88px; height: 88px; margin-bottom: 16px; }
-.g-title { overflow-wrap: anywhere; }
-.g-lead { margin-top: 8px; }
-.gnow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 24px; }
+/* 읽는 기둥 880 — 가운데 틀(.page-centered) 안 가운데 (시안 .col) */
+.col { max-width: 880px; margin-inline: auto; }
+.col :global(.stack) { gap: var(--space-6); }
+/* 판 머리 — 소제목 20, 설명은 본문 크기 (시안 .part h2) */
+.col :global(.part) { padding: var(--space-6); }
+.col :global(.part) > h2, .col :global(.card) > h2 { font-size: var(--fs-card); line-height: 1.4; }
+.col :global(.part) > h2 + :global(.t-desc) { margin-top: var(--space-2); }
+.col :global(.part--soft) { background: var(--gray-50); box-shadow: var(--hair); }
+.col :global(.card--soft) { background: var(--gray-50); box-shadow: var(--hair); }
+
+/* 돌아가기 — 시안 .back: 회색 14 + 왼쪽 꺾쇠 */
+.back { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--touch); margin-bottom: var(--space-2); color: var(--gray-600); font-size: var(--fs-navitem); font-weight: var(--fw-nav); text-decoration: none; }
+.back:hover { color: var(--gray-900); }
+.back svg { width: var(--icon-xs); height: var(--icon-xs); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 첫 판 — 흰 카드 하나에 그림·머리·지금 상황·진행 단계(세로)·승인 한 줄 (시안 .gtop) */
+.gtop.gtop { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); padding: var(--space-6); }
+.g-art { width: var(--art-step); height: var(--art-step); margin-bottom: var(--space-2); object-fit: contain; }
+.g-title.g-title { font-size: var(--fs-page); line-height: 1.3; overflow-wrap: anywhere; }
+.g-lead { margin: 0; }
+.gnow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin: var(--space-2) 0; }
+.gnow :global(.t-card) { font-size: var(--fs-body); font-weight: var(--fw-btn); }
 .gnow :global(.tag), .appr :global(.tag) { gap: 6px; white-space: nowrap; }
-.flow { margin-top: 40px; }
+
+/* 진행 단계 — 넓은 화면도 세로 목록: 번호 원 28 + 이름·시각, 사이 세로선 (시안 .tl) */
+.flow.flow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; width: 100%; margin-top: var(--space-2); }
+.flow.flow > li { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: var(--space-4); padding-bottom: var(--space-4); text-align: left; }
+.flow.flow > li:last-child { padding-bottom: 0; }
+.flow.flow > li > :global(.n) { grid-row: 1 / span 3; width: 28px; height: 28px; margin: 0; font-size: var(--fs-caption); }
+.flow.flow > li > :global(.n) svg { width: 14px; height: 14px; }
+.flow.flow > li > p { grid-column: 2; }
+.flow.flow > li > :global(.t-strong) { line-height: 28px; }
+.flow.flow > li:not(:last-child)::after { left: 13px; top: 28px; bottom: 0; width: 1px; height: auto; }
 .flow > li > :global(.t-meta) { overflow-wrap: anywhere; }
-/* 멈춘 단계(돌려보냄) — 지금 단계처럼 눈에 띄게, 코랄 대신 본문색 */
-.flow > li.stopped > :global(.n) { background: var(--ink); color: var(--on-brand); box-shadow: none; }
-.appr { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 32px; }
+/* 멈춘 단계(돌려보냄) — 지금 단계처럼 눈에 띄게, 빨강 대신 본문색 */
+.flow > li.stopped > :global(.n) { background: var(--gray-900); color: var(--white); box-shadow: none; }
+.appr { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
 
 /* 도착 예정일 — 시안에 없는 칸(코드에만 있다) */
 .eta { display: flex; align-items: center; gap: 16px; }
 .eta img { width: 44px; height: 44px; }
 
-/* 판 안 내용 묶음 — 설명 아래 24 */
-.inner { margin-top: 24px; }
+/* 판 안 내용 묶음 — 설명 아래 16 */
+.inner { margin-top: var(--space-4); }
 .more { margin-top: 8px; }
 .more4 { margin-top: 4px; }
 
-/* 상자별 상태 — 상자마다 카드 한 장 */
+/* 상자별 상태 — 상자마다 카드 한 장 (시안 .box) */
+.box.box { padding: 20px; box-shadow: var(--hair); }
 .box + .box { margin-top: 16px; }
-.box-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.box-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.box-head h3 { font-size: var(--fs-lead); }
 .box-head :global(.tag) { gap: 6px; white-space: nowrap; }
 .inv-fixed { margin-top: 12px; }
 .no { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
@@ -36,5 +62,5 @@
 .kv, .lines { margin-top: 8px; }
 .tag-line { margin-top: 12px; }
 .tag-line :global(.tag) { gap: 6px; }
-.pay-extra { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--border); }
+.pay-extra { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--gray-200); }
 .cancel { margin-top: 24px; }

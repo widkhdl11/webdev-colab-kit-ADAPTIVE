@@ -1,15 +1,19 @@
-/* 선물 내역 — 시안 docs/design/mockups/site/v11/gifts.html 화면 전용 <style>. 카드 격자·탭·진행 막대는 base.css 공통 부품. 내 팬꾹 틀(제목·메뉴)은 라우트가 붙인다 */
+/* 보낸 선물 — 시안 docs/design/mockups/site/v18/my-gifts.html (v18-app.css .tg · .dots · .gcard-top). 탭·진행 막대·태그는 base.css 공통 부품. 본문 틀은 라우트가 붙인다 */
 
-/* 크리에이터별로 보기 — 「함께한 시간」으로 가는 3열 카드(휴대폰 1열) */
-.by { margin-bottom: 48px; }
-.tg { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; height: 100%; padding: 20px; text-decoration: none; }
-.tg:hover { background: var(--surface); }
-.tg-text { display: grid; min-width: 0; }
-.tg-text strong { overflow-wrap: anywhere; }
+/* 2열 카드 격자, 휴대폰 1열 — 마지막 카드도 왼쪽부터(가운데로 몰지 않는다) */
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+@media (max-width: 767px) { .cards { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); } }
 
-/* 받지 않은 선물 탭 위 안내 한 줄 → 카드 48(휴대폰 32, design-rules 0절 간격 표) */
-.note-line { margin-bottom: 48px; }
-@media (max-width: 767px) { .note-line { margin-bottom: 32px; } }
+/* 크리에이터별로 보기 — 소제목 20 + 「함께한 시간」으로 가는 카드 */
+.by { margin-bottom: var(--space-12); }
+.h.h { margin-bottom: var(--space-4); font-size: var(--fs-card); line-height: 1.4; }
+.tg { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-4); height: 100%; padding: var(--space-6); text-decoration: none; }
+.tg-text { display: grid; gap: 2px; min-width: 0; }
+.tg-text strong { overflow-wrap: anywhere; font-weight: var(--fw-btn); }
+.chev { width: var(--icon-xs); height: var(--icon-xs); fill: none; stroke: var(--gray-600); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-.meter { margin-top: 6px; }
+/* 받지 않은 선물 탭 위 안내 한 줄 */
+.note-line { margin-bottom: var(--space-6); color: var(--gray-600); }
+
+.meter { margin-top: var(--space-2); }
 .go { margin-top: auto; }

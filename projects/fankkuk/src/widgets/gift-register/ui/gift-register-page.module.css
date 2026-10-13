@@ -1,8 +1,11 @@
-/* 선물 보내기 바깥 틀 — 시안 docs/design/mockups/site/v11/send.html. 본문 폼은 features/gift-register/ui/register-form */
-/* 가운데 한 기둥 — 시안 .page-send main > .container */
-.col { max-width: calc(720px + 2 * var(--gutter)); }
-.top-meta { margin-top: 8px; }
+/* 선물 보내기 바깥 틀 — 시안 docs/design/mockups/site/v18/send.html. 본문 폼은 features/gift-register/ui/register-form */
+/* 입력 기둥 720 — 가운데 틀(.page-centered) 안 가운데 (시안 .col--form) */
+.col { max-width: 720px; margin-inline: auto; }
+.top-meta.top-meta { margin-top: var(--space-2); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+/* 빈 상태 — 시안 send-loggedout .empty: 그림 80 · 설명은 회색 본문 크기 */
+.col :global(.empty) :global(.asset) { width: 80px; height: 80px; object-fit: contain; }
+.col :global(.empty) :global(.t-meta) { font-size: var(--fs-body); line-height: 1.6; }
 /* 미리 고르고 왔는데 아직 팔로우하지 않은 크리에이터 — 안내라서 옅은 코랄 판 */
-.follow-first { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; padding: 24px; }
+.follow-first { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; padding: 24px; background: var(--gray-50); box-shadow: var(--hair); }
 /* 선물 사진을 올리지 못했을 때 결제창 위 한 줄 — 결제는 그대로 진행한다 */
 .photo-note { margin-bottom: 16px; font-weight: var(--fw-bold); }
