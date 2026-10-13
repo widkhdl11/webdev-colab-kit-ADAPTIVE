@@ -112,12 +112,12 @@ html[data-collapsed="1"] .sb-nav a:hover::after, html[data-collapsed="1"] .sb-na
 .ph-count { margin-left: var(--sp-8); font-size: var(--fs-count); font-weight: var(--fw-body); color: var(--gray-500); }
 .ph-desc { margin-top: var(--sp-8); color: var(--gray-600); }
 .btn--sm { height: var(--btn-h-sm); padding: 0 var(--sp-16); font-size: var(--fs-btn-sm); }
-.app .grid.cols-4 { grid-template-columns: repeat(var(--app-cols-4), minmax(0, 1fr)); }
-.app .grid.cols-3 { grid-template-columns: repeat(var(--app-cols-3), minmax(0, 1fr)); }
-.app .grid.cols-2 { grid-template-columns: repeat(var(--app-cols-2), minmax(0, 1fr)); }
-.app .hero { padding-top: var(--sp-32); }
-.app .promise { border-radius: var(--r-card); padding: var(--sp-64) var(--sp-32); }
-.app .site-footer { margin-top: 0; }
+.app .grid.cols-4, .lp .grid.cols-4 { grid-template-columns: repeat(var(--app-cols-4), minmax(0, 1fr)); }
+.app .grid.cols-3, .lp .grid.cols-3 { grid-template-columns: repeat(var(--app-cols-3), minmax(0, 1fr)); }
+.app .grid.cols-2, .lp .grid.cols-2 { grid-template-columns: repeat(var(--app-cols-2), minmax(0, 1fr)); }
+.app .hero, .lp .hero { padding-top: var(--sp-32); }
+.app .promise, .lp .promise { border-radius: var(--r-card); padding: var(--sp-64) var(--sp-32); }
+.app .site-footer, .lp .site-footer { margin-top: 0; }
 
 /* 팔로우 카드 */
 .fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: var(--sp-16); }

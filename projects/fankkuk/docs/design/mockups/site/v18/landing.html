@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="v18.css">
+<link rel="stylesheet" href="v18-app.css">
 <script src="font-switch.js" defer></script>
 </head>
 <body>
@@ -57,7 +58,9 @@
   </header>
   <!--/HEADER-->
 
-  <main id="main">
+  <!-- 2026-10-13 사용자 「사이드바랑 상단바를 빼도 생긴게 다르잖아」: 본문 틀을 landing-loggedin 과 같게(page-centered + sb-stack, 아래 정보도 본문 안) -->
+  <main id="main" class="sb-main page-centered lp">
+    <div class="sb-stack">
     <section class="hero" aria-labelledby="hero-title">
       <div class="container hero-deco-wrap">
         <!-- v18: 히어로 좌우 장식 2개(v16 .back 자리). 장식이라 alt="" · aria-hidden, 휴대폰(767 이하)에선 숨김 -->
@@ -175,8 +178,7 @@
         </ul>
       </div>
     </section>
-  </main>
-
+    </div>
   <footer class="site-footer">
     <div class="container">
       <div class="footer-grid">
@@ -196,5 +198,6 @@
       <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
     </div>
   </footer>
+  </main>
 </body>
 </html>
