@@ -553,3 +553,18 @@ a.card:hover,.ccard:focus-within{box-shadow:inset 0 0 0 2px var(--field-line)}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none!important;animation:none!important}
 }
+
+/* ---------- 12. 세부 정렬 보정 (2차) ----------
+   카드·판 안: 제목 아래 본문 8px, 표 바깥 설명은 표 칸 글 시작선(24px)에 맞춘다. */
+:is(.card,.part,.gcard,.ccard,.info,.flow li,.step-col) :is(h3,.t-card) + :is(p,.t-meta,.t-desc){margin-top:8px}
+.card > .tag + :is(h3,.t-card){margin-top:12px}
+.table-wrap + :is(p,.t-meta){margin-top:12px;padding-inline:24px}
+@media(max-width:767px){.table-wrap + :is(p,.t-meta){padding-inline:12px}}
+.card--soft.center{text-align:center}
+.page-send .stack > .part > :is(h2,.t-lead){text-align:center}
+.page-send .stack > .part > .t-lead{max-width:560px;margin-inline:auto}
+fieldset.part{border:0;min-width:0}
+fieldset.part > legend{float:left;width:100%;margin:0 0 12px;padding:0}
+fieldset.part > legend + *{clear:both}
+.page-support .acc{max-width:720px}
+@media(max-width:767px){.table td:last-child{white-space:normal}}
