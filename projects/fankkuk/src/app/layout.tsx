@@ -8,16 +8,14 @@ export const metadata: Metadata = {
   description: `${PROMISE.approval} ${PROMISE.inspection} ${PROMISE.address}`,
 };
 
-// 로그인 후 사이드바 접힘 상태를 첫 그림 전에 단다 — 안 그러면 펼친 240 으로 그렸다가 64 로 줄어드는 게 보인다.
-// 저장값이 없으면 1024 이하에서 접힘(design-rules 00절). 값을 쓰는 쪽은 widgets/site-header/ui/app-sidebar.tsx
-const SIDEBAR_BOOT = `try{var s=localStorage.getItem("sidebar-collapsed");if(s==="1"||(s!=="0"&&matchMedia("(max-width: 1024px)").matches))document.documentElement.setAttribute("data-collapsed","1")}catch(e){}`;
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // suppressHydrationWarning: 위 스크립트가 <html> 에 다는 data-collapsed 는 서버 HTML 에 없다
+    // suppressHydrationWarning: <head> 의 sidebar-boot.js 가 <html> 에 다는 data-collapsed 는 서버 HTML 에 없다
     <html lang="ko" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: SIDEBAR_BOOT }} />
+        {/* 사이드바 접힘 상태를 첫 그림 전에 단다(public/sidebar-boot.js). 비동기로 받으면 그린 뒤에 줄어드는 게 보여 일부러 동기로 부른다 */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/sidebar-boot.js" />
         {/* 제목 글꼴 티머니 둥근바람(v18) — @font-face 는 shared/ui/base.css. 첫 화면에서 글꼴이 늦게 바뀌지 않게 미리 받는다 */}
         <link rel="preload" href="/fonts/TmoneyRoundWindRegular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/TmoneyRoundWindExtraBold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />

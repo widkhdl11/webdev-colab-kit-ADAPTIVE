@@ -757,6 +757,3 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
   .hero-actions:where(:not(.admin-area *)) { flex-direction: column; align-items: stretch; }
   .tabs:where(:not(.admin-area *)) { flex-wrap: nowrap; overflow-x: auto; }
 }
-/* 본문의 로그인·가입 기둥(.auth)이 상단 바 로그인 링크 묶음(site-header.css 의 맨 이름 .auth — 가로 정렬·줄바꿈 없음·15px)과 이름이 겹친다.
-   본문 안에서는 상단 바 규칙을 되돌린다(가입 화면 390 폭에서 가로 넘침 1740px 이 났다) */
-main .auth { display: block; white-space: normal; font-size: var(--fs-body); font-weight: 400; line-height: 1.6; }

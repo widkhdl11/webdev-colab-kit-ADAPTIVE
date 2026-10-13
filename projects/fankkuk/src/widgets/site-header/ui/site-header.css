@@ -19,10 +19,10 @@
 .nav a:hover { color: var(--gray-900); }
 .nav a[aria-current="page"] { color: var(--gray-900); border-bottom-color: var(--primary); }
 .header-actions { display: flex; align-items: center; gap: 8px; }
-.auth { display: flex; align-items: center; gap: 16px; font-size: var(--fs-nav); font-weight: var(--fw-nav); line-height: 1; white-space: nowrap; }
-.auth a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gray-600); text-decoration: none; }
-.auth a:hover, .auth a.strong { color: var(--gray-900); }
-.auth .sep { width: 1px; height: 16px; background: var(--gray-200); }
+.site-header .auth { display: flex; align-items: center; gap: 16px; font-size: var(--fs-nav); font-weight: var(--fw-nav); line-height: 1; white-space: nowrap; }
+.site-header .auth a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gray-600); text-decoration: none; }
+.site-header .auth a:hover, .site-header .auth a.strong { color: var(--gray-900); }
+.site-header .auth .sep { width: 1px; height: 16px; background: var(--gray-200); }
 .menu-toggle, .icon-btn { display: grid; place-items: center; width: 48px; height: 48px; padding: 12px; border: 0; border-radius: var(--r-btn); background: none; color: var(--gray-900); cursor: pointer; }
 .menu-toggle:hover, .icon-btn:hover { background: var(--gray-50); }
 .menu-toggle { display: none; }
