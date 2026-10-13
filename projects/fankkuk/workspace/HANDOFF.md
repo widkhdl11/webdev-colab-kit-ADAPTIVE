@@ -19,7 +19,7 @@
   },
   "design/page-designer": {
     "status": "clean",
-    "hash": "fa0072fe190e"
+    "hash": "5b40a0fc1c10"
   },
   "design/schema-designer": {
     "status": "clean",
