@@ -18,11 +18,24 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link rel="stylesheet" href="a.css">
 <link rel="stylesheet" href="a-fan.css">
+<link rel="stylesheet" href="a-v13.css">
 </head>
 <body class="page-landing">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
     <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
     <symbol id="check" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="currentColor"/><path d="m5 10 3 3 7-7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-album" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M12 12h.01"/></symbol>
+    <symbol id="i-photo" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><circle cx="12" cy="10" r="2.5"/><path d="M10 16h4"/></symbol>
+    <symbol id="i-plush" viewBox="0 0 24 24"><circle cx="12" cy="10" r="5"/><circle cx="7.5" cy="5.5" r="2"/><circle cx="16.5" cy="5.5" r="2"/><path d="M10 10h.01M14 10h.01M7 21c0-3.5 2-5.5 5-5.5s5 2 5 5.5"/></symbol>
+    <symbol id="i-cup" viewBox="0 0 24 24"><path d="M7 3h10l-1.5 17a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1z"/><path d="M7 8h10"/></symbol>
+    <symbol id="i-blanket" viewBox="0 0 24 24"><path d="M3 7h18v11H3zM3 12h18M16 7v11"/></symbol>
+    <symbol id="i-pkg" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4v9l-9 4-9-4z" fill="#fff5f1" vector-effect="non-scaling-stroke"/><path d="M3 8l9 4 9-4M12 12v9" vector-effect="non-scaling-stroke"/></symbol>
   </defs></svg>
   <a class="skip-link" href="#main">본문 바로가기</a>
 
@@ -137,11 +150,21 @@
             <h2 id="promise-title">이제 확인하고 <span class="accent">선물을 받으세요</span></h2>
             <p class="t-lead t-desc">승인 전까지 주소는 노출되지 않습니다.</p>
           </div>
+          <figure class="mock mock--log" aria-label="예시 화면: 주소 열람 기록. 언제 어느 주문에서 주소가 열렸는지 한 줄씩 남습니다.">
+            <div aria-hidden="true">
+              <div class="mock-bar"><span>주소 열람 기록</span><span class="mock-tag">예시</span></div>
+              <div class="m-card"><div class="m-rows">
+                <div class="m-row"><svg class="ic" aria-hidden="true"><use href="#i-unlock"/></svg><b>10월 14일 14:02</b><span>주문 FK-2410</span><span class="m-why">송장 출력으로 열림</span></div>
+                <div class="m-row"><svg class="ic" aria-hidden="true"><use href="#i-unlock"/></svg><b>10월 12일 09:41</b><span>주문 FK-2398</span><span class="m-why">송장 출력으로 열림</span></div>
+                <div class="m-row"><svg class="ic" aria-hidden="true"><use href="#i-unlock"/></svg><b>10월 9일 18:20</b><span>주문 FK-2377</span><span class="m-why">송장 출력으로 열림</span></div>
+              </div></div>
+            </div>
+          </figure>
           <div class="grid cols-2">
-            <div class="card"><h3>주소는 잠긴 채 보관합니다</h3><p>승인된 선물의 송장을 출력할 때만 열려요.</p></div>
-            <div class="card"><h3>주소가 열린 기록은 모두 공개합니다</h3><p>언제, 어느 주문에서 열렸는지 크리에이터가 직접 볼 수 있어요.</p></div>
-            <div class="card"><h3>모든 선물을 검수합니다</h3><p>탐지기 반응이 있으면 개봉 검수합니다.</p></div>
-            <div class="card"><h3>승인은 한 건씩, 카카오톡으로</h3><p>한꺼번에 승인하는 버튼은 없어요. 받지 않은 이유는 팬에게 알리지 않아요.</p></div>
+            <div class="card"><svg class="ic card-ic" aria-hidden="true"><use href="#i-lock"/></svg><h3>주소는 잠긴 채 보관합니다</h3><p>승인된 선물의 송장을 출력할 때만 열려요.</p></div>
+            <div class="card"><svg class="ic card-ic" aria-hidden="true"><use href="#i-list"/></svg><h3>주소가 열린 기록은 모두 공개합니다</h3><p>언제, 어느 주문에서 열렸는지 크리에이터가 직접 볼 수 있어요.</p></div>
+            <div class="card"><svg class="ic card-ic" aria-hidden="true"><use href="#i-search"/></svg><h3>모든 선물을 검수합니다</h3><p>탐지기 반응이 있으면 개봉 검수합니다.</p></div>
+            <div class="card"><svg class="ic card-ic" aria-hidden="true"><use href="#i-chat"/></svg><h3>승인은 한 건씩, 카카오톡으로</h3><p>한꺼번에 승인하는 버튼은 없어요. 받지 않은 이유는 팬에게 알리지 않아요.</p></div>
           </div>
           <div class="sec-foot"><a class="btn" href="#">크리에이터로 가입하기</a></div>
         </div>
@@ -156,9 +179,9 @@
           <p class="t-lead t-desc">배송비를 포함한 금액이에요. 크기와 무게 중 큰 쪽으로 정해져요.</p>
         </div>
         <div class="grid cols-3 keep">
-          <article class="card price"><span class="tag">소형</span><p class="price-amount">6,900<span>원</span></p><p class="inc"><svg width="20" height="20" aria-hidden="true"><use href="#check"/></svg>검수 포함</p><p class="spec">세 변 합 100cm·5kg 이하</p></article>
-          <article class="card price"><span class="tag">중형</span><p class="price-amount">8,900<span>원</span></p><p class="inc"><svg width="20" height="20" aria-hidden="true"><use href="#check"/></svg>검수 포함</p><p class="spec">세 변 합 100cm·10kg 이하</p></article>
-          <article class="card price"><span class="tag">대형</span><p class="price-amount">10,900<span>원</span></p><p class="inc"><svg width="20" height="20" aria-hidden="true"><use href="#check"/></svg>검수 포함</p><p class="spec">세 변 합 160cm·20kg 이하</p></article>
+          <article class="card price"><div class="box-fig" aria-hidden="true"><svg style="--bw:56px"><use href="#i-pkg"/></svg></div><span class="tag">소형</span><p class="price-amount">6,900<span>원</span></p><p class="inc"><svg width="20" height="20" aria-hidden="true"><use href="#check"/></svg>검수 포함</p><p class="spec">세 변 합 100cm·5kg 이하</p><p class="items" aria-hidden="false"><svg class="ic" aria-hidden="true"><use href="#i-album"/></svg><svg class="ic" aria-hidden="true"><use href="#i-photo"/></svg><span>앨범, 포토카드</span></p></article>
+          <article class="card price"><div class="box-fig" aria-hidden="true"><svg style="--bw:84px"><use href="#i-pkg"/></svg></div><span class="tag">중형</span><p class="price-amount">8,900<span>원</span></p><p class="inc"><svg width="20" height="20" aria-hidden="true"><use href="#check"/></svg>검수 포함</p><p class="spec">세 변 합 100cm·10kg 이하</p><p class="items" aria-hidden="false"><svg class="ic" aria-hidden="true"><use href="#i-plush"/></svg><svg class="ic" aria-hidden="true"><use href="#i-cup"/></svg><span>인형, 텀블러</span></p></article>
+          <article class="card price"><div class="box-fig" aria-hidden="true"><svg style="--bw:120px"><use href="#i-pkg"/></svg></div><span class="tag">대형</span><p class="price-amount">10,900<span>원</span></p><p class="inc"><svg width="20" height="20" aria-hidden="true"><use href="#check"/></svg>검수 포함</p><p class="spec">세 변 합 160cm·20kg 이하</p><p class="items" aria-hidden="false"><svg class="ic" aria-hidden="true"><use href="#i-plush"/></svg><svg class="ic" aria-hidden="true"><use href="#i-blanket"/></svg><span>큰 인형, 담요</span></p></article>
         </div>
         <ul class="notes">
           <li>세 변 합 160cm나 20kg를 넘는 상자는 받지 않아요.</li>

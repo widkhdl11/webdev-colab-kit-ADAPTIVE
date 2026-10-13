@@ -1,0 +1,101 @@
+<!doctype html>
+<!--
+  3단계 v13 합치기 (2026-10-13 카드 d73 「합쳐서 보여줘」): v13 그림 요소를 v12 A 화면으로 옮김. 카드 테두리 선은 그림자로 교체.
+  팬꾹 시안 v12-A 선물 보내기 — 로그인 전 빈 화면 (새 파일). 머리 띠·바탕·그림자는 v12 A, 안은 v13 B(흐린 카드 + 「예시」 + 마스코트).
+  문구는 지금 사이트 /gifts/new 로그인 전 그대로(「예시 · 로그인하면 이렇게 나와요」 만 새 문구). 흐린 카드는 aria-hidden, 안내 글자는 흰 판 위.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v12-A 선물 보내기(로그인 전)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="a.css">
+<style>
+.about-hero .t-lead{max-width:640px;margin:24px auto 0}
+.story p{color:var(--ink)}
+</style>
+<link rel="stylesheet" href="a-fan.css">
+<link rel="stylesheet" href="a-v13.css">
+</head>
+<body class="page-send fan">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+    <symbol id="ic-lock" viewBox="0 0 48 48"><path d="M15 22v-5a9 9 0 0 1 18 0v5h-5v-5a4 4 0 0 0-8 0v5z" fill="#343039"/><rect x="10" y="21" width="28" height="20" rx="5" fill="#F58278"/><circle cx="24" cy="29" r="3" fill="#FFF8F0"/><rect x="22.5" y="30" width="3" height="6" rx="1.5" fill="#FFF8F0"/></symbol>
+    <symbol id="ic-lock-open" viewBox="0 0 48 48"><path d="M15 22v-6a9 9 0 0 1 18 0v1h-5v-1a4 4 0 0 0-8 0v6z" fill="#343039"/><rect x="10" y="22" width="28" height="19" rx="5" fill="#BE514A"/><circle cx="24" cy="30" r="3" fill="#FFF8F0"/><rect x="22.5" y="31" width="3" height="5" rx="1.5" fill="#FFF8F0"/></symbol>
+    <symbol id="ic-box" viewBox="0 0 48 48"><rect x="5" y="12" width="38" height="9" rx="3" fill="#BE514A"/><path d="M8 24h32v14a5 5 0 0 1-5 5H13a5 5 0 0 1-5-5z" fill="#F58278"/><rect x="21" y="12" width="6" height="31" rx="1" fill="#FFF8F0"/><rect x="17" y="27" width="14" height="12" rx="4" fill="#343039"/><circle cx="24" cy="33" r="2" fill="#FFF8F0"/></symbol>
+    <symbol id="ic-chat" viewBox="0 0 48 48"><path d="M13 7h22a8 8 0 0 1 8 8v12a8 8 0 0 1-8 8H26l-9 8v-8h-4a8 8 0 0 1-8-8V15a8 8 0 0 1 8-8z" fill="#FEE500"/><path d="M16 22l6 6 11-12" fill="none" stroke="#343039" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="ic-print" viewBox="0 0 48 48"><rect x="14" y="5" width="20" height="14" rx="3" fill="#F58278"/><rect x="5" y="17" width="38" height="17" rx="6" fill="#343039"/><circle cx="37" cy="24" r="2" fill="#FFF8F0"/><rect x="12" y="28" width="24" height="15" rx="3" fill="#FFF8F0"/><rect x="16" y="33" width="16" height="3" rx="1.5" fill="#BE514A"/><rect x="16" y="38" width="10" height="2.5" rx="1.25" fill="#F58278"/></symbol>
+    <symbol id="ic-truck" viewBox="0 0 48 48"><rect x="3" y="11" width="25" height="23" rx="4" fill="#F58278"/><rect x="8" y="17" width="12" height="8" rx="2" fill="#FFF8F0"/><path d="M30 18h8a3 3 0 0 1 2.4 1.2L45 25v9H30z" fill="#343039"/><circle cx="13" cy="36" r="5.5" fill="#343039"/><circle cx="13" cy="36" r="2" fill="#FFF8F0"/><circle cx="36" cy="36" r="5.5" fill="#343039"/><circle cx="36" cy="36" r="2" fill="#FFF8F0"/></symbol>
+    <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#F58278"/><path d="M12 6v6.5l4 2.5" fill="none" stroke="#FFF8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="ic-arrow" viewBox="0 0 40 40"><path d="M6 15h14V8l14 12-14 12v-7H6z" fill="#F58278"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+        <li><a href="#">크리에이터 찾기</a></li><li><a href="#" aria-current="page">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li>
+      </ul></nav>
+      <div class="header-actions">
+        <a class="hd-link hd-link--sub hide-sm" href="#">로그인</a><span class="hd-sep hide-sm" aria-hidden="true"></span><a class="hd-link hd-link--strong hide-sm" href="#">회원가입</a>
+        <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+          <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#" aria-current="page">선물 보내기</a><a href="#">공지사항</a><a href="#" aria-current="page">팬꾹 소개</a><a href="#">고객센터</a>
+            <div class="btn-row"><a class="btn btn--line" href="#">로그인</a><a class="btn" href="#">회원가입</a></div></div>
+        </details>
+      </div>
+    </div>
+  </header>
+
+    <main id="main">
+    <div class="container page-top"><div class="page-band">
+      <h1 class="t-hero">선물 보내기</h1>
+      <p class="t-lead t-desc">누구에게, 무엇을, 몇 상자 보낼지 알려 주세요.</p>
+      <p class="t-meta" style="margin-top:8px">팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p>
+    </div></div>
+    <div class="container">
+      <div class="gate">
+        <div class="mock" aria-hidden="true">
+          <p class="mock-bar gate-cap"><span class="mock-tag">예시 · 로그인하면 이렇게 나와요</span></p>
+          <ul class="ghost">
+          <li class="g-card"><span class="g-face"></span><span class="g-lines"><i></i><i></i><span class="g-tags"><i></i><i></i></span></span></li>
+          <li class="g-card"><span class="g-face"></span><span class="g-lines"><i></i><i></i><span class="g-tags"><i></i><i></i></span></span></li>
+          <li class="g-card"><span class="g-face"></span><span class="g-lines"><i></i><i></i><span class="g-tags"><i></i><i></i></span></span></li>
+          <li class="g-card"><span class="g-face"></span><span class="g-lines"><i></i><i></i><span class="g-tags"><i></i><i></i></span></span></li>
+          <li class="g-card"><span class="g-face"></span><span class="g-lines"><i></i><i></i><span class="g-tags"><i></i><i></i></span></span></li>
+          <li class="g-card"><span class="g-face"></span><span class="g-lines"><i></i><i></i><span class="g-tags"><i></i><i></i></span></span></li>
+          </ul>
+        </div>
+        <div class="gate-note">
+          <svg width="88" height="88" aria-hidden="true"><use href="#logo"/></svg>
+          <h2 class="t-title">로그인하고 선물을 보내 주세요</h2>
+          <p class="t-desc">선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 로그인하면 팔로우한 크리에이터가 여기에 나와요.</p>
+          <a class="btn" href="#">로그인</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
