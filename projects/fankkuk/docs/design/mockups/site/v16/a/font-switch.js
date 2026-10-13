@@ -1,6 +1,6 @@
 /* 비교 스위치 — 주소에 붙이면 그 탭 안에서 다른 화면으로 넘어가도 유지된다. ?<이름>=default 로 되돌린다.
    ?font=pretendard   글꼴을 Pretendard 로
-   ?type=large        글자 크기를 v14 값(48·32·20·18·16, 휴대폰 34·26·20·18·16)으로
+   ?type=…            글자 크기. 기본은 large(48·32·20·18·16, 휴대폰 34·26·20·18·16), ?type=default 는 예전 40·28
    ?badge=…           플랫폼 뱃지 비교안. 기본은 e3(사용자 선택), ?badge=default 는 예전 흰 알약 */
 (function () {
   var q = location.search, root = document.documentElement;
@@ -12,7 +12,8 @@
     if (v && allowed.indexOf(v) >= 0) root.setAttribute("data-" + key, v);
   }
   pick("font", ["pretendard"]);
-  pick("type", ["large"]);
+  pick("type", ["default", "large"]);
+  if (!root.getAttribute("data-type")) root.setAttribute("data-type", "large"); // 2026-10-13 사용자 「추천대로」 — 큰 제목을 기본값으로
   pick("badge", ["default", "a", "b", "c", "d", "e", "e1", "e2", "e3"]);
   if (!root.getAttribute("data-badge")) root.setAttribute("data-badge", "e3"); // 2026-10-13 사용자 「e3으로 하자」 — 기본값
   if (/^e/.test(root.getAttribute("data-badge") || "")) { var l = document.createElement("link"); l.rel = "stylesheet"; l.href = "https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css"; document.head.appendChild(l); }

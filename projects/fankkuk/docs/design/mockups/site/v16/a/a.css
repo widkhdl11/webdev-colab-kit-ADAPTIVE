@@ -130,3 +130,24 @@ a.card:hover,.ccard:focus-within{box-shadow:var(--sh-2);transform:translateY(-3p
 .tile{justify-content:center;gap:12px;min-height:136px}
 .tile .ico-circle{background:#fff}
 @media(max-width:767px){.hero-card .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tile{min-height:116px}.ad-img.ico-circle{width:56px;height:56px}.ad-img.ico-circle svg{width:36px;height:36px}}
+
+/* ---------- 10. v16 장식 그림 되살림 (v12 그대로: 구간 가장자리, 기울이고 흐리게) ---------- */
+.back{position:absolute;z-index:-1;pointer-events:none;object-fit:contain;opacity:.55;filter:blur(.3px)}
+.hero-stage .b1{width:clamp(140px,17vw,240px);left:5%;top:14%;transform:rotate(-14deg)}
+.hero-stage .b2{width:clamp(130px,15vw,210px);right:6%;top:9%;transform:rotate(12deg)}
+.hero-stage .b3{width:clamp(110px,12vw,170px);right:17%;bottom:30%;transform:rotate(-6deg);opacity:.4}
+.hero-stage .b4{width:clamp(100px,11vw,150px);left:15%;bottom:34%;transform:rotate(8deg);opacity:.4}
+.sheet .b1{width:clamp(160px,20vw,280px);right:-2%;top:-30px;transform:rotate(14deg);opacity:.5}
+.sheet .b2{width:clamp(130px,16vw,220px);left:-2%;bottom:-24px;transform:rotate(-12deg);opacity:.5}
+.sheet.send-sheet .b1{width:clamp(130px,16vw,230px);left:4%;top:12%;right:auto;bottom:auto;transform:rotate(-12deg)}
+.sheet.send-sheet .b2{width:clamp(120px,14vw,200px);right:5%;left:auto;bottom:10%;top:auto;transform:rotate(10deg)}
+.pf-band .b1{width:clamp(110px,14vw,190px);left:8%;top:16%;transform:rotate(-12deg)}
+.pf-band .b2{width:clamp(100px,12vw,170px);right:9%;top:10%;transform:rotate(10deg)}
+@media(max-width:767px){
+  .hero-stage .b3,.hero-stage .b4{display:none}
+  .hero-stage .b1{left:8px;top:8px;width:56px;opacity:.6}
+  .hero-stage .b2{right:8px;top:8px;width:56px;opacity:.6}
+  .sheet .b1,.sheet.send-sheet .b1{width:52px;left:auto;right:6px;top:6px;bottom:auto;opacity:.35}
+  .sheet .b2,.sheet.send-sheet .b2{width:52px;left:6px;right:auto;bottom:6px;top:auto;opacity:.35}
+  .pf-band .b1{left:-2%}.pf-band .b2{right:-2%}
+}

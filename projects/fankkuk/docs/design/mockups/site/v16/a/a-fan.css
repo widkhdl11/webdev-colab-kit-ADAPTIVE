@@ -143,3 +143,20 @@
   .ad-track,.ad-dot::before{transition:none}
   .is-on .ad-face,.is-on .ad-img{animation:none}
 }
+
+/* ---------- v16 장식 그림 (팬 화면: 소개 첫 화면 · 둥근 면) ---------- */
+.fan .about-hero .back.b3,.fan .about-hero .back.b4{display:none}
+.fan .about-hero .back.b1{left:2%;top:18%;width:clamp(120px,14vw,190px)}
+.fan .about-hero .back.b2{right:2%;top:12%;width:clamp(120px,14vw,190px)}
+.fan .panel .back.b1{width:clamp(110px,14vw,200px);left:3%;top:14%;transform:rotate(-12deg);opacity:.5}
+.fan .panel .back.b2{width:clamp(100px,13vw,180px);right:3%;bottom:10%;transform:rotate(10deg);opacity:.5}
+@media(max-width:767px){
+  .fan .panel .back{display:none}
+  .fan .about-hero .back.b1,.fan .about-hero .back.b2{width:56px;top:8px}
+  .fan .about-hero .back.b1{left:8px}.fan .about-hero .back.b2{right:8px}
+}
+/* 휴대폰 팬꾹 소개 첫 화면: 장식 두 장이 제목을 덮어 모서리로 작게 뺀다(본체 실측 2026-10-13) */
+@media(max-width:767px){
+  .fan .about-hero .back.b1{left:8px;top:8px;width:56px;opacity:.6}
+  .fan .about-hero .back.b2{right:8px;left:auto;top:8px;width:56px;opacity:.6}
+}
