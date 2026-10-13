@@ -1,0 +1,136 @@
+/* 팬꾹 시안 v12-A 「겹침과 깊이」 (2026-10-13)
+   v11.css 를 그대로 불러온 뒤, 층(바탕 면 / 흰 면 / 떠 있는 카드)과 그림자만 덧입힌다.
+   배치(위아래 쌓기)·문구·글자 크기 다섯 단계·색 토큰은 v11 그대로. 새 색은 코랄 계열 옅은 면 --page·--wash 둘뿐이다.
+   차례: 1 층 토큰 / 2 바탕·헤더 / 3 카드·부품 그림자 / 4 첫 화면(큰 판 + 걸친 카드) / 5 구간 경계(둥근 면) / 6 뒤쪽 그림 / 7 크리에이터 페이지 / 8 바닥글 / 9 휴대폰 */
+@import url("../../v11/v11.css");
+
+/* ---------- 1. 층 토큰 ---------- */
+:root{
+  --page:#fcf6f4;      /* 페이지 바탕 — 코랄 계열 아주 옅은 면 (글자 --sub 대비 5.9:1 이상) */
+  --wash:#fff0eb;      /* 첫 화면 큰 판 위쪽 — 코랄 계열 옅은 면 */
+  /* 옅고 넓게 퍼지는 그림자 세 겹: 가까운 접촉선 + 중간 + 멀리 */
+  --sh-1:0 1px 2px rgb(88 52 48/.05),0 6px 16px -2px rgb(88 52 48/.06),0 20px 40px -12px rgb(88 52 48/.10);
+  --sh-2:0 2px 4px rgb(88 52 48/.05),0 12px 28px -4px rgb(88 52 48/.09),0 36px 72px -16px rgb(88 52 48/.16);
+  --sh-up:0 -1px 0 rgb(255 255 255/.8),0 2px 4px rgb(88 52 48/.05),0 18px 40px -6px rgb(88 52 48/.12),0 48px 96px -24px rgb(88 52 48/.18);
+  --r-sheet:48px;
+}
+
+/* ---------- 2. 바탕 · 헤더 ---------- */
+body{background:var(--page)}
+.site-header{background:rgb(255 255 255/.94);box-shadow:0 1px 0 rgb(88 52 48/.05),0 8px 28px -8px rgb(88 52 48/.10)}
+.mm-body{box-shadow:0 20px 40px -12px rgb(88 52 48/.18)}
+.hd-menu{box-shadow:var(--sh-2)}
+.hd-ico::after{box-shadow:0 0 0 2px #fff}
+
+/* ---------- 3. 카드 · 부품: 경계선을 그림자로 바꾼다 ---------- */
+.card,.part,.table-wrap,.nlist a,.acc details{box-shadow:var(--sh-1)}
+.card{padding:36px;border-radius:var(--r-tile)}
+a.card,.ccard{transition:box-shadow .2s,transform .2s}
+a.card:hover,.ccard:focus-within{box-shadow:var(--sh-2);transform:translateY(-3px)}
+.card--soft{background:var(--surface-brand);box-shadow:none}
+.chip,.tabs a,.tab{background:#fff;box-shadow:0 1px 2px rgb(88 52 48/.05),0 4px 10px -2px rgb(88 52 48/.08)}
+.tabs a[aria-current="page"],.tab[aria-selected="true"]{background:var(--surface-selected)}
+.btn--line{box-shadow:0 1px 2px rgb(88 52 48/.06),0 6px 14px -4px rgb(88 52 48/.12),var(--hair)}
+.btn--line:hover{box-shadow:0 2px 4px rgb(88 52 48/.06),0 10px 20px -4px rgb(88 52 48/.14),var(--hair)}
+.btn{box-shadow:0 1px 2px rgb(184 79 72/.20),0 8px 18px -4px rgb(184 79 72/.34),0 20px 36px -12px rgb(184 79 72/.30)}
+.btn--text,.btn--sm{box-shadow:none}
+.btn--line.btn--sm{box-shadow:var(--hair)}
+.search{box-shadow:0 2px 4px rgb(88 52 48/.05),0 14px 32px -6px rgb(88 52 48/.16),inset 0 0 0 1px rgb(223 220 224/.7)}
+.search:focus-within{box-shadow:0 0 0 3px var(--ink)}
+.field{background:#fff}
+.tag{background:#fff;box-shadow:0 1px 2px rgb(88 52 48/.06)}
+.tag--brand{background:var(--surface-selected);box-shadow:none}.tag--success{background:var(--success-soft);box-shadow:none}
+.tag--warn{background:var(--warn-soft);box-shadow:none}.tag--danger{background:var(--danger-soft);box-shadow:none}.tag--info{background:var(--info-soft);box-shadow:none}
+.card-icon,.info .ic{background:var(--page)}
+.price .spec{border-top-color:rgb(88 52 48/.10)}
+
+/* ---------- 4. 첫 화면: 큰 둥근 판 + 위로 걸쳐 올라오는 흰 카드 ---------- */
+.hero{padding:0;text-align:center;margin-top:16px}
+.hero-stage{position:relative;overflow:hidden;isolation:isolate;padding:clamp(56px,7vw,104px) var(--gutter) clamp(120px,13vw,176px);border-radius:var(--r-sheet);
+  background:radial-gradient(900px 420px at 12% 0%,#ffe3da 0,rgb(255 227 218/0) 70%),radial-gradient(800px 460px at 92% 8%,#ffeadf 0,rgb(255 234 223/0) 70%),linear-gradient(180deg,var(--wash),#fff8f5)}
+.hero .t-lead{margin-bottom:16px}
+.hero-line{color:var(--brand-ink)}
+.hero .search{position:relative;z-index:1}
+.hero-card{position:relative;z-index:2;margin:calc(-1 * clamp(72px,8vw,112px)) auto 0;padding:clamp(24px,3vw,40px) clamp(16px,2.5vw,40px) clamp(32px,4vw,48px);max-width:1180px;border-radius:var(--r-sheet);background:#fff;box-shadow:var(--sh-up)}
+.hero-card .tiles{margin-top:0}
+.tile{background:var(--page);box-shadow:none;transition:background-color .2s,box-shadow .2s,transform .2s}
+.tile:hover{background:#fff;box-shadow:var(--sh-1);transform:translateY(-4px)}
+.hero-card .hero-actions{margin-top:36px}
+
+/* ---------- 5. 구간: 둥근 면이 넘어가는 경계 ---------- */
+/* 작동 방식: 바탕 면 위에 흰 카드, 그림은 카드 윗변을 넘어 튀어나온다 */
+.how-grid{--grid-gap:24px;row-gap:64px;margin-top:40px}
+.step-col.card{padding:0 28px 36px;text-align:center}
+.step-col.card img{width:96px;height:96px;margin:-48px auto 12px;filter:drop-shadow(0 10px 14px rgb(88 52 48/.18))}
+.steps-line .chip{min-height:40px}
+/* 약속: 화면 폭에 가깝게 펼친 코랄 면, 위아래가 둥글게 넘어간다 */
+.sheet{position:relative;overflow:hidden;isolation:isolate;margin-inline:clamp(8px,2vw,24px);padding:clamp(72px,9vw,128px) 0;border-radius:var(--r-sheet);
+  background:linear-gradient(180deg,#fff2ee,var(--surface-brand) 55%,#fff8f5)}
+.sheet .sec-head{margin-bottom:56px}
+.sheet .card{box-shadow:var(--sh-2)}
+.sheet .sec-foot{margin-top:56px}
+/* 요금 */
+.price-sec{padding-block:clamp(88px,10vw,144px) clamp(72px,8vw,112px)}
+.price.card{padding:36px}
+.price-amount{margin-top:20px}
+
+/* ---------- 6. 뒤쪽 그림 (장식 · 앞쪽 카드보다 흐리고 크게, 기울여서) ---------- */
+.back{position:absolute;z-index:-1;pointer-events:none;object-fit:contain;opacity:.55;filter:blur(.3px)}
+.hero-stage .b1{width:clamp(140px,17vw,240px);left:5%;top:14%;transform:rotate(-14deg)}
+.hero-stage .b2{width:clamp(130px,15vw,210px);right:6%;top:9%;transform:rotate(12deg)}
+.hero-stage .b3{width:clamp(110px,12vw,170px);right:17%;bottom:30%;transform:rotate(-6deg);opacity:.4}
+.hero-stage .b4{width:clamp(100px,11vw,150px);left:15%;bottom:34%;transform:rotate(8deg);opacity:.4}
+.sheet .b1{width:clamp(160px,20vw,280px);right:-2%;top:-30px;transform:rotate(14deg);opacity:.5}
+.sheet .b2{width:clamp(130px,16vw,220px);left:-2%;bottom:-24px;transform:rotate(-12deg);opacity:.5}
+
+/* ---------- 7. 크리에이터 페이지 ---------- */
+.pf{padding:16px 0 0;text-align:center}
+.pf-band{position:relative;overflow:hidden;isolation:isolate;height:clamp(160px,18vw,232px);border-radius:var(--r-sheet);
+  background:radial-gradient(700px 300px at 15% 0%,#ffe0d6 0,rgb(255 224 214/0) 70%),radial-gradient(600px 300px at 90% 20%,#ffe9dd 0,rgb(255 233 221/0) 70%),linear-gradient(180deg,var(--wash),#fff8f5)}
+.pf-band .b1{width:clamp(110px,14vw,190px);left:8%;top:16%;transform:rotate(-12deg)}
+.pf-band .b2{width:clamp(100px,12vw,170px);right:9%;top:10%;transform:rotate(10deg)}
+.pf-card{position:relative;z-index:2;margin:clamp(-96px,-8vw,-72px) auto 0;padding:0 clamp(20px,4vw,56px) clamp(40px,5vw,64px);max-width:880px;border-radius:var(--r-sheet);background:#fff;box-shadow:var(--sh-up)}
+.pf .face--xl{margin:-60px auto 20px;box-shadow:0 0 0 8px #fff,0 16px 32px -8px rgb(88 52 48/.25)}
+.pf .ctags{justify-content:center}
+.info .ic{box-shadow:0 1px 2px rgb(88 52 48/.06)}
+.info.ok .ic{background:var(--success-soft)}.info.rest .ic{background:var(--warn-soft)}
+.quote.card{background:#fff}
+.page-creator .quote q{position:relative}
+.send-sheet{padding:clamp(72px,9vw,120px) 0}
+.send-sheet .center-in{position:relative;z-index:1}
+.sheet.send-sheet .b1{width:clamp(130px,16vw,230px);left:4%;top:12%;right:auto;bottom:auto;transform:rotate(-12deg)}
+.sheet.send-sheet .b2{width:clamp(120px,14vw,200px);right:5%;left:auto;bottom:10%;top:auto;transform:rotate(10deg)}
+.page-creator .sec-sim{padding-bottom:clamp(72px,9vw,120px)}
+.other{padding:24px}
+
+/* ---------- 8. 바닥글: 위가 둥글게 올라온 면 ---------- */
+.site-footer{margin-top:0;border-top:0;border-radius:var(--r-sheet) var(--r-sheet) 0 0;background:#f3eeee;box-shadow:0 -20px 48px -24px rgb(88 52 48/.12)}
+.site-footer .footer-links a,.site-footer{color:#5c5359}
+.site-footer .footer-logo,.site-footer .biz dt{color:var(--ink)}
+
+/* ---------- 9. 휴대폰 ---------- */
+@media(max-width:1023px){.how-grid{--cols:2}.how-grid{row-gap:64px}}
+@media(max-width:767px){
+  :root{--r-sheet:32px}
+  .hero{margin-top:8px}
+  .hero-stage{padding-bottom:104px}
+  .hero-card{margin-top:-64px;padding:20px 12px 28px}
+  .hero-stage .b3,.hero-stage .b4{display:none}
+  .hero-stage .b1{left:8px;top:8px;width:56px;opacity:.6}
+  .hero-stage .b2{right:8px;top:8px;width:56px;opacity:.6}
+  .how-grid{--cols:1;row-gap:64px;margin-top:56px}
+  .card{padding:28px 24px}
+  .step-col.card{padding:0 24px 28px}
+  .sheet{padding-block:64px}
+  .sheet .sec-head{margin-bottom:40px}
+  .sheet .sec-foot{margin-top:40px}
+  .sheet .b1,.sheet .b2{opacity:.35}
+  .pf-card{padding-inline:20px}
+  .pf-band .b1{left:-2%}.pf-band .b2{right:-2%}
+  .price-sec{padding-block:72px}
+}
+@media(prefers-reduced-motion:reduce){a.card,.tile{transition:none}a.card:hover,.tile:hover{transform:none}}
+
+/* 둥근 면 안 가운데 모음 (v11 은 .panel 안에서만 적용됐다) */
+.sheet .center-in{display:grid;justify-items:center;gap:16px;text-align:center}
+.sheet .center-in .t-lead{margin:0}

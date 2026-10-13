@@ -1,0 +1,217 @@
+/* 팬꾹 시안 v12-B 「배치를 다시」 공통 CSS (2026-10-13)
+   v11.css 의 토큰·헤더·바닥글·버튼·태그를 그대로 물려받고, 이 파일은 본문 짜임만 바꾼다.
+   장치: ① 크기가 다른 타일을 맞물린 격자(벤토) ② 큰 글자 머리 + 넓은 여백, 왼쪽 정렬 잡지 리듬
+         ③ 구간마다 다른 너비(1200 · 1040 · 880 · 전폭 띠)
+   금지 유지: 좁은 칸에 왼쪽 제목 / 오른쪽 설명을 나란히 두는 분할은 쓰지 않는다. 머리는 늘 위에 쌓는다.
+   색은 1절 토큰만(코랄 주 색 + 옅은 면 + 차콜). 글자 크기는 다섯 단계(40·28·20·18·16 / 30·24·20·18·16)만. */
+@import url("../../v11/v11.css");
+
+/* ---------- 구간 뼈대 ---------- */
+main > .b-sec{padding-block:clamp(72px,9vw,128px)}
+main > section.b-sec + section.b-sec{margin-top:0}
+@media(max-width:767px){main > .b-sec{padding-block:56px}}
+.b-w-wide{max-width:calc(1200px + 2*var(--gutter))}
+.b-w-mid{max-width:calc(1040px + 2*var(--gutter))}
+.b-w-narrow{max-width:calc(880px + 2*var(--gutter))}
+
+/* 머리: 위에 쌓고 왼쪽 정렬. 구간 제목은 첫 화면 크기(40/30)까지 키운다 */
+.b-head{margin-bottom:clamp(40px,5vw,64px);text-align:left}
+.b-head h2{font-size:var(--fs-hero);line-height:1.25;max-width:20ch}
+.b-head .t-desc{max-width:560px;margin-top:16px}
+.b-head .accent{color:var(--brand)}
+.b-band .b-head .accent{color:var(--brand-ink)}
+
+/* ---------- 벤토 타일 공통 ---------- */
+.bento{display:grid;gap:16px}
+.bt{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:16px;min-width:0;overflow:hidden;
+  padding:24px;border-radius:var(--r-tile);background:var(--surface);color:var(--ink);text-decoration:none}
+.bt--coral{background:var(--surface-brand)}
+.bt--tint{background:var(--surface-selected)}
+.bt--ink{background:var(--ink);color:#fff}
+.bt--ink .bt-sub,.bt--ink p{color:#f0eff1}
+.bt--brand{background:var(--brand);color:#fff}
+a.bt{transition:transform .15s ease,background-color .15s ease}
+a.bt:hover{transform:translateY(-3px)}
+a.bt--plain:hover{background:var(--surface-hover)}
+a.bt--coral:hover{background:var(--surface-selected)}
+a.bt--brand:hover{background:var(--brand-hover)}
+a.bt--ink:hover{background:#2a262e}
+a.bt:focus-visible{outline-offset:3px}
+a.bt--brand:focus-visible{outline-color:var(--ink)}
+@media(prefers-reduced-motion:reduce){a.bt{transition:none}a.bt:hover{transform:none}}
+
+/* ---------- 랜딩: 첫 화면 ---------- */
+.b-hero{padding-block:clamp(56px,8vw,112px) clamp(48px,6vw,88px)}
+.b-hero .t-lead{margin-bottom:16px}
+.b-hero h1{max-width:16ch}
+.b-hero .hero-line{margin-top:20px}
+.b-hero .search{margin:clamp(32px,4vw,48px) 0 0;max-width:640px}
+.b-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.b-shortcuts{margin-top:clamp(48px,6vw,80px);grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(176px,auto)}
+.b-shortcuts .bt{padding:20px 24px}
+.b-shortcuts .bt span{font-size:var(--fs-card);line-height:1.4;font-weight:800}
+.b-shortcuts .bt img{position:absolute;right:12px;bottom:8px;width:96px;height:96px;object-fit:contain}
+.b-shortcuts .bt-gift{grid-column:1 / 3;grid-row:1 / 3;padding:32px}
+.b-shortcuts .bt-gift span{font-size:var(--fs-title);line-height:1.3;letter-spacing:var(--ls-title)}
+.b-shortcuts .bt-gift img{right:24px;bottom:16px;width:216px;height:216px}
+.b-shortcuts .bt-find{grid-column:3 / 5}
+.b-shortcuts .bt-find img{width:112px;height:112px}
+@media(max-width:1023px){.b-shortcuts .bt-gift img{width:176px;height:176px}}
+@media(max-width:767px){
+  .b-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(168px,auto);gap:12px}
+  .b-shortcuts .bt{padding:16px}
+  .b-shortcuts .bt img{width:72px;height:72px;right:8px;bottom:6px}
+  .b-shortcuts .bt-gift{grid-column:1 / 3;grid-row:auto;min-height:216px;padding:24px}
+  .b-shortcuts .bt-gift img{width:152px;height:152px;right:12px;bottom:8px}
+  .b-shortcuts .bt-find{grid-column:1 / 3}
+  .b-shortcuts .bt-find img{width:96px;height:96px}
+}
+
+/* ---------- 랜딩: 4단계 (3열 벤토, 첫 타일은 키 큰 타일, 마지막은 넓은 타일) ---------- */
+.b-steps{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:auto}
+.b-steps .bt{justify-content:flex-start;padding:32px}
+.b-steps .bt img{width:96px;height:96px;object-fit:contain;margin-bottom:8px}
+.b-steps .label-num{font-weight:800;color:var(--brand-ink)}
+.b-steps .bt h3{margin-top:4px}
+.b-steps .bt h3 + p{margin-top:8px}
+.b-steps .st-1{grid-row:1 / 3;justify-content:space-between}
+.b-steps .st-1 img{width:168px;height:168px;margin:0 0 24px}
+.b-steps .st-4{grid-column:2 / 4;display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:24px;align-items:center}
+.b-steps .st-4 img{order:2;width:120px;height:120px;margin:0}
+.b-steps .st-4 .label-num{color:#f0eff1}
+.b-steps .st-4 h3,.b-steps .st-4 p{color:#fff}
+.b-steps .st-4 p{color:#f0eff1}
+.b-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:40px}
+.b-chips .lab{margin-right:4px;font-weight:800}
+.b-chips .arrow{color:var(--faint)}
+@media(max-width:1023px){
+  .b-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .b-steps .st-1{grid-column:1 / 3;grid-row:auto}
+  .b-steps .st-4{grid-column:1 / 3}
+}
+@media(max-width:767px){
+  .b-steps{grid-template-columns:minmax(0,1fr);gap:12px}
+  .b-steps .st-1,.b-steps .st-4{grid-column:auto}
+  .b-steps .bt{padding:24px}
+  .b-steps .st-1 img{width:120px;height:120px}
+  .b-steps .st-4{grid-template-columns:minmax(0,1fr) 72px;gap:16px}
+  .b-steps .st-4 img{width:72px;height:72px}
+}
+
+/* ---------- 랜딩: 약속 — 전폭 띠 안에 카드 없는 잡지 단 ---------- */
+main > .b-band{margin-inline:var(--gutter);padding-block:clamp(64px,8vw,112px);border-radius:var(--r-panel);background:var(--surface-brand)}
+.b-edit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 clamp(32px,6vw,80px)}
+.b-edit li{padding:28px 0 36px;border-top:2px solid var(--ink)}
+.b-edit .no{display:block;margin-bottom:12px;font-weight:800;color:var(--brand-ink)}
+.b-edit h3 + p{margin-top:8px}
+.b-band .b-foot{margin-top:24px}
+@media(max-width:767px){
+  main > .b-band{margin-inline:12px;border-radius:24px;padding-block:48px}
+  .b-edit{grid-template-columns:minmax(0,1fr)}
+  .b-edit li{padding-bottom:28px}
+}
+
+/* ---------- 랜딩: 요금 — 계단형 타일(오를수록 키가 커진다) ---------- */
+.b-stair{grid-template-columns:repeat(3,minmax(0,1fr));align-items:end}
+.b-stair .bt{justify-content:flex-start;padding:32px}
+.b-stair .p-s{min-height:300px}
+.b-stair .p-m{min-height:360px;background:var(--surface-brand)}
+.b-stair .p-l{min-height:420px;background:var(--surface-selected)}
+.b-stair .tag{align-self:flex-start;background:#fff}
+.b-stair .price-amount{margin-top:auto;font-size:var(--fs-hero);font-weight:800;line-height:1.15}
+.b-stair .price-amount span{margin-left:4px;font-size:var(--fs-card);line-height:1.4}
+.b-stair .inc{display:flex;align-items:center;gap:8px;font-weight:800}
+.b-stair .inc svg{color:var(--brand)}
+.b-stair .spec{padding-top:16px;border-top:1px solid color-mix(in srgb,var(--ink) 18%,transparent);color:var(--sub)}
+.b-notes{margin-top:32px}
+@media(max-width:1023px){.b-stair .p-s,.b-stair .p-m,.b-stair .p-l{min-height:0}.b-stair .price-amount{margin-top:16px}}
+@media(max-width:767px){.b-stair{grid-template-columns:minmax(0,1fr);gap:12px}.b-stair .bt{padding:24px}}
+
+/* ---------- 크리에이터 페이지: 첫 화면 (왼쪽 정렬 + 넓은 여백, 오른쪽에 큰 옅은 원) ---------- */
+.b-pf{position:relative;overflow:hidden;padding-block:clamp(56px,8vw,112px) clamp(48px,6vw,80px)}
+.b-pf::after{content:"";position:absolute;right:-120px;top:-80px;width:clamp(280px,40vw,520px);aspect-ratio:1;border-radius:50%;background:var(--surface-brand);z-index:0}
+.b-pf .container{position:relative;z-index:1}
+.b-pf-in{max-width:640px}
+.b-pf .face--xl{margin-bottom:24px;box-shadow:0 0 0 8px #fff}
+.b-pf .handle{margin-top:8px}
+.b-pf .t-lead{margin-top:16px}
+.b-pf .ctags{margin-top:20px}
+.b-pf .thanks{margin-top:24px;font-size:var(--fs-card);line-height:1.4;font-weight:800;color:var(--brand-ink)}
+.b-pf .b-actions{margin-top:32px}
+@media(max-width:767px){.b-pf::after{right:-160px;top:-100px;width:300px}}
+
+/* ---------- 크리에이터 페이지: 정보 벤토 (4열, 큰 글자 수치) ---------- */
+.b-info{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(184px,auto)}
+.b-info .bt{justify-content:space-between;padding:28px}
+.bi-ic{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#fff;color:var(--ink)}
+.bi-ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bt--ink .bi-ic{background:rgba(255,255,255,.14);color:#fff}
+.b-info .bt h3{font-size:var(--fs-body);line-height:1.5;font-weight:800;letter-spacing:0;color:inherit}
+.bt .fig{margin-top:6px;font-size:var(--fs-title);line-height:1.3;font-weight:800;letter-spacing:var(--ls-title)}
+.bt .fig--xl{font-size:var(--fs-hero);line-height:1.25}
+.bt .fig em{font-style:normal;color:var(--brand-ink)}
+.bt--ink .fig em{color:#fff;text-decoration:underline;text-decoration-color:var(--brand);text-decoration-thickness:4px;text-underline-offset:6px}
+.bt .plain{margin-top:6px;font-size:var(--fs-lead);line-height:1.6;font-weight:400}
+.bi-ok{background:var(--success-soft)}
+.bi-ok .bi-ic{color:var(--success)}
+.bi-ok .fig{color:var(--success)}
+.bi-warn{background:var(--warn-soft)}
+.bi-warn .bi-ic{color:var(--warn-ink)}
+.b-info .w2{grid-column:span 2}
+.b-info .w4{grid-column:1 / -1}
+.b-info .tall{grid-row:span 2}
+.b-info .dd{margin-top:12px}
+.b-info .row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+@media(max-width:1023px){
+  .b-info{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .b-info .w4{grid-column:1 / -1}
+  .b-info .tall{grid-row:auto}
+}
+@media(max-width:767px){
+  .b-info{grid-template-columns:minmax(0,1fr);grid-auto-rows:auto;gap:12px}
+  .b-info .w2,.b-info .w4{grid-column:auto}
+  .b-info .bt{padding:24px}
+  .bt .fig--xl{font-size:var(--fs-hero)}
+}
+
+/* ---------- 크리에이터 페이지: 감사 답장 — 카드 없는 큰 인용, 둘째 단을 아래로 어긋나게 ---------- */
+.b-quotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 clamp(32px,6vw,96px)}
+.b-quotes li{padding:24px 0 40px;border-top:2px solid var(--ink)}
+.b-quotes li:nth-child(even){margin-top:64px}
+.b-quotes q{display:block;font-size:var(--fs-title);line-height:1.45;font-weight:800;letter-spacing:var(--ls-title);quotes:"“" "”"}
+.b-quotes .by{margin-top:16px}
+@media(max-width:767px){
+  .b-quotes{grid-template-columns:minmax(0,1fr)}
+  .b-quotes li:nth-child(even){margin-top:0}
+  .b-quotes li{padding-bottom:28px}
+}
+
+/* ---------- 크리에이터 페이지: 접는 안내(좁은 한 단) ---------- */
+.b-narrow-col .acc{margin-top:0}
+.b-narrow-col .acc summary b{font-size:var(--fs-card);line-height:1.4}
+
+/* ---------- 크리에이터 페이지: 마지막 선물 보내기 — 전폭 코랄 띠 ---------- */
+main > .b-send{margin-inline:var(--gutter);padding-block:clamp(64px,8vw,112px);border-radius:var(--r-panel);background:var(--brand);color:#fff;text-align:center}
+.b-send h2{font-size:var(--fs-hero);line-height:1.25;color:#fff}
+.b-send .lead{margin-top:16px;color:#fff}
+.b-send .btn--invert{margin-top:32px}
+.btn--invert{background:#fff;color:var(--ink);box-shadow:none}
+.btn--invert:hover{background:var(--surface-selected)}
+.btn--invert:active{background:var(--surface-hover)}
+.b-send :focus-visible{outline-color:#fff}
+@media(max-width:767px){main > .b-send{margin-inline:12px;border-radius:24px;padding-block:48px}}
+
+/* ---------- 크리에이터 페이지: 비슷한 크리에이터 — 위아래로 어긋난 타일 ---------- */
+.b-others{grid-template-columns:repeat(4,minmax(0,1fr));align-items:start}
+.b-others li:nth-child(even){margin-top:40px}
+.b-others .bt{justify-content:flex-start;gap:20px;min-height:216px;padding:24px}
+.b-others li:nth-child(1) .bt{background:var(--surface)}
+.b-others li:nth-child(2) .bt{background:var(--surface-brand)}
+.b-others li:nth-child(3) .bt{background:var(--surface-selected)}
+.b-others li:nth-child(4) .bt{background:var(--surface)}
+.b-others .face{width:72px;height:72px}
+.b-others .nm{font-size:var(--fs-card);line-height:1.4;font-weight:800}
+.b-others small{display:block;margin-top:4px;color:var(--sub);font-size:var(--fs-body);font-weight:400}
+.b-others + .b-foot{margin-top:48px}
+@media(max-width:1023px){.b-others{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:767px){.b-others{gap:12px}.b-others li:nth-child(even){margin-top:24px}.b-others .bt{min-height:0;padding:20px}.b-others .face{width:56px;height:56px}}
