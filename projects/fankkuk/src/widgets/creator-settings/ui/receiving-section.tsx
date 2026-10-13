@@ -2,15 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import {
-  ANNIVERSARY_MAX,
-  ANNIVERSARY_NAME_MAX,
-  daysInMonth,
-  MONTHLY_LIMIT_MAX,
-  resumeRange,
-  type CalendarDate,
-  type MyCreatorReceiving,
-} from "@/entities/creator/model/receiving";
+import { ANNIVERSARY_MAX, ANNIVERSARY_NAME_MAX, daysInMonth, MONTHLY_LIMIT_MAX, resumeRange, type CalendarDate, type MyCreatorReceiving } from "@/entities/creator/model/receiving";
 import { sendCreatorDays, sendCreatorReceiving } from "@/features/creator-settings-save/api/send-creator-settings";
 import { clipChars } from "@/features/creator-settings-save/model/creator-settings-input";
 import s from "./creator-settings.module.css";
@@ -23,7 +15,12 @@ import s from "./creator-settings.module.css";
 type Msg = { ok: boolean; text: string; field?: "resumeOn" } | null;
 /** 저장 결과 줄 — 받기 어려운 품목 칸(hard-items-section)도 같은 줄을 쓴다. */
 export type SaveMsg = Msg;
-type AnniversaryDraft = { key: number; name: string; month: number; day: number };
+type AnniversaryDraft = {
+  key: number;
+  name: string;
+  month: number;
+  day: number;
+};
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 const LIMITS = Array.from({ length: MONTHLY_LIMIT_MAX }, (_, i) => i + 1);
@@ -33,14 +30,11 @@ const daysOf = (month: number) => Array.from({ length: daysInMonth(month) }, (_,
 export function SaveMessage({ id, msg }: { id: string; msg: Msg }) {
   return (
     <>
-      <p className={`sub ${s["save-msg"]}`} role="status" id={id}>
+      <p className={`t-meta ${s.msg}`} role="status" id={id}>
         {msg?.ok ? msg.text : null}
       </p>
       {msg && !msg.ok ? (
-        <p className={s.error} role="alert" id={`${id}-err`}>
-          <span className={s["error-mark"]} aria-hidden="true">
-            !
-          </span>
+        <p className={`err ${s.msg}`} role="alert" id={`${id}-err`}>
           {msg.text}
         </p>
       ) : null}
@@ -70,7 +64,7 @@ function MonthDaySelect({
       </label>
       <select
         id={`${idBase}-m`}
-        className="input"
+        className="field"
         value={month ?? ""}
         onChange={(e) => {
           const m = e.currentTarget.value === "" ? null : Number(e.currentTarget.value);
@@ -87,13 +81,7 @@ function MonthDaySelect({
       <label className="sr-only" htmlFor={`${idBase}-d`}>
         {label} 일
       </label>
-      <select
-        id={`${idBase}-d`}
-        className="input"
-        value={day ?? ""}
-        disabled={month === null}
-        onChange={(e) => onChange(month, Number(e.currentTarget.value))}
-      >
+      <select id={`${idBase}-d`} className="field" value={day ?? ""} disabled={month === null} onChange={(e) => onChange(month, Number(e.currentTarget.value))}>
         {month === null ? <option value="">—</option> : null}
         {daysOf(month ?? 1).map((d) => (
           <option key={d} value={d}>
@@ -128,12 +116,20 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
     if (recvSaving) return;
     setRecvMsg(null);
     if (resting && resumeOn === "") {
-      setRecvMsg({ ok: false, text: "쉬는 동안에는 다시 받는 날을 꼭 골라 주세요.", field: "resumeOn" });
+      setRecvMsg({
+        ok: false,
+        text: "쉬는 동안에는 다시 받는 날을 꼭 골라 주세요.",
+        field: "resumeOn",
+      });
       resumeRef.current?.focus();
       return;
     }
     setRecvSaving(true);
-    const r = await sendCreatorReceiving({ resting, resumeOn: resting ? resumeOn : null, monthlyLimit: limit });
+    const r = await sendCreatorReceiving({
+      resting,
+      resumeOn: resting ? resumeOn : null,
+      monthlyLimit: limit,
+    });
     setRecvSaving(false);
     if (r.kind === "login") {
       router.push("/login?next=/creator/settings");
@@ -154,7 +150,11 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
     setDaysSaving(true);
     const r = await sendCreatorDays({
       birthday: bMonth !== null && bDay !== null ? { month: bMonth, day: bDay } : null,
-      anniversaries: anniversaries.map(({ name, month, day }) => ({ name: name.trim(), month, day })),
+      anniversaries: anniversaries.map(({ name, month, day }) => ({
+        name: name.trim(),
+        month,
+        day,
+      })),
     });
     setDaysSaving(false);
     if (r.kind === "login") {
@@ -169,30 +169,35 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
     router.refresh();
   };
 
-  const updateAnniversary = (key: number, patch: Partial<AnniversaryDraft>) =>
-    setAnniversaries((list) => list.map((a) => (a.key === key ? { ...a, ...patch } : a)));
+  const updateAnniversary = (key: number, patch: Partial<AnniversaryDraft>) => setAnniversaries((list) => list.map((a) => (a.key === key ? { ...a, ...patch } : a)));
 
   return (
     <>
-      <section aria-labelledby="recv-h">
-        <div className={s["s-head"]}>
-          <h3 id="recv-h">선물 받기</h3>
+      <section id="recv" className={`card ${s.set}`} aria-labelledby="recv-h">
+        <div className={s["set-head"]}>
+          <h3 className="t-card" id="recv-h">
+            선물 받기
+          </h3>
         </div>
-        <div className={s.radios} role="radiogroup" aria-label="받는 상태">
-          <label>
-            <input type="radio" name="recv-state" checked={!resting} onChange={() => setResting(false)} /> 받는 중
+        <div className="grid cols-2" role="radiogroup" aria-label="받는 상태">
+          <label className="opt">
+            <input type="radio" name="recv-state" checked={!resting} onChange={() => setResting(false)} />
+            <span>받는 중</span>
           </label>
-          <label>
-            <input type="radio" name="recv-state" checked={resting} onChange={() => setResting(true)} /> 쉬는 중
+          <label className="opt">
+            <input type="radio" name="recv-state" checked={resting} onChange={() => setResting(true)} />
+            <span>쉬는 중</span>
           </label>
         </div>
         {resting ? (
-          <div className={`field ${s["recv-field"]}`}>
-            <label htmlFor="recv-resume">다시 받는 날</label>
+          <div>
+            <label className="label" htmlFor="recv-resume">
+              다시 받는 날
+            </label>
             <input
               ref={resumeRef}
               id="recv-resume"
-              className="input"
+              className="field"
               type="date"
               min={range.min}
               max={range.max}
@@ -204,16 +209,18 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
               aria-invalid={resumeInvalid || undefined}
               aria-describedby={resumeInvalid ? "recv-resume-hint recv-msg-err" : "recv-resume-hint"}
             />
-            <p className="hint" id="recv-resume-hint">
+            <p className="t-meta hint" id="recv-resume-hint">
               내일부터 1년 안으로 골라요. 이날 0시부터 다시 받아요. 쉬는 동안에도 이미 받은 선물의 승인·거절은 그대로 할 수 있어요.
             </p>
           </div>
         ) : null}
-        <div className={`field ${s["recv-field"]}`}>
-          <label htmlFor="recv-limit">팬 한 명이 한 달에 보낼 수 있는 선물</label>
+        <div>
+          <label className="label" htmlFor="recv-limit">
+            팬 한 명이 한 달에 보낼 수 있는 선물
+          </label>
           <select
             id="recv-limit"
-            className="input"
+            className="field"
             value={limit ?? ""}
             onChange={(e) => setLimit(e.currentTarget.value === "" ? null : Number(e.currentTarget.value))}
             aria-describedby="recv-limit-hint"
@@ -225,22 +232,26 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
               </option>
             ))}
           </select>
-          <p className="hint" id="recv-limit-hint">
+          <p className="t-meta hint" id="recv-limit-hint">
             정해 두면 이번 달에 그만큼 보낸 팬은 다음 달 1일부터 다시 보낼 수 있어요. 이 숫자는 크리에이터 페이지에 보이지 않아요.
           </p>
         </div>
-        <button className={`btn ${s.save}`} type="button" aria-disabled={recvSaving} onClick={() => void saveReceiving()}>
-          {recvSaving ? "저장하는 중…" : "선물 받기 저장"}
-        </button>
-        <SaveMessage id="recv-msg" msg={recvMsg} />
+        <div>
+          <button className="btn" type="button" aria-disabled={recvSaving} onClick={() => void saveReceiving()}>
+            {recvSaving ? "저장하는 중…" : "선물 받기 저장"}
+          </button>
+          <SaveMessage id="recv-msg" msg={recvMsg} />
+        </div>
       </section>
 
-      <section aria-labelledby="days-h">
-        <div className={s["s-head"]}>
-          <h3 id="days-h">생일과 기념일</h3>
+      <section id="days" className={`card ${s.set}`} aria-labelledby="days-h">
+        <div className={s["set-head"]}>
+          <h3 className="t-card" id="days-h">
+            생일과 기념일
+          </h3>
         </div>
-        <p className="sub">적어 두면 크리에이터 페이지에 30일 전부터 D-day 가 보여요. 연도는 받지 않아요.</p>
-        <div className={`field ${s["recv-field"]}`}>
+        <p>적어 두면 크리에이터 페이지에 30일 전부터 D-day 가 보여요. 연도는 받지 않아요.</p>
+        <div>
           <span className="label" id="bday-label">
             생일
           </span>
@@ -256,9 +267,9 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
             }}
           />
         </div>
-        <div className={`field ${s["recv-field"]}`}>
+        <div>
           <span className="label">기념일 ({ANNIVERSARY_MAX}개까지)</span>
-          {anniversaries.length === 0 ? <p className="sub">아직 적은 기념일이 없어요.</p> : null}
+          {anniversaries.length === 0 ? <p className="t-meta">아직 적은 기념일이 없어요.</p> : null}
           <ul className={s["ann-list"]}>
             {anniversaries.map((a, i) => (
               <li key={a.key} className={s["ann-row"]}>
@@ -267,10 +278,14 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
                 </label>
                 <input
                   id={`ann-${a.key}-name`}
-                  className="input"
+                  className="field"
                   placeholder="예: 데뷔일"
                   value={a.name}
-                  onChange={(e) => updateAnniversary(a.key, { name: clipChars(e.currentTarget.value, ANNIVERSARY_NAME_MAX) })}
+                  onChange={(e) =>
+                    updateAnniversary(a.key, {
+                      name: clipChars(e.currentTarget.value, ANNIVERSARY_NAME_MAX),
+                    })
+                  }
                 />
                 <MonthDaySelect
                   idBase={`ann-${a.key}`}
@@ -281,7 +296,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
                   onChange={(m, d) => updateAnniversary(a.key, { month: m ?? 1, day: d ?? 1 })}
                 />
                 <button
-                  className="btn btn--soft btn--sm"
+                  className="btn btn--line btn--sm"
                   type="button"
                   aria-label={`기념일 ${i + 1} 빼기`}
                   onClick={() => setAnniversaries((list) => list.filter((x) => x.key !== a.key))}
@@ -296,19 +311,29 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
               className="btn btn--line btn--sm"
               type="button"
               onClick={() => {
-                setAnniversaries((list) => [...list, { key: nextKey, name: "", month: today.month, day: today.day }]);
+                setAnniversaries((list) => [
+                  ...list,
+                  {
+                    key: nextKey,
+                    name: "",
+                    month: today.month,
+                    day: today.day,
+                  },
+                ]);
                 setNextKey((k) => k + 1);
               }}
             >
               기념일 더하기
             </button>
           ) : null}
-          <p className="hint">이름은 {ANNIVERSARY_NAME_MAX}자까지예요. 기념일 7일 전부터는 팬이 「기념일 선물」 표시를 붙여 보낼 수 있어요.</p>
+          <p className="t-meta hint">이름은 {ANNIVERSARY_NAME_MAX}자까지예요. 기념일 7일 전부터는 팬이 「기념일 선물」 표시를 붙여 보낼 수 있어요.</p>
         </div>
-        <button className={`btn ${s.save}`} type="button" aria-disabled={daysSaving} onClick={() => void saveDays()}>
-          {daysSaving ? "저장하는 중…" : "생일·기념일 저장"}
-        </button>
-        <SaveMessage id="days-msg" msg={daysMsg} />
+        <div>
+          <button className="btn" type="button" aria-disabled={daysSaving} onClick={() => void saveDays()}>
+            {daysSaving ? "저장하는 중…" : "생일·기념일 저장"}
+          </button>
+          <SaveMessage id="days-msg" msg={daysMsg} />
+        </div>
       </section>
     </>
   );

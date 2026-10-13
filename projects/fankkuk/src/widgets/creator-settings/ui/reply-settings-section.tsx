@@ -28,11 +28,18 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
     if (saving) return;
     setMsg(null);
     if (!handleOk) {
-      setMsg({ ok: false, text: "X 계정은 영문·숫자·밑줄 1~15자로 적어 주세요." });
+      setMsg({
+        ok: false,
+        text: "X 계정은 영문·숫자·밑줄 1~15자로 적어 주세요.",
+      });
       return;
     }
     setSaving(true);
-    const r = await sendCreatorReplySettings({ wallVisible, xHandle, xTagAllowed });
+    const r = await sendCreatorReplySettings({
+      wallVisible,
+      xHandle,
+      xTagAllowed,
+    });
     setSaving(false);
     if (r.kind === "login") {
       router.push("/login?next=/creator/settings");
@@ -48,25 +55,29 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
   };
 
   return (
-    <section aria-labelledby="reply-set-h">
-      <div className={s["s-head"]}>
-        <h3 id="reply-set-h">감사 답장</h3>
+    <section id="reply" className={`card ${s.set}`} aria-labelledby="reply-set-h">
+      <div className={s["set-head"]}>
+        <h3 className="t-card" id="reply-set-h">
+          감사 답장
+        </h3>
       </div>
-      <div className={s["switch-row"]}>
+      <div className="sw-row">
         <label className={s.txt} htmlFor="reply-wall">
-          <strong>답장 모음 보이기</strong>
-          <span className="sub">켜면 팬이 공개를 허락한 답장이 받았어요 3일 뒤부터 링크 페이지에 보여요.</span>
+          <strong className="t-strong">답장 모음 보이기</strong>
+          <span className="t-meta">켜면 팬이 공개를 허락한 답장이 받았어요 3일 뒤부터 링크 페이지에 보여요.</span>
         </label>
         <input className={s.switch} type="checkbox" role="switch" id="reply-wall" checked={wallVisible} onChange={(e) => setWallVisible(e.currentTarget.checked)} />
       </div>
-      <div className={`field ${s["recv-field"]}`}>
-        <label htmlFor="reply-x">X 계정 (선택)</label>
+      <div>
+        <label className="label" htmlFor="reply-x">
+          X 계정 (선택)
+        </label>
         <div className={s["handle-row"]}>
           <span className={s["handle-host"]} aria-hidden="true">
             @
           </span>
           <input
-            className="input"
+            className="field"
             id="reply-x"
             type="text"
             inputMode="text"
@@ -79,14 +90,14 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
             onChange={(e) => setXHandle(e.currentTarget.value)}
           />
         </div>
-        <p className="hint" id="reply-x-hint">
+        <p className="t-meta hint" id="reply-x-hint">
           영문·숫자·밑줄 1~15자예요. 비우면 등록하지 않아요.
         </p>
       </div>
-      <div className={s["switch-row"]}>
+      <div className="sw-row">
         <label className={s.txt} htmlFor="reply-tag">
-          <strong>태그 허용</strong>
-          <span className="sub">켜면 팬이 답장 카드를 X 에 공유할 때 내 계정이 함께 적혀요. 지금 채워지는 글: {preview}</span>
+          <strong className="t-strong">태그 허용</strong>
+          <span className="t-meta">켜면 팬이 답장 카드를 X 에 공유할 때 내 계정이 함께 적혀요. 지금 채워지는 글: {preview}</span>
         </label>
         <input
           className={s.switch}
@@ -98,13 +109,13 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
           onChange={(e) => setXTagAllowed(e.currentTarget.checked)}
         />
       </div>
-      <div className={s.save}>
+      <div>
         <button className="btn" type="button" aria-disabled={saving} onClick={() => void save()}>
           {saving ? "저장하는 중…" : "감사 답장 설정 저장"}
         </button>
+        {/* 오류 문구는 reply-set-msg-err 로 그려진다 — X 계정 칸이 그 문구를 가리킨다 */}
+        <SaveMessage id="reply-set-msg" msg={msg} />
       </div>
-      {/* 오류 문구는 reply-set-msg-err 로 그려진다 — X 계정 칸이 그 문구를 가리킨다 */}
-      <SaveMessage id="reply-set-msg" msg={msg} />
     </section>
   );
 }

@@ -34,8 +34,8 @@ import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./creator-settings.module.css";
 
-// 크리에이터 — 주소와 설정. 시안: docs/design/mockups/site/v4/creator-settings.html
-// 선물 받기·생일과 기념일(creator-receiving)은 같은 칸 언어(제목 줄·필드·저장 버튼·상태 문구)로 왼쪽 열 끝에 둔다(receiving-section).
+// 크리에이터 — 주소와 설정. 시안: docs/design/mockups/site/v11/creator-settings.html — 설정 상자를 같은 모양 카드로 위→아래 한 줄, 맨 위에 지금 상태 카드 셋과 바로가기 칩 줄
+// 선물 링크·선물 받기·생일과 기념일·받기 어려운 품목·감사 답장은 같은 카드 언어(제목 줄·입력·저장 버튼·결과 줄)로 따로 파일에 둔다.
 //
 // 주소 등록·변경(address-protection INV-P13): 확인 창에서 주소를 입력하고 「카카오톡으로 서명하기」를 누르면 이 브라우저에서 봉인해 보낸다.
 // 카카오 재서명 자리는 지금 로컬 가짜 서명 창구가 맡고(카드 d28), 운영에서는 서버가 창구가 없어 거부한다.
@@ -71,10 +71,10 @@ function Switch({
   describedBy?: string;
 }) {
   return (
-    <div className={s["switch-row"]}>
+    <div className="sw-row">
       <label className={s.txt} htmlFor={id}>
-        <strong>{title}</strong>
-        <span className="sub">{desc}</span>
+        <strong className="t-strong">{title}</strong>
+        <span className="t-meta">{desc}</span>
       </label>
       <input
         className={s.switch}
@@ -90,6 +90,11 @@ function Switch({
       />
     </div>
   );
+}
+
+/** 저장 결과 한 줄 — 오류면 빨간 상자(.err), 아니면 보조 글자. 비어 있으면 자리를 차지하지 않는다. */
+function msgClass(msg: { ok: boolean } | null): string {
+  return `${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`;
 }
 
 export function CreatorSettingsPage({
@@ -226,32 +231,89 @@ export function CreatorSettingsPage({
 
   return (
     <div>
-      <div className="panel-title">
-        <h2 className="panel-h">주소와 설정</h2>
-        <p>채널 본인 확인, 선물을 받을 주소, 차단한 팬, 프로필, 알림, 계정 보안을 한곳에서 관리해요.</p>
+      <div className="page-head">
+        <h2 className="t-title">주소와 설정</h2>
+        <p className="t-lead t-desc">채널 본인 확인, 선물을 받을 주소, 차단한 팬, 프로필, 알림, 계정 보안을 한곳에서 관리해요.</p>
       </div>
 
-      <div className={s["set-grid"]}>
-        <div className={s.col}>
-          <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
+      {/* 지금 상태 — 아래 카드들이 이미 들고 있는 값(주소 등록 여부·본인 확인·받는 상태)만 모아 보인다 */}
+      <ul className="grid cols-3 keep" aria-label="지금 상태">
+        <li className="card">
+          <p className="t-meta">받는 주소</p>
+          <p className={s["status-tag"]}>
+            {addressRegistered ? <span className={statusTagClass("success")}>등록됨</span> : <span className={statusTagClass("plain")}>등록 전</span>}
+          </p>
+        </li>
+        <li className="card">
+          <p className="t-meta">본인 확인</p>
+          <p className={s["status-tag"]}>
+            {verification.state.verified ? <span className={statusTagClass("success")}>확인 완료</span> : <span className={statusTagClass("plain")}>확인 전</span>}
+          </p>
+        </li>
+        <li className="card">
+          <p className="t-meta">선물 받기</p>
+          <p className={s["status-tag"]}>
+            {receiving.resumeOn === null ? <span className={statusTagClass("info")}>받는 중</span> : <span className={statusTagClass("plain")}>쉬는 중</span>}
+          </p>
+        </li>
+      </ul>
 
-          <section aria-labelledby="addr-h">
-            <div className={s["s-head"]}>
-              <h3 id="addr-h">받는 주소</h3>
-              {addressRegistered ? <span className={statusTagClass("success")}>등록됨</span> : <span className={statusTagClass("plain")}>등록 전</span>}
-            </div>
-            <div className={s.addr}>
-              <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
-              <div>
-                <p className={s["addr-t"]}>{addressRegistered ? "주소가 안전하게 등록돼 있어요" : "아직 주소를 등록하지 않았어요"}</p>
-                <p className="sub">
-                  {addressRegistered ? `주소는 잠가서 보관해요. ${PROMISE.address}` : `등록하면 바로 잠가서 보관해요. ${PROMISE.address}`}
-                </p>
-              </div>
-            </div>
-            <p className={`sub ${s.note}`}>
-              {addressRegistered ? "아직 출력하지 않은 주문은 바뀐 주소로 나가요." : "등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}
-            </p>
+      <nav aria-label="이 화면 바로가기" className={`tags ${s.jump}`}>
+        <a className={`chip ${s.chip}`} href="#verify">
+          본인 확인
+        </a>
+        <a className={`chip ${s.chip}`} href="#addr">
+          받는 주소
+        </a>
+        <a className={`chip ${s.chip}`} href="#blocked">
+          차단한 팬
+        </a>
+        <a className={`chip ${s.chip}`} href="#prof">
+          프로필
+        </a>
+        <a className={`chip ${s.chip}`} href="#link">
+          선물 링크
+        </a>
+        <a className={`chip ${s.chip}`} href="#recv">
+          선물 받기
+        </a>
+        <a className={`chip ${s.chip}`} href="#days">
+          생일과 기념일
+        </a>
+        <a className={`chip ${s.chip}`} href="#hard">
+          받기 어려운 품목
+        </a>
+        <a className={`chip ${s.chip}`} href="#reply">
+          감사 답장
+        </a>
+        <a className={`chip ${s.chip}`} href="#alarm">
+          알림
+        </a>
+        <a className={`chip ${s.chip}`} href="#security">
+          계정 보안
+        </a>
+      </nav>
+
+      <div className={`block-gap ${s.cards}`}>
+        {/* 본인 확인 칸은 자기 section(제목 포함)을 그린다 — 바깥은 이름 없는 section 이라 랜드마크가 되지 않고 카드 사이 간격만 다른 카드와 같아진다 */}
+        <section id="verify" className={`card ${s.set}`}>
+          <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
+        </section>
+
+        <section id="addr" className={`card ${s.set}`} aria-labelledby="addr-h">
+          <div className={s["set-head"]}>
+            <h3 className="t-card" id="addr-h">
+              받는 주소
+            </h3>
+            {addressRegistered ? <span className={statusTagClass("success")}>등록됨</span> : <span className={statusTagClass("plain")}>등록 전</span>}
+          </div>
+          <div className={`card card--soft ${s.inner}`}>
+            <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
+            <p className="t-strong">{addressRegistered ? "주소가 안전하게 등록돼 있어요" : "아직 주소를 등록하지 않았어요"}</p>
+            <p className={s["body-gap"]}>{addressRegistered ? `주소는 잠가서 보관해요. ${PROMISE.address}` : `등록하면 바로 잠가서 보관해요. ${PROMISE.address}`}</p>
+          </div>
+          <p className="t-meta">{addressRegistered ? "아직 출력하지 않은 주문은 바뀐 주소로 나가요." : "등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}</p>
+          <div>
             <button
               className="btn btn--line"
               type="button"
@@ -262,29 +324,35 @@ export function CreatorSettingsPage({
             >
               {addressRegistered ? "주소 바꾸기" : "주소 등록하기"}
             </button>
-            <p className={`sub ${s["save-msg"]}`} role="status">
+            <p className={`t-meta ${s.msg}`} role="status">
               {addressMsg ?? ""}
             </p>
-          </section>
+          </div>
+        </section>
 
-          <section id="blocked" className={s.anchor} aria-labelledby="block-h">
-            <div className={s["s-head"]}>
-              <h3 id="block-h">차단한 팬</h3>
-              <span className="tag">{blocked.length}명</span>
-            </div>
-            {blocked.length === 0 ? (
-              <p className="sub">차단한 팬이 없어요.</p>
-            ) : (
-              <ul className={s.blist}>
-                {blocked.map((f, i) => (
-                  <li key={f.blockId} className={s.brow}>
+        <section id="blocked" className={`card ${s.set}`} aria-labelledby="block-h">
+          <div className={s["set-head"]}>
+            <h3 className="t-card" id="block-h">
+              차단한 팬
+            </h3>
+            <span className="tag">{blocked.length}명</span>
+          </div>
+          {blocked.length === 0 ? (
+            <p className="t-meta">차단한 팬이 없어요.</p>
+          ) : (
+            <ul className="grid cols-2">
+              {blocked.map((f, i) => (
+                <li key={f.blockId} className="card card--soft card-col">
+                  <div className={s.who}>
                     <FaceAvatar index={i} />
-                    <div className={s.who}>
-                      <strong>{f.fanNickname}</strong>
-                      <span className="sub">{formatDate(f.blockedAt)} 차단</span>
+                    <div>
+                      <p className="t-strong">{f.fanNickname}</p>
+                      <p className="t-meta">{formatDate(f.blockedAt)} 차단</p>
                     </div>
+                  </div>
+                  <div className="push">
                     <button
-                      className="btn btn--soft btn--sm"
+                      className="btn btn--line btn--sm btn--block"
                       type="button"
                       aria-label={`${f.fanNickname}님 차단 풀기`}
                       onClick={() => {
@@ -294,199 +362,193 @@ export function CreatorSettingsPage({
                     >
                       차단 풀기
                     </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className={`sub ${s.note}`}>차단을 풀어도 주소는 열리지 않아요. 새 선물도 한 건씩 카카오톡 서명으로 승인해야 나가요.</p>
-          </section>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="t-meta">차단을 풀어도 주소는 열리지 않아요. 새 선물도 한 건씩 카카오톡 서명으로 승인해야 나가요.</p>
+        </section>
 
-          <ReceivingSection initial={receiving} today={today} />
-          <HardItemsSection initial={hardItems} today={today} />
-          <ReplySettingsSection initial={replySettings} />
-        </div>
-
-        <div className={s.col}>
-          <LinkSection initial={link} photoBase={photoBase} verified={verification.state.verified} />
-
-          <section aria-labelledby="prof-h">
-            <div className={s["s-head"]}>
-              <h3 id="prof-h">프로필</h3>
-            </div>
-            <div className="field">
-              <label htmlFor="pub-name">공개 이름</label>
-              <input
-                className="input"
-                id="pub-name"
-                value={publicName}
-                // 글자 수는 저장 검사와 같은 셈(코드 포인트)으로 막는다 — maxLength 는 이모지를 두 글자로 센다
-                onChange={(e) => setPublicName(clipChars(e.target.value, PUBLIC_NAME_MAX))}
-                aria-describedby="pub-name-hint"
-              />
-              <p className="hint" id="pub-name-hint">
-                팬에게 보이는 이름이에요. {PUBLIC_NAME_MAX}자까지, 언제든 바꿀 수 있어요. 바꾼 기록은 운영팀이 볼 수 있어요.
-              </p>
-            </div>
-            <div className={`field ${s["intro-field"]}`}>
-              <label htmlFor="pub-intro">한 줄 소개</label>
-              <input
-                className="input"
-                id="pub-intro"
-                value={intro}
-                // 한 줄 — 붙여 넣은 줄바꿈은 띄어쓰기로 바꾼다(creator-link INV-E6)
-                onChange={(e) => setIntro(clipChars(e.target.value.replace(/[\r\n\u2028\u2029]+/g, " "), INTRO_MAX))}
-                aria-describedby="pub-intro-hint"
-              />
-              <p className="hint" id="pub-intro-hint">
-                선물 링크 페이지에 이름 아래 한 줄로 보여요. {INTRO_MAX}자까지 적을 수 있어요({charCount(intro.trim())}/{INTRO_MAX}). 전화번호·이메일·인터넷 주소는 쓸 수 없어요.
-              </p>
-            </div>
-            <div className={s["tags-field"]}>
-              <TagPicker
-                idBase="pub-tags"
-                options={tagOptions}
-                picked={tagIds}
-                custom={customTag}
-                onPickedChange={(next) => {
-                  setTagIds(next);
-                  setTagsBad(false);
-                }}
-                onCustomChange={(next) => {
-                  setCustomTag(next);
-                  setTagsBad(false);
-                }}
-                invalid={tagsBad ? { describedBy: "prof-msg" } : null}
-              />
-            </div>
-            <dl className={s.kv}>
-              <div>
-                <dt>방송 채널</dt>
-                <dd>{verification.state.channelTitle}</dd>
-              </div>
-              <div>
-                <dt>본인 확인</dt>
-                <dd>
-                  {verification.state.verified ? (
-                    <>
-                      <span className={statusTagClass("success")}>확인 완료</span>
-                    </>
-                  ) : (
-                    <span className="tag">확인 전</span>
-                  )}
-                </dd>
-              </div>
-            </dl>
-            <Switch
-              id="sw-find"
-              title="크리에이터 찾기에 보이기"
-              desc="끄면 크리에이터 찾기 목록에서만 빠져요. 내 페이지 링크·팔로우·선물 받기는 그대로예요. 본인 확인을 마쳐야 찾기에 보여요."
-              checked={visible}
-              onChange={setVisible}
+        <section id="prof" className={`card ${s.set}`} aria-labelledby="prof-h">
+          <div className={s["set-head"]}>
+            <h3 className="t-card" id="prof-h">
+              프로필
+            </h3>
+          </div>
+          <div>
+            <label className="label" htmlFor="pub-name">
+              공개 이름
+            </label>
+            <input
+              className="field"
+              id="pub-name"
+              value={publicName}
+              // 글자 수는 저장 검사와 같은 셈(코드 포인트)으로 막는다 — maxLength 는 이모지를 두 글자로 센다
+              onChange={(e) => setPublicName(clipChars(e.target.value, PUBLIC_NAME_MAX))}
+              aria-describedby="pub-name-hint"
             />
-            <button className={`btn ${s.save}`} type="button" aria-disabled={profileSaving} onClick={() => void saveProfile()}>
+            <p className="t-meta hint" id="pub-name-hint">
+              팬에게 보이는 이름이에요. {PUBLIC_NAME_MAX}자까지, 언제든 바꿀 수 있어요. 바꾼 기록은 운영팀이 볼 수 있어요.
+            </p>
+          </div>
+          <div>
+            <label className="label" htmlFor="pub-intro">
+              한 줄 소개
+            </label>
+            <input
+              className="field"
+              id="pub-intro"
+              value={intro}
+              // 한 줄 — 붙여 넣은 줄바꿈은 띄어쓰기로 바꾼다(creator-link INV-E6)
+              onChange={(e) => setIntro(clipChars(e.target.value.replace(/[\r\n\u2028\u2029]+/g, " "), INTRO_MAX))}
+              aria-describedby="pub-intro-hint"
+            />
+            <p className="t-meta hint" id="pub-intro-hint">
+              선물 링크 페이지에 이름 아래 한 줄로 보여요. {INTRO_MAX}자까지 적을 수 있어요({charCount(intro.trim())}/{INTRO_MAX}). 전화번호·이메일·인터넷 주소는 쓸 수 없어요.
+            </p>
+          </div>
+          <div>
+            <TagPicker
+              idBase="pub-tags"
+              options={tagOptions}
+              picked={tagIds}
+              custom={customTag}
+              onPickedChange={(next) => {
+                setTagIds(next);
+                setTagsBad(false);
+              }}
+              onCustomChange={(next) => {
+                setCustomTag(next);
+                setTagsBad(false);
+              }}
+              invalid={tagsBad ? { describedBy: "prof-msg" } : null}
+            />
+          </div>
+          <dl className="grid cols-2">
+            <div className="card card--soft">
+              <dt className="t-meta">방송 채널</dt>
+              <dd className={`t-strong ${s["kv-dd"]}`}>{verification.state.channelTitle}</dd>
+            </div>
+            <div className="card card--soft">
+              <dt className="t-meta">본인 확인</dt>
+              <dd className={s["kv-dd"]}>{verification.state.verified ? <span className={statusTagClass("success")}>확인 완료</span> : <span className="tag">확인 전</span>}</dd>
+            </div>
+          </dl>
+          <Switch
+            id="sw-find"
+            title="크리에이터 찾기에 보이기"
+            desc="끄면 크리에이터 찾기 목록에서만 빠져요. 내 페이지 링크·팔로우·선물 받기는 그대로예요. 본인 확인을 마쳐야 찾기에 보여요."
+            checked={visible}
+            onChange={setVisible}
+          />
+          <div>
+            <button className="btn" type="button" aria-disabled={profileSaving} onClick={() => void saveProfile()}>
               {profileSaving ? "저장하는 중…" : "프로필 저장"}
             </button>
-            <p className={profileMsg && !profileMsg.ok ? s.error : `sub ${s["save-msg"]}`} role="status" id="prof-msg">
-              {profileMsg && !profileMsg.ok ? (
-                <span className={s["error-mark"]} aria-hidden="true">
-                  !
-                </span>
-              ) : null}
+            <p className={msgClass(profileMsg)} role="status" id="prof-msg">
               {profileMsg?.text}
             </p>
-          </section>
+          </div>
+        </section>
 
-          <section aria-labelledby="alarm-h">
-            <div className={s["s-head"]}>
-              <h3 id="alarm-h">알림 받기</h3>
-            </div>
-            {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 끄는 스위치를 두지 않고 「끌 수 없는 알림」으로 알린다(notifications INV-N6 표, 2026-10-12 문제집 D7).
-                알림 스펙에 없는 종류(자동 반려 하루 전·주소가 열릴 때)의 스위치는 두지 않는다(my-account INV-A11) */}
-            <div className={s["switch-row"]}>
-              <MustDeliverNotice
-                audience="creator"
-                id="alarm-must"
-                className={s.txt}
-                bodyClassName="sub"
-                extra={`승인 요청은 놓치면 ${APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려돼요.`}
-              />
-            </div>
-            <Switch
-              id="sw-kakao"
-              title="카카오톡 알림"
-              desc="그 밖의 소식을 카카오톡으로 알려드려요."
-              checked={notify.kakao}
-              busy={notifySaving}
-              describedBy="alarm-must"
-              onChange={(v) => void toggleNotify("kakao", v)}
-            />
-            <Switch
-              id="sw-email"
-              title="이메일 알림"
-              desc="같은 소식을 확인된 이메일로 알려드려요."
-              checked={notify.email}
-              busy={notifySaving}
-              describedBy="alarm-must"
-              onChange={(v) => void toggleNotify("email", v)}
-            />
-            <p className={notifyMsg && !notifyMsg.ok ? s.error : `sub ${s["save-msg"]}`} role="status">
-              {notifyMsg && !notifyMsg.ok ? (
-                <span className={s["error-mark"]} aria-hidden="true">
-                  !
-                </span>
-              ) : null}
-              {notifyMsg?.text}
-            </p>
-          </section>
+        <LinkSection initial={link} photoBase={photoBase} verified={verification.state.verified} />
+        <ReceivingSection initial={receiving} today={today} />
+        <HardItemsSection initial={hardItems} today={today} />
+        <ReplySettingsSection initial={replySettings} />
 
-          {/* 번호 바꾸기(signup INV-U12)·비밀번호 바꾸기(session-login INV-L12)는 팬 내 정보와 같은 칸을 그대로 쓴다 —
-              두 서버 처리 모두 로그인 토큰의 사람 것만 바꾸고 역할을 가리지 않는다 */}
-          <section aria-labelledby="security-h">
-            <div className={s["s-head"]}>
-              <h3 id="security-h">계정 보안</h3>
+        <section id="alarm" className={`card ${s.set}`} aria-labelledby="alarm-h">
+          <div className={s["set-head"]}>
+            <h3 className="t-card" id="alarm-h">
+              알림 받기
+            </h3>
+          </div>
+          {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 끄는 스위치를 두지 않고 「끌 수 없는 알림」으로 알린다(notifications INV-N6 표, 2026-10-12 문제집 D7).
+              알림 스펙에 없는 종류(자동 반려 하루 전·주소가 열릴 때)의 스위치는 두지 않는다(my-account INV-A11) */}
+          <div className={`card card--soft ${s.inner}`}>
+            <MustDeliverNotice
+              audience="creator"
+              id="alarm-must"
+              className={s.txt}
+              titleClassName="t-strong"
+              extra={`승인 요청은 놓치면 ${APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려돼요.`}
+            />
+          </div>
+          <Switch
+            id="sw-kakao"
+            title="카카오톡 알림"
+            desc="그 밖의 소식을 카카오톡으로 알려드려요."
+            checked={notify.kakao}
+            busy={notifySaving}
+            describedBy="alarm-must"
+            onChange={(v) => void toggleNotify("kakao", v)}
+          />
+          <Switch
+            id="sw-email"
+            title="이메일 알림"
+            desc="같은 소식을 확인된 이메일로 알려드려요."
+            checked={notify.email}
+            busy={notifySaving}
+            describedBy="alarm-must"
+            onChange={(v) => void toggleNotify("email", v)}
+          />
+          <p className={msgClass(notifyMsg)} role="status">
+            {notifyMsg?.text}
+          </p>
+        </section>
+
+        {/* 번호 바꾸기(signup INV-U12)·비밀번호 바꾸기(session-login INV-L12)는 팬 내 정보와 같은 칸을 그대로 쓴다 —
+            두 서버 처리 모두 로그인 토큰의 사람 것만 바꾸고 역할을 가리지 않는다 */}
+        <section id="security" className={`card ${s.set}`} aria-labelledby="security-h">
+          <div className={s["set-head"]}>
+            <h3 className="t-card" id="security-h">
+              계정 보안
+            </h3>
+          </div>
+          <ul className="grid cols-2">
+            <li className="card card--soft card-col">
+              <p className="t-strong">휴대폰 번호</p>
+              <p>{settings.phoneMasked ?? "등록된 번호가 없어요"}</p>
+              <p className="t-meta">바꾸려면 카카오 인증을 다시 받아요.</p>
+              <div className="push">
+                <button
+                  className="btn btn--line btn--sm btn--block"
+                  type="button"
+                  aria-expanded={security === "phone"}
+                  aria-controls="security-phone"
+                  onClick={() => toggleSecurity("phone")}
+                >
+                  번호 바꾸기
+                </button>
+              </div>
+            </li>
+            <li className="card card--soft card-col">
+              <p className="t-strong">비밀번호</p>
+              <p className="t-meta">바꾸면 다른 기기의 로그인은 모두 끝나요.</p>
+              <div className="push">
+                <button
+                  className="btn btn--line btn--sm btn--block"
+                  type="button"
+                  aria-expanded={security === "password"}
+                  aria-controls="security-password"
+                  onClick={() => toggleSecurity("password")}
+                >
+                  비밀번호 변경
+                </button>
+              </div>
+            </li>
+          </ul>
+          {security === "phone" && (
+            <div className={s["sec-panel"]}>
+              <PhoneChangePanel id="security-phone" onLoginExpired={toLogin} onChanged={() => router.refresh()} />
             </div>
-            <div className={s["switch-row"]}>
-              <div className={s.txt}>
-                <strong>휴대폰 번호</strong>
-                <span className="sub">{settings.phoneMasked ?? "등록된 번호가 없어요"} · 바꾸려면 카카오 인증을 다시 받아요.</span>
-              </div>
-              <button
-                className="btn btn--soft btn--sm"
-                type="button"
-                aria-expanded={security === "phone"}
-                aria-controls="security-phone"
-                onClick={() => toggleSecurity("phone")}
-              >
-                번호 바꾸기
-              </button>
+          )}
+          {security === "password" && (
+            <div className={s["sec-panel"]}>
+              <PasswordChangePanel id="security-password" onLoginExpired={toLogin} />
             </div>
-            {security === "phone" && (
-              <div className={s["sec-panel"]}>
-                <PhoneChangePanel id="security-phone" onLoginExpired={toLogin} onChanged={() => router.refresh()} />
-              </div>
-            )}
-            <div className={s["switch-row"]}>
-              <div className={s.txt}>
-                <strong>비밀번호</strong>
-                <span className="sub">바꾸면 다른 기기의 로그인은 모두 끝나요.</span>
-              </div>
-              <button
-                className="btn btn--soft btn--sm"
-                type="button"
-                aria-expanded={security === "password"}
-                aria-controls="security-password"
-                onClick={() => toggleSecurity("password")}
-              >
-                비밀번호 변경
-              </button>
-            </div>
-            {security === "password" && (
-              <div className={s["sec-panel"]}>
-                <PasswordChangePanel id="security-password" onLoginExpired={toLogin} />
-              </div>
-            )}
-          </section>
-        </div>
+          )}
+        </section>
       </div>
 
       <BottomSheet
@@ -497,17 +559,14 @@ export function CreatorSettingsPage({
         {sheet?.kind === "unblock" ? (
           <>
             <p>풀면 이 팬이 다시 선물을 보낼 수 있어요. 받지 않은 지난 선물은 그대로예요.</p>
-            <p className={`sub ${s["sheet-sub"]}`}>새로 온 선물도 한 건씩 카카오톡 서명으로 승인해야 주소가 열려요.</p>
+            <p className={`t-meta ${s["sheet-sub"]}`}>새로 온 선물도 한 건씩 카카오톡 서명으로 승인해야 주소가 열려요.</p>
             {unblockError ? (
-              <p className={s.error} role="alert">
-                <span className={s["error-mark"]} aria-hidden="true">
-                  !
-                </span>
+              <p className={`err ${s["sheet-err"]}`} role="alert">
                 {unblockError}
               </p>
             ) : null}
             <div className={s["sheet-btns"]}>
-              <button className="btn btn--soft" type="button" onClick={() => setSheet(null)}>
+              <button className="btn btn--line" type="button" onClick={() => setSheet(null)}>
                 돌아가기
               </button>
               <button className="btn" type="button" aria-disabled={saving} onClick={() => void confirmUnblock(sheet.fan)}>
@@ -518,7 +577,7 @@ export function CreatorSettingsPage({
         ) : (
           <>
             <p>주소를 {addressRegistered ? "바꾸" : "등록하"}려면 카카오톡 인증서 서명이 필요해요. 로그인만으로는 바꿀 수 없어요.</p>
-            <p className={`sub ${s["sheet-sub"]}`}>
+            <p className={`t-meta ${s["sheet-sub"]}`}>
               {addressRegistered
                 ? "새 주소도 이 브라우저에서 잠가서 보내요. 아직 출력하지 않은 주문은 바뀐 주소로 나가요."
                 : "주소는 이 브라우저에서 잠가서 보내요. 등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}
@@ -539,14 +598,11 @@ export function CreatorSettingsPage({
               />
             ) : (
               <>
-                <p className={s.error} role="status">
-                  <span className={s["error-mark"]} aria-hidden="true">
-                    !
-                  </span>
+                <p className={`err ${s["sheet-err"]}`} role="status">
                   주소 보호 설정이 아직 안 돼 있어요. 지금은 주소를 등록할 수 없어요.
                 </p>
                 <div className={s["sheet-btns"]}>
-                  <button className="btn btn--soft" type="button" onClick={() => setSheet(null)}>
+                  <button className="btn btn--line" type="button" onClick={() => setSheet(null)}>
                     돌아가기
                   </button>
                 </div>

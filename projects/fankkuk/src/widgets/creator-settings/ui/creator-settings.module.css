@@ -1,84 +1,79 @@
-/* 주소와 설정 화면 — 시안 v4 creator-settings.html <style>. 페이지 머리·끝 여백은 base.css 공용 */
+/* 주소와 설정 화면 — 시안 v11 creator-settings.html <style>. 설정 상자는 같은 모양 카드(.card)로 위→아래 한 줄.
+   공통 부품(.card·.card--soft·.grid·.opt·.sw-row·.tags·.chip·.field·.hint·.err)은 base.css 가 그린다 — 여기는 이 화면에만 있는 것 */
 
-.set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(40px, 6vw, 96px); align-items: start; margin-top: 24px; }
-.col { display: grid; gap: clamp(48px, 5vw, 72px); }
-.anchor { scroll-margin-top: 88px; } /* 붙박이 헤더(72px) 아래로 */
-.s-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.s-head h3 { font-size: 22px; letter-spacing: -.3px; }
+.set { display: grid; gap: 24px; scroll-margin-top: calc(var(--header-h) + 16px); }
+.set-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.inner { padding: 20px; }
+.set :global(.fs) > :global(.label) { margin-bottom: 12px; }
+.rule { width: 100%; height: 1px; margin: 0; border: 0; background: var(--border); }
+.status-tag { margin-top: 8px; }
+.kv-dd { margin: 4px 0 0; }
+.chip { text-decoration: none; }
+.chip:hover { background: var(--surface-hover); }
+.jump { margin-top: 24px; }
+.cards { margin-top: 40px; }
+/* 저장 버튼과 결과 줄을 한 덩어리로 — 비어 있는 결과 줄이 카드 안 간격(24)을 차지하지 않게 */
+.msg:not(:empty) { margin-top: 12px; }
+.body-gap { margin-top: 4px; }
+.inner-btn { margin-top: 16px; }
 
-.addr { display: flex; align-items: center; gap: 20px; padding: 28px; border-radius: var(--r-tile); background: var(--surface-brand); }
-.addr-ico { width: 72px; height: 72px; }
-.addr-t { margin-bottom: 4px; font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
-.note { margin-block: 16px 20px; }
+/* 받는 주소 — 자물쇠 그림 */
+.addr-ico { width: 72px; height: 72px; margin-bottom: 12px; }
 
-.blist { border-top: 1px solid var(--divider); }
-.brow { display: flex; align-items: center; gap: 16px; padding-block: 16px; border-bottom: 1px solid var(--divider); }
-.who { flex: 1; min-width: 0; display: grid; }
+/* 차단한 팬 · 계정 보안 — 칸 안 이름 줄 */
+.who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.who > div { min-width: 0; }
 
-.kv { margin-top: 24px; }
-.kv > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; padding-block: 14px; border-top: 1px solid var(--divider); }
-.kv dt { color: var(--sub); }
-.kv dd { font-weight: 600; }
-
-.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; padding-block: 14px; border-top: 1px solid var(--divider); }
-.txt { display: grid; }
-.switch-row :global(.btn) { flex-shrink: 0; white-space: nowrap; } /* 계정 보안 줄 — 좁은 폭에서 버튼 글자가 꺾이지 않게 */
-.sec-panel { padding-bottom: 16px; } /* 펼친 바꾸기 칸이 다음 줄 구분선에 붙지 않게 */
-.txt strong { font-weight: 600; }
-.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 52px; height: 32px; margin: 0; border-radius: var(--r-pill); background: var(--field-line); cursor: pointer; transition: background .15s; }
+/* 스위치 — 입력은 체크박스(role=switch) 그대로, 모양은 v11 .sw 와 같게 */
+.txt { display: grid; gap: 4px; }
+label.txt { cursor: pointer; }
+.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 56px; height: 32px; margin: 0; border-radius: var(--r-pill); background: var(--field-line); cursor: pointer; transition: background .15s; }
 .switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--white); transition: transform .15s; }
 .switch:checked { background: var(--brand); }
-.switch:checked::after { transform: translateX(20px); }
-.save { margin-top: 24px; }
-.save-msg { margin-top: 12px; }
-.intro-field { margin-top: 20px; }
-.tags-field { margin-top: 20px; }
-/* 소개글 — 문의 글상자와 같은 모양(inquiry-form .textarea) */
-.textarea { height: auto; padding: 16px 20px; line-height: 1.6; resize: vertical; }
+.switch:checked::after { transform: translateX(24px); }
+.switch:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.switch:disabled { cursor: not-allowed; opacity: .5; }
 
+/* 펼친 번호·비밀번호 바꾸기 칸 */
+.sec-panel { min-width: 0; }
+
+/* 확인 창(바텀시트) */
 .sheet-sub { margin-top: 8px; }
-.error { display: flex; align-items: flex-start; gap: 8px; margin-top: 16px; color: var(--ink); font-weight: 700; }
-.error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
+.sheet-err { margin-top: 16px; }
 .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
 
-/* 선물 받기·생일과 기념일 (creator-receiving) — 받는 상태 고르기는 선물 보내기의 알약 라디오(register-form .radios)와 같은 모양 */
-.radios { display: flex; flex-wrap: wrap; gap: 12px; }
-.radios label { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px 0 16px; border-radius: var(--r-pill); background: var(--surface); font-weight: 600; cursor: pointer; margin: 0; }
-.radios label:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand); }
-.radios label:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
-.radios input { width: 22px; height: 22px; accent-color: var(--brand); margin: 0; }
-.radios input:focus-visible { outline: none; }
-.recv-field { margin-top: 20px; }
+/* 생일과 기념일 — 월·일 두 칸, 기념일 줄(이름 · 월 · 일 · 빼기) */
 .md-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .ann-list { display: grid; gap: 12px; margin-bottom: 12px; }
 .ann-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 
-@media (max-width: 1023px) {
-  .set-grid { grid-template-columns: 1fr; }
-}
-@media (max-width: 767px) {
-  .addr { gap: 16px; padding: 20px; }
-  .addr-ico { width: 56px; height: 56px; }
-  .kv > div { grid-template-columns: 1fr; gap: 2px; }
-  .ann-row { grid-template-columns: minmax(0, 1fr) auto; }
-  .ann-row > .md-row { grid-column: 1 / -1; grid-row: 2; }
-}
-/* 받기 어려운 품목 (hard-items) — 고르는 묶음은 테두리 없는 fieldset, 제목(legend)은 칸 이름(label)과 같은 모양 */
-.fs { border: 0; padding: 0; margin-inline: 0; min-width: 0; }
-.fs > legend { padding: 0; margin-bottom: 8px; }
-.save-row { display: flex; flex-wrap: wrap; gap: 12px; }
-/* 선물 링크·프로필 사진·공지 이미지 (creator-link) — 주소 앞부분(fankkuk.kr/)은 칸 왼쪽에 붙인 글자 */
+/* 선물 링크 — 주소 앞부분(fankkuk.kr/, @)은 칸 왼쪽에 붙인 글자 */
 .handle-row { display: flex; align-items: center; gap: 8px; }
-.handle-host { flex-shrink: 0; color: var(--sub); font-weight: 600; }
-.handle-row :global(.input) { flex: 1; min-width: 0; }
-.link-now { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; padding: 16px 20px; border-radius: var(--r-box); background: var(--surface-brand); }
-.link-now > span { display: grid; min-width: 0; }
-.link-now strong { overflow-wrap: anywhere; }
-.photo-field { margin-top: 28px; }
+.handle-host { flex-shrink: 0; font-weight: 800; white-space: nowrap; }
+.handle-row :global(.field) { flex: 1; }
+.link-text { overflow-wrap: anywhere; }
 .photo-row { display: flex; align-items: center; gap: 20px; }
 .photo-prev { width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
 .photo-ctl { flex: 1; display: grid; gap: 12px; min-width: 0; }
 /* 파일 칸은 sr-only 로 숨기고 라벨(.pick)을 버튼 모양으로 — 키보드 포커스는 라벨에 그린다 */
 .file:focus-visible + .pick { outline: 3px solid var(--ink); outline-offset: 2px; }
-.photo-ctl .pick { display: inline-flex; margin-bottom: 0; font-weight: 700; cursor: pointer; } /* .field label(칸 이름 모양)을 버튼 모양으로 되돌린다 */
+.pick { cursor: pointer; }
 .file-name { overflow-wrap: anywhere; }
+
+@media (max-width: 767px) {
+  .set:global(.card) { padding: 20px; }
+  .set :global(.sw-row) { gap: 12px; padding: 16px; }
+  .addr-ico { width: 56px; height: 56px; }
+  .ann-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .ann-row > .md-row { grid-column: 1 / -1; grid-row: 2; }
+  .photo-row { align-items: flex-start; gap: 16px; }
+  .photo-prev { width: 72px; height: 72px; }
+}
+/* 버튼과 묶이지 않은 결과 줄(알림 받기)이 비어 있을 때 카드 안 간격만큼 끝이 떠 보이지 않게 — 알림 줄(role=status)은 화면에 남겨 둔다 */
+.set > .msg:empty { margin-top: -24px; }
+/* 선물 링크 — 지금 주소 두 줄, 복사·바꾸기 버튼 줄. 복사 버튼의 결과 줄(role=status)은 버튼 아래 한 줄로 */
+.link-now { margin-top: 8px; }
+.link-btns > :global(.hint) { order: 1; flex-basis: 100%; margin-top: 0; }
+.link-btns > :global(.hint:empty) { margin-top: -12px; }
+/* 링크 주소 결과 줄은 버튼 줄과 따로 있다 — 비었을 때 카드 안 간격을 지운다 */
+.set-msg:empty { margin-top: -24px; }

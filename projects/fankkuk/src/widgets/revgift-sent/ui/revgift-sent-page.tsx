@@ -13,7 +13,7 @@ import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import s from "./revgift-sent.module.css";
 
-// 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v4/creator-revgift-list.html
+// 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v11/creator-revgifts.html — 묶음마다 팬 카드 3열(휴대폰 1열)
 // 한 줄에 보이는 것은 팬 닉네임·주문번호·상태 배지(셋 중 하나)뿐이다 — 팬 로그인 아이디도 싣지 않는다(reverse-gift INV-R8).
 // 몫마다 송장번호 줄이 붙는다(시안 creator-revgift-boxes.html). 배송 조회를 보고 싶을 때만 넣는 선택 칸이다(inbound-address-code INV-C7).
 // 입고 전엔 넣고 고치고, 입고되면 「입고됨」으로 잠긴다.
@@ -46,145 +46,140 @@ function ShareWaybill({ box, fanNickname, shareState }: { box: ShareBox; fanNick
     );
   }
   return (
-    <div className={s["share-inv"]}>
-      <span className={s.lab}>송장번호</span>
-      <span className={statusTagClass("success")}>
-        <Check />
-        입고됨
-      </span>
-      <span className={s.lab}>사무실에 도착해 확인했어요</span>
+    <div>
+      <p className="t-meta">송장번호</p>
+      <p className={`tags ${s["inv-tags"]}`}>
+        <span className={statusTagClass("success")}>
+          <Check />
+          입고됨
+        </span>
+        <span className="t-meta">사무실에 도착해 확인했어요</span>
+      </p>
     </div>
   );
 }
 
 function batchSummary(shares: readonly SentRevgift[]): string {
   const n = countBatchStates(shares);
-  const parts = [
-    n.accepted ? `받은 팬 ${n.accepted}명` : "",
-    n.waiting ? `기다리는 중 ${n.waiting}명` : "",
-    n.not_received ? `받지 않은 팬 ${n.not_received}명` : "",
-  ].filter(Boolean);
+  const parts = [n.accepted ? `받은 팬 ${n.accepted}명` : "", n.waiting ? `기다리는 중 ${n.waiting}명` : "", n.not_received ? `받지 않은 팬 ${n.not_received}명` : ""].filter(
+    Boolean,
+  );
   return n.not_received ? `${parts.join(" · ")} (받지 않은 상자 요금은 환불돼요)` : parts.join(" · ");
 }
 
 function AddressGuide({ headId }: { headId: string }) {
   return (
-    <div className={s.addr} role="group" aria-labelledby={headId}>
-      <p className={s["addr-title"]} id={headId}>
+    <div className={`card card--soft ${s.guide}`} role="group" aria-labelledby={headId}>
+      <p className="t-card" id={headId}>
         팬마다 받는 주소가 달라요
       </p>
-      <p className={s["addr-note"]}>
-        팬 한 명마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 팬이 받기를 누를 때까지 기다리지 않고 보내셔도 돼요. 받지 않은 팬의 상자는 돌려보내고 그 상자 요금은 환불돼요.
+      <p className={s["body-gap"]}>
+        팬 한 명마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 팬이 받기를 누를 때까지 기다리지 않고 보내셔도 돼요. 받지 않은 팬의
+        상자는 돌려보내고 그 상자 요금은 환불돼요.
       </p>
     </div>
   );
 }
 
-export function RevgiftSentPage({
-  rows,
-  boxes,
-  paid,
-  officeAddress,
-}: {
-  rows: readonly SentRevgift[];
-  boxes: readonly ShareBox[];
-  paid: boolean;
-  officeAddress: string;
-}) {
+export function RevgiftSentPage({ rows, boxes, paid, officeAddress }: { rows: readonly SentRevgift[]; boxes: readonly ShareBox[]; paid: boolean; officeAddress: string }) {
   const batches = toSentBatches(rows, officeAddress);
   const boxByOrder = new Map(boxes.map((b) => [b.orderNo, b]));
   // 받는 주소 없이 보냈어요(INV-C4 ②) — 고를 수 있는 몫의 판정은 features/box-waybill/model/box-targets.ts
   const finderBoxes = shareFinderBoxes(rows, boxes);
   return (
     <div>
-      <div className="panel-head">
-        <div>
-          <h2 className="panel-h">보낸 역조공</h2>
-          <p>팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
-        </div>
-        <Link className="btn btn--sm" href="/creator/revgifts/new">
-          역조공 보내기
-        </Link>
+      <div className="page-head">
+        <h2 className="t-title">보낸 역조공</h2>
+        <p className="t-lead t-desc">팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
+        <p className={s["head-btn"]}>
+          <Link className="btn" href="/creator/revgifts/new">
+            역조공 보내기
+          </Link>
+        </p>
       </div>
       {paid ? (
         <p className={s.paid} role="status">
-          <strong>결제가 끝났어요.</strong>
-          <span>팬마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소로 보내 주세요.</span>
+          <strong>결제가 끝났어요.</strong> 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소로 보내 주세요.
         </p>
       ) : null}
-      <div className={s["rule-line"]}>
-        <img className={`asset ${s.ico}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={56} height={56} />
+      {/* 이름 없는 section — 화면 읽기 랜드마크가 되지 않고, 구간 사이 간격(64·휴대폰 48)만 공통 규칙을 따른다 */}
+      <section className="card card--soft">
+        <img className={`asset ${s.lock}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={56} height={56} />
         <p>
-          <strong>팬의 주소와 실명은 보이지 않아요.</strong>
-          <span>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span>
+          <strong className={`t-card ${s["privacy-t"]}`}>팬의 주소와 실명은 보이지 않아요.</strong>
+          <span className={`${s["privacy-t"]} ${s["body-gap"]}`}>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span>
         </p>
-      </div>
+      </section>
       {batches.length === 0 ? (
-        <div className={s.empty}>
-          <h3>아직 보낸 역조공이 없어요</h3>
-          <p className="sub">나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
-        </div>
+        <section className="empty">
+          <h3 className="t-card">아직 보낸 역조공이 없어요</h3>
+          <p className="t-meta">나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
+        </section>
       ) : (
         batches.map((b, bi) => (
-          <section key={b.sentAt} className={s.batch} aria-labelledby={`rv-batch-${bi}`}>
-            <div className={s["batch-head"]}>
-              <h3 id={`rv-batch-${bi}`}>{formatDateTime(b.sentAt)} 보낸 역조공</h3>
-              <p className={s.facts}>팬 {b.shares.length}명</p>
-            </div>
+          <section key={b.sentAt} aria-labelledby={`rv-batch-${bi}`}>
+            <h3 className="t-card" id={`rv-batch-${bi}`}>
+              {formatDateTime(b.sentAt)} 보낸 역조공
+            </h3>
+            <p className={`t-meta ${s.facts}`}>
+              팬 {b.shares.length}명 · {batchSummary(b.shares)}
+            </p>
             {b.officeAddress && b.shares.some((x) => shareAddressCode(boxByOrder.get(x.orderNo), b.officeAddress, x.state)) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
-            <ul className={s.shares}>
+            <ul className={`grid cols-3 ${s.shares}`}>
               {b.shares.map((x, i) => {
                 const tag = sentStateTag(x.state);
                 const box = boxByOrder.get(x.orderNo);
                 const addressCode = shareAddressCode(box, b.officeAddress, x.state);
                 return (
-                  <li key={x.orderNo} className={s.share}>
-                    <FaceAvatar index={i} />
-                    <div>
-                      <p className={s.nick}>{x.fanNickname}</p>
-                      <p className={s.says}>
-                        주문번호 {x.orderNo}
-                      </p>
-                    </div>
-                    <span className={statusTagClass(tag.tone, s.tag)}>{tag.tag}</span>
-                    {b.officeAddress && addressCode ? (
-                      <div className={s["share-extra"]}>
-                        <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
+                  <li key={x.orderNo} className="card card-col">
+                    <div className={s.who}>
+                      <FaceAvatar index={i} />
+                      <div>
+                        <p className="t-card">{x.fanNickname}</p>
+                        <p className={`t-meta ${s["order-no"]}`}>주문번호 {x.orderNo}</p>
                       </div>
+                    </div>
+                    <p>
+                      <span className={statusTagClass(tag.tone)}>{tag.tag}</span>
+                    </p>
+                    {b.officeAddress && addressCode ? (
+                      <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
                     ) : null}
                     {box ? <ShareWaybill box={box} fanNickname={x.fanNickname} shareState={x.state} /> : null}
                     {box && canReportNotMine(box.state) ? (
-                      <div className={s["share-extra"]}>
-                        <NotMineButton target={{ kind: "share", id: box.shareId }} boxName={`${x.fanNickname}님 상자`} reported={box.reportedNotMine} />
-                      </div>
+                      <NotMineButton target={{ kind: "share", id: box.shareId }} boxName={`${x.fanNickname}님 상자`} reported={box.reportedNotMine} />
                     ) : null}
                   </li>
                 );
               })}
             </ul>
-            <p className={s["batch-sum"]}>{batchSummary(b.shares)}</p>
           </section>
         ))
       )}
       {finderBoxes.length > 0 ? (
-        <section className={s.batch} aria-labelledby="rv-find">
-          <div className={s["batch-head"]}>
-            <h3 id="rv-find">받는 주소 없이 보냈어요</h3>
+        <section className="card" aria-labelledby="rv-find">
+          <h3 className="t-card" id="rv-find">
+            받는 주소 없이 보냈어요
+          </h3>
+          <p className={s["find-text"]}>
+            받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 그 팬의 상자로 이어져요. 하루에 다섯 번까지 찾을
+            수 있어요.
+          </p>
+          <div className={s["find-box"]}>
+            <FindMyBox boxes={finderBoxes} />
           </div>
-          <p className="sub">받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 그 팬의 상자로 이어져요. 하루에 다섯 번까지 찾을 수 있어요.</p>
-          <FindMyBox boxes={finderBoxes} />
         </section>
       ) : null}
-      <div className={s["foot-note"]}>
-        <strong>알아 두세요</strong>
-        <ul>
+      <section className="card">
+        <strong className="t-card">알아 두세요</strong>
+        <ul className={s.notes}>
           <li>「받지 않았어요」는 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
           <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
           <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
           <li>송장번호는 배송 조회를 보고 싶을 때만 넣어요. 상자가 사무실에 도착하기 전까지만 고칠 수 있고, 입고되면 「입고됨」으로 바뀌고 잠겨요.</li>
           <li>상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 받는 주소가 달라요.</li>
         </ul>
-      </div>
+      </section>
     </div>
   );
 }

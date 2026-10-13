@@ -1,42 +1,23 @@
-/* 보낸 역조공 — 시안 v4 creator-revgift-list.html <style> */
-.paid { display: grid; gap: 4px; margin-bottom: 24px; padding: 16px 20px; border-radius: var(--r-box); background: var(--brand-soft); color: var(--brand-ink); }
-.rule-line { display: flex; align-items: center; gap: 16px; padding-block: 8px; }
-.ico { width: 56px; height: 56px; flex-shrink: 0; }
-.rule-line strong { display: block; font-size: 18px; letter-spacing: -.3px; }
-.rule-line span { color: var(--sub); }
+/* 보낸 역조공 — 시안 v11 creator-revgifts.html <style>. 카드·격자·태그·빈 상태는 base.css 공통 부품 */
 
-.batch { margin-top: 32px; }
-.batch-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding-bottom: 12px; }
-.batch-head h3 { font-size: 22px; letter-spacing: -.3px; }
-.facts { color: var(--sub); }
-.shares { border-top: 1px solid var(--divider); }
-.share { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; padding-block: 16px; border-bottom: 1px solid var(--divider); }
-.nick { font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
-.says { color: var(--sub); overflow-wrap: anywhere; }
-.tag { justify-self: end; }
-.share-inv { grid-column: 1 / -1; margin-left: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.lab { color: var(--sub); }
-.batch-sum { margin-top: 12px; color: var(--sub); }
-.empty { margin-top: 40px; padding: 48px 24px; border-radius: var(--r-card); background: var(--surface); text-align: center; }
-.empty h3 { font-size: 22px; letter-spacing: -.3px; }
-.empty p { margin-top: 8px; }
-.foot-note { margin-top: 56px; padding: 20px 24px; border-radius: var(--r-box); background: var(--surface-brand); }
-.foot-note ul { display: grid; gap: 4px; margin-top: 8px; padding: 0; list-style: none; color: var(--sub); }
-.foot-note li { display: flex; gap: 12px; }
-.foot-note li::before { content: ""; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+.head-btn { margin-top: 24px; }
+/* 결제 끝 안내 — 아래 판과 붙지 않게 쌓인 판 사이 간격(32) */
+.paid { margin-bottom: 32px; padding: 16px 20px; border-radius: var(--r-btn); background: var(--success-soft); color: var(--success); }
+.lock { width: 56px; height: 56px; margin-bottom: 12px; }
+.privacy-t { display: block; }
+.body-gap { margin-top: 8px; }
 
-@media (max-width: 767px) {
-  .ico { width: 48px; height: 48px; }
-  .batch { margin-top: 32px; }
-  .share { grid-template-columns: 48px minmax(0, 1fr); }
-  .tag { grid-column: 2; justify-self: start; }
-  .share-inv { margin-left: 0; }
-}
+/* 묶음 — 제목 아래 상태 한 줄, 안내 판, 팬 카드 3열(휴대폰 1열) */
+.facts { margin-top: 4px; }
+.guide { margin-top: 16px; }
+.shares { margin-top: 24px; }
+.who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.who > div { min-width: 0; }
+.order-no { overflow-wrap: anywhere; }
+.inv-tags { align-items: center; }
 
-/* 받는 주소 안내(INV-R14, inbound-address-code INV-C2) — 묶음 머리의 안내 상자. 주소 자체는 팬(몫)마다 아래 줄에 붙는다 */
-.addr { margin-bottom: 16px; padding: 20px 24px; border-radius: var(--r-card); box-shadow: var(--hair); }
-.addr-title { font-size: 18px; font-weight: 700; }
-.addr-note { margin-top: 8px; color: var(--sub); }
-/* 몫 줄 아래 붙는 받는 주소 · 「제가 보낸 게 아니에요」 — 아바타 폭만큼 들여 쓴다 */
-.share-extra { grid-column: 1 / -1; margin-left: 64px; min-width: 0; }
-@media (max-width: 767px) { .share-extra { margin-left: 0; } .addr { padding: 20px; } }
+.find-text { margin-top: 8px; }
+.find-box { margin-top: 24px; }
+
+.notes { display: grid; gap: 8px; margin-top: 16px; padding: 0; list-style: none; color: var(--ink); }
+
