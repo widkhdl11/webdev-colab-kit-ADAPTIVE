@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import s from "./approval-requests.module.css";
 
-// 승인·받은 선물 탭(시안 creator-received.html) — 확인할 선물이 있으면 가운데에 하나 더(2026-10-12 (2) D3 ②). 좌우 화살표로 옮겨 가고, 고른 탭만 Tab 순서에 남는다(선물 내역 탭과 같은 방식).
+// 승인·받은 선물 탭(시안 v11 creator-requests.html · creator-boxes.html 의 .tabs — 모양은 base.css 공통 탭) — 확인할 선물이 있으면 가운데에 하나 더(2026-10-12 (2) D3 ②). 좌우 화살표로 옮겨 가고, 고른 탭만 Tab 순서에 남는다(선물 내역 탭과 같은 방식).
 // 처음 고른 탭은 주소(?tab=received)로 정한다 — 서버가 넘긴다.
 
 export type CreatorGiftTab = { id: "requests" | "checks" | "received"; label: string; count: number; panel: ReactNode };
@@ -58,14 +57,14 @@ export function CreatorGiftTabs({ tabs: given, initial }: { tabs: readonly Creat
 
   return (
     <>
-      <div className={s.tabs} role="tablist" aria-label="승인·받은 선물 구분">
+      <div className="tabs" role="tablist" aria-label="승인·받은 선물 구분">
         {tabs.map((t, i) => (
           <button
             key={t.id}
             ref={(el) => {
               buttons.current[i] = el;
             }}
-            className={s.tab}
+            className="tab"
             role="tab"
             id={`gift-tab-${t.id}`}
             type="button"
@@ -76,7 +75,7 @@ export function CreatorGiftTabs({ tabs: given, initial }: { tabs: readonly Creat
             onKeyDown={(e) => onKeyDown(e, i)}
           >
             {t.label}
-            <span className={s.n}>{t.count}</span>
+            <span className="n">{t.count}</span>
           </button>
         ))}
       </div>

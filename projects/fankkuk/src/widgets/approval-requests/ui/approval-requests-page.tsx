@@ -12,7 +12,8 @@ import s from "./approval-requests.module.css";
 
 // 크리에이터 — 승인·받은 선물. 탭: 승인 요청(한 건씩 보고 승인·거절, 전체 승인은 없다) · 확인할 선물(추적기 아님 블루투스·RF 상자를 받을지 —
 // 답을 기다리는 상자가 있거나 그 탭으로 들어왔을 때만, 2026-10-12 (2) D3 ②) · 받은 선물(출고된 상자마다 받았어요·답장, gift-reply).
-// 시안: docs/design/mockups/site/v4/creator-requests.html(승인 요청) · docs/design/mockups/addendum/creator-received.html(탭·받은 선물)
+// 시안: docs/design/mockups/site/v11/creator-requests.html(승인 요청) · creator-boxes.html(받은 선물). 바깥 탭(승인 요청·확인할 선물·받은 선물)은
+// 시안에도 있다 — 주소(?tab=)로 고르는 동작과 확인할 선물 탭의 기억(INV-W4)은 그대로 둔다. 시안이 없앤 「안쪽 탭」은 승인 요청 목록 안의 대기/처리 구분이다.
 // 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리는 서로 import 하지 않는다(FSD).
 export function ApprovalRequestsPage({
   requests,
@@ -37,10 +38,10 @@ export function ApprovalRequestsPage({
 }) {
   const showChecks = checks.length > 0 || initialTab === "checks";
   return (
-    <div>
-      <div className="panel-title">
-        <h2 className="panel-h">승인·받은 선물</h2>
-        <p>팬이 보낸 선물을 받을지 정하고, 받은 선물에 답장을 남기는 곳이에요.</p>
+    <>
+      <div className="page-head">
+        <h2 className="t-title">승인·받은 선물</h2>
+        <p className="t-lead t-desc">팬이 보낸 선물을 받을지 정하고, 받은 선물에 답장을 남기는 곳이에요.</p>
       </div>
 
       <CreatorGiftTabs
@@ -52,13 +53,15 @@ export function ApprovalRequestsPage({
             count: requests.length,
             panel: (
               <>
-                <p className="sub">{APPROVAL_DEADLINE_DAYS}일 안에 정하지 않으면 자동으로 받지 않음 처리돼요.</p>
-                <div className={s["rule-line"]}>
-                  <img className={`asset ${s.ico}`} src="/img/icon-approve.png" alt="" aria-hidden="true" width={56} height={56} />
+                <section className="card card--soft" aria-labelledby="rule-h">
+                  <img className={s.ico} src="/img/icon-approve.png" alt="" aria-hidden="true" width={56} height={56} />
+                  <h3 className="t-card" id="rule-h">
+                    선물은 한 건씩, 카카오톡으로 승인해요.
+                  </h3>
                   <p>
-                    <strong>선물은 한 건씩, 카카오톡으로 승인해요.</strong> {PROMISE.address}
+                    {PROMISE.address} {APPROVAL_DEADLINE_DAYS}일 안에 정하지 않으면 자동으로 받지 않음 처리돼요.
                   </p>
-                </div>
+                </section>
                 <ApprovalRequestList requests={requests} decided={decided} now={now} />
               </>
             ),
@@ -69,6 +72,6 @@ export function ApprovalRequestsPage({
           { id: "received", label: "받은 선물", count: received.length, panel: <ReceivedBoxList boxes={received} pending={replyPending} /> },
         ]}
       />
-    </div>
+    </>
   );
 }

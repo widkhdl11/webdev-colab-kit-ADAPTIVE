@@ -1,30 +1,17 @@
-/* 주소 열람 기록 화면 — 시안 v4 creator-log.html <style>. 본문 머리(panel-title)는 base.css 공용 */
-.records { margin-top: 32px; }
-.strong { color: var(--ink); font-weight: 700; }
+/* 주소 열람 기록 화면 전용 — 시안 v11 creator-log.html <style> 과 인라인 값. 머리·카드·표는 base.css 공통 */
+.strong { color: var(--ink); }
 
-.month { display: flex; align-items: center; gap: clamp(20px, 3vw, 40px); padding: clamp(24px, 3vw, 40px); border-radius: var(--r-tile); background: var(--surface-brand); }
-.ico { width: 96px; height: 96px; }
-.month-body { flex: 1; min-width: 0; }
-.month-h { font-size: 22px; letter-spacing: -.3px; }
-.nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
-.nums dt { color: var(--sub); font-weight: 600; }
-.nums dd { font-size: clamp(32px, 3.4vw, 44px); line-height: 1.2; font-weight: 800; letter-spacing: -1.5px; font-variant-numeric: tabular-nums; }
-.nums small { margin-left: 4px; font-size: 18px; font-weight: 700; letter-spacing: 0; color: var(--sub); }
-.rules { margin-top: 16px; }
-.empty { padding-block: 32px; }
+/* 이번 달 숫자 — 시안 .num */
+.nums { margin: 0; }
+.nums dt { font-weight: 400; }
+.num { margin: 4px 0 0; font-size: var(--fs-hero); font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.num small { margin-left: 4px; font-size: var(--fs-card); font-weight: 800; }
 
-.log-table { width: 100%; border-collapse: collapse; }
-.log-table th { padding: 12px 16px 12px 0; text-align: left; color: var(--sub); font-weight: 600; border-bottom: 1px solid var(--divider-mid); }
-.log-table td { padding: 18px 16px 18px 0; border-bottom: 1px solid var(--divider); vertical-align: middle; }
-.nw { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.log-list { display: none; margin-top: 8px; border-top: 1px solid var(--divider); }
-.lrow { display: grid; gap: 2px; padding-block: 18px; border-bottom: 1px solid var(--divider); }
+/* 안내 판 위 아이콘 — 시안 인라인 값 72px, 아래 12px */
+.ico { width: 72px; height: 72px; margin-bottom: 12px; object-fit: contain; }
 
-/* 「내 팬꾹」 왼쪽 메뉴 옆이라 1023px 이하에서는 본문 칸이 표에 좁다 — 거기서부터 목록으로 */
-@media (max-width: 1023px) {
-  .log-table { display: none; }
-  .log-list { display: block; }
-}
-@media (max-width: 767px) {
-  .ico { display: none; }
-}
+.nw { font-variant-numeric: tabular-nums; }
+
+/* 작은 제목 → 판 32(휴대폰 24) — 공통 간격 규칙(h3 + .table-wrap)이 빈 안내(.empty)는 세지 않아 같은 값을 둔다 */
+.gap { margin-top: 32px; }
+@media (max-width: 767px) { .gap { margin-top: 24px; } }

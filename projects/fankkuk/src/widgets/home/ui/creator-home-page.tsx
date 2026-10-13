@@ -9,13 +9,13 @@ import type { SendAvailability } from "@/features/gift-register/model/sender-rul
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { statusTagClass } from "@/shared/ui/status-tone";
-import { BrandPanel } from "./brand-panel";
 import s from "./home.module.css";
+import { HomeHero } from "./home-hero";
 import { HomeNotices, type HomeNotice } from "./home-notices";
 import { NewCreators } from "./new-creators";
 
-// 크리에이터 메인 — 로그인하면 먼저 나오는 첫 화면. 시안: docs/design/mockups/site/v9-home/creator-a.html (카드 d40)
-// 팬 메인과 같은 틀이다: 왼쪽 서비스 첫 판 + 오른쪽 내 카드, 아래 새로 들어온 크리에이터 · 공지.
+// 크리에이터 메인 — 로그인하면 먼저 나오는 첫 화면. 시안: docs/design/mockups/site/v11/home-creator.html (v9 creator-a 카드 d40 → v11)
+// 팬 메인과 같은 틀이다: 서비스 첫 화면, 그 아래 내 구간(승인 대기 판 + 카드 셋), 새로 들어온 크리에이터 · 공지.
 // 사용자 「기본적으로 서비스 플랫폼이다. 너~~무 배송업무 중심으로만 보이면 사이트가 정나미 없을 거 같아」.
 // 필수 다섯(오늘 승인할 선물 · 진행 중인 선물 · 최근 열람 기록 · 공지 · 내가 보낸 선물, 카드 d15)은 내 카드와 공지에 모두 있다.
 // 이 화면에는 서명 버튼을 두지 않는다 — 승인은 승인 요청 화면에서 한 건씩 서명한다.
@@ -50,98 +50,94 @@ const MAX_REQUESTS = 2;
 /** 「최근 열람 기록」은 한 줄만 쓴다 — 라우트가 이만큼만 읽는다. */
 export const CREATOR_HOME_LOG_ROWS = 1;
 
-function MyCard({ nickname, requests, accessLog, incoming, sentGifts, now }: Omit<Props, "notices" | "newest" | "chips" | "sendOf">) {
+function MySection({ nickname, requests, accessLog, incoming, sentGifts, now }: Omit<Props, "notices" | "newest" | "chips" | "sendOf">) {
   const waiting = requests.length;
   const ongoing = incoming.filter(isIncomingInProgress).length;
   const lastLog = accessLog[0];
   return (
-    <aside className={s["me-card"]} aria-labelledby="me-title">
-      <div className={s.hi}>
-        <h2 id="me-title">{nickname}님</h2>
-        <span className={s.sub}>크리에이터</span>
-      </div>
-      <p className={s["wait-big"]}>
-        <span className={s.n}>승인 대기</span>
-        <b>{waiting}</b>
-        <span className={s.n}>건</span>
-      </p>
-      {waiting === 0 ? (
-        <p className={`${s.sub} ${s["me-empty"]}`}>기다리는 승인 요청이 없어요.</p>
-      ) : (
-        <ul className={s["me-gifts"]} aria-label="승인 대기 선물 중 남은 기간이 짧은 순서">
-          {requests.slice(0, MAX_REQUESTS).map((r, i) => (
-            <li key={r.orderNo}>
-              <Link href="/creator/requests" aria-label={`${r.fanNickname}님의 선물 · ${approvalTimeLeftLabel(r.registeredAt, now)} · 승인하러 가기`}>
-                <FaceAvatar index={i} className={`face ${s["face-sm"]}`} />
-                <span className={s.w}>{r.fanNickname}님의 선물</span>
-                <span className={statusTagClass("warn")}>{approvalTimeLeftLabel(r.registeredAt, now)}</span>
+    <section className="section section--compact" aria-labelledby="me-title">
+      <div className="container">
+        <div className="sec-head">
+          <h2 id="me-title">
+            {nickname}님 <span className={`t-body t-meta ${s.role}`}>크리에이터</span>
+          </h2>
+        </div>
+        <div className="stack">
+          <div className={`card card--soft ${s.wait}`}>
+            <h3>승인 대기</h3>
+            <p className="bignum">
+              {waiting}
+              <span>건</span>
+            </p>
+            {waiting === 0 ? (
+              <p className="t-meta">기다리는 승인 요청이 없어요.</p>
+            ) : (
+              <ul className="mine-list" aria-label="승인 대기 선물 중 남은 기간이 짧은 순서">
+                {requests.slice(0, MAX_REQUESTS).map((r, i) => (
+                  <li key={r.orderNo}>
+                    <Link href="/creator/requests" aria-label={`${r.fanNickname}님의 선물 · ${approvalTimeLeftLabel(r.registeredAt, now)} · 승인하러 가기`}>
+                      <FaceAvatar index={i} className="face face--sm" />
+                      <span className="w">{r.fanNickname}님의 선물</span>
+                      <span className={statusTagClass("warn")}>{approvalTimeLeftLabel(r.registeredAt, now)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div>
+              <Link className={waiting === 0 ? "btn btn--line" : "btn"} href="/creator/requests">
+                {waiting === 0 ? "승인 요청 보기" : "승인하러 가기"}
               </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-      <Link className={waiting === 0 ? "btn btn--soft" : "btn"} href="/creator/requests">
-        {waiting === 0 ? "승인 요청 보기" : "승인하러 가기"}
-      </Link>
-      <ul className={s["me-links"]}>
-        {/* 받은 선물을 한 건씩 보는 화면이 아직 없어 승인 요청 화면(대기·결정한 요청)으로 잇는다 — BACKLOG */}
-        <li>
-          <Link href="/creator/requests">
-            <span>진행 중인 선물</span>
-            <b>{ongoing}개</b>
-            <span className={s.accent} aria-hidden="true">
-              ›
-            </span>
-          </Link>
-        </li>
-        <li>
-          <Link href="/gifts">
-            <span>내가 보낸 선물</span>
-            <b>{sentGifts.length}개</b>
-            <span className={s.accent} aria-hidden="true">
-              ›
-            </span>
-          </Link>
-        </li>
-        <li>
-          <Link href="/creator/log">
-            <span>{lastLog ? `최근 열람 ${formatDateTime(lastLog.at)}` : "아직 주소가 열린 적이 없어요"}</span>
-            <span className={s.accent} aria-hidden="true">
-              ›
-            </span>
-          </Link>
-        </li>
-      </ul>
-    </aside>
+            </div>
+          </div>
+          <div className="grid cols-3">
+            {/* 받은 선물을 한 건씩 보는 화면이 아직 없어 승인 요청 화면(대기·결정한 요청)으로 잇는다 — BACKLOG */}
+            <Link className={`card ${s["link-card"]}`} href="/creator/requests">
+              <h3>진행 중인 선물</h3>
+              <p className="bignum">
+                {ongoing}
+                <span>개</span>
+              </p>
+            </Link>
+            <Link className={`card ${s["link-card"]}`} href="/gifts">
+              <h3>내가 보낸 선물</h3>
+              <p className="bignum">
+                {sentGifts.length}
+                <span>개</span>
+              </p>
+            </Link>
+            <Link className={`card ${s["link-card"]}`} href="/creator/log">
+              <h3>최근 열람 기록</h3>
+              <p>{lastLog ? `최근 열람 ${formatDateTime(lastLog.at)}` : "아직 주소가 열린 적이 없어요"}</p>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
 export function CreatorHomePage({ notices, newest, chips, sendOf, ...mine }: Props) {
   return (
-    <main id="main">
-      <section className={s["hero-wrap"]} aria-labelledby="hero-title">
-        <div className="container">
-          <div className={s.hero}>
-            <BrandPanel />
-            <MyCard {...mine} />
-          </div>
-        </div>
-      </section>
+    <main id="main" className={s.home}>
+      <HomeHero />
+      <MySection {...mine} />
 
-      <section className="block" aria-labelledby="new-title">
+      <section className="section section--compact" aria-labelledby="new-title">
         <div className="container">
-          <div className="block-head">
+          <div className="sec-head">
             <h2 id="new-title">새로 들어온 크리에이터</h2>
-            <Link className="link-arrow" href="/creators">
-              전체 보기 ›
-            </Link>
           </div>
           <NewCreators creators={newest} chips={chips} sendOf={sendOf} />
+          <div className="sec-foot">
+            <Link className="btn btn--line" href="/creators">
+              전체 보기
+            </Link>
+          </div>
         </div>
       </section>
 
       <HomeNotices notices={notices} />
-      <div className="page-end" />
     </main>
   );
 }

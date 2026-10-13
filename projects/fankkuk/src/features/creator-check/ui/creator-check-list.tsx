@@ -18,7 +18,7 @@ import { sendCheckAnswer } from "../api/send-check-answer";
 import c from "./creator-check.module.css";
 
 // 확인할 선물 (2026-10-12 (2) 문제집 D3 ②). 검수에서 블루투스·RF 반응이 나왔지만 직원이 위치 추적기가 아니라고 확인한 상자를
-// 받을지 크리에이터가 정한다 — 받기 / 돌려보내기. 승인 요청과 같은 줄 모양이고, 주소를 여는 방향이 아니라 서명은 없다.
+// 받을지 크리에이터가 정한다 — 받기 / 돌려보내기. 승인 요청과 같은 카드 모양(v11 .grid.cols-2 · .card)이고, 주소를 여는 방향이 아니라 서명은 없다.
 // 서버에 저장된 뒤에만 그 줄을 결과 문구로 바꾼다. 기한(검수 완료 + 7일)이 지나면 버튼을 두지 않는다 — 자동 처리가 돌려보낸다.
 
 type Done = { answer: CreatorCheckAnswer };
@@ -74,29 +74,33 @@ export function CreatorCheckList({ checks, now }: { checks: readonly CreatorChec
 
   return (
     <>
-      <p className="sub">
+      <p className="section-hint">
         검수에서 무선 신호가 잡혔지만 위치 추적기는 아니라고 확인한 상자예요. 받을지 정해 주세요. {CREATOR_CHECK_DAYS}일 안에 정하지 않으면 보낸 분에게
         돌려보내요.
       </p>
       {rows.length === 0 ? (
-        <p className={c.empty}>확인할 선물이 없어요.</p>
+        <p className="empty">확인할 선물이 없어요.</p>
       ) : (
-        <ul className={c.rows}>
+        <ul className="grid cols-2">
           {rows.map((r, i) => {
             const key = keyOf(r);
             const d = done[key];
             const lapsed = isCreatorCheckDeadlinePassed(r.dueAt, now);
             return (
-              <li key={key} className={c.row}>
-                <FaceAvatar index={i} />
-                <div className={c.main}>
-                  <p className={c.who}>
-                    {r.senderNickname}님의 선물 · 상자 {r.boxSeq}
-                  </p>
-                  <p className={c.says}>
-                    {r.itemKind} · {r.orderNo}
-                  </p>
-                  {d ? (
+              <li key={key} className="card card-col">
+                <div className="who">
+                  <FaceAvatar index={i} />
+                  <div>
+                    <p className="t-card">
+                      {r.senderNickname}님의 선물 · 상자 {r.boxSeq}
+                    </p>
+                    <p className="t-meta">
+                      {r.itemKind} · {r.orderNo}
+                    </p>
+                  </div>
+                </div>
+                {d ? (
+                  <>
                     <p
                       ref={(el) => {
                         if (el) resultRefs.current.set(key, el);
@@ -107,44 +111,43 @@ export function CreatorCheckList({ checks, now }: { checks: readonly CreatorChec
                     >
                       {d.answer === "accept" ? "받기로 했어요. 다른 상자와 같이 검수를 마치면 출고돼요" : "돌려보내기로 했어요. 보낸 분 주소로 돌려보내요"}
                     </p>
-                  ) : (
-                    <>
-                      <p className={c.why}>{detectedSignalText(r)} 신호가 잡혔어요. 직원이 상자를 열어 보고 위치 추적기는 아니라고 확인했어요.</p>
-                      <p className={c.meta}>
-                        <span className={statusTagClass("warn")}>{checkTimeLeftLabel(r.dueAt, now)}</span>
-                        <span className="sub">{formatDateTime(r.askedAt)} 검수</span>
-                        {lapsed ? <span className="sub">기한이 지나 곧 보낸 분에게 돌려보내요.</span> : null}
-                      </p>
-                    </>
-                  )}
-                </div>
-                {d ? (
-                  <span className={statusTagClass(d.answer === "accept" ? "success" : "danger", c["done-tag"])}>
-                    {d.answer === "accept" ? "받음" : "돌려보냄"}
-                  </span>
-                ) : lapsed ? null : (
-                  <div className={c.act}>
-                    <button
-                      className="btn"
-                      type="button"
-                      onClick={() => {
-                        setError(null);
-                        setSheet({ answer: "accept", row: r });
-                      }}
-                    >
-                      받기
-                    </button>
-                    <button
-                      className="btn btn--soft"
-                      type="button"
-                      onClick={() => {
-                        setError(null);
-                        setSheet({ answer: "return", row: r });
-                      }}
-                    >
-                      돌려보내기
-                    </button>
-                  </div>
+                    <p className="push">
+                      <span className={statusTagClass(d.answer === "accept" ? "success" : "danger")}>{d.answer === "accept" ? "받음" : "돌려보냄"}</span>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p>{detectedSignalText(r)} 신호가 잡혔어요. 직원이 상자를 열어 보고 위치 추적기는 아니라고 확인했어요.</p>
+                    <p className="tags">
+                      <span className={statusTagClass("warn")}>{checkTimeLeftLabel(r.dueAt, now)}</span>
+                    </p>
+                    <p className="t-meta">{formatDateTime(r.askedAt)} 검수</p>
+                    {lapsed ? <p className="t-meta">기한이 지나 곧 보낸 분에게 돌려보내요.</p> : null}
+                    {lapsed ? null : (
+                      <div className="btn-col push">
+                        <button
+                          className="btn"
+                          type="button"
+                          onClick={() => {
+                            setError(null);
+                            setSheet({ answer: "accept", row: r });
+                          }}
+                        >
+                          받기
+                        </button>
+                        <button
+                          className="btn btn--line"
+                          type="button"
+                          onClick={() => {
+                            setError(null);
+                            setSheet({ answer: "return", row: r });
+                          }}
+                        >
+                          돌려보내기
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </li>
             );

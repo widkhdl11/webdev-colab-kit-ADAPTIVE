@@ -13,7 +13,7 @@ import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorTag, hasTagIcon, TagChipBody, tagStyle } from "@/entities/creator/ui/creator-tag";
 import s from "./home.module.css";
 
-// 메인의 「새로 들어온 크리에이터」 — 태그 칩(creator-tags INV-T4)으로 거른 뒤 앞의 MAX_CARDS 명. 시안: docs/design/mockups/site/v9-home/home-b.html
+// 메인의 「새로 들어온 크리에이터」 — 태그 칩(creator-tags INV-T4)으로 거른 뒤 앞의 MAX_CARDS 명. 시안: docs/design/mockups/site/v11/home-fan.html (.chips · .grid.cols-3 · .ccard)
 // 태그 칩·카드 태그의 아이콘·플랫폼 색은 v9-pages/tags-b.html 4절 (카드 d46).
 
 /** 카드 수. PC 3열 두 줄. 나머지는 「전체 보기」(크리에이터 찾기)에서. */
@@ -38,7 +38,7 @@ export function NewCreators({ creators, chips, sendOf = {} }: Props) {
 
   return (
     <>
-      <div className={s.chips} role="group" aria-label="태그">
+      <div className={`chips ${s.chips}`} role="group" aria-label="태그">
         {[ALL, ...chips].map((c) => (
           <button
             key={c}
@@ -53,36 +53,36 @@ export function NewCreators({ creators, chips, sendOf = {} }: Props) {
           </button>
         ))}
       </div>
-      {shown.some((c) => sendOf[c.id] === "needs_follow") ? <p className="hint">{FOLLOW_NICKNAME_NOTICE}</p> : null}
+      {shown.some((c) => sendOf[c.id] === "needs_follow") ? <p className="section-hint">{FOLLOW_NICKNAME_NOTICE}</p> : null}
       {shown.length === 0 ? (
-        <p className={s.empty}>아직 소개할 크리에이터가 없어요.</p>
+        <p className="empty">아직 소개할 크리에이터가 없어요.</p>
       ) : (
-        <ul className={s["c-grid"]}>
+        <ul className="grid cols-3">
           {shown.map((c) => (
-            <li key={c.id} className={s["c-card"]}>
-              <div className={s["c-top"]}>
-                <CreatorFace tone={c.faceTone} className="face face--lg" />
+            <li key={c.id} className="card ccard">
+              <div className="ccard-top">
+                <CreatorFace tone={c.faceTone} />
                 <div>
                   <h3>
                     <Link href={creatorPagePath(c)}>{c.name}</Link>
                   </h3>
-                  {c.channelTitle ? <p className={s.sub}>{c.channelTitle}</p> : null}
+                  {c.channelTitle ? <p className="t-meta">{c.channelTitle}</p> : null}
                 </div>
               </div>
               {c.tags.length > 0 ? (
-                <p className={s["c-meta"]}>
+                <p className="ctags">
                   {c.tags.map((t) => (
                     <CreatorTag key={t} name={t} />
                   ))}
                 </p>
               ) : null}
-              <p>{c.intro}</p>
-              <div className={s["c-foot"]}>
-                <span className={s.sub}>{approvalTimeText(c.approvalMinutes)}</span>
+              <p className="intro">{c.intro}</p>
+              <div className="ccard-foot">
+                <span className="t-meta">{approvalTimeText(c.approvalMinutes)}</span>
                 {sendOf[c.id] === "needs_follow" ? (
-                  <FollowThenSend creatorId={c.id} creatorName={c.name} signedIn className="btn btn--soft btn--sm" />
+                  <FollowThenSend creatorId={c.id} creatorName={c.name} signedIn className="btn btn--line btn--sm btn--block" />
                 ) : (
-                  <Link className="btn btn--soft btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
+                  <Link className="btn btn--line btn--sm btn--block" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
                     선물 보내기
                   </Link>
                 )}

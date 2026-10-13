@@ -44,16 +44,12 @@ describe("INV-P7: 크리에이터 열람 기록 화면", () => {
       ["FC-4T7NX", "출력 실패"],
       ["FC-9QW2E", "첫 출력"],
     ]);
-    // 좁은 화면 목록도 같은 세 줄, 「열림」 배지 없이 비고만
-    const items = [...host.querySelectorAll("li")];
-    expect(items.length).toBe(3);
-    expect(items.map((li) => li.textContent)).toEqual([
-      expect.stringContaining("재출력 2번째"),
-      expect.stringContaining("출력 실패"),
-      expect.stringContaining("첫 출력"),
-    ]);
-    for (const li of items) expect(li.textContent).not.toContain("열림");
-    expect(host.querySelectorAll("table .tag--info, li .tag--info").length).toBe(0);
+    // 어느 폭에서도 같은 표 하나(v11 — 좁은 화면 전용 목록은 없앴다). 줄마다 「열림」 배지 없이 비고만
+    const trs = [...host.querySelectorAll("tbody tr")];
+    expect(trs.length).toBe(3);
+    for (const tr of trs) expect(tr.textContent).not.toContain("열림");
+    expect(host.querySelectorAll("li").length).toBe(0);
+    expect(host.querySelectorAll(".tag--info").length).toBe(0);
     expect(host.textContent).not.toMatch(/대표 계정|권한이 없는 계정|거부/);
   });
 

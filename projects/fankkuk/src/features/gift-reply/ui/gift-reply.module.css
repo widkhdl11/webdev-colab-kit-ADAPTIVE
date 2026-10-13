@@ -1,43 +1,20 @@
 /* 받았어요 · 답장 — 시안 docs/design/mockups/addendum/creator-received.html · together.html(답장 카드) <style>.
    시안의 --surface-neutral 은 --surface, --focus-ring 은 --ink(공용 포커스 테두리), --secondary-foreground 는 --brand-ink 로 옮겼다. */
 
-/* ── 크리에이터: 받은 선물 ── */
-.pending { display: flex; align-items: center; gap: 16px; padding: 20px 24px; border-radius: var(--r-panel); background: var(--surface-brand); }
-.ic-tile { display: grid; place-items: center; flex-shrink: 0; width: 56px; height: 56px; border-radius: 20px; background: var(--white); box-shadow: var(--hair); color: var(--brand); }
-.pending strong { display: block; font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
-.pending small { display: block; color: var(--sub); font-size: 16px; }
+/* ── 크리에이터: 받은 선물 — 시안 v11 creator-boxes.html. 카드 격자(.grid.cols-2 · .card.card-col · .who · .tags · .quote)·
+   답장 칸의 고르기(.opt)·입력(.field)·버튼 줄(.btn-row2)은 base.css 공통. 여기에는 코드에만 있는 것만 둔다 ── */
+.who:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; border-radius: 4px; } /* 저장 뒤 포커스가 옮겨 오는 카드 제목 */
+.q { quotes: none; font-weight: 800; }
+.capped { margin-top: 16px; }
 
-.rows { margin-top: 16px; border-top: 1px solid var(--border); }
-.row { padding-block: 24px; border-bottom: 1px solid var(--border); }
-.main { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 16px 24px; }
-.who { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
-.who:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; border-radius: 4px; } /* 저장 뒤 포커스가 옮겨 오는 줄 제목 */
-.says { color: var(--sub); }
-.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
-.act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.sent { margin-top: 12px; margin-left: 72px; padding: 14px 18px; border-radius: 16px; background: var(--surface); box-shadow: var(--hair); }
-.sent small { display: block; color: var(--sub); font-size: 16px; }
-.sent q { quotes: none; font-weight: 700; }
-.empty { padding-block: 32px; color: var(--sub); }
-.capped { margin-top: 12px; color: var(--sub); }
-
-.form { margin: 16px 0 0 72px; padding: 24px; border-radius: var(--r-card); background: var(--surface-brand); }
-.form h3 { font-size: 20px; }
-.form fieldset { min-width: 0; margin: 16px 0 0; padding: 0; border: 0; }
-.form legend { padding: 0; font-weight: 700; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.chip { position: relative; }
-.chip span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair); font-weight: 600; cursor: pointer; }
-.chip span:hover { background: var(--surface-hover); }
-.chip input:checked + span { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand); color: var(--brand-ink); font-weight: 700; }
-.chip input:checked + span::before { content: "✓"; margin-right: 6px; }
-.chip input:focus-visible + span { outline: 3px solid var(--ink); outline-offset: 2px; }
-.line-field { margin-top: 20px; }
-.line-field label { display: block; margin-bottom: 8px; font-weight: 700; }
+/* 받았어요를 누르면 카드 안에서 열리는 답장 칸 */
+.form { padding: 24px; border-radius: var(--r-card); background: var(--surface-brand); }
+.form fieldset { min-width: 0; margin: 24px 0 0; padding: 0; border: 0; }
+.form legend { padding: 0; }
+.line-field { margin-top: 24px; }
 .line-field label span { color: var(--sub); font-weight: 400; }
-.line-field :global(.input) { background: var(--white); }
-.count { margin-top: 6px; text-align: right; color: var(--sub); }
-.form-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.count { margin-top: 8px; text-align: right; }
+.form-btns { margin-top: 24px; }
 /* 오류 문구 — 지금 화면들 방식(본문색 굵은 글자 + 「!」 원, creator-settings .error) */
 .error { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; color: var(--ink); font-weight: 700; }
 .error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
@@ -68,13 +45,7 @@
 .share-text { margin-top: 12px; color: var(--sub); }
 
 @media (max-width: 767px) {
-  .main { grid-template-columns: 48px minmax(0, 1fr); gap: 12px 16px; }
-  .act { grid-column: 1 / -1; }
-  .act :global(.btn) { flex: 1 1 100%; }
-  .sent, .form { margin-left: 0; }
-  .form { padding: 20px 16px; }
-  .form-btns :global(.btn) { flex: 1 1 100%; }
-  .pending { padding: 16px; }
+  .form { padding: 24px 16px; }
   .reply { padding: 20px; }
   .reply-foot :global(.btn) { width: 100%; }
   .share-btns :global(.btn) { flex: 1 1 100%; }

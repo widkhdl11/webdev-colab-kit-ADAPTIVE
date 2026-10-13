@@ -10,7 +10,7 @@ import s from "./access-log.module.css";
 // 크리에이터 — 주소 열람 기록. 주소가 열린 줄이 전부 한 줄씩 보인다(INV-P7). 주소 값은 이 화면에 오지 않는다.
 // 거부된 시도와 대표·직원 구분은 운영자 내부 기록에만 있다(2026-10-12 문제집 D12) — 그래서 「누가」 칸도 없다.
 // 줄은 전부 주소가 열린 줄이라 「결과」 칸·「열림」 배지도 두지 않는다 — 비고 칸이 몇 번째 출력과 「출력 실패」(돌려받은 줄, INV-P15)를 보인다.
-// 시안: docs/design/mockups/site/v4/creator-log.html
+// 시안: docs/design/mockups/site/v11/creator-log.html — 이번 달 숫자 카드 셋 + 안내 판, 그 아래 표(어느 폭에서도 표, 휴대폰은 마지막 칸만 줄바꿈)
 // 문구 한계(design-rules 6절): "승인 없이는 저희 시스템이 주소를 열지 않습니다"는 쓰고 "절대 유출되지 않습니다"는 쓰지 않는다.
 
 function Note({ e }: { e: AddressAccessEntry }) {
@@ -28,55 +28,61 @@ export function AccessLogPage({
   entries: readonly AddressAccessEntry[];
 }) {
   return (
-    <div>
-      <div className="panel-title">
-        <h2 className="panel-h">주소 열람 기록</h2>
-        <p>
-          <strong className={s.strong}>승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.
+    <>
+      <div className="page-head">
+        <h2 className="t-title">주소 열람 기록</h2>
+        <p className="t-lead t-desc">
+          <strong className={`t-strong ${s.strong}`}>승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.
         </p>
       </div>
 
-      <section className={s.month} aria-labelledby="sum-h">
-        <img className={`asset ${s.ico}`} src="/img/icon-log.png" alt="" aria-hidden="true" width={96} height={96} />
-        <div className={s["month-body"]}>
-          <h3 id="sum-h" className={s["month-h"]}>
-            이번 달 ({monthLabel})
-          </h3>
-          <dl className={s.nums}>
-            <div>
-              <dt>승인</dt>
-              <dd>
+      <section aria-labelledby="sum-h">
+        <h3 className="t-card" id="sum-h">
+          이번 달 ({monthLabel})
+        </h3>
+        <div className="stack">
+          <dl className={`grid cols-3 keep ${s.nums}`}>
+            <div className="card">
+              <dt className="t-meta">승인</dt>
+              <dd className={s.num}>
                 {summary.approvedCount}
                 <small>건</small>
               </dd>
             </div>
-            <div>
-              <dt>주소 열림</dt>
-              <dd>
+            <div className="card">
+              <dt className="t-meta">주소 열림</dt>
+              <dd className={s.num}>
                 {summary.openedCount}
                 <small>번</small>
               </dd>
             </div>
-            <div>
-              <dt>재출력</dt>
-              <dd>
+            <div className="card">
+              <dt className="t-meta">재출력</dt>
+              <dd className={s.num}>
                 {summary.reprintCount}
                 <small>번</small>
               </dd>
             </div>
           </dl>
+          <div className="card card--soft">
+            <img className={s.ico} src="/img/icon-log.png" alt="" aria-hidden="true" width={72} height={72} />
+            <p>
+              주소는 선물 상자마다 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_BOX}번까지 열려요. 택배 기사가 상자를 가져가면 남은 횟수가 있어도 그 상자로는 더
+              열리지 않아요.
+            </p>
+          </div>
         </div>
       </section>
-      <p className={`sub ${s.rules}`}>
-        주소는 선물 상자마다 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_BOX}번까지 열려요. 택배 기사가 상자를 가져가면 남은 횟수가 있어도 그 상자로는 더 열리지 않아요.
-      </p>
 
-      <section className={s.records} aria-label="열람 기록">
+      <section aria-labelledby="rec-h">
+        <h3 className="t-card" id="rec-h">
+          열람 기록
+        </h3>
         {entries.length === 0 ? (
-          <p className={`sub ${s.empty}`}>아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
+          <p className={`empty ${s.gap}`}>아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
         ) : (
-          <>
-            <table className={s["log-table"]}>
+          <div className="table-wrap" tabIndex={0} role="region" aria-label="주소 열람 기록 표">
+            <table className="table">
               <caption className="sr-only">주소 열람 기록. 최근 순</caption>
               <thead>
                 <tr>
@@ -97,20 +103,9 @@ export function AccessLogPage({
                 ))}
               </tbody>
             </table>
-            <ul className={s["log-list"]} aria-label="주소 열람 기록">
-              {entries.map((e, i) => (
-                <li key={`${i}-${e.orderNo}-${e.at}`} className={s.lrow}>
-                  <strong>{formatDateTime(e.at)}</strong>
-                  <p className="sub">{e.orderNo}</p>
-                  <p>
-                    <Note e={e} />
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </>
+          </div>
         )}
       </section>
-    </div>
+    </>
   );
 }
