@@ -18,7 +18,7 @@
 .dd { margin-top: 12px; }
 .dd em { font-style: normal; }
 .ann-btn { display: grid; justify-items: center; gap: 8px; }
-.rest-msg { font-weight: 800; }
+.rest-msg { font-weight: var(--fw-bold); }
 
 /* 함께한 기록 — 위 판과 붙은 큰 구간이라 아래 여백은 page-end 가 맡는다 */
 .tl { padding-bottom: 0; }
@@ -29,15 +29,15 @@
 .what { overflow-wrap: anywhere; }
 .stage-top { margin-bottom: 8px; }
 .gc-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-.gc-foot a { display: inline-flex; align-items: center; min-height: 44px; color: var(--brand-ink); font-weight: 800; text-decoration: none; }
+.gc-foot a { display: inline-flex; align-items: center; min-height: 44px; color: var(--brand-ink); font-weight: var(--fw-bold); text-decoration: none; }
 .gc-foot a:hover { text-decoration: underline; }
-.moment { display: flex; align-items: center; gap: 8px; color: var(--brand-ink); font-weight: 800; }
-.wait { padding: 16px; border-radius: var(--r-btn); background: var(--surface); font-weight: 800; }
+.moment { display: flex; align-items: center; gap: 8px; color: var(--brand-ink); font-weight: var(--fw-bold); }
+.wait { padding: 16px; border-radius: var(--r-btn); background: var(--surface); font-weight: var(--fw-bold); }
 .boxes { display: grid; gap: 8px; }
 
 /* 「이전 기록 N개 더 보기」 — 시안 .more 버튼 모양(접기 칸 summary) */
 .fold { margin-top: 32px; }
-.fold summary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 12px 24px; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair); color: var(--ink); font-weight: 800; cursor: pointer; list-style: none; }
+.fold summary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 12px 24px; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair); color: var(--ink); font-weight: var(--fw-bold); cursor: pointer; list-style: none; }
 .fold summary::-webkit-details-marker { display: none; }
 .fold summary:hover { background: var(--surface-hover); }
 .fold[open] summary { margin-bottom: 24px; }

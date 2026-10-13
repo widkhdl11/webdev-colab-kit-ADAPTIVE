@@ -1,8 +1,8 @@
 /* 로그인 — 시안 docs/design/mockups/site/v11/login.html 의 <style>. 기둥(.auth)·카드·머리·폼·확인칸·오류(.err)·아래 줄(.foot-line)은 전역 클래스 */
-.reset summary { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; cursor: pointer; list-style: none; font-weight: 800; }
+.reset summary { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; cursor: pointer; list-style: none; font-weight: var(--fw-bold); }
 .reset summary::-webkit-details-marker { display: none; }
 .reset summary svg { width: 20px; height: 20px; transition: transform .15s; }
 .reset[open] summary svg { transform: rotate(180deg); }
 .reset :global(.form) { margin-top: 16px; padding-top: 20px; border-top: 1px solid var(--border); }
 :global(.form) + .reset { margin-top: 24px; }
-.link { color: var(--brand-ink); font-weight: 800; text-underline-offset: 4px; }
+.link { color: var(--brand-ink); font-weight: var(--fw-bold); text-underline-offset: 4px; }

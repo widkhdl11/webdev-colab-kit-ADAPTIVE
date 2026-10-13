@@ -4,7 +4,7 @@
 
 /* 운영·시행일·동의 기록의 판 카드 */
 .facts dt { color: var(--sub); font-weight: 400; }
-.facts dd { margin: 4px 0 0; font-weight: 800; }
+.facts dd { margin: 4px 0 0; font-weight: var(--fw-bold); }
 
 /* 맨 위 목차 카드 — 3열(1023px 이하 2열, 767px 이하 1열) */
 .toc ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 32px; margin-top: 12px; }

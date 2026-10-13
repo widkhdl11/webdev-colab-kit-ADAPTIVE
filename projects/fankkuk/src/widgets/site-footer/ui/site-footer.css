@@ -2,7 +2,7 @@
 .site-footer { border-top: 1px solid var(--border); background: var(--surface); color: var(--sub); }
 .footer-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; padding-block: 56px 24px; }
 /* 로고 글자는 라이선스상 Pretendard (티머니 둥근바람은 로고에 쓰지 않는다) */
-.footer-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-family: var(--font-logo); font-size: var(--fs-card); font-weight: 800; line-height: 1; color: var(--ink); }
+.footer-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-family: var(--font-logo); font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1; color: var(--ink); }
 .biz { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 32px; }
 .biz div { display: flex; gap: 12px; }
 .biz dt { color: var(--ink); flex-shrink: 0; }

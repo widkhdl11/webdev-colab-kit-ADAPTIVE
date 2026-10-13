@@ -4,8 +4,8 @@
 /* 이번 달 숫자 — 시안 .num */
 .nums { margin: 0; }
 .nums dt { font-weight: 400; }
-.num { margin: 4px 0 0; font-size: var(--fs-hero); font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
-.num small { margin-left: 4px; font-size: var(--fs-card); font-weight: 800; }
+.num { margin: 4px 0 0; font-size: var(--fs-hero); font-weight: var(--fw-bold); line-height: 1.2; font-variant-numeric: tabular-nums; }
+.num small { margin-left: 4px; font-size: var(--fs-card); font-weight: var(--fw-bold); }
 
 /* 안내 판 위 아이콘 — 시안 인라인 값 72px, 아래 12px */
 .ico { width: 72px; height: 72px; margin-bottom: 12px; object-fit: contain; }

@@ -28,7 +28,7 @@
 .box-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .box-head :global(.tag) { gap: 6px; white-space: nowrap; }
 .inv-fixed { margin-top: 12px; }
-.no { font-weight: 800; font-variant-numeric: tabular-nums; }
+.no { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
 .diff { display: grid; gap: 12px; }
 .diff + .diff { margin-top: 16px; }
 

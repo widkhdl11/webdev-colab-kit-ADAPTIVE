@@ -1,5 +1,5 @@
 /* 크리에이터 찾기 화면 전용 — 시안 docs/design/mockups/site/v11/creators.html 의 <style> (나머지는 공통 v11 클래스) */
-.verify { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 24px; color: var(--success); font-weight: 800; }
+.verify { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 24px; color: var(--success); font-weight: var(--fw-bold); }
 .verify svg { flex-shrink: 0; }
 .search:global(.search) { margin: 0 auto 24px; }
 .bar { margin: 0 0 24px; text-align: center; }

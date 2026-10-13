@@ -1,4 +1,4 @@
 /* 내 정보 — 받은 역조공. 시안 docs/design/mockups/site/v11/me-revgifts.html 의 <style>. 탭·격자·카드는 전역 클래스(.tabs·.grid.cols-2·.gcard) */
 .note { margin-top: 8px; }
-.urgent { color: var(--danger); font-weight: 800; }
+.urgent { color: var(--danger); font-weight: var(--fw-bold); }
 .past-note { margin-top: 24px; }

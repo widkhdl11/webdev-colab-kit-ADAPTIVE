@@ -4,7 +4,7 @@
 /* ── 크리에이터: 받은 선물 — 시안 v11 creator-boxes.html. 카드 격자(.grid.cols-2 · .card.card-col · .who · .tags · .quote)·
    답장 칸의 고르기(.opt)·입력(.field)·버튼 줄(.btn-row2)은 base.css 공통. 여기에는 코드에만 있는 것만 둔다 ── */
 .who:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; border-radius: 4px; } /* 저장 뒤 포커스가 옮겨 오는 카드 제목 */
-.q { quotes: none; font-weight: 800; }
+.q { quotes: none; font-weight: var(--fw-bold); }
 .capped { margin-top: 16px; }
 
 /* 받았어요를 누르면 카드 안에서 열리는 답장 칸 */
@@ -16,8 +16,8 @@
 .count { margin-top: 8px; text-align: right; }
 .form-btns { margin-top: 24px; }
 /* 오류 문구 — 지금 화면들 방식(본문색 굵은 글자 + 「!」 원, creator-settings .error) */
-.error { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; color: var(--ink); font-weight: 800; }
-.error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: 800; line-height: 1; }
+.error { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; color: var(--ink); font-weight: var(--fw-bold); }
+.error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: var(--fw-bold); line-height: 1; }
 .status { margin-top: 12px; }
 
 /* ── 팬: 상자별 받았어요 · 답장 카드 ── */
@@ -30,7 +30,7 @@
 .reply-top b { font-size: 18px; }
 .reply-top .d { margin-left: auto; color: var(--sub); }
 .reply-photo { width: 48px; height: 48px; }
-.reply q { display: block; margin-top: 16px; quotes: none; font-size: var(--fs-title); font-weight: 800; letter-spacing: var(--ls-title); line-height: 1.4; }
+.reply q { display: block; margin-top: 16px; quotes: none; font-size: var(--fs-title); font-weight: var(--fw-bold); letter-spacing: var(--ls-title); line-height: 1.4; }
 .reply .more { margin-top: 8px; font-size: 18px; overflow-wrap: anywhere; }
 .consent { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--divider); }
 .check { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
@@ -52,4 +52,4 @@
 }
 /* 공유 카드 고르기 묶음 — 테두리 없는 fieldset */
 .fs { min-width: 0; margin: 0 0 8px; padding: 0; border: 0; }
-.fs > legend { margin-bottom: 8px; padding: 0; font-weight: 800; }
+.fs > legend { margin-bottom: 8px; padding: 0; font-weight: var(--fw-bold); }

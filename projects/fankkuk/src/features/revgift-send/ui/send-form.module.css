@@ -31,7 +31,7 @@
 .line { display: flex; justify-content: space-between; gap: 16px; }
 .amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .total { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); align-items: baseline; }
-.big { font-size: var(--fs-hero); line-height: 1.2; font-weight: 800; white-space: nowrap; }
+.big { font-size: var(--fs-hero); line-height: 1.2; font-weight: var(--fw-bold); white-space: nowrap; }
 .pay-btn { margin-top: 24px; }
 .after { margin-top: 12px; }
 

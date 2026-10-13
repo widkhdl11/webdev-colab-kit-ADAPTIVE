@@ -5,11 +5,11 @@
 .list li + li { margin-top: 12px; }
 
 /* 본문 안 링크 */
-.link { color: var(--brand); font-weight: 800; text-underline-offset: 4px; }
+.link { color: var(--brand); font-weight: var(--fw-bold); text-underline-offset: 4px; }
 
 /* 쪽 넘김 */
 .pager { display: flex; justify-content: center; gap: 8px; margin-top: 40px; }
 .pager a, .pager span { display: grid; place-items: center; min-width: 44px; height: 44px; border-radius: var(--r-btn-sm); text-decoration: none; }
 .pager a:hover { background: var(--surface-hover); }
-.pager a[aria-current="page"] { background: var(--ink); color: var(--on-brand); font-weight: 800; }
+.pager a[aria-current="page"] { background: var(--ink); color: var(--on-brand); font-weight: var(--fw-bold); }
 .pager span { color: var(--faint); }

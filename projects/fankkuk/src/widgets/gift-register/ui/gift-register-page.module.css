@@ -5,4 +5,4 @@
 /* 미리 고르고 왔는데 아직 팔로우하지 않은 크리에이터 — 안내라서 옅은 코랄 판 */
 .follow-first { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; padding: 24px; }
 /* 선물 사진을 올리지 못했을 때 결제창 위 한 줄 — 결제는 그대로 진행한다 */
-.photo-note { margin-bottom: 16px; font-weight: 800; }
+.photo-note { margin-bottom: 16px; font-weight: var(--fw-bold); }

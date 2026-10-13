@@ -49,7 +49,7 @@ label.txt { cursor: pointer; }
 
 /* 선물 링크 — 주소 앞부분(fankkuk.kr/, @)은 칸 왼쪽에 붙인 글자 */
 .handle-row { display: flex; align-items: center; gap: 8px; }
-.handle-host { flex-shrink: 0; font-weight: 800; white-space: nowrap; }
+.handle-host { flex-shrink: 0; font-weight: var(--fw-bold); white-space: nowrap; }
 .handle-row :global(.field) { flex: 1; }
 .link-text { overflow-wrap: anywhere; }
 .photo-row { display: flex; align-items: center; gap: 20px; }

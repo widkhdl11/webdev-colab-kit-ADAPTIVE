@@ -3,15 +3,15 @@
 
 /* 단계 표시 — 시안의 번호 동그라미(.sh .no)와 같은 모양의 알약 줄. 지금 단계는 선택 면, 지난 단계는 초록 */
 .steps-wrap { margin-bottom: 24px; }
-.step-count { display: none; margin-bottom: 12px; font-weight: 800; }
+.step-count { display: none; margin-bottom: 12px; font-weight: var(--fw-bold); }
 .step-count span { color: var(--sub); font-weight: 400; }
 .steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .st { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px 0 8px; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--sub); cursor: default; }
-.dot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--sub); font-weight: 800; line-height: 1; }
+.dot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--sub); font-weight: var(--fw-bold); line-height: 1; }
 .st.is-done { background: var(--success-soft); color: var(--success); cursor: pointer; }
 .st.is-done .dot { color: var(--success); }
 .st.is-done:hover .lbl { text-decoration: underline; text-underline-offset: 4px; }
-.st[aria-current="step"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: 800; }
+.st[aria-current="step"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: var(--fw-bold); }
 .st[aria-current="step"] .dot { background: var(--ink); color: var(--on-brand); }
 .st[disabled] { opacity: 1; }
 @media (max-width: 767px) { .step-count { display: block; text-align: center; } .st { flex: 1 1 calc(50% - 8px); } }
@@ -22,7 +22,7 @@
 .focusable:focus { outline: none; }
 .focusable:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
 .sh { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-.no { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: var(--on-brand); font-weight: 800; line-height: 1; flex-shrink: 0; }
+.no { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: var(--on-brand); font-weight: var(--fw-bold); line-height: 1; flex-shrink: 0; }
 .step-actions { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
 .step-actions :global(.btn) { min-width: 120px; }
 .step-actions .next { margin-left: auto; } /* 「다음」은 모든 단계에서 카드 오른쪽 아래 */
@@ -50,16 +50,16 @@
 .terms { display: grid; gap: 4px; }
 .row { display: flex; align-items: center; gap: 12px; }
 .row :global(.check) { flex: 1; min-width: 0; }
-.req { color: var(--brand-ink); font-weight: 800; }
+.req { color: var(--brand-ink); font-weight: var(--fw-bold); }
 .link-off { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 14px; color: var(--sub); } /* 아직 갈 곳이 없는 「보기」 — 링크처럼 보이지 않게 */
 
 /* 3단계 — 카카오톡 본인 확인 */
 .kakao { display: grid; gap: 16px; counter-reset: k; }
 .kakao li { position: relative; min-height: 28px; padding-left: 40px; counter-increment: k; }
-.kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-selected); color: var(--brand-ink); font-weight: 800; }
+.kakao li::before { content: counter(k); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-selected); color: var(--brand-ink); font-weight: var(--fw-bold); }
 .kakao li.is-done::before { content: none; }
 .mark { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--success); color: var(--on-brand); }
-.sent { font-weight: 800; }
+.sent { font-weight: var(--fw-bold); }
 .again { margin-top: 16px; }
-.text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.text-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: var(--fw-bold); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .step > .error { margin-top: 24px; }

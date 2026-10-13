@@ -18,4 +18,4 @@
 /* 운영 시간·연락처 카드 */
 .hours { text-align: center; }
 .hours dt { color: var(--sub); font-weight: 400; }
-.hours dd { margin: 4px 0 0; font-weight: 800; }
+.hours dd { margin: 4px 0 0; font-weight: var(--fw-bold); }
