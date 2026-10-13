@@ -1,9 +1,12 @@
-/* 주소와 설정 화면 — 시안 v11 creator-settings.html <style>. 설정 상자는 같은 모양 카드(.card)로 위→아래 한 줄.
+/* 주소와 설정 화면 — 시안 v18 creator-settings.html(v18-cre.css), 이전 v11. 설정 상자는 같은 모양 카드(.card)로 위→아래 한 줄.
    공통 부품(.card·.card--soft·.grid·.opt·.sw-row·.tags·.chip·.field·.hint·.err)은 base.css 가 그린다 — 여기는 이 화면에만 있는 것 */
 
-.set { display: grid; gap: 24px; scroll-margin-top: calc(var(--header-h) + 16px); }
+/* 이 화면 안의 옅은 판은 v18 크리에이터 묶음 값(회색 면 + 경계) — 공통 .card--soft(옅은 빨강)는 공개 화면 묶음 값이다 */
+.root :global(.card--soft) { background: var(--gray-50); box-shadow: var(--hair); }
+
+.set { display: grid; gap: 24px; scroll-margin-top: var(--space-6); }
 .set-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.inner { padding: 20px; }
+.inner { padding: 24px; }
 .set :global(.fs) > :global(.label) { margin-bottom: 12px; }
 .rule { width: 100%; height: 1px; margin: 0; border: 0; background: var(--border); }
 .status-tag { margin-top: 8px; }
@@ -61,7 +64,10 @@ label.txt { cursor: pointer; }
 .file-name { overflow-wrap: anywhere; }
 
 @media (max-width: 767px) {
-  .set:global(.card) { padding: 20px; }
+  /* 고르기 칸 4열은 휴대폰에서 2열(시안 v18-cre.css .opt-grid) — 공통 격자는 1열로 접는다 */
+  .root :global(.grid.cols-4) { --cols: 2; }
+  .set:global(.card) { padding: 24px 16px; }
+  .inner { padding: 24px 16px; }
   .set :global(.sw-row) { gap: 12px; padding: 16px; }
   .addr-ico { width: 56px; height: 56px; }
   .ann-row { grid-template-columns: minmax(0, 1fr) auto; }

@@ -13,7 +13,7 @@ import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import s from "./revgift-sent.module.css";
 
-// 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v11/creator-revgifts.html — 묶음마다 팬 카드 3열(휴대폰 1열)
+// 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v18/creator-revgifts.html(이전 v11) — 묶음마다 팬 카드 3열(휴대폰 1열)
 // 한 줄에 보이는 것은 팬 닉네임·주문번호·상태 배지(셋 중 하나)뿐이다 — 팬 로그인 아이디도 싣지 않는다(reverse-gift INV-R8).
 // 몫마다 송장번호 줄이 붙는다(시안 creator-revgift-boxes.html). 배송 조회를 보고 싶을 때만 넣는 선택 칸이다(inbound-address-code INV-C7).
 // 입고 전엔 넣고 고치고, 입고되면 「입고됨」으로 잠긴다.
@@ -87,16 +87,18 @@ export function RevgiftSentPage({ rows, boxes, paid, officeAddress }: { rows: re
   // 받는 주소 없이 보냈어요(INV-C4 ②) — 고를 수 있는 몫의 판정은 features/box-waybill/model/box-targets.ts
   const finderBoxes = shareFinderBoxes(rows, boxes);
   return (
-    <div>
-      <div className="page-head">
-        <h2 className="t-title">보낸 역조공</h2>
-        <p className="t-lead t-desc">팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
-        <p className={s["head-btn"]}>
-          <Link className="btn" href="/creator/revgifts/new">
+    <div className={s.root}>
+      <header className="page-head">
+        <div className="ph-row">
+          <h1 className="ph-title">
+            보낸 역조공<span className="ph-count">{batches.length}</span>
+          </h1>
+          <Link className="btn btn--sm" href="/creator/revgifts/new">
             역조공 보내기
           </Link>
-        </p>
-      </div>
+        </div>
+        <p className="ph-desc">팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
+      </header>
       {paid ? (
         <p className={s.paid} role="status">
           <strong>결제가 끝났어요.</strong> 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소로 보내 주세요.
@@ -112,15 +114,15 @@ export function RevgiftSentPage({ rows, boxes, paid, officeAddress }: { rows: re
       </section>
       {batches.length === 0 ? (
         <section className="empty">
-          <h3 className="t-card">아직 보낸 역조공이 없어요</h3>
+          <h2 className="t-card">아직 보낸 역조공이 없어요</h2>
           <p className="t-meta">나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
         </section>
       ) : (
         batches.map((b, bi) => (
           <section key={b.sentAt} aria-labelledby={`rv-batch-${bi}`}>
-            <h3 className="t-card" id={`rv-batch-${bi}`}>
+            <h2 className={`t-card ${s["batch-h"]}`} id={`rv-batch-${bi}`}>
               {formatDateTime(b.sentAt)} 보낸 역조공
-            </h3>
+            </h2>
             <p className={`t-meta ${s.facts}`}>
               팬 {b.shares.length}명 · {batchSummary(b.shares)}
             </p>
@@ -158,9 +160,9 @@ export function RevgiftSentPage({ rows, boxes, paid, officeAddress }: { rows: re
       )}
       {finderBoxes.length > 0 ? (
         <section className="card" aria-labelledby="rv-find">
-          <h3 className="t-card" id="rv-find">
+          <h2 className="t-card" id="rv-find">
             받는 주소 없이 보냈어요
-          </h3>
+          </h2>
           <p className={s["find-text"]}>
             받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 그 팬의 상자로 이어져요. 하루에 다섯 번까지 찾을
             수 있어요.

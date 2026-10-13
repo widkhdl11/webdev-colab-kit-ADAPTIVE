@@ -2,7 +2,7 @@
    구간 머리(카드 제목 + 태그) · 회색 면 상자(받는 주소 칸과 같은 반경·안쪽 여백) · 줄 구분선 · 주 버튼/선 버튼/글자 버튼. */
 
 .head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.head h3 { font-size: var(--fs-card); }
+.head h2 { font-size: var(--fs-card); }
 
 .lead { margin-bottom: 20px; }
 

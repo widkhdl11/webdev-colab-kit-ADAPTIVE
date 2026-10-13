@@ -1,14 +1,18 @@
-/* 주소 열람 기록 화면 전용 — 시안 v11 creator-log.html <style> 과 인라인 값. 머리·카드·표는 base.css 공통 */
+/* 주소 열람 기록 화면 전용 — 시안 v18 creator-log.html(v18-cre.css .stat-grid). 머리(.page-head·.ph-*)·카드·표는 base.css 공통 */
 .strong { color: var(--ink); }
 
-/* 이번 달 숫자 — 시안 .num */
+/* 이 화면 안의 옅은 판은 v18 크리에이터 묶음 값(회색 면 + 경계) */
+.root :global(.card--soft) { background: var(--gray-50); box-shadow: var(--hair); }
+/* 구간 머리 — v18 작은 제목 20 */
+.sh { font-size: var(--fs-card); line-height: 1.4; }
+
+/* 이번 달 숫자 — 시안 .stat-grid dd: 32 굵게, 단위는 20 보통 굵기 회색 */
 .nums { margin: 0; }
 .nums dt { font-weight: 400; }
-.num { margin: 4px 0 0; font-size: var(--fs-hero); font-weight: var(--fw-bold); line-height: 1.2; font-variant-numeric: tabular-nums; }
-.num small { margin-left: 4px; font-size: var(--fs-card); font-weight: var(--fw-bold); }
+.num { margin: 8px 0 0; font-size: 32px; font-weight: var(--fw-bold); line-height: 1.3; font-variant-numeric: tabular-nums; }
+.num small { margin-left: 8px; font-size: var(--fs-card); font-weight: 400; color: var(--gray-600); }
 
-/* 안내 판 위 아이콘 — 시안 인라인 값 72px, 아래 12px */
-.ico { width: 72px; height: 72px; margin-bottom: 12px; object-fit: contain; }
+/* 안내 판 위 그림 — 시안 72px, 아래 16px */
+.ico { width: 72px; height: 72px; margin-bottom: 16px; object-fit: contain; }
 
 .nw { font-variant-numeric: tabular-nums; }
-

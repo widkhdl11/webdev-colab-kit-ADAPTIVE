@@ -163,10 +163,10 @@ export function ApprovalRequestList({
 
   return (
     <>
-      <section aria-labelledby="wait-h">
-        <h3 className="t-card" id="wait-h">
+      <section id="wait" className={a.sec} aria-labelledby="wait-h">
+        <h2 className="t-card" id="wait-h">
           승인 대기 {waitingCount}
-        </h3>
+        </h2>
         {rows.length === 0 ? (
           <p className="empty">기다리는 승인 요청이 없어요.</p>
         ) : (
@@ -279,10 +279,10 @@ export function ApprovalRequestList({
         )}
       </section>
 
-      <section aria-labelledby="done-h">
-        <h3 className="t-card" id="done-h">
+      <section id="done" className={a.sec} aria-labelledby="done-h">
+        <h2 className="t-card" id="done-h">
           처리한 요청
-        </h3>
+        </h2>
         {below.length === 0 ? (
           <p className="empty">아직 처리한 요청이 없어요.</p>
         ) : (

@@ -28,18 +28,22 @@ export function AccessLogPage({
   entries: readonly AddressAccessEntry[];
 }) {
   return (
-    <>
-      <div className="page-head">
-        <h2 className="t-title">주소 열람 기록</h2>
-        <p className="t-lead t-desc">
+    <div className={s.root}>
+      <header className="page-head">
+        <div className="ph-row">
+          <h1 className="ph-title">
+            주소 열람 기록<span className="ph-count">{entries.length}</span>
+          </h1>
+        </div>
+        <p className="ph-desc">
           <strong className={`t-strong ${s.strong}`}>승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.
         </p>
-      </div>
+      </header>
 
       <section aria-labelledby="sum-h">
-        <h3 className="t-card" id="sum-h">
+        <h2 className={`t-card ${s.sh}`} id="sum-h">
           이번 달 ({monthLabel})
-        </h3>
+        </h2>
         <div className="stack">
           <dl className={`grid cols-3 keep ${s.nums}`}>
             <div className="card">
@@ -75,9 +79,9 @@ export function AccessLogPage({
       </section>
 
       <section aria-labelledby="rec-h">
-        <h3 className="t-card" id="rec-h">
+        <h2 className={`t-card ${s.sh}`} id="rec-h">
           열람 기록
-        </h3>
+        </h2>
         {entries.length === 0 ? (
           <p className="empty">아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
         ) : (
@@ -106,6 +110,6 @@ export function AccessLogPage({
           </div>
         )}
       </section>
-    </>
+    </div>
   );
 }

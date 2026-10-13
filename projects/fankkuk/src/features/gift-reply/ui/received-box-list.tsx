@@ -30,7 +30,7 @@ import s from "./gift-reply.module.css";
 // 저장하면 누른 버튼이 사라지므로(답장 칸이 닫히거나 지우기 버튼이 없어진다), 포커스를 그 줄의 제목(늘 남는 요소)으로 옮긴다.
 
 /** 세션이 끝났을 때 — 다시 로그인한 뒤 이 화면으로 돌아온다 */
-const LOGIN_AGAIN = "/login?next=/creator/requests";
+const LOGIN_AGAIN = "/login?next=/creator/boxes"; // 받은 선물은 v18 에서 승인 요청과 나뉜 화면(/creator/boxes)
 
 function ErrorMark() {
   return (
@@ -240,9 +240,9 @@ export function ReceivedBoxList({ boxes, pending }: { boxes: readonly ReceivedBo
     <>
       {/* INV-G10: 이 숫자는 본인 화면에만 — DB 본인 읽기 함수가 센다 */}
       <section className="card card--soft" aria-labelledby="pend-h">
-        <h3 className="t-card" id="pend-h">
+        <h2 className="t-card" id="pend-h">
           아직 답장 안 한 선물 {pending}개
-        </h3>
+        </h2>
         <p>답장은 꼭 남기지 않아도 돼요. 이 숫자는 나만 볼 수 있어요.</p>
       </section>
       <section>

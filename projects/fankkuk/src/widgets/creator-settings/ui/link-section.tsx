@@ -131,9 +131,9 @@ export function LinkSection({
   return (
     <section id="link" className={`card ${s.set}`} aria-labelledby="link-h">
       <div className={s["set-head"]}>
-        <h3 className="t-card" id="link-h">
+        <h2 className="t-card" id="link-h">
           선물 링크
-        </h3>
+        </h2>
       </div>
 
       <div>

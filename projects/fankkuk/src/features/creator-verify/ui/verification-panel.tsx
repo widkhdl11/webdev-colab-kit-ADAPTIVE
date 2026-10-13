@@ -125,7 +125,7 @@ export function VerificationPanel({
   return (
     <section aria-labelledby={`${ids}-h`}>
       <div className={s.head}>
-        <h3 id={`${ids}-h`}>채널 본인 확인</h3>
+        <h2 id={`${ids}-h`}>채널 본인 확인</h2>
         {tag}
       </div>
 

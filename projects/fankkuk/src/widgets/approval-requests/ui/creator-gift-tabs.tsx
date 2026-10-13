@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 
 // 승인·받은 선물 탭(시안 v11 creator-requests.html · creator-boxes.html 의 .tabs — 모양은 base.css 공통 탭) — 확인할 선물이 있으면 가운데에 하나 더(2026-10-12 (2) D3 ②). 좌우 화살표로 옮겨 가고, 고른 탭만 Tab 순서에 남는다(선물 내역 탭과 같은 방식).
-// 처음 고른 탭은 주소(?tab=received)로 정한다 — 서버가 넘긴다.
+// 처음 고른 탭은 주소(?tab=checks)로 정한다 — 서버가 넘긴다. 주소의 # 이 어느 탭 안의 구간을 가리키면(사이드바 「승인 내역」 = #done)
+// 그 탭을 먼저 보이고 그 구간으로 내려간다 — 숨은 탭 안의 구간으로는 브라우저가 내려가지 못한다.
 
 export type CreatorGiftTab = { id: "requests" | "checks" | "received"; label: string; count: number; panel: ReactNode };
 
@@ -45,6 +46,20 @@ export function CreatorGiftTabs({ tabs: given, initial }: { tabs: readonly Creat
   const found = tabs.findIndex((t) => t.id === selectedId);
   const selected = found >= 0 ? found : 0;
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const target = document.getElementById(decodeURIComponent(hash));
+    const panel = target?.closest<HTMLElement>("[role=tabpanel]");
+    const id = panel?.id.replace(/^gift-panel-/, "");
+    const hit = tabs.find((t) => t.id === id);
+    if (!target || !hit) return;
+    setSelectedId(hit.id);
+    requestAnimationFrame(() => target.scrollIntoView());
+    // 처음 그릴 때 한 번만 본다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
     const n = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : null;

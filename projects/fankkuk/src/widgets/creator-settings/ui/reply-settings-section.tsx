@@ -57,9 +57,9 @@ export function ReplySettingsSection({ initial }: { initial: ReplySettings }) {
   return (
     <section id="reply" className={`card ${s.set}`} aria-labelledby="reply-set-h">
       <div className={s["set-head"]}>
-        <h3 className="t-card" id="reply-set-h">
+        <h2 className="t-card" id="reply-set-h">
           감사 답장
-        </h3>
+        </h2>
       </div>
       <div className="sw-row">
         <label className={s.txt} htmlFor="reply-wall">

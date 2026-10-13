@@ -230,11 +230,11 @@ export function CreatorSettingsPage({
   };
 
   return (
-    <div>
-      <div className="page-head">
-        <h2 className="t-title">주소와 설정</h2>
-        <p className="t-lead t-desc">채널 본인 확인, 선물을 받을 주소, 차단한 팬, 프로필, 알림, 계정 보안을 한곳에서 관리해요.</p>
-      </div>
+    <div className={s.root}>
+      <header className="page-head">
+        <h1 className="ph-title">주소와 설정</h1>
+        <p className="ph-desc">채널 본인 확인, 선물을 받을 주소, 차단한 팬, 프로필, 알림, 계정 보안을 한곳에서 관리해요.</p>
+      </header>
 
       {/* 지금 상태 — 아래 카드들이 이미 들고 있는 값(주소 등록 여부·본인 확인·받는 상태)만 모아 보인다 */}
       <ul className="grid cols-3 keep" aria-label="지금 상태">
@@ -262,7 +262,7 @@ export function CreatorSettingsPage({
         <a className={`chip ${s.chip}`} href="#verify">
           본인 확인
         </a>
-        <a className={`chip ${s.chip}`} href="#addr">
+        <a className={`chip ${s.chip}`} href="#address">
           받는 주소
         </a>
         <a className={`chip ${s.chip}`} href="#blocked">
@@ -300,11 +300,12 @@ export function CreatorSettingsPage({
           <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
         </div>
 
-        <section id="addr" className={`card ${s.set}`} aria-labelledby="addr-h">
+        {/* 사이드바 「주소 관리」가 /creator/settings#address 로 온다 */}
+        <section id="address" className={`card ${s.set}`} aria-labelledby="addr-h">
           <div className={s["set-head"]}>
-            <h3 className="t-card" id="addr-h">
+            <h2 className="t-card" id="addr-h">
               받는 주소
-            </h3>
+            </h2>
             {addressRegistered ? <span className={statusTagClass("success")}>등록됨</span> : <span className={statusTagClass("plain")}>등록 전</span>}
           </div>
           <div className={`card card--soft ${s.inner}`}>
@@ -332,9 +333,9 @@ export function CreatorSettingsPage({
 
         <section id="blocked" className={`card ${s.set}`} aria-labelledby="block-h">
           <div className={s["set-head"]}>
-            <h3 className="t-card" id="block-h">
+            <h2 className="t-card" id="block-h">
               차단한 팬
-            </h3>
+            </h2>
             <span className="tag">{blocked.length}명</span>
           </div>
           {blocked.length === 0 ? (
@@ -372,9 +373,9 @@ export function CreatorSettingsPage({
 
         <section id="prof" className={`card ${s.set}`} aria-labelledby="prof-h">
           <div className={s["set-head"]}>
-            <h3 className="t-card" id="prof-h">
+            <h2 className="t-card" id="prof-h">
               프로필
-            </h3>
+            </h2>
           </div>
           <div>
             <label className="label" htmlFor="pub-name">
@@ -459,9 +460,9 @@ export function CreatorSettingsPage({
 
         <section id="alarm" className={`card ${s.set}`} aria-labelledby="alarm-h">
           <div className={s["set-head"]}>
-            <h3 className="t-card" id="alarm-h">
+            <h2 className="t-card" id="alarm-h">
               알림 받기
-            </h3>
+            </h2>
           </div>
           {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 끄는 스위치를 두지 않고 「끌 수 없는 알림」으로 알린다(notifications INV-N6 표, 2026-10-12 문제집 D7).
               알림 스펙에 없는 종류(자동 반려 하루 전·주소가 열릴 때)의 스위치는 두지 않는다(my-account INV-A11) */}
@@ -501,9 +502,9 @@ export function CreatorSettingsPage({
             두 서버 처리 모두 로그인 토큰의 사람 것만 바꾸고 역할을 가리지 않는다 */}
         <section id="security" className={`card ${s.set}`} aria-labelledby="security-h">
           <div className={s["set-head"]}>
-            <h3 className="t-card" id="security-h">
+            <h2 className="t-card" id="security-h">
               계정 보안
-            </h3>
+            </h2>
           </div>
           <ul className="grid cols-2">
             <li className="card card--soft card-col">

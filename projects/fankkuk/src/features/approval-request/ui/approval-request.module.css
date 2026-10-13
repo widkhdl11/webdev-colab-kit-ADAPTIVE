@@ -1,10 +1,14 @@
-/* 승인 요청 목록 — 시안 v11 creator-requests.html. 카드 격자(.grid.cols-2 · .card.card-col · .who · .tags · .btn-col)는 base.css 공통.
+/* 승인 요청 목록 — 시안 v18(이전 v11) creator-requests.html. 카드 격자(.grid.cols-2 · .card.card-col · .who · .tags · .btn-col)는 base.css 공통.
    여기에는 시안 <style> 의 .signing 과 코드에만 있는 결과 문구만 둔다. */
 
 .link-in { color: var(--brand); font-weight: var(--fw-bold); text-underline-offset: 4px; }
 
 /* 시안 .signing — 서명 대기 한 줄 */
-.signing { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: var(--r-btn); background: var(--warn-soft); color: var(--warn-ink); }
+.signing { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--r-btn); background: var(--primary-50); color: var(--primary-700); } /* v18-app.css .signing */
+
+/* 승인 대기(#wait)·처리한 요청(#done) — 사이드바 「승인 내역」이 #done 으로 온다. 구간 머리는 20(v18 작은 제목) */
+.sec { scroll-margin-top: var(--space-6); }
+.sec > h2 { font-size: var(--fs-card); line-height: 1.4; }
 .result { font-weight: var(--fw-bold); }
 
 /* 받지 않기 확인 창 */
