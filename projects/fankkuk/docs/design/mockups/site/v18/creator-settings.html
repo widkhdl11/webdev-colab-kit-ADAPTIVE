@@ -1,0 +1,258 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v18 C 갈래 · 주소 관리·설정 (2026-10-13)
+  원본: ../v16/a/creator-settings.html (문구·구조 그대로). 틀: v18/creator-requests.html (크리에이터 사이드바 · 페이지 헤더 · .page-centered(폼 열 720)).
+  지시: _brief.md 「2차」 공통 규칙 + 「C 갈래」. 화면 전용 규칙은 v18-cre.css (값은 :root 변수). 카카오 노랑 예외는 --kakao 변수.
+  판단: 사이드바 「주소 관리」(#address)·「설정」은 같은 파일. 주소로 #address 가 있으면 「주소 관리」, 아니면 「설정」을 현재로 표시(작은 인라인 스크립트).
+  v16 id="addr" 는 지시서의 #address 로 바꿈.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v18 크리에이터 · 주소 관리·설정</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="v18.css">
+<link rel="stylesheet" href="v18-app.css">
+<link rel="stylesheet" href="v18-cre.css">
+<script src="font-switch.js" defer></script>
+</head>
+<body>
+  
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-gift" viewBox="0 0 24 24"><path d="M12 7v14" /><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" /><rect x="3" y="7" width="18" height="4" rx="1" /></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></symbol>
+    <symbol id="i-package-search" viewBox="0 0 24 24"><path d="M12 22V12" /><path d="M20.27 18.27 22 20" /><path d="M21 10.498V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.729l7 4a2 2 0 0 0 2 .001l.98-.559" /><path d="M3.29 7 12 12l8.71-5" /><path d="m7.5 4.27 8.997 5.148" /><circle cx="18.5" cy="16.5" r="2.5" /></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
+    <symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></symbol>
+    <symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+  
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><polyline points="3.29 7 12 12 20.71 7" /><path d="m7.5 4.27 9 5.15" /></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></symbol>
+    <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></symbol>
+    <symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /></symbol>
+    <symbol id="i-log-out" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></symbol>
+      <symbol id="i-panel-left-close" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m16 15-3-3 3-3" /></symbol>
+    <symbol id="i-panel-left-open" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m14 9 3 3-3 3" /></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2" /> <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /> <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></symbol>
+    <symbol id="i-list-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /> <path d="M13 6h8" /> <path d="M13 12h8" /> <path d="M13 18h8" /></symbol>
+    <symbol id="i-chevrons-up-down" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" /><path d="m21.854 2.147-10.94 10.939" /></symbol>
+    <symbol id="i-ellipsis" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></symbol>
+  </defs></svg>
+
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="app" id="app">
+    <header class="topbar">
+      <a class="logo" href="home-creator.html" aria-label="팬꾹 홈">팬꾹</a>
+      <button class="icon-btn" id="sb-open" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button>
+    </header>
+    <div class="sb-scrim" id="sb-scrim"></div>
+    <aside class="sidebar" id="sidebar" aria-label="크리에이터 메뉴">
+      <div class="sb-top">
+        <button class="sb-mark" id="sb-mark" type="button" aria-label="사이드바 펼치기" aria-controls="sidebar" aria-expanded="false"><span class="m-txt" aria-hidden="true">꾹</span><svg class="ico m-ico" aria-hidden="true"><use href="#i-panel-left-open"/></svg></button>
+        <a class="logo" href="home-creator.html" aria-label="팬꾹 홈">팬꾹</a>
+        <button class="sb-btn sb-fold" id="sb-fold" type="button" aria-label="사이드바 접기" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button>
+        <button class="sb-btn sb-close" id="sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </div>
+      <nav class="sb-nav" aria-label="크리에이터 메뉴">
+        <p class="sb-group" id="g1-creator"><span class="sb-group-t">기본</span></p>
+        <ul aria-labelledby="g1-creator"><li><a href="home-creator.html" data-tip="홈"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg><span class="sb-label">홈</span></a></li><li><a href="creators.html" data-tip="크리에이터 찾기"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sb-label">크리에이터 찾기</span></a></li><li><a href="send.html" data-tip="선물 보내기"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg><span class="sb-label">선물 보내기</span></a></li></ul>
+        <p class="sb-group" id="g2-creator"><span class="sb-group-t">관리</span></p>
+        <ul aria-labelledby="g2-creator"><li><a href="creator-requests.html" data-tip="승인 대기"><svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg><span class="sb-label">승인 대기</span><span class="badge" aria-label="4건">4</span></a></li><li><a href="creator-requests.html#done" data-tip="승인 내역"><svg class="ico" aria-hidden="true"><use href="#i-list-checks"/></svg><span class="sb-label">승인 내역</span></a></li><li><a href="creator-boxes.html" data-tip="보낸 선물"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg><span class="sb-label">보낸 선물</span></a></li><li><a href="creator-revgifts.html" data-tip="보낸 역조공"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg><span class="sb-label">보낸 역조공</span></a></li><li><a href="creator-log.html" data-tip="열람 기록"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg><span class="sb-label">열람 기록</span></a></li><li><a href="creator-settings.html#address" data-tip="주소 관리"><svg class="ico" aria-hidden="true"><use href="#i-map-pin"/></svg><span class="sb-label">주소 관리</span></a></li><li><a href="creator-settings.html" data-tip="설정" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="sb-label">설정</span></a></li></ul>
+      </nav>
+      <div class="sb-bottom">
+        <details class="sb-menu" id="sb-menu">
+          <summary aria-label="별빛님 계정 메뉴"><span class="sb-avatar" aria-hidden="true">별</span><span class="sb-name">별빛님</span><svg class="ico sb-chev" aria-hidden="true"><use href="#i-chevrons-up-down"/></svg></summary>
+          <div class="sb-menu-list"><a href="me.html">계정 설정</a><a href="#">로그아웃</a></div>
+        </details>
+      </div>
+    </aside>
+    <div class="sb-wrap">
+
+    <main id="main" class="sb-main page-centered">
+      <div class="form-col">
+        <header class="page-head">
+          <div class="ph-row"><h1 class="ph-title">주소와 설정</h1></div>
+          <p class="ph-desc">채널 본인 확인, 선물을 받을 주소, 차단한 팬, 프로필, 알림, 계정 보안을 한곳에서 관리해요.</p>
+        </header>
+        <div class="sb-stack">
+        <ul class="grid cols-3 status-grid" aria-label="지금 상태">
+          <li class="card"><p class="meta">받는 주소</p><p><span class="tag tag--ok">등록됨</span></p></li>
+          <li class="card"><p class="meta">본인 확인</p><p><span class="tag tag--ok">확인 완료</span></p></li>
+          <li class="card"><p class="meta">선물 받기</p><p><span class="tag tag--accent">받는 중</span></p></li>
+        </ul>
+
+        <nav aria-label="이 화면 바로가기" class="jump">
+          <a href="#address">받는 주소</a><a href="#blocked">차단한 팬</a><a href="#prof">프로필</a><a href="#link">선물 링크</a><a href="#recv">선물 받기</a><a href="#days">생일과 기념일</a><a href="#hard">받기 어려운 품목</a><a href="#reply">감사 답장</a><a href="#alarm">알림</a><a href="#security">계정 보안</a>
+        </nav>
+
+        <div class="sb-stack">
+          <section class="card set" id="address" aria-labelledby="addr-h">
+            <div class="set-head"><h2 id="addr-h" class="card-t">받는 주소</h2><span class="tag tag--ok">등록됨</span></div>
+            <div class="card card--soft inner">
+              <img class="art art--card" src="../v16/img/icon-address-lock.png" width="64" height="64" alt="" aria-hidden="true">
+              <p class="strong">주소가 안전하게 등록돼 있어요</p>
+              <p style="margin-top:var(--sp-8);color:var(--gray-600)">주소는 잠가서 보관해요. 승인 전까지 주소는 노출되지 않습니다.</p>
+            </div>
+            <p class="meta">아직 출력하지 않은 주문은 바뀐 주소로 나가요.</p>
+            <div><a class="btn btn--secondary" href="#">주소 바꾸기</a></div>
+          </section>
+
+          <section class="card set" id="blocked" aria-labelledby="block-h">
+            <div class="set-head"><h2 id="block-h" class="card-t">차단한 팬</h2><span class="tag">2명</span></div>
+            <ul class="grid cols-2">
+              <li class="card card--soft card-col"><div><p class="strong">이름모를팬</p><p class="meta">10.02 차단</p></div><div class="push"><a class="btn btn--secondary btn--sm btn--block" href="#" aria-label="이름모를팬님 차단 풀기">차단 풀기</a></div></li>
+              <li class="card card--soft card-col"><div><p class="strong">한밤</p><p class="meta">09.14 차단</p></div><div class="push"><a class="btn btn--secondary btn--sm btn--block" href="#" aria-label="한밤님 차단 풀기">차단 풀기</a></div></li>
+            </ul>
+            <p class="meta">차단을 풀어도 주소는 열리지 않아요. 새 선물도 한 건씩 카카오톡 서명으로 승인해야 나가요.</p>
+          </section>
+
+          <section class="card set" id="prof" aria-labelledby="prof-h">
+            <div class="set-head"><h2 id="prof-h" class="card-t">프로필</h2></div>
+            <div><label class="label" for="pub-name">공개 이름</label><input class="field" id="pub-name" value="별빛" maxlength="20"><p class="meta hint">팬에게 보이는 이름이에요. 20자까지, 언제든 바꿀 수 있어요. 바꾼 기록은 운영팀이 볼 수 있어요.</p></div>
+            <div><label class="label" for="pub-intro">한 줄 소개</label><input class="field" id="pub-intro" value="밤하늘 보며 기타 치는 별빛입니다" maxlength="40"><p class="meta hint">선물 링크 페이지에 이름 아래 한 줄로 보여요. 40자까지 적을 수 있어요(17/40). 전화번호·이메일·인터넷 주소는 쓸 수 없어요.</p></div>
+            <dl class="grid cols-2">
+              <div class="card card--soft"><dt class="meta">방송 채널</dt><dd style="margin:var(--sp-8) 0 0" class="strong"><span class="ptag ptag--chz"><span class="bd"><img src="../v9-pages/brand/chzzk.png" alt="" aria-hidden="true"></span>치지직</span> 별빛TV</dd></div>
+              <div class="card card--soft"><dt class="meta">본인 확인</dt><dd style="margin:var(--sp-8) 0 0"><span class="tag tag--ok">확인 완료</span></dd></div>
+            </dl>
+            <div class="sw-row"><div><p class="strong" id="find-t">크리에이터 찾기에 보이기</p><p class="meta" id="find-d">끄면 크리에이터 찾기 목록에서만 빠져요. 내 페이지 링크·팔로우·선물 받기는 그대로예요. 본인 확인을 마쳐야 찾기에 보여요.</p></div><button class="sw" type="button" role="switch" aria-checked="true" aria-labelledby="find-t" aria-describedby="find-d"><span></span></button></div>
+            <div><a class="btn" href="#">프로필 저장</a></div>
+          </section>
+
+          <section class="card set" id="link" aria-labelledby="link-h">
+            <div class="set-head"><h2 id="link-h" class="card-t">선물 링크</h2></div>
+            <div>
+              <label class="label" for="link-handle">링크 주소</label>
+              <div class="btn-stack" style="flex-wrap:nowrap"><span class="prefix">fankkuk.kr/</span><input class="field" id="link-handle" value="byeolbit" readonly aria-describedby="link-hint"></div>
+              <p class="meta hint" id="link-hint">링크 주소는 21일 뒤에 바꿀 수 있어요.</p>
+              <p class="meta">지금 이 주소로 내 페이지가 열려요.</p>
+            </div>
+            <div class="btn-stack"><a class="btn btn--secondary btn--sm" href="#">복사</a><a class="btn btn--sm" href="#">링크 주소 바꾸기</a></div>
+            <hr class="rule">
+            <div>
+              <p class="label">프로필 사진</p>
+              <div class="btn-stack"><a class="btn btn--secondary btn--sm" href="#">사진 고르기</a><a class="btn btn--sm" href="#">사진 올리기</a><a class="btn btn--secondary btn--sm" href="#">사진 지우기</a></div>
+              <p class="meta" style="margin-top:var(--sp-16)">아직 고른 사진이 없어요.</p>
+              <p class="meta hint">jpg·png·webp, 10MB 까지. 가운데를 정사각으로 잘라 저장하고, 촬영 위치 같은 사진 정보는 지워요. 링크 미리보기에도 이 사진이 들어가요.</p>
+            </div>
+            <hr class="rule">
+            <div class="card card--soft inner">
+              <p class="strong">공지 이미지</p>
+              <p style="margin-top:var(--sp-8);color:var(--gray-600)">「선물은 팬꾹으로 받아요」 이미지를 내려받아 방송·SNS 공지에 쓰세요.</p>
+              <p style="margin-top:var(--sp-16)"><a class="btn btn--secondary btn--sm" href="#">내려받기</a></p>
+            </div>
+          </section>
+
+          <section class="card set" id="recv" aria-labelledby="recv-h">
+            <div class="set-head"><h2 id="recv-h" class="card-t">선물 받기</h2></div>
+            <fieldset class="fs"><legend class="label">받는 상태</legend>
+              <div class="opt-grid opt-grid--2"><label class="opt"><input type="radio" name="recv" checked><span>받는 중</span></label><label class="opt"><input type="radio" name="recv"><span>쉬는 중</span></label></div>
+              <p class="meta hint">쉬는 동안에도 이미 받은 선물의 승인·거절은 그대로 할 수 있어요.</p>
+            </fieldset>
+            <div>
+              <label class="label" for="recv-limit">팬 한 명이 한 달에 보낼 수 있는 선물</label>
+              <select class="field" id="recv-limit"><option>정하지 않음</option><option selected>3개</option><option>5개</option></select>
+              <p class="meta hint">정해 두면 이번 달에 그만큼 보낸 팬은 다음 달 1일부터 다시 보낼 수 있어요. 이 숫자는 크리에이터 페이지에 보이지 않아요.</p>
+            </div>
+            <div><a class="btn" href="#">선물 받기 저장</a></div>
+          </section>
+
+          <section class="card set" id="days" aria-labelledby="days-h">
+            <div class="set-head"><h2 id="days-h" class="card-t">생일과 기념일</h2></div>
+            <p>적어 두면 크리에이터 페이지에 30일 전부터 D-day 가 보여요. 연도는 받지 않아요.</p>
+            <fieldset class="fs"><legend class="label">생일</legend>
+              <div class="grid cols-2">
+                <div><label class="sr-only" for="bd-m">생일 월</label><select class="field" id="bd-m"><option>3월</option></select></div>
+                <div><label class="sr-only" for="bd-d">생일 일</label><select class="field" id="bd-d"><option>17일</option></select></div>
+              </div>
+            </fieldset>
+            <fieldset class="fs"><legend class="label">기념일 (3개까지)</legend>
+              <div class="grid cols-2">
+                <div><label class="meta" for="an-1">기념일 1 이름</label><input class="field" id="an-1" value="데뷔일"></div>
+                <div><label class="meta" for="an-1d">기념일 1 날짜</label><select class="field" id="an-1d"><option>9월 2일</option></select></div>
+              </div>
+              <div class="btn-stack" style="margin-top:var(--sp-16)"><a class="btn btn--secondary btn--sm" href="#" aria-label="기념일 1 빼기">빼기</a><a class="btn btn--secondary btn--sm" href="#">기념일 더하기</a></div>
+              <p class="meta hint">이름은 10자까지예요. 기념일 7일 전부터는 팬이 「기념일 선물」 표시를 붙여 보낼 수 있어요.</p>
+            </fieldset>
+            <div><a class="btn" href="#">생일·기념일 저장</a></div>
+          </section>
+
+          <section class="card set" id="hard" aria-labelledby="hard-h">
+            <div class="set-head"><h2 id="hard-h" class="card-t">받기 어려운 품목</h2></div>
+            <p>고르면 크리에이터 페이지에 정해진 문장으로 한 줄 보여요. 문장은 직접 쓰지 않아요.</p>
+            <div class="card card--soft inner"><p class="meta">지금 보이는 문구</p><p class="strong">지금은 인형·쿠션, 꽃을 받기 어려워요 ㅠㅠ 이미 많이 받았어요</p><p class="meta" style="margin-top:var(--sp-8)">안내만 · 10월 17일까지 (5일 남음) · 남은 기간은 나에게만 보여요.</p></div>
+            <fieldset class="fs"><legend class="label">품목 (여러 개 고를 수 있어요)</legend>
+              <div class="opt-grid"><label class="opt"><input type="checkbox" name="item" checked><span>인형·쿠션</span></label><label class="opt"><input type="checkbox" name="item" checked><span>꽃</span></label><label class="opt"><input type="checkbox" name="item"><span>의류</span></label><label class="opt"><input type="checkbox" name="item"><span>향수·화장품</span></label><label class="opt"><input type="checkbox" name="item"><span>대형 물품</span></label><label class="opt"><input type="checkbox" name="item"><span>문구</span></label><label class="opt"><input type="checkbox" name="item"><span>전자기기</span></label><label class="opt"><input type="checkbox" name="item"><span>기타</span></label></div>
+            </fieldset>
+            <fieldset class="fs"><legend class="label">이유</legend>
+              <div class="opt-grid"><label class="opt"><input type="radio" name="why" checked><span>이미 많이 받았어요</span></label><label class="opt"><input type="radio" name="why"><span>보관할 곳이 부족해요</span></label><label class="opt"><input type="radio" name="why"><span>잠시 집을 비워요</span></label><label class="opt"><input type="radio" name="why"><span>이유 표시 안 함</span></label></div>
+            </fieldset>
+            <fieldset class="fs"><legend class="label">기간</legend>
+              <div class="opt-grid"><label class="opt"><input type="radio" name="per"><span>1주</span></label><label class="opt"><input type="radio" name="per" checked><span>2주</span></label><label class="opt"><input type="radio" name="per"><span>한 달</span></label><label class="opt"><input type="radio" name="per"><span>직접 해제할 때까지</span></label></div>
+              <p class="meta hint">저장한 날부터 계산해요. 다시 저장하면 그날부터 다시 계산하고, 기간이 끝나면 문구가 저절로 사라져요.</p>
+            </fieldset>
+            <fieldset class="fs"><legend class="label">팬이 이 품목을 고르면</legend>
+              <div class="opt-grid opt-grid--2"><label class="opt"><input type="radio" name="act" checked><span>안내만</span></label><label class="opt"><input type="radio" name="act"><span>등록 막기</span></label></div>
+              <p class="meta hint">「안내만」을 고르면 팬이 결제 전에 안내를 보고 그대로 보낼 수도 있어요. 「등록 막기」를 고르면 그 품목으로는 선물을 보낼 수 없어요. 어느 쪽이든 승인한 선물만 배송합니다.</p>
+            </fieldset>
+            <div class="card inner"><p class="meta">미리보기</p><p>지금은 인형·쿠션, 꽃을 받기 어려워요 ㅠㅠ 이미 많이 받았어요</p></div>
+            <div class="btn-stack"><a class="btn" href="#">받기 어려운 품목 저장</a><a class="btn btn--secondary" href="#">해제</a></div>
+          </section>
+
+          <section class="card set" id="reply" aria-labelledby="reply-h">
+            <div class="set-head"><h2 id="reply-h" class="card-t">감사 답장</h2></div>
+            <div class="sw-row"><div><p class="strong" id="rs-t">답장 모음 보이기</p><p class="meta" id="rs-d">켜면 팬이 공개를 허락한 답장이 받았어요 3일 뒤부터 링크 페이지에 보여요.</p></div><button class="sw" type="button" role="switch" aria-checked="true" aria-labelledby="rs-t" aria-describedby="rs-d"><span></span></button></div>
+            <div><label class="label" for="reply-x">X 계정 (선택)</label><input class="field" id="reply-x" value="byeolbit_x"><p class="meta hint">영문·숫자·밑줄 1~15자예요. 비우면 등록하지 않아요.</p></div>
+            <div class="sw-row"><div><p class="strong" id="tg-t">태그 허용</p><p class="meta" id="tg-d">켜면 팬이 답장 카드를 X 에 공유할 때 내 계정이 함께 적혀요. 지금 채워지는 글: @byeolbit_x 님이 보낸 답장이에요</p></div><button class="sw" type="button" role="switch" aria-checked="false" aria-labelledby="tg-t" aria-describedby="tg-d"><span></span></button></div>
+            <div><a class="btn" href="#">감사 답장 설정 저장</a></div>
+          </section>
+
+          <section class="card set" id="alarm" aria-labelledby="alarm-h">
+            <div class="set-head"><h2 id="alarm-h" class="card-t">알림 받기</h2></div>
+            <div class="card card--soft inner"><p class="strong">꼭 가는 알림은 끌 수 없어요</p><p style="margin-top:var(--sp-8);color:var(--gray-600)">승인 요청·돌려보내는 선물 같은 알림이에요. 승인 요청은 놓치면 7일 뒤 자동으로 반려돼요.</p></div>
+            <div class="sw-row"><div><p class="strong" id="kk-t">카카오톡 알림</p><p class="meta" id="kk-d">그 밖의 소식을 카카오톡으로 알려드려요.</p></div><button class="sw" type="button" role="switch" aria-checked="true" aria-labelledby="kk-t" aria-describedby="kk-d"><span></span></button></div>
+            <div class="sw-row"><div><p class="strong" id="em-t">이메일 알림</p><p class="meta" id="em-d">같은 소식을 확인된 이메일로 알려드려요.</p></div><button class="sw" type="button" role="switch" aria-checked="false" aria-labelledby="em-t" aria-describedby="em-d"><span></span></button></div>
+          </section>
+
+          <section class="card set" id="security" aria-labelledby="security-h">
+            <div class="set-head"><h2 id="security-h" class="card-t">계정 보안</h2></div>
+            <ul class="grid cols-2">
+              <li class="card card--soft card-col"><p class="strong">휴대폰 번호</p><p>010-****-1234</p><p class="meta">바꾸려면 카카오 인증을 다시 받아요.</p><div class="push"><a class="btn btn--secondary btn--sm btn--block" href="#">번호 바꾸기</a></div></li>
+              <li class="card card--soft card-col"><p class="strong">비밀번호</p><p class="meta">바꾸면 다른 기기의 로그인은 모두 끝나요.</p><div class="push"><a class="btn btn--secondary btn--sm btn--block" href="#">비밀번호 변경</a></div></li>
+            </ul>
+          </section>
+        </div>
+        </div>
+      </div>
+    </main>
+    </div>
+  </div>
+  <script>
+    /* 같은 파일을 가리키는 「주소 관리」(#address)와 「설정」 중 현재 항목 하나만 표시 */
+    (function () {
+      var h = location.hash === '#address';
+      var links = document.querySelectorAll('.sb-nav a[href^="creator-settings.html"]');
+      links.forEach(function (a) { a.removeAttribute('aria-current'); });
+      links.forEach(function (a) { var isAddr = /#address$/.test(a.getAttribute('href')); if (isAddr === h) a.setAttribute('aria-current', 'page'); });
+    })();
+  </script>
+</body>
+</html>

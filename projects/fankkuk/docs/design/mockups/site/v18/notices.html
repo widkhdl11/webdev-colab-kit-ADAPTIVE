@@ -1,0 +1,95 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v18 공지사항 — P 갈래(로그인 전·공개 화면) (2026-10-13)
+  지시: _brief.md 「2차」 — 원본 ../v16/a/notices.html, 문구·구조 그대로. 틀은 v18 landing(GNB 로그인 전) + v18-pub.css.
+  3D 그림은 설명 그림 자리(머리 그림·소개 장면·안내 판)만, UI 아이콘은 lucide 선 아이콘. 색·글자 크기·간격은 전부 tokens.css 변수.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v18 공지사항</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="v18.css">
+<link rel="stylesheet" href="v18-pub.css">
+<script src="font-switch.js" defer></script>
+</head>
+<body class="page-notices">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="landing.html" aria-label="팬꾹 처음 화면">팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+        <li><a href="creators.html">크리에이터 찾기</a></li><li><a href="send-loggedout.html">선물 보내기</a></li><li><a href="notices.html" aria-current="page">공지사항</a></li><li><a href="about.html">팬꾹 소개</a></li><li><a href="support.html">고객센터</a></li>
+      </ul></nav>
+      <div class="header-actions">
+        <div class="auth"><a href="login.html">로그인</a><span class="sep" aria-hidden="true"></span><a class="strong" href="signup.html">회원가입</a></div>
+        <details class="mm">
+          <summary aria-label="메뉴 열기"><svg class="ico i-open" aria-hidden="true"><use href="#i-menu"/></svg><svg class="ico i-close" aria-hidden="true"><use href="#i-x"/></svg></summary>
+          <div class="mm-body">
+            <a href="creators.html">크리에이터 찾기</a><a href="send-loggedout.html">선물 보내기</a><a href="notices.html" aria-current="page">공지사항</a><a href="about.html">팬꾹 소개</a><a href="support.html">고객센터</a>
+            <div class="btn-row"><a class="btn btn--secondary" href="login.html">로그인</a><a class="btn" href="signup.html">회원가입</a></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="pub pub--doc">
+    <section class="section section--compact page-band" aria-labelledby="page-title">
+      <div class="container">
+        <div class="sec-head">
+          <img class="art art--head" src="../v16/img/icon-notice.png" width="64" height="64" alt="" aria-hidden="true">
+          <h1 class="t-title" id="page-title">공지사항</h1>
+        </div>
+        <div class="acc">
+          <ul aria-label="공지사항 목록">
+            <li><details open><summary><span class="tag tag--brand">고정</span><span class="q"><b>팬꾹 서비스 시작 안내</b><span class="t-meta">2026.09.28</span></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans prose">
+              <h3>안녕하세요, 팬꾹입니다</h3>
+              <p>좋아하는 크리에이터에게 선물을 안전하게 보낼 수 있도록 팬꾹이 문을 열었어요. 팬꾹은 크리에이터가 승인한 선물만 배송합니다.</p>
+              <ul class="dots"><li>모든 선물은 팬꾹에서 검수한 뒤 보냅니다.</li><li>승인 전까지 주소는 노출되지 않습니다.</li><li>고객센터에서 1:1 문의를 남길 수 있어요.</li></ul>
+              <p class="t-meta">팬꾹 운영팀 드림</p>
+            </div></details></li>
+            <li><details><summary><span class="q"><b>선물 보내기 전에 꼭 확인해 주세요 (크기·무게 기준)</b><span class="t-meta">2026.09.28</span></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans prose"><p>공지 본문이 여기에 펼쳐져요.</p></div></details></li>
+            <li><details><summary><span class="q"><b>요금 안내: 상자마다 배송비가 포함돼 있어요</b><span class="t-meta">2026.09.26</span></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans prose"><p>공지 본문이 여기에 펼쳐져요.</p></div></details></li>
+            <li><details><summary><span class="q"><b>크리에이터 방송 채널 인증 방법 안내</b><span class="t-meta">2026.09.24</span></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans prose"><p>공지 본문이 여기에 펼쳐져요.</p></div></details></li>
+            <li><details><summary><span class="q"><b>검수는 이렇게 진행돼요: 걸린 상자만 개봉합니다</b><span class="t-meta">2026.09.22</span></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans prose"><p>공지 본문이 여기에 펼쳐져요.</p></div></details></li>
+            <li><details><summary><span class="q"><b>카카오톡 인증 점검 안내</b><span class="t-meta">2026.09.20</span></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans prose"><p>공지 본문이 여기에 펼쳐져요.</p></div></details></li>
+            <li><details><summary><span class="q"><b>개인정보 보관 방식 안내</b><span class="t-meta">2026.09.18</span></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans prose"><p>공지 본문이 여기에 펼쳐져요.</p></div></details></li>
+            <li><details><summary><span class="q"><b>선물 상태 단계가 여섯 가지로 바뀌었어요</b><span class="t-meta">2026.09.15</span></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans prose"><p>공지 본문이 여기에 펼쳐져요.</p></div></details></li>
+          </ul>
+        </div>
+        <nav class="pager" aria-label="공지사항 페이지"><span aria-hidden="true">&lsaquo;</span><a href="#" aria-label="1페이지" aria-current="page">1</a><a href="#" aria-label="2페이지">2</a><a href="#" aria-label="다음 페이지">&rsaquo;</a></nav>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="legal.html">이용약관</a><a href="legal.html">개인정보처리방침</a><a href="support.html">고객센터</a><a href="about.html">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

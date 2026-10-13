@@ -1,0 +1,118 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v18 고객센터 — P 갈래(로그인 전·공개 화면) (2026-10-13)
+  지시: _brief.md 「2차」 — 원본 ../v16/a/support.html, 문구·구조 그대로. 틀은 v18 landing(GNB 로그인 전) + v18-pub.css.
+  3D 그림은 설명 그림 자리(머리 그림·소개 장면·안내 판)만, UI 아이콘은 lucide 선 아이콘. 색·글자 크기·간격은 전부 tokens.css 변수.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v18 고객센터</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="v18.css">
+<link rel="stylesheet" href="v18-pub.css">
+<script src="font-switch.js" defer></script>
+</head>
+<body class="page-support">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="landing.html" aria-label="팬꾹 처음 화면">팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+        <li><a href="creators.html">크리에이터 찾기</a></li><li><a href="send-loggedout.html">선물 보내기</a></li><li><a href="notices.html">공지사항</a></li><li><a href="about.html">팬꾹 소개</a></li><li><a href="support.html" aria-current="page">고객센터</a></li>
+      </ul></nav>
+      <div class="header-actions">
+        <div class="auth"><a href="login.html">로그인</a><span class="sep" aria-hidden="true"></span><a class="strong" href="signup.html">회원가입</a></div>
+        <details class="mm">
+          <summary aria-label="메뉴 열기"><svg class="ico i-open" aria-hidden="true"><use href="#i-menu"/></svg><svg class="ico i-close" aria-hidden="true"><use href="#i-x"/></svg></summary>
+          <div class="mm-body">
+            <a href="creators.html">크리에이터 찾기</a><a href="send-loggedout.html">선물 보내기</a><a href="notices.html">공지사항</a><a href="about.html">팬꾹 소개</a><a href="support.html" aria-current="page">고객센터</a>
+            <div class="btn-row"><a class="btn btn--secondary" href="login.html">로그인</a><a class="btn" href="signup.html">회원가입</a></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="pub pub--doc">
+    <section class="section section--compact page-band page-band--sep" aria-labelledby="page-title">
+      <div class="container">
+        <div class="sec-head">
+          <img class="art art--head" src="../v16/img/icon-help.png" width="64" height="64" alt="" aria-hidden="true">
+          <h1 class="t-title" id="page-title">고객센터</h1>
+          <p class="t-lead t-desc">궁금한 점을 먼저 찾아보시고, 없으면 1:1 문의를 남겨 주세요.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--compact doc" aria-labelledby="faq-title">
+      <div class="container">
+        <div class="sec-head"><h2 id="faq-title">자주 묻는 질문</h2></div>
+        <input class="sr-only" type="radio" name="cat" id="c0" aria-label="선물 보내기" checked><input class="sr-only" type="radio" name="cat" id="c1" aria-label="요금"><input class="sr-only" type="radio" name="cat" id="c2" aria-label="배송"><input class="sr-only" type="radio" name="cat" id="c3" aria-label="크리에이터"><input class="sr-only" type="radio" name="cat" id="c4" aria-label="계정">
+        <div class="tabs" role="group" aria-label="질문 분류"><label for="c0">선물 보내기</label><label for="c1">요금</label><label for="c2">배송</label><label for="c3">크리에이터</label><label for="c4">계정</label></div>
+        <div class="panels">
+          <div class="p0 acc"><details open><summary><span class="q"><b>선물은 어떻게 보내나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>크리에이터를 찾아 「선물 보내기」를 누르고 상자 크기를 골라 결제하면 돼요. 결제하면 상자마다 보낼 팬꾹 주소가 나와요. 크리에이터가 승인하면 주소가 바로 보이고, 「먼저 보내기」로 미리 보낼 수도 있어요.</p></div></details><details><summary><span class="q"><b>크리에이터가 거절하면 어떻게 되나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>거절된 선물은 크리에이터에게 배송되지 않아요. 사무실에 도착하기 전이면 결제 금액을 모두 돌려드리고, 도착한 뒤면 보낸 주소로 돌려보내 드린 뒤 반송 택배비를 뺀 금액을 돌려드려요. 7일 안에 승인하지 않은 선물도 같아요. 거절 이유는 팬에게 알리지 않습니다.</p></div></details><details><summary><span class="q"><b>여러 상자를 한 번에 보낼 수 있나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>네, 한 선물에 상자를 여러 개 등록할 수 있어요. 상자마다 크기에 맞는 요금이 정해져요.</p></div></details></div>
+          <div class="p1 acc"><details open><summary><span class="q"><b>요금은 얼마인가요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>상자마다 배송비가 포함된 금액이에요. 소형(세 변 합 100cm·5kg 이하) 6,900원, 중형(세 변 합 100cm·10kg 이하) 8,900원, 대형(세 변 합 160cm·20kg 이하) 10,900원이고, 추적 장치 검수가 포함돼 있어요.</p></div></details><details><summary><span class="q"><b>크기와 무게가 서로 다른 구간이면 어떻게 정해지나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>크기와 무게 중 큰 쪽 기준으로 정해져요. 예를 들어 세 변 합은 80cm인데 무게가 7kg이면 중형이에요.</p></div></details><details><summary><span class="q"><b>도착해서 잰 크기가 등록한 것보다 크면요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>사무실에서 실측한 크기가 더 크면 차액을 따로 결제해 주셔야 해요. 세 변 합 160cm나 20kg를 넘는 상자는 받지 않아요.</p></div></details></div>
+          <div class="p2 acc"><details open><summary><span class="q"><b>선물이 어디쯤 왔는지 어떻게 확인하나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>등록 → 입고 → 검수 → 출고 → 배송중 → 수령, 여섯 단계로 (크리에이터 승인은 검수와 출고 사이에 따로 표시돼요) 선물 상세 화면과 상단 선물 아이콘에서 볼 수 있어요.</p></div></details><details><summary><span class="q"><b>크리에이터행 운송장 번호를 볼 수 있나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>팬에게는 크리에이터행 운송장 번호를 보여 드리지 않아요. 팬이 입력하는 것은 사무실로 보내는 상자의 송장번호예요.</p></div></details><details><summary><span class="q"><b>검수는 어떻게 하나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>모든 선물은 팬꾹에서 검수한 뒤 보냅니다. 송장을 떼고 겉면과 추적 장치를 검사하고, 탐지기 반응이 있으면 열어서 확인해요. 보낼 수 없는 물품이 나오면 상자를 돌려보내 드려요.</p></div></details></div>
+          <div class="p3 acc"><details open><summary><span class="q"><b>크리에이터는 어떻게 가입하나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>가입할 때 「크리에이터」를 고르면 돼요. 가입한 뒤 「주소와 설정」에서 방송 채널 주인인지 확인을 마치면 「크리에이터 찾기」에 나타나요.</p></div></details><details><summary><span class="q"><b>선물 승인은 어떻게 하나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>요청이 오면 한 건씩 카카오톡 인증서로 서명해서 승인해요. 전체 승인 버튼은 없어요.</p></div></details><details><summary><span class="q"><b>원치 않는 팬을 막을 수 있나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>네, 차단 목록에 추가하면 그 팬은 선물을 요청할 수 없어요.</p></div></details></div>
+          <div class="p4 acc"><details open><summary><span class="q"><b>비밀번호를 잊어버렸어요.</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>로그인 화면의 「비밀번호를 잊으셨나요?」에서 가입 이메일을 입력하면 재설정 링크를 보내 드려요.</p></div></details><details><summary><span class="q"><b>아이디를 바꿀 수 있나요?</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>아이디는 바꿀 수 없어요. 닉네임과 이메일은 내 팬꾹의 개인정보에서 고칠 수 있어요.</p></div></details><details><summary><span class="q"><b>휴대폰 번호를 바꾸고 싶어요.</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary><div class="ans"><p>내 팬꾹의 개인정보에서 바꿀 수 있고, 카카오톡 인증을 다시 받아야 해요.</p></div></details></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--compact" aria-labelledby="inquiry-title">
+      <div class="container">
+        <div class="sec-head"><h2 id="inquiry-title">1:1 문의</h2><p class="t-lead t-desc">남겨 주신 순서대로 답변드려요. 답변이 달리면 「내 문의」에서 볼 수 있어요.</p></div>
+        <form class="card ask form" onsubmit="return false" aria-label="1:1 문의">
+          <div><label class="label" for="q-cat">분류</label><select class="field" id="q-cat"><option>분류를 골라 주세요</option><option>선물 보내기</option><option>요금</option><option>배송</option><option>크리에이터</option><option>계정</option><option>기타</option></select></div>
+          <div><label class="label" for="q-order">주문번호 <span class="t-meta">(선택)</span></label><input class="field" id="q-order" placeholder="예: FC-7K3M9"></div>
+          <div><label class="label" for="q-title">제목</label><input class="field" id="q-title" placeholder="문의 제목을 적어 주세요"></div>
+          <div><label class="label" for="q-body">내용</label><textarea class="field" id="q-body" placeholder="궁금한 점을 자세히 적어 주세요"></textarea></div>
+          <a class="btn btn--block" href="#">로그인하고 문의하기</a>
+        </form>
+      </div>
+    </section>
+
+    <section class="section section--compact" aria-labelledby="contact-title">
+      <div class="container">
+        <div class="sec-head"><h2 id="contact-title">운영 시간·연락처</h2></div>
+        <dl class="grid cols-4 hours">
+          <div class="card"><dt>운영 시간</dt><dd>(출시 전 기재)</dd></div>
+          <div class="card"><dt>점심 시간</dt><dd>(출시 전 기재)</dd></div>
+          <div class="card"><dt>전화</dt><dd>(출시 전 기재)</dd></div>
+          <div class="card"><dt>이메일</dt><dd>(출시 전 기재)</dd></div>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="legal.html">이용약관</a><a href="legal.html">개인정보처리방침</a><a href="support.html">고객센터</a><a href="about.html">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

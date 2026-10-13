@@ -20,7 +20,9 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="v18.css">
+
 <link rel="stylesheet" href="v18-app.css">
+<script src="font-switch.js" defer></script>
 </head>
 <body>
   <script>
@@ -109,27 +111,27 @@
   <a class="skip-link" href="#main">본문 바로가기</a>
   <div class="app" id="app">
     <header class="topbar">
-      <a class="logo" href="landing-loggedin.html" aria-label="팬꾹 홈">팬꾹</a>
+      <a class="logo" href="home-fan.html" aria-label="팬꾹 홈">팬꾹</a>
       <button class="icon-btn" id="sb-open" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button>
     </header>
     <div class="sb-scrim" id="sb-scrim"></div>
     <aside class="sidebar" id="sidebar" aria-label="팬 메뉴">
       <div class="sb-top">
         <button class="sb-mark" id="sb-mark" type="button" aria-label="사이드바 펼치기" aria-controls="sidebar" aria-expanded="false"><span class="m-txt" aria-hidden="true">꾹</span><svg class="ico m-ico" aria-hidden="true"><use href="#i-panel-left-open"/></svg></button>
-        <a class="logo" href="landing-loggedin.html" aria-label="팬꾹 홈">팬꾹</a>
+        <a class="logo" href="home-fan.html" aria-label="팬꾹 홈">팬꾹</a>
         <button class="sb-btn sb-fold" id="sb-fold" type="button" aria-label="사이드바 접기" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button>
         <button class="sb-btn sb-close" id="sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
       </div>
       <nav class="sb-nav" aria-label="팬 메뉴">
         <p class="sb-group" id="g1-fan"><span class="sb-group-t">기본</span></p>
-        <ul aria-labelledby="g1-fan"><li><a href="landing-loggedin.html" data-tip="홈"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg><span class="sb-label">홈</span></a></li><li><a href="#" data-tip="크리에이터 찾기"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sb-label">크리에이터 찾기</span></a></li><li><a href="#" data-tip="선물 보내기"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg><span class="sb-label">선물 보내기</span></a></li></ul>
+        <ul aria-labelledby="g1-fan"><li><a href="home-fan.html" data-tip="홈"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg><span class="sb-label">홈</span></a></li><li><a href="creators.html" data-tip="크리에이터 찾기"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sb-label">크리에이터 찾기</span></a></li><li><a href="send.html" data-tip="선물 보내기"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg><span class="sb-label">선물 보내기</span></a></li></ul>
         <p class="sb-group" id="g2-fan"><span class="sb-group-t">내 활동</span></p>
-        <ul aria-labelledby="g2-fan"><li><a href="my-following.html" aria-current="page" data-tip="팔로우한 크리에이터"><svg class="ico" aria-hidden="true"><use href="#i-heart"/></svg><span class="sb-label">팔로우한 크리에이터</span></a></li><li><a href="my-gifts.html" data-tip="보낸 선물"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg><span class="sb-label">보낸 선물</span><span class="badge" aria-label="미확인 2건">2</span></a></li><li><a href="#" data-tip="받은 감사 카드"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg><span class="sb-label">받은 감사 카드</span></a></li><li><a href="#" data-tip="문의"><svg class="ico" aria-hidden="true"><use href="#i-message-circle"/></svg><span class="sb-label">문의</span></a></li></ul>
+        <ul aria-labelledby="g2-fan"><li><a href="my-following.html" aria-current="page" data-tip="팔로우한 크리에이터"><svg class="ico" aria-hidden="true"><use href="#i-heart"/></svg><span class="sb-label">팔로우한 크리에이터</span></a></li><li><a href="my-gifts.html" data-tip="보낸 선물"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg><span class="sb-label">보낸 선물</span><span class="badge" aria-label="미확인 2건">2</span></a></li><li><a href="me-revgifts.html" data-tip="받은 감사 카드"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg><span class="sb-label">받은 감사 카드</span></a></li><li><a href="support.html" data-tip="문의"><svg class="ico" aria-hidden="true"><use href="#i-message-circle"/></svg><span class="sb-label">문의</span></a></li></ul>
       </nav>
       <div class="sb-bottom">
         <details class="sb-menu" id="sb-menu">
           <summary aria-label="팬꾹러 계정 메뉴"><span class="sb-avatar" aria-hidden="true">팬</span><span class="sb-name">팬꾹러</span><svg class="ico sb-chev" aria-hidden="true"><use href="#i-chevrons-up-down"/></svg></summary>
-          <div class="sb-menu-list"><a href="my-following.html">계정 설정</a><a href="#">로그아웃</a></div>
+          <div class="sb-menu-list"><a href="me.html">계정 설정</a><a href="#">로그아웃</a></div>
         </details>
       </div>
     </aside>

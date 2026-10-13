@@ -1,0 +1,154 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v18 선물 링크 페이지 — P 갈래(로그인 전·공개 화면) (2026-10-13)
+  지시: _brief.md 「2차」 — 원본 ../v16/a/link.html, 문구·구조 그대로. 틀은 v18 landing(GNB 로그인 전) + v18-pub.css.
+  3D 그림은 설명 그림 자리(머리 그림·소개 장면·안내 판)만, UI 아이콘은 lucide 선 아이콘. 색·글자 크기·간격은 전부 tokens.css 변수.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v18 선물 링크 페이지</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="v18.css">
+<link rel="stylesheet" href="v18-pub.css">
+<script src="font-switch.js" defer></script>
+</head>
+<body class="page-link">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+    <symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="landing.html" aria-label="팬꾹 처음 화면">팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+        <li><a href="creators.html" aria-current="page">크리에이터 찾기</a></li><li><a href="send-loggedout.html">선물 보내기</a></li><li><a href="notices.html">공지사항</a></li><li><a href="about.html">팬꾹 소개</a></li><li><a href="support.html">고객센터</a></li>
+      </ul></nav>
+      <div class="header-actions">
+        <div class="auth"><a href="login.html">로그인</a><span class="sep" aria-hidden="true"></span><a class="strong" href="signup.html">회원가입</a></div>
+        <details class="mm">
+          <summary aria-label="메뉴 열기"><svg class="ico i-open" aria-hidden="true"><use href="#i-menu"/></svg><svg class="ico i-close" aria-hidden="true"><use href="#i-x"/></svg></summary>
+          <div class="mm-body">
+            <a href="creators.html" aria-current="page">크리에이터 찾기</a><a href="send-loggedout.html">선물 보내기</a><a href="notices.html">공지사항</a><a href="about.html">팬꾹 소개</a><a href="support.html">고객센터</a>
+            <div class="btn-row"><a class="btn btn--secondary" href="login.html">로그인</a><a class="btn" href="signup.html">회원가입</a></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="pub ">
+    <section class="pf" aria-labelledby="creator-name">
+      <div class="container">
+       <img class="pdeco pdeco--l" src="../v16/img/icon-gift.png" width="96" height="96" alt="" aria-hidden="true">
+        <img class="pdeco pdeco--r" src="../v16/img/icon-find.png" width="96" height="96" alt="" aria-hidden="true">
+       <div class="pf-card">
+        <span class="av av--xl" aria-hidden="true">새</span>
+        <h1 class="t-hero" id="creator-name">새벽달</h1>
+        <p class="handle t-meta">fankkuk.kr/dawnmoon</p>
+        <p class="t-lead">새벽에 듣기 좋은 음악과 이야기를 들려드려요.</p>
+        <p class="ctags"><span class="tag tag--success"><svg aria-hidden="true"><use href="#i-check"/></svg>본인 확인 완료</span><span class="ptag ptag--yt"><span class="bd glyph"><img src="../v9-pages/brand/youtube.svg" alt="" aria-hidden="true"></span>YouTube</span></p>
+        <p class="thanks">보내주시는 마음 늘 감사해요</p>
+        <div class="row-btns"><a class="btn btn--wide" href="#">팔로우하고 선물 보내기</a></div>
+        <p class="note">팔로우한 크리에이터에게만 보낼 수 있어요. 팔로우하면 내 닉네임이 보여요.</p>
+       </div>
+      </div>
+    </section>
+
+    <section class="section section--compact" aria-labelledby="info-title">
+      <div class="container">
+        <div class="sec-head"><h2 id="info-title">새벽달님은 지금</h2></div>
+        <div class="grid cols-3">
+          <div class="card info ok"><span class="ic" aria-hidden="true"><svg><use href="#i-circle-check"/></svg></span><h3>받는 상태</h3><p class="big">지금 선물을 받고 있어요</p></div>
+          <div class="card info"><span class="ic" aria-hidden="true"><svg><use href="#i-clock"/></svg></span><h3>평균 승인 시간 (최근 30일)</h3><p class="big">약 5시간</p></div>
+          <div class="card info"><span class="ic" aria-hidden="true"><svg><use href="#i-receipt"/></svg></span><h3>상자마다 배송비 포함</h3><p class="big">6,900원부터</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--compact" aria-labelledby="fold-title">
+      <div class="container">
+        <div class="sec-head"><h2 id="fold-title">보내기 전에 알아 두세요</h2></div>
+
+        <div class="acc">
+          <details>
+            <summary><span class="q"><b>보낼 수 없는 것</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary>
+            <div class="ans"><ul class="nos">
+              <li><span class="x" aria-hidden="true"><svg><use href="#i-x"/></svg></span><span>현금·상품권 (금전 가치가 있는 것)</span></li>
+              <li><span class="x" aria-hidden="true"><svg><use href="#i-x"/></svg></span><span>살아 있는 동물과 식물</span></li>
+              <li><span class="x" aria-hidden="true"><svg><use href="#i-x"/></svg></span><span>음식물과 상하기 쉬운 것 (포장 식품은 가능)</span></li>
+              <li><span class="x" aria-hidden="true"><svg><use href="#i-x"/></svg></span><span>인화성 물질·배터리 단품</span></li>
+              <li><span class="x" aria-hidden="true"><svg><use href="#i-x"/></svg></span><span>주류·담배·의약품</span></li>
+            </ul></div>
+          </details>
+          <details>
+            <summary><span class="q"><b>상자는 이렇게 확인해요</b></span><svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary>
+            <div class="ans"><ol class="steps-ol">
+              <li>모든 선물은 팬꾹에서 검수한 뒤 보냅니다.</li>
+              <li>탐지기 반응이 있으면 개봉 검수합니다.</li>
+              <li>승인 전까지 주소는 노출되지 않습니다. 크리에이터 주소는 팬에게 공개되지 않습니다.</li>
+            </ol></div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="send-h">
+      <div class="sheet send-sheet">
+        <img class="pdeco pdeco--l" src="../v16/img/icon-gift.png" width="96" height="96" alt="" aria-hidden="true">
+        <img class="pdeco pdeco--r" src="../v16/img/icon-truck.png" width="96" height="96" alt="" aria-hidden="true">
+        <div class="container">
+          <div class="center-in">
+            <h2 id="send-h">새벽달님께 선물 <span class="accent">보내기</span></h2>
+            <p class="t-lead t-desc">팔로우한 크리에이터에게만 보낼 수 있어요.</p>
+            <a class="btn btn--wide" href="#">팔로우하고 선물 보내기</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--compact sec-sim" aria-labelledby="similar-title">
+      <div class="container">
+        <div class="sec-head"><h2 id="similar-title">이런 크리에이터도 있어요</h2></div>
+        <ul class="grid cols-4">
+          <li><a class="card other" href="#" aria-label="새벽달님의 선물 링크 페이지"><span class="av" aria-hidden="true">새</span><span class="t-strong">새벽달<span class="ptag ptag--yt"><span class="bd glyph"><img src="../v9-pages/brand/youtube.svg" alt="" aria-hidden="true"></span>YouTube</span></span></a></li>
+          <li><a class="card other" href="#" aria-label="꿀단지님의 선물 링크 페이지"><span class="av" aria-hidden="true">꿀</span><span class="t-strong">꿀단지<span class="ptag ptag--soop"><span class="bd"><img src="../v9-pages/brand/soop.png" alt="" aria-hidden="true"></span>SOOP</span></span></a></li>
+          <li><a class="card other" href="#" aria-label="모카님의 선물 링크 페이지"><span class="av" aria-hidden="true">모</span><span class="t-strong">모카<span class="ptag ptag--chz"><span class="bd"><img src="../v9-pages/brand/chzzk.png" alt="" aria-hidden="true"></span>치지직</span></span></a></li>
+          <li><a class="card other" href="#" aria-label="라온님의 선물 링크 페이지"><span class="av" aria-hidden="true">라</span><span class="t-strong">라온<span class="ptag ptag--yt"><span class="bd glyph"><img src="../v9-pages/brand/youtube.svg" alt="" aria-hidden="true"></span>YouTube</span></span></a></li>
+        </ul>
+        <div class="sec-foot"><a class="btn btn--line" href="#">크리에이터 전체 보기</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="legal.html">이용약관</a><a href="legal.html">개인정보처리방침</a><a href="support.html">고객센터</a><a href="about.html">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

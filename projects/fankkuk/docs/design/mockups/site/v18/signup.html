@@ -1,0 +1,119 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v18 회원가입 — P 갈래(로그인 전·공개 화면) (2026-10-13)
+  지시: _brief.md 「2차」 — 원본 ../v16/a/signup.html, 문구·구조 그대로. 틀은 v18 landing(GNB 로그인 전) + v18-pub.css.
+  3D 그림은 설명 그림 자리(머리 그림·소개 장면·안내 판)만, UI 아이콘은 lucide 선 아이콘. 색·글자 크기·간격은 전부 tokens.css 변수.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v18 회원가입</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="v18.css">
+<link rel="stylesheet" href="v18-pub.css">
+<script src="font-switch.js" defer></script>
+</head>
+<body class="page-signup">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="landing.html" aria-label="팬꾹 처음 화면">팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+        <li><a href="creators.html">크리에이터 찾기</a></li><li><a href="send-loggedout.html">선물 보내기</a></li><li><a href="notices.html">공지사항</a></li><li><a href="about.html">팬꾹 소개</a></li><li><a href="support.html">고객센터</a></li>
+      </ul></nav>
+      <div class="header-actions">
+        <div class="auth"><a href="login.html">로그인</a><span class="sep" aria-hidden="true"></span><a class="strong" href="signup.html">회원가입</a></div>
+        <details class="mm">
+          <summary aria-label="메뉴 열기"><svg class="ico i-open" aria-hidden="true"><use href="#i-menu"/></svg><svg class="ico i-close" aria-hidden="true"><use href="#i-x"/></svg></summary>
+          <div class="mm-body">
+            <a href="creators.html">크리에이터 찾기</a><a href="send-loggedout.html">선물 보내기</a><a href="notices.html">공지사항</a><a href="about.html">팬꾹 소개</a><a href="support.html">고객센터</a>
+            <div class="btn-row"><a class="btn btn--secondary" href="login.html">로그인</a><a class="btn" href="signup.html">회원가입</a></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="pub page-signup">
+    <section class="section section--compact auth-page" aria-labelledby="page-title">
+      <div class="container authbox">
+        <div class="head">
+          <h1 class="t-title" id="page-title">회원가입</h1>
+          <p class="t-lead t-desc">몇 가지만 적으면 바로 시작할 수 있어요.</p>
+        </div>
+        <div class="steps">
+          <section class="card" aria-labelledby="s1">
+            <div class="sh"><span class="no">1</span><div><h2 id="s1" class="t-card">어떤 분이세요?</h2></div></div>
+            <div class="choices" role="radiogroup" aria-label="회원 유형">
+              <label class="choice"><input type="radio" name="kind" checked><span><strong>팬이에요</strong><span class="t-meta">응원하는 크리에이터에게 선물을 보내고 싶어요.</span></span></label>
+              <label class="choice"><input type="radio" name="kind"><span><strong>크리에이터예요</strong><span class="t-meta">팬이 보내는 선물을 안전하게 받고 싶어요.</span></span></label>
+            </div>
+            <p class="note"><strong>크리에이터로 가입하면</strong> 가입한 뒤에 방송 채널 주인이 맞는지 한 번 더 확인해요. 유튜브·치지직은 그 계정으로 로그인하면 바로 끝나요(인스타그램은 프로페셔널 계정만). SOOP 은 인증 코드를 채널 소개란에 붙이거나 팬꾹 공식 계정 DM 으로 보내면 운영자가 확인해요. 확인이 끝나야 「크리에이터 찾기」에 나타나요.</p>
+          </section>
+
+          <section class="card" aria-labelledby="s2">
+            <div class="sh"><span class="no">2</span><div><h2 id="s2" class="t-card">가입 정보</h2></div></div>
+            <form class="form" onsubmit="return false" aria-label="회원가입 입력">
+              <div><label class="label" for="id">아이디</label><input class="field" id="id" autocomplete="username" aria-describedby="id-h"><p class="hint" id="id-h">영문 소문자·숫자·밑줄(_)로 4~20자예요. 가입한 뒤에는 아이디를 바꿀 수 없어요.</p></div>
+              <div><label class="label" for="mail">이메일</label><input class="field" id="mail" type="email" placeholder="example@email.com" aria-describedby="mail-h"><p class="hint" id="mail-h">가입하면 확인 메일을 보내 드려요. 메일의 링크를 눌러야 이 주소로 선물 소식을 받아요.</p></div>
+              <div><label class="label" for="pw">비밀번호</label><input class="field" id="pw" type="password" autocomplete="new-password" aria-describedby="pw-h"><p class="hint" id="pw-h">8자 이상, 영문·숫자·특수문자를 모두 섞고 아이디와 다르게 적어 주세요.</p></div>
+              <div><label class="label" for="pw2">비밀번호 확인</label><input class="field" id="pw2" type="password" autocomplete="new-password" placeholder="비밀번호를 한 번 더 입력해 주세요"></div>
+              <div><label class="label" for="tel">휴대폰 번호</label><input class="field" id="tel" type="tel" placeholder="010-0000-0000" aria-describedby="tel-h"><p class="hint" id="tel-h">선물 소식을 카카오톡 알림톡으로 보내 드릴 번호예요. 실명·주소처럼 따로 나눠 보관해요.</p></div>
+              <div class="cr" role="group" aria-labelledby="cr-t">
+                <p class="t-strong" id="cr-t">크리에이터로 가입할 때만 나와요</p>
+                <div><label class="label" for="cr-name">공개 이름</label><input class="field" id="cr-name" aria-describedby="cr-name-h"><p class="hint" id="cr-name-h">팬에게 보이는 이름이에요. 20자까지 적을 수 있어요.</p></div>
+                <div><label class="label" for="cr-ch">채널 이름</label><input class="field" id="cr-ch" placeholder="예: 꿀단지TV" aria-describedby="cr-ch-h"><p class="hint" id="cr-ch-h">채널 주소는 가입한 뒤 본인 확인 때 받아요.</p></div>
+                <div><p class="label">태그 <span class="t-meta">(선택)</span></p><p class="ctags"><span class="ptag ptag--soop"><span class="bd"><img src="../v9-pages/brand/soop.png" alt="" aria-hidden="true"></span>SOOP</span><span class="ptag ptag--chz"><span class="bd"><img src="../v9-pages/brand/chzzk.png" alt="" aria-hidden="true"></span>치지직</span><span class="ptag ptag--yt"><span class="bd glyph"><img src="../v9-pages/brand/youtube.svg" alt="" aria-hidden="true"></span>YouTube</span><span class="ptag ptag--ig"><span class="bd glyph"><img src="../v9-pages/brand/instagram.svg" alt="" aria-hidden="true"></span>Instagram</span><span class="tag">버추얼</span></p></div>
+              </div>
+              <div><label class="label" for="heard">어디서 팬꾹을 알게 되셨나요? <span class="t-meta">(선택)</span></label><select class="field" id="heard" aria-describedby="heard-h"><option>고르지 않을래요</option><option>검색</option><option>SNS</option><option>지인 소개</option><option>크리에이터 방송</option></select><p class="hint" id="heard-h">답하지 않아도 가입돼요. 어떤 길로 많이 찾아오시는지만 모아서 봐요.</p></div>
+              <div role="group" aria-labelledby="terms-t"><p class="label" id="terms-t">약관 동의</p>
+                <div class="terms">
+                  <label class="check"><input type="checkbox"> 전체 동의</label>
+                  <div class="row"><label class="check"><input type="checkbox"> <span><span class="req">[필수]</span> 이용약관</span></label><a class="btn btn--text btn--sm" href="#" aria-label="이용약관 보기 (새 창)">보기</a></div>
+                  <div class="row"><label class="check"><input type="checkbox"> <span><span class="req">[필수]</span> 개인정보 수집·이용</span></label><a class="btn btn--text btn--sm" href="#" aria-label="개인정보 수집·이용 보기 (새 창)">보기</a></div>
+                  <div class="row"><label class="check"><input type="checkbox"> <span>[선택] 이벤트·소식 알림 받기</span></label></div>
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <section class="card" aria-labelledby="s3">
+            <div class="sh"><span class="no">3</span><div><h2 id="s3" class="t-card">카카오톡으로 본인 확인</h2><p class="t-desc">휴대폰 번호의 주인이 맞는지 카카오톡 인증으로 확인해요. 인증이 끝나면 가입이 마무리돼요.</p></div></div>
+            <ol class="kakao"><li>아래 버튼을 누르면 <strong>010-1234-5678</strong>의 카카오톡으로 인증 요청이 가요.</li><li>카카오톡에서 요청을 열고 인증을 눌러 주세요.</li><li>팬꾹으로 돌아와 「인증했어요, 가입하기」를 누르면 가입 완료예요.</li></ol>
+            <button class="btn btn--kakao btn--block" type="button">카카오톡으로 인증 요청 보내기</button>
+          </section>
+        </div>
+        <p class="foot-line">이미 회원이신가요? <a href="#">로그인</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="legal.html">이용약관</a><a href="legal.html">개인정보처리방침</a><a href="support.html">고객센터</a><a href="about.html">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

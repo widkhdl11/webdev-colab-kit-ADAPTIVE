@@ -105,7 +105,7 @@ html[data-collapsed="1"] .sb-nav a:hover::after, html[data-collapsed="1"] .sb-na
 .page-centered { min-width: 0; max-width: var(--page-centered-max); margin: 0 auto; padding: var(--body-pad) var(--container-pad); }
 .sb-main .container { max-width: none; padding: 0; margin: 0; }
 
-.sb-stack { display: grid; gap: var(--sp-48); }
+.sb-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-48); } /* v18: 배너·모형이 칸을 밀어 넘치지 않게 */
 .page-head { margin-bottom: var(--sp-32); }
 .ph-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-16); }
 .ph-title { font-size: var(--fs-page); font-weight: var(--fw-h2); line-height: var(--lh-h2); }

@@ -1,0 +1,75 @@
+<!doctype html>
+<!-- 팬꾹 v18 전 화면 목록 (2026-10-13). v17 큰 틀 + v16 섞기. 화면 31개. -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v18 전 화면</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="v18.css">
+<style>
+  .ix { max-width: var(--container-max); margin: 0 auto; padding: var(--sp-48) var(--container-pad) var(--sp-96); }
+  .ix h1 { font-size: var(--fs-h2); font-weight: var(--fw-h2); line-height: var(--lh-h2); }
+  .ix .lead { margin-top: var(--sp-8); color: var(--gray-600); }
+  .ix .sw { display: flex; flex-wrap: wrap; gap: var(--sp-8); margin-top: var(--sp-24); }
+  .ix .grp { margin-top: var(--sp-48); }
+  .ix .grp h2 { font-size: var(--fs-h3); font-weight: var(--fw-h3); margin-bottom: var(--sp-16); }
+  .ix ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-8); }
+  .ix li a { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-16); padding: var(--sp-16); border: var(--bw) solid var(--gray-200); border-radius: var(--r-btn); background: var(--white); color: var(--gray-900); }
+  .ix li a:hover { border-color: var(--primary); }
+  .ix li code { font-size: var(--fs-caption); color: var(--gray-600); }
+</style>
+</head>
+<body>
+<main class="ix">
+  <h1>팬꾹 시안 v18 — 전 화면 31개</h1>
+  <p class="lead">v17 큰 틀(사이드바·Pretendard·테두리 카드) + v16(3D 그림·E3 뱃지·광고 배너·화면 모형). 비교는 주소의 v18 을 v17·v16/a 로.</p>
+  <div class="sw">
+    <a class="btn btn--secondary" href="?font=round">둥근 제목 글꼴 켜기</a>
+    <a class="btn btn--secondary" href="?font=default">기본 글꼴로</a>
+  </div>
+
+  <section class="grp"><h2>로그인 전 · 공개 (위쪽 메뉴)</h2><ul>
+    <li><a href="landing.html">랜딩<code>landing</code></a></li>
+    <li><a href="about.html">팬꾹 소개<code>about</code></a></li>
+    <li><a href="notices.html">공지사항<code>notices</code></a></li>
+    <li><a href="support.html">고객센터<code>support</code></a></li>
+    <li><a href="legal.html">이용약관<code>legal</code></a></li>
+    <li><a href="login.html">로그인<code>login</code></a></li>
+    <li><a href="signup.html">회원가입<code>signup</code></a></li>
+    <li><a href="password-reset.html">새 비밀번호 정하기<code>password-reset</code></a></li>
+    <li><a href="email-confirm.html">이메일 확인<code>email-confirm</code></a></li>
+    <li><a href="send-loggedout.html">선물 보내기(로그인 전)<code>send-loggedout</code></a></li>
+    <li><a href="link.html">선물 링크 페이지<code>link</code></a></li>
+    <li><a href="revgift-receive.html">역조공 받기<code>revgift-receive</code></a></li>
+  </ul></section>
+
+  <section class="grp"><h2>팬 (왼쪽 사이드바)</h2><ul>
+    <li><a href="home-fan.html">팬 홈<code>home-fan</code></a></li>
+    <li><a href="landing-loggedin.html">홈 — 랜딩형(비교용)<code>landing-loggedin</code></a></li>
+    <li><a href="creators.html">크리에이터 찾기<code>creators</code></a></li>
+    <li><a href="creator.html">크리에이터 페이지<code>creator</code></a></li>
+    <li><a href="send.html">선물 보내기<code>send</code></a></li>
+    <li><a href="my-following.html">팔로우한 크리에이터<code>my-following</code></a></li>
+    <li><a href="my-following.html?empty=1">팔로우 — 빈 상태<code>?empty=1</code></a></li>
+    <li><a href="my-gifts.html">보낸 선물<code>my-gifts</code></a></li>
+    <li><a href="gift.html">선물 상세<code>gift</code></a></li>
+    <li><a href="gift-with.html">함께한 시간<code>gift-with</code></a></li>
+    <li><a href="me-revgifts.html">받은 감사 카드(받은 역조공)<code>me-revgifts</code></a></li>
+    <li><a href="me.html">계정 설정<code>me</code></a></li>
+  </ul></section>
+
+  <section class="grp"><h2>크리에이터 (왼쪽 사이드바)</h2><ul>
+    <li><a href="home-creator.html">크리에이터 홈<code>home-creator</code></a></li>
+    <li><a href="creator-requests.html">승인 대기 · 승인 내역<code>creator-requests</code></a></li>
+    <li><a href="creator-boxes.html">받은 선물<code>creator-boxes</code></a></li>
+    <li><a href="creator-revgifts.html">보낸 역조공<code>creator-revgifts</code></a></li>
+    <li><a href="creator-revgift-new.html">역조공 보내기<code>creator-revgift-new</code></a></li>
+    <li><a href="creator-log.html">열람 기록<code>creator-log</code></a></li>
+    <li><a href="creator-settings.html#address">주소 관리 · 설정<code>creator-settings</code></a></li>
+  </ul></section>
+</main>
+<script src="font-switch.js" defer></script>
+</body>
+</html>

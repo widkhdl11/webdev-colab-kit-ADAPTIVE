@@ -212,3 +212,53 @@
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-w: 0s; --dur-fade: 0s; --dur-fade-out: 0s; --delay-fade: 0s; }
 }
+
+/* v18 2차 (A 갈래): 광고 배너 · 화면 모형(.mock*) · 장면(.scene*) · 둥근 제목 글꼴 비교 */
+:root {
+  --sp-4: 4px; --sp-12: 12px; --sp-20: 20px;
+  --font-round: "Tmoney Round Wind", var(--font);   /* ?font=round 일 때 제목에만 */
+  --kakao: #FEE500; --kakao-ink: #191919;           /* 카카오 가이드 색(색 제한의 예외) */
+
+  --ad-h: 120px;
+  --ad-img: 72px;
+  --ad-pad-r: 176px;
+  --ad-btn: 36px;
+  --ad-btn-ico: 18px;
+  --ad-dot-box: 24px; --ad-dot: 10px; --ad-dot-on: 22px;
+  --ad-max: 1200px;
+  --ad-dur: .6s;
+  --ad-ease: cubic-bezier(.34, 1.5, .64, 1);
+  --ad-coral-bg: #FFE1D8; --ad-coral-ink: #8F3836;
+  --ad-mint-bg: #D9F2E6;  --ad-mint-ink: #1F5A41;
+  --ad-sun-bg: #FFF0C0;   --ad-sun-ink: #6B4A0F;
+  --ad-tag-bg: rgba(255, 255, 255, .8);
+  --ad-face-ring: 0 0 0 4px #FFFFFF;
+  --ad-line-h: 1.4;
+
+  --mock-max: 820px;
+  --mock-log-max: 600px;
+  --mock-gap: 40px;
+  --chip-lg-h: 32px;
+  --mock-ic: 20px;
+  --mock-ic-lg: 32px;
+  --mock-arrow: 56px;
+  --scene-max: 960px;
+  --scene-cols: auto minmax(0, 1fr) 40px minmax(0, 1.35fr);
+  --scene-arrow: 40px;
+  --scene-mascot: 136px;
+  --scene-badge: 52px;
+  --mask-h: 14px;
+  --mask-w1: 92%; --mask-w2: 64%;
+  --mock-pair-cols: minmax(0, 1fr) var(--mock-arrow) minmax(0, 1fr);
+}
+@media (max-width: 1023px) {
+  :root { --scene-cols: 1fr; --scene-max: 440px; }
+}
+@media (max-width: 767px) {
+  :root {
+    --ad-h: 96px; --ad-img: 56px; --ad-pad-r: 16px; --ad-btn: 32px; --ad-btn-ico: 16px;
+    --mock-gap: 32px; --scene-mascot: 112px;
+    --mock-pair-cols: minmax(0, 1fr);
+    --mock-arrow: 48px;
+  }
+}

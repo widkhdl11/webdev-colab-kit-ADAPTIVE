@@ -21,7 +21,9 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="v18.css">
+
 <link rel="stylesheet" href="v18-app.css">
+<script src="font-switch.js" defer></script>
 </head>
 <body>
   <script>
@@ -110,27 +112,27 @@
   <a class="skip-link" href="#main">본문 바로가기</a>
   <div class="app" id="app">
     <header class="topbar">
-      <a class="logo" href="landing-loggedin.html" aria-label="팬꾹 홈">팬꾹</a>
+      <a class="logo" href="home-creator.html" aria-label="팬꾹 홈">팬꾹</a>
       <button class="icon-btn" id="sb-open" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button>
     </header>
     <div class="sb-scrim" id="sb-scrim"></div>
     <aside class="sidebar" id="sidebar" aria-label="크리에이터 메뉴">
       <div class="sb-top">
         <button class="sb-mark" id="sb-mark" type="button" aria-label="사이드바 펼치기" aria-controls="sidebar" aria-expanded="false"><span class="m-txt" aria-hidden="true">꾹</span><svg class="ico m-ico" aria-hidden="true"><use href="#i-panel-left-open"/></svg></button>
-        <a class="logo" href="landing-loggedin.html" aria-label="팬꾹 홈">팬꾹</a>
+        <a class="logo" href="home-creator.html" aria-label="팬꾹 홈">팬꾹</a>
         <button class="sb-btn sb-fold" id="sb-fold" type="button" aria-label="사이드바 접기" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button>
         <button class="sb-btn sb-close" id="sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
       </div>
       <nav class="sb-nav" aria-label="크리에이터 메뉴">
         <p class="sb-group" id="g1-creator"><span class="sb-group-t">기본</span></p>
-        <ul aria-labelledby="g1-creator"><li><a href="landing-loggedin.html" data-tip="홈"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg><span class="sb-label">홈</span></a></li><li><a href="#" data-tip="크리에이터 찾기"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sb-label">크리에이터 찾기</span></a></li><li><a href="#" data-tip="선물 보내기"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg><span class="sb-label">선물 보내기</span></a></li></ul>
+        <ul aria-labelledby="g1-creator"><li><a href="home-creator.html" data-tip="홈"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg><span class="sb-label">홈</span></a></li><li><a href="creators.html" data-tip="크리에이터 찾기"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sb-label">크리에이터 찾기</span></a></li><li><a href="send.html" data-tip="선물 보내기"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg><span class="sb-label">선물 보내기</span></a></li></ul>
         <p class="sb-group" id="g2-creator"><span class="sb-group-t">관리</span></p>
         <ul aria-labelledby="g2-creator"><li><a href="creator-requests.html#wait" aria-current="page" data-tip="승인 대기"><svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg><span class="sb-label">승인 대기</span><span class="badge" aria-label="4건">4</span></a></li><li><a href="creator-requests.html#done" data-tip="승인 내역"><svg class="ico" aria-hidden="true"><use href="#i-list-checks"/></svg><span class="sb-label">승인 내역</span></a></li><li><a href="creator-boxes.html" data-tip="보낸 선물"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg><span class="sb-label">보낸 선물</span></a></li><li><a href="creator-revgifts.html" data-tip="보낸 역조공"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg><span class="sb-label">보낸 역조공</span></a></li><li><a href="creator-log.html" data-tip="열람 기록"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg><span class="sb-label">열람 기록</span></a></li><li><a href="creator-settings.html#address" data-tip="주소 관리"><svg class="ico" aria-hidden="true"><use href="#i-map-pin"/></svg><span class="sb-label">주소 관리</span></a></li><li><a href="creator-settings.html" data-tip="설정"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="sb-label">설정</span></a></li></ul>
       </nav>
       <div class="sb-bottom">
         <details class="sb-menu" id="sb-menu">
           <summary aria-label="별빛님 계정 메뉴"><span class="sb-avatar" aria-hidden="true">별</span><span class="sb-name">별빛님</span><svg class="ico sb-chev" aria-hidden="true"><use href="#i-chevrons-up-down"/></svg></summary>
-          <div class="sb-menu-list"><a href="creator-settings.html">계정 설정</a><a href="#">로그아웃</a></div>
+          <div class="sb-menu-list"><a href="me.html">계정 설정</a><a href="#">로그아웃</a></div>
         </details>
       </div>
     </aside>
@@ -161,19 +163,19 @@
               <div class="who"><span class="avatar" aria-hidden="true">하</span><div><h3>하루님의 선물</h3><p class="meta">인형·쿠션 · 상자 2개 · FC-7K3M9</p></div></div>
               <p class="tags"><span class="tag tag--accent">남은 기간 5일</span><span class="tag">10.11 14:05 사무실 도착</span></p>
               <p class="meta">10.09 14:20 요청</p>
-              <div class="btn-col push"><a class="btn" href="#approve-dialog">카카오톡으로 승인</a><a class="btn btn--secondary" href="#">받지 않기</a></div>
+              <div class="btn-col push"><a class="btn btn--kakao" href="#approve-dialog">카카오톡으로 승인</a><a class="btn btn--secondary" href="#">받지 않기</a></div>
             </li>
             <li class="card card-col">
               <div class="who"><span class="avatar" aria-hidden="true">달</span><div><h3>달빛토끼님의 선물</h3><p class="meta">의류 · 상자 1개 · FC-5D1H6</p></div></div>
               <p class="tags"><span class="tag tag--accent">남은 기간 18시간</span></p>
               <p class="meta">10.05 20:40 요청</p>
-              <div class="btn-col push"><a class="btn" href="#approve-dialog">카카오톡으로 승인</a><a class="btn btn--secondary" href="#">받지 않기</a></div>
+              <div class="btn-col push"><a class="btn btn--kakao" href="#approve-dialog">카카오톡으로 승인</a><a class="btn btn--secondary" href="#">받지 않기</a></div>
             </li>
             <li class="card card-col">
               <div class="who"><span class="avatar" aria-hidden="true">윤</span><div><h3>윤슬님의 선물</h3><p class="meta">전자기기 · 상자 1개 · FC-2P8QW</p></div></div>
               <p class="tags"><span class="tag tag--accent">남은 기간 3일</span><span class="tag">전자기기·금속 있음</span></p>
               <p class="meta">10.08 09:12 요청</p>
-              <div class="btn-col push"><a class="btn" href="#approve-dialog">카카오톡으로 승인</a><a class="btn btn--secondary" href="#">받지 않기</a></div>
+              <div class="btn-col push"><a class="btn btn--kakao" href="#approve-dialog">카카오톡으로 승인</a><a class="btn btn--secondary" href="#">받지 않기</a></div>
             </li>
             <li class="card card-col">
               <div class="who"><span class="avatar" aria-hidden="true">다</span><div><h3>다온님의 선물</h3><p class="meta">문구 · 상자 1개 · FC-8N4TR</p></div></div>
