@@ -1,83 +1,13 @@
-/* 선물 링크 페이지 — 시안 docs/design/mockups/addendum/creator-link.html (색·글자·반경은 design-rules v8 토큰) */
+/* 선물 링크 페이지(크리에이터 페이지) 화면 전용 — 시안 docs/design/mockups/site/v11/creator.html · link.html (나머지는 공통 v11 클래스) */
 
-/* 첫머리 — 사진(가장 크게)·이름·링크 주소·소개·태그·감사 문장 */
-.hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: clamp(32px, 5vw, 64px); }
-.photo { width: 176px; height: 176px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
-@media (max-width: 767px) { .photo { width: 152px; height: 152px; } }
-.hero h1 { margin-top: 24px; font-size: clamp(36px, 4vw, 52px); font-weight: 800; letter-spacing: -1.4px; line-height: 1.2; }
-.handle { margin-top: 8px; color: var(--sub); font-weight: 600; }
-.intro { margin-top: 16px; max-width: 560px; font-size: 20px; line-height: 1.5; }
-.tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
-.tags :global(.tag) { min-height: 32px; }
-.thanks { margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand-ink); }
-/* 좁은 폭에서만 보이는 맨 위 주 버튼(DECISIONS 2026-10-11) */
-.top-send { display: none; width: 100%; max-width: 420px; margin-top: 24px; }
-@media (max-width: 1023px) { .top-send { display: block; } }
+/* 「본인 확인 완료」 체크와 글자 사이(시안 margin-right:4px) */
+.verified svg { margin-right: 4px; }
 
-/* 두 칸 — 왼쪽 흐름 + 오른쪽 선물 보내기 판 */
-.grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(24px, 4vw, 56px); align-items: start; margin-top: clamp(32px, 5vw, 56px); }
-@media (max-width: 1023px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-.flow { display: grid; gap: 12px; }
+/* 받기 어려운 품목은 크리에이터가 고른 문장이라 큰 글씨가 아니라 본문 글씨(시안 인라인 스타일) */
+.plain:global(.big) { font-weight: 400; font-size: var(--fs-body); }
 
-.ic { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--r-box); background: var(--white); box-shadow: var(--hair); color: var(--brand); flex-shrink: 0; }
-.info { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--hair); }
-.info small { display: block; color: var(--sub); font-size: 16px; }
-.info p { font-size: 18px; font-weight: 700; line-height: 1.5; letter-spacing: -.2px; }
-.info--ok { background: var(--success-soft); box-shadow: none; }
-.info--ok .ic { color: var(--success); }
-.info--rest { background: var(--warn-soft); box-shadow: none; }
-.info--rest .ic { color: var(--warn-ink); }
-.info--dday .dd { margin-left: auto; align-self: center; flex-shrink: 0; }
-.dd-tag { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: var(--r-pill); background: var(--surface-selected); color: var(--brand-ink); font-size: 20px; font-weight: 800; }
-.month-n b { color: var(--brand); font-size: 22px; font-weight: 800; }
-.month-n > div { align-self: center; }
+/* 답장 한 줄은 크리에이터가 쓴 글이라 긴 낱말도 칸 안에서 줄을 바꾼다 */
+.quote q { overflow-wrap: anywhere; }
 
-.send { position: sticky; top: 96px; padding: 32px; border-radius: var(--r-panel); background: var(--surface-brand); }
-@media (max-width: 1023px) { .send { position: static; } }
-@media (max-width: 767px) { .send { padding: 24px 20px; } }
-.send h2 { font-size: 28px; letter-spacing: -.8px; }
-.send-btn { margin-top: 20px; }
-.send-btn:empty { display: none; }
-.need { margin-top: 12px; color: var(--sub); }
-.rest-note { margin-top: 20px; padding: 16px 20px; border-radius: var(--r-box); background: var(--white); box-shadow: var(--hair); font-weight: 700; }
-.sum { margin-top: 20px; }
-.sum-row { display: flex; align-items: center; gap: 16px; padding-block: 16px; border-top: 1px solid var(--border); }
-.sum-row small { display: block; color: var(--sub); font-size: 16px; }
-.sum-row b { display: block; font-size: 20px; font-weight: 800; letter-spacing: -.3px; }
-
-/* 접이식(기본 접힘) — 보낼 수 없는 것 · 확인 절차 */
-.fold { margin-top: 12px; border-top: 1px solid var(--border); }
-.fold summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; cursor: pointer; font-weight: 700; list-style: none; }
-.fold summary::-webkit-details-marker { display: none; }
-.fold summary svg { color: var(--sub); transition: transform .2s; }
-.fold[open] summary svg { transform: rotate(180deg); }
-.nos { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 12px; }
-.nos li { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px 8px 10px; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--hair); }
-.no-desc { color: var(--sub); }
-.x { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); color: var(--sub); flex-shrink: 0; }
-.steps { display: grid; gap: 8px; padding-bottom: 16px; counter-reset: s; }
-.steps li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; }
-.steps li::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-selected); color: var(--brand-ink); font-weight: 800; }
-
-/* 이런 크리에이터도 있어요 — 어느 폭에서도 한 줄 */
-.similar { padding-top: clamp(56px, 7vw, 96px); }
-.h2-sec { font-size: 28px; letter-spacing: -.8px; line-height: 1.3; }
-@media (max-width: 767px) { .h2-sec { font-size: 24px; } }
-.follow-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
-.follow { display: grid; justify-items: center; gap: 8px; padding: 8px 0; text-decoration: none; text-align: center; font-weight: 600; border-radius: var(--r-box); }
-.follow:hover { background: var(--surface); }
-.follow small { display: block; color: var(--sub); font-size: 16px; font-weight: 400; }
-@media (max-width: 1023px) {
-  /* 가로로 밀리는 줄 — 위아래 포커스 테두리(3px + 2px 띄움)가 잘리지 않게 padding-block 을 둔다 */
-  .follow-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-block: 6px 8px; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scrollbar-width: none; }
-  .follow-row::-webkit-scrollbar { display: none; }
-  .follow-row > li { flex: 0 0 104px; scroll-snap-align: start; }
-}
-@media (max-width: 767px) { .follow-row > li { flex-basis: 88px; } }
-.page-end { height: clamp(72px, 9vw, 128px); }
-/* 감사 답장 모음 (gift-reply INV-G7) — 시안 addendum/creator-link.html .replies */
-.replies { margin-top: 24px; }
-.rp-list { display: grid; gap: 12px; margin-top: 16px; }
-.rp { padding: 20px 24px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
-.rp q { display: block; quotes: none; font-size: 20px; font-weight: 700; line-height: 1.5; letter-spacing: -.3px; overflow-wrap: anywhere; }
-.by { margin-top: 12px; color: var(--sub); }
+/* 비슷한 크리에이터가 없을 때 — 판이 마지막이라 바닥글과 붙지 않게 아래 여백만 둔다(위는 앞 구간 여백이 있다) */
+.last-send:global(.section) { padding-top: 0; }

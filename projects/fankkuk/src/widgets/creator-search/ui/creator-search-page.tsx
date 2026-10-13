@@ -7,21 +7,23 @@ import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/
 import { hasPickedTag, tagChips, type TagOption } from "@/entities/creator/model/creator-tags";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
-import { CreatorTag, hasTagIcon, TagChipBody, tagStyle } from "@/entities/creator/ui/creator-tag";
+import { CreatorTag, hasTagIcon, TagChipBody } from "@/entities/creator/ui/creator-tag";
 import { FollowButton, type FollowMode } from "@/features/creator-follow/ui/follow-button";
 import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import s from "./creator-search.module.css";
 
-// 크리에이터 찾기. 시안: docs/design/mockups/site/v9-pages/creators-b.html (카드 d45) · 태그 아이콘·색 tags-b.html (카드 d46)
-// PC 는 왼쪽 열(검색 + 태그 세로 메뉴) · 오른쪽 한 줄에 한 명 목록, 1023px 이하는 위 칩 줄 + 목록.
+// 크리에이터 찾기. 시안: docs/design/mockups/site/v11/creators.html (design-rules 0절) · 태그 아이콘·색 v9-pages/tags-b.html (카드 d46)
+// 위에서 아래로 한 줄: 제목·안내 → 검색창 → 태그 칩 → 「전체 N명」 → 같은 크기 카드 격자(PC 3열 · 1023px 이하 2열 · 767px 이하 1열).
 // 검색창에 치는 대로 목록이 걸러진다(시안 site.js 의 실시간 검색).
 // 태그 칩(creator-tags INV-T4)은 숨기지 않은 선택지 가운데 이 목록의 크리에이터 1명 이상이 가진 것만, 선택지 순서. 칩 하나를 고르면
 // 그 태그를 가진 크리에이터만 — 검색어와 함께 걸린다. 칩은 한 번에 하나(여러 개 고르는 검색은 비범위).
 
-function CheckIcon({ size }: { size: number }) {
+// 본인 확인 안내 앞 동그란 체크(시안 v11 #check)
+function CheckIcon() {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="10" cy="10" r="10" fill="currentColor" />
+      <path d="m5 10 3 3 7-7" fill="none" stroke="var(--white)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -50,24 +52,19 @@ export function CreatorSearchPage({
 
   return (
     <main id="main">
-      <section className={s.top} aria-labelledby="find-title">
+      <section className="section section--compact" aria-labelledby="find-title">
         <div className="container">
-          <h1 id="find-title">
-            나의 크리에이터를
-            <br />
-            찾아요
-          </h1>
-          <p className="lead">이름이나 채널 이름을 입력하면 아래 목록이 바로 걸러져요.</p>
-          <p className={s.verify}>
-            <CheckIcon size={20} />
-            방송 채널 본인 확인을 마친 크리에이터만 보여요.
-          </p>
-        </div>
-      </section>
-
-      <div className={`container ${s.split}`}>
-        <div className={s.side}>
-          <div className="search">
+          <div className="sec-head">
+            <h1 className="t-title" id="find-title">
+              나의 크리에이터를 찾아요
+            </h1>
+            <p className="t-lead t-desc">이름이나 채널 이름을 입력하면 아래 목록이 바로 걸러져요.</p>
+            <p className={s.verify}>
+              <CheckIcon />
+              방송 채널 본인 확인을 마친 크리에이터만 보여요.
+            </p>
+          </div>
+          <div className={`search ${s.search}`}>
             <label className="sr-only" htmlFor={inputId}>
               크리에이터 이름 또는 채널 이름
             </label>
@@ -87,87 +84,76 @@ export function CreatorSearchPage({
               </svg>
             </span>
           </div>
-          <h2 className={s["side-h"]}>태그</h2>
-          <div className={s.cat} role="group" aria-label="태그로 걸러 보기">
+          {/* 칩 줄 제목 — 칩이 검색창 바로 아래 한 줄로 와서 눈에는 보이지 않게 두고 문서 개요에만 남긴다 */}
+          <h2 className="sr-only">태그</h2>
+          <div className={`chips ${s.chips}`} role="group" aria-label="태그로 걸러 보기">
             {["", ...chips].map((t) => (
-              <button
-                key={t || "all"}
-                className="chip"
-                type="button"
-                aria-pressed={tag === t}
-                data-icon={t !== "" && hasTagIcon(t)}
-                style={t === "" ? undefined : tagStyle(t)}
-                onClick={() => setTag(t)}
-              >
+              <button key={t || "all"} className="chip" type="button" aria-pressed={tag === t} data-icon={t !== "" && hasTagIcon(t)} onClick={() => setTag(t)}>
                 {t === "" ? "전체" : <TagChipBody name={t} pressed={tag === t} />}
               </button>
             ))}
           </div>
-        </div>
 
-        <section aria-label="검색 결과">
-          <div className={s.bar}>
-            <strong className={s.count} role="status" aria-live="polite">
+          <section aria-label="검색 결과">
+            <p className={`bar t-strong ${s.bar}`} role="status" aria-live="polite">
               {count}
-            </strong>
-          </div>
-          {followMode === "save" ? <p className={`hint ${s["nick-note"]}`}>{FOLLOW_NICKNAME_NOTICE}</p> : null}
-          {/* 걸러진 줄은 지우지 않고 숨긴다 — 지우면 팔로우 버튼이 사라지며 누른 상태·저장 중 표시를 잃는다 */}
-          <ul className={s.list} hidden={shown.size === 0}>
-            {creators.map((c) => (
-              <li key={c.id} className={shown.has(c.id) ? s.row : `${s.row} ${s.off}`}>
-                <CreatorFace tone={c.faceTone} />
-                <div>
-                  <p className={s.who}>
-                    <Link href={creatorPagePath(c)}>{c.name}</Link>
-                  </p>
-                  <p className={s.says}>
-                    {c.tags.map((t) => (
-                      <CreatorTag key={t} name={t} />
-                    ))}
-                    {c.channelTitle ? (
-                      <>
-                        <span>{c.channelTitle}</span>
-                        <span className={s.sep} aria-hidden="true">
-                          ·
-                        </span>
-                      </>
+            </p>
+            {followMode === "save" ? <p className="section-hint">{FOLLOW_NICKNAME_NOTICE}</p> : null}
+            {/* 걸러진 카드는 지우지 않고 숨긴다 — 지우면 팔로우 버튼이 사라지며 누른 상태·저장 중 표시를 잃는다 */}
+            <ul className="grid cols-3" hidden={shown.size === 0}>
+              {creators.map((c) => {
+                const own = c.id === ownCreatorId;
+                return (
+                  <li key={c.id} className="card ccard" hidden={!shown.has(c.id)}>
+                    <div className="ccard-top">
+                      <CreatorFace tone={c.faceTone} />
+                      <div>
+                        <p className={`t-card ${s.name}`}>
+                          <Link href={creatorPagePath(c)}>{c.name}</Link>
+                        </p>
+                        {c.channelTitle ? <p className="t-meta">{c.channelTitle}</p> : null}
+                      </div>
+                    </div>
+                    {c.tags.length > 0 ? (
+                      <p className="ctags">
+                        {c.tags.map((t) => (
+                          <CreatorTag key={t} name={t} />
+                        ))}
+                      </p>
                     ) : null}
-                    <span>{approvalTimeText(c.approvalMinutes)}</span>
-                  </p>
-                </div>
-                {c.id === ownCreatorId ? (
-                  <div className={s.acts}>
-                    <span className="tag">내 페이지</span>
-                  </div>
-                ) : (
-                  <div className={s.acts}>
-                    <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing={c.following} variant="row" mode={followMode} />
-                    {/* 팔로우한 줄에만 선물 보내기 — 팔로우한 크리에이터에게만 보낸다(INV-L9). 팔로우하면 화면이 다시 그려져 나타난다 */}
-                    {c.following ? (
-                      <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
-                        선물 보내기
-                      </Link>
-                    ) : null}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-          {shown.size === 0 && (
-            <div className={s.empty}>
-              <span className={s["empty-ico"]} aria-hidden="true">
-                <img className="asset" src="/img/illust-empty-search.png" alt="" width={64} height={64} />
-              </span>
-              <h2>찾는 크리에이터가 아직 없어요</h2>
-              <p className="sub">이름 철자를 다시 확인해 보세요. 본인 확인을 마치지 않은 크리에이터는 검색되지 않아요.</p>
-              <Link className={`btn btn--soft ${s["empty-cta"]}`} href="/support">
-                크리에이터를 초대하고 싶어요
-              </Link>
-            </div>
-          )}
-        </section>
-      </div>
+                    {/* 팔로우한 카드에만 선물 보내기 — 팔로우한 크리에이터에게만 보낸다(INV-L9). 팔로우하면 화면이 다시 그려져 나타난다 */}
+                    <div className={!own && c.following ? "ccard-foot two" : "ccard-foot"}>
+                      <span className="t-meta">{approvalTimeText(c.approvalMinutes)}</span>
+                      {own ? (
+                        <span className={`tag ${s.own}`}>내 페이지</span>
+                      ) : (
+                        <>
+                          <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing={c.following} variant="row" mode={followMode} />
+                          {c.following ? (
+                            <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
+                              선물 보내기
+                            </Link>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            {shown.size === 0 && (
+              <div className="empty">
+                <img className="asset" src="/img/illust-empty-search.png" alt="" width={96} height={96} />
+                <h2 className="t-card">찾는 크리에이터가 아직 없어요</h2>
+                <p className="t-desc">이름 철자를 다시 확인해 보세요. 본인 확인을 마치지 않은 크리에이터는 검색되지 않아요.</p>
+                <Link className="btn btn--line" href="/support">
+                  크리에이터를 초대하고 싶어요
+                </Link>
+              </div>
+            )}
+          </section>
+        </div>
+      </section>
     </main>
   );
 }

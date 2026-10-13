@@ -7,6 +7,8 @@
 .virtual svg { width: 16px; height: 16px; }
 .check { flex: 0 0 auto; }
 
-.tag { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px 0 6px; border-radius: var(--r-tag); background: var(--pf, var(--surface)); color: var(--pt, var(--sub)); font-size: 16px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
-.plain { padding-inline: 10px; }
-
+/* 플랫폼 뱃지(공통 .ctag, design-rules 0절) — 어느 폭에서도 한 줄. 표에 없는 이름은 로고 자리가 없어 양옆을 같게 */
+.ctag { white-space: nowrap; }
+.plain:global(.ctag) { padding-inline: 12px; }
+/* 브랜드 색 동그라미 위 흰 글리프(5절 — 로고 파일은 검은 선이라 흰색으로 바꿔 그린다) */
+.white img { filter: brightness(0) invert(1); }

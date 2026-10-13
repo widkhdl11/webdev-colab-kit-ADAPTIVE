@@ -71,12 +71,34 @@ export function TagChipBody({ name, pressed = false, check = true }: { name: str
   );
 }
 
-/** 카드·목록·페이지의 태그 하나 — 옅은 브랜드 면 + 어둡게 맞춘 글자 + 아이콘. 표에 없으면 중립 면의 글자 태그. */
+/** 플랫폼 뱃지 안의 24px 동그란 로고(공통 .ctag 의 .bd · 버추얼은 선 그림 svg). 모양·색은 tagBrandOf 표 그대로. */
+function CtagLogo({ icon }: { icon: TagIcon }) {
+  if (icon.kind === "virtual") return <VirtualGlyph />;
+  if (icon.kind === "app") {
+    return (
+      <span className="bd" aria-hidden="true">
+        <img src={icon.src} alt="" width={24} height={24} />
+      </span>
+    );
+  }
+  return (
+    <span className={`bd glyph ${s.white}`} style={{ background: icon.background }} aria-hidden="true">
+      <img src={icon.src} alt="" width={12} height={12} />
+    </span>
+  );
+}
+
+/**
+ * 카드·목록·페이지의 태그 하나 = 플랫폼 뱃지(design-rules 0절 — 공통 클래스 .ctag: 흰 바탕 테두리 알약, 마우스를 올리면 옅은 면).
+ * --f 옅은 면 · --k 글자·테두리 색. 표에 없는 이름은 로고 없이 중립 뱃지.
+ */
 export function CreatorTag({ name }: { name: string }) {
   const brand = tagBrandOf(name);
+  if (!brand) return <span className={`ctag ${s.ctag} ${s.plain}`}>{name}</span>;
+  const vars: Record<string, string> = { "--f": brand.fill, "--k": brand.ink };
   return (
-    <span className={brand ? s.tag : `${s.tag} ${s.plain}`} style={tagStyle(name)}>
-      {brand ? <Badge icon={brand.icon} /> : null}
+    <span className={`ctag ${s.ctag}`} style={vars as CSSProperties}>
+      <CtagLogo icon={brand.icon} />
       {name}
     </span>
   );
