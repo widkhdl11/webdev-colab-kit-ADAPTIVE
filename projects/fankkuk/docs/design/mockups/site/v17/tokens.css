@@ -101,7 +101,6 @@
   --badge-dot: 6px;
   --avatar-sb: 28px;
   --icon-chev: 16px;
-  --follow-cols: 3;
   --app-cols-4: 4;
   --app-cols-3: 3;
   --app-cols-2: 2;
@@ -115,8 +114,9 @@
   --btn-h-sm: 36px;
   --fs-btn-sm: 14px;
 
-  /* 7단계: 사이드바 overlay · 핀 고정 · 접힘에서도 세로 위치 고정 (사용자 프롬프트 「사이드바 수정」 숫자 그대로) */
-  --sb-pad: var(--rail-w);       /* 본문 wrapper 의 왼쪽 padding. 사이드바 펼침/접힘과 무관하게 64 고정, 핀 고정일 때만 240 */
+  /* 7~8단계: 접힘에서도 세로 위치 고정 (8단계: 본문을 미는 push 방식으로 복귀) (사용자 프롬프트 「사이드바 수정」 숫자 그대로) */
+  --app-flex: flex;              /* 8단계: 데스크톱은 사이드바 + 본문이 한 줄(flex row), 휴대폰은 위아래 */
+  --sb-pos: sticky;
   --sb-w-col: var(--rail-w);
   --sb-w-exp: var(--sidebar-w);
   --z-sidebar: 40;
@@ -126,20 +126,13 @@
   --prof-h: 56px;
   --nav-px: calc((var(--rail-w) - 2 * var(--sp-8) - var(--nav-icon)) / 2);   /* 접힘 64 에서 아이콘이 가운데 오는 안쪽 여백 */
   --prof-px: calc((var(--rail-w) - 2 * var(--sp-8) - var(--avatar-sb)) / 2);
-  --page-pane-max: 1120px;
+  --page-pane-max: 1440px;
+  --card-min: 300px;             /* 카드 목록 grid 의 카드 최소 폭 (auto-fill) */
   --page-centered-max: 1200px;
-  --shadow-overlay: 0 0 0 1px var(--gray-200), 0 8px 24px var(--shadow-overlay-color);
-  --shadow-overlay-color: rgba(0, 0, 0, .08);
   --dur-w: 200ms;
   --dur-fade: 150ms;
   --dur-fade-out: 100ms;
   --delay-fade: 100ms;
-}
-
-html[data-pin="1"] { --sb-pad: var(--sidebar-w); }
-
-@media (max-width: 1280px) {
-  :root { --follow-cols: 2; }
 }
 
 @media (max-width: 1024px) {
@@ -148,17 +141,17 @@ html[data-pin="1"] { --sb-pad: var(--sidebar-w); }
 
 /* 6단계 휴대폰 경계는 프롬프트대로 768 이하(기존 767 규칙은 로그인 전 화면용으로 그대로 둔다) */
 @media (max-width: 768px) {
-  html[data-pin="1"], :root {
+  :root {
     --app-wide: none;
     --app-narrow: flex;
-    --sb-pad: 0;
+    --app-flex: block;
+    --sb-pos: fixed;
     --sb-w-col: 100vw;
     --sb-w-exp: 100vw;
     --sb-tx: translateX(-100%);
     --sb-vis: hidden;
     --nav-ovf: auto;
     --body-pad: 16px;
-    --follow-cols: 1;
     --app-cols-4: 2;
     --app-cols-3: 1;
     --app-cols-2: 1;

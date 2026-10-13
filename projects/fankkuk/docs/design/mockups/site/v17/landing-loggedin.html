@@ -3,9 +3,10 @@
   팬꾹 시안 v17 홈 (로그인 후) (2026-10-13, 6단계로 갱신)
   로그인 후 홈: GNB 를 팬 앱 사이드바로 바꾸고 「홈」 현재 표시. 본문(히어로·카드·요금·바닥글)은 landing.html 과 같은 내용, 앱 본문 규칙(padding 40 / max-width 1120 왼쪽 정렬)만 적용.
   마케팅형 히어로가 첫 줄이라 페이지 헤더(제목+개수+버튼)는 두지 않았다(확인 포인트). 로그인 전 landing.html 은 그대로(GNB).
-  7단계(사용자 프롬프트 「사이드바 수정」): 사이드바 기본 접힘 64 · 펼침 240 은 본문을 덮는 overlay(본문 클릭·Esc·메뉴 항목 클릭으로 접힘) · Pin 토글로 고정하면 본문이 240 으로 밀림(localStorage "sidebar-pinned", 본문 클릭·Esc·항목 클릭으로 안 닫힘, 접기 버튼을 누르면 고정 해제+접힘).
-  본문 wrapper padding-left 64 고정(사이드바 상태와 무관, 고정일 때만 240). 접어도 display:none 없음(라벨 opacity·폭 0) -> 아이콘 y 좌표 같음. 로고 마크는 28px primary 둥근 사각 + 흰 「꾹」(본체 결정). ≤768 은 64 레일 없이 상단 56 바 + 전체 폭 drawer. 6단계의 sidebar-collapsed 키·?rail=1·≤1024 기본 접힘은 폐지.
   홈: .page-centered 하나 안에 히어로 글·검색창·버튼·아이콘 카드 4개(와 아래 구간·바닥글)를 둠. 팬꾹 소개·공지·고객센터도 이 컨테이너를 쓰지만 v17 에 그 화면이 아직 없어 만들지 않음.
+  8단계(사용자 프롬프트): 사이드바를 본문과 같은 flex row 의 sticky 칸으로 되돌림(폭만 240 <-> 64, 200ms, 본문이 같이 움직여 넓어지고 좁아짐, 어느 상태에서도 본문을 가리지 않음).
+  세로 위치 고정(상단 56·그룹 라벨 32·항목 36·프로필 56, display:none 없음)·「꾹」 마크·접힘 툴팁·badge 점·라벨 fade-in 지연은 유지. 상태 localStorage "sidebar-collapsed", 기본 펼침(본체 결정), 1024 이하 기본 접힘(저장값 우선), [ 단축키 유지. 768 이하는 상단 56 바 + 전체 폭 drawer.
+  본문 .page-pane: padding 40, max-width 1440, 왼쪽 정렬(1120 상한 제거). 카드 목록 grid = repeat(auto-fill, minmax(300px, 1fr)) gap 16.
 -->
 <html lang="ko">
 <head>
@@ -19,53 +20,47 @@
 </head>
 <body>
   <script>
-    /* 7단계 사이드바 상태. 기본 = 접힘 64, 고정 해제. 펼침(240)은 본문을 덮는 overlay(저장 안 함), 핀을 누르면 본문을 240 으로 미는 고정(localStorage "sidebar-pinned").
-       html[data-open] = 펼침(휴대폰에서는 drawer), html[data-pin] = 고정(휴대폰에서는 무시). 단축키 [ = 펼침/접힘 토글. */
+    /* 8단계 사이드바 상태. 펼침 240 / 접힘 64, 둘 다 본문을 밀고 당긴다(가리지 않음). 접힘 상태 localStorage "sidebar-collapsed"(저장값 우선, 없으면 기본 펼침·1024 이하는 접힘).
+       html[data-collapsed] = 접힘(PC), html[data-open] = drawer 열림(휴대폰). 단축키 [ = 펼침/접힘 토글. */
     (function () {
-      var KP = 'sidebar-pinned', root = document.documentElement, pinned = false, open = false;
-      try { pinned = localStorage.getItem(KP) === '1'; } catch (e) {}
+      var K = 'sidebar-collapsed', root = document.documentElement, collapsed, open = false, stored = null;
+      try { stored = localStorage.getItem(K); } catch (e) {}
+      if (stored === '1' || stored === '0') collapsed = stored === '1'; else collapsed = window.matchMedia('(max-width: 1024px)').matches;
+      if (/[?&]empty=1/.test(location.search)) root.setAttribute('data-empty', '1');
       function narrow() { return getComputedStyle(root).getPropertyValue('--app-narrow').trim() !== 'none'; }
       function $(id) { return document.getElementById(id); }
       function apply() {
-        var pin = pinned && !narrow();
-        if (pin) open = false;
-        if (pin) root.setAttribute('data-pin', '1'); else root.removeAttribute('data-pin');
+        var n = narrow(), col = collapsed && !n;
+        if (!n) open = false;
+        if (col) root.setAttribute('data-collapsed', '1'); else root.removeAttribute('data-collapsed');
         if (open) root.setAttribute('data-open', '1'); else root.removeAttribute('data-open');
-        var p = $('sb-pin'), o = $('sb-open');
-        if (p) { p.setAttribute('aria-pressed', String(pin)); p.setAttribute('aria-label', pin ? '사이드바 고정 해제' : '사이드바 고정'); }
+        var o = $('sb-open'), m = $('sb-mark');
         if (o) o.setAttribute('aria-expanded', String(open));
-        var m = $('sb-mark'); if (m) m.setAttribute('aria-expanded', String(open || pin));
+        if (m) m.setAttribute('aria-expanded', String(!col));
       }
+      function setCollapsed(v) { collapsed = v; try { localStorage.setItem(K, v ? '1' : '0'); } catch (e) {} apply(); }
       function setOpen(v) { open = v; apply(); }
-      function setPinned(v) { pinned = v; try { localStorage.setItem(KP, v ? '1' : '0'); } catch (e) {} apply(); }
-      function isOut() { return !(root.hasAttribute('data-open') || root.hasAttribute('data-pin')); }
       apply();
       window.addEventListener('resize', apply);
       document.addEventListener('DOMContentLoaded', function () {
         apply();
-        var sb = $('sidebar'), mark = $('sb-mark'), fold = $('sb-fold'), pin = $('sb-pin'), ob = $('sb-open'), cb = $('sb-close');
-        mark.addEventListener('click', function () { setOpen(true); fold.focus(); });
+        var sb = $('sidebar'), mark = $('sb-mark'), fold = $('sb-fold'), ob = $('sb-open'), cb = $('sb-close');
+        mark.addEventListener('click', function () { setCollapsed(false); fold.focus(); });
+        fold.addEventListener('click', function () { setCollapsed(true); mark.focus(); });
         ob.addEventListener('click', function () { setOpen(true); cb.focus(); });
         cb.addEventListener('click', function () { setOpen(false); ob.focus(); });
-        fold.addEventListener('click', function () { if (pinned) setPinned(false); setOpen(false); mark.focus(); });
-        pin.addEventListener('click', function () { setPinned(!pinned); });
-        sb.addEventListener('click', function (e) { if (e.target.closest('.sb-nav a') && open && !root.hasAttribute('data-pin')) setOpen(false); });
+        sb.addEventListener('click', function (e) { if (e.target.closest('.sb-nav a') && open) setOpen(false); });
         document.addEventListener('click', function (e) {
           document.querySelectorAll('details.sb-menu[open], details.fc-more[open]').forEach(function (d) { if (!d.contains(e.target)) d.open = false; });
-          if (open && !root.hasAttribute('data-pin') && !sb.contains(e.target) && !ob.contains(e.target)) setOpen(false);
         });
         document.addEventListener('keydown', function (e) {
           var t = e.target, tag = t && t.tagName;
           if (e.key === 'Escape') {
-            var any = false;
-            document.querySelectorAll('details[open]').forEach(function (d) { d.open = false; any = true; });
-            if (open && !root.hasAttribute('data-pin')) { setOpen(false); if (narrow()) ob.focus(); else mark.focus(); }
+            document.querySelectorAll('details[open]').forEach(function (d) { d.open = false; });
+            if (open) { setOpen(false); ob.focus(); }
             return;
           }
-          if (e.key === '[' && !e.ctrlKey && !e.metaKey && !e.altKey && !narrow() && !(t && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable))) {
-            if (pinned) setPinned(false);
-            setOpen(isOut());
-          }
+          if (e.key === '[' && !e.ctrlKey && !e.metaKey && !e.altKey && !narrow() && !(t && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable))) setCollapsed(!collapsed);
         });
       });
     })();
@@ -104,7 +99,6 @@
     <symbol id="i-list-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /> <path d="M13 6h8" /> <path d="M13 12h8" /> <path d="M13 18h8" /></symbol>
     <symbol id="i-chevrons-up-down" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></symbol>
     <symbol id="i-ellipsis" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></symbol>
-    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 17v5" /> <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" /></symbol>
   </defs></svg>
 
   <a class="skip-link" href="#main">본문 바로가기</a>
@@ -118,7 +112,6 @@
       <div class="sb-top">
         <button class="sb-mark" id="sb-mark" type="button" aria-label="사이드바 펼치기" aria-controls="sidebar" aria-expanded="false"><span class="m-txt" aria-hidden="true">꾹</span><svg class="ico m-ico" aria-hidden="true"><use href="#i-panel-left-open"/></svg></button>
         <a class="logo" href="landing-loggedin.html" aria-label="팬꾹 홈">팬꾹</a>
-        <button class="sb-btn sb-pin" id="sb-pin" type="button" aria-label="사이드바 고정" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg></button>
         <button class="sb-btn sb-fold" id="sb-fold" type="button" aria-label="사이드바 접기" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button>
         <button class="sb-btn sb-close" id="sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
       </div>

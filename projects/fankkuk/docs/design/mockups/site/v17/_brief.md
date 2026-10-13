@@ -133,3 +133,30 @@ v12~v16 과 별개 비교 시안이다. 기존 design-rules 와 다르면 **프�
 - 1440·1024·768·390 가로 넘침 0. 직접 눌러 확인: 마크 hover → 아이콘 바뀜 → 눌러 펼침(본문 안 밀림, x 좌표 실측) → 본문 클릭/Esc/항목 클릭으로 접힘 → Pin 누르면 본문 240 으로 밀림·본문 클릭에도 유지·새로고침 뒤 유지 → 390 햄버거 전체 폭 drawer.
 - 아이콘 y 좌표 두 상태 비교표(차이 0). display:none 이 사이드바 안에 남아 있는지 grep(0). 하드코딩 grep 0.
 - 스크린샷 `_shots/v7-*.png`: 1440 접힘·펼침(overlay)·고정, 마크 hover, 홈 1440, 390 drawer. 보고 한국어 10줄 이내.
+
+---
+
+## 8단계 — overlay 제거, push 복귀 + 본문 폭 (2026-10-13 사용자 추가 프롬프트) — 7단계의 overlay·Pin 전부 취소
+
+원문은 대화에 있다.
+
+### 사이드바
+- position sticky, top 0, height 100vh. 본문과 같은 flex row 안에서 폭만 240 ↔ 64. 본문 flex 1, min-width 0 — 줄어든 만큼 본문이 넓어짐. 두 상태 모두 본문을 가리지 않음.
+- Pin 토글·`sidebar-pinned`·overlay 그림자·본문 클릭/Esc/항목 클릭으로 닫기 → 전부 제거. 상태는 펼침/접힘 둘.
+- width transition 200ms ease, 본문도 같은 시간에 따라 움직임(grid/flex 폭 전환). reduced-motion 이면 전환 없음.
+- **7단계에서 유지**: 세로 위치 고정(상단 56·그룹 라벨 32·항목 36·프로필 56, display:none 금지, 라벨만 opacity/폭 0), 접힘 상단 「꾹」 마크 + hover 시 PanelLeftOpen, 접힘 그룹 라벨 자리의 가로선, 툴팁, badge 점, 라벨 fade-in 지연 100ms.
+- 본체 결정(프롬프트에 없음): 접힘 상태 localStorage `sidebar-collapsed`(6단계 키 복귀), 기본 펼침, ≤1024 기본 접힘(저장값 우선), `[` 단축키 토글 유지. ≤768 상단 56 바 + 전체 폭 drawer 는 7단계 그대로(Esc·X·항목 클릭으로 닫힘).
+
+### 본문 폭
+- `.page-pane`(my-*, creator-*): padding 40, max-width **1440**, 왼쪽 정렬. 1120 상한 제거. 헤더·설명 줄도 같은 폭을 따라 늘어남.
+- 카드 grid(팔로우 목록 등 카드 목록): `repeat(auto-fill, minmax(300px, 1fr))`, gap 16. 300 은 토큰으로. 6단계의 1280/768 열 수 미디어쿼리는 이 grid 에선 제거.
+- 빈 상태 카드: 목록 아래에 같이 보이지 않게. 시안에선 주소에 `?empty=1` 이면 목록 대신 빈 상태만, 아니면 목록만(본체 결정).
+- `.page-centered`(홈): max-width 1200, margin 0 auto — 본문 영역 안에서 가운데. 별도 처리 없음.
+
+### 확인 (스크린샷으로 보여 줌 — 사용자 요구)
+1. 1440 펼침: 본문 어느 부분도 사이드바에 가리지 않음(main 왼쪽 x ≥ 사이드바 오른쪽 x 실측).
+2. 1440 팔로우 목록: 펼침 3열 → 접힘 4열(열 수 실측). 1920 폭에서도 4열 이하(5열 안 나옴).
+3. 접고 펼 때 홈 아이콘 y 좌표 같음(전 아이콘 비교, 차이 0).
+4. 홈 히어로: 두 상태 모두 본문 영역 가운데((히어로 중심 x) − (본문 영역 중심 x) 실측 0 근처).
+- 1440·1024·768·390 가로 넘침 0, 하드코딩 grep 0, Pin/overlay 흔적 grep 0.
+- 스크린샷 `_shots/v8-*.png`: following-1440-expanded, following-1440-collapsed, following-empty-1440, home-1440-expanded, home-1440-collapsed, drawer-390. 보고 한국어 10줄 이내.
