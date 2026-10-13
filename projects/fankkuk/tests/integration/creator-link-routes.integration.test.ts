@@ -205,7 +205,8 @@ describe("주소 넘기기 — 실제 페이지 응답 (개발 서버)", () => {
     expect(html).toContain(A.name);
     expect(html).toContain("fankkuk.kr/rt_s7");
     expect(html).toContain(INTRO);
-    expect(html).toMatch(/이번 달 <b>2(<!-- -->)?명<\/b>/); // 집계 숫자(팬 둘)는 나온다 — 누가·몇 개·금액은 없다
+    // 집계 숫자(팬 둘)는 나온다 — 누가·몇 개·금액은 없다. 강조 태그는 v18 에서 <b> → <span class="accent"> 라 태그 이름은 보지 않는다
+    expect(html).toMatch(/이번 달 <(b|span)[^>]*>2(<!-- -->)?명<\/(b|span)>/);
     for (const bad of forbidden(orders)) expect([bad, html.includes(bad)]).toEqual([bad, false]);
     expect(html.match(/FC-[0-9A-Z]{3,}/g)).toBeNull();
     expect(PHONE_IN_TEXT.test(html)).toBe(false);
