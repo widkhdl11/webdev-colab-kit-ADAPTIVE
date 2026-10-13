@@ -101,7 +101,7 @@ html[data-collapsed="1"] .sb-nav a:hover::after, html[data-collapsed="1"] .sb-na
 .topbar { display: var(--app-narrow); position: sticky; top: 0; z-index: 38; align-items: center; justify-content: space-between; height: var(--topbar-h); padding: 0 var(--sp-8) 0 var(--sp-16); background: var(--white); border-bottom: var(--bw) solid var(--gray-200); }
 
 /* 본문 컨테이너 두 종류 — 사이트 코드에서는 PageCentered / PagePane 컴포넌트 */
-.page-pane { min-width: 0; max-width: var(--page-pane-max); padding: var(--body-pad); }
+.page-pane { min-width: 0; width: 100%; max-width: var(--page-pane-max); margin-inline: auto; padding: var(--body-pad); } /* 2026-10-13 사용자: 넓은 화면에서 왼쪽에 붙지 말고 본문 영역 가운데로 */
 .page-centered { min-width: 0; max-width: var(--page-centered-max); margin: 0 auto; padding: var(--body-pad) var(--container-pad); }
 .sb-main .container { max-width: none; padding: 0; margin: 0; }
 
