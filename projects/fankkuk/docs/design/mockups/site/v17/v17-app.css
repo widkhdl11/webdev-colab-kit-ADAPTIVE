@@ -70,7 +70,7 @@ html[data-open="1"] .sb-scrim { opacity: .4; visibility: visible; }
 
 /* 메뉴 */
 .sb-nav { flex: 1; min-height: 0; overflow-y: var(--nav-ovf); padding: 0 var(--sp-8); }
-.sb-group { position: relative; display: flex; align-items: center; height: var(--group-h); margin: var(--sp-8) 0 0; padding: 0 var(--nav-px); font-size: var(--fs-group); font-weight: var(--fw-nav); letter-spacing: var(--ls-group); line-height: 1; color: var(--gray-400); }
+.sb-group { position: relative; display: flex; align-items: center; height: var(--group-h); margin: var(--sp-8) 0 0; padding: 0 var(--nav-px); font-size: var(--fs-group); font-weight: var(--fw-nav); letter-spacing: var(--ls-group); line-height: 1; color: var(--gray-500); }
 .sb-group-t { overflow: hidden; white-space: nowrap; opacity: var(--lbl-op); transition: opacity var(--tr-dur) ease var(--tr-delay); }
 .sb-group::after { content: ""; position: absolute; top: 50%; left: var(--sp-8); right: var(--sp-8); height: var(--bw); background: var(--gray-200); opacity: var(--col-op); transition: opacity var(--tr-dur) ease var(--tr-delay); }
 .sb-nav ul { display: flex; flex-direction: column; gap: var(--nav-gap-item); }
@@ -109,7 +109,7 @@ html[data-collapsed="1"] .sb-nav a:hover::after, html[data-collapsed="1"] .sb-na
 .page-head { margin-bottom: var(--sp-32); }
 .ph-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-16); }
 .ph-title { font-size: var(--fs-page); font-weight: var(--fw-h2); line-height: var(--lh-h2); }
-.ph-count { margin-left: var(--sp-8); font-size: var(--fs-count); font-weight: var(--fw-body); color: var(--gray-400); }
+.ph-count { margin-left: var(--sp-8); font-size: var(--fs-count); font-weight: var(--fw-body); color: var(--gray-500); }
 .ph-desc { margin-top: var(--sp-8); color: var(--gray-600); }
 .btn--sm { height: var(--btn-h-sm); padding: 0 var(--sp-16); font-size: var(--fs-btn-sm); }
 .app .grid.cols-4 { grid-template-columns: repeat(var(--app-cols-4), minmax(0, 1fr)); }
@@ -130,7 +130,7 @@ html:not([data-empty="1"]) .empty-block { display: none; }
 .fc-av { display: grid; place-items: center; flex: none; width: var(--avatar-fc); height: var(--avatar-fc); border-radius: var(--r-pill); background: var(--primary-50); color: var(--primary); font-weight: var(--fw-btn); line-height: 1; }
 .fc-who { min-width: 0; }
 .fc-name { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: var(--lh-h3); }
-.fc-ch { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-ch { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fc-info { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-8) var(--fc-gap); }
 .fc-chips { display: flex; flex-wrap: wrap; gap: var(--sp-8); }
 .fc-chip { display: inline-flex; align-items: center; height: var(--chip-h); padding: 0 var(--sp-8); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-chip); line-height: 1; }
