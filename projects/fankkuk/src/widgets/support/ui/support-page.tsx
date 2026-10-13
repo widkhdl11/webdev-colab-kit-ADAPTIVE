@@ -12,7 +12,7 @@ import { formatDateTime } from "@/shared/lib/format/datetime";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./support.module.css";
 
-// 고객센터. 시안: docs/design/mockups/site/v4/support.html
+// 고객센터. 시안: docs/design/mockups/site/v11/support.html
 // 1:1 문의: 로그인하지 않았으면 버튼이 로그인 화면으로 가고, 로그인했으면 실제로 접수한다(결정 d25).
 // 그 아래 「내 문의」는 자주 묻는 질문과 같은 펼치는 줄로 보인다(쓴 사람 본인 것만 — DB 가 거른다).
 // 요금 답변의 숫자는 결제와 같은 DB 요금표(서버 page 가 읽어 넘긴다)를, 구간 기준은 size-tier 를 읽는다.
@@ -109,9 +109,9 @@ const CONTACT: readonly (readonly [string, string])[] = [
   ["이메일", "(출시 전 기재)"],
 ];
 
-function Chevron({ className }: { className: string }) {
+function Chevron() {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+    <svg viewBox="0 0 20 20" aria-hidden="true">
       <path d="m4 7.5 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -119,34 +119,34 @@ function Chevron({ className }: { className: string }) {
 
 function MyInquiries({ inquiries }: { inquiries: readonly MyInquiry[] }) {
   return (
-    <section className={s.mine} aria-labelledby="mine-title">
+    <section aria-labelledby="mine-title">
       <h3 id="mine-title">내 문의</h3>
       {inquiries.length === 0 ? (
-        <p className={s["mine-empty"]}>아직 남긴 문의가 없어요.</p>
+        <p className="t-meta">아직 남긴 문의가 없어요.</p>
       ) : (
-        <div className={s.faq}>
+        <div className="acc">
           {inquiries.map((q) => (
             <details key={q.id}>
               <summary>
-                <span className={s["mine-title"]}>
-                  <span>{q.title}</span>
-                  {q.status === "answered" ? <span className={statusTagClass("success")}>답변 완료</span> : <span className={statusTagClass("warn")}>답변 대기</span>}
+                <span className="q">
+                  <b>{q.title}</b>
                 </span>
-                <Chevron className={s.chev} />
+                {q.status === "answered" ? <span className={statusTagClass("success")}>답변 완료</span> : <span className={statusTagClass("warn")}>답변 대기</span>}
+                <Chevron />
               </summary>
-              <div className={s.answer}>
-                <p className={s["mine-meta"]}>
+              <div className="ans">
+                <p className="t-meta">
                   {INQUIRY_KIND_LABELS[q.kind]}
                   {q.orderNo && ` · 주문번호 ${q.orderNo}`} · {formatDateTime(q.createdAt)}
                 </p>
                 <p className={s["mine-text"]}>{q.body}</p>
                 {q.status === "answered" && q.answer !== null ? (
                   <div className={s["mine-reply"]}>
-                    <p className={s["mine-reply-h"]}>팬꾹의 답변{q.answeredAt && ` · ${formatDateTime(q.answeredAt)}`}</p>
+                    <p className="t-strong">팬꾹의 답변{q.answeredAt && ` · ${formatDateTime(q.answeredAt)}`}</p>
                     <p className={s["mine-text"]}>{q.answer}</p>
                   </div>
                 ) : (
-                  <p className={s["mine-meta"]}>답변을 준비하고 있어요. 남겨 주신 순서대로 답변드려요.</p>
+                  <p className="t-meta">답변을 준비하고 있어요. 남겨 주신 순서대로 답변드려요.</p>
                 )}
               </div>
             </details>
@@ -184,31 +184,31 @@ export function SupportPage({
 
   return (
     <main id="main">
-      <div className="container">
-        <div className="page-top">
-          <div>
-            <h1 className="page-h">고객센터</h1>
-            <p className={`lead ${s["page-lead"]}`}>궁금한 점을 먼저 찾아보시고, 없으면 1:1 문의를 남겨 주세요.</p>
-          </div>
-          <div className={s["tile-ico"]} aria-hidden="true">
-            <img className="asset" src="/img/icon-help.png" width={72} height={72} alt="" />
+      <section className="section section--compact" aria-labelledby="page-title">
+        <div className="container">
+          <div className="sec-head">
+            <img className="sec-icon" src="/img/icon-help.png" width={72} height={72} alt="" aria-hidden="true" />
+            <h1 className="t-title" id="page-title">
+              고객센터
+            </h1>
+            <p className="t-lead t-desc">궁금한 점을 먼저 찾아보시고, 없으면 1:1 문의를 남겨 주세요.</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <section aria-labelledby="faq-title">
+      <section className="section section--compact" aria-labelledby="faq-title">
         <div className="container">
-          <h2 id="faq-title" className={s["faq-title"]}>
-            자주 묻는 질문
-          </h2>
-          <div className={s.tabs} role="tablist" aria-label="질문 분류">
+          <div className="sec-head">
+            <h2 id="faq-title">자주 묻는 질문</h2>
+          </div>
+          <div className={`tabs ${s.tabs}`} role="tablist" aria-label="질문 분류">
             {categories.map((c, i) => (
               <button
                 key={c.id}
                 ref={(el) => {
                   tabRefs.current[i] = el;
                 }}
-                className={s.tab}
+                className="tab"
                 type="button"
                 role="tab"
                 id={`t-${c.id}`}
@@ -225,7 +225,7 @@ export function SupportPage({
           {categories.map((c, i) => (
             <div
               key={c.id}
-              className={s.faq}
+              className={`acc ${s.col}`}
               role="tabpanel"
               id={`p-${c.id}`}
               aria-labelledby={`t-${c.id}`}
@@ -234,10 +234,14 @@ export function SupportPage({
               {c.faqs.map((f, j) => (
                 <details key={f.q} open={j === 0}>
                   <summary>
-                    <span>{f.q}</span>
-                    <Chevron className={s.chev} />
+                    <span className="q">
+                      <b>{f.q}</b>
+                    </span>
+                    <Chevron />
                   </summary>
-                  <p className={s.answer}>{f.a}</p>
+                  <div className="ans">
+                    <p>{f.a}</p>
+                  </div>
                 </details>
               ))}
             </div>
@@ -245,28 +249,36 @@ export function SupportPage({
         </div>
       </section>
 
-      <section className="block" aria-labelledby="inquiry-title">
-        <div className={`container ${s.help}`}>
-          <div className={s.ask}>
+      <section className="section section--compact" aria-labelledby="inquiry-title">
+        <div className="container">
+          <div className="sec-head">
             <h2 id="inquiry-title">1:1 문의</h2>
-            <InquiryForm signedIn={signedIn} restricted={inquiryRestricted} />
+            <p className="t-lead t-desc">1:1 문의는 남겨 주신 순서대로 답변드려요. 답변이 달리면 「내 문의」에서 볼 수 있어요.</p>
+          </div>
+          <div className={`stack ${s.col}`}>
+            <div className={`card ${s.ask}`}>
+              <InquiryForm signedIn={signedIn} restricted={inquiryRestricted} />
+            </div>
             {signedIn && <MyInquiries inquiries={myInquiries} />}
           </div>
-          <aside className={s.contact} aria-labelledby="contact-title">
-            <h2 id="contact-title">운영 시간·연락처</h2>
-            <dl>
-              {CONTACT.map(([k, v]) => (
-                <div key={k}>
-                  <dt>{k}</dt>
-                  <dd>{v}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className={s.note}>1:1 문의는 남겨 주신 순서대로 답변드려요. 답변이 달리면 「내 문의」에서 볼 수 있어요.</p>
-          </aside>
         </div>
       </section>
-      <div className="page-end" />
+
+      <section className="section section--compact" aria-labelledby="contact-title">
+        <div className="container">
+          <div className="sec-head">
+            <h2 id="contact-title">운영 시간·연락처</h2>
+          </div>
+          <dl className={`grid cols-4 ${s.hours}`}>
+            {CONTACT.map(([k, v]) => (
+              <div key={k} className="card">
+                <dt>{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
     </main>
   );
 }
