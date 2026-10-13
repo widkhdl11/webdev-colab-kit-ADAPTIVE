@@ -222,7 +222,8 @@ export function AppSidebar({ role, groups, current, homeHref, nickname, counts }
               <Icon name="chevrons-up-down" className="sb-chev" />
             </summary>
             <div className="sb-menu-list">
-              <Link href={ACCOUNT_HREF[role]} aria-current={current === ACCOUNT_HREF[role] ? "page" : undefined}>
+              {/* 크리에이터의 계정 설정은 위 「설정」과 같은 화면이라, 위 메뉴에서 현재 칸이 잡혔으면 여기는 켜지 않는다(한 화면에 현재 표시 하나) */}
+              <Link href={ACCOUNT_HREF[role]} aria-current={here === null && current === ACCOUNT_HREF[role] ? "page" : undefined}>
                 계정 설정
               </Link>
               <LogoutButton className="menu-action" />
