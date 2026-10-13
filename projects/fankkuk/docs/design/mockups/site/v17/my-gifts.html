@@ -1,0 +1,167 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v17 마이꾹 · 보낸 선물 (2026-10-13, 4단계)
+  v11/gifts.html(「선물 내역」) 문구 그대로. 탭은 라디오 입력으로 스크립트 없이 전환.
+  LNB 「보낸 선물」 badge 2 = 미확인 예시.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v17 마이꾹 · 보낸 선물</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="v17.css">
+<link rel="stylesheet" href="v17-app.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-gift" viewBox="0 0 24 24"><path d="M12 7v14" /><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" /><rect x="3" y="7" width="18" height="4" rx="1" /></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></symbol>
+    <symbol id="i-package-search" viewBox="0 0 24 24"><path d="M12 22V12" /><path d="M20.27 18.27 22 20" /><path d="M21 10.498V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.729l7 4a2 2 0 0 0 2 .001l.98-.559" /><path d="M3.29 7 12 12l8.71-5" /><path d="m7.5 4.27 8.997 5.148" /><circle cx="18.5" cy="16.5" r="2.5" /></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
+    <symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></symbol>
+    <symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+  
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><polyline points="3.29 7 12 12 20.71 7" /><path d="m7.5 4.27 9 5.15" /></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></symbol>
+    <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></symbol>
+    <symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /></symbol>
+    <symbol id="i-log-out" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></symbol>
+  </defs></svg>
+
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <!--HEADER-->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="#" aria-label="팬꾹 처음 화면">팬꾹</a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+        <li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li>
+      </ul></nav>
+      <div class="header-actions">
+        <button class="icon-btn bell" type="button" aria-label="알림 1건"><svg class="ico" aria-hidden="true"><use href="#i-bell"/></svg></button>
+        <details class="user">
+          <summary>팬꾹러<svg class="ico" aria-hidden="true"><use href="#i-chevron-down"/></svg></summary>
+          <div class="user-menu"><a href="#">마이꾹</a><a href="#">로그아웃</a></div>
+        </details>
+        <details class="mm">
+          <summary aria-label="메뉴 열기"><svg class="ico i-open" aria-hidden="true"><use href="#i-menu"/></svg><svg class="ico i-close" aria-hidden="true"><use href="#i-x"/></svg></summary>
+          <div class="mm-body">
+            <a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a>
+            <a href="#">마이꾹</a><a href="#">알림</a><div class="btn-row"><a class="btn btn--secondary" href="#">로그아웃</a></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </header>
+  <!--/HEADER-->
+  <main id="main">
+    <div class="container page-top only-wide"><h1>마이꾹</h1></div>
+    <div class="container">
+      <a class="back-link" href="my.html"><svg class="ico" aria-hidden="true"><use href="#i-chevron-left"/></svg>마이꾹</a>
+    </div>
+    <div class="container my-grid">
+      <nav class="lnb" aria-label="마이꾹 메뉴">
+          <a href="my-following.html">팔로우한 크리에이터</a>
+          <a href="my-gifts.html" aria-current="page">보낸 선물 <span class="badge" aria-label="미확인 2건">2</span></a>
+          <a href="#">받은 감사 카드</a>
+          <a href="#">계정 설정</a>
+        </nav>
+      <div class="my-body">
+        <div class="head-block"><h2 class="page-title">선물 내역</h2></div>
+        <section class="body-block" aria-labelledby="by-h">
+          <h3 id="by-h">크리에이터별로 보기</h3>
+          <ul class="grid cols-2">
+            <li><a class="card tg" href="#"><span class="avatar" aria-hidden="true">별</span><span><strong>별빛님과 함께한 시간</strong><br><span class="meta">선물 4개 · 답장 2통</span></span><svg class="ico chev" aria-hidden="true"><use href="#i-chevron-right"/></svg></a></li>
+            <li><a class="card tg" href="#"><span class="avatar" aria-hidden="true">달</span><span><strong>달무리님과 함께한 시간</strong><br><span class="meta">선물 2개 · 답장 0통</span></span><svg class="ico chev" aria-hidden="true"><use href="#i-chevron-right"/></svg></a></li>
+            <li><a class="card tg" href="#"><span class="avatar" aria-hidden="true">소</span><span><strong>소리님과 함께한 시간</strong><br><span class="meta">선물 1개 · 답장 1통</span></span><svg class="ico chev" aria-hidden="true"><use href="#i-chevron-right"/></svg></a></li>
+          </ul>
+        </section>
+        <div class="tabs-radio body-block">
+          <input type="radio" name="gt" id="t1" checked aria-label="진행 중"><input type="radio" name="gt" id="t2" aria-label="끝난 선물"><input type="radio" name="gt" id="t3" aria-label="받지 않은 선물">
+          <div class="tab-row"><label for="t1">진행 중 2</label><label for="t2">끝난 선물 3</label><label for="t3">받지 않은 선물 1</label></div>
+          <div class="panel p1"><ul class="grid cols-2">
+            <li class="card card-col">
+              <div class="gcard-top"><span class="avatar" aria-hidden="true">별</span><div><p class="strong">별빛님께</p><p class="meta">인형·쿠션 · 상자 3개</p></div></div>
+              <p class="meta">등록 10월 8일 · 주문번호 FC-7K3M9</p>
+              <p><span class="tag tag--accent">보내 주세요</span></p>
+              <div style="width:100%"><div class="dots" role="progressbar" aria-label="별빛님께 보낸 선물 FC-7K3M9 진행 단계" aria-valuemin="0" aria-valuemax="6" aria-valuenow="2" aria-valuetext="6단계 중 2단계 완료"><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span></div><p class="meta">2/6 단계</p></div>
+              <div class="push"><a class="btn btn--secondary btn--block" href="#" aria-label="별빛님께 보낸 선물 FC-7K3M9 상세">상세 보기</a></div>
+            </li>
+            <li class="card card-col">
+              <div class="gcard-top"><span class="avatar" aria-hidden="true">달</span><div><p class="strong">달무리님께</p><p class="meta">꽃 · 상자 1개</p></div></div>
+              <p class="meta">등록 10월 5일 · 주문번호 FC-4H8Q2</p>
+              <p><span class="tag tag--accent">승인 대기</span></p>
+              <div style="width:100%"><div class="dots" role="progressbar" aria-label="달무리님께 보낸 선물 FC-4H8Q2 진행 단계" aria-valuemin="0" aria-valuemax="6" aria-valuenow="4" aria-valuetext="6단계 중 4단계 완료"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div><p class="meta">4/6 단계</p></div>
+              <div class="push"><a class="btn btn--secondary btn--block" href="#" aria-label="달무리님께 보낸 선물 FC-4H8Q2 상세">상세 보기</a></div>
+            </li>
+          </ul></div>
+          <div class="panel p2"><ul class="grid cols-2">
+            <li class="card card-col">
+              <div class="gcard-top"><span class="avatar" aria-hidden="true">별</span><div><p class="strong">별빛님께</p><p class="meta">문구 · 상자 1개</p></div></div>
+              <p class="meta">등록 9월 21일 · 주문번호 FC-2B6T8</p>
+              <p><span class="tag">수령 완료</span></p>
+              <div class="push"><a class="btn btn--secondary btn--block" href="#" aria-label="별빛님께 보낸 선물 FC-2B6T8 상세">상세 보기</a></div>
+            </li>
+            <li class="card card-col">
+              <div class="gcard-top"><span class="avatar" aria-hidden="true">소</span><div><p class="strong">소리님께</p><p class="meta">의류 · 상자 2개</p></div></div>
+              <p class="meta">등록 9월 3일 · 주문번호 FC-9D1X4</p>
+              <p><span class="tag">반송</span></p>
+              <div class="push"><a class="btn btn--secondary btn--block" href="#" aria-label="소리님께 보낸 선물 FC-9D1X4 상세">상세 보기</a></div>
+            </li>
+            <li class="card card-col">
+              <div class="gcard-top"><span class="avatar" aria-hidden="true">달</span><div><p class="strong">달무리님께</p><p class="meta">향수·화장품 · 상자 1개</p></div></div>
+              <p class="meta">등록 8월 30일 · 주문번호 FC-5N0W7</p>
+              <p><span class="tag">취소</span></p>
+              <div class="push"><a class="btn btn--secondary btn--block" href="#" aria-label="달무리님께 보낸 선물 FC-5N0W7 상세">상세 보기</a></div>
+            </li>
+          </ul></div>
+          <div class="panel p3">
+            <p class="note">크리에이터가 받지 않기로 했거나 승인 시간이 지난 선물이에요. 사무실 도착 전이면 결제 금액을 모두, 도착 뒤면 반송 택배비를 뺀 금액을 돌려드려요.</p>
+            <ul class="grid cols-2">
+            <li class="card card-col">
+              <div class="gcard-top"><span class="avatar" aria-hidden="true">이</span><div><p class="strong">이든님께</p><p class="meta">인형·쿠션 · 상자 1개</p></div></div>
+              <p class="meta">등록 9월 12일 · 주문번호 FC-8M3K1</p>
+              <p><span class="tag">거절</span></p>
+              <div class="push"><a class="btn btn--secondary btn--block" href="#" aria-label="이든님께 보낸 선물 FC-8M3K1 상세">상세 보기</a></div>
+            </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo">팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

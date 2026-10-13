@@ -63,6 +63,33 @@
   --show-wide: flex;   /* 메뉴·로그인 링크 */
   --show-narrow: none; /* 햄버거 */
   --hero-pad-top: 96px;
+
+  /* 4~5단계: 마이꾹 LNB · 크리에이터 앱 사이드바 */
+  --fs-badge: 12px;
+  --badge-h: 20px;
+  --lnb-w: 220px;
+  --lnb-item-h: 44px;
+  --avatar: 48px;
+  --avatar-sm: 32px;
+  --dialog-max: 480px;
+  --dot-h: 8px;
+  --sidebar-w: 240px;
+  --rail-w: 64px;
+  --topbar-h: 56px;
+  --app-pad: 32px;
+  --my-cols: var(--lnb-w) minmax(0, 1fr);
+  --my-gap: 48px;
+  --sb-width: var(--sidebar-w);
+  --sb-col: var(--sb-width);
+  --sb-pos: sticky;
+  --sb-tx: none;
+  --rail-auto: 0;      /* 1 이면 처음부터 접힌 상태(JS 가 읽는다) */
+}
+
+html[data-rail="1"] { --sb-width: var(--rail-w); }
+
+@media (max-width: 1024px) {
+  :root { --rail-auto: 1; }
 }
 
 @media (max-width: 1023px) {
@@ -83,5 +110,11 @@
     --show-wide: none;
     --show-narrow: flex;
     --hero-pad-top: 64px;
+    --my-cols: minmax(0, 1fr);
+    --my-gap: 24px;
+    --app-pad: 16px;
+    --sb-col: 0;
+    --sb-pos: fixed;
+    --sb-tx: translateX(-100%);
   }
 }
