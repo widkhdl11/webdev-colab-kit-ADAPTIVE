@@ -1,0 +1,150 @@
+/* 팬꾹 시안 v12-A 팬 묶음 공통 CSS (2026-10-13)
+   a.css 다음에 불러온다. a.css 의 층 토큰(--page·--wash·--sh-*·--r-sheet)을 그대로 쓰고, 새 색은 없다.
+   팬 화면은 body 에 .fan 이 붙어 있어서, 이 파일의 규칙은 .fan 안에서만 작동한다(랜딩에는 .ad-banner 만 영향).
+   차례: 1 업무 화면 공통(카드·판·옆 메뉴) / 2 옅은 띠 머리 / 3 소개·팬 메인 첫 화면 / 4 작은 보정 / 5 광고 배너 */
+
+/* ---------- 1. 업무 화면 공통 ---------- */
+.fan{--band:radial-gradient(700px 300px at 12% 0%,#ffe0d6 0,rgb(255 224 214/0) 70%),radial-gradient(600px 300px at 92% 10%,#ffe9dd 0,rgb(255 233 221/0) 70%),linear-gradient(180deg,var(--wash),#fff8f5)}
+.fan .panel{position:relative;overflow:hidden;isolation:isolate;border-radius:var(--r-sheet);background:linear-gradient(180deg,#fff2ee,var(--surface-brand) 55%,#fff8f5)}
+.fan .panel .card{box-shadow:var(--sh-2)}
+.fan .part{border-radius:var(--r-tile)}
+.fan .card--soft,.fan .part--soft{background:var(--wash);box-shadow:none}
+.fan .stack{gap:32px}
+.fan .kv > div,.fan .lines > div{border-bottom-color:rgb(88 52 48/.10)}
+.fan .table th,.fan .table td{border-bottom-color:rgb(88 52 48/.10)}
+.fan .table thead th,.fan .table caption{background:var(--page)}
+.fan .sw-row,.fan .quote,.fan .reply{background:var(--page)}
+.fan .reply{background:var(--wash)}
+.fan .mine-list a{background:var(--page)}
+.fan .mine-list a:hover{background:#fff;box-shadow:var(--sh-1)}
+.fan .nlist a:hover,.fan .tg:hover,.fan .other:hover{background:#fff;box-shadow:var(--sh-2)}
+.fan .pick:hover{background:#fff;box-shadow:var(--sh-1)}
+.fan .pick--off,.fan .pick--off:hover{background:var(--page);box-shadow:none}
+.fan .acc summary:hover{background:var(--page)}
+.fan .acc details[open] summary{border-bottom-color:rgb(88 52 48/.10)}
+.fan .priv{background:#fff;box-shadow:var(--sh-1)}
+.fan .empty{background:var(--wash);border-radius:var(--r-sheet)}
+.fan .flow .n{box-shadow:inset 0 0 0 2px var(--ink),0 4px 10px -2px rgb(88 52 48/.18)}
+.fan .flow li.on .n,.fan .flow li.done .n{box-shadow:0 4px 12px -2px rgb(88 52 48/.28)}
+.fan .flow li:not(:last-child)::after{background:rgb(88 52 48/.16)}
+.fan .avatar-stack .face{box-shadow:0 0 0 3px #fff,0 4px 10px -2px rgb(88 52 48/.2)}
+.fan .face--lg,.fan .who-head .face{box-shadow:0 0 0 6px #fff,0 12px 24px -8px rgb(88 52 48/.25)}
+/* 내 팬꾹 옆 메뉴: 흰 카드 한 장 */
+.fan .my-side{padding:20px;border-radius:var(--r-tile);background:#fff;box-shadow:var(--sh-1);margin-top:-40px;position:relative;z-index:2}
+.fan .my-me{border-bottom-color:rgb(88 52 48/.10)}
+.fan .my-menu a{border-radius:14px}
+.fan .my-menu a:hover{background:var(--page)}
+.fan .my-body > .sec-head,.fan .my-main > .page-head{padding-bottom:0;border-bottom:0}
+@media(max-width:1023px){
+  .fan .my-side{margin-top:0;padding:0;background:none;box-shadow:none}
+  .fan .my-menu a{background:#fff;box-shadow:0 1px 2px rgb(88 52 48/.05),0 4px 10px -2px rgb(88 52 48/.08)}
+  .fan .my-menu a[aria-current="page"]{background:var(--surface-selected)}
+}
+
+/* ---------- 2. 옅은 띠 머리 (화면 제목이 띠 위에 놓이고 첫 카드가 걸친다) ---------- */
+.fan .page-top{padding:16px 0 0}
+.fan .page-band{padding:clamp(40px,5vw,56px) var(--gutter) clamp(72px,8vw,96px);border-radius:var(--r-sheet);background:var(--band);text-align:center}
+.fan .page-band .t-lead{margin-top:12px}
+.fan .page-top + .container{margin-top:-40px;position:relative;z-index:1}
+.fan .page-top + .container.my-grid{margin-top:0}
+.fan.page-send .page-top + .container{margin-top:32px}
+/* 크리에이터 찾기: 머리 글이 띠 위, 검색창이 띠 아래로 걸친다 */
+.fan.page-creators .sec-head{padding:clamp(40px,5vw,56px) var(--gutter) clamp(72px,8vw,96px);margin-bottom:-36px;border-radius:var(--r-sheet);background:var(--band)}
+.fan.page-creators .search.left{position:relative;z-index:1;margin-bottom:32px}
+/* 함께한 시간 / 역조공 받기 */
+.fan .who-head{margin-top:24px;padding:clamp(40px,5vw,56px) var(--gutter) clamp(72px,8vw,96px);border-radius:var(--r-sheet);background:var(--band)}
+.fan .who-head + .grid{margin-top:-44px;position:relative;z-index:1}
+.fan .priv{position:relative;z-index:1}
+.fan .rv-head{margin-bottom:-44px;padding:clamp(40px,5vw,56px) var(--gutter) clamp(72px,8vw,96px);border-radius:var(--r-sheet);background:var(--band)}
+.fan.page-revgift-receive .rv-head + .stack{position:relative;z-index:1}
+.fan.page-revgift-receive .stack{position:relative}
+.fan .gtop{background:linear-gradient(180deg,var(--wash),#fff8f5 70%);box-shadow:var(--sh-2)}
+
+/* ---------- 3. 소개 · 팬 메인 첫 화면 ---------- */
+.fan .about-hero .hero-stage{padding-bottom:clamp(72px,8vw,104px)}
+.fan .about-hero .t-desc{max-width:640px;margin:24px auto 0}
+.fan .about-hero .back.b3,.fan .about-hero .back.b4{display:none}
+.fan .about-hero .back.b1{left:2%;top:18%;width:clamp(120px,14vw,190px)}
+.fan .about-hero .back.b2{right:2%;top:12%;width:clamp(120px,14vw,190px)}
+.fan .about-hero + section{padding-top:clamp(56px,6vw,88px)}
+.page-home-fan.fan .hero{padding:0}
+.page-home-fan.fan .hero-stage{padding-bottom:clamp(64px,7vw,96px)}
+.page-home-fan.fan .hero-desc{max-width:640px;margin:24px auto 0}
+.page-home-fan.fan .hero .row-btns{margin-top:32px}
+.fan .panel .back.b1{width:clamp(110px,14vw,200px);left:3%;top:14%;transform:rotate(-12deg);opacity:.5}
+.fan .panel .back.b2{width:clamp(100px,13vw,180px);right:3%;bottom:10%;transform:rotate(10deg);opacity:.5}
+.fan .panel .step-col{padding:0 24px 28px;border-radius:var(--r-tile);background:#fff;box-shadow:var(--sh-1)}
+.fan .panel .step-col img{width:96px;height:96px;margin:-48px auto 12px;filter:drop-shadow(0 10px 14px rgb(88 52 48/.18))}
+.fan .panel ol.grid{row-gap:64px;margin-top:40px}
+.fan .panel .sec-head{margin-bottom:48px}
+.fan .panel .flow{margin-top:8px}
+.fan .panel .flow .n{background:#fff}
+.fan .panel .flow li.on .n{background:var(--brand)}
+.fan .sec-icon{filter:drop-shadow(0 10px 14px rgb(88 52 48/.18))}
+@media(max-width:767px){
+  .fan .panel .back{display:none}
+  .fan .panel ol.grid{row-gap:64px}
+  .fan .about-hero .hero-stage{padding-bottom:72px}
+  .page-home-fan.fan .hero-stage{padding-bottom:64px}
+  .fan .who-head,.fan .rv-head{padding-bottom:72px}
+}
+
+/* ---------- 4. 작은 보정 ---------- */
+.fan .site-footer{margin-top:0}
+.fan.page-link .other{padding:24px}
+
+/* ---------- 5. 광고 배너 (크리에이터 요청 광고 칸 · 예시 3장) ---------- */
+/* 높이 PC 120 / 휴대폰 96. 글은 사이트 안내 2장 + 크리에이터 광고 1장 — 「광고」 표시는 광고 장에만 붙는다. */
+.ad-slot{margin:32px auto 0;max-width:1180px}
+.fan.page-creators .ad-slot{margin:0 auto 32px}
+.fan.page-home-fan .ad-slot{margin:24px auto 0}
+.ad-banner{position:relative;border-radius:28px;background:#fff;box-shadow:var(--sh-1)}
+.ad-viewport{overflow:hidden;border-radius:inherit;touch-action:pan-y}
+.ad-track{display:flex;transition:transform .6s cubic-bezier(.34,1.5,.64,1)}
+.ad-slide{position:relative;flex:0 0 100%;min-width:0;height:120px;display:flex;align-items:center;gap:20px;padding:10px 176px 12px 24px;background:var(--ad-bg,#ffe1d8);color:var(--ink)}
+.ad-slide--coral{--ad-bg:#ffe1d8;--ad-ink:#a4433d}
+.ad-slide--mint{--ad-bg:#d9f2e6;--ad-ink:#276749}
+.ad-slide--sun{--ad-bg:#fff0c0;--ad-ink:#805b16}
+.ad-face{flex-shrink:0;width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 4px #fff,0 8px 16px -6px rgb(88 52 48/.3)}
+.ad-img{flex-shrink:0;width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 6px 8px rgb(88 52 48/.18))}
+.is-on .ad-face,.is-on .ad-img{animation:ad-hop .6s cubic-bezier(.34,1.6,.64,1)}
+@keyframes ad-hop{0%{transform:translateY(10px) scale(.92)}60%{transform:translateY(-5px) scale(1.04)}100%{transform:none}}
+.ad-txt{min-width:0;display:grid;gap:2px;align-content:center}
+.ad-top{display:flex;align-items:center;gap:8px;min-width:0;font-size:var(--fs-lead);font-weight:800;line-height:1.4}
+.ad-tag{flex-shrink:0;display:inline-flex;align-items:center;min-height:24px;padding:0 8px;border-radius:6px;background:rgb(255 255 255/.8);color:var(--sub);font-size:var(--fs-body);font-weight:800;line-height:1.5}
+.ad-sub{font-size:var(--fs-body);line-height:1.4}
+.ad-go{display:inline-flex;align-items:center;gap:4px;justify-self:start;min-height:28px;font-size:var(--fs-body);font-weight:800;line-height:1.5;color:var(--ad-ink);text-decoration:none}
+.ad-go::after{content:"";position:absolute;inset:0}
+.ad-go:hover{text-decoration:underline}
+.ad-go:focus-visible{outline-offset:2px}
+.ad-ctrl{position:absolute;right:20px;top:50%;transform:translateY(-50%);z-index:3;display:flex;gap:6px}
+.ad-btn{display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:#fff;color:var(--ink);cursor:pointer;box-shadow:0 1px 2px rgb(88 52 48/.10),0 4px 10px -2px rgb(88 52 48/.20)}
+.ad-btn:hover{background:var(--page)}
+.ad-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.ad-btn .i-play{display:none}
+.ad-pause[aria-pressed="true"] .i-pause{display:none}
+.ad-pause[aria-pressed="true"] .i-play{display:block;fill:currentColor;stroke-width:1.5}
+.ad-dots{position:absolute;left:50%;bottom:0;z-index:3;display:flex;transform:translateX(-50%)}
+.ad-dot{display:grid;place-items:center;width:24px;height:24px;padding:0;border:0;background:none;cursor:pointer}
+.ad-dot::before{content:"";width:10px;height:10px;border-radius:5px;box-shadow:inset 0 0 0 2px var(--ink);transition:width .25s cubic-bezier(.34,1.5,.64,1),background-color .2s}
+.ad-dot[aria-current="true"]::before{width:22px;background:var(--ink)}
+@media(max-width:767px){
+  .ad-banner{border-radius:24px}
+  .ad-slide{height:96px;gap:12px;padding:10px 16px 10px 16px}
+  .ad-face,.ad-img{width:56px;height:56px;box-shadow:0 0 0 3px #fff,0 6px 12px -6px rgb(88 52 48/.3)}
+  .ad-img{box-shadow:none}
+  .ad-top{font-size:var(--fs-body);line-height:1.5}
+  .ad-sub{line-height:1.35}
+  .ad-go{min-height:24px;line-height:1.4}
+  .ad-ctrl{top:auto;bottom:-40px;right:0;transform:none}
+  .ad-btn{width:32px;height:32px}
+  .ad-btn svg{width:16px;height:16px}
+  .ad-slide{padding-right:12px}
+  .ad-txt{padding-right:0}
+  .ad-dots{left:0;bottom:-36px;transform:none}
+  .ad-slot,.fan.page-creators .ad-slot,.fan.page-home-fan .ad-slot{margin-bottom:56px}
+}
+@media(prefers-reduced-motion:reduce){
+  .ad-track,.ad-dot::before{transition:none}
+  .is-on .ad-face,.is-on .ad-img{animation:none}
+}

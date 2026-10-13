@@ -1,0 +1,147 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v12-A 팬 묶음 me (2026-10-13) — v11/me.html 을 A 언어로 옮김
+  지시 원문: 「A 형태로. 다만 박스 안에 있는 아이콘 모양은 나중에 바꾸겠다」 「크리에이터 요청에 의한 광고 배너 운용할 수 있게 배너 칸도 있으면 좋겠다. 너무 크진 않게 귀여운 슬라이드 형식으로」
+  바뀐 것: 「내 팬꾹」 머리 띠 + 옆 메뉴 흰 카드 / 입력 칸 묶음은 띄운 흰 카드. 문구·구간 순서·버튼은 v11 그대로, 공통 CSS 는 a.css 다음 a-fan.css.
+-->
+<!--
+  팬꾹 시안 v12-A 개인정보 (2026-10-12)
+  /me — 내 팬꾹(팬)의 개인정보. 문구는 my-info-page.tsx 그대로.
+  지금 코드는 「왼쪽 라벨 / 오른쪽 입력칸」 행인데, 라벨을 입력칸 위로 올리고 짝이 되는 칸(아이디·닉네임 / 이메일·휴대폰)을 2열 격자에 맞췄다.
+  비밀번호와 알림 받기는 폭 전체 카드로 아래에 쌓았다. 비밀번호·번호 바꾸기를 눌렀을 때 펼쳐지는 패널은 그리지 않았다.
+  글자 체계 A(40/28/20/18/16) · 티머니 둥근바람 400·800 · 공통 CSS v11.css 만 사용, 화면 전용 스타일은 아래 <style> 에 둔다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 v12-A 개인정보</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="a.css">
+<style>
+.with-btn{display:flex;gap:12px}
+.with-btn .field{flex:1;min-width:0}
+.save-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-top:32px}
+.leave{display:inline-flex;align-items:center;min-height:44px;color:var(--sub)}
+.must{margin-top:16px}
+@media(max-width:767px){.with-btn{flex-direction:column}}
+@media(max-width:767px){.save-bar .btnrow{width:100%}}
+@media(max-width:767px){.save-bar .btnrow .btn{flex:1}}
+</style>
+<link rel="stylesheet" href="a-fan.css">
+</head>
+<body class="page-me fan">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 9h4l3 3v4h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4v9l-9 4-9-4zM3 8l9 4 9-4M12 12v9"/></symbol>
+    <symbol id="i-down" viewBox="0 0 16 16"><path d="m3 6 5 5 5-5"/></symbol>
+  </defs></svg>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="check" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="currentColor"/><path d="m5 10 3 3 7-7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="m-me" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol>
+  <symbol id="m-follow" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/></symbol>
+  <symbol id="m-gift" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></symbol>
+  <symbol id="m-rev" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></symbol>
+</defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header"><div class="header-inner">
+          <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+          <nav class="nav" aria-label="주요 메뉴(팬)"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav>
+          <div class="header-actions">
+            <a class="hd-gift" href="#" aria-label="진행 중인 선물 3개">
+              <span class="hd-icons"><span class="hd-ico hd-ico--wait"><svg width="24" height="24"><use href="#i-clock"/></svg></span><span class="hd-ico hd-ico--move"><svg width="24" height="24"><use href="#i-truck"/></svg></span><span class="hd-ico hd-ico--done"><svg width="24" height="24"><use href="#i-done"/></svg></span></span>
+              <span class="hd-compact"><span class="hd-ico hd-ico--plain"><svg width="24" height="24"><use href="#i-box"/></svg></span>선물<span class="hd-count">3</span></span>
+            </a>
+            <span class="hd-sep hide-sm" aria-hidden="true"></span>
+            <details class="hd-user hide-sm"><summary class="hd-link hd-link--strong">하루님 <svg aria-hidden="true"><use href="#i-down"/></svg></summary>
+              <div class="hd-menu"><a href="#">개인정보</a><a href="#">팔로우한 크리에이터</a><a href="#">선물 내역</a><a href="#">받은 역조공</a><hr><a href="#">로그아웃</a></div></details>
+            <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+              <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><a href="#">내 팬꾹</a><a href="#">로그아웃</a></div></details>
+          </div>
+        </div></header>
+  <main id="main">
+    <div class="container page-top"><div class="page-band"><h1 class="t-hero">내 팬꾹</h1></div></div>
+    <div class="container my-grid">
+      <nav class="my-side" aria-label="내 팬꾹 메뉴">
+        <div class="my-me"><span class="face" style="--f:#f6d6cf" aria-hidden="true">하</span><div><b>하루님</b><span>팬</span></div></div>
+        <ul class="my-menu">
+          <li><a href="#" aria-current="page"><svg aria-hidden="true"><use href="#m-me"/></svg>개인정보</a></li>
+          <li><a href="#"><svg aria-hidden="true"><use href="#m-follow"/></svg>팔로우한 크리에이터</a></li>
+          <li><a href="#"><svg aria-hidden="true"><use href="#m-gift"/></svg>선물 내역</a></li>
+          <li><a href="#"><svg aria-hidden="true"><use href="#m-rev"/></svg>받은 역조공</a></li>
+        </ul>
+      </nav>
+      <div class="my-body">
+        <form aria-labelledby="me-h" onsubmit="return false">
+          <div class="sec-head"><h2 class="t-title" id="me-h">개인정보</h2></div>
+          <div class="stack">
+            <div class="grid cols-2">
+              <div class="part">
+                <label class="label" for="uid">아이디</label>
+                <input class="field" id="uid" type="text" value="haru_fan" readonly aria-describedby="uid-h">
+                <p class="hint" id="uid-h">아이디는 바꿀 수 없어요.</p>
+              </div>
+              <div class="part">
+                <label class="label" for="nick">닉네임</label>
+                <input class="field" id="nick" type="text" value="하루" maxlength="12" required autocomplete="nickname" aria-describedby="nick-h">
+                <p class="hint" id="nick-h">크리에이터에게 보이는 이름이에요. (12자까지)</p>
+              </div>
+              <div class="part">
+                <label class="label" for="mail">이메일</label>
+                <input class="field" id="mail" type="email" value="haru@example.com" maxlength="254" required autocomplete="email" aria-describedby="mail-h">
+                <p class="hint" id="mail-h">바꾸면 새 주소로 확인 메일이 가요. 링크를 눌러야 바뀌어요.</p>
+              </div>
+              <div class="part">
+                <label class="label" for="tel">휴대폰 번호</label>
+                <div class="with-btn"><input class="field" id="tel" type="text" value="010-****-1234" readonly aria-describedby="tel-h"><button class="btn btn--line" type="button" aria-expanded="false">번호 바꾸기</button></div>
+                <p class="hint" id="tel-h">바꾸려면 카카오 인증을 다시 받아요.</p>
+              </div>
+            </div>
+            <div class="part">
+              <h3>비밀번호</h3>
+              <div class="btnrow" style="margin-top:12px"><button class="btn btn--line" type="button" aria-expanded="false">비밀번호 변경</button></div>
+            </div>
+            <fieldset class="part" style="margin:0;min-width:0" aria-describedby="noti-hint noti-must">
+              <legend class="t-card" style="padding:0;font-size:var(--fs-card);line-height:1.4">알림 받기</legend>
+              <div style="margin-top:12px">
+                <label class="check"><input type="checkbox" name="notifyKakao" checked> 카카오 알림톡으로 받기</label>
+                <label class="check"><input type="checkbox" name="notifyEmail" checked> 이메일로 받기</label>
+              </div>
+              <p class="hint" id="noti-hint">보낸 선물이 사무실에 도착하고, 검수를 마치고, 크리에이터에게 출발할 때 알려 드려요.</p>
+              <p class="must t-meta" id="noti-must"><strong style="color:var(--ink)">끌 수 없는 알림</strong> 선물을 진행하는 데 필요하거나 돈·상자가 걸린 일이라 꺼 두어도 가요.</p>
+            </fieldset>
+          </div>
+          <div class="save-bar">
+            <a class="leave" href="#">회원 탈퇴</a>
+            <div class="btnrow"><button class="btn btn--text" type="reset">되돌리기</button><button class="btn" type="submit">저장하기</button></div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<!--
+  v12-A 크리에이터 묶음 (2026-10-13, 카드 d70 「A로」): v11 내용·문구·배치 그대로, 시각만 A 언어 — 옅은 코랄 바탕 + 띄운 흰 카드 + 화면 머리 옅은 띠. 공통 CSS a.css + a-creator.css. 아이콘 그림은 v11 그대로(나중에 교체 예정).
+  (아래는 v11 원래 주석)
+  팬꾹 시안 v12-A 역조공 보내기 (2026-10-12)
+  화면 내용·문구는 실제 코드(src/app/creator/...의 page.tsx 가 부르는 widgets·features)에서 가져왔다. 공통 부품은 v11.css 에 둔다.
+  사용자 불만(원문): 「좁은 공간에 설명을 덕지덕지 붙여놓은 것 같아서 한눈에 들어오지 않고, 설명글 같이만 보여. 그리고 정렬이 맞지도 않아」
+  바꾼 것 (지금 화면 → 이 시안): 왼쪽 팬 고르기 / 오른쪽 결제 금액(따라다니는 칸)의 좌우 분할을 없애고 세로 한 줄로.
+   받을 팬 → 이렇게 진행돼요(번호 단계) → 결제 금액 순. 팬 카드는 한 열로 쌓는다. 이 화면은 「내 팬꾹」 왼쪽 메뉴가 없는 화면이라 좌우 배치 없음.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>역조공 보내기 — 시안 v12-A</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/TmoneyRoundWind/TmoneyRoundWind.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="a.css">
+<link rel="stylesheet" href="a-creator.css">
+<style>
+.fan{display:flex;flex-direction:column;gap:16px;padding:20px}
+.fan.on{background:var(--surface-brand);box-shadow:inset 0 0 0 2px var(--brand)}
+.recipient-check{display:flex;align-items:center;gap:12px;min-height:48px;cursor:pointer}
+.recipient-check input{flex-shrink:0;width:24px;height:24px;margin:0;accent-color:var(--brand)}
+.sizes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.recipient-check:has(input:focus-visible){outline:3px solid var(--ink);outline-offset:3px}
+.pay-line{display:flex;justify-content:space-between;gap:16px}
+.total{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.total strong{font-size:var(--fs-hero);line-height:1.2;font-weight:800}
+@media(max-width:767px){.sizes{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="page-creator-revgift-new">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="logo" viewBox="0 0 512 512"><circle cx="256" cy="256" r="256" fill="#F58278"/><path d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z" fill="#FFF8F0"/><circle cx="199.5" cy="189.5" r="15.5" fill="#343039"/><circle cx="310.5" cy="189.5" r="15.5" fill="#343039"/><path d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z" fill="#BE514A"/><path d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z" fill="#FFF8F0"/><path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="#BE514A"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 9h4l3 3v4h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 8l9-4 9 4v9l-9 4-9-4zM3 8l9 4 9-4M12 12v9"/></symbol>
+    <symbol id="i-down" viewBox="0 0 16 16"><path d="m3 6 5 5 5-5"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="site-header"><div class="container header-inner">
+          <a class="logo" href="#" aria-label="팬꾹 처음 화면"><svg width="32" height="32" aria-hidden="true"><use href="#logo"/></svg>팬꾹</a>
+          <nav class="nav" aria-label="주요 메뉴(크리에이터)"><ul><li><a href="#">크리에이터 찾기</a></li><li><a href="#">선물 보내기</a></li><li><a href="#">공지사항</a></li><li><a href="#">팬꾹 소개</a></li><li><a href="#">고객센터</a></li></ul></nav>
+          <div class="header-actions">
+            <a class="hd-gift" href="#" aria-label="승인 대기 4건"><span class="hd-ico hd-ico--plain"><svg width="24" height="24"><use href="#i-box"/></svg></span><span class="hide-sm">승인 대기</span><span class="hd-count">4</span></a>
+            <span class="hd-sep hide-sm" aria-hidden="true"></span>
+            <details class="hd-user hide-sm"><summary class="hd-link hd-link--strong">별빛님 <svg aria-hidden="true"><use href="#i-down"/></svg></summary>
+              <div class="hd-menu"><a href="#">승인·받은 선물</a><a href="#">보낸 선물</a><a href="#">보낸 역조공</a><a href="#">열람 기록</a><a href="#">주소와 설정</a><hr><a href="#">로그아웃</a></div></details>
+            <details class="mm"><summary aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="10.5" width="18" height="3" rx="1.5" fill="currentColor"/><rect x="3" y="16" width="18" height="3" rx="1.5" fill="currentColor"/></svg></summary>
+              <div class="mm-body"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a><a href="#">내 팬꾹</a><a href="#">로그아웃</a></div></details>
+          </div>
+        </div></header>
+  <main id="main" class="container">
+    <div class="col">
+      <div class="page-head">
+        <h1 class="t-title">역조공 보내기</h1>
+        <p class="t-lead t-desc">팬 3명에게 보내요 — 결제하면 보내기가 끝나요.</p>
+      </div>
+
+      <section aria-labelledby="add-h">
+        <h2 class="t-card" id="add-h">받을 팬 고르기</h2>
+        <p class="t-body" style="margin-top:4px">나를 팔로우하는 팬이에요. 받을 팬을 체크해 주세요.</p>
+        <p class="t-strong" style="margin-top:24px" id="fans-title">받을 팬 3명</p>
+        <p class="t-meta" id="fans-max" aria-live="polite">최대 10명까지 한 번에 보낼 수 있어요</p>
+        <fieldset class="fs" style="margin-top:16px"><legend class="sr-only">받을 팬</legend>
+          <ul class="grid cols-1">
+            <li class="card fan on">
+              <label class="recipient-check"><input type="checkbox" checked aria-describedby="fans-max"><span class="avatar" aria-hidden="true">하</span><span class="t-strong">하루</span></label>
+              <fieldset class="fs"><legend class="sr-only">하루님께 보낼 상자 크기</legend><div class="sizes"><label class="opt"><input type="radio" name="sz1" checked><span>소형 5,400원</span></label><label class="opt"><input type="radio" name="sz1"><span>중형 6,900원</span></label><label class="opt"><input type="radio" name="sz1"><span>대형 8,400원</span></label></div></fieldset>
+            </li>
+            <li class="card fan on">
+              <label class="recipient-check"><input type="checkbox" checked aria-describedby="fans-max"><span class="avatar" aria-hidden="true">달</span><span class="t-strong">달빛토끼</span></label>
+              <fieldset class="fs"><legend class="sr-only">달빛토끼님께 보낼 상자 크기</legend><div class="sizes"><label class="opt"><input type="radio" name="sz2"><span>소형 5,400원</span></label><label class="opt"><input type="radio" name="sz2" checked><span>중형 6,900원</span></label><label class="opt"><input type="radio" name="sz2"><span>대형 8,400원</span></label></div></fieldset>
+            </li>
+            <li class="card fan on">
+              <label class="recipient-check"><input type="checkbox" checked aria-describedby="fans-max"><span class="avatar" aria-hidden="true">윤</span><span class="t-strong">윤슬</span></label>
+              <fieldset class="fs"><legend class="sr-only">윤슬님께 보낼 상자 크기</legend><div class="sizes"><label class="opt"><input type="radio" name="sz3" checked><span>소형 5,400원</span></label><label class="opt"><input type="radio" name="sz3"><span>중형 6,900원</span></label><label class="opt"><input type="radio" name="sz3"><span>대형 8,400원</span></label></div></fieldset>
+            </li>
+            <li class="card fan">
+              <label class="recipient-check"><input type="checkbox" aria-describedby="fans-max"><span class="avatar" aria-hidden="true">다</span><span class="t-strong">다온</span></label>
+              <p class="t-meta">체크하면 상자 크기를 고를 수 있어요.</p>
+            </li>
+            <li class="card fan">
+              <label class="recipient-check"><input type="checkbox" aria-describedby="fans-max"><span class="avatar" aria-hidden="true">보</span><span class="t-strong">보리</span></label>
+              <p class="t-meta">체크하면 상자 크기를 고를 수 있어요.</p>
+            </li>
+            <li class="card fan">
+              <label class="recipient-check"><input type="checkbox" aria-describedby="fans-max"><span class="avatar" aria-hidden="true">소</span><span class="t-strong">소라</span></label>
+              <p class="t-meta">체크하면 상자 크기를 고를 수 있어요.</p>
+            </li>
+          </ul>
+        </fieldset>
+        <p class="t-meta" style="margin-top:16px">팔로워 목록에는 팬의 닉네임만 보여요. 팬의 주소와 연락처는 보이지 않아요.</p>
+      </section>
+
+      <section aria-labelledby="flow-h">
+        <h2 class="t-card" id="flow-h">이렇게 진행돼요</h2>
+        <ol class="flow" style="--steps:3">
+          <li><span class="n" aria-hidden="true">1</span><div><h3>팬이 「받기」를 누를 때 주소를 직접 입력해요</h3><p>크리에이터에게는 팬의 주소가 보이지 않아요.</p></div></li>
+          <li><span class="n" aria-hidden="true">2</span><div><h3>결제하면 팬마다 받는 주소가 안내돼요</h3><p>팬마다 상자를 따로 포장해서, 그 팬의 받는 주소를 끝까지 그대로 써서 보내 주세요.</p></div></li>
+          <li><span class="n" aria-hidden="true">3</span><div><h3>7일 안에 받지 않으면 그 상자만 돌려보내고 환불해요</h3><p>한 팬이 받지 않아도 다른 팬의 선물은 그대로 가요.</p></div></li>
+        </ol>
+      </section>
+
+      <section class="card card--soft" aria-labelledby="pay-h" style="margin-top:56px;padding:32px">
+        <h2 class="t-card" id="pay-h">결제 금액</h2>
+        <p class="t-meta" style="margin-top:4px">배송비와 검수 포함</p>
+        <div style="margin-top:16px;display:grid;gap:8px">
+          <p class="pay-line"><span>소형 상자 × 2</span><span class="t-strong">10,800원</span></p>
+          <p class="pay-line"><span>중형 상자 × 1</span><span class="t-strong">6,900원</span></p>
+        </div>
+        <p class="pay-line total"><span class="t-strong">합계</span><strong>17,700원</strong></p>
+        <p style="margin-top:24px"><a class="btn btn--block" href="#">결제하기</a></p>
+        <p class="t-meta" style="margin-top:12px">결제는 한 번이에요. 팬이 받지 않으면 그 팬의 상자 요금만 환불돼요.</p>
+      </section>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><svg width="28" height="28" aria-hidden="true"><use href="#logo"/></svg>팬꾹</p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">고객센터</a><a href="#">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

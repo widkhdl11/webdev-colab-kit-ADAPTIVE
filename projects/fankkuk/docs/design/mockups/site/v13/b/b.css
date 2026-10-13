@@ -1,0 +1,39 @@
+/* v13 B — 화면 모형 위주. v11.css 위에 얹는 추가분만. 색은 v11 토큰 그대로, 선 아이콘 굵기 2 하나. */
+.ic{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.flow .step-ic{display:block;margin-bottom:12px;color:var(--ink)}
+.flow li.on .step-ic{color:var(--brand-ink)}
+/* 단계 잇는 선: 잠금 구간은 회색, 열리는 구간(3→4→5)은 코랄 옅은 선 */
+.flow li:not(:last-child)::after{background:var(--border)}
+.flow li:nth-child(3)::after,.flow li:nth-child(4)::after{background:#e6b3ad}
+@media(max-width:1023px){.flow .step-ic{margin-bottom:8px}}
+
+/* 화면 모형 */
+.mock{max-width:820px;margin:0 auto 56px}
+.mock-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:800;color:var(--sub)}
+.mock-bar svg{display:block}
+.mock-pair{display:grid;grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr);align-items:stretch;gap:0}
+.m-card{min-width:0;padding:20px;border-radius:var(--r-card);background:#fff;box-shadow:var(--hair),0 8px 24px rgb(52 48 57/.08);text-align:left}
+.m-card--open{box-shadow:inset 0 0 0 2px var(--brand),0 8px 24px rgb(184 79 72/.14)}
+.m-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.m-head b{font-weight:800}
+.m-state{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border-radius:var(--r-pill);font-weight:800;line-height:1.5}
+.m-state .ic{width:18px;height:18px}
+.m-state--lock{background:var(--surface-hover);color:var(--ink)}
+.m-state--open{background:var(--surface-selected);color:var(--brand-ink)}
+.m-addr{display:flex;align-items:center;gap:10px;min-height:56px;padding:10px 14px;border-radius:var(--r-btn);background:var(--surface);overflow-wrap:anywhere}
+.m-addr .ic{color:var(--ink)}
+.m-addr--mask{letter-spacing:.06em}
+.m-addr--open{background:var(--surface-brand);box-shadow:inset 0 0 0 1px #e6b3ad}
+.m-note{margin-top:12px;color:var(--sub);line-height:1.6}
+.m-btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-top:12px;border-radius:var(--r-btn);background:var(--brand);color:var(--on-brand);font-weight:800}
+.m-btn .ic{width:20px;height:20px}
+.m-log{display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:10px 12px;border-radius:var(--r-btn);background:var(--surface);color:var(--ink);line-height:1.5}
+.m-log .ic{width:20px;height:20px;margin-top:2px;color:var(--brand-ink)}
+.m-arrow{display:grid;place-items:center;align-self:center;color:var(--brand-ink)}
+.m-arrow .ic{width:32px;height:32px}
+@media(max-width:767px){
+  .mock{margin-bottom:40px}
+  .mock-pair{grid-template-columns:minmax(0,1fr);gap:0}
+  .m-arrow{height:48px}
+  .m-arrow .ic{transform:rotate(90deg)}
+}
