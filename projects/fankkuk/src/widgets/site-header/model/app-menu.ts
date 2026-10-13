@@ -40,8 +40,8 @@ export const FAN_APP_MENU: readonly AppMenuGroup[] = [
   },
 ];
 
-// 「받은 선물」은 시안에서 승인 화면과 나뉜 화면이다(creator-boxes.html). 화면을 나누기 전까지는 지금 승인·받은 선물 화면을 가리킨다.
-export const CREATOR_BOXES_HREF = "/creator/requests";
+// 「받은 선물」은 시안대로 승인 화면과 나뉜 화면이다(creator-boxes.html → /creator/boxes).
+export const CREATOR_BOXES_HREF = "/creator/boxes";
 
 export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
   { label: "기본", items: [{ href: CREATOR_HOME, label: "홈", icon: "house" }, ...BASIC] },
@@ -55,6 +55,8 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
       { href: "/creator/log", label: "열람 기록", icon: "eye" },
       { href: "/creator/settings#address", label: "주소 관리", icon: "map-pin" },
       { href: "/creator/settings", label: "설정", icon: "settings" },
+      // 시안에 없던 칸 — 크리에이터도 선물을 보내므로 보낸 선물 목록으로 가는 길(카드 d78 「추가해」)
+      { href: "/gifts", label: "보낸 선물", icon: "package" },
     ],
   },
 ];
