@@ -75,6 +75,7 @@ export function RegisterForm({
   initialCreatorId = "",
   notice,
   onRegistered,
+  onCreatorChange,
   today,
 }: {
   creators: readonly CreatorOption[];
@@ -86,6 +87,8 @@ export function RegisterForm({
   notice?: string;
   /** 등록이 끝나면 — 고른 선물 사진(선택)도 같이 넘긴다. 사진은 받는 쪽이 등록된 주문에 올린다(together INV-F2) */
   onRegistered: (gift: RegisteredGift, photo: File | null) => void | Promise<void>;
+  /** 1단계에서 크리에이터를 바꿔 고르면 — 고른 크리에이터 ID 를 알린다(선물 보내기 맨 위 한 줄이 미리 고른 사람일 때만 보이게) */
+  onCreatorChange?: (creatorId: string) => void;
   /** 한국 시간 오늘 — 서버가 정해 넘긴다(쉬는 중·기념일 7일·다음 달 1일 계산, creator-receiving) */
   today: CalendarDate;
 }) {
@@ -448,7 +451,12 @@ export function RegisterForm({
             {creators.map((c) => (
               <li key={c.id} hidden={!visible.includes(c)}>
                 <label className={`card ${f.pick}`}>
-                  <input className="sr-only" type="radio" value={c.id} {...register("creatorId")} />
+                  <input
+                    className="sr-only"
+                    type="radio"
+                    value={c.id}
+                    {...register("creatorId", { onChange: (e: { target: { value: string } }) => onCreatorChange?.(e.target.value) })}
+                  />
                   <CreatorFace tone={c.faceTone ?? "var(--face-1)"} className={f["pick-face"]} />
                   <span className={f["pick-text"]}>
                     <strong>{c.name}</strong>

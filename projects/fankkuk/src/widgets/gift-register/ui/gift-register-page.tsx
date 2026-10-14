@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { channelOwnerLine } from "@/entities/creator/model/channel-badge";
+import { channelPlatformOfLabel } from "@/entities/creator/model/channel-url";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
+import { CheckIcon } from "@/entities/creator/ui/check-icon";
 import type { CalendarDate } from "@/entities/creator/model/receiving";
 import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 import { receivingNotice } from "@/features/gift-register/model/receiving-notice";
@@ -67,7 +69,13 @@ export function GiftRegisterPage({
   const preselectedNotice = receivingNotice(preselected, today);
   const [pickOther, setPickOther] = useState(false);
   const blockedNotice = pickOther ? null : preselectedNotice;
-  const ownerLine = pickOther ? null : channelOwnerLine(preselected ?? followFirst);
+  // 폼에서 지금 고른 크리에이터 — 미리 고른 사람과 다르면 맨 위 한 줄을 숨긴다(다른 크리에이터의 채널 정보는 이 화면에서 읽어 오지 않는다)
+  const [pickedId, setPickedId] = useState(initialCreatorId ?? "");
+  const ownerSource = preselected ?? followFirst;
+  const ownerLine =
+    pickOther || pickedId !== (initialCreatorId ?? "") || !ownerSource
+      ? null
+      : channelOwnerLine({ name: ownerSource.name, platform: channelPlatformOfLabel(ownerSource.platform) });
 
   return (
     <main id="main" className="page-centered">
@@ -87,9 +95,7 @@ export function GiftRegisterPage({
           {ownerLine ? (
             <p className={s.owner}>
               <span className={s["owner-mark"]} aria-hidden="true">
-                <svg width="14" height="14" viewBox="0 0 24 24">
-                  <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <CheckIcon size={14} />
               </span>
               {ownerLine}
             </p>
@@ -208,6 +214,7 @@ export function GiftRegisterPage({
             initialCreatorId={pickOther ? "" : initialCreatorId}
             notice={notice}
             onRegistered={onRegistered}
+            onCreatorChange={setPickedId}
             today={today}
           />
         )}

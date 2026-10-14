@@ -1,5 +1,6 @@
 import { channelBadgeTitle, channelPlatformLabel, type ChannelBadge } from "../model/channel-badge";
 import { TagIconBadge } from "./creator-tag";
+import { CheckIcon } from "./check-icon";
 import s from "./channel-badge-icon.module.css";
 
 // 확인된 채널 표시 둘 (추가분 4-3·4-5). 풀이 글자는 channelBadgeTitle 하나에서만 만든다 — 「@핸들 · YYYY.MM.DD 확인」.
@@ -28,9 +29,7 @@ export function ChannelVerifiedMark({ channel, className }: { channel: ChannelBa
   const title = channelBadgeTitle(channel);
   return (
     <span className={className ? `${s.mark} ${className}` : s.mark} role="img" title={title} aria-label={`${channelPlatformLabel(channel)} 채널 소유 확인 (${title})`}>
-      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <CheckIcon />
     </span>
   );
 }

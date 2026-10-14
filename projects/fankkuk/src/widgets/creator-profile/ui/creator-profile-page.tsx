@@ -12,6 +12,7 @@ import { approvalDurationText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { ChannelLinkIcon } from "@/entities/creator/ui/channel-badge-icon";
+import { CheckIcon } from "@/entities/creator/ui/check-icon";
 import { channelBadgeTitle, type ChannelBadge } from "@/entities/creator/model/channel-badge";
 import { thanksLine } from "@/entities/creator/model/fan-name";
 import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
@@ -156,9 +157,7 @@ export function CreatorProfilePage({
               {creator.intro ? <p className={s.intro}>{creator.intro}</p> : null}
               <div className={`ctags ${s.tags}`}>
                 <span className={statusTagClass("success", s.verified)} title={channel ? channelBadgeTitle(channel) : undefined}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <CheckIcon />
                   채널 소유 확인
                 </span>
                 {/* 태그 — 숨기지 않은 선택지 뒤에 필터를 통과한 직접 입력(creator-tags INV-T4) */}

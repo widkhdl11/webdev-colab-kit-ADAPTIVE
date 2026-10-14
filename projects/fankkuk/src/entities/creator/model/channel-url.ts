@@ -148,3 +148,12 @@ export function parseChannelUrl(input: string): ChannelUrlResult {
 export function isChannelPlatform(v: string): v is ChannelPlatform {
   return (CHANNEL_PLATFORMS as readonly string[]).includes(v);
 }
+
+/**
+ * 화면 이름(유튜브·치지직·SOOP·인스타그램) → 플랫폼 코드. 크리에이터 카드의 플랫폼 칸은 승인 때 DB 가 이름으로 적는다.
+ * 넷이 아니면(확인 전·옛 값·주소) null.
+ */
+export function channelPlatformOfLabel(label: string): ChannelPlatform | null {
+  const trimmed = label.trim();
+  return CHANNEL_PLATFORMS.find((p) => CHANNEL_PLATFORM_LABEL[p] === trimmed) ?? null;
+}

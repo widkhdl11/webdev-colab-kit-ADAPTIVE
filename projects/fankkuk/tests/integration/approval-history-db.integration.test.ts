@@ -102,6 +102,24 @@ describe("승인 요청 카드의 지난 검수 내역 (INV-D11)", () => {
     deleteTestOrders();
   });
 
+  it("INV-D11 (실패경로): 결제 전 주문은 세지 않는다 — 결제가 끝난 주문만 지난 선물이다", async () => {
+    const now = await paidGift({ senderId: SENDER });
+    // 결제창을 닫아 결제 전으로 남은 주문 둘. 하나는 등록 시각이 비어 있는 보통 모양,
+    // 다른 하나는 등록 시각이 찍혀 있어 「결제 전 상태」 조건만이 걸러 내는 모양이다(시각 조건이 대신 막지 못하게).
+    const unpaid = await registerTestOrder(1, { senderId: SENDER });
+    const unpaidStamped = await registerTestOrder(1, { senderId: SENDER });
+    psql(`update public.orders set registered_at = now() where id = '${unpaidStamped.orderId}'`);
+    expect(psql(`select string_agg(status::text, ',' order by status::text) from public.orders where id in ('${unpaid.orderId}', '${unpaidStamped.orderId}')`)).toBe(
+      "pending_payment,pending_payment",
+    );
+    // 맞는 쪽: 결제가 끝난 지난 주문 하나는 센다
+    const paidBefore = await paidGift({ senderId: SENDER });
+    setInspection(paidBefore.orderId, "passed");
+
+    expect(pick(await rows(haru), now.orderNo)).toEqual({ prior_gift_count: 1, prior_passed_count: 1, prior_returned_count: 0 });
+    deleteTestOrders();
+  });
+
   it("INV-D11 (S11d, 실패경로): 팬 계정이 부르면 0줄", async () => {
     await paidGift({ senderId: SENDER });
     const fan = await signedInClient("haneul_fan");
