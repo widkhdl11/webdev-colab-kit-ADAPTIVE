@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FanApproval, FanGiftView, FanStep, FanStepKey } from "../model/fan-view";
-import { fanBadge, fanGiftBucket, fanHeadline, headerGiftState } from "./fan-stage-copy";
+import { fanBadge, fanGiftBucket, fanHeadline, fanStepDetail, headerGiftState } from "./fan-stage-copy";
 
 const KEYS: FanStepKey[] = ["registered", "received", "inspected", "shipped", "in_transit", "delivered"];
 
@@ -119,3 +119,16 @@ describe("decline-block INV-D5: 팬에게 보이는 거절과 기간 지남", ()
   });
 });
 
+
+describe("팬 단계 시각은 날짜까지만 (2026-10-14 추가분 3)", () => {
+  const AT = "2026-10-05T05:37:00.000Z"; // 서울 10월 5일 오후 2:37
+  it("끝난 단계·멈춘 단계·출고 단계 모두 날짜만 나오고 시:분은 없다", () => {
+    const v = view(6);
+    for (const key of ["received", "inspected", "in_transit", "delivered"] as const) {
+      const detail = fanStepDetail({ key, at: AT, state: "done" }, v) ?? "";
+      expect(detail).toContain("10월 5일");
+      expect(detail).not.toMatch(/\d+:\d{2}|오전|오후/);
+    }
+    expect(fanStepDetail({ key: "inspected", at: AT, state: "stopped" }, v)).toBe("10월 5일 (월) · 반송");
+  });
+});

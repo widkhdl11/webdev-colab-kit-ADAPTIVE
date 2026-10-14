@@ -1,4 +1,4 @@
-import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
+import { formatDate } from "@/shared/lib/format/datetime";
 import type { StatusTone } from "@/shared/ui/status-tone";
 import { APPROVAL_DEADLINE_DAYS } from "../config/approval-deadline";
 import type { FanGiftView, FanStep, FanStepKey } from "../model/fan-view";
@@ -75,13 +75,13 @@ export function fanBadge(view: FanGiftView): { text: string; tone: StatusTone } 
   return lastDone ? { text: FAN_STEP_LABEL[lastDone.key], tone: "info" } : { text: "등록", tone: "plain" };
 }
 
-/** 단계 아래 한 줄 설명. 없으면 null. */
+/** 단계 아래 한 줄 설명. 없으면 null. 시각은 날짜까지만 — 출고·배송·수령 시각은 크리에이터가 언제 받는지 좁히는 단서라 팬에게 보이지 않는다(2026-10-14 추가분 3). */
 export function fanStepDetail(step: FanStep, view: FanGiftView): string | null {
-  const at = step.at ? formatDateTime(step.at) : null;
+  const at = step.at ? formatDate(step.at) : null;
   if (step.state === "stopped") return at ? `${at} · 반송` : "반송";
   if (step.state === "current") {
     if (step.key === "shipped" && view.approval.state !== "done") return "승인되면 바로 출고하고 알림톡으로 알려 드려요";
-    if (step.key === "received") return "도착하면 시각이 여기에 표시돼요";
+    if (step.key === "received") return "도착하면 날짜가 여기에 표시돼요";
     if (step.key === "inspected") return "모든 상자를 탐지기로 검수해요";
     return null;
   }

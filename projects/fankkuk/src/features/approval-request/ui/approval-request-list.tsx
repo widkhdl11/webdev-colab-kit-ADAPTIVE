@@ -323,6 +323,10 @@ export function ApprovalRequestList({
             <p className={`sub ${a.reason}`}>
               {PROMISE.address} 승인한 뒤에도 송장을 출력할 때만 열리고, 열린 기록은 열람 기록에서 볼 수 있어요.
             </p>
+            {/* 승인 버튼 바로 위 — 승인해도 보내는 팬에게 주소가 가지 않는다는 것과 검수를 다시 말한다(2026-10-14 추가분 3) */}
+            <p className="t-strong">
+              {PROMISE.addressFan} {PROMISE.inspection}
+            </p>
             {approveError ? (
               <p className={a.error} role="alert">
                 <span className={a["error-mark"]} aria-hidden="true">
