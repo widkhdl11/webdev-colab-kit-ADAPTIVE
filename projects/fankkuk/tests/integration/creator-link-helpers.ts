@@ -26,6 +26,9 @@ export function resetLink(): void {
       `if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'creators' and column_name = 'photo_path') then
          execute $q$update public.creators set handle_changed_at = null, photo_path = null, photo_version = 0 where id in (${IDS})$q$;
        end if;`,
+      `if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'creators' and column_name = 'bg_path') then
+         execute $q$update public.creators set bg_path = null, bg_version = 0, symbol_path = null, symbol_version = 0, symbol_rights_at = null, preview_pick = 'photo' where id in (${IDS})$q$;
+       end if;`,
       `update public.creators set intro = '' where id in (${IDS});`,
       "end $$;",
       "commit;",

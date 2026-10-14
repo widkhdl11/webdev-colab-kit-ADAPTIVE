@@ -5,6 +5,7 @@ import { daysInputSchema, receivingInputSchema } from "./receiving-input";
 import { hardItemsInputSchema } from "./hard-items-input";
 import { handleInputSchema } from "./handle-input";
 import { replySettingsInputSchema } from "./reply-settings-input";
+import { previewPickInputSchema } from "./preview-pick-input";
 
 // 크리에이터 설정 저장 (my-account INV-A9 공개 정보 · INV-A11 알림).
 // 요청한 사람의 세션 클라이언트로 DB 함수를 부른다 — DB 가 로그인 토큰으로 크리에이터를 정하고 입력을 다시 검사한다.
@@ -155,4 +156,14 @@ export async function saveCreatorReplySettings(deps: SaveCreatorSettingsDeps, bo
     { p_wall_visible: wallVisible, p_x_handle: xHandle, p_x_tag_allowed: xTagAllowed },
     { "22023": "X 계정은 영문·숫자·밑줄 1~15자로 적어 주세요." },
   );
+}
+
+// creator-link INV-E1·E10: 링크 미리보기 이미지에 쓸 사진(프로필 사진·팬덤 심볼) — 고르기 한 칸만 넘긴다. 크리에이터는 DB 가 로그인 토큰으로 정한다.
+// 심볼이 없는데 심볼을 고르면 DB 가 거부한다(P0096).
+export async function savePreviewPick(deps: SaveCreatorSettingsDeps, body: unknown): Promise<SaveCreatorSettingsResult> {
+  const denied = gate(deps.viewer);
+  if (denied) return denied;
+  const parsed = previewPickInputSchema.safeParse(body);
+  if (!parsed.success) return { ok: false, status: 400, message: "프로필 사진과 팬덤 심볼 가운데 하나를 골라 주세요." };
+  return call(deps, "set_my_preview_pick", { p_pick: parsed.data.pick }, { P0096: "팬덤 심볼을 먼저 올려야 고를 수 있어요." });
 }

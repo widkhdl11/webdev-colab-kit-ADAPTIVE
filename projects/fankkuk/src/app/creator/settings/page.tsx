@@ -9,7 +9,6 @@ import { kstToday } from "@/entities/creator/model/receiving";
 import { readMyHardItems } from "@/entities/gift-item/api/hard-items-reads";
 import { readMyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import { readMyReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
-import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
 import { CreatorSettingsPage } from "@/widgets/creator-settings/ui/creator-settings-page";
@@ -41,7 +40,7 @@ export default async function Page() {
     readTagOptions(supabase),
     readMyCreatorReceiving(supabase),
     readMyHardItems(supabase),
-    // creator-link: 링크용 아이디·남은 잠금 날·사진 경로 — 본인 것만(INV-E1·E4)
+    // creator-link: 링크용 아이디·남은 잠금 날 — 본인 것만(INV-E1·E4). 사진·공지 이미지는 「내 팬꾹 꾸미기」 화면
     readMyCreatorLink(supabase),
     // gift-reply: 답장 모음 보이기·X 계정·태그 허용 — 본인 것만(INV-G8)
     readMyReplySettings(supabase),
@@ -63,7 +62,6 @@ export default async function Page() {
           hardItems={hardItems}
           today={kstToday(new Date())}
           link={link}
-          photoBase={readPublicStorageBase()}
           replySettings={replySettings}
         />
       </MyShell>

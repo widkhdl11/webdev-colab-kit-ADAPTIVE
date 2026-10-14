@@ -4,7 +4,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearPhotos, insertOrder, linkClient, resetLink, setHandleOk, unlockHandle, verifyCreator } from "./creator-link-helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
-import { anonClient, deleteTestOrders, psql, SEED } from "./helpers";
+import sharp from "sharp";
+import { saveCreatorImage } from "@/features/creator-photo/model/save-creator-image";
+import { savePreviewPick } from "@/features/creator-settings-save/model/save-creator-settings";
+import { adminClient, anonClient, deleteTestOrders, psql, SEED } from "./helpers";
 import { PHONE_IN_TEXT } from "./pii-shape";
 
 // 선물 링크 페이지의 주소와 이미지 라우트 (docs/specs/creator-link.md INV-E2·E3·E5·E7·E10).
@@ -14,11 +17,12 @@ import { PHONE_IN_TEXT } from "./pii-shape";
 // 2) 이미지 라우트(미리보기·공지)는 라우트 함수를 직접 부르고, 그림 그리기(next/og)만 바꿔 라우트가 그리라고 넘긴 화면 조각을 받는다.
 //    PNG 에서 글자를 읽을 수는 없어서, 그 조각을 글자로 펼쳐 무엇이 그려지는지 본다. 읽기는 로컬 DB 에 실제로 한다.
 
-const captured = vi.hoisted(() => ({ shots: [] as { element: unknown; init: { headers?: Record<string, string> } | undefined }[], client: null as SupabaseClient | null }));
+type ShotInit = { width?: number; height?: number; headers?: Record<string, string> };
+const captured = vi.hoisted(() => ({ shots: [] as { element: unknown; init: ShotInit | undefined }[], client: null as SupabaseClient | null }));
 
 vi.mock("next/og", () => ({
   ImageResponse: class extends Response {
-    constructor(element: unknown, init?: { headers?: Record<string, string> }) {
+    constructor(element: unknown, init?: ShotInit) {
       super("png", { status: 200, headers: init?.headers });
       captured.shots.push({ element, init });
     }
@@ -36,7 +40,7 @@ vi.mock("@/shared/api/supabase/server", () => ({
 }));
 
 const { GET: previewGet } = await import("@/app/api/og/[id]/route");
-const { GET: noticeGet } = await import("@/app/api/creator/notice-image/route");
+const { GET: noticeGet } = await import("@/app/api/notice/[id]/route");
 
 const APP = process.env.FK_TEST_APP_URL ?? "http://localhost:3000";
 const A = CV.haru;
@@ -47,6 +51,8 @@ const FAN_Y = SEED.otherFanId; // 달토끼 (daltokki_fan)
 /** 주문 상자 값 — 요금표에 없는 금액이라 화면에 나오면 주문에서 온 것이다. */
 const ODD_PRICE = 13570;
 const INTRO = "와우산로 근처 사는 느긋한 방송";
+/** 공지 이미지에는 한 줄 소개가 들어간다(INV-E10) — 주소 꼴이 아닌 소개. */
+const NOTICE_INTRO = "느긋하게 게임하는 방송";
 
 async function open(path: string): Promise<Response> {
   return fetch(`${APP}${path}`, { redirect: "manual", headers: { accept: "text/html" } });
@@ -228,22 +234,51 @@ describe("미리보기·공지 이미지 라우트가 그리는 것 (INV-E7·E10
     for (const bad of [...forbidden(orders), "와우산로", INTRO, "rt_og"]) expect([bad, text.includes(bad)]).toEqual([bad, false]);
   });
 
-  it("INV-E10 S10: 공지 이미지 라우트가 그리는 글자는 「선물은 팬꾹으로 받아요」·「승인한 선물만 받습니다」·링크 주소뿐 — 사진이 없으면 이름 첫 글자, 공개 이름 전체·소개는 없다", async () => {
+  it("INV-E10 S10: 공지 이미지 세 크기가 그리는 글자는 이름 첫 글자(사진 없음)·공개 이름·한 줄 소개·「팬꾹으로 선물 보내기」·링크 주소뿐 — 부탁 문구·로그인 없이도 열린다", async () => {
     await setHandleOk(A.login, "rt_notice");
-    await saveIntro(A.login, A.name, INTRO);
-    captured.client = await linkClient(A.login);
-    const res = await noticeGet();
-    expect(res.status).toBe(200);
-    const text = drawnText(lastShot().element);
-    expect(text).toBe(`${[...A.name][0]} 선물은 팬꾹으로 받아요 승인한 선물만 받습니다 fankkuk.kr/rt_notice`);
-    for (const bad of [A.name, "와우산로", INTRO, A.login]) expect([bad, text.includes(bad)]).toEqual([bad, false]);
+    await saveIntro(A.login, A.name, NOTICE_INTRO);
+    const orders = [insertOrder(FAN_X, A.creatorId, "shipped", "now()", { waybill: "581234567890" })];
+    orders.forEach(addBox);
+    const sizes: [string, number | undefined, number | undefined][] = [];
+    for (const size of ["square", "story", "wide"]) {
+      const res = await noticeGet(new Request(`http://app.test/api/notice/${A.creatorId}?size=${size}`), { params: Promise.resolve({ id: A.creatorId }) });
+      expect([size, res.status]).toEqual([size, 200]);
+      const shot = lastShot();
+      sizes.push([size, shot.init?.width, shot.init?.height]);
+      const text = drawnText(shot.element);
+      expect([size, text]).toEqual([size, `${[...A.name][0]} ${A.name} ${NOTICE_INTRO} 팬꾹으로 선물 보내기 fankkuk.kr/rt_notice`]);
+      for (const bad of [...forbidden(orders), "선물은 팬꾹으로 받아요", "승인한 선물만 받습니다"]) expect([size, bad, text.includes(bad)]).toEqual([size, bad, false]);
+    }
+    expect(sizes).toEqual([
+      ["square", 1080, 1080],
+      ["story", 1080, 1920],
+      ["wide", 1200, 675],
+    ]);
   });
 
-  it("INV-E10 S10 (실패경로): 링크용 아이디가 없으면 공지 이미지를 만들지 않는다", async () => {
-    captured.client = await linkClient(A.login);
-    const res = await noticeGet();
-    expect(res.status).toBe(404);
+  it("INV-E10 S10 (실패경로): 링크용 아이디가 없거나 본인 확인 전이면 공지 이미지를 만들지 않는다 — 정해진 크기 밖도 거부", async () => {
+    const get = (id: string, q: string) => noticeGet(new Request(`http://app.test/api/notice/${id}${q}`), { params: Promise.resolve({ id }) });
+    expect((await get(A.creatorId, "?size=square")).status).toBe(404);
+    await setHandleOk(A.login, "rt_notice_x");
+    for (const q of ["", "?size=big", "?size=SQUARE"]) expect([q, (await get(A.creatorId, q)).status]).toEqual([q, 400]);
+    expect((await get(C.creatorId, "?size=square")).status).toBe(404);
+    expect((await get("not-a-uuid", "?size=square")).status).toBe(404);
     expect(captured.shots).toEqual([]);
+  });
+
+  it("INV-E10 S10: 팬덤 심볼을 고르면 미리보기 라우트는 심볼 판(v=s{판})으로 그리고, 프로필 사진 판 주소는 심볼 판으로 넘긴다", async () => {
+    const square = await sharp({ create: { width: 600, height: 600, channels: 3, background: "#88e" } }).jpeg().toBuffer();
+    const viewer = { userId: A.id, role: "creator" as const };
+    for (let i = 0; i < 2; i += 1) {
+      expect(await saveCreatorImage({ admin: adminClient(), viewer }, "symbol", new Blob([new Uint8Array(square)], { type: "image/jpeg" }), { rightsChecked: true })).toMatchObject({ ok: true });
+    }
+    expect(await savePreviewPick({ client: await linkClient(A.login), viewer }, { pick: "symbol" })).toEqual({ ok: true });
+    const at = (q: string) => previewGet(new Request(`http://app.test/api/og/${A.creatorId}${q}`), { params: Promise.resolve({ id: A.creatorId }) });
+    const moved = await at("?v=0");
+    expect([moved.status, new URL(moved.headers.get("location") ?? "", "http://app.test").search]).toEqual([307, "?v=s2"]);
+    const res = await at("?v=s2");
+    expect(res.status).toBe(200);
+    expect(drawnText(lastShot().element)).toBe(`${A.name} 승인한 선물만 받습니다 팬꾹`);
   });
 });
 

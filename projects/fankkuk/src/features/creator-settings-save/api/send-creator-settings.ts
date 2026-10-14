@@ -3,6 +3,7 @@ import type { DaysInput, ReceivingInput } from "../model/receiving-input";
 import type { HardItemsInput } from "../model/hard-items-input";
 import type { HandleInput } from "../model/handle-input";
 import type { ReplySettingsInput } from "../model/reply-settings-input";
+import type { PreviewPickInput } from "../model/preview-pick-input";
 
 // 브라우저에서 크리에이터 설정을 저장한다(/api/creator/profile · /api/creator/notify). 서버가 준 문구를 그대로 보여 준다.
 // ok = 저장됨 / login = 세션이 끝났다 / failed = 저장하지 못했다(문구를 보인다)
@@ -63,4 +64,9 @@ export async function sendCreatorHandle(input: HandleInput): Promise<SendHandleO
   } catch {
     return { kind: "failed", message: FALLBACK };
   }
+}
+
+// creator-link: 링크 미리보기 이미지 고르기(프로필 사진·팬덤 심볼)
+export function sendPreviewPick(input: PreviewPickInput): Promise<SendSettingsOutcome> {
+  return post("/api/creator/preview-pick", input);
 }

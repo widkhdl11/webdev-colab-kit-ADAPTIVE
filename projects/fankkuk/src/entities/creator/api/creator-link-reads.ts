@@ -3,12 +3,15 @@ import { z } from "zod";
 import type { ChannelBadge } from "../model/channel-badge";
 import { isChannelPlatform } from "../model/channel-url";
 import { isHandleShape, type ResolvedHandle } from "../model/creator-handle";
+import { backgroundPathOrNull, NO_LOOK, symbolPathOrNull, type PublicCreatorLook } from "../model/link-images";
 
 // 선물 링크 페이지 읽기 (creator-link). 응답은 신뢰 경계 밖이라 형식을 검사한다.
 // - resolve_creator_handle: 공개 — 지금 아이디·묶인 옛 아이디로 크리에이터와 그 지금 아이디를 찾는다. 본인 확인 전·없는 아이디는 빈 목록(INV-E3·E5).
 // - creator_month_fan_total: 공개 — 이번 달 마음을 보낸 서로 다른 팬 수, 숫자 하나(INV-E8).
 // - my_creator_link: 로그인한 크리에이터 본인의 아이디·남은 잠금 날·사진 경로(INV-E4).
-// - creator_link_extras: 공개 — 팬덤 이름과 확인된 채널(플랫폼·채널 키·주소·확인 날짜)만(추가분 4-1·4-3). 본인 확인 전·취소면 빈 목록.
+// - creator_link_extras: 공개 — 팬덤 이름과 확인된 채널(플랫폼·채널 키·주소·확인 날짜)(추가분 4-1·4-3), 배경사진·심볼 경로·미리보기 고르기(INV-E7)만.
+//   본인 확인 전·취소면 빈 목록.
+// - my_creator_look: 로그인한 크리에이터 본인의 배경사진·심볼 경로·미리보기 고르기(「내 팬꾹 꾸미기」).
 
 const resolvedRow = z.object({ creator_id: z.guid(), handle: z.string() });
 
@@ -54,6 +57,8 @@ export type CreatorLinkExtras = {
   fanName: string | null;
   /** 확인된 채널 — 플랫폼이 비었거나 모르는 값이면 null(추가분 4-3) */
   channel: ChannelBadge | null;
+  /** 배경사진·심볼·미리보기 고르기 — 경로 꼴이 틀리면 없는 것으로(INV-E7) */
+  look: PublicCreatorLook;
 };
 
 const extrasRow = z.object({
@@ -62,9 +67,28 @@ const extrasRow = z.object({
   channel_key: z.string().nullable(),
   channel_url: z.string().nullable(),
   verified_on: z.iso.date().nullable(),
+  bg_path: z.string().nullable(),
+  symbol_path: z.string().nullable(),
+  preview_pick: z.string(),
 });
 
-const NO_EXTRAS: CreatorLinkExtras = { fanName: null, channel: null };
+const NO_EXTRAS: CreatorLinkExtras = { fanName: null, channel: null, look: NO_LOOK };
+
+const lookRow = z.object({ bg_path: z.string().nullable(), symbol_path: z.string().nullable(), preview_pick: z.string() });
+
+/** DB 응답을 공개 칸으로 — 꼴이 틀린 경로는 버리고, 심볼이 없거나 모르는 값이면 고르기는 프로필 사진. */
+function lookOf(row: z.infer<typeof lookRow>): PublicCreatorLook {
+  const symbolPath = symbolPathOrNull(row.symbol_path);
+  return { bgPath: backgroundPathOrNull(row.bg_path), symbolPath, previewPick: row.preview_pick === "symbol" && symbolPath ? "symbol" : "photo" };
+}
+
+/** 로그인한 크리에이터 본인의 꾸미기 칸. 크리에이터 줄이 없으면(팬 등) null. */
+export async function readMyCreatorLook(client: Pick<SupabaseClient, "rpc">): Promise<PublicCreatorLook | null> {
+  const { data, error } = await client.rpc("my_creator_look");
+  if (error) throw new Error(`내 꾸미기 설정을 읽지 못했다: ${error.code}`);
+  const row = z.array(lookRow).parse(data)[0];
+  return row ? lookOf(row) : null;
+}
 
 /** 공개 읽기 — 크리에이터 ID 꼴이 아니면 DB 를 부르지 않는다. 본인 확인 전·없는 크리에이터는 둘 다 null. */
 export async function readCreatorLinkExtras(client: Pick<SupabaseClient, "rpc">, creatorId: string): Promise<CreatorLinkExtras> {
@@ -78,5 +102,5 @@ export async function readCreatorLinkExtras(client: Pick<SupabaseClient, "rpc">,
     platform && isChannelPlatform(platform) && channelKey && channelUrl?.startsWith("https://")
       ? { platform, channelKey, channelUrl, verifiedOn: row.verified_on }
       : null;
-  return { fanName: row.fan_name?.trim() || null, channel };
+  return { fanName: row.fan_name?.trim() || null, channel, look: lookOf(row) };
 }

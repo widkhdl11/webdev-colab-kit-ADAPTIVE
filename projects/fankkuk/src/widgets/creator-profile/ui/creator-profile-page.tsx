@@ -15,6 +15,7 @@ import { ChannelLinkIcon } from "@/entities/creator/ui/channel-badge-icon";
 import { CheckIcon } from "@/entities/creator/ui/check-icon";
 import { channelBadgeTitle, type ChannelBadge } from "@/entities/creator/model/channel-badge";
 import { thanksLine } from "@/entities/creator/model/fan-name";
+import type { PublicCreatorLook } from "@/entities/creator/model/link-images";
 import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
 import { lowestPriceKrw, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { FOLLOW_NICKNAME_NOTICE_SHORT, NEEDS_FOLLOW_TO_SEND } from "@/features/creator-follow/model/follow-notice";
@@ -26,7 +27,7 @@ import s from "./creator-profile.module.css";
 // 선물 링크 페이지 = 크리에이터 페이지 (creator-link). 시안: docs/design/mockups/site/v18/link.html(로그인 전) · creator.html(로그인 후) (design-rules 00절)
 // 로그인 전: 1152 선 안에 가운데 프로필 카드, 마지막 선물 보내기는 화면 폭 가득 옅은 빨강 띠. 로그인 후: 가운데 틀(1200)에 왼쪽 정렬 프로필 머리(사진·글·오른쪽 주 버튼),
 // 마지막 선물 보내기는 옅은 빨강 둥근 상자. 어느 쪽인지는 followMode(로그인 안 함 = "login")로 가른다 — 보이는 정보·순서는 같다.
-// 위에서 아래로: 사진·이름·링크 주소·한 줄 소개·태그·감사 문장·주 버튼 → 같은 크기 정보 카드
+// 위에서 아래로: 프로필 배경사진(없으면 옅은 코랄 단색, 프로필 사진이 아래 가장자리에 걸침 — 디자인 기준 10절)·사진·이름·링크 주소·한 줄 소개·태그·감사 문장·주 버튼 → 같은 크기 정보 카드
 // (받는 상태 → 받기 어려운 품목(있을 때만) → 기념일 D-day(30일 안일 때만) → 평균 승인 → 배송비 → 이번 달 N명(0이면 숨김))
 // → 감사 답장 모음(F-5 — 양쪽이 동의하고 받았어요 3일이 지난 답장만, 없으면 숨김, 2열) → 접는 안내 → 마지막 선물 보내기 판 → 비슷한 크리에이터.
 // 공개 화면이라 크리에이터 공개 이름·링크용 아이디·사진·소개·켠 항목·정해진 문구·집계 숫자·요금만 그린다(INV-E7). 주소 열람 건수는 없다(INV-E11).
@@ -61,6 +62,12 @@ export type CreatorProfilePageProps = {
   fanName?: string | null;
   /** 확인된 채널(추가분 4-3) — 공개 칸(플랫폼·채널 키·주소·확인 날짜)만. 없으면 아이콘을 그리지 않는다 */
   channel?: ChannelBadge | null;
+  /** 배경사진·심볼 경로·미리보기 고르기(「내 팬꾹 꾸미기」) — 미리보기 이미지 주소(판 값)를 만든다 */
+  look?: PublicCreatorLook;
+  /** 프로필 배경사진 공개 주소 — 없으면 옅은 코랄 단색(디자인 기준 10절) */
+  backgroundUrl?: string | null;
+  /** 팬덤 심볼 공개 주소 — 있으면 감사 문장 위에 작게(INV-E7) */
+  symbolUrl?: string | null;
 };
 
 function Icon({ d }: { d: string }) {
@@ -120,6 +127,8 @@ export function CreatorProfilePage({
   today,
   fanName = null,
   channel = null,
+  backgroundUrl = null,
+  symbolUrl = null,
 }: CreatorProfilePageProps) {
   // INV-B2: 쉬는 중이면 안내 문구를 보이고 받기 어려운 품목 줄을 숨긴다(시안 쉬는 중 변형). 「선물 보내기」 자리를 비울지는 send 가 이미 정해 왔다.
   const restingText = restingNotice(receiving?.resumeOn ?? null, today);
@@ -141,6 +150,10 @@ export function CreatorProfilePage({
       <section className={s.pfSec} aria-labelledby="creator-name">
         <div className={wrap}>
           <div className={s.pf}>
+            {/* 프로필 배경사진(디자인 기준 10절) — 맨 위 띠, 없으면 옅은 코랄 단색. 사진은 꾸밈이라 읽지 않는다. 프로필 사진이 아래 가장자리에 걸친다 */}
+            <div className={s.cover} aria-hidden="true">
+              {backgroundUrl ? <img className={s.coverImg} src={backgroundUrl} alt="" width={1280} height={427} /> : null}
+            </div>
             <CreatorPhoto photoUrl={creator.photoUrl} tone={creator.faceTone} className={`face ${s.photo}`} />
             <div className={s.pfMain}>
               <h1 className={s.name} id="creator-name">
@@ -165,6 +178,7 @@ export function CreatorProfilePage({
                   <CreatorTag key={t} name={t} />
                 ))}
               </div>
+              {symbolUrl ? <img className={s.symbol} src={symbolUrl} alt="팬덤 심볼" width={512} height={512} /> : null}
               <p className={s.thanks}>{thanksLine(fanName)}</p>
             </div>
             {/* 첫 화면의 주 버튼(DECISIONS 2026-10-11). 쉬는 중·자기 페이지면 없다 */}

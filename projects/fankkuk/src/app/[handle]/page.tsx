@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";
-import { resolveCreatorHandle } from "@/entities/creator/api/creator-link-reads";
+import { readCreatorLinkExtras, resolveCreatorHandle } from "@/entities/creator/api/creator-link-reads";
 import { linkRouteOf } from "@/entities/creator/model/creator-handle";
 import { createPublicReadSupabase, readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { loadCreatorLinkPage } from "@/widgets/creator-profile/api/load-creator-link";
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const route = await linkRoute(handle);
   if (route.kind !== "show") return {};
   const creator = await publicCreator(route.creatorId);
-  return creator ? creatorLinkMetadata(creator, requestOrigin(await headers())) : {};
+  return creator ? creatorLinkMetadata(creator, requestOrigin(await headers()), (await readCreatorLinkExtras(createPublicReadSupabase(), creator.id)).look) : {};
 }
 
 export default async function Page({ params }: Props) {

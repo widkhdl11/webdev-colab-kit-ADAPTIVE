@@ -7,7 +7,16 @@ import { readCreatorLinkExtras } from "./creator-link-reads";
 
 const CREATOR_ID = "6f1c2b9e-4a3d-4c8e-9b7a-2d5e8f1a0c3b";
 
-type ExtrasRow = { fan_name: string | null; platform: string | null; channel_key: string | null; channel_url: string | null; verified_on: string | null };
+type ExtrasRow = {
+  fan_name: string | null;
+  platform: string | null;
+  channel_key: string | null;
+  channel_url: string | null;
+  verified_on: string | null;
+  bg_path: string | null;
+  symbol_path: string | null;
+  preview_pick: string;
+};
 
 const okRow: ExtrasRow = {
   fan_name: "꿀단지",
@@ -15,6 +24,9 @@ const okRow: ExtrasRow = {
   channel_key: "gguldanji",
   channel_url: "https://www.youtube.com/@gguldanji",
   verified_on: "2026-10-14",
+  bg_path: null,
+  symbol_path: null,
+  preview_pick: "photo",
 };
 
 function fakeClient(rows: ExtrasRow[]) {
@@ -52,5 +64,22 @@ describe("readCreatorLinkExtras — 확인된 채널 거르기", () => {
   it("팬덤 이름은 채널과 따로 — 채널이 걸러져도 남는다", async () => {
     const r = await readCreatorLinkExtras(fakeClient([{ ...okRow, platform: "x" }]), CREATOR_ID);
     expect(r.fanName).toBe("꿀단지");
+  });
+});
+
+describe("readCreatorLinkExtras — 배경사진·팬덤 심볼·미리보기 고르기 (creator-link INV-E7·E10)", () => {
+  const lookOf = async (patch: Partial<ExtrasRow>) => (await readCreatorLinkExtras(fakeClient([{ ...okRow, ...patch }]), CREATOR_ID)).look;
+
+  it("INV-E7: 저장소 경로 꼴이 맞는 배경사진·심볼만 넘긴다", async () => {
+    expect(await lookOf({ bg_path: `${CREATOR_ID}/bg-2.webp`, symbol_path: `${CREATOR_ID}/sym-1.webp`, preview_pick: "symbol" })).toEqual({
+      bgPath: `${CREATOR_ID}/bg-2.webp`,
+      symbolPath: `${CREATOR_ID}/sym-1.webp`,
+      previewPick: "symbol",
+    });
+  });
+
+  it("INV-E7 (실패경로): 꼴이 틀린 경로·모르는 고르기 값은 없는 것으로 — 심볼이 없으면 고르기는 프로필 사진", async () => {
+    expect(await lookOf({ bg_path: "../x.webp", symbol_path: `${CREATOR_ID}/1.webp`, preview_pick: "symbol" })).toEqual({ bgPath: null, symbolPath: null, previewPick: "photo" });
+    expect(await lookOf({ preview_pick: "logo" })).toEqual({ bgPath: null, symbolPath: null, previewPick: "photo" });
   });
 });

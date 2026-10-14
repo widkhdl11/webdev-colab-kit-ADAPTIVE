@@ -16,6 +16,7 @@ export type AppIcon =
   | "send"
   | "eye"
   | "map-pin"
+  | "sparkles"
   | "settings";
 
 /** badge: 이 칸 옆에 숫자를 붙일 자리. 숫자는 헤더가 넘긴다 */
@@ -43,6 +44,9 @@ export const FAN_APP_MENU: readonly AppMenuGroup[] = [
 // 「받은 선물」은 시안대로 승인 화면과 나뉜 화면이다(creator-boxes.html → /creator/boxes).
 export const CREATOR_BOXES_HREF = "/creator/boxes";
 
+/** 「내 팬꾹 꾸미기」 화면 — 설정의 프로필 칸도 이 주소로 보낸다. */
+export const CREATOR_CUSTOMIZE_HREF = "/creator/customize";
+
 export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
   { label: "기본", items: [{ href: CREATOR_HOME, label: "홈", icon: "house" }, ...BASIC] },
   {
@@ -53,6 +57,8 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
       { href: CREATOR_BOXES_HREF, label: "받은 선물", icon: "mail" },
       { href: "/creator/revgifts", label: "보낸 역조공", icon: "send" },
       { href: "/creator/log", label: "열람 기록", icon: "eye" },
+      // 디자인 기준 10절 — 「주소 관리」 바로 위(시안 customize-b.html)
+      { href: CREATOR_CUSTOMIZE_HREF, label: "내 팬꾹 꾸미기", icon: "sparkles" },
       { href: "/creator/settings#address", label: "주소 관리", icon: "map-pin" },
       { href: "/creator/settings", label: "설정", icon: "settings" },
       // 시안에 없던 칸 — 크리에이터도 선물을 보내므로 보낸 선물 목록으로 가는 길(카드 d78 「추가해」)

@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import sharp from "sharp";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { noticeImageInput, previewImageInput, previewImagePath } from "@/entities/creator/model/link-images";
+import { NOTICE_SIZES, noticeImageInput, previewImageInput, previewImagePath } from "@/entities/creator/model/link-images";
 import { removeCreatorPhoto, saveCreatorPhoto } from "@/features/creator-photo/model/save-creator-photo";
 import { loadCreatorLinkPage } from "@/widgets/creator-profile/api/load-creator-link";
 import { CreatorProfilePage } from "@/widgets/creator-profile/ui/creator-profile-page";
@@ -417,7 +417,7 @@ describe("INV-E7: 공개 화면에는 정해진 칸만", () => {
         }
       }
       const pub = page!.props.creator;
-      const inputs = JSON.stringify([previewImageInput(pub, "http://photo.test"), noticeImageInput(pub, "http://photo.test")]);
+      const inputs = JSON.stringify([previewImageInput(pub, page!.props.look, "http://photo.test"), noticeImageInput(pub, page!.props.look, "http://photo.test")]);
       for (const bad of [...orders, "별빛", "달토끼", A.login, "581234567890"]) {
         expect([who, bad, inputs.includes(bad)]).toEqual([who, bad, false]);
       }
@@ -488,16 +488,16 @@ describe("INV-E9: 프로필 사진 — 서버가 열어 보고 사진 정보를 
 });
 
 describe("INV-E10: 이미지 생성에 넘기는 값", () => {
-  it("INV-E10 S10: 미리보기 입력은 이름·사진 주소뿐, 공지 입력은 사진·링크 주소뿐 — 아이디가 없으면 공지 이미지가 없다", async () => {
+  it("INV-E10 S10: 미리보기 입력은 이름·고른 사진뿐, 공지 입력은 배경사진·사진·이름·소개·링크 주소뿐 — 아이디가 없으면 공지 이미지가 없다", async () => {
     await saveProfile(A.login, "느긋하게 게임하는 방송이에요");
     const before = await loadCreatorLinkPage({ client: anonClient(), viewer: null, creatorId: A.creatorId, photoBase: "http://photo.test" });
-    expect(noticeImageInput(before!.props.creator, "http://photo.test")).toBeNull();
-    expect(Object.keys(previewImageInput(before!.props.creator, "http://photo.test")).sort()).toEqual(["name", "photoUrl"]);
+    expect(noticeImageInput(before!.props.creator, before!.props.look, "http://photo.test")).toBeNull();
+    expect(Object.keys(previewImageInput(before!.props.creator, before!.props.look, "http://photo.test")).sort()).toEqual(["imageUrl", "name", "pick"]);
     await setHandleOk(A.login, "haru_s10");
     const after = await loadCreatorLinkPage({ client: anonClient(), viewer: null, creatorId: A.creatorId, photoBase: "http://photo.test" });
-    const notice = noticeImageInput(after!.props.creator, "http://photo.test");
-    expect(notice).toEqual({ photoUrl: null, linkText: "fankkuk.kr/haru_s10", initial: [...A.name][0] });
-    expect(JSON.stringify(previewImageInput(after!.props.creator, "http://photo.test"))).not.toContain("느긋하게");
+    const notice = noticeImageInput(after!.props.creator, after!.props.look, "http://photo.test");
+    expect(notice).toEqual({ name: A.name, intro: "느긋하게 게임하는 방송이에요", photoUrl: null, backgroundUrl: null, linkText: "fankkuk.kr/haru_s10", initial: [...A.name][0] });
+    expect(JSON.stringify(previewImageInput(after!.props.creator, after!.props.look, "http://photo.test"))).not.toContain("느긋하게");
   });
 });
 
@@ -507,16 +507,18 @@ describe("INV-E10: 사진이 있는 크리에이터의 이미지가 실제로 �
     await saveCreatorPhoto({ admin: adminClient(), viewer: asViewer(A) }, blob(await photoWithGps(), "image/jpeg"));
     const page = await loadCreatorLinkPage({ client: anonClient(), viewer: null, creatorId: A.creatorId, photoBase: process.env.FK_TEST_API_URL ?? "" });
     const pub = page!.props.creator;
-    const preview = previewImageInput(pub, process.env.FK_TEST_API_URL ?? "");
-    const notice = noticeImageInput(pub, process.env.FK_TEST_API_URL ?? "")!;
-    const photo = await readPhotoDataUrl(preview.photoUrl);
+    const preview = previewImageInput(pub, page!.props.look, process.env.FK_TEST_API_URL ?? "");
+    const notice = noticeImageInput(pub, page!.props.look, process.env.FK_TEST_API_URL ?? "")!;
+    const photo = await readPhotoDataUrl(preview.imageUrl);
     expect(photo?.startsWith("data:image/png;base64,")).toBe(true);
     // 실제 바이트도 PNG — 개발 서버의 이미지 그리기는 webp 를 받으면 응답이 중간에 끊겼다(이 시험 환경의 그리기는 webp 도 읽어서 크기만으로는 못 잡는다)
     expect(Buffer.from(photo!.split(",")[1] ?? "", "base64").subarray(0, 4).toString("hex")).toBe("89504e47");
     const fonts = [{ name: "Pretendard", data: await readImageFont(), weight: 800 as const, style: "normal" as const }];
     const shots = [
-      new ImageResponse(createElement(PreviewImageCard, { name: preview.name, photo, logo: await readLogoDataUrl() }), { width: 1200, height: 630, fonts }),
-      new ImageResponse(createElement(NoticeImageCard, { photo: await readPhotoDataUrl(notice.photoUrl), initial: notice.initial, linkText: notice.linkText }), { width: 1080, height: 1080, fonts }),
+      new ImageResponse(createElement(PreviewImageCard, { name: preview.name, image: photo, pick: preview.pick, logo: await readLogoDataUrl() }), { width: 1200, height: 630, fonts }),
+      ...(["square", "story", "wide"] as const).map(
+        (size) => new ImageResponse(createElement(NoticeImageCard, { size, input: notice, photo, background: null }), { ...NOTICE_SIZES[size], fonts }),
+      ),
     ];
     const sizes: [number, number][] = [];
     for (const shot of shots) {
@@ -526,6 +528,8 @@ describe("INV-E10: 사진이 있는 크리에이터의 이미지가 실제로 �
     expect(sizes).toEqual([
       [1200, 630],
       [1080, 1080],
+      [1080, 1920],
+      [1200, 675],
     ]);
   });
 });

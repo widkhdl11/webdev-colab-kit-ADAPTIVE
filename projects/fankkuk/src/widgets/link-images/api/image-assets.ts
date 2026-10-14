@@ -22,11 +22,16 @@ export function readLogoDataUrl(): Promise<string> {
   return logoCache;
 }
 
+/** 프로필 사진·심볼(512 정사각)을 열어 볼 화소 상한. */
+const SQUARE_MAX_PIXELS = 1024 * 1024;
+/** 배경사진(긴 변 1280)을 열어 볼 화소 상한. */
+export const BACKGROUND_MAX_PIXELS = 1280 * 1280;
+
 /**
- * 공개 저장소의 프로필 사진을 data 주소로 읽는다. 못 읽으면 null(기본 이미지로 그린다).
- * 주소는 서버가 정한 공개 저장소 주소만 온다(creatorPhotoUrl — 경로 꼴 검사를 거친 값).
+ * 공개 저장소의 프로필 사진(배경사진·심볼도)을 data 주소로 읽는다. 못 읽으면 null(기본 이미지·단색으로 그린다).
+ * 주소는 서버가 정한 공개 저장소 주소만 온다(creatorPhotoUrl·creatorBackgroundUrl·creatorSymbolUrl — 경로 꼴 검사를 거친 값).
  */
-export async function readPhotoDataUrl(photoUrl: string | null): Promise<string | null> {
+export async function readPhotoDataUrl(photoUrl: string | null, maxPixels: number = SQUARE_MAX_PIXELS): Promise<string | null> {
   if (!photoUrl) return null;
   try {
     const res = await fetch(photoUrl, { signal: AbortSignal.timeout(3000) });
@@ -34,7 +39,7 @@ export async function readPhotoDataUrl(photoUrl: string | null): Promise<string 
     const bytes = Buffer.from(await res.arrayBuffer());
     if (bytes.byteLength > 1024 * 1024) return null;
     // 이미지 그리기(next/og)는 webp 를 읽지 못해 응답이 중간에 끊긴다(2026-10-11 화면 확인) — PNG 로 바꿔 넣는다
-    const png = await sharp(bytes, { limitInputPixels: 1024 * 1024 }).png().toBuffer();
+    const png = await sharp(bytes, { limitInputPixels: maxPixels }).png().toBuffer();
     return `data:image/png;base64,${png.toString("base64")}`;
   } catch {
     return null;

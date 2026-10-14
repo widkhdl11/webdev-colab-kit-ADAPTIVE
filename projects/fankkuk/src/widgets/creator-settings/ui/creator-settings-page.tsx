@@ -11,10 +11,7 @@ import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notice";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { sendCreatorNotify, sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
-import { clipChars, FAN_NAME_MAX, INTRO_MAX, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
-import { thanksLine } from "@/entities/creator/model/fan-name";
 import { formatDate } from "@/shared/lib/format/datetime";
-import { charCount } from "@/shared/lib/validation/char-count";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import type { MyAddressStatus } from "@/entities/creator/api/my-address-status";
@@ -43,7 +40,8 @@ import s from "./creator-settings.module.css";
 // 「등록됨」은 서버에 저장된 뒤에만 바뀐다. 처음 그리는 값은 DB 읽기 함수(my_creator_address_status)의 등록 여부다.
 // 차단 풀기는 로그인 세션으로 저장한다(decline-block INV-D10, 카드 d26) — 풀어도 주소는 열리지 않고, 새 선물은 건마다 서명 승인이 있어야 나간다.
 // 주소는 값을 받지 않는다 — 「등록돼 있는가」만 보여 준다.
-// 프로필(공개 이름·소개글·찾기 노출)은 「프로필 저장」으로 보낸다(my-account INV-A9·A10). 공개 이름은 운영자 확인 없이 바뀌고 바꾼 기록이 남는다.
+// 프로필(태그·찾기 노출)은 「프로필 저장」으로 보낸다(my-account INV-A9·A10). 공개 이름·한 줄 소개·프로필 사진·팬을 부르는 이름은
+// 「내 팬꾹 꾸미기」(/creator/customize)로 옮겼다 — 여기는 그 화면으로 가는 링크만 둔다(디자인 기준 10절).
 // 찾기 노출을 끄면 크리에이터 찾기 목록에서만 빠진다 — 페이지·팔로우·새 선물은 그대로다.
 // 알림은 카카오·이메일 두 스위치이고 누르는 즉시 저장한다(INV-A11). 저장에 실패하면 스위치를 되돌리고 이유를 보인다.
 // 승인 요청은 두 칸이 꺼져도 가므로 끄는 스위치가 없다(notifications INV-N6).
@@ -109,7 +107,6 @@ export function CreatorSettingsPage({
   hardItems,
   today,
   link,
-  photoBase,
   replySettings,
 }: {
   settings: CreatorSettingsView;
@@ -117,8 +114,6 @@ export function CreatorSettingsPage({
   replySettings: ReplySettings;
   /** 링크용 아이디·남은 잠금 날·사진 경로 — 로그인한 크리에이터 본인 것(creator-link) */
   link: MyCreatorLink;
-  /** 공개 저장소 주소 — 프로필 사진 미리보기 */
-  photoBase: string;
   /** 받는 상태·팬당 한도·생일·기념일 — 로그인한 크리에이터 본인 것(creator-receiving) */
   receiving: MyCreatorReceiving;
   /** 살아 있는 받기 어려운 품목 — 로그인한 크리에이터 본인 것(hard-items). 없거나 끝났으면 null */
@@ -163,9 +158,6 @@ export function CreatorSettingsPage({
     }
     setUnblockError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
   };
-  const [publicName, setPublicName] = useState(settings.publicName);
-  const [intro, setIntro] = useState(settings.intro);
-  const [fanName, setFanName] = useState(settings.fanName);
   const [visible, setVisible] = useState(settings.visibleInSearch);
   const [tagIds, setTagIds] = useState<string[]>([...settings.tagIds]);
   const [customTag, setCustomTag] = useState(settings.customTag);
@@ -188,7 +180,8 @@ export function CreatorSettingsPage({
       return;
     }
     setProfileSaving(true);
-    const r = await sendCreatorProfile({ name: publicName, intro, searchable: visible, fanName });
+    // 이름·소개는 이 화면에서 고치지 않는다 — 서버가 준 지금 값 그대로 보내고, 팬덤 이름은 보내지 않는다(DB 가 그대로 둔다)
+    const r = await sendCreatorProfile({ name: settings.publicName, intro: settings.intro, searchable: visible });
     const t = r.kind === "ok" ? await sendCreatorTags({ tagIds: tags.tagIds, customTag: tags.customTag }) : r;
     setProfileSaving(false);
     if (r.kind === "login" || t.kind === "login") {
@@ -380,53 +373,14 @@ export function CreatorSettingsPage({
               프로필
             </h2>
           </div>
-          <div>
-            <label className="label" htmlFor="pub-name">
-              공개 이름
-            </label>
-            <input
-              className="field"
-              id="pub-name"
-              value={publicName}
-              // 글자 수는 저장 검사와 같은 셈(코드 포인트)으로 막는다 — maxLength 는 이모지를 두 글자로 센다
-              onChange={(e) => setPublicName(clipChars(e.target.value, PUBLIC_NAME_MAX))}
-              aria-describedby="pub-name-hint"
-            />
-            <p className="t-meta hint" id="pub-name-hint">
-              팬에게 보이는 이름이에요. {PUBLIC_NAME_MAX}자까지, 언제든 바꿀 수 있어요. 바꾼 기록은 운영팀이 볼 수 있어요.
-            </p>
-          </div>
-          <div>
-            <label className="label" htmlFor="pub-intro">
-              한 줄 소개
-            </label>
-            <input
-              className="field"
-              id="pub-intro"
-              value={intro}
-              // 한 줄 — 붙여 넣은 줄바꿈은 띄어쓰기로 바꾼다(creator-link INV-E6)
-              onChange={(e) => setIntro(clipChars(e.target.value.replace(/[\r\n\u2028\u2029]+/g, " "), INTRO_MAX))}
-              aria-describedby="pub-intro-hint"
-            />
-            <p className="t-meta hint" id="pub-intro-hint">
-              선물 링크 페이지에 이름 아래 한 줄로 보여요. {INTRO_MAX}자까지 적을 수 있어요({charCount(intro.trim())}/{INTRO_MAX}). 전화번호·이메일·인터넷 주소는 쓸 수 없어요.
-            </p>
-          </div>
-          <div>
-            <label className="label" htmlFor="pub-fan-name">
-              팬을 부르는 이름 (선택)
-            </label>
-            <input
-              className="field"
-              id="pub-fan-name"
-              value={fanName}
-              // 한 줄 — 붙여 넣은 줄바꿈은 띄어쓰기로 바꾼다. 글자 수는 저장 검사와 같은 셈(코드 포인트)으로 막는다(추가분 4-1)
-              onChange={(e) => setFanName(clipChars(e.target.value.replace(/[\r\n  ]+/g, " "), FAN_NAME_MAX))}
-              aria-describedby="pub-fan-name-hint"
-            />
-            <p className="t-meta hint" id="pub-fan-name-hint">
-              적으면 선물 링크 페이지의 감사 문장이 「{thanksLine(fanName.trim() || "팬덤 이름")}」로 바뀌어요. {FAN_NAME_MAX}자까지 적을 수 있어요({charCount(fanName.trim())}/{FAN_NAME_MAX}).
-              비우면 기본 문장이 보여요.
+          {/* 공개 이름·한 줄 소개·팬을 부르는 이름·프로필 사진은 「내 팬꾹 꾸미기」에서 바꾼다(디자인 기준 10절) — 같은 칸이 두 곳에 있지 않게 */}
+          <div className={`card card--soft ${s.inner}`}>
+            <p className="t-strong">{settings.publicName}</p>
+            <p className={s["body-gap"]}>공개 이름·한 줄 소개·프로필 사진·팬을 부르는 이름은 내 팬꾹 꾸미기에서 바꿔요.</p>
+            <p className={s["inner-btn"]}>
+              <a className="btn btn--line btn--sm" href="/creator/customize">
+                내 팬꾹 꾸미기에서 바꿔요
+              </a>
             </p>
           </div>
           <div>
@@ -473,7 +427,7 @@ export function CreatorSettingsPage({
           </div>
         </section>
 
-        <LinkSection initial={link} photoBase={photoBase} verified={verification.state.verified} />
+        <LinkSection initial={link} verified={verification.state.verified} />
         <ReceivingSection initial={receiving} today={today} />
         <HardItemsSection initial={hardItems} today={today} />
         <ReplySettingsSection initial={replySettings} />

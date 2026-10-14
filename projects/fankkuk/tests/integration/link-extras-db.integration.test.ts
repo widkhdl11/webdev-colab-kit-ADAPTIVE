@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { readCreatorLinkExtras } from "@/entities/creator/api/creator-link-reads";
+import { NO_LOOK } from "@/entities/creator/model/link-images";
 import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-settings";
 import { loadCreatorLinkPage } from "@/widgets/creator-profile/api/load-creator-link";
 import { CreatorProfilePage } from "@/widgets/creator-profile/ui/creator-profile-page";
@@ -103,11 +104,12 @@ describe("확인된 채널의 공개 읽기 — creator_link_extras (추가분 4
     const rows = raw.data as Record<string, unknown>[];
     expect(rows).toHaveLength(1);
     // 운영자 메모·인증 코드·신청·계정 칸은 없다
-    expect(Object.keys(rows[0]!).sort()).toEqual(["channel_key", "channel_url", "fan_name", "platform", "verified_on"]);
+    expect(Object.keys(rows[0]!).sort()).toEqual(["bg_path", "channel_key", "channel_url", "fan_name", "platform", "preview_pick", "symbol_path", "verified_on"]);
     const today = psql(`select (now() at time zone 'Asia/Seoul')::date::text`);
     expect(await readCreatorLinkExtras(anonClient(), A.creatorId)).toEqual({
       fanName: "꿀벌단",
       channel: { platform: "youtube", channelKey: YT_KEY, channelUrl: `https://www.youtube.com/@${YT_KEY}`, verifiedOn: today },
+      look: NO_LOOK,
     });
   });
 
@@ -118,7 +120,7 @@ describe("확인된 채널의 공개 읽기 — creator_link_extras (추가분 4
     expect(((await anonClient().rpc("creator_link_extras", { p_creator_id: A.creatorId })).data as unknown[]).length).toBe(1);
     expect((await revoke(A.creatorId)).error).toBeNull();
     expect((await anonClient().rpc("creator_link_extras", { p_creator_id: A.creatorId })).data).toEqual([]);
-    expect(await readCreatorLinkExtras(anonClient(), A.creatorId)).toEqual({ fanName: null, channel: null });
+    expect(await readCreatorLinkExtras(anonClient(), A.creatorId)).toEqual({ fanName: null, channel: null, look: NO_LOOK });
   });
 
   it("링크 페이지: 감사 문장에 팬덤 이름, 닉네임 아래 채널 아이콘(새 탭·풀이) — 인증 코드는 응답·화면 어디에도 없다", async () => {
