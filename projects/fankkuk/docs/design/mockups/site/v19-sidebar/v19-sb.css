@@ -1,0 +1,23 @@
+/* 팬꾹 v19 사이드바 시안 — v18 위에 얹는 추가분만. 값은 전부 tokens.css 변수. */
+.v19-memo { padding: var(--sp-12) var(--sp-24); background: var(--primary-50); border-bottom: var(--bw) solid var(--gray-200); color: var(--gray-900); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.v19-memo b { color: var(--primary-700); }
+
+/* 하위 목록 — 부모 아이콘 가운데 세로선을 따라 한 단 아래로 */
+.sb-nav .sb-sub { margin: var(--nav-gap-item) 0 0 calc(var(--nav-px) + var(--nav-icon) / 2); border-left: var(--bw) solid var(--gray-200); }
+.sb-nav .sb-sub[hidden] { display: none; }
+.sb-nav .sb-sub a, .sb-nav .sb-soon { height: var(--sp-32); padding: 0 var(--sp-8) 0 var(--sp-20); font-size: var(--fs-navitem); }
+.sb-nav .sb-sub a { border-radius: 0 var(--r-nav) var(--r-nav) 0; }
+.sb-nav .sb-soon { display: flex; align-items: center; gap: var(--sp-8); color: var(--gray-500); font-weight: var(--fw-nav); line-height: 1; cursor: not-allowed; }
+.sb-soon-tag { flex: none; margin-left: auto; padding: var(--sp-4) var(--sp-8); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-600); font-size: var(--fs-sb-badge); font-weight: var(--fw-btn); line-height: 1; }
+/* 접힘(64): 하위는 숨기고 부모 아이콘만 둔다 */
+html[data-collapsed="1"] .sb-nav .sb-sub { display: none; }
+
+/* B안 펼침 줄 (버튼) — 링크 줄(.sb-nav a)과 같은 모양 */
+.sb-nav .sb-tgl { position: relative; display: flex; align-items: center; gap: var(--nav-gap-in); width: 100%; height: var(--nav-item-h); padding: 0 var(--nav-px); border: 0; border-radius: var(--r-nav); background: none; font: inherit; font-size: var(--fs-navitem); font-weight: var(--fw-nav); line-height: 1; text-align: left; color: var(--gray-600); cursor: pointer; }
+.sb-nav .sb-tgl:hover { background: var(--gray-100); color: var(--gray-900); }
+.sb-nav .sb-tgl > svg:first-child { flex: none; width: var(--nav-icon); height: var(--nav-icon); }
+.sb-nav .sb-tgl .sb-chv { flex: none; width: var(--icon-chev); height: var(--icon-chev); margin-left: auto; opacity: var(--lbl-op); transition: transform var(--dur-w) ease, opacity var(--tr-dur) ease var(--tr-delay); }
+.sb-nav .sb-tgl[aria-expanded="true"] .sb-chv { transform: rotate(180deg); }
+.sb-nav .sb-tgl::after { content: attr(data-tip); position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: var(--sp-8); padding: var(--sp-8) var(--sp-16); border-radius: var(--r-nav); background: var(--gray-900); color: var(--white); font-size: var(--fs-caption); line-height: 1; white-space: nowrap; z-index: 70; pointer-events: none; opacity: 0; visibility: hidden; }
+html[data-collapsed="1"] .sb-nav .sb-tgl:hover::after, html[data-collapsed="1"] .sb-nav .sb-tgl:focus-visible::after { opacity: 1; visibility: visible; }
+html[data-collapsed="1"] .sb-nav .sb-tgl .sb-chv { display: none; }
