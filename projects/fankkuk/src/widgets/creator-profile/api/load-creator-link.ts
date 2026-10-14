@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readCreatorCards, readMyFollowIds, readOtherCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
-import { readCreatorMonthFans } from "@/entities/creator/api/creator-link-reads";
+import { readCreatorLinkExtras, readCreatorMonthFans } from "@/entities/creator/api/creator-link-reads";
 import { readCreatorReceiving } from "@/entities/creator/api/receiving-reads";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { creatorPhotoUrl } from "@/entities/creator/model/link-images";
@@ -18,6 +18,7 @@ import type { CreatorProfilePageProps } from "../ui/creator-profile-page";
 // 읽는 것은 모두 공개 읽기 함수다: 크리에이터 한 명(creator_by_id — 공개 이름·아이디·사진 경로·소개·태그·승인 시간),
 // 아래 줄의 다른 크리에이터 몇 명(list_other_creators — 목록 전체를 읽지 않는다), 받는 상태(쉬는 날·생일·기념일),
 // 받기 어려운 품목 문구, 이번 달 팬 수(숫자 하나), 감사 답장 모음(양쪽 동의 + 받았어요 3일 뒤, gift-reply INV-G7), 공개 요금표, 보낼 수 없는 것. 로그인했으면 팔로우 목록을 한 번 읽어 양쪽에 붙인다.
+// 팬덤 이름과 확인된 채널(플랫폼·채널 키·주소·확인 날짜, 추가분 4-1·4-3)도 공개 읽기 함수(creator_link_extras)로 읽는다 — 운영자 메모·인증 코드는 그 함수가 돌려주지 않는다.
 // 주소·주문·운송장·팬 목록·열람 건수를 읽는 함수는 부르지 않는다(INV-E7). 본인 확인 전·없는 크리에이터는 null(없는 페이지).
 
 /** 「이런 크리에이터도 있어요」 줄에 보이는 수(시안 6명). */
@@ -40,7 +41,7 @@ export async function loadCreatorLinkPage(input: {
   // 크리에이터가 자기 페이지를 보면 선물 보내기를 숨긴다(INV-L8). 팔로우하지 않았으면 「팔로우하고 선물 보내기」(INV-L9)
   const asCreator = viewer?.role === "creator";
   const followedIds = viewer ? await readMyFollowIds(client) : [];
-  const [others, ownCreatorId, prices, prohibited, receiving, hardItems, monthFans, replies] = await Promise.all([
+  const [others, ownCreatorId, prices, prohibited, receiving, hardItems, monthFans, replies, extras] = await Promise.all([
     readOtherCreatorCards(client, { excludeId: creatorId, limit: OTHERS_SHOWN, followedIds }),
     asCreator ? readOwnCreatorId(client) : Promise.resolve(null),
     readPublicPrices(client),
@@ -52,6 +53,7 @@ export async function loadCreatorLinkPage(input: {
     readCreatorMonthFans(client, creatorId),
     // gift-reply INV-G7: 문구·한 줄·날짜·팬 닉네임(팬이 고른 경우만)뿐 — 조건 판정은 DB 공개 읽기 함수가 한다
     readReplyWall(client, creatorId),
+    readCreatorLinkExtras(client, creatorId),
   ]);
   const creator = { ...base, following: followedIds.includes(creatorId) };
   const today = kstToday(new Date());
@@ -71,6 +73,8 @@ export async function loadCreatorLinkPage(input: {
       monthFans,
       replies,
       today,
+      fanName: extras.fanName,
+      channel: extras.channel,
     },
   };
 }

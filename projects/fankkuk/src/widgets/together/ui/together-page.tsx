@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
+import { ChannelVerifiedMark } from "@/entities/creator/ui/channel-badge-icon";
 import { dotDate, monthDayText } from "@/entities/gift-reply/model/reply";
 import { SPECIAL_MOMENT_TEXT } from "@/entities/together/model/special-moment";
 import { ALL_GIFTS_PATH } from "@/entities/together/model/together-path";
@@ -144,7 +145,11 @@ export function TogetherPage(props: TogetherPageProps) {
         <header className={`page-head ${s["who-head"]}`}>
           <CreatorPhoto photoUrl={props.creatorPhotoUrl} tone="var(--face-6)" className={`face ${s.photo}`} />
           <div className={s.who}>
-            <h1 className="ph-title">{name}님과 함께한 시간</h1>
+            <div className={s["title-row"]}>
+              <h1 className="ph-title">{name}님과 함께한 시간</h1>
+              {/* 추가분 4-5: 상단 프로필 옆 채널 소유 확인 표시 — 올리면 「@핸들 · 날짜 확인」 */}
+              {props.channel ? <ChannelVerifiedMark channel={props.channel} /> : null}
+            </div>
             <p className="ph-desc">
               처음 선물한 날 <b className={s.ink}>{dotDate(summary.firstGiftOn)}</b> ·{" "}
               <b className={s.ink}>{summary.dayCount.toLocaleString("ko-KR")}일째</b>

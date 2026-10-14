@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { HIDDEN_CHAR } from "@/shared/lib/validation/hidden-char";
+import { FAN_NAME_MAX } from "@/entities/creator/model/fan-name";
 
 // 크리에이터 설정 입력 경계 — 앱 서버가 먼저 검사한다(my-account INV-A9·A11). DB 함수가 같은 규칙으로 다시 검사한다.
 // 본문에서 정해진 칸만 꺼낸다. 크리에이터 ID·채널·본인 확인·계정 ID 칸은 있어도 읽지 않는다.
@@ -19,6 +20,8 @@ export { HIDDEN_CHAR };
 export const PUBLIC_NAME_MAX = 20;
 /** 한 줄 소개 — 40자, 줄바꿈 없음(creator-link INV-E6). DB 함수가 같은 길이와 태그 필터로 다시 검사한다. */
 export const INTRO_MAX = 40;
+/** 팬을 부르는 이름 — 선택, 10자, 줄바꿈 없음(추가분 4-1). 금칙어·연락처 꼴은 DB 가 한 줄 소개와 같은 필터로 다시 본다. */
+export { FAN_NAME_MAX };
 
 export const profileInputSchema = z.object({
   name: z
@@ -32,6 +35,13 @@ export const profileInputSchema = z.object({
     .refine((s) => charCount(s) <= INTRO_MAX, `한 줄 소개는 ${INTRO_MAX}자까지 적을 수 있어요.`)
     .refine((s) => !HIDDEN_CHAR.test(s) && !/[\u2028\u2029]/.test(s), "한 줄 소개에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요."),
   searchable: z.boolean(),
+  // 없으면 DB 가 그대로 둔다. 빈 문자열이면 지운다
+  fanName: z
+    .string()
+    .trim()
+    .refine((s) => charCount(s) <= FAN_NAME_MAX, `팬을 부르는 이름은 ${FAN_NAME_MAX}자까지 적을 수 있어요.`)
+    .refine((s) => !HIDDEN_CHAR.test(s) && !/[\u2028\u2029]/.test(s), "팬을 부르는 이름에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요.")
+    .optional(),
 });
 
 export type ProfileInput = z.infer<typeof profileInputSchema>;

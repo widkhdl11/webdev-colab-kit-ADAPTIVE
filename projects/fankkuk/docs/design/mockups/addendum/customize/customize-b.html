@@ -1,0 +1,359 @@
+<!doctype html>
+<!--
+  [B안] 모바일 미리보기를 편집 칸 위로 옮긴 판(사용자 정정 2026-10-14): 1023px 이하에서 미리보기가 맨 위, 위쪽에 붙어 따라오고, 「접기」로 줄인다. PC 는 A안(customize.html)과 같다. 그 밖은 바꾸지 않았다.
+  팬꾹 시안 addendum — 내 팬꾹 꾸미기 (크리에이터 메뉴 새 화면) (2026-10-14, 추가분 4 후속)
+  기준: design-rules 「00. v18」 + 6절 말투. 값은 site/v18 의 tokens.css · v18*.css 변수를 그대로 쓴다(여기서 새 색·글꼴을 만들지 않음).
+  틀: site/v18/creator-settings.html 의 크리에이터 사이드바 · 페이지 머리 · 카드. 사이드바 「관리」 묶음에 「내 팬꾹 꾸미기」 한 줄 추가(현재 표시).
+  보는 법: 이 파일을 열면 PC 1280 · 모바일 390 이 나란히 뜬다(각 칸은 이 파일을 ?embed=1 로 부른 것). 칸 안에서 입력하면 미리보기가 바로 바뀐다.
+  하지 않는 것(결정됨): 테마 색 · 배경 무늬 · 글꼴 고르기 없음. 「공식·인증된·검증된·안전한」 쓰지 않음. 팬덤 심볼에는 신고 버튼 없음.
+  공지 이미지 세 크기: 정사각 = 구현된 link-image-cards 의 공지 이미지, 세로 = story-card.html, 가로 = 새로 생기는 판(아직 시안 없음).
+  시안 전용(실제 화면 아님): 위쪽 보기 도구줄, 「샘플 사진」「샘플 심볼」 눌러 보기 버튼.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팬꾹 — 시안 내 팬꾹 꾸미기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
+<link rel="stylesheet" href="../../site/v18/tokens.css">
+<link rel="stylesheet" href="../../site/v18/v18.css">
+<link rel="stylesheet" href="../../site/v18/v18-app.css">
+<link rel="stylesheet" href="../../site/v18/v18-cre.css">
+<link rel="stylesheet" href="../../site/v18/v18-pub.css">
+<script src="../../site/v18/font-switch.js" defer></script>
+<style>
+/* ===== 시안 도구줄 · 두 폭 보기 (시안 전용) ===== */
+.mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 24px; background: var(--gray-900); color: var(--white); }
+.mk-bar b { font-weight: 700; }
+.mk-bar span { color: #E5E7EB; }
+.mk-frames { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start; padding: 24px; background: var(--gray-100); }
+.mk-frame figcaption { margin-bottom: 8px; font-weight: 600; }
+.mk-frame iframe { display: block; border: 0; background: var(--white); box-shadow: 0 1px 3px var(--shadow-color); }
+.mk-pc { overflow: hidden; border-radius: 12px; }
+.mk-pc iframe { transform-origin: 0 0; }
+.mk-m iframe { border-radius: 28px; box-shadow: 0 0 0 8px var(--gray-900); }
+.mk-m { padding: 8px; }
+html:not(.embed) .app, html:not(.embed) .skip-link { display: none; }
+html.embed .mk-bar, html.embed .mk-frames { display: none; }
+
+/* ===== 꾸미기 화면 ===== */
+.cz { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: var(--sp-32); align-items: start; }
+.cz-edit { display: grid; gap: var(--sp-32); min-width: 0; }
+.cz-side { position: sticky; top: var(--sp-32); display: grid; gap: var(--sp-16); min-width: 0; }
+.cz-toggle { display: none; }
+.set-card { display: grid; gap: var(--sp-16); }
+.set-card > .card-t + .meta { margin-top: calc(var(--sp-8) * -1); }
+.fld { display: grid; gap: var(--sp-8); }
+.fld label, .fld .lbl { font-weight: var(--fw-btn); }
+.fld .optn { margin-left: var(--sp-8); color: var(--gray-600); font-weight: var(--fw-body); font-size: var(--fs-caption); }
+.fld-row { display: flex; justify-content: space-between; gap: var(--sp-16); align-items: baseline; }
+.count { font-size: var(--fs-caption); color: var(--gray-600); font-variant-numeric: tabular-nums; }
+.field:focus-visible, .btn:focus-visible, .pick:has(input:focus-visible), .chk input:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.ph-row-img { display: flex; align-items: center; gap: var(--sp-16); flex-wrap: wrap; }
+.avatar-lg { display: grid; place-items: center; flex: none; width: 88px; height: 88px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--primary-700); font-size: var(--fs-h2); font-weight: var(--fw-btn); overflow: hidden; }
+.avatar-lg svg { width: 100%; height: 100%; display: block; }
+.sym-box { display: grid; place-items: center; flex: none; width: 88px; height: 88px; border-radius: var(--r-card); background: var(--gray-50); border: var(--bw) dashed var(--gray-400); color: var(--gray-600); font-size: var(--fs-caption); text-align: center; overflow: hidden; }
+.sym-box.has { border-style: solid; border-color: var(--gray-200); background: var(--white); }
+.sym-box svg { width: 100%; height: 100%; display: block; }
+.chk { display: flex; gap: var(--sp-8); align-items: flex-start; }
+.chk input { flex: none; width: 20px; height: 20px; margin-top: 2px; accent-color: var(--primary); }
+.btn[disabled] { background: var(--gray-100); border-color: var(--gray-200); color: var(--gray-500); cursor: not-allowed; }
+.picks { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-16); }
+.pick { display: flex; gap: var(--sp-8); align-items: center; padding: var(--sp-16); border: var(--bw) solid var(--gray-200); border-radius: var(--r-btn); cursor: pointer; }
+.pick:has(input:checked) { border-color: var(--primary); background: var(--primary-50); }
+.pick:has(input:disabled) { cursor: not-allowed; color: var(--gray-500); background: var(--gray-50); }
+.pick input { accent-color: var(--primary); width: 20px; height: 20px; flex: none; }
+.pick small { display: block; font-size: var(--fs-caption); color: var(--gray-600); }
+.sizes { display: grid; gap: var(--sp-16); list-style: none; margin: 0; padding: 0; }
+.sizes li { display: flex; align-items: center; gap: var(--sp-16); padding: var(--sp-16); border: var(--bw) solid var(--gray-200); border-radius: var(--r-btn); }
+.sz-thumb { flex: none; display: grid; place-items: center; width: 64px; height: 64px; }
+.sz-thumb i { display: block; background: var(--primary-50); border: var(--bw) solid var(--primary); border-radius: 6px; }
+.sizes .sz-t { flex: 1; min-width: 0; }
+.sizes .sz-t b { display: block; font-weight: var(--fw-btn); }
+.toast { min-height: 24px; font-size: var(--fs-caption); color: var(--primary-700); font-weight: var(--fw-btn); }
+
+/* ===== 미리보기 (링크 페이지 축소) ===== */
+.pv-label { display: flex; justify-content: space-between; align-items: center; }
+.pv-card { display: flex; flex-direction: column; align-items: center; gap: var(--sp-8); text-align: center; padding: var(--sp-32) var(--sp-24); }
+.pv-card .avatar-lg { width: 72px; height: 72px; font-size: 28px; }
+.pv-card h3 { margin: 0; font-size: var(--fs-h3); font-weight: var(--fw-h3); }
+.pv-card .handle { font-size: var(--fs-caption); color: var(--gray-600); }
+.pv-bio { margin: 0; color: var(--gray-600); min-height: 1.6em; }
+.pv-sym { width: 56px; height: 56px; border-radius: var(--r-btn); overflow: hidden; border: var(--bw) solid var(--gray-200); }
+.pv-sym svg { width: 100%; height: 100%; display: block; }
+.pv-thanks { margin: 0; font-weight: var(--fw-btn); color: var(--primary-700); }
+.pv-btn { margin-top: var(--sp-8); width: 100%; }
+.pv-og { padding: 0; overflow: hidden; }
+.og-img { aspect-ratio: 1200 / 630; display: grid; place-items: center; background: var(--primary-50); }
+.og-img .avatar-lg { width: 96px; height: 96px; box-shadow: 0 0 0 6px var(--white); }
+.og-img .og-sym { width: 40%; height: 82%; }
+.og-img .og-sym svg { width: 100%; height: 100%; display: block; }
+.og-meta { padding: var(--sp-16); border-top: var(--bw) solid var(--gray-200); }
+.og-meta p { margin: 0; }
+.og-meta .og-t { font-weight: var(--fw-btn); }
+
+/* 1023 이하: 위아래, 미리보기 접기 */
+@media (max-width: 1023px) {
+  .cz { grid-template-columns: minmax(0, 1fr); }
+  .cz-side { order: -1; position: sticky; top: var(--topbar-h); z-index: 5; background: var(--white); padding: var(--sp-8) 0 var(--sp-16); border-bottom: var(--bw) solid var(--gray-200); max-height: 62vh; overflow: auto; }
+  .cz-side .pv-card { padding: var(--sp-16); }
+  .cz-toggle { display: inline-flex; }
+  .cz-side.is-closed .cz-body { display: none; }
+}
+@media (max-width: 767px) {
+  .picks { grid-template-columns: 1fr; }
+  .sizes li { flex-wrap: wrap; }
+  .sizes .btn { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="mk-bar" role="region" aria-label="시안 도구"><b>시안</b><span>내 팬꾹 꾸미기 — 왼쪽 PC 1280px, 오른쪽 모바일 390px. 각 칸 안에서 직접 입력해 보세요.</span></div>
+<div class="mk-frames" id="mk-frames"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-gift" viewBox="0 0 24 24"><path d="M12 7v14" /><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" /><rect x="3" y="7" width="18" height="4" rx="1" /></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></symbol>
+    <symbol id="i-package-search" viewBox="0 0 24 24"><path d="M12 22V12" /><path d="M20.27 18.27 22 20" /><path d="M21 10.498V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.729l7 4a2 2 0 0 0 2 .001l.98-.559" /><path d="M3.29 7 12 12l8.71-5" /><path d="m7.5 4.27 8.997 5.148" /><circle cx="18.5" cy="16.5" r="2.5" /></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
+    <symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></symbol>
+    <symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+  
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><polyline points="3.29 7 12 12 20.71 7" /><path d="m7.5 4.27 9 5.15" /></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></symbol>
+    <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></symbol>
+    <symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /></symbol>
+    <symbol id="i-log-out" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></symbol>
+      <symbol id="i-panel-left-close" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m16 15-3-3 3-3" /></symbol>
+    <symbol id="i-panel-left-open" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m14 9 3 3-3 3" /></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2" /> <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /> <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></symbol>
+    <symbol id="i-list-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /> <path d="M13 6h8" /> <path d="M13 12h8" /> <path d="M13 18h8" /></symbol>
+    <symbol id="i-chevrons-up-down" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" /><path d="m21.854 2.147-10.94 10.939" /></symbol>
+    <symbol id="i-ellipsis" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></symbol></defs></svg>
+
+<a class="skip-link" href="#main">본문 바로가기</a>
+<div class="app" id="app">
+    <header class="topbar">
+      <a class="logo" href="../../site/v18/home-creator.html" aria-label="팬꾹 홈">팬꾹</a>
+      <button class="icon-btn" id="sb-open" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button>
+    </header>
+    <div class="sb-scrim" id="sb-scrim"></div>
+    <aside class="sidebar" id="sidebar" aria-label="크리에이터 메뉴">
+      <div class="sb-top">
+        <button class="sb-mark" id="sb-mark" type="button" aria-label="사이드바 펼치기" aria-controls="sidebar" aria-expanded="false"><span class="m-txt" aria-hidden="true">꾹</span><svg class="ico m-ico" aria-hidden="true"><use href="#i-panel-left-open"/></svg></button>
+        <a class="logo" href="../../site/v18/home-creator.html" aria-label="팬꾹 홈">팬꾹</a>
+        <button class="sb-btn sb-fold" id="sb-fold" type="button" aria-label="사이드바 접기" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button>
+        <button class="sb-btn sb-close" id="sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </div>
+      <nav class="sb-nav" aria-label="크리에이터 메뉴">
+        <p class="sb-group" id="g1-creator"><span class="sb-group-t">기본</span></p>
+        <ul aria-labelledby="g1-creator"><li><a href="../../site/v18/home-creator.html" data-tip="홈"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg><span class="sb-label">홈</span></a></li><li><a href="../../site/v18/creators.html" data-tip="크리에이터 찾기"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sb-label">크리에이터 찾기</span></a></li><li><a href="../../site/v18/send.html" data-tip="선물 보내기"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg><span class="sb-label">선물 보내기</span></a></li></ul>
+        <p class="sb-group" id="g2-creator"><span class="sb-group-t">관리</span></p>
+        <ul aria-labelledby="g2-creator"><li><a href="../../site/v18/creator-requests.html" data-tip="승인 대기"><svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg><span class="sb-label">승인 대기</span><span class="badge" aria-label="4건">4</span></a></li><li><a href="../../site/v18/creator-requests.html#done" data-tip="승인 내역"><svg class="ico" aria-hidden="true"><use href="#i-list-checks"/></svg><span class="sb-label">승인 내역</span></a></li><li><a href="../../site/v18/creator-boxes.html" data-tip="받은 선물"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg><span class="sb-label">받은 선물</span></a></li><li><a href="../../site/v18/creator-revgifts.html" data-tip="보낸 역조공"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg><span class="sb-label">보낸 역조공</span></a></li><li><a href="../../site/v18/creator-log.html" data-tip="열람 기록"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg><span class="sb-label">열람 기록</span></a></li><li><a href="customize.html" data-tip="내 팬꾹 꾸미기" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-sparkles"/></svg><span class="sb-label">내 팬꾹 꾸미기</span></a></li><li><a href="../../site/v18/creator-settings.html#address" data-tip="주소 관리"><svg class="ico" aria-hidden="true"><use href="#i-map-pin"/></svg><span class="sb-label">주소 관리</span></a></li><li><a href="../../site/v18/creator-settings.html" data-tip="설정"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="sb-label">설정</span></a></li></ul>
+      </nav>
+      <div class="sb-bottom">
+        <details class="sb-menu" id="sb-menu">
+          <summary aria-label="별빛님 계정 메뉴"><span class="sb-avatar" aria-hidden="true">별</span><span class="sb-name">별빛님</span><svg class="ico sb-chev" aria-hidden="true"><use href="#i-chevrons-up-down"/></svg></summary>
+          <div class="sb-menu-list"><a href="../../site/v18/me.html">계정 설정</a><a href="#">로그아웃</a></div>
+        </details>
+      </div>
+    </aside>
+    <div class="sb-wrap">
+
+
+    <main id="main" class="sb-main page-centered">
+      <header class="page-head">
+        <div class="ph-row"><h1 class="ph-title">내 팬꾹 꾸미기</h1></div>
+        <p class="ph-desc">팬이 보게 될 내 선물 링크 페이지를 직접 다듬어요. 바꾸는 즉시 미리보기에서 확인할 수 있어요.</p>
+      </header>
+
+      <div class="cz">
+        <div class="cz-edit">
+
+          <section class="card set-card" aria-labelledby="h-prof">
+            <h2 class="card-t" id="h-prof">프로필</h2>
+            <div class="fld">
+              <span class="lbl" id="l-photo">프로필 사진</span>
+              <div class="ph-row-img">
+                <span class="avatar-lg" id="in-photo-view" aria-hidden="true">새</span>
+                <div class="btn-stack">
+                  <button class="btn btn--secondary btn--sm" type="button" id="btn-photo" aria-describedby="l-photo">사진 바꾸기</button>
+                  <button class="btn btn--text btn--sm" type="button" id="btn-photo-del">사진 지우기</button>
+                </div>
+              </div>
+              <p class="meta">정사각 이미지가 가장 예뻐요. 사진을 지우면 이름 첫 글자가 대신 보여요.</p>
+            </div>
+            <div class="fld">
+              <label for="in-name">공개 이름</label>
+              <input class="field" id="in-name" type="text" maxlength="20" value="새벽달" autocomplete="off">
+            </div>
+            <div class="fld">
+              <div class="fld-row"><label for="in-bio">한 줄 소개</label><span class="count" id="c-bio" aria-live="polite">0 / 40</span></div>
+              <input class="field" id="in-bio" type="text" maxlength="40" value="새벽에 듣기 좋은 음악과 이야기를 들려드려요." autocomplete="off">
+            </div>
+          </section>
+
+          <section class="card set-card" aria-labelledby="h-fan">
+            <h2 class="card-t" id="h-fan">팬덤</h2>
+            <p class="meta">팬을 부르는 이름과 캐릭터 이미지를 넣을 수 있어요. 둘 다 비워 둬도 괜찮아요.</p>
+            <div class="fld">
+              <div class="fld-row"><label for="in-fan">팬을 부르는 이름<span class="optn">선택</span></label><span class="count" id="c-fan" aria-live="polite">0 / 10</span></div>
+              <input class="field" id="in-fan" type="text" maxlength="10" placeholder="예: 달빛지기" autocomplete="off" aria-describedby="fan-help">
+              <p class="meta" id="fan-help">넣으면 링크 페이지 감사 문장이 「<span id="fan-ex">달빛지기</span> 여러분의 마음 늘 감사해요」로 바뀌어요. 비우면 「보내주시는 마음 늘 감사해요」가 그대로 나와요.</p>
+            </div>
+            <div class="fld">
+              <span class="lbl" id="l-sym">팬덤 심볼<span class="optn">선택</span></span>
+              <div class="ph-row-img">
+                <span class="sym-box" id="sym-view">이미지 없음</span>
+                <div class="btn-stack">
+                  <button class="btn btn--secondary btn--sm" type="button" id="btn-sym" disabled aria-describedby="sym-right">캐릭터 이미지 올리기</button>
+                  <button class="btn btn--text btn--sm" type="button" id="btn-sym-del" hidden>지우기</button>
+                </div>
+              </div>
+              <label class="chk" for="chk-right"><input type="checkbox" id="chk-right"><span id="sym-right">내가 만들었거나 쓸 권리가 있는 이미지예요</span></label>
+              <p class="meta">위 칸에 체크하면 올릴 수 있어요. 정사각 이미지(PNG·JPG)를 권해요.</p>
+            </div>
+          </section>
+
+          <section class="card set-card" aria-labelledby="h-og">
+            <h2 class="card-t" id="h-og">링크 미리보기 이미지</h2>
+            <p class="meta">메신저나 SNS에 내 링크를 붙여 넣으면 보이는 그림이에요.</p>
+            <div class="picks" role="radiogroup" aria-labelledby="h-og">
+              <label class="pick"><input type="radio" name="og" value="photo" checked><span>프로필 사진</span></label>
+              <label class="pick" id="pick-sym"><input type="radio" name="og" value="symbol" disabled><span>팬덤 심볼<small id="pick-sym-hint">심볼을 올리면 고를 수 있어요</small></span></label>
+            </div>
+          </section>
+
+          <section class="card set-card" aria-labelledby="h-notice">
+            <h2 class="card-t" id="h-notice">공지 이미지 받기</h2>
+            <p class="meta">인스타·유튜브 같은 내 채널에 올려 「선물은 팬꾹으로 받아요」라고 알리는 이미지예요. 올릴 곳에 맞는 크기를 골라 링크를 복사하세요.</p>
+            <ul class="sizes">
+              <li><span class="sz-thumb" aria-hidden="true"><i style="width:48px;height:48px"></i></span><span class="sz-t"><b>정사각</b><span class="meta">1080 × 1080</span></span><button class="btn btn--secondary btn--sm js-copy" type="button" data-n="정사각">링크 복사</button></li>
+              <li><span class="sz-thumb" aria-hidden="true"><i style="width:36px;height:64px"></i></span><span class="sz-t"><b>세로 (스토리용)</b><span class="meta">1080 × 1920</span></span><button class="btn btn--secondary btn--sm js-copy" type="button" data-n="세로">링크 복사</button></li>
+              <li><span class="sz-thumb" aria-hidden="true"><i style="width:64px;height:36px"></i></span><span class="sz-t"><b>가로</b><span class="meta">1200 × 675</span></span><button class="btn btn--secondary btn--sm js-copy" type="button" data-n="가로">링크 복사</button></li>
+            </ul>
+            <p class="toast" id="toast" role="status"></p>
+          </section>
+
+        </div>
+
+        <aside class="cz-side" id="cz-side" aria-label="내 링크 페이지 미리보기">
+          <div class="pv-label">
+            <h2 class="card-t">미리보기</h2>
+            <button class="btn btn--secondary btn--sm cz-toggle" type="button" id="btn-fold" aria-expanded="true" aria-controls="cz-body">접기</button>
+          </div>
+          <div class="cz-body" id="cz-body" style="display:grid;gap:var(--sp-16)">
+            <div class="card pv-card" aria-label="링크 페이지">
+              <span class="avatar-lg" id="pv-photo" aria-hidden="true">새</span>
+              <h3 id="pv-name">새벽달</h3>
+              <p class="handle">fankkuk.kr/dawnmoon</p>
+              <p class="pv-bio" id="pv-bio"></p>
+              <span class="tag tag--accent">채널 소유 확인</span>
+              <span class="pv-sym" id="pv-sym" hidden></span>
+              <p class="pv-thanks" id="pv-thanks">보내주시는 마음 늘 감사해요</p>
+              <span class="btn pv-btn" aria-hidden="true">팔로우하고 선물 보내기</span>
+            </div>
+            <div>
+              <p class="meta" style="margin-bottom:var(--sp-8)">링크를 공유하면 이렇게 보여요</p>
+              <div class="card pv-og">
+                <div class="og-img" id="og-img" aria-hidden="true"></div>
+                <div class="og-meta"><p class="og-t" id="og-t">새벽달 · 팬꾹</p><p class="meta">fankkuk.kr/dawnmoon</p></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+</div>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  if (!/[?&]embed=1/.test(location.search)) {
+    var f = document.getElementById('mk-frames'), s = Math.min(1, Math.max(320, window.innerWidth - 390 - 140) / 1280), h = 900;
+    f.innerHTML = '<figure class="mk-frame"><figcaption>PC 1280px' + (s < 1 ? ' (축소 보기)' : '') + '</figcaption><div class="mk-pc" style="width:' + Math.round(1280 * s) + 'px;height:' + Math.round(h * s) + 'px"><iframe title="PC 폭" src="?embed=1" width="1280" height="' + h + '" style="transform:scale(' + s + ')"></iframe></div></figure>'
+      + '<figure class="mk-frame mk-m"><figcaption>모바일 390px</figcaption><iframe title="모바일 폭" src="?embed=1" width="390" height="' + h + '"></iframe></figure>';
+    return;
+  }
+  root.classList.add('embed');
+  function $(id) { return document.getElementById(id); }
+
+  /* ---- 사이드바 (v18 시안과 같은 동작) ---- */
+  var collapsed = window.matchMedia('(max-width: 1024px)').matches, open = false;
+  function narrow() { return getComputedStyle(root).getPropertyValue('--app-narrow').trim() !== 'none'; }
+  function apply() {
+    var n = narrow(), col = collapsed && !n;
+    if (!n) open = false;
+    if (col) root.setAttribute('data-collapsed', '1'); else root.removeAttribute('data-collapsed');
+    if (open) root.setAttribute('data-open', '1'); else root.removeAttribute('data-open');
+    $('sb-open').setAttribute('aria-expanded', String(open));
+    $('sb-mark').setAttribute('aria-expanded', String(!col));
+  }
+  apply(); window.addEventListener('resize', apply);
+  $('sb-mark').addEventListener('click', function () { collapsed = false; apply(); $('sb-fold').focus(); });
+  $('sb-fold').addEventListener('click', function () { collapsed = true; apply(); $('sb-mark').focus(); });
+  $('sb-open').addEventListener('click', function () { open = true; apply(); $('sb-close').focus(); });
+  $('sb-close').addEventListener('click', function () { open = false; apply(); $('sb-open').focus(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && open) { open = false; apply(); $('sb-open').focus(); } });
+
+  /* ---- 샘플 그림 (시안 전용 자리표시) ---- */
+  var PHOTO = '<svg viewBox="0 0 88 88" aria-hidden="true"><rect width="88" height="88" fill="#F3D9D5"/><circle cx="44" cy="36" r="16" fill="#8F3836"/><path d="M12 88c2-22 16-30 32-30s30 8 32 30z" fill="#B94A48"/></svg>';
+  var SYMBOL = '<svg viewBox="0 0 88 88" aria-hidden="true"><rect width="88" height="88" fill="#FBF1F0"/><path d="M58 20a26 26 0 1 0 0 48 22 22 0 0 1 0-48z" fill="#B94A48"/><circle cx="40" cy="42" r="3" fill="#111827"/><circle cx="52" cy="42" r="3" fill="#111827"/><path d="M41 52q5 5 10 0" stroke="#111827" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>';
+  var st = { photo: false, symbol: false };
+
+  var name = $('in-name'), bio = $('in-bio'), fan = $('in-fan');
+  function ini() { var v = name.value.trim(); return v ? v.charAt(0) : '?'; }
+  function render() {
+    var n = name.value.trim() || '이름을 입력해 주세요';
+    $('c-bio').textContent = bio.value.length + ' / 40';
+    $('c-fan').textContent = fan.value.length + ' / 10';
+    $('fan-ex').textContent = fan.value.trim() || '달빛지기';
+    $('pv-name').textContent = n;
+    $('pv-bio').textContent = bio.value.trim();
+    $('pv-thanks').textContent = fan.value.trim() ? fan.value.trim() + ' 여러분의 마음 늘 감사해요' : '보내주시는 마음 늘 감사해요';
+    ['in-photo-view', 'pv-photo'].forEach(function (id) { var el = $(id); if (st.photo) el.innerHTML = PHOTO; else el.textContent = ini(); });
+    var sv = $('sym-view'), pv = $('pv-sym');
+    if (st.symbol) { sv.innerHTML = SYMBOL; sv.className = 'sym-box has'; pv.innerHTML = SYMBOL; pv.hidden = false; $('btn-sym-del').hidden = false; }
+    else { sv.textContent = '이미지 없음'; sv.className = 'sym-box'; pv.innerHTML = ''; pv.hidden = true; $('btn-sym-del').hidden = true; }
+    var r = document.querySelector('input[name="og"][value="symbol"]'), picked = document.querySelector('input[name="og"]:checked').value;
+    r.disabled = !st.symbol; $('pick-sym-hint').hidden = st.symbol;
+    if (!st.symbol && picked === 'symbol') { document.querySelector('input[name="og"][value="photo"]').checked = true; picked = 'photo'; }
+    $('og-img').innerHTML = picked === 'symbol' ? '<span class="og-sym">' + SYMBOL + '</span>' : '<span class="avatar-lg">' + (st.photo ? PHOTO : ini()) + '</span>';
+    $('og-t').textContent = (name.value.trim() || '이름') + ' · 팬꾹';
+  }
+  [name, bio, fan].forEach(function (el) { el.addEventListener('input', render); });
+  document.querySelectorAll('input[name="og"]').forEach(function (el) { el.addEventListener('change', render); });
+  $('btn-photo').addEventListener('click', function () { st.photo = true; render(); });
+  $('btn-photo-del').addEventListener('click', function () { st.photo = false; render(); });
+  $('chk-right').addEventListener('change', function () { $('btn-sym').disabled = !this.checked; });
+  $('btn-sym').addEventListener('click', function () { st.symbol = true; render(); });
+  $('btn-sym-del').addEventListener('click', function () { st.symbol = false; render(); });
+  document.querySelectorAll('.js-copy').forEach(function (b) { b.addEventListener('click', function () { $('toast').textContent = '「' + b.dataset.n + '」 이미지 링크를 복사했어요.'; }); });
+  $('btn-fold').addEventListener('click', function () {
+    var side = $('cz-side'), closed = side.classList.toggle('is-closed');
+    this.textContent = closed ? '펴기' : '접기'; this.setAttribute('aria-expanded', String(!closed));
+  });
+  render();
+})();
+</script>
+</body>
+</html>

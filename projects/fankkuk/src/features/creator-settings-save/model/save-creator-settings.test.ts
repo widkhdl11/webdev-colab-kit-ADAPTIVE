@@ -106,3 +106,40 @@ describe("크리에이터 알림 저장 (my-account INV-A11)", () => {
     expect(f.calls).toEqual([]);
   });
 });
+
+describe("팬을 부르는 이름 저장 (추가분 4-1)", () => {
+  it("팬덤 이름을 보내면 앞뒤 공백을 빼고 p_fan_name 으로 넘긴다 — 빈 문자열은 지우기로 그대로 넘긴다", async () => {
+    for (const [input, sent] of [
+      ["  꿀벌단 ", "꿀벌단"],
+      ["", ""],
+      ["가".repeat(9) + "🎁", "가".repeat(9) + "🎁"],
+    ] as const) {
+      const f = fakeClient();
+      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: "하루달", intro: "", searchable: true, fanName: input })).toEqual({ ok: true });
+      expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_name: "하루달", p_intro: "", p_searchable: true, p_fan_name: sent } }]);
+    }
+  });
+
+  it("(실패경로) 팬덤 이름 11자·줄바꿈·보이지 않는 글자·문자열 아님은 400, DB 를 부르지 않는다", async () => {
+    for (const fanName of ["가".repeat(11), "꿀벌\n단", "꿀벌 단", "꿀​벌", 3]) {
+      const f = fakeClient();
+      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: "하루달", intro: "", searchable: true, fanName })).toMatchObject({ ok: false, status: 400 });
+      expect(f.calls).toEqual([]);
+    }
+  });
+
+  it("(실패경로) DB 필터가 거부하면 팬덤 이름 칸의 문구로 알린다 — 한 줄 소개 문구와 섞이지 않는다", async () => {
+    for (const [code, text] of [
+      ["P0084", "팬을 부르는 이름에 쓸 수 없는 말이 들어 있어요."],
+      ["P0085", "팬을 부르는 이름에 전화번호·이메일·인터넷 주소는 쓸 수 없어요."],
+      ["P0086", "팬을 부르는 이름에 글자나 숫자를 하나 이상 넣어 주세요."],
+    ] as const) {
+      const f = fakeClient({ code });
+      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: "하루달", intro: "", searchable: true, fanName: "꿀벌단" })).toEqual({
+        ok: false,
+        status: 400,
+        message: text,
+      });
+    }
+  });
+});

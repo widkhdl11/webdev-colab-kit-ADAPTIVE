@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readFollowsCreator, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
+import { readCreatorLinkExtras } from "@/entities/creator/api/creator-link-reads";
+import type { ChannelBadge } from "@/entities/creator/model/channel-badge";
 import { readCreatorReceiving } from "@/entities/creator/api/receiving-reads";
 import { creatorPhotoUrl } from "@/entities/creator/model/link-images";
 import { isResting, kstToday, parseIsoDate, upcomingDday } from "@/entities/creator/model/receiving";
@@ -19,6 +21,8 @@ import { sendAvailabilityOf, sendOnLinkPage, type LinkPageSend } from "@/feature
 //   기념일 칸은 30일 안에 생일·기념일이 있을 때만 그린다(추가분 F-7 그대로). 「선물 보내기」·「다시 받아요」는 그 칸 안에만 있다.
 //   크리에이터 페이지가 없는(본인 확인 전) 크리에이터는 공개 받는 상태(creator_receiving)가 비어 기념일 칸이 없으니 보내기 자리도 없다.
 // - 특별 카드는 화면 쪽 계산 함수 하나(specialMoments)로 정한다(INV-F4). 첫 선물 카드(순번 1)도 여기서 고른다.
+// - 상단 프로필 옆 채널 소유 확인 표시(추가분 4-5)는 링크 페이지와 같은 공개 읽기(creator_link_extras)의 채널 칸만 쓴다 — 주문에서 나온 값이 아니고,
+//   기록이 없으면 다른 읽기와 함께 버린다(INV-F1 그대로). 본인 확인이 취소된 크리에이터면 비어 표시가 없다.
 // - 읽기는 한 번에 같이 보낸다. 기록이 없으면(없는 페이지) 나머지 결과는 버린다 — 모두 로그인한 사람 본인의 것이라 새어 나갈 것이 없다.
 
 /** 처음에 펼쳐 보이는 최근 기록 수. 나머지(첫 선물 빼고)는 「이전 기록 N개 더 보기」로 접는다(시안 together.html). */
@@ -45,6 +49,8 @@ export type TogetherPageProps = {
   /** 맨 아래 첫 선물 카드 — 「○○님께 처음 보낸 선물이에요」. 최근·이전 기록에는 들어 있지 않다 */
   first: TogetherCard | null;
   photoBase: string;
+  /** 크리에이터의 확인된 채널(공개 칸만) — 없으면 확인 표시를 그리지 않는다(추가분 4-5) */
+  channel: ChannelBadge | null;
 };
 
 /** 「10월 25일부터 다시 받아요」 — 쉬는 중이 아니면 null. */
@@ -71,13 +77,14 @@ export async function loadTogetherPage(input: {
   photoBase: string;
 }): Promise<TogetherPageProps | null> {
   const { client, viewer, creatorId, photoBase } = input;
-  const [summaries, gifts, replies, following, receiving, ownCreatorId] = await Promise.all([
+  const [summaries, gifts, replies, following, receiving, ownCreatorId, extras] = await Promise.all([
     readMyTogether(client, creatorId),
     readMyTogetherGifts(client, creatorId),
     readMyGiftReplies(client, null, creatorId),
     readFollowsCreator(client, creatorId),
     readCreatorReceiving(client, [creatorId]),
     viewer.role === "creator" ? readOwnCreatorId(client) : Promise.resolve(null),
+    readCreatorLinkExtras(client, creatorId),
   ]);
   const [summary] = summaries;
   if (!summary) return null;
@@ -107,5 +114,6 @@ export async function loadTogetherPage(input: {
     older: fold ? rest.slice(RECENT_SHOWN) : [],
     first: firstCard,
     photoBase,
+    channel: extras.channel,
   };
 }

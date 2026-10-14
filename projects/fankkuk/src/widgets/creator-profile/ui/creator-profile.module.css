@@ -11,6 +11,8 @@
 .pfSec { padding-top: var(--space-10); }
 .app .pfSec { padding-top: 0; }
 .name { font-size: var(--fs-page); line-height: 1.3; }
+.channel { display: flex; margin-top: var(--space-2); }
+.pub .channel { justify-content: center; }
 .handle { margin-top: var(--space-2); font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
 .intro { margin-top: var(--space-2); color: var(--gray-600); }
 .tags { align-items: center; margin-top: var(--space-4); }

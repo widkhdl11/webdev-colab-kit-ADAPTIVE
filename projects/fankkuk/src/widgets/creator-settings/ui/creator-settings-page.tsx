@@ -11,7 +11,8 @@ import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notice";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { sendCreatorNotify, sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
-import { clipChars, INTRO_MAX, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
+import { clipChars, FAN_NAME_MAX, INTRO_MAX, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
+import { thanksLine } from "@/entities/creator/model/fan-name";
 import { formatDate } from "@/shared/lib/format/datetime";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
@@ -164,6 +165,7 @@ export function CreatorSettingsPage({
   };
   const [publicName, setPublicName] = useState(settings.publicName);
   const [intro, setIntro] = useState(settings.intro);
+  const [fanName, setFanName] = useState(settings.fanName);
   const [visible, setVisible] = useState(settings.visibleInSearch);
   const [tagIds, setTagIds] = useState<string[]>([...settings.tagIds]);
   const [customTag, setCustomTag] = useState(settings.customTag);
@@ -186,7 +188,7 @@ export function CreatorSettingsPage({
       return;
     }
     setProfileSaving(true);
-    const r = await sendCreatorProfile({ name: publicName, intro, searchable: visible });
+    const r = await sendCreatorProfile({ name: publicName, intro, searchable: visible, fanName });
     const t = r.kind === "ok" ? await sendCreatorTags({ tagIds: tags.tagIds, customTag: tags.customTag }) : r;
     setProfileSaving(false);
     if (r.kind === "login" || t.kind === "login") {
@@ -408,6 +410,23 @@ export function CreatorSettingsPage({
             />
             <p className="t-meta hint" id="pub-intro-hint">
               선물 링크 페이지에 이름 아래 한 줄로 보여요. {INTRO_MAX}자까지 적을 수 있어요({charCount(intro.trim())}/{INTRO_MAX}). 전화번호·이메일·인터넷 주소는 쓸 수 없어요.
+            </p>
+          </div>
+          <div>
+            <label className="label" htmlFor="pub-fan-name">
+              팬을 부르는 이름 (선택)
+            </label>
+            <input
+              className="field"
+              id="pub-fan-name"
+              value={fanName}
+              // 한 줄 — 붙여 넣은 줄바꿈은 띄어쓰기로 바꾼다. 글자 수는 저장 검사와 같은 셈(코드 포인트)으로 막는다(추가분 4-1)
+              onChange={(e) => setFanName(clipChars(e.target.value.replace(/[\r\n  ]+/g, " "), FAN_NAME_MAX))}
+              aria-describedby="pub-fan-name-hint"
+            />
+            <p className="t-meta hint" id="pub-fan-name-hint">
+              적으면 선물 링크 페이지의 감사 문장이 「{thanksLine(fanName.trim() || "팬덤 이름")}」로 바뀌어요. {FAN_NAME_MAX}자까지 적을 수 있어요({charCount(fanName.trim())}/{FAN_NAME_MAX}).
+              비우면 기본 문장이 보여요.
             </p>
           </div>
           <div>

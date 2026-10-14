@@ -17,6 +17,8 @@
 .photo { flex: none; width: 64px; height: 64px; object-fit: cover; }
 .who { min-width: 0; }
 .who :global(.ph-title) { overflow-wrap: anywhere; }
+/* 제목 옆 채널 소유 확인 표시(추가분 4-5) */
+.title-row { display: flex; align-items: center; gap: var(--space-2); }
 .ink { color: var(--gray-900); font-weight: var(--fw-btn); }
 
 /* 나의 기록 숫자 카드 */

@@ -11,6 +11,9 @@ import { HardItemsLine } from "@/entities/gift-item/ui/hard-items-line";
 import { approvalDurationText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
+import { ChannelLinkIcon } from "@/entities/creator/ui/channel-badge-icon";
+import { channelBadgeTitle, type ChannelBadge } from "@/entities/creator/model/channel-badge";
+import { thanksLine } from "@/entities/creator/model/fan-name";
 import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
 import { lowestPriceKrw, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { FOLLOW_NICKNAME_NOTICE_SHORT, NEEDS_FOLLOW_TO_SEND } from "@/features/creator-follow/model/follow-notice";
@@ -53,6 +56,10 @@ export type CreatorProfilePageProps = {
   replies?: readonly WallReply[];
   /** 한국 시간 오늘 — 서버가 정해 넘긴다 */
   today: CalendarDate;
+  /** 팬을 부르는 이름(추가분 4-1) — 있으면 감사 문장이 「{팬덤 이름} 여러분의 마음 늘 감사해요」 */
+  fanName?: string | null;
+  /** 확인된 채널(추가분 4-3) — 공개 칸(플랫폼·채널 키·주소·확인 날짜)만. 없으면 아이콘을 그리지 않는다 */
+  channel?: ChannelBadge | null;
 };
 
 function Icon({ d }: { d: string }) {
@@ -110,6 +117,8 @@ export function CreatorProfilePage({
   monthFans,
   replies = [],
   today,
+  fanName = null,
+  channel = null,
 }: CreatorProfilePageProps) {
   // INV-B2: 쉬는 중이면 안내 문구를 보이고 받기 어려운 품목 줄을 숨긴다(시안 쉬는 중 변형). 「선물 보내기」 자리를 비울지는 send 가 이미 정해 왔다.
   const restingText = restingNotice(receiving?.resumeOn ?? null, today);
@@ -136,11 +145,17 @@ export function CreatorProfilePage({
               <h1 className={s.name} id="creator-name">
                 {creator.name}
               </h1>
+              {/* 추가분 4-3: 닉네임 아래 확인된 채널 아이콘 하나 — 새 탭으로 열리고, 올리면 「@핸들 · 날짜 확인」 */}
+              {channel ? (
+                <p className={s.channel}>
+                  <ChannelLinkIcon channel={channel} />
+                </p>
+              ) : null}
               {creator.handle ? <p className={s.handle}>{linkText(creator.handle)}</p> : null}
               {/* 한 줄 소개(INV-E6 — 40자, 줄바꿈 없음). 크리에이터가 직접 쓰는 글이라 다른 문장과 잇지 않는다 */}
               {creator.intro ? <p className={s.intro}>{creator.intro}</p> : null}
               <div className={`ctags ${s.tags}`}>
-                <span className={statusTagClass("success", s.verified)}>
+                <span className={statusTagClass("success", s.verified)} title={channel ? channelBadgeTitle(channel) : undefined}>
                   <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -151,7 +166,7 @@ export function CreatorProfilePage({
                   <CreatorTag key={t} name={t} />
                 ))}
               </div>
-              <p className={s.thanks}>보내주시는 마음 늘 감사해요</p>
+              <p className={s.thanks}>{thanksLine(fanName)}</p>
             </div>
             {/* 첫 화면의 주 버튼(DECISIONS 2026-10-11). 쉬는 중·자기 페이지면 없다 */}
             {sendRow}

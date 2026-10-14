@@ -85,7 +85,7 @@ function ReplyForm({ box, mode, onDone }: { box: ReceivedBox; mode: FormMode; on
 
   return (
     <form className={s.form} aria-label={`${box.senderNickname}님께 답장`} onSubmit={(e) => e.preventDefault()}>
-      <h3>{mode === "confirm" ? "잘 받았어요! 답장을 남겨 볼까요?" : "답장을 남겨 볼까요?"}</h3>
+      <h3>{box.senderNickname}님에게 감사의 메시지를 전해 보세요!</h3>
       <fieldset aria-describedby={error ? errorId : undefined}>
         <legend className="label">짧은 답장 고르기</legend>
         <div className="tags">

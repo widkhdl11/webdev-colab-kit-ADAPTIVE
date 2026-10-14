@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { channelOwnerLine } from "@/entities/creator/model/channel-badge";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
 import type { CalendarDate } from "@/entities/creator/model/receiving";
 import type { PublicPriceTable } from "@/entities/payment/model/price-table";
@@ -22,6 +23,7 @@ import s from "./gift-register-page.module.css";
 // 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리 import 하지 않게.
 // 선물 사진(선택)을 골랐으면 등록 직후 그 주문에 올린 뒤 결제창을 연다(together INV-F2 — 서버가 열어 보고 사진 정보를 지워 저장한다).
 // 사진을 올리지 못해도 결제는 그대로 진행하고 「함께한 시간」에서 다시 올릴 수 있다고 알린다.
+// 맨 위 한 줄(추가분 4-4): 크리에이터 페이지에서 미리 고르고 왔으면 「{닉네임}님의 {플랫폼} 채널 주인이 확인된 페이지예요」. 플랫폼 값이 없으면 줄을 그리지 않는다.
 export function GiftRegisterPage({
   creators,
   prices,
@@ -42,7 +44,7 @@ export function GiftRegisterPage({
   /** 로그인했는가 — 아니면 팔로우한 사람이 없으니 로그인 안내를 보여 준다. */
   signedIn?: boolean;
   /** 크리에이터 페이지에서 미리 고르고 왔는데 아직 팔로우하지 않은 사람 — 「팔로우하고 선물 보내기」를 따로 보여 준다(INV-L9). */
-  followFirst?: { id: string; name: string } | null;
+  followFirst?: { id: string; name: string; platform: string } | null;
   /** 한국 시간 오늘 — 서버가 정해 넘긴다(creator-receiving 계산) */
   today: CalendarDate;
 }) {
@@ -65,6 +67,7 @@ export function GiftRegisterPage({
   const preselectedNotice = receivingNotice(preselected, today);
   const [pickOther, setPickOther] = useState(false);
   const blockedNotice = pickOther ? null : preselectedNotice;
+  const ownerLine = pickOther ? null : channelOwnerLine(preselected ?? followFirst);
 
   return (
     <main id="main" className="page-centered">
@@ -79,6 +82,16 @@ export function GiftRegisterPage({
           {!registered ? (
             <p className={`t-meta ${s["top-meta"]}`}>
               팔로우한 크리에이터에게만 선물을 보낼 수 있어요.
+            </p>
+          ) : null}
+          {ownerLine ? (
+            <p className={s.owner}>
+              <span className={s["owner-mark"]} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24">
+                  <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              {ownerLine}
             </p>
           ) : null}
         </header>

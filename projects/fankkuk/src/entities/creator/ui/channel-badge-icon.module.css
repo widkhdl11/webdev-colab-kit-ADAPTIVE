@@ -1,0 +1,4 @@
+/* 확인된 채널 표시 — 링크 페이지 채널 아이콘(누르는 자리 32×32, 아이콘 20) · 함께한 시간 확인 표시(「채널 소유 확인」 뱃지와 같은 성공 색) */
+.link { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-btn-sm); }
+.link:hover { background: var(--gray-100); }
+.mark { display: inline-grid; place-items: center; flex: 0 0 auto; width: 24px; height: 24px; border-radius: var(--r-pill); background: var(--success-soft); color: var(--success); }

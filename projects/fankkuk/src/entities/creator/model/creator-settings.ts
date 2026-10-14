@@ -9,6 +9,8 @@ export type CreatorSettingsView = {
   tagIds: readonly string[];
   /** 직접 입력한 태그(없으면 ""). 본인 설정 화면과 운영자 화면에서만 읽힌다(INV-T4). */
   customTag: string;
+  /** 팬을 부르는 이름(없으면 "") — 링크 페이지 감사 문장에 들어간다(추가분 4-1). */
+  fanName: string;
   /** 알림 두 칸 — 팬과 같다. 승인 요청은 두 칸이 꺼져도 간다(notifications INV-N6). */
   notify: { kakao: boolean; email: boolean };
   /** 가운데를 가린 휴대폰 번호(010-****-5678) — 팬 내 정보와 같은 값. 번호 바꾸기 칸 옆에 보인다. */

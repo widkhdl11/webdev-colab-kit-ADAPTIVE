@@ -9,3 +9,6 @@
 .follow-first { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; padding: 24px; background: var(--gray-50); box-shadow: var(--hair); }
 /* 선물 사진을 올리지 못했을 때 결제창 위 한 줄 — 결제는 그대로 진행한다 */
 .photo-note { margin-bottom: 16px; font-weight: var(--fw-bold); }
+/* 맨 위 한 줄 — 미리 고른 크리에이터의 채널 주인이 확인된 페이지라는 사실(추가분 4-4). 체크는 「채널 소유 확인」 뱃지와 같은 성공 색 */
+.owner { display: flex; align-items: center; gap: 8px; margin-top: var(--space-2); font-weight: var(--fw-bold); }
+.owner-mark { display: inline-grid; place-items: center; flex: 0 0 auto; width: 22px; height: 22px; border-radius: var(--r-pill); background: var(--success-soft); color: var(--success); }

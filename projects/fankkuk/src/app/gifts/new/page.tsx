@@ -68,7 +68,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
     preselectedId && !initialCreatorId && preselectedId !== ownCreatorId
       ? (cards.find((c) => c.id === preselectedId) ?? (await readCreatorCards(supabase, { signedIn, onlyId: preselectedId }))[0])
       : undefined;
-  const followFirst = pickedCard ? { id: pickedCard.id, name: pickedCard.name } : null;
+  const followFirst = pickedCard ? { id: pickedCard.id, name: pickedCard.name, platform: pickedCard.platform } : null;
   const notice = typeof payment === "string" ? PAYMENT_NOTICE[payment] : undefined;
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   if (!clientKey) console.warn("NEXT_PUBLIC_TOSS_CLIENT_KEY 가 없어 결제창을 열 수 없다");
