@@ -31,7 +31,7 @@ import { ReplySettingsSection } from "./reply-settings-section";
 import type { ReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
 import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
-import { PROMISE } from "@/shared/config/site-copy";
+import { PROMISE, NO_ADDRESS_ASK } from "@/shared/config/site-copy";
 import s from "./creator-settings.module.css";
 
 // 크리에이터 — 주소와 설정. 시안: docs/design/mockups/site/v11/creator-settings.html — 설정 상자를 같은 모양 카드로 위→아래 한 줄, 맨 위에 지금 상태 카드 셋과 바로가기 칩 줄
@@ -314,6 +314,7 @@ export function CreatorSettingsPage({
             <p className={s["body-gap"]}>{addressRegistered ? `주소는 잠가서 보관해요. ${PROMISE.address}` : `등록하면 바로 잠가서 보관해요. ${PROMISE.address}`}</p>
           </div>
           <p className="t-meta">{addressRegistered ? "아직 출력하지 않은 주문은 바뀐 주소로 나가요." : "등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}</p>
+          <p className="t-meta">{NO_ADDRESS_ASK}</p>
           <div>
             <button
               className="btn btn--line"

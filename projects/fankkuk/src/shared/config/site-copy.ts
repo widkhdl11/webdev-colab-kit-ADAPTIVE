@@ -24,3 +24,6 @@ export const PROMISE_SHORT = {
 
 /** 운영 상호 — 새 사업자 등록 전까지는 서비스 이름으로 임시 표기한다(카드 d64). 상호가 나오면 이 줄만 바꾼다. */
 export const OPERATOR_NAME = "팬꾹";
+
+/** 사칭 연락 안내 — 크리에이터 홈·설정의 주소 칸에 같은 글자로(2026-10-14 추가분 3, external-connections INV-X3). */
+export const NO_ADDRESS_ASK = "팬꾹은 채팅·메일·전화로 주소를 묻지 않아요. 주소를 다시 알려 달라는 연락은 팬꾹이 아닙니다.";

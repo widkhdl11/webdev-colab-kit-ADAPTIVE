@@ -6,7 +6,7 @@ import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { isIncomingInProgress, type IncomingGiftView } from "@/entities/order/model/incoming-gift";
 import type { SendAvailability } from "@/features/gift-register/model/sender-rule";
-import { PROMISE } from "@/shared/config/site-copy";
+import { PROMISE, NO_ADDRESS_ASK } from "@/shared/config/site-copy";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { statusTagClass } from "@/shared/ui/status-tone";
@@ -107,6 +107,7 @@ function MySection({ nickname, requests, accessLog, incoming, sentGifts, now }: 
         <Link className={`card ${s.linkCard}`} href="/creator/log">
           <h3>최근 열람 기록</h3>
           <p>{lastLog ? `최근 열람 ${formatDateTime(lastLog.at)}` : "아직 주소가 열린 적이 없어요"}</p>
+          <p className="t-meta">{NO_ADDRESS_ASK}</p>
         </Link>
       </div>
     </section>

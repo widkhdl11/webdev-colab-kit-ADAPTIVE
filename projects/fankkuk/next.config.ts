@@ -1,7 +1,35 @@
 import type { NextConfig } from "next";
 import { PHOTO_BODY_LIMIT } from "./src/shared/lib/image/photo-limits";
 
+// 보안 헤더(CSP) — 2026-10-14 추가분 3. 지금은 막지 않고 위반만 브라우저 콘솔에 남기는 모드(Report-Only)다.
+// 결제 창(토스)·글꼴(jsdelivr)·프로필 사진(Supabase 저장소)이 깨지지 않는 것을 운영에서 확인한 뒤 막는 모드로 바꾼다(BACKLOG).
+// 기준: Next 문서의 「Without Nonces」 예시 + 이 사이트가 실제로 부르는 바깥 출처.
+const isDev = process.env.NODE_ENV === "development";
+const storageOrigin = (() => {
+  try {
+    return process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).origin : "";
+  } catch {
+    return "";
+  }
+})();
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline' https://js.tosspayments.com${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+  "font-src 'self' data: https://cdn.jsdelivr.net",
+  `img-src 'self' blob: data: ${storageOrigin}`.trim(),
+  "connect-src 'self' https://*.tosspayments.com",
+  "frame-src https://*.tosspayments.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self' https://*.tosspayments.com",
+  "frame-ancestors 'none'",
+].join("; ");
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [{ source: "/(.*)", headers: [{ key: "Content-Security-Policy-Report-Only", value: csp }] }];
+  },
   // 개발 서버는 localhost 가 아닌 주소에서 오는 개발용 파일 요청을 막는다. 127.0.0.1 로 열면 화면 스크립트가
   // 붙지 않아 로그인 버튼이 서버로 요청을 보내지 못했다(2026-10-02). 개발 서버에만 적용되는 설정이다.
   allowedDevOrigins: ["127.0.0.1"],
