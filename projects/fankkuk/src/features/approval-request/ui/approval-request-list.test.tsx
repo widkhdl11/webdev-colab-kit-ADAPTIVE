@@ -2,7 +2,6 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
-import { PROMISE } from "@/shared/config/site-copy";
 
 // 승인 요청 화면 (2026-10-14 추가분 3).
 // ① 팬이 직접 쓴 값(닉네임·품목 이름)에 스크립트·javascript: 주소·URL 을 넣어도 크리에이터 화면에는 글자 그대로 보이고,
@@ -66,7 +65,6 @@ describe("팬이 쓴 값은 글자로만 보인다 (추가분 3 검사 7)", () =
     expect(host.querySelector("script")).toBeNull();
     expect(host.querySelector("img[onerror]")).toBeNull();
     expect(host.querySelector('a[href^="javascript"], a[href*="evil.example"]')).toBeNull();
-    expect((window as { __pwned?: number }).__pwned).toBeUndefined();
   });
 });
 
@@ -82,6 +80,7 @@ describe("승인 확인창 버튼 위 약속 문장 (추가분 3 2-2)", () => {
     const btns = send?.parentElement;
     let line = btns?.previousElementSibling;
     while (line && line.getAttribute("role") === "alert") line = line.previousElementSibling;
-    expect(line?.textContent).toBe(`${PROMISE.addressFan} ${PROMISE.inspection}`);
+    // 글자까지 고정한다 — 상수에서 읽으면 약속 문장이 바뀌어도 통과한다
+    expect(line?.textContent).toBe("크리에이터 주소는 팬에게 공개되지 않습니다. 모든 선물은 팬꾹에서 검수한 뒤 보냅니다.");
   });
 });

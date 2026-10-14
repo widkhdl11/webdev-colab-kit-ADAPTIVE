@@ -130,5 +130,8 @@ describe("팬 단계 시각은 날짜까지만 (2026-10-14 추가분 3)", () => 
       expect(detail).not.toMatch(/\d+:\d{2}|오전|오후/);
     }
     expect(fanStepDetail({ key: "inspected", at: AT, state: "stopped" }, v)).toBe("10월 5일 (월) · 반송");
+    expect(fanStepDetail({ key: "shipped", at: AT, state: "done" }, { ...v, expectedArrivalDate: "2026-10-07" })).toBe(
+      "10월 5일 (월) · 10월 7일 (수) 도착 예정",
+    );
   });
 });

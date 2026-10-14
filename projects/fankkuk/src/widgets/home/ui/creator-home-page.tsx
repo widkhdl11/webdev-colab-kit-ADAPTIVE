@@ -107,9 +107,10 @@ function MySection({ nickname, requests, accessLog, incoming, sentGifts, now }: 
         <Link className={`card ${s.linkCard}`} href="/creator/log">
           <h3>최근 열람 기록</h3>
           <p>{lastLog ? `최근 열람 ${formatDateTime(lastLog.at)}` : "아직 주소가 열린 적이 없어요"}</p>
-          <p className="t-meta">{NO_ADDRESS_ASK}</p>
         </Link>
       </div>
+      {/* 링크 카드 밖 — 카드 안에 두면 안내문이 링크 이름에 섞이고 이 카드만 높아진다(ui 리뷰 2026-10-14) */}
+      <p className="t-meta">{NO_ADDRESS_ASK}</p>
     </section>
   );
 }

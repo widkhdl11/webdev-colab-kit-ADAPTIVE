@@ -28,7 +28,16 @@ const csp = [
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [{ source: "/(.*)", headers: [{ key: "Content-Security-Policy-Report-Only", value: csp }] }];
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "Content-Security-Policy-Report-Only", value: csp },
+          // 다른 사이트가 이 화면을 끼워 넣지 못하게 — CSP 의 frame-ancestors 는 기록만 하는 모드라 막지 않으므로 이 헤더로 지금 막는다(보안 리뷰 2026-10-14)
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+    ];
   },
   // 개발 서버는 localhost 가 아닌 주소에서 오는 개발용 파일 요청을 막는다. 127.0.0.1 로 열면 화면 스크립트가
   // 붙지 않아 로그인 버튼이 서버로 요청을 보내지 못했다(2026-10-02). 개발 서버에만 적용되는 설정이다.

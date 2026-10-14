@@ -310,7 +310,7 @@ export function CreatorSettingsPage({
           </div>
           <div className={`card card--soft ${s.inner}`}>
             <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
-            <p className="t-strong">{addressRegistered ? "주소가 안전하게 등록돼 있어요" : "아직 주소를 등록하지 않았어요"}</p>
+            <p className="t-strong">{addressRegistered ? "주소를 잠가서 등록해 뒀어요" : "아직 주소를 등록하지 않았어요"}</p>
             <p className={s["body-gap"]}>{addressRegistered ? `주소는 잠가서 보관해요. ${PROMISE.address}` : `등록하면 바로 잠가서 보관해요. ${PROMISE.address}`}</p>
           </div>
           <p className="t-meta">{addressRegistered ? "아직 출력하지 않은 주문은 바뀐 주소로 나가요." : "등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}</p>
