@@ -16,7 +16,7 @@
 .tags { align-items: center; margin-top: var(--space-4); }
 .thanks { margin-top: var(--space-4); font-weight: var(--fw-btn); color: var(--primary-700); }
 .note { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
-/* 「본인 확인 완료」 체크와 글자 사이 */
+/* 「채널 소유 확인」 체크와 글자 사이 */
 .verified svg { margin-right: 4px; }
 
 /* 로그인 전 — 가운데 프로필 카드(최대 880) */

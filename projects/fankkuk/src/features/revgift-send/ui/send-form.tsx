@@ -155,7 +155,7 @@ export function RevgiftSendForm({
           <p className={`empty ${s.fans}`}>아직 나를 팔로우한 팬이 없어요. 팬이 팔로우하면 여기에 나와요.</p>
         )}
         {followers.length > 0 ? <p className={`t-meta ${s.note}`}>{SIZE_NOTE}</p> : null}
-        <p className={`t-meta ${s.note}`}>팔로워 목록에는 팬의 닉네임만 보여요. 팬의 주소와 연락처는 보이지 않아요.</p>
+        <p className={`t-meta ${s.note}`}>나를 팔로우한 팬 목록에는 팬의 닉네임만 보여요. 팬의 주소와 연락처는 보이지 않아요.</p>
       </section>
 
       <section aria-labelledby="rv-how-title">

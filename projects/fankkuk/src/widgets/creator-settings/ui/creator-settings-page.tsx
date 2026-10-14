@@ -47,7 +47,7 @@ import s from "./creator-settings.module.css";
 // 알림은 카카오·이메일 두 스위치이고 누르는 즉시 저장한다(INV-A11). 저장에 실패하면 스위치를 되돌리고 이유를 보인다.
 // 승인 요청은 두 칸이 꺼져도 가므로 끄는 스위치가 없다(notifications INV-N6).
 // 채널 본인 확인(creator-verification)은 DB 읽기 함수(my_creator_verification_state · my_creator_verifications)의 값이다 —
-// 프로필 칸의 방송 채널·본인 확인도 그 값을 쓴다.
+// 프로필 칸의 활동 채널·본인 확인도 그 값을 쓴다.
 
 type SheetState = { kind: "address" } | { kind: "unblock"; fan: BlockedFan } | null;
 
@@ -428,7 +428,7 @@ export function CreatorSettingsPage({
           </div>
           <dl className="grid cols-2">
             <div className="card card--soft">
-              <dt className="t-meta">방송 채널</dt>
+              <dt className="t-meta">활동 채널</dt>
               <dd className={`t-strong ${s["kv-dd"]}`}>{verification.state.channelTitle}</dd>
             </div>
             <div className="card card--soft">

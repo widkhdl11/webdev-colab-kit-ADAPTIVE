@@ -144,7 +144,7 @@ export function CreatorProfilePage({
                   <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  본인 확인 완료
+                  채널 소유 확인
                 </span>
                 {/* 태그 — 숨기지 않은 선택지 뒤에 필터를 통과한 직접 입력(creator-tags INV-T4) */}
                 {creator.tags.map((t) => (

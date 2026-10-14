@@ -49,7 +49,7 @@ const CODE_REPLY: Record<string, JsonReply> = {
   FKV07: { status: 409, body: { message: "이 채널로는 코드를 더 받을 수 없어요. 1:1 문의로 알려 주세요." } },
   FKV08: { status: 409, body: { message: "확인 기한(7일)이 지났어요. 새로 신청해 주세요." } },
   FKV13: { status: 409, body: { message: "지금 확인된 채널이에요." } },
-  FKV14: { status: 409, body: { message: "이 플랫폼은 자동 확인을 하지 않아요. 코드를 소개란에 붙이거나 공식 계정 DM 으로 보낸 뒤 「확인 요청」을 눌러 주세요." } },
+  FKV14: { status: 409, body: { message: "이 플랫폼은 자동 확인을 하지 않아요. 코드를 소개란에 붙이거나 팬꾹 계정 DM 으로 보낸 뒤 「확인 요청」을 눌러 주세요." } },
   FKV15: { status: 429, body: { message: "잠시 뒤 다시 눌러 주세요." } },
   FKV16: { status: 409, body: { message: "운영자 확인으로만 다시 확인할 수 있어요. 코드를 받아 「확인 요청」을 눌러 주세요." } },
   "22023": { status: 400, body: { message: CHANNEL_URL_MESSAGE.shape } },

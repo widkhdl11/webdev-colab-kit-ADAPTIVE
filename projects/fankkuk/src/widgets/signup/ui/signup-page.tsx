@@ -261,8 +261,8 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                 </label>
               </div>
               <p className={s.note}>
-                <strong>크리에이터로 가입하면</strong> 가입한 뒤에 방송 채널 주인이 맞는지 한 번 더 확인해요. 유튜브·치지직은 그 계정으로
-                로그인하면 바로 끝나요(인스타그램은 프로페셔널 계정만). SOOP 은 인증 코드를 채널 소개란에 붙이거나 팬꾹 공식 계정 DM 으로 보내면
+                <strong>크리에이터로 가입하면</strong> 가입한 뒤에 활동 채널 주인이 맞는지 한 번 더 확인해요. 유튜브·치지직은 그 계정으로
+                로그인하면 바로 끝나요(인스타그램은 프로페셔널 계정만). SOOP 은 인증 코드를 채널 소개란에 붙이거나 팬꾹 계정 DM 으로 보내면
                 운영자가 확인해요. 확인이 끝나야 「크리에이터 찾기」에 나타나요.
               </p>
             </fieldset>

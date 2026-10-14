@@ -279,7 +279,7 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
                 <input
                   id={`ann-${a.key}-name`}
                   className="field"
-                  placeholder="예: 데뷔일"
+                  placeholder="예: 활동 시작일"
                   value={a.name}
                   onChange={(e) =>
                     updateAnniversary(a.key, {

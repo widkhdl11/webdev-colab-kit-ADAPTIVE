@@ -25,7 +25,7 @@ import a from "@/shared/ui/admin.module.css";
 // 관리자 「크리에이터 확인」 본문 (creator-verification INV-V5·V6·V9·V11·V13·V15, admin-console INV-K10·K8, 시안 admin/creators.html).
 // 확인 대기(올림) 표 = 시안의 승인 대기 표 — 인증 코드·채널 열기·승인·반려. 시안에 없던 표는 같은 표 모양으로 더했다:
 // 코드 받음(아직 확인 요청 전 — 반려만), 끝난 신청(횟수 풀기). 사람은 닉네임·아이디로만(INV-K8).
-// 2026-10-06 확인 방법을 API 여부로 가른 뒤로 크리에이터는 코드를 공개 게시물이 아니라 채널 소개란에 붙이거나 팬꾹 공식 계정 DM 으로 보낸다.
+// 2026-10-06 확인 방법을 API 여부로 가른 뒤로 크리에이터는 코드를 공개 게시물이 아니라 채널 소개란에 붙이거나 팬꾹 계정 DM 으로 보낸다.
 // 「채널 열기」는 서버가 채널 키로 다시 만든 주소만 연다(INV-V2) — 크리에이터가 적은 문자열이 아니다.
 
 type Props = {
@@ -106,7 +106,7 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
             <h2 id="h-cv-posted" tabIndex={-1}>
               확인 대기 <span>{posted.length}건</span>
             </h2>
-            <span>채널 소개란이나 팬꾹 공식 계정 DM 에 인증 코드가 있는지 확인해 주세요</span>
+            <span>채널 소개란이나 팬꾹 계정 DM 에 인증 코드가 있는지 확인해 주세요</span>
           </div>
           <div className={a.tblWrap}>
             <table className={a.tbl} style={{ minWidth: 980 }}>

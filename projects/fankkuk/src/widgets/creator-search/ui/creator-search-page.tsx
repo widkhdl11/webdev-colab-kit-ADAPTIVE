@@ -91,7 +91,7 @@ export function CreatorSearchPage({
         <p className="ph-desc">이름이나 채널 이름을 입력하면 아래 목록이 바로 걸러져요.</p>
         <p className={s.verify}>
           <CheckIcon />
-          방송 채널 본인 확인을 마친 크리에이터만 보여요.
+          활동 채널 본인 확인을 마친 크리에이터만 보여요.
         </p>
       </header>
       <div className={`search ${s.search}`}>

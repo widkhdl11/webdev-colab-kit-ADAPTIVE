@@ -25,7 +25,7 @@ export function RejectButton({ applicationId, creatorName, returnFocusId, onDone
       reasons={REJECT_REASONS}
       reasonLabels={REJECT_REASON_LABEL}
       memoLabel="메모 (운영자만 봐요, 적지 않아도 돼요)"
-      memoPlaceholder="예: 채널 소개란·공식 계정 DM 모두 코드 없음"
+      memoPlaceholder="예: 채널 소개란·팬꾹 계정 DM 모두 코드 없음"
       decision={(reasonCode, memo) => ({ action: "reject", applicationId, reasonCode: reasonCode ?? "other", memo })}
       doneText={`${creatorName}님의 신청을 반려했어요.`}
       returnFocusId={returnFocusId}
