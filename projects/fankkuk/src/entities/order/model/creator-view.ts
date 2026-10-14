@@ -1,5 +1,6 @@
 import type { OrderRecord } from "./order-record";
 import { isApprovable } from "./order-status";
+import type { PriorGiftHistory } from "./prior-history";
 
 // 크리에이터 승인 요청 한 건. 원본 「팬이 보는 것 / 크리에이터가 보는 것」 표의 등록 단계:
 // 팬 닉네임과 팬이 입력한 물품 종류. 팬의 송장번호·결제 정보는 넣지 않는다.
@@ -13,6 +14,8 @@ export type ApprovalRequestView = {
   hasElectronicsOrMetal: boolean;
   registeredAt: string;
   receivedAt: string | null;
+  /** 이 팬이 이 크리에이터에게 보낸 지난 주문의 검수 내역(decline-block INV-D11). 다른 크리에이터에게 보낸 주문은 세지 않는다. */
+  priorHistory: PriorGiftHistory;
 };
 
 /**
@@ -34,5 +37,18 @@ export function pendingApprovalRequests(records: readonly OrderRecord[], creator
       hasElectronicsOrMetal: r.hasElectronicsOrMetal,
       registeredAt: r.registeredAt,
       receivedAt: r.receivedAt,
+      priorHistory: priorHistoryOf(records, r),
     }));
+}
+
+// 예시 기록에는 보낸 사람 계정 값이 없어 닉네임으로 같은 팬을 가른다(예시 전용 — DB 는 계정으로 센다, INV-D6·D11).
+function priorHistoryOf(records: readonly OrderRecord[], current: OrderRecord): PriorGiftHistory {
+  const prior = records.filter(
+    (o) => o.creatorId === current.creatorId && o.fanNickname === current.fanNickname && o.orderNo !== current.orderNo,
+  );
+  return {
+    gifts: prior.length,
+    passed: prior.filter((o) => o.inspection?.result === "passed").length,
+    returned: prior.filter((o) => o.inspection?.result === "returned").length,
+  };
 }

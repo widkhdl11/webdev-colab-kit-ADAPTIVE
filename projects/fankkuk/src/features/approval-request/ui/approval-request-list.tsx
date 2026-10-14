@@ -8,6 +8,7 @@ import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadlin
 import { approvalTimeLeftLabel, isApprovalDeadlinePassed } from "@/entities/order/model/approval-time-left";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
 import type { DecidedOutcome, DecidedRequestView } from "@/entities/order/model/decided-request";
+import { priorHistoryLabel } from "@/entities/order/model/prior-history";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
@@ -186,6 +187,10 @@ export function ApprovalRequestList({
                       </p>
                     </div>
                   </div>
+                  {/* 지난 검수 내역 — 이 팬이 나에게 보낸 것만(decline-block INV-D11). 경고가 아니라 사실 한 줄이다 */}
+                  <p className="t-meta" data-prior-history="">
+                    {priorHistoryLabel(r.priorHistory)}
+                  </p>
 
                   {st.kind === "pending" ? (
                     <>

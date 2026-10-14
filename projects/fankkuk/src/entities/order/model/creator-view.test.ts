@@ -60,7 +60,17 @@ describe("pendingApprovalRequests — 크리에이터 승인 요청 목록", () 
       hasElectronicsOrMetal: true,
       registeredAt: "2026-10-01T01:00:00.000Z",
       receivedAt: null,
+      priorHistory: { gifts: 0, passed: 0, returned: 0 },
     });
+  });
+
+  it("INV-D11: 예시 기록의 지난 내역은 같은 크리에이터·같은 팬 주문만, 자기 주문은 빼고 센다", () => {
+    const passed = { ...base, orderNo: "FC-OLD01", status: "shipped" as const, approvedAt: "2026-09-01T00:00:00.000Z", inspection: { result: "passed" as const, at: "2026-09-02T00:00:00.000Z" } };
+    const returned = { ...passed, orderNo: "FC-OLD02", status: "rejected" as const, inspection: { result: "returned" as const, at: "2026-09-02T00:00:00.000Z" } };
+    const otherCreator = { ...returned, orderNo: "FC-OLD03", creatorId: "c2" };
+    const otherFan = { ...returned, orderNo: "FC-OLD04", fanNickname: "달토끼" };
+    const [req] = pendingApprovalRequests([base, passed, returned, otherCreator, otherFan], "c1");
+    expect(req?.priorHistory).toEqual({ gifts: 2, passed: 1, returned: 1 });
   });
 
   it("오래 기다린 요청이 먼저 온다", () => {

@@ -10,6 +10,9 @@ const waiting = {
   has_electronics_or_metal: true,
   registered_at: "2026-10-02T13:00:00+00:00",
   received_at: "2026-10-03T00:40:00+00:00",
+  prior_gift_count: 3,
+  prior_passed_count: 2,
+  prior_returned_count: 1,
 };
 
 describe("크리에이터 승인 요청 응답", () => {
@@ -24,8 +27,22 @@ describe("크리에이터 승인 요청 응답", () => {
         hasElectronicsOrMetal: true,
         registeredAt: "2026-10-02T13:00:00.000Z",
         receivedAt: "2026-10-03T00:40:00.000Z",
+        priorHistory: { gifts: 3, passed: 2, returned: 1 },
       },
     ]);
+  });
+
+  it("INV-D11: 지난 검수 내역은 세 수만 받는다 — 빠지거나 음수·소수·통과+반송이 지난 수보다 크면 받지 않는다", () => {
+    const { prior_gift_count: _omit, ...missing } = waiting;
+    expect(() => parseApprovalRequestRows([missing])).toThrow();
+    expect(() => parseApprovalRequestRows([{ ...waiting, prior_returned_count: -1 }])).toThrow();
+    expect(() => parseApprovalRequestRows([{ ...waiting, prior_passed_count: 1.5 }])).toThrow();
+    expect(() => parseApprovalRequestRows([{ ...waiting, prior_gift_count: 2 }])).toThrow();
+    expect(parseApprovalRequestRows([{ ...waiting, prior_gift_count: 0, prior_passed_count: 0, prior_returned_count: 0 }])[0]?.priorHistory).toEqual({
+      gifts: 0,
+      passed: 0,
+      returned: 0,
+    });
   });
 
   it("팬 송장번호 같은 다른 칸이 섞여 와도 승인 요청 모양에 넣지 않는다", () => {

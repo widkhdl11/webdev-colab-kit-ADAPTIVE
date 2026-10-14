@@ -1,5 +1,7 @@
 <!doctype html>
 <!--
+  [B안 2차 — 홍보 카드 구성 변경, 사용자 정정] 「선물은 팬꾹으로 받아요」 같은 직접 문구는 쓰지 않는다. 프로필 사진·이름·짧은 소개·프로필 배경사진이 나오고, 하단에 작은 「팬꾹으로 선물 보내기」만.
+  바뀐 것: 편집 칸에 「프로필 배경사진」(프로필 사진 바로 아래) · 미리보기 링크 페이지 상단에 배경사진(링크 페이지 상단에도 쓰는 판, 한 가지 판으로 보임) · 공지 이미지 세 크기 썸네일을 같은 구성으로.
   [B안] 모바일 미리보기를 편집 칸 위로 옮긴 판(사용자 정정 2026-10-14): 1023px 이하에서 미리보기가 맨 위, 위쪽에 붙어 따라오고, 「접기」로 줄인다. PC 는 A안(customize.html)과 같다. 그 밖은 바꾸지 않았다.
   팬꾹 시안 addendum — 내 팬꾹 꾸미기 (크리에이터 메뉴 새 화면) (2026-10-14, 추가분 4 후속)
   기준: design-rules 「00. v18」 + 6절 말투. 값은 site/v18 의 tokens.css · v18*.css 변수를 그대로 쓴다(여기서 새 색·글꼴을 만들지 않음).
@@ -75,7 +77,21 @@ html.embed .mk-bar, html.embed .mk-frames { display: none; }
 
 /* ===== 미리보기 (링크 페이지 축소) ===== */
 .pv-label { display: flex; justify-content: space-between; align-items: center; }
-.pv-card { display: flex; flex-direction: column; align-items: center; gap: var(--sp-8); text-align: center; padding: var(--sp-32) var(--sp-24); }
+.pv-card { --px: 24px; --py: 32px; display: flex; flex-direction: column; align-items: center; gap: var(--sp-8); text-align: center; padding: var(--py) var(--px); }
+.pv-bg { align-self: stretch; height: 112px; margin: calc(var(--py) * -1) calc(var(--px) * -1) 0; border-radius: var(--r-card) var(--r-card) 0 0; background: var(--primary-50); overflow: hidden; }
+.pv-bg svg { width: 100%; height: 100%; display: block; }
+.pv-card .avatar-lg { margin-top: -36px; box-shadow: 0 0 0 4px var(--white); }
+.bg-box { display: grid; place-items: center; width: 100%; max-width: 360px; aspect-ratio: 3 / 1; border-radius: var(--r-btn); background: var(--primary-50); border: var(--bw) dashed var(--gray-400); color: var(--gray-600); font-size: var(--fs-caption); overflow: hidden; }
+.bg-box.has { border-style: solid; border-color: var(--gray-200); }
+.bg-box svg { width: 100%; height: 100%; display: block; }
+.mini { position: relative; display: block; overflow: hidden; background: #FFF5F1; border: var(--bw) solid var(--primary); border-radius: 6px; }
+.mini b { position: absolute; display: block; }
+.m-bg { left: 0; right: 0; top: 0; height: 40%; background: #F3D9D5; }
+.m-av { left: 50%; top: 30%; width: 22%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: #F7C8D4; box-shadow: 0 0 0 1.5px #fff; }
+.m-l1 { left: 30%; right: 30%; top: 60%; height: 4px; border-radius: 2px; background: #343039; }
+.m-l2 { left: 22%; right: 22%; top: 70%; height: 3px; border-radius: 2px; background: #9CA3AF; }
+.m-ft { left: 34%; right: 34%; bottom: 8%; height: 3px; border-radius: 2px; background: #A4433D; }
+.sz-thumb { width: 80px !important; height: 80px !important; }
 .pv-card .avatar-lg { width: 72px; height: 72px; font-size: 28px; }
 .pv-card h3 { margin: 0; font-size: var(--fs-h3); font-weight: var(--fw-h3); }
 .pv-card .handle { font-size: var(--fs-caption); color: var(--gray-600); }
@@ -97,7 +113,7 @@ html.embed .mk-bar, html.embed .mk-frames { display: none; }
 @media (max-width: 1023px) {
   .cz { grid-template-columns: minmax(0, 1fr); }
   .cz-side { order: -1; position: sticky; top: var(--topbar-h); z-index: 5; background: var(--white); padding: var(--sp-8) 0 var(--sp-16); border-bottom: var(--bw) solid var(--gray-200); max-height: 62vh; overflow: auto; }
-  .cz-side .pv-card { padding: var(--sp-16); }
+  .cz-side .pv-card { --px: 16px; --py: 16px; }
   .cz-toggle { display: inline-flex; }
   .cz-side.is-closed .cz-body { display: none; }
 }
@@ -202,6 +218,15 @@ html.embed .mk-bar, html.embed .mk-frames { display: none; }
               <p class="meta">정사각 이미지가 가장 예뻐요. 사진을 지우면 이름 첫 글자가 대신 보여요.</p>
             </div>
             <div class="fld">
+              <span class="lbl" id="l-bg">프로필 배경사진<span class="optn">선택</span></span>
+              <span class="bg-box" id="bg-view">배경사진 없음</span>
+              <div class="btn-stack">
+                <button class="btn btn--secondary btn--sm" type="button" id="btn-bg" aria-describedby="l-bg">배경사진 올리기</button>
+                <button class="btn btn--text btn--sm" type="button" id="btn-bg-del" hidden>지우기</button>
+              </div>
+              <p class="meta">링크 페이지 상단에도 쓰는 판이에요. 공지 이미지 위쪽에도 같은 사진이 들어가요. 없으면 옅은 코랄 바탕이에요. 가로로 긴 사진이 잘 맞아요.</p>
+            </div>
+            <div class="fld">
               <label for="in-name">공개 이름</label>
               <input class="field" id="in-name" type="text" maxlength="20" value="새벽달" autocomplete="off">
             </div>
@@ -244,11 +269,11 @@ html.embed .mk-bar, html.embed .mk-frames { display: none; }
 
           <section class="card set-card" aria-labelledby="h-notice">
             <h2 class="card-t" id="h-notice">공지 이미지 받기</h2>
-            <p class="meta">인스타·유튜브 같은 내 채널에 올려 「선물은 팬꾹으로 받아요」라고 알리는 이미지예요. 올릴 곳에 맞는 크기를 골라 링크를 복사하세요.</p>
+            <p class="meta">인스타·유튜브 같은 내 채널에 올려 내 링크를 알리는 이미지예요. 프로필 배경사진·사진·이름·소개가 나오고, 아래에 작은 글씨로 「팬꾹으로 선물 보내기」만 들어가요. 올릴 곳에 맞는 크기를 골라 링크를 복사하세요.</p>
             <ul class="sizes">
-              <li><span class="sz-thumb" aria-hidden="true"><i style="width:48px;height:48px"></i></span><span class="sz-t"><b>정사각</b><span class="meta">1080 × 1080</span></span><button class="btn btn--secondary btn--sm js-copy" type="button" data-n="정사각">링크 복사</button></li>
-              <li><span class="sz-thumb" aria-hidden="true"><i style="width:36px;height:64px"></i></span><span class="sz-t"><b>세로 (스토리용)</b><span class="meta">1080 × 1920</span></span><button class="btn btn--secondary btn--sm js-copy" type="button" data-n="세로">링크 복사</button></li>
-              <li><span class="sz-thumb" aria-hidden="true"><i style="width:64px;height:36px"></i></span><span class="sz-t"><b>가로</b><span class="meta">1200 × 675</span></span><button class="btn btn--secondary btn--sm js-copy" type="button" data-n="가로">링크 복사</button></li>
+              <li><span class="sz-thumb" aria-hidden="true"><i class="mini" style="width:64px;height:64px"><b class="m-bg"></b><b class="m-av"></b><b class="m-l1"></b><b class="m-l2"></b><b class="m-ft"></b></i></span><span class="sz-t"><b>정사각</b><span class="meta">1080 × 1080</span></span><button class="btn btn--secondary btn--sm js-copy" type="button" data-n="정사각">링크 복사</button></li>
+              <li><span class="sz-thumb" aria-hidden="true"><i class="mini" style="width:45px;height:80px"><b class="m-bg"></b><b class="m-av"></b><b class="m-l1"></b><b class="m-l2"></b><b class="m-ft"></b></i></span><span class="sz-t"><b>세로 (스토리용)</b><span class="meta">1080 × 1920</span></span><button class="btn btn--secondary btn--sm js-copy" type="button" data-n="세로">링크 복사</button></li>
+              <li><span class="sz-thumb" aria-hidden="true"><i class="mini" style="width:80px;height:45px"><b class="m-bg"></b><b class="m-av"></b><b class="m-l1"></b><b class="m-l2"></b><b class="m-ft"></b></i></span><span class="sz-t"><b>가로</b><span class="meta">1200 × 675</span></span><button class="btn btn--secondary btn--sm js-copy" type="button" data-n="가로">링크 복사</button></li>
             </ul>
             <p class="toast" id="toast" role="status"></p>
           </section>
@@ -262,6 +287,7 @@ html.embed .mk-bar, html.embed .mk-frames { display: none; }
           </div>
           <div class="cz-body" id="cz-body" style="display:grid;gap:var(--sp-16)">
             <div class="card pv-card" aria-label="링크 페이지">
+              <div class="pv-bg" id="pv-bg" aria-hidden="true"></div>
               <span class="avatar-lg" id="pv-photo" aria-hidden="true">새</span>
               <h3 id="pv-name">새벽달</h3>
               <p class="handle">fankkuk.kr/dawnmoon</p>
@@ -318,7 +344,8 @@ html.embed .mk-bar, html.embed .mk-frames { display: none; }
   /* ---- 샘플 그림 (시안 전용 자리표시) ---- */
   var PHOTO = '<svg viewBox="0 0 88 88" aria-hidden="true"><rect width="88" height="88" fill="#F3D9D5"/><circle cx="44" cy="36" r="16" fill="#8F3836"/><path d="M12 88c2-22 16-30 32-30s30 8 32 30z" fill="#B94A48"/></svg>';
   var SYMBOL = '<svg viewBox="0 0 88 88" aria-hidden="true"><rect width="88" height="88" fill="#FBF1F0"/><path d="M58 20a26 26 0 1 0 0 48 22 22 0 0 1 0-48z" fill="#B94A48"/><circle cx="40" cy="42" r="3" fill="#111827"/><circle cx="52" cy="42" r="3" fill="#111827"/><path d="M41 52q5 5 10 0" stroke="#111827" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>';
-  var st = { photo: false, symbol: false };
+  var BG = '<svg viewBox="0 0 360 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="360" height="120" fill="#F3D9D5"/><circle cx="290" cy="30" r="22" fill="#FBF1F0"/><path d="M0 120 90 60l60 40 70-50 140 70z" fill="#B94A48" opacity=".75"/></svg>';
+  var st = { photo: false, symbol: false, bg: false };
 
   var name = $('in-name'), bio = $('in-bio'), fan = $('in-fan');
   function ini() { var v = name.value.trim(); return v ? v.charAt(0) : '?'; }
@@ -331,6 +358,9 @@ html.embed .mk-bar, html.embed .mk-frames { display: none; }
     $('pv-bio').textContent = bio.value.trim();
     $('pv-thanks').textContent = fan.value.trim() ? fan.value.trim() + ' 여러분의 마음 늘 감사해요' : '보내주시는 마음 늘 감사해요';
     ['in-photo-view', 'pv-photo'].forEach(function (id) { var el = $(id); if (st.photo) el.innerHTML = PHOTO; else el.textContent = ini(); });
+    var bv = $('bg-view'), pb = $('pv-bg');
+    if (st.bg) { bv.innerHTML = BG; bv.className = 'bg-box has'; pb.innerHTML = BG; $('btn-bg-del').hidden = false; }
+    else { bv.textContent = '배경사진 없음'; bv.className = 'bg-box'; pb.innerHTML = ''; $('btn-bg-del').hidden = true; }
     var sv = $('sym-view'), pv = $('pv-sym');
     if (st.symbol) { sv.innerHTML = SYMBOL; sv.className = 'sym-box has'; pv.innerHTML = SYMBOL; pv.hidden = false; $('btn-sym-del').hidden = false; }
     else { sv.textContent = '이미지 없음'; sv.className = 'sym-box'; pv.innerHTML = ''; pv.hidden = true; $('btn-sym-del').hidden = true; }
@@ -343,6 +373,8 @@ html.embed .mk-bar, html.embed .mk-frames { display: none; }
   [name, bio, fan].forEach(function (el) { el.addEventListener('input', render); });
   document.querySelectorAll('input[name="og"]').forEach(function (el) { el.addEventListener('change', render); });
   $('btn-photo').addEventListener('click', function () { st.photo = true; render(); });
+  $('btn-bg').addEventListener('click', function () { st.bg = true; render(); });
+  $('btn-bg-del').addEventListener('click', function () { st.bg = false; render(); });
   $('btn-photo-del').addEventListener('click', function () { st.photo = false; render(); });
   $('chk-right').addEventListener('change', function () { $('btn-sym').disabled = !this.checked; });
   $('btn-sym').addEventListener('click', function () { st.symbol = true; render(); });

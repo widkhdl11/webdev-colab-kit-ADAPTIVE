@@ -8,6 +8,7 @@ import type { DecidedRequestView } from "../model/decided-request";
 
 const ts = z.string().min(1);
 const iso = (v: string) => new Date(v).toISOString();
+const count = z.number().int().nonnegative();
 
 const waitingSchema = z.object({
   request_id: z.string().min(1),
@@ -18,7 +19,11 @@ const waitingSchema = z.object({
   has_electronics_or_metal: z.boolean(),
   registered_at: ts,
   received_at: ts.nullable(),
-});
+  // 지난 검수 내역(decline-block INV-D11) — 같은 팬이 이 크리에이터에게 보낸 지난 주문 수와 그중 통과·반송 수
+  prior_gift_count: count,
+  prior_passed_count: count,
+  prior_returned_count: count,
+}).refine((r) => r.prior_passed_count + r.prior_returned_count <= r.prior_gift_count, "검수 통과·반송 수가 지난 주문 수보다 많다");
 
 const decidedSchema = z.object({
   order_no: z.string().min(1),
@@ -42,6 +47,7 @@ export function parseApprovalRequestRows(rows: unknown): ApprovalRequestView[] {
       hasElectronicsOrMetal: r.has_electronics_or_metal,
       registeredAt: iso(r.registered_at),
       receivedAt: r.received_at === null ? null : iso(r.received_at),
+      priorHistory: { gifts: r.prior_gift_count, passed: r.prior_passed_count, returned: r.prior_returned_count },
     }));
 }
 

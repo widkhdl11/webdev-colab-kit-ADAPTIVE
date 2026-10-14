@@ -50,10 +50,11 @@ const req: ApprovalRequestView = {
   hasElectronicsOrMetal: false,
   registeredAt: "2026-10-13T03:00:00.000Z",
   receivedAt: null,
+  priorHistory: { gifts: 0, passed: 0, returned: 0 },
 };
 
-function render() {
-  act(() => root.render(<ApprovalRequestList requests={[req]} decided={[]} now={NOW} />));
+function render(requests: readonly ApprovalRequestView[] = [req]) {
+  act(() => root.render(<ApprovalRequestList requests={requests} decided={[]} now={NOW} />));
 }
 
 describe("팬이 쓴 값은 글자로만 보인다 (추가분 3 검사 7)", () => {
@@ -82,5 +83,19 @@ describe("승인 확인창 버튼 위 약속 문장 (추가분 3 2-2)", () => {
     while (line && line.getAttribute("role") === "alert") line = line.previousElementSibling;
     // 글자까지 고정한다 — 상수에서 읽으면 약속 문장이 바뀌어도 통과한다
     expect(line?.textContent).toBe("크리에이터 주소는 팬에게 공개되지 않습니다. 모든 선물은 팬꾹에서 검수한 뒤 보냅니다.");
+  });
+});
+
+describe("승인 요청 카드의 지난 검수 내역 (INV-D11)", () => {
+  const historyLine = (orderNo: string) =>
+    [...host.querySelectorAll("li")].find((li) => li.textContent?.includes(orderNo))?.querySelector("[data-prior-history]")?.textContent;
+
+  it("INV-D11: 카드마다 그 요청의 내역 한 줄 — 처음이면 처음이라고만, 지난 주문이 있으면 수를 사실대로", () => {
+    render([
+      { ...req, orderNo: "FC-FIRST1", fanNickname: "하늘" },
+      { ...req, orderNo: "FC-AGAIN1", fanNickname: "별빛", priorHistory: { gifts: 3, passed: 2, returned: 1 } },
+    ]);
+    expect(historyLine("FC-FIRST1")).toBe("처음 보내는 팬이에요");
+    expect(historyLine("FC-AGAIN1")).toBe("지난 선물 3건 · 검수 통과 2건 · 검수 반송 1건");
   });
 });
