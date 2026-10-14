@@ -93,6 +93,15 @@ describe("승인 저장 (approval-signature INV-S11·S12)", () => {
     });
   });
 
+  it("INV-S13 S13 (실패경로): 받는 주소가 없어 DB 가 no_address 로 답하면 409 「받는 주소를 먼저 등록해 주세요」", async () => {
+    expect(await approveGift({ admin: fakeAdmin(PAYLOAD, "no_address").admin, viewer: HARU, signer }, { requestId: "apr_FCA" })).toEqual({
+      ok: false,
+      status: 409,
+      message: "받는 주소를 먼저 등록해 주세요.",
+      code: "no_address",
+    });
+  });
+
   it("DB 결과를 문구로 — 이미 처리됨·승인 불가·서명 불일치는 409, 모르는 결과는 던진다", async () => {
     for (const [result, status] of [
       ["already", 409],

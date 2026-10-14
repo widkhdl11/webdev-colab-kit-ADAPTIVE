@@ -1,5 +1,5 @@
 import { removeTestAccounts } from "./account-fixtures";
-import { countTestOrders, deleteTestBlocks, deleteTestOrders, psql, SEED } from "./helpers";
+import { countTestOrders, deleteTestBlocks, deleteTestOrders, DUMMY_ADDRESS_IV, psql, SEED } from "./helpers";
 import { removeTestCreator } from "./test-creator";
 
 // 시험마다 새 주문을 만든다. 남겨 두면 쌓여서 「최근 n 건」 목록에서 시드 주문을 밀어낸다.
@@ -7,6 +7,8 @@ import { removeTestCreator } from "./test-creator";
 function cleanup(): void {
   deleteTestOrders();
   deleteTestBlocks();
+  // 승인 준비용 자리 표시 주소(ensureApprovalAddress) — 진짜 봉투는 iv 가 무작위라 이 줄에 걸리지 않는다
+  psql(`delete from pii.creator_addresses where envelope ->> 'iv' = '${DUMMY_ADDRESS_IV}'`);
   removeTestCreator(); // 주소 시험 전용 크리에이터 — 지난 실행이 끊겨 남았으면 주소째 지운다
   removeTestAccounts(); // 비밀번호·번호 바꾸기 시험 계정(it_)과 그 기록 — 지난 실행이 끊겨 남았으면 지운다
   // 비밀번호 확인 횟수(session-login INV-L14) — 틀린 비밀번호를 넣는 시험이 시드 아이디를 막아 둔 채로 남지 않게(로컬 DB 에만 붙는다)

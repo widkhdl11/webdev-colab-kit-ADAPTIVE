@@ -8,12 +8,14 @@ import type { ApprovalSigner } from "@/shared/api/approval-signer/signer";
 // 승인 저장 (approval-signature INV-S11·S12, 카드 d28).
 // 흐름: 승인 요청 → 본인 확인 결과 수신(서명 창구 — 로컬은 가짜) → 승인 처리. 가운데 칸만 창구마다 다르다.
 // 승인하는 사람은 세션에서 확인한 사람이다(INV-L2·L3). 본문에서는 요청 식별값 하나만 꺼낸다 — 사람·서명 칸은 읽지 않는다.
+// 받는 주소가 없으면 DB 가 승인하지 않는다(INV-S13) — 화면이 승인 전에 주소 입력을 먼저 띄우므로 여기 닿는 것은 그 사이에 어긋난 경우뿐이다.
 // 원문은 그 주문의 크리에이터일 때만 DB 가 돌려주고, 승인 함수가 같은 확인과 원문 일치를 한 번 더 본 뒤 서명과 승인을 한 처리에서 저장한다.
 
 const inputSchema = z.object({ requestId: z.string().regex(/^apr_[0-9A-Za-z]{1,40}$/) });
-const resultSchema = z.enum(["approved", "already", "not_approvable", "expired", "not_found", "signature_mismatch"]);
+const resultSchema = z.enum(["approved", "already", "not_approvable", "expired", "not_found", "signature_mismatch", "no_address"]);
 
-export type ApproveGiftResult = { ok: true } | { ok: false; status: 400 | 401 | 403 | 404 | 409 | 503; message: string };
+/** code: 화면이 갈래를 나눌 실패 — no_address 면 승인 창이 주소 입력으로 돌아간다(INV-S13) */
+export type ApproveGiftResult = { ok: true } | { ok: false; status: 400 | 401 | 403 | 404 | 409 | 503; message: string; code?: "no_address" };
 
 const NOT_FOUND = { ok: false, status: 404, message: "찾을 수 없는 요청이에요." } as const;
 
@@ -56,6 +58,7 @@ export async function approveGift(
   if (result === "already") return { ok: false, status: 409, message: "이미 처리된 요청이에요. 새로 고침하면 결과가 보여요." };
   // INV-S6: 168시간이 지났으면 자동 처리 전이라도 승인하지 않는다 — 거절과 같은 문구
   if (result === "expired") return { ok: false, status: 409, message: APPROVAL_EXPIRED_MESSAGE };
+  if (result === "no_address") return { ok: false, status: 409, message: "받는 주소를 먼저 등록해 주세요.", code: "no_address" };
   if (result === "not_approvable") return { ok: false, status: 409, message: "지금은 승인할 수 없는 선물이에요. 새로 고침해 주세요." };
   return { ok: false, status: 409, message: "서명을 확인하지 못했어요. 다시 해 주세요." };
 }

@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
+import { readMyAddressStatus } from "@/entities/address/api/my-address-status";
 import { readMyApprovalRequests, readMyDecidedRequests } from "@/entities/order/api/creator-request-rows";
 import { readMyCreatorChecks } from "@/entities/parcel/api/read-creator-checks";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { ApprovalRequestsPage } from "@/widgets/approval-requests/ui/approval-requests-page";
+import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { loadSession } from "@/widgets/site-header/api/session-header";
@@ -21,10 +23,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   if (viewer?.role !== "creator") redirect("/login");
   const { tab } = await searchParams;
   if (tab === "received") redirect("/creator/boxes");
-  const [requests, decided, checks] = await Promise.all([
+  // 주소 상태는 승인 창의 주소 단계(INV-S13)에 쓴다 — 등록 여부·이름표·바꾼 날만 온다(INV-P16)
+  const [requests, decided, checks, address] = await Promise.all([
     readMyApprovalRequests(supabase),
     readMyDecidedRequests(supabase),
     readMyCreatorChecks(supabase),
+    // 읽기 실패로 승인 목록 전체가 멈추지 않게 — 실패하면 승인 창의 주소 단계만 「다시 해 주세요」 안내가 된다
+    readMyAddressStatus(supabase).catch(() => null),
   ]);
   const initialTab = tab === "checks" || (tab === undefined && checks.length > 0) ? "checks" : "requests";
   return (
@@ -37,6 +42,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
           now={new Date().toISOString()}
           checks={checks}
           initialTab={initialTab}
+          address={address}
+          sealingKeyPem={readSealingPublicKeyPem(process.env)}
         />
       </MyShell>
       <SiteFooter />

@@ -3,7 +3,7 @@
 import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
 import { approvalTimeLeftLabel, isApprovalDeadlinePassed } from "@/entities/order/model/approval-time-left";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
@@ -27,6 +27,30 @@ import a from "./approval-request.module.css";
 // 서버 검증을 통과했을 때만 일어난다(INV-S7: 승인 상태를 바꾸는 경로는 서명 검증을 통과한 승인 처리 하나뿐).
 // 그래서 예시에서도 버튼을 누른 결과는 "서명 대기"이지 "승인됨"이 아니다. 전체 승인 버튼은 없다.
 // 거절은 주소를 여는 방향이 아니라 서명 없이 로그인 세션으로 한다(승인 서명 스펙 비범위).
+//
+// 승인 창은 주소 단계부터 보인다(INV-S13): 받는 주소가 없으면 「주소를 입력해 주세요」, 있으면 「주소를 확인해 주세요」.
+// 주소를 입력·확인하는 칸은 위젯이 주소 기능으로 조립해 넘긴다(기능끼리는 서로 import 하지 않는다 — FSD).
+// 주소가 준비됐을 때(ready)만 아래에 승인 서명 칸이 붙는다.
+
+/** 승인 창의 주소 단계 — 위젯이 넘긴다. */
+export type ApprovalAddressStep = {
+  /** 받는 주소가 등록돼 있는가 — 창 제목이 「입력」인지 「확인」인지 가른다 */
+  registered: boolean;
+  /** 등록돼 있고 바꾸는 중이 아니다 — 이때만 승인 서명 칸을 보인다 */
+  ready: boolean;
+  /** 주소 칸. closeSheet 는 등록 전 입력을 그만둘 때 창을 닫는다 */
+  renderStep: (closeSheet: () => void) => ReactNode;
+  /** 승인 창을 열 때마다 — 바꾸던 입력을 접는다 */
+  onOpen: () => void;
+  /** 서버가 「주소 없음」으로 거부했다 — 주소 단계가 등록 전으로 돌아간다 */
+  onMissing: () => void;
+};
+
+/** 승인 창 제목 — 주소가 없으면 입력, 바꾸는 중이면 새 주소, 준비됐으면 확인 */
+function approveSheetTitle(address: ApprovalAddressStep): string {
+  if (!address.registered) return "주소를 입력해 주세요";
+  return address.ready ? "주소를 확인해 주세요" : "새 주소를 입력해 주세요";
+}
 
 
 // 처리 뒤 포커스를 옮길 곳. 같은 줄을 두 번 처리해도 effect 가 다시 돌게 매번 새 객체로 둔다.
@@ -70,10 +94,12 @@ export function ApprovalRequestList({
   requests,
   decided,
   now,
+  address,
 }: {
   requests: readonly ApprovalRequestView[];
   decided: readonly DecidedRequestView[];
   now: string;
+  address: ApprovalAddressStep;
 }) {
   const router = useRouter();
   const [states, setStates] = useState<Record<string, LocalDecision>>({});
@@ -150,8 +176,19 @@ export function ApprovalRequestList({
       router.push("/login");
       return;
     }
+    if (r.kind === "refused" && r.noAddress) {
+      address.onMissing(); // 창은 그대로 두고 주소 입력으로 돌아간다
+      return;
+    }
     setApproveError(r.kind === "refused" ? r.message : "승인하지 못했어요. 잠시 뒤 다시 해 주세요.");
   };
+  // 창 안에서 주소를 저장해 서명 칸이 새로 붙으면 그 머리로 포커스를 옮긴다 — 저장한 폼이 사라져 포커스가 창 밖으로 나가지 않게
+  const signHeadRef = useRef<HTMLHeadingElement>(null);
+  const wasReady = useRef(address.ready);
+  useEffect(() => {
+    if (address.ready && !wasReady.current && sheet?.kind === "approve") signHeadRef.current?.focus();
+    wasReady.current = address.ready;
+  }, [address.ready, sheet]);
   const cancelSigning = (req: ApprovalRequestView) => {
     setStates((prev) => ({ ...prev, [req.orderNo]: { kind: "pending" } }));
     setFocusTarget({ orderNo: req.orderNo, where: "approve" });
@@ -212,6 +249,7 @@ export function ApprovalRequestList({
                             type="button"
                             onClick={() => {
                               setApproveError(null);
+                              address.onOpen();
                               setSheet({ kind: "approve", req: r });
                             }}
                           >
@@ -318,9 +356,17 @@ export function ApprovalRequestList({
         )}
       </section>
 
-      <BottomSheet open={sheet?.kind === "approve"} title="카카오톡으로 서명해 주세요" onClose={() => setSheet(null)}>
-        {sheet?.kind === "approve" ? (
+      <BottomSheet
+        open={sheet?.kind === "approve"}
+        title={approveSheetTitle(address)}
+        onClose={() => setSheet(null)}
+      >
+        {sheet?.kind === "approve" ? address.renderStep(() => setSheet(null)) : null}
+        {sheet?.kind === "approve" && address.ready ? (
           <>
+            <h3 ref={signHeadRef} tabIndex={-1} className={`t-strong ${a["sign-head"]}`}>
+              카카오톡으로 서명해 주세요
+            </h3>
             <p className="sub">
               {sheet.req.fanNickname}님의 {sheet.req.itemKind}({sheet.req.orderNo}) 한 건을 승인합니다. 카카오톡 인증서로 서명해야
               승인이 끝나요.

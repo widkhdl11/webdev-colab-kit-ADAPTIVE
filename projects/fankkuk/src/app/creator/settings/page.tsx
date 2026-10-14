@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { readMyBlockedSenders } from "@/entities/creator/api/blocked-senders";
 import { readApiCheckPlatforms, readMyVerifications, readMyVerificationState } from "@/entities/creator/api/creator-verification-reads";
-import { readMyAddressStatus } from "@/entities/creator/api/my-address-status";
+import { readMyAddressStatus } from "@/entities/address/api/my-address-status";
 import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-settings";
 import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
 import { readMyCreatorReceiving } from "@/entities/creator/api/receiving-reads";

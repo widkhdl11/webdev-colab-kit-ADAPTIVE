@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
+import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
 import type { DecidedRequestView } from "@/entities/order/model/decided-request";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
 import type { CreatorCheckView } from "@/entities/parcel/model/creator-check";
-import { ApprovalRequestList } from "@/features/approval-request/ui/approval-request-list";
 import { CreatorCheckList } from "@/features/creator-check/ui/creator-check-list";
+import { ApprovalListWithAddress } from "./approval-list-with-address";
 import { CreatorGiftTabs } from "./creator-gift-tabs";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./approval-requests.module.css";
@@ -20,6 +21,8 @@ export function ApprovalRequestsPage({
   now,
   checks = [],
   initialTab = "requests",
+  address,
+  sealingKeyPem,
 }: {
   requests: readonly ApprovalRequestView[];
   decided: readonly DecidedRequestView[];
@@ -28,6 +31,10 @@ export function ApprovalRequestsPage({
   /** 답을 기다리는 확인할 선물(본인 것만, my_creator_checks) */
   checks?: readonly CreatorCheckView[];
   initialTab?: "requests" | "checks";
+  /** 승인 전 주소 단계(INV-S13) — 로그인한 크리에이터 본인의 주소 상태. 주소 자체는 없다 */
+  address: MyAddressStatus | null;
+  /** 주소 봉인 공개키(PEM). 없으면 승인 창에서 주소를 입력할 수 없다 */
+  sealingKeyPem: string | null;
 }) {
   const showChecks = checks.length > 0 || initialTab === "checks";
   return (
@@ -68,7 +75,7 @@ export function ApprovalRequestsPage({
                     {PROMISE.address} {APPROVAL_DEADLINE_DAYS}일 안에 정하지 않으면 자동으로 받지 않음 처리돼요.
                   </p>
                 </section>
-                <ApprovalRequestList requests={requests} decided={decided} now={now} />
+                <ApprovalListWithAddress requests={requests} decided={decided} now={now} address={address} sealingKeyPem={sealingKeyPem} />
               </div>
             ),
           },

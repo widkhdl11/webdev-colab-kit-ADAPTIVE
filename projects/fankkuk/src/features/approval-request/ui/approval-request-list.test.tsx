@@ -12,7 +12,7 @@ vi.mock("../api/send-approve", () => ({ sendApprove: vi.fn() }));
 vi.mock("../api/send-decline", () => ({ sendDecline: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: () => {}, push: () => {} }) }));
 
-import { ApprovalRequestList } from "./approval-request-list";
+import { ApprovalRequestList, type ApprovalAddressStep } from "./approval-request-list";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -53,9 +53,55 @@ const req: ApprovalRequestView = {
   priorHistory: { gifts: 0, passed: 0, returned: 0 },
 };
 
-function render(requests: readonly ApprovalRequestView[] = [req]) {
-  act(() => root.render(<ApprovalRequestList requests={requests} decided={[]} now={NOW} />));
+const READY: ApprovalAddressStep = { registered: true, ready: true, renderStep: () => <p data-step="">주소 칸</p>, onOpen: () => {}, onMissing: () => {} };
+
+function render(requests: readonly ApprovalRequestView[] = [req], address: ApprovalAddressStep = READY) {
+  act(() => root.render(<ApprovalRequestList requests={requests} decided={[]} now={NOW} address={address} />));
 }
+
+function openApprove(): HTMLDialogElement {
+  const open = [...host.querySelectorAll("button")].find((b) => b.textContent?.includes("카카오톡으로 승인"));
+  act(() => open?.click());
+  const dialog = host.querySelector<HTMLDialogElement>("dialog[open]");
+  if (!dialog) throw new Error("승인 창이 열리지 않았다");
+  return dialog;
+}
+const sendButton = (d: Element) => [...d.querySelectorAll("button")].find((b) => b.textContent?.includes("서명 요청 보내기"));
+
+describe("승인 창은 주소 단계부터 (approval-signature INV-S13)", () => {
+  it("INV-S13 (실패경로): 주소가 없으면 제목이 「주소를 입력해 주세요」이고 주소 칸만 — 서명 요청 버튼이 없다", () => {
+    render([req], { ...READY, registered: false, ready: false });
+    const d = openApprove();
+    expect(d.textContent).toContain("주소를 입력해 주세요");
+    expect(d.querySelector("[data-step]")).not.toBeNull();
+    expect(sendButton(d)).toBeUndefined();
+  });
+
+  it("INV-S13: 주소가 있으면 제목이 「주소를 확인해 주세요」, 주소 칸 아래에 서명 요청 버튼이 붙는다", () => {
+    render();
+    const d = openApprove();
+    expect(d.textContent).toContain("주소를 확인해 주세요");
+    const step = d.querySelector("[data-step]");
+    const send = sendButton(d);
+    expect(step).not.toBeNull();
+    expect(send).toBeDefined();
+    expect(step!.compareDocumentPosition(send!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("INV-S13 (실패경로): 주소를 바꾸는 중(registered·준비 안 됨)이면 제목이 「새 주소를 입력해 주세요」이고 서명 요청 버튼이 없다", () => {
+    render([req], { ...READY, ready: false });
+    const d = openApprove();
+    expect(d.textContent).toContain("새 주소를 입력해 주세요");
+    expect(sendButton(d)).toBeUndefined();
+  });
+
+  it("INV-S13: 승인 창을 열 때마다 주소 단계에 알린다(바꾸던 입력을 접게)", () => {
+    const onOpen = vi.fn();
+    render([req], { ...READY, onOpen });
+    openApprove();
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe("팬이 쓴 값은 글자로만 보인다 (추가분 3 검사 7)", () => {
   it("닉네임·품목 이름의 태그·javascript:·URL 이 글자 그대로 보이고, 스크립트·이미지·링크 요소가 생기지 않는다", () => {

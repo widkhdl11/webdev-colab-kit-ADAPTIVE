@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { adminClient, approveArgs, approveRpc, payTestOrder, psql, psqlError, registerTestOrder, SEED, signedInClient } from "./helpers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { adminClient, approveArgs, approveRpc, deleteTestOrders, ensureApprovalAddress, payTestOrder, psql, psqlError, registerTestOrder, SEED, signedInClient } from "./helpers";
+import { createTestCreator, removeTestCreator, TEST_CREATOR } from "./test-creator";
 
 // 승인 서명 스펙(docs/specs/approval-signature.md) 중 DB 가 지키는 것.
 // 서명 검증(INV-S2~S4)은 앱 서버가 approve_request 를 부르기 전에 한다. DB 는 승인하는 사람·원문 일치를 한 번 더 보고(INV-S11),
@@ -245,5 +246,41 @@ describe("INV-S11: 가짜 서명은 허용 줄이 있는 DB(로컬)에서만 받
 
   it("INV-S12: 서명 표는 통째로 비우기도 막힌다", () => {
     expect(psqlError(`truncate public.approval_signatures`)).toMatch(/추가만/);
+  });
+});
+
+describe("INV-S13: 받는 주소가 없는 크리에이터의 승인은 거부된다 (manual/0017 뒤)", () => {
+  // 주소 칸을 마음대로 비울 수 있는 시험 전용 크리에이터를 쓴다 — 시드 크리에이터의 주소(하루의 진짜 봉투)는 건드리지 않는다.
+  const creatorId = TEST_CREATOR.creatorId;
+  beforeAll(() => {
+    createTestCreator();
+  });
+  afterAll(() => {
+    deleteTestOrders(); // 시험 크리에이터를 가리키는 주문이 남으면 다음 파일의 시험 크리에이터 정리가 멈춘다
+    removeTestCreator();
+  });
+
+  async function orderWithoutAddress() {
+    psql(`delete from pii.creator_addresses where creator_id = '${creatorId}'`);
+    const o = await registerTestOrder(1, { creatorId });
+    const requestId = await payTestOrder(o);
+    return { ...o, requestId };
+  }
+
+  it("INV-S13 S13 (실패경로): 주소 칸이 없으면 유효한 서명이어도 no_address — 승인·서명 기록이 남지 않는다", async () => {
+    const o = await orderWithoutAddress();
+    const r = await adminClient().rpc("approve_request", approveArgs(o.requestId, { ensureAddress: false }));
+    expect(r.error).toBeNull();
+    expect(r.data).toBe("no_address");
+    expect(psql(`select status from public.approval_requests where request_id = '${o.requestId}'`)).toBe("waiting");
+    expect(psql(`select coalesce(approved_at::text, 'null') from public.orders where id = '${o.orderId}'`)).toBe("null");
+    expect(psql(`select count(*) from public.approval_signatures where request_id = '${o.requestId}'`)).toBe("0");
+  });
+
+  it("INV-S13 S13b: 같은 주문도 주소를 등록한 뒤에는 승인된다", async () => {
+    const o = await orderWithoutAddress();
+    expect((await adminClient().rpc("approve_request", approveArgs(o.requestId, { ensureAddress: false }))).data).toBe("no_address");
+    ensureApprovalAddress(o.requestId);
+    expect((await adminClient().rpc("approve_request", approveArgs(o.requestId, { ensureAddress: false }))).data).toBe("approved");
   });
 });

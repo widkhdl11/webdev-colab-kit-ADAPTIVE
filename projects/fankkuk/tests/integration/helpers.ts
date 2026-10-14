@@ -239,11 +239,31 @@ export async function payTestOrder(o: { orderNo: string; tossOrderId: string }):
   return requestId;
 }
 
+/** 시험 준비용 자리 표시 주소의 iv — 「it-dummy-add」. 시험 전체 정리(global-cleanup)가 이 값을 단 줄만 지운다. */
+export const DUMMY_ADDRESS_IV = Buffer.from("it-dummy-add").toString("base64");
+
+/**
+ * 받는 주소가 없는 크리에이터는 승인되지 않는다(approval-signature INV-S13). 승인을 준비하는 시험은
+ * 그 주문의 크리에이터에게 자리 표시 봉투를 넣어 둔다 — 이미 주소가 있으면(하루의 진짜 봉투 등) 건드리지 않는다.
+ * 이름표 칸은 비워 둔다(manual/0017 적용 전 DB 에서도 넣어지게).
+ */
+export function ensureApprovalAddress(requestId: string): void {
+  const b64 = (n: number) => Buffer.from(crypto.getRandomValues(new Uint8Array(n))).toString("base64");
+  const envelope = JSON.stringify({ v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: b64(256), iv: DUMMY_ADDRESS_IV, ciphertext: b64(40) });
+  psql(
+    `insert into pii.creator_addresses (creator_id, envelope) select o.creator_id, '${envelope}'::jsonb from public.approval_requests q join public.orders o on o.id = q.order_id where q.request_id = '${requestId.replace(/'/g, "''")}' on conflict (creator_id) do nothing`,
+  );
+}
+
 /**
  * 그 주문의 크리에이터로, 가짜 서명(원문 그대로·서명자 fake:<크리에이터 계정>)을 붙여 승인 함수를 부른다(approval-signature INV-S11·S12).
  * 크리에이터 계정이 없는 요청이면 actor 가 비어 not_found 가 돌아온다.
  */
-export function approveArgs(requestId: string): { p_request_id: string; p_actor_id: string | null; p_signed_content: string; p_signer_id: string; p_method: string } {
+export function approveArgs(
+  requestId: string,
+  opts: { ensureAddress?: boolean } = {},
+): { p_request_id: string; p_actor_id: string | null; p_signed_content: string; p_signer_id: string; p_method: string } {
+  if (opts.ensureAddress ?? true) ensureApprovalAddress(requestId);
   const row = psql(
     `select coalesce(c.profile_id::text, '') || '|' || q.payload from public.approval_requests q join public.orders o on o.id = q.order_id join public.creators c on c.id = o.creator_id where q.request_id = '${requestId}'`,
   );

@@ -457,8 +457,9 @@ describe("INV-P12: 개발용 키는 운영에서 만드는 순간 실패한다",
 
 describe("주소가 없는 크리에이터", () => {
   it("주소 칸이 비어 있으면 열 것이 없다고 답하고, 횟수를 쓰지 않고, 상자는 그대로", async () => {
-    psql(`delete from pii.creator_addresses where creator_id = '${ADDRESS_CREATOR_ID}'`);
+    // 주소 없는 승인은 막히므로(approval-signature INV-S13) 승인·검수까지 마친 뒤에 주소 칸을 비운다 — 지금은 지울 길이 없는 상태를 막는 마지막 방어선을 본다
     const g = await inspectedGift();
+    psql(`delete from pii.creator_addresses where creator_id = '${ADDRESS_CREATOR_ID}'`);
     expect(await print(g.qr)).toEqual({ kind: "no_address" });
     expect(logRows(g.orderId)).toEqual([]);
     expect(parcelState(g.qr)).toBe("inspected");

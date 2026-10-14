@@ -14,7 +14,9 @@ import { sendCreatorNotify, sendCreatorProfile } from "@/features/creator-settin
 import { formatDate } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
-import type { MyAddressStatus } from "@/entities/creator/api/my-address-status";
+import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
+import { addressOnFileText } from "@/entities/address/ui/address-on-file-text";
+import { ADDRESS_KEY_MISSING_TEXT } from "@/features/creator-address/ui/address-copy";
 import type { MyVerification, MyVerificationState } from "@/entities/creator/model/creator-verification";
 import { AddressChangeForm } from "@/features/creator-address/ui/address-change-form";
 import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
@@ -134,6 +136,8 @@ export function CreatorSettingsPage({
   const toggleSecurity = (which: "phone" | "password") => setSecurity((cur) => (cur === which ? null : which));
   const toLogin = () => router.push("/login?next=/creator/settings");
   const [addressRegistered, setAddressRegistered] = useState(address.registered);
+  // 등록한 주소의 이름표와 바꾼 날 — 주소 자체는 본인에게도 보이지 않는다(address-protection INV-P16)
+  const [addressOnFile, setAddressOnFile] = useState({ label: address.label, updatedAt: address.updatedAt });
   // 저장된 뒤에만 띄우는 확인 문구 — 바꾼 뒤에도 같은 「등록됨」이라 문구가 없으면 바뀌었는지 알 수 없다
   const [addressMsg, setAddressMsg] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(blockedFans);
@@ -307,6 +311,7 @@ export function CreatorSettingsPage({
           <div className={`card card--soft ${s.inner}`}>
             <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
             <p className="t-strong">{addressRegistered ? "주소를 잠가서 등록해 뒀어요" : "아직 주소를 등록하지 않았어요"}</p>
+            {addressRegistered ? <p data-address-on-file="">{addressOnFileText(addressOnFile)}</p> : null}
             <p className={s["body-gap"]}>{addressRegistered ? `주소는 잠가서 보관해요. ${PROMISE.address}` : `등록하면 바로 잠가서 보관해요. ${PROMISE.address}`}</p>
           </div>
           <p className="t-meta">{addressRegistered ? "아직 출력하지 않은 주문은 바뀐 주소로 나가요." : "등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}</p>
@@ -562,10 +567,12 @@ export function CreatorSettingsPage({
               <AddressChangeForm
                 creatorId={address.creatorId}
                 sealingKeyPem={sealingKeyPem}
-                onSaved={() => {
+                initialLabel={addressOnFile.label}
+                onSaved={(label) => {
                   // 서버에 저장된 뒤에만 「등록됨」으로 바꾼다
                   setAddressMsg(addressRegistered ? "주소를 바꿨어요." : "주소를 등록했어요.");
                   setAddressRegistered(true);
+                  setAddressOnFile({ label, updatedAt: new Date().toISOString() });
                   setSheet(null);
                   router.refresh();
                 }}
@@ -575,7 +582,7 @@ export function CreatorSettingsPage({
             ) : (
               <>
                 <p className={`err ${s["sheet-err"]}`} role="status">
-                  주소 보호 설정이 아직 안 돼 있어요. 지금은 주소를 등록할 수 없어요.
+                  {ADDRESS_KEY_MISSING_TEXT}
                 </p>
                 <div className={s["sheet-btns"]}>
                   <button className="btn btn--line" type="button" onClick={() => setSheet(null)}>

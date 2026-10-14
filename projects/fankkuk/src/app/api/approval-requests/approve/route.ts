@@ -12,6 +12,8 @@ export async function POST(req: Request) {
   return handlePrivateJsonPost(req, async (body) => {
     const viewer = await readViewer(await createRequestSupabase());
     const result = await approveGift({ admin: createAdminSupabase(), viewer, signer: chooseApprovalSigner(process.env) }, body);
-    return result.ok ? { status: 200, body: {} } : { status: result.status, body: { message: result.message } };
+    if (result.ok) return { status: 200, body: {} };
+    // code 는 화면이 갈래를 나눌 실패에만 붙는다(no_address — INV-S13)
+    return { status: result.status, body: result.code ? { message: result.message, code: result.code } : { message: result.message } };
   });
 }

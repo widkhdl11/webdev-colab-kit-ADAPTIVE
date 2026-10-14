@@ -34,18 +34,18 @@ function fakeAdmin(result: { data?: unknown; error?: { code: string } | null } =
 describe("크리에이터 주소 등록·변경 (address-protection INV-P13)", () => {
   it("INV-P13 S13: 로그인한 크리에이터의 ID 와 봉인 하나, 서명 방식을 저장 함수에 넘긴다", async () => {
     const f = fakeAdmin();
-    expect(await saveCreatorAddress({ admin: f.admin, viewer: HARU, signer }, { address: envelope })).toEqual({ ok: true });
+    expect(await saveCreatorAddress({ admin: f.admin, viewer: HARU, signer }, { address: envelope, label: "home" })).toEqual({ ok: true });
     expect(f.calls).toEqual([
-      { fn: "set_creator_address", args: { p_actor_id: HARU.userId, p_envelope: envelope, p_method: "fake" } },
+      { fn: "set_creator_address", args: { p_actor_id: HARU.userId, p_envelope: envelope, p_label: "home", p_method: "fake" } },
     ]);
   });
 
   it("INV-P13 S13c: 본문에 다른 크리에이터 값을 붙여도 세션의 크리에이터로만 저장한다", async () => {
     const f = fakeAdmin();
-    const body = { address: envelope, actorId: "someone", creatorId: "00000000-0000-4000-b000-000000000002", p_actor_id: "x", method: "kakao" };
+    const body = { address: envelope, label: "home", actorId: "someone", creatorId: "00000000-0000-4000-b000-000000000002", p_actor_id: "x", method: "kakao" };
     expect(await saveCreatorAddress({ admin: f.admin, viewer: HARU, signer }, body)).toEqual({ ok: true });
     expect(f.calls).toEqual([
-      { fn: "set_creator_address", args: { p_actor_id: HARU.userId, p_envelope: envelope, p_method: "fake" } },
+      { fn: "set_creator_address", args: { p_actor_id: HARU.userId, p_envelope: envelope, p_label: "home", p_method: "fake" } },
     ]);
   });
 
@@ -56,14 +56,14 @@ describe("크리에이터 주소 등록·변경 (address-protection INV-P13)", (
       [{ userId: "o", role: "operator" }, 403],
     ] as const) {
       const f = fakeAdmin();
-      expect(await saveCreatorAddress({ admin: f.admin, viewer, signer }, { address: envelope })).toMatchObject({ ok: false, status });
+      expect(await saveCreatorAddress({ admin: f.admin, viewer, signer }, { address: envelope, label: "home" })).toMatchObject({ ok: false, status });
       expect(f.calls).toEqual([]);
     }
   });
 
   it("INV-P13 S13d (실패경로): 서명 창구가 없으면(운영) 503 — DB 를 부르지 않는다", async () => {
     const f = fakeAdmin();
-    expect(await saveCreatorAddress({ admin: f.admin, viewer: HARU, signer: null }, { address: envelope })).toMatchObject({
+    expect(await saveCreatorAddress({ admin: f.admin, viewer: HARU, signer: null }, { address: envelope, label: "home" })).toMatchObject({
       ok: false,
       status: 503,
     });
@@ -73,7 +73,7 @@ describe("크리에이터 주소 등록·변경 (address-protection INV-P13)", (
   it("INV-P13 S13d (실패경로): 운영 표시로 고른 창구로는 저장하지 않는다", async () => {
     const f = fakeAdmin();
     const prodSigner = chooseApprovalSigner({ NODE_ENV: "production" });
-    expect(await saveCreatorAddress({ admin: f.admin, viewer: HARU, signer: prodSigner }, { address: envelope })).toMatchObject({
+    expect(await saveCreatorAddress({ admin: f.admin, viewer: HARU, signer: prodSigner }, { address: envelope, label: "home" })).toMatchObject({
       ok: false,
       status: 503,
     });
@@ -98,11 +98,30 @@ describe("크리에이터 주소 등록·변경 (address-protection INV-P13)", (
   });
 
   it("DB 결과를 문구로 — 크리에이터 아님 403, 방식 거부 503, 형식 오류 400, 모르는 결과·오류는 던진다", async () => {
-    const run = (r: Parameters<typeof fakeAdmin>[0]) => saveCreatorAddress({ admin: fakeAdmin(r).admin, viewer: HARU, signer }, { address: envelope });
+    const run = (r: Parameters<typeof fakeAdmin>[0]) => saveCreatorAddress({ admin: fakeAdmin(r).admin, viewer: HARU, signer }, { address: envelope, label: "home" });
     expect(await run({ data: "not_creator" })).toMatchObject({ ok: false, status: 403 });
     expect(await run({ data: "method_refused" })).toMatchObject({ ok: false, status: 503 });
     expect(await run({ error: { code: "22023" } })).toMatchObject({ ok: false, status: 400 });
     await expect(run({ data: "weird" })).rejects.toThrow();
     await expect(run({ error: { code: "42501" } })).rejects.toThrow();
+  });
+});
+
+describe("주소 이름표 (address-protection INV-P16)", () => {
+  it("INV-P16 S16: 고른 이름표를 저장 함수에 넘긴다", async () => {
+    const f = fakeAdmin();
+    expect(await saveCreatorAddress({ admin: f.admin, viewer: HARU, signer }, { address: envelope, label: "studio" })).toEqual({ ok: true });
+    expect(f.calls).toEqual([
+      { fn: "set_creator_address", args: { p_actor_id: HARU.userId, p_envelope: envelope, p_label: "studio", p_method: "fake" } },
+    ]);
+  });
+
+  it("INV-P16 S16b (실패경로): 이름표가 없거나 목록 밖(주소 글자 포함)이면 400 — DB 를 부르지 않는다", async () => {
+    for (const label of [undefined, null, "", "서울 강남구 집", "HOME", "집"]) {
+      const f = fakeAdmin();
+      const r = await saveCreatorAddress({ admin: f.admin, viewer: HARU, signer }, { address: envelope, label });
+      expect(r).toMatchObject({ ok: false, status: 400, message: "주소 이름표를 골라 주세요." });
+      expect(f.calls).toEqual([]);
+    }
   });
 });

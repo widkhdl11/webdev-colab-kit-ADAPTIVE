@@ -10,3 +10,7 @@
 .icon { display: grid; place-items: center; width: var(--space-12); height: var(--space-12); border-radius: var(--r-pill); background: var(--primary-50); color: var(--primary); }
 .icon svg { width: var(--space-6); height: var(--space-6); }
 
+
+/* 승인 창 — 등록한 주소 확인 칸(이름표·등록한 날, INV-P16) */
+.addr-on-file { display: grid; gap: 8px; margin-top: 8px; }
+.addr-saved { margin-top: 8px; }
