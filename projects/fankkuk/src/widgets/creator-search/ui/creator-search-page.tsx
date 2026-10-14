@@ -137,7 +137,7 @@ export function CreatorSearchPage({
         </p>
         {followMode === "save" ? <p className={s.hint}>{FOLLOW_NICKNAME_NOTICE}</p> : null}
         {/* 걸러진 카드는 지우지 않고 숨긴다 — 지우면 팔로우 버튼이 사라지며 누른 상태·저장 중 표시를 잃는다 */}
-        <ul className={s.grid} hidden={shown.size === 0}>
+        <ul className={`${s.grid} pane-wide`} hidden={shown.size === 0}>
           {creators.map((c) => {
             const own = c.id === ownCreatorId;
             return (

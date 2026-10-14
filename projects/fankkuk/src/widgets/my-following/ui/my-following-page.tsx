@@ -53,7 +53,7 @@ export function MyFollowingPanel({ creators }: { creators: readonly CreatorCard[
         {failedName ? `${failedName}님 팔로우를 끊지 못했어요. 잠시 뒤 다시 눌러 주세요.` : ""}
       </p>
       {list.length > 0 ? (
-        <ul className={s.grid}>
+        <ul className={`${s.grid} pane-wide`}>
           {list.map((c) => (
             <li key={c.id} className={s.fc}>
               <div className={s.top}>

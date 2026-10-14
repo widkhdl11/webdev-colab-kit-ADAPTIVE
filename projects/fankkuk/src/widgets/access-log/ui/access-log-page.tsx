@@ -85,7 +85,7 @@ export function AccessLogPage({
         {entries.length === 0 ? (
           <p className="empty">아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
         ) : (
-          <div className="table-wrap" tabIndex={0} role="region" aria-label="주소 열람 기록 표">
+          <div className="table-wrap pane-wide" tabIndex={0} role="region" aria-label="주소 열람 기록 표">
             <table className="table">
               <caption className="sr-only">주소 열람 기록. 최근 순</caption>
               <thead>
