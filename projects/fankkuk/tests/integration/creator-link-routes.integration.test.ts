@@ -266,6 +266,40 @@ describe("미리보기·공지 이미지 라우트가 그리는 것 (INV-E7·E10
     expect(captured.shots).toEqual([]);
   });
 
+  it("INV-E10 (실패경로): 공지 이미지 크기 검사는 DB 를 읽기 전이다 — 없는 크리에이터여도 크기가 틀리면 400", async () => {
+    const nobody = "00000000-0000-4000-b000-0000000000ff";
+    const get = (q: string) => noticeGet(new Request(`http://app.test/api/notice/${nobody}${q}`), { params: Promise.resolve({ id: nobody }) });
+    expect((await get("?size=big")).status).toBe(400);
+    expect((await get("?size=square")).status).toBe(404);
+  });
+
+  it("INV-E10: 공지 이미지 쿼리가 size·download 꼴이 아니면 정해진 주소로 넘기고(307, 캐시 안 함) 그리지 않는다", async () => {
+    await setHandleOk(A.login, "rt_notice_q");
+    const get = (q: string) => noticeGet(new Request(`http://app.test/api/notice/${A.creatorId}${q}`), { params: Promise.resolve({ id: A.creatorId }) });
+    for (const [q, to] of [
+      ["?size=square&utm=x", "?size=square"],
+      ["?size=story&download=0", "?size=story"],
+      ["?download=1&size=wide", "?size=wide&download=1"],
+      ["?size=wide&download=1&v=2", "?size=wide&download=1"],
+    ] as const) {
+      const res = await get(q);
+      const loc = new URL(res.headers.get("location") ?? "", "http://app.test");
+      expect([q, res.status, loc.pathname + loc.search, res.headers.get("cache-control")]).toEqual([q, 307, `/api/notice/${A.creatorId}${to}`, "no-store"]);
+    }
+    expect(captured.shots).toEqual([]);
+  });
+
+  it("INV-E10: 내려받기(download=1)는 캐시하지 않고 파일로 — 바로 열기는 짧게 캐시한다. 글꼴은 시안 굵기 넷(500·600·700·800)을 넘긴다", async () => {
+    await setHandleOk(A.login, "rt_notice_dl");
+    const get = (q: string) => noticeGet(new Request(`http://app.test/api/notice/${A.creatorId}${q}`), { params: Promise.resolve({ id: A.creatorId }) });
+    const dl = await get("?size=story&download=1");
+    expect([dl.status, dl.headers.get("cache-control"), dl.headers.get("content-disposition")]).toEqual([200, "no-store", 'attachment; filename="fankkuk-notice-story.png"']);
+    const fonts = (lastShot().init as { fonts?: { weight: number }[] } | undefined)?.fonts ?? [];
+    expect(fonts.map((f) => f.weight)).toEqual([500, 600, 700, 800]);
+    const view = await get("?size=story");
+    expect([view.status, view.headers.get("cache-control"), view.headers.get("content-disposition")]).toEqual([200, "public, max-age=300", null]);
+  });
+
   it("INV-E10 S10: 팬덤 심볼을 고르면 미리보기 라우트는 심볼 판(v=s{판})으로 그리고, 프로필 사진 판 주소는 심볼 판으로 넘긴다", async () => {
     const square = await sharp({ create: { width: 600, height: 600, channels: 3, background: "#88e" } }).jpeg().toBuffer();
     const viewer = { userId: A.id, role: "creator" as const };

@@ -27,6 +27,16 @@ describe("크리에이터 공개 정보 저장 (my-account INV-A9)", () => {
     expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_name: "하루달", p_intro: "안녕하세요", p_searchable: false } }]);
   });
 
+  it("INV-A9: 본문에 있는 칸만 DB 에 넘긴다 — 없는 칸은 DB 가 지금 값 그대로 둔다(화면마다 자기 칸만 저장)", async () => {
+    const f = fakeClient();
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { searchable: false })).toEqual({ ok: true });
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { name: "하루달", intro: "소개", fanName: "" })).toEqual({ ok: true });
+    expect(f.calls).toEqual([
+      { fn: "update_my_creator_profile", args: { p_searchable: false } },
+      { fn: "update_my_creator_profile", args: { p_name: "하루달", p_intro: "소개", p_fan_name: "" } },
+    ]);
+  });
+
   it("INV-A9 S9b (실패경로): 공개 이름 21자·빈 이름·소개 41자·소개 줄바꿈·노출 빈 값은 400, DB 를 부르지 않는다", async () => {
     for (const body of [
       { name: "가".repeat(21), intro: "", searchable: true },
@@ -34,7 +44,8 @@ describe("크리에이터 공개 정보 저장 (my-account INV-A9)", () => {
       { name: "하루달", intro: "가".repeat(41), searchable: true },
       { name: "하루달", intro: "첫 줄\n둘째 줄", searchable: true },
       { name: "하루달", intro: "", searchable: "yes" },
-      { name: "하루달", searchable: true },
+      { name: "하루달", intro: null, searchable: true },
+      { searchable: null },
       null,
     ]) {
       const f = fakeClient();

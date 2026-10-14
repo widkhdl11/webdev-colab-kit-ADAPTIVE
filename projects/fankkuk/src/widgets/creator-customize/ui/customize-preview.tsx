@@ -37,7 +37,7 @@ export function CustomizePreview({ v }: { v: PreviewValues }) {
         </button>
       </div>
       <div className={s.pvBody} id="cz-body">
-        <div className={`card ${s.pvCard}`} aria-label="링크 페이지">
+        <div className={`card ${s.pvCard}`} role="group" aria-label="링크 페이지">
           <div className={s.pvBg} aria-hidden="true">
             {v.backgroundUrl ? <img src={v.backgroundUrl} alt="" width={1280} height={427} /> : null}
           </div>

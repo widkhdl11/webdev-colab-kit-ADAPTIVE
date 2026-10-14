@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { canDownloadNotice, linkText } from "@/entities/creator/model/creator-handle";
 import { thanksLine } from "@/entities/creator/model/fan-name";
 import {
@@ -16,7 +16,7 @@ import {
 import { deleteCreatorImage, sendCreatorImage } from "@/features/creator-photo/api/send-creator-image";
 import { deleteCreatorPhoto, sendCreatorPhoto } from "@/features/creator-photo/api/send-creator-photo";
 import { sendCreatorProfile, sendPreviewPick } from "@/features/creator-settings-save/api/send-creator-settings";
-import { clipChars, FAN_NAME_MAX, INTRO_MAX, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
+import { clipChars, FAN_NAME_MAX, INTRO_MAX, oneLine, PUBLIC_NAME_MAX } from "@/features/creator-settings-save/model/creator-settings-input";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { CustomizePreview } from "./customize-preview";
 import { ImageField, type ImageSendResult } from "./image-field";
@@ -27,16 +27,16 @@ import s from "./creator-customize.module.css";
 // 편집 칸(프로필 · 팬덤 · 링크 미리보기 이미지 · 공지 이미지 받기) + 내 링크 페이지 바로 미리보기. 1023px 이하는 미리보기가 위에 붙어 따라온다.
 // - 사진 셋(프로필 사진·배경사진·심볼)은 고르는 즉시 서버로 보낸다. 서버가 열어 보고 사진 정보를 지운 뒤 다시 굽는다 — 화면은 보내기만 한다.
 // - 심볼은 권리 확인 체크를 해야 고를 수 있다. 체크는 요청에도 실려 서버가 다시 본다(INV-E12). 신고 버튼은 두지 않는다(권리 문제는 1:1 문의).
-// - 공개 이름·한 줄 소개·팬을 부르는 이름은 「저장」으로 보낸다(프로필·팬덤 카드 어느 쪽 버튼이든 세 칸을 같이 — 같은 DB 함수이고 찾기 노출은 지금 값 그대로 보낸다).
-// - 미리보기 이미지 고르기는 누르는 즉시 저장한다. 심볼이 없으면 고를 수 없다(DB 도 거부한다).
+// - 공개 이름·한 줄 소개·팬을 부르는 이름은 「저장」으로 보낸다(프로필·팬덤 카드 어느 쪽 버튼이든 세 칸을 같이). 이 화면이 고치는 세 칸만 보낸다 —
+//   찾기 노출은 「주소와 설정」의 칸이라 보내지 않는다(DB 가 지금 값 그대로 둔다. 처음 읽은 값을 보내면 그사이 바꾼 값을 덮어쓴다).
+// - 미리보기 이미지 고르기는 누르는 즉시 저장한다. 저장하는 동안에는 다시 고를 수 없다(응답 순서가 뒤바뀌어 엉뚱한 값으로 되돌리지 않게).
+//   심볼이 없으면 고를 수 없다(DB 도 거부한다). 심볼을 지운 뒤의 고르기는 서버가 돌려준 값을 쓴다.
 // - 테마 색·무늬·글꼴 고르기는 없다(디자인 기준 10절).
 
 export type CreatorCustomizeProps = {
   creatorId: string;
   verified: boolean;
   handle: string | null;
-  /** 찾기 노출 — 이 화면에서는 바꾸지 않고 저장 때 그대로 보낸다 */
-  searchable: boolean;
   name: string;
   intro: string;
   fanName: string;
@@ -65,6 +65,9 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
   const [symbolPath, setSymbolPath] = useState(p.look.symbolPath);
   const [pick, setPick] = useState<PreviewPick>(p.look.previewPick);
   const [pickMsg, setPickMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pickSaving, setPickSaving] = useState(false);
+  // 같은 틀 안에서 두 번 눌러도 막히게 — 상태는 다음 그리기 전까지 옛 값이다
+  const pickBusy = useRef(false);
   const [rights, setRights] = useState(false);
 
   const toLogin = () => router.push(LOGIN);
@@ -79,7 +82,7 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
     if (saving) return;
     setSaving(true);
     setSaveMsg(null);
-    const r = await sendCreatorProfile({ name, intro, searchable: p.searchable, fanName });
+    const r = await sendCreatorProfile({ name, intro, fanName });
     setSaving(false);
     if (r.kind === "login") return toLogin();
     if (r.kind === "failed") return setSaveMsg({ ok: false, text: r.message, at });
@@ -88,10 +91,15 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
   };
 
   const choosePick = async (next: PreviewPick) => {
+    if (pickBusy.current) return;
+    pickBusy.current = true;
+    setPickSaving(true);
     const before = pick;
     setPick(next);
     setPickMsg(null);
     const r = await sendPreviewPick({ pick: next });
+    pickBusy.current = false;
+    setPickSaving(false);
     if (r.kind === "login") return toLogin();
     if (r.kind === "failed") {
       setPick(before);
@@ -192,7 +200,7 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
                 value={intro}
                 autoComplete="off"
                 // 한 줄 — 붙여 넣은 줄바꿈은 띄어쓰기로 바꾼다(creator-link INV-E6)
-                onChange={(e) => setIntro(clipChars(e.target.value.replace(/[\r\n\u2028\u2029]+/g, " "), INTRO_MAX))}
+                onChange={(e) => setIntro(clipChars(oneLine(e.target.value), INTRO_MAX))}
                 aria-describedby="cz-intro-hint"
               />
               <p className="t-meta" id="cz-intro-hint">
@@ -222,7 +230,7 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
                 value={fanName}
                 placeholder="예: 달빛지기"
                 autoComplete="off"
-                onChange={(e) => setFanName(clipChars(e.target.value.replace(/[\r\n\u2028\u2029]+/g, " "), FAN_NAME_MAX))}
+                onChange={(e) => setFanName(clipChars(oneLine(e.target.value), FAN_NAME_MAX))}
                 aria-describedby="cz-fan-hint"
               />
               <p className="t-meta" id="cz-fan-hint">
@@ -243,9 +251,9 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
               blocked={rights ? null : "cz-sym-right"}
               upload={(f) => sendCreatorImage("symbol", f, { rightsChecked: rights })}
               remove={() => deleteCreatorImage("symbol")}
-              onSaved={(path) => {
+              onSaved={(path, pickNow) => {
                 setSymbolPath(path);
-                if (!path) setPick("photo"); // 심볼을 지우면 미리보기는 프로필 사진으로 돌아간다(DB 가 같이 바꾼다)
+                if (pickNow) setPick(pickNow); // 심볼을 지우면 DB 가 고르기를 프로필 사진으로 되돌린다 — 그 값을 서버 응답으로 받는다
               }}
               onLogin={toLogin}
               savedText="팬덤 심볼을 올렸어요."
@@ -262,7 +270,7 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
               링크 미리보기 이미지
             </h2>
             <p className="t-meta">메신저나 SNS에 내 링크를 붙여 넣으면 보이는 그림이에요.</p>
-            <div className={s.picks} role="radiogroup" aria-labelledby="h-og" aria-describedby="cz-pick-msg">
+            <div className={s.picks} role="radiogroup" aria-labelledby="h-og" aria-describedby="cz-pick-msg" aria-busy={pickSaving}>
               <label className={s.pickOpt}>
                 <input type="radio" name="cz-og" value="photo" checked={shownPick === "photo"} onChange={() => void choosePick("photo")} />
                 <span>프로필 사진</span>

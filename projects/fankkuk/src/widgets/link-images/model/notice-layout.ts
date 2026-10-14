@@ -53,7 +53,7 @@ export const NOTICE_LAYOUT: Readonly<Record<NoticeSize, NoticeLayout>> = {
     textBottom: 1920 - STORY_SAFE_INSET,
     padX: 96,
     nameSizes: [88, 64, 48],
-    introSize: 44,
+    introSize: 48, // 시안 story-card.html .nc-bio 48px
     footSize: 40,
   },
   wide: {

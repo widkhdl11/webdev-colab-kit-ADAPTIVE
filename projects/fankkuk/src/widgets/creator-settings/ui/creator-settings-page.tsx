@@ -180,8 +180,9 @@ export function CreatorSettingsPage({
       return;
     }
     setProfileSaving(true);
-    // 이름·소개는 이 화면에서 고치지 않는다 — 서버가 준 지금 값 그대로 보내고, 팬덤 이름은 보내지 않는다(DB 가 그대로 둔다)
-    const r = await sendCreatorProfile({ name: settings.publicName, intro: settings.intro, searchable: visible });
+    // 이름·소개·팬덤 이름은 이 화면에서 고치지 않는다 — 찾기 노출 한 칸만 보낸다(나머지는 DB 가 지금 값 그대로 둔다).
+    // 처음 읽은 이름·소개를 같이 보내면 그사이 「내 팬꾹 꾸미기」에서 바꾼 값을 옛 값으로 덮어쓴다
+    const r = await sendCreatorProfile({ searchable: visible });
     const t = r.kind === "ok" ? await sendCreatorTags({ tagIds: tags.tagIds, customTag: tags.customTag }) : r;
     setProfileSaving(false);
     if (r.kind === "login" || t.kind === "login") {
@@ -373,10 +374,10 @@ export function CreatorSettingsPage({
               프로필
             </h2>
           </div>
-          {/* 공개 이름·한 줄 소개·팬을 부르는 이름·프로필 사진은 「내 팬꾹 꾸미기」에서 바꾼다(디자인 기준 10절) — 같은 칸이 두 곳에 있지 않게 */}
+          {/* 공개 이름·한 줄 소개·팬을 부르는 이름·프로필 사진·배경사진·팬덤 심볼은 「내 팬꾹 꾸미기」에서 바꾼다(디자인 기준 10절) — 같은 칸이 두 곳에 있지 않게 */}
           <div className={`card card--soft ${s.inner}`}>
             <p className="t-strong">{settings.publicName}</p>
-            <p className={s["body-gap"]}>공개 이름·한 줄 소개·프로필 사진·팬을 부르는 이름은 내 팬꾹 꾸미기에서 바꿔요.</p>
+            <p className={s["body-gap"]}>공개 이름·한 줄 소개·프로필 사진·배경사진·팬을 부르는 이름·팬덤 심볼은 내 팬꾹 꾸미기에서 바꿔요.</p>
             <p className={s["inner-btn"]}>
               <a className="btn btn--line btn--sm" href="/creator/customize">
                 내 팬꾹 꾸미기에서 바꿔요

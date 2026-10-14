@@ -34,7 +34,6 @@ const base: CreatorCustomizeProps = {
   creatorId: ID,
   verified: true,
   handle: "haru",
-  searchable: true,
   name: "하루",
   intro: "느긋한 방송",
   fanName: "",
@@ -101,6 +100,54 @@ describe("INV-E10: 링크 미리보기 이미지 고르기", () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect([url, JSON.parse(String(init.body))]).toEqual(["/api/creator/preview-pick", { pick: "symbol" }]);
     expect(host.querySelector<HTMLInputElement>("input[name='cz-og'][value='symbol']")!.checked).toBe(true);
+  });
+});
+
+describe("INV-E10: 고르기를 빠르게 두 번 눌러도 마지막 화면 값과 저장 값이 같다", () => {
+  it("INV-E10: 저장하는 동안 다른 쪽을 눌러도 보내지 않는다 — 첫 요청이 실패하면 저장된 값(프로필 사진)으로 돌아간다", async () => {
+    await render({ look: { bgPath: null, symbolPath: `${ID}/sym-1.webp`, previewPick: "photo" } });
+    let answer: (r: Response) => void = () => undefined;
+    fetchMock.mockImplementationOnce(() => new Promise<Response>((r) => (answer = r)));
+    const radio = (v: string) => host.querySelector<HTMLInputElement>(`input[name='cz-og'][value='${v}']`)!;
+    await act(async () => radio("symbol").click());
+    await act(async () => radio("photo").click());
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(radio("symbol").checked).toBe(true);
+    await act(async () => answer(new Response(JSON.stringify({ message: "잠시 뒤 다시 해 주세요." }), { status: 400 })));
+    expect([radio("photo").checked, host.querySelector("#cz-pick-msg")?.textContent]).toEqual([true, "잠시 뒤 다시 해 주세요."]);
+    // 끝난 뒤에는 다시 고를 수 있다
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    await act(async () => radio("symbol").click());
+    expect([fetchMock.mock.calls.length, radio("symbol").checked]).toEqual([2, true]);
+  });
+
+  it("INV-E10·E12: 심볼을 지우면 미리보기 고르기는 서버가 돌려준 값으로 바뀐다", async () => {
+    await render({ look: { bgPath: null, symbolPath: `${ID}/sym-1.webp`, previewPick: "symbol" } });
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ path: null, previewPick: "photo" }), { status: 200 }));
+    const symGroup = host.querySelector("[aria-labelledby='cz-sym-t']")!;
+    const removeBtn = [...symGroup.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === "지우기")!;
+    await act(async () => {
+      removeBtn.click();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/creator/image/symbol");
+    expect(host.querySelector<HTMLInputElement>("input[name='cz-og'][value='photo']")!.checked).toBe(true);
+    // 다시 올려도 DB 의 고르기는 프로필 사진이다 — 화면이 지우기 전 값(심볼)을 들고 있으면 여기서 심볼이 켜진다
+    await act(async () => rights().click());
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ path: `${ID}/sym-2.webp`, previewPick: "photo" }), { status: 200 }));
+    await choose(symbolFile(), new File([new Uint8Array([1, 2, 3])], "sym.png", { type: "image/png" }));
+    expect([host.querySelector<HTMLInputElement>("input[name='cz-og'][value='photo']")!.checked, host.querySelector<HTMLInputElement>("input[name='cz-og'][value='symbol']")!.checked]).toEqual([true, false]);
+  });
+});
+
+describe("INV-A9: 이 화면은 자기가 고치는 칸만 보낸다", () => {
+  it("INV-A9: 저장 본문은 공개 이름·한 줄 소개·팬을 부르는 이름 — 찾기 노출은 보내지 않는다(다른 화면의 칸을 덮어쓰지 않게)", async () => {
+    await render();
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    const save = [...host.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === "저장")!;
+    await act(async () => save.click());
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect([url, JSON.parse(String(init.body))]).toEqual(["/api/creator/profile", { name: "하루", intro: "느긋한 방송", fanName: "" }]);
   });
 });
 

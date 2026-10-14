@@ -4,6 +4,7 @@
 // - 공지(홍보 카드 — 정사각 1080×1080·스토리 세로 1080×1920·가로 1200×675, 시안 docs/design/mockups/addendum/customize/story-card.html, 디자인 기준 10절):
 //   배경사진(없으면 단색)·프로필 사진(배경 아래 가장자리에 걸침)·공개 이름·한 줄 소개, 하단에 작은 「팬꾹으로 선물 보내기」와 링크 주소.
 //   「선물은 팬꾹으로 받아요」 같은 부탁 문구·로고·심볼은 넣지 않는다. 스토리 세로판은 위·아래 250px 에 글자가 없다(자리는 notice-layout).
+//   굵기는 시안 그대로 세 크기 모두 같다 — 이름 800 · 한 줄 소개 500 · 「팬꾹으로 선물 보내기」 700 · 링크 주소 600(NOTICE_WEIGHT, 라우트가 이 굵기의 글꼴을 불러온다).
 // 그리는 값은 previewImageInput·noticeImageInput 의 결과와 정해진 문구뿐이다.
 // next/og 는 CSS 변수를 읽지 못해 색을 값으로 적는다 — 미리보기는 design-rules 9절의 토큰 값, 공지 이미지는 승인된 시안 값
 // (bg = 시안 카드 몸통 · cover = --surface-selected 단색 · ink · sub · accent = --brand-ink · photo = --face-6, 사진이 없을 때 원 바탕).
@@ -13,6 +14,12 @@ import { NOTICE_LAYOUT, noticeNameSize } from "../model/notice-layout";
 
 const COLOR = { bg: "#FCECE8", card: "#FFF5F1", cover: "#FCECE8", ink: "#343039", sub: "#665D65", accent: "#A4433D", white: "#FFFFFF", photo: "#F7C8D4" } as const;
 const FONT = "Pretendard";
+
+/** 공지 이미지 글자 굵기(시안 story-card.html — .nc-name 800 · .nc-bio 500 · .nc-foot 700 · .nc-foot span 600). */
+export const NOTICE_WEIGHT = { name: 800, intro: 500, cta: 700, link: 600 } as const;
+
+/** 공지 이미지가 쓰는 굵기 — 라우트가 이 굵기의 글꼴만 불러온다. */
+export const NOTICE_FONT_WEIGHTS = [500, 600, 700, 800] as const;
 
 /** 시안 규칙: 5자까지 112px, 6~10자 80px, 11~20자 56px. */
 function nameSize(name: string): number {
@@ -77,13 +84,13 @@ export function NoticeImageCard({ size, input, photo, background }: { size: Noti
           textAlign: "center",
         }}
       >
-        <div style={{ display: "flex", fontSize: name, fontWeight: 800, letterSpacing: -2, lineHeight: 1.15 }}>{input.name}</div>
+        <div style={{ display: "flex", fontSize: name, fontWeight: NOTICE_WEIGHT.name, letterSpacing: -2, lineHeight: 1.15 }}>{input.name}</div>
         {input.intro ? (
-          <div style={{ display: "flex", marginTop: Math.round(l.introSize * 0.5), fontSize: l.introSize, fontWeight: 800, lineHeight: 1.45, color: COLOR.sub }}>{input.intro}</div>
+          <div style={{ display: "flex", marginTop: Math.round(l.introSize * 0.5), fontSize: l.introSize, fontWeight: NOTICE_WEIGHT.intro, lineHeight: 1.45, color: COLOR.sub }}>{input.intro}</div>
         ) : null}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "auto", fontSize: l.footSize, fontWeight: 800, lineHeight: 1.3 }}>
-          <div style={{ display: "flex", color: COLOR.accent }}>팬꾹으로 선물 보내기</div>
-          <div style={{ display: "flex", marginTop: 6, color: COLOR.sub }}>{input.linkText}</div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "auto", fontSize: l.footSize, lineHeight: 1.3 }}>
+          <div style={{ display: "flex", fontWeight: NOTICE_WEIGHT.cta, color: COLOR.accent }}>팬꾹으로 선물 보내기</div>
+          <div style={{ display: "flex", marginTop: 8, fontWeight: NOTICE_WEIGHT.link, color: COLOR.sub }}>{input.linkText}</div>
         </div>
       </div>
     </div>

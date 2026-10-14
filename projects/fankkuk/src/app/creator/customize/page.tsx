@@ -40,7 +40,6 @@ export default async function Page() {
           creatorId={creatorId}
           verified={state.verified}
           handle={link.handle}
-          searchable={settings.visibleInSearch}
           name={settings.publicName}
           intro={settings.intro}
           fanName={settings.fanName}

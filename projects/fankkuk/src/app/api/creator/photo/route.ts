@@ -1,6 +1,7 @@
 import { readViewer, type Viewer } from "@/entities/session/model/viewer";
 import { PHOTO_BODY_LIMIT } from "@/shared/lib/image/photo-limits";
-import { photoGate, removeCreatorPhoto, saveCreatorPhoto, type PhotoResult } from "@/features/creator-photo/model/save-creator-photo";
+import { photoGate } from "@/features/creator-photo/model/photo-slot";
+import { removeCreatorPhoto, saveCreatorPhoto, type PhotoResult } from "@/features/creator-photo/model/save-creator-photo";
 import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import { isSameOrigin } from "@/shared/lib/http/same-origin";
@@ -24,7 +25,7 @@ async function run(req: Request, work: Work): Promise<Response> {
   if (!isSameOrigin(req.headers)) return Response.json({ message: "잘못된 요청이에요." }, { status: 403, headers: NO_STORE });
   try {
     const viewer = await readViewer(await createRequestSupabase());
-    const denied = photoGate(viewer);
+    const denied = photoGate(viewer, "프로필 사진");
     if (denied || !viewer) return reply(denied ?? { ok: false, status: 401, message: "로그인이 필요해요." });
     const result = await work({ admin: createAdminSupabase(), viewer });
     return result instanceof Response ? result : reply(result);

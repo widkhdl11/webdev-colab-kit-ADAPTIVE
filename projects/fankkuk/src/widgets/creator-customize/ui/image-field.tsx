@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
+import type { PreviewPick } from "@/entities/creator/model/link-images";
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
 import s from "./creator-customize.module.css";
@@ -9,7 +10,7 @@ import s from "./creator-customize.module.css";
 // 파일 칸은 sr-only 로 숨기고 라벨을 버튼 모양으로 보인다(키보드·화면 읽기는 그대로). 결과 문구는 파일 칸의 설명으로 이어 읽힌다.
 // 보내기 전 검사(종류·크기)는 안내일 뿐이다 — 판단은 서버가 다시 한다. 막혀 있으면(blocked) 파일 칸을 끄고 그 까닭을 설명으로 잇는다.
 
-export type ImageSendResult = { kind: "ok"; path: string | null } | { kind: "login" } | { kind: "failed"; message: string };
+export type ImageSendResult = { kind: "ok"; path: string | null; previewPick?: PreviewPick | null } | { kind: "login" } | { kind: "failed"; message: string };
 
 export function ImageField({
   id,
@@ -41,7 +42,8 @@ export function ImageField({
   blocked?: string | null;
   upload: (file: File) => Promise<ImageSendResult>;
   remove: () => Promise<ImageSendResult>;
-  onSaved: (path: string | null) => void;
+  /** 저장된 새 경로(지웠으면 null)와, 서버가 알려 준 그 뒤의 미리보기 고르기(없으면 null) */
+  onSaved: (path: string | null, previewPick: PreviewPick | null) => void;
   onLogin: () => void;
   savedText: string;
   removedText: string;
@@ -55,7 +57,7 @@ export function ImageField({
     if (fileRef.current) fileRef.current.value = "";
     if (r.kind === "login") return onLogin();
     if (r.kind === "failed") return setMsg({ ok: false, text: r.message });
-    onSaved(r.path);
+    onSaved(r.path, r.previewPick ?? null);
     setMsg({ ok: true, text: okText });
   };
 

@@ -115,9 +115,12 @@ export function parseNoticeSize(raw: string | null): NoticeSize | null {
   return raw === "square" || raw === "story" || raw === "wide" ? raw : null;
 }
 
-/** 공지 이미지 주소 — 로그인 없이 열리는 공개 화면이다(스펙 「공개 화면」). */
-export function noticeImagePath(creatorId: string, size: NoticeSize): string {
-  return `/api/notice/${creatorId}?size=${size}`;
+/**
+ * 공지 이미지 주소 — 로그인 없이 열리는 공개 화면이다(스펙 「공개 화면」). 쿼리는 size 와(내려받기면) download=1 둘뿐이고 순서도 이것이 정본이다 —
+ * 라우트는 다른 꼴로 들어오면 이 주소로 넘긴다(쿼리를 바꿔 붙여 공유 캐시를 우회하지 못하게).
+ */
+export function noticeImagePath(creatorId: string, size: NoticeSize, opts: { download?: boolean } = {}): string {
+  return `/api/notice/${creatorId}?size=${size}${opts.download ? "&download=1" : ""}`;
 }
 
 export type NoticeImageInput = {

@@ -14,6 +14,11 @@ export function clipChars(s: string, max: number): string {
   return [...s.trimStart()].slice(0, max).join("");
 }
 
+/** 한 줄 칸(한 줄 소개·팬을 부르는 이름)에 붙여 넣은 줄바꿈을 띄어쓰기로 바꾼다(creator-link INV-E6). 입력하는 동안 화면이 부른다. */
+export function oneLine(s: string): string {
+  return s.replace(/[\r\n\u2028\u2029]+/g, " ");
+}
+
 /** 공개 이름에 둘 수 없는 글자(제어 문자·보이지 않는 글자). DB 함수(update_my_creator_profile)도 같은 목록으로 거부한다. */
 export { HIDDEN_CHAR };
 
@@ -23,19 +28,23 @@ export const INTRO_MAX = 40;
 /** 팬을 부르는 이름 — 선택, 10자, 줄바꿈 없음(추가분 4-1). 금칙어·연락처 꼴은 DB 가 한 줄 소개와 같은 필터로 다시 본다. */
 export { FAN_NAME_MAX };
 
+// 네 칸 모두 없어도 된다 — 없는 칸은 DB 가 지금 값 그대로 둔다. 화면은 자기가 고치는 칸만 보낸다
+// (「내 팬꾹 꾸미기」 = 공개 이름·한 줄 소개·팬을 부르는 이름, 「주소와 설정」 = 찾기 노출). 보낸 칸 가운데 하나라도 틀리면 아무 칸도 바꾸지 않는다(INV-A9).
 export const profileInputSchema = z.object({
   name: z
     .string()
     .trim()
     .refine((s) => charCount(s) >= 1 && charCount(s) <= PUBLIC_NAME_MAX, `공개 이름은 1~${PUBLIC_NAME_MAX}자로 적어 주세요.`)
-    .refine((s) => !HIDDEN_CHAR.test(s), "공개 이름에 보이지 않는 글자나 줄바꿈은 쓸 수 없어요."),
+    .refine((s) => !HIDDEN_CHAR.test(s), "공개 이름에 보이지 않는 글자나 줄바꿈은 쓸 수 없어요.")
+    .optional(),
   intro: z
     .string()
     .trim()
     .refine((s) => charCount(s) <= INTRO_MAX, `한 줄 소개는 ${INTRO_MAX}자까지 적을 수 있어요.`)
-    .refine((s) => !HIDDEN_CHAR.test(s) && !/[\u2028\u2029]/.test(s), "한 줄 소개에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요."),
-  searchable: z.boolean(),
-  // 없으면 DB 가 그대로 둔다. 빈 문자열이면 지운다
+    .refine((s) => !HIDDEN_CHAR.test(s) && !/[\u2028\u2029]/.test(s), "한 줄 소개에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요.")
+    .optional(),
+  searchable: z.boolean().optional(),
+  // 빈 문자열이면 지운다
   fanName: z
     .string()
     .trim()

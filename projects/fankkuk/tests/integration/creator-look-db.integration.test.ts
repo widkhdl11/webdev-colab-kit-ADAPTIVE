@@ -135,12 +135,36 @@ describe("INV-E12·E9: 팬덤 심볼 — 권리 확인 체크 뒤에만, 정사�
     expect(at).toBeGreaterThanOrEqual(before - 60_000);
   });
 
-  it("INV-E12: 심볼을 지우면 체크 시각도 지우고, 미리보기 고르기는 프로필 사진으로 돌아간다", async () => {
+  it("INV-E12: 심볼을 지우면 체크 시각도 지우고, 미리보기 고르기는 프로필 사진으로 돌아간다 — 저장 함수가 그 값을 돌려준다", async () => {
     await saveCreatorImage(admin(), "symbol", blob(await photoWithGps()), { rightsChecked: true });
     expect(await savePreviewPick({ client: await linkClient(A.login), viewer: asViewer(A) }, { pick: "symbol" })).toEqual({ ok: true });
-    expect(await removeCreatorImage(admin(), "symbol")).toMatchObject({ ok: true, path: null });
+    expect(await removeCreatorImage(admin(), "symbol")).toEqual({ ok: true, path: null, previewPick: "photo" });
     expect([col(A.creatorId, "symbol_path"), col(A.creatorId, "symbol_rights_at"), col(A.creatorId, "preview_pick")]).toEqual(["", "", "photo"]);
     expect(await storedNames(A.creatorId)).toEqual([]);
+  });
+});
+
+describe("INV-E9: 판 번호가 엇갈리면 붙이지 않는다", () => {
+  it("INV-E9 (실패경로): 다른 요청이 판을 먼저 올린 뒤 옛 판 번호로 붙이면 DB 가 40001 로 거부하고 지금 파일·판은 그대로다", async () => {
+    await saveCreatorImage(admin(), "background", blob(await photoWithGps()), { rightsChecked: false });
+    await saveCreatorImage(admin(), "background", blob(await photoWithGps(2000, 1000, "#8e8")), { rightsChecked: false });
+    // 지금 판은 2 — 첫 요청이 받아 둔 판 1(그리고 이미 지나간 판 2)로 붙이려 하면 거부된다
+    for (const stale of [1, 2]) {
+      const r = await adminClient().rpc("set_creator_image", { p_profile_id: A.id, p_kind: "background", p_version: stale, p_rights_checked: false });
+      expect([stale, r.error?.code]).toEqual([stale, "40001"]);
+    }
+    const sym = await adminClient().rpc("set_creator_image", { p_profile_id: A.id, p_kind: "symbol", p_version: 5, p_rights_checked: true });
+    expect(sym.error?.code).toBe("40001");
+    expect([col(A.creatorId, "bg_path"), col(A.creatorId, "bg_version"), col(A.creatorId, "symbol_path"), col(A.creatorId, "symbol_version")]).toEqual([
+      `${A.creatorId}/bg-2.webp`,
+      "2",
+      "",
+      "0",
+    ]);
+    // 다음 판(3)은 붙는다
+    const ok = await adminClient().rpc("set_creator_image", { p_profile_id: A.id, p_kind: "background", p_version: 3, p_rights_checked: false });
+    expect(ok.error).toBeNull();
+    expect(ok.data).toEqual([{ old_path: `${A.creatorId}/bg-2.webp`, preview_pick: "photo" }]);
   });
 });
 

@@ -74,6 +74,8 @@ describe("INV-E10: 공지 이미지에 들어가는 칸", () => {
     expect(["square", "story", "wide"].map(parseNoticeSize)).toEqual(["square", "story", "wide"]);
     for (const bad of [null, "", "SQUARE", "big", "square "]) expect([bad, parseNoticeSize(bad)]).toEqual([bad, null]);
     expect(noticeImagePath(ID, "story")).toBe(`/api/notice/${ID}?size=story`);
+    expect(noticeImagePath(ID, "wide", { download: true })).toBe(`/api/notice/${ID}?size=wide&download=1`);
+    expect(noticeImagePath(ID, "wide", { download: false })).toBe(`/api/notice/${ID}?size=wide`);
   });
 });
 

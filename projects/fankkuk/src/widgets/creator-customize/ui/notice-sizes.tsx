@@ -29,7 +29,7 @@ function Thumb({ size }: { size: NoticeSize }) {
 }
 
 export function NoticeSizes({ creatorId, ready, siteOrigin }: { creatorId: string; ready: boolean; siteOrigin: string }) {
-  if (!ready) return <p className="t-meta">본인 확인을 마치고 「주소와 설정」에서 링크 주소를 정하면 받을 수 있어요.</p>;
+  if (!ready) return <p className="t-meta">본인 확인을 마치고 「설정」에서 링크 주소를 정하면 받을 수 있어요.</p>;
   return (
     <ul className={s.sizes}>
       {ROWS.map(({ size, title }) => {
@@ -45,7 +45,7 @@ export function NoticeSizes({ creatorId, ready, siteOrigin }: { creatorId: strin
               </span>
             </span>
             <div className={`btn-stack ${s.szBtns}`}>
-              <a className="btn btn--line btn--sm" href={`${path}&download=1`} download={`fankkuk-notice-${size}.png`} aria-label={`${title} 공지 이미지 내려받기`}>
+              <a className="btn btn--line btn--sm" href={noticeImagePath(creatorId, size, { download: true })} download={`fankkuk-notice-${size}.png`} aria-label={`${title} 공지 이미지 내려받기`}>
                 내려받기
               </a>
               <CopyButton

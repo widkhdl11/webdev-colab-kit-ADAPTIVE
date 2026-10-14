@@ -43,11 +43,16 @@ export async function saveCreatorProfile(deps: SaveCreatorSettingsDeps, body: un
   if (!parsed.success) return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "입력을 확인해 주세요." };
   const { name, intro, searchable, fanName } = parsed.data;
   // creator-link INV-E6: 한 줄 소개는 직접 입력 태그와 같은 필터를 거친다(DB 가 사유별 코드로 거부).
-  // 팬을 부르는 이름(추가분 4-1)도 같은 필터 — 칸이 없으면 넘기지 않는다(DB 가 그대로 둔다)
+  // 팬을 부르는 이름(추가분 4-1)도 같은 필터. 본문에 없는 칸은 넘기지 않는다 — DB 가 지금 값 그대로 둔다(다른 화면이 고친 칸을 덮어쓰지 않게)
+  const args: Record<string, string | boolean> = {};
+  if (name !== undefined) args.p_name = name;
+  if (intro !== undefined) args.p_intro = intro;
+  if (searchable !== undefined) args.p_searchable = searchable;
+  if (fanName !== undefined) args.p_fan_name = fanName;
   return call(
     deps,
     "update_my_creator_profile",
-    { p_name: name, p_intro: intro, p_searchable: searchable, ...(fanName === undefined ? {} : { p_fan_name: fanName }) },
+    args,
     {
       P0081: "한 줄 소개에 쓸 수 없는 말이 들어 있어요.",
       P0082: "한 줄 소개에 전화번호·이메일·인터넷 주소는 쓸 수 없어요.",

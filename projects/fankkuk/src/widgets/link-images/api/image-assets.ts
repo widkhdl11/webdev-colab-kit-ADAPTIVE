@@ -4,16 +4,36 @@ import sharp from "sharp";
 
 // 공개 화면 이미지(미리보기·공지)에 쓰는 재료 — 글꼴·로고·프로필 사진 바이트 (creator-link INV-E10).
 // 이미지 그리기(next/og)는 CSS 변수를 읽지 못하고 웹 글꼴도 받지 않아, 글꼴 파일을 직접 읽어 넘긴다.
-// 글꼴: Pretendard ExtraBold 부분 글꼴(한글 완성형 2,350자 + 영문·숫자, OFL — assets/fonts/OFL.txt). 공개 이름에 이 범위 밖 글자가 있으면 그 글자는 빠진다.
+// 글꼴: Pretendard 부분 글꼴(한글 완성형 2,350자 + 영문·숫자, OFL — assets/fonts/OFL.txt). 공개 이름에 이 범위 밖 글자가 있으면 그 글자는 빠진다.
+// 굵기는 Medium(500)·SemiBold(600)·Bold(700)·ExtraBold(800) 넷 — 넷 다 같은 글자 범위로 잘랐다. 그리는 쪽이 쓰는 굵기만 불러온다
+// (없는 굵기를 쓰면 가장 가까운 굵기로 그려져 시안과 달라진다).
 
-let fontCache: Promise<ArrayBuffer> | null = null;
+export type ImageFontWeight = 500 | 600 | 700 | 800;
+
+const FONT_FILE: Record<ImageFontWeight, string> = {
+  500: "Pretendard-Medium.subset.woff",
+  600: "Pretendard-SemiBold.subset.woff",
+  700: "Pretendard-Bold.subset.woff",
+  800: "Pretendard-ExtraBold.subset.woff",
+};
+
+const fontCache = new Map<ImageFontWeight, Promise<ArrayBuffer>>();
 let logoCache: Promise<string> | null = null;
 
-export function readImageFont(): Promise<ArrayBuffer> {
-  fontCache ??= readFile(join(process.cwd(), "assets", "fonts", "Pretendard-ExtraBold.subset.woff")).then((b) =>
-    b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength),
-  );
-  return fontCache;
+export function readImageFont(weight: ImageFontWeight = 800): Promise<ArrayBuffer> {
+  let hit = fontCache.get(weight);
+  if (!hit) {
+    hit = readFile(join(process.cwd(), "assets", "fonts", FONT_FILE[weight])).then((b) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));
+    fontCache.set(weight, hit);
+  }
+  return hit;
+}
+
+export type ImageFont = { name: "Pretendard"; data: ArrayBuffer; weight: ImageFontWeight; style: "normal" };
+
+/** 이미지 그리기(next/og)에 넘길 글꼴 목록 — 굵기마다 한 벌. */
+export async function readImageFonts(weights: readonly ImageFontWeight[]): Promise<ImageFont[]> {
+  return Promise.all(weights.map(async (weight) => ({ name: "Pretendard" as const, data: await readImageFont(weight), weight, style: "normal" as const })));
 }
 
 /** 팬꾹 로고(src/app/icon.svg)를 이미지 안에 넣을 data 주소로. */

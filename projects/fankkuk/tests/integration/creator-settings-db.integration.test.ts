@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { adminClient, anonClient, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 import { deleteTestUnmatched, fanSetsWaybill, inspect, receiveAndLabel, waybill } from "./office-helpers";
+import { saveCreatorProfile } from "@/features/creator-settings-save/model/save-creator-settings";
 
 // 크리에이터 설정 (my-account INV-A9 공개 정보 고치기 · INV-A10 찾기 노출 · INV-A11 알림, S9~S11).
 // 시드 크리에이터의 값을 바꾸지 않으려고 본인 확인 시험 계정(cvt_*)을 쓴다. 모모(시드)는 「바뀌지 않았는가」만 읽는다.
@@ -21,7 +22,7 @@ function resetSettings(): void {
       "begin;",
       "set local session_replication_role = replica;",
       `do $$ begin if to_regclass('public.creator_name_changes') is not null then delete from public.creator_name_changes where creator_id in (${CV_IDS}); end if; end $$;`,
-      ...Object.values(CV).map((a) => `update public.creators set name = '${a.name}', intro = '' where id = '${a.creatorId}';`),
+      ...Object.values(CV).map((a) => `update public.creators set name = '${a.name}', intro = '', fan_name = null where id = '${a.creatorId}';`),
       ...Object.values(CV).map((a) => `update public.profiles set nickname = '${a.name}' where id = '${a.id}';`),
       `do $$ begin if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'creators' and column_name = 'searchable') then execute $q$update public.creators set searchable = true where id in (${CV_IDS})$q$; end if; end $$;`,
       `delete from pii.account_contacts where account_id in (${CV_ACCOUNTS});`,
@@ -106,13 +107,41 @@ describe("INV-A9: 크리에이터 공개 정보 고치기", () => {
       { p_name: "가".repeat(21), p_intro: "바뀌면 안 됨", p_searchable: false },
       { p_name: "   ", p_intro: "바뀌면 안 됨", p_searchable: false },
       { p_name: "하루달", p_intro: "가".repeat(41), p_searchable: false },
-      { p_name: "하루달", p_intro: "", p_searchable: null },
+      { p_searchable: false, p_fan_name: "가".repeat(11) },
+      { p_name: "하루달", p_searchable: false, p_intro: "가".repeat(41) },
     ]) {
       const r = await save(ME.login, args);
       expect(r.error?.code).toBe("22023");
     }
     expect(creatorRow(ME.creatorId)).toBe(before);
     expect(psql(`select searchable from public.creators where id = '${ME.creatorId}'`)).toBe("t");
+    expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("0");
+  });
+
+  it("INV-A9: 「내 팬꾹 꾸미기」 저장(공개 이름·한 줄 소개·팬을 부르는 이름)은 「주소와 설정」에서 끈 찾기 노출을 되돌리지 않는다", async () => {
+    const client = await signedInClient(ME.login);
+    const viewer = { userId: ME.id, role: "creator" as const };
+    expect(await saveCreatorProfile({ client, viewer }, { searchable: false })).toEqual({ ok: true });
+    expect(await saveCreatorProfile({ client, viewer }, { name: "하루달", intro: "새 소개", fanName: "달빛지기" })).toEqual({ ok: true });
+    expect(psql(`select name || '|' || intro || '|' || fan_name || '|' || searchable from public.creators where id = '${ME.creatorId}'`)).toBe("하루달|새 소개|달빛지기|false");
+    expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("1");
+  });
+
+  it("INV-A9: 「주소와 설정」 저장(찾기 노출만)은 「내 팬꾹 꾸미기」에서 바꾼 이름·소개·팬을 부르는 이름을 덮어쓰지 않고 이름 변경 기록도 남기지 않는다", async () => {
+    const client = await signedInClient(ME.login);
+    const viewer = { userId: ME.id, role: "creator" as const };
+    expect(await saveCreatorProfile({ client, viewer }, { name: "하루달", intro: "새 소개", fanName: "달빛지기" })).toEqual({ ok: true });
+    expect(await saveCreatorProfile({ client, viewer }, { searchable: false })).toEqual({ ok: true });
+    expect(psql(`select name || '|' || intro || '|' || fan_name || '|' || searchable from public.creators where id = '${ME.creatorId}'`)).toBe("하루달|새 소개|달빛지기|false");
+    expect(psql(`select nickname from public.profiles where id = '${ME.id}'`)).toBe("하루달");
+    expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("1");
+  });
+
+  it("INV-A9: DB 함수에 칸을 하나만 넘겨도 나머지 칸은 그대로다 — 이름을 넘기지 않으면 이름 변경 기록이 없다", async () => {
+    expect((await save(ME.login, { p_intro: "소개만" })).error).toBeNull();
+    expect((await save(ME.login, { p_fan_name: "꿀벌단" })).error).toBeNull();
+    expect((await save(ME.login, {})).error).toBeNull();
+    expect(psql(`select name || '|' || intro || '|' || fan_name || '|' || searchable from public.creators where id = '${ME.creatorId}'`)).toBe(`${ME.name}|소개만|꿀벌단|true`);
     expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("0");
   });
 
