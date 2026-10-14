@@ -7,6 +7,7 @@ import { RevgiftSentPage } from "@/widgets/revgift-sent/ui/revgift-sent-page";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
+import { SentTabs } from "@/widgets/site-header/ui/sent-tabs";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
     <>
       <SiteHeader {...header} />
       <MyShell>
+        <SentTabs current="fans" />
         <RevgiftSentPage rows={rows} boxes={boxes} paid={paid === "1"} officeAddress={OFFICE_ADDRESS} />
       </MyShell>
       <SiteFooter />

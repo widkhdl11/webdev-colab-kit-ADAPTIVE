@@ -208,6 +208,35 @@ export function AppSidebar({ role, groups, current, homeHref, nickname, counts }
                             </>
                           ) : null}
                         </Link>
+                        {it.sub ? (
+                          // 하위 줄은 늘 펼쳐 둔다(design-rules 11절). 접힘(64)에서는 css 가 숨기고 부모 아이콘만 남긴다
+                          <ul className="sb-sub" aria-label={`${it.label} 방식`}>
+                            {it.sub.map((sub) =>
+                              "soon" in sub ? (
+                                <li key={sub.label}>
+                                  <span className="sb-soon" aria-disabled="true">
+                                    <span className="sb-label">{sub.label}</span>
+                                    {/* 낭독기가 「합포장준비 중」으로 붙여 읽지 않게 */}
+                                    <span className="sr-only">, </span>
+                                    <span className="sb-soon-tag">준비 중</span>
+                                  </span>
+                                </li>
+                              ) : (
+                                <li key={sub.label}>
+                                  <Link
+                                    href={sub.href}
+                                    data-tip={sub.label}
+                                    onClick={() => {
+                                      if (open) setOpen(false);
+                                    }}
+                                  >
+                                    <span className="sb-label">{sub.label}</span>
+                                  </Link>
+                                </li>
+                              ),
+                            )}
+                          </ul>
+                        ) : null}
                       </li>
                     );
                   })}

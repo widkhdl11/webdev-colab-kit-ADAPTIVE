@@ -9,6 +9,7 @@ import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { GiftListPage } from "@/widgets/gift-list/ui/gift-list-page";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
+import { SentTabs } from "@/widgets/site-header/ui/sent-tabs";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 
@@ -47,15 +48,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   return (
     <>
       <SiteHeader {...header} />
-      {viewer.role === "fan" ? (
-        <MyShell>
-          <GiftListPage gifts={gifts} faceToneByName={faceToneByName} creators={creators} />
-        </MyShell>
-      ) : (
-        <MyShell>
-          <GiftListPage gifts={gifts} faceToneByName={faceToneByName} creators={creators} />
-        </MyShell>
-      )}
+      <MyShell>
+        {/* 크리에이터는 사이드바 「보낸 내역」 한 칸에서 팬에게 보낸 역조공과 이 화면을 탭으로 오간다(design-rules 11절) */}
+        {viewer.role === "creator" ? <SentTabs current="creators" /> : null}
+        <GiftListPage gifts={gifts} faceToneByName={faceToneByName} creators={creators} />
+      </MyShell>
       <SiteFooter />
     </>
   );
