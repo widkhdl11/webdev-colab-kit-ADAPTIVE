@@ -9,7 +9,7 @@ import { Icon } from "./app-icons";
 
 // 로그인 후 왼쪽 앱 사이드바(design-rules 00절, 시안 v18/home-fan.html·home-creator.html·v18-app.css).
 // 펼침 240 / 접힘 64 — 본문을 가리지 않고 그 폭만큼 민다(body 왼쪽 여백, site-header.css). 768 이하는 위 막대 + 서랍.
-// 접힘 여부는 localStorage "sidebar-collapsed"(저장값 우선, 없으면 1024 이하에서 접힘). 첫 그림이 깜빡이지 않게
+// 접힘 여부는 localStorage "sidebar-collapsed"(저장값 우선, 없으면 펼침). 첫 그림이 깜빡이지 않게
 // app/layout.tsx 의 짧은 스크립트가 그리기 전에 <html data-collapsed> 를 먼저 단다. `[` 키로 접고 편다.
 
 const KEY = "sidebar-collapsed";
