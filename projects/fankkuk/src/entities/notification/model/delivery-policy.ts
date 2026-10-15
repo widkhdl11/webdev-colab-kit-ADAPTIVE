@@ -22,6 +22,7 @@ export const NOTIFICATION_KINDS = [
   "gift_reply",
   "gift_received",
   "creator_check",
+  "deposit_expired",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -50,6 +51,8 @@ export const NOTIFICATION_POLICY: Record<NotificationKind, Policy> = {
   difference_due: { mustDeliver: true, label: "추가 결제 요청", audience: "fan" },
   payment_canceled: { mustDeliver: true, label: "결제 취소", audience: "fan" },
   difference_canceled: { mustDeliver: true, label: "추가 결제 취소", audience: "fan" },
+  // 무통장 입금 기한(24시간)이 지나 주문이 취소됐다(payment INV-M23)
+  deposit_expired: { mustDeliver: true, label: "입금 기한 지남", audience: "fan" },
   arrived: { mustDeliver: false, label: null, audience: "fan" },
   inspected: { mustDeliver: false, label: null, audience: "fan" },
   shipped: { mustDeliver: false, label: null, audience: "fan" },

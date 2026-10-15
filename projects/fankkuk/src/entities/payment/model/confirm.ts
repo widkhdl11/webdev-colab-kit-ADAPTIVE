@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { parseTossPayment } from "@/shared/api/toss-payments/client";
 
 export type PendingPayment = {
   orderId: string;
   /** 서버가 계산해 저장한 금액 (INV-M1) */
   amountKrw: number;
-  status: "pending" | "confirming" | "done" | "failed";
+  /** waiting_deposit = 무통장 입금 대기(팬 선물 첫 결제만, payment INV-M21) */
+  status: "pending" | "confirming" | "waiting_deposit" | "done" | "failed";
 };
 
 /** 성공 주소로 돌아온 쿼리 값. 대조용일 뿐 믿지 않는다. */
@@ -42,4 +44,19 @@ export function evaluateConfirmResponse(response: unknown, pending: PendingPayme
   if (!parsed.success) return { done: false };
   const r = parsed.data;
   return { done: r.status === "DONE" && r.orderId === pending.orderId && r.totalAmount === pending.amountKrw };
+}
+
+/** 결제사가 발급한 입금 계좌와 웹훅 검증 값 — 입금 대기로 기록할 것(payment INV-M21·M22). */
+export type DepositIssued = { paymentKey: string; secret: string; bankCode: string; accountNumber: string };
+
+/**
+ * INV-M21: 승인(또는 조회) 응답이 「입금 기다리는 중」이고 orderId·금액이 기록과 같으며, 웹훅 검증 값과 발급 계좌가 다 있을 때만 입금 대기다.
+ * 하나라도 없거나 다르면 null — 부르는 쪽은 완료도 입금 대기도 아닌 것으로 다룬다.
+ */
+export function evaluateDepositIssued(response: unknown, pending: Pick<PendingPayment, "orderId" | "amountKrw">): DepositIssued | null {
+  const p = parseTossPayment(response);
+  if (!p || p.status !== "WAITING_FOR_DEPOSIT") return null;
+  if (p.orderId !== pending.orderId || p.totalAmount !== pending.amountKrw) return null;
+  if (!p.secret || !p.virtualAccount) return null;
+  return { paymentKey: p.paymentKey, secret: p.secret, bankCode: p.virtualAccount.bankCode, accountNumber: p.virtualAccount.accountNumber };
 }

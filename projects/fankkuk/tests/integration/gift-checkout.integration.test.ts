@@ -98,7 +98,7 @@ describe("결제 승인 → 승인 요청", () => {
     if (!r.ok) throw new Error();
 
     const out = await confirmPayment({ store, toss: toss.client }, SEED.fanId, { orderId: r.orderId, amount: String(r.amountKrw), paymentKey: "tgen_it_1" });
-    expect(out).toEqual({ ok: true, orderId: r.orderId, orderNo: r.orderNo });
+    expect(out).toEqual({ ok: true, orderId: r.orderId, orderNo: r.orderNo, awaitingDeposit: false });
 
     const { data: order } = await adminClient().from("orders").select("status").eq("order_no", r.orderNo).single();
     expect(order?.status).toBe("registered");
@@ -178,7 +178,7 @@ describe("크리에이터가 보낸 선물도 결제 승인까지 (session-login
         amount: String(r.amountKrw),
         paymentKey: "tgen_it_creator",
       });
-      expect(out).toEqual({ ok: true, orderId: r.orderId, orderNo: r.orderNo });
+      expect(out).toEqual({ ok: true, orderId: r.orderId, orderNo: r.orderNo, awaitingDeposit: false });
       const momo = await signedInClient("momo_creator");
       const list = (await momo.rpc("my_approval_requests")).data as { order_no: string; fan_nickname: string }[];
       expect(list.find((x) => x.order_no === r.orderNo)?.fan_nickname).toBe("하루");

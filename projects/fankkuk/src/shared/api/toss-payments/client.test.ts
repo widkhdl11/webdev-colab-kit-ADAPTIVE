@@ -106,7 +106,7 @@ describe("결제 조회 (payment INV-M19)", () => {
     const { calls, fetchImpl } = recordingFetch(PAYMENT);
     const client = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl });
     const r = await client.getByOrderId("pay_x1");
-    expect(r).toEqual({ kind: "found", payment: { status: "DONE", orderId: "pay_x1", totalAmount: 6900, balanceAmount: null, paymentKey: "pk_toss" } });
+    expect(r).toEqual({ kind: "found", payment: { status: "DONE", orderId: "pay_x1", totalAmount: 6900, balanceAmount: null, paymentKey: "pk_toss", secret: null, virtualAccount: null } });
     expect(calls[0]!.url).toBe("https://api.tosspayments.com/v1/payments/orders/pay_x1");
     expect(calls[0]!.init.method).toBe("GET");
     expect(calls[0]!.init.body).toBeUndefined();
@@ -118,7 +118,7 @@ describe("결제 조회 (payment INV-M19)", () => {
     const ok = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl: recordingFetch({ ...PAYMENT, status: "PARTIAL_CANCELED", balanceAmount: 4000 }).fetchImpl });
     expect(await ok.getByOrderId("pay_x1")).toEqual({
       kind: "found",
-      payment: { status: "PARTIAL_CANCELED", orderId: "pay_x1", totalAmount: 6900, balanceAmount: 4000, paymentKey: "pk_toss" },
+      payment: { status: "PARTIAL_CANCELED", orderId: "pay_x1", totalAmount: 6900, balanceAmount: 4000, paymentKey: "pk_toss", secret: null, virtualAccount: null },
     });
     const bad = createTossPaymentsClient({ secretKey: "test_gsk_x", env: { NODE_ENV: "development" }, fetchImpl: recordingFetch({ ...PAYMENT, balanceAmount: "4000" }).fetchImpl });
     expect(await bad.getByOrderId("pay_x1")).toEqual({ kind: "error" });

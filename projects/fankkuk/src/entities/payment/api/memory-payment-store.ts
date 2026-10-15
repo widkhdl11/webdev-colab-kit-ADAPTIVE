@@ -53,11 +53,20 @@ export function createMemoryPaymentStore(opts: { env: EnvLike; nicknames?: Recor
     async settle(orderId, outcome) {
       const row = rows.get(orderId);
       if (!row || row.status === "done" || row.status === "failed") return false;
+      // 입금 대기는 완료로만 바뀐다(DB settle_payment 와 같다)
+      if (row.status === "waiting_deposit" && outcome.status !== "done") return false;
       row.status = outcome.status;
       if (outcome.status === "done") {
         row.paymentKey = outcome.paymentKey;
         requests.push({ ...outcome.approvalRequest });
       }
+      return true;
+    },
+    async settleWaiting(orderId, issued) {
+      const row = rows.get(orderId);
+      if (!row || row.status !== "confirming") return false;
+      row.status = "waiting_deposit";
+      row.paymentKey = issued.paymentKey;
       return true;
     },
     registrations: () => registrations.map((r) => ({ ...r })),

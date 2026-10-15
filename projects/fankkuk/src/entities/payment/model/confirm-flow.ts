@@ -1,5 +1,5 @@
 import type { TossPaymentsClient } from "@/shared/api/toss-payments/client";
-import { checkSuccessReturn, evaluateConfirmResponse, type PendingPayment, type SuccessReturn } from "./confirm";
+import { checkSuccessReturn, evaluateConfirmResponse, evaluateDepositIssued, type DepositIssued, type PendingPayment, type SuccessReturn } from "./confirm";
 
 // 결제 확정의 공통 흐름 — 팬 선물(features/checkout)과 역조공(features/revgift-send)이 같이 쓴다.
 // 대조(INV-M2) → 승인 권리 한 번(INV-M5) → 승인 API → 응답 판정(INV-M3) → 기록.
@@ -15,21 +15,30 @@ export type ConfirmFlowDeps<R extends PendingPayment> = {
   settleFailed(orderId: string): Promise<boolean>;
   /** 완료로 기록한다. 이번 호출이 기록을 바꿨는지 돌려준다. */
   settleDone(record: R, paymentKey: string): Promise<boolean>;
+  /**
+   * 입금 대기로 기록한다(무통장, payment INV-M21) — 승인 중인 줄만. 이 결제 종류가 무통장을 받지 않으면 비운다 —
+   * 그러면 「입금 기다리는 중」 응답은 승인되지 않은 것(실패)으로 다룬다.
+   */
+  settleWaiting?: (record: R, issued: DepositIssued) => Promise<boolean>;
   toss: TossPaymentsClient;
 };
+
+export type ConfirmFlowResult<R> = { ok: true; record: R; awaitingDeposit: boolean } | { ok: false; reason: ConfirmFailure };
 
 /** 요청한 사람이 이 결제의 주인일 때만 처리한다 — 남의 결제는 없는 결제와 같다. */
 export async function runConfirmFlow<R extends PendingPayment>(
   deps: ConfirmFlowDeps<R>,
   isOwner: (record: R) => boolean,
   ret: SuccessReturn,
-): Promise<{ ok: true; record: R } | { ok: false; reason: ConfirmFailure }> {
+): Promise<ConfirmFlowResult<R>> {
   const found = await deps.find(ret.orderId);
   const record = found && isOwner(found) ? found : null;
   if (!record) return { ok: false, reason: "no_pending_payment" };
 
   // INV-M5: 이미 끝난 결제는 승인 API 를 다시 부르지 않고 처음 결과를 돌려준다.
-  if (record.status === "done") return { ok: true, record };
+  if (record.status === "done") return { ok: true, record, awaitingDeposit: false };
+  // 무통장 입금 대기 — 승인은 이미 끝났고 입금을 기다린다(INV-M21). 다시 부르지 않는다
+  if (record.status === "waiting_deposit") return { ok: true, record, awaitingDeposit: true };
   if (record.status === "confirming") return { ok: false, reason: "in_progress" };
   if (record.status === "failed") return { ok: false, reason: "not_approved" };
 
@@ -59,6 +68,16 @@ export async function runConfirmFlow<R extends PendingPayment>(
     return { ok: false, reason: "in_progress" };
   }
 
+  // INV-M21: 무통장 — 「입금 기다리는 중」·orderId·금액 일치면 입금 대기로. 승인 요청·받는 주소는 입금이 확인된 뒤에 생긴다.
+  const issued = deps.settleWaiting ? evaluateDepositIssued(response, record) : null;
+  if (deps.settleWaiting && issued) {
+    if (await deps.settleWaiting(record, issued)) return { ok: true, record, awaitingDeposit: true };
+    const now = await deps.find(check.orderId);
+    return now?.status === "waiting_deposit" || now?.status === "done"
+      ? { ok: true, record: now, awaitingDeposit: now.status === "waiting_deposit" }
+      : { ok: false, reason: "in_progress" };
+  }
+
   // INV-M3: DONE + orderId·금액 일치일 때만 완료.
   if (!evaluateConfirmResponse(response, record).done) {
     await deps.settleFailed(check.orderId);
@@ -67,7 +86,7 @@ export async function runConfirmFlow<R extends PendingPayment>(
   if (!(await deps.settleDone(record, check.paymentKey))) {
     // 다른 처리가 먼저 반영했다 — 기록을 다시 읽어 그 결과를 따른다.
     const now = await deps.find(check.orderId);
-    return now?.status === "done" ? { ok: true, record: now } : { ok: false, reason: "in_progress" };
+    return now?.status === "done" ? { ok: true, record: now, awaitingDeposit: false } : { ok: false, reason: "in_progress" };
   }
-  return { ok: true, record };
+  return { ok: true, record, awaitingDeposit: false };
 }

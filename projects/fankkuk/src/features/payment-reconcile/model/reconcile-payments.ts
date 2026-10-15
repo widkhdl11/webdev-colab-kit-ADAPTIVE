@@ -1,4 +1,5 @@
 import { judgeReconcile } from "@/entities/payment/model/reconcile";
+import type { DepositIssued } from "@/entities/payment/model/confirm";
 import type { TossLookup } from "@/shared/api/toss-payments/client";
 
 // 결과를 모르는 결제 다시 확인 (payment INV-M19). 5분 예약 실행과 관리자 「지금 돌리기」가 부른다.
@@ -20,6 +21,8 @@ export type ReconcileTarget = { source: ReconcileSourceKind; tossOrderId: string
 export type ReconcileSettler = {
   settleDone(tossOrderId: string, paymentKey: string): Promise<boolean>;
   settleFailed(tossOrderId: string): Promise<boolean>;
+  /** 무통장 입금 대기로(payment INV-M21). 무통장을 받지 않는 결제 종류는 비운다 — 그 결제는 그대로 둔다 */
+  settleWaiting?: (tossOrderId: string, issued: DepositIssued) => Promise<boolean>;
 };
 
 export type ReconcileDeps = {
@@ -58,6 +61,9 @@ export async function reconcilePayments(deps: ReconcileDeps, orderNo: string | n
       if (decision.kind === "done") changed = await settler.settleDone(t.tossOrderId, decision.paymentKey);
       else if (decision.kind === "failed") changed = await settler.settleFailed(t.tossOrderId);
       else if (decision.kind === "needs_review") changed = await deps.markReview(t.source, t.tossOrderId, decision.paymentKey, decision.balanceKrw);
+      else if (decision.kind === "deposit" && settler.settleWaiting) changed = await settler.settleWaiting(t.tossOrderId, decision.issued);
+      // 무통장을 받지 않는 결제(차액·역조공)에 계좌가 발급됐다 — 사람이 본다
+      else if (decision.kind === "deposit") changed = await deps.markReview(t.source, t.tossOrderId, decision.issued.paymentKey, null);
       // 바꾸지 못했으면(다른 처리가 먼저 반영) 그대로 둔 것으로 센다
       if (changed && decision.kind === "done") counts.done += 1;
       else if (changed && decision.kind === "failed") counts.failed += 1;

@@ -28,6 +28,8 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 //   금액·실측 구간 칸이 없다 — 선물 상세를 열면 보인다.
 // payment_canceled · difference_canceled: 「확인 필요」 결제를 대표가 전액 취소했을 때 보낸 팬에게 한 번(INV-N19, payment INV-M20, 2026-10-10).
 //   첫 결제면 결제 전 주문이라 팬 화면에 없다 — 링크는 선물 등록. 차액이면 선물 상세. 금액 칸이 없다.
+// deposit_expired: 무통장 입금 기한(24시간)이 지나 주문을 취소했을 때 보낸 팬에게 한 번(payment INV-M23, 2026-10-15). 계좌·금액 칸이 없다.
+//   취소된 주문은 팬 화면에 없다 — 링크는 선물 등록.
 // gift_reply · gift_received: 크리에이터가 상자에 「받았어요」를 남길 때 보낸 팬에게 상자마다 한 번(gift-reply INV-G5, 2026-10-11).
 //   답장이 있으면 「답장이 왔어요」, 확인만이면 「도착했다고 확인됐어요」. 크리에이터 이름·답장 내용 칸이 없다 — 선물 상세를 열면 보인다.
 // 종류 목록과 꼭 가는 알림 판정은 entities/notification 이 정본이다(INV-N6 표).
@@ -156,6 +158,13 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         path: first ? "/gifts/new" : `/gifts/${orderNo}`,
       };
     }
+    case "deposit_expired":
+      return {
+        subject: "[팬꾹] 입금 기한이 지나 주문을 취소했어요",
+        lines: [greet, "입금 기한(24시간)이 지나 주문이 취소됐어요.", "취소한 주문의 계좌로는 입금되지 않아요.", "선물을 보내시려면 다시 등록해 주세요.", order],
+        buttonLabel: "선물 다시 등록하기",
+        path: "/gifts/new",
+      };
     case "box_missing":
       // 30일(720시간)이 지나면 자동 처리가 그 상자를 닫는다(office-workflow INV-W10 · payment INV-M8)
       return {

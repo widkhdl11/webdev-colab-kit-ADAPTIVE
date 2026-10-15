@@ -1,6 +1,6 @@
 import type { PricedTier } from "../model/price-table";
 import type { ChargeBreakdown } from "../model/charge";
-import type { PendingPayment } from "../model/confirm";
+import type { DepositIssued, PendingPayment } from "../model/confirm";
 
 /** 주문번호가 이미 있다 — 등록이 새 번호로 다시 시도한다. */
 export class OrderNoTakenError extends Error {
@@ -70,4 +70,9 @@ export interface PaymentStore {
     orderId: string,
     outcome: { status: "done"; paymentKey: string; approvalRequest: ApprovalRequestDraft } | { status: "failed" },
   ): Promise<boolean>;
+  /**
+   * 승인 중 → 무통장 입금 대기(payment INV-M21). 비밀 값은 DB 에 해시로만 남는다. 기한은 DB 시각 + 24시간(INV-M23).
+   * 입금 대기는 settle 의 done 으로만 끝나고(입금 확인), 실패 닫기는 기한 지남 확인을 거친 따로의 길이다.
+   */
+  settleWaiting(orderId: string, issued: DepositIssued): Promise<boolean>;
 }

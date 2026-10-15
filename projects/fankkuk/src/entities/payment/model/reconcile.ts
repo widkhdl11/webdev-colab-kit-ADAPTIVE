@@ -1,4 +1,5 @@
 import type { TossLookup, TossPaymentView } from "@/shared/api/toss-payments/client";
+import { evaluateDepositIssued, type DepositIssued } from "./confirm";
 
 // 결과를 모르는 결제 확정의 판정 (payment INV-M19).
 // 승인 호출이 시간 초과·연결 끊김으로 끝나 「승인 중」에 남은 결제를 결제사 결제 조회(주문번호로) 결과로 정리한다.
@@ -25,7 +26,9 @@ export type ReconcileDecision =
   | { kind: "done"; paymentKey: string }
   | { kind: "failed" }
   | { kind: "keep" }
-  | { kind: "needs_review"; paymentKey: string; balanceKrw: number | null };
+  | { kind: "needs_review"; paymentKey: string; balanceKrw: number | null }
+  /** 무통장 — 승인 호출이 끊긴 사이 결제사는 계좌를 발급했다. 입금 대기로 정리한다(payment INV-M21, 팬 선물 첫 결제만 받는다) */
+  | { kind: "deposit"; issued: DepositIssued };
 
 /** 취소 가능 금액. 응답에 남은 금액이 있으면 그 값, 없으면 승인됨은 결제 금액(취소한 적이 없다), 부분 취소는 모름. 0 이하면 취소할 것이 없어 모름과 같다. */
 function balanceOf(p: TossPaymentView): number | null {
@@ -53,8 +56,13 @@ export function judgeReconcile(lookup: TossLookup, record: ReconcileRecord, now:
     case "PARTIAL_CANCELED":
       // 승인 뒤 누군가 결제사 쪽에서 일부를 취소했다 — 완료도 실패도 아니고 대표가 남은 금액을 전액 취소한다(INV-M20)
       return { kind: "needs_review", paymentKey: p.paymentKey, balanceKrw: balanceOf(p) };
+    case "WAITING_FOR_DEPOSIT": {
+      const issued = evaluateDepositIssued(p, { orderId: record.orderId, amountKrw: record.amountKrw });
+      // 계좌·비밀 값이 없거나 금액이 다르면 지금처럼 다음 회차에 다시 본다
+      return issued ? { kind: "deposit", issued } : { kind: "keep" };
+    }
     default:
-      // 진행 중·입금 대기 — 다음 회차에 다시 본다
+      // 진행 중 — 다음 회차에 다시 본다
       return { kind: "keep" };
   }
 }
