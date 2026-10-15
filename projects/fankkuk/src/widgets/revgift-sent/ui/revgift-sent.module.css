@@ -22,3 +22,21 @@
 .notes { display: grid; gap: 8px; margin-top: 16px; padding: 0; list-style: none; color: var(--ink); }
 .notes li::before { content: "· "; } /* v18.css .notes */
 
+
+/* 두 단 — 시안 v22-width/v22.css .v22-split·.v22-side·.v22-card·.v22-sum. 틀(.page-pane)이 container 라 본문 영역 폭으로 가른다.
+   좁을 때(한 단)는 요약 칸이 위, 넓을 때(1000 이상)는 오른쪽 288 · 스크롤을 따라온다. 주 내용은 880 까지(좁으면 줄어듦). */
+.split { display: grid; grid-template-columns: minmax(0, 880px); grid-template-areas: "side" "main"; justify-content: center; gap: var(--space-8); }
+.mainc { grid-area: main; min-width: 0; }
+.side { grid-area: side; display: grid; align-content: start; gap: var(--space-4); min-width: 0; }
+.sideCard { display: grid; gap: var(--space-4); }
+.sideCard > h2 { margin: 0; }
+.sideCard :global(.btn) { width: 100%; }
+.sum { display: grid; gap: var(--space-2); margin: 0; }
+.sum > div { display: flex; justify-content: space-between; gap: var(--space-4); }
+.sum dt { color: var(--gray-600); }
+.sum dd { margin: 0; font-weight: var(--fw-btn); font-variant-numeric: tabular-nums; }
+.sideNote { margin: 0; }
+@container (min-width: 1000px) {
+  .split { grid-template-columns: minmax(0, 880px) 288px; grid-template-areas: "main side"; }
+  .side { position: sticky; top: var(--space-8); align-self: start; }
+}

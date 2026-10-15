@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { canReportNotMine, isWaybillEditable, type ShareBox } from "@/entities/parcel/model/box-rows";
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
-import { countBatchStates, toSentBatches } from "@/entities/revgift/model/sent-batches";
+import { countBatchStates, summarizeSent, toSentBatches, type SentSummary } from "@/entities/revgift/model/sent-batches";
 import { sentStateTag } from "@/entities/revgift/ui/received-status";
 import { shareAddressCode, shareFinderBoxes } from "@/features/box-waybill/model/box-targets";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
@@ -14,7 +14,7 @@ import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import s from "./revgift-sent.module.css";
 
-// 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v18/creator-revgifts.html(이전 v11) — 묶음마다 팬 카드 3열(휴대폰 1열)
+// 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v18/creator-revgifts.html(이전 v11) — 묶음마다 팬 카드 2열(주 내용 880 이라 3열에서 줄임, 휴대폰 1열)
 // 한 줄에 보이는 것은 팬 닉네임·주문번호·상태 배지(셋 중 하나)뿐이다 — 팬 로그인 아이디도 싣지 않는다(reverse-gift INV-R8).
 // 몫마다 송장번호 줄이 붙는다(시안 creator-revgift-boxes.html). 배송 조회를 보고 싶을 때만 넣는 선택 칸이다(inbound-address-code INV-C7).
 // 입고 전엔 넣고 고치고, 입고되면 「입고됨」으로 잠긴다.
@@ -23,6 +23,9 @@ import s from "./revgift-sent.module.css";
 // (결제가 끝났고 보낼 상자가 남은 묶음) + my_share_boxes 가 그 몫의 6자리를 줄 때(보낸 크리에이터 본인 · 유효할 때)만 그린다.
 // 6자리 빠진 기본 사무실 주소는 그리지 않는다. 팬의 받기를 기다리지 않는다 — 받기는 출고 전에만 있으면 된다.
 // 받는 주소 없이 보낸 상자는 「받는 주소 없이 보냈어요」(INV-C4 ②), 입고 뒤 출고 전에는 「제가 보낸 게 아니에요」(INV-C8).
+// 두 단(design-rules 00절 「본문 틀」, 시안 v22-width/cre-revgift-sent-ab.html): 주 내용 880 + 오른쪽 요약 칸 288, 간격 32.
+// 본문 영역 1000 이상에서 두 단·칸은 스크롤을 따라오고, 좁으면 한 단에 칸이 위. 칸에는 이 화면에 이미 있는 값만 —
+// 몫 목록을 센 숫자(summarizeSent), 머리에서 옮긴 「역조공 보내기」, 아래 「알아 두세요」에 있던 송장번호 안내 한 줄.
 
 function Check() {
   return (
@@ -68,6 +71,41 @@ function batchSummary(shares: readonly SentRevgift[]): string {
   return n.not_received ? `${parts.join(" · ")} (받지 않은 상자 요금은 환불돼요)` : parts.join(" · ");
 }
 
+const STATE_ORDER: readonly SentRevgift["state"][] = ["accepted", "waiting", "not_received"];
+
+function SummarySide({ summary }: { summary: SentSummary }) {
+  return (
+    <aside className={s.side} aria-label="보낸 역조공 요약">
+      <div className={`card ${s.sideCard}`}>
+        <h2 className="t-card">요약</h2>
+        {/* 보낸 것이 없으면 0 줄을 늘어놓지 않는다 — 빈 상태는 본문이 알린다 */}
+        {summary.fans === 0 ? null : (
+          <dl className={s.sum}>
+            <div>
+              <dt>보낸 묶음</dt>
+              <dd>{summary.batches}묶음</dd>
+            </div>
+            <div>
+              <dt>받는 팬</dt>
+              <dd>{summary.fans}명</dd>
+            </div>
+            {STATE_ORDER.map((st) => (
+              <div key={st}>
+                <dt>{sentStateTag(st).tag}</dt>
+                <dd>{summary.states[st]}명</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        <Link className="btn" href="/creator/revgifts/new">
+          역조공 보내기
+        </Link>
+      </div>
+      <p className={`t-meta ${s.sideNote}`}>송장번호는 배송 조회를 보고 싶을 때만 넣어요.</p>
+    </aside>
+  );
+}
+
 function AddressGuide({ headId }: { headId: string }) {
   return (
     <div className={`card card--soft ${s.guide}`} role="group" aria-labelledby={headId}>
@@ -101,102 +139,103 @@ export function RevgiftSentPage({
   // 받는 주소 없이 보냈어요(INV-C4 ②) — 고를 수 있는 몫의 판정은 features/box-waybill/model/box-targets.ts
   const finderBoxes = shareFinderBoxes(rows, boxes);
   return (
-    <div className={s.root}>
-      <header className="page-head">
-        <div className="ph-row">
-          <h1 className="ph-title">
-            보낸 역조공<span className="ph-count">{batches.length}</span>
-          </h1>
-          <Link className="btn btn--sm" href="/creator/revgifts/new">
-            역조공 보내기
-          </Link>
-        </div>
-        <p className="ph-desc">팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
-      </header>
-      {tabs}
-      {paid ? (
-        <p className={s.paid} role="status">
-          <strong>결제가 끝났어요.</strong> 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소로 보내 주세요.
-        </p>
-      ) : null}
-      {/* 이름 없는 section — 화면 읽기 랜드마크가 되지 않고, 구간 사이 간격(64·휴대폰 48)만 공통 규칙을 따른다 */}
-      <section className="card card--soft">
-        <img className={`asset ${s.lock}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={56} height={56} />
-        <p>
-          <strong className={`t-card ${s["privacy-t"]}`}>팬의 주소와 실명은 보이지 않아요.</strong>
-          <span className={`${s["privacy-t"]} ${s["body-gap"]}`}>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span>
-        </p>
-      </section>
-      {batches.length === 0 ? (
-        <section className="empty">
-          <h2 className="t-card">아직 보낸 역조공이 없어요</h2>
-          <p className="t-meta">나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
-        </section>
-      ) : (
-        batches.map((b, bi) => (
-          <section key={b.sentAt} aria-labelledby={`rv-batch-${bi}`}>
-            <h2 className={`t-card ${s["batch-h"]}`} id={`rv-batch-${bi}`}>
-              {formatDateTime(b.sentAt)} 보낸 역조공
-            </h2>
-            <p className={`t-meta ${s.facts}`}>
-              팬 {b.shares.length}명 · {batchSummary(b.shares)}
-            </p>
-            {b.officeAddress && b.shares.some((x) => shareAddressCode(boxByOrder.get(x.orderNo), b.officeAddress, x.state)) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
-            <ul className={`grid cols-3 ${s.shares}`}>
-              {b.shares.map((x, i) => {
-                const tag = sentStateTag(x.state);
-                const box = boxByOrder.get(x.orderNo);
-                const addressCode = shareAddressCode(box, b.officeAddress, x.state);
-                return (
-                  <li key={x.orderNo} className="card card-col">
-                    <div className={s.who}>
-                      <FaceAvatar index={i} />
-                      <div>
-                        <p className="t-card">{x.fanNickname}</p>
-                        <p className={`t-meta ${s["order-no"]}`}>주문번호 {x.orderNo}</p>
-                      </div>
-                    </div>
-                    <p>
-                      <span className={statusTagClass(tag.tone)}>{tag.tag}</span>
-                    </p>
-                    {b.officeAddress && addressCode ? (
-                      <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
-                    ) : null}
-                    {box ? <ShareWaybill box={box} fanNickname={x.fanNickname} shareState={x.state} /> : null}
-                    {box && canReportNotMine(box.state) ? (
-                      <NotMineButton target={{ kind: "share", id: box.shareId }} boxName={`${x.fanNickname}님 상자`} reported={box.reportedNotMine} />
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ))
-      )}
-      {finderBoxes.length > 0 ? (
-        <section className="card" aria-labelledby="rv-find">
-          <h2 className="t-card" id="rv-find">
-            받는 주소 없이 보냈어요
-          </h2>
-          <p className={s["find-text"]}>
-            받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 그 팬의 상자로 이어져요. 하루에 다섯 번까지 찾을
-            수 있어요.
-          </p>
-          <div className={s["find-box"]}>
-            <FindMyBox boxes={finderBoxes} />
+    <div className={s.split}>
+      <div className={s.mainc}>
+        <header className="page-head">
+          <div className="ph-row">
+            <h1 className="ph-title">
+              보낸 역조공<span className="ph-count">{batches.length}</span>
+            </h1>
           </div>
+          <p className="ph-desc">팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
+        </header>
+        {tabs}
+        {paid ? (
+          <p className={s.paid} role="status">
+            <strong>결제가 끝났어요.</strong> 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소로 보내 주세요.
+          </p>
+        ) : null}
+        {/* 이름 없는 section — 화면 읽기 랜드마크가 되지 않고, 구간 사이 간격(64·휴대폰 48)만 공통 규칙을 따른다 */}
+        <section className="card card--soft">
+          <img className={`asset ${s.lock}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={56} height={56} />
+          <p>
+            <strong className={`t-card ${s["privacy-t"]}`}>팬의 주소와 실명은 보이지 않아요.</strong>
+            <span className={`${s["privacy-t"]} ${s["body-gap"]}`}>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span>
+          </p>
         </section>
-      ) : null}
-      <section className="card">
-        <strong className="t-card">알아 두세요</strong>
-        <ul className={s.notes}>
-          <li>「받지 않았어요」는 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
-          <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
-          <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
-          <li>송장번호는 배송 조회를 보고 싶을 때만 넣어요. 상자가 사무실에 도착하기 전까지만 고칠 수 있고, 입고되면 「입고됨」으로 바뀌고 잠겨요.</li>
-          <li>상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 받는 주소가 달라요.</li>
-        </ul>
-      </section>
+        {batches.length === 0 ? (
+          <section className="empty">
+            <h2 className="t-card">아직 보낸 역조공이 없어요</h2>
+            <p className="t-meta">나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
+          </section>
+        ) : (
+          batches.map((b, bi) => (
+            <section key={b.sentAt} aria-labelledby={`rv-batch-${bi}`}>
+              <h2 className={`t-card ${s["batch-h"]}`} id={`rv-batch-${bi}`}>
+                {formatDateTime(b.sentAt)} 보낸 역조공
+              </h2>
+              <p className={`t-meta ${s.facts}`}>
+                팬 {b.shares.length}명 · {batchSummary(b.shares)}
+              </p>
+              {b.officeAddress && b.shares.some((x) => shareAddressCode(boxByOrder.get(x.orderNo), b.officeAddress, x.state)) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
+              <ul className={`grid cols-2 ${s.shares}`}>
+                {b.shares.map((x, i) => {
+                  const tag = sentStateTag(x.state);
+                  const box = boxByOrder.get(x.orderNo);
+                  const addressCode = shareAddressCode(box, b.officeAddress, x.state);
+                  return (
+                    <li key={x.orderNo} className="card card-col">
+                      <div className={s.who}>
+                        <FaceAvatar index={i} />
+                        <div>
+                          <p className="t-card">{x.fanNickname}</p>
+                          <p className={`t-meta ${s["order-no"]}`}>주문번호 {x.orderNo}</p>
+                        </div>
+                      </div>
+                      <p>
+                        <span className={statusTagClass(tag.tone)}>{tag.tag}</span>
+                      </p>
+                      {b.officeAddress && addressCode ? (
+                        <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
+                      ) : null}
+                      {box ? <ShareWaybill box={box} fanNickname={x.fanNickname} shareState={x.state} /> : null}
+                      {box && canReportNotMine(box.state) ? (
+                        <NotMineButton target={{ kind: "share", id: box.shareId }} boxName={`${x.fanNickname}님 상자`} reported={box.reportedNotMine} />
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))
+        )}
+        {finderBoxes.length > 0 ? (
+          <section className="card" aria-labelledby="rv-find">
+            <h2 className="t-card" id="rv-find">
+              받는 주소 없이 보냈어요
+            </h2>
+            <p className={s["find-text"]}>
+              받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 그 팬의 상자로 이어져요. 하루에 다섯 번까지 찾을
+              수 있어요.
+            </p>
+            <div className={s["find-box"]}>
+              <FindMyBox boxes={finderBoxes} />
+            </div>
+          </section>
+        ) : null}
+        <section className="card">
+          <strong className="t-card">알아 두세요</strong>
+          <ul className={s.notes}>
+            <li>「받지 않았어요」는 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
+            <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
+            <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
+            <li>송장번호는 배송 조회를 보고 싶을 때만 넣어요. 상자가 사무실에 도착하기 전까지만 고칠 수 있고, 입고되면 「입고됨」으로 바뀌고 잠겨요.</li>
+            <li>상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 받는 주소가 달라요.</li>
+          </ul>
+        </section>
+      </div>
+      {/* 칸은 글 순서상 주 내용 뒤(제목이 먼저 읽히게), 보이는 자리는 CSS grid-area 가 정한다 */}
+      <SummarySide summary={summarizeSent(rows)} />
     </div>
   );
 }

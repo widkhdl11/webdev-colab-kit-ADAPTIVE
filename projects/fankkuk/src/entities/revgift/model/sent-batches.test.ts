@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countBatchStates, toSentBatches } from "./sent-batches";
+import { countBatchStates, summarizeSent, toSentBatches } from "./sent-batches";
 import type { SentRevgift } from "./revgift-rows";
 
 function share(orderNo: string, sentAt: string, state: SentRevgift["state"], shipToOffice = true): SentRevgift {
@@ -46,5 +46,17 @@ describe("countBatchStates", () => {
   it("상태별로 센다", () => {
     const shares = [share("RG-AAA111", EARLY, "accepted"), share("RG-BBB222", EARLY, "accepted"), share("RG-CCC333", EARLY, "not_received")];
     expect(countBatchStates(shares)).toEqual({ accepted: 2, waiting: 0, not_received: 1 });
+  });
+});
+
+describe("summarizeSent", () => {
+  it("묶음 수는 보낸 시각 가짓수, 받는 팬은 몫 수, 상태는 세 가지로 센다", () => {
+    const rows = [share("RG-AAA111", EARLY, "waiting"), share("RG-BBB222", LATE, "accepted"), share("RG-CCC333", EARLY, "not_received"), share("RG-DDD444", EARLY, "accepted")];
+    expect(summarizeSent(rows)).toEqual({ batches: 2, fans: 4, states: { accepted: 2, waiting: 1, not_received: 1 } });
+    expect(summarizeSent(rows).batches).toBe(toSentBatches(rows, OFFICE).length);
+  });
+
+  it("빈 목록은 모두 0", () => {
+    expect(summarizeSent([])).toEqual({ batches: 0, fans: 0, states: { accepted: 0, waiting: 0, not_received: 0 } });
   });
 });

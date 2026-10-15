@@ -25,3 +25,17 @@ export function countBatchStates(shares: readonly SentRevgift[]): BatchStateCoun
   for (const x of shares) counts[x.state] += 1;
   return counts;
 }
+
+export type SentSummary = {
+  /** 한 번에 보낸 묶음 수 — 보낸 시각이 같은 몫끼리 하나(toSentBatches 와 같은 기준) */
+  batches: number;
+  /** 받는 팬 수 — 몫 하나가 팬 한 명이다. 같은 팬이 두 묶음에 있으면 묶음마다 센다(묶음 줄의 「팬 N명」 합) */
+  fans: number;
+  /** 상태별 몫 수 — 크리에이터에게 보이는 세 가지(INV-R8) */
+  states: BatchStateCounts;
+};
+
+/** 보낸 역조공 화면 오른쪽 요약 칸의 숫자 — 화면에 이미 있는 몫 목록만 센다. */
+export function summarizeSent(rows: readonly SentRevgift[]): SentSummary {
+  return { batches: new Set(rows.map((r) => r.sentAt)).size, fans: rows.length, states: countBatchStates(rows) };
+}
