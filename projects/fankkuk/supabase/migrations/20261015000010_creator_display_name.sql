@@ -10,7 +10,7 @@
 --    팬 선물 쪽 결제자는 팬이라 닉네임 그대로다.
 --
 -- 고치지 않은 것(이유):
---   admin_payment_rows — 20261015000003_virtual_account_flow.sql 이 이미 coalesce(cr.name, cp.nickname) 로 다시 정의한다(무통장 입금 작업).
+--   admin_payment_rows — 20261015000011_admin_payment_creator_name.sql 이 coalesce(cr.name, cp.nickname) 로 다시 정의한다(처음엔 무통장 입금 작업에 있었고, 그 작업을 되돌릴 때 따로 뺐다).
 --   notification_claim · my_account · my_profile · issue_email_verification · request_password_reset — 받는 사람 본인을 부르는 닉네임이다.
 --   admin_creator_verifications · admin_creators — 공개 이름(c.name)과 계정 닉네임을 따로 보여 준다.
 --

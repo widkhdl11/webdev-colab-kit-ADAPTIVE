@@ -43,4 +43,14 @@ describe("크리에이터 이름은 공개 이름으로 보인다", () => {
     const row = (data as { toss_order_id: string; payer_nickname: string }[]).find((r) => r.toss_order_id === send.tossOrderId);
     expect(row?.payer_nickname).toBe(publicName());
   });
+
+  it("운영자의 결제 내역에서 역조공을 낸 크리에이터는 공개 이름으로 보인다", async () => {
+    const send = await registerTestRevgift([{ fanId: PROFILE.byeolbit, tier: "small" }]);
+    await payTestRevgift(send);
+    const { data, error } = await (await signedInClient("fankkuk_admin")).rpc("admin_payment_rows");
+    expect(error).toBeNull();
+    const row = (data as { order_no: string; unit_kind: string; payer_nickname: string }[]).find((r) => r.order_no === send.orderNos[0]);
+    expect(row?.unit_kind).toBe("revgift");
+    expect(row?.payer_nickname).toBe(publicName());
+  });
 });

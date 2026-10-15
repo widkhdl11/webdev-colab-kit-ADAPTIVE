@@ -1,9 +1,24 @@
 ---
 project: fankkuk
 status: passed
-basis: 4f9a31aa13be
+basis: 46da8f46d466
 reviewers: [security-reviewer, code-reviewer, ui-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-15, 가입 닉네임·아이디/닉네임 미리 확인)
+
+이번 사인오프가 덮는 변경: 지난 사인오프(basis 4f9a31aa13be) 뒤 f168677(가입 닉네임·미리 확인·크리에이터 팬덤 이름) · 9141d47(리뷰 반영) · 7ffaa81(옛 시험 기대값) · 무통장 입금 추가와 되돌림(6a1323d → ab1061b, 코드는 남지 않음) · 0dfe6fc 에서 따로 살린 마이그레이션 20261015000011. 스펙: signup INV-U13·U14.
+
+- 리뷰 셋(security·code·ui)은 f168677 에 돌렸고 지적은 9141d47 에서 반영했다: 크리에이터 이름 자리는 공개 이름(마이그레이션 0010) · 확인 중에는 「다음」이 기다림 · 이메일 칸 @ 넘김 · 휴대폰 +82 · 미리 확인 횟수 세기를 IPv6 /64 단위로.
+- 리뷰어가 보지 않은 것: 마이그레이션 20261015000011(관리자 결제 목록 역조공 줄의 이름). 직전 정의(20261010000003_late_box)와 줄 단위로 비교해 다른 곳은 두 줄뿐 — 이름을 `coalesce(cr.name, cp.nickname)` 로, 그 이름을 읽으려고 `creators` 를 left join. 운영자 확인(`is_operator()`)은 그대로라 리뷰어 없이 시험으로 확인했다. 0010 주석이 되돌린 파일을 가리키던 것도 고쳤다.
+- 새 시험: creator-display-name-db 에 「운영자의 결제 내역에서 역조공을 낸 크리에이터는 공개 이름으로 보인다」. 로컬 DB 함수를 옛 정의로 돌리면 실패(Expected 하루 · Received 하루계정닉) → 새 정의로 되돌리면 3/3 통과.
+
+## 실행 근거
+- `node gates/run-gates.mjs` → 게이트 통과(tsc 4/4 · test 4/4).
+- `npx vitest run --config vitest.integration.config.mts tests/integration/creator-display-name-db.integration.test.ts` → 3 passed.
+- 통합 전체(지난 턴, 7ffaa81 뒤): 1728 중 실패 2 — 시드 날짜 건(BACKLOG 기존).
+
+# 이전 사인오프
 
 # 리뷰 사인오프 — fankkuk (2026-10-15, 사이드바 A안·본문 폭·하늘색 브랜드 교체)
 
@@ -15,7 +30,6 @@ reviewers: [security-reviewer, code-reviewer, ui-reviewer]
 - 추가분(사인오프 뒤, 리뷰어 없이 실측만): 열람 기록 표를 넓은 구간에서 빼 1200 으로(사용자 지시, 클래스 하나 삭제) — 1920 폭에서 표 1200·안 넘침·페이지 가로 넘침 없음. 리뷰어 셋은 이 줄을 보지 않았다.
 - 실행 근거: `node gates/run-gates.mjs` → 게이트 통과(tsc 4/4 · test 4/4). 화면(로컬, haru_creator): /creator/revgifts/new 에서 현재 칸 「팬에게 보내기」 하나·#count 로 이동 · /creator/revgifts 와 /gifts?view=all 에서 제목 아래 탭, 현재 칸 「보낸 내역」+해당 탭 · 체크박스 accent-color rgb(31, 41, 55).
 
-# 이전 사인오프
 
 # 리뷰 사인오프 — fankkuk (2026-10-14, 승인 전 주소 입력·확인)
 
