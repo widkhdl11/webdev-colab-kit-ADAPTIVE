@@ -79,20 +79,20 @@ function SummarySide({ summary }: { summary: SentSummary }) {
       <div className={`card ${s.sideCard}`}>
         <h2 className="t-card">요약</h2>
         {/* 보낸 것이 없으면 0 줄을 늘어놓지 않는다 — 빈 상태는 본문이 알린다 */}
-        {summary.fans === 0 ? null : (
+        {summary.shares === 0 ? null : (
           <dl className={s.sum}>
             <div>
               <dt>보낸 묶음</dt>
               <dd>{summary.batches}묶음</dd>
             </div>
             <div>
-              <dt>받는 팬</dt>
-              <dd>{summary.fans}명</dd>
+              <dt>보낸 선물</dt>
+              <dd>{summary.shares}개</dd>
             </div>
             {STATE_ORDER.map((st) => (
               <div key={st}>
                 <dt>{sentStateTag(st).tag}</dt>
-                <dd>{summary.states[st]}명</dd>
+                <dd>{summary.states[st]}개</dd>
               </div>
             ))}
           </dl>
