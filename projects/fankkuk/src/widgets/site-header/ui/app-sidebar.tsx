@@ -214,7 +214,7 @@ export function AppSidebar({ role, groups, current, homeHref, nickname, counts }
                             {it.sub.map((sub) =>
                               "soon" in sub ? (
                                 <li key={sub.label}>
-                                  <span className="sb-soon" aria-disabled="true">
+                                  <span className="sb-soon">
                                     <span className="sb-label">{sub.label}</span>
                                     {/* 낭독기가 「합포장준비 중」으로 붙여 읽지 않게 */}
                                     <span className="sr-only">, </span>

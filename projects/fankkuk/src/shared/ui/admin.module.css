@@ -116,7 +116,7 @@
 .textareaTall { min-height: 220px; }
 .count { font-size: 13px; color: var(--sub); text-align: right; }
 .check { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
-.check input { width: 18px; height: 18px; accent-color: var(--brand); }
+.check input { width: 18px; height: 18px; accent-color: var(--brand-line); }
 .btnSoft { background: var(--surface); color: var(--ink); }
 .btnSoft:hover { background: var(--surface-hover); }
 .btnInk { background: var(--ink); color: var(--white); }

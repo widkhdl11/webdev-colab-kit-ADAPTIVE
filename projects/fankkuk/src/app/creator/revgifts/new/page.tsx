@@ -25,7 +25,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   if (!clientKey) console.warn("NEXT_PUBLIC_TOSS_CLIENT_KEY 가 없어 결제창을 열 수 없다");
   return (
     <>
-      <SiteHeader {...await readSiteHeader(supabase, viewer, "/creator/revgifts")} />
+      <SiteHeader {...await readSiteHeader(supabase, viewer, "/creator/revgifts/new")} />
       <RevgiftSendPage clientKey={clientKey} prices={prices} followers={followers} notice={notice} />
       <SiteFooter />
     </>

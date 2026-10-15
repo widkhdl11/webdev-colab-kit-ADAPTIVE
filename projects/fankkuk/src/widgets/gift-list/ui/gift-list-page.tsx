@@ -1,5 +1,6 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
@@ -125,7 +126,10 @@ export function GiftListPage({
   faceToneByName,
   creators = [],
   title = "보낸 선물",
+  tabs,
 }: {
+  /** 페이지 머리 바로 아래에 둘 화면 간 탭 — 크리에이터의 「보낸 내역」 두 화면(design-rules 11절). 머리는 늘 본문 맨 앞이다(00절) */
+  tabs?: ReactNode;
   /** 선물한 크리에이터마다 「함께한 시간」 줄 — 비면 그리지 않는다 */
   creators?: readonly TogetherLink[];
   /** 페이지 머리 제목 — 사이드바 메뉴 이름과 같게(팬·크리에이터 모두 「보낸 선물」, design-rules 00절) */
@@ -153,6 +157,7 @@ export function GiftListPage({
         </div>
         <p className="ph-desc">크리에이터별로 보낸 선물과 받은 답장을 한곳에서 볼 수 있어요.</p>
       </header>
+      {tabs}
       {creators.length > 0 ? <TogetherLinks creators={creators} /> : null}
       <GiftTabs
         tabs={[

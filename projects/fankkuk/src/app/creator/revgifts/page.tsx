@@ -30,8 +30,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
     <>
       <SiteHeader {...header} />
       <MyShell>
-        <SentTabs current="fans" />
-        <RevgiftSentPage rows={rows} boxes={boxes} paid={paid === "1"} officeAddress={OFFICE_ADDRESS} />
+        <RevgiftSentPage tabs={<SentTabs current="fans" />} rows={rows} boxes={boxes} paid={paid === "1"} officeAddress={OFFICE_ADDRESS} />
       </MyShell>
       <SiteFooter />
     </>

@@ -1,5 +1,6 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { canReportNotMine, isWaybillEditable, type ShareBox } from "@/entities/parcel/model/box-rows";
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
 import { countBatchStates, toSentBatches } from "@/entities/revgift/model/sent-batches";
@@ -81,7 +82,20 @@ function AddressGuide({ headId }: { headId: string }) {
   );
 }
 
-export function RevgiftSentPage({ rows, boxes, paid, officeAddress }: { rows: readonly SentRevgift[]; boxes: readonly ShareBox[]; paid: boolean; officeAddress: string }) {
+export function RevgiftSentPage({
+  rows,
+  boxes,
+  paid,
+  officeAddress,
+  tabs,
+}: {
+  rows: readonly SentRevgift[];
+  boxes: readonly ShareBox[];
+  paid: boolean;
+  officeAddress: string;
+  /** 페이지 머리 바로 아래에 둘 화면 간 탭(design-rules 11절). 머리는 늘 본문 맨 앞이다(00절) */
+  tabs?: ReactNode;
+}) {
   const batches = toSentBatches(rows, officeAddress);
   const boxByOrder = new Map(boxes.map((b) => [b.orderNo, b]));
   // 받는 주소 없이 보냈어요(INV-C4 ②) — 고를 수 있는 몫의 판정은 features/box-waybill/model/box-targets.ts
@@ -99,6 +113,7 @@ export function RevgiftSentPage({ rows, boxes, paid, officeAddress }: { rows: re
         </div>
         <p className="ph-desc">팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
       </header>
+      {tabs}
       {paid ? (
         <p className={s.paid} role="status">
           <strong>결제가 끝났어요.</strong> 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소로 보내 주세요.

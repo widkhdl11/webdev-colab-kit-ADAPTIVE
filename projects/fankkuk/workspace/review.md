@@ -1,9 +1,20 @@
 ---
 project: fankkuk
 status: passed
-basis: 5662b5d40f7f
+basis: f13e97209e19
 reviewers: [security-reviewer, code-reviewer, ui-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-15, 사이드바 A안·본문 폭·하늘색 브랜드 교체)
+
+이번 사인오프가 덮는 변경: 지난 사인오프(basis 5662b5d40f7f) 뒤 커밋 eeb795d(사이드바 A안)·30a18f0(본문 폭 1200/1360)·7ef67e2·b14128e(하늘색·고양이 로고, 카드 d86) + 이번 리뷰 반영.
+
+- 코드 리뷰: 높음 1 — 역조공 보내기 화면이 사이드바에 「/creator/revgifts」를 넘겨 「보낸 내역」이 켜짐 → 「/creator/revgifts/new」. 중간 1 — 「몇 명에게」 링크의 #count 구간이 없음 → 팬 고르기 구간에 id. 낮음 2(역할 없는 span 의 aria-disabled, 안 쓰는 아이콘 둘) 정리.
+- UI 리뷰: 중간 1 — 「보낸 내역」 탭이 페이지 제목 위 → 위젯에 tabs 자리를 열어 제목 아래로. 판단 1 — 체크박스 켜짐 색 하늘색(흰 바탕 1.7:1) → 짙은 회색(000절 선택 표시 규칙). 낮음(하위 줄 간격 토큰 없음, 값은 같음)은 그대로 둠. 하늘색 규칙 위반 0.
+- 보안 리뷰: 문제 없음 — 역할 분기는 탭 표시만, 접근은 기존 서버 확인과 DB 함수가 맡음. 링크는 고정 문자열.
+- 실행 근거: `node gates/run-gates.mjs` → 게이트 통과(tsc 4/4 · test 4/4). 화면(로컬, haru_creator): /creator/revgifts/new 에서 현재 칸 「팬에게 보내기」 하나·#count 로 이동 · /creator/revgifts 와 /gifts?view=all 에서 제목 아래 탭, 현재 칸 「보낸 내역」+해당 탭 · 체크박스 accent-color rgb(31, 41, 55).
+
+# 이전 사인오프
 
 # 리뷰 사인오프 — fankkuk (2026-10-14, 승인 전 주소 입력·확인)
 

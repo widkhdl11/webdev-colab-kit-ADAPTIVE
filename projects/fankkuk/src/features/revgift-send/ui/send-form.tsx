@@ -97,7 +97,7 @@ export function RevgiftSendForm({
 
   return (
     <div>
-      <section aria-labelledby="rv-add-title">
+      <section id="count" aria-labelledby="rv-add-title">
         <h2 className="t-card" id="rv-add-title">
           받을 팬 고르기
         </h2>

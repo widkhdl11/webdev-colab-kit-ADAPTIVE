@@ -25,7 +25,7 @@
 .symBox { display: grid; flex: none; place-items: center; overflow: hidden; width: 88px; height: 88px; border-radius: var(--r-card); background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-400); color: var(--gray-600); font-size: var(--fs-caption); text-align: center; }
 .has { box-shadow: inset 0 0 0 1px var(--gray-200); background: var(--white); }
 .chk { display: flex; gap: var(--space-2); align-items: flex-start; cursor: pointer; }
-.chk input { flex: none; width: 20px; height: 20px; margin-top: 2px; accent-color: var(--primary); }
+.chk input { flex: none; width: 20px; height: 20px; margin-top: 2px; accent-color: var(--brand-line); }
 .chk input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* 미리보기 이미지 고르기 */
@@ -34,7 +34,7 @@
 .pickOpt:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
 .pickOpt:has(input:disabled) { background: var(--gray-50); color: var(--gray-600); cursor: not-allowed; }
 .pickOpt:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
-.pickOpt input { flex: none; width: 20px; height: 20px; accent-color: var(--primary); }
+.pickOpt input { flex: none; width: 20px; height: 20px; accent-color: var(--brand-line); }
 .pickHint { display: block; font-size: var(--fs-caption); color: var(--gray-600); }
 
 /* 공지 이미지 세 크기 */
