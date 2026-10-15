@@ -1,0 +1,25 @@
+/* 팬꾹 v22 본문 폭 비교 — 폭·배치만. 색·글자·간격은 v20 토큰 변수만 쓴다. */
+.v22-list { --wrap-w: 880px; }                 /* 가: 목록형 기둥 */
+.v22-form { margin-inline: auto; }              /* 가: 입력형 720 기둥을 본문 영역 가운데로 */
+.sb-main.v22-ct { container-type: inline-size; }
+.v22-split { display: grid; grid-template-columns: minmax(0, 880px); justify-content: center; gap: var(--sp-32); grid-template-areas: "side" "main"; }
+.v22-split--form { grid-template-columns: minmax(0, 720px); }
+.v22-split > .v22-mainc { grid-area: main; min-width: 0; }
+.v22-split > .v22-side { grid-area: side; min-width: 0; display: grid; gap: var(--sp-16); align-content: start; }
+.v22-card { background: var(--white); border: var(--bw) solid var(--gray-200); border-radius: var(--r-card); padding: var(--sp-24); display: grid; gap: var(--sp-16); }
+.v22-card .btn { width: 100%; }
+.v22-sum { display: grid; gap: var(--sp-8); }
+.v22-sum > div { display: flex; justify-content: space-between; gap: var(--sp-16); }
+.v22-sum dt { color: var(--gray-600); }
+.v22-sum dd { font-weight: var(--fw-btn); font-variant-numeric: tabular-nums; }
+.v22-toc ul { display: flex; flex-wrap: wrap; gap: var(--sp-8) var(--sp-16); }
+.v22-toc a { display: block; padding: var(--sp-8) 0; color: var(--ink); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 3px; }
+.v22-toc a:hover { background: var(--primary-50); }
+.v22-split h2.sec-t { scroll-margin-top: var(--sp-96); }
+/* 두 단은 본문 영역 1000 부터(1440 화면 + 펼친 사이드바에서도 두 단) — 주 내용 칸이 880 까지 줄고 늘어난다 */
+@container (min-width: 1000px) {
+  .v22-split { grid-template-columns: minmax(0, 880px) 288px; grid-template-areas: "main side"; }
+  .v22-split--form { grid-template-columns: minmax(0, 720px) 280px; }
+  .v22-split > .v22-side { position: sticky; top: var(--sp-32); align-self: start; }
+  .v22-toc ul { display: grid; gap: 0; }
+}
