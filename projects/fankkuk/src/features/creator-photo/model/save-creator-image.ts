@@ -62,7 +62,7 @@ export async function saveCreatorImage(
     pathOf: (creatorId, version) => `${creatorId}/${FILE_PREFIX[kind]}${version}.webp`,
     attach: (version) => deps.admin.rpc("set_creator_image", { p_profile_id: userId, p_kind: kind, p_version: version, p_rights_checked: opts.rightsChecked }),
     refusals: { P0095: RIGHTS_REFUSED },
-  });
+  }, deps.now);
   if (!r.ok) return r;
   const after = readAttached(r.attached);
   await removeOldFile(deps.admin, after.oldPath);

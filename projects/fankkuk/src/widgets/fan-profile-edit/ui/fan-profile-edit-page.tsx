@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { fanImageUrl, type FanImageKind } from "@/entities/fan/model/fan-profile";
 import { NICKNAME_MAX } from "@/entities/session/model/nickname-rule";
-import { postAccount } from "@/features/account-edit/api/save-account-client";
-import { accountInputSchema } from "@/features/account-edit/model/account-input";
-import { deleteFanImage, sendFanImage, sendFanIntro } from "@/features/fan-profile-edit/api/send-fan-profile";
-import { FAN_INTRO_MAX, introInputSchema } from "@/features/fan-profile-edit/model/intro-input";
+import { deleteFanImage, sendFanImage, sendFanProfile } from "@/features/fan-profile-edit/api/send-fan-profile";
+import { planFanProfileSave } from "@/features/fan-profile-edit/model/plan-profile-save";
+import { FAN_INTRO_MAX } from "@/features/fan-profile-edit/model/profile-input";
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
 import { charCount } from "@/shared/lib/validation/char-count";
@@ -17,8 +16,9 @@ import s from "./fan-profile-edit.module.css";
 // 팬 프로필 수정 (design-rules 12절, 시안 docs/design/mockups/site/v21-addendum3/fan-profile-edit.html, 입력형 720 — 00절 「본문 틀」).
 // 스펙 my-account INV-A12~A14:
 // - 사진·배경 사진은 고르는 즉시 서버로 보낸다(/api/me/profile/image/…). 서버가 열어 보고 사진 정보를 지운 뒤 다시 그린다 — 화면은 보내기만 한다.
-// - 자기소개·닉네임은 「저장하기」로 보낸다. 소개는 /api/me/profile, 닉네임은 지금의 내 정보 저장(/api/me — 닉네임 규칙을 새로 만들지 않는다, INV-A12).
-//   내 정보 저장은 이메일·알림도 같이 받으므로 지금 값 그대로 실어 보낸다(바뀌지 않는다). 바뀐 칸만 보낸다.
+// - 자기소개·닉네임은 「저장하기」로 /api/me/profile 에 한 번에 보낸다 — 한 처리라 둘 다 되거나 둘 다 안 된다(INV-A12).
+//   무엇을 보낼지(바뀐 칸만·칸 오류)는 features 의 planFanProfileSave 가 정한다. 닉네임 판정은 내 정보 고치기와 같은 DB 판정이다.
+// - 사진 칸: 지운 뒤에는 올리기 버튼(파일 칸)으로 초점을 옮기고 글자를 「사진 올리기」로 바꾼다(시안 스크립트와 같다).
 // 시안의 자물쇠 안내 줄(「나와 승인 요청을 받은 크리에이터에게만」)은 카드 d91 로 맞지 않게 되어 옮기지 않는다 — 공개 범위 설명 문구는 두지 않는다(2026-10-15 사용자).
 // 시안의 「사용할 수 있는 닉네임이에요」 미리 확인은 로그인한 사람용 확인 경로가 없어 두지 않는다 — 겹치면 저장할 때 칸 아래에 알린다.
 
@@ -29,8 +29,6 @@ export type FanProfileEditProps = {
   bgPath: string | null;
   /** 공개 저장소 주소 — 사진 미리보기 주소를 만든다 */
   photoBase: string;
-  /** 닉네임을 내 정보 저장 경로로 보낼 때 그대로 실어 보낼 지금 값 */
-  account: { email: string | null; notifyKakao: boolean; notifyEmail: boolean };
 };
 
 const LOGIN = "/login?next=/me/profile";
@@ -58,14 +56,22 @@ function PhotoField({
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
+  // 지우기 뒤 초점을 올리기 버튼으로 — 「지우기」 버튼이 사라져 초점이 맨 앞으로 빠지지 않게. 파일 칸이 다시 켜진 뒤에 옮긴다
+  const [focusPick, setFocusPick] = useState(false);
+  useEffect(() => {
+    if (!focusPick || busy) return;
+    fileRef.current?.focus();
+    setFocusPick(false);
+  }, [focusPick, busy]);
 
-  const finish = (r: Awaited<ReturnType<typeof sendFanImage>>, okText: string) => {
+  const finish = (r: Awaited<ReturnType<typeof sendFanImage>>, okText: string, removed = false) => {
     setBusy(false);
     if (fileRef.current) fileRef.current.value = "";
     if (r.kind === "login") return onLogin();
     if (r.kind === "failed") return setMsg({ ok: false, text: r.message });
     onSaved(r.path);
     setMsg({ ok: true, text: okText });
+    if (removed) setFocusPick(true);
   };
 
   const picked = async (file: File | undefined) => {
@@ -84,8 +90,10 @@ function PhotoField({
     if (busy) return;
     setBusy(true);
     setMsg(null);
-    finish(await deleteFanImage(kind), `${title}을 지웠어요.`);
+    finish(await deleteFanImage(kind), `${title}을 지웠어요.`, true);
   };
+
+  const bad = msg !== null && !msg.ok;
 
   return (
     <section className={s.sec} aria-labelledby={`${id}-t`}>
@@ -96,18 +104,21 @@ function PhotoField({
         {view}
         <div>
           <div className={s.btns}>
+            {/* 이름 = 칸 제목 + 버튼 글자(「프로필 사진 사진 올리기」) — 두 파일 칸의 이름이 같지 않게 */}
             <input
-              className="sr-only"
+              className={`sr-only ${s.file}`}
               id={`${id}-f`}
               ref={fileRef}
               type="file"
               accept={PHOTO_ACCEPT}
               disabled={busy}
-              aria-describedby={`${id}-h ${id}-m`}
+              aria-labelledby={`${id}-t ${id}-l`}
+              aria-describedby={`${id}-h ${id}-e ${id}-m`}
+              aria-invalid={bad ? true : undefined}
               onChange={(e) => void picked(e.currentTarget.files?.[0])}
             />
-            <label className={`btn btn--line btn--sm ${s.pick}`} htmlFor={`${id}-f`} aria-disabled={busy}>
-              {busy ? "저장하는 중…" : "사진 바꾸기"}
+            <label className={`btn btn--line btn--sm ${s.pick}`} id={`${id}-l`} htmlFor={`${id}-f`} aria-disabled={busy}>
+              {busy ? "저장하는 중…" : hasImage ? "사진 바꾸기" : "사진 올리기"}
             </label>
             {hasImage ? (
               <button className={`btn btn--sm ${s.danger}`} type="button" aria-disabled={busy} onClick={() => void removeNow()}>
@@ -118,8 +129,12 @@ function PhotoField({
           <p className={s.help} id={`${id}-h`}>
             {help}
           </p>
-          <p className={`${s.msg} ${msg && !msg.ok ? s.bad : ""}`} role="status" id={`${id}-m`}>
-            {msg?.text}
+          {/* 알림 칸은 늘 두고 글자만 바꾼다 — 오류는 alert, 끝남은 status */}
+          <p className={`${s.msg} ${s.bad}`} role="alert" id={`${id}-e`}>
+            {bad ? msg.text : ""}
+          </p>
+          <p className={s.msg} role="status" id={`${id}-m`}>
+            {msg?.ok ? msg.text : ""}
           </p>
         </div>
       </div>
@@ -153,39 +168,26 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
     setNickErr(null);
     setIntroErr(null);
 
-    const introParsed = introInputSchema.safeParse({ intro });
-    if (!introParsed.success) return setIntroErr(introParsed.error.issues[0]?.message ?? "자기소개를 확인해 주세요.");
-    const nickChanged = nickname.trim() !== saved.current.nickname;
-    const email = p.account.email;
-    const account = nickChanged
-      ? accountInputSchema.safeParse({ nickname, email: email ?? "", notifyKakao: p.account.notifyKakao, notifyEmail: p.account.notifyEmail })
-      : null;
-    if (account && !account.success) {
-      const issue = account.error.issues[0];
-      if (issue?.path[0] === "nickname") return setNickErr(issue.message);
-      return setNotice({ ok: false, text: "계정 설정에서 이메일을 먼저 확인해 주세요." });
-    }
-    const introChanged = introParsed.data.intro !== saved.current.intro;
-    if (!introChanged && !account) return setNotice({ ok: true, text: "바뀐 내용이 없어요." });
+    const plan = planFanProfileSave({ nickname, intro }, saved.current);
+    if (plan.kind === "invalid") return plan.field === "nickname" ? setNickErr(plan.message) : setIntroErr(plan.message);
+    if (plan.kind === "unchanged") return setNotice({ ok: true, text: "바뀐 내용이 없어요." });
 
     setSaving(true);
     try {
-      if (introChanged) {
-        const r = await sendFanIntro(introParsed.data.intro);
-        if (r.kind === "login") return toLogin();
-        if (r.kind === "failed") return setIntroErr(r.message);
+      const r = await sendFanProfile(plan.body);
+      if (r.kind === "login") return toLogin();
+      if (r.kind === "failed") {
+        if (r.field === "nickname") return setNickErr(r.message);
+        if (r.field === "intro") return setIntroErr(r.message);
+        return setNotice({ ok: false, text: r.message });
+      }
+      if (r.intro !== null) {
         saved.current.intro = r.intro;
         setIntro(r.intro);
       }
-      if (account?.success) {
-        const r = await postAccount(account.data);
-        if (r.kind === "login") return toLogin();
-        if (r.kind === "failed") {
-          if (r.field === "nickname") return setNickErr(r.message);
-          return setNotice({ ok: false, text: r.message });
-        }
-        saved.current.nickname = account.data.nickname;
-        setNickname(account.data.nickname);
+      if (r.nickname !== null) {
+        saved.current.nickname = r.nickname;
+        setNickname(r.nickname);
       }
       setNotice({ ok: true, text: "저장했어요." });
       router.refresh(); // 사이드바 이름 메뉴의 닉네임도 새 값으로
@@ -258,7 +260,7 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
             </p>
           ) : null}
           <p className={s.help} id={`${id}-nick-h`}>
-            1~{NICKNAME_MAX}자. 팔로우하면 크리에이터가 이 닉네임을 볼 수 있어요.
+            1~{NICKNAME_MAX}자
           </p>
         </section>
 

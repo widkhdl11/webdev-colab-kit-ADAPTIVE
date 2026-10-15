@@ -35,3 +35,47 @@ describe("INV-E1: 크리에이터 본인만", () => {
     }
   });
 });
+
+describe("INV-E1: 올리기 오류 — 「이미 있음」만 409, 오래 남은 파일은 치우고 다시", () => {
+  const CREATOR = { userId: "u1", role: "creator" as const };
+  const CREATOR_ID = "00000000-0000-4000-b000-000000000001";
+  const NOW = Date.parse("2026-10-16T12:00:00Z");
+  const jpeg = async () => {
+    const sharp = (await import("sharp")).default;
+    const buf = await sharp({ create: { width: 40, height: 20, channels: 3, background: "#8ce" } }).jpeg().toBuffer();
+    return new Blob([new Uint8Array(buf)], { type: "image/jpeg" });
+  };
+  function storageFake(ageMs: number) {
+    const rpc = vi.fn(async (fn: string) =>
+      fn === "creator_image_next"
+        ? { data: [{ creator_id: CREATOR_ID, next_version: 2 }], error: null }
+        : { data: [{ old_path: null, preview_pick: "photo" }], error: null },
+    );
+    const upload = vi.fn();
+    const remove = vi.fn(async () => ({ data: [], error: null }));
+    const list = vi.fn(async () => ({ data: [{ name: "bg-2.webp", created_at: new Date(NOW - ageMs).toISOString() }], error: null }));
+    return { admin: { rpc, storage: { from: () => ({ upload, remove, list }) } } as never, rpc, upload, remove };
+  }
+  const DUPLICATE = { data: null, error: { message: "The resource already exists", statusCode: "409" } };
+
+  it("INV-E1 (실패경로): 방금 생긴 같은 판 파일 → 409, 지우지 않는다 / 다른 올리기 오류 → 던진다(500)", async () => {
+    const fresh = storageFake(1_000);
+    fresh.upload.mockResolvedValue(DUPLICATE);
+    expect(await saveCreatorImage({ admin: fresh.admin, viewer: CREATOR, now: () => NOW }, "background", await jpeg(), { rightsChecked: false })).toMatchObject({ ok: false, status: 409 });
+    expect(fresh.remove).not.toHaveBeenCalled();
+    const broken = storageFake(1_000);
+    broken.upload.mockResolvedValue({ data: null, error: { message: "Internal Server Error", statusCode: "500" } });
+    await expect(saveCreatorImage({ admin: broken.admin, viewer: CREATOR, now: () => NOW }, "background", await jpeg(), { rightsChecked: false })).rejects.toThrow();
+  });
+
+  it("INV-E1: 오래 남은 같은 판 파일은 지우고 한 번 다시 올려 붙인다", async () => {
+    const f = storageFake(10 * 60_000);
+    f.upload.mockResolvedValueOnce(DUPLICATE).mockResolvedValueOnce({ data: {}, error: null });
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const r = await saveCreatorImage({ admin: f.admin, viewer: CREATOR, now: () => NOW }, "background", await jpeg(), { rightsChecked: false });
+    log.mockRestore();
+    expect(r).toEqual({ ok: true, path: `${CREATOR_ID}/bg-2.webp`, previewPick: "photo" });
+    expect(f.remove.mock.calls[0]).toEqual([[`${CREATOR_ID}/bg-2.webp`]]);
+    expect(f.upload).toHaveBeenCalledTimes(2);
+  });
+});

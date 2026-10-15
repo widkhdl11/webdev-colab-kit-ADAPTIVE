@@ -28,6 +28,7 @@
 .swRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .swT { min-width: 0; }
 .swT b { display: block; }
+.swT span { display: block; margin-top: var(--space-1); color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
 .swRow + .swRow { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
 .must { margin: 0; }
 .must-t { color: var(--gray-900); }

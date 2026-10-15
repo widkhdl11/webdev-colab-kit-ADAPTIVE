@@ -7,7 +7,7 @@ import type { MyAccount } from "@/entities/fan/model/my-account";
 import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notice";
 import { FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 import { postAccount } from "@/features/account-edit/api/save-account-client";
-import { accountInputSchema } from "@/features/account-edit/model/account-input";
+import { planAccountSettingsSave } from "@/features/account-edit/model/settings-input";
 import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
 import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
 import s from "./my-info.module.css";
@@ -17,16 +17,19 @@ import s from "./my-info.module.css";
 // - 비밀번호 변경(session-login INV-L12)·번호 바꾸기(카카오 재인증, signup INV-U12)는 「바꾸기」를 눌러야 그 줄 아래에 칸이 펼쳐진다. 두 칸은 저장하기와 따로 서버에 보낸다.
 // - 이메일·알림 둘은 아래 「저장하기」로 보낸다(/api/me). 이메일은 바로 바뀌지 않고 확인 메일의 링크를 눌러야 바뀐다(my-account INV-A7).
 //   닉네임은 프로필 수정 화면에서 고친다 — 여기서는 지금 값을 그대로 실어 보낸다(내 정보 저장이 닉네임 칸을 같이 받는다).
-// - 회원 탈퇴는 탈퇴 기능이 아직 없어 지금처럼 고객센터로 보낸다. 시안의 「마지막으로 바꾼 날」은 저장된 값이 없어 두지 않는다.
+// - 회원 탈퇴는 다른 줄처럼 「탈퇴하기」를 눌러야 펼쳐진다. 탈퇴 기능이 아직 없어 펼친 안에는 고객센터로 가는 링크만 둔다.
+//   시안의 「마지막으로 바꾼 날」은 저장된 값이 없어 두지 않는다.
+// - 알림 스위치 설명은 시안의 스위치별 문구 그대로다. 시안에 없는 안내 문구는 두지 않는다(2026-10-16 사용자 — 문구 남발 금지).
 // 「되돌리기」는 폼 기본 동작(reset)으로 처음 값에 돌아가고, 알림 스위치도 처음 값으로 돌린다.
 
 type Notice = { tone: "ok" | "error"; text: string } | null;
 
-function Switch({ id, title, on, onChange }: { id: string; title: string; on: boolean; onChange: (v: boolean) => void }) {
+function Switch({ id, title, desc, on, onChange }: { id: string; title: string; desc: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className={s.swRow}>
       <div className={s.swT} id={`${id}-l`}>
         <b>{title}</b>
+        <span>{desc}</span>
       </div>
       <button className="sw" type="button" role="switch" aria-checked={on} aria-labelledby={`${id}-l`} onClick={() => onChange(!on)}>
         <span />
@@ -41,31 +44,22 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
-  const [open, setOpen] = useState<"phone" | "password" | null>(null);
+  const [open, setOpen] = useState<"phone" | "password" | "leave" | null>(null);
   const [kakao, setKakao] = useState(account.notifyKakao);
   const [mail, setMail] = useState(account.notifyEmail);
-  const toggle = (which: "phone" | "password") => setOpen((cur) => (cur === which ? null : which));
+  const toggle = (which: "phone" | "password" | "leave") => setOpen((cur) => (cur === which ? null : which));
   const toLogin = () => router.push("/login?next=/me");
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (saving) return;
     const form = new FormData(e.currentTarget);
-    const parsed = accountInputSchema.safeParse({
-      nickname: account.nickname,
-      email: String(form.get("email") ?? ""),
-      notifyKakao: kakao,
-      notifyEmail: mail,
-    });
-    if (!parsed.success) {
-      const issue = parsed.error.issues[0];
-      // 닉네임은 이 화면에서 고치지 않는다 — 지금 닉네임이 새 규칙에 맞지 않으면 프로필 수정으로 안내한다
-      const text = issue?.path[0] === "nickname" ? "닉네임을 프로필 수정에서 먼저 고쳐 주세요." : (issue?.message ?? "입력을 확인해 주세요.");
-      return setNotice({ tone: "error", text });
-    }
+    // 닉네임은 이 화면에서 고치지 않는다 — 지금 값을 그대로 싣는다(planAccountSettingsSave)
+    const plan = planAccountSettingsSave({ nickname: account.nickname, email: String(form.get("email") ?? ""), notifyKakao: kakao, notifyEmail: mail });
+    if (!plan.ok) return setNotice({ tone: "error", text: plan.message });
     setSaving(true);
     setNotice(null);
-    const outcome = await postAccount(parsed.data);
+    const outcome = await postAccount(plan.input);
     setSaving(false);
     if (outcome.kind === "login") return toLogin();
     if (outcome.kind === "failed") return setNotice({ tone: "error", text: outcome.message });
@@ -117,20 +111,10 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
               </span>
               <b>{account.phoneMasked ?? "등록된 번호가 없어요"}</b>
             </p>
-            <button
-              className="btn btn--line btn--sm"
-              type="button"
-              aria-expanded={open === "phone"}
-              aria-controls={f("tel-panel")}
-              aria-describedby={f("tel-h")}
-              onClick={() => toggle("phone")}
-            >
+            <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "phone"} aria-controls={f("tel-panel")} onClick={() => toggle("phone")}>
               바꾸기
             </button>
           </div>
-          <p className={s.help} id={f("tel-h")}>
-            바꾸려면 카카오 인증을 다시 받아요.
-          </p>
           {open === "phone" && (
             <div className={s.panel}>
               <PhoneChangePanel id={f("tel-panel")} onLoginExpired={toLogin} onChanged={() => router.refresh()} />
@@ -183,11 +167,19 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
           <div className={s.revealHead}>
             <p className={s.kvMain}>
               <span className={s.meta}>회원 탈퇴</span>
+              <b>계정과 프로필을 삭제해요</b>
             </p>
-            <Link className={`btn btn--sm ${s.danger}`} href="/support">
-              탈퇴 문의
-            </Link>
+            <button className={`btn btn--sm ${s.danger}`} type="button" aria-expanded={open === "leave"} aria-controls={f("leave-panel")} onClick={() => toggle("leave")}>
+              탈퇴하기
+            </button>
           </div>
+          {open === "leave" && (
+            <div className={s.panel} id={f("leave-panel")}>
+              <Link className="btn btn--line btn--sm" href="/support">
+                탈퇴 문의
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -195,9 +187,8 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
         <h2 className={s.secT} id={f("sec3")}>
           알림
         </h2>
-        <Switch id={f("n1")} title="카카오 알림톡으로 받기" on={kakao} onChange={setKakao} />
-        <Switch id={f("n2")} title="이메일로 받기" on={mail} onChange={setMail} />
-        <p className={s.help}>보낸 선물이 사무실에 도착하고, 검수를 마치고, 크리에이터에게 출발할 때 알려 드려요.</p>
+        <Switch id={f("n1")} title="카카오 알림톡으로 받기" desc="승인·배송처럼 선물 소식을 카카오톡으로 받아요." on={kakao} onChange={setKakao} />
+        <Switch id={f("n2")} title="이메일로 받기" desc="영수증과 안내 메일을 받아요." on={mail} onChange={setMail} />
         {/* 꼭 가는 알림은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) */}
         <MustDeliverNotice audience="fan" id={f("noti-must")} className={`t-meta ${s.must}`} titleClassName={s["must-t"]} />
       </section>

@@ -21,20 +21,23 @@ export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "creator") redirect(CREATOR_HOME);
   if (viewer?.role !== "fan") redirect("/login");
-  const all = await readMyGiftViews(supabase);
+  // 서로 기대지 않는 읽기 넷은 한꺼번에 — 프로필 구간은 공개 네 칸(my-account INV-A13). 못 읽으면 사진·소개 없이 닉네임만 그린다
+  const [all, cards, fanProfile, noticeRows] = await Promise.all([
+    readMyGiftViews(supabase),
+    readCreatorCards(supabase, { signedIn: true }),
+    readFanProfile(supabase, viewer.userId),
+    readNotices(supabase),
+  ]);
   const gifts = all.filter((v) => fanGiftBucket(v) === "ongoing");
-  const cards = await readCreatorCards(supabase, { signedIn: true });
   const following = cards.filter((c) => c.following).map(({ id, name, faceTone, handle, approvalMinutes }) => ({ id, name, faceTone, handle, approvalMinutes }));
   const faceToneByName = Object.fromEntries(cards.map((c) => [c.name, c.faceTone]));
-  // 프로필 구간 — 공개 네 칸(my-account INV-A13). 못 읽으면 사진·소개 없이 닉네임만 그린다
-  const fanProfile = await readFanProfile(supabase, viewer.userId);
   const photoBase = readPublicStorageBase();
   const profile = {
     photoUrl: fanImageUrl(photoBase, fanProfile?.photoPath ?? null),
     bgUrl: fanImageUrl(photoBase, fanProfile?.bgPath ?? null),
     intro: fanProfile?.intro ?? "",
   };
-  const notices = (await readNotices(supabase))
+  const notices = noticeRows
     .toSorted((a, b) => b.date.localeCompare(a.date))
     .slice(0, 3)
     .map(({ id, title, date }) => ({ id, title, date }));

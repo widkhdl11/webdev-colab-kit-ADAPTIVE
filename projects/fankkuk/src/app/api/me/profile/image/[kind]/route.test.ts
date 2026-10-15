@@ -6,7 +6,7 @@ import type { Viewer } from "@/entities/session/model/viewer";
 // 다른 사이트·로그인·팬 확인은 본문을 읽기 전에, 크기를 밝히지 않은 요청은 411, 상한을 넘으면 400.
 // 사진 처리·저장(saveFanImage)은 통합 시험(fan-profile-db)이 실제 저장소로 본다. 여기서는 그 함수가 불렸는지만 본다.
 
-const state = vi.hoisted(() => ({ viewer: null as Viewer | null, saved: 0 }));
+const state = vi.hoisted(() => ({ viewer: null as Viewer | null, saved: 0, savedFor: [] as string[] }));
 
 vi.mock("@/shared/api/supabase/server", () => ({ createRequestSupabase: async () => ({}) }));
 vi.mock("@/shared/api/supabase/admin", () => ({ createAdminSupabase: () => ({}) }));
@@ -15,8 +15,9 @@ vi.mock("@/features/fan-profile-edit/model/save-fan-image", async (importOrigina
   const real = await importOriginal<typeof import("@/features/fan-profile-edit/model/save-fan-image")>();
   return {
     ...real,
-    saveFanImage: async () => {
+    saveFanImage: async (deps: { viewer: Viewer | null }) => {
       state.saved += 1;
+      state.savedFor.push(deps.viewer?.userId ?? "<없음>");
       return { ok: true, path: "f/p-1.webp" };
     },
   };
@@ -28,9 +29,10 @@ const { PHOTO_BODY_LIMIT } = await import("@/shared/lib/image/photo-limits");
 const SITE = "http://127.0.0.1:3311";
 const ctx = (kind: string) => ({ params: Promise.resolve({ kind }) });
 
-function upload(length: number | null, origin = SITE): { req: Request; formData: ReturnType<typeof vi.fn> } {
+function upload(length: number | null, origin = SITE, extra: Record<string, string> = {}): { req: Request; formData: ReturnType<typeof vi.fn> } {
   const form = new FormData();
   form.append("photo", new Blob([new Uint8Array(8)], { type: "image/jpeg" }), "a.jpg");
+  for (const [k, v] of Object.entries(extra)) form.append(k, v);
   const headers: Record<string, string> = { origin, host: "127.0.0.1:3311" };
   if (length !== null) headers["content-length"] = String(length);
   const req = new Request(`${SITE}/api/me/profile/image/photo`, { method: "POST", headers, body: form });
@@ -42,6 +44,7 @@ function upload(length: number | null, origin = SITE): { req: Request; formData:
 beforeEach(() => {
   state.viewer = null;
   state.saved = 0;
+  state.savedFor = [];
 });
 
 describe("POST /api/me/profile/image/{kind} — 본문을 읽기 전에 거른다", () => {
@@ -84,5 +87,14 @@ describe("POST /api/me/profile/image/{kind} — 본문을 읽기 전에 거른�
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ path: "f/p-1.webp" });
     expect(state.saved).toBe(1);
+    // 저장 함수가 받은 사람은 세션의 팬이다
+    expect(state.savedFor).toEqual(["f1"]);
+  });
+
+  it("INV-A14 (실패경로): 폼 본문에 다른 계정 ID(owner·userId·profileId)를 넣어도 저장 함수는 세션의 계정으로 불린다", async () => {
+    state.viewer = { userId: "f1", role: "fan" };
+    const forged = upload(1000, SITE, { owner: "f2", userId: "f2", profileId: "f2", user_id: "f2" });
+    expect((await POST(forged.req, ctx("photo"))).status).toBe(200);
+    expect(state.savedFor).toEqual(["f1"]);
   });
 });

@@ -20,7 +20,7 @@ export async function saveCreatorPhoto(deps: PhotoDeps, file: Blob | null): Prom
     next: () => deps.admin.rpc("creator_photo_next", { p_profile_id: userId }),
     pathOf: (creatorId, version) => `${creatorId}/${version}.webp`,
     attach: (version) => deps.admin.rpc("set_creator_photo", { p_profile_id: userId, p_version: version }),
-  });
+  }, deps.now);
   if (!r.ok) return r;
   await removeOldFile(deps.admin, r.attached);
   return { ok: true, photoPath: r.path };
