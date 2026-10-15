@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkDetails, creatorProfileSchema } from "./signup-input";
+import { checkDetails, checkField, creatorProfileSchema, type LiveValues } from "./signup-input";
 
 // 시험용 비밀번호(실제 계정 아님). 비밀번호 칸에 긴 문자열을 바로 적으면 시크릿 검사에 걸려 상수로 둔다.
 const TEST_PW = "long-enough-pw1";
@@ -57,5 +57,51 @@ describe("INV-V1·creator-tags INV-T3: 크리에이터 공개 정보 미리 보�
     const five = ["1", "2", "3", "4", "5"].map((n) => `11111111-1111-4111-8111-00000000000${n}`);
     expect(checkDetails({ ...ok, creator: { ...creator, tagIds: five, customTag: "유튜브" } })).toBeNull();
     expect(creatorProfileSchema.safeParse({ ...creator, tagIds: five, customTag: " 유튜브 " }).data).toMatchObject({ tagIds: five, customTag: "유튜브" });
+  });
+});
+
+describe("INV-U6: 칸별 실시간 안내 — 다음을 누를 때와 같은 규칙을 칸마다", () => {
+  const live: LiveValues = {
+    loginId: "newfan",
+    email: { local: "new.fan", choice: "naver.com", custom: "" },
+    password: TEST_PW,
+    passwordConfirm: TEST_PW,
+    phone: "010-5555-6666",
+    creatorName: "꿀단지",
+    channelTitle: "꿀단지TV",
+  };
+  const fields = ["loginId", "email", "password", "passwordConfirm", "phone", "creatorName", "channelTitle"] as const;
+
+  it("INV-U6: 맞는 칸은 짧은 확인 문구", () => {
+    for (const field of fields) {
+      const r = checkField(field, live);
+      expect([field, r.ok, r.message.length > 0]).toEqual([field, true, true]);
+    }
+  });
+
+  it("INV-U6 (실패경로): 틀린 칸은 다음을 누를 때와 같은 문구", () => {
+    const same = (field: (typeof fields)[number], v: LiveValues, details: Parameters<typeof checkDetails>[0]) => {
+      const r = checkField(field, v);
+      expect(r.ok).toBe(false);
+      expect(r.message).toBe(checkDetails(details)?.message);
+    };
+    same("loginId", { ...live, loginId: "abc" }, { ...ok, loginId: "abc" });
+    same("password", { ...live, password: NINE_CHARS, passwordConfirm: NINE_CHARS }, { ...ok, password: NINE_CHARS, passwordConfirm: NINE_CHARS });
+    same("password", { ...live, loginId: SAME_AS_ID, password: SAME_AS_ID }, { ...ok, loginId: SAME_AS_ID, password: SAME_AS_ID, passwordConfirm: SAME_AS_ID });
+    same("passwordConfirm", { ...live, passwordConfirm: "other-pw" }, { ...ok, passwordConfirm: "other-pw" });
+    same("phone", { ...live, phone: "02-123-4567" }, { ...ok, phone: "02-123-4567" });
+    same("email", { ...live, email: { local: "a,b", choice: "naver.com", custom: "" } }, { ...ok, email: "a,b@naver.com" });
+  });
+
+  it("INV-U6 (실패경로): 이메일은 어느 부분이 비었는지 알려 준다", () => {
+    expect(checkField("email", { ...live, email: { local: "", choice: "naver.com", custom: "" } }).message).toBe("이메일 앞부분을 적어 주세요.");
+    expect(checkField("email", { ...live, email: { local: "fan", choice: "", custom: "" } }).message).toBe("@ 뒤 주소를 골라 주세요.");
+    expect(checkField("email", { ...live, email: { local: "fan", choice: "custom", custom: " " } }).message).toBe("@ 뒤 주소를 적어 주세요.");
+  });
+
+  it("INV-U6 (실패경로): 비밀번호 확인이 비었거나 다르면 확인 문구가 아니다, 크리에이터 칸도 같은 규칙", () => {
+    expect(checkField("passwordConfirm", { ...live, passwordConfirm: "" }).ok).toBe(false);
+    expect(checkField("creatorName", { ...live, creatorName: " " }).ok).toBe(false);
+    expect(checkField("channelTitle", { ...live, channelTitle: "가".repeat(41) }).ok).toBe(false);
   });
 });

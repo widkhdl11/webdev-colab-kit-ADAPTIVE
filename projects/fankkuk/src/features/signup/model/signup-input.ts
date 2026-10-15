@@ -6,6 +6,7 @@ import { PASSWORD_KINDS, PASSWORD_MAX, PASSWORD_MIN, PASSWORD_SAME_AS_ID, PASSWO
 import { EMAIL_SHAPE } from "@/shared/lib/validation/email-shape";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { MOBILE_PHONE_SHAPE } from "@/shared/lib/validation/phone-shape";
+import { EMAIL_CUSTOM, joinEmail, type EmailParts } from "./signup-fields";
 
 // 가입 입력 경계(INV-U5·U6). 앱 서버가 먼저 검사하고, DB 함수 create_account 가 같은 규칙으로 다시 검사한다.
 // 본문에서 이 칸들만 꺼낸다 — 「인증 완료」 표시·사용자 ID·닉네임·약관 판 번호는 와도 읽지 않는다(INV-U1).
@@ -59,12 +60,13 @@ const trimmedWithin = (max: number, message: string) =>
     .trim()
     .refine((s) => charCount(s) >= 1 && charCount(s) <= max, message);
 
-export const creatorProfileSchema = z
-  .object({
-    name: trimmedWithin(CREATOR_PROFILE_LIMITS.name, `공개 이름을 1~${CREATOR_PROFILE_LIMITS.name}자로 적어 주세요.`),
-    channelTitle: trimmedWithin(CREATOR_PROFILE_LIMITS.channelTitle, `채널 이름을 1~${CREATOR_PROFILE_LIMITS.channelTitle}자로 적어 주세요.`),
-    ...tagSelectionFields,
-  })
+const creatorProfileObject = z.object({
+  name: trimmedWithin(CREATOR_PROFILE_LIMITS.name, `공개 이름을 1~${CREATOR_PROFILE_LIMITS.name}자로 적어 주세요.`),
+  channelTitle: trimmedWithin(CREATOR_PROFILE_LIMITS.channelTitle, `채널 이름을 1~${CREATOR_PROFILE_LIMITS.channelTitle}자로 적어 주세요.`),
+  ...tagSelectionFields,
+});
+
+export const creatorProfileSchema = creatorProfileObject
   .refine(tagCountWithin, { message: TAG_COUNT_MESSAGE, path: ["tagIds"] });
 
 export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
@@ -141,6 +143,75 @@ export function checkDetails(v: {
   }
   if (v.password !== v.passwordConfirm) return { field: "passwordConfirm", message: "비밀번호가 서로 달라요." };
   return null;
+}
+
+/** 입력하는 동안 칸 바로 아래에 안내를 띄우는 칸 */
+export type LiveField = "loginId" | "email" | "password" | "passwordConfirm" | "phone" | "creatorName" | "channelTitle";
+
+/** 칸별 안내에 쓰는 값 — 이메일은 칸 셋(앞부분·고른 주소·직접 입력) 그대로 */
+export type LiveValues = {
+  loginId: string;
+  email: EmailParts;
+  password: string;
+  passwordConfirm: string;
+  phone: string;
+  creatorName: string;
+  channelTitle: string;
+};
+
+/** 맞을 때의 짧은 확인. 아이디는 아직 중복을 보지 않으므로 「쓸 수 있다」고 하지 않는다. */
+const LIVE_OK: Record<LiveField, string> = {
+  loginId: "형식이 맞아요.",
+  email: "형식이 맞아요.",
+  password: "쓸 수 있는 비밀번호예요.",
+  passwordConfirm: "비밀번호가 같아요.",
+  phone: "번호 형식이 맞아요.",
+  creatorName: "좋아요.",
+  channelTitle: "좋아요.",
+};
+
+const firstMessage = (r: { success: boolean; error?: { issues: { message: string }[] } }): string | null =>
+  r.success ? null : (r.error?.issues[0]?.message ?? "입력을 확인해 주세요.");
+
+function emailPartsProblem(p: EmailParts): string | null {
+  if (p.local.trim() === "") return "이메일 앞부분을 적어 주세요.";
+  if (p.choice === "") return "@ 뒤 주소를 골라 주세요.";
+  if (p.choice === EMAIL_CUSTOM && p.custom.trim() === "") return "@ 뒤 주소를 적어 주세요.";
+  return null;
+}
+
+/**
+ * 칸 하나를 미리 본다(INV-U6) — 「다음」을 누를 때 checkDetails 가 쓰는 것과 같은 스키마를 칸마다 부른다.
+ * 맞으면 짧은 확인, 틀리면 무엇이 틀렸는지. 화면 편의일 뿐 판정은 서버가 다시 한다.
+ */
+export function checkField(field: LiveField, v: LiveValues): { ok: boolean; message: string } {
+  const shape = detailsObject.shape;
+  const creatorShape = creatorProfileObject.shape;
+  let problem: string | null;
+  switch (field) {
+    case "loginId":
+      problem = firstMessage(shape.loginId.safeParse(v.loginId));
+      break;
+    case "email":
+      problem = emailPartsProblem(v.email) ?? firstMessage(shape.email.safeParse(joinEmail(v.email)));
+      break;
+    case "password":
+      problem = firstMessage(shape.password.safeParse(v.password)) ?? (v.password === v.loginId.trim() ? PASSWORD_SAME_AS_ID : null);
+      break;
+    case "passwordConfirm":
+      problem = v.passwordConfirm === "" ? "비밀번호를 한 번 더 입력해 주세요." : v.passwordConfirm !== v.password ? "비밀번호가 서로 달라요." : null;
+      break;
+    case "phone":
+      problem = firstMessage(phoneSchema.safeParse(v.phone));
+      break;
+    case "creatorName":
+      problem = firstMessage(creatorShape.name.safeParse(v.creatorName));
+      break;
+    case "channelTitle":
+      problem = firstMessage(creatorShape.channelTitle.safeParse(v.channelTitle));
+      break;
+  }
+  return problem === null ? { ok: true, message: LIVE_OK[field] } : { ok: false, message: problem };
 }
 
 /** create_account 에 넘길 약관 동의 — 동의한 것만, 판 번호는 서버 값으로. */

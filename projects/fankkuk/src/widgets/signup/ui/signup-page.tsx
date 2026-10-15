@@ -2,14 +2,29 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
 import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
 import { HEARD_FROM, HEARD_FROM_LABEL, isHeardFrom, type HeardFrom } from "@/entities/metrics/model/signup-source";
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { completeSignup } from "@/features/signup/api/complete-signup";
 import { requestPhoneVerification } from "@/features/signup/api/signup-client";
-import { checkDetails, CREATOR_PROFILE_LIMITS, type DetailsField } from "@/features/signup/model/signup-input";
+import {
+  applyPhoneEdit,
+  EMAIL_CUSTOM,
+  EMAIL_DOMAINS,
+  joinEmail,
+  splitEmail,
+  type EmailParts,
+} from "@/features/signup/model/signup-fields";
+import {
+  checkDetails,
+  checkField,
+  CREATOR_PROFILE_LIMITS,
+  type DetailsField,
+  type LiveField,
+  type LiveValues,
+} from "@/features/signup/model/signup-input";
 import { KakaoBubble } from "@/shared/ui/kakao-bubble";
 import s from "./signup.module.css";
 
@@ -18,6 +33,7 @@ import s from "./signup.module.css";
 // 3단계: 「인증 요청 보내기」로 카카오톡에 요청 → 카카오톡에서 인증 → 「인증했어요, 가입하기」.
 // 브라우저는 번호표만 들고 있다 — 인증됐는지는 서버가 카카오에게 묻는다(INV-U1).
 // 입력칸에 name 을 두지 않는다 — 폼 기본 제출이 일어나도 값이 주소창에 실리지 않게.
+// 2단계 칸은 입력하거나 칸을 떠난 뒤부터 바로 아래에 안내를 띄운다(맞으면 짧은 확인, 틀리면 무엇이 틀렸는지 — 판정은 checkField).
 
 const STEPS = ["유형 선택", "정보 입력", "본인 확인"] as const;
 const LAST = STEPS.length;
@@ -25,6 +41,19 @@ const LAST = STEPS.length;
 type TermKey = "service" | "privacy" | "news";
 type Role = "fan" | "creator";
 type ErrorField = DetailsField | "verification" | "form";
+
+/** 칸별 안내가 붙는 칸 → 입력 요소 id 의 꼬리. 「다음」에서 막히면 이 칸으로 포커스를 보낸다. */
+const LIVE_IDS: Record<LiveField, string> = {
+  loginId: "id",
+  email: "mail",
+  password: "pw",
+  passwordConfirm: "pw2",
+  phone: "tel",
+  creatorName: "cr-name",
+  channelTitle: "cr-channel",
+};
+const LIVE_FIELDS = Object.keys(LIVE_IDS) as LiveField[];
+const isLiveField = (x: ErrorField): x is LiveField => Object.hasOwn(LIVE_IDS, x);
 
 // href 가 없는 항목(선택 동의)의 「보기」는 링크가 아니라 흐린 글자로 둔다. 전문 화면이 생기면 href 만 채운다.
 const TERMS: ReadonlyArray<{ key: TermKey; label: string; required: boolean; href?: string }> = [
@@ -52,7 +81,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const [moved, setMoved] = useState(false);
   const [role, setRole] = useState<Role>("fan");
   const [loginId, setLoginId] = useState("");
-  const [email, setEmail] = useState("");
+  const [emailParts, setEmailParts] = useState<EmailParts>({ local: "", choice: "", custom: "" });
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [phone, setPhone] = useState("");
@@ -68,7 +97,10 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   // 다른 번호의 확인으로 가입하지 않게(서버도 번호 대조로 막는다).
   const [requested, setRequested] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<{ field: ErrorField; message: string } | null>(null);
+  // server: 가입 요청에서 서버가 돌려준 오류(칸별 안내 칸이라도 낭독기에 알린다)
+  const [error, setError] = useState<{ field: ErrorField; message: string; server?: boolean } | null>(null);
+  // 한 번이라도 입력했거나 떠난 칸 — 그 전에는 안내를 띄우지 않는다
+  const [touched, setTouched] = useState<Partial<Record<LiveField, boolean>>>({});
   // 오류를 띄울 때마다 오르는 번호 — 같은 문구가 연달아 나와도 새로 붙여 다시 읽히게 한다.
   const [errorSeq, setErrorSeq] = useState(0);
   const navRef = useRef<HTMLElement>(null);
@@ -88,9 +120,51 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     setMoved(true);
   };
 
-  const showError = (next: { field: ErrorField; message: string }) => {
+  const showError = (next: { field: ErrorField; message: string; server?: boolean }) => {
     setError(next);
     setErrorSeq((n) => n + 1);
+  };
+
+  const email = joinEmail(emailParts);
+  const liveValues: LiveValues = { loginId, email: emailParts, password, passwordConfirm, phone, creatorName, channelTitle };
+  const touch = (field: LiveField) => setTouched((t) => (t[field] ? t : { ...t, [field]: true }));
+  // 칸을 고치면 그 칸에 걸려 있던 「다음」·서버 오류를 내리고 실시간 안내로 돌아간다
+  const edited = (field: LiveField) => {
+    touch(field);
+    setError((e) => (e?.field === field ? null : e));
+  };
+  const liveOf = (field: LiveField): { ok: boolean; message: string } | null => {
+    if (error?.field === field) return { ok: false, message: error.message };
+    return touched[field] ? checkField(field, liveValues) : null;
+  };
+  const liveId = (field: LiveField) => f(`${LIVE_IDS[field]}-m`);
+  const liveAttrs = (field: LiveField, hintId?: string) => {
+    const m = liveOf(field);
+    const describedBy = [hintId, m ? liveId(field) : null].filter(Boolean).join(" ");
+    return { "aria-describedby": describedBy || undefined, "aria-invalid": m && !m.ok ? true : undefined };
+  };
+  const liveLine = (field: LiveField) => {
+    const m = liveOf(field);
+    if (!m) return null;
+    return (
+      <p className={`${s.live} ${m.ok ? s["live-ok"] : s["live-bad"]}`} id={liveId(field)}>
+        {m.ok ? <CheckIcon size={16} /> : null}
+        {m.message}
+      </p>
+    );
+  };
+
+  // 「다음」에서 막혔을 때 — 칸별 안내 칸이면 모든 칸의 안내를 켜고 틀린 칸으로 포커스, 아니면(약관·태그) 아래 오류 줄
+  const reject = (problem: { field: DetailsField; message: string }) => {
+    const field = problem.field;
+    if (!isLiveField(field)) {
+      showError(problem);
+      return;
+    }
+    setTouched(Object.fromEntries(LIVE_FIELDS.map((k) => [k, true])));
+    const own = checkField(field, liveValues);
+    showError({ field, message: own.ok ? problem.message : own.message });
+    requestAnimationFrame(() => document.getElementById(f(LIVE_IDS[field]))?.focus());
   };
 
   // 태그는 화면에서 먼저 합친다(creator-tags INV-T3) — 직접 입력이 선택지 이름과 같으면 그 선택지로 세어 보낸다.
@@ -127,7 +201,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     const r = await completeSignup({
       role,
       loginId: loginId.trim(),
-      email: email.trim(),
+      email,
       password,
       phone,
       terms: agreed,
@@ -141,7 +215,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     }
     setBusy(false);
     if (r.dropVerification) setRequested(false);
-    showError({ field: r.field, message: r.message });
+    showError({ field: r.field, message: r.message, server: true });
     if (r.field !== "verification" && r.field !== "form") go(2);
   };
 
@@ -150,7 +224,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     if (step === 2) {
       const problem = details();
       if (problem) {
-        showError(problem);
+        reject(problem);
         return;
       }
     }
@@ -164,12 +238,47 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const setAll = (value: boolean) => setAgreed({ service: value, privacy: value, news: value });
 
   const invalid = (field: ErrorField) => (error?.field === field ? { "aria-invalid": true, "aria-describedby": f("error") } : {});
-  const errorLine = (show: boolean) =>
-    show && error ? (
+  // 칸별 안내 칸의 오류는 칸 아래에 보인다 — 서버가 돌려준 것만 낭독기용으로 한 번 더 알린다(눈에는 한 번만)
+  const errorLine = (show: boolean) => {
+    if (!show || !error) return null;
+    if (isLiveField(error.field)) {
+      return error.server ? (
+        <p className="sr-only" role="alert" key={errorSeq}>
+          {error.message}
+        </p>
+      ) : null;
+    }
+    return (
       <p className={`err ${s.error}`} id={f("error")} role="alert" key={errorSeq}>
         {error.message}
       </p>
-    ) : null;
+    );
+  };
+
+  const onPhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const el = e.currentTarget;
+    const native = e.nativeEvent;
+    const type = native instanceof InputEvent ? native.inputType : "";
+    const deleting = type === "deleteContentBackward" ? "backward" : type === "deleteContentForward" ? "forward" : null;
+    const next = applyPhoneEdit(phone, el.value, el.selectionStart ?? el.value.length, deleting);
+    // 요소 값과 커서를 먼저 맞춘다 — 상태와 같은 값이 되므로 다시 그릴 때 React 가 커서를 끝으로 옮기지 않는다
+    el.value = next.value;
+    el.setSelectionRange(next.caret, next.caret);
+    setPhone(next.value);
+    setRequested(false);
+    edited("phone");
+  };
+
+  const onEmailLocalChange = (value: string) => {
+    // 주소를 통째로 붙여 넣거나 자동 완성이 채우면 칸 셋으로 나눈다. @ 만 쳤으면 고른 주소는 그대로 둔다
+    if (value.includes("@")) {
+      const split = splitEmail(value);
+      setEmailParts((p) => (split.choice === "" ? { ...p, local: split.local } : split));
+    } else {
+      setEmailParts((p) => ({ ...p, local: value }));
+    }
+    edited("email");
+  };
 
   const heading = (n: number, text: string) => (
     <h2
@@ -219,7 +328,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         const problem = k === LAST ? details() : null;
                         if (problem) {
                           go(2);
-                          showError(problem);
+                          reject(problem);
                           return;
                         }
                         setError(null);
@@ -286,10 +395,14 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     autoCapitalize="none"
                     spellCheck={false}
                     value={loginId}
-                    onChange={(e) => setLoginId(e.target.value)}
-                    aria-describedby={f("id-h")}
-                    {...invalid("loginId")}
+                    onChange={(e) => {
+                      setLoginId(e.target.value);
+                      edited("loginId");
+                    }}
+                    onBlur={() => touch("loginId")}
+                    {...liveAttrs("loginId", f("id-h"))}
                   />
+                  {liveLine("loginId")}
                   <p className="hint" id={f("id-h")}>
                     영문 소문자·숫자·밑줄(_)로 4~20자예요. 가입한 뒤에는 아이디를 바꿀 수 없어요.
                   </p>
@@ -298,17 +411,67 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                   <label className="label" htmlFor={f("mail")}>
                     이메일
                   </label>
-                  <input
-                    className="field"
-                    id={f("mail")}
-                    type="email"
-                    autoComplete="email"
-                    placeholder="example@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    aria-describedby={f("mail-h")}
-                    {...invalid("email")}
-                  />
+                  <div className={s.email}>
+                    <input
+                      className="field"
+                      id={f("mail")}
+                      type="text"
+                      inputMode="email"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      placeholder="앞부분"
+                      value={emailParts.local}
+                      onChange={(e) => onEmailLocalChange(e.target.value)}
+                      onBlur={() => touch("email")}
+                      {...liveAttrs("email", f("mail-h"))}
+                    />
+                    <span className={s.at} aria-hidden="true">
+                      @
+                    </span>
+                    <select
+                      className="field"
+                      aria-label="이메일 주소 고르기(@ 뒤)"
+                      value={emailParts.choice}
+                      onChange={(e) => {
+                        const choice = e.currentTarget.value;
+                        setEmailParts((p) => ({ ...p, choice }));
+                        edited("email");
+                        if (choice === EMAIL_CUSTOM) requestAnimationFrame(() => document.getElementById(f("mail-custom"))?.focus());
+                      }}
+                      onBlur={() => touch("email")}
+                      {...liveAttrs("email")}
+                    >
+                      <option value="">주소 고르기</option>
+                      {EMAIL_DOMAINS.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                      <option value={EMAIL_CUSTOM}>직접 입력</option>
+                    </select>
+                  </div>
+                  {emailParts.choice === EMAIL_CUSTOM ? (
+                    <input
+                      className={`field ${s["email-custom"]}`}
+                      id={f("mail-custom")}
+                      type="text"
+                      inputMode="url"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      aria-label="이메일 주소 직접 입력(@ 뒤)"
+                      placeholder="예: example.co.kr"
+                      value={emailParts.custom}
+                      onChange={(e) => {
+                        const custom = e.target.value;
+                        setEmailParts((p) => ({ ...p, custom }));
+                        edited("email");
+                      }}
+                      onBlur={() => touch("email")}
+                      {...liveAttrs("email")}
+                    />
+                  ) : null}
+                  {liveLine("email")}
                   <p className="hint" id={f("mail-h")}>
                     가입하면 확인 메일을 보내 드려요. 메일의 링크를 눌러야 이 주소로 선물 소식을 받아요.
                   </p>
@@ -323,10 +486,14 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     type="password"
                     autoComplete="new-password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    aria-describedby={f("pw-h")}
-                    {...invalid("password")}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      edited("password");
+                    }}
+                    onBlur={() => touch("password")}
+                    {...liveAttrs("password", f("pw-h"))}
                   />
+                  {liveLine("password")}
                   <p className="hint" id={f("pw-h")}>
                     {PASSWORD_HINT}
                   </p>
@@ -342,9 +509,14 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     autoComplete="new-password"
                     placeholder="비밀번호를 한 번 더 입력해 주세요"
                     value={passwordConfirm}
-                    onChange={(e) => setPasswordConfirm(e.target.value)}
-                    {...invalid("passwordConfirm")}
+                    onChange={(e) => {
+                      setPasswordConfirm(e.target.value);
+                      edited("passwordConfirm");
+                    }}
+                    onBlur={() => touch("passwordConfirm")}
+                    {...liveAttrs("passwordConfirm")}
                   />
+                  {liveLine("passwordConfirm")}
                 </div>
                 <div>
                   <label className="label" htmlFor={f("tel")}>
@@ -357,14 +529,13 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     inputMode="numeric"
                     autoComplete="tel"
                     placeholder="010-0000-0000"
+                    maxLength={13}
                     value={phone}
-                    onChange={(e) => {
-                      setPhone(e.target.value);
-                      setRequested(false);
-                    }}
-                    aria-describedby={f("tel-h")}
-                    {...invalid("phone")}
+                    onChange={onPhoneChange}
+                    onBlur={() => touch("phone")}
+                    {...liveAttrs("phone", f("tel-h"))}
                   />
+                  {liveLine("phone")}
                   <p className="hint" id={f("tel-h")}>
                     선물 소식을 카카오톡 알림톡으로 보내 드릴 번호예요. 실명·주소처럼 따로 나눠 보관해요.
                   </p>
@@ -382,10 +553,14 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         autoComplete="off"
                         maxLength={CREATOR_PROFILE_LIMITS.name}
                         value={creatorName}
-                        onChange={(e) => setCreatorName(e.target.value)}
-                        aria-describedby={f("cr-name-h")}
-                        {...invalid("creatorName")}
+                        onChange={(e) => {
+                          setCreatorName(e.target.value);
+                          edited("creatorName");
+                        }}
+                        onBlur={() => touch("creatorName")}
+                        {...liveAttrs("creatorName", f("cr-name-h"))}
                       />
+                      {liveLine("creatorName")}
                       <p className="hint" id={f("cr-name-h")}>
                         팬에게 보이는 이름이에요. {CREATOR_PROFILE_LIMITS.name}자까지 적을 수 있어요.
                       </p>
@@ -402,10 +577,14 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                         placeholder="예: 꿀단지TV"
                         maxLength={CREATOR_PROFILE_LIMITS.channelTitle}
                         value={channelTitle}
-                        onChange={(e) => setChannelTitle(e.target.value)}
-                        aria-describedby={f("cr-channel-h")}
-                        {...invalid("channelTitle")}
+                        onChange={(e) => {
+                          setChannelTitle(e.target.value);
+                          edited("channelTitle");
+                        }}
+                        onBlur={() => touch("channelTitle")}
+                        {...liveAttrs("channelTitle", f("cr-channel-h"))}
                       />
+                      {liveLine("channelTitle")}
                       <p className="hint" id={f("cr-channel-h")}>
                         채널 주소는 가입한 뒤 본인 확인 때 받아요.
                       </p>
