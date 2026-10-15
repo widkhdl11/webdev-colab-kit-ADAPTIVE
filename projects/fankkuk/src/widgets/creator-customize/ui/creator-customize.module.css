@@ -50,7 +50,7 @@
 .mAv { left: 50%; top: 30%; width: 22%; aspect-ratio: 1; transform: translateX(-50%); border-radius: var(--r-pill); background: var(--face-6); box-shadow: 0 0 0 2px var(--white); }
 .mL1 { left: 30%; right: 30%; top: 60%; height: 4px; border-radius: var(--r-pill); background: var(--gray-900); }
 .mL2 { left: 22%; right: 22%; top: 70%; height: 2px; border-radius: var(--r-pill); background: var(--gray-400); }
-.mFt { left: 34%; right: 34%; bottom: 8%; height: 2px; border-radius: var(--r-pill); background: var(--primary-700); }
+.mFt { left: 34%; right: 34%; bottom: 8%; height: 2px; border-radius: var(--r-pill); background: var(--gray-400); }
 
 /* 미리보기 (링크 페이지 축소) */
 .side { position: sticky; top: var(--space-8); display: grid; gap: var(--space-4); min-width: 0; }

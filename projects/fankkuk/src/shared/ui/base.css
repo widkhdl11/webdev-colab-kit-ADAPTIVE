@@ -724,7 +724,7 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 .flow li.on .n:where(:not(.admin-area *)) { background: var(--primary); color: var(--on-brand); box-shadow: none; }
 .flow li.done .n:where(:not(.admin-area *)) { background: var(--primary-50); color: var(--brand-ink); }
 .flow li:not(:last-child):where(:not(.admin-area *))::after { background: var(--gray-200); }
-.flow li.done:not(:last-child):where(:not(.admin-area *))::after { background: var(--primary); }
+.flow li.done:not(:last-child):where(:not(.admin-area *))::after { background: var(--brand-line); }
 
 /* 첫 화면 부품 — 히어로 위 96(휴대폰 64)·글 폭 680, 한 줄 설명은 회색 본문, 검색창 56 알약 */
 .hero:where(:not(.admin-area *)) { padding-block: var(--hero-pad-top) 0; }
