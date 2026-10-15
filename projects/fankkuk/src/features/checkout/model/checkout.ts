@@ -8,8 +8,7 @@ import type { TossPaymentsClient } from "@/shared/api/toss-payments/client";
 
 export type CheckoutDeps = { store: PaymentStore; toss: TossPaymentsClient };
 
-/** awaitingDeposit: 무통장 — 계좌가 발급돼 입금을 기다린다(payment INV-M21). 결제가 끝난 것이 아니다. */
-export type ConfirmOutcome = { ok: true; orderId: string; orderNo: string; awaitingDeposit: boolean } | { ok: false; reason: ConfirmFailure };
+export type ConfirmOutcome = { ok: true; orderId: string; orderNo: string } | { ok: false; reason: ConfirmFailure };
 
 const ID_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
@@ -56,12 +55,10 @@ export async function confirmPayment(deps: CheckoutDeps, requesterId: string | n
       claim: (id) => deps.store.claim(id),
       settleFailed: (id) => deps.store.settle(id, { status: "failed" }),
       settleDone: (record, paymentKey) => settleGiftDone(deps.store, record, paymentKey),
-      // 무통장은 팬 선물 첫 결제만 받는다(차액·역조공은 settleWaiting 이 없어 「입금 기다리는 중」이면 실패)
-      settleWaiting: (record, issued) => deps.store.settleWaiting(record.orderId, issued),
       toss: deps.toss,
     },
     (record) => requesterId !== null && record.fanId === requesterId,
     ret,
   );
-  return r.ok ? { ok: true, orderId: r.record.orderId, orderNo: r.record.orderNo, awaitingDeposit: r.awaitingDeposit } : r;
+  return r.ok ? { ok: true, orderId: r.record.orderId, orderNo: r.record.orderNo } : r;
 }

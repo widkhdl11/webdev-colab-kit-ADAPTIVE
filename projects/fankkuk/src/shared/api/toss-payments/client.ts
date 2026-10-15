@@ -2,9 +2,6 @@
 // API 사실 출처: docs.tosspayments.com — 결제 승인 POST /v1/payments/confirm,
 // 결제 취소 POST /v1/payments/{paymentKey}/cancel, 주문번호로 결제 조회 GET /v1/payments/orders/{orderId}
 // (없으면 404 NOT_FOUND_PAYMENT · NOT_FOUND), 비밀 키 Basic 인증, Idempotency-Key 헤더, 테스트 키는 test_ 접두어.
-// 가상계좌(2026-10-15 공식 문서 docs.tosspayments.com/reference): 결제 객체의 secret(최대 50자, 입금 웹훅 본문의 secret 과 같으면 정상 웹훅),
-// virtualAccount.accountNumber(최대 20자)·bankCode(두 자리)·dueDate, 취소 요청의 refundReceiveAccount{bank, accountNumber(숫자만, 최대 20자), holderName(최대 60자)}
-// — 가상계좌 결제를 입금 뒤에 취소할 때만 필수, 입금 전에는 전액 취소만 되고 필요 없다.
 
 import { z } from "zod";
 
@@ -28,22 +25,7 @@ export type TossPaymentStatus = (typeof TOSS_PAYMENT_STATUSES)[number];
  * 결제 조회 응답에서 쓰는 칸만. 나머지 칸은 버린다.
  * balanceAmount = 취소·부분 취소 뒤 남은 취소 가능 금액(2026-10-10 공식 문서). 응답에 없으면 null — 모르는 값으로 취소하지 않는다(payment INV-M20 ①).
  */
-export type TossPaymentView = {
-  status: TossPaymentStatus;
-  orderId: string;
-  totalAmount: number;
-  balanceAmount: number | null;
-  paymentKey: string;
-  /** 웹훅 검증 값. 가상계좌가 아니면 없을 수 있다 — 없으면 null */
-  secret?: string | null;
-  /** 가상계좌 결제에만 — 발급된 계좌. 없으면 null */
-  virtualAccount?: TossVirtualAccount | null;
-};
-
-export type TossVirtualAccount = { accountNumber: string; bankCode: string };
-
-/** 가상계좌 결제를 입금 뒤 취소할 때 돌려받을 계좌(결제사 취소 요청의 refundReceiveAccount). */
-export type TossRefundReceiveAccount = { bank: string; accountNumber: string; holderName: string };
+export type TossPaymentView = { status: TossPaymentStatus; orderId: string; totalAmount: number; balanceAmount: number | null; paymentKey: string };
 
 /** 결제 조회 결과. not_found 는 결제사가 「그런 결제 없음」이라고 답한 것뿐 — 그 밖의 오류·시간 초과·꼴이 다른 응답은 error. */
 export type TossLookup = { kind: "found"; payment: TossPaymentView } | { kind: "not_found" } | { kind: "error" };
@@ -58,23 +40,7 @@ const paymentShape = z.object({
     .nullish()
     .transform((v) => v ?? null),
   paymentKey: z.string().min(1),
-  secret: z
-    .string()
-    .min(1)
-    .max(100)
-    .nullish()
-    .transform((v) => v ?? null),
-  virtualAccount: z
-    .object({ accountNumber: z.string().min(1).max(30), bankCode: z.string().min(1).max(3) })
-    .nullish()
-    .transform((v) => (v ? { accountNumber: v.accountNumber, bankCode: v.bankCode } : null)),
 });
-
-/** 승인·조회 응답을 결제 꼴로 읽는다. 꼴이 다르면 null. */
-export function parseTossPayment(body: unknown): TossPaymentView | null {
-  const p = paymentShape.safeParse(body);
-  return p.success ? p.data : null;
-}
 const errorShape = z.object({ code: z.string() });
 const NOT_FOUND_CODES = new Set(["NOT_FOUND_PAYMENT", "NOT_FOUND"]);
 
@@ -83,14 +49,7 @@ type EnvLike = { NODE_ENV?: string; VERCEL_ENV?: string };
 export type TossPaymentsClient = {
   confirm(req: { paymentKey: string; orderId: string; amount: number; idempotencyKey: string }): Promise<unknown>;
   /** cancelAmount 를 비우면 남은 금액 전부를 취소한다(결제사 문서 「값이 없으면 전액 취소」). */
-  cancel(req: {
-    paymentKey: string;
-    cancelAmount?: number;
-    cancelReason: string;
-    idempotencyKey: string;
-    /** 가상계좌 결제를 입금 뒤 취소할 때만 */
-    refundReceiveAccount?: TossRefundReceiveAccount;
-  }): Promise<unknown>;
+  cancel(req: { paymentKey: string; cancelAmount?: number; cancelReason: string; idempotencyKey: string }): Promise<unknown>;
   /** 주문번호로 결제 하나를 조회한다. 돈을 움직이지 않아 몇 번 불러도 같다. 던지지 않는다. */
   getByOrderId(orderId: string): Promise<TossLookup>;
 };
@@ -141,8 +100,8 @@ export function createTossPaymentsClient(opts: {
         return e.success && NOT_FOUND_CODES.has(e.data.code) ? { kind: "not_found" } : { kind: "error" };
       }
       if (!res.ok) return { kind: "error" };
-      const p = parseTossPayment(body);
-      return p ? { kind: "found", payment: p } : { kind: "error" };
+      const p = paymentShape.safeParse(body);
+      return p.success ? { kind: "found", payment: p.data } : { kind: "error" };
     } catch {
       return { kind: "error" };
     }
@@ -153,13 +112,8 @@ export function createTossPaymentsClient(opts: {
       post(`${API_BASE}/confirm`, { paymentKey, orderId, amount }, idempotencyKey),
     // 취소는 60초 안에 끝나지 않으면 끊는다. 부르는 쪽이 같은 요청을 2분 뒤에야 다시 보낼 수 있게 막아 두므로
     // 첫 요청이 그보다 오래 살아 있으면 두 요청의 결과가 섞인다. 끊긴 요청은 같은 멱등 키로 다시 보내면 된다.
-    cancel: ({ paymentKey, cancelAmount, cancelReason, idempotencyKey, refundReceiveAccount }) =>
-      post(
-        `${API_BASE}/${encodeURIComponent(paymentKey)}/cancel`,
-        { cancelAmount, cancelReason, ...(refundReceiveAccount ? { refundReceiveAccount } : {}) },
-        idempotencyKey,
-        AbortSignal.timeout(CANCEL_TIMEOUT_MS),
-      ),
+    cancel: ({ paymentKey, cancelAmount, cancelReason, idempotencyKey }) =>
+      post(`${API_BASE}/${encodeURIComponent(paymentKey)}/cancel`, { cancelAmount, cancelReason }, idempotencyKey, AbortSignal.timeout(CANCEL_TIMEOUT_MS)),
     getByOrderId,
   };
 }

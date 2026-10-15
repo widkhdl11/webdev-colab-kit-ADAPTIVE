@@ -54,7 +54,7 @@ describe("결제 흐름", () => {
 
     const res = await confirmPayment(deps, "fan-byeolbit", { orderId: p.orderId, amount: "6900", paymentKey: "tgen_1" });
 
-    expect(res).toEqual({ ok: true, orderId: p.orderId, orderNo: "FC-7K3M9", awaitingDeposit: false });
+    expect(res).toEqual({ ok: true, orderId: p.orderId, orderNo: "FC-7K3M9" });
     expect((await store.find(p.orderId))?.status).toBe("done");
     expect(toss.calls).toHaveLength(1);
     expect(toss.calls[0]!.idempotencyKey).toBe(`confirm-${p.orderId}`);
@@ -89,7 +89,7 @@ describe("결제 흐름", () => {
     await confirmPayment(deps, "fan-byeolbit", ret);
     const again = await confirmPayment(deps, "fan-byeolbit", ret);
 
-    expect(again).toEqual({ ok: true, orderId: p.orderId, orderNo: "FC-7K3M9", awaitingDeposit: false });
+    expect(again).toEqual({ ok: true, orderId: p.orderId, orderNo: "FC-7K3M9" });
     expect(toss.calls).toHaveLength(1);
     expect((await store.find(p.orderId))?.status).toBe("done");
   });

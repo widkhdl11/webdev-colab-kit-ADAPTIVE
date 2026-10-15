@@ -4,7 +4,6 @@ import { createAdminSupabase } from "@/shared/api/supabase/admin";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import { createTossPaymentsClient, readTossSecretKey } from "@/shared/api/toss-payments/client";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
-import { refundDepositDeps } from "./deposit-deps";
 
 // 환불 실행 (admin-console INV-K2·K7). 같은 사이트의 JSON 만, 응답은 캐시하지 않는다.
 // 잡기(금액 계산)는 로그인한 사람의 세션 클라이언트로 — 대표인지는 DB 가 그 토큰의 사람으로 판정한다.
@@ -12,14 +11,11 @@ import { refundDepositDeps } from "./deposit-deps";
 export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async (body) => {
     const env = process.env;
-    const admin = createAdminSupabase();
     return runRefund(
       {
         session: await createRequestSupabase(),
-        admin,
+        admin: createAdminSupabase(),
         toss: createTossPaymentsClient({ secretKey: readTossSecretKey(env), env, fetchImpl: fetch }),
-        // 무통장 결제의 환불 계좌(payment INV-M25) — 앱 서버 키로 읽는다
-        deposit: refundDepositDeps(admin, env),
       },
       body,
     );

@@ -62,7 +62,6 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   difference_due: "추가 결제 요청",
   payment_canceled: "결제 취소",
   difference_canceled: "추가 결제 취소",
-  deposit_expired: "입금 기한 지남",
   gift_reply: "답장",
   gift_received: "받았어요 확인",
   creator_check: "확인할 선물",

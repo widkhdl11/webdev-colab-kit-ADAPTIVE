@@ -19,7 +19,6 @@ export async function GET(req: NextRequest) {
     paymentKey: q.get("paymentKey") ?? "",
   });
 
-  // 무통장: 계좌가 발급돼 입금을 기다린다 — 선물 상세에서 입금 안내(my_deposit_account)를 보여 준다(payment INV-M21)
-  if (outcome.ok) return seeOther(`/gifts/${encodeURIComponent(outcome.orderNo)}?${outcome.awaitingDeposit ? "deposit=1" : "paid=1"}`);
+  if (outcome.ok) return seeOther(`/gifts/${encodeURIComponent(outcome.orderNo)}?paid=1`);
   return seeOther(`/gifts/new?payment=${outcome.reason === "in_progress" ? "in_progress" : "failed"}`);
 }

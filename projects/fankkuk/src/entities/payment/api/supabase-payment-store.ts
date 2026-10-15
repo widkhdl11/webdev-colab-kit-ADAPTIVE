@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { parseChargeBreakdown } from "../model/charge";
@@ -16,7 +15,7 @@ const rowSchema = z.object({
   service_fee_krw: z.number().int(),
   inspection_fee_krw: z.number().int(),
   shipping_fee_krw: z.number().int(),
-  status: z.enum(["pending", "confirming", "waiting_deposit", "done", "failed"]),
+  status: z.enum(["pending", "confirming", "done", "failed"]),
   payment_key: z.string().nullable(),
   orders: z.object({ order_no: z.string(), fan_id: z.string(), profiles: z.object({ nickname: z.string() }) }),
 });
@@ -111,18 +110,6 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
         p_requested_at: done ? outcome.approvalRequest.requestedAt : null,
       });
       if (error) throw new Error(`결제 결과를 반영하지 못했다: ${error.code}`);
-      return data === true;
-    },
-    async settleWaiting(orderId, issued) {
-      const { data, error } = await admin.rpc("settle_payment_waiting", {
-        p_toss_order_id: orderId,
-        p_payment_key: issued.paymentKey,
-        // 웹훅 검증 값은 원문을 두지 않는다 — 웹훅이 오면 같은 해시로 맞대어 본다(INV-M22)
-        p_secret_sha256: createHash("sha256").update(issued.secret, "utf8").digest("hex"),
-        p_bank_code: issued.bankCode,
-        p_account_no: issued.accountNumber,
-      });
-      if (error) throw new Error(`입금 대기를 기록하지 못했다: ${error.code}`);
       return data === true;
     },
   };

@@ -248,7 +248,6 @@ surfaces: [auth, authz, concurrency]
 | 추가 결제 요청 (difference_due) | 팬 | 끌 수 없음 | 7일 안에 결제하지 않으면 반송된다 |
 | 결제 취소 (payment_canceled) | 팬 | 끌 수 없음 | 결제가 취소돼 돈이 돌아가고, 다시 등록해야 한다 |
 | 추가 결제 취소 (difference_canceled) | 팬 | 끌 수 없음 | 추가 결제를 다시 해야 출고된다 |
-| 입금 기한 지남 (deposit_expired) | 팬 | 끌 수 없음 | 무통장 입금 기한(24시간)이 지나 주문이 취소됐고, 보내려면 다시 등록해야 한다(payment INV-M23) |
 | 입고 (arrived) | 팬 | 끌 수 있음 | 진행 알림 |
 | 검수 끝 (inspected) | 팬 | 끌 수 있음 | 진행 알림 |
 | 출고 (shipped) | 팬 | 끌 수 있음 | 진행 알림 |
@@ -258,7 +257,7 @@ surfaces: [auth, authz, concurrency]
 | 답장이 왔어요 (gift_reply) | 팬 | 끌 수 있음 | 소식 알림 |
 | 받았다고 확인됐어요 (gift_received) | 팬 | 끌 수 있음 | 소식 알림 |
 
-끌 수 없음 11종, 끌 수 있음 8종. 역조공 받기 요청 알림은 아직 없다(reverse-gift INV-R12) — 생기면 「끌 수 없음」으로 더한다.
+끌 수 없음 10종, 끌 수 있음 8종. 역조공 받기 요청 알림은 아직 없다(reverse-gift INV-R12) — 생기면 「끌 수 없음」으로 더한다.
 
 ## 시나리오
 

@@ -983,7 +983,7 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
         const must = psql(`select public.notification_kind_must_deliver('${kind}')`) === "t";
         seen.push([kind, must, await contactValue(id)]);
       }
-      expect(seen.filter(([, must]) => must)).toHaveLength(11);
+      expect(seen.filter(([, must]) => must)).toHaveLength(10);
       expect(seen).toEqual(seen.map(([kind, must]) => [kind, must, must ? "byeolbit.fan@example.com" : null]));
     });
   });

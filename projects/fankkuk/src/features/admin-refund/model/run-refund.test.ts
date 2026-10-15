@@ -44,9 +44,7 @@ function setup(opts: { session?: ReturnType<typeof fakeClient>; toss?: () => Pro
       return opts.toss ? opts.toss() : canceled();
     },
   };
-  // 카드 결제 — 무통장 환불 계좌는 따로(payment-va-db 통합 시험)
-  const deposit = { isDeposit: async () => false, account: async () => null };
-  const deps = { session, admin, toss, deposit } as unknown as RefundDeps;
+  const deps = { session, admin, toss } as unknown as RefundDeps;
   return { deps, session, admin, cancels };
 }
 
