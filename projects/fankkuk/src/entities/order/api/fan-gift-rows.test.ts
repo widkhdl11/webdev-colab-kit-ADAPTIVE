@@ -47,3 +47,11 @@ describe("my_gifts 응답 → 팬 화면", () => {
     expect(JSON.stringify(view)).not.toContain("612345678901");
   });
 });
+
+describe("together INV-F7: 보낸 선물 목록의 선물 이름(나만 보는 메모)", () => {
+  it("INV-F7 S7: memo_title 이 있으면 화면 모양에 memoTitle 로 싣는다, 없으면 null", () => {
+    const [withMemo, without] = parseFanGiftRows([{ ...row, memo_title: "생일 편지와 인형" }, { ...row, order_no: "FC-W5N3U", memo_title: null }], "x");
+    expect(withMemo!.memoTitle).toBe("생일 편지와 인형");
+    expect(without!.memoTitle).toBeNull();
+  });
+});

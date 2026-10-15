@@ -31,6 +31,8 @@ export type FanGiftView = {
   expectedArrivalDate: string | null;
   /** 승인 전 진행 중 주문인데 「먼저 보내기」를 아직 누르지 않았다 — 받는 주소가 아직 없으니 「보내 주세요」라고 하지 않는다(INV-S9) */
   earlySendPending: boolean;
+  /** 나만 보는 메모의 선물 이름(together INV-F7) — 보낸 사람 본인 목록 읽기(my_gifts)만 채운다. 없으면 null·없음 */
+  memoTitle?: string | null;
 };
 
 /** 팬 화면이 읽는 칸만. 크리에이터행 송장번호·팬 닉네임·크리에이터 id 는 이 모양에 없다 — DB 읽기 함수도 이 칸만 돌려준다. */

@@ -90,3 +90,10 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 .photo-row .photo-pick { display: inline-flex; margin-bottom: 0; cursor: pointer; }
 .photo-name { margin-top: 8px; overflow-wrap: anywhere; }
 .root :global(.part) { padding: var(--space-6); }
+
+/* 나만 보는 메모(together INV-F7) — 시안 v21-addendum3 fan-21.css 「.memo」: 연한 면 한 덩어리, 머리에 자물쇠, 칸은 흰 바탕 */
+.memo { display: grid; gap: var(--space-4); margin-top: var(--space-6); padding: var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--tint); }
+.memo :global(.field) { background: var(--white); }
+.memo > div > :global(.hint) { margin-top: var(--space-2); }
+.memo-h { display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-body); }
+.memo-lock { width: var(--icon-xs); height: var(--icon-xs); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

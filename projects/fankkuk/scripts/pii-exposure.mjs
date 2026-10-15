@@ -12,6 +12,13 @@
 //    함수 중 개인정보 구역(pii)에 닿는 것(다른 함수를 거쳐 닿는 것 포함)은 이유를 적은 아래 허용 목록에 있어야 한다. 새로 닿는 함수가 생기면
 //    여기서 걸리고, 사람이 그 함수가 무엇을 돌려주는지 보고 목록에 올린다. 목록에 있는데 이제 닿지 않는 함수도 실패(목록을 정직하게).
 //
+// 3) 나만 보는 선물 메모(together INV-F8) — 자유 글이라 위 꼴 검사로는 잡히지 않는다(새도 0건). 그래서 따로 둘을 본다.
+//    - 구조: DB 함수 본문 전체(로그인 키에 닫힌 함수 포함)에서 메모 표(gift_memos)를 참조하는 함수가 허용 목록 셋뿐인지,
+//      메모 표를 읽는 뷰가 없는지, 메모 표에 화면 쪽 키 권한이 없는지·행 보안이 켜져 있는지.
+//    - 응답: memoCanary(심은 값·그 주문번호·보낸 사람)를 주면 모든 권한의 성공 응답에서 그 값을 찾는다. 보낸 사람 말고는 한 번도 나오면 안 되고,
+//      보낸 사람에게는 나와야 한다(안 나오면 심기가 안 됐거나 읽기 함수가 빠졌다 — 아무것도 못 본 검사가 통과하지 않게).
+//      심은 값은 시험이 넣는다(통합 시험 gift-memo-db). 값은 출력에 찍지 않는다.
+//
 // 이 검사가 보지 않는 길: 앱의 POST 경로(부르면 쓰기가 일어난다 — 응답 꼴은 경로별 유닛 시험이 본다), 서버 화면(page) — 화면은 DB 함수를
 // 로그인 토큰으로 불러 그리므로 1) 이 덮는다, GraphQL·Storage·realtime(BACKLOG). 앱 GET 경로는 --app 주소를 줄 때 로그인하지 않고 부른다.
 // 출력에는 개인정보 값을 찍지 않는다(address-protection INV-P10) — 자리와 종류만.
@@ -63,6 +70,14 @@ export const PII_FUNCTIONS = {
   office_scan_inspect: "검수 완료 스캔 → 몫 닫기, 돌려주는 것은 다음 단계 글자",
   // 크리에이터가 블루투스 제품 확인에 답한다(문제집 D3 ②). 같은 office_sync 경로로 닿는다 — 크리에이터 확인은 역조공 몫에 생기지 않지만 공통 정리를 부른다
   answer_creator_check: "크리에이터 확인 답(받기·돌려보내기) → 몫 닫기, 돌려주는 것은 결과 글자 여섯 가지(not_found·expired·already·closed·accepted·returned)",
+};
+
+// 메모 표를 참조해도 되는 함수 — 스펙 together INV-F8 의 셋(등록 때 저장 · 보낸 팬 본인의 선물 상세 · 보낸 팬 본인의 보낸 선물 목록)
+export const MEMO_TABLE = "gift_memos";
+export const MEMO_FUNCTIONS = {
+  register_order: "선물 등록 — 같은 처리에서 메모를 저장만 한다, 서버 비밀 키 전용(돌려주는 것은 주문 id)",
+  my_gift_memo: "선물 상세 — 로그인 토큰의 계정이 보낸 주문의 메모만, 계정 ID 인자 없음",
+  my_gifts: "보낸 선물 목록 — 로그인 토큰의 계정이 보낸 주문의 선물 이름만",
 };
 
 /** 응답 하나를 통째로 훑어 개인정보 꼴이 있는 자리를 돌려준다(값은 찍지 않는다). 칸 이름이 걸려도 값이 참·거짓·빈 값이면 개인정보가 아니다. */
@@ -184,13 +199,16 @@ function argsFor(required, pool, i) {
 const TABLE_LIMIT = 1000;
 
 /** 한 권한으로 열린 표·함수를 모두 부르고 개인정보 꼴을 찾는다. */
-export async function scanRole({ apiUrl, anonKey, token, label }) {
+export async function scanRole({ apiUrl, anonKey, token, label, memoCanary }) {
   const { tables, rpcs } = await listEndpoints(apiUrl, anonKey, token);
   const findings = [];
   const problems = [];
   const pool = new Map();
   const called = [];
   const refused = [];
+  // together INV-F8: 심은 메모 값이 나온 자리 · 그 주문번호가 나온 자리(「0번」이 그 주문을 못 본 것이 아님을 보이는 근거)
+  const memoHits = [];
+  const orderSeen = [];
   if (token && tables.length + rpcs.length === 0) problems.push(`${label}: 열린 표·함수가 하나도 보이지 않는다 — 데이터 API 목록이 꺼졌거나 막혔다`);
   const record = (where, fn, r) => {
     // 데이터 API 는 함수가 스스로 낸 거부(P0002 없음·55000 단계 등)와 쓰기 함수의 읽기 전용 오류(25006)도 500 으로 돌려준다 — 그것은 거부다.
@@ -198,6 +216,11 @@ export async function scanRole({ apiUrl, anonKey, token, label }) {
     if (r.status >= 500 && isServerFault(r.body)) problems.push(`${label} ${where}: 서버 오류 ${r.status} ${errorCode(r.body) ?? ""}`);
     if (r.status >= 300) return false;
     collectValues(r.body, pool);
+    if (memoCanary) {
+      const text = JSON.stringify(r.body);
+      if (memoCanary.values.some((v) => text.includes(v))) memoHits.push(where);
+      if (text.includes(memoCanary.orderNo)) orderSeen.push(where);
+    }
     for (const f of piiFindings(r.body, fn)) findings.push(`${label} ${where} ${f}`);
     return true;
   };
@@ -240,6 +263,8 @@ export async function scanRole({ apiUrl, anonKey, token, label }) {
     skipped: pending.map((f) => `${f.name}(${f.required.join(",")})`),
     findings: [...new Set(findings)],
     problems: [...new Set(problems)],
+    memoHits: [...new Set(memoHits)],
+    orderSeen: [...new Set(orderSeen)],
   };
 }
 
@@ -316,6 +341,60 @@ export function structureProblems(touching, columns = []) {
   return problems;
 }
 
+/**
+ * 구조 검사(together INV-F8): 메모 표를 참조하는 함수·뷰·권한. sql 은 piiTouchingFunctions 와 같은 꼴.
+ * 함수는 로그인 키에 열렸는지와 상관없이 본다 — 닫힌 함수도 열린 함수가 부르면 길이 된다.
+ */
+export function memoStructureProblems(sql) {
+  const problems = [];
+  const re = new RegExp(`\\b${MEMO_TABLE}\\b`, "i");
+  const names = new Set(
+    sql("select p.proname || '|' || replace(replace(p.prosrc, chr(10), ' '), chr(13), ' ') from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname not in ('pg_catalog', 'information_schema')")
+      .split(/\r?\n/)
+      .map((line) => {
+        const i = line.indexOf("|");
+        return i < 0 ? null : re.test(line.slice(i + 1)) ? line.slice(0, i) : null;
+      })
+      .filter((n) => n !== null),
+  );
+  for (const name of [...names].sort()) {
+    if (!(name in MEMO_FUNCTIONS)) problems.push(`구조: 메모 표(${MEMO_TABLE})를 참조하는 함수 ${name} — 허용 목록(등록·본인 상세·본인 목록) 밖이다`);
+  }
+  for (const name of Object.keys(MEMO_FUNCTIONS)) {
+    if (!names.has(name)) problems.push(`구조: 허용 목록의 ${name} 는 이제 메모 표(${MEMO_TABLE})를 참조하지 않는다 — 목록에서 뺀다`);
+  }
+  const views = sql(`select distinct v.relname from pg_depend d join pg_rewrite w on w.oid = d.objid join pg_class v on v.oid = w.ev_class where d.refobjid = to_regclass('public.${MEMO_TABLE}') and v.oid <> d.refobjid`)
+    .split(/\r?\n/)
+    .filter(Boolean);
+  for (const v of views) problems.push(`구조: 메모 표(${MEMO_TABLE})를 읽는 뷰 ${v} — 메모는 정해진 함수 셋으로만 나간다`);
+  const table = sql(`select coalesce((select relrowsecurity::text from pg_class where oid = to_regclass('public.${MEMO_TABLE}')), 'missing')`).trim();
+  if (table === "missing") problems.push(`구조: 메모 표(${MEMO_TABLE})가 없다 — 검사할 대상을 찾지 못했다`);
+  else {
+    if (table !== "true") problems.push(`구조: 메모 표(${MEMO_TABLE})의 행 보안이 꺼져 있다`);
+    for (const role of ["anon", "authenticated"]) {
+      for (const priv of ["select", "insert", "update", "delete"]) {
+        if (sql(`select has_table_privilege('${role}', 'public.${MEMO_TABLE}', '${priv}')`).trim() === "t")
+          problems.push(`구조: 메모 표(${MEMO_TABLE})에 화면 쪽 키(${role}) ${priv} 권한이 있다`);
+      }
+    }
+  }
+  return problems;
+}
+
+/** 응답 검사(together INV-F8): 심은 메모 값이 보낸 사람 말고 어느 권한에 나왔는지, 보낸 사람에게는 나왔는지. */
+export function memoResponseProblems(roles, memoCanary) {
+  if (!memoCanary) return [];
+  const problems = [];
+  for (const r of roles) {
+    if (r.label === memoCanary.owner) continue;
+    for (const where of r.memoHits) problems.push(`메모: ${r.label} ${where} 응답에 심은 메모 값이 있다`);
+  }
+  const owner = roles.find((r) => r.label === memoCanary.owner);
+  if (!owner) problems.push(`메모: 보낸 사람 ${memoCanary.owner} 로 로그인하지 않았다 — 심은 값이 본인에게 나오는지 보지 못했다`);
+  else if (owner.memoHits.length === 0) problems.push(`메모: 보낸 사람 ${memoCanary.owner} 의 응답 어디에도 심은 메모 값이 없다 — 심기가 안 됐거나 본인 읽기 함수가 빠졌다`);
+  return problems;
+}
+
 async function signIn(apiUrl, anonKey, email, password) {
   const r = await fetch(`${apiUrl}/auth/v1/token?grant_type=password`, {
     method: "POST",
@@ -333,9 +412,9 @@ async function signOut(apiUrl, anonKey, token) {
 
 /**
  * 전체 검사. 실패(개인정보 꼴·확인 못 함)면 problems 가 비어 있지 않다.
- * @param {{ apiUrl: string, anonKey: string, logins: [string, string][], sql?: (q: string) => string, appUrl?: string, appDir?: string }} options
+ * @param {{ apiUrl: string, anonKey: string, logins: [string, string][], sql?: (q: string) => string, appUrl?: string, appDir?: string, memoCanary?: { values: string[], orderNo: string, owner: string } }} options
  */
-export async function runPiiExposureCheck({ apiUrl, anonKey, logins, sql, appUrl, appDir = "" }) {
+export async function runPiiExposureCheck({ apiUrl, anonKey, logins, sql, appUrl, appDir = "", memoCanary }) {
   const problems = [];
   if (logins.length === 0) problems.push("로그인 계정이 없다 — 일반 사용자 권한도 검사해야 한다");
   if (!sql) problems.push("DB 연결이 없다 — 구조 검사(개인정보 구역에 닿는 함수)를 하지 못했다");
@@ -344,14 +423,16 @@ export async function runPiiExposureCheck({ apiUrl, anonKey, logins, sql, appUrl
   for (const [email, password] of logins) sessions.push({ label: email.split("@")[0], token: await signIn(apiUrl, anonKey, email, password) });
   try {
     await assertReadOnlyGet(apiUrl, anonKey, sessions.map((s) => s.token));
-    const roles = [await scanRole({ apiUrl, anonKey, label: "익명" })];
-    for (const s of sessions) roles.push(await scanRole({ apiUrl, anonKey, token: s.token, label: s.label }));
+    const roles = [await scanRole({ apiUrl, anonKey, label: "익명", memoCanary })];
+    for (const s of sessions) roles.push(await scanRole({ apiUrl, anonKey, token: s.token, label: s.label, memoCanary }));
     const app = appUrl ? await scanAppGets(appUrl, appDir) : null;
     const touching = piiTouchingFunctions(sql);
     const columns = piiColumns(sql);
     for (const r of roles) problems.push(...r.problems, ...r.findings);
     if (app) problems.push(...app.findings);
     problems.push(...structureProblems(touching, columns));
+    problems.push(...memoStructureProblems(sql));
+    problems.push(...memoResponseProblems(roles, memoCanary));
     return { roles, app, touching, problems };
   } finally {
     for (const s of sessions) await signOut(apiUrl, anonKey, s.token);

@@ -31,6 +31,8 @@ import type { FanBoxReply } from "@/entities/gift-reply/api/gift-reply-reads";
 import { FanBoxReplies } from "@/features/gift-reply/ui/fan-box-replies";
 import { DifferenceSection, type DifferenceNotice } from "./difference-section";
 import { PaymentSummary } from "./payment-summary";
+import { GiftMemoCard } from "./gift-memo-card";
+import type { GiftMemo } from "@/entities/order/model/gift-memo";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./gift-status.module.css";
 
@@ -69,6 +71,7 @@ export function GiftStatusPage({
   payment = null,
   replies = [],
   photoBase = "",
+  memo = null,
 }: {
   view: FanGiftView;
   boxes: readonly GiftBox[];
@@ -79,6 +82,8 @@ export function GiftStatusPage({
   replies?: readonly FanBoxReply[];
   /** 공개 저장소 주소 — 답장 카드의 크리에이터 사진 */
   photoBase?: string;
+  /** 나만 보는 메모(together INV-F7·F8) — my_gift_memo 가 보낸 사람 본인에게만 준다. 없으면 칸을 그리지 않는다. */
+  memo?: GiftMemo | null;
 }) {
   const progress = fanProgress(view);
   // 배지의 「N/6」은 지금 있는 단계 번호다 — 끝낸 단계 수(4)를 쓰면 아래 진행 줄의 현재 단계(5번 배송중)와 숫자가 어긋났다(2026-10-09 디자인 점검)
@@ -167,6 +172,8 @@ export function GiftStatusPage({
               </>
             ) : null}
           </section>
+
+          {memo ? <GiftMemoCard memo={memo} /> : null}
 
           {/* 도착 예정일 — 시안에 없는 칸. 같은 판 모양(흰 카드 + 그림)으로 진행 판 바로 아래 */}
           {view.expectedArrivalDate ? (

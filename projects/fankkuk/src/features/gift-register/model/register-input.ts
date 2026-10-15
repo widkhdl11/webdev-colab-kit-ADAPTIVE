@@ -3,6 +3,7 @@ import type { PricedTier } from "@/entities/payment/model/price-table";
 import { ANNIVERSARY_NAME_MAX } from "@/entities/creator/model/receiving";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { forcesMetalReport, ITEM_CATEGORIES, ITEM_OTHER_MAX, type ItemCategory } from "@/entities/gift-item/model/item-category";
+import { giftMemoOf, MEMO_BODY_MAX, MEMO_TITLE_MAX, type GiftMemo } from "@/entities/order/model/gift-memo";
 
 // 선물 등록 폼의 입력 경계. 폼은 문자열을 보내고, 여기서 한 번 검증해 상자 구간 목록·참거짓으로 바꾼다.
 // 금액 칸은 받지 않는다 — 결제 금액은 서버 요금표로만 계산한다(INV-M1).
@@ -34,6 +35,19 @@ export const registerFormSchema = z
       .trim()
       .refine((s) => charCount(s) >= 1 && charCount(s) <= ANNIVERSARY_NAME_MAX)
       .optional(),
+    // together INV-F7: 나만 보는 메모 — 둘 다 선택. 앞뒤 공백을 빼고 글자 수(코드 포인트)로 센다. 이름은 한 줄이다.
+    // 물품 이름(itemOther)과 다른 칸이다 — 물품 이름은 크리에이터에게 가고, 메모는 보낸 팬만 본다
+    memoTitle: z
+      .string()
+      .trim()
+      .refine((s) => charCount(s) <= MEMO_TITLE_MAX, `선물 이름은 ${MEMO_TITLE_MAX}자 안으로 적어 주세요.`)
+      .refine((s) => !/[\r\n]/.test(s), "선물 이름은 한 줄로 적어 주세요.")
+      .optional(),
+    memoBody: z
+      .string()
+      .trim()
+      .refine((s) => charCount(s) <= MEMO_BODY_MAX, `내용은 ${MEMO_BODY_MAX}자 안으로 적어 주세요.`)
+      .optional(),
   })
   .superRefine((v, ctx) => {
     // 기타 글 길이는 글자 수(코드 포인트)로 센다 — DB char_length 와 같은 기준
@@ -62,6 +76,8 @@ export type RegisterInput = {
   anniversaryName: string | null;
   /** 받기 어려운 품목 안내가 뜬 품목(metrics INV-Q5) — 화면이 보낸 값. 맞는지는 DB 등록 함수가 그때의 설정과 다시 맞춰 본다 */
   hardNoticeCategory: ItemCategory | null;
+  /** 나만 보는 메모(together INV-F7) — 둘 다 비면 null. 물품 이름(itemOther)을 채우지 않는다 */
+  memo: GiftMemo | null;
 };
 
 export type RegisterParseResult =
@@ -80,7 +96,7 @@ export function boxesFromCounts(counts: Readonly<Record<PricedTier, number>>): P
 // metrics INV-Q5: 안내가 뜬 품목은 측정용이다 — 목록 밖 값·꼴이 틀린 값은 버리고(null) 등록은 막지 않는다
 const noticeSchema = z.object({ hardNoticeCategory: z.enum(ITEM_CATEGORIES) });
 
-const FIELDS = ["creatorId", "itemCategory", "itemOther", "smallCount", "mediumCount", "largeCount", "electronicsOrMetal", "anniversaryName"] as const;
+const FIELDS = ["creatorId", "itemCategory", "itemOther", "smallCount", "mediumCount", "largeCount", "electronicsOrMetal", "anniversaryName", "memoTitle", "memoBody"] as const;
 
 /** 서버 쪽 등록 처리(DB 연결 때)가 쓰는 경계 — 폼은 같은 스키마를 zodResolver 로 쓴다. 브라우저 검증만 믿지 않는다. */
 export function parseRegisterInput(input: unknown): RegisterParseResult {
@@ -93,7 +109,7 @@ export function parseRegisterInput(input: unknown): RegisterParseResult {
     }
     return { success: false, errors };
   }
-  const { creatorId, itemCategory, itemOther, smallCount, mediumCount, largeCount, electronicsOrMetal, anniversaryName } = parsed.data;
+  const { creatorId, itemCategory, itemOther, smallCount, mediumCount, largeCount, electronicsOrMetal, anniversaryName, memoTitle, memoBody } = parsed.data;
   return {
     success: true,
     data: {
@@ -105,6 +121,7 @@ export function parseRegisterInput(input: unknown): RegisterParseResult {
       hasElectronicsOrMetal: electronicsOrMetal === "yes" || forcesMetalReport(itemCategory),
       anniversaryName: anniversaryName ?? null,
       hardNoticeCategory: noticeSchema.safeParse(input).data?.hardNoticeCategory ?? null,
+      memo: giftMemoOf(memoTitle, memoBody),
     },
   };
 }

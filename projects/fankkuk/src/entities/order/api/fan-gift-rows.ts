@@ -26,6 +26,8 @@ const rowSchema = z.object({
   delivery: z.enum(["in_transit", "delivered"]).nullable(),
   fan_tracking_no: z.string().nullable(),
   fan_send_ack_at: ts.nullable(),
+  // together INV-F7: 보낸 사람 본인 목록의 선물 이름(나만 보는 메모) — 안 적었으면 null
+  memo_title: z.string().nullish(),
 });
 
 /** DB 시각(+00:00)을 화면 코드가 쓰는 ISO(Z) 꼴로. */
@@ -56,7 +58,7 @@ export function parseFanGiftRows(rows: unknown, officeAddress: string): FanGiftV
   return z
     .array(rowSchema)
     .parse(rows)
-    .map((r) => toFanView(toRecord(r), officeAddress));
+    .map((r) => ({ ...toFanView(toRecord(r), officeAddress), memoTitle: r.memo_title ?? null }));
 }
 
 /** 로그인한 팬의 선물, 최신 등록 순. 로그인하지 않았으면 함수가 거부한다 — 부르는 쪽이 먼저 로그인을 확인한다. */

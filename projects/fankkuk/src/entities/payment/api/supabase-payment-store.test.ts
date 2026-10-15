@@ -63,3 +63,17 @@ describe("metrics INV-Q5: 안내가 뜬 품목을 등록 함수에 넘긴다", (
     expect(calls.map((c) => c.args.p_hard_notice_category)).toEqual(["flower", null]);
   });
 });
+
+describe("together INV-F7: 나만 보는 메모는 등록 함수에 같이 넘긴다(같은 처리에서 저장)", () => {
+  it("INV-F7: p_memo_title·p_memo_body 로 넘긴다 — 물품 이름 칸(p_item_kind)에는 섞지 않는다, 메모가 없으면 둘 다 null", async () => {
+    const { store, calls } = storeReturning("FKR03");
+    await store.create({ ...input, registration: { ...input.registration, memo: { title: "생일 편지와 인형", body: null } } }).catch(() => null);
+    await store.create(input).catch(() => null);
+    await store.create({ ...input, registration: { ...input.registration, memo: { title: null, body: "내용만" } } }).catch(() => null);
+    expect(calls.map((c) => [c.args.p_memo_title, c.args.p_memo_body, c.args.p_item_kind])).toEqual([
+      ["생일 편지와 인형", null, null],
+      [null, null, null],
+      [null, "내용만", null],
+    ]);
+  });
+});

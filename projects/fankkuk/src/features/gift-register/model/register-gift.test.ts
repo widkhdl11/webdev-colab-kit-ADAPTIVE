@@ -278,3 +278,31 @@ describe("받는 양 조절 (creator-receiving INV-B2·B4·B6·B9)", () => {
     expect(store.registrations()).toEqual([]);
   });
 });
+
+describe("together INV-F7: 나만 보는 메모는 등록과 같은 처리로 넘긴다", () => {
+  it("INV-F7 S7: 메모를 등록 내용에 실어 한 번에 넘긴다 — 물품 이름은 그대로다", async () => {
+    const { deps, store } = setup();
+    const r = await registerGift({ ...deps, viewer: FAN }, { ...form, memoTitle: "생일 편지와 인형", memoBody: "첫 줄\n둘째 줄\n셋째 줄" });
+    expect(r.ok).toBe(true);
+    expect(store.registrations().map((x) => [x.itemOther, x.memo])).toEqual([["손편지", { title: "생일 편지와 인형", body: "첫 줄\n둘째 줄\n셋째 줄" }]]);
+  });
+
+  it("INV-F7 (실패경로): 기타가 아닌 종류면 물품 이름 글은 비어 있고 메모 이름으로 채우지 않는다", async () => {
+    const { deps, store } = setup();
+    expect((await registerGift({ ...deps, viewer: FAN }, { ...form, itemCategory: "doll", itemOther: undefined, memoTitle: "생일 편지와 인형" })).ok).toBe(true);
+    expect(store.registrations().map((x) => [x.itemCategory, x.itemOther, x.memo?.title])).toEqual([["doll", null, "생일 편지와 인형"]]);
+  });
+
+  it("INV-F7: 메모를 안 적으면 null 로 넘긴다", async () => {
+    const { deps, store } = setup();
+    expect((await registerGift({ ...deps, viewer: FAN }, form)).ok).toBe(true);
+    expect(store.registrations().map((x) => x.memo)).toEqual([null]);
+  });
+
+  it("INV-F7 S7b (실패경로): 선물 이름 21자 또는 내용 201자면 400, 주문도 메모도 저장하지 않는다", async () => {
+    const { deps, store } = setup();
+    expect(await registerGift({ ...deps, viewer: FAN }, { ...form, memoTitle: "가".repeat(21) })).toMatchObject({ ok: false, status: 400, errors: { memoTitle: expect.any(String) } });
+    expect(await registerGift({ ...deps, viewer: FAN }, { ...form, memoBody: "가".repeat(201) })).toMatchObject({ ok: false, status: 400, errors: { memoBody: expect.any(String) } });
+    expect(store.registrations()).toEqual([]);
+  });
+});

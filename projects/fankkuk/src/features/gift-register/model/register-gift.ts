@@ -52,7 +52,7 @@ export async function registerGift(
   const quoted = quotedShape.safeParse(body);
   if (!quoted.success) return { ok: false, status: 400, errors: {} };
 
-  const { creatorId, itemCategory, itemOther, boxes, hasElectronicsOrMetal, anniversaryName, hardNoticeCategory } = parsed.data;
+  const { creatorId, itemCategory, itemOther, boxes, hasElectronicsOrMetal, anniversaryName, hardNoticeCategory, memo } = parsed.data;
   // INV-L8·INV-L9: 받는 크리에이터와의 관계(자기 자신인가·팔로우했는가)를 로그인한 사람 기준으로 서버가 읽어 판정한다
   // (DB 등록 함수도 따로 막는다)
   const relation = await deps.creatorRelation(deps.viewer.userId, creatorId);
@@ -61,7 +61,8 @@ export async function registerGift(
 
   const charge = computeCharge(await deps.readPrices(), { boxes });
   if (charge.totalKrw !== quoted.data.quotedTotalKrw) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
-  const registration = { fanId: deps.viewer.userId, creatorId, itemCategory, itemOther, hasElectronicsOrMetal, boxes, anniversaryName, hardNoticeCategory };
+  // together INV-F7: 메모는 등록과 같은 처리로 저장한다 — 주인은 이 등록의 보낸 사람(fanId, 세션에서 확인한 사람)이다
+  const registration = { fanId: deps.viewer.userId, creatorId, itemCategory, itemOther, hasElectronicsOrMetal, boxes, anniversaryName, hardNoticeCategory, memo };
   // 주문번호가 겹치면(다섯 자리 무작위) 새 번호로 두 번까지 다시 시도한다
   for (let attempt = 1; ; attempt += 1) {
     try {

@@ -40,6 +40,8 @@ export type GiftRegistration = {
   anniversaryName: string | null;
   /** 받기 어려운 품목 안내가 뜬 품목(metrics INV-Q5). DB 등록 함수가 그때 살아 있는 받기 어려운 품목에 있을 때만 남긴다. 안내가 없었으면 null. */
   hardNoticeCategory: string | null;
+  /** 나만 보는 메모(together INV-F7) — 등록과 같은 처리로 따로 된 표에 저장된다. 안 적었으면 null(또는 없음). 물품 이름(itemOther)과 섞지 않는다. */
+  memo?: { title: string | null; body: string | null } | null;
 };
 
 /** 결제가 끝나는 순간 같이 만드는 승인 요청(INV-M6). 원문은 buildSigningPayload 가 만든다(INV-S1). */

@@ -54,7 +54,8 @@ function GiftRow({ gift, faceTone }: { gift: FanGiftView; faceTone: string | und
       <div className="gcard-top">
         <CreatorFace tone={faceTone ?? "var(--face-1)"} />
         <div>
-          <p className="t-strong">{who}</p>
+          {/* together INV-F7: 나만 보는 메모의 선물 이름 — 본인 목록(my_gifts)에만 온다(시안 v21-addendum3 fan-home 「하루님께 · 생일 편지와 인형」) */}
+          <p className="t-strong">{gift.memoTitle ? `${who} · ${gift.memoTitle}` : who}</p>
           <p className="t-meta">
             {gift.itemKind} · 상자 {gift.boxCount}개
           </p>

@@ -17,6 +17,7 @@ import { anniversaryInWeek, restingNotice, type CalendarDate, type CreatorReceiv
 import { hardItemOverlap, type HardItems } from "@/entities/gift-item/model/hard-items";
 import { forcesMetalReport, isItemCategory, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, ITEM_OTHER_MAX, type ItemCategory } from "@/entities/gift-item/model/item-category";
 import { charCount } from "@/shared/lib/validation/char-count";
+import { MEMO_BODY_MAX, MEMO_TITLE_MAX } from "@/entities/order/model/gift-memo";
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
 import { receivingNotice } from "../model/receiving-notice";
@@ -53,7 +54,7 @@ const STEP_LABEL: Record<StepNo, string> = { 1: "크리에이터", 2: "선물", 
 /** 「다음」을 누르면 그 단계 칸만 검증한다. 4단계(결제)는 제출 때 전체를 다시 검증한다. */
 const STEP_FIELDS: Record<Exclude<StepNo, 4>, (keyof RegisterFormValues)[]> = {
   1: ["creatorId"],
-  2: ["itemCategory", "itemOther", "electronicsOrMetal"],
+  2: ["itemCategory", "itemOther", "electronicsOrMetal", "memoTitle", "memoBody"],
   3: ["smallCount", "mediumCount", "largeCount"],
 };
 
@@ -139,12 +140,14 @@ export function RegisterForm({
     resolver: zodResolver(registerFormSchema),
     // 전자기기 신고는 기본값이 없다 — 팬이 직접 골라야 한다
     // 물품 종류도 기본값이 없다 — 팬이 목록에서 직접 고른다(hard-items INV-H1)
-    defaultValues: { creatorId: initialCreatorId, itemOther: "", smallCount: "1", mediumCount: "0", largeCount: "0" },
+    defaultValues: { creatorId: initialCreatorId, itemOther: "", smallCount: "1", mediumCount: "0", largeCount: "0", memoTitle: "", memoBody: "" },
   });
   const creatorId = useWatch({ control, name: "creatorId" });
   const watchedCategory = useWatch({ control, name: "itemCategory" });
   const itemCategory = isItemCategory(watchedCategory) ? watchedCategory : null;
   const itemOther = useWatch({ control, name: "itemOther" }) ?? "";
+  const memoTitle = useWatch({ control, name: "memoTitle" }) ?? "";
+  const memoBody = useWatch({ control, name: "memoBody" }) ?? "";
   const metal = useWatch({ control, name: "electronicsOrMetal" });
   const summary = summarizeBoxes(prices, {
     small: useWatch({ control, name: "smallCount" }),
@@ -222,7 +225,7 @@ export function RegisterForm({
     setSubmitError(null);
     setNoticeShown(false);
     try {
-      const { creatorId, itemCategory: category, itemOther: other, smallCount, mediumCount, largeCount, electronicsOrMetal } = getValues();
+      const { creatorId, itemCategory: category, itemOther: other, smallCount, mediumCount, largeCount, electronicsOrMetal, memoTitle: memoTitleValue, memoBody: memoBodyValue } = getValues();
       const res = await fetch("/api/gifts", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -235,6 +238,9 @@ export function RegisterForm({
           mediumCount,
           largeCount,
           electronicsOrMetal,
+          // together INV-F7: 나만 보는 메모 — 물품 이름(itemOther)과 다른 칸. 비면 서버가 저장하지 않는다
+          memoTitle: memoTitleValue ?? "",
+          memoBody: memoBodyValue ?? "",
           quotedTotalKrw: summary.totalKrw,
           // INV-B9: 고른 표시만 이름으로 보낸다. 7일 안인지는 DB 가 그날 다시 계산해 아니면 표시 없이 저장한다
           ...(anniversaryMark && markAnniversary ? { anniversaryName: anniversaryMark } : {}),
@@ -581,7 +587,7 @@ export function RegisterForm({
           {itemCategory === "other" ? (
             <div className="field-block">
               <label className="label" htmlFor="itemOther">
-                어떤 선물인가요? ({ITEM_OTHER_MAX}자까지)
+                어떤 선물인가요? ({ITEM_OTHER_MAX}자까지 · 크리에이터에게 보여요)
               </label>
               <input
                 id="itemOther"
@@ -672,6 +678,57 @@ export function RegisterForm({
             </p>
             {err("photo-error", photoError ?? undefined)}
           </div>
+          {/* together INV-F7: 나만 보는 메모(선물 이름·내용, 둘 다 선택) — 보낸 팬만 본다. 위 「기타」 물품 이름(크리에이터에게 보인다)과 다른 덩어리 (시안 v21-addendum3/fan-gift-register-step.html) */}
+          <section className={f.memo} aria-labelledby="memo-h">
+            <div>
+              <h3 className={f["memo-h"]} id="memo-h">
+                <svg className={f["memo-lock"]} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                나만 보는 메모 <span className={f["photo-opt"]}>(선택)</span>
+              </h3>
+              <p className="hint">나만 볼 수 있는 메모예요. 나중에 보낸 선물에서 다시 볼 수 있어요.</p>
+            </div>
+            <div className="field-block">
+              <label className="label" htmlFor="memoTitle">
+                선물 이름
+              </label>
+              <input
+                id="memoTitle"
+                className="field"
+                type="text"
+                maxLength={MEMO_TITLE_MAX * 2}
+                placeholder="예) 생일 축하 선물"
+                aria-invalid={errors.memoTitle ? true : undefined}
+                aria-describedby={errors.memoTitle ? "memoTitle-count memoTitle-error" : "memoTitle-count"}
+                {...register("memoTitle")}
+              />
+              <p className={`t-meta ${f["char-count"]}`} id="memoTitle-count">
+                {charCount(memoTitle)} / {MEMO_TITLE_MAX}자
+              </p>
+              {err("memoTitle-error", errors.memoTitle?.message)}
+            </div>
+            <div className="field-block">
+              <label className="label" htmlFor="memoBody">
+                내용
+              </label>
+              <textarea
+                id="memoBody"
+                className="field"
+                rows={5}
+                maxLength={MEMO_BODY_MAX * 2}
+                placeholder="무엇을 담았는지, 어떤 마음으로 보냈는지 적어 두세요."
+                aria-invalid={errors.memoBody ? true : undefined}
+                aria-describedby={errors.memoBody ? "memoBody-count memoBody-error" : "memoBody-count"}
+                {...register("memoBody")}
+              />
+              <p className={`t-meta ${f["char-count"]}`} id="memoBody-count">
+                {charCount(memoBody)} / {MEMO_BODY_MAX}자
+              </p>
+              {err("memoBody-error", errors.memoBody?.message)}
+            </div>
+          </section>
         </fieldset>
 
         {/* 3 상자 */}

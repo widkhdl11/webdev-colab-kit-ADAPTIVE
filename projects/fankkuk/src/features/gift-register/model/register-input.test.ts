@@ -7,7 +7,7 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
   it("정상 입력은 상자 구간 목록·참거짓으로 바뀐다 (소형 먼저)", () => {
     expect(parseRegisterInput(ok)).toEqual({
       success: true,
-      data: { creatorId: "00000000-0000-4000-b000-000000000001", itemCategory: "doll", itemOther: null, boxes: ["small", "small", "medium"], hasElectronicsOrMetal: false, anniversaryName: null, hardNoticeCategory: null },
+      data: { creatorId: "00000000-0000-4000-b000-000000000001", itemCategory: "doll", itemOther: null, boxes: ["small", "small", "medium"], hasElectronicsOrMetal: false, anniversaryName: null, hardNoticeCategory: null, memo: null },
     });
   });
 
@@ -87,7 +87,7 @@ describe("parseRegisterInput — 선물 등록 입력 경계", () => {
 
   it("모르는 칸(금액·대형 초과 상자 수 등)은 결과에 들어오지 않는다 — 결제 금액은 서버 요금표로만 계산한다", () => {
     const r = parseRegisterInput({ ...ok, totalKrw: "100", oversizeCount: "3" });
-    expect(r.success && Object.keys(r.data).sort()).toEqual(["anniversaryName", "boxes", "creatorId", "hardNoticeCategory", "hasElectronicsOrMetal", "itemCategory", "itemOther"]);
+    expect(r.success && Object.keys(r.data).sort()).toEqual(["anniversaryName", "boxes", "creatorId", "hardNoticeCategory", "hasElectronicsOrMetal", "itemCategory", "itemOther", "memo"]);
     expect(r.success && r.data.boxes).toHaveLength(3);
   });
 });
@@ -131,5 +131,64 @@ describe("받기 어려운 품목 안내가 뜬 품목 (metrics INV-Q5)", () => 
   it("INV-Q5: 안 보내면 없음", () => {
     const r = parseRegisterInput(ok);
     expect(r.success && r.data.hardNoticeCategory).toBeNull();
+  });
+});
+
+describe("together INV-F7: 나만 보는 메모 — 선물 이름(한 줄 20자)·내용(200자), 둘 다 선택", () => {
+  const title20 = "가".repeat(20);
+
+  it("INV-F7 S7: 앞뒤 공백을 빼고 받는다 — 내용은 줄바꿈을 그대로 둔다", () => {
+    const r = parseRegisterInput({ ...ok, memoTitle: "  생일 편지와 인형 ", memoBody: "\n첫 줄\n둘째 줄\n셋째 줄  " });
+    expect(r.success && r.data.memo).toEqual({ title: "생일 편지와 인형", body: "첫 줄\n둘째 줄\n셋째 줄" });
+  });
+
+  it("INV-F7: 20자 이름·200자 내용(줄바꿈 포함)은 받는다 — 글자 수는 코드 포인트로 센다", () => {
+    expect(parseRegisterInput({ ...ok, memoTitle: title20 }).success).toBe(true);
+    expect(parseRegisterInput({ ...ok, memoBody: "가".repeat(100) + "\n" + "나".repeat(99) }).success).toBe(true);
+    // 그림 글자 20개도 20자다(DB char_length 와 같은 기준)
+    expect(parseRegisterInput({ ...ok, memoTitle: "🎁".repeat(20) }).success).toBe(true);
+  });
+
+  it("INV-F7 S7b (실패경로): 선물 이름 21자면 memoTitle 칸 오류", () => {
+    const r = parseRegisterInput({ ...ok, memoTitle: title20 + "가" });
+    expect(r.success).toBe(false);
+    expect(r.success ? null : r.errors.memoTitle).toBeTruthy();
+  });
+
+  it("INV-F7 S7b (실패경로): 내용 201자면 memoBody 칸 오류", () => {
+    const r = parseRegisterInput({ ...ok, memoBody: "나".repeat(201) });
+    expect(r.success).toBe(false);
+    expect(r.success ? null : r.errors.memoBody).toBeTruthy();
+  });
+
+  it("INV-F7 (실패경로): 선물 이름은 한 줄이다 — 줄바꿈이 있으면 오류", () => {
+    for (const t of ["생일\n편지", "생일\r편지"]) {
+      const r = parseRegisterInput({ ...ok, memoTitle: t });
+      expect(r.success, JSON.stringify(t)).toBe(false);
+      expect(r.success ? null : r.errors.memoTitle).toBeTruthy();
+    }
+  });
+
+  it("INV-F7: 둘 다 비거나 공백뿐이면 메모를 저장하지 않는다(null) — 한쪽만 있으면 다른 쪽은 null", () => {
+    const empty = parseRegisterInput({ ...ok, memoTitle: "   ", memoBody: "\n " });
+    expect(empty.success && empty.data.memo).toBeNull();
+    const onlyBody = parseRegisterInput({ ...ok, memoBody: "내용만" });
+    expect(onlyBody.success && onlyBody.data.memo).toEqual({ title: null, body: "내용만" });
+    const onlyTitle = parseRegisterInput({ ...ok, memoTitle: "이름만" });
+    expect(onlyTitle.success && onlyTitle.data.memo).toEqual({ title: "이름만", body: null });
+  });
+
+  it("INV-F7 (실패경로): 메모는 물품 이름을 채우지 않고, 물품 이름은 메모를 채우지 않는다", () => {
+    const doll = parseRegisterInput({ ...ok, memoTitle: "생일 편지와 인형" });
+    expect(doll.success && doll.data.itemOther).toBeNull();
+    const other = parseRegisterInput({ ...ok, itemCategory: "other", itemOther: "손편지", memoTitle: "생일 편지와 인형" });
+    expect(other.success && other.data).toMatchObject({ itemOther: "손편지", memo: { title: "생일 편지와 인형", body: null } });
+    const otherOnly = parseRegisterInput({ ...ok, itemCategory: "other", itemOther: "손편지" });
+    expect(otherOnly.success && otherOnly.data.memo).toBeNull();
+  });
+
+  it("INV-F7 (실패경로): 문자열이 아닌 메모 값은 받지 않는다", () => {
+    expect(parseRegisterInput({ ...ok, memoTitle: 12 }).success).toBe(false);
+    expect(parseRegisterInput({ ...ok, memoBody: { x: 1 } }).success).toBe(false);
   });
 });

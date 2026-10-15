@@ -201,3 +201,55 @@ describe("metrics INV-Q5: 안내가 뜬 품목을 등록에 같이 보낸다", (
     expect(sent()).not.toHaveProperty("hardNoticeCategory");
   });
 });
+
+describe("together INV-F7: 2단계 「나만 보는 메모」(선물 이름·내용, 둘 다 선택)", () => {
+  const pay = () => click([...host.querySelectorAll("button")].find((b) => b.textContent?.includes("결제하기")));
+  const sent = () => JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
+  async function type(el: HTMLInputElement | HTMLTextAreaElement | null, value: string) {
+    if (!el) throw new Error("입력 칸이 없다");
+    const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(proto, "value")!.set!.call(el, value);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await settle();
+  }
+  const title = () => host.querySelector<HTMLInputElement>("#memoTitle");
+  const body = () => host.querySelector<HTMLTextAreaElement>("#memoBody");
+
+  it("INV-F7: 메모 칸 둘은 2단계에 있고, 「나만 볼 수 있어요」 안내가 붙는다 — 「기타」 물품 이름 칸에는 「크리에이터에게 보여요」", async () => {
+    await render("notice", MOMO);
+    await toStep2("other");
+    const memo = title()?.closest("section");
+    expect(memo?.closest("[hidden]")).toBeNull();
+    expect(memo?.querySelector("h2, h3")?.textContent).toContain("나만 보는 메모");
+    expect(memo?.textContent).toContain("나만 볼 수 있");
+    expect(memo?.contains(body())).toBe(true);
+    expect(host.querySelector('label[for="memoTitle"]')?.textContent).toContain("선물 이름");
+    expect(host.querySelector('label[for="memoBody"]')?.textContent).toContain("내용");
+    // 메모 칸은 「기타」 칸과 다른 덩어리다
+    expect(memo?.contains(host.querySelector("#itemOther"))).toBe(false);
+    expect(host.querySelector('label[for="itemOther"]')?.textContent).toContain("크리에이터에게 보여요");
+  });
+
+  it("INV-F7 S7: 적은 선물 이름·내용을 등록에 보낸다 — 물품 이름 칸과 섞지 않는다", async () => {
+    await render("notice", MOMO);
+    await toStep2("other");
+    await type(host.querySelector<HTMLInputElement>("#itemOther"), "손편지");
+    await type(title(), "생일 편지와 인형");
+    await type(body(), "첫 줄\n둘째 줄\n셋째 줄");
+    await click(button("다음"));
+    await click(button("다음"));
+    await pay();
+    expect(sent()).toMatchObject({ itemOther: "손편지", memoTitle: "생일 편지와 인형", memoBody: "첫 줄\n둘째 줄\n셋째 줄" });
+  });
+
+  it("INV-F7 S7b (실패경로): 선물 이름이 21자면 2단계에서 넘어가지 않고 그 칸에 오류가 붙는다", async () => {
+    await render("notice", MOMO);
+    await toStep2("doll");
+    await type(title(), "가".repeat(21));
+    await click(button("다음"));
+    expect(visibleStep()).toEqual([2]);
+    expect(title()?.getAttribute("aria-invalid")).toBe("true");
+  });
+});
