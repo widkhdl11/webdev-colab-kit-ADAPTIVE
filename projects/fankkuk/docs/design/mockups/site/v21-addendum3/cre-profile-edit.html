@@ -1,0 +1,140 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v21 추가분 3 · 크리에이터 · 프로필 수정
+  근거: design-rules 0000절(단계별·카드 좌우 나열 지양) · 000절(하늘색은 면에만, 글자·선택 테두리·초점 #1F2937) · 00절 · 11절(사이드바 A안).
+  결정: DECISIONS 2026-10-15 「추가 요청 3 정할 것 다섯」(③ 퍼스널 컬러·팬컬러, ⑤ 추가 조치).
+  틀: v20-rebrand C안 + v19 creator-a 사이드바. 아래 값은 전부 cre-21.css :root 와 v20 토큰 변수를 쓴다.
+  위쪽 머리 모양이 곧 미리보기다 — 사진·배경을 바로 그 자리에서 바꾼다(단계 줄이기). 아래는 이름과 소개 두 칸뿐.
+  배경 사진을 올리지 않으면 퍼스널 컬러 띠가 기본이다. 한 줄 소개 40자.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="../v20-rebrand/logo-user.svg">
+<title>팬꾹 — 시안 v21 프로필 수정</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
+<link rel="stylesheet" href="../v20-rebrand/tokens.css">
+<link rel="stylesheet" href="../v20-rebrand/tokens-c.css">
+<link rel="stylesheet" href="../v20-rebrand/v18.css">
+<link rel="stylesheet" href="../v20-rebrand/v18-app.css">
+<link rel="stylesheet" href="../v20-rebrand/v18-cre.css">
+<link rel="stylesheet" href="../v19-sidebar/v19-sb.css">
+<link rel="stylesheet" href="cre-21.css">
+<script src="../v20-rebrand/font-switch.js" defer></script>
+<script src="../v19-sidebar/v19-sb.js"></script>
+<script src="cre-21.js" defer></script>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-gift" viewBox="0 0 24 24"><path d="M12 7v14" /><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" /><rect x="3" y="7" width="18" height="4" rx="1" /></symbol>
+<symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></symbol>
+<symbol id="i-package-search" viewBox="0 0 24 24"><path d="M12 22V12" /><path d="M20.27 18.27 22 20" /><path d="M21 10.498V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.729l7 4a2 2 0 0 0 2 .001l.98-.559" /><path d="M3.29 7 12 12l8.71-5" /><path d="m7.5 4.27 8.997 5.148" /><circle cx="18.5" cy="16.5" r="2.5" /></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
+<symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
+<symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><polyline points="3.29 7 12 12 20.71 7" /><path d="m7.5 4.27 9 5.15" /></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></symbol>
+<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></symbol>
+<symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /></symbol>
+<symbol id="i-log-out" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+<symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></symbol>
+<symbol id="i-panel-left-close" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m16 15-3-3 3-3" /></symbol>
+<symbol id="i-panel-left-open" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m14 9 3 3-3 3" /></symbol>
+<symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2" /> <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /> <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></symbol>
+<symbol id="i-list-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /> <path d="M13 6h8" /> <path d="M13 12h8" /> <path d="M13 18h8" /></symbol>
+<symbol id="i-chevrons-up-down" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" /><path d="m21.854 2.147-10.94 10.939" /></symbol>
+<symbol id="i-ellipsis" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></symbol>
+<symbol id="i-package-plus" viewBox="0 0 24 24"><path d="M16 16h6" /><path d="M19 13v6" /><path d="M21 14V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14" /><path d="m7.5 4.27 9 5.15" /><polyline points="3.29 7 12 12 20.71 7" /><line x1="12" x2="12" y1="22" y2="12" /></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></symbol>
+<symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" /><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /></symbol>
+<symbol id="i-clipboard-check" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+<symbol id="i-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-user-round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+<symbol id="i-smartphone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></symbol>
+<symbol id="i-credit-card" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+<symbol id="i-badge-check" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+<symbol id="fm-star" viewBox="0 0 24 24"><polygon points="12 2 15.1 8.6 22 9.3 16.8 14 18.2 21 12 17.5 5.8 21 7.2 14 2 9.3 8.9 8.6"/></symbol>
+</defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="app" id="app">
+    <header class="topbar">
+      <a class="logo" href="cre-home.html" aria-label="팬꾹 홈"><img class="logo-mark" src="../v20-rebrand/logo-user.svg" alt="" aria-hidden="true" width="32" height="32"><span>팬꾹</span></a>
+      <button class="icon-btn" id="sb-open" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button>
+    </header>
+    <div class="sb-scrim" id="sb-scrim"></div>
+    <aside class="sidebar" id="sidebar" aria-label="크리에이터 메뉴">
+      <div class="sb-top">
+        <button class="sb-mark" id="sb-mark" type="button" aria-label="사이드바 펼치기" aria-controls="sidebar" aria-expanded="false"><img class="m-txt" src="../v20-rebrand/logo-user.svg" alt="" aria-hidden="true" width="24" height="24"><svg class="ico m-ico" aria-hidden="true"><use href="#i-panel-left-open"/></svg></button>
+        <a class="logo" href="cre-home.html" aria-label="팬꾹 홈"><img class="logo-mark" src="../v20-rebrand/logo-user.svg" alt="" aria-hidden="true" width="32" height="32"><span>팬꾹</span></a>
+        <button class="sb-btn sb-fold" id="sb-fold" type="button" aria-label="사이드바 접기" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button>
+        <button class="sb-btn sb-close" id="sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </div>
+      <nav class="sb-nav" aria-label="크리에이터 메뉴">
+<p class="sb-group" id="g1"><span class="sb-group-t">기본</span></p>
+<ul aria-labelledby="g1"><li><a href="cre-home.html" data-tip="홈"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg><span class="sb-label">홈</span></a></li><li><a href="cre-action-center.html" data-tip="해야 할 일"><svg class="ico" aria-hidden="true"><use href="#i-clipboard-check"/></svg><span class="sb-label">해야 할 일</span><span class="badge todo-badge" aria-label="1건">1</span></a></li><li><a href="../v18/creators.html" data-tip="크리에이터 찾기"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sb-label">크리에이터 찾기</span></a></li></ul>
+<p class="sb-group" id="g2"><span class="sb-group-t">받기</span></p>
+<ul aria-labelledby="g2"><li><a href="../v20-rebrand/creator-requests-c.html" data-tip="승인 대기"><svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg><span class="sb-label">승인 대기</span><span class="badge" aria-label="3건">3</span></a></li><li><a href="../v20-rebrand/creator-requests-c.html#done" data-tip="승인 내역"><svg class="ico" aria-hidden="true"><use href="#i-list-checks"/></svg><span class="sb-label">승인 내역</span></a></li><li><a href="../v18/creator-boxes.html" data-tip="받은 선물"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg><span class="sb-label">받은 선물</span></a></li><li><a href="../v18/creator-log.html" data-tip="열람 기록"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg><span class="sb-label">열람 기록</span></a></li></ul>
+<p class="sb-group" id="g3"><span class="sb-group-t">보내기</span></p>
+<ul aria-labelledby="g3"><li><a href="../v18/creator-revgift-new.html" data-tip="팬에게 보내기"><svg class="ico" aria-hidden="true"><use href="#i-package-plus"/></svg><span class="sb-label">팬에게 보내기</span></a>
+<ul class="sb-sub" aria-label="팬에게 보내기 방식"><li><a href="../v18/creator-revgift-new.html#count" data-tip="몇 명에게"><span class="sb-label">몇 명에게</span></a></li><li><span class="sb-soon" aria-disabled="true"><span class="sb-label">합포장</span><span class="sb-soon-tag">준비 중</span></span></li></ul></li><li><a href="../v18/send.html" data-tip="다른 크리에이터에게 선물"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg><span class="sb-label">다른 크리에이터에게 선물</span></a></li><li><a href="cre-revgift-sent.html" data-tip="보낸 내역"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg><span class="sb-label">보낸 내역</span></a></li></ul>
+<p class="sb-group" id="g4"><span class="sb-group-t">내 팬꾹</span></p>
+<ul aria-labelledby="g4"><li><a href="../v18/creator-settings.html#decorate" data-tip="꾸미기"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg><span class="sb-label">꾸미기</span></a></li><li><a href="cre-profile-edit.html" data-tip="프로필 수정" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-user-round"/></svg><span class="sb-label">프로필 수정</span></a></li><li><a href="cre-detail-settings.html" data-tip="상세 설정"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="sb-label">상세 설정</span></a></li></ul>
+</nav>
+      <div class="sb-bottom">
+        <details class="sb-menu" id="sb-menu">
+          <summary aria-label="별빛님 계정 메뉴"><span class="sb-avatar" aria-hidden="true">별</span><span class="sb-name">별빛님</span><svg class="ico sb-chev" aria-hidden="true"><use href="#i-chevrons-up-down"/></svg></summary>
+          <div class="sb-menu-list"><a href="cre-account-settings.html">계정 설정</a><a href="#">로그아웃</a></div>
+        </details>
+      </div>
+    </aside>
+    <div class="sb-wrap">
+    <main id="main" class="sb-main page-pane">
+        <div class="cre-form stack-xl">
+        <header class="page-head">
+          <div class="ph-row"><h1 class="ph-title">프로필 수정</h1></div>
+          <p class="ph-desc">팬에게 보이는 내 프로필이에요. 위 모양이 그대로 보여요.</p>
+        </header>
+        <section class="pf" aria-label="미리보기">
+          <div class="pf-band"><svg class="photo" viewBox="0 0 1200 168" preserveAspectRatio="xMidYMid slice" role="img" aria-label="올린 배경 사진 예시"><rect width="1200" height="168" fill="#BFE3F5"/><circle cx="930" cy="52" r="26" fill="#FFF6D6"/><path d="M0 168V112q130-54 280-12t300 14q160 30 320-24t300 30v48z" fill="#7FB38F"/><path d="M0 168v-28q180-34 360-4t340-6q200-30 500 14v24z" fill="#5E9A74"/></svg></div>
+          <div class="pf-body" style="grid-template-columns:auto minmax(0,1fr)">
+            <span class="pf-av" role="img" aria-label="프로필 사진 예시">별</span>
+            <div class="pf-id"><div class="pf-line"><span class="pf-name">별빛</span><span class="fb " style="--fan:#C4B5FD;--on-fan:#111827"><span class="fb-mark" aria-hidden="true"><svg><use href="#fm-star"/></svg></span>별무리</span></div></div>
+          </div>
+        </section>
+        <section class="fcard2" aria-labelledby="ph-t">
+          <h2 class="sec-t" id="ph-t">사진</h2>
+          <div class="upl"><button class="btn btn--ghost btn--sm" type="button"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg>&nbsp;배경 사진 바꾸기</button><button class="btn btn--ghost btn--sm" type="button"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg>&nbsp;프로필 사진 바꾸기</button><button class="btn btn--ghost btn--sm" type="button">배경을 퍼스널 컬러 띠로 되돌리기</button></div>
+          <p class="hint">배경 사진은 가로로 긴 사진이 잘 어울려요(JPG·PNG). 올리면 위치 정보 같은 숨은 정보는 지워져요. 사진이 없으면 퍼스널 컬러 띠가 보여요.</p>
+        </section>
+        <form class="fcard2" aria-label="이름과 소개" onsubmit="return false">
+          <div><label class="label" for="nm">공개 이름</label><input class="field" id="nm" type="text" value="별빛" autocomplete="off"><p class="hint" style="margin-top:var(--sp-8)">팬에게 보이는 이름이에요.</p></div>
+          <div><label class="label" for="bio">한 줄 소개 <span class="meta">(40자까지)</span></label><textarea class="field" id="bio" maxlength="40" rows="2" data-count="bio-c">밤마다 잔잔한 노래와 수다로 찾아와요. 오늘도 편하게 놀다 가세요.</textarea><div class="count" id="bio-c" aria-live="polite">0/40</div></div>
+          <div class="btn-end"><a class="btn btn--ghost" href="cre-home.html">취소</a><button class="btn" type="submit">저장</button></div>
+        </form>
+        </div>
+    </main>
+    </div>
+  </div>
+</body>
+</html>
