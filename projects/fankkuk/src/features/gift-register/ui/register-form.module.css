@@ -48,7 +48,11 @@ fieldset.step { margin: 0; padding: 0; border: 0; min-width: 0; }
 
 /* 2 선물 — 고르기 칸은 전역 .opt */
 .opts { display: flex; flex-wrap: wrap; gap: 8px; }
-.char-count { margin-top: 8px; text-align: right; }
+/* 라벨과 글자 수를 한 줄에(시안 v21-addendum3 .f-head·.count) */
+.field-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: var(--space-2); }
+.field-head :global(.label) { margin-bottom: 0; }
+.char-count { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.char-count[data-over] { color: var(--danger); font-weight: var(--fw-btn); }
 .note { margin-top: 16px; padding: 24px; }
 .note > p + p { margin-top: 8px; }
 .note :global(.notes) { margin-top: 8px; }

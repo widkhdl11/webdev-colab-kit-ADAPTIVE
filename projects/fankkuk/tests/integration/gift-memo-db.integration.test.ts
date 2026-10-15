@@ -158,7 +158,7 @@ describe("together INV-F8: 메모는 보낸 팬 본인에게만 — 정해진 �
 
   afterEach(() => {
     psql(
-      "drop function if exists public.pii_check_planted_memo cascade; drop function if exists public.pii_check_planted_memo_inner cascade; drop view if exists public.pii_check_planted_memo_view; revoke all on public.gift_memos from authenticated; alter table public.gift_memos enable row level security",
+      "drop function if exists public.pii_check_planted_memo cascade; drop function if exists public.pii_check_planted_memo_inner cascade; drop function if exists public.my_gifts(uuid) cascade; drop view if exists public.pii_check_planted_memo_view; revoke all on public.gift_memos from authenticated; alter table public.gift_memos enable row level security",
     );
     psql("notify pgrst, 'reload schema'");
   });
@@ -213,7 +213,17 @@ describe("together INV-F8: 메모는 보낸 팬 본인에게만 — 정해진 �
       "create function public.pii_check_planted_memo_inner() returns integer language sql stable as $$ select count(*)::int from public.gift_memos $$; revoke all on function public.pii_check_planted_memo_inner() from public, anon, authenticated",
     );
     const r = await runPiiExposureCheck({ apiUrl: apiUrl(), anonKey: anonKey(), logins: [login("haru_creator")], sql: psql });
-    expect(r.problems).toContain("구조: 메모 표(gift_memos)를 참조하는 함수 pii_check_planted_memo_inner — 허용 목록(등록·본인 상세·본인 목록) 밖이다");
+    expect(r.problems).toContain("구조: 메모 표(gift_memos)를 참조하는 함수 public.pii_check_planted_memo_inner() — 허용 목록(등록·본인 상세·본인 목록) 밖이다");
+  });
+
+  it("INV-F8 S8b (실패경로): 허용된 함수와 같은 이름에 계정 ID 인자를 받는 판을 더 만들면 — 이름이 같아도 — 허용 목록 밖이라 구조 검사가 잡는다", async () => {
+    psql(
+      "create function public.my_gifts(p_fan_id uuid) returns jsonb language sql stable security definer set search_path = '' as $$ select jsonb_agg(m.title) from public.gift_memos m join public.orders o on o.id = m.order_id where o.fan_id = p_fan_id $$; revoke all on function public.my_gifts(uuid) from public, anon, authenticated",
+    );
+    const r = await runPiiExposureCheck({ apiUrl: apiUrl(), anonKey: anonKey(), logins: [login("haru_creator")], sql: psql });
+    expect(r.problems).toContain("구조: 메모 표(gift_memos)를 참조하는 함수 public.my_gifts(p_fan_id uuid) — 허용 목록(등록·본인 상세·본인 목록) 밖이다");
+    // 원래 판(인자 없음)은 그대로 허용된다 — 이름이 아니라 인자 모양까지 맞춰 본 결과다
+    expect(r.problems.filter((p) => p.includes("public.my_gifts()"))).toEqual([]);
   });
 
   it("INV-F8 S8b (실패경로): 크리에이터에게 열린 함수가 메모를 돌려주면 응답 검사가 하루 권한에서 잡는다(구조 검사와 따로)", async () => {
@@ -230,7 +240,7 @@ describe("together INV-F8: 메모는 보낸 팬 본인에게만 — 정해진 �
       memoCanary: { values: [CANARY_TITLE, CANARY_BODY_MARK], orderNo: pending.orderNo, owner: "byeolbit_fan" },
     });
     expect(r.problems).toContain("메모: haru_creator 함수 pii_check_planted_memo 응답에 심은 메모 값이 있다");
-    expect(r.problems).toContain("구조: 메모 표(gift_memos)를 참조하는 함수 pii_check_planted_memo — 허용 목록(등록·본인 상세·본인 목록) 밖이다");
+    expect(r.problems).toContain("구조: 메모 표(gift_memos)를 참조하는 함수 public.pii_check_planted_memo() — 허용 목록(등록·본인 상세·본인 목록) 밖이다");
   });
 
   it("INV-F8 S8b (실패경로): 메모 표를 읽는 뷰·화면 쪽 키 권한·꺼진 행 보안도 구조 검사가 잡는다", async () => {
@@ -252,7 +262,7 @@ describe("together INV-F8: 메모는 보낸 팬 본인에게만 — 정해진 �
     psql("create or replace function public.my_gift_memo(p_order_no text) returns jsonb language sql stable security definer set search_path = '' as $$ select null::jsonb $$");
     try {
       const r = await runPiiExposureCheck({ apiUrl: apiUrl(), anonKey: anonKey(), logins: [login("haru_creator")], sql: psql });
-      expect(r.problems).toContain("구조: 허용 목록의 my_gift_memo 는 이제 메모 표(gift_memos)를 참조하지 않는다 — 목록에서 뺀다");
+      expect(r.problems).toContain("구조: 허용 목록의 public.my_gift_memo(p_order_no text) 는 이제 메모 표(gift_memos)를 참조하지 않는다 — 목록에서 뺀다");
     } finally {
       psql(src);
     }

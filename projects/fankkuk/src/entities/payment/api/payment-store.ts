@@ -16,6 +16,13 @@ export class PriceChangedError extends Error {
   }
 }
 
+/** DB 등록 함수가 입력 값(메모·기타 글 길이 등, 22023)을 거부했다 — 입력 검사가 먼저 막으므로 정상 흐름에서는 나오지 않지만, 나오면 입력 오류(400)다. */
+export class InvalidRegistrationError extends Error {
+  constructor(detail: string) {
+    super(`DB 가 등록 입력을 거부했다: ${detail}`);
+  }
+}
+
 /** DB 등록 함수가 보내는 사람을 거부했다 — 자기 자신(self)·팔로우 없음(no_follow)·보낼 수 없는 계정(role)·받을 수 없는 크리에이터(unknown_creator — 없거나 본인 확인 전)·
  * 받는 크리에이터가 채널 이사 중(moving — creator-verification INV-V12, 이것만은 DB 만 판정하는 정상 경로다)·
  * 쉬는 중(resting — creator-receiving INV-B2)·이번 달 한도(limit — INV-B4)·받기 어려운 품목 등록 막기(hard_item — hard-items INV-H7) — 이 셋도 DB 가 판정하는 정상 경로다.

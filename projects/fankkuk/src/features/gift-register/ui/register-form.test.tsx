@@ -252,4 +252,32 @@ describe("together INV-F7: 2단계 「나만 보는 메모」(선물 이름·내
     expect(visibleStep()).toEqual([2]);
     expect(title()?.getAttribute("aria-invalid")).toBe("true");
   });
+
+  it("INV-F7: 칸 최대 길이는 시안대로 선물 이름 20·내용 200·「기타」 30 — 한글 21자째는 칸이 받지 않는다", async () => {
+    await render("notice", MOMO);
+    await toStep2("other");
+    expect(title()?.maxLength).toBe(20);
+    expect(body()?.maxLength).toBe(200);
+    expect(host.querySelector<HTMLInputElement>("#itemOther")?.maxLength).toBe(30);
+  });
+
+  it("INV-F7: 글자 수는 라벨과 같은 줄에 있고 바뀌면 읽어 준다(aria-live polite) — 넘치면 표시가 바로 바뀐다", async () => {
+    await render("notice", MOMO);
+    await toStep2("other");
+    for (const id of ["memoTitle", "memoBody", "itemOther"]) {
+      const label = host.querySelector(`label[for="${id}"]`);
+      const count = host.querySelector(`#${id}-count`);
+      expect(count, id).not.toBeNull();
+      expect(label?.parentElement, id).toBe(count?.parentElement);
+      expect(label?.parentElement?.contains(host.querySelector(`#${id}`)), id).toBe(false);
+      expect(count?.getAttribute("aria-live"), id).toBe("polite");
+    }
+    await type(title(), "가".repeat(20));
+    expect(host.querySelector("#memoTitle-count")?.textContent).toContain("20 / 20");
+    expect(host.querySelector("#memoTitle-count")?.hasAttribute("data-over")).toBe(false);
+    // 「다음」을 누르기 전, 넣기만 해도 넘침이 보인다
+    await type(title(), "가".repeat(21));
+    expect(visibleStep()).toEqual([2]);
+    expect(host.querySelector("#memoTitle-count")?.getAttribute("data-over")).toBe("true");
+  });
 });

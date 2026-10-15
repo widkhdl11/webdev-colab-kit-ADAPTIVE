@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { SenderRefusedError } from "./payment-store";
+import { InvalidRegistrationError, SenderRefusedError } from "./payment-store";
 import { createSupabasePaymentStore } from "./supabase-payment-store";
 
 // 결제 저장소가 DB 등록 함수의 거부 코드를 앱 오류 종류로 바꾸는지 — 가짜 rpc 로 본다(실제 DB 판정은 통합 시험 hard-items-db).
 
-function storeReturning(code: string) {
+function storeReturning(code: string, message = "거부") {
   const calls: { fn: string; args: Record<string, unknown> }[] = [];
   const admin = {
     rpc: async (fn: string, args: Record<string, unknown>) => {
       calls.push({ fn, args });
-      return { data: null, error: { code, message: "거부" } };
+      return { data: null, error: { code, message } };
     },
     from: () => {
       throw new Error("거부된 등록 뒤에 결제 기록을 읽으면 안 된다");
@@ -75,5 +75,19 @@ describe("together INV-F7: 나만 보는 메모는 등록 함수에 같이 넘�
       [null, null, null],
       [null, "내용만", null],
     ]);
+  });
+});
+
+describe("together INV-F7: DB 의 길이 검사(22023)는 입력 오류로 — 서버 고장(500)이 아니다", () => {
+  it("INV-F7 S7b (실패경로): 메모·기타 글 길이로 22023 이 오면 InvalidRegistrationError", async () => {
+    for (const message of ["선물 이름은 한 줄 20자까지", "메모 내용은 200자까지", "기타 물품은 1~30자로 적는다"]) {
+      const err = await storeReturning("22023", message).store.create(input).catch((e: unknown) => e);
+      expect(err, message).toBeInstanceOf(InvalidRegistrationError);
+    }
+  });
+
+  it("INV-F7: 22023 이어도 받을 수 없는 크리에이터는 그대로 SenderRefusedError(unknown_creator)", async () => {
+    const err = await storeReturning("22023", "받을 수 없는 크리에이터").store.create(input).catch((e: unknown) => e);
+    expect((err as SenderRefusedError).reason).toBe("unknown_creator");
   });
 });

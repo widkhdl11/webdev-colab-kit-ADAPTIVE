@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { parseChargeBreakdown } from "../model/charge";
-import { OrderNoTakenError, PriceChangedError, SenderRefusedError, type PaymentStore, type StoredPayment } from "./payment-store";
+import { InvalidRegistrationError, OrderNoTakenError, PriceChangedError, SenderRefusedError, type PaymentStore, type StoredPayment } from "./payment-store";
 
 // 결제 기록 저장소 — DB 구현. 관리자 키 클라이언트를 받는다(앱 서버 전용).
 // 쓰기는 전부 DB 함수(register_order·claim_payment·settle_payment)로 한다 — 한 처리 안에서 일어나야 하는 것들이
@@ -91,6 +91,8 @@ export function createSupabasePaymentStore(admin: SupabaseClient): PaymentStore 
       if (error?.code === "FKR03") throw new SenderRefusedError("hard_item");
       // 22023 은 상자 수 경계와 같이 쓰지만 상자 수는 입력 검사가 먼저 막는다 — 남는 것은 받을 수 없는 크리에이터다
       if (error?.code === "22023" && error.message.includes("받을 수 없는 크리에이터")) throw new SenderRefusedError("unknown_creator");
+      // together INV-F7: 나머지 22023 은 입력 값 거부(메모·기타 글 길이, 목록 밖 종류, 상자 수) — 서버 고장이 아니라 입력 오류다
+      if (error?.code === "22023") throw new InvalidRegistrationError(error.message);
       if (error) throw new Error(`선물을 등록하지 못했다: ${error.code}`);
       const stored = await find(orderId);
       if (!stored) throw new Error("등록한 결제 기록을 다시 읽지 못했다");

@@ -72,12 +72,15 @@ export const PII_FUNCTIONS = {
   answer_creator_check: "크리에이터 확인 답(받기·돌려보내기) → 몫 닫기, 돌려주는 것은 결과 글자 여섯 가지(not_found·expired·already·closed·accepted·returned)",
 };
 
-// 메모 표를 참조해도 되는 함수 — 스펙 together INV-F8 의 셋(등록 때 저장 · 보낸 팬 본인의 선물 상세 · 보낸 팬 본인의 보낸 선물 목록)
+// 메모 표를 참조해도 되는 함수 — 스펙 together INV-F8 의 셋(등록 때 저장 · 보낸 팬 본인의 선물 상세 · 보낸 팬 본인의 보낸 선물 목록).
+// 키는 「구역.이름(인자 모양)」이다 — 이름만 맞추면 같은 이름에 계정 ID 인자를 받는 판(my_gifts(p_fan_id uuid))을 더 만들어도 통과한다.
+// 인자 모양은 pg_get_function_identity_arguments 가 내는 글자 그대로(인자 이름·타입, 기본값 없음)다.
 export const MEMO_TABLE = "gift_memos";
 export const MEMO_FUNCTIONS = {
-  register_order: "선물 등록 — 같은 처리에서 메모를 저장만 한다, 서버 비밀 키 전용(돌려주는 것은 주문 id)",
-  my_gift_memo: "선물 상세 — 로그인 토큰의 계정이 보낸 주문의 메모만, 계정 ID 인자 없음",
-  my_gifts: "보낸 선물 목록 — 로그인 토큰의 계정이 보낸 주문의 선물 이름만",
+  "public.register_order(p_fan_id uuid, p_creator_id uuid, p_order_no text, p_item_kind text, p_has_electronics_or_metal boolean, p_tiers parcel_tier[], p_toss_order_id text, p_goods_krw integer, p_service_fee_krw integer, p_inspection_fee_krw integer, p_shipping_fee_krw integer, p_amount_krw integer, p_anniversary_name text, p_item_category text, p_hard_notice_category text, p_memo_title text, p_memo_body text)":
+    "선물 등록 — 같은 처리에서 메모를 저장만 한다, 서버 비밀 키 전용(돌려주는 것은 주문 id)",
+  "public.my_gift_memo(p_order_no text)": "선물 상세 — 로그인 토큰의 계정이 보낸 주문의 메모만, 계정 ID 인자 없음",
+  "public.my_gifts()": "보낸 선물 목록 — 로그인 토큰의 계정이 보낸 주문의 선물 이름만",
 };
 
 /** 응답 하나를 통째로 훑어 개인정보 꼴이 있는 자리를 돌려준다(값은 찍지 않는다). 칸 이름이 걸려도 값이 참·거짓·빈 값이면 개인정보가 아니다. */
@@ -349,7 +352,7 @@ export function memoStructureProblems(sql) {
   const problems = [];
   const re = new RegExp(`\\b${MEMO_TABLE}\\b`, "i");
   const names = new Set(
-    sql("select p.proname || '|' || replace(replace(p.prosrc, chr(10), ' '), chr(13), ' ') from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname not in ('pg_catalog', 'information_schema')")
+    sql("select n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' || '|' || replace(replace(p.prosrc, chr(10), ' '), chr(13), ' ') from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname not in ('pg_catalog', 'information_schema')")
       .split(/\r?\n/)
       .map((line) => {
         const i = line.indexOf("|");

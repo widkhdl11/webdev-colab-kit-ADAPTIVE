@@ -1,5 +1,5 @@
 import { newOrderNo } from "@/entities/order/model/order-no";
-import { OrderNoTakenError, PriceChangedError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
+import { InvalidRegistrationError, OrderNoTakenError, PriceChangedError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
 import { computeCharge } from "@/entities/payment/model/charge";
 import { z } from "zod";
 import { PRICE_CHANGED_MESSAGE, quotedTotalSchema, type PriceTable } from "@/entities/payment/model/price-table";
@@ -71,6 +71,11 @@ export async function registerGift(
       return { ok: true, orderId: stored.orderId, orderNo: stored.orderNo, amountKrw: stored.amountKrw };
     } catch (e) {
       if (e instanceof PriceChangedError) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
+      // 입력 검사를 지나 DB 가 값을 거부했다(22023) — 입력 오류로 돌려준다. 정상 흐름에서는 입력 검사가 먼저 막으므로 남겨 둔다
+      if (e instanceof InvalidRegistrationError) {
+        console.error(`선물 등록: 입력 검사를 지나 DB 가 값을 거부했다 (${e.message})`);
+        return { ok: false, status: 400, errors: {} };
+      }
       if (e instanceof SenderRefusedError) {
         // 본인 확인 전·차단(unknown_creator)과 채널 이사 중(INV-V12)은 DB 가 처음 판정하는 정상 경로다. 나머지는 서버 판정이 빠졌다는 뜻이다
         // 쉬는 중·한도(creator-receiving INV-B2·B4)도 DB 만 판정하는 정상 경로다

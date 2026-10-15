@@ -586,22 +586,26 @@ export function RegisterForm({
           </div>
           {itemCategory === "other" ? (
             <div className="field-block">
-              <label className="label" htmlFor="itemOther">
-                어떤 선물인가요? ({ITEM_OTHER_MAX}자까지)
-              </label>
+              <div className={f["field-head"]}>
+                <label className="label" htmlFor="itemOther">
+                  어떤 선물인가요? ({ITEM_OTHER_MAX}자까지)
+                </label>
+                <span className={`t-meta ${f["char-count"]}`} id="itemOther-count" aria-live="polite" data-over={charCount(itemOther) > ITEM_OTHER_MAX ? "true" : undefined}>
+                  {charCount(itemOther)} / {ITEM_OTHER_MAX}자
+                </span>
+              </div>
               <input
                 id="itemOther"
                 className="field"
                 type="text"
-                maxLength={ITEM_OTHER_MAX * 2}
+                // 칸 최대 길이는 서버·DB 와 같은 숫자다. 서버·DB 는 코드 포인트(글자)로 세고 브라우저 maxLength 는 UTF-16 단위로 센다 —
+                // 한글·영문은 한 글자가 한 단위라 그대로 맞고, 이모지처럼 두 단위인 글자는 칸이 더 일찍 막는다(서버보다 엄격할 뿐 넘치지는 않는다).
+                maxLength={ITEM_OTHER_MAX}
                 placeholder="예: 손편지와 사진"
                 aria-invalid={errors.itemOther ? true : undefined}
                 aria-describedby={errors.itemOther ? "itemOther-count itemOther-error" : "itemOther-count"}
                 {...register("itemOther")}
               />
-              <p className={`t-meta ${f["char-count"]}`} id="itemOther-count">
-                {charCount(itemOther)} / {ITEM_OTHER_MAX}자
-              </p>
               {err("itemOther-error", errors.itemOther?.message)}
             </div>
           ) : null}
@@ -691,41 +695,45 @@ export function RegisterForm({
               <p className="hint">나만 볼 수 있는 메모예요. 나중에 보낸 선물에서 다시 볼 수 있어요.</p>
             </div>
             <div className="field-block">
-              <label className="label" htmlFor="memoTitle">
-                선물 이름
-              </label>
+              <div className={f["field-head"]}>
+                <label className="label" htmlFor="memoTitle">
+                  선물 이름
+                </label>
+                <span className={`t-meta ${f["char-count"]}`} id="memoTitle-count" aria-live="polite" data-over={charCount(memoTitle) > MEMO_TITLE_MAX ? "true" : undefined}>
+                  {charCount(memoTitle)} / {MEMO_TITLE_MAX}자
+                </span>
+              </div>
               <input
                 id="memoTitle"
                 className="field"
                 type="text"
-                maxLength={MEMO_TITLE_MAX * 2}
+                maxLength={MEMO_TITLE_MAX}
                 placeholder="예) 생일 축하 선물"
                 aria-invalid={errors.memoTitle ? true : undefined}
                 aria-describedby={errors.memoTitle ? "memoTitle-count memoTitle-error" : "memoTitle-count"}
                 {...register("memoTitle")}
               />
-              <p className={`t-meta ${f["char-count"]}`} id="memoTitle-count">
-                {charCount(memoTitle)} / {MEMO_TITLE_MAX}자
-              </p>
               {err("memoTitle-error", errors.memoTitle?.message)}
             </div>
             <div className="field-block">
-              <label className="label" htmlFor="memoBody">
-                내용
-              </label>
+              <div className={f["field-head"]}>
+                <label className="label" htmlFor="memoBody">
+                  내용
+                </label>
+                <span className={`t-meta ${f["char-count"]}`} id="memoBody-count" aria-live="polite" data-over={charCount(memoBody) > MEMO_BODY_MAX ? "true" : undefined}>
+                  {charCount(memoBody)} / {MEMO_BODY_MAX}자
+                </span>
+              </div>
               <textarea
                 id="memoBody"
                 className="field"
                 rows={5}
-                maxLength={MEMO_BODY_MAX * 2}
+                maxLength={MEMO_BODY_MAX}
                 placeholder="무엇을 담았는지, 어떤 마음으로 보냈는지 적어 두세요."
                 aria-invalid={errors.memoBody ? true : undefined}
                 aria-describedby={errors.memoBody ? "memoBody-count memoBody-error" : "memoBody-count"}
                 {...register("memoBody")}
               />
-              <p className={`t-meta ${f["char-count"]}`} id="memoBody-count">
-                {charCount(memoBody)} / {MEMO_BODY_MAX}자
-              </p>
               {err("memoBody-error", errors.memoBody?.message)}
             </div>
           </section>

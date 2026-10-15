@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createMemoryPaymentStore } from "@/entities/payment/api/memory-payment-store";
-import { PriceChangedError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
+import { InvalidRegistrationError, PriceChangedError, SenderRefusedError, type PaymentStore } from "@/entities/payment/api/payment-store";
 import { PRICE_CHANGED_MESSAGE, type PriceTable } from "@/entities/payment/model/price-table";
 import type { CreatorRelation } from "./sender-rule";
 import { registerGift } from "./register-gift";
@@ -304,5 +304,14 @@ describe("together INV-F7: 나만 보는 메모는 등록과 같은 처리로 �
     expect(await registerGift({ ...deps, viewer: FAN }, { ...form, memoTitle: "가".repeat(21) })).toMatchObject({ ok: false, status: 400, errors: { memoTitle: expect.any(String) } });
     expect(await registerGift({ ...deps, viewer: FAN }, { ...form, memoBody: "가".repeat(201) })).toMatchObject({ ok: false, status: 400, errors: { memoBody: expect.any(String) } });
     expect(store.registrations()).toEqual([]);
+  });
+});
+
+describe("together INV-F7: 입력 검사를 지나 DB 가 길이로 거부해도 입력 오류다", () => {
+  it("INV-F7 S7b (실패경로): 등록 함수가 22023(InvalidRegistrationError)으로 거부하면 400 — 500 으로 터지지 않는다", async () => {
+    const { deps } = setup();
+    const refusing: PaymentStore = { ...deps.store, create: async () => { throw new InvalidRegistrationError("선물 이름은 한 줄 20자까지"); } };
+    const r = await registerGift({ ...deps, store: refusing, viewer: FAN }, form);
+    expect(r).toEqual({ ok: false, status: 400, errors: {} });
   });
 });
