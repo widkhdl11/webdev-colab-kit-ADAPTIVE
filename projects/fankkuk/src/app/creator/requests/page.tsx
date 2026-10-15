@@ -35,7 +35,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   return (
     <>
       <SiteHeader role="creator" current="/creator/requests" nickname={viewer.nickname ?? ""} pendingCount={requests.length} />
-      <MyShell>
+      <MyShell width="list">
         <ApprovalRequestsPage
           requests={requests}
           decided={decided}

@@ -22,7 +22,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell>
+      <MyShell width="form">
         <MyInfoPanel account={account} />
       </MyShell>
       <SiteFooter />

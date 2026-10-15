@@ -48,7 +48,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell>
+      <MyShell width="list">
         {/* 크리에이터는 사이드바 「보낸 내역」 한 칸에서 팬에게 보낸 역조공과 이 화면을 탭으로 오간다(design-rules 11절) */}
         <GiftListPage
           tabs={viewer.role === "creator" ? <SentTabs current="creators" /> : undefined}

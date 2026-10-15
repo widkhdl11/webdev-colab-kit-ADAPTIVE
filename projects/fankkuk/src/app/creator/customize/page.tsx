@@ -35,7 +35,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell>
+      <MyShell width="broad">
         <CreatorCustomizePage
           creatorId={creatorId}
           verified={state.verified}

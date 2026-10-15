@@ -50,7 +50,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell>
+      <MyShell width="form">
         <CreatorSettingsPage
           settings={settings}
           tagOptions={tagOptions}

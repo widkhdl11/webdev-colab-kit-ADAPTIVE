@@ -19,7 +19,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell>
+      <MyShell width="broad">
         <MyFollowingPanel creators={followed} />
       </MyShell>
       <SiteFooter />

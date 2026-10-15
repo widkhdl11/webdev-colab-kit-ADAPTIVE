@@ -23,7 +23,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell>
+      <MyShell width="list">
         <ReceivedBoxesPage received={received} replyPending={replyPending} />
       </MyShell>
       <SiteFooter />

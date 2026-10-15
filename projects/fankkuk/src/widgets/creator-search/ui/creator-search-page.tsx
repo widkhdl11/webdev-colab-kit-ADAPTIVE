@@ -14,7 +14,7 @@ import s from "./creator-search.module.css";
 
 // 크리에이터 찾기. 시안: docs/design/mockups/site/v18/creators.html (design-rules 00절) · 태그 아이콘·색 v9-pages/tags-b.html (카드 d46)
 // 위에서 아래로: 페이지 머리(제목 24 왼쪽·설명·본인 확인 줄) → 왼쪽부터 꽉 찬 검색창 → 태그 칩 → 「전체 N명」 → 카드 격자(최소 300 으로 채움).
-// 본문 틀: 로그인 후는 넓은 틀(.page-pane), 로그인 전은 상단 바와 같은 1152 선(.pub-inner) — 로그인 전 상단 바 아래에서 넓은 틀이 상단 바 선을 벗어나지 않게.
+// 본문 틀: 로그인 후는 넓은 틀(.page-pane.pane-broad 1200 · 카드 격자 1360), 로그인 전은 상단 바와 같은 1152 선(.pub-inner) — 로그인 전 상단 바 아래에서 넓은 틀이 상단 바 선을 벗어나지 않게.
 // 광고 배너 자리는 다음 기능 작업이라 두지 않는다.
 // 검색창에 치는 대로 목록이 걸러진다(시안 site.js 의 실시간 검색).
 // 태그 칩(creator-tags INV-T4)은 숨기지 않은 선택지 가운데 이 목록의 크리에이터 1명 이상이 가진 것만, 선택지 순서. 칩 하나를 고르면
@@ -78,7 +78,7 @@ export function CreatorSearchPage({
   const shown = new Set(creators.filter((c) => matchesCreatorQuery(c, query) && hasPickedTag(c, tag === "" ? null : tag)).map((c) => c.id));
   const count = query.trim() || tag ? `검색 결과 ${shown.size}명` : `전체 ${creators.length}명`;
 
-  const frame = followMode === "login" ? `pub-inner ${s.pub}` : "page-pane";
+  const frame = followMode === "login" ? `pub-inner ${s.pub}` : "page-pane pane-broad";
 
   return (
     <main id="main" className={frame}>

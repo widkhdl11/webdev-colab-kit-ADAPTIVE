@@ -18,7 +18,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell>
+      <MyShell width="list">
         <MyRevgiftsPanel items={items} nowMs={Date.now()} />
       </MyShell>
       <SiteFooter />
