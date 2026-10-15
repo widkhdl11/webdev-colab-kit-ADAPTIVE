@@ -1,0 +1,29 @@
+/* 크리에이터 프로필 수정 — 시안 docs/design/mockups/site/v21-addendum3/cre-profile-edit.html (cre-21.css .fcard2 · .count · .btn-end · textarea.field).
+   폭은 틀(MyShell form 720)이 정한다. 머리 미리보기는 entities/creator/ui/creator-head 가 그린다. */
+.col { display: grid; gap: var(--space-8); min-width: 0; }
+.col > * { min-width: 0; }
+/* 전역의 「구간 + 구간 위 48」 을 걷는다 — 사이는 위 gap 하나로 */
+.col > section + section, .col > section + form { margin-top: 0; }
+.card { display: grid; gap: var(--space-4); padding: var(--space-6) var(--space-8); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
+.fld { display: grid; gap: var(--space-2); }
+.fld :global(.label) { margin-bottom: 0; }
+.hint { margin: 0; color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.optn { color: var(--gray-600); font-size: var(--fs-caption); font-weight: 400; }
+.bio { height: auto; min-height: 96px; padding: var(--space-4); resize: vertical; line-height: 1.6; }
+.count { text-align: right; color: var(--gray-600); font-size: var(--fs-caption); font-variant-numeric: tabular-nums; }
+.msg:empty { display: none; }
+.btnEnd { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+
+/* 스위치 — 상세 설정의 알림 스위치와 같은 모양(48×28 · 손잡이 20) */
+.txt { display: grid; gap: 4px; cursor: pointer; }
+.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 48px; height: 28px; margin: 0; border-radius: var(--r-pill); background: var(--gray-500); cursor: pointer; transition: background 0.15s; }
+.switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--white); transition: transform 0.15s; }
+.switch:checked { background: var(--brand); }
+.switch:checked::after { transform: translateX(20px); }
+.switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+@media (max-width: 768px) {
+  .card { padding: var(--space-6) var(--space-4); }
+  .btnEnd :global(.btn) { flex: 1; }
+}

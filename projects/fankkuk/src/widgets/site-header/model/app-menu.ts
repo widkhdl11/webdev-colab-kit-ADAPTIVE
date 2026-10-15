@@ -1,7 +1,8 @@
-import { CREATOR_HOME, FAN_ACCOUNT_SETTINGS, FAN_HOME, FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
+import { CREATOR_HOME, CREATOR_PROFILE_EDIT, CREATOR_SETTINGS, FAN_ACCOUNT_SETTINGS, FAN_HOME, FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 
 // 로그인 후 왼쪽 앱 사이드바 메뉴(design-rules 00절, 시안 docs/design/mockups/site/v18/home-fan.html·home-creator.html).
-// 크리에이터 메뉴의 묶음·하위 줄은 design-rules 11절(시안 docs/design/mockups/site/v19-sidebar/creator-a.html).
+// 크리에이터 메뉴의 묶음·하위 줄은 design-rules 11절(시안 docs/design/mockups/site/v19-sidebar/creator-a.html),
+// 「내 팬꾹」 묶음은 12절(꾸미기·프로필 수정·상세 설정 — 주소 관리는 상세 설정 안, 계정 설정은 아래 이름 메뉴. 시안 v21-addendum3/cre-*.html).
 // 아이콘 이름은 lucide 선 아이콘 이름 — 그림은 ui/app-icons.tsx 에 있다.
 
 export type AppIcon =
@@ -19,7 +20,8 @@ export type AppIcon =
   | "settings"
   | "package-plus"
   | "history"
-  | "palette";
+  | "palette"
+  | "user-round";
 
 /** 부모 칸 아래 들여 쓴 하위 줄. soon 은 아직 없는 기능 — 링크 없이 「준비 중」 태그만(design-rules 11절) */
 export type AppMenuSub = { label: string; href: string } | { label: string; soon: true };
@@ -60,7 +62,7 @@ export const FAN_APP_MENU: readonly AppMenuGroup[] = [
 // 「받은 선물」은 시안대로 승인 화면과 나뉜 화면이다(creator-boxes.html → /creator/boxes).
 export const CREATOR_BOXES_HREF = "/creator/boxes";
 
-/** 「내 팬꾹 꾸미기」 화면 — 설정의 프로필 칸도 이 주소로 보낸다. */
+/** 「내 팬꾹 꾸미기」 화면 — 링크 미리보기 이미지·공지 이미지 받기. */
 export const CREATOR_CUSTOMIZE_HREF = "/creator/customize";
 
 /** 「보낸 내역」 한 칸이 맡는 두 화면 — 팬에게 보낸 역조공과 크리에이터에게 보낸 선물(탭으로 잇는다) */
@@ -100,14 +102,17 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
     label: "내 팬꾹",
     items: [
       { href: CREATOR_CUSTOMIZE_HREF, label: "꾸미기", icon: "palette" },
-      { href: "/creator/settings#address", label: "주소 관리", icon: "map-pin" },
-      { href: "/creator/settings", label: "설정", icon: "settings" },
+      { href: CREATOR_PROFILE_EDIT, label: "프로필 수정", icon: "user-round" },
+      { href: CREATOR_SETTINGS, label: "상세 설정", icon: "settings" },
     ],
   },
 ];
 
-/** 아래 이름 메뉴의 「계정 설정」 — 크리에이터가 /me 로 가면 승인 화면으로 돌려보내지므로(app/me) 크리에이터는 설정 화면 */
-export const ACCOUNT_HREF = { fan: FAN_ACCOUNT_SETTINGS, creator: "/creator/settings" } as const;
+/**
+ * 아래 이름 메뉴의 「계정 설정」 — 크리에이터가 /me 로 가면 승인 화면으로 돌려보내지므로(app/me) 크리에이터는 상세 설정의 계정 구간(본인 확인·알림·계정 보안).
+ * 크리에이터 계정 설정 화면을 따로 만들면 그 주소로 바꾼다(시안 v21-addendum3/cre-account-settings.html — BACKLOG).
+ */
+export const ACCOUNT_HREF = { fan: FAN_ACCOUNT_SETTINGS, creator: `${CREATOR_SETTINGS}#account` } as const;
 
 /** 팬 프로필 수정 화면(my-account INV-A12, design-rules 12절) — 사이드바 위 메뉴 칸이 아니라 이름 메뉴와 홈 프로필 구간에서 간다(시안 v21-addendum3). */
 export const FAN_PROFILE_EDIT_HREF = FAN_PROFILE_EDIT;

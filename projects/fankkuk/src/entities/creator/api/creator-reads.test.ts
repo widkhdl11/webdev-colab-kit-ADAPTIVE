@@ -53,3 +53,21 @@ describe("크리에이터 카드 읽기 — 어느 DB 읽기를 부르나 (my-ac
     expect(bad.calls).toEqual([]);
   });
 });
+
+describe("크리에이터 색 읽기 (creator-link INV-E13·E7)", () => {
+  function clientWith(row: Record<string, unknown>) {
+    return { rpc: async (fn: string) => ({ data: fn === "my_follows" ? [] : [row], error: null }) } as never;
+  }
+
+  it("INV-E13: 공개 읽기의 두 색을 카드에 싣는다", async () => {
+    const [card] = await readCreatorCards(clientWith({ ...ROW, personal_color: "#1E3A8A", fan_color: "#FFF59D" }), { signedIn: false, onlyId: ROW.id });
+    expect(card?.colors).toEqual({ personal: "#1E3A8A", fan: "#FFF59D" });
+  });
+
+  it("INV-E13 (실패경로): 꼴이 틀린 색(스타일 문장·소문자)은 없는 것(기본 모양)으로 — 칸이 없거나 null 이어도 기본", async () => {
+    const [bad] = await readCreatorCards(clientWith({ ...ROW, personal_color: "#123456; background:url(x)", fan_color: "#fff59d" }), { signedIn: false, onlyId: ROW.id });
+    expect(bad?.colors).toEqual({ personal: null, fan: null });
+    const [none] = await readCreatorCards(clientWith({ ...ROW, personal_color: null, fan_color: null }), { signedIn: false, onlyId: ROW.id });
+    expect(none?.colors).toEqual({ personal: null, fan: null });
+  });
+});

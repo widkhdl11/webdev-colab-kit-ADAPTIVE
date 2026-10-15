@@ -1,0 +1,40 @@
+/* 크리에이터 프로필 머리·팬덤 뱃지 — 시안 docs/design/mockups/site/v21-addendum3/cre-21.css 「프로필 구간」·「팬덤 뱃지」·「미리보기」.
+   값은 시안 :root(--band-h 168 · --av 104 · --av-ring 4 · --badge-h2 28 · --mark-s 20 · --pf-pad 32, 768 이하 112 · 80 · 16).
+   --personal·--on-personal·--fan·--on-fan 은 creatorColorVars 가 꼴을 본 뒤에만 넣는다 — 없으면 아래 기본값(사이트 기본 모양). */
+.pf { --band-h: 168px; --av: 104px; --av-ring: 4px; --pf-pad: 32px; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
+.band { display: block; height: var(--band-h); background: var(--personal, var(--primary-50)); }
+.band img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.body { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-6); padding: 0 var(--pf-pad) var(--space-6); }
+.withAct { grid-template-columns: auto minmax(0, 1fr) auto; }
+.av { grid-row: 1 / span 2; align-self: start; display: grid; place-items: center; width: var(--av); height: var(--av); margin-top: calc(var(--av) / -2); border-radius: var(--r-pill); border: var(--av-ring) solid var(--personal, var(--white)); box-shadow: 0 0 0 var(--av-ring) var(--white); background: var(--gray-100); color: var(--ink); font-size: 36px; font-weight: var(--fw-bold); line-height: 1; overflow: hidden; }
+.av img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.id { grid-column: 2; min-width: 0; padding-top: var(--space-4); }
+.line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.name { margin: 0; font-size: var(--fs-page); line-height: 1.3; word-break: keep-all; overflow-wrap: anywhere; }
+span.name { font-weight: var(--fw-bold); }
+.intro { margin: var(--space-2) 0 0; color: var(--gray-600); overflow-wrap: anywhere; }
+.act { grid-column: 3; grid-row: 1 / span 2; align-self: start; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6); padding-top: var(--space-4); }
+
+/* 미리보기 상자 안의 작은 머리 — 시안 .pv-head */
+.compact { --band-h: 88px; --av: 72px; --pf-pad: 24px; border-radius: var(--r-btn); }
+.compact .av { font-size: 26px; }
+.compact .body { padding-bottom: var(--space-4); }
+.compact .name { font-size: var(--fs-card); }
+
+/* 팬덤 뱃지 — 면 = 팬컬러, 글자 = 대비가 큰 쪽(흰색/#111827) */
+.fb { --badge-h2: 28px; --mark-s: 20px; display: inline-flex; align-items: center; gap: var(--space-2); height: var(--badge-h2); padding: 0 var(--space-4); border-radius: var(--r-pill); background: var(--fan, var(--primary-50)); color: var(--on-fan, var(--ink)); font-size: 14px; font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
+.fb:has(.fbMark) { padding-left: 4px; }
+.fbMark { flex: none; display: grid; place-items: center; width: var(--mark-s); height: var(--mark-s); border-radius: 6px; background: var(--white); overflow: hidden; }
+.fbMark img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fbLg { --badge-h2: 40px; --mark-s: 30px; font-size: var(--fs-body); }
+
+@media (max-width: 768px) {
+  .pf:not(.compact) { --band-h: 112px; --av: 80px; --pf-pad: 16px; }
+  .pf:not(.compact) .av { font-size: 28px; }
+  .body, .withAct { grid-template-columns: auto minmax(0, 1fr); }
+  .av { grid-row: 1; }
+  .id { grid-column: 1 / -1; }
+  .act { grid-column: 1 / -1; grid-row: auto; flex-wrap: wrap; }
+  .act :global(.btn) { flex: 1; }
+  .compact { --pf-pad: 16px; }
+}

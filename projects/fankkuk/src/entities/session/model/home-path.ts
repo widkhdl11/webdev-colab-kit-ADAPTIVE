@@ -15,3 +15,7 @@ export function homePathOf(role: ViewerRole | null | undefined): string | null {
 /** 팬 계정 설정·프로필 수정 화면(design-rules 12절). 사이드바 이름 메뉴와 팬 홈 프로필 구간이 같은 값을 쓴다. */
 export const FAN_ACCOUNT_SETTINGS = "/me";
 export const FAN_PROFILE_EDIT = "/me/profile";
+
+/** 크리에이터 프로필 수정·상세 설정 화면(design-rules 12절 「내 팬꾹」 묶음). 사이드바와 크리에이터 홈 프로필 구간이 같은 값을 쓴다. */
+export const CREATOR_PROFILE_EDIT = "/creator/profile";
+export const CREATOR_SETTINGS = "/creator/settings";

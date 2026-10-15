@@ -1,6 +1,7 @@
 import { PROMISE } from "@/shared/config/site-copy";
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { creatorPagePath, linkText } from "@/entities/creator/model/creator-handle";
 import { addDays, restingNotice, upcomingDday, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
@@ -15,6 +16,8 @@ import { ChannelLinkIcon } from "@/entities/creator/ui/channel-badge-icon";
 import { CheckIcon } from "@/entities/creator/ui/check-icon";
 import { channelBadgeTitle, type ChannelBadge } from "@/entities/creator/model/channel-badge";
 import { thanksLine } from "@/entities/creator/model/fan-name";
+import { creatorColorOrNull, creatorColorVars } from "@/entities/creator/model/creator-color";
+import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
 import type { PublicCreatorLook } from "@/entities/creator/model/link-images";
 import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
 import { lowestPriceKrw, type PublicPriceTable } from "@/entities/payment/model/price-table";
@@ -30,6 +33,9 @@ import s from "./creator-profile.module.css";
 // 위에서 아래로: 프로필 배경사진(없으면 옅은 코랄 단색, 프로필 사진이 아래 가장자리에 걸침 — 디자인 기준 10절)·사진·이름·링크 주소·한 줄 소개·태그·감사 문장·주 버튼 → 같은 크기 정보 카드
 // (받는 상태 → 받기 어려운 품목(있을 때만) → 기념일 D-day(30일 안일 때만) → 평균 승인 → 배송비 → 이번 달 N명(0이면 숨김))
 // → 감사 답장 모음(F-5 — 양쪽이 동의하고 받았어요 3일이 지난 답장만, 없으면 숨김, 2열) → 접는 안내 → 마지막 선물 보내기 판 → 비슷한 크리에이터.
+// 팬덤 색(design-rules 12절, 시안 v21-addendum3/cre-public-page.html, creator-link INV-E13·E14): 퍼스널 컬러는 맨 위 띠(배경사진이 없을 때 보이는 면)와 프로필 사진 테두리에만,
+// 팬컬러는 공개 이름 옆 팬덤 뱃지 면에만. 버튼·링크·글자는 사이트 색 그대로. 색은 creatorColorVars 가 꼴을 본 뒤에만 스타일 변수로 들어간다.
+// 팬덤 이름이 있으면 팬덤 심볼은 뱃지의 마크로 들어가고, 이름이 없을 때만 감사 문장 위에 따로 보인다.
 // 공개 화면이라 크리에이터 공개 이름·링크용 아이디·사진·소개·켠 항목·정해진 문구·집계 숫자·요금만 그린다(INV-E7). 주소 열람 건수는 없다(INV-E11).
 // 문구 한계(design-rules 6절): 주소 약속은 shared/config/site-copy 의 고정 문구를 읽고, "절대 유출되지 않는다"는 쓰지 않는다.
 
@@ -138,6 +144,9 @@ export function CreatorProfilePage({
   const needNote = followMode === "save" ? `${NEEDS_FOLLOW_TO_SEND} ${FOLLOW_NICKNAME_NOTICE_SHORT}` : NEEDS_FOLLOW_TO_SEND;
   const guest = followMode === "login";
   const wrap = guest ? "pub-inner" : undefined;
+  // 머리에는 퍼스널 컬러만 — 팬컬러는 뱃지가 스스로 붙인다(뱃지 면에만)
+  const colorVars = creatorColorVars({ personal: creator.colors?.personal ?? null, fan: null });
+  const ringed = creatorColorOrNull(creator.colors?.personal) !== null;
   const sendRow =
     send === "open" || send === "needs_follow" ? (
       <div className={s.act}>
@@ -149,16 +158,19 @@ export function CreatorProfilePage({
     <main id="main" className={guest ? s.pub : `page-centered ${s.app}`}>
       <section className={s.pfSec} aria-labelledby="creator-name">
         <div className={wrap}>
-          <div className={s.pf}>
+          <div className={`${s.pf} ${ringed ? s.ringed : ""}`} style={colorVars as CSSProperties} data-creator-colors="">
             {/* 프로필 배경사진(디자인 기준 10절) — 맨 위 띠, 없으면 옅은 코랄 단색. 사진은 꾸밈이라 읽지 않는다. 프로필 사진이 아래 가장자리에 걸친다 */}
             <div className={s.cover} aria-hidden="true">
               {backgroundUrl ? <img className={s.coverImg} src={backgroundUrl} alt="" width={1280} height={427} /> : null}
             </div>
             <CreatorPhoto photoUrl={creator.photoUrl} tone={creator.faceTone} className={`face ${s.photo}`} />
             <div className={s.pfMain}>
-              <h1 className={s.name} id="creator-name">
-                {creator.name}
-              </h1>
+              <div className={s.nameLine} data-name-line="">
+                <h1 className={s.name} id="creator-name">
+                  {creator.name}
+                </h1>
+                {fanName ? <FandomBadge name={fanName} symbolUrl={symbolUrl} fanColor={creator.colors?.fan ?? null} /> : null}
+              </div>
               {/* 추가분 4-3: 닉네임 아래 확인된 채널 아이콘 하나 — 새 탭으로 열리고, 올리면 「@핸들 · 날짜 확인」 */}
               {channel ? (
                 <p className={s.channel}>
@@ -178,7 +190,7 @@ export function CreatorProfilePage({
                   <CreatorTag key={t} name={t} />
                 ))}
               </div>
-              {symbolUrl ? <img className={s.symbol} src={symbolUrl} alt="팬덤 심볼" width={512} height={512} /> : null}
+              {symbolUrl && !fanName ? <img className={s.symbol} src={symbolUrl} alt="팬덤 심볼" width={512} height={512} /> : null}
               <p className={s.thanks}>{thanksLine(fanName)}</p>
             </div>
             {/* 첫 화면의 주 버튼(DECISIONS 2026-10-11). 쉬는 중·자기 페이지면 없다 */}

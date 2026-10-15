@@ -1,3 +1,5 @@
+import type { CreatorColors } from "./creator-color";
+
 // 크리에이터의 저장 모양. DB 읽기(api/creator-reads)가 이 모양으로 바꿔 넘긴다.
 
 /** 기본 정보 — 주문 기록이 creatorId 로 읽는다. */
@@ -20,4 +22,6 @@ export type CreatorProfile = {
   handle?: string | null;
   /** 프로필 사진의 공개 저장소 경로({크리에이터 ID}/{판}.webp) — 없으면 null(INV-E9). */
   photoPath?: string | null;
+  /** 퍼스널 컬러·팬컬러(creator-link INV-E13) — 꼴이 맞는 값만, 없으면 null(기본 모양). */
+  colors?: CreatorColors;
 };

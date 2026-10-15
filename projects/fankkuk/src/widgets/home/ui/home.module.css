@@ -15,7 +15,6 @@
 .secHead h2 { font-size: var(--fs-card); line-height: 1.4; }
 .pane .secHead { margin-bottom: var(--space-4); }
 .foot { display: flex; justify-content: center; margin-top: var(--space-6); }
-.role { margin-left: var(--space-2); font-family: var(--font); font-size: var(--fs-caption); font-weight: 400; color: var(--gray-600); }
 
 /* 팬 홈 프로필 구간 — 시안 v21-addendum3/fan-21.css .pf · .pf-banner · .pf-body · .pf-top · .pf-av · .pf-actions · .pf-link · .pf-bio.
    값은 시안 :root(--banner-h 160 · --pf-av 96 · --pf-ring 4, 768 이하 112 · 80). 카드 안쪽 여백은 걷고 띠를 끝까지 채운다 */
@@ -49,19 +48,11 @@
 .chev { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--gray-600); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .faceSm { width: 40px; height: 40px; flex-shrink: 0; }
 
-/* 크리에이터 홈 내 구간 — 시안 v18-cre.css .card--soft · .big · .wait-list · a.card--link */
-.soft { display: grid; gap: var(--space-4); background: var(--gray-50); box-shadow: var(--hair); }
-.soft > h2 { margin: 0; }
-.big { margin: 0; font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1.2; font-variant-numeric: tabular-nums; }
-.big small { margin-left: var(--space-2); font-size: var(--fs-card); font-weight: var(--fw-btn); color: var(--gray-600); }
-.waitList { display: grid; gap: var(--space-2); }
-.waitList a { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: var(--hair); text-decoration: none; }
-.waitList a:hover { box-shadow: inset 0 0 0 1px var(--gray-400); }
-.waitList .w { flex: 1; min-width: 0; font-weight: var(--fw-btn); }
-.cards3 { margin-top: var(--space-6); }
-.cards3 + p { margin-top: var(--space-4); } /* 카드 밖 안내문(NO_ADDRESS_ASK)이 카드 밑에 붙지 않게 */
-.linkCard { display: block; text-decoration: none; }
-.linkCard > p { margin-top: var(--space-2); }
+/* 크리에이터 홈 바로가기 — 시안 v21-addendum3/cre-21.css .row .ri · .rv (한 줄 목록은 위 .rows · .row 그대로) */
+.ri { display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: var(--r-pill); background: var(--primary-50); }
+.ri svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rv { flex: none; font-weight: var(--fw-btn); text-align: right; font-variant-numeric: tabular-nums; }
+.rv small { margin-left: 2px; font-size: var(--fs-caption); font-weight: 400; color: var(--gray-600); }
 
 /* 「이렇게 도착해요」 접힘 줄 — 시안 v21-addendum3/fan-21.css .fold · .steps4 · .dismiss */
 .fold { border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }

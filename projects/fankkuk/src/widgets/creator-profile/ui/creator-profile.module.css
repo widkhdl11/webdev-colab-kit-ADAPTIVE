@@ -20,9 +20,14 @@
 .thanks { margin-top: var(--space-4); font-weight: var(--fw-btn); color: var(--brand-ink); }
 .note { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
 /* 프로필 배경사진 띠(디자인 기준 10절) — 없으면 옅은 코랄 단색. 프로필 사진이 아래 가장자리에 걸치고 흰 테두리로 띠와 갈린다 */
-.cover { overflow: hidden; height: 160px; background: var(--primary-50); }
+/* 퍼스널 컬러(--personal, creator-link INV-E13)가 있으면 띠 면과 사진 테두리가 그 색 — 없으면 옅은 하늘 면·흰 테두리 */
+.cover { overflow: hidden; height: 160px; background: var(--personal, var(--primary-50)); }
 .coverImg { display: block; width: 100%; height: 100%; object-fit: cover; }
 .photo { position: relative; box-shadow: 0 0 0 4px var(--white); }
+.ringed .photo { box-shadow: 0 0 0 4px var(--personal), 0 0 0 8px var(--white); }
+/* 공개 이름 + 팬덤 뱃지 한 줄 — 좁으면 뱃지가 아래로 */
+.nameLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.pub .nameLine { justify-content: center; }
 /* 「채널 소유 확인」 체크와 글자 사이 */
 .verified svg { margin-right: 4px; }
 

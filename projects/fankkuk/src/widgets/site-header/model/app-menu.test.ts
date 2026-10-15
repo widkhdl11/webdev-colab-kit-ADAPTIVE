@@ -12,7 +12,24 @@ describe("크리에이터 메뉴 — 묶음", () => {
     expect(labels("기본")).toEqual(["홈", "크리에이터 찾기"]);
     expect(labels("받기")).toEqual(["승인 대기", "승인 내역", "받은 선물", "열람 기록"]);
     expect(labels("보내기")).toEqual(["팬에게 보내기", "다른 크리에이터에게 선물", "보낸 내역"]);
-    expect(labels("내 팬꾹")).toEqual(["꾸미기", "주소 관리", "설정"]);
+    expect(labels("내 팬꾹")).toEqual(["꾸미기", "프로필 수정", "상세 설정"]);
+  });
+
+  it("내 팬꾹 (design-rules 12절): 꾸미기·프로필 수정·상세 설정 주소 — 주소 관리 줄은 없고 받는 주소는 상세 설정 안", () => {
+    expect(group("내 팬꾹").items.map((i) => [i.label, i.href, i.icon])).toEqual([
+      ["꾸미기", "/creator/customize", "palette"],
+      ["프로필 수정", "/creator/profile", "user-round"],
+      ["상세 설정", "/creator/settings", "settings"],
+    ]);
+    const all = CREATOR_APP_MENU.flatMap((g) => g.items);
+    expect(all.some((i) => i.label === "주소 관리" || i.href.includes("#address"))).toBe(false);
+    // 「처리할 일」은 이번 묶음에 넣지 않는다(크리에이터 쪽은 아직 정하지 않음)
+    expect(all.some((i) => /할 일/.test(i.label))).toBe(false);
+  });
+
+  it("프로필 수정·상세 설정 화면에서 그 칸이 켜진다", () => {
+    expect(currentMenuItem(CREATOR_APP_MENU, "/creator/profile")?.label).toBe("프로필 수정");
+    expect(currentMenuItem(CREATOR_APP_MENU, "/creator/settings")?.label).toBe("상세 설정");
   });
 
   it("꾸미기는 /creator/customize 한 칸뿐", () => {
@@ -57,8 +74,8 @@ describe("이름 메뉴 — 팬은 프로필 수정·계정 설정 (design-rules
     ]);
   });
 
-  it("크리에이터 이름 메뉴는 계정 설정 하나 — 팬 프로필 수정 화면으로 가는 길이 없다", () => {
-    expect(ACCOUNT_MENU.creator).toEqual([{ label: "계정 설정", href: "/creator/settings" }]);
+  it("크리에이터 이름 메뉴는 계정 설정 하나 — 상세 설정의 계정 구간(#account)으로, 팬 프로필 수정 화면으로 가는 길이 없다", () => {
+    expect(ACCOUNT_MENU.creator).toEqual([{ label: "계정 설정", href: "/creator/settings#account" }]);
   });
 
   it("프로필 수정은 사이드바 위 메뉴 칸이 아니다(시안 사이드바에 없음) — 그 화면에서 위 메뉴의 어느 칸도 켜지지 않는다", () => {

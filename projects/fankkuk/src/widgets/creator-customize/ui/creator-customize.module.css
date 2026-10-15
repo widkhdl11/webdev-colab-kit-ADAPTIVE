@@ -5,28 +5,10 @@
 .edit { display: grid; gap: var(--space-8); min-width: 0; }
 .set { display: grid; gap: var(--space-4); }
 
-/* 칸 */
-.fld { display: grid; gap: var(--space-2); }
-.lbl { font-weight: var(--fw-btn); }
-.optn { margin-left: var(--space-2); color: var(--gray-600); font-weight: 400; font-size: var(--fs-caption); }
-.fldRow { display: flex; justify-content: space-between; gap: var(--space-4); align-items: baseline; }
-.count { font-size: var(--fs-caption); color: var(--gray-600); font-variant-numeric: tabular-nums; }
+/* 결과 줄 */
 .msg:empty { display: none; }
-.saveRow { display: grid; gap: var(--space-3); justify-items: start; }
-
-/* 사진 칸 */
-.imgRow { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
-.file:focus-visible + .pick { outline: 3px solid var(--focus); outline-offset: 2px; }
-.pick { cursor: pointer; }
-.pick[aria-disabled="true"] { background: var(--gray-100); color: var(--gray-600); cursor: not-allowed; }
 .avatar { display: grid; flex: none; place-items: center; overflow: hidden; width: 88px; height: 88px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--brand-ink); font-size: var(--fs-title); font-weight: var(--fw-btn); }
-.avatar img, .bgBox img, .symBox img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.bgBox { display: grid; place-items: center; overflow: hidden; width: 100%; max-width: 360px; aspect-ratio: 3 / 1; border-radius: var(--r-btn); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--gray-400); color: var(--gray-600); font-size: var(--fs-caption); }
-.symBox { display: grid; flex: none; place-items: center; overflow: hidden; width: 88px; height: 88px; border-radius: var(--r-card); background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-400); color: var(--gray-600); font-size: var(--fs-caption); text-align: center; }
-.has { box-shadow: inset 0 0 0 1px var(--gray-200); background: var(--white); }
-.chk { display: flex; gap: var(--space-2); align-items: flex-start; cursor: pointer; }
-.chk input { flex: none; width: 20px; height: 20px; margin-top: 2px; accent-color: var(--brand-line); }
-.chk input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
 /* 미리보기 이미지 고르기 */
 .picks { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }

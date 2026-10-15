@@ -103,6 +103,12 @@ const PATHS: Record<AppIcon | "panel-left-open" | "panel-left-close" | "x" | "ch
       <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
     </>
   ),
+  "user-round": (
+    <>
+      <circle cx="12" cy="8" r="5" />
+      <path d="M20 21a8 8 0 0 0-16 0" />
+    </>
+  ),
   "panel-left-open": (
     <>
       <rect width="18" height="18" x="3" y="3" rx="2" />

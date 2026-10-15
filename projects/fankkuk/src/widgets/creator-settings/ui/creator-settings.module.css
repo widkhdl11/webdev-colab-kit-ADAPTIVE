@@ -1,4 +1,4 @@
-/* 주소와 설정 화면 — 시안 v18 creator-settings.html(v18-cre.css), 이전 v11. 설정 상자는 같은 모양 카드(.card)로 위→아래 한 줄.
+/* 상세 설정 화면 — 시안 v21-addendum3/cre-detail-settings.html(cre-21.css .jump · .fold · .sec-t). 접힌 칸 안의 설정 상자는 옛 v18 카드 그대로.
    공통 부품(.card·.card--soft·.grid·.opt·.sw-row·.tags·.chip·.field·.hint·.err)은 base.css 가 그린다 — 여기는 이 화면에만 있는 것 */
 
 .set { display: grid; gap: 24px; scroll-margin-top: var(--space-6); }
@@ -8,10 +8,28 @@
 .rule { width: 100%; height: 1px; margin: 0; border: 0; background: var(--border); }
 .status-tag { margin-top: 8px; }
 .kv-dd { margin: 4px 0 0; }
-.chip { text-decoration: none; }
-.chip:hover { background: var(--surface-hover); }
-.jump { margin-top: 24px; }
-.cards { margin-top: 40px; }
+/* 구간 바로가기 — 시안 .jump(글자 링크 한 줄) */
+.jump { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); margin-top: var(--space-6); font-weight: var(--fw-btn); }
+.jump a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.page { display: grid; gap: var(--space-12); margin-top: var(--space-8); min-width: 0; }
+.page > * { min-width: 0; }
+.page > section + section { margin-top: 0; }
+.group { display: grid; gap: var(--space-4); scroll-margin-top: var(--space-6); }
+.groupT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
+
+/* 접힌 칸 — 시안 .fold: 제목 · 오른쪽 짧은 상태 · 화살표 */
+.fold { border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); scroll-margin-top: var(--space-6); }
+.fold > summary { display: flex; align-items: center; gap: var(--space-4); min-height: 48px; padding: 0 var(--space-6); border-radius: var(--r-btn); font-weight: var(--fw-btn); list-style: none; cursor: pointer; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary:hover { background: var(--gray-50); }
+.fold > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.fold > summary > span:first-child { flex: 1; min-width: 0; }
+.foldMeta { color: var(--gray-600); font-size: var(--fs-caption); font-weight: 400; }
+.foldChev { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--dur-fade, 0.15s) ease; }
+.fold[open] > summary .foldChev { transform: rotate(180deg); }
+.foldBody { display: grid; gap: var(--space-4); min-width: 0; padding: var(--space-4) var(--space-6) var(--space-6); border-top: 1px solid var(--gray-200); }
+.foldBody > * { min-width: 0; }
+.foldBody > section + section { margin-top: 0; }
 /* 저장 버튼과 결과 줄을 한 덩어리로 — 비어 있는 결과 줄이 카드 안 간격(24)을 차지하지 않게 */
 .msg:not(:empty) { margin-top: 12px; }
 .body-gap { margin-top: 4px; }
@@ -64,6 +82,8 @@ label.txt { cursor: pointer; }
   /* 고르기 칸 4열은 휴대폰에서 2열(시안 v18-cre.css .opt-grid) — 공통 격자는 1열로 접는다 */
   .root :global(.grid.cols-4) { --cols: 2; }
   .set:global(.card) { padding: 24px 16px; }
+  .fold > summary { padding: 0 var(--space-4); }
+  .foldBody { padding: var(--space-4); }
   .inner { padding: 24px 16px; }
   .set :global(.sw-row) { gap: 12px; padding: 16px; }
   .addr-ico { width: 56px; height: 56px; }

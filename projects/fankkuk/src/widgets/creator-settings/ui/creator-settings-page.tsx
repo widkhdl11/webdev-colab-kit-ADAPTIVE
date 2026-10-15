@@ -2,15 +2,12 @@
 
 import { statusTagClass } from "@/shared/ui/status-tone";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { BlockedFan } from "@/entities/creator/api/blocked-senders";
 import type { CreatorSettingsView } from "@/entities/creator/model/creator-settings";
-import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
-import { sendCreatorTags } from "@/features/creator-tags-edit/api/send-creator-tags";
-import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notice";
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
-import { sendCreatorNotify, sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
+import { sendCreatorNotify } from "@/features/creator-settings-save/api/send-creator-settings";
 import { formatDate } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
@@ -28,27 +25,28 @@ import { ReceivingSection } from "./receiving-section";
 import { HardItemsSection } from "./hard-items-section";
 import { LinkSection } from "./link-section";
 import { ReplySettingsSection } from "./reply-settings-section";
+import { FandomSection, type FandomSectionProps } from "./fandom-section";
 import type { ReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
 import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import type { MyHardItems } from "@/entities/gift-item/model/hard-items";
 import { PROMISE, NO_ADDRESS_ASK } from "@/shared/config/site-copy";
 import s from "./creator-settings.module.css";
 
-// 크리에이터 — 주소와 설정. 시안: docs/design/mockups/site/v11/creator-settings.html — 설정 상자를 같은 모양 카드로 위→아래 한 줄, 맨 위에 지금 상태 카드 셋과 바로가기 칩 줄
-// 선물 링크·선물 받기·생일과 기념일·받기 어려운 품목·감사 답장은 같은 카드 언어(제목 줄·입력·저장 버튼·결과 줄)로 따로 파일에 둔다.
+// 크리에이터 상세 설정 (design-rules 12절, 시안 docs/design/mockups/site/v21-addendum3/cre-detail-settings.html, 입력형 720 — 00절 「본문 틀」).
+// 위에서 아래: 팬덤(팬덤 이름·팬마크·팬컬러·퍼스널 컬러·미리보기 — fandom-section) → 주소와 설정(접힌 칸: 받는 주소·받기 설정·차단한 팬·선물 링크·감사 답장)
+// → 계정(접힌 칸: 본인 확인·알림·계정 보안 — 크리에이터 계정 설정 화면을 따로 만들기 전까지 이름 메뉴 「계정 설정」이 여기 #account 로 온다).
+// 사이드바 「주소 관리」 줄은 없어졌고(12절) 받는 주소는 이 화면의 접힌 칸이다. 옛 주소(/creator/settings#address · #blocked …)로 오면
+// 그 칸을 감싼 접힌 칸을 펼친다 — 주소 끝 #이름이 가리키는 요소의 바깥 접힌 칸을 연다.
+// 공개 이름·한 줄 소개·사진·태그·찾기 노출은 「프로필 수정」(/creator/profile)으로 옮겼다.
 //
 // 주소 등록·변경(address-protection INV-P13): 확인 창에서 주소를 입력하고 「카카오톡으로 서명하기」를 누르면 이 브라우저에서 봉인해 보낸다.
 // 카카오 재서명 자리는 지금 로컬 가짜 서명 창구가 맡고(카드 d28), 운영에서는 서버가 창구가 없어 거부한다.
 // 「등록됨」은 서버에 저장된 뒤에만 바뀐다. 처음 그리는 값은 DB 읽기 함수(my_creator_address_status)의 등록 여부다.
 // 차단 풀기는 로그인 세션으로 저장한다(decline-block INV-D10, 카드 d26) — 풀어도 주소는 열리지 않고, 새 선물은 건마다 서명 승인이 있어야 나간다.
 // 주소는 값을 받지 않는다 — 「등록돼 있는가」만 보여 준다.
-// 프로필(태그·찾기 노출)은 「프로필 저장」으로 보낸다(my-account INV-A9·A10). 공개 이름·한 줄 소개·프로필 사진·팬을 부르는 이름은
-// 「내 팬꾹 꾸미기」(/creator/customize)로 옮겼다 — 여기는 그 화면으로 가는 링크만 둔다(디자인 기준 10절).
-// 찾기 노출을 끄면 크리에이터 찾기 목록에서만 빠진다 — 페이지·팔로우·새 선물은 그대로다.
 // 알림은 카카오·이메일 두 스위치이고 누르는 즉시 저장한다(INV-A11). 저장에 실패하면 스위치를 되돌리고 이유를 보인다.
 // 승인 요청은 두 칸이 꺼져도 가므로 끄는 스위치가 없다(notifications INV-N6).
-// 채널 본인 확인(creator-verification)은 DB 읽기 함수(my_creator_verification_state · my_creator_verifications)의 값이다 —
-// 프로필 칸의 활동 채널·본인 확인도 그 값을 쓴다.
+// 채널 본인 확인(creator-verification)은 DB 읽기 함수(my_creator_verification_state · my_creator_verifications)의 값이다.
 
 type SheetState = { kind: "address" } | { kind: "unblock"; fan: BlockedFan } | null;
 
@@ -93,6 +91,40 @@ function Switch({
   );
 }
 
+/** 접힌 칸 하나 — 시안 .fold(제목 · 오른쪽 짧은 상태 · 화살표). */
+function Fold({ id, title, meta, children }: { id?: string; title: string; meta?: ReactNode; children: ReactNode }) {
+  return (
+    <details className={s.fold} id={id}>
+      <summary>
+        <span>{title}</span>
+        {meta ? <span className={s.foldMeta}>{meta}</span> : null}
+        <svg className={s.foldChev} viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </summary>
+      <div className={`stack ${s.foldBody}`}>{children}</div>
+    </details>
+  );
+}
+
+/** 주소 끝 #이름이 접힌 칸 안(또는 접힌 칸 자체)을 가리키면 그 칸을 펼치고 그 자리로 간다 — 옛 링크(#address · #blocked …)를 위해. */
+function useOpenFoldForHash(): void {
+  useEffect(() => {
+    const open = () => {
+      const id = decodeURIComponent(window.location.hash.slice(1));
+      if (!id) return;
+      const target = document.getElementById(id);
+      const fold = target?.closest("details");
+      if (!target || !fold) return;
+      fold.open = true;
+      target.scrollIntoView({ block: "start" });
+    };
+    open();
+    window.addEventListener("hashchange", open);
+    return () => window.removeEventListener("hashchange", open);
+  }, []);
+}
+
 /** 저장 결과 한 줄 — 오류면 빨간 상자(.err), 아니면 보조 글자. 비어 있으면 자리를 차지하지 않는다. */
 function msgClass(msg: { ok: boolean } | null): string {
   return `${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`;
@@ -100,7 +132,7 @@ function msgClass(msg: { ok: boolean } | null): string {
 
 export function CreatorSettingsPage({
   settings,
-  tagOptions,
+  fandom,
   address,
   sealingKeyPem,
   blockedFans,
@@ -112,6 +144,8 @@ export function CreatorSettingsPage({
   replySettings,
 }: {
   settings: CreatorSettingsView;
+  /** 팬덤 구간 — 팬덤 이름·두 색·미리보기 머리에 쓰는 사진 주소(로그인한 크리에이터 본인 것) */
+  fandom: FandomSectionProps;
   /** 답장 모음 보이기·X 계정·태그 허용 — 로그인한 크리에이터 본인 것(gift-reply INV-G8) */
   replySettings: ReplySettings;
   /** 링크용 아이디·남은 잠금 날·사진 경로 — 로그인한 크리에이터 본인 것(creator-link) */
@@ -122,8 +156,6 @@ export function CreatorSettingsPage({
   hardItems: MyHardItems | null;
   /** 한국 시간 오늘 — 서버가 정해 넘긴다(다시 받는 날 범위) */
   today: CalendarDate;
-  /** 고를 수 있는 태그 선택지(숨기지 않은 것, 선택지 순서 — creator-tags INV-T3) */
-  tagOptions: readonly TagOption[];
   address: MyAddressStatus;
   /** 주소 봉인 공개키(PEM). 없으면 주소 입력 대신 안내만 보인다. */
   sealingKeyPem: string | null;
@@ -131,6 +163,7 @@ export function CreatorSettingsPage({
   verification: { state: MyVerificationState; rows: readonly MyVerification[]; apiPlatforms: readonly string[] };
 }) {
   const router = useRouter();
+  useOpenFoldForHash();
   const [sheet, setSheet] = useState<SheetState>(null);
   const [security, setSecurity] = useState<"phone" | "password" | null>(null);
   const toggleSecurity = (which: "phone" | "password") => setSecurity((cur) => (cur === which ? null : which));
@@ -143,6 +176,9 @@ export function CreatorSettingsPage({
   const [blocked, setBlocked] = useState(blockedFans);
   const [saving, setSaving] = useState(false);
   const [unblockError, setUnblockError] = useState<string | null>(null);
+  const [notify, setNotify] = useState(settings.notify);
+  const [notifySaving, setNotifySaving] = useState(false);
+  const [notifyMsg, setNotifyMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   // 서버에 저장된 뒤에만 목록에서 뺀다. 실패하면 창을 닫지 않고 이유를 보인다.
   const confirmUnblock = async (fan: BlockedFan) => {
@@ -161,50 +197,6 @@ export function CreatorSettingsPage({
       return;
     }
     setUnblockError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
-  };
-  const [visible, setVisible] = useState(settings.visibleInSearch);
-  const [tagIds, setTagIds] = useState<string[]>([...settings.tagIds]);
-  const [customTag, setCustomTag] = useState(settings.customTag);
-  const [tagsBad, setTagsBad] = useState(false);
-  const [profileSaving, setProfileSaving] = useState(false);
-  const [profileMsg, setProfileMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [notify, setNotify] = useState(settings.notify);
-  const [notifySaving, setNotifySaving] = useState(false);
-  const [notifyMsg, setNotifyMsg] = useState<{ ok: boolean; text: string } | null>(null);
-
-  // 서버가 저장한 뒤에만 「저장했어요」. 입력 검사는 서버가 다시 한다 — 화면은 서버가 준 문구를 그대로 보인다.
-  // 태그(creator-tags INV-T3)는 화면에서 먼저 1~5개인지 보고, 프로필을 저장한 뒤 이어서 저장한다(서로 다른 DB 함수).
-  const saveProfile = async () => {
-    if (profileSaving) return;
-    setProfileMsg(null);
-    const tags = resolveTagSelection(tagOptions, tagIds, customTag);
-    setTagsBad(!tags.ok);
-    if (!tags.ok) {
-      setProfileMsg({ ok: false, text: tags.message });
-      return;
-    }
-    setProfileSaving(true);
-    // 이름·소개·팬덤 이름은 이 화면에서 고치지 않는다 — 찾기 노출 한 칸만 보낸다(나머지는 DB 가 지금 값 그대로 둔다).
-    // 처음 읽은 이름·소개를 같이 보내면 그사이 「내 팬꾹 꾸미기」에서 바꾼 값을 옛 값으로 덮어쓴다
-    const r = await sendCreatorProfile({ searchable: visible });
-    const t = r.kind === "ok" ? await sendCreatorTags({ tagIds: tags.tagIds, customTag: tags.customTag }) : r;
-    setProfileSaving(false);
-    if (r.kind === "login" || t.kind === "login") {
-      router.push("/login");
-      return;
-    }
-    if (r.kind === "failed") {
-      setProfileMsg({ ok: false, text: r.message });
-      return;
-    }
-    if (t.kind === "failed") {
-      setTagsBad(true);
-      setProfileMsg({ ok: false, text: t.message });
-      router.refresh(); // 공개 이름은 저장됐다 — 머리 메뉴를 새로. 태그 선택지가 바뀌었으면 새 목록으로
-      return;
-    }
-    setProfileMsg({ ok: true, text: "프로필을 저장했어요." });
-    router.refresh(); // 머리 메뉴의 이름도 새 공개 이름으로
   };
 
   // 스위치는 누르는 즉시 저장한다. 실패하면 화면 값을 저장된 값으로 되돌린다.
@@ -232,303 +224,186 @@ export function CreatorSettingsPage({
   return (
     <div className={s.root}>
       <header className="page-head">
-        <h1 className="ph-title">주소와 설정</h1>
-        <p className="ph-desc">채널 본인 확인, 선물을 받을 주소, 차단한 팬, 프로필, 알림, 계정 보안을 한곳에서 관리해요.</p>
+        <h1 className="ph-title">상세 설정</h1>
+        <p className="ph-desc">주소와 설정을 한곳에서 관리해요.</p>
       </header>
 
-      {/* 지금 상태 — 아래 카드들이 이미 들고 있는 값(주소 등록 여부·본인 확인·받는 상태)만 모아 보인다 */}
-      <ul className="grid cols-3 keep" aria-label="지금 상태">
-        <li className="card">
-          <p className="t-meta">받는 주소</p>
-          <p className={s["status-tag"]}>
-            {addressRegistered ? <span className={statusTagClass("success")}>등록됨</span> : <span className={statusTagClass("plain")}>등록 전</span>}
-          </p>
-        </li>
-        <li className="card">
-          <p className="t-meta">본인 확인</p>
-          <p className={s["status-tag"]}>
-            {verification.state.verified ? <span className={statusTagClass("success")}>확인 완료</span> : <span className={statusTagClass("plain")}>확인 전</span>}
-          </p>
-        </li>
-        <li className="card">
-          <p className="t-meta">선물 받기</p>
-          <p className={s["status-tag"]}>
-            {isResting(receiving.resumeOn, today) ? <span className={statusTagClass("plain")}>쉬는 중</span> : <span className={statusTagClass("info")}>받는 중</span>}
-          </p>
-        </li>
-      </ul>
-
-      <nav aria-label="이 화면 바로가기" className={`tags ${s.jump}`}>
-        <a className={`chip ${s.chip}`} href="#verify">
-          본인 확인
-        </a>
-        <a className={`chip ${s.chip}`} href="#address">
-          받는 주소
-        </a>
-        <a className={`chip ${s.chip}`} href="#blocked">
-          차단한 팬
-        </a>
-        <a className={`chip ${s.chip}`} href="#prof">
-          프로필
-        </a>
-        <a className={`chip ${s.chip}`} href="#link">
-          선물 링크
-        </a>
-        <a className={`chip ${s.chip}`} href="#recv">
-          선물 받기
-        </a>
-        <a className={`chip ${s.chip}`} href="#days">
-          생일과 기념일
-        </a>
-        <a className={`chip ${s.chip}`} href="#hard">
-          받기 어려운 품목
-        </a>
-        <a className={`chip ${s.chip}`} href="#reply">
-          감사 답장
-        </a>
-        <a className={`chip ${s.chip}`} href="#alarm">
-          알림
-        </a>
-        <a className={`chip ${s.chip}`} href="#security">
-          계정 보안
-        </a>
+      <nav className={s.jump} aria-label="상세 설정 구간">
+        <a href="#fandom">팬덤</a>
+        <a href="#more">받는 주소·받기 설정·차단한 팬</a>
       </nav>
 
-      <div className={`block-gap ${s.cards}`}>
-        {/* 본인 확인 칸은 자기 section(제목 포함)을 그린다 — 바깥은 카드 틀(div)만 */}
-        <div id="verify" className={`card ${s.set}`}>
-          <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
-        </div>
+      <div className={`stack ${s.page}`}>
+        <FandomSection {...fandom} />
 
-        {/* 사이드바 「주소 관리」가 /creator/settings#address 로 온다 */}
-        <section id="address" className={`card ${s.set}`} aria-labelledby="addr-h">
-          <div className={s["set-head"]}>
-            <h2 className="t-card" id="addr-h">
-              받는 주소
-            </h2>
-            {addressRegistered ? <span className={statusTagClass("success")}>등록됨</span> : <span className={statusTagClass("plain")}>등록 전</span>}
-          </div>
-          <div className={`card card--soft ${s.inner}`}>
-            <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
-            <p className="t-strong">{addressRegistered ? "주소를 잠가서 등록해 뒀어요" : "아직 주소를 등록하지 않았어요"}</p>
-            {addressRegistered ? <p data-address-on-file="">{addressOnFileText(addressOnFile)}</p> : null}
-            <p className={s["body-gap"]}>{addressRegistered ? `주소는 잠가서 보관해요. ${PROMISE.address}` : `등록하면 바로 잠가서 보관해요. ${PROMISE.address}`}</p>
-          </div>
-          <p className="t-meta">{addressRegistered ? "아직 출력하지 않은 주문은 바뀐 주소로 나가요." : "등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}</p>
-          <p className="t-meta">{NO_ADDRESS_ASK}</p>
-          <div>
-            <button
-              className="btn btn--line"
-              type="button"
-              onClick={() => {
-                setAddressMsg(null);
-                setSheet({ kind: "address" });
-              }}
-            >
-              {addressRegistered ? "주소 바꾸기" : "주소 등록하기"}
-            </button>
-            <p className={`t-meta ${s.msg}`} role="status">
-              {addressMsg ?? ""}
-            </p>
-          </div>
-        </section>
+        <section id="more" className={s.group} aria-labelledby="more-h">
+          <h2 className={s.groupT} id="more-h">
+            주소와 설정
+          </h2>
+          <Fold id="address" title="받는 주소" meta={addressRegistered ? "등록됨" : "등록 전"}>
+            <div className={`card card--soft ${s.inner}`}>
+              <img className={`asset ${s["addr-ico"]}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={72} height={72} />
+              <p className="t-strong">{addressRegistered ? "주소를 잠가서 등록해 뒀어요" : "아직 주소를 등록하지 않았어요"}</p>
+              {addressRegistered ? <p data-address-on-file="">{addressOnFileText(addressOnFile)}</p> : null}
+              <p className={s["body-gap"]}>{addressRegistered ? `주소는 잠가서 보관해요. ${PROMISE.address}` : `등록하면 바로 잠가서 보관해요. ${PROMISE.address}`}</p>
+            </div>
+            <p className="t-meta">{addressRegistered ? "아직 출력하지 않은 주문은 바뀐 주소로 나가요." : "등록하면 아직 출력하지 않은 주문부터 이 주소로 나가요."}</p>
+            <p className="t-meta">{NO_ADDRESS_ASK}</p>
+            <div>
+              <button
+                className="btn btn--line"
+                type="button"
+                onClick={() => {
+                  setAddressMsg(null);
+                  setSheet({ kind: "address" });
+                }}
+              >
+                {addressRegistered ? "주소 바꾸기" : "주소 등록하기"}
+              </button>
+              <p className={`t-meta ${s.msg}`} role="status">
+                {addressMsg ?? ""}
+              </p>
+            </div>
+          </Fold>
 
-        <section id="blocked" className={`card ${s.set}`} aria-labelledby="block-h">
-          <div className={s["set-head"]}>
-            <h2 className="t-card" id="block-h">
-              차단한 팬
-            </h2>
-            <span className="tag">{blocked.length}명</span>
-          </div>
-          {blocked.length === 0 ? (
-            <p className="t-meta">차단한 팬이 없어요.</p>
-          ) : (
-            <ul className="grid cols-2">
-              {blocked.map((f, i) => (
-                <li key={f.blockId} className="card card--soft card-col">
-                  <div className={s.who}>
-                    <FaceAvatar index={i} />
-                    <div>
-                      <p className="t-strong">{f.fanNickname}</p>
-                      <p className="t-meta">{formatDate(f.blockedAt)} 차단</p>
+          <Fold id="receiving" title="받기 설정" meta={isResting(receiving.resumeOn, today) ? "쉬는 중" : "받는 중"}>
+            <ReceivingSection initial={receiving} today={today} />
+            <HardItemsSection initial={hardItems} today={today} />
+          </Fold>
+
+          <Fold id="blocked" title="차단한 팬" meta={`${blocked.length}명`}>
+            {blocked.length === 0 ? (
+              <p className="t-meta">차단한 팬이 없어요.</p>
+            ) : (
+              <ul className="grid cols-2">
+                {blocked.map((f, i) => (
+                  <li key={f.blockId} className="card card--soft card-col">
+                    <div className={s.who}>
+                      <FaceAvatar index={i} />
+                      <div>
+                        <p className="t-strong">{f.fanNickname}</p>
+                        <p className="t-meta">{formatDate(f.blockedAt)} 차단</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="push">
-                    <button
-                      className="btn btn--line btn--sm btn--block"
-                      type="button"
-                      aria-label={`${f.fanNickname}님 차단 풀기`}
-                      onClick={() => {
-                        setUnblockError(null);
-                        setSheet({ kind: "unblock", fan: f });
-                      }}
-                    >
-                      차단 풀기
-                    </button>
-                  </div>
-                </li>
-              ))}
+                    <div className="push">
+                      <button
+                        className="btn btn--line btn--sm btn--block"
+                        type="button"
+                        aria-label={`${f.fanNickname}님 차단 풀기`}
+                        onClick={() => {
+                          setUnblockError(null);
+                          setSheet({ kind: "unblock", fan: f });
+                        }}
+                      >
+                        차단 풀기
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="t-meta">차단을 풀어도 주소는 열리지 않아요. 새 선물도 한 건씩 카카오톡 서명으로 승인해야 나가요.</p>
+          </Fold>
+
+          <Fold id="gift-link" title="선물 링크">
+            <LinkSection initial={link} verified={verification.state.verified} />
+          </Fold>
+
+          <Fold id="thanks" title="감사 답장">
+            <ReplySettingsSection initial={replySettings} />
+          </Fold>
+        </section>
+
+        <section id="account" className={s.group} aria-labelledby="account-h">
+          <h2 className={s.groupT} id="account-h">
+            계정
+          </h2>
+          <Fold id="verify" title="본인 확인" meta={verification.state.verified ? "확인 완료" : "확인 전"}>
+            <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
+          </Fold>
+
+          <Fold id="alarm" title="알림 받기">
+            {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 끄는 스위치를 두지 않고 「끌 수 없는 알림」으로 알린다(notifications INV-N6 표, 2026-10-12 문제집 D7).
+                알림 스펙에 없는 종류(자동 반려 하루 전·주소가 열릴 때)의 스위치는 두지 않는다(my-account INV-A11) */}
+            <div className={`card card--soft ${s.inner}`}>
+              <MustDeliverNotice
+                audience="creator"
+                id="alarm-must"
+                className={s.txt}
+                titleClassName="t-strong"
+                extra={`승인 요청은 놓치면 ${APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려돼요.`}
+              />
+            </div>
+            <Switch
+              id="sw-kakao"
+              title="카카오톡 알림"
+              desc="그 밖의 소식을 카카오톡으로 알려드려요."
+              checked={notify.kakao}
+              busy={notifySaving}
+              describedBy="alarm-must"
+              onChange={(v) => void toggleNotify("kakao", v)}
+            />
+            <Switch
+              id="sw-email"
+              title="이메일 알림"
+              desc="같은 소식을 확인된 이메일로 알려드려요."
+              checked={notify.email}
+              busy={notifySaving}
+              describedBy="alarm-must"
+              onChange={(v) => void toggleNotify("email", v)}
+            />
+            <p className={msgClass(notifyMsg)} role="status">
+              {notifyMsg?.text}
+            </p>
+          </Fold>
+
+          {/* 번호 바꾸기(signup INV-U12)·비밀번호 바꾸기(session-login INV-L12)는 팬 내 정보와 같은 칸을 그대로 쓴다 —
+              두 서버 처리 모두 로그인 토큰의 사람 것만 바꾸고 역할을 가리지 않는다 */}
+          <Fold id="security" title="계정 보안">
+            <ul className="grid cols-2">
+              <li className="card card--soft card-col">
+                <p className="t-strong">휴대폰 번호</p>
+                <p>{settings.phoneMasked ?? "등록된 번호가 없어요"}</p>
+                <p className="t-meta">바꾸려면 카카오 인증을 다시 받아요.</p>
+                <div className="push">
+                  <button
+                    className="btn btn--line btn--sm btn--block"
+                    type="button"
+                    aria-expanded={security === "phone"}
+                    aria-controls="security-phone"
+                    onClick={() => toggleSecurity("phone")}
+                  >
+                    번호 바꾸기
+                  </button>
+                </div>
+              </li>
+              <li className="card card--soft card-col">
+                <p className="t-strong">비밀번호</p>
+                <p className="t-meta">바꾸면 다른 기기의 로그인은 모두 끝나요.</p>
+                <div className="push">
+                  <button
+                    className="btn btn--line btn--sm btn--block"
+                    type="button"
+                    aria-expanded={security === "password"}
+                    aria-controls="security-password"
+                    onClick={() => toggleSecurity("password")}
+                  >
+                    비밀번호 변경
+                  </button>
+                </div>
+              </li>
             </ul>
-          )}
-          <p className="t-meta">차단을 풀어도 주소는 열리지 않아요. 새 선물도 한 건씩 카카오톡 서명으로 승인해야 나가요.</p>
-        </section>
-
-        <section id="prof" className={`card ${s.set}`} aria-labelledby="prof-h">
-          <div className={s["set-head"]}>
-            <h2 className="t-card" id="prof-h">
-              프로필
-            </h2>
-          </div>
-          {/* 공개 이름·한 줄 소개·팬을 부르는 이름·프로필 사진·배경사진·팬덤 심볼은 「내 팬꾹 꾸미기」에서 바꾼다(디자인 기준 10절) — 같은 칸이 두 곳에 있지 않게 */}
-          <div className={`card card--soft ${s.inner}`}>
-            <p className="t-strong">{settings.publicName}</p>
-            <p className={s["body-gap"]}>공개 이름·한 줄 소개·프로필 사진·배경사진·팬을 부르는 이름·팬덤 심볼은 내 팬꾹 꾸미기에서 바꿔요.</p>
-            <p className={s["inner-btn"]}>
-              <a className="btn btn--line btn--sm" href="/creator/customize">
-                내 팬꾹 꾸미기에서 바꿔요
-              </a>
-            </p>
-          </div>
-          <div>
-            <TagPicker
-              idBase="pub-tags"
-              options={tagOptions}
-              picked={tagIds}
-              custom={customTag}
-              onPickedChange={(next) => {
-                setTagIds(next);
-                setTagsBad(false);
-              }}
-              onCustomChange={(next) => {
-                setCustomTag(next);
-                setTagsBad(false);
-              }}
-              invalid={tagsBad ? { describedBy: "prof-msg" } : null}
-            />
-          </div>
-          <dl className="grid cols-2">
-            <div className="card card--soft">
-              <dt className="t-meta">활동 채널</dt>
-              <dd className={`t-strong ${s["kv-dd"]}`}>{verification.state.channelTitle}</dd>
-            </div>
-            <div className="card card--soft">
-              <dt className="t-meta">본인 확인</dt>
-              <dd className={s["kv-dd"]}>{verification.state.verified ? <span className={statusTagClass("success")}>확인 완료</span> : <span className="tag">확인 전</span>}</dd>
-            </div>
-          </dl>
-          <Switch
-            id="sw-find"
-            title="크리에이터 찾기에 보이기"
-            desc="끄면 크리에이터 찾기 목록에서만 빠져요. 내 페이지 링크·팔로우·선물 받기는 그대로예요. 본인 확인을 마쳐야 찾기에 보여요."
-            checked={visible}
-            onChange={setVisible}
-          />
-          <div>
-            <button className="btn" type="button" aria-disabled={profileSaving} onClick={() => void saveProfile()}>
-              {profileSaving ? "저장하는 중…" : "프로필 저장"}
-            </button>
-            <p className={msgClass(profileMsg)} role="status" id="prof-msg">
-              {profileMsg?.text}
-            </p>
-          </div>
-        </section>
-
-        <LinkSection initial={link} verified={verification.state.verified} />
-        <ReceivingSection initial={receiving} today={today} />
-        <HardItemsSection initial={hardItems} today={today} />
-        <ReplySettingsSection initial={replySettings} />
-
-        <section id="alarm" className={`card ${s.set}`} aria-labelledby="alarm-h">
-          <div className={s["set-head"]}>
-            <h2 className="t-card" id="alarm-h">
-              알림 받기
-            </h2>
-          </div>
-          {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 끄는 스위치를 두지 않고 「끌 수 없는 알림」으로 알린다(notifications INV-N6 표, 2026-10-12 문제집 D7).
-              알림 스펙에 없는 종류(자동 반려 하루 전·주소가 열릴 때)의 스위치는 두지 않는다(my-account INV-A11) */}
-          <div className={`card card--soft ${s.inner}`}>
-            <MustDeliverNotice
-              audience="creator"
-              id="alarm-must"
-              className={s.txt}
-              titleClassName="t-strong"
-              extra={`승인 요청은 놓치면 ${APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려돼요.`}
-            />
-          </div>
-          <Switch
-            id="sw-kakao"
-            title="카카오톡 알림"
-            desc="그 밖의 소식을 카카오톡으로 알려드려요."
-            checked={notify.kakao}
-            busy={notifySaving}
-            describedBy="alarm-must"
-            onChange={(v) => void toggleNotify("kakao", v)}
-          />
-          <Switch
-            id="sw-email"
-            title="이메일 알림"
-            desc="같은 소식을 확인된 이메일로 알려드려요."
-            checked={notify.email}
-            busy={notifySaving}
-            describedBy="alarm-must"
-            onChange={(v) => void toggleNotify("email", v)}
-          />
-          <p className={msgClass(notifyMsg)} role="status">
-            {notifyMsg?.text}
-          </p>
-        </section>
-
-        {/* 번호 바꾸기(signup INV-U12)·비밀번호 바꾸기(session-login INV-L12)는 팬 내 정보와 같은 칸을 그대로 쓴다 —
-            두 서버 처리 모두 로그인 토큰의 사람 것만 바꾸고 역할을 가리지 않는다 */}
-        <section id="security" className={`card ${s.set}`} aria-labelledby="security-h">
-          <div className={s["set-head"]}>
-            <h2 className="t-card" id="security-h">
-              계정 보안
-            </h2>
-          </div>
-          <ul className="grid cols-2">
-            <li className="card card--soft card-col">
-              <p className="t-strong">휴대폰 번호</p>
-              <p>{settings.phoneMasked ?? "등록된 번호가 없어요"}</p>
-              <p className="t-meta">바꾸려면 카카오 인증을 다시 받아요.</p>
-              <div className="push">
-                <button
-                  className="btn btn--line btn--sm btn--block"
-                  type="button"
-                  aria-expanded={security === "phone"}
-                  aria-controls="security-phone"
-                  onClick={() => toggleSecurity("phone")}
-                >
-                  번호 바꾸기
-                </button>
+            {security === "phone" && (
+              <div className={s["sec-panel"]}>
+                <PhoneChangePanel id="security-phone" onLoginExpired={toLogin} onChanged={() => router.refresh()} />
               </div>
-            </li>
-            <li className="card card--soft card-col">
-              <p className="t-strong">비밀번호</p>
-              <p className="t-meta">바꾸면 다른 기기의 로그인은 모두 끝나요.</p>
-              <div className="push">
-                <button
-                  className="btn btn--line btn--sm btn--block"
-                  type="button"
-                  aria-expanded={security === "password"}
-                  aria-controls="security-password"
-                  onClick={() => toggleSecurity("password")}
-                >
-                  비밀번호 변경
-                </button>
+            )}
+            {security === "password" && (
+              <div className={s["sec-panel"]}>
+                <PasswordChangePanel id="security-password" onLoginExpired={toLogin} />
               </div>
-            </li>
-          </ul>
-          {security === "phone" && (
-            <div className={s["sec-panel"]}>
-              <PhoneChangePanel id="security-phone" onLoginExpired={toLogin} onChanged={() => router.refresh()} />
-            </div>
-          )}
-          {security === "password" && (
-            <div className={s["sec-panel"]}>
-              <PasswordChangePanel id="security-password" onLoginExpired={toLogin} />
-            </div>
-          )}
+            )}
+          </Fold>
         </section>
       </div>
 

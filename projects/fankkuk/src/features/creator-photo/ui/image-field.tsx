@@ -4,9 +4,9 @@ import { useRef, useState, type ReactNode } from "react";
 import type { PreviewPick } from "@/entities/creator/model/link-images";
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
-import s from "./creator-customize.module.css";
+import s from "./image-field.module.css";
 
-// 사진 한 칸(프로필 사진·배경사진·팬덤 심볼) — 고르면 바로 서버로 보낸다. 서버가 열어 보고 사진 정보를 지운 뒤 다시 굽는다(creator-link INV-E9).
+// 사진 한 칸(프로필 사진·배경사진·팬덤 심볼) — 크리에이터 「프로필 수정」·「상세 설정」(팬마크)이 같이 쓴다 — 고르면 바로 서버로 보낸다. 서버가 열어 보고 사진 정보를 지운 뒤 다시 굽는다(creator-link INV-E9).
 // 파일 칸은 sr-only 로 숨기고 라벨을 버튼 모양으로 보인다(키보드·화면 읽기는 그대로). 결과 문구는 파일 칸의 설명으로 이어 읽힌다.
 // 보내기 전 검사(종류·크기)는 안내일 뿐이다 — 판단은 서버가 다시 한다. 막혀 있으면(blocked) 파일 칸을 끄고 그 까닭을 설명으로 잇는다.
 
@@ -16,6 +16,7 @@ export function ImageField({
   id,
   label,
   optional = false,
+  hideLabel = false,
   view,
   hasImage,
   pickLabel,
@@ -32,8 +33,10 @@ export function ImageField({
   id: string;
   label: string;
   optional?: boolean;
-  /** 지금 사진 보기 */
-  view: ReactNode;
+  /** 바깥에 같은 이름의 제목이 이미 보이면 칸 이름은 화면 읽기용으로만 */
+  hideLabel?: boolean;
+  /** 지금 사진 보기 — 화면 위 미리보기가 이미 보여 주면 없다 */
+  view?: ReactNode;
   hasImage: boolean;
   pickLabel: string;
   removeLabel: string;
@@ -84,12 +87,12 @@ export function ImageField({
   const off = busy || blocked !== null;
   return (
     <div className={s.fld} role="group" aria-labelledby={`${id}-t`}>
-      <p className={s.lbl} id={`${id}-t`}>
+      <p className={hideLabel ? "sr-only" : s.lbl} id={`${id}-t`}>
         {label}
         {optional ? <span className={s.optn}>선택</span> : null}
       </p>
       <div className={s.imgRow}>
-        {view}
+        {view ?? null}
         <div className="btn-stack">
           <input
             className={`sr-only ${s.file}`}

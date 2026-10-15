@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { toCreatorCards, type CreatorCard } from "../model/creator-card";
 import type { CreatorProfile, CreatorSummary } from "../model/creator";
+import { creatorColorOrNull } from "../model/creator-color";
 
 // 크리에이터 목록을 DB 읽기 함수(find_creators·list_creators·creator_by_id, 팔로우는 my_follows)로 읽는다. 응답은 신뢰 경계 밖이라 형식을 검사한다.
 
@@ -19,6 +20,9 @@ const rowSchema = z.object({
   // creator-link: 링크용 아이디·사진 경로(아이디나 사진이 없으면 null)
   handle: z.string().nullable(),
   photo_path: z.string().nullable(),
+  // creator-link INV-E13: 퍼스널 컬러·팬컬러(공개 값). 꼴은 아래에서 다시 거른다 — 틀리면 기본 모양
+  personal_color: z.string().nullable().optional(),
+  fan_color: z.string().nullable().optional(),
 });
 
 const followSchema = z.object({ creator_id: z.guid() });
@@ -37,6 +41,7 @@ function rowsToCards(rows: readonly CreatorRow[], followedIds: readonly string[]
     faceTone: r.face_tone,
     handle: r.handle,
     photoPath: r.photo_path,
+    colors: { personal: creatorColorOrNull(r.personal_color), fan: creatorColorOrNull(r.fan_color) },
   }));
   const minutes = Object.fromEntries(rows.map((r) => [r.id, r.approval_minutes_from_orders]));
   return toCreatorCards(summaries, profiles, followedIds, minutes);

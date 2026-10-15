@@ -1,5 +1,6 @@
 import { approvalTimeOf } from "./approval-time";
 import type { CreatorProfile, CreatorSummary } from "./creator";
+import type { CreatorColors } from "./creator-color";
 
 // 크리에이터 목록·페이지가 보여 주는 한 사람의 모양 — 기본 정보 + 소개 + 팔로우 여부.
 
@@ -21,6 +22,8 @@ export type CreatorCard = {
   handle: string | null;
   /** 프로필 사진 저장소 경로 — 없으면 null(INV-E9). */
   photoPath: string | null;
+  /** 퍼스널 컬러·팬컬러(creator-link INV-E13) — 공개 값. 없으면 기본 모양. */
+  colors?: CreatorColors;
 };
 
 /**
@@ -51,6 +54,7 @@ export function toCreatorCards(
         following: followed.has(c.id),
         handle: p.handle ?? null,
         photoPath: p.photoPath ?? null,
+        ...(p.colors ? { colors: p.colors } : {}),
       },
     ];
   });
