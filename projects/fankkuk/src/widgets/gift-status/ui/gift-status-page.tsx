@@ -32,6 +32,7 @@ import { FanBoxReplies } from "@/features/gift-reply/ui/fan-box-replies";
 import { DifferenceSection, type DifferenceNotice } from "./difference-section";
 import { PaymentSummary } from "./payment-summary";
 import { GiftMemoCard } from "./gift-memo-card";
+import { ActionLine } from "@/entities/action-item/ui/action-line";
 import type { GiftMemo } from "@/entities/order/model/gift-memo";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./gift-status.module.css";
@@ -72,6 +73,7 @@ export function GiftStatusPage({
   replies = [],
   photoBase = "",
   memo = null,
+  actionCount = 0,
 }: {
   view: FanGiftView;
   boxes: readonly GiftBox[];
@@ -84,6 +86,8 @@ export function GiftStatusPage({
   photoBase?: string;
   /** 나만 보는 메모(together INV-F7·F8) — my_gift_memo 가 보낸 사람 본인에게만 준다. 없으면 칸을 그리지 않는다. */
   memo?: GiftMemo | null;
+  /** 이 주문의 처리할 일 카드 수(action-center INV-J2) — 라우트가 처리할 일 읽기 결과에서 이 주문 줄만 센다. 0 이면 맨 위 한 줄이 없다. 팬 화면에서만 넘긴다. */
+  actionCount?: number;
 }) {
   const progress = fanProgress(view);
   // 배지의 「N/6」은 지금 있는 단계 번호다 — 끝낸 단계 수(4)를 쓰면 아래 진행 줄의 현재 단계(5번 배송중)와 숫자가 어긋났다(2026-10-09 디자인 점검)
@@ -116,6 +120,7 @@ export function GiftStatusPage({
           보낸 선물로
         </Link>
         <div className="stack">
+          <ActionLine count={actionCount} place="gift" />
           <section className={`card ${s.gtop}`} aria-labelledby="g-title">
             <img className={`asset ${s["g-art"]}`} src="/img/icon-truck.png" alt="" aria-hidden="true" width={56} height={56} />
             <p className="t-meta">

@@ -1,8 +1,9 @@
+import { ACTION_CENTER_HREF } from "@/entities/action-item/model/action-items";
 import { CREATOR_HOME, CREATOR_PROFILE_EDIT, CREATOR_SETTINGS, FAN_ACCOUNT_SETTINGS, FAN_HOME, FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 
 // 로그인 후 왼쪽 앱 사이드바 메뉴(design-rules 00절, 시안 docs/design/mockups/site/v18/home-fan.html·home-creator.html).
 // 크리에이터 메뉴의 묶음·하위 줄은 design-rules 11절(시안 docs/design/mockups/site/v19-sidebar/creator-a.html),
-// 「내 팬꾹」 묶음은 12절(꾸미기·프로필 수정·상세 설정 — 주소 관리는 상세 설정 안, 계정 설정은 아래 이름 메뉴. 시안 v21-addendum3/cre-*.html).
+// 팬 「내 활동」 묶음의 「처리할 일」은 12절(숫자 뱃지, 0 이면 없음 — action-center INV-J2). 「내 팬꾹」 묶음은 12절(꾸미기·프로필 수정·상세 설정 — 주소 관리는 상세 설정 안, 계정 설정은 아래 이름 메뉴. 시안 v21-addendum3/cre-*.html).
 // 아이콘 이름은 lucide 선 아이콘 이름 — 그림은 ui/app-icons.tsx 에 있다.
 
 export type AppIcon =
@@ -21,13 +22,14 @@ export type AppIcon =
   | "package-plus"
   | "history"
   | "palette"
-  | "user-round";
+  | "user-round"
+  | "clipboard-list";
 
 /** 부모 칸 아래 들여 쓴 하위 줄. soon 은 아직 없는 기능 — 링크 없이 「준비 중」 태그만(design-rules 11절) */
 export type AppMenuSub = { label: string; href: string } | { label: string; soon: true };
 
 /**
- * badge: 이 칸 옆에 숫자를 붙일 자리. 숫자는 헤더가 넘긴다.
+ * badge: 이 칸 옆에 숫자를 붙일 자리. 숫자는 헤더가 넘긴다(actions = 처리할 일 읽기 결과의 줄 수, action-center INV-J2).
  * also: 이 칸이 현재 칸으로 켜지는 다른 주소(한 칸이 탭으로 이은 두 화면을 맡을 때 — 「보낸 내역」).
  * sub: 늘 펼쳐 두는 하위 줄.
  */
@@ -35,10 +37,12 @@ export type AppMenuItem = {
   href: string;
   label: string;
   icon: AppIcon;
-  badge?: "gifts" | "pending";
+  badge?: AppBadge;
   also?: readonly string[];
   sub?: readonly AppMenuSub[];
 };
+export type AppBadge = "gifts" | "pending" | "actions";
+
 export type AppMenuGroup = { label: string; items: readonly AppMenuItem[] };
 
 const BASIC: AppMenuGroup["items"] = [
@@ -53,6 +57,7 @@ export const FAN_APP_MENU: readonly AppMenuGroup[] = [
     items: [
       { href: "/me/following", label: "팔로우한 크리에이터", icon: "heart" },
       { href: "/gifts", label: "보낸 선물", icon: "package", badge: "gifts" },
+      { href: ACTION_CENTER_HREF, label: "처리할 일", icon: "clipboard-list", badge: "actions" },
       { href: "/me/revgifts", label: "받은 선물", icon: "mail" },
       { href: "/support", label: "문의", icon: "message-circle" },
     ],

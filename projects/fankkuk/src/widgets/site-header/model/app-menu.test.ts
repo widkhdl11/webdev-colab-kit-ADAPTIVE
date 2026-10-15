@@ -82,3 +82,13 @@ describe("이름 메뉴 — 팬은 프로필 수정·계정 설정 (design-rules
     expect(currentMenuItem(FAN_APP_MENU, FAN_PROFILE_EDIT_HREF)).toBeNull();
   });
 });
+
+describe("팬 메뉴 — 처리할 일 (action-center INV-J2, design-rules 12절)", () => {
+  it("INV-J2: 「내 활동」 묶음의 보낸 선물 바로 아래, /me/actions, 숫자 뱃지 자리는 처리할 일 읽기 결과(actions)", () => {
+    const mine = FAN_APP_MENU.find((g) => g.label === "내 활동")!;
+    expect(mine.items.map((i) => i.label)).toEqual(["팔로우한 크리에이터", "보낸 선물", "처리할 일", "받은 선물", "문의"]);
+    const it = mine.items.find((i) => i.label === "처리할 일")!;
+    expect([it.href, it.icon, it.badge]).toEqual(["/me/actions", "clipboard-list", "actions"]);
+    expect(currentMenuItem(FAN_APP_MENU, "/me/actions")?.label).toBe("처리할 일");
+  });
+});

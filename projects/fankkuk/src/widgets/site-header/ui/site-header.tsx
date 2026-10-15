@@ -26,7 +26,7 @@ const SITE_NAV: NavItem[] = [
 
 export type SiteHeaderProps =
   | { role: "guest"; current?: string }
-  | { role: "fan"; current?: string; nickname: string; gifts: HeaderGift[] }
+  | { role: "fan"; current?: string; nickname: string; gifts: HeaderGift[]; actionCount: number }
   | { role: "creator"; current?: string; nickname: string; pendingCount: number };
 
 function GuestTopBar({ current }: { current?: string }) {
@@ -127,7 +127,7 @@ export function SiteHeader(props: SiteHeaderProps) {
         current={props.current}
         homeHref={FAN_HOME}
         nickname={props.nickname}
-        counts={{ gifts: props.gifts.length }}
+        counts={{ gifts: props.gifts.length, actions: props.actionCount }}
       />
     );
   }

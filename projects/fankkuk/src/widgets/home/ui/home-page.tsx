@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ActionLine } from "@/entities/action-item/ui/action-line";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
@@ -12,8 +13,8 @@ import { HomeNotices, type HomeNotice } from "./home-notices";
 import { HowFold } from "./how-fold";
 
 // 팬 홈(로그인 뒤). 시안: docs/design/mockups/site/v21-addendum3/fan-home.html — 본문 틀 기본 880(design-rules 00절 「본문 틀」·12절).
-// 순서는 시안대로 프로필 구간(h1 = 닉네임) → 진행 중인 선물 → 팔로우한 크리에이터(위아래 한 줄 목록) → 공지 → 「이렇게 도착해요」 접힘 줄. 첫 화면 문구·「새 크리에이터」 격자는 12절에서 뺐다.
-// 프로필 구간은 my-account INV-A13 의 공개 네 칸(사진·배경 사진·닉네임·소개)만 그린다. 시안의 「해야 할 일」 한 줄은 다른 묶음(처리할 일)이라 아직 두지 않는다.
+// 순서는 시안대로 프로필 구간(h1 = 닉네임) → 처리할 일 한 줄(0건이면 없음, action-center INV-J2) → 진행 중인 선물 → 팔로우한 크리에이터(위아래 한 줄 목록) → 공지 → 「이렇게 도착해요」 접힘 줄. 첫 화면 문구·「새 크리에이터」 격자는 12절에서 뺐다.
+// 프로필 구간은 my-account INV-A13 의 공개 네 칸(사진·배경 사진·닉네임·소개)만 그린다.
 // 팬 화면이라 선물은 팬용 모양(toFanView)만 받는다 — 크리에이터행 송장번호·주소가 여기 닿지 않는다.
 
 /** 홈 프로필 구간 — 공개 네 칸에서 만든 값(사진 주소는 공개 저장소 주소, 없으면 null). */
@@ -30,6 +31,8 @@ type Props = {
   /** 크리에이터 이름 → 얼굴 자리표시 색. 선물 줄의 얼굴이 크리에이터 찾기와 같은 색이 되게. */
   faceToneByName: Readonly<Record<string, string>>;
   notices: readonly HomeNotice[];
+  /** 처리할 일 카드 수 — 라우트가 처리할 일 읽기 결과의 줄 수를 넘긴다(사이드바 숫자와 같은 결과, action-center INV-J2) */
+  actionCount: number;
 };
 
 const MAX_GIFTS = 3;
@@ -156,11 +159,12 @@ function ProfileSection({ nickname, profile }: { nickname: string; profile: Home
   );
 }
 
-export function HomePage({ nickname, profile, gifts, following, faceToneByName, notices }: Props) {
+export function HomePage({ nickname, profile, gifts, following, faceToneByName, notices, actionCount }: Props) {
   return (
     <main id="main" className="page-pane">
       <div className={s.stack}>
         <ProfileSection nickname={nickname} profile={profile} />
+        <ActionLine count={actionCount} place="home" />
         <GiftsSection gifts={gifts} faceToneByName={faceToneByName} />
         <FollowSection following={following} />
         <HomeNotices notices={notices} />

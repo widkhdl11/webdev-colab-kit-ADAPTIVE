@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LogoutButton } from "@/features/auth/ui/logout-button";
 import { LogoMark } from "@/shared/ui/logo";
-import { ACCOUNT_MENU, currentMenuItem, type AppMenuGroup } from "../model/app-menu";
+import { ACCOUNT_MENU, currentMenuItem, type AppBadge, type AppMenuGroup } from "../model/app-menu";
 import { Icon } from "./app-icons";
 
 // 로그인 후 왼쪽 앱 사이드바(design-rules 00절, 시안 v18/home-fan.html·home-creator.html·v18-app.css).
@@ -13,6 +13,13 @@ import { Icon } from "./app-icons";
 // app/layout.tsx 의 짧은 스크립트가 그리기 전에 <html data-collapsed> 를 먼저 단다. `[` 키로 접고 편다.
 
 const KEY = "sidebar-collapsed";
+
+/** 숫자 뱃지의 뜻 — 낭독기용(숫자 자체는 숨긴다) */
+const BADGE_SPEECH: Record<AppBadge, (n: number) => string> = {
+  pending: (n) => `대기 ${n}건`,
+  gifts: (n) => `진행 중 ${n}건`,
+  actions: (n) => `처리할 일 ${n}건`,
+};
 
 function narrowNow(): boolean {
   return window.matchMedia("(max-width: 768px)").matches;
@@ -25,7 +32,7 @@ export type AppSidebarProps = {
   homeHref: string;
   nickname: string;
   /** 메뉴 칸 옆 숫자 — 0 이면 붙이지 않는다 */
-  counts: { gifts?: number; pending?: number };
+  counts: Partial<Record<AppBadge, number>>;
 };
 
 export function AppSidebar({ role, groups, current, homeHref, nickname, counts }: AppSidebarProps) {
@@ -204,7 +211,7 @@ export function AppSidebar({ role, groups, current, homeHref, nickname, counts }
                               <span className="badge" aria-hidden="true">
                                 {n}
                               </span>
-                              <span className="sr-only">{it.badge === "pending" ? `대기 ${n}건` : `진행 중 ${n}건`}</span>
+                              <span className="sr-only">{it.badge ? BADGE_SPEECH[it.badge](n) : null}</span>
                             </>
                           ) : null}
                         </Link>

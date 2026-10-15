@@ -80,6 +80,14 @@ export async function payTestRevgift(send: TestSend): Promise<void> {
   if (error || data !== true) throw new Error(`settle_revgift_payment 실패: ${error?.message ?? data}`);
 }
 
+/** 하루가 그 팬에게 보낸 소형 몫 하나를 결제까지 — 받기 대기. 받는 팬은 하루를 팔로우하고 있어야 한다(INV-R2). */
+export async function paidShareFor(fanId: string): Promise<{ send: TestSend; shareId: string; orderNo: string }> {
+  const send = await registerTestRevgift([{ fanId, tier: "small" }]);
+  await payTestRevgift(send);
+  const shareId = psql(`select id from public.revgift_shares where send_id = '${send.sendId}'`);
+  return { send, shareId, orderNo: send.orderNos[0]! };
+}
+
 /** 결제 완료 시각을 과거로 옮긴다 — 기한 시험용. */
 export function backdateSettlement(send: TestSend, hours: number, minutes = 0): void {
   psql(
