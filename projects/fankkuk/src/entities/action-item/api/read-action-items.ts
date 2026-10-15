@@ -8,3 +8,16 @@ export async function readActionItems(client: Pick<SupabaseClient, "rpc">): Prom
   if (error) throw new Error(`처리할 일을 읽지 못했다: ${error.code}`);
   return parseActionItems(data);
 }
+
+/**
+ * 숫자만 곁들이는 화면(사이드바 뱃지·홈 한 줄·선물 상세 맨 위 한 줄)용 — 못 읽으면 null 을 주고 화면은 그대로 그린다.
+ * null 이면 뱃지와 한 줄이 모두 빠진다(서로 다른 수를 말하지 않는다). 처리할 일 화면 자체는 readActionItems 로 실패를 드러낸다.
+ */
+export async function readActionItemsOrNull(client: Pick<SupabaseClient, "rpc">): Promise<ActionItem[] | null> {
+  try {
+    return await readActionItems(client);
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : "처리할 일을 읽지 못했다");
+    return null;
+  }
+}

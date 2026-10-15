@@ -56,3 +56,11 @@ export function formatStamp(iso: string): string {
 export function formatMonthDay(iso: string): string {
   return formatStamp(iso).slice(0, 5);
 }
+
+const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+
+/** 서울 날짜로 센 남은 날 수 — 기한 날짜 − 오늘 날짜(시각은 보지 않는다). 10월 18일 오후 11시 59분 기한을 16일에 보면 2 */
+export function seoulDaysUntil(dueIso: string, nowIso: string): number {
+  const day = (iso: string) => Date.parse(`${dayKey.format(new Date(iso))}T00:00:00Z`);
+  return Math.round((day(dueIso) - day(nowIso)) / 86_400_000);
+}

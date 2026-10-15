@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PaymentStep } from "@/features/checkout/ui/payment-step";
 import { postDifferencePrepare, type DifferenceCheckout } from "@/features/difference-pay/api/post-difference-client";
@@ -13,6 +14,7 @@ type Props = { boxId: string; orderNo: string; amountKrw: number; clientKey: str
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
 export function DifferencePayButton({ boxId, orderNo, amountKrw, clientKey }: Props) {
+  const router = useRouter();
   const [checkout, setCheckout] = useState<DifferenceCheckout | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,8 +25,13 @@ export function DifferencePayButton({ boxId, orderNo, amountKrw, clientKey }: Pr
     setBusy(true);
     const r = await postDifferencePrepare({ boxId });
     setBusy(false);
-    if (r.ok) setCheckout(r.checkout);
-    else setError(r.message);
+    if (r.ok) {
+      setCheckout(r.checkout);
+      return;
+    }
+    setError(r.message);
+    // 거부면 그 사이 상태가 바뀌었을 수 있다(기한 지남·이미 결제 중) — 다시 읽어 카드가 원천 상태를 따르게 한다(INV-J4)
+    router.refresh();
   }
 
   if (checkout) {

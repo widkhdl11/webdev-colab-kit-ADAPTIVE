@@ -4,7 +4,7 @@ import type { ActionItem } from "@/entities/action-item/model/action-items";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
 import { DifferencePayButton } from "./difference-pay-button";
-import { formatDeadline } from "@/shared/lib/format/datetime";
+import { formatDeadline, seoulDaysUntil } from "@/shared/lib/format/datetime";
 import s from "./action-center.module.css";
 
 // 처리할 일 (action-center INV-J1·J2·J4, design-rules 12절, 시안 v21-addendum3/fan-action-center.html). 본문 틀은 목록형 880 — 라우트가 MyShell(list)로 감싼다.
@@ -13,7 +13,8 @@ import s from "./action-center.module.css";
 //   추가 결제 = 차액 결제 준비 → 결제창(선물 상세와 같은 길) · 도착이 늦어요 = 「받는 주소 없이 보냈어요」 찾기(그 상자 하나) · 선물 받기 = 기존 받기 화면.
 // 처리가 끝나면 다음 읽기에서 카드가 없다 — 카드는 누른 기록이 아니라 원천 상태로 사라진다.
 
-type Props = { items: readonly ActionItem[]; clientKey: string };
+/** now = 남은 날을 셀 기준 시각(라우트가 그린 때) */
+type Props = { items: readonly ActionItem[]; clientKey: string; now: string };
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
@@ -67,12 +68,14 @@ function Svg({ name }: { name: keyof typeof ICONS }) {
   );
 }
 
-function Due({ at }: { at: string }) {
+/** 기한 — 「10월 18일 오후 11시 59분까지 · 2일 남았어요」(시안). 남은 날은 서울 날짜로 세고, 기한 당일(0일)에는 붙이지 않는다 */
+function Due({ at, now }: { at: string; now: string }) {
+  const days = seoulDaysUntil(at, now);
   return (
     <p>
       <span className={`${s.due} action-due`}>
         <Svg name="clock" />
-        {formatDeadline(at)}까지
+        {formatDeadline(at)}까지{days > 0 ? ` · ${days}일 남았어요` : null}
       </span>
     </p>
   );
@@ -96,7 +99,7 @@ function Card({ item, icon, title, meta, children }: { item: ActionItem; icon: k
   );
 }
 
-function ActionCard({ item, clientKey }: { item: ActionItem; clientKey: string }) {
+function ActionCard({ item, clientKey, now }: { item: ActionItem; clientKey: string; now: string }) {
   if (item.kind === "difference") {
     const declared = tierName(item.declaredTier);
     const measured = tierName(item.measuredTier);
@@ -119,7 +122,7 @@ function ActionCard({ item, clientKey }: { item: ActionItem; clientKey: string }
             <strong>{won(item.amountKrw)}</strong>
           </div>
         </div>
-        <Due at={item.dueAt} />
+        <Due at={item.dueAt} now={now} />
         <DifferencePayButton boxId={item.boxId} orderNo={item.orderNo} amountKrw={item.amountKrw} clientKey={clientKey} />
       </Card>
     );
@@ -129,14 +132,14 @@ function ActionCard({ item, clientKey }: { item: ActionItem; clientKey: string }
     return (
       <Card item={item} icon="truck" title="도착이 늦어요" meta={`${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq} (${tier})`}>
         <p className={s.why}>예상한 날짜가 지났는데 아직 도착하지 않았어요.</p>
-        <Due at={item.dueAt} />
-        <FindMyBox boxes={[{ target: { kind: "box", id: item.boxId }, label: item.boxLabel, name: `${item.boxLabel} · ${tier} 상자` }]} />
+        <Due at={item.dueAt} now={now} />
+        <FindMyBox box={{ target: { kind: "box", id: item.boxId }, label: item.boxLabel, name: `${item.boxLabel} · ${tier} 상자` }} />
       </Card>
     );
   }
   return (
     <Card item={item} icon="gift" title="선물 받기" meta={`${item.creatorName}님이 보낸 선물`}>
-      <Due at={item.dueAt} />
+      <Due at={item.dueAt} now={now} />
       <Link className={`btn ${s.go}`} href={`/me/revgifts/${item.orderNo}`} aria-label={`${item.creatorName}님이 보낸 선물 받기`}>
         받기
       </Link>
@@ -144,7 +147,7 @@ function ActionCard({ item, clientKey }: { item: ActionItem; clientKey: string }
   );
 }
 
-export function ActionCenterPage({ items, clientKey }: Props) {
+export function ActionCenterPage({ items, clientKey, now }: Props) {
   return (
     <>
       <header className="page-head">
@@ -158,7 +161,7 @@ export function ActionCenterPage({ items, clientKey }: Props) {
       {items.length > 0 ? (
         <div className="stack">
           {items.map((it) => (
-            <ActionCard key={`${it.kind}-${it.orderNo}-${"boxId" in it ? it.boxId : ""}`} item={it} clientKey={clientKey} />
+            <ActionCard key={`${it.kind}-${it.orderNo}-${"boxId" in it ? it.boxId : ""}`} item={it} clientKey={clientKey} now={now} />
           ))}
         </div>
       ) : (

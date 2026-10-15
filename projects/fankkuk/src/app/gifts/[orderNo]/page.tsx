@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { readActionItems } from "@/entities/action-item/api/read-action-items";
+import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
 import { actionItemsOfOrder } from "@/entities/action-item/model/action-items";
 import { readMyGiftReplies } from "@/entities/gift-reply/api/gift-reply-reads";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
@@ -41,14 +41,14 @@ export default async function Page({
   // 결제 금액(payment INV-M14) — 결제할 때 저장한 값. 읽기 함수가 로그인한 사람의 결제 완료 주문이 아니면 null 을 준다
   // 출고된 상자별 받았어요·답장(gift-reply INV-G6) — 읽기 함수가 로그인한 사람이 보낸 주문이 아니면 빈 목록을 준다. 날짜만 온다
   // 나만 보는 메모(together INV-F8) — 읽기 함수가 로그인한 사람이 보낸 주문이 아니면 null 을 준다
-  // 처리할 일(action-center INV-J2) — 팬만. 한 번 읽어 사이드바 숫자와 맨 위 한 줄(이 주문 줄만)에 함께 넘긴다. 크리에이터 쪽은 아직 만들지 않는다
+  // 처리할 일(action-center INV-J2) — 팬만. 한 번 읽어 사이드바 숫자와 맨 위 한 줄(이 주문 줄만)에 함께 넘긴다. 크리에이터 쪽은 아직 만들지 않는다. 못 읽으면 둘 다 빼고 상세는 그린다
   const [boxes, differences, payment, replies, memo, actions] = await Promise.all([
     readMyGiftBoxes(supabase, view.orderNo),
     readMyDifferences(supabase, view.orderNo),
     readMyGiftPayment(supabase, view.orderNo),
     readMyGiftReplies(supabase, view.orderNo),
     readMyGiftMemo(supabase, view.orderNo),
-    viewer.role === "fan" ? readActionItems(supabase) : Promise.resolve(undefined),
+    viewer.role === "fan" ? readActionItemsOrNull(supabase) : Promise.resolve(null),
   ]);
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   const notice = DIFFERENCE_NOTICES.find((n) => n === differenceParam) ?? null;

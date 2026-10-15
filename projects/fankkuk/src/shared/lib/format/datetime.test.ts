@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatMonthDay, formatStamp } from "./datetime";
+import { formatDuration, formatMonthDay, formatStamp, seoulDaysUntil } from "./datetime";
 
 describe("formatStamp · formatMonthDay", () => {
   it("서울 시각으로 「MM-DD HH:mm」「MM-DD」 — UTC 밤 시각은 다음 날로 넘어간다", () => {
@@ -16,5 +16,15 @@ describe("formatDuration", () => {
     expect(formatDuration(40)).toBe("약 40분");
     expect(formatDuration(150)).toBe("약 3시간");
     expect(formatDuration(0)).toBe("약 1분");
+  });
+});
+
+describe("seoulDaysUntil — 서울 날짜로 센 남은 날", () => {
+  it("서울 10월 16일 낮에 보면 10월 18일 오후 11시 59분 기한은 2일", () => {
+    expect(seoulDaysUntil("2026-10-18T14:59:00+00:00", "2026-10-16T03:00:00+00:00")).toBe(2);
+  });
+  it("UTC 로는 같은 날이어도 서울 날짜가 다르면 하루 — 서울 자정을 넘기는 경계", () => {
+    expect(seoulDaysUntil("2026-10-17T15:30:00+00:00", "2026-10-17T14:30:00+00:00")).toBe(1);
+    expect(seoulDaysUntil("2026-10-17T14:50:00+00:00", "2026-10-17T00:10:00+00:00")).toBe(0);
   });
 });

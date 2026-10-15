@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { readActionItems } from "@/entities/action-item/api/read-action-items";
+import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
 import type { ActionItem } from "@/entities/action-item/model/action-items";
 import { readMyApprovalRequests } from "@/entities/order/api/creator-request-rows";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
@@ -25,17 +25,18 @@ export function fanHeaderGifts(views: readonly FanGiftView[]): HeaderGift[] {
  * 팬 화면이 선물 목록을 이미 읽었으면 gifts 로 넘겨 두 번 읽지 않는다.
  * 처리할 일도 같다 — 본문이 처리할 일을 그리는 화면(홈·처리할 일·선물 상세)은 한 번 읽은 결과를 actions 로 넘겨,
  * 사이드바 숫자와 본문이 같은 결과의 줄 수가 되게 한다(action-center INV-J2). 안 넘기면 같은 읽기 함수를 여기서 한 번 부른다.
+ * 읽기가 실패했으면(null) 뱃지만 빼고 헤더는 그린다 — 숫자 하나 때문에 화면 전체가 실패하지 않게.
  */
 export async function readSiteHeader(
   client: Pick<SupabaseClient, "rpc">,
   viewer: Viewer | null,
   current?: string,
   gifts?: readonly FanGiftView[],
-  actions?: readonly ActionItem[],
+  actions?: readonly ActionItem[] | null,
 ): Promise<SiteHeaderProps> {
   if (viewer?.role === "fan") {
-    const [giftViews, actionItems] = await Promise.all([gifts ?? readMyGiftViews(client), actions ?? readActionItems(client)]);
-    return { role: "fan", current, nickname: viewer.nickname ?? "", gifts: fanHeaderGifts(giftViews), actionCount: actionItems.length };
+    const [giftViews, actionItems] = await Promise.all([gifts ?? readMyGiftViews(client), actions === undefined ? readActionItemsOrNull(client) : actions]);
+    return { role: "fan", current, nickname: viewer.nickname ?? "", gifts: fanHeaderGifts(giftViews), actionCount: actionItems?.length ?? 0 };
   }
   if (viewer?.role === "creator") {
     return { role: "creator", current, nickname: viewer.nickname ?? "", pendingCount: (await readMyApprovalRequests(client)).length };

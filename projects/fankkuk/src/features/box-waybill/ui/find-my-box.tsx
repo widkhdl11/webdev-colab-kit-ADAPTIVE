@@ -19,7 +19,15 @@ export type { FinderBox } from "../model/box-targets";
 
 type Result = { kind: "ok"; label: string } | { kind: "no"; message: string };
 
-export function FindMyBox({ boxes }: { boxes: readonly FinderBox[] }) {
+/**
+ * boxes = 아직 입고되지 않은 내 상자들 — 「어느 상자인가요」에서 고른다(선물 상세).
+ * box = 상자가 이미 정해진 자리(처리할 일 카드 — 카드 하나가 상자 하나) — 고르는 칸과 위 안내 문단 없이 그 상자로 보낸다.
+ */
+type Props = { boxes: readonly FinderBox[]; box?: never } | { box: FinderBox; boxes?: never };
+
+export function FindMyBox(props: Props) {
+  const fixed = props.box ?? null;
+  const boxes: readonly FinderBox[] = fixed ? [fixed] : (props.boxes ?? []);
   const id = useId();
   const router = useRouter();
   const [picked, setPicked] = useState<string | null>(null);
@@ -80,8 +88,8 @@ export function FindMyBox({ boxes }: { boxes: readonly FinderBox[] }) {
 
   return (
     <div className={s.finder}>
-      {/* 바로 위에 「받는 주소 없이 보냈어요」 제목이 있다 — 같은 뜻의 제목을 한 단계 더 두지 않고 안내 문단으로 둔다 */}
-      <p className={s["finder-q"]}>받는 주소를 쓰지 않고 상자를 보냈다면</p>
+      {/* 바로 위에 「받는 주소 없이 보냈어요」 제목이 있다 — 같은 뜻의 제목을 한 단계 더 두지 않고 안내 문단으로 둔다. 상자가 정해진 카드에는 없다 */}
+      {fixed ? null : <p className={s["finder-q"]}>받는 주소를 쓰지 않고 상자를 보냈다면</p>}
       {current ? (
         <form
           aria-label="받는 주소 없이 보낸 상자 찾기"
@@ -91,25 +99,27 @@ export function FindMyBox({ boxes }: { boxes: readonly FinderBox[] }) {
             void submit(e.currentTarget);
           }}
         >
-          <div className="field">
-            <label htmlFor={`${id}-box`}>어느 상자인가요</label>
-            <select
-              id={`${id}-box`}
-              className="input"
-              value={current.target.id}
-              onChange={(e) => setPicked(e.currentTarget.value)}
-              aria-describedby={`${id}-box-hint`}
-            >
-              {boxes.map((b) => (
-                <option key={b.target.id} value={b.target.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-            <p className="hint" id={`${id}-box-hint`}>
-              아직 입고되지 않은 내 상자만 보여요.
-            </p>
-          </div>
+          {fixed ? null : (
+            <div className="field">
+              <label htmlFor={`${id}-box`}>어느 상자인가요</label>
+              <select
+                id={`${id}-box`}
+                className="input"
+                value={current.target.id}
+                onChange={(e) => setPicked(e.currentTarget.value)}
+                aria-describedby={`${id}-box-hint`}
+              >
+                {boxes.map((b) => (
+                  <option key={b.target.id} value={b.target.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+              <p className="hint" id={`${id}-box-hint`}>
+                아직 입고되지 않은 내 상자만 보여요.
+              </p>
+            </div>
+          )}
           <div className="field">
             <label htmlFor={`${id}-no`}>그 상자를 보낸 택배 송장번호</label>
             <input

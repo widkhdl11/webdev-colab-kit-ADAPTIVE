@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ACCOUNT_MENU, CREATOR_APP_MENU, CREATOR_CUSTOMIZE_HREF, CREATOR_SENT_HREFS, currentMenuItem, FAN_APP_MENU, FAN_PROFILE_EDIT_HREF } from "./app-menu";
+import { ACCOUNT_MENU, BADGE_SPEECH, CREATOR_APP_MENU, CREATOR_CUSTOMIZE_HREF, CREATOR_SENT_HREFS, currentMenuItem, FAN_APP_MENU, FAN_PROFILE_EDIT_HREF } from "./app-menu";
 
 // 크리에이터 앱 메뉴 구성 (디자인 기준 11절, 시안 docs/design/mockups/site/v19-sidebar/creator-a.html).
 
@@ -90,5 +90,10 @@ describe("팬 메뉴 — 처리할 일 (action-center INV-J2, design-rules 12절
     const it = mine.items.find((i) => i.label === "처리할 일")!;
     expect([it.href, it.icon, it.badge]).toEqual(["/me/actions", "clipboard-list", "actions"]);
     expect(currentMenuItem(FAN_APP_MENU, "/me/actions")?.label).toBe("처리할 일");
+  });
+
+  it("INV-J2: 뱃지 낭독은 수만 — 칸 이름과 이어 읽으면 「처리할 일, 3건」(칸 이름을 두 번 읽지 않는다, 시안 aria-label=\"2건\")", () => {
+    expect(BADGE_SPEECH.actions(3)).toBe("3건");
+    expect(BADGE_SPEECH.actions(3)).not.toContain("처리할 일");
   });
 });

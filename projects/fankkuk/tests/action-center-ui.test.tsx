@@ -2,7 +2,12 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
+const nav = vi.hoisted(() => ({ refresh: vi.fn(), push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => nav }));
+// 카드 버튼이 부르는 기존 처리 경로(INV-J4) — 브라우저 요청 대신 무엇을 무엇으로 불렀는지 본다
+const api = vi.hoisted(() => ({ prepare: vi.fn(), find: vi.fn() }));
+vi.mock("@/features/difference-pay/api/post-difference-client", () => ({ postDifferencePrepare: api.prepare }));
+vi.mock("@/features/box-waybill/api/post-waybill-client", async (orig) => ({ ...(await orig<object>()), postFind: api.find }));
 // 헤더 읽기 모듈이 서버 전용 세션 모듈을 함께 가져온다 — 이 시험은 그 경로를 부르지 않는다
 vi.mock("@/shared/api/supabase/server", () => ({ createRequestSupabase: vi.fn() }));
 
@@ -28,6 +33,9 @@ beforeEach(() => {
   host = document.createElement("div");
   document.body.appendChild(host);
   root = createRoot(host);
+  nav.refresh.mockReset();
+  api.prepare.mockReset();
+  api.find.mockReset();
 });
 
 afterEach(() => {
@@ -36,6 +44,8 @@ afterEach(() => {
 });
 
 const ORDER = "FC-W5N3T";
+/** 화면을 그린 때 — 서울 10월 16일 낮 */
+const NOW = "2026-10-16T03:00:00+00:00";
 
 const ROWS = {
   difference: {
@@ -129,13 +139,15 @@ async function counts(rows: readonly unknown[]) {
   act(() => root.render(<SiteHeader {...header} />));
   const badgeLink = host.querySelector('a[href="/me/actions"]');
   const badge = badgeLink?.querySelector(".badge")?.textContent ?? null;
+  // 낭독기가 읽는 링크 이름 — aria-hidden 숫자를 뺀 글자
+  const speech = badgeLink ? [...badgeLink.querySelectorAll("span:not([aria-hidden])")].map((e) => e.textContent).join("") : null;
 
   act(() => root.render(<HomePage nickname="별빛" profile={profile} gifts={[]} following={[]} faceToneByName={{}} notices={[]} actionCount={items.length} />));
   const homeLine = host.querySelector('[data-testid="action-line"]');
   const homeText = homeLine?.textContent ?? null;
   const homeHref = homeLine?.querySelector("a")?.getAttribute("href") ?? null;
 
-  act(() => root.render(<ActionCenterPage items={items} clientKey="" />));
+  act(() => root.render(<ActionCenterPage items={items} clientKey="" now={NOW} />));
   const cardsN = host.querySelectorAll("section.action-card").length;
   const titleCount = host.querySelector("h1 .ph-count")?.textContent ?? null;
   const empty = host.querySelector('[data-testid="action-empty"]');
@@ -144,7 +156,7 @@ async function counts(rows: readonly unknown[]) {
   const detailLine = host.querySelector('[data-testid="action-line"]');
   const detailFirst = host.querySelector("main")?.querySelector('[data-testid="action-line"]') === detailLine;
 
-  return { calls, badge, homeText, homeHref, cardsN, titleCount, empty, detailText: detailLine?.textContent ?? null, detailFirst, items };
+  return { calls, badge, speech, homeText, homeHref, cardsN, titleCount, empty, detailText: detailLine?.textContent ?? null, detailFirst, items };
 }
 
 describe("INV-J2: 숫자는 한 읽기 결과의 줄 수 — 사이드바·홈·페이지·선물 상세가 같은 수", () => {
@@ -152,6 +164,8 @@ describe("INV-J2: 숫자는 한 읽기 결과의 줄 수 — 사이드바·홈·
     const r = await counts([ROWS.difference, ROWS.missing]);
     expect(r.calls.filter((c) => c === "my_action_items")).toHaveLength(1);
     expect(r.badge).toBe("2");
+    // 칸 이름을 두 번 읽지 않는다 — 「처리할 일, 2건」(시안 뱃지 aria-label="2건")
+    expect(r.speech).toBe("처리할 일, 2건");
     expect(r.homeText).toContain("처리할 일 2건");
     expect(r.homeHref).toBe("/me/actions");
     expect(r.cardsN).toBe(2);
@@ -187,6 +201,27 @@ describe("INV-J2: 숫자는 한 읽기 결과의 줄 수 — 사이드바·홈·
     expect(header.role === "fan" && header.actionCount).toBe(1);
   });
 
+  it("INV-J2 (실패경로): 헤더가 스스로 읽다 실패하면 뱃지만 빠지고 헤더는 그려진다 — 처리할 일 화면의 읽기는 실패를 그대로 드러낸다", async () => {
+    const rpc = vi.fn(async (fn: string) => (fn === "my_action_items" ? { data: null, error: { code: "57014", message: "timeout" } } : { data: [], error: null }));
+    const failing = { rpc } as unknown as Parameters<typeof readActionItems>[0];
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const header = await readSiteHeader(failing, viewer, "/home", []);
+      expect(header.role === "fan" && header.actionCount).toBe(0);
+      act(() => root.render(<SiteHeader {...header} />));
+      const link = host.querySelector('a[href="/me/actions"]');
+      expect(link).not.toBeNull();
+      expect(link?.querySelector(".badge")).toBeNull();
+      // 넘겨받은 결과가 실패(null)였어도 같다 — 다시 읽지 않는다
+      const passed = await readSiteHeader(failing, viewer, "/home", [], null);
+      expect(passed.role === "fan" && passed.actionCount).toBe(0);
+      expect(rpc.mock.calls.filter(([fn]) => fn === "my_action_items")).toHaveLength(1);
+    } finally {
+      errors.mockRestore();
+    }
+    await expect(readActionItems(failing)).rejects.toThrow("처리할 일을 읽지 못했다");
+  });
+
   it("INV-J2: 크리에이터 헤더는 처리할 일을 읽지 않는다(크리에이터 쪽은 아직 만들지 않음)", async () => {
     const { client, calls } = fakeClient([ROWS.difference]);
     await readSiteHeader(client, { ...viewer, role: "creator" }, "/creator");
@@ -198,7 +233,7 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
   const items: ActionItem[] = parseActionItems([ROWS.difference, ROWS.missing, ROWS.revgift]);
 
   function card(kind: string): Element {
-    act(() => root.render(<ActionCenterPage items={items} clientKey="" />));
+    act(() => root.render(<ActionCenterPage items={items} clientKey="" now={NOW} />));
     const el = host.querySelector(`section.action-card[data-kind="${kind}"]`);
     if (!el) throw new Error(`${kind} 카드가 없다`);
     return el;
@@ -212,18 +247,65 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
     expect(el.textContent).toContain("중형");
     expect(el.querySelector(".pay-total")?.textContent).toContain("2,000원");
     // 2026-10-18T14:59Z = 서울 10월 18일 오후 11시 59분
-    expect(el.querySelector(".action-due")?.textContent).toContain("10월 18일 오후 11시 59분까지");
+    // 남은 날은 서울 날짜로 — 16일에 보면 18일 기한은 2일(시안 「· 2일 남았어요」)
+    expect(el.querySelector(".action-due")?.textContent).toBe("10월 18일 오후 11시 59분까지 · 2일 남았어요");
     expect(el.querySelector("button")?.textContent).toBe("2,000원 결제하기");
   });
 
-  it("INV-J4: 도착하지 않은 상자 — 「받는 주소 없이 보냈어요」 찾기 양식이 그 상자 하나로 붙는다", () => {
+  it("INV-J4: 추가 결제 버튼을 누르면 기존 차액 결제 준비(postDifferencePrepare)를 그 상자로 부른다 — 거부면 화면을 다시 읽는다", async () => {
+    api.prepare.mockResolvedValue({ ok: false, message: "차액을 낼 수 없는 상태예요." });
+    const el = card("difference");
+    await act(async () => {
+      el.querySelector("button")!.click();
+    });
+    expect(api.prepare).toHaveBeenCalledTimes(1);
+    expect(api.prepare).toHaveBeenCalledWith({ boxId: ROWS.difference.box_id });
+    expect(host.querySelector('section[data-kind="difference"] [role="alert"]')?.textContent).toBe("차액을 낼 수 없는 상태예요.");
+    expect(nav.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("INV-J4: 결제 준비가 받아 주면 다시 읽지 않는다(결제창으로 넘어간다)", async () => {
+    api.prepare.mockResolvedValue({ ok: true, checkout: { orderId: "diff_1", orderNo: ORDER, amountKrw: 2000 } });
+    const el = card("difference");
+    await act(async () => {
+      el.querySelector("button")!.click();
+    });
+    expect(api.prepare).toHaveBeenCalledWith({ boxId: ROWS.difference.box_id });
+    expect(nav.refresh).not.toHaveBeenCalled();
+  });
+
+  it("INV-J4: 도착하지 않은 상자 — 찾기 양식이 그 상자로 정해져 붙는다(고르는 칸·위 안내 문단 없음, 세 칸은 그대로)", () => {
     const el = card("missing_box");
     expect(el.querySelector("h2")?.textContent).toBe("도착이 늦어요");
     const form = el.querySelector('form[aria-label="받는 주소 없이 보낸 상자 찾기"]');
     expect(form).not.toBeNull();
-    const options = [...(form?.querySelectorAll("select option") ?? [])].map((o) => (o as HTMLOptionElement).value);
-    expect(options[0]).toBe(ROWS.missing.box_id);
-    expect(el.querySelector(".action-due")?.textContent).toContain("11월 1일 오후 12시까지");
+    expect(form?.querySelectorAll("select")).toHaveLength(1); // 택배사만 — 「어느 상자인가요」 없음
+    expect(el.textContent).not.toContain("어느 상자인가요");
+    expect(el.textContent).not.toContain("받는 주소를 쓰지 않고");
+    expect([...(form?.querySelectorAll("label") ?? [])].map((l) => l.textContent)).toEqual([
+      "그 상자를 보낸 택배 송장번호",
+      "택배사",
+      "송장에 적은 보낸 사람 이름의 첫 글자",
+    ]);
+    expect(el.querySelector(".action-due")?.textContent).toBe("11월 1일 오후 12시까지 · 16일 남았어요");
+  });
+
+  it("INV-J4: 찾기를 보내면 기존 찾기 경로(postFind)를 카드의 그 상자로 부른다", async () => {
+    api.find.mockResolvedValue({ kind: "ok", body: { matched: false, message: "맞는 상자를 못 찾았어요." } });
+    const el = card("missing_box");
+    const form = el.querySelector("form") as HTMLFormElement;
+    (form.querySelector('input[name="waybill"]') as HTMLInputElement).value = "123456789012";
+    (form.querySelector('input[name="initial"]') as HTMLInputElement).value = "별";
+    const carrier = form.querySelector("select") as HTMLSelectElement;
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(carrier, "cj");
+      carrier.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await act(async () => {
+      form.requestSubmit();
+    });
+    expect(api.find).toHaveBeenCalledTimes(1);
+    expect(api.find).toHaveBeenCalledWith({ kind: "box", id: ROWS.missing.box_id }, "123456789012", "cj", "별");
   });
 
   it("INV-J4: 역조공 받기 — 기존 받기 화면으로 가는 「받기」", () => {
@@ -232,7 +314,7 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
     const go = el.querySelector("a.btn");
     expect(go?.getAttribute("href")).toBe("/me/revgifts/RG-T1ABCDE0");
     expect(go?.textContent).toBe("받기");
-    expect(el.querySelector(".action-due")?.textContent).toContain("10월 20일 오후 12시까지");
+    expect(el.querySelector(".action-due")?.textContent).toBe("10월 20일 오후 12시까지 · 4일 남았어요");
   });
 
   it("INV-J1 (실패경로): 꼴이 다른 줄(종류가 넷째 것)이 오면 읽기 자체가 실패한다 — 일부만 버려 숫자와 목록이 달라지지 않게", () => {

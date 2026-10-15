@@ -22,7 +22,7 @@ export default async function Page() {
     <>
       <SiteHeader {...header} />
       <MyShell width="list">
-        <ActionCenterPage items={items} clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""} />
+        <ActionCenterPage items={items} clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""} now={new Date().toISOString()} />
       </MyShell>
       <SiteFooter />
     </>

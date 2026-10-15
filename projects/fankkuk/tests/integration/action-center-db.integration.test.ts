@@ -167,6 +167,26 @@ describe("INV-J1: 카드는 세 종류, 상자(몫) 하나에 하나, 보이는 
     expect(await cards("byeolbit_fan", [d.orderNo])).toEqual([]);
   });
 
+  // 주문 상태 · 상자 상태 하나씩 — 카드가 차액 결제 준비(prepare_difference_payment)의 판정과 같은지
+  for (const status of ["canceled", "rejected"] as const) {
+    it(`INV-J1 S1b (실패경로): ${status} 주문의 차액 → 카드 없음, 결제 준비도 거부(P0022)`, async () => {
+      const d = await differenceOrder();
+      expect(await cards("byeolbit_fan", [d.orderNo])).toEqual([`difference:${d.orderNo}:1`]);
+      psql(`update public.orders set status = '${status}' where id = '${d.orderId}'`);
+      expect(await cards("byeolbit_fan", [d.orderNo])).toEqual([]);
+      expect((await (await signedInClient("byeolbit_fan")).rpc("prepare_difference_payment", { p_box_id: d.boxId })).error?.code).toBe("P0022");
+    });
+  }
+
+  it("INV-J1 S1: 상자가 크리에이터 확인 대기(held)인 차액 → 결제 준비가 받아 주므로 카드가 있다", async () => {
+    const d = await differenceOrder();
+    psql(`begin; set local session_replication_role = replica; update public.office_parcels set state = 'held' where box_id = '${d.boxId}'; commit;`);
+    expect(await cards("byeolbit_fan", [d.orderNo])).toEqual([`difference:${d.orderNo}:1`]);
+    const prepared = await (await signedInClient("byeolbit_fan")).rpc("prepare_difference_payment", { p_box_id: d.boxId });
+    expect(prepared.error).toBeNull();
+    expect(prepared.data).toEqual([expect.objectContaining({ order_no: d.orderNo, amount_krw: 2000 })]);
+  });
+
   it("INV-J1 S1b (실패경로): 결제 + 720시간에 닫힌 상자는 카드가 없고, 같은 주문의 입고된 상자도 없다", async () => {
     const g = await waitingGift(2, 400);
     await receive(g.boxIds[0]!);
@@ -265,6 +285,12 @@ describe("INV-J3: 계정 인자 없음, 로그인 토큰의 계정 것만, 칸�
     expect((await measure(qr, "medium")).error).toBeNull();
     expect(await cards("haru_creator", [o.orderNo])).toEqual([`difference:${o.orderNo}:1`]);
     expect(await cards("byeolbit_fan", [o.orderNo])).toEqual([]);
+  });
+
+  it("INV-J3 S3 (실패경로): 하루(크리에이터)가 받는 주문(별빛 → 하루)의 차액은 하루로 읽으면 0줄 — 받는 사람이 아니라 보낸 사람 것", async () => {
+    const d = await differenceOrder();
+    expect(await cards("byeolbit_fan", [d.orderNo])).toEqual([`difference:${d.orderNo}:1`]);
+    expect(await cards("haru_creator", [d.orderNo])).toEqual([]);
   });
 });
 

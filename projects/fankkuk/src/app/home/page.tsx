@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { readActionItems } from "@/entities/action-item/api/read-action-items";
+import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";
 import { readFanProfile } from "@/entities/fan/api/read-fan-profile";
 import { fanImageUrl } from "@/entities/fan/model/fan-profile";
@@ -23,13 +23,13 @@ export default async function Page() {
   if (viewer?.role === "creator") redirect(CREATOR_HOME);
   if (viewer?.role !== "fan") redirect("/login");
   // 서로 기대지 않는 읽기 다섯은 한꺼번에 — 프로필 구간은 공개 네 칸(my-account INV-A13). 못 읽으면 사진·소개 없이 닉네임만 그린다.
-  // 처리할 일은 한 번 읽어 사이드바 숫자와 홈 한 줄에 함께 넘긴다(action-center INV-J2)
+  // 처리할 일은 한 번 읽어 사이드바 숫자와 홈 한 줄에 함께 넘긴다(action-center INV-J2). 못 읽으면 둘 다 빼고 홈은 그린다
   const [all, cards, fanProfile, noticeRows, actions] = await Promise.all([
     readMyGiftViews(supabase),
     readCreatorCards(supabase, { signedIn: true }),
     readFanProfile(supabase, viewer.userId),
     readNotices(supabase),
-    readActionItems(supabase),
+    readActionItemsOrNull(supabase),
   ]);
   const gifts = all.filter((v) => fanGiftBucket(v) === "ongoing");
   const following = cards.filter((c) => c.following).map(({ id, name, faceTone, handle, approvalMinutes }) => ({ id, name, faceTone, handle, approvalMinutes }));
@@ -47,7 +47,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/home", all, actions)} />
-      <HomePage nickname={fanProfile?.nickname ?? viewer.nickname ?? ""} profile={profile} gifts={gifts} following={following} faceToneByName={faceToneByName} notices={notices} actionCount={actions.length} />
+      <HomePage nickname={fanProfile?.nickname ?? viewer.nickname ?? ""} profile={profile} gifts={gifts} following={following} faceToneByName={faceToneByName} notices={notices} actionCount={actions?.length ?? 0} />
       <SiteFooter />
     </>
   );
