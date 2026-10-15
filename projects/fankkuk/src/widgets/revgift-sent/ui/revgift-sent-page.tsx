@@ -1,7 +1,7 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { canReportNotMine, isWaybillEditable, type ShareBox } from "@/entities/parcel/model/box-rows";
+import { canReportNotMine, isMissing, isWaybillEditable, type ShareBox } from "@/entities/parcel/model/box-rows";
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
 import { countBatchStates, summarizeSent, toSentBatches, type SentSummary } from "@/entities/revgift/model/sent-batches";
 import { sentStateTag } from "@/entities/revgift/ui/received-status";
@@ -43,6 +43,23 @@ function waybillShown(box: ShareBox | undefined, shareState: SentRevgift["state"
   return !isWaybillEditable(box.state) || shareState !== "not_received";
 }
 
+/** 몫 하나에 대해 이 화면이 쓰는 값 — 줄·안내 판·접힌 칸이 같은 값을 보도록 몫마다 한 번만 센다 */
+type ShareView = {
+  x: SentRevgift;
+  box: ShareBox | undefined;
+  /** 받는 주소 6자리(그릴 때만) */
+  addressCode: string | null;
+  /** 접힌 칸에 줄을 둘 상자(없으면 null) */
+  waybillBox: ShareBox | null;
+};
+
+function toShareViews(shares: readonly SentRevgift[], boxByOrder: ReadonlyMap<string, ShareBox>, officeAddress: string | null): ShareView[] {
+  return shares.map((x) => {
+    const box = boxByOrder.get(x.orderNo);
+    return { x, box, addressCode: shareAddressCode(box, officeAddress, x.state), waybillBox: waybillShown(box, x.state) ? box : null };
+  });
+}
+
 function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string }) {
   if (isWaybillEditable(box.state)) {
     return (
@@ -55,6 +72,16 @@ function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string
       />
     );
   }
+  if (isMissing(box.state)) {
+    // 결제 + 30일이 지나도 오지 않아 닫힌 상자(office-workflow INV-W10) — 입고되지 않았다. 문구는 팬 선물 진행 화면과 같은 말
+    return (
+      <p className={`tags ${s["inv-tags"]}`}>
+        <span className={statusTagClass("warn")}>도착하지 않음</span>
+        <span className="t-meta">결제하고 30일이 지나도 도착하지 않아 이 상자는 닫혔어요</span>
+      </p>
+    );
+  }
+  // 남은 것은 입고 뒤(hasArrived) 상태뿐이다
   return (
     <p className={`tags ${s["inv-tags"]}`}>
       <span className={statusTagClass("success")}>
@@ -67,11 +94,8 @@ function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string
 }
 
 /** 묶음 아래 「송장번호 적기(선택)」 — 평소엔 접혀 있다(design-rules 0000절·12절). 칸에 넣을 팬이 없으면 그리지 않는다 */
-function WaybillFold({ shares, boxByOrder }: { shares: readonly SentRevgift[]; boxByOrder: ReadonlyMap<string, ShareBox> }) {
-  const items = shares.flatMap((x) => {
-    const box = boxByOrder.get(x.orderNo);
-    return waybillShown(box, x.state) ? [{ x, box }] : [];
-  });
+function WaybillFold({ views }: { views: readonly ShareView[] }) {
+  const items = views.flatMap(({ x, waybillBox }) => (waybillBox ? [{ x, box: waybillBox }] : []));
   if (items.length === 0) return null;
   return (
     <details className={s.fold}>
@@ -200,7 +224,9 @@ export function RevgiftSentPage({
             <p className="t-meta">나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
           </section>
         ) : (
-          batches.map((b, bi) => (
+          batches.map((b, bi) => {
+            const views = toShareViews(b.shares, boxByOrder, b.officeAddress);
+            return (
             <section key={b.sentAt} aria-labelledby={`rv-batch-${bi}`}>
               <h2 className={`t-card ${s["batch-h"]}`} id={`rv-batch-${bi}`}>
                 {formatDateTime(b.sentAt)} 보낸 역조공
@@ -209,12 +235,10 @@ export function RevgiftSentPage({
                 {/* 한 번 보낸 것 안에서는 같은 팬이 두 번 없다(DB 유일 send_id·fan_id) — 묶음 줄은 「팬 N명」이 맞다 */}
                 팬 {b.shares.length}명 · {batchSummary(b.shares)}
               </p>
-              {b.officeAddress && b.shares.some((x) => shareAddressCode(boxByOrder.get(x.orderNo), b.officeAddress, x.state)) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
+              {b.officeAddress && views.some((v) => v.addressCode) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
               <ul className={s.rows} aria-label={`${formatDateTime(b.sentAt)} 묶음 팬별 지금 상태`}>
-                {b.shares.map((x, i) => {
+                {views.map(({ x, box, addressCode }, i) => {
                   const tag = sentStateTag(x.state);
-                  const box = boxByOrder.get(x.orderNo);
-                  const addressCode = shareAddressCode(box, b.officeAddress, x.state);
                   return (
                     <li key={x.orderNo}>
                       <div className={s.row}>
@@ -239,9 +263,10 @@ export function RevgiftSentPage({
                   );
                 })}
               </ul>
-              <WaybillFold shares={b.shares} boxByOrder={boxByOrder} />
+              <WaybillFold views={views} />
             </section>
-          ))
+            );
+          })
         )}
         {finderBoxes.length > 0 ? (
           <section className="card" aria-labelledby="rv-find">

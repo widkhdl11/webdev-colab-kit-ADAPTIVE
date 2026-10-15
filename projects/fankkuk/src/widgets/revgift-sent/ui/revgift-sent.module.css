@@ -1,15 +1,15 @@
 /* 보낸 역조공 — 시안 v21-addendum3/cre-revgift-sent.html(cre-21.css .rows·.row·.fold·.inv-row), 이전 v18 creator-revgifts.html. 머리(.page-head·.ph-*)·카드·격자·태그·빈 상태는 base.css 공통 부품 */
 
 .batch-h { font-size: var(--fs-card); line-height: 1.4; }
-/* 결제 끝 안내 — 아래 판과 붙지 않게 쌓인 판 사이 간격(32) */
-.paid { margin-bottom: 48px; padding: 16px 24px; border-radius: var(--r-btn); background: var(--primary-50); color: var(--brand-ink); } /* v18-cre.css .paid — 색은 빨강+회색만 */
-.lock { width: 56px; height: 56px; margin-bottom: 12px; }
+/* 결제 끝 안내 — 아래 판과 붙지 않게 아래 간격 48 */
+.paid { margin-bottom: var(--space-12); padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--primary-50); color: var(--brand-ink); } /* v18-cre.css .paid — 연한 하늘 바탕(--primary-50) + 진한 회색 글자(--brand-ink, 하늘색 글자는 쓰지 않는다 — design-rules 000절) */
+.lock { width: 56px; height: 56px; margin-bottom: var(--space-3); }
 .privacy-t { display: block; }
-.body-gap { margin-top: 8px; }
+.body-gap { margin-top: var(--space-2); }
 
 /* 묶음 — 제목 아래 상태 한 줄, 안내 판, 팬별 「지금 상태」 한 줄 목록(위아래), 그 아래 송장번호 접힌 칸 */
-.facts { margin-top: 4px; }
-.guide { margin-top: 16px; }
+.facts { margin-top: var(--space-1); }
+.guide { margin-top: var(--space-4); }
 .rows { margin: var(--space-4) 0 0; padding: 0; list-style: none; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
 .rows > li + li { border-top: 1px solid var(--gray-200); }
 .row { display: flex; align-items: center; gap: var(--space-4); min-height: 64px; padding: var(--space-4) var(--space-6); }
@@ -43,10 +43,10 @@
   .invName { padding-top: 0; }
 }
 
-.find-text { margin-top: 8px; }
-.find-box { margin-top: 24px; }
+.find-text { margin-top: var(--space-2); }
+.find-box { margin-top: var(--space-6); }
 
-.notes { display: grid; gap: 8px; margin-top: 16px; padding: 0; list-style: none; color: var(--ink); }
+.notes { display: grid; gap: var(--space-2); margin-top: var(--space-4); padding: 0; list-style: none; color: var(--ink); }
 .notes li::before { content: "· "; } /* v18.css .notes */
 
 

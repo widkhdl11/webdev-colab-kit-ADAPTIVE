@@ -53,7 +53,7 @@ function MySection({ publicName, requests, accessLog, incoming, sentGifts, now }
         </h1>
       </div>
       <div className={`card ${s.soft}`}>
-        <h3>승인 대기</h3>
+        <h2 className="t-card">승인 대기</h2>
         <p className={s.big}>
           {waiting}
           <small>건</small>
@@ -82,21 +82,21 @@ function MySection({ publicName, requests, accessLog, incoming, sentGifts, now }
       <div className={`grid cols-3 ${s.cards3}`}>
         {/* 받은 선물을 한 건씩 보는 화면이 아직 없어 승인 요청 화면(대기·결정한 요청)으로 잇는다 — BACKLOG */}
         <Link className={`card ${s.linkCard}`} href="/creator/requests">
-          <h3>진행 중인 선물</h3>
+          <h2 className="t-card">진행 중인 선물</h2>
           <p className={s.big}>
             {ongoing}
             <small>개</small>
           </p>
         </Link>
         <Link className={`card ${s.linkCard}`} href="/gifts">
-          <h3>내가 보낸 선물</h3>
+          <h2 className="t-card">내가 보낸 선물</h2>
           <p className={s.big}>
             {sentGifts.length}
             <small>개</small>
           </p>
         </Link>
         <Link className={`card ${s.linkCard}`} href="/creator/log">
-          <h3>최근 열람 기록</h3>
+          <h2 className="t-card">최근 열람 기록</h2>
           <p>{lastLog ? `최근 열람 ${formatDateTime(lastLog.at)}` : "아직 주소가 열린 적이 없어요"}</p>
         </Link>
       </div>

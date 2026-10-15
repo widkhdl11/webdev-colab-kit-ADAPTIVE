@@ -3,7 +3,7 @@
 /* 등록된 번호 + 고치기 */
 .fixed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 12px; }
 .lab { color: var(--sub); }
-.no { font-size: 20px; font-weight: var(--fw-bold); letter-spacing: .3px; font-variant-numeric: tabular-nums; }
+.no { font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: .3px; font-variant-numeric: tabular-nums; }
 
 /* 입력 */
 .edit { margin-top: 12px; }
@@ -13,7 +13,7 @@
 /* 크리에이터 몫 줄 — 보낸 역조공의 「송장번호 적기(선택)」 접힌 칸 안, 팬 이름 옆 칸(시안 v21-addendum3 cre-21.css .inv-row) */
 .share { min-width: 0; }
 .share .fixed { margin-top: 0; gap: 8px 12px; }
-.share .no { font-size: 18px; }
+.share .no { font-size: var(--fs-lead); }
 .share .edit { margin-top: 0; }
 .share .inv { grid-template-columns: minmax(0, 320px) auto; }
 
