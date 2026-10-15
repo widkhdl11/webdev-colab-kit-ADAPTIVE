@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./home.module.css";
 
 // 팬 홈 맨 아래 「선물은 이렇게 도착해요」 4단계 — 시안 docs/design/mockups/site/v21-addendum3/fan-home.html (details.fold · ol.steps4).
 // 처음 방문에는 펼쳐 두고 「알겠어요, 다시 보지 않기」를 누르면 그 뒤로는 접힌 한 줄(design-rules 12절). 접힌 줄을 누르면 언제든 펼친다.
-// 본 적 있는지는 이 브라우저에만 적는다(localStorage). 읽기·쓰기가 막힌 브라우저에서는 처음 방문처럼 펼친다.
+// 본 적 있는지는 이 브라우저에만 적는다(localStorage). 읽기·쓰기가 막힌 브라우저에서는 이번 화면에서만 접고, 다음 방문에는 다시 펼친다.
 
 const KEY = "home-how-dismissed";
 const EVENT = "home-how-dismissed";
@@ -37,7 +37,10 @@ function subscribe(onChange: () => void): () => void {
 
 export function HowFold() {
   // 서버 그림은 처음 방문(펼침) — 다시 온 사람은 붙은 뒤 바로 접힌다
-  const dismissed = useSyncExternalStore(subscribe, readDismissed, () => false);
+  const stored = useSyncExternalStore(subscribe, readDismissed, () => false);
+  // 저장이 막혀도 누른 화면에서는 접힌다
+  const [dismissedNow, setDismissedNow] = useState(false);
+  const dismissed = stored || dismissedNow;
   const summaryRef = useRef<HTMLElement>(null);
 
   const dismiss = () => {
@@ -46,6 +49,7 @@ export function HowFold() {
     } catch {
       // 저장이 막힌 브라우저 — 다음 방문에는 다시 펼쳐진다
     }
+    setDismissedNow(true);
     window.dispatchEvent(new Event(EVENT));
     // 누른 버튼이 사라지므로 접힌 줄로 초점을 옮긴다
     summaryRef.current?.focus();

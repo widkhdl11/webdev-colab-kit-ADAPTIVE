@@ -34,6 +34,7 @@ export function FollowButton({
   const [following, setFollowing] = useState(initialFollowing);
   const [failed, setFailed] = useState(false);
   const savingRef = useRef(false);
+  const [saving, setSaving] = useState(false);
   const unfollowConfirm = useUnfollowConfirm();
 
   if (mode === "hidden") return null;
@@ -55,15 +56,17 @@ export function FollowButton({
     );
   }
 
-  // 저장 중에 다시 누르면 무시한다 — 요청 순서가 뒤바뀌어 화면과 저장 값이 어긋나지 않게
-  const toggle = async () => {
+  // 저장 중에는 버튼을 막는다 — 요청 순서가 뒤바뀌어 화면과 저장 값이 어긋나지 않게.
+  // 바꿀 값(next)을 직접 받는다 — 확인 창이 열린 사이 앞 저장이 실패해 상태가 되돌아가도, 창의 「취소하기」는 늘 「끊기」만 보낸다
+  const save = async (next: boolean) => {
     if (savingRef.current) return;
     savingRef.current = true;
-    const next = !following;
+    setSaving(true);
     setFollowing(next);
     setFailed(false);
     const outcome = await saveFollow(creatorId, next);
     savingRef.current = false;
+    setSaving(false);
     // 팔로우가 바뀌면 화면의 「선물 보내기」 자리도 바뀐다(INV-L9 — 팔로우한 사람에게만 보낸다) — 서버가 다시 그리게 한다
     if (outcome === "ok") {
       router.refresh();
@@ -76,8 +79,8 @@ export function FollowButton({
 
   // 팔로우는 바로, 팔로우 끊기는 확인 창을 거쳐서
   const onPress = () => {
-    if (following) unfollowConfirm.ask(creatorName, () => void toggle());
-    else void toggle();
+    if (following) unfollowConfirm.ask(creatorName, () => void save(false));
+    else void save(true);
   };
 
   const notice = (
@@ -89,7 +92,7 @@ export function FollowButton({
   if (variant === "profile") {
     return (
       <>
-        <button className="btn btn--line" type="button" onClick={onPress}>
+        <button className="btn btn--line" type="button" onClick={onPress} disabled={saving}>
           {following ? "팔로우 중" : "팔로우"}
         </button>
         {notice}
@@ -106,6 +109,7 @@ export function FollowButton({
           type="button"
           aria-label={`${creatorName} 팔로우 중`}
           onClick={onPress}
+          disabled={saving}
         >
           팔로우 중
         </button>
@@ -115,6 +119,7 @@ export function FollowButton({
           type="button"
           aria-label={`${creatorName} 팔로우`}
           onClick={onPress}
+          disabled={saving}
         >
           팔로우
         </button>

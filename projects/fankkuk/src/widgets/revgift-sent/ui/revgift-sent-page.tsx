@@ -175,6 +175,7 @@ export function RevgiftSentPage({
                 {formatDateTime(b.sentAt)} 보낸 역조공
               </h2>
               <p className={`t-meta ${s.facts}`}>
+                {/* 한 번 보낸 것 안에서는 같은 팬이 두 번 없다(DB 유일 send_id·fan_id) — 묶음 줄은 「팬 N명」이 맞다 */}
                 팬 {b.shares.length}명 · {batchSummary(b.shares)}
               </p>
               {b.officeAddress && b.shares.some((x) => shareAddressCode(boxByOrder.get(x.orderNo), b.officeAddress, x.state)) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
