@@ -19,6 +19,7 @@ status: approved
 - **프레임워크**: Next.js (App Router) + React
 - **데이터·인증**: Supabase (Postgres + Auth)
 - **배포**: Vercel
+  - 접속 주소(가입 미리 확인의 횟수 한도)는 Vercel 이 덮어쓴 헤더(x-real-ip·x-forwarded-for)를 믿는다 — Vercel 밖에 띄우면 이 헤더를 누가 채우는지 다시 봐야 한다.
 - **고정 IP 경로**: 카카오 인증 API 호출만 고정 IP를 가진 경로(소형 VM 또는 고정 IP 프록시)로 보낸다.
   어느 쪽인지는 서명 승인 스펙에서 정한다 — 원본 일정표상 개발 초기에 먼저 정해야 하는 항목이다
 

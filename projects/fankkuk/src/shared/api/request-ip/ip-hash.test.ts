@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { clientIp, hashIp, readIpHashSecret } from "./ip-hash";
 
@@ -33,5 +34,26 @@ describe("INV-U14: 접속 주소 해시", () => {
     expect(clientIp(new Headers({ "x-real-ip": "203.0.113.1", "x-forwarded-for": "198.51.100.1" }))).toBe("203.0.113.1");
     expect(clientIp(new Headers({ "x-forwarded-for": " 198.51.100.1 , 10.0.0.1" }))).toBe("198.51.100.1");
     expect(clientIp(new Headers())).toBe("unknown");
+  });
+
+  it("INV-U14: IPv6 는 앞 64비트 대역으로 센다 — 같은 /64 의 다른 주소는 같은 해시, 줄여 쓴 꼴·대문자도 같다", () => {
+    const h = hashIp(SECRET_A, "2001:db8:1:2::1");
+    expect(hashIp(SECRET_A, "2001:db8:1:2:aaaa:bbbb:cccc:dddd")).toBe(h);
+    expect(hashIp(SECRET_A, "2001:0DB8:0001:0002:0:0:0:ffff")).toBe(h);
+    expect(hashIp(SECRET_A, "2001:db8:1:2::1%eth0")).toBe(h);
+  });
+
+  it("INV-U14 (실패경로): 다른 /64 대역은 다른 해시", () => {
+    const h = hashIp(SECRET_A, "2001:db8:1:2::1");
+    expect(hashIp(SECRET_A, "2001:db8:1:3::1")).not.toBe(h);
+    expect(hashIp(SECRET_A, "2001:db9:1:2::1")).not.toBe(h);
+    expect(hashIp(SECRET_A, "::1")).not.toBe(h);
+  });
+
+  it("INV-U14: IPv4 는 주소 그대로 센다(IPv4 를 담은 IPv6 꼴도 그 IPv4 로)", () => {
+    const direct = createHmac("sha256", SECRET_A).update("203.0.113.7").digest("hex");
+    expect(hashIp(SECRET_A, "203.0.113.7")).toBe(direct);
+    expect(hashIp(SECRET_A, "::ffff:203.0.113.7")).toBe(direct);
+    expect(hashIp(SECRET_A, "203.0.113.8")).not.toBe(direct);
   });
 });

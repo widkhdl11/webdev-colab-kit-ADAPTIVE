@@ -156,6 +156,11 @@ describe("INV-U13: 가입 때 받은 닉네임으로 계정이 생긴다", () =>
     expect(psql(`select count(*) from public.profiles where lower(btrim(nickname)) = '동시닉';`)).toBe("1");
   });
 
+  it("INV-U13: 겹침을 막는 것은 비교 값 lower(btrim(nickname)) 의 유일 인덱스다 — 대소문자·앞뒤 공백을 빼고 비교하는 그 정의 그대로", () => {
+    const def = psql(`select indexdef from pg_indexes where schemaname = 'public' and tablename = 'profiles' and indexname = 'profiles_nickname_key';`);
+    expect(def).toBe("CREATE UNIQUE INDEX profiles_nickname_key ON public.profiles USING btree (lower(btrim(nickname)))");
+  });
+
   it("INV-U13: 가입 처리 — 이미 쓰는 닉네임이면 닉네임 칸 「이미 쓰는 닉네임」, 로그인 정보는 남지 않는다", async () => {
     const p = phone();
     const r = await signUp(signUpDeps(), signupBody("it_nk_taken", "HARU", p, await verified(p)));
@@ -251,6 +256,23 @@ describe("INV-U13·my-account INV-A5: 내 정보에서 닉네임을 바꿀 때�
     expect(nicknameOf(SEED.fanId)).toBe("별빛");
   });
 
+  it("INV-U13 (실패경로): 내 정보 닉네임 — 금칙어(FKU05)·연락처(FKU06)·기호만(FKU07)·13자·보이지 않는 글자는 가입 때처럼 거부, 닉네임은 그대로", async () => {
+    const banned = psql(`select word from public.creator_tag_banned_words order by word limit 1`);
+    const cases: [string, string][] = [
+      [`x${banned}x`, "FKU05"],
+      ["010.1234.567", "FKU06"],
+      ["!!!", "FKU07"],
+      ["가".repeat(13), "22023"],
+      ["보이지​않음", "22023"],
+    ];
+    const fan = await signedInClient("byeolbit_fan");
+    for (const [nickname, code] of cases) {
+      const r = await fan.rpc("update_my_account", { p_nickname: nickname, p_email: "byeolbit.fan@example.com", p_notify_kakao: true, p_notify_email: true });
+      expect([nickname, r.error?.code]).toEqual([nickname, code]);
+      expect(nicknameOf(SEED.fanId)).toBe("별빛");
+    }
+  });
+
   it("INV-U13 (동시): 두 팬이 같은 새 닉네임으로 동시에 바꾸면 하나만 성공", async () => {
     const [a, b] = [await signedInClient("byeolbit_fan"), await signedInClient("daltokki_fan")];
     const edit = (email: string) => ({ p_nickname: "같은새닉", p_email: email, p_notify_kakao: true, p_notify_email: true });
@@ -329,6 +351,41 @@ describe("INV-U14: 아이디·닉네임 미리 확인", () => {
     for (let i = 0; i < 30; i += 1) await check(h, "login_id", "haru_creator");
     psql(`update public.signup_check_hits set window_started_at = now() - interval '61 seconds' where ip_hash = '${h}';`);
     expect((await check(h, "login_id", "haru_creator")).data).toBe("taken");
+  });
+
+  it("INV-U14: 31번째에 걸리면 쉬는 시간은 1분이다 — blocked_until 이 지금부터 약 60초 뒤", async () => {
+    const h = ipHash();
+    for (let i = 0; i < 31; i += 1) await check(h, "login_id", "haru_creator");
+    const left = Number(psql(`select extract(epoch from blocked_until - now()) from public.signup_check_hits where ip_hash = '${h}';`));
+    expect(left).toBeGreaterThan(55);
+    expect(left).toBeLessThanOrEqual(60);
+  });
+
+  it("INV-U14 (실패경로): 1분 창 안(59초 전 시작)에서 이미 30번이면 다음 확인은 rate_limited — 창이 일찍 새로 시작되지 않는다", async () => {
+    const h = ipHash();
+    expect((await check(h, "login_id", "haru_creator")).data).toBe("taken");
+    psql(`update public.signup_check_hits set window_started_at = now() - interval '59 seconds', hits = 30 where ip_hash = '${h}';`);
+    expect((await check(h, "login_id", "haru_creator")).data).toBe("rate_limited");
+  });
+
+  it("INV-U14: 형식이 틀린 값은 한도와 상관없이 invalid — 31번째 이후에도, 쉬는 중에도 같은 답이고 횟수에 넣지 않는다", async () => {
+    const h = ipHash();
+    for (let i = 0; i < 31; i += 1) await check(h, "login_id", "haru_creator");
+    expect((await check(h, "login_id", "haru_creator")).data).toBe("rate_limited");
+    for (const [kind, value] of [
+      ["login_id", "Haru_Creator"],
+      ["login_id", "ab"],
+      ["nickname", "가".repeat(13)],
+      ["nickname", "010-1234-5678"],
+      ["nickname", "   "],
+    ] as const) {
+      const r = await check(h, kind, value);
+      expect([kind, value, r.error, r.data]).toEqual([kind, value, null, "invalid"]);
+    }
+    // 형식이 틀린 값은 센 횟수를 늘리지 않는다
+    const fresh = ipHash();
+    for (let i = 0; i < 40; i += 1) await check(fresh, "nickname", "!!!");
+    expect((await check(fresh, "login_id", "haru_creator")).data).toBe("taken");
   });
 
   it("INV-U14 (동시): 한 주소에서 40번을 동시에 물어도 답은 30번만", async () => {

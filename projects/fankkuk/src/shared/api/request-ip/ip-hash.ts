@@ -1,4 +1,5 @@
 import { createHmac, randomBytes } from "node:crypto";
+import { isIPv4, isIPv6 } from "node:net";
 import { isProduction } from "@/shared/lib/env/is-production";
 
 // 요청한 접속 주소(IP)를 원문 대신 비밀 값을 섞은 해시로 다룬다 — 횟수 한도처럼 「같은 주소인지」만 알면 되는 곳에 쓴다.
@@ -32,7 +33,31 @@ export function clientIp(headers: Headers): string {
   return first || "unknown";
 }
 
-/** HMAC-SHA256 16진수 64자리. */
+/**
+ * 횟수를 셀 단위. IPv4 는 주소 그대로, IPv6 는 앞 64비트 대역(/64) — 한 가입자 회선이 보통 /64 하나를 통째로 받아
+ * 주소를 마음대로 바꿔 가며 한도를 피할 수 있기 때문이다(signup INV-U14). IPv4 를 담은 IPv6 꼴(::ffff:a.b.c.d)은 그 IPv4 로 본다.
+ * 주소 꼴이 아니면(unknown 등) 받은 글자 그대로.
+ */
+export function rateKey(ip: string): string {
+  const bare = ip.trim().replace(/^\[|\]$/g, "").split("%")[0] ?? "";
+  if (isIPv4(bare)) return bare;
+  if (!isIPv6(bare)) return ip;
+  const lower = bare.toLowerCase();
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(lower);
+  if (mapped?.[1] && isIPv4(mapped[1])) return mapped[1];
+  // 끝에 IPv4 꼴이 붙은 IPv6 는 그 32비트를 16진 묶음 둘로 바꿔 센다
+  const tail = /(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(lower);
+  const hex = tail
+    ? lower.slice(0, tail.index) + [0, 2].map((i) => ((Number(tail[i + 1]) << 8) | Number(tail[i + 2])).toString(16)).join(":")
+    : lower;
+  const [head = "", rest] = hex.split("::");
+  const left = head === "" ? [] : head.split(":");
+  const right = rest === undefined || rest === "" ? [] : rest.split(":");
+  const groups = rest === undefined ? left : [...left, ...Array<string>(8 - left.length - right.length).fill("0"), ...right];
+  return `${groups.slice(0, 4).map((g) => parseInt(g, 16).toString(16)).join(":")}::/64`;
+}
+
+/** HMAC-SHA256 16진수 64자리. 주소는 rateKey 로 센 단위를 해시한다(IPv6 는 /64). */
 export function hashIp(secret: string, ip: string): string {
-  return createHmac("sha256", secret).update(ip).digest("hex");
+  return createHmac("sha256", secret).update(rateKey(ip)).digest("hex");
 }

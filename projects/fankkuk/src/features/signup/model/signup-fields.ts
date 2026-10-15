@@ -27,13 +27,31 @@ export function splitEmail(full: string): EmailParts {
   return isListedDomain(lower) ? { local, choice: lower, custom: "" } : { local, choice: EMAIL_CUSTOM, custom: domain };
 }
 
+/**
+ * 앞부분 칸에 친 값 → 칸 셋. @ 가 들어오면 @ 뒤 글자를 주소 칸으로 옮긴다 — abc@gmail.com 을 끝까지 쳐도 앞부분이 abcgmail.com 이 되지 않게.
+ * @ 뒤가 목록에 있는 주소면 그 항목을 고르고, 아니면(빈칸 포함) 「직접 입력」으로 바꿔 주소 칸으로 포커스를 옮긴다(focusCustom).
+ */
+export function emailLocalTyped(prev: EmailParts, value: string): { parts: EmailParts; focusCustom: boolean } {
+  if (!value.includes("@")) return { parts: { ...prev, local: value }, focusCustom: false };
+  const split = splitEmail(value);
+  if (split.choice !== "" && split.choice !== EMAIL_CUSTOM) return { parts: split, focusCustom: false };
+  return { parts: { local: split.local, choice: EMAIL_CUSTOM, custom: split.custom }, focusCustom: true };
+}
+
 const MOBILE_DIGITS = 11;
+const INTL_PREFIX = "+82";
+
+const isIntl = (raw: string): boolean => raw.trimStart().startsWith(INTL_PREFIX);
+
+/** 국내 번호의 숫자만. 맨 앞이 +82 일 때만 국제번호로 보고 0 으로 바꾼다(+82 010… 꼴은 0 을 겹치지 않는다). 숫자 821… 은 그대로 */
+function domesticDigits(raw: string): string {
+  if (!isIntl(raw)) return raw.replace(/\D/g, "");
+  const rest = raw.trimStart().slice(INTL_PREFIX.length).replace(/\D/g, "");
+  return rest === "" || rest.startsWith("0") ? rest : `0${rest}`;
+}
 
 function phoneDigits(raw: string): string {
-  let d = raw.replace(/\D/g, "");
-  // 자동 완성이 +82 10-… 꼴로 채우면 국내 번호로 돌린다
-  if (d.startsWith("821")) d = `0${d.slice(2)}`;
-  return d.slice(0, MOBILE_DIGITS);
+  return domesticDigits(raw).slice(0, MOBILE_DIGITS);
 }
 
 function formatDigits(d: string): string {
@@ -71,8 +89,9 @@ export function applyPhoneEdit(
   caret: number,
   deleting: "backward" | "forward" | null,
 ): { value: string; caret: number } {
-  let digits = next.replace(/\D/g, "");
-  let before = next.slice(0, caret).replace(/\D/g, "").length;
+  let digits = domesticDigits(next);
+  // 커서 앞 숫자 수도 국내 번호 기준으로 센다(+82 를 0 으로 바꾼 만큼 옮긴다)
+  let before = isIntl(next) ? domesticDigits(next.slice(0, caret)).length : next.slice(0, caret).replace(/\D/g, "").length;
   const onlySeparatorRemoved = deleting !== null && next.length < prev.length && digits === prev.replace(/\D/g, "");
   if (onlySeparatorRemoved && deleting === "backward" && before > 0) {
     digits = digits.slice(0, before - 1) + digits.slice(before);

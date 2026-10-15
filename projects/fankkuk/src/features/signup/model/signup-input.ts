@@ -7,7 +7,7 @@ import { nicknameSchema } from "@/entities/session/model/nickname-rule";
 import { PASSWORD_KINDS, PASSWORD_MAX, PASSWORD_MIN, PASSWORD_SAME_AS_ID, PASSWORD_TOO_LONG, PASSWORD_TOO_SHORT, PASSWORD_WEAK, passwordKinds } from "@/entities/session/model/password-rule";
 import { EMAIL_SHAPE } from "@/shared/lib/validation/email-shape";
 import { charCount } from "@/shared/lib/validation/char-count";
-import { HIDDEN_CHAR } from "@/shared/lib/validation/hidden-char";
+import { HIDDEN_CHAR, LINE_BREAK } from "@/shared/lib/validation/hidden-char";
 import { MOBILE_PHONE_SHAPE } from "@/shared/lib/validation/phone-shape";
 import { EMAIL_CUSTOM, joinEmail, type EmailParts } from "./signup-fields";
 
@@ -64,8 +64,6 @@ const trimmedWithin = (max: number, message: string) =>
     .string()
     .trim()
     .refine((s) => charCount(s) >= 1 && charCount(s) <= max, message);
-
-const LINE_BREAK = new RegExp(`[${String.fromCharCode(0x2028, 0x2029)}]`);
 
 const creatorProfileObject = z.object({
   name: trimmedWithin(CREATOR_PROFILE_LIMITS.name, `공개 이름을 1~${CREATOR_PROFILE_LIMITS.name}자로 적어 주세요.`),

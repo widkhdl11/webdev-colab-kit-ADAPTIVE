@@ -10,14 +10,14 @@ import { HEARD_FROM, HEARD_FROM_LABEL, isHeardFrom, type HeardFrom } from "@/ent
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { completeSignup } from "@/features/signup/api/complete-signup";
 import { requestPhoneVerification } from "@/features/signup/api/signup-client";
-import type { AvailabilityState } from "@/features/signup/model/name-availability";
+import { availabilityBlock, availabilityLine, type AvailabilityTone } from "@/features/signup/model/name-availability";
 import { useNameAvailability } from "@/features/signup/model/use-name-availability";
 import {
   applyPhoneEdit,
   EMAIL_CUSTOM,
   EMAIL_DOMAINS,
+  emailLocalTyped,
   joinEmail,
-  splitEmail,
   type EmailParts,
 } from "@/features/signup/model/signup-fields";
 import {
@@ -46,18 +46,7 @@ const LAST = STEPS.length;
 type TermKey = "service" | "privacy" | "news";
 type Role = "fan" | "creator";
 type ErrorField = DetailsField | "verification" | "form";
-type LiveTone = "ok" | "bad" | "wait";
-type LiveMessage = { tone: LiveTone; message: string };
-
-/** 미리 확인(INV-U14)의 답 → 칸 아래 안내. 「잠시 뒤에」는 틀렸다는 뜻이 아니라 흐린 안내로 둔다. */
-const AVAILABILITY_LINE: Record<AvailabilityState["status"], LiveMessage> = {
-  checking: { tone: "wait", message: "확인 중…" },
-  available: { tone: "ok", message: "쓸 수 있어요." },
-  taken: { tone: "bad", message: "이미 쓰고 있어요." },
-  invalid: { tone: "bad", message: "형식이 맞지 않아요." },
-  rate_limited: { tone: "wait", message: "잠시 뒤에 다시 확인해 주세요." },
-  error: { tone: "wait", message: "잠시 뒤에 다시 확인해 주세요." },
-};
+type LiveMessage = { tone: AvailabilityTone; message: string };
 
 /** 칸별 안내가 붙는 칸 → 입력 요소 id 의 꼬리. 「다음」에서 막히면 이 칸으로 포커스를 보낸다. */
 const LIVE_IDS: Record<LiveField, string> = {
@@ -158,12 +147,9 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const askable = (field: "loginId" | "nickname") => (touched[field] && checkField(field, liveValues).ok ? liveValues[field].trim() : null);
   const idCheck = useNameAvailability("loginId", askable("loginId"));
   const nickCheck = useNameAvailability("nickname", askable("nickname"));
-  const availabilityOf = (field: "loginId" | "nickname"): LiveMessage => {
-    const state = field === "loginId" ? idCheck : nickCheck;
-    // 지금 칸 값에 대한 답이 아니면(아직 묻는 중·이전 값의 답) 확인 중으로 둔다
-    if (!state || state.value !== liveValues[field].trim()) return AVAILABILITY_LINE.checking;
-    return AVAILABILITY_LINE[state.status];
-  };
+  // 지금 칸 값에 대한 답이 아니면(아직 묻는 중·이전 값의 답) 확인 중으로 둔다
+  const availabilityOf = (field: "loginId" | "nickname"): LiveMessage =>
+    availabilityLine((field === "loginId" ? idCheck : nickCheck).state, liveValues[field].trim());
   const liveOf = (field: LiveField): LiveMessage | null => {
     if (error?.field === field) return { tone: "bad", message: error.message };
     if (!touched[field]) return null;
@@ -212,19 +198,34 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
       ? { name: creatorName, channelTitle, tagIds: t.tagIds, customTag: t.customTag ?? "", fanName }
       : { name: creatorName, channelTitle, tagIds, customTag, fanName };
   };
-  // 미리 확인이 지금 값에 대해 「이미 씀」·「형식 틀림」이라고 답했으면 다음으로 넘기지 않는다(그 사이 바뀌는 것은 가입 때 서버가 다시 본다)
-  const knownTaken = (): { field: DetailsField; message: string } | null => {
-    for (const field of ["loginId", "nickname"] as const) {
-      const line = availabilityOf(field);
-      if (line.tone === "bad") return { field, message: line.message };
-    }
-    return null;
-  };
   const details = (): { field: DetailsField; message: string } | null => {
-    const problem = checkDetails({ loginId, nickname, email, password, passwordConfirm, phone, terms: agreed, creator: creatorProfile() }) ?? knownTaken();
+    const problem = checkDetails({ loginId, nickname, email, password, passwordConfirm, phone, terms: agreed, creator: creatorProfile() });
     if (problem || role !== "creator") return problem;
     const t = tagSelection();
     return t.ok ? null : { field: "tags", message: t.message };
+  };
+  // 2단계 → 3단계. 칸 검사가 맞으면 아이디·닉네임 미리 확인의 답이 올 때까지 기다렸다가 판정한다(INV-U14) —
+  // 확인 중에 눌러도 「이미 쓰는」 값으로 넘어가지 않게. 「이미 씀」·「형식 틀림」이면 그 칸에서 막는다(그 사이 바뀌는 것은 가입 때 서버가 다시 본다).
+  const leaveDetails = async () => {
+    if (busy) return;
+    const problem = details();
+    if (problem) {
+      go(2);
+      reject(problem);
+      return;
+    }
+    const values = { loginId: loginId.trim(), nickname: nickname.trim() };
+    setBusy(true);
+    const [idState, nickState] = await Promise.all([idCheck.settle(values.loginId), nickCheck.settle(values.nickname)]);
+    setBusy(false);
+    const block = availabilityBlock({ loginId: idState, nickname: nickState }, values);
+    if (block) {
+      go(2);
+      reject(block);
+      return;
+    }
+    setError(null);
+    go(LAST);
   };
 
   const sendRequest = async () => {
@@ -266,11 +267,8 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (step === 2) {
-      const problem = details();
-      if (problem) {
-        reject(problem);
-        return;
-      }
+      void leaveDetails();
+      return;
     }
     setError(null);
     if (step < LAST) go(step + 1);
@@ -314,14 +312,19 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   };
 
   const onEmailLocalChange = (value: string) => {
-    // 주소를 통째로 붙여 넣거나 자동 완성이 채우면 칸 셋으로 나눈다. @ 만 쳤으면 고른 주소는 그대로 둔다
-    if (value.includes("@")) {
-      const split = splitEmail(value);
-      setEmailParts((p) => (split.choice === "" ? { ...p, local: split.local } : split));
-    } else {
-      setEmailParts((p) => ({ ...p, local: value }));
-    }
+    // @ 를 치거나 주소를 통째로 붙여 넣으면 @ 뒤를 주소 칸으로 옮긴다 — 목록에 있는 주소면 고르고, 아니면 「직접 입력」 칸으로 포커스
+    const next = emailLocalTyped(emailParts, value);
+    setEmailParts(next.parts);
     edited("email");
+    if (next.focusCustom) {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(f("mail-custom"));
+        if (el instanceof HTMLInputElement) {
+          el.focus();
+          el.setSelectionRange(el.value.length, el.value.length);
+        }
+      });
+    }
   };
 
   const heading = (n: number, text: string) => (
@@ -369,10 +372,8 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       aria-current={k === step ? "step" : undefined}
                       onClick={() => {
                         // 단계 표시로 3단계에 갈 때도 2단계 검사를 거친다 — 고친 칸이 틀렸으면 2단계에 남는다
-                        const problem = k === LAST ? details() : null;
-                        if (problem) {
-                          go(2);
-                          reject(problem);
+                        if (k === LAST) {
+                          void leaveDetails();
                           return;
                         }
                         setError(null);
@@ -596,7 +597,6 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                     inputMode="numeric"
                     autoComplete="tel"
                     placeholder="010-0000-0000"
-                    maxLength={13}
                     value={phone}
                     onChange={onPhoneChange}
                     onBlur={() => touch("phone")}
@@ -813,7 +813,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                 </button>
               ) : null}
               {step < LAST ? (
-                <button className={`btn ${s.next}`} type="submit">
+                <button className={`btn ${s.next}`} type="submit" aria-disabled={busy} aria-busy={busy || undefined}>
                   다음
                 </button>
               ) : (

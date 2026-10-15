@@ -1,6 +1,6 @@
 -- 가입 닉네임 · 아이디·닉네임 미리 확인 · 크리에이터 가입 때 팬덤 이름 (signup INV-U13·U14, PRODUCT 「추가 요청 3」, 2026-10-15).
 --
--- 운영 적용 순서: 이 파일 → supabase/manual/0019_signup_nickname.sql(가입 함수 create_account·내 정보 update_my_account — 개인정보 구역을
+-- 운영 적용 순서: 이 파일 → supabase/manual/0018_signup_nickname.sql(가입 함수 create_account·내 정보 update_my_account — 개인정보 구역을
 -- 쓰는 함수라 사람이 적용) → 앱 배포. 셋을 같은 때에 한다. 이 파일만 적용된 사이에는 크리에이터 가입이 새 create_account(닉네임 인자)를
 -- 찾지 못해 실패하고, 앱만 먼저 배포되면 가입 요청이 없는 인자를 넘겨 실패한다.
 --

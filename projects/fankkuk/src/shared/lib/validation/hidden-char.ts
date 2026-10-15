@@ -4,3 +4,6 @@
  * DB 함수(공개 이름 고치기·태그 검사)도 같은 목록으로 거부한다.
  */
 export const HIDDEN_CHAR = /[\u0000-\u001f\u007f-\u009f­؜ᅟᅠ᠎​-‏‪-‮⁠-⁤⁦-⁯ㅤ﻿ﾠ￹-￻]/u;
+
+/** 줄 구분자·문단 구분자(U+2028·U+2029) — 한 줄 칸에 줄바꿈처럼 보인다. HIDDEN_CHAR 와 함께 거부한다(DB 목록에는 들어 있다). */
+export const LINE_BREAK = new RegExp(`[${String.fromCharCode(0x2028, 0x2029)}]`);

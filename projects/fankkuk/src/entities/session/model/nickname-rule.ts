@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { charCount } from "@/shared/lib/validation/char-count";
-import { HIDDEN_CHAR } from "@/shared/lib/validation/hidden-char";
+import { HIDDEN_CHAR, LINE_BREAK } from "@/shared/lib/validation/hidden-char";
 
 // 닉네임 규칙(signup INV-U13 · my-account INV-A5) — 가입과 내 정보가 같은 규칙을 쓴다.
 // 앞뒤 공백을 뺀 1~12자(코드 포인트로 센다 — DB char_length 와 같다), 줄바꿈·보이지 않는 글자 없음.
@@ -10,7 +10,6 @@ export const NICKNAME_MAX = 12;
 
 const LENGTH_MESSAGE = `닉네임은 1~${NICKNAME_MAX}자로 적어 주세요.`;
 const HIDDEN_MESSAGE = "닉네임에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요.";
-const LINE_BREAK = new RegExp(`[${String.fromCharCode(0x2028, 0x2029)}]`);
 
 export const NICKNAME_TAKEN = "이미 쓰는 닉네임이에요.";
 
