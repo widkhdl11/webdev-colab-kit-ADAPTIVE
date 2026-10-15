@@ -10,8 +10,8 @@
 .inv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
 .inv :global(.input), .inv :global(.btn) { height: 52px; }
 
-/* 크리에이터 몫 줄 — 줄 아래에 붙고, 아바타 폭만큼 들여 쓴다 */
-.share { grid-column: 1 / -1; margin-left: 64px; }
+/* 크리에이터 몫 줄 — 보낸 역조공의 「송장번호 적기(선택)」 접힌 칸 안, 팬 이름 옆 칸(시안 v21-addendum3 cre-21.css .inv-row) */
+.share { min-width: 0; }
 .share .fixed { margin-top: 0; gap: 8px 12px; }
 .share .no { font-size: 18px; }
 .share .edit { margin-top: 0; }
@@ -35,7 +35,6 @@
 
 @media (max-width: 767px) {
   .inv, .share .inv { grid-template-columns: minmax(0, 1fr); }
-  .share { margin-left: 0; }
   .finder { padding: 20px; }
 }
 

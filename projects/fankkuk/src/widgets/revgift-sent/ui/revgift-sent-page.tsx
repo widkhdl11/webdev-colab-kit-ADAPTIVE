@@ -14,10 +14,12 @@ import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import s from "./revgift-sent.module.css";
 
-// 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v18/creator-revgifts.html(이전 v11) — 묶음마다 팬 카드 2열(주 내용 880 이라 3열에서 줄임, 휴대폰 1열)
-// 한 줄에 보이는 것은 팬 닉네임·주문번호·상태 배지(셋 중 하나)뿐이다 — 팬 로그인 아이디도 싣지 않는다(reverse-gift INV-R8).
-// 몫마다 송장번호 줄이 붙는다(시안 creator-revgift-boxes.html). 배송 조회를 보고 싶을 때만 넣는 선택 칸이다(inbound-address-code INV-C7).
-// 입고 전엔 넣고 고치고, 입고되면 「입고됨」으로 잠긴다.
+// 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v21-addendum3/cre-revgift-sent.html(design-rules 12절 「진행 상태」) —
+// 묶음마다 팬별 「지금 상태」 한 줄 목록(위아래, 0000절). 한 줄에 보이는 것은 팬 닉네임·주문번호·상태 배지(셋 중 하나)뿐이다 —
+// 팬 로그인 아이디도 싣지 않는다(reverse-gift INV-R8). 팬마다 따로 보는 화면이 없어 줄은 링크가 아니다.
+// 송장번호는 묶음 아래 「송장번호 적기(선택)」 접힌 칸에 팬마다 한 줄(시안 .fold·.inv-row). 배송 조회를 보고 싶을 때만 넣는 선택 칸이다
+// (inbound-address-code INV-C7). 입고 전엔 넣고 고치고, 입고되면 「입고됨」으로 잠긴다(design-rules 8-1).
+// 받는 주소·「제가 보낸 게 아니에요」는 그 팬 줄 바로 아래 — 보낼 상자가 남았을 때·입고 뒤 출고 전에만 생긴다(필요할 때만, 0000절).
 // 묶음 나누기와 상태 세기는 entities/revgift/model/sent-batches.ts — 여기서는 문구만 조립한다.
 // 받는 주소(INV-R14, inbound-address-code INV-C2·C3): 팬(몫)마다 사무실 주소 + 그 몫의 6자리. 묶음에 officeAddress 가 있을 때
 // (결제가 끝났고 보낼 상자가 남은 묶음) + my_share_boxes 가 그 몫의 6자리를 줄 때(보낸 크리에이터 본인 · 유효할 때)만 그린다.
@@ -36,9 +38,13 @@ function Check() {
 }
 
 // 받지 않은 몫(거절·기한 지남)은 보낼 상자가 아니라 송장번호 칸을 열지 않는다
-function ShareWaybill({ box, fanNickname, shareState }: { box: ShareBox; fanNickname: string; shareState: SentRevgift["state"] }) {
+function waybillShown(box: ShareBox | undefined, shareState: SentRevgift["state"]): box is ShareBox {
+  if (!box) return false;
+  return !isWaybillEditable(box.state) || shareState !== "not_received";
+}
+
+function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string }) {
   if (isWaybillEditable(box.state)) {
-    if (shareState === "not_received") return null;
     return (
       <WaybillEditor
         target={{ kind: "share", id: box.shareId }}
@@ -50,16 +56,41 @@ function ShareWaybill({ box, fanNickname, shareState }: { box: ShareBox; fanNick
     );
   }
   return (
-    <div>
-      <p className="t-meta">송장번호</p>
-      <p className={`tags ${s["inv-tags"]}`}>
-        <span className={statusTagClass("success")}>
-          <Check />
-          입고됨
-        </span>
-        <span className="t-meta">사무실에 도착해 확인했어요</span>
-      </p>
-    </div>
+    <p className={`tags ${s["inv-tags"]}`}>
+      <span className={statusTagClass("success")}>
+        <Check />
+        입고됨
+      </span>
+      <span className="t-meta">사무실에 도착해 확인했어요</span>
+    </p>
+  );
+}
+
+/** 묶음 아래 「송장번호 적기(선택)」 — 평소엔 접혀 있다(design-rules 0000절·12절). 칸에 넣을 팬이 없으면 그리지 않는다 */
+function WaybillFold({ shares, boxByOrder }: { shares: readonly SentRevgift[]; boxByOrder: ReadonlyMap<string, ShareBox> }) {
+  const items = shares.flatMap((x) => {
+    const box = boxByOrder.get(x.orderNo);
+    return waybillShown(box, x.state) ? [{ x, box }] : [];
+  });
+  if (items.length === 0) return null;
+  return (
+    <details className={s.fold}>
+      <summary>
+        송장번호 적기 (선택)
+        <svg className={s.foldChev} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </summary>
+      <div className={s.foldBody}>
+        <p className="t-meta">상자가 사무실에 도착하기 전까지만 고칠 수 있고, 입고되면 「입고됨」으로 바뀌고 잠겨요.</p>
+        {items.map(({ x, box }) => (
+          <div key={x.orderNo} className={s.invRow}>
+            <p className={s.invName}>{x.fanNickname}님</p>
+            <ShareWaybill box={box} fanNickname={x.fanNickname} />
+          </div>
+        ))}
+      </div>
+    </details>
   );
 }
 
@@ -179,34 +210,36 @@ export function RevgiftSentPage({
                 팬 {b.shares.length}명 · {batchSummary(b.shares)}
               </p>
               {b.officeAddress && b.shares.some((x) => shareAddressCode(boxByOrder.get(x.orderNo), b.officeAddress, x.state)) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
-              <ul className={`grid cols-2 ${s.shares}`}>
+              <ul className={s.rows} aria-label={`${formatDateTime(b.sentAt)} 묶음 팬별 지금 상태`}>
                 {b.shares.map((x, i) => {
                   const tag = sentStateTag(x.state);
                   const box = boxByOrder.get(x.orderNo);
                   const addressCode = shareAddressCode(box, b.officeAddress, x.state);
                   return (
-                    <li key={x.orderNo} className="card card-col">
-                      <div className={s.who}>
-                        <FaceAvatar index={i} />
-                        <div>
-                          <p className="t-card">{x.fanNickname}</p>
+                    <li key={x.orderNo}>
+                      <div className={s.row}>
+                        <FaceAvatar index={i} className={s.av} />
+                        <div className={s.rt}>
+                          <p className={s.name}>{x.fanNickname}님</p>
                           <p className={`t-meta ${s["order-no"]}`}>주문번호 {x.orderNo}</p>
                         </div>
-                      </div>
-                      <p>
                         <span className={statusTagClass(tag.tone)}>{tag.tag}</span>
-                      </p>
+                      </div>
                       {b.officeAddress && addressCode ? (
-                        <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
+                        <div className={s.rowMore}>
+                          <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
+                        </div>
                       ) : null}
-                      {box ? <ShareWaybill box={box} fanNickname={x.fanNickname} shareState={x.state} /> : null}
                       {box && canReportNotMine(box.state) ? (
-                        <NotMineButton target={{ kind: "share", id: box.shareId }} boxName={`${x.fanNickname}님 상자`} reported={box.reportedNotMine} />
+                        <div className={s.rowMore}>
+                          <NotMineButton target={{ kind: "share", id: box.shareId }} boxName={`${x.fanNickname}님 상자`} reported={box.reportedNotMine} />
+                        </div>
                       ) : null}
                     </li>
                   );
                 })}
               </ul>
+              <WaybillFold shares={b.shares} boxByOrder={boxByOrder} />
             </section>
           ))
         )}
@@ -230,7 +263,6 @@ export function RevgiftSentPage({
             <li>「받지 않았어요」는 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
             <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
             <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
-            <li>송장번호는 배송 조회를 보고 싶을 때만 넣어요. 상자가 사무실에 도착하기 전까지만 고칠 수 있고, 입고되면 「입고됨」으로 바뀌고 잠겨요.</li>
             <li>상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 받는 주소가 달라요.</li>
           </ul>
         </section>

@@ -1,4 +1,4 @@
-/* 보낸 역조공 — 시안 v18 creator-revgifts.html(v18-cre.css). 머리(.page-head·.ph-*)·카드·격자·태그·빈 상태는 base.css 공통 부품 */
+/* 보낸 역조공 — 시안 v21-addendum3/cre-revgift-sent.html(cre-21.css .rows·.row·.fold·.inv-row), 이전 v18 creator-revgifts.html. 머리(.page-head·.ph-*)·카드·격자·태그·빈 상태는 base.css 공통 부품 */
 
 .batch-h { font-size: var(--fs-card); line-height: 1.4; }
 /* 결제 끝 안내 — 아래 판과 붙지 않게 쌓인 판 사이 간격(32) */
@@ -7,14 +7,41 @@
 .privacy-t { display: block; }
 .body-gap { margin-top: 8px; }
 
-/* 묶음 — 제목 아래 상태 한 줄, 안내 판, 팬 카드 3열(휴대폰 1열) */
+/* 묶음 — 제목 아래 상태 한 줄, 안내 판, 팬별 「지금 상태」 한 줄 목록(위아래), 그 아래 송장번호 접힌 칸 */
 .facts { margin-top: 4px; }
 .guide { margin-top: 16px; }
-.shares { margin-top: 24px; }
-.who { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.who > div { min-width: 0; }
-.order-no { overflow-wrap: anywhere; }
-.inv-tags { align-items: center; }
+.rows { margin: var(--space-4) 0 0; padding: 0; list-style: none; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
+.rows > li + li { border-top: 1px solid var(--gray-200); }
+.row { display: flex; align-items: center; gap: var(--space-4); min-height: 64px; padding: var(--space-4) var(--space-6); }
+.av { width: 40px; height: 40px; flex: none; }
+.rt { flex: 1; min-width: 0; }
+.name { margin: 0; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+.order-no { margin: 0; overflow-wrap: anywhere; }
+/* 줄 아래에 붙는 받는 주소·「아니에요」 — 아바타 폭만큼 들여 쓴다 */
+.rowMore { padding: 0 var(--space-6) var(--space-4) calc(var(--space-6) + 40px + var(--space-4)); }
+.rowMore > * { margin-top: 0; }
+.inv-tags { align-items: center; margin: 0; }
+
+/* 「송장번호 적기(선택)」 접힌 칸 — 시안 cre-21.css .fold · .fold-body · .inv-row(이름 96 · 칸) */
+.fold { margin-top: var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.fold > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 48px; padding: 0 var(--space-6); border-radius: var(--r-btn); font-weight: var(--fw-btn); list-style: none; cursor: pointer; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary:hover { background: var(--gray-50); }
+.foldChev { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--dur-fade) ease; }
+.fold[open] > summary .foldChev { transform: rotate(180deg); }
+.foldBody { display: grid; gap: var(--space-4); padding: var(--space-4) var(--space-6) var(--space-6); border-top: 1px solid var(--gray-200); }
+.foldBody > p { margin: 0; }
+.invRow { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-2) var(--space-4); align-items: start; }
+.invName { margin: 0; padding-top: 14px; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .foldChev { transition: none; } }
+@media (max-width: 767px) {
+  .row { padding: var(--space-4); }
+  .rowMore { padding: 0 var(--space-4) var(--space-4); }
+  .fold > summary { padding: 0 var(--space-4); }
+  .foldBody { padding: var(--space-4); }
+  .invRow { grid-template-columns: minmax(0, 1fr); }
+  .invName { padding-top: 0; }
+}
 
 .find-text { margin-top: 8px; }
 .find-box { margin-top: 24px; }

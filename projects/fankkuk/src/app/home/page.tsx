@@ -21,7 +21,7 @@ export default async function Page() {
   const all = await readMyGiftViews(supabase);
   const gifts = all.filter((v) => fanGiftBucket(v) === "ongoing");
   const cards = await readCreatorCards(supabase, { signedIn: true });
-  const following = cards.filter((c) => c.following).map(({ id, name, faceTone }) => ({ id, name, faceTone }));
+  const following = cards.filter((c) => c.following).map(({ id, name, faceTone, handle, approvalMinutes }) => ({ id, name, faceTone, handle, approvalMinutes }));
   const faceToneByName = Object.fromEntries(cards.map((c) => [c.name, c.faceTone]));
   const notices = (await readNotices(supabase))
     .toSorted((a, b) => b.date.localeCompare(a.date))

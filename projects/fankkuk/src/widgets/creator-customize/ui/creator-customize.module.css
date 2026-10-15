@@ -75,8 +75,11 @@
 .ogMeta p { margin: 0; }
 .ogTitle { font-weight: var(--fw-btn); }
 
-/* 1023 이하: 위아래, 미리보기가 편집 칸 위에 붙어 따라오고 접힌다 */
-@media (max-width: 1023px) {
+/* 두 단 기준은 화면 폭이 아니라 본문 영역 폭(design-rules 00절 「편집 + 미리보기 화면」) — 틀(.page-pane)이 container 다.
+   편집 칸이 648 이상(720 안팎) 나와야 두 단: 648 + 간격 32 + 미리보기 400 = 1080. 1440 화면 + 펼친 사이드바의 본문 영역(약 1104, 편집 칸 672)은 두 단,
+   1024 화면(본문 영역 약 690)은 위아래.
+   그보다 좁으면 위아래, 미리보기가 편집 칸 위에 붙어 따라오고 접힌다 */
+@container (max-width: 1079.98px) {
   .cz { grid-template-columns: minmax(0, 1fr); }
   .side { order: -1; top: 0; z-index: 5; max-height: 62vh; overflow: auto; padding: var(--space-2) 0 var(--space-4); background: var(--white); box-shadow: inset 0 -1px 0 var(--gray-200); }
   .pvCard { --pv-x: 16px; --pv-y: 16px; }
