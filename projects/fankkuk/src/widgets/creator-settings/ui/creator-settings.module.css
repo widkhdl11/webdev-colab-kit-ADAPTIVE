@@ -5,9 +5,6 @@
 .set-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .inner { padding: 24px; }
 .set :global(.fs) > :global(.label) { margin-bottom: 12px; }
-.rule { width: 100%; height: 1px; margin: 0; border: 0; background: var(--border); }
-.status-tag { margin-top: 8px; }
-.kv-dd { margin: 4px 0 0; }
 /* 구간 바로가기 — 시안 .jump(글자 링크 한 줄) */
 .jump { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); margin-top: var(--space-6); font-weight: var(--fw-btn); }
 .jump a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
@@ -33,7 +30,6 @@
 /* 저장 버튼과 결과 줄을 한 덩어리로 — 비어 있는 결과 줄이 카드 안 간격(24)을 차지하지 않게 */
 .msg:not(:empty) { margin-top: 12px; }
 .body-gap { margin-top: 4px; }
-.inner-btn { margin-top: 16px; }
 
 /* 받는 주소 — 자물쇠 그림 */
 .addr-ico { width: 72px; height: 72px; margin-bottom: 12px; }
@@ -70,13 +66,6 @@ label.txt { cursor: pointer; }
 .handle-host { flex-shrink: 0; font-weight: var(--fw-bold); white-space: nowrap; }
 .handle-row :global(.field) { flex: 1; }
 .link-text { overflow-wrap: anywhere; }
-.photo-row { display: flex; align-items: center; gap: 20px; }
-.photo-prev { width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
-.photo-ctl { flex: 1; display: grid; gap: 12px; min-width: 0; }
-/* 파일 칸은 sr-only 로 숨기고 라벨(.pick)을 버튼 모양으로 — 키보드 포커스는 라벨에 그린다 */
-.file:focus-visible + .pick { outline: 2px solid var(--focus); outline-offset: 2px; }
-.pick { cursor: pointer; }
-.file-name { overflow-wrap: anywhere; }
 
 @media (max-width: 767px) {
   /* 고르기 칸 4열은 휴대폰에서 2열(시안 v18-cre.css .opt-grid) — 공통 격자는 1열로 접는다 */
@@ -89,8 +78,6 @@ label.txt { cursor: pointer; }
   .addr-ico { width: 56px; height: 56px; }
   .ann-row { grid-template-columns: minmax(0, 1fr) auto; }
   .ann-row > .md-row { grid-column: 1 / -1; grid-row: 2; }
-  .photo-row { align-items: flex-start; gap: 16px; }
-  .photo-prev { width: 72px; height: 72px; }
 }
 /* 버튼과 묶이지 않은 결과 줄(알림 받기)이 비어 있을 때 카드 안 간격만큼 끝이 떠 보이지 않게 — 알림 줄(role=status)은 화면에 남겨 둔다 */
 .set > .msg:empty { margin-top: -24px; }

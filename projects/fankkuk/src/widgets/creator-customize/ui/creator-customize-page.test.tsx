@@ -1,6 +1,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { NO_COLORS } from "@/entities/creator/model/creator-color";
 import { NO_LOOK } from "@/entities/creator/model/link-images";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
@@ -39,6 +40,7 @@ const base: CreatorCustomizeProps = {
   fanName: "",
   photoPath: null,
   look: NO_LOOK,
+  colors: NO_COLORS,
   photoBase: "http://photo.test",
   siteOrigin: "http://app.test",
 };
@@ -54,6 +56,8 @@ describe("INV-E10: 링크 미리보기 이미지 고르기", () => {
     const symbol = host.querySelector<HTMLInputElement>("input[name='cz-og'][value='symbol']")!;
     expect(symbol.disabled).toBe(true);
     expect(host.querySelector(`#${symbol.getAttribute("aria-describedby")}`)?.textContent).toBe("심볼을 올리면 고를 수 있어요");
+    // 심볼을 올리는 곳(상세 설정 · 팬덤)으로 가는 링크가 그 문장에 걸려 있다
+    expect(host.querySelector("a[href='/creator/settings#fandom']")?.textContent).toBe("심볼을 올리면");
   });
 
   it("INV-E10: 심볼이 있으면 고를 수 있고 고르는 즉시 저장한다", async () => {
@@ -110,6 +114,14 @@ describe("미리보기", () => {
     expect(preview.textContent).toContain("꿀벌단 여러분의 마음 늘 감사해요");
     expect(preview.textContent).toContain("fankkuk.kr/haru");
     expect(preview.querySelector(`img[src*="bg-"]`)).toBeNull();
+  });
+
+  it("INV-E13: 퍼스널 컬러가 있으면 미리보기 띠·사진 테두리가 공개 페이지처럼 그 색, 없거나 꼴이 틀리면 기본 모양", async () => {
+    await render({ colors: { personal: "#F9A8D4", fan: null } });
+    const card = host.querySelector<HTMLElement>("[data-creator-colors]")!;
+    expect(card.style.getPropertyValue("--personal")).toBe("#F9A8D4");
+    await render({ colors: { personal: "red;", fan: null } });
+    expect(host.querySelector<HTMLElement>("[data-creator-colors]")!.style.getPropertyValue("--personal")).toBe("");
   });
 
   it("2026-10-16 옮김: 이 화면에는 사진·이름·소개·팬덤 이름·심볼 편집 칸이 없다(프로필 수정·상세 설정으로)", async () => {

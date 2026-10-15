@@ -21,7 +21,9 @@
 .markBox img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .chk { display: flex; gap: var(--space-2); align-items: flex-start; cursor: pointer; }
 .chk input { flex: none; width: 20px; height: 20px; margin-top: 2px; accent-color: var(--brand-line); }
-.note { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--tint); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.note { display: flex; gap: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--tint); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.noteIco { flex: none; width: 20px; height: 20px; margin-top: 2px; }
+.noteBody { display: grid; gap: var(--space-2); min-width: 0; }
 .note p { margin: 0; }
 
 /* 미리보기 — 오른쪽이 아니라 바로 아래 */

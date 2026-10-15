@@ -175,9 +175,9 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
     <>
       <section id="recv" className={`card ${s.set}`} aria-labelledby="recv-h">
         <div className={s["set-head"]}>
-          <h2 className="t-card" id="recv-h">
+          <h3 className="t-card" id="recv-h">
             선물 받기
-          </h2>
+          </h3>
         </div>
         <div className="grid cols-2" role="radiogroup" aria-label="받는 상태">
           <label className="opt">
@@ -246,9 +246,9 @@ export function ReceivingSection({ initial, today }: { initial: MyCreatorReceivi
 
       <section id="days" className={`card ${s.set}`} aria-labelledby="days-h">
         <div className={s["set-head"]}>
-          <h2 className="t-card" id="days-h">
+          <h3 className="t-card" id="days-h">
             생일과 기념일
-          </h2>
+          </h3>
         </div>
         <p>적어 두면 크리에이터 페이지에 30일 전부터 D-day 가 보여요. 연도는 받지 않아요.</p>
         <div>

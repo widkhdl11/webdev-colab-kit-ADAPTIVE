@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
+import { creatorColorOrNull, creatorColorVars } from "@/entities/creator/model/creator-color";
 import type { PreviewPick } from "@/entities/creator/model/link-images";
 import { CheckIcon } from "@/entities/creator/ui/check-icon";
 import s from "./creator-customize.module.css";
@@ -20,6 +21,8 @@ export type PreviewValues = {
   backgroundUrl: string | null;
   symbolUrl: string | null;
   pick: PreviewPick;
+  /** 퍼스널 컬러(없으면 null) — 띠 면과 사진 테두리. 공개 페이지(creator-profile-page)와 같은 계산 */
+  personalColor: string | null;
 };
 
 function Avatar({ url, initial, className }: { url: string | null; initial: string; className: string }) {
@@ -37,7 +40,13 @@ export function CustomizePreview({ v }: { v: PreviewValues }) {
         </button>
       </div>
       <div className={s.pvBody} id="cz-body">
-        <div className={`card ${s.pvCard}`} role="group" aria-label="링크 페이지">
+        <div
+          className={`card ${s.pvCard} ${creatorColorOrNull(v.personalColor) !== null ? s.ringed : ""}`}
+          style={creatorColorVars({ personal: v.personalColor, fan: null }) as CSSProperties}
+          role="group"
+          aria-label="링크 페이지"
+          data-creator-colors=""
+        >
           <div className={s.pvBg} aria-hidden="true">
             {v.backgroundUrl ? <img src={v.backgroundUrl} alt="" width={1280} height={427} /> : null}
           </div>

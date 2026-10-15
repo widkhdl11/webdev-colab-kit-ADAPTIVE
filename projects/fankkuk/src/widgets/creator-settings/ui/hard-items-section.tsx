@@ -73,9 +73,9 @@ export function HardItemsSection({ initial, today }: { initial: MyHardItems | nu
   return (
     <section id="hard" className={`card ${s.set}`} aria-labelledby="hard-h">
       <div className={s["set-head"]}>
-        <h2 className="t-card" id="hard-h">
+        <h3 className="t-card" id="hard-h">
           받기 어려운 품목
-        </h2>
+        </h3>
       </div>
       <p>고르면 크리에이터 페이지에 정해진 문장으로 한 줄 보여요. 문장은 직접 쓰지 않아요.</p>
       {initial ? (

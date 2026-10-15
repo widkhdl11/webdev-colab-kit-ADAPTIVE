@@ -24,7 +24,7 @@ span.name { font-weight: var(--fw-bold); }
 /* 팬덤 뱃지 — 면 = 팬컬러, 글자 = 대비가 큰 쪽(흰색/#111827) */
 .fb { --badge-h2: 28px; --mark-s: 20px; display: inline-flex; align-items: center; gap: var(--space-2); height: var(--badge-h2); padding: 0 var(--space-4); border-radius: var(--r-pill); background: var(--fan, var(--primary-50)); color: var(--on-fan, var(--ink)); font-size: 14px; font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
 .fb:has(.fbMark) { padding-left: 4px; }
-.fbMark { flex: none; display: grid; place-items: center; width: var(--mark-s); height: var(--mark-s); border-radius: 6px; background: var(--white); overflow: hidden; }
+.fbMark { flex: none; display: grid; place-items: center; width: var(--mark-s); height: var(--mark-s); border-radius: var(--r-tag); background: var(--white); overflow: hidden; }
 .fbMark img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .fbLg { --badge-h2: 40px; --mark-s: 30px; font-size: var(--fs-body); }
 

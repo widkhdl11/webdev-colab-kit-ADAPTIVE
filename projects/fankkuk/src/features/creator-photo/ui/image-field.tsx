@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import type { PreviewPick } from "@/entities/creator/model/link-images";
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
 import s from "./image-field.module.css";
@@ -10,12 +9,11 @@ import s from "./image-field.module.css";
 // 파일 칸은 sr-only 로 숨기고 라벨을 버튼 모양으로 보인다(키보드·화면 읽기는 그대로). 결과 문구는 파일 칸의 설명으로 이어 읽힌다.
 // 보내기 전 검사(종류·크기)는 안내일 뿐이다 — 판단은 서버가 다시 한다. 막혀 있으면(blocked) 파일 칸을 끄고 그 까닭을 설명으로 잇는다.
 
-export type ImageSendResult = { kind: "ok"; path: string | null; previewPick?: PreviewPick | null } | { kind: "login" } | { kind: "failed"; message: string };
+export type ImageSendResult = { kind: "ok"; path: string | null } | { kind: "login" } | { kind: "failed"; message: string };
 
 export function ImageField({
   id,
   label,
-  optional = false,
   hideLabel = false,
   view,
   hasImage,
@@ -32,7 +30,6 @@ export function ImageField({
 }: {
   id: string;
   label: string;
-  optional?: boolean;
   /** 바깥에 같은 이름의 제목이 이미 보이면 칸 이름은 화면 읽기용으로만 */
   hideLabel?: boolean;
   /** 지금 사진 보기 — 화면 위 미리보기가 이미 보여 주면 없다 */
@@ -40,13 +37,14 @@ export function ImageField({
   hasImage: boolean;
   pickLabel: string;
   removeLabel: string;
-  hint: string;
+  /** 칸 아래 안내 — 시안에 없으면 넘기지 않는다 */
+  hint?: string;
   /** 고를 수 없는 까닭의 설명 요소 id — 있으면 파일 칸을 끈다 */
   blocked?: string | null;
   upload: (file: File) => Promise<ImageSendResult>;
   remove: () => Promise<ImageSendResult>;
-  /** 저장된 새 경로(지웠으면 null)와, 서버가 알려 준 그 뒤의 미리보기 고르기(없으면 null) */
-  onSaved: (path: string | null, previewPick: PreviewPick | null) => void;
+  /** 저장된 새 경로(지웠으면 null) */
+  onSaved: (path: string | null) => void;
   onLogin: () => void;
   savedText: string;
   removedText: string;
@@ -60,7 +58,7 @@ export function ImageField({
     if (fileRef.current) fileRef.current.value = "";
     if (r.kind === "login") return onLogin();
     if (r.kind === "failed") return setMsg({ ok: false, text: r.message });
-    onSaved(r.path, r.previewPick ?? null);
+    onSaved(r.path);
     setMsg({ ok: true, text: okText });
   };
 
@@ -89,7 +87,6 @@ export function ImageField({
     <div className={s.fld} role="group" aria-labelledby={`${id}-t`}>
       <p className={hideLabel ? "sr-only" : s.lbl} id={`${id}-t`}>
         {label}
-        {optional ? <span className={s.optn}>선택</span> : null}
       </p>
       <div className={s.imgRow}>
         {view ?? null}
@@ -101,7 +98,7 @@ export function ImageField({
             type="file"
             accept={PHOTO_ACCEPT}
             disabled={off}
-            aria-describedby={[blocked, `${id}-hint`, `${id}-msg`].filter(Boolean).join(" ")}
+            aria-describedby={[blocked, hint ? `${id}-hint` : null, `${id}-msg`].filter(Boolean).join(" ")}
             onChange={(e) => void picked(e.currentTarget.files?.[0])}
           />
           <label className={`btn btn--line btn--sm ${s.pick}`} htmlFor={id} aria-disabled={off}>
@@ -114,9 +111,11 @@ export function ImageField({
           ) : null}
         </div>
       </div>
-      <p className="t-meta" id={`${id}-hint`}>
-        {hint}
-      </p>
+      {hint ? (
+        <p className="t-meta" id={`${id}-hint`}>
+          {hint}
+        </p>
+      ) : null}
       <p className={`${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`} role="status" id={`${id}-msg`}>
         {msg?.text}
       </p>

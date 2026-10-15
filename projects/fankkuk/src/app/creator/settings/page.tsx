@@ -9,7 +9,7 @@ import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl, nameInitial } 
 import { readMyHardItems } from "@/entities/gift-item/api/hard-items-reads";
 import { readMyCreatorLink, readMyCreatorLook } from "@/entities/creator/api/creator-link-reads";
 import { readMyReplySettings } from "@/entities/gift-reply/api/gift-reply-reads";
-import { FAN_HOME } from "@/entities/session/model/home-path";
+import { CREATOR_SETTINGS, FAN_HOME } from "@/entities/session/model/home-path";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
 import { CreatorSettingsPage } from "@/widgets/creator-settings/ui/creator-settings-page";
@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
-  if (viewer?.role !== "creator") redirect("/login");
+  if (viewer?.role !== "creator") redirect(`/login?next=${CREATOR_SETTINGS}`);
   const [header, blockedFans, address, state, rows, apiPlatforms, settings, receiving, hardItems, link, look, replySettings] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creator/settings"),
     readMyBlockedSenders(supabase),

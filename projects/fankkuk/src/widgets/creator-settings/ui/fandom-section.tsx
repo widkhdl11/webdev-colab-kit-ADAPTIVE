@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { contrastRatio, parseColorField, TEXT_DARK, textOnColor, type CreatorColors } from "@/entities/creator/model/creator-color";
 import { creatorSymbolUrl } from "@/entities/creator/model/link-images";
 import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
@@ -43,8 +43,20 @@ function textName(bg: string): string {
   return textOnColor(bg) === TEXT_DARK ? "검정 글자" : "흰색 글자";
 }
 
+/** 대비는 소수 첫째 자리에서 버린다 — 반올림하면 4.46 이 4.5 로 보여 기준을 넘은 것처럼 읽힌다 */
 function ratioText(bg: string): string {
-  return `대비 ${contrastRatio(bg, textOnColor(bg)).toFixed(1)}:1`;
+  return `대비 ${(Math.floor(contrastRatio(bg, textOnColor(bg)) * 10) / 10).toFixed(1)}:1`;
+}
+
+/** 안내 상자 아이콘(시안 #i-info) */
+function InfoIcon() {
+  return (
+    <svg className={s.noteIco} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
 }
 
 function ColorStep({
@@ -57,6 +69,8 @@ function ColorStep({
   swatches,
   showAuto,
   invalid,
+  errorId,
+  inputRef,
   children,
 }: {
   step: number;
@@ -68,6 +82,9 @@ function ColorStep({
   swatches: readonly string[];
   showAuto: boolean;
   invalid: boolean;
+  /** 틀렸을 때 이어 읽을 오류 문구 id */
+  errorId: string;
+  inputRef: RefObject<HTMLInputElement | null>;
   children?: ReactNode;
 }) {
   const parsed = parseColorField(value);
@@ -97,6 +114,7 @@ function ColorStep({
         <input
           className={`field ${s.hex}`}
           id={`${id}-hex`}
+          ref={inputRef}
           type="text"
           value={value}
           maxLength={7}
@@ -104,7 +122,7 @@ function ColorStep({
           autoComplete="off"
           spellCheck={false}
           aria-invalid={invalid ? true : undefined}
-          aria-describedby={`${id}-h`}
+          aria-describedby={invalid ? `${id}-h ${errorId}` : `${id}-h`}
           onChange={(e) => onChange(e.currentTarget.value)}
         />
         {showAuto && color ? (
@@ -141,6 +159,8 @@ export function FandomSection(p: FandomSectionProps) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [bad, setBad] = useState<{ fan: boolean; personal: boolean }>({ fan: false, personal: false });
+  const fanRef = useRef<HTMLInputElement>(null);
+  const personalRef = useRef<HTMLInputElement>(null);
 
   const fanParsed = parseColorField(fan);
   const personalParsed = parseColorField(personal);
@@ -152,7 +172,12 @@ export function FandomSection(p: FandomSectionProps) {
     setMsg(null);
     const nextBad = { fan: !fanParsed.ok, personal: !personalParsed.ok };
     setBad(nextBad);
-    if (nextBad.fan || nextBad.personal) return setMsg({ ok: false, text: "색은 #RRGGBB 꼴(예: #1E3A8A)로 적어 주세요." });
+    if (nextBad.fan || nextBad.personal) {
+      setMsg({ ok: false, text: "색은 #RRGGBB 꼴(예: #1E3A8A)로 적어 주세요." });
+      // 화면 위에서 먼저 나오는 틀린 칸으로 — 팬컬러(3단계)가 퍼스널 컬러(4단계)보다 위
+      (nextBad.fan ? fanRef : personalRef).current?.focus();
+      return;
+    }
     setSaving(true);
     const r = await sendCreatorProfile({ fanName: name, fanColor: colors.fan ?? "", personalColor: colors.personal ?? "" });
     setSaving(false);
@@ -252,27 +277,34 @@ export function FandomSection(p: FandomSectionProps) {
         swatches={FAN_SWATCHES}
         showAuto
         invalid={bad.fan}
+        errorId="fd-msg"
+        inputRef={fanRef}
       />
 
       <ColorStep
-          step={4}
-          id="fd-per"
-          title="퍼스널 컬러"
-          hint="내 페이지 맨 위 띠와 프로필 사진 테두리에 쓰여요."
-          value={personal}
-          onChange={(v) => {
-            setPersonal(v);
-            setBad((b) => ({ ...b, personal: false }));
-          }}
-          swatches={PERSONAL_SWATCHES}
+        step={4}
+        id="fd-per"
+        title="퍼스널 컬러"
+        hint="내 페이지 맨 위 띠와 프로필 사진 테두리에 쓰여요."
+        value={personal}
+        onChange={(v) => {
+          setPersonal(v);
+          setBad((b) => ({ ...b, personal: false }));
+        }}
+        swatches={PERSONAL_SWATCHES}
         showAuto={false}
         invalid={bad.personal}
+        errorId="fd-msg"
+        inputRef={personalRef}
       >
         <div className={s.note} role="note">
-          <p>
-            <b>팬컬러와 퍼스널 컬러는 달라도 돼요.</b>
-          </p>
-          <p className="t-meta">팬컬러는 팬덤 뱃지에만, 퍼스널 컬러는 내 페이지의 띠와 사진 테두리에만 쓰여요. 사이트의 버튼과 글자는 그대로예요.</p>
+          <InfoIcon />
+          <div className={s.noteBody}>
+            <p>
+              <b>팬컬러와 퍼스널 컬러는 달라도 돼요.</b>
+            </p>
+            <p className="t-meta">팬컬러는 팬덤 뱃지에만, 퍼스널 컬러는 내 페이지의 띠와 사진 테두리에만 쓰여요. 사이트의 버튼과 글자는 그대로예요.</p>
+          </div>
         </div>
       </ColorStep>
 

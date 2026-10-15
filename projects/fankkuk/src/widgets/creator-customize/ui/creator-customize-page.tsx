@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { canDownloadNotice, linkText } from "@/entities/creator/model/creator-handle";
+import type { CreatorColors } from "@/entities/creator/model/creator-color";
 import { thanksLine } from "@/entities/creator/model/fan-name";
 import {
   creatorBackgroundUrl,
@@ -13,6 +14,7 @@ import {
   type PreviewPick,
   type PublicCreatorLook,
 } from "@/entities/creator/model/link-images";
+import { CREATOR_SETTINGS } from "@/entities/session/model/home-path";
 import { sendPreviewPick } from "@/features/creator-settings-save/api/send-creator-settings";
 import { CustomizePreview } from "./customize-preview";
 import { NoticeSizes } from "./notice-sizes";
@@ -35,6 +37,8 @@ export type CreatorCustomizeProps = {
   fanName: string;
   photoPath: string | null;
   look: PublicCreatorLook;
+  /** 퍼스널 컬러 — 미리보기 띠·사진 테두리를 공개 페이지와 같게 그린다(creator-link INV-E13) */
+  colors: CreatorColors;
   /** 공개 저장소 주소 — 사진 미리보기 주소를 만든다 */
   photoBase: string;
   /** 사이트 주소 — 공지 이미지 링크 복사에 붙인다 */
@@ -110,7 +114,7 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
                   팬덤 심볼
                   {symbolPath === null ? (
                     <small className={s.pickHint} id="cz-pick-hint">
-                      심볼을 올리면 고를 수 있어요
+                      <a href={`${CREATOR_SETTINGS}#fandom`}>심볼을 올리면</a> 고를 수 있어요
                     </small>
                   ) : null}
                 </span>
@@ -145,6 +149,7 @@ export function CreatorCustomizePage(p: CreatorCustomizeProps) {
             backgroundUrl: bgUrl,
             symbolUrl,
             pick: shownPick,
+            personalColor: p.colors.personal,
           }}
         />
       </div>

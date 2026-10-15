@@ -6,7 +6,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: 
 
 import { LinkSection } from "./link-section";
 
-// 설정의 선물 링크 칸 (creator-link INV-E4). 잠금 남은 날이 보이는지, 읽어 주는 연결이 맞는지 본다. 사진·공지 이미지는 꾸미기 화면 시험(creator-customize-page.test)이 본다.
+// 설정의 선물 링크 칸 (creator-link INV-E4). 잠금 남은 날이 보이는지, 읽어 주는 연결이 맞는지 본다. 사진은 프로필 수정 화면 시험(creator-profile-edit-page.test)이, 공지 이미지는 꾸미기 화면 시험(creator-customize-page.test)이 본다.
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -75,11 +75,12 @@ describe("INV-E4: 아이디 잠금 남은 날", () => {
   });
 });
 
-describe("「내 팬꾹 꾸미기」로 옮긴 칸", () => {
-  it("INV-E10: 선물 링크 칸에는 사진·공지 이미지 칸이 없고 꾸미기 화면으로 가는 링크만 있다", async () => {
+describe("「프로필 수정」·「내 팬꾹 꾸미기」로 옮긴 칸", () => {
+  it("INV-E10: 선물 링크 칸에는 사진·공지 이미지 칸이 없고 사진을 바꾸는 프로필 수정 화면으로 가는 링크만 있다", async () => {
     await render({ initial: { handle: "haru", lockedDays: 0, photoPath: null }, verified: true });
     expect(host.querySelector("input[type='file']")).toBeNull();
     expect(host.querySelector("a[href*='notice']")).toBeNull();
-    expect(host.querySelector("a[href='/creator/customize']")?.textContent).toBe("내 팬꾹 꾸미기");
+    expect(host.querySelector("a[href='/creator/profile']")?.textContent).toBe("프로필 수정");
+    expect(host.querySelector("a[href='/creator/customize']")).toBeNull();
   });
 });

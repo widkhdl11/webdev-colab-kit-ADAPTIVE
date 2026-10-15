@@ -116,9 +116,24 @@ describe("INV-E13: 저장은 팬덤 이름·두 색만, 크리에이터 ID 없�
     await act(async () => saveBtn().click());
     expect(fetchMock).not.toHaveBeenCalled();
     expect(fanHex().getAttribute("aria-invalid")).toBe("true");
+    // 틀린 칸은 오류 문구를 설명으로 이어 읽고, 초점이 그 칸으로 간다
+    expect((fanHex().getAttribute("aria-describedby") ?? "").split(" ")).toContain("fd-msg");
+    expect(host.querySelector("#fd-msg")?.textContent).toContain("#RRGGBB");
+    expect(document.activeElement).toBe(fanHex());
     // 칸에 적은 글자는 그대로 남지만 어느 요소의 스타일에도 들어가지 않는다
     expect([...host.querySelectorAll("[style]")].map((el) => el.getAttribute("style") ?? "").filter((st) => st.includes("url("))).toEqual([]);
     expect(host.querySelector<HTMLElement>("[data-fandom-badge]")?.style.getPropertyValue("--fan")).toBe("");
+  });
+
+  it("INV-E13 S12b (실패경로): 퍼스널 컬러만 틀리면 초점이 그 칸으로, 맞는 팬컬러 칸은 오류 문구를 읽지 않는다", async () => {
+    await render();
+    await type(fanHex(), "#1E3A8A");
+    await type(perHex(), "#12");
+    await act(async () => saveBtn().click());
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(perHex());
+    expect((perHex().getAttribute("aria-describedby") ?? "").split(" ")).toContain("fd-msg");
+    expect((fanHex().getAttribute("aria-describedby") ?? "").split(" ")).not.toContain("fd-msg");
   });
 
   it("INV-E13: 추천 색을 누르면 그 색이 칸과 미리보기에 들어간다", async () => {
@@ -147,6 +162,9 @@ describe("INV-E14: 미리보기 글자색은 저장하지 않고 그때 계산 �
     await render();
     await type(fanHex(), "#777777");
     expect(host.querySelector<HTMLElement>("[data-fandom-badge]")!.style.getPropertyValue("--on-fan")).toBe("#FFFFFF");
+    // 대비 4.48 — 반올림하면 4.5 로 보여 기준을 넘은 것처럼 읽히므로 버린다
+    expect(host.textContent).toContain("흰색 글자 · 대비 4.4:1");
+    expect(host.textContent).not.toContain("4.5:1");
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
     await act(async () => saveBtn().click());
     expect(JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1].body)).fanColor).toBe("#777777");

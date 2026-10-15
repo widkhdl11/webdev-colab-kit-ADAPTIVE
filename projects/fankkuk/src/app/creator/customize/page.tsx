@@ -45,6 +45,7 @@ export default async function Page() {
           fanName={settings.fanName}
           photoPath={link.photoPath}
           look={look}
+          colors={settings.colors}
           photoBase={readPublicStorageBase()}
           siteOrigin={requestOrigin(await headers())}
         />

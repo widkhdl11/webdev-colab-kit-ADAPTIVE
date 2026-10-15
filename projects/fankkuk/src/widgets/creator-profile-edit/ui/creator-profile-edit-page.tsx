@@ -129,7 +129,6 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
           hasImage={photoPath !== null}
           pickLabel="프로필 사진 바꾸기"
           removeLabel="사진 지우기"
-          hint="가운데를 정사각으로 잘라 저장하고 촬영 위치 같은 사진 정보는 지워요(10MB 까지). 지우면 이름 첫 글자가 대신 보여요."
           upload={async (f) => photoOut(await sendCreatorPhoto(f))}
           remove={async () => photoOut(await deleteCreatorPhoto())}
           onSaved={setPhotoPath}
@@ -201,7 +200,6 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
         <div className="sw-row">
           <label className={s.txt} htmlFor="pe-find">
             <strong className="t-strong">크리에이터 찾기에 보이기</strong>
-            <span className="t-meta">끄면 크리에이터 찾기 목록에서만 빠져요. 내 페이지 링크·팔로우·선물 받기는 그대로예요. 본인 확인을 마쳐야 찾기에 보여요.</span>
           </label>
           <input className={s.switch} type="checkbox" role="switch" id="pe-find" checked={visible} onChange={(e) => setVisible(e.currentTarget.checked)} />
         </div>

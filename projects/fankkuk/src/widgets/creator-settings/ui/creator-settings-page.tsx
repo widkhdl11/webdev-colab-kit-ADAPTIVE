@@ -1,6 +1,5 @@
 "use client";
 
-import { statusTagClass } from "@/shared/ui/status-tone";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import type { BlockedFan } from "@/entities/creator/api/blocked-senders";
@@ -231,6 +230,7 @@ export function CreatorSettingsPage({
       <nav className={s.jump} aria-label="상세 설정 구간">
         <a href="#fandom">팬덤</a>
         <a href="#more">받는 주소·받기 설정·차단한 팬</a>
+        <a href="#account">계정</a>
       </nav>
 
       <div className={`stack ${s.page}`}>

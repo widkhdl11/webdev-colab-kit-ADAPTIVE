@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { MyCreatorLink } from "@/entities/creator/api/creator-link-reads";
 import { HANDLE_LOCK_DAYS, HANDLE_MAX, HANDLE_RETIRE_DAYS, isSameHandle, LINK_HOST, linkText, normalizeHandle } from "@/entities/creator/model/creator-handle";
+import { CREATOR_PROFILE_EDIT } from "@/entities/session/model/home-path";
 import { sendCreatorHandle } from "@/features/creator-settings-save/api/send-creator-settings";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { CopyButton } from "@/shared/ui/copy-button";
@@ -66,9 +67,9 @@ export function LinkSection({
   return (
     <section id="link" className={`card ${s.set}`} aria-labelledby="link-h">
       <div className={s["set-head"]}>
-        <h2 className="t-card" id="link-h">
+        <h3 className="t-card" id="link-h">
           선물 링크
-        </h2>
+        </h3>
       </div>
 
       <div>
@@ -128,9 +129,8 @@ export function LinkSection({
       </p>
 
       <p className="t-meta">
-        프로필 사진·배경사진·공지 이미지는{" "}
-        <a href="/creator/customize">내 팬꾹 꾸미기</a>
-        에서 바꾸고 받아요.
+        프로필 사진·배경사진은 <a href={CREATOR_PROFILE_EDIT}>프로필 수정</a>
+        에서 바꿔요.
       </p>
 
       <BottomSheet open={confirming} title={`${linkText(normalizeHandle(draft) || "…")} 로 정할까요?`} onClose={() => setConfirming(false)}>
