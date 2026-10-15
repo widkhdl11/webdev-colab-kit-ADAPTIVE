@@ -1,9 +1,5 @@
 import { redirect } from "next/navigation";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";
-import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
-import { tagChips } from "@/entities/creator/model/creator-tags";
-import { newestSearchable } from "@/entities/creator/model/newest-creators";
-import { sendAvailabilityOf } from "@/features/gift-register/model/sender-rule";
 import { readNotices } from "@/entities/notice/api/notice-reads";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { fanGiftBucket } from "@/entities/order/ui/fan-stage-copy";
@@ -15,7 +11,7 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
 
-// 팬 메인(시안 v9-home B). 진행 중 선물·팔로우·새로 들어온 크리에이터·공지 모두 DB. 공지 줄은 고정 여부와 상관없이 최신 셋.
+// 팬 메인(시안 v21-addendum3/fan-home.html). 진행 중 선물·팔로우·공지 모두 DB. 공지 줄은 고정 여부와 상관없이 최신 셋.
 // 「진행 중」은 선물 내역의 「진행 중」 탭과 같은 기준(fanGiftBucket)이다.
 // 크리에이터는 크리에이터 메인으로, 로그인하지 않았으면 로그인으로 보낸다.
 export default async function Page() {
@@ -24,17 +20,7 @@ export default async function Page() {
   if (viewer?.role !== "fan") redirect("/login");
   const all = await readMyGiftViews(supabase);
   const gifts = all.filter((v) => fanGiftBucket(v) === "ongoing");
-  const [cards, searchable, tagOptions] = await Promise.all([
-    readCreatorCards(supabase, { signedIn: true }),
-    readCreatorCards(supabase, { signedIn: false, forSearch: true }),
-    readTagOptions(supabase),
-  ]);
-  const newest = newestSearchable(cards, searchable);
-  const chips = tagChips(tagOptions, newest); // creator-tags INV-T4
-  // 「선물 보내기」 자리는 크리에이터 페이지와 같은 판단 — 팔로우했으면 선물 보내기, 아니면 팔로우하고 선물 보내기(INV-L9)
-  const sendOf = Object.fromEntries(
-    newest.map((c) => [c.id, sendAvailabilityOf({ viewerRole: "fan", creatorId: c.id, ownCreatorId: null, following: c.following })]),
-  );
+  const cards = await readCreatorCards(supabase, { signedIn: true });
   const following = cards.filter((c) => c.following).map(({ id, name, faceTone }) => ({ id, name, faceTone }));
   const faceToneByName = Object.fromEntries(cards.map((c) => [c.name, c.faceTone]));
   const notices = (await readNotices(supabase))
@@ -44,7 +30,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/home", all)} />
-      <HomePage nickname={viewer.nickname ?? ""} gifts={gifts} following={following} faceToneByName={faceToneByName} newest={newest} chips={chips} sendOf={sendOf} notices={notices} />
+      <HomePage nickname={viewer.nickname ?? ""} gifts={gifts} following={following} faceToneByName={faceToneByName} notices={notices} />
       <SiteFooter />
     </>
   );
