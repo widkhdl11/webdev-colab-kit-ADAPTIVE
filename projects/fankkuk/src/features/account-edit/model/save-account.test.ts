@@ -97,6 +97,22 @@ describe("내 정보 저장", () => {
     expect(await saveAccount(t.deps, VALID)).toMatchObject({ ok: false, status: 400 });
   });
 
+  it("INV-U13 (실패경로): DB 가 같은 닉네임이 있다고 하면(FKU04) 닉네임 칸 「이미 쓰는 닉네임」 409", async () => {
+    const t = setup({ update: { data: null, error: { code: "FKU04" } } });
+    expect(await saveAccount(t.deps, VALID)).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 쓰는 닉네임이에요." });
+    expect(t.admin.calls).toEqual([]);
+  });
+
+  it("INV-U13 (실패경로): 닉네임 필터(FKU05~07)는 닉네임 칸 400, 보이지 않는 글자는 DB 를 부르기 전에 닉네임 칸 400", async () => {
+    for (const code of ["FKU05", "FKU06", "FKU07"]) {
+      const t = setup({ update: { data: null, error: { code } } });
+      expect(await saveAccount(t.deps, VALID)).toMatchObject({ ok: false, status: 400, field: "nickname" });
+    }
+    const t = setup();
+    expect(await saveAccount(t.deps, { ...VALID, nickname: "별\u200b빛" })).toMatchObject({ ok: false, status: 400, field: "nickname" });
+    expect(t.session.calls).toEqual([]);
+  });
+
   it("INV-A7 S7: 이메일이 바뀌면 세션 ID 로 링크를 만들고 새 주소로 확인 메일 한 통을 보낸다", async () => {
     const t = setup();
     const r = await saveAccount(t.deps, VALID);

@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { PASSWORD_HINT } from "@/entities/session/model/password-rule";
 import { resolveTagSelection, type TagOption } from "@/entities/creator/model/creator-tags";
+import { FAN_NAME_MAX } from "@/entities/creator/model/fan-name";
 import { HEARD_FROM, HEARD_FROM_LABEL, isHeardFrom, type HeardFrom } from "@/entities/metrics/model/signup-source";
 import { TagPicker } from "@/features/creator-tags-edit/ui/tag-picker";
 import { completeSignup } from "@/features/signup/api/complete-signup";
 import { requestPhoneVerification } from "@/features/signup/api/signup-client";
+import type { AvailabilityState } from "@/features/signup/model/name-availability";
+import { useNameAvailability } from "@/features/signup/model/use-name-availability";
 import {
   applyPhoneEdit,
   EMAIL_CUSTOM,
@@ -34,6 +37,8 @@ import s from "./signup.module.css";
 // 브라우저는 번호표만 들고 있다 — 인증됐는지는 서버가 카카오에게 묻는다(INV-U1).
 // 입력칸에 name 을 두지 않는다 — 폼 기본 제출이 일어나도 값이 주소창에 실리지 않게.
 // 2단계 칸은 입력하거나 칸을 떠난 뒤부터 바로 아래에 안내를 띄운다(맞으면 짧은 확인, 틀리면 무엇이 틀렸는지 — 판정은 checkField).
+// 아이디·닉네임은 형식이 맞으면 입력을 멈춘 뒤 0.4초에 서버에 미리 묻는다(INV-U14) — 확인 중… / 쓸 수 있어요 / 이미 쓰고 있어요 /
+// 형식이 맞지 않아요 / 잠시 뒤에 다시 확인해 주세요. 입력이 바뀌면 이전 답은 버린다. 최종 판정은 가입 때 서버가 한다(INV-U13).
 
 const STEPS = ["유형 선택", "정보 입력", "본인 확인"] as const;
 const LAST = STEPS.length;
@@ -41,10 +46,23 @@ const LAST = STEPS.length;
 type TermKey = "service" | "privacy" | "news";
 type Role = "fan" | "creator";
 type ErrorField = DetailsField | "verification" | "form";
+type LiveTone = "ok" | "bad" | "wait";
+type LiveMessage = { tone: LiveTone; message: string };
+
+/** 미리 확인(INV-U14)의 답 → 칸 아래 안내. 「잠시 뒤에」는 틀렸다는 뜻이 아니라 흐린 안내로 둔다. */
+const AVAILABILITY_LINE: Record<AvailabilityState["status"], LiveMessage> = {
+  checking: { tone: "wait", message: "확인 중…" },
+  available: { tone: "ok", message: "쓸 수 있어요." },
+  taken: { tone: "bad", message: "이미 쓰고 있어요." },
+  invalid: { tone: "bad", message: "형식이 맞지 않아요." },
+  rate_limited: { tone: "wait", message: "잠시 뒤에 다시 확인해 주세요." },
+  error: { tone: "wait", message: "잠시 뒤에 다시 확인해 주세요." },
+};
 
 /** 칸별 안내가 붙는 칸 → 입력 요소 id 의 꼬리. 「다음」에서 막히면 이 칸으로 포커스를 보낸다. */
 const LIVE_IDS: Record<LiveField, string> = {
   loginId: "id",
+  nickname: "nick",
   email: "mail",
   password: "pw",
   passwordConfirm: "pw2",
@@ -81,6 +99,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const [moved, setMoved] = useState(false);
   const [role, setRole] = useState<Role>("fan");
   const [loginId, setLoginId] = useState("");
+  const [nickname, setNickname] = useState("");
   const [emailParts, setEmailParts] = useState<EmailParts>({ local: "", choice: "", custom: "" });
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -90,6 +109,8 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   const [channelTitle, setChannelTitle] = useState("");
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
+  // 팬덤 이름(추가 요청 3) — 선택. 비우면 없음
+  const [fanName, setFanName] = useState("");
   const [agreed, setAgreed] = useState<Record<TermKey, boolean>>({ service: false, privacy: false, news: false });
   // metrics INV-Q4: 「어디서 알게 되셨나요」 — 고르지 않아도 가입된다
   const [heardFrom, setHeardFrom] = useState<HeardFrom | null>(null);
@@ -126,29 +147,43 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
   };
 
   const email = joinEmail(emailParts);
-  const liveValues: LiveValues = { loginId, email: emailParts, password, passwordConfirm, phone, creatorName, channelTitle };
+  const liveValues: LiveValues = { loginId, nickname, email: emailParts, password, passwordConfirm, phone, creatorName, channelTitle };
   const touch = (field: LiveField) => setTouched((t) => (t[field] ? t : { ...t, [field]: true }));
   // 칸을 고치면 그 칸에 걸려 있던 「다음」·서버 오류를 내리고 실시간 안내로 돌아간다
   const edited = (field: LiveField) => {
     touch(field);
     setError((e) => (e?.field === field ? null : e));
   };
-  const liveOf = (field: LiveField): { ok: boolean; message: string } | null => {
-    if (error?.field === field) return { ok: false, message: error.message };
-    return touched[field] ? checkField(field, liveValues) : null;
+  // INV-U14: 형식이 맞는 아이디·닉네임만 미리 묻는다(형식이 틀리면 묻지 않고 형식 안내만)
+  const askable = (field: "loginId" | "nickname") => (touched[field] && checkField(field, liveValues).ok ? liveValues[field].trim() : null);
+  const idCheck = useNameAvailability("loginId", askable("loginId"));
+  const nickCheck = useNameAvailability("nickname", askable("nickname"));
+  const availabilityOf = (field: "loginId" | "nickname"): LiveMessage => {
+    const state = field === "loginId" ? idCheck : nickCheck;
+    // 지금 칸 값에 대한 답이 아니면(아직 묻는 중·이전 값의 답) 확인 중으로 둔다
+    if (!state || state.value !== liveValues[field].trim()) return AVAILABILITY_LINE.checking;
+    return AVAILABILITY_LINE[state.status];
+  };
+  const liveOf = (field: LiveField): LiveMessage | null => {
+    if (error?.field === field) return { tone: "bad", message: error.message };
+    if (!touched[field]) return null;
+    const own = checkField(field, liveValues);
+    if (!own.ok) return { tone: "bad", message: own.message };
+    if (field === "loginId" || field === "nickname") return availabilityOf(field);
+    return { tone: "ok", message: own.message };
   };
   const liveId = (field: LiveField) => f(`${LIVE_IDS[field]}-m`);
   const liveAttrs = (field: LiveField, hintId?: string) => {
     const m = liveOf(field);
     const describedBy = [hintId, m ? liveId(field) : null].filter(Boolean).join(" ");
-    return { "aria-describedby": describedBy || undefined, "aria-invalid": m && !m.ok ? true : undefined };
+    return { "aria-describedby": describedBy || undefined, "aria-invalid": m?.tone === "bad" ? true : undefined };
   };
   const liveLine = (field: LiveField) => {
     const m = liveOf(field);
     if (!m) return null;
     return (
-      <p className={`${s.live} ${m.ok ? s["live-ok"] : s["live-bad"]}`} id={liveId(field)}>
-        {m.ok ? <CheckIcon size={16} /> : null}
+      <p className={`${s.live} ${s[`live-${m.tone}`]}`} id={liveId(field)}>
+        {m.tone === "ok" ? <CheckIcon size={16} /> : null}
         {m.message}
       </p>
     );
@@ -174,11 +209,19 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     if (role !== "creator") return undefined;
     const t = tagSelection();
     return t.ok
-      ? { name: creatorName, channelTitle, tagIds: t.tagIds, customTag: t.customTag ?? "" }
-      : { name: creatorName, channelTitle, tagIds, customTag };
+      ? { name: creatorName, channelTitle, tagIds: t.tagIds, customTag: t.customTag ?? "", fanName }
+      : { name: creatorName, channelTitle, tagIds, customTag, fanName };
+  };
+  // 미리 확인이 지금 값에 대해 「이미 씀」·「형식 틀림」이라고 답했으면 다음으로 넘기지 않는다(그 사이 바뀌는 것은 가입 때 서버가 다시 본다)
+  const knownTaken = (): { field: DetailsField; message: string } | null => {
+    for (const field of ["loginId", "nickname"] as const) {
+      const line = availabilityOf(field);
+      if (line.tone === "bad") return { field, message: line.message };
+    }
+    return null;
   };
   const details = (): { field: DetailsField; message: string } | null => {
-    const problem = checkDetails({ loginId, email, password, passwordConfirm, phone, terms: agreed, creator: creatorProfile() });
+    const problem = checkDetails({ loginId, nickname, email, password, passwordConfirm, phone, terms: agreed, creator: creatorProfile() }) ?? knownTaken();
     if (problem || role !== "creator") return problem;
     const t = tagSelection();
     return t.ok ? null : { field: "tags", message: t.message };
@@ -201,6 +244,7 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
     const r = await completeSignup({
       role,
       loginId: loginId.trim(),
+      nickname: nickname.trim(),
       email,
       password,
       phone,
@@ -408,6 +452,29 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                   </p>
                 </div>
                 <div>
+                  <label className="label" htmlFor={f("nick")}>
+                    닉네임
+                  </label>
+                  <input
+                    className="field"
+                    id={f("nick")}
+                    type="text"
+                    autoComplete="nickname"
+                    spellCheck={false}
+                    value={nickname}
+                    onChange={(e) => {
+                      setNickname(e.target.value);
+                      edited("nickname");
+                    }}
+                    onBlur={() => touch("nickname")}
+                    {...liveAttrs("nickname", f("nick-h"))}
+                  />
+                  {liveLine("nickname")}
+                  <p className="hint" id={f("nick-h")}>
+                    팬꾹에서 보이는 이름이에요. 12자까지, 다른 사람이 쓰는 닉네임은 쓸 수 없어요. 가입한 뒤 계정 설정에서 바꿀 수 있어요.
+                  </p>
+                </div>
+                <div>
                   <label className="label" htmlFor={f("mail")}>
                     이메일
                   </label>
@@ -587,6 +654,29 @@ export function SignupPage({ tagOptions }: { tagOptions: readonly TagOption[] })
                       {liveLine("channelTitle")}
                       <p className="hint" id={f("cr-channel-h")}>
                         채널 주소는 가입한 뒤 본인 확인 때 받아요.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="label" htmlFor={f("cr-fan")}>
+                        팬덤 이름 <span className={`t-meta ${s.opt}`}>(선택)</span>
+                      </label>
+                      <input
+                        className="field"
+                        id={f("cr-fan")}
+                        type="text"
+                        autoComplete="off"
+                        placeholder="예: 꿀벌단"
+                        maxLength={FAN_NAME_MAX}
+                        value={fanName}
+                        onChange={(e) => {
+                          setFanName(e.target.value);
+                          setError((x) => (x?.field === "fanName" ? null : x));
+                        }}
+                        aria-describedby={error?.field === "fanName" ? `${f("cr-fan-h")} ${f("error")}` : f("cr-fan-h")}
+                        aria-invalid={error?.field === "fanName" ? true : undefined}
+                      />
+                      <p className="hint" id={f("cr-fan-h")}>
+                        팬을 부르는 이름이에요. {FAN_NAME_MAX}자까지, 비워 둬도 돼요. 가입한 뒤 내 팬꾹 꾸미기에서 바꿀 수 있어요.
                       </p>
                     </div>
                     <TagPicker

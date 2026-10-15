@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { nicknameRejection } from "@/entities/session/model/nickname-rule";
 import type { Viewer } from "@/entities/session/model/viewer";
 import type { SendMail } from "@/shared/api/mail/smtp";
 import { buildVerificationMail } from "../lib/verification-mail";
@@ -12,6 +13,7 @@ import { accountInputSchema } from "./account-input";
 //    넘기는 계정 ID 는 세션에서 확인한 ID 뿐이다(INV-L3). 받은 링크 값은 메일에만 넣고 응답에는 넣지 않는다.
 // 팬만 쓴다 — 크리에이터 설정은 따로다(my-account 비범위).
 // 메일 설정은 메일이 필요할 때만 읽는다 — 설정이 빠져도 닉네임·알림 저장은 된다.
+// 닉네임이 남과 겹치거나(FKU04) 필터에 걸리면(FKU05~07) 닉네임 칸 오류로 돌려준다(signup INV-U13).
 
 export type SaveAccountDeps = {
   client: Pick<SupabaseClient, "rpc">;
@@ -22,7 +24,7 @@ export type SaveAccountDeps = {
 
 export type SaveAccountResult =
   | { ok: true; pendingEmail: string | null }
-  | { ok: false; status: 400 | 401 | 403 | 429 | 502; message: string };
+  | { ok: false; status: 400 | 401 | 403 | 409 | 429 | 502; message: string; field?: "nickname" };
 
 const issuedSchema = z.array(z.object({ token: z.string(), email: z.string(), nickname: z.string() })).length(1);
 
@@ -34,7 +36,9 @@ export async function saveAccount(deps: SaveAccountDeps, body: unknown): Promise
 
   const parsed = accountInputSchema.safeParse(body);
   if (!parsed.success) {
-    return { ok: false, status: 400, message: parsed.error.issues[0]?.message ?? "입력을 확인해 주세요." };
+    const issue = parsed.error.issues[0];
+    const message = issue?.message ?? "입력을 확인해 주세요.";
+    return issue?.path[0] === "nickname" ? { ok: false, status: 400, field: "nickname", message } : { ok: false, status: 400, message };
   }
   const input = parsed.data;
 
@@ -45,6 +49,8 @@ export async function saveAccount(deps: SaveAccountDeps, body: unknown): Promise
     p_notify_email: input.notifyEmail,
   });
   if (updated.error) {
+    const nick = nicknameRejection(updated.error.code);
+    if (nick) return { ok: false, status: nick.status, field: "nickname", message: nick.message };
     if (updated.error.code === "22023") return { ok: false, status: 400, message: "입력을 확인해 주세요." };
     if (updated.error.code === "FK429") return { ok: false, status: 429, message: TOO_MANY };
     if (updated.error.code === "42501") return { ok: false, status: 401, message: "로그인이 필요해요." };

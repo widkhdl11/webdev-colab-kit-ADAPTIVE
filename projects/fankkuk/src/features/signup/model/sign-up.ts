@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { tagFilterMessage } from "@/entities/creator/model/creator-tags";
 import { accountLoginEmail } from "@/entities/session/model/login-id";
+import { nicknameRejection } from "@/entities/session/model/nickname-rule";
 import type { SendMail } from "@/shared/api/mail/smtp";
 import type { Utm } from "@/shared/lib/attribution/utm";
 import { choosePhoneVerifier } from "@/shared/api/phone-verifier/verifier";
@@ -12,7 +13,8 @@ import { consentRows, detailsFieldOf, signupInputSchema, type DetailsField } fro
 // 2) 번호표가 쓸 수 있는지, 확인된 번호가 입력 번호와 같은지 본다(INV-U1·U2). 아니면 로그인 정보를 만들지 않는다.
 //    번호 중복은 이 확인을 통과한 뒤에만 알려 준다(INV-U11).
 // 3) Supabase Auth 에 로그인 정보를 만든다 — 주소는 아이디로 만든 예약 도메인 주소(INV-U8). 이미 있으면 「쓰는 아이디」.
-// 4) create_account(크리에이터면 create_creator_account — 확인 안 된 공개 정보 행까지) 가 프로필·연락처·확인 메일 기록·약관 동의를 한 번에 만들고 번호표를 「씀」으로 바꾼다(INV-U4).
+// 4) create_account(크리에이터면 create_creator_account — 확인 안 된 공개 정보 행·팬덤 이름까지) 가 프로필·연락처·확인 메일 기록·약관 동의를 한 번에 만들고 번호표를 「씀」으로 바꾼다(INV-U4).
+//    닉네임은 적은 값 그대로 넘긴다 — 겹침(영문 대소문자·앞뒤 공백 무시)과 금칙어·연락처 필터는 DB 가 판정한다(INV-U13, FKU04~07).
 //    실패하면 3)에서 만든 로그인 정보를 지운다 — 로그인은 되는데 프로필이 없는 계정이 남지 않게.
 // 5) 가입 경로(고른 답)와 처음 들어온 공유 링크의 utm(쿠키에서 거른 값)을 계정에 붙인다(metrics INV-Q4). 실패해도 가입은 그대로다.
 // 6) 그 사람으로 로그인해 세션 쿠키를 쓴다. 7) 확인 메일을 보낸다(INV-U7). 5~7 이 실패해도 계정은 그대로 둔다.
@@ -54,6 +56,12 @@ const CLOSED = {
 const REVERIFY = { ok: false, status: 400, field: "verification", message: "본인 확인을 다시 해 주세요." } as const;
 const ID_TAKEN = { ok: false, status: 409, field: "loginId", message: "이미 쓰는 아이디예요." } as const;
 const PHONE_TAKEN = { ok: false, status: 409, field: "phone", message: "이미 가입된 휴대폰 번호예요. 로그인해 주세요." } as const;
+
+const FAN_NAME_FILTER: Record<string, string> = {
+  P0084: "팬덤 이름에 쓸 수 없는 말이 들어 있어요.",
+  P0085: "팬덤 이름에 전화번호·이메일·인터넷 주소는 쓸 수 없어요.",
+  P0086: "팬덤 이름에 글자나 숫자를 하나 이상 넣어 주세요.",
+};
 
 const issuedSchema = z.array(z.object({ token: z.string(), email: z.string(), nickname: z.string() })).length(1);
 
@@ -99,6 +107,7 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
       p_phone: input.phone,
       p_verification_id: input.verificationId,
       p_terms: consentRows(input.terms),
+      p_nickname: input.nickname,
     };
     // creator-verification INV-V1·signup INV-U5: 크리에이터는 계정과 확인 안 된 공개 정보 행을 한 처리에서 만든다
     account =
@@ -109,6 +118,8 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
             p_channel_title: input.creator.channelTitle,
             p_tag_ids: input.creator.tagIds,
             p_custom_tag: input.creator.customTag === "" ? null : input.creator.customTag,
+            // 팬덤 이름(추가 요청 3) — 비우면 null
+            p_fan_name: input.creator.fanName ? input.creator.fanName : null,
           })
         : await deps.admin.rpc("create_account", { ...common, p_role: input.role });
   } catch (e) {
@@ -120,6 +131,12 @@ export async function signUp(deps: SignUpDeps, body: unknown, utm: Utm | null = 
     if (account.error.code === "FKU01") return REVERIFY;
     if (account.error.code === "FKU02") return PHONE_TAKEN;
     if (account.error.code === "FKU03") return ID_TAKEN;
+    // INV-U13: 이미 쓰는 닉네임(FKU04, 동시 가입에서 진 쪽 포함)·닉네임 필터(FKU05~07) — 닉네임 칸
+    const nick = nicknameRejection(account.error.code);
+    if (nick) return { ok: false, status: nick.status, field: "nickname", message: nick.message };
+    // 팬덤 이름이 필터에 걸림(P0084~P0086) — 팬덤 이름 칸
+    const fan = account.error.code ? FAN_NAME_FILTER[account.error.code] : undefined;
+    if (fan && input.role === "creator") return { ok: false, status: 400, field: "fanName", message: fan };
     // 직접 입력이 태그 필터에 걸림(creator-tags INV-T7) — 사유마다 문구
     const filtered = tagFilterMessage(account.error.code);
     if (filtered && input.role === "creator") return { ok: false, status: 400, field: "tags", message: filtered };

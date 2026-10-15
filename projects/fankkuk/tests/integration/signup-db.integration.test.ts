@@ -51,6 +51,7 @@ function createAccount(userId: string, loginId: string, p: string, verificationI
     p_phone: p,
     p_verification_id: verificationId,
     p_terms: TERMS,
+    p_nickname: loginId, // 가입 닉네임(INV-U13) — 시험마다 다른 아이디를 그대로 쓴다
     ...extra,
   });
 }
@@ -59,6 +60,7 @@ function signupBody(loginId: string, p: string, verificationId: string, extra: R
   return {
     role: "fan",
     loginId,
+    nickname: loginId,
     email: `${loginId.replace("_", ".")}@example.com`,
     password: "long-enough-pw1",
     phone: p,
@@ -141,7 +143,7 @@ describe("INV-U1: 서버가 확인한 번호로만 계정이 생긴다", () => {
       expect((await client.rpc("phone_verification_tx", { p_id: "00000000-0000-4000-8000-000000000000" })).error?.code).toBe("42501");
       expect((await client.rpc("complete_phone_verification", { p_id: "00000000-0000-4000-8000-000000000000", p_verified_phone: "01090000000" })).error?.code).toBe("42501");
       expect((await client.rpc("usable_phone_verification", { p_id: "00000000-0000-4000-8000-000000000000" })).error?.code).toBe("42501");
-      expect((await client.rpc("create_account", { p_user_id: null, p_login_id: "x", p_role: "fan", p_email: "", p_phone: "", p_verification_id: null, p_terms: [] })).error?.code).toBe("42501");
+      expect((await client.rpc("create_account", { p_user_id: null, p_login_id: "x", p_role: "fan", p_email: "", p_phone: "", p_verification_id: null, p_terms: [], p_nickname: "x" })).error?.code).toBe("42501");
       expect((await client.from("terms_consents").select("*").limit(1)).error?.code).toBe("42501");
     }
   });

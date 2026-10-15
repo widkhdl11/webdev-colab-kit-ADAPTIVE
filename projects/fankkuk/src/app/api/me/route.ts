@@ -25,6 +25,6 @@ export async function POST(req: NextRequest) {
       body,
     );
     if (result.ok) return { status: 200, body: { pendingEmail: result.pendingEmail } };
-    return { status: result.status, body: { message: result.message } };
+    return { status: result.status, body: result.field ? { field: result.field, message: result.message } : { message: result.message } };
   });
 }

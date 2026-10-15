@@ -58,6 +58,7 @@ async function args(loginId: string, extra: Record<string, unknown> = {}) {
       p_channel_title: "꿀단지의 부엌",
       p_tag_ids: [optionId("유튜브")],
       p_custom_tag: "요리",
+      p_nickname: loginId.slice(0, 12), // 가입 닉네임(signup INV-U13) — 계정마다 다르게
       ...extra,
     },
   };
@@ -77,8 +78,8 @@ describe("크리에이터 가입 때 공개 정보 (INV-V1 · signup INV-U5)", (
     const r = await adminClient().rpc("create_creator_account", body);
     expect(r.error).toBeNull();
     expect(psql(`select role from public.profiles where id = '${userId}'`)).toBe("creator");
-    // 머리 메뉴·인사말이 쓰는 닉네임도 공개 이름이다 — 로그인 아이디를 자른 값(it_cv_ggul)이 아니다
-    expect(psql(`select nickname from public.profiles where id = '${userId}'`)).toBe("꿀단지");
+    // 닉네임은 가입 때 적은 값이다(signup INV-U13, 2026-10-15) — 공개 이름(꿀단지)으로 덮지 않는다
+    expect(psql(`select nickname from public.profiles where id = '${userId}'`)).toBe("it_cv_ggul");
     const row = psql(
       `select name || '|' || channel_title || '|' || identity_verified || '|' || coalesce(channel_url, '-') || '|' || intro || '|' || slug from public.creators where profile_id = '${userId}'`,
     );

@@ -8,6 +8,7 @@ const SAME_AS_ID = "samepassword";
 
 const ok = {
   loginId: "newfan",
+  nickname: "새팬",
   email: "new.fan@example.com",
   password: TEST_PW,
   passwordConfirm: TEST_PW,
@@ -63,6 +64,7 @@ describe("INV-V1·creator-tags INV-T3: 크리에이터 공개 정보 미리 보�
 describe("INV-U6: 칸별 실시간 안내 — 다음을 누를 때와 같은 규칙을 칸마다", () => {
   const live: LiveValues = {
     loginId: "newfan",
+    nickname: "새팬",
     email: { local: "new.fan", choice: "naver.com", custom: "" },
     password: TEST_PW,
     passwordConfirm: TEST_PW,
@@ -70,7 +72,7 @@ describe("INV-U6: 칸별 실시간 안내 — 다음을 누를 때와 같은 규
     creatorName: "꿀단지",
     channelTitle: "꿀단지TV",
   };
-  const fields = ["loginId", "email", "password", "passwordConfirm", "phone", "creatorName", "channelTitle"] as const;
+  const fields = ["loginId", "nickname", "email", "password", "passwordConfirm", "phone", "creatorName", "channelTitle"] as const;
 
   it("INV-U6: 맞는 칸은 짧은 확인 문구", () => {
     for (const field of fields) {
@@ -103,5 +105,40 @@ describe("INV-U6: 칸별 실시간 안내 — 다음을 누를 때와 같은 규
     expect(checkField("passwordConfirm", { ...live, passwordConfirm: "" }).ok).toBe(false);
     expect(checkField("creatorName", { ...live, creatorName: " " }).ok).toBe(false);
     expect(checkField("channelTitle", { ...live, channelTitle: "가".repeat(41) }).ok).toBe(false);
+  });
+});
+
+describe("INV-U13: 닉네임·팬덤 이름 미리 보기 — 서버와 같은 규칙", () => {
+  const live: LiveValues = {
+    loginId: "newfan",
+    nickname: "새팬",
+    email: { local: "new.fan", choice: "naver.com", custom: "" },
+    password: TEST_PW,
+    passwordConfirm: TEST_PW,
+    phone: "010-5555-6666",
+    creatorName: "꿀단지",
+    channelTitle: "꿀단지TV",
+  };
+
+  it("INV-U13 (실패경로): 닉네임 13자·공백뿐·보이지 않는 글자는 닉네임 칸을 가리킨다 — 칸별 안내도 같은 문구", () => {
+    for (const nickname of ["가".repeat(13), "  ", "하\u200b루"]) {
+      const d = checkDetails({ ...ok, nickname });
+      expect([nickname, d?.field]).toEqual([nickname, "nickname"]);
+      const f = checkField("nickname", { ...live, nickname });
+      expect([nickname, f.ok, f.message]).toEqual([nickname, false, d?.message]);
+    }
+  });
+
+  it("INV-U13: 앞뒤 공백을 뺀 12자는 맞는 닉네임", () => {
+    expect(checkDetails({ ...ok, nickname: ` ${"가".repeat(12)} ` })).toBeNull();
+    expect(checkField("nickname", { ...live, nickname: "🌟".repeat(12) }).ok).toBe(true);
+  });
+
+  it("추가 요청 3 (실패경로): 팬덤 이름은 비워도 되고, 11자·보이지 않는 글자면 팬덤 이름 칸", () => {
+    const creator = { name: "꿀단지", channelTitle: "꿀단지TV", tagIds: ["11111111-1111-4111-8111-000000000001"], customTag: "" };
+    expect(checkDetails({ ...ok, creator: { ...creator, fanName: "" } })).toBeNull();
+    expect(checkDetails({ ...ok, creator: { ...creator, fanName: "가".repeat(10) } })).toBeNull();
+    expect(checkDetails({ ...ok, creator: { ...creator, fanName: "가".repeat(11) } })?.field).toBe("fanName");
+    expect(checkDetails({ ...ok, creator: { ...creator, fanName: "꿀\u200b벌" } })?.field).toBe("fanName");
   });
 });

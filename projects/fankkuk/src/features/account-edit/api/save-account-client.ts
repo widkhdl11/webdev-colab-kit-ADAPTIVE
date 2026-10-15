@@ -6,7 +6,7 @@ import type { AccountInput } from "../model/account-input";
 export type SaveAccountOutcome =
   | { kind: "ok"; pendingEmail: string | null }
   | { kind: "login" }
-  | { kind: "failed"; message: string };
+  | { kind: "failed"; message: string; field?: "nickname" };
 
 const FALLBACK = "저장하지 못했어요. 잠시 뒤 다시 해 주세요.";
 
@@ -17,10 +17,12 @@ export async function postAccount(input: AccountInput): Promise<SaveAccountOutco
       headers: { "content-type": "application/json" },
       body: JSON.stringify(input),
     });
-    const body = (await res.json().catch(() => null)) as { pendingEmail?: unknown; message?: unknown } | null;
+    const body = (await res.json().catch(() => null)) as { pendingEmail?: unknown; message?: unknown; field?: unknown } | null;
     if (res.ok) return { kind: "ok", pendingEmail: typeof body?.pendingEmail === "string" ? body.pendingEmail : null };
     if (res.status === 401) return { kind: "login" };
-    return { kind: "failed", message: typeof body?.message === "string" ? body.message : FALLBACK };
+    const message = typeof body?.message === "string" ? body.message : FALLBACK;
+    // 닉네임 칸 오류(이미 쓰는 닉네임 등, signup INV-U13)는 그 칸 아래에 띄운다
+    return body?.field === "nickname" ? { kind: "failed", message, field: "nickname" } : { kind: "failed", message };
   } catch {
     return { kind: "failed", message: FALLBACK };
   }

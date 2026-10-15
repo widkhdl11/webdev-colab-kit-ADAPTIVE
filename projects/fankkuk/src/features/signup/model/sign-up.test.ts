@@ -78,6 +78,7 @@ function harness(opts: {
 const body = (extra: Record<string, unknown> = {}) => ({
   role: "fan",
   loginId: "newfan",
+  nickname: " 새팬 ",
   email: "new.fan@example.com",
   password: TEST_PW,
   phone: "010-5555-6666",
@@ -104,6 +105,7 @@ describe("가입 — 정상 경로", () => {
         { key: "service", version: "2026-10-01" },
         { key: "privacy", version: "2026-10-01" },
       ],
+      p_nickname: "새팬",
     });
     expect(h.signIns).toEqual([{ email: "newfan@login.fankkuk.invalid", password: TEST_PW }]);
     expect(h.deleted).toEqual([]);
@@ -337,6 +339,8 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
       p_channel_title: "꿀단지TV",
       p_tag_ids: ["11111111-1111-4111-8111-000000000001", "11111111-1111-4111-8111-000000000002"],
       p_custom_tag: "먹방",
+      p_nickname: "새팬",
+      p_fan_name: null,
     });
   });
 
@@ -390,6 +394,63 @@ describe("크리에이터 가입 — 공개 정보 행 (creator-verification INV
     const r = await signUp(h.deps, body({ role: "creator", creator }));
     expect(r).toMatchObject({ ok: false, status: 400 });
     expect(h.deleted).toEqual([USER_ID]);
+  });
+});
+
+describe("INV-U13: 가입 닉네임", () => {
+  const creator = { name: "꿀단지", channelTitle: "꿀단지TV", tagIds: ["11111111-1111-4111-8111-000000000001"], customTag: "" };
+
+  it("INV-U13 (실패경로): 닉네임이 없거나 13자·공백뿐·보이지 않는 글자면 닉네임 칸으로 400, 로그인 정보를 만들지 않는다", async () => {
+    for (const nickname of [undefined, "가".repeat(13), "   ", "하\u200b루"]) {
+      const h = harness();
+      const r = await signUp(h.deps, body({ nickname }));
+      expect([nickname, r]).toMatchObject([nickname, { ok: false, status: 400, field: "nickname" }]);
+      expect(h.created).toEqual([]);
+    }
+  });
+
+  it("INV-U13: 12자 닉네임(이모지는 한 글자)은 받는다", async () => {
+    const h = harness();
+    expect((await signUp(h.deps, body({ nickname: "🌟".repeat(12) }))).ok).toBe(true);
+    expect(h.rpcCalls.find((c) => c.fn === "create_account")?.args.p_nickname).toBe("🌟".repeat(12));
+  });
+
+  it("INV-U13 (실패경로): DB 가 같은 닉네임이 있다고 하면(FKU04) 닉네임 칸 「이미 쓰는 닉네임」 409, 방금 만든 로그인 정보는 지운다", async () => {
+    const h = harness({ createAccountError: { code: "FKU04" } });
+    expect(await signUp(h.deps, body())).toEqual({ ok: false, status: 409, field: "nickname", message: "이미 쓰는 닉네임이에요." });
+    expect(h.deleted).toEqual([USER_ID]);
+  });
+
+  it("INV-U13 (실패경로): 닉네임 필터(금칙어 FKU05·연락처 FKU06·기호만 FKU07)는 닉네임 칸에 사유 문구", async () => {
+    for (const code of ["FKU05", "FKU06", "FKU07"]) {
+      const h = harness({ createAccountError: { code } });
+      const r = await signUp(h.deps, body());
+      expect(r).toMatchObject({ ok: false, status: 400, field: "nickname" });
+      expect(r.ok ? "" : r.message).toMatch(/닉네임/);
+      expect(h.deleted).toEqual([USER_ID]);
+    }
+  });
+
+  it("INV-U13·추가 요청 3: 크리에이터도 적은 닉네임을 넘기고, 팬덤 이름은 앞뒤 공백을 떼어 넘긴다(비우면 null)", async () => {
+    const h = harness();
+    await signUp(h.deps, body({ role: "creator", creator: { ...creator, fanName: " 꿀벌들 " } }));
+    expect(h.rpcCalls.find((c) => c.fn === "create_creator_account")?.args).toMatchObject({ p_nickname: "새팬", p_fan_name: "꿀벌들" });
+    const h2 = harness();
+    await signUp(h2.deps, body({ role: "creator", creator: { ...creator, fanName: "  " } }));
+    expect(h2.rpcCalls.find((c) => c.fn === "create_creator_account")?.args).toMatchObject({ p_fan_name: null });
+  });
+
+  it("추가 요청 3 (실패경로): 팬덤 이름 11자·보이지 않는 글자는 팬덤 이름 칸 400, DB 필터(P0084~P0086)도 팬덤 이름 칸", async () => {
+    for (const fanName of ["가".repeat(11), "꿀\u200b벌"]) {
+      const h = harness();
+      expect(await signUp(h.deps, body({ role: "creator", creator: { ...creator, fanName } }))).toMatchObject({ ok: false, status: 400, field: "fanName" });
+      expect(h.created).toEqual([]);
+    }
+    for (const code of ["P0084", "P0085", "P0086"]) {
+      const h = harness({ createAccountError: { code } });
+      expect(await signUp(h.deps, body({ role: "creator", creator: { ...creator, fanName: "꿀벌" } }))).toMatchObject({ ok: false, status: 400, field: "fanName" });
+      expect(h.deleted).toEqual([USER_ID]);
+    }
   });
 });
 

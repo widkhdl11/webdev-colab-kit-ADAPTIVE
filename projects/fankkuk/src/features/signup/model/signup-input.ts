@@ -1,15 +1,19 @@
 import { z } from "zod";
+import { FAN_NAME_MAX } from "@/entities/creator/model/fan-name";
 import { TAG_COUNT_MESSAGE, tagCountWithin, tagSelectionFields } from "@/entities/creator/model/creator-tags";
 import { HEARD_FROM } from "@/entities/metrics/model/signup-source";
 import { SIGNUP_LOGIN_ID_PATTERN } from "@/entities/session/model/login-id";
+import { nicknameSchema } from "@/entities/session/model/nickname-rule";
 import { PASSWORD_KINDS, PASSWORD_MAX, PASSWORD_MIN, PASSWORD_SAME_AS_ID, PASSWORD_TOO_LONG, PASSWORD_TOO_SHORT, PASSWORD_WEAK, passwordKinds } from "@/entities/session/model/password-rule";
 import { EMAIL_SHAPE } from "@/shared/lib/validation/email-shape";
 import { charCount } from "@/shared/lib/validation/char-count";
+import { HIDDEN_CHAR } from "@/shared/lib/validation/hidden-char";
 import { MOBILE_PHONE_SHAPE } from "@/shared/lib/validation/phone-shape";
 import { EMAIL_CUSTOM, joinEmail, type EmailParts } from "./signup-fields";
 
-// 가입 입력 경계(INV-U5·U6). 앱 서버가 먼저 검사하고, DB 함수 create_account 가 같은 규칙으로 다시 검사한다.
-// 본문에서 이 칸들만 꺼낸다 — 「인증 완료」 표시·사용자 ID·닉네임·약관 판 번호는 와도 읽지 않는다(INV-U1).
+// 가입 입력 경계(INV-U5·U6·U13). 앱 서버가 먼저 검사하고, DB 함수 create_account 가 같은 규칙으로 다시 검사한다.
+// 본문에서 이 칸들만 꺼낸다 — 「인증 완료」 표시·사용자 ID·약관 판 번호는 와도 읽지 않는다(INV-U1).
+// 닉네임은 가입 때 받는다(INV-U13) — 앞뒤 공백 뺀 1~12자. 금칙어·연락처 필터와 겹침은 DB 가 다시 본다.
 // 휴대폰은 하이픈·공백을 빼고 숫자만 남긴 뒤 검사한다.
 // 화면의 2단계 미리 보기(checkDetails)도 같은 detailsSchema 를 쓴다 — 규칙과 문구가 한 곳에만 있다.
 
@@ -30,6 +34,7 @@ const detailsObject = z.object({
     .string()
     .trim()
     .refine((s) => SIGNUP_LOGIN_ID_PATTERN.test(s), "아이디는 영문 소문자·숫자·밑줄(_) 4~20자로 적어 주세요."),
+  nickname: nicknameSchema,
   email: z
     .string()
     .trim()
@@ -60,10 +65,20 @@ const trimmedWithin = (max: number, message: string) =>
     .trim()
     .refine((s) => charCount(s) >= 1 && charCount(s) <= max, message);
 
+const LINE_BREAK = new RegExp(`[${String.fromCharCode(0x2028, 0x2029)}]`);
+
 const creatorProfileObject = z.object({
   name: trimmedWithin(CREATOR_PROFILE_LIMITS.name, `공개 이름을 1~${CREATOR_PROFILE_LIMITS.name}자로 적어 주세요.`),
   channelTitle: trimmedWithin(CREATOR_PROFILE_LIMITS.channelTitle, `채널 이름을 1~${CREATOR_PROFILE_LIMITS.channelTitle}자로 적어 주세요.`),
   ...tagSelectionFields,
+  // 팬덤 이름(PRODUCT 「추가 요청 3」) — 선택, 0~10자. 내 팬꾹 꾸미기의 「팬을 부르는 이름」과 같은 칸(creators.fan_name)·같은 규칙.
+  // 금칙어·연락처 필터는 DB 함수 create_creator_account 가 본다(P0084~P0086).
+  fanName: z
+    .string()
+    .trim()
+    .refine((s) => charCount(s) <= FAN_NAME_MAX, `팬덤 이름은 ${FAN_NAME_MAX}자까지 적을 수 있어요.`)
+    .refine((s) => !HIDDEN_CHAR.test(s) && !LINE_BREAK.test(s), "팬덤 이름에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요.")
+    .optional(),
 });
 
 export const creatorProfileSchema = creatorProfileObject
@@ -72,7 +87,7 @@ export const creatorProfileSchema = creatorProfileObject
 export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
 
 /** 화면이 보내는 크리에이터 공개 정보 — 태그는 고른 선택지 id 와 직접 입력(없으면 ""). */
-export type CreatorProfileBody = { name: string; channelTitle: string; tagIds: readonly string[]; customTag: string };
+export type CreatorProfileBody = { name: string; channelTitle: string; tagIds: readonly string[]; customTag: string; fanName?: string };
 
 const CREATOR_REQUIRED = { message: "크리에이터 정보를 적어 주세요.", path: ["creator", "name"] };
 const creatorWhenCreator = (v: { role?: string; creator?: unknown }) => v.role !== "creator" || v.creator !== undefined;
@@ -97,6 +112,7 @@ export type SignupInput = z.infer<typeof signupInputSchema>;
 /** 입력 오류가 가리키는 칸. 서버 응답과 화면이 같은 이름을 쓴다. */
 export type DetailsField =
   | "loginId"
+  | "nickname"
   | "email"
   | "password"
   | "passwordConfirm"
@@ -104,10 +120,11 @@ export type DetailsField =
   | "terms"
   | "creatorName"
   | "channelTitle"
-  | "tags";
+  | "tags"
+  | "fanName";
 
-const DETAILS_FIELDS: readonly string[] = ["loginId", "email", "password", "phone", "terms"];
-const CREATOR_FIELDS: Record<string, DetailsField> = { name: "creatorName", channelTitle: "channelTitle", tagIds: "tags", customTag: "tags" };
+const DETAILS_FIELDS: readonly string[] = ["loginId", "nickname", "email", "password", "phone", "terms"];
+const CREATOR_FIELDS: Record<string, DetailsField> = { name: "creatorName", channelTitle: "channelTitle", tagIds: "tags", customTag: "tags", fanName: "fanName" };
 
 /** zod 오류의 첫 칸 이름. 2단계 칸이 아니면 null. */
 export function detailsFieldOf(path: readonly PropertyKey[]): DetailsField | null {
@@ -125,6 +142,7 @@ export function detailsFieldOf(path: readonly PropertyKey[]): DetailsField | nul
  */
 export function checkDetails(v: {
   loginId: string;
+  nickname: string;
   email: string;
   password: string;
   passwordConfirm: string;
@@ -146,11 +164,12 @@ export function checkDetails(v: {
 }
 
 /** 입력하는 동안 칸 바로 아래에 안내를 띄우는 칸 */
-export type LiveField = "loginId" | "email" | "password" | "passwordConfirm" | "phone" | "creatorName" | "channelTitle";
+export type LiveField = "loginId" | "nickname" | "email" | "password" | "passwordConfirm" | "phone" | "creatorName" | "channelTitle";
 
 /** 칸별 안내에 쓰는 값 — 이메일은 칸 셋(앞부분·고른 주소·직접 입력) 그대로 */
 export type LiveValues = {
   loginId: string;
+  nickname: string;
   email: EmailParts;
   password: string;
   passwordConfirm: string;
@@ -159,11 +178,15 @@ export type LiveValues = {
   channelTitle: string;
 };
 
-/** 맞을 때의 짧은 확인. 아이디는 아직 중복을 보지 않으므로 「쓸 수 있다」고 하지 않는다. */
+// 비밀번호 칸의 확인 문구 — 표 안에 글자로 바로 두면 비밀 값 검사가 비밀번호로 잘못 잡는다(2026-10-15)
+const PW_FIELD_OK = "쓸 수 있는 비밀번호예요.";
+
+/** 맞을 때의 짧은 확인. 아이디·닉네임은 형식만 본 것이라 「쓸 수 있다」고 하지 않는다 — 겹침은 미리 확인(INV-U14)이 따로 알린다. */
 const LIVE_OK: Record<LiveField, string> = {
   loginId: "형식이 맞아요.",
+  nickname: "형식이 맞아요.",
   email: "형식이 맞아요.",
-  password: "쓸 수 있는 비밀번호예요.",
+  password: PW_FIELD_OK,
   passwordConfirm: "비밀번호가 같아요.",
   phone: "번호 형식이 맞아요.",
   creatorName: "좋아요.",
@@ -191,6 +214,9 @@ export function checkField(field: LiveField, v: LiveValues): { ok: boolean; mess
   switch (field) {
     case "loginId":
       problem = firstMessage(shape.loginId.safeParse(v.loginId));
+      break;
+    case "nickname":
+      problem = firstMessage(shape.nickname.safeParse(v.nickname));
       break;
     case "email":
       problem = emailPartsProblem(v.email) ?? firstMessage(shape.email.safeParse(joinEmail(v.email)));

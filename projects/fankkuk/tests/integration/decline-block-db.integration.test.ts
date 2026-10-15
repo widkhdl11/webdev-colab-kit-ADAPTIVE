@@ -436,15 +436,19 @@ describe("INV-D6: 차단은 보낸 사람 계정 기준, 살아 있는 차단은
     }
   });
 
-  it("INV-D6 S6b: 닉네임이 같은 다른 계정은 등록된다", async () => {
+  // 닉네임은 계정마다 달라서(signup INV-U13, 2026-10-15) 두 계정이 같은 닉네임을 동시에 가질 수는 없다.
+  // 같은 뜻을 지금 규칙 안에서 본다 — 차단된 팬이 닉네임을 바꾼 뒤 다른 계정이 그 옛 닉네임을 가져가도, 그 계정은 막히지 않는다.
+  it("INV-D6 S6b: 차단된 팬이 쓰던 닉네임을 가진 다른 계정은 등록된다", async () => {
     const g = await giftFrom();
     expect(await decline(haru, g.requestId, true)).toBe("declined");
+    psql(`update public.profiles set nickname = '새하늘' where id = '${SENDER}'`);
     psql(`update public.profiles set nickname = '하늘' where id = '${OTHER}'`);
     try {
       const o = await registerTestOrder(1, { senderId: OTHER });
       expect(orderStatus(o.orderId)).toBe("pending_payment");
     } finally {
       psql(`update public.profiles set nickname = '솜사탕' where id = '${OTHER}'`);
+      psql(`update public.profiles set nickname = '하늘' where id = '${SENDER}'`);
     }
   });
 

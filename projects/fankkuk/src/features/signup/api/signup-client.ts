@@ -1,4 +1,5 @@
 import type { HeardFrom } from "@/entities/metrics/model/signup-source";
+import type { NameAnswer } from "../model/name-availability";
 import type { SignUpField } from "../model/sign-up";
 import type { CreatorProfileBody } from "../model/signup-input";
 
@@ -8,6 +9,8 @@ import type { CreatorProfileBody } from "../model/signup-input";
 export type SignupBody = {
   role: "fan" | "creator";
   loginId: string;
+  /** 가입 닉네임(INV-U13) */
+  nickname: string;
   email: string;
   password: string;
   phone: string;
@@ -23,6 +26,7 @@ const FALLBACK = "잠시 문제가 생겼어요. 조금 뒤 다시 해 주세요
 const FIELDS: readonly SignUpField[] = [
   "verification",
   "loginId",
+  "nickname",
   "email",
   "password",
   "passwordConfirm",
@@ -31,6 +35,7 @@ const FIELDS: readonly SignUpField[] = [
   "creatorName",
   "channelTitle",
   "tags",
+  "fanName",
   "form",
 ];
 
@@ -75,4 +80,21 @@ export async function postSignup(
   } catch {
     return { ok: false, field: "form", message: FALLBACK };
   }
+}
+
+const ANSWERS: readonly NameAnswer[] = ["available", "taken", "invalid", "rate_limited"];
+
+/**
+ * 아이디·닉네임 미리 확인(INV-U14). 서버 답 넷 중 하나, 그 밖(네트워크·서버 오류)은 error.
+ * 입력이 바뀌어 끊긴 요청(signal)은 예외를 던진다 — 부르는 쪽이 그 답을 버린다.
+ */
+export async function checkNameAvailability(kind: "loginId" | "nickname", value: string, signal: AbortSignal): Promise<NameAnswer> {
+  const res = await fetch("/api/signup/check", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ kind, value }),
+    signal,
+  });
+  const data = (await res.json().catch(() => null)) as { result?: unknown } | null;
+  return ANSWERS.find((a) => a === data?.result) ?? "error";
 }

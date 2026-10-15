@@ -25,6 +25,8 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
+  // 닉네임 칸 오류(이미 쓰는 닉네임·필터 — signup INV-U13)는 그 칸 바로 아래에 띄운다
+  const [nickError, setNickError] = useState<string | null>(null);
   const [open, setOpen] = useState<"phone" | "password" | null>(null);
   const toggle = (which: "phone" | "password") => setOpen((cur) => (cur === which ? null : which));
   const toLogin = () => router.push("/login?next=/me");
@@ -40,11 +42,14 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
       notifyEmail: form.get("notifyEmail") === "on",
     });
     if (!parsed.success) {
-      setNotice({ tone: "error", text: parsed.error.issues[0]?.message ?? "입력을 확인해 주세요." });
+      const issue = parsed.error.issues[0];
+      if (issue?.path[0] === "nickname") setNickError(issue.message);
+      else setNotice({ tone: "error", text: issue?.message ?? "입력을 확인해 주세요." });
       return;
     }
     setSaving(true);
     setNotice(null);
+    setNickError(null);
     const outcome = await postAccount(parsed.data);
     setSaving(false);
     if (outcome.kind === "login") {
@@ -52,7 +57,8 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
       return;
     }
     if (outcome.kind === "failed") {
-      setNotice({ tone: "error", text: outcome.message });
+      if (outcome.field === "nickname") setNickError(outcome.message);
+      else setNotice({ tone: "error", text: outcome.message });
       return;
     }
     setNotice({
@@ -99,10 +105,17 @@ export function MyInfoPanel({ account }: { account: MyAccount }) {
               maxLength={12}
               required
               autoComplete="nickname"
-              aria-describedby={f("nick-h")}
+              aria-describedby={nickError ? `${f("nick-h")} ${f("nick-e")}` : f("nick-h")}
+              aria-invalid={nickError ? true : undefined}
+              onChange={() => setNickError(null)}
             />
+            {nickError ? (
+              <p className="err" id={f("nick-e")} role="alert">
+                {nickError}
+              </p>
+            ) : null}
             <p className="hint" id={f("nick-h")}>
-              크리에이터에게 보이는 이름이에요. (12자까지)
+              크리에이터에게 보이는 이름이에요. (12자까지, 다른 사람이 쓰는 닉네임은 쓸 수 없어요)
             </p>
           </div>
           <div className="part">
