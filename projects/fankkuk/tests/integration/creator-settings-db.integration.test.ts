@@ -70,7 +70,8 @@ describe("INV-A9: 크리에이터 공개 정보 고치기", () => {
     expect(r.error).toBeNull();
     expect(psql(`select name || '|' || intro from public.creators where id = '${ME.creatorId}'`)).toBe("하루달|안녕하세요");
     // 머리 메뉴·인사말에 쓰이는 계정 닉네임도 같이 바뀐다(가입 때 공개 이름으로 정한 것과 같게)
-    expect(psql(`select nickname from public.profiles where id = '${ME.id}'`)).toBe("하루달");
+    // 공개 이름은 계정 닉네임을 덮지 않는다(signup INV-U13, 2026-10-15 — 닉네임은 1~12자·계정마다 다름, 공개 이름은 20자)
+    expect(psql(`select nickname from public.profiles where id = '${ME.id}'`)).toBe(ME.name);
     expect(psql(`select before_name || '|' || after_name || '|' || (at is not null) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe(
       `${ME.name}|하루달|true`,
     );
@@ -133,7 +134,8 @@ describe("INV-A9: 크리에이터 공개 정보 고치기", () => {
     expect(await saveCreatorProfile({ client, viewer }, { name: "하루달", intro: "새 소개", fanName: "달빛지기" })).toEqual({ ok: true });
     expect(await saveCreatorProfile({ client, viewer }, { searchable: false })).toEqual({ ok: true });
     expect(psql(`select name || '|' || intro || '|' || fan_name || '|' || searchable from public.creators where id = '${ME.creatorId}'`)).toBe("하루달|새 소개|달빛지기|false");
-    expect(psql(`select nickname from public.profiles where id = '${ME.id}'`)).toBe("하루달");
+    // 공개 이름은 계정 닉네임을 덮지 않는다(signup INV-U13, 2026-10-15 — 닉네임은 1~12자·계정마다 다름, 공개 이름은 20자)
+    expect(psql(`select nickname from public.profiles where id = '${ME.id}'`)).toBe(ME.name);
     expect(psql(`select count(*) from public.creator_name_changes where creator_id = '${ME.creatorId}'`)).toBe("1");
   });
 

@@ -134,7 +134,7 @@ describe("INV-Q4 — 가입이 끝나면 utm 쿠키를 지운다(개인정보처
     const loginId = `it_mqs${Date.now().toString(36).slice(-6)}`;
     const res = await postJson(
       "/api/signup",
-      { role: "fan", loginId, email: testEmail("mqs"), password: "Fk-signup-9876", phone, terms: { service: true, privacy: true }, heardFrom: "friend" },
+      { role: "fan", loginId, nickname: loginId, email: testEmail("mqs"), password: "Fk-signup-9876", phone, terms: { service: true, privacy: true }, heardFrom: "friend" },
       `${ticket}; fk_utm=x_share.social.launch-1`,
     );
     expect(res.status).toBe(200);
@@ -155,7 +155,7 @@ describe("INV-Q4 — 가입이 끝나면 utm 쿠키를 지운다(개인정보처
   it("INV-Q4 (실패경로): 가입이 실패하면(본인 확인 없음) utm 쿠키를 지우지 않는다 — 다시 가입할 때 읽는다", async () => {
     const res = await postJson(
       "/api/signup",
-      { role: "fan", loginId: `it_mqf${Date.now().toString(36).slice(-6)}`, email: testEmail("mqf"), password: "Fk-signup-9876", phone: testPhone(), terms: { service: true, privacy: true } },
+      { role: "fan", loginId: `it_mqf${Date.now().toString(36).slice(-6)}`, nickname: `mqf${Date.now().toString(36).slice(-6)}`, email: testEmail("mqf"), password: "Fk-signup-9876", phone: testPhone(), terms: { service: true, privacy: true } },
       "fk_utm=x_share..",
     );
     expect(res.status).toBe(400);
