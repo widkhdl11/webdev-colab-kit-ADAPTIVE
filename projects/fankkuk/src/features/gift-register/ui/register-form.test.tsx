@@ -217,7 +217,7 @@ describe("together INV-F7: 2단계 「나만 보는 메모」(선물 이름·내
   const title = () => host.querySelector<HTMLInputElement>("#memoTitle");
   const body = () => host.querySelector<HTMLTextAreaElement>("#memoBody");
 
-  it("INV-F7: 메모 칸 둘은 2단계에 있고, 「나만 볼 수 있어요」 안내가 붙는다 — 「기타」 물품 이름 칸에는 「크리에이터에게 보여요」", async () => {
+  it("INV-F7: 메모 칸 둘은 2단계에 있고, 시안의 「나만 볼 수 있는 메모예요」 안내가 붙는다 — 「기타」 물품 이름 칸에는 공개 안내를 붙이지 않는다", async () => {
     await render("notice", MOMO);
     await toStep2("other");
     const memo = title()?.closest("section");
@@ -229,7 +229,7 @@ describe("together INV-F7: 2단계 「나만 보는 메모」(선물 이름·내
     expect(host.querySelector('label[for="memoBody"]')?.textContent).toContain("내용");
     // 메모 칸은 「기타」 칸과 다른 덩어리다
     expect(memo?.contains(host.querySelector("#itemOther"))).toBe(false);
-    expect(host.querySelector('label[for="itemOther"]')?.textContent).toContain("크리에이터에게 보여요");
+    expect(host.querySelector('label[for="itemOther"]')?.textContent).not.toContain("크리에이터에게 보여요");
   });
 
   it("INV-F7 S7: 적은 선물 이름·내용을 등록에 보낸다 — 물품 이름 칸과 섞지 않는다", async () => {

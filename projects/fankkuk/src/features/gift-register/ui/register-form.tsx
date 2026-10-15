@@ -587,7 +587,7 @@ export function RegisterForm({
           {itemCategory === "other" ? (
             <div className="field-block">
               <label className="label" htmlFor="itemOther">
-                어떤 선물인가요? ({ITEM_OTHER_MAX}자까지 · 크리에이터에게 보여요)
+                어떤 선물인가요? ({ITEM_OTHER_MAX}자까지)
               </label>
               <input
                 id="itemOther"
