@@ -10,17 +10,19 @@ import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { saveFollow } from "@/features/creator-follow/api/save-follow";
 import { FOLLOWING_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
+import { useUnfollowConfirm } from "@/features/creator-follow/ui/unfollow-dialog";
 import s from "./my-following.module.css";
 
 // 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/v18/my-following.html (넓은 틀 + 페이지 머리, 팔로우 카드 격자 — 최소 300, 폭에 따라 칸 수가 저절로)
-// 시안은 「팔로우 끊기」를 ⋯ 메뉴 안에 두지만, 버튼 하나로 바로 끊는 지금 동작을 그대로 두고 글자 버튼으로만 바꿨다(기능·접근성 그대로).
-// 「팔로우 끊기」는 줄을 바로 지우고 저장한다. 저장에 실패하면 줄을 제자리에 돌려놓고 알린다. 다 지우면 빈 화면 안내가 나온다.
+// 시안은 「팔로우 끊기」를 ⋯ 메뉴 안에 두지만, 글자 버튼 하나로 둔다. 누르면 확인 창(design-rules 12절)을 띄우고,
+// 「취소하기」를 누르면 줄을 바로 지우고 저장한다. 저장에 실패하면 줄을 제자리에 돌려놓고 알린다. 다 지우면 빈 화면 안내가 나온다.
 
 export function MyFollowingPanel({ creators }: { creators: readonly CreatorCard[] }) {
   const router = useRouter();
   const [list, setList] = useState(creators);
   const [failedName, setFailedName] = useState<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const unfollowConfirm = useUnfollowConfirm();
 
   const unfollow = async (target: CreatorCard) => {
     setFailedName(null);
@@ -87,7 +89,7 @@ export function MyFollowingPanel({ creators }: { creators: readonly CreatorCard[
                 <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
                   선물 보내기
                 </Link>
-                <button className="btn btn--sm btn--text" type="button" aria-label={`${c.name} 팔로우 끊기`} onClick={() => void unfollow(c)}>
+                <button className="btn btn--sm btn--text" type="button" aria-label={`${c.name} 팔로우 끊기`} onClick={() => unfollowConfirm.ask(c.name, () => void unfollow(c))}>
                   팔로우 끊기
                 </button>
               </div>
@@ -104,6 +106,7 @@ export function MyFollowingPanel({ creators }: { creators: readonly CreatorCard[
           </Link>
         </div>
       )}
+      {unfollowConfirm.dialog}
     </div>
   );
 }

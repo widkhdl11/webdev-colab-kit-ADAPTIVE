@@ -6,10 +6,12 @@ import { useRef, useState } from "react";
 import { saveFollow } from "../api/save-follow";
 import type { FollowMode } from "../model/follow-mode";
 import s from "./follow-button.module.css";
+import { useUnfollowConfirm } from "./unfollow-dialog";
 
 // 팔로우 토글. 누르면 바로 글자를 바꾸고 서버(/api/follows)에 저장한다 — 저장에 실패하면 원래대로 돌리고 알린다.
 // mode: save = 저장하는 버튼(팬·크리에이터) / login = 로그인하지 않은 사람, 누르면 로그인으로 / hidden = 운영자·자기 페이지(팔로우하지 않음).
 // row = 크리에이터 찾기 목록의 작은 버튼, profile = 크리에이터 페이지의 큰 버튼(시안 creators.html · creator.html).
+// 「팔로우 중」을 누르면 바로 끊지 않고 확인 창(useUnfollowConfirm)을 띄운다 — 「취소하기」를 눌러야 끊는다(design-rules 12절).
 // 상태는 바뀌는 글자(「팔로우」↔「팔로우 중」)로만 알린다 — 시안이 글자를 바꿔 보여 주므로 aria-pressed 를 같이 달지 않는다
 // (둘 다 달면 화면 낭독기가 「팔로우 중, 눌림」처럼 상태를 두 번 읽는다).
 
@@ -32,6 +34,7 @@ export function FollowButton({
   const [following, setFollowing] = useState(initialFollowing);
   const [failed, setFailed] = useState(false);
   const savingRef = useRef(false);
+  const unfollowConfirm = useUnfollowConfirm();
 
   if (mode === "hidden") return null;
   if (mode === "login") {
@@ -71,6 +74,12 @@ export function FollowButton({
     else setFailed(true);
   };
 
+  // 팔로우는 바로, 팔로우 끊기는 확인 창을 거쳐서
+  const onPress = () => {
+    if (following) unfollowConfirm.ask(creatorName, () => void toggle());
+    else void toggle();
+  };
+
   const notice = (
     <span className={s.sr} role="status">
       {failed ? "팔로우를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요." : ""}
@@ -80,10 +89,11 @@ export function FollowButton({
   if (variant === "profile") {
     return (
       <>
-        <button className="btn btn--line" type="button" onClick={toggle}>
+        <button className="btn btn--line" type="button" onClick={onPress}>
           {following ? "팔로우 중" : "팔로우"}
         </button>
         {notice}
+        {unfollowConfirm.dialog}
       </>
     );
   }
@@ -95,7 +105,7 @@ export function FollowButton({
           className="btn btn--sm btn--line"
           type="button"
           aria-label={`${creatorName} 팔로우 중`}
-          onClick={toggle}
+          onClick={onPress}
         >
           팔로우 중
         </button>
@@ -104,12 +114,13 @@ export function FollowButton({
           className="btn btn--sm btn--line"
           type="button"
           aria-label={`${creatorName} 팔로우`}
-          onClick={toggle}
+          onClick={onPress}
         >
           팔로우
         </button>
       )}
       {notice}
+      {unfollowConfirm.dialog}
     </>
   );
 }
