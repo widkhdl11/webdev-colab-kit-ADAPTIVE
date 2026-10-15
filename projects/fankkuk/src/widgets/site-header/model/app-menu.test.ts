@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CREATOR_APP_MENU, CREATOR_CUSTOMIZE_HREF, CREATOR_SENT_HREFS, currentMenuItem } from "./app-menu";
+import { ACCOUNT_MENU, CREATOR_APP_MENU, CREATOR_CUSTOMIZE_HREF, CREATOR_SENT_HREFS, currentMenuItem, FAN_APP_MENU, FAN_PROFILE_EDIT_HREF } from "./app-menu";
 
 // 크리에이터 앱 메뉴 구성 (디자인 기준 11절, 시안 docs/design/mockups/site/v19-sidebar/creator-a.html).
 
@@ -45,5 +45,23 @@ describe("현재 칸 — 보낸 내역은 두 화면에서 켜진다", () => {
 
   it("메뉴에 없는 주소는 아무 칸도 켜지 않는다", () => {
     expect(currentMenuItem(CREATOR_APP_MENU, "/gifts/1234")).toBeNull();
+  });
+});
+
+describe("이름 메뉴 — 팬은 프로필 수정·계정 설정 (design-rules 12절, 시안 v21-addendum3 fan-*.html)", () => {
+  it("팬 이름 메뉴는 프로필 수정(/me/profile) → 계정 설정(/me) 순서", () => {
+    expect(FAN_PROFILE_EDIT_HREF).toBe("/me/profile");
+    expect(ACCOUNT_MENU.fan).toEqual([
+      { label: "프로필 수정", href: "/me/profile" },
+      { label: "계정 설정", href: "/me" },
+    ]);
+  });
+
+  it("크리에이터 이름 메뉴는 계정 설정 하나 — 팬 프로필 수정 화면으로 가는 길이 없다", () => {
+    expect(ACCOUNT_MENU.creator).toEqual([{ label: "계정 설정", href: "/creator/settings" }]);
+  });
+
+  it("프로필 수정은 사이드바 위 메뉴 칸이 아니다(시안 사이드바에 없음) — 그 화면에서 위 메뉴의 어느 칸도 켜지지 않는다", () => {
+    expect(currentMenuItem(FAN_APP_MENU, FAN_PROFILE_EDIT_HREF)).toBeNull();
   });
 });

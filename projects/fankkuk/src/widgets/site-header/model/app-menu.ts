@@ -1,4 +1,4 @@
-import { CREATOR_HOME, FAN_HOME } from "@/entities/session/model/home-path";
+import { CREATOR_HOME, FAN_ACCOUNT_SETTINGS, FAN_HOME, FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 
 // 로그인 후 왼쪽 앱 사이드바 메뉴(design-rules 00절, 시안 docs/design/mockups/site/v18/home-fan.html·home-creator.html).
 // 크리에이터 메뉴의 묶음·하위 줄은 design-rules 11절(시안 docs/design/mockups/site/v19-sidebar/creator-a.html).
@@ -107,7 +107,19 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
 ];
 
 /** 아래 이름 메뉴의 「계정 설정」 — 크리에이터가 /me 로 가면 승인 화면으로 돌려보내지므로(app/me) 크리에이터는 설정 화면 */
-export const ACCOUNT_HREF = { fan: "/me", creator: "/creator/settings" } as const;
+export const ACCOUNT_HREF = { fan: FAN_ACCOUNT_SETTINGS, creator: "/creator/settings" } as const;
+
+/** 팬 프로필 수정 화면(my-account INV-A12, design-rules 12절) — 사이드바 위 메뉴 칸이 아니라 이름 메뉴와 홈 프로필 구간에서 간다(시안 v21-addendum3). */
+export const FAN_PROFILE_EDIT_HREF = FAN_PROFILE_EDIT;
+
+/** 아래 이름 메뉴의 링크(로그아웃 위). 팬은 시안대로 「프로필 수정」·「계정 설정」, 크리에이터는 「계정 설정」 하나. */
+export const ACCOUNT_MENU: Record<"fan" | "creator", readonly { label: string; href: string }[]> = {
+  fan: [
+    { label: "프로필 수정", href: FAN_PROFILE_EDIT_HREF },
+    { label: "계정 설정", href: ACCOUNT_HREF.fan },
+  ],
+  creator: [{ label: "계정 설정", href: ACCOUNT_HREF.creator }],
+};
 
 /**
  * 지금 화면에 해당하는 메뉴 칸 하나 — 주소(또는 also 의 주소)가 current 와 글자 그대로 같은 첫 칸. 하위 줄은 고르지 않는다(부모가 켜진다). 「#」 붙은 칸(승인 내역 = /creator/requests#done)은 current 와 같을 수 없어 고르지 않는다 —

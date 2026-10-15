@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LogoutButton } from "@/features/auth/ui/logout-button";
 import { LogoMark } from "@/shared/ui/logo";
-import { ACCOUNT_HREF, currentMenuItem, type AppMenuGroup } from "../model/app-menu";
+import { ACCOUNT_MENU, currentMenuItem, type AppMenuGroup } from "../model/app-menu";
 import { Icon } from "./app-icons";
 
 // 로그인 후 왼쪽 앱 사이드바(design-rules 00절, 시안 v18/home-fan.html·home-creator.html·v18-app.css).
@@ -256,9 +256,11 @@ export function AppSidebar({ role, groups, current, homeHref, nickname, counts }
             </summary>
             <div className="sb-menu-list">
               {/* 크리에이터의 계정 설정은 위 「설정」과 같은 화면이라, 위 메뉴에서 현재 칸이 잡혔으면 여기는 켜지 않는다(한 화면에 현재 표시 하나) */}
-              <Link href={ACCOUNT_HREF[role]} aria-current={here === null && current === ACCOUNT_HREF[role] ? "page" : undefined}>
-                계정 설정
-              </Link>
+              {ACCOUNT_MENU[role].map((link) => (
+                <Link key={link.href} href={link.href} aria-current={here === null && current === link.href ? "page" : undefined}>
+                  {link.label}
+                </Link>
+              ))}
               <LogoutButton className="menu-action" />
             </div>
           </details>

@@ -3,6 +3,7 @@ import { creatorPagePath } from "@/entities/creator/model/creator-handle";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
+import { FAN_ACCOUNT_SETTINGS, FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 import { fanBadge } from "@/entities/order/ui/fan-stage-copy";
 import { formatDate } from "@/shared/lib/format/datetime";
 import { statusTagClass } from "@/shared/ui/status-tone";
@@ -11,14 +12,18 @@ import { HomeNotices, type HomeNotice } from "./home-notices";
 import { HowFold } from "./how-fold";
 
 // 팬 홈(로그인 뒤). 시안: docs/design/mockups/site/v21-addendum3/fan-home.html — 본문 틀 기본 880(design-rules 00절 「본문 틀」·12절).
-// 순서는 시안대로 h1 → 진행 중인 선물 → 팔로우한 크리에이터(위아래 한 줄 목록) → 공지 → 「이렇게 도착해요」 접힘 줄. 첫 화면 문구·「새 크리에이터」 격자는 12절에서 뺐다.
-// 시안 맨 앞의 프로필 구간과 「해야 할 일」 한 줄은 아직 없는 데이터가 필요해 두지 않는다 — 그 전까지 제목(h1)은 「닉네임님」.
+// 순서는 시안대로 프로필 구간(h1 = 닉네임) → 진행 중인 선물 → 팔로우한 크리에이터(위아래 한 줄 목록) → 공지 → 「이렇게 도착해요」 접힘 줄. 첫 화면 문구·「새 크리에이터」 격자는 12절에서 뺐다.
+// 프로필 구간은 my-account INV-A13 의 공개 네 칸(사진·배경 사진·닉네임·소개)만 그린다. 시안의 「해야 할 일」 한 줄은 다른 묶음(처리할 일)이라 아직 두지 않는다.
 // 팬 화면이라 선물은 팬용 모양(toFanView)만 받는다 — 크리에이터행 송장번호·주소가 여기 닿지 않는다.
+
+/** 홈 프로필 구간 — 공개 네 칸에서 만든 값(사진 주소는 공개 저장소 주소, 없으면 null). */
+export type HomeProfile = { photoUrl: string | null; bgUrl: string | null; intro: string };
 
 export type HomeFollow = { id: string; name: string; faceTone: string; handle: string | null; approvalMinutes: number | null };
 
 type Props = {
   nickname: string;
+  profile: HomeProfile;
   /** 진행 중인 선물 전부(최신순). 홈 목록에는 앞의 MAX_GIFTS 개만 보인다. */
   gifts: readonly FanGiftView[];
   following: readonly HomeFollow[];
@@ -118,12 +123,44 @@ function FollowSection({ following }: Pick<Props, "following">) {
   );
 }
 
-export function HomePage({ nickname, gifts, following, faceToneByName, notices }: Props) {
+// 시안 fan-home.html .pf — 배경 띠 위로 사진 동그라미가 반쯤 올라오고, 오른쪽에 「프로필 수정」 버튼·「계정 설정」 글자 링크, 아래에 닉네임(h1)·소개.
+function ProfileSection({ nickname, profile }: { nickname: string; profile: HomeProfile }) {
+  const initial = Array.from(nickname)[0] ?? "";
+  return (
+    <section className={`card ${s.pf}`} aria-labelledby="pf-name">
+      <div className={s.pfBanner} aria-hidden="true">
+        {profile.bgUrl ? <img src={profile.bgUrl} alt="" width={1280} height={427} /> : null}
+      </div>
+      <div className={s.pfBody}>
+        <div className={s.pfTop}>
+          <span className={s.pfAv} aria-hidden="true">
+            {profile.photoUrl ? <img src={profile.photoUrl} alt="" width={512} height={512} /> : initial}
+          </span>
+          <div className={s.pfActions}>
+            <Link className="btn btn--sm" href={FAN_PROFILE_EDIT}>
+              프로필 수정
+            </Link>
+            <Link className={s.pfLink} href={FAN_ACCOUNT_SETTINGS}>
+              계정 설정
+            </Link>
+          </div>
+        </div>
+        <div>
+          <h1 className={s.homeName} id="pf-name">
+            {nickname}
+          </h1>
+          {profile.intro ? <p className={s.pfBio}>{profile.intro}</p> : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function HomePage({ nickname, profile, gifts, following, faceToneByName, notices }: Props) {
   return (
     <main id="main" className="page-pane">
       <div className={s.stack}>
-        {/* 프로필 구간이 생기기 전까지 「닉네임님」이 h1 이다 — 시안 .pf-name 자리 */}
-        <h1 className={s.homeName}>{nickname}님</h1>
+        <ProfileSection nickname={nickname} profile={profile} />
         <GiftsSection gifts={gifts} faceToneByName={faceToneByName} />
         <FollowSection following={following} />
         <HomeNotices notices={notices} />

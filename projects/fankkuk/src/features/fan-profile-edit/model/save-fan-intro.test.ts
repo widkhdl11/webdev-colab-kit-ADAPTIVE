@@ -22,7 +22,7 @@ describe("INV-A12: 소개 입력 경계 — 앞뒤 공백을 뺀 0~100자 한 �
   it("INV-A12 (실패경로): 101자·줄바꿈·보이지 않는 글자는 거부한다", () => {
     expect(introInputSchema.safeParse({ intro: "가".repeat(101) }).success).toBe(false);
     expect(introInputSchema.safeParse({ intro: "첫 줄\n둘째 줄" }).success).toBe(false);
-    expect(introInputSchema.safeParse({ intro: "보이지​않음" }).success).toBe(false);
+    expect(introInputSchema.safeParse({ intro: "보이지\u200b않음" }).success).toBe(false);
     expect(introInputSchema.safeParse({ intro: 3 }).success).toBe(false);
   });
 });

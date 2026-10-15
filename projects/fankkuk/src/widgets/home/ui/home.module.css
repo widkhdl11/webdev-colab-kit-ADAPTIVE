@@ -17,6 +17,22 @@
 .foot { display: flex; justify-content: center; margin-top: var(--space-6); }
 .role { margin-left: var(--space-2); font-family: var(--font); font-size: var(--fs-caption); font-weight: 400; color: var(--gray-600); }
 
+/* 팬 홈 프로필 구간 — 시안 v21-addendum3/fan-21.css .pf · .pf-banner · .pf-body · .pf-top · .pf-av · .pf-actions · .pf-link · .pf-bio.
+   값은 시안 :root(--banner-h 160 · --pf-av 96 · --pf-ring 4, 768 이하 112 · 80). 카드 안쪽 여백은 걷고 띠를 끝까지 채운다 */
+.pf { --banner-h: 160px; --pf-av: 96px; --pf-ring: 4px; padding: 0; overflow: hidden; }
+.pfBanner { display: block; width: 100%; height: var(--banner-h); background: var(--primary-50); }
+.pfBanner img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pfBody { display: grid; gap: var(--space-4); padding: 0 var(--space-6) var(--space-6); }
+.pfTop { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-top: calc(var(--pf-av) / -2); }
+.pfAv { display: grid; place-items: center; flex: none; width: var(--pf-av); height: var(--pf-av); border-radius: var(--r-pill); border: var(--pf-ring) solid var(--white); background: var(--primary-50); color: var(--ink); font-size: 36px; font-weight: var(--fw-bold); line-height: 1; overflow: hidden; }
+.pfAv img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pfActions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+.pfLink { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.pfBio { margin: var(--space-2) 0 0; color: var(--gray-600); overflow-wrap: anywhere; }
+@media (max-width: 768px) {
+  .pf { --banner-h: 112px; --pf-av: 80px; }
+}
+
 /* 팬 홈 — 시안 v21-addendum3/fan-21.css .pf-name · .sec-t · .rows · .row · .row-av · .sec-foot-l. 구간은 위아래로만 쌓는다(0000절) */
 .homeName { margin: 0; font-size: var(--fs-page); line-height: 1.3; }
 .secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }

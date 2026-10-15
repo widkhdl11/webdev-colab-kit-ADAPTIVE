@@ -1,23 +1,41 @@
-/* 계정 설정 — 시안 docs/design/mockups/site/v18/me.html (v18-fan.css 「입력 · 폼」). 칸·판은 전역 클래스(.part·.stack·.hint·.check) */
-/* 읽는 기둥 880 — 넓은 틀 안 가운데 */
-.col { max-width: 880px; margin-inline: auto; }
-.sub { margin-bottom: var(--space-4); font-size: var(--fs-card); line-height: 1.4; }
-.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--space-4); }
-.col :global(.part) { padding: var(--space-6); }
-.col :global(.field[readonly]) { background: var(--gray-50); color: var(--gray-600); }
-.with-btn { display: flex; gap: 12px; }
-.with-btn :global(.field) { flex: 1; min-width: 0; }
-.with-btn :global(.btn) { flex-shrink: 0; }
-/* 판 제목(.t-card) 아래 버튼 줄·확인칸 묶음 — 시안 margin-top:12px */
-.open { margin-top: 12px; }
-.must { margin-top: 16px; }
+/* 팬 계정 설정 — 시안 docs/design/mockups/site/v21-addendum3/fan-account-settings.html (fan-21.css 「설정 카드」 .set-card · .sec-t · .kv · .reveal · .sw-row).
+   폭은 틀(MyShell form 720)이 정한다. 카드 사이 32, 카드 안 줄 사이 24, 줄 사이 가는 선. */
+.col { display: grid; gap: var(--space-8); min-width: 0; }
+.col > * { min-width: 0; }
+/* 전역의 「구간 + 구간 위 48」 을 걷는다 — 사이는 위 gap 하나로 */
+.col > section:not(.section) + section:not(.section), .form > section:not(.section) + section:not(.section) { margin-top: 0; }
+.setCard { display: grid; gap: var(--space-6); }
+.secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
+.meta { display: block; color: var(--gray-600); font-size: var(--fs-caption); }
+.kvMain { margin: 0; min-width: 0; }
+.kvMain b { display: block; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+.help { margin: 0; color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.revealHead + .help { margin-top: var(--space-2); }
+.reveal + .reveal, .fields + .help + .reveal { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+.revealHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.panel { margin-top: var(--space-4); }
+.fields { display: grid; gap: var(--space-4); }
+.kv { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); margin: 0; }
+.kv dt { color: var(--gray-600); font-size: var(--fs-caption); }
+.kv dd { margin: 0; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+.fields :global(.label) { margin-bottom: var(--space-2); }
+.fields :global(.field) + .help { margin-top: var(--space-2); }
+.inlineLink { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.danger { background: var(--white); color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+.danger:hover { background: var(--gray-50); }
+
+/* 알림 스위치 줄 — 공통 .sw(base.css), 줄 모양은 시안 .sw-row */
+.swRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.swT { min-width: 0; }
+.swT b { display: block; }
+.swRow + .swRow { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+.must { margin: 0; }
 .must-t { color: var(--gray-900); }
+
 /* 저장 결과 줄 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다(빈 칸은 공통 .err:empty·.okmsg:empty) */
-.msg { margin-top: 24px; }
-.save-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--gray-200); }
-.leave { display: inline-flex; align-items: center; min-height: 44px; color: var(--gray-600); font-size: var(--fs-navitem); }
+.msg { margin: 0; }
+.save-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-4); padding-top: var(--space-6); border-top: 1px solid var(--gray-200); }
 @media (max-width: 767px) {
-  .with-btn { flex-direction: column; }
   .save-bar :global(.btnrow) { width: 100%; }
   .save-bar :global(.btnrow .btn) { flex: 1; }
 }
