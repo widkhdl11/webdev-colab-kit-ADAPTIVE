@@ -1,18 +1,26 @@
 /* 디자인 토큰 — 값의 정본은 docs/design/design-rules.md 00절(2026-10-14 v18 승인, 카드 d77)과 시안 docs/design/mockups/site/v18/tokens.css.
-   v18 색은 맨 위 「v18」 묶음에 있고, 화면이 아직 쓰는 옛 이름(--brand·--ink·--sub·--faint·--surface…)은 그 값을 가리킨다.
-   화면이 v18 이름으로 옮겨 가면 옛 이름을 지운다. 로고 4색(--logo-*)은 그대로다. */
+   색만 v20 하늘색으로 바꿨다(2026-10-15 승인, 카드 d86 · 시안 docs/design/mockups/site/v20-rebrand/*-c.html). 배치·간격·글꼴 값은 v18 그대로다.
+   화면이 쓰는 옛 이름(--brand·--ink·--sub·--faint·--surface…)은 맨 위 묶음의 값을 가리킨다.
+   하늘색은 면(버튼 바탕·선택 면)에만 쓴다. 흰 바탕 대비 1.7:1 이라 글자·초점·선택 테두리에는 짙은 회색을 쓴다. */
 :root {
-  /* v18 — 빨강 한 색 + 회색 단계 (시안 tokens.css 그대로) */
-  --primary: #b94a48;
-  --primary-50: #fbf1f0;
-  --primary-700: #8f3836;
+  /* v20 — 하늘색 한 색 + 회색 단계. 진한 파랑·남색은 브랜드 색으로 쓰지 않는다(로고 안 --logo-ink 만 예외) */
+  --primary: #89cff0; /* 주 버튼·켜진 칩·스위치 면. 위 글자는 --on-brand(짙은 회색 8.8:1) */
+  --primary-50: #e0f2fe; /* 선택 면·뱃지·아이콘 원 (C안 primary-soft) */
+  --primary-700: #6bbfe6; /* 하늘색 면의 마우스 올림·누름. 글자에 쓰지 않는다 */
+  --tint: #f0f8ff; /* 사이드바·약속 구간처럼 넓은 옅은 하늘 면 */
+  --accent-peach: #ffd6a5; /* 긍정 알림에만, 화면 넓이 5% 이하 */
+  /* 그라데이션 — 이 세 곳에만. 버튼에는 쓰지 않는다 */
+  --grad-hero: linear-gradient(135deg, #d6eefc 0%, #eef0ff 100%); /* 랜딩 첫 화면 판 */
+  --grad-glow: radial-gradient(ellipse at top left, #f0f8ff 0%, transparent 60%); /* 사이드바 위쪽 빛 */
+  --grad-title: linear-gradient(90deg, #7dd3fc, #a5e1fa); /* 구간 제목 강조 낱말 아래 띠. 글자색으로 쓰지 않는다 */
+  --glass: rgb(255 255 255 / 0.7); /* 그라데이션 판 위 카드 */
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
   --gray-400: #9ca3af; /* 글자에 쓰지 않는다(대비 미달). 장식 전용 */
   --gray-500: #6b7280; /* 흐린 글자 — 흰 바탕 4.83:1. 이보다 옅게 쓰지 않는다 */
   --gray-600: #4b5563;
-  --gray-900: #111827;
+  --gray-900: #1f2937; /* 본문 글자(ink). 흰 바탕 14.7:1 */
   --shadow: 0 1px 3px rgb(0 0 0 / 0.06);
   /* 글꼴: 본문·버튼·메뉴 Pretendard, 제목(h1·h2·h3·페이지 머리 제목)만 티머니 둥근바람(400·800 두 굵기뿐) */
   --font: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Segoe UI", "Malgun Gothic", sans-serif;
@@ -21,18 +29,19 @@
   --fw-btn: 600; /* 버튼·메뉴 */
   --fw-title: 800; /* 티머니 둥근바람 제목 — 이 글꼴에는 400·800 만 있다 */
 
-  /* 브랜드 원색 — 로고 안에서만. 버튼·글자에는 아래 --brand 를 쓴다 */
-  --logo-coral: #f58278;
-  --logo-ivory: #fff8f0;
-  --logo-charcoal: #343039;
-  --logo-deep-coral: #be514a;
+  /* 로고 원색 — 로고 그림 안에서만(2026-10-15 사용자 제공 로고). 남색은 로고 밖에 쓰지 않는다 */
+  --logo-sky: #62b9fc;
+  --logo-cream: #fefdf9;
+  --logo-ink: #192b4f;
 
   /* 색 */
-  --brand: var(--primary); /* 주 버튼·링크·강조 글자. 흰 글자 5.4:1. 밝은 코랄(#F58278, 로고)에는 흰 글자를 올리지 않는다 */
+  --brand: var(--primary); /* 주 버튼 면. 글자로 쓰지 않는다 — 강조 글자는 --brand-ink */
   --brand-hover: var(--primary-700);
   --brand-active: var(--primary-700);
-  --brand-soft: var(--primary-50); /* 빨강 태그 면 (= 선택 면) */
-  --brand-ink: var(--primary-700); /* 빨강 태그 글자 — 옅은 면 위 */
+  --brand-soft: var(--primary-50); /* 하늘 태그 면 (= 선택 면) */
+  --brand-ink: var(--gray-900); /* 강조 글자·링크 글자·선 아이콘 — 하늘색 글자는 쓰지 않는다 */
+  --brand-line: var(--gray-900); /* 선택된 칸 테두리·왼쪽 띠 (WCAG 1.4.11 3:1) */
+  --focus: var(--gray-900); /* 키보드 초점 테두리 */
   --avatar-soft: var(--primary-50); /* 이름 첫 글자 동그라미 면 */
   --ink: var(--gray-900); /* 본문 */
   --sub: var(--gray-600); /* 보조 글 */
@@ -40,11 +49,11 @@
   --background: #ffffff; /* 페이지 바탕 — 흰색 (2026-10-07 사용자 「배경을 하얗게」, 아이보리 #FFFAF7 에서) */
   --surface: var(--gray-50); /* 옅은 중립 면 — 아이콘 칸·비선택 탭·빈 목록·푸터 같은 일반 칸 (시안 v8) */
   --surface-hover: var(--gray-100); /* 일반 칸 마우스 올림 */
-  --surface-brand: var(--primary-50); /* 옅은 코랄 면 — 주소 보호·개인정보 안내, 금액·업무 요약에만 */
+  --surface-brand: var(--tint); /* 옅은 하늘 면 — 주소 보호·개인정보 안내, 금액·업무 요약에만 */
   --surface-selected: var(--primary-50); /* 선택된 탭·메뉴·항목 */
   --white: #ffffff; /* 카드·입력창·헤더 */
   --print-ink: #000000; /* 종이에 찍는 글자 — 송장 라벨처럼 스캐너·사람이 읽는 인쇄물은 순검정 */
-  --on-brand: #ffffff;
+  --on-brand: var(--gray-900); /* 하늘색 면 위 글자 — 흰 글자는 1.8:1 이라 쓰지 않는다 */
   --disabled: var(--gray-100);
   --disabled-ink: var(--gray-600); /* 비활성 면 위 */
   --warn-soft: #fff5db;

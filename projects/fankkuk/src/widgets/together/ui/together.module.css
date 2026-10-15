@@ -52,9 +52,9 @@
 .what { overflow-wrap: anywhere; }
 .stage-top { margin-bottom: var(--space-2); }
 .gc-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); margin-top: auto; padding-top: var(--space-2); }
-.gc-foot a { display: inline-flex; align-items: center; min-height: var(--touch); color: var(--primary-700); font-size: var(--fs-navitem); font-weight: var(--fw-btn); text-decoration: none; }
+.gc-foot a { display: inline-flex; align-items: center; min-height: var(--touch); color: var(--brand-ink); font-size: var(--fs-navitem); font-weight: var(--fw-btn); text-decoration: none; }
 .gc-foot a:hover { text-decoration: underline; }
-.moment { display: flex; align-items: center; gap: var(--space-2); color: var(--primary-700); font-weight: var(--fw-btn); }
+.moment { display: flex; align-items: center; gap: var(--space-2); color: var(--brand-ink); font-weight: var(--fw-btn); }
 .wait { padding: var(--space-4); border-radius: var(--r-btn); background: var(--gray-50); font-weight: var(--fw-btn); }
 .boxes { display: grid; gap: var(--space-2); }
 

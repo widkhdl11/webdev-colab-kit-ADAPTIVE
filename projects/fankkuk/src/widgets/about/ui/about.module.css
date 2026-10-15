@@ -42,15 +42,15 @@
 .sceneCard { width: 100%; padding: var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); text-align: left; }
 .sceneRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .sceneRow svg { width: 24px; height: 24px; color: var(--gray-600); }
-.sceneOpen svg { color: var(--primary); }
+.sceneOpen svg { color: var(--brand-ink); }
 .mask { display: grid; gap: var(--space-2); margin-top: var(--space-6); }
 .mask i { display: block; height: 14px; border-radius: var(--r-pill); background: var(--gray-200); }
 .mask i:nth-child(1) { width: 92%; }
 .mask i:nth-child(2) { width: 64%; }
 .sceneAddr { margin-top: var(--space-6); font-weight: var(--fw-btn); color: var(--gray-900); overflow-wrap: anywhere; }
 .sceneLog { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-4); padding: var(--space-4); border-radius: var(--r-btn); background: var(--primary-50); color: var(--gray-900); }
-.sceneLog svg { flex: none; width: var(--icon-xs); height: var(--icon-xs); margin-top: 2px; color: var(--primary); }
-.sceneArrow { display: block; width: var(--scene-arrow); height: var(--scene-arrow); color: var(--primary); }
+.sceneLog svg { flex: none; width: var(--icon-xs); height: var(--icon-xs); margin-top: 2px; color: var(--brand-ink); }
+.sceneArrow { display: block; width: var(--scene-arrow); height: var(--scene-arrow); color: var(--brand-ink); }
 .sceneArrow svg { width: 100%; height: 100%; }
 
 /* 번호 단계 카드 — PC 다섯 칸 세로 카드, 1023 이하 한 줄씩 가로 */
@@ -59,10 +59,10 @@
 .flow li > div { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; }
 .flow li p { color: var(--gray-600); }
 .n { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); line-height: 1; }
-.flow li.on { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--primary), var(--shadow); }
-.flow li.on .n { background: var(--primary); color: var(--white); }
+.flow li.on { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line), var(--shadow); }
+.flow li.on .n { background: var(--primary); color: var(--on-brand); }
 .flow li.on p { color: var(--gray-900); }
-.stepIc { display: grid; place-items: center; width: var(--space-12); height: var(--space-12); margin-bottom: var(--space-2); border-radius: var(--r-btn); background: var(--primary-50); color: var(--primary); }
+.stepIc { display: grid; place-items: center; width: var(--space-12); height: var(--space-12); margin-bottom: var(--space-2); border-radius: var(--r-btn); background: var(--primary-50); color: var(--brand-ink); }
 .stepIc svg { width: 24px; height: 24px; }
 .flow li.on .stepIc { background: var(--white); }
 

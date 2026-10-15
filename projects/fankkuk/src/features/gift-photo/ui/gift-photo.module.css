@@ -5,7 +5,7 @@
 .thumb { display: block; width: 160px; max-width: 100%; height: auto; aspect-ratio: 1; margin-top: 8px; border-radius: var(--r-card); box-shadow: var(--hair); object-fit: cover; background: var(--gray-50); }
 .btns { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
 /* 파일 칸은 sr-only 로 숨기고 라벨(.pick)을 버튼 모양으로 — 키보드 포커스는 라벨에 그린다 */
-.file:focus-visible + .pick { outline: 2px solid var(--primary); outline-offset: 2px; }
+.file:focus-visible + .pick { outline: 2px solid var(--focus); outline-offset: 2px; }
 .pick { cursor: pointer; }
 .pick[aria-disabled="true"] { cursor: progress; }
 .hint { margin-top: 8px; color: var(--gray-600); }

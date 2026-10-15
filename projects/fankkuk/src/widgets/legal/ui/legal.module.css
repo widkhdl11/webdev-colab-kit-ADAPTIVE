@@ -11,7 +11,7 @@
 /* 맨 위 목차 카드 — 3열(1023px 이하 2열, 767px 이하 1열) */
 .toc ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--space-8); margin-top: var(--space-4); }
 .toc a { display: flex; align-items: center; min-height: var(--touch); text-decoration: none; }
-.toc a:hover { color: var(--primary); text-decoration: underline; }
+.toc a:hover { color: var(--brand-ink); text-decoration: underline; }
 @media (max-width: 1023px) { .toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* 조마다 위 구분선 */

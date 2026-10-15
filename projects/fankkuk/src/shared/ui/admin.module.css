@@ -124,7 +124,7 @@
 .act .btn + .btn { margin-left: 6px; }
 .pick { display: grid; width: 100%; gap: 2px; padding: 10px 14px; border: 0; background: var(--white); color: var(--ink); text-align: left; font: inherit; font-size: 14px; cursor: pointer; }
 .pick:hover { background: var(--surface); }
-.pick[aria-current="true"] { background: var(--brand-soft); box-shadow: inset 4px 0 0 var(--brand); }
+.pick[aria-current="true"] { background: var(--brand-soft); box-shadow: inset 4px 0 0 var(--brand-line); }
 .pickTitle { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; }
 .pickMeta { font-size: 13px; color: var(--sub); }
 .tbl td.pickCell { padding: 0; }

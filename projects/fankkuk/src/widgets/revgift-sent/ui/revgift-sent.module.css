@@ -2,7 +2,7 @@
 
 .batch-h { font-size: var(--fs-card); line-height: 1.4; }
 /* 결제 끝 안내 — 아래 판과 붙지 않게 쌓인 판 사이 간격(32) */
-.paid { margin-bottom: 48px; padding: 16px 24px; border-radius: var(--r-btn); background: var(--primary-50); color: var(--primary-700); } /* v18-cre.css .paid — 색은 빨강+회색만 */
+.paid { margin-bottom: 48px; padding: 16px 24px; border-radius: var(--r-btn); background: var(--primary-50); color: var(--brand-ink); } /* v18-cre.css .paid — 색은 빨강+회색만 */
 .lock { width: 56px; height: 56px; margin-bottom: 12px; }
 .privacy-t { display: block; }
 .body-gap { margin-top: 8px; }

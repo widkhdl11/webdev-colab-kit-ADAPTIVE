@@ -1,10 +1,10 @@
 /* 승인 요청 목록 — 시안 v18(이전 v11) creator-requests.html. 카드 격자(.grid.cols-2 · .card.card-col · .who · .tags · .btn-col)는 base.css 공통.
    여기에는 시안 <style> 의 .signing 과 코드에만 있는 결과 문구만 둔다. */
 
-.link-in { color: var(--brand); font-weight: var(--fw-bold); text-underline-offset: 4px; }
+.link-in { color: var(--brand-ink); font-weight: var(--fw-bold); text-underline-offset: 4px; }
 
 /* 시안 .signing — 서명 대기 한 줄 */
-.signing { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--r-btn); background: var(--primary-50); color: var(--primary-700); } /* v18-app.css .signing */
+.signing { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--r-btn); background: var(--primary-50); color: var(--brand-ink); } /* v18-app.css .signing */
 
 /* 승인 대기(#wait)·처리한 요청(#done) — 사이드바 「승인 내역」이 #done 으로 온다. 구간 머리는 20(v18 작은 제목) */
 .sec { scroll-margin-top: var(--space-6); }
@@ -14,8 +14,8 @@
 /* 받지 않기 확인 창 */
 .check-row { display: flex; align-items: flex-start; gap: 12px; margin-top: 16px; padding: 16px 20px; border-radius: var(--r-box); background: var(--surface); cursor: pointer; font-weight: var(--fw-bold); }
 .check-row input { flex-shrink: 0; width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--brand); }
-.check-row:has(input:checked) { box-shadow: inset 0 0 0 2px var(--brand); }
-.check-row:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+.check-row:has(input:checked) { box-shadow: inset 0 0 0 2px var(--brand-line); }
+.check-row:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .check-row input:focus-visible { outline: none; }
 .check-row small { display: block; margin-top: 4px; color: var(--sub); font-size: 16px; font-weight: 400; }
 .reason { margin-top: 12px; }

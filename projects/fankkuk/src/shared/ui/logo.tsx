@@ -1,25 +1,21 @@
-// 확정 로고 — 코랄 원 안의 뻐꾸기 얼굴 + 선물 상자 (docs/design/refs/fankkuk-icon-guide.md, 원본 fankkuk-icon-final.png).
-// 도형은 시안 docs/design/mockups/site/v5-coral/icon.svg 와 같다. 색은 로고 전용 4색 — 버튼 색(--brand)을 쓰지 않는다.
-// 뚜껑과 몸통 사이 가로 빈틈은 비워 둔다: 세로 리본은 몸통 윗변(y=295)에서 시작한다.
+// 확정 로고 — 하늘색 상자 안에서 고개를 내민 흰 고양이 (2026-10-15 사용자 제공 그림, 카드 d86).
+// 도형은 시안 docs/design/mockups/site/v20-rebrand/logo-user.svg 와 같다(원본 logo-user-ref.png 를 같은 좌표로 옮김).
+// 색은 로고 전용 3색 — 버튼 색(--brand)을 쓰지 않는다. 남색(--logo-ink)은 이 그림 밖에 쓰지 않는다.
 export function LogoMark({ size = 32 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 512 512" aria-hidden="true">
-      <circle cx="256" cy="256" r="256" fill="var(--logo-coral)" />
+    <svg width={size} height={size} viewBox="366 290 522 522" aria-hidden="true">
       <path
-        d="M141 242C127 168 182 101 258 103C269 76 290 69 301 76C315 84 310 100 295 110C349 130 381 182 370 242H383C392 242 399 249 399 258V267C399 276 392 282 383 282H128C119 282 112 276 112 267V258C112 249 119 242 128 242Z"
-        fill="var(--logo-ivory)"
-      />
-      <circle cx="199.5" cy="189.5" r="15.5" fill="var(--logo-charcoal)" />
-      <circle cx="310.5" cy="189.5" r="15.5" fill="var(--logo-charcoal)" />
-      <path
-        d="M240 202H271C279 202 282 208 277 215L263 237C259 244 252 244 248 237L233 215C228 208 232 202 240 202Z"
-        fill="var(--logo-deep-coral)"
+        d="M443 292H811A75 75 0 0 1 886 367V717A85 85 0 0 1 801 802H453A85 85 0 0 1 368 717V367A75 75 0 0 1 443 292Z"
+        fill="var(--logo-sky)"
       />
       <path
-        d="M132 295H378Q384 295 384 301V400C384 420 370 435 350 435H161C141 435 127 420 127 400V301Q127 295 132 295Z"
-        fill="var(--logo-ivory)"
+        d="M413 548C413 506 436 474 459 462L462 430Q466 382 480 364Q490 354 500 366L556 416Q627 420 698 416L752 366Q762 354 772 364Q786 382 792 430L795 462C818 474 841 506 841 548Z"
+        fill="var(--logo-cream)"
       />
-      <path d="M235.5 295H275.5V322H384V355H275.5V435H235.5V355H127V322H235.5Z" fill="var(--logo-deep-coral)" />
+      <rect x="368" y="548" width="518" height="19" fill="var(--logo-cream)" />
+      <path d="M602 567H651V598Q651 607 642 607H611Q602 607 602 598Z" fill="var(--logo-cream)" />
+      <circle cx="551.5" cy="510.5" r="18.5" fill="var(--logo-ink)" />
+      <circle cx="701.5" cy="510.5" r="18.5" fill="var(--logo-ink)" />
     </svg>
   );
 }

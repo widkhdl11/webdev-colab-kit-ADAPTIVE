@@ -19,7 +19,7 @@
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); margin-top: var(--space-6); }
 .full { grid-column: 1 / -1; }
 /* 칸 하나의 입력 오류 — 칸 바로 아래 한 줄 */
-.error { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2); color: var(--primary-700); font-weight: var(--fw-btn); }
+.error { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2); color: var(--brand-ink); font-weight: var(--fw-btn); }
 .next { --steps: 3; margin-top: var(--space-8); }
 .next :global(.t-strong) + p { margin-top: 4px; }
 .links { justify-content: center; margin-top: var(--space-8); }

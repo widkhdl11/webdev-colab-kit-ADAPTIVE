@@ -3,12 +3,12 @@
 // 답장 글자는 길이에 따라 줄인다(cardTextSizes, DECISIONS 2026-10-11). 크리에이터 이름도 길이에 따라 줄이고(cardNameSize — 20자도 가로 카드 왼쪽 열 296px 안),
 // 칸보다 긴 낱말은 그 안에서 줄을 바꾼다(break-word). 답장 속 팬 닉네임은 그대로 둔다(사용자 결정).
 // next/og 는 CSS 변수를 읽지 못해 색을 값으로 적는다 — design-rules 토큰과 같은 값이다
-// (bg = --surface-brand · ink = --ink · sub = --sub · accent = --brand-ink · white = --white · photo = --face-6, 사진이 없을 때 원 바탕).
+// (bg = --surface-brand · ink = --ink · sub = --sub · accent = --brand-ink · white = --white · photo = --face-3, 사진이 없을 때 원 바탕). 2026-10-15 하늘색으로 바꿈.
 
 import { cardNameSize, cardTextSizes, type CardSize } from "@/entities/gift-reply/model/reply";
 import type { ReplyCardInput } from "@/entities/gift-reply/model/reply-card";
 
-const COLOR = { bg: "#FFF5F1", ink: "#343039", sub: "#665D65", accent: "#A4433D", white: "#FFFFFF", photo: "#F7C8D4" } as const;
+const COLOR = { bg: "#F0F8FF", ink: "#1F2937", sub: "#4B5563", accent: "#1F2937", white: "#FFFFFF", photo: "#CFE3FA" } as const;
 const FONT = "Pretendard";
 
 function Photo({ src, initial, size, ring }: { src: string | null; initial: string; size: number; ring: number }) {

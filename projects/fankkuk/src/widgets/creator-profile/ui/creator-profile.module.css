@@ -17,7 +17,7 @@
 .intro { margin-top: var(--space-2); color: var(--gray-600); }
 .tags { align-items: center; margin-top: var(--space-4); }
 .symbol { display: block; width: 56px; height: 56px; margin-top: var(--space-4); border-radius: var(--r-btn); object-fit: cover; box-shadow: inset 0 0 0 1px var(--gray-200); }
-.thanks { margin-top: var(--space-4); font-weight: var(--fw-btn); color: var(--primary-700); }
+.thanks { margin-top: var(--space-4); font-weight: var(--fw-btn); color: var(--brand-ink); }
 .note { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
 /* 프로필 배경사진 띠(디자인 기준 10절) — 없으면 옅은 코랄 단색. 프로필 사진이 아래 가장자리에 걸치고 흰 테두리로 띠와 갈린다 */
 .cover { overflow: hidden; height: 160px; background: var(--primary-50); }

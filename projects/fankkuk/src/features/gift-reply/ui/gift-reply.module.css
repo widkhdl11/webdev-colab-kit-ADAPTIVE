@@ -3,7 +3,7 @@
 
 /* ── 크리에이터: 받은 선물 — 시안 v11 creator-boxes.html. 카드 격자(.grid.cols-2 · .card.card-col · .who · .tags · .quote)·
    답장 칸의 고르기(.opt)·입력(.field)·버튼 줄(.btn-row2)은 base.css 공통. 여기에는 코드에만 있는 것만 둔다 ── */
-.who:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; } /* 저장 뒤 포커스가 옮겨 오는 카드 제목 */
+.who:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; } /* 저장 뒤 포커스가 옮겨 오는 카드 제목 */
 .q { quotes: none; font-weight: var(--fw-bold); }
 .capped { margin-top: 16px; }
 
@@ -35,7 +35,7 @@
 .consent { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--divider); }
 .check { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
 .check input { width: 22px; height: 22px; margin: 0; accent-color: var(--brand); }
-.check input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.check input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .check-hint { margin-left: 34px; color: var(--sub); }
 .reply-foot { display: flex; justify-content: flex-end; margin-top: 20px; }
 .share { margin-top: 16px; padding: 20px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }

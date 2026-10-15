@@ -3,7 +3,7 @@
 .card { display: flex; flex-direction: column; gap: 24px; max-width: 720px; margin-inline: auto; padding: var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
 .title { margin: 0; font-size: var(--fs-card); line-height: 1.4; scroll-margin-top: 160px; }
 .title:focus { outline: none; }
-.title:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.title:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .sum { display: flex; justify-content: space-between; align-items: baseline; margin: 0; padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .sum span { color: var(--sub); }
 .sum strong { font-size: var(--fs-lead); color: var(--gray-900); font-variant-numeric: tabular-nums; }

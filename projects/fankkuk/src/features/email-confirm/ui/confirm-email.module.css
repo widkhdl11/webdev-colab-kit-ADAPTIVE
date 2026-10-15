@@ -2,6 +2,6 @@
    알림 칸(.ok·.err)은 늘 두고 글자만 바꾼다 — 빈 칸이 간격·판을 차지하지 않는 것은 공통 .err:empty 가 정한다 */
 .narrow { max-width: 720px; margin-inline: auto; }
 .ok { display: flex; align-items: center; gap: var(--space-4); }
-.ok svg { flex: none; color: var(--primary); }
+.ok svg { flex: none; color: var(--brand-ink); }
 .msg { margin-top: var(--space-4); }
 .actions { margin-top: var(--space-6); }

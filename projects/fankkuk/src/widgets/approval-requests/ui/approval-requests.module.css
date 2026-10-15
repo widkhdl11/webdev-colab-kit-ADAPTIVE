@@ -7,7 +7,7 @@
 /* 안내 판 — 시안 .rule-card: 회색 면 + 1px 경계, 왼쪽 정렬, 아이콘 원 → 제목 → 설명 */
 .rule { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); background: var(--gray-50); }
 .rule-h { font-size: var(--fs-card); line-height: 1.4; }
-.icon { display: grid; place-items: center; width: var(--space-12); height: var(--space-12); border-radius: var(--r-pill); background: var(--primary-50); color: var(--primary); }
+.icon { display: grid; place-items: center; width: var(--space-12); height: var(--space-12); border-radius: var(--r-pill); background: var(--primary-50); color: var(--brand-ink); }
 .icon svg { width: var(--space-6); height: var(--space-6); }
 
 

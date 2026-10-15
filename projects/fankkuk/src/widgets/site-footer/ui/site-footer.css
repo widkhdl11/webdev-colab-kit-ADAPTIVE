@@ -2,7 +2,7 @@
    안의 글은 로그인 전 본문과 같은 1152 선(.pub-inner). 로고는 확정 로고 마크 + Pretendard 글자(티머니 둥근바람은 로고에 쓰지 않는다) */
 .site-footer { padding-block: 48px; background: var(--gray-50); border-top: 1px solid var(--gray-200); color: var(--gray-600); }
 .footer-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
-.footer-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-family: var(--font-logo); font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1; color: var(--primary); }
+.footer-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-family: var(--font-logo); font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1; color: var(--brand-ink); }
 .biz { display: grid; gap: 8px; font-size: var(--fs-caption); line-height: 1.5; }
 .biz div { display: flex; gap: 16px; }
 .biz dt { min-width: 128px; flex-shrink: 0; }

@@ -24,9 +24,9 @@ svg { flex-shrink: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
 b, strong, th, dt { font-weight: var(--fw-bold); }
 [hidden] { display: none !important; }
-:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.skip-link { position: absolute; left: 16px; top: -64px; z-index: 200; background: var(--ink); color: var(--on-brand); padding: 12px 16px; border-radius: var(--r-btn-sm); }
+.skip-link { position: absolute; left: 16px; top: -64px; z-index: 200; background: var(--ink); color: var(--white); padding: 12px 16px; border-radius: var(--r-btn-sm); }
 .skip-link:focus { top: 8px; }
 
 /* ---------- 3. 글자 단계 (클래스 이름으로 쓴다) ----------
@@ -47,7 +47,7 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 .t-strong { font-weight: var(--fw-bold); }
 /* 글자색: 본문 기본은 --ink. --sub 는 제목 아래 설명(.t-desc)·메타(.t-meta)에만. 코랄(.accent)은 구간마다 한 곳 */
 .t-desc { color: var(--sub); }
-.accent { color: var(--brand); }
+.accent { color: var(--brand-ink); }
 .tint .accent, .panel .accent { color: var(--brand-ink); }
 
 /* ---------- 4. 레이아웃 ---------- */
@@ -98,7 +98,7 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
    시안에서 .field 는 입력 요소 자체에 붙는다. 이전 화면은 같은 이름을 「라벨+입력」 감싸개 div 로 썼으므로 입력 요소에만 건다(감싸개는 맨 아래 이전 클래스) */
 :is(input, select, textarea).field { display: block; width: 100%; min-width: 0; min-height: 48px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); color: var(--ink); }
 :is(input, textarea).field::placeholder { color: var(--faint); opacity: 1; }
-:is(input, select, textarea).field:focus { outline: 2px solid var(--primary); outline-offset: 0; }
+:is(input, select, textarea).field:focus { outline: 2px solid var(--focus); outline-offset: 0; }
 .label { display: block; margin-bottom: 8px; font-weight: var(--fw-bold); }
 /* 카드: 경계 1px, 떠 있는 그림자 없음 */
 .card { min-width: 0; padding: 32px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
@@ -117,7 +117,7 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 /* ---------- 8. 첫 화면 부품 (첫 화면·팬 메인·크리에이터 메인·소개가 같이 쓴다. 검색창은 크리에이터 찾기·선물 보내기도) ---------- */
 .hero { padding-block: clamp(48px, 7vw, 96px) clamp(56px, 7vw, 96px); text-align: center; }
 .hero .t-lead { margin-bottom: 16px; }
-.hero-line { margin-top: 20px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); color: var(--brand); }
+.hero-line { margin-top: 20px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); color: var(--brand-ink); }
 .hero-desc { max-width: 640px; margin: 24px auto 0; }
 .search { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 640px; height: 60px; margin: clamp(32px, 4vw, 48px) auto 0; padding: 0 8px 0 24px; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--field); }
 .search:focus-within { box-shadow: 0 0 0 3px var(--ink); }
@@ -145,7 +145,7 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 .price .price-amount { margin-top: 16px; font-size: var(--fs-hero); font-weight: var(--fw-bold); line-height: 1.15; letter-spacing: 0; }
 .price .price-amount span { margin-left: 4px; font-size: var(--fs-card); line-height: 1.4; }
 .price .inc { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: var(--fw-bold); }
-.price .inc svg { color: var(--brand); }
+.price .inc svg { color: var(--brand-ink); }
 .price .spec { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--sub); }
 .notes { display: grid; gap: 8px; margin-top: 28px; color: var(--sub); }
 .notes li { display: flex; gap: 12px; }
@@ -159,7 +159,7 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 .flow li.on .n { background: var(--brand); color: var(--on-brand); box-shadow: 0 0 0 4px var(--surface-selected); }
 .flow h3 + p { margin-top: 8px; }
 .flow .tag { margin-top: 12px; }
-.flow li.done .n { background: var(--success); color: var(--on-brand); box-shadow: none; }
+.flow li.done .n { background: var(--success); color: var(--white); box-shadow: none; }
 .flow li.done:not(:last-child)::after { background: var(--success); }
 .flow--mini { justify-items: stretch; text-align: center; }
 .flow--mini .n { margin-inline: auto; }
@@ -233,12 +233,12 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 .tabs a, .tabs label, .tab { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 8px 16px; border: 0; border-radius: var(--r-pill); background: var(--surface); text-decoration: none; text-align: center; cursor: pointer; }
 .tabs a:hover, .tab:hover { background: var(--surface-hover); }
 .tabs a[aria-current="page"], .tab[aria-selected="true"] { background: var(--surface-selected); color: var(--brand-ink); font-weight: var(--fw-bold); }
-.tabs .n { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--ink); color: var(--on-brand); font-weight: var(--fw-bold); line-height: 1; }
+.tabs .n { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-weight: var(--fw-bold); line-height: 1; }
 .tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 32px; }
 .chips .chip { min-height: 44px; padding: 0 18px; border: 0; cursor: pointer; }
 .chips .chip:hover { background: var(--surface-hover); }
-.chips .chip[aria-pressed="true"] { background: var(--ink); color: var(--on-brand); }
+.chips .chip[aria-pressed="true"] { background: var(--ink); color: var(--white); }
 /* 버튼 묶음 */
 .card-col { display: flex; flex-direction: column; gap: 12px; }
 .card-col .push { margin-top: auto; }
@@ -264,7 +264,7 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 /* 고르기·폼 */
 .opt { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 12px 16px; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); cursor: pointer; line-height: 1.5; }
 .opt input { flex-shrink: 0; width: 24px; height: 24px; margin: 0; accent-color: var(--brand); }
-.opt:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand); }
+.opt:has(input:checked) { background: var(--surface-selected); box-shadow: inset 0 0 0 2px var(--brand-line); }
 .opt:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 3px; }
 .fs { min-width: 0; margin: 0; padding: 0; border: 0; }
 .hint { margin-top: 8px; color: var(--sub); }
@@ -345,7 +345,7 @@ textarea.field { padding-block: 14px; min-height: 160px; resize: vertical; line-
 .nos .x { display: grid; place-items: center; width: 24px; height: 24px; margin-top: 1px; border-radius: 50%; background: var(--danger-soft); color: var(--danger); flex-shrink: 0; }
 .steps-ol { display: grid; gap: 12px; counter-reset: s; }
 .steps-ol li { display: flex; gap: 12px; }
-.steps-ol li::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--on-brand); font-weight: var(--fw-bold); flex-shrink: 0; }
+.steps-ol li::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--white); font-weight: var(--fw-bold); flex-shrink: 0; }
 .other { text-decoration: none; display: flex; align-items: center; gap: 16px; }
 .other:hover { background: var(--surface); }
 .other small { display: block; color: var(--sub); font-size: var(--fs-body); }
@@ -521,7 +521,7 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
 .btn--sm.btn--soft { box-shadow: var(--hair); }
 /* 처리 중인 버튼 — disabled 대신 aria-disabled 를 써서 키보드 포커스를 잃지 않게(같은 모양) */
 .btn[disabled], .btn[aria-disabled="true"] { background: var(--disabled); color: var(--disabled-ink); box-shadow: none; cursor: not-allowed; }
-.link-arrow { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--brand); font-weight: var(--fw-bold); text-decoration: none; }
+.link-arrow { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--brand-ink); font-weight: var(--fw-bold); text-decoration: none; }
 .link-arrow:hover { text-decoration: underline; text-underline-offset: 4px; }
 /* 검색창 변형 */
 span.search-go { cursor: default; } /* 누르는 동작이 없는 장식용 돋보기 */
@@ -531,7 +531,7 @@ img.face { object-fit: cover; } /* 프로필 사진(512 정사각)을 원 안에
 .field > label, .field > .label { display: block; margin-bottom: 8px; font-weight: var(--fw-bold); }
 .input { display: block; width: 100%; min-width: 0; min-height: 52px; padding: 0 16px; border: 0; border-radius: var(--r-btn); background: var(--white); box-shadow: var(--field); font-size: var(--fs-body); }
 .input::placeholder { color: var(--faint); opacity: 1; }
-.input:focus { outline: 2px solid var(--primary); outline-offset: 0; }
+.input:focus { outline: 2px solid var(--focus); outline-offset: 0; }
 /* 그림 — 칸 안에서 비율 유지 */
 img.asset { display: block; object-fit: contain; }
 
@@ -560,8 +560,8 @@ img.asset { display: block; object-fit: contain; }
 :is(.part, .card) :is(.t-lead, .t-desc):where(:not(.admin-area *)) { font-size: var(--fs-body); font-weight: 400; line-height: 1.6; }
 .t-meta:where(:not(.admin-area *)) { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
 .t-strong:where(:not(.admin-area *)) { font-weight: var(--fw-btn); color: var(--gray-900); }
-.accent:where(:not(.admin-area *)) { color: var(--primary); }
-:is(.tint, .panel) .accent:where(:not(.admin-area *)) { color: var(--primary-700); }
+.accent:where(:not(.admin-area *)) { color: var(--brand-ink); }
+:is(.tint, .panel) .accent:where(:not(.admin-area *)) { color: var(--brand-ink); }
 
 /* 구간 · 구간 머리 — v11 의 「가운데 정렬」을 걷고 왼쪽 정렬(가운데는 .center 안에서만). 구간 사이 96(휴대폰 64) */
 .section:where(:not(.admin-area *)) { padding-block: var(--section-gap); }
@@ -583,7 +583,7 @@ img.asset { display: block; object-fit: contain; }
 .grid:where(:not(.admin-area *)) { justify-content: flex-start; }
 
 /* 카드 · 판 — 1px 회색 경계(gray-200) + 반경 16 + 옅은 그림자. 경계는 v11 처럼 안쪽 그림자 1px 로 그린다(크기 계산이 바뀌지 않게) */
-.card:where(:not(.admin-area *)) { padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
+.card:where(:not(.admin-area *)) { padding: var(--card-pad); border-radius: var(--r-card); background: var(--white) var(--grad-glow); box-shadow: var(--hair), var(--shadow); }
 /* 옅은 판 — 로그인 후 화면 시안(v18-fan·v18-cre)의 회색 면 + 경계. 공개 화면 시안(v18-pub)의 옅은 빨강은 소개·약관 모듈이 덮는다 */
 .card--soft:where(:not(.admin-area *)) { background: var(--gray-50); box-shadow: var(--hair); }
 .card .t-card + p:where(:not(.admin-area *)) { margin-top: var(--space-2); }
@@ -592,7 +592,7 @@ img.asset { display: block; object-fit: contain; }
 .panel:where(:not(.admin-area *)) { padding: var(--card-pad); border-radius: var(--r-card); background: var(--primary-50); }
 .center .panel:where(:not(.admin-area *)) { padding: var(--section-gap) var(--card-pad); }
 :is(a.card, .ccard):where(:not(.admin-area *)):is(:hover, :focus-within) { box-shadow: inset 0 0 0 1px var(--gray-400), var(--shadow); }
-.card-icon:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-4); border-radius: var(--r-pill); background: var(--primary-50); color: var(--primary); }
+.card-icon:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-4); border-radius: var(--r-pill); background: var(--primary-50); color: var(--brand-ink); }
 .card-icon svg:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); }
 .card-col:where(:not(.admin-area *)) { gap: var(--space-4); }
 .stack:where(:not(.admin-area *)), .block-gap:where(:not(.admin-area *)) { gap: var(--space-6); }
@@ -618,21 +618,21 @@ img.asset { display: block; object-fit: contain; }
 .center :is(.row-btns, .actions):where(:not(.admin-area *)) { justify-content: center; }
 :is(.btn-col, .btn-row2):where(:not(.admin-area *)) { gap: var(--space-2); }
 .foot-line:where(:not(.admin-area *)) { color: var(--gray-600); }
-.foot-line a:where(:not(.admin-area *)) { color: var(--primary-700); font-weight: var(--fw-btn); text-decoration: underline; }
-:is(.link-line, .mini-links a):where(:not(.admin-area *)) { font-weight: var(--fw-btn); color: var(--primary-700); }
+.foot-line a:where(:not(.admin-area *)) { color: var(--brand-ink); font-weight: var(--fw-btn); text-decoration: underline; }
+:is(.link-line, .mini-links a):where(:not(.admin-area *)) { font-weight: var(--fw-btn); color: var(--brand-ink); }
 
 /* 태그 · 칩 — 알약(gray-100). 상태 색은 빨강+회색만: 강조·완료 = 옅은 빨강, 대기·진행·거절 = 회색 */
 .tag:where(:not(.admin-area *)) { gap: var(--space-2); min-height: 0; padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: 1; }
 .tag svg:where(:not(.admin-area *)) { width: 16px; height: 16px; }
-:is(.tag--brand, .tag--success, .tag--accent):where(:not(.admin-area *)) { background: var(--primary-50); color: var(--primary-700); }
+:is(.tag--brand, .tag--success, .tag--accent):where(:not(.admin-area *)) { background: var(--primary-50); color: var(--brand-ink); }
 :is(.tag--warn, .tag--info, .tag--danger):where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-900); }
 .tag--line:where(:not(.admin-area *)) { background: var(--white); color: var(--gray-600); box-shadow: inset 0 0 0 1px var(--gray-200); } /* 새 이름 — 흰 면 회색 경계(시안 크리에이터 묶음) */
-.tag--no:where(:not(.admin-area *)) { background: var(--white); color: var(--primary-700); box-shadow: inset 0 0 0 1px var(--primary); } /* 새 이름 — 거절(시안 크리에이터 묶음) */
+.tag--no:where(:not(.admin-area *)) { background: var(--white); color: var(--brand-ink); box-shadow: inset 0 0 0 1px var(--brand-line); } /* 새 이름 — 거절(시안 크리에이터 묶음) */
 .chip:where(:not(.admin-area *)) { min-height: 0; padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); line-height: 1; }
 .chips:where(:not(.admin-area *)) { justify-content: flex-start; margin-bottom: var(--space-6); }
 .chips .chip:where(:not(.admin-area *)) { min-height: var(--btn-h-sm); padding: 0 var(--space-4); }
 .chips .chip:where(:not(.admin-area *)):hover { background: var(--gray-200); }
-.chips .chip[aria-pressed="true"]:where(:not(.admin-area *)) { background: var(--primary); color: var(--white); }
+.chips .chip[aria-pressed="true"]:where(:not(.admin-area *)) { background: var(--primary); color: var(--on-brand); }
 .dots span:where(:not(.admin-area *)) { border-radius: var(--r-pill); background: var(--gray-200); }
 .dots span.on:where(:not(.admin-area *)) { background: var(--primary); }
 
@@ -655,9 +655,9 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 .check input:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); accent-color: var(--primary); }
 .opt:where(:not(.admin-area *)) { min-height: var(--btn-h); padding: var(--space-2) var(--space-4); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
 .opt input:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); accent-color: var(--primary); }
-.opt:has(input:checked):where(:not(.admin-area *)) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--primary); }
-.opt:has(input:focus-visible):where(:not(.admin-area *)) { outline: 2px solid var(--primary); outline-offset: 2px; }
-.err:where(:not(.admin-area *)) { padding: var(--space-4); border-radius: var(--r-btn); background: var(--primary-50); color: var(--primary-700); font-weight: var(--fw-btn); }
+.opt:has(input:checked):where(:not(.admin-area *)) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.opt:has(input:focus-visible):where(:not(.admin-area *)) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.err:where(:not(.admin-area *)) { padding: var(--space-4); border-radius: var(--r-btn); background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-btn); }
 .okmsg:where(:not(.admin-area *)) { padding: var(--space-4); border-radius: var(--r-btn); background: var(--gray-50); color: var(--gray-900); font-weight: var(--fw-btn); box-shadow: inset 0 0 0 1px var(--gray-200); }
 :is(.err, .okmsg):empty:where(:not(.admin-area *)) { padding: 0; background: none; box-shadow: none; }
 .sw-row:where(:not(.admin-area *)) { display: flex; justify-content: space-between; gap: var(--space-6); padding: var(--space-4) var(--space-6); border-radius: var(--r-btn); background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-200); }
@@ -707,13 +707,13 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 .nlist a:where(:not(.admin-area *)):hover { background: var(--gray-50); }
 .quote:where(:not(.admin-area *)) { padding: var(--space-4); border-radius: var(--r-btn); background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-200); }
 .quote q:where(:not(.admin-area *)) { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.6; }
-.info .ic:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-2); background: var(--primary-50); color: var(--primary); }
+.info .ic:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-2); background: var(--primary-50); color: var(--brand-ink); }
 .info .ic svg:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); }
-.info.ok .ic:where(:not(.admin-area *)) { background: var(--primary-50); color: var(--primary); }
+.info.ok .ic:where(:not(.admin-area *)) { background: var(--primary-50); color: var(--brand-ink); }
 .info.rest .ic:where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-600); }
 .nos:where(:not(.admin-area *)) { gap: var(--space-4); }
 .nos li:where(:not(.admin-area *)) { align-items: center; gap: var(--space-4); }
-.nos .x:where(:not(.admin-area *)) { width: 32px; height: 32px; margin-top: 0; background: var(--primary-50); color: var(--primary); }
+.nos .x:where(:not(.admin-area *)) { width: 32px; height: 32px; margin-top: 0; background: var(--primary-50); color: var(--brand-ink); }
 .steps-ol:where(:not(.admin-area *)) { gap: var(--space-2); padding-left: var(--space-6); list-style: decimal; counter-reset: none; }
 .steps-ol li:where(:not(.admin-area *)) { display: list-item; }
 .steps-ol li:where(:not(.admin-area *))::before { content: none; }
@@ -721,8 +721,8 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 
 /* 단계 — 자리(가로/세로·연결선)는 그대로, 번호 원만 v18: 회색 원 → 지금 단계 빨강 원 → 끝난 단계 옅은 빨강 */
 .flow .n:where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-900); box-shadow: none; font-weight: var(--fw-btn); }
-.flow li.on .n:where(:not(.admin-area *)) { background: var(--primary); color: var(--white); box-shadow: none; }
-.flow li.done .n:where(:not(.admin-area *)) { background: var(--primary-50); color: var(--primary-700); }
+.flow li.on .n:where(:not(.admin-area *)) { background: var(--primary); color: var(--on-brand); box-shadow: none; }
+.flow li.done .n:where(:not(.admin-area *)) { background: var(--primary-50); color: var(--brand-ink); }
 .flow li:not(:last-child):where(:not(.admin-area *))::after { background: var(--gray-200); }
 .flow li.done:not(:last-child):where(:not(.admin-area *))::after { background: var(--primary); }
 
@@ -732,7 +732,7 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 .hero-line:where(:not(.admin-area *)) { margin-top: var(--space-4); font-size: var(--fs-body); font-weight: 400; line-height: 1.6; color: var(--gray-600); }
 .hero-desc:where(:not(.admin-area *)) { max-width: var(--hero-max); }
 .search:where(:not(.admin-area *)) { max-width: var(--hero-max); height: var(--search-h); margin: var(--space-8) auto 0; padding: 0 6px 0 var(--space-6); box-shadow: var(--field), var(--shadow); }
-.search:where(:not(.admin-area *)):focus-within { box-shadow: 0 0 0 2px var(--primary); }
+.search:where(:not(.admin-area *)):focus-within { box-shadow: 0 0 0 2px var(--focus); }
 .search input:where(:not(.admin-area *)) { font-size: var(--fs-body); }
 .search input:where(:not(.admin-area *))::placeholder { color: var(--gray-600); }
 .search-go:where(:not(.admin-area *)) { width: var(--search-btn); height: var(--search-btn); background: var(--primary); }
@@ -743,13 +743,13 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 /* 단계 카드 — 왼쪽 정렬, 번호는 빨강 캡션 */
 .step-col:where(:not(.admin-area *)) { text-align: left; }
 .step-col img:where(:not(.admin-area *)) { width: var(--art-step); height: var(--art-step); margin: 0 0 var(--space-4); }
-.step-col .label-num:where(:not(.admin-area *)) { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-btn); color: var(--primary); }
+.step-col .label-num:where(:not(.admin-area *)) { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-btn); color: var(--brand-ink); }
 .steps-line:where(:not(.admin-area *)) { justify-content: flex-start; margin-top: var(--space-8); font-size: var(--fs-caption); color: var(--gray-600); }
 .steps-line .lab:where(:not(.admin-area *)) { color: var(--gray-900); }
 /* 요금 */
 .price .price-amount:where(:not(.admin-area *)) { margin-top: var(--space-2); font-size: var(--fs-title); line-height: 1.3; }
 .price .price-amount span:where(:not(.admin-area *)) { margin-left: var(--space-2); font-size: var(--fs-card); font-weight: var(--fw-btn); }
-.price .inc:where(:not(.admin-area *)) { color: var(--primary); font-weight: var(--fw-btn); }
+.price .inc:where(:not(.admin-area *)) { color: var(--brand-ink); font-weight: var(--fw-btn); }
 .notes:where(:not(.admin-area *)) { margin-top: var(--space-6); color: var(--gray-600); }
 /* 로그인·가입 카드 */
 .auth .card:where(:not(.admin-area *)) { padding: var(--card-pad); }

@@ -3,6 +3,6 @@
 .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
 @media (max-width: 767px) { .cards { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); } }
 .note { margin-top: var(--space-4); }
-.urgent { color: var(--primary-700); font-weight: var(--fw-btn); }
+.urgent { color: var(--brand-ink); font-weight: var(--fw-btn); }
 .go { justify-self: start; }
 .past-note { margin-top: var(--space-6); }

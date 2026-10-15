@@ -16,24 +16,24 @@
 
 /* 사진 칸 */
 .imgRow { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
-.file:focus-visible + .pick { outline: 3px solid var(--primary); outline-offset: 2px; }
+.file:focus-visible + .pick { outline: 3px solid var(--focus); outline-offset: 2px; }
 .pick { cursor: pointer; }
 .pick[aria-disabled="true"] { background: var(--gray-100); color: var(--gray-600); cursor: not-allowed; }
-.avatar { display: grid; flex: none; place-items: center; overflow: hidden; width: 88px; height: 88px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--primary-700); font-size: var(--fs-title); font-weight: var(--fw-btn); }
+.avatar { display: grid; flex: none; place-items: center; overflow: hidden; width: 88px; height: 88px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--brand-ink); font-size: var(--fs-title); font-weight: var(--fw-btn); }
 .avatar img, .bgBox img, .symBox img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .bgBox { display: grid; place-items: center; overflow: hidden; width: 100%; max-width: 360px; aspect-ratio: 3 / 1; border-radius: var(--r-btn); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--gray-400); color: var(--gray-600); font-size: var(--fs-caption); }
 .symBox { display: grid; flex: none; place-items: center; overflow: hidden; width: 88px; height: 88px; border-radius: var(--r-card); background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-400); color: var(--gray-600); font-size: var(--fs-caption); text-align: center; }
 .has { box-shadow: inset 0 0 0 1px var(--gray-200); background: var(--white); }
 .chk { display: flex; gap: var(--space-2); align-items: flex-start; cursor: pointer; }
 .chk input { flex: none; width: 20px; height: 20px; margin-top: 2px; accent-color: var(--primary); }
-.chk input:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.chk input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* 미리보기 이미지 고르기 */
 .picks { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
 .pickOpt { display: flex; gap: var(--space-2); align-items: center; padding: var(--space-4); border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--gray-200); cursor: pointer; }
-.pickOpt:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--primary); }
+.pickOpt:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
 .pickOpt:has(input:disabled) { background: var(--gray-50); color: var(--gray-600); cursor: not-allowed; }
-.pickOpt:has(input:focus-visible) { outline: 3px solid var(--primary); outline-offset: 2px; }
+.pickOpt:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 .pickOpt input { flex: none; width: 20px; height: 20px; accent-color: var(--primary); }
 .pickHint { display: block; font-size: var(--fs-caption); color: var(--gray-600); }
 
@@ -44,7 +44,7 @@
 .szText { display: grid; flex: 1; min-width: 0; }
 .szText b { font-weight: var(--fw-btn); }
 .szBtns { flex: none; }
-.mini { position: relative; display: block; overflow: hidden; border-radius: var(--r-tag); background: var(--white); box-shadow: inset 0 0 0 1px var(--primary); }
+.mini { position: relative; display: block; overflow: hidden; border-radius: var(--r-tag); background: var(--white); box-shadow: inset 0 0 0 1px var(--brand-line); }
 .mini b { position: absolute; display: block; }
 .mBg { left: 0; right: 0; top: 0; height: 40%; background: var(--primary-50); }
 .mAv { left: 50%; top: 30%; width: 22%; aspect-ratio: 1; transform: translateX(-50%); border-radius: var(--r-pill); background: var(--face-6); box-shadow: 0 0 0 2px var(--white); }
@@ -65,7 +65,7 @@
 .pvIntro { margin: 0; color: var(--gray-600); overflow-wrap: anywhere; }
 .pvTag svg { margin-right: 4px; }
 .pvSym { width: 56px; height: 56px; border-radius: var(--r-btn); object-fit: cover; box-shadow: inset 0 0 0 1px var(--gray-200); }
-.pvThanks { margin: 0; font-weight: var(--fw-btn); color: var(--primary-700); }
+.pvThanks { margin: 0; font-weight: var(--fw-btn); color: var(--brand-ink); }
 .pvBtn { width: 100%; margin-top: var(--space-2); pointer-events: none; }
 .og { margin-top: var(--space-2); padding: 0; overflow: hidden; }
 .ogImg { display: grid; place-items: center; aspect-ratio: 1200 / 630; background: var(--primary-50); }
