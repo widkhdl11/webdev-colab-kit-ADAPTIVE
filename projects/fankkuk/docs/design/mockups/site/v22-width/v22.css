@@ -23,3 +23,7 @@
   .v22-split > .v22-side { position: sticky; top: var(--sp-32); align-self: start; }
   .v22-toc ul { display: grid; gap: 0; }
 }
+/* 본문 틀 적용(v21-addendum3): fan-21.css 의 .col 기둥 폭을 장별로 바꾼다 */
+.col.v22-w1200 { max-width: 1200px; }
+.col.v22-w880 { max-width: 880px; }
+.col.v22-w720 { max-width: 720px; }
