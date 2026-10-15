@@ -1,0 +1,13 @@
+/* v20 B안 — 하늘색 대표색은 그대로, 짝 색만 바꾼다(2026-10-15 사용자 「하늘색 유지, 짝 색만」). tokens.css 뒤에 불러와 덮는다.
+   바탕 크림 → 흰색, 섹션·사이드바 옅은 하늘 → 아주 옅은 라벤더, 선택·뱃지 면 파우더 블루(청록기) → 옅은 하늘. */
+:root {
+  --surface: #FFFFFF;
+  --tint: #F5F3FF;
+  --primary-soft: #E0F2FE;
+  --lavender: #DDD6FE;
+  --ink-muted: #4B5563; /* 라벤더 면 위에서 #6B7280 은 4.5 미만이라 한 단계 진하게 */
+  --grad-hero: linear-gradient(135deg, #E0F2FE 0%, #EDE9FE 100%);
+  --grad-glow: radial-gradient(ellipse at top left, #F5F3FF 0%, transparent 60%);
+  --grad-title: linear-gradient(90deg, #7DD3FC, #C4B5FD);
+  --art-ico-bg: var(--lavender); /* 아이콘 원·장식 원 — 하늘색 버튼과 겹치지 않게 짝 색이 보이는 자리 */
+}

@@ -1,0 +1,11 @@
+/* v20 C안 — 옅은 하늘이 주인공(2026-10-15 사용자 「섹션 사이드바는 옅은 하늘이 나은데? 옅은 하늘을 메인으로」). tokens.css 뒤에 불러와 덮는다.
+   바탕 흰색(B안에서 가져옴) · 섹션·사이드바 옅은 하늘 #F0F8FF(A안) · 선택·뱃지·아이콘 원 옅은 하늘 #E0F2FE(청록기 없음) · 라벤더는 히어로 그라데이션 끝에만 아주 옅게. */
+:root {
+  --surface: #FFFFFF;
+  --tint: #F0F8FF;
+  --primary-soft: #E0F2FE;
+  --art-ico-bg: #E0F2FE;
+  --grad-hero: linear-gradient(135deg, #D6EEFC 0%, #EEF0FF 100%);
+  --grad-glow: radial-gradient(ellipse at top left, #F0F8FF 0%, transparent 60%);
+  --grad-title: linear-gradient(90deg, #7DD3FC, #A5E1FA);
+}

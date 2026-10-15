@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="366 290 522 522" width="64" height="64" role="img" aria-label="팬꾹 로고: 하늘색 상자 안에서 고개를 내민 흰 고양이">
+  <!-- 사용자 제공 이미지(logo-user-ref.png, 2026-10-15)를 원본 픽셀 좌표 그대로 옮김. 색은 로고 전용 -->
+  <path d="M443 292H811A75 75 0 0 1 886 367V717A85 85 0 0 1 801 802H453A85 85 0 0 1 368 717V367A75 75 0 0 1 443 292Z" style="fill:var(--logo-sky,#62B9FC)"/>
+  <path d="M413 548C413 506 436 474 459 462L462 430Q466 382 480 364Q490 354 500 366L556 416Q627 420 698 416L752 366Q762 354 772 364Q786 382 792 430L795 462C818 474 841 506 841 548Z" style="fill:var(--logo-cream,#FEFDF9)"/>
+  <rect x="368" y="548" width="518" height="19" style="fill:var(--logo-cream,#FEFDF9)"/>
+  <path d="M602 567H651V598Q651 607 642 607H611Q602 607 602 598Z" style="fill:var(--logo-cream,#FEFDF9)"/>
+  <circle cx="551.5" cy="510.5" r="18.5" style="fill:var(--logo-ink,#192B4F)"/>
+  <circle cx="701.5" cy="510.5" r="18.5" style="fill:var(--logo-ink,#192B4F)"/>
+</svg>

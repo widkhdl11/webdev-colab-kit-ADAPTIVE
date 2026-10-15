@@ -1,0 +1,86 @@
+<!doctype html>
+<!--
+  [v20-rebrand 2026-10-14] 팬꾹 로고 세트 한 장. 마스코트 = 정면 선물 상자(리본 포함) + 상자 정면 중앙에 도장처럼 찍힌 고양이 발자국(패드 1 + 발가락 4, 발톱·털 없음).
+  색: 상자 몸통 primary-soft, 리본 primary, 발자국 ink, 외곽선 ink 2(통일). 단색판은 ink 한 색. 파일: mascot-color.svg / mascot-mono.svg / paw.svg (색은 CSS 변수 + fallback).
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="mascot-color.svg">
+<title>팬꾹 — 시안 v20-rebrand 로고 세트</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="v18.css">
+<style>
+  .lg { max-width: var(--container-max); margin: 0 auto; padding: var(--sp-48) var(--container-pad) var(--sp-96); }
+  .lg h1 { font-size: var(--fs-h2); font-weight: var(--fw-h2); line-height: var(--lh-h2); }
+  .lg h2 { font-size: var(--fs-h3); line-height: var(--lh-h3); margin-bottom: var(--sp-16); }
+  .lg section { margin-top: var(--sp-48); }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--card-gap); }
+  .tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-16); min-height: 240px; padding: var(--sp-24); border-radius: var(--r-card); border: var(--bw) solid var(--border); background: var(--white); text-align: center; }
+  .tile.cream { background: var(--surface); } .tile.tint { background: var(--tint); }
+  .tile img { display: block; }
+  .word { display: inline-flex; align-items: center; gap: var(--sp-8); font-size: 40px; font-weight: 700; line-height: 1; color: var(--ink); }
+  .word img { width: 56px; height: 56px; }
+  .steps { display: flex; flex-wrap: wrap; gap: var(--sp-8); list-style: none; padding: 0; margin: 0; }
+  .st { display: flex; flex-direction: column; align-items: center; gap: var(--sp-8); width: 80px; font-size: var(--fs-caption); font-weight: var(--fw-btn); color: var(--ink); }
+  .paw { width: 40px; height: 40px; fill: var(--border); stroke: none; }
+  .st.done .paw { fill: var(--primary); stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
+  .sizes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-32); }
+  .sizes figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: var(--sp-8); }
+  .sizes figcaption { font-size: var(--fs-caption); color: var(--ink-muted); }
+  .sz-pair { display: flex; gap: var(--sp-16); align-items: flex-end; }
+  .on-tint { padding: var(--sp-16); border-radius: var(--r-btn); background: var(--tint); }
+  .zoom { image-rendering: pixelated; }
+  p.note2 { margin-top: var(--sp-8); color: var(--gray-600); font-size: var(--fs-caption); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><symbol id="paw" viewBox="14 22 36 36"><g transform="translate(0 4)"><path d="M32 35.5c-4.6 0-9 4.6-9 8.7 0 3 2.2 4.8 4.8 4.8 1.6 0 2.6-.7 4.2-.7s2.6.7 4.2.7c2.6 0 4.8-1.8 4.8-4.8 0-4.1-4.4-8.7-9-8.7z"/><ellipse cx="22.5" cy="34" rx="3" ry="3.8" transform="rotate(-18 22.5 34)"/><ellipse cx="28.3" cy="28.5" rx="3" ry="3.9"/><ellipse cx="35.7" cy="28.5" rx="3" ry="3.9"/><ellipse cx="41.5" cy="34" rx="3" ry="3.8" transform="rotate(18 41.5 34)"/></g></symbol></defs></svg>
+<main class="lg">
+  <h1>팬꾹 로고 세트</h1>
+  <p class="t-sub">선물 상자 위에 고양이 발자국이 「꾹」 찍힌 마스코트. 색은 토큰만 쓴다.</p>
+
+  <section aria-labelledby="s1">
+    <h2 id="s1">1. 마스코트 — 컬러 · 단색</h2>
+    <div class="row">
+      <div class="tile cream"><img src="mascot-color.svg" width="160" height="160" alt="컬러 마스코트"><p class="caption">컬러 · mascot-color.svg<br>몸통 #B0E0E6 · 리본 #89CFF0 · 발자국·외곽선 #1F2937</p></div>
+      <div class="tile cream"><img src="mascot-mono.svg" width="160" height="160" alt="단색 마스코트"><p class="caption">단색 ink · mascot-mono.svg<br>#1F2937 한 색</p></div>
+      <div class="tile tint"><img src="paw.svg" width="160" height="160" alt="발자국"><p class="caption">발자국만 · paw.svg<br>패드 1 + 발가락 4</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s2">
+    <h2 id="s2">2. 워드마크 — 마스코트 + 「팬꾹」(ink)</h2>
+    <div class="row">
+      <div class="tile cream"><span class="word"><img src="mascot-color.svg" alt="">팬꾹</span><p class="caption">크림 바탕 · 컬러</p></div>
+      <div class="tile"><span class="word"><img src="mascot-mono.svg" alt="">팬꾹</span><p class="caption">흰 바탕 · 단색</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s3">
+    <h2 id="s3">3. 발자국 아이콘 — 상태 단계 표시</h2>
+    <p class="caption">완료 = primary 채움 + ink 1px 테두리, 미완료 = border 색 채움.</p>
+    <div class="tile cream" style="align-items:flex-start;margin-top:16px;gap:24px">
+      <ul class="steps" aria-label="진행 단계: 등록 승인 입고 검수까지 완료"><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>등록<span class="sr-only"> 완료</span></span></li><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>승인<span class="sr-only"> 완료</span></span></li><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>입고<span class="sr-only"> 완료</span></span></li><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>검수<span class="sr-only"> 완료</span></span></li><li class="st "><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>출고<span class="sr-only"> 아직</span></span></li><li class="st "><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>배송중<span class="sr-only"> 아직</span></span></li><li class="st "><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>수령<span class="sr-only"> 아직</span></span></li></ul>
+      <ul class="steps" aria-label="진행 단계: 전부 완료, 수령"><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>등록<span class="sr-only"> 완료</span></span></li><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>승인<span class="sr-only"> 완료</span></span></li><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>입고<span class="sr-only"> 완료</span></span></li><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>검수<span class="sr-only"> 완료</span></span></li><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>출고<span class="sr-only"> 완료</span></span></li><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>배송중<span class="sr-only"> 완료</span></span></li><li class="st done"><svg class="paw" width="40" height="40" aria-hidden="true"><use href="#paw"/></svg><span>수령<span class="sr-only"> 완료</span></span></li></ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="s4">
+    <h2 id="s4">4. 크기별 — 16 · 32 · 64 · 128px (실제 크기)</h2>
+    <div class="tile cream" style="align-items:flex-start">
+      <div class="sizes">
+        <figure><div class="sz-pair"><img src="mascot-color.svg" width="16" height="16" alt="16px 컬러"><img src="mascot-mono.svg" width="16" height="16" alt="16px 단색"></div><figcaption>16px 컬러 · 단색</figcaption></figure>
+        <figure><div class="sz-pair"><img src="mascot-color.svg" width="32" height="32" alt="32px 컬러"><img src="mascot-mono.svg" width="32" height="32" alt="32px 단색"></div><figcaption>32px</figcaption></figure>
+        <figure><div class="sz-pair"><img src="mascot-color.svg" width="64" height="64" alt="64px 컬러"><img src="mascot-mono.svg" width="64" height="64" alt="64px 단색"></div><figcaption>64px</figcaption></figure>
+        <figure><div class="sz-pair"><img src="mascot-color.svg" width="128" height="128" alt="128px 컬러"><img src="mascot-mono.svg" width="128" height="128" alt="128px 단색"></div><figcaption>128px</figcaption></figure>
+        <figure><div class="on-tint"><img src="mascot-color.svg" width="16" height="16" alt="tint 위 16px"></div><figcaption>16px · tint 위</figcaption></figure>
+      </div>
+      <p class="note2">파비콘은 mascot-color.svg 를 그대로 쓴다(브라우저 탭 16px).</p>
+    </div>
+  </section>
+</main>
+</body>
+</html>

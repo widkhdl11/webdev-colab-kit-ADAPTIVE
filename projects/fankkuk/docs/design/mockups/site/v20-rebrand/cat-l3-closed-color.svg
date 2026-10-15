@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="팬꾹 마스코트: 뚜껑을 닫고 리본을 맨 선물 상자">
+  <g stroke-width="2" stroke-linejoin="round" stroke-linecap="round" style="stroke:var(--ink,#1F2937)">
+    <rect x="12" y="30.5" width="40" height="30.0" rx="4" style="fill:var(--primary-soft,#E0F2FE)"/><rect x="28.0" y="30.5" width="8" height="30.0" style="fill:var(--primary,#89CFF0)"/><rect x="9" y="21" width="46" height="10.5" rx="4" style="fill:var(--primary-soft,#E0F2FE)"/><rect x="28" y="21" width="8" height="10.5" style="fill:var(--primary,#89CFF0)"/><g transform="translate(32 21.5) scale(1.8 1.8)" stroke-width="1.11"><path d="M0 0C-3 0 -7 -1.5 -7 -4.5C-7 -6.7 -4.5 -7 -3 -5.5C-1 -4 0 0 0 0Z M0 0C3 0 7 -1.5 7 -4.5C7 -6.7 4.5 -7 3 -5.5C1 -4 0 0 0 0Z" style="fill:var(--primary,#89CFF0)"/></g><ellipse cx="32" cy="21.5" rx="3.4" ry="2.9" style="fill:var(--primary,#89CFF0)"/>
+  </g>
+</svg>

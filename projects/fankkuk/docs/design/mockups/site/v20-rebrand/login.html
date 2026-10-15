@@ -1,0 +1,100 @@
+<!doctype html>
+<!--
+  [v20-rebrand 2026-10-14] 지시: 팬꾹 브랜드 색(하늘색+크림)·마스코트(선물 상자 + 고양이 발자국) 교체 시안. v18 복사본에서 시작, 배치·여백·글꼴·사이드바 동작은 그대로. 바뀐 것: tokens.css 색 토큰, 글자색 전부 ink(흰 글자·파랑 글자 제거), 초점 테두리 ink, 로고·파비콘·접힘 아이콘·3D 그림 -> 마스코트/선 아이콘, 히어로 그라데이션·유리 카드·제목 그라데이션(랜딩만), 승인함 뱃지 피치.
+-->
+<!--
+  팬꾹 시안 v20-rebrand 로그인 — P 갈래(로그인 전·공개 화면) (2026-10-13)
+  지시: _brief.md 「2차」 — 원본 ../v16/a/login.html, 문구·구조 그대로. 틀은 v18 landing(GNB 로그인 전) + v18-pub.css.
+  3D 그림은 설명 그림 자리(머리 그림·소개 장면·안내 판)만, UI 아이콘은 lucide 선 아이콘. 색·글자 크기·간격은 전부 tokens.css 변수.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="mascot-color.svg">
+<title>팬꾹 — 시안 v20-rebrand 로그인</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="v18.css">
+<link rel="stylesheet" href="v18-pub.css">
+<script src="font-switch.js" defer></script>
+</head>
+<body class="page-login">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="landing.html" aria-label="팬꾹 처음 화면"><img class="logo-mark" src="mascot-color.svg" alt="" aria-hidden="true" width="32" height="32"><span>팬꾹</span></a>
+      <nav class="nav" aria-label="주요 메뉴"><ul>
+        <li><a href="creators.html">크리에이터 찾기</a></li><li><a href="send-loggedout.html">선물 보내기</a></li><li><a href="notices.html">공지사항</a></li><li><a href="about.html">팬꾹 소개</a></li><li><a href="support.html">고객센터</a></li>
+      </ul></nav>
+      <div class="header-actions">
+        <div class="auth"><a href="login.html">로그인</a><span class="sep" aria-hidden="true"></span><a class="strong" href="signup.html">회원가입</a></div>
+        <details class="mm">
+          <summary aria-label="메뉴 열기"><svg class="ico i-open" aria-hidden="true"><use href="#i-menu"/></svg><svg class="ico i-close" aria-hidden="true"><use href="#i-x"/></svg></summary>
+          <div class="mm-body">
+            <a href="creators.html">크리에이터 찾기</a><a href="send-loggedout.html">선물 보내기</a><a href="notices.html">공지사항</a><a href="about.html">팬꾹 소개</a><a href="support.html">고객센터</a>
+            <div class="btn-row"><a class="btn btn--secondary" href="login.html">로그인</a><a class="btn" href="signup.html">회원가입</a></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="pub ">
+    <section class="section section--compact auth-page" aria-labelledby="page-title">
+      <div class="container authbox">
+        <div class="card">
+          <div class="head">
+            <img class="art art--head" src="mascot-color.svg" width="64" height="64" alt="" aria-hidden="true">
+            <h1 class="t-title" id="page-title">로그인</h1>
+            <p class="t-lead t-desc">다시 만나서 반가워요.</p>
+          </div>
+          <form class="form" onsubmit="return false" aria-label="로그인">
+            <div><label class="label" for="lid">아이디</label><input class="field" id="lid" type="text" autocomplete="username" placeholder="아이디를 입력해 주세요"></div>
+            <div><label class="label" for="lpw">비밀번호</label><input class="field" id="lpw" type="password" autocomplete="current-password" placeholder="비밀번호를 입력해 주세요"></div>
+            <label class="check"><input type="checkbox"> 로그인 상태 유지</label>
+            <button class="btn btn--block" type="submit">로그인</button>
+          </form>
+          <details class="reset">
+            <summary>비밀번호를 잊으셨나요?<svg aria-hidden="true"><use href="#i-chevron-down"/></svg></summary>
+            <form class="form" onsubmit="return false" aria-label="비밀번호 재설정 링크 받기">
+              <p class="t-desc">아이디와 가입할 때 적은 이메일을 넣으면, 확인된 이메일로 비밀번호 재설정 링크를 보내 드려요.</p>
+              <div><label class="label" for="rid">아이디</label><input class="field" id="rid" type="text" autocomplete="username" placeholder="아이디를 입력해 주세요"></div>
+              <div><label class="label" for="rmail">가입 이메일</label><input class="field" id="rmail" type="email" autocomplete="email" placeholder="example@email.com"></div>
+              <button class="btn btn--line btn--block" type="submit">재설정 링크 보내기</button>
+            </form>
+          </details>
+        </div>
+        <p class="foot-line">아직 회원이 아니신가요? <a href="#">회원가입</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="footer-logo"><img class="logo-mark" src="mascot-color.svg" alt="" aria-hidden="true" width="32" height="32"><span>팬꾹</span></p>
+          <dl class="biz">
+            <div><dt>상호</dt><dd>팬꾹</dd></div>
+            <div><dt>대표자</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>사업자등록번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>통신판매업 신고번호</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>주소</dt><dd>(출시 전 기재)</dd></div>
+            <div><dt>고객센터</dt><dd>(출시 전 기재)</dd></div>
+          </dl>
+        </div>
+        <nav class="footer-links" aria-label="서비스 정책"><a href="legal.html">이용약관</a><a href="legal.html">개인정보처리방침</a><a href="support.html">고객센터</a><a href="about.html">팬꾹 소개</a></nav>
+      </div>
+      <p class="footer-copy">&copy; 2026 팬꾹. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

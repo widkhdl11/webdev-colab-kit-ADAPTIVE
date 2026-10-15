@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="팬꾹 마스코트 단색: 선물 상자 위에 찍힌 고양이 발자국">
+  <defs><mask id="m-paw" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64"><rect width="64" height="64" fill="#fff"/><rect x="15" y="29" width="34" height="30" rx="9" fill="#000"/></mask></defs>
+  <g fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" style="stroke:var(--ink,#1F2937)">
+    <rect x="9" y="28" width="46" height="30" rx="4"/>
+    <rect x="6" y="15" width="52" height="13" rx="4"/>
+    <path d="M28 15V58M36 15V58" mask="url(#m-paw)"/>
+    <path d="M32 15C26 15 19 12.5 19 8.5 19 5 23 4.5 26 6.5 29 8.5 32 15 32 15Z M32 15C38 15 45 12.5 45 8.5 45 5 41 4.5 38 6.5 35 8.5 32 15 32 15Z"/>
+  </g>
+  <g transform="translate(0 3)" style="fill:var(--ink,#1F2937)"><path d="M32 35.5c-4.6 0-9 4.6-9 8.7 0 3 2.2 4.8 4.8 4.8 1.6 0 2.6-.7 4.2-.7s2.6.7 4.2.7c2.6 0 4.8-1.8 4.8-4.8 0-4.1-4.4-8.7-9-8.7z"/><ellipse cx="22.5" cy="34" rx="3" ry="3.8" transform="rotate(-18 22.5 34)"/><ellipse cx="28.3" cy="28.5" rx="3" ry="3.9"/><ellipse cx="35.7" cy="28.5" rx="3" ry="3.9"/><ellipse cx="41.5" cy="34" rx="3" ry="3.8" transform="rotate(18 41.5 34)"/></g>
+</svg>

@@ -1,0 +1,218 @@
+<!doctype html>
+<!--
+  [v20-rebrand 2026-10-14] 지시: 팬꾹 브랜드 색(하늘색+크림)·마스코트(선물 상자 + 고양이 발자국) 교체 시안. v18 복사본에서 시작, 배치·여백·글꼴·사이드바 동작은 그대로. 바뀐 것: tokens.css 색 토큰, 글자색 전부 ink(흰 글자·파랑 글자 제거), 초점 테두리 ink, 로고·파비콘·접힘 아이콘·3D 그림 -> 마스코트/선 아이콘, 히어로 그라데이션·유리 카드·제목 그라데이션(랜딩만), 승인함 뱃지 피치.
+-->
+<!--
+  [v18 2026-10-13] 지시: 「큰 틀은 V17로 하고 v16 을 자연스럽게 섞어보자」(_brief.md). v17 복사본에서 시작. 바뀐 것: 3D 점토 그림(바로가기·4단계·빈 상태·랜딩 히어로 장식 2개), 팔로우 카드 플랫폼 뱃지 E3. 나머지는 v17 그대로.
+  팬꾹 시안 v20-rebrand 크리에이터 관리 · 승인·받은 선물 (2026-10-13, 6단계로 갱신)
+  6단계(사용자 프롬프트 「2. 레이아웃 (수정)」): 로그인 후는 GNB 없이 앱 사이드바 하나. 펼침 240 / 접힘 64, localStorage "sidebar-collapsed", 단축키 [ .
+  메뉴: [기본] 홈·크리에이터 찾기·선물 보내기 / [관리] 승인 대기(badge 4)·승인 내역·열람 기록·주소 관리. 「정산」은 PRODUCT 에 없는 기능이라 넣지 않음(사용자 확인 대기).
+  ?rail=1 이면 접힌 상태로 시작(비교용, 저장 안 함). ≤1024 기본 접힘, ≤768 사이드바 숨김 + 상단 56 바 햄버거 drawer.
+  첫 줄 = 페이지 헤더(h1 24/700 + 개수 + 오른쪽 버튼 1개 + 설명 한 줄). 본문 padding 40 / max-width 1120 왼쪽 정렬.
+  본문 문구는 v11/creator-requests.html 그대로(카카오 노란 버튼은 토큰 외 색 금지라 primary 버튼).
+  8단계(사용자 프롬프트): 사이드바를 본문과 같은 flex row 의 sticky 칸으로 되돌림(폭만 240 <-> 64, 200ms, 본문이 같이 움직여 넓어지고 좁아짐, 어느 상태에서도 본문을 가리지 않음).
+  세로 위치 고정(상단 56·그룹 라벨 32·항목 36·프로필 56, display:none 없음)·「꾹」 마크·접힘 툴팁·badge 점·라벨 fade-in 지연은 유지. 상태 localStorage "sidebar-collapsed", 기본 펼침(본체 결정), 1024 이하 기본 접힘(저장값 우선), [ 단축키 유지. 768 이하는 상단 56 바 + 전체 폭 drawer.
+  본문 .page-pane: padding 40, max-width 1440, 왼쪽 정렬(1120 상한 제거). 카드 목록 grid = repeat(auto-fill, minmax(300px, 1fr)) gap 16.
+  피드백(8단계): 7단계 방식을 취소하고 본문을 미는 사이드바로 복귀, 본문 최대 폭 1440.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="logo-user.svg">
+<title>팬꾹 — 시안 v20-rebrand 크리에이터 · 승인·받은 선물</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="tokens-c.css">
+<link rel="stylesheet" href="v18.css">
+
+<link rel="stylesheet" href="v18-app.css">
+<script src="font-switch.js" defer></script>
+</head>
+<body>
+  <script>
+    /* 8단계 사이드바 상태. 펼침 240 / 접힘 64, 둘 다 본문을 밀고 당긴다(가리지 않음). 접힘 상태 localStorage "sidebar-collapsed"(저장값 우선, 없으면 기본 펼침·1024 이하는 접힘).
+       html[data-collapsed] = 접힘(PC), html[data-open] = drawer 열림(휴대폰). 단축키 [ = 펼침/접힘 토글. */
+    (function () {
+      var K = 'sidebar-collapsed', root = document.documentElement, collapsed, open = false, stored = null;
+      try { stored = localStorage.getItem(K); } catch (e) {}
+      if (stored === '1' || stored === '0') collapsed = stored === '1'; else collapsed = window.matchMedia('(max-width: 1024px)').matches;
+      if (/[?&]empty=1/.test(location.search)) root.setAttribute('data-empty', '1');
+      function narrow() { return getComputedStyle(root).getPropertyValue('--app-narrow').trim() !== 'none'; }
+      function $(id) { return document.getElementById(id); }
+      function apply() {
+        var n = narrow(), col = collapsed && !n;
+        if (!n) open = false;
+        if (col) root.setAttribute('data-collapsed', '1'); else root.removeAttribute('data-collapsed');
+        if (open) root.setAttribute('data-open', '1'); else root.removeAttribute('data-open');
+        var o = $('sb-open'), m = $('sb-mark');
+        if (o) o.setAttribute('aria-expanded', String(open));
+        if (m) m.setAttribute('aria-expanded', String(!col));
+      }
+      function setCollapsed(v) { collapsed = v; try { localStorage.setItem(K, v ? '1' : '0'); } catch (e) {} apply(); }
+      function setOpen(v) { open = v; apply(); }
+      apply();
+      window.addEventListener('resize', apply);
+      document.addEventListener('DOMContentLoaded', function () {
+        apply();
+        var sb = $('sidebar'), mark = $('sb-mark'), fold = $('sb-fold'), ob = $('sb-open'), cb = $('sb-close');
+        mark.addEventListener('click', function () { setCollapsed(false); fold.focus(); });
+        fold.addEventListener('click', function () { setCollapsed(true); mark.focus(); });
+        ob.addEventListener('click', function () { setOpen(true); cb.focus(); });
+        cb.addEventListener('click', function () { setOpen(false); ob.focus(); });
+        sb.addEventListener('click', function (e) { if (e.target.closest('.sb-nav a') && open) setOpen(false); });
+        document.addEventListener('click', function (e) {
+          document.querySelectorAll('details.sb-menu[open], details.fc-more[open]').forEach(function (d) { if (!d.contains(e.target)) d.open = false; });
+        });
+        document.addEventListener('keydown', function (e) {
+          var t = e.target, tag = t && t.tagName;
+          if (e.key === 'Escape') {
+            document.querySelectorAll('details[open]').forEach(function (d) { d.open = false; });
+            if (open) { setOpen(false); ob.focus(); }
+            return;
+          }
+          if (e.key === '[' && !e.ctrlKey && !e.metaKey && !e.altKey && !narrow() && !(t && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable))) setCollapsed(!collapsed);
+        });
+      });
+    })();
+  </script>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-gift" viewBox="0 0 24 24"><path d="M12 7v14" /><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" /><rect x="3" y="7" width="18" height="4" rx="1" /></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></symbol>
+    <symbol id="i-package-search" viewBox="0 0 24 24"><path d="M12 22V12" /><path d="M20.27 18.27 22 20" /><path d="M21 10.498V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.729l7 4a2 2 0 0 0 2 .001l.98-.559" /><path d="M3.29 7 12 12l8.71-5" /><path d="m7.5 4.27 8.997 5.148" /><circle cx="18.5" cy="16.5" r="2.5" /></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
+    <symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></symbol>
+    <symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+  
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><polyline points="3.29 7 12 12 20.71 7" /><path d="m7.5 4.27 9 5.15" /></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></symbol>
+    <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></symbol>
+    <symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /></symbol>
+    <symbol id="i-log-out" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></symbol>
+      <symbol id="i-panel-left-close" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m16 15-3-3 3-3" /></symbol>
+    <symbol id="i-panel-left-open" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m14 9 3 3-3 3" /></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2" /> <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /> <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></symbol>
+    <symbol id="i-list-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /> <path d="M13 6h8" /> <path d="M13 12h8" /> <path d="M13 18h8" /></symbol>
+    <symbol id="i-chevrons-up-down" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" /><path d="m21.854 2.147-10.94 10.939" /></symbol>
+    <symbol id="i-ellipsis" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></symbol>
+  </defs></svg>
+
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="app" id="app">
+    <header class="topbar">
+      <a class="logo" href="home-creator.html" aria-label="팬꾹 홈"><img class="logo-mark" src="logo-user.svg" alt="" aria-hidden="true" width="32" height="32"><span>팬꾹</span></a>
+      <button class="icon-btn" id="sb-open" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button>
+    </header>
+    <div class="sb-scrim" id="sb-scrim"></div>
+    <aside class="sidebar" id="sidebar" aria-label="크리에이터 메뉴">
+      <div class="sb-top">
+        <button class="sb-mark" id="sb-mark" type="button" aria-label="사이드바 펼치기" aria-controls="sidebar" aria-expanded="false"><img class="m-txt" src="logo-user.svg" alt="" aria-hidden="true" width="24" height="24"><svg class="ico m-ico" aria-hidden="true"><use href="#i-panel-left-open"/></svg></button>
+        <a class="logo" href="home-creator.html" aria-label="팬꾹 홈"><img class="logo-mark" src="logo-user.svg" alt="" aria-hidden="true" width="32" height="32"><span>팬꾹</span></a>
+        <button class="sb-btn sb-fold" id="sb-fold" type="button" aria-label="사이드바 접기" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button>
+        <button class="sb-btn sb-close" id="sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </div>
+      <nav class="sb-nav" aria-label="크리에이터 메뉴">
+        <p class="sb-group" id="g1-creator"><span class="sb-group-t">기본</span></p>
+        <ul aria-labelledby="g1-creator"><li><a href="home-creator.html" data-tip="홈"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg><span class="sb-label">홈</span></a></li><li><a href="creators.html" data-tip="크리에이터 찾기"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sb-label">크리에이터 찾기</span></a></li><li><a href="send.html" data-tip="선물 보내기"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg><span class="sb-label">선물 보내기</span></a></li></ul>
+        <p class="sb-group" id="g2-creator"><span class="sb-group-t">관리</span></p>
+        <ul aria-labelledby="g2-creator"><li><a href="creator-requests.html#wait" aria-current="page" data-tip="승인 대기"><svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg><span class="sb-label">승인 대기</span><span class="badge" aria-label="4건">4</span></a></li><li><a href="creator-requests.html#done" data-tip="승인 내역"><svg class="ico" aria-hidden="true"><use href="#i-list-checks"/></svg><span class="sb-label">승인 내역</span></a></li><li><a href="creator-boxes.html" data-tip="받은 선물"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg><span class="sb-label">받은 선물</span></a></li><li><a href="creator-revgifts.html" data-tip="보낸 역조공"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg><span class="sb-label">보낸 역조공</span></a></li><li><a href="creator-log.html" data-tip="열람 기록"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg><span class="sb-label">열람 기록</span></a></li><li><a href="creator-settings.html#address" data-tip="주소 관리"><svg class="ico" aria-hidden="true"><use href="#i-map-pin"/></svg><span class="sb-label">주소 관리</span></a></li><li><a href="creator-settings.html" data-tip="설정"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="sb-label">설정</span></a></li></ul>
+      </nav>
+      <div class="sb-bottom">
+        <details class="sb-menu" id="sb-menu">
+          <summary aria-label="별빛님 계정 메뉴"><span class="sb-avatar" aria-hidden="true">별</span><span class="sb-name">별빛님</span><svg class="ico sb-chev" aria-hidden="true"><use href="#i-chevrons-up-down"/></svg></summary>
+          <div class="sb-menu-list"><a href="me.html">계정 설정</a><a href="#">로그아웃</a></div>
+        </details>
+      </div>
+    </aside>
+    <div class="sb-wrap">
+    <!-- 본문 컨테이너: .page-pane (max 1440 왼쪽 정렬, padding 40) — 사이트 코드의 PagePane -->
+    <main id="main" class="sb-main page-pane">
+        <header class="page-head">
+          <div class="ph-row"><h1 class="ph-title">승인·받은 선물<span class="ph-count">4</span></h1><a class="btn btn--sm" href="creator-boxes.html">받은 선물 보기</a></div>
+          <p class="ph-desc">팬이 보낸 선물을 받을지 정하고, 받은 선물에 답장을 남기는 곳이에요.</p>
+        </header>
+        <div class="sb-stack">
+<nav class="tab-links" aria-label="승인·받은 선물 구분">
+          <a href="creator-requests.html" aria-current="page">승인 요청 <span class="badge">4</span></a>
+          <a href="#">확인할 선물 <span class="badge">1</span></a>
+          <a href="creator-boxes.html">받은 선물 <span class="badge">4</span></a>
+        </nav>
+
+        <section class="card rule-card" aria-labelledby="rule-h">
+          <span class="icon-wrap"><svg class="ico" aria-hidden="true"><use href="#i-shield-check"/></svg></span>
+          <h2 id="rule-h" style="font-size:var(--fs-h3);line-height:var(--lh-h3)">선물은 한 건씩, 카카오톡으로 승인해요</h2>
+          <p>승인 전까지 주소는 노출되지 않습니다. 7일 안에 정하지 않으면 자동으로 받지 않음 처리돼요.</p>
+        </section>
+
+        <section id="wait" aria-labelledby="wait-h" class="body-block">
+          <h2 id="wait-h" style="font-size:var(--fs-h3);line-height:var(--lh-h3)">승인 대기 4</h2>
+          <ul class="grid cols-2">
+            <li class="card card-col">
+              <div class="who"><span class="avatar" aria-hidden="true">하</span><div><h3>하루님의 선물</h3><p class="meta">인형·쿠션 · 상자 2개 · FC-7K3M9</p></div></div>
+              <p class="tags"><span class="tag tag--accent">남은 기간 5일</span><span class="tag">10.11 14:05 사무실 도착</span></p>
+              <p class="meta">10.09 14:20 요청</p>
+              <div class="btn-col push"><a class="btn btn--kakao" href="#approve-dialog">카카오톡으로 승인</a><a class="btn btn--secondary" href="#">받지 않기</a></div>
+            </li>
+            <li class="card card-col">
+              <div class="who"><span class="avatar" aria-hidden="true">달</span><div><h3>달빛토끼님의 선물</h3><p class="meta">의류 · 상자 1개 · FC-5D1H6</p></div></div>
+              <p class="tags"><span class="tag tag--accent">남은 기간 18시간</span></p>
+              <p class="meta">10.05 20:40 요청</p>
+              <div class="btn-col push"><a class="btn btn--kakao" href="#approve-dialog">카카오톡으로 승인</a><a class="btn btn--secondary" href="#">받지 않기</a></div>
+            </li>
+            <li class="card card-col">
+              <div class="who"><span class="avatar" aria-hidden="true">윤</span><div><h3>윤슬님의 선물</h3><p class="meta">전자기기 · 상자 1개 · FC-2P8QW</p></div></div>
+              <p class="tags"><span class="tag tag--accent">남은 기간 3일</span><span class="tag">전자기기·금속 있음</span></p>
+              <p class="meta">10.08 09:12 요청</p>
+              <div class="btn-col push"><a class="btn btn--kakao" href="#approve-dialog">카카오톡으로 승인</a><a class="btn btn--secondary" href="#">받지 않기</a></div>
+            </li>
+            <li class="card card-col">
+              <div class="who"><span class="avatar" aria-hidden="true">다</span><div><h3>다온님의 선물</h3><p class="meta">문구 · 상자 1개 · FC-8N4TR</p></div></div>
+              <p class="signing" role="status"><svg class="ico" aria-hidden="true"><use href="#i-hourglass"/></svg><strong>카카오톡에서 서명을 기다리고 있어요</strong></p>
+              <p class="meta">서명을 마치기 전에는 아무것도 바뀌지 않아요. · 10.10 18:30 요청</p>
+              <div class="push"><a class="btn btn--secondary btn--block" href="#">서명 요청 취소</a></div>
+            </li>
+          </ul>
+        </section>
+
+        <section id="done" aria-labelledby="done-h" class="body-block">
+          <h2 id="done-h" style="font-size:var(--fs-h3);line-height:var(--lh-h3)">처리한 요청</h2>
+          <ul class="grid cols-2">
+            <li class="card card-col"><p><span class="tag tag--good">승인함</span></p><div><h3>소라님의 선물</h3><p class="meta">꽃 · 상자 1개 · FC-1A7BX</p></div><p class="meta">10.04 처리 · 카카오톡 서명으로 승인했어요.</p></li>
+            <li class="card card-col"><p><span class="tag">받지 않음</span></p><div><h3>보리님의 선물</h3><p class="meta">대형 물품 · 상자 1개 · FC-9Z2KD</p></div><p class="meta">10.03 처리 · 팬에게는 이유를 알리지 않았어요.</p></li>
+            <li class="card card-col"><p><span class="tag">차단함</span></p><div><h3>이름모를팬님의 선물</h3><p class="meta">기타 · 상자 1개 · FC-3Q6VM</p></div><p class="meta">10.02 처리 · 앞으로 이 팬의 선물은 받지 않아요. 풀려면 <a class="accent strong" href="creator-settings.html#blocked">주소와 설정</a>에서 해요.</p></li>
+            <li class="card card-col"><p><span class="tag">자동 반려</span></p><div><h3>모모님의 선물</h3><p class="meta">문구 · 상자 1개 · FC-6H8LS</p></div><p class="meta">09.28 자동 처리 · 7일 안에 정하지 않아 자동으로 받지 않음 처리됐어요.</p></li>
+          </ul>
+        </section>
+
+        <section class="body-block">
+          <p class="meta" style="margin-bottom:var(--sp-16)">아래는 「카카오톡으로 승인」을 눌렀을 때 열리는 확인창이에요.</p>
+          <div class="card dialog" id="approve-dialog" role="dialog" aria-labelledby="dlg-h">
+            <h2 id="dlg-h" style="font-size:var(--fs-h3);line-height:var(--lh-h3)">카카오톡으로 서명해 주세요</h2>
+            <p style="margin-top:var(--sp-16)">하루님의 인형·쿠션(FC-7K3M9) 한 건을 승인합니다. 카카오톡 인증서로 서명해야 승인이 끝나요.</p>
+            <p class="note" style="margin-top:var(--sp-16);margin-bottom:0">승인 전까지 주소는 노출되지 않습니다. 승인한 뒤에도 송장을 출력할 때만 열리고, 열린 기록은 열람 기록에서 볼 수 있어요.</p>
+            <div class="btn-pair" style="margin-top:var(--sp-24)"><button class="btn btn--secondary" type="button">돌아가기</button><button class="btn" type="button">서명 요청 보내기</button></div>
+          </div>
+        </section>
+        </div>
+    </main>
+    </div>
+  </div>
+</body>
+</html>
