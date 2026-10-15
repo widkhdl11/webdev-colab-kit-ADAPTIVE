@@ -1,9 +1,26 @@
 ---
 project: fankkuk
 status: passed
-basis: 46da8f46d466
+basis: 692673e84e9d
 reviewers: [security-reviewer, code-reviewer, ui-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-15, 본문 폭 세 가지·시안 v21 중 화면만으로 되는 것)
+
+이번 사인오프가 덮는 변경: 지난 사인오프(basis 46da8f46d466, e964081) 뒤 b30f5f6(본문 폭 880/720/1200, MyShell width) · 657e6aa(보낸 역조공 두 단) · bc5e80a(팬 홈 — 새 크리에이터 격자 뺌·「이렇게 도착해요」 접힘) · c41c1d9(팔로우 취소 확인 창) · 372dbf1(요약 「보낸 선물 N개」) · b251452 · f2169da(팬 홈 위아래 목록·크리에이터 홈·보낸 역조공 팬마다 한 줄+송장번호 접힌 칸·꾸미기 두 단 기준) · 5bdc624 · e5d5dc9. 결정: 카드 d89·d90, design-rules 00절 「본문 틀」·12절.
+
+- 1차(묶음 A) code-reviewer: 중간 2 → 접힘 줄은 저장이 막혀도 이번 화면에서 접힘 · 팔로우 저장 중 버튼 막고 확인 창은 늘 「끊기」만(고침). 낮음 2 → 묶음 줄 「팬 N명」은 DB 유일(send_id, fan_id)이라 맞음(주석) · 줄마다 닫힌 창은 BACKLOG.
+- 1차 ui-reviewer: 중간 3 → 팬 홈 좌우 카드·크리에이터 홈·보낸 역조공 카드(2차 묶음 A2 로 고침), 꾸미기 1200 은 design-rules 00절에 「편집 + 미리보기 화면」 예외로 적고 두 단 기준을 본문 영역 폭으로. 낮음 1(안내 두 번) 고침.
+- 2차(묶음 A2) ui-reviewer: 중간 3 → 크리에이터 홈 h2 단계(고침), 문제 처리 칸·홈 맨 앞 구간은 해야 할 일·프로필 데이터가 필요해 BACKLOG. 낮음 2 → 토큰(고침, .lock 56 은 맞는 토큰 없어 그대로), 팬 줄 보조 글 차이는 BACKLOG 에 기록.
+- 2차 code-reviewer: 중간 1 → 크리에이터 홈이 이름 하나 찾으려 전체 목록을 읽어 노출 끈 크리에이터는 닉네임이 나옴 → 내 카드 한 장(creator_by_id). 낮음 2 → missing 상자에 「입고됨」(도착한 상태만), 몫마다 판정 한 번(고침).
+- security-reviewer: 지적 없음 — 보낸 역조공 화면 값은 INV-R8 안, 6자리 가림 유지, 송장번호 저장은 서버·DB 가 본인·입고 전 확인, onlyId 는 공개 카드 칸만, localStorage 는 "1" 하나.
+
+## 실행 근거
+- `node gates/run-gates.mjs` → 게이트 통과(tsc 4/4 · test 4/4). 유닛 1813/1813(묶음 A), 묶음 A2 반영 뒤 관련 37파일 346건 통과.
+- 화면(로컬): 1920·1440·1024·390 넘침 0, 본문 폭 880/720/1200·격자 1360, 보낸 역조공 1440 에서 800+288. 팔로우 취소 창·접힘 줄·송장번호 접힌 칸 저장을 눌러 확인. 요약 숫자는 시험 데이터 두 묶음으로 「2묶음·3개·기다리는 중 3개」 확인 뒤 데이터 지움. 크리에이터 홈 h1 「하루」.
+- 통합 시험은 돌리지 않았다(DB·서버 경로 변경 없음, 송장번호 통합 시험 inbound-code-db·office-workflow-db 는 저장 동작이 그대로라 이번에는 생략).
+
+# 이전 사인오프
 
 # 리뷰 사인오프 — fankkuk (2026-10-15, 가입 닉네임·아이디/닉네임 미리 확인)
 
@@ -18,7 +35,6 @@ reviewers: [security-reviewer, code-reviewer, ui-reviewer]
 - `npx vitest run --config vitest.integration.config.mts tests/integration/creator-display-name-db.integration.test.ts` → 3 passed.
 - 통합 전체(지난 턴, 7ffaa81 뒤): 1728 중 실패 2 — 시드 날짜 건(BACKLOG 기존).
 
-# 이전 사인오프
 
 # 리뷰 사인오프 — fankkuk (2026-10-15, 사이드바 A안·본문 폭·하늘색 브랜드 교체)
 
