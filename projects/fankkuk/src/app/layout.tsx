@@ -4,14 +4,17 @@ import "./globals.css";
 
 // 사이트 주소 — 공개 이미지(opengraph-image·twitter-image)의 전체 주소를 만드는 기준. 이미 쓰는 서버 설정값 APP_ORIGIN(메일 링크·시험 사이트 판정과 같은 값)을 쓴다.
 // 없으면 Vercel 이 넣어 주는 운영 주소, 그것도 없으면 로컬. 아이콘·미리보기 이미지 태그는 src/app 의 파일 규칙이 만든다(2026-10-16 로고 교체).
-function siteOrigin(): string {
-  if (process.env.APP_ORIGIN) return process.env.APP_ORIGIN;
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  return "http://localhost:3000";
+// 주소 꼴이 아닌 값은 건너뛴다 — 여기서 new URL 이 던지면 모든 페이지가 그려지지 않는다(보안 리뷰 2026-10-16 하).
+function siteOrigin(): URL {
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  for (const candidate of [process.env.APP_ORIGIN, vercel ? `https://${vercel}` : undefined]) {
+    if (candidate && URL.canParse(candidate)) return new URL(candidate);
+  }
+  return new URL("http://localhost:3000");
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteOrigin()),
+  metadataBase: siteOrigin(),
   title: "팬꾹",
   description: "주소 노출 없이 전하는 팬 선물 배송 대행",
 };
