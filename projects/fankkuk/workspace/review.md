@@ -1,9 +1,20 @@
 ---
 project: fankkuk
 status: passed
-basis: 88f68803fcb4
-reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
+basis: 22333f37e07d
+reviewers: [security-reviewer, ui-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-16 밤, 크리에이터 찾기 폭 880·카드에 꾸민 모양)
+
+이번 사인오프가 덮는 변경: 지난 사인오프(basis 88f68803fcb4) 뒤 커밋 8e519a55(크리에이터 찾기 본문 880) · 4b9524d8(카드에 배경사진 띠·프로필 사진·퍼스널 컬러 테두리·팬덤 뱃지, 공개 읽기 find_creators_look) · 6cf29c48(리뷰 하 정리). 마이그레이션 20261016000013.
+
+- security: 상·중 0, 하 1(사진 경로가 그 크리에이터 폴더인지 앱이 다시 보지 않음 — DB 제약이 막고 있음) → BACKLOG.
+- ui: 상·중 0, 하 3 → 주석 색 이름·글자 크기 예외 고침, 카드 반경 12/16 은 이전부터라 BACKLOG.
+- 뺀 리뷰어: code-reviewer — 도메인 로직 변경 없음(읽어서 그리기만, 거르기는 기존 함수). test-auditor — 새 시험 하나라 변이 넷을 직접 돌려 대신함.
+- 실행 근거: 통합 find-creators-look-db 4/4 통과, 변이 4(찾기 노출·본인 확인·손님 권한·칸 추가) 모두 실패로 잡힘 · 단위 creator 192/192 · tsc 오류 0 · copy:lint 0건 · 화면: 하루 계정으로 설정 화면에서 배경·사진·팬마크·색 등록 → 크리에이터 찾기 1440·390 캡처, 가로 넘침 없음.
+
+이전 사인오프:
 
 # 리뷰 사인오프 — fankkuk (2026-10-16 저녁, 닉네임 상자 찾기·크리에이터 처리할 일·선물 현황·용어집)
 
