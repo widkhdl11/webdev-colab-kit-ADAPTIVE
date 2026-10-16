@@ -170,8 +170,8 @@ export function FindMyBox(props: Props) {
       <div role="status">
         {result?.kind === "ok" ? (
           <div ref={resultRef} tabIndex={-1} className={`${s.result} ${s["result--ok"]}`}>
-            <strong>찾았어요</strong>
-            <p>{result.label} 상자와 이어졌어요. 이 상자는 입고 처리됐고, 곧 검수로 넘어가요.</p>
+            <strong>도착 완료</strong>
+            <p>{result.label} · 곧 검수로 넘어가요.</p>
           </div>
         ) : null}
         {result?.kind === "no" ? (
