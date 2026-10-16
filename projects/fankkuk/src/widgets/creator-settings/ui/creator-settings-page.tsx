@@ -4,9 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import type { BlockedFan } from "@/entities/creator/api/blocked-senders";
 import type { CreatorSettingsView } from "@/entities/creator/model/creator-settings";
-import { MustDeliverNotice } from "@/entities/notification/ui/must-deliver-notice";
-import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
-import { sendCreatorNotify } from "@/features/creator-settings-save/api/send-creator-settings";
 import { formatDate } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
@@ -15,9 +12,6 @@ import { addressOnFileText } from "@/entities/address/ui/address-on-file-text";
 import { ADDRESS_KEY_MISSING_TEXT } from "@/features/creator-address/ui/address-copy";
 import type { MyVerification, MyVerificationState } from "@/entities/creator/model/creator-verification";
 import { AddressChangeForm } from "@/features/creator-address/ui/address-change-form";
-import { PasswordChangePanel } from "@/features/password-change/ui/password-change-panel";
-import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel";
-import { VerificationPanel } from "@/features/creator-verify/ui/verification-panel";
 import { sendUnblock } from "@/features/creator-unblock/api/send-unblock";
 import { isResting, type CalendarDate, type MyCreatorReceiving } from "@/entities/creator/model/receiving";
 import { ReceivingSection } from "./receiving-section";
@@ -33,7 +27,7 @@ import s from "./creator-settings.module.css";
 
 // 크리에이터 상세 설정 (design-rules 12절, 시안 docs/design/mockups/site/v21-addendum3/cre-detail-settings.html, 입력형 720 — 00절 「본문 틀」).
 // 위에서 아래: 팬덤(팬덤 이름·팬마크·팬컬러·퍼스널 컬러·미리보기 — fandom-section) → 주소와 설정(접힌 칸: 받는 주소·받기 설정·차단한 팬·선물 링크·감사 답장)
-// → 계정(접힌 칸: 본인 확인·알림·계정 보안 — 크리에이터 계정 설정 화면을 따로 만들기 전까지 이름 메뉴 「계정 설정」이 여기 #account 로 온다).
+// 본인 확인·알림·계정 보안은 크리에이터 계정 설정(/creator/account, widgets/creator-account)으로 옮겼다(2026-10-16).
 // 사이드바 「주소 관리」 줄은 없어졌고(12절) 받는 주소는 이 화면의 접힌 칸이다. 옛 주소(/creator/settings#address · #blocked …)로 오면
 // 그 칸을 감싼 접힌 칸을 펼친다 — 주소 끝 #이름이 가리키는 요소의 바깥 접힌 칸을 연다.
 // 공개 이름·한 줄 소개·사진·태그·찾기 노출은 「프로필 수정」(/creator/profile)으로 옮겼다.
@@ -43,52 +37,9 @@ import s from "./creator-settings.module.css";
 // 「등록됨」은 서버에 저장된 뒤에만 바뀐다. 처음 그리는 값은 DB 읽기 함수(my_creator_address_status)의 등록 여부다.
 // 차단 풀기는 로그인 세션으로 저장한다(decline-block INV-D10, 카드 d26) — 풀어도 주소는 열리지 않고, 새 선물은 건마다 서명 승인이 있어야 나간다.
 // 주소는 값을 받지 않는다 — 「등록돼 있는가」만 보여 준다.
-// 알림은 카카오·이메일 두 스위치이고 누르는 즉시 저장한다(INV-A11). 저장에 실패하면 스위치를 되돌리고 이유를 보인다.
-// 승인 요청은 두 칸이 꺼져도 가므로 끄는 스위치가 없다(notifications INV-N6).
-// 채널 본인 확인(creator-verification)은 DB 읽기 함수(my_creator_verification_state · my_creator_verifications)의 값이다.
+// 채널 본인 확인 여부(creator-verification)는 선물 링크 칸이 쓴다(확인 전이면 링크를 만들 수 없다).
 
 type SheetState = { kind: "address" } | { kind: "unblock"; fan: BlockedFan } | null;
-
-function Switch({
-  id,
-  title,
-  desc,
-  checked,
-  onChange,
-  busy = false,
-  describedBy,
-}: {
-  id: string;
-  title: string;
-  desc: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  /** 저장하는 동안 — 겹쳐 누르지 않게 막는다(포커스는 남긴다). */
-  busy?: boolean;
-  /** 스위치를 설명하는 바깥 안내의 id(예: 「끌 수 없는 알림」) — 화면 읽기 프로그램이 스위치와 함께 읽는다 */
-  describedBy?: string;
-}) {
-  return (
-    <div className="sw-row">
-      <label className={s.txt} htmlFor={id}>
-        <strong className="t-strong">{title}</strong>
-        <span className="t-meta">{desc}</span>
-      </label>
-      <input
-        className={s.switch}
-        type="checkbox"
-        role="switch"
-        id={id}
-        checked={checked}
-        aria-disabled={busy}
-        aria-describedby={describedBy}
-        onChange={(e) => {
-          if (!busy) onChange(e.target.checked);
-        }}
-      />
-    </div>
-  );
-}
 
 /** 접힌 칸 하나 — 시안 .fold(제목 · 오른쪽 짧은 상태 · 화살표). */
 function Fold({ id, title, meta, children }: { id?: string; title: string; meta?: ReactNode; children: ReactNode }) {
@@ -122,11 +73,6 @@ function useOpenFoldForHash(): void {
     window.addEventListener("hashchange", open);
     return () => window.removeEventListener("hashchange", open);
   }, []);
-}
-
-/** 저장 결과 한 줄 — 오류면 빨간 상자(.err), 아니면 보조 글자. 비어 있으면 자리를 차지하지 않는다. */
-function msgClass(msg: { ok: boolean } | null): string {
-  return `${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`;
 }
 
 export function CreatorSettingsPage({
@@ -164,9 +110,6 @@ export function CreatorSettingsPage({
   const router = useRouter();
   useOpenFoldForHash();
   const [sheet, setSheet] = useState<SheetState>(null);
-  const [security, setSecurity] = useState<"phone" | "password" | null>(null);
-  const toggleSecurity = (which: "phone" | "password") => setSecurity((cur) => (cur === which ? null : which));
-  const toLogin = () => router.push("/login?next=/creator/settings");
   const [addressRegistered, setAddressRegistered] = useState(address.registered);
   // 등록한 주소의 이름표와 바꾼 날 — 주소 자체는 본인에게도 보이지 않는다(address-protection INV-P16)
   const [addressOnFile, setAddressOnFile] = useState({ label: address.label, updatedAt: address.updatedAt });
@@ -175,9 +118,6 @@ export function CreatorSettingsPage({
   const [blocked, setBlocked] = useState(blockedFans);
   const [saving, setSaving] = useState(false);
   const [unblockError, setUnblockError] = useState<string | null>(null);
-  const [notify, setNotify] = useState(settings.notify);
-  const [notifySaving, setNotifySaving] = useState(false);
-  const [notifyMsg, setNotifyMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   // 서버에 저장된 뒤에만 목록에서 뺀다. 실패하면 창을 닫지 않고 이유를 보인다.
   const confirmUnblock = async (fan: BlockedFan) => {
@@ -198,28 +138,6 @@ export function CreatorSettingsPage({
     setUnblockError(r.kind === "refused" ? r.message : "저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
   };
 
-  // 스위치는 누르는 즉시 저장한다. 실패하면 화면 값을 저장된 값으로 되돌린다.
-  const toggleNotify = async (key: "kakao" | "email", value: boolean) => {
-    if (notifySaving) return;
-    const before = notify;
-    const next = { ...notify, [key]: value };
-    setNotify(next);
-    setNotifySaving(true);
-    setNotifyMsg(null);
-    const r = await sendCreatorNotify(next);
-    setNotifySaving(false);
-    if (r.kind === "login") {
-      router.push("/login");
-      return;
-    }
-    if (r.kind === "ok") {
-      setNotifyMsg({ ok: true, text: "알림 설정을 저장했어요." });
-      return;
-    }
-    setNotify(before);
-    setNotifyMsg({ ok: false, text: r.message });
-  };
-
   return (
     <div className={s.root}>
       <header className="page-head">
@@ -230,7 +148,6 @@ export function CreatorSettingsPage({
       <nav className={s.jump} aria-label="상세 설정 구간">
         <a href="#fandom">팬덤</a>
         <a href="#more">받는 주소·받기 설정·차단한 팬</a>
-        <a href="#account">계정</a>
       </nav>
 
       <div className={`stack ${s.page}`}>
@@ -314,97 +231,6 @@ export function CreatorSettingsPage({
           </Fold>
         </section>
 
-        <section id="account" className={s.group} aria-labelledby="account-h">
-          <h2 className={s.groupT} id="account-h">
-            계정
-          </h2>
-          <Fold id="verify" title="본인 확인" meta={verification.state.verified ? "확인 완료" : "확인 전"}>
-            <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
-          </Fold>
-
-          <Fold id="alarm" title="알림 받기">
-            {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 끄는 스위치를 두지 않고 「끌 수 없는 알림」으로 알린다(notifications INV-N6 표, 2026-10-12 문제집 D7).
-                알림 스펙에 없는 종류(자동 반려 하루 전·주소가 열릴 때)의 스위치는 두지 않는다(my-account INV-A11) */}
-            <div className={`card card--soft ${s.inner}`}>
-              <MustDeliverNotice
-                audience="creator"
-                id="alarm-must"
-                className={s.txt}
-                titleClassName="t-strong"
-                extra={`승인 요청은 놓치면 ${APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려돼요.`}
-              />
-            </div>
-            <Switch
-              id="sw-kakao"
-              title="카카오톡 알림"
-              desc="그 밖의 소식을 카카오톡으로 알려드려요."
-              checked={notify.kakao}
-              busy={notifySaving}
-              describedBy="alarm-must"
-              onChange={(v) => void toggleNotify("kakao", v)}
-            />
-            <Switch
-              id="sw-email"
-              title="이메일 알림"
-              desc="같은 소식을 확인된 이메일로 알려드려요."
-              checked={notify.email}
-              busy={notifySaving}
-              describedBy="alarm-must"
-              onChange={(v) => void toggleNotify("email", v)}
-            />
-            <p className={msgClass(notifyMsg)} role="status">
-              {notifyMsg?.text}
-            </p>
-          </Fold>
-
-          {/* 번호 바꾸기(signup INV-U12)·비밀번호 바꾸기(session-login INV-L12)는 팬 내 정보와 같은 칸을 그대로 쓴다 —
-              두 서버 처리 모두 로그인 토큰의 사람 것만 바꾸고 역할을 가리지 않는다 */}
-          <Fold id="security" title="계정 보안">
-            <ul className="grid cols-2">
-              <li className="card card--soft card-col">
-                <p className="t-strong">휴대폰 번호</p>
-                <p>{settings.phoneMasked ?? "등록된 번호가 없어요"}</p>
-                <p className="t-meta">바꾸려면 카카오 인증을 다시 받아요.</p>
-                <div className="push">
-                  <button
-                    className="btn btn--line btn--sm btn--block"
-                    type="button"
-                    aria-expanded={security === "phone"}
-                    aria-controls="security-phone"
-                    onClick={() => toggleSecurity("phone")}
-                  >
-                    번호 바꾸기
-                  </button>
-                </div>
-              </li>
-              <li className="card card--soft card-col">
-                <p className="t-strong">비밀번호</p>
-                <p className="t-meta">바꾸면 다른 기기의 로그인은 모두 끝나요.</p>
-                <div className="push">
-                  <button
-                    className="btn btn--line btn--sm btn--block"
-                    type="button"
-                    aria-expanded={security === "password"}
-                    aria-controls="security-password"
-                    onClick={() => toggleSecurity("password")}
-                  >
-                    비밀번호 변경
-                  </button>
-                </div>
-              </li>
-            </ul>
-            {security === "phone" && (
-              <div className={s["sec-panel"]}>
-                <PhoneChangePanel id="security-phone" onLoginExpired={toLogin} onChanged={() => router.refresh()} />
-              </div>
-            )}
-            {security === "password" && (
-              <div className={s["sec-panel"]}>
-                <PasswordChangePanel id="security-password" onLoginExpired={toLogin} />
-              </div>
-            )}
-          </Fold>
-        </section>
       </div>
 
       <BottomSheet

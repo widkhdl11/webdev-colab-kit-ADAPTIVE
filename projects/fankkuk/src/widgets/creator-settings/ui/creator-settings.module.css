@@ -48,8 +48,6 @@ label.txt { cursor: pointer; }
 .switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .switch:disabled { cursor: not-allowed; opacity: .5; }
 
-/* 펼친 번호·비밀번호 바꾸기 칸 */
-.sec-panel { min-width: 0; }
 
 /* 확인 창(바텀시트) */
 .sheet-sub { margin-top: 8px; }

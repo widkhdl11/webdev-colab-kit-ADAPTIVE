@@ -1,7 +1,7 @@
 import { ACTION_CENTER_HREF } from "@/entities/action-item/model/action-items";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import { CREATOR_GIFT_PROGRESS_HREF } from "@/entities/gift-progress/model/progress-href";
-import { CREATOR_HOME, CREATOR_PROFILE_EDIT, CREATOR_SETTINGS, FAN_ACCOUNT_SETTINGS, FAN_HOME, FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
+import { CREATOR_ACCOUNT, CREATOR_HOME, CREATOR_PROFILE_EDIT, CREATOR_SETTINGS, FAN_ACCOUNT_SETTINGS, FAN_HOME, FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 
 // 로그인 후 왼쪽 앱 사이드바 메뉴(design-rules 00절, 시안 docs/design/mockups/site/v18/home-fan.html·home-creator.html).
 // 크리에이터 메뉴의 묶음·하위 줄은 design-rules 11절(시안 docs/design/mockups/site/v19-sidebar/creator-a.html),
@@ -129,10 +129,9 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
 ];
 
 /**
- * 아래 이름 메뉴의 「계정 설정」 — 크리에이터가 /me 로 가면 승인 화면으로 돌려보내지므로(app/me) 크리에이터는 상세 설정의 계정 구간(본인 확인·알림·계정 보안).
- * 크리에이터 계정 설정 화면을 따로 만들면 그 주소로 바꾼다(시안 v21-addendum3/cre-account-settings.html — BACKLOG).
+ * 아래 이름 메뉴의 「계정 설정」 — 팬은 /me, 크리에이터는 크리에이터 계정 설정 화면(본인 확인·알림·계정 보안, 시안 v21-addendum3/cre-account-settings.html, 2026-10-16).
  */
-export const ACCOUNT_HREF = { fan: FAN_ACCOUNT_SETTINGS, creator: `${CREATOR_SETTINGS}#account` } as const;
+export const ACCOUNT_HREF = { fan: FAN_ACCOUNT_SETTINGS, creator: CREATOR_ACCOUNT } as const;
 
 /** 팬 프로필 수정 화면(my-account INV-A12, design-rules 12절) — 사이드바 위 메뉴 칸이 아니라 이름 메뉴와 홈 프로필 구간에서 간다(시안 v21-addendum3). */
 export const FAN_PROFILE_EDIT_HREF = FAN_PROFILE_EDIT;

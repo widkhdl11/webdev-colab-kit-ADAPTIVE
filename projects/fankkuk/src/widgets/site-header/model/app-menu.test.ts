@@ -84,8 +84,8 @@ describe("이름 메뉴 — 팬은 프로필 수정·계정 설정 (design-rules
     ]);
   });
 
-  it("크리에이터 이름 메뉴는 계정 설정 하나 — 상세 설정의 계정 구간(#account)으로, 팬 프로필 수정 화면으로 가는 길이 없다", () => {
-    expect(ACCOUNT_MENU.creator).toEqual([{ label: "계정 설정", href: "/creator/settings#account" }]);
+  it("크리에이터 이름 메뉴는 계정 설정 하나 — 크리에이터 계정 설정 화면으로, 팬 프로필 수정 화면으로 가는 길이 없다", () => {
+    expect(ACCOUNT_MENU.creator).toEqual([{ label: "계정 설정", href: "/creator/account" }]);
   });
 
   it("프로필 수정은 사이드바 위 메뉴 칸이 아니다(시안 사이드바에 없음) — 그 화면에서 위 메뉴의 어느 칸도 켜지지 않는다", () => {
