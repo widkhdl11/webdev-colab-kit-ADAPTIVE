@@ -3,6 +3,7 @@ import { z } from "zod";
 import { toCreatorCards, type CreatorCard } from "../model/creator-card";
 import type { CreatorProfile, CreatorSummary } from "../model/creator";
 import { creatorColorOrNull } from "../model/creator-color";
+import { backgroundPathOrNull, symbolPathOrNull } from "../model/link-images";
 
 // 크리에이터 목록을 DB 읽기 함수(find_creators·list_creators·creator_by_id, 팔로우는 my_follows)로 읽는다. 응답은 신뢰 경계 밖이라 형식을 검사한다.
 
@@ -103,4 +104,32 @@ export async function readMyFollowIds(client: Pick<SupabaseClient, "rpc">): Prom
   const r = await client.rpc("my_follows");
   if (r.error) throw new Error(`팔로우 목록을 읽지 못했다: ${r.error.code}`);
   return z.array(followSchema).parse(r.data).map((f) => f.creator_id);
+}
+
+/** 크리에이터 찾기 카드에 싣는 각자 꾸민 모양 — 배경사진·팬덤 심볼 경로(꼴이 틀리면 null)와 팬덤 이름. */
+export type CreatorSearchLook = { bgPath: string | null; symbolPath: string | null; fanName: string | null };
+
+const searchLookSchema = z.object({
+  id: z.guid(),
+  bg_path: z.string().nullable(),
+  symbol_path: z.string().nullable(),
+  fan_name: z.string().nullable(),
+});
+
+/**
+ * 크리에이터 찾기 목록(find_creators 와 같은 사람)의 꾸민 모양을 한 번에(find_creators_look) — 크리에이터 id → 모양.
+ * 공개 페이지가 creator_link_extras 로 읽는 것과 같은 공개 칸이다. 목록에 없는 사람은 기본 모양.
+ */
+export async function readCreatorSearchLooks(client: Pick<SupabaseClient, "rpc">): Promise<Record<string, CreatorSearchLook>> {
+  const { data, error } = await client.rpc("find_creators_look");
+  if (error) throw new Error(`크리에이터 꾸밈을 읽지 못했다: ${error.code}`);
+  return Object.fromEntries(
+    z
+      .array(searchLookSchema)
+      .parse(data)
+      .map((r) => [
+        r.id,
+        { bgPath: backgroundPathOrNull(r.bg_path), symbolPath: symbolPathOrNull(r.symbol_path), fanName: r.fan_name?.trim() || null },
+      ]),
+  );
 }
