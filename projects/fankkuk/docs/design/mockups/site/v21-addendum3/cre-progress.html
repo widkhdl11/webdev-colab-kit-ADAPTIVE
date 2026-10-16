@@ -1,0 +1,399 @@
+<!doctype html>
+<!--
+  팬꾹 시안 v21 추가분 3 · 크리에이터 · 선물 현황 (2026-10-16 사용자)
+  사용자 원문: 「'처리할 일' 카테고리 위에 현재 진행중인 선물 받기나, 선물 보내기 현황을 한번에 확인 할 수 있는 페이지도 만들어줘.
+  그러면 지금 '처리할 일' 페이지에 있는 보낸 선물 - 배송조회 같은건 거기서 보여지는거지」
+  진행 중인 것만 보인다(끝난 것은 받은 선물·보낸 내역). 줄 = 한 선물(받는 쪽) 또는 팬 한 명 몫 상자(보내는 쪽).
+  단계는 줄 안의 작은 다섯 칸 막대 + 단계 이름(카드를 좌우로 늘어놓지 않는다 — 0000절). 버튼은 필요할 때만(늦은 상자의 배송 조회, 손이 필요한 일은 처리할 일로).
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="../v20-rebrand/logo-user.svg">
+<title>팬꾹 — 시안 v21 선물 현황</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumSquareRound/NanumSquareRound.css">
+<link rel="stylesheet" href="../v20-rebrand/tokens.css">
+<link rel="stylesheet" href="../v20-rebrand/tokens-c.css">
+<link rel="stylesheet" href="../v20-rebrand/v18.css">
+<link rel="stylesheet" href="../v20-rebrand/v18-app.css">
+<link rel="stylesheet" href="../v20-rebrand/v18-cre.css">
+<link rel="stylesheet" href="../v19-sidebar/v19-sb.css">
+<link rel="stylesheet" href="cre-21.css">
+<link rel="stylesheet" href="../v22-width/v22.css">
+<script src="../v20-rebrand/font-switch.js" defer></script>
+<script src="../v19-sidebar/v19-sb.js"></script>
+<script src="cre-21.js" defer></script>
+<style>
+/* C안 전용 — 늦은 상자 줄 + 상태 칩 + 창. 값은 cre-21.css·v20 토큰 그대로 */
+.late { list-style: none; margin: 0; padding: 0; border: var(--bw) solid var(--gray-200); border-radius: var(--r-card); overflow: hidden; }
+.late > li + li { border-top: var(--bw) solid var(--gray-200); }
+.late .lr { display: flex; align-items: center; gap: var(--sp-16); width: 100%; min-height: var(--row-h); padding: var(--sp-16) var(--sp-24); background: none; border: 0; text-align: left; font: inherit; color: var(--ink); }
+.late button.lr { cursor: pointer; }
+.late button.lr:hover { background: var(--gray-50); }
+.late button.lr:focus-visible { outline: var(--bw-2) solid var(--ink); outline-offset: calc(var(--bw-2) * -1); }
+.late .av2 { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-pill); background: var(--gray-100); font-weight: var(--fw-btn); }
+.late .rt { flex: 1; min-width: 0; }
+.late .rt b { display: block; font-weight: var(--fw-btn); }
+.late .rt .meta { display: block; }
+.late .go { flex: none; width: 20px; height: 20px; color: var(--gray-600); }
+.chip { flex: none; display: inline-flex; align-items: center; gap: var(--sp-4); padding: var(--sp-4) var(--sp-12); border-radius: var(--r-pill); font-size: var(--fs-caption); font-weight: var(--fw-btn); background: var(--gray-100); color: var(--ink); white-space: nowrap; }
+.chip--warn { background: var(--primary-50); }
+.chip .ico { width: 14px; height: 14px; }
+.dlg-back { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: var(--sp-16); background: rgba(31, 41, 55, .56); }
+.dlg-back[hidden] { display: none; }
+.dlg { width: 100%; max-width: 480px; max-height: calc(100dvh - 32px); overflow: auto; padding: var(--sp-24); border-radius: var(--r-card); background: var(--white); box-shadow: 0 8px 32px rgba(31, 41, 55, .24); display: grid; gap: var(--sp-16); }
+.dlg-h { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-16); }
+.dlg-h h2 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: var(--fw-h3); }
+.dlg-h .meta { display: block; margin-top: var(--sp-4); }
+.dlg-x { flex: none; display: grid; place-items: center; width: 44px; height: 44px; margin: calc(var(--sp-8) * -1) calc(var(--sp-8) * -1) 0 0; border: 0; border-radius: var(--r-pill); background: none; color: var(--ink); cursor: pointer; }
+.dlg-x:hover { background: var(--gray-50); }
+.dlg-x .ico { width: 20px; height: 20px; }
+.dlg .f2 { display: grid; grid-template-columns: 1fr 1.4fr; gap: var(--sp-16); align-items: end; }
+.dlg .btns { display: grid; gap: var(--sp-8); }
+.dlg .btns .btn { width: 100%; justify-content: center; }
+.dlg .sub { display: flex; justify-content: center; }
+.dlg .sub a, .dlg .sub button { display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--sp-8); border: 0; background: none; font: inherit; font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.dlg .ext { width: 16px; height: 16px; }
+.dlg .box-info { display: grid; gap: var(--sp-4); padding: var(--sp-16); border-radius: var(--r-card); background: var(--gray-50); }
+.dlg .box-info b { font-weight: var(--fw-btn); }
+.dlg .fans { display: grid; gap: var(--sp-8); }
+.dlg .help { display: grid; gap: var(--sp-8); padding-top: var(--sp-16); border-top: var(--bw) solid var(--gray-200); }
+.dlg .help p { color: var(--gray-600); }
+.dlg .step { display: grid; gap: var(--sp-16); }
+.dlg .step[hidden] { display: none; }
+.dlg .kv { display: flex; justify-content: space-between; gap: var(--sp-16); }
+.dlg .kv span { color: var(--gray-600); }
+.dlg .kv b { text-align: right; }
+.dlg .btns.two { grid-template-columns: 1fr 1fr; }
+.dlg .q { font-size: var(--fs-h3); font-weight: var(--fw-h3); }
+.dlg .note { color: var(--gray-600); }
+.dlg .done-l { display: flex; align-items: center; gap: var(--sp-8); font-size: var(--fs-h3); font-weight: var(--fw-h3); }
+.dlg .done-l .ico { width: 24px; height: 24px; }
+.gift-who { display: flex; align-items: center; gap: var(--sp-16); }
+.gift-who b { display: block; font-weight: var(--fw-btn); }
+.gift-who .meta { display: block; }
+.av-fan { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-pill); background: var(--gray-100); font-weight: var(--fw-btn); }
+.act--alert { border: var(--bw-2) solid #B45309; background: #FFFBEB; }
+.act--alert .act-h .ri { background: #FEF3C7; color: #92400E; }
+.act--alert .act-h h2 { color: #92400E; }
+.act--alert .late { background: var(--white); }
+.chip--alert { background: #FEF3C7; color: #92400E; }
+@media (max-width: 768px) { .late .lr { padding: var(--sp-16); flex-wrap: wrap; gap: var(--sp-8) var(--sp-16); } .late .lr .rt { flex: 1 1 calc(100% - 56px); } .late .lr .chip { margin-left: 56px; } .late .lr .go { display: none; } .dlg .f2 { grid-template-columns: 1fr; } }
+</style>
+<style>
+/* D안 — 할 일 줄: 위 한 줄(종류 · 남은 날) · 제목 · 설명 / 오른쪽 버튼 하나 */
+.panel { background: var(--white); border: var(--bw) solid var(--gray-200); border-radius: var(--r-card); overflow: hidden; }
+.panel-h { display: flex; align-items: center; gap: var(--sp-8); padding: var(--sp-12) var(--sp-20); border-bottom: var(--bw) solid var(--gray-200); background: var(--gray-50); }
+.panel-h .ico { width: 18px; height: 18px; }
+.panel-h h2 { font-size: var(--fs-body); line-height: 1.5; font-weight: var(--fw-h3); }
+.panel-h .cnt { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 var(--sp-8); border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-size: var(--fs-caption); font-weight: var(--fw-btn); }
+.tasks { list-style: none; margin: 0; padding: 0; }
+.tasks > li + li { border-top: var(--bw) solid var(--gray-100); }
+.task { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 2px var(--sp-12); align-items: center; padding: var(--sp-12) var(--sp-20); }
+.task:hover { background: var(--gray-50); }
+.task--alert { background: #FFFBEB; }
+.task--alert:hover { background: #FEF3C7; }
+.task--alert::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #D97706; }
+.task .ti { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--gray-100); color: var(--ink); }
+.task .ti .ico { width: 18px; height: 18px; }
+.task--alert .ti { background: #FDE68A; color: #78350F; }
+.task--appr .ti { background: var(--primary-50); }
+.task .tb { display: grid; gap: 0; }
+.task .sub { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; font-size: var(--fs-caption); line-height: 1.5; color: var(--gray-600); }
+.task .sub .k { font-weight: var(--fw-btn); color: var(--ink); }
+.task--alert .sub .k, .task--alert .sub .d { color: #92400E; }
+.task .sub .d { display: inline-flex; align-items: center; gap: 2px; }
+.task .sub .d .ico { width: 14px; height: 14px; }
+.task .sub .d--soon { color: #92400E; font-weight: var(--fw-btn); }
+.task .sub .sep::before { content: "·"; }
+.task .tt { font-size: var(--fs-body); line-height: 1.5; font-weight: var(--fw-btn); color: var(--ink); overflow-wrap: anywhere; }
+.task .ta { display: flex; align-items: center; gap: var(--sp-8); justify-self: end; }
+.task .ta .btn { min-width: 104px; height: 36px; min-height: 36px; padding: 0 var(--sp-16); font-size: var(--fs-caption); justify-content: center; white-space: nowrap; }
+.picked { display: inline-flex; align-items: center; gap: var(--sp-4); padding: var(--sp-4) var(--sp-12); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 var(--bw) var(--gray-200); font-size: var(--fs-caption); font-weight: var(--fw-btn); white-space: nowrap; }
+.picked .ico { width: 14px; height: 14px; }
+.lnk-btn { min-height: 44px; padding: 0 var(--sp-8); border: 0; background: none; font: inherit; font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.ftabs { display: flex; gap: var(--sp-8); flex-wrap: wrap; }
+.ftab { display: inline-flex; align-items: center; gap: var(--sp-8); min-height: 40px; padding: 0 var(--sp-16); border: var(--bw) solid var(--gray-200); border-radius: var(--r-pill); background: var(--white); font: inherit; font-weight: var(--fw-btn); color: var(--ink); cursor: pointer; }
+.ftab[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--white); }
+.ftab .n { font-size: var(--fs-caption); }
+[data-variant] { display: none; }
+html[data-v="ga"] [data-variant="ga"], html[data-v="na"] [data-variant="na"] { display: grid; }
+@media (max-width: 768px) {
+  .panel-h { padding: var(--sp-12) var(--sp-16); }
+  .task .ta .btn { height: 44px; min-height: 44px; }
+  .task { grid-template-columns: 36px minmax(0, 1fr); padding: var(--sp-12) var(--sp-16); }
+  .task .ta { grid-column: 2; justify-self: stretch; padding-top: var(--sp-8); }
+  .task .ta .btn { flex: 1; }
+}
+</style>
+<style>
+/* 선물 현황 — 처리할 일 D안의 판·줄 모양을 그대로 쓰고, 오른쪽에 단계 막대를 둔다 */
+.prog { display: grid; justify-items: end; gap: 4px; min-width: 132px; }
+.prog .bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; width: 100px; }
+.prog .bar i { height: 6px; border-radius: 3px; background: var(--gray-200); }
+.prog .bar i.on { background: var(--ink); }
+.prog .pl { font-size: var(--fs-caption); line-height: 1.5; font-weight: var(--fw-btn); color: var(--ink); white-space: nowrap; }
+.prog .pl--late { color: #92400E; }
+.prog .pl--done { color: #15803D; }
+.task .ta { gap: var(--sp-16); }
+a.task-link { display: contents; color: inherit; }
+.sub-h { display: flex; align-items: center; gap: var(--sp-8); padding: var(--sp-8) var(--sp-20); background: var(--gray-50); border-top: var(--bw) solid var(--gray-200); border-bottom: var(--bw) solid var(--gray-100); font-size: var(--fs-caption); font-weight: var(--fw-btn); }
+.sub-h .meta { font-weight: var(--fw-body); }
+.panel-h .more { margin-left: auto; font-size: var(--fs-caption); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 768px) {
+  .prog { justify-items: start; min-width: 0; }
+  .task .ta { justify-content: space-between; }
+  .sub-h { padding: var(--sp-8) var(--sp-16); }
+}
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-gift" viewBox="0 0 24 24"><path d="M12 7v14" /><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" /><rect x="3" y="7" width="18" height="4" rx="1" /></symbol>
+<symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></symbol>
+<symbol id="i-package-search" viewBox="0 0 24 24"><path d="M12 22V12" /><path d="M20.27 18.27 22 20" /><path d="M21 10.498V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.729l7 4a2 2 0 0 0 2 .001l.98-.559" /><path d="M3.29 7 12 12l8.71-5" /><path d="m7.5 4.27 8.997 5.148" /><circle cx="18.5" cy="16.5" r="2.5" /></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
+<symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
+<symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><polyline points="3.29 7 12 12 20.71 7" /><path d="m7.5 4.27 9 5.15" /></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></symbol>
+<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></symbol>
+<symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /></symbol>
+<symbol id="i-log-out" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+<symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></symbol>
+<symbol id="i-panel-left-close" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m16 15-3-3 3-3" /></symbol>
+<symbol id="i-panel-left-open" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="m14 9 3 3-3 3" /></symbol>
+<symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2" /> <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /> <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></symbol>
+<symbol id="i-list-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /> <path d="M13 6h8" /> <path d="M13 12h8" /> <path d="M13 18h8" /></symbol>
+<symbol id="i-chevrons-up-down" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" /><path d="m21.854 2.147-10.94 10.939" /></symbol>
+<symbol id="i-ellipsis" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></symbol>
+<symbol id="i-package-plus" viewBox="0 0 24 24"><path d="M16 16h6" /><path d="M19 13v6" /><path d="M21 14V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14" /><path d="m7.5 4.27 9 5.15" /><polyline points="3.29 7 12 12 20.71 7" /><line x1="12" x2="12" y1="22" y2="12" /></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></symbol>
+<symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" /><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /></symbol>
+<symbol id="i-clipboard-check" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+<symbol id="i-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-user-round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+<symbol id="i-smartphone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></symbol>
+<symbol id="i-credit-card" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+<symbol id="i-badge-check" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+<symbol id="fm-star" viewBox="0 0 24 24"><polygon points="12 2 15.1 8.6 22 9.3 16.8 14 18.2 21 12 17.5 5.8 21 7.2 14 2 9.3 8.9 8.6"/></symbol>
+<symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol></defs></svg>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="app" id="app">
+    <header class="topbar">
+      <a class="logo" href="cre-home.html" aria-label="팬꾹 홈"><img class="logo-mark" src="../v20-rebrand/logo-user.svg" alt="" aria-hidden="true" width="32" height="32"><span>팬꾹</span></a>
+      <button class="icon-btn" id="sb-open" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button>
+    </header>
+    <div class="sb-scrim" id="sb-scrim"></div>
+    <aside class="sidebar" id="sidebar" aria-label="크리에이터 메뉴">
+      <div class="sb-top">
+        <button class="sb-mark" id="sb-mark" type="button" aria-label="사이드바 펼치기" aria-controls="sidebar" aria-expanded="false"><img class="m-txt" src="../v20-rebrand/logo-user.svg" alt="" aria-hidden="true" width="24" height="24"><svg class="ico m-ico" aria-hidden="true"><use href="#i-panel-left-open"/></svg></button>
+        <a class="logo" href="cre-home.html" aria-label="팬꾹 홈"><img class="logo-mark" src="../v20-rebrand/logo-user.svg" alt="" aria-hidden="true" width="32" height="32"><span>팬꾹</span></a>
+        <button class="sb-btn sb-fold" id="sb-fold" type="button" aria-label="사이드바 접기" aria-controls="sidebar"><svg class="ico" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button>
+        <button class="sb-btn sb-close" id="sb-close" type="button" aria-label="메뉴 닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </div>
+      <nav class="sb-nav" aria-label="크리에이터 메뉴">
+<p class="sb-group" id="g1"><span class="sb-group-t">기본</span></p>
+<ul aria-labelledby="g1"><li><a href="cre-home.html" data-tip="홈"><svg class="ico" aria-hidden="true"><use href="#i-house"/></svg><span class="sb-label">홈</span></a></li><li><a href="cre-progress.html" data-tip="선물 현황" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-truck"/></svg><span class="sb-label">선물 현황</span></a></li><li><a href="cre-action-center-d.html" data-tip="처리할 일"><svg class="ico" aria-hidden="true"><use href="#i-clipboard-check"/></svg><span class="sb-label">처리할 일</span><span class="badge todo-badge" aria-label="6건">6</span></a></li><li><a href="../v18/creators.html" data-tip="크리에이터 찾기"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sb-label">크리에이터 찾기</span></a></li></ul>
+<p class="sb-group" id="g2"><span class="sb-group-t">받기</span></p>
+<ul aria-labelledby="g2"><li><a href="../v20-rebrand/creator-requests-c.html#done" data-tip="승인 내역"><svg class="ico" aria-hidden="true"><use href="#i-list-checks"/></svg><span class="sb-label">승인 내역</span></a></li><li><a href="../v18/creator-boxes.html" data-tip="받은 선물"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg><span class="sb-label">받은 선물</span></a></li><li><a href="../v18/creator-log.html" data-tip="열람 기록"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg><span class="sb-label">열람 기록</span></a></li></ul>
+<p class="sb-group" id="g3"><span class="sb-group-t">보내기</span></p>
+<ul aria-labelledby="g3"><li><a href="../v18/creator-revgift-new.html" data-tip="팬에게 보내기"><svg class="ico" aria-hidden="true"><use href="#i-package-plus"/></svg><span class="sb-label">팬에게 보내기</span></a>
+<ul class="sb-sub" aria-label="팬에게 보내기 방식"><li><a href="../v18/creator-revgift-new.html#count" data-tip="몇 명에게"><span class="sb-label">몇 명에게</span></a></li><li><span class="sb-soon" aria-disabled="true"><span class="sb-label">합포장</span><span class="sb-soon-tag">준비 중</span></span></li></ul></li><li><a href="../v18/send.html" data-tip="다른 크리에이터에게 선물"><svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg><span class="sb-label">다른 크리에이터에게 선물</span></a></li><li><a href="cre-revgift-sent.html" data-tip="보낸 내역"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg><span class="sb-label">보낸 내역</span></a></li></ul>
+<p class="sb-group" id="g4"><span class="sb-group-t">내 팬꾹</span></p>
+<ul aria-labelledby="g4"><li><a href="../v18/creator-settings.html#decorate" data-tip="꾸미기"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg><span class="sb-label">꾸미기</span></a></li><li><a href="cre-profile-edit.html" data-tip="프로필 수정"><svg class="ico" aria-hidden="true"><use href="#i-user-round"/></svg><span class="sb-label">프로필 수정</span></a></li><li><a href="cre-detail-settings.html" data-tip="상세 설정"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="sb-label">상세 설정</span></a></li></ul>
+</nav>
+      <div class="sb-bottom">
+        <details class="sb-menu" id="sb-menu">
+          <summary aria-label="별빛님 계정 메뉴"><span class="sb-avatar" aria-hidden="true">별</span><span class="sb-name">별빛님</span><svg class="ico sb-chev" aria-hidden="true"><use href="#i-chevrons-up-down"/></svg></summary>
+          <div class="sb-menu-list"><a href="cre-account-settings.html">계정 설정</a><a href="#">로그아웃</a></div>
+        </details>
+      </div>
+    </aside>
+    <div class="sb-wrap">
+    <main id="main" class="sb-main page-pane">
+        <div class="cre-wrap v22-list stack-xl">
+        <header class="page-head">
+          <div class="ph-row"><h1 class="ph-title">선물 현황<span class="ph-count">진행 중 10건</span></h1></div>
+        </header>
+
+        <section class="panel" aria-labelledby="p-in">
+          <div class="panel-h"><svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg><h2 id="p-in">받는 선물</h2><span class="cnt" aria-label="4건">4</span><a class="more" href="../v18/creator-boxes.html">받은 선물 전체</a></div>
+          <ul class="tasks" aria-label="받는 선물"><li class="task task--appr"><span class="ti" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg></span><div class="tb"><span class="tt">하루님의 선물</span><span class="sub"><span>인형·쿠션</span><span class="sep" aria-hidden="true"></span><span>상자 2개</span><span class="sep" aria-hidden="true"></span><span>10월 15일 요청</span></span></div><div class="ta"><div class="prog" aria-label="5단계 중 1단계, 승인 대기"><span class="bar" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="pl pl--late">승인 대기</span></div><a class="btn" href="cre-action-center-d.html">처리할 일</a></div></li><li class="task"><span class="ti" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg></span><div class="tb"><span class="tt">보리님의 선물</span><span class="sub"><span>대형 물품</span><span class="sep" aria-hidden="true"></span><span>상자 1개</span><span class="sep" aria-hidden="true"></span><span>10월 13일 승인</span></span></div><div class="ta"><div class="prog" aria-label="5단계 중 2단계, 사무실로 오는 중"><span class="bar" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="pl">사무실로 오는 중</span></div></div></li><li class="task task--alert"><span class="ti" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-package-search"/></svg></span><div class="tb"><span class="tt">별사탕님의 선물</span><span class="sub"><span>인형·쿠션</span><span class="sep" aria-hidden="true"></span><span>상자 2개</span><span class="sep" aria-hidden="true"></span><span>10월 12일 승인</span></span></div><div class="ta"><div class="prog" aria-label="5단계 중 3단계, 검수 중 · 1개 확인 필요"><span class="bar" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="pl pl--late">검수 중 · 1개 확인 필요</span></div><a class="btn" href="cre-action-center-d.html">처리할 일</a></div></li><li class="task"><span class="ti" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-truck"/></svg></span><div class="tb"><span class="tt">소라님의 선물</span><span class="sub"><span>꽃</span><span class="sep" aria-hidden="true"></span><span>상자 1개</span><span class="sep" aria-hidden="true"></span><span>10월 10일 승인</span></span></div><div class="ta"><div class="prog" aria-label="5단계 중 4단계, 나에게 오는 중"><span class="bar" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="pl">나에게 오는 중</span></div><button class="btn btn--ghost" type="button" data-open="dlg-a" aria-haspopup="dialog">배송 조회</button></div></li></ul>
+        </section>
+
+        <section class="panel" aria-labelledby="p-out">
+          <div class="panel-h"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg><h2 id="p-out">보내는 선물</h2><span class="cnt" aria-label="6건">6</span><a class="more" href="cre-revgift-sent.html">보낸 내역 전체</a></div>
+          <p class="sub-h">10월 2일 보낸 역조공 <span class="meta">· 팬 4명</span></p>
+          <ul class="tasks" aria-label="10월 2일 보낸 역조공"><li class="task"><span class="ti" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-truck"/></svg></span><div class="tb"><span class="tt">하루님</span><span class="sub"><span>소형 상자</span></span></div><div class="ta"><div class="prog" aria-label="5단계 중 4단계, 팬에게 가는 중"><span class="bar" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="pl">팬에게 가는 중</span></div></div></li><li class="task"><span class="ti" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg></span><div class="tb"><span class="tt">모카님</span><span class="sub"><span>소형 상자</span></span></div><div class="ta"><div class="prog" aria-label="5단계 중 2단계, 사무실 도착이 늦어요"><span class="bar" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="pl pl--late">사무실 도착이 늦어요</span></div><button class="btn btn--ghost" type="button" data-open="dlg-a" aria-haspopup="dialog">배송 조회</button></div></li><li class="task"><span class="ti" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg></span><div class="tb"><span class="tt">라온님</span><span class="sub"><span>소형 상자</span></span></div><div class="ta"><div class="prog" aria-label="5단계 중 2단계, 사무실 도착이 늦어요"><span class="bar" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="pl pl--late">사무실 도착이 늦어요</span></div><button class="btn btn--ghost" type="button" data-open="dlg-a" aria-haspopup="dialog">배송 조회</button></div></li><li class="task"><span class="ti" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-package"/></svg></span><div class="tb"><span class="tt">새벽달님</span><span class="sub"><span>중형 상자</span></span></div><div class="ta"><div class="prog" aria-label="5단계 중 2단계, 사무실 도착이 늦어요"><span class="bar" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="pl pl--late">사무실 도착이 늦어요</span></div><button class="btn btn--ghost" type="button" data-open="dlg-a" aria-haspopup="dialog">배송 조회</button></div></li></ul>
+          <p class="sub-h">10월 9일 보낸 역조공 <span class="meta">· 팬 2명</span></p>
+          <ul class="tasks" aria-label="10월 9일 보낸 역조공"><li class="task"><span class="ti" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg></span><div class="tb"><span class="tt">꿀단지님</span><span class="sub"><span>소형 상자</span></span></div><div class="ta"><div class="prog" aria-label="5단계 중 1단계, 팬이 받을지 정하는 중"><span class="bar" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="pl">팬이 받을지 정하는 중</span></div></div></li><li class="task"><span class="ti" aria-hidden="true"><svg class="ico" aria-hidden="true"><use href="#i-package-search"/></svg></span><div class="tb"><span class="tt">윤슬님</span><span class="sub"><span>소형 상자</span></span></div><div class="ta"><div class="prog" aria-label="5단계 중 3단계, 검수 중"><span class="bar" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="pl">검수 중</span></div></div></li></ul>
+        </section>
+        </div>
+    </main>
+
+    </div>
+  </div>
+
+
+    <div class="dlg-back" id="dlg-a" hidden>
+      <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-a-t">
+        <div class="dlg-h"><div><h2 id="dlg-a-t">도착하지 않았어요</h2><span class="meta">모카님 · 소형 상자 · 10월 2일 보냄</span></div><button class="dlg-x" type="button" data-close aria-label="닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+        <form class="stack" style="display:grid;gap:var(--sp-16)" onsubmit="return false">
+          <div class="f2">
+            <div><label class="label" for="a-cr">택배사</label><select class="field" id="a-cr"><option value="">고르세요</option><option selected>CJ대한통운</option><option>우체국택배</option><option>한진택배</option><option>롯데택배</option><option>로젠택배</option><option>경동택배</option><option>그 밖의 택배사</option></select></div>
+            <div><label class="label" for="a-no">송장번호</label><input class="field" id="a-no" type="text" inputmode="numeric" placeholder="숫자만 입력해요" value="568912340017" autocomplete="off"></div>
+          </div>
+          <div class="btns"><a class="btn" href="#" target="_blank" rel="noopener noreferrer">CJ대한통운에서 배송 조회 <svg class="ico ext" aria-hidden="true"><use href="#i-external"/></svg><span class="sr-only">(새 탭)</span></a></div>
+        </form>
+        <div class="sub"><button type="button" data-open="dlg-b">코드를 적지 않고 보냈어요</button></div>
+      </div>
+    </div>
+
+    <div class="dlg-back" id="dlg-b" hidden>
+      <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-b-t">
+        <div class="dlg-h"><div><h2 id="dlg-b-t">미확인 상자</h2><span class="meta">10월 14일 사무실 도착</span></div><button class="dlg-x" type="button" data-close aria-label="닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+        <form style="display:grid;gap:var(--sp-16)" onsubmit="return false">
+          <div class="f2">
+            <div><label class="label" for="b-cr">택배사</label><select class="field" id="b-cr"><option value="">고르세요</option><option selected>CJ대한통운</option><option>우체국택배</option><option>한진택배</option><option>롯데택배</option><option>로젠택배</option><option>경동택배</option><option>그 밖의 택배사</option></select></div>
+            <div><label class="label" for="b-no">송장번호</label><input class="field" id="b-no" type="text" inputmode="numeric" placeholder="숫자만 입력해요" value="568912340024" autocomplete="off"></div>
+          </div>
+          <fieldset class="fs"><legend class="label">어느 팬에게 보낸 상자인가요?</legend>
+            <div class="fans">
+              <label class="opt"><input type="radio" name="b-fan"><span>모카님 · 소형</span></label>
+              <label class="opt"><input type="radio" name="b-fan"><span>라온님 · 소형</span></label>
+              <label class="opt"><input type="radio" name="b-fan"><span>새벽달님 · 중형</span></label>
+            </div>
+          </fieldset>
+          <div class="btns"><button class="btn" type="submit">선택 완료</button></div>
+        </form>
+        <div class="help">
+          <p>송장번호를 모르시나요?</p>
+          <a class="btn btn--ghost" href="../v18/support.html">1:1 문의</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="dlg-back" id="dlg-d" hidden>
+      <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-d-t">
+        <div class="dlg-h"><div><h2 id="dlg-d-t">승인 요청</h2><span class="meta">10월 15일 14:20 요청</span></div><button class="dlg-x" type="button" data-close aria-label="닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+        <div class="gift-who"><span class="av2 av-fan" aria-hidden="true">하</span><div><b>하루님</b><span class="meta">이전에 보낸 선물 2번 · 모두 통과</span></div></div>
+        <div class="box-info">
+          <div class="kv"><span>물품 종류</span><b>인형·쿠션</b></div>
+          <div class="kv"><span>상자</span><b>2개</b></div>
+          <div class="kv"><span>전자기기·금속</span><b>없음</b></div>
+          <div class="kv"><span>기한</span><b>10월 22일 오후 2시 20분 · 6일 남음</b></div>
+        </div>
+        <div class="step" data-step="ask">
+          <div class="btns two"><button class="btn btn--ghost" type="button" data-go="no">받지 않기</button><button class="btn" type="button" data-go="sign">카카오톡으로 승인</button></div>
+        </div>
+        <div class="step" data-step="sign" hidden>
+          <p class="q">카카오톡으로 서명해 주세요</p>
+          <div class="btns two"><button class="btn btn--ghost" type="button" data-go="ask">돌아가기</button><button class="btn" type="button" data-go="ok">서명 요청 보내기</button></div>
+        </div>
+        <div class="step" data-step="no" hidden>
+          <p class="q">이 선물을 받지 않을까요?</p>
+          <div class="btns two"><button class="btn btn--ghost" type="button" data-go="ask">돌아가기</button><button class="btn" type="button" data-go="noed">받지 않기</button></div>
+        </div>
+        <div class="step" data-step="ok" hidden>
+          <p class="done-l"><svg class="ico" aria-hidden="true"><use href="#i-circle-check"/></svg>승인 완료</p>
+          <div class="btns two"><a class="btn btn--ghost" href="../v20-rebrand/creator-requests-c.html#done">승인 내역</a><button class="btn" type="button" data-close>확인</button></div>
+        </div>
+        <div class="step" data-step="noed" hidden>
+          <p class="done-l"><svg class="ico" aria-hidden="true"><use href="#i-circle-check"/></svg>받지 않기 완료</p>
+          <div class="btns two"><a class="btn btn--ghost" href="../v20-rebrand/creator-requests-c.html#done">승인 내역</a><button class="btn" type="button" data-close>확인</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dlg-back" id="dlg-c" hidden>
+      <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-c-t">
+        <div class="dlg-h"><div><h2 id="dlg-c-t">블루투스 기기가 발견된 선물</h2><span class="meta">인형·쿠션 · 상자 2개 중 1번</span></div><button class="dlg-x" type="button" data-close aria-label="닫기"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+                  <div class="gift-who"><span class="av2 av-fan" aria-hidden="true">별</span><div><b>별사탕님</b><span class="meta">이전에 보낸 선물 3번 · 모두 통과</span></div></div>
+          <div class="box-info">
+            <div class="kv"><span>물품 종류</span><b>인형·쿠션</b></div>
+            <div class="kv"><span>상자</span><b>2개 중 1번 · 중형</b></div>
+            <div class="kv"><span>보낸 날</span><b>10월 12일</b></div>
+            <div class="kv"><span>사무실 도착</span><b>10월 13일</b></div>
+          </div>
+          <div class="box-info">
+            <div class="kv"><span>발견된 것</span><b>블루투스 기기</b></div>
+            <div class="kv"><span>검수 결과</span><b>위치 추적기 아님</b></div>
+            <div class="kv"><span>기한</span><b>10월 20일 오후 11시 59분 · 4일 남음</b></div>
+          </div>
+<div class="step" data-step="ask">
+          <div class="btns two"><button class="btn btn--ghost" type="button" data-go="returned">거절</button><button class="btn" type="button" data-go="accepted">받기</button></div>
+        </div>
+        <div class="step" data-step="picked" hidden>
+          <p class="done-l"><svg class="ico" aria-hidden="true"><use href="#i-circle-check"/></svg>받기 선택</p>
+          <div class="btns two"><button class="btn btn--ghost" type="button" data-go="ask">취소</button><button class="btn" type="button" data-close>확인</button></div>
+        </div>
+        <div class="step" data-step="locked" hidden>
+          <p class="done-l"><svg class="ico" aria-hidden="true"><use href="#i-circle-check"/></svg>처리 완료 · 받기</p>
+          <div class="btns"><button class="btn" type="button" data-close>확인</button></div>
+        </div>
+        <div class="step" data-step="accepted" hidden>
+          <p class="done-l"><svg class="ico" aria-hidden="true"><use href="#i-circle-check"/></svg>받기 선택</p>
+          <p class="note">팬꾹이 처리하기 전까지 취소할 수 있어요.</p>
+          <div class="btns two"><button class="btn btn--ghost" type="button" data-go="ask">취소</button><button class="btn" type="button" data-close>확인</button></div>
+        </div>
+        <div class="step" data-step="returned" hidden>
+          <p class="done-l"><svg class="ico" aria-hidden="true"><use href="#i-circle-check"/></svg>거절 선택</p>
+          <p class="note">팬꾹이 처리하기 전까지 취소할 수 있어요.</p>
+          <div class="btns two"><button class="btn btn--ghost" type="button" data-go="ask">취소</button><button class="btn" type="button" data-close>확인</button></div>
+        </div>
+      </div>
+    </div>
+<script>
+(function () {
+  var last = null;
+  function closeAll() { document.querySelectorAll('.dlg-back').forEach(function (d) { d.hidden = true; }); document.getElementById('app').inert = false; if (last) last.focus(); }
+  function open(id, from) {
+    document.querySelectorAll('.dlg-back').forEach(function (d) { d.hidden = true; });
+    var d = document.getElementById(id); if (!d) return;
+    if (from && !from.closest('.dlg')) last = from;
+    var init = (from && from.getAttribute('data-init')) || null; var steps = d.querySelectorAll('.step'); steps.forEach(function (st, i) { st.hidden = init ? st.getAttribute('data-step') !== init : i !== 0; });
+    d.hidden = false; document.getElementById('app').inert = true;
+    var f = d.querySelector('form select, form input, .step button') || d.querySelector('button'); if (f) f.focus();
+  }
+  document.addEventListener('click', function (e) {
+    var o = e.target.closest('[data-open]'); if (o) { open(o.getAttribute('data-open'), o); return; }
+    if (e.target.closest('[data-close]') || e.target.classList.contains('dlg-back')) closeAll();
+    var g = e.target.closest('[data-go]'); if (g) { var dl = g.closest('.dlg'); dl.querySelectorAll('.step').forEach(function (st) { st.hidden = st.getAttribute('data-step') !== g.getAttribute('data-go'); }); var b = dl.querySelector('.step:not([hidden]) button:last-child'); if (b) b.focus(); }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAll(); });
+})();
+</script>
+
+<script>
+(function () {
+  var r = document.documentElement;
+  function set(v) { r.setAttribute('data-v', v); try { localStorage.setItem('ac-d-v', v); } catch (e) {} }
+  var v0 = 'ga'; try { v0 = localStorage.getItem('ac-d-v') || 'ga'; } catch (e) {}
+  set(v0);
+  document.addEventListener('click', function (e) { var b = e.target.closest('[data-setv]'); if (b) set(b.getAttribute('data-setv')); });
+})();
+</script>
+</body>
+</html>
