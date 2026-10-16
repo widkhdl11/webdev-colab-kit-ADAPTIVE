@@ -9,10 +9,10 @@ import type { StatusTone } from "@/shared/ui/status-tone";
 export type StageCopy = { tag: string; tone: StatusTone; note: string };
 
 const STAGE_COPY: Record<Exclude<ReceivedStage, "waiting">, StageCopy> = {
-  accepted: { tag: "받았어요", tone: "success", note: "상자가 준비되면 보내 드려요" },
+  accepted: { tag: "수락", tone: "success", note: "상자가 준비되면 보내 드려요" },
   shipped: { tag: "출고됨", tone: "info", note: "배송이 시작됐어요 · 주소는 지워졌어요" },
-  declined: { tag: "받지 않았어요", tone: "danger", note: "내가 받지 않기를 눌렀어요" },
-  expired: { tag: "받지 않았어요", tone: "danger", note: "기한(7일)이 지났어요" },
+  declined: { tag: "받지 않음", tone: "danger", note: "「받지 않기」를 눌렀어요" },
+  expired: { tag: "기한 지남", tone: "danger", note: "기한(7일)이 지났어요" },
   returned: { tag: "돌려보냈어요", tone: "danger", note: "상자를 크리에이터에게 돌려보냈어요" },
   cancelled: { tag: "취소됐어요", tone: "plain", note: "이 선물은 취소됐어요" },
 };

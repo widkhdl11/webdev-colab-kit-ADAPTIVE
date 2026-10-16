@@ -33,10 +33,10 @@ function view(
 }
 
 describe("INV-S9: 「먼저 보내기」 전 표시", () => {
-  it("INV-S9: 입고 전·승인 전이고 「먼저 보내기」를 아직 누르지 않았으면 「승인 대기 · 승인을 기다리는 중」 — 「보내 주세요」라고 하지 않는다", () => {
+  it("INV-S9: 입고 전·승인 전이고 「먼저 보내기」를 아직 누르지 않았으면 「승인 대기 · 아직 승인하지 않았어요」 — 「보내 주세요」라고 하지 않는다", () => {
     const v = { ...view(1), earlySendPending: true };
     expect(fanBadge(v)).toEqual({ text: "승인 대기", tone: "warn" });
-    expect(fanHeadline(v)).toBe("크리에이터의 승인을 기다리는 중이에요");
+    expect(fanHeadline(v)).toBe("크리에이터가 아직 승인하지 않았어요");
   });
 
   it("INV-S9 (실패경로): 누른 뒤에는 그대로 「보내 주세요」", () => {

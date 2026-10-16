@@ -245,7 +245,7 @@ describe("INV-R3: 보내기 하나 = 결제 하나, 몫 1~10개, 팬마다 상�
 });
 
 describe("INV-R8: 크리에이터에게는 팬 닉네임과 상태 셋만 보인다", () => {
-  it("INV-R8 S8·S8b: 보낸 목록의 칸은 정해진 것뿐이고, 거절과 기한 지남은 같은 「받지 않았어요」다", async () => {
+  it("INV-R8 S8·S8b: 보낸 목록의 칸은 정해진 것뿐이고, 거절과 기한 지남은 같은 「받지 않음」이다", async () => {
     const send = await registerTestRevgift([
       { fanId: PROFILE.byeolbit, tier: "small" },
       { fanId: PROFILE.gureumppang, tier: "small" },

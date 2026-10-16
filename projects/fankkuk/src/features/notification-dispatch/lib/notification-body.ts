@@ -217,8 +217,8 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
       const name = senderName?.trim();
       if (!name) throw new Error("역조공 받기 알림에 보낸 크리에이터 이름이 없다");
       return {
-        subject: round === 1 ? `[팬꾹] ${name}님이 선물을 보냈어요` : `[팬꾹] ${name}님이 보낸 선물을 아직 받지 않았어요`,
-        lines: [greet, round === 1 ? `${name}님이 선물을 보냈어요.` : `${name}님이 보낸 선물을 아직 받지 않았어요.`],
+        subject: round === 1 ? `[팬꾹] ${name}님이 선물을 보냈어요` : `[팬꾹] ${name}님이 보낸 선물을 받을지 정해 주세요`,
+        lines: [greet, round === 1 ? `${name}님이 선물을 보냈어요.` : `${name}님이 보낸 선물을 받을지 정해 주세요.`],
         buttonLabel: "선물 받기",
         path: `/me/revgifts/${orderNo}`,
       };

@@ -59,7 +59,7 @@ function Check({ size = 18 }: { size?: number }) {
 
 const STEP_CLASS = { done: "done", current: "on", stopped: s.stopped, todo: undefined } as const;
 
-const APPROVAL_TEXT = { done: "승인됨", waiting: "기다리는 중", todo: "출고 전에 받아요" } as const;
+const APPROVAL_TEXT = { done: "승인됨", waiting: "승인 대기", todo: "출고 전에 받아요" } as const;
 
 const APPROVAL_TONE = { done: "success", waiting: "warn", todo: "plain" } as const satisfies Record<keyof typeof APPROVAL_TEXT, StatusTone>;
 

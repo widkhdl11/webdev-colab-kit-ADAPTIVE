@@ -35,7 +35,7 @@ const currentKey = (view: FanGiftView) => view.steps.find((st) => st.state === "
 
 /** 승인 전 주문에서 「먼저 보내기」를 아직 누르지 않았을 때의 상단 표시(approval-signature INV-S9) — 받는 주소가 아직 없으니 「보내 주세요」라고 하지 않는다. */
 export const EARLY_SEND_WAIT_BADGE: { text: string; tone: StatusTone } = { text: "승인 대기", tone: "warn" };
-export const EARLY_SEND_WAIT_HEADLINE = "크리에이터의 승인을 기다리는 중이에요";
+export const EARLY_SEND_WAIT_HEADLINE = "크리에이터가 아직 승인하지 않았어요";
 
 /** 지금 상황 한 줄. "지금 단계"는 아직 끝나지 않은 단계라, 그 단계를 기다리는 말로 쓴다. */
 export function fanHeadline(view: FanGiftView): string {
