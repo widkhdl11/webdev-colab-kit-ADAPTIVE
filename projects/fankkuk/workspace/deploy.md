@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: deployed
-basis: cc69decb080e
+basis: 79fdaf15a413
 ---
 
 # 배포 기록 — fankkuk
@@ -17,3 +17,8 @@ basis: cc69decb080e
 
 - DB 변경 없음. 앱: main 764bb8d6 push → Vercel 세 프로젝트 빌드 success.
 - 시험 주소 / 의 head: rel=icon 두 개(favicon.ico 48·icon.png 512), apple-touch-icon 180, og:image·twitter:image 가 https://webdev-colab-kit-adaptive-xqne.vercel.app 기준 전체 주소(APP_ORIGIN). 이미지 6개 모두 200, /creators 200.
+
+## 2026-10-17 새벽 — 팔로우 카드·크리에이터 계정 설정
+
+- 운영 DB: `supabase db push` 로 20261016000014(creator_looks, 개인정보 구역 접촉 0).
+- 앱: main d0dad81e push → Vercel 세 프로젝트 빌드 success. 시험 주소에서 / · /creators · /login 200, 로그인 전 /creator/account·/creator/settings·/me/following 은 로그인으로 307(next 붙음).

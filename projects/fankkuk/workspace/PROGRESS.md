@@ -4,8 +4,8 @@
 
 - **오늘의 목표**: 크리에이터 찾기·팔로우 카드 꾸민 모양, 로고·아이콘, 크리에이터 계정 설정 — 배포
 - **완료**: 찾기·팔로우 880 + 꾸민 카드(공통 creator-card-head) · 로고·아이콘 배포(764bb8d) · 크리에이터 계정 설정 /creator/account(1f23015) · 리뷰 반영(fe75cea) · review 사인오프(basis 79fdaf15a413) · 운영 DB 마이그레이션 20261016000014 · push d0dad81
-- **멈춘 지점**: 배포 빌드 대기 중(Vercel, d0dad81)
-- **다음 할 일**: 빌드 success 확인 → 시험 주소에서 /creator/account·/me/following 열림 확인 → workspace/deploy.md 를 basis 79fdaf15a413 로 기록. 마스코트 이미지(public/images)를 어디에 쓸지·헤더 로고 교체는 사용자 말 기다림. 사용자는 Supabase 토큰을 다듬기가 끝나면 지운다고 함
+- **멈춘 지점**: 배포 끝(d0dad81 → Vercel success, workspace/deploy.md) — 프론티어 없음
+- **다음 할 일**: 마스코트 이미지(public/images)를 어디에 쓸지·헤더 로고 교체는 사용자 말 기다림. 사용자는 Supabase 토큰을 다듬기가 끝나면 지운다고 함
 - **대기 중인 결정**: 없음
 
 ## 로그
