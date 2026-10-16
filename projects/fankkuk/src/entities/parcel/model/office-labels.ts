@@ -23,6 +23,10 @@ export const STATE_LABEL: Record<ParcelState, { text: string; tone: StateTone }>
   returned: { text: "반송함", tone: "ink" },
   label_printed: { text: "송장 출력함", tone: "brand" },
   shipped: { text: "출고함", tone: "plain" },
+  // 추적기 보관·신고 보관·경찰 인계(office-workflow INV-W14) — 화면 표기는 용어집 승인 전이라 코드값 그대로 보인다
+  tracker_held: { text: "tracker_held", tone: "warn" },
+  report_held: { text: "report_held", tone: "warn" },
+  police_handed: { text: "police_handed", tone: "ink" },
 };
 
 /** 목록의 「다음 단계」 칸. 빈 문자열이면 할 일이 없다. */
@@ -41,6 +45,9 @@ export const NEXT_STEP_TEXT: Record<NextStep, string> = {
   print_return: "출고 화면에서 QR 스캔하면 반송 송장 출력",
   confirm_return: "출고 화면에서 반송 송장 바코드 스캔",
   confirm_shipment: "출고 화면에서 출력한 송장 바코드 스캔",
+  // 추적기 보관·신고 보관(INV-W14) — 화면 표기는 용어집 승인 전이라 코드값 그대로
+  tracker_held: "tracker_held",
+  report_held: "report_held",
   done: "",
 };
 

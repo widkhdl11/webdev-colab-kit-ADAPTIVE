@@ -14,7 +14,8 @@ export type OrderRecord = {
   registeredAt: string; // ISO 시각
   approvedAt: string | null;
   receivedAt: string | null;
-  inspection: { result: "passed" | "returned"; at: string } | null;
+  // checking = 확인 중 — 추적기 보관·신고 보관·경찰 인계 상자가 있는 주문(office-workflow INV-W14). 통과·반송 어느 쪽으로도 세지 않는다
+  inspection: { result: "passed" | "returned" | "checking"; at: string } | null;
   shippedAt: string | null;
   expectedArrivalDate: string | null; // YYYY-MM-DD
   delivery: "in_transit" | "delivered" | null; // 택배사 조회 결과 — 단계만

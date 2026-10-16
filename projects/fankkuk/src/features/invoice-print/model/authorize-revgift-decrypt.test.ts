@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { fanAddressPlaintext } from "@/entities/address/model/fan-address-plaintext";
 import { authorizeRevgiftDecrypt, checkOpenedRevgift, type RevgiftDecryptRequest } from "./authorize-revgift-decrypt";
 
 const OWNER = "owner-1";
+const FAN = "00000000-0000-4000-a000-000000000001";
+const OTHER_FAN = "00000000-0000-4000-a000-000000000002";
+const LABEL = { recipientName: "a", phone: "01012345678", zipCode: "04001", address1: "x", address2: "" };
 
 const ok: RevgiftDecryptRequest = {
   requestedOrderNo: "RG-ABC123",
@@ -47,11 +51,23 @@ describe("INV-R7: 몫의 주소를 여는 조건", () => {
 
   it("INV-R7 S7c (b, 실패경로): 연 내용의 주문번호가 요청한 몫과 다르면(옮겨 붙인 암호문) 쓰지 않는다", () => {
     const opened = JSON.stringify({ v: 1, orderNo: "RG-OTHER1", recipientName: "a", phone: "01012345678", zipCode: "04001", address1: "x", address2: "" });
-    expect(checkOpenedRevgift({ requestedOrderNo: "RG-ABC123", openedPlaintext: opened })).toEqual({ ok: false, reason: "order_mismatch" });
-    expect(checkOpenedRevgift({ requestedOrderNo: "RG-OTHER1", openedPlaintext: opened })).toEqual({
+    expect(checkOpenedRevgift({ requestedOrderNo: "RG-ABC123", shareFanId: FAN, openedPlaintext: opened })).toEqual({ ok: false, reason: "order_mismatch" });
+    expect(checkOpenedRevgift({ requestedOrderNo: "RG-OTHER1", shareFanId: FAN, openedPlaintext: opened })).toEqual({
       ok: true,
       label: { recipientName: "a", phone: "01012345678", zipCode: "04001", address1: "x", address2: "" },
     });
-    expect(checkOpenedRevgift({ requestedOrderNo: "RG-ABC123", openedPlaintext: "서울" })).toEqual({ ok: false, reason: "order_mismatch" });
+    expect(checkOpenedRevgift({ requestedOrderNo: "RG-ABC123", shareFanId: FAN, openedPlaintext: "서울" })).toEqual({ ok: false, reason: "order_mismatch" });
+  });
+
+  it("INV-R7 S7 (b): 받기 때 복사한 등록 주소는 봉인 속 계정이 몫의 받는 팬과 같을 때만 쓴다", () => {
+    const opened = fanAddressPlaintext({ accountId: FAN, ...LABEL });
+    expect(checkOpenedRevgift({ requestedOrderNo: "RG-ABC123", shareFanId: FAN, openedPlaintext: opened })).toEqual({ ok: true, label: LABEL });
+  });
+
+  it("INV-R7 S7c (b, 실패경로): 다른 팬의 계정이 묶인 봉인·받는 팬을 모르는 경우는 쓰지 않는다", () => {
+    const opened = fanAddressPlaintext({ accountId: OTHER_FAN, ...LABEL });
+    expect(checkOpenedRevgift({ requestedOrderNo: "RG-ABC123", shareFanId: FAN, openedPlaintext: opened })).toEqual({ ok: false, reason: "order_mismatch" });
+    const mine = fanAddressPlaintext({ accountId: FAN, ...LABEL });
+    expect(checkOpenedRevgift({ requestedOrderNo: "RG-ABC123", shareFanId: null, openedPlaintext: mine })).toEqual({ ok: false, reason: "order_mismatch" });
   });
 });

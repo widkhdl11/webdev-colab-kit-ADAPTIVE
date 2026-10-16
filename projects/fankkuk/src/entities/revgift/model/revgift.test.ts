@@ -1,19 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { importSealingPublicKey, sealEnvelope } from "@/shared/lib/envelope/envelope";
-import { parseAcceptInput, sealedAddressPlaintext, readOpenedRevgiftAddress } from "./sealed-address";
+import { sealedAddressPlaintext, readOpenedRevgiftAddress } from "./sealed-address";
 import { isRevgiftOrderNo, newRevgiftOrderNo, revgiftQrContent } from "./revgift-order-no";
 import { buildRevgiftNotice } from "./revgift-notice";
 import { parseSentRows, parseReceivedRows } from "./revgift-rows";
-
-async function testPublicKeyPem(): Promise<string> {
-  const pair = (await crypto.subtle.generateKey(
-    { name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
-    true,
-    ["encrypt", "decrypt"],
-  )) as CryptoKeyPair;
-  const spki = new Uint8Array(await crypto.subtle.exportKey("spki", pair.publicKey));
-  return `-----BEGIN PUBLIC KEY-----\n${btoa(String.fromCharCode(...spki))}\n-----END PUBLIC KEY-----`;
-}
 
 const ADDRESS = {
   orderNo: "RG-ABC123",
@@ -34,7 +23,7 @@ describe("역조공 주문번호", () => {
   });
 });
 
-describe("INV-R5: 팬 주소는 주문번호와 함께 봉인된 뒤에만 서버로 간다", () => {
+describe("INV-R5: 2026-10-17 전 봉인 — 주문번호가 묶인 몫은 계속 열린다", () => {
   it("INV-R5: 봉인할 내용에는 주소·받는 사람 이름·전화번호와 그 몫의 주문번호가 함께 들어간다", () => {
     const plain = JSON.parse(sealedAddressPlaintext(ADDRESS)) as Record<string, unknown>;
     expect(plain).toEqual({ v: 1, ...ADDRESS });
@@ -45,24 +34,6 @@ describe("INV-R5: 팬 주소는 주문번호와 함께 봉인된 뒤에만 서�
     expect(() => sealedAddressPlaintext({ ...ADDRESS, recipientName: " " })).toThrow();
     expect(() => sealedAddressPlaintext({ ...ADDRESS, phone: "02-123" })).toThrow();
     expect(() => sealedAddressPlaintext({ ...ADDRESS, address1: "" })).toThrow();
-  });
-
-  it("INV-R5 S5: 실제로 봉인한 봉투는 받기 입력으로 통과하고, 본문에 주소 평문이 없다", async () => {
-    const key = await importSealingPublicKey(await testPublicKeyPem());
-    const envelope = await sealEnvelope(sealedAddressPlaintext(ADDRESS), key);
-    const body = JSON.stringify({ envelope });
-    expect(body).not.toContain("마포구");
-    expect(body).not.toContain("01012345678");
-    expect(parseAcceptInput(JSON.parse(body)).ok).toBe(true);
-  });
-
-  it("INV-R5 S5b (실패경로): 평문 주소·봉투가 아닌 값·다른 칸이 섞인 본문은 거부된다", () => {
-    expect(parseAcceptInput({ envelope: "서울 마포구 어울마당로 1" })).toEqual({ ok: false });
-    expect(parseAcceptInput({ address: ADDRESS })).toEqual({ ok: false });
-    expect(parseAcceptInput(null)).toEqual({ ok: false });
-    expect(parseAcceptInput({ envelope: { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: "AAAA", iv: "AAAA", ciphertext: "AAAA" } })).toEqual({
-      ok: false,
-    });
   });
 
   it("INV-R5·R7 (b): 연 내용에서 주문번호를 꺼낸다 — 꼴이 틀리면 null", () => {

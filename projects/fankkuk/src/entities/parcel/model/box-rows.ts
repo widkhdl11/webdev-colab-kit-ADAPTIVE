@@ -18,6 +18,12 @@ export const BOX_STATES = [
   "returned",
   "label_printed",
   "shipped",
+  // 추적기 보관 · 신고 보관 · 경찰 인계(office-workflow INV-W14) — 운영자 목록에만 온다
+  "tracker_held",
+  "report_held",
+  "police_handed",
+  // 확인 중 — 팬 읽기(my_gift_boxes)가 위 세 상태를 부르는 한 값(INV-W14)
+  "checking",
   // 결제 + 30일이 지나도 오지 않아 닫힌 팬 선물 상자(office-workflow INV-W10). 6자리는 무효, 그 상자 금액은 환불 대상.
   "missing",
 ] as const;

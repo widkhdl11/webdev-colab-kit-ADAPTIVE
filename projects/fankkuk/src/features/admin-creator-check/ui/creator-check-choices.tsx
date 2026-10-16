@@ -12,7 +12,8 @@ import type { CreatorCheckChoiceRow } from "../model/process-check";
 // 운영자가 여기서 처리 버튼을 눌러야 받기 선택은 검수 완료, 거절 선택은 반송 대기로 넘어간다. 버튼은 화면에 보이는 선택을 함께 보낸다 —
 // 그사이 크리에이터가 취소하고 다르게 골랐으면 서버가 「바뀜」으로 거부하고 목록을 새로 읽는다. 기한(검수 완료 + 7일)이 지나면 자동 처리가 고른 쪽대로 한다.
 
-const CHOICE_TEXT = { accept: "받기 선택", return: "거절 선택" } as const;
+// report·no_report(추적기 보관 상자의 신고 선택, office-workflow INV-W14)는 용어집 승인 전이라 코드값 그대로 보인다
+const CHOICE_TEXT = { accept: "받기 선택", return: "거절 선택", report: "report", no_report: "no_report" } as const;
 
 export function CreatorCheckChoices({ rows }: { rows: readonly CreatorCheckChoiceRow[] }) {
   const router = useRouter();

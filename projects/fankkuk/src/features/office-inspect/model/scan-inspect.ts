@@ -33,8 +33,8 @@ const bodyShape = z.discriminatedUnion("kind", [
 
 export type InspectWrite = z.input<typeof bodyShape>;
 
-// held = 크리에이터 확인 대기(추적기 아님 블루투스·RF 상자, 2026-10-12 (2) D3 ②)
-const afterInspect = z.enum(["inspected", "return_waiting", "held"]);
+// held = 크리에이터 확인 대기(추적기 아님 블루투스·RF 상자, 2026-10-12 (2) D3 ②) · tracker_held = 추적기 보관(office-workflow INV-W14, 2026-10-17)
+const afterInspect = z.enum(["inspected", "return_waiting", "held", "tracker_held"]);
 
 export async function scanInspect(client: Pick<SupabaseClient, "rpc">, body: unknown): Promise<JsonReply> {
   if ((await readAdminAccess(client)) === "not_found") return { status: 404, body: { message: MESSAGE_NOT_FOUND } };

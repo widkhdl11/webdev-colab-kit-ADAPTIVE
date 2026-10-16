@@ -1,11 +1,12 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { fanAddressPlaintext } from "@/entities/address/model/fan-address-plaintext";
 import { sealedAddressPlaintext } from "@/entities/revgift/model/sealed-address";
 import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
 import { sealEnvelope, type Envelope } from "@/shared/lib/envelope/envelope";
 import { adminClient, deleteTestOrders, holdRowLock, psql, psqlError, signedInClient } from "./helpers";
 import { decryptFileText, LABEL, OWNER_ID, STAFF_ID, testKeyPair, type TestKeys } from "./invoice-helpers";
 import { creatorSetsWaybill, deleteTestUnmatched, fanSetsWaybill, inspect, paidGift, paidShare, parcelState, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
-import { deleteTestRevgifts } from "./revgift-helpers";
+import { acceptWithAddress, deleteTestRevgifts, PROFILE } from "./revgift-helpers";
 
 // 역조공 송장 출력 = 팬 주소 열기 (reverse-gift INV-R7) · 송장이 안 나온 출력 돌려주기 (INV-R13).
 // - 송장 출력 함수(앱의 InvoiceDecryptor)가 몫 상자면 역조공 갈래로 간다: 판정 → DB 가 잠근 자리에서 횟수 올리고 봉투 내줌
@@ -49,18 +50,24 @@ async function tokenOf(loginId: string): Promise<string> {
 
 const q = (v: string) => `'${v.replace(/'/g, "''")}'`;
 
+/** 2026-10-17 부터의 봉인 — 팬 받을 주소. 계정 식별값이 묶인다(reverse-gift INV-R5). */
+function sealForAccount(accountId: string = PROFILE.byeolbit, with_: TestKeys = keys): Promise<Envelope> {
+  return sealEnvelope(fanAddressPlaintext({ accountId, ...LABEL }), with_.publicKey);
+}
+
+/** 2026-10-17 전 봉인 — 받기 때 입력해 주문번호가 묶인 옛 몫. 이 꼴도 계속 열린다(INV-R7 b). */
 function sealFor(orderNo: string, with_: TestKeys = keys): Promise<Envelope> {
   return sealEnvelope(sealedAddressPlaintext({ orderNo, ...LABEL }), with_.publicKey);
 }
 
 type Share = { orderNo: string; shareId: string; qr: string };
 
-/** 하루 → 별빛 몫 하나: 결제 → 별빛이 받기(봉인 주소) → 원 송장번호 → 입고·부착 → 검수 완료. */
-async function inspectedShare(envelope?: (orderNo: string) => Promise<Envelope>): Promise<Share> {
+/** 하루 → 별빛 몫 하나: 결제 → 별빛이 받을 주소 등록 + 받기(등록 주소가 몫에 복사됨) → 원 송장번호 → 입고·부착 → 검수 완료. */
+async function inspectedShare(envelope?: () => Promise<Envelope>): Promise<Share> {
   const s = await paidShare();
   const fan = await signedInClient("byeolbit_fan");
-  const sealed = await (envelope ?? sealFor)(s.orderNo);
-  const accepted = await fan.rpc("accept_revgift", { p_order_no: s.orderNo, p_envelope: sealed });
+  const sealed = await (envelope ?? (() => sealForAccount()))();
+  const accepted = await acceptWithAddress(fan, s.orderNo, sealed);
   if (accepted.error) throw new Error(`accept_revgift 실패: ${accepted.error.message}`);
   const no = waybill();
   await creatorSetsWaybill(s.shareId, no);
@@ -158,12 +165,9 @@ describe("INV-R7: 역조공 몫의 주소는 조건이 모두 참일 때만 열�
     expect(logRows(s.shareId)).toEqual([`denied:order_not_printable:${OWNER_ID}`, `denied:order_not_printable:${OWNER_ID}`]);
   });
 
-  it("INV-R7 S7c (실패경로): 다른 몫의 암호문을 옮겨 붙이면 풀린 주문번호가 달라 거부 — 송장이 안 나왔으니 그 연 줄은 출력 실패처럼 돌려받는다(INV-R13, D12 반영)", async () => {
-    const a = await inspectedShare();
+  it("INV-R7 S7c (실패경로): 다른 팬의 계정이 묶인 암호문을 옮겨 붙이면 풀린 계정이 받는 팬과 달라 거부 — 송장이 안 나왔으니 그 연 줄은 출력 실패처럼 돌려받는다(INV-R13, D12 반영)", async () => {
     const b = await inspectedShare();
-    psql(
-      `update pii.revgift_addresses set envelope = (select envelope from pii.revgift_addresses where share_id = '${a.shareId}') where share_id = '${b.shareId}'`,
-    );
+    psql(`update pii.revgift_addresses set envelope = ${q(JSON.stringify(await sealForAccount(PROFILE.daltokki)))}::jsonb where share_id = '${b.shareId}'`);
     expect(await print(b.qr)).toEqual({ kind: "denied", reason: "order_mismatch" });
     expect(logRows(b.shareId)).toEqual([`opened:1:${OWNER_ID}`, `denied:order_mismatch:${OWNER_ID}`]);
     expect(contextCount(b.qr)).toBe(0);
@@ -174,11 +178,25 @@ describe("INV-R7: 역조공 몫의 주소는 조건이 모두 참일 때만 열�
     expect(seen.error).toBeNull();
     expect((seen.data as { kind: string; print_no: number; released: boolean }[]).map((x) => `${x.kind}:${x.print_no}:${x.released}`)).toEqual(["opened:1:true"]);
 
-    // 시험 준비: 그 몫의 바른 봉인으로 바꿔 넣으면 다음 출력은 첫 출력
-    psql(`update pii.revgift_addresses set envelope = ${q(JSON.stringify(await sealFor(b.orderNo)))}::jsonb where share_id = '${b.shareId}'`);
+    // 시험 준비: 받는 팬(별빛)의 봉인으로 바꿔 넣으면 다음 출력은 첫 출력
+    psql(`update pii.revgift_addresses set envelope = ${q(JSON.stringify(await sealForAccount()))}::jsonb where share_id = '${b.shareId}'`);
     const r = await print(b.qr);
     expect(r.kind).toBe("printed");
     if (r.kind === "printed") expect(r.reprint).toBe(false);
+  });
+
+  it("INV-R7 (b): 2026-10-17 전 받기로 주문번호가 묶인 몫은 계속 열린다 — 다른 몫의 주문번호가 묶였으면 거부", async () => {
+    const a = await inspectedShare();
+    const b = await inspectedShare();
+    psql(`update pii.revgift_addresses set envelope = ${q(JSON.stringify(await sealFor(b.orderNo)))}::jsonb where share_id = '${b.shareId}'`);
+    expect((await print(b.qr)).kind).toBe("printed");
+    psql(`update pii.revgift_addresses set envelope = ${q(JSON.stringify(await sealFor(b.orderNo)))}::jsonb where share_id = '${a.shareId}'`);
+    expect(await print(a.qr)).toEqual({ kind: "denied", reason: "order_mismatch" });
+  });
+
+  it("INV-R7 (b): 봉투를 내줄 때 그 몫의 받는 팬을 같이 내준다 — 계정 봉인을 대조할 값", async () => {
+    const s = await inspectedShare();
+    expect(claim(s.qr)).toMatchObject({ result: "opened", fan_id: PROFILE.byeolbit, order_no: s.orderNo });
   });
 
   it("INV-R7 S7f (동시): 상한 직전인 몫에 출력 요청 둘이 겹쳐도 열리는 것은 하나다", async () => {
@@ -289,14 +307,14 @@ describe("INV-R13: 주소를 연 뒤 송장이 나오기 전에 실패하면 그
   });
 
   it("INV-R13 S13: 봉투를 열지 못한 출력은 돌려받아 횟수가 0 이고, 고친 뒤 다음 출력은 첫 출력이다", async () => {
-    const s = await inspectedShare((no) => sealFor(no, otherKeys));
+    const s = await inspectedShare(() => sealForAccount(PROFILE.byeolbit, otherKeys));
     expect(await print(s.qr)).toEqual({ kind: "failed" });
     expect(logRows(s.shareId)).toEqual([`opened:1:${OWNER_ID}`]);
     expect(contextCount(s.qr)).toBe(0);
     expect(parcelState(s.qr)).toBe("inspected");
 
     // 시험 준비: 바른 키로 봉인한 주소로 바꿔 넣는다
-    psql(`update pii.revgift_addresses set envelope = ${q(JSON.stringify(await sealFor(s.orderNo)))}::jsonb where share_id = '${s.shareId}'`);
+    psql(`update pii.revgift_addresses set envelope = ${q(JSON.stringify(await sealForAccount()))}::jsonb where share_id = '${s.shareId}'`);
     const r = await print(s.qr);
     expect(r.kind).toBe("printed");
     if (r.kind === "printed") expect(r.reprint).toBe(false);

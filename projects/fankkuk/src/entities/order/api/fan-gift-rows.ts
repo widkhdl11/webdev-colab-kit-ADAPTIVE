@@ -19,7 +19,8 @@ const rowSchema = z.object({
   registered_at: ts,
   approved_at: ts.nullable(),
   received_at: ts.nullable(),
-  inspection_result: z.enum(["passed", "returned"]).nullable(),
+  // checking = 확인 중 — 추적기 보관·신고 보관·경찰 인계 상자가 있는 주문(office-workflow INV-W14)
+  inspection_result: z.enum(["passed", "returned", "checking"]).nullable(),
   inspected_at: ts.nullable(),
   shipped_at: ts.nullable(),
   expected_arrival_date: z.string().nullable(),

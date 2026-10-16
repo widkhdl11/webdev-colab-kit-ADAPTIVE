@@ -1,3 +1,4 @@
+import { readOpenedFanAddress } from "@/entities/address/model/fan-address-plaintext";
 import { MAX_DECRYPTS_PER_BOX, type AccessDenyReason } from "@/entities/address/model/access-log";
 import { readOpenedRevgiftAddress, type RevgiftAddressLabel } from "@/entities/revgift/model/sealed-address";
 
@@ -42,13 +43,21 @@ export function authorizeRevgiftDecrypt(req: RevgiftDecryptRequest): RevgiftDecr
 }
 
 /**
- * (b) 연 내용의 주문번호가 요청한 몫과 같아야 그 주소를 쓴다 — 다른 몫에서 옮겨 붙인 암호문을 막는다.
- * 같으면 라벨 다섯 칸만 돌려준다(주문번호·평문 전체는 넘기지 않는다). 꼴이 틀린 내용도 같은 거부다.
+ * (b) 연 내용이 요청한 몫의 것이어야 그 주소를 쓴다 — 다른 몫·다른 팬에서 옮겨 붙인 암호문을 막는다(INV-R5·R7 b).
+ *   · 2026-10-17 부터: 받기 때 팬 등록 주소를 복사한 봉인 — 봉인 속 계정이 그 몫의 받는 팬과 같아야 한다.
+ *     받는 팬을 모르면(shareFanId 가 없는 옛 DB 응답) 쓰지 않는다.
+ *   · 그 전: 받기 때 입력해 주문번호가 묶인 봉인 — 봉인 속 주문번호가 요청한 몫과 같아야 한다(계속 열린다).
+ * 같으면 라벨 다섯 칸만 돌려준다(식별값·평문 전체는 넘기지 않는다). 꼴이 틀린 내용도 같은 거부다.
  */
 export function checkOpenedRevgift(input: {
   requestedOrderNo: string;
+  shareFanId: string | null;
   openedPlaintext: string;
 }): { ok: true; label: RevgiftAddressLabel } | { ok: false; reason: "order_mismatch" } {
-  const opened = readOpenedRevgiftAddress(input.openedPlaintext);
-  return opened && opened.orderNo === input.requestedOrderNo ? { ok: true, label: opened.label } : { ok: false, reason: "order_mismatch" };
+  const account = readOpenedFanAddress(input.openedPlaintext);
+  if (account) {
+    return input.shareFanId !== null && account.accountId === input.shareFanId ? { ok: true, label: account.label } : { ok: false, reason: "order_mismatch" };
+  }
+  const legacy = readOpenedRevgiftAddress(input.openedPlaintext);
+  return legacy && legacy.orderNo === input.requestedOrderNo ? { ok: true, label: legacy.label } : { ok: false, reason: "order_mismatch" };
 }

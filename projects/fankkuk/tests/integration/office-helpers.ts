@@ -109,8 +109,33 @@ export async function receiveAndLabel(staff: SupabaseClient, no: string): Promis
   return scanned.qr;
 }
 
-/** 검수 기록 → 검수 스캔. 돌려주는 값은 바뀐 상태. */
-export async function inspect(staff: SupabaseClient, qr: string, result: Record<string, string>): Promise<string> {
+/**
+ * 개봉 대상(office-workflow INV-W16)인가 — 그 상자를 보낸 팬에게 추적기 판정 기록이 하나라도 있으면(어느 크리에이터에게 보낸 주문이든) 팬 선물 상자는 연다.
+ * DB 의 판정과 같은 조건을 시험 쪽에서 따로 센다(구현 전 빨간불에서도 돌게 DB 함수를 부르지 않는다).
+ */
+export function isOpenTarget(qr: string): boolean {
+  return (
+    psql(
+      `select exists (select 1 from public.office_parcels p join public.boxes b on b.id = p.box_id join public.orders o on o.id = b.order_id
+         join public.orders o2 on o2.fan_id = o.fan_id join public.boxes b2 on b2.order_id = o2.id join public.office_parcels p2 on p2.box_id = b2.id
+         join public.office_inspections i on i.parcel_id = p2.id
+       where p.qr_code = '${qr}' and i.tracker_verdict = 'tracker')`,
+    ) === "t"
+  );
+}
+
+/**
+ * 검수 결과에 개봉 결과를 붙인다 — 개봉 대상이고 결과에 그 칸이 없을 때만. 판정 칸이 있으면 「장치 나옴」, 없으면 「장치 없음」으로 친다.
+ * 같은 팬(별빛)이 앞 시험에서 추적기로 걸리면 그 뒤 상자가 개봉 대상이 되므로, 개봉을 보는 시험이 아닌 곳은 이 기본값으로 지나간다(W16 시험은 직접 넣는다).
+ */
+export function withOpened(qr: string, result: Record<string, string>): Record<string, string> {
+  if ("opened" in result || !("bluetooth" in result) || !isOpenTarget(qr)) return result;
+  return { ...result, opened: "tracker_verdict" in result ? "device" : "none" };
+}
+
+/** 검수 기록 → 검수 스캔. 돌려주는 값은 바뀐 상태. 개봉 대상이면 개봉 결과를 붙인다(withOpened). */
+export async function inspect(staff: SupabaseClient, qr: string, given: Record<string, string>): Promise<string> {
+  const result = withOpened(qr, given);
   await ok(staff.rpc("office_record_inspection", { p_qr: qr, p_result: result }), "office_record_inspection");
   // 팬 선물이 통과로 끝나려면 실측이 있어야 한다(office-workflow INV-W4 S4d) — 아직 없으면 신고 구간 그대로 잰 것으로 친다
   // 크리에이터 확인(confirm)도 받으면 그대로 출고되므로 같은 규칙이다(2026-10-12 (2) D3 ②)

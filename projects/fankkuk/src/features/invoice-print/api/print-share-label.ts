@@ -7,7 +7,7 @@ import type { CreatorLabelDeps } from "./print-creator-label";
 
 // 역조공 송장 출력 — 팬 주소(몫 하나)를 여는 유일한 서버 코드(reverse-gift INV-R7·R13).
 // 순서는 팬 선물 송장 출력(print-creator-label)과 같다: 로그인 토큰 검증 → 판정 재료 읽기 → 판정(대표·받기·단계·횟수) → 거부면 기록 한 줄
-//   → DB 가 몫을 잠근 자리에서 다시 확인하고 횟수를 올리며 봉투를 내줌 → 봉투 열기 → 봉인 속 주문번호 대조 → 출력 단계로 넘기기.
+//   → DB 가 몫을 잠근 자리에서 다시 확인하고 횟수를 올리며 봉투를 내줌 → 봉투 열기 → 봉인 속 계정(옛 봉인은 주문번호) 대조 → 출력 단계로 넘기기.
 //   봉투를 연 뒤 송장이 나오기 전에 실패하거나 봉인 속 주문번호가 달라 쓰지 않으면 그 「연 줄」을 돌려받는다(INV-R13 — 조건은 DB 가 몫을 잠근 자리에서 본다).
 // DB 자격은 복호화 전용 역할(address_decryptor). 평문은 이 호출 안에서만 쓰고 라벨 다섯 칸만 돌려준다 — 로그·오류·기록 줄에 넣지 않는다.
 
@@ -43,6 +43,8 @@ const claimShape = z.union([
     // INV-R13: 이번에 남긴 「연 줄」의 id — 송장이 안 나오면 이 줄을 돌려받는다
     log_id: z.number().int().positive(),
     order_no: z.string(),
+    // INV-R7 b: 그 몫의 받는 팬 — 계정이 묶인 봉인을 대조한다. manual/0019 전 DB 는 내주지 않는다(그러면 계정 봉인은 쓰지 않는다)
+    fan_id: z.string().optional(),
     envelope: z.unknown(),
   }),
   z.object({ result: z.literal("denied"), reason: z.enum(ACCESS_DENY_REASONS) }),
@@ -132,9 +134,13 @@ export async function printShareLabel(deps: ShareLabelDeps, input: { qr: string;
     return releaseOpened(deps, logId, requesterId);
   }
 
-  // INV-R7 (b): 봉인 속 주문번호가 잠근 자리의 몫 주문번호와 다르면(옮겨 붙인 암호문) 쓰지 않는다.
+  // INV-R7 (b): 봉인 속 계정이 잠근 자리의 몫의 받는 팬과 다르면(옛 봉인은 주문번호가 다르면 — 옮겨 붙인 암호문) 쓰지 않는다.
   // 답은 거부지만 송장은 안 나왔다 — 다른 출력 실패와 같이 그 「연 줄」을 돌려받는다(INV-R13, D12 반영). 거부 사유는 운영자 내부 기록에.
-  const opened = checkOpenedRevgift({ requestedOrderNo: claim.data.order_no, openedPlaintext: plaintext });
+  const opened = checkOpenedRevgift({
+    requestedOrderNo: claim.data.order_no,
+    shareFanId: claim.data.fan_id ?? null,
+    openedPlaintext: plaintext,
+  });
   if (!opened.ok) {
     await returnOpenedLog(deps, logId, requesterId);
     await logDenied(deps, ctx, requesterId, opened.reason);

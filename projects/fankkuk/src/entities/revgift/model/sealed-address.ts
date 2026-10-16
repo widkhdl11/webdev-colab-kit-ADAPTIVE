@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { parseEnvelope, type Envelope } from "@/shared/lib/envelope/envelope";
 import { REVGIFT_ORDER_NO_PATTERN } from "./revgift-order-no";
 
-// INV-R5: 팬 주소는 팬 브라우저에서 봉인된 뒤에만 서버로 간다. 봉인하는 내용에는 택배 라벨에 필요한 값
-// (받는 사람 이름·전화번호·주소)과 그 몫의 주문번호가 함께 들어간다 — 주문번호가 같이 묶여 있어야
-// 서버를 장악한 사람이 한 몫의 암호문을 다른 몫에 옮겨 붙여도 송장 출력 때 걸린다(INV-R7 b).
+// INV-R5 (2026-10-17 전): 받기 때마다 주소를 입력하던 때의 봉인 — 택배 라벨에 필요한 값(받는 사람 이름·전화번호·주소)과
+// 그 몫의 주문번호가 함께 들어 있다. 지금은 받기 때 팬 등록 주소(계정이 묶인 봉인, entities/address/model/fan-address-plaintext)를
+// 몫에 복사하므로 새로 만들지 않는다. 그 전에 받기를 한 몫은 이 꼴 그대로 열린다(INV-R7 b — 주문번호 대조).
+// 만드는 함수는 시험이 옛 몫을 재현할 때만 쓴다.
 
 const text = (max: number) => z.string().trim().min(1).max(max);
 
@@ -42,11 +42,4 @@ export function readOpenedRevgiftAddress(plaintext: string): { orderNo: string; 
   if (!parsed.success) return null;
   const { orderNo, recipientName, phone, zipCode, address1, address2 } = parsed.data;
   return { orderNo, label: { recipientName, phone, zipCode, address1, address2 } };
-}
-
-/** 받기 요청 본문. 봉인 형식이 아니면 거부한다(INV-R5) — 평문 주소가 들어올 자리가 없다. */
-export function parseAcceptInput(body: unknown): { ok: true; envelope: Envelope } | { ok: false } {
-  if (typeof body !== "object" || body === null || !("envelope" in body)) return { ok: false };
-  const envelope = parseEnvelope((body as { envelope: unknown }).envelope);
-  return envelope ? { ok: true, envelope } : { ok: false };
 }

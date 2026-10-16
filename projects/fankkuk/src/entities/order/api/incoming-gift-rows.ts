@@ -20,7 +20,8 @@ const rowSchema = z
     received_at: ts.nullable(),
     inspected_at: ts.nullable(),
     shipped_at: ts.nullable(),
-    inspection_result: z.enum(["passed", "returned"]).nullable(),
+    // held = 보관 — 위치 추적기 상자의 신고 선택·신고 보관·경찰 인계(office-workflow INV-W9·W14)
+    inspection_result: z.enum(["passed", "returned", "held"]).nullable(),
     delivery: z.enum(["in_transit", "delivered"]).nullable(),
   })
   .strict();

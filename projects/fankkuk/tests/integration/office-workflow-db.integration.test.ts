@@ -396,30 +396,31 @@ describe("검수 기록 (INV-W4)", () => {
   const verdictOf = (qr: string) =>
     psql(`select coalesce(i.tracker_verdict, '-') from public.office_inspections i join public.office_parcels p on p.id = i.parcel_id where p.qr_code = '${qr}'`);
 
-  it("INV-W4 (S4e): 추적기 반송 결과는 실측 없이도 반송 대기로 넘어간다", async () => {
+  it("INV-W4 (S4e): 추적기 보관 결과는 실측 없이도 추적기 보관으로 넘어간다", async () => {
     const { staff, qr } = await labeledGift();
     expect((await staff.rpc("office_record_inspection", { p_qr: qr, p_result: TRACKER })).error).toBeNull();
-    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("return_waiting");
+    expect((await staff.rpc("office_scan_inspect", { p_qr: qr })).data).toBe("tracker_held");
   });
 
-  it("INV-W4 (S4c): 추적기로 판정한 팬 선물은 보관 없이 바로 반송 대기, 추적기 기록 1줄, 주문의 검수 결과 「반송」, 판정 값이 기록에 남는다", async () => {
+  it("INV-W4 (S4c): 추적기로 판정한 팬 선물은 반송 대기가 아니라 추적기 보관(2026-10-17 카드 d100), 추적기 기록 1줄, 주문의 검수 결과 「반송」(검수 불합격 줄), 판정 값이 기록에 남는다", async () => {
     const { g, staff, qr } = await labeledGift();
-    expect(await inspect(staff, qr, TRACKER)).toBe("return_waiting");
-    expect(parcelState(qr)).toBe("return_waiting");
+    expect(await inspect(staff, qr, TRACKER)).toBe("tracker_held");
+    expect(parcelState(qr)).toBe("tracker_held");
     expect(psql(`select count(*) from public.office_hold_alerts a join public.office_parcels p on p.id = a.parcel_id where p.qr_code = '${qr}'`)).toBe("1");
     expect(psql(`select inspection_result from public.orders where id = '${g.orderId}'`)).toBe("returned");
     expect(verdictOf(qr)).toBe("tracker");
   });
 
-  it("INV-W4 (S4f): 추적기 반송의 환불은 상품 대금 칸만이고, 자동 처리를 돌려도 바뀌는 것이 없다", async () => {
+  it("INV-W4·W14 (S4f): 추적기 보관의 환불은 상품 대금 칸만이고, 고르지 않은 채 기한이 지나 반송 대기로 넘어가도 환불은 같다", async () => {
     const { g, staff, qr } = await labeledGift();
-    expect(await inspect(staff, qr, TRACKER)).toBe("return_waiting");
+    expect(await inspect(staff, qr, TRACKER)).toBe("tracker_held");
     expect(psql(`select public.refund_due_of_payment(p.id) = p.goods_krw from public.payments p where p.order_id = '${g.orderId}' and p.kind = 'initial'`)).toBe("t");
     psql(`update public.office_parcels set inspected_at = now() - interval '169 hours' where qr_code = '${qr}'`);
     const r = await staff.rpc("office_run_expiry", { p_order_no: g.orderNo });
     expect(r.error).toBeNull();
-    expect((r.data as { held: number }).held).toBe(0);
+    expect((r.data as { held: number }).held).toBe(1);
     expect(parcelState(qr)).toBe("return_waiting");
+    expect(psql(`select public.refund_due_of_payment(p.id) = p.goods_krw from public.payments p where p.order_id = '${g.orderId}' and p.kind = 'initial'`)).toBe("t");
   });
 
   it("INV-W4 (S4g): 블루투스 반응이지만 「추적기 아님」이면 크리에이터 확인 — 실측 뒤 검수 스캔으로 확인 대기(held), 판정 값이 기록에 남고 추적기 기록은 없다", async () => {

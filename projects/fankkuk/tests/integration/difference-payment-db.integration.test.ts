@@ -285,10 +285,10 @@ describe("차액 결제 — 첫 결제와 같은 대조·한 번만 확정 (INV-
     expect((await adminClient().rpc("claim_difference_payment", { p_toss_order_id: toss })).data).toBe(true);
   });
 
-  it("보안 (실패경로): 추적기로 판정돼 반송 대기로 간 상자의 차액도 승인 권리를 얻지 못한다", async () => {
+  it("보안 (실패경로): 추적기로 판정돼 추적기 보관으로 간 상자의 차액도 승인 권리를 얻지 못한다(office-workflow INV-W14 — 그 상자는 나가지 않는다)", async () => {
     const { g, qr } = await withDifference();
     const toss = ((await prepare(g.boxIds[0]!)).data as { toss_order_id: string }[])[0]!.toss_order_id;
-    expect(await inspect(await signedInClient("fankkuk_staff"), qr, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" })).toBe("return_waiting");
+    expect(await inspect(await signedInClient("fankkuk_staff"), qr, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" })).toBe("tracker_held");
     expect((await adminClient().rpc("claim_difference_payment", { p_toss_order_id: toss })).data).toBe(false);
     expect(differenceRow(g.orderId)).toBe("2000/0/500/500/1000/pending");
   });

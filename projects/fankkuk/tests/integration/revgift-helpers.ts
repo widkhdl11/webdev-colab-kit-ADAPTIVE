@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { adminClient, officeRowsDelete, psql } from "./helpers";
 
 // 역조공 통합 시험 공용. 시험이 만든 보내기는 주문번호가 RG-T 로 시작한다 — 끝나면 그것만 지운다.
@@ -118,6 +119,26 @@ export function deleteTestRevgifts(): void {
 export function sampleEnvelope(): Record<string, unknown> {
   const b64 = (n: number) => Buffer.from(crypto.getRandomValues(new Uint8Array(n))).toString("base64");
   return { v: 1, alg: "RSA-OAEP-256+A256GCM", wrappedKey: b64(256), iv: b64(12), ciphertext: b64(40) };
+}
+
+/**
+ * 로그인한 팬의 받을 주소를 등록한다(address-protection INV-P17, manual/0019). 받기는 이 주소의 암호문을 몫에 복사한다(reverse-gift INV-R4).
+ * 이미 있으면 덮어쓴다. 실패하면 예외.
+ */
+export async function registerFanAddress(fan: SupabaseClient, envelope: unknown = sampleEnvelope(), label = "home"): Promise<void> {
+  const { data, error } = await fan.rpc("set_my_fan_address", { p_envelope: envelope, p_label: label });
+  if (error || data !== "saved") throw new Error(`set_my_fan_address 실패: ${error?.code ?? String(data)}`);
+}
+
+/** 받을 주소를 등록한 뒤 받기를 한다 — 받기 함수의 답을 그대로 돌려준다. */
+export async function acceptWithAddress(fan: SupabaseClient, orderNo: string, envelope: unknown = sampleEnvelope()) {
+  await registerFanAddress(fan, envelope);
+  return fan.rpc("accept_revgift", { p_order_no: orderNo });
+}
+
+/** 시험 팬들의 받을 주소를 비운다(기록은 추가만 되므로 남는다). */
+export function clearFanAddresses(profileIds: readonly string[]): void {
+  psql(`delete from pii.fan_addresses where account_id in (${profileIds.map((id) => `'${id}'`).join(", ")})`);
 }
 
 /** 받지 않음·기한 지남으로 살려 둔 몫의 6자리를 hours 시간 전에 살려 둔 것처럼 옮긴다(reverse-gift INV-R11 — 168시간 뒤 자동 처리가 닫는다). */

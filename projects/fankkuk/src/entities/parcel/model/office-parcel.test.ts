@@ -75,9 +75,16 @@ describe("들어온 상자 읽기 (office-workflow INV-W1·W7)", () => {
       envelopeNo: "Q-000123",
       outboundWaybillNo: null,
       returnWaybillNo: "123456789012",
+      openTarget: false,
     };
     expect(parcelDetailFromData([DETAIL])).toEqual(expected);
     expect(parcelDetailFromData(DETAIL)).toEqual(expected);
+  });
+
+  it("INV-W16: 개봉 대상 여부(open_target)를 그대로 옮긴다 — 칸이 없는 읽기는 대상이 아닌 것으로, 불린이 아니면 꼴이 다른 줄", () => {
+    expect(parcelDetailFromData({ ...DETAIL, open_target: true })?.openTarget).toBe(true);
+    expect(parcelDetailFromData({ ...DETAIL, open_target: false })?.openTarget).toBe(false);
+    expect(parcelDetailFromData({ ...DETAIL, open_target: "yes" })).toBeNull();
   });
 
   it("INV-W1 (실패경로): 0줄·두 줄·꼴이 다른 줄이면 null", () => {

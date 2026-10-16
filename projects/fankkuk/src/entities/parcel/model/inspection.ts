@@ -11,14 +11,16 @@ export type CheckMark = "clear" | "found";
 /** 결론. hold = 추적기 반송(값 이름은 환불·취소 함수가 읽는 DB 값 그대로) · confirm = 크리에이터 확인 */
 export type InspectionOutcome = "pass" | "return" | "hold" | "confirm";
 export type TrackerVerdict = "tracker" | "not_tracker";
+/** 개봉 결과(office-workflow INV-W16) — 추적기 판정 이력이 있는 팬의 상자만. none = 장치 없음 · device = 장치 나옴(반응과 같이 판정이 필요하다) */
+export type OpenedResult = "none" | "device";
 
-export type GiftChecks = { kind: "gift"; bluetooth: CheckMark; rf: CheckMark; metal: CheckMark; trackerVerdict: TrackerVerdict | null };
+export type GiftChecks = { kind: "gift"; bluetooth: CheckMark; rf: CheckMark; metal: CheckMark; trackerVerdict: TrackerVerdict | null; opened?: OpenedResult | null };
 export type RevgiftChecks = { kind: "revgift"; surface: CheckMark; prohibited: CheckMark };
 export type InspectionChecks = GiftChecks | RevgiftChecks;
 
-/** 블루투스·RF 중 하나라도 반응했는가 — 그러면 추적기 판정이 필요하다 */
-export function trackerReacted(checks: Pick<GiftChecks, "bluetooth" | "rf">): boolean {
-  return checks.bluetooth === "found" || checks.rf === "found";
+/** 블루투스·RF 중 하나라도 반응했거나 개봉에서 장치가 나왔는가 — 그러면 추적기 판정이 필요하다(INV-W4·W16) */
+export function trackerReacted(checks: Pick<GiftChecks, "bluetooth" | "rf" | "opened">): boolean {
+  return checks.bluetooth === "found" || checks.rf === "found" || checks.opened === "device";
 }
 
 /** 반응이 없어진 팬 선물의 남은 추적기 판정을 비운다 — 다시 반응이 나오면 판정은 기본값 없이 비어 있어야 한다 */
@@ -44,12 +46,14 @@ const giftResult = z
     rf: mark,
     metal: mark,
     tracker_verdict: z.enum(["tracker", "not_tracker"]).optional(),
+    // 개봉 대상이면 꼭 있고 아니면 없다 — 대상인지는 DB 기록 함수가 판정한다(INV-W16)
+    opened: z.enum(["none", "device"]).optional(),
     outcome: z.enum(["pass", "return", "hold", "confirm"]),
   })
   .strict()
   // 반응 있음 ⇔ 판정 있음, 그리고 결론이 판정과 맞아야 한다
   .refine((r) => trackerReacted(r) === (r.tracker_verdict !== undefined))
-  .refine((r) => allowedOutcomes({ kind: "gift", bluetooth: r.bluetooth, rf: r.rf, metal: r.metal, trackerVerdict: r.tracker_verdict ?? null }).includes(r.outcome));
+  .refine((r) => allowedOutcomes({ kind: "gift", bluetooth: r.bluetooth, rf: r.rf, metal: r.metal, trackerVerdict: r.tracker_verdict ?? null, opened: r.opened ?? null }).includes(r.outcome));
 
 const revgiftResult = z
   .object({ surface: mark, prohibited: mark, outcome: z.enum(["pass", "return"]) })
@@ -69,7 +73,8 @@ export function inspectionResultOf(checks: InspectionChecks, chosen: InspectionO
   const outcome = allowed.includes(chosen) ? chosen : allowed[0];
   if (outcome === undefined) return null;
   if (checks.kind === "gift") {
-    const base = { bluetooth: checks.bluetooth, rf: checks.rf, metal: checks.metal };
+    // 개봉 결과는 화면이 고른 때만 싣는다(개봉 대상인지는 DB 가 정한다, INV-W16)
+    const base = { bluetooth: checks.bluetooth, rf: checks.rf, metal: checks.metal, ...(checks.opened ? { opened: checks.opened } : {}) };
     // 반응이 없어진 뒤 남은 판정은 싣지 않는다
     return trackerReacted(checks) && checks.trackerVerdict ? { ...base, tracker_verdict: checks.trackerVerdict, outcome } : { ...base, outcome };
   }

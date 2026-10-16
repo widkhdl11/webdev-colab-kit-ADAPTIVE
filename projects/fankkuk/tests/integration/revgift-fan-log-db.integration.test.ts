@@ -1,11 +1,11 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { sealedAddressPlaintext } from "@/entities/revgift/model/sealed-address";
+import { fanAddressPlaintext } from "@/entities/address/model/fan-address-plaintext";
 import { createInvoiceDecryptor, type InvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
 import { sealEnvelope } from "@/shared/lib/envelope/envelope";
 import { anonClient, deleteTestOrders, psql, registerTestOrder, signedInClient } from "./helpers";
 import { decryptFileText, LABEL, OWNER_ID, testKeyPair, type TestKeys } from "./invoice-helpers";
 import { creatorSetsWaybill, deleteTestUnmatched, inspect, paidShare, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
-import { deleteTestRevgifts, followHaru, payTestRevgift, PROFILE, registerTestRevgift, unfollowHaru } from "./revgift-helpers";
+import { acceptWithAddress, deleteTestRevgifts, followHaru, payTestRevgift, PROFILE, registerTestRevgift, unfollowHaru } from "./revgift-helpers";
 
 // 팬이 자기 몫 주소의 열람 기록을 본다 (reverse-gift INV-R16).
 // 읽기 함수(my_revgift_access_log)는 사람 ID 를 받지 않고, 로그인 토큰의 계정이 받는 팬인 몫의 기록만 돌려준다.
@@ -53,8 +53,8 @@ async function print(qr: string, loginId: string) {
 async function inspectedShare(): Promise<{ orderNo: string; shareId: string; qr: string }> {
   const s = await paidShare();
   const fan = await signedInClient("byeolbit_fan");
-  const sealed = await sealEnvelope(sealedAddressPlaintext({ orderNo: s.orderNo, ...LABEL }), keys.publicKey);
-  const accepted = await fan.rpc("accept_revgift", { p_order_no: s.orderNo, p_envelope: sealed });
+  const sealed = await sealEnvelope(fanAddressPlaintext({ accountId: PROFILE.byeolbit, ...LABEL }), keys.publicKey);
+  const accepted = await acceptWithAddress(fan, s.orderNo, sealed);
   if (accepted.error) throw new Error(`accept_revgift 실패: ${accepted.error.message}`);
   const no = waybill();
   await creatorSetsWaybill(s.shareId, no);

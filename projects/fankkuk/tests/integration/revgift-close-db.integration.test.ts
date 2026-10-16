@@ -9,7 +9,8 @@ import {
   payTestRevgift,
   PROFILE,
   registerTestRevgift,
-  sampleEnvelope,
+  acceptWithAddress,
+  registerFanAddress,
   shareReply,
   unfollowHaru,
 } from "./revgift-helpers";
@@ -36,7 +37,7 @@ async function acceptedAndLabeled(): Promise<{ orderNo: string; qr: string }> {
   await payTestRevgift(send);
   const orderNo = send.orderNos[0]!;
   const fan = await signedInClient("byeolbit_fan");
-  const accepted = await fan.rpc("accept_revgift", { p_order_no: orderNo, p_envelope: sampleEnvelope() });
+  const accepted = await acceptWithAddress(fan, orderNo);
   if (accepted.error) throw new Error(`accept_revgift 실패: ${accepted.error.message}`);
   const shareId = psql(`select id from public.revgift_shares where order_no = '${orderNo}'`);
   const no = waybill();
@@ -268,7 +269,8 @@ describe("INV-R10 · INV-K1: 역조공 받기 기한 처리는 운영자가 관�
       const no = send.orderNos[0]!;
       // 기한이 300ms 뒤에 닥친다 — 받기는 바로 보내고, 기한 처리는 기한을 넘겨 보낸다
       psql(`update public.revgift_sends set settled_at = now() - interval '168 hours' + interval '300 milliseconds' where id = '${send.sendId}'`);
-      const accepting = fan.rpc("accept_revgift", { p_order_no: no, p_envelope: sampleEnvelope() });
+      await registerFanAddress(fan);
+      const accepting = fan.rpc("accept_revgift", { p_order_no: no });
       await new Promise((r) => setTimeout(r, 300));
       const [accepted] = await Promise.all([accepting, staff.rpc("office_run_expiry", { p_order_no: no })]);
       const reply = shareReply(no);

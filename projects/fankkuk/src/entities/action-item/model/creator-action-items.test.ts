@@ -118,3 +118,23 @@ describe("남은 날 (INV-J5 — 서울 시간)", () => {
     expect(daysLeftOf("2026-10-16T14:59:00Z", "2026-10-16T14:00:00Z")).toEqual({ text: "오늘까지", soon: true });
   });
 });
+
+describe("추적 장치 발견 줄 (action-center INV-J5, office-workflow INV-W14)", () => {
+  const tracker = { ...bluetooth, kind: "tracker", order_no: "FC-T9", choice: "no_report" };
+
+  it("INV-J5 (S5d): 추적 장치 발견 줄은 받은 선물 판의 따로 묶음(tracker)이고 신고 선택을 옮긴다 — 줄 수(J6)에도 들어간다", () => {
+    const items = parseCreatorActionItems([tracker, bluetooth, approval]);
+    expect(items).toHaveLength(3);
+    expect(items[0]).toMatchObject({ kind: "tracker", orderNo: "FC-T9", choice: "no_report", boxSeq: 1 });
+    const boards = splitBoards(items);
+    expect(boards.tracker.map((t) => t.orderNo)).toEqual(["FC-T9"]);
+    expect(boards.received.map((r) => r.kind)).toEqual(["bluetooth", "approval"]);
+    expect(parseCreatorActionItems([{ ...tracker, choice: null }])[0]).toMatchObject({ kind: "tracker", choice: null });
+  });
+
+  it("INV-J5 (실패경로): 선택지가 종류와 짝이 맞지 않거나(추적기 줄에 받기, 블루투스 줄에 신고하기) 판이 보낸 선물이면 전체를 거부한다", () => {
+    expect(() => parseCreatorActionItems([{ ...tracker, choice: "accept" }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...bluetooth, choice: "report" }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...tracker, board: "sent" }])).toThrow();
+  });
+});

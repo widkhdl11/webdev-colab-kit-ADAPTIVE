@@ -5,8 +5,8 @@
  *  · returned 검수에서 반송 · closed 거절·7일 반려·취소 */
 export type IncomingStage = "paid" | "received" | "inspected" | "shipped" | "in_transit" | "delivered" | "returned" | "closed";
 
-/** 검수 결과. 추적기 상자도 보관 없이 바로 반송 대기로 가므로 「반송」이다(INV-W4, 2026-10-12 문제집 D2) — 보관 값은 없다 */
-export type IncomingInspection = "passed" | "returned";
+/** 검수 결과. held = 보관 — 위치 추적기 상자를 신고할지 고르는 동안·신고 보관·경찰 인계 뒤(INV-W9·W14, 2026-10-17). 반송 대기로 넘어가면 returned */
+export type IncomingInspection = "passed" | "returned" | "held";
 
 export type IncomingGiftView = {
   orderNo: string;

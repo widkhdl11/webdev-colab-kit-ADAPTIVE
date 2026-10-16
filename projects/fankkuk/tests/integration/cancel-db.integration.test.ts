@@ -241,3 +241,84 @@ describe("대표의 입고 뒤 취소 (INV-M17)", () => {
     expect(psql(`select count(*) from public.order_cancellations where order_id in ('${g.orderId}', '${notYet.orderId}')`)).toBe("0");
   });
 });
+
+describe("크리에이터 사정으로 취소 (INV-M21)", () => {
+  const cancelForCreator = async (orderNo: string, reason: string, login = "fankkuk_admin") =>
+    (await signedInClient(login)).rpc("admin_cancel_for_creator", { p_order_no: orderNo, p_reason: reason });
+  const cancellation = (orderId: string) =>
+    psql(`select coalesce((select kind || '|' || reason from public.order_cancellations where order_id = '${orderId}'), 'none')`);
+
+  it("INV-M21 (S21): 상자 2개 중 A 만 입고·검수된 승인 주문을 대표가 사유와 함께 취소 — 기록 한 줄, 환불 = (A − 배송비) + (살려 둔 B − 배송비), A 는 반송 대기", async () => {
+    const op = await staff();
+    const g = await paidGift(2);
+    await approve(g);
+    const qrA = await receive(op, g.boxIds[0]!);
+    await inspect(op, qrA, FAN_PASS);
+    expect((await cancelForCreator(g.orderNo, "크리에이터 탈퇴 요청")).error).toBeNull();
+    expect(status(g.orderId)).toBe("canceled");
+    expect(cancellation(g.orderId)).toBe("creator|크리에이터 탈퇴 요청");
+    expect(parcelState(qrA)).toBe("return_waiting");
+    expect(codeState(g.boxIds[1]!)).toBe("valid");
+    // 소형 2개 13,800원이면 (6,900 − 4,000) + (6,900 − 4,000) = 5,800 — 검수비는 빼지 않는다(입고 뒤 취소 4,300 과 다르다)
+    expect(Number(orderRefundDue(g.orderId))).toBe(5800);
+  });
+
+  it("INV-M21: 상자가 하나도 오지 않은 진행 중 주문도 취소된다 — 받는 주소를 본 적이 없으면 6자리는 무효, 환불은 전액", async () => {
+    const g = await paidGift(1);
+    expect((await cancelForCreator(g.orderNo, "탈퇴")).error).toBeNull();
+    expect(status(g.orderId)).toBe("canceled");
+    expect(codeState(g.boxIds[0]!)).toBe("void");
+    expect(orderRefundDue(g.orderId)).toBe(paid(g.orderId));
+  });
+
+  it("INV-M8·M21: 차액 결제를 마친 주문을 크리에이터 사정으로 취소하면 차액 결제의 환불은 배송비 칸만 뺀 값", async () => {
+    const op = await staff();
+    const g = await paidGift(1);
+    await receive(op, g.boxIds[0]!);
+    psql(
+      `insert into public.payments (order_id, kind, box_id, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status, payment_key, settled_at)
+       values ('${g.orderId}', 'difference', '${g.boxIds[0]}', 'pay_diff_${g.orderNo.replace("-", "").toLowerCase()}', 2000, 0, 500, 500, 1000, 'done', 'pk_diff_${g.orderId}', now())`,
+    );
+    expect((await cancelForCreator(g.orderNo, "탈퇴")).error).toBeNull();
+    const diffDue = psql(`select coalesce(public.refund_due_of_payment(p.id)::text, 'none') from public.payments p where p.order_id = '${g.orderId}' and p.kind = 'difference'`);
+    expect(diffDue).toBe("1000");
+  });
+
+  it("INV-M21 (S21b, 실패경로): 출고된 주문·출고 송장을 출력한 상자가 있는 주문은 거부, 직원·팬·크리에이터는 42501, 사유가 없거나 201자면 22023 — 그대로 남는다", async () => {
+    const op = await staff();
+    const g = await paidGift(2);
+    const qr = await receive(op, g.boxIds[0]!);
+    for (const who of ["fankkuk_staff", "byeolbit_fan", "haru_creator"]) {
+      expect((await cancelForCreator(g.orderNo, "사유", who)).error?.code).toBe("42501");
+    }
+    expect((await anonClient().rpc("admin_cancel_for_creator", { p_order_no: g.orderNo, p_reason: "사유" })).error).not.toBeNull();
+    expect((await cancelForCreator(g.orderNo, " ")).error?.code).toBe("22023");
+    expect((await cancelForCreator(g.orderNo, "가".repeat(201))).error?.code).toBe("22023");
+    expect(status(g.orderId)).not.toBe("canceled");
+
+    psql(`begin; set local session_replication_role = replica; update public.office_parcels set state = 'label_printed', outbound_waybill_no = '700000000002' where qr_code = '${qr}'; commit;`);
+    expect((await cancelForCreator(g.orderNo, "사유")).error?.code).toBe("P0002");
+    psql(`begin; set local session_replication_role = replica; update public.orders set status = 'shipped', shipped_at = now() where id = '${g.orderId}'; commit;`);
+    expect((await cancelForCreator(g.orderNo, "사유")).error?.code).toBe("P0002");
+    expect(status(g.orderId)).toBe("shipped");
+    expect((await cancelForCreator("FC-TNONE01", "사유")).error?.code).toBe("P0002");
+    expect(cancellation(g.orderId)).toBe("none");
+  });
+
+  it("INV-M21 (S21c): 추적기 보관 상자가 있는 주문을 크리에이터 사정으로 취소하면 주문은 취소, 그 상자는 추적기 보관 그대로이고 환불 몫은 0", async () => {
+    const op = await staff();
+    const g = await paidGift(2);
+    const caught = await receive(op, g.boxIds[0]!);
+    const other = await receive(op, g.boxIds[1]!);
+    expect(await inspect(op, caught, { bluetooth: "found", rf: "clear", metal: "clear", tracker_verdict: "tracker", outcome: "hold" })).toBe("tracker_held");
+    await inspect(op, other, FAN_PASS);
+    expect((await cancelForCreator(g.orderNo, "탈퇴")).error).toBeNull();
+    expect(status(g.orderId)).toBe("canceled");
+    expect(parcelState(caught)).toBe("tracker_held");
+    expect(parcelState(other)).toBe("return_waiting");
+    await op.rpc("office_run_expiry", { p_order_no: g.orderNo });
+    expect(parcelState(caught)).toBe("tracker_held");
+    // 추적기 상자 0 + 통과한 상자 6,900 − 4,000 = 2,900
+    expect(Number(orderRefundDue(g.orderId))).toBe(2900);
+  });
+});

@@ -10,8 +10,9 @@ export type ParcelKind = (typeof PARCEL_KINDS)[number];
 
 // 상자 상태 목록의 정본은 box-rows.ts(BOX_STATES) — 팬·크리에이터 화면과 같은 목록을 쓴다.
 // 도착하지 않음으로 닫힌 상자(INV-W10)는 사무실 목록에 오지 않는다(admin_office_parcels 가 뺀다) — 그 값이 오면 꼴이 다른 줄로 버린다.
-export const PARCEL_STATES = BOX_STATES.filter((s): s is Exclude<BoxState, "missing"> => s !== "missing");
-export type ParcelState = Exclude<BoxState, "missing">;
+// 「확인 중」(checking)은 팬 읽기만 쓰는 값이라(INV-W14) 사무실 목록에도 오지 않는다.
+export const PARCEL_STATES = BOX_STATES.filter((s): s is Exclude<BoxState, "missing" | "checking"> => s !== "missing" && s !== "checking");
+export type ParcelState = Exclude<BoxState, "missing" | "checking">;
 
 export const NEXT_STEPS = [
   "wait_waybill",
@@ -24,6 +25,9 @@ export const NEXT_STEPS = [
   "wait_accept",
   "wait_expiry",
   "held",
+  // 추적기 보관(크리에이터가 신고 여부를 고르면 처리) · 신고 보관(경찰 인계를 기록) — office-workflow INV-W14
+  "tracker_held",
+  "report_held",
   // 보류(inbound-address-code INV-C5·C8): 같은 6자리·같은 송장번호 분쟁이거나 주인이 「제가 보낸 게 아니에요」를 눌러 출고를 멈춘 상자
   "on_hold",
   "print_return",
@@ -54,6 +58,8 @@ export type ParcelDetail = Omit<OfficeParcel, "qr" | "receivedAt"> & {
   envelopeNo: string;
   outboundWaybillNo: string | null;
   returnWaybillNo: string | null;
+  /** 개봉 대상(office-workflow INV-W16) — 보낸 팬에게 추적기 판정 기록이 있다. 검수 기록에 개봉 결과가 꼭 있어야 한다. 운영자 화면에만 */
+  openTarget: boolean;
 };
 
 const common = {
@@ -73,6 +79,8 @@ const detailRow = z.object({
   envelope_no: z.string(),
   outbound_waybill_no: z.string().nullable(),
   return_waybill_no: z.string().nullable(),
+  // 입고 스캔 응답처럼 이 칸이 없는 읽기는 대상이 아닌 것으로 둔다 — 개봉 결과의 최종 판정은 DB 기록 함수가 한다(INV-W16)
+  open_target: z.boolean().default(false),
 });
 
 export function officeParcelsFromRows(rows: unknown): OfficeParcel[] | null {
@@ -109,6 +117,7 @@ export function parcelDetailFromData(data: unknown): ParcelDetail | null {
     envelopeNo: r.envelope_no,
     outboundWaybillNo: r.outbound_waybill_no,
     returnWaybillNo: r.return_waybill_no,
+    openTarget: r.open_target,
   };
 }
 
@@ -134,6 +143,11 @@ export function parcelTabOf(state: ParcelState): ParcelTab {
     case "return_printed":
     case "returned":
       return "return";
+    // 추적기 보관·신고 보관·경찰 인계(INV-W14) — 돌려보내지 않지만 출고로 가지 않는 상자라 반송 탭에 둔다
+    case "tracker_held":
+    case "report_held":
+    case "police_handed":
+      return "return";
   }
 }
 
@@ -149,6 +163,7 @@ const detailReply = z.object({
   envelopeNo: z.string(),
   outboundWaybillNo: z.string().nullable(),
   returnWaybillNo: z.string().nullable(),
+  openTarget: z.boolean().default(false),
 });
 
 /** 브라우저 쪽: 서버 응답(JSON)의 상자를 다시 확인한다. 꼴이 다르면 null. */

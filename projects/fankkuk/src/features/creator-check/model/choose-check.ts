@@ -10,7 +10,7 @@ import type { Viewer } from "@/entities/session/model/viewer";
 
 const target = { orderNo: z.string().regex(/^[A-Z0-9][A-Z0-9-]{0,39}$/), boxSeq: z.number().int().min(1).max(99) };
 const inputSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("choose"), ...target, choice: z.enum(["accept", "return"]) }).strict(),
+  z.object({ action: z.literal("choose"), ...target, choice: z.enum(["accept", "return", "report", "no_report"]) }).strict(),
   z.object({ action: z.literal("cancel"), ...target }).strict(),
 ]);
 

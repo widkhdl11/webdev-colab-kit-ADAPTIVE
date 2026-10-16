@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { labeled, measure, paidOrder } from "./difference-helpers";
 import { adminClient, anonClient, deleteTestOrders, payTestOrder, psql, registerTestOrder, SEED, signedInClient } from "./helpers";
 import { approve, deleteTestUnmatched, fanSetsWaybill, paidGift, receiveAndLabel, scanInbound, waybill, type Unit } from "./office-helpers";
-import { backdateSettlement, deleteTestRevgifts, followHaru, paidShareFor, PROFILE, sampleEnvelope, unfollowHaru } from "./revgift-helpers";
+import { acceptWithAddress, backdateSettlement, deleteTestRevgifts, followHaru, paidShareFor, PROFILE, unfollowHaru } from "./revgift-helpers";
 
 // 처리할 일 (action-center INV-J1·J3·J4). 카드는 저장하지 않고 읽을 때마다 원천(차액 요청·상자·역조공 몫)에서 계산한다.
 // 읽기 함수 하나(my_action_items) — 계정 인자 없이 로그인 토큰의 계정 것만. 시간은 원천의 시각(차액 요청 시각·결제 완료 시각)을 앞으로 옮겨 흉내 낸다.
@@ -211,7 +211,7 @@ describe("INV-J1: 카드는 세 종류, 상자(몫) 하나에 하나, 보이는 
     const fan = await signedInClient("byeolbit_fan");
     expect((await fan.rpc("decline_revgift", { p_order_no: declined.orderNo })).error).toBeNull();
     const accepted = await paidShareFor(PROFILE.byeolbit);
-    expect((await fan.rpc("accept_revgift", { p_order_no: accepted.orderNo, p_envelope: sampleEnvelope() })).error).toBeNull();
+    expect((await acceptWithAddress(fan, accepted.orderNo)).error).toBeNull();
     const late = await paidShareFor(PROFILE.byeolbit);
     backdateSettlement(late.send, 167, 59);
     expect(await cards("byeolbit_fan", [declined.orderNo, accepted.orderNo, late.orderNo])).toEqual([`revgift:${late.orderNo}:-`]);

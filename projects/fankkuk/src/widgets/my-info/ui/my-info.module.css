@@ -40,3 +40,4 @@
   .save-bar :global(.btnrow) { width: 100%; }
   .save-bar :global(.btnrow .btn) { flex: 1; }
 }
+.panelBtns { margin-top: var(--space-4); }

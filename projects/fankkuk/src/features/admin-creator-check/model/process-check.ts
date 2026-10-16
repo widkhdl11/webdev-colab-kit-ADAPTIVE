@@ -9,10 +9,11 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 // 화면을 연 뒤 크리에이터가 취소하고 다르게 고른 것을 잘못 처리하지 않게, 지금 선택과 다르면 DB 가 「바뀜」으로 거부한다.
 // 처리한 운영자·시각은 운영자 기록에만 남고 크리에이터에게 가지 않는다(address-protection INV-P7). 운영자가 아니면 404.
 
-const processShape = z.object({ qr: z.string().regex(/^Q-[0-9]{6}$/), seen: z.enum(["accept", "return"]) }).strict();
+const processShape = z.object({ qr: z.string().regex(/^Q-[0-9]{6}$/), seen: z.enum(["accept", "return", "report", "no_report"]) }).strict();
 export type CreatorCheckProcessWrite = z.input<typeof processShape>;
 
-const replySchema = z.enum(["accepted", "returned", "no_choice", "changed", "processed", "closed", "not_found"]);
+// reported·not_reported = 추적기 보관 상자의 신고하기·신고하지 않기 처리(office-workflow INV-W14). expired = 기한(168시간)이 지나 자동 처리를 기다림
+const replySchema = z.enum(["accepted", "returned", "reported", "not_reported", "no_choice", "changed", "processed", "closed", "expired", "not_found"]);
 
 const REFUSED = {
   no_choice: "크리에이터가 고른 것이 없어요(취소했어요). 목록을 새로 고침해 주세요.",
@@ -23,10 +24,10 @@ const REFUSED = {
 } as const;
 
 /** 운영자 목록 한 줄 — QR·주문번호·상자 순번·크리에이터의 선택·고른 시각·기한(보낸 팬·크리에이터 칸은 없다) */
-export type CreatorCheckChoiceRow = { qr: string; orderNo: string; boxSeq: number; choice: "accept" | "return"; chosenAt: string; dueAt: string };
+export type CreatorCheckChoiceRow = { qr: string; orderNo: string; boxSeq: number; choice: "accept" | "return" | "report" | "no_report"; chosenAt: string; dueAt: string };
 
 const rowsSchema = z.array(
-  z.object({ qr: z.string(), order_no: z.string(), box_seq: z.number().int(), choice: z.enum(["accept", "return"]), chosen_at: z.string(), due_at: z.string() }).strict(),
+  z.object({ qr: z.string(), order_no: z.string(), box_seq: z.number().int(), choice: z.enum(["accept", "return", "report", "no_report"]), chosen_at: z.string(), due_at: z.string() }).strict(),
 );
 
 type Rpc = Pick<SupabaseClient, "rpc">;
@@ -48,6 +49,8 @@ export async function processCreatorCheck(client: Rpc, body: unknown): Promise<J
   const reply = replySchema.safeParse(data);
   // 모르는 답이면 처리됐다고 단정하지 않는다
   if (!reply.success) return { status: 500, body: { message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." } };
-  if (reply.data === "accepted" || reply.data === "returned") return { status: 200, body: { result: reply.data } };
+  if (reply.data === "accepted" || reply.data === "returned" || reply.data === "reported" || reply.data === "not_reported") return { status: 200, body: { result: reply.data } };
+  // 문구가 정해지지 않은 거절(기한 지남)은 코드값만 돌려준다
+  if (reply.data === "expired") return { status: 409, body: { code: reply.data } };
   return { status: reply.data === "not_found" ? 404 : 409, body: { message: REFUSED[reply.data] } };
 }

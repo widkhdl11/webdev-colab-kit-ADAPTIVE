@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { adminClient, anonClient, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
+import { adminClient, anonClient, deleteTestOrders, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 import { deleteTestUnmatched, fanSetsWaybill, inspect, receiveAndLabel, waybill } from "./office-helpers";
 import { saveCreatorProfile } from "@/features/creator-settings-save/model/save-creator-settings";
@@ -55,6 +55,8 @@ beforeEach(() => {
   deleteTestUnmatched();
 });
 afterAll(() => {
+  // 추적기로 판정한 시험 주문을 남겨 두면 그 팬(별빛)이 다음 파일에서 개봉 대상이 된다(office-workflow INV-W16) — 이 파일에서 지운다
+  deleteTestOrders();
   resetSettings();
   dropCvAccounts();
 });

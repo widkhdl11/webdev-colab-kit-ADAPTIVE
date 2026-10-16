@@ -53,7 +53,11 @@ export const ALLOWED = [
 
 // 로그인 키로 부를 수 있으면서 개인정보 구역에 닿는 함수 — 무엇을 돌려주는지 사람이 보고 올린 것만
 export const PII_FUNCTIONS = {
-  accept_revgift: "역조공 받기 — 팬이 봉인한 주소를 저장만 한다, 돌려주는 것은 결과 글자(reverse-gift INV-R3)",
+  accept_revgift: "역조공 받기 — 팬의 등록 주소 암호문을 그 몫에 복사만 한다, 돌려주는 것 없음(reverse-gift INV-R4)",
+  // 팬 받을 주소(address-protection INV-P17, manual/0019) — 로그인한 팬 본인 칸만
+  set_my_fan_address: "팬 받을 주소 저장 — 봉인된 값과 이름표를 저장만 한다, 돌려주는 것은 결과 글자(saved·not_fan)",
+  delete_my_fan_address: "팬 받을 주소 지우기 — 돌려주는 것은 결과 글자(deleted·none·not_fan)",
+  my_fan_address_status: "본인 받을 주소의 등록 여부·고른 이름표·바꾼 시각만, 주소 값은 돌려주지 않는다(address-protection INV-P16·P17)",
   confirm_my_email: "확인 메일 토큰으로 이메일을 확정한다, 돌려주는 것은 결과 글자(my-account INV-A7)",
   my_account: "내 정보 — 본인 이메일·가린 번호만(my-account INV-A2, 위 허용 칸)",
   my_creator_address_status: "본인 주소의 등록 여부·고른 이름표·바꾼 시각만, 주소 값은 돌려주지 않는다(address-protection INV-P9·P16)",
@@ -70,6 +74,8 @@ export const PII_FUNCTIONS = {
   office_scan_inspect: "검수 완료 스캔 → 몫 닫기, 돌려주는 것은 다음 단계 글자",
   // 크리에이터가 고른 블루투스 상자의 운영자 처리(office-workflow INV-W13). 같은 office_sync 경로로 닿는다 — 크리에이터 확인은 역조공 몫에 생기지 않지만 공통 정리를 부른다
   office_process_creator_check: "크리에이터 선택의 운영자 처리 → 몫 닫기, 돌려주는 것은 결과 글자(accepted·returned·no_choice·changed·processed·expired·closed·not_found)",
+  // 신고 보관 상자의 경찰 인계 기록(office-workflow INV-W14). 같은 office_sync 경로로 닿는다
+  office_record_police_handover: "경찰 인계 기록 → 몫 정리 경로, 돌려주는 것은 결과 글자(handed)",
   // 운영자 몫 옮기기(inbound-address-code INV-C11) — 옮긴 상자로 office_sync 를 부른다. 주소를 읽어 돌려주지 않는다
   // 운영자 잇기(inbound-address-code INV-C12) — 입고 마무리(office_finish_held_receive → office_sync)로 닿는다. 돌려주는 것은 결과 글자(linked)
   admin_link_held_parcel: "6자리 없이 온 상자를 문의한 팬의 입고 전 상자에 잇기 → 몫 정리 경로, 돌려주는 것은 결과 글자(linked)",

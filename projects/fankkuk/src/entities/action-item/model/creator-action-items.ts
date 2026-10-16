@@ -10,6 +10,8 @@ import { seoulDaysUntil } from "@/shared/lib/format/datetime";
 export const CREATOR_ACTION_CENTER_HREF = "/creator/actions";
 
 export type CreatorCheckChoice = "accept" | "return";
+/** 추적 장치 발견 줄의 선택 — report 신고하기 · no_report 신고하지 않기(office-workflow INV-W14) */
+export type TrackerReportChoice = "report" | "no_report";
 
 /** 그 팬이 이 크리에이터에게 보낸 지난 주문 수와 그중 검수 통과·반송 수(decline-block INV-D11) — 주문 쪽 PriorGiftHistory 와 같은 꼴 */
 export type PriorHistory = { gifts: number; passed: number; returned: number };
@@ -31,6 +33,10 @@ export type BluetoothItem = {
   dueAt: string;
   priorHistory: PriorHistory;
 };
+
+/** 추적 장치 발견 — 추적기 보관 상자 하나(office-workflow INV-W14, action-center INV-J5). 칸은 블루투스 발견과 같고 선택지만 다르다.
+ *  주문이 끝나도 운영자 처리 전·기한 전이면 남는다. 화면 줄은 용어집 승인 뒤에 그린다 — 지금은 줄 수(J6)에만 들어간다 */
+export type TrackerItem = Omit<BluetoothItem, "kind" | "choice"> & { kind: "tracker"; choice: TrackerReportChoice | null };
 
 /** 승인 요청 — 주문 하나(approval-signature). 승인은 카카오톡 서명, 받지 않기는 서명 없이 */
 export type ApprovalItem = {
@@ -55,7 +61,7 @@ export type SentGiftItem =
   | { kind: "difference"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; measuredTier: string; amountKrw: number; dueAt: string; sentAt: string }
   | { kind: "missing_box"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string; sentAt: string };
 
-export type CreatorActionItem = BluetoothItem | ApprovalItem | UnconfirmedItem | SentGiftItem;
+export type CreatorActionItem = TrackerItem | BluetoothItem | ApprovalItem | UnconfirmedItem | SentGiftItem;
 
 const iso = z.string().min(1).transform((v) => new Date(v).toISOString());
 const count = z.number().int().nonnegative();
@@ -77,7 +83,7 @@ const common = {
   has_electronics_or_metal: z.boolean().nullable(),
   bluetooth: z.boolean().nullable(),
   rf: z.boolean().nullable(),
-  choice: z.enum(["accept", "return"]).nullable(),
+  choice: z.enum(["accept", "return", "report", "no_report"]).nullable(),
   sent_at: iso,
   received_at: iso.nullable(),
   due_at: iso.nullable(),
@@ -85,7 +91,7 @@ const common = {
   prior_passed_count: count.nullable(),
   prior_returned_count: count.nullable(),
 };
-const rowShape = z.object({ ...common, kind: z.enum(["bluetooth", "approval", "unconfirmed", "difference", "missing_box"]), board: z.enum(["received", "sent"]) }).strict();
+const rowShape = z.object({ ...common, kind: z.enum(["tracker", "bluetooth", "approval", "unconfirmed", "difference", "missing_box"]), board: z.enum(["received", "sent"]) }).strict();
 type Row = z.infer<typeof rowShape>;
 
 const need = <T>(v: T | null, what: string): T => {
@@ -103,11 +109,10 @@ export function parseCreatorActionItems(data: unknown): CreatorActionItem[] {
     .array(rowShape)
     .parse(data ?? [])
     .map((r): CreatorActionItem => {
-      const board = r.kind === "bluetooth" || r.kind === "approval" ? "received" : "sent";
+      const board = r.kind === "tracker" || r.kind === "bluetooth" || r.kind === "approval" ? "received" : "sent";
       if (r.board !== board) throw new Error(`처리할 일 줄의 판이 종류와 다르다: ${r.kind}`);
-      if (r.kind === "bluetooth") {
-        return {
-          kind: r.kind,
+      if (r.kind === "tracker" || r.kind === "bluetooth") {
+        const box = {
           orderNo: r.order_no,
           boxSeq: need(r.box_seq, "상자 순번"),
           boxCount: need(r.box_count, "상자 수"),
@@ -116,12 +121,18 @@ export function parseCreatorActionItems(data: unknown): CreatorActionItem[] {
           tier: need(r.tier, "상자 크기"),
           bluetooth: need(r.bluetooth, "블루투스"),
           rf: need(r.rf, "RF"),
-          choice: r.choice,
           sentAt: r.sent_at,
           receivedAt: r.received_at,
           dueAt: need(r.due_at, "기한"),
           priorHistory: priorOf(r),
         };
+        // 선택지는 종류의 짝 안에서만 — 다른 종류의 선택이 오면 꼴이 다른 줄이다
+        if (r.kind === "tracker") {
+          if (r.choice !== null && r.choice !== "report" && r.choice !== "no_report") throw new Error("추적 장치 줄의 선택이 신고하기·신고하지 않기가 아니다");
+          return { kind: "tracker", ...box, choice: r.choice };
+        }
+        if (r.choice !== null && r.choice !== "accept" && r.choice !== "return") throw new Error("블루투스 줄의 선택이 받기·거절이 아니다");
+        return { kind: "bluetooth", ...box, choice: r.choice };
       }
       if (r.kind === "approval") {
         return {
@@ -158,15 +169,21 @@ export function parseCreatorActionItems(data: unknown): CreatorActionItem[] {
     });
 }
 
-/** 받은 선물 판(블루투스 발견 · 승인 요청)과 보낸 선물 판 — DB 가 정한 순서 그대로 나눈다 */
-export function splitBoards(items: readonly CreatorActionItem[]): { received: (BluetoothItem | ApprovalItem)[]; sent: (UnconfirmedItem | SentGiftItem)[] } {
+/** 받은 선물 판(블루투스 발견 · 승인 요청)과 보낸 선물 판 — DB 가 정한 순서 그대로 나눈다. 추적 장치 발견 줄은 따로(tracker) — 받은 선물 판 맨 위 자리이고, 화면 줄은 용어집 승인 뒤에 그린다 */
+export function splitBoards(items: readonly CreatorActionItem[]): {
+  tracker: TrackerItem[];
+  received: (BluetoothItem | ApprovalItem)[];
+  sent: (UnconfirmedItem | SentGiftItem)[];
+} {
+  const tracker: TrackerItem[] = [];
   const received: (BluetoothItem | ApprovalItem)[] = [];
   const sent: (UnconfirmedItem | SentGiftItem)[] = [];
   for (const it of items) {
-    if (it.kind === "bluetooth" || it.kind === "approval") received.push(it);
+    if (it.kind === "tracker") tracker.push(it);
+    else if (it.kind === "bluetooth" || it.kind === "approval") received.push(it);
     else sent.push(it);
   }
-  return { received, sent };
+  return { tracker, received, sent };
 }
 
 /** 남은 날 — 서울 날짜로 센다(줄·창에 보이는 기한은 서울 시간, INV-J5). 3일 이하는 강조색(design-rules 13절) */

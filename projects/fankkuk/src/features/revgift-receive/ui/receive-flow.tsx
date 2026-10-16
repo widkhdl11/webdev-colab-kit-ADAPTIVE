@@ -3,21 +3,35 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
-import { z } from "zod";
-import { sealedAddressPlaintext, type RevgiftAddressInput } from "@/entities/revgift/model/sealed-address";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
+import type { AddressLabel } from "@/entities/address/model/address-label";
+import { addressOnFileText } from "@/entities/address/ui/address-on-file-text";
 import type { ReceivedStage } from "@/entities/revgift/model/received-stage";
 import { settledStageCopy } from "@/entities/revgift/ui/received-status";
 import { FAN_HOME } from "@/entities/session/model/home-path";
-import { importSealingPublicKey, sealEnvelope } from "@/shared/lib/envelope/envelope";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { acceptRevgift, declineRevgift } from "../api/reply-requests";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./receive-flow.module.css";
 
 // 받은 역조공 하나 — 받기·받지 않기. 시안: docs/design/mockups/site/v18/revgift-receive.html (가운데 한 기둥에 판을 세로로 쌓음)
-// 주소는 이 브라우저에서 봉인한 뒤 봉인된 값만 보낸다(reverse-gift INV-R5). 평문 주소는 서버로 가지 않고, 저장하지도 않는다(INV-R6).
-// 우편번호 찾기 서비스는 아직 붙이지 않았다 — 다섯 자리를 직접 입력한다.
+// 받기를 누르면 설정에 등록한 받을 주소를 확인하는 판이 열린다(reverse-gift INV-R4, address-protection INV-P16·P17, 2026-10-17 카드 d100):
+//   등록돼 있으면 「주소를 확인해 주세요」 — 이름표와 등록한 날만 보이고 주소는 보이지 않는다. 「이 주소로 받기」를 누르면 서버가 등록 주소를 이 선물에 복사한다.
+//   등록 전이면 「주소를 입력해 주세요」 — 그 자리에서 받을 주소를 등록한 뒤(이 브라우저에서 봉인한 값만 — INV-R5) 확인 판으로 넘어간다.
+// 주소 입력 칸은 위젯이 받을 주소 기능으로 조립해 넘긴다(기능끼리는 서로 import 하지 않는다 — FSD). 승인 창의 주소 단계와 같은 꼴이다.
+
+/** 받기 판의 주소 칸 — 위젯이 넘긴다. */
+export type ReceiveAddressStep = {
+  /** 로그인한 팬의 받을 주소 상태. 읽지 못했으면 null */
+  status: MyFanAddressStatus | null;
+  /** 주소 입력 칸을 그릴 수 있는가(봉인 공개키가 있다). 없으면 입력 대신 안내만 보인다 */
+  canEnter: boolean;
+  /** 주소 입력 칸 */
+  renderForm: (p: { initialLabel: AddressLabel | null; autoFocusFirst: boolean; onSaved: (label: AddressLabel) => void; onCancel: () => void }) => ReactNode;
+  /** canEnter 가 아닐 때 입력 칸 자리에 보이는 안내 */
+  missingKeyText: string;
+};
 
 export type ReceiveFlowProps = {
   orderNo: string;
@@ -29,109 +43,76 @@ export type ReceiveFlowProps = {
   daysLeftText: string;
   /** 기다리는 중일 때만 쓴다 — 「10월 8일 오후 3:00까지 정해 주세요」 */
   deadlineText: string;
-  /** 주소 봉인 공개키(PEM). 없으면 받기 폼 대신 안내만 보인다. */
-  sealingKeyPem: string | null;
+  address: ReceiveAddressStep;
   /** 받기 판들 아래에 붙는 칸(내 주소 열람 기록 — 위젯이 넣는다). */
   children?: ReactNode;
 };
 
-type FieldName = keyof Omit<RevgiftAddressInput, "orderNo">;
-
-const FIELD_ORDER: readonly FieldName[] = ["zipCode", "address1", "address2", "recipientName", "phone"];
-
-const FIELD_ERROR: Record<FieldName, string> = {
-  zipCode: "우편번호 다섯 자리를 숫자로 적어 주세요",
-  address1: "기본 주소를 적어 주세요",
-  address2: "상세 주소는 120자 안으로 적어 주세요",
-  recipientName: "받는 사람 이름을 적어 주세요",
-  phone: "휴대폰 번호를 010으로 시작하는 숫자로 적어 주세요",
-};
-
-const EMPTY: Record<FieldName, string> = { zipCode: "", address1: "", address2: "", recipientName: "", phone: "" };
-
-function badFields(err: unknown): FieldName[] {
-  if (!(err instanceof z.ZodError)) return [];
-  const names = new Set(err.issues.map((i) => i.path[0]));
-  return FIELD_ORDER.filter((f) => names.has(f));
+/** 주소 판 머리 — 등록 전이면 입력, 바꾸는 중이면 새 주소, 등록돼 있으면 확인(승인 창과 같은 말) */
+function addressHead(registered: boolean, editing: boolean): string {
+  if (!registered) return "주소를 입력해 주세요";
+  return editing ? "새 주소를 입력해 주세요" : "주소를 확인해 주세요";
 }
 
 export function ReceiveFlow(props: ReceiveFlowProps) {
-  const { orderNo, creatorName, tierName, tierRule, daysLeftText, deadlineText, sealingKeyPem } = props;
+  const { orderNo, creatorName, tierName, tierRule, daysLeftText, deadlineText, address } = props;
   const router = useRouter();
   const [stage, setStage] = useState<ReceivedStage>(props.stage);
-  const [formOpen, setFormOpen] = useState(false);
-  const [values, setValues] = useState(EMPTY);
-  const [errors, setErrors] = useState<FieldName[]>([]);
+  const [stepOpen, setStepOpen] = useState(false);
+  const [status, setStatus] = useState(address.status);
+  const [editing, setEditing] = useState(false);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [declineError, setDeclineError] = useState<string | null>(null);
 
-  const formTitle = useRef<HTMLHeadingElement>(null);
+  const stepTitle = useRef<HTMLHeadingElement>(null);
   const resultTitle = useRef<HTMLHeadingElement>(null);
-  const fieldRefs = useRef<Partial<Record<FieldName, HTMLInputElement | null>>>({});
-  const focusNext = useRef<"form" | "result" | null>(null);
+  const focusNext = useRef<"step" | "result" | null>(null);
 
   // 화면이 바뀌면 누른 버튼이 사라진다 — 바뀐 부분의 제목으로 포커스를 옮겨 처음부터 읽게
   useEffect(() => {
-    const target = focusNext.current === "form" ? formTitle.current : focusNext.current === "result" ? resultTitle.current : null;
+    const target = focusNext.current === "step" ? stepTitle.current : focusNext.current === "result" ? resultTitle.current : null;
     focusNext.current = null;
     target?.focus();
-  }, [formOpen, stage]);
+  }, [stepOpen, stage, editing, status?.registered]);
 
   const waiting = stage === "waiting";
+  const registered = status?.registered ?? false;
+  // 등록 주소가 있으면 공개키 없이도 받을 수 있다(복사는 서버가 한다). 없으면 입력 칸이 있어야 받을 수 있다.
+  const canReceive = status !== null && (registered || address.canEnter);
 
-  const set = (name: FieldName, value: string) => {
-    setValues((v) => ({ ...v, [name]: value }));
-    if (errors.includes(name)) setErrors((e) => e.filter((x) => x !== name));
-  };
-
-  const openForm = () => {
-    focusNext.current = "form";
-    setFormOpen(true);
-  };
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (busy || !sealingKeyPem) return;
+  const openStep = () => {
     setSubmitError(null);
-    let plaintext: string;
-    try {
-      plaintext = sealedAddressPlaintext({
-        orderNo,
-        zipCode: values.zipCode.trim(),
-        address1: values.address1,
-        address2: values.address2,
-        recipientName: values.recipientName,
-        phone: values.phone.replace(/[^0-9]/g, ""),
-      });
-    } catch (err) {
-      const bad = badFields(err);
-      setErrors(bad);
-      if (bad[0]) fieldRefs.current[bad[0]]?.focus();
-      else setSubmitError("주소를 다시 확인해 주세요.");
+    setSavedMsg(null);
+    setEditing(false);
+    focusNext.current = "step";
+    setStepOpen(true);
+  };
+
+  const accept = async () => {
+    if (busy) return;
+    setBusy(true);
+    setSubmitError(null);
+    const outcome = await acceptRevgift(orderNo);
+    setBusy(false);
+    if (outcome.ok) {
+      focusNext.current = "result";
+      setStepOpen(false);
+      setStage("accepted");
       return;
     }
-    setErrors([]);
-    setBusy(true);
-    try {
-      const envelope = await sealEnvelope(plaintext, await importSealingPublicKey(sealingKeyPem));
-      const outcome = await acceptRevgift(orderNo, envelope);
-      if (outcome.ok) {
-        setValues(EMPTY); // 입력한 주소를 화면 상태에 남기지 않는다
-        focusNext.current = "result";
-        setFormOpen(false);
-        setStage("accepted");
-        return;
-      }
-      setSubmitError(outcome.message);
-      // 이미 정해졌거나 기한이 지났으면 지금 상태를 다시 읽어 그 안내로 바꾼다
-      if (outcome.status === 409) router.refresh();
-    } catch {
-      setSubmitError("주소를 암호화하지 못했어요. 새로고침한 뒤 다시 시도해 주세요.");
-    } finally {
-      setBusy(false);
+    setSubmitError(outcome.message);
+    // 서버가 「등록 주소 없음」으로 돌려보냈다 — 화면이 들고 있던 「등록됨」이 틀렸으니 입력부터 다시
+    if (outcome.noAddress) {
+      focusNext.current = "step";
+      setStatus({ registered: false, label: null, updatedAt: null });
+      setEditing(false);
+      setSavedMsg(null);
     }
+    // 이미 정해졌거나 기한이 지났으면 지금 상태를 다시 읽어 그 안내로 바꾼다
+    if (outcome.status === 409) router.refresh();
   };
 
   const decline = async () => {
@@ -142,46 +123,89 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
     setBusy(false);
     setSheetOpen(false);
     if (outcome.ok) {
-      setValues(EMPTY);
       focusNext.current = "result";
-      setFormOpen(false);
+      setStepOpen(false);
       setStage("declined");
       return;
     }
-    if (formOpen) setSubmitError(outcome.message);
+    if (stepOpen) setSubmitError(outcome.message);
     else setDeclineError(outcome.message);
     if (outcome.status === 409) router.refresh();
   };
 
   const settled = stage === "waiting" ? null : settledStageCopy(stage);
 
-  const field = (name: FieldName, label: string, extra: InputHTMLAttributes<HTMLInputElement>, full = false) => {
-    const invalid = errors.includes(name);
-    const errId = `rv-${name}-err`;
-    return (
-      <div className={full ? s.full : undefined}>
-        <label className="label" htmlFor={`rv-${name}`}>
-          {label}
-        </label>
-        <input
-          ref={(el) => {
-            fieldRefs.current[name] = el;
-          }}
-          className="field"
-          id={`rv-${name}`}
-          name={name}
-          value={values[name]}
-          onChange={(e) => set(name, e.target.value)}
-          aria-invalid={invalid || undefined}
-          aria-describedby={invalid ? errId : undefined}
-          {...extra}
-        />
-        {invalid ? (
-          <p className={s.error} id={errId}>
-            {FIELD_ERROR[name]}
+  const addressBody = () => {
+    if (!status) return <p className="err">받을 주소를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요.</p>;
+    if (registered && !editing) {
+      return (
+        <>
+          <div className={`card card--soft ${s["addr-on-file"]}`}>
+            <p className="t-strong" data-address-on-file="">
+              {addressOnFileText(status)}
+            </p>
+            <p className="t-meta">주소는 잠가서 보관해서 여기서도 보이지 않아요. 이사했거나 받는 곳이 바뀌었으면 받기 전에 바꿔 주세요.</p>
+            <div>
+              <button
+                className="btn btn--line btn--sm"
+                type="button"
+                onClick={() => {
+                  setSavedMsg(null);
+                  setSubmitError(null);
+                  focusNext.current = "step";
+                  setEditing(true);
+                }}
+              >
+                주소 바꾸기
+              </button>
+            </div>
+          </div>
+          <p className={`t-meta ${s["addr-saved"]}`} role="status">
+            {savedMsg ?? ""}
           </p>
-        ) : null}
-      </div>
+          <div role="alert">{submitError ? <p className={`err ${s.alert}`}>{submitError}</p> : null}</div>
+          <div className="actions">
+            <button className="btn btn--line" type="button" onClick={() => setSheetOpen(true)}>
+              받지 않기
+            </button>
+            <button className="btn" type="button" onClick={() => void accept()} aria-disabled={busy || undefined} aria-busy={busy || undefined}>
+              이 주소로 받기
+            </button>
+          </div>
+        </>
+      );
+    }
+    if (!address.canEnter) {
+      return (
+        <p className="err" role="status">
+          {address.missingKeyText}
+        </p>
+      );
+    }
+    return (
+      <>
+        <p className={`t-lead t-desc ${s.desc}`}>
+          주소는 이 브라우저에서 암호화돼요. 팬꾹도 송장을 뽑을 때만 열 수 있어요. {creatorName}님에게는 보이지 않아요.
+        </p>
+        <div role="alert">{submitError ? <p className={`err ${s.alert}`}>{submitError}</p> : null}</div>
+        {address.renderForm({
+          initialLabel: status.label,
+          autoFocusFirst: registered,
+          onSaved: (label) => {
+            // 서버에 저장된 뒤에만 바뀐다 — 이어서 같은 판에서 「이 주소로 받기」를 누른다
+            setSavedMsg(registered ? "주소를 바꿨어요." : "주소를 등록했어요.");
+            setSubmitError(null);
+            focusNext.current = "step";
+            setStatus({ registered: true, label, updatedAt: new Date().toISOString() });
+            setEditing(false);
+          },
+          onCancel: () => {
+            focusNext.current = registered ? "step" : null;
+            if (registered) setEditing(false);
+            else setStepOpen(false);
+          },
+        })}
+      </>
     );
   };
 
@@ -221,16 +245,16 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
               </dd>
             </div>
           </dl>
-          {waiting && !formOpen ? (
+          {waiting && !stepOpen ? (
             <>
-              {sealingKeyPem ? null : (
+              {canReceive ? null : (
                 <p className={s.warn} role="status">
-                  주소 보호 설정이 아직 안 돼 있어요. 지금은 받기를 할 수 없어요 — 설정이 끝나면 다시 들어와 주세요.
+                  {status === null ? "받을 주소를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요." : `${address.missingKeyText} 설정이 끝나면 다시 들어와 주세요.`}
                 </p>
               )}
               <div className={s.choice}>
-                {sealingKeyPem ? (
-                  <button className="btn" type="button" onClick={openForm}>
+                {canReceive ? (
+                  <button className="btn" type="button" onClick={openStep}>
                     받기
                   </button>
                 ) : null}
@@ -244,33 +268,12 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
           ) : null}
         </section>
 
-        {waiting && formOpen && sealingKeyPem ? (
-          <section className="part" aria-labelledby="rv-form-title">
-            <h2 className={`t-title ${s.focusable}`} id="rv-form-title" ref={formTitle} tabIndex={-1}>
-              받을 주소를 알려 주세요
+        {waiting && stepOpen ? (
+          <section className="part" aria-labelledby="rv-step-title">
+            <h2 className={`t-title ${s.focusable}`} id="rv-step-title" ref={stepTitle} tabIndex={-1}>
+              {addressHead(registered, editing)}
             </h2>
-            <p className={`t-lead t-desc ${s.desc}`}>
-              주소는 이 브라우저에서 암호화돼요. 팬꾹도 송장을 뽑을 때만 열 수 있고, 출고되면 지워요. {creatorName}님에게는 보이지 않아요.
-            </p>
-            <p className={`t-meta ${s.desc}`}>이 주소는 이번 선물에만 쓰이고, 계정에 저장되지 않아요.</p>
-            <form onSubmit={submit} noValidate>
-              <div className={s["form-grid"]}>
-                {field("zipCode", "우편번호", { type: "text", inputMode: "numeric", autoComplete: "postal-code", maxLength: 5, placeholder: "숫자 다섯 자리", required: true })}
-                {field("address1", "기본 주소", { type: "text", autoComplete: "address-line1", maxLength: 120, placeholder: "도로명 주소나 지번 주소", required: true }, true)}
-                {field("address2", "상세 주소", { type: "text", autoComplete: "address-line2", maxLength: 120, placeholder: "동·호수 등을 적어 주세요" }, true)}
-                {field("recipientName", "받는 사람 이름", { type: "text", autoComplete: "name", maxLength: 30, placeholder: "택배에 적힐 이름", required: true })}
-                {field("phone", "휴대폰 번호", { type: "tel", inputMode: "tel", autoComplete: "tel", maxLength: 13, placeholder: "010-0000-0000", required: true })}
-              </div>
-              <div role="alert">{submitError ? <p className={`err ${s.alert}`}>{submitError}</p> : null}</div>
-              <div className="actions">
-                <button className="btn btn--line" type="button" onClick={() => setSheetOpen(true)}>
-                  받지 않기
-                </button>
-                <button className="btn" type="submit" aria-disabled={busy || undefined} aria-busy={busy || undefined}>
-                  이 주소로 받기
-                </button>
-              </div>
-            </form>
+            {addressBody()}
           </section>
         ) : null}
 
@@ -281,7 +284,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
                 <h2 className={`t-title ${s.focusable}`} id="rv-result-title" ref={resultTitle} tabIndex={-1}>
                   받기가 끝났어요
                 </h2>
-                <p className={`t-lead t-desc ${s.desc}`}>{creatorName}님의 선물이 곧 준비돼요. 주소를 다시 입력하지 않아도 돼요.</p>
+                <p className={`t-lead t-desc ${s.desc}`}>{creatorName}님의 선물이 곧 준비돼요.</p>
                 <ol className={`flow ${s.next}`}>
                   <li>
                     <span className="n">1</span>
@@ -291,7 +294,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
                   <li>
                     <span className="n">2</span>
                     <p className="t-strong">검수가 끝나면 보내 드려요</p>
-                    <p>입력한 주소는 송장을 출력할 때만 열리고, 출고하면 바로 지워요.</p>
+                    <p>주소는 송장을 출력할 때만 열려요.</p>
                   </li>
                   <li>
                     <span className="n">3</span>
@@ -344,10 +347,11 @@ const RESULT_TITLE: Record<Exclude<ReceivedStage, "waiting" | "accepted">, strin
   cancelled: "이 선물은 취소됐어요",
 };
 
+// 이 선물에 복사해 둔 주소는 출고·반송 때 지운다(reverse-gift INV-R9). 등록한 받을 주소는 그대로라 「주소를 지웠다」고 쓰지 않는다.
 function resultBody(stage: Exclude<ReceivedStage, "waiting" | "accepted">, creatorName: string): string {
-  if (stage === "declined") return `${creatorName}님에게는 받지 않은 이유를 알리지 않아요. 입력한 주소는 없어요.`;
+  if (stage === "declined") return `${creatorName}님에게는 받지 않은 이유를 알리지 않아요.`;
   if (stage === "expired") return `7일 안에 정하지 않아 받지 않음으로 처리됐어요. ${creatorName}님에게는 이유를 알리지 않아요.`;
-  if (stage === "shipped") return "입력한 주소는 출고할 때 지워졌어요. 곧 도착해요.";
+  if (stage === "shipped") return "곧 도착해요.";
   if (stage === "cancelled") return `${creatorName}님이 보낸 이 선물은 더 진행되지 않아요.`;
-  return `상자를 ${creatorName}님에게 돌려보냈어요. 입력한 주소는 지워졌어요.`;
+  return `상자를 ${creatorName}님에게 돌려보냈어요.`;
 }

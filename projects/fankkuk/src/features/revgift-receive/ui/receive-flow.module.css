@@ -16,15 +16,13 @@
 .alert { margin-top: var(--space-4); }
 .desc { margin-top: var(--space-2); }
 .focusable:focus { outline: none; }
-.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); margin-top: var(--space-6); }
-.full { grid-column: 1 / -1; }
-/* 칸 하나의 입력 오류 — 칸 바로 아래 한 줄 */
-.error { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2); color: var(--brand-ink); font-weight: var(--fw-btn); }
+/* 등록한 받을 주소 확인 — 크리에이터 승인 창의 주소 확인 판과 같은 모양(이름표·등록한 날·바꾸기) */
+.addr-on-file { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+.addr-saved { margin-top: var(--space-2); }
 .next { --steps: 3; margin-top: var(--space-8); }
 .next :global(.t-strong) + p { margin-top: 4px; }
 .links { justify-content: center; margin-top: var(--space-8); }
 .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-6); }
 @media (max-width: 767px) {
-  .form-grid { grid-template-columns: 1fr; }
   .choice { grid-template-columns: 1fr; }
 }

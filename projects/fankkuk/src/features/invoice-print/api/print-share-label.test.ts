@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
+import { fanAddressPlaintext } from "@/entities/address/model/fan-address-plaintext";
 import { sealedAddressPlaintext } from "@/entities/revgift/model/sealed-address";
 import { createDevKeyUnwrapper, type KeyUnwrapper } from "@/shared/lib/envelope/dev-key-unwrapper";
 import { importSealingPublicKey, sealEnvelope } from "@/shared/lib/envelope/envelope";
@@ -16,6 +17,8 @@ const QR = "Q-000456";
 const NEW_WAYBILL = "555566667777";
 const OLD_WAYBILL = "111122223333";
 const LOG_ID = 777;
+const FAN = "00000000-0000-4000-a000-000000000001";
+const OTHER_FAN = "00000000-0000-4000-a000-000000000002";
 
 const fields = { recipientName: "별빛", phone: "01012345678", zipCode: "04001", address1: "서울시 마포구 시험로 1", address2: "" };
 
@@ -54,7 +57,13 @@ function goodContext(patch: Context = {}): Context {
 
 async function openedClaim(sealedOrderNo = ORDER_NO, with_ = keys): Promise<Record<string, unknown>> {
   const envelope = await sealEnvelope(sealedAddressPlaintext({ orderNo: sealedOrderNo, ...fields }), with_.publicKey);
-  return { result: "opened", print_no: 1, log_id: LOG_ID, order_no: ORDER_NO, envelope };
+  return { result: "opened", print_no: 1, log_id: LOG_ID, order_no: ORDER_NO, fan_id: FAN, envelope };
+}
+
+/** 2026-10-17 부터의 봉인 — 받기 때 팬 등록 주소를 복사한 것이라 계정 식별값이 묶여 있다(reverse-gift INV-R5). */
+async function openedAccountClaim(sealedAccount = FAN): Promise<Record<string, unknown>> {
+  const envelope = await sealEnvelope(fanAddressPlaintext({ accountId: sealedAccount, ...fields }), keys.publicKey);
+  return { result: "opened", print_no: 1, log_id: LOG_ID, order_no: ORDER_NO, fan_id: FAN, envelope };
 }
 
 type Reply = { data: unknown; error: { code: string; message: string } | null };
@@ -148,6 +157,25 @@ describe("역조공 송장 출력 — 팬 주소 열기 (INV-R7)", () => {
     expect(await printShareLabel(deps(db), ask)).toEqual({ kind: "denied", reason: "order_mismatch" });
     expect(fnNames(calls)).toEqual(["revgift_print_context", "revgift_claim_print", "revgift_release_print", "insert:revgift_decrypt_log"]);
     expect(calls[2]?.args).toEqual({ p_log_id: LOG_ID, p_requester: OWNER });
+  });
+
+  it("INV-R7 S7 (b): 받기 때 복사한 등록 주소(봉인 속 계정 = 몫의 받는 팬)면 열어 라벨 다섯 칸만 돌려준다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedAccountClaim());
+    expect(await printShareLabel(deps(db), ask)).toEqual({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: fields });
+    expect(fnNames(calls)).toEqual(["revgift_print_context", "revgift_claim_print", "revgift_finish_print"]);
+  });
+
+  it("INV-R7 S7c (b, 실패경로): 봉인 속 계정이 몫의 받는 팬과 다르면(다른 팬의 등록 주소를 옮겨 붙임) 거부하고 연 줄을 돌려준다", async () => {
+    const { db, calls } = fakeDb(goodContext(), await openedAccountClaim(OTHER_FAN));
+    expect(await printShareLabel(deps(db), ask)).toEqual({ kind: "denied", reason: "order_mismatch" });
+    expect(fnNames(calls)).toEqual(["revgift_print_context", "revgift_claim_print", "revgift_release_print", "insert:revgift_decrypt_log"]);
+  });
+
+  it("INV-R7 (b, 실패경로): 받는 팬(fan_id)을 내주지 않는 옛 DB 응답이면 계정 봉인은 쓰지 않는다 — 주문번호 봉인은 그대로 열린다", async () => {
+    const { fan_id: _a, ...accountWithout } = await openedAccountClaim();
+    expect(await printShareLabel(deps(fakeDb(goodContext(), accountWithout).db), ask)).toEqual({ kind: "denied", reason: "order_mismatch" });
+    const { fan_id: _b, ...orderWithout } = await openedClaim();
+    expect(await printShareLabel(deps(fakeDb(goodContext(), orderWithout).db), ask)).toMatchObject({ kind: "printed" });
   });
 
   it("INV-R7 (실패경로): DB 가 잠근 자리에서 거부하면 그대로 거부 — 앱은 거부 줄을 또 남기지 않는다", async () => {
