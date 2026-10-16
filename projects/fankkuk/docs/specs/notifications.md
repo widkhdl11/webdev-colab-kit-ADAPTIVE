@@ -1,6 +1,6 @@
 ---
 feature: 알림 — 카카오 알림톡과 이메일 대체 (notifications)
-status: draft
+status: approved
 # ↑ 값은 반드시 이 줄에 붙여 쓴다.
 # 이력:
 #   2026-10-06 초안. 원본: PRODUCT 「알림 — 카카오 알림톡(승인 요청·입고·검수·출고·배송중·수령 6종). 본문에 선물 내용·보낸 사람·주소 없음.
@@ -33,6 +33,7 @@ status: draft
 #   2026-10-17 draft — 규칙 바꾸기 넷(카드 d100). INV-N13: 추적기가 나오면 크리에이터에게 신고할지 정해 달라는 알림(hold), 팬에게는 그때 알리지 않고
 #              「신고하지 않기」로 반송 대기가 될 때 hold_fan(office-workflow INV-W14). hold_fan 본문은 「보내신 주소로 돌려보내요」 대신 반송 주소를 정해 달라는 말.
 #              INV-N22 새로 — 반송 주소 알림(return_address)과 14일 재알림(office-workflow INV-W15). 표에 두 줄. 재승인 대기.
+#   2026-10-17 approved — 카드 fankkuk-20261001-1-d101, 사용자 「승인」.
 surfaces: [auth, authz, concurrency]
 # ↑ authz: 누구의 휴대폰·이메일로 알림이 가는가, 누가 발송 기록을 읽는가. 틀리면 남의 선물 소식이 다른 사람에게 간다.
 #   concurrency: 같은 사건에 알림 줄이 하나만 생기고, 보내는 일꾼 둘이 같은 줄을 동시에 보내지 않는다(INV-N4·N5).

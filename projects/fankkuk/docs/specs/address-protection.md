@@ -1,6 +1,6 @@
 ---
 feature: 크리에이터 주소 보호 (address protection)
-status: draft
+status: approved
 # ↑ 값은 반드시 이 줄에 붙여 쓴다.
 # 이력:
 #   2026-10-01 초안. 원본: docs/reference/fankkuk-design.md 「보안 구조」「승인 인증 방법」「내부 QR 시스템」.
@@ -33,6 +33,7 @@ status: draft
 #              fankkuk-20261001-1-d83 「이름표와 날짜만」. 확인 창에는 주소가 아니라 고른 이름표와 바꾼 날만 보인다. S16·S16b·S16c 새로.
 #   2026-10-17 draft — 규칙 바꾸기 넷(카드 d100 ④ 「추천대로」). INV-P17 새로(팬도 설정에 주소 하나를 등록해 두고 반송·역조공 때 쓴다 — 2026-10-14 「팬은 저장하지 않는다」를 뒤집음),
 #              INV-P18 새로(반송 송장의 주소 열기 — 고른 때 상자에 복사해 둔 암호문만), INV-P16 을 팬에게도. S17~S18c. 재승인 대기.
+#   2026-10-17 approved — 카드 fankkuk-20261001-1-d101, 사용자 「승인」.
 surfaces: [authz, concurrency]
 # ↑ authz: 누가 주소를 열 수 있는가(복호화 권한). concurrency: 승인 1건당 복호화 횟수 상한을
 #   동시 요청에서도 지켜야 한다. 로그인·세션(auth)은 계정 스펙의 관할이다.
