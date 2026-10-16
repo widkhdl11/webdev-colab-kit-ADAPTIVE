@@ -141,24 +141,24 @@ describe("추적기 판정 (INV-W4 S4c, 문제집 D2)", () => {
     expect(field.getAttribute("aria-invalid")).toBeNull();
   });
 
-  it("화면 안에서 막힌 오류는 「확인 필요」 — 서버 거절이 아니므로 「거부」·「상자 상태는 그대로예요」가 없다", async () => {
+  it("화면 안에서 막힌 오류는 「확인 필요」 — 서버 거절이 아니므로 「거절」·「상자 상태는 그대로예요」가 없다", async () => {
     await loadBox();
     pick("bt", "found");
     await click("기록 저장");
     const panel = [...host.querySelectorAll("h2")].find((h) => h.textContent === "추적기인지 먼저 골라 주세요")!.closest("div")!.parentElement!;
     expect(panel.textContent).toContain("확인 필요");
-    expect(panel.textContent).not.toContain("거부");
+    expect(panel.textContent).not.toContain("거절");
     expect(panel.textContent).not.toContain("상자 상태는 그대로예요");
   });
 
-  it("서버가 거절한 오류는 그대로 「거부」·「상자 상태는 그대로예요」", async () => {
+  it("서버가 거절한 오류는 그대로 「거절」·「상자 상태는 그대로예요」", async () => {
     await loadBox();
     api.postInspect.mockResolvedValueOnce({ kind: "failed", status: 409, message: "지금 단계에서 할 수 없어요.", reason: null });
     // 거절 뒤 화면이 상자를 다시 읽는다
     api.postInspect.mockResolvedValueOnce(lookupReply("small"));
     await click("기록 저장");
     const panel = [...host.querySelectorAll("h2")].find((h) => h.textContent === "기록을 저장하지 못했어요")!.closest("div")!.parentElement!;
-    expect(panel.textContent).toContain("거부");
+    expect(panel.textContent).toContain("거절");
     expect(panel.textContent).toContain("상자 상태는 그대로예요");
   });
 

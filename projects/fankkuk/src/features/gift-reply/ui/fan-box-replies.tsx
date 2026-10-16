@@ -62,7 +62,7 @@ function SharePanel({ row, id }: { row: FanBoxReply; id: string }) {
         </a>
       </div>
       <p className={s["share-text"]}>
-        X 글쓰기 창에 「{text}」가 채워져요. 저장한 이미지를 붙여 올려 주세요. 카드에는 주소·주문번호·운송장이 들어가지 않아요.
+        X 글쓰기 창에 「{text}」가 채워져요. 저장한 이미지를 붙여 올려 주세요. 카드에는 주소·주문번호·송장번호가 들어가지 않아요.
       </p>
     </div>
   );

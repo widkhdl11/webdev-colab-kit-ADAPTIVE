@@ -194,13 +194,13 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
       />
 
       <p className="sr-only" role="status">
-        {error ? `${error.unknown ? "확인 필요" : "거부"}: ${error.title}` : done ? (done.kind === "shipped" ? "출고 확정됐어요" : "반송 확정됐어요") : parcel ? `${parcel.orderNo} ${NEXT_STEP_TEXT[parcel.nextStep] || STATE_LABEL[parcel.state].text}` : ""}
+        {error ? `${error.unknown ? "확인 필요" : "거절"}: ${error.title}` : done ? (done.kind === "shipped" ? "출고됐어요" : "반송됐어요") : parcel ? `${parcel.orderNo} ${NEXT_STEP_TEXT[parcel.nextStep] || STATE_LABEL[parcel.state].text}` : ""}
       </p>
       <div className={w.work} style={{ maxWidth: "none" }}>
         {error && (
           <div className={`${w.result} ${w.resultNo} ${w.resultHeadSm}`}>
             <div className={w.resultHead}>
-              <span className={`${a.tag} ${a.tagInk}`}>{error.unknown ? "확인 필요" : "거부"}</span>
+              <span className={`${a.tag} ${a.tagInk}`}>{error.unknown ? "확인 필요" : "거절"}</span>
               <h2>{error.title}</h2>
             </div>
             <p>
@@ -213,8 +213,8 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
         {done && (
           <div className={`${w.result} ${w.resultOk}`}>
             <div className={`${w.resultHead} ${w.resultHeadSm}`}>
-              <span className={`${a.tag} ${a.tagBrand}`}>{done.kind === "shipped" ? "출고 확정" : "반송 확정"}</span>
-              <h2>{done.kind === "shipped" ? "출고 확정됐어요" : "반송 확정됐어요"}</h2>
+              <span className={`${a.tag} ${a.tagBrand}`}>{done.kind === "shipped" ? "출고함" : "반송함"}</span>
+              <h2>{done.kind === "shipped" ? "출고됐어요" : "반송됐어요"}</h2>
               <span className={a.faint}>
                 {formatStamp(done.at)} · {operatorNickname}
               </span>
@@ -222,7 +222,7 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
             <p className={w.bigNote}>
               봉투 <span className={a.mono}>{done.envelopeNo}</span> 파쇄 기록됨 — 봉투를 파쇄해 주세요
             </p>
-            <p className={a.hint}>{done.kind === "shipped" ? "출고" : "반송"} 확정과 함께 파쇄 기록이 남았어요. 봉투 안의 원 송장을 파쇄하면 돼요.</p>
+            <p className={a.hint}>{done.kind === "shipped" ? "출고" : "반송"} 확정과 함께 파쇄 기록이 남았어요. 봉투 안의 원래 송장을 파쇄하면 돼요.</p>
           </div>
         )}
 
@@ -339,7 +339,7 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
             </h2>
           </div>
           <Facts parcel={parcel} />
-          <p className={a.hint}>{parcel.kind === "gift" ? "보낸 팬의 원 송장 주소로 반송해요. 택배비는 팬꾹이 먼저 내요(선불) — 환불에서 빠져요." : "보낸 크리에이터 쪽으로 반송해요."}</p>
+          <p className={a.hint}>{parcel.kind === "gift" ? "보낸 팬의 원래 송장 주소로 반송해요. 택배비는 팬꾹이 먼저 내요(선불) — 환불에서 빠져요." : "보낸 크리에이터 쪽으로 반송해요."}</p>
           <div className={a.btnRow}>
             <button className={`${a.btn} ${a.btnLg}`} type="button" onClick={() => onPrint("print_return")} aria-disabled={busy}>
               {busy ? "출력하는 중…" : "반송 송장 출력"}
@@ -359,7 +359,7 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
           </div>
           <div className={w.qnum}>
             <span>
-              <small>이 상자의 원 송장 봉투 번호</small>
+              <small>이 상자의 원래 송장 봉투 번호</small>
               {parcel.envelopeNo}
             </span>
           </div>
@@ -367,7 +367,7 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
           <div className={w.nextStep}>
             <h3>이렇게 하세요</h3>
             <p>
-              화면에 뜬 번호의 봉투에서 원 송장을 꺼내 반송 송장을 붙여요. 봉투 번호는 이 상자 것만 나와요. 붙인 뒤 <strong>반송 송장의 바코드</strong>를 스캔하면 반송이 확정돼요.
+              화면에 뜬 번호의 봉투에서 원래 송장을 꺼내 반송 송장을 붙여요. 봉투 번호는 이 상자 것만 나와요. 붙인 뒤 <strong>반송 송장의 바코드</strong>를 스캔하면 반송이 확정돼요.
             </p>
             <div className={a.btnRow}>
               <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
@@ -430,7 +430,7 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
         return (
           <section className={w.result} aria-labelledby="out-shipped">
             <div className={w.resultHead}>
-              <span className={`${a.tag} ${a.tagBrand}`}>출고 확정</span>
+              <span className={`${a.tag} ${a.tagBrand}`}>출고함</span>
               <h2 id="out-shipped" className={a.mono}>
                 {parcel.orderNo}
               </h2>
@@ -450,7 +450,7 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
                 </>
               ) : (
                 <>
-                  <h3>출고 확정된 상자예요</h3>
+                  <h3>출고된 상자예요</h3>
                   <p>택배 기사가 가져가기 전에 송장이 젖거나 망가졌을 때만 다시 출력해요. 송장번호는 처음 것 그대로예요.</p>
                   <div className={a.btnRow}>
                     <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => onPrint("print_label")} aria-disabled={busy}>

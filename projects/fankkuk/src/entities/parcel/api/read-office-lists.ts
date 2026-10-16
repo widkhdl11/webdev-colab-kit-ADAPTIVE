@@ -24,7 +24,7 @@ async function readRows<T>(client: Rpc, fn: string, label: string, parse: (rows:
   const { data, error } = await client.rpc(fn);
   if (error) throw new Error(`${label}을 읽지 못했다: ${error.code}`);
   const parsed = parse(data);
-  if (parsed === null) throw new Error(`${label}의 모양이 다르다`);
+  if (parsed === null) throw new Error(`${label}의 형식이 다르다`);
   return parsed;
 }
 
@@ -57,7 +57,7 @@ export function readRevgiftShares(client: Rpc): Promise<RevgiftShare[]> {
 
 /** INV-W2: 이 작업자가 출력하고 아직 부착 확인하지 않은 라벨(없으면 null). */
 export async function readMyPendingLabel(client: Rpc): Promise<PendingLabel | null> {
-  const result = await readRows(client, "office_my_pending_label", "부착 대기 라벨", (rows) => {
+  const result = await readRows(client, "office_my_pending_label", "붙이기를 기다리는 라벨", (rows) => {
     const r = pendingLabelFromRows(rows);
     return r.ok ? r : null;
   });

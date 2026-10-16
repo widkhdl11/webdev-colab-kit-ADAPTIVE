@@ -4,6 +4,7 @@ import {
   type AccessMonthSummary,
   type AddressAccessEntry,
 } from "@/entities/address/model/access-log";
+import { PROMISE } from "@/shared/config/site-copy";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import s from "./access-log.module.css";
 
@@ -36,7 +37,7 @@ export function AccessLogPage({
           </h1>
         </div>
         <p className="ph-desc">
-          <strong className={`t-strong ${s.strong}`}>승인 없이는 저희 시스템이 주소를 열지 않습니다.</strong> 열린 기록은 전부 여기에 보여요.
+          <strong className={`t-strong ${s.strong}`}>{PROMISE.address}</strong> 열린 기록은 전부 여기에 보여요.
         </p>
       </header>
 

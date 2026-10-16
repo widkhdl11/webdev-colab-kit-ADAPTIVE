@@ -108,14 +108,14 @@ describe("상태 배지 색 갈래", () => {
   });
 });
 
-describe("decline-block INV-D5: 팬에게 보이는 거절과 기간 지남", () => {
+describe("decline-block INV-D5: 팬에게 보이는 거절과 기한 지남", () => {
   it("거절은 크리에이터 이름으로 부드럽게 말하되 거절했다는 뜻을 전한다", () => {
     expect(fanHeadline(view(1, "declined"))).toBe("하루님이 선물을 원하지 않아요");
     expect(fanBadge(view(1, "declined")).text).toBe("거절");
   });
   it("7일 자동 반려는 기간이 지났다고 따로 말한다", () => {
     expect(fanHeadline(view(1, "expired"))).toBe("기간이 지나 반려됐어요");
-    expect(fanBadge(view(1, "expired")).text).toBe("기간 지남");
+    expect(fanBadge(view(1, "expired")).text).toBe("기한 지남");
   });
 });
 

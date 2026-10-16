@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   await loadAdminSession(); // 운영자가 아니면 제목도 만들지 않고 404
-  return { title: "검수 완료 카드 · 팬꾹 관리자" };
+  return { title: "검수 완료 카드 · 팬꾹 운영자" };
 }
 
 // 상자 속 검수 완료 카드 인쇄 (추가분 F-8). 운영자가 아니면 404.

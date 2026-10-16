@@ -29,7 +29,7 @@ export function passwordAttemptsOf(admin: Pick<SupabaseClient, "rpc">): Password
       const { data, error } = await admin.rpc("password_attempt_begin", { p_login_key: passwordLoginKey(loginKey) });
       if (error) throw new Error(`비밀번호 확인 횟수를 읽지 못했다: ${error.code}`);
       if (data === null) return null;
-      if (typeof data !== "number") throw new Error("비밀번호 확인 횟수의 모양이 다르다");
+      if (typeof data !== "number") throw new Error("비밀번호 확인 횟수의 형식이 다르다");
       return data;
     },
     async finish(id, ok) {

@@ -36,6 +36,6 @@ export async function checkSignupName(deps: CheckNameDeps, body: unknown, ipHash
   const { data, error } = await deps.admin.rpc("signup_name_check", { p_ip_hash: ipHash, p_kind: DB_KIND[kind], p_value: value });
   if (error) throw new Error(`미리 확인을 하지 못했다: ${error.code ?? "코드 없음"}`);
   const result = resultSchema.safeParse(data);
-  if (!result.success) throw new Error("미리 확인 응답의 꼴이 틀렸다");
+  if (!result.success) throw new Error("미리 확인 응답의 형식이 틀렸다");
   return { status: result.data === "rate_limited" ? 429 : 200, body: { result: result.data } };
 }

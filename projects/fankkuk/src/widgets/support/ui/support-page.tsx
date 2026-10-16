@@ -24,7 +24,7 @@ type Category = { id: string; label: string; faqs: readonly Faq[] };
 function feeAnswer(prices: PublicPriceTable): string {
   return `상자마다 배송비가 포함된 금액이에요. ${PRICED_TIERS.map(
     (t) => `${PARCEL_TIER_GUIDE[t].name}(${PARCEL_TIER_GUIDE[t].rule}) ${prices[t].priceKrw.toLocaleString("ko-KR")}원`,
-  ).join(", ")}이고, 추적 장치 검수가 포함돼 있어요.`;
+  ).join(", ")}이고, 검수비도 포함돼 있어요.`;
 }
 
 const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
@@ -70,8 +70,8 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
         a: "등록 → 입고 → 검수 → 출고 → 배송중 → 수령, 여섯 단계로 (크리에이터 승인은 검수와 출고 사이에 따로 표시돼요) 선물 상세 화면과 상단 선물 아이콘에서 볼 수 있어요.",
       },
       {
-        q: "크리에이터행 운송장 번호를 볼 수 있나요?",
-        a: "팬에게는 크리에이터행 운송장 번호를 보여 드리지 않아요. 팬이 입력하는 것은 사무실로 보내는 상자의 송장번호예요.",
+        q: "크리에이터행 송장번호를 볼 수 있나요?",
+        a: "팬에게는 크리에이터행 송장번호를 보여 드리지 않아요. 팬이 입력하는 것은 사무실로 보내는 상자의 송장번호예요.",
       },
       { q: "검수는 어떻게 하나요?", a: `${PROMISE.inspection} 송장을 떼고 겉면과 추적 장치를 검사하고, 탐지기 반응이 있으면 열어서 확인해요. 보낼 수 없는 물품이 나오면 상자를 돌려보내 드려요. 이때는 검수비와 택배비를 빼면 환불 금액이 남지 않아요.` },
     ],

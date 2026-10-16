@@ -64,7 +64,7 @@ export async function saveAccount(deps: SaveAccountDeps, body: unknown): Promise
     throw new Error(`확인 링크를 만들지 못했다: ${issued.error.code}`);
   }
   const rows = issuedSchema.safeParse(issued.data);
-  if (!rows.success) throw new Error("확인 링크 응답의 꼴이 틀렸다");
+  if (!rows.success) throw new Error("확인 링크 응답의 형식이 틀렸다");
   const row = rows.data[0]!;
 
   const mailer = deps.getMailer();

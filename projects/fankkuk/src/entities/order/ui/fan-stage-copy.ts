@@ -63,11 +63,11 @@ export function fanHeadline(view: FanGiftView): string {
 /** 목록의 짧은 상태 표시. 색 갈래: 끝남 success · 팬/크리에이터를 기다림 warn · 거절·반송 danger · 진행 단계 info · 취소·등록 plain. */
 export function fanBadge(view: FanGiftView): { text: string; tone: StatusTone } {
   if (view.outcome === "declined") return { text: "거절", tone: "danger" };
-  if (view.outcome === "expired") return { text: "기간 지남", tone: "danger" };
+  if (view.outcome === "expired") return { text: "기한 지남", tone: "danger" };
   if (view.outcome === "returned") return { text: "반송", tone: "danger" };
   if (view.outcome === "canceled") return { text: "취소", tone: "plain" };
   const current = currentKey(view);
-  if (!current) return { text: "수령 완료", tone: "success" };
+  if (!current) return { text: "수령", tone: "success" };
   if (current === "shipped" && view.approval.state !== "done") return { text: "승인 대기", tone: "warn" };
   if (current === "received" && view.earlySendPending) return EARLY_SEND_WAIT_BADGE;
   if (current === "received") return { text: view.fanTrackingNo ? "도착 대기" : "보내 주세요", tone: "warn" };

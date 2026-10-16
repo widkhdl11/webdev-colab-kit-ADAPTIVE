@@ -10,7 +10,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 export const OFFICE_MESSAGE = {
   wrongStep: "이미 처리됐거나 지금 단계가 아니에요.",
   notShippable: "출고 조건이 아직 안 됐어요.",
-  pendingLabel: "앞 상자 라벨 부착을 먼저 확인해 주세요.",
+  pendingLabel: "앞 상자 라벨을 붙였는지 먼저 확인해 주세요.",
   wrongCode: "이 상자의 라벨·송장이 아니에요.",
   noInspection: "검수 기록을 먼저 저장해 주세요.",
   noMeasurement: "실측 구간을 먼저 기록해 주세요.",

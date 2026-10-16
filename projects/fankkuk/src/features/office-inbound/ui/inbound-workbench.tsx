@@ -44,7 +44,7 @@ function announceOf(card: Card | null): string {
     case "received":
       return card.reprinted ? "라벨을 다시 냈어요" : `입고 완료 ${card.orderNo}`;
     case "labeled":
-      return `부착 확인 완료 ${card.orderNo}`;
+      return `라벨 붙임 확인 ${card.orderNo}`;
     case "code":
       return card.error ? `다시 입력: ${card.error}` : "받는 주소 끝 6자리를 입력하세요";
     case "details":
@@ -54,7 +54,7 @@ function announceOf(card: Card | null): string {
     case "hold_recorded":
       return "이미 보류로 기록된 상자예요";
     case "rejected":
-      return `${card.unknown ? "확인 필요" : "거부"}: ${card.title}`;
+      return `${card.unknown ? "확인 필요" : "거절"}: ${card.title}`;
   }
 }
 
@@ -143,7 +143,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
     if (scanned.kind === "waybill") {
       // 라벨 부착 대기 중이면 서버가 다음 상자를 받지 않는다(P0042) — 6자리를 적게 하기 전에 막는다
       if (pending) {
-        reject("앞 상자 라벨 부착을 먼저 확인하세요", "앞 상자 라벨 부착을 먼저 확인해 주세요.");
+        reject("앞 상자 라벨을 붙였는지 먼저 확인하세요", "앞 상자 라벨을 붙였는지 먼저 확인해 주세요.");
         return;
       }
       setCode("");
@@ -155,7 +155,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
     setBusy(false);
     scan.current?.focus();
     if (outcome.kind === "failed") {
-      if (outcome.reason === "pending_label") reject("앞 상자 라벨 부착을 먼저 확인하세요", outcome.message);
+      if (outcome.reason === "pending_label") reject("앞 상자 라벨을 붙였는지 먼저 확인하세요", outcome.message);
       else if (outcome.reason === "wrong_step") reject("이미 처리된 상자예요", outcome.message);
       else reject("반영되지 않았어요", outcome.message);
       if (needsReload(outcome)) router.refresh();
@@ -164,7 +164,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
     const orderNo = pending?.qr === scanned.value ? pending.orderNo : null;
     setPending(null);
     setCard({ kind: "labeled", orderNo });
-    addRecent({ at: new Date().toISOString(), orderNo: orderNo ?? "—", kindText: "—", resultText: "부착 확인" });
+    addRecent({ at: new Date().toISOString(), orderNo: orderNo ?? "—", kindText: "—", resultText: "라벨 붙임 확인" });
   }
 
   /** 바코드 + 6자리(없으면 빈칸) + 보류용 값(있으면)을 보낸다 */
@@ -187,7 +187,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
         return;
       }
       scan.current?.focus();
-      if (outcome.reason === "pending_label") reject("앞 상자 라벨 부착을 먼저 확인하세요", outcome.message);
+      if (outcome.reason === "pending_label") reject("앞 상자 라벨을 붙였는지 먼저 확인하세요", outcome.message);
       else if (outcome.reason === "wrong_step") reject("이미 처리된 상자예요", outcome.message);
       else reject("반영되지 않았어요", outcome.message);
       if (needsReload(outcome)) router.refresh();
@@ -197,7 +197,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
     const reply = inboundReplyFromBody(outcome.body);
     if (!reply) {
       scan.current?.focus();
-      reject("결과를 읽지 못했어요", "반영됐을 수 있어요. 위의 부착 대기 줄에 이 상자의 라벨이 나왔는지 확인해 주세요.", true);
+      reject("결과를 읽지 못했어요", "반영됐을 수 있어요. 위의 붙이기 대기 줄에 이 상자의 라벨이 나왔는지 확인해 주세요.", true);
       router.refresh();
       return;
     }
@@ -231,15 +231,15 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
         <span className={w.dot} aria-hidden="true" />
         <span>
           {pending
-            ? `부착 대기 중인 라벨 1장 · ${pending.orderNo} (${pending.qr}) — 라벨 QR 을 스캔해 부착을 확인하기 전에는 다음 상자를 입고할 수 없어요`
-            : "부착 대기 중인 라벨 없음 — 다음 상자를 스캔해도 돼요"}
+            ? `붙이기를 기다리는 라벨 1장 · ${pending.orderNo} (${pending.qr}) — 라벨 QR 을 스캔해 붙임을 확인하기 전에는 다음 상자를 입고할 수 없어요`
+            : "붙이기를 기다리는 라벨 없음 — 다음 상자를 스캔해도 돼요"}
         </span>
       </div>
 
       <ScanInput
         ref={scan}
         id="inbound-scan"
-        label={pending ? "라벨 QR 스캔 (부착 확인)" : "원 송장 바코드 스캔"}
+        label={pending ? "라벨 QR 스캔 (붙임 확인)" : "원래 송장 바코드 스캔"}
         placeholder="스캐너로 읽으면 여기에 들어가요"
         hint="상자에 붙은 택배 송장 바코드를 스캐너로 읽은 뒤, 받는 주소 끝 6자리를 입력해요. 라벨을 붙였으면 라벨 QR 을 읽혀요. 주문번호나 상태를 손으로 고르는 칸은 없어요."
         busy={busy}
@@ -266,7 +266,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
                 void submitInbound(card.barcode, card.at, code, null);
               }}
             >
-              <label htmlFor="inbound-code-input">원 송장의 받는 주소 맨 끝 6자리</label>
+              <label htmlFor="inbound-code-input">원래 송장의 받는 주소 맨 끝 6자리</label>
               <div className={w.scanRow}>
                 <input
                   ref={codeInput}
@@ -411,12 +411,12 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
                 {card.qr}
               </span>
             </div>
-            <p className={w.bigNote}>라벨 1장 출력됨. 붙인 뒤 라벨 QR 을 스캔해 부착 확인</p>
+            <p className={w.bigNote}>라벨 1장 출력됨. 붙인 뒤 라벨 QR 을 스캔해 붙임 확인</p>
             <div className={w.nextStep}>
               <h3>지금 할 일</h3>
               <ol className={w.steps} aria-label="입고 순서">
                 <li className={w.done}>
-                  <b>1</b>원 송장 스캔 · 6자리
+                  <b>1</b>원래 송장 스캔 · 6자리
                 </li>
                 <li className={w.now}>
                   <b>2</b>라벨 붙이기
@@ -426,12 +426,12 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
                 </li>
               </ol>
               <p className={a.hint}>
-                떼어 낸 원 송장은 봉투 <strong className={a.mono}>{card.qr}</strong>(라벨의 QR 번호와 같아요)에 넣고, 상자와 따로 보관 선반에 두세요. 크리에이터에게 가는 상자에 섞이면 안 돼요.
+                떼어 낸 원래 송장은 봉투 <strong className={a.mono}>{card.qr}</strong>(라벨의 QR 번호와 같아요)에 넣고, 상자와 따로 보관 선반에 두세요. 크리에이터에게 가는 상자에 섞이면 안 돼요.
               </p>
             </div>
             <div className={a.note}>
               <InfoIcon />
-              <p>부착 확인 전까지 스캔 칸은 라벨 QR 만 받아요.</p>
+              <p>붙임 확인 전까지 스캔 칸은 라벨 QR 만 받아요.</p>
             </div>
           </section>
         )}
@@ -440,7 +440,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
           <div className={`${a.note} ${a.noteOk}`}>
             <InfoIcon />
             <p>
-              <strong>부착 확인 완료.</strong> {card.orderNo ? `${card.orderNo} 상자는` : "이 상자는"} 이제 검수 단계로 넘어가요. 다음 상자를 스캔하세요.
+              <strong>라벨 붙임 확인.</strong> {card.orderNo ? `${card.orderNo} 상자는` : "이 상자는"} 이제 검수 단계로 넘어가요. 다음 상자를 스캔하세요.
             </p>
           </div>
         )}
@@ -449,7 +449,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
           <div className={`${a.note} ${a.noteOk}`}>
             <InfoIcon />
             <p>
-              <strong>보류로 기록했어요.</strong> 사유: {HOLD_REASON_LABEL[card.reason]}. 보낸 분: {card.nickname ? <strong>닉네임 일치 · {card.nickname}</strong> : "닉네임 없음"}. 상자는 선반 <span className={a.mono}>{card.shelf}</span>에 두세요. 출고 목록에는 나오지 않고, 7일 안에 입고되지 않으면 원 송장 주소로 착불 반송해요.
+              <strong>보류로 기록했어요.</strong> 사유: {HOLD_REASON_LABEL[card.reason]}. 보낸 사람: {card.nickname ? <strong>닉네임 일치 · {card.nickname}</strong> : "닉네임 없음"}. 상자는 선반 <span className={a.mono}>{card.shelf}</span>에 두세요. 출고 목록에는 나오지 않고, 7일 안에 입고되지 않으면 원래 송장 주소로 착불 반송해요.
             </p>
           </div>
         )}
@@ -466,7 +466,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
         {card?.kind === "rejected" && (
           <section className={`${w.result} ${w.resultNo}`} aria-labelledby="inbound-rejected">
             <div className={w.resultHead}>
-              <span className={`${a.tag} ${a.tagInk}`}>{card.unknown ? "확인 필요" : "거부"}</span>
+              <span className={`${a.tag} ${a.tagInk}`}>{card.unknown ? "확인 필요" : "거절"}</span>
               <h2 id="inbound-rejected">{card.title}</h2>
             </div>
             <dl className={a.kv}>
@@ -486,7 +486,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
               <p>
                 {pending
                   ? "앞 상자에 라벨을 붙이고, 그 라벨의 QR 을 스캔하면 다음 상자를 받을 수 있어요. 한 상자에 스캔 한 번, 라벨 한 장씩 처리해요."
-                  : "같은 송장을 두 번 읽었다면 그대로 두세요. 이 상자에 붙은 라벨이 없다면 관리자에게 알려 주세요."}
+                  : "같은 송장을 두 번 읽었다면 그대로 두세요. 이 상자에 붙은 라벨이 없다면 대표에게 알려 주세요."}
               </p>
             </div>
           </section>
@@ -525,7 +525,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
                     </td>
                     <td>{r.kindText}</td>
                     <td>
-                      <span className={`${a.tag} ${r.resultText === "부착 확인" ? a.tagBrand : ""}`}>{r.resultText}</span>
+                      <span className={`${a.tag} ${r.resultText === "라벨 붙임 확인" ? a.tagBrand : ""}`}>{r.resultText}</span>
                     </td>
                     <td>{operatorNickname}</td>
                   </tr>

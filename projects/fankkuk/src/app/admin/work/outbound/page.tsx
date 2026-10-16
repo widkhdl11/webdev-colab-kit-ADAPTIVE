@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   await loadAdminSession(); // 운영자가 아니면 제목도 만들지 않고 404
-  return { title: "출고 · 팬꾹 관리자" };
+  return { title: "출고 · 팬꾹 운영자" };
 }
 
 // 출고 작업 화면 (office-workflow INV-W1·W3·W8). 송장 출력 버튼은 대표에게만 보인다 — 판정은 서버·DB 가 다시 한다.

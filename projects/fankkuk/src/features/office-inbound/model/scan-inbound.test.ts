@@ -142,7 +142,7 @@ describe("입고 스캔 — 원 송장 바코드 + 받는 주소 6자리 (office
 
   it("INV-W2 S2b (실패경로): 앞 상자 라벨 부착 전이면 409 + pending_label", async () => {
     const { client } = fakeClient({ office_scan_inbound: { error: { code: "P0042" } } });
-    expect(await scanInbound(client, scan())).toEqual({ status: 409, body: { message: "앞 상자 라벨 부착을 먼저 확인해 주세요.", reason: "pending_label" } });
+    expect(await scanInbound(client, scan())).toEqual({ status: 409, body: { message: "앞 상자 라벨을 붙였는지 먼저 확인해 주세요.", reason: "pending_label" } });
   });
 
   it("INV-W2: 라벨 QR 스캔 → 부착 확인. 직전 라벨이 아니면 400(P0043), 이미 처리됐으면 409(55000)", async () => {

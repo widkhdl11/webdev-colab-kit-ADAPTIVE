@@ -8,6 +8,6 @@ export async function readProhibitedItems(supabase: Pick<SupabaseClient, "rpc">)
   const { data, error } = await supabase.rpc("list_prohibited_items");
   if (error) throw new Error(`보낼 수 없는 물품 목록을 읽지 못했다: ${error.code}`);
   const items = prohibitedItemsFromRows(data);
-  if (!items) throw new Error("보낼 수 없는 물품 목록의 모양이 다르다");
+  if (!items) throw new Error("보낼 수 없는 물품 목록의 형식이 다르다");
   return items;
 }

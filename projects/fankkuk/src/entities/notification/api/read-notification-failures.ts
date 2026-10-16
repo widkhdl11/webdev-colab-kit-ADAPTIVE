@@ -33,7 +33,7 @@ export async function readNotificationFailures(client: Pick<SupabaseClient, "rpc
   const { data, error } = await client.rpc("notification_failures");
   if (error) throw new Error(`보내지 못한 알림 목록을 읽지 못했다: ${error.code}`);
   const parsed = z.array(row).safeParse(data);
-  if (!parsed.success) throw new Error("보내지 못한 알림 목록의 모양이 다르다");
+  if (!parsed.success) throw new Error("보내지 못한 알림 목록의 형식이 다르다");
   return parsed.data.map((r) => ({
     kind: r.kind,
     orderNo: r.order_no,
@@ -51,7 +51,7 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   arrived: "입고",
   inspected: "검수",
   shipped: "출고",
-  in_transit: "배송중",
+  in_transit: "배송 중",
   delivered: "수령",
   hold: "추적기 반송",
   box_arrived: "상자 도착",
@@ -64,8 +64,9 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   difference_canceled: "추가 결제 취소",
   gift_reply: "답장",
   gift_received: "받았어요 확인",
-  creator_check: "확인할 선물",
-  box_no_code: "코드 없이 온 상자",
+  creator_check: "크리에이터 확인",
+  box_no_code: "6자리 없는 상자",
+  revgift_offer: "역조공 받기",
 };
 
 function isKnownKind(kind: string): kind is NotificationKind {

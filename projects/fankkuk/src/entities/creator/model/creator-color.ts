@@ -27,7 +27,7 @@ function channel(hex: string, at: number): number {
 
 /** WCAG 2 상대 휘도. #RRGGBB(대소문자 무관)만 받는다. */
 function luminance(hex: string): number {
-  if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) throw new Error(`색 꼴이 아니다: ${hex}`);
+  if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) throw new Error(`색 형식이 아니다: ${hex}`);
   return 0.2126 * channel(hex, 1) + 0.7152 * channel(hex, 3) + 0.0722 * channel(hex, 5);
 }
 

@@ -16,7 +16,7 @@ import { MEASURED_TIERS, measurementFromDb } from "./measurement";
 // - complete: 같은 QR 을 다시 스캔 → 검수 완료·반송 대기·크리에이터 확인 대기 중 DB 가 정한 곳으로(추적기 반송도 반송 대기, 2026-10-12 D2·(2) D3 ②). 기록이 없으면 P0044
 // 운영자가 아니면 404. 상태를 고르는 칸은 없다(INV-W1).
 
-const MESSAGE_SHAPE = "스캔한 값이나 검수 기록의 꼴이 맞지 않아요.";
+const MESSAGE_SHAPE = "스캔한 값이나 검수 기록의 형식이 맞지 않아요.";
 const FAILED = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
 const MESSAGES = { limit: MESSAGE_SHAPE, failed: FAILED };
 // INV-W4: 검수 기록은 상자마다 한 번 — 두 번째 기록은 DB 가 55000 으로 막는다

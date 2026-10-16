@@ -62,7 +62,7 @@ export function InspectionCardSheet() {
           <div key={i} className={size === "biz" ? s.biz : s.post} aria-hidden={i > 0 ? true : undefined}>
             <LogoMark size={size === "biz" ? 56 : 80} />
             <div className={s.text}>
-              <p className={s.title}>{size === "biz" ? <>추적 장치<br />검수 완료</> : "추적 장치 검수 완료"}</p>
+              <p className={s.title}>검수 완료</p>
               <p className={s.date}>{label}</p>
             </div>
           </div>

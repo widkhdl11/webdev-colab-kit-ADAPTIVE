@@ -12,7 +12,7 @@ export type DifferencePrepareWrite = z.input<typeof bodyShape>;
 const prepared = z.array(z.object({ toss_order_id: z.string().min(6), amount_krw: z.number().int().positive(), order_no: z.string() })).length(1);
 
 const MESSAGE = {
-  shape: "요청 꼴이 맞지 않아요.",
+  shape: "요청 형식이 맞지 않아요.",
   notFound: "차액 요청을 찾을 수 없어요.",
   closed: "기한이 지났거나 지금은 낼 수 없는 차액이에요.",
   paid: "이미 낸 차액이에요.",

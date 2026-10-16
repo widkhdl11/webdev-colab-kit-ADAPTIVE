@@ -16,7 +16,7 @@ export const VERIFICATION_STATUS_LABEL: Record<VerificationStatus, string> = {
   rejected: "반려됨",
   withdrawn: "거둠",
   closed: "닫힘",
-  expired: "기간 지남",
+  expired: "기한 지남",
 };
 
 /** INV-V13: 「인증 코드」(운영자 확인) · 「코드 자동 확인」 · 「플랫폼 로그인」. 읽기 함수는 승인된 신청이면 승인 기록의 방법을 준다. */

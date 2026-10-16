@@ -28,6 +28,6 @@ function sameSecret(expected: string, authorization: string | null): boolean {
 export function refuseScheduleRequest(input: ScheduleRequest): JsonReply | null {
   if (!input.secret || input.secret.length < SCHEDULE_SECRET_MIN) return { status: 404, body: { message: "찾을 수 없어요." } };
   if (!sameSecret(input.secret, input.authorization)) return { status: 401, body: { message: "인증이 필요해요." } };
-  if (!bodyShape.safeParse(input.body).success) return { status: 400, body: { message: "요청 꼴이 맞지 않아요." } };
+  if (!bodyShape.safeParse(input.body).success) return { status: 400, body: { message: "요청 형식이 맞지 않아요." } };
   return null;
 }

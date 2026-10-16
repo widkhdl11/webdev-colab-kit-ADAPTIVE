@@ -148,9 +148,9 @@ describe("내 정보 저장", () => {
     expect(t.session.calls).toEqual([]);
   });
 
-  it("링크 발급 응답의 꼴이 틀리면 메일을 보내지 않고 던진다", async () => {
+  it("링크 발급 응답의 형식이 틀리면 메일을 보내지 않고 던진다", async () => {
     const t = setup({ issue: { data: [{ token: 1, email: "b@example.com", nickname: "별빛" }], error: null } });
-    await expect(saveAccount(t.deps, VALID)).rejects.toThrow(/꼴/);
+    await expect(saveAccount(t.deps, VALID)).rejects.toThrow(/형식이 틀렸다/);
     expect(t.sent).toEqual([]);
   });
 

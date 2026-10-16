@@ -245,7 +245,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   const stepIndex = !parcel ? 0 : phase === "form" ? 1 : phase === "saved" ? 3 : 4;
   const steps = ["QR 스캔", "검수 기록", "기록 저장", "QR 다시 스캔해 검수 완료"];
   const announce = error
-    ? `${error.unknown || error.local ? "확인 필요" : "거부"}: ${error.title}`
+    ? `${error.unknown || error.local ? "확인 필요" : "거절"}: ${error.title}`
     : phase === "finished" && finished
       ? FINISHED[finished.state].title
       : phase === "saved"
@@ -284,7 +284,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
         {error && (
           <div className={`${w.result} ${w.resultNo} ${w.resultHeadSm}`}>
             <div className={w.resultHead}>
-              <span className={`${a.tag} ${a.tagInk}`}>{error.unknown || error.local ? "확인 필요" : "거부"}</span>
+              <span className={`${a.tag} ${a.tagInk}`}>{error.unknown || error.local ? "확인 필요" : "거절"}</span>
               <h2>{error.title}</h2>
             </div>
             <p>
@@ -519,7 +519,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
           <div className={a.note}>
             <InfoIcon />
             <p>
-              <strong>검수 기록이 없으면 다음 단계로 넘어가지 않아요.</strong> 기록을 저장하기 전에 QR 을 다시 스캔하면 서버가 거부해요. 이미 저장한 상자라면 QR 을 한 번 더 스캔하세요.
+              <strong>검수 기록이 없으면 다음 단계로 넘어가지 않아요.</strong> 기록을 저장하기 전에 QR 을 다시 스캔하면 서버가 받지 않아요. 이미 저장한 상자라면 QR 을 한 번 더 스캔하세요.
             </p>
           </div>
         )}

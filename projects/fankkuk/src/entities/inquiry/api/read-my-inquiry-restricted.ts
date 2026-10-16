@@ -6,6 +6,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export async function readMyInquiryRestricted(client: Pick<SupabaseClient, "rpc">): Promise<boolean> {
   const { data, error } = await client.rpc("my_inquiry_restricted");
   if (error) throw new Error(`문의 제한 여부를 읽지 못했다: ${error.code}`);
-  if (typeof data !== "boolean") throw new Error("문의 제한 여부의 모양이 다르다");
+  if (typeof data !== "boolean") throw new Error("문의 제한 여부의 형식이 다르다");
   return data;
 }

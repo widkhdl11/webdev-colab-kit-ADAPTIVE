@@ -17,12 +17,12 @@ export function AdminShell({ nickname, access, children }: Props) {
     <div className={`${s.root} admin-area`}>
       <div className={s.pcOnly}>
         <h1>PC에서 써 주세요</h1>
-        <p className={s.sub}>관리자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p>
+        <p className={s.sub}>운영자 화면은 넓은 화면에서 쓰도록 만들었어요. 1024px 이상 화면에서 열어 주세요.</p>
       </div>
-      <aside className={s.side} aria-label="관리자 메뉴">
+      <aside className={s.side} aria-label="운영자 메뉴">
         <Link className={s.sideLogo} href="/admin">
           <LogoMark size={28} />
-          팬꾹<small>관리자</small>
+          팬꾹<small>운영자</small>
         </Link>
         <AdminNav />
       </aside>

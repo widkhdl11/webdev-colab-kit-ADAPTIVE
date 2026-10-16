@@ -13,7 +13,7 @@ export const ADMIN_MENU: readonly AdminMenuGroup[] = [
       { href: "/admin/work/inspect", label: "검수" },
       { href: "/admin/work/outbound", label: "출고" },
       { href: "/admin/parcels", label: "들어온 상자" },
-      { href: "/admin/unmatched", label: "미확인 입고" },
+      { href: "/admin/unmatched", label: "보류 상자" },
       { href: "/admin/automation", label: "자동 처리 현황" },
       { href: "/admin/revgifts", label: "역조공 처리" },
     ],

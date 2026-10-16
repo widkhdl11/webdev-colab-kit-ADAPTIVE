@@ -24,7 +24,7 @@ export function createSupabaseReconcileStore(admin: Pick<SupabaseClient, "rpc">)
         .parse(data)
         .map((r): ReconcileTarget => {
           const confirmingAt = new Date(r.confirming_at);
-          if (Number.isNaN(confirmingAt.getTime())) throw new Error("승인 중이 된 시각의 꼴이 다르다");
+          if (Number.isNaN(confirmingAt.getTime())) throw new Error("승인 중이 된 시각의 형식이 다르다");
           return { source: r.source, tossOrderId: r.toss_order_id, amountKrw: r.amount_krw, confirmingAt };
         });
     },

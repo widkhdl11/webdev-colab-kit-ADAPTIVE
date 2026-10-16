@@ -19,7 +19,7 @@ export class PriceChangedError extends Error {
 /** DB 등록 함수가 입력 값(메모·기타 글 길이 등, 22023)을 거부했다 — 입력 검사가 먼저 막으므로 정상 흐름에서는 나오지 않지만, 나오면 입력 오류(400)다. */
 export class InvalidRegistrationError extends Error {
   constructor(detail: string) {
-    super(`DB 가 등록 입력을 거부했다: ${detail}`);
+    super(`DB 가 등록 입력을 받지 않았다: ${detail}`);
   }
 }
 
@@ -29,7 +29,7 @@ export class InvalidRegistrationError extends Error {
  * 앱 서버 판정이 먼저 막으므로 정상 흐름에서는 나오지 않는다. 나오면 서버 판정이 빠진 것이다(INV-L3·L8·L9 두 번째 장치). */
 export class SenderRefusedError extends Error {
   constructor(readonly reason: "role" | "self" | "no_follow" | "unknown_creator" | "moving" | "resting" | "limit" | "hard_item") {
-    super(`DB 가 보내는 사람을 거부했다: ${reason}`);
+    super(`DB 가 보내는 사람을 받지 않았다: ${reason}`);
   }
 }
 

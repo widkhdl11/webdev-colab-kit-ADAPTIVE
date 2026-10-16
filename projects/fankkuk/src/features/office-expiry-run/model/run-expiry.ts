@@ -13,7 +13,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 
 export const ORDER_NO_MAX = 40;
 
-const MESSAGE_SHAPE = "주문번호 꼴이 맞지 않아요.";
+const MESSAGE_SHAPE = "주문번호 형식이 맞지 않아요.";
 const FAILED = "자동 처리를 돌리지 못했어요. 잠시 뒤 다시 해 주세요.";
 const RECONCILE_FAILED = "자동 처리는 끝났지만 결제를 다시 확인하지 못한 줄이 있어요. 잠시 뒤 다시 해 주세요.";
 

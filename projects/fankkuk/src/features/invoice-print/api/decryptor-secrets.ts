@@ -24,7 +24,7 @@ function valuesOf(text: string): Map<string, string> {
 
 export function readDecryptorSecrets(env: DeployEnv, readFile: () => string): DecryptorSecrets {
   if (isProduction(env)) {
-    throw new Error("임시 복호화는 운영 환경에서 쓸 수 없다 — KMS 를 연결해야 한다");
+    throw new Error("임시 주소 열람 방식은 운영 환경에서 쓸 수 없다 — KMS 를 연결해야 한다");
   }
   const values = valuesOf(readFile());
   const need = (name: string): string => {
@@ -35,6 +35,6 @@ export function readDecryptorSecrets(env: DeployEnv, readFile: () => string): De
   const privateKeyPem = need("DEV_ADDRESS_PRIVATE_KEY");
   const dbKey = need("DECRYPT_DB_KEY");
   const ownerUserId = need("DECRYPT_OWNER_USER_ID");
-  if (!UUID.test(ownerUserId)) throw new Error("송장 출력 함수 설정의 DECRYPT_OWNER_USER_ID 가 계정 ID 꼴이 아니다");
+  if (!UUID.test(ownerUserId)) throw new Error("송장 출력 함수 설정의 DECRYPT_OWNER_USER_ID 가 계정 ID 형식이 아니다");
   return { privateKeyPem, dbKey, ownerUserId };
 }

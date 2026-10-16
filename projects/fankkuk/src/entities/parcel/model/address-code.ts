@@ -23,7 +23,7 @@ function fold(state: number, x: number): number {
 
 /** 앞 5자리(20자 안의 글자)로 확인 문자를 계산한다. 20자 밖의 글자가 있으면 던진다. */
 export function addressCodeCheckChar(body: string): string {
-  if (!/^[3479ACDEFHJKMNPRTWXY]{5}$/.test(body)) throw new Error("확인 문자를 계산할 앞 5자리 꼴이 아니다");
+  if (!/^[3479ACDEFHJKMNPRTWXY]{5}$/.test(body)) throw new Error("확인 문자를 계산할 앞 5자리 형식이 아니다");
   let state = 0;
   for (const ch of body) state = fold(state, ADDRESS_CODE_ALPHABET.indexOf(ch));
   // fold(state, x) 가 (0, 0) 이 되는 x — a 쪽은 ALPHA_TIMES[a1] 와 같은 값, b 쪽은 2·b1 을 0 으로 되돌리는 값

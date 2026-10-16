@@ -25,7 +25,7 @@ export function AccessLogPanel({ entries }: { entries: readonly AdminAccessEntry
         <div>
           <h1>주소 열람 기록</h1>
           <p>
-            송장 출력으로 주소를 연 기록과 거부된 시도를 최근 순으로 {ADMIN_ACCESS_LOG_LIMIT}줄까지 보여요. 운영자만 보는 내부 기록이에요 — 크리에이터와 팬에게는
+            송장 출력으로 주소를 연 기록과 거절된 시도를 최근 순으로 {ADMIN_ACCESS_LOG_LIMIT}줄까지 보여요. 운영자만 보는 내부 기록이에요 — 크리에이터와 팬에게는
             주소가 열린 줄과 지운 줄만 보여요.
           </p>
         </div>
@@ -59,7 +59,7 @@ export function AccessLogPanel({ entries }: { entries: readonly AdminAccessEntry
                     <strong>{e.orderNo}</strong>
                   </td>
                   <td>{whoOf(e)}</td>
-                  <td>{e.result.kind === "opened" ? <span className={`${a.tag} ${a.tagInfo}`}>열림</span> : <span className={`${a.tag} ${a.tagDanger}`}>거부</span>}</td>
+                  <td>{e.result.kind === "opened" ? <span className={`${a.tag} ${a.tagInfo}`}>열림</span> : <span className={`${a.tag} ${a.tagDanger}`}>거절</span>}</td>
                   <td>{noteOf(e)}</td>
                 </tr>
               ))

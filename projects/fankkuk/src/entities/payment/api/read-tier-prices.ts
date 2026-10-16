@@ -9,7 +9,7 @@ export async function readPublicPrices(supabase: Pick<SupabaseClient, "rpc">): P
   const { data, error } = await supabase.rpc("public_tier_prices");
   if (error) throw new Error(`요금표를 읽지 못했다: ${error.code}`);
   const table = publicPriceTableFromRows(data);
-  if (!table) throw new Error("공개 요금표의 모양이 다르다");
+  if (!table) throw new Error("공개 요금표의 형식이 다르다");
   return table;
 }
 

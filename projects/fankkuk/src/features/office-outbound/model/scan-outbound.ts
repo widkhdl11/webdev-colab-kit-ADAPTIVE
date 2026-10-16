@@ -50,7 +50,7 @@ const DENY_MESSAGE: Record<Exclude<AccessDenyReason, "not_owner">, string> = {
 const MESSAGE_NO_ADDRESS = "크리에이터가 아직 배송 주소를 등록하지 않았어요.";
 const MESSAGE_SIGN_IN = "로그인을 다시 확인해 주세요.";
 
-const MESSAGE_SHAPE = "스캔한 값의 꼴이 맞지 않아요. 다시 스캔해 주세요.";
+const MESSAGE_SHAPE = "스캔한 값의 형식이 맞지 않아요. 다시 스캔해 주세요.";
 const MESSAGE_OWNER_ONLY = "송장 출력은 대표만 할 수 있어요.";
 const FAILED = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
 const MESSAGES = { limit: MESSAGE_SHAPE, failed: FAILED };

@@ -73,7 +73,7 @@ export async function registerGift(
       if (e instanceof PriceChangedError) return { ok: false, status: 409, message: PRICE_CHANGED_MESSAGE };
       // 입력 검사를 지나 DB 가 값을 거부했다(22023) — 입력 오류로 돌려준다. 정상 흐름에서는 입력 검사가 먼저 막으므로 남겨 둔다
       if (e instanceof InvalidRegistrationError) {
-        console.error(`선물 등록: 입력 검사를 지나 DB 가 값을 거부했다 (${e.message})`);
+        console.error(`선물 등록: 입력 검사를 지나 DB 가 값을 받지 않았다 (${e.message})`);
         return { ok: false, status: 400, errors: {} };
       }
       if (e instanceof SenderRefusedError) {
@@ -82,7 +82,7 @@ export async function registerGift(
         // 받기 어려운 품목 등록 막기(hard-items INV-H7)도 DB 만 판정한다
         const dbOnly =
           e.reason === "unknown_creator" || e.reason === "moving" || e.reason === "resting" || e.reason === "limit" || e.reason === "hard_item";
-        if (!dbOnly) console.error(`선물 등록: 서버 판정을 지나 DB 가 거부했다 (${e.reason})`);
+        if (!dbOnly) console.error(`선물 등록: 서버 판정을 지나 DB 가 받지 않았다 (${e.reason})`);
         // INV-B6: 한도 문구는 하나 — 다음 달 1일만 넣고 한도 숫자·남은 개수는 넣지 않는다
         const message = e.reason === "limit" ? limitReachedMessage(kstToday((deps.now ?? (() => new Date()))())) : SENDER_REFUSAL_MESSAGE[e.reason];
         // hard-items INV-H7: 화면이 이유를 알아야 2단계로 돌아가 안내를 다시 보인다(요금 변경 409 와 가르기)

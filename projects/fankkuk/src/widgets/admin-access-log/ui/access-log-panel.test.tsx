@@ -28,7 +28,7 @@ const render = (entries: readonly AdminAccessEntry[]) => act(() => root.render(<
 const rowsOf = () => [...host.querySelectorAll("tbody tr")].map((tr) => [...tr.querySelectorAll("td")].slice(1).map((td) => td.textContent));
 
 describe("INV-P7 (D12): 운영자 내부 열람 기록 화면", () => {
-  it("INV-P7 (D12): 직원 거부 줄은 「대표 아님 · 닉네임」과 C1 문구로, 대표의 연 줄은 「대표 · 닉네임」과 몇 번째로", () => {
+  it("INV-P7 (D12): 직원 거절 줄은 「대표 아님 · 닉네임」과 C1 문구로, 대표의 연 줄은 「대표 · 닉네임」과 몇 번째로", () => {
     render([
       { at: "2026-10-12T06:00:00.000Z", target: "gift", orderNo: "FC-4T7NX", requester: "other", requesterNickname: "팬꾹 직원", result: { kind: "denied", reason: "not_owner" } },
       { at: "2026-10-12T05:50:00.000Z", target: "gift", orderNo: "FC-4T7NX", requester: "owner", requesterNickname: "팬꾹 운영", result: { kind: "opened", printNo: 2, released: false } },
@@ -36,14 +36,14 @@ describe("INV-P7 (D12): 운영자 내부 열람 기록 화면", () => {
       { at: "2026-10-12T05:30:00.000Z", target: "gift", orderNo: "FC-9QW2E", requester: "owner", requesterNickname: "팬꾹 운영", result: { kind: "denied", reason: "no_valid_approval" } },
     ]);
     expect(rowsOf()).toEqual([
-      ["팬 선물", "FC-4T7NX", "대표 아님 · 팬꾹 직원", "거부", "권한이 없는 계정이라 열리지 않았어요"],
+      ["팬 선물", "FC-4T7NX", "대표 아님 · 팬꾹 직원", "거절", "권한이 없는 계정이라 열리지 않았어요"],
       ["팬 선물", "FC-4T7NX", "대표 · 팬꾹 운영", "열림", "재출력 2번째"],
-      ["역조공", "RG-AB12CD0", "대표", "거부", "받기로 하며 입력한 주소가 없어 열리지 않았어요"],
-      ["팬 선물", "FC-9QW2E", "대표 · 팬꾹 운영", "거부", "승인 서명이 확인되지 않아 열리지 않았어요"],
+      ["역조공", "RG-AB12CD0", "대표", "거절", "받기로 하며 입력한 주소가 없어 열리지 않았어요"],
+      ["팬 선물", "FC-9QW2E", "대표 · 팬꾹 운영", "거절", "승인 서명이 확인되지 않아 열리지 않았어요"],
     ]);
   });
 
-  it("D12 반영: 결과 배지는 상태 4색 — 거부 빨강(tagDanger)·열림 파랑(tagInfo)", () => {
+  it("D12 반영: 결과 배지는 상태 4색 — 거절 빨강(tagDanger)·열림 파랑(tagInfo)", () => {
     render([
       { at: "2026-10-12T06:00:00.000Z", target: "gift", orderNo: "FC-4T7NX", requester: "other", requesterNickname: "팬꾹 직원", result: { kind: "denied", reason: "not_owner" } },
       { at: "2026-10-12T05:50:00.000Z", target: "gift", orderNo: "FC-4T7NX", requester: "owner", requesterNickname: "팬꾹 운영", result: { kind: "opened", printNo: 1, released: false } },
@@ -60,7 +60,7 @@ describe("INV-P7 (D12): 운영자 내부 열람 기록 화면", () => {
     render([]);
     const text = host.textContent ?? "";
     expect(text).toContain(`최근 순으로 ${ADMIN_ACCESS_LOG_LIMIT}줄까지`);
-    expect(text.match(/거부된 시도/g)?.length).toBe(1);
+    expect(text.match(/거절된 시도/g)?.length).toBe(1);
     expect(host.querySelectorAll("p[style]").length).toBe(0);
     expect(host.querySelectorAll("p").length).toBe(1);
   });

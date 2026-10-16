@@ -8,7 +8,7 @@ export async function readAdminProhibitedItems(client: Pick<SupabaseClient, "rpc
   const { data, error } = await client.rpc("admin_prohibited_items");
   if (error) throw new Error(`금지 물품 목록을 읽지 못했다: ${error.code}`);
   const items = adminProhibitedItemsFromRows(data);
-  if (!items) throw new Error("금지 물품 목록의 모양이 다르다");
+  if (!items) throw new Error("금지 물품 목록의 형식이 다르다");
   return items;
 }
 
@@ -16,6 +16,6 @@ export async function readAdminProhibitedChanges(client: Pick<SupabaseClient, "r
   const { data, error } = await client.rpc("admin_prohibited_changes");
   if (error) throw new Error(`금지 물품 변경 기록을 읽지 못했다: ${error.code}`);
   const changes = prohibitedChangesFromRows(data);
-  if (!changes) throw new Error("금지 물품 변경 기록의 모양이 다르다");
+  if (!changes) throw new Error("금지 물품 변경 기록의 형식이 다르다");
   return changes;
 }

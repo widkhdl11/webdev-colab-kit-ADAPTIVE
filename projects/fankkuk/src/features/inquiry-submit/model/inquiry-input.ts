@@ -15,7 +15,7 @@ export type InquiryField = "kind" | "orderNo" | "title" | "body";
 
 export const INQUIRY_MESSAGES: Readonly<Record<InquiryField, string>> = {
   kind: "분류를 골라 주세요.",
-  orderNo: "주문번호는 FC-7K3M9 꼴로 적어 주세요.",
+  orderNo: "주문번호는 FC-7K3M9 형식으로 적어 주세요.",
   title: `제목은 1~${INQUIRY_TITLE_MAX}자로 적어 주세요.`,
   body: `내용은 1~${INQUIRY_BODY_MAX}자로 적어 주세요.`,
 };

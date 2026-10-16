@@ -24,7 +24,7 @@ const BY_NUMBER: ReadonlyMap<number, SpecialMoment> = new Map([
  */
 export function oneYearAfter(isoDate: string): string {
   const d = splitIsoDate(isoDate);
-  if (!d) throw new Error(`날짜 꼴이 아니다: ${isoDate}`);
+  if (!d) throw new Error(`날짜 형식이 아니다: ${isoDate}`);
   const day = d.month === 2 && d.day === 29 ? 28 : d.day;
   return `${d.year + 1}-${String(d.month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }

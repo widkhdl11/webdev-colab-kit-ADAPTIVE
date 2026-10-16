@@ -17,7 +17,7 @@ export async function readMyVerifications(client: Pick<SupabaseClient, "rpc">): 
   const { data, error } = await client.rpc("my_creator_verifications");
   if (error) throw new Error(`본인 확인 신청을 읽지 못했다: ${error.code}`);
   const rows = myVerificationsFromRows(data);
-  if (!rows) throw new Error("본인 확인 신청의 모양이 다르다");
+  if (!rows) throw new Error("본인 확인 신청의 형식이 다르다");
   return rows;
 }
 
@@ -26,7 +26,7 @@ export async function readMyVerificationState(client: Pick<SupabaseClient, "rpc"
   const { data, error } = await client.rpc("my_creator_verification_state");
   if (error) throw new Error(`본인 확인 상태를 읽지 못했다: ${error.code}`);
   const state = myVerificationStateFromRows(data);
-  if (state === undefined) throw new Error("본인 확인 상태의 모양이 다르다");
+  if (state === undefined) throw new Error("본인 확인 상태의 형식이 다르다");
   return state;
 }
 
@@ -35,7 +35,7 @@ export async function readAdminVerifications(client: Pick<SupabaseClient, "rpc">
   const { data, error } = await client.rpc("admin_creator_verifications");
   if (error) throw new Error(`본인 확인 신청 목록을 읽지 못했다: ${error.code}`);
   const rows = adminVerificationsFromRows(data);
-  if (!rows) throw new Error("본인 확인 신청 목록의 모양이 다르다");
+  if (!rows) throw new Error("본인 확인 신청 목록의 형식이 다르다");
   return rows;
 }
 

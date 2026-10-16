@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   await loadAdminSession(); // 운영자가 아니면 제목도 만들지 않고 404
-  return { title: "미확인 입고 · 팬꾹 관리자" };
+  return { title: "보류 상자 · 팬꾹 운영자" };
 }
 
 // 미확인 입고 = 운영자 확인 목록 (office-workflow INV-W5·W6·W7, inbound-address-code INV-C9·C10).

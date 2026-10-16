@@ -13,7 +13,7 @@ export type StateTone = "plain" | "warn" | "brand" | "ink";
 export const STATE_LABEL: Record<ParcelState, { text: string; tone: StateTone }> = {
   no_waybill: { text: "송장 대기", tone: "plain" },
   awaiting: { text: "입고 대기", tone: "plain" },
-  received: { text: "라벨 부착 대기", tone: "warn" },
+  received: { text: "라벨 붙이기 대기", tone: "warn" },
   labeled: { text: "검수 대기", tone: "warn" },
   inspected: { text: "검수 완료", tone: "brand" },
   // 추적기 아님 블루투스·RF 상자의 크리에이터 확인 대기(2026-10-12 (2) D3 ②). DB 값은 옛 「보관」 이름 그대로
@@ -28,8 +28,8 @@ export const STATE_LABEL: Record<ParcelState, { text: string; tone: StateTone }>
 /** 목록의 「다음 단계」 칸. 빈 문자열이면 할 일이 없다. */
 export const NEXT_STEP_TEXT: Record<NextStep, string> = {
   wait_waybill: "팬이 송장번호를 넣으면 입고할 수 있어요",
-  scan_inbound: "원 송장을 스캔하면 입고돼요",
-  confirm_label: "입고 화면에서 라벨 QR 스캔해 부착 확인",
+  scan_inbound: "원래 송장을 스캔하면 입고돼요",
+  confirm_label: "입고 화면에서 라벨 QR 스캔해 붙임 확인",
   inspect: "검수 화면에서 QR 스캔 뒤 검수 기록",
   print_label: "출고 화면에서 QR 스캔",
   wait_approval: "크리에이터 승인을 기다려요",
@@ -37,7 +37,7 @@ export const NEXT_STEP_TEXT: Record<NextStep, string> = {
   wait_accept: "팬의 받기를 기다려요",
   wait_expiry: "자동 처리 대기(반송 예정)",
   held: "크리에이터가 받기·거절을 고르면 위 목록에서 처리해요(7일이 지나면 고른 쪽대로, 고르지 않았으면 반송 대기)",
-  on_hold: "보류 중이라 출고하지 않아요 — 미확인 입고 화면에서 확인",
+  on_hold: "보류 중이라 출고하지 않아요 — 보류 상자 화면에서 확인",
   print_return: "출고 화면에서 QR 스캔하면 반송 송장 출력",
   confirm_return: "출고 화면에서 반송 송장 바코드 스캔",
   confirm_shipment: "출고 화면에서 출력한 송장 바코드 스캔",

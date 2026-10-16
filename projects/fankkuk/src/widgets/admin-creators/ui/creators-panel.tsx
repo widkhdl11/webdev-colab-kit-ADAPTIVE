@@ -281,7 +281,7 @@ export function CreatorsPanel({ creators, verifications, events, nameChanges, ta
           </div>
           <div className={a.tblWrap}>
             <table className={a.tbl} style={{ minWidth: 900 }}>
-              <caption className="sr-only">끝난 신청 — 승인·반려·거둠·닫힘·기간 지남</caption>
+              <caption className="sr-only">끝난 신청 — 승인·반려·거둠·닫힘·기한 지남</caption>
               <thead>
                 <tr>
                   <th scope="col">신청 시각</th>

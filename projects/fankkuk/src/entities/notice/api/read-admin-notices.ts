@@ -7,6 +7,6 @@ export async function readAdminNotices(client: Pick<SupabaseClient, "rpc">): Pro
   const { data, error } = await client.rpc("admin_notices");
   if (error) throw new Error(`공지 목록을 읽지 못했다: ${error.code}`);
   const notices = adminNoticesFromRows(data);
-  if (!notices) throw new Error("공지 목록의 모양이 다르다");
+  if (!notices) throw new Error("공지 목록의 형식이 다르다");
   return notices;
 }

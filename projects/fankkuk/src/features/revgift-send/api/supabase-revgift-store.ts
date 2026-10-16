@@ -7,7 +7,7 @@ import type { RevgiftRefusal, RevgiftStore } from "../model/register-revgift";
 // 쓰기는 DB 함수(register_revgift·claim_revgift_payment·settle_revgift_payment)로만 한다.
 
 function refused(refusal: RevgiftRefusal): Error {
-  return Object.assign(new Error(`역조공 등록 거부: ${refusal}`), { refusal });
+  return Object.assign(new Error(`역조공 등록을 DB 가 받지 않았다: ${refusal}`), { refusal });
 }
 
 export function createSupabaseRevgiftStore(admin: SupabaseClient): RevgiftStore {

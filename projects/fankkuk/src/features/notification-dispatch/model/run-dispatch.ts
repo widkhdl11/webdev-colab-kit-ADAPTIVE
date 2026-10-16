@@ -16,7 +16,7 @@ const bodyShape = z.object({}).strict();
 
 export async function runDispatch(session: Pick<SupabaseClient, "rpc">, body: unknown, dispatch: () => Promise<DispatchResult>): Promise<JsonReply> {
   if ((await readAdminAccess(session)) === "not_found") return { status: 404, body: { message: MESSAGE_NOT_FOUND } };
-  if (!bodyShape.safeParse(body).success) return { status: 400, body: { message: "요청 꼴이 맞지 않아요." } };
+  if (!bodyShape.safeParse(body).success) return { status: 400, body: { message: "요청 형식이 맞지 않아요." } };
   const result = await dispatch();
   // 중간에 멈춰도 그때까지 보낸 건수를 같이 준다 — 다시 누를지 판단하는 근거다
   if (!result.ok) return { status: 500, body: { message: result.reason === "config" ? CONFIG : FAILED, counts: result.counts } };

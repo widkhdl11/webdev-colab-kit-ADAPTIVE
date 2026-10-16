@@ -9,7 +9,7 @@ export async function readAdminPriceTable(client: Pick<SupabaseClient, "rpc">): 
   const { data, error } = await client.rpc("admin_tier_prices");
   if (error) throw new Error(`요금표를 읽지 못했다: ${error.code}`);
   const table = priceTableFromRows(data);
-  if (!table) throw new Error("요금표가 비었거나 모양이 다르다");
+  if (!table) throw new Error("요금표가 비었거나 형식이 다르다");
   return table;
 }
 
@@ -17,6 +17,6 @@ export async function readAdminPriceChanges(client: Pick<SupabaseClient, "rpc">)
   const { data, error } = await client.rpc("admin_price_changes");
   if (error) throw new Error(`요금 변경 기록을 읽지 못했다: ${error.code}`);
   const changes = priceChangesFromRows(data);
-  if (!changes) throw new Error("요금 변경 기록의 모양이 다르다");
+  if (!changes) throw new Error("요금 변경 기록의 형식이 다르다");
   return changes;
 }

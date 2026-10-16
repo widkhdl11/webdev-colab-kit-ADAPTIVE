@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   await loadAdminSession(); // 운영자가 아니면 제목도 만들지 않고 404
-  return { title: "주소 열람 기록 · 팬꾹 관리자" };
+  return { title: "주소 열람 기록 · 팬꾹 운영자" };
 }
 
 // 주소 열람 내부 기록 (address-protection INV-P7, 2026-10-12 문제집 D12). 읽기는 로그인한 운영자의 세션으로 —

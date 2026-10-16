@@ -15,7 +15,7 @@ function isProduction(env: EnvLike): boolean {
  */
 export function createDevKeyUnwrapper(opts: { privateKeyPem: string; env: EnvLike }): KeyUnwrapper {
   if (isProduction(opts.env)) {
-    throw new Error("임시 복호화는 운영 환경에서 쓸 수 없다 — KMS 를 연결해야 한다");
+    throw new Error("임시 주소 열람 방식은 운영 환경에서 쓸 수 없다 — KMS 를 연결해야 한다");
   }
   const body = opts.privateKeyPem.replace(/-----(BEGIN|END) PRIVATE KEY-----/g, "").replace(/\s+/g, "");
   if (body === "") throw new Error("개발용 비밀키가 비어 있다");

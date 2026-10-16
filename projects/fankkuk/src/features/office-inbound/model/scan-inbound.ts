@@ -27,7 +27,7 @@ export const SHELF_MAX = 20;
 /** 송장 「보내는 분」 이름 최대 글자 수 — DB 입고 함수와 같은 경계 */
 export const SENDER_NAME_MAX = 40;
 
-const MESSAGE_SCAN = "스캔한 값의 꼴이 맞지 않아요. 다시 스캔해 주세요.";
+const MESSAGE_SCAN = "스캔한 값의 형식이 맞지 않아요. 다시 스캔해 주세요.";
 const MESSAGE_DETAILS = `택배사를 고르고, 송장의 보내는 분 이름은 ${SENDER_NAME_MAX}자까지, 보관 선반 번호는 1~${SHELF_MAX}자로 적어 주세요.`;
 export const MESSAGE_CODE_FORMAT = "받는 주소 끝 6자리에 쓰지 않는 글자가 있어요. 상자에 적힌 주소를 다시 보고 입력해 주세요.";
 export const MESSAGE_CODE_CHECK = "받는 주소 끝 6자리가 맞지 않아요. 한 글자씩 다시 확인해 입력해 주세요.";

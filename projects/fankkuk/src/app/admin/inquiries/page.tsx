@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   await loadAdminSession(); // 운영자가 아니면 제목도 만들지 않고 404
-  return { title: "1:1 문의 · 팬꾹 관리자" };
+  return { title: "1:1 문의 · 팬꾹 운영자" };
 }
 
 // 1:1 문의 (admin-console INV-K11·K8·K12 — 문의 제한 버튼은 대표에게만). 읽기는 로그인한 운영자의 세션으로 — 운영자가 아니면 그 전에 404 다.

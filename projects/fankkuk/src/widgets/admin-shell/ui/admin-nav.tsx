@@ -32,7 +32,7 @@ export function AdminNav() {
 
 export function AdminCrumb() {
   const place = adminPlaceOf(usePathname());
-  if (!place) return <p className={s.crumb}>관리자</p>;
+  if (!place) return <p className={s.crumb}>운영자 화면</p>;
   return (
     <p className={s.crumb}>
       {place.group} / <strong>{place.item.label}</strong>

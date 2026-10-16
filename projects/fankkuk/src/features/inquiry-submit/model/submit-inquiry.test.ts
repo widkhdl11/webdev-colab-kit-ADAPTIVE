@@ -25,7 +25,7 @@ describe("1:1 문의 남기기 (INV-K11, 결정 d25)", () => {
     const { calls, client } = fakeClient(null);
     expect(await submitInquiry(client, { ...OK, orderNo: "AB-1234" })).toEqual({
       status: 400,
-      body: { message: "주문번호는 FC-7K3M9 꼴로 적어 주세요.", field: "orderNo" },
+      body: { message: "주문번호는 FC-7K3M9 형식으로 적어 주세요.", field: "orderNo" },
     });
     expect(calls).toEqual([]);
   });

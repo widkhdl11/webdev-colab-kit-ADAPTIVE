@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   await loadAdminSession(); // 운영자가 아니면 제목도 만들지 않고 404
-  return { title: "입고 · 팬꾹 관리자" };
+  return { title: "입고 · 팬꾹 운영자" };
 }
 
 // 입고 작업 화면 (office-workflow INV-W1·W2·W5). 이 작업자의 부착 대기 라벨을 먼저 읽어 맨 위 줄에 보인다(INV-W2).
