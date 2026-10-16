@@ -127,7 +127,7 @@ describe("INV-C5 6자리 없는 상자 — 송장 「보내는 분」 이름을 
     expect(heldNickname(barcode)).toBe("별빛");
   });
 
-  it("INV-C5 (S4c): 송장 보내는 분에 실명 → 「닉네임 없음」만, 그 글자는 DB 어디에도 없다", async () => {
+  it("INV-C5 (S4g): 송장 보내는 분에 실명 → 「닉네임 없음」만, 그 글자는 DB 어디에도 없다", async () => {
     const name = realName();
     const barcode = waybill();
     const out = await holdNoCode(barcode, name);
