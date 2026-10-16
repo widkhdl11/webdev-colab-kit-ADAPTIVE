@@ -1,9 +1,20 @@
 ---
 project: fankkuk
 status: passed
-basis: cc69decb080e
-reviewers: [security-reviewer]
+basis: 79fdaf15a413
+reviewers: [security-reviewer, ui-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-16 밤, 팔로우 카드·크리에이터 계정 설정)
+
+덮는 변경: cb0282b4(팔로우한 크리에이터 880·꾸민 카드, 카드 머리 공통 부품, creator_looks) · 1f23015c(크리에이터 계정 설정 /creator/account, 상세 설정의 계정 칸 걷어냄) · fe75ceab(리뷰 반영). 마이그레이션 20261016000014.
+
+- security: 상·중 0, 하 1(creator_looks 배열 상한 없음) → 고침(200개 넘으면 22023, 앱은 200개씩 나눠 부름).
+- ui: 상 0, 중 3 → 고침(저장 결과 줄이 비면 사라짐 → 팬과 같은 alert/status 두 줄 · 스위치 이름 팬과 같게, 꼭 가는 알림 안내를 스위치 위로 · 「알려드려요」), 하 3 → 고침(팔로우 카드 배치·포커스 테두리·간격 토큰, 본인 확인 줄에 채널 이름·안내 줄 role=note). 안내 줄 정보 아이콘은 두지 않음.
+- 뺀 리뷰어: code-reviewer — 도메인 로직 변경 없음(기존 기능을 새 화면으로 옮김). test-auditor — 새 시험은 변이로 직접 확인.
+- 실행 근거: 통합 find-creators-look-db 8/8, 변이 4(creator_looks 본인 확인·id 조건·손님 권한·200 상한) 모두 실패로 잡힘 · 단위 전체 2000/2000(리뷰 반영 전), 반영 뒤 widgets·creator 336/336 · tsc 0 · copy:lint 0 · 화면: 하루로 이름 메뉴 → /creator/account, 다시 확인 펼침, 알림 스위치 끄기 → 「알림 설정을 저장했어요」·새로고침 뒤 유지 → 되돌림, 1440·390 넘침 없음, 별빛으로 팔로우 카드 확인.
+
+이전 사인오프:
 
 # 리뷰 사인오프 — fankkuk (2026-10-16 밤, 로고·마스코트 아이콘)
 
