@@ -82,7 +82,7 @@ export function RefundButton({ unitKind, unitId, orderNo, payerNickname, amountK
           </dl>
           <div className={a.amount}>
             <span className={a.amountLabel}>돌려줄 금액 (서버가 계산한 값)</span>
-            {amountKrw === null ? <b>몫 상태로 서버가 계산해요</b> : <b className={a.mono}>{won.format(amountKrw)}원</b>}
+            {amountKrw === null ? <b>받는 팬별 상태로 서버가 계산해요</b> : <b className={a.mono}>{won.format(amountKrw)}원</b>}
           </div>
           <p className={a.hint}>
             금액은 사람이 바꿀 수 없어요. 같은 환불을 두 번 눌러도 결제사 취소는 한 번만 일어나요. 결제사 취소가 실패하면 「환불 실패」로 남고 다시 시도할 수 있어요.

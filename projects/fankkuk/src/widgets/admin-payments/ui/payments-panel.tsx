@@ -203,7 +203,7 @@ export function PaymentsPanel({ rows, pendingBoxes, reviewPayments, access }: Pr
           </table>
         </div>
         <p className={a.hint}>
-          네 칸을 더하면 결제 금액이에요. 역조공은 받는 팬 한 명 몫이 한 줄이고 검수비가 없어요. 요금표를 바꿔도 이미 결제한 주문의 칸은 그대로예요. 확인 필요 줄은 결제가 끝나지 않아 여기서 환불하지 않고, 아래 「확인 필요 결제」에서 전액 취소해요.
+          네 칸을 더하면 결제 금액이에요. 역조공은 받는 팬 한 명이 한 줄이고 검수비가 없어요. 요금표를 바꿔도 이미 결제한 주문의 칸은 그대로예요. 확인 필요 줄은 결제가 끝나지 않아 여기서 환불하지 않고, 아래 「확인 필요 결제」에서 전액 취소해요.
         </p>
         <ReviewPaymentsSection rows={reviewPayments} access={access} />
         <PendingBoxesSection boxes={pendingBoxes} access={access} />

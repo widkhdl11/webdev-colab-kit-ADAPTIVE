@@ -52,7 +52,7 @@ export function readExpiryDue(client: Rpc): Promise<ExpiryDue[]> {
 }
 
 export function readRevgiftShares(client: Rpc): Promise<RevgiftShare[]> {
-  return readRows(client, "admin_revgift_shares", "역조공 몫 목록", revgiftSharesFromRows);
+  return readRows(client, "admin_revgift_shares", "역조공 받는 팬별 목록", revgiftSharesFromRows);
 }
 
 /** INV-W2: 이 작업자가 출력하고 아직 부착 확인하지 않은 라벨(없으면 null). */

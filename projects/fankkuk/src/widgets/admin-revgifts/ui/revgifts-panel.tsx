@@ -61,7 +61,7 @@ export function RevgiftsPanel({ rows, access, now }: Props) {
           <h1 id="revgifts-title" tabIndex={-1}>
             역조공 처리
           </h1>
-          <p>크리에이터가 팬에게 보낸 선물의 몫별 상태예요. 몫마다 환불이나 반송을 따로 해요.</p>
+          <p>크리에이터가 팬에게 보낸 선물의 받는 팬별 상태예요. 받는 팬마다 환불이나 반송을 따로 해요.</p>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export function RevgiftsPanel({ rows, access, now }: Props) {
         </p>
         <div className={a.tblWrap}>
           <table className={a.tbl} style={{ minWidth: 980 }}>
-            <caption className="sr-only">역조공 몫 목록</caption>
+            <caption className="sr-only">역조공 받는 팬별 목록</caption>
             <thead>
               <tr>
                 <th scope="col">주문번호</th>
@@ -117,7 +117,7 @@ export function RevgiftsPanel({ rows, access, now }: Props) {
               {shown.length === 0 ? (
                 <tr>
                   <td colSpan={9} className={a.empty}>
-                    {rows.length === 0 ? "아직 역조공 몫이 없어요." : "조건에 맞는 몫이 없어요."}
+                    {rows.length === 0 ? "아직 역조공이 없어요." : "조건에 맞는 건이 없어요."}
                   </td>
                 </tr>
               ) : (
@@ -161,7 +161,7 @@ export function RevgiftsPanel({ rows, access, now }: Props) {
           </table>
         </div>
         <p className={a.hint}>
-          기한이 지났는데 답이 없는 몫은 「지금 돌리기」로 받지 않은 것으로 처리해요. 환불은 팬이 받지 않은(거절·기한 지남) 몫에만 켜지고 대표만 해요. 받지 않은 몫의 상자는 출고 화면에서 QR 을 스캔하면 크리에이터 쪽 반송 송장이 나와요 — 이 화면에 반송 버튼은 없어요. 환불 금액은 몫의 상태로 서버가 정해요. 팬의 주소는 이 화면에 없어요.
+          기한이 지났는데 답이 없는 건은 「지금 돌리기」로 받지 않은 것으로 처리해요. 환불은 팬이 받지 않은(거절·기한 지남) 건에만 켜지고 대표만 해요. 받지 않은 건의 상자는 출고 화면에서 QR 을 스캔하면 크리에이터 쪽 반송 송장이 나와요 — 이 화면에 반송 버튼은 없어요. 환불 금액은 받는 팬별 상태로 서버가 정해요. 팬의 주소는 이 화면에 없어요.
         </p>
       </div>
     </>

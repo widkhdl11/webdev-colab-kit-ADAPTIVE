@@ -23,7 +23,7 @@ const SECTIONS: readonly { category: ExpiryCategory; title: string; hint: string
   {
     category: "revgift",
     title: "역조공 받기 기한",
-    hint: "팬이 기한 안에 받지도 거절하지도 않은 몫이에요. 기한이 지나면 받지 않은 것으로 처리돼요.",
+    hint: "팬이 기한 안에 받지도 거절하지도 않은 건이에요. 기한이 지나면 받지 않은 것으로 처리돼요.",
     sender: "크리에이터",
     receiver: "팬",
     after: "반송 대상",
