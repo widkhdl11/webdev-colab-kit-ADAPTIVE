@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: deployed
-basis: 22333f37e07d
+basis: cc69decb080e
 ---
 
 # 배포 기록 — fankkuk
@@ -12,3 +12,8 @@ basis: 22333f37e07d
 - 사람이 적용: manual 0017(크리에이터 주소 이름표)·0018(가입 닉네임) — 확인 쿼리로 `pii.creator_addresses.label` 있음, `create_account` 에 `p_nickname` 인자 있음. 0016 은 이전에 적용돼 있었다.
 - Vercel 환경 변수 `FANKKUK_IP_HASH_SECRET` (사용자).
 - 앱: main 7bd1d387 push → Vercel 세 프로젝트 빌드 success. 시험 주소 https://webdev-colab-kit-adaptive-xqne.vercel.app 에서 `/`·`/creators`·`/signup`·`/login` 모두 200, 「시험 사이트」 띠 보임, 크리에이터 찾기는 본인 확인된 크리에이터가 없어 「전체 0명」(새 읽기 함수 오류 없음).
+
+## 2026-10-16 밤 (2) — 로고·마스코트 아이콘
+
+- DB 변경 없음. 앱: main 764bb8d6 push → Vercel 세 프로젝트 빌드 success.
+- 시험 주소 / 의 head: rel=icon 두 개(favicon.ico 48·icon.png 512), apple-touch-icon 180, og:image·twitter:image 가 https://webdev-colab-kit-adaptive-xqne.vercel.app 기준 전체 주소(APP_ORIGIN). 이미지 6개 모두 200, /creators 200.
