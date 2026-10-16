@@ -213,6 +213,9 @@ export async function scanRole({ apiUrl, anonKey, token, label, memoCanary }) {
   const findings = [];
   const problems = [];
   const pool = new Map();
+  // 심은 메모의 주문번호를 맨 앞에 둔다 — 함수는 첫 성공에서 멈추고 칸마다 값 셋만 모으므로, 다른 주문번호가 먼저 모이면
+  // 메모 함수가 심은 주문으로 한 번도 불리지 않는다(2026-10-16 통합 전체 실행에서 별빛 my_gift_memo 0번). 다른 권한도 이 주문번호로 불러 본다
+  if (memoCanary) pool.set("order_no", [memoCanary.orderNo]);
   const called = [];
   const refused = [];
   // together INV-F8: 심은 메모 값이 나온 자리 · 그 주문번호가 나온 자리(「0번」이 그 주문을 못 본 것이 아님을 보이는 근거)
