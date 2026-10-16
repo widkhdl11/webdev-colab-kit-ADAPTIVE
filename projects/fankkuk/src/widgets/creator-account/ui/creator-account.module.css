@@ -23,9 +23,8 @@
 .swRow + .swRow { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
 .must { margin: 0; }
 .mustT { color: var(--gray-900); }
-/* 저장 결과 줄 — 비어 있으면 자리를 차지하지 않는다 */
+/* 저장 결과 줄 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다(빈 칸은 공통 .err:empty·.okmsg:empty) */
 .msg { margin: 0; }
-.msg:empty { display: none; }
 
 .note { margin: 0; color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
 .inlineLink { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }

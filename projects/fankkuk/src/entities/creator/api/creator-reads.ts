@@ -167,11 +167,25 @@ export async function readCreatorLooks(
   client: Pick<SupabaseClient, "rpc">,
   ids: readonly string[],
 ): Promise<Record<string, CreatorLookPaths>> {
-  if (ids.length === 0) return {};
-  const { data, error } = await client.rpc("creator_looks", { p_ids: ids });
-  if (error) throw new Error(`크리에이터 꾸밈을 읽지 못했다: ${error.code}`);
-  return looksOf(data);
+  // DB 함수가 한 번에 200개까지만 받는다 — 나눠 부른다
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += LOOKS_PER_CALL)
+    chunks.push(ids.slice(i, i + LOOKS_PER_CALL));
+  const parts = await Promise.all(
+    chunks.map(async (chunk) => {
+      const { data, error } = await client.rpc("creator_looks", {
+        p_ids: chunk,
+      });
+      if (error)
+        throw new Error(`크리에이터 꾸밈을 읽지 못했다: ${error.code}`);
+      return looksOf(data);
+    }),
+  );
+  return Object.assign({}, ...parts);
 }
+
+/** creator_looks 가 한 번에 받는 id 수(20261016000014 와 같은 값). */
+const LOOKS_PER_CALL = 200;
 
 function looksOf(data: unknown): Record<string, CreatorLookPaths> {
   return Object.fromEntries(

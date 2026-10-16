@@ -95,18 +95,19 @@ export function MyFollowingPanel({
                       />
                     ) : null}
                   </p>
-                  {c.tags.length > 0 ? (
-                    <p className={s.tags}>
-                      {c.tags.map((t) => (
-                        <CreatorTag key={t} name={t} />
-                      ))}
-                    </p>
+                  {/* 카드 머리 안은 이름 줄·채널 이름 — 크리에이터 찾기 카드와 같은 배치(태그는 머리 아래) */}
+                  {c.channelTitle ? (
+                    <p className={s.ch}>{c.channelTitle}</p>
                   ) : null}
                 </CreatorCardHead>
+                {c.tags.length > 0 ? (
+                  <p className={s.tags}>
+                    {c.tags.map((t) => (
+                      <CreatorTag key={t} name={t} />
+                    ))}
+                  </p>
+                ) : null}
                 <p className={s.info}>
-                  {c.channelTitle ? (
-                    <span className={s.ch}>{c.channelTitle}</span>
-                  ) : null}
                   <span className={s.time}>
                     <svg
                       viewBox="0 0 24 24"
