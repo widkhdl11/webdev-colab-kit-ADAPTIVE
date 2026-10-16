@@ -35,10 +35,9 @@
 - **docs/reference/addendum-2026-10-02-creators-sponsorship.md:68**(뱃지 「쓰지 않는 말」) · **docs/reference/addendum-2-vs-now.md:37·51~53**(금지 단어·용어 대조) — 승인된 내용(카드 d79)은 glossary 7절·9절에 옮겼다. 두 파일의 해당 부분을 「glossary 를 따른다」 한 줄로 바꾸지는 않았다: 원문은 「글자 그대로 보관」하는 사용자 전달본이고, 대조표는 결정 근거 기록이라 고치면 기록이 사라진다.
 - **docs/specs/creator-link.md:9** 「"선물은 팬꾹으로 받아요" 같은 직접적인 문구는 사용하지 않는다」(홍보 카드 한정) — 스펙이라 손대지 않았고, 한 화면에 한정된 규칙이라 glossary 에도 옮기지 않았다.
 
-## 3. 고치지 않은 킷·보호 파일 (목록만)
+## 3. 고치지 않은 작업 도구 쪽 문서
 
-- 저장소 루트 `CLAUDE.md`, `.claude/rules/design-drafting.md`, `.claude/agents/*.md`(ui-reviewer·design-drafter·qa-classifier·style-scout), `.claude/skills/*`, `gates/run-gates.mjs`, `graph.mjs` — 「design-rules」를 일반 개념(승인된 디자인 기준 문서)으로 가리킬 뿐, 팬꾹 화면 어휘를 정하지 않는다.
-- `docs/references/devtool-ui-standards.md:124~` 「쓰지 않는 말」 표 — 킷의 개발 도구 화면용 표다. 팬꾹 화면과 무관해 손대지 않았다.
+- 저장소의 작업 도구(하네스) 문서와 설정도 「design-rules」·「쓰지 않는 말」을 쓰지만, 승인된 디자인 기준 문서라는 일반 개념이나 개발 도구 화면용 표를 가리킬 뿐 팬꾹 화면 문구와 무관해 손대지 않았다.
 
 ## 4. 코드 주석
 
