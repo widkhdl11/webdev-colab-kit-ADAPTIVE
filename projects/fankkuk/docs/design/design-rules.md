@@ -137,7 +137,7 @@ status: approved
 ### 1-1. 로고 (2026-10-07 확정)
 
 - 코랄 원 안 뻐꾸기 얼굴 + 선물 상자. 원본 `refs/fankkuk-icon-final.png`, 형태 규칙 `refs/fankkuk-icon-guide.md`
-- 벡터로 다시 그린 것이 정본: `src/shared/ui/logo.tsx`(헤더·푸터), `src/app/icon.svg`(브라우저 탭). 로고 전용 4색 `--logo-*`(#F58278·#FFF8F0·#343039·#BE514A) — 버튼 색을 로고에 쓰지 않는다
+- 벡터로 다시 그린 것이 정본: `src/shared/ui/logo.tsx`(헤더·푸터), `assets/logo.svg`(미리보기·공지 이미지 안 로고). 브라우저 탭·홈 화면 아이콘·링크 미리보기 기본 이미지는 2026-10-16 받은 마스코트 이미지(`src/app/favicon.ico`·`icon.png`·`apple-icon.png`·`opengraph-image.png`·`twitter-image.png`, 마스코트 원본 `public/images/mascot-*.png`). 로고 전용 4색 `--logo-*`(#F58278·#FFF8F0·#343039·#BE514A) — 버튼 색을 로고에 쓰지 않는다
 - 뚜껑과 몸통 사이 가로 빈틈을 지킨다(세로 리본은 몸통 윗변에서 시작). 로고에 그림자 없음
 - 링크로 쓸 때 접근성 이름은 「팬꾹에서 선물 보내기」(사이트 밖에 걸 때)
 

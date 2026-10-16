@@ -36,9 +36,9 @@ export async function readImageFonts(weights: readonly ImageFontWeight[]): Promi
   return Promise.all(weights.map(async (weight) => ({ name: "Pretendard" as const, data: await readImageFont(weight), weight, style: "normal" as const })));
 }
 
-/** 팬꾹 로고(src/app/icon.svg)를 이미지 안에 넣을 data 주소로. */
+/** 팬꾹 로고(assets/logo.svg — 브라우저 탭 아이콘은 src/app/icon.png 로 바뀌어 옮김, 2026-10-16)를 이미지 안에 넣을 data 주소로. */
 export function readLogoDataUrl(): Promise<string> {
-  logoCache ??= readFile(join(process.cwd(), "src", "app", "icon.svg")).then((b) => `data:image/svg+xml;base64,${b.toString("base64")}`);
+  logoCache ??= readFile(join(process.cwd(), "assets", "logo.svg")).then((b) => `data:image/svg+xml;base64,${b.toString("base64")}`);
   return logoCache;
 }
 

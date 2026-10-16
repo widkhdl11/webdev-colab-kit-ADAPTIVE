@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import { PROMISE } from "@/shared/config/site-copy";
 import { TestSiteBand } from "@/shared/ui/test-site-band";
 import "./globals.css";
 
+// 사이트 주소 — 공개 이미지(opengraph-image·twitter-image)의 전체 주소를 만드는 기준. 이미 쓰는 서버 설정값 APP_ORIGIN(메일 링크·시험 사이트 판정과 같은 값)을 쓴다.
+// 없으면 Vercel 이 넣어 주는 운영 주소, 그것도 없으면 로컬. 아이콘·미리보기 이미지 태그는 src/app 의 파일 규칙이 만든다(2026-10-16 로고 교체).
+function siteOrigin(): string {
+  if (process.env.APP_ORIGIN) return process.env.APP_ORIGIN;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return "http://localhost:3000";
+}
+
 export const metadata: Metadata = {
-  title: "팬꾹 — 크리에이터가 승인한 선물만 배송",
-  description: `${PROMISE.approval} ${PROMISE.inspection} ${PROMISE.address}`,
+  metadataBase: new URL(siteOrigin()),
+  title: "팬꾹",
+  description: "주소 노출 없이 전하는 팬 선물 배송 대행",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
