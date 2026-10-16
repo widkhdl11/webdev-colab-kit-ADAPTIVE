@@ -72,7 +72,7 @@ export function ReceivingAddress({ officeAddress, code, boxName, multiple = fals
           />
         </div>
       </div>
-      <p className={s["addr-note"]}>끝 6자리까지 꼭 그대로 적어 주세요. 이 6자리로 사무실에서 이 상자를 찾아요. 다른 사람에게 알려 주지 마세요.</p>
+      <p className={s["addr-note"]}>끝 6자리까지 꼭 그대로 적어 주세요. 이 6자리로 사무실에서 이 상자를 찾아요. 다른 사람에게 알려 주지 마세요. 송장의 보내는 분에는 팬꾹 닉네임을 써 주세요.</p>
     </div>
   );
 }
