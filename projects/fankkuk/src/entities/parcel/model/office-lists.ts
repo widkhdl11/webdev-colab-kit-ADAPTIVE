@@ -5,7 +5,7 @@ import { PARCEL_TIERS, type OfficeTier } from "./office-parcel";
 import { QR_PATTERN } from "./scan-code";
 
 // 관리자 사무실 목록들의 줄 (office-workflow INV-W2·W3·W5·W6·W7). 꼴이 다른 줄이 하나라도 있으면 null.
-// 사람은 닉네임·크리에이터 이름으로만, 미확인 입고의 보낸 사람은 앞 한 글자만(INV-W7).
+// 사람은 닉네임·크리에이터 이름으로만, 미확인 입고의 보낸 사람은 닉네임 일치 여부(일치면 그 닉네임)만(INV-W7, 카드 d94).
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
@@ -14,7 +14,7 @@ const DAY_MS = 24 * HOUR_MS;
 // 두 갈래가 한 목록에 온다.
 //   unmatched = 6자리로 이어지지 않아 보류로 들어온 상자(미확인 입고) — 선반에 있고, 7일 안에 이어지지 않으면 반송 대상.
 //   parcel    = 주문에 묶여 있는데 출고를 멈춘 상자(같은 6자리·같은 송장번호 분쟁, 「제가 보낸 게 아니에요」, 주문에서 떼어 낸 상자).
-// 칸은 도착 시각·원 송장 바코드·택배사·보류 사유·발신인 앞 한 글자(+ 선반·봉투 번호)뿐이다(INV-C9·W7). 주문번호·닉네임·6자리는 오지 않는다.
+// 칸은 도착 시각·원 송장 바코드·택배사·보류 사유·닉네임 일치 여부(일치면 그 닉네임, + 선반·봉투 번호)뿐이다(INV-C9·W7). 주문번호·6자리·이름 글자는 오지 않는다.
 
 /** 보류 사유. 앞 일곱은 보류로 들어올 때(입고 함수), 뒤 둘은 묶인 상자가 멈출 때. */
 export const HOLD_REASONS = [
@@ -36,6 +36,15 @@ export type UnmatchedState = (typeof UNMATCHED_STATES)[number];
 export const HELD_SOURCES = ["unmatched", "parcel"] as const;
 export type HeldSource = (typeof HELD_SOURCES)[number];
 
+/** DB 닉네임 칸(profiles.nickname) 제약 — 1~20자(20261002000001_init.sql) */
+export const NICKNAME_MAX = 20;
+
+/** 닉네임 칸에 들어갈 수 있는 값인가 — DB char_length 와 같은 기준(코드 포인트)으로 1~20자 */
+export function isNicknameValue(s: string): boolean {
+  const n = charCount(s);
+  return n >= 1 && n <= NICKNAME_MAX;
+}
+
 export type UnmatchedParcel = {
   id: string;
   source: HeldSource;
@@ -44,7 +53,8 @@ export type UnmatchedParcel = {
   waybillNo: string | null;
   carrier: Carrier | null;
   arrivedAt: string | null;
-  senderInitial: string | null;
+  /** 송장 「보내는 분」이 닉네임과 맞았으면 그 닉네임, 아니면 null(닉네임 없음) — 이름 글자는 DB 에도 없다(INV-C5·C9·W7) */
+  nickname: string | null;
   shelf: string | null;
   reason: HoldReason;
   suspectedTheft: boolean;
@@ -60,10 +70,8 @@ const unmatchedRow = z.object({
   waybill_no: z.string().nullable(),
   carrier: z.enum(CARRIERS).nullable(),
   arrived_at: z.string().nullable(),
-  sender_initial: z
-    .string()
-    .refine((s) => charCount(s) === 1)
-    .nullable(),
+  // DB 닉네임 칸 제약과 같은 1~20자 — 더 좁게 잡으면 긴 크리에이터 이름과 맞은 줄 하나로 목록 전체가 읽히지 않는다
+  nickname: z.string().refine(isNicknameValue).nullable(),
   shelf: z.string().nullable(),
   reason: z.enum(HOLD_REASONS),
   suspected_theft: z.boolean(),
@@ -81,7 +89,7 @@ export function unmatchedFromRows(rows: unknown): UnmatchedParcel[] | null {
     waybillNo: r.waybill_no,
     carrier: r.carrier,
     arrivedAt: r.arrived_at,
-    senderInitial: r.sender_initial,
+    nickname: r.nickname,
     shelf: r.shelf,
     reason: r.reason,
     suspectedTheft: r.suspected_theft,
@@ -102,6 +110,21 @@ export function canReturnHeld(row: Pick<UnmatchedParcel, "source" | "state" | "r
   if (row.state !== "on_hold") return false;
   if (RETURN_ANYTIME.includes(row.reason)) return true;
   return row.deadlineAt !== null && Date.parse(row.deadlineAt) <= Date.parse(now);
+}
+
+/**
+ * 「6자리 없이 온 상자」로 보는 보류 사유 — 붙어 온 6자리 줄이 없다(없는 6자리는 어느 상자의 것도 아니다).
+ * DB 의 inbound_held_without_code 와 같은 목록이다 — 코드 없이 온 상자 알림(notifications INV-N21)·운영자 잇기(INV-C12)가 그 판정을 쓴다.
+ */
+export const HELD_WITHOUT_CODE_REASONS: readonly HoldReason[] = ["no_code", "unknown_code"];
+
+/**
+ * 「주인 주문으로 입고」(운영자 잇기, inbound-address-code INV-C12)를 그릴 줄. 6자리 없이 온 대기 중 미확인 입고이고 도착 + 168시간 전.
+ * 여기는 버튼을 그릴지만 정한다 — 운영자인지·후보 상자인지·잠금 뒤 상태는 DB 가 다시 판정한다.
+ */
+export function canLinkHeld(row: Pick<UnmatchedParcel, "source" | "state" | "reason" | "deadlineAt">, now: string): boolean {
+  if (row.source !== "unmatched" || row.state !== "waiting" || !HELD_WITHOUT_CODE_REASONS.includes(row.reason)) return false;
+  return row.deadlineAt !== null && Date.parse(now) < Date.parse(row.deadlineAt);
 }
 
 // ── 찾기 실패가 반복된 계정 (inbound-address-code INV-C10) ──

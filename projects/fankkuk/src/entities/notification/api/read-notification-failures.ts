@@ -65,6 +65,7 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   gift_reply: "답장",
   gift_received: "받았어요 확인",
   creator_check: "확인할 선물",
+  box_no_code: "코드 없이 온 상자",
 };
 
 function isKnownKind(kind: string): kind is NotificationKind {

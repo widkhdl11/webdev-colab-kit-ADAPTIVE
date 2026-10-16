@@ -65,13 +65,13 @@ export function ReturnHeldButton({ source, id, waybillNo }: Props) {
           <p>
             {source === "parcel" ? (
               <>
-                <b className={a.mono}>{name}</b> 상자를 주문에서 떼어 반송 대상으로 넘겨요. 원 송장 주소로 착불 반송하고, 넘긴 뒤에는 주인이 찾아도 이어지지
+                <b className={a.mono}>{name}</b> 상자를 주문에서 떼어 반송 대상으로 넘겨요. 원 송장 주소로 착불 반송하고, 넘긴 뒤에는 주인이 찾아도 입고되지
                 않아요. 주문의 환불은 생기지 않아요.
               </>
             ) : (
               <>
                 <b className={a.mono}>{name}</b> 상자를 7일을 기다리지 않고 반송 대상으로 넘겨요. 원 송장 주소로 착불 반송하고, 넘긴 뒤에는 주인이 찾아도
-                이어지지 않아요.
+                입고되지 않아요.
               </>
             )}
           </p>

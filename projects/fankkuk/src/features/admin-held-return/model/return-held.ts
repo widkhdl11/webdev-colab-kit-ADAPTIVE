@@ -10,7 +10,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 // 몸통은 그 줄 id 하나뿐이다. 주문번호·상자를 받는 칸은 없다 — 운영자가 상자를 주문에 잇는 길은 만들지 않는다(INV-C4·C9, strict).
 // 운영자가 아니면 404. 이어졌거나 이미 반송 대상인지는 DB 가 행 잠금 뒤 다시 본다(55000 → 409).
 
-export const MESSAGE_ALREADY_CLOSED = "이미 주인과 이어졌거나 반송 대상이 됐거나, 아직 주인의 확인을 기다리는 상자예요.";
+export const MESSAGE_ALREADY_CLOSED = "이미 입고됐거나 반송 대상이 됐거나, 아직 주인의 확인을 기다리는 상자예요.";
 const FAILED = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
 
 const returnShape = z.object({ kind: z.literal("return"), source: z.enum(["unmatched", "parcel"]), id: z.guid() }).strict();

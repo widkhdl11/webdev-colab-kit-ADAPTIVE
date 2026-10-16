@@ -179,6 +179,7 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
         "provider_message_id",
         "round",
         "status",
+        "unmatched_id", // 코드 없이 온 상자 알림이 가리키는 보류 상자(INV-N21 — 상자마다 한 번) — 연락처·본문 칸이 아니다
       ].sort(),
     );
   });
@@ -971,19 +972,25 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
       const kindDef = psql(`select pg_get_constraintdef(oid) from pg_constraint where conrelid = '${OUTBOX}'::regclass and conname = 'notification_outbox_kind_check'`);
       const kinds = [...kindDef.matchAll(/'([a-z_]+)'::text/g)].map((m) => m[1]!);
       expect(kinds.length).toBe(NOTIFICATION_KINDS.length);
+      // 코드 없이 온 상자 알림(INV-N21)은 보류 상자 줄을 가리킨다 — 시험용 보류 줄 하나(선반 T- 로 정리된다)
+      const heldId = psql(
+        `insert into public.office_unmatched (waybill_no, shelf, recorded_by, carrier, reason) select '9' || lpad((floor(random() * 1e11))::bigint::text, 11, '0'), 'T-NX', id, 'cj', 'no_code' from public.profiles where login_id = 'fankkuk_staff' returning id`,
+      ).split(/\r?\n/)[0]!;
       const seen: [string, boolean, unknown][] = [];
       for (const kind of kinds) {
         const request = kind === "approval_request" ? `'${requestId}'` : "null";
         const parcel = parcelKinds.includes(`'${kind}'`) ? `'${parcelId}'` : "null";
+        const held = kind === "box_no_code" ? `'${heldId}'` : "null";
         psql(
-          `insert into ${OUTBOX} (kind, order_id, approval_request_id, parcel_id, round, account_id, channel, event_at) select '${kind}', '${g.orderId}', ${request}, ${parcel}, 1, id, 'email', now() from public.profiles where login_id = 'byeolbit_fan' on conflict do nothing`,
+          `insert into ${OUTBOX} (kind, order_id, approval_request_id, parcel_id, unmatched_id, round, account_id, channel, event_at) select '${kind}', '${g.orderId}', ${request}, ${parcel}, ${held}, 1, id, 'email', now() from public.profiles where login_id = 'byeolbit_fan' on conflict do nothing`,
         );
         const id = rowId(g.orderId, kind, "byeolbit_fan");
         await claimOne(id);
         const must = psql(`select public.notification_kind_must_deliver('${kind}')`) === "t";
         seen.push([kind, must, await contactValue(id)]);
       }
-      expect(seen.filter(([, must]) => must)).toHaveLength(10);
+      expect(seen.filter(([, must]) => must)).toHaveLength(11);
+      psql(`delete from public.office_unmatched where id = '${heldId}'`);
       expect(seen).toEqual(seen.map(([kind, must]) => [kind, must, must ? "byeolbit.fan@example.com" : null]));
     });
   });

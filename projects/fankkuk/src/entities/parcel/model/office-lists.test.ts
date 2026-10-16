@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  canLinkHeld,
   canReturnHeld,
+  HELD_WITHOUT_CODE_REASONS,
   daysLeft,
   dueUrgency,
   expiryDueFromRows,
@@ -21,7 +23,7 @@ const UNMATCHED = {
   waybill_no: "123456789012",
   carrier: "cj",
   arrived_at: "2026-10-03T01:00:00+00:00",
-  sender_initial: "별",
+  nickname: "별빛",
   shelf: "A-03",
   reason: "no_code",
   suspected_theft: false,
@@ -36,7 +38,7 @@ const HELD_PARCEL = {
   waybill_no: "123456789013",
   carrier: null,
   arrived_at: "2026-10-03T02:00:00+00:00",
-  sender_initial: null,
+  nickname: null,
   shelf: null,
   reason: "not_mine",
   suspected_theft: true,
@@ -66,7 +68,7 @@ const SHARE = {
 };
 
 describe("보류 상자 읽기 (office-workflow INV-W5·W6·W7, inbound-address-code INV-C9)", () => {
-  it("INV-C9·W7: 보낸 사람은 앞 한 글자만 옮긴다 — 주문번호·닉네임 같은 다른 칸은 버린다", () => {
+  it("INV-C9·W7: 보낸 사람은 닉네임 일치면 그 닉네임만 옮긴다 — 주문번호·이름 같은 다른 칸은 버린다", () => {
     expect(unmatchedFromRows([{ ...UNMATCHED, sender_name: "별빛나", order_no: "FC-7K3M9" }])).toEqual([
       {
         id: UNMATCHED.id,
@@ -75,7 +77,7 @@ describe("보류 상자 읽기 (office-workflow INV-W5·W6·W7, inbound-address-
         waybillNo: "123456789012",
         carrier: "cj",
         arrivedAt: UNMATCHED.arrived_at,
-        senderInitial: "별",
+        nickname: "별빛",
         shelf: "A-03",
         reason: "no_code",
         suspectedTheft: false,
@@ -86,11 +88,13 @@ describe("보류 상자 읽기 (office-workflow INV-W5·W6·W7, inbound-address-
   });
 
   it("INV-C8·C9: 출고를 멈춘 묶인 상자(「제가 보낸 게 아니에요」 등)도 같은 목록 — 보낸 사람·선반·기한 없이", () => {
-    expect(unmatchedFromRows([HELD_PARCEL])?.[0]).toMatchObject({ source: "parcel", qr: "Q-000123", reason: "not_mine", suspectedTheft: true, state: "on_hold", senderInitial: null, deadlineAt: null });
+    expect(unmatchedFromRows([HELD_PARCEL])?.[0]).toMatchObject({ source: "parcel", qr: "Q-000123", reason: "not_mine", suspectedTheft: true, state: "on_hold", nickname: null, deadlineAt: null });
   });
 
-  it("INV-W7 (실패경로): 보낸 사람이 한 글자가 아니거나 모르는 상태·사유·택배사면 null", () => {
-    expect(unmatchedFromRows([{ ...UNMATCHED, sender_initial: "별빛" }])).toBeNull();
+  it("INV-C9·W7 (실패경로): 닉네임 칸이 문자열·null 이 아니거나(닉네임 꼴 1~12자 밖) 모르는 상태·사유·택배사면 null", () => {
+    expect(unmatchedFromRows([{ ...UNMATCHED, nickname: 3 }])).toBeNull();
+    expect(unmatchedFromRows([{ ...UNMATCHED, nickname: "가".repeat(21) }])).toBeNull();
+    expect(unmatchedFromRows([{ ...UNMATCHED, nickname: "" }])).toBeNull();
     expect(unmatchedFromRows([{ ...UNMATCHED, state: "lost" }])).toBeNull();
     expect(unmatchedFromRows([{ ...UNMATCHED, reason: "guess" }])).toBeNull();
     expect(unmatchedFromRows([{ ...UNMATCHED, carrier: "fedex" }])).toBeNull();
@@ -102,6 +106,32 @@ describe("보류 상자 읽기 (office-workflow INV-W5·W6·W7, inbound-address-
     expect(canReturnHeld({ source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: null }, now)).toBe(true);
     expect(canReturnHeld({ source: "unmatched", state: "matched", reason: "no_code", deadlineAt: null }, now)).toBe(false);
     expect(canReturnHeld({ source: "unmatched", state: "expired", reason: "no_code", deadlineAt: null }, now)).toBe(false);
+  });
+
+  it("INV-C9: 닉네임 칸은 DB 닉네임 칸 제약(1~20자)과 같다 — 13~20자 닉네임과 맞은 줄이 있어도 목록 전체가 사라지지 않는다", () => {
+    const rows = unmatchedFromRows([{ ...UNMATCHED, nickname: "가".repeat(18) }, { ...UNMATCHED, id: "5f1c2b7a-9d4e-4c1a-8b2f-0a1b2c3d4e5f", nickname: "가".repeat(20) }, HELD_PARCEL]);
+    expect(rows?.map((r) => r.nickname)).toEqual(["가".repeat(18), "가".repeat(20), null]);
+  });
+
+  it("INV-C5·C12·N21: 「6자리 없이 온 상자」는 6자리 없음·없는 6자리 둘 — DB 판정(inbound_held_without_code)과 같은 목록", () => {
+    expect([...HELD_WITHOUT_CODE_REASONS]).toEqual(["no_code", "unknown_code"]);
+  });
+
+  it("INV-C12: 주인 주문으로 입고 버튼은 6자리 없이(또는 없는 6자리로) 온 대기 중 미확인 입고에만, 도착 + 168시간 전까지", () => {
+    const now = "2026-10-08T00:00:00Z";
+    const left = "2026-10-08T00:00:01Z";
+    expect(canLinkHeld({ source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: left }, now)).toBe(true);
+    expect(canLinkHeld({ source: "unmatched", state: "waiting", reason: "unknown_code", deadlineAt: left }, now)).toBe(true);
+    // 기한 정각부터는 반송 대상(INV-C6) — DB 도 168시간이 지난 상자는 잇지 않는다
+    expect(canLinkHeld({ source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: now }, now)).toBe(false);
+    for (const reason of ["void_code", "used_code", "code_dispute", "barcode_bound", "waybill_dispute"] as const) {
+      expect([reason, canLinkHeld({ source: "unmatched", state: "waiting", reason, deadlineAt: left }, now)]).toEqual([reason, false]);
+    }
+    for (const state of ["matched", "expired"] as const) {
+      expect([state, canLinkHeld({ source: "unmatched", state, reason: "no_code", deadlineAt: left }, now)]).toEqual([state, false]);
+    }
+    expect(canLinkHeld({ source: "parcel", state: "on_hold", reason: "not_mine", deadlineAt: left }, now)).toBe(false);
+    expect(canLinkHeld({ source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: null }, now)).toBe(false);
   });
 
   it("INV-C9 (S9b·S9c): 주문에 묶인 보류 상자 — 「아니에요」·떼어 낸 상자는 바로, 분쟁은 기한(보류 + 168시간)이 지나야, 넘긴 상자는 아니다", () => {

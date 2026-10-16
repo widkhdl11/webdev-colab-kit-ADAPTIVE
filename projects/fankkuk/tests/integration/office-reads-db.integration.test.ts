@@ -41,7 +41,7 @@ describe("작업 함수는 운영자만 (INV-W1)", () => {
     const calls: [string, Record<string, unknown>][] = [
       ["office_confirm_label", { p_qr: qr }],
       // 옛 미확인 기록 함수 자리 — 입고 스캔이 보류 기록을 겸한다(inbound-address-code INV-C5)
-      ["office_scan_inbound", { p_barcode: waybill(), p_code: null, p_carrier: "cj", p_sender_initial: "별", p_shelf: "T-X1" }],
+      ["office_scan_inbound", { p_barcode: waybill(), p_code: null, p_carrier: "cj", p_sender_name: "별빛", p_shelf: "T-X1" }],
       ["office_record_inspection", { p_qr: qr, p_result: FAN_PASS }],
       ["office_scan_inspect", { p_qr: qr }],
       ["office_confirm_shipment", { p_qr: qr, p_waybill: waybill() }],

@@ -217,6 +217,20 @@ describe("알림 링크 (INV-N9)", () => {
     for (const word of ["별빛", "블루투스", "RF", "추적", "전자"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
   });
 
+  it("INV-N21 (S12): 코드 없이 온 상자 알림 — 「코드 없이 온 상자가 있어요」와 「받는 주소 없이 보냈어요」 화면(선물 상세) 링크뿐, 꼭 가는 알림", () => {
+    const b = buildNotificationBody(inputFor("box_no_code"));
+    expect(b.subject).toBe("[팬꾹] 코드 없이 온 상자가 있어요");
+    expect(b.buttonLabel).toBe("받는 주소 없이 보냈어요");
+    expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    const lines = b.text.split("\n");
+    // 인사 · 문구 한 줄 · (빈 줄) · 링크 · (빈 줄) · 공통 꼬리말 · 꺼도 간다는 안내 — 주문번호 줄·도착일·기한 문장은 없다
+    expect(lines.slice(0, 2)).toEqual(["하루님,", "코드 없이 온 상자가 있어요."]);
+    expect(lines[3]).toBe(b.link);
+    expect(b.text).toContain("이 알림은 꺼 두어도 가요.");
+    expect(b.text).not.toContain("주문번호");
+    for (const word of ["송장", "택배", "CJ", "도착한", "크리에이터"]) expect([word, b.text.includes(word)]).toEqual([word, false]);
+  });
+
   it("INV-N6: 꼭 가는 알림에는 「꺼 두어도 가요」, 끌 수 있는 알림에는 「끌 수 있어요」 — 종류별 표 그대로", () => {
     for (const kind of SENDABLE) {
       const text = buildNotificationBody(inputFor(kind)).text;

@@ -15,8 +15,8 @@ export function postWaybill(target: WaybillTarget, waybill: string): Promise<Pos
   return postJson("/api/revgifts/shares/waybill", write);
 }
 
-export function postFind(target: WaybillTarget, waybill: string, carrier: Carrier, senderInitial: string): Promise<PostJsonOutcome> {
-  const common = { waybill, carrier, senderInitial };
+export function postFind(target: WaybillTarget, waybill: string, carrier: Carrier): Promise<PostJsonOutcome> {
+  const common = { waybill, carrier };
   const write: FindHeldWrite = target.kind === "box" ? { boxId: target.id, ...common } : { shareId: target.id, ...common };
   return postJson("/api/gifts/boxes/match", write, "찾지 못했어요. 잠시 뒤 다시 해 주세요.");
 }

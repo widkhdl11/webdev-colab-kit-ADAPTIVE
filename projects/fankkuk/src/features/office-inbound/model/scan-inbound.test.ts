@@ -54,7 +54,7 @@ describe("입고 스캔 — 원 송장 바코드 + 받는 주소 6자리 (office
     expect(reply.body).toMatchObject({ result: "received", qr: "Q-000123", orderNo: "FC-261003-0041", parcel: { senderNickname: "별빛", tier: "small" } });
     expect(calls[0]).toEqual({
       fn: "office_scan_inbound",
-      args: { p_barcode: BARCODE, p_code: CODE, p_carrier: null, p_sender_initial: null, p_shelf: null },
+      args: { p_barcode: BARCODE, p_code: CODE, p_carrier: null, p_sender_name: null, p_shelf: null },
     });
     // 측정: 받아들인 입력 한 건(값은 남기지 않는다)
     expect(calls).toContainEqual({ fn: "office_log_code_input", args: { p_outcome: "accepted" } });
@@ -88,19 +88,24 @@ describe("입고 스캔 — 원 송장 바코드 + 받는 주소 6자리 (office
   it("INV-C5: 6자리 없는 상자는 빈칸으로 넘긴다 — 대조용 값이 없으면 DB 가 need_details(바뀐 것 없음), 입력 기록은 남기지 않는다", async () => {
     const { calls, client } = fakeClient({ office_scan_inbound: { data: { result: "need_details", qr: null, order_no: null, reason: "no_code" }, error: null } });
     expect(await scanInbound(client, scan({ code: "" }))).toEqual({ status: 200, body: { result: "need_details", reason: "no_code" } });
-    expect(calls).toEqual([{ fn: "office_scan_inbound", args: { p_barcode: BARCODE, p_code: null, p_carrier: null, p_sender_initial: null, p_shelf: null } }]);
+    expect(calls).toEqual([{ fn: "office_scan_inbound", args: { p_barcode: BARCODE, p_code: null, p_carrier: null, p_sender_name: null, p_shelf: null } }]);
   });
 
-  it("INV-C5·W7: 보류로 넣을 때 택배사·이름 앞 한 글자·선반 번호만 넘긴다(앞뒤 공백 뗌) → hold + 사유", async () => {
-    const { calls, client } = fakeClient({ office_scan_inbound: { data: { result: "hold", qr: null, order_no: null, reason: "no_code" }, error: null } });
-    const reply = await scanInbound(client, scan({ code: "", carrier: "cj", senderInitial: " 별 ", shelf: " A-03 " }));
-    expect(reply).toEqual({ status: 200, body: { result: "hold", reason: "no_code" } });
-    expect(calls).toEqual([{ fn: "office_scan_inbound", args: { p_barcode: BARCODE, p_code: null, p_carrier: "cj", p_sender_initial: "별", p_shelf: "A-03" } }]);
+  it("INV-C5·W7: 보류로 넣을 때 택배사·송장 「보내는 분」 이름·선반 번호만 넘긴다(앞뒤 공백 뗌) → hold + 사유 + 닉네임 일치면 그 닉네임", async () => {
+    const { calls, client } = fakeClient({ office_scan_inbound: { data: { result: "hold", qr: null, order_no: null, reason: "no_code", nickname: "별빛" }, error: null } });
+    const reply = await scanInbound(client, scan({ code: "", carrier: "cj", senderName: " 별빛 ", shelf: " A-03 " }));
+    expect(reply).toEqual({ status: 200, body: { result: "hold", reason: "no_code", nickname: "별빛" } });
+    expect(calls).toEqual([{ fn: "office_scan_inbound", args: { p_barcode: BARCODE, p_code: null, p_carrier: "cj", p_sender_name: "별빛", p_shelf: "A-03" } }]);
+  });
+
+  it("INV-C5: 닉네임과 맞지 않으면 hold 의 nickname 은 null — 「닉네임 없음」", async () => {
+    const { client } = fakeClient({ office_scan_inbound: { data: { result: "hold", qr: null, order_no: null, reason: "no_code", nickname: null }, error: null } });
+    expect(await scanInbound(client, scan({ code: "", carrier: "cj", senderName: "김민지", shelf: "A-03" }))).toEqual({ status: 200, body: { result: "hold", reason: "no_code", nickname: null } });
   });
 
   it("INV-C5 (S5c): 이미 쓰인 6자리로 온 상자는 보류(code_dispute) — 받아들인 입력으로 센다", async () => {
     const { calls, client } = fakeClient({ office_scan_inbound: { data: { result: "hold", qr: null, order_no: null, reason: "code_dispute" }, error: null }, ...LOG_OK });
-    expect(await scanInbound(client, scan({ carrier: "cj", senderInitial: "별", shelf: "A-03" }))).toEqual({ status: 200, body: { result: "hold", reason: "code_dispute" } });
+    expect(await scanInbound(client, scan({ carrier: "cj", senderName: "별빛", shelf: "A-03" }))).toEqual({ status: 200, body: { result: "hold", reason: "code_dispute", nickname: null } });
     expect(calls).toContainEqual({ fn: "office_log_code_input", args: { p_outcome: "accepted" } });
   });
 
@@ -150,12 +155,13 @@ describe("입고 스캔 — 원 송장 바코드 + 받는 주소 6자리 (office
     expect((await scanInbound(twice.client, { kind: "label", qr: "Q-000123" })).status).toBe(409);
   });
 
-  it("INV-W7 (실패경로): 이름 두 글자 이상·21자 선반·모르는 택배사·모르는 칸은 DB 를 부르지 않고 400", async () => {
+  it("INV-W7 (실패경로): 41자 넘는 보내는 분 이름·21자 선반·모르는 택배사·옛 이름 앞 글자 칸·모르는 칸은 DB 를 부르지 않고 400", async () => {
     const bad: unknown[] = [
-      scan({ code: "", carrier: "cj", senderInitial: "별빛", shelf: "A-03" }),
-      scan({ code: "", carrier: "cj", senderInitial: "별", shelf: "가".repeat(21) }),
-      scan({ code: "", carrier: "fedex", senderInitial: "별", shelf: "A-03" }),
-      scan({ code: "", carrier: "cj", senderInitial: "별", shelf: "A-03", phone: "010" }),
+      scan({ code: "", carrier: "cj", senderName: "가".repeat(41), shelf: "A-03" }),
+      scan({ code: "", carrier: "cj", senderName: "별빛", shelf: "가".repeat(21) }),
+      scan({ code: "", carrier: "fedex", senderName: "별빛", shelf: "A-03" }),
+      scan({ code: "", carrier: "cj", senderInitial: "별", shelf: "A-03" }),
+      scan({ code: "", carrier: "cj", senderName: "별빛", shelf: "A-03", phone: "010" }),
     ];
     for (const body of bad) {
       const { calls, client } = fakeClient({});

@@ -274,8 +274,7 @@ export function RevgiftSentPage({
               받는 주소 없이 보냈어요
             </h2>
             <p className={s["find-text"]}>
-              받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 그 팬의 상자로 이어져요. 하루에 다섯 번까지 찾을
-              수 있어요.
+              받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호와 택배사가 맞으면 고른 팬의 상자로 입고돼요. 틀린 입력은 하루에 다섯 번까지예요.
             </p>
             <div className={s["find-box"]}>
               <FindMyBox boxes={finderBoxes} />

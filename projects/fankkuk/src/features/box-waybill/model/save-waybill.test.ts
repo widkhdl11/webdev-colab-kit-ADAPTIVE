@@ -107,11 +107,11 @@ describe("역조공 몫 송장번호 저장 (보낸 크리에이터)", () => {
   });
 });
 
-const FIND = { boxId: BOX, waybill: "3057-8812-4096", carrier: "cj", senderInitial: " 별 " };
-const FIND_ARGS = { p_box_id: BOX, p_share_id: null, p_waybill: "305788124096", p_carrier: "cj", p_sender_initial: "별" };
+const FIND = { boxId: BOX, waybill: "3057-8812-4096", carrier: "cj" };
+const FIND_ARGS = { p_box_id: BOX, p_share_id: null, p_waybill: "305788124096", p_carrier: "cj" };
 
 describe("받는 주소 없이 보냈어요 (inbound-address-code INV-C4 ②·C10)", () => {
-  it("INV-C4 (S4): 주문 주인이 고른 내 상자 + 송장번호·택배사·이름 앞 한 글자만 DB 찾기 함수에 넘긴다", async () => {
+  it("INV-C4 ②-가 (S4): 주문 주인이 고른 내 상자 + 송장번호·택배사만 DB 찾기 함수에 넘긴다 — 닉네임은 DB 가 로그인 계정으로 본다", async () => {
     const f = fakeClient(null, "matched");
     expect(await findHeldParcel({ client: f.client, viewer: FAN }, FIND)).toEqual({ status: 200, body: { matched: true } });
     expect(f.calls).toEqual([{ fn: "find_held_parcel", args: FIND_ARGS }]);
@@ -119,9 +119,9 @@ describe("받는 주소 없이 보냈어요 (inbound-address-code INV-C4 ②·C1
 
   it("INV-C4: 역조공 몫은 보낸 크리에이터가 몫 id 로 찾는다 — 팬은 403", async () => {
     const f = fakeClient(null, "matched");
-    const body = { shareId: BOX, waybill: "305788124096", carrier: "post", senderInitial: "하" };
+    const body = { shareId: BOX, waybill: "305788124096", carrier: "post" };
     expect((await findHeldParcel({ client: f.client, viewer: CREATOR }, body)).status).toBe(200);
-    expect(f.calls).toEqual([{ fn: "find_held_parcel", args: { p_box_id: null, p_share_id: BOX, p_waybill: "305788124096", p_carrier: "post", p_sender_initial: "하" } }]);
+    expect(f.calls).toEqual([{ fn: "find_held_parcel", args: { p_box_id: null, p_share_id: BOX, p_waybill: "305788124096", p_carrier: "post" } }]);
     const g = fakeClient(null, "matched");
     expect((await findHeldParcel({ client: g.client, viewer: FAN }, body)).status).toBe(403);
     expect(g.calls).toEqual([]);
@@ -133,14 +133,14 @@ describe("받는 주소 없이 보냈어요 (inbound-address-code INV-C4 ②·C1
     expect(f.calls).toEqual([]);
   });
 
-  it("INV-C4 (실패경로): 로그인 안 함 401 · 주문번호 칸·택배사 없음·이름 두 글자·모르는 택배사·상자 둘은 400 — DB 를 부르지 않는다", async () => {
+  it("INV-C4 (실패경로): 로그인 안 함 401 · 주문번호 칸·택배사 없음·이름 칸(이제 받지 않음)·모르는 택배사·상자 둘은 400 — DB 를 부르지 않는다", async () => {
     const f = fakeClient();
     expect((await findHeldParcel({ client: f.client, viewer: null }, FIND)).status).toBe(401);
     for (const body of [
       { ...FIND, orderNo: "FC-7K3M9" },
-      { boxId: BOX, waybill: "305788124096", senderInitial: "별" },
-      { ...FIND, senderInitial: "별빛" },
-      { ...FIND, senderInitial: "" },
+      { boxId: BOX, waybill: "305788124096" },
+      { ...FIND, senderInitial: "별" },
+      { ...FIND, nickname: "별빛" },
       { ...FIND, carrier: "fedex" },
       { ...FIND, shareId: BOX },
     ]) {

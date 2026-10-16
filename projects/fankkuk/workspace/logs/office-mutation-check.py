@@ -27,7 +27,8 @@ M = [
     ('label: state', 'office_confirm_label', "if v.state <> 'received' then", F),
     ('label: mismatch', 'office_confirm_label', "if not exists (select 1 from public.office_label_pending where operator_id = auth.uid() and parcel_id = v.id) then", F),
     ('unmatched: operator', 'office_record_unmatched', OP, F),
-    ('unmatched: initial', 'office_record_unmatched', "if char_length(coalesce(p_sender_initial, '')) <> 1 or", "if false or"),
+    # 2026-10-16 카드 d94: 이름 앞 1글자(p_sender_initial) 대신 송장 「보내는 분」 이름(p_sender_name, 40자까지 — 닉네임 비교만, 저장 안 함)
+    ('unmatched: sender name', 'office_scan_inbound', "if char_length(v_name) > 40 or char_length(v_shelf) > 20 then", "if false then"),
     ('match: owner', 'match_unmatched', "where b.id = p_box_id and o.fan_id = auth.uid() and", "where b.id = p_box_id and"),
     ('match: deadline', 'match_unmatched', "\n      and arrived_at > now() - interval '168 hours'", ""),
     ('match: already matched', 'match_unmatched', "where waybill_no = p_waybill and matched_parcel_id is null and expired_at is null", "where waybill_no = p_waybill and expired_at is null"),

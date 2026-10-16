@@ -1,14 +1,16 @@
 import { CARRIER_LABEL } from "@/entities/parcel/model/carrier";
 import { HOLD_REASON_LABEL } from "@/entities/parcel/model/office-labels";
-import { canReturnHeld, daysLeft, isUnmatchedUrgent, ratePercent, type FindFlag, type InboundMetrics, type UnmatchedParcel } from "@/entities/parcel/model/office-lists";
+import { canLinkHeld, canReturnHeld, daysLeft, isUnmatchedUrgent, ratePercent, type FindFlag, type InboundMetrics, type UnmatchedParcel } from "@/entities/parcel/model/office-lists";
+import { LinkHeldButton } from "@/features/admin-held-link/ui/link-held-button";
 import { ReturnHeldButton } from "@/features/admin-held-return/ui/return-held-button";
 import { formatMonthDay, formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 import u from "./unmatched.module.css";
 
 // 관리자 「미확인 입고」 = 운영자 확인 목록 (office-workflow INV-W5·W6·W7, inbound-address-code INV-C5·C8·C9·C10, 시안 admin/unmatched.html).
-// 보이는 칸은 도착 시각·원 송장 바코드·택배사·보류 사유·발신인 앞 한 글자(+ 선반·봉투 번호)뿐이다. 주문번호·닉네임·6자리는 DB 가 주지 않는다.
-// 상자를 주문에 붙이는 칸은 없다 — 주인이 「받는 주소 없이 보냈어요」로만 잇는다(INV-C4 ②). 여기서 할 수 있는 일은 「반송으로 넘기기」뿐이다.
+// 보이는 칸은 도착 시각·원 송장 바코드·택배사·보류 사유·닉네임 일치 여부(일치면 그 닉네임, + 선반·봉투 번호)뿐이다. 주문번호·6자리·이름 글자는 DB 가 주지 않는다.
+// 주인이 「받는 주소 없이 보냈어요」로 잇는 것이 먼저다(INV-C4 ②). 여기서 할 수 있는 일은 「반송으로 넘기기」와, 6자리 없이 온 상자의 주인이
+// 문의했을 때 송장번호·내용물을 확인하고 그 팬의 도착 전 상자로 입고하는 「주인 주문으로 입고」(INV-C12, 카드 d94) 둘이다 — 주문번호를 적는 칸은 없다.
 // 남은 날은 도착 + 168시간 기한까지(INV-W6·C6). now 는 서버가 그린 시각.
 // 위의 숫자 셋은 최근 30일 측정값(스펙 「측정」 절), 아래는 찾기 실패가 반복된 계정(INV-C10).
 
@@ -16,7 +18,7 @@ const TOTAL_DAYS = 7;
 
 const STATE_TAG: Record<UnmatchedParcel["state"], { text: string; className: string }> = {
   waiting: { text: "주인 찾기 대기", className: a.tag },
-  matched: { text: "주인과 이어짐", className: `${a.tag} ${a.tagBrand}` },
+  matched: { text: "입고 완료", className: `${a.tag} ${a.tagBrand}` },
   expired: { text: "반송 대상", className: `${a.tag} ${a.tagInk}` },
   on_hold: { text: "출고 멈춤", className: `${a.tag} ${a.tagWarn}` },
 };
@@ -67,7 +69,7 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
       <div className={a.pageHead}>
         <div>
           <h1>미확인 입고</h1>
-          <p>받는 주소 6자리로 이어지지 않아 보류된 상자와, 분쟁·「제가 보낸 게 아니에요」로 출고를 멈춘 상자예요. 출고 목록에는 나오지 않아요.</p>
+          <p>받는 주소 6자리로 입고되지 않아 보류된 상자와, 분쟁·「제가 보낸 게 아니에요」로 출고를 멈춘 상자예요. 출고 목록에는 나오지 않아요.</p>
         </div>
       </div>
       <div className={a.stack}>
@@ -119,7 +121,7 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
                           {HOLD_REASON_LABEL[r.reason]}
                           {r.suspectedTheft ? <span className={`${a.tag} ${a.tagInk}`}> 도용 의심</span> : null}
                         </td>
-                        <td>{r.senderInitial ? `${r.senderInitial}*` : "—"}</td>
+                        <td>{r.nickname ? <span className={`${a.tag} ${a.tagBrand}`}>닉네임 일치 · {r.nickname}</span> : r.source === "unmatched" ? <span className={a.faint}>닉네임 없음</span> : "—"}</td>
                         <td className={a.mono}>{r.shelf ?? (r.qr ? `봉투 ${r.qr}` : "—")}</td>
                         <td>
                           {/* 미확인 입고는 7일 반송까지, 주문에 묶인 보류 상자는 보류 + 168시간(분쟁은 그때부터 넘길 수 있고, 아무도 안 넘기면 자동) */}
@@ -138,7 +140,10 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
                         <td>
                           <span className={tag.className}>{tag.text}</span>
                         </td>
-                        <td className={a.act}>{canReturnHeld(r, now) ? <ReturnHeldButton source={r.source} id={r.id} waybillNo={r.waybillNo} /> : null}</td>
+                        <td className={a.act}>
+                          {canLinkHeld(r, now) ? <LinkHeldButton id={r.id} waybillNo={r.waybillNo} /> : null}
+                          {canReturnHeld(r, now) ? <ReturnHeldButton source={r.source} id={r.id} waybillNo={r.waybillNo} /> : null}
+                        </td>
                       </tr>
                     );
                   })
@@ -147,7 +152,7 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
             </table>
           </div>
           <p className={a.hint}>
-            주인이 「받는 주소 없이 보냈어요」에 송장번호·택배사·보낸 사람 이름 첫 글자를 넣어 셋이 다 맞으면 저절로 입고돼요. 이 화면에서 주문을 붙이는 칸은 없어요. 보낸 사람은 앞 한 글자만, 사진·주소는 남기지 않아요. 7일 안에 이어지지 않으면 원 송장 주소로 착불 반송해요. 출고가 멈춘 상자는 보류된 때부터 7일 뒤 주문에서 떼어 반송해요 — 「제가 보낸 게 아니에요」·떼어 낸 상자는 바로 넘길 수 있어요.
+            보낸 분 이름·사진·주소는 남기지 않아요. 7일 안에 입고되지 않으면 원 송장 주소로 착불 반송해요. 출고가 멈춘 상자는 보류된 때부터 7일 뒤 주문에서 떼어 반송해요 — 「제가 보낸 게 아니에요」·떼어 낸 상자는 바로 넘길 수 있어요.
           </p>
         </section>
 

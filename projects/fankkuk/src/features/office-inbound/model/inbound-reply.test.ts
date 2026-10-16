@@ -5,8 +5,13 @@ describe("입고 스캔 응답 다시 읽기 (office-workflow INV-W1·W5, inboun
   it("INV-W1: 입고 완료 응답 — 상자 정보가 없으면 null 로 둔다", () => {
     expect(inboundReplyFromBody({ result: "received", qr: "Q-000123", orderNo: "FC-1", parcel: null })).toEqual({ result: "received", qr: "Q-000123", orderNo: "FC-1", parcel: null });
   });
-  it("INV-C5: 보류로 기록한 응답 — 사유를 같이 읽는다", () => {
-    expect(inboundReplyFromBody({ result: "hold", reason: "code_dispute" })).toEqual({ result: "hold", reason: "code_dispute" });
+  it("INV-C5: 보류로 기록한 응답 — 사유와 닉네임 일치 여부(일치면 그 닉네임, 아니면 null)를 같이 읽는다", () => {
+    expect(inboundReplyFromBody({ result: "hold", reason: "no_code", nickname: "별빛" })).toEqual({ result: "hold", reason: "no_code", nickname: "별빛" });
+    expect(inboundReplyFromBody({ result: "hold", reason: "code_dispute", nickname: null })).toEqual({ result: "hold", reason: "code_dispute", nickname: null });
+    expect(inboundReplyFromBody({ result: "hold", reason: "code_dispute" })).toEqual({ result: "hold", reason: "code_dispute", nickname: null });
+  });
+  it("INV-C5 (실패경로): 닉네임 칸이 글자가 아니면 null", () => {
+    expect(inboundReplyFromBody({ result: "hold", reason: "no_code", nickname: 3 })).toBeNull();
   });
   it("INV-C5: 보류인데 대조용 값이 모자란 응답(need_details) — 바뀐 것 없음", () => {
     expect(inboundReplyFromBody({ result: "need_details", reason: "no_code" })).toEqual({ result: "need_details", reason: "no_code" });

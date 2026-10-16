@@ -147,7 +147,6 @@ describe("도착하지 않은 상자 닫기 (INV-W10 · INV-M8·M9)", () => {
       p_share_id: null,
       p_waybill: late,
       p_carrier: HOLD_DETAILS.carrier,
-      p_sender_initial: HOLD_DETAILS.initial,
     });
     expect(found.error).toBeNull();
     expect(found.data).toBe("not_found");

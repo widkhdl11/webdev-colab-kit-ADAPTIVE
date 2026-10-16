@@ -296,3 +296,9 @@
 - auto | 실패 출력에 값 대신 자리·종류·길이 | 근거: address-protection INV-P10
 - auto | 앱 POST 경로·GraphQL·Storage·realtime 은 이번 범위 밖 → BACKLOG | 근거: POST 는 부르면 쓰기, 나머지는 쓰는 곳 없음·로컬 꺼짐
 - 리뷰 | security high 1·medium 3·low 4 / code high 3·medium 2·low 1 / test-auditor high 2·medium 2 → 모두 반영(low 일부 BACKLOG). 변이 17/17(처음 16, 「실패 응답도 성공으로」는 단언을 더해 잡음)
+
+## 2026-10-16 닉네임 상자 찾기 (카드 d94·d95)
+- auto | 6자리가 붙어 온 보류 상자(분쟁·무효)는 그 6자리 주인이면 닉네임 없이 두 값으로 찾음 | 근거: 6자리가 주문 연결을 이미 보여 줌, 바꾸기 전 동작 유지(INV-C5 「주인은 ②로 확인」)
+- auto | 「6자리 없이 온 상자」 = no_code + unknown_code 로 한 목록(알림·잇기 같이) | 근거: 없는 6자리를 적은 것도 코드가 없는 것과 같다
+- auto | 닉네임 길이 검사는 DB 칸 제약(1~20자)과 같게 | 근거: 크리에이터 이름도 nickname 칸
+- 리뷰 | security medium 1·low 1 / code medium 3·low 2 / ui high 2·medium 4 → 모두 반영 중

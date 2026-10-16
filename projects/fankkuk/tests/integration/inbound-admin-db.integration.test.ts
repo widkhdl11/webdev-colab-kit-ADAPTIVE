@@ -75,7 +75,7 @@ describe("INV-C9 반송으로 넘기기 — 운영자만, 아직 이어지지 �
     const barcode = waybill();
     const id = await holdWithoutCode(op, barcode);
     const fan = await signedInClient("byeolbit_fan");
-    const found = await fan.rpc("find_held_parcel", { p_box_id: g.boxIds[0], p_share_id: null, p_waybill: barcode, p_carrier: "cj", p_sender_initial: "별" });
+    const found = await fan.rpc("find_held_parcel", { p_box_id: g.boxIds[0], p_share_id: null, p_waybill: barcode, p_carrier: "cj" });
     expect(found.data).toBe("matched");
     expect((await op.rpc("admin_return_unmatched", { p_id: id })).error?.code).toBe("55000");
   });
@@ -89,14 +89,14 @@ describe("INV-C9 반송으로 넘기기 — 운영자만, 아직 이어지지 �
     expect(psql(`select expired_at is null from public.office_unmatched where id = '${id}'`)).toBe("t");
   });
 
-  it("INV-C6·C4: 반송으로 넘긴 상자는 주인이 셋 다 맞게 넣어도 이어지지 않는다", async () => {
+  it("INV-C6·C4: 반송으로 넘긴 상자는 주인이 송장번호·택배사를 맞게 넣어도 이어지지 않는다", async () => {
     const op = await staff();
     const g = await paidGift(1);
     const barcode = waybill();
     const id = await holdWithoutCode(op, barcode);
     expect((await op.rpc("admin_return_unmatched", { p_id: id })).error).toBeNull();
     const fan = await signedInClient("byeolbit_fan");
-    const found = await fan.rpc("find_held_parcel", { p_box_id: g.boxIds[0], p_share_id: null, p_waybill: barcode, p_carrier: "cj", p_sender_initial: "별" });
+    const found = await fan.rpc("find_held_parcel", { p_box_id: g.boxIds[0], p_share_id: null, p_waybill: barcode, p_carrier: "cj" });
     expect(found.data).toBe("not_found");
   });
 

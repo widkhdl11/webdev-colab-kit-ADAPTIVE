@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { adminClient, anonClient, approveRpc, deleteTestOrders, holdRowLock, psql, signedInClient } from "./helpers";
+import { adminClient, anonClient, approveRpc, deleteTestOrders, holdRowLock, psql, SEED, signedInClient } from "./helpers";
 import {
   approve,
   creatorSetsWaybill,
@@ -505,17 +505,20 @@ describe("검수 기록 (INV-W4)", () => {
 
 describe("미확인 입고 (INV-W5)", () => {
   // inbound-address-code(2026-10-07): 6자리로 이어지지 않은 상자가 보류(미확인 입고)다. 입고 스캔이 그 자리에서 기록하고,
-  // 팬은 「받는 주소 없이 보냈어요」에 송장번호·택배사·이름 앞 1글자를 넣어 찾는다(INV-C4 ②).
+  // 팬은 「받는 주소 없이 보냈어요」에 송장번호·택배사를 넣어 찾는다 — 입고 때 닉네임이 맞은 상자만(INV-C4 ②-가, 카드 d94).
   const find = (c: SupabaseClient, boxId: string, no: string) =>
-    c.rpc("find_held_parcel", { p_box_id: boxId, p_share_id: null, p_waybill: no, p_carrier: "cj", p_sender_initial: "별" });
+    c.rpc("find_held_parcel", { p_box_id: boxId, p_share_id: null, p_waybill: no, p_carrier: "cj" });
 
-  it("INV-W5 (S5): 6자리 없는 상자를 입고 스캔하면 보류로 기록되고, 기록은 발신인 앞 한 글자만", async () => {
+  it("INV-W5 (S5): 6자리 없는 상자를 입고 스캔하면 보류로 기록되고, 발신인은 닉네임 일치 여부(일치면 그 계정)만", async () => {
     const staff = await signedInClient("fankkuk_staff");
     const no = waybill();
-    const r = await scanInbound(staff, no, { carrier: "cj", initial: "별", shelf: "T-A1" });
+    const r = await scanInbound(staff, no, { carrier: "cj", senderName: "별빛", shelf: "T-A1" });
     expect((r.data as { result: string }).result).toBe("hold");
-    expect(psql(`select sender_initial || '/' || shelf from public.office_unmatched where waybill_no = '${no}'`)).toBe("별/T-A1");
-    expect((await scanInbound(staff, waybill(), { carrier: "cj", initial: "별빛", shelf: "T-A2" })).error?.code).toBe("22023");
+    expect(psql(`select coalesce(nickname_profile_id::text, 'none') || '/' || shelf from public.office_unmatched where waybill_no = '${no}'`)).toBe(`${SEED.fanId}/T-A1`);
+    const none = waybill();
+    await scanInbound(staff, none, { carrier: "cj", senderName: "홍길동", shelf: "T-A2" });
+    expect(psql(`select coalesce(nickname_profile_id::text, 'none') from public.office_unmatched where waybill_no = '${none}'`)).toBe("none");
+    expect((await scanInbound(staff, waybill(), { carrier: "cj", senderName: "가".repeat(41), shelf: "T-A3" })).error?.code).toBe("22023");
   });
 
   it("INV-W5 (S5b): 별빛이 자기 결제 완료 상자로 그 송장번호·택배사·이름 앞 1글자를 넣으면 이어지고 입고 완료", async () => {
@@ -636,7 +639,7 @@ describe("7일 자동 처리 (INV-W6)", () => {
     await scanInbound(staff, no, { ...HOLD_DETAILS, shelf: "T-F1" });
     psql(`update public.office_unmatched set arrived_at = now() - interval '168 hours' where waybill_no = '${no}'`);
     const fan = await signedInClient("byeolbit_fan");
-    const found = await fan.rpc("find_held_parcel", { p_box_id: g.boxIds[0], p_share_id: null, p_waybill: no, p_carrier: "cj", p_sender_initial: "별" });
+    const found = await fan.rpc("find_held_parcel", { p_box_id: g.boxIds[0], p_share_id: null, p_waybill: no, p_carrier: "cj" });
     expect(found.data).toBe("not_found");
     const r = (await staff.rpc("office_run_expiry")).data as { unmatched: number };
     expect(r.unmatched).toBeGreaterThanOrEqual(1);
@@ -1093,14 +1096,15 @@ describe("개인정보 없음 (INV-W7)", () => {
     }
   });
 
-  it("INV-W7: 미확인 입고 표에는 발신인 앞 한 글자 말고 사람 칸이 없다", async () => {
+  it("INV-W7: 미확인 입고 표에는 닉네임이 맞은 계정 말고 사람 칸이 없다 — 직원이 넣은 이름 글자 칸이 없다", async () => {
     const cols = psql(
       "select string_agg(column_name, ',' order by column_name) from information_schema.columns where table_schema = 'public' and table_name = 'office_unmatched'",
     );
     // 택배사·보류 사유·붙어 온 6자리 줄·도용 의심 표시는 inbound-address-code(INV-C5·C9)가 더한 대조용 칸이다 — 사람 칸이 아니다.
     // returned_by 는 「반송으로 넘기기」를 누른 운영자(recorded_by 와 같은 작업자 칸)다.
+    // nickname_profile_id 는 송장 「보내는 분」이 닉네임과 맞은 계정(INV-W5·W7, 카드 d94) — 이름 글자는 남기지 않는다.
     expect(cols.split(",")).toEqual([
-      "arrived_at", "carrier", "code_id", "expired_at", "id", "matched_at", "matched_parcel_id", "reason", "recorded_by", "returned_by", "sender_initial", "shelf", "suspected_theft", "waybill_no",
+      "arrived_at", "carrier", "code_id", "expired_at", "id", "matched_at", "matched_parcel_id", "nickname_profile_id", "reason", "recorded_by", "returned_by", "shelf", "suspected_theft", "waybill_no",
     ]);
   });
 

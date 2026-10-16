@@ -99,20 +99,20 @@ async function shipAll(client: SupabaseClient, unit: Awaited<ReturnType<typeof p
   if (shipped.error) throw new Error(`office_confirm_shipment 실패: ${shipped.error.code} ${shipped.error.message}`);
 }
 
-async function find(login: string, target: { boxId?: string; shareId?: string }, no: string, carrier = "cj", initial = "별") {
+// 찾기는 송장번호 + 택배사. 팬 상자는 그 보류 상자가 입고 때 로그인한 팬의 닉네임과 맞았어야 한다(INV-C4 ②-가, 카드 d94)
+async function find(login: string, target: { boxId?: string; shareId?: string }, no: string, carrier = "cj") {
   const client = await signedInClient(login);
   return client.rpc("find_held_parcel", {
     p_box_id: target.boxId ?? null,
     p_share_id: target.shareId ?? null,
     p_waybill: no,
     p_carrier: carrier,
-    p_sender_initial: initial,
   });
 }
 
-/** 6자리 없이 온 상자를 보류로 넣는다 */
-async function holdWithoutCode(barcode: string, initial = "별"): Promise<void> {
-  const r = await scanInbound(await staff(), barcode, { code: null, carrier: "cj", initial, shelf: "T-1" });
+/** 6자리 없이 온 상자를 보류로 넣는다 — 송장 「보내는 분」은 별빛의 닉네임(INV-C5) */
+async function holdWithoutCode(barcode: string, senderName = "별빛"): Promise<void> {
+  const r = await scanInbound(await staff(), barcode, { code: null, carrier: "cj", senderName, shelf: "T-1" });
   expect(r.error).toBeNull();
   expect((r.data as ScanOut).result).toBe("hold");
 }
@@ -554,8 +554,8 @@ describe("INV-C3 · INV-C5 잠금 순서 — 입고와 거절·7일 반려가 �
   });
 });
 
-describe("INV-C4 매칭은 유효한 6자리 또는 주인의 송장번호·택배사·이름 앞 1글자 일치로만", () => {
-  it("INV-C4 (S4): 6자리 없이 온 별빛 상자를 별빛이 송장번호·택배사·이름 앞 1글자로 찾으면 별빛 상자로 입고된다", async () => {
+describe("INV-C4 매칭은 유효한 6자리 또는 주인의 송장번호·택배사 일치(팬은 닉네임 일치 상자)로만", () => {
+  it("INV-C4 (S4): 6자리 없이 온 닉네임 일치 별빛 상자를 별빛이 송장번호·택배사로 찾으면 별빛 상자로 입고된다", async () => {
     const g = await paidGift();
     const barcode = waybill();
     await holdWithoutCode(barcode);
@@ -569,13 +569,15 @@ describe("INV-C4 매칭은 유효한 6자리 또는 주인의 송장번호·택�
     expect((await scanInbound(await staff(), barcode, { code: null })).data).toMatchObject({ result: "reprinted" });
   });
 
-  it("INV-C4 (S4): 셋 중 하나라도 다르면 이어지지 않는다", async () => {
+  it("INV-C4 (S4): 송장번호·택배사 중 하나라도 다르거나 상자의 닉네임이 다른 계정이면 이어지지 않는다", async () => {
     const g = await paidGift();
     const barcode = waybill();
     await holdWithoutCode(barcode);
-    expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, barcode, "hanjin", "별")).data).toBe("not_found");
-    expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, barcode, "cj", "달")).data).toBe("not_found");
-    expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill(), "cj", "별")).data).toBe("not_found");
+    expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, barcode, "hanjin")).data).toBe("not_found");
+    expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill(), "cj")).data).toBe("not_found");
+    const other = waybill();
+    await holdWithoutCode(other, "달토끼");
+    expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, other, "cj")).data).toBe("not_found");
     expect(parcelOf(g.boxIds[0]).state).toBe("awaiting");
     expect(holdRow(barcode)?.matched).toBe("false");
   });
@@ -871,7 +873,7 @@ describe("INV-C8 상자 도착 알림 · 「제가 보낸 게 아니에요」", 
 });
 
 describe("INV-C9 운영자 확인 목록 — 보이는 값과 손으로 잇는 길 없음", () => {
-  it("INV-C9 (S9): 보류 목록에는 도착 시각·바코드·택배사·보류 사유·발신인 앞 한 글자만 — 실명·주소·전화·주문번호·6자리 없음", async () => {
+  it("INV-C9 (S9): 보류 목록에는 도착 시각·바코드·택배사·보류 사유·닉네임 일치 여부(일치면 그 닉네임)만 — 실명·주소·전화·주문번호·6자리 없음", async () => {
     const g = await paidGift();
     const code = codeOf({ boxId: g.boxIds[0] })!;
     const op = await staff();
@@ -883,9 +885,9 @@ describe("INV-C9 운영자 확인 목록 — 보이는 값과 손으로 잇는 �
     const rows = r.data as Record<string, unknown>[];
     const row = rows.find((x) => x.waybill_no === barcode)!;
     expect(Object.keys(row).sort()).toEqual(
-      ["arrived_at", "carrier", "deadline_at", "id", "qr", "reason", "sender_initial", "shelf", "source", "state", "suspected_theft", "waybill_no"].sort(),
+      ["arrived_at", "carrier", "deadline_at", "id", "nickname", "qr", "reason", "shelf", "source", "state", "suspected_theft", "waybill_no"].sort(),
     );
-    expect(row).toMatchObject({ carrier: "cj", sender_initial: "별", reason: "code_dispute" });
+    expect(row).toMatchObject({ carrier: "cj", nickname: "별빛", reason: "code_dispute" });
     // 바코드·id·QR 은 무작위 숫자라 그 안에 「010…」 같은 전화번호 꼴이 우연히 생길 수 있다 — 그 칸을 뺀 나머지에서 찾는다
     const text = JSON.stringify(rows.map(({ waybill_no: _w, id: _i, qr: _q, ...rest }) => rest));
     expect(text).toContain("code_dispute");
@@ -913,31 +915,72 @@ describe("INV-C9 운영자 확인 목록 — 보이는 값과 손으로 잇는 �
   });
 });
 
-describe("INV-C10 찾기는 하루 5번 — 실패가 반복되면 운영자 확인", () => {
-  it("INV-C10 (S10): 하루에 6번째 찾기는 거부(P0045), 성공도 횟수에 든다", async () => {
+describe("INV-C10 찾기는 틀린 시도만 하루(서울 날짜) 5번 — 실패가 반복되면 운영자 확인", () => {
+  // 2026-10-16 카드 d92: 하루 5번은 틀린 시도만 센다(맞아서 이어진 찾기는 세지 않음). 「하루」는 서울 날짜다.
+  /** 오늘(서울 날짜) 0시 기준 시각 — 서울 하루 경계 시험용 */
+  const seoulToday = (plus: string) => `(date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul') + interval '${plus}'`;
+  function addAttempts(profileId: string, n: number, at: string, matched = false): void {
+    psql(`insert into public.office_match_attempts (profile_id, matched, at) select '${profileId}', ${matched}, ${at} from generate_series(1, ${n})`);
+  }
+
+  it("INV-C10 (S10): 오늘 틀린 찾기 5번이면 6번째는 값이 맞아도 거부(P0045), 상자는 그대로", async () => {
+    const g = await paidGift();
+    const barcode = waybill();
+    await holdWithoutCode(barcode);
+    for (let i = 0; i < 5; i++) expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill())).data).toBe("not_found");
+    expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, barcode)).error?.code).toBe("P0045");
+    expect(psql(`select matched_parcel_id is null from public.office_unmatched where waybill_no = '${barcode}'`)).toBe("t");
+  });
+
+  it("INV-C10 (S10): 맞아서 이어진 찾기는 세지 않는다 — 맞힘 1번 + 틀림 4번 뒤 틀린 찾기 1번 더 받고, 그다음 거부", async () => {
     const g = await paidGift();
     const barcode = waybill();
     await holdWithoutCode(barcode);
     expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, barcode)).data).toBe("matched");
     for (let i = 0; i < 4; i++) expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill())).data).toBe("not_found");
-    const sixth = await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill());
-    expect(sixth.error?.code).toBe("P0045");
-    expect(psql(`select count(*) from public.office_match_attempts where profile_id = '${SEED.fanId}'`)).toBe("5");
+    expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill())).data).toBe("not_found");
+    expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill())).error?.code).toBe("P0045");
+    // 맞힌 시도도 기록은 남는다 — 거부 판정에만 빠진다
+    expect(psql(`select count(*) || '/' || count(*) filter (where matched) from public.office_match_attempts where profile_id = '${SEED.fanId}'`)).toBe("6/1");
   });
 
-  it("INV-C10 (S10): 다른 계정의 시도는 섞이지 않고, 24시간이 지난 시도는 세지 않는다", async () => {
+  it("INV-C10 (S10): 「하루」는 서울 날짜 — 서울 어제 23시 59분의 틀린 시도 5번은 세지 않고, 오늘 0시 넘은 시도는 센다. 다른 계정은 섞이지 않는다", async () => {
     const g = await paidGift();
-    // 달토끼가 5번 시도해 자기 한도를 다 써도 별빛의 찾기는 막히지 않는다
-    for (let i = 0; i < 5; i++) expect((await find("daltokki_fan", { boxId: g.boxIds[0] }, waybill())).data).toBe("not_found");
-    expect((await find("daltokki_fan", { boxId: g.boxIds[0] }, waybill())).error?.code).toBe("P0045");
+    // 서울 어제 23:59 — 24시간 안이지만 다른 날이다
+    addAttempts(SEED.fanId, 5, seoulToday("-1 minute"));
     expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill())).data).toBe("not_found");
-    // 별빛의 24시간 지난 시도 5줄은 세지 않는다 — 오늘 시도 1번 + 4번 더 가능, 그다음 거부
-    psql(`insert into public.office_match_attempts (profile_id, matched, at) select '${SEED.fanId}', false, now() - interval '24 hours 1 minute' from generate_series(1, 5)`);
-    for (let i = 0; i < 4; i++) expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill())).data).toBe("not_found");
+    // 오늘 0시 1초의 틀린 시도 3번 + 방금 1번 = 4번 — 한 번 더 받고 그다음 거부
+    addAttempts(SEED.fanId, 3, seoulToday("1 second"));
+    expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill())).data).toBe("not_found");
     expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill())).error?.code).toBe("P0045");
-    // 운영자 확인 표시의 실패 횟수도 24시간 안의 것만
-    const flags = (await (await staff()).rpc("admin_find_flags")).data as { nickname: string; failures_24h: number }[];
-    expect(flags.find((x) => x.nickname === "별빛")?.failures_24h).toBe(5);
+    // 달토끼는 별빛의 시도와 섞이지 않는다
+    expect((await find("daltokki_fan", { boxId: g.boxIds[0] }, waybill())).data).toBe("not_found");
+  });
+
+  it("INV-C10 (S10b): 하루가 상자 셋을 6자리 없이 보냄, 오늘 틀린 찾기 4번 → 맞는 찾기 3번 모두 이어지고, 두 값은 맞지만 후보가 아닌 몫을 고른 시도는 다섯 번째 틀린 시도, 그다음 거부", async () => {
+    const shares = [await paidShare(), await paidShare(), await paidShare()];
+    const barcodes = [waybill(), waybill(), waybill()];
+    for (const b of barcodes) await holdWithoutCode(b, "하루");
+    const extra = waybill(); // 넷째 보류 상자 — 고를 수 있는 입고 전 몫이 없다
+    await holdWithoutCode(extra, "하루");
+    for (let i = 0; i < 4; i++) expect((await find("haru_creator", { shareId: shares[0]!.shareId }, waybill())).data).toBe("not_found");
+    for (let i = 0; i < 3; i++) expect((await find("haru_creator", { shareId: shares[i]!.shareId }, barcodes[i]!)).data).toBe("matched");
+    // 두 값은 맞지만 이미 입고된 몫(후보 아님) — 틀린 시도로 센다(다섯 번째, 받음)
+    expect((await find("haru_creator", { shareId: shares[0]!.shareId }, extra)).data).toBe("not_found");
+    expect((await find("haru_creator", { shareId: shares[0]!.shareId }, extra)).error?.code).toBe("P0045");
+    expect(psql(`select count(*) from public.office_match_attempts where profile_id = '${SEED.creatorProfileId}' and not matched`)).toBe("5");
+  });
+
+  it("INV-C10: 운영자 확인 표시의 실패 횟수는 그대로 24시간 안의 것", async () => {
+    const g = await paidGift();
+    addAttempts(SEED.fanId, 5, "now() - interval '24 hours 1 minute'");
+    await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill());
+    const op = await staff();
+    const flags = ((await op.rpc("admin_find_flags")).data ?? []) as { nickname: string; failures_24h: number }[];
+    expect(flags.find((x) => x.nickname === "별빛")?.failures_24h ?? 0).toBe(0);
+    for (let i = 0; i < 2; i++) await find("byeolbit_fan", { boxId: g.boxIds[0] }, waybill());
+    const after = (await op.rpc("admin_find_flags")).data as { nickname: string; failures_24h: number }[];
+    expect(after.find((x) => x.nickname === "별빛")?.failures_24h).toBe(3);
   });
 
   it("INV-C10 (S10): 실패가 3번 쌓이면 운영자 확인 대상 목록에 닉네임으로 뜬다, 운영자 밖에는 0줄", async () => {

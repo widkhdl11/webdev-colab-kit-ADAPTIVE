@@ -295,36 +295,36 @@ describe("INV-J3: 계정 인자 없음, 로그인 토큰의 계정 것만, 칸�
 });
 
 describe("INV-J4: 버튼은 기존 처리를 부르고, 카드는 원천 상태로 사라진다", () => {
-  async function holdWithoutCode(barcode: string, initial = "별"): Promise<void> {
-    const r = await scanInbound(await staff(), barcode, { code: null, carrier: "cj", initial, shelf: "T-1" });
+  // 송장 「보내는 분」에 별빛의 닉네임 — 별빛과 닉네임 일치로 기록된다(inbound-address-code INV-C5, 카드 d94)
+  async function holdWithoutCode(barcode: string, senderName = "별빛"): Promise<void> {
+    const r = await scanInbound(await staff(), barcode, { code: null, carrier: "cj", senderName, shelf: "T-1" });
     expect(r.error).toBeNull();
     expect((r.data as { result: string }).result).toBe("hold");
   }
 
-  async function find(boxId: string, no: string, initial: string) {
+  async function find(boxId: string, no: string) {
     return (await signedInClient("byeolbit_fan")).rpc("find_held_parcel", {
       p_box_id: boxId,
       p_share_id: null,
       p_waybill: no,
       p_carrier: "cj",
-      p_sender_initial: initial,
     });
   }
 
-  it("INV-J4 S4: 도착하지 않은 상자 카드 → 세 값이 맞는 찾기(받는 주소 없이 보냈어요) → 상자가 이어지고 카드가 사라진다", async () => {
+  it("INV-J4 S4: 도착하지 않은 상자 카드 → 송장번호·택배사가 맞는 찾기(받는 주소 없이 보냈어요, 닉네임 일치 상자) → 상자가 이어지고 카드가 사라진다", async () => {
     const g = await waitingGift(1, 400);
     const barcode = waybill();
     await holdWithoutCode(barcode);
     expect(await cards("byeolbit_fan", [g.orderNo])).toEqual([`missing_box:${g.orderNo}:1`]);
-    expect((await find(g.boxIds[0]!, barcode, "별")).data).toBe("matched");
+    expect((await find(g.boxIds[0]!, barcode)).data).toBe("matched");
     expect(await cards("byeolbit_fan", [g.orderNo])).toEqual([]);
   });
 
-  it("INV-J4 S4b (실패경로): 세 값이 틀린 찾기(이름 앞 글자 다름) → 이어지지 않고 카드가 남는다", async () => {
+  it("INV-J4 S4b (실패경로): 맞지 않는 찾기(상자의 닉네임이 다른 계정) → 이어지지 않고 카드가 남는다", async () => {
     const g = await waitingGift(1, 400);
     const barcode = waybill();
-    await holdWithoutCode(barcode);
-    expect((await find(g.boxIds[0]!, barcode, "달")).data).toBe("not_found");
+    await holdWithoutCode(barcode, "달토끼");
+    expect((await find(g.boxIds[0]!, barcode)).data).toBe("not_found");
     expect(await cards("byeolbit_fan", [g.orderNo])).toEqual([`missing_box:${g.orderNo}:1`]);
   });
 

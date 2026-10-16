@@ -274,7 +274,7 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
     expect(nav.refresh).not.toHaveBeenCalled();
   });
 
-  it("INV-J4: 도착하지 않은 상자 — 찾기 양식이 그 상자로 정해져 붙는다(고르는 칸·위 안내 문단 없음, 세 칸은 그대로)", () => {
+  it("INV-J4: 도착하지 않은 상자 — 찾기 양식이 그 상자로 정해져 붙는다(고르는 칸·위 안내 문단 없음, 송장번호·택배사 두 칸 — 이름 첫 글자 칸은 없다, inbound-address-code INV-C4 ②-가)", () => {
     const el = card("missing_box");
     expect(el.querySelector("h2")?.textContent).toBe("도착이 늦어요");
     const form = el.querySelector('form[aria-label="받는 주소 없이 보낸 상자 찾기"]');
@@ -285,8 +285,8 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
     expect([...(form?.querySelectorAll("label") ?? [])].map((l) => l.textContent)).toEqual([
       "그 상자를 보낸 택배 송장번호",
       "택배사",
-      "송장에 적은 보낸 사람 이름의 첫 글자",
     ]);
+    expect(form?.querySelector('input[name="initial"]')).toBeNull();
     expect(el.querySelector(".action-due")?.textContent).toBe("11월 1일 오후 12시까지 · 16일 남았어요");
   });
 
@@ -295,7 +295,6 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
     const el = card("missing_box");
     const form = el.querySelector("form") as HTMLFormElement;
     (form.querySelector('input[name="waybill"]') as HTMLInputElement).value = "123456789012";
-    (form.querySelector('input[name="initial"]') as HTMLInputElement).value = "별";
     const carrier = form.querySelector("select") as HTMLSelectElement;
     act(() => {
       Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(carrier, "cj");
@@ -305,7 +304,7 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
       form.requestSubmit();
     });
     expect(api.find).toHaveBeenCalledTimes(1);
-    expect(api.find).toHaveBeenCalledWith({ kind: "box", id: ROWS.missing.box_id }, "123456789012", "cj", "별");
+    expect(api.find).toHaveBeenCalledWith({ kind: "box", id: ROWS.missing.box_id }, "123456789012", "cj");
   });
 
   it("INV-J4: 역조공 받기 — 기존 받기 화면으로 가는 「받기」", () => {

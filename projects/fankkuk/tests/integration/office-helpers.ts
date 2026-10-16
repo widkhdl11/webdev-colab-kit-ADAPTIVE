@@ -63,11 +63,12 @@ export function sentWithAddress(barcode: string, unit: { boxId?: string; shareId
   waybillUnits.set(barcode, unit);
 }
 
-export type ScanOptions = { code?: string | null; carrier?: string | null; initial?: string | null; shelf?: string | null };
+export type ScanOptions = { code?: string | null; carrier?: string | null; senderName?: string | null; shelf?: string | null };
 
 /**
  * 입고 스캔(원 송장 바코드 + 6자리). code 를 주지 않으면 그 바코드로 보낸 상자(fanSetsWaybill·sentWithAddress)의 6자리를 붙이고,
- * 모르는 바코드면 6자리 없이 스캔한다. 보류로 넣을 때 쓰는 택배사·이름 앞 1글자·선반 번호는 opts 로.
+ * 모르는 바코드면 6자리 없이 스캔한다. 보류로 넣을 때 쓰는 택배사·송장 「보내는 분」 이름(inbound-address-code INV-C5 — DB 가 닉네임과 비교만 하고
+ * 글자는 남기지 않는다)·선반 번호는 opts 로.
  */
 export function scanInbound(staff: SupabaseClient, barcode: string, opts: ScanOptions = {}) {
   const unit = waybillUnits.get(barcode);
@@ -76,13 +77,16 @@ export function scanInbound(staff: SupabaseClient, barcode: string, opts: ScanOp
     p_barcode: barcode,
     p_code: code,
     p_carrier: opts.carrier ?? null,
-    p_sender_initial: opts.initial ?? null,
+    p_sender_name: opts.senderName ?? null,
     p_shelf: opts.shelf ?? null,
   });
 }
 
-/** 보류로 넣을 때 직원이 적는 값(시험 선반은 T- 로 시작 — 정리할 때 이것으로 가려낸다). */
-export const HOLD_DETAILS = { carrier: "cj", initial: "별", shelf: "T-1" } as const;
+/**
+ * 보류로 넣을 때 직원이 적는 값(시험 선반은 T- 로 시작 — 정리할 때 이것으로 가려낸다).
+ * 보내는 분은 시험 주문의 팬 별빛의 닉네임 — 그 상자는 별빛과 「닉네임 일치」로 기록된다(INV-C5, 카드 d94).
+ */
+export const HOLD_DETAILS = { carrier: "cj", senderName: "별빛", shelf: "T-1" } as const;
 
 export async function approve(unit: Unit): Promise<void> {
   const r = await approveRpc(unit.requestId);
@@ -144,6 +148,12 @@ export function orderStatus(orderId: string): string {
 
 /** 시험이 만든 미확인 입고(보류) 줄을 지운다(선반 번호 앞머리 T-). */
 export function deleteTestUnmatched(): void {
+  // 운영자 잇기 기록(INV-C12)은 추가만 되는 표라 트리거를 끈 채 먼저 지운다 — 표가 아직 없을 때(구현 전 빨간불)도 정리가 멈추지 않게
+  psql(
+    "begin; set local session_replication_role = replica; " +
+      "do $$ begin if to_regclass('public.office_held_links') is not null then " +
+      "delete from public.office_held_links where unmatched_id in (select id from public.office_unmatched where shelf like 'T-%'); end if; end $$; commit;",
+  );
   psql("delete from public.office_unmatched where shelf like 'T-%'");
   // 찾기 시도 기록·반복 실패 표시 — 남겨 두면 하루 한도(5번)에 걸려 다음 시험이 막힌다. 로컬 DB 에만 붙는다.
   psql("delete from public.office_match_attempts; delete from public.office_find_flags;");

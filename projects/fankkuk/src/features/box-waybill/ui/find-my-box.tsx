@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { CARRIER_LABEL, CARRIERS, isCarrier, type Carrier } from "@/entities/parcel/model/carrier";
 import { parseWaybillInput } from "@/entities/parcel/model/waybill-no";
-import { charCount } from "@/shared/lib/validation/char-count";
 import { postFind } from "../api/post-waybill-client";
 import type { FinderBox } from "../model/box-targets";
 import s from "./box-waybill.module.css";
 
 // 받는 주소 없이 보냈어요 (inbound-address-code INV-C4 ②·C10, 시안 gift-boxes.html 의 「내 물건 찾기」 자리).
 // 받는 주소(6자리) 없이 보낸 상자는 사무실에서 보류로 들어간다. 주인이 아직 입고되지 않은 내 상자 하나를 고르고,
-// 그 상자를 보낸 송장번호·택배사·원 송장의 보낸 사람 이름 앞 한 글자를 넣어 셋 다 맞으면 이어진다.
+// 그 상자를 보낸 송장번호·택배사를 넣어 둘 다 맞으면 이어진다. 팬 상자는 송장 「보내는 분」이 내 닉네임과 맞았던 상자만 —
+// 닉네임은 다시 넣지 않는다(로그인한 계정의 것, INV-C4 ②-가, 카드 d94). 역조공 몫은 두 값뿐(②-나).
 // 이어도 되는지는 DB 찾기 함수가 본인 토큰으로 판정한다. 못 찾으면 이유(남의 상자·아직 안 옴·기한 지남)를 나누지 않는다.
 // 보류 상자 목록은 어디에도 보여 주지 않는다(INV-C10). 하루 5번을 넘으면 서버가 429 와 문구를 준다 — 오류 줄에 그대로 보인다.
 
@@ -34,6 +34,10 @@ export function FindMyBox(props: Props) {
   const [carrier, setCarrier] = useState<Carrier | "">("");
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 화면이 틀렸다고 본 칸 — 그 칸에 오류를 잇고 초점을 옮긴다. 서버가 거부한 것은 어느 칸인지 몰라 비워 둔다
+  const [errorField, setErrorField] = useState<"waybill" | "carrier" | null>(null);
+  const waybillInput = useRef<HTMLInputElement>(null);
+  const carrierSelect = useRef<HTMLSelectElement>(null);
   const [busy, setBusy] = useState(false);
   // 찾기 결과가 나오면 결과 칸으로 포커스를 옮긴다 — 마지막 상자를 찾으면 양식이 사라져 포커스가 갈 곳이 없어지기 때문이다
   const moved = useRef(false);
@@ -50,23 +54,26 @@ export function FindMyBox(props: Props) {
     if (busy || !current) return;
     const data = new FormData(form);
     const waybill = data.get("waybill");
-    const initial = data.get("initial");
     const parsed = parseWaybillInput(typeof waybill === "string" ? waybill : "");
     if (!parsed.ok) {
       setError(parsed.message);
+      setErrorField("waybill");
       setResult(null);
+      waybillInput.current?.focus();
       return;
     }
-    const initialText = typeof initial === "string" ? initial.trim() : "";
-    if (!carrier || charCount(initialText) !== 1) {
-      setError("택배사를 고르고, 보낸 사람 이름은 앞 한 글자만 적어 주세요.");
+    if (!carrier) {
+      setError("택배사를 골라 주세요.");
+      setErrorField("carrier");
       setResult(null);
+      carrierSelect.current?.focus();
       return;
     }
     setBusy(true);
     setError(null);
+    setErrorField(null);
     setResult(null);
-    const outcome = await postFind(current.target, parsed.value, carrier, initialText);
+    const outcome = await postFind(current.target, parsed.value, carrier);
     setBusy(false);
     if (outcome.kind === "ok") {
       moved.current = true;
@@ -130,13 +137,22 @@ export function FindMyBox(props: Props) {
               inputMode="numeric"
               autoComplete="off"
               placeholder="숫자만 입력해요"
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? `${id}-error` : undefined}
+              ref={waybillInput}
+              aria-invalid={errorField === "waybill" ? true : undefined}
+              aria-describedby={errorField === "waybill" ? `${id}-error` : undefined}
             />
           </div>
           <div className="field">
             <label htmlFor={`${id}-carrier`}>택배사</label>
-            <select id={`${id}-carrier`} className="input" value={carrier} onChange={(e) => setCarrier(isCarrier(e.currentTarget.value) ? e.currentTarget.value : "")}>
+            <select
+              ref={carrierSelect}
+              id={`${id}-carrier`}
+              className="input"
+              value={carrier}
+              onChange={(e) => setCarrier(isCarrier(e.currentTarget.value) ? e.currentTarget.value : "")}
+              aria-invalid={errorField === "carrier" ? true : undefined}
+              aria-describedby={errorField === "carrier" ? `${id}-error` : undefined}
+            >
               <option value="">고르세요</option>
               {CARRIERS.map((c) => (
                 <option key={c} value={c}>
@@ -144,13 +160,6 @@ export function FindMyBox(props: Props) {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="field">
-            <label htmlFor={`${id}-initial`}>송장에 적은 보낸 사람 이름의 첫 글자</label>
-            <input id={`${id}-initial`} name="initial" className="input" type="text" maxLength={2} autoComplete="off" placeholder="예: 별" aria-describedby={`${id}-initial-hint`} />
-            <p className="hint" id={`${id}-initial-hint`}>
-              택배 송장의 보내는 사람 칸에 적은 이름의 첫 글자 하나만 넣어 주세요.
-            </p>
           </div>
           {error ? (
             <p className={s.error} id={`${id}-error`} role="alert">

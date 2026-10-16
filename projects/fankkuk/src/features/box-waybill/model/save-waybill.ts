@@ -5,7 +5,6 @@ import { parseWaybillInput, WAYBILL_FORMAT_MESSAGE } from "@/entities/parcel/mod
 import type { Viewer, ViewerRole } from "@/entities/session/model/viewer";
 import { MESSAGE_NOT_FOUND, pgErrorReply } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
-import { charCount } from "@/shared/lib/validation/char-count";
 
 // 상자 쓰기 — 팬 선물 상자 송장(set_box_waybill) · 역조공 몫 송장(set_share_waybill) · 받는 주소 없이 보냈어요(find_held_parcel)
 // · 제가 보낸 게 아니에요(report_not_mine).
@@ -15,13 +14,13 @@ import { charCount } from "@/shared/lib/validation/char-count";
 //   같은 번호가 다른 상자에 있어도 거부하지 않고 늘 같은 「등록됐어요」로 답한다 — 남의 송장번호가 등록돼 있는지 떠볼 수 없게.
 
 export const MESSAGE_ALREADY_RECEIVED = "이미 입고된 상자예요";
-export const MESSAGE_NO_MATCH = "맞는 상자를 못 찾았어요. 송장번호·택배사·보낸 사람 이름 앞 한 글자를 다시 확인해 주세요. 사무실에 도착한 지 7일이 지나면 원 송장 주소로 돌려보내요";
+export const MESSAGE_NO_MATCH = "맞는 상자를 못 찾았어요. 송장번호와 택배사를 다시 확인해 주세요. 사무실에 도착한 지 7일이 지나면 원 송장 주소로 돌려보내요";
 export const MESSAGE_MATCH_LIMIT = "오늘은 더 찾을 수 없어요. 내일 다시 해 주세요";
 export const MESSAGE_WAYBILL_LIMIT = "오늘은 송장번호를 더 넣을 수 없어요. 내일 다시 해 주세요";
-export const MESSAGE_FIND_DETAILS = "택배사를 고르고, 보낸 사람 이름은 앞 한 글자만 적어 주세요.";
+export const MESSAGE_FIND_DETAILS = "송장번호를 넣고 택배사를 골라 주세요.";
 export const MESSAGE_NOT_MINE_LATE = "출고가 끝난 상자는 여기서 알릴 수 없어요. 고객센터로 문의해 주세요.";
 
-/** 찾기 함수의 답. 남의 상자·셋 중 하나라도 다름·기한 지남·남의 6자리가 붙은 상자는 모두 not_found 하나다(INV-C4·C10). */
+/** 찾기 함수의 답. 남의 상자·두 값 중 하나라도 다름·닉네임이 맞지 않은 상자·기한 지남·남의 6자리가 붙은 상자는 모두 not_found 하나다(INV-C4·C10). */
 const matchAnswer = z.enum(["matched", "not_found"]);
 
 /**
@@ -36,12 +35,8 @@ const waybillField = z.string().max(40);
 const boxBody = z.object({ boxId: z.guid(), waybill: waybillField }).strict();
 const shareBody = z.object({ shareId: z.guid(), waybill: waybillField }).strict();
 
-const senderInitial = z
-  .string()
-  .max(10)
-  .transform((s) => s.trim())
-  .refine((s) => charCount(s) === 1);
-const findCommon = { waybill: waybillField, carrier: z.enum(CARRIERS), senderInitial };
+// 이름 칸은 없다 — 팬 상자는 DB 가 보류 상자의 닉네임 일치 계정과 로그인 계정을 맞대 본다(INV-C4 ②-가), 역조공 몫은 두 값뿐(②-나)
+const findCommon = { waybill: waybillField, carrier: z.enum(CARRIERS) };
 const findBody = z.union([
   z.object({ boxId: z.guid(), ...findCommon }).strict(),
   z.object({ shareId: z.guid(), ...findCommon }).strict(),
@@ -118,8 +113,9 @@ function unitRole(body: { boxId?: unknown; shareId?: unknown }): (role: ViewerRo
 }
 
 /**
- * inbound-address-code INV-C4 ②·C10 「받는 주소 없이 보냈어요」 — 주문 주인이 고른 내 상자 하나 + 송장번호·택배사·보낸 사람 이름 앞 1글자.
- * 셋 다 맞는 보류 상자가 있으면 DB 가 그 상자를 내 상자로 잇는다. 이유(남의 상자·셋 중 하나 다름·기한 지남)는 나누지 않고 not_found 하나.
+ * inbound-address-code INV-C4 ②·C10 「받는 주소 없이 보냈어요」 — 주문 주인이 고른 내 상자 하나 + 송장번호·택배사.
+ * 두 값이 맞고, 팬 상자면 그 보류 상자가 입고 때 로그인한 팬의 닉네임과 맞았을 때 DB 가 그 상자를 내 상자로 잇는다(②-가, 카드 d94).
+ * 이유(남의 상자·두 값 중 하나 다름·닉네임 다름·기한 지남)는 나누지 않고 not_found 하나.
  * 계정마다 하루 5번까지 — 넘으면 DB 가 막는다(P0045). 주문번호는 받지 않는다(strict).
  */
 export async function findHeldParcel(deps: Deps, body: unknown): Promise<JsonReply> {
@@ -136,7 +132,6 @@ export async function findHeldParcel(deps: Deps, body: unknown): Promise<JsonRep
     p_share_id: "shareId" in input ? input.shareId : null,
     p_waybill: no.value,
     p_carrier: input.carrier,
-    p_sender_initial: input.senderInitial,
   });
   if (error?.code === "P0045") return { status: 429, body: { message: MESSAGE_MATCH_LIMIT } };
   if (error) return pgErrorReply(error.code, { limit: MESSAGE_FIND_DETAILS, failed: "찾지 못했어요. 잠시 뒤 다시 해 주세요." });

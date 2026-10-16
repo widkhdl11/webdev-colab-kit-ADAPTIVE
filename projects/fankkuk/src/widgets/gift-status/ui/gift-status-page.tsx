@@ -300,13 +300,13 @@ export function GiftStatusPage({
             <div className="part">
               <h2 className="t-title">받는 주소 없이 보냈어요</h2>
               <p className="t-lead t-desc">
-                받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호·택배사·보낸 사람 이름 첫 글자가 모두 맞으면 내 상자로 이어져요.
+                받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호와 택배사가 맞으면 찾아요.
               </p>
               <div className={s.inner}>
                 <FindMyBox boxes={finderBoxes} />
               </div>
               <p className="hint">
-                하루에 다섯 번까지 찾을 수 있어요. 사무실에는 도착 시각·택배사·보낸 사람 이름 첫 글자만 남기고, 주소와 전화번호는 남기지 않아요.
+                틀린 입력은 하루에 다섯 번까지예요. 사무실에는 도착 시각과 택배사만 남기고, 주소와 전화번호는 남기지 않아요.
               </p>
             </div>
           ) : null}

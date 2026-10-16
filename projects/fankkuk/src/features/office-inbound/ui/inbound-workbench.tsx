@@ -15,12 +15,13 @@ import { ScanInput, type ScanInputHandle } from "@/shared/ui/scan-input";
 import w from "@/shared/ui/work.module.css";
 import { postInbound } from "../api/post-inbound-client";
 import { inboundReplyFromBody } from "../model/inbound-reply";
-import { SHELF_MAX } from "../model/scan-inbound";
+import { SENDER_NAME_MAX, SHELF_MAX } from "../model/scan-inbound";
 
 // 입고 작업 화면 (office-workflow INV-W1·W2·W5·W7, inbound-address-code INV-C1·C5, design-rules 8-1, 시안 admin/work-inbound.html).
 // 순서: 원 송장 바코드 스캔 → 받는 주소 끝 6자리 입력(대소문자 상관없음) → 입고 완료 + 라벨 1장, 또는 보류.
 //   6자리가 틀리면(20자 밖 글자·확인 문자 불일치) 서버가 거부하고 상태는 그대로다 — 6자리 칸을 비우고 그 자리에서 다시 입력받는다.
-//   6자리가 없거나 보류로 가야 하면 택배사·원 송장의 보낸 사람 이름 앞 1글자·선반 번호를 받아 보류로 기록한다.
+//   6자리가 없거나 보류로 가야 하면 택배사·원 송장 「보내는 분」에 적힌 이름 그대로·선반 번호를 받아 보류로 기록한다.
+//   그 이름은 서버가 팬꾹 닉네임과 비교만 하고 저장하지 않는다 — 결과 카드에 닉네임 일치(그 닉네임) 또는 닉네임 없음만 보인다(INV-C5·W7, 카드 d94).
 // 스캔 칸: 숫자 송장이면 새 상자, Q-번호면 라벨 부착 확인. 상태를 고르거나 주문번호를 넣는 칸은 없다.
 // 부착 대기 라벨 줄은 서버가 준 값(이 작업자의 대기 라벨)으로 시작하고, 스캔 결과로 바뀐다.
 // 아래 표는 이 화면을 연 뒤 처리한 상자만 보인다(오늘 전체 기록을 읽는 함수는 아직 없다).
@@ -29,8 +30,9 @@ type Card =
   | { kind: "received"; qr: string; orderNo: string; parcel: ParcelDetail | null; at: string; reprinted: boolean }
   | { kind: "labeled"; orderNo: string | null } // null: 이 화면이 모르는 라벨이라 주문번호를 알 수 없음
   | { kind: "code"; barcode: string; at: string; error: string | null }
-  | { kind: "details"; barcode: string; code: string; reason: HoldReason; at: string; error: string | null }
-  | { kind: "hold_saved"; reason: HoldReason; shelf: string }
+  // field: 화면이 틀렸다고 본 칸(그 칸에 오류를 잇고 초점을 옮긴다). 서버가 거부한 값은 어느 칸인지 몰라 비워 둔다
+  | { kind: "details"; barcode: string; code: string; reason: HoldReason; at: string; error: string | null; field?: DetailsField | null }
+  | { kind: "hold_saved"; reason: HoldReason; shelf: string; nickname: string | null }
   | { kind: "hold_recorded" }
   // unknown: 서버는 반영했을 수 있는데 응답을 못 읽음 — 「반영되지 않았어요」라고 말하면 안 된다
   | { kind: "rejected"; title: string; message: string; unknown?: true };
@@ -48,13 +50,15 @@ function announceOf(card: Card | null): string {
     case "details":
       return card.error ? `보류 기록 안 됨: ${card.error}` : "보류로 넣을 값을 적어 주세요";
     case "hold_saved":
-      return "보류로 기록했어요";
+      return card.nickname ? `보류로 기록했어요 · 닉네임 일치 ${card.nickname}` : "보류로 기록했어요 · 닉네임 없음";
     case "hold_recorded":
       return "이미 보류로 기록된 상자예요";
     case "rejected":
       return `${card.unknown ? "확인 필요" : "거부"}: ${card.title}`;
   }
 }
+
+type DetailsField = "carrier" | "sender";
 
 type Recent = { at: string; orderNo: string; kindText: string; resultText: string };
 
@@ -89,6 +93,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
   const scan = useRef<ScanInputHandle>(null);
   const codeInput = useRef<HTMLInputElement>(null);
   const carrierSelect = useRef<HTMLSelectElement>(null);
+  const senderInput = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<PendingLabel | null>(initialPending);
   const [seenInitial, setSeenInitial] = useState(initialPending);
   const [busy, setBusy] = useState(false);
@@ -96,7 +101,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
   const [recent, setRecent] = useState<Recent[]>([]);
   const [code, setCode] = useState("");
   const [carrier, setCarrier] = useState<Carrier | "">("");
-  const [senderInitial, setSenderInitial] = useState("");
+  const [senderName, setSenderName] = useState("");
   const [shelf, setShelf] = useState("");
 
   // 화면을 다시 읽으면(router.refresh) 서버가 준 대기 라벨로 맞춘다
@@ -112,10 +117,14 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
   }, [codeFocusKey]);
 
   // 보류 양식이 뜨거나 양식 오류가 나면 첫 칸(택배사)으로 커서를 옮긴다 — 키보드·화면 읽기 사용자가 양식 위치를 찾지 않게
-  const detailsFocusKey = card?.kind === "details" ? `${card.barcode}|${card.error ?? ""}` : null;
+  //   틀린 칸이 정해져 있으면 그 칸으로
+  const detailsField = card?.kind === "details" ? (card.field ?? null) : null;
+  const detailsFocusKey = card?.kind === "details" ? `${card.barcode}|${card.error ?? ""}|${detailsField ?? ""}` : null;
   useEffect(() => {
-    if (detailsFocusKey) carrierSelect.current?.focus();
-  }, [detailsFocusKey]);
+    if (!detailsFocusKey) return;
+    if (detailsField === "sender") senderInput.current?.focus();
+    else carrierSelect.current?.focus();
+  }, [detailsFocusKey, detailsField]);
 
   function addRecent(row: Recent) {
     setRecent((rows) => [row, ...rows].slice(0, 20));
@@ -159,7 +168,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
   }
 
   /** 바코드 + 6자리(없으면 빈칸) + 보류용 값(있으면)을 보낸다 */
-  async function submitInbound(barcode: string, at: string, typedCode: string, details: { carrier: Carrier; senderInitial: string; shelf: string } | null) {
+  async function submitInbound(barcode: string, at: string, typedCode: string, details: { carrier: Carrier; senderName: string; shelf: string } | null) {
     if (busy) return;
     setBusy(true);
     const outcome = await postInbound(details ? { kind: "inbound", barcode, code: typedCode, ...details } : { kind: "inbound", barcode, code: typedCode });
@@ -195,7 +204,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
     const now = new Date().toISOString();
     if (reply.result === "need_details") {
       setCarrier("");
-      setSenderInitial("");
+      setSenderName("");
       setShelf("");
       setCard({ kind: "details", barcode, code: typedCode, reason: reply.reason, at, error: null });
       return;
@@ -207,7 +216,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
     }
     if (reply.result === "hold") {
       const savedShelf = details?.shelf.trim() ?? "";
-      setCard({ kind: "hold_saved", reason: reply.reason, shelf: savedShelf });
+      setCard({ kind: "hold_saved", reason: reply.reason, shelf: savedShelf, nickname: reply.nickname });
       addRecent({ at: now, orderNo: "보류", kindText: "—", resultText: `보류 · ${savedShelf}` });
       return;
     }
@@ -299,7 +308,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
               <span className={`${a.faint} ${a.mono}`}>송장 {formatWaybill(card.barcode)}</span>
             </div>
             <p>
-              사유: <strong>{HOLD_REASON_LABEL[card.reason]}</strong>. 주인이 「받는 주소 없이 보냈어요」에서 송장번호·택배사·보낸 사람 이름 앞 한 글자를 넣어 셋이 다 맞으면 이어져요. 대조할 값을 적어 주세요.
+              사유: <strong>{HOLD_REASON_LABEL[card.reason]}</strong>
             </p>
             <form
               className={w.two}
@@ -308,15 +317,27 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!carrier) {
-                  setCard({ ...card, error: "택배사를 골라 주세요." });
+                  setCard({ ...card, error: "택배사를 골라 주세요.", field: "carrier" });
                   return;
                 }
-                void submitInbound(card.barcode, card.at, card.code, { carrier, senderInitial, shelf });
+                if (!senderName.trim()) {
+                  setCard({ ...card, error: "송장의 보내는 분 이름을 적어 주세요.", field: "sender" });
+                  return;
+                }
+                void submitInbound(card.barcode, card.at, card.code, { carrier, senderName, shelf });
               }}
             >
               <div className={a.field}>
                 <label htmlFor="h-carrier">택배사</label>
-                <select ref={carrierSelect} className={a.input} id="h-carrier" value={carrier} onChange={(e) => setCarrier(isCarrier(e.target.value) ? e.target.value : "")}>
+                <select
+                  ref={carrierSelect}
+                  className={a.input}
+                  id="h-carrier"
+                  value={carrier}
+                  onChange={(e) => setCarrier(isCarrier(e.target.value) ? e.target.value : "")}
+                  aria-invalid={card.field === "carrier" ? true : undefined}
+                  aria-describedby={card.field === "carrier" ? "h-error" : undefined}
+                >
                   <option value="">고르세요</option>
                   {CARRIERS.map((c) => (
                     <option key={c} value={c}>
@@ -326,10 +347,21 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
                 </select>
               </div>
               <div className={a.field}>
-                <label htmlFor="h-sender">원 송장의 보낸 사람 이름 앞 한 글자</label>
-                <input className={a.input} id="h-sender" maxLength={2} placeholder="예: 별" autoComplete="off" value={senderInitial} onChange={(e) => setSenderInitial(e.target.value)} aria-describedby="h-sender-hint" />
+                <label htmlFor="h-sender">송장의 보내는 분</label>
+                <input
+                  ref={senderInput}
+                  className={a.input}
+                  id="h-sender"
+                  maxLength={SENDER_NAME_MAX}
+                  placeholder="예: 별빛"
+                  autoComplete="off"
+                  value={senderName}
+                  onChange={(e) => setSenderName(e.target.value)}
+                  aria-invalid={card.field === "sender" ? true : undefined}
+                  aria-describedby={card.field === "sender" ? "h-error h-sender-hint" : "h-sender-hint"}
+                />
                 <p id="h-sender-hint" className={a.hint}>
-                  이름 전체·주소·전화는 적지 않아요. 앞 한 글자만 남겨요.
+                  송장에 적힌 이름을 그대로 적어요. 닉네임과 맞는지만 보고 이름은 남기지 않아요. 주소·전화는 적지 않아요.
                 </p>
               </div>
               <div className={a.field}>
@@ -417,7 +449,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
           <div className={`${a.note} ${a.noteOk}`}>
             <InfoIcon />
             <p>
-              <strong>보류로 기록했어요.</strong> 사유: {HOLD_REASON_LABEL[card.reason]}. 상자는 선반 <span className={a.mono}>{card.shelf}</span>에 두세요. 출고 목록에는 나오지 않고, 7일 안에 이어지지 않으면 원 송장 주소로 착불 반송해요.
+              <strong>보류로 기록했어요.</strong> 사유: {HOLD_REASON_LABEL[card.reason]}. 보낸 분: {card.nickname ? <strong>닉네임 일치 · {card.nickname}</strong> : "닉네임 없음"}. 상자는 선반 <span className={a.mono}>{card.shelf}</span>에 두세요. 출고 목록에는 나오지 않고, 7일 안에 입고되지 않으면 원 송장 주소로 착불 반송해요.
             </p>
           </div>
         )}
@@ -426,7 +458,7 @@ export function InboundWorkbench({ initialPending, operatorNickname }: Props) {
           <div className={a.note}>
             <InfoIcon />
             <p>
-              <strong>이미 보류로 기록된 상자예요.</strong> 선반에 그대로 두세요. 주인이 「받는 주소 없이 보냈어요」로 확인하면 이어져요.
+              <strong>이미 보류로 기록된 상자예요.</strong> 선반에 그대로 두세요. 주인이 「받는 주소 없이 보냈어요」로 찾으면 입고돼요.
             </p>
           </div>
         )}

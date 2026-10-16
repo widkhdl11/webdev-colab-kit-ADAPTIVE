@@ -82,10 +82,10 @@ describe("검수 기록은 한 번 (INV-W4)", () => {
 });
 
 describe("미확인 입고 (INV-W5)", () => {
-  // inbound-address-code(2026-10-07): 보류 기록은 입고 스캔이 그 자리에서 한다. 찾기 한도는 「24시간에 5번, 성공 포함」(INV-C10) —
+  // inbound-address-code(2026-10-07): 보류 기록은 입고 스캔이 그 자리에서 한다. 찾기 한도는 「그날(서울 날짜) 틀린 시도 5번」(INV-C10, 카드 d92) —
   // 옛 「실패 10번」 시험 둘을 새 한도로 바꿨다.
   const find = (c: SupabaseClient, boxId: string, no: string) =>
-    c.rpc("find_held_parcel", { p_box_id: boxId, p_share_id: null, p_waybill: no, p_carrier: "cj", p_sender_initial: "별" });
+    c.rpc("find_held_parcel", { p_box_id: boxId, p_share_id: null, p_waybill: no, p_carrier: "cj" });
 
   it("INV-W5 · INV-C4 (실패경로): 팬이 등록한 송장번호와 같은 바코드라도 6자리 없이 오면 그 상자로 입고되지 않고 보류", async () => {
     const g = await paidGift();

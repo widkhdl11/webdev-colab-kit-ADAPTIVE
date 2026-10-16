@@ -30,6 +30,8 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 //   첫 결제면 결제 전 주문이라 팬 화면에 없다 — 링크는 선물 등록. 차액이면 선물 상세. 금액 칸이 없다.
 // gift_reply · gift_received: 크리에이터가 상자에 「받았어요」를 남길 때 보낸 팬에게 상자마다 한 번(gift-reply INV-G5, 2026-10-11).
 //   답장이 있으면 「답장이 왔어요」, 확인만이면 「도착했다고 확인됐어요」. 크리에이터 이름·답장 내용 칸이 없다 — 선물 상세를 열면 보인다.
+// box_no_code: 6자리 없이 온 상자가 송장 「보내는 분」으로 그 팬의 닉네임과 맞았고 결제 완료·입고 전 주문이 있으면 상자마다 한 번(INV-N21, 카드 d94).
+//   본문은 「코드 없이 온 상자가 있어요」와 「받는 주소 없이 보냈어요」 화면(선물 상세) 링크뿐 — 송장번호·택배사·도착일·크리에이터 이름·주문번호 줄은 없다.
 // 종류 목록과 꼭 가는 알림 판정은 entities/notification 이 정본이다(INV-N6 표).
 export { NOTIFICATION_KINDS, type NotificationKind } from "@/entities/notification/model/delivery-policy";
 
@@ -202,6 +204,14 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         lines: [greet, "받을지 정해 주실 상자가 있어요.", `${CREATOR_CHECK_DAYS}일 안에 정하지 않으면 보낸 분에게 돌려보내요.`, order],
         buttonLabel: "확인하기",
         path: "/creator/requests",
+      };
+    case "box_no_code":
+      // 링크는 그 팬의 결제 완료·입고 전 주문(DB 가 고른 줄의 주문) 선물 상세 — 그 화면에 「받는 주소 없이 보냈어요」가 있다
+      return {
+        subject: "[팬꾹] 코드 없이 온 상자가 있어요",
+        lines: [greet, "코드 없이 온 상자가 있어요."],
+        buttonLabel: "받는 주소 없이 보냈어요",
+        path: `/gifts/${orderNo}`,
       };
     case "difference_due":
       // 결제가 끝나야 송장이 나가고(payment INV-M12), 168시간 미납이면 반송 대상이다(INV-M13)
