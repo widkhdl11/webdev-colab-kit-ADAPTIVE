@@ -14,9 +14,9 @@ export type LegalVersion = { version: string; effectiveDate: string };
 export type ArchivedDoc = LegalVersion & { doc: LegalDoc };
 
 export const CURRENT: Readonly<Record<VersionedKind, LegalVersion>> = {
-  terms: { version: TERMS_VERSIONS.service, effectiveDate: "" },
-  privacy: { version: TERMS_VERSIONS.privacy, effectiveDate: "" },
-  refund: { version: "2026-10-17", effectiveDate: "" },
+  terms: { version: TERMS_VERSIONS.service, effectiveDate: "2026-11-24" },
+  privacy: { version: TERMS_VERSIONS.privacy, effectiveDate: "2026-11-24" },
+  refund: { version: "2026-10-17", effectiveDate: "2026-11-24" },
 };
 
 /** 지난 버전 — 최신이 앞. 아직 시행 전이라 비어 있다. */

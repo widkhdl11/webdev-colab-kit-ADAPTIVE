@@ -27,18 +27,24 @@ export type SiteInfo = {
 };
 
 export const SITE_INFO: SiteInfo = {
-  companyName: OPERATOR_NAME,
-  ceoName: "",
-  bizRegNo: "",
-  mailOrderNo: "",
-  bizAddress: "",
-  supportEmail: "",
-  supportPhone: "",
-  supportHours: "",
+  companyName: OPERATOR_NAME, // 등록증 상호 "팬꾹"과 같은지 site-copy의 OPERATOR_NAME 확인
+  ceoName: "정재원",
+  bizRegNo: "260-12-03086",
+  mailOrderNo: "", // 통신판매업 신고번호 나오면 채움. 비어 있으면 「신고 진행 중」
+  bizAddress: "서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)",
+  supportEmail: "", // 고객센터 이메일 — 신고·문의 폼이 이 주소로 열림
+  supportPhone: "", // 고객센터 전화 — 050 안심번호나 인터넷 전화 권장
+  supportHours: "", // 예: "평일 10:00~18:00 (주말·공휴일 휴무)"
   hostingProvider: "Vercel Inc.",
-  privacyOfficer: { name: "", contact: "" },
-  vendors: { kakaoAuth: "", alimtalk: "", mail: "", carrier: "", keyVault: "" },
-  compensationCapKrw: 500_000,
+  privacyOfficer: { name: "정재원", contact: "" }, // contact는 supportEmail과 같게
+  vendors: {
+    kakaoAuth: "", // 카카오 인증 딜러사 계약 후
+    alimtalk: "",  // 알림톡 발송 대행사 계약 후
+    mail: "",      // 메일 발송 서비스(예: Resend, AWS SES) 정한 뒤
+    carrier: "",   // 택배사 계약 후(예: "우체국", "CJ대한통운")
+    keyVault: "",  // 주소 키 보관처(예: "Supabase Vault", "AWS KMS") 정한 뒤
+  },
+  compensationCapKrw: 500_000, // 변호사 검토 후 확정
 };
 
 /** 빈 값이면 자리표시. */
