@@ -6,9 +6,10 @@ import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl, nameInitial } 
 import { readNotices } from "@/entities/notice/api/notice-reads";
 import { readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
-import { readMyIncomingGifts } from "@/entities/order/api/incoming-gift-rows";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
+import { readMyGiftProgress } from "@/widgets/creator-gift-progress/api/read-gift-progress";
+import { countProgress } from "@/widgets/creator-gift-progress/model/gift-progress";
 import { CREATOR_HOME_LOG_ROWS, CreatorHomePage } from "@/widgets/home/ui/creator-home-page";
 import { ACCOUNT_HREF } from "@/widgets/site-header/model/app-menu";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -19,16 +20,16 @@ export const dynamic = "force-dynamic";
 
 // 크리에이터 메인 — 로그인한 크리에이터의 첫 화면(시안 v21-addendum3/cre-home.html). 맨 앞 프로필 구간은 본인 읽기 —
 // 공개 이름·소개·팬덤 이름·두 색(my_creator_settings, creator-link INV-E13)·프로필 사진(my_creator_link)·배경사진·심볼(my_creator_look). 본인 확인 전에도 나온다.
-// 크리에이터 처리할 일(my_creator_action_items — 사이드바 숫자와 바로가기 「처리할 일」이 같은 결과, action-center INV-J6)·받은 선물 진행 단계(my_incoming_gifts, INV-W9)·열람 기록(my_access_log)·공지(list_notices)·
+// 크리에이터 처리할 일(my_creator_action_items — 사이드바 숫자와 바로가기 「처리할 일」이 같은 결과, action-center INV-J6)·진행 중인 선물 수(선물 현황과 같은 읽기 my_gift_progress — 머리 「진행 중 N건」과 같은 값, action-center INV-J9)·열람 기록(my_access_log)·공지(list_notices)·
 // 내가 보낸 선물(my_gifts — 로그인한 사람이 보낸 주문)은 DB. 모두 인자 없이 로그인 토큰의 사람 것만 돌려준다.
 // 팬은 팬 메인으로, 로그인하지 않았으면 로그인으로 보낸다.
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect("/login");
-  const [actions, incoming, accessLog, sentGifts, allNotices, settings, link, look] = await Promise.all([
+  const [actions, progress, accessLog, sentGifts, allNotices, settings, link, look] = await Promise.all([
     readCreatorActionItemsOrNull(supabase),
-    readMyIncomingGifts(supabase),
+    readMyGiftProgress(supabase).catch(() => null),
     readMyAccessLog(supabase, CREATOR_HOME_LOG_ROWS),
     readMyGiftViews(supabase),
     readNotices(supabase),
@@ -61,7 +62,7 @@ export default async function Page() {
         actionCount={actions?.length ?? null}
         accessLog={accessLog}
         notices={notices}
-        incoming={incoming}
+        ongoingCount={progress ? countProgress(progress) : null}
         sentGifts={sentGifts}
       />
       <SiteFooter />

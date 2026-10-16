@@ -32,3 +32,6 @@
 @media (max-width: 768px) {
   .f2 { grid-template-columns: 1fr; }
 }
+
+/* 새 탭으로 여는 링크 뒤 작은 아이콘(시안 창 A .ext) */
+.ext { flex: none; margin-left: var(--space-1); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

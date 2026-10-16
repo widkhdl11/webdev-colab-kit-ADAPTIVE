@@ -34,7 +34,7 @@ export function settledStageCopy(stage: Exclude<ReceivedStage, "waiting">): Stag
 export function receivedStageCopy(stage: ReceivedStage, deadline: string, nowMs: number): StageCopy & { urgent: boolean } {
   if (stage !== "waiting") return { ...settledStageCopy(stage), urgent: false };
   const days = daysLeft(deadline, nowMs);
-  return { tag: "받기 기다리는 중", tone: "warn", note: `${days}일 남음 · ${monthDay(deadline)}까지`, urgent: days <= 1 };
+  return { tag: "받을지 정해 주세요", tone: "warn", note: `${days}일 남음 · ${monthDay(deadline)}까지`, urgent: days <= 1 };
 }
 
 /** 받기 화면의 기한 한 줄 — 「10월 8일 오후 3:00까지 정해 주세요」 */
@@ -43,12 +43,12 @@ export function replyDeadlineText(deadline: string): string {
 }
 
 const SENT_TAG: Record<SentRevgift["state"], { tag: string; tone: StatusTone }> = {
-  waiting: { tag: "기다리는 중", tone: "warn" },
-  accepted: { tag: "받았어요", tone: "success" },
-  not_received: { tag: "받지 않았어요", tone: "danger" },
+  waiting: { tag: "수락 대기", tone: "warn" },
+  accepted: { tag: "수락", tone: "success" },
+  not_received: { tag: "받지 않음", tone: "danger" },
 };
 
-/** 크리에이터에게 보이는 상태 배지 — 세 가지뿐(INV-R8). */
+/** 크리에이터에게 보이는 상태 배지 — 세 가지뿐(INV-R8). 라벨은 용어집 3·7절 크리에이터 화면 표기(수락 대기·수락·받지 않음) */
 export function sentStateTag(state: SentRevgift["state"]): { tag: string; tone: StatusTone } {
   return SENT_TAG[state];
 }

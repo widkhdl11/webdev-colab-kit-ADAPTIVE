@@ -1,5 +1,6 @@
 import { ACTION_CENTER_HREF } from "@/entities/action-item/model/action-items";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
+import { CREATOR_GIFT_PROGRESS_HREF } from "@/entities/gift-progress/model/progress-href";
 import { CREATOR_HOME, CREATOR_PROFILE_EDIT, CREATOR_SETTINGS, FAN_ACCOUNT_SETTINGS, FAN_HOME, FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 
 // 로그인 후 왼쪽 앱 사이드바 메뉴(design-rules 00절, 시안 docs/design/mockups/site/v18/home-fan.html·home-creator.html).
@@ -24,7 +25,8 @@ export type AppIcon =
   | "history"
   | "palette"
   | "user-round"
-  | "clipboard-list";
+  | "clipboard-list"
+  | "truck";
 
 /** 부모 칸 아래 들여 쓴 하위 줄. soon 은 아직 없는 기능 — 링크 없이 「준비 중」 태그만(design-rules 11절) */
 export type AppMenuSub = { label: string; href: string } | { label: string; soon: true };
@@ -88,7 +90,9 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
     label: "기본",
     items: [
       { href: CREATOR_HOME, label: "홈", icon: "house" },
-      // 홈 → (선물 현황 — 다음 묶음에서 화면과 함께) → 처리할 일 → 크리에이터 찾기(design-rules 13절). 숫자는 크리에이터 처리할 일 읽기의 줄 수(action-center INV-J6)
+      // 홈 → 선물 현황 → 처리할 일 → 크리에이터 찾기(design-rules 13절). 선물 현황은 읽기 전용 목록이라 숫자가 없다.
+      // 처리할 일 숫자는 크리에이터 처리할 일 읽기의 줄 수(action-center INV-J6)
+      { href: CREATOR_GIFT_PROGRESS_HREF, label: "선물 현황", icon: "truck" },
       { href: CREATOR_ACTION_CENTER_HREF, label: "처리할 일", icon: "clipboard-list", badge: "actions" },
       { href: "/creators", label: "크리에이터 찾기", icon: "search" },
     ],

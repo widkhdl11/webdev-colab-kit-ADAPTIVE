@@ -11,14 +11,14 @@ import a from "@/shared/ui/admin.module.css";
 import { countByShareTab, filterShares, needsExpiryRun, SHARE_TABS, type ShareTab } from "../model/share-filter";
 
 // 관리자 「역조공 처리」 (office-workflow INV-W3·W6, reverse-gift INV-R10·R11, 시안 admin/revgifts.html).
-// 몫마다 팬의 답·받기 기한·입고. 환불은 팬이 받지 않은(거절·기한 지남) 몫에만, 대표에게만 버튼이 보인다(design-rules 8절).
+// 몫마다 팬 수락·받기 기한·입고(라벨은 용어집 7절 운영자 표기). 환불은 팬이 받지 않은(거절·기한 지남) 몫에만, 대표에게만 버튼이 보인다(design-rules 8절).
 // 금액은 몫 상태로 서버가 정한다 — 입력 칸이 없다. 반송은 출고 화면에서 QR 스캔으로만 한다(이 화면에 반송 버튼은 없다).
 // 받기 기한이 지났는데 답이 없는 몫에는 「지금 돌리기」(기한 처리, INV-R10)가 보인다 — 운영자 누구나, 판정은 DB 가 서버 시각으로.
 
 const REPLY_TAG: Record<RevgiftShare["reply"], { text: string; className: string }> = {
-  waiting: { text: "기다리는 중", className: `${a.tag} ${a.tagWarn}` },
-  accepted: { text: "받음", className: `${a.tag} ${a.tagBrand}` },
-  declined: { text: "거절", className: a.tag },
+  waiting: { text: "수락 대기", className: `${a.tag} ${a.tagWarn}` },
+  accepted: { text: "수락", className: `${a.tag} ${a.tagBrand}` },
+  declined: { text: "받지 않음", className: a.tag },
   expired: { text: "기한 지남", className: `${a.tag} ${a.tagInk}` },
 };
 
@@ -104,7 +104,7 @@ export function RevgiftsPanel({ rows, access, now }: Props) {
                 <th scope="col">크리에이터</th>
                 <th scope="col">팬</th>
                 <th scope="col">구간</th>
-                <th scope="col">팬의 답</th>
+                <th scope="col">팬 수락</th>
                 <th scope="col">받기 기한</th>
                 <th scope="col">입고</th>
                 <th scope="col">환불</th>

@@ -34,9 +34,10 @@ vi.mock("@/entities/action-item/api/read-action-items", async (orig) => {
 });
 
 const VIEWER = { userId: "00000000-0000-4000-a000-000000000011", role: "creator" as const, nickname: "하루" };
+const who = vi.hoisted(() => ({ viewer: null as null | { userId: string; role: "fan" | "creator"; nickname: string } }));
 vi.mock("@/widgets/site-header/api/session-header", async (orig) => ({
   ...(await orig<object>()),
-  loadSession: vi.fn(async () => ({ supabase: { rpc: vi.fn() }, viewer: VIEWER })),
+  loadSession: vi.fn(async () => ({ supabase: { rpc: vi.fn() }, viewer: who.viewer === null ? VIEWER : who.viewer })),
 }));
 vi.mock("@/entities/address/api/access-log-rows", async (orig) => ({ ...(await orig<object>()), readMyAccessLog: vi.fn(async () => []) }));
 vi.mock("@/entities/creator/api/creator-link-reads", async (orig) => ({
@@ -51,9 +52,24 @@ vi.mock("@/entities/order/api/incoming-gift-rows", async (orig) => ({ ...(await 
 vi.mock("@/shared/api/supabase/detached", () => ({ readPublicStorageBase: () => "http://storage.test" }));
 vi.mock("@/features/box-waybill/api/read-sent-box-candidates", () => ({ readSentBoxCandidates: vi.fn(async () => []) }));
 vi.mock("@/entities/address/api/my-address-status", async (orig) => ({ ...(await orig<object>()), readMyAddressStatus: vi.fn(async () => null) }));
+// 선물 현황 읽기 — 처리할 일 줄에 든 주문(FC-AP1)·몫(RG-UN1)과 들지 않은 주문(FC-NO1) 하나씩
+vi.mock("@/widgets/creator-gift-progress/api/read-gift-progress", async () => {
+  const { parseGiftProgressRows } = await import("@/widgets/creator-gift-progress/model/gift-progress");
+  const r = { board: "received", share_id: null, tier: null, reply_state: null, box_state: null, sent_at: null, before_inbound: null, late: null, item_kind: "문구", box_count: 1, requested_at: "2026-10-12T05:20:00Z" };
+  const rows = [
+    { ...r, order_no: "FC-AP1", nickname: "다온", stage: "paid", approval_waiting: true, approved_at: null },
+    { ...r, order_no: "FC-NO1", nickname: "보리", stage: "paid", approval_waiting: false, approved_at: "2026-10-13T05:00:00Z" },
+    {
+      board: "sent", order_no: "RG-UN1", share_id: "11111111-1111-4111-8111-111111111111", nickname: "모카", item_kind: null, box_count: null, tier: "small", stage: null,
+      approval_waiting: null, requested_at: null, approved_at: null, reply_state: "accepted", box_state: "no_waybill", sent_at: "2026-10-02T01:00:00Z", before_inbound: true, late: true,
+    },
+  ];
+  return { readMyGiftProgress: vi.fn(async () => parseGiftProgressRows(rows)) };
+});
 
 import CreatorActionsRoute from "@/app/creator/actions/page";
 import CreatorHomeRoute from "@/app/creator/page";
+import CreatorProgressRoute from "@/app/creator/progress/page";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.showModal) {
@@ -88,6 +104,8 @@ beforeEach(() => {
   root = createRoot(host);
   reads.calls = 0;
   reads.rows = THREE;
+  who.viewer = null;
+  nav.redirect.mockClear();
 });
 afterEach(() => {
   act(() => root.unmount());
@@ -125,5 +143,45 @@ describe("INV-J6: 실제 라우트 — 사이드바 숫자·홈 「처리할 일
     reads.calls = 0;
     expect((await draw(CreatorActionsRoute())).badge).toBeNull();
     expect(host.textContent).toContain("지금 처리할 일이 없어요");
+  });
+});
+
+describe("INV-J6·J11: 선물 현황 라우트 — 「처리할 일」 버튼은 사이드바 숫자와 같은 한 번의 읽기에서", () => {
+  it("INV-J11 S6: 한 번 읽고, 사이드바 3 · 「처리할 일」 버튼은 처리할 일 줄에 든 주문·몫에만(2개)", async () => {
+    const r = await draw(CreatorProgressRoute());
+    expect(reads.calls).toBe(1);
+    expect(r.badge).toBe("3");
+    expect(host.querySelector("h1")?.textContent).toBe("선물 현황진행 중 3건");
+    const go = [...host.querySelectorAll("main li a")].filter((a) => a.textContent === "처리할 일");
+    expect(go.map((a) => a.closest("li")?.querySelector("[data-title]")?.textContent)).toEqual(["다온님의 선물", "모카님"]);
+  });
+
+  it("INV-J11 S11b (실패경로): 처리할 일 읽기가 비면 같은 현황에도 「처리할 일」 버튼이 없다", async () => {
+    reads.rows = [];
+    await draw(CreatorProgressRoute());
+    expect([...host.querySelectorAll("main li a")].filter((a) => a.textContent === "처리할 일")).toHaveLength(0);
+    expect(host.querySelectorAll("main li [data-title]").length).toBe(3);
+  });
+
+  it("크리에이터 홈 「진행 중인 선물」 줄은 선물 현황으로 가고, 숫자는 선물 현황 머리와 같은 값·같은 단위(3건)", async () => {
+    await draw(CreatorHomeRoute());
+    const row = [...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("진행 중인 선물"));
+    expect(row?.getAttribute("href")).toBe("/creator/progress");
+    expect(row?.textContent).toBe("진행 중인 선물3건");
+    const actions = [...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("처리할 일"));
+    expect(actions?.getAttribute("href")).toBe("/creator/actions");
+  });
+});
+
+describe("선물 현황 라우트 — 크리에이터만", () => {
+  it("팬은 팬 홈으로, 로그인하지 않았거나 크리에이터가 아니면 로그인으로 — 현황을 읽지 않는다", async () => {
+    who.viewer = { userId: "00000000-0000-4000-a000-000000000001", role: "fan", nickname: "별빛" };
+    await expect(CreatorProgressRoute()).rejects.toThrow("redirect /home");
+    who.viewer = { userId: "x", role: "staff" as "fan", nickname: "직원" };
+    await expect(CreatorProgressRoute()).rejects.toThrow("redirect /login");
+    expect(reads.calls).toBe(0);
+    who.viewer = null;
+    await draw(CreatorProgressRoute());
+    expect(host.querySelector("h1")?.textContent).toContain("선물 현황");
   });
 });

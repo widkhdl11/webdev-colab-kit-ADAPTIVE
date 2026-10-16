@@ -110,6 +110,7 @@
   --r-btn: 12px;
   --r-btn-sm: 10px;
   --r-tag: 6px;
+  --r-bar: 3px; /* 진행 막대 칸(높이 6)의 둥근 끝 — design-rules 13절 선물 현황 */
   --r-pill: 9999px;
 
   /* 간격 (4px 단위, 짝수만) */

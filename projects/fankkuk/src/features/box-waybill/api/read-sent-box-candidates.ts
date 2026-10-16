@@ -8,6 +8,6 @@ const rows = z.array(z.object({ share_id: z.string().uuid(), fan_nickname: z.str
 
 export async function readSentBoxCandidates(client: Pick<SupabaseClient, "rpc">): Promise<SentBoxCandidate[]> {
   const { data, error } = await client.rpc("my_revgift_find_candidates");
-  if (error) throw new Error(`미확인 상자 후보를 읽지 못했다: ${error.code}`);
+  if (error) throw new Error(`내 상자 찾기 후보를 읽지 못했다: ${error.code}`);
   return rows.parse(data ?? []).map((r) => ({ shareId: r.share_id, nickname: r.fan_nickname, tier: r.tier }));
 }

@@ -14,7 +14,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 //   같은 번호가 다른 상자에 있어도 거부하지 않고 늘 같은 「등록됐어요」로 답한다 — 남의 송장번호가 등록돼 있는지 떠볼 수 없게.
 
 export const MESSAGE_ALREADY_RECEIVED = "이미 입고된 상자예요";
-export const MESSAGE_NO_MATCH = "맞는 상자를 못 찾았어요. 송장번호와 택배사를 다시 확인해 주세요. 사무실에 도착한 지 7일이 지나면 원 송장 주소로 돌려보내요";
+export const MESSAGE_NO_MATCH = "맞는 상자를 못 찾았어요. 송장번호와 택배사를 다시 확인해 주세요. 사무실에 도착한 지 7일이 지나면 원래 송장 주소로 돌려보내요";
 export const MESSAGE_MATCH_LIMIT = "오늘은 더 찾을 수 없어요. 내일 다시 해 주세요";
 export const MESSAGE_WAYBILL_LIMIT = "오늘은 송장번호를 더 넣을 수 없어요. 내일 다시 해 주세요";
 export const MESSAGE_FIND_DETAILS = "송장번호를 넣고 택배사를 골라 주세요.";

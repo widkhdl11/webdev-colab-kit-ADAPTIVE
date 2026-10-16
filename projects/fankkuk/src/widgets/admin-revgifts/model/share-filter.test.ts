@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RevgiftShare } from "@/entities/parcel/model/office-lists";
-import { countByShareTab, filterShares, needsExpiryRun } from "./share-filter";
+import { countByShareTab, filterShares, needsExpiryRun, SHARE_TABS } from "./share-filter";
 
 const base: RevgiftShare = {
   shareId: "s1",
@@ -19,6 +19,9 @@ describe("역조공 몫 탭·검색 (office-workflow INV-W3)", () => {
   it("INV-W3: 팬의 답으로 거르고 건수를 센다", () => {
     expect(filterShares(rows, "declined", "").map((r) => r.shareId)).toEqual(["s2"]);
     expect(countByShareTab(rows)).toEqual({ all: 2, waiting: 1, accepted: 0, declined: 1, expired: 0 });
+  });
+  it("탭 이름은 용어집 7절 운영자 표기 — 수락 대기·수락·받지 않음(「기다리는 중」「받음」을 쓰지 않는다)", () => {
+    expect(SHARE_TABS.map((t) => t.label)).toEqual(["전체", "수락 대기", "수락", "받지 않음", "기한 지남"]);
   });
   it("INV-W3: 주문번호·닉네임 검색", () => {
     expect(filterShares(rows, "all", "별빛").map((r) => r.shareId)).toEqual(["s2"]);

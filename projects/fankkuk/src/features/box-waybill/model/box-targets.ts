@@ -33,16 +33,6 @@ export function giftAddressCode(box: GiftBox, officeAddress: string | null, inPr
   return inProgress && officeAddress !== null ? box.addressCode : null;
 }
 
-/** 역조공: 아직 입고되지 않았고 팬이 받지 않은 것이 아닌 몫만 찾기 대상 */
-export function shareFinderBoxes(rows: readonly SentRevgift[], boxes: readonly ShareBox[]): FinderBox[] {
-  const byOrder = new Map(boxes.map((b) => [b.orderNo, b]));
-  return rows.flatMap((x) => {
-    const box = byOrder.get(x.orderNo);
-    if (!box || !isWaybillEditable(box.state) || x.state === "not_received") return [];
-    return [{ target: { kind: "share", id: box.shareId }, label: `${x.fanNickname}님 상자`, name: `${x.fanNickname}님 상자 · ${x.orderNo}` }];
-  });
-}
-
 /** 역조공 몫 하나의 받는 주소 6자리 — 묶음에 사무실 주소가 있고 팬이 받지 않은 몫이 아닐 때만 */
 export function shareAddressCode(box: ShareBox | undefined, officeAddress: string | null, state: SentRevgift["state"]): string | null {
   if (!box || officeAddress === null || state === "not_received") return null;

@@ -6,8 +6,6 @@ import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
 import { countBatchStates, summarizeSent, toSentBatches, type SentSummary } from "@/entities/revgift/model/sent-batches";
 import { sentStateTag } from "@/entities/revgift/ui/received-status";
 import { shareAddressCode } from "@/features/box-waybill/model/box-targets";
-import type { SentBoxCandidate } from "@/features/box-waybill/ui/find-sent-box";
-import { FindSentBoxButton } from "@/features/box-waybill/ui/find-sent-box-button";
 import { NotMineButton } from "@/features/box-waybill/ui/not-mine-button";
 import { ReceivingAddress } from "@/features/box-waybill/ui/receiving-address";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
@@ -19,13 +17,14 @@ import s from "./revgift-sent.module.css";
 // 묶음마다 팬별 「지금 상태」 한 줄 목록(위아래, 0000절). 한 줄에 보이는 것은 팬 닉네임·주문번호·상태 배지(셋 중 하나)뿐이다 —
 // 팬 로그인 아이디도 싣지 않는다(reverse-gift INV-R8). 팬마다 따로 보는 화면이 없어 줄은 링크가 아니다.
 // 송장번호는 묶음 아래 「송장번호 적기(선택)」 접힌 칸에 팬마다 한 줄(시안 .fold·.inv-row). 배송 조회를 보고 싶을 때만 넣는 선택 칸이다
-// (inbound-address-code INV-C7). 입고 전엔 넣고 고치고, 입고되면 「입고됨」으로 잠긴다(design-rules 8-1).
+// (inbound-address-code INV-C7). 입고 전엔 넣고 고치고, 도착하면 「도착 완료」로 잠긴다(design-rules 8-1).
 // 받는 주소·「제가 보낸 게 아니에요」는 그 팬 줄 바로 아래 — 보낼 상자가 남았을 때·입고 뒤 출고 전에만 생긴다(필요할 때만, 0000절).
 // 묶음 나누기와 상태 세기는 entities/revgift/model/sent-batches.ts — 여기서는 문구만 조립한다.
 // 받는 주소(INV-R14, inbound-address-code INV-C2·C3): 팬(몫)마다 사무실 주소 + 그 몫의 6자리. 묶음에 officeAddress 가 있을 때
 // (결제가 끝났고 보낼 상자가 남은 묶음) + my_share_boxes 가 그 몫의 6자리를 줄 때(보낸 크리에이터 본인 · 유효할 때)만 그린다.
 // 6자리 빠진 기본 사무실 주소는 그리지 않는다. 팬의 받기를 기다리지 않는다 — 받기는 출고 전에만 있으면 된다.
-// 받는 주소 없이 보낸 상자는 아직 입고 전인 줄마다 「내 상자 찾기」(INV-C4 ②-나, 2026-10-16 카드 d96 ①), 입고 뒤 출고 전에는 「제가 보낸 게 아니에요」(INV-C8).
+// 입고 뒤 출고 전에는 「제가 보낸 게 아니에요」(INV-C8). 받는 주소 없이 보낸 상자의 「내 상자 찾기」는 선물 현황 「보내는 선물」의 입고 전 줄에 있다
+// (action-center INV-J10 — 「선물 현황 화면이 생기기 전에는 보낸 역조공 화면」이었고, 선물 현황이 생겨 옮겼다).
 // 두 단(design-rules 00절 「본문 틀」, 시안 v22-width/cre-revgift-sent-ab.html): 주 내용 880 + 오른쪽 요약 칸 288, 간격 32.
 // 본문 영역 1000 이상에서 두 단·칸은 스크롤을 따라오고, 좁으면 한 단에 칸이 위. 칸에는 이 화면에 이미 있는 값만 —
 // 몫 목록을 센 숫자(summarizeSent), 머리에서 옮긴 「역조공 보내기」, 아래 「알아 두세요」에 있던 송장번호 안내 한 줄.
@@ -87,7 +86,7 @@ function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string
     <p className={`tags ${s["inv-tags"]}`}>
       <span className={statusTagClass("success")}>
         <Check />
-        입고됨
+        도착 완료
       </span>
       <span className="t-meta">사무실에 도착해 확인했어요</span>
     </p>
@@ -107,7 +106,7 @@ function WaybillFold({ views }: { views: readonly ShareView[] }) {
         </svg>
       </summary>
       <div className={s.foldBody}>
-        <p className="t-meta">상자가 사무실에 도착하기 전까지만 고칠 수 있고, 입고되면 「입고됨」으로 바뀌고 잠겨요.</p>
+        <p className="t-meta">상자가 사무실에 도착하기 전까지만 고칠 수 있고, 도착하면 「도착 완료」로 바뀌고 잠겨요.</p>
         {items.map(({ x, box }) => (
           <div key={x.orderNo} className={s.invRow}>
             <p className={s.invName}>{x.fanNickname}님</p>
@@ -121,7 +120,7 @@ function WaybillFold({ views }: { views: readonly ShareView[] }) {
 
 function batchSummary(shares: readonly SentRevgift[]): string {
   const n = countBatchStates(shares);
-  const parts = [n.accepted ? `받은 팬 ${n.accepted}명` : "", n.waiting ? `기다리는 중 ${n.waiting}명` : "", n.not_received ? `받지 않은 팬 ${n.not_received}명` : ""].filter(
+  const parts = [n.accepted ? `수락 ${n.accepted}명` : "", n.waiting ? `수락 대기 ${n.waiting}명` : "", n.not_received ? `받지 않음 ${n.not_received}명` : ""].filter(
     Boolean,
   );
   return n.not_received ? `${parts.join(" · ")} (받지 않은 상자 요금은 환불돼요)` : parts.join(" · ");
@@ -182,7 +181,6 @@ export function RevgiftSentPage({
   paid,
   officeAddress,
   tabs,
-  candidates = [],
 }: {
   rows: readonly SentRevgift[];
   boxes: readonly ShareBox[];
@@ -190,13 +188,9 @@ export function RevgiftSentPage({
   officeAddress: string;
   /** 페이지 머리 바로 아래에 둘 화면 간 탭(design-rules 11절). 머리는 늘 본문 맨 앞이다(00절) */
   tabs?: ReactNode;
-  /** 「내 상자 찾기」 후보 — 로그인한 크리에이터가 보낸 결제 끝·입고 전·닫히지 않은 몫(찾기와 같은 판정). 이 줄에만 버튼을 둔다 */
-  candidates?: readonly SentBoxCandidate[];
 }) {
   const batches = toSentBatches(rows, officeAddress);
   const boxByOrder = new Map(boxes.map((b) => [b.orderNo, b]));
-  // 내 상자 찾기(INV-C4 ②-나, 카드 d96 ①) — 아직 입고 전인 줄마다. 늦지 않아도 누를 수 있고 처리할 일 숫자에는 들지 않는다
-  const findable = new Set(candidates.map((c) => c.shareId));
   return (
     <div className={s.split}>
       <div className={s.mainc}>
@@ -258,17 +252,6 @@ export function RevgiftSentPage({
                           <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
                         </div>
                       ) : null}
-                      {box && findable.has(box.shareId) ? (
-                        <div className={s.rowMore}>
-                          <FindSentBoxButton
-                            className="btn btn--line btn--sm"
-                            candidates={candidates}
-                            shareId={box.shareId}
-                            meta={`${formatDateTime(b.sentAt)} 보냄`}
-                            label={`내 상자 찾기(${x.fanNickname}님)`}
-                          />
-                        </div>
-                      ) : null}
                       {box && canReportNotMine(box.state) ? (
                         <div className={s.rowMore}>
                           <NotMineButton target={{ kind: "share", id: box.shareId }} boxName={`${x.fanNickname}님 상자`} reported={box.reportedNotMine} />
@@ -286,7 +269,7 @@ export function RevgiftSentPage({
         <section className="card">
           <strong className="t-card">알아 두세요</strong>
           <ul className={s.notes}>
-            <li>「받지 않았어요」는 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
+            <li>「받지 않음」은 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
             <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
             <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
             <li>상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 받는 주소가 달라요.</li>

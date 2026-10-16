@@ -1,14 +1,14 @@
 import type { RevgiftShare, ShareReply } from "@/entities/parcel/model/office-lists";
 
-// 「역조공 처리」 탭·검색 (시안 admin/revgifts.html). 탭은 팬의 답, 검색은 주문번호·닉네임·이름.
+// 「역조공 처리」 탭·검색 (시안 admin/revgifts.html). 탭은 팬 수락 상태(용어집 7절 운영자 표기), 검색은 주문번호·닉네임·이름.
 
 export type ShareTab = "all" | ShareReply;
 
 export const SHARE_TABS: readonly { key: ShareTab; label: string }[] = [
   { key: "all", label: "전체" },
-  { key: "waiting", label: "기다리는 중" },
-  { key: "accepted", label: "받음" },
-  { key: "declined", label: "거절" },
+  { key: "waiting", label: "수락 대기" },
+  { key: "accepted", label: "수락" },
+  { key: "declined", label: "받지 않음" },
   { key: "expired", label: "기한 지남" },
 ];
 

@@ -1,0 +1,45 @@
+/* 크리에이터 선물 현황 (design-rules 13절, 시안 v21-addendum3/cre-progress.html — 처리할 일 D안의 판·줄 모양 + 오른쪽 단계 막대).
+   본문 틀은 목록형 880(00절) — 라우트가 MyShell(list)로 감싼다. 판 머리는 옅은 바탕 + 검은 숫자 동그라미 + 오른쪽 「~ 전체」 링크. */
+.root { display: grid; gap: var(--space-8); }
+.root.root > section, .root.root > header { margin: 0; }
+.panel { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--r-card); overflow: hidden; }
+.panelH { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--gray-200); background: var(--gray-50); }
+.panelH h2 { font-size: var(--fs-body); line-height: 1.5; font-weight: var(--fw-h3); }
+.cnt { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-size: var(--fs-caption); font-weight: var(--fw-btn); }
+.more { margin-left: auto; font-size: var(--fs-caption); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.subH { display: flex; align-items: center; gap: var(--space-2); margin: 0; padding: var(--space-2) var(--space-5); background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-100); font-size: var(--fs-caption); font-weight: var(--fw-btn); }
+.panelH + div > .subH { border-top: 0; }
+.subMeta { font-weight: var(--fw-body); }
+.tasks { list-style: none; margin: 0; padding: 0; }
+.tasks > li + li { border-top: 1px solid var(--gray-100); }
+.task { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 2px var(--space-3); align-items: center; min-height: 72px; padding: var(--space-3) var(--space-5); }
+.task:hover { background: var(--gray-50); }
+.alert { background: var(--alert-50); }
+.alert:hover { background: var(--alert-100); }
+.alert::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--alert-600); }
+.ti { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--r-btn-sm); background: var(--gray-100); color: var(--ink); }
+.alert .ti { background: var(--alert-200); color: var(--alert-900); }
+.appr .ti { background: var(--primary-50); }
+.tb { display: grid; gap: 0; min-width: 0; }
+.tt { font-size: var(--fs-body); line-height: 1.5; font-weight: var(--fw-btn); color: var(--ink); overflow-wrap: anywhere; }
+.sub { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; font-size: var(--fs-caption); line-height: 1.5; color: var(--gray-600); }
+.ta { display: flex; align-items: center; gap: var(--space-4); justify-self: end; }
+.ta :global(.btn) { min-width: 104px; height: 36px; min-height: 36px; padding: 0 var(--space-4); font-size: var(--fs-caption); justify-content: center; white-space: nowrap; }
+.prog { display: grid; justify-items: end; gap: 4px; min-width: 132px; }
+.bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; width: 100px; }
+.bar i { height: 6px; border-radius: var(--r-bar); background: var(--gray-200); }
+.bar i.on { background: var(--ink); }
+.pl { font-size: var(--fs-caption); line-height: 1.5; font-weight: var(--fw-btn); color: var(--ink); white-space: nowrap; }
+.plLate { color: var(--alert-800); }
+.none { margin: 0; padding: var(--space-4) var(--space-5); font-size: var(--fs-caption); color: var(--gray-600); }
+
+@media (max-width: 768px) {
+  .panelH { padding: var(--space-3) var(--space-4); }
+  .subH { padding: var(--space-2) var(--space-4); }
+  .task { grid-template-columns: 36px minmax(0, 1fr); padding: var(--space-3) var(--space-4); }
+  .ta { grid-column: 2; justify-self: stretch; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); padding-top: var(--space-2); }
+  .prog { justify-items: start; min-width: 0; flex-basis: 100%; }
+  .ta :global(.btn) { flex: 1; height: 44px; min-height: 44px; }
+  .none { padding: var(--space-4); }
+}

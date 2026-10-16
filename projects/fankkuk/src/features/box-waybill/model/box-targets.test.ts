@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GiftBox, ShareBox } from "@/entities/parcel/model/box-rows";
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
-import { giftAddressCode, giftFinderBoxes, shareAddressCode, shareFinderBoxes } from "./box-targets";
+import { giftAddressCode, giftFinderBoxes, shareAddressCode } from "./box-targets";
 
 const gift = (over: Partial<GiftBox>): GiftBox => ({
   boxId: "b1",
@@ -60,14 +60,6 @@ describe("INV-C2·C3 받는 주소 — 팬 선물", () => {
     expect(giftAddressCode(gift({}), "서울 사무실", false)).toBeNull();
     expect(giftAddressCode(gift({}), null, true)).toBeNull();
     expect(giftAddressCode(gift({ addressCode: null }), "서울 사무실", true)).toBeNull();
-  });
-});
-
-describe("INV-C4 ② 찾기 대상 — 역조공", () => {
-  it("입고 전이고 팬이 받지 않은 것이 아닌 몫만, 이름은 팬 닉네임 · 주문번호", () => {
-    const rows = [sent({ orderNo: "RV-1", state: "waiting" }), sent({ orderNo: "RV-2", state: "accepted" }), sent({ orderNo: "RV-3", state: "not_received" }), sent({ orderNo: "RV-4" })];
-    const boxes = [share({ shareId: "s1", orderNo: "RV-1" }), share({ shareId: "s2", orderNo: "RV-2", state: "received" }), share({ shareId: "s3", orderNo: "RV-3" })];
-    expect(shareFinderBoxes(rows, boxes)).toEqual([{ target: { kind: "share", id: "s1" }, label: "초코우유님 상자", name: "초코우유님 상자 · RV-1" }]);
   });
 });
 

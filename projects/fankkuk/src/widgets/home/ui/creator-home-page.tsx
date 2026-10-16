@@ -4,8 +4,8 @@ import type { AddressAccessEntry } from "@/entities/address/model/access-log";
 import type { CreatorColors } from "@/entities/creator/model/creator-color";
 import { CreatorHead } from "@/entities/creator/ui/creator-head";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
+import { CREATOR_GIFT_PROGRESS_HREF } from "@/entities/gift-progress/model/progress-href";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
-import { isIncomingInProgress, type IncomingGiftView } from "@/entities/order/model/incoming-gift";
 import { CREATOR_PROFILE_EDIT } from "@/entities/session/model/home-path";
 import { NO_ADDRESS_ASK } from "@/shared/config/site-copy";
 import { formatDateTime } from "@/shared/lib/format/datetime";
@@ -17,7 +17,7 @@ import { HomeNotices, type HomeNotice } from "./home-notices";
 // 팬덤 뱃지(면 팬컬러)·한 줄 소개·「프로필 수정」·「계정 설정」(creator-link INV-E13·E14). 그 아래 바로가기 한 줄 목록(0000절 — 카드 좌우 나열 대신) · 공지.
 // 필수 다섯(오늘 승인할 선물 · 진행 중인 선물 · 최근 열람 기록 · 공지 · 내가 보낸 선물, 카드 d15)은 바로가기와 공지에 모두 있다.
 // 이 화면에는 승인 버튼을 두지 않는다 — 승인은 처리할 일의 승인 창에서 한 건씩 카카오톡으로 한다.
-// 「진행 중인 선물」은 받은 선물 읽기(my_incoming_gifts, office-workflow INV-W9)로 센다 — 결제 완료부터 배송중까지.
+// 「진행 중인 선물 N건」은 선물 현황 머리 「진행 중 N건」과 같은 값이다 — 라우트가 같은 읽기(my_gift_progress, action-center INV-J9)로 센 수를 넘긴다.
 // 바로가기 첫 줄 「처리할 일 N건」은 크리에이터 처리할 일 읽기의 줄 수다 — 사이드바 숫자와 같은 결과(action-center INV-J6). 승인 대기만 따로 세지 않는다.
 // 헤더·푸터는 라우트(app)가 붙인다.
 
@@ -42,8 +42,8 @@ type Props = {
   /** 최근 열람 기록, 최근 순. 첫 줄만 쓴다. */
   accessLog: readonly AddressAccessEntry[];
   notices: readonly HomeNotice[];
-  /** 나에게 온 선물의 진행 단계(끝난 것 포함 — 진행 중인 것만 이 화면이 센다). */
-  incoming: readonly IncomingGiftView[];
+  /** 선물 현황의 진행 중 줄 수(받는 선물 + 보내는 선물). 못 읽었으면 null(줄의 숫자를 비운다) */
+  ongoingCount: number | null;
   /** 내가(로그인한 사람이) 보낸 선물. */
   sentGifts: readonly FanGiftView[];
 };
@@ -86,8 +86,7 @@ function Row({ href, icon, title, meta, value }: { href: string; icon: keyof typ
   );
 }
 
-export function CreatorHomePage({ profile, accountHref, notices, actionCount, accessLog, incoming, sentGifts }: Props) {
-  const ongoing = incoming.filter(isIncomingInProgress).length;
+export function CreatorHomePage({ profile, accountHref, notices, actionCount, accessLog, ongoingCount, sentGifts }: Props) {
   const lastLog = accessLog[0];
   return (
     <main id="main" className={`page-pane ${s.pane}`}>
@@ -133,16 +132,18 @@ export function CreatorHomePage({ profile, accountHref, notices, actionCount, ac
                 )
               }
             />
-            {/* 진행 중인 선물을 한 화면에서 보는 선물 현황은 다음 묶음 — 그때까지는 손이 필요한 일이 모인 처리할 일로 잇는다(그 화면이 생기면 바꾼다) */}
+            {/* 진행 중인 선물을 한 화면에서 보는 선물 현황으로(action-center 「선물 현황」, design-rules 13절) */}
             <Row
-              href={CREATOR_ACTION_CENTER_HREF}
+              href={CREATOR_GIFT_PROGRESS_HREF}
               icon="truck"
               title="진행 중인 선물"
               value={
-                <>
-                  {ongoing}
-                  <small>개</small>
-                </>
+                ongoingCount === null ? null : (
+                  <>
+                    {ongoingCount}
+                    <small>건</small>
+                  </>
+                )
               }
             />
             <Row
