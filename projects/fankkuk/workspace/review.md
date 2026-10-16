@@ -1,9 +1,26 @@
 ---
 project: fankkuk
 status: passed
-basis: bd81a3cdc019
+basis: 29c8e6217b2f
 reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-16 저녁, 닉네임 상자 찾기·크리에이터 처리할 일·선물 현황·용어집)
+
+이번 사인오프가 덮는 변경: 지난 사인오프(basis bd81a3cdc019) 뒤 스펙 다섯 승인(카드 d93·d94·d95)과 그 구현·리뷰 반영, 카드 d96·d97, 용어집. 커밋 926f04f(닉네임 상자 찾기) · 749a9a2(크리에이터 처리할 일) · 17c5fc5(금지어 147건) · df31ebf(선물 현황) · 7e1281e(노출 검사) · 8dbcbeb. 마이그레이션 20261016000007~0012.
+
+- 닉네임 상자 찾기(INV-C4 ②-가·C5·C10·C12, N21): security 중간 1(닉네임 맞은 상자도 운영자가 남에게 이음)·낮음 1(송장번호 등록 상자) · code 중간 3(닉네임 길이·코드 없는 상자 판정 둘·분쟁 상자 주인 못 찾음) 낮음 2 · ui 높음 2·중간 4 → 모두 고침. 변이 16+12.
+- 크리에이터 처리할 일(INV-J5~J8, W13, C11, N20): security 낮음 2(닫힌 몫 6자리 되살림·기한 지난 운영자 처리) · code 높음 1(노출 검사 허용 목록 옛 이름)·중간 3·낮음 3 · ui 중간 3·낮음 6 · test-auditor 높음 3·중간 3·낮음 2 → 모두 고침(취소 함수 확인 줄 잠금 하나는 앞선 상자 잠금 때문에 변이로 안 잡힘 — 이중 잠금). 카드 d96(내 상자 찾기 자리). 변이 DB 21/22·화면 6/6.
+- 선물 현황(INV-J9~J11): security 지적 없음(J10 칸 목록에 주문번호·몫 ID 보탬) · code 높음 2(일부 반송 주문 사라짐·역조공 출고 영원히 남음 → 카드 d97)·중간 3·낮음 1 · ui 중간 3·낮음 4 · test-auditor 높음 1·중간 2·낮음 3 → 모두 고침(몫 상자 상태에 missing 이 없어 그 갈래 시험 없음). 변이 23/23.
+- 화면 문구: 용어집(docs/copy/glossary.md)을 유일한 기준으로, copy:lint 149 → 0.
+
+## 실행 근거
+- `node gates/run-gates.mjs` → 게이트 통과(1435개 파일, tsc 4/4 · test 4/4). `npm test` 2000 통과. `npm run copy:lint` 0건. `npm run check:pii` 통과.
+- 통합 전체 `npm run test:integration` 1회: 1921 중 4 실패(3개 파일). ① gift-memo-db INV-F8 S8 — 노출 검사가 첫 성공에서 멈춰 메모 함수를 심은 주문으로 부르지 않던 검사 결함(메모 누출 아님) → 검사 고침(7e1281e), 그 파일 15/15. ② read-isolation 2 — 시드 승인 요청이 날짜로 expired(BACKLOG 기존). ③ password-reset INV-L11 1 — 문구 순서(BACKLOG 기존). ①을 고친 뒤 전체는 다시 돌리지 않았다.
+- 화면(로컬, Playwright): 묶음마다 PC·390 — 팬 찾기·직원 입고·운영자 잇기, 처리할 일 두 판·블루투스 고르기/취소·승인 창 초점·Esc·내 상자 찾기 입고, 선물 현황 두 판·배송 조회 새 탭(서버 요청 0)·처리할 일 버튼, 운영자·팬 역조공 수락 용어. 시험 데이터는 지움.
+- 규칙 메모: 선물 현황 에이전트가 변이 중 지운 옛 함수 my_approval_requests 를 로컬 DB 에 되살렸다가 같은 문장으로 다시 지움(0개 확인).
+
+# 이전 사인오프
 
 # 리뷰 사인오프 — fankkuk (2026-10-16, 팬 프로필·선물 메모·팬덤 색·처리할 일)
 
@@ -20,8 +37,6 @@ reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 - 통합 전체 `npx vitest run --config vitest.integration.config.mts` 두 번: 1회 1803 중 3 실패(2개 파일 — read-isolation 2 + 다른 파일 1, 출력 끝만 저장해 그 1건이 무엇인지 남지 않음), 2회 실패 2(둘 다 read-isolation 시드 승인 요청이 날짜로 expired — BACKLOG 기존). 1회만의 1건은 흔들리는 시험(password-reset 흔들림 BACKLOG 로 추정, 확인 못 함).
 - 화면(로컬): 묶음마다 1440·390 넘침 0, 팬 사진 올리기·로그아웃 상태 열림·사진 정보 지움, 메모가 하루 승인 대기·카드·서명 원문에 0, 노랑·남색 저장 뒤 띠·뱃지 글자색, 처리할 일 사이드바=홈=카드 수·처리 뒤 줄어듦·0 이면 뱃지 없음. 시험 데이터는 지움.
 - 규칙 위반 기록: 팬 프로필 구현 에이전트가 화면 확인 중 끈 카카오 알림을 되돌리려 pii.account_contacts 한 줄을 psql 로 고침(값은 원래대로 확인). 이후 지시서에 금지 문장 추가.
-
-# 이전 사인오프
 
 # 리뷰 사인오프 — fankkuk (2026-10-15, 본문 폭 세 가지·시안 v21 중 화면만으로 되는 것)
 
