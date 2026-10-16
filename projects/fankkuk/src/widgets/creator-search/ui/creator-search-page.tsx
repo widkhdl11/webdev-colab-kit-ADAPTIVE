@@ -2,23 +2,39 @@
 
 import Link from "next/link";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
-import { useId, useState, type CSSProperties } from "react";
-import { matchesCreatorQuery, type CreatorCard } from "@/entities/creator/model/creator-card";
-import { hasPickedTag, tagChips, type TagOption } from "@/entities/creator/model/creator-tags";
+import { useId, useState } from "react";
+import {
+  matchesCreatorQuery,
+  type CreatorCard,
+} from "@/entities/creator/model/creator-card";
+import {
+  hasPickedTag,
+  tagChips,
+  type TagOption,
+} from "@/entities/creator/model/creator-tags";
 import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
-import { creatorColorOrNull, creatorColorVars } from "@/entities/creator/model/creator-color";
-import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
+import {
+  NO_CARD_LOOK,
+  type CardLook,
+} from "@/entities/creator/model/card-look";
+import { CreatorCardHead } from "@/entities/creator/ui/creator-card-head";
 import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
-import { CreatorTag, hasTagIcon, TagChipBody } from "@/entities/creator/ui/creator-tag";
-import { FollowButton, type FollowMode } from "@/features/creator-follow/ui/follow-button";
+import {
+  CreatorTag,
+  hasTagIcon,
+  TagChipBody,
+} from "@/entities/creator/ui/creator-tag";
+import {
+  FollowButton,
+  type FollowMode,
+} from "@/features/creator-follow/ui/follow-button";
 import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import s from "./creator-search.module.css";
 
 // 크리에이터 찾기. 시안: docs/design/mockups/site/v18/creators.html (design-rules 00절) · 태그 아이콘·색 v9-pages/tags-b.html (카드 d46)
 // 위에서 아래로: 페이지 머리(제목 24 왼쪽·설명·본인 확인 줄) → 왼쪽부터 꽉 찬 검색창 → 태그 칩 → 「전체 N명」 → 카드 격자(최소 300 으로 채움).
 // 본문 틀: 로그인 후는 목록형 기본 폭(.page-pane 880 — 2026-10-16 사용자 「꼭 넓은 너비가 필요한 페이지가 아니다」), 로그인 전은 상단 바와 같은 1152 선(.pub-inner) — 로그인 전 상단 바 아래에서 넓은 틀이 상단 바 선을 벗어나지 않게.
-// 카드는 크리에이터가 꾸민 대로(2026-10-16 사용자) — 공개 페이지 머리(widgets/creator-profile)를 작게 옮긴 모양:
-// 맨 위 띠 = 배경사진(없으면 퍼스널 컬러 면, 그것도 없으면 옅은 기본 면) · 프로필 사진이 띠 아래 가장자리에 걸치고 퍼스널 컬러 테두리 ·
+// 카드는 크리에이터가 꾸민 대로(2026-10-16 사용자) — 머리는 entities/creator/ui/creator-card-head(배경사진 띠·프로필 사진·퍼스널 컬러 테두리),
 // 이름 옆 팬덤 뱃지(팬컬러 면 + 팬덤 심볼 + 팬덤 이름 — 팬덤 이름이 없으면 뱃지 없음, 공개 페이지와 같다).
 // 광고 배너 자리는 다음 기능 작업이라 두지 않는다.
 // 검색창에 치는 대로 목록이 걸러진다(시안 site.js 의 실시간 검색).
@@ -61,11 +77,6 @@ function ClockIcon() {
   );
 }
 
-/** 카드 한 장에 싣는 꾸민 모양 — 공개 저장소 주소(라우트가 만든다)와 팬덤 이름. */
-export type CardLook = { photoUrl: string | null; backgroundUrl: string | null; symbolUrl: string | null; fanName: string | null };
-
-const NO_CARD_LOOK: CardLook = { photoUrl: null, backgroundUrl: null, symbolUrl: null, fanName: null };
-
 /**
  * looks: 크리에이터 id → 꾸민 모양. 없는 사람은 기본 모양.
  * ownCreatorId: 로그인한 크리에이터 자신의 줄 — 팔로우·선물 보내기를 보이지 않는다(자기 자신은 팔로우·선물 불가).
@@ -88,8 +99,19 @@ export function CreatorSearchPage({
   const [tag, setTag] = useState("");
   const inputId = useId();
   const chips = tagChips(tagOptions, creators);
-  const shown = new Set(creators.filter((c) => matchesCreatorQuery(c, query) && hasPickedTag(c, tag === "" ? null : tag)).map((c) => c.id));
-  const count = query.trim() || tag ? `검색 결과 ${shown.size}명` : `전체 ${creators.length}명`;
+  const shown = new Set(
+    creators
+      .filter(
+        (c) =>
+          matchesCreatorQuery(c, query) &&
+          hasPickedTag(c, tag === "" ? null : tag),
+      )
+      .map((c) => c.id),
+  );
+  const count =
+    query.trim() || tag
+      ? `검색 결과 ${shown.size}명`
+      : `전체 ${creators.length}명`;
 
   const frame = followMode === "login" ? `pub-inner ${s.pub}` : "page-pane";
 
@@ -101,7 +123,9 @@ export function CreatorSearchPage({
             나의 크리에이터를 찾아요
           </h1>
         </div>
-        <p className="ph-desc">이름이나 채널 이름을 입력하면 아래 목록이 바로 걸러져요.</p>
+        <p className="ph-desc">
+          이름이나 채널 이름을 입력하면 아래 목록이 바로 걸러져요.
+        </p>
         <p className={s.verify}>
           <CheckIcon />
           활동 채널 본인 확인을 마친 크리에이터만 보여요.
@@ -122,8 +146,20 @@ export function CreatorSearchPage({
         {/* 치는 대로 걸러지므로 누를 버튼이 없다 — 돋보기는 장식 */}
         <span className="search-go" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
-            <path d="m21 21-4.34-4.34" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <circle
+              cx="11"
+              cy="11"
+              r="8"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <path
+              d="m21 21-4.34-4.34"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
         </span>
       </div>
@@ -148,30 +184,35 @@ export function CreatorSearchPage({
         <p className={s.bar} role="status" aria-live="polite">
           {count}
         </p>
-        {followMode === "save" ? <p className={s.hint}>{FOLLOW_NICKNAME_NOTICE}</p> : null}
+        {followMode === "save" ? (
+          <p className={s.hint}>{FOLLOW_NICKNAME_NOTICE}</p>
+        ) : null}
         {/* 걸러진 카드는 지우지 않고 숨긴다 — 지우면 팔로우 버튼이 사라지며 누른 상태·저장 중 표시를 잃는다 */}
         <ul className={s.grid} hidden={shown.size === 0}>
           {creators.map((c) => {
             const own = c.id === ownCreatorId;
             const look = looks[c.id] ?? NO_CARD_LOOK;
-            const ringed = creatorColorOrNull(c.colors?.personal) !== null;
-            const colorVars = creatorColorVars({ personal: c.colors?.personal ?? null, fan: null });
             return (
-              <li key={c.id} className={`${s.card} ${ringed ? s.ringed : ""}`} style={colorVars as CSSProperties} hidden={!shown.has(c.id)}>
-                {/* 배경사진 띠 — 꾸밈이라 읽지 않는다 */}
-                <div className={s.cover} aria-hidden="true">
-                  {look.backgroundUrl ? <img className={s.coverImg} src={look.backgroundUrl} alt="" width={1280} height={427} loading="lazy" /> : null}
-                </div>
-                <div className={s.top}>
-                  <CreatorPhoto photoUrl={look.photoUrl} tone={c.faceTone} className={`face face--sm ${s.photo}`} />
-                  <div className={s.who}>
-                    <p className={s.name}>
-                      <Link href={creatorPagePath(c)}>{c.name}</Link>
-                      {look.fanName ? <FandomBadge name={look.fanName} symbolUrl={look.symbolUrl} fanColor={c.colors?.fan ?? null} /> : null}
-                    </p>
-                    {c.channelTitle ? <p className={s.channel}>{c.channelTitle}</p> : null}
-                  </div>
-                </div>
+              <li key={c.id} className={s.card} hidden={!shown.has(c.id)}>
+                <CreatorCardHead
+                  look={look}
+                  colors={c.colors}
+                  faceTone={c.faceTone}
+                >
+                  <p className={s.name}>
+                    <Link href={creatorPagePath(c)}>{c.name}</Link>
+                    {look.fanName ? (
+                      <FandomBadge
+                        name={look.fanName}
+                        symbolUrl={look.symbolUrl}
+                        fanColor={c.colors?.fan ?? null}
+                      />
+                    ) : null}
+                  </p>
+                  {c.channelTitle ? (
+                    <p className={s.channel}>{c.channelTitle}</p>
+                  ) : null}
+                </CreatorCardHead>
                 {c.tags.length > 0 ? (
                   <p className="ctags">
                     {c.tags.map((t) => (
@@ -190,9 +231,19 @@ export function CreatorSearchPage({
                     <span className={`tag ${s.own}`}>내 페이지</span>
                   ) : (
                     <>
-                      <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing={c.following} variant="row" mode={followMode} />
+                      <FollowButton
+                        creatorId={c.id}
+                        creatorName={c.name}
+                        initialFollowing={c.following}
+                        variant="row"
+                        mode={followMode}
+                      />
                       {c.following ? (
-                        <Link className="btn btn--sm" href={`/gifts/new?creator=${c.id}`} aria-label={`${c.name}님께 선물 보내기`}>
+                        <Link
+                          className="btn btn--sm"
+                          href={`/gifts/new?creator=${c.id}`}
+                          aria-label={`${c.name}님께 선물 보내기`}
+                        >
                           선물 보내기
                         </Link>
                       ) : null}
@@ -205,9 +256,18 @@ export function CreatorSearchPage({
         </ul>
         {shown.size === 0 && (
           <div className="empty">
-            <img className="asset" src="/img/illust-empty-search.png" alt="" width={96} height={96} />
+            <img
+              className="asset"
+              src="/img/illust-empty-search.png"
+              alt=""
+              width={96}
+              height={96}
+            />
             <h2 className="t-card">찾는 크리에이터가 아직 없어요</h2>
-            <p className="t-desc">이름 철자를 다시 확인해 보세요. 본인 확인을 마치지 않은 크리에이터는 검색되지 않아요.</p>
+            <p className="t-desc">
+              이름 철자를 다시 확인해 보세요. 본인 확인을 마치지 않은
+              크리에이터는 검색되지 않아요.
+            </p>
             <Link className="btn btn--line" href="/support">
               크리에이터를 초대하고 싶어요
             </Link>

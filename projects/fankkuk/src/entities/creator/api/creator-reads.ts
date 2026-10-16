@@ -4,6 +4,7 @@ import { toCreatorCards, type CreatorCard } from "../model/creator-card";
 import type { CreatorProfile, CreatorSummary } from "../model/creator";
 import { creatorColorOrNull } from "../model/creator-color";
 import { backgroundPathOrNull, symbolPathOrNull } from "../model/link-images";
+import type { CreatorLookPaths } from "../model/card-look";
 
 // 크리에이터 목록을 DB 읽기 함수(find_creators·list_creators·creator_by_id, 팔로우는 my_follows)로 읽는다. 응답은 신뢰 경계 밖이라 형식을 검사한다.
 
@@ -30,8 +31,15 @@ const followSchema = z.object({ creator_id: z.guid() });
 
 type CreatorRow = z.infer<typeof rowSchema>;
 
-function rowsToCards(rows: readonly CreatorRow[], followedIds: readonly string[]): CreatorCard[] {
-  const summaries: CreatorSummary[] = rows.map((r) => ({ id: r.id, name: r.name, channel: r.channel }));
+function rowsToCards(
+  rows: readonly CreatorRow[],
+  followedIds: readonly string[],
+): CreatorCard[] {
+  const summaries: CreatorSummary[] = rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    channel: r.channel,
+  }));
   const profiles: CreatorProfile[] = rows.map((r) => ({
     creatorId: r.id,
     tags: r.tags,
@@ -42,9 +50,14 @@ function rowsToCards(rows: readonly CreatorRow[], followedIds: readonly string[]
     faceTone: r.face_tone,
     handle: r.handle,
     photoPath: r.photo_path,
-    colors: { personal: creatorColorOrNull(r.personal_color), fan: creatorColorOrNull(r.fan_color) },
+    colors: {
+      personal: creatorColorOrNull(r.personal_color),
+      fan: creatorColorOrNull(r.fan_color),
+    },
   }));
-  const minutes = Object.fromEntries(rows.map((r) => [r.id, r.approval_minutes_from_orders]));
+  const minutes = Object.fromEntries(
+    rows.map((r) => [r.id, r.approval_minutes_from_orders]),
+  );
   return toCreatorCards(summaries, profiles, followedIds, minutes);
 }
 
@@ -57,16 +70,23 @@ function rowsToCards(rows: readonly CreatorRow[], followedIds: readonly string[]
  */
 export async function readCreatorCards(
   client: Pick<SupabaseClient, "rpc">,
-  opts: { signedIn: boolean; forSearch?: boolean; onlyId?: string; followedIds?: readonly string[] },
+  opts: {
+    signedIn: boolean;
+    forSearch?: boolean;
+    onlyId?: string;
+    followedIds?: readonly string[];
+  },
 ): Promise<CreatorCard[]> {
   // 주소에서 온 값이라 꼴부터 본다 — ID 꼴이 아니면 DB 가 오류를 내 페이지가 500 이 된다
-  if (opts.onlyId !== undefined && !z.guid().safeParse(opts.onlyId).success) return [];
+  if (opts.onlyId !== undefined && !z.guid().safeParse(opts.onlyId).success)
+    return [];
   const { data, error } = opts.onlyId
     ? await client.rpc("creator_by_id", { p_id: opts.onlyId })
     : await client.rpc(opts.forSearch ? "find_creators" : "list_creators");
   if (error) throw new Error(`크리에이터 목록을 읽지 못했다: ${error.code}`);
   const rows = z.array(rowSchema).parse(data);
-  const followedIds = opts.followedIds ?? (opts.signedIn ? await readMyFollowIds(client) : []);
+  const followedIds =
+    opts.followedIds ?? (opts.signedIn ? await readMyFollowIds(client) : []);
   return rowsToCards(rows, followedIds);
 }
 
@@ -78,7 +98,10 @@ export async function readOtherCreatorCards(
   client: Pick<SupabaseClient, "rpc">,
   opts: { excludeId: string; limit: number; followedIds: readonly string[] },
 ): Promise<CreatorCard[]> {
-  const { data, error } = await client.rpc("list_other_creators", { p_exclude: opts.excludeId, p_limit: opts.limit });
+  const { data, error } = await client.rpc("list_other_creators", {
+    p_exclude: opts.excludeId,
+    p_limit: opts.limit,
+  });
   if (error) throw new Error(`다른 크리에이터를 읽지 못했다: ${error.code}`);
   return rowsToCards(z.array(rowSchema).parse(data), opts.followedIds);
 }
@@ -86,28 +109,36 @@ export async function readOtherCreatorCards(
 const creatorIdSchema = z.object({ creator_id: z.guid() });
 
 /** 로그인한 크리에이터 자신의 크리에이터 id(없으면 null). 자기 줄·자기 페이지에서 팔로우·선물 보내기를 숨기는 데 쓴다. */
-export async function readOwnCreatorId(client: Pick<SupabaseClient, "rpc">): Promise<string | null> {
+export async function readOwnCreatorId(
+  client: Pick<SupabaseClient, "rpc">,
+): Promise<string | null> {
   const own = await client.rpc("my_creator_id");
-  if (own.error) throw new Error(`내 크리에이터 id 를 읽지 못했다: ${own.error.code}`);
+  if (own.error)
+    throw new Error(`내 크리에이터 id 를 읽지 못했다: ${own.error.code}`);
   return z.array(creatorIdSchema).parse(own.data)[0]?.creator_id ?? null;
 }
 
 /** 로그인한 사람이 그 크리에이터를 팔로우하는지 하나만(my_follows_creator — 팔로우 목록 전체를 읽지 않는다). */
-export async function readFollowsCreator(client: Pick<SupabaseClient, "rpc">, creatorId: string): Promise<boolean> {
+export async function readFollowsCreator(
+  client: Pick<SupabaseClient, "rpc">,
+  creatorId: string,
+): Promise<boolean> {
   const r = await client.rpc("my_follows_creator", { p_creator_id: creatorId });
   if (r.error) throw new Error(`팔로우 여부를 읽지 못했다: ${r.error.code}`);
   return z.boolean().parse(r.data);
 }
 
 /** 로그인한 사람이 팔로우한 크리에이터 id, 팔로우한 순서(오래된 것부터 — my_follows). 로그인하지 않았으면 부르지 않는다. */
-export async function readMyFollowIds(client: Pick<SupabaseClient, "rpc">): Promise<string[]> {
+export async function readMyFollowIds(
+  client: Pick<SupabaseClient, "rpc">,
+): Promise<string[]> {
   const r = await client.rpc("my_follows");
   if (r.error) throw new Error(`팔로우 목록을 읽지 못했다: ${r.error.code}`);
-  return z.array(followSchema).parse(r.data).map((f) => f.creator_id);
+  return z
+    .array(followSchema)
+    .parse(r.data)
+    .map((f) => f.creator_id);
 }
-
-/** 크리에이터 찾기 카드에 싣는 각자 꾸민 모양 — 배경사진·팬덤 심볼 경로(꼴이 틀리면 null)와 팬덤 이름. */
-export type CreatorSearchLook = { bgPath: string | null; symbolPath: string | null; fanName: string | null };
 
 const searchLookSchema = z.object({
   id: z.guid(),
@@ -120,16 +151,40 @@ const searchLookSchema = z.object({
  * 크리에이터 찾기 목록(find_creators 와 같은 사람)의 꾸민 모양을 한 번에(find_creators_look) — 크리에이터 id → 모양.
  * 공개 페이지가 creator_link_extras 로 읽는 것과 같은 공개 칸이다. 목록에 없는 사람은 기본 모양.
  */
-export async function readCreatorSearchLooks(client: Pick<SupabaseClient, "rpc">): Promise<Record<string, CreatorSearchLook>> {
+export async function readCreatorSearchLooks(
+  client: Pick<SupabaseClient, "rpc">,
+): Promise<Record<string, CreatorLookPaths>> {
   const { data, error } = await client.rpc("find_creators_look");
   if (error) throw new Error(`크리에이터 꾸밈을 읽지 못했다: ${error.code}`);
+  return looksOf(data);
+}
+
+/**
+ * 고른 크리에이터들의 꾸민 모양(creator_looks — 로그인한 사람만, 본인 확인된 크리에이터만). 팔로우 목록처럼 찾기 노출과 상관없이 보이는 목록이 쓴다.
+ * 공개 페이지(creator_link_extras)가 한 명씩 공개하는 것과 같은 칸이다. 빈 목록이면 부르지 않는다.
+ */
+export async function readCreatorLooks(
+  client: Pick<SupabaseClient, "rpc">,
+  ids: readonly string[],
+): Promise<Record<string, CreatorLookPaths>> {
+  if (ids.length === 0) return {};
+  const { data, error } = await client.rpc("creator_looks", { p_ids: ids });
+  if (error) throw new Error(`크리에이터 꾸밈을 읽지 못했다: ${error.code}`);
+  return looksOf(data);
+}
+
+function looksOf(data: unknown): Record<string, CreatorLookPaths> {
   return Object.fromEntries(
     z
       .array(searchLookSchema)
       .parse(data)
       .map((r) => [
         r.id,
-        { bgPath: backgroundPathOrNull(r.bg_path), symbolPath: symbolPathOrNull(r.symbol_path), fanName: r.fan_name?.trim() || null },
+        {
+          bgPath: backgroundPathOrNull(r.bg_path),
+          symbolPath: symbolPathOrNull(r.symbol_path),
+          fanName: r.fan_name?.trim() || null,
+        },
       ]),
   );
 }
