@@ -9,8 +9,8 @@
 
 /* 검색창 — 왼쪽부터 본문 폭 가득 */
 .search:global(.search) { max-width: none; margin: 0; }
-/* 로그인 후 넓은 틀 안에서는 기본 글 폭(1200)까지만 — 아래 격자만 넓은 구간이다(base.css .page-pane) */
-:global(.page-pane) > .search:global(.search) { max-width: 1200px; margin-inline: auto; }
+/* 로그인 후 틀 안에서는 틀의 기둥 폭(목록형 880)까지만 — 제목·태그·격자와 같은 선 (base.css .page-pane) */
+:global(.page-pane) > .search:global(.search) { max-width: var(--pane-col); margin-inline: auto; }
 
 /* 태그 칩 — 흰 면 + 회색 경계 알약(36), 고른 칩은 옅은 빨강 면 + 빨강 경계 */
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
