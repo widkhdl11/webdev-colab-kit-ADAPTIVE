@@ -113,8 +113,8 @@ describe("결제 승인 → 승인 요청", () => {
     expect(fields?.requestId).toBe(req?.request_id);
 
     const haru = await signedInClient("haru_creator");
-    const list = (await haru.rpc("my_approval_requests")).data as { order_no: string; fan_nickname: string }[];
-    expect(list.find((x) => x.order_no === r.orderNo)?.fan_nickname).toBe("별빛");
+    const list = (await haru.rpc("my_creator_action_items")).data as { order_no: string; nickname: string }[];
+    expect(list.find((x) => x.order_no === r.orderNo)?.nickname).toBe("별빛");
   });
 
   it("INV-M5 (S5): 성공 주소를 다시 열어도 승인 API 는 한 번, 승인 요청도 하나", async () => {
@@ -180,8 +180,8 @@ describe("크리에이터가 보낸 선물도 결제 승인까지 (session-login
       });
       expect(out).toEqual({ ok: true, orderId: r.orderId, orderNo: r.orderNo });
       const momo = await signedInClient("momo_creator");
-      const list = (await momo.rpc("my_approval_requests")).data as { order_no: string; fan_nickname: string }[];
-      expect(list.find((x) => x.order_no === r.orderNo)?.fan_nickname).toBe("하루");
+      const list = (await momo.rpc("my_creator_action_items")).data as { order_no: string; nickname: string }[];
+      expect(list.find((x) => x.order_no === r.orderNo)?.nickname).toBe("하루");
       // 보낸 사람(하루)의 보낸 선물 목록에도 나온다
       const haru = await signedInClient("haru_creator");
       const mine = (await haru.rpc("my_gifts")).data as { order_no: string }[];

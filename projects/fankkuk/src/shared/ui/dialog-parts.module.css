@@ -1,0 +1,34 @@
+/* 창 안의 공통 조각 — 시안 v21-addendum3/cre-action-center-c.html 의 .dlg 안 칸(.box-info·.kv·.gift-who·.step·.btns·.done-l·.note·.help·.fans·.f2).
+   창 자체(덮개·제목·닫기)는 bottom-sheet.tsx. 값은 v20 토큰. */
+.stack { display: grid; gap: var(--space-4); }
+.who { display: flex; align-items: center; gap: var(--space-4); }
+.who b { display: block; font-weight: var(--fw-btn); }
+.avatar { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-pill); background: var(--gray-100); font-weight: var(--fw-btn); }
+.boxInfo { display: grid; gap: var(--space-1); margin: 0; padding: var(--space-4); border-radius: var(--r-card); background: var(--gray-50); }
+.kv { display: flex; justify-content: space-between; gap: var(--space-4); }
+.kv dt { color: var(--gray-600); }
+.kv dd { margin: 0; text-align: right; font-weight: var(--fw-btn); }
+.btns { display: grid; gap: var(--space-2); }
+.btns > .btn, .btns > a, .btns > button { width: 100%; justify-content: center; }
+.two { grid-template-columns: 1fr 1fr; }
+.q { font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); }
+.note { color: var(--gray-600); }
+.done { display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); }
+.done svg { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.help { display: grid; gap: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+.help p { color: var(--gray-600); }
+.f2 { display: grid; grid-template-columns: 1fr 1.4fr; gap: var(--space-4); align-items: end; }
+.fs { margin: 0; padding: 0; border: 0; min-width: 0; }
+.fs legend { margin-bottom: var(--space-2); font-weight: var(--fw-btn); }
+.fans { display: grid; gap: var(--space-2); }
+.opt { display: flex; align-items: center; gap: var(--space-3); min-height: 48px; padding: 0 var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-btn); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--ink); background: var(--gray-50); }
+.opt input { width: 20px; height: 20px; accent-color: var(--ink); }
+.error { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--ink); font-weight: var(--fw-bold); }
+.errorMark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: var(--fw-bold); line-height: 1; }
+.check { display: flex; align-items: center; gap: var(--space-3); }
+.check input { width: 20px; height: 20px; accent-color: var(--ink); }
+
+@media (max-width: 768px) {
+  .f2 { grid-template-columns: 1fr; }
+}

@@ -29,6 +29,7 @@ const UNMATCHED = {
   suspected_theft: false,
   state: "waiting",
   deadline_at: "2026-10-10T01:00:00+00:00",
+  share_movable: false,
 };
 
 const HELD_PARCEL = {
@@ -44,6 +45,7 @@ const HELD_PARCEL = {
   suspected_theft: true,
   state: "on_hold",
   deadline_at: null,
+  share_movable: false,
 };
 
 const DUE = {
@@ -83,6 +85,7 @@ describe("보류 상자 읽기 (office-workflow INV-W5·W6·W7, inbound-address-
         suspectedTheft: false,
         state: "waiting",
         deadlineAt: UNMATCHED.deadline_at,
+        shareMovable: false,
       },
     ]);
   });

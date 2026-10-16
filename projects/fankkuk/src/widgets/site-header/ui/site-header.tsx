@@ -27,7 +27,7 @@ const SITE_NAV: NavItem[] = [
 export type SiteHeaderProps =
   | { role: "guest"; current?: string }
   | { role: "fan"; current?: string; nickname: string; gifts: HeaderGift[]; actionCount: number }
-  | { role: "creator"; current?: string; nickname: string; pendingCount: number };
+  | { role: "creator"; current?: string; nickname: string; actionCount: number };
 
 function GuestTopBar({ current }: { current?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -138,7 +138,7 @@ export function SiteHeader(props: SiteHeaderProps) {
       current={props.current}
       homeHref={CREATOR_HOME}
       nickname={props.nickname}
-      counts={{ pending: props.pendingCount }}
+      counts={{ actions: props.actionCount }}
     />
   );
 }

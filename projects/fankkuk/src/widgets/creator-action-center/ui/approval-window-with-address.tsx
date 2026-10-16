@@ -4,28 +4,32 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { addressOnFileText } from "@/entities/address/ui/address-on-file-text";
 import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
-import type { DecidedRequestView } from "@/entities/order/model/decided-request";
 import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
-import { ApprovalRequestList, type ApprovalAddressStep } from "@/features/approval-request/ui/approval-request-list";
+import { ApprovalWindow, type ApprovalAddressStep } from "@/features/approval-request/ui/approval-window";
 import { AddressChangeForm } from "@/features/creator-address/ui/address-change-form";
 import { ADDRESS_KEY_MISSING_TEXT } from "@/features/creator-address/ui/address-copy";
-import s from "./approval-requests.module.css";
+import s from "./creator-action-center.module.css";
 
 // 승인 창의 주소 단계를 조립한다(approval-signature INV-S13 · address-protection INV-P16). 승인 기능과 주소 기능은 서로 import 하지
 // 않으므로(FSD) 위젯이 둘을 잇는다. 주소가 없으면 입력 칸, 있으면 이름표·등록한 날과 「주소 바꾸기」. 주소 자체는 보이지 않는다.
 // 주소 등록과 승인은 서명을 따로 받는다 — 여기서 주소를 저장해도 승인은 아래 서명 칸을 눌러야 일어난다.
 // 「등록한 날」은 저장 직후에는 이 브라우저의 시각이다 — 다음에 화면을 열면 서버에 저장된 시각으로 바뀐다(날짜만 보여 차이가 거의 없다).
 
-export function ApprovalListWithAddress({
-  requests,
-  decided,
-  now,
+// 크리에이터 처리할 일의 승인 요청 줄이 여는 승인 창(action-center INV-J8) — 그 요청 하나에 주소 단계를 붙인다.
+export function ApprovalWindowWithAddress({
+  request,
+  dueAt,
+  daysLeftText,
+  open,
+  onClose,
   address,
   sealingKeyPem,
 }: {
-  requests: readonly ApprovalRequestView[];
-  decided: readonly DecidedRequestView[];
-  now: string;
+  request: ApprovalRequestView;
+  dueAt: string;
+  daysLeftText: string;
+  open: boolean;
+  onClose: () => void;
   /** 로그인한 크리에이터의 주소 상태. 크리에이터 줄이 없거나 읽지 못했으면 null */
   address: MyAddressStatus | null;
   /** 주소 봉인 공개키(PEM). 없으면 주소 입력 대신 안내만 보인다. */
@@ -99,7 +103,7 @@ export function ApprovalListWithAddress({
             setEditing(false);
             setRefocusChange(true);
           }}
-          onLoginExpired={() => router.push("/login?next=/creator/requests")}
+          onLoginExpired={() => router.push("/login?next=/creator/actions")}
         />
       </>
     );
@@ -120,5 +124,5 @@ export function ApprovalListWithAddress({
       setSavedMsg(null);
     },
   };
-  return <ApprovalRequestList requests={requests} decided={decided} now={now} address={step} />;
+  return <ApprovalWindow request={request} dueAt={dueAt} daysLeftText={daysLeftText} open={open} onClose={onClose} address={step} />;
 }

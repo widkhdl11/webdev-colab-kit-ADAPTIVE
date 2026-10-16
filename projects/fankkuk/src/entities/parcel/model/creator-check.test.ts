@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { isCreatorCheckDeadlinePassed } from "./creator-check";
 
-// 크리에이터 확인의 답할 기한 (office-workflow INV-W6, 2026-10-12 (2) 문제집 D3 ②). 기한(dueAt)은 DB 가 검수 완료 + 168시간으로 넘긴다 —
-// DB(answer_creator_check)는 그 시각부터 답을 받지 않으므로, 화면도 그 시각부터 버튼을 감춘다.
+// 블루투스 상자 고를 기한 (office-workflow INV-W6·W13). 기한(dueAt)은 DB 가 검수 완료 + 168시간으로 넘긴다 —
+// DB(choose_creator_check·cancel_creator_check·office_process_creator_check)는 그 시각부터 받지 않으므로, 화면도 그 시각부터 버튼을 감춘다.
 
 describe("크리에이터 확인 기한", () => {
   const due = "2026-10-19T03:00:00.000Z";

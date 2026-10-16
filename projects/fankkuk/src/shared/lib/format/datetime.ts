@@ -52,6 +52,22 @@ export function formatStamp(iso: string): string {
   return `${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
 }
 
+const monthDayKo = new Intl.DateTimeFormat("ko-KR", { timeZone: TZ, month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+
+/** "10월 12일" (서울 날짜) — 문장·칸 안의 날짜 */
+export function formatMonthDayKo(iso: string): string {
+  const parts = monthDayKo.formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("month")}월 ${get("day")}일`;
+}
+
+/** "10월 15일 14:20" (서울 시각) */
+export function formatMonthDayTimeKo(iso: string): string {
+  const parts = monthDayKo.formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("month")}월 ${get("day")}일 ${get("hour")}:${get("minute")}`;
+}
+
 /** "10-03" (서울 날짜) */
 export function formatMonthDay(iso: string): string {
   return formatStamp(iso).slice(0, 5);

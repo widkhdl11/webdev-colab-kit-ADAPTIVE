@@ -28,3 +28,13 @@ describe("seoulDaysUntil — 서울 날짜로 센 남은 날", () => {
     expect(seoulDaysUntil("2026-10-17T14:50:00+00:00", "2026-10-17T00:10:00+00:00")).toBe(0);
   });
 });
+
+describe("formatMonthDayKo · formatMonthDayTimeKo", () => {
+  it("서울 날짜로 「10월 12일」, 시각은 24시간 「10월 15일 14:20」 — 자정 넘는 UTC 시각도 서울 날짜", async () => {
+    const { formatMonthDayKo, formatMonthDayTimeKo } = await import("./datetime");
+    expect(formatMonthDayKo("2026-10-12T01:00:00Z")).toBe("10월 12일");
+    expect(formatMonthDayKo("2026-10-12T16:00:00Z")).toBe("10월 13일");
+    expect(formatMonthDayTimeKo("2026-10-15T05:20:00Z")).toBe("10월 15일 14:20");
+    expect(formatMonthDayTimeKo("2026-10-15T15:05:00Z")).toBe("10월 16일 00:05");
+  });
+});

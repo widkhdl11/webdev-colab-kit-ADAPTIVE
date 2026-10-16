@@ -5,11 +5,12 @@
 .grip { display: block; width: 40px; height: 4px; margin: 0 auto 12px; border-radius: var(--r-pill); background: var(--grip); }
 .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .title { margin: 0; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); letter-spacing: 0; } /* v11 카드 제목 단계 */
-.close { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border: 0; border-radius: var(--r-btn); background: var(--surface); color: var(--ink); cursor: pointer; }
-.close:hover { background: var(--surface-hover); }
+.meta { margin-top: var(--space-1); }
+.close { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border: 0; border-radius: var(--r-pill); background: none; color: var(--ink); cursor: pointer; } /* 시안 .dlg-x — 면 없음, 눌렀을 때만 옅은 면 */
+.close:hover { background: var(--gray-50); }
 
 @media (min-width: 768px) {
   .sheet { inset: 0; margin: auto; max-width: 480px; height: fit-content; border-radius: var(--r-panel); }
-  .body { padding: 28px 28px 32px; }
+  .body { padding: var(--space-6); } /* 시안 .dlg 안쪽 여백 24 */
   .grip { display: none; }
 }

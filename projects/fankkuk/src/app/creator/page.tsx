@@ -4,7 +4,7 @@ import { readMyCreatorLink, readMyCreatorLook } from "@/entities/creator/api/cre
 import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-settings";
 import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl, nameInitial } from "@/entities/creator/model/link-images";
 import { readNotices } from "@/entities/notice/api/notice-reads";
-import { readMyApprovalRequests } from "@/entities/order/api/creator-request-rows";
+import { readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { readMyIncomingGifts } from "@/entities/order/api/incoming-gift-rows";
 import { FAN_HOME } from "@/entities/session/model/home-path";
@@ -19,15 +19,15 @@ export const dynamic = "force-dynamic";
 
 // 크리에이터 메인 — 로그인한 크리에이터의 첫 화면(시안 v21-addendum3/cre-home.html). 맨 앞 프로필 구간은 본인 읽기 —
 // 공개 이름·소개·팬덤 이름·두 색(my_creator_settings, creator-link INV-E13)·프로필 사진(my_creator_link)·배경사진·심볼(my_creator_look). 본인 확인 전에도 나온다.
-// 승인 요청(my_approval_requests)·받은 선물 진행 단계(my_incoming_gifts, INV-W9)·열람 기록(my_access_log)·공지(list_notices)·
+// 크리에이터 처리할 일(my_creator_action_items — 사이드바 숫자와 바로가기 「처리할 일」이 같은 결과, action-center INV-J6)·받은 선물 진행 단계(my_incoming_gifts, INV-W9)·열람 기록(my_access_log)·공지(list_notices)·
 // 내가 보낸 선물(my_gifts — 로그인한 사람이 보낸 주문)은 DB. 모두 인자 없이 로그인 토큰의 사람 것만 돌려준다.
 // 팬은 팬 메인으로, 로그인하지 않았으면 로그인으로 보낸다.
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect("/login");
-  const [requests, incoming, accessLog, sentGifts, allNotices, settings, link, look] = await Promise.all([
-    readMyApprovalRequests(supabase),
+  const [actions, incoming, accessLog, sentGifts, allNotices, settings, link, look] = await Promise.all([
+    readCreatorActionItemsOrNull(supabase),
     readMyIncomingGifts(supabase),
     readMyAccessLog(supabase, CREATOR_HOME_LOG_ROWS),
     readMyGiftViews(supabase),
@@ -45,7 +45,7 @@ export default async function Page() {
     .map(({ id, title, date }) => ({ id, title, date }));
   return (
     <>
-      <SiteHeader role="creator" current="/creator" nickname={viewer.nickname ?? ""} pendingCount={requests.length} />
+      <SiteHeader role="creator" current="/creator" nickname={viewer.nickname ?? ""} actionCount={actions?.length ?? 0} />
       <CreatorHomePage
         profile={{
           name: publicName,
@@ -58,12 +58,11 @@ export default async function Page() {
           symbolUrl: creatorSymbolUrl(photoBase, look?.symbolPath ?? null),
         }}
         accountHref={ACCOUNT_HREF.creator}
-        requests={requests}
+        actionCount={actions?.length ?? null}
         accessLog={accessLog}
         notices={notices}
         incoming={incoming}
         sentGifts={sentGifts}
-        now={new Date().toISOString()}
       />
       <SiteFooter />
     </>

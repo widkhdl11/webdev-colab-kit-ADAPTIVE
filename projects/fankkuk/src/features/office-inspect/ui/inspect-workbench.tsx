@@ -48,7 +48,7 @@ const FINISHED: Record<Finished["state"], { title: string; text: string }> = {
   return_waiting: { title: "반송 대기로 넘어갔어요", text: "출고 화면에서 반송 송장을 출력해요." },
   held: {
     title: "크리에이터 확인을 기다려요",
-    text: `크리에이터가 받기를 고르면 검수 완료로, 돌려보내기를 고르면 반송 대기로 넘어가요. ${CREATOR_CHECK_DAYS}일 안에 답이 없으면 반송 대기로 넘어가요.`,
+    text: `크리에이터가 받기·거절을 고르면 「들어온 상자」 맨 위 목록에서 처리해요 — 받기는 검수 완료로, 거절은 반송 대기로 넘어가요. ${CREATOR_CHECK_DAYS}일이 지나면 고른 쪽대로, 고르지 않았으면 반송 대기로 넘어가요.`,
   },
 };
 

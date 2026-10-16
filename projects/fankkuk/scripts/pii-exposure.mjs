@@ -68,8 +68,14 @@ export const PII_FUNCTIONS = {
   office_print_return_label: "반송 송장 출력 → 몫 닫기, 돌려주는 것은 원 송장 봉투 번호",
   office_scan_inbound: "입고 스캔 → 몫 닫기, 돌려주는 것은 결과·QR(office-workflow INV-W1)",
   office_scan_inspect: "검수 완료 스캔 → 몫 닫기, 돌려주는 것은 다음 단계 글자",
-  // 크리에이터가 블루투스 제품 확인에 답한다(문제집 D3 ②). 같은 office_sync 경로로 닿는다 — 크리에이터 확인은 역조공 몫에 생기지 않지만 공통 정리를 부른다
-  answer_creator_check: "크리에이터 확인 답(받기·돌려보내기) → 몫 닫기, 돌려주는 것은 결과 글자 여섯 가지(not_found·expired·already·closed·accepted·returned)",
+  // 크리에이터가 고른 블루투스 상자의 운영자 처리(office-workflow INV-W13). 같은 office_sync 경로로 닿는다 — 크리에이터 확인은 역조공 몫에 생기지 않지만 공통 정리를 부른다
+  office_process_creator_check: "크리에이터 선택의 운영자 처리 → 몫 닫기, 돌려주는 것은 결과 글자(accepted·returned·no_choice·changed·processed·expired·closed·not_found)",
+  // 운영자 몫 옮기기(inbound-address-code INV-C11) — 옮긴 상자로 office_sync 를 부른다. 주소를 읽어 돌려주지 않는다
+  // 운영자 잇기(inbound-address-code INV-C12) — 입고 마무리(office_finish_held_receive → office_sync)로 닿는다. 돌려주는 것은 결과 글자(linked)
+  admin_link_held_parcel: "6자리 없이 온 상자를 문의한 팬의 입고 전 상자에 잇기 → 몫 정리 경로, 돌려주는 것은 결과 글자(linked)",
+  // 7일 자동 처리(office-workflow INV-W6·W13) — 받기를 고른 확인 대기 상자를 검수 완료로 넘길 때 office_sync 를 부른다. 돌려주는 것은 처리 건수(jsonb)
+  office_run_expiry: "기한 자동 처리 → 몫 정리 경로, 돌려주는 것은 단계별 처리 건수",
+  admin_move_held_share: "찾기로 이은 상자를 같은 크리에이터의 다른 팬별 선물로 옮김 → 몫 정리, 돌려주는 것은 결과 글자(moved)",
 };
 
 // 메모 표를 참조해도 되는 함수 — 스펙 together INV-F8 의 셋(등록 때 저장 · 보낸 팬 본인의 선물 상세 · 보낸 팬 본인의 보낸 선물 목록).

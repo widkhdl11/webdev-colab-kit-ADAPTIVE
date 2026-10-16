@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { KIND_LABEL, NEXT_STEP_TEXT, STATE_LABEL, TIER_LABEL, type StateTone } from "@/entities/parcel/model/office-labels";
 import type { OfficeParcel } from "@/entities/parcel/model/office-parcel";
 import { formatStamp } from "@/shared/lib/format/datetime";
@@ -52,7 +52,8 @@ function NextStepCell({ parcel }: { parcel: OfficeParcel }) {
   );
 }
 
-export function ParcelsPanel({ rows }: { rows: readonly OfficeParcel[] }) {
+/** top = 목록 위에 붙일 구간(크리에이터가 고른 블루투스 상자의 운영자 처리 — office-workflow INV-W13). 라우트가 조립해 넘긴다 */
+export function ParcelsPanel({ rows, top }: { rows: readonly OfficeParcel[]; top?: ReactNode }) {
   const [tab, setTab] = useState<ParcelFilterTab>("all");
   const [query, setQuery] = useState("");
   const shown = filterParcels(rows, tab, query);
@@ -68,6 +69,7 @@ export function ParcelsPanel({ rows }: { rows: readonly OfficeParcel[] }) {
       </div>
 
       <div className={a.stack}>
+        {top}
         <div className={a.toolbar}>
           <div className={a.tabs} role="group" aria-label="상태로 거르기">
             {PARCEL_TABS.map((t) => (
@@ -139,7 +141,7 @@ export function ParcelsPanel({ rows }: { rows: readonly OfficeParcel[] }) {
           </table>
         </div>
         <p className={a.hint}>
-          구간은 크기와 무게 중 큰 쪽으로 정해요. 대형을 넘는 상자는 검수에서 반송해요. 상자 상태는 입고·검수·출고 화면에서 스캔할 때만 바뀌어요 — 이 목록에는 상태를 바꾸는 버튼이 없어요. 원 송장은 상자의 QR 번호가 적힌 봉투에 따로 보관하고, 반송·출고가 끝나면 파쇄해요.
+          구간은 크기와 무게 중 큰 쪽으로 정해요. 대형을 넘는 상자는 검수에서 반송해요. 상자 상태는 입고·검수·출고 화면에서 스캔할 때만 바뀌어요 — 이 목록에는 상태를 바꾸는 버튼이 없어요. 원래 송장은 상자의 QR 번호가 적힌 봉투에 따로 보관하고, 반송·출고가 끝나면 파쇄해요.
         </p>
       </div>
     </>

@@ -5,8 +5,9 @@ import { canReportNotMine, isMissing, isWaybillEditable, type ShareBox } from "@
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
 import { countBatchStates, summarizeSent, toSentBatches, type SentSummary } from "@/entities/revgift/model/sent-batches";
 import { sentStateTag } from "@/entities/revgift/ui/received-status";
-import { shareAddressCode, shareFinderBoxes } from "@/features/box-waybill/model/box-targets";
-import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
+import { shareAddressCode } from "@/features/box-waybill/model/box-targets";
+import type { SentBoxCandidate } from "@/features/box-waybill/ui/find-sent-box";
+import { FindSentBoxButton } from "@/features/box-waybill/ui/find-sent-box-button";
 import { NotMineButton } from "@/features/box-waybill/ui/not-mine-button";
 import { ReceivingAddress } from "@/features/box-waybill/ui/receiving-address";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
@@ -24,7 +25,7 @@ import s from "./revgift-sent.module.css";
 // 받는 주소(INV-R14, inbound-address-code INV-C2·C3): 팬(몫)마다 사무실 주소 + 그 몫의 6자리. 묶음에 officeAddress 가 있을 때
 // (결제가 끝났고 보낼 상자가 남은 묶음) + my_share_boxes 가 그 몫의 6자리를 줄 때(보낸 크리에이터 본인 · 유효할 때)만 그린다.
 // 6자리 빠진 기본 사무실 주소는 그리지 않는다. 팬의 받기를 기다리지 않는다 — 받기는 출고 전에만 있으면 된다.
-// 받는 주소 없이 보낸 상자는 「받는 주소 없이 보냈어요」(INV-C4 ②), 입고 뒤 출고 전에는 「제가 보낸 게 아니에요」(INV-C8).
+// 받는 주소 없이 보낸 상자는 아직 입고 전인 줄마다 「내 상자 찾기」(INV-C4 ②-나, 2026-10-16 카드 d96 ①), 입고 뒤 출고 전에는 「제가 보낸 게 아니에요」(INV-C8).
 // 두 단(design-rules 00절 「본문 틀」, 시안 v22-width/cre-revgift-sent-ab.html): 주 내용 880 + 오른쪽 요약 칸 288, 간격 32.
 // 본문 영역 1000 이상에서 두 단·칸은 스크롤을 따라오고, 좁으면 한 단에 칸이 위. 칸에는 이 화면에 이미 있는 값만 —
 // 몫 목록을 센 숫자(summarizeSent), 머리에서 옮긴 「역조공 보내기」, 아래 「알아 두세요」에 있던 송장번호 안내 한 줄.
@@ -181,6 +182,7 @@ export function RevgiftSentPage({
   paid,
   officeAddress,
   tabs,
+  candidates = [],
 }: {
   rows: readonly SentRevgift[];
   boxes: readonly ShareBox[];
@@ -188,11 +190,13 @@ export function RevgiftSentPage({
   officeAddress: string;
   /** 페이지 머리 바로 아래에 둘 화면 간 탭(design-rules 11절). 머리는 늘 본문 맨 앞이다(00절) */
   tabs?: ReactNode;
+  /** 「내 상자 찾기」 후보 — 로그인한 크리에이터가 보낸 결제 끝·입고 전·닫히지 않은 몫(찾기와 같은 판정). 이 줄에만 버튼을 둔다 */
+  candidates?: readonly SentBoxCandidate[];
 }) {
   const batches = toSentBatches(rows, officeAddress);
   const boxByOrder = new Map(boxes.map((b) => [b.orderNo, b]));
-  // 받는 주소 없이 보냈어요(INV-C4 ②) — 고를 수 있는 몫의 판정은 features/box-waybill/model/box-targets.ts
-  const finderBoxes = shareFinderBoxes(rows, boxes);
+  // 내 상자 찾기(INV-C4 ②-나, 카드 d96 ①) — 아직 입고 전인 줄마다. 늦지 않아도 누를 수 있고 처리할 일 숫자에는 들지 않는다
+  const findable = new Set(candidates.map((c) => c.shareId));
   return (
     <div className={s.split}>
       <div className={s.mainc}>
@@ -254,6 +258,17 @@ export function RevgiftSentPage({
                           <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
                         </div>
                       ) : null}
+                      {box && findable.has(box.shareId) ? (
+                        <div className={s.rowMore}>
+                          <FindSentBoxButton
+                            className="btn btn--line btn--sm"
+                            candidates={candidates}
+                            shareId={box.shareId}
+                            meta={`${formatDateTime(b.sentAt)} 보냄`}
+                            label={`내 상자 찾기(${x.fanNickname}님)`}
+                          />
+                        </div>
+                      ) : null}
                       {box && canReportNotMine(box.state) ? (
                         <div className={s.rowMore}>
                           <NotMineButton target={{ kind: "share", id: box.shareId }} boxName={`${x.fanNickname}님 상자`} reported={box.reportedNotMine} />
@@ -268,19 +283,6 @@ export function RevgiftSentPage({
             );
           })
         )}
-        {finderBoxes.length > 0 ? (
-          <section className="card" aria-labelledby="rv-find">
-            <h2 className="t-card" id="rv-find">
-              받는 주소 없이 보냈어요
-            </h2>
-            <p className={s["find-text"]}>
-              받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호와 택배사가 맞으면 고른 팬의 상자로 입고돼요. 틀린 입력은 하루에 다섯 번까지예요.
-            </p>
-            <div className={s["find-box"]}>
-              <FindMyBox boxes={finderBoxes} />
-            </div>
-          </section>
-        ) : null}
         <section className="card">
           <strong className="t-card">알아 두세요</strong>
           <ul className={s.notes}>

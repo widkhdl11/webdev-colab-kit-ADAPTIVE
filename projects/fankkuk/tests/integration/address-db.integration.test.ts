@@ -81,7 +81,7 @@ describe("INV-P9: 주소·실명·전화번호는 공개 API 로 조회되지 �
       await fan.rpc("my_follows"),
       await fan.rpc("list_creators"),
       await creator.rpc("my_profile"),
-      await creator.rpc("my_approval_requests"),
+      await creator.rpc("my_creator_action_items"),
       await creator.rpc("my_decided_requests"),
       await anonClient().rpc("list_creators"),
     ];

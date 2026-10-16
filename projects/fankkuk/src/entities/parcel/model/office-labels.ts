@@ -36,7 +36,7 @@ export const NEXT_STEP_TEXT: Record<NextStep, string> = {
   wait_difference: "팬의 차액 결제를 기다려요",
   wait_accept: "팬의 받기를 기다려요",
   wait_expiry: "자동 처리 대기(반송 예정)",
-  held: "크리에이터의 받기·돌려보내기를 기다려요(7일 안에 답이 없으면 반송 대기)",
+  held: "크리에이터가 받기·거절을 고르면 위 목록에서 처리해요(7일이 지나면 고른 쪽대로, 고르지 않았으면 반송 대기)",
   on_hold: "보류 중이라 출고하지 않아요 — 미확인 입고 화면에서 확인",
   print_return: "출고 화면에서 QR 스캔하면 반송 송장 출력",
   confirm_return: "출고 화면에서 반송 송장 바코드 스캔",

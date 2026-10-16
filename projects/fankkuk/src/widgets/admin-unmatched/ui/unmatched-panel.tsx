@@ -3,6 +3,7 @@ import { HOLD_REASON_LABEL } from "@/entities/parcel/model/office-labels";
 import { canLinkHeld, canReturnHeld, daysLeft, isUnmatchedUrgent, ratePercent, type FindFlag, type InboundMetrics, type UnmatchedParcel } from "@/entities/parcel/model/office-lists";
 import { LinkHeldButton } from "@/features/admin-held-link/ui/link-held-button";
 import { ReturnHeldButton } from "@/features/admin-held-return/ui/return-held-button";
+import { MoveShareButton } from "@/features/admin-share-move/ui/move-share-button";
 import { formatMonthDay, formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 import u from "./unmatched.module.css";
@@ -19,7 +20,7 @@ const TOTAL_DAYS = 7;
 const STATE_TAG: Record<UnmatchedParcel["state"], { text: string; className: string }> = {
   waiting: { text: "주인 찾기 대기", className: a.tag },
   matched: { text: "입고 완료", className: `${a.tag} ${a.tagBrand}` },
-  expired: { text: "반송 대상", className: `${a.tag} ${a.tagInk}` },
+  expired: { text: "반송 대기", className: `${a.tag} ${a.tagInk}` },
   on_hold: { text: "출고 멈춤", className: `${a.tag} ${a.tagWarn}` },
 };
 
@@ -46,10 +47,10 @@ function Metrics({ m }: { m: InboundMetrics }) {
           </span>
         </div>
         <div className={u.stat}>
-          <span className={u.statLabel}>확인 문자가 틀려 거부된 입력</span>
+          <span className={u.statLabel}>확인 문자가 틀려 받지 않은 입력</span>
           <span className={u.statValue}>{percentText(m.codeCheckRejects, m.codeInputs)}</span>
           <span className={u.statSub}>
-            6자리 입력 {m.codeInputs}번 중 {m.codeCheckRejects}번 (쓰지 않는 글자로 거부 {m.codeFormatRejects}번)
+            6자리 입력 {m.codeInputs}번 중 {m.codeCheckRejects}번 (쓰지 않는 글자라 받지 않음 {m.codeFormatRejects}번)
           </span>
         </div>
         <div className={u.stat}>
@@ -68,7 +69,7 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
     <>
       <div className={a.pageHead}>
         <div>
-          <h1>미확인 입고</h1>
+          <h1>보류 상자</h1>
           <p>받는 주소 6자리로 입고되지 않아 보류된 상자와, 분쟁·「제가 보낸 게 아니에요」로 출고를 멈춘 상자예요. 출고 목록에는 나오지 않아요.</p>
         </div>
       </div>
@@ -86,7 +87,7 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
               <thead>
                 <tr>
                   <th scope="col">들어온 날</th>
-                  <th scope="col">원 송장 바코드</th>
+                  <th scope="col">원래 송장 바코드</th>
                   <th scope="col">택배사</th>
                   <th scope="col">보류 사유</th>
                   <th scope="col">보낸 사람</th>
@@ -143,6 +144,8 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
                         <td className={a.act}>
                           {canLinkHeld(r, now) ? <LinkHeldButton id={r.id} waybillNo={r.waybillNo} /> : null}
                           {canReturnHeld(r, now) ? <ReturnHeldButton source={r.source} id={r.id} waybillNo={r.waybillNo} /> : null}
+                          {/* 찾기(②-나)로 이은 6자리 없는 역조공 상자·검수 전 줄에만 — 크리에이터가 잘못 골랐다는 문의가 오면 같은 크리에이터의 다른 팬별 선물로(INV-C11). 판정은 DB(share_movable) */}
+                          {r.shareMovable ? <MoveShareButton id={r.id} waybillNo={r.waybillNo} /> : null}
                         </td>
                       </tr>
                     );
@@ -152,7 +155,7 @@ export function UnmatchedPanel({ rows, flags, metrics, now }: Props) {
             </table>
           </div>
           <p className={a.hint}>
-            보낸 분 이름·사진·주소는 남기지 않아요. 7일 안에 입고되지 않으면 원 송장 주소로 착불 반송해요. 출고가 멈춘 상자는 보류된 때부터 7일 뒤 주문에서 떼어 반송해요 — 「제가 보낸 게 아니에요」·떼어 낸 상자는 바로 넘길 수 있어요.
+            보낸 분 이름·사진·주소는 남기지 않아요. 7일 안에 입고되지 않으면 원래 송장 주소로 착불 반송해요. 출고가 멈춘 상자는 보류된 때부터 7일 뒤 주문에서 떼어 반송해요 — 「제가 보낸 게 아니에요」·떼어 낸 상자는 바로 넘길 수 있어요.
           </p>
         </section>
 

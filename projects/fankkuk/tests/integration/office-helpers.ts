@@ -152,7 +152,10 @@ export function deleteTestUnmatched(): void {
   psql(
     "begin; set local session_replication_role = replica; " +
       "do $$ begin if to_regclass('public.office_held_links') is not null then " +
-      "delete from public.office_held_links where unmatched_id in (select id from public.office_unmatched where shelf like 'T-%'); end if; end $$; commit;",
+      "delete from public.office_held_links where unmatched_id in (select id from public.office_unmatched where shelf like 'T-%'); end if; " +
+      // 운영자 몫 옮기기 기록(INV-C11)도 추가만 — 표가 있을 때만
+      "if to_regclass('public.office_share_moves') is not null then " +
+      "delete from public.office_share_moves where unmatched_id in (select id from public.office_unmatched where shelf like 'T-%'); end if; end $$; commit;",
   );
   psql("delete from public.office_unmatched where shelf like 'T-%'");
   // 찾기 시도 기록·반복 실패 표시 — 남겨 두면 하루 한도(5번)에 걸려 다음 시험이 막힌다. 로컬 DB 에만 붙는다.

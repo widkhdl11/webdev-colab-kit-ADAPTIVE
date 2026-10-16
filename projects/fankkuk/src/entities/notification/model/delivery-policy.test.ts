@@ -19,6 +19,9 @@ function specTable(): Map<string, boolean> {
   for (const line of text.slice(start, end).split("\n")) {
     const m = /^\| .*\(([a-z_]+)\) \| [^|]+ \| (끌 수 없음|끌 수 있음) \|/.exec(line);
     if (m) rows.set(m[1]!, m[2] === "끌 수 없음");
+    // 역조공 받기 줄은 스펙 표에 「(코드 이름은 구현 때)」로 적혀 있다(INV-N20) — 구현한 코드 이름(revgift_offer)으로 읽는다. 표의 코드 칸을 채우면 이 두 줄은 지운다
+    const pending = /^\| 역조공 받기 — 재알림 포함 \(코드 이름은 구현 때\) \| [^|]+ \| (끌 수 없음|끌 수 있음) \|/.exec(line);
+    if (pending) rows.set("revgift_offer", pending[1] === "끌 수 없음");
   }
   return rows;
 }
@@ -30,9 +33,9 @@ describe("꼭 가는 알림 목록 (INV-N6)", () => {
     for (const kind of NOTIFICATION_KINDS) expect([kind, NOTIFICATION_POLICY[kind].mustDeliver]).toEqual([kind, table.get(kind)]);
   });
 
-  it("INV-N6 · INV-N21: 끌 수 없는 알림은 열하나 — 승인 요청·돌려보내는 선물·확인할 선물·돌려보낼 상자·안 온 상자 둘·거절 알림·추가 결제·결제 취소 둘·코드 없이 온 상자", () => {
+  it("INV-N6 · INV-N21 · INV-N20: 끌 수 없는 알림은 열둘 — 승인 요청·돌려보내는 선물·확인할 선물·돌려보낼 상자·안 온 상자 둘·거절 알림·추가 결제·결제 취소 둘·코드 없이 온 상자·역조공 받기", () => {
     expect([...MUST_DELIVER_KINDS].sort()).toEqual(
-      ["approval_request", "hold", "creator_check", "hold_fan", "box_missing", "gift_pending_box", "gift_undelivered", "difference_due", "payment_canceled", "difference_canceled", "box_no_code"].sort(),
+      ["approval_request", "hold", "creator_check", "hold_fan", "box_missing", "gift_pending_box", "gift_undelivered", "difference_due", "payment_canceled", "difference_canceled", "box_no_code", "revgift_offer"].sort(),
     );
   });
 
@@ -45,7 +48,7 @@ describe("꼭 가는 알림 목록 (INV-N6)", () => {
 
   it("INV-N6: 설정 화면의 안내 목록 — 팬은 팬이 받는 끌 수 없는 알림, 크리에이터는 승인 요청·돌려보내는 선물·확인할 선물(INV-N13, 2026-10-12 D2·D3 ②)", () => {
     const fan = mustDeliverLabels("fan");
-    expect(fan).toEqual(["돌려보낼 상자", "아직 도착하지 않은 상자", "전해지지 못한 선물", "추가 결제 요청", "결제 취소", "추가 결제 취소", "코드 없이 온 상자"]);
+    expect(fan).toEqual(["돌려보낼 상자", "아직 도착하지 않은 상자", "전해지지 못한 선물", "추가 결제 요청", "결제 취소", "추가 결제 취소", "받는 주소 없이 보낸 상자", "역조공 받기"]);
     expect(mustDeliverLabels("creator")).toEqual(["승인 요청", "돌려보내는 선물", "확인할 선물"]);
   });
 

@@ -3,8 +3,7 @@ import type { ReactNode } from "react";
 import type { AddressAccessEntry } from "@/entities/address/model/access-log";
 import type { CreatorColors } from "@/entities/creator/model/creator-color";
 import { CreatorHead } from "@/entities/creator/ui/creator-head";
-import { approvalTimeLeftLabel } from "@/entities/order/model/approval-time-left";
-import type { ApprovalRequestView } from "@/entities/order/model/creator-view";
+import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { isIncomingInProgress, type IncomingGiftView } from "@/entities/order/model/incoming-gift";
 import { CREATOR_PROFILE_EDIT } from "@/entities/session/model/home-path";
@@ -17,9 +16,10 @@ import { HomeNotices, type HomeNotice } from "./home-notices";
 // 12절: 제목 「홈」 없이 프로필 구간이 본문 맨 앞이고 h1 은 공개 이름. 프로필 구간 = 배경 띠(배경 사진, 없으면 퍼스널 컬러)·사진(테두리 퍼스널 컬러)·
 // 팬덤 뱃지(면 팬컬러)·한 줄 소개·「프로필 수정」·「계정 설정」(creator-link INV-E13·E14). 그 아래 바로가기 한 줄 목록(0000절 — 카드 좌우 나열 대신) · 공지.
 // 필수 다섯(오늘 승인할 선물 · 진행 중인 선물 · 최근 열람 기록 · 공지 · 내가 보낸 선물, 카드 d15)은 바로가기와 공지에 모두 있다.
-// 이 화면에는 서명 버튼을 두지 않는다 — 승인은 승인 요청 화면에서 한 건씩 서명한다.
+// 이 화면에는 승인 버튼을 두지 않는다 — 승인은 처리할 일의 승인 창에서 한 건씩 카카오톡으로 한다.
 // 「진행 중인 선물」은 받은 선물 읽기(my_incoming_gifts, office-workflow INV-W9)로 센다 — 결제 완료부터 배송중까지.
-// 「처리할 일」 한 줄은 아직 두지 않는다(크리에이터 쪽은 정하지 않음). 헤더·푸터는 라우트(app)가 붙인다.
+// 바로가기 첫 줄 「처리할 일 N건」은 크리에이터 처리할 일 읽기의 줄 수다 — 사이드바 숫자와 같은 결과(action-center INV-J6). 승인 대기만 따로 세지 않는다.
+// 헤더·푸터는 라우트(app)가 붙인다.
 
 export type CreatorHomeProfile = {
   /** 공개 이름(크리에이터 페이지에 보이는 이름) — h1 */
@@ -37,8 +37,8 @@ type Props = {
   profile: CreatorHomeProfile;
   /** 아래 이름 메뉴와 같은 계정 설정 주소 */
   accountHref: string;
-  /** 승인 대기 요청, 오래 기다린 것부터(= 남은 기간이 짧은 순). */
-  requests: readonly ApprovalRequestView[];
+  /** 크리에이터 처리할 일 줄 수(INV-J6) — 사이드바 숫자와 같은 읽기 결과. 못 읽었으면 null(줄의 숫자를 비운다) */
+  actionCount: number | null;
   /** 최근 열람 기록, 최근 순. 첫 줄만 쓴다. */
   accessLog: readonly AddressAccessEntry[];
   notices: readonly HomeNotice[];
@@ -46,8 +46,6 @@ type Props = {
   incoming: readonly IncomingGiftView[];
   /** 내가(로그인한 사람이) 보낸 선물. */
   sentGifts: readonly FanGiftView[];
-  /** 승인 대기의 남은 기간을 세는 기준 시각 — 화면을 그리는 서버가 넘긴다 */
-  now: string;
 };
 
 /** 「최근 열람 기록」은 한 줄만 쓴다 — 라우트가 이만큼만 읽는다. */
@@ -88,11 +86,9 @@ function Row({ href, icon, title, meta, value }: { href: string; icon: keyof typ
   );
 }
 
-export function CreatorHomePage({ profile, accountHref, notices, requests, accessLog, incoming, sentGifts, now }: Props) {
-  const waiting = requests.length;
+export function CreatorHomePage({ profile, accountHref, notices, actionCount, accessLog, incoming, sentGifts }: Props) {
   const ongoing = incoming.filter(isIncomingInProgress).length;
   const lastLog = accessLog[0];
-  const urgent = requests[0];
   return (
     <main id="main" className={`page-pane ${s.pane}`}>
       <div className={s.stack}>
@@ -125,20 +121,21 @@ export function CreatorHomePage({ profile, accountHref, notices, requests, acces
           </h2>
           <ul className={`${s.rows} ${s.secBody}`} aria-label="바로가기">
             <Row
-              href="/creator/requests"
+              href={CREATOR_ACTION_CENTER_HREF}
               icon="inbox"
-              title="승인 대기"
-              meta={urgent ? `${urgent.fanNickname}님의 선물이 남은 기간 ${approvalTimeLeftLabel(urgent.registeredAt, now)}로 가장 급해요` : undefined}
+              title="처리할 일"
               value={
-                <>
-                  {waiting}
-                  <small>건</small>
-                </>
+                actionCount === null ? null : (
+                  <>
+                    {actionCount}
+                    <small>건</small>
+                  </>
+                )
               }
             />
-            {/* 받은 선물을 한 건씩 보는 화면이 아직 없어 승인 요청 화면(대기·결정한 요청)으로 잇는다 — BACKLOG */}
+            {/* 진행 중인 선물을 한 화면에서 보는 선물 현황은 다음 묶음 — 그때까지는 손이 필요한 일이 모인 처리할 일로 잇는다(그 화면이 생기면 바꾼다) */}
             <Row
-              href="/creator/requests"
+              href={CREATOR_ACTION_CENTER_HREF}
               icon="truck"
               title="진행 중인 선물"
               value={

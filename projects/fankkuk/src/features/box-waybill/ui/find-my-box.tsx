@@ -128,21 +128,6 @@ export function FindMyBox(props: Props) {
             </div>
           )}
           <div className="field">
-            <label htmlFor={`${id}-no`}>그 상자를 보낸 택배 송장번호</label>
-            <input
-              id={`${id}-no`}
-              name="waybill"
-              className="input"
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder="숫자만 입력해요"
-              ref={waybillInput}
-              aria-invalid={errorField === "waybill" ? true : undefined}
-              aria-describedby={errorField === "waybill" ? `${id}-error` : undefined}
-            />
-          </div>
-          <div className="field">
             <label htmlFor={`${id}-carrier`}>택배사</label>
             <select
               ref={carrierSelect}
@@ -160,6 +145,21 @@ export function FindMyBox(props: Props) {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="field">
+            <label htmlFor={`${id}-no`}>송장번호</label>
+            <input
+              id={`${id}-no`}
+              name="waybill"
+              className="input"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="숫자만 입력해요"
+              ref={waybillInput}
+              aria-invalid={errorField === "waybill" ? true : undefined}
+              aria-describedby={errorField === "waybill" ? `${id}-error` : undefined}
+            />
           </div>
           {error ? (
             <p className={s.error} id={`${id}-error`} role="alert">

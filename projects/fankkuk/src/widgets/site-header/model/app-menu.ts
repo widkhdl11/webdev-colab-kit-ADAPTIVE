@@ -1,4 +1,5 @@
 import { ACTION_CENTER_HREF } from "@/entities/action-item/model/action-items";
+import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import { CREATOR_HOME, CREATOR_PROFILE_EDIT, CREATOR_SETTINGS, FAN_ACCOUNT_SETTINGS, FAN_HOME, FAN_PROFILE_EDIT } from "@/entities/session/model/home-path";
 
 // 로그인 후 왼쪽 앱 사이드바 메뉴(design-rules 00절, 시안 docs/design/mockups/site/v18/home-fan.html·home-creator.html).
@@ -41,14 +42,13 @@ export type AppMenuItem = {
   also?: readonly string[];
   sub?: readonly AppMenuSub[];
 };
-export type AppBadge = "gifts" | "pending" | "actions";
+export type AppBadge = "gifts" | "actions";
 
 /**
  * 숫자 뱃지의 뜻 — 낭독기용(숫자 자체는 aria-hidden). 링크 이름은 「칸 이름, 이 말」로 읽힌다.
  * 처리할 일은 칸 이름이 이미 뜻이라 수만 붙인다(시안 뱃지 aria-label="2건") — 「처리할 일 처리할 일 3건」이 되지 않게.
  */
 export const BADGE_SPEECH: Readonly<Record<AppBadge, (n: number) => string>> = {
-  pending: (n) => `대기 ${n}건`,
   gifts: (n) => `진행 중 ${n}건`,
   actions: (n) => `${n}건`,
 };
@@ -88,13 +88,14 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
     label: "기본",
     items: [
       { href: CREATOR_HOME, label: "홈", icon: "house" },
+      // 홈 → (선물 현황 — 다음 묶음에서 화면과 함께) → 처리할 일 → 크리에이터 찾기(design-rules 13절). 숫자는 크리에이터 처리할 일 읽기의 줄 수(action-center INV-J6)
+      { href: CREATOR_ACTION_CENTER_HREF, label: "처리할 일", icon: "clipboard-list", badge: "actions" },
       { href: "/creators", label: "크리에이터 찾기", icon: "search" },
     ],
   },
   {
     label: "받기",
     items: [
-      { href: "/creator/requests", label: "승인 대기", icon: "inbox", badge: "pending" },
       { href: "/creator/requests#done", label: "승인 내역", icon: "list-checks" },
       { href: CREATOR_BOXES_HREF, label: "받은 선물", icon: "package" },
       { href: "/creator/log", label: "열람 기록", icon: "eye" },

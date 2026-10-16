@@ -41,9 +41,10 @@ function setInspection(orderId: string, result: "passed" | "returned"): void {
 }
 
 async function rows(client: SupabaseClient): Promise<Row[]> {
-  const r = await client.rpc("my_approval_requests");
-  if (r.error) throw new Error(`my_approval_requests 실패: ${r.error.code} ${r.error.message}`);
-  return r.data as Row[];
+  // 승인 요청 줄은 크리에이터 처리할 일 읽기의 승인 줄이다(action-center INV-J5·J6 — 옛 my_approval_requests 는 없어짐)
+  const r = await client.rpc("my_creator_action_items");
+  if (r.error) throw new Error(`my_creator_action_items 실패: ${r.error.code} ${r.error.message}`);
+  return (r.data as (Row & { kind: string })[]).filter((x) => x.kind === "approval");
 }
 
 function pick(list: Row[], orderNo: string): Pick<Row, "prior_gift_count" | "prior_passed_count" | "prior_returned_count"> | undefined {
@@ -77,18 +78,11 @@ describe("승인 요청 카드의 지난 검수 내역 (INV-D11)", () => {
     expect(pick(list, passed.orderNo)).toEqual({ prior_gift_count: 2, prior_passed_count: 0, prior_returned_count: 1 });
     // 개별 주문 칸(주문번호·날짜·품목)은 지난 내역으로 오지 않는다 — 칸 목록 고정
     expect(Object.keys(list.find((x) => x.order_no === now.orderNo) ?? {}).sort()).toEqual(
+      // 처리할 일 읽기의 줄 칸(action-center INV-J7) — 지난 주문 하나하나의 주문번호·날짜·품목 칸은 없다
       [
-        "box_count",
-        "fan_nickname",
-        "has_electronics_or_metal",
-        "item_kind",
-        "order_no",
-        "prior_gift_count",
-        "prior_passed_count",
-        "prior_returned_count",
-        "received_at",
-        "registered_at",
-        "request_id",
+        "amount_krw", "bluetooth", "board", "box_count", "box_id", "box_label", "box_seq", "choice", "due_at", "has_electronics_or_metal", "item_kind",
+        "kind", "measured_tier", "nickname", "order_no", "prior_gift_count", "prior_passed_count", "prior_returned_count", "received_at", "request_id",
+        "rf", "sent_at", "share_id", "tier",
       ].sort(),
     );
 
@@ -123,7 +117,7 @@ describe("승인 요청 카드의 지난 검수 내역 (INV-D11)", () => {
   it("INV-D11 (S11d, 실패경로): 팬 계정이 부르면 0줄", async () => {
     await paidGift({ senderId: SENDER });
     const fan = await signedInClient("haneul_fan");
-    const r = await fan.rpc("my_approval_requests");
+    const r = await fan.rpc("my_creator_action_items");
     expect(r.error).toBeNull();
     expect(r.data).toEqual([]);
     deleteTestOrders();

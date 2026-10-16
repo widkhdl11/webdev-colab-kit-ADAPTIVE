@@ -700,8 +700,22 @@ describe("크리에이터 확인 — 추적기 아님 블루투스·RF 상자 (I
     return { g, staff, qrs };
   }
 
-  const answer = async (login: string, orderNo: string, seq: number, a: string) =>
-    (await signedInClient(login)).rpc("answer_creator_check", { p_order_no: orderNo, p_box_seq: seq, p_answer: a });
+  /**
+   * 크리에이터의 답 = 고르기(choose_creator_check) + 운영자 처리(office_process_creator_check, 화면에서 본 선택 그대로) — office-workflow INV-W13(2026-10-16).
+   * 고르기가 받아지지 않으면 그 결과를 옛 꼴로 돌려준다(이미 처리됨 → already). 처리 결과는 accepted · returned.
+   */
+  const answer = async (login: string, orderNo: string, seq: number, a: string): Promise<{ data: unknown; error: { code?: string } | null }> => {
+    const chosen = await (await signedInClient(login)).rpc("choose_creator_check", { p_order_no: orderNo, p_box_seq: seq, p_choice: a });
+    if (chosen.error) return chosen;
+    if (chosen.data !== "chosen") return { data: chosen.data === "processed" ? "already" : chosen.data, error: null };
+    const qr = psql(
+      `select p.qr_code from public.office_parcels p join public.boxes b on b.id = p.box_id join public.orders o on o.id = b.order_id where o.order_no = '${orderNo}' and b.seq = ${seq}`,
+    );
+    return (await signedInClient("fankkuk_staff")).rpc("office_process_creator_check", { p_qr: qr, p_seen_choice: a });
+  };
+  /** 확인 대기 상자 줄 — 크리에이터 처리할 일의 블루투스 발견 줄(action-center INV-J5) */
+  const checkLines = async (login: string) =>
+    (((await (await signedInClient(login)).rpc("my_creator_action_items")).data ?? []) as Record<string, unknown>[]).filter((r) => r.kind === "bluetooth");
   const checkAnswer = (qr: string) =>
     psql(`select coalesce(k.answer, '-') from public.office_creator_checks k join public.office_parcels p on p.id = k.parcel_id where p.qr_code = '${qr}'`);
   const refundDue = (orderId: string) =>
@@ -795,7 +809,7 @@ describe("크리에이터 확인 — 추적기 아님 블루투스·RF 상자 (I
     expect((await answer("haru_creator", g.orderNo, 1, "accept")).data).toBe("accepted");
     expect((await answer("haru_creator", g.orderNo, 1, "return")).data).toBe("already");
     expect(parcelState(qrs[0]!)).toBe("inspected");
-    const anon = await anonClient().rpc("answer_creator_check", { p_order_no: g.orderNo, p_box_seq: 1, p_answer: "accept" });
+    const anon = await anonClient().rpc("choose_creator_check", { p_order_no: g.orderNo, p_box_seq: 1, p_choice: "accept" });
     expect(anon.error).not.toBeNull();
   });
 
@@ -856,18 +870,18 @@ describe("크리에이터 확인 — 추적기 아님 블루투스·RF 상자 (I
   it("INV-W4: 크리에이터 읽기 — 하루는 보낸 팬 닉네임·상자 순번·반응 종류·기한을 보고, 다른 크리에이터·팬에게는 줄이 없다", async () => {
     const { g, staff, qrs } = await labeledBoxes();
     await inspect(staff, qrs[0]!, { ...CONFIRM, bluetooth: "clear", rf: "found" });
-    const mine = (await (await signedInClient("haru_creator")).rpc("my_creator_checks")).data as Record<string, unknown>[];
+    const mine = await checkLines("haru_creator");
     const row = mine.find((r) => r.order_no === g.orderNo);
-    expect(row).toMatchObject({ order_no: g.orderNo, box_seq: 1, sender_nickname: "별빛", bluetooth: false, rf: true });
+    expect(row).toMatchObject({ order_no: g.orderNo, box_seq: 1, nickname: "별빛", bluetooth: false, rf: true });
     const due = psql(`select extract(epoch from inspected_at + interval '168 hours') from public.office_parcels where qr_code = '${qrs[0]}'`);
     expect(new Date(String(row!.due_at)).getTime() / 1000).toBeCloseTo(Number(due), 2);
     for (const login of ["momo_creator", "byeolbit_fan"]) {
-      const other = (await (await signedInClient(login)).rpc("my_creator_checks")).data as Record<string, unknown>[] | null;
-      expect([login, (other ?? []).some((r) => r.order_no === g.orderNo)]).toEqual([login, false]);
+      const other = await checkLines(login);
+      expect([login, other.some((r) => r.order_no === g.orderNo)]).toEqual([login, false]);
     }
     // 답한 뒤에는 목록에서 빠진다
     await answer("haru_creator", g.orderNo, 1, "accept");
-    const after = (await (await signedInClient("haru_creator")).rpc("my_creator_checks")).data as Record<string, unknown>[];
+    const after = await checkLines("haru_creator");
     expect(after.some((r) => r.order_no === g.orderNo)).toBe(false);
   });
 
@@ -877,7 +891,7 @@ describe("크리에이터 확인 — 추적기 아님 블루투스·RF 상자 (I
   function answerAtExactly(qr: string, interval: string, orderNo: string, a: string): string {
     const haru = psql(`select id from public.profiles where login_id = 'haru_creator'`);
     const out = psql(
-      `begin; update public.office_parcels set inspected_at = now() - interval '${interval}' where qr_code = '${qr}'; set local request.jwt.claims = '{"sub":"${haru}","role":"authenticated"}'; select public.answer_creator_check('${orderNo}', 1, '${a}'); commit;`,
+      `begin; update public.office_parcels set inspected_at = now() - interval '${interval}' where qr_code = '${qr}'; set local request.jwt.claims = '{"sub":"${haru}","role":"authenticated"}'; select public.choose_creator_check('${orderNo}', 1, '${a}'); commit;`,
     );
     return out.split("\n").filter((l) => !/^(BEGIN|SET|COMMIT|UPDATE \d+)$/.test(l)).join("|");
   }
@@ -970,11 +984,10 @@ describe("크리에이터 확인 — 추적기 아님 블루투스·RF 상자 (I
     const { g, staff, qrs } = await labeledBoxes();
     expect((await staff.rpc("office_record_measurement", { p_qr: qrs[0], p_tier: "medium" })).error).toBeNull();
     expect(await inspect(staff, qrs[0]!, CONFIRM)).toBe("held");
-    const haru = await signedInClient("haru_creator");
-    const before = (await haru.rpc("my_creator_checks")).data as Record<string, unknown>[];
+    const before = await checkLines("haru_creator");
     expect(before.some((r) => r.order_no === g.orderNo)).toBe(true);
     psql(`update public.payments set expired_at = now() where order_id = '${g.orderId}' and kind = 'difference'`);
-    const after = (await haru.rpc("my_creator_checks")).data as Record<string, unknown>[];
+    const after = await checkLines("haru_creator");
     expect(after.some((r) => r.order_no === g.orderNo)).toBe(false);
   });
 });

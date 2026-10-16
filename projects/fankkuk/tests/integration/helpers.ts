@@ -143,7 +143,11 @@ export function officeRowsDelete(unitIds: string, column: "box_id" | "share_id")
     `delete from public.office_envelope_shreds where parcel_id in (${parcels});`,
     `delete from public.office_hold_alerts where parcel_id in (${parcels});`,
     // 크리에이터 확인 줄(2026-10-12 (2) D3 ②) — 표가 아직 없을 때(구현 전 빨간불)도 정리가 멈추지 않게 표가 있을 때만
+    // 크리에이터 고르기·취소 기록(office-workflow INV-W13, 추가만) — 확인 줄보다 먼저, 표가 있을 때만
+    `do $$ begin if to_regclass('public.office_creator_check_events') is not null then delete from public.office_creator_check_events where parcel_id in (${parcels}); end if; end $$;`,
     `do $$ begin if to_regclass('public.office_creator_checks') is not null then delete from public.office_creator_checks where parcel_id in (${parcels}); end if; end $$;`,
+    // 운영자 몫 옮기기 기록(inbound-address-code INV-C11, 추가만) — 표가 있을 때만
+    `do $$ begin if to_regclass('public.office_share_moves') is not null then delete from public.office_share_moves where parcel_id in (${parcels}); end if; end $$;`,
     `delete from public.office_label_pending where parcel_id in (${parcels});`,
     // 운영자 잇기 기록(inbound-address-code INV-C12, 추가만) — 표가 아직 없을 때도 정리가 멈추지 않게 표가 있을 때만
     `do $$ begin if to_regclass('public.office_held_links') is not null then delete from public.office_held_links where parcel_id in (${parcels}); end if; end $$;`,

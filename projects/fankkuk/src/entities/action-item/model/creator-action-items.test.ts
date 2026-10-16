@@ -1,0 +1,120 @@
+import { describe, expect, it } from "vitest";
+import { parseCreatorActionItems, splitBoards } from "./creator-action-items";
+
+// 크리에이터 처리할 일 줄 꼴 (action-center INV-J5·J6·J7). DB 읽기 함수 한 번의 결과가 그대로 숫자·목록이 된다 —
+// 꼴이 다른 줄을 일부만 버리면 사이드바 숫자와 목록이 다른 수를 말하므로 하나라도 틀리면 전체를 거부한다.
+
+const EMPTY = {
+  request_id: null,
+  share_id: null,
+  box_id: null,
+  box_seq: null,
+  box_count: null,
+  box_label: null,
+  item_kind: null,
+  tier: null,
+  measured_tier: null,
+  amount_krw: null,
+  has_electronics_or_metal: null,
+  bluetooth: null,
+  rf: null,
+  choice: null,
+  received_at: null,
+  due_at: null,
+  prior_gift_count: null,
+  prior_passed_count: null,
+  prior_returned_count: null,
+};
+
+const bluetooth = {
+  ...EMPTY,
+  kind: "bluetooth",
+  board: "received",
+  order_no: "FC-A1",
+  box_seq: 1,
+  box_count: 2,
+  nickname: "별사탕",
+  item_kind: "인형·쿠션",
+  tier: "medium",
+  bluetooth: true,
+  rf: false,
+  choice: "accept",
+  sent_at: "2026-10-12T01:00:00Z",
+  received_at: "2026-10-13T01:00:00Z",
+  due_at: "2026-10-20T14:59:00Z",
+  prior_gift_count: 3,
+  prior_passed_count: 3,
+  prior_returned_count: 0,
+};
+const approval = {
+  ...EMPTY,
+  kind: "approval",
+  board: "received",
+  order_no: "FC-B2",
+  request_id: "apr_FCB2",
+  box_count: 1,
+  nickname: "다온",
+  item_kind: "문구",
+  has_electronics_or_metal: false,
+  sent_at: "2026-10-15T05:20:00Z",
+  due_at: "2026-10-22T05:20:00Z",
+  prior_gift_count: 0,
+  prior_passed_count: 0,
+  prior_returned_count: 0,
+};
+const unconfirmed = { ...EMPTY, kind: "unconfirmed", board: "sent", order_no: "RG-C3", share_id: "11111111-1111-4111-8111-111111111111", nickname: "모카", tier: "small", sent_at: "2026-10-02T01:00:00Z" };
+const missing = {
+  ...EMPTY,
+  kind: "missing_box",
+  board: "sent",
+  order_no: "FC-D4",
+  box_id: "22222222-2222-4222-8222-222222222222",
+  box_label: "FC-D4",
+  box_seq: 1,
+  nickname: "모모",
+  tier: "small",
+  sent_at: "2026-09-20T01:00:00Z",
+  due_at: "2026-10-20T01:00:00Z",
+};
+
+describe("크리에이터 처리할 일 줄 (INV-J5·J6)", () => {
+  it("INV-J5: 네 종류를 DB 순서 그대로 읽고, 판으로 나눠도 순서가 같다", () => {
+    const items = parseCreatorActionItems([bluetooth, approval, unconfirmed, missing]);
+    expect(items.map((i) => i.kind)).toEqual(["bluetooth", "approval", "unconfirmed", "missing_box"]);
+    const { received, sent } = splitBoards(items);
+    expect(received.map((i) => i.orderNo)).toEqual(["FC-A1", "FC-B2"]);
+    expect(sent.map((i) => i.orderNo)).toEqual(["RG-C3", "FC-D4"]);
+    expect(items[0]).toMatchObject({ choice: "accept", boxCount: 2, priorHistory: { gifts: 3, passed: 3, returned: 0 } });
+    expect(items[1]).toMatchObject({ requestId: "apr_FCB2", hasElectronicsOrMetal: false });
+    expect(items[3]).toMatchObject({ creatorName: "모모", declaredTier: "small", boxId: missing.box_id });
+  });
+
+  it("INV-J6 (실패경로): 판이 종류와 다르거나 필요한 칸이 빈 줄이 하나라도 있으면 전부 거부한다 — 일부만 버려 숫자와 목록이 달라지지 않게", () => {
+    expect(() => parseCreatorActionItems([bluetooth, { ...approval, board: "sent" }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...approval, request_id: null }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...bluetooth, due_at: null }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...unconfirmed, share_id: null }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...approval, kind: "pending_box" }])).toThrow();
+  });
+
+  it("INV-J7 (실패경로): 정해진 칸 밖의 칸(팬 주소·실명·6자리 등)이 섞여 오면 거부한다", () => {
+    for (const extra of [{ fan_address: "서울" }, { real_name: "김민지" }, { inbound_code: "K7M3QA" }, { operator_id: "x" }]) {
+      expect(() => parseCreatorActionItems([{ ...bluetooth, ...extra }])).toThrow();
+    }
+  });
+
+  it("빈 결과는 빈 목록", () => {
+    expect(parseCreatorActionItems(null)).toEqual([]);
+    expect(parseCreatorActionItems([])).toEqual([]);
+  });
+});
+
+describe("남은 날 (INV-J5 — 서울 시간)", () => {
+  it("서울 날짜로 세고 3일 이하는 강조, 당일은 「오늘까지」", async () => {
+    const { daysLeftOf } = await import("./creator-action-items");
+    expect(daysLeftOf("2026-10-20T14:59:00Z", "2026-10-16T03:00:00Z")).toEqual({ text: "4일 남음", soon: false });
+    expect(daysLeftOf("2026-10-19T14:59:00Z", "2026-10-16T03:00:00Z")).toEqual({ text: "3일 남음", soon: true });
+    // 서울 10월 16일 23시 → 같은 날 기한
+    expect(daysLeftOf("2026-10-16T14:59:00Z", "2026-10-16T14:00:00Z")).toEqual({ text: "오늘까지", soon: true });
+  });
+});

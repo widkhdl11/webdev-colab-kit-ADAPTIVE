@@ -25,6 +25,11 @@ export const PARCEL_TIER_GUIDE: Readonly<Record<Exclude<ParcelTier, "oversize">,
 };
 
 /** 받지 않는 상자 안내. */
+/** 상자 크기 이름(소형·중형·대형) — 모르는 값(대형 초과 등)은 그대로 */
+export function tierName(t: string): string {
+  return t in PARCEL_TIER_GUIDE ? PARCEL_TIER_GUIDE[t as keyof typeof PARCEL_TIER_GUIDE].name : t;
+}
+
 export const OVERSIZE_RULE = `세 변 합 ${LARGE_MAX_SUM_CM}cm나 ${LARGE_MAX_WEIGHT_KG}kg를 넘는 상자`;
 
 /** 보내기 전에 알리는 검수 반송 안내. 추적 장치 등이 나오거나 대형을 넘으면 팬의 위반이라 검수비·반송비를 모두 뺀다(결제 INV-M8).

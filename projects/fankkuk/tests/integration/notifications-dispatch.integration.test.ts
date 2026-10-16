@@ -59,7 +59,7 @@ describe("보내는 일꾼 — DB 와 함께 (manual/0011 뒤)", () => {
     expect(mine).toHaveLength(1);
     expect(mine[0]!.to).toBe(psql(`select c.email from pii.account_contacts c join public.profiles p on p.id = c.account_id where p.login_id = 'haru_creator'`));
     expect(mine[0]!.text).toContain(g.orderNo);
-    expect(mine[0]!.text).toContain("http://127.0.0.1:3311/creator/requests");
+    expect(mine[0]!.text).toContain("http://127.0.0.1:3311/creator/actions");
     expect(statusOf(g.orderId, "approval_request")).toBe("sent");
   });
 

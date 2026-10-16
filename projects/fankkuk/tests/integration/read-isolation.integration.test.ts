@@ -32,13 +32,13 @@ describe("읽기 함수는 로그인한 사람의 것만 돌려준다", () => {
     const byeolbit = await signedInClient("byeolbit_fan");
     const haru = await signedInClient("haru_creator");
     const gifts = (await byeolbit.rpc("my_gifts")).data as { order_no: string }[];
-    const reqs = (await haru.rpc("my_approval_requests")).data as { order_no: string }[];
+    const reqs = (await haru.rpc("my_creator_action_items")).data as { order_no: string }[];
     expect(gifts.map((g) => g.order_no)).not.toContain(o.orderNo);
     expect(reqs.map((g) => g.order_no)).not.toContain(o.orderNo);
 
     await payTestOrder(o);
     const gifts2 = (await byeolbit.rpc("my_gifts")).data as { order_no: string }[];
-    const reqs2 = (await haru.rpc("my_approval_requests")).data as { order_no: string }[];
+    const reqs2 = (await haru.rpc("my_creator_action_items")).data as { order_no: string }[];
     expect(gifts2.map((g) => g.order_no)).toContain(o.orderNo);
     expect(reqs2.map((g) => g.order_no)).toContain(o.orderNo);
   });
@@ -46,8 +46,8 @@ describe("읽기 함수는 로그인한 사람의 것만 돌려준다", () => {
   it("크리에이터는 자기에게 온 요청만 본다 — 하루의 요청은 모모에게, 모모의 요청은 하루에게 안 보인다", async () => {
     const haru = await signedInClient("haru_creator");
     const momo = await signedInClient("momo_creator");
-    const haruWaiting = ((await haru.rpc("my_approval_requests")).data as { order_no: string }[]).map((r) => r.order_no);
-    const momoWaiting = ((await momo.rpc("my_approval_requests")).data as { order_no: string }[]).map((r) => r.order_no);
+    const haruWaiting = ((await haru.rpc("my_creator_action_items")).data as { order_no: string }[]).map((r) => r.order_no);
+    const momoWaiting = ((await momo.rpc("my_creator_action_items")).data as { order_no: string }[]).map((r) => r.order_no);
     expect(haruWaiting).toEqual(expect.arrayContaining(["FC-P4X7N", "FC-L5T6B", "FC-Z9C3V"]));
     expect(haruWaiting).not.toContain("FC-W5N3T");
     expect(momoWaiting).toContain("FC-W5N3T");
@@ -69,7 +69,7 @@ describe("읽기 함수는 로그인한 사람의 것만 돌려준다", () => {
 
   it("승인 요청은 그 크리에이터 계정에게만 — 팬이 부르면 빈 결과", async () => {
     const byeolbit = await signedInClient("byeolbit_fan");
-    const r = await byeolbit.rpc("my_approval_requests");
+    const r = await byeolbit.rpc("my_creator_action_items");
     expect(r.error).toBeNull();
     expect(r.data).toEqual([]);
   });

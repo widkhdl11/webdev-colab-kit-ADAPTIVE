@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import type { ReceivedBox } from "@/entities/gift-reply/api/gift-reply-reads";
 import { ReceivedBoxList } from "@/features/gift-reply/ui/received-box-list";
 import s from "./approval-requests.module.css";
@@ -13,8 +14,9 @@ export function ReceivedBoxesPage({ received, replyPending }: { received: readon
           <h1 className="ph-title">
             받은 선물<span className="ph-count">{received.length}</span>
           </h1>
-          <Link className="btn btn--sm" href="/creator/requests">
-            승인 요청 보기
+          {/* 대기 중인 승인 요청은 처리할 일에서 처리한다(action-center INV-J5, 2026-10-16 — 「승인 대기」 화면이 없어짐) */}
+          <Link className="btn btn--sm" href={CREATOR_ACTION_CENTER_HREF}>
+            처리할 일
           </Link>
         </div>
         <p className="ph-desc">팬이 보낸 선물을 받을지 정하고, 받은 선물에 답장을 남기는 곳이에요.</p>

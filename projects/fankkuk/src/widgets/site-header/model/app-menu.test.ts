@@ -7,10 +7,10 @@ const group = (label: string) => CREATOR_APP_MENU.find((g) => g.label === label)
 const labels = (label: string) => group(label).items.map((i) => i.label);
 
 describe("크리에이터 메뉴 — 묶음", () => {
-  it("기본·받기·보내기·내 팬꾹 순서, 칸은 시안 그대로", () => {
+  it("기본·받기·보내기·내 팬꾹 순서, 칸은 시안 그대로 — 기본은 홈 → 처리할 일 → 크리에이터 찾기, 「승인 대기」 칸은 없다(design-rules 13절, action-center INV-J6)", () => {
     expect(CREATOR_APP_MENU.map((g) => g.label)).toEqual(["기본", "받기", "보내기", "내 팬꾹"]);
-    expect(labels("기본")).toEqual(["홈", "크리에이터 찾기"]);
-    expect(labels("받기")).toEqual(["승인 대기", "승인 내역", "받은 선물", "열람 기록"]);
+    expect(labels("기본")).toEqual(["홈", "처리할 일", "크리에이터 찾기"]);
+    expect(labels("받기")).toEqual(["승인 내역", "받은 선물", "열람 기록"]);
     expect(labels("보내기")).toEqual(["팬에게 보내기", "다른 크리에이터에게 선물", "보낸 내역"]);
     expect(labels("내 팬꾹")).toEqual(["꾸미기", "프로필 수정", "상세 설정"]);
   });
@@ -23,8 +23,14 @@ describe("크리에이터 메뉴 — 묶음", () => {
     ]);
     const all = CREATOR_APP_MENU.flatMap((g) => g.items);
     expect(all.some((i) => i.label === "주소 관리" || i.href.includes("#address"))).toBe(false);
-    // 「처리할 일」은 이번 묶음에 넣지 않는다(크리에이터 쪽은 아직 정하지 않음)
-    expect(all.some((i) => /할 일/.test(i.label))).toBe(false);
+    // 「선물 현황」은 다음 묶음에서 화면과 함께 — 자리만 두지 않는다
+    expect(all.some((i) => i.label === "선물 현황")).toBe(false);
+  });
+
+  it("INV-J6: 처리할 일 칸은 크리에이터 처리할 일 화면으로 가고 숫자는 처리할 일 뱃지 하나 — 승인 요청만 따로 세는 뱃지가 없다", () => {
+    const all = CREATOR_APP_MENU.flatMap((g) => g.items);
+    expect(all.filter((i) => i.badge).map((i) => [i.label, i.href, i.badge])).toEqual([["처리할 일", "/creator/actions", "actions"]]);
+    expect(currentMenuItem(CREATOR_APP_MENU, "/creator/actions")?.label).toBe("처리할 일");
   });
 
   it("프로필 수정·상세 설정 화면에서 그 칸이 켜진다", () => {

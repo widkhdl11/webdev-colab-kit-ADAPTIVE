@@ -61,6 +61,8 @@ export type UnmatchedParcel = {
   state: UnmatchedState;
   /** 미확인 입고만 — 도착 + 168시간 */
   deadlineAt: string | null;
+  /** 운영자 몫 옮기기(inbound-address-code INV-C11)를 받는 줄인가 — 찾기로 이은 6자리 없는 역조공 상자, 검수 완료 전. DB 가 정한 값 */
+  shareMovable: boolean;
 };
 
 const unmatchedRow = z.object({
@@ -77,6 +79,7 @@ const unmatchedRow = z.object({
   suspected_theft: z.boolean(),
   state: z.enum(UNMATCHED_STATES),
   deadline_at: z.string().nullable(),
+  share_movable: z.boolean(),
 });
 
 export function unmatchedFromRows(rows: unknown): UnmatchedParcel[] | null {
@@ -95,6 +98,7 @@ export function unmatchedFromRows(rows: unknown): UnmatchedParcel[] | null {
     suspectedTheft: r.suspected_theft,
     state: r.state,
     deadlineAt: r.deadline_at,
+    shareMovable: r.share_movable,
   }));
 }
 

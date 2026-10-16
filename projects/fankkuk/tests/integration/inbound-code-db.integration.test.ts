@@ -884,8 +884,9 @@ describe("INV-C9 운영자 확인 목록 — 보이는 값과 손으로 잇는 �
     expect(r.error).toBeNull();
     const rows = r.data as Record<string, unknown>[];
     const row = rows.find((x) => x.waybill_no === barcode)!;
+    // share_movable: 운영자 몫 옮기기를 받는 줄인지(참·거짓) — 사람·주문 칸이 아니다(INV-C11)
     expect(Object.keys(row).sort()).toEqual(
-      ["arrived_at", "carrier", "deadline_at", "id", "nickname", "qr", "reason", "shelf", "source", "state", "suspected_theft", "waybill_no"].sort(),
+      ["arrived_at", "carrier", "deadline_at", "id", "nickname", "qr", "reason", "share_movable", "shelf", "source", "state", "suspected_theft", "waybill_no"].sort(),
     );
     expect(row).toMatchObject({ carrier: "cj", nickname: "별빛", reason: "code_dispute" });
     // 바코드·id·QR 은 무작위 숫자라 그 안에 「010…」 같은 전화번호 꼴이 우연히 생길 수 있다 — 그 칸을 뺀 나머지에서 찾는다

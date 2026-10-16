@@ -3,6 +3,7 @@ import { OFFICE_ADDRESS } from "@/entities/order/config/office-address";
 import { readMyShareBoxes } from "@/entities/parcel/api/box-reads";
 import { readSentRevgifts } from "@/entities/revgift/api/revgift-reads";
 import { FAN_HOME } from "@/entities/session/model/home-path";
+import { readSentBoxCandidates } from "@/features/box-waybill/api/read-sent-box-candidates";
 import { RevgiftSentPage } from "@/widgets/revgift-sent/ui/revgift-sent-page";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -21,16 +22,18 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
   if (viewer?.role !== "creator") redirect("/login");
-  const [header, rows, boxes] = await Promise.all([
+  // 「내 상자 찾기」 후보(INV-C4 ②-나) — 읽기가 실패해도 화면은 그린다(버튼만 빠진다)
+  const [header, rows, boxes, candidates] = await Promise.all([
     readSiteHeader(supabase, viewer, "/creator/revgifts"),
     readSentRevgifts(supabase),
     readMyShareBoxes(supabase),
+    readSentBoxCandidates(supabase).catch(() => []),
   ]);
   return (
     <>
       <SiteHeader {...header} />
       <MyShell width="broad">
-        <RevgiftSentPage tabs={<SentTabs current="fans" />} rows={rows} boxes={boxes} paid={paid === "1"} officeAddress={OFFICE_ADDRESS} />
+        <RevgiftSentPage tabs={<SentTabs current="fans" />} rows={rows} boxes={boxes} paid={paid === "1"} officeAddress={OFFICE_ADDRESS} candidates={candidates} />
       </MyShell>
       <SiteFooter />
     </>

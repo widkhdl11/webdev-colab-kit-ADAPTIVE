@@ -26,6 +26,7 @@
   --font: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Segoe UI", "Malgun Gothic", sans-serif;
   --font-round: "Tmoney Round Wind", var(--font);
   --fw-bold: 700; /* 본문 쪽 굵은 글자(라벨·강조·태그) */
+  --fw-h3: 600; /* 작은 제목(판 머리 — 시안 v20 tokens --fw-h3) */
   --fw-btn: 600; /* 버튼·메뉴 */
   --fw-title: 800; /* 티머니 둥근바람 제목 — 이 글꼴에는 400·800 만 있다 */
 
@@ -58,6 +59,13 @@
   --disabled-ink: var(--gray-600); /* 비활성 면 위 */
   --warn-soft: #fff5db;
   --warn-ink: #805b16; /* 5.6:1 */
+  /* 크리에이터 처리할 일 — 블루투스 발견 줄·늦음 강조(design-rules 13절, 시안 cre-action-center-d.html) */
+  --alert-50: #fffbeb;
+  --alert-100: #fef3c7;
+  --alert-200: #fde68a;
+  --alert-600: #d97706;
+  --alert-800: #92400e; /* #fffbeb 위 6.8:1 */
+  --alert-900: #78350f;
   --success: #276749;
   --success-soft: #eaf5ee;
   --danger: #b42318;

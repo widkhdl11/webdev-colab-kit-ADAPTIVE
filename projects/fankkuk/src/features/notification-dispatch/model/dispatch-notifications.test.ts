@@ -14,6 +14,7 @@ type Row = {
   nickname: string;
   auto_reject_at: string | null;
   undelivered_reason?: string | null;
+  sender_name?: string | null;
   must_deliver: boolean;
   attempts: number;
   claimed_at: string;
@@ -195,6 +196,23 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(email.sent[0]!.text).toContain("10월 8일 오전 10시까지");
     expect(email.sent[0]!.text).toContain("하루님");
     expect(email.sent[0]!.text).not.toContain("haru@example.com"); // 받는 주소는 본문에 없다
+  });
+
+  it("INV-N20: 역조공 받기 줄은 꺼낸 sender_name(DB 값)으로 보낸 크리에이터 이름을 넣고 몫 받기 화면으로 잇는다. 이름이 없는 줄은 보내지 않는다", async () => {
+    const email = channel();
+    const { admin, calls } = fakeAdmin({
+      rows: [
+        { ...ROW, id: "offer", kind: "revgift_offer", order_no: "RG-7K3M90", sender_name: "모모", must_deliver: true },
+        { ...ROW, id: "nameless", kind: "revgift_offer", order_no: "RG-7K3M91", sender_name: null, must_deliver: true },
+      ],
+      contacts: { offer: "a@example.com", nameless: "b@example.com" },
+    });
+    await dispatchNotifications(deps(admin, { email, kakao: null }));
+    expect(email.sent).toHaveLength(1);
+    expect(email.sent[0]!.text).toContain("모모님");
+    expect(email.sent[0]!.text).toContain("/me/revgifts/RG-7K3M90");
+    const nameless = finishes(calls).find((a) => (a as { p_id: string }).p_id === "nameless") as { p_outcome: string; p_error_code: string };
+    expect(`${nameless.p_outcome}:${nameless.p_error_code}`).toBe("skipped:body_unavailable");
   });
 
   it("INV-N17 ② · decline-block INV-D5: 거절 알림 문구는 꺼낸 줄의 undelivered_reason(DB 값)으로 고르고, 값이 없는 줄은 보내지 않는다(2026-10-12 (2) D11)", async () => {

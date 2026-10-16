@@ -226,7 +226,8 @@ describe("추적기 아님 → 크리에이터 확인 (INV-W4, 2026-10-12 (2) �
     await rescan();
     expect(writesOf("complete")).toEqual([{ kind: "complete", qr: QR }]);
     expect(host.textContent).toContain("크리에이터 확인을 기다려요");
-    expect(host.textContent).toContain("7일 안에 답이 없으면 반송 대기로 넘어가요.");
+    // INV-W13: 고른 것은 「들어온 상자」에서 운영자가 처리하고, 기한이 지나면 고른 쪽대로·고르지 않았으면 반송 대기
+    expect(host.textContent).toContain("7일이 지나면 고른 쪽대로, 고르지 않았으면 반송 대기로 넘어가요.");
     expect(host.textContent).not.toContain("결과를 읽지 못했어요");
   });
 });

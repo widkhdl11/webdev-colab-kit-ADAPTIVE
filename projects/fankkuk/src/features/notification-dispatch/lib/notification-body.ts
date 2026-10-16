@@ -1,5 +1,6 @@
 import { NOTIFICATION_POLICY, type NotificationAudience, type NotificationKind } from "@/entities/notification/model/delivery-policy";
 import { DECLINED_PHRASE, EXPIRED_TEXT } from "@/entities/order/ui/fan-stage-copy";
+import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
 import { formatDeadline } from "@/shared/lib/format/datetime";
 
@@ -31,7 +32,10 @@ import { formatDeadline } from "@/shared/lib/format/datetime";
 // gift_reply · gift_received: 크리에이터가 상자에 「받았어요」를 남길 때 보낸 팬에게 상자마다 한 번(gift-reply INV-G5, 2026-10-11).
 //   답장이 있으면 「답장이 왔어요」, 확인만이면 「도착했다고 확인됐어요」. 크리에이터 이름·답장 내용 칸이 없다 — 선물 상세를 열면 보인다.
 // box_no_code: 6자리 없이 온 상자가 송장 「보내는 분」으로 그 팬의 닉네임과 맞았고 결제 완료·입고 전 주문이 있으면 상자마다 한 번(INV-N21, 카드 d94).
-//   본문은 「코드 없이 온 상자가 있어요」와 「받는 주소 없이 보냈어요」 화면(선물 상세) 링크뿐 — 송장번호·택배사·도착일·크리에이터 이름·주문번호 줄은 없다.
+//   본문은 「받는 주소 없이 보낸 상자가 있어요」와 「받는 주소 없이 보냈어요」 화면(선물 상세) 링크뿐 — 송장번호·택배사·도착일·크리에이터 이름·주문번호 줄은 없다.
+// revgift_offer: 역조공 몫의 결제가 끝나면 받는 팬에게 한 번, 72시간 뒤 아직 받기 대기면 한 번 더(INV-N20, 2026-10-16). INV-N1 의 예외로 보낸 크리에이터
+//   공개 이름 하나가 들어간다(팬이 누가 보냈는지 모르면 받을지 정할 수 없다). 링크는 그 몫 받기 화면.
+// approval_request · creator_check 링크는 크리에이터 처리할 일(2026-10-16, INV-N9).
 // 종류 목록과 꼭 가는 알림 판정은 entities/notification 이 정본이다(INV-N6 표).
 export { NOTIFICATION_KINDS, type NotificationKind } from "@/entities/notification/model/delivery-policy";
 
@@ -46,6 +50,8 @@ export type NotificationBodyInput = {
   autoRejectAt: string | null;
   /** 거절 알림(gift_undelivered)만 — 직접·차단 거절 declined · 7일 반려 expired. DB 가 정한 값이다 */
   undeliveredReason: "declined" | "expired" | null;
+  /** 역조공 받기(revgift_offer)만 — 보낸 크리에이터의 공개 이름(INV-N20 · reverse-gift INV-R12). DB 가 꺼낸 줄에 넣은 값이고, 다른 종류는 본문에 쓰지 않는다 */
+  senderName: string | null;
   /** 꺼낸 줄의 꼭 가는 알림 표시(DB 판정, INV-N6) */
   mustDeliver: boolean;
   /** 설정의 사이트 주소(APP_ORIGIN) */
@@ -95,7 +101,7 @@ export function siteOrigin(appOrigin: string): string {
   return url.origin;
 }
 
-function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReason }: NotificationBodyInput): Draft {
+function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReason, senderName }: NotificationBodyInput): Draft {
   const greet = `${nickname}님,`;
   const order = `주문번호 ${orderNo}`;
   switch (kind) {
@@ -110,7 +116,8 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
           `${formatDeadline(autoRejectAt)}까지 승인하지 않으면 자동으로 반려돼요.`,
         ],
         buttonLabel: "승인 요청 보기",
-        path: "/creator/requests",
+        // 승인은 크리에이터 처리할 일에서 한다(2026-10-16 — 「승인 대기」 메뉴가 없어짐, INV-N9 · action-center INV-J5)
+        path: CREATOR_ACTION_CENTER_HREF,
       };
     case "arrived":
     case "inspected":
@@ -198,20 +205,32 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
       };
     }
     case "creator_check":
-      // 받을지 정해 달라는 말과 기한뿐 — 보낸 팬·무엇이 나왔는지는 쓰지 않는다(INV-N1). 화면은 승인·받은 선물의 「확인할 선물」 탭
+      // 받을지 정해 달라는 말과 기한뿐 — 보낸 팬·무엇이 나왔는지는 쓰지 않는다(INV-N1). 화면은 크리에이터 처리할 일의 블루투스 발견 줄(INV-N9·N13)
       return {
         subject: "[팬꾹] 받을지 정해 주실 선물이 있어요",
         lines: [greet, "받을지 정해 주실 상자가 있어요.", `${CREATOR_CHECK_DAYS}일 안에 정하지 않으면 보낸 분에게 돌려보내요.`, order],
         buttonLabel: "확인하기",
-        path: "/creator/requests",
+        path: CREATOR_ACTION_CENTER_HREF,
       };
-    case "box_no_code":
-      // 링크는 그 팬의 결제 완료·입고 전 주문(DB 가 고른 줄의 주문) 선물 상세 — 그 화면에 「받는 주소 없이 보냈어요」가 있다
+    case "revgift_offer": {
+      // 보낸 크리에이터 이름과 그 몫 받기 화면 링크뿐(INV-N20 · reverse-gift INV-R12) — 선물 내용·상자 크기·금액·주소·6자리 칸이 없다. 이름이 없으면 보내지 않는다
+      const name = senderName?.trim();
+      if (!name) throw new Error("역조공 받기 알림에 보낸 크리에이터 이름이 없다");
       return {
-        subject: "[팬꾹] 코드 없이 온 상자가 있어요",
-        lines: [greet, "코드 없이 온 상자가 있어요."],
-        buttonLabel: "받는 주소 없이 보냈어요",
-        path: `/gifts/${orderNo}`,
+        subject: round === 1 ? `[팬꾹] ${name}님이 선물을 보냈어요` : `[팬꾹] ${name}님이 보낸 선물을 아직 받지 않았어요`,
+        lines: [greet, round === 1 ? `${name}님이 선물을 보냈어요.` : `${name}님이 보낸 선물을 아직 받지 않았어요.`],
+        buttonLabel: "선물 받기",
+        path: `/me/revgifts/${orderNo}`,
+      };
+    }
+    case "box_no_code":
+      // 링크는 DB 가 고른 줄이 정한다(INV-N21, 카드 d96 ③): 팬 선물 주문이면 선물 상세(「받는 주소 없이 보냈어요」),
+      // 역조공 몫(RG-)이면 보낸 역조공 화면(줄마다 「내 상자 찾기」). 몫 번호는 본문에 쓰지 않는다
+      return {
+        subject: "[팬꾹] 받는 주소 없이 보낸 상자가 있어요",
+        lines: [greet, "받는 주소 없이 보낸 상자가 있어요."],
+        buttonLabel: REVGIFT_ORDER_NO.test(orderNo) ? "내 상자 찾기" : "받는 주소 없이 보냈어요",
+        path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : `/gifts/${orderNo}`,
       };
     case "difference_due":
       // 결제가 끝나야 송장이 나가고(payment INV-M12), 168시간 미납이면 반송 대상이다(INV-M13)
@@ -250,12 +269,12 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
 
 /** 받는 사람 — 종류별 표의 받는 쪽. 역조공 상자 도착은 보낸 크리에이터가 받는다 */
 function audienceOf({ kind, orderNo }: NotificationBodyInput): NotificationAudience {
-  if (kind === "box_arrived" && REVGIFT_ORDER_NO.test(orderNo)) return "creator";
+  if ((kind === "box_arrived" || kind === "box_no_code") && REVGIFT_ORDER_NO.test(orderNo)) return "creator";
   return NOTIFICATION_POLICY[kind].audience;
 }
 
 export function buildNotificationBody(input: NotificationBodyInput): NotificationBody {
-  if (!ORDER_NO.test(input.orderNo)) throw new Error("알림 링크에 넣을 주문번호 꼴이 아니다");
+  if (!ORDER_NO.test(input.orderNo)) throw new Error("알림 링크에 넣을 주문번호 형식이 아니다");
   const origin = siteOrigin(input.appOrigin);
   const d = draftOf(input);
   const link = `${origin}${d.path}`;

@@ -283,8 +283,8 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
     expect(el.textContent).not.toContain("어느 상자인가요");
     expect(el.textContent).not.toContain("받는 주소를 쓰지 않고");
     expect([...(form?.querySelectorAll("label") ?? [])].map((l) => l.textContent)).toEqual([
-      "그 상자를 보낸 택배 송장번호",
       "택배사",
+      "송장번호",
     ]);
     expect(form?.querySelector('input[name="initial"]')).toBeNull();
     expect(el.querySelector(".action-due")?.textContent).toBe("11월 1일 오후 12시까지 · 16일 남았어요");

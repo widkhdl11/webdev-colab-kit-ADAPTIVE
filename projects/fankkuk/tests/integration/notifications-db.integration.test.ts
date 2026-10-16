@@ -13,6 +13,7 @@ import {
   SEED,
   signedInClient,
 } from "./helpers";
+import { deleteTestRevgifts } from "./revgift-helpers";
 import { isMustDeliver, NOTIFICATION_KINDS } from "@/entities/notification/model/delivery-policy";
 import {
   approve,
@@ -22,6 +23,7 @@ import {
   inspect,
   orderStatus,
   paidGift,
+  paidShare,
   receiveAndLabel,
   scanInbound,
   waybill,
@@ -45,6 +47,7 @@ afterEach(() => {
   // 차단 시험이 남긴 줄(하루 → 하늘). 시드에는 차단이 없다.
   deleteTestBlocks();
   deleteTestUnmatched();
+  deleteTestRevgifts();
   // 3차 재알림 함수는 오래된 시드 대기 요청에도 줄을 만든다 — 시드 주문은 지우지 않으므로 발송 줄을 통째로 비운다(로컬 DB, 시드에는 발송 줄이 없다).
   psql(`do $$ begin if to_regclass('${OUTBOX}') is not null then delete from ${OUTBOX}; end if; end $$;`);
   // 템플릿 설정은 시험마다 비운다. 표가 아직 없을 때(구현 전 빨간불 확인)도 정리 단계가 멈추지 않게 표가 있을 때만.
@@ -180,6 +183,7 @@ describe("받는 계정과 줄 만들기 (INV-N3·N4·N7)", () => {
         "round",
         "status",
         "unmatched_id", // 코드 없이 온 상자 알림이 가리키는 보류 상자(INV-N21 — 상자마다 한 번) — 연락처·본문 칸이 아니다
+        "share_id", // 역조공 받기 알림이 가리키는 몫(INV-N20 — 몫마다·차례마다 한 번) — 연락처·본문 칸이 아니다
       ].sort(),
     );
   });
@@ -555,7 +559,7 @@ describe("꺼내기·끝내기 (INV-N5·N1)", () => {
   it("INV-N1: 꺼낸 줄은 본문에 쓸 값만 돌려준다 — 승인 요청은 자동 반려 예정 시각과 꼭 가는 알림 표시, 연락처는 없다", async () => {
     const g = await paidGift();
     const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
-    expect(Object.keys(c).sort()).toEqual(["attempts", "auto_reject_at", "channel", "claimed_at", "id", "kind", "must_deliver", "nickname", "order_no", "round", "undelivered_reason"]);
+    expect(Object.keys(c).sort()).toEqual(["attempts", "auto_reject_at", "channel", "claimed_at", "id", "kind", "must_deliver", "nickname", "order_no", "round", "sender_name", "undelivered_reason"]);
     expect(c).toMatchObject({ kind: "approval_request", channel: "email", round: 1, order_no: g.orderNo, nickname: "하루", must_deliver: true, attempts: 0, undelivered_reason: null });
     const expected = psql(`select extract(epoch from registered_at + interval '168 hours') from public.orders where id = '${g.orderId}'`);
     expect(new Date(c.auto_reject_at!).getTime() / 1000).toBeCloseTo(Number(expected), 3);
@@ -976,20 +980,23 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
       const heldId = psql(
         `insert into public.office_unmatched (waybill_no, shelf, recorded_by, carrier, reason) select '9' || lpad((floor(random() * 1e11))::bigint::text, 11, '0'), 'T-NX', id, 'cj', 'no_code' from public.profiles where login_id = 'fankkuk_staff' returning id`,
       ).split(/\r?\n/)[0]!;
+      // 역조공 받기 알림(INV-N20)은 몫을 가리킨다 — 시험용 몫 하나(보내기 정리로 지운다)
+      const shareId = (await paidShare()).shareId;
       const seen: [string, boolean, unknown][] = [];
       for (const kind of kinds) {
+        const share = kind === "revgift_offer" ? `'${shareId}'` : "null";
         const request = kind === "approval_request" ? `'${requestId}'` : "null";
         const parcel = parcelKinds.includes(`'${kind}'`) ? `'${parcelId}'` : "null";
         const held = kind === "box_no_code" ? `'${heldId}'` : "null";
         psql(
-          `insert into ${OUTBOX} (kind, order_id, approval_request_id, parcel_id, unmatched_id, round, account_id, channel, event_at) select '${kind}', '${g.orderId}', ${request}, ${parcel}, ${held}, 1, id, 'email', now() from public.profiles where login_id = 'byeolbit_fan' on conflict do nothing`,
+          `insert into ${OUTBOX} (kind, order_id, approval_request_id, parcel_id, unmatched_id, share_id, round, account_id, channel, event_at) select '${kind}', '${g.orderId}', ${request}, ${parcel}, ${held}, ${share}, 1, id, 'email', now() from public.profiles where login_id = 'byeolbit_fan' on conflict do nothing`,
         );
         const id = rowId(g.orderId, kind, "byeolbit_fan");
         await claimOne(id);
         const must = psql(`select public.notification_kind_must_deliver('${kind}')`) === "t";
         seen.push([kind, must, await contactValue(id)]);
       }
-      expect(seen.filter(([, must]) => must)).toHaveLength(11);
+      expect(seen.filter(([, must]) => must)).toHaveLength(12); // 역조공 받기(INV-N20)까지 열둘
       psql(`delete from public.office_unmatched where id = '${heldId}'`);
       expect(seen).toEqual(seen.map(([kind, must]) => [kind, must, must ? "byeolbit.fan@example.com" : null]));
     });
