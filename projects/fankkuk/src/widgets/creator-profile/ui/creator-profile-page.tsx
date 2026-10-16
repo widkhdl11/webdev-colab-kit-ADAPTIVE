@@ -159,7 +159,7 @@ export function CreatorProfilePage({
       <section className={s.pfSec} aria-labelledby="creator-name">
         <div className={wrap}>
           <div className={`${s.pf} ${ringed ? s.ringed : ""}`} style={colorVars as CSSProperties} data-creator-colors="">
-            {/* 프로필 배경사진(디자인 기준 10절) — 맨 위 띠, 없으면 옅은 코랄 단색. 사진은 꾸밈이라 읽지 않는다. 프로필 사진이 아래 가장자리에 걸친다 */}
+            {/* 프로필 배경사진(디자인 기준 10절) — 맨 위 띠, 없으면 옅은 하늘 단색. 사진은 꾸밈이라 읽지 않는다. 프로필 사진이 아래 가장자리에 걸친다 */}
             <div className={s.cover} aria-hidden="true">
               {backgroundUrl ? <img className={s.coverImg} src={backgroundUrl} alt="" width={1280} height={427} /> : null}
             </div>
