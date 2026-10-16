@@ -32,6 +32,7 @@ surfaces: [authz, concurrency, payment]
 #   동시에 와도 한 번만 반영돼야 한다. payment: 결제 하나에 받는 팬이 여럿이라 팬 몫마다 환불이 따로 난다.
 #   로그인·세션(auth)은 session-login 스펙의 관할이다.
 ---
+화면 표기는 docs/copy/glossary.md를 따른다. 이 문서의 미확인 상자 = 아직 도착하지 않은 상자, 확인할 선물 = 승인 요청, 코드 없이 온 상자 = 받는 주소 없이 보낸 상자.
 
 # 역조공 스펙
 
