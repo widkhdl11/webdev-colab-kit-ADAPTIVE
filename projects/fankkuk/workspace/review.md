@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: passed
-basis: 29c8e6217b2f
+basis: 88f68803fcb4
 reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 ---
 
@@ -13,6 +13,8 @@ reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 - 크리에이터 처리할 일(INV-J5~J8, W13, C11, N20): security 낮음 2(닫힌 몫 6자리 되살림·기한 지난 운영자 처리) · code 높음 1(노출 검사 허용 목록 옛 이름)·중간 3·낮음 3 · ui 중간 3·낮음 6 · test-auditor 높음 3·중간 3·낮음 2 → 모두 고침(취소 함수 확인 줄 잠금 하나는 앞선 상자 잠금 때문에 변이로 안 잡힘 — 이중 잠금). 카드 d96(내 상자 찾기 자리). 변이 DB 21/22·화면 6/6.
 - 선물 현황(INV-J9~J11): security 지적 없음(J10 칸 목록에 주문번호·몫 ID 보탬) · code 높음 2(일부 반송 주문 사라짐·역조공 출고 영원히 남음 → 카드 d97)·중간 3·낮음 1 · ui 중간 3·낮음 4 · test-auditor 높음 1·중간 2·낮음 3 → 모두 고침(몫 상자 상태에 missing 이 없어 그 갈래 시험 없음). 변이 23/23.
 - 화면 문구: 용어집(docs/copy/glossary.md)을 유일한 기준으로, copy:lint 149 → 0.
+
+- 뒤이어 faa7bb3(팬 화면 새 용어 — 받은 역조공 수락·받지 않음·기한 지남, 승인 대기, 재알림·약관 라벨): 문구만 바뀌어 리뷰어를 다시 보내지 않음(카피 변경은 자동 게이트만). npm test 2000, tsc 0, copy:lint 0, 통합 revgift·notifications 119/119, 게이트 통과. 화면은 브라우저로 열어 보지 않았다.
 
 ## 실행 근거
 - `node gates/run-gates.mjs` → 게이트 통과(1435개 파일, tsc 4/4 · test 4/4). `npm test` 2000 통과. `npm run copy:lint` 0건. `npm run check:pii` 통과.
