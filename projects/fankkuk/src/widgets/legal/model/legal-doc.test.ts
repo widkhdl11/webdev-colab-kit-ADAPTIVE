@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { openItems, TO_DECIDE, TO_FILL, type LegalDoc } from "./legal-doc";
-import { PRIVACY_DOC } from "./privacy-doc";
+import { privacyDoc } from "./privacy-doc";
 import { termsDoc } from "./terms-doc";
 import { mustDeliverLabels } from "@/entities/notification/model/delivery-policy";
 
@@ -10,7 +10,7 @@ const prices = {
   large: { priceKrw: 12345, revgiftPriceKrw: 9876 },
 } as const;
 
-const docs: readonly LegalDoc[] = [termsDoc(prices), PRIVACY_DOC];
+const docs: readonly LegalDoc[] = [termsDoc(prices), privacyDoc()];
 
 describe("약관·개인정보처리방침 글", () => {
   it("목차 앵커가 문서마다 겹치지 않고 주소에 그대로 쓸 수 있는 꼴이다", () => {
@@ -46,6 +46,7 @@ describe("약관·개인정보처리방침 글", () => {
     const doc: LegalDoc = {
       title: "t",
       lead: "l",
+      summary: ["요약 하나", "요약 둘", "요약 셋"],
       facts: [["시행일", TO_FILL]],
       sections: [{ id: "a", title: "A", blocks: [{ kind: "text", text: "정해진 문장" }, { kind: "list", items: [`관할: ${TO_DECIDE}`] }] }],
     };

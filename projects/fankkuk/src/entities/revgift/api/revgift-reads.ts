@@ -50,7 +50,7 @@ export type RevgiftFollower = { fanId: string; nickname: string };
  */
 export async function readRevgiftFollowers(client: Pick<SupabaseClient, "rpc">): Promise<RevgiftFollower[]> {
   const { data, error } = await client.rpc("my_revgift_followers");
-  if (error) throw new Error(`팔로워 목록을 읽지 못했다: ${error.code}`);
+  if (error) throw new Error(`팔로우한 팬 목록을 읽지 못했다: ${error.code}`);
   return z
     .array(followerRow)
     .parse(data)

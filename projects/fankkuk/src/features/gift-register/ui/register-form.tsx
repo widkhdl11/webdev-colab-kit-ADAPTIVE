@@ -18,6 +18,7 @@ import { hardItemOverlap, type HardItems } from "@/entities/gift-item/model/hard
 import { forcesMetalReport, isItemCategory, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, ITEM_OTHER_MAX, type ItemCategory } from "@/entities/gift-item/model/item-category";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { MEMO_BODY_MAX, MEMO_TITLE_MAX } from "@/entities/order/model/gift-memo";
+import { PAYMENT_CONSENT_MISSING, PaymentConsent } from "@/entities/payment/ui/payment-consent";
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
 import { receivingNotice } from "../model/receiving-notice";
@@ -102,6 +103,9 @@ export function RegisterForm({
   const [submitting, setSubmitting] = useState(false);
   // 다시 그려지기 전에 Enter·클릭이 연달아 와도 한 번만 보내게 — state 는 다음 그리기까지 옛 값이다
   const submittingRef = useRef(false);
+  // 결제 전 동의(약관·처리방침·취소·환불 규정) — 체크하지 않으면 결제로 넘어가지 않는다
+  const [consented, setConsented] = useState(false);
+  const [consentMissing, setConsentMissing] = useState(false);
   const [noticeShown, setNoticeShown] = useState(true);
   // creator-receiving INV-B9: 「{기념일} 선물」 표시를 고른 크리에이터 — 다른 크리에이터로 바꾸면 고른 것이 풀린다
   const [markedFor, setMarkedFor] = useState<string | null>(null);
@@ -211,6 +215,12 @@ export function RegisterForm({
     if (hardOverlap?.blocks) {
       e.preventDefault();
       go(2, "hard-note");
+      return;
+    }
+    if (!consented) {
+      e.preventDefault();
+      setConsentMissing(true);
+      document.getElementById("pay-consent")?.focus();
       return;
     }
     void handleSubmit(() => submit(), onInvalid)(e);
@@ -894,6 +904,27 @@ export function RegisterForm({
           </div>
         </div>
 
+        {step === 4 ? (
+          <>
+            <PaymentConsent
+              id="pay-consent"
+              checked={consented}
+              invalid={consentMissing}
+              errorId="pay-consent-error"
+              onChange={(v) => {
+                setConsented(v);
+                if (v) setConsentMissing(false);
+              }}
+            />
+            <div role="alert">
+              {consentMissing ? (
+                <p className={f.error} id="pay-consent-error">
+                  {PAYMENT_CONSENT_MISSING}
+                </p>
+              ) : null}
+            </div>
+          </>
+        ) : null}
         {alerts}
         {actions}
       </form>

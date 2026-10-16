@@ -36,3 +36,27 @@
 
 /* 옅은 판 — 공개 화면 시안(v18-pub.css .card--soft)은 옅은 빨강. 전역 기본(회색)은 로그인 후 화면 값이다 */
 .page :global(.card--soft) { background: var(--primary-50); box-shadow: none; }
+
+/* 세 줄 요약 — 사실 카드 위 */
+.summary { margin-bottom: var(--space-6); }
+.summary ul { margin-top: var(--space-2); }
+.past { margin-bottom: var(--space-6); border: 1px solid var(--gray-200); }
+.versions { margin-top: var(--space-2); }
+/* 신고·문의 양식 카드 — 폼 한 기둥(design-rules 정렬: 폼은 가운데 한 기둥 560~720) */
+.formCard { max-width: 640px; margin-inline: auto; }
+
+/* 보안 안내 그림 — 네 칸이 차례로(오른쪽 화살표), 767 이하에서는 위아래(아래 화살표) */
+.figure { margin: 0 0 var(--space-6); }
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-8); counter-reset: none; }
+.flow > li { position: relative; display: grid; align-content: start; gap: var(--space-2); }
+.flow > li:not(:last-child)::after { content: "→" / ""; position: absolute; top: 50%; right: calc(var(--space-8) / -2); transform: translate(50%, -50%); color: var(--gray-600); font-weight: var(--fw-bold); }
+.flowNo { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-50); color: var(--brand-ink); font-weight: var(--fw-bold); font-size: var(--fs-caption); }
+.figure figcaption { margin-top: var(--space-4); }
+/* 1023 이하는 위아래로 — 2칸으로 접으면 화살표 차례가 꼬인다(design-rules 그리드 폭 기준) */
+@media (max-width: 1023px) {
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .flow > li:not(:last-child)::after { content: "↓" / ""; top: auto; bottom: calc(var(--space-8) / -2); right: 50%; transform: translate(50%, 50%); }
+}
+/* 그림 칸 제목·설명은 본문 크기(설명은 회색) */
+.flow h3 { font-size: var(--fs-body); }
+.flowText { color: var(--gray-600); }

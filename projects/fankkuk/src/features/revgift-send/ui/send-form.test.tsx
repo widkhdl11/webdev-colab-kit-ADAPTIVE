@@ -4,6 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 
+// 결제 전 동의 시험용 — 등록 요청은 보냈는지만 본다(결제창으로 넘어가지 않게 실패로 돌려준다)
+const registerMock = vi.hoisted(() => vi.fn(async () => ({ ok: false as const, reason: "failed" as const, message: "시험" })));
+vi.mock("../api/send-requests", () => ({ registerRevgiftRequest: registerMock }));
+
 import type { RevgiftFollower } from "@/entities/revgift/api/revgift-reads";
 import { MAX_REVGIFT_SHARES } from "../model/register-revgift";
 import { RevgiftSendForm } from "./send-form";
@@ -122,5 +126,26 @@ describe("역조공 받을 팬 고르기 (INV-R2·R3)", () => {
     render(followersOf(ELEVEN));
     expect(pickedCount()).toBe("받을 팬 10명");
     expect(box("팬1").checked).toBe(false);
+  });
+});
+
+describe("결제 전 동의 — 이용약관·개인정보처리방침·취소·환불 규정", () => {
+  it("(실패경로) 동의 칸을 체크하지 않고 결제하기를 누르면 등록 요청을 보내지 않고 안내가 보인다", async () => {
+    registerMock.mockClear();
+    render(followersOf([1]));
+    click(box("팬1"));
+    await act(async () => payButton()!.click());
+    expect(registerMock).not.toHaveBeenCalled();
+    expect(host.textContent).toContain("결제 전에 이용약관과 취소·환불 규정을 확인하고 동의해 주세요.");
+    expect(document.activeElement).toBe(host.querySelector("#rv-consent"));
+  });
+
+  it("동의 칸을 체크하면 등록 요청을 보낸다", async () => {
+    registerMock.mockClear();
+    render(followersOf([1]));
+    click(box("팬1"));
+    click(host.querySelector<HTMLInputElement>("#rv-consent")!);
+    await act(async () => payButton()!.click());
+    expect(registerMock).toHaveBeenCalledTimes(1);
   });
 });

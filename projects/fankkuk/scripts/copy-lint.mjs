@@ -213,9 +213,13 @@ for (const file of listFiles(scanRoot)) {
     return lo;
   };
   for (const word of forbidden) {
+    // 영문 금지어(BJ 등)는 식별자 안에서 잡히지 않게 낱말 단위로만 본다(APPROVAL_SUBJECT 의 BJ). JSX 글자도 잡힌다. 한글 금지어는 그대로.
+    const ascii = /^[\x20-\x7E]+$/.test(word) && /[A-Za-z]/.test(word);
+    const wordChar = (c) => c !== undefined && /[A-Za-z0-9_]/.test(c);
+    const counts = (p) => !ascii || (!wordChar(code[p - 1]) && !wordChar(code[p + word.length]));
     let pos = code.indexOf(word);
     while (pos >= 0) {
-      if (!skip.some(([a, b]) => pos >= a && pos < b)) {
+      if (counts(pos) && !skip.some(([a, b]) => pos >= a && pos < b)) {
         const ln = lineOf(pos);
         const lineText = src.slice(lineStarts[ln], (lineStarts[ln + 1] ?? src.length + 1) - 1).trim();
         hits.push({ file: relative(projectRoot, file).replace(/\\/g, "/"), line: ln + 1, word, text: lineText.length > 140 ? `${lineText.slice(0, 140)}…` : lineText });

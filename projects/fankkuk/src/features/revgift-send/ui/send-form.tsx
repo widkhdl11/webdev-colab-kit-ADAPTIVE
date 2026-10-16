@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
+import { PAYMENT_CONSENT_MISSING, PaymentConsent } from "@/entities/payment/ui/payment-consent";
 import type { RevgiftFollower } from "@/entities/revgift/api/revgift-reads";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { registerRevgiftRequest } from "../api/send-requests";
@@ -44,6 +45,8 @@ export function RevgiftSendForm({
   const [payError, setPayError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [noticeShown, setNoticeShown] = useState(true);
+  // 결제 전 동의(약관·처리방침·취소·환불 규정) — 체크하지 않으면 결제로 넘어가지 않는다
+  const [consented, setConsented] = useState(false);
 
   const picked = followers.flatMap((f) => {
     const tier = tiers.get(f.fanId);
@@ -71,6 +74,11 @@ export function RevgiftSendForm({
   };
 
   const pay = async () => {
+    if (!consented) {
+      setPayError(PAYMENT_CONSENT_MISSING);
+      document.getElementById("rv-consent")?.focus();
+      return;
+    }
     if (paying || picked.length === 0) return;
     setPaying(true);
     setPayError(null);
@@ -212,12 +220,26 @@ export function RevgiftSendForm({
           <span className="t-strong">합계</span>
           <strong className={s.big}>{won(total)}</strong>
         </p>
+        <PaymentConsent
+          id="rv-consent"
+          checked={consented}
+          invalid={!consented && payError === PAYMENT_CONSENT_MISSING}
+          errorId="rv-pay-error"
+          onChange={(v) => {
+            setConsented(v);
+            if (v && payError === PAYMENT_CONSENT_MISSING) setPayError(null);
+          }}
+        />
         <p className={s["pay-btn"]}>
           <button className="btn btn--block" type="button" onClick={pay} disabled={picked.length === 0} aria-busy={paying || undefined}>
             결제하기
           </button>
         </p>
-        <div role="alert">{payError ? <p className={`err ${s.after}`}>{payError}</p> : null}</div>
+        <div role="alert">{payError ? (
+            <p className={`err ${s.after}`} id="rv-pay-error">
+              {payError}
+            </p>
+          ) : null}</div>
         <p className={`t-meta ${s.after}`}>결제는 한 번이에요. 팬이 받지 않으면 그 팬의 상자 요금만 환불돼요.</p>
       </aside>
     </div>

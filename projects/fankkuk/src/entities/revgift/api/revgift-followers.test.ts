@@ -39,6 +39,6 @@ describe("readRevgiftFollowers (INV-R2)", () => {
   });
 
   it("(실패경로) 읽기 오류는 멈춘다", async () => {
-    await expect(readRevgiftFollowers(clientReturning(null, { code: "42501" }))).rejects.toThrow("팔로워 목록을 읽지 못했다");
+    await expect(readRevgiftFollowers(clientReturning(null, { code: "42501" }))).rejects.toThrow("팔로우한 팬 목록을 읽지 못했다");
   });
 });

@@ -55,6 +55,13 @@ async function click(el: Element | null | undefined) {
   await settle();
 }
 
+/** 결제 전 동의 칸을 체크하고 결제하기를 누른다. */
+async function agreeAndPay() {
+  const box = host.querySelector<HTMLInputElement>("#pay-consent");
+  if (box && !box.checked) await click(box);
+  await click([...host.querySelectorAll("button")].find((b) => b.textContent?.includes("결제하기")));
+}
+
 const button = (text: string) => [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === text);
 const stepButton = (label: string) => [...host.querySelectorAll("nav button")].find((b) => b.textContent?.includes(label));
 const radio = (value: string) => host.querySelector<HTMLInputElement>(`input[type=radio][value="${value}"]`);
@@ -113,7 +120,7 @@ describe("결제 직전에 다시 본다 — 4단계까지 간 뒤 크리에이�
     await click(stepButton("크리에이터"));
     await click(radio(HARU));
     await click(stepButton("결제"));
-    await click([...host.querySelectorAll("button")].find((b) => b.textContent?.includes("결제하기")));
+    await agreeAndPay();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(visibleStep()).toEqual([2]);
     expect(host.querySelector("#hard-note")?.textContent).toContain("다른 선물을 골라 주세요.");
@@ -124,7 +131,7 @@ describe("결제 직전에 다시 본다 — 4단계까지 간 뒤 크리에이�
     await click(stepButton("크리에이터"));
     await click(radio(NARU));
     await click(stepButton("결제"));
-    await click([...host.querySelectorAll("button")].find((b) => b.textContent?.includes("결제하기")));
+    await agreeAndPay();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(visibleStep()).toEqual([1]);
     expect(host.querySelector("#creator-error")?.textContent).toContain("잠시 선물 받기를 쉬고 있어요");
@@ -132,14 +139,14 @@ describe("결제 직전에 다시 본다 — 4단계까지 간 뒤 크리에이�
 
   it("막힘이 없으면 결제하기가 서버에 보낸다(위 두 시험이 아무것도 안 보내서 통과한 것이 아님을 확인)", async () => {
     await toPayWith("stationery");
-    await click([...host.querySelectorAll("button")].find((b) => b.textContent?.includes("결제하기")));
+    await agreeAndPay();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({ creatorId: MOMO, itemCategory: "stationery" });
   });
 });
 
 describe("metrics INV-Q5: 안내가 뜬 품목을 등록에 같이 보낸다", () => {
-  const pay = () => click([...host.querySelectorAll("button")].find((b) => b.textContent?.includes("결제하기")));
+  const pay = () => agreeAndPay();
   const sent = () => JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
 
   it("INV-Q5 (S5): 꽃에서 안내를 보고 인형으로 바꿔 결제하면 안내 품목 꽃·마지막 인형을 보낸다", async () => {
@@ -203,7 +210,7 @@ describe("metrics INV-Q5: 안내가 뜬 품목을 등록에 같이 보낸다", (
 });
 
 describe("together INV-F7: 2단계 「나만 보는 메모」(선물 이름·내용, 둘 다 선택)", () => {
-  const pay = () => click([...host.querySelectorAll("button")].find((b) => b.textContent?.includes("결제하기")));
+  const pay = () => agreeAndPay();
   const sent = () => JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
   async function type(el: HTMLInputElement | HTMLTextAreaElement | null, value: string) {
     if (!el) throw new Error("입력 칸이 없다");
@@ -279,5 +286,32 @@ describe("together INV-F7: 2단계 「나만 보는 메모」(선물 이름·내
     await type(title(), "가".repeat(21));
     expect(visibleStep()).toEqual([2]);
     expect(host.querySelector("#memoTitle-count")?.getAttribute("data-over")).toBe("true");
+  });
+});
+
+describe("결제 전 동의 — 이용약관·개인정보처리방침·취소·환불 규정", () => {
+  async function toPay() {
+    await render("block", MOMO);
+    await toStep2("stationery");
+    await click(button("다음"));
+    await click(button("다음"));
+  }
+
+  it("(실패경로) 동의 칸을 체크하지 않고 결제하기를 누르면 보내지 않고, 안내가 보이고 동의 칸으로 간다", async () => {
+    await toPay();
+    await click([...host.querySelectorAll("button")].find((b) => b.textContent?.includes("결제하기")));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(host.textContent).toContain("결제 전에 이용약관과 취소·환불 규정을 확인하고 동의해 주세요.");
+    expect(document.activeElement).toBe(host.querySelector("#pay-consent"));
+  });
+
+  it("동의 칸 옆에 세 규정의 링크가 새 탭으로 걸려 있다", async () => {
+    await toPay();
+    const links = [...host.querySelectorAll<HTMLAnchorElement>("#pay-consent-links a")];
+    expect(links.map((a) => [a.getAttribute("href"), a.textContent, a.target])).toEqual([
+      ["/terms", "이용약관", "_blank"],
+      ["/privacy", "개인정보처리방침", "_blank"],
+      ["/refund", "취소·환불 규정", "_blank"],
+    ]);
   });
 });

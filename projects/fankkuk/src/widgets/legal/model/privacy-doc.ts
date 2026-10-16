@@ -1,19 +1,23 @@
-import { TERMS_VERSIONS } from "@/features/signup/model/signup-input";
 import { OPERATOR_NAME, PROMISE } from "@/shared/config/site-copy";
-import { TO_DECIDE, TO_FILL, type LegalDoc } from "./legal-doc";
+import { orBlank, SITE_INFO, type SiteInfo } from "@/shared/config/site-info";
+import { TO_DECIDE, toCheck, type LegalDoc } from "./legal-doc";
 
 // 개인정보처리방침. 근거: docs/PRODUCT.md · DECISIONS.md · specs(address-protection·reverse-gift·office-workflow INV-W8·
 // signup·my-account·notifications·approval-signature·creator-verification) · tech-stack.md · DB 의 개인정보 구역 표.
 // 처리를 맡기는 곳은 레포에 정해진 범위만 적는다 — 업체가 정해지지 않은 곳(카카오 딜러사·알림톡 대행사·메일·택배사·KMS)은 이름을 비워 둔다.
 
-export const PRIVACY_DOC: LegalDoc = {
+// 처리를 맡기는 곳의 이름·보호책임자·문의 이메일은 site-info 설정값에서 읽는다.
+export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
+  const vendor = (label: string, name: string) => (name.trim() === "" ? `${label} ${orBlank(name)}` : `${label} — ${name}`);
+  return {
   title: "개인정보처리방침",
   lead: `팬꾹이 어떤 개인정보를 왜 받고, 언제 지우고, 누구에게 맡기는지 적었어요. ${PROMISE.address}`,
-  facts: [
-    ["운영", OPERATOR_NAME],
-    ["시행일", TO_FILL],
-    ["동의 기록의 판", TERMS_VERSIONS.privacy],
+  summary: [
+    "팬꾹은 가입·선물 보내기·배송에 꼭 필요한 정보만 받고, 크리에이터와 역조공을 받는 팬의 주소는 입력한 사람의 브라우저에서 암호화한 상태로만 받습니다.",
+    "주소는 송장을 출력할 때만 열리고, 열린 기록은 주소의 주인이 볼 수 있습니다.",
+    "개인정보를 다른 회사에 팔거나 넘기지 않으며, 배송·결제·알림처럼 맡기는 일은 4절에 적은 곳에만 맡깁니다.",
   ],
+  facts: [["운영", OPERATOR_NAME]],
   sections: [
     {
       id: "collect",
@@ -149,6 +153,7 @@ export const PRIVACY_DOC: LegalDoc = {
               title: "소비자 불만·분쟁 처리 기록",
               fields: [["보관", "3년(전자상거래 등에서의 소비자보호에 관한 법률 시행령)"]],
             },
+            { title: "개인정보 접속 기록(주소 열람 시도·출력한 사람)", fields: [["보관", toCheck("보관 기간 — 개인정보의 안전성 확보조치 기준")]] },
           ],
         },
         {
@@ -182,11 +187,11 @@ export const PRIVACY_DOC: LegalDoc = {
             { title: "Supabase", fields: [["맡기는 일", "데이터 저장, 로그인"]] },
             { title: "Vercel", fields: [["맡기는 일", "사이트 운영(서버)"]] },
             { title: "토스페이먼츠", fields: [["맡기는 일", "결제와 환불"]] },
-            { title: `카카오 인증 대행사 ${TO_FILL}`, fields: [["맡기는 일", "카카오톡 본인 확인, 선물 승인과 주소 등록의 카카오톡 인증서 전자서명"]] },
-            { title: `알림톡 발송 대행사 ${TO_FILL}`, fields: [["맡기는 일", "카카오 알림톡 발송"]] },
-            { title: `메일 발송 ${TO_FILL}`, fields: [["맡기는 일", "확인 메일과 알림 메일 발송"]] },
-            { title: `택배사 ${TO_FILL}`, fields: [["맡기는 일", "송장 출력과 배송"]] },
-            { title: `주소 키 보관 ${TO_FILL}`, fields: [["맡기는 일", "암호화한 주소를 여는 키 보관(앱 서버·데이터베이스와 분리)"]] },
+            { title: vendor("카카오 인증 대행사", info.vendors.kakaoAuth), fields: [["맡기는 일", "카카오톡 본인 확인, 선물 승인과 주소 등록의 카카오톡 인증서 전자서명"]] },
+            { title: vendor("알림톡 발송 대행사", info.vendors.alimtalk), fields: [["맡기는 일", "카카오 알림톡 발송"]] },
+            { title: vendor("메일 발송", info.vendors.mail), fields: [["맡기는 일", "확인 메일과 알림 메일 발송"]] },
+            { title: vendor("택배사", info.vendors.carrier), fields: [["맡기는 일", "송장 출력과 배송"]] },
+            { title: vendor("주소 키 보관", info.vendors.keyVault), fields: [["맡기는 일", "암호화한 주소를 여는 키 보관(앱 서버·데이터베이스와 분리)"]] },
           ],
         },
         { kind: "text", text: `맡기는 곳마다 맡기는 정보의 범위와 계약 내용: ${TO_DECIDE}` },
@@ -202,7 +207,8 @@ export const PRIVACY_DOC: LegalDoc = {
             "크리에이터에게 팬의 실명·주소·연락처를 주지 않습니다. 승인 요청에는 보낸 사람의 닉네임만, 크리에이터를 팔로우한 팬 목록에는 팬의 닉네임만, 역조공에서도 받는 팬의 닉네임만 보입니다.",
             "운영자 화면에도 실명·주소·휴대폰 번호는 나오지 않고, 회원은 아이디·닉네임으로만 보입니다.",
             "송장을 출력할 때 받는 사람 정보가 택배사로 가는 것은 배송을 맡기는 처리 위탁입니다(4절).",
-            `그 밖에 제3자에게 주는 경우: ${TO_DECIDE}`,
+            "위의 경우 말고는 개인정보를 제3자에게 제공하지 않습니다.",
+            `법령에 따른 수사기관 등의 요청에 응하는 경우의 절차: ${TO_DECIDE}`,
           ],
         },
       ],
@@ -244,9 +250,9 @@ export const PRIVACY_DOC: LegalDoc = {
           kind: "list",
           items: [
             "주소를 열려는 시도는 성공과 거절 모두 한 줄씩 기록합니다. 시각, 주문번호, 출력한 사람, 결과, 재출력 여부가 남습니다.",
-            "크리에이터는 「내 팬꾹」의 열람 기록 화면에서 자기 선물의 주소가 열린 기록(시각·주문번호·몇 번째 출력)을 전부 볼 수 있습니다. 역조공을 받은 회원도 받은 역조공 화면에서 자기 주소가 열리고 지워진 기록을 봅니다.",
+            "크리에이터는 열람 기록 화면에서 자기 선물의 주소가 열린 기록(시각·주문번호·몇 번째 출력)을 전부 볼 수 있습니다. 역조공을 받은 회원도 받은 역조공 화면에서 자기 주소가 열리고 지워진 기록을 봅니다.",
             "거절된 시도와 출력한 사람의 기록은 개인정보 접속 기록으로 회사 안에서만 보관하고, 회사의 운영자만 볼 수 있습니다.",
-            "이 기록은 회사도 고치거나 지울 수 없습니다.",
+            "사이트 서버는 이 기록을 고치거나 지울 수 없습니다.",
           ],
         },
       ],
@@ -262,7 +268,7 @@ export const PRIVACY_DOC: LegalDoc = {
             "알림은 알림 설정에서 끌 수 있습니다. 다만 승인 요청·추가 결제 요청·돌려보낼 상자·추가 결제 취소 같은 알림은 조치가 필요하거나 돈·상자가 걸려 있기 때문에 꺼도 갑니다.",
             "크리에이터 배송지는 「주소와 설정」에서 카카오톡 인증서로 서명한 뒤 바꿀 수 있습니다.",
             "휴대폰 번호 변경(카카오톡 인증 다시 받기)은 준비 중입니다. 준비가 끝나기 전까지는 1:1 문의로 바꿔 드립니다.",
-            `개인정보 열람·정정·삭제·처리 정지와 선택 동의 철회는 고객센터의 1:1 문의나 이메일(${TO_FILL})로 요청할 수 있습니다. 요청을 받은 날부터 10일 안에 처리합니다.`,
+            `개인정보 열람·정정·삭제·처리 정지와 선택 동의 철회는 고객센터의 1:1 문의나 이메일(${orBlank(info.supportEmail)})로 요청할 수 있습니다. 요청을 받은 날부터 10일 안에 처리합니다.`,
           ],
         },
       ],
@@ -287,8 +293,8 @@ export const PRIVACY_DOC: LegalDoc = {
             {
               title: "개인정보 보호책임자",
               fields: [
-                ["이름", TO_FILL],
-                ["연락처", TO_FILL],
+                ["이름", orBlank(info.privacyOfficer.name)],
+                ["연락처", orBlank(info.privacyOfficer.contact)],
               ],
             },
           ],
@@ -300,7 +306,7 @@ export const PRIVACY_DOC: LegalDoc = {
       id: "change",
       title: "12. 방침의 변경",
       blocks: [
-        { kind: "text", text: `이 방침은 ${TO_FILL}부터 시행합니다.` },
+        { kind: "text", text: "이 방침의 시행일과 지난 버전은 맨 위와 「버전 기록」에 적습니다." },
         {
           kind: "text",
           text: "방침을 바꿀 때는 바뀌는 내용과 시행일을 시행 7일 전부터 사이트에 공지합니다. 회원에게 불리하게 바뀌는 경우에는 시행 30일 전부터 공지합니다.",
@@ -309,3 +315,4 @@ export const PRIVACY_DOC: LegalDoc = {
     },
   ],
 };
+}

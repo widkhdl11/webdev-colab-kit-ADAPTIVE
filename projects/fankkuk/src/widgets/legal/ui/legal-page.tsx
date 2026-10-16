@@ -1,4 +1,6 @@
+import Link from "next/link";
 import type { LegalBlock, LegalDoc } from "../model/legal-doc";
+import type { VersionLink } from "../model/legal-versions";
 import s from "./legal.module.css";
 
 // 이용약관·개인정보처리방침 공용 글 화면. 시안: docs/design/mockups/site/v18/legal.html — 로그인 전 1152 선
@@ -6,7 +8,17 @@ import s from "./legal.module.css";
 // 표는 쓰지 않는다 — 이름·값 줄(rows)은 카드 격자로, 휴대폰 폭에서는 한 줄에 하나씩 쌓여 가로로 밀리지 않는다.
 
 // icon 은 v11 머리 그림 자리였다 — v18 페이지 머리에는 그림이 없어 쓰지 않는다(부르는 쪽 모양은 그대로 둔다)
-type Props = { doc: LegalDoc; icon: string };
+// history: 버전이 있는 글(약관·처리방침·환불 규정)만 넘긴다 — 맨 아래 「버전 기록」 칸. pastVersion: 지난 버전을 보고 있으면 맨 위에 한 줄.
+// flow: 보안 안내의 그림(차례대로 이어지는 칸) — 요약 아래에 한 줄로, 휴대폰 폭에서는 위아래로 쌓인다.
+type FlowStep = { title: string; text: string };
+type Props = {
+  doc: LegalDoc;
+  icon: string;
+  history?: readonly VersionLink[];
+  pastVersion?: boolean;
+  flow?: readonly FlowStep[];
+  flowLabel?: string;
+};
 
 function Block({ block }: { block: LegalBlock }) {
   switch (block.kind) {
@@ -50,7 +62,13 @@ function Block({ block }: { block: LegalBlock }) {
   }
 }
 
-export function LegalPage({ doc }: Props) {
+export function LegalPage({
+  doc,
+  history,
+  pastVersion,
+  flow,
+  flowLabel,
+}: Props) {
   return (
     <main id="main" className={s.page}>
       <section aria-labelledby="page-title">
@@ -63,14 +81,52 @@ export function LegalPage({ doc }: Props) {
             </div>
             <p className="ph-desc">{doc.lead}</p>
           </header>
-          <dl className={s.facts}>
-            {doc.facts.map(([k, v]) => (
-              <div key={k} className="card">
-                <dt>{k}</dt>
-                <dd>{v}</dd>
-              </div>
-            ))}
-          </dl>
+          {pastVersion ? (
+            <p className={`card ${s.past}`} role="note">
+              지난 버전이에요. 지금 시행 중인 글은{" "}
+              <Link href={history?.find((h) => h.current)?.href ?? "/"}>
+                최신 버전
+              </Link>
+              에서 볼 수 있어요.
+            </p>
+          ) : null}
+          <div className={`card card--soft prose ${s.summary} ${s.prose}`}>
+            <h2 className="t-card">요약</h2>
+            <ul className="dots">
+              {doc.summary.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+          {flow ? (
+            <figure className={s.figure}>
+              <ol className={s.flow}>
+                {flow.map((step, i) => (
+                  <li key={step.title} className="card">
+                    <span className={s.flowNo} aria-hidden="true">
+                      {i + 1}
+                    </span>
+                    <h3 className="t-strong">{step.title}</h3>
+                    <p className={s.flowText}>{step.text}</p>
+                  </li>
+                ))}
+              </ol>
+              {flowLabel ? (
+                <figcaption className="t-meta">{flowLabel}</figcaption>
+              ) : null}
+            </figure>
+          ) : null}
+          {/* 사실 칸이 「운영」 하나뿐인 안내 페이지는 칸을 그리지 않는다 — 버전·시행일이 있는 글만 셋이 된다 */}
+          {doc.facts.length > 1 ? (
+            <dl className={s.facts}>
+              {doc.facts.map(([k, v]) => (
+                <div key={k} className="card">
+                  <dt>{k}</dt>
+                  <dd>{v}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
         </div>
       </section>
 
@@ -105,6 +161,38 @@ export function LegalPage({ doc }: Props) {
               </div>
             </section>
           ))}
+          {history ? (
+            <section
+              id="versions"
+              className={s.art}
+              aria-labelledby="versions-h"
+            >
+              <h2 className="t-card" id="versions-h">
+                버전 기록
+              </h2>
+              <div className={`prose ${s.prose}`}>
+                <ul className={`dots ${s.versions}`}>
+                  {history.map((v) => (
+                    <li key={v.version}>
+                      <Link
+                        href={v.href}
+                        aria-current={
+                          v.current && !pastVersion ? "page" : undefined
+                        }
+                      >
+                        버전 {v.version}
+                      </Link>{" "}
+                      · 시행일 {v.effective}
+                      {v.current ? " · 지금 시행 중" : ""}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {history.length === 1 ? (
+                <p className="t-meta">지난 버전은 아직 없어요.</p>
+              ) : null}
+            </section>
+          ) : null}
         </div>
       </section>
     </main>

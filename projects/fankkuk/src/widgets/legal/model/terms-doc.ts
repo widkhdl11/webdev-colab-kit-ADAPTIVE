@@ -1,9 +1,11 @@
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
+import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
-import { TERMS_VERSIONS } from "@/features/signup/model/signup-input";
 import { OPERATOR_NAME } from "@/shared/config/site-copy";
-import { TO_DECIDE, TO_FILL, type LegalDoc } from "./legal-doc";
+import { SITE_INFO } from "@/shared/config/site-info";
+import { TO_DECIDE, toCheck, type LegalDoc } from "./legal-doc";
+import { CURRENT, effectiveText } from "./legal-versions";
 
 // 이용약관. 근거: docs/PRODUCT.md · DECISIONS.md · specs(payment·office-workflow·decline-block·reverse-gift·signup·
 // creator-verification·notifications·address-protection). 요금 숫자는 결제와 같은 DB 요금표를 page 가 읽어 넘긴다.
@@ -13,15 +15,16 @@ import { TO_DECIDE, TO_FILL, type LegalDoc } from "./legal-doc";
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const DEADLINE = `${APPROVAL_DEADLINE_DAYS * 24}시간(${APPROVAL_DEADLINE_DAYS}일)`;
 
-export function termsDoc(prices: PublicPriceTable): LegalDoc {
+export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compensationCapKrw): LegalDoc {
   return {
     title: "이용약관",
     lead: "팬꾹을 쓰기 전에 알아 두셔야 할 약속을 모았어요. 선물이 어떻게 오가고, 돈은 언제 얼마를 받고 돌려드리는지 적었습니다.",
-    facts: [
-      ["운영", OPERATOR_NAME],
-      ["시행일", TO_FILL],
-      ["동의 기록의 판", TERMS_VERSIONS.service],
+    summary: [
+      "팬꾹은 팬의 선물을 사무실에서 받아 검수한 뒤, 크리에이터가 승인한 선물만 크리에이터에게 보냅니다.",
+      "요금은 상자마다 크기·무게 구간으로 받으며, 거절·반송·취소 때 돌려드리는 금액은 선물의 상태에 따라 정해집니다.",
+      "보낼 수 없는 물품을 보내거나 남의 채널로 크리에이터 확인을 받으면 이용이 제한될 수 있습니다.",
     ],
+    facts: [["운영", OPERATOR_NAME]],
     sections: [
       {
         id: "purpose",
@@ -164,7 +167,7 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
             kind: "list",
             items: [
               "사무실에서 실측한 구간이 등록한 구간보다 높으면 팬은 차액을 추가로 결제하여야 합니다. 차액이 결제되기 전에는 해당 선물을 출고하지 않습니다.",
-              `회사가 차액 결제를 요청한 시각부터 ${DEADLINE} 이내에 결제하지 않으면 상자를 반송합니다. 환불 금액은 제9조의 표에 따릅니다.`,
+              `회사가 차액 결제를 요청한 시각부터 ${DIFFERENCE_DEADLINE_DAYS * 24}시간(${DIFFERENCE_DEADLINE_DAYS}일) 이내에 결제하지 않으면 상자를 반송합니다. 환불 금액은 제9조의 표에 따릅니다.`,
               "실측한 구간이 등록한 구간보다 낮더라도 차액은 환불하지 않습니다.",
               `실측 결과가 ${OVERSIZE_RULE}이면 차액 결제가 아니라 검수 불합격으로 처리합니다(제10조).`,
             ],
@@ -178,7 +181,7 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
           {
             kind: "list",
             items: [
-              "크리에이터는 승인하기 전의 선물에 대해 받지 않기(거절)를 선택할 수 있습니다. 회사는 거절 사유를 팬에게 알리지 않으며, 크리에이터의 거절·자동 반려·차단에 따른 거절은 팬 화면에 모두 같게 표시됩니다.",
+              "크리에이터는 승인하기 전의 선물에 대해 받지 않기(거절)를 선택할 수 있습니다. 회사는 거절 사유와 차단 여부를 팬에게 알리지 않습니다. 크리에이터의 거절과 차단에 따른 거절은 팬 화면에 같은 「거절」로, 자동 반려는 따로 표시됩니다.",
               `결제가 완료된 시각부터 ${DEADLINE} 이내에 크리에이터가 승인하지 않으면 자동으로 반려됩니다. 이 기간에는 주말과 공휴일도 포함되며, 크리에이터에게 보내는 승인 요청 알림에 반려 예정 시각을 적습니다.`,
               `기한을 시각 단위로 세는 방식에 대한 법률 검토: ${TO_DECIDE}`,
               "사무실에 도착한 상자를 반송할 때에는 팬이 처음 상자에 붙인 원래 송장의 주소로 보냅니다.",
@@ -195,7 +198,13 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
                   ["「먼저 보내기」를 누른 경우", "아래 「아직 도착하지 않은 상자」 기준에 따름"],
                 ],
               },
-              { title: "사무실 도착 후 거절·자동 반려", fields: [["환불 금액", "도착한 상자별로 해당 상자 금액에서 반송 택배비를 공제한 금액"]] },
+              {
+                title: "사무실 도착 후 거절·자동 반려",
+                fields: [
+                  ["환불 금액", "도착한 상자별로 해당 상자 금액에서 반송 택배비를 공제한 금액"],
+                  ["검수에 걸린 상자", "환불 금액 없음"],
+                ],
+              },
               {
                 title: "받는 주소가 공개된 후 거절·자동 반려·취소 시 아직 도착하지 않은 상자",
                 fields: [
@@ -211,7 +220,14 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
                   ["환불 금액", "검수비와 반송 택배비를 공제하므로 환불 금액이 없습니다"],
                 ],
               },
-              { title: "차액 미결제에 따른 반송", fields: [["환불 금액", "결제 금액 중 배송비 상당액"]] },
+              { title: "차액 미결제에 따른 반송", fields: [["환불 금액", "검수 불합격에 따른 반송과 같이 환불 금액이 없습니다"]] },
+              {
+                title: "승인 후 결제 완료 시각부터 30일이 지나도 도착하지 않은 상자",
+                fields: [
+                  ["환불 금액", "해당 상자 금액 전액"],
+                  ["같은 선물의 다른 상자", "그대로 진행"],
+                ],
+              },
               { title: "출고 후", fields: [["환불 금액", "없음"]] },
             ],
           },
@@ -242,6 +258,7 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
               "블루투스·RF 반응이 있었으나 개봉하여 위치 추적 장치가 아님을 확인한 상자는 바로 통과시키지 않고, 크리에이터에게 받을지를 묻습니다. 크리에이터가 받기를 선택하면 다른 상자와 함께 출고하고, 돌려보내기를 선택하거나 물은 때부터 7일(168시간) 이내에 답하지 않으면 팬에게 반송합니다. 이렇게 반송하는 상자는 검수에 걸린 상자와 같이 검수비와 반송 택배비를 공제합니다(제9조).",
               "크리에이터에게 묻는 동안 해당 선물이 거절·반려·취소로 종료되면 질문을 닫고 상자를 팬에게 반송합니다. 이 경우 환불 금액은 제9조의 「사무실 도착 후 거절·자동 반려」와 입고 후 취소 규정에 따릅니다.",
               "역조공 상자는 추적 장치 검사 없이 외관·크기·무게와 보낼 수 없는 물품 여부만 확인합니다.",
+              "검수는 탐지 장비의 반응과 겉면 검사에 따르며, 탐지 장비가 반응하지 않는 물품까지 모두 찾아낸다고 보장하지 않습니다. 검수 방법과 한계는 「검수 기준」 안내에 적습니다.",
             ],
           },
         ],
@@ -318,7 +335,7 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
             items: [
               "크리에이터의 주소(받는 사람 이름·전화번호·주소)는 크리에이터의 브라우저에서 암호화한 후 저장합니다. 승인 없이는 회사 시스템이 주소를 열람하지 않습니다.",
               "주소는 승인과 검수가 모두 완료된 상자의 송장을 출력할 때에만, 대표 계정 1개로만 열람할 수 있습니다. 상자 1개당 최대 3회(최초 출력과 재출력 2회)입니다. 출고가 확정된 후에도 송장을 다시 붙여야 하는 경우에는 남은 횟수 안에서 재출력할 수 있습니다. 택배사와 연동된 후에는 택배사가 상자를 집하하는 시점부터 남은 횟수가 있더라도 더 이상 열람할 수 없습니다. 송장이 출력되지 않은 시도(프린터 오류 등)는 상자별로 2회까지 횟수에서 제외하되, 기록에는 그대로 남깁니다.",
-              "주소 열람 시도는 성공과 거절 모두 1건씩 기록합니다(시각·주문번호·출력자·재출력 여부). 크리에이터는 열람 기록 화면에서 자신의 선물 주소가 열람된 기록을 모두 확인할 수 있습니다. 거절된 시도와 출력자 기록은 회사 내부에서만 보관합니다. 회사도 이 기록을 수정하거나 삭제할 수 없습니다.",
+              "주소 열람 시도는 성공과 거절 모두 1건씩 기록합니다(시각·주문번호·출력자·재출력 여부). 크리에이터는 열람 기록 화면에서 자신의 선물 주소가 열람된 기록을 모두 확인할 수 있습니다. 거절된 시도와 출력자 기록은 회사 내부에서만 보관합니다. 회사의 서비스 서버는 이 기록을 수정하거나 삭제할 수 없습니다.",
               "크리에이터 본인의 기기나 카카오톡 인증서를 탈취당한 경우에는 이 보호 조치로 막을 수 없습니다.",
             ],
           },
@@ -338,6 +355,8 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
               "상자의 크기나 무게를 실제보다 작게 등록하는 행위",
               "타인이 보낸 상자의 송장번호를 자신의 선물에 등록하거나, 타인의 받는 주소로 상자를 보내는 행위",
               "보안 장치를 우회하거나 다른 회원의 주소·연락처를 알아내려는 행위",
+              "선물을 등록할 때 전자기기·금속 제품이 들어 있는지를 사실과 다르게 알리는 행위",
+              "다른 사람의 권리를 침해하는 사진(프로필 사진·배경사진·팬덤 심볼·선물 사진)을 올리는 행위",
             ],
           },
           { kind: "text", text: "다음 각 호에 해당하는 경우 회사는 해당 회원의 서비스 이용을 제한할 수 있습니다." },
@@ -346,6 +365,11 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
             items: ["보낼 수 없는 물품을 반복하여 보내는 경우", "크리에이터를 사칭하는 경우", "결제를 악용하는 경우"],
           },
           { kind: "text", text: `이용 제한의 절차와 정도(계정 정지 기간 등): ${TO_DECIDE}` },
+          {
+            kind: "text",
+            text: "회원이 올린 사진에 대한 책임은 올린 회원에게 있습니다. 팬덤 심볼은 직접 만들었거나 쓸 권리가 있는 이미지라고 확인한 경우에만 등록됩니다. 권리를 침해당한 사람은 「신고·문의」로 알릴 수 있으며, 회사는 확인한 후 해당 사진을 내릴 수 있습니다.",
+          },
+          { kind: "text", text: `권리 침해 신고를 받은 사진의 처리 기한과 절차: ${toCheck("게시 중단 절차·기한")}` },
         ],
       },
       {
@@ -354,8 +378,9 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
         blocks: [
           {
             kind: "text",
-            text: "회사가 맡은 상자가 분실되거나 파손된 경우 회사는 보낸 회원이 신고한 물품 가액을 한도로 배상합니다. 신고한 가액이 없는 경우에는 50만 원을 한도로 배상합니다.",
+            text: `회사가 맡은 상자가 분실되거나 파손된 경우 회사는 보낸 회원이 신고한 물품 가액을 한도로 배상합니다. 신고한 가액이 없는 경우에는 ${won(cap)}을 한도로 배상합니다.`,
           },
+          { kind: "text", text: `배상 한도 금액: ${toCheck("금액 — 법률 검토 전 초안")}` },
           { kind: "text", text: `회사의 면책 사유와 택배 사고의 처리: ${TO_DECIDE}` },
         ],
       },
@@ -363,14 +388,18 @@ export function termsDoc(prices: PublicPriceTable): LegalDoc {
         id: "dispute",
         title: "제18조 분쟁 해결",
         blocks: [
-          { kind: "text", text: `분쟁 발생 시 처리 절차: ${TO_DECIDE}` },
+          {
+            kind: "text",
+            text: "회원은 서비스 이용 중 생긴 불만과 분쟁을 고객센터의 1:1 문의나 「신고·문의」로 접수할 수 있습니다. 접수한 분쟁의 처리 절차는 「분쟁 처리 안내」에 적습니다.",
+          },
+          { kind: "text", text: `이 약관에서 정하지 않은 분쟁의 처리 기준: 소비자분쟁해결기준(공정거래위원회 고시)을 따릅니다. ${toCheck("준용 문구")}` },
           { kind: "text", text: "회사와 회원 간에 제기된 소송은 민사소송법에 따른 관할법원에서 처리합니다." },
         ],
       },
       {
         id: "addendum",
         title: "부칙",
-        blocks: [{ kind: "text", text: `이 약관은 ${TO_FILL}부터 시행합니다.` }],
+        blocks: [{ kind: "text", text: `이 약관은 ${effectiveText(CURRENT.terms)}부터 시행합니다.` }],
       },
     ],
   };

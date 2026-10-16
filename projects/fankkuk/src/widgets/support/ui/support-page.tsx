@@ -10,6 +10,7 @@ import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/pr
 import { InquiryForm } from "@/features/inquiry-submit/ui/inquiry-form";
 import { formatDateTime } from "@/shared/lib/format/datetime";
 import { PROMISE } from "@/shared/config/site-copy";
+import { orBlank, SITE_INFO, SITE_INFO_BLANK } from "@/shared/config/site-info";
 import s from "./support.module.css";
 
 // 고객센터. 시안: docs/design/mockups/site/v18/support.html — 로그인 전 1152 선, 페이지 머리 + 구간 넷(질문·문의·내 문의·연락처) 사이 48
@@ -38,7 +39,7 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
       },
       {
         q: "크리에이터가 거절하면 어떻게 되나요?",
-        a: `거절된 선물은 크리에이터에게 배송되지 않아요. 사무실에 도착하기 전이면 결제 금액을 모두 돌려드리고, 도착한 뒤면 보낸 주소로 돌려보내 드린 뒤 반송 택배비를 뺀 금액을 돌려드려요. ${APPROVAL_DEADLINE_DAYS}일 안에 승인하지 않은 선물도 같아요. 거절 이유는 팬에게 알리지 않습니다.`,
+        a: `거절된 선물은 크리에이터에게 배송되지 않아요. 사무실에 도착하기 전이면 결제 금액을 모두 돌려드리고, 도착한 뒤면 보낸 주소로 돌려보내 드린 뒤 반송 택배비를 뺀 금액을 돌려드려요(검수에 걸린 상자는 돌려드리는 금액이 없어요). ${APPROVAL_DEADLINE_DAYS}일 안에 승인하지 않은 선물도 같아요. 거절 이유는 팬에게 알리지 않습니다.`,
       },
       {
         q: "여러 상자를 한 번에 보낼 수 있나요?",
@@ -102,11 +103,12 @@ const categoriesFor = (prices: PublicPriceTable): readonly Category[] => [
   },
 ];
 
+// 연락처는 사이트 하단과 같은 설정값(shared/config/site-info)을 읽는다. 점심 시간은 아직 설정값이 없다.
 const CONTACT: readonly (readonly [string, string])[] = [
-  ["운영 시간", "(출시 전 기재)"],
-  ["점심 시간", "(출시 전 기재)"],
-  ["전화", "(출시 전 기재)"],
-  ["이메일", "(출시 전 기재)"],
+  ["운영 시간", orBlank(SITE_INFO.supportHours)],
+  ["점심 시간", SITE_INFO_BLANK],
+  ["전화", orBlank(SITE_INFO.supportPhone)],
+  ["이메일", orBlank(SITE_INFO.supportEmail)],
 ];
 
 function Chevron() {
