@@ -1,9 +1,19 @@
 ---
 project: fankkuk
 status: passed
-basis: 22333f37e07d
-reviewers: [security-reviewer, ui-reviewer]
+basis: cc69decb080e
+reviewers: [security-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-16 밤, 로고·마스코트 아이콘)
+
+덮는 변경: c16789ac(아이콘·OG 이미지 파일, 마스코트 원본 셋, 옛 icon.svg → assets/logo.svg, layout metadataBase·제목·설명) · 주소 꼴 검사 커밋.
+
+- security: 지적 0, 하 1(APP_ORIGIN 이 주소 꼴이 아니면 모든 페이지가 멈춤) → 고침(URL.canParse 로 거르고 다음 후보).
+- 뺀 리뷰어: ui-reviewer — 사용자가 준 이미지를 그대로 넣었고 화면 배치는 그대로. code-reviewer — 도메인 로직 없음. test-auditor — 새 시험 없음.
+- 실행 근거: npm run build 성공(/icon.png·/opengraph-image.png·/twitter-image.png 정적 생성) · 개발 서버 / 의 head 에 rel=icon(favicon.ico·icon.png)·apple-touch-icon·og:image·twitter:image(전체 주소) 확인 · 이미지 6개 200 · /api/og 200(로고 이동 뒤) · tsc 오류 0 · copy:lint 0 · 관련 시험 61/61.
+
+이전 사인오프:
 
 # 리뷰 사인오프 — fankkuk (2026-10-16 밤, 크리에이터 찾기 폭 880·카드에 꾸민 모양)
 
