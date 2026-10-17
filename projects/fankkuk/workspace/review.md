@@ -1,11 +1,19 @@
 ---
 project: fankkuk
 status: passed
-basis: 2d65a1d3d310
-reviewers: [security-reviewer, code-reviewer, ui-reviewer]
+basis: a330aefcca27
+reviewers: [security-reviewer, code-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-18, 페이지 이동 로딩 화면)
+# 리뷰 사인오프 — fankkuk (2026-10-18, 남은 폴더 6개 (site) 로)
+
+덮는 변경: 4396ca20 뒤 — creator·creators·gifts·guide·me·password 를 src/app/(site) 로 git mv(내용 변경 없음, 주소 그대로). 시험 두 파일 import 경로, 예약어 통합 시험(INV-E2 S2c)이 묶음 폴더 안 이름도 첫 단계 주소로 세게 고침. ui-reviewer 는 뺐다 — 새로 바뀌는 화면은 /password/reset 에 기존 로딩 화면(design-rules 15절)이 붙는 것뿐이다.
+
+- 실행 근거: `npm run build` 성공(/password/reset·/me/following·/creator/actions 등 주소 그대로) · `npx tsc --noEmit` 오류 0(개발 서버가 남긴 .next/dev 옛 경로 타입은 치움) · `npm test` 277파일 2176개 통과 · `npm run copy:lint` 금지어 0 · 통합 시험 S2c 통과, 변이(묶음 폴더 안을 안 보게) → 「expected 3 to be greater than 10」 실패.
+- code: 높음 1(예약어 시험이 (site) 안을 안 봐서 실패 — 68d33f22 때부터 대부분의 주소가 검사에서 빠져 있었음) → 고침 · 낮음 2 → 재설정 화면 손님 상단 바 깜빡임은 BACKLOG, docs/copy 기록 문서의 옛 경로는 기계가 읽지 않아 그대로.
+- security: 지적 없음 — 재설정은 저장 버튼의 POST 에서만 바뀌어 로딩 화면이 끼지 않음, 메일 링크로 새로 열려 기억된 상단 바가 없음, 운영자 화면은 (site) 밖 그대로.
+
+## 이전 사인오프 (2026-10-18, 페이지 이동 로딩 화면)
 
 덮는 변경: fee68e34 뒤 — 사용자 선택 「공통 틀 + 로딩 화면」. 직전 페이지가 그린 상단 바·사이드바 값을 화면에 기억(header-memory)하고, loading.tsx 가 그 값으로 상단 바를 다시 그린 뒤 본문 자리만 뼈대(page-loading). 로딩 화면은 아무것도 따로 읽지 않는다(action-center INV-J2·J6). 운영자 화면을 뺀 라우트를 (site) 묶음으로 옮기는 중(22개 옮김, 6개는 개발 서버가 폴더를 잡고 있어 남음 — 남은 폴더는 각자 loading.tsx 가 있어 동작은 같다). design-rules 15절, DECISIONS 2026-10-18.
 

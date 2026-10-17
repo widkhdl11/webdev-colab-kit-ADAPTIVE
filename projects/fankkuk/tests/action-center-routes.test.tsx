@@ -88,8 +88,8 @@ vi.mock("@/entities/payment/api/read-my-gift-payment", () => ({ readMyGiftPaymen
 vi.mock("@/entities/gift-reply/api/gift-reply-reads", async (orig) => ({ ...(await orig<object>()), readMyGiftReplies: vi.fn(async () => []) }));
 vi.mock("@/entities/order/api/my-gift-memo", async (orig) => ({ ...(await orig<object>()), readMyGiftMemo: vi.fn(async () => null) }));
 
-import ActionsRoute from "@/app/me/actions/page";
-import GiftRoute from "@/app/gifts/[orderNo]/page";
+import ActionsRoute from "@/app/(site)/me/actions/page";
+import GiftRoute from "@/app/(site)/gifts/[orderNo]/page";
 import HomeRoute from "@/app/(site)/home/page";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

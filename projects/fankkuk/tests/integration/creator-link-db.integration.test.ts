@@ -157,10 +157,13 @@ describe("INV-E2: 아이디 꼴·예약어·본인 로그인 아이디", () => {
   });
 
   it("INV-E2 S2c: 사이트의 첫 단계 주소(src/app·public 아래 이름)가 예약어 목록에 모두 들어 있다", () => {
-    const appDir = join(process.cwd(), "src", "app");
-    const firstLevel = readdirSync(appDir)
-      .filter((n) => statSync(join(appDir, n)).isDirectory())
-      .filter((n) => !n.startsWith("[") && !n.startsWith("(") && !n.startsWith("_"));
+    // 「(site)」 같은 묶음 폴더는 주소에 나오지 않으므로 그 안의 이름이 첫 단계 주소다.
+    const routeNames = (dir: string): string[] =>
+      readdirSync(dir)
+        .filter((n) => statSync(join(dir, n)).isDirectory())
+        .flatMap((n) => (n.startsWith("(") ? routeNames(join(dir, n)) : [n]))
+        .filter((n) => !n.startsWith("[") && !n.startsWith("_"));
+    const firstLevel = routeNames(join(process.cwd(), "src", "app"));
     const publicNames = readdirSync(join(process.cwd(), "public")).map((n) => n.replace(/\.[^.]+$/, ""));
     const reserved = new Set(psql("select word from public.creator_handle_reserved").split("\n"));
     const missing = [...firstLevel, ...publicNames].map((n) => n.toLowerCase()).filter((n) => !reserved.has(n));
