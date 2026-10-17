@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v23 토큰 시안 — 지금 / 제안</title>
+<style>
+:root { --ink:#1f2937; --sub:#4b5563; --line:#e5e7eb; --bg:#f9fafb; }
+* { box-sizing: border-box; }
+body { margin:0; font-family:"Pretendard Variable",Pretendard,-apple-system,"Malgun Gothic",sans-serif; color:var(--ink); background:#fff; font-size:16px; line-height:1.6; }
+.wrap { max-width:1200px; margin:0 auto; padding:48px 24px 96px; }
+h1 { font-size:32px; margin:0 0 8px; } h2 { font-size:24px; margin:0 0 8px; } h3 { font-size:16px; margin:0 0 8px; color:var(--sub); }
+p { margin:0; color:var(--sub); }
+.src { font-size:14px; margin-top:8px; }
+section { margin-top:64px; padding-top:32px; border-top:1px solid var(--line); }
+.links { display:flex; gap:16px; flex-wrap:wrap; margin:8px 0 24px; }
+.links a { color:var(--ink); font-weight:600; }
+.pair { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px; align-items:start; }
+.pair.narrow { grid-template-columns:repeat(2, minmax(0, 390px)); justify-content:start; }
+figure { margin:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--bg); }
+figcaption { font-size:14px; font-weight:600; padding:8px 16px; border-bottom:1px solid var(--line); background:#fff; }
+figure img { display:block; width:100%; height:auto; }
+@media (max-width:767px) { .pair, .pair.narrow { grid-template-columns:1fr; } }
+</style></head><body><div class="wrap">
+<h1>v23 토큰 시안 — 지금 / 제안</h1>
+<p>제안 = <code>docs/design/tokens.md</code> 의 값과 <code>redesign-2026-10-17-audit.md</code> 표의 「제안」 칸만 적용한 모습. 색·글꼴·문구·그림은 그대로.</p>
+<p class="src">각 화면 폴더: before.html(실제 화면을 2026-10-17 에 정적으로 저장) · after.html(같은 원본 + proposal.css + 꼭 필요한 배치 이동) · proposal.css</p>
+
+<section><h2>랜딩 <code>/</code></h2>
+<div class="links"><a href="landing/before.html">지금</a><a href="landing/after.html">제안</a><a href="landing/proposal.css">proposal.css</a></div>
+<h3>1440</h3><div class="pair"><figure><figcaption>지금</figcaption><img src="shots/landing-before-1440.png" alt="랜딩 지금 1440" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/landing-after-1440.png" alt="랜딩 제안 1440" loading="lazy"></figure></div>
+<h3>390</h3><div class="pair narrow"><figure><figcaption>지금</figcaption><img src="shots/landing-before-390.png" alt="랜딩 지금 390" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/landing-after-390.png" alt="랜딩 제안 390" loading="lazy"></figure></div>
+</section>
+
+<section><h2>크리에이터 프로필 <code>/creators/[id]</code></h2>
+<div class="links"><a href="profile/before.html">지금</a><a href="profile/after.html">제안</a><a href="profile/proposal.css">proposal.css</a></div>
+<h3>1440</h3><div class="pair"><figure><figcaption>지금</figcaption><img src="shots/profile-before-1440.png" alt="프로필 지금 1440" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/profile-after-1440.png" alt="프로필 제안 1440" loading="lazy"></figure></div>
+<h3>390</h3><div class="pair narrow"><figure><figcaption>지금</figcaption><img src="shots/profile-before-390.png" alt="프로필 지금 390" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/profile-after-390.png" alt="프로필 제안 390" loading="lazy"></figure></div>
+</section>
+
+<section><h2>마이꾹 <code>/home</code></h2>
+<div class="links"><a href="home/before.html">지금</a><a href="home/after.html">제안</a><a href="home/proposal.css">proposal.css</a></div>
+<h3>1440</h3><div class="pair"><figure><figcaption>지금</figcaption><img src="shots/home-before-1440.png" alt="마이꾹 지금 1440" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/home-after-1440.png" alt="마이꾹 제안 1440" loading="lazy"></figure></div>
+<h3>390</h3><div class="pair narrow"><figure><figcaption>지금</figcaption><img src="shots/home-before-390.png" alt="마이꾹 지금 390" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/home-after-390.png" alt="마이꾹 제안 390" loading="lazy"></figure></div>
+</section>
+</div></body></html>

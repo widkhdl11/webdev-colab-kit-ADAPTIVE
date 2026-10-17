@@ -1,0 +1,97 @@
+/* v23-tokens 제안 덮어쓰기 — 기준: docs/design/tokens.md(초안) · redesign-2026-10-17-audit.md.
+   CSS 모듈 클래스는 해시가 붙어 있어 {{이름}} 을 [class$="__이름"] 속성 선택자로 잡는다.
+   바꾸는 것: 글자 크기·간격·반경·폭·배치. 색·글꼴·문구·그림은 그대로. */
+
+/* ── 1. 토큰 재정의 (tokens.md) ───────────────────────── */
+:root {
+  /* 글자 6단계: 48·32·24·20·16·14 */
+  --fs-caption: 14px;  /* 13 → 14 (캡션·태그·날짜·개수) */
+  --fs-nav: 16px;      /* 15 → 16 (상단 메뉴). 푸터는 아래에서 14 */
+  --fs-group: 14px;    /* 11 → 14 (사이드바 묶음 이름·숫자 뱃지) */
+  --fs-lead: 16px;     /* 18 → 16 (리드) */
+  /* 간격: 20 을 뺀다 */
+  --space-5: 24px;     /* 20 → 24 (이 토큰을 쓰는 곳은 전부 카드 안쪽 여백) */
+  --space-16: 64px;
+  --space-24: 96px;
+  /* 카드 */
+  --card-pad: 24px;    /* PC 32 → 24 */
+  --panel-pad: 32px;
+  --card-gap: 24px;
+  /* 반경 */
+  --r-panel: 24px;
+  --r-panel-sm: 24px;
+  --r-card: 16px;
+  --r-btn: 12px;
+  --r-tag: 8px;        /* 6 → 8 */
+  /* 폭 */
+  --pub-max: 1200px;
+  --prose-max: 680px;
+  --col-profile: 880px;
+  --col-list: 880px;
+  --col-form: 720px;
+  --col-wide: 1200px;
+  --col-auth: 480px;
+  /* 첫 화면 판 위 여백 96 → 64 (감사표 1절) */
+  --hero-pad-top: 64px;
+}
+@media (max-width: 767px) {
+  :root {
+    --fs-hero: 32px;
+    --fs-title: 24px;
+    --card-pad: 24px;
+    --panel-pad: 24px;
+    --card-gap: 16px;
+    --hero-pad-top: 64px;
+  }
+}
+
+/* ── 2. 모든 페이지 공통 (감사표 0절) ────────────────── */
+/* 푸터 링크·사업자 정보·저작권 줄: 14 하나로 */
+.footer-links, .footer-links a, .biz, .footer-copy { font-size: 14px; }
+/* 사이드바 묶음 이름·숫자 뱃지: 14 / 600 */
+.sb-group-t { font-size: 14px; font-weight: 600; }
+.badge { font-size: 14px; font-weight: 600; }
+/* 상태 태그: 13 → 14 (토큰으로), 반경은 알약 그대로 */
+.tag { font-size: var(--fs-caption); }
+
+/* 제목 줄 오른쪽 「모두 보기」 링크 (프로필·마이꾹 공통 모양) */
+.v23-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.v23-head-row > :first-child { flex: 1 1 auto; min-width: 0; width: auto; }
+.v23-more { flex: 0 0 auto; font-size: 16px; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+
+/* 사이드바는 묶음 이름·숫자 뱃지(11 → 14) 말고 바꾸지 않는다. --fs-caption 을 쓰는 얼굴 글자는 원래 값으로 고정 */
+.sb-avatar { font-size: 13px; }
+
+/* ── 3. 크리에이터 프로필 (감사표 2절) ────────────────── */
+/* 페이지 기둥: 전부 880 한 기둥 */
+:is([class$="__pub"],[class*="__pub "]) .pub-inner { max-width: calc(var(--col-profile) + 2 * var(--gutter)); }
+/* 머리 카드: 네 묶음(이름+팬덤 / 칩 / 소개·인사말 / 버튼+안내), 묶음 사이 24 · 안 8 */
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__pfMain"],[class*="__pfMain "]) { gap: 24px; }
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__pfMain"],[class*="__pfMain "]) > * { margin-top: 0; margin-bottom: 0; }
+:is([class$="__pub"],[class*="__pub "]) .v23-g { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+:is([class$="__pub"],[class*="__pub "]) .v23-g > * { margin: 0; }
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__tags"],[class*="__tags "]) { margin-top: 0; }
+/* 이름 아래 단독 플랫폼 아이콘: 칩 줄에 이미 있으니 숨김 */
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__channel"],[class*="__channel "]) { display: none; }
+/* 통계 카드 넷: 2열 × 2줄. 안: 아이콘+라벨 한 줄(14) · 값 20/700, 라벨↔값 8. 반경 16 · 안쪽 24 */
+:is([class$="__infoGrid"],[class*="__infoGrid "]) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+:is([class$="__infoGrid"],[class*="__infoGrid "]) .card.info { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; align-content: start; column-gap: 8px; row-gap: 8px; border-radius: 16px; padding: 24px; }
+:is([class$="__infoGrid"],[class*="__infoGrid "]) .card.info > .ic { margin: 0; width: 20px; height: 20px; }
+:is([class$="__infoGrid"],[class*="__infoGrid "]) .card.info > .ic svg { width: 20px; height: 20px; }
+:is([class$="__infoGrid"],[class*="__infoGrid "]) .card.info > h3 { margin: 0; align-self: center; line-height: 1.5; font-size: 14px; justify-content: flex-start; }
+:is([class$="__infoGrid"],[class*="__infoGrid "]) .card.info > .big.big { grid-column: 1 / -1; margin: 0; font-size: 20px; font-weight: 700; line-height: 1.4; }
+/* 「선물 보내기」 띠 → 880 기둥 안 판(반경 24), 제목 24 */
+:is([class$="__sheet"],[class*="__sheet "]) { background: none; padding-block: 0; }
+:is([class$="__sheet"],[class*="__sheet "]) :is([class$="__sheetIn"],[class*="__sheetIn "]) { position: relative; overflow: hidden; background: var(--primary-50); border-radius: 24px; padding: var(--panel-pad); }
+:is([class$="__sheet"],[class*="__sheet "]) h2 { margin: 0 0 16px; }
+:is([class$="__sheet"],[class*="__sheet "]) h2, :is([class$="__sheet"],[class*="__sheet "]) h2 .accent { font-size: var(--fs-page); line-height: 1.3; }
+/* 판이 좁아져 왼쪽 그림이 제목을 덮으므로 두 그림을 오른쪽에 나란히 둔다 */
+:is([class$="__sheet"],[class*="__sheet "]) :is([class$="__pdecoL"],[class*="__pdecoL "]) { left: auto; right: 128px; top: auto; bottom: 8px; }
+:is([class$="__sheet"],[class*="__sheet "]) :is([class$="__pdecoR"],[class*="__pdecoR "]) { right: 8px; bottom: 8px; top: auto; }
+/* 비슷한 크리에이터: 3열 · 간격 16, 카드 반경 16 */
+:is([class$="__otherGrid"],[class*="__otherGrid "]) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+:is([class$="__other"],[class*="__other "]) { border-radius: 16px; }
+@media (max-width: 767px) {
+  :is([class$="__infoGrid"],[class*="__infoGrid "]) { grid-template-columns: minmax(0, 1fr); }
+  :is([class$="__otherGrid"],[class*="__otherGrid "]) { grid-template-columns: minmax(0, 1fr); }
+}

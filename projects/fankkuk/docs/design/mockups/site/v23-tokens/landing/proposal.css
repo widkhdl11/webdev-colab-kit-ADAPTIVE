@@ -1,0 +1,87 @@
+/* v23-tokens 제안 덮어쓰기 — 기준: docs/design/tokens.md(초안) · redesign-2026-10-17-audit.md.
+   CSS 모듈 클래스는 해시가 붙어 있어 {{이름}} 을 [class$="__이름"] 속성 선택자로 잡는다.
+   바꾸는 것: 글자 크기·간격·반경·폭·배치. 색·글꼴·문구·그림은 그대로. */
+
+/* ── 1. 토큰 재정의 (tokens.md) ───────────────────────── */
+:root {
+  /* 글자 6단계: 48·32·24·20·16·14 */
+  --fs-caption: 14px;  /* 13 → 14 (캡션·태그·날짜·개수) */
+  --fs-nav: 16px;      /* 15 → 16 (상단 메뉴). 푸터는 아래에서 14 */
+  --fs-group: 14px;    /* 11 → 14 (사이드바 묶음 이름·숫자 뱃지) */
+  --fs-lead: 16px;     /* 18 → 16 (리드) */
+  /* 간격: 20 을 뺀다 */
+  --space-5: 24px;     /* 20 → 24 (이 토큰을 쓰는 곳은 전부 카드 안쪽 여백) */
+  --space-16: 64px;
+  --space-24: 96px;
+  /* 카드 */
+  --card-pad: 24px;    /* PC 32 → 24 */
+  --panel-pad: 32px;
+  --card-gap: 24px;
+  /* 반경 */
+  --r-panel: 24px;
+  --r-panel-sm: 24px;
+  --r-card: 16px;
+  --r-btn: 12px;
+  --r-tag: 8px;        /* 6 → 8 */
+  /* 폭 */
+  --pub-max: 1200px;
+  --prose-max: 680px;
+  --col-profile: 880px;
+  --col-list: 880px;
+  --col-form: 720px;
+  --col-wide: 1200px;
+  --col-auth: 480px;
+  /* 첫 화면 판 위 여백 96 → 64 (감사표 1절) */
+  --hero-pad-top: 64px;
+}
+@media (max-width: 767px) {
+  :root {
+    --fs-hero: 32px;
+    --fs-title: 24px;
+    --card-pad: 24px;
+    --panel-pad: 24px;
+    --card-gap: 16px;
+    --hero-pad-top: 64px;
+  }
+}
+
+/* ── 2. 모든 페이지 공통 (감사표 0절) ────────────────── */
+/* 푸터 링크·사업자 정보·저작권 줄: 14 하나로 */
+.footer-links, .footer-links a, .biz, .footer-copy { font-size: 14px; }
+/* 사이드바 묶음 이름·숫자 뱃지: 14 / 600 */
+.sb-group-t { font-size: 14px; font-weight: 600; }
+.badge { font-size: 14px; font-weight: 600; }
+/* 상태 태그: 13 → 14 (토큰으로), 반경은 알약 그대로 */
+.tag { font-size: var(--fs-caption); }
+
+/* 제목 줄 오른쪽 「모두 보기」 링크 (프로필·마이꾹 공통 모양) */
+.v23-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.v23-head-row > :first-child { flex: 1 1 auto; min-width: 0; width: auto; }
+.v23-more { flex: 0 0 auto; font-size: 16px; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+
+/* 사이드바는 묶음 이름·숫자 뱃지(11 → 14) 말고 바꾸지 않는다. --fs-caption 을 쓰는 얼굴 글자는 원래 값으로 고정 */
+.sb-avatar { font-size: 13px; }
+
+/* ── 3. 랜딩 (감사표 1절) ─────────────────────────── */
+/* 첫 화면 머리말: 18/500 회색 → 16/600 (조정: 14 는 48 제목 위에서 너무 작아 16) 짙은 회색, 제목 위 8 */
+:is([class$="__heroText"],[class*="__heroText "]) > .t-lead { font-size: 16px; font-weight: 600; color: var(--gray-900); line-height: 1.5; margin: 0; }
+:is([class$="__heroText"],[class*="__heroText "]) > .t-hero { margin-top: 8px; }
+/* 첫 화면 설명: 제목 아래 16 */
+:is([class$="__heroText"],[class*="__heroText "]) > .hero-line { margin-top: 16px; }
+/* 첫 화면 버튼: 높이 48 */
+.hero-actions .btn { min-height: 48px; height: 48px; }
+/* 첫 화면 판 안쪽 위아래 64 / 64 */
+:is([class$="__hero"],[class*="__hero "]):is([class$="__hero"],[class*="__hero "]) { padding-top: 64px; padding-bottom: 64px; }
+/* 4단계 카드 번호: 그림 아래 16 · 제목 위 8 (카드 묶음 간격 16 에서 번호↔제목만 8) */
+:is([class$="__stepCard"],[class*="__stepCard "]) > :is([class$="__num"],[class*="__num "]) + h3 { margin-top: -8px; }
+/* 상태 칩 줄: 카드 아래 24 */
+:is([class$="__stepsLine"],[class*="__stepsLine "]) { margin-top: 24px; }
+/* 약속 구간: 판 반경 24 · 안쪽 48, 모형은 카드 격자와 같은 폭·같은 왼쪽 선, 버튼은 왼쪽 */
+:is([class$="__promise"],[class*="__promise "]):is([class$="__promise"],[class*="__promise "]) { border-radius: 24px; padding: 48px; }
+:is([class$="__promise"],[class*="__promise "]) :is([class$="__mock"],[class*="__mock "]) { max-width: none; margin: 0 0 var(--space-10); }
+:is([class$="__promise"],[class*="__promise "]) :is([class$="__foot"],[class*="__foot "]) { justify-content: flex-start; }
+/* 요금 아래 주의 두 줄: 카드 아래 24 */
+:is([class$="__notes"],[class*="__notes "]) { margin-top: 24px; }
+@media (max-width: 767px) {
+  :is([class$="__promise"],[class*="__promise "]):is([class$="__promise"],[class*="__promise "]) { padding: 48px 24px; }
+}

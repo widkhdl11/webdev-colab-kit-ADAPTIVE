@@ -1,0 +1,93 @@
+/* v23-tokens 제안 덮어쓰기 — 기준: docs/design/tokens.md(초안) · redesign-2026-10-17-audit.md.
+   CSS 모듈 클래스는 해시가 붙어 있어 {{이름}} 을 [class$="__이름"] 속성 선택자로 잡는다.
+   바꾸는 것: 글자 크기·간격·반경·폭·배치. 색·글꼴·문구·그림은 그대로. */
+
+/* ── 1. 토큰 재정의 (tokens.md) ───────────────────────── */
+:root {
+  /* 글자 6단계: 48·32·24·20·16·14 */
+  --fs-caption: 14px;  /* 13 → 14 (캡션·태그·날짜·개수) */
+  --fs-nav: 16px;      /* 15 → 16 (상단 메뉴). 푸터는 아래에서 14 */
+  --fs-group: 14px;    /* 11 → 14 (사이드바 묶음 이름·숫자 뱃지) */
+  --fs-lead: 16px;     /* 18 → 16 (리드) */
+  /* 간격: 20 을 뺀다 */
+  --space-5: 24px;     /* 20 → 24 (이 토큰을 쓰는 곳은 전부 카드 안쪽 여백) */
+  --space-16: 64px;
+  --space-24: 96px;
+  /* 카드 */
+  --card-pad: 24px;    /* PC 32 → 24 */
+  --panel-pad: 32px;
+  --card-gap: 24px;
+  /* 반경 */
+  --r-panel: 24px;
+  --r-panel-sm: 24px;
+  --r-card: 16px;
+  --r-btn: 12px;
+  --r-tag: 8px;        /* 6 → 8 */
+  /* 폭 */
+  --pub-max: 1200px;
+  --prose-max: 680px;
+  --col-profile: 880px;
+  --col-list: 880px;
+  --col-form: 720px;
+  --col-wide: 1200px;
+  --col-auth: 480px;
+  /* 첫 화면 판 위 여백 96 → 64 (감사표 1절) */
+  --hero-pad-top: 64px;
+}
+@media (max-width: 767px) {
+  :root {
+    --fs-hero: 32px;
+    --fs-title: 24px;
+    --card-pad: 24px;
+    --panel-pad: 24px;
+    --card-gap: 16px;
+    --hero-pad-top: 64px;
+  }
+}
+
+/* ── 2. 모든 페이지 공통 (감사표 0절) ────────────────── */
+/* 푸터 링크·사업자 정보·저작권 줄: 14 하나로 */
+.footer-links, .footer-links a, .biz, .footer-copy { font-size: 14px; }
+/* 사이드바 묶음 이름·숫자 뱃지: 14 / 600 */
+.sb-group-t { font-size: 14px; font-weight: 600; }
+.badge { font-size: 14px; font-weight: 600; }
+/* 상태 태그: 13 → 14 (토큰으로), 반경은 알약 그대로 */
+.tag { font-size: var(--fs-caption); }
+
+/* 제목 줄 오른쪽 「모두 보기」 링크 (프로필·마이꾹 공통 모양) */
+.v23-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.v23-head-row > :first-child { flex: 1 1 auto; min-width: 0; width: auto; }
+.v23-more { flex: 0 0 auto; font-size: 16px; font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+
+/* 사이드바는 묶음 이름·숫자 뱃지(11 → 14) 말고 바꾸지 않는다. --fs-caption 을 쓰는 얼굴 글자는 원래 값으로 고정 */
+.sb-avatar { font-size: 13px; }
+
+/* ── 3. 마이꾹 (감사표 3절) ───────────────────────── */
+/* 프로필 머리: 띠 64, 버튼 둘은 이름 줄 오른쪽 같은 기준선 */
+:is([class$="__pf"],[class*="__pf "]):is([class$="__pf"],[class*="__pf "]) { --banner-h: 64px; }
+:is([class$="__pfAv"],[class*="__pfAv "]) { font-size: 32px; }
+.v23-name-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.v23-name-row > h1 { flex: 1 1 auto; min-width: 0; }
+/* 「처리할 일」 줄: 안쪽 16 / 24 · 반경 16 */
+[class*="action-line-module__"][class*="__line"] { padding: 16px 24px; border-radius: 16px; }
+/* 구간 제목 옆 개수: 14, 제목과 같은 기준선 */
+:is([class$="__secMeta"],[class*="__secMeta "]) { vertical-align: baseline; line-height: inherit; }
+/* 「모두 보기」를 제목 줄로 옮겨서 생긴 제목 줄 */
+.v23-head-row { margin-bottom: 16px; }
+.v23-head-row > h2 { margin: 0; }
+:is([class$="__notices"],[class*="__notices "]) .v23-head-row { margin-bottom: 16px; }
+/* 공지사항 목록: 위 두 목록과 같은 카드 묶음 */
+:is([class$="__notices"],[class*="__notices "]) .nlist { border-top: 0; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
+:is([class$="__notices"],[class*="__notices "]) .nlist li + li { border-top: 1px solid var(--gray-200); }
+:is([class$="__notices"],[class*="__notices "]) .nlist a { box-shadow: none; padding: 12px 16px; min-height: 64px; }
+/* 구간 사이 48 */
+:is([class$="__stack"],[class*="__stack "]) { gap: 48px; }
+@media (max-width: 767px) {
+  :is([class$="__pf"],[class*="__pf "]):is([class$="__pf"],[class*="__pf "]) { --banner-h: 64px; }
+  /* 좁은 폭: 「모두 보기」가 제목 줄에 안 들어가므로 세 구간 모두 목록 바로 아래 오른쪽 링크로 내린다 */
+  :is([class$="__stack"],[class*="__stack "]) > section:has(> .v23-head-row) { display: flex; flex-direction: column; }
+  :is([class$="__stack"],[class*="__stack "]) > section > .v23-head-row { display: contents; }
+  :is([class$="__stack"],[class*="__stack "]) > section > .v23-head-row > h2 { order: 1; margin: 0 0 16px; }
+  :is([class$="__stack"],[class*="__stack "]) > section > ul { order: 2; }
+  :is([class$="__stack"],[class*="__stack "]) > section > .v23-head-row > .v23-more { order: 3; align-self: flex-end; margin-top: 16px; }
+}
