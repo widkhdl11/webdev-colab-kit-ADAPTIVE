@@ -1,4 +1,5 @@
-/* 디자인 토큰 — 값의 정본은 docs/design/design-rules.md 00절(2026-10-14 v18 승인, 카드 d77)과 시안 docs/design/mockups/site/v18/tokens.css.
+/* 디자인 토큰 — 글자·간격·폭·카드·반경 값의 정본은 docs/design/tokens.md(2026-10-17 승인, 카드 d96 · 시안 docs/design/mockups/site/v23-tokens/).
+   그 밖의 값은 design-rules.md 00절(2026-10-14 v18 승인, 카드 d77)과 시안 docs/design/mockups/site/v18/tokens.css.
    색만 v20 하늘색으로 바꿨다(2026-10-15 승인, 카드 d86 · 시안 docs/design/mockups/site/v20-rebrand/*-c.html). 배치·간격·글꼴 값은 v18 그대로다.
    화면이 쓰는 옛 이름(--brand·--ink·--sub·--faint·--surface…)은 맨 위 묶음의 값을 가리킨다.
    하늘색은 면(버튼 바탕·선택 면)에만 쓴다. 흰 바탕 대비 1.7:1 이라 글자·초점·선택 테두리에는 짙은 회색을 쓴다. */
@@ -102,41 +103,52 @@
   --float: 0 10px 28px rgb(17 24 39 / 0.12); /* 말풍선·메뉴·바텀시트 */
   --scrim: rgb(17 24 39 / 0.48);
 
-  /* 반경 — 크기별로 다르게 */
-  --r-panel: 16px; /* v18 옅은 빨강 둥근 상자 = 카드 반경 */
-  --r-panel-sm: 16px; /* 좁은 화면의 패널 */
+  /* 반경 — 바깥은 둥글게, 안쪽은 덜 둥글게(tokens.md 5절) */
+  --r-panel: 24px; /* 큰 판(첫 화면 판·약속 구간·프로필 머리) */
+  --r-panel-sm: 24px; /* 좁은 화면의 큰 판 */
   --r-tile: 28px;
-  --r-card: 16px; /* v18 카드 반경 16 */
+  --r-card: 16px; /* 모든 카드·카드 모양 상자 */
   --r-box: 16px; /* 안내 상자·드롭다운 */
-  --r-btn: 12px;
+  --r-btn: 12px; /* 버튼·입력창·카드 안 줄 */
   --r-btn-sm: 10px;
-  --r-tag: 6px;
+  --r-tag: 8px; /* 상태 태그·칩 */
   --r-bar: 3px; /* 진행 막대 칸(높이 6)의 둥근 끝 — design-rules 13절 선물 현황 */
   --r-pill: 9999px;
 
-  /* 간격 (4px 단위, 짝수만) */
+  /* 간격 — 4px 기준 10단계(tokens.md 1절). 20 은 뺐다: 16·20·24 가 함께 있으면 구분이 안 된다.
+     한 묶음 안의 간격은 그 묶음과 바깥 사이 간격의 절반 이하 */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
-  --space-5: 20px;
+  --space-5: var(--space-6); /* 옛 이름 — 20 을 뺐다. 새로 쓰지 않는다(크리에이터 찾기 전용 CSS 가 아직 쓴다) */
   --space-6: 24px;
   --space-8: 32px;
   --space-10: 40px;
   --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
 
-  --maxw: 1200px;
+  /* 폭(tokens.md 3절) */
+  --maxw: 1152px; /* 로그인 전 글 폭 — .pub-inner(--pub-max 1200 - 양옆 24)와 같은 선 */
+  --prose-max: 680px; /* 약관·안내·자주 묻는 질문 본문, 페이지 머리 설명 한 줄(16px 기준 약 42자) */
+  --col-profile: 880px; /* 크리에이터 공개 프로필 한 기둥 */
+  --col-list: 880px; /* 로그인 후 목록형·홈 */
+  --col-form: 720px; /* 로그인 후 입력·설정형, 가입 */
+  --col-wide: 1200px; /* 표·편집+미리보기 */
+  --col-auth: 480px; /* 로그인·비밀번호 찾기 카드 */
   --gutter: 24px;
   --header-h: 64px; /* v18 상단 바 64 */
 
-  /* 글자 — 재디자인 v11 (design-rules 0절). 한 화면에 쓰는 크기는 PC 40·28·20·18·16 다섯 가지, 휴대폰 30·24·20·18·16.
-     굵기는 400·800 둘. 16px 미만은 쓰지 않는다 */
-  --fs-hero: 48px; /* 첫 화면 제목 (v18 display) */
-  --fs-title: 32px; /* 구간 제목 (v18 h2) */
-  --fs-page: 24px; /* 페이지 머리 제목 (v18) */
-  --fs-card: 20px; /* 카드 제목 */
-  --fs-lead: 18px; /* 리드 */
-  --fs-body: 16px; /* 본문·버튼·메뉴·보조 */
+  /* 글자 — 6단계 48·32·24·20·16·14(tokens.md 2절, 휴대폰 32·24·24·20·16·14). 이 밖의 크기는 쓰지 않는다.
+     바로 위아래 단계는 한 단계 이상 띄우고, 같은 크기로 위계를 줄 때는 굵기와 색으로만 준다 */
+  --fs-hero: 48px; /* 랜딩 첫 화면 제목 하나 · 줄 높이 1.2 */
+  --fs-title: 32px; /* 랜딩·소개 구간 제목, 크리에이터 이름 · 1.25 */
+  --fs-page: 24px; /* 페이지 머리 제목, 프로필 아래 구간 제목 · 1.3 */
+  --fs-card: 20px; /* 카드 제목, 로그인 후 구간 제목, 강조 값(숫자·상태) · 1.4 */
+  --fs-body: 16px; /* 본문·버튼·상단 메뉴·리드 문장 · 1.6 */
+  --fs-small: 14px; /* 보조 글 — 캡션·날짜·개수·라벨·뱃지·사이드바 메뉴·푸터 · 1.5 */
+  --fs-lead: var(--fs-body); /* 옛 이름 — 리드 18 → 16(통계 값처럼 강조 값은 --fs-card) */
   /* v18 앱 사이드바(로그인 후)·상단 바(로그인 전) — 시안 v18/tokens.css 6~8단계 값 */
   --sidebar-w: 240px;
   --rail-w: 64px;
@@ -150,10 +162,10 @@
   --avatar-sb: 28px;
   --r-nav: 8px;
   --menu-w: 192px;
-  --fs-nav: 15px; /* 상단 바 메뉴 — 16px 하한의 예외(design-rules 00절 실측) */
-  --fs-navitem: 14px; /* 사이드바 메뉴 — 같은 예외 */
-  --fs-caption: 13px; /* 캡션 — 같은 예외 */
-  --fs-group: 11px; /* 사이드바 묶음 이름 */
+  --fs-nav: var(--fs-body); /* 상단 바 메뉴 15 → 16 */
+  --fs-navitem: var(--fs-small); /* 사이드바 메뉴 */
+  --fs-caption: var(--fs-small); /* 캡션·태그·날짜·개수 13 → 14 */
+  --fs-group: var(--fs-small); /* 사이드바 묶음 이름·숫자 뱃지 11 → 14 */
   --fw-nav: 500;
   --nav-px: calc((var(--rail-w) - 2 * 8px - var(--nav-icon)) / 2); /* 접힘 64 에서 아이콘이 가운데 오는 안쪽 여백 */
   --prof-px: calc((var(--rail-w) - 2 * 8px - var(--avatar-sb)) / 2);
@@ -170,11 +182,14 @@
   --section-gap: 96px;
   --sec-pad: var(--section-gap);
   /* v18 전역 클래스(base.css 16절)가 쓰는 시안 값 */
-  --card-pad: 32px; /* 카드·판 안쪽 (휴대폰 24) */
+  /* 카드(tokens.md 4절) */
+  --card-pad: 24px; /* 목록·통계·설정 카드 안쪽(휴대폰도 24) */
+  --panel-pad: 32px; /* 큰 판 안쪽(휴대폰 24) */
+  --card-gap: 24px; /* 카드 격자 간격(휴대폰 16) */
   --btn-h: 48px;
   --btn-h-sm: 36px;
   --touch: 48px;
-  --hero-pad-top: 96px; /* 첫 화면 위 여백 (휴대폰 64) */
+  --hero-pad-top: 64px; /* 첫 화면 판 안쪽 위 여백 96 → 64 (v23 감사표 1절) */
   --hero-max: 680px; /* 첫 화면 글·검색창 폭 */
   --search-h: 56px;
   --search-btn: 44px;
@@ -198,7 +213,22 @@
     --fs-title: 24px;
     --section-gap: 64px;
     --card-pad: 24px;
+    --panel-pad: 24px;
+    --card-gap: 16px;
     --hero-pad-top: 64px;
     --art-empty: 128px;
   }
+}
+/* 운영자 화면은 이번 토큰 정리 대상이 아니다(design-rules 8절) — 옛 값을 그대로 물려준다 */
+.admin-area {
+  --space-5: 20px;
+  --r-tag: 6px;
+  --r-panel: 16px;
+  --r-panel-sm: 16px;
+  --fs-lead: 18px;
+  --fs-nav: 15px;
+  --fs-caption: 13px;
+  --fs-group: 11px;
+  --card-pad: 32px;
+  --maxw: 1200px;
 }

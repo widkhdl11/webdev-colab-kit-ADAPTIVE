@@ -47,10 +47,10 @@
 .more4 { margin-top: 4px; }
 
 /* 상자별 상태 — 상자마다 카드 한 장 (시안 .box) */
-.box.box { padding: 20px; box-shadow: var(--hair); }
+.box.box { padding: 24px; box-shadow: var(--hair); }
 .box + .box { margin-top: 16px; }
 .box-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-.box-head h3 { font-size: var(--fs-lead); }
+.box-head h3 { font-size: var(--fs-card); }
 .box-head :global(.tag) { gap: 6px; white-space: nowrap; }
 .inv-fixed { margin-top: 12px; }
 .no { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
@@ -67,7 +67,7 @@
 /* 나만 보는 메모(together INV-F7) — 시안 v21-addendum3 fan-21.css 「.gift-head·.gift-memo」: 선물 이름 위, 내용은 연한 면 + 자물쇠 */
 .memo-card.memo-card { display: grid; gap: var(--space-4); padding: var(--space-6); }
 .memo-title.memo-title { margin-top: var(--space-1); font-size: var(--fs-card); line-height: 1.4; overflow-wrap: anywhere; }
-.memo { display: grid; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-btn); background: var(--tint); }
+.memo { display: grid; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--tint); }
 .memo-lab { display: flex; align-items: center; gap: var(--space-2); color: var(--gray-600); font-size: var(--fs-caption); }
 .memo-lock { width: var(--icon-xs); height: var(--icon-xs); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .memo-body { white-space: pre-line; overflow-wrap: anywhere; }

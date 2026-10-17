@@ -31,11 +31,19 @@
 /* 「채널 소유 확인」 체크와 글자 사이 */
 .verified svg { margin-right: 4px; }
 
-/* 로그인 전 — 가운데 프로필 카드(최대 880) */
-.pub .pf { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); max-width: 880px; margin-inline: auto; padding: var(--space-12) var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); text-align: center; }
+/* 로그인 전 — 머리·통계·접는 칸·선물 보내기·비슷한 크리에이터를 880 한 기둥에(v23 감사표 2절) */
+.pub :global(.pub-inner) { max-width: calc(var(--col-profile) + 2 * var(--gutter)); }
+.pub .pf { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); max-width: var(--col-profile); margin-inline: auto; padding: var(--space-12) var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); text-align: center; }
 .pub .cover { align-self: stretch; margin: calc(var(--space-12) * -1) calc(var(--card-pad) * -1) 0; border-radius: var(--r-card) var(--r-card) 0 0; }
 .pub .photo { width: 88px; height: 88px; margin-top: calc(-44px - var(--space-4)); font-size: var(--fs-page); }
-.pub .pfMain { display: flex; flex-direction: column; align-items: center; }
+.pub .pfMain { display: flex; flex-direction: column; align-items: center; gap: var(--space-6); }
+/* 네 묶음 — 이름+팬덤 뱃지 / 칩 줄 / 소개·인사말 / 버튼+안내. 묶음 사이 24 · 묶음 안 8 */
+.pub .pfMain > * { margin-top: 0; margin-bottom: 0; }
+.pub .pfMain > :is(.handle, .intro) + :is(.intro, .thanks) { margin-top: calc(var(--space-2) - var(--space-6)); }
+.pub .act { margin-top: var(--space-2); }
+.pub .act + .note { margin-top: calc(var(--space-2) - var(--space-4)); }
+/* 이름 아래 단독 채널 아이콘 — 칩 줄에 같은 정보가 있어 숨긴다 */
+.pub .channel { display: none; }
 .pub .name { font-size: var(--fs-title); }
 .pub .tags { justify-content: center; }
 .pub .act :global(.btn) { min-width: 240px; }
@@ -49,45 +57,48 @@
 .app .note { grid-column: 2 / -1; }
 
 /* ---------- 정보 카드 · 답장 · 비슷한 크리에이터 ---------- */
-.infoGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); }
-.infoGrid :global(.card.info) { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); padding: var(--space-5); border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--gray-200); }
-.infoGrid :global(.info h3) { font-family: var(--font); font-size: var(--fs-navitem); font-weight: var(--fw-nav); line-height: var(--lh-caption); color: var(--gray-600); }
-.infoGrid :global(.info .big) { margin-top: 0; font-size: var(--fs-lead); font-weight: var(--fw-btn); line-height: 1.5; }
-.infoGrid :global(.info .dd) { margin-top: 0; }
+/* 통계 카드 — 2열 × 2줄. 안: 아이콘+라벨 한 줄(14) · 값 20/700, 라벨 ↔ 값 8 */
+.infoGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.infoGrid :global(.card.info) { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; align-content: start; gap: var(--space-2); padding: var(--card-pad); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.infoGrid :global(.info .ic) { width: var(--icon-xs); height: var(--icon-xs); margin: 0; }
+.infoGrid :global(.info h3) { margin: 0; justify-content: flex-start; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-nav); line-height: var(--lh-caption); color: var(--gray-600); }
+.infoGrid :global(.card.info .big) { grid-column: 1 / -1; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; }
+.infoGrid :global(.card.info .dd) { grid-column: 1 / -1; margin-top: 0; }
 /* 받기 어려운 품목은 크리에이터가 고른 문장이라 큰 글씨가 아니라 본문 글씨 */
 .plain:global(.big) { font-weight: 400; font-size: var(--fs-body); }
 
 .quoteGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
-.quoteGrid :global(.card.quote) { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.quoteGrid :global(.card.quote) { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
 .quoteGrid :global(.quote q) { font-weight: 400; }
 .quoteGrid :global(.quote .by) { margin-top: 0; }
 /* 답장 한 줄은 크리에이터가 쓴 글이라 긴 낱말도 칸 안에서 줄을 바꾼다 */
 .quote q { overflow-wrap: anywhere; }
 
-.otherGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
-.other { display: flex; align-items: center; gap: var(--space-3); height: 100%; padding: var(--space-5); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); text-decoration: none; }
+/* 비슷한 크리에이터 — 880 기둥에 3열 · 간격 16 */
+.otherGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+.other { display: flex; align-items: center; gap: var(--space-3); height: 100%; padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); text-decoration: none; }
 .other:hover { box-shadow: inset 0 0 0 1px var(--gray-400); }
 .otherWho { display: grid; gap: var(--space-2); min-width: 0; }
 .otherWho b { font-weight: var(--fw-btn); }
 .otherTags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-.foot { display: flex; justify-content: center; margin-top: var(--space-8); }
 
 /* ---------- 마지막 선물 보내기 ---------- */
 /* 로그인 후 — 옅은 빨강 둥근 상자 */
 .cta { text-align: center; }
-/* 로그인 전 — 화면 폭 가득 옅은 빨강 띠 + 모서리 장식 둘(1120 이하 숨김) */
-.sheet { position: relative; margin-top: var(--section-gap); padding-block: var(--section-gap); background: var(--primary-50); }
-.sheetIn { position: static; }
+/* 로그인 전 — 880 기둥 안 옅은 하늘 큰 판(반경 24, 제목 24) + 오른쪽 아래 장식 둘(1120 이하 숨김) */
+.sheet { margin-top: var(--section-gap); }
+.sheetIn { position: relative; overflow: hidden; padding: var(--panel-pad); border-radius: var(--r-panel); background: var(--primary-50); }
+.sheet h2 { margin: 0 0 var(--space-4); }
+.sheet h2, .sheet h2 :global(.accent) { font-size: var(--fs-page); line-height: 1.3; }
 .pdeco { position: absolute; width: 96px; height: 96px; object-fit: contain; opacity: 0.5; pointer-events: none; }
-.pdecoL { left: var(--space-8); top: var(--space-8); transform: rotate(-12deg); }
-.pdecoR { right: var(--space-8); bottom: var(--space-8); transform: rotate(10deg); }
+.pdecoL { right: calc(96px + var(--space-8)); bottom: var(--space-2); transform: rotate(-12deg); }
+.pdecoR { right: var(--space-2); bottom: var(--space-2); transform: rotate(10deg); }
 .sheet + section { margin-top: 64px; }
 
 @media (max-width: 1120px) {
   .pdeco { display: none; }
 }
 @media (max-width: 1023px) {
-  .infoGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .otherGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 767px) {

@@ -177,9 +177,7 @@ export function CreatorProfilePage({
                   <ChannelLinkIcon channel={channel} />
                 </p>
               ) : null}
-              {creator.handle ? <p className={s.handle}>{linkText(creator.handle)}</p> : null}
-              {/* 한 줄 소개(INV-E6 — 40자, 줄바꿈 없음). 크리에이터가 직접 쓰는 글이라 다른 문장과 잇지 않는다 */}
-              {creator.intro ? <p className={s.intro}>{creator.intro}</p> : null}
+              {/* 이름 → 칩 줄 → 소개·인사말 → 버튼 순(v23 감사표 2절 — 네 묶음) */}
               <div className={`ctags ${s.tags}`}>
                 <span className={statusTagClass("success", s.verified)} title={channel ? channelBadgeTitle(channel) : undefined}>
                   <CheckIcon />
@@ -190,6 +188,9 @@ export function CreatorProfilePage({
                   <CreatorTag key={t} name={t} />
                 ))}
               </div>
+              {creator.handle ? <p className={s.handle}>{linkText(creator.handle)}</p> : null}
+              {/* 한 줄 소개(INV-E6 — 40자, 줄바꿈 없음). 크리에이터가 직접 쓰는 글이라 다른 문장과 잇지 않는다 */}
+              {creator.intro ? <p className={s.intro}>{creator.intro}</p> : null}
               {symbolUrl && !fanName ? <img className={s.symbol} src={symbolUrl} alt="팬덤 심볼" width={512} height={512} /> : null}
               <p className={s.thanks}>{thanksLine(fanName)}</p>
             </div>
@@ -366,8 +367,11 @@ export function CreatorProfilePage({
       {others.length > 0 ? (
         <section className={s.sec} aria-labelledby="similar-title">
           <div className={wrap}>
-            <div className={`sec-head ${s.head}`}>
+            <div className={`sec-head head-row ${s.head}`}>
               <h2 id="similar-title">이런 크리에이터도 있어요</h2>
+              <Link className="more-link" href="/creators">
+                전체 보기
+              </Link>
             </div>
             <ul className={s.otherGrid}>
               {others.map((o) => (
@@ -388,11 +392,6 @@ export function CreatorProfilePage({
                 </li>
               ))}
             </ul>
-            <div className={s.foot}>
-              <Link className="btn btn--line" href="/creators">
-                전체 보기
-              </Link>
-            </div>
           </div>
         </section>
       ) : null}

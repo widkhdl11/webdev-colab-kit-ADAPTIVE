@@ -6,7 +6,6 @@
   --deco-edge: 0px;
   --icon-wrap: 64px;
   --icon: 48px;
-  --mock-max: 600px;
   --mock-ic: 20px;
   --cols-4: 4;
   --cols-3: 3;
@@ -21,6 +20,12 @@
 /* 첫 화면 — 하늘 그라데이션 둥근 판(시안 v20 C안). 안쪽 카드는 반투명 흰색 */
 .hero.hero { position: relative; padding: var(--hero-pad-top) var(--hero-px) 64px; border-radius: var(--r-card); background: var(--grad-hero); overflow-x: clip; }
 .heroText { max-width: var(--hero-max); margin-inline: auto; }
+/* 머리말 → 제목 8 → 설명 16 (v23 감사표 1절). 머리말은 16/600 짙은 회색 — 제목 아래 설명(16/400 회색)보다 또렷하게 */
+.heroText > :global(.t-lead) { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; color: var(--gray-900); }
+.heroText > :global(.t-hero) { margin-top: var(--space-2); }
+.heroText > :global(.hero-line) { margin-top: var(--space-4); }
+/* 첫 화면 버튼 높이 48 — 바로 위 검색창(56)과 어울리게 */
+.hero :global(.hero-actions .btn) { min-height: var(--btn-h); height: var(--btn-h); }
 .deco { position: absolute; top: var(--deco-top); width: var(--deco); height: var(--deco); object-fit: contain; opacity: 0.55; pointer-events: none; }
 .decoL { left: var(--deco-edge); transform: rotate(-12deg); }
 .decoR { right: var(--deco-edge); transform: rotate(10deg); }
@@ -43,14 +48,15 @@
 .grid3 { grid-template-columns: repeat(var(--cols-3), minmax(0, 1fr)); }
 .grid2 { grid-template-columns: repeat(var(--cols-2), minmax(0, 1fr)); }
 
-/* 단계 카드 */
+/* 단계 카드 — 그림 아래 16 · 번호 → 제목 8 */
 .stepCard { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
 .stepCard img { width: var(--art-step); height: var(--art-step); object-fit: contain; }
+.num + h3 { margin-top: calc(var(--space-2) - var(--space-4)); }
 .num { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-btn); color: var(--brand-ink); }
-.stepsLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-8); font-size: var(--fs-caption); color: var(--gray-600); }
+.stepsLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-6); font-size: var(--fs-caption); color: var(--gray-600); }
 
-/* 약속 — 옅은 하늘 둥근 상자 */
-.promise { padding: 64px var(--space-8); border-radius: var(--r-card); background: var(--tint); }
+/* 약속 — 옅은 하늘 큰 판(반경 24 · 안쪽 48). 제목·모형·카드가 같은 왼쪽 선, 가입 버튼만 가운데(2026-10-17 사용자 지시) */
+.promise { padding: var(--space-12); border-radius: var(--r-panel); background: var(--tint); }
 .promise :global(.card) { box-shadow: inset 0 0 0 1px var(--primary-50), var(--shadow); }
 .promiseCard { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
 .iconWrap { display: grid; place-items: center; width: var(--icon-wrap); height: var(--icon-wrap); border-radius: var(--r-pill); background: var(--primary-50); color: var(--brand-ink); }
@@ -58,11 +64,11 @@
 .foot { display: flex; justify-content: center; margin-top: var(--space-12); }
 
 /* 열람 기록 화면 모형(누를 수 없는 예시) */
-.mock { max-width: var(--mock-max); margin: 0 auto var(--space-10); text-align: left; cursor: default; user-select: none; }
+.mock { margin: 0 0 var(--space-10); text-align: left; cursor: default; user-select: none; }
 .mock * { pointer-events: none; }
 .mockBar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); font-weight: var(--fw-btn); color: var(--gray-900); }
 .mockTag { display: inline-flex; align-items: center; min-height: 32px; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: var(--lh-caption); }
-.mockCard { display: grid; gap: var(--space-2); padding: var(--space-5); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); }
+.mockCard { display: grid; gap: var(--space-2); padding: var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); }
 .mockRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--gray-50); }
 .mockRow:first-child { background: var(--primary-50); }
 .mockRow b { font-weight: var(--fw-btn); }

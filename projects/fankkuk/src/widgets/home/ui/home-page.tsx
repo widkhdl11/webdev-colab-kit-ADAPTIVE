@@ -51,9 +51,14 @@ function Chev() {
 function GiftsSection({ gifts, faceToneByName }: Pick<Props, "gifts" | "faceToneByName">) {
   return (
     <section aria-labelledby="gifts-title">
-      <h2 className={s.secT} id="gifts-title">
-        진행 중인 선물 <span className={s.secMeta}>{gifts.length}개</span>
-      </h2>
+      <div className="head-row">
+        <h2 className={s.secT} id="gifts-title">
+          진행 중인 선물 <span className={s.secMeta}>{gifts.length}개</span>
+        </h2>
+        <Link className="more-link" href="/gifts">
+          보낸 선물 모두 보기
+        </Link>
+      </div>
       {gifts.length === 0 ? (
         <p className={`t-meta ${s.secBody}`}>지금 진행 중인 선물이 없어요.</p>
       ) : (
@@ -78,11 +83,6 @@ function GiftsSection({ gifts, faceToneByName }: Pick<Props, "gifts" | "faceTone
           })}
         </ul>
       )}
-      <p className={s.secFoot}>
-        <Link className="btn btn--line btn--sm" href="/gifts">
-          보낸 선물 모두 보기
-        </Link>
-      </p>
     </section>
   );
 }
@@ -90,9 +90,16 @@ function GiftsSection({ gifts, faceToneByName }: Pick<Props, "gifts" | "faceTone
 function FollowSection({ following }: Pick<Props, "following">) {
   return (
     <section aria-labelledby="follow-title">
-      <h2 className={s.secT} id="follow-title">
-        팔로우한 크리에이터 <span className={s.secMeta}>{following.length}명</span>
-      </h2>
+      <div className="head-row">
+        <h2 className={s.secT} id="follow-title">
+          팔로우한 크리에이터 <span className={s.secMeta}>{following.length}명</span>
+        </h2>
+        {following.length > 0 ? (
+          <Link className="more-link" href="/me/following">
+            팔로우한 크리에이터 모두 보기
+          </Link>
+        ) : null}
+      </div>
       {following.length === 0 ? (
         <p className={`t-meta ${s.secBody}`}>아직 팔로우한 크리에이터가 없어요.</p>
       ) : (
@@ -111,17 +118,14 @@ function FollowSection({ following }: Pick<Props, "following">) {
           ))}
         </ul>
       )}
-      <p className={s.secFoot}>
-        {following.length === 0 ? (
+      {/* 비었을 때만 목록 아래 「크리에이터 찾기」 버튼 — 「모두 보기」는 제목 줄 오른쪽(v23 감사표 3절) */}
+      {following.length === 0 ? (
+        <p className={s.secFoot}>
           <Link className="btn btn--line btn--sm" href="/creators">
             크리에이터 찾기
           </Link>
-        ) : (
-          <Link className="btn btn--line btn--sm" href="/me/following">
-            팔로우한 크리에이터 모두 보기
-          </Link>
-        )}
-      </p>
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -139,19 +143,22 @@ function ProfileSection({ nickname, profile }: { nickname: string; profile: Home
           <span className={s.pfAv} aria-hidden="true">
             {profile.photoUrl ? <img src={profile.photoUrl} alt="" width={512} height={512} /> : initial}
           </span>
-          <div className={s.pfActions}>
-            <Link className="btn btn--sm" href={FAN_PROFILE_EDIT}>
-              프로필 수정
-            </Link>
-            <Link className={s.pfLink} href={FAN_ACCOUNT_SETTINGS}>
-              계정 설정
-            </Link>
-          </div>
         </div>
         <div>
-          <h1 className={s.homeName} id="pf-name">
-            {nickname}
-          </h1>
+          {/* 이름 줄 오른쪽에 버튼 둘 — 이름과 같은 기준선(v23 감사표 3절) */}
+          <div className={s.nameRow}>
+            <h1 className={s.homeName} id="pf-name">
+              {nickname}
+            </h1>
+            <div className={s.pfActions}>
+              <Link className="btn btn--sm" href={FAN_PROFILE_EDIT}>
+                프로필 수정
+              </Link>
+              <Link className={s.pfLink} href={FAN_ACCOUNT_SETTINGS}>
+                계정 설정
+              </Link>
+            </div>
+          </div>
           {profile.intro ? <p className={s.pfBio}>{profile.intro}</p> : null}
         </div>
       </div>

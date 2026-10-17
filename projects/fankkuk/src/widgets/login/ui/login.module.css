@@ -2,7 +2,7 @@
    가운데 카드 480(양옆 여백 포함 528). 상단 바 아래 88(본문 위 40 + 구간 위 48), 아래 바닥글까지 96(휴대폰 64).
    카드·머리·폼·확인칸·오류(.err)·아래 줄(.foot-line)은 전역 클래스 */
 .page { padding: calc(var(--space-10) + var(--space-12)) 0 var(--section-gap); }
-:global(.auth).box { max-width: calc(480px + 2 * var(--gutter)); }
+:global(.auth).box { max-width: calc(var(--col-auth) + 2 * var(--gutter)); }
 .box :global(.head) { margin-bottom: var(--space-8); }
 .box :global(.head .t-lead) { margin-top: var(--space-2); font-size: var(--fs-lead); font-weight: var(--fw-sub); line-height: 1.5; }
 .reset summary { display: flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--touch); cursor: pointer; list-style: none; font-weight: var(--fw-btn); }

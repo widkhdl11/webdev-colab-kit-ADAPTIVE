@@ -17,28 +17,28 @@
 .form-btns { margin-top: 24px; }
 /* 오류 문구 — 지금 화면들 방식(본문색 굵은 글자 + 「!」 원, creator-settings .error) */
 .error { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; color: var(--ink); font-weight: var(--fw-bold); }
-.error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: var(--fw-bold); line-height: 1; }
+.error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1; }
 .status { margin-top: 12px; }
 
 /* ── 팬: 상자별 받았어요 · 답장 카드 ── */
 .boxes { display: grid; gap: 16px; margin-top: 16px; }
 .box-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
-.box-head h3 { font-size: 18px; }
+.box-head h3 { font-size: var(--fs-card); }
 .wait { display: flex; align-items: flex-start; gap: 12px; margin-top: 12px; color: var(--sub); }
 .reply { margin-top: 12px; padding: 24px 28px; border-radius: 24px; background: var(--surface-selected); }
 .reply-top { display: flex; align-items: center; gap: 12px; }
-.reply-top b { font-size: 18px; }
+.reply-top b { font-size: var(--fs-card); }
 .reply-top .d { margin-left: auto; color: var(--sub); }
 .reply-photo { width: 48px; height: 48px; }
 .reply q { display: block; margin-top: 16px; quotes: none; font-size: var(--fs-title); font-weight: var(--fw-bold); letter-spacing: var(--ls-title); line-height: 1.4; }
-.reply .more { margin-top: 8px; font-size: 18px; overflow-wrap: anywhere; }
-.consent { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--divider); }
+.reply .more { margin-top: 8px; font-size: var(--fs-body); overflow-wrap: anywhere; }
+.consent { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--divider); }
 .check { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
 .check input { width: 22px; height: 22px; margin: 0; accent-color: var(--brand-line); }
 .check input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .check-hint { margin-left: 34px; color: var(--sub); }
-.reply-foot { display: flex; justify-content: flex-end; margin-top: 20px; }
-.share { margin-top: 16px; padding: 20px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.reply-foot { display: flex; justify-content: flex-end; margin-top: 24px; }
+.share { margin-top: 16px; padding: 24px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
 .share-sizes { display: flex; flex-wrap: wrap; gap: 12px; }
 .share-prev { display: block; width: 100%; max-width: 360px; height: auto; margin-top: 16px; border-radius: 16px; box-shadow: var(--hair); }
 .share-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
@@ -46,7 +46,7 @@
 
 @media (max-width: 767px) {
   .form { padding: 24px 16px; }
-  .reply { padding: 20px; }
+  .reply { padding: 24px; }
   .reply-foot :global(.btn) { width: 100%; }
   .share-btns :global(.btn) { flex: 1 1 100%; }
 }

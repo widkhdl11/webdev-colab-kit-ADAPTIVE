@@ -18,24 +18,26 @@
 
 /* 팬 홈 프로필 구간 — 시안 v21-addendum3/fan-21.css .pf · .pf-banner · .pf-body · .pf-top · .pf-av · .pf-actions · .pf-link · .pf-bio.
    값은 시안 :root(--banner-h 160 · --pf-av 96 · --pf-ring 4, 768 이하 112 · 80). 카드 안쪽 여백은 걷고 띠를 끝까지 채운다 */
-.pf { --banner-h: 160px; --pf-av: 96px; --pf-ring: 4px; padding: 0; overflow: hidden; }
+.pf { --banner-h: 64px; --pf-av: 96px; --pf-ring: 4px; padding: 0; overflow: hidden; }
 .pfBanner { display: block; width: 100%; height: var(--banner-h); background: var(--primary-50); }
 .pfBanner img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pfBody { display: grid; gap: var(--space-4); padding: 0 var(--space-6) var(--space-6); }
 .pfTop { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-top: calc(var(--pf-av) / -2); }
-.pfAv { display: grid; place-items: center; flex: none; width: var(--pf-av); height: var(--pf-av); border-radius: var(--r-pill); border: var(--pf-ring) solid var(--white); background: var(--primary-50); color: var(--ink); font-size: 36px; font-weight: var(--fw-bold); line-height: 1; overflow: hidden; }
+.pfAv { display: grid; place-items: center; flex: none; width: var(--pf-av); height: var(--pf-av); border-radius: var(--r-pill); border: var(--pf-ring) solid var(--white); background: var(--primary-50); color: var(--ink); font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1; overflow: hidden; }
 .pfAv img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.nameRow { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
+.nameRow > h1 { flex: 1 1 auto; min-width: 0; }
 .pfActions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
 .pfLink { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .pfBio { margin: var(--space-2) 0 0; color: var(--gray-600); overflow-wrap: anywhere; }
 @media (max-width: 768px) {
-  .pf { --banner-h: 112px; --pf-av: 80px; }
+  .pf { --pf-av: 80px; }
 }
 
 /* 팬 홈 — 시안 v21-addendum3/fan-21.css .pf-name · .sec-t · .rows · .row · .row-av · .sec-foot-l. 구간은 위아래로만 쌓는다(0000절) */
 .homeName { margin: 0; font-size: var(--fs-page); line-height: 1.3; }
 .secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
-.secMeta { margin-left: var(--space-1); font-family: var(--font); font-size: var(--fs-caption); font-weight: 400; color: var(--gray-600); }
+.secMeta { margin-left: var(--space-1); font-family: var(--font); font-size: var(--fs-caption); font-weight: 400; line-height: inherit; vertical-align: baseline; color: var(--gray-600); }
 .secBody { margin-top: var(--space-4); }
 .secFoot { margin: var(--space-4) 0 0; }
 .rows { margin-bottom: 0; padding: 0; list-style: none; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
@@ -72,7 +74,20 @@
 .dismiss { justify-self: start; }
 @media (prefers-reduced-motion: reduce) { .foldChev { transition: none; } }
 
-/* 공지 줄 — 시안 .nlist: 제목 왼쪽 · 날짜 오른쪽 한 줄 */
+/* 공지 — 위 두 목록과 같은 카드 묶음(v23 감사표 3절). 줄마다 제목 왼쪽 · 날짜 오른쪽 */
+.notices .secHead { margin-bottom: var(--space-4); }
+.notices :global(.nlist) { border-top: 0; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
+.notices :global(.nlist) li + li { border-top: 1px solid var(--gray-200); }
+.notices :global(.nlist) a { min-height: 64px; padding: var(--space-3) var(--space-4); border-radius: 0; box-shadow: none; }
 .notices :global(.nlist) a { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .notices :global(.nlist) b { min-width: 0; font-weight: var(--fw-nav); }
 .notices :global(.nlist) :global(.t-meta) { flex-shrink: 0; }
+/* 좁은 폭 — 「모두 보기」가 제목 줄에 안 들어가므로 목록 바로 아래 오른쪽으로 내린다 */
+@media (max-width: 767px) {
+  .stack > section:has(> :global(.head-row)) { display: flex; flex-direction: column; }
+  .stack > section > :global(.head-row) { display: contents; }
+  .stack > section > :global(.head-row) > h2 { order: 1; }
+  .stack > section > :global(.head-row) > :global(.more-link) { order: 3; align-self: flex-end; margin-top: var(--space-4); }
+  .stack > section > :is(ul, p) { order: 2; }
+  .notices > :global(.head-row) > h2 { margin-bottom: var(--space-4); }
+}

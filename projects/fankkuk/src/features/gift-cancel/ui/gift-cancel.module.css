@@ -1,8 +1,8 @@
 /* 팬의 입고 전 취소 (payment INV-M16) — 묻는 칸은 「제가 보낸 게 아니에요」(box-waybill) 와 같은 모양 */
 .cancel { margin-top: 16px; }
 /* 주문 정보 카드가 --surface 라 같은 바탕이면 경계가 사라진다 — 흰 바탕 + 헤어라인 */
-.ask { padding: 16px 20px; border-radius: var(--r-box); background: var(--white); box-shadow: var(--hair); }
+.ask { padding: 16px 24px; border-radius: var(--r-box); background: var(--white); box-shadow: var(--hair); }
 .ask p { color: var(--ink); }
 .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .error { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; color: var(--ink); font-weight: var(--fw-bold); }
-.error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: var(--fw-bold); line-height: 1; }
+.error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1; }

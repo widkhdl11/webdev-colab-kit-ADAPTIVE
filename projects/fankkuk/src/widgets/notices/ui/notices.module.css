@@ -4,8 +4,8 @@
 .list li + li { margin-top: var(--space-4); }
 /* 펼친 글 — 왼쪽에서 시작하고 한 줄 길이는 760 까지 */
 .list :global(.prose) { max-width: none; margin-inline: 0; }
-.list :global(.prose) > * { max-width: 760px; }
-.list :global(.prose h3) { font-size: var(--fs-lead); }
+.list :global(.prose) > * { max-width: var(--prose-max); }
+.list :global(.prose h3) { font-size: var(--fs-card); }
 
 /* 본문 안 링크 */
 .link { color: var(--brand-ink); font-weight: var(--fw-btn); text-underline-offset: 4px; }

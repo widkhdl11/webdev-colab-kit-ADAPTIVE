@@ -15,7 +15,7 @@
 .groupT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
 
 /* 접힌 칸 — 시안 .fold: 제목 · 오른쪽 짧은 상태 · 화살표 */
-.fold { border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); scroll-margin-top: var(--space-6); }
+.fold { border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); scroll-margin-top: var(--space-6); }
 .fold > summary { display: flex; align-items: center; gap: var(--space-4); min-height: 48px; padding: 0 var(--space-6); border-radius: var(--r-btn); font-weight: var(--fw-btn); list-style: none; cursor: pointer; }
 .fold > summary::-webkit-details-marker { display: none; }
 .fold > summary:hover { background: var(--gray-50); }

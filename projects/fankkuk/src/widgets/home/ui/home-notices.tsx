@@ -11,8 +11,11 @@ const shortDate = (date: string) => date.slice(5).replace("-", ".");
 export function HomeNotices({ notices }: { notices: readonly HomeNotice[] }) {
   return (
     <section className={s.notices} aria-labelledby="notice-title">
-      <div className={s.secHead}>
+      <div className={`head-row ${s.secHead}`}>
         <h2 id="notice-title">공지사항</h2>
+        <Link className="more-link" href="/notices">
+          전체 보기
+        </Link>
       </div>
       {notices.length === 0 ? (
         <p className="empty">아직 공지가 없어요.</p>
@@ -28,11 +31,6 @@ export function HomeNotices({ notices }: { notices: readonly HomeNotice[] }) {
           ))}
         </ul>
       )}
-      <div className={s.foot}>
-        <Link className="btn btn--line" href="/notices">
-          전체 보기
-        </Link>
-      </div>
     </section>
   );
 }

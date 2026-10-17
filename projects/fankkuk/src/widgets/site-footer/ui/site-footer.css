@@ -6,7 +6,7 @@
 .biz { display: grid; gap: 8px; font-size: var(--fs-caption); line-height: 1.5; }
 .biz div { display: flex; gap: 16px; }
 .biz dt { min-width: 128px; flex-shrink: 0; }
-.footer-links { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; font-size: var(--fs-nav); font-weight: var(--fw-nav); }
+.footer-links { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; font-size: var(--fs-small); font-weight: var(--fw-nav); }
 .footer-links a { text-decoration: none; }
 .footer-links a:hover { color: var(--gray-900); }
 /* 개인정보처리방침은 다른 링크와 구별되게 굵게(개인정보 보호법 안내서의 업계 관행) */

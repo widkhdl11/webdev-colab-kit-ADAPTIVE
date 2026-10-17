@@ -19,8 +19,8 @@
 .art:first-child { padding-top: 0; border-top: 0; }
 .art > h2 { margin-bottom: var(--space-4); }
 .prose { max-width: none; margin-inline: 0; }
-.prose > * { max-width: 760px; }
-.prose > :global(.grid) { max-width: 760px; }
+.prose > * { max-width: var(--prose-max); }
+.prose > :global(.grid) { max-width: var(--prose-max); }
 
 /* 카드 안 이름·값 — 좁은 카드에서 이름 아래 값 */
 .kv { display: grid; gap: var(--space-4); margin-top: var(--space-4); }

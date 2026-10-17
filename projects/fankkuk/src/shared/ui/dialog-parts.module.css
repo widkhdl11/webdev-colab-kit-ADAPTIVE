@@ -25,7 +25,7 @@
 .opt:has(input:checked) { border-color: var(--ink); background: var(--gray-50); }
 .opt input { width: 20px; height: 20px; accent-color: var(--ink); }
 .error { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--ink); font-weight: var(--fw-bold); }
-.errorMark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: 16px; font-weight: var(--fw-bold); line-height: 1; }
+.errorMark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1; }
 .check { display: flex; align-items: center; gap: var(--space-3); }
 .check input { width: 20px; height: 20px; accent-color: var(--ink); }
 

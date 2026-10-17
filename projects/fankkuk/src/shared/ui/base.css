@@ -117,7 +117,7 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 /* ---------- 8. 첫 화면 부품 (첫 화면·팬 메인·크리에이터 메인·소개가 같이 쓴다. 검색창은 크리에이터 찾기·선물 보내기도) ---------- */
 .hero { padding-block: clamp(48px, 7vw, 96px) clamp(56px, 7vw, 96px); text-align: center; }
 .hero .t-lead { margin-bottom: 16px; }
-.hero-line { margin-top: 20px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); color: var(--brand-ink); }
+.hero-line { margin-top: 24px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); color: var(--brand-ink); }
 .hero-desc { max-width: 640px; margin: 24px auto 0; }
 .search { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 640px; height: 60px; margin: clamp(32px, 4vw, 48px) auto 0; padding: 0 8px 0 24px; border-radius: var(--r-pill); background: var(--white); box-shadow: var(--field); }
 .search:focus-within { box-shadow: 0 0 0 3px var(--ink); }
@@ -146,7 +146,7 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 .price .price-amount span { margin-left: 4px; font-size: var(--fs-card); line-height: 1.4; }
 .price .inc { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: var(--fw-bold); }
 .price .inc svg { color: var(--brand-ink); }
-.price .spec { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--sub); }
+.price .spec { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--sub); }
 .notes { display: grid; gap: 8px; margin-top: 28px; color: var(--sub); }
 .notes li { display: flex; gap: 12px; }
 .notes li::before { content: ""; width: 6px; height: 6px; margin-top: 11px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
@@ -196,7 +196,7 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 /* v18 페이지 머리 — 로그인 전·후 같은 모양: 제목 24 왼쪽 + (개수) + 오른쪽 주요 버튼 하나 + 설명 한 줄(design-rules 00절, 시안 v18-app.css .page-head·.ph-*) */
 .page-head { margin-bottom: 32px; text-align: left; }
 .page-head > :is(h1, h2), .ph-title { font-size: var(--fs-page); line-height: 1.3; letter-spacing: 0; }
-.page-head > :is(.t-lead, .t-desc, p), .ph-desc { margin: 8px 0 0; max-width: none; font-size: var(--fs-body); color: var(--gray-600); }
+.page-head > :is(.t-lead, .t-desc, p), .ph-desc { margin: 8px 0 0; max-width: var(--prose-max); font-size: var(--fs-body); color: var(--gray-600); }
 .ph-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
 .ph-count { margin-left: 8px; font-family: var(--font); font-size: var(--fs-body); font-weight: 400; color: var(--gray-500); }
 /* 본문 틀 — 로그인 후 관리 화면의 폭은 세 가지(design-rules 00절 「본문 틀」, 카드 d89 · 시안 v22-width/v22.css). 셋 다 안쪽 여백 40, 사이드바를 뺀 남은 영역의 가운데.
@@ -228,7 +228,7 @@ b, strong, th, dt { font-weight: var(--fw-bold); }
 .face--sm { width: 40px; height: 40px; }
 .face--lg { width: 72px; height: 72px; font-size: var(--fs-card); }
 .face--xl { width: 120px; height: 120px; }
-.avatar-stack { display: flex; margin-top: 20px; }
+.avatar-stack { display: flex; margin-top: 24px; }
 .avatar-stack .face { width: 48px; height: 48px; margin-left: -10px; box-shadow: 0 0 0 3px var(--white); border-radius: 50%; }
 .avatar-stack .face:first-child { margin-left: 0; }
 /* 탭·태그 묶음 */
@@ -319,16 +319,16 @@ textarea.field { padding-block: 14px; min-height: 160px; resize: vertical; line-
 .acc details[open] summary svg { transform: rotate(180deg); }
 .acc .ans { padding: 0 24px 24px; display: grid; gap: 16px; }
 /* 긴 글 */
-.prose { display: grid; gap: 16px; max-width: 760px; margin-inline: auto; }
+.prose { display: grid; gap: 16px; max-width: var(--prose-max); margin-inline: auto; }
 .prose .dots { display: grid; gap: 8px; }
 .prose .dots li { display: flex; gap: 12px; }
 .prose .dots li::before { content: ""; width: 6px; height: 6px; margin-top: 11px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
 /* 프로필 머리 */
 .pf { padding-block: clamp(40px, 6vw, 80px) clamp(32px, 4vw, 56px); text-align: center; }
-.pf .face--xl { margin: 0 auto 20px; }
+.pf .face--xl { margin: 0 auto 24px; }
 .pf .handle { margin-top: 8px; }
 .pf .t-lead { margin-top: 16px; }
-.pf .ctags { justify-content: center; margin-top: 20px; }
+.pf .ctags { justify-content: center; margin-top: 24px; }
 .pf .thanks { margin-top: 24px; font-size: var(--fs-card); line-height: 1.4; font-weight: var(--fw-bold); color: var(--brand-ink); }
 .pf .row-btns { margin-top: 24px; }
 .pf .note { margin-top: 12px; color: var(--sub); }
@@ -340,7 +340,7 @@ textarea.field { padding-block: 14px; min-height: 160px; resize: vertical; line-
 .info.ok .ic { background: var(--success-soft); color: var(--success); }
 .info.rest .ic { background: var(--warn-soft); color: var(--warn-ink); }
 .info .dd { margin-top: 12px; }
-.quote { padding: 16px 20px; border-radius: var(--r-btn); background: var(--surface); }
+.quote { padding: 16px 24px; border-radius: var(--r-btn); background: var(--surface); }
 .quote q { display: block; font-weight: var(--fw-bold); font-size: var(--fs-lead); line-height: 1.5; quotes: "“" "”"; }
 .quote .by { margin-top: 12px; }
 .nos { display: grid; gap: 8px; }
@@ -370,7 +370,7 @@ fieldset.part > legend + * { clear: both; }
 @container (max-width: 480px) { .kv > div { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
 /* 금액 줄 */
 .lines > div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-.lines .total { border-bottom: 0; padding-top: 20px; align-items: baseline; }
+.lines .total { border-bottom: 0; padding-top: 24px; align-items: baseline; }
 .lines .amt { font-weight: var(--fw-bold); white-space: nowrap; }
 .total .amt { font-size: var(--fs-title); line-height: 1.3; color: var(--brand-ink); }
 .bignum { margin-top: 8px; font-size: var(--fs-hero); line-height: 1.2; font-weight: var(--fw-bold); }
@@ -379,16 +379,16 @@ fieldset.part > legend + * { clear: both; }
 /* 선물 카드·내 목록 */
 .gcard { display: grid; gap: 16px; align-content: start; list-style: none; }
 .gcard-top { display: flex; align-items: center; gap: 16px; }
-.mine-list { display: grid; gap: 12px; margin-top: 20px; }
+.mine-list { display: grid; gap: 12px; margin-top: 24px; }
 .mine-list a { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px; border-radius: var(--r-btn); background: var(--surface); text-decoration: none; }
 .mine-list a:hover { background: var(--surface-hover); }
 .mine-list .w { flex: 1; min-width: 0; font-weight: var(--fw-bold); }
 .nlist li + li { margin-top: 12px; }
-.nlist a { display: block; padding: 20px 24px; border-radius: var(--r-card); box-shadow: var(--hair); text-decoration: none; background: var(--white); }
+.nlist a { display: block; padding: 24px 24px; border-radius: var(--r-card); box-shadow: var(--hair); text-decoration: none; background: var(--white); }
 .nlist a:hover { background: var(--surface); }
 .nlist b { display: block; }
 /* 스위치: 설명과 조작 영역 */
-.sw-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px 20px; border-radius: var(--r-btn); background: var(--surface); }
+.sw-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px 24px; border-radius: var(--r-btn); background: var(--surface); }
 .sw { position: relative; flex-shrink: 0; width: 56px; height: 32px; padding: 0; border: 0; border-radius: var(--r-pill); background: var(--field-line); cursor: pointer; }
 .sw span { position: absolute; left: 4px; top: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--white); transition: transform .15s; }
 .sw[aria-checked="true"] { background: var(--brand); }
@@ -545,7 +545,7 @@ img.asset { display: block; object-fit: contain; }
   body:has(.print-only) * { visibility: hidden; }
   /* 위 줄과 같은 앞머리를 붙여야 이긴다 — `:has()` 안의 클래스도 선택자 점수에 들어가서, `.print-only` 만 쓰면 위 줄에 져 라벨까지 가려진다 */
   body:has(.print-only) .print-only, body:has(.print-only) .print-only * { visibility: visible; }
-  .print-only { display: grid; gap: 6px; position: absolute; left: 0; top: 0; width: 100%; padding: 16px; background: var(--white); color: var(--print-ink); font-size: 16px; }
+  .print-only { display: grid; gap: 6px; position: absolute; left: 0; top: 0; width: 100%; padding: 16px; background: var(--white); color: var(--print-ink); font-size: var(--fs-body); }
 }
 
 /* 운영자 화면은 재디자인 대상이 아니다(design-rules 0·00절) — 제목도 둥근 글꼴로 바꾸지 않고(위 제목 규칙에서 뺐다) Pretendard 그대로, 굵기 600·700 을 그대로 쓴다 */
@@ -694,8 +694,8 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 /* 금액 줄 */
 .lines > div:where(:not(.admin-area *)) { padding: var(--space-2) 0; border-bottom-color: var(--gray-200); }
 .lines .amt:where(:not(.admin-area *)) { font-weight: var(--fw-btn); }
-.lines .total:where(:not(.admin-area *)) { padding-top: var(--space-4); font-size: var(--fs-lead); }
-.total .amt:where(:not(.admin-area *)) { font-size: var(--fs-lead); color: var(--gray-900); }
+.lines .total:where(:not(.admin-area *)) { padding-top: var(--space-4); font-size: var(--fs-card); }
+.total .amt:where(:not(.admin-area *)) { font-size: var(--fs-card); color: var(--gray-900); }
 
 /* 사람 · 목록 */
 .avatar:where(:not(.admin-area *)) { background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); }
@@ -771,3 +771,8 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
   .hero-actions:where(:not(.admin-area *)) { flex-direction: column; align-items: stretch; }
   .tabs:where(:not(.admin-area *)) { flex-wrap: nowrap; overflow-x: auto; }
 }
+
+/* 제목 줄 오른쪽 「모두 보기」 링크 — 프로필·마이꾹 공통 모양(v23 감사표 2·3절). 목록 아래 버튼·가운데 버튼을 대신한다 */
+.head-row:where(:not(.admin-area *)) { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
+.head-row > :first-child:where(:not(.admin-area *)) { flex: 1 1 auto; min-width: 0; margin: 0; }
+.more-link:where(:not(.admin-area *)) { flex: none; font-size: var(--fs-body); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }

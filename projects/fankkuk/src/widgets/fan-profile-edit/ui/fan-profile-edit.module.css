@@ -31,7 +31,7 @@
 .pick[aria-disabled="true"] { cursor: progress; }
 .danger { background: var(--white); color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
 .danger:hover { background: var(--gray-50); }
-.avatar { --pf-av: 96px; flex: none; display: grid; place-items: center; width: var(--pf-av); height: var(--pf-av); border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); font-size: 36px; font-weight: var(--fw-bold); line-height: 1; overflow: hidden; }
+.avatar { --pf-av: 96px; flex: none; display: grid; place-items: center; width: var(--pf-av); height: var(--pf-av); border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1; overflow: hidden; }
 .banner { --banner-h: 160px; display: grid; place-items: center; width: 100%; height: var(--banner-h); border-radius: var(--r-btn); background: var(--primary-50); overflow: hidden; }
 .avatar img, .banner img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .bannerEmpty { color: var(--gray-600); }
