@@ -1,11 +1,20 @@
 ---
 project: fankkuk
 status: passed
-basis: 1afb99436bb0
-reviewers: [security-reviewer, code-reviewer, ui-reviewer]
+basis: 5cddd80adff3
+reviewers: [security-reviewer, ui-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-17 밤, 크리에이터 카드 C안)
+# 리뷰 사인오프 — fankkuk (2026-10-17 밤, 토큰 감사 4절 나머지)
+
+덮는 변경: 487afd0a 뒤 — 상세 설정 팬덤 카드 안쪽 좌우 32 → 24(접힌 칸 글자와 같은 시작선), /me 「아이디」 줄을 라벨 위 · 값 아래로(라벨 16 / 600, 「이메일」과 같음). CSS 두 파일뿐이라 code-reviewer 는 보내지 않았다(로직 변경 없음).
+
+- 실행 근거: `npx tsc --noEmit` 오류 0 · `npx vitest run src/widgets/creator-settings src/widgets/my-info` 3파일 16개 통과 · `npm run copy:lint` 금지어 0 · Playwright 실측 — 1440 팬덤 카드 글자 x496 = 접힌 칸 글자 x496, 390 둘 다 x32 · /me 아이디 라벨 x496 y506, 값 y540, 이메일 라벨과 같은 16 / 600 · 두 화면 가로 넘침 0.
+- ui: 위반 없음(간격 24·8 허용 목록 안, 위아래 배치는 design-rules 와 감사 4절에 맞음).
+- security: 지적 없음 — .kv 는 배치·굵기만 바꾸고 숨김 속성은 넣지도 빼지도 않음, 쓰는 곳은 본인 아이디 한 줄. 휴대폰 번호 가림은 .kvMain·JSX 분기라 무관.
+- 다시 재 보니 이미 반영돼 있던 것: 주문 상세 큰 글 16(공통 --fs-lead), /me 캡션 라벨 14. 선물 등록 24 안쪽은 메모 상자 안쪽 여백이라 그대로(감사 문서 4절에 적음).
+
+## 이전 사인오프 (2026-10-17 밤, 크리에이터 카드 C안)
 
 덮는 변경: da405e96 뒤 — 카드 C안(가운데 정렬·배너 모서리 팔로우 28·이름/뱃지/소개/칩 줄 고정·칩 한 줄 + 「+N」), 팬덤 뱃지(테두리 팬컬러·면 28%·글자 #111827, 카드 12px·프로필 머리 medium 14px), 카드 안 플랫폼 칩 22·12, 상세 설정의 옛 글자색 안내 제거, creator-link INV-E14·S13·S13b 고쳐 적음(DECISIONS 2026-10-17 카드 C안). 데이터·권한 경로는 그대로라 security-reviewer 는 보내지 않았다. 고친 INV-E14 시험은 변이로 확인했고 test-auditor 는 보내지 않았다(시험 셋이 CSS 클래스·변수 확인 수준).
 
