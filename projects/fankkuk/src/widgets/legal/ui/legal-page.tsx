@@ -47,6 +47,8 @@ function Block({ block }: { block: LegalBlock }) {
           ))}
         </ul>
       );
+    case "stages":
+      return <p>{`${block.title}: ${block.items.join(" → ")}. ${block.note}`}</p>;
     case "prices":
       return (
         <div className={`grid ${block.rows.length === 3 ? "cols-3 keep" : "cols-2"}`}>

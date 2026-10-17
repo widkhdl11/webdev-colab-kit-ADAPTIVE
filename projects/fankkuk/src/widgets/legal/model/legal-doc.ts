@@ -9,7 +9,9 @@ export const TO_FILL = SITE_INFO_BLANK;
 export const TO_DECIDE = "[확인 필요]";
 export const toCheck = (what: string) => `[확인 필요: ${what}]`;
 
-export type LegalRow = { title: string; fields: readonly (readonly [string, string])[] };
+/** 환불 금액 칸의 색 꼬리표 — 전액(초록)·없음(빨강). 일부만 돌려받는 칸은 붙이지 않는다(design-rules 14절) */
+export type RefundTone = "full" | "none";
+export type LegalRow = { title: string; fields: readonly (readonly [string, string, RefundTone?])[] };
 
 export type LegalBlock =
   | { kind: "text"; text: string }
@@ -22,7 +24,9 @@ export type LegalBlock =
   /** 낱말 정의 — [낱말, 뜻]. 뜻은 「~을 말합니다」로 끝나는 문장 */
   | { kind: "defs"; items: readonly (readonly [string, string])[] }
   /** 상자 구간별 요금 — 구간 이름·기준 한 칸 + 금액 칸(columns 순서) */
-  | { kind: "prices"; columns: readonly string[]; rows: readonly LegalPriceRow[] };
+  | { kind: "prices"; columns: readonly string[]; rows: readonly LegalPriceRow[] }
+  /** 단계 칩 한 줄 — 이름표 + 단계 이름(차례대로) + 아래 덧붙임 한 줄 */
+  | { kind: "stages"; title: string; items: readonly string[]; note: string };
 
 export type LegalPriceRow = { name: string; rule: string; amounts: readonly string[] };
 
@@ -51,6 +55,7 @@ export function openItems(doc: LegalDoc): string[] {
       else if (b.kind === "rows") for (const r of b.rows) for (const [k, v] of r.fields) texts.push(`${r.title} — ${k}: ${v}`);
       else if (b.kind === "defs") for (const [k, v] of b.items) texts.push(`${k}: ${v}`);
       else if (b.kind === "prices") for (const r of b.rows) texts.push(`${r.name} — ${r.rule}: ${r.amounts.join(" · ")}`);
+      else if (b.kind === "stages") texts.push(b.title, ...b.items, b.note);
       else texts.push(...b.items);
     }
   }

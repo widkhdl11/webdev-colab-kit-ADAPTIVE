@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { LegalBlock, LegalDoc } from "../model/legal-doc";
+import type { LegalBlock, LegalDoc, RefundTone } from "../model/legal-doc";
 import type { VersionedKind, VersionLink } from "../model/legal-versions";
 import { PolicyToc, type TocGroup } from "./policy-toc";
 import s from "./policy-page.module.css";
@@ -20,6 +20,20 @@ type Props = { kind: VersionedKind; doc: LegalDoc; history: readonly VersionLink
 function splitArticle(title: string): { no: string | null; name: string } {
   const m = /^(제\d+조)\s+(.+)$/.exec(title);
   return m ? { no: m[1]!, name: m[2]! } : { no: null, name: title };
+}
+
+/** 환불 금액 칸 — 전액은 값 전체를 초록 꼬리표로, 없음은 「없음」 빨강 꼬리표 + (짧은 값이 아니면) 뒤에 설명 */
+function RefundValue({ value, tone }: { value: string; tone?: RefundTone }) {
+  if (tone === "full") return <span className={`${s.pill} ${s.pillFull}`}>{value}</span>;
+  if (tone === "none") {
+    if (value.endsWith("없음")) return <span className={`${s.pill} ${s.pillNone}`}>{value}</span>;
+    return (
+      <>
+        <span className={`${s.pill} ${s.pillNone}`}>없음</span> {value}
+      </>
+    );
+  }
+  return <>{value}</>;
 }
 
 function Block({ block }: { block: LegalBlock }) {
@@ -86,6 +100,20 @@ function Block({ block }: { block: LegalBlock }) {
           </table>
         </div>
       );
+    case "stages":
+      return (
+        <div className={s.stages}>
+          <p className={s.stagesT}>{block.title}</p>
+          <ol className={s.chips}>
+            {block.items.map((item) => (
+              <li key={item}>
+                <span className={s.chip}>{item}</span>
+              </li>
+            ))}
+          </ol>
+          <p className={s.stagesNote}>{block.note}</p>
+        </div>
+      );
     case "rows":
       return (
         <div className={s.box}>
@@ -93,10 +121,12 @@ function Block({ block }: { block: LegalBlock }) {
             <div key={row.title} className={s.caseRow}>
               <h3>{row.title}</h3>
               <dl className={s.kv}>
-                {row.fields.map(([k, v]) => (
+                {row.fields.map(([k, v, tone]) => (
                   <div key={k}>
                     <dt>{k}</dt>
-                    <dd>{v}</dd>
+                    <dd>
+                      <RefundValue value={v} tone={tone} />
+                    </dd>
                   </div>
                 ))}
               </dl>

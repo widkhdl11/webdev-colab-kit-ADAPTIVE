@@ -3,6 +3,7 @@ import { openItems, TO_DECIDE, TO_FILL, type LegalDoc } from "./legal-doc";
 import { privacyDoc } from "./privacy-doc";
 import { termsDoc } from "./terms-doc";
 import { ARCHIVE } from "./legal-versions";
+import { refundDoc } from "./refund-doc";
 import { mustDeliverLabels } from "@/entities/notification/model/delivery-policy";
 
 const prices = {
@@ -48,6 +49,24 @@ describe("약관·개인정보처리방침 글", () => {
       expect(examples).toContain("추가 결제 취소");
       for (const name of examples) expect([doc.title, name, names.has(name)]).toEqual([doc.title, name, true]);
     }
+  });
+
+  it("환불 금액 꼬리표는 한 규칙 — 전액이면 초록, 없음이면 빨강, 일부만 돌려받는 줄은 칠하지 않는다(약관·환불 규정 모두)", () => {
+    const fields = [termsDoc(prices), refundDoc(prices)].flatMap((doc) =>
+      doc.sections.flatMap((sec) => sec.blocks.flatMap((b) => (b.kind === "rows" ? b.rows.flatMap((r) => r.fields.map((f) => [doc.title, r.title, ...f] as const)) : []))),
+    );
+    const expected = (v: string) => (v.includes("전액") ? "full" : /^없음$|환불 금액 없음|환불 금액이 없습니다/.test(v) ? "none" : undefined);
+    expect(fields.filter(([, , , , tone]) => tone === "full").length).toBeGreaterThan(0);
+    expect(fields.filter(([, , , , tone]) => tone === "none").length).toBeGreaterThan(0);
+    for (const [doc, row, k, v, tone] of fields) expect([doc, row, k, tone], v).toEqual([doc, row, k, expected(v)]);
+  });
+
+  it("약관 4조 단계 칩은 화면의 단계 이름 여섯 개이고, 이름표와 본문의 「6단계」와 수가 맞는다", () => {
+    const service = termsDoc(prices).sections.find((s) => s.id === "service");
+    const stages = service?.blocks.find((b) => b.kind === "stages");
+    expect(stages && stages.kind === "stages" ? stages.items : []).toEqual(["등록", "입고", "검수", "출고", "배송중", "수령"]);
+    expect(stages && stages.kind === "stages" ? stages.title : "").toBe(`진행 상황 ${stages && stages.kind === "stages" ? stages.items.length : 0}단계`);
+    expect(JSON.stringify(service)).toContain("등록 → 입고 → 검수 → 출고 → 배송중 → 수령의 6단계");
   });
 
   it("빈칸 표시가 있는 문장만 모은다", () => {

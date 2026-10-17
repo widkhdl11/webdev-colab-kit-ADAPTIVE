@@ -1,4 +1,5 @@
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
+import { FAN_STEP_LABEL } from "@/entities/order/ui/fan-stage-copy";
 import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
@@ -90,6 +91,13 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
               "크리에이터는 선물마다 카카오톡 인증서로 서명하여 승인하거나, 받지 않기(거절)를 선택합니다. 승인은 출고 전까지만 완료하면 되며, 일괄 승인 기능은 제공하지 않습니다.",
               "승인과 검수가 모두 완료된 상자에 한하여 송장을 출력하여 크리에이터에게 발송합니다(출고).",
             ],
+          },
+          {
+            kind: "stages",
+            // 화면의 단계 이름 그대로(차례는 FAN_STEP_LABEL 의 순서) — 단계가 바뀌면 칩과 이름표 숫자가 같이 바뀐다
+            title: `진행 상황 ${Object.keys(FAN_STEP_LABEL).length}단계`,
+            items: Object.values(FAN_STEP_LABEL),
+            note: "크리에이터의 승인은 검수와 출고 사이에 따로 표시합니다.",
           },
           {
             kind: "list",
@@ -202,7 +210,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
               {
                 title: "사무실 도착 전 거절·자동 반려",
                 fields: [
-                  ["환불 금액", "결제 금액 전액"],
+                  ["환불 금액", "결제 금액 전액", "full"],
                   ["「먼저 보내기」를 누른 경우", "아래 「아직 도착하지 않은 상자」 기준에 따름"],
                 ],
               },
@@ -210,7 +218,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
                 title: "사무실 도착 후 거절·자동 반려",
                 fields: [
                   ["환불 금액", "도착한 상자별로 해당 상자 금액에서 반송 택배비를 공제한 금액"],
-                  ["검수에 걸린 상자", "환불 금액 없음"],
+                  ["검수에 걸린 상자", "환불 금액 없음", "none"],
                 ],
               },
               {
@@ -225,14 +233,14 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
                 title: "검수 불합격에 따른 반송",
                 fields: [
                   ["해당", `보낼 수 없는 물품이 발견되거나 ${OVERSIZE_RULE}, 또는 크리에이터가 돌려보내기를 선택했거나 7일 이내에 답하지 않은 상자(제10조)`],
-                  ["환불 금액", "검수비와 반송 택배비를 공제하므로 환불 금액이 없습니다"],
+                  ["환불 금액", "검수비와 반송 택배비를 공제하므로 환불 금액이 없습니다", "none"],
                 ],
               },
-              { title: "차액 미결제에 따른 반송", fields: [["환불 금액", "검수 불합격에 따른 반송과 같이 환불 금액이 없습니다"]] },
+              { title: "차액 미결제에 따른 반송", fields: [["환불 금액", "검수 불합격에 따른 반송과 같이 환불 금액이 없습니다", "none"]] },
               {
                 title: "승인 후 결제 완료 시각부터 30일이 지나도 도착하지 않은 상자",
                 fields: [
-                  ["환불 금액", "해당 상자 금액 전액"],
+                  ["환불 금액", "해당 상자 금액 전액", "full"],
                   ["같은 선물의 다른 상자", "그대로 진행"],
                 ],
               },
@@ -243,7 +251,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
                   ["환불 금액", "「사무실 도착 후 거절·자동 반려」와 같음. 아직 도착하지 않은 상자는 「받는 주소가 공개된 후 거절·자동 반려·취소 시 아직 도착하지 않은 상자」 기준에 따름"],
                 ],
               },
-              { title: "출고 후", fields: [["환불 금액", "없음"]] },
+              { title: "출고 후", fields: [["환불 금액", "없음", "none"]] },
             ],
           },
           {
