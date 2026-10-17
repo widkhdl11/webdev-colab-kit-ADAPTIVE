@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { IntentPrefetch } from "@/shared/ui/intent-prefetch";
 import { TestSiteBand } from "@/shared/ui/test-site-band";
 import { HeaderMemoryProvider } from "@/widgets/site-header/model/header-memory";
 import "./globals.css";
@@ -46,6 +47,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <TestSiteBand />
         {/* 페이지를 옮기는 동안 로딩 화면이 마지막 상단 바를 그대로 보여 주도록 그 값을 기억한다(widgets/site-header) */}
         <HeaderMemoryProvider>{children}</HeaderMemoryProvider>
+        {/* 링크에 마우스를 올리면 그 페이지를 통째로 미리 받는다(shared/ui/intent-prefetch) */}
+        <IntentPrefetch />
       </body>
     </html>
   );

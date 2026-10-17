@@ -1,11 +1,19 @@
 ---
 project: fankkuk
 status: passed
-basis: a330aefcca27
+basis: 31234ed2ed88
 reviewers: [security-reviewer, code-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-18, 남은 폴더 6개 (site) 로)
+# 리뷰 사인오프 — fankkuk (2026-10-18, 링크에 마우스 올리면 미리 받기)
+
+덮는 변경: b35e003d 뒤 — 사용자 「추천대로」(DECISIONS 2026-10-18). shared/lib/navigation/prefetch-path(받을 주소 고르기) · shared/ui/intent-prefetch(문서 전체 pointerover·focusin → router.prefetch kind full, 같은 링크 1초 중복 방지) · 루트 레이아웃 · next.config staleTimes.static 30 · 로그인 뒤 이동을 페이지 새로 읽기로(widgets/login). ui-reviewer 는 뺐다 — 화면에 그리는 것이 없다.
+
+- 실행 근거: `npx vitest run` 279파일 2183개 통과 · `tsc` 오류 0 · `npm run build` 성공 · copy:lint 0 · 변이 — 주소 고르기의 거르는 줄 여섯을 하나씩 지움 → 각각 1 실패, kind full 빼기 → 2 실패, 중복 방지 빼기 → 1 실패 · Playwright(개발 서버, 로컬 DB) /login?next=/me/following 에서 별빛 로그인 → 페이지가 새로 읽혀(window 표시 사라짐) /me/following 에 별빛 화면. 미리 받기 자체는 운영 빌드에서만 돌아 배포 뒤 시험 주소에서 잰다(deploy.md).
+- code: critical 1 — 옵션 없는 router.prefetch 는 이 버전에서 auto → 로딩 화면까지만 받아 효과가 없음(app-router-instance.js) → kind full 로, enum 은 공개 경로에 없어 useRouter 의 옵션 타입에 「full」을 맞춤, 시험으로 고정 · 낮음 2 — staleTimes.static 30 은 허용 최솟값이고 정적 페이지·로딩 화면 재사용도 30초가 됨(그대로, 주석) · A→B→A 중복 방지 빈틈은 라우터가 같은 주소를 걸러 그대로.
+- security: 지적 없음 — 로그아웃은 페이지를 새로 읽어 미리 받은 화면이 사라짐, 열람 기록·송장 출력은 /api POST 에서만이라 미리 받기에서 빠짐, 화면 읽기 코드에 쓰기 0건. 정보 1 — 세션이 끊긴 탭에서 다른 계정으로 다시 로그인하면 이전 계정의 미리 받은 화면이 잠깐 보일 수 있음 → 로그인 뒤 이동을 window.location.assign 으로(제안대로 고침).
+
+## 이전 사인오프 (2026-10-18, 남은 폴더 6개 (site) 로)
 
 덮는 변경: 4396ca20 뒤 — creator·creators·gifts·guide·me·password 를 src/app/(site) 로 git mv(내용 변경 없음, 주소 그대로). 시험 두 파일 import 경로, 예약어 통합 시험(INV-E2 S2c)이 묶음 폴더 안 이름도 첫 단계 주소로 세게 고침. ui-reviewer 는 뺐다 — 새로 바뀌는 화면은 /password/reset 에 기존 로딩 화면(design-rules 15절)이 붙는 것뿐이다.
 
