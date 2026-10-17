@@ -30,3 +30,8 @@ basis: 2d787815b7cc
 - 사람이 적용: manual 0019~0022 — 확인 쿼리로 pii.fan_addresses·pii.return_addresses 있음, confirm_return_address·return_claim_print(confirmed_at 포함) 있음, 복사본 삭제 트리거 1, close_revgift_share 가 disposed 를 받음.
 - 앱: main d19a1e53 push → Vercel 세 프로젝트 빌드 success. 시험 주소에서 / · /creators · /login · /security · /images/logo-mark.png 200, 첫 화면에 logo-mark.png 와 5,900 · 7,900 · 9,900 이 보이고 6,900 은 없다.
 
+## 2026-10-17 저녁 — 환불 규정 반송 택배비 표
+
+- 운영 DB: `supabase db push` 로 20261017000011(공개 요금표에 return_shipping_krw, 개인정보 구역 접촉 0).
+- 앱: main b89af2db push → Vercel 세 프로젝트 빌드 success. 시험 주소 /refund 200, 표에 4,000원 · 5,000원 · 6,500원, / 200.
+
