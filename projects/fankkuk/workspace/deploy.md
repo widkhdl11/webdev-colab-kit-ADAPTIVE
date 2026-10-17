@@ -27,6 +27,6 @@ basis: 2d787815b7cc
 
 - 운영 DB: 적용 전 셈 — 계정 0 · 상자 0 · 반송 대기 0. `supabase db push` 로 마이그레이션 8개(20261017000001~06·08·09).
 - 요금표: 대표 계정이 없어 SQL 로 받는 금액만 바꿈(사용자 「추천대로」) — 소형 5,900 · 중형 7,900 · 대형 9,900(택배 원가·검수비 그대로). 변경 기록 표에는 줄이 없다(바꾼 계정이 없어서).
-- 사람이 적용: manual 0019~0022 — 대기 중.
+- 사람이 적용: manual 0019~0022 — 확인 쿼리로 pii.fan_addresses·pii.return_addresses 있음, confirm_return_address·return_claim_print(confirmed_at 포함) 있음, 복사본 삭제 트리거 1, close_revgift_share 가 disposed 를 받음.
 - 앱: main d19a1e53 push → Vercel 세 프로젝트 빌드 success. 시험 주소에서 / · /creators · /login · /security · /images/logo-mark.png 200, 첫 화면에 logo-mark.png 와 5,900 · 7,900 · 9,900 이 보이고 6,900 은 없다.
 
