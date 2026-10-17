@@ -40,13 +40,12 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
             ],
           },
           {
-            kind: "rows",
+            kind: "prices",
+            columns: ["이용요금"],
             rows: PRICED_TIERS.map((t) => ({
-              title: PARCEL_TIER_GUIDE[t].name,
-              fields: [
-                ["기준", PARCEL_TIER_GUIDE[t].rule],
-                ["이용요금", won(prices[t].priceKrw)],
-              ],
+              name: PARCEL_TIER_GUIDE[t].name,
+              rule: PARCEL_TIER_GUIDE[t].rule,
+              amounts: [won(prices[t].priceKrw)],
             })),
           },
           { kind: "text", text: `${OVERSIZE_RULE}는 접수하지 않습니다.` },

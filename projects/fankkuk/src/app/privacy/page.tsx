@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { resolveLegal } from "@/widgets/legal/model/legal-versions";
 import { privacyDoc } from "@/widgets/legal/model/privacy-doc";
-import { LegalPage } from "@/widgets/legal/ui/legal-page";
+import { PolicyPage } from "@/widgets/legal/ui/policy-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
@@ -21,7 +21,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   return (
     <>
       <SiteHeader {...header} />
-      <LegalPage doc={resolved.doc} history={resolved.history} pastVersion={!resolved.current} icon="/img/icon-address-lock.png" />
+      <PolicyPage kind="privacy" doc={resolved.doc} history={resolved.history} pastVersion={!resolved.current} />
       <SiteFooter />
     </>
   );

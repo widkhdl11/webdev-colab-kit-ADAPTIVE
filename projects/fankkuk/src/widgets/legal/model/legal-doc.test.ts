@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { openItems, TO_DECIDE, TO_FILL, type LegalDoc } from "./legal-doc";
 import { privacyDoc } from "./privacy-doc";
 import { termsDoc } from "./terms-doc";
+import { ARCHIVE } from "./legal-versions";
 import { mustDeliverLabels } from "@/entities/notification/model/delivery-policy";
 
 const prices = {
@@ -23,12 +24,19 @@ describe("약관·개인정보처리방침 글", () => {
 
   it("약관의 요금은 넘겨받은 요금표 값으로 적힌다(코드에 숫자를 박지 않는다)", () => {
     const fee = termsDoc(prices).sections.find((s) => s.id === "fee");
-    const rows = fee?.blocks.find((b) => b.kind === "rows");
-    expect(rows && rows.kind === "rows" ? rows.rows.map((r) => r.fields.map(([, v]) => v)) : []).toEqual([
+    const table = fee?.blocks.find((b) => b.kind === "prices");
+    expect(table && table.kind === "prices" ? table.columns : []).toEqual(["선물", "역조공"]);
+    expect(table && table.kind === "prices" ? table.rows.map((r) => [r.rule, ...r.amounts]) : []).toEqual([
       [expect.stringContaining("5kg"), "6,900원", "5,400원"],
       [expect.stringContaining("10kg"), "8,900원", "6,900원"],
       [expect.stringContaining("20kg"), "12,345원", "9,876원"],
     ]);
+  });
+
+  it("목차 묶음이 있는 글은 모든 조를 한 번씩, 본문 차례대로 담는다(지난 버전 글 포함)", () => {
+    const withGroups = [termsDoc(prices), ...Object.values(ARCHIVE).flatMap((list) => list.map((a) => a.doc))].filter((d) => d.tocGroups);
+    expect(withGroups.length).toBeGreaterThan(0);
+    for (const doc of withGroups) expect(doc.tocGroups?.flatMap((g) => g.ids), doc.title).toEqual(doc.sections.map((s) => s.id));
   });
 
   it("notifications INV-N6: 꺼도 가는 알림의 예시는 설정 화면의 이름 그대로이고, 이유는 「조치가 필요하거나 돈·상자가 걸려 있기 때문」", () => {
@@ -51,5 +59,25 @@ describe("약관·개인정보처리방침 글", () => {
       sections: [{ id: "a", title: "A", blocks: [{ kind: "text", text: "정해진 문장" }, { kind: "list", items: [`관할: ${TO_DECIDE}`] }] }],
     };
     expect(openItems(doc)).toEqual([`시행일: ${TO_FILL}`, `관할: ${TO_DECIDE}`]);
+  });
+
+  it("정의·요금표 안의 빈칸도 모은다(빈칸 없는 줄은 뺀다)", () => {
+    const doc: LegalDoc = {
+      title: "t",
+      lead: "l",
+      summary: ["요약 하나", "요약 둘", "요약 셋"],
+      facts: [],
+      sections: [
+        {
+          id: "a",
+          title: "A",
+          blocks: [
+            { kind: "defs", items: [["회원", "가입한 사람을 말합니다."], ["사무실", `주소는 ${TO_FILL}`]] },
+            { kind: "prices", columns: ["선물"], rows: [{ name: "소형", rule: "5kg 이하", amounts: ["6,900원"] }, { name: "대형", rule: "20kg 이하", amounts: [TO_DECIDE] }] },
+          ],
+        },
+      ],
+    };
+    expect(openItems(doc)).toEqual([`사무실: 주소는 ${TO_FILL}`, `대형 — 20kg 이하: ${TO_DECIDE}`]);
   });
 });

@@ -18,9 +18,18 @@ export type LegalBlock =
   /** 차례가 있는 목록(1. 2. 3.) */
   | { kind: "steps"; items: readonly string[] }
   /** 제목 + 이름·값 줄의 묶음. 표 대신 쓴다 — 휴대폰 폭에서 옆으로 밀리지 않고 위아래로 쌓인다. */
-  | { kind: "rows"; rows: readonly LegalRow[] };
+  | { kind: "rows"; rows: readonly LegalRow[] }
+  /** 낱말 정의 — [낱말, 뜻]. 뜻은 「~을 말합니다」로 끝나는 문장 */
+  | { kind: "defs"; items: readonly (readonly [string, string])[] }
+  /** 상자 구간별 요금 — 구간 이름·기준 한 칸 + 금액 칸(columns 순서) */
+  | { kind: "prices"; columns: readonly string[]; rows: readonly LegalPriceRow[] };
+
+export type LegalPriceRow = { name: string; rule: string; amounts: readonly string[] };
 
 export type LegalSection = { id: string; title: string; blocks: readonly LegalBlock[] };
+
+/** 목차 묶음 — 조가 많은 글만. ids 는 sections 의 id */
+export type LegalTocGroup = { title: string; ids: readonly string[] };
 
 export type LegalDoc = {
   title: string;
@@ -29,6 +38,7 @@ export type LegalDoc = {
   summary: readonly [string, string, string];
   facts: readonly (readonly [string, string])[];
   sections: readonly LegalSection[];
+  tocGroups?: readonly LegalTocGroup[];
 };
 
 /** 글 안에 남은 빈칸 표시를 모은다(출시 전 점검용). 같은 문장은 한 번만. */
@@ -39,6 +49,8 @@ export function openItems(doc: LegalDoc): string[] {
     for (const b of sec.blocks) {
       if (b.kind === "text") texts.push(b.text);
       else if (b.kind === "rows") for (const r of b.rows) for (const [k, v] of r.fields) texts.push(`${r.title} — ${k}: ${v}`);
+      else if (b.kind === "defs") for (const [k, v] of b.items) texts.push(`${k}: ${v}`);
+      else if (b.kind === "prices") for (const r of b.rows) texts.push(`${r.name} — ${r.rule}: ${r.amounts.join(" · ")}`);
       else texts.push(...b.items);
     }
   }

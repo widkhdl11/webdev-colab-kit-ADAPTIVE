@@ -25,6 +25,14 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       "보낼 수 없는 물품을 보내거나 남의 채널로 크리에이터 확인을 받으면 이용이 제한될 수 있습니다.",
     ],
     facts: [["운영", OPERATOR_NAME]],
+    // 왼쪽 목차 다섯 묶음 — 시안 docs/design/mockups/site/v26-terms
+    tocGroups: [
+      { title: "시작하며", ids: ["purpose", "terms", "notice"] },
+      { title: "서비스와 계정", ids: ["service", "account", "creator"] },
+      { title: "요금과 환불", ids: ["fee", "measure", "refund"] },
+      { title: "선물 처리", ids: ["inspection", "block", "revgift", "unmatched"] },
+      { title: "약속과 책임", ids: ["alert", "address", "prohibited", "liability", "dispute", "addendum"] },
+    ],
     sections: [
       {
         id: "purpose",
@@ -41,15 +49,15 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
         title: "제2조 정의",
         blocks: [
           {
-            kind: "list",
+            kind: "defs",
             items: [
-              "「팬꾹」이란 팬이 크리에이터에게 보내는 선물을 회사 사무실에서 받아 검수한 후, 크리에이터의 주소를 팬에게 알리지 않고 크리에이터에게 다시 발송하는 선물 배송대행 서비스를 말합니다.",
-              "「회원」이란 팬꾹에 가입한 팬과 크리에이터를 말합니다.",
-              "「선물」이란 팬이 크리에이터 1명에게 보내기 위해 등록한 1건을 말합니다. 선물마다 주문번호(예: FC-7K3M9)가 부여됩니다.",
-              "「상자」란 선물을 나누어 보내는 단위를 말합니다. 선물 1건은 여러 상자로 나누어 보낼 수 있으며, 요금·입고·검수·송장은 상자별로 처리합니다.",
-              "「사무실」이란 회사가 상자를 받아 검수하고 다시 발송하는 장소를 말합니다. 사무실 주소는 결제를 완료한 팬에게만 안내합니다.",
-              "「승인」이란 크리에이터가 카카오톡 인증서로 전자서명하여 선물 1건을 받겠다는 의사를 표시하는 것을 말합니다.",
-              "「역조공」이란 크리에이터가 자신을 팔로우한 팬에게 보내는 선물을 말합니다.",
+              ["팬꾹", "팬이 크리에이터에게 보내는 선물을 회사 사무실에서 받아 검수한 후, 크리에이터의 주소를 팬에게 알리지 않고 크리에이터에게 다시 발송하는 선물 배송대행 서비스를 말합니다."],
+              ["회원", "팬꾹에 가입한 팬과 크리에이터를 말합니다."],
+              ["선물", "팬이 크리에이터 1명에게 보내기 위해 등록한 1건을 말합니다. 선물마다 주문번호(예: FC-7K3M9)가 부여됩니다."],
+              ["상자", "선물을 나누어 보내는 단위를 말합니다. 선물 1건은 여러 상자로 나누어 보낼 수 있으며, 요금·입고·검수·송장은 상자별로 처리합니다."],
+              ["사무실", "회사가 상자를 받아 검수하고 다시 발송하는 장소를 말합니다. 사무실 주소는 결제를 완료한 팬에게만 안내합니다."],
+              ["승인", "크리에이터가 카카오톡 인증서로 전자서명하여 선물 1건을 받겠다는 의사를 표시하는 것을 말합니다."],
+              ["역조공", "크리에이터가 자신을 팔로우한 팬에게 보내는 선물을 말합니다."],
             ],
           },
         ],
@@ -138,14 +146,12 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
             text: "이용요금은 상자별로 부과하며, 배송비와 검수비가 포함된 금액입니다. 상자의 크기와 무게 중 더 높은 구간의 요금을 적용합니다.",
           },
           {
-            kind: "rows",
+            kind: "prices",
+            columns: ["선물", "역조공"],
             rows: PRICED_TIERS.map((t) => ({
-              title: PARCEL_TIER_GUIDE[t].name,
-              fields: [
-                ["기준", PARCEL_TIER_GUIDE[t].rule],
-                ["선물", won(prices[t].priceKrw)],
-                ["역조공", won(prices[t].revgiftPriceKrw)],
-              ],
+              name: PARCEL_TIER_GUIDE[t].name,
+              rule: PARCEL_TIER_GUIDE[t].rule,
+              amounts: [won(prices[t].priceKrw), won(prices[t].revgiftPriceKrw)],
             })),
           },
           {
