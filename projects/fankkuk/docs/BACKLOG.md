@@ -7,6 +7,7 @@
 
 ## 미결
 
+- [ ] **홈 공지 줄을 누르면 그 공지가 아니라 공지 목록이 열린다** (2026-10-17 code-reviewer) — home-notices 의 줄 링크가 모두 /notices · 이번 디자인 변경 전부터 그랬다 · 공지 상세 주소(앵커 등)를 정할 때
 - [ ] **(다음 1순위) 크리에이터 카드·공개 프로필 머리 구현** (2026-10-17, 카드 d102 승인) — 시안 docs/design/mockups/site/v24-creator-card/ 를 코드로(카드 부품 entities/creator/ui/creator-card-head·widgets/creator-search·my-following 도 같은 부품, 공개 프로필 머리 2.5:1·간격, 프로필 수정 「권장 크기 1200×480」, 상세 설정 퍼스널 컬러 추천 줄 파스텔 8색, 바탕 지운 고양이 그림 v24-creator-card/assets/logo-mark-clear.png 를 public 으로) · 구현 뒤 1440·390 스크린샷 + ui-reviewer
 - [ ] **토큰 감사 4절 나머지 페이지 개별 행** (2026-10-17) — 공통 토큰은 들어갔고 페이지별 자리 맞춤만 남음: /creator/settings 팬덤 구간 32 안쪽 · 팬 /gifts/new 단계 입력 칸 24 안쪽 · /gifts/[orderNo] 큰 글 18 · /me 「아이디」 줄 모양(docs/design/redesign-2026-10-17-audit.md 4절) · 대상 셋을 먼저 하라는 사용자 순서라 미룸 · 카드 구현 뒤
 - [ ] **사이드바 하위 메뉴 왼쪽 여백 20** (2026-10-17 UI 리뷰) — 간격 단계 밖이지만 「사이드바 동작은 그대로」 방침이라 둠 · 사이드바를 다시 손볼 때

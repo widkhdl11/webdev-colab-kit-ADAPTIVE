@@ -28,9 +28,9 @@ import type { LinkPageSend } from "@/features/gift-register/model/sender-rule";
 import s from "./creator-profile.module.css";
 
 // 선물 링크 페이지 = 크리에이터 페이지 (creator-link). 시안: docs/design/mockups/site/v18/link.html(로그인 전) · creator.html(로그인 후) (design-rules 00절)
-// 로그인 전: 1152 선 안에 가운데 프로필 카드, 마지막 선물 보내기는 화면 폭 가득 옅은 빨강 띠. 로그인 후: 가운데 틀(1200)에 왼쪽 정렬 프로필 머리(사진·글·오른쪽 주 버튼),
-// 마지막 선물 보내기는 옅은 빨강 둥근 상자. 어느 쪽인지는 followMode(로그인 안 함 = "login")로 가른다 — 보이는 정보·순서는 같다.
-// 위에서 아래로: 프로필 배경사진(없으면 옅은 코랄 단색, 프로필 사진이 아래 가장자리에 걸침 — 디자인 기준 10절)·사진·이름·링크 주소·한 줄 소개·태그·감사 문장·주 버튼 → 같은 크기 정보 카드
+// 로그인 전·후 모두 880 한 기둥(design-rules 00000절, 시안 v23-tokens/profile) — 머리 카드·정보 카드·접는 안내·마지막 선물 보내기 판·비슷한 크리에이터가 같은 선.
+// 어느 쪽인지는 followMode(로그인 안 함 = "login")로 가른다 — 보이는 정보·순서는 같다.
+// 위에서 아래로: 프로필 배경사진(없으면 퍼스널 컬러 면, 프로필 사진이 아래 가장자리에 걸침)·사진·이름·채널 아이콘·링크 주소·칩 줄(채널 확인·태그)·한 줄 소개·감사 문장·주 버튼 → 정보 카드 2열
 // (받는 상태 → 받기 어려운 품목(있을 때만) → 기념일 D-day(30일 안일 때만) → 평균 승인 → 배송비 → 이번 달 N명(0이면 숨김))
 // → 감사 답장 모음(F-5 — 양쪽이 동의하고 받았어요 3일이 지난 답장만, 없으면 숨김, 2열) → 접는 안내 → 마지막 선물 보내기 판 → 비슷한 크리에이터.
 // 팬덤 색(design-rules 12절, 시안 v21-addendum3/cre-public-page.html, creator-link INV-E13·E14): 퍼스널 컬러는 맨 위 띠(배경사진이 없을 때 보이는 면)와 프로필 사진 테두리에만,
@@ -177,6 +177,7 @@ export function CreatorProfilePage({
                   <ChannelLinkIcon channel={channel} />
                 </p>
               ) : null}
+              {creator.handle ? <p className={s.handle}>{linkText(creator.handle)}</p> : null}
               {/* 이름 → 칩 줄 → 소개·인사말 → 버튼 순(v23 감사표 2절 — 네 묶음) */}
               <div className={`ctags ${s.tags}`}>
                 <span className={statusTagClass("success", s.verified)} title={channel ? channelBadgeTitle(channel) : undefined}>
@@ -188,7 +189,6 @@ export function CreatorProfilePage({
                   <CreatorTag key={t} name={t} />
                 ))}
               </div>
-              {creator.handle ? <p className={s.handle}>{linkText(creator.handle)}</p> : null}
               {/* 한 줄 소개(INV-E6 — 40자, 줄바꿈 없음). 크리에이터가 직접 쓰는 글이라 다른 문장과 잇지 않는다 */}
               {creator.intro ? <p className={s.intro}>{creator.intro}</p> : null}
               {symbolUrl && !fanName ? <img className={s.symbol} src={symbolUrl} alt="팬덤 심볼" width={512} height={512} /> : null}

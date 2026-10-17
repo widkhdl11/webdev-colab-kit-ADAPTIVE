@@ -59,6 +59,8 @@
 /* ---------- 정보 카드 · 답장 · 비슷한 크리에이터 ---------- */
 /* 통계 카드 — 2열 × 2줄. 안: 아이콘+라벨 한 줄(14) · 값 20/700, 라벨 ↔ 값 8 */
 .infoGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+/* 카드 수가 홀수(3·5)면 마지막 한 장을 두 칸으로 — 마지막 줄에 빈칸이 남지 않게 */
+.infoGrid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 .infoGrid :global(.card.info) { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; align-content: start; gap: var(--space-2); padding: var(--card-pad); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200); }
 .infoGrid :global(.info .ic) { width: var(--icon-xs); height: var(--icon-xs); margin: 0; }
 .infoGrid :global(.info h3) { margin: 0; justify-content: flex-start; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-nav); line-height: var(--lh-caption); color: var(--gray-600); }
