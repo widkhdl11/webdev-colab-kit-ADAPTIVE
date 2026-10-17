@@ -43,6 +43,17 @@ describe("INV-P7 (D12): 운영자 내부 열람 기록 화면", () => {
     ]);
   });
 
+  it("INV-P7 · P18: 반송 송장의 주소 열기 줄은 「반송」으로, 확인 전 거부는 「반송 주소 확인 전」 문구로", () => {
+    render([
+      { at: "2026-10-17T06:00:00.000Z", target: "return", orderNo: "FC-4T7NX", requester: "owner", requesterNickname: "팬꾹 운영", result: { kind: "denied", reason: "no_valid_approval" } },
+      { at: "2026-10-17T05:50:00.000Z", target: "return", orderNo: "RG-AB12CD0", requester: "owner", requesterNickname: "팬꾹 운영", result: { kind: "opened", printNo: 1, released: false } },
+    ]);
+    expect(rowsOf()).toEqual([
+      ["반송", "FC-4T7NX", "대표 · 팬꾹 운영", "거절", "반송 주소 확인 전이라 열리지 않았어요"],
+      ["반송", "RG-AB12CD0", "대표 · 팬꾹 운영", "열림", "첫 출력"],
+    ]);
+  });
+
   it("D12 반영: 결과 배지는 상태 4색 — 거절 빨강(tagDanger)·열림 파랑(tagInfo)", () => {
     render([
       { at: "2026-10-12T06:00:00.000Z", target: "gift", orderNo: "FC-4T7NX", requester: "other", requesterNickname: "팬꾹 직원", result: { kind: "denied", reason: "not_owner" } },

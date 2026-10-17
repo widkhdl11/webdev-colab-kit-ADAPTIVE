@@ -53,7 +53,8 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   shipped: "출고",
   in_transit: "배송 중",
   delivered: "수령",
-  hold: "추적기 반송",
+  // 추적기 보관 상자의 신고 선택을 크리에이터에게 묻는 알림(INV-N13, 2026-10-17) — 운영자 화면 표기(용어집 tracker_hold 행)
+  hold: "추적기 보관",
   box_arrived: "상자 도착",
   hold_fan: "돌려보낼 상자",
   box_missing: "도착하지 않은 상자",
@@ -67,9 +68,9 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   creator_check: "크리에이터 확인",
   box_no_code: "6자리 없는 상자",
   revgift_offer: "역조공 받기",
-  // 반송 주소 확인·재알림(INV-N22) — 화면 이름은 용어집 표기를 넣는 다음 묶음에서. 지금은 코드값
-  return_address: "return_address",
-  return_address_reminder: "return_address_reminder",
+  // 반송 주소 확인·재알림(INV-N22) — 운영자 화면 표기(용어집 return_address 행)
+  return_address: "반송 주소 확인",
+  return_address_reminder: "반송 주소 확인 (14일 재알림)",
 };
 
 function isKnownKind(kind: string): kind is NotificationKind {

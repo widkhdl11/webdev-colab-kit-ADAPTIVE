@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { cancelForCreator } from "./cancel-for-creator";
 
 // 크리에이터 사정으로 취소 (payment INV-M21). 대표 판정·주문 상태 판정·기록은 DB 함수가 최종으로 한다.
-// 정해지지 않은 화면 문구 자리는 코드값(code)만 돌려준다 — 사유·주문번호 안내는 입고 뒤 취소와 같은 문구를 쓴다.
+// 거절은 문장으로 돌려준다(코드값이 화면에 나가지 않게) — 사유·주문번호 안내는 입고 뒤 취소와 같은 문구를 쓴다.
 
 type Who = { operator: boolean; owner: boolean };
 
@@ -21,6 +21,8 @@ function fakeClient(error: { code: string } | null, who: Who = { operator: true,
 
 const REASON_REPLY = { status: 400, body: { message: "사유를 1~200자로 적어 주세요." } };
 const ORDER_NO_REPLY = { status: 400, body: { message: "주문번호를 FC-7K3M9 꼴 그대로 적어 주세요." } };
+const OWNER_ONLY_REPLY = { status: 403, body: { message: "크리에이터 사정 취소는 대표만 할 수 있어요." } };
+const NOT_CANCELABLE_REPLY = { status: 409, body: { message: "크리에이터 사정 취소를 할 수 있는 주문이 아니에요. 출고 송장을 출력하기 전의 진행 중인 주문인지 확인해 주세요." } };
 
 describe("INV-M21: 크리에이터 사정으로 취소", () => {
   it("INV-M21 (S21): 대표가 취소 — 사유 앞뒤 공백을 떼고 주문번호와 함께 DB 함수를 부르고 200", async () => {
@@ -34,7 +36,7 @@ describe("INV-M21: 크리에이터 사정으로 취소", () => {
     expect(await cancelForCreator(guest.client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual({ status: 404, body: { message: "찾을 수 없어요." } });
     expect(guest.calls).toEqual([]);
     const staff = fakeClient(null, { operator: true, owner: false });
-    expect(await cancelForCreator(staff.client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual({ status: 403, body: { code: "owner_only" } });
+    expect(await cancelForCreator(staff.client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual(OWNER_ONLY_REPLY);
     expect(staff.calls).toEqual([]);
   });
 
@@ -52,8 +54,8 @@ describe("INV-M21: 크리에이터 사정으로 취소", () => {
   });
 
   it("INV-M21 (S21b, 실패경로): DB 거부 — 42501 은 403(owner_only), P0002 는 409(not_cancelable), 22023 은 사유 안내", async () => {
-    expect(await cancelForCreator(fakeClient({ code: "42501" }).client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual({ status: 403, body: { code: "owner_only" } });
-    expect(await cancelForCreator(fakeClient({ code: "P0002" }).client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual({ status: 409, body: { code: "not_cancelable" } });
+    expect(await cancelForCreator(fakeClient({ code: "42501" }).client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual(OWNER_ONLY_REPLY);
+    expect(await cancelForCreator(fakeClient({ code: "P0002" }).client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual(NOT_CANCELABLE_REPLY);
     expect(await cancelForCreator(fakeClient({ code: "22023" }).client, { orderNo: "FC-7K3M9", reason: "x" })).toEqual(REASON_REPLY);
   });
 });

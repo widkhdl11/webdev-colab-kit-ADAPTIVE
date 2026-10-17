@@ -55,3 +55,17 @@ describe("INV-J11: 「처리할 일」 버튼은 처리할 일 읽기 결과에 
     expect(hasActionButton(rec({ orderNo: "FC-A1" }), t)).toBe(false);
   });
 });
+
+describe("INV-J11 · W14·W15: 추적 장치 발견·보낸 역조공 반송 주소 줄도 같은 판정", () => {
+  const trackerItem = {
+    ...EMPTY, kind: "tracker", board: "received", order_no: "FC-T1", box_seq: 1, box_count: 1, nickname: "새벽", item_kind: "인형", tier: "small",
+    bluetooth: true, rf: false, sent_at: "2026-10-10T00:00:00Z", due_at: "2026-10-20T00:00:00Z", prior_gift_count: 0, prior_passed_count: 0, prior_returned_count: 0,
+  };
+  const returnShare = { ...EMPTY, kind: "return_address", board: "sent", order_no: "RG-R5", share_id: S2, nickname: "별빛", tier: "small", sent_at: "2026-10-01T00:00:00Z", due_at: "2026-11-16T00:00:00Z" };
+  it("INV-J11: 추적 장치 발견 줄의 주문은 받는 선물 버튼, 반송 주소 줄의 몫은 보내는 선물 버튼", () => {
+    const t = actionTargetsOf(parseCreatorActionItems([trackerItem, returnShare]));
+    expect(hasActionButton(rec({ orderNo: "FC-T1" }), t)).toBe(true);
+    expect(hasActionButton(sent({ orderNo: "RG-R5", shareId: S2 }), t)).toBe(true);
+    expect(hasActionButton(sent({ orderNo: "RG-A0", shareId: S1 }), t)).toBe(false);
+  });
+});

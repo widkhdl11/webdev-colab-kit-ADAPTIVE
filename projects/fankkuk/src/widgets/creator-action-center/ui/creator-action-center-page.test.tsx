@@ -8,6 +8,8 @@ import type { CreatorActionItem } from "@/entities/action-item/model/creator-act
 const sendCheckChoice = vi.fn();
 const refresh = vi.fn();
 vi.mock("@/features/creator-check/api/send-check-choice", () => ({ sendCheckChoice: (...a: unknown[]) => sendCheckChoice(...a) }));
+const sendReturnConfirm = vi.fn();
+vi.mock("@/features/return-address/api/send-return-confirm", () => ({ sendReturnConfirm: (...a: unknown[]) => sendReturnConfirm(...a) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh, push: () => {} }) }));
 
 import { CreatorActionCenterPage } from "./creator-action-center-page";
@@ -29,6 +31,7 @@ beforeEach(() => {
   document.body.appendChild(host);
   root = createRoot(host);
   sendCheckChoice.mockReset();
+  sendReturnConfirm.mockReset();
   refresh.mockReset();
 });
 afterEach(() => {
@@ -220,5 +223,90 @@ describe("리뷰 반영 — 판 숫자 낭독·찾기 창 오류", () => {
     expect(radios.every((r) => r.getAttribute("aria-describedby") === errId)).toBe(true);
     expect(d.querySelector(`[id="${errId}"]`)?.textContent).toContain("어느 팬에게 보낸 상자인지 골라 주세요");
     expect(document.activeElement).toBe(radios[0]);
+  });
+});
+
+const TRACKER: CreatorActionItem = { ...(BT_OPEN as Extract<CreatorActionItem, { kind: "bluetooth" }>), kind: "tracker", orderNo: "FC-TR1", nickname: "새벽", choice: null };
+const TRACKER_PICKED: CreatorActionItem = { ...TRACKER, orderNo: "FC-TR2", nickname: "노을", choice: "report" };
+const RETURN_SHARE: CreatorActionItem = {
+  kind: "return_address",
+  orderNo: "RG-R5",
+  shareId: "33333333-3333-4333-8333-333333333333",
+  boxId: null,
+  boxSeq: null,
+  boxLabel: null,
+  nickname: "별빛",
+  tier: "small",
+  dueAt: "2026-11-15T15:30:00.000Z",
+  sentAt: "2026-10-01T01:00:00.000Z",
+};
+const RETURN_BOX: CreatorActionItem = { ...RETURN_SHARE, orderNo: "FC-R6", shareId: null, boxId: "44444444-4444-4444-8444-444444444444", boxSeq: 2, boxLabel: "FC-R6-2", nickname: "하루" };
+
+describe("추적 장치 발견 줄 (action-center INV-J5·J8, office-workflow INV-W14)", () => {
+  it("INV-J5: 받은 선물 판 맨 위, 제목·종류는 용어집 표기(추적 장치 발견) — 판 숫자에 들어간다", () => {
+    render([TRACKER, BT_OPEN, APPROVAL]);
+    const first = rows()[0]!;
+    expect(first.textContent).toContain("새벽님 선물에서 추적 장치가 나왔어요");
+    expect(first.textContent).toContain("추적 장치 발견");
+    expect(first.textContent).not.toContain("위치 추적기");
+    expect(host.querySelector("section .sr-only")?.textContent).toBe("3건");
+  });
+
+  it("INV-W14: 창에서 「신고하기」를 고르면 고르기 함수에 report 를 보내고 「신고하기 선택」·취소 단계", async () => {
+    sendCheckChoice.mockResolvedValue({ kind: "ok" });
+    render([TRACKER]);
+    await act(async () => button(rows()[0]!, "신고할지 정하기")!.click());
+    const dlg = document.querySelector("dialog[open]")!;
+    expect(dlg.textContent).toContain("신고할지 정해 주세요");
+    expect(button(dlg, "신고하지 않기")).toBeDefined();
+    await act(async () => button(dlg, "신고하기")!.click());
+    expect(sendCheckChoice).toHaveBeenCalledWith({ action: "choose", choice: "report", orderNo: "FC-TR1", boxSeq: 1 });
+    expect(dlg.textContent).toContain("신고하기 선택");
+    expect(button(dlg, "취소")).toBeDefined();
+  });
+
+  it("INV-W14: 「신고하지 않기」는 no_report 를 보낸다", async () => {
+    sendCheckChoice.mockResolvedValue({ kind: "ok" });
+    render([TRACKER]);
+    await act(async () => button(rows()[0]!, "신고할지 정하기")!.click());
+    const dlg = document.querySelector("dialog[open]")!;
+    await act(async () => button(dlg, "신고하지 않기")!.click());
+    expect(sendCheckChoice).toHaveBeenCalledWith({ action: "choose", choice: "no_report", orderNo: "FC-TR1", boxSeq: 1 });
+  });
+
+  it("INV-J5·J8: 고른 줄은 「신고하기 선택」과 「취소」 — 취소는 고르기 함수의 취소를 부른다", async () => {
+    sendCheckChoice.mockResolvedValue({ kind: "ok" });
+    render([TRACKER_PICKED]);
+    const row = rows()[0]!;
+    expect(row.textContent).toContain("신고하기 선택");
+    expect(button(row, "신고할지 정하기")).toBeUndefined();
+    await act(async () => button(row, "취소")!.click());
+    expect(sendCheckChoice).toHaveBeenCalledWith({ action: "cancel", orderNo: "FC-TR2", boxSeq: 1 });
+  });
+});
+
+describe("보낸 선물의 반송 주소 줄 (action-center INV-J5, office-workflow INV-W15)", () => {
+  it("INV-J5: 보낸 역조공·보낸 팬 선물 상자 줄이 보낸 선물 판에 — 종류 「돌려받을 주소 확인」, 처분 예정 날짜 문장", () => {
+    render([UNCONFIRMED, RETURN_SHARE, RETURN_BOX]);
+    const [, share, box] = rows();
+    expect(share!.textContent).toContain("별빛님께 보낸 역조공");
+    expect(box!.textContent).toContain("하루님께 보낸 선물 · 상자 2");
+    for (const r of [share!, box!]) {
+      expect(r.textContent).toContain("돌려받을 주소 확인");
+      expect(r.textContent).toContain("11월 16일까지 확인하지 않으면 상자를 처분해요");
+    }
+    expect(host.querySelectorAll("section .sr-only")[0]?.textContent).toBe("3건");
+  });
+
+  it("INV-W15·J4: 역조공 줄의 확인은 주문번호만, 팬 선물 상자 줄은 상자 순번까지 보낸다", async () => {
+    sendReturnConfirm.mockResolvedValue({ kind: "ok" });
+    const registered = { creatorId: "c1", registered: true, label: "home" as const, updatedAt: "2026-10-03T05:00:00Z" };
+    act(() => root.render(<CreatorActionCenterPage items={[RETURN_SHARE, RETURN_BOX]} now={NOW} candidates={[]} address={registered} sealingKeyPem={null} />));
+    for (const [i, want] of [[0, { orderNo: "RG-R5" }], [1, { orderNo: "FC-R6", boxSeq: 2 }]] as const) {
+      await act(async () => button(rows()[i]!, "확인하기")!.click());
+      const dlg = document.querySelector("dialog[open]")!;
+      await act(async () => button(dlg, "확인")!.click());
+      expect(sendReturnConfirm).toHaveBeenLastCalledWith(want);
+    }
   });
 });

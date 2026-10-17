@@ -8,12 +8,13 @@ import a from "@/shared/ui/admin.module.css";
 import { postProcessCheck } from "../api/post-process-client";
 import type { CreatorCheckChoiceRow } from "../model/process-check";
 
-// 관리자 「들어온 상자」 위의 크리에이터가 고른 블루투스 상자 목록 (office-workflow INV-W13). 크리에이터의 받기·거절은 선택일 뿐이고,
+// 관리자 「들어온 상자」 위의 크리에이터가 고른 블루투스 상자·추적기 보관 상자 목록 (office-workflow INV-W13·W14). 크리에이터의 받기·거절은 선택일 뿐이고,
 // 운영자가 여기서 처리 버튼을 눌러야 받기 선택은 검수 완료, 거절 선택은 반송 대기로 넘어간다. 버튼은 화면에 보이는 선택을 함께 보낸다 —
 // 그사이 크리에이터가 취소하고 다르게 골랐으면 서버가 「바뀜」으로 거부하고 목록을 새로 읽는다. 기한(검수 완료 + 7일)이 지나면 자동 처리가 고른 쪽대로 한다.
 
-// report·no_report(추적기 보관 상자의 신고 선택, office-workflow INV-W14)는 용어집 승인 전이라 코드값 그대로 보인다
-const CHOICE_TEXT = { accept: "받기 선택", return: "거절 선택", report: "report", no_report: "no_report" } as const;
+// 추적기 보관 상자(office-workflow INV-W14)도 같은 목록 — 신고하기는 신고 보관, 신고하지 않기는 반송 대기로 넘어간다
+const CHOICE_TEXT = { accept: "받기 선택", return: "거절 선택", report: "신고하기 선택", no_report: "신고하지 않기 선택" } as const;
+const PROCESS_TEXT = { accept: "검수 완료로 처리", return: "반송으로 처리", report: "신고 보관으로 처리", no_report: "반송으로 처리" } as const;
 
 export function CreatorCheckChoices({ rows }: { rows: readonly CreatorCheckChoiceRow[] }) {
   const router = useRouter();
@@ -37,12 +38,12 @@ export function CreatorCheckChoices({ rows }: { rows: readonly CreatorCheckChoic
   return (
     <section aria-labelledby="cc-choices">
       <div className={a.sectionH}>
-        <h2 id="cc-choices">크리에이터가 고른 블루투스 상자</h2>
+        <h2 id="cc-choices">크리에이터가 고른 상자</h2>
         <span>{rows.length}건</span>
       </div>
       <div className={a.tblWrap}>
         <table className={a.tbl}>
-          <caption className="sr-only">크리에이터가 고른 블루투스 상자</caption>
+          <caption className="sr-only">크리에이터가 고른 상자</caption>
           <thead>
             <tr>
               <th scope="col">QR</th>
@@ -82,7 +83,7 @@ export function CreatorCheckChoices({ rows }: { rows: readonly CreatorCheckChoic
                       aria-label={`${r.qr} ${CHOICE_TEXT[r.choice]}대로 처리`}
                       onClick={() => void process(r)}
                     >
-                      {busy === r.qr ? "처리하는 중…" : r.choice === "accept" ? "검수 완료로 처리" : "반송으로 처리"}
+                      {busy === r.qr ? "처리하는 중…" : PROCESS_TEXT[r.choice]}
                     </button>
                   </td>
                 </tr>

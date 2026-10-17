@@ -1,6 +1,6 @@
 import { ADMIN_ACCESS_LOG_LIMIT, type AdminAccessEntry } from "@/entities/address/api/admin-access-log";
 import { printLabelOf } from "@/entities/address/model/access-log";
-import { ACCESS_DENY_TEXT, ACCESS_REQUESTER_TEXT, REVGIFT_ACCESS_DENY_TEXT } from "@/entities/address/ui/access-log-text";
+import { ACCESS_DENY_TEXT, ACCESS_REQUESTER_TEXT, RETURN_ACCESS_DENY_TEXT, REVGIFT_ACCESS_DENY_TEXT } from "@/entities/address/ui/access-log-text";
 import { formatStamp } from "@/shared/lib/format/datetime";
 import a from "@/shared/ui/admin.module.css";
 
@@ -10,8 +10,12 @@ import a from "@/shared/ui/admin.module.css";
 
 function noteOf(e: AdminAccessEntry): string {
   if (e.result.kind === "opened") return printLabelOf(e.result.printNo, e.result.released).text;
-  return (e.target === "revgift" ? REVGIFT_ACCESS_DENY_TEXT[e.result.reason] : undefined) ?? ACCESS_DENY_TEXT[e.result.reason];
+  const special = e.target === "revgift" ? REVGIFT_ACCESS_DENY_TEXT : e.target === "return" ? RETURN_ACCESS_DENY_TEXT : {};
+  return special[e.result.reason] ?? ACCESS_DENY_TEXT[e.result.reason];
 }
+
+/** 「선물」 칸 — 반송 송장 줄(INV-P18)은 팬 선물·역조공 어느 쪽이든 「반송」 */
+const TARGET_TEXT: Record<AdminAccessEntry["target"], string> = { gift: "팬 선물", revgift: "역조공", return: "반송" };
 
 function whoOf(e: AdminAccessEntry): string {
   const role = ACCESS_REQUESTER_TEXT[e.requester];
@@ -54,7 +58,7 @@ export function AccessLogPanel({ entries }: { entries: readonly AdminAccessEntry
               entries.map((e, i) => (
                 <tr key={`${i}-${e.orderNo}-${e.at}`}>
                   <td className={`${a.mono} ${a.nowrap}`}>{formatStamp(e.at)}</td>
-                  <td>{e.target === "gift" ? "팬 선물" : "역조공"}</td>
+                  <td>{TARGET_TEXT[e.target]}</td>
                   <td className={`${a.mono} ${a.nowrap}`}>
                     <strong>{e.orderNo}</strong>
                   </td>

@@ -8,6 +8,8 @@ import { qrCode, waybillNo } from "@/entities/parcel/model/scan-code";
 import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 import { MESSAGE_NOT_FOUND } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
+import { charCount } from "@/shared/lib/validation/char-count";
+import { MESSAGE_POLICE_MEMO, POLICE_MEMO_MAX } from "./police-memo";
 
 // 출고 화면의 서버 쪽 (office-workflow INV-W1·W2·W3·W8).
 // - lookup: 라벨 QR 로 상자를 불러온다(그 상자가 지금 할 수 있는 일만 화면에 나온다)
@@ -19,6 +21,7 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 // - confirm_shipment: 출력한 송장 바코드 스캔 → 출고 확정(+ 봉투 파쇄 기록, DB 가 같이 남긴다)
 // - print_return: 반송 송장 출력 — 운영자 누구나. 봉투 번호는 DB 가 그 상자 것만 돌려준다(INV-W8)
 // - confirm_return: 반송 송장 바코드 스캔 → 반송 확정(+ 봉투 파쇄 기록)
+// - record_disposal: 처분 대상 상자 처분 기록(INV-W15) · record_police_handover: 신고 보관 상자 경찰 인계 기록(INV-W14, 메모 1~200자)
 // 출력 송장번호는 서버가 만든다 — 화면이 보내는 송장번호·봉투 번호는 strict 라 400.
 
 export type OutboundDeps = {
@@ -57,6 +60,15 @@ const DENY_MESSAGE: Record<Exclude<AccessDenyReason, "not_owner">, string> = {
   decrypt_limit_reached: "이 상자의 송장 출력 횟수(다시 출력 포함 3번)를 다 썼어요.",
   address_mismatch: "주소 주인이 맞지 않아 송장에 쓰지 않았어요. 개발 담당에게 알려 주세요.",
 };
+// 반송 송장 출력 함수의 거부 → 화면 문구(INV-W15·P18). 확인 전 상자는 보낸 사람이 반송 주소를 확인해야 출력된다
+const RETURN_DENY_MESSAGE: Record<Exclude<AccessDenyReason, "not_owner">, string> = {
+  no_valid_approval: "반송 주소 확인 전이라 주소를 열지 않았어요. 보낸 사람이 확인하면 출력할 수 있어요.",
+  order_mismatch: "주문번호가 이 상자의 주문과 맞지 않아 주소를 열지 않았어요.",
+  order_not_printable: "지금은 반송 송장을 출력할 수 없는 단계예요.",
+  difference_unpaid: "지금은 반송 송장을 출력할 수 없는 단계예요.",
+  decrypt_limit_reached: "이 상자의 반송 송장 출력 횟수(다시 출력 포함 3번)를 다 썼어요.",
+  address_mismatch: "주소 주인이 맞지 않아 송장에 쓰지 않았어요. 개발 담당에게 알려 주세요.",
+};
 const MESSAGE_NO_ADDRESS = "크리에이터가 아직 배송 주소를 등록하지 않았어요.";
 const MESSAGE_SIGN_IN = "로그인을 다시 확인해 주세요.";
 
@@ -65,6 +77,8 @@ const MESSAGE_OWNER_ONLY = "송장 출력은 대표만 할 수 있어요.";
 const FAILED = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
 const MESSAGES = { limit: MESSAGE_SHAPE, failed: FAILED };
 
+
+
 const bodyShape = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("lookup"), qr: qrCode }).strict(),
   z.object({ kind: z.literal("print_label"), qr: qrCode }).strict(),
@@ -72,6 +86,7 @@ const bodyShape = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("print_return"), qr: qrCode }).strict(),
   z.object({ kind: z.literal("confirm_return"), qr: qrCode, waybill: waybillNo }).strict(),
   z.object({ kind: z.literal("record_disposal"), qr: qrCode }).strict(),
+  z.object({ kind: z.literal("record_police_handover"), qr: qrCode, memo: z.string() }).strict(),
 ]);
 
 export type OutboundWrite = z.input<typeof bodyShape>;
@@ -122,8 +137,7 @@ export async function scanOutbound(deps: OutboundDeps, body: unknown): Promise<J
             return { status: 200, body: { waybill: back.waybill, reprint: back.reprint, label: back.label } };
           case "denied":
             if (back.reason === "not_owner") return { status: 403, body: { message: MESSAGE_OWNER_ONLY } };
-            // 화면 문구는 용어집(return_address 행)으로 다음 묶음에서 넣는다 — 지금은 거부 사유 코드값
-            return { status: 409, body: { message: back.reason, reason: "not_shippable" } };
+            return { status: 409, body: { message: RETURN_DENY_MESSAGE[back.reason], reason: "not_shippable" } };
           case "unauthenticated":
             return { status: 401, body: { message: MESSAGE_SIGN_IN } };
           case "not_found":
@@ -143,6 +157,15 @@ export async function scanOutbound(deps: OutboundDeps, body: unknown): Promise<J
       // INV-W15: 처분 대상 상자의 QR 스캔 → 처분 기록(봉투 파쇄 기록을 DB 가 같이 남긴다). 운영자 누구나
       const { error } = await client.rpc("office_record_disposal", { p_qr: input.qr });
       if (error) return officeErrorReply(error.code, MESSAGES);
+      return { status: 200, body: { ok: true } };
+    }
+
+    case "record_police_handover": {
+      // INV-W14: 신고 보관 상자의 QR 스캔 → 경찰 인계 기록(메모 1~200자, 봉투 파쇄 기록을 DB 가 같이 남긴다). 운영자 누구나
+      const memo = input.memo.trim();
+      if (charCount(memo) < 1 || charCount(memo) > POLICE_MEMO_MAX) return { status: 400, body: { message: MESSAGE_POLICE_MEMO } };
+      const { error } = await client.rpc("office_record_police_handover", { p_qr: input.qr, p_memo: memo });
+      if (error) return officeErrorReply(error.code, { limit: MESSAGE_POLICE_MEMO, failed: FAILED });
       return { status: 200, body: { ok: true } };
     }
 

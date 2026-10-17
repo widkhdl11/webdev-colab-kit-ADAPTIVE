@@ -10,8 +10,9 @@ import { ACCESS_DENY_REASONS, ACCESS_REQUESTERS, MAX_DECRYPTS_PER_BOX, type Acce
 /** 화면이 한 번에 읽는 줄 수 — DB 함수의 기본값(200)과 같고, 이 값을 p_limit 으로 넘긴다. 화면 안내 문구도 이 값을 쓴다. DB 범위는 1~500. */
 export const ADMIN_ACCESS_LOG_LIMIT = 200;
 
-/** gift = 팬 선물(크리에이터 주소), revgift = 역조공 몫(팬 주소). 역조공의 거부 사유는 팬 선물 목록 안에 있다. */
-export type AdminAccessTarget = "gift" | "revgift";
+/** gift = 팬 선물(크리에이터 주소), revgift = 역조공 몫(팬 주소), return = 반송 송장(보낸 사람이 확인한 등록 주소 — INV-P18).
+ *  역조공·반송의 거부 사유는 팬 선물 목록 안에 있다. */
+export type AdminAccessTarget = "gift" | "revgift" | "return";
 
 export type AdminAccessEntry = {
   at: string;
@@ -25,7 +26,7 @@ export type AdminAccessEntry = {
 
 const base = {
   at: z.iso.datetime({ offset: true }),
-  target: z.enum(["gift", "revgift"]),
+  target: z.enum(["gift", "revgift", "return"]),
   order_no: z.string().min(1),
   requester: z.enum(ACCESS_REQUESTERS),
   requester_nickname: z.string().nullable(),

@@ -27,19 +27,20 @@ import { initialMeasuredTier, MEASURED_TIERS, measurementFromBody, type Measured
 
 // 검수 작업 화면 (office-workflow INV-W1·W4, design-rules 8-1, 시안 admin/work-inspect.html).
 // 라벨 QR 로 상자를 불러와 검수 기록을 저장하고, 같은 QR 을 한 번 더 스캔하면 DB 가 다음 상태(검수 완료·반송 대기)를 정한다.
-// 블루투스·RF 반응이 나오면 직원이 위치 추적기인지 판정한다 — 추적기면 「추적기 반송」만(보관 없이 바로 반송 대기),
+// 블루투스·RF 반응이 나오면 직원이 위치 추적기인지 판정한다 — 추적기면 「추적기 보관」만(사무실에 두고 크리에이터가 신고 여부를 고른다, INV-W14),
 // 추적기가 아니면 「크리에이터 확인」(크리에이터에게 받을지 묻는다, 7일 안에 답이 없으면 반송)·반송(2026-10-12 (2) 문제집 D3 ②).
 // 역조공에서 걸리면 반송만. 저장한 기록은 고칠 수 없다.
 // 실측 구간은 팬이 신고한 구간을 미리 골라 둔다 — 다를 때만 바꾼다(INV-W4 S4h, 문제집 D5).
+// 개봉 대상(보낸 팬에게 추적기 판정 이력, INV-W16)이면 개봉 결과(장치 없음·장치 나옴)를 꼭 고른다 — 장치 나옴이면 반응과 같이 추적기 판정을 한다.
 
 type Phase = "form" | "saved" | "finished";
-type Finished = { state: "inspected" | "return_waiting" | "held" };
+type Finished = { state: "inspected" | "return_waiting" | "held" | "tracker_held" };
 
-const OUTCOME_LABEL: Record<InspectionOutcome, string> = { pass: "통과", return: "반송", hold: "추적기 반송", confirm: "크리에이터 확인" };
+const OUTCOME_LABEL: Record<InspectionOutcome, string> = { pass: "통과", return: "반송", hold: "추적기 보관", confirm: "크리에이터 확인" };
 const SAVED_TEXT: Record<InspectionOutcome, string> = {
   pass: "통과 — 출고 단계로 넘어갈 수 있어요.",
   return: "반송 — 반송 대기로 넘어가요.",
-  hold: "추적기 반송 — 보관하지 않고 바로 반송 대기로 넘어가요.",
+  hold: "추적기 보관 — 사무실에 두고 크리에이터의 신고 선택을 기다려요.",
   confirm: "크리에이터 확인 — 크리에이터에게 받을지 물어요.",
 };
 const VERDICT_LABEL: Record<TrackerVerdict, string> = { tracker: "위치 추적기예요", not_tracker: "추적기가 아니에요" };
@@ -50,7 +51,12 @@ const FINISHED: Record<Finished["state"], { title: string; text: string }> = {
     title: "크리에이터 확인을 기다려요",
     text: `크리에이터가 받기·거절을 고르면 「들어온 상자」 맨 위 목록에서 처리해요 — 받기는 검수 완료로, 거절은 반송 대기로 넘어가요. ${CREATOR_CHECK_DAYS}일이 지나면 고른 쪽대로, 고르지 않았으면 반송 대기로 넘어가요.`,
   },
+  tracker_held: {
+    title: "추적기 보관으로 넘어갔어요",
+    text: `크리에이터가 신고하기·신고하지 않기를 고르면 「들어온 상자」 맨 위 목록에서 처리해요 — 신고하기는 신고 보관으로, 신고하지 않기는 반송 대기로 넘어가요. ${CREATOR_CHECK_DAYS}일이 지나면 고른 쪽대로, 고르지 않았으면 반송 대기로 넘어가요.`,
+  },
 };
+const OPENED_LABEL = { none: "장치 없음", device: "장치 나옴" } as const;
 
 function InfoIcon() {
   return (
@@ -90,6 +96,8 @@ function measurementText(m: Measurement): string {
 
 /** 판정 칸의 첫 선택지 — 판정 없이 저장하면 여기로 커서를 옮긴다 */
 const VERDICT_FIRST_ID = "tracker-verdict-tracker";
+/** 개봉 결과 칸의 첫 선택지(INV-W16) */
+const OPENED_FIRST_ID = "opened-none";
 
 const CLEAR_GIFT: InspectionChecks = { kind: "gift", bluetooth: "clear", rf: "clear", metal: "clear", trackerVerdict: null };
 const CLEAR_REVGIFT: InspectionChecks = { kind: "revgift", surface: "clear", prohibited: "clear" };
@@ -116,6 +124,9 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   const restriction = outcomeRestriction(checks);
   const reacted = checks.kind === "gift" && trackerReacted(checks);
   const canInspect = parcel !== null && parcel.state === "labeled";
+  // INV-W16: 개봉 대상 팬 선물 — 개봉 결과가 꼭 있어야 기록한다
+  const openTarget = parcel !== null && parcel.kind === "gift" && parcel.openTarget;
+  const openedMissing = openTarget && checks.kind === "gift" && !checks.opened;
 
   function updateChecks(changed: InspectionChecks) {
     // 반응이 없어지면 고른 판정을 비운다 — 다시 반응이 나와도 기본값 없이 비어 있다(INV-W4)
@@ -158,7 +169,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
         return;
       }
       const state = done.body.state;
-      if (state === "inspected" || state === "return_waiting" || state === "held") {
+      if (state === "inspected" || state === "return_waiting" || state === "held" || state === "tracker_held") {
         setFinished({ state });
         // 상자 정보 칸의 상태 표시도 끝난 상태로. nextStep 은 옛 값이지만 finished 단계에서는 「검수 단계가 아니에요」 안내가 가려져 쓰이지 않는다
         setParcel({ ...parcel, state });
@@ -218,6 +229,11 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
 
   async function save() {
     if (!parcel || busy) return;
+    if (openedMissing) {
+      setError({ title: "개봉 결과를 먼저 골라 주세요", message: "개봉 대상 상자는 열어 본 결과를 같이 기록해야 해요.", local: true });
+      document.getElementById(OPENED_FIRST_ID)?.focus();
+      return;
+    }
     const result = inspectionResultOf(checks, outcome);
     if (!result) {
       setError({ title: "추적기인지 먼저 골라 주세요", message: "블루투스·RF 반응이 나온 상자는 위치 추적기인지 판정해야 기록할 수 있어요.", local: true });
@@ -317,6 +333,14 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
               <dt>라벨</dt>
               <dd className={a.mono}>{parcel.qr}</dd>
             </dl>
+            {openTarget && (
+              <div className={`${a.note} ${w.noteWarn}`}>
+                <InfoIcon />
+                <p>
+                  <strong>개봉 대상 — 추적기 판정 이력</strong>
+                </p>
+              </div>
+            )}
             {!canInspect && phase !== "finished" && (
               <div className={a.note}>
                 <InfoIcon />
@@ -400,6 +424,27 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
               </div>
             )}
 
+            {openTarget && checks.kind === "gift" && (
+              <fieldset className={w.choice} disabled={phase !== "form"}>
+                <legend>개봉 결과</legend>
+                <div className={w.opts}>
+                  {(["none", "device"] as const).map((v) => (
+                    <label key={v} className={w.opt}>
+                      <input
+                        id={v === "none" ? OPENED_FIRST_ID : undefined}
+                        type="radio"
+                        name="opened"
+                        value={v}
+                        checked={checks.opened === v}
+                        onChange={() => updateChecks({ ...checks, opened: v })}
+                      />
+                      {OPENED_LABEL[v]}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+
             {reacted && checks.kind === "gift" && (
               <fieldset
                 id="tracker-verdict"
@@ -410,7 +455,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
                 aria-invalid={verdictMissing ? true : undefined}
                 aria-describedby={verdictMissing ? "tracker-verdict-error tracker-verdict-hint" : "tracker-verdict-hint"}
               >
-                <legend>추적기 판정 — 블루투스·RF 반응이 나왔어요</legend>
+                <legend>{checks.bluetooth === "found" || checks.rf === "found" ? "추적기 판정 — 블루투스·RF 반응이 나왔어요" : "추적기 판정 — 개봉에서 장치가 나왔어요"}</legend>
                 <div className={w.opts}>
                   {(["tracker", "not_tracker"] as const).map((v) => (
                     <label key={v} className={w.opt}>
@@ -446,7 +491,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
                 <p>
                   {restriction === "tracker_only" ? (
                     <>
-                      <strong>위치 추적기라 「추적기 반송」만 고를 수 있어요.</strong> 보관하지 않고 바로 반송 대기로 가고, 크리에이터와 보낸 팬에게 알림이 가요.
+                      <strong>위치 추적기라 「추적기 보관」만 고를 수 있어요.</strong> 사무실에 두고, 크리에이터에게 신고할지 묻는 알림이 가요.
                     </>
                   ) : restriction === "creator_confirm" ? (
                     <>
@@ -476,14 +521,14 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
               </div>
               <p className={a.hint}>
                 {restriction === "tracker_only"
-                  ? "위치 추적기가 나온 상자는 보낸 팬의 주소로 바로 돌려보내요."
+                  ? "위치 추적기가 나온 상자는 보관 선반에 두고 크리에이터의 신고 선택을 기다려요."
                   : restriction === "creator_confirm"
                     ? "크리에이터 확인은 사무실에 둔 채 크리에이터의 답을 기다려요. 반송은 바로 반송 대기로 넘어가요."
                   : restriction === "return_only"
                     ? "문제가 나온 역조공 상자는 반송 대기로 넘어가요."
                     : restriction === "needs_verdict"
                       ? "추적기 판정을 먼저 고르면 결과를 고를 수 있어요."
-                      : "통과하면 출고 단계로 넘어가요. 반송은 반송 대기로 넘어가요. 추적기 반송은 위치 추적기로 판정했을 때만 고를 수 있어요. 크리에이터 확인은 추적기가 아니라고 판정했을 때만 골라요."}
+                      : "통과하면 출고 단계로 넘어가요. 반송은 반송 대기로 넘어가요. 추적기 보관은 위치 추적기로 판정했을 때만 고를 수 있어요. 크리에이터 확인은 추적기가 아니라고 판정했을 때만 골라요."}
               </p>
             </fieldset>
 
@@ -537,10 +582,10 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
                 <p>크리에이터({parcel.receiverName})에게 받을지 묻는 알림이 갔어요. 답이 올 때까지 상자는 검수 선반에 두세요.</p>
               </div>
             )}
-            {finished.state === "return_waiting" && chosen === "hold" && parcel.kind === "gift" && (
+            {finished.state === "tracker_held" && (
               <div className={`${a.note} ${a.noteOk}`}>
                 <InfoIcon />
-                <p>크리에이터({parcel.receiverName})와 보낸 팬에게 반송 알림이 갔어요. 상자는 반송 선반에 두세요.</p>
+                <p>크리에이터({parcel.receiverName})에게 신고할지 묻는 알림이 갔어요. 상자는 보관 선반에 두세요.</p>
               </div>
             )}
             <p className={a.hint}>다음 상자를 스캔하세요.</p>

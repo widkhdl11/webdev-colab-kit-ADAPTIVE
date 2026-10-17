@@ -35,7 +35,7 @@ export type BluetoothItem = {
 };
 
 /** 추적 장치 발견 — 추적기 보관 상자 하나(office-workflow INV-W14, action-center INV-J5). 칸은 블루투스 발견과 같고 선택지만 다르다.
- *  주문이 끝나도 운영자 처리 전·기한 전이면 남는다. 화면 줄은 용어집 승인 뒤에 그린다 — 지금은 줄 수(J6)에만 들어간다 */
+ *  주문이 끝나도 운영자 처리 전·기한 전이면 남는다 */
 export type TrackerItem = Omit<BluetoothItem, "kind" | "choice"> & { kind: "tracker"; choice: TrackerReportChoice | null };
 
 /** 승인 요청 — 주문 하나(approval-signature). 승인은 카카오톡 서명, 받지 않기는 서명 없이 */
@@ -62,7 +62,7 @@ export type SentGiftItem =
   | { kind: "missing_box"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string; sentAt: string };
 
 /** 보낸 선물의 반송 주소 확인(office-workflow INV-W15, action-center INV-J5·J3) — 보낸 역조공 몫(shareId) 또는 보낸 팬 선물의 상자(boxId) 하나.
- *  nickname 은 몫이면 받는 팬, 팬 선물이면 받는 크리에이터. 기한 = 반송 대기 + 30일. 화면 줄은 용어집 표기를 넣는 다음 묶음에서 그린다 — 지금은 줄 수(J6)에만 들어간다 */
+ *  nickname 은 몫이면 받는 팬, 팬 선물이면 받는 크리에이터. 기한 = 반송 대기 + 30일 */
 export type ReturnAddressItem = {
   kind: "return_address";
   orderNo: string;
@@ -200,25 +200,18 @@ export function parseCreatorActionItems(data: unknown): CreatorActionItem[] {
     });
 }
 
-/** 받은 선물 판(블루투스 발견 · 승인 요청)과 보낸 선물 판 — DB 가 정한 순서 그대로 나눈다. 추적 장치 발견 줄은 따로(tracker) — 받은 선물 판 맨 위 자리이고, 화면 줄은 용어집 승인 뒤에 그린다 */
+/** 받은 선물 판(추적 장치 발견 · 블루투스 발견 · 승인 요청)과 보낸 선물 판(미확인 상자 · 보낸 팬 선물 · 반송 주소) — DB 가 정한 순서 그대로 나눈다(INV-J5) */
 export function splitBoards(items: readonly CreatorActionItem[]): {
-  tracker: TrackerItem[];
-  received: (BluetoothItem | ApprovalItem)[];
-  sent: (UnconfirmedItem | SentGiftItem)[];
-  returns: ReturnAddressItem[];
+  received: (TrackerItem | BluetoothItem | ApprovalItem)[];
+  sent: (UnconfirmedItem | SentGiftItem | ReturnAddressItem)[];
 } {
-  const tracker: TrackerItem[] = [];
-  const received: (BluetoothItem | ApprovalItem)[] = [];
-  const sent: (UnconfirmedItem | SentGiftItem)[] = [];
-  // 보낸 선물 판의 반송 주소 줄(INV-W15) — 화면 줄은 용어집 표기를 넣는 다음 묶음에서 그린다. 줄 수(J6)는 전체 배열 길이라 이미 들어간다
-  const returns: ReturnAddressItem[] = [];
+  const received: (TrackerItem | BluetoothItem | ApprovalItem)[] = [];
+  const sent: (UnconfirmedItem | SentGiftItem | ReturnAddressItem)[] = [];
   for (const it of items) {
-    if (it.kind === "tracker") tracker.push(it);
-    else if (it.kind === "return_address") returns.push(it);
-    else if (it.kind === "bluetooth" || it.kind === "approval") received.push(it);
+    if (it.kind === "tracker" || it.kind === "bluetooth" || it.kind === "approval") received.push(it);
     else sent.push(it);
   }
-  return { tracker, received, sent, returns };
+  return { received, sent };
 }
 
 /** 남은 날 — 서울 날짜로 센다(줄·창에 보이는 기한은 서울 시간, INV-J5). 3일 이하는 강조색(design-rules 13절) */

@@ -2,7 +2,7 @@ import { NOTIFICATION_POLICY, type NotificationAudience, type NotificationKind }
 import { DECLINED_PHRASE, EXPIRED_TEXT } from "@/entities/order/ui/fan-stage-copy";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
 import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
-import { formatDeadline } from "@/shared/lib/format/datetime";
+import { formatDeadline, formatMonthDayKo } from "@/shared/lib/format/datetime";
 
 // 알림 본문 틀 (notifications INV-N1·N9). 카카오 알림톡과 이메일이 같은 틀을 쓴다(INV-N7) — 카카오 템플릿도 이 문구로 심사받는다.
 // 본문은 잠금 화면·메일함·대행사 서버처럼 우리가 지킬 수 없는 곳에 남는다. 그래서 받는 칸을 아래 여섯으로 묶어
@@ -136,18 +136,21 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : `/gifts/${orderNo}`,
       };
     case "hold":
-      // 추적기 반송 — 확인을 부탁하지 않고 돌려보낸다는 사실만. 무엇이 나왔는지·보낸 팬은 쓰지 않는다(INV-N13, 2026-10-12 D2)
+      // 추적 장치 발견 — 추적기 보관 상자의 신고 선택을 크리에이터에게 묻는다(INV-N13, office-workflow INV-W14, 2026-10-17 카드 d100).
+      // 보낸 팬의 닉네임은 쓰지 않는다(INV-N1) — 들어간 처리할 일 화면에서 로그인한 크리에이터에게만 보인다.
+      // 스펙 문장의 「보낸 분」은 용어집 2절에서 쓰지 않는 말이라 「보낸 사람」으로 쓴다. 기한은 블루투스 발견과 같은 7일(검수 완료 + 168시간)
       return {
-        subject: "[팬꾹] 검수를 통과하지 못한 선물이 있어요",
-        lines: [greet, "검수를 통과하지 못해 보낸 분에게 돌려보내는 상자가 있어요.", order],
-        buttonLabel: "선물 보기",
-        path: "/creator",
+        subject: "[팬꾹] 추적 장치가 나온 상자가 있어요",
+        lines: [greet, "추적 장치가 나온 상자가 있어요.", `신고할지 정해 주세요. ${CREATOR_CHECK_DAYS}일 안에 정하지 않으면 보낸 사람에게 돌려보내요.`, order],
+        buttonLabel: "확인하기",
+        path: CREATOR_ACTION_CENTER_HREF,
       };
     case "hold_fan":
-      // 무엇이 나왔는지·크리에이터가 알았다는 사실은 쓰지 않는다(INV-N13). 추적기 상자는 보관 없이 바로 반송 대기로 간다(office-workflow INV-W4)
+      // 무엇이 나왔는지·크리에이터가 알았다는 사실·신고 선택은 쓰지 않는다(INV-N13). 반송 주소를 확인해 달라는 말이 들어 있어
+      // 같은 처리에서 반송 주소 알림(return_address)은 따로 가지 않는다(INV-N22)
       return {
         subject: "[팬꾹] 돌려보낼 상자가 있어요",
-        lines: [greet, "검수를 통과하지 못한 상자가 있어요.", "보내신 주소로 돌려보내요.", order],
+        lines: [greet, "검수를 통과하지 못한 상자가 있어요.", "돌려받을 주소를 확인해 주세요.", order],
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
       };
@@ -264,15 +267,24 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
       };
     case "return_address":
     case "return_address_reminder": {
-      // 반송 주소 확인(INV-N22) — 반송 이유·주소·크리에이터 이름 칸이 없다(INV-N1). 링크는 팬 선물이면 선물 상세, 역조공 몫(RG-)이면 보낸 역조공 화면.
-      // 본문 문구는 용어집(return_address · dispose_due 행)의 표기로 다음 묶음에서 넣는다 — 지금은 자리만 코드값으로 둔다.
-      // 재알림만 처분 예정 날짜(반송 대기 + 30일, 서울 시간)를 적는다 — 날짜가 없으면 만들지 않는다
-      if (kind === "return_address_reminder" && !disposeDueAt) throw new Error("반송 주소 재알림에 처분 예정 시각이 없다");
+      // 반송 주소 확인(INV-N22) — 반송 이유·주소·크리에이터 이름 칸이 없다(INV-N1). 문구는 용어집 return_address · dispose_due 행.
+      // 링크는 팬 선물이면 선물 상세, 역조공 몫(RG-)이면 크리에이터 처리할 일(「보낸 역조공 반송 주소」 줄 — action-center INV-J5).
+      // 재알림만 처분 예정 날짜(반송 대기 + 30일, 서울 날짜)를 적는다 — 날짜가 없으면 만들지 않는다
+      const path = REVGIFT_ORDER_NO.test(orderNo) ? CREATOR_ACTION_CENTER_HREF : `/gifts/${orderNo}`;
+      if (kind === "return_address") {
+        return {
+          subject: "[팬꾹] 돌려보낼 상자가 있어요",
+          lines: [greet, "돌려보낼 상자가 있어요.", "돌려받을 주소를 확인해 주세요. 30일 안에 확인하지 않으면 상자를 처분해요.", order],
+          buttonLabel: "돌려받을 주소 확인하기",
+          path,
+        };
+      }
+      if (!disposeDueAt) throw new Error("반송 주소 재알림에 처분 예정 시각이 없다");
       return {
-        subject: `[팬꾹] ${kind}`,
-        lines: [greet, kind, ...(kind === "return_address_reminder" && disposeDueAt ? [`dispose_due ${formatDeadline(disposeDueAt)}`] : []), order],
-        buttonLabel: "return_address",
-        path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : `/gifts/${orderNo}`,
+        subject: "[팬꾹] 돌려받을 주소를 아직 확인하지 않았어요",
+        lines: [greet, "돌려받을 주소를 아직 확인하지 않았어요.", `${formatMonthDayKo(disposeDueAt)}까지 확인하지 않으면 상자를 처분해요.`, order],
+        buttonLabel: "돌려받을 주소 확인하기",
+        path,
       };
     }
     case "in_transit":

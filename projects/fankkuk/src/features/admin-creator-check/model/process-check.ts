@@ -1,10 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { CREATOR_CHECK_DAYS } from "@/entities/parcel/model/creator-check";
 import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 import { MESSAGE_NOT_FOUND, pgErrorReply } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
 
-// 크리에이터가 고른 블루투스 상자의 운영자 처리 (office-workflow INV-W13). 운영자(직원·대표)가 크리에이터가 고른 것을 보고 처리 버튼을 누르면
+// 크리에이터가 고른 블루투스 상자·추적기 보관 상자의 운영자 처리 (office-workflow INV-W13·W14). 운영자(직원·대표)가 크리에이터가 고른 것을 보고 처리 버튼을 누르면
 // 그 선택이 잠기고 받기 선택은 검수 완료, 거절 선택은 반송 대기로 넘어간다. 요청에는 운영자가 화면에서 본 선택이 함께 간다 —
 // 화면을 연 뒤 크리에이터가 취소하고 다르게 고른 것을 잘못 처리하지 않게, 지금 선택과 다르면 DB 가 「바뀜」으로 거부한다.
 // 처리한 운영자·시각은 운영자 기록에만 남고 크리에이터에게 가지 않는다(address-protection INV-P7). 운영자가 아니면 404.
@@ -21,6 +22,7 @@ const REFUSED = {
   processed: "이미 처리된 상자예요.",
   closed: "선물이 끝나 처리할 수 없는 상자예요.",
   not_found: "찾을 수 없는 상자예요.",
+  expired: `${CREATOR_CHECK_DAYS}일이 지나 자동 처리를 기다리는 상자예요.`,
 } as const;
 
 /** 운영자 목록 한 줄 — QR·주문번호·상자 순번·크리에이터의 선택·고른 시각·기한(보낸 팬·크리에이터 칸은 없다) */
@@ -50,7 +52,5 @@ export async function processCreatorCheck(client: Rpc, body: unknown): Promise<J
   // 모르는 답이면 처리됐다고 단정하지 않는다
   if (!reply.success) return { status: 500, body: { message: "처리하지 못했어요. 잠시 뒤 다시 해 주세요." } };
   if (reply.data === "accepted" || reply.data === "returned" || reply.data === "reported" || reply.data === "not_reported") return { status: 200, body: { result: reply.data } };
-  // 문구가 정해지지 않은 거절(기한 지남)은 코드값만 돌려준다
-  if (reply.data === "expired") return { status: 409, body: { code: reply.data } };
   return { status: reply.data === "not_found" ? 404 : 409, body: { message: REFUSED[reply.data] } };
 }

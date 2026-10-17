@@ -48,6 +48,11 @@ describe("INV-P7 (D12): 운영자 내부 열람 기록 응답", () => {
     ]);
   });
 
+  it("INV-P7 · P18: 반송 송장으로 연 줄(target return)도 같은 모양으로 읽는다", () => {
+    const [row] = parseAdminAccessLogRows([{ ...opened, target: "return", order_no: "FC-9QW2E", print_no: 2 }]);
+    expect(row).toMatchObject({ target: "return", orderNo: "FC-9QW2E", result: { kind: "opened", printNo: 2, released: false } });
+  });
+
   it("탈퇴 등으로 닉네임이 없으면 null 로 둔다", () => {
     expect(parseAdminAccessLogRows([{ ...denied, requester_nickname: null }])[0]?.requesterNickname).toBeNull();
   });

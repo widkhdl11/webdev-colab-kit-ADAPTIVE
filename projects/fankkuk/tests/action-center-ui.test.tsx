@@ -147,7 +147,7 @@ async function counts(rows: readonly unknown[]) {
   const homeText = homeLine?.textContent ?? null;
   const homeHref = homeLine?.querySelector("a")?.getAttribute("href") ?? null;
 
-  act(() => root.render(<ActionCenterPage items={items} clientKey="" now={NOW} />));
+  act(() => root.render(<ActionCenterPage items={items} clientKey="" now={NOW} address={{ accountId: "a1", status: null, sealingKeyPem: null }} />));
   const cardsN = host.querySelectorAll("section.action-card").length;
   const titleCount = host.querySelector("h1 .ph-count")?.textContent ?? null;
   const empty = host.querySelector('[data-testid="action-empty"]');
@@ -233,7 +233,7 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
   const items: ActionItem[] = parseActionItems([ROWS.difference, ROWS.missing, ROWS.revgift]);
 
   function card(kind: string): Element {
-    act(() => root.render(<ActionCenterPage items={items} clientKey="" now={NOW} />));
+    act(() => root.render(<ActionCenterPage items={items} clientKey="" now={NOW} address={{ accountId: "a1", status: null, sealingKeyPem: null }} />));
     const el = host.querySelector(`section.action-card[data-kind="${kind}"]`);
     if (!el) throw new Error(`${kind} 카드가 없다`);
     return el;

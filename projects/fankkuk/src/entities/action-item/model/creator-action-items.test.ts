@@ -122,13 +122,13 @@ describe("남은 날 (INV-J5 — 서울 시간)", () => {
 describe("추적 장치 발견 줄 (action-center INV-J5, office-workflow INV-W14)", () => {
   const tracker = { ...bluetooth, kind: "tracker", order_no: "FC-T9", choice: "no_report" };
 
-  it("INV-J5 (S5d): 추적 장치 발견 줄은 받은 선물 판의 따로 묶음(tracker)이고 신고 선택을 옮긴다 — 줄 수(J6)에도 들어간다", () => {
+  it("INV-J5 (S5d): 추적 장치 발견 줄은 받은 선물 판 맨 위(읽기 순서 그대로)이고 신고 선택을 옮긴다 — 줄 수(J6)에도 들어간다", () => {
     const items = parseCreatorActionItems([tracker, bluetooth, approval]);
     expect(items).toHaveLength(3);
     expect(items[0]).toMatchObject({ kind: "tracker", orderNo: "FC-T9", choice: "no_report", boxSeq: 1 });
     const boards = splitBoards(items);
-    expect(boards.tracker.map((t) => t.orderNo)).toEqual(["FC-T9"]);
-    expect(boards.received.map((r) => r.kind)).toEqual(["bluetooth", "approval"]);
+    expect(boards.received.map((r) => r.kind)).toEqual(["tracker", "bluetooth", "approval"]);
+    expect(boards.sent).toEqual([]);
     expect(parseCreatorActionItems([{ ...tracker, choice: null }])[0]).toMatchObject({ kind: "tracker", choice: null });
   });
 
@@ -171,10 +171,10 @@ describe("보낸 선물의 반송 주소 줄 (action-center INV-J5·J3, office-w
       { kind: "return_address", orderNo: "RG-R5", shareId: revgiftReturn.share_id, boxId: null, boxSeq: null, boxLabel: null, nickname: "별빛", tier: "small", dueAt: "2026-11-16T01:00:00.000Z", sentAt: "2026-10-01T01:00:00.000Z" },
       { kind: "return_address", orderNo: "FC-R6", shareId: null, boxId: giftReturn.box_id, boxSeq: 2, boxLabel: "FC-R6-2", nickname: "하루", tier: "medium", dueAt: "2026-11-16T01:00:00.000Z", sentAt: "2026-10-01T01:00:00.000Z" },
     ]);
-    // 화면 줄은 다음 묶음에서 그린다 — 판을 나눌 때 반송 주소 줄은 따로(returns) 묶여 지금의 보낸 선물 줄 그리기에 섞이지 않는다
+    // 반송 주소 줄은 보낸 선물 판에 읽기 순서 그대로 들어간다
     const boards = splitBoards(items);
-    expect(boards.returns.map((r) => r.orderNo)).toEqual(["RG-R5", "FC-R6"]);
-    expect(boards.sent).toEqual([]);
+    expect(boards.sent.map((r) => r.orderNo)).toEqual(["RG-R5", "FC-R6"]);
+    expect(boards.received).toEqual([]);
   });
 
   it("INV-J5 (실패경로): 반송 주소 줄이 받은 선물 판이거나, 몫도 상자도 없거나 둘 다 있거나, 기한이 없으면 전체를 거부한다", () => {

@@ -42,7 +42,10 @@ describe("운영자 실패 목록 읽기 (INV-N10)", () => {
     expect(kindLabel("approval_request", 1)).toBe("승인 요청");
     expect(kindLabel("approval_request", 2)).toBe("승인 요청 (도착 재알림)");
     expect(kindLabel("arrived")).toBe("입고");
-    expect(kindLabel("hold")).toBe("추적기 반송");
+    // 추적기 상자는 2026-10-17 부터 반송하지 않고 보관한다(INV-N13·W14) — 운영자 표기 「추적기 보관」
+    expect(kindLabel("hold")).toBe("추적기 보관");
+    expect(kindLabel("return_address")).toBe("반송 주소 확인");
+    expect(kindLabel("return_address_reminder")).toBe("반송 주소 확인 (14일 재알림)");
     expect(errorCodeLabel("no_contact")).toMatch(/꺼|이메일/);
     expect(errorCodeLabel("request_not_waiting")).toMatch(/승인/);
     expect(errorCodeLabel("weird_code")).toBe("weird_code");

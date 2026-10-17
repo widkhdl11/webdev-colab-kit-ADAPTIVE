@@ -153,3 +153,18 @@ describe("toFanView — 팬에게 보이는 것", () => {
     expect(view.steps.filter((s) => s.state === "stopped")).toHaveLength(1);
   });
 });
+
+describe("office-workflow INV-W14: 추적기 보관·신고 보관·경찰 인계 상자의 주문은 팬에게 「확인 중」으로만", () => {
+  const received = { ...base, status: "received" as const, receivedAt: "2026-10-02T01:00:00.000Z" };
+  it("INV-W14: 검수 결과가 checking 이면 진행 중이고 지금 단계는 검수, inspectionChecking 이 켜진다", () => {
+    const v = toFanView({ ...received, inspection: { result: "checking", at: "2026-10-02T02:00:00.000Z" } }, OFFICE);
+    expect(v.outcome).toBe("in_progress");
+    expect(v.steps.find((s) => s.state === "current")?.key).toBe("inspected");
+    expect(v.inspectionChecking).toBe(true);
+  });
+  it("INV-W14 (실패경로): 통과·반송·검수 전 주문은 inspectionChecking 이 아니다", () => {
+    for (const inspection of [null, { result: "passed" as const, at: "2026-10-02T02:00:00.000Z" }, { result: "returned" as const, at: "2026-10-02T02:00:00.000Z" }]) {
+      expect(toFanView({ ...received, inspection }, OFFICE).inspectionChecking).toBe(false);
+    }
+  });
+});

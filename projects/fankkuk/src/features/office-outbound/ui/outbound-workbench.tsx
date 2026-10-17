@@ -12,7 +12,9 @@ import a from "@/shared/ui/admin.module.css";
 import { ScanInput, type ScanInputHandle } from "@/shared/ui/scan-input";
 import w from "@/shared/ui/work.module.css";
 import { postOutbound } from "../api/post-outbound-client";
+import { charCount } from "@/shared/lib/validation/char-count";
 import { canReprintLabel } from "../model/label-print-access";
+import { POLICE_MEMO_MAX } from "../model/police-memo";
 import { printedReplyFromBody, returnPrintedReplyFromBody, type PrintedLabel } from "../model/outbound-reply";
 
 // 출고 작업 화면 (office-workflow INV-W1·W3·W8, design-rules 8-1, 시안 admin/work-outbound.html).
@@ -21,9 +23,17 @@ import { printedReplyFromBody, returnPrintedReplyFromBody, type PrintedLabel } f
 // 출력된 송장 바코드를 스캔해야만 된다. 송장 출력은 대표만(직원에게는 버튼 대신 안내).
 // 택배사 API·라벨 프린터가 아직 없어 송장번호는 서버가 만든 개발용 번호를 화면에 크게 보이고 화면 인쇄로 대신한다.
 // 팬 선물은 송장 출력 함수가 연 받는 사람 주소(라벨 칸)를 응답으로 받아 인쇄에만 찍는다 — 화면에는 보이지 않고, 저장하지 않으며,
-// 다른 상자를 스캔하거나 확정하면 버린다(address-protection INV-P4·P10).
+// 다른 상자를 스캔하거나 확정하면 버린다(address-protection INV-P4·P10). 주문에 이어진 상자의 반송 송장도 같다 — 보낸 사람이 확인한 주소(INV-P18).
+// 처분 대상 상자는 「처분 기록」(INV-W15), 신고 보관 상자는 메모와 함께 「경찰 인계 기록」(INV-W14) — 둘 다 봉투 파쇄 기록이 같이 남는다.
 
-type Done = { kind: "shipped" | "returned"; envelopeNo: string; at: string };
+type Done = { kind: "shipped" | "returned" | "disposed" | "handed"; envelopeNo: string; at: string };
+const DONE_TEXT: Record<Done["kind"], { tag: string; title: string; what: string }> = {
+  shipped: { tag: "출고함", title: "출고됐어요", what: "출고와 함께 파쇄 기록이 남았어요." },
+  returned: { tag: "반송함", title: "반송됐어요", what: "반송과 함께 파쇄 기록이 남았어요." },
+  disposed: { tag: "처분", title: "처분을 기록했어요", what: "처분 기록과 함께 파쇄 기록이 남았어요." },
+  handed: { tag: "경찰 인계", title: "경찰 인계를 기록했어요", what: "경찰 인계 기록과 함께 파쇄 기록이 남았어요." },
+};
+type RecordWrite = { kind: "record_disposal" } | { kind: "record_police_handover"; memo: string };
 /** 방금 연 라벨 — 그 상자(qr)의 인쇄에만 쓴다 */
 type OpenedLabel = { qr: string; waybill: string; fields: PrintedLabel };
 
@@ -171,11 +181,33 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
       setBusy(false);
       return;
     }
-    const printed = kind === "print_label" ? printedReplyFromBody(outcome.body) : null;
-    const ok = kind === "print_label" ? printed : returnPrintedReplyFromBody(outcome.body);
-    if (!ok) setError({ title: "출력 결과를 읽지 못했어요", message: "반영됐을 수 있어요. QR 을 다시 스캔해 상자 상태를 확인해 주세요.", unknown: true });
+    // 반송 송장도 주문에 이어진 상자면 라벨 칸이 온다(INV-P18) — 인쇄에만 쓴다
+    const printed = kind === "print_label" ? printedReplyFromBody(outcome.body) : returnPrintedReplyFromBody(outcome.body);
+    if (!printed) setError({ title: "출력 결과를 읽지 못했어요", message: "반영됐을 수 있어요. QR 을 다시 스캔해 상자 상태를 확인해 주세요.", unknown: true });
     setOpened(printed?.label ? { qr: parcel.qr, waybill: printed.waybill, fields: printed.label } : null);
     // 출력 뒤 상태는 DB 에서 다시 읽는다 — 화면이 상태를 짐작해 바꾸지 않는다
+    setParcel(await lookup(parcel.qr, true));
+    setBusy(false);
+    scan.current?.focus();
+  }
+
+  /** 처분 기록(INV-W15) · 경찰 인계 기록(INV-W14). 끝나면 봉투 파쇄를 안내하고 상자를 다시 읽는다 */
+  async function record(write: RecordWrite) {
+    if (!parcel || busy) return;
+    setBusy(true);
+    setError(null);
+    const outcome = await postOutbound({ ...write, qr: parcel.qr });
+    if (outcome.kind === "failed") {
+      setError({ title: "반영되지 않았어요", message: outcome.message });
+      if (needsReload(outcome)) {
+        setParcel(await lookup(parcel.qr, true));
+        router.refresh();
+      }
+      setBusy(false);
+      return;
+    }
+    setOpened(null);
+    setDone({ kind: write.kind === "record_disposal" ? "disposed" : "handed", envelopeNo: parcel.envelopeNo, at: new Date().toISOString() });
     setParcel(await lookup(parcel.qr, true));
     setBusy(false);
     scan.current?.focus();
@@ -194,7 +226,7 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
       />
 
       <p className="sr-only" role="status">
-        {error ? `${error.unknown ? "확인 필요" : "거절"}: ${error.title}` : done ? (done.kind === "shipped" ? "출고됐어요" : "반송됐어요") : parcel ? `${parcel.orderNo} ${NEXT_STEP_TEXT[parcel.nextStep] || STATE_LABEL[parcel.state].text}` : ""}
+        {error ? `${error.unknown ? "확인 필요" : "거절"}: ${error.title}` : done ? DONE_TEXT[done.kind].title : parcel ? `${parcel.orderNo} ${NEXT_STEP_TEXT[parcel.nextStep] || STATE_LABEL[parcel.state].text}` : ""}
       </p>
       <div className={w.work} style={{ maxWidth: "none" }}>
         {error && (
@@ -213,8 +245,8 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
         {done && (
           <div className={`${w.result} ${w.resultOk}`}>
             <div className={`${w.resultHead} ${w.resultHeadSm}`}>
-              <span className={`${a.tag} ${a.tagBrand}`}>{done.kind === "shipped" ? "출고함" : "반송함"}</span>
-              <h2>{done.kind === "shipped" ? "출고됐어요" : "반송됐어요"}</h2>
+              <span className={`${a.tag} ${a.tagBrand}`}>{DONE_TEXT[done.kind].tag}</span>
+              <h2>{DONE_TEXT[done.kind].title}</h2>
               <span className={a.faint}>
                 {formatStamp(done.at)} · {operatorNickname}
               </span>
@@ -222,11 +254,13 @@ export function OutboundWorkbench({ access, operatorNickname }: { access: "staff
             <p className={w.bigNote}>
               봉투 <span className={a.mono}>{done.envelopeNo}</span> 파쇄 기록됨 — 봉투를 파쇄해 주세요
             </p>
-            <p className={a.hint}>{done.kind === "shipped" ? "출고" : "반송"} 확정과 함께 파쇄 기록이 남았어요. 봉투 안의 원래 송장을 파쇄하면 돼요.</p>
+            <p className={a.hint}>{DONE_TEXT[done.kind].what} 봉투 안의 원래 송장을 파쇄하면 돼요.</p>
           </div>
         )}
 
-        {parcel && !done && <ParcelCard parcel={parcel} access={access} busy={busy} onPrint={print} opened={opened?.qr === parcel.qr ? opened : null} />}
+        {parcel && !done && (
+          <ParcelCard parcel={parcel} access={access} busy={busy} onPrint={print} onRecord={record} opened={opened?.qr === parcel.qr ? opened : null} />
+        )}
       </div>
     </div>
   );
@@ -237,10 +271,81 @@ type CardProps = {
   access: "staff" | "owner";
   busy: boolean;
   onPrint: (kind: "print_label" | "print_return") => void;
+  onRecord: (write: RecordWrite) => void;
   opened: OpenedLabel | null;
 };
 
-function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
+/** 경찰 인계 기록(INV-W14) — 메모 1~200자. 실명·주소·전화번호는 적지 않는다(INV-W7) */
+function PoliceHandoverCard({ parcel, busy, onRecord }: { parcel: ParcelDetail; busy: boolean; onRecord: CardProps["onRecord"] }) {
+  const [memo, setMemo] = useState("");
+  const [memoError, setMemoError] = useState(false);
+  const count = charCount(memo.trim());
+  return (
+    <section className={`${w.result} ${w.resultOk}`} aria-labelledby="out-police">
+      <div className={w.resultHead}>
+        <span className={`${a.tag} ${a.tagWarn}`}>{STATE_LABEL.report_held.text}</span>
+        <h2 id="out-police" className={a.mono}>
+          {parcel.orderNo}
+        </h2>
+      </div>
+      <Facts parcel={parcel} />
+      <form
+        className={a.stack}
+        style={{ gap: 8 }}
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (count < 1 || count > POLICE_MEMO_MAX) {
+            setMemoError(true);
+            return;
+          }
+          onRecord({ kind: "record_police_handover", memo: memo.trim() });
+        }}
+      >
+        <div className={a.field}>
+          <label htmlFor="police-memo">경찰 인계 메모</label>
+          <input
+            id="police-memo"
+            className={a.input}
+            type="text"
+            autoComplete="off"
+            placeholder="예: ○○경찰서 인계"
+            aria-describedby={memoError ? "police-memo-hint police-memo-count police-memo-error" : "police-memo-hint police-memo-count"}
+            aria-invalid={memoError || count > POLICE_MEMO_MAX}
+            value={memo}
+            onChange={(e) => {
+              setMemo(e.target.value);
+              setMemoError(false);
+            }}
+          />
+          <span className={a.count} id="police-memo-count">
+            {count} / {POLICE_MEMO_MAX}
+          </span>
+          <p className={a.hint} id="police-memo-hint">
+            실명·주소·전화번호는 적지 않아요.
+          </p>
+        </div>
+        <div role="status">
+          {memoError && (
+            <p className={a.errorLine} id="police-memo-error">
+              <span className={a.errorMark} aria-hidden="true">
+                !
+              </span>
+              메모를 1~{POLICE_MEMO_MAX}자로 적어 주세요.
+            </p>
+          )}
+        </div>
+        <div className={a.btnRow}>
+          <button className={`${a.btn} ${a.btnLg}`} type="submit" aria-disabled={busy}>
+            {busy ? "기록하는 중…" : "경찰 인계 기록"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function ParcelCard({ parcel, access, busy, onPrint, onRecord, opened }: CardProps) {
   switch (parcel.nextStep) {
     case "print_label":
       return (
@@ -339,7 +444,7 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
             </h2>
           </div>
           <Facts parcel={parcel} />
-          <p className={a.hint}>{parcel.kind === "gift" ? "보낸 팬의 원래 송장 주소로 반송해요. 택배비는 팬꾹이 먼저 내요(선불) — 환불에서 빠져요." : "보낸 크리에이터 쪽으로 반송해요."}</p>
+          <p className={a.hint}>{parcel.kind === "gift" ? "보낸 팬에게 반송해요. 택배비는 팬꾹이 먼저 내요(선불) — 환불에서 빠져요." : "보낸 크리에이터 쪽으로 반송해요."}</p>
           <div className={a.btnRow}>
             <button className={`${a.btn} ${a.btnLg}`} type="button" onClick={() => onPrint("print_return")} aria-disabled={busy}>
               {busy ? "출력하는 중…" : "반송 송장 출력"}
@@ -369,14 +474,47 @@ function ParcelCard({ parcel, access, busy, onPrint, opened }: CardProps) {
             <p>
               화면에 뜬 번호의 봉투에서 원래 송장을 꺼내 반송 송장을 붙여요. 봉투 번호는 이 상자 것만 나와요. 붙인 뒤 <strong>반송 송장의 바코드</strong>를 스캔하면 반송이 확정돼요.
             </p>
-            <div className={a.btnRow}>
-              <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
-                화면 인쇄
-              </button>
-            </div>
+            {opened ? (
+              <>
+                <PrintLabel orderNo={parcel.orderNo} opened={opened} />
+                <div className={a.btnRow}>
+                  <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
+                    송장 인쇄
+                  </button>
+                </div>
+                <p className={a.hint}>받는 사람 주소는 화면에 보이지 않고 인쇄에만 찍혀요. 다른 상자를 스캔하면 지워져요.</p>
+              </>
+            ) : (
+              <div className={a.btnRow}>
+                <button className={`${a.btn} ${a.btnLine} ${a.btnSm}`} type="button" onClick={() => window.print()}>
+                  화면 인쇄
+                </button>
+              </div>
+            )}
           </div>
         </section>
       );
+
+    case "record_disposal":
+      return (
+        <section className={`${w.result} ${w.resultOk}`} aria-labelledby="out-dispose">
+          <div className={w.resultHead}>
+            <span className={`${a.tag} ${a.tagWarn}`}>{STATE_LABEL.dispose_due.text}</span>
+            <h2 id="out-dispose" className={a.mono}>
+              {parcel.orderNo}
+            </h2>
+          </div>
+          <Facts parcel={parcel} />
+          <div className={a.btnRow}>
+            <button className={`${a.btn} ${a.btnLg}`} type="button" onClick={() => onRecord({ kind: "record_disposal" })} aria-disabled={busy}>
+              {busy ? "기록하는 중…" : "처분 기록"}
+            </button>
+          </div>
+        </section>
+      );
+
+    case "report_held":
+      return <PoliceHandoverCard parcel={parcel} busy={busy} onRecord={onRecord} />;
 
     case "wait_expiry":
       return (

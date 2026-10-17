@@ -14,7 +14,11 @@ export type PrintedLabel = z.infer<typeof labelShape>;
 
 // 팬 선물은 라벨 칸(받는 사람·전화·주소)이 함께 온다 — 송장 인쇄에만 쓰고 저장하지 않는다. 역조공은 아직 송장번호뿐이다.
 const printed = z.object({ waybill: z.string().regex(WAYBILL_PATTERN), reprint: z.boolean().optional(), label: labelShape.optional() });
-const returnPrinted = z.object({ waybill: z.string().regex(WAYBILL_PATTERN), envelopeNo: z.string().min(1) });
+// 반송 송장: 어느 주문에도 이어지지 않은 상자는 봉투 번호, 주문에 이어진 상자는 보낸 사람이 확인한 주소의 라벨 칸이 온다(address-protection INV-P18)
+const returnPrinted = z.union([
+  z.object({ waybill: z.string().regex(WAYBILL_PATTERN), envelopeNo: z.string().min(1) }),
+  z.object({ waybill: z.string().regex(WAYBILL_PATTERN), reprint: z.boolean().optional(), label: labelShape }),
+]);
 
 export function printedReplyFromBody(body: unknown): { waybill: string; reprint: boolean; label: PrintedLabel | null } | null {
   const parsed = printed.safeParse(body);
@@ -22,7 +26,9 @@ export function printedReplyFromBody(body: unknown): { waybill: string; reprint:
   return { waybill: parsed.data.waybill, reprint: parsed.data.reprint ?? false, label: parsed.data.label ?? null };
 }
 
-export function returnPrintedReplyFromBody(body: unknown): { waybill: string; envelopeNo: string } | null {
+export function returnPrintedReplyFromBody(body: unknown): { waybill: string; envelopeNo: string | null; label: PrintedLabel | null } | null {
   const parsed = returnPrinted.safeParse(body);
-  return parsed.success ? { waybill: parsed.data.waybill, envelopeNo: parsed.data.envelopeNo } : null;
+  if (!parsed.success) return null;
+  const d = parsed.data;
+  return "label" in d ? { waybill: d.waybill, envelopeNo: null, label: d.label } : { waybill: d.waybill, envelopeNo: d.envelopeNo, label: null };
 }

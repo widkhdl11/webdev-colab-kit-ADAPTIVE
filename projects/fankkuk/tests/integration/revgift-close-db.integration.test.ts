@@ -90,6 +90,26 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
     expect(psql(`select returned_at is not null from public.revgift_shares where order_no = '${orderNo}'`)).toBe("t");
   });
 
+  it("INV-R9 · W15: 반송 주소를 30일 확인하지 않아 처분된 몫 상자 — 처분 기록 처리 안에서 몫이 닫히고 받는 팬 주소가 지워진다(결과 값은 반송)", async () => {
+    const { orderNo, qr } = await acceptedAndLabeled();
+    const staff = await signedInClient("fankkuk_staff");
+    expect(await inspect(staff, qr, { surface: "found", prohibited: "clear", outcome: "return" })).toBe("return_waiting");
+    psql(`update public.office_parcels set return_waiting_at = now() - interval '721 hours' where qr_code = '${qr}'`);
+    const run = await staff.rpc("office_run_expiry", { p_order_no: orderNo });
+    expect(run.error).toBeNull();
+    expect(psql(`select state from public.office_parcels where qr_code = '${qr}'`)).toBe("dispose_due");
+    // 처분 대상이 된 것만으로는 몫이 닫히지 않는다 — 처분을 기록해야 끝난다
+    expect(addressCount(orderNo)).toBe(1);
+    expect(closeEvents(orderNo)).toBe("");
+
+    expect((await staff.rpc("office_record_disposal", { p_qr: qr })).data).toBe("disposed");
+    expect(addressCount(orderNo)).toBe(0);
+    // 몫 닫기의 결과 값은 출고·반송·취소 셋뿐이라 처분도 반송으로 닫힌다 — 처분 사실은 상자 상태(disposed)와 처분 기록에 있다
+    expect(closeEvents(orderNo)).toBe("deleted,returned");
+    expect(psql(`select (returned_at is not null) || '/' || (shipped_at is null) || '/' || (cancelled_at is null) from public.revgift_shares where order_no = '${orderNo}'`)).toBe("true/true/true");
+    expect(psql(`select count(*) from public.office_disposals d join public.office_parcels p on p.id = d.parcel_id where p.qr_code = '${qr}'`)).toBe("1");
+  });
+
   it("INV-R9 (실패경로): 출고 송장을 출력만 하고 확정하지 않으면 주소는 그대로다 — 닫기는 확정 때만", async () => {
     const { orderNo, qr } = await acceptedAndLabeled();
     const staff = await signedInClient("fankkuk_staff");

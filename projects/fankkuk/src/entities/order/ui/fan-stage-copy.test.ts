@@ -135,3 +135,17 @@ describe("팬 단계 시각은 날짜까지만 (2026-10-14 추가분 3)", () => 
     );
   });
 });
+
+describe("office-workflow INV-W14: 「확인 중」 표시 — 무엇이 나왔는지는 쓰지 않는다", () => {
+  const checking = { ...view(2), inspectionChecking: true };
+  it("INV-W14: 배지와 검수 단계 아래 한 줄이 「확인 중」", () => {
+    expect(fanBadge(checking)).toEqual({ text: "확인 중", tone: "warn" });
+    const step = checking.steps.find((s) => s.key === "inspected");
+    expect(step && fanStepDetail(step, checking)).toBe("확인 중");
+  });
+  it("INV-W14: 어느 문구에도 추적·신고·경찰이 없다", () => {
+    const step = checking.steps.find((s) => s.key === "inspected");
+    const texts = [fanBadge(checking).text, fanHeadline(checking), step ? fanStepDetail(step, checking) : ""].join(" ");
+    expect(texts).not.toMatch(/추적|신고|경찰/);
+  });
+});

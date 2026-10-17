@@ -33,6 +33,9 @@ export type FanGiftView = {
   earlySendPending: boolean;
   /** 나만 보는 메모의 선물 이름(together INV-F7) — 보낸 사람 본인 목록 읽기(my_gifts)만 채운다. 없으면 null·없음 */
   memoTitle?: string | null;
+  /** 추적기 보관·신고 보관·경찰 인계 상자가 있는 주문(검수 결과 checking — office-workflow INV-W14). 팬에게는 「확인 중」으로만 보이고
+   *  무엇이 나왔는지는 어디에도 없다. 목록 읽기처럼 이 칸을 채우지 않는 곳은 없음(false)과 같다 */
+  inspectionChecking?: boolean;
 };
 
 /** 팬 화면이 읽는 칸만. 크리에이터행 송장번호·팬 닉네임·크리에이터 id 는 이 모양에 없다 — DB 읽기 함수도 이 칸만 돌려준다. */
@@ -83,5 +86,6 @@ export function toFanView(r: FanOrderRecord, officeAddress: string): FanGiftView
     fanTrackingNo: r.fanTrackingNo,
     expectedArrivalDate: r.expectedArrivalDate,
     earlySendPending: outcome === "in_progress" && r.approvedAt === null && r.fanSendAckAt === null,
+    inspectionChecking: outcome === "in_progress" && r.inspection?.result === "checking",
   };
 }

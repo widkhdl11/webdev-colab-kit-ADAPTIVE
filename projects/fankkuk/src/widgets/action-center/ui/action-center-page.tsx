@@ -1,20 +1,22 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { ActionItem } from "@/entities/action-item/model/action-items";
+import { disposeDueText, type ActionItem } from "@/entities/action-item/model/action-items";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
 import { DifferencePayButton } from "./difference-pay-button";
+import { ReturnAddressButton, type FanReturnAddress } from "./return-address-button";
 import { formatDeadline, seoulDaysUntil } from "@/shared/lib/format/datetime";
 import s from "./action-center.module.css";
 
 // 처리할 일 (action-center INV-J1·J2·J4, design-rules 12절, 시안 v21-addendum3/fan-action-center.html). 본문 틀은 목록형 880 — 라우트가 MyShell(list)로 감싼다.
 // 카드는 처리할 일 읽기 한 번의 결과 그대로 — 제목 옆 숫자는 그 줄 수이고 사이드바 숫자와 같은 결과다(J2). 0건이면 빈 상태.
 // 카드는 위아래 한 줄씩. 버튼은 새 처리 길을 만들지 않고 기존 처리를 그대로 부른다(J4):
-//   추가 결제 = 차액 결제 준비 → 결제창(선물 상세와 같은 길) · 도착이 늦어요 = 「받는 주소 없이 보냈어요」 찾기(그 상자 하나) · 선물 받기 = 기존 받기 화면.
+//   추가 결제 = 차액 결제 준비 → 결제창(선물 상세와 같은 길) · 도착이 늦어요 = 「받는 주소 없이 보냈어요」 찾기(그 상자 하나) · 선물 받기 = 기존 받기 화면
+//   · 돌려받을 주소 확인 = 반송 주소 확인 창(등록 주소 확인 / 바꾸기, 등록 전이면 입력 — office-workflow INV-W15).
 // 처리가 끝나면 다음 읽기에서 카드가 없다 — 카드는 누른 기록이 아니라 원천 상태로 사라진다.
 
-/** now = 남은 날을 셀 기준 시각(라우트가 그린 때) */
-type Props = { items: readonly ActionItem[]; clientKey: string; now: string };
+/** now = 남은 날을 셀 기준 시각(라우트가 그린 때) · address = 반송 주소 확인 창의 받을 주소(라우트가 읽는다) */
+type Props = { items: readonly ActionItem[]; clientKey: string; now: string; address: FanReturnAddress };
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
@@ -99,7 +101,7 @@ function Card({ item, icon, title, meta, children }: { item: ActionItem; icon: k
   );
 }
 
-function ActionCard({ item, clientKey, now }: { item: ActionItem; clientKey: string; now: string }) {
+function ActionCard({ item, clientKey, now, address }: { item: ActionItem; clientKey: string; now: string; address: FanReturnAddress }) {
   if (item.kind === "difference") {
     const declared = tierName(item.declaredTier);
     const measured = tierName(item.measuredTier);
@@ -137,8 +139,21 @@ function ActionCard({ item, clientKey, now }: { item: ActionItem; clientKey: str
       </Card>
     );
   }
-  // 반송 주소 확인 카드(office-workflow INV-W15) — 카드 문구는 용어집(return_address 행)으로 다음 묶음에서 그린다. 숫자(INV-J2)에는 이미 들어간다
-  if (item.kind === "return_address") return null;
+  // 반송 주소 확인(office-workflow INV-W15) — 용어집 return_address·dispose_due 행. 기한 = 반송 대기 + 30일(지나면 처분 대상)
+  if (item.kind === "return_address") {
+    const meta = `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`;
+    return (
+      <Card item={item} icon="truck" title="돌려받을 주소 확인" meta={meta}>
+        <p>
+          <span className={`${s.due} action-due`}>
+            <Svg name="clock" />
+            {disposeDueText(item.dueAt)}
+          </span>
+        </p>
+        <ReturnAddressButton target={{ orderNo: item.orderNo, boxSeq: item.boxSeq }} meta={meta} address={address} />
+      </Card>
+    );
+  }
   return (
     <Card item={item} icon="gift" title="선물 받기" meta={`${item.creatorName}님이 보낸 선물`}>
       <Due at={item.dueAt} now={now} />
@@ -149,7 +164,7 @@ function ActionCard({ item, clientKey, now }: { item: ActionItem; clientKey: str
   );
 }
 
-export function ActionCenterPage({ items, clientKey, now }: Props) {
+export function ActionCenterPage({ items, clientKey, now, address }: Props) {
   return (
     <>
       <header className="page-head">
@@ -163,7 +178,7 @@ export function ActionCenterPage({ items, clientKey, now }: Props) {
       {items.length > 0 ? (
         <div className="stack">
           {items.map((it) => (
-            <ActionCard key={`${it.kind}-${it.orderNo}-${"boxId" in it ? it.boxId : ""}`} item={it} clientKey={clientKey} now={now} />
+            <ActionCard key={`${it.kind}-${it.orderNo}-${"boxId" in it ? it.boxId : ""}`} item={it} clientKey={clientKey} now={now} address={address} />
           ))}
         </div>
       ) : (

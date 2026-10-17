@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatMonthDayKo } from "@/shared/lib/format/datetime";
 
 // 처리할 일 카드 (action-center INV-J1·J2·J3). DB 읽기 함수 하나(my_action_items)의 줄을 그대로 카드로 쓴다 — 저장된 목록이 아니라
 // 읽을 때마다 원천 상태에서 계산된 결과다. 사이드바 숫자·홈 한 줄·처리할 일 화면·선물 상세 맨 위 한 줄은 모두 이 배열 하나에서 나온다(J2).
@@ -20,7 +21,6 @@ export type ActionItem =
   | { kind: "missing_box"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string }
   | { kind: "revgift"; orderNo: string; creatorName: string; tier: string; dueAt: string }
   // 반송 주소 확인(office-workflow INV-W15) — 반송 대기 · 확인 전 상자 하나. 기한 = 반송 대기 + 30일(지나면 처분 대상).
-  // 화면 카드는 용어집 표기를 넣는 다음 묶음에서 그린다 — 지금은 숫자(INV-J2)에만 들어간다
   | { kind: "return_address"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string };
 
 const base = { order_no: z.string(), creator_name: z.string(), tier: z.string(), due_at: z.string() };
@@ -83,3 +83,8 @@ export function actionItemsOfOrder(items: readonly ActionItem[], orderNo: string
 
 /** 처리할 일 화면 주소 */
 export const ACTION_CENTER_HREF = "/me/actions";
+
+/** 처분 예정 날짜 문장(office-workflow INV-W15, 용어집 dispose_due 행) — 기한은 반송 대기 + 30일, 날짜는 서울 날짜. 팬·크리에이터 처리할 일이 같이 쓴다 */
+export function disposeDueText(dueAt: string): string {
+  return `${formatMonthDayKo(dueAt)}까지 확인하지 않으면 상자를 처분해요`;
+}

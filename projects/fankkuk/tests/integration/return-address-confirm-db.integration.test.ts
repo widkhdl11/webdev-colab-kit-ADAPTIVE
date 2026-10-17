@@ -211,6 +211,29 @@ describe("반송 송장의 주소 열기 (address-protection INV-P18)", () => {
     expect(after.map((r) => [r.kind, r.outcome])).toEqual([["deleted", "returned"], ["opened", null]]);
   });
 
+  it("INV-P7 · P18: 반송 송장으로 주소를 연 줄과 거부 줄이 운영자 내부 열람 기록에 「반송」 줄로 보인다 — 주문번호·결과·몇 번째·누가, 주소 칸은 없다", async () => {
+    const { g, qr } = await confirmedBox();
+    const unconfirmed = await returnWaitingGift();
+    expect(claim(qr)).toMatchObject({ result: "opened", print_no: 1 });
+    expect(claim(unconfirmed.qrs[0]!)).toEqual({ result: "denied", reason: "no_valid_approval" });
+    // 「대표 아님」 거부 줄은 송장 출력 함수가 대표 판정에서 넣는다(print-return-label 의 logDenied) — 같은 줄을 넣는다
+    psql(`insert into public.return_decrypt_log (parcel_id, requester_id, result, deny_reason) select id, '${DALTOKKI}', 'denied', 'not_owner' from public.office_parcels where qr_code = '${qr}'`);
+    const read = await (await staff()).rpc("admin_access_log", { p_limit: 500 });
+    expect(read.error).toBeNull();
+    type Row = { target: string; order_no: string; result: string; print_no: number | null; deny_reason: string | null; requester: string; released: boolean };
+    const rows = (read.data as Row[]).filter((r) => r.target === "return");
+    const mine = rows.filter((r) => r.order_no === g.orderNo).map((r) => [r.result, r.print_no, r.deny_reason, r.requester, r.released]);
+    expect(mine).toEqual([
+      ["denied", null, "not_owner", "other", false],
+      ["opened", 1, null, "owner", false],
+    ]);
+    expect(rows.filter((r) => r.order_no === unconfirmed.g.orderNo).map((r) => [r.result, r.deny_reason])).toEqual([["denied", "no_valid_approval"]]);
+    // 칸 목록은 그대로 — 주소·봉투가 들어갈 칸이 없다
+    expect(Object.keys((read.data as Row[])[0]!).sort()).toEqual(["at", "deny_reason", "order_no", "print_no", "released", "requester", "requester_nickname", "result", "target"]);
+    // 운영자가 아니면 읽지 못한다
+    expect((await (await signedInClient("byeolbit_fan")).rpc("admin_access_log", { p_limit: 10 })).error?.code).toBe("42501");
+  });
+
   it("INV-P18 (S18b, 실패경로): 확인하지 않은 상자 · 어느 주문에도 이어지지 않은 상자 → 거부와 거부 줄", async () => {
     const { qrs } = await returnWaitingGift();
     expect(claim(qrs[0]!)).toEqual({ result: "denied", reason: "no_valid_approval" });

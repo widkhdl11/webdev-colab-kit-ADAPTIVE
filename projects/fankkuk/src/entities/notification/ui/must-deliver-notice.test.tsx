@@ -18,10 +18,12 @@ describe("끌 수 없는 알림 안내", () => {
     expect(html).toContain('id="must-fan"');
   });
 
-  it("INV-N6: 크리에이터 화면 — 승인 요청과 돌려보내는 선물", () => {
+  it("INV-N6 · N13 · N22: 크리에이터 화면 — 승인 요청·추적 장치 발견·돌려받을 주소 확인", () => {
     const html = renderToStaticMarkup(<MustDeliverNotice audience="creator" id="must-creator" />);
     expect(html).toContain("끌 수 없는 알림");
     expect(html).toContain("승인 요청");
-    expect(html).toContain("돌려보내는 선물");
+    expect(html).toContain("추적 장치 발견");
+    expect(html).toContain("돌려받을 주소 확인");
+    expect(html).not.toContain("return_address");
   });
 });

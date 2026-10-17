@@ -29,7 +29,7 @@ afterEach(() => {
 
 const QR = "Q-123456";
 
-function lookupReply(tier: "small" | "medium" | "large") {
+function lookupReply(tier: "small" | "medium" | "large", openTarget = false) {
   return {
     kind: "ok",
     body: {
@@ -45,14 +45,15 @@ function lookupReply(tier: "small" | "medium" | "large") {
         envelopeNo: "E-1",
         outboundWaybillNo: null,
         returnWaybillNo: null,
+        openTarget,
       },
     },
   };
 }
 
-async function loadBox(tier: "small" | "medium" | "large" = "small") {
+async function loadBox(tier: "small" | "medium" | "large" = "small", openTarget = false) {
   act(() => root.render(<InspectWorkbench operatorNickname="담당" />));
-  api.postInspect.mockResolvedValueOnce(lookupReply(tier));
+  api.postInspect.mockResolvedValueOnce(lookupReply(tier, openTarget));
   const scan = host.querySelector<HTMLInputElement>("#inspect-scan")!;
   const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
   act(() => {
@@ -164,7 +165,7 @@ describe("추적기 판정 (INV-W4 S4c, 문제집 D2)", () => {
 
   it("INV-W4: 판정 전에는 결과 칸 아래에 「추적기 판정을 먼저 고르면 결과를 고를 수 있어요」, 평소에는 「…판정했을 때만 고를 수 있어요」", async () => {
     await loadBox();
-    expect(host.textContent).toContain("추적기 반송은 위치 추적기로 판정했을 때만 고를 수 있어요.");
+    expect(host.textContent).toContain("추적기 보관은 위치 추적기로 판정했을 때만 고를 수 있어요.");
     pick("bt", "found");
     const result = radio("res", "pass").closest("fieldset")!;
     expect(result.textContent).toContain("추적기 판정을 먼저 고르면 결과를 고를 수 있어요.");
@@ -229,5 +230,50 @@ describe("추적기 아님 → 크리에이터 확인 (INV-W4, 2026-10-12 (2) �
     // INV-W13: 고른 것은 「들어온 상자」에서 운영자가 처리하고, 기한이 지나면 고른 쪽대로·고르지 않았으면 반송 대기
     expect(host.textContent).toContain("7일이 지나면 고른 쪽대로, 고르지 않았으면 반송 대기로 넘어가요.");
     expect(host.textContent).not.toContain("결과를 읽지 못했어요");
+  });
+  it("INV-W14: 위치 추적기 판정이면 결과는 「추적기 보관」뿐이고, 다시 스캔해 추적기 보관으로 넘어가면 그 사실을 보인다 — 「결과를 읽지 못했어요」가 없다", async () => {
+    await loadBox();
+    pick("bt", "found");
+    pick("tracker", "tracker");
+    expect(radio("res", "hold").checked).toBe(true);
+    expect(radio("res", "hold").closest("label")?.textContent).toBe("추적기 보관");
+    api.postInspect.mockResolvedValueOnce({ kind: "ok", body: { ok: true } });
+    await click("기록 저장");
+    api.postInspect.mockResolvedValueOnce({ kind: "ok", body: { state: "tracker_held" } });
+    await rescan();
+    expect(host.textContent).toContain("추적기 보관으로 넘어갔어요");
+    expect(host.textContent).not.toContain("결과를 읽지 못했어요");
+    expect(host.textContent).not.toContain("바로 반송");
+  });
+
+  it("INV-W16: 개봉 대상 상자는 「개봉 대상 — 추적기 판정 이력」과 개봉 결과 칸이 나오고, 「장치 없음」이면 opened none 으로 기록한다", async () => {
+    await loadBox("small", true);
+    expect(host.textContent).toContain("개봉 대상 — 추적기 판정 이력");
+    expect(radio("opened", "none").closest("label")?.textContent).toBe("장치 없음");
+    expect(radio("opened", "device").closest("label")?.textContent).toBe("장치 나옴");
+    pick("opened", "none");
+    api.postInspect.mockResolvedValueOnce({ kind: "ok", body: { ok: true } });
+    await click("기록 저장");
+    expect(writesOf("record")).toEqual([{ kind: "record", qr: QR, result: { bluetooth: "clear", rf: "clear", metal: "clear", opened: "none", outcome: "pass" } }]);
+  });
+
+  it("INV-W16 (실패경로): 개봉 대상인데 개봉 결과 없이 저장하면 기록을 보내지 않는다 · 「장치 나옴」이면 추적기 판정 칸이 열린다", async () => {
+    await loadBox("small", true);
+    await click("기록 저장");
+    expect(writesOf("record")).toEqual([]);
+    expect(host.textContent).toContain("확인 필요");
+    pick("opened", "device");
+    pick("tracker", "tracker");
+    api.postInspect.mockResolvedValueOnce({ kind: "ok", body: { ok: true } });
+    await click("기록 저장");
+    expect(writesOf("record")).toEqual([
+      { kind: "record", qr: QR, result: { bluetooth: "clear", rf: "clear", metal: "clear", opened: "device", tracker_verdict: "tracker", outcome: "hold" } },
+    ]);
+  });
+
+  it("INV-W16: 개봉 대상이 아닌 상자에는 개봉 결과 칸·개봉 대상 표시가 없다", async () => {
+    await loadBox();
+    expect(host.querySelector('input[name="opened"]')).toBeNull();
+    expect(host.textContent).not.toContain("개봉 대상");
   });
 });

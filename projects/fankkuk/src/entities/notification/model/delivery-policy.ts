@@ -45,8 +45,9 @@ type Policy = {
 // 새 종류를 더하면 여기서 타입 오류가 난다 — 끌 수 있는지를 정하지 않은 종류는 만들 수 없다.
 export const NOTIFICATION_POLICY: Record<NotificationKind, Policy> = {
   approval_request: { mustDeliver: true, label: "승인 요청", audience: "creator" },
-  // 검수에서 위치 추적기가 나와 보낸 팬에게 돌려보내는 상자(INV-N13, 2026-10-12 문제집 D2 — 보관 없이 바로 반송). 종류 코드는 처음 이름 그대로
-  hold: { mustDeliver: true, label: "돌려보내는 선물", audience: "creator" },
+  // 검수에서 위치 추적기가 나와 사무실에 보관한 상자 — 크리에이터에게 신고할지 묻는다(INV-N13, office-workflow INV-W14, 2026-10-17 카드 d100).
+  // 이름은 용어집 tracker_hold 행의 크리에이터 라벨. 종류 코드는 처음 이름 그대로
+  hold: { mustDeliver: true, label: "추적 장치 발견", audience: "creator" },
   hold_fan: { mustDeliver: true, label: "돌려보낼 상자", audience: "fan" },
   // 추적기 아님 블루투스·RF 상자를 받을지 묻는다 — 7일 안에 답이 없으면 반송(2026-10-12 (2) D3 ②)
   creator_check: { mustDeliver: true, label: "확인할 선물", audience: "creator" },
@@ -61,9 +62,9 @@ export const NOTIFICATION_POLICY: Record<NotificationKind, Policy> = {
   box_no_code: { mustDeliver: true, label: "받는 주소 없이 보낸 상자", audience: "fan" },
   // 역조공 몫 결제 완료 때·72시간 뒤 받는 팬에게(INV-N20, 2026-10-16) — 7일 안에 정하지 않으면 받지 않음이 된다
   revgift_offer: { mustDeliver: true, label: "역조공 받기", audience: "fan" },
-  // 반송 주소를 확인하지 않으면 반송되지 않고 30일 뒤 처분된다(INV-N22). 화면 이름은 용어집 표기를 넣기 전이라 코드값 — 두 종류가 한 이름으로 보인다
-  return_address: { mustDeliver: true, label: "return_address", audience: "fan", alsoAudience: "creator" },
-  return_address_reminder: { mustDeliver: true, label: "return_address", audience: "fan", alsoAudience: "creator" },
+  // 반송 주소를 확인하지 않으면 반송되지 않고 30일 뒤 처분된다(INV-N22). 이름은 용어집 return_address 행의 카드 제목 — 첫 알림과 재알림이 한 이름으로 보인다
+  return_address: { mustDeliver: true, label: "돌려받을 주소 확인", audience: "fan", alsoAudience: "creator" },
+  return_address_reminder: { mustDeliver: true, label: "돌려받을 주소 확인", audience: "fan", alsoAudience: "creator" },
   arrived: { mustDeliver: false, label: null, audience: "fan" },
   inspected: { mustDeliver: false, label: null, audience: "fan" },
   shipped: { mustDeliver: false, label: null, audience: "fan" },

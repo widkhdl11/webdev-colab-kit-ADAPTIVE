@@ -31,6 +31,9 @@ export function declinedText(creatorName: string): string {
 /** 7일 자동 반려 — 거절과 따로 보인다(decline-block INV-D5). */
 export const EXPIRED_TEXT = "기간이 지나 반려됐어요";
 
+/** 추적기 보관·신고 보관·경찰 인계인 동안 팬에게 보이는 이름(office-workflow INV-W14) */
+export const CHECKING_LABEL = "확인 중";
+
 const currentKey = (view: FanGiftView) => view.steps.find((st) => st.state === "current")?.key;
 
 /** 승인 전 주문에서 「먼저 보내기」를 아직 누르지 않았을 때의 상단 표시(approval-signature INV-S9) — 받는 주소가 아직 없으니 「보내 주세요」라고 하지 않는다. */
@@ -68,6 +71,8 @@ export function fanBadge(view: FanGiftView): { text: string; tone: StatusTone } 
   if (view.outcome === "canceled") return { text: "취소", tone: "plain" };
   const current = currentKey(view);
   if (!current) return { text: "수령", tone: "success" };
+  // INV-W14: 추적기 보관·신고 보관·경찰 인계 — 팬에게는 「확인 중」뿐(용어집 tracker_hold·report_hold·police_handover 행 팬 열)
+  if (view.inspectionChecking) return { text: CHECKING_LABEL, tone: "warn" };
   if (current === "shipped" && view.approval.state !== "done") return { text: "승인 대기", tone: "warn" };
   if (current === "received" && view.earlySendPending) return EARLY_SEND_WAIT_BADGE;
   if (current === "received") return { text: view.fanTrackingNo ? "도착 대기" : "보내 주세요", tone: "warn" };
@@ -82,7 +87,7 @@ export function fanStepDetail(step: FanStep, view: FanGiftView): string | null {
   if (step.state === "current") {
     if (step.key === "shipped" && view.approval.state !== "done") return "승인되면 바로 출고하고 알림톡으로 알려 드려요";
     if (step.key === "received") return "도착하면 날짜가 여기에 표시돼요";
-    if (step.key === "inspected") return "모든 상자를 탐지기로 검수해요";
+    if (step.key === "inspected") return view.inspectionChecking ? CHECKING_LABEL : "모든 상자를 탐지기로 검수해요";
     return null;
   }
   if (step.state !== "done") return null;

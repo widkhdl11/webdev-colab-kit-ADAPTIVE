@@ -13,7 +13,7 @@ import {
   RETURN_ON_REJECT_NOTICE,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
-import { boxTierName, canReportNotMine, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
+import { boxTierName, canReportNotMine, fanBoxStateTag, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
 import { giftAddressCode, giftFinderBoxes, needsEarlySendAck } from "@/features/box-waybill/model/box-targets";
 import { EarlySendGate } from "@/features/box-waybill/ui/early-send-gate";
 import { canCancelGift } from "@/features/gift-cancel/model/cancellable";
@@ -243,11 +243,14 @@ export function GiftStatusPage({
                 {boxes.map((b) => {
                   const tierName = boxTierName(b.tier);
                   const addressCode = giftAddressCode(b, officeAddress, inProgress);
+                  const stateTag = fanBoxStateTag(b.state);
                   return (
                     <div key={b.boxId} className={`card ${s.box}`}>
                       <div className={s["box-head"]}>
                         <h3>{b.label}</h3>
-                        {hasArrived(b.state) ? (
+                        {stateTag ? (
+                          <span className={statusTagClass(stateTag.tone)}>{stateTag.text}</span>
+                        ) : hasArrived(b.state) ? (
                           <span className={statusTagClass("success")}>
                             <Check size={16} />
                             입고됨

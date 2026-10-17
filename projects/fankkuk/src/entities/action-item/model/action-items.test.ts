@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseActionItems } from "./action-items";
+import { disposeDueText, parseActionItems } from "./action-items";
 
 // 팬 처리할 일 줄 꼴 (action-center INV-J1·J2). 반송 주소 확인 카드(office-workflow INV-W15) — 상자 하나가 카드 하나.
 
@@ -16,5 +16,12 @@ describe("반송 주소 확인 카드 (action-center INV-J1)", () => {
   it("INV-J1 (실패경로): 상자 칸이 없는 반송 주소 줄이 하나라도 있으면 전체를 거부한다 — 숫자와 목록이 다른 수를 말하지 않게", () => {
     expect(() => parseActionItems([{ ...returnRow, box_id: null }])).toThrow();
     expect(() => parseActionItems([{ ...returnRow, box_seq: null }])).toThrow();
+  });
+});
+
+describe("처분 예정 날짜 문장 (office-workflow INV-W15, 용어집 dispose_due 행)", () => {
+  it("INV-W15: 기한(반송 대기 + 30일)을 서울 날짜로 — 「○월 ○일까지 확인하지 않으면 상자를 처분해요」", () => {
+    // 서울 11월 16일 0시 30분 = UTC 11월 15일 15시 30분 — UTC 날짜로 쓰면 하루 이르게 나온다
+    expect(disposeDueText("2026-11-15T15:30:00.000Z")).toBe("11월 16일까지 확인하지 않으면 상자를 처분해요");
   });
 });

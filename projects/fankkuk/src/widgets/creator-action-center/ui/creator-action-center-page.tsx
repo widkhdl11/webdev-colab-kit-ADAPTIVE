@@ -9,22 +9,28 @@ import {
   type ApprovalItem,
   type BluetoothItem,
   type CreatorActionItem,
+  type ReturnAddressItem,
   type SentGiftItem,
+  type TrackerItem,
   type UnconfirmedItem,
 } from "@/entities/action-item/model/creator-action-items";
+import { disposeDueText } from "@/entities/action-item/model/action-items";
 import { tierName } from "@/entities/parcel/model/size-tier";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
 import type { SentBoxCandidate } from "@/features/box-waybill/ui/find-sent-box";
 import { FindSentBoxButton } from "@/features/box-waybill/ui/find-sent-box-button";
 import { BluetoothWindow, boxPlace, CancelChoiceButton, choiceText, signalThing } from "@/features/creator-check/ui/bluetooth-window";
+import { TrackerWindow, trackerChoiceText } from "@/features/creator-check/ui/tracker-window";
 import { formatMonthDayKo } from "@/shared/lib/format/datetime";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { ApprovalWindowWithAddress } from "./approval-window-with-address";
+import { CreatorReturnAddressButton } from "./creator-return-address-button";
 import s from "./creator-action-center.module.css";
 
 // 크리에이터 처리할 일 (action-center INV-J5~J8, design-rules 13절, 시안 v21-addendum3/cre-action-center-d.html 가안 · 창은 cre-action-center-c.html).
 // 줄은 처리할 일 읽기 한 번의 결과 그대로 — 판·순서도 DB 가 정했다. 제목 옆 숫자·판 머리 숫자는 그 줄 수이고 사이드바 숫자와 같은 결과다(J6).
-// 버튼은 새 처리 길을 만들지 않고 정해진 처리를 부른다(J8): 블루투스 = 받기·거절 고르기와 취소, 승인 = 카카오톡 서명 승인·받지 않기,
+// 버튼은 새 처리 길을 만들지 않고 정해진 처리를 부른다(J8): 추적 장치 = 신고하기·신고하지 않기 고르기와 취소(블루투스와 같은 고르기 함수, office-workflow INV-W14),
+// 블루투스 = 받기·거절 고르기와 취소, 승인 = 카카오톡 서명 승인·받지 않기, 반송 주소 = 반송 주소 확인 창(office-workflow INV-W15),
 // 미확인 상자 = 송장번호·택배사와 팬 고르기를 한 번에(창 B), 보낸 팬 선물 = 팬 처리할 일과 같은 처리(차액은 선물 상세의 결제, 늦은 상자는 「받는 주소 없이 보냈어요」).
 // 처리가 끝나면 다음 읽기에서 줄이 없다 — 블루투스는 고르기만 한 동안 남는다(고른 쪽 + 취소).
 
@@ -146,6 +152,7 @@ function Row({ tone, icon, title, sub, action }: { tone?: "alert" | "appr"; icon
 }
 
 type Open =
+  | { kind: "tracker"; item: TrackerItem }
   | { kind: "bluetooth"; item: BluetoothItem }
   | { kind: "approval"; item: ApprovalItem }
   | { kind: "missing_box"; item: Extract<SentGiftItem, { kind: "missing_box" }> }
@@ -158,8 +165,34 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
   const close = () => setOpen(null);
   const { received, sent } = splitBoards(items);
 
-  function receivedRow(it: BluetoothItem | ApprovalItem) {
+  function receivedRow(it: TrackerItem | BluetoothItem | ApprovalItem) {
     const due = daysLeftOf(it.dueAt, now);
+    if (it.kind === "tracker") {
+      return (
+        <Row
+          key={keyOf(it)}
+          tone="alert"
+          icon="alert"
+          title={`${it.nickname}님 선물에서 추적 장치가 나왔어요`}
+          sub={<Sub kind="추적 장치 발견" due={due} rest={[`${it.itemKind} · ${boxPlace(it)}`]} />}
+          action={
+            it.choice ? (
+              <>
+                <span className={s.picked}>
+                  <Ico name="check" />
+                  {trackerChoiceText(it.choice)}
+                </span>
+                <CancelChoiceButton item={it} label={trackerChoiceText(it.choice)} />
+              </>
+            ) : (
+              <button className="btn" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "tracker", item: it })}>
+                신고할지 정하기
+              </button>
+            )
+          }
+        />
+      );
+    }
     if (it.kind === "bluetooth") {
       const title = `${it.nickname}님 선물에서 ${signalThing(it)}가 나왔어요`;
       return (
@@ -203,7 +236,20 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
     );
   }
 
-  function sentRow(it: UnconfirmedItem | SentGiftItem) {
+  function sentRow(it: UnconfirmedItem | SentGiftItem | ReturnAddressItem) {
+    if (it.kind === "return_address") {
+      // 보낸 역조공 몫(상자 순번 없음) 또는 보낸 팬 선물의 상자 — 용어집 return_address·dispose_due 행
+      const title = it.boxSeq === null ? `${it.nickname}님께 보낸 역조공` : `${it.nickname}님께 보낸 선물 · 상자 ${it.boxSeq}`;
+      return (
+        <Row
+          key={keyOf(it)}
+          icon="truck"
+          title={title}
+          sub={<Sub kind="돌려받을 주소 확인" rest={[disposeDueText(it.dueAt)]} />}
+          action={<CreatorReturnAddressButton target={{ orderNo: it.orderNo, boxSeq: it.boxSeq }} meta={title} address={address} sealingKeyPem={sealingKeyPem} />}
+        />
+      );
+    }
     if (it.kind === "unconfirmed") {
       return (
         <Row
@@ -309,6 +355,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
         </section>
       ) : null}
 
+      {open?.kind === "tracker" ? <TrackerWindow key={keyOf(open.item)} item={open.item} now={now} open onClose={close} /> : null}
       {open?.kind === "bluetooth" ? <BluetoothWindow key={keyOf(open.item)} item={open.item} now={now} open onClose={close} /> : null}
       {open?.kind === "approval" ? (
         <ApprovalWindowWithAddress

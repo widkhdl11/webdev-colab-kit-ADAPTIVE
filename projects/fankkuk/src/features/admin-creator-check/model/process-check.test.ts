@@ -49,4 +49,17 @@ describe("크리에이터가 고른 상자의 운영자 처리 (INV-W13)", () =>
     expect((await processCreatorCheck(client, BODY)).status).toBe(404);
     expect(calls.some((c) => c.fn === "office_process_creator_check")).toBe(false);
   });
+  it("INV-W13·W14 (실패경로): 기한(검수 완료 + 168시간)이 지난 상자는 409 와 문장 — 코드값을 돌려주지 않는다", async () => {
+    const { client } = fakeClient({ data: "expired" });
+    const reply = await processCreatorCheck(client, { qr: "Q-000123", seen: "report" });
+    expect(reply.status).toBe(409);
+    expect(reply.body).toEqual({ message: "7일이 지나 자동 처리를 기다리는 상자예요." });
+  });
+
+  it("INV-W14: 추적기 보관 상자의 신고하기·신고하지 않기 처리 결과를 돌려준다", async () => {
+    for (const data of ["reported", "not_reported"] as const) {
+      const { client } = fakeClient({ data });
+      expect(await processCreatorCheck(client, { qr: "Q-000123", seen: data === "reported" ? "report" : "no_report" })).toEqual({ status: 200, body: { result: data } });
+    }
+  });
 });

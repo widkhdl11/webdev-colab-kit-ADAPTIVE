@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { boxTierName, canReportNotMine, hasArrived, isMissing, isWaybillEditable, parseGiftBoxRows, parseShareBoxRows } from "./box-rows";
+import { boxTierName, canReportNotMine, fanBoxStateTag, hasArrived, isMissing, isWaybillEditable, parseGiftBoxRows, parseShareBoxRows } from "./box-rows";
 
 const EXTRA = { address_code: null, reported_not_mine: false } as const;
 // 팬 선물 상자 줄에만 있는 칸 — 「먼저 보내기」 전인가(approval-signature INV-S9)
@@ -88,5 +88,18 @@ describe("송장번호를 고칠 수 있는 때 — 입고 전까지만", () => 
     expect(boxTierName("small")).toBe("소형 상자");
     expect(boxTierName("large")).toBe("대형 상자");
     expect(boxTierName(null)).toBeNull();
+  });
+});
+
+describe("fanBoxStateTag — 상자 칸 배지(office-workflow INV-W14·W15, 용어집 팬 열)", () => {
+  it("INV-W14: 확인 중(checking)은 「확인 중」 — 추적기 보관·신고 보관·경찰 인계를 팬 읽기가 부르는 한 값", () => {
+    expect(fanBoxStateTag("checking")).toEqual({ text: "확인 중", tone: "warn" });
+  });
+  it("INV-W15: 처분 대상은 「처분 예정」, 처분은 「처분」", () => {
+    expect(fanBoxStateTag("dispose_due")).toEqual({ text: "처분 예정", tone: "warn" });
+    expect(fanBoxStateTag("disposed")).toEqual({ text: "처분", tone: "plain" });
+  });
+  it("그 밖의 상태는 따로 배지가 없다(null — 입고됨·도착 전 칸이 그대로)", () => {
+    for (const s of ["awaiting", "received", "inspected", "return_waiting", "shipped", "missing"] as const) expect(fanBoxStateTag(s)).toBeNull();
   });
 });

@@ -159,13 +159,20 @@ describe("출고 (office-workflow INV-W1·W3·W8)", () => {
   });
 
   it("INV-W15 · P18 (S15b, 실패경로): 확인 전·상한·계정 불일치 거부는 409 not_shippable(라벨 없음), 없는 상자 404, 실패 500 — 봉투 번호 길로 넘어가지 않는다", async () => {
+    const texts = new Set<string>();
     for (const reason of ["no_valid_approval", "order_not_printable", "decrypt_limit_reached", "address_mismatch"] as const) {
       const { calls, client } = fakeClient({});
       const reply = await scanOutbound(deps(client, undefined, returnPrinter({ kind: "denied", reason })), { kind: "print_return", qr: "Q-000123" });
       expect([reason, reply.status, reply.body.reason]).toEqual([reason, 409, "not_shippable"]);
       expect(reply.body).not.toHaveProperty("label");
+      // 화면에 그대로 나가는 문장이다 — 코드값이 아니다
+      expect(String(reply.body.message)).not.toMatch(/[a-z_]{3,}/);
+      texts.add(String(reply.body.message));
       expect(calls).toEqual([]);
     }
+    expect(texts.size).toBe(4);
+    const unconfirmed = await scanOutbound(deps(fakeClient({}).client, undefined, returnPrinter({ kind: "denied", reason: "no_valid_approval" })), { kind: "print_return", qr: "Q-000123" });
+    expect(String(unconfirmed.body.message)).toContain("반송 주소 확인 전");
     const missing = fakeClient({});
     expect((await scanOutbound(deps(missing.client, undefined, returnPrinter({ kind: "not_found" })), { kind: "print_return", qr: "Q-000123" })).status).toBe(404);
     const failed = fakeClient({});
@@ -241,5 +248,26 @@ describe("개발용 송장번호 (택배사 API 전, office-workflow 비범위)"
     const made = new Set(Array.from({ length: 50 }, () => devWaybillNo()));
     for (const n of made) expect(n).toMatch(/^[0-9]{12}$/);
     expect(made.size).toBeGreaterThan(45);
+  });
+});
+
+describe("경찰 인계 기록 (office-workflow INV-W14·W8)", () => {
+  it("INV-W14: 신고 보관 상자의 QR 과 메모(앞뒤 공백 뗌)로 경찰 인계를 기록한다 — 직원도", async () => {
+    const { calls, client } = fakeClient({ office_record_police_handover: { data: "handed", error: null } }, { operator: true, owner: false });
+    expect(await scanOutbound(deps(client), { kind: "record_police_handover", qr: "Q-000123", memo: "  강남서 생활안전과 인계 " })).toEqual({ status: 200, body: { ok: true } });
+    expect(calls).toEqual([{ fn: "office_record_police_handover", args: { p_qr: "Q-000123", p_memo: "강남서 생활안전과 인계" } }]);
+  });
+
+  it("INV-W14 (실패경로): 메모가 비었거나 200자를 넘으면 400 — DB 를 부르지 않는다. 신고 보관이 아니면 409", async () => {
+    for (const memo of ["", "   ", "가".repeat(201)]) {
+      const { calls, client } = fakeClient({});
+      const reply = await scanOutbound(deps(client), { kind: "record_police_handover", qr: "Q-000123", memo });
+      expect(reply).toEqual({ status: 400, body: { message: "메모를 1~200자로 적어 주세요." } });
+      expect(calls).toEqual([]);
+    }
+    const wrong = fakeClient({ office_record_police_handover: { error: { code: "55000" } } });
+    expect((await scanOutbound(deps(wrong.client), { kind: "record_police_handover", qr: "Q-000123", memo: "인계" })).status).toBe(409);
+    const tooLong = fakeClient({ office_record_police_handover: { error: { code: "22023" } } });
+    expect(await scanOutbound(deps(tooLong.client), { kind: "record_police_handover", qr: "Q-000123", memo: "인계" })).toEqual({ status: 400, body: { message: "메모를 1~200자로 적어 주세요." } });
   });
 });

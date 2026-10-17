@@ -13,7 +13,14 @@ describe("출고 응답 다시 읽기 (office-workflow INV-W3·W8)", () => {
     expect(printedReplyFromBody({ waybill: "555566667777", reprint: false, label: { ...label, zipCode: undefined } })).toBeNull();
   });
   it("INV-W8: 반송 송장 응답은 봉투 번호가 있어야 한다", () => {
-    expect(returnPrintedReplyFromBody({ waybill: "555566667777", envelopeNo: "Q-000123" })).toEqual({ waybill: "555566667777", envelopeNo: "Q-000123" });
+    expect(returnPrintedReplyFromBody({ waybill: "555566667777", envelopeNo: "Q-000123" })).toEqual({ waybill: "555566667777", envelopeNo: "Q-000123", label: null });
     expect(returnPrintedReplyFromBody({ waybill: "555566667777", envelopeNo: "" })).toBeNull();
+  });
+  it("INV-P18: 주문에 이어진 상자의 반송 송장 응답은 봉투 번호 대신 라벨 칸 다섯 개가 온다 — 둘 다 읽는다", () => {
+    const label = { recipientName: "별빛", phone: "01012345678", zipCode: "06236", address1: "서울시 강남구 테헤란로 1", address2: "" };
+    expect(returnPrintedReplyFromBody({ waybill: "555566667777", reprint: false, label })).toEqual({ waybill: "555566667777", envelopeNo: null, label });
+    expect(returnPrintedReplyFromBody({ waybill: "555566667777", envelopeNo: "Q-000123" })).toEqual({ waybill: "555566667777", envelopeNo: "Q-000123", label: null });
+    expect(returnPrintedReplyFromBody({ waybill: "555566667777", reprint: false, label: { ...label, phone: "" } })).toBeNull();
+    expect(returnPrintedReplyFromBody({ waybill: "555566667777" })).toBeNull();
   });
 });

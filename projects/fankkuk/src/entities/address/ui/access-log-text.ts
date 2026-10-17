@@ -20,5 +20,10 @@ export const REVGIFT_ACCESS_DENY_TEXT: Partial<Record<AccessDenyReason, string>>
   order_mismatch: "다른 선물의 주소라 열리지 않았어요",
 };
 
+/** 반송 송장의 주소 열기(INV-P18) — 보낸 사람이 반송 주소를 확인하기 전이면 no_valid_approval 로 거부된다(용어집 return_address 행 운영자 열). 나머지 사유는 ACCESS_DENY_TEXT. */
+export const RETURN_ACCESS_DENY_TEXT: Partial<Record<AccessDenyReason, string>> = {
+  no_valid_approval: "반송 주소 확인 전이라 열리지 않았어요",
+};
+
 /** 운영자 내부 기록의 「누가」 — 대표 계정인지 아닌지(INV-P8). 닉네임은 따로 붙인다. */
 export const ACCESS_REQUESTER_TEXT: Record<AccessRequester, string> = { owner: "대표", other: "대표 아님" };

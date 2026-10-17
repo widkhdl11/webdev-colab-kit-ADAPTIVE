@@ -6,6 +6,7 @@ import type { PendingBox } from "@/entities/payment/model/pending-boxes";
 import type { ReviewPayment } from "@/entities/payment/model/review-payments";
 import { canRefund } from "@/features/admin-refund/model/refund-access";
 import { RefundButton } from "@/features/admin-refund/ui/refund-button";
+import { CreatorCancelForm } from "@/features/admin-order-cancel/ui/creator-cancel-form";
 import { ReceivedCancelForm } from "@/features/admin-order-cancel/ui/received-cancel-form";
 import { PendingBoxesSection } from "@/features/admin-pending-box/ui/pending-boxes-section";
 import { ReviewPaymentsSection } from "@/features/admin-review-cancel/ui/review-payments-section";
@@ -208,6 +209,7 @@ export function PaymentsPanel({ rows, pendingBoxes, reviewPayments, access }: Pr
         <ReviewPaymentsSection rows={reviewPayments} access={access} />
         <PendingBoxesSection boxes={pendingBoxes} access={access} />
         {access === "owner" && <ReceivedCancelForm />}
+        {access === "owner" && <CreatorCancelForm />}
       </div>
     </>
   );

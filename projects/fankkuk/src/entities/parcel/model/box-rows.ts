@@ -54,6 +54,14 @@ export function hasArrived(s: BoxState): boolean {
   return !isWaybillEditable(s) && !isMissing(s);
 }
 
+/** 팬 상자 칸의 배지 중 「입고됨」 대신 붙는 것 — 확인 중(INV-W14)·처분 예정·처분(INV-W15). 용어집 tracker_hold·dispose_due·disposed 행 팬 열. 없으면 null */
+export function fanBoxStateTag(s: BoxState): { text: string; tone: "warn" | "plain" } | null {
+  if (s === "checking") return { text: "확인 중", tone: "warn" };
+  if (s === "dispose_due") return { text: "처분 예정", tone: "warn" };
+  if (s === "disposed") return { text: "처분", tone: "plain" };
+  return null;
+}
+
 export function boxTierName(t: BoxTier): string | null {
   return t ? `${PARCEL_TIER_GUIDE[t].name} 상자` : null;
 }

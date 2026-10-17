@@ -32,7 +32,9 @@ describe("알림 본문 틀 (INV-N1)", () => {
       const all = [b.subject, b.text, b.buttonLabel, b.link].join("\n");
       expect(all).toContain("FC-7K3M9");
       expect(all).toContain("하루");
-      for (const banned of ["향수", "별빛", "추적 장치", "블루투스"]) expect(all).not.toContain(banned);
+      // 추적 장치 발견(hold)은 그 크리에이터에게 신고할지 묻는 알림이라 「추적 장치」를 쓴다(INV-N13, 2026-10-17 카드 d100) — 그 밖의 종류에는 없다
+      const banned = kind === "hold" ? ["향수", "별빛", "블루투스"] : ["향수", "별빛", "추적 장치", "블루투스"];
+      for (const word of banned) expect(all).not.toContain(word);
       expect(all).not.toMatch(/01[016789]-?\d{3,4}-?\d{4}/); // 휴대폰 번호 꼴
       expect(all).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/); // 메일 주소 꼴
       expect(all).not.toMatch(/\d{10,}/); // 운송장 번호 꼴(숫자 열 자리 이상)
@@ -85,20 +87,22 @@ describe("알림 링크 (INV-N9)", () => {
     // 승인 요청·확인할 선물은 크리에이터 처리할 일(2026-10-16 — 「승인 대기」 메뉴가 없어짐, action-center INV-J5)
     expect(paths.get("approval_request")!.pathname).toBe("/creator/actions");
     expect(paths.get("creator_check")!.pathname).toBe("/creator/actions");
-    expect(paths.get("hold")!.pathname).toBe("/creator");
+    expect(paths.get("hold")!.pathname).toBe("/creator/actions");
     for (const k of ["arrived", "inspected", "shipped", "box_arrived"] as const) expect(paths.get(k)!.pathname).toBe("/gifts/FC-7K3M9");
   });
 
-  it("INV-N13 (S13): 팬의 「돌려보낼 상자」 알림 — 선물 상세 링크, 보내신 주소로 돌려보낸다는 말뿐이고 무엇이 나왔는지·기다리는 시간은 없다", () => {
+  it("INV-N13 (S13): 팬의 「돌려보낼 상자」 알림 — 선물 상세 링크, 돌려받을 주소를 확인해 달라는 말뿐이고 무엇이 나왔는지·신고 선택은 없다", () => {
     const b = buildNotificationBody(inputFor("hold_fan"));
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
     expect(b.subject).toBe("[팬꾹] 돌려보낼 상자가 있어요");
     expect(b.text).toContain("검수를 통과하지 못한 상자가 있어요.");
-    expect(b.text).toContain("보내신 주소로 돌려보내요.");
-    for (const word of ["추적", "블루투스", "금속", "크리에이터가", "168시간", "보관"]) expect(b.text).not.toContain(word);
+    expect(b.text).toContain("돌려받을 주소를 확인해 주세요.");
+    // 2026-10-17 부터 반송 주소를 확인해야 반송 송장이 나간다 — 「보내신 주소로 돌려보내요」(원 송장 주소)는 틀린 말이 된다
+    expect(b.text).not.toContain("보내신 주소로");
+    for (const word of ["추적", "블루투스", "금속", "크리에이터가", "168시간", "보관", "신고"]) expect(b.text).not.toContain(word);
   });
 
-  it("INV-N13 (S13): 크리에이터의 추적기 반송 알림 — 확인을 부탁하지 않고 돌려보낸다는 사실, 무엇이 나왔는지·보낸 팬은 없다", () => {
+  it("INV-N13 (S13): 크리에이터의 추적 장치 발견 알림 — 신고할지 정해 달라는 말과 7일 기한, 처리할 일 링크. 보낸 팬은 없다", () => {
     // 보낸 팬의 닉네임을 칸 밖으로 실제로 넘겨도 본문에 섞이지 않는다 — 넘기지 않으면 「별빛」 부재는 늘 참이다
     const b = buildNotificationBody({
       ...inputFor("hold"),
@@ -106,10 +110,12 @@ describe("알림 링크 (INV-N9)", () => {
       senderNickname: "별빛",
       fanNickname: "별빛",
     });
-    expect(new URL(b.link).pathname).toBe("/creator");
-    expect(b.subject).toBe("[팬꾹] 검수를 통과하지 못한 선물이 있어요");
-    expect(b.text).toContain("검수를 통과하지 못해 보낸 분에게 돌려보내는 상자가 있어요.");
-    for (const word of ["확인할", "확인이 필요한", "추적", "블루투스", "보관", "별빛"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
+    expect(new URL(b.link).pathname).toBe("/creator/actions");
+    expect(b.subject).toBe("[팬꾹] 추적 장치가 나온 상자가 있어요");
+    expect(b.text).toContain("추적 장치가 나온 상자가 있어요.");
+    // 스펙 문장의 「보낸 분」은 용어집 2절에서 쓰지 않는 말이라 「보낸 사람」으로 쓴다
+    expect(b.text).toContain("신고할지 정해 주세요. 7일 안에 정하지 않으면 보낸 사람에게 돌려보내요.");
+    for (const word of ["위치 추적기", "블루투스", "보관", "별빛", "보낸 분에게"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
   });
 
   it("INV-N15 (S15): 도착하지 않은 상자 알림 — 선물 상세 링크, 30일이 지나면 닫히고 그 상자 금액을 돌려준다는 말뿐이다", () => {
@@ -371,13 +377,18 @@ describe("받는 주소 없이 보낸 상자 알림 — 크리에이터 (INV-N21
 });
 
 describe("반송 주소 알림 (INV-N22)", () => {
-  // 본문 문구는 용어집(return_address·dispose_due 행)으로 다음 묶음에서 넣는다 — 지금은 자리만(코드값). 여기서는 링크·칸·날짜·꼭 가는 알림을 본다
-  it("INV-N22 (S22): 팬 선물이면 선물 상세로, 역조공 몫(RG-)이면 보낸 역조공 화면으로 잇고 꼭 가는 알림 — 반송 이유·주소·크리에이터 이름 칸이 없다", () => {
+  it("INV-N22 (S22): 팬 선물이면 선물 상세로, 역조공 몫(RG-)이면 크리에이터 처리할 일로 잇고 꼭 가는 알림 — 반송 이유·주소·크리에이터 이름 칸이 없다", () => {
     const gift = buildNotificationBody(inputFor("return_address"));
     expect(new URL(gift.link).pathname).toBe("/gifts/FC-7K3M9");
+    expect(gift.subject).toBe("[팬꾹] 돌려보낼 상자가 있어요");
+    expect(gift.text).toContain("돌려보낼 상자가 있어요.");
+    expect(gift.text).toContain("돌려받을 주소를 확인해 주세요. 30일 안에 확인하지 않으면 상자를 처분해요.");
+    expect(gift.buttonLabel).toBe("돌려받을 주소 확인하기");
     expect(gift.text).toContain("이 알림은 꺼 두어도 가요.");
+    for (const word of ["return_address", "dispose_due", "반송지", "폐기"]) expect(gift.text + gift.subject + gift.buttonLabel).not.toContain(word);
+    // 보낸 역조공 반송 주소는 크리에이터 처리할 일의 줄에서 확인한다(action-center INV-J5)
     const share = buildNotificationBody({ ...inputFor("return_address"), orderNo: "RG-7K3M90" });
-    expect(new URL(share.link).pathname).toBe("/creator/revgifts");
+    expect(new URL(share.link).pathname).toBe("/creator/actions");
     // 다른 종류의 값(보낸 크리에이터 이름·자동 반려 시각)을 넘겨도 섞이지 않는다
     const mixed = buildNotificationBody({ ...inputFor("return_address"), senderName: "모모", autoRejectAt: "2026-10-08T01:00:00Z" });
     expect(mixed.text).not.toContain("모모");
@@ -386,7 +397,10 @@ describe("반송 주소 알림 (INV-N22)", () => {
 
   it("INV-N22 (S22): 재알림은 처분 예정 날짜(반송 대기 + 30일)를 서울 시간으로 적는다 — 첫 알림에는 날짜가 없다", () => {
     const b = buildNotificationBody(inputFor("return_address_reminder"));
-    expect(b.text).toContain("11월 16일");
+    expect(b.subject).toBe("[팬꾹] 돌려받을 주소를 아직 확인하지 않았어요");
+    expect(b.text).toContain("돌려받을 주소를 아직 확인하지 않았어요.");
+    expect(b.text).toContain("11월 16일까지 확인하지 않으면 상자를 처분해요.");
+    expect(b.text).not.toContain("dispose_due");
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
     const first = buildNotificationBody({ ...inputFor("return_address"), disposeDueAt: "2026-11-16T03:00:00Z" });
     expect(first.text).not.toContain("11월 16일");
