@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v24 크리에이터 찾기 카드 — 지금 / 제안</title>
+<style>
+:root { --ink:#1f2937; --sub:#4b5563; --line:#e5e7eb; --bg:#f9fafb; }
+* { box-sizing: border-box; }
+body { margin:0; font-family:"Pretendard Variable",Pretendard,-apple-system,"Malgun Gothic",sans-serif; color:var(--ink); background:#fff; font-size:16px; line-height:1.6; }
+.wrap { max-width:1200px; margin:0 auto; padding:48px 24px 96px; }
+h1 { font-size:32px; margin:0 0 8px; } h2 { font-size:24px; margin:0 0 8px; } h3 { font-size:16px; margin:0 0 8px; color:var(--sub); }
+p { margin:0; color:var(--sub); }
+.src { font-size:14px; margin-top:8px; }
+section { margin-top:64px; padding-top:32px; border-top:1px solid var(--line); }
+.links { display:flex; gap:16px; flex-wrap:wrap; margin:8px 0 24px; }
+.links a { color:var(--ink); font-weight:600; }
+.pair { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px; align-items:start; }
+.pair.narrow { grid-template-columns:repeat(2, minmax(0, 390px)); justify-content:start; }
+figure { margin:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--bg); }
+figcaption { font-size:14px; font-weight:600; padding:8px 16px; border-bottom:1px solid var(--line); background:#fff; }
+figure img { display:block; width:100%; height:auto; }
+@media (max-width:767px) { .pair, .pair.narrow { grid-template-columns:1fr; } }
+.crop { position:relative; display:inline-block; max-width:600px; width:100%; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+.crop img { display:block; width:100%; height:auto; }
+.crop .band { position:absolute; left:0; right:0; top:30.9%; height:38.2%; box-shadow:0 0 0 9999px rgba(17,24,39,.55); outline:2px solid #fff; }
+ul.notes { margin:8px 0 0; padding-left:20px; color:var(--sub); font-size:14px; } ul.notes li { margin-top:4px; }
+.pair.three { grid-template-columns:repeat(3, minmax(0,1fr)); } .pair.narrow3 { grid-template-columns:repeat(3, minmax(0,358px)); justify-content:start; }
+@media (max-width:767px) { .pair.three, .pair.narrow3 { grid-template-columns:1fr; } }
+</style></head><body><div class="wrap">
+<h1>v24 크리에이터 찾기 카드 — 지금 / 제안</h1>
+<p>제안 = 승인된 계획(카드 격자·2.5:1 배너·파스텔 배너·얼굴 64·이름 줄 오른쪽 팔로우 버튼·본문 두 줄·승인 시간과 선물 버튼 제외)과 <code>docs/design/tokens.md</code> 값. 문구·색 토큰·뱃지는 그대로.</p>
+<p class="src">각 화면 폴더: before.html(실제 화면을 2026-10-17 에 정적으로 저장) · after.html(같은 원본 + proposal.css + 카드 안 배치 이동) · proposal.css</p>
+<ul class="notes">
+<li><b>수정(2026-10-17)</b>: 카드에서 승인 시간 줄을 빼고, 「팔로우」 버튼을 이름 줄 오른쪽 끝으로 올렸다. 본문은 「채널 이름 · 소개」 한 줄 + 플랫폼 칩 두 줄. 카드 안 폭 280 이하(4열·3열)에서는 팬덤 뱃지만 이름 아래 줄로 내려간다. 이름 줄(이름·뱃지·버튼)은 배너 아래 12 에서 시작한다.</li>
+<li>열 수: 로그인 전 1152 → 4열, 로그인 후 880 → 3열, 390 → 1열(실측). 배너 가로:세로 2.500(방송 배너 표준 1200×480 — 트위치 1200×480, 치지직 1920×480 의 가운데 1200×480).</li>
+<li>사진 없는 배너 11장이 파스텔 8색으로 나뉜다(크리에이터 ID 로 정함). 퍼스널 컬러만 있고 사진이 없는 시드 크리에이터는 없어서 「퍼스널 컬러 30% 면」은 이 화면에 나오지 않는다.</li>
+<li>고양이는 <code>logo-mark.png</code> 가 옅은 하늘색 네모 바탕이 있는 그림이라 바탕만 투명하게 뺀 사본(<code>assets/logo-mark-clear.png</code>)을 썼다.</li>
+<li>로그인 전 화면의 두 번째 카드(모모)는 마우스를 올린 모습(테두리 진해짐)으로 그렸다.</li>
+</ul>
+
+<section><h2>크리에이터 찾기 — 로그인 전 <code>/creators</code></h2>
+<div class="links"><a href="guest/before.html">지금</a><a href="guest/after.html">제안</a><a href="guest/proposal.css">proposal.css</a></div>
+<h3>1440</h3><div class="pair"><figure><figcaption>지금</figcaption><img src="shots/guest-before-1440.png" alt="로그인 전 지금 1440" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/guest-after-1440.png" alt="로그인 전 제안 1440" loading="lazy"></figure></div>
+<h3>390</h3><div class="pair narrow"><figure><figcaption>지금</figcaption><img src="shots/guest-before-390.png" alt="로그인 전 지금 390" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/guest-after-390.png" alt="로그인 전 제안 390" loading="lazy"></figure></div>
+</section>
+
+<section><h2>크리에이터 찾기 — 로그인 후(팬) <code>/creators</code></h2>
+<div class="links"><a href="fan/before.html">지금</a><a href="fan/after.html">제안</a><a href="fan/proposal.css">proposal.css</a></div>
+<h3>1440 · 사이드바 펼침 240</h3><div class="pair"><figure><figcaption>지금</figcaption><img src="shots/fan-before-1440.png" alt="로그인 후 지금 1440" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/fan-after-1440.png" alt="로그인 후 제안 1440" loading="lazy"></figure></div>
+</section>
+
+<section><h2>찾기 결과 0명</h2>
+<p>검색칸에 없는 이름을 넣은 상태. 빈 상태 상자는 이미 토큰 값(안쪽 24·반경 16·글자 20/16)이라 바뀐 것이 없고, 검색칸·칩 여백만 달라진다.</p>
+<div class="links"><a href="empty/before.html">지금</a><a href="empty/after.html">제안</a></div>
+<div class="pair"><figure><figcaption>지금</figcaption><img src="shots/empty-before-1440.png" alt="빈 상태 지금" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/empty-after-1440.png" alt="빈 상태 제안" loading="lazy"></figure></div>
+</section>
+
+<section><h2>프로필 수정 — 배경 사진 칸 <code>/creator/profile</code></h2>
+<div class="links"><a href="cprofile/before.html">지금</a><a href="cprofile/after.html">제안</a></div>
+<div class="pair"><figure><figcaption>지금</figcaption><img src="shots/cprofile-before-1440.png" alt="배경 사진 칸 지금" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/cprofile-after-1440.png" alt="배경 사진 칸 제안" loading="lazy"></figure></div>
+<h3>공개 프로필 머리 — 지금 168 / 2.5:1 + 흰 여백 줄임(제안) / 치지직 1920×480 사진</h3>
+<p>시험 사진은 1200×480(2.5:1). 위아래 가장자리 띠와 양옆 끝 막대가 모두 보이면 잘림이 0 이다. 치지직 1920×480 은 양옆 360 씩이 잘리고 가운데 1200 이 그대로 보인다(어둡게 칠한 곳이 잘리는 부분).</p>
+<p>여백: 사진↔이름 16→8, 이름↔칩 24→8, 칩↔소개 24→16, 소개↔인사말 8, 인사말↔버튼 24→16, 버튼↔안내 8, 아래 안쪽 48→32(휴대폰 32→24). 머리 카드 높이(2.5:1 기준) 742→686(PC), 499→451(390).</p>
+<div class="links"><a href="pubhead/now.html">지금 168</a><a href="pubhead-alt/after.html">2.5:1 제안</a><a href="pubhead-chzzk/after.html">치지직 사진</a><a href="pubhead-alt/proposal.css">proposal.css</a></div>
+<h3>1440 (머리 폭 880)</h3><div class="pair three"><figure><figcaption>지금 880×168 — 사진 높이의 48% 보임</figcaption><img src="shots/pubhead-now-1440.png" alt="지금 880×168 — 사진 높이의 48% 보임" loading="lazy"></figure><figure><figcaption>2.5:1 880×352 — 100% 보임</figcaption><img src="shots/pubhead-alt-1440.png" alt="2.5:1 880×352 — 100% 보임" loading="lazy"></figure><figure><figcaption>치지직 1920×480 — 가운데 1200(63%) 보임</figcaption><img src="shots/pubhead-chzzk-1440.png" alt="치지직 1920×480 — 가운데 1200(63%) 보임" loading="lazy"></figure></div>
+<h3>390 (머리 폭 358)</h3><div class="pair three narrow3"><figure><figcaption>지금 358×112 — 78% 보임</figcaption><img src="shots/pubhead-now-390.png" alt="지금 358×112 — 78% 보임" loading="lazy"></figure><figure><figcaption>2.5:1 358×143 — 100%</figcaption><img src="shots/pubhead-alt-390.png" alt="2.5:1 358×143 — 100%" loading="lazy"></figure><figure><figcaption>치지직 — 가운데 1200</figcaption><img src="shots/pubhead-chzzk-390.png" alt="치지직 — 가운데 1200" loading="lazy"></figure></div>
+<h3>카드에 같은 1200×480 사진 (2.5:1 — 잘림 0)</h3><div class="pair narrow"><figure><figcaption>1440 카드 270×108</figcaption><img src="shots/card-testphoto-1440.png" alt="1440 카드 270×108" loading="lazy"></figure><figure><figcaption>390 카드 358×143</figcaption><img src="shots/card-testphoto-390.png" alt="390 카드 358×143" loading="lazy"></figure></div>
+<div class="links"><a href="guest/after-testphoto.html">카드 시험 화면</a></div>
+</section>
+
+<section><h2>상세 설정 — 퍼스널 컬러 칸 <code>/creator/settings</code></h2>
+<p>지금도 입력 아래에 추천 색 8개 줄이 있다(진한 남색·자주 포함). 제안은 그 줄을 파스텔 8색으로 바꿔 입력 위로 올린 모습이고, 하늘색(#DCEBFF)을 누른 뒤 입력칸에 값이 들어간 상태다. 직접 입력은 그대로.</p>
+<div class="links"><a href="csettings/before.html">지금</a><a href="csettings/after.html">제안</a></div>
+<div class="pair"><figure><figcaption>지금</figcaption><img src="shots/csettings-before-1440.png" alt="퍼스널 컬러 칸 지금" loading="lazy"></figure><figure><figcaption>제안</figcaption><img src="shots/csettings-after-1440.png" alt="퍼스널 컬러 칸 제안" loading="lazy"></figure></div>
+</section>
+</div></body></html>

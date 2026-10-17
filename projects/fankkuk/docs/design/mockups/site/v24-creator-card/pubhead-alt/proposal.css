@@ -1,0 +1,15 @@
+/* 공개 프로필 머리 — 배경 칸 2.5:1(방송 배너 표준 1200×480) + 흰 여백 줄임. 묶음 안 8 · 묶음 사이 16 · 아래 안쪽 32(휴대폰 24) */
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__cover"],[class*="__cover "]), :is([class$="__cover"],[class*="__cover "]) { height: auto !important; aspect-ratio: 5 / 2; }
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__pf"],[class*="__pf "]) { gap: 8px; padding-bottom: 32px; }
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__photo"],[class*="__photo "]) { margin-top: calc(-44px - 8px); }
+/* 이름 → 칩 8 / 칩 → 소개 16 / 소개 → 인사말 8 */
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__pfMain"],[class*="__pfMain "]) { gap: 8px; }
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__pfMain"],[class*="__pfMain "]) > .ctags + * { margin-top: 8px; }
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__pfMain"],[class*="__pfMain "]) > :is(:is([class$="__handle"],[class*="__handle "]), :is([class$="__intro"],[class*="__intro "])) + :is(:is([class$="__intro"],[class*="__intro "]), :is([class$="__thanks"],[class*="__thanks "])) { margin-top: 0; }
+/* 본문 → 버튼 16(간격 8 + 8) / 버튼 → 안내 8 */
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__act"],[class*="__act "]) { margin-top: 8px; }
+:is([class$="__pub"],[class*="__pub "]) :is([class$="__act"],[class*="__act "]) + :is([class$="__note"],[class*="__note "]) { margin-top: 0; }
+@media (max-width: 767px) {
+  :is([class$="__pub"],[class*="__pub "]) :is([class$="__pf"],[class*="__pf "]) { padding-bottom: 24px; }
+  :is([class$="__pub"],[class*="__pub "]) :is([class$="__photo"],[class*="__photo "]) { margin-top: calc(-36px - 8px); }
+}

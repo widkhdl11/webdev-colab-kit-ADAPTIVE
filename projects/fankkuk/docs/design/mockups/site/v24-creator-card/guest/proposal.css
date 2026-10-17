@@ -1,0 +1,48 @@
+/* v24 제안 — 크리에이터 찾기 카드 다시 그리기. 값의 정본: docs/design/tokens.md */
+
+/* 찾기 화면 나머지 */
+.search { padding-right: 8px; }
+:is([class$="__chip"],[class*="__chip "])[data-icon="true"] { padding-left: 12px; }
+:is([class$="__bar"],[class*="__bar "]), :is([class$="__hint"],[class*="__hint "]) { font-size: 14px; line-height: 1.5; }
+
+/* 격자 — 쓸 수 있는 폭 기준(컨테이너 쿼리). 1152 → 4열, 880 → 3열, 640 이상 2열, 그 아래 1열 */
+section[aria-label="검색 결과"] { container-type: inline-size; }
+:is([class$="__grid"],[class*="__grid "]) { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+@container (min-width: 640px) { :is([class$="__grid"],[class*="__grid "]) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (min-width: 860px) { :is([class$="__grid"],[class*="__grid "]) { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container (min-width: 1100px) { :is([class$="__grid"],[class*="__grid "]) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 767px) { :is([class$="__grid"],[class*="__grid "]) { gap: 16px; } }
+
+/* 카드 — 안쪽 24 · 반경 16 · 줄 사이 12. 카드 전체가 프로필 링크처럼 */
+:is([class$="__card"],[class*="__card "]) { padding: 24px; border-radius: 16px; gap: 12px; cursor: pointer; transition: box-shadow .15s; }
+:is([class$="__card"],[class*="__card "]):hover, :is([class$="__card"],[class*="__card "]).v24-hover { box-shadow: inset 0 0 0 1px var(--gray-500); }
+
+/* 배너 2.5:1(방송 배너 표준 1200×480) — 카드 위 가장자리에 붙음 */
+:is([class$="__cover"],[class*="__cover "]) { position: relative; height: auto; aspect-ratio: 5 / 2; margin: -24px -24px 0; }
+:is([class$="__coverImg"],[class*="__coverImg "]) { object-fit: cover; }
+.v24-cat { position: absolute; right: -4%; bottom: -10%; height: 70%; width: auto; opacity: .18; pointer-events: none; }
+
+/* 얼굴 64, 배너에 32 걸침, 오른쪽에 이름 + 팬덤 뱃지 */
+:is([class$="__top"],[class*="__top "]) { align-items: flex-start; gap: 12px; margin-top: 0; }
+:is([class$="__photo"],[class*="__photo "]):is(.face) { width: 64px; height: 64px; margin-top: -32px; }
+:is([class$="__who"],[class*="__who "]) { padding: 16px 0 0; }
+:is([class$="__name"],[class*="__name "]) { min-height: 28px; font-size: 16px; font-weight: 600; line-height: 1.4; }
+
+/* 본문 두 줄 — 채널·소개 한 줄 + 칩 */
+.v24-line { margin: 0; overflow: hidden; font-size: 14px; line-height: 1.5; color: var(--gray-600); text-overflow: ellipsis; white-space: nowrap; }
+:is([class$="__card"],[class*="__card "]) .ctags { margin: 0; }
+/* 버튼 — 이름 줄 오른쪽 끝, 세로는 이름 줄 가운데(이름 줄 위 4 + 28/2 = 18 = 버튼 36/2) */
+:is([class$="__who"],[class*="__who "]) { flex: 1 1 auto; min-width: 0; }
+.v24-act :is([class$="__act"],[class*="__act "]), .v24-act { flex: none; margin: 12px 0 0 auto; }
+.v24-act .btn { flex: none; height: 36px; min-height: 36px; padding: 0 16px; }
+.v24-act .tag { flex: none; }
+/* 좁은 카드(안 폭 280 이하 — 4열·3열) — 뱃지만 이름 아래 줄로, 버튼 아래까지 폭을 씀. 버튼은 이름 줄에 남는다 */
+:is([class$="__card"],[class*="__card "]) { container-type: inline-size; container-name: fcard; }
+@container fcard (max-width: 280px) {
+  :is([class$="__top"],[class*="__top "]) { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; column-gap: 12px; row-gap: 4px; align-items: start; }
+  :is([class$="__photo"],[class*="__photo "]):is(.face) { grid-row: 1 / 3; grid-column: 1; }
+  :is([class$="__who"],[class*="__who "]), :is([class$="__name"],[class*="__name "]) { display: contents; }
+  :is([class$="__name"],[class*="__name "]) > a { grid-row: 1; grid-column: 2; min-width: 0; margin-top: 16px; line-height: 28px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :is([class$="__name"],[class*="__name "]) > [data-fandom-badge] { grid-row: 2; grid-column: 2 / 4; justify-self: start; max-width: 100%; }
+  .v24-act { grid-row: 1; grid-column: 3; }
+}
