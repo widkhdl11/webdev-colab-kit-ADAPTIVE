@@ -22,8 +22,8 @@ status: approved
 시안 `mockups/site/v20-rebrand/*-c.html`(C안, 사용자 「응 일단 이렇게 하자」). 로고는 사용자가 붙여 넣은 그림을 옮긴 `v20-rebrand/logo-user.svg`(원본 `logo-user-ref.png`).
 로고 디자인은 사용자가 「나중에」 다시 보기로 했다 — 지금 것은 임시 확정이다.
 
-- **로고**: (2026-10-17 사용자 「사이트 로고는 안 바뀐 거 같은데」 → 탭 아이콘과 같은 흰 고양이 마스코트 얼굴 `public/images/logo-mark.png`, 모서리 `--r-logo`. 아래 줄은 10-15 임시 로고 기록) 하늘색 둥근 상자 안에서 고개를 내민 흰 고양이. 로고 전용 3색 `--logo-sky #62B9FC`·`--logo-cream #FEFDF9`·`--logo-ink #192B4F`.
-  남색(`--logo-ink`, 눈)은 **로고 그림 안에서만** 쓴다. 로고 하늘색은 사이트 하늘색(`--primary`)과 다른 값 그대로 둔다(원본 유지).
+- **로고**: 흰 고양이 마스코트 얼굴(2026-10-17 사용자 「사이트 로고는 안 바뀐 거 같은데」). 탭 아이콘 `src/app/icon.png` 을 400px 로 잘라 `public/images/logo-mark.png`, `src/shared/ui/logo.tsx` 의 `LogoMark` 가 그린다. 모서리 `--r-logo`(22%, 크기에 비례). 장식 그림이라 alt="" — 이름은 옆 「팬꾹」 글자나 링크 이름이 맡는다.
+  (10-15 임시 로고 「하늘색 상자 안 고양이」 SVG 와 로고 전용 3색 `--logo-sky·cream·ink` 는 더 쓰지 않는다 — 토큰은 정의만 남아 있다.)
 - **하늘색은 면에만**: `--primary #89CFF0` 는 주 버튼·켜진 칩·스위치·진행 점 같은 **면**에만. 흰 바탕 대비 1.7:1 이라 글자·선에 쓰지 않는다.
   - 하늘색 면 위 글자는 `--on-brand` = 짙은 회색(8.8:1). **흰 글자를 올리지 않는다**(1.8:1).
   - 마우스 올림·누름 면 `--primary-700 #6BBFE6`(위 글자 7.4:1).
@@ -137,7 +137,7 @@ status: approved
 ### 1-1. 로고 (2026-10-07 확정)
 
 - 코랄 원 안 뻐꾸기 얼굴 + 선물 상자. 원본 `refs/fankkuk-icon-final.png`, 형태 규칙 `refs/fankkuk-icon-guide.md`
-- 벡터로 다시 그린 것이 정본: `src/shared/ui/logo.tsx`(헤더·푸터), `assets/logo.svg`(미리보기·공지 이미지 안 로고). 브라우저 탭·홈 화면 아이콘·링크 미리보기 기본 이미지는 2026-10-16 받은 마스코트 이미지(`src/app/favicon.ico`·`icon.png`·`apple-icon.png`·`opengraph-image.png`·`twitter-image.png`, 마스코트 원본 `public/images/mascot-*.png`). 로고 전용 4색 `--logo-*`(#F58278·#FFF8F0·#343039·#BE514A) — 버튼 색을 로고에 쓰지 않는다
+- (10-07 기록 — 지금 로고는 000절) 벡터로 다시 그린 것이 정본: `src/shared/ui/logo.tsx`(헤더·푸터), `assets/logo.svg`(미리보기·공지 이미지 안 로고). 브라우저 탭·홈 화면 아이콘·링크 미리보기 기본 이미지는 2026-10-16 받은 마스코트 이미지(`src/app/favicon.ico`·`icon.png`·`apple-icon.png`·`opengraph-image.png`·`twitter-image.png`, 마스코트 원본 `public/images/mascot-*.png`). 로고 전용 4색 `--logo-*`(#F58278·#FFF8F0·#343039·#BE514A) — 버튼 색을 로고에 쓰지 않는다
 - 뚜껑과 몸통 사이 가로 빈틈을 지킨다(세로 리본은 몸통 윗변에서 시작). 로고에 그림자 없음
 - 링크로 쓸 때 접근성 이름은 「팬꾹에서 선물 보내기」(사이트 밖에 걸 때)
 
