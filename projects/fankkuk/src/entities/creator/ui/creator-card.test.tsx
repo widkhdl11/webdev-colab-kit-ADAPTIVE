@@ -96,7 +96,7 @@ describe("칩 줄 측정 — 그린 뒤 재서 넘치는 칩을 「+N」으로",
 
   afterEach(() => {
     vi.restoreAllMocks();
-    document.body.innerHTML = "";
+    document.body.replaceChildren();
   });
 
   function mountMeasured(tags: readonly string[], gap = "6px") {
