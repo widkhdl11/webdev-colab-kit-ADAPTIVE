@@ -296,6 +296,7 @@ export function privacyDoc(info: SiteInfo = SITE_INFO): LegalDoc {
               title: "개인정보 보호책임자",
               fields: [
                 ["이름", orBlank(info.privacyOfficer.name)],
+                ["직책", orBlank(info.privacyOfficer.title)],
                 ["연락처", orBlank(info.privacyOfficer.contact)],
               ],
             },

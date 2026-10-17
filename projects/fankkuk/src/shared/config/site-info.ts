@@ -19,7 +19,7 @@ export type SiteInfo = {
   supportHours: string;
   /** 호스팅 제공자 — 사이트 서버(tech-stack: Vercel) */
   hostingProvider: string;
-  privacyOfficer: { name: string; contact: string };
+  privacyOfficer: { name: string; title: string; contact: string };
   /** 개인정보 처리를 맡기는 곳 중 계약 전이라 이름이 없는 곳 */
   vendors: { kakaoAuth: string; alimtalk: string; mail: string; carrier: string; keyVault: string };
   /** 분실·파손 배상 한도(신고한 가액이 없을 때) — 약관 제17조. 법률 검토 전 초안 값(DECISIONS 2026-10-08 ①) */
@@ -32,11 +32,12 @@ export const SITE_INFO: SiteInfo = {
   bizRegNo: "260-12-03086",
   mailOrderNo: "", // 통신판매업 신고번호 나오면 채움. 비어 있으면 「신고 진행 중」
   bizAddress: "서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)",
-  supportEmail: "", // 고객센터 이메일 — 신고·문의 폼이 이 주소로 열림
+  supportEmail: "support@fankkuk.com", // 고객센터 이메일 — 신고·문의 폼이 이 주소로 열림. 홈택스·토스에 쓴 주소와 같게
   supportPhone: "0502-1931-8289", // 고객센터 전화 — 050 안심번호(개인 번호는 쓰지 않는다)
-  supportHours: "", // 예: "평일 10:00~18:00 (주말·공휴일 휴무)"
+  supportHours: "평일 10:00~18:00 (주말·공휴일 휴무)",
   hostingProvider: "Vercel Inc.",
-  privacyOfficer: { name: "정재원", contact: "" }, // contact는 supportEmail과 같게
+  // 개인정보보호법 제31조 — 처리방침에 성명·연락처. 1인 사업자는 대표가 책임자
+  privacyOfficer: { name: "정재원", title: "대표", contact: "support@fankkuk.com · 0502-1931-8289" },
   vendors: {
     kakaoAuth: "", // 카카오 인증 딜러사 계약 후
     alimtalk: "",  // 알림톡 발송 대행사 계약 후

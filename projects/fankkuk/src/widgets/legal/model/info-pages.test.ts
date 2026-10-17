@@ -61,7 +61,7 @@ describe("안내·법정 페이지 공통", () => {
   });
 
   it("처리를 맡기는 곳·보호책임자·문의 이메일은 설정값에서 읽고, 비면 자리표시가 남는다", () => {
-    const filled = privacyDoc({ ...SITE_INFO, supportEmail: "help@example.com", privacyOfficer: { name: "김보호", contact: "02-1" }, vendors: { ...SITE_INFO.vendors, carrier: "예시택배" } });
+    const filled = privacyDoc({ ...SITE_INFO, supportEmail: "help@example.com", privacyOfficer: { name: "김보호", title: "대표", contact: "02-1" }, vendors: { ...SITE_INFO.vendors, carrier: "예시택배" } });
     expect(text(filled)).toContain("help@example.com");
     expect(text(filled)).toContain("김보호");
     expect(text(filled)).toContain("택배사 — 예시택배");
