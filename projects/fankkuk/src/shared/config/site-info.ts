@@ -33,7 +33,7 @@ export const SITE_INFO: SiteInfo = {
   mailOrderNo: "", // 통신판매업 신고번호 나오면 채움. 비어 있으면 「신고 진행 중」
   bizAddress: "서울특별시 강남구 언주로134길 18, 5층 가42호 (논현동, 신승빌딩)",
   supportEmail: "", // 고객센터 이메일 — 신고·문의 폼이 이 주소로 열림
-  supportPhone: "", // 고객센터 전화 — 050 안심번호나 인터넷 전화 권장
+  supportPhone: "0502-1931-8289", // 고객센터 전화 — 050 안심번호(개인 번호는 쓰지 않는다)
   supportHours: "", // 예: "평일 10:00~18:00 (주말·공휴일 휴무)"
   hostingProvider: "Vercel Inc.",
   privacyOfficer: { name: "정재원", contact: "" }, // contact는 supportEmail과 같게
