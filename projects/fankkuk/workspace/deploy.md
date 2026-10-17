@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: deployed
-basis: 5cddd80adff3
+basis: 1856b50032b1
 ---
 
 # 배포 기록 — fankkuk
@@ -40,3 +40,9 @@ basis: 5cddd80adff3
 
 - DB 변경 없음(b89af2db 뒤 supabase 폴더 변경 0).
 - 앱: main f1e2ab5d push(커밋 23개 — 고객센터 연락처, 디자인 토큰 적용, 크리에이터 카드 v24 → C안, 토큰 감사 4절 나머지) → Vercel 세 프로젝트 빌드 success. 시험 주소에서 / · /creators · /login · /refund 200, 로그인 전 /me·/creator/settings 는 로그인으로 307.
+
+## 2026-10-18 — 약관 세 글 v26 화면 · 함수 지역 서울
+
+- DB 변경 없음.
+- 앱: main 1660efde push → Vercel 빌드 success. 응답 머리 `x-vercel-id` 가 `icn1::iad1` → `icn1::icn1`(서버 함수가 서울에서 돈다). 첫 응답 시간(로그인 없이, 각 3회) — / 1.06 → 0.44초 · /creators 1.07 → 0.20~0.44초 · /terms 0.98 → 0.20~0.27초 · /privacy 0.17초 · /login 0.36 → 0.14~0.19초.
+- /terms 에 「먼저 세 가지만 알아 두세요」·왼쪽 목차·요금 5,900 · 7,900 · 9,900원, /refund 200.
