@@ -260,7 +260,8 @@ describe("INV-L11: 재설정 링크는 한 번·1시간·그 계정 하나, 끝�
 
   it("INV-L11 (실패경로): 새 비밀번호가 짧거나 아이디와 같거나 확인과 다르면 거부되고, 링크는 버려지지 않는다", async () => {
     const mail = testEmail("bounds");
-    const a = await createTestAccount({ tag: "bounds", email: mail });
+    // 아이디를 그대로 비밀번호로 넣어 「아이디와 같음」에 닿게 하려면 아이디가 세 종류 규칙을 먼저 통과해야 한다 — 무작위 끝 글자에 숫자가 없을 때가 있어 태그에 숫자를 넣는다
+    const a = await createTestAccount({ tag: "bounds7", email: mail });
     const token = issueReset(a.userId);
     expect(await reset(token, "short-9")).toMatchObject({ ok: false, field: "password" });
     expect(await reset(token, a.loginId)).toMatchObject({ ok: false, field: "password", message: "비밀번호를 아이디와 다르게 적어 주세요." });
