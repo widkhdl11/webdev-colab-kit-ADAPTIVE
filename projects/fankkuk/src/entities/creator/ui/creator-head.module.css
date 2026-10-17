@@ -2,8 +2,9 @@
    값은 시안 :root(--band-h 168 · --av 104 · --av-ring 4 · --badge-h2 28 · --mark-s 20 · --pf-pad 32, 768 이하 112 · 80 · 16).
    --personal·--on-personal·--fan·--on-fan 은 creatorColorVars 가 꼴을 본 뒤에만 넣는다 — 없으면 아래 기본값(사이트 기본 모양). */
 .pf { --band-h: 168px; --av: 104px; --av-ring: 4px; --pf-pad: 32px; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
-.band { display: block; height: var(--band-h); background: var(--personal, var(--primary-50)); }
-.band img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* 띠 2.5:1(공개 프로필 머리와 같다 — 시안 v24-creator-card pubhead-alt). 사진이 없으면 퍼스널 컬러 30% 면 + 흐린 고양이(creator-cover-art), 퍼스널 컬러도 없으면 옅은 하늘 면 */
+.band { position: relative; display: block; overflow: hidden; aspect-ratio: 5 / 2; background: var(--primary-50); }
+.tinted .band { background: color-mix(in srgb, var(--personal) 30%, var(--white)); }
 .body { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-6); padding: 0 var(--pf-pad) var(--space-6); }
 .withAct { grid-template-columns: auto minmax(0, 1fr) auto; }
 .av { grid-row: 1 / span 2; align-self: start; display: grid; place-items: center; width: var(--av); height: var(--av); margin-top: calc(var(--av) / -2); border-radius: var(--r-pill); border: var(--av-ring) solid var(--personal, var(--white)); box-shadow: 0 0 0 var(--av-ring) var(--white); background: var(--gray-100); color: var(--ink); font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1; overflow: hidden; }
@@ -16,6 +17,7 @@ span.name { font-weight: var(--fw-bold); }
 .act { grid-column: 3; grid-row: 1 / span 2; align-self: start; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6); padding-top: var(--space-4); }
 
 /* 미리보기 상자 안의 작은 머리 — 시안 .pv-head */
+.compact .band { height: var(--band-h); aspect-ratio: auto; }
 .compact { --band-h: 88px; --av: 72px; --pf-pad: 24px; border-radius: var(--r-card); }
 .compact .av { font-size: var(--fs-page); }
 .compact .body { padding-bottom: var(--space-4); }

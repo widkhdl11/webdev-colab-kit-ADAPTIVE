@@ -1,0 +1,4 @@
+/* 배너 안쪽(creator-cover-art.tsx) — 시안 v24-creator-card proposal.css 「.v24-cat」·「__coverImg」 */
+.img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* 사진 없는 배너의 흐린 고양이 — 오른쪽 아래, 배너 높이의 70% */
+.cat { position: absolute; right: -4%; bottom: -10%; width: auto; height: 70%; opacity: 0.18; pointer-events: none; }

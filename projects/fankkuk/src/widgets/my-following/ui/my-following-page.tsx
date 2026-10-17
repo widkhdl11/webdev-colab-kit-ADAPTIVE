@@ -5,22 +5,20 @@ import { creatorPagePath } from "@/entities/creator/model/creator-handle";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
-import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import {
   NO_CARD_LOOK,
   type CardLook,
 } from "@/entities/creator/model/card-look";
-import { CreatorCardHead } from "@/entities/creator/ui/creator-card-head";
-import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
+import { CreatorCardHead, CreatorCardLine } from "@/entities/creator/ui/creator-card-head";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { saveFollow } from "@/features/creator-follow/api/save-follow";
 import { FOLLOWING_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import { useUnfollowConfirm } from "@/features/creator-follow/ui/unfollow-dialog";
 import s from "./my-following.module.css";
 
-// 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/v18/my-following.html (페이지 머리, 팔로우 카드 격자 — 최소 300, 폭에 따라 칸 수가 저절로)
-// 폭은 목록형 기본 880, 카드 머리는 크리에이터가 꾸민 대로 — 크리에이터 찾기와 같다(2026-10-16 사용자 「추천대로」).
-// 시안은 「팔로우 끊기」를 ⋯ 메뉴 안에 두지만, 글자 버튼 하나로 둔다. 누르면 확인 창(design-rules 12절)을 띄우고,
+// 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/v18/my-following.html (페이지 머리) · 카드와 격자는 크리에이터 찾기와 같은 카드(시안 v24-creator-card, DECISIONS d101·d102 —
+// 승인 시간·「선물 보내기」를 카드에서 뺐다). 폭은 목록형 기본 880 → 3열.
+// 이름 줄 오른쪽 버튼은 크리에이터 찾기의 팔로우한 카드와 같은 「팔로우 중」. 누르면 확인 창(design-rules 12절)을 띄우고,
 // 「취소하기」를 누르면 줄을 바로 지우고 저장한다. 저장에 실패하면 줄을 제자리에 돌려놓고 알린다. 다 지우면 빈 화면 안내가 나온다.
 
 export function MyFollowingPanel({
@@ -73,76 +71,45 @@ export function MyFollowingPanel({
           : ""}
       </p>
       {list.length > 0 ? (
+        <div className={s.results}>
         <ul className={s.grid}>
           {list.map((c) => {
             const look = looks[c.id] ?? NO_CARD_LOOK;
             return (
               <li key={c.id} className={s.fc}>
                 <CreatorCardHead
+                  creatorId={c.id}
+                  name={c.name}
+                  href={creatorPagePath(c)}
                   look={look}
                   colors={c.colors}
                   faceTone={c.faceTone}
-                >
-                  <p className={s.nameLine}>
-                    <Link className={s.name} href={creatorPagePath(c)}>
-                      {c.name}
-                    </Link>
-                    {look.fanName ? (
-                      <FandomBadge
-                        name={look.fanName}
-                        symbolUrl={look.symbolUrl}
-                        fanColor={c.colors?.fan ?? null}
-                      />
-                    ) : null}
-                  </p>
-                  {/* 카드 머리 안은 이름 줄·채널 이름 — 크리에이터 찾기 카드와 같은 배치(태그는 머리 아래) */}
-                  {c.channelTitle ? (
-                    <p className={s.ch}>{c.channelTitle}</p>
-                  ) : null}
-                </CreatorCardHead>
+                  action={
+                    <button
+                      className="btn btn--sm btn--line"
+                      type="button"
+                      aria-label={`${c.name} 팔로우 중`}
+                      onClick={() =>
+                        unfollowConfirm.ask(c.name, () => void unfollow(c))
+                      }
+                    >
+                      팔로우 중
+                    </button>
+                  }
+                />
+                <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
                 {c.tags.length > 0 ? (
-                  <p className={s.tags}>
+                  <p className="ctags">
                     {c.tags.map((t) => (
                       <CreatorTag key={t} name={t} />
                     ))}
                   </p>
                 ) : null}
-                <p className={s.info}>
-                  <span className={s.time}>
-                    <svg
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                      focusable="false"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 6v6l4 2" />
-                    </svg>
-                    {approvalTimeText(c.approvalMinutes)}
-                  </span>
-                </p>
-                <div className={s.acts}>
-                  <Link
-                    className="btn btn--sm"
-                    href={`/gifts/new?creator=${c.id}`}
-                    aria-label={`${c.name}님께 선물 보내기`}
-                  >
-                    선물 보내기
-                  </Link>
-                  <button
-                    className="btn btn--sm btn--text"
-                    type="button"
-                    aria-label={`${c.name} 팔로우 끊기`}
-                    onClick={() =>
-                      unfollowConfirm.ask(c.name, () => void unfollow(c))
-                    }
-                  >
-                    팔로우 끊기
-                  </button>
-                </div>
               </li>
             );
           })}
         </ul>
+        </div>
       ) : (
         <div className={`card empty ${s.empty}`}>
           <img

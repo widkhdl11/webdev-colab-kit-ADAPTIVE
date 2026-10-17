@@ -20,6 +20,7 @@ export function ImageField({
   pickLabel,
   removeLabel,
   hint,
+  sizeHint,
   blocked = null,
   upload,
   remove,
@@ -39,6 +40,8 @@ export function ImageField({
   removeLabel: string;
   /** 칸 아래 안내 — 시안에 없으면 넘기지 않는다 */
   hint?: string;
+  /** 안내 아래 권장 크기 한 줄(배경 사진 「권장 크기 1200×480」 — 시안 v24-creator-card cprofile) */
+  sizeHint?: string;
   /** 고를 수 없는 까닭의 설명 요소 id — 있으면 파일 칸을 끈다 */
   blocked?: string | null;
   upload: (file: File) => Promise<ImageSendResult>;
@@ -98,7 +101,7 @@ export function ImageField({
             type="file"
             accept={PHOTO_ACCEPT}
             disabled={off}
-            aria-describedby={[blocked, hint ? `${id}-hint` : null, `${id}-msg`].filter(Boolean).join(" ")}
+            aria-describedby={[blocked, hint ? `${id}-hint` : null, sizeHint ? `${id}-size` : null, `${id}-msg`].filter(Boolean).join(" ")}
             onChange={(e) => void picked(e.currentTarget.files?.[0])}
           />
           <label className={`btn btn--line btn--sm ${s.pick}`} htmlFor={id} aria-disabled={off}>
@@ -114,6 +117,11 @@ export function ImageField({
       {hint ? (
         <p className="t-meta" id={`${id}-hint`}>
           {hint}
+        </p>
+      ) : null}
+      {sizeHint ? (
+        <p className={s.size} id={`${id}-size`}>
+          {sizeHint}
         </p>
       ) : null}
       <p className={`${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`} role="status" id={`${id}-msg`}>

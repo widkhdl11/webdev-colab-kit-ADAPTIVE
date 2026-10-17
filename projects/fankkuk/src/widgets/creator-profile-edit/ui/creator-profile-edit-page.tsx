@@ -116,6 +116,7 @@ export function CreatorProfileEditPage(p: CreatorProfileEditProps) {
           pickLabel="배경 사진 바꾸기"
           removeLabel="배경을 퍼스널 컬러 띠로 되돌리기"
           hint="배경 사진은 가로로 긴 사진이 잘 어울려요(JPG·PNG·WebP). 올리면 위치 정보 같은 숨은 정보는 지워져요. 사진이 없으면 퍼스널 컬러 띠가 보여요."
+          sizeHint="권장 크기 1200×480"
           upload={(f) => sendCreatorImage("background", f, { rightsChecked: false })}
           remove={() => deleteCreatorImage("background")}
           onSaved={setBgPath}

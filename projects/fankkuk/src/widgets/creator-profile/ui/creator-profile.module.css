@@ -19,10 +19,10 @@
 .symbol { display: block; width: 56px; height: 56px; margin-top: var(--space-4); border-radius: var(--r-btn); object-fit: cover; box-shadow: inset 0 0 0 1px var(--gray-200); }
 .thanks { margin-top: var(--space-4); font-weight: var(--fw-btn); color: var(--brand-ink); }
 .note { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
-/* 프로필 배경사진 띠(디자인 기준 10절) — 없으면 옅은 하늘 단색. 프로필 사진이 아래 가장자리에 걸치고 흰 테두리로 띠와 갈린다 */
-/* 퍼스널 컬러(--personal, creator-link INV-E13)가 있으면 띠 면과 사진 테두리가 그 색 — 없으면 옅은 하늘 면·흰 테두리 */
-.cover { overflow: hidden; height: 168px; background: var(--personal, var(--primary-50)); }
-.coverImg { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* 프로필 배경사진 칸 2.5:1(방송 배너 표준 1200×480 — 시안 v24-creator-card pubhead-alt, DECISIONS d102). 프로필 사진이 아래 가장자리에 걸치고 흰 테두리로 갈린다.
+   사진이 없으면 퍼스널 컬러(--personal, creator-link INV-E13) 30% 면, 그것도 없으면 크리에이터마다 정해진 파스텔(--pastel) + 흐린 고양이(creator-cover-art) */
+.cover { position: relative; overflow: hidden; aspect-ratio: 5 / 2; background: var(--pastel, var(--primary-50)); }
+.ringed .cover { background: color-mix(in srgb, var(--personal) 30%, var(--white)); }
 .photo { position: relative; box-shadow: 0 0 0 4px var(--white); }
 .ringed .photo { box-shadow: 0 0 0 4px var(--personal), 0 0 0 8px var(--white); }
 /* 공개 이름 + 팬덤 뱃지 한 줄 — 좁으면 뱃지가 아래로 */
@@ -33,15 +33,16 @@
 
 /* 로그인 전 — 머리·통계·접는 칸·선물 보내기·비슷한 크리에이터를 880 한 기둥에(v23 감사표 2절) */
 .pub :global(.pub-inner) { max-width: calc(var(--col-profile) + 2 * var(--gutter)); }
-.pub .pf { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); max-width: var(--col-profile); margin-inline: auto; padding: var(--space-12) var(--panel-pad); border-radius: var(--r-panel); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); text-align: center; }
+.pub .pf { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); max-width: var(--col-profile); margin-inline: auto; padding: var(--space-12) var(--panel-pad) var(--space-8); border-radius: var(--r-panel); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); text-align: center; }
 .pub .cover { align-self: stretch; margin: calc(var(--space-12) * -1) calc(var(--panel-pad) * -1) 0; border-radius: var(--r-panel) var(--r-panel) 0 0; }
-.pub .photo { width: 88px; height: 88px; margin-top: calc(-44px - var(--space-4)); font-size: var(--fs-page); }
-.pub .pfMain { display: flex; flex-direction: column; align-items: center; gap: var(--space-6); }
-/* 네 묶음 — 이름+팬덤 뱃지 / 칩 줄 / 소개·인사말 / 버튼+안내. 묶음 사이 24 · 묶음 안 8 */
+.pub .photo { width: 88px; height: 88px; margin-top: calc(-44px - var(--space-2)); font-size: var(--fs-page); }
+.pub .pfMain { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+/* 네 묶음 — 이름+팬덤 뱃지 / 칩 줄 / 소개·인사말 / 버튼+안내(시안 v24 pubhead-alt). 사진↔이름 8 · 이름↔칩 8 · 칩↔소개 16 · 소개↔인사말 8 · 본문↔버튼 16 · 버튼↔안내 8 */
 .pub .pfMain > * { margin-top: 0; margin-bottom: 0; }
-.pub .pfMain > :is(.handle, .intro) + :is(.intro, .thanks) { margin-top: calc(var(--space-2) - var(--space-6)); }
+.pub .pfMain > :global(.ctags) + * { margin-top: var(--space-2); }
+.pub .pfMain > :is(.handle, .intro) + :is(.intro, .thanks) { margin-top: 0; }
 .pub .act { margin-top: var(--space-2); }
-.pub .act + .note { margin-top: calc(var(--space-2) - var(--space-4)); }
+.pub .act + .note { margin-top: 0; }
 /* 이름 아래 단독 채널 아이콘 — 칩 줄에 같은 정보가 있어 숨긴다 */
 .pub .channel { display: none; }
 .pub .name { font-size: var(--fs-title); }
@@ -105,9 +106,8 @@
 }
 @media (max-width: 767px) {
   .pfSec { padding-top: var(--space-4); }
-  .pub .pf { padding: var(--space-8) var(--space-6); }
-  .pub .photo { width: 72px; height: 72px; margin-top: calc(-36px - var(--space-4)); }
-  .cover { height: 112px; }
+  .pub .pf { padding: var(--space-8) var(--space-6) var(--space-6); }
+  .pub .photo { width: 72px; height: 72px; margin-top: calc(-36px - var(--space-2)); }
   .pub .cover { margin-top: calc(var(--space-8) * -1); margin-inline: calc(var(--space-6) * -1); }
   .pub .act, .pub .act :global(.btn) { width: 100%; min-width: 0; }
   .app .pf { grid-template-columns: auto minmax(0, 1fr); }

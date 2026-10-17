@@ -5,6 +5,7 @@ import { useRef, useState, type CSSProperties, type ReactNode, type RefObject } 
 import { contrastRatio, parseColorField, TEXT_DARK, textOnColor, type CreatorColors } from "@/entities/creator/model/creator-color";
 import { creatorSymbolUrl } from "@/entities/creator/model/link-images";
 import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
+import { COVER_PASTELS } from "@/entities/creator/lib/cover-pastel";
 import { CreatorHead } from "@/entities/creator/ui/creator-head";
 import { deleteCreatorImage, sendCreatorImage } from "@/features/creator-photo/api/send-creator-image";
 import { ImageField } from "@/features/creator-photo/ui/image-field";
@@ -21,7 +22,8 @@ import s from "./fandom-section.module.css";
 // - 미리보기 글자색은 저장하지 않고 그때 계산한다 — 실제 페이지와 같은 계산 하나(textOnColor, INV-E14).
 
 const FAN_SWATCHES = ["#C4B5FD", "#FFF59D", "#89CFF0", "#F9A8D4", "#86EFAC", "#FDBA74", "#1E3A8A", "#9D174D"] as const;
-const PERSONAL_SWATCHES = ["#F9A8D4", "#FDBA74", "#FDE047", "#86EFAC", "#7DD3FC", "#C4B5FD", "#334155", "#9F1239"] as const;
+// 퍼스널 컬러 추천 색 = 사진 없는 배너의 파스텔 8색(시안 v24-creator-card csettings, DECISIONS d101) — 입력 위에 둔다
+const PERSONAL_SWATCHES = COVER_PASTELS;
 /** 글자색 예시(시안 「뱃지 글자는 팬컬러에 맞춰 저절로 바뀌어요」) */
 const AUTO_EXAMPLES = ["#FFF59D", "#1E3A8A"] as const;
 
@@ -67,6 +69,7 @@ function ColorStep({
   value,
   onChange,
   swatches,
+  swatchesFirst = false,
   showAuto,
   invalid,
   errorId,
@@ -80,6 +83,8 @@ function ColorStep({
   value: string;
   onChange: (v: string) => void;
   swatches: readonly string[];
+  /** 추천 색 줄을 입력 위에(퍼스널 컬러) */
+  swatchesFirst?: boolean;
   showAuto: boolean;
   invalid: boolean;
   /** 틀렸을 때 이어 읽을 오류 문구 id */
@@ -89,6 +94,20 @@ function ColorStep({
 }) {
   const parsed = parseColorField(value);
   const color = parsed.ok ? parsed.value : null;
+  const swatchRow = (
+    <div className={`${s.swatches} ${swatchesFirst ? s.swatchesFirst : ""}`} role="group" aria-label={`${title} 추천 색`}>
+      {swatches.map((c) => (
+        <button
+          key={c}
+          type="button"
+          style={{ "--sw": c } as CSSProperties}
+          aria-label={`${title} ${c}`}
+          aria-pressed={color === c}
+          onClick={() => onChange(c)}
+        />
+      ))}
+    </div>
+  );
   return (
     <div className={s.card}>
       <div className={s.step}>
@@ -100,6 +119,7 @@ function ColorStep({
       <p className={s.hint} id={`${id}-h`}>
         {hint}
       </p>
+      {swatchesFirst ? swatchRow : null}
       <div className={s.fieldRow}>
         <input
           className={s.picker}
@@ -131,18 +151,7 @@ function ColorStep({
           </span>
         ) : null}
       </div>
-      <div className={s.swatches} role="group" aria-label={`${title} 추천 색`}>
-        {swatches.map((c) => (
-          <button
-            key={c}
-            type="button"
-            style={{ "--sw": c } as CSSProperties}
-            aria-label={`${title} ${c}`}
-            aria-pressed={color === c}
-            onClick={() => onChange(c)}
-          />
-        ))}
-      </div>
+      {swatchesFirst ? null : swatchRow}
       {children}
     </div>
   );
@@ -292,6 +301,7 @@ export function FandomSection(p: FandomSectionProps) {
           setBad((b) => ({ ...b, personal: false }));
         }}
         swatches={PERSONAL_SWATCHES}
+        swatchesFirst
         showAuto={false}
         invalid={bad.personal}
         errorId="fd-msg"

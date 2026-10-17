@@ -1,8 +1,35 @@
-/* 크리에이터 카드 머리(creator-card-head.tsx) — 공개 페이지 머리(creator-profile.module.css .cover/.photo/.ringed)를 작게.
-   띠는 카드 안쪽 여백(--space-6, 24)만큼 바깥으로 나간다. 사진만 띠에 반쯤 걸치고 이름 줄(children)은 띠 아래에서 시작한다. */
-.cover { overflow: hidden; height: 88px; margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) 0; background: var(--personal, var(--primary-50)); }
-.coverImg { display: block; width: 100%; height: 100%; object-fit: cover; }
-.top { display: flex; align-items: flex-start; gap: var(--space-3); margin-top: var(--space-3); }
-.photo:global(.face) { position: relative; width: 56px; height: 56px; margin-top: calc(-28px - var(--space-3)); box-shadow: 0 0 0 3px var(--white); }
+/* 크리에이터 카드(creator-card-head.tsx) — 시안 docs/design/mockups/site/v24-creator-card/guest/proposal.css 「배너」·「얼굴」·「본문」·「버튼」·「좁은 카드」.
+   배너는 카드 안쪽 여백(--space-6, 24)만큼 바깥으로 나간다. 카드 안 폭으로 배치를 바꾸려고 머리 칸이 컨테이너가 된다(머리 폭 = 카드 안 폭). */
+.head { container: ccard / inline-size; }
+
+/* 배너 2.5:1(방송 배너 표준 1200×480) — 사진이 없으면 퍼스널 컬러 30% 면, 그것도 없으면 크리에이터마다 정해진 파스텔(--pastel) */
+.cover { position: relative; overflow: hidden; aspect-ratio: 5 / 2; margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) 0; background: var(--pastel, var(--primary-50)); }
+.ringed .cover { background: color-mix(in srgb, var(--personal) 30%, var(--white)); }
+
+/* 사진 64, 배너에 32 걸침 · 오른쪽에 이름 + 팬덤 뱃지 · 이름 줄 오른쪽 끝 버튼 */
+.top { display: flex; align-items: flex-start; gap: var(--space-3); }
+.photo:global(.face) { position: relative; flex: none; width: 64px; height: 64px; margin-top: -32px; box-shadow: 0 0 0 3px var(--white); }
 .ringed .photo:global(.face) { box-shadow: 0 0 0 3px var(--personal), 0 0 0 6px var(--white); }
-.who { min-width: 0; padding-top: var(--space-1); }
+.who { flex: 1 1 auto; min-width: 0; padding-top: var(--space-4); }
+.name { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); min-height: 28px; margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
+.name a { text-decoration: none; }
+.name a:hover { text-decoration: underline; text-underline-offset: 4px; }
+/* 카드 전체가 프로필 링크 — 이름 링크가 카드(position: relative)를 덮는다 */
+.name a::after { content: ""; position: absolute; inset: 0; }
+/* 버튼 — 세로는 이름 줄 가운데(이름 줄 위 16 + 28/2 = 30 = 12 + 버튼 36/2). 카드를 덮는 링크 위에 올린다 */
+.act { position: relative; z-index: 1; display: flex; flex: none; margin: var(--space-3) 0 0 auto; }
+.act :global(.btn) { flex: none; height: var(--btn-h-sm); min-height: var(--btn-h-sm); padding: 0 var(--space-4); }
+.act :global(.tag) { flex: none; }
+
+/* 「채널 이름 · 소개」 한 줄 */
+.line { margin: 0; overflow: hidden; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); text-overflow: ellipsis; white-space: nowrap; }
+
+/* 좁은 카드(안 폭 280 이하 — 4열·3열) — 뱃지만 이름 아래 줄로, 버튼 아래까지 폭을 쓴다. 버튼은 이름 줄에 남는다 */
+@container ccard (max-width: 280px) {
+  .top { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; column-gap: var(--space-3); row-gap: var(--space-1); align-items: start; }
+  .photo:global(.face) { grid-row: 1 / 3; grid-column: 1; }
+  .who, .name { display: contents; }
+  .name > a { grid-row: 1; grid-column: 2; min-width: 0; margin-top: var(--space-4); overflow: hidden; line-height: 28px; text-overflow: ellipsis; white-space: nowrap; }
+  .name > [data-fandom-badge] { grid-row: 2; grid-column: 2 / 4; justify-self: start; max-width: 100%; }
+  .act { grid-row: 1; grid-column: 3; }
+}

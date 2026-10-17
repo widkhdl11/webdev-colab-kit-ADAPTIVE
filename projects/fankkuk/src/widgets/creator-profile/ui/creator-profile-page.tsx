@@ -10,6 +10,7 @@ import type { WallReply } from "@/entities/gift-reply/api/gift-reply-reads";
 import { ANONYMOUS_FAN, dotDate, REPLY_PHRASE_TEXT } from "@/entities/gift-reply/model/reply";
 import { HardItemsLine } from "@/entities/gift-item/ui/hard-items-line";
 import { approvalDurationText } from "@/entities/creator/ui/approval-time-text";
+import { CreatorCoverArt, coverPastelVar } from "@/entities/creator/ui/creator-cover-art";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { ChannelLinkIcon } from "@/entities/creator/ui/channel-badge-icon";
@@ -159,9 +160,9 @@ export function CreatorProfilePage({
       <section className={s.pfSec} aria-labelledby="creator-name">
         <div className={wrap}>
           <div className={`${s.pf} ${ringed ? s.ringed : ""}`} style={colorVars as CSSProperties} data-creator-colors="">
-            {/* 프로필 배경사진(디자인 기준 10절) — 맨 위 띠, 없으면 옅은 하늘 단색. 사진은 꾸밈이라 읽지 않는다. 프로필 사진이 아래 가장자리에 걸친다 */}
-            <div className={s.cover} aria-hidden="true">
-              {backgroundUrl ? <img className={s.coverImg} src={backgroundUrl} alt="" width={1280} height={427} /> : null}
+            {/* 프로필 배경사진 칸 2.5:1 — 없으면 퍼스널 컬러 30% 면 또는 파스텔 + 흐린 고양이(DECISIONS d101·d102). 꾸밈이라 읽지 않는다. 프로필 사진이 아래 가장자리에 걸친다 */}
+            <div className={s.cover} style={coverPastelVar(creator.id)} aria-hidden="true">
+              <CreatorCoverArt imageUrl={backgroundUrl} lazy={false} />
             </div>
             <CreatorPhoto photoUrl={creator.photoUrl} tone={creator.faceTone} className={`face ${s.photo}`} />
             <div className={s.pfMain}>

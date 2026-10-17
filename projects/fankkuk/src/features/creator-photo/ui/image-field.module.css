@@ -2,6 +2,8 @@
 .fld { display: grid; gap: var(--space-2); }
 .lbl { font-weight: var(--fw-btn); }
 .msg:empty { display: none; }
+/* 권장 크기 한 줄 — 시안 v24-creator-card cprofile/proposal.css .v24-size */
+.size { margin-top: var(--space-1); font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); }
 .imgRow { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
 .file:focus-visible + .pick { outline: 3px solid var(--focus); outline-offset: 2px; }
 .pick { cursor: pointer; }

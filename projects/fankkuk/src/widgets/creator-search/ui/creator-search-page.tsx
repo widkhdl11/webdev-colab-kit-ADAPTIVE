@@ -12,13 +12,11 @@ import {
   tagChips,
   type TagOption,
 } from "@/entities/creator/model/creator-tags";
-import { approvalTimeText } from "@/entities/creator/ui/approval-time-text";
 import {
   NO_CARD_LOOK,
   type CardLook,
 } from "@/entities/creator/model/card-look";
-import { CreatorCardHead } from "@/entities/creator/ui/creator-card-head";
-import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
+import { CreatorCardHead, CreatorCardLine } from "@/entities/creator/ui/creator-card-head";
 import {
   CreatorTag,
   hasTagIcon,
@@ -32,10 +30,10 @@ import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-n
 import s from "./creator-search.module.css";
 
 // 크리에이터 찾기. 시안: docs/design/mockups/site/v18/creators.html (design-rules 00절) · 태그 아이콘·색 v9-pages/tags-b.html (카드 d46)
-// 위에서 아래로: 페이지 머리(제목 24 왼쪽·설명·본인 확인 줄) → 왼쪽부터 꽉 찬 검색창 → 태그 칩 → 「전체 N명」 → 카드 격자(최소 300 으로 채움).
+// 위에서 아래로: 페이지 머리(제목 24 왼쪽·설명·본인 확인 줄) → 왼쪽부터 꽉 찬 검색창 → 태그 칩 → 「전체 N명」 → 카드 격자(쓸 수 있는 폭 1152 → 4열 · 880 → 3열 · 640 이상 2열 · 그 아래 1열).
 // 본문 틀: 로그인 후는 목록형 기본 폭(.page-pane 880 — 2026-10-16 사용자 「꼭 넓은 너비가 필요한 페이지가 아니다」), 로그인 전은 상단 바와 같은 1152 선(.pub-inner) — 로그인 전 상단 바 아래에서 넓은 틀이 상단 바 선을 벗어나지 않게.
-// 카드는 크리에이터가 꾸민 대로(2026-10-16 사용자) — 머리는 entities/creator/ui/creator-card-head(배경사진 띠·프로필 사진·퍼스널 컬러 테두리),
-// 이름 옆 팬덤 뱃지(팬컬러 면 + 팬덤 심볼 + 팬덤 이름 — 팬덤 이름이 없으면 뱃지 없음, 공개 페이지와 같다).
+// 카드는 크리에이터가 꾸민 대로 — entities/creator/ui/creator-card-head(시안 v24-creator-card, DECISIONS d101·d102: 배너 2.5:1 · 이름 줄 오른쪽 팔로우 ·
+// 「채널 이름 · 소개」 한 줄 + 칩, 승인 시간·「선물 보내기」 없음). 팔로우한 크리에이터 화면과 같은 카드다.
 // 광고 배너 자리는 다음 기능 작업이라 두지 않는다.
 // 검색창에 치는 대로 목록이 걸러진다(시안 site.js 의 실시간 검색).
 // 태그 칩(creator-tags INV-T4)은 숨기지 않은 선택지 가운데 이 목록의 크리에이터 1명 이상이 가진 것만, 선택지 순서. 칩 하나를 고르면
@@ -59,27 +57,9 @@ function CheckIcon() {
   );
 }
 
-// 평균 승인 시간 앞 시계(lucide clock)
-function ClockIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 6v6l4 2" />
-    </svg>
-  );
-}
-
 /**
  * looks: 크리에이터 id → 꾸민 모양. 없는 사람은 기본 모양.
- * ownCreatorId: 로그인한 크리에이터 자신의 줄 — 팔로우·선물 보내기를 보이지 않는다(자기 자신은 팔로우·선물 불가).
+ * ownCreatorId: 로그인한 크리에이터 자신의 줄 — 팔로우 대신 「내 페이지」 태그(자기 자신은 팔로우 불가).
  * tagOptions: 숨기지 않은 태그 선택지(선택지 순서) — 칩 순서를 정한다.
  */
 export function CreatorSearchPage({
@@ -180,7 +160,7 @@ export function CreatorSearchPage({
         ))}
       </div>
 
-      <section aria-label="검색 결과">
+      <section className={s.results} aria-label="검색 결과">
         <p className={s.bar} role="status" aria-live="polite">
           {count}
         </p>
@@ -195,42 +175,16 @@ export function CreatorSearchPage({
             return (
               <li key={c.id} className={s.card} hidden={!shown.has(c.id)}>
                 <CreatorCardHead
+                  creatorId={c.id}
+                  name={c.name}
+                  href={creatorPagePath(c)}
                   look={look}
                   colors={c.colors}
                   faceTone={c.faceTone}
-                >
-                  <p className={s.name}>
-                    <Link href={creatorPagePath(c)}>{c.name}</Link>
-                    {look.fanName ? (
-                      <FandomBadge
-                        name={look.fanName}
-                        symbolUrl={look.symbolUrl}
-                        fanColor={c.colors?.fan ?? null}
-                      />
-                    ) : null}
-                  </p>
-                  {c.channelTitle ? (
-                    <p className={s.channel}>{c.channelTitle}</p>
-                  ) : null}
-                </CreatorCardHead>
-                {c.tags.length > 0 ? (
-                  <p className="ctags">
-                    {c.tags.map((t) => (
-                      <CreatorTag key={t} name={t} />
-                    ))}
-                  </p>
-                ) : null}
-                {/* 팔로우한 카드에만 선물 보내기 — 팔로우한 크리에이터에게만 보낸다(INV-L9). 팔로우하면 화면이 다시 그려져 나타난다 */}
-                {c.intro ? <p className={s.intro}>{c.intro}</p> : null}
-                <p className={s.time}>
-                  <ClockIcon />
-                  {approvalTimeText(c.approvalMinutes)}
-                </p>
-                <div className={s.act}>
-                  {own ? (
-                    <span className={`tag ${s.own}`}>내 페이지</span>
-                  ) : (
-                    <>
+                  action={
+                    own ? (
+                      <span className="tag">내 페이지</span>
+                    ) : (
                       <FollowButton
                         creatorId={c.id}
                         creatorName={c.name}
@@ -238,18 +192,17 @@ export function CreatorSearchPage({
                         variant="row"
                         mode={followMode}
                       />
-                      {c.following ? (
-                        <Link
-                          className="btn btn--sm"
-                          href={`/gifts/new?creator=${c.id}`}
-                          aria-label={`${c.name}님께 선물 보내기`}
-                        >
-                          선물 보내기
-                        </Link>
-                      ) : null}
-                    </>
-                  )}
-                </div>
+                    )
+                  }
+                />
+                <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
+                {c.tags.length > 0 ? (
+                  <p className="ctags">
+                    {c.tags.map((t) => (
+                      <CreatorTag key={t} name={t} />
+                    ))}
+                  </p>
+                ) : null}
               </li>
             );
           })}
