@@ -99,33 +99,37 @@ describe("DB 줄 → 요금표 (INV-K4·K6)", () => {
 });
 
 const PUBLIC_ROWS = [
-  { tier: "small", price_krw: 6900, revgift_price_krw: 5400 },
-  { tier: "medium", price_krw: 8900, revgift_price_krw: 6900 },
-  { tier: "large", price_krw: 10900, revgift_price_krw: 8400 },
+  { tier: "small", price_krw: 6900, revgift_price_krw: 5400, return_shipping_krw: 4000 },
+  { tier: "medium", price_krw: 8900, revgift_price_krw: 6900, return_shipping_krw: 5000 },
+  { tier: "large", price_krw: 10900, revgift_price_krw: 8400, return_shipping_krw: 6500 },
 ];
 
 describe("공개 요금표 (INV-K3 화면용)", () => {
-  it("INV-K3: 공개 읽기 함수 줄은 구간마다 받는 값·역조공 값만 담는다", () => {
+  it("INV-K3: 공개 읽기 함수 줄은 구간마다 받는 값·역조공 값·반송 택배비를 담는다(카드 d98)", () => {
     expect(publicPriceTableFromRows(PUBLIC_ROWS)).toEqual({
-      small: { priceKrw: 6900, revgiftPriceKrw: 5400 },
-      medium: { priceKrw: 8900, revgiftPriceKrw: 6900 },
-      large: { priceKrw: 10900, revgiftPriceKrw: 8400 },
+      small: { priceKrw: 6900, revgiftPriceKrw: 5400, returnShippingKrw: 4000 },
+      medium: { priceKrw: 8900, revgiftPriceKrw: 6900, returnShippingKrw: 5000 },
+      large: { priceKrw: 10900, revgiftPriceKrw: 8400, returnShippingKrw: 6500 },
     });
   });
 
-  it("INV-K3 (실패경로): 구간 빠짐·겹침·소수·문자·역조공 값 > 받는 값이면 null", () => {
+  it("INV-K3 (실패경로): 구간 빠짐·겹침·소수·문자·역조공 값 또는 반송 택배비 > 받는 값이면 null", () => {
     expect(publicPriceTableFromRows(PUBLIC_ROWS.slice(0, 2))).toBeNull();
     expect(publicPriceTableFromRows([...PUBLIC_ROWS, PUBLIC_ROWS[0]])).toBeNull();
     expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r, i) => (i === 0 ? { ...r, price_krw: 6900.5 } : r)))).toBeNull();
     expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r, i) => (i === 1 ? { ...r, revgift_price_krw: "6900" } : r)))).toBeNull();
     expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r, i) => (i === 2 ? { ...r, revgift_price_krw: 11000 } : r)))).toBeNull();
+    // 반송 택배비 칸이 없거나 문자이거나 받는 값보다 크면 null — 환불 규정 표에 빈칸·엉뚱한 금액을 그리지 않는다
+    expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r) => ({ tier: r.tier, price_krw: r.price_krw, revgift_price_krw: r.revgift_price_krw })))).toBeNull();
+    expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r, i) => (i === 0 ? { ...r, return_shipping_krw: "4000" } : r)))).toBeNull();
+    expect(publicPriceTableFromRows(PUBLIC_ROWS.map((r, i) => (i === 1 ? { ...r, return_shipping_krw: 9000 } : r)))).toBeNull();
     expect(publicPriceTableFromRows(null)).toBeNull();
   });
 });
 
 describe("lowestPriceKrw", () => {
   it("공개 요금표에서 가장 싼 구간의 받는 값 — 구간 순서와 상관없이 최솟값", () => {
-    const row = (priceKrw: number) => ({ priceKrw, revgiftPriceKrw: priceKrw - 500 });
+    const row = (priceKrw: number) => ({ priceKrw, revgiftPriceKrw: priceKrw - 500, returnShippingKrw: 4000 });
     expect(lowestPriceKrw({ small: row(6900), medium: row(8900), large: row(12900) })).toBe(6900);
     expect(lowestPriceKrw({ small: row(9000), medium: row(7000), large: row(8000) })).toBe(7000);
     expect(lowestPriceKrw({ small: row(9000), medium: row(9500), large: row(4000) })).toBe(4000);

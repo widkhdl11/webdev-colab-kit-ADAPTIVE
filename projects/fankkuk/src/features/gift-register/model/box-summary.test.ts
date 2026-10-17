@@ -5,9 +5,9 @@ import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 
 // 첫 공개 요금표(시험용 고정값). 운영 값은 DB 요금표에서만 온다. 화면은 원가·검수비를 받지 않는다.
 const PRICES: PublicPriceTable = {
-  small: { priceKrw: 6900, revgiftPriceKrw: 5400 },
-  medium: { priceKrw: 8900, revgiftPriceKrw: 6900 },
-  large: { priceKrw: 10900, revgiftPriceKrw: 8400 },
+  small: { priceKrw: 6900, revgiftPriceKrw: 5400, returnShippingKrw: 4000 },
+  medium: { priceKrw: 8900, revgiftPriceKrw: 6900, returnShippingKrw: 5000 },
+  large: { priceKrw: 10900, revgiftPriceKrw: 8400, returnShippingKrw: 6500 },
 };
 
 describe("summarizeBoxes — 등록 화면의 상자 수량·금액 안내", () => {

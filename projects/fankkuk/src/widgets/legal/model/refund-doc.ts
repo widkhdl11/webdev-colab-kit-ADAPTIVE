@@ -6,7 +6,8 @@ import { OPERATOR_NAME } from "@/shared/config/site-copy";
 import { toCheck, type LegalDoc } from "./legal-doc";
 
 // 취소·환불 규정. 근거: 이용약관 제8·9·10·13조(terms-doc.ts) · specs/payment.md INV-M8·M14·M16·M17·M18 · office-workflow INV-W10.
-// 요금 안의 칸(배송비·검수비·서비스료) 금액은 쓰지 않는다 — payment INV-M14. 실제 금액은 선물 상세의 결제 내역이 보여 준다.
+// 요금 안의 칸 중 반송 택배비(배송비)만 상자 크기별 숫자로 쓴다(카드 d98 ①, DECISIONS 2026-10-17). 검수비·서비스료는 말로만.
+// 실제로 공제한 금액은 선물 상세의 결제 내역이 보여 준다(payment INV-M14 — 결제 당시 저장한 칸).
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const WAIT = `${APPROVAL_DEADLINE_DAYS}일`;
@@ -150,10 +151,18 @@ export function refundDoc(prices: PublicPriceTable): LegalDoc {
             items: [
               "사무실에 도착한 상자를 반송할 때에는 상자를 보낸 회원이 등록한 주소로 보냅니다. 회사가 반송할 상자를 알리면, 보낸 회원이 화면에서 주소를 확인하거나 바꾼 후 「확인」을 눌러야 반송합니다.",
               "반송할 상자가 생긴 때부터 14일이 지나도 확인하지 않으면 다시 알리고, 30일이 지나도 확인하지 않은 상자는 처분합니다. 처분하더라도 환불 금액은 다시 계산하지 않습니다.",
+              "받는 주소의 6자리로 선물을 확인할 수 없는 상자(보류)는 원래 송장의 보낸 사람 주소로 착불 발송합니다. 주문과 연결되지 않아 환불할 결제가 없기 때문입니다.",
               "회사는 반송 택배비를 먼저 부담하여 선불로 보내고, 그 금액을 환불 금액에서 공제합니다.",
               "공제하는 반송 택배비는 상자 크기별로 정한 배송비 상당액이며, 결제 당시의 금액으로 계산합니다.",
-              "받는 주소의 6자리로 선물을 확인할 수 없는 상자(보류)는 원래 송장의 보낸 사람 주소로 착불 발송합니다. 주문과 연결되지 않아 환불할 결제가 없기 때문입니다.",
             ],
+          },
+          { kind: "text", text: "현재 상자 크기별 반송 택배비는 다음과 같습니다." },
+          {
+            kind: "rows",
+            rows: PRICED_TIERS.map((t) => ({
+              title: PARCEL_TIER_GUIDE[t].name,
+              fields: [["반송 택배비", won(prices[t].returnShippingKrw)]],
+            })),
           },
         ],
       },

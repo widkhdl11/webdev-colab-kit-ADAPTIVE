@@ -17,7 +17,7 @@ import { RevgiftSendForm } from "./send-form";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const prices = { small: { priceKrw: 6900, revgiftPriceKrw: 5400 }, medium: { priceKrw: 8900, revgiftPriceKrw: 6900 }, large: { priceKrw: 10900, revgiftPriceKrw: 8400 } };
+const prices = { small: { priceKrw: 6900, revgiftPriceKrw: 5400, returnShippingKrw: 4000 }, medium: { priceKrw: 8900, revgiftPriceKrw: 6900, returnShippingKrw: 5000 }, large: { priceKrw: 10900, revgiftPriceKrw: 8400, returnShippingKrw: 6500 } };
 
 const fanId = (n: number) => `00000000-0000-4000-a000-${String(n).padStart(12, "0")}`;
 const followersOf = (ns: readonly number[]): RevgiftFollower[] => ns.map((n) => ({ fanId: fanId(n), nickname: `팬${n}` }));

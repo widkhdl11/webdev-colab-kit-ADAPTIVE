@@ -11,8 +11,11 @@ export type TierPrice = { priceKrw: number; carrierCostKrw: number; inspectionFe
 
 export type PriceTable = Readonly<Record<PricedTier, TierPrice>>;
 
-/** 화면용 공개 요금표 — 구간마다 받는 값과 역조공 값(받는 값 − 검수비)만. 택배 원가·검수비는 앱 서버만 안다. */
-export type PublicTierPrice = { priceKrw: number; revgiftPriceKrw: number };
+/**
+ * 화면용 공개 요금표 — 구간마다 받는 값, 역조공 값(받는 값 − 검수비), 반송 택배비(= 택배 원가, 환불 규정 표에 쓴다 — 카드 d98 ①).
+ * 검수비·서비스료 칸은 따로 공개하지 않는다.
+ */
+export type PublicTierPrice = { priceKrw: number; revgiftPriceKrw: number; returnShippingKrw: number };
 
 export type PublicPriceTable = Readonly<Record<PricedTier, PublicTierPrice>>;
 
@@ -83,19 +86,20 @@ export function priceTableFromRows(rows: unknown): PriceTable | null {
 }
 
 const krw = z.number().int().nonnegative();
-const publicTableShape = z.object({
-  small: z.object({ priceKrw: krw.min(1), revgiftPriceKrw: krw }),
-  medium: z.object({ priceKrw: krw.min(1), revgiftPriceKrw: krw }),
-  large: z.object({ priceKrw: krw.min(1), revgiftPriceKrw: krw }),
-});
+const publicTierShape = z.object({ priceKrw: krw.min(1), revgiftPriceKrw: krw, returnShippingKrw: krw });
+const publicTableShape = z.object({ small: publicTierShape, medium: publicTierShape, large: publicTierShape });
 
-/** 공개 읽기 함수(public_tier_prices)의 줄을 화면용 요금표로. 세 구간이 한 번씩, 0 이상 정수, 역조공 값 ≤ 받는 값이 아니면 null. */
+/**
+ * 공개 읽기 함수(public_tier_prices)의 줄을 화면용 요금표로.
+ * 세 구간이 한 번씩, 0 이상 정수, 역조공 값·반송 택배비 ≤ 받는 값이 아니면 null.
+ */
 export function publicPriceTableFromRows(rows: unknown): PublicPriceTable | null {
-  const byTier = rowsByTier(rows, (r) => ({ priceKrw: r.price_krw, revgiftPriceKrw: r.revgift_price_krw }));
+  const byTier = rowsByTier(rows, (r) => ({ priceKrw: r.price_krw, revgiftPriceKrw: r.revgift_price_krw, returnShippingKrw: r.return_shipping_krw }));
   const parsed = publicTableShape.safeParse(byTier);
   if (!parsed.success) return null;
   const table = parsed.data;
-  return PRICED_TIERS.every((t) => table[t].revgiftPriceKrw <= table[t].priceKrw) ? table : null;
+  const fits = (t: PricedTier) => table[t].revgiftPriceKrw <= table[t].priceKrw && table[t].returnShippingKrw <= table[t].priceKrw;
+  return PRICED_TIERS.every(fits) ? table : null;
 }
 
 /** 크리에이터 페이지 요약 칸 「N원부터」 — 지금 공개 요금표에서 가장 싼 구간의 받는 값(design-rules 5절 creator-b). */

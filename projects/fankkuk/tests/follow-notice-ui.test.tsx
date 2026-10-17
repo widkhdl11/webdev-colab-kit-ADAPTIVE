@@ -36,7 +36,7 @@ const card: CreatorCard = {
   handle: "haru",
   photoPath: null,
 };
-const prices = { small: { priceKrw: 6900, revgiftPriceKrw: 5400 }, medium: { priceKrw: 8900, revgiftPriceKrw: 6900 }, large: { priceKrw: 10900, revgiftPriceKrw: 8400 } };
+const prices = { small: { priceKrw: 6900, revgiftPriceKrw: 5400, returnShippingKrw: 4000 }, medium: { priceKrw: 8900, revgiftPriceKrw: 6900, returnShippingKrw: 5000 }, large: { priceKrw: 10900, revgiftPriceKrw: 8400, returnShippingKrw: 6500 } };
 
 let host: HTMLDivElement;
 let root: Root;

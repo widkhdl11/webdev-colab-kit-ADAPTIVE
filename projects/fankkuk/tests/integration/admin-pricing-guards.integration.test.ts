@@ -35,14 +35,23 @@ async function saveAsOwner(patch: TablePatch): Promise<void> {
 }
 
 describe("요금 공개 범위 (INV-K3·K6 읽기)", () => {
-  it("INV-K3: 로그인 안 한 사람이 읽는 공개 요금표는 구간·받는 값·역조공 값 세 칸뿐이다", async () => {
+  it("INV-K3: 로그인 안 한 사람이 읽는 공개 요금표는 구간·받는 값·역조공 값·반송 택배비 네 칸뿐이다 — 검수비 칸은 없다(카드 d98 ①)", async () => {
     const { data, error } = await anonClient().rpc("public_tier_prices");
     expect(error).toBeNull();
+    // toEqual 은 칸이 더 있어도 실패한다 — inspection_fee_krw·carrier_cost_krw 같은 칸이 끼면 빨간불
     expect(data).toEqual([
-      { tier: "small", price_krw: 6900, revgift_price_krw: 5400 },
-      { tier: "medium", price_krw: 8900, revgift_price_krw: 6900 },
-      { tier: "large", price_krw: 10900, revgift_price_krw: 8400 },
+      { tier: "small", price_krw: 6900, revgift_price_krw: 5400, return_shipping_krw: 4000 },
+      { tier: "medium", price_krw: 8900, revgift_price_krw: 6900, return_shipping_krw: 5000 },
+      { tier: "large", price_krw: 10900, revgift_price_krw: 8400, return_shipping_krw: 6500 },
     ]);
+  });
+
+  it("INV-K3: 공개 요금표의 반송 택배비는 요금표의 택배 원가를 따라간다 — 대표가 원가를 바꾸면 바로 바뀐다", async () => {
+    await saveAsOwner({ medium: { carrier_cost_krw: 5300 } });
+    const { data, error } = await anonClient().rpc("public_tier_prices");
+    expect(error).toBeNull();
+    const medium = (data as { tier: string; return_shipping_krw: number }[]).find((r) => r.tier === "medium");
+    expect(medium?.return_shipping_krw).toBe(5300);
   });
 
   it("INV-K3 (실패경로): 택배 원가·검수비가 든 전체 요금표는 로그인 안 한 사람·팬 키로 읽을 수 없다(42501)", async () => {

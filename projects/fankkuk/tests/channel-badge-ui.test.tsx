@@ -45,7 +45,7 @@ const card: CreatorCard = {
   handle: "haru",
   photoPath: null,
 };
-const prices = { small: { priceKrw: 6900, revgiftPriceKrw: 5400 }, medium: { priceKrw: 8900, revgiftPriceKrw: 6900 }, large: { priceKrw: 10900, revgiftPriceKrw: 8400 } };
+const prices = { small: { priceKrw: 6900, revgiftPriceKrw: 5400, returnShippingKrw: 4000 }, medium: { priceKrw: 8900, revgiftPriceKrw: 6900, returnShippingKrw: 5000 }, large: { priceKrw: 10900, revgiftPriceKrw: 8400, returnShippingKrw: 6500 } };
 const channel: ChannelBadge = { platform: "youtube", channelKey: "haru_ch", channelUrl: "https://www.youtube.com/@haru_ch", verifiedOn: "2026-10-14" };
 const TITLE = "@haru_ch · 2026.10.14 확인";
 

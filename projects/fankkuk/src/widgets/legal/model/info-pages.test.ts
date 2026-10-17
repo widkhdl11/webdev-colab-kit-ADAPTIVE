@@ -13,9 +13,9 @@ import { termsDoc } from "./terms-doc";
 
 // 안내·법정 페이지 공통 — 세 줄 요약, 목차 앵커, 요금·설정값을 넘겨받은 값으로 적는지.
 const prices = {
-  small: { priceKrw: 6111, revgiftPriceKrw: 5111 },
-  medium: { priceKrw: 8222, revgiftPriceKrw: 7222 },
-  large: { priceKrw: 12333, revgiftPriceKrw: 9333 },
+  small: { priceKrw: 6111, revgiftPriceKrw: 5111, returnShippingKrw: 4111 },
+  medium: { priceKrw: 8222, revgiftPriceKrw: 7222, returnShippingKrw: 5222 },
+  large: { priceKrw: 12333, revgiftPriceKrw: 9333, returnShippingKrw: 6333 },
 } as const;
 
 const docs: Readonly<Record<string, LegalDoc>> = {
@@ -74,5 +74,33 @@ describe("안내·법정 페이지 공통", () => {
 
   it("보안 안내 그림은 팬 → 사무실 → 송장 출력 때만 주소 열람 → 크리에이터 네 칸이다", () => {
     expect(SECURITY_FLOW.map((s) => s.title)).toEqual(["팬", "팬꾹 사무실", "송장을 출력할 때만 주소 열람", "크리에이터"]);
+  });
+});
+
+describe("환불 규정 — 상자 크기별 반송 택배비 (카드 d98 ①)", () => {
+  const ret = refundDoc(prices).sections.find((s) => s.id === "return")!;
+
+  it("반송 방법 절에 크기별 반송 택배비 표가 있고, 넘겨받은 공개 요금표 값을 그린다", () => {
+    const tables = ret.blocks.filter((b) => b.kind === "rows");
+    expect(tables).toHaveLength(1);
+    const rows = tables[0]!.kind === "rows" ? tables[0]!.rows : [];
+    expect(rows.map((r) => [r.title, r.fields])).toEqual([
+      ["소형", [["반송 택배비", "4,111원"]]],
+      ["중형", [["반송 택배비", "5,222원"]]],
+      ["대형", [["반송 택배비", "6,333원"]]],
+    ]);
+  });
+
+  it("표 바로 앞 문장이 「결제 당시의 금액으로 계산」을 말한다 — 표의 숫자가 지금 금액이라는 것을 함께 읽는다", () => {
+    const at = ret.blocks.findIndex((b) => b.kind === "rows");
+    const before = JSON.stringify(ret.blocks.slice(0, at));
+    expect(before).toContain("결제 당시의 금액으로 계산합니다");
+    expect(JSON.stringify(ret.blocks[at - 1])).toContain("현재");
+  });
+
+  it("검수비·서비스료는 숫자로 쓰지 않는다 — 받는 값 − 역조공 값(검수비)·나머지(서비스료) 금액이 글에 없다", () => {
+    const all = text(docs.refund!);
+    // 검수비 = 1,000 · 1,000 · 3,000 / 서비스료 = 1,000 · 2,000 · 3,000 (위 prices)
+    for (const n of ["1,000원", "2,000원", "3,000원"]) expect(all).not.toContain(n);
   });
 });

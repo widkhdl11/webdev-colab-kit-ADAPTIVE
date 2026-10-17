@@ -1,7 +1,7 @@
 # HANDOFF.md — 그래프 런타임 상태 (graph-stop.mjs 가 자동 갱신 — 손으로 편집 금지)
 
 # 토폴로지는 루트 graph.mjs. 여기는 dirty/hash 상태만 담는다(학습·이유는 LESSONS/DECISIONS).
-# 프론티어(지금 작업할 노드, 파생값): 없음 — 전부 clean
+# 프론티어(지금 작업할 노드, 파생값): review
 
 ```json
 {
@@ -23,23 +23,23 @@
   },
   "design/schema-designer": {
     "status": "clean",
-    "hash": "04c98f317c5d"
+    "hash": "cad0e0447f8e"
   },
   "implement": {
     "status": "clean",
-    "hash": "2d787815b7cc"
+    "hash": "c8bdc37899dc"
   },
   "qa": {
     "status": "clean",
-    "hash": "572c89fb7893"
+    "hash": "740c6a2490a7"
   },
   "review": {
-    "status": "clean",
-    "hash": "ba22ee29506a"
+    "status": "dirty",
+    "hash": null
   },
   "deploy": {
-    "status": "clean",
-    "hash": "65ce2000b059"
+    "status": "dirty",
+    "hash": null
   }
 }
 ```

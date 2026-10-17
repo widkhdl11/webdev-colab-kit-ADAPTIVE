@@ -14,7 +14,7 @@ import { RegisterForm, type CreatorOption } from "./register-form";
 const HARU = "00000000-0000-4000-b000-000000000001";
 const MOMO = "00000000-0000-4000-b000-000000000002";
 const NARU = "00000000-0000-4000-b000-000000000003";
-const prices = { small: { priceKrw: 6900, revgiftPriceKrw: 5400 }, medium: { priceKrw: 8900, revgiftPriceKrw: 7400 }, large: { priceKrw: 10900, revgiftPriceKrw: 9400 } };
+const prices = { small: { priceKrw: 6900, revgiftPriceKrw: 5400, returnShippingKrw: 4000 }, medium: { priceKrw: 8900, revgiftPriceKrw: 7400, returnShippingKrw: 5000 }, large: { priceKrw: 10900, revgiftPriceKrw: 9400, returnShippingKrw: 6500 } };
 const today = { year: 2026, month: 10, day: 11 };
 
 function creators(action: "notice" | "block"): CreatorOption[] {

@@ -5,9 +5,9 @@ import { termsDoc } from "./terms-doc";
 import { mustDeliverLabels } from "@/entities/notification/model/delivery-policy";
 
 const prices = {
-  small: { priceKrw: 6900, revgiftPriceKrw: 5400 },
-  medium: { priceKrw: 8900, revgiftPriceKrw: 6900 },
-  large: { priceKrw: 12345, revgiftPriceKrw: 9876 },
+  small: { priceKrw: 6900, revgiftPriceKrw: 5400, returnShippingKrw: 4000 },
+  medium: { priceKrw: 8900, revgiftPriceKrw: 6900, returnShippingKrw: 5000 },
+  large: { priceKrw: 12345, revgiftPriceKrw: 9876, returnShippingKrw: 6500 },
 } as const;
 
 const docs: readonly LegalDoc[] = [termsDoc(prices), privacyDoc()];

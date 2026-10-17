@@ -27,9 +27,9 @@ afterEach(() => {
 });
 
 const PRICES: PublicPriceTable = {
-  small: { priceKrw: 9000, revgiftPriceKrw: 7000 },
-  medium: { priceKrw: 12000, revgiftPriceKrw: 10000 },
-  large: { priceKrw: 15000, revgiftPriceKrw: 13000 },
+  small: { priceKrw: 9000, revgiftPriceKrw: 7000, returnShippingKrw: 4000 },
+  medium: { priceKrw: 12000, revgiftPriceKrw: 10000, returnShippingKrw: 5000 },
+  large: { priceKrw: 15000, revgiftPriceKrw: 13000, returnShippingKrw: 6500 },
 };
 const HARU: CreatorOption = { id: "11111111-1111-4111-8111-111111111111", name: "하루", platform: "유튜브", approvalMinutes: null };
 const DAL: CreatorOption = { id: "22222222-2222-4222-8222-222222222222", name: "달", platform: "치지직", approvalMinutes: null };
