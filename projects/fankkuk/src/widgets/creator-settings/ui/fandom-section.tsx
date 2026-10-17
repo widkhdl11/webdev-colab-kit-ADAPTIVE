@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
-import { contrastRatio, parseColorField, TEXT_DARK, textOnColor, type CreatorColors } from "@/entities/creator/model/creator-color";
+import { parseColorField, type CreatorColors } from "@/entities/creator/model/creator-color";
 import { creatorSymbolUrl } from "@/entities/creator/model/link-images";
 import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
 import { COVER_PASTELS } from "@/entities/creator/lib/cover-pastel";
@@ -19,13 +19,11 @@ import s from "./fandom-section.module.css";
 // - 팬덤 이름·두 색은 「저장」으로 한 번에 보낸다(/api/creator/profile — my-account INV-A9 경로, 크리에이터 ID 는 보내지 않는다). 보내는 칸은 이 셋뿐이다.
 //   색은 빈 칸이면 기본 모양으로 되돌리고, 꼴이 틀리면 보내지 않는다(서버·DB 가 다시 본다 — creator-link INV-E13).
 // - 팬마크 = 팬덤 심볼(INV-E9·E12). 권리 확인 체크를 해야 고를 수 있고 체크는 요청에도 실린다 — 시안에는 체크가 없지만 스펙(INV-E12)대로 둔다.
-// - 미리보기 글자색은 저장하지 않고 그때 계산한다 — 실제 페이지와 같은 계산 하나(textOnColor, INV-E14).
+// - 팬덤 뱃지 글자는 진한 회색 고정 — 면이 팬컬러를 옅게 섞은 색이라 어느 팬컬러에서도 읽힌다(DECISIONS 2026-10-17 카드 C안).
 
 const FAN_SWATCHES = ["#C4B5FD", "#FFF59D", "#89CFF0", "#F9A8D4", "#86EFAC", "#FDBA74", "#1E3A8A", "#9D174D"] as const;
 // 퍼스널 컬러 추천 색 = 사진 없는 배너의 파스텔 8색(시안 v24-creator-card csettings, DECISIONS d101) — 입력 위에 둔다
 const PERSONAL_SWATCHES = COVER_PASTELS;
-/** 글자색 예시(시안 「뱃지 글자는 팬컬러에 맞춰 저절로 바뀌어요」) */
-const AUTO_EXAMPLES = ["#FFF59D", "#1E3A8A"] as const;
 
 const LOGIN = "/login?next=/creator/settings";
 
@@ -40,15 +38,6 @@ export type FandomSectionProps = {
   /** 공개 저장소 주소 — 올린 뒤 새 심볼 경로로 주소를 만든다 */
   photoBase: string;
 };
-
-function textName(bg: string): string {
-  return textOnColor(bg) === TEXT_DARK ? "검정 글자" : "흰색 글자";
-}
-
-/** 대비는 소수 첫째 자리에서 버린다 — 반올림하면 4.46 이 4.5 로 보여 기준을 넘은 것처럼 읽힌다 */
-function ratioText(bg: string): string {
-  return `대비 ${(Math.floor(contrastRatio(bg, textOnColor(bg)) * 10) / 10).toFixed(1)}:1`;
-}
 
 /** 안내 상자 아이콘(시안 #i-info) */
 function InfoIcon() {
@@ -70,7 +59,6 @@ function ColorStep({
   onChange,
   swatches,
   swatchesFirst = false,
-  showAuto,
   invalid,
   errorId,
   inputRef,
@@ -85,7 +73,6 @@ function ColorStep({
   swatches: readonly string[];
   /** 추천 색 줄을 입력 위에(퍼스널 컬러) */
   swatchesFirst?: boolean;
-  showAuto: boolean;
   invalid: boolean;
   /** 틀렸을 때 이어 읽을 오류 문구 id */
   errorId: string;
@@ -145,11 +132,6 @@ function ColorStep({
           aria-describedby={invalid ? `${id}-h ${errorId}` : `${id}-h`}
           onChange={(e) => onChange(e.currentTarget.value)}
         />
-        {showAuto && color ? (
-          <span className="t-meta" aria-live="polite">
-            {textName(color)} · {ratioText(color)}
-          </span>
-        ) : null}
       </div>
       {swatchesFirst ? null : swatchRow}
       {children}
@@ -284,7 +266,6 @@ export function FandomSection(p: FandomSectionProps) {
           setBad((b) => ({ ...b, fan: false }));
         }}
         swatches={FAN_SWATCHES}
-        showAuto
         invalid={bad.fan}
         errorId="fd-msg"
         inputRef={fanRef}
@@ -302,7 +283,6 @@ export function FandomSection(p: FandomSectionProps) {
         }}
         swatches={PERSONAL_SWATCHES}
         swatchesFirst
-        showAuto={false}
         invalid={bad.personal}
         errorId="fd-msg"
         inputRef={personalRef}
@@ -326,7 +306,7 @@ export function FandomSection(p: FandomSectionProps) {
           <div className={s.pvBox}>
             <p className={s.pvCap}>팬덤 뱃지</p>
             <div className={s.pvBadges}>
-              <FandomBadge name={name} symbolUrl={symbolUrl} fanColor={colors.fan} large />
+              <FandomBadge name={name} symbolUrl={symbolUrl} fanColor={colors.fan} size="large" />
               <FandomBadge name={name} symbolUrl={symbolUrl} fanColor={colors.fan} />
             </div>
           </div>
@@ -345,21 +325,6 @@ export function FandomSection(p: FandomSectionProps) {
             symbolUrl={symbolUrl}
           />
         </div>
-        {name ? (
-          <div className={s.pvBox}>
-            <p className={s.pvCap}>뱃지 글자는 팬컬러에 맞춰 저절로 바뀌어요</p>
-            <ul className={s.autoEx}>
-              {AUTO_EXAMPLES.map((c) => (
-                <li key={c}>
-                  <FandomBadge name={name} symbolUrl={symbolUrl} fanColor={c} />
-                  <span className="t-meta">
-                    {c} {textOnColor(c) === TEXT_DARK ? "밝은 색" : "어두운 색"} → {textName(c)} · {ratioText(c)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
       </div>
 
       <p className={`${s.msg} ${msg && !msg.ok ? "err" : "t-meta"}`} role="status" id="fd-msg">

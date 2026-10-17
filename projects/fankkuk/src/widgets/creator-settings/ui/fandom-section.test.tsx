@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 
+import badgeStyles from "@/entities/creator/ui/creator-head.module.css";
 import { FandomSection, type FandomSectionProps } from "./fandom-section";
 
 // 상세 설정 · 팬덤 (creator-link INV-E12·E13·E14, design-rules 12절). 서버로 보내는 길(fetch)만 가짜로 두고 화면이 무엇을 막고 무엇을 보내는지 본다.
@@ -146,25 +147,27 @@ describe("INV-E13: 저장은 팬덤 이름·두 색만, 크리에이터 ID 없�
   });
 });
 
-describe("INV-E14: 미리보기 글자색은 저장하지 않고 그때 계산 — 실제 페이지와 같은 계산", () => {
-  it("INV-E14 S13: 팬컬러를 바꾸는 즉시 뱃지 글자색이 바뀐다(#FFF59D → #111827, #1E3A8A → 흰색) · 안내에 대비 숫자", async () => {
+describe("INV-E14: 팬덤 뱃지 글자는 진한 회색 고정 — 팬컬러는 테두리·옅은 면에만", () => {
+  it("INV-E14 S13: 팬컬러를 넣으면 미리보기 뱃지 모두 팬컬러 모양(.fbFan)·--fan 그 값이 되고 글자색 변수·안내는 없다", async () => {
     await render();
-    await type(fanHex(), "#FFF59D");
-    const badge = () => host.querySelector<HTMLElement>("[data-fandom-badge]")!;
-    expect(badge().style.getPropertyValue("--on-fan")).toBe("#111827");
-    expect(host.textContent).toContain("검정 글자 · 대비");
-    await type(fanHex(), "#1E3A8A");
-    expect(badge().style.getPropertyValue("--on-fan")).toBe("#FFFFFF");
-    expect(host.textContent).toContain("흰색 글자 · 대비");
+    const badges = () => Array.from(host.querySelectorAll<HTMLElement>("[data-fandom-badge]"));
+    expect(badges().length).toBeGreaterThan(0);
+    for (const b of badges()) expect(b.classList.contains(badgeStyles.fbFan)).toBe(false);
+    for (const fan of ["#FFF59D", "#1E3A8A"]) {
+      await type(fanHex(), fan);
+      for (const b of badges()) {
+        expect(b.classList.contains(badgeStyles.fbFan), fan).toBe(true);
+        expect(b.style.getPropertyValue("--fan"), fan).toBe(fan);
+        expect(b.style.getPropertyValue("--on-fan"), fan).toBe("");
+      }
+    }
+    expect(host.textContent).not.toMatch(/(검정|흰색) 글자 · 대비/);
+    expect(host.textContent).not.toContain("저절로 바뀌어요");
   });
 
-  it("INV-E14 S13b: 경계 색 #777777 도 거부 없이 보내고 글자는 흰색", async () => {
+  it("INV-E14 S13b: 경계 색 #777777 도 거부 없이 보낸다", async () => {
     await render();
     await type(fanHex(), "#777777");
-    expect(host.querySelector<HTMLElement>("[data-fandom-badge]")!.style.getPropertyValue("--on-fan")).toBe("#FFFFFF");
-    // 대비 4.48 — 반올림하면 4.5 로 보여 기준을 넘은 것처럼 읽히므로 버린다
-    expect(host.textContent).toContain("흰색 글자 · 대비 4.4:1");
-    expect(host.textContent).not.toContain("4.5:1");
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
     await act(async () => saveBtn().click());
     expect(JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1].body)).fanColor).toBe("#777777");

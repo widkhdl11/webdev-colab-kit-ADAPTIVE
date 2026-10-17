@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { tagBrandOf, type TagIcon } from "../model/tag-brand";
+import { NEUTRAL, tagBrandOf, type TagIcon } from "../model/tag-brand";
 import s from "./creator-tag.module.css";
 
 // 크리에이터 태그의 아이콘 배지·태그·칩 안쪽 (design-rules 5절 「크리에이터 태그 아이콘·플랫폼 색」, 시안 v9-pages/tags-b.html).
@@ -94,12 +94,27 @@ function CtagLogo({ icon }: { icon: TagIcon }) {
  */
 export function CreatorTag({ name }: { name: string }) {
   const brand = tagBrandOf(name);
-  if (!brand) return <span className={`ctag ${s.e3} ${s.plain}`}>{name}</span>;
+  if (!brand)
+    return (
+      <span className={`ctag ${s.e3} ${s.plain}`} data-plain="">
+        <span className={s.label}>{name}</span>
+      </span>
+    );
   const vars: Record<string, string> = { "--f": brand.fill, "--k": brand.ink };
   return (
     <span className={`ctag ${s.e3}`} style={vars as CSSProperties}>
       <CtagLogo icon={brand.icon} />
-      {name}
+      <span className={s.label}>{name}</span>
+    </span>
+  );
+}
+
+/** 칩 줄에 다 못 들어간 칩 수 「+N」 — 중립 플랫폼 색 알약(시안 v25-card-align C안 .ctag.more). */
+export function CreatorTagMore({ count }: { count: number }) {
+  const vars: Record<string, string> = { "--f": NEUTRAL.fill, "--k": NEUTRAL.ink };
+  return (
+    <span className={`ctag ${s.e3} ${s.plain}`} style={vars as CSSProperties} data-plain="">
+      +{count}
     </span>
   );
 }

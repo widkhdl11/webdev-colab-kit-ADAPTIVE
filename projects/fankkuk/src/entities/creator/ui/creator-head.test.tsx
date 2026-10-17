@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { CreatorHead, type CreatorHeadProps } from "./creator-head";
 import { FandomBadge } from "./fandom-badge";
+import s from "./creator-head.module.css";
 
 // 크리에이터 머리·팬덤 뱃지가 색을 어디에 쓰는가 (creator-link INV-E13·E14, design-rules 12절 「팬덤 색」).
 
@@ -50,22 +51,28 @@ describe("크리에이터 머리 — 퍼스널 컬러는 띠·사진 테두리, 
   });
 });
 
-describe("팬덤 뱃지 글자색 — 그때 계산 (INV-E14)", () => {
-  it("INV-E14 S13: #FFF59D 위 #111827, #1E3A8A 위 흰색, #777777 위 흰색", () => {
-    for (const [fan, on] of [
-      ["#FFF59D", "#111827"],
-      ["#1E3A8A", "#FFFFFF"],
-      ["#777777", "#FFFFFF"],
-    ] as const) {
+describe("팬덤 뱃지 — 글자 #111827 고정, 팬컬러는 테두리·옅은 면에만 (INV-E14)", () => {
+  it("INV-E14 S13: #FFF59D·#1E3A8A·#777777 모두 팬컬러 모양(.fbFan)에 --fan 그 값 — 글자색 변수는 없다", () => {
+    for (const fan of ["#FFF59D", "#1E3A8A", "#777777"] as const) {
       const badge = dom(renderToStaticMarkup(<FandomBadge name="달빛지기" symbolUrl={null} fanColor={fan} />)).querySelector<HTMLElement>("[data-fandom-badge]");
-      expect(badge?.style.getPropertyValue("--on-fan"), fan).toBe(on);
+      expect(badge?.classList.contains(s.fbFan), fan).toBe(true);
+      expect(badge?.style.getPropertyValue("--fan"), fan).toBe(fan);
+      expect(badge?.style.getPropertyValue("--on-fan"), fan).toBe("");
     }
   });
 
-  it("INV-E14: 크리에이터 머리 안의 뱃지와 따로 그린 뱃지(미리보기)의 글자색이 같다 — 같은 계산 하나", () => {
+  it("INV-E14: 팬컬러가 없으면 팬컬러 모양(.fbFan)이 붙지 않는다 — 기본 모양", () => {
+    const badge = dom(renderToStaticMarkup(<FandomBadge name="달빛지기" symbolUrl={null} fanColor={null} />)).querySelector<HTMLElement>("[data-fandom-badge]");
+    expect(badge?.classList.contains(s.fbFan)).toBe(false);
+    expect(badge?.style.getPropertyValue("--fan")).toBe("");
+  });
+
+  it("INV-E14: 크리에이터 머리 안의 뱃지와 따로 그린 큰 뱃지(미리보기)가 같은 색 모양이다", () => {
     const inHead = dom(renderToStaticMarkup(<CreatorHead {...base} colors={{ personal: null, fan: "#89CFF0" }} />)).querySelector<HTMLElement>("[data-fandom-badge]");
-    const alone = dom(renderToStaticMarkup(<FandomBadge name="달빛지기" symbolUrl={null} fanColor="#89CFF0" large />)).querySelector<HTMLElement>("[data-fandom-badge]");
-    expect(inHead?.style.getPropertyValue("--on-fan")).toBe("#111827");
-    expect(alone?.style.getPropertyValue("--on-fan")).toBe(inHead?.style.getPropertyValue("--on-fan"));
+    const alone = dom(renderToStaticMarkup(<FandomBadge name="달빛지기" symbolUrl={null} fanColor="#89CFF0" size="large" />)).querySelector<HTMLElement>("[data-fandom-badge]");
+    for (const badge of [inHead, alone]) {
+      expect(badge?.classList.contains(s.fbFan)).toBe(true);
+      expect(badge?.style.getPropertyValue("--fan")).toBe("#89CFF0");
+    }
   });
 });

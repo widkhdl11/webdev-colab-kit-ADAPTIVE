@@ -51,14 +51,13 @@ describe("크리에이터 색 형식 (creator-link INV-E13)", () => {
     }
   });
 
-  it("INV-E13·E14: 그리기 변수 — 형식인 색만 넣고, 글자색은 같은 계산 하나로 붙인다", () => {
+  it("INV-E13·E14: 그리기 변수 — 형식인 색만 넣고, 띠 글자색은 계산해 붙이며 뱃지 글자색 변수는 없다", () => {
     expect(creatorColorVars({ personal: "#FFF59D", fan: "#1E3A8A" })).toEqual({
       "--personal": "#FFF59D",
       "--on-personal": TEXT_DARK,
       "--fan": "#1E3A8A",
-      "--on-fan": TEXT_LIGHT,
     });
-    expect(creatorColorVars({ personal: null, fan: "#777777" })).toEqual({ "--fan": "#777777", "--on-fan": TEXT_LIGHT });
+    expect(creatorColorVars({ personal: null, fan: "#777777" })).toEqual({ "--fan": "#777777" });
   });
 
   it("INV-E13 (실패경로): 그리기 직전 형식 확인 — 스타일 문장을 끼운 값은 변수에 들어가지 않는다", () => {

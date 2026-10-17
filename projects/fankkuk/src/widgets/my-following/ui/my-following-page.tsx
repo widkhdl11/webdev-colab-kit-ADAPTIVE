@@ -10,15 +10,15 @@ import {
   type CardLook,
 } from "@/entities/creator/model/card-look";
 import { CreatorCardHead, CreatorCardLine } from "@/entities/creator/ui/creator-card-head";
-import { CreatorTag } from "@/entities/creator/ui/creator-tag";
+import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
 import { saveFollow } from "@/features/creator-follow/api/save-follow";
 import { FOLLOWING_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import { useUnfollowConfirm } from "@/features/creator-follow/ui/unfollow-dialog";
 import s from "./my-following.module.css";
 
-// 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/v18/my-following.html (페이지 머리) · 카드와 격자는 크리에이터 찾기와 같은 카드(시안 v24-creator-card, DECISIONS d101·d102 —
-// 승인 시간·「선물 보내기」를 카드에서 뺐다). 폭은 목록형 기본 880 → 3열.
-// 이름 줄 오른쪽 버튼은 크리에이터 찾기의 팔로우한 카드와 같은 「팔로우 중」. 누르면 확인 창(design-rules 12절)을 띄우고,
+// 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/v18/my-following.html (페이지 머리) · 카드와 격자는 크리에이터 찾기와 같은 카드(시안 v25-card-align C안,
+// DECISIONS 2026-10-17 카드 d103 — 승인 시간·「선물 보내기」는 카드에 없다). 폭은 목록형 기본 880 → 3열.
+// 배너 모서리 버튼은 크리에이터 찾기의 팔로우한 카드와 같은 「팔로우 중」. 누르면 확인 창(design-rules 12절)을 띄우고,
 // 「취소하기」를 누르면 줄을 바로 지우고 저장한다. 저장에 실패하면 줄을 제자리에 돌려놓고 알린다. 다 지우면 빈 화면 안내가 나온다.
 
 export function MyFollowingPanel({
@@ -98,13 +98,7 @@ export function MyFollowingPanel({
                   }
                 />
                 <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-                {c.tags.length > 0 ? (
-                  <p className="ctags">
-                    {c.tags.map((t) => (
-                      <CreatorTag key={t} name={t} />
-                    ))}
-                  </p>
-                ) : null}
+                <CreatorCardTags tags={c.tags} />
               </li>
             );
           })}

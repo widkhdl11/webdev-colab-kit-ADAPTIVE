@@ -46,7 +46,7 @@ export function CreatorHead(p: CreatorHeadProps) {
         <div className={s.id}>
           <div className={s.line}>
             <Name className={s.name}>{p.name}</Name>
-            {p.fanName ? <FandomBadge name={p.fanName} symbolUrl={p.symbolUrl} fanColor={p.colors.fan} /> : null}
+            {p.fanName ? <FandomBadge name={p.fanName} symbolUrl={p.symbolUrl} fanColor={p.colors.fan} size="medium" /> : null}
           </div>
           {p.intro ? <p className={s.intro}>{p.intro}</p> : null}
         </div>

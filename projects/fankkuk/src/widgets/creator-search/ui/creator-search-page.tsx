@@ -17,8 +17,8 @@ import {
   type CardLook,
 } from "@/entities/creator/model/card-look";
 import { CreatorCardHead, CreatorCardLine } from "@/entities/creator/ui/creator-card-head";
+import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
 import {
-  CreatorTag,
   hasTagIcon,
   TagChipBody,
 } from "@/entities/creator/ui/creator-tag";
@@ -32,8 +32,8 @@ import s from "./creator-search.module.css";
 // 크리에이터 찾기. 시안: docs/design/mockups/site/v18/creators.html (design-rules 00절) · 태그 아이콘·색 v9-pages/tags-b.html (카드 d46)
 // 위에서 아래로: 페이지 머리(제목 24 왼쪽·설명·본인 확인 줄) → 왼쪽부터 꽉 찬 검색창 → 태그 칩 → 「전체 N명」 → 카드 격자(쓸 수 있는 폭 1152 → 4열 · 880 → 3열 · 640 이상 2열 · 그 아래 1열).
 // 본문 틀: 로그인 후는 목록형 기본 폭(.page-pane 880 — 2026-10-16 사용자 「꼭 넓은 너비가 필요한 페이지가 아니다」), 로그인 전은 상단 바와 같은 1152 선(.pub-inner) — 로그인 전 상단 바 아래에서 넓은 틀이 상단 바 선을 벗어나지 않게.
-// 카드는 크리에이터가 꾸민 대로 — entities/creator/ui/creator-card-head(시안 v24-creator-card, DECISIONS d101·d102: 배너 2.5:1 · 이름 줄 오른쪽 팔로우 ·
-// 「채널 이름 · 소개」 한 줄 + 칩, 승인 시간·「선물 보내기」 없음). 팔로우한 크리에이터 화면과 같은 카드다.
+// 카드는 크리에이터가 꾸민 대로 — entities/creator/ui/creator-card-head·creator-card-tags(시안 v25-card-align C안, DECISIONS 2026-10-17 카드 d103: 배너 2.5:1 ·
+// 가운데 정렬 · 배너 모서리 팔로우 · 「채널 이름 · 소개」 한 줄 + 칩 한 줄, 승인 시간·「선물 보내기」 없음). 팔로우한 크리에이터 화면과 같은 카드다.
 // 광고 배너 자리는 다음 기능 작업이라 두지 않는다.
 // 검색창에 치는 대로 목록이 걸러진다(시안 site.js 의 실시간 검색).
 // 태그 칩(creator-tags INV-T4)은 숨기지 않은 선택지 가운데 이 목록의 크리에이터 1명 이상이 가진 것만, 선택지 순서. 칩 하나를 고르면
@@ -196,13 +196,7 @@ export function CreatorSearchPage({
                   }
                 />
                 <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-                {c.tags.length > 0 ? (
-                  <p className="ctags">
-                    {c.tags.map((t) => (
-                      <CreatorTag key={t} name={t} />
-                    ))}
-                  </p>
-                ) : null}
+                <CreatorCardTags tags={c.tags} />
               </li>
             );
           })}

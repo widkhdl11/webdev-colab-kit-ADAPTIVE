@@ -23,6 +23,7 @@
   --gray-600: #4b5563;
   --gray-900: #1f2937; /* 본문 글자(ink). 흰 바탕 14.7:1 */
   --shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  --shadow-float: 0 1px 3px rgb(0 0 0 / 0.15); /* 사진 위에 뜬 작은 버튼(크리에이터 카드 배너 모서리 「팔로우」, 시안 v25-card-align C안) */
   /* 글꼴: 본문·버튼·메뉴 Pretendard, 제목(h1·h2·h3·페이지 머리 제목)만 티머니 둥근바람(400·800 두 굵기뿐) */
   --font: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Segoe UI", "Malgun Gothic", sans-serif;
   --font-round: "Tmoney Round Wind", var(--font);
@@ -113,6 +114,7 @@
   --r-btn-sm: var(--r-btn); /* 옛 이름 — 10 을 뺐다 */
   --r-tag: 8px; /* 상태 태그·칩 */
   --r-bar: 3px; /* 진행 막대 칸(높이 6)의 둥근 끝 — design-rules 13절 선물 현황 */
+  --r-mark: 3px; /* 작은 팬덤 뱃지(높이 22) 안 팬마크 14 의 모서리 — 시안 v25-card-align */
   --r-pill: 9999px;
 
   /* 간격 — 4px 기준 10단계(tokens.md 1절). 20 은 뺐다: 16·20·24 가 함께 있으면 구분이 안 된다.
@@ -148,6 +150,7 @@
   --fs-card: 20px; /* 카드 제목, 로그인 후 구간 제목, 강조 값(숫자·상태) · 1.4 */
   --fs-body: 16px; /* 본문·버튼·상단 메뉴·리드 문장 · 1.6 */
   --fs-small: 14px; /* 보조 글 — 캡션·날짜·개수·라벨·뱃지·사이드바 메뉴·푸터 · 1.5 */
+  --fs-badge: 12px; /* 6단계 밖 예외 — 팬덤 뱃지·카드 안 플랫폼 칩 전용(DECISIONS 2026-10-17 카드 d103) */
   --fs-lead: var(--fs-body); /* 옛 이름 — 리드 18 → 16(통계 값처럼 강조 값은 --fs-card) */
   /* v18 앱 사이드바(로그인 후)·상단 바(로그인 전) — 시안 v18/tokens.css 6~8단계 값 */
   --sidebar-w: 240px;

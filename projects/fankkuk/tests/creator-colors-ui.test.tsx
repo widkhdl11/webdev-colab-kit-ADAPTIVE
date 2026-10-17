@@ -5,10 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
+import badgeStyles from "@/entities/creator/ui/creator-head.module.css";
 import { CreatorProfilePage } from "@/widgets/creator-profile/ui/creator-profile-page";
 
 // 팬이 보는 크리에이터 페이지의 색 (creator-link INV-E13·E14, design-rules 12절 「팬덤 색」, 시안 v21-addendum3/cre-public-page.html).
-// 퍼스널 컬러 = 맨 위 띠·프로필 사진 테두리, 팬컬러 = 팬덤 뱃지 면. 버튼은 사이트 색 그대로. DOM 으로 자리를 본다.
+// 퍼스널 컬러 = 맨 위 띠·프로필 사진 테두리, 팬컬러 = 팬덤 뱃지 테두리·옅은 면. 버튼은 사이트 색 그대로. DOM 으로 자리를 본다.
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -101,15 +102,13 @@ describe("크리에이터 페이지 — 색이 쓰이는 자리 (INV-E13)", () =
   });
 });
 
-describe("크리에이터 페이지 — 뱃지 글자색은 그때 계산 (INV-E14)", () => {
-  it("INV-E14 S13: #FFF59D → #111827, #1E3A8A → 흰색, 경계 #777777 → 흰색", () => {
-    for (const [fan, on] of [
-      ["#FFF59D", "#111827"],
-      ["#1E3A8A", "#FFFFFF"],
-      ["#777777", "#FFFFFF"],
-    ] as const) {
+describe("크리에이터 페이지 — 뱃지 글자 #111827 고정, 팬컬러는 테두리·옅은 면 (INV-E14)", () => {
+  it("INV-E14 S13: #FFF59D·#1E3A8A·경계 #777777 모두 팬컬러 모양(.fbFan)·--fan 그 값 — 글자색 변수는 없다", () => {
+    for (const fan of ["#FFF59D", "#1E3A8A", "#777777"] as const) {
       renderPage({ personal: null, fan });
-      expect(badge()?.style.getPropertyValue("--on-fan"), fan).toBe(on);
+      expect(badge()?.classList.contains(badgeStyles.fbFan), fan).toBe(true);
+      expect(badge()?.style.getPropertyValue("--fan"), fan).toBe(fan);
+      expect(badge()?.style.getPropertyValue("--on-fan"), fan).toBe("");
     }
   });
 });

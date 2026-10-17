@@ -19,3 +19,5 @@
 .e3:global(.ctag) :global(.bd) { width: 18px; height: 18px; background: var(--white); }
 .e3:global(.ctag) > svg { width: 18px; height: 18px; padding: 2px; }
 .e3.plain:global(.ctag) { padding-inline: 10px; }
+/* 뱃지 이름 — 뱃지가 칸보다 좁아지면(크리에이터 카드 칩 줄의 첫 칩 줄이기) 말줄임 */
+.label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }

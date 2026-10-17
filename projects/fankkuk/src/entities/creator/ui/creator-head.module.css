@@ -1,6 +1,6 @@
 /* 크리에이터 프로필 머리·팬덤 뱃지 — 시안 docs/design/mockups/site/v21-addendum3/cre-21.css 「프로필 구간」·「팬덤 뱃지」·「미리보기」.
    값은 시안 :root(--band-h 168 · --av 104 · --av-ring 4 · --badge-h2 28 · --mark-s 20 · --pf-pad 32, 768 이하 112 · 80 · 16).
-   --personal·--on-personal·--fan·--on-fan 은 creatorColorVars 가 꼴을 본 뒤에만 넣는다 — 없으면 아래 기본값(사이트 기본 모양). */
+   --personal·--on-personal·--fan 은 creatorColorVars 가 꼴을 본 뒤에만 넣는다 — 없으면 아래 기본값(사이트 기본 모양). */
 .pf { --band-h: 168px; --av: 104px; --av-ring: 4px; --pf-pad: 32px; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
 /* 띠 2.5:1(공개 프로필 머리와 같다 — 시안 v24-creator-card pubhead-alt). 사진이 없으면 퍼스널 컬러 30% 면 + 흐린 고양이(creator-cover-art), 퍼스널 컬러도 없으면 옅은 하늘 면 */
 .band { position: relative; display: block; overflow: hidden; aspect-ratio: 5 / 2; background: var(--primary-50); }
@@ -23,12 +23,20 @@ span.name { font-weight: var(--fw-bold); }
 .compact .body { padding-bottom: var(--space-4); }
 .compact .name { font-size: var(--fs-card); }
 
-/* 팬덤 뱃지 — 면 = 팬컬러, 글자 = 대비가 큰 쪽(흰색/#111827) */
-.fb { --badge-h2: 28px; --mark-s: 20px; display: inline-flex; align-items: center; gap: var(--space-2); height: var(--badge-h2); padding: 0 var(--space-4); border-radius: var(--r-pill); background: var(--fan, var(--primary-50)); color: var(--on-fan, var(--ink)); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
-.fb:has(.fbMark) { padding-left: 4px; }
-.fbMark { flex: none; display: grid; place-items: center; width: var(--mark-s); height: var(--mark-s); border-radius: var(--r-tag); background: var(--white); overflow: hidden; }
+/* 팬덤 뱃지 — 시안 v25-card-align C안 .fn2(DECISIONS 2026-10-17 카드 d103): 높이 22 · 글자 12(뱃지 전용 --fs-badge) · 굵기 600 · 마크 14.
+   팬컬러가 있으면(.fbFan) 테두리 = 팬컬러 1px, 면 = 팬컬러 28% + 흰색. 글자는 진한 회색. 팬컬러가 없으면 옅은 면 + 회색 테두리 */
+.fb { --badge-h2: 22px; --mark-s: 14px; display: inline-flex; align-items: center; gap: var(--space-1); min-width: 0; max-width: 100%; height: var(--badge-h2); padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1; white-space: nowrap; }
+.fbFan { background: color-mix(in srgb, var(--fan) 28%, var(--white)); box-shadow: inset 0 0 0 1px var(--fan); }
+.fb:has(.fbMark) { padding-left: 3px; }
+.fbMark { flex: none; display: grid; place-items: center; width: var(--mark-s); height: var(--mark-s); border-radius: var(--r-mark); background: var(--white); overflow: hidden; }
 .fbMark img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.fbLg { --badge-h2: 40px; --mark-s: 30px; font-size: var(--fs-body); }
+.fbt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* 중간 뱃지(공개 프로필 머리·크리에이터 머리, 큰 이름 옆) — 이전 크기 그대로 28 · 마크 20 · 글자 14, 색 모양만 위와 같다 */
+.fbMd { --badge-h2: 28px; --mark-s: 20px; font-size: var(--fs-small); }
+/* 큰 뱃지(상세 설정 미리보기) — 크기는 예전 그대로 40 · 마크 30 · 글자 16, 색 모양만 위와 같다 */
+.fbLg { --badge-h2: 40px; --mark-s: 30px; gap: var(--space-2); padding: 0 var(--space-4); font-size: var(--fs-body); }
+.fbLg:has(.fbMark) { padding-left: 4px; }
+.fbLg .fbMark { border-radius: var(--r-tag); }
 
 @media (max-width: 768px) {
   .pf:not(.compact) { --band-h: 112px; --av: 80px; --pf-pad: 16px; }

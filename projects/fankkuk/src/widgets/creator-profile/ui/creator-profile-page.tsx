@@ -170,7 +170,7 @@ export function CreatorProfilePage({
                 <h1 className={s.name} id="creator-name">
                   {creator.name}
                 </h1>
-                {fanName ? <FandomBadge name={fanName} symbolUrl={symbolUrl} fanColor={creator.colors?.fan ?? null} /> : null}
+                {fanName ? <FandomBadge name={fanName} symbolUrl={symbolUrl} fanColor={creator.colors?.fan ?? null} size="medium" /> : null}
               </div>
               {/* 추가분 4-3: 닉네임 아래 확인된 채널 아이콘 하나 — 새 탭으로 열리고, 올리면 「@핸들 · 날짜 확인」 */}
               {channel ? (

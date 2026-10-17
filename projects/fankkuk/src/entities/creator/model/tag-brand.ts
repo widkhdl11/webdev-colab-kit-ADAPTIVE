@@ -16,7 +16,8 @@ export type TagIcon =
 export type TagBrand = { icon: TagIcon; ring: string; fill: string; ink: string };
 
 const INSTAGRAM_GRADIENT = "radial-gradient(circle at 30% 107%, #FDF497 0%, #FDF497 5%, #FD5949 45%, #D6249F 60%, #285AEB 90%)";
-const NEUTRAL = { fill: "#F2F2F3", ink: "#343039" } as const;
+/** 중립 플랫폼 색(버추얼·카드 칩 줄의 「+N」) */
+export const NEUTRAL = { fill: "#F2F2F3", ink: "#343039" } as const;
 
 // 키는 tagKey 로 정리한 선택지 이름(문자열 값). 객체 키 대신 Map 을 쓴다 — 식별자·객체 키는 ASCII 로 쓰는 규칙.
 const TAG_BRANDS: ReadonlyMap<string, TagBrand> = new Map<string, TagBrand>([

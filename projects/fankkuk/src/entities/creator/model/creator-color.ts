@@ -1,7 +1,8 @@
-// 크리에이터 색 — 퍼스널 컬러(크리에이터 페이지 맨 위 띠·프로필 사진 테두리)와 팬컬러(팬덤 뱃지 면). 스펙 creator-link INV-E13·E14.
+// 크리에이터 색 — 퍼스널 컬러(크리에이터 페이지 맨 위 띠·프로필 사진 테두리)와 팬컬러(팬덤 뱃지 테두리·옅은 면). 스펙 creator-link INV-E13·E14.
 // - 저장 형식은 #RRGGBB 대문자 하나뿐이다(DB 제약이 같은 꼴만 받는다). 화면은 스타일에 넣기 직전에 이 꼴을 한 번 더 보고, 아니면 기본 모양으로 그린다(INV-E13).
 // - 색 위 글자색은 저장하지 않고 여기서 그때 계산한다 — 흰색과 #111827 가운데 WCAG 상대 휘도 대비가 큰 쪽(INV-E14).
-//   크리에이터 페이지 띠·팬덤 뱃지·상세 설정 미리보기가 모두 이 계산 하나를 쓴다. 대비가 낮다고 색을 거부하지 않는다(카드 d91).
+//   퍼스널 컬러 띠 위 글자가 이 계산을 쓴다. 팬덤 뱃지 글자는 계산하지 않고 #111827 고정이다(면이 팬컬러 28% 로 옅다, INV-E14).
+//   대비가 낮다고 색을 거부하지 않는다(카드 d91).
 
 /** 저장된 색의 꼴 — # 뒤 16진수 여섯 자리, 대문자. */
 export const CREATOR_COLOR_PATTERN = /^#[0-9A-F]{6}$/;
@@ -45,7 +46,7 @@ export function textOnColor(bg: string): typeof TEXT_LIGHT | typeof TEXT_DARK {
 
 /**
  * 그리기용 CSS 변수 — 꼴이 맞는 색만 넣는다. 없으면 그 칸은 사이트 기본 모양(부르는 쪽 CSS 의 기본값).
- * --personal·--on-personal(띠·테두리), --fan·--on-fan(뱃지 면·글자).
+ * --personal·--on-personal(띠·테두리·띠 위 글자), --fan(뱃지 테두리·옅은 면 — 글자는 #111827 고정이라 글자색 변수가 없다).
  */
 export function creatorColorVars(c: CreatorColors): Record<string, string> {
   const out: Record<string, string> = {};
@@ -55,10 +56,7 @@ export function creatorColorVars(c: CreatorColors): Record<string, string> {
     out["--personal"] = personal;
     out["--on-personal"] = textOnColor(personal);
   }
-  if (fan) {
-    out["--fan"] = fan;
-    out["--on-fan"] = textOnColor(fan);
-  }
+  if (fan) out["--fan"] = fan;
   return out;
 }
 
