@@ -1,9 +1,21 @@
 ---
 project: fankkuk
 status: passed
-basis: c8bdc37899dc
-reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
+basis: 4c4d2dbaf941
+reviewers: [security-reviewer, code-reviewer, ui-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-17 오후, 고객센터 연락처 + 디자인 토큰 적용)
+
+덮는 변경: c26ec239·7066397f(사업자 정보 설정값) · 37dd32f4·d47a985f·dd0c4805(토큰 적용 — 글자 6단계·간격 20 제거·반경, 랜딩·크리에이터 프로필·마이꾹 구조 이동). 화면 모양만 바뀌고 데이터·권한 경로는 그대로다. test-auditor 는 새 불변식 시험이 없어 보내지 않았다.
+
+- 실행 근거: `npx tsc --noEmit` 오류 없음 · `npx vitest run` 274파일 2150개 통과 · `npm run copy:lint` 금지어 0 · Playwright 실측(1440·390, 세 화면) 6단계 밖 글자 0·대비 미달 0·넘침 0, 13px 심으면 잡힘.
+- ui: 7건 → 6건 고침(큰 판 반경 24, 반경 28·10 정리, 간격 28·20 잔여, 카드 모양 상자 반경 16, 「모두 보기」 누름 칸 44). 사이드바 하위 메뉴 왼쪽 20 은 「사이드바 그대로」 방침이라 BACKLOG.
+- code: medium 1(정보 카드가 홀수면 마지막 줄 빈칸) → 마지막 한 장을 두 칸으로(실측: 3장일 때 428·428·880). low 2(링크 주소가 칩 아래로 밀림 → 이름 아래로 되돌림, 머리 주석 낡음 → 고침). low 1(공지 줄이 모두 목록으로 감 — 원래 동작) → BACKLOG.
+- security: 인증·인가·세션·결제·개인정보 경로에 닿지 않음. 사업자 정보의 전화는 050 안심번호, 개인 휴대폰 번호 없음.
+
+## 이전 사인오프
+
 
 # 리뷰 사인오프 — fankkuk (2026-10-17, 규칙 바꾸기 넷)
 
