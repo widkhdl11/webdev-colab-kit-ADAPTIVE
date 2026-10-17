@@ -36,3 +36,8 @@ projects/*/report/loop/*
 !projects/*/report/loop/config.json
 projects/*/report/loop.lock
 projects/*/report/session-warning.json
+
+# 시험 삼아 설치한 외부 스킬 — 이 컴퓨터에만 둔다(2026-10-17 사용자)
+.agents/skills/design-taste-frontend/
+.claude/skills/design-taste-frontend
+skills-lock.json
