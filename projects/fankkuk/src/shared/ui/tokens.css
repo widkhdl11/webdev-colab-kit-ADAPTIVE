@@ -34,6 +34,7 @@
   --logo-sky: #62b9fc;
   --logo-cream: #fefdf9;
   --logo-ink: #192b4f;
+  --r-logo: 22%; /* 로고 그림(연한 하늘색 정사각형) 모서리 — 크기에 비례 */
 
   /* 색 */
   --brand: var(--primary); /* 주 버튼 면. 글자로 쓰지 않는다 — 강조 글자는 --brand-ink */
