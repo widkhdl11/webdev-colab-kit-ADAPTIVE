@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v26 이용약관 시안</title>
+<!--
+  요청(2026-10-17): 「이용약관 페이지부터 재 디자인 해줘볼래?」
+  기준: design-rules 000절(하늘색·고양이 로고)·00000절(글자 여섯 단계·간격·1152 선·긴 글 680·반경) + tokens.md. 색·문구는 바꾸지 않는다.
+  문구: src/widgets/legal/model/terms-doc.ts 의 1~9조 그대로(9조는 일부 줄과 표 세 줄 생략). 10~18조는 빈칸. 요금은 supabase 초기 요금표 값.
+  지금 화면과 다른 점: 약관 세 글 탭 · 사실 카드 셋 → 한 줄 · 왼쪽 따라오는 목차(다섯 묶음, 1023 이하 위 접는 칸) · 조 꼬리표 · 정의 줄 목록 · 요금 세 칸 표 · 환불 경우별 줄.
+-->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+@font-face{font-family:"Tmoney Round Wind";src:url("../../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Tmoney Round Wind";src:url("../../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2");font-weight:400;font-display:swap}
+</style>
+<style>
+body{margin:0;background:#FFFFFF}
+a{color:#1F2937}a:hover{color:#4B5563}
+.tm *{box-sizing:border-box}
+.tm h1,.tm h2,.tm h3,.tm p{margin:0}
+.tm .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.tm .round{font-family:"Tmoney Round Wind","Pretendard Variable",Pretendard,sans-serif;font-weight:800;font-synthesis:none}
+.tm .top a{text-decoration:none;color:#1F2937}
+.tm .layout{display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start}
+.tm .side{flex:0 0 248px;position:sticky;top:24px}
+.tm .main{flex:1 1 560px;min-width:0;max-width:680px}
+.tm .tocTop{display:none}
+.tm .mmenu{display:none}
+.tm .toc a{display:block;padding:6px 12px;border-radius:8px;text-decoration:none;color:#4B5563;font-size:14px;line-height:1.5}
+.tm .toc a:hover{background:#F3F4F6;color:#1F2937}
+.tm .toc a[aria-current]{background:#E0F2FE;color:#1F2937;font-weight:600}
+.tm .art{padding:40px 0;border-top:1px solid #E5E7EB;display:flex;flex-direction:column;gap:16px;scroll-margin-top:24px}
+.tm .art:first-child,.tm .tocTop+.art{border-top:0;padding-top:0}
+.tm .prose{font-size:16px;line-height:1.75;color:#1F2937;display:flex;flex-direction:column;gap:12px}
+.tm .dots{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.tm .dots li{position:relative;padding-left:18px}
+.tm .dots li::before{content:"";position:absolute;left:4px;top:12px;width:5px;height:5px;border-radius:50%;background:#6B7280}
+.tm .steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:s}
+.tm .steps li{position:relative;padding-left:40px;counter-increment:s}
+.tm .steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;background:#E0F2FE;color:#1F2937;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.tm .no{align-self:flex-start;padding:2px 10px;border-radius:999px;background:#F3F4F6;color:#4B5563;font-size:14px;font-weight:600}
+.tm .kv{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr);gap:8px 16px;margin:0;font-size:16px;line-height:1.6}
+.tm .kv dt{color:#4B5563}
+.tm .kv dd{margin:0}
+@media (max-width:1023px){.tm .side{display:none !important}.tm .tocTop{display:block}.tm .main{max-width:none}}
+@media (max-width:767px){
+.tm .wrap{padding:0 16px}
+.tm .navlinks{display:none !important}.tm .mmenu{display:inline-flex !important}.tm .auth{display:none !important}
+.tm .kv{grid-template-columns:minmax(0,1fr)}
+.tm .kv dd{margin-bottom:8px}
+.tm .tabs a{flex:1 1 auto}
+}
+</style>
+
+</head>
+<body>
+
+<div class="tm" style="font-family: &quot;Pretendard Variable&quot;, Pretendard, -apple-system, &quot;Apple SD Gothic Neo&quot;, &quot;Malgun Gothic&quot;, sans-serif; color: #1F2937; font-size: 16px; line-height: 1.6; word-break: keep-all; background: #FFFFFF">
+
+<!-- 상단 바 -->
+<header class="top" style="border-bottom: 1px solid #E5E7EB">
+<div class="wrap" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px">
+<a href="#" style="display: flex; align-items: center; gap: 10px" aria-label="팬꾹 처음으로">
+<img src="../../../../../public/images/logo-mark.png" width="32" height="32" alt="" style="border-radius: 22%; display: block">
+<span style="font-size: 20px; font-weight: 700">팬꾹</span>
+</a>
+<nav class="navlinks" aria-label="주 메뉴" style="display: flex; gap: 28px; font-size: 16px; font-weight: 500">
+<a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a>
+</nav>
+<button class="mmenu" type="button" aria-label="메뉴 열기" style="width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: #1F2937; align-items: center; justify-content: center; cursor: pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+<div class="auth" style="display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 600">
+<a href="#" style="color: #4B5563">로그인</a>
+<span style="width: 1px; height: 16px; background: #E5E7EB" aria-hidden="true"></span>
+<a href="#">회원가입</a>
+</div>
+</div>
+</header>
+
+<main>
+<!-- 페이지 머리 -->
+<section style="padding: 40px 0 0" aria-labelledby="t-title">
+<div class="wrap" style="display: flex; flex-direction: column; gap: 24px">
+<nav class="tabs" aria-label="약관과 정책" style="display: flex; flex-wrap: wrap; gap: 8px">
+<a href="#" aria-current="page" style="display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 999px; background: #1F2937; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none">이용약관</a>
+<a href="#" style="display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 999px; box-shadow: inset 0 0 0 1px #E5E7EB; color: #1F2937; font-size: 14px; font-weight: 500; text-decoration: none">개인정보처리방침</a>
+<a href="#" style="display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 999px; box-shadow: inset 0 0 0 1px #E5E7EB; color: #1F2937; font-size: 14px; font-weight: 500; text-decoration: none">환불 규정</a>
+</nav>
+<div style="display: flex; flex-direction: column; gap: 8px; max-width: 680px">
+<h1 id="t-title" class="round" style="font-size: 32px; line-height: 1.25">이용약관</h1>
+<p style="font-size: 16px; color: #4B5563">팬꾹을 쓰기 전에 알아 두셔야 할 약속을 모았어요. 선물이 어떻게 오가고, 돈은 언제 얼마를 받고 돌려드리는지 적었습니다.</p>
+</div>
+<p style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 14px; color: #4B5563">
+<span>버전 <strong style="color: #1F2937; font-weight: 600">2026-10-01</strong></span>
+<span aria-hidden="true" style="width: 1px; height: 12px; background: #E5E7EB"></span>
+<span>시행일 <strong style="color: #1F2937; font-weight: 600">2026-11-24</strong></span>
+<span aria-hidden="true" style="width: 1px; height: 12px; background: #E5E7EB"></span>
+<span>운영 <strong style="color: #1F2937; font-weight: 600">팬꾹</strong></span>
+<span aria-hidden="true" style="width: 1px; height: 12px; background: #E5E7EB"></span>
+<a href="#versions" style="font-weight: 600">버전 기록 보기</a>
+</p>
+
+<!-- 요약 -->
+<div style="border-radius: 24px; background: #F0F8FF; padding: 32px; display: flex; flex-direction: column; gap: 16px">
+<h2 class="round" style="font-size: 20px">먼저 세 가지만 알아 두세요</h2>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; max-width: 880px">
+<li style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 26px; height: 26px; border-radius: 50%; background: #89CFF0; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">1</span><span>팬꾹은 팬의 선물을 사무실에서 받아 검수한 뒤, 크리에이터가 승인한 선물만 크리에이터에게 보냅니다.</span></li>
+<li style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 26px; height: 26px; border-radius: 50%; background: #89CFF0; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">2</span><span>요금은 상자마다 크기·무게 구간으로 받으며, 거절·반송·취소 때 돌려드리는 금액은 선물의 상태에 따라 정해집니다.</span></li>
+<li style="display: flex; gap: 12px; align-items: flex-start"><span style="flex: none; width: 26px; height: 26px; border-radius: 50%; background: #89CFF0; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">3</span><span>보낼 수 없는 물품을 보내거나 남의 채널로 크리에이터 확인을 받으면 이용이 제한될 수 있습니다.</span></li>
+</ol>
+</div>
+</div>
+</section>
+
+<!-- 본문: 왼쪽 목차 + 글 기둥 -->
+<section style="padding: 48px 0 96px" aria-label="이용약관 본문">
+<div class="wrap">
+<div class="layout">
+
+<nav class="side toc" aria-labelledby="toc-h" style="display: flex; flex-direction: column; gap: 16px">
+<h2 id="toc-h" style="font-size: 14px; font-weight: 600; color: #6B7280; padding: 0 12px">목차</h2>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<p style="font-size: 14px; font-weight: 600; padding: 4px 12px">시작하며</p>
+<a href="#a1" aria-current="true">제1조 목적</a><a href="#a2">제2조 정의</a><a href="#a3">제3조 약관의 게시와 개정</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<p style="font-size: 14px; font-weight: 600; padding: 4px 12px">서비스와 계정</p>
+<a href="#a4">제4조 서비스의 내용</a><a href="#a5">제5조 회원가입과 계정 관리</a><a href="#a6">제6조 크리에이터 본인 확인</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<p style="font-size: 14px; font-weight: 600; padding: 4px 12px">요금과 환불</p>
+<a href="#a7">제7조 이용요금과 결제</a><a href="#a8">제8조 입고 후 실측과 차액 결제</a><a href="#a9">제9조 거절·자동 반려와 환불</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<p style="font-size: 14px; font-weight: 600; padding: 4px 12px">선물 처리</p>
+<a href="#a10">제10조 검수와 보낼 수 없는 물품</a><a href="#a11">제11조 차단</a><a href="#a12">제12조 역조공</a><a href="#a13">제13조 주문을 확인할 수 없는 상자</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<p style="font-size: 14px; font-weight: 600; padding: 4px 12px">약속과 책임</p>
+<a href="#a14">제14조 회원에 대한 통지</a><a href="#a15">제15조 크리에이터 주소 보호와 열람 기록</a><a href="#a16">제16조 회원의 금지 행위</a><a href="#a17">제17조 손해배상</a><a href="#a18">제18조 분쟁 해결</a>
+</div>
+</nav>
+
+<div class="main">
+<details class="tocTop toc" style="border-radius: 16px; box-shadow: inset 0 0 0 1px #E5E7EB; padding: 16px; margin-bottom: 32px">
+<summary style="font-size: 16px; font-weight: 600; cursor: pointer; min-height: 28px">목차 · 18개 조</summary>
+<div style="display: flex; flex-direction: column; gap: 2px; margin-top: 12px">
+<a href="#a1">제1조 목적</a><a href="#a2">제2조 정의</a><a href="#a3">제3조 약관의 게시와 개정</a><a href="#a4">제4조 서비스의 내용</a><a href="#a5">제5조 회원가입과 계정 관리</a><a href="#a6">제6조 크리에이터 본인 확인</a><a href="#a7">제7조 이용요금과 결제</a><a href="#a8">제8조 입고 후 실측과 차액 결제</a><a href="#a9">제9조 거절·자동 반려와 환불</a><a href="#a10">제10조 ~ 제18조</a>
+</div>
+</details>
+
+<article id="a1" class="art" aria-labelledby="a1-h">
+<span class="no">제1조</span>
+<h2 id="a1-h" class="round" style="font-size: 24px; line-height: 1.3">목적</h2>
+<div class="prose"><p>이 약관은 네오코드(이하 「회사」)가 운영하는 팬꾹 서비스(이하 「서비스」)의 이용 조건 및 절차, 회사와 회원 간의 권리·의무 및 책임 사항을 규정함을 목적으로 합니다.</p></div>
+</article>
+
+<article id="a2" class="art" aria-labelledby="a2-h">
+<span class="no">제2조</span>
+<h2 id="a2-h" class="round" style="font-size: 24px; line-height: 1.3">정의</h2>
+<dl style="margin: 0; display: flex; flex-direction: column; border-radius: 16px; box-shadow: inset 0 0 0 1px #E5E7EB; overflow: hidden">
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px"><dt style="font-weight: 600">팬꾹</dt><dd style="margin: 0; color: #4B5563; line-height: 1.7">팬이 크리에이터에게 보내는 선물을 회사 사무실에서 받아 검수한 후, 크리에이터의 주소를 팬에게 알리지 않고 크리에이터에게 다시 발송하는 선물 배송대행 서비스를 말합니다.</dd></div>
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #E5E7EB"><dt style="font-weight: 600">회원</dt><dd style="margin: 0; color: #4B5563; line-height: 1.7">팬꾹에 가입한 팬과 크리에이터를 말합니다.</dd></div>
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #E5E7EB"><dt style="font-weight: 600">선물</dt><dd style="margin: 0; color: #4B5563; line-height: 1.7">팬이 크리에이터 1명에게 보내기 위해 등록한 1건을 말합니다. 선물마다 주문번호(예: FC-7K3M9)가 부여됩니다.</dd></div>
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #E5E7EB"><dt style="font-weight: 600">상자</dt><dd style="margin: 0; color: #4B5563; line-height: 1.7">선물을 나누어 보내는 단위를 말합니다. 선물 1건은 여러 상자로 나누어 보낼 수 있으며, 요금·입고·검수·송장은 상자별로 처리합니다.</dd></div>
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #E5E7EB"><dt style="font-weight: 600">사무실</dt><dd style="margin: 0; color: #4B5563; line-height: 1.7">회사가 상자를 받아 검수하고 다시 발송하는 장소를 말합니다. 사무실 주소는 결제를 완료한 팬에게만 안내합니다.</dd></div>
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #E5E7EB"><dt style="font-weight: 600">승인</dt><dd style="margin: 0; color: #4B5563; line-height: 1.7">크리에이터가 카카오톡 인증서로 전자서명하여 선물 1건을 받겠다는 의사를 표시하는 것을 말합니다.</dd></div>
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #E5E7EB"><dt style="font-weight: 600">역조공</dt><dd style="margin: 0; color: #4B5563; line-height: 1.7">크리에이터가 자신을 팔로우한 팬에게 보내는 선물을 말합니다.</dd></div>
+</dl>
+</article>
+
+<article id="a3" class="art" aria-labelledby="a3-h">
+<span class="no">제3조</span>
+<h2 id="a3-h" class="round" style="font-size: 24px; line-height: 1.3">약관의 게시와 개정</h2>
+<div class="prose">
+<p>회사는 이 약관을 사이트 하단의 「이용약관」에 상시 게시합니다. 회원이 가입할 때 동의한 약관의 판과 동의 시각은 회원별로 기록합니다.</p>
+<p>회사가 약관을 개정하는 경우에는 개정 내용과 시행일을 명시하여 시행일 7일 전부터 사이트에 공지합니다. 다만 회원에게 불리하게 개정하는 경우에는 시행일 30일 전부터 공지합니다.</p>
+</div>
+</article>
+
+<article id="a4" class="art" aria-labelledby="a4-h">
+<span class="no">제4조</span>
+<h2 id="a4-h" class="round" style="font-size: 24px; line-height: 1.3">서비스의 내용</h2>
+<div class="prose">
+<p>팬이 크리에이터에게 선물을 보내는 절차는 다음과 같습니다.</p>
+<ol class="steps">
+<li>팬은 크리에이터를 찾아 선물을 등록하고, 상자 수와 크기를 입력한 후 결제합니다. 이때 전자기기나 금속 제품이 들어 있는지도 회사에 알려야 합니다.</li>
+<li>결제가 완료되면 상자별로 받는 주소가 발급됩니다. 크리에이터가 승인하면 받는 주소가 바로 표시되고, 승인 전에는 「먼저 보내기」를 눌러 받는 주소를 열람할 수 있습니다.</li>
+<li>사무실은 상자를 받으면(입고) 원래 송장을 떼어 따로 보관하고, 상자에 내부 라벨을 붙인 후 검수합니다.</li>
+<li>크리에이터는 선물마다 카카오톡 인증서로 서명하여 승인하거나, 받지 않기(거절)를 선택합니다. 승인은 출고 전까지만 완료하면 되며, 일괄 승인 기능은 제공하지 않습니다.</li>
+<li>승인과 검수가 모두 완료된 상자에 한하여 송장을 출력하여 크리에이터에게 발송합니다(출고).</li>
+</ol>
+<div style="border-radius: 16px; background: #F9FAFB; padding: 16px 24px; display: flex; flex-direction: column; gap: 12px">
+<p style="font-size: 14px; font-weight: 600; color: #4B5563">진행 상황은 6단계로 보여요</p>
+<p style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px">
+<span style="padding: 2px 12px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E5E7EB">등록</span><span aria-hidden="true" style="color: #6B7280">›</span>
+<span style="padding: 2px 12px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E5E7EB">입고</span><span aria-hidden="true" style="color: #6B7280">›</span>
+<span style="padding: 2px 12px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E5E7EB">검수</span><span aria-hidden="true" style="color: #6B7280">›</span>
+<span style="padding: 2px 12px; border-radius: 999px; background: #E0F2FE">승인 확인</span><span aria-hidden="true" style="color: #6B7280">›</span>
+<span style="padding: 2px 12px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E5E7EB">출고</span><span aria-hidden="true" style="color: #6B7280">›</span>
+<span style="padding: 2px 12px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E5E7EB">배송중</span><span aria-hidden="true" style="color: #6B7280">›</span>
+<span style="padding: 2px 12px; border-radius: 999px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E5E7EB">수령</span>
+</p>
+</div>
+<ul class="dots">
+<li>선물의 진행 상황은 등록 → 입고 → 검수 → 출고 → 배송중 → 수령의 6단계로 표시합니다. 크리에이터의 승인은 검수와 출고 사이에 따로 표시합니다.</li>
+<li>회사는 팬에게 크리에이터의 주소와 크리에이터에게 발송하는 상자의 송장번호를 알리지 않습니다. 송장번호로 택배사 조회를 하면 받는 곳의 일부가 표시되기 때문입니다.</li>
+<li>크리에이터는 선물을 받는 데 드는 비용을 부담하지 않습니다.</li>
+<li>회사는 이 밖에 크리에이터 찾기·팔로우, 역조공(제12조), 공지사항과 고객센터를 제공합니다.</li>
+</ul>
+</div>
+</article>
+
+<article id="a5" class="art" aria-labelledby="a5-h">
+<span class="no">제5조</span>
+<h2 id="a5-h" class="round" style="font-size: 24px; line-height: 1.3">회원가입과 계정 관리</h2>
+<div class="prose"><ul class="dots">
+<li>회원가입 시 팬과 크리에이터 중 하나를 선택하고, 아이디·이메일·비밀번호·휴대폰 번호를 입력한 후 카카오톡으로 본인 확인을 거쳐야 합니다. 이용약관과 개인정보 수집·이용에 동의하여야 가입할 수 있습니다.</li>
+<li>휴대폰 번호 1개당 계정 1개만 만들 수 있습니다. 아이디는 변경할 수 없습니다.</li>
+<li>이메일은 확인 메일의 링크를 눌러야 등록되며, 알림 메일은 확인된 이메일로만 발송합니다.</li>
+<li>아이디와 비밀번호의 관리 책임은 회원에게 있습니다.</li>
+<li>크리에이터 주소의 등록·변경과 선물 승인 등 주소와 관련된 기능은 비밀번호 로그인만으로는 이용할 수 없으며, 이용할 때마다 카카오톡 인증서 서명을 다시 거쳐야 합니다.</li>
+<li>회원 탈퇴는 고객센터를 통해 신청하며, 진행 중인 선물과 역조공이 없는 경우에만 할 수 있습니다. 다만 크리에이터가 탈퇴를 신청한 경우에는 회사가 그 크리에이터에게 온 진행 중인 선물을 크리에이터 사정에 의한 취소로 종료하고 제9조에 따라 환불한 후 탈퇴를 처리합니다.</li>
+<li>회원이 탈퇴하면 회원 정보는 즉시 삭제합니다. 주소 열람 기록과 검수 기록은 회원 정보 없이 주문번호만 남겨 보관하고, 법령에 따라 보관해야 하는 기록은 개인정보처리방침에서 정한 기간 동안 보관합니다.</li>
+</ul></div>
+</article>
+
+<article id="a6" class="art" aria-labelledby="a6-h">
+<span class="no">제6조</span>
+<h2 id="a6-h" class="round" style="font-size: 24px; line-height: 1.3">크리에이터 본인 확인</h2>
+<div class="prose">
+<p>크리에이터는 활동 채널의 소유자임을 확인받아야 크리에이터 찾기에 표시되고 선물을 받을 수 있습니다.</p>
+<ul class="dots">
+<li>유튜브·치지직·인스타그램(프로페셔널 계정)은 해당 계정으로 로그인하여 확인하거나, 인증 코드를 채널 소개란에 일시적으로 게시하면 자동으로 확인합니다.</li>
+<li>SOOP 등 자동 확인이 지원되지 않는 플랫폼은 인증 코드를 채널 소개란에 게시하거나 팬꾹 계정에 DM 으로 보내면 운영자가 확인합니다. 공개 게시물을 통한 확인 방식은 사용하지 않습니다.</li>
+<li>하나의 채널은 하나의 계정으로만 확인됩니다. 같은 채널에 대한 인증 코드 신청은 3회까지 할 수 있으며, 운영자가 신청을 다시 허용할 수 있습니다.</li>
+<li>이미 다른 계정으로 확인된 채널은 1:1 문의를 통해 운영자가 처리합니다.</li>
+<li>「이용 규칙 위반」으로 확인이 취소된 경우에는 운영자의 승인을 받아야만 다시 확인받을 수 있습니다.</li>
+</ul>
+</div>
+</article>
+
+<article id="a7" class="art" aria-labelledby="a7-h">
+<span class="no">제7조</span>
+<h2 id="a7-h" class="round" style="font-size: 24px; line-height: 1.3">이용요금과 결제</h2>
+<div class="prose">
+<p>이용요금은 상자별로 부과하며, 배송비와 검수비가 포함된 금액입니다. 상자의 크기와 무게 중 더 높은 구간의 요금을 적용합니다.</p>
+<div role="group" aria-label="상자 구간별 요금" style="border-radius: 16px; box-shadow: inset 0 0 0 1px #E5E7EB; overflow: hidden">
+<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 12px 24px; background: #F9FAFB; font-size: 14px; font-weight: 600; color: #4B5563"><span>구간</span><span style="text-align: right">선물</span><span style="text-align: right">역조공</span></div>
+<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 16px 24px; border-top: 1px solid #E5E7EB; align-items: center"><span><strong style="font-weight: 600">소형</strong><br><span style="font-size: 14px; color: #6B7280">세 변 합 100cm·5kg 이하</span></span><span style="text-align: right; font-size: 20px; font-weight: 700">6,900원</span><span style="text-align: right; color: #4B5563">5,400원</span></div>
+<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 16px 24px; border-top: 1px solid #E5E7EB; align-items: center"><span><strong style="font-weight: 600">중형</strong><br><span style="font-size: 14px; color: #6B7280">세 변 합 100cm·10kg 이하</span></span><span style="text-align: right; font-size: 20px; font-weight: 700">8,900원</span><span style="text-align: right; color: #4B5563">6,900원</span></div>
+<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 16px 24px; border-top: 1px solid #E5E7EB; align-items: center"><span><strong style="font-weight: 600">대형</strong><br><span style="font-size: 14px; color: #6B7280">세 변 합 160cm·20kg 이하</span></span><span style="text-align: right; font-size: 20px; font-weight: 700">10,900원</span><span style="text-align: right; color: #4B5563">8,400원</span></div>
+</div>
+<ul class="dots">
+<li>세 변 합 160cm나 20kg를 넘는 상자는 접수하지 않습니다.</li>
+<li>결제는 선물을 등록할 때 합니다. 결제 금액은 회사 서버가 상자 구간별 요금으로 산정하며, 결제는 결제대행사(토스페이먼츠)를 통해 처리합니다. 가상계좌 입금은 지원하지 않습니다.</li>
+<li>요금이 변경되면 변경 후 등록한 선물부터 적용합니다. 이미 결제한 선물에는 결제 당시의 요금을 그대로 적용합니다.</li>
+<li>결제가 완료되기 전에는 크리에이터에게 승인 요청을 보내지 않으며, 사무실 주소도 안내하지 않습니다.</li>
+</ul>
+</div>
+</article>
+
+<article id="a8" class="art" aria-labelledby="a8-h">
+<span class="no">제8조</span>
+<h2 id="a8-h" class="round" style="font-size: 24px; line-height: 1.3">입고 후 실측과 차액 결제</h2>
+<div class="prose"><ul class="dots">
+<li>사무실에서 실측한 구간이 등록한 구간보다 높으면 팬은 차액을 추가로 결제하여야 합니다. 차액이 결제되기 전에는 해당 선물을 출고하지 않습니다.</li>
+<li>회사가 차액 결제를 요청한 시각부터 168시간(7일) 이내에 결제하지 않으면 상자를 반송합니다. 환불 금액은 제9조의 표에 따릅니다.</li>
+<li>실측한 구간이 등록한 구간보다 낮더라도 차액은 환불하지 않습니다.</li>
+<li>실측 결과가 세 변 합 160cm나 20kg를 넘는 상자이면 차액 결제가 아니라 검수 불합격으로 처리합니다(제10조).</li>
+</ul></div>
+</article>
+
+<article id="a9" class="art" aria-labelledby="a9-h">
+<span class="no">제9조</span>
+<h2 id="a9-h" class="round" style="font-size: 24px; line-height: 1.3">거절·자동 반려와 환불</h2>
+<div class="prose">
+<ul class="dots">
+<li>크리에이터는 승인하기 전의 선물에 대해 받지 않기(거절)를 선택할 수 있습니다. 회사는 거절 사유와 차단 여부를 팬에게 알리지 않습니다.</li>
+<li>결제가 완료된 시각부터 168시간(7일) 이내에 크리에이터가 승인하지 않으면 자동으로 반려됩니다.</li>
+<li>사무실에 도착한 상자를 반송할 때에는 상자를 보낸 회원이 등록한 주소로 보냅니다.</li>
+</ul>
+<p style="font-weight: 600">환불 금액은 선물의 상태에 따라 정해지며, 담당자가 금액을 개별적으로 정하지 않습니다.</p>
+<div style="display: flex; flex-direction: column; border-radius: 16px; box-shadow: inset 0 0 0 1px #E5E7EB; overflow: hidden">
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 8px">
+<h3 style="font-size: 16px; font-weight: 600">사무실 도착 전 거절·자동 반려</h3>
+<dl class="kv"><dt>환불 금액</dt><dd><span style="padding: 2px 10px; border-radius: 8px; background: #EAF5EE; color: #276749; font-weight: 600">결제 금액 전액</span></dd><dt>「먼저 보내기」를 누른 경우</dt><dd>아래 「아직 도착하지 않은 상자」 기준에 따름</dd></dl>
+</div>
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #E5E7EB">
+<h3 style="font-size: 16px; font-weight: 600">사무실 도착 후 거절·자동 반려</h3>
+<dl class="kv"><dt>환불 금액</dt><dd>도착한 상자별로 해당 상자 금액에서 반송 택배비를 공제한 금액</dd><dt>검수에 걸린 상자</dt><dd>환불 금액 없음</dd></dl>
+</div>
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #E5E7EB">
+<h3 style="font-size: 16px; font-weight: 600">받는 주소가 공개된 후 거절·자동 반려·취소 시 아직 도착하지 않은 상자</h3>
+<dl class="kv"><dt>우선 환불 금액</dt><dd>해당 상자 금액에서 반송 택배비를 공제한 금액</dd><dt>7일 이내에 도착한 경우</dt><dd>해당 선물의 상자로 받아 반송하며, 추가 환불 금액은 없음</dd><dt>7일 이내에 도착하지 않은 경우</dt><dd>남겨 둔 반송 택배비까지 환불</dd></dl>
+</div>
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #E5E7EB">
+<h3 style="font-size: 16px; font-weight: 600">검수 불합격에 따른 반송</h3>
+<dl class="kv"><dt>환불 금액</dt><dd><span style="padding: 2px 10px; border-radius: 8px; background: #FEECE9; color: #B42318; font-weight: 600">환불 금액 없음</span> 검수비와 반송 택배비를 공제합니다</dd></dl>
+</div>
+<div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #E5E7EB">
+<h3 style="font-size: 16px; font-weight: 600">출고 후</h3>
+<dl class="kv"><dt>환불 금액</dt><dd>없음</dd></dl>
+</div>
+</div>
+<p style="font-size: 14px; color: #6B7280">이 밖의 경우(차액 미결제·30일 미도착·크리에이터 사정에 의한 취소)도 같은 모양의 줄로 이어집니다.</p>
+</div>
+</article>
+
+<article id="a10" class="art" aria-labelledby="a10-h">
+<span class="no">제10조 ~ 제18조</span>
+<h2 id="a10-h" class="round" style="font-size: 24px; line-height: 1.3">검수 · 차단 · 역조공 · 통지 · 주소 보호 · 금지 행위 · 손해배상 · 분쟁 해결</h2>
+<div class="prose"><p style="color: #6B7280">[본문은 지금 약관 그대로 — 조마다 위와 같은 머리·글 모양]</p></div>
+</article>
+
+<section id="versions" class="art" aria-labelledby="v-h">
+<h2 id="v-h" class="round" style="font-size: 24px; line-height: 1.3">버전 기록</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 24px; border-radius: 16px; background: #F9FAFB">
+<span><strong style="font-weight: 600">버전 2026-10-01</strong> <span style="color: #4B5563">· 시행일 2026-11-24</span></span>
+<span style="padding: 2px 10px; border-radius: 8px; background: #E0F2FE; font-size: 14px; font-weight: 600">지금 시행 중</span>
+</div>
+<p style="font-size: 14px; color: #6B7280">지난 버전은 아직 없어요.</p>
+</section>
+
+<div style="margin-top: 16px; border-radius: 24px; background: #F0F8FF; padding: 32px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center">
+<h2 class="round" style="font-size: 20px">약관에서 이해가 안 되는 부분이 있나요?</h2>
+<p style="color: #4B5563">고객센터에 물어보시면 쉬운 말로 다시 설명해 드려요.</p>
+<a href="#" style="display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 24px; border-radius: 12px; background: #89CFF0; color: #1F2937; font-weight: 600; text-decoration: none">고객센터 가기</a>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+</main>
+
+<footer style="background: #F9FAFB; padding: 40px 0">
+<div class="wrap" style="display: flex; flex-direction: column; gap: 8px; color: #4B5563; font-size: 14px">
+<p style="font-size: 16px; font-weight: 700; color: #1F2937">팬꾹</p>
+<p>상호 [상호] · 대표 [대표자] · 사업자등록번호 [번호] · 통신판매업 [번호]</p>
+<p><a href="#" style="font-weight: 600">이용약관</a> · 개인정보처리방침 · 환불 규정 · 고객센터</p>
+</div>
+</footer>
+</div>
+
+</body>
+</html>
