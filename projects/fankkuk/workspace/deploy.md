@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: deployed
-basis: 1856b50032b1
+basis: a330aefcca27
 ---
 
 # 배포 기록 — fankkuk
@@ -46,3 +46,9 @@ basis: 1856b50032b1
 - DB 변경 없음.
 - 앱: main 1660efde push → Vercel 빌드 success. 응답 머리 `x-vercel-id` 가 `icn1::iad1` → `icn1::icn1`(서버 함수가 서울에서 돈다). 첫 응답 시간(로그인 없이, 각 3회) — / 1.06 → 0.44초 · /creators 1.07 → 0.20~0.44초 · /terms 0.98 → 0.20~0.27초 · /privacy 0.17초 · /login 0.36 → 0.14~0.19초.
 - /terms 에 「먼저 세 가지만 알아 두세요」·왼쪽 목차·요금 5,900 · 7,900 · 9,900원, /refund 200.
+
+## 2026-10-18 새벽 — 약관 4조 칩·환불 꼬리표 · 페이지 이동 로딩 화면 · 폴더 (site) 정리
+
+- DB 변경 없음. 앱: main eb7ca1ba push → Vercel 세 프로젝트 빌드 success.
+- 시험 주소(curl, 로그인 전): / · /creators · /login · /terms · /faq · /password/reset · /guide/fan 200, 모두 icn1::icn1 · /admin/creators 404 · /me/following·/creator/actions·/gifts 는 200 + 본문의 로그인 이동(NEXT_REDIRECT /login, meta refresh) — 로딩 화면이 생겨 응답을 먼저 보내는 방식, 브라우저에서 /me/following → /login 확인 · /creator/account 는 /login?next=/creator/account.
+- Playwright 링크 이동(로그인 전, 상단 바 링크): 뼈대 3~5ms, 내용 306~313ms(/terms 490ms) — 서버 응답은 125~195ms(/terms 472ms). 뼈대를 띄우면 React 가 내용으로 바꾸기까지 최소 약 300ms 를 채운다.
