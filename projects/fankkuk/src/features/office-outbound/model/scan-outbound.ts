@@ -28,7 +28,17 @@ export type OutboundDeps = {
   newWaybill: () => string;
   /** 송장 출력 함수 — 그 상자의 받는 사람 주소를 연다(팬 선물 address-protection INV-P4, 역조공 reverse-gift INV-R7) */
   printLabel: (qr: string) => Promise<LabelOutcome>;
+  /** 반송 송장 출력 함수 — 주문에 이어진 상자는 보낸 사람이 확인한 주소를 연다(address-protection INV-P18). 이어지지 않은 상자면 not_linked */
+  printReturnLabel: (qr: string) => Promise<ReturnLabelOutcome>;
 };
+
+export type ReturnLabelOutcome =
+  | { kind: "printed"; waybill: string; reprint: boolean; label: CreatorAddressLabel }
+  | { kind: "denied"; reason: AccessDenyReason }
+  | { kind: "unauthenticated" }
+  | { kind: "not_found" }
+  | { kind: "not_linked" }
+  | { kind: "failed" };
 
 export type LabelOutcome =
   | { kind: "printed"; waybill: string; reprint: boolean; label: CreatorAddressLabel }
@@ -61,6 +71,7 @@ const bodyShape = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("confirm_shipment"), qr: qrCode, waybill: waybillNo }).strict(),
   z.object({ kind: z.literal("print_return"), qr: qrCode }).strict(),
   z.object({ kind: z.literal("confirm_return"), qr: qrCode, waybill: waybillNo }).strict(),
+  z.object({ kind: z.literal("record_disposal"), qr: qrCode }).strict(),
 ]);
 
 export type OutboundWrite = z.input<typeof bodyShape>;
@@ -101,11 +112,38 @@ export async function scanOutbound(deps: OutboundDeps, body: unknown): Promise<J
     }
 
     case "print_return": {
+      // INV-W8·W15·P18: 주문에 이어진 상자는 반송 송장 출력 함수가 보낸 사람이 확인한 주소를 열어 출력 단계까지 넘긴다(대표만 — 직원의 시도도 그 함수가 거부 줄을 남긴다).
+      // 어느 주문에도 이어지지 않은 상자(not_linked)만 지금처럼 봉투 번호 길로 간다(S15f).
+      const back = await deps.printReturnLabel(input.qr);
+      if (back.kind !== "not_linked") {
+        if (access !== "owner") return { status: 403, body: { message: MESSAGE_OWNER_ONLY } };
+        switch (back.kind) {
+          case "printed":
+            return { status: 200, body: { waybill: back.waybill, reprint: back.reprint, label: back.label } };
+          case "denied":
+            if (back.reason === "not_owner") return { status: 403, body: { message: MESSAGE_OWNER_ONLY } };
+            // 화면 문구는 용어집(return_address 행)으로 다음 묶음에서 넣는다 — 지금은 거부 사유 코드값
+            return { status: 409, body: { message: back.reason, reason: "not_shippable" } };
+          case "unauthenticated":
+            return { status: 401, body: { message: MESSAGE_SIGN_IN } };
+          case "not_found":
+            return { status: 404, body: { message: MESSAGE_NOT_FOUND } };
+          case "failed":
+            return { status: 500, body: { message: FAILED } };
+        }
+      }
       const waybill = deps.newWaybill();
       const { data, error } = await client.rpc("office_print_return_label", { p_qr: input.qr, p_waybill: waybill });
       if (error) return officeErrorReply(error.code, MESSAGES);
       if (typeof data !== "string" || data === "") return { status: 500, body: { message: FAILED } };
       return { status: 200, body: { waybill, envelopeNo: data } };
+    }
+
+    case "record_disposal": {
+      // INV-W15: 처분 대상 상자의 QR 스캔 → 처분 기록(봉투 파쇄 기록을 DB 가 같이 남긴다). 운영자 누구나
+      const { error } = await client.rpc("office_record_disposal", { p_qr: input.qr });
+      if (error) return officeErrorReply(error.code, MESSAGES);
+      return { status: 200, body: { ok: true } };
     }
 
     case "confirm_shipment":

@@ -137,6 +137,8 @@ function ActionCard({ item, clientKey, now }: { item: ActionItem; clientKey: str
       </Card>
     );
   }
+  // 반송 주소 확인 카드(office-workflow INV-W15) — 카드 문구는 용어집(return_address 행)으로 다음 묶음에서 그린다. 숫자(INV-J2)에는 이미 들어간다
+  if (item.kind === "return_address") return null;
   return (
     <Card item={item} icon="gift" title="선물 받기" meta={`${item.creatorName}님이 보낸 선물`}>
       <Due at={item.dueAt} now={now} />

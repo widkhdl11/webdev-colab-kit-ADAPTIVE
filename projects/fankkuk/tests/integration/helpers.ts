@@ -141,6 +141,13 @@ export function officeRowsDelete(unitIds: string, column: "box_id" | "share_id")
   return [
     `delete from public.office_inspections where parcel_id in (${parcels});`,
     `delete from public.office_envelope_shreds where parcel_id in (${parcels});`,
+    // 반송 주소(office-workflow INV-W15·address-protection INV-P18) — 처분 기록·반송 주소 열람 기록·돌려줌·지운 기록(추가만)과 상자 복사본(pii).
+    // 표가 아직 없을 때(구현 전 빨간불·manual/0020 적용 전)도 정리가 멈추지 않게 표가 있을 때만
+    `do $$ begin if to_regclass('public.office_disposals') is not null then delete from public.office_disposals where parcel_id in (${parcels}); end if; end $$;`,
+    `do $$ begin if to_regclass('public.return_decrypt_releases') is not null then delete from public.return_decrypt_releases where parcel_id in (${parcels}); end if; end $$;`,
+    `do $$ begin if to_regclass('public.return_decrypt_log') is not null then delete from public.return_decrypt_log where parcel_id in (${parcels}); end if; end $$;`,
+    `do $$ begin if to_regclass('public.return_address_events') is not null then delete from public.return_address_events where parcel_id in (${parcels}); end if; end $$;`,
+    `do $$ begin if to_regclass('pii.return_addresses') is not null then delete from pii.return_addresses where parcel_id in (${parcels}); end if; end $$;`,
     `delete from public.office_hold_alerts where parcel_id in (${parcels});`,
     // 경찰 인계 기록(office-workflow INV-W14, 추가만) — 표가 아직 없을 때(구현 전 빨간불)도 정리가 멈추지 않게 표가 있을 때만
     `do $$ begin if to_regclass('public.office_police_handovers') is not null then delete from public.office_police_handovers where parcel_id in (${parcels}); end if; end $$;`,

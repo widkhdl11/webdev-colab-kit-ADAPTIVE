@@ -17,6 +17,8 @@ function inputFor(kind: NotificationBodyInput["kind"], round: 1 | 2 | 3 = 1): No
     undeliveredReason: kind === "gift_undelivered" ? "declined" : null,
     // 역조공 받기(INV-N20)만 보낸 크리에이터 이름 하나를 받는다 — 다른 종류는 비어 있다
     senderName: kind === "revgift_offer" ? "모모" : null,
+    // 반송 주소 재알림(INV-N22)만 처분 예정 시각(반송 대기 + 30일)을 받는다
+    disposeDueAt: kind === "return_address_reminder" ? "2026-11-16T03:00:00Z" : null,
     mustDeliver: isMustDeliver(kind),
   };
 }
@@ -365,5 +367,32 @@ describe("받는 주소 없이 보낸 상자 알림 — 크리에이터 (INV-N21
     const b = buildNotificationBody(inputFor("box_no_code"));
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
     expect(b.buttonLabel).toBe("받는 주소 없이 보냈어요");
+  });
+});
+
+describe("반송 주소 알림 (INV-N22)", () => {
+  // 본문 문구는 용어집(return_address·dispose_due 행)으로 다음 묶음에서 넣는다 — 지금은 자리만(코드값). 여기서는 링크·칸·날짜·꼭 가는 알림을 본다
+  it("INV-N22 (S22): 팬 선물이면 선물 상세로, 역조공 몫(RG-)이면 보낸 역조공 화면으로 잇고 꼭 가는 알림 — 반송 이유·주소·크리에이터 이름 칸이 없다", () => {
+    const gift = buildNotificationBody(inputFor("return_address"));
+    expect(new URL(gift.link).pathname).toBe("/gifts/FC-7K3M9");
+    expect(gift.text).toContain("이 알림은 꺼 두어도 가요.");
+    const share = buildNotificationBody({ ...inputFor("return_address"), orderNo: "RG-7K3M90" });
+    expect(new URL(share.link).pathname).toBe("/creator/revgifts");
+    // 다른 종류의 값(보낸 크리에이터 이름·자동 반려 시각)을 넘겨도 섞이지 않는다
+    const mixed = buildNotificationBody({ ...inputFor("return_address"), senderName: "모모", autoRejectAt: "2026-10-08T01:00:00Z" });
+    expect(mixed.text).not.toContain("모모");
+    expect(mixed.text).not.toContain("10월 8일");
+  });
+
+  it("INV-N22 (S22): 재알림은 처분 예정 날짜(반송 대기 + 30일)를 서울 시간으로 적는다 — 첫 알림에는 날짜가 없다", () => {
+    const b = buildNotificationBody(inputFor("return_address_reminder"));
+    expect(b.text).toContain("11월 16일");
+    expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    const first = buildNotificationBody({ ...inputFor("return_address"), disposeDueAt: "2026-11-16T03:00:00Z" });
+    expect(first.text).not.toContain("11월 16일");
+  });
+
+  it("INV-N22 (실패경로): 처분 예정 시각이 없는 재알림은 만들지 않는다 — 날짜 없는 재알림을 보내지 않는다", () => {
+    expect(() => buildNotificationBody({ ...inputFor("return_address_reminder"), disposeDueAt: null })).toThrow();
   });
 });

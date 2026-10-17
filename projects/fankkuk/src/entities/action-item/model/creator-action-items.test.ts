@@ -138,3 +138,49 @@ describe("추적 장치 발견 줄 (action-center INV-J5, office-workflow INV-W1
     expect(() => parseCreatorActionItems([{ ...tracker, board: "sent" }])).toThrow();
   });
 });
+
+describe("보낸 선물의 반송 주소 줄 (action-center INV-J5·J3, office-workflow INV-W15)", () => {
+  const revgiftReturn = {
+    ...EMPTY,
+    kind: "return_address",
+    board: "sent",
+    order_no: "RG-R5",
+    share_id: "33333333-3333-4333-8333-333333333333",
+    nickname: "별빛",
+    tier: "small",
+    sent_at: "2026-10-01T01:00:00Z",
+    due_at: "2026-11-16T01:00:00Z",
+  };
+  const giftReturn = {
+    ...EMPTY,
+    kind: "return_address",
+    board: "sent",
+    order_no: "FC-R6",
+    box_id: "44444444-4444-4444-8444-444444444444",
+    box_label: "FC-R6-2",
+    box_seq: 2,
+    nickname: "하루",
+    tier: "medium",
+    sent_at: "2026-10-01T01:00:00Z",
+    due_at: "2026-11-16T01:00:00Z",
+  };
+
+  it("INV-J5 · J3: 보낸 역조공 몫(상자 칸 없이 몫)과 보낸 팬 선물의 상자 둘 다 보낸 선물 판에 반송 주소 줄로 읽고, 줄 수(J6)에 들어간다", () => {
+    const items = parseCreatorActionItems([revgiftReturn, giftReturn]);
+    expect(items).toEqual([
+      { kind: "return_address", orderNo: "RG-R5", shareId: revgiftReturn.share_id, boxId: null, boxSeq: null, boxLabel: null, nickname: "별빛", tier: "small", dueAt: "2026-11-16T01:00:00.000Z", sentAt: "2026-10-01T01:00:00.000Z" },
+      { kind: "return_address", orderNo: "FC-R6", shareId: null, boxId: giftReturn.box_id, boxSeq: 2, boxLabel: "FC-R6-2", nickname: "하루", tier: "medium", dueAt: "2026-11-16T01:00:00.000Z", sentAt: "2026-10-01T01:00:00.000Z" },
+    ]);
+    // 화면 줄은 다음 묶음에서 그린다 — 판을 나눌 때 반송 주소 줄은 따로(returns) 묶여 지금의 보낸 선물 줄 그리기에 섞이지 않는다
+    const boards = splitBoards(items);
+    expect(boards.returns.map((r) => r.orderNo)).toEqual(["RG-R5", "FC-R6"]);
+    expect(boards.sent).toEqual([]);
+  });
+
+  it("INV-J5 (실패경로): 반송 주소 줄이 받은 선물 판이거나, 몫도 상자도 없거나 둘 다 있거나, 기한이 없으면 전체를 거부한다", () => {
+    expect(() => parseCreatorActionItems([{ ...revgiftReturn, board: "received" }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...revgiftReturn, share_id: null }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...giftReturn, share_id: revgiftReturn.share_id }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...giftReturn, due_at: null }])).toThrow();
+  });
+});

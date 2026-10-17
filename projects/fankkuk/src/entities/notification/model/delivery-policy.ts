@@ -24,6 +24,9 @@ export const NOTIFICATION_KINDS = [
   "creator_check",
   "box_no_code",
   "revgift_offer",
+  // 반송 주소 확인과 14일 재알림(INV-N22, office-workflow INV-W15) — 주문을 보낸 사람(팬 선물은 팬, 역조공은 보낸 크리에이터)에게
+  "return_address",
+  "return_address_reminder",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -35,6 +38,8 @@ type Policy = {
   label: string | null;
   /** 이 종류를 받는 쪽(설정 화면 안내를 고를 때만 쓴다) */
   audience: NotificationAudience;
+  /** 다른 쪽도 받는 종류 — 반송 주소 알림은 보낸 사람이 팬이든 크리에이터(보낸 역조공·보낸 팬 선물)든 간다(INV-N22) */
+  alsoAudience?: NotificationAudience;
 };
 
 // 새 종류를 더하면 여기서 타입 오류가 난다 — 끌 수 있는지를 정하지 않은 종류는 만들 수 없다.
@@ -56,6 +61,9 @@ export const NOTIFICATION_POLICY: Record<NotificationKind, Policy> = {
   box_no_code: { mustDeliver: true, label: "받는 주소 없이 보낸 상자", audience: "fan" },
   // 역조공 몫 결제 완료 때·72시간 뒤 받는 팬에게(INV-N20, 2026-10-16) — 7일 안에 정하지 않으면 받지 않음이 된다
   revgift_offer: { mustDeliver: true, label: "역조공 받기", audience: "fan" },
+  // 반송 주소를 확인하지 않으면 반송되지 않고 30일 뒤 처분된다(INV-N22). 화면 이름은 용어집 표기를 넣기 전이라 코드값 — 두 종류가 한 이름으로 보인다
+  return_address: { mustDeliver: true, label: "return_address", audience: "fan", alsoAudience: "creator" },
+  return_address_reminder: { mustDeliver: true, label: "return_address", audience: "fan", alsoAudience: "creator" },
   arrived: { mustDeliver: false, label: null, audience: "fan" },
   inspected: { mustDeliver: false, label: null, audience: "fan" },
   shipped: { mustDeliver: false, label: null, audience: "fan" },
@@ -82,7 +90,7 @@ export function mustDeliverLabels(audience: NotificationAudience): string[] {
   const out: string[] = [];
   for (const kind of MUST_DELIVER_KINDS) {
     const p = NOTIFICATION_POLICY[kind];
-    if (p.audience === audience && p.label && !out.includes(p.label)) out.push(p.label);
+    if ((p.audience === audience || p.alsoAudience === audience) && p.label && !out.includes(p.label)) out.push(p.label);
   }
   return out;
 }

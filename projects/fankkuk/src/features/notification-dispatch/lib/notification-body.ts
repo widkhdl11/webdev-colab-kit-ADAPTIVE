@@ -52,6 +52,8 @@ export type NotificationBodyInput = {
   undeliveredReason: "declined" | "expired" | null;
   /** 역조공 받기(revgift_offer)만 — 보낸 크리에이터의 공개 이름(INV-N20 · reverse-gift INV-R12). DB 가 꺼낸 줄에 넣은 값이고, 다른 종류는 본문에 쓰지 않는다 */
   senderName: string | null;
+  /** 반송 주소 재알림(return_address_reminder)만 — 처분 예정 시각(반송 대기 + 720시간, INV-N22). DB 가 꺼낸 줄에 넣은 값이고, 다른 종류는 본문에 쓰지 않는다 */
+  disposeDueAt: string | null;
   /** 꺼낸 줄의 꼭 가는 알림 표시(DB 판정, INV-N6) */
   mustDeliver: boolean;
   /** 설정의 사이트 주소(APP_ORIGIN) */
@@ -101,7 +103,7 @@ export function siteOrigin(appOrigin: string): string {
   return url.origin;
 }
 
-function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReason, senderName }: NotificationBodyInput): Draft {
+function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReason, senderName, disposeDueAt }: NotificationBodyInput): Draft {
   const greet = `${nickname}님,`;
   const order = `주문번호 ${orderNo}`;
   switch (kind) {
@@ -260,6 +262,19 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
       };
+    case "return_address":
+    case "return_address_reminder": {
+      // 반송 주소 확인(INV-N22) — 반송 이유·주소·크리에이터 이름 칸이 없다(INV-N1). 링크는 팬 선물이면 선물 상세, 역조공 몫(RG-)이면 보낸 역조공 화면.
+      // 본문 문구는 용어집(return_address · dispose_due 행)의 표기로 다음 묶음에서 넣는다 — 지금은 자리만 코드값으로 둔다.
+      // 재알림만 처분 예정 날짜(반송 대기 + 30일, 서울 시간)를 적는다 — 날짜가 없으면 만들지 않는다
+      if (kind === "return_address_reminder" && !disposeDueAt) throw new Error("반송 주소 재알림에 처분 예정 시각이 없다");
+      return {
+        subject: `[팬꾹] ${kind}`,
+        lines: [greet, kind, ...(kind === "return_address_reminder" && disposeDueAt ? [`dispose_due ${formatDeadline(disposeDueAt)}`] : []), order],
+        buttonLabel: "return_address",
+        path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : `/gifts/${orderNo}`,
+      };
+    }
     case "in_transit":
     case "delivered":
       // 팬과 크리에이터 둘 다 받는 종류인데 화면이 달라 받는 사람별 경로가 필요하다. 택배사 연결(INV-N12) 때 정한다.
@@ -269,7 +284,7 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
 
 /** 받는 사람 — 종류별 표의 받는 쪽. 역조공 상자 도착은 보낸 크리에이터가 받는다 */
 function audienceOf({ kind, orderNo }: NotificationBodyInput): NotificationAudience {
-  if ((kind === "box_arrived" || kind === "box_no_code") && REVGIFT_ORDER_NO.test(orderNo)) return "creator";
+  if ((kind === "box_arrived" || kind === "box_no_code" || kind === "return_address" || kind === "return_address_reminder") && REVGIFT_ORDER_NO.test(orderNo)) return "creator";
   return NOTIFICATION_POLICY[kind].audience;
 }
 

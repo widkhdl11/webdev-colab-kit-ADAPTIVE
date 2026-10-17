@@ -27,6 +27,9 @@ export const STATE_LABEL: Record<ParcelState, { text: string; tone: StateTone }>
   tracker_held: { text: "tracker_held", tone: "warn" },
   report_held: { text: "report_held", tone: "warn" },
   police_handed: { text: "police_handed", tone: "ink" },
+  // 처분 대상·처분(office-workflow INV-W15) — 화면 표기는 용어집(dispose_due·disposed 행)으로 다음 묶음에서 넣는다. 지금은 코드값 그대로
+  dispose_due: { text: "dispose_due", tone: "warn" },
+  disposed: { text: "disposed", tone: "ink" },
 };
 
 /** 목록의 「다음 단계」 칸. 빈 문자열이면 할 일이 없다. */
@@ -48,6 +51,9 @@ export const NEXT_STEP_TEXT: Record<NextStep, string> = {
   // 추적기 보관·신고 보관(INV-W14) — 화면 표기는 용어집 승인 전이라 코드값 그대로
   tracker_held: "tracker_held",
   report_held: "report_held",
+  // 보낸 사람의 반송 주소 확인 기다림 · 처분 기록(office-workflow INV-W15) — 화면 표기는 다음 묶음, 지금은 코드값 그대로
+  wait_return_address: "wait_return_address",
+  record_disposal: "record_disposal",
   done: "",
 };
 

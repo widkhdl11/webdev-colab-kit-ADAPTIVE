@@ -7,6 +7,7 @@ import type { DeployEnv } from "@/shared/lib/env/is-production";
 import { createDevKeyUnwrapper } from "@/shared/lib/envelope/dev-key-unwrapper";
 import { readDecryptorSecrets } from "./decryptor-secrets";
 import { printCreatorLabel, type CreatorLabelResult } from "./print-creator-label";
+import { printReturnLabel, type ReturnLabelResult } from "./print-return-label";
 import { printShareLabel } from "./print-share-label";
 
 // 송장 출력 함수를 조립한다. 복호화 키·DB 자격·대표 ID 는 이 함수만 읽는 설정 파일에서 온다 —
@@ -27,7 +28,17 @@ export function readDecryptFile(): string {
   return readFileSync(join(process.cwd(), DECRYPT_FILE), "utf8");
 }
 
-export function createInvoiceDecryptor(env: DecryptorEnv, readFile: () => string, newWaybill: () => string): InvoiceDecryptor {
+/** 반송 송장 출력 함수 — 주문에 이어진 반송 대기 상자는 보낸 사람이 확인한 등록 주소(상자 복사본)를 연다(address-protection INV-P18).
+ *  어느 주문에도 이어지지 않은 상자면 not_linked — 부르는 쪽이 봉투 번호 길로 간다(office-workflow INV-W15 S15f). */
+export type ReturnLabelPrinter = (input: { qr: string; accessToken: string }) => Promise<ReturnLabelResult>;
+
+/** 송장 출력과 같은 설정 파일·같은 복호화 역할로 반송 송장 출력 함수를 조립한다. 운영 환경이면 파일을 읽기 전에 실패한다(INV-P12). */
+export function createReturnLabelPrinter(env: DecryptorEnv, readFile: () => string, newWaybill: () => string): ReturnLabelPrinter {
+  const { signer: _signer, ...deps } = decryptorDeps(env, readFile, newWaybill);
+  return (input) => printReturnLabel(deps, input);
+}
+
+function decryptorDeps(env: DecryptorEnv, readFile: () => string, newWaybill: () => string) {
   const secrets = readDecryptorSecrets(env, readFile);
   const unwrapper = createDevKeyUnwrapper({ privateKeyPem: secrets.privateKeyPem, env });
   const { url, anonKey } = readSupabaseConfig(env);
@@ -37,7 +48,7 @@ export function createInvoiceDecryptor(env: DecryptorEnv, readFile: () => string
   const auth = createClient(url, anonKey, { auth: noSession });
   const signer = chooseApprovalSigner(env);
 
-  const deps = {
+  return {
     db,
     verifyRequester: async (token: string) => {
       const { data, error } = await auth.auth.getUser(token);
@@ -48,6 +59,10 @@ export function createInvoiceDecryptor(env: DecryptorEnv, readFile: () => string
     signer,
     newWaybill,
   };
+}
+
+export function createInvoiceDecryptor(env: DecryptorEnv, readFile: () => string, newWaybill: () => string): InvoiceDecryptor {
+  const deps = decryptorDeps(env, readFile, newWaybill);
 
   // 상자 종류는 각 출력 함수가 DB 판정 재료로 가린다 — 팬 선물 함수가 「팬 선물 상자가 아님」이라고 하면 역조공 함수로 간다.
   return async (input) => {

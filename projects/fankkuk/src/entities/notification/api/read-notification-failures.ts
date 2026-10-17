@@ -67,6 +67,9 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   creator_check: "크리에이터 확인",
   box_no_code: "6자리 없는 상자",
   revgift_offer: "역조공 받기",
+  // 반송 주소 확인·재알림(INV-N22) — 화면 이름은 용어집 표기를 넣는 다음 묶음에서. 지금은 코드값
+  return_address: "return_address",
+  return_address_reminder: "return_address_reminder",
 };
 
 function isKnownKind(kind: string): kind is NotificationKind {

@@ -179,7 +179,7 @@ describe("INV-P8: 대표만 — 판단은 송장 출력 함수 설정의 대표 
     const staff = await signedInClient("fankkuk_staff");
     const token = await tokenOf("fankkuk_staff");
     const reply = await scanOutbound(
-      { client: staff, newWaybill: waybill, printLabel: (qr) => decryptor({ qr, accessToken: token }) },
+      { client: staff, newWaybill: waybill, printLabel: (qr) => decryptor({ qr, accessToken: token }), printReturnLabel: async () => ({ kind: "not_linked" }) },
       { kind: "print_label", qr: g.qr },
     );
     expect(reply).toEqual({ status: 403, body: { message: "송장 출력은 대표만 할 수 있어요." } });

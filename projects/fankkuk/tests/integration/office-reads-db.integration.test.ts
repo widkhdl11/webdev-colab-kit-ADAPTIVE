@@ -47,6 +47,8 @@ describe("작업 함수는 운영자만 (INV-W1)", () => {
       ["office_confirm_shipment", { p_qr: qr, p_waybill: waybill() }],
       ["office_print_return_label", { p_qr: qr, p_waybill: waybill() }],
       ["office_confirm_return", { p_qr: qr, p_waybill: waybill() }],
+      // 처분 기록(office-workflow INV-W15) — 운영자만
+      ["office_record_disposal", { p_qr: qr }],
     ];
     for (const [fn, args] of calls) {
       expect({ fn, code: (await c.rpc(fn, args)).error?.code }).toEqual({ fn, code: "42501" });

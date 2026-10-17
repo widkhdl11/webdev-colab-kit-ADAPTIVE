@@ -10,6 +10,8 @@ import {
   HOLD_DETAILS,
   inspect,
   finishPrint,
+  finishReturnPrint,
+  markReturnConfirmedForTest,
   orderStatus,
   paidGift,
   paidShare,
@@ -1005,11 +1007,14 @@ describe("원 송장 봉투와 반송 (INV-W8)", () => {
   }
 
   it("INV-W8 (S8): 반송 대기 상자의 QR 을 스캔하면 그 상자의 봉투 번호가 뜨고, 반송 확정 때 파쇄 기록 1건", async () => {
+    // 주문에 이어진 상자는 보낸 사람이 반송 주소를 확인한 뒤 반송 송장 출력 함수의 마무리로 출력 단계로 간다(INV-W15, 2026-10-17) —
+    // 봉투 번호 길(office_print_return_label)은 어느 주문에도 이어지지 않은 상자만이고 return-address-db 가 본다
     const { staff, qr } = await returnWaiting();
+    const shown = await staff.rpc("office_parcel_by_qr", { p_qr: qr });
+    expect((shown.data as { envelope_no: string }[])[0]?.envelope_no).toBe(qr);
+    markReturnConfirmedForTest(qr);
     const back = waybill();
-    const r = await staff.rpc("office_print_return_label", { p_qr: qr, p_waybill: back });
-    expect(r.error).toBeNull();
-    expect(r.data).toBe(qr);
+    expect(finishReturnPrint(qr, back)).toBeNull();
     expect(parcelState(qr)).toBe("return_printed");
     expect((await staff.rpc("office_confirm_return", { p_qr: qr, p_waybill: back })).error).toBeNull();
     expect(parcelState(qr)).toBe("returned");
@@ -1029,7 +1034,8 @@ describe("원 송장 봉투와 반송 (INV-W8)", () => {
 
   it("INV-W8 (실패경로): 반송 확정 스캔의 송장번호가 이 상자의 반송 송장이 아니면 거부", async () => {
     const { staff, qr } = await returnWaiting();
-    await staff.rpc("office_print_return_label", { p_qr: qr, p_waybill: waybill() });
+    markReturnConfirmedForTest(qr);
+    expect(finishReturnPrint(qr, waybill())).toBeNull();
     expect((await staff.rpc("office_confirm_return", { p_qr: qr, p_waybill: waybill() })).error?.code).toBe("P0043");
     expect(parcelState(qr)).toBe("return_printed");
   });

@@ -18,7 +18,10 @@ export type ActionItem =
       dueAt: string;
     }
   | { kind: "missing_box"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string }
-  | { kind: "revgift"; orderNo: string; creatorName: string; tier: string; dueAt: string };
+  | { kind: "revgift"; orderNo: string; creatorName: string; tier: string; dueAt: string }
+  // 반송 주소 확인(office-workflow INV-W15) — 반송 대기 · 확인 전 상자 하나. 기한 = 반송 대기 + 30일(지나면 처분 대상).
+  // 화면 카드는 용어집 표기를 넣는 다음 묶음에서 그린다 — 지금은 숫자(INV-J2)에만 들어간다
+  | { kind: "return_address"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string };
 
 const base = { order_no: z.string(), creator_name: z.string(), tier: z.string(), due_at: z.string() };
 
@@ -34,6 +37,7 @@ const rowShape = z.discriminatedUnion("kind", [
   }),
   z.object({ ...base, kind: z.literal("missing_box"), box_id: z.string().uuid(), box_label: z.string(), box_seq: z.number().int() }),
   z.object({ ...base, kind: z.literal("revgift") }),
+  z.object({ ...base, kind: z.literal("return_address"), box_id: z.string().uuid(), box_label: z.string(), box_seq: z.number().int() }),
 ]);
 
 /** 꼴이 다른 줄이 하나라도 있으면 예외 — 숫자와 목록이 서로 다른 줄 수를 말하지 않게 일부만 버리지 않는다. */
@@ -56,7 +60,7 @@ export function parseActionItems(data: unknown): ActionItem[] {
           dueAt: r.due_at,
         };
       }
-      if (r.kind === "missing_box") {
+      if (r.kind === "missing_box" || r.kind === "return_address") {
         return {
           kind: r.kind,
           orderNo: r.order_no,

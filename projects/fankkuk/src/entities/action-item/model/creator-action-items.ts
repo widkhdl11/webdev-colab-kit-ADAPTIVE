@@ -61,7 +61,22 @@ export type SentGiftItem =
   | { kind: "difference"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; measuredTier: string; amountKrw: number; dueAt: string; sentAt: string }
   | { kind: "missing_box"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string; sentAt: string };
 
-export type CreatorActionItem = TrackerItem | BluetoothItem | ApprovalItem | UnconfirmedItem | SentGiftItem;
+/** 보낸 선물의 반송 주소 확인(office-workflow INV-W15, action-center INV-J5·J3) — 보낸 역조공 몫(shareId) 또는 보낸 팬 선물의 상자(boxId) 하나.
+ *  nickname 은 몫이면 받는 팬, 팬 선물이면 받는 크리에이터. 기한 = 반송 대기 + 30일. 화면 줄은 용어집 표기를 넣는 다음 묶음에서 그린다 — 지금은 줄 수(J6)에만 들어간다 */
+export type ReturnAddressItem = {
+  kind: "return_address";
+  orderNo: string;
+  shareId: string | null;
+  boxId: string | null;
+  boxSeq: number | null;
+  boxLabel: string | null;
+  nickname: string;
+  tier: string;
+  dueAt: string;
+  sentAt: string;
+};
+
+export type CreatorActionItem = TrackerItem | BluetoothItem | ApprovalItem | UnconfirmedItem | SentGiftItem | ReturnAddressItem;
 
 const iso = z.string().min(1).transform((v) => new Date(v).toISOString());
 const count = z.number().int().nonnegative();
@@ -91,7 +106,7 @@ const common = {
   prior_passed_count: count.nullable(),
   prior_returned_count: count.nullable(),
 };
-const rowShape = z.object({ ...common, kind: z.enum(["tracker", "bluetooth", "approval", "unconfirmed", "difference", "missing_box"]), board: z.enum(["received", "sent"]) }).strict();
+const rowShape = z.object({ ...common, kind: z.enum(["tracker", "bluetooth", "approval", "unconfirmed", "difference", "missing_box", "return_address"]), board: z.enum(["received", "sent"]) }).strict();
 type Row = z.infer<typeof rowShape>;
 
 const need = <T>(v: T | null, what: string): T => {
@@ -152,6 +167,22 @@ export function parseCreatorActionItems(data: unknown): CreatorActionItem[] {
       if (r.kind === "unconfirmed") {
         return { kind: r.kind, orderNo: r.order_no, shareId: need(r.share_id, "팬별 선물"), nickname: r.nickname, tier: need(r.tier, "상자 크기"), sentAt: r.sent_at };
       }
+      if (r.kind === "return_address") {
+        // 몫이거나 상자이거나 하나만 — 둘 다·둘 다 없음은 꼴이 다른 줄이다
+        if ((r.share_id === null) === (r.box_id === null)) throw new Error("반송 주소 줄은 팬별 선물과 상자 중 하나만 가리킨다");
+        return {
+          kind: r.kind,
+          orderNo: r.order_no,
+          shareId: r.share_id,
+          boxId: r.box_id,
+          boxSeq: r.box_id === null ? null : need(r.box_seq, "상자 순번"),
+          boxLabel: r.box_id === null ? null : need(r.box_label, "상자 이름"),
+          nickname: r.nickname,
+          tier: need(r.tier, "상자 크기"),
+          dueAt: need(r.due_at, "기한"),
+          sentAt: r.sent_at,
+        };
+      }
       const box = {
         orderNo: r.order_no,
         boxId: need(r.box_id, "상자"),
@@ -174,16 +205,20 @@ export function splitBoards(items: readonly CreatorActionItem[]): {
   tracker: TrackerItem[];
   received: (BluetoothItem | ApprovalItem)[];
   sent: (UnconfirmedItem | SentGiftItem)[];
+  returns: ReturnAddressItem[];
 } {
   const tracker: TrackerItem[] = [];
   const received: (BluetoothItem | ApprovalItem)[] = [];
   const sent: (UnconfirmedItem | SentGiftItem)[] = [];
+  // 보낸 선물 판의 반송 주소 줄(INV-W15) — 화면 줄은 용어집 표기를 넣는 다음 묶음에서 그린다. 줄 수(J6)는 전체 배열 길이라 이미 들어간다
+  const returns: ReturnAddressItem[] = [];
   for (const it of items) {
     if (it.kind === "tracker") tracker.push(it);
+    else if (it.kind === "return_address") returns.push(it);
     else if (it.kind === "bluetooth" || it.kind === "approval") received.push(it);
     else sent.push(it);
   }
-  return { tracker, received, sent };
+  return { tracker, received, sent, returns };
 }
 
 /** 남은 날 — 서울 날짜로 센다(줄·창에 보이는 기한은 서울 시간, INV-J5). 3일 이하는 강조색(design-rules 13절) */

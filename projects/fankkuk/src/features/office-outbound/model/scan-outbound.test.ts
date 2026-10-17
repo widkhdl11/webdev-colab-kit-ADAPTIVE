@@ -25,7 +25,17 @@ function giftPrinter(outcome: LabelOutcome) {
   const asked: string[] = [];
   return { asked, printLabel: async (qr: string) => (asked.push(qr), outcome) };
 }
-const deps = (client: never, printer = giftPrinter({ kind: "failed" })) => ({ client, newWaybill: () => NEW_WAYBILL, printLabel: printer.printLabel });
+type ReturnOutcome = Awaited<ReturnType<OutboundDeps["printReturnLabel"]>>;
+function returnPrinter(outcome: ReturnOutcome) {
+  const asked: string[] = [];
+  return { asked, printReturnLabel: async (qr: string) => (asked.push(qr), outcome) };
+}
+const deps = (client: never, printer = giftPrinter({ kind: "failed" }), back = returnPrinter({ kind: "not_linked" })) => ({
+  client,
+  newWaybill: () => NEW_WAYBILL,
+  printLabel: printer.printLabel,
+  printReturnLabel: back.printReturnLabel,
+});
 
 describe("출고 (office-workflow INV-W1·W3·W8)", () => {
   it("INV-R7·W3: 역조공 상자도 송장 출력 함수가 팬 주소를 열어 라벨 칸을 돌려준다 — 주소 없이 출력 단계로 넘기는 DB 함수는 부르지 않는다", async () => {
@@ -123,6 +133,52 @@ describe("출고 (office-workflow INV-W1·W3·W8)", () => {
     const { calls, client } = fakeClient({ office_print_return_label: { data: "Q-000123", error: null } }, { operator: true, owner: false });
     expect(await scanOutbound(deps(client), { kind: "print_return", qr: "Q-000123" })).toEqual({ status: 200, body: { waybill: NEW_WAYBILL, envelopeNo: "Q-000123" } });
     expect(calls).toEqual([{ fn: "office_print_return_label", args: { p_qr: "Q-000123", p_waybill: NEW_WAYBILL } }]);
+  });
+
+  it("INV-W8 · P18 (S18): 주문에 이어진 상자의 반송 송장은 반송 송장 출력 함수가 확인한 주소를 열어 라벨 칸을 돌려준다 — 봉투 번호 DB 함수는 부르지 않는다", async () => {
+    const { calls, client } = fakeClient({});
+    const back = returnPrinter({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: LABEL });
+    expect(await scanOutbound(deps(client, undefined, back), { kind: "print_return", qr: "Q-000123" })).toEqual({
+      status: 200,
+      body: { waybill: NEW_WAYBILL, reprint: false, label: LABEL },
+    });
+    expect(back.asked).toEqual(["Q-000123"]);
+    expect(calls).toEqual([]);
+  });
+
+  it("INV-P18 (S18b, 실패경로): 직원이 주문에 이어진 상자의 반송 송장을 누르면 출력 함수까지 보내 거부 줄을 남기게 하고, 어떤 답이든 라벨 없이 403", async () => {
+    for (const outcome of [{ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: LABEL }, { kind: "denied", reason: "not_owner" }] as const) {
+      const { calls, client } = fakeClient({}, { operator: true, owner: false });
+      const back = returnPrinter(outcome);
+      const reply = await scanOutbound(deps(client, undefined, back), { kind: "print_return", qr: "Q-000123" });
+      expect(reply.status).toBe(403);
+      expect(reply.body).not.toHaveProperty("label");
+      expect(back.asked).toEqual(["Q-000123"]);
+      expect(calls).toEqual([]);
+    }
+  });
+
+  it("INV-W15 · P18 (S15b, 실패경로): 확인 전·상한·계정 불일치 거부는 409 not_shippable(라벨 없음), 없는 상자 404, 실패 500 — 봉투 번호 길로 넘어가지 않는다", async () => {
+    for (const reason of ["no_valid_approval", "order_not_printable", "decrypt_limit_reached", "address_mismatch"] as const) {
+      const { calls, client } = fakeClient({});
+      const reply = await scanOutbound(deps(client, undefined, returnPrinter({ kind: "denied", reason })), { kind: "print_return", qr: "Q-000123" });
+      expect([reason, reply.status, reply.body.reason]).toEqual([reason, 409, "not_shippable"]);
+      expect(reply.body).not.toHaveProperty("label");
+      expect(calls).toEqual([]);
+    }
+    const missing = fakeClient({});
+    expect((await scanOutbound(deps(missing.client, undefined, returnPrinter({ kind: "not_found" })), { kind: "print_return", qr: "Q-000123" })).status).toBe(404);
+    const failed = fakeClient({});
+    expect((await scanOutbound(deps(failed.client, undefined, returnPrinter({ kind: "failed" })), { kind: "print_return", qr: "Q-000123" })).status).toBe(500);
+    expect(failed.calls).toEqual([]);
+  });
+
+  it("INV-W15 (S15d): 처분 대상 상자의 QR 스캔 → 처분 기록, 처분 대상이 아니면 409", async () => {
+    const { calls, client } = fakeClient({ office_record_disposal: { data: "disposed", error: null } });
+    expect(await scanOutbound(deps(client), { kind: "record_disposal", qr: "Q-000123" })).toEqual({ status: 200, body: { ok: true } });
+    expect(calls).toEqual([{ fn: "office_record_disposal", args: { p_qr: "Q-000123" } }]);
+    const wrong = fakeClient({ office_record_disposal: { error: { code: "55000" } } });
+    expect((await scanOutbound(deps(wrong.client), { kind: "record_disposal", qr: "Q-000123" })).status).toBe(409);
   });
 
   it("INV-W8 S8b (실패경로): 반송 대기가 아니면 409, 봉투 번호가 비면 500", async () => {

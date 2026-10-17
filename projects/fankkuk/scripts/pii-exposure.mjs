@@ -76,6 +76,10 @@ export const PII_FUNCTIONS = {
   office_process_creator_check: "크리에이터 선택의 운영자 처리 → 몫 닫기, 돌려주는 것은 결과 글자(accepted·returned·no_choice·changed·processed·expired·closed·not_found)",
   // 신고 보관 상자의 경찰 인계 기록(office-workflow INV-W14). 같은 office_sync 경로로 닿는다
   office_record_police_handover: "경찰 인계 기록 → 몫 정리 경로, 돌려주는 것은 결과 글자(handed)",
+  // 처분 대상 상자의 처분 기록(office-workflow INV-W15). 같은 office_sync 경로로 닿는다(처분된 몫 상자의 몫 닫기 — 받는 팬 주소 복사본을 지운다)
+  office_record_disposal: "처분 기록 → 몫 정리 경로(주소를 지우는 길), 돌려주는 것은 결과 글자(disposed)",
+  // 반송 주소 확인(office-workflow INV-W15 · address-protection INV-P18, manual/0020) — 로그인한 보낸 사람 본인의 상자에만, 등록 주소 암호문을 상자에 복사만 한다
+  confirm_return_address: "반송 주소 확인 — 보낸 사람 본인의 등록 주소 암호문을 그 상자에 복사만 한다, 돌려주는 것은 결과 글자(confirmed·not_found·no_address·expired·closed)",
   // 운영자 몫 옮기기(inbound-address-code INV-C11) — 옮긴 상자로 office_sync 를 부른다. 주소를 읽어 돌려주지 않는다
   // 운영자 잇기(inbound-address-code INV-C12) — 입고 마무리(office_finish_held_receive → office_sync)로 닿는다. 돌려주는 것은 결과 글자(linked)
   admin_link_held_parcel: "6자리 없이 온 상자를 문의한 팬의 입고 전 상자에 잇기 → 몫 정리 경로, 돌려주는 것은 결과 글자(linked)",

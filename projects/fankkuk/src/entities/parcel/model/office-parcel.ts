@@ -28,6 +28,9 @@ export const NEXT_STEPS = [
   // 추적기 보관(크리에이터가 신고 여부를 고르면 처리) · 신고 보관(경찰 인계를 기록) — office-workflow INV-W14
   "tracker_held",
   "report_held",
+  // 주문에 이어진 반송 대기 상자: 보낸 사람이 반송 주소를 확인해야 반송 송장을 출력한다 · 처분 대상: QR 스캔으로 처분 기록(office-workflow INV-W15)
+  "wait_return_address",
+  "record_disposal",
   // 보류(inbound-address-code INV-C5·C8): 같은 6자리·같은 송장번호 분쟁이거나 주인이 「제가 보낸 게 아니에요」를 눌러 출고를 멈춘 상자
   "on_hold",
   "print_return",
@@ -147,6 +150,10 @@ export function parcelTabOf(state: ParcelState): ParcelTab {
     case "tracker_held":
     case "report_held":
     case "police_handed":
+      return "return";
+    // 처분 대상·처분(INV-W15) — 반송 대기에서 넘어온 상자라 반송 탭에 둔다
+    case "dispose_due":
+    case "disposed":
       return "return";
   }
 }

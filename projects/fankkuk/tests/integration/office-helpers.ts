@@ -163,6 +163,27 @@ export function finishPrint(qr: string, waybillNo: string): string | null {
   return last === "ok" ? null : last;
 }
 
+/**
+ * 반송 송장 출력의 DB 마무리 단계(office-workflow INV-W8·W15) — 주문에 이어진 반송 대기 상자를 「반송 송장 출력함」으로 넘긴다.
+ * 앱은 보낸 사람이 확인한 주소를 연 뒤 주소 열기 계정으로만 이 단계를 부른다(return_finish_print). 시험은 주소 열기 없이 DB 관리자 연결로 부른다 —
+ * 확인 여부·단계 검사는 같다. 성공하면 null, 거부되면 SQLSTATE(P0041 반송 주소 확인 전, 55000 단계).
+ */
+export function finishReturnPrint(qr: string, waybillNo: string): string | null {
+  const state = psql(
+    `do $$ begin perform public.return_finish_print('${qr}', '${waybillNo}'); perform set_config('fankkuk_test.state', 'ok', false); exception when others then perform set_config('fankkuk_test.state', sqlstate, false); end $$; select current_setting('fankkuk_test.state')`,
+  );
+  const last = state.split("\n").pop() ?? "";
+  return last === "ok" ? null : last;
+}
+
+/**
+ * 보낸 사람이 반송 주소를 확인한 것으로 표시만 한다(확인 시각 칸) — 기한·카드·출력 단계의 갈래를 보는 시험의 준비용.
+ * 등록 주소를 상자에 복사하는 실제 확인(confirm_return_address, manual/0020)은 return-address-confirm-db 가 본다.
+ */
+export function markReturnConfirmedForTest(qr: string): void {
+  psql(`update public.office_parcels set return_confirmed_at = now() where qr_code = '${qr}'`);
+}
+
 export function parcelState(qr: string): string {
   return psql(`select state from public.office_parcels where qr_code = '${qr}'`);
 }
@@ -195,6 +216,8 @@ export function deleteTestUnmatched(): void {
       `delete from public.office_not_mine_reports where parcel_id in (${detached});`,
       `delete from public.office_inspections where parcel_id in (${detached});`,
       `delete from public.office_envelope_shreds where parcel_id in (${detached});`,
+      // 반송 주소 열람 기록(address-protection INV-P18 — 이어지지 않은 상자의 거부 줄) — 표가 있을 때만
+      `do $$ begin if to_regclass('public.return_decrypt_log') is not null then delete from public.return_decrypt_log where parcel_id in (${detached}); end if; end $$;`,
       `delete from public.office_label_pending where parcel_id in (${detached});`,
       `update public.inbound_codes set first_parcel_id = null where first_parcel_id in (${detached});`,
       `delete from public.office_parcels where id in (${detached});`,

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { adminClient, holdRowLock, psql, signedInClient } from "./helpers";
-import { creatorSetsWaybill, finishPrint, inspect, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
+import { creatorSetsWaybill, finishPrint, finishReturnPrint, inspect, markReturnConfirmedForTest, receiveAndLabel, SHARE_PASS, waybill } from "./office-helpers";
 import {
   backdateSettlement,
   deleteTestRevgifts,
@@ -79,7 +79,9 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
     const staff = await signedInClient("fankkuk_staff");
     expect(await inspect(staff, qr, { surface: "found", prohibited: "clear", outcome: "return" })).toBe("return_waiting");
     const back = waybill();
-    expect((await staff.rpc("office_print_return_label", { p_qr: qr, p_waybill: back })).error).toBeNull();
+    // 주문에 이어진 몫 상자의 반송 송장은 보낸 크리에이터가 반송 주소를 확인한 뒤 마무리로 출력 단계로 간다(office-workflow INV-W15) — 여기서는 확인 표시만 채운다
+    markReturnConfirmedForTest(qr);
+    expect(finishReturnPrint(qr, back)).toBeNull();
     expect(addressCount(orderNo)).toBe(1);
 
     expect((await staff.rpc("office_confirm_return", { p_qr: qr, p_waybill: back })).error).toBeNull();
@@ -125,7 +127,9 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
     const staff = await signedInClient("fankkuk_staff");
     expect(await inspect(staff, qr, SHARE_PASS)).toBe("return_waiting");
     const back = waybill();
-    expect((await staff.rpc("office_print_return_label", { p_qr: qr, p_waybill: back })).error).toBeNull();
+    // 주문에 이어진 몫 상자의 반송 송장은 보낸 크리에이터가 반송 주소를 확인한 뒤 마무리로 출력 단계로 간다(office-workflow INV-W15) — 여기서는 확인 표시만 채운다
+    markReturnConfirmedForTest(qr);
+    expect(finishReturnPrint(qr, back)).toBeNull();
     expect((await staff.rpc("office_confirm_return", { p_qr: qr, p_waybill: back })).error).toBeNull();
     expect(psql(`select (returned_at is not null) || '/' || (cancelled_at is not null) from public.revgift_shares where order_no = '${orderNo}'`)).toBe(
       "true/true",

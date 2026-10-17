@@ -22,6 +22,9 @@ export const BOX_STATES = [
   "tracker_held",
   "report_held",
   "police_handed",
+  // 처분 대상 · 처분(office-workflow INV-W15) — 보낸 사람이 반송 대기부터 30일 안에 반송 주소를 확인하지 않은 상자 · 운영자가 처분을 기록한 상자(끝)
+  "dispose_due",
+  "disposed",
   // 확인 중 — 팬 읽기(my_gift_boxes)가 위 세 상태를 부르는 한 값(INV-W14)
   "checking",
   // 결제 + 30일이 지나도 오지 않아 닫힌 팬 선물 상자(office-workflow INV-W10). 6자리는 무효, 그 상자 금액은 환불 대상.

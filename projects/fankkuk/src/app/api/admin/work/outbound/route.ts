@@ -1,7 +1,13 @@
 import type { NextRequest } from "next/server";
-import { createInvoiceDecryptor, readDecryptFile, type InvoiceDecryptor } from "@/features/invoice-print/api/invoice-decryptor";
+import {
+  createInvoiceDecryptor,
+  createReturnLabelPrinter,
+  readDecryptFile,
+  type InvoiceDecryptor,
+  type ReturnLabelPrinter,
+} from "@/features/invoice-print/api/invoice-decryptor";
 import { devWaybillNo } from "@/features/office-outbound/model/dev-waybill";
-import { scanOutbound, type LabelOutcome } from "@/features/office-outbound/model/scan-outbound";
+import { scanOutbound, type LabelOutcome, type ReturnLabelOutcome } from "@/features/office-outbound/model/scan-outbound";
 import { createRequestSupabase } from "@/shared/api/supabase/server";
 import { handlePrivateJsonPost } from "@/shared/lib/http/private-json";
 
@@ -26,6 +32,20 @@ function invoiceDecryptor(): InvoiceDecryptor | null {
   return decryptor;
 }
 
+let returnPrinter: ReturnLabelPrinter | null = null;
+
+/** 반송 송장 출력 함수를 처음 쓸 때 한 번 만든다. 만들지 못하면(운영 환경·설정 파일 없음) 실패로 답한다 — 봉투 번호 길로 넘어가지 않는다 */
+function returnLabelPrinter(): ReturnLabelPrinter | null {
+  if (returnPrinter) return returnPrinter;
+  try {
+    returnPrinter = createReturnLabelPrinter(process.env, readDecryptFile, devWaybillNo);
+  } catch (e) {
+    console.error("반송 송장 출력 함수를 만들지 못했다", e instanceof Error ? e.message : typeof e);
+    return null;
+  }
+  return returnPrinter;
+}
+
 export async function POST(req: NextRequest) {
   return handlePrivateJsonPost(req, async (body) => {
     const client = await createRequestSupabase();
@@ -35,6 +55,13 @@ export async function POST(req: NextRequest) {
       const { data } = await client.auth.getSession();
       return run({ qr, accessToken: data.session?.access_token ?? "" });
     };
-    return scanOutbound({ client, newWaybill: devWaybillNo, printLabel }, body);
+    // 반송 송장 — 주문에 이어진 상자는 보낸 사람이 확인한 주소를 여는 반송 송장 출력 함수에 같은 방식(로그인 토큰)으로 맡긴다(address-protection INV-P18)
+    const printReturnLabel = async (qr: string): Promise<ReturnLabelOutcome> => {
+      const run = returnLabelPrinter();
+      if (!run) return { kind: "failed" };
+      const { data } = await client.auth.getSession();
+      return run({ qr, accessToken: data.session?.access_token ?? "" });
+    };
+    return scanOutbound({ client, newWaybill: devWaybillNo, printLabel, printReturnLabel }, body);
   });
 }

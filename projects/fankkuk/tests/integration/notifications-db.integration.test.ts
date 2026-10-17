@@ -436,10 +436,11 @@ describe("추적 장치 발견 알림 — 크리에이터에게만, 팬에게는
     const rows = outboxRows(held.g.orderId);
     expect(rows.filter((r) => r.startsWith("hold|"))).toEqual(["hold|1|haru_creator|email|pending"]);
     expect(rows.filter((r) => r.startsWith("hold_fan|"))).toEqual([]);
-    // 다른 검수 반송(금속)과 팬이 받는 나머지 줄이 같다 — 무엇이 나왔는지가 알림 종류로 드러나지 않는다
+    // 다른 검수 반송(금속)과 팬이 받는 나머지 줄이 같다 — 무엇이 나왔는지가 알림 종류로 드러나지 않는다.
+    // 돌려보낼 상자·반송 주소 확인(hold_fan · return_address, INV-N22)은 반송 대기가 될 때 가는 줄이라 뺀다 — 추적기 상자는 아직 보관 중이다
     const returned = await arrivedGift();
     await inspect(returned.staff, returned.qrs[0]!, { bluetooth: "clear", rf: "clear", metal: "found", outcome: "return" });
-    const fanKinds = (orderId: string) => outboxRows(orderId).filter((r) => r.includes("|byeolbit_fan|") && !r.startsWith("hold_fan|"));
+    const fanKinds = (orderId: string) => outboxRows(orderId).filter((r) => r.includes("|byeolbit_fan|") && !r.startsWith("hold_fan|") && !r.startsWith("return_address|"));
     expect(fanKinds(held.g.orderId)).toEqual(fanKinds(returned.g.orderId));
   });
 
@@ -560,7 +561,9 @@ describe("꺼내기·끝내기 (INV-N5·N1)", () => {
   it("INV-N1: 꺼낸 줄은 본문에 쓸 값만 돌려준다 — 승인 요청은 자동 반려 예정 시각과 꼭 가는 알림 표시, 연락처는 없다", async () => {
     const g = await paidGift();
     const c = await claimOne(rowId(g.orderId, "approval_request", "haru_creator"));
-    expect(Object.keys(c).sort()).toEqual(["attempts", "auto_reject_at", "channel", "claimed_at", "id", "kind", "must_deliver", "nickname", "order_no", "round", "sender_name", "undelivered_reason"]);
+    // dispose_due_at = 반송 주소 재알림의 처분 예정 시각(INV-N22) — 다른 종류는 비어 있다
+    expect(Object.keys(c).sort()).toEqual(["attempts", "auto_reject_at", "channel", "claimed_at", "dispose_due_at", "id", "kind", "must_deliver", "nickname", "order_no", "round", "sender_name", "undelivered_reason"]);
+    expect(c).toMatchObject({ dispose_due_at: null });
     expect(c).toMatchObject({ kind: "approval_request", channel: "email", round: 1, order_no: g.orderNo, nickname: "하루", must_deliver: true, attempts: 0, undelivered_reason: null });
     const expected = psql(`select extract(epoch from registered_at + interval '168 hours') from public.orders where id = '${g.orderId}'`);
     expect(new Date(c.auto_reject_at!).getTime() / 1000).toBeCloseTo(Number(expected), 3);
@@ -985,6 +988,8 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
       const shareId = (await paidShare()).shareId;
       const seen: [string, boolean, unknown][] = [];
       for (const kind of kinds) {
+        // 반송 주소 재알림(INV-N22)은 꺼낼 때 상자가 반송 대기·확인 전이어야 보낸다 — 그 줄 앞에서 상자를 반송 대기로 둔다
+        if (kind === "return_address_reminder") psql(`update public.office_parcels set state = 'return_waiting' where id = '${parcelId}'`);
         const share = kind === "revgift_offer" ? `'${shareId}'` : "null";
         const request = kind === "approval_request" ? `'${requestId}'` : "null";
         const parcel = parcelKinds.includes(`'${kind}'`) ? `'${parcelId}'` : "null";
@@ -997,7 +1002,7 @@ describe("연락처는 보내는 순간 앱 서버 키 전용 함수로 (INV-N3�
         const must = psql(`select public.notification_kind_must_deliver('${kind}')`) === "t";
         seen.push([kind, must, await contactValue(id)]);
       }
-      expect(seen.filter(([, must]) => must)).toHaveLength(12); // 역조공 받기(INV-N20)까지 열둘
+      expect(seen.filter(([, must]) => must)).toHaveLength(14); // 역조공 받기(INV-N20)·반송 주소 확인과 재알림(INV-N22)까지 열넷
       psql(`delete from public.office_unmatched where id = '${heldId}'`);
       expect(seen).toEqual(seen.map(([kind, must]) => [kind, must, must ? "byeolbit.fan@example.com" : null]));
     });
