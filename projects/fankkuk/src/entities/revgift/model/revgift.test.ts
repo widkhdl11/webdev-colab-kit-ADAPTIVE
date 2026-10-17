@@ -78,6 +78,13 @@ describe("INV-R8: 크리에이터용 보낸 목록은 정해진 칸만 받는다
     expect(parseReceivedRows([received])[0]?.reply).toBe("expired");
     expect(() => parseReceivedRows([{ ...received, reply: "unknown" }])).toThrow();
   });
+
+  it("INV-W15: 처분 표시(disposed)를 받는다 — 읽기 함수가 아직 옛것이라 칸이 없으면 처분 아님", () => {
+    const received = { order_no: "RG-ABC123", creator_name: "하루", tier: "small", reply: "accepted", deadline: "2026-10-10T00:00:00+00:00", shipped: false, returned: true, cancelled: false };
+    expect(parseReceivedRows([{ ...received, disposed: true }])[0]?.disposed).toBe(true);
+    expect(parseReceivedRows([received])[0]?.disposed).toBe(false);
+    expect(() => parseReceivedRows([{ ...received, disposed: "yes" }])).toThrow();
+  });
 });
 
 describe("INV-R12: 팬 알림과 QR 에는 주소가 들어가지 않는다", () => {

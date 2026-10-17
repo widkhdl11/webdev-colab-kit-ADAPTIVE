@@ -308,7 +308,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
                 <h2 className={`t-title ${s.focusable}`} id="rv-result-title" ref={resultTitle} tabIndex={-1}>
                   {RESULT_TITLE[stage]}
                 </h2>
-                <p className={`t-lead t-desc ${s.desc}`}>{resultBody(stage, creatorName)}</p>
+                {resultBody(stage, creatorName) !== null && <p className={`t-lead t-desc ${s.desc}`}>{resultBody(stage, creatorName)}</p>}
               </>
             )}
             <div className={`btnrow ${s.links}`}>
@@ -344,11 +344,14 @@ const RESULT_TITLE: Record<Exclude<ReceivedStage, "waiting" | "accepted">, strin
   expired: "기한이 지나 받지 않음으로 정해졌어요",
   shipped: "배송이 시작됐어요",
   returned: "상자를 돌려보냈어요",
+  disposed: "상자를 처분했어요",
   cancelled: "이 선물은 취소됐어요",
 };
 
 // 이 선물에 복사해 둔 주소는 출고·반송 때 지운다(reverse-gift INV-R9). 등록한 받을 주소는 그대로라 「주소를 지웠다」고 쓰지 않는다.
-function resultBody(stage: Exclude<ReceivedStage, "waiting" | "accepted">, creatorName: string): string {
+// 처분(office-workflow INV-W15)은 제목 한 줄로 끝난다 — 덧붙일 사실이 없다.
+function resultBody(stage: Exclude<ReceivedStage, "waiting" | "accepted">, creatorName: string): string | null {
+  if (stage === "disposed") return null;
   if (stage === "declined") return `${creatorName}님에게는 받지 않은 이유를 알리지 않아요.`;
   if (stage === "expired") return `7일 안에 정하지 않아 받지 않음으로 처리됐어요. ${creatorName}님에게는 이유를 알리지 않아요.`;
   if (stage === "shipped") return "곧 도착해요.";

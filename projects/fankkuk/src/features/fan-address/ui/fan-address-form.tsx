@@ -11,6 +11,10 @@ import { sendFanAddress } from "../api/send-fan-address";
 
 const LABEL_OPTIONS = ADDRESS_LABELS.map((value) => ({ value, name: ADDRESS_LABEL_NAME[value] }));
 
+const HINT_HIDDEN = "주소는 등록한 뒤에 다시 보이지 않아요.";
+// 받을 주소로 쓰는 자리(설정·역조공 받기)에서만 붙는다 — 반송 주소 확인 창에서는 맞지 않는 말이라 뺀다(office-workflow INV-W15)
+const HINT_RECEIVE = "크리에이터가 보낸 선물을 받을 때 이 이름표와 등록한 날로 확인해요.";
+
 export type FanAddressFormProps = {
   /** 로그인한 팬의 계정 ID — 봉인할 내용에 묶는다 */
   accountId: string;
@@ -20,9 +24,11 @@ export type FanAddressFormProps = {
   onSaved: (label: AddressLabel) => void;
   onCancel: () => void;
   onLoginExpired: () => void;
+  /** 이름표 안내에 「크리에이터가 보낸 선물을 받을 때 …」를 붙이는가. 반송 주소 확인 창은 false */
+  receiveHint?: boolean;
 };
 
-export function FanAddressForm({ accountId, sealingKeyPem, initialLabel = null, autoFocusFirst = false, onSaved, onCancel, onLoginExpired }: FanAddressFormProps) {
+export function FanAddressForm({ accountId, sealingKeyPem, initialLabel = null, autoFocusFirst = false, onSaved, onCancel, onLoginExpired, receiveHint = true }: FanAddressFormProps) {
   return (
     <SealedAddressForm
       idPrefix="fa"
@@ -30,7 +36,7 @@ export function FanAddressForm({ accountId, sealingKeyPem, initialLabel = null, 
       toPlaintext={(f) => fanAddressPlaintext({ accountId, ...f })}
       labelOptions={LABEL_OPTIONS}
       initialLabel={initialLabel}
-      labelHint="주소는 등록한 뒤에 다시 보이지 않아요. 크리에이터가 보낸 선물을 받을 때 이 이름표와 등록한 날로 확인해요."
+      labelHint={receiveHint ? `${HINT_HIDDEN} ${HINT_RECEIVE}` : HINT_HIDDEN}
       send={sendFanAddress}
       submitClassName="btn"
       submitContent={(busy) => (busy ? "저장하는 중…" : "저장하기")}

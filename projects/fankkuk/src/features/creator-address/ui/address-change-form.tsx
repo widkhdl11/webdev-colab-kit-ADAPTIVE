@@ -23,9 +23,11 @@ export type AddressChangeFormProps = {
   onSaved: (label: AddressLabel) => void;
   onCancel: () => void;
   onLoginExpired: () => void;
+  /** 승인 안내 뒷문장을 붙일지 — 반송 주소 확인 창에서는 승인과 관계가 없어 뺀다 */
+  approvalHint?: boolean;
 };
 
-export function AddressChangeForm({ creatorId, sealingKeyPem, initialLabel = null, autoFocusFirst = false, onSaved, onCancel, onLoginExpired }: AddressChangeFormProps) {
+export function AddressChangeForm({ creatorId, sealingKeyPem, initialLabel = null, autoFocusFirst = false, onSaved, onCancel, onLoginExpired, approvalHint = true }: AddressChangeFormProps) {
   return (
     <SealedAddressForm
       idPrefix="ca"
@@ -33,7 +35,7 @@ export function AddressChangeForm({ creatorId, sealingKeyPem, initialLabel = nul
       toPlaintext={(f) => creatorAddressPlaintext({ creatorId, ...f })}
       labelOptions={LABEL_OPTIONS}
       initialLabel={initialLabel}
-      labelHint="주소는 등록한 뒤에 다시 보이지 않아요. 승인할 때 이 이름표와 등록한 날로 확인해요."
+      labelHint={approvalHint ? "주소는 등록한 뒤에 다시 보이지 않아요. 승인할 때 이 이름표와 등록한 날로 확인해요." : "주소는 등록한 뒤에 다시 보이지 않아요."}
       send={sendCreatorAddress}
       submitClassName="btn btn--kakao"
       submitContent={(busy) => (

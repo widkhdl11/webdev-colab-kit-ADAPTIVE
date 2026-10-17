@@ -14,6 +14,8 @@ const STAGE_COPY: Record<Exclude<ReceivedStage, "waiting">, StageCopy> = {
   declined: { tag: "받지 않음", tone: "danger", note: "「받지 않기」를 눌렀어요" },
   expired: { tag: "기한 지남", tone: "danger", note: "기한(7일)이 지났어요" },
   returned: { tag: "돌려보냈어요", tone: "danger", note: "상자를 크리에이터에게 돌려보냈어요" },
+  // 용어집 disposed 라벨 「처분」 · 문장은 dispose_due 행의 「상자를 처분해요」와 같은 말(office-workflow INV-W15)
+  disposed: { tag: "처분", tone: "danger", note: "상자를 처분했어요" },
   cancelled: { tag: "취소됐어요", tone: "plain", note: "이 선물은 취소됐어요" },
 };
 

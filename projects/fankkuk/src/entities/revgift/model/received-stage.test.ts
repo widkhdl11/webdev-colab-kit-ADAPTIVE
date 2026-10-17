@@ -8,10 +8,10 @@ const DEADLINE = "2026-10-10T06:00:00.000Z";
 const DEADLINE_MS = Date.parse(DEADLINE);
 const HOUR = 60 * 60 * 1000;
 
-type StageInput = Pick<ReceivedRevgift, "reply" | "shipped" | "returned" | "cancelled" | "deadline">;
+type StageInput = Pick<ReceivedRevgift, "reply" | "shipped" | "returned" | "disposed" | "cancelled" | "deadline">;
 
 function row(over: Partial<StageInput>): StageInput {
-  return { reply: "waiting", deadline: DEADLINE, shipped: false, returned: false, cancelled: false, ...over };
+  return { reply: "waiting", deadline: DEADLINE, shipped: false, returned: false, disposed: false, cancelled: false, ...over };
 }
 
 describe("receivedStage", () => {
@@ -28,6 +28,13 @@ describe("receivedStage", () => {
   it("반송은 반송 표시가 있을 때만, 출고보다 앞선다", () => {
     expect(receivedStage(row({ reply: "accepted", returned: true, shipped: true }), 0)).toBe("returned");
     expect(receivedStage(row({ reply: "accepted" }), 0)).toBe("accepted");
+  });
+
+  it("INV-W15 · INV-R9: 처분된 몫은 처분 — 반송 표시가 같이 와도 반송으로 보이지 않고, 취소보다는 뒤", () => {
+    expect(receivedStage(row({ reply: "accepted", returned: true, disposed: true }), 0)).toBe("disposed");
+    expect(receivedStage(row({ reply: "accepted", disposed: true }), 0)).toBe("disposed");
+    expect(receivedStage(row({ reply: "accepted", returned: true }), 0)).toBe("returned");
+    expect(receivedStage(row({ reply: "accepted", cancelled: true, returned: true, disposed: true }), 0)).toBe("cancelled");
   });
 
   it("출고됐으면 출고", () => {
@@ -63,5 +70,6 @@ describe("isOngoingStage", () => {
     expect(isOngoingStage("expired")).toBe(false);
     expect(isOngoingStage("returned")).toBe(false);
     expect(isOngoingStage("cancelled")).toBe(false);
+    expect(isOngoingStage("disposed")).toBe(false);
   });
 });

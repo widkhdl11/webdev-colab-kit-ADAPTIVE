@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { expiryRunSummary } from "./expiry-counts";
 import { runExpiry, type PaymentReconcileRun } from "./run-expiry";
 
 type Reply = { data?: unknown; error: { code: string } | null };
@@ -16,7 +17,7 @@ function fakeClient(reply: Reply, who = { operator: true, owner: false }) {
   return { calls, client };
 }
 
-const COUNTS = { gifts: 1, unmatched: 0, differences: 0, revgifts: 0, pending_gifts: 0, pending_revgifts: 0, held: 0 };
+const COUNTS = { gifts: 1, unmatched: 0, differences: 0, revgifts: 0, pending_gifts: 0, pending_revgifts: 0, held: 0, dispose_due: 2, return_reminders: 3 };
 const PAYMENTS = { checked: 1, done: 1, failed: 0, review: 0, kept: 0, errors: 0 };
 
 // 결제 다시 확인(payment INV-M19)을 대신하는 기록기 — 몇 번, 어느 주문번호로 불렸는지만 본다
@@ -98,5 +99,30 @@ describe("지금 돌리기의 결제 다시 확인 (payment INV-M19)", () => {
       throw new Error("TOSS_SECRET_KEY 가 없다");
     });
     expect(reply.status).toBe(500);
+  });
+});
+
+describe("지금 돌리기 결과 — 반송 주소 집계 (office-workflow INV-W15)", () => {
+  it("INV-W15: 처분 대상으로 바꾼 수(dispose_due)와 재알림 수(return_reminders)를 화면에 넘긴다", async () => {
+    const reply = await runExpiry(fakeClient({ data: COUNTS, error: null }).client, {}, reconcileSpy().run);
+    expect(reply.status).toBe(200);
+    expect(reply.body).toMatchObject({ counts: { dispose_due: 2, return_reminders: 3 } });
+  });
+
+  it("INV-W15 (실패경로): 두 집계가 빠진 답은 꼴이 다른 답이라 500 — 0건으로 보이지 않는다", async () => {
+    for (const drop of ["dispose_due", "return_reminders"] as const) {
+      const data: Record<string, number> = { ...COUNTS };
+      delete data[drop];
+      expect([drop, (await runExpiry(fakeClient({ data, error: null }).client, {}, reconcileSpy().run)).status]).toEqual([drop, 500]);
+    }
+  });
+
+  it("INV-W15: 결과 한 줄은 운영자 화면 표기 — 「처분 대상 N건 · 재알림 N건」", () => {
+    expect(expiryRunSummary({ counts: COUNTS })).toBe("처분 대상 2건 · 재알림 3건");
+    expect(expiryRunSummary({ counts: { ...COUNTS, dispose_due: 0, return_reminders: 0 } })).toBe("처분 대상 0건 · 재알림 0건");
+  });
+
+  it("INV-W15 (실패경로): 결과의 꼴이 다르면 한 줄을 만들지 않는다(null)", () => {
+    for (const body of [{}, { counts: { ...COUNTS, dispose_due: "2" } }, { counts: null }]) expect(expiryRunSummary(body)).toBeNull();
   });
 });

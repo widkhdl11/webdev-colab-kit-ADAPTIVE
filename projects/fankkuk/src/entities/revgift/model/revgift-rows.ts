@@ -47,6 +47,8 @@ const receivedRow = z
     deadline: z.string(),
     shipped: z.boolean(),
     returned: z.boolean(),
+    // 처분된 몫(office-workflow INV-W15). 읽기 함수가 옛것이면 칸이 없다 — 처분 아님으로 본다
+    disposed: z.boolean().optional(),
     cancelled: z.boolean(),
   })
   .strict();
@@ -59,6 +61,7 @@ export type ReceivedRevgift = {
   deadline: string;
   shipped: boolean;
   returned: boolean;
+  disposed: boolean;
   cancelled: boolean;
 };
 
@@ -66,5 +69,5 @@ export function parseReceivedRows(data: unknown): ReceivedRevgift[] {
   return z
     .array(receivedRow)
     .parse(data)
-    .map((r) => ({ orderNo: r.order_no, creatorName: r.creator_name, tier: r.tier, reply: r.reply, deadline: r.deadline, shipped: r.shipped, returned: r.returned, cancelled: r.cancelled }));
+    .map((r) => ({ orderNo: r.order_no, creatorName: r.creator_name, tier: r.tier, reply: r.reply, deadline: r.deadline, shipped: r.shipped, returned: r.returned, disposed: r.disposed ?? false, cancelled: r.cancelled }));
 }

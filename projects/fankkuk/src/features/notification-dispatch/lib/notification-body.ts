@@ -64,7 +64,7 @@ export type NotificationBody = { subject: string; text: string; buttonLabel: str
 
 const ORDER_NO = /^[A-Z0-9][A-Z0-9-]{0,39}$/;
 
-const FOOTER = "이 알림에는 선물 내용과 보낸 분·받는 분 정보를 담지 않아요. 자세한 내용은 로그인한 뒤 위 링크에서 확인해 주세요.";
+const FOOTER = "이 알림에는 선물 내용과 보낸 사람·받는 사람 정보를 담지 않아요. 자세한 내용은 로그인한 뒤 위 링크에서 확인해 주세요.";
 const FOOTER_OPTIONAL: Record<NotificationAudience, string> = {
   fan: "알림은 내 팬꾹에서 끌 수 있어요.",
   creator: "알림은 내 팬꾹의 주소와 설정에서 끌 수 있어요.",
@@ -213,7 +213,7 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
       // 받을지 정해 달라는 말과 기한뿐 — 보낸 팬·무엇이 나왔는지는 쓰지 않는다(INV-N1). 화면은 크리에이터 처리할 일의 블루투스 발견 줄(INV-N9·N13)
       return {
         subject: "[팬꾹] 받을지 정해 주실 선물이 있어요",
-        lines: [greet, "받을지 정해 주실 상자가 있어요.", `${CREATOR_CHECK_DAYS}일 안에 정하지 않으면 보낸 분에게 돌려보내요.`, order],
+        lines: [greet, "받을지 정해 주실 상자가 있어요.", `${CREATOR_CHECK_DAYS}일 안에 정하지 않으면 보낸 사람에게 돌려보내요.`, order],
         buttonLabel: "확인하기",
         path: CREATOR_ACTION_CENTER_HREF,
       };

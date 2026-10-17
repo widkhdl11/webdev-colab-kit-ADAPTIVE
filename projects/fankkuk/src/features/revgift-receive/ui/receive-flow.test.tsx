@@ -162,3 +162,34 @@ describe("받기 — 등록 전이면 그 자리에서 입력 (INV-R4, INV-P17)"
     expect(host.textContent).toContain("받을 주소를 읽지 못했어요");
   });
 });
+
+describe("끝난 역조공의 결과 (office-workflow INV-W15)", () => {
+  function renderSettled(stage: "returned" | "disposed") {
+    act(() =>
+      root.render(
+        <ReceiveFlow
+          orderNo={ORDER_NO}
+          creatorName="하루"
+          tierName="소"
+          tierRule="가로·세로·높이 합 80cm 이하"
+          stage={stage}
+          daysLeftText="5일 남음"
+          deadlineText="10월 22일까지 정해 주세요"
+          address={{ status: HOME, canEnter: true, missingKeyText: "", renderForm: () => null }}
+        />,
+      ),
+    );
+  }
+
+  it("INV-W15: 처분된 몫은 「상자를 처분했어요」 — 크리에이터에게 돌려보냈다는 말이 없다", () => {
+    renderSettled("disposed");
+    expect(host.querySelector("#rv-result-title")?.textContent).toBe("상자를 처분했어요");
+    expect(host.textContent).not.toContain("돌려보냈");
+  });
+
+  it("INV-W15 (실패경로): 반송된 몫은 그대로 「상자를 돌려보냈어요」", () => {
+    renderSettled("returned");
+    expect(host.querySelector("#rv-result-title")?.textContent).toBe("상자를 돌려보냈어요");
+    expect(host.textContent).toContain("상자를 하루님에게 돌려보냈어요.");
+  });
+});

@@ -224,7 +224,7 @@ describe("알림 링크 (INV-N9)", () => {
     expect(new URL(b.link).pathname).toBe("/creator/actions");
     expect(b.subject).toBe("[팬꾹] 받을지 정해 주실 선물이 있어요");
     expect(b.text).toContain("받을지 정해 주실 상자가 있어요.");
-    expect(b.text).toContain("7일 안에 정하지 않으면 보낸 분에게 돌려보내요.");
+    expect(b.text).toContain("7일 안에 정하지 않으면 보낸 사람에게 돌려보내요.");
     expect(b.text).toContain("이 알림은 꺼 두어도 가요.");
     for (const word of ["별빛", "블루투스", "RF", "추적", "전자"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
   });
@@ -241,6 +241,15 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.text).toContain("이 알림은 꺼 두어도 가요.");
     expect(b.text).not.toContain("주문번호");
     for (const word of ["송장", "택배", "CJ", "도착한", "크리에이터"]) expect([word, b.text.includes(word)]).toEqual([word, false]);
+  });
+
+  it("INV-N1: 상자를 보낸 쪽·받는 쪽은 용어집 표기(보낸 사람·받는 사람)로 — 「보낸 분」「받는 분」은 어느 알림에도 없다", () => {
+    for (const kind of SENDABLE) {
+      const b = buildNotificationBody(inputFor(kind));
+      const all = [b.subject, b.text, b.buttonLabel].join("\n");
+      expect([kind, all.includes("보낸 분"), all.includes("받는 분")]).toEqual([kind, false, false]);
+      expect([kind, b.text.includes("선물 내용과 보낸 사람·받는 사람 정보를 담지 않아요.")]).toEqual([kind, true]);
+    }
   });
 
   it("INV-N6: 꼭 가는 알림에는 「꺼 두어도 가요」, 끌 수 있는 알림에는 「끌 수 있어요」 — 종류별 표 그대로", () => {

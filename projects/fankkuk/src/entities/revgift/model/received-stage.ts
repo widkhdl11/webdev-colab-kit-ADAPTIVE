@@ -3,17 +3,19 @@ import type { ReceivedRevgift } from "./revgift-rows";
 // 받은 역조공 한 줄이 팬 본인 화면에서 어느 단계인지 정한다. 누가 받았는지·기한·출고·반송·취소는 DB 가 정한 값이고,
 // 여기서는 그 값들 사이의 우선순위만 정한다. 팬 본인에게는 거절과 기한 지남을 나눠 보여 준다(reverse-gift INV-R8).
 
-export type ReceivedStage = "waiting" | "accepted" | "shipped" | "declined" | "expired" | "returned" | "cancelled";
+export type ReceivedStage = "waiting" | "accepted" | "shipped" | "declined" | "expired" | "returned" | "disposed" | "cancelled";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * 우선순위: 거절·기한 지남 > 취소 > 반송 > 출고 > 기한 지난 기다림(→ 기한 지남) > 답한 그대로.
+ * 우선순위: 거절·기한 지남 > 취소 > 처분 > 반송 > 출고 > 기한 지난 기다림(→ 기한 지남) > 답한 그대로.
+ * 처분된 몫(office-workflow INV-W15)은 DB 가 반송 시각도 함께 적으므로 반송보다 먼저 본다.
  * 기한 처리가 아직 돌지 않았어도 기한 시각이 된(같거나 지난) 「기다리는 중」은 기한 지남이다.
  */
-export function receivedStage(r: Pick<ReceivedRevgift, "reply" | "shipped" | "returned" | "cancelled" | "deadline">, nowMs: number): ReceivedStage {
+export function receivedStage(r: Pick<ReceivedRevgift, "reply" | "shipped" | "returned" | "disposed" | "cancelled" | "deadline">, nowMs: number): ReceivedStage {
   if (r.reply === "declined" || r.reply === "expired") return r.reply;
   if (r.cancelled) return "cancelled";
+  if (r.disposed) return "disposed";
   if (r.returned) return "returned";
   if (r.shipped) return "shipped";
   if (r.reply === "waiting" && Date.parse(r.deadline) <= nowMs) return "expired";

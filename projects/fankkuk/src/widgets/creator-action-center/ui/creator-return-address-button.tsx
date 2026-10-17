@@ -41,6 +41,7 @@ export function CreatorReturnAddressButton({
             renderForm: (p) =>
               sealingKeyPem && address ? (
                 <AddressChangeForm
+                  approvalHint={false}
                   creatorId={address.creatorId}
                   sealingKeyPem={sealingKeyPem}
                   initialLabel={p.initialLabel}

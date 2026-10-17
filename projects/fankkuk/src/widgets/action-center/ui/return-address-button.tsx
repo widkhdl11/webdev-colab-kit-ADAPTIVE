@@ -41,6 +41,7 @@ export function ReturnAddressButton({ target, meta, address }: { target: ReturnT
                   autoFocusFirst={p.autoFocusFirst}
                   onSaved={p.onSaved}
                   onCancel={p.onCancel}
+                  receiveHint={false}
                   onLoginExpired={() => router.push("/login?next=/me/actions")}
                 />
               ) : null,

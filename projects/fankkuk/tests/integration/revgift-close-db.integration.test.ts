@@ -88,9 +88,11 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
     expect(addressCount(orderNo)).toBe(0);
     expect(closeEvents(orderNo)).toBe("deleted,returned");
     expect(psql(`select returned_at is not null from public.revgift_shares where order_no = '${orderNo}'`)).toBe("t");
+    // INV-W15 (실패경로): 반송 확정된 몫은 처분이 아니다
+    expect(psql(`select disposed_at is null from public.revgift_shares where order_no = '${orderNo}'`)).toBe("t");
   });
 
-  it("INV-R9 · W15: 반송 주소를 30일 확인하지 않아 처분된 몫 상자 — 처분 기록 처리 안에서 몫이 닫히고 받는 팬 주소가 지워진다(결과 값은 반송)", async () => {
+  it("INV-R9 · INV-W15: 반송 주소를 30일 확인하지 않아 처분된 몫 상자 — 처분 기록 처리 안에서 몫이 「처분」으로 닫히고 받는 팬 주소가 지워진다", async () => {
     const { orderNo, qr } = await acceptedAndLabeled();
     const staff = await signedInClient("fankkuk_staff");
     expect(await inspect(staff, qr, { surface: "found", prohibited: "clear", outcome: "return" })).toBe("return_waiting");
@@ -104,9 +106,17 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
 
     expect((await staff.rpc("office_record_disposal", { p_qr: qr })).data).toBe("disposed");
     expect(addressCount(orderNo)).toBe(0);
-    // 몫 닫기의 결과 값은 출고·반송·취소 셋뿐이라 처분도 반송으로 닫힌다 — 처분 사실은 상자 상태(disposed)와 처분 기록에 있다
-    expect(closeEvents(orderNo)).toBe("deleted,returned");
-    expect(psql(`select (returned_at is not null) || '/' || (shipped_at is null) || '/' || (cancelled_at is null) from public.revgift_shares where order_no = '${orderNo}'`)).toBe("true/true/true");
+    // 처분으로 닫힌다(manual/0021) — 지운 기록의 결과 값도 처분. 닫힌 몫을 세 시각으로 보는 읽기들을 위해 반송 시각도 같이 적힌다
+    expect(closeEvents(orderNo)).toBe("deleted,disposed");
+    expect(
+      psql(
+        `select (disposed_at is not null) || '/' || (returned_at is not null) || '/' || (shipped_at is null) || '/' || (cancelled_at is null) from public.revgift_shares where order_no = '${orderNo}'`,
+      ),
+    ).toBe("true/true/true/true");
+    // 팬 본인 목록에는 처분으로 보인다 — 반송(돌려보냄)으로 보이지 않게 disposed 칸이 켜진다
+    const fan = await signedInClient("byeolbit_fan");
+    const mine = ((await fan.rpc("my_received_revgifts")).data ?? []) as { order_no: string; disposed: boolean }[];
+    expect(mine.find((r) => r.order_no === orderNo)?.disposed).toBe(true);
     expect(psql(`select count(*) from public.office_disposals d join public.office_parcels p on p.id = d.parcel_id where p.qr_code = '${qr}'`)).toBe("1");
   });
 

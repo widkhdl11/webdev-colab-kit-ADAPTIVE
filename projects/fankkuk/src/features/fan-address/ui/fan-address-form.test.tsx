@@ -113,4 +113,17 @@ describe("팬 받을 주소 입력 (INV-P1·P16·P17)", () => {
     expect(sendFanAddress).not.toHaveBeenCalled();
     expect(host.querySelector('input[name="zipCode"]')?.getAttribute("aria-invalid")).toBe("true");
   });
+  it("INV-W15 · INV-P16: 반송 주소 확인 창에서는 「크리에이터가 보낸 선물을 받을 때 …」 안내를 빼고, 설정·받기 화면에서는 그대로 둔다", () => {
+    const hint = () => host.querySelector("#fa-label-hint")?.textContent ?? "";
+    act(() =>
+      root.render(<FanAddressForm accountId={ACCOUNT} sealingKeyPem={publicPem} onSaved={() => {}} onCancel={() => {}} onLoginExpired={() => {}} />),
+    );
+    expect(hint()).toBe("주소는 등록한 뒤에 다시 보이지 않아요. 크리에이터가 보낸 선물을 받을 때 이 이름표와 등록한 날로 확인해요.");
+    act(() =>
+      root.render(
+        <FanAddressForm accountId={ACCOUNT} sealingKeyPem={publicPem} receiveHint={false} onSaved={() => {}} onCancel={() => {}} onLoginExpired={() => {}} />,
+      ),
+    );
+    expect(hint()).toBe("주소는 등록한 뒤에 다시 보이지 않아요.");
+  });
 });

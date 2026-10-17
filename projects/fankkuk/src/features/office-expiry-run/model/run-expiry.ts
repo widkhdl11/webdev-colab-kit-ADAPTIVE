@@ -3,6 +3,7 @@ import { z } from "zod";
 import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 import { MESSAGE_NOT_FOUND, pgErrorReply } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
+import { expiryCounts } from "./expiry-counts";
 
 // 7일 자동 처리를 지금 돌리기 (office-workflow INV-W6). 운영자(대표·직원) 누구나. 24시간 지난 결제 대기 닫기(payment INV-M15 · reverse-gift INV-R15)도 같이 돈다.
 // 주문번호를 주면 그 주문(역조공은 그 몫)만, 안 주면 전부. 같은 대상을 두 번 처리하지 않는 것과
@@ -23,18 +24,6 @@ export type PaymentReconcileRun = (orderNo: string | null) => Promise<{ ok: bool
 const bodyShape = z.object({ orderNo: z.string().regex(/^[A-Z0-9-]+$/).max(ORDER_NO_MAX).optional() }).strict();
 export type ExpiryRunWrite = z.input<typeof bodyShape>;
 
-const counts = z.object({
-  gifts: z.number().int(),
-  unmatched: z.number().int(),
-  differences: z.number().int(),
-  revgifts: z.number().int(),
-  // 24시간 지난 결제 대기를 닫은 수(payment INV-M15 · reverse-gift INV-R15)
-  pending_gifts: z.number().int(),
-  pending_revgifts: z.number().int(),
-  // 크리에이터 확인 대기 상자 중 168시간 안에 답이 없어 반송 대기로 넘긴 수(office-workflow INV-W6, 2026-10-12 (2) D3 ②)
-  held: z.number().int(),
-});
-
 export async function runExpiry(client: Pick<SupabaseClient, "rpc">, body: unknown, reconcile: PaymentReconcileRun): Promise<JsonReply> {
   if ((await readAdminAccess(client)) === "not_found") return { status: 404, body: { message: MESSAGE_NOT_FOUND } };
   const shaped = bodyShape.safeParse(body);
@@ -42,7 +31,7 @@ export async function runExpiry(client: Pick<SupabaseClient, "rpc">, body: unkno
 
   const { data, error } = await client.rpc("office_run_expiry", { p_order_no: shaped.data.orderNo ?? null });
   if (error) return pgErrorReply(error.code, { limit: MESSAGE_SHAPE, failed: FAILED });
-  const parsed = counts.safeParse(data);
+  const parsed = expiryCounts.safeParse(data);
   if (!parsed.success) return { status: 500, body: { message: FAILED } };
 
   let payments;
