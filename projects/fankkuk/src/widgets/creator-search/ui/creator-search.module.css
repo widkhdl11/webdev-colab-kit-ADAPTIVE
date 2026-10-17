@@ -34,8 +34,10 @@
 @container (min-width: 1100px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 /* 카드 — 안쪽 24 · 반경 16 · 줄 사이 12. 카드 전체가 프로필 링크(이름 링크가 덮는다), 올리면 테두리가 진해진다.
    머리·「채널 이름 · 소개」 한 줄은 entities/creator/ui/creator-card-head */
-.card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; padding: var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); cursor: pointer; transition: box-shadow 0.15s; }
-.card:hover, .card:focus-within { box-shadow: inset 0 0 0 1px var(--gray-500); }
+.card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: var(--space-6) var(--space-6) var(--space-4); border-radius: var(--r-card); background: var(--white); cursor: pointer; }
+/* 테두리는 배너 사진 위에 그리는 층 — 카드 안쪽 그림자로 그리면 사진이 덮어 hover 가 위쪽에서 안 보인다. 클릭은 통과(pointer-events: none) */
+.card::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow 0.15s; }
+.card:hover::before, .card:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
 .card:has(a:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 .card :global(.ctags) { margin: 0; }
 
