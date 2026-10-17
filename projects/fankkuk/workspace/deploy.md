@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: deployed
-basis: a330aefcca27
+basis: 31234ed2ed88
 ---
 
 # 배포 기록 — fankkuk
@@ -52,3 +52,8 @@ basis: a330aefcca27
 - DB 변경 없음. 앱: main eb7ca1ba push → Vercel 세 프로젝트 빌드 success.
 - 시험 주소(curl, 로그인 전): / · /creators · /login · /terms · /faq · /password/reset · /guide/fan 200, 모두 icn1::icn1 · /admin/creators 404 · /me/following·/creator/actions·/gifts 는 200 + 본문의 로그인 이동(NEXT_REDIRECT /login, meta refresh) — 로딩 화면이 생겨 응답을 먼저 보내는 방식, 브라우저에서 /me/following → /login 확인 · /creator/account 는 /login?next=/creator/account.
 - Playwright 링크 이동(로그인 전, 상단 바 링크): 뼈대 3~5ms, 내용 306~313ms(/terms 490ms) — 서버 응답은 125~195ms(/terms 472ms). 뼈대를 띄우면 React 가 내용으로 바꾸기까지 최소 약 300ms 를 채운다.
+
+## 2026-10-18 새벽 (2) — 링크에 마우스 올리면 미리 받기
+
+- DB 변경 없음. 앱: main 10729256 push → Vercel 세 프로젝트 빌드 success.
+- Playwright(시험 주소, 로그인 전, 상단 바 링크): 마우스 안 올림 → 뼈대 뜸 · 내용 317ms. 올리고 250ms(한 번은 150ms) 뒤 누름 → 12번 중 11번 뼈대 없이 내용 3~22ms, 1번(/faq 첫 회)은 뼈대 · 307ms(미리 받기가 그 안에 안 끝난 것으로 보임). 일부는 30초 안에 같은 페이지를 다시 연 경우라 미리 받은 화면을 다시 썼다.
