@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: deployed
-basis: 2d787815b7cc
+basis: c8bdc37899dc
 ---
 
 # 배포 기록 — fankkuk
