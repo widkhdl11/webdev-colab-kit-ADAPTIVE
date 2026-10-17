@@ -63,7 +63,7 @@ export function MyRevgiftsPanel({ items, nowMs }: { items: readonly ReceivedRevg
     <div>
       <header className="page-head">
         <h1 className="ph-title">받은 선물</h1>
-        <p className="ph-desc">내가 팔로우한 크리에이터가 나에게 보낸 선물이에요. 받을 때마다 주소를 새로 입력해요.</p>
+        <p className="ph-desc">내가 팔로우한 크리에이터가 나에게 보낸 선물이에요.</p>
       </header>
       {rows.length === 0 ? (
         <div className="empty">

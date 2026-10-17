@@ -246,9 +246,9 @@ describe("추적기 아님 → 크리에이터 확인 (INV-W4, 2026-10-12 (2) �
     expect(host.textContent).not.toContain("바로 반송");
   });
 
-  it("INV-W16: 개봉 대상 상자는 「개봉 대상 — 추적기 판정 이력」과 개봉 결과 칸이 나오고, 「장치 없음」이면 opened none 으로 기록한다", async () => {
+  it("INV-W16: 개봉 대상 상자는 「개봉 대상 — 위치 추적기 판정 이력」과 개봉 결과 칸이 나오고, 「장치 없음」이면 opened none 으로 기록한다", async () => {
     await loadBox("small", true);
-    expect(host.textContent).toContain("개봉 대상 — 추적기 판정 이력");
+    expect(host.textContent).toContain("개봉 대상 — 위치 추적기 판정 이력");
     expect(radio("opened", "none").closest("label")?.textContent).toBe("장치 없음");
     expect(radio("opened", "device").closest("label")?.textContent).toBe("장치 나옴");
     pick("opened", "none");
@@ -259,10 +259,16 @@ describe("추적기 아님 → 크리에이터 확인 (INV-W4, 2026-10-12 (2) �
 
   it("INV-W16 (실패경로): 개봉 대상인데 개봉 결과 없이 저장하면 기록을 보내지 않는다 · 「장치 나옴」이면 추적기 판정 칸이 열린다", async () => {
     await loadBox("small", true);
+    expect(host.querySelector("#opened-result")?.getAttribute("aria-invalid")).toBeNull();
     await click("기록 저장");
     expect(writesOf("record")).toEqual([]);
     expect(host.textContent).toContain("확인 필요");
+    // 개봉 결과 칸이 오류로 읽히고, 오류 줄을 설명으로 가리킨다
+    const opened = host.querySelector("#opened-result");
+    expect(opened?.getAttribute("aria-invalid")).toBe("true");
+    expect(host.querySelector(`#${opened?.getAttribute("aria-describedby")}`)?.textContent).toBe("!개봉 결과를 골라 주세요.");
     pick("opened", "device");
+    expect(host.querySelector("#opened-result")?.getAttribute("aria-invalid")).toBeNull();
     pick("tracker", "tracker");
     api.postInspect.mockResolvedValueOnce({ kind: "ok", body: { ok: true } });
     await click("기록 저장");

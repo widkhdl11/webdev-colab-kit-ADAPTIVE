@@ -18,8 +18,11 @@ if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.sho
   HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
     this.setAttribute("open", "");
   };
+  // 브라우저처럼 열려 있던 창을 닫으면 close 이벤트를 낸다(BottomSheet 는 onClose 를 이 이벤트로만 부른다)
   HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+    if (!this.hasAttribute("open")) return;
     this.removeAttribute("open");
+    this.dispatchEvent(new Event("close"));
   };
 }
 
@@ -47,7 +50,6 @@ const box = (orderNo: string, shareId: string, fanNickname: string, state: Share
   waybillNo: null,
   state,
   addressCode: null,
-  reportedNotMine: false,
 });
 const S1 = "11111111-1111-4111-8111-111111111111";
 const S2 = "22222222-2222-4222-8222-222222222222";

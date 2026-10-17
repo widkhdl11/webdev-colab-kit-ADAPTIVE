@@ -49,18 +49,12 @@
 .addr-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 12px; margin-top: 16px; }
 .addr-note { margin-top: 12px; color: var(--sub); }
 
-/* 제가 보낸 게 아니에요 — 확인 한 번 */
-.notmine { margin-top: 12px; }
-.notmine-ask { margin-top: 12px; padding: 16px 20px; border-radius: var(--r-box); background: var(--surface); }
-.notmine-ask p { color: var(--ink); }
-.notmine-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-
 @media (max-width: 767px) {
   .addr { padding: 20px; }
   .addr dl div { grid-template-columns: minmax(0, 1fr); gap: 0; }
 }
 
-/* 「먼저 보내기」 안내 (approval-signature INV-S9) — 「아니에요」 묻는 칸과 같은 판 */
+/* 「먼저 보내기」 안내 (approval-signature INV-S9) */
 .early { margin-top: 12px; padding: 16px 20px; border-radius: var(--r-box); background: var(--surface); }
 .early p:not(:global(.hint)) { color: var(--ink); }
 .early p + p { margin-top: 8px; }

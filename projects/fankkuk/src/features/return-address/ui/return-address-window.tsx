@@ -57,6 +57,9 @@ export function ReturnAddressWindow({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const changeRef = useRef<HTMLButtonElement>(null);
+  // 입력 칸의 「돌아가기」로 확인 단계에 돌아왔다 — 그 버튼이 사라졌으니 입력 칸을 연 「바꾸기」로 포커스를 돌린다
+  const [backFromEdit, setBackFromEdit] = useState(false);
   const registered = status?.registered ?? false;
   const confirming = registered && !editing;
 
@@ -64,6 +67,12 @@ export function ReturnAddressWindow({
   useEffect(() => {
     if (open && confirming && savedMsg) confirmRef.current?.focus();
   }, [open, confirming, savedMsg]);
+  useEffect(() => {
+    if (open && confirming && backFromEdit) {
+      changeRef.current?.focus();
+      setBackFromEdit(false);
+    }
+  }, [open, confirming, backFromEdit]);
 
   async function confirm() {
     if (busy) return;
@@ -110,6 +119,7 @@ export function ReturnAddressWindow({
           </p>
           <div className={`${d.btns} ${d.two}`}>
             <button
+              ref={changeRef}
               className="btn btn--line"
               type="button"
               disabled={busy}
@@ -146,8 +156,10 @@ export function ReturnAddressWindow({
         setEditing(false);
       },
       onCancel: () => {
-        if (registered) setEditing(false);
-        else onClose();
+        if (registered) {
+          setEditing(false);
+          setBackFromEdit(true);
+        } else onClose();
       },
     });
   }

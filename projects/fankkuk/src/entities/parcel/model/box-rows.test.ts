@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { boxTierName, canReportNotMine, fanBoxStateTag, hasArrived, isMissing, isWaybillEditable, parseGiftBoxRows, parseShareBoxRows } from "./box-rows";
+import { boxTierName, fanBoxStateTag, hasArrived, isMissing, isWaybillEditable, parseGiftBoxRows, parseShareBoxRows } from "./box-rows";
 
 const EXTRA = { address_code: null, reported_not_mine: false } as const;
 // 팬 선물 상자 줄에만 있는 칸 — 「먼저 보내기」 전인가(approval-signature INV-S9)
@@ -10,7 +10,7 @@ const BOX = "3f1c2b7a-9d4e-4c1a-8b2f-0a1b2c3d4e5f";
 describe("상자 줄 경계 — 팬 선물 상자(my_gift_boxes)", () => {
   it("정해진 칸을 화면용 이름으로 바꾼다", () => {
     expect(parseGiftBoxRows([{ box_id: BOX, label: "FC-7K3M9-1", tier: "small", waybill_no: null, state: "awaiting", address_code: "K7M3XA", reported_not_mine: false, send_ack_needed: false }])).toEqual([
-      { boxId: BOX, label: "FC-7K3M9-1", tier: "small", waybillNo: null, state: "awaiting", addressCode: "K7M3XA", reportedNotMine: false, sendAckNeeded: false },
+      { boxId: BOX, label: "FC-7K3M9-1", tier: "small", waybillNo: null, state: "awaiting", addressCode: "K7M3XA", sendAckNeeded: false },
     ]);
   });
 
@@ -33,7 +33,7 @@ describe("상자 줄 경계 — 역조공 몫(my_share_boxes)", () => {
   it("정해진 칸을 화면용 이름으로 바꾼다", () => {
     expect(
       parseShareBoxRows([{ share_id: BOX, order_no: "RG-R8N5W2", fan_nickname: "초코우유", tier: "medium", waybill_no: "640199882271", state: "awaiting", ...EXTRA }]),
-    ).toEqual([{ shareId: BOX, orderNo: "RG-R8N5W2", fanNickname: "초코우유", tier: "medium", waybillNo: "640199882271", state: "awaiting", addressCode: null, reportedNotMine: false }]);
+    ).toEqual([{ shareId: BOX, orderNo: "RG-R8N5W2", fanNickname: "초코우유", tier: "medium", waybillNo: "640199882271", state: "awaiting", addressCode: null }]);
   });
 
   it("INV-W7: 팬 주소 같은 칸이 섞여 오면 버린다", () => {
@@ -59,20 +59,11 @@ describe("송장번호를 고칠 수 있는 때 — 입고 전까지만", () => 
     expect(hasArrived("awaiting")).toBe(false);
   });
 
-  it("INV-C8: 「제가 보낸 게 아니에요」는 입고된 뒤 출고·반송 확정 전에만", () => {
-    expect(canReportNotMine("awaiting")).toBe(false);
-    expect(canReportNotMine("no_waybill")).toBe(false);
-    for (const st of ["received", "labeled", "inspected", "held", "label_printed"] as const) expect(canReportNotMine(st)).toBe(true);
-    expect(canReportNotMine("shipped")).toBe(false);
-    expect(canReportNotMine("returned")).toBe(false);
-  });
-
-  it("INV-W10: 도착하지 않음으로 닫힌 상자는 입고된 것도, 송장번호를 고칠 것도, 「아니에요」를 누를 것도 아니다", () => {
+  it("INV-W10: 도착하지 않음으로 닫힌 상자는 입고된 것도, 송장번호를 고칠 것도 아니다", () => {
     const row = { box_id: BOX, label: "FC-7K3M9-2", tier: "small", waybill_no: null, state: "missing", ...GIFT_EXTRA };
     expect(parseGiftBoxRows([row])[0]!.state).toBe("missing");
     expect(isWaybillEditable("missing")).toBe(false);
     expect(hasArrived("missing")).toBe(false);
-    expect(canReportNotMine("missing")).toBe(false);
     expect(isMissing("missing")).toBe(true);
     expect(isMissing("awaiting")).toBe(false);
   });

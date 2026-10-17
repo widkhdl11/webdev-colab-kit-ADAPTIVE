@@ -53,7 +53,7 @@ describe("크리에이터 사정 취소 양식 (INV-M21)", () => {
     api.postCreatorCancel.mockResolvedValueOnce({ kind: "ok", body: { ok: true } });
     await click("크리에이터 사정으로 취소");
     expect(api.postCreatorCancel).toHaveBeenCalledWith({ orderNo: "FC-7K3M9", reason: "1:1 문의로 탈퇴 요청" });
-    expect(host.textContent).toContain("FC-7K3M9 주문을 취소했어요.");
+    expect(host.textContent).toContain("FC-7K3M9 선물을 취소했어요.");
   });
 
   it("INV-M21 (실패경로): 사유가 비면 보내지 않고 사유 안내 · 서버 거절 문장은 그대로 보인다", async () => {

@@ -117,6 +117,14 @@ describe("INV-R9: 사무실 흐름의 출고 확정·반송 확정이 몫을 닫
     const fan = await signedInClient("byeolbit_fan");
     const mine = ((await fan.rpc("my_received_revgifts")).data ?? []) as { order_no: string; disposed: boolean }[];
     expect(mine.find((r) => r.order_no === orderNo)?.disposed).toBe(true);
+    // 받은 역조공 상세(몫 하나)도 같은 칸으로 읽힌다 — 목록과 반환 칸이 어긋나면 상세가 통째로 실패한다(2026-10-17 리뷰 A)
+    const one = await fan.rpc("my_received_revgift", { p_order_no: orderNo });
+    expect(one.error).toBeNull();
+    expect((one.data as { disposed: boolean; returned: boolean }[])[0]).toMatchObject({ disposed: true, returned: true });
+    // 열람 기록에도 처분으로 지운 줄이 나온다
+    const log = await fan.rpc("my_revgift_access_log", { p_order_no: orderNo });
+    expect(log.error).toBeNull();
+    expect((log.data as { kind: string; outcome: string | null }[]).filter((r) => r.kind === "deleted").map((r) => r.outcome)).toEqual(["disposed"]);
     expect(psql(`select count(*) from public.office_disposals d join public.office_parcels p on p.id = d.parcel_id where p.qr_code = '${qr}'`)).toBe("1");
   });
 

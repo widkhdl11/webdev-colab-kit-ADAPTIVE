@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addressCodeCheckChar } from "@/entities/parcel/model/address-code";
 import { spyConsole } from "@/shared/lib/testing/console-spy";
-import { findHeldParcel, reportNotMine, saveBoxWaybill, saveShareWaybill } from "./save-waybill";
+import { findHeldParcel, saveBoxWaybill, saveShareWaybill } from "./save-waybill";
 
 const BOX = "3f1c2b7a-9d4e-4c1a-8b2f-0a1b2c3d4e5f";
 const FAN = { userId: "fan-byeolbit", role: "fan" } as const;
@@ -176,37 +176,8 @@ describe("받는 주소 없이 보냈어요 (inbound-address-code INV-C4 ②·C1
   });
 });
 
-describe("제가 보낸 게 아니에요 (inbound-address-code INV-C8)", () => {
-  it("INV-C8 (S8): 주문 주인이 고른 상자 하나만 DB 함수에 넘긴다", async () => {
-    const f = fakeClient();
-    expect(await reportNotMine({ client: f.client, viewer: FAN }, { boxId: BOX })).toEqual({ status: 200, body: { reported: true } });
-    expect(f.calls).toEqual([{ fn: "report_not_mine", args: { p_box_id: BOX, p_share_id: null } }]);
-    const g = fakeClient();
-    expect((await reportNotMine({ client: g.client, viewer: CREATOR }, { shareId: BOX })).status).toBe(200);
-    expect(g.calls).toEqual([{ fn: "report_not_mine", args: { p_box_id: null, p_share_id: BOX } }]);
-  });
-
-  it("INV-C8 (S8 실패경로): 다른 계정·입고 전(P0002)은 404, 출고 확정 뒤(55000)는 409", async () => {
-    expect((await reportNotMine({ client: fakeClient({ code: "P0002" }).client, viewer: FAN }, { boxId: BOX })).status).toBe(404);
-    expect(await reportNotMine({ client: fakeClient({ code: "55000" }).client, viewer: FAN }, { boxId: BOX })).toEqual({
-      status: 409,
-      body: { message: "출고가 끝난 상자는 여기서 알릴 수 없어요. 고객센터로 문의해 주세요." },
-    });
-  });
-
-  it("INV-C8 (실패경로): 로그인 안 함 401 · 운영자 403 · 팬이 역조공 몫 403 · 다른 칸 400 — DB 를 부르지 않는다", async () => {
-    const f = fakeClient();
-    expect((await reportNotMine({ client: f.client, viewer: null }, { boxId: BOX })).status).toBe(401);
-    expect((await reportNotMine({ client: f.client, viewer: OPERATOR }, { boxId: BOX })).status).toBe(403);
-    expect((await reportNotMine({ client: f.client, viewer: FAN }, { shareId: BOX })).status).toBe(403);
-    expect((await reportNotMine({ client: f.client, viewer: FAN }, { boxId: BOX, orderNo: "FC-1" })).status).toBe(400);
-    expect((await reportNotMine({ client: f.client, viewer: FAN }, { boxId: BOX, shareId: BOX })).status).toBe(400);
-    expect(f.calls).toEqual([]);
-  });
-});
-
 describe("상자 쓰기 — 6자리는 서버 로그에 남지 않는다 (inbound-address-code INV-C2)", () => {
-  it("INV-C2 (실패경로): DB 가 6자리가 섞인 오류·모르는 답을 돌려줘도 송장 저장·찾기·「제가 보낸 게 아니에요」가 console 에 그 값을 남기지 않는다", async () => {
+  it("INV-C2 (실패경로): DB 가 6자리가 섞인 오류·모르는 답을 돌려줘도 송장 저장·찾기가 console 에 그 값을 남기지 않는다", async () => {
     const code = "K7M3X" + addressCodeCheckChar("K7M3X");
     const leakyError = { code: "XX000", message: `오류 ${code}`, details: code };
     const spy = spyConsole();
@@ -220,9 +191,8 @@ describe("상자 쓰기 — 6자리는 서버 로그에 남지 않는다 (inboun
         await saveBoxWaybill({ client: f.client, viewer: FAN }, { boxId: BOX, waybill: "640123457788" });
         await saveShareWaybill({ client: f.client, viewer: CREATOR }, { shareId: BOX, waybill: "640123457788" });
         await findHeldParcel({ client: f.client, viewer: FAN }, FIND);
-        await reportNotMine({ client: f.client, viewer: FAN }, { boxId: BOX });
-        // 네 함수 모두 DB 를 실제로 불렀다
-        expect(f.calls.map((c) => c.fn)).toEqual(["set_box_waybill", "set_share_waybill", "find_held_parcel", "report_not_mine"]);
+        // 세 함수 모두 DB 를 실제로 불렀다
+        expect(f.calls.map((c) => c.fn)).toEqual(["set_box_waybill", "set_share_waybill", "find_held_parcel"]);
       }
       expect(spy.leaked(code)).toBe(false);
     } finally {

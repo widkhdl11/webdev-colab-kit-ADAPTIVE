@@ -66,11 +66,6 @@ export function boxTierName(t: BoxTier): string | null {
   return t ? `${PARCEL_TIER_GUIDE[t].name} 상자` : null;
 }
 
-/** 「제가 보낸 게 아니에요」를 누를 수 있는 때 — 입고된 뒤, 출고(또는 반송) 확정 전(inbound-address-code INV-C8). DB 도 같은 때만 받는다. */
-export function canReportNotMine(s: BoxState): boolean {
-  return hasArrived(s) && s !== "shipped" && s !== "returned";
-}
-
 // 받는 주소 6자리(inbound-address-code INV-C2): DB 가 로그인한 주문 주인에게만, 아직 유효할 때만 준다(거절·반려·취소·입고 뒤엔 null).
 const addressCode = z.string().regex(ADDRESS_CODE_PATTERN).nullable();
 
@@ -82,6 +77,7 @@ const giftBoxRow = z
     waybill_no: waybill,
     state,
     address_code: addressCode,
+    // 「제가 보낸 게 아니에요」를 누른 적이 있는가 — 팬·크리에이터 버튼은 없앴고(2026-10-17 사용자 결정) DB 가 아직 보내는 칸이라 받기만 한다
     reported_not_mine: z.boolean(),
     send_ack_needed: z.boolean(),
   })
@@ -95,8 +91,6 @@ export type GiftBox = {
   state: BoxState;
   /** 이 상자의 받는 주소 6자리 — 화면에서는 「이 선물의 받는 주소」의 끝자리로만 보인다 */
   addressCode: string | null;
-  /** 「제가 보낸 게 아니에요」를 이미 눌렀다 */
-  reportedNotMine: boolean;
   /** 승인 전 주문인데 「먼저 보내기」를 아직 누르지 않았다 — 받는 주소 대신 안내와 버튼을 그린다(approval-signature INV-S9) */
   sendAckNeeded: boolean;
 };
@@ -112,7 +106,6 @@ export function parseGiftBoxRows(data: unknown): GiftBox[] {
       waybillNo: r.waybill_no,
       state: r.state,
       addressCode: r.address_code,
-      reportedNotMine: r.reported_not_mine,
       sendAckNeeded: r.send_ack_needed,
     }));
 }
@@ -126,6 +119,7 @@ const shareBoxRow = z
     waybill_no: waybill,
     state,
     address_code: addressCode,
+    // 받기만 한다 — 위 팬 선물 상자 줄과 같다
     reported_not_mine: z.boolean(),
   })
   .strict();
@@ -138,7 +132,6 @@ export type ShareBox = {
   waybillNo: string | null;
   state: BoxState;
   addressCode: string | null;
-  reportedNotMine: boolean;
 };
 
 export function parseShareBoxRows(data: unknown): ShareBox[] {
@@ -153,6 +146,5 @@ export function parseShareBoxRows(data: unknown): ShareBox[] {
       waybillNo: r.waybill_no,
       state: r.state,
       addressCode: r.address_code,
-      reportedNotMine: r.reported_not_mine,
     }));
 }

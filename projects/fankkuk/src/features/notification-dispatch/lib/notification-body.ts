@@ -128,10 +128,10 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
       return { subject, lines: [greet, first, order], buttonLabel: "선물 보기", path: `/gifts/${orderNo}` };
     }
     case "box_arrived":
-      // 상자 하나가 사무실에 도착해 입고됐다. 「제가 보낸 게 아니에요」는 링크를 열고 로그인한 뒤에만 누를 수 있다.
+      // 상자 하나가 사무실에 도착해 입고됐다.
       return {
         subject: "[팬꾹] 보낸 상자가 팬꾹 사무실에 도착했어요",
-        lines: [greet, "보내신 상자 하나가 팬꾹 사무실에 도착했어요.", order, "보낸 적 없는 상자라면 링크를 열어 알려 주세요."],
+        lines: [greet, "보내신 상자 하나가 팬꾹 사무실에 도착했어요.", order],
         buttonLabel: "상자 확인하기",
         path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : `/gifts/${orderNo}`,
       };

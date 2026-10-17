@@ -13,6 +13,7 @@ const DELETE_TEXT: Record<RevgiftDeleteOutcome, string> = {
   shipped: "출고되어 주소를 지웠어요",
   returned: "반송되어 주소를 지웠어요",
   cancelled: "취소되어 주소를 지웠어요",
+  disposed: "처분되어 주소를 지웠어요",
 };
 
 function ResultTag({ e }: { e: FanAccessEntry }) {
@@ -37,7 +38,7 @@ export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanA
         내 주소 열람 기록
       </h2>
       <p className={`t-lead t-desc ${s.lead}`}>
-        내 주소는 송장을 출력할 때만 열리고, 재출력을 합쳐 최대 {REVGIFT_MAX_DECRYPTS}번까지예요. 출고·반송·취소가 되면 주소를 지워요. 열린 기록은 전부 여기에 보여요.
+        내 주소는 송장을 출력할 때만 열리고, 재출력을 합쳐 최대 {REVGIFT_MAX_DECRYPTS}번까지예요. 출고·반송·취소·처분이 되면 주소를 지워요. 열린 기록은 전부 여기에 보여요.
       </p>
       {entries === null ? (
         <p className={s.empty} role="status">

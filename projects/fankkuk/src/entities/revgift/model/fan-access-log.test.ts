@@ -14,6 +14,13 @@ describe("INV-R16: 팬 주소 열람 기록 응답", () => {
     ]);
   });
 
+  it("INV-R16 · INV-W15: 처분으로 지운 줄도 읽는다 — 처분된 몫의 기록 전체가 버려지지 않게", () => {
+    expect(parseFanAccessLogRows([{ ...deleted, outcome: "disposed" }, opened])).toEqual([
+      { at: "2026-10-09T06:00:00.000Z", kind: "deleted", outcome: "disposed" },
+      { at: "2026-10-09T05:32:00.000Z", kind: "opened", printNo: 1, released: false },
+    ]);
+  });
+
   it("INV-R16: 빈 목록은 빈 목록, 돌려받은 연 줄은 released 로", () => {
     expect(parseFanAccessLogRows([])).toEqual([]);
     expect(parseFanAccessLogRows([{ ...opened, print_no: 2, released: true }])).toEqual([

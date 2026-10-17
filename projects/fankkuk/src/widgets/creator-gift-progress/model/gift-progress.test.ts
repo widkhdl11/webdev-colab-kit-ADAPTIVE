@@ -68,6 +68,9 @@ describe("INV-J9: 다섯 칸 막대와 단계 이름 열쇠 — 기존 읽기의
     expect(sentStepOf(sent({ replyState: "accepted", boxState: "labeled", late: false }))).toEqual({ key: "inspecting", cells: 3 });
     expect(sentStepOf(sent({ replyState: "accepted", boxState: "label_printed", late: false }))).toEqual({ key: "inspected", cells: 3 });
     expect(sentStepOf(sent({ replyState: "not_received", boxState: "return_waiting", late: false }))).toEqual({ key: "returning", cells: 3 });
+    // INV-W15: 반송 주소를 30일 확인하지 않아 처분 대상이 된 몫 상자 — 「사무실로 오는 중」이 아니라 처분 예정
+    expect(sentStepOf(sent({ replyState: "accepted", boxState: "dispose_due", late: false }))).toEqual({ key: "dispose_due", cells: 3 });
+    expect(sentStepOf(sent({ replyState: "not_received", boxState: "dispose_due", late: true }))).toEqual({ key: "dispose_due", cells: 3 });
     expect(sentStepOf(sent({ replyState: "accepted", boxState: "shipped", late: false }))).toEqual({ key: "shipped", cells: 4 });
   });
 

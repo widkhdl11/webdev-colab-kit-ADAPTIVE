@@ -42,6 +42,9 @@ const claimShape = z.union([
     // INV-P18 (b): 그 상자 주문을 보낸 계정과, 그 계정이 크리에이터면 크리에이터 id — 봉인 속 식별값과 대조한다
     sender_id: z.string(),
     sender_creator_id: z.string().nullable(),
+    // INV-W15 · P18: 봉투를 내준 순간 상자에 적힌 확인 시각 — 마무리가 잠근 자리에서 이 값과 비교해, 그 사이 다시 확인했으면 거부한다.
+    // 없으면(봉투 함수가 옛것, manual/0022 적용 전) 출력 단계로 넘기지 않는다 — 연 줄을 돌려받고 실패
+    confirmed_at: z.string().min(1).optional(),
     envelope: z.unknown(),
   }),
   z.object({ result: z.literal("denied"), reason: z.enum(ACCESS_DENY_REASONS) }),
@@ -100,6 +103,8 @@ export async function printReturnLabel(deps: ReturnLabelDeps, input: { qr: strin
   if (claim.data.result === "denied") return { kind: "denied", reason: claim.data.reason };
 
   const logId = claim.data.log_id;
+  const confirmedAt = claim.data.confirmed_at;
+  if (confirmedAt === undefined) return releaseOpened(deps, logId, requesterId);
   const envelope = parseEnvelope(claim.data.envelope);
   if (!envelope) return releaseOpened(deps, logId, requesterId);
   let plaintext: string;
@@ -123,8 +128,9 @@ export async function printReturnLabel(deps: ReturnLabelDeps, input: { qr: strin
   }
 
   // 첫 출력이면 새 송장번호로 반송 송장 출력 단계로 넘기고, 재출력이면 DB 가 처음 번호를 돌려준다(어느 쪽인지는 DB 가 잠근 자리에서 정한다).
+  // 봉투를 내준 뒤 보낸 사람이 다른 주소로 다시 확인했으면 확인 시각이 달라 DB 가 거부한다(P0041) — 먼저 연 주소로 출력하지 않고 연 줄을 돌려받는다.
   const waybill = ctx.parcel_state === "return_printed" ? null : deps.newWaybill();
-  const finish = await deps.db.rpc("return_finish_print", { p_qr: input.qr, p_waybill: waybill });
+  const finish = await deps.db.rpc("return_finish_print", { p_qr: input.qr, p_waybill: waybill, p_confirmed_at: confirmedAt });
   if (finish.error) return releaseOpened(deps, logId, requesterId);
   const finished = finishShape.safeParse(finish.data);
   if (!finished.success) return releaseOpened(deps, logId, requesterId);

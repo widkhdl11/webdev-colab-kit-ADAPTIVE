@@ -16,7 +16,7 @@
 --   DB 만 새것: 옛 앱의 받은 역조공 읽기는 모르는 칸(disposed)이 오면 목록을 버린다 — 앱 배포와 같은 때 적용한다.
 --   앱만 새것: disposed 칸이 없으면 앱이 처분 아님으로 본다(지금 화면 그대로).
 
-alter table public.revgift_shares add column disposed_at timestamptz;
+alter table public.revgift_shares add column if not exists disposed_at timestamptz;
 
 drop function public.my_received_revgifts();
 create function public.my_received_revgifts()

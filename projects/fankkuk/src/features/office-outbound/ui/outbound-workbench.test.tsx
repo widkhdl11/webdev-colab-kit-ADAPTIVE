@@ -112,6 +112,9 @@ describe("출고 화면 — 반송·처분·경찰 인계 (INV-W8·W14·W15)", (
     await click("경찰 인계 기록");
     expect(writes().filter((w) => w.kind === "record_police_handover")).toEqual([]);
     const memo = host.querySelector<HTMLInputElement>("#police-memo")!;
+    // 오류는 바로 읽히고(alert) 포커스는 고칠 입력 칸으로 간다
+    expect(host.querySelector("#police-memo-error")?.closest("[role=alert]")).not.toBeNull();
+    expect(host.ownerDocument.activeElement).toBe(memo);
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
     act(() => {
       setter?.call(memo, "강남서 인계");

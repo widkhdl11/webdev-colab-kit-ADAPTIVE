@@ -10,6 +10,7 @@ import {
   fanSetsWaybill,
   HOLD_DETAILS,
   inspect,
+  markNotMineForTest,
   orderStatus,
   paidGift,
   paidShare,
@@ -813,15 +814,13 @@ describe("INV-C8 상자 도착 알림 · 「제가 보낸 게 아니에요」", 
     expect(psql(`select string_agg(distinct account_id::text, ',') from public.notification_outbox where kind = 'box_arrived' and parcel_id = '${parcel}'`)).toBe(SEED.creatorProfileId);
   });
 
-  it("INV-C8 (S8): 주인이 「제가 보낸 게 아니에요」를 누르면 보류, 출고 목록에서 빠지고 운영자 목록에 도용 의심, 기록은 지울 수 없다", async () => {
+  it("INV-C8 (S8): 「제가 보낸 게 아니에요」 보류 상자(버튼을 없애기 전에 남은 데이터)는 출고 목록에서 빠지고 운영자 목록에 도용 의심, 기록은 지울 수 없다", async () => {
     const g = await paidGift();
     const op = await staff();
     const qr = await receiveWithCode(op, g.boxIds[0]);
     await inspect(op, qr, FAN_PASS);
     await approve(g);
-    const fan = await signedInClient("byeolbit_fan");
-    const r = await fan.rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null });
-    expect(r.error).toBeNull();
+    markNotMineForTest({ boxId: g.boxIds[0]! }, SEED.fanId);
     expect(parcelOf(g.boxIds[0]).hold).toBe("not_mine");
     const list = (await op.rpc("admin_office_parcels")).data as { qr: string | null; next_step: string }[];
     expect(list.find((x) => x.qr === qr)?.next_step).toBe("on_hold");
@@ -833,7 +832,7 @@ describe("INV-C8 상자 도착 알림 · 「제가 보낸 게 아니에요」", 
     expect(psqlError(`update public.office_not_mine_reports set at = now() where parcel_id = '${parcel}'`)).not.toBeNull();
   });
 
-  it("INV-C8 (S8): 송장 출력 뒤 누르면 출고 확정이 거부된다", async () => {
+  it("INV-C8 (S8): 송장 출력 뒤 보류되면 출고 확정이 거부된다", async () => {
     const g = await paidGift();
     const op = await staff();
     const qr = await receiveWithCode(op, g.boxIds[0]);
@@ -841,32 +840,34 @@ describe("INV-C8 상자 도착 알림 · 「제가 보낸 게 아니에요」", 
     await approve(g);
     const out = waybill();
     expect(finishPrint(qr, out)).toBeNull();
-    await (await signedInClient("byeolbit_fan")).rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null });
+    markNotMineForTest({ boxId: g.boxIds[0]! }, SEED.fanId);
     expect((await op.rpc("office_confirm_shipment", { p_qr: qr, p_waybill: out })).error?.code).toBe("P0041");
     expect(parcelOf(g.boxIds[0]).state).toBe("label_printed");
   });
 
-  it("INV-C8 (S8, 실패경로): 다른 계정이 누르면 「없다」, 입고 전이면 「없다」, 출고 확정 뒤면 거부", async () => {
+  it("INV-C8 (실패경로): 「제가 보낸 게 아니에요」는 팬·크리에이터 기능이 아니다 — 주인 팬·보낸 크리에이터·다른 팬이 부르면 권한 거부(42501), 보류·신고 줄이 생기지 않는다", async () => {
     const g = await paidGift();
-    const fan = await signedInClient("byeolbit_fan");
-    expect((await fan.rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null })).error?.code).toBe("P0002");
     const op = await staff();
     const qr = await receiveWithCode(op, g.boxIds[0]);
-    expect((await (await signedInClient("daltokki_fan")).rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null })).error?.code).toBe("P0002");
+    for (const login of ["byeolbit_fan", "daltokki_fan", "haru_creator"]) {
+      const r = await (await signedInClient(login)).rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null });
+      expect([login, r.error?.code]).toEqual([login, "42501"]);
+    }
+    const s = await paidShare();
+    const shared = await (await signedInClient("haru_creator")).rpc("report_not_mine", { p_box_id: null, p_share_id: s.shareId });
+    expect(shared.error?.code).toBe("42501");
     expect(parcelOf(g.boxIds[0]).hold).toBe("");
-    await shipAll(op, g, qr);
-    expect((await fan.rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null })).error?.code).toBe("55000");
-    expect(parcelOf(g.boxIds[0]).hold).toBe("");
+    expect(psql(`select count(*) from public.office_not_mine_reports r join public.office_parcels p on p.id = r.parcel_id where p.qr_code = '${qr}'`)).toBe("0");
   });
 
-  it("INV-C8: 「제가 보낸 게 아니에요」를 누른 분쟁 상자는 주인의 찾기로도 멈춤이 풀리지 않는다", async () => {
+  it("INV-C8: 「제가 보낸 게 아니에요」 신고 줄이 있는 분쟁 상자는 주인의 찾기로도 멈춤이 풀리지 않는다", async () => {
     const g = await paidGift();
     const op = await staff();
     const code = codeOf({ boxId: g.boxIds[0] })!;
     const first = waybill();
     await receiveWithCode(op, g.boxIds[0], first);
     await scanInbound(op, waybill(), { code, ...HOLD_DETAILS });
-    await (await signedInClient("byeolbit_fan")).rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null });
+    markNotMineForTest({ boxId: g.boxIds[0]! }, SEED.fanId);
     expect((await find("byeolbit_fan", { boxId: g.boxIds[0] }, first)).data).toBe("not_found");
     expect(parcelOf(g.boxIds[0]).hold).toBe("code_dispute");
   });

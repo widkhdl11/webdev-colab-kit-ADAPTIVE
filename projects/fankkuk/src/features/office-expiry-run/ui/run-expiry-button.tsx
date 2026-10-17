@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isStaleFailure } from "@/shared/lib/http/post-json-client";
 import a from "@/shared/ui/admin.module.css";
 import { postExpiryRun } from "../api/post-expiry-client";
@@ -19,7 +19,13 @@ export function RunExpiryButton({ orderNo, returnFocusId }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const titleId = `run-title-${orderNo}`;
+
+  // 결과가 나오면 누른 「지금 돌리기」가 사라진다 — 포커스를 「닫기」로 옮긴다
+  useEffect(() => {
+    if (result !== null) closeRef.current?.focus();
+  }, [result]);
 
   function close() {
     if (busy) return;
@@ -93,7 +99,7 @@ export function RunExpiryButton({ orderNo, returnFocusId }: Props) {
           </div>
         </div>
         <div className={a.dlgFoot}>
-          <button type="button" className={`${a.btn} ${a.btnLine}`} onClick={close} aria-disabled={busy}>
+          <button ref={closeRef} type="button" className={`${a.btn} ${a.btnLine}`} onClick={close} aria-disabled={busy}>
             닫기
           </button>
           {result === null && (

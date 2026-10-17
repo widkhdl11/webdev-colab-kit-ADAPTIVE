@@ -10,11 +10,11 @@ export function CreatorCancelForm() {
     <OrderCancelForm
       fieldId="creator-cancel"
       title="크리에이터 사정 취소"
-      hint="1:1 문의로 크리에이터가 더 받을 수 없다고 한 주문을 취소해요. 출고 전 주문만 취소돼요."
+      hint="1:1 문의로 크리에이터가 더 받을 수 없다고 한 선물을 취소해요. 출고 전 선물만 취소돼요."
       openLabel="크리에이터 사정 취소하기"
       reasonPlaceholder="예: 1:1 문의로 탈퇴 요청"
       submitLabel="크리에이터 사정으로 취소"
-      doneText={(no) => `${no} 주문을 취소했어요.`}
+      doneText={(no) => `${no} 선물을 취소했어요.`}
       send={postCreatorCancel}
     />
   );

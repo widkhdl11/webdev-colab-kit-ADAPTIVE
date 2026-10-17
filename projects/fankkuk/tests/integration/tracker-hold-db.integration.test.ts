@@ -284,18 +284,21 @@ describe("신고 고르기·처리·기한 (office-workflow INV-W14·W13·W6)", 
 });
 
 describe("추적기 보관의 환불 (office-workflow INV-W14, payment INV-M8)", () => {
-  it("INV-W4·W14 (S4f): 신고 보관·경찰 인계·반송 어느 쪽으로 끝나도 환불은 상품 대금 칸만(지금 0원)으로 같다", async () => {
-    const goods = (orderId: string) => psql(`select goods_krw from public.payments where order_id = '${orderId}' and kind = 'initial'`);
+  it("INV-W4·W14 (S4f): 신고 보관·경찰 인계·반송 어느 쪽으로 끝나도 환불은 상품 대금 칸만으로 같다 — 0원이 아닌 상품 대금으로 본다", async () => {
+    // 상품 대금 칸이 0원이면 「상품 대금 칸만」과 「0원」을 가를 수 없다 — 시험 주문의 결제 줄(public)에서 금액을 그대로 두고
+    // 서비스 이용료 칸 일부를 상품 대금 칸으로 옮겨 0이 아닌 값으로 본다(칸의 합 = 결제 금액 제약은 그대로)
+    const GOODS = 1000;
     const ends: string[] = [];
     for (const path of ["report", "handover", "no_report"] as const) {
       const { g, qrs } = await trackerGift();
+      psql(`update public.payments set goods_krw = ${GOODS}, service_fee_krw = service_fee_krw - ${GOODS} where order_id = '${g.orderId}' and kind = 'initial'`);
       expect((await choose(g.orderNo, 1, path === "no_report" ? "no_report" : "report")).data).toBe("chosen");
-      await processCheck(qrs[0]!, path === "no_report" ? "no_report" : "report");
+      expect((await processCheck(qrs[0]!, path === "no_report" ? "no_report" : "report")).data).toBe(path === "no_report" ? "not_reported" : "reported");
       if (path === "handover") expect((await handover(qrs[0]!, "인계")).data).toBe("handed");
-      expect(orderRefundDue(g.orderId)).toBe(goods(g.orderId));
+      expect(parcelState(qrs[0]!)).toBe({ report: "report_held", handover: "police_handed", no_report: "return_waiting" }[path]);
       ends.push(orderRefundDue(g.orderId));
     }
-    expect(ends).toEqual(["0", "0", "0"]);
+    expect(ends).toEqual([String(GOODS), String(GOODS), String(GOODS)]);
   });
 
   it("INV-M8·M9: 거절로 끝난 주문의 상자가 추적기 보관이면 그 상자 몫은 0(검수 불합격 줄), 통과한 상자는 상자 금액 − 배송비 칸", async () => {

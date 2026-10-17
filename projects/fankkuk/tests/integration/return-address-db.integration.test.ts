@@ -8,11 +8,13 @@ import {
   fanSetsWaybill,
   finishReturnPrint,
   inspect,
+  markNotMineForTest,
   markReturnConfirmedForTest,
   paidGift,
   paidShare,
   parcelState,
   receiveAndLabel,
+  returnConfirmedAtSql,
   scanInbound,
   waybill,
   type Unit,
@@ -84,9 +86,7 @@ async function returnWaitingShare(): Promise<{ orderNo: string; qr: string; parc
 /** 주문에서 떼어 낸 상자(어느 주문에도 이어지지 않음)를 반송 대기로 둔다 — 보류 「제가 보낸 게 아니에요」 → 운영자가 넘김 */
 async function detachedReturnWaiting(): Promise<{ qr: string; parcelId: string }> {
   const { g, qrs } = await arrived(1);
-  const fan = await signedInClient("byeolbit_fan");
-  const r = await fan.rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null });
-  if (r.error) throw new Error(`report_not_mine 실패: ${r.error.code}`);
+  markNotMineForTest({ boxId: g.boxIds[0]! }, SEED.fanId);
   const parcelId = psql(`select id from public.office_parcels where qr_code = '${qrs[0]}'`);
   const back = await (await staff()).rpc("admin_return_held_parcel", { p_id: parcelId });
   if (back.error) throw new Error(`admin_return_held_parcel 실패: ${back.error.code}`);
@@ -299,7 +299,7 @@ describe("반송 송장 (office-workflow INV-W8·W15)", () => {
     const back = waybill();
     expect(finishReturnPrint(qrs[0]!, back)).toBeNull();
     expect(parcelState(qrs[0]!)).toBe("return_printed");
-    expect(psql(`select (public.return_finish_print('${qrs[0]}', null) ->> 'waybill') || '|' || (public.return_finish_print('${qrs[0]}', null) ->> 'first')`)).toBe(`${back}|false`);
+    expect(psql(`select (public.return_finish_print('${qrs[0]}', null, ${returnConfirmedAtSql(qrs[0]!)}) ->> 'waybill') || '|' || (public.return_finish_print('${qrs[0]}', null, ${returnConfirmedAtSql(qrs[0]!)}) ->> 'first')`)).toBe(`${back}|false`);
     const op = await staff();
     expect((await op.rpc("office_confirm_return", { p_qr: qrs[0], p_waybill: back })).error).toBeNull();
     expect(parcelState(qrs[0]!)).toBe("returned");

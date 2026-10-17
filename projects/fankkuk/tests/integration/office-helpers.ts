@@ -166,14 +166,32 @@ export function finishPrint(qr: string, waybillNo: string): string | null {
 /**
  * 반송 송장 출력의 DB 마무리 단계(office-workflow INV-W8·W15) — 주문에 이어진 반송 대기 상자를 「반송 송장 출력함」으로 넘긴다.
  * 앱은 보낸 사람이 확인한 주소를 연 뒤 주소 열기 계정으로만 이 단계를 부른다(return_finish_print). 시험은 주소 열기 없이 DB 관리자 연결로 부른다 —
- * 확인 여부·단계 검사는 같다. 성공하면 null, 거부되면 SQLSTATE(P0041 반송 주소 확인 전, 55000 단계).
+ * 확인 여부·단계 검사는 같다. 성공하면 null, 거부되면 SQLSTATE(P0041 반송 주소 확인 전·봉투를 내준 뒤 다시 확인함, 55000 단계).
+ * confirmedAtSql: 봉투를 내준 순간의 확인 시각(SQL 식). 앱은 봉투 함수의 답에 실린 값을 넘긴다 — 시험은 기본으로 지금 상자에 적힌 값을 넘긴다.
  */
-export function finishReturnPrint(qr: string, waybillNo: string): string | null {
+export function finishReturnPrint(qr: string, waybillNo: string, confirmedAtSql = returnConfirmedAtSql(qr)): string | null {
   const state = psql(
-    `do $$ begin perform public.return_finish_print('${qr}', '${waybillNo}'); perform set_config('fankkuk_test.state', 'ok', false); exception when others then perform set_config('fankkuk_test.state', sqlstate, false); end $$; select current_setting('fankkuk_test.state')`,
+    `do $$ begin perform public.return_finish_print('${qr}', '${waybillNo}', ${confirmedAtSql}); perform set_config('fankkuk_test.state', 'ok', false); exception when others then perform set_config('fankkuk_test.state', sqlstate, false); end $$; select current_setting('fankkuk_test.state')`,
   );
   const last = state.split("\n").pop() ?? "";
   return last === "ok" ? null : last;
+}
+
+/**
+ * 「제가 보낸 게 아니에요」 보류 상자를 시험용으로 만든다. 팬·크리에이터 버튼은 없앴고(2026-10-17 사용자 결정, report_not_mine 실행 권한 없음)
+ * 이미 남은 보류·신고 줄과 운영자의 보류 넘기기는 그대로라, 옛 함수가 남기던 public 두 가지(신고 줄 + 보류 사유)만 넣는다.
+ */
+export function markNotMineForTest(target: { boxId: string } | { shareId: string }, reporterId: string): void {
+  const where = "boxId" in target ? `box_id = '${target.boxId}'` : `share_id = '${target.shareId}'`;
+  psql(
+    `insert into public.office_not_mine_reports (parcel_id, reported_by, parcel_state) select id, '${reporterId}', state from public.office_parcels where ${where} on conflict (parcel_id) do nothing; ` +
+      `update public.office_parcels set hold_reason = coalesce(hold_reason, 'not_mine'), hold_at = coalesce(hold_at, now()) where ${where}`,
+  );
+}
+
+/** 그 상자에 지금 적힌 반송 주소 확인 시각을 읽는 SQL 식 — 반송 송장 마무리(return_finish_print)의 셋째 인자로 쓴다 */
+export function returnConfirmedAtSql(qr: string): string {
+  return `(select return_confirmed_at from public.office_parcels where qr_code = '${qr}')`;
 }
 
 /**

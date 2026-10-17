@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { anonClient, deleteTestOrders, psql, signedInClient } from "./helpers";
-import { codeOf, deleteTestUnmatched, HOLD_DETAILS, paidGift, paidShare, scanInbound, waybill } from "./office-helpers";
+import { anonClient, deleteTestOrders, psql, SEED, signedInClient } from "./helpers";
+import { codeOf, deleteTestUnmatched, HOLD_DETAILS, markNotMineForTest, paidGift, paidShare, scanInbound, waybill } from "./office-helpers";
 import { deleteTestRevgifts } from "./revgift-helpers";
 
 // 받는 주소 6자리 — 운영자 도구 (docs/specs/inbound-address-code.md INV-C6·C8·C9·C10, 「측정」 절, 마이그레이션 20261007000009).
@@ -125,12 +125,11 @@ async function disputedParcel(op: SupabaseClient): Promise<{ parcelId: string; o
   return { parcelId: psql(`select id from public.office_parcels where box_id = '${g.boxIds[0]}'`), orderId: g.orderId };
 }
 
-/** 6자리로 입고한 뒤 주인이 「제가 보낸 게 아니에요」를 누른 상자. */
+/** 6자리로 입고한 뒤 「제가 보낸 게 아니에요」로 보류된 상자(버튼을 없애기 전에 남은 데이터와 같은 꼴). */
 async function notMineParcel(op: SupabaseClient): Promise<{ parcelId: string; orderId: string }> {
   const g = await paidGift();
   await receiveLabeled(op, g.boxIds[0]);
-  const r = await (await signedInClient("byeolbit_fan")).rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null });
-  expect(r.error).toBeNull();
+  markNotMineForTest({ boxId: g.boxIds[0]! }, SEED.fanId);
   return { parcelId: psql(`select id from public.office_parcels where box_id = '${g.boxIds[0]}'`), orderId: g.orderId };
 }
 
@@ -256,7 +255,7 @@ describe("측정 — 6자리 입력 기록과 숫자 셋(최근 30일)", () => {
     const r = await scanInbound(op, waybill(), { code: codeOf({ boxId: g.boxIds[0] }) });
     expect((r.data as { result: string }).result).toBe("received");
     await op.rpc("office_confirm_label", { p_qr: (r.data as { qr: string }).qr });
-    expect((await (await signedInClient("byeolbit_fan")).rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null })).error).toBeNull();
+    markNotMineForTest({ boxId: g.boxIds[0]! }, SEED.fanId);
     const after = await metrics(op);
     expect(after.arrived_total - before.arrived_total).toBe(2);
     expect(after.arrived_without_code - before.arrived_without_code).toBe(1);
@@ -273,8 +272,8 @@ describe("측정 — 6자리 입력 기록과 숫자 셋(최근 30일)", () => {
   });
 });
 
-describe("INV-C8 상자 읽기 — 「제가 보낸 게 아니에요」를 눌렀는지는 주인에게만", () => {
-  it("INV-C8: 누르기 전 false, 누른 뒤 true. 다른 팬에게는 상자 자체가 없다", async () => {
+describe("INV-C8 상자 읽기 — 「제가 보낸 게 아니에요」 보류였는지는 주인에게만", () => {
+  it("INV-C8: 보류 전 false, 보류 줄이 있으면 true. 다른 팬에게는 상자 자체가 없다", async () => {
     const op = await staff();
     const g = await paidGift(1);
     const r = await scanInbound(op, waybill(), { code: codeOf({ boxId: g.boxIds[0] }) });
@@ -284,7 +283,7 @@ describe("INV-C8 상자 읽기 — 「제가 보낸 게 아니에요」를 눌�
     expect((await read()).reported_not_mine).toBe(false);
     // 입고되면 6자리는 사용됨 — 더는 주소로 보이지 않는다(INV-C2·C5)
     expect((await read()).address_code).toBeNull();
-    expect((await fan.rpc("report_not_mine", { p_box_id: g.boxIds[0], p_share_id: null })).error).toBeNull();
+    markNotMineForTest({ boxId: g.boxIds[0]! }, SEED.fanId);
     expect((await read()).reported_not_mine).toBe(true);
     const other = await (await signedInClient("daltokki_fan")).rpc("my_gift_boxes", { p_order_no: g.orderNo });
     expect(other.data).toEqual([]);

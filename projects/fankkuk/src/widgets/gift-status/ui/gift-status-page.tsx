@@ -13,7 +13,7 @@ import {
   RETURN_ON_REJECT_NOTICE,
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
-import { boxTierName, canReportNotMine, fanBoxStateTag, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
+import { boxTierName, fanBoxStateTag, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
 import { giftAddressCode, giftFinderBoxes, needsEarlySendAck } from "@/features/box-waybill/model/box-targets";
 import { EarlySendGate } from "@/features/box-waybill/ui/early-send-gate";
 import { canCancelGift } from "@/features/gift-cancel/model/cancellable";
@@ -21,7 +21,6 @@ import { CancelGiftButton } from "@/features/gift-cancel/ui/cancel-gift-button";
 import { RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
 import { formatWaybill } from "@/entities/parcel/model/waybill-no";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
-import { NotMineButton } from "@/features/box-waybill/ui/not-mine-button";
 import { ReceivingAddress } from "@/features/box-waybill/ui/receiving-address";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
@@ -44,7 +43,6 @@ import s from "./gift-status.module.css";
 // 받는 주소(inbound-address-code INV-C2·C3): 결제가 끝난 진행 중 주문의 상자마다 「이 선물의 받는 주소」(사무실 주소 + 6자리).
 //   6자리는 my_gift_boxes 가 로그인한 주인에게, 유효할 때만 준다 — 없으면 그 상자의 주소 칸을 그리지 않는다. 6자리 빠진 기본 사무실 주소는 그리지 않는다.
 // 송장번호는 배송 조회를 보고 싶을 때만 넣는 선택 칸이다(INV-C7). 받는 주소 없이 보낸 상자는 「받는 주소 없이 보냈어요」로 찾는다(INV-C4 ②).
-// 입고된 뒤 출고 확정 전에는 상자마다 「제가 보낸 게 아니에요」(INV-C8).
 // 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 진행 줄 아래 따로 한 줄로 그린다.
 // 결제 내역은 결제할 때 저장한 금액만 보인다(payment INV-M14, my_gift_payment) — 주문 정보 중립 면 카드 안에 붙인다.
 // 진행 중이고 도착한 상자가 없으면 주문 정보 카드 끝에 「취소하기」(payment INV-M16, 판정은 features/gift-cancel/model/cancellable.ts).
@@ -286,9 +284,6 @@ export function GiftStatusPage({
                           </dl>
                           {hasArrived(b.state) ? <p className="hint">입고된 상자는 송장번호를 고칠 수 없어요.</p> : null}
                         </>
-                      ) : null}
-                      {inProgress && canReportNotMine(b.state) ? (
-                        <NotMineButton target={{ kind: "box", id: b.boxId }} boxName={b.label} reported={b.reportedNotMine} />
                       ) : null}
                     </div>
                   );

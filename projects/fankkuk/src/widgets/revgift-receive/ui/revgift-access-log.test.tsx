@@ -53,6 +53,11 @@ describe("INV-R16: 받은 역조공 상세의 「내 주소 열람 기록」", (
     expect(rowsOf().map((r) => r[1])).toEqual(["취소되어 주소를 지웠어요", "반송되어 주소를 지웠어요", "출력 실패", "재출력 3번째"]);
   });
 
+  it("INV-R16 · INV-W15: 처분으로 지운 줄은 「처분」으로 적는다", () => {
+    render([{ at: "2026-10-09T08:00:00.000Z", kind: "deleted", outcome: "disposed" }], true);
+    expect(rowsOf()).toEqual([["지움", "처분되어 주소를 지웠어요"]]);
+  });
+
   it("INV-R16: 빈 목록이면 아직 열린 적이 없다는 안내, 표는 없다", () => {
     render([]);
     expect(host.textContent).toContain("아직 주소가 열린 적이 없어요");

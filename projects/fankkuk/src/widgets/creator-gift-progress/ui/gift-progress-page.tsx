@@ -48,6 +48,8 @@ const STEP_LABEL: Record<ProgressStepKey, string> = {
   not_received: "받지 않음",
   late: "아직 도착하지 않았어요",
   returning: "반송",
+  // 용어집 dispose_due 행 팬·크리에이터 열
+  dispose_due: "처분 예정",
 };
 
 const PATHS = {
@@ -107,6 +109,7 @@ const STEP_ICON: Record<ProgressStepKey, IconKey> = {
   inspecting: "search",
   inspected: "search",
   returning: "search",
+  dispose_due: "search",
   shipped: "truck",
   in_transit: "truck",
   reply_waiting: "clock",

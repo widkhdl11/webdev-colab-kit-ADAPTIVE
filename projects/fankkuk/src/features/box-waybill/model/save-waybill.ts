@@ -6,8 +6,7 @@ import type { Viewer, ViewerRole } from "@/entities/session/model/viewer";
 import { MESSAGE_NOT_FOUND, pgErrorReply } from "@/shared/lib/http/pg-error-reply";
 import type { JsonReply } from "@/shared/lib/http/private-json";
 
-// 상자 쓰기 — 팬 선물 상자 송장(set_box_waybill) · 역조공 몫 송장(set_share_waybill) · 받는 주소 없이 보냈어요(find_held_parcel)
-// · 제가 보낸 게 아니에요(report_not_mine).
+// 상자 쓰기 — 팬 선물 상자 송장(set_box_waybill) · 역조공 몫 송장(set_share_waybill) · 받는 주소 없이 보냈어요(find_held_parcel).
 // 요청한 사람의 세션 클라이언트로 DB 함수를 부른다. 누구 상자인지·할 수 있는 때인지는 DB 가 로그인 토큰으로 판정한다.
 // 여기서는 본문 꼴과 역할만 먼저 거른다 — 운영자는 어느 쪽도 쓰지 않는다(office-workflow INV-W5: 운영자가 손으로 잇는 길은 없다).
 // 송장번호는 배송 조회용 선택 입력이다(inbound-address-code INV-C7) — 상자를 찾는 열쇠가 아니다. 계정마다 24시간에 10번까지(DB 판정, 429).
@@ -18,7 +17,6 @@ export const MESSAGE_NO_MATCH = "맞는 상자를 못 찾았어요. 송장번호
 export const MESSAGE_MATCH_LIMIT = "오늘은 더 찾을 수 없어요. 내일 다시 해 주세요";
 export const MESSAGE_WAYBILL_LIMIT = "오늘은 송장번호를 더 넣을 수 없어요. 내일 다시 해 주세요";
 export const MESSAGE_FIND_DETAILS = "송장번호를 넣고 택배사를 골라 주세요.";
-export const MESSAGE_NOT_MINE_LATE = "출고가 끝난 상자는 여기서 알릴 수 없어요. 고객센터로 문의해 주세요.";
 
 /** 찾기 함수의 답. 남의 상자·두 값 중 하나라도 다름·닉네임이 맞지 않은 상자·기한 지남·남의 6자리가 붙은 상자는 모두 not_found 하나다(INV-C4·C10). */
 const matchAnswer = z.enum(["matched", "not_found"]);
@@ -41,12 +39,10 @@ const findBody = z.union([
   z.object({ boxId: z.guid(), ...findCommon }).strict(),
   z.object({ shareId: z.guid(), ...findCommon }).strict(),
 ]);
-const notMineBody = z.union([z.object({ boxId: z.guid() }).strict(), z.object({ shareId: z.guid() }).strict()]);
 
 export type BoxWaybillWrite = z.input<typeof boxBody>;
 export type ShareWaybillWrite = z.input<typeof shareBody>;
 export type FindHeldWrite = z.input<typeof findBody>;
-export type NotMineWrite = z.input<typeof notMineBody>;
 
 type Deps = { client: Pick<SupabaseClient, "rpc">; viewer: Viewer | null };
 
@@ -142,23 +138,4 @@ export async function findHeldParcel(deps: Deps, body: unknown): Promise<JsonRep
   return answer.data === "matched"
     ? { status: 200, body: { matched: true } }
     : { status: 200, body: { matched: false, message: MESSAGE_NO_MATCH } };
-}
-
-/**
- * inbound-address-code INV-C8 「제가 보낸 게 아니에요」 — 주문 주인이 입고된 내 상자 하나를 보류로 돌린다(출고 목록에서 빠짐, 운영자 확인).
- * 누구 상자인지·출고 전인지는 DB 가 본다. 남의 상자·입고 전은 404, 출고 확정 뒤는 409. 누른 기록은 지울 수 없다.
- */
-export async function reportNotMine(deps: Deps, body: unknown): Promise<JsonReply> {
-  if (!deps.viewer) return { status: 401, body: { message: "로그인이 필요해요." } };
-  const shaped = notMineBody.safeParse(body);
-  if (!shaped.success) return BAD_REQUEST;
-  const input = shaped.data;
-  const refused = roleRefusal(deps.viewer, unitRole(input));
-  if (refused) return refused;
-  const { error } = await deps.client.rpc("report_not_mine", {
-    p_box_id: "boxId" in input ? input.boxId : null,
-    p_share_id: "shareId" in input ? input.shareId : null,
-  });
-  if (error) return pgErrorReply(error.code, { limit: "잘못된 요청이에요.", conflict: MESSAGE_NOT_MINE_LATE, failed: "알리지 못했어요. 잠시 뒤 다시 해 주세요." });
-  return { status: 200, body: { reported: true } };
 }

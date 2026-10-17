@@ -137,7 +137,8 @@ export type ProgressStepKey =
   | "reply_waiting"
   | "not_received"
   | "late"
-  | "returning";
+  | "returning"
+  | "dispose_due";
 
 /**
  * 받는 선물 — 승인 → 사무실 도착 → 검수 → 출고·배송 → 수령의 다섯 칸(시안 cre-progress.html).
@@ -170,6 +171,8 @@ export function sentStepOf(r: Pick<SentProgress, "replyState" | "boxState" | "la
   if (r.boxState === "shipped") return { key: "shipped", cells: 4 };
   if (ARRIVED_PASSED.includes(r.boxState)) return { key: "inspected", cells: 3 };
   if (RETURNING.includes(r.boxState)) return { key: "returning", cells: 3 };
+  // 반송 주소를 30일 확인하지 않아 처분 대상이 된 상자(office-workflow INV-W15) — 상자는 사무실에 있고 반송되지 않는다
+  if (r.boxState === "dispose_due") return { key: "dispose_due", cells: 3 };
   if (ARRIVED_CHECKING.includes(r.boxState)) return { key: "inspecting", cells: 3 };
   if (r.late) return { key: "late", cells: 2 };
   if (r.replyState === "waiting") return { key: "reply_waiting", cells: 1 };

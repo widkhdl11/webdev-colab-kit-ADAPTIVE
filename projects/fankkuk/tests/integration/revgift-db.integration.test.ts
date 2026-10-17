@@ -442,6 +442,7 @@ describe("리뷰 뒤 보강 (2026-10-03)", () => {
     await payTestRevgift(send);
     const no = send.orderNos[0]!;
     const mine = await (await signedInClient("byeolbit_fan")).rpc("my_received_revgift", { p_order_no: no });
+    expect(mine.error).toBeNull();
     expect((mine.data as { order_no: string }[]).map((r) => r.order_no)).toEqual([no]);
     const other = await (await signedInClient("daltokki_fan")).rpc("my_received_revgift", { p_order_no: no });
     expect(other.data).toEqual([]);

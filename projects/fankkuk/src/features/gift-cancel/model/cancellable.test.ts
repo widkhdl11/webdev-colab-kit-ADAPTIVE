@@ -11,7 +11,6 @@ const gift = (over: Partial<GiftBox>): GiftBox => ({
   waybillNo: null,
   state: "awaiting",
   addressCode: "K7M3XA",
-  reportedNotMine: false,
   sendAckNeeded: false,
   ...over,
 });

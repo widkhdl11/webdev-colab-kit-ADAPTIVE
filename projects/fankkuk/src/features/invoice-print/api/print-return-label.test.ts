@@ -22,6 +22,8 @@ const QR = "Q-000789";
 const NEW_WAYBILL = "555566667777";
 const OLD_WAYBILL = "111122223333";
 const LOG_ID = 901;
+// 봉투를 내준 순간 상자에 적혀 있던 확인 시각 — 마무리가 잠근 자리에서 이 값과 비교한다(INV-W15 · P18, 출력 사이 재확인)
+const CONFIRMED_AT = "2026-10-17T03:04:05.123456+00:00";
 
 const fields = { recipientName: "별빛", phone: "01012345678", zipCode: "04001", address1: "서울시 마포구 시험로 1", address2: "" };
 
@@ -54,12 +56,12 @@ function linkedContext(patch: Context = {}): Context {
 
 async function fanClaim(sealedAccount = FAN, patch: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
   const envelope = await sealEnvelope(fanAddressPlaintext({ accountId: sealedAccount, ...fields }), keys.publicKey);
-  return { result: "opened", print_no: 1, log_id: LOG_ID, order_no: ORDER_NO, sender_id: FAN, sender_creator_id: null, envelope, ...patch };
+  return { result: "opened", print_no: 1, log_id: LOG_ID, order_no: ORDER_NO, sender_id: FAN, sender_creator_id: null, confirmed_at: CONFIRMED_AT, envelope, ...patch };
 }
 
 async function creatorClaim(sealedCreator = CREATOR_ID): Promise<Record<string, unknown>> {
   const envelope = await sealEnvelope(creatorAddressPlaintext({ creatorId: sealedCreator, ...fields }), keys.publicKey);
-  return { result: "opened", print_no: 1, log_id: LOG_ID, order_no: "RG-AAA111", sender_id: CREATOR_PROFILE, sender_creator_id: CREATOR_ID, envelope };
+  return { result: "opened", print_no: 1, log_id: LOG_ID, order_no: "RG-AAA111", sender_id: CREATOR_PROFILE, sender_creator_id: CREATOR_ID, confirmed_at: CONFIRMED_AT, envelope };
 }
 
 type Reply = { data: unknown; error: { code: string; message: string } | null };
@@ -120,7 +122,7 @@ describe("반송 송장 출력 — 확인한 등록 주소 열기 (address-prote
     expect(await printReturnLabel(deps(db), ask)).toEqual({ kind: "printed", waybill: NEW_WAYBILL, reprint: false, label: fields });
     expect(fnNames(calls)).toEqual(["return_print_context", "return_claim_print", "return_finish_print"]);
     expect(calls[1]?.args).toEqual({ p_qr: QR, p_requester: OWNER });
-    expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: NEW_WAYBILL });
+    expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: NEW_WAYBILL, p_confirmed_at: CONFIRMED_AT });
   });
 
   it("INV-P18: 역조공 몫 상자는 보낸 크리에이터의 등록 주소 — 봉인 속 크리에이터가 보낸 크리에이터와 같으면 연다", async () => {
@@ -131,7 +133,7 @@ describe("반송 송장 출력 — 확인한 등록 주소 열기 (address-prote
   it("INV-P18: 이미 반송 송장이 나온 상자는 새 송장번호 없이 마무리를 불러 처음 번호로 재출력한다", async () => {
     const { db, calls } = fakeDb(linkedContext({ parcel_state: "return_printed", decrypt_count: 1 }), await fanClaim(), ok({ waybill: OLD_WAYBILL, first: false }));
     expect(await printReturnLabel(deps(db), ask)).toEqual({ kind: "printed", waybill: OLD_WAYBILL, reprint: true, label: fields });
-    expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: null });
+    expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: null, p_confirmed_at: CONFIRMED_AT });
   });
 
   it("INV-P18 (S18b, 실패경로): 대표 아님·확인 전·반송 대기 아님·상한이면 봉투를 부르지 않고 거부 줄 하나만 남긴다 — 갈래마다", async () => {
@@ -169,6 +171,22 @@ describe("반송 송장 출력 — 확인한 등록 주소 열기 (address-prote
     // 팬 봉인인데 보낸 사람이 크리에이터면(계정 칸은 크리에이터 프로필) 그 계정과 대조한다 — 같은 계정이 아니면 거부
     const fanSealForCreator = fakeDb(linkedContext(), await fanClaim(FAN, { sender_id: CREATOR_PROFILE, sender_creator_id: CREATOR_ID }));
     expect(await printReturnLabel(deps(fanSealForCreator.db), ask)).toEqual({ kind: "denied", reason: "address_mismatch" });
+  });
+
+  it("INV-W15 · P18 (실패경로): 봉투를 연 뒤 보낸 사람이 다른 주소로 다시 확인해 마무리가 거부하면 연 줄을 돌려받고 실패 — 먼저 연 주소로 출력하지 않는다", async () => {
+    const { db, calls } = fakeDb(linkedContext(), await fanClaim(), { data: null, error: { code: "P0041", message: "확인이 바뀜" } });
+    expect(await printReturnLabel(deps(db), ask)).toEqual({ kind: "failed" });
+    expect(fnNames(calls)).toEqual(["return_print_context", "return_claim_print", "return_finish_print", "return_release_print"]);
+    expect(calls[2]?.args).toEqual({ p_qr: QR, p_waybill: NEW_WAYBILL, p_confirmed_at: CONFIRMED_AT });
+    expect(calls[3]?.args).toEqual({ p_log_id: LOG_ID, p_requester: OWNER });
+  });
+
+  it("INV-W15 · P18 (실패경로): 봉투를 내준 답에 확인 시각이 없으면(DB 가 옛 함수) 출력 단계로 넘기지 않고 연 줄을 돌려받는다", async () => {
+    const claim = await fanClaim();
+    delete claim.confirmed_at;
+    const { db, calls } = fakeDb(linkedContext(), claim);
+    expect(await printReturnLabel(deps(db), ask)).toEqual({ kind: "failed" });
+    expect(fnNames(calls)).toEqual(["return_print_context", "return_claim_print", "return_release_print"]);
   });
 
   it("INV-W15 (S15f): 어느 주문에도 이어지지 않은 상자는 이 함수가 열지 않는다 — not_linked 로 돌려보내 봉투 번호 길로 간다", async () => {

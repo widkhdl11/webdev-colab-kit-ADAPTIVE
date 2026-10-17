@@ -10,14 +10,14 @@ import { z } from "zod";
  */
 export const REVGIFT_MAX_DECRYPTS = 3;
 
-/** 주소를 지운 까닭(INV-R9) — 출고 확정·반송·취소. */
-export const REVGIFT_DELETE_OUTCOMES = ["shipped", "returned", "cancelled"] as const;
+/** 주소를 지운 까닭(INV-R9) — 출고 확정·반송·취소·처분(office-workflow INV-W15). */
+export const REVGIFT_DELETE_OUTCOMES = ["shipped", "returned", "cancelled", "disposed"] as const;
 export type RevgiftDeleteOutcome = (typeof REVGIFT_DELETE_OUTCOMES)[number];
 
 export type FanAccessEntry =
   /** printNo: 그 몫의 몇 번째 출력. released: 송장이 안 나와 돌려받은 줄(INV-R13) — 주소는 열렸고 줄도 그대로 보인다. */
   | { at: string; kind: "opened"; printNo: number; released: boolean }
-  /** 출고·반송·취소로 주소를 지운 줄. */
+  /** 출고·반송·취소·처분으로 주소를 지운 줄. */
   | { at: string; kind: "deleted"; outcome: RevgiftDeleteOutcome };
 
 const at = z.iso.datetime({ offset: true });

@@ -279,6 +279,7 @@ type CardProps = {
 function PoliceHandoverCard({ parcel, busy, onRecord }: { parcel: ParcelDetail; busy: boolean; onRecord: CardProps["onRecord"] }) {
   const [memo, setMemo] = useState("");
   const [memoError, setMemoError] = useState(false);
+  const memoRef = useRef<HTMLInputElement>(null);
   const count = charCount(memo.trim());
   return (
     <section className={`${w.result} ${w.resultOk}`} aria-labelledby="out-police">
@@ -297,6 +298,8 @@ function PoliceHandoverCard({ parcel, busy, onRecord }: { parcel: ParcelDetail; 
           e.preventDefault();
           if (count < 1 || count > POLICE_MEMO_MAX) {
             setMemoError(true);
+            // 고칠 자리로 바로 — 오류 줄은 입력 칸의 설명으로도 읽힌다
+            memoRef.current?.focus();
             return;
           }
           onRecord({ kind: "record_police_handover", memo: memo.trim() });
@@ -305,6 +308,7 @@ function PoliceHandoverCard({ parcel, busy, onRecord }: { parcel: ParcelDetail; 
         <div className={a.field}>
           <label htmlFor="police-memo">경찰 인계 메모</label>
           <input
+            ref={memoRef}
             id="police-memo"
             className={a.input}
             type="text"
@@ -325,7 +329,7 @@ function PoliceHandoverCard({ parcel, busy, onRecord }: { parcel: ParcelDetail; 
             실명·주소·전화번호는 적지 않아요.
           </p>
         </div>
-        <div role="status">
+        <div role="alert">
           {memoError && (
             <p className={a.errorLine} id="police-memo-error">
               <span className={a.errorMark} aria-hidden="true">

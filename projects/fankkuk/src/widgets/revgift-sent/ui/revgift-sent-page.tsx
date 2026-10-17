@@ -1,12 +1,11 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { canReportNotMine, isMissing, isWaybillEditable, type ShareBox } from "@/entities/parcel/model/box-rows";
+import { isMissing, isWaybillEditable, type ShareBox } from "@/entities/parcel/model/box-rows";
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
 import { countBatchStates, summarizeSent, toSentBatches, type SentSummary } from "@/entities/revgift/model/sent-batches";
 import { sentStateTag } from "@/entities/revgift/ui/received-status";
 import { shareAddressCode } from "@/features/box-waybill/model/box-targets";
-import { NotMineButton } from "@/features/box-waybill/ui/not-mine-button";
 import { ReceivingAddress } from "@/features/box-waybill/ui/receiving-address";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDateTime } from "@/shared/lib/format/datetime";
@@ -18,12 +17,12 @@ import s from "./revgift-sent.module.css";
 // 팬 로그인 아이디도 싣지 않는다(reverse-gift INV-R8). 팬마다 따로 보는 화면이 없어 줄은 링크가 아니다.
 // 송장번호는 묶음 아래 「송장번호 적기(선택)」 접힌 칸에 팬마다 한 줄(시안 .fold·.inv-row). 배송 조회를 보고 싶을 때만 넣는 선택 칸이다
 // (inbound-address-code INV-C7). 입고 전엔 넣고 고치고, 도착하면 「도착 완료」로 잠긴다(design-rules 8-1).
-// 받는 주소·「제가 보낸 게 아니에요」는 그 팬 줄 바로 아래 — 보낼 상자가 남았을 때·입고 뒤 출고 전에만 생긴다(필요할 때만, 0000절).
+// 받는 주소는 그 팬 줄 바로 아래 — 보낼 상자가 남았을 때만 생긴다(필요할 때만, 0000절).
 // 묶음 나누기와 상태 세기는 entities/revgift/model/sent-batches.ts — 여기서는 문구만 조립한다.
 // 받는 주소(INV-R14, inbound-address-code INV-C2·C3): 팬(몫)마다 사무실 주소 + 그 몫의 6자리. 묶음에 officeAddress 가 있을 때
 // (결제가 끝났고 보낼 상자가 남은 묶음) + my_share_boxes 가 그 몫의 6자리를 줄 때(보낸 크리에이터 본인 · 유효할 때)만 그린다.
 // 6자리 빠진 기본 사무실 주소는 그리지 않는다. 팬의 받기를 기다리지 않는다 — 받기는 출고 전에만 있으면 된다.
-// 입고 뒤 출고 전에는 「제가 보낸 게 아니에요」(INV-C8). 받는 주소 없이 보낸 상자의 「내 상자 찾기」는 선물 현황 「보내는 선물」의 입고 전 줄에 있다
+// 받는 주소 없이 보낸 상자의 「내 상자 찾기」는 선물 현황 「보내는 선물」의 입고 전 줄에 있다
 // (action-center INV-J10 — 「선물 현황 화면이 생기기 전에는 보낸 역조공 화면」이었고, 선물 현황이 생겨 옮겼다).
 // 두 단(design-rules 00절 「본문 틀」, 시안 v22-width/cre-revgift-sent-ab.html): 주 내용 880 + 오른쪽 요약 칸 288, 간격 32.
 // 본문 영역 1000 이상에서 두 단·칸은 스크롤을 따라오고, 좁으면 한 단에 칸이 위. 칸에는 이 화면에 이미 있는 값만 —
@@ -235,7 +234,7 @@ export function RevgiftSentPage({
               </p>
               {b.officeAddress && views.some((v) => v.addressCode) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
               <ul className={s.rows} aria-label={`${formatDateTime(b.sentAt)} 묶음 팬별 지금 상태`}>
-                {views.map(({ x, box, addressCode }, i) => {
+                {views.map(({ x, addressCode }, i) => {
                   const tag = sentStateTag(x.state);
                   return (
                     <li key={x.orderNo}>
@@ -250,11 +249,6 @@ export function RevgiftSentPage({
                       {b.officeAddress && addressCode ? (
                         <div className={s.rowMore}>
                           <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
-                        </div>
-                      ) : null}
-                      {box && canReportNotMine(box.state) ? (
-                        <div className={s.rowMore}>
-                          <NotMineButton target={{ kind: "share", id: box.shareId }} boxName={`${x.fanNickname}님 상자`} reported={box.reportedNotMine} />
                         </div>
                       ) : null}
                     </li>

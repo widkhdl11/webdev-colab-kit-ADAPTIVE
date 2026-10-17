@@ -19,8 +19,11 @@ if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.sho
   HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
     this.setAttribute("open", "");
   };
+  // 브라우저처럼 열려 있던 창을 닫으면 close 이벤트를 낸다(BottomSheet 는 onClose 를 이 이벤트로만 부른다)
   HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+    if (!this.hasAttribute("open")) return;
     this.removeAttribute("open");
+    this.dispatchEvent(new Event("close"));
   };
 }
 
@@ -109,13 +112,17 @@ describe("INV-W15: 등록 주소가 있으면 이름표·바꾼 날과 「확인
     expect(button("확인")).toBeUndefined();
     await click("가짜 돌아가기");
     expect(button("확인")).toBeDefined();
+    // 누른 「돌아가기」가 사라졌다 — 포커스는 입력 칸을 연 「바꾸기」로 돌아온다
+    expect(host.ownerDocument.activeElement).toBe(button("바꾸기"));
   });
 
   it("INV-W15 (실패경로): 기한이 지나 거부되면 그 문장을 보이고 다시 읽는다 — 창은 닫지 않는다", async () => {
     sendReturnConfirm.mockResolvedValue({ kind: "refused", reason: "expired" });
     render(HOME);
     await click("확인");
-    expect(host.ownerDocument.querySelector("[role=alert]")?.textContent).not.toBe("");
+    const alert = host.ownerDocument.querySelector("[role=alert]");
+    expect(alert).not.toBeNull();
+    expect(alert?.textContent).toBe("!기한이 지나 확인할 수 없어요.");
     expect(refresh).toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
   });

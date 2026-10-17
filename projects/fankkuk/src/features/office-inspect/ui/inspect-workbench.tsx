@@ -116,6 +116,8 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
   const [error, setError] = useState<{ title: string; message: string; unknown?: true; local?: true } | null>(null);
   // 반응이 나왔는데 판정 없이 저장을 눌렀다 — 판정 칸을 오류로 표시한다(판정을 고르거나 반응이 없어지면 풀린다)
   const [verdictMissing, setVerdictMissing] = useState(false);
+  // 개봉 결과 없이 기록을 눌렀다 — 고를 때까지 개봉 결과 칸을 오류로 읽힌다
+  const [openedFlagged, setOpenedFlagged] = useState(false);
   const [measuredTier, setMeasuredTier] = useState<MeasuredTier | null>(null);
   const [measurement, setMeasurement] = useState<Measurement | null>(null);
 
@@ -231,6 +233,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
     if (!parcel || busy) return;
     if (openedMissing) {
       setError({ title: "개봉 결과를 먼저 골라 주세요", message: "개봉 대상 상자는 열어 본 결과를 같이 기록해야 해요.", local: true });
+      setOpenedFlagged(true);
       document.getElementById(OPENED_FIRST_ID)?.focus();
       return;
     }
@@ -337,7 +340,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
               <div className={`${a.note} ${w.noteWarn}`}>
                 <InfoIcon />
                 <p>
-                  <strong>개봉 대상 — 추적기 판정 이력</strong>
+                  <strong>개봉 대상 — 위치 추적기 판정 이력</strong>
                 </p>
               </div>
             )}
@@ -425,7 +428,15 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
             )}
 
             {openTarget && checks.kind === "gift" && (
-              <fieldset className={w.choice} disabled={phase !== "form"}>
+              <fieldset
+                id="opened-result"
+                // aria-invalid 를 읽게 라디오 묶음 역할을 준다(아래 추적기 판정 칸과 같다)
+                role="radiogroup"
+                className={w.choice}
+                disabled={phase !== "form"}
+                aria-invalid={openedFlagged && openedMissing ? true : undefined}
+                aria-describedby={openedFlagged && openedMissing ? "opened-result-error" : undefined}
+              >
                 <legend>개봉 결과</legend>
                 <div className={w.opts}>
                   {(["none", "device"] as const).map((v) => (
@@ -442,6 +453,14 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
                     </label>
                   ))}
                 </div>
+                {openedFlagged && openedMissing && (
+                  <p id="opened-result-error" className={a.errorLine}>
+                    <span className={a.errorMark} aria-hidden="true">
+                      !
+                    </span>
+                    개봉 결과를 골라 주세요.
+                  </p>
+                )}
               </fieldset>
             )}
 
@@ -455,7 +474,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
                 aria-invalid={verdictMissing ? true : undefined}
                 aria-describedby={verdictMissing ? "tracker-verdict-error tracker-verdict-hint" : "tracker-verdict-hint"}
               >
-                <legend>{checks.bluetooth === "found" || checks.rf === "found" ? "추적기 판정 — 블루투스·RF 반응이 나왔어요" : "추적기 판정 — 개봉에서 장치가 나왔어요"}</legend>
+                <legend>{checks.bluetooth === "found" || checks.rf === "found" ? "위치 추적기 판정 — 블루투스·RF 반응이 나왔어요" : "위치 추적기 판정 — 개봉에서 장치가 나왔어요"}</legend>
                 <div className={w.opts}>
                   {(["tracker", "not_tracker"] as const).map((v) => (
                     <label key={v} className={w.opt}>
@@ -521,7 +540,7 @@ export function InspectWorkbench({ operatorNickname }: { operatorNickname: strin
               </div>
               <p className={a.hint}>
                 {restriction === "tracker_only"
-                  ? "위치 추적기가 나온 상자는 보관 선반에 두고 크리에이터의 신고 선택을 기다려요."
+                  ? "위치 추적기가 나온 상자는 선반에 두고 크리에이터의 신고 선택을 기다려요."
                   : restriction === "creator_confirm"
                     ? "크리에이터 확인은 사무실에 둔 채 크리에이터의 답을 기다려요. 반송은 바로 반송 대기로 넘어가요."
                   : restriction === "return_only"
