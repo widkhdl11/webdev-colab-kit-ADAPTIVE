@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: passed
-basis: 2d787815b7cc
+basis: c8bdc37899dc
 reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 ---
 
@@ -15,6 +15,7 @@ reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 - test-auditor: 8건(동시 처리 잠금 단언, 열람 거부 갈래 둘, 처분 때 복사본 삭제, alert 요소 존재, 확인한 상자 720시간 뒤 재확인, 환불 0원 아닌 값, 거부 줄 뒤 3회 상한) → 전부 보강.
 - 화면 확인(Playwright): 받은 역조공 처분 목록 「처분 / 상자를 처분했어요」, 상세 500 고친 뒤 처분·대기 상세 열림, 반송 확인 창 닫기·Esc·돌아가기 포커스, 팬·크리에이터·운영자·대표 화면 각 자리(화면 묶음 에이전트).
 - 사인오프 뒤 덧붙임(2026-10-17, 같은 날): 보안 페이지 한계 문장·여는 조건, 「모든 선물 검수」 그대로, 사이트 로고를 마스코트 얼굴로(LogoMark 6곳). ui-reviewer: 중 1(인쇄 카드 80px 에 160px 그림 → 400px 로), 하 2(디자인 기준 옛 로고 줄 → 정리). security-reviewer: 하 1(역조공 검수를 「크기·무게」까지 한다고 적음 — 스펙은 겉면·금지 물품만 → 보안·약관·크리에이터 안내 세 곳 고침). 근거: 로컬 헤더 로고 화면 확인, legal·shared 138/138, copy:lint 0, 게이트 통과.
+- 덧붙임 2(2026-10-17): 환불 규정 크기별 반송 택배비(공개 요금표 return_shipping_krw, 20261017000011)·read-isolation 시드 독립. security-reviewer: 지적 0(칸 4개 고정·grant 동일·파싱 검증). 근거: 단위 2150/2150, 통합 admin-pricing-guards·read-isolation·pii-exposure-check 53/53, 변이(검수비 칸 끼우기·크리에이터 조건 둘) 실패로 잡힘, 로컬 /refund 4,000·5,000·6,500 화면 확인.
 - 실행 근거: 통합 전체 2009/2012 — 실패 3 중 read-isolation 2 는 시드 날짜 고정(BACKLOG 240줄, 이번 변경과 무관), password-reset 1 은 무작위 아이디에 숫자가 없을 때 실패하던 시험 → 태그에 숫자를 넣어 5회 연속 통과 · 반송·추적기·처분·노출 124/124 · 단위 2147/2147 · tsc 0 · copy:lint 0 · 노출 검사 13/13 · 변이: 1차 15건, 3차 DB 17·TS 10, 리뷰 반영 public 재확인 가드·TS 가드 2 모두 실패로 잡힘(개인정보 구역 함수는 로컬에도 바꾸지 않아 변이 안 함 — test-auditor 판정으로 대신).
 
 ## 이전 사인오프
