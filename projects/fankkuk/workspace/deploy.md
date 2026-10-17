@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: deployed
-basis: c8bdc37899dc
+basis: 5cddd80adff3
 ---
 
 # 배포 기록 — fankkuk
@@ -35,3 +35,8 @@ basis: c8bdc37899dc
 - 운영 DB: `supabase db push` 로 20261017000011(공개 요금표에 return_shipping_krw, 개인정보 구역 접촉 0).
 - 앱: main b89af2db push → Vercel 세 프로젝트 빌드 success. 시험 주소 /refund 200, 표에 4,000원 · 5,000원 · 6,500원, / 200.
 
+
+## 2026-10-17 밤 — 디자인 토큰·크리에이터 카드 C안·토큰 감사 4절
+
+- DB 변경 없음(b89af2db 뒤 supabase 폴더 변경 0).
+- 앱: main f1e2ab5d push(커밋 23개 — 고객센터 연락처, 디자인 토큰 적용, 크리에이터 카드 v24 → C안, 토큰 감사 4절 나머지) → Vercel 세 프로젝트 빌드 success. 시험 주소에서 / · /creators · /login · /refund 200, 로그인 전 /me·/creator/settings 는 로그인으로 307.
