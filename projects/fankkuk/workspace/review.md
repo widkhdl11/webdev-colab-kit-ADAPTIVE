@@ -1,11 +1,21 @@
 ---
 project: fankkuk
 status: passed
-basis: 4a04476f95bc
+basis: 2d65a1d3d310
 reviewers: [security-reviewer, code-reviewer, ui-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-18, 약관 4조 단계 칩 · 환불 금액 꼬리표)
+# 리뷰 사인오프 — fankkuk (2026-10-18, 페이지 이동 로딩 화면)
+
+덮는 변경: fee68e34 뒤 — 사용자 선택 「공통 틀 + 로딩 화면」. 직전 페이지가 그린 상단 바·사이드바 값을 화면에 기억(header-memory)하고, loading.tsx 가 그 값으로 상단 바를 다시 그린 뒤 본문 자리만 뼈대(page-loading). 로딩 화면은 아무것도 따로 읽지 않는다(action-center INV-J2·J6). 운영자 화면을 뺀 라우트를 (site) 묶음으로 옮기는 중(22개 옮김, 6개는 개발 서버가 폴더를 잡고 있어 남음 — 남은 폴더는 각자 loading.tsx 가 있어 동작은 같다). design-rules 15절, DECISIONS 2026-10-18.
+
+- 실행 근거: `npx next build` 성공(79 페이지) · `npx tsc --noEmit` 오류 0 · `npx vitest run` 277파일 2176개 통과 · `npm run copy:lint` 금지어 0 · 변이(상단 바가 기억 안 함 → 4 실패, 현재 칸을 가는 주소로 안 옮김 → 1 실패) · Playwright(개발 서버, 팬 로그인) — /home·/gifts·/me/following·/me/actions·/me/revgifts·/creators 사이 이동 다섯 번 모두 사이드바가 한 번도 안 사라지고 본문만 뼈대, 현재 칸이 누른 곳으로 바로 옮겨짐, 로그인 전 /terms → /notices 도 상단 바 유지 · 로그인 없이 상태 코드 — /admin/work/inbound·/admin/creators·/admin/zzz 404(운영자 판정이 응답 전에 끝남), /admin 은 페이지가 없어 크리에이터 주소 규칙으로 가 /아무이름 과 같은 200(색인 금지 표시).
+- code: 높음 1(루트 loading.tsx 가 운영자 틀까지 감싸 /admin 판정이 200 으로 나감) → 운영자 화면 밖 라우트를 (site) 묶음으로 옮기고 로딩 화면을 그 안에만 · 중 2(처음 들어온 순간 틀린 폭 뼈대 · 밖에서 /admin 으로 갈 때 손님 상단 바) → 기억이 없으면 뼈대를 그리지 않음 · 운영자 화면은 루트 로딩 밖이 됨 · 낮음 2 → 하위 페이지 하나뿐인 두 폴더 로딩 화면 삭제, CSS 선언 합침.
+- ui: 중 1(「불러오는 중」 안내가 busy 영역 안·처음부터 글자) → busy 밖, 붙인 뒤 글자 넣기 · 낮음 1(운영자 화면 막대 반경 6) → 토큰 유지, design-rules 15절에 예외로 적음.
+- security: 지적 없음 — 기억은 탭 메모리(useState)뿐 저장소·URL·서버로 안 나감, 로그아웃은 페이지를 통째로 새로 읽어 기억이 비워짐, 운영자 로딩 화면은 상단 바 없이 뼈대만.
+- 남은 것: 폴더 6개(creator·creators·gifts·guide·me·password) (site) 로 옮기기 — BACKLOG.
+
+## 이전 사인오프 (2026-10-18, 약관 4조 단계 칩 · 환불 금액 꼬리표)
 
 덮는 변경: 1660efde 뒤 — 비교 시안 compare-omitted.html 「추천」(사용자 「추천대로하자」). 4조에 단계 칩 줄(화면의 단계 이름 여섯 · 이름표 숫자는 칩 수로 계산 · 승인은 아래 한 줄), 약관 9조와 취소·환불 규정 표의 환불 금액 꼬리표(전액 초록 · 없음 빨강 · 일부 환불은 칠하지 않음). design-rules 14절, DECISIONS 2026-10-18.
 

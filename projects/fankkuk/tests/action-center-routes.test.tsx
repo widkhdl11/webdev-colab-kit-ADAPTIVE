@@ -90,7 +90,7 @@ vi.mock("@/entities/order/api/my-gift-memo", async (orig) => ({ ...(await orig<o
 
 import ActionsRoute from "@/app/me/actions/page";
 import GiftRoute from "@/app/gifts/[orderNo]/page";
-import HomeRoute from "@/app/home/page";
+import HomeRoute from "@/app/(site)/home/page";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
