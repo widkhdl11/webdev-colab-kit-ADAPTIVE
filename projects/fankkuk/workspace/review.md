@@ -1,8 +1,8 @@
 ---
 project: fankkuk
 status: passed
-basis: 4c4d2dbaf941
-reviewers: [code-reviewer, ui-reviewer]
+basis: 1afb99436bb0
+reviewers: [security-reviewer, code-reviewer, ui-reviewer]
 ---
 
 # 리뷰 사인오프 — fankkuk (2026-10-17 밤, 크리에이터 카드 C안)
@@ -13,6 +13,7 @@ reviewers: [code-reviewer, ui-reviewer]
 - code: 높음 1(옛 INV-E14 시험) → 새 규칙으로 · 중 4(--on-fan 죽은 출력, 칩 줄이 카드 링크를 가림, 측정 전 칩 잘림 깜빡임, +N 측정 시험 없음) → 고침(깜빡임은 safe center) · 낮음 4 → 고침(칩 하나 말줄임, 간격은 CSS 에서 읽기, 뱃지 size 하나로, 시험 이름). tests/creator-colors-ui.test.tsx 도 옛 규칙이라 같이 고침.
 - ui: 중 2(취소 창 버튼까지 28, 이름 포커스 테두리 잘림) → 직계 선택자 · 포커스는 카드 전체 테두리로(이름 칸 안쪽 테두리는 글자를 가려서 본체가 다시 고침) · 하 4 → 문서(design-rules 뱃지 크기 범위, tokens.md 새 토큰 둘)·카드 뱃지 최소 폭 44·주석 위치 고침.
 - 사인오프 뒤 추가(사용자 지적 두 가지, CSS 만): hover 테두리가 배너 사진에 가려짐 → 테두리를 사진 위 층(::before, 클릭 통과)으로 · 사진 비중 → 배너 2:1·얼굴 56·줄 사이 6·아래 안쪽 16. 실측 1440 카드 298·배너 139(47%)·높이 모두 같음, 390 카드 330(52%), 가로 넘침 0, 마우스 올림 테두리가 배너 위쪽까지 보임. 관련 시험 208 통과. CSS 값 조정이라 리뷰어는 다시 보내지 않았다.
+- security(랩업 때, 95bd2552 이후 카드 변경 전체): 지적 없음 — 색은 #RRGGBB 꼴 검사 뒤에만 style 에 들어가고, 사진 주소는 공개 저장소 경로 꼴만, 이름·소개는 JSX 이스케이프, 팔로우 버튼은 그 카드의 id 를 받고 누름 칸은 카드 안. `git diff --stat 95bd2552..HEAD` 로 인증·세션·결제·API·DB 파일 변경 0 확인. 시험 정리 한 줄(innerHTML → replaceChildren, 게이트 지적)도 이 basis 에 포함.
 - 남은 것: --on-personal 을 읽는 CSS 가 없다(INV-E14 띠 글자 계산은 스펙에 남김) · 배너 「흰 부분 줄이기」는 사용자 답 대기.
 
 ## 이전 사인오프
