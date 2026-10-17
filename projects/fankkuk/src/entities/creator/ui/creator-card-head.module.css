@@ -1,5 +1,5 @@
 /* 크리에이터 카드 머리(creator-card-head.tsx) — 공개 페이지 머리(creator-profile.module.css .cover/.photo/.ringed)를 작게.
-   띠는 카드 안쪽 여백(--space-5)만큼 바깥으로 나간다. 사진만 띠에 반쯤 걸치고 이름 줄(children)은 띠 아래에서 시작한다. */
+   띠는 카드 안쪽 여백(--space-6, 24)만큼 바깥으로 나간다. 사진만 띠에 반쯤 걸치고 이름 줄(children)은 띠 아래에서 시작한다. */
 .cover { overflow: hidden; height: 88px; margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) 0; background: var(--personal, var(--primary-50)); }
 .coverImg { display: block; width: 100%; height: 100%; object-fit: cover; }
 .top { display: flex; align-items: flex-start; gap: var(--space-3); margin-top: var(--space-3); }

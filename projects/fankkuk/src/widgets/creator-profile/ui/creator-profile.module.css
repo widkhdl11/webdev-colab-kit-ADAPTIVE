@@ -33,8 +33,8 @@
 
 /* 로그인 전 — 머리·통계·접는 칸·선물 보내기·비슷한 크리에이터를 880 한 기둥에(v23 감사표 2절) */
 .pub :global(.pub-inner) { max-width: calc(var(--col-profile) + 2 * var(--gutter)); }
-.pub .pf { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); max-width: var(--col-profile); margin-inline: auto; padding: var(--space-12) var(--card-pad); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); text-align: center; }
-.pub .cover { align-self: stretch; margin: calc(var(--space-12) * -1) calc(var(--card-pad) * -1) 0; border-radius: var(--r-card) var(--r-card) 0 0; }
+.pub .pf { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); max-width: var(--col-profile); margin-inline: auto; padding: var(--space-12) var(--panel-pad); border-radius: var(--r-panel); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); text-align: center; }
+.pub .cover { align-self: stretch; margin: calc(var(--space-12) * -1) calc(var(--panel-pad) * -1) 0; border-radius: var(--r-panel) var(--r-panel) 0 0; }
 .pub .photo { width: 88px; height: 88px; margin-top: calc(-44px - var(--space-4)); font-size: var(--fs-page); }
 .pub .pfMain { display: flex; flex-direction: column; align-items: center; gap: var(--space-6); }
 /* 네 묶음 — 이름+팬덤 뱃지 / 칩 줄 / 소개·인사말 / 버튼+안내. 묶음 사이 24 · 묶음 안 8 */

@@ -25,7 +25,7 @@
 .box-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
 .box-head h3 { font-size: var(--fs-card); }
 .wait { display: flex; align-items: flex-start; gap: 12px; margin-top: 12px; color: var(--sub); }
-.reply { margin-top: 12px; padding: 24px 28px; border-radius: 24px; background: var(--surface-selected); }
+.reply { margin-top: 12px; padding: var(--space-6); border-radius: var(--r-card); background: var(--surface-selected); }
 .reply-top { display: flex; align-items: center; gap: 12px; }
 .reply-top b { font-size: var(--fs-card); }
 .reply-top .d { margin-left: auto; color: var(--sub); }
@@ -40,7 +40,7 @@
 .reply-foot { display: flex; justify-content: flex-end; margin-top: 24px; }
 .share { margin-top: 16px; padding: 24px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
 .share-sizes { display: flex; flex-wrap: wrap; gap: 12px; }
-.share-prev { display: block; width: 100%; max-width: 360px; height: auto; margin-top: 16px; border-radius: 16px; box-shadow: var(--hair); }
+.share-prev { display: block; width: 100%; max-width: 360px; height: auto; margin-top: var(--space-4); border-radius: var(--r-card); box-shadow: var(--hair); }
 .share-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .share-text { margin-top: 12px; color: var(--sub); }
 

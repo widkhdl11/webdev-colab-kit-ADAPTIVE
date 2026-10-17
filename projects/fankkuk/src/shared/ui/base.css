@@ -708,7 +708,7 @@ textarea.field:where(:not(.admin-area *)) { padding-block: var(--space-4); }
 .nlist li + li:where(:not(.admin-area *)) { margin-top: 0; }
 .nlist a:where(:not(.admin-area *)) { padding: var(--space-4) var(--space-2); border-radius: 0; background: none; box-shadow: inset 0 -1px 0 var(--gray-200); }
 .nlist a:where(:not(.admin-area *)):hover { background: var(--gray-50); }
-.quote:where(:not(.admin-area *)) { padding: var(--space-4); border-radius: var(--r-btn); background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.quote:where(:not(.admin-area *)) { padding: var(--space-4); border-radius: var(--r-card); background: var(--gray-50); box-shadow: inset 0 0 0 1px var(--gray-200); }
 .quote q:where(:not(.admin-area *)) { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.6; }
 .info .ic:where(:not(.admin-area *)) { width: 40px; height: 40px; margin-bottom: var(--space-2); background: var(--primary-50); color: var(--brand-ink); }
 .info .ic svg:where(:not(.admin-area *)) { width: var(--icon-xs); height: var(--icon-xs); }
@@ -775,4 +775,4 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
 /* 제목 줄 오른쪽 「모두 보기」 링크 — 프로필·마이꾹 공통 모양(v23 감사표 2·3절). 목록 아래 버튼·가운데 버튼을 대신한다 */
 .head-row:where(:not(.admin-area *)) { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
 .head-row > :first-child:where(:not(.admin-area *)) { flex: 1 1 auto; min-width: 0; margin: 0; }
-.more-link:where(:not(.admin-area *)) { flex: none; font-size: var(--fs-body); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.more-link:where(:not(.admin-area *)) { flex: none; display: inline-flex; align-items: center; min-height: 44px; /* 누름 칸 44 */ font-size: var(--fs-body); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }

@@ -18,7 +18,7 @@
 }
 
 /* 첫 화면 — 하늘 그라데이션 둥근 판(시안 v20 C안). 안쪽 카드는 반투명 흰색 */
-.hero.hero { position: relative; padding: var(--hero-pad-top) var(--hero-px) 64px; border-radius: var(--r-card); background: var(--grad-hero); overflow-x: clip; }
+.hero.hero { position: relative; padding: var(--hero-pad-top) var(--hero-px) 64px; border-radius: var(--r-panel); background: var(--grad-hero); overflow-x: clip; }
 .heroText { max-width: var(--hero-max); margin-inline: auto; }
 /* 머리말 → 제목 8 → 설명 16 (v23 감사표 1절). 머리말은 16/600 짙은 회색 — 제목 아래 설명(16/400 회색)보다 또렷하게 */
 .heroText > :global(.t-lead) { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; color: var(--gray-900); }

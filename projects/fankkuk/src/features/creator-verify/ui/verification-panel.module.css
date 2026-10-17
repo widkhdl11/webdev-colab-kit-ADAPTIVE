@@ -6,7 +6,7 @@
 
 .lead { margin-bottom: 24px; }
 
-.box { display: grid; gap: 16px; padding: 28px; border-radius: var(--r-tile); background: var(--surface); }
+.box { display: grid; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-tile); background: var(--surface); }
 .box-top { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
 .channel { min-width: 0; overflow-wrap: anywhere; font-weight: var(--fw-bold); }
 
