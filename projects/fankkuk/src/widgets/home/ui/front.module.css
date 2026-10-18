@@ -67,18 +67,18 @@
 .num { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-btn); color: var(--brand-ink); }
 .stepsLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-6); font-size: var(--fs-caption); color: var(--gray-600); }
 
-/* ④·④-2 카드 줄 — 크리에이터 찾기와 같은 카드 틀(design-rules 17절). 본문 칸 828 이상 3열 · 544 이상 2열(카드 260 이상),
+/* ④·④-2 카드 줄 — 크리에이터 찾기와 같은 카드 틀(design-rules 17절). 본문 칸 678 이상 3열 · 444 이상 2열(카드 210 이상),
    찾기 격자와 같은 기준(DECISIONS 2026-10-18). 그 아래는 옆으로 넘기는 한 줄(카드 68%, 한 장씩 멈춤).
    넘기는 줄은 넘침을 자르므로 카드 초점 테두리(3px + 2px)가 잘리지 않게 사방 8 여백을 두고 같은 값만큼 바깥으로 당긴다 */
 .slot:has(.cardRow) { container-type: inline-size; }
 .cardRow { display: flex; gap: var(--space-4); margin: calc(var(--space-2) * -1); padding: var(--space-2); list-style: none; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--space-2); }
 .cardRow > li { flex: 0 0 68%; scroll-snap-align: start; }
-/* 칸 폭 544 이상은 격자 — 카드 260 이상이 되는 만큼 최대 3열(찾기 격자와 같은 기준, 2026-10-18 「그렇게 해줘」). 2열이면 셋째 카드는 다음 줄 */
-@container (min-width: 544px) {
+/* 칸 폭 444 이상은 격자 — 카드 210 이상이 되는 만큼 최대 3열(찾기 격자와 같은 기준, 2026-10-18). 2열이면 셋째 카드는 다음 줄 */
+@container (min-width: 444px) {
   .cardRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: var(--space-6); margin: 0; padding: 0; overflow: visible; }
   .cardRow > li { flex: none; }
 }
-@container (min-width: 828px) {
+@container (min-width: 678px) {
   .cardRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
