@@ -1,0 +1,87 @@
+/* 광고 배너 넘김 칸 — 시안 docs/design/mockups/site/v27-home-airy/compose.js 의 .tb-wide·.tb-track·.tb-side·.tb-bar·.tb-dots·.tb-btn·.tb-count.
+   폭(시안 compose.js 의 계산을 CSS 로): PC 배너 칸 = min(바깥 폭 - 48, 본문 + 360), 가운데 장 = 배너 칸의 56%.
+   좁은 화면(바깥 폭 700 미만)은 배너 칸 = 바깥 폭, 가운데 장 = 바깥 폭 - 88(양옆 약 32 보임).
+   바깥 폭: 로그인 전(가운데 틀) = 화면 폭 / 로그인 후(.page-pane 은 inline-size 컨테이너) = 칸 안쪽 폭 + 양옆 여백.
+   칸(.slot)은 본문 기둥 폭 그대로 두고, 안의 넓은 판(.wide)이 양쪽으로 같은 만큼 나간다(base.css .pane-wide 와 같은 방식). */
+.slot { min-width: 0; }
+.wide {
+  --gap: var(--space-6);
+  --outer: 100vw;
+  --pad: var(--gutter);
+  --w: min(calc(var(--outer) - 48px), calc(100% + 360px));
+  width: var(--w);
+  margin-inline: calc((100% - var(--w)) / 2);
+}
+:global(.page-pane) .wide { --outer: calc(100cqi + 80px); --pad: 40px; }
+@media (max-width: 768px) {
+  :global(.page-pane) .wide { --outer: calc(100cqi + 32px); --pad: 16px; }
+}
+
+/* 장은 모두 한 칸에 겹쳐 두고 --d(가운데에서 몇 칸 옆)만큼 옮긴다 — 칸 높이는 가장 큰 장에 맞춘다 */
+.track { display: grid; grid-template-columns: 56%; justify-content: center; overflow: clip; padding-block: var(--space-2); }
+.item {
+  position: relative;
+  grid-area: 1 / 1;
+  display: grid;
+  min-width: 0;
+  transform: translateX(calc(var(--d) * (100% + var(--gap))));
+  transition: transform 0.45s ease, opacity 0.45s ease;
+}
+.item > :first-child { height: 100%; }
+.item[data-side="true"] { opacity: 0.45; transform: translateX(calc(var(--d) * (100% + var(--gap)))) scale(0.94); }
+.item[data-far="true"] { visibility: hidden; opacity: 0; }
+.item[data-jump="true"] { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .item { transition: none; }
+}
+
+.count {
+  position: absolute;
+  right: var(--space-6);
+  bottom: var(--space-4);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ink) 60%, transparent);
+  color: var(--white);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  font-weight: var(--fw-btn);
+}
+
+/* 아래 줄 ‹ · 점 · 멈춤 · › */
+.bar { display: flex; align-items: center; justify-content: center; gap: var(--space-3); margin-top: var(--space-2); }
+.btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--field-line);
+  color: var(--ink);
+  cursor: pointer;
+}
+.btn:hover { background: var(--gray-50); }
+.btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dots { display: flex; align-items: center; }
+/* 누르는 칸은 24 — 보이는 점은 8(지금 장은 24 길이) */
+.dot { display: grid; place-items: center; min-width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; }
+.dot::before { content: ""; width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--gray-500); }
+.dot[aria-current="true"] { min-width: 32px; }
+.dot[aria-current="true"]::before { width: 24px; background: var(--ink); }
+.btn:focus-visible, .dot:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* 좁은 화면 — 배너 칸 = 바깥 폭(본문 양옆 여백까지), 가운데 장 = 바깥 폭 - 88. 로그인 후 틀 안은 칸 폭으로 잰다 */
+@media (max-width: 699px) {
+  .wide { width: calc(100% + 2 * var(--pad)); margin-inline: calc(-1 * var(--pad)); --gap: var(--space-3); }
+  .track { grid-template-columns: calc(100% - 88px); }
+}
+@container (max-width: 619px) {
+  .wide { width: calc(100% + 2 * var(--pad)); margin-inline: calc(-1 * var(--pad)); --gap: var(--space-3); }
+  .track { grid-template-columns: calc(100% - 88px); }
+}
+@media (max-width: 767px) {
+  .step { display: none; }
+}

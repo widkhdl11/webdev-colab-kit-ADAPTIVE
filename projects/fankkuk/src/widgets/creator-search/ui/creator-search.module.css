@@ -45,3 +45,6 @@
   .pub { padding-top: var(--space-4); }
   .grid { gap: var(--space-4); }
 }
+
+/* 광고 배너 칸(태그 칩 아래·목록 위, 시안 v18/creators.html 의 .ad-slot) — 칩과 사이 24 */
+.chips + [data-banner-slot] { margin-top: var(--space-6); }

@@ -85,6 +85,8 @@ vi.mock("@/entities/payment/api/read-tier-prices", async (orig) => {
   const price = (priceKrw: number) => ({ priceKrw, revgiftPriceKrw: priceKrw, returnShippingKrw: 0 });
   return { ...(await orig<object>()), readPublicPrices: vi.fn(async () => ({ small: price(6900), medium: price(8900), large: price(10900) })) };
 });
+// 홈 칸 ② 광고 배너 공개 읽기(banners) — 이 시험의 대상이 아니라 빈 목록으로 둔다
+vi.mock("@/entities/banner/api/read-banners", () => ({ readPublicBannersOrNull: vi.fn(async () => []) }));
 vi.mock("@/entities/notice/api/notice-reads", async (orig) => ({ ...(await orig<object>()), readNotices: vi.fn(async () => []) }));
 vi.mock("@/shared/api/supabase/detached", () => ({ readPublicStorageBase: () => "http://storage.test" }));
 vi.mock("@/entities/parcel/api/box-reads", () => ({ readMyGiftBoxes: vi.fn(async () => []) }));

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ACTION_CENTER_HREF } from "@/entities/action-item/model/action-items";
 import type { CardLook } from "@/entities/creator/model/card-look";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
@@ -10,7 +11,7 @@ import s from "./front.module.css";
 import h from "./home.module.css";
 
 // 팬 홈(로그인 뒤, design-rules 16절, 시안 v27-home-airy 오른쪽). 로그인 전 첫 화면과 같은 칸 순서에서 바뀌는 칸만 「-2」:
-// ①-2 「OO님」 + 내 바로가기 → (② 광고 배너 — 스펙 승인 뒤) → ③-2 진행 중인 선물 → ④-2 팔로우한 크리에이터 → ⑤-2 약속(가입 버튼 없음) → ⑥ 요금 → ⑦ 공지.
+// ①-2 「OO님」 + 내 바로가기 → ② 광고 배너(라우트가 넘긴 칸, 0장이면 없음 — banners INV-Y8) → ③-2 진행 중인 선물 → ④-2 팔로우한 크리에이터 → ⑤-2 약속(가입 버튼 없음) → ⑥ 요금 → ⑦ 공지.
 // 「처리할 일」 칸의 숫자는 사이드바 숫자와 같은 처리할 일 읽기 결과의 줄 수다(action-center INV-J2) — 따로 세지 않는다.
 // 팬 화면이라 선물은 팬용 모양(toFanView)만 받는다 — 크리에이터행 송장번호·주소가 여기 닿지 않는다.
 
@@ -29,6 +30,8 @@ type Props = {
   actionCount: number | null;
   /** 받은 선물(크리에이터가 보낸 선물) 수 — 받은 선물 화면 목록 전체. 못 읽었으면 null */
   receivedCount: number | null;
+  /** 칸 ② 광고 배너 — 라우트가 넘김 부품을 넣는다. 보일 배너가 없으면 null */
+  banner?: ReactNode;
 };
 
 /** 숫자 칸의 작은 글 — 못 읽은 수(null)는 「0건」처럼 사실로 보이지 않게 비운다 */
@@ -44,11 +47,12 @@ export function memberTiles({ gifts, actionCount, receivedCount }: Pick<Props, "
   ];
 }
 
-export function HomePage({ nickname, gifts, following, looks, faceToneByName, notices, prices, actionCount, receivedCount }: Props) {
+export function HomePage({ nickname, gifts, following, looks, faceToneByName, notices, prices, actionCount, receivedCount, banner = null }: Props) {
   return (
     <main id="main" className="page-pane">
       <div className={s.root}>
         <SearchSlot eyebrow={nickname ? `${nickname}님` : undefined} tiles={memberTiles({ gifts, actionCount, receivedCount })} tilesLabel="내 바로가기" />
+        {banner}
         <GiftsSlot gifts={gifts} faceToneByName={faceToneByName} />
         <CreatorCardsSlot
           id="follow"

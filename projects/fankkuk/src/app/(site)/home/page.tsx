@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { readPublicBannersOrNull } from "@/entities/banner/api/read-banners";
 import { readCreatorCards, readCreatorLooks } from "@/entities/creator/api/creator-reads";
 import { toCardLooks } from "@/entities/creator/model/card-look";
 import { readFanProfile } from "@/entities/fan/api/read-fan-profile";
@@ -10,6 +11,7 @@ import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { readReceivedRevgiftsOrNull } from "@/entities/revgift/api/revgift-reads";
 import { CREATOR_HOME } from "@/entities/session/model/home-path";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
+import { bannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
 import { CARD_ROW_MAX } from "@/widgets/home/ui/front-slots";
 import { HomePage } from "@/widgets/home/ui/home-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -26,8 +28,8 @@ export default async function Page() {
   if (viewer?.role === "creator") redirect(CREATOR_HOME);
   if (viewer?.role !== "fan") redirect("/login");
   // 서로 기대지 않는 읽기는 한꺼번에. 머리말 닉네임은 프로필에서 — 못 읽으면 세션의 닉네임.
-  // 처리할 일은 한 번 읽어 사이드바 숫자와 바로가기 「처리할 일」 칸에 함께 넘긴다(action-center INV-J2). 못 읽으면 칸의 숫자와 사이드바 뱃지를 뺀다. 받은 선물 수도 못 읽으면 칸의 숫자만 뺀다
-  const [all, cards, fanProfile, noticeRows, actions, received, prices] = await Promise.all([
+  // 처리할 일은 한 번 읽어 사이드바 숫자와 바로가기 「처리할 일」 칸에 함께 넘긴다(action-center INV-J2). 못 읽으면 칸의 숫자와 사이드바 뱃지를 뺀다. 받은 선물 수도 못 읽으면 칸의 숫자만 뺀다. 광고 배너(칸 ②)를 못 읽으면 칸만 없다(banners INV-Y8)
+  const [all, cards, fanProfile, noticeRows, actions, received, prices, banners] = await Promise.all([
     readMyGiftViews(supabase),
     readCreatorCards(supabase, { signedIn: true }),
     readFanProfile(supabase, viewer.userId),
@@ -35,6 +37,7 @@ export default async function Page() {
     readActionItemsOrNull(supabase),
     readReceivedRevgiftsOrNull(supabase),
     readPublicPrices(supabase),
+    readPublicBannersOrNull(supabase, readPublicStorageBase()),
   ]);
   const gifts = all.filter((v) => fanGiftBucket(v) === "ongoing");
   const following = cards.filter((c) => c.following);
@@ -59,6 +62,7 @@ export default async function Page() {
         prices={prices}
         actionCount={actions?.length ?? null}
         receivedCount={received?.length ?? null}
+        banner={bannerSlot(banners)}
       />
       <SiteFooter />
     </>

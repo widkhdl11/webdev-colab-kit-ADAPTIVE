@@ -46,6 +46,8 @@ type Props = {
   ongoingCount: number | null;
   /** 내가(로그인한 사람이) 보낸 선물. */
   sentGifts: readonly FanGiftView[];
+  /** 광고 배너 — 바로가기 아래·공지 위(design-rules 16절 ②). 라우트가 넘김 부품을 넣는다. 보일 배너가 없으면 null */
+  banner?: ReactNode;
 };
 
 /** 「최근 열람 기록」은 한 줄만 쓴다 — 라우트가 이만큼만 읽는다. */
@@ -86,7 +88,7 @@ function Row({ href, icon, title, meta, value }: { href: string; icon: keyof typ
   );
 }
 
-export function CreatorHomePage({ profile, accountHref, notices, actionCount, accessLog, ongoingCount, sentGifts }: Props) {
+export function CreatorHomePage({ profile, accountHref, notices, actionCount, accessLog, ongoingCount, sentGifts, banner = null }: Props) {
   const lastLog = accessLog[0];
   return (
     <main id="main" className={`page-pane ${s.pane}`}>
@@ -167,6 +169,8 @@ export function CreatorHomePage({ profile, accountHref, notices, actionCount, ac
           </ul>
           <p className={`t-meta ${s.secFoot}`}>{NO_ADDRESS_ASK}</p>
         </section>
+
+        {banner}
 
         <HomeNotices notices={notices} />
       </div>
