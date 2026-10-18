@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: passed
-basis: 94477ad1efaf
+basis: 86204fbb4230
 reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 ---
 
@@ -16,3 +16,4 @@ reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 - ui-reviewer: 4건 — 설정 카드 미리보기 머리만 → 카드 전체 / 휴대폰 홈 카드 줄 초점 테두리 잘림 → 여백 / 칩·뱃지 왼쪽 3px → 아이콘 보정이라 유지 / design-rules 권장 크기 1200×480 → 1200×600.
 - code-reviewer: 8건 — 홈 4→3장 근거(design-rules 16절·DECISIONS 기록) / personal 타입 ThemeColor 로 좁힘·재검사 한곳 / 쓰이지 않는 --on-personal 삭제(띠 위 글자 없음 — 스펙 INV-E14 고침) / 카드 틀 CSS 중복 하나로 / 주석 잔재 / 「내 페이지」 태그 누름 통과 / NO_COLORS / 미리보기 creatorId.
 - 실행 근거: `npm test` 284 파일 2252 통과 · `tsc` 0 · copy:lint 0 · `creator-settings-db` 통합 35 통과 · 변이: DB 8색 검사 끔 → S12b 실패, 마이그레이션 비우기 뺌 → S12c 실패, --badge-ink 흰색 → S13 실패 · Playwright /creators 1440(3열·24)·390(1열·16) 콘솔 에러 0·가로 넘침 0, 설정 테마 색 칸(시험 계정 하루, 개발 서버).
+- 추가(사용자 「A로」): 이름·뱃지를 한 줄 → 이름 줄 아래 뱃지 줄. ui-reviewer 지적 없음. 실행 근거: `npm test` 2252 통과 · tsc 0 · 자리 시험을 두 줄 구조로 고쳐 옛 한 줄 구조에서 1 실패 확인 · Playwright 이름 19자·팬덤 10자 넣어 1440·1024·390 에서 뱃지 전부 보임(뱃지 폭 133), 카드 높이 324 로 같음.

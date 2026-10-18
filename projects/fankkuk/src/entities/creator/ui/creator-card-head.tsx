@@ -11,7 +11,8 @@ import s from "./creator-card-head.module.css";
 // 크리에이터 카드 — 크리에이터 찾기·팔로우한 크리에이터·홈 새 크리에이터가 같이 쓴다(design-rules 17절 「크리에이터 카드 v28」,
 // 시안 docs/design/mockups/site/v28-card-redesign/index.html, DECISIONS 2026-10-18).
 // 위에서 아래로(줄 사이 8): 배너 2:1(배경사진, 없으면 테마 색 면 그대로 또는 파스텔 + 오른쪽 흐린 고양이)
-// → 사진 64(배너에 32 걸침, 왼쪽) + 오른쪽에 이름(600·한 줄 말줄임)·팬덤 뱃지 한 줄(CreatorCardHead)
+// → 사진 64(배너에 32 걸침, 왼쪽) + 오른쪽에 이름(600·한 줄 말줄임) 한 줄, 그 아래 팬덤 뱃지 한 줄(CreatorCardHead)
+//   — 한 줄에 나란히 두면 긴 이름이 뱃지를 「하..」까지 밀어내서 두 줄로 나눴다(2026-10-18 사용자 「A로」)
 // → 「채널 이름 · 소개」 한 줄(CreatorCardLine) → 플랫폼 칩 한 줄(CreatorCardTags)
 // → 하단 줄(CreatorCardFoot): 왼쪽 평균 승인 시간 · 오른쪽 버튼(팔로우·팔로우 중·내 페이지), 칩 줄과 12 띄움.
 // 줄마다 자리가 고정이다 — 소개·칩이 없어도 빈칸으로 남아 카드 높이가 같다.
@@ -50,16 +51,21 @@ export function CreatorCardHead({
       </div>
       <div className={s.who}>
         <CreatorPhoto photoUrl={look.photoUrl} tone={faceTone} className={`face ${s.photo}`} />
-        <p className={s.name}>
-          {href ? (
-            <Link href={href} title={name}>
-              {name}
-            </Link>
-          ) : (
-            <span title={name}>{name}</span>
-          )}
-          {look.fanName ? <FandomBadge name={look.fanName} symbolUrl={look.symbolUrl} themeColor={theme} /> : null}
-        </p>
+        <div className={s.id}>
+          <p className={s.name}>
+            {href ? (
+              <Link href={href} title={name}>
+                {name}
+              </Link>
+            ) : (
+              <span title={name}>{name}</span>
+            )}
+          </p>
+          {/* 뱃지 줄 — 뱃지가 없어도 자리는 남는다(카드 높이를 같게) */}
+          <p className={s.badgeRow}>
+            {look.fanName ? <FandomBadge name={look.fanName} symbolUrl={look.symbolUrl} themeColor={theme} /> : null}
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ describe("칩 줄에 들어가는 칩 수", () => {
   });
 });
 
-describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름·뱃지 한 줄, 하단 줄 (design-rules 17절)", () => {
+describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름 줄·뱃지 줄, 하단 줄 (design-rules 17절)", () => {
   const head = (fanName: string | null, personal: string | null = null, href: string | null = "/c/dawn") =>
     dom(
       renderToStaticMarkup(
@@ -62,13 +62,22 @@ describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름·뱃지 한 줄,
     expect(preview.querySelector("[title]")?.textContent).toBe("새벽달빛라디오하루별이야하루별이달빛방송");
   });
 
-  it("팬덤 뱃지는 이름과 같은 줄(이름 바로 뒤) — 사진은 그 줄 앞", () => {
+  it("팬덤 뱃지는 이름 아래 자기 줄 — 이름 줄과 나눠서 긴 이름이 뱃지를 밀어내지 않는다, 사진은 두 줄 앞", () => {
     const host = head("달빛지기");
     const badge = host.querySelector("[data-fandom-badge]");
     expect(badge?.textContent).toBe("달빛지기");
-    expect(badge?.previousElementSibling?.tagName).toBe("A");
-    expect(badge?.parentElement?.previousElementSibling?.classList.contains("face")).toBe(true);
-    expect(head(null).querySelector("[data-fandom-badge]")).toBeNull();
+    const badgeRow = badge?.parentElement;
+    // 뱃지 줄에는 뱃지뿐, 바로 위 형제가 이름 줄(링크 하나)
+    expect(badgeRow?.children.length).toBe(1);
+    const nameRow = badgeRow?.previousElementSibling;
+    expect(nameRow?.querySelector("a")?.textContent).toBe(nameRow?.textContent);
+    expect(nameRow?.contains(badge ?? null)).toBe(false);
+    // 두 줄을 감싼 칸 바로 앞이 사진
+    expect(badgeRow?.parentElement?.previousElementSibling?.classList.contains("face")).toBe(true);
+    // 뱃지가 없어도 뱃지 줄 자리는 남는다(카드 높이를 같게)
+    const empty = head(null);
+    expect(empty.querySelector("[data-fandom-badge]")).toBeNull();
+    expect(empty.querySelector("a")?.parentElement?.nextElementSibling?.tagName).toBe("P");
   });
 
   it("INV-E13 S12: 사진 없는 배너·팬덤 뱃지가 테마 색을 쓴다(머리 변수 --personal · 뱃지 면)", () => {

@@ -15,21 +15,24 @@
 .cover { position: relative; overflow: hidden; aspect-ratio: 2 / 1; margin: calc(var(--card-pad) * -1) calc(var(--card-pad) * -1) 0; background: var(--pastel, var(--primary-50)); }
 .ringed .cover { background: var(--personal); }
 
-/* 사진 64(배너에 32 걸침, 왼쪽 — 카드 안쪽 여백 24 선) + 오른쪽에 이름·팬덤 뱃지 한 줄(높이 32) */
+/* 사진 64(배너에 32 걸침, 왼쪽 — 카드 안쪽 여백 24 선) + 오른쪽에 이름 한 줄 · 그 아래 뱃지 한 줄(2026-10-18 「A로」 — 한 줄에 두면 긴 이름이 뱃지를 밀어낸다) */
 .who { display: flex; align-items: flex-start; gap: var(--space-2); min-width: 0; }
 .photo:global(.face) { position: relative; flex: none; width: 64px; height: 64px; margin-top: -32px; box-shadow: 0 0 0 3px var(--white); }
 .ringed .photo:global(.face) { box-shadow: 0 0 0 3px var(--personal), 0 0 0 6px var(--white); }
+.id { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; min-width: 0; }
 
-/* 이름(16 · 600, 한 줄 말줄임 — 전체 이름은 title) + 뱃지. 이름이 먼저 줄고, 뱃지는 최소 폭 44 까지 */
-.name { display: flex; align-items: center; gap: var(--space-2); flex: 1; min-width: 0; height: 32px; margin: 0; font-size: var(--fs-body); font-weight: var(--fw-h3); line-height: 1.4; }
-.name > a, .name > span:not([data-fandom-badge]) { flex: 0 1 auto; min-width: 2.2em; overflow: hidden; color: inherit; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+/* 이름(16 · 600, 한 줄 말줄임 — 전체 이름은 title). 이름 칸이 뱃지와 폭을 나누지 않는다 */
+.name { height: 24px; margin: 0; overflow: hidden; font-size: var(--fs-body); font-weight: var(--fw-h3); line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
+.name > a, .name > span { color: inherit; text-decoration: none; }
 .name a:hover { text-decoration: underline; text-underline-offset: 4px; }
 /* 이름 링크가 카드 전체를 덮으므로 포커스 테두리는 카드(li)에 그린다 — 찾기·팔로우·홈 화면의 .card:has. 이름 칸은 overflow 로 잘리므로 여기선 끈다 */
 .name a:focus-visible { outline: none; }
 /* 카드 전체가 프로필 링크 — 이름 링크가 카드(position: relative)를 덮는다. z-index 1 = 칩 줄(position: relative)·사진보다 위(하단 버튼 .act 는 2) */
 .name a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
-/* 카드 안 뱃지만 최소 폭 44(시안 .fn) — 이름이 길어도 마크와 글자 한두 자는 남는다. 다른 곳의 뱃지는 그대로 */
-.name > [data-fandom-badge] { flex: 0 100 auto; min-width: 44px; overflow: hidden; }
+
+/* 팬덤 뱃지 줄(높이 22) — 뱃지가 없어도 빈칸으로 남는다. 뱃지는 이 줄 폭 안에서만, 넘치면 잘린다(팬덤 이름은 최대 10자라 보통 다 보인다) */
+.badgeRow { display: flex; align-items: center; height: 22px; margin: 0; min-width: 0; }
+.badgeRow > [data-fandom-badge] { min-width: 0; max-width: 100%; overflow: hidden; }
 
 /* 「채널 이름 · 소개」 한 줄(14 회색, 높이 21) — 비어도 자리는 남는다 */
 .line { height: 21px; margin: 0; overflow: hidden; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); text-overflow: ellipsis; white-space: nowrap; }
