@@ -1,7 +1,7 @@
 import type { LegalBlock, LegalDoc } from "../model/legal-doc";
 import s from "./legal.module.css";
 
-// 안내 글 화면(보안·검수·이용 안내·분쟁 안내). 시안: docs/design/mockups/site/v18/legal.html — 로그인 전 1152 선
+// 안내 글 화면(보안·검수·이용 안내·분쟁 안내). 시안: docs/design/mockups/site/v18/legal.html — 로그인 전 880 선
 // 버전이 있는 세 글(이용약관·개인정보처리방침·취소·환불 규정)은 policy-page(v26)로 옮겼다.
 // 페이지 머리(제목 24 왼쪽·설명) → 사실 카드 셋 → 맨 위 목차 카드 → 조마다 구분선 + 제목 + 글(760 기둥).
 // 표는 쓰지 않는다 — 이름·값 줄(rows)은 카드 격자로, 휴대폰 폭에서는 한 줄에 하나씩 쌓여 가로로 밀리지 않는다.

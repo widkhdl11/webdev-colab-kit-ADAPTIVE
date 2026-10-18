@@ -13,7 +13,7 @@ import { PROMISE } from "@/shared/config/site-copy";
 import { orBlank, SITE_INFO, SITE_INFO_BLANK } from "@/shared/config/site-info";
 import s from "./support.module.css";
 
-// 고객센터. 시안: docs/design/mockups/site/v18/support.html — 로그인 전 1152 선, 페이지 머리 + 구간 넷(질문·문의·내 문의·연락처) 사이 48
+// 고객센터. 시안: docs/design/mockups/site/v18/support.html — 로그인 전 880 선, 페이지 머리 + 구간 넷(질문·문의·내 문의·연락처) 사이 48
 // 1:1 문의: 로그인하지 않았으면 버튼이 로그인 화면으로 가고, 로그인했으면 실제로 접수한다(결정 d25).
 // 그 아래 「내 문의」는 자주 묻는 질문과 같은 펼치는 줄로 보인다(쓴 사람 본인 것만 — DB 가 거른다).
 // 요금 답변의 숫자는 결제와 같은 DB 요금표(서버 page 가 읽어 넘긴다)를, 구간 기준은 size-tier 를 읽는다.

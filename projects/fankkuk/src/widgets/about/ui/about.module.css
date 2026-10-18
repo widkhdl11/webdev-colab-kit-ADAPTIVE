@@ -1,7 +1,7 @@
 /* 팬꾹 소개 화면 전용 — 시안 docs/design/mockups/site/v18/about.html · v18-pub.css 「소개: 히어로 · 장면 · 흐름 · 마무리」.
    구간 사이: 첫 화면 아래·이어진 구간 64(.near), 큰 구간 96(.far, 휴대폰 64). 카드·판·표·태그는 전역 클래스. 화면 전용 크기는 여기 변수로만 */
 .root {
-  --deco: 160px;
+  --deco: 96px; /* 본문 880 안 글 680 바깥 여백(양옆 100) 안에 들어가게 — 2026-10-18 로그인 전 폭 1152 → 880 */
   --deco-top: 48px;
   --deco-edge: 0px;
   --pdeco: 96px;
@@ -9,8 +9,8 @@
   --scene-art: 112px;
   --scene-arrow: 40px;
   --scene-cols: auto minmax(0, 1fr) var(--scene-arrow) minmax(0, 1.35fr);
-  --flow-cols: 5;
-  --flow-dir: column;
+  --flow-cols: 1; /* 2026-10-18 본문 880 — 다섯 장을 나란히 두면 카드 안이 약 105 라 「입력하자마자」(약 120)가 낱말 중간에서 끊긴다. 예전 1023 이하 배치(한 줄에 한 단계)를 모든 폭에 */
+  --flow-dir: row;
   --cols-3: 3;
 }
 .root :global(.sec-head) { margin-bottom: var(--space-8); }
@@ -53,7 +53,7 @@
 .sceneArrow { display: block; width: var(--scene-arrow); height: var(--scene-arrow); color: var(--brand-ink); }
 .sceneArrow svg { width: 100%; height: 100%; }
 
-/* 번호 단계 카드 — PC 다섯 칸 세로 카드, 1023 이하 한 줄씩 가로 */
+/* 번호 단계 카드 — 모든 폭에서 한 줄에 한 단계(본문 880, 2026-10-18) */
 .flow { display: grid; grid-template-columns: repeat(var(--flow-cols), minmax(0, 1fr)); gap: var(--space-4); max-width: var(--scene-max); margin: 0 auto; }
 .flow li { display: flex; flex-direction: var(--flow-dir); align-items: flex-start; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); }
 .flow li > div { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; }
@@ -79,14 +79,15 @@
 .pdecoL { left: var(--space-4); transform: rotate(-12deg); }
 .pdecoR { right: var(--space-4); transform: rotate(10deg); }
 
-@media (max-width: 1120px) {
+/* 마무리 판 장식 — 판이 880 보다 좁아지는 폭(화면 928 이하)부터 숨긴다 */
+@media (max-width: 928px) {
   .pdeco { display: none; }
 }
 @media (max-width: 1024px) {
   .root { --deco: 88px; --deco-top: 32px; --deco-edge: 16px; }
 }
 @media (max-width: 1023px) {
-  .root { --flow-cols: 1; --flow-dir: row; --scene-cols: minmax(0, 1fr); }
+  .root { --scene-cols: minmax(0, 1fr); }
   .scene { align-items: stretch; }
   .sceneArrow { justify-self: center; transform: rotate(90deg); }
 }

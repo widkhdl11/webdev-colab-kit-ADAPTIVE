@@ -8,7 +8,7 @@
 .logo svg { flex-shrink: 0; }
 .menu-action { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 
-/* ---------- 로그인 전 상단 바 (높이 64, 로고~오른쪽 메뉴가 본문과 같은 1152 선) ---------- */
+/* ---------- 로그인 전 상단 바 (높이 64, 로고~오른쪽 메뉴가 본문과 같은 880 선) ---------- */
 .pub-inner { width: 100%; max-width: var(--pub-max); margin-inline: auto; padding-inline: var(--gutter); }
 .site-header { position: sticky; top: 0; z-index: 40; height: var(--header-h); background: var(--white); border-bottom: 1px solid var(--gray-200); }
 .header-inner { display: flex; align-items: stretch; justify-content: space-between; gap: var(--nav-gap); height: 100%; }

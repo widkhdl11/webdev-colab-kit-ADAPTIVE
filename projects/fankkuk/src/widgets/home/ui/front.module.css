@@ -127,6 +127,13 @@
   .root { --cols-3: 1; --cols-2: 1; --hero-px: var(--space-4); padding-top: var(--space-4); }
   .promise { padding: var(--space-12) var(--space-6); }
 }
+/* ③ 단계 카드 — 767 이하는 한 줄에 한 장(두 장씩이면 판 안 카드가 좁아 「크리에이터가」가 낱말 중간에서 끊긴다. 시안 slots-mobile 도 끊겨 있었다) */
+@media (max-width: 767px) {
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  /* 바로가기 두 장씩 — 사이 12 · 안쪽 16 으로 글자 칸을 95 → 117(「크리에이터」 약 96 이 한 줄에) */
+  .tiles { gap: var(--space-3); }
+  .tile:global(.card) { padding: var(--space-4); }
+}
 /* 좁은 폭 — 「모두 보기」가 제목 줄에 안 들어가므로 목록 아래 오른쪽(목록 뒤에 둔 두 번째 링크)으로 바꾼다 */
 .moreBottom:global(.more-link) { display: none; }
 @media (max-width: 767px) {

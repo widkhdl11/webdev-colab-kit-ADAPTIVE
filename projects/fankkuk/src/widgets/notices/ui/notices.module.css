@@ -1,8 +1,8 @@
 /* 공지사항 화면 전용 — 시안 docs/design/mockups/site/v18/notices.html · v18-pub.css 「접는 목록 · 쪽 번호」. 목록 모양은 공통 .acc
-   본문은 로그인 전 1152 선 전체 폭. 상단 바 아래 40, 바닥글까지 96(휴대폰 64) */
+   본문은 로그인 전 880 선 전체 폭. 상단 바 아래 40, 바닥글까지 96(휴대폰 64) */
 .page { padding: var(--space-10) 0 var(--section-gap); }
 .list li + li { margin-top: var(--space-4); }
-/* 펼친 글 — 왼쪽에서 시작하고 한 줄 길이는 760 까지 */
+/* 펼친 글 — 왼쪽에서 시작하고 한 줄 길이는 680 까지 */
 .list :global(.prose) { max-width: none; margin-inline: 0; }
 .list :global(.prose) > * { max-width: var(--prose-max); }
 .list :global(.prose h3) { font-size: var(--fs-card); }

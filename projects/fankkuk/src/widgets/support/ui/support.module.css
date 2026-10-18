@@ -1,5 +1,5 @@
 /* 고객센터 화면 전용 — 시안 docs/design/mockups/site/v18/support.html · v18-pub.css 「접는 목록 · 탭」「로그인 후 화면과 같은 페이지 머리」.
-   본문은 로그인 전 1152 선. 상단 바 아래 40, 구간 사이 48, 바닥글까지 96(휴대폰 64). 접기 목록·카드는 공통 클래스(base.css) */
+   본문은 로그인 전 880 선. 상단 바 아래 40, 구간 사이 48, 바닥글까지 96(휴대폰 64). 접기 목록·카드는 공통 클래스(base.css) */
 .page { padding: var(--space-10) 0 var(--section-gap); }
 .sec { margin-top: var(--space-12); }
 /* 페이지 제목(24)보다 큰 소제목이 없게 — 구간 제목 20, 설명 16 */
@@ -24,11 +24,10 @@
 .mine-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .mine-reply { display: grid; gap: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
 
-/* 운영 시간·연락처 카드 — 네 칸(1023 이하 둘, 767 이하 하나), 왼쪽 정렬 */
-.hours { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-6); }
+/* 운영 시간·연락처 카드 — 두 칸(767 이하 하나), 왼쪽 정렬 */
+.hours { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); } /* 2026-10-18 본문 880 — 넷을 나란히 두면 이메일 주소(약 168)가 칸(154)에 안 들어가 예전 1023 이하 배치(두 장씩)를 모든 폭에 */
 .hours dt { color: var(--gray-600); font-size: var(--fs-caption); font-weight: 400; }
 .hours dd { margin: var(--space-2) 0 0; font-weight: var(--fw-btn); }
-@media (max-width: 1023px) { .hours { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 767px) {
   .page { padding-top: var(--space-4); }
   .hours { grid-template-columns: minmax(0, 1fr); }
