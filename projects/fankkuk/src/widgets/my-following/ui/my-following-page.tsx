@@ -2,24 +2,21 @@
 
 import Link from "next/link";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import {
   NO_CARD_LOOK,
   type CardLook,
 } from "@/entities/creator/model/card-look";
-import { CreatorCardHead, CreatorCardLine } from "@/entities/creator/ui/creator-card-head";
-import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
-import { saveFollow } from "@/features/creator-follow/api/save-follow";
+import { CreatorCardActions, CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
 import { FOLLOWING_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
-import { useUnfollowConfirm } from "@/features/creator-follow/ui/unfollow-dialog";
+import { FollowButton } from "@/features/creator-follow/ui/follow-button";
 import s from "./my-following.module.css";
 
-// 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/v18/my-following.html (페이지 머리) · 카드와 격자는 크리에이터 찾기와 같은 카드(시안 v25-card-align C안,
-// DECISIONS 2026-10-17 카드 d103 — 승인 시간·「선물 보내기」는 카드에 없다). 폭은 목록형 기본 880 → 3열.
-// 배너 모서리 버튼은 크리에이터 찾기의 팔로우한 카드와 같은 「팔로우 중」. 누르면 확인 창(design-rules 12절)을 띄우고,
-// 「취소하기」를 누르면 줄을 바로 지우고 저장한다. 저장에 실패하면 줄을 제자리에 돌려놓고 알린다. 다 지우면 빈 화면 안내가 나온다.
+// 팔로우한 크리에이터 본문. 시안: docs/design/mockups/site/v18/my-following.html (페이지 머리) · 카드와 격자는 크리에이터 찾기와 같은 카드(design-rules 17절).
+// 카드 아래 띠는 찾기 화면과 같은 FollowButton(card) — 모두 팔로우 중이라 「선물 보내기」 + 「팔로우 취소」(아이콘만).
+// 「팔로우 취소」는 확인 창을 거쳐 저장하고, 저장되면(onUnfollowed) 카드를 목록에서 빼고 초점을 제목으로 옮긴다.
+// 저장 실패 알림·로그인 이동은 FollowButton 한 곳에서 한다(찾기·홈과 같다). 다 빼면 빈 화면 안내가 나온다.
 
 export function MyFollowingPanel({
   creators,
@@ -28,27 +25,13 @@ export function MyFollowingPanel({
   creators: readonly CreatorCard[];
   looks?: Readonly<Record<string, CardLook>>;
 }) {
-  const router = useRouter();
   const [list, setList] = useState(creators);
-  const [failedName, setFailedName] = useState<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const unfollowConfirm = useUnfollowConfirm();
 
-  const unfollow = async (target: CreatorCard) => {
-    setFailedName(null);
+  // 팔로우 취소가 저장된 뒤 — 카드를 빼고, 누른 버튼이 사라지므로 초점을 제목으로(키보드 사용자가 페이지 맨 위로 튕기지 않게)
+  const removeCard = (target: CreatorCard) => {
     setList((prev) => prev.filter((c) => c.id !== target.id));
-    // 누른 버튼이 사라지므로 포커스를 제목으로 옮긴다 — 키보드 사용자가 페이지 맨 위로 튕기지 않게.
     headingRef.current?.focus();
-    const outcome = await saveFollow(target.id, false);
-    if (outcome === "ok") return;
-    // 원래 순서대로 돌려놓는다(처음 받은 목록 순서 기준)
-    setList((prev) =>
-      creators.filter(
-        (c) => c.id === target.id || prev.some((p) => p.id === c.id),
-      ),
-    );
-    if (outcome === "login") router.push("/login");
-    else setFailedName(target.name);
   };
 
   return (
@@ -65,18 +48,13 @@ export function MyFollowingPanel({
         </div>
         <p className="ph-desc">{FOLLOWING_NICKNAME_NOTICE}</p>
       </header>
-      <p className={`err ${s.msg}`} role="status">
-        {failedName
-          ? `${failedName}님 팔로우를 끊지 못했어요. 잠시 뒤 다시 눌러 주세요.`
-          : ""}
-      </p>
       {list.length > 0 ? (
         <div className={s.results}>
         <ul className={s.grid}>
           {list.map((c) => {
             const look = looks[c.id] ?? NO_CARD_LOOK;
             return (
-              <li key={c.id} className={s.fc}>
+              <li key={c.id} className={creatorCardClass}>
                 <CreatorCardHead
                   creatorId={c.id}
                   name={c.name}
@@ -84,21 +62,19 @@ export function MyFollowingPanel({
                   look={look}
                   colors={c.colors}
                   faceTone={c.faceTone}
-                  action={
-                    <button
-                      className="btn btn--sm btn--line"
-                      type="button"
-                      aria-label={`${c.name} 팔로우 중`}
-                      onClick={() =>
-                        unfollowConfirm.ask(c.name, () => void unfollow(c))
-                      }
-                    >
-                      팔로우 중
-                    </button>
-                  }
                 />
                 <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-                <CreatorCardTags tags={c.tags} />
+                <CreatorCardFoot tags={c.tags} />
+                <CreatorCardActions creatorId={c.id} colors={c.colors}>
+                  <FollowButton
+                    creatorId={c.id}
+                    creatorName={c.name}
+                    initialFollowing
+                    variant="card"
+                    mode="save"
+                    onUnfollowed={() => removeCard(c)}
+                  />
+                </CreatorCardActions>
               </li>
             );
           })}
@@ -123,7 +99,6 @@ export function MyFollowingPanel({
           </Link>
         </div>
       )}
-      {unfollowConfirm.dialog}
     </div>
   );
 }

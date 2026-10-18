@@ -59,15 +59,17 @@ describe("크리에이터 색 읽기 (creator-link INV-E13·E7)", () => {
     return { rpc: async (fn: string) => ({ data: fn === "my_follows" ? [] : [row], error: null }) } as never;
   }
 
-  it("INV-E13: 공개 읽기의 두 색을 카드에 싣는다", async () => {
-    const [card] = await readCreatorCards(clientWith({ ...ROW, personal_color: "#1E3A8A", fan_color: "#FFF59D" }), { signedIn: false, onlyId: ROW.id });
-    expect(card?.colors).toEqual({ personal: "#1E3A8A", fan: "#FFF59D" });
+  it("INV-E13 S12: 공개 읽기의 테마 색(8색)을 카드에 싣는다 — 팬컬러는 읽어도 싣지 않는다", async () => {
+    const [card] = await readCreatorCards(clientWith({ ...ROW, personal_color: "#DCEBFF", fan_color: "#FFF59D" }), { signedIn: false, onlyId: ROW.id });
+    expect(card?.colors).toEqual({ personal: "#DCEBFF" });
   });
 
-  it("INV-E13 (실패경로): 꼴이 틀린 색(스타일 문장·소문자)은 없는 것(기본 모양)으로 — 칸이 없거나 null 이어도 기본", async () => {
-    const [bad] = await readCreatorCards(clientWith({ ...ROW, personal_color: "#123456; background:url(x)", fan_color: "#fff59d" }), { signedIn: false, onlyId: ROW.id });
-    expect(bad?.colors).toEqual({ personal: null, fan: null });
+  it("INV-E13 S12c (실패경로): 8색 밖 값(옛 진한 색·스타일 문장·소문자)은 없는 것(기본 모양)으로 — 칸이 없거나 null 이어도 기본", async () => {
+    for (const bad of ["#1E3A8A", "#DCEBFF; background:url(x)", "#dcebff"]) {
+      const [card] = await readCreatorCards(clientWith({ ...ROW, personal_color: bad, fan_color: "#FFF59D" }), { signedIn: false, onlyId: ROW.id });
+      expect(card?.colors, bad).toEqual({ personal: null });
+    }
     const [none] = await readCreatorCards(clientWith({ ...ROW, personal_color: null, fan_color: null }), { signedIn: false, onlyId: ROW.id });
-    expect(none?.colors).toEqual({ personal: null, fan: null });
+    expect(none?.colors).toEqual({ personal: null });
   });
 });

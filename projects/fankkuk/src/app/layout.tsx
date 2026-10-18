@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { IntentPrefetch } from "@/shared/ui/intent-prefetch";
 import { TestSiteBand } from "@/shared/ui/test-site-band";
+import { HeaderMemoryProvider } from "@/widgets/site-header/model/header-memory";
 import "./globals.css";
 
 // 사이트 주소 — 공개 이미지(opengraph-image·twitter-image)의 전체 주소를 만드는 기준. 이미 쓰는 서버 설정값 APP_ORIGIN(메일 링크·시험 사이트 판정과 같은 값)을 쓴다.
@@ -43,7 +45,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           본문 바로가기
         </a>
         <TestSiteBand />
-        {children}
+        {/* 페이지를 옮기는 동안 로딩 화면이 마지막 상단 바를 그대로 보여 주도록 그 값을 기억한다(widgets/site-header) */}
+        <HeaderMemoryProvider>{children}</HeaderMemoryProvider>
+        {/* 링크에 마우스를 올리면 그 페이지를 통째로 미리 받는다(shared/ui/intent-prefetch) */}
+        <IntentPrefetch />
       </body>
     </html>
   );

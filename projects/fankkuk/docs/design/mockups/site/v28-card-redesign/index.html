@@ -1,0 +1,132 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>v28 크리에이터 카드 재설계 — A안(880 · 최대 3열)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-500:#6b7280;--gray-600:#4b5563;--gray-900:#1f2937;--primary:#89cff0;--primary-50:#e0f2fe;--tint:#f0f8ff;--r-card:16px;--r-btn:12px;--r-panel:24px;--shadow:0 1px 3px #0000000f;--font:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Segoe UI","Malgun Gothic",sans-serif;--focus:#1f2937}
+@font-face{font-family:"Tmoney Round Wind";src:url(assets/fonts_TmoneyRoundWindExtraBold.woff2) format("woff2");font-weight:800}
+@font-face{font-family:"Tmoney Round Wind";src:url(assets/fonts_TmoneyRoundWindRegular.woff2) format("woff2");font-weight:400}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--gray-900);font:400 16px/1.6 var(--font);word-break:keep-all;overflow-wrap:anywhere}
+p,ul,h1,h2{margin:0;padding:0;list-style:none}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.top{height:64px;border-bottom:1px solid var(--gray-200);background:#fff}
+.top div{max-width:928px;height:100%;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:32px}
+.top img{width:32px;height:32px;border-radius:22%}.top b{font-size:20px}.top a{color:var(--gray-900);text-decoration:none;font-weight:500;padding:8px 0}.top a[aria-current]{border-bottom:2px solid var(--primary)}
+.pub{max-width:928px;margin:0 auto;padding:40px 24px 96px}
+.ph-title{font:800 24px/1.3 "Tmoney Round Wind",var(--font)}
+.ph-desc{margin-top:8px;max-width:680px;color:var(--gray-600)}
+.verify{margin-top:8px;color:var(--gray-600);font-size:14px;line-height:1.5;display:flex;align-items:center;gap:8px}
+.verify svg{width:16px;height:16px;color:var(--gray-900)}
+.search{display:flex;align-items:center;gap:12px;height:56px;margin-top:32px;padding:0 6px 0 24px;border-radius:9999px;background:#fff;box-shadow:inset 0 0 0 1px var(--gray-500),var(--shadow)}
+.search:focus-within{box-shadow:0 0 0 2px var(--focus)}
+.search input{flex:1;min-width:0;height:100%;border:0;background:none;font:inherit;color:var(--gray-900)}
+.search input:focus{outline:none}.search input::placeholder{color:var(--gray-600);opacity:1}
+.go{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--primary);color:var(--gray-900)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{min-height:36px;padding:0 16px;border:0;border-radius:9999px;background:#fff;box-shadow:inset 0 0 0 1px var(--gray-200);color:var(--gray-900);font:500 14px/1.5 var(--font);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--primary-50);box-shadow:inset 0 0 0 1px var(--gray-900)}
+.bar{margin:24px 0 16px;font-size:14px;line-height:1.5;font-weight:600}
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:24px}}
+@media(min-width:1024px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.card{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px;min-width:0;padding:24px;border-radius:var(--r-card);background:#fff;cursor:pointer}
+.card::before{content:"";position:absolute;inset:0;z-index:3;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--gray-200);pointer-events:none;transition:box-shadow .15s}
+.card:hover::before,.card:focus-within::before{box-shadow:inset 0 0 0 1px var(--gray-500)}
+.card:has(a:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
+.cover{position:relative;overflow:hidden;aspect-ratio:2/1;margin:-24px -24px 0;background:var(--theme)}
+.cimg{display:block;width:100%;height:100%;object-fit:cover}
+.cat{position:absolute;right:6%;bottom:-8%;height:80%;width:auto;opacity:.22;pointer-events:none}
+.who{display:flex;align-items:flex-start;gap:8px;min-width:0}
+.face{flex:none;width:64px;height:64px;margin-top:-32px;border-radius:50%;box-shadow:0 0 0 3px #fff;object-fit:cover;position:relative;background:#fff}
+.init{display:grid;place-items:center;font:800 24px/1 "Tmoney Round Wind",var(--font);color:var(--gray-900)}
+.nm{display:flex;align-items:center;gap:8px;flex:1;min-width:0;height:32px}
+.nm a{flex:0 1 auto;min-width:2.2em;overflow:hidden;color:inherit;font-weight:600;line-height:1.4;text-decoration:none;text-overflow:ellipsis;white-space:nowrap}
+.nm a:hover{text-decoration:underline;text-underline-offset:4px}.nm a:focus-visible{outline:none}
+.nm a::after{content:"";position:absolute;inset:0;z-index:1}
+.fn{display:inline-flex;align-items:center;flex:0 100 auto;min-width:44px;height:22px;padding:0 8px;border-radius:9999px;background:var(--theme);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme) 78%,#1f2937);color:#111827;font-size:12px;font-weight:600;line-height:1;white-space:nowrap;overflow:hidden}
+.fbt{overflow:hidden;text-overflow:ellipsis}
+.line{height:21px;overflow:hidden;font-size:14px;line-height:1.5;color:var(--gray-600);text-overflow:ellipsis;white-space:nowrap}
+.ctags{display:flex;gap:6px;height:22px;overflow:hidden}
+.ctag{flex:none;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 3px;border-radius:9999px;background:var(--f);color:var(--k);font-size:12px;font-weight:700;line-height:1;white-space:nowrap;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--k) 22%,var(--f))}
+.ctag.more{padding:0 8px;--f:#f3f4f6;--k:#374151}
+.bd{width:14px;height:14px;border-radius:50%;background:#fff;display:grid;place-items:center;overflow:hidden}.bd img{width:100%;height:100%;object-fit:cover}.bd.glyph img{width:9px;height:9px}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;min-height:32px}
+.appr{min-width:0;overflow:hidden;font-size:14px;line-height:1.5;color:var(--gray-600);text-overflow:ellipsis;white-space:nowrap}
+.fol{position:relative;z-index:2;flex:none;height:32px;padding:0 12px;border:0;border-radius:var(--r-btn);background:#fff;box-shadow:inset 0 0 0 1px var(--gray-200);color:var(--gray-900);font:600 14px/1 var(--font);cursor:pointer}
+.fol::after{content:"";position:absolute;inset:-6px -4px}
+.fol:hover{background:var(--gray-100)}
+.empty{display:flex;flex-direction:column;align-items:center;gap:16px;max-width:480px;padding:24px;border-radius:var(--r-card);background:#fff;box-shadow:inset 0 0 0 1px var(--gray-200),var(--shadow);color:var(--gray-600);text-align:center}
+.empty img{width:96px;height:96px;object-fit:contain}.empty h2{font-size:20px;line-height:1.4;color:var(--gray-900)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 24px;border-radius:var(--r-btn);background:#fff;box-shadow:inset 0 0 0 1px var(--gray-200);color:var(--gray-900);font-weight:600;text-decoration:none}
+.sec{margin-top:64px}.sec h2{font-size:20px;line-height:1.4;margin-bottom:16px}
+.note{margin-top:8px;font-size:14px;line-height:1.5;color:var(--gray-600)}
+table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.5}th,td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--gray-200)}th{background:var(--gray-50);font-weight:600}
+@media(max-width:767px){.pub{padding-top:16px;padding-bottom:64px}.ph-title{font-size:24px}table{display:block;overflow-x:auto}}
+</style></head><body>
+<header class="top"><div><img src="assets/images_logo-mark.png" alt=""><b>팬꾹</b><a href="#" aria-current="page">크리에이터 찾기</a></div></header><!--
+  요청(사용자): 카드 재설계 — 배너 2:1, 사진 64 왼쪽 정렬, 본문 3줄(채널·소개 / 칩 / 승인 시간+팔로우), 배너 없으면 테마 색 + 고양이.
+  결정(2026-10-18): A안(880 폭 · 최대 3열) 채택. B안(1200 · 4열)은 만들지 않음.
+-->
+<main class="pub" id="main">
+<header><h1 class="ph-title">나의 크리에이터를 찾아요</h1>
+<p class="ph-desc">이름이나 채널 이름을 입력하면 아래 목록이 바로 걸러져요.</p>
+<p class="verify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg>활동 채널 본인 확인을 마친 크리에이터만 보여요.</p></header>
+<div class="search"><label class="sr-only" for="q">크리에이터 이름 또는 채널 이름</label><input id="q" type="search" placeholder="예: 하루, 치지직, 새벽달 라디오" autocomplete="off"><span class="go" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.34-4.34" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></div>
+<h2 class="sr-only">태그</h2>
+<div class="chips" role="group" aria-label="태그로 걸러 보기"><button class="chip" type="button" aria-pressed="true">전체</button><button class="chip" type="button" aria-pressed="false">게임</button><button class="chip" type="button" aria-pressed="false">버튜버</button><button class="chip" type="button" aria-pressed="false">토크</button><button class="chip" type="button" aria-pressed="false">음악</button><button class="chip" type="button" aria-pressed="false">먹방</button></div>
+<section aria-label="검색 결과"><p class="bar" role="status">전체 12명</p>
+<ul class="grid"><li class="card" style="--theme:#E6E0FF"><div class="cover" aria-hidden="true"><img class="cimg" src="assets/test-cover-1200x480.jpg" alt="" loading="lazy"></div>
+<div class="who"><img class="face" src="assets/storage_v1_object_public_creator-photos_00000000-0000-4000-b000-000000000001_1.webp" alt=""><div class="nm"><a href="#" title="하루">하루</a><span class="fn" data-fandom-badge><span class="fbt">하루별</span></span></div></div>
+<p class="line">하루의 놀이터 · 게임 방송을 해요.</p><p class="ctags"><span class="ctag" style="--f:#E6FFF5;--k:#006B47"><span class="bd"><img src="assets/brand_chzzk.png" alt="" width="14" height="14"></span>치지직</span><span class="ctag" style="--f:#FFECEC;--k:#C00000"><span class="bd glyph" style="background:#FF0000"><img src="assets/brand_youtube.svg" alt="" width="9" height="9"></span>유튜브</span></p>
+<div class="foot"><span class="appr">평균 승인 약 3시간</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#DCEBFF"><div class="cover" aria-hidden="true"><img class="cat" src="assets/logo-mark-clear.png" alt=""></div>
+<div class="who"><span class="face init" style="background:#dcd3f6" aria-hidden="true">새</span><div class="nm"><a href="#" title="새벽달">새벽달</a><span class="fn" data-fandom-badge><span class="fbt">달무리</span></span></div></div>
+<p class="line">새벽달 라디오 · 밤마다 사연을 읽어 드려요.</p><p class="ctags"><span class="ctag" style="--f:#EAF5FE;--k:#0B5CAD"><span class="bd"><img src="assets/brand_soop.png" alt="" width="14" height="14"></span>SOOP</span><span class="ctag" style="--f:#FFEBF3;--k:#B8004D"><span class="bd glyph" style="background:#D6249F"><img src="assets/brand_instagram.svg" alt="" width="9" height="9"></span>인스타그램</span></p>
+<div class="foot"><span class="appr">평균 승인 약 1시간</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#FFF1B8"><div class="cover" aria-hidden="true"><img class="cat" src="assets/logo-mark-clear.png" alt=""></div>
+<div class="who"><span class="face init" style="background:#cfe3fa" aria-hidden="true">보</span><div class="nm"><a href="#" title="보리">보리</a><span class="fn" data-fandom-badge><span class="fbt">보리밭</span></span></div></div>
+<p class="line">보리네 부엌 · 집밥 먹방</p><p class="ctags"><span class="ctag" style="--f:#FFECEC;--k:#C00000"><span class="bd glyph" style="background:#FF0000"><img src="assets/brand_youtube.svg" alt="" width="9" height="9"></span>유튜브</span></p>
+<div class="foot"><span class="appr">평균 승인 약 2일</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#FDE2E4"><div class="cover" aria-hidden="true"><img class="cimg" src="assets/test-cover-1200x600.jpg" alt="" loading="lazy"></div>
+<div class="who"><span class="face init" style="background:#fad2ba" aria-hidden="true">유</span><div class="nm"><a href="#" title="유나">유나</a><span class="fn" data-fandom-badge><span class="fbt">유나리</span></span></div></div>
+<p class="line">유나의 노래방 · 커버곡 라이브</p><p class="ctags"><span class="ctag" style="--f:#E6FFF5;--k:#006B47"><span class="bd"><img src="assets/brand_chzzk.png" alt="" width="14" height="14"></span>치지직</span><span class="ctag" style="--f:#EAF5FE;--k:#0B5CAD"><span class="bd"><img src="assets/brand_soop.png" alt="" width="14" height="14"></span>SOOP</span><span class="ctag more" aria-label="외 2개">+2</span></p>
+<div class="foot"><span class="appr">평균 승인 약 40분</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#D3F0EC"><div class="cover" aria-hidden="true"><img class="cat" src="assets/logo-mark-clear.png" alt=""></div>
+<div class="who"><span class="face init" style="background:#c9ecdd" aria-hidden="true">이</span><div class="nm"><a href="#" title="이름이 아주 아주 긴 크리에이터입니다">이름이 아주 아주 긴 크리에이터입니다</a><span class="fn" data-fandom-badge><span class="fbt">긴이름팬덤</span></span></div></div>
+<p class="line">아주 긴 채널 이름으로 한 줄을 넘기는 경우 · 소개도 길게 이어져요</p><p class="ctags"><span class="ctag" style="--f:#E6FFF5;--k:#006B47"><span class="bd"><img src="assets/brand_chzzk.png" alt="" width="14" height="14"></span>치지직</span></p>
+<div class="foot"><span class="appr">아직 승인 기록이 없어요</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#DFF5D8"><div class="cover" aria-hidden="true"><img class="cat" src="assets/logo-mark-clear.png" alt=""></div>
+<div class="who"><span class="face init" style="background:#f7c8d4" aria-hidden="true">도</span><div class="nm"><a href="#" title="도도">도도</a><span class="fn" data-fandom-badge><span class="fbt">도도새</span></span></div></div>
+<p class="line">도도의 운동 일지 · 매일 아침 홈트</p><p class="ctags"><span class="ctag" style="--f:#EAF5FE;--k:#0B5CAD"><span class="bd"><img src="assets/brand_soop.png" alt="" width="14" height="14"></span>SOOP</span><span class="ctag" style="--f:#F2F2F3;--k:#343039"><span class="bd glyph" style="background:#000"><img src="assets/brand_x.svg" alt="" width="9" height="9"></span>X</span></p>
+<div class="foot"><span class="appr">평균 승인 약 5시간</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#FFE5CC"><div class="cover" aria-hidden="true"><img class="cimg" src="assets/test-cover-chzzk-1920x480.jpg" alt="" loading="lazy"></div>
+<div class="who"><span class="face init" style="background:#fbe3a8" aria-hidden="true">미</span><div class="nm"><a href="#" title="미소">미소</a><span class="fn" data-fandom-badge><span class="fbt">미소천사</span></span></div></div>
+<p class="line">미소의 작은 가게 · 수다와 일상</p><p class="ctags"><span class="ctag" style="--f:#E6FFF5;--k:#006B47"><span class="bd"><img src="assets/brand_chzzk.png" alt="" width="14" height="14"></span>치지직</span><span class="ctag" style="--f:#FFEBF3;--k:#B8004D"><span class="bd glyph" style="background:#D6249F"><img src="assets/brand_instagram.svg" alt="" width="9" height="9"></span>인스타그램</span></p>
+<div class="foot"><span class="appr">평균 승인 약 2시간</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#F6DFF0"><div class="cover" aria-hidden="true"><img class="cat" src="assets/logo-mark-clear.png" alt=""></div>
+<div class="who"><span class="face init" style="background:#dcd3f6" aria-hidden="true">라</span><div class="nm"><a href="#" title="라온">라온</a><span class="fn" data-fandom-badge><span class="fbt">라온즈</span></span></div></div>
+<p class="line">라온 TV · 버튜버 토크쇼</p><p class="ctags"><span class="ctag" style="--f:#FFECEC;--k:#C00000"><span class="bd glyph" style="background:#FF0000"><img src="assets/brand_youtube.svg" alt="" width="9" height="9"></span>유튜브</span><span class="ctag" style="--f:#F2F2F3;--k:#343039"><span class="bd glyph" style="background:#000"><img src="assets/brand_x.svg" alt="" width="9" height="9"></span>X</span></p>
+<div class="foot"><span class="appr">평균 승인 약 6시간</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#DCEBFF"><div class="cover" aria-hidden="true"><img class="cat" src="assets/logo-mark-clear.png" alt=""></div>
+<div class="who"><span class="face init" style="background:#cfe3fa" aria-hidden="true">지</span><div class="nm"><a href="#" title="지안">지안</a><span class="fn" data-fandom-badge><span class="fbt">지안지기</span></span></div></div>
+<p class="line">지안의 서재 · 책 읽는 방송</p><p class="ctags"><span class="ctag" style="--f:#EAF5FE;--k:#0B5CAD"><span class="bd"><img src="assets/brand_soop.png" alt="" width="14" height="14"></span>SOOP</span></p>
+<div class="foot"><span class="appr">평균 승인 약 1시간</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#DFF5D8"><div class="cover" aria-hidden="true"><img class="cat" src="assets/logo-mark-clear.png" alt=""></div>
+<div class="who"><span class="face init" style="background:#fad2ba" aria-hidden="true">나</span><div class="nm"><a href="#" title="나무">나무</a><span class="fn" data-fandom-badge><span class="fbt">나무늘보</span></span></div></div>
+<p class="line">나무 숲속 · 잔잔한 게임 방송</p><p class="ctags"><span class="ctag" style="--f:#E6FFF5;--k:#006B47"><span class="bd"><img src="assets/brand_chzzk.png" alt="" width="14" height="14"></span>치지직</span><span class="ctag" style="--f:#FFECEC;--k:#C00000"><span class="bd glyph" style="background:#FF0000"><img src="assets/brand_youtube.svg" alt="" width="9" height="9"></span>유튜브</span><span class="ctag more" aria-label="외 1개">+1</span></p>
+<div class="foot"><span class="appr">평균 승인 약 4시간</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#FFE5CC"><div class="cover" aria-hidden="true"><img class="cat" src="assets/logo-mark-clear.png" alt=""></div>
+<div class="who"><span class="face init" style="background:#c9ecdd" aria-hidden="true">솔</span><div class="nm"><a href="#" title="솔">솔</a><span class="fn" data-fandom-badge><span class="fbt">솔방울</span></span></div></div>
+<p class="line">솔의 음악방 · 기타 연주</p><p class="ctags"><span class="ctag" style="--f:#FFEBF3;--k:#B8004D"><span class="bd glyph" style="background:#D6249F"><img src="assets/brand_instagram.svg" alt="" width="9" height="9"></span>인스타그램</span></p>
+<div class="foot"><span class="appr">평균 승인 약 20분</span><button type="button" class="fol">팔로우</button></div></li>
+<li class="card" style="--theme:#E6E0FF"><div class="cover" aria-hidden="true"><img class="cimg" src="assets/test-cover-1200x480.jpg" alt="" loading="lazy"></div>
+<div class="who"><span class="face init" style="background:#f7c8d4" aria-hidden="true">하</span><div class="nm"><a href="#" title="하늘">하늘</a><span class="fn" data-fandom-badge><span class="fbt">하늘바라기</span></span></div></div>
+<p class="line">하늘이네 · 여행 브이로그</p><p class="ctags"><span class="ctag" style="--f:#FFECEC;--k:#C00000"><span class="bd glyph" style="background:#FF0000"><img src="assets/brand_youtube.svg" alt="" width="9" height="9"></span>유튜브</span><span class="ctag" style="--f:#E6FFF5;--k:#006B47"><span class="bd"><img src="assets/brand_chzzk.png" alt="" width="14" height="14"></span>치지직</span></p>
+<div class="foot"><span class="appr">평균 승인 약 3시간</span><button type="button" class="fol">팔로우</button></div></li></ul></section>
+
+<section class="sec" aria-labelledby="e"><h2 id="e">상태 · 결과 없음</h2>
+<div class="empty"><img src="assets/img_illust-empty-search.png" alt="" width="96" height="96"><h2>찾는 크리에이터가 아직 없어요</h2><p>이름 철자를 다시 확인해 보세요. 본인 확인을 마치지 않은 크리에이터는 검색되지 않아요.</p><a class="btn" href="#">크리에이터를 초대하고 싶어요</a></div></section>
+
+<section class="sec" aria-labelledby="r"><h2 id="r">근거 규칙</h2><table><thead><tr><th>요소</th><th>현재 값</th><th>바꿀 값(px)</th><th>근거 규칙(ui-ux-pro-max)</th></tr></thead><tbody><tr><td>카드 사진(프로필)</td><td>56px · 가운데 · 배너에 28 걸침</td><td>64px · 왼쪽 · 배너에 32 걸침</td><td>Touch Target Size(눈에 띄는 대상은 크게)</td></tr><tr><td>이름 · 팬덤 배지</td><td>이름 줄 아래에 배지 줄 따로(가운데)</td><td>사진 오른쪽 한 줄(이름 600 + 배지 22). 이름만 말줄임</td><td>Truncation(넘치면 말줄임, 배지는 최소 폭 44)</td></tr><tr><td>팔로우 버튼</td><td>배너 모서리에 떠 있음 · 높이 28 · 그림자</td><td>하단 줄 오른쪽 · 높이 32 · 테두리형 · 누름 칸 44</td><td>Touch Target Size, Touch Spacing(옆 칸과 8 이상)</td></tr><tr><td>카드 안 줄 간격</td><td>6</td><td>8(묶음 사이) · 하단 줄 위 12</td><td>Touch Spacing(간격 8 이상) · tokens 1절 간격 단계</td></tr><tr><td>카드 아래 안쪽 여백</td><td>16</td><td>24(--card-pad)</td><td>tokens 4절 카드 안쪽</td></tr><tr><td>평균 승인 시간</td><td>카드에 없음</td><td>하단 줄 왼쪽, 14px 회색 600(#4b5563 7.5:1)</td><td>Color Contrast(4.5:1 이상), Contrast Readability</td></tr><tr><td>배너 없는 카드 바탕</td><td>퍼스널 컬러 30% 또는 ID로 정한 파스텔</td><td>크리에이터가 고른 테마 색(파스텔 8색)</td><td>Color Only(색만으로 구분하지 않음 — 이름·글자가 함께)</td></tr><tr><td>팬덤 배지 색</td><td>팬컬러</td><td>테마 색 면 + 같은 색을 짙게 섞은 1px 테두리, 글자 #111827(12px)</td><td>Color Contrast</td></tr><tr><td>카드 전체 링크</td><td>이름 링크가 카드 덮음</td><td>그대로 · 팔로우만 z-index 위(이동 안 됨)</td><td>Hover States(올리면 테두리 진해짐) · Focus States(카드에 3px 초점)</td></tr><tr><td>격자</td><td>880 기둥 · 3열 · 640 이상 2열</td><td>1024 이상 3열 · 640 이상 2열 · 그 아래 1열(뷰포트 기준)</td><td>Horizontal Scroll(내용이 화면 폭에 맞게)</td></tr><tr><td>결과 없음</td><td>그림 + 문구 + 버튼 (회색 면 큰 판)</td><td>흰 카드 반경 16, 폭 480, 안쪽 24 간격 16</td><td>Empty States(안내 + 다음 행동)</td></tr></tbody></table>
+<p class="note">다른 화면: <a href="settings.html">settings.html — 테마 색 · 배경 사진 안내</a></p></section>
+</main></body></html>

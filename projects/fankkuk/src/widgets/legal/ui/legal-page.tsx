@@ -1,21 +1,17 @@
-import Link from "next/link";
 import type { LegalBlock, LegalDoc } from "../model/legal-doc";
-import type { VersionLink } from "../model/legal-versions";
 import s from "./legal.module.css";
 
-// 이용약관·개인정보처리방침 공용 글 화면. 시안: docs/design/mockups/site/v18/legal.html — 로그인 전 1152 선
+// 안내 글 화면(보안·검수·이용 안내·분쟁 안내). 시안: docs/design/mockups/site/v18/legal.html — 로그인 전 880 선
+// 버전이 있는 세 글(이용약관·개인정보처리방침·취소·환불 규정)은 policy-page(v26)로 옮겼다.
 // 페이지 머리(제목 24 왼쪽·설명) → 사실 카드 셋 → 맨 위 목차 카드 → 조마다 구분선 + 제목 + 글(760 기둥).
 // 표는 쓰지 않는다 — 이름·값 줄(rows)은 카드 격자로, 휴대폰 폭에서는 한 줄에 하나씩 쌓여 가로로 밀리지 않는다.
 
 // icon 은 v11 머리 그림 자리였다 — v18 페이지 머리에는 그림이 없어 쓰지 않는다(부르는 쪽 모양은 그대로 둔다)
-// history: 버전이 있는 글(약관·처리방침·환불 규정)만 넘긴다 — 맨 아래 「버전 기록」 칸. pastVersion: 지난 버전을 보고 있으면 맨 위에 한 줄.
 // flow: 보안 안내의 그림(차례대로 이어지는 칸) — 요약 아래에 한 줄로, 휴대폰 폭에서는 위아래로 쌓인다.
 type FlowStep = { title: string; text: string };
 type Props = {
   doc: LegalDoc;
   icon: string;
-  history?: readonly VersionLink[];
-  pastVersion?: boolean;
   flow?: readonly FlowStep[];
   flowLabel?: string;
 };
@@ -40,6 +36,37 @@ function Block({ block }: { block: LegalBlock }) {
           ))}
         </ol>
       );
+    // 정의·요금표는 지금 세 글(policy-page)만 쓴다 — 안내 페이지가 쓰게 되면 점 목록·카드 격자로 보인다
+    case "defs":
+      return (
+        <ul className="dots">
+          {block.items.map(([term, def]) => (
+            <li key={term}>
+              「{term}」 — {def}
+            </li>
+          ))}
+        </ul>
+      );
+    case "stages":
+      return <p>{`${block.title}: ${block.items.join(" → ")}. ${block.note}`}</p>;
+    case "prices":
+      return (
+        <div className={`grid ${block.rows.length === 3 ? "cols-3 keep" : "cols-2"}`}>
+          {block.rows.map((r) => (
+            <div key={r.name} className="card">
+              <h3>{r.name}</h3>
+              <dl className={`kv ${s.kv}`}>
+                {[["기준", r.rule] as const, ...block.columns.map((c, i) => [c, r.amounts[i] ?? ""] as const)].map(([k, v]) => (
+                  <div key={k}>
+                    <dt>{k}</dt>
+                    <dd>{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+      );
     case "rows":
       return (
         // 시안: 요금 셋은 3열, 나머지는 2열
@@ -62,13 +89,7 @@ function Block({ block }: { block: LegalBlock }) {
   }
 }
 
-export function LegalPage({
-  doc,
-  history,
-  pastVersion,
-  flow,
-  flowLabel,
-}: Props) {
+export function LegalPage({ doc, flow, flowLabel }: Props) {
   return (
     <main id="main" className={s.page}>
       <section aria-labelledby="page-title">
@@ -81,15 +102,6 @@ export function LegalPage({
             </div>
             <p className="ph-desc">{doc.lead}</p>
           </header>
-          {pastVersion ? (
-            <p className={`card ${s.past}`} role="note">
-              지난 버전이에요. 지금 시행 중인 글은{" "}
-              <Link href={history?.find((h) => h.current)?.href ?? "/"}>
-                최신 버전
-              </Link>
-              에서 볼 수 있어요.
-            </p>
-          ) : null}
           <div className={`card card--soft prose ${s.summary} ${s.prose}`}>
             <h2 className="t-card">요약</h2>
             <ul className="dots">
@@ -161,38 +173,6 @@ export function LegalPage({
               </div>
             </section>
           ))}
-          {history ? (
-            <section
-              id="versions"
-              className={s.art}
-              aria-labelledby="versions-h"
-            >
-              <h2 className="t-card" id="versions-h">
-                버전 기록
-              </h2>
-              <div className={`prose ${s.prose}`}>
-                <ul className={`dots ${s.versions}`}>
-                  {history.map((v) => (
-                    <li key={v.version}>
-                      <Link
-                        href={v.href}
-                        aria-current={
-                          v.current && !pastVersion ? "page" : undefined
-                        }
-                      >
-                        버전 {v.version}
-                      </Link>{" "}
-                      · 시행일 {v.effective}
-                      {v.current ? " · 지금 시행 중" : ""}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {history.length === 1 ? (
-                <p className="t-meta">지난 버전은 아직 없어요.</p>
-              ) : null}
-            </section>
-          ) : null}
         </div>
       </section>
     </main>

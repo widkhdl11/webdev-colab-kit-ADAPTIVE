@@ -4,7 +4,7 @@ import { withSubjectParticle } from "@/shared/lib/format/subject-particle";
 import { AboutIcon, type AboutIconName } from "./about-icons";
 import s from "./about.module.css";
 
-// 팬꾹 소개. 시안: docs/design/mockups/site/v18/about.html — 본문은 로그인 전 1152 선(.pub-inner). 화면 전용 모양은 about.module.css
+// 팬꾹 소개. 시안: docs/design/mockups/site/v18/about.html — 본문은 로그인 전 880 선(.pub-inner). 화면 전용 모양은 about.module.css
 // 약속 문장은 shared/config/site-copy 의 고정 문구를 그대로 읽는다(문구 v2). 소개 이야기는 해요체, 약속·하지 않는 것은 합니다체.
 
 const FLOW: readonly { icon: AboutIconName; title: string; body: string; once?: true }[] = [

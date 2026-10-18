@@ -1,0 +1,12 @@
+/* 페이지 이동 중 본문 뼈대 — 제목 막대 · 설명 막대 · 카드 셋. 색은 회색 면 하나(gray-100), 반경은 카드 16·막대 8.
+   0.4초 넘게 걸릴 때만 은은히 깜빡인다 — 빨리 끝나는 이동에서는 움직임이 보이지 않게 */
+.pub { padding: var(--space-10) 0 var(--section-gap); }
+.sk { display: flex; flex-direction: column; gap: var(--space-4); animation: sk-pulse 1.2s ease-in-out 0.4s infinite; }
+/* 막대 반경 --r-tag — 운영자 화면에서는 옛 값 6 을 물려받는다(design-rules 8절 · 15절) */
+.bar { height: 16px; border-radius: var(--r-tag); background: var(--gray-100); }
+.title { width: min(240px, 60%); height: 32px; }
+.line { width: min(480px, 90%); }
+.cards { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
+.card { height: 120px; border-radius: var(--r-card); background: var(--gray-100); }
+@keyframes sk-pulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }

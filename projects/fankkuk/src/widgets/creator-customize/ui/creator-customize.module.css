@@ -43,7 +43,7 @@
 .pvBg { align-self: stretch; overflow: hidden; height: 112px; margin: calc(var(--pv-y) * -1) calc(var(--pv-x) * -1) 0; border-radius: var(--r-card) var(--r-card) 0 0; background: var(--personal, var(--primary-50)); }
 .pvBg img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pvAvatar { width: 72px; height: 72px; margin-top: -36px; font-size: var(--fs-card); box-shadow: 0 0 0 4px var(--white); }
-/* 퍼스널 컬러가 있으면 띠 면과 사진 테두리가 그 색 — 공개 페이지(creator-profile.module.css .ringed)와 같은 모양 */
+/* 테마 색이 있으면 띠 면과 사진 테두리가 그 색 — 공개 페이지(creator-profile.module.css .ringed)와 같은 모양 */
 .ringed .pvAvatar { box-shadow: 0 0 0 4px var(--personal), 0 0 0 8px var(--white); }
 .pvName { margin: 0; font-size: var(--fs-card); overflow-wrap: anywhere; }
 .pvIntro { margin: 0; color: var(--gray-600); overflow-wrap: anywhere; }

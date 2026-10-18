@@ -1,4 +1,5 @@
 import { APPROVAL_DEADLINE_DAYS } from "@/entities/order/config/approval-deadline";
+import { FAN_STEP_LABEL } from "@/entities/order/ui/fan-stage-copy";
 import { DIFFERENCE_DEADLINE_DAYS } from "@/entities/payment/config/difference-deadline";
 import { OVERSIZE_RULE, PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { PRICED_TIERS, type PublicPriceTable } from "@/entities/payment/model/price-table";
@@ -25,6 +26,14 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       "보낼 수 없는 물품을 보내거나 남의 채널로 크리에이터 확인을 받으면 이용이 제한될 수 있습니다.",
     ],
     facts: [["운영", OPERATOR_NAME]],
+    // 왼쪽 목차 다섯 묶음 — 시안 docs/design/mockups/site/v26-terms
+    tocGroups: [
+      { title: "시작하며", ids: ["purpose", "terms", "notice"] },
+      { title: "서비스와 계정", ids: ["service", "account", "creator"] },
+      { title: "요금과 환불", ids: ["fee", "measure", "refund"] },
+      { title: "선물 처리", ids: ["inspection", "block", "revgift", "unmatched"] },
+      { title: "약속과 책임", ids: ["alert", "address", "prohibited", "liability", "dispute", "addendum"] },
+    ],
     sections: [
       {
         id: "purpose",
@@ -41,15 +50,15 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
         title: "제2조 정의",
         blocks: [
           {
-            kind: "list",
+            kind: "defs",
             items: [
-              "「팬꾹」이란 팬이 크리에이터에게 보내는 선물을 회사 사무실에서 받아 검수한 후, 크리에이터의 주소를 팬에게 알리지 않고 크리에이터에게 다시 발송하는 선물 배송대행 서비스를 말합니다.",
-              "「회원」이란 팬꾹에 가입한 팬과 크리에이터를 말합니다.",
-              "「선물」이란 팬이 크리에이터 1명에게 보내기 위해 등록한 1건을 말합니다. 선물마다 주문번호(예: FC-7K3M9)가 부여됩니다.",
-              "「상자」란 선물을 나누어 보내는 단위를 말합니다. 선물 1건은 여러 상자로 나누어 보낼 수 있으며, 요금·입고·검수·송장은 상자별로 처리합니다.",
-              "「사무실」이란 회사가 상자를 받아 검수하고 다시 발송하는 장소를 말합니다. 사무실 주소는 결제를 완료한 팬에게만 안내합니다.",
-              "「승인」이란 크리에이터가 카카오톡 인증서로 전자서명하여 선물 1건을 받겠다는 의사를 표시하는 것을 말합니다.",
-              "「역조공」이란 크리에이터가 자신을 팔로우한 팬에게 보내는 선물을 말합니다.",
+              ["팬꾹", "팬이 크리에이터에게 보내는 선물을 회사 사무실에서 받아 검수한 후, 크리에이터의 주소를 팬에게 알리지 않고 크리에이터에게 다시 발송하는 선물 배송대행 서비스를 말합니다."],
+              ["회원", "팬꾹에 가입한 팬과 크리에이터를 말합니다."],
+              ["선물", "팬이 크리에이터 1명에게 보내기 위해 등록한 1건을 말합니다. 선물마다 주문번호(예: FC-7K3M9)가 부여됩니다."],
+              ["상자", "선물을 나누어 보내는 단위를 말합니다. 선물 1건은 여러 상자로 나누어 보낼 수 있으며, 요금·입고·검수·송장은 상자별로 처리합니다."],
+              ["사무실", "회사가 상자를 받아 검수하고 다시 발송하는 장소를 말합니다. 사무실 주소는 결제를 완료한 팬에게만 안내합니다."],
+              ["승인", "크리에이터가 카카오톡 인증서로 전자서명하여 선물 1건을 받겠다는 의사를 표시하는 것을 말합니다."],
+              ["역조공", "크리에이터가 자신을 팔로우한 팬에게 보내는 선물을 말합니다."],
             ],
           },
         ],
@@ -82,6 +91,13 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
               "크리에이터는 선물마다 카카오톡 인증서로 서명하여 승인하거나, 받지 않기(거절)를 선택합니다. 승인은 출고 전까지만 완료하면 되며, 일괄 승인 기능은 제공하지 않습니다.",
               "승인과 검수가 모두 완료된 상자에 한하여 송장을 출력하여 크리에이터에게 발송합니다(출고).",
             ],
+          },
+          {
+            kind: "stages",
+            // 화면의 단계 이름 그대로(차례는 FAN_STEP_LABEL 의 순서) — 단계가 바뀌면 칩과 이름표 숫자가 같이 바뀐다
+            title: `진행 상황 ${Object.keys(FAN_STEP_LABEL).length}단계`,
+            items: Object.values(FAN_STEP_LABEL),
+            note: "크리에이터의 승인은 검수와 출고 사이에 따로 표시합니다.",
           },
           {
             kind: "list",
@@ -138,14 +154,12 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
             text: "이용요금은 상자별로 부과하며, 배송비와 검수비가 포함된 금액입니다. 상자의 크기와 무게 중 더 높은 구간의 요금을 적용합니다.",
           },
           {
-            kind: "rows",
+            kind: "prices",
+            columns: ["선물", "역조공"],
             rows: PRICED_TIERS.map((t) => ({
-              title: PARCEL_TIER_GUIDE[t].name,
-              fields: [
-                ["기준", PARCEL_TIER_GUIDE[t].rule],
-                ["선물", won(prices[t].priceKrw)],
-                ["역조공", won(prices[t].revgiftPriceKrw)],
-              ],
+              name: PARCEL_TIER_GUIDE[t].name,
+              rule: PARCEL_TIER_GUIDE[t].rule,
+              amounts: [won(prices[t].priceKrw), won(prices[t].revgiftPriceKrw)],
             })),
           },
           {
@@ -196,7 +210,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
               {
                 title: "사무실 도착 전 거절·자동 반려",
                 fields: [
-                  ["환불 금액", "결제 금액 전액"],
+                  ["환불 금액", "결제 금액 전액", "full"],
                   ["「먼저 보내기」를 누른 경우", "아래 「아직 도착하지 않은 상자」 기준에 따름"],
                 ],
               },
@@ -204,7 +218,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
                 title: "사무실 도착 후 거절·자동 반려",
                 fields: [
                   ["환불 금액", "도착한 상자별로 해당 상자 금액에서 반송 택배비를 공제한 금액"],
-                  ["검수에 걸린 상자", "환불 금액 없음"],
+                  ["검수에 걸린 상자", "환불 금액 없음", "none"],
                 ],
               },
               {
@@ -219,14 +233,14 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
                 title: "검수 불합격에 따른 반송",
                 fields: [
                   ["해당", `보낼 수 없는 물품이 발견되거나 ${OVERSIZE_RULE}, 또는 크리에이터가 돌려보내기를 선택했거나 7일 이내에 답하지 않은 상자(제10조)`],
-                  ["환불 금액", "검수비와 반송 택배비를 공제하므로 환불 금액이 없습니다"],
+                  ["환불 금액", "검수비와 반송 택배비를 공제하므로 환불 금액이 없습니다", "none"],
                 ],
               },
-              { title: "차액 미결제에 따른 반송", fields: [["환불 금액", "검수 불합격에 따른 반송과 같이 환불 금액이 없습니다"]] },
+              { title: "차액 미결제에 따른 반송", fields: [["환불 금액", "검수 불합격에 따른 반송과 같이 환불 금액이 없습니다", "none"]] },
               {
                 title: "승인 후 결제 완료 시각부터 30일이 지나도 도착하지 않은 상자",
                 fields: [
-                  ["환불 금액", "해당 상자 금액 전액"],
+                  ["환불 금액", "해당 상자 금액 전액", "full"],
                   ["같은 선물의 다른 상자", "그대로 진행"],
                 ],
               },
@@ -237,7 +251,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
                   ["환불 금액", "「사무실 도착 후 거절·자동 반려」와 같음. 아직 도착하지 않은 상자는 「받는 주소가 공개된 후 거절·자동 반려·취소 시 아직 도착하지 않은 상자」 기준에 따름"],
                 ],
               },
-              { title: "출고 후", fields: [["환불 금액", "없음"]] },
+              { title: "출고 후", fields: [["환불 금액", "없음", "none"]] },
             ],
           },
           {

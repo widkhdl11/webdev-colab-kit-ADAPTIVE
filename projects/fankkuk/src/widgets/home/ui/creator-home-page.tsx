@@ -13,8 +13,8 @@ import s from "./home.module.css";
 import { HomeNotices, type HomeNotice } from "./home-notices";
 
 // 크리에이터 홈 — 로그인하면 먼저 나오는 첫 화면. 시안: docs/design/mockups/site/v21-addendum3/cre-home.html(design-rules 12절 「홈」), 본문 틀 기본 880.
-// 12절: 제목 「홈」 없이 프로필 구간이 본문 맨 앞이고 h1 은 공개 이름. 프로필 구간 = 배경 띠(배경 사진, 없으면 퍼스널 컬러)·사진(테두리 퍼스널 컬러)·
-// 팬덤 뱃지(면 팬컬러)·한 줄 소개·「프로필 수정」·「계정 설정」(creator-link INV-E13·E14). 그 아래 바로가기 한 줄 목록(0000절 — 카드 좌우 나열 대신) · 공지.
+// 12절: 제목 「홈」 없이 프로필 구간이 본문 맨 앞이고 h1 은 공개 이름. 프로필 구간 = 배경 띠(배경 사진, 없으면 테마 색)·사진(테두리 테마 색)·
+// 팬덤 뱃지(면 테마 색)·한 줄 소개·「프로필 수정」·「계정 설정」(creator-link INV-E13·E14). 그 아래 바로가기 한 줄 목록(0000절 — 카드 좌우 나열 대신) · 공지.
 // 필수 다섯(오늘 승인할 선물 · 진행 중인 선물 · 최근 열람 기록 · 공지 · 내가 보낸 선물, 카드 d15)은 바로가기와 공지에 모두 있다.
 // 이 화면에는 승인 버튼을 두지 않는다 — 승인은 처리할 일의 승인 창에서 한 건씩 카카오톡으로 한다.
 // 「진행 중인 선물 N건」은 선물 현황 머리 「진행 중 N건」과 같은 값이다 — 라우트가 같은 읽기(my_gift_progress, action-center INV-J9)로 센 수를 넘긴다.
@@ -46,6 +46,8 @@ type Props = {
   ongoingCount: number | null;
   /** 내가(로그인한 사람이) 보낸 선물. */
   sentGifts: readonly FanGiftView[];
+  /** 광고 배너 — 본문 맨 위(design-rules 16절 ②, 2026-10-18 사용자 「위치는 제일 상단에」). 라우트가 넘김 부품을 넣는다. 보일 배너가 없으면 null */
+  banner?: ReactNode;
 };
 
 /** 「최근 열람 기록」은 한 줄만 쓴다 — 라우트가 이만큼만 읽는다. */
@@ -86,11 +88,13 @@ function Row({ href, icon, title, meta, value }: { href: string; icon: keyof typ
   );
 }
 
-export function CreatorHomePage({ profile, accountHref, notices, actionCount, accessLog, ongoingCount, sentGifts }: Props) {
+export function CreatorHomePage({ profile, accountHref, notices, actionCount, accessLog, ongoingCount, sentGifts, banner = null }: Props) {
   const lastLog = accessLog[0];
   return (
     <main id="main" className={`page-pane ${s.pane}`}>
       <div className={s.stack}>
+        {/* 광고 배너는 맨 위(2026-10-18 사용자 「위치는 제일 상단에」) */}
+        {banner}
         <CreatorHead
           label="내 프로필"
           nameAs="h1"

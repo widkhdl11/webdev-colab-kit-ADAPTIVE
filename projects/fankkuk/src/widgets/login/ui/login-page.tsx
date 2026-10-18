@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { safeNextPath } from "@/entities/session/model/safe-next-path";
 import { sendResetRequest } from "@/features/password-reset/api/reset-client";
@@ -17,7 +16,6 @@ import s from "./login.module.css";
 type LoginResponse = { ok?: boolean; message?: string; next?: string };
 
 export function LoginPage({ next }: { next?: string }) {
-  const router = useRouter();
   const id = useId();
   const f = (name: string) => `${id}-${name}`;
 
@@ -56,8 +54,8 @@ export function LoginPage({ next }: { next?: string }) {
       const body = (await res.json().catch(() => ({}))) as LoginResponse;
       if (res.ok) {
         // 서버가 검사해 돌려준 같은 사이트 경로로만 간다(INV-L13). 없으면 처음 화면(/) — 그곳이 로그인한 사람을 제 메인으로 보낸다.
-        router.push(safeNextPath(body.next));
-        router.refresh();
+        // 페이지를 통째로 다시 읽는다 — 이 탭이 미리 받아 둔 화면(링크에 마우스를 올렸을 때, 30초)이 이전 계정의 것일 수 있어서다. 로그아웃도 같은 방식이다(보안 리뷰 2026-10-18).
+        window.location.assign(safeNextPath(body.next));
         return;
       }
       setError(body.message ?? "로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.");

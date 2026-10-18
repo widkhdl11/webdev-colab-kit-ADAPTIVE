@@ -1,8 +1,10 @@
+import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { adminClient, anonClient, deleteTestOrders, payTestOrder, psql, psqlError, registerTestOrder, signedInClient } from "./helpers";
 import { CV, createCvAccounts, dropCvAccounts, resetCv } from "./creator-verification-helpers";
 import { deleteTestUnmatched, fanSetsWaybill, inspect, receiveAndLabel, waybill } from "./office-helpers";
 import { saveCreatorProfile } from "@/features/creator-settings-save/model/save-creator-settings";
+import { readCreatorCards } from "@/entities/creator/api/creator-reads";
 
 // 크리에이터 설정 (my-account INV-A9 공개 정보 고치기 · INV-A10 찾기 노출 · INV-A11 알림, S9~S11).
 // 시드 크리에이터의 값을 바꾸지 않으려고 본인 확인 시험 계정(cvt_*)을 쓴다. 모모(시드)는 「바뀌지 않았는가」만 읽는다.
@@ -369,92 +371,139 @@ describe("INV-A11: 크리에이터 알림은 카카오·이메일 두 칸 (manua
   });
 });
 
-describe("INV-E13·E14: 크리에이터 색 — 퍼스널 컬러·팬컬러 (creator-link)", () => {
+describe("INV-E13·E14: 테마 색(저장 칸 퍼스널 컬러) — 파스텔 8색만, 팬컬러는 바꾸지 않는다 (creator-link)", () => {
+  const MIGRATION = new URL("../../supabase/migrations/20261018000003_theme_color.sql", import.meta.url);
+
   function colors(creatorId: string): string {
     return psql(`select coalesce(personal_color, '-') || '|' || coalesce(fan_color, '-') from public.creators where id = '${creatorId}'`);
   }
+  /** 규칙 전 값을 심는다 — 8색 제약을 잠깐 내리고 표에 직접 쓴다(로컬 DB). 끝나면 마이그레이션을 다시 돌려 제약을 되살린다 */
+  function seedLegacy(rows: readonly { id: string; personal: string | null; fan: string | null }[]): void {
+    const q = (v: string | null) => (v === null ? "null" : `'${v}'`);
+    psql(
+      [
+        "begin;",
+        "alter table public.creators drop constraint if exists creators_personal_color_palette;",
+        ...rows.map((r) => `update public.creators set personal_color = ${q(r.personal)}, fan_color = ${q(r.fan)} where id = '${r.id}';`),
+        "commit;",
+      ].join(" "),
+    );
+  }
+  function runMigration(): void {
+    psql(readFileSync(MIGRATION, "utf8"));
+  }
 
-  it("INV-E13 S12: 하루로 #1e3a8a·#FFF59D 저장 → 대문자로 저장, 팬덤 이름만 보내면 색은 그대로, 빈 값이면 기본(null)으로", async () => {
+  it("INV-E13 S12: 하루로 #dcebff 저장 → #DCEBFF, 팬덤 이름만 보내면 색은 그대로, 빈 값이면 기본(null)으로", async () => {
     const client = await signedInClient(ME.login);
     const viewer = { userId: ME.id, role: "creator" as const };
-    expect(await saveCreatorProfile({ client, viewer }, { personalColor: "#1e3a8a", fanColor: "#FFF59D" })).toEqual({ ok: true });
-    expect(colors(ME.creatorId)).toBe("#1E3A8A|#FFF59D");
+    expect(await saveCreatorProfile({ client, viewer }, { personalColor: "#dcebff" })).toEqual({ ok: true });
+    expect(colors(ME.creatorId)).toBe("#DCEBFF|-");
     expect(await saveCreatorProfile({ client, viewer }, { fanName: "달빛지기" })).toEqual({ ok: true });
-    expect(colors(ME.creatorId)).toBe("#1E3A8A|#FFF59D");
+    expect(colors(ME.creatorId)).toBe("#DCEBFF|-");
     expect(await saveCreatorProfile({ client, viewer }, { personalColor: "" })).toEqual({ ok: true });
-    expect(colors(ME.creatorId)).toBe("-|#FFF59D");
-    expect(await saveCreatorProfile({ client, viewer }, { fanColor: "" })).toEqual({ ok: true });
     expect(colors(ME.creatorId)).toBe("-|-");
   });
 
-  it("INV-E13: DB 함수를 직접 불러 소문자로 보내도 대문자로 저장된다(앱 서버를 거치지 않아도)", async () => {
-    expect((await save(ME.login, { p_personal_color: "#1e3a8a", p_fan_color: "#fff59d" })).error).toBeNull();
-    expect(colors(ME.creatorId)).toBe("#1E3A8A|#FFF59D");
+  it("INV-E13 S12: DB 함수를 직접 불러도 8색은 모두 받고, 소문자로 보내도 대문자로 저장된다", async () => {
+    for (const c of ["#FDE2E4", "#FFE5CC", "#FFF1B8", "#DFF5D8", "#D3F0EC", "#DCEBFF", "#E6E0FF", "#F6DFF0"]) {
+      expect((await save(ME.login, { p_personal_color: c.toLowerCase() })).error, c).toBeNull();
+      expect(colors(ME.creatorId), c).toBe(`${c}|-`);
+    }
   });
 
-  it("INV-E13: 본인 설정 읽기(my_creator_settings)에 두 색이 있다 — 본인 것만", async () => {
-    expect((await save(ME.login, { p_personal_color: "#1E3A8A", p_fan_color: "#FFF59D" })).error).toBeNull();
+  it("INV-E13: 본인 설정 읽기(my_creator_settings)에 테마 색이 있다 — 본인 것만", async () => {
+    expect((await save(ME.login, { p_personal_color: "#E6E0FF" })).error).toBeNull();
     const mine = await (await signedInClient(ME.login)).rpc("my_creator_settings");
     expect(mine.error).toBeNull();
-    expect(mine.data).toEqual([expect.objectContaining({ personal_color: "#1E3A8A", fan_color: "#FFF59D" })]);
+    expect(mine.data).toEqual([expect.objectContaining({ personal_color: "#E6E0FF" })]);
     const other = await (await signedInClient(OTHER.login)).rpc("my_creator_settings");
-    expect(other.data).toEqual([expect.objectContaining({ personal_color: null, fan_color: null })]);
+    expect(other.data).toEqual([expect.objectContaining({ personal_color: null })]);
   });
 
-  it("INV-E13 S12b (실패경로): DB 함수를 직접 불러 형식 밖 값 → 22023, 같이 보낸 칸도 아무것도 안 바뀐다", async () => {
-    expect((await save(ME.login, { p_personal_color: "#111111", p_fan_color: "#222222" })).error).toBeNull();
+  it("INV-E13 S12b (실패경로): DB 함수를 직접 불러 8색 밖 값(#1E3A8A 등)·형식 밖 값 → 22023, 같이 보낸 칸도 아무것도 안 바뀐다", async () => {
+    expect((await save(ME.login, { p_personal_color: "#FFF1B8" })).error).toBeNull();
     const before = creatorRow(ME.creatorId);
-    for (const bad of ["red", "#12345", "#123456; background:url(x)", "1E3A8A", "#1E3A8A0", " #1E3A8A", "#GGGGGG"]) {
-      for (const key of ["p_personal_color", "p_fan_color"]) {
-        const r = await save(ME.login, { p_name: "바뀌면안됨", p_fan_name: "바뀌면안됨", [key]: bad });
-        expect(r.error?.code, `${key}=${bad}`).toBe("22023");
-      }
+    for (const bad of ["#1E3A8A", "#FFFFFF", "#DCEBFE", "red", "#12345", "#DCEBFF; background:url(x)", "DCEBFF", " #DCEBFF", "#GGGGGG"]) {
+      const r = await save(ME.login, { p_name: "바뀌면안됨", p_fan_name: "바뀌면안됨", p_personal_color: bad });
+      expect(r.error?.code, bad).toBe("22023");
     }
-    expect(colors(ME.creatorId)).toBe("#111111|#222222");
+    expect(colors(ME.creatorId)).toBe("#FFF1B8|-");
     expect(creatorRow(ME.creatorId)).toBe(before);
     expect(psql(`select coalesce(fan_name, '-') from public.creators where id = '${ME.creatorId}'`)).toBe("-");
   });
 
   it("INV-E13 S12b (실패경로): 모모의 크리에이터 ID 를 넣으면 거부되고 모모·하루 그대로 · 팬·로그인 안 함은 거부", async () => {
     const momoBefore = colors(MOMO_CREATOR_ID);
-    const r = await save(ME.login, { p_personal_color: "#1E3A8A", p_creator_id: MOMO_CREATOR_ID });
+    const r = await save(ME.login, { p_personal_color: "#DCEBFF", p_creator_id: MOMO_CREATOR_ID });
     expect(r.error).not.toBeNull();
     expect(colors(MOMO_CREATOR_ID)).toBe(momoBefore);
     expect(colors(ME.creatorId)).toBe("-|-");
-    expect((await save("byeolbit_fan", { p_personal_color: "#1E3A8A" })).error?.code).toBe("42501");
-    expect((await anonClient().rpc("update_my_creator_profile", { p_fan_color: "#1E3A8A" })).error).not.toBeNull();
+    expect((await save("byeolbit_fan", { p_personal_color: "#DCEBFF" })).error?.code).toBe("42501");
+    expect((await anonClient().rpc("update_my_creator_profile", { p_personal_color: "#DCEBFF" })).error).not.toBeNull();
     expect(colors(ME.creatorId)).toBe("-|-");
   });
 
-  it("INV-E13 (실패경로): DB 제약 — 표에 직접 넣어도 #RRGGBB 대문자 밖의 값은 들어가지 않는다", () => {
-    for (const bad of ["red", "#1e3a8a", "#12345", "#123456; x"]) {
+  it("INV-E13 S12b (실패경로): DB 제약 — 표에 직접 넣어도 8색 밖의 값(진한 색·소문자·형식 밖)은 들어가지 않는다", () => {
+    for (const bad of ["#1E3A8A", "#FFFFFF", "#dcebff", "red", "#12345", "#DCEBFF; x"]) {
       expect(psqlError(`update public.creators set personal_color = '${bad}' where id = '${ME.creatorId}'`), bad).not.toBeNull();
-      expect(psqlError(`update public.creators set fan_color = '${bad}' where id = '${ME.creatorId}'`), bad).not.toBeNull();
     }
-    expect(psqlError(`update public.creators set personal_color = '#1E3A8A', fan_color = null where id = '${ME.creatorId}'`)).toBeNull();
+    expect(psqlError(`update public.creators set personal_color = '#DCEBFF' where id = '${ME.creatorId}'`)).toBeNull();
+    expect(psql(`select count(*) from pg_constraint where conname = 'creators_personal_color_palette'`)).toBe("1");
+    expect(psql(`select count(*) from pg_constraint where conname = 'creators_personal_color_shape'`)).toBe("0");
   });
 
-  it("INV-E14 S13b: 경계 색 #777777 은 거부 없이 저장된다 · 글자색을 저장하는 칸은 없다(넘기면 함수가 없다고 거부)", async () => {
-    expect((await save(ME.login, { p_fan_color: "#777777" })).error).toBeNull();
-    expect(colors(ME.creatorId)).toBe("-|#777777");
-    expect(psql(`select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'creators' and column_name ~ '(text|on|ink|font)_?colou?r|^on_'`)).toBe("0");
-    expect((await save(ME.login, { p_fan_color: "#777777", p_text_color: "#FF0000" })).error).not.toBeNull();
+  it("INV-E13 S12c: 규칙 전 퍼스널 컬러 #1E3A8A·팬컬러 #FFF59D → 마이그레이션 뒤 퍼스널 컬러는 비고 팬컬러는 남는다 · 8색 값은 그대로 · 다시 돌려도 같다", () => {
+    try {
+      seedLegacy([
+        { id: ME.creatorId, personal: "#1E3A8A", fan: "#FFF59D" },
+        { id: OTHER.creatorId, personal: "#DCEBFF", fan: "#C4B5FD" },
+      ]);
+      expect(colors(ME.creatorId)).toBe("#1E3A8A|#FFF59D");
+      runMigration();
+      expect(colors(ME.creatorId)).toBe("-|#FFF59D");
+      expect(colors(OTHER.creatorId)).toBe("#DCEBFF|#C4B5FD");
+      runMigration();
+      expect(colors(ME.creatorId)).toBe("-|#FFF59D");
+      expect(colors(OTHER.creatorId)).toBe("#DCEBFF|#C4B5FD");
+    } finally {
+      runMigration();
+    }
   });
 
-  it("INV-E13 · INV-E7: 공개 읽기(creator_by_id·목록·찾기·다른 크리에이터)에 두 색이 있다 — 누구나 읽는 공개 값", async () => {
+  it("INV-E13 S12c: 남아 있는 팬컬러는 저장 요청에 팬컬러를 넣어도 바뀌지 않는다(앱 서버·DB 함수 모두) · 공개 읽기 카드에도 그려지지 않는다", async () => {
+    psql(`update public.creators set fan_color = '#FFF59D' where id = '${ME.creatorId}'`);
+    const client = await signedInClient(ME.login);
+    const viewer = { userId: ME.id, role: "creator" as const };
+    expect(await saveCreatorProfile({ client, viewer }, { personalColor: "#DCEBFF", fanColor: "#1E3A8A" })).toEqual({ ok: true });
+    expect(colors(ME.creatorId)).toBe("#DCEBFF|#FFF59D");
+    expect((await save(ME.login, { p_fan_color: "#C4B5FD" })).error).toBeNull();
+    expect((await save(ME.login, { p_fan_color: "" })).error).toBeNull();
+    expect(colors(ME.creatorId)).toBe("#DCEBFF|#FFF59D");
     verify(ME.creatorId, "cvt_haru_color");
-    expect((await save(ME.login, { p_personal_color: "#1E3A8A", p_fan_color: "#FFF59D" })).error).toBeNull();
+    const cards = await readCreatorCards(anonClient(), { signedIn: false, onlyId: ME.creatorId });
+    expect(cards.map((c) => c.colors)).toEqual([{ personal: "#DCEBFF" }]);
+  });
+
+  it("INV-E14 S13b: 글자색을 저장하는 칸은 없다(넘기면 함수가 없다고 거부)", async () => {
+    expect(psql(`select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'creators' and column_name ~ '(text|on|ink|font)_?colou?r|^on_'`)).toBe("0");
+    expect((await save(ME.login, { p_personal_color: "#DCEBFF", p_text_color: "#FF0000" })).error).not.toBeNull();
+    expect(colors(ME.creatorId)).toBe("-|-");
+  });
+
+  it("INV-E13 · INV-E7: 공개 읽기(creator_by_id·목록·찾기·다른 크리에이터)에 테마 색이 있다 — 누구나 읽는 공개 값", async () => {
+    verify(ME.creatorId, "cvt_haru_color");
+    expect((await save(ME.login, { p_personal_color: "#DCEBFF" })).error).toBeNull();
     const anon = anonClient();
     const one = await anon.rpc("creator_by_id", { p_id: ME.creatorId });
     expect(one.error).toBeNull();
-    expect(one.data).toEqual([expect.objectContaining({ id: ME.creatorId, personal_color: "#1E3A8A", fan_color: "#FFF59D" })]);
+    expect(one.data).toEqual([expect.objectContaining({ id: ME.creatorId, personal_color: "#DCEBFF" })]);
     for (const fn of ["list_creators", "find_creators"] as const) {
       const r = await anon.rpc(fn);
       expect(r.error, fn).toBeNull();
-      expect((r.data as { id: string }[]).find((x) => x.id === ME.creatorId), fn).toEqual(expect.objectContaining({ personal_color: "#1E3A8A", fan_color: "#FFF59D" }));
+      expect((r.data as { id: string }[]).find((x) => x.id === ME.creatorId), fn).toEqual(expect.objectContaining({ personal_color: "#DCEBFF" }));
     }
     const others = await anon.rpc("list_other_creators", { p_exclude: MOMO_CREATOR_ID, p_limit: 12 });
     expect(others.error).toBeNull();
-    expect(Object.keys((others.data as object[])[0] ?? {})).toEqual(expect.arrayContaining(["personal_color", "fan_color"]));
+    expect(Object.keys((others.data as object[])[0] ?? {})).toEqual(expect.arrayContaining(["personal_color"]));
   });
 });

@@ -22,6 +22,7 @@
   --gray-500: #6b7280; /* 흐린 글자 — 흰 바탕 4.83:1. 이보다 옅게 쓰지 않는다 */
   --gray-600: #4b5563;
   --gray-900: #1f2937; /* 본문 글자(ink). 흰 바탕 14.7:1 */
+  --badge-ink: #111827; /* 테마 색 팬덤 뱃지 글자(creator-link INV-E14 — 8색 모두 12:1 이상, design-rules 17절) */
   --shadow: 0 1px 3px rgb(0 0 0 / 0.06);
   --shadow-float: 0 1px 3px rgb(0 0 0 / 0.15); /* 사진 위에 뜬 작은 버튼(크리에이터 카드 배너 모서리 「팔로우」, 시안 v25-card-align C안) */
   /* 글꼴: 본문·버튼·메뉴 Pretendard, 제목(h1·h2·h3·페이지 머리 제목)만 티머니 둥근바람(400·800 두 굵기뿐) */
@@ -132,7 +133,7 @@
   --space-24: 96px;
 
   /* 폭(tokens.md 3절) */
-  --maxw: 1152px; /* 로그인 전 글 폭 — .pub-inner(--pub-max 1200 - 양옆 24)와 같은 선 */
+  --maxw: 880px; /* 로그인 전 글 폭 — .pub-inner(--pub-max 928 − 양옆 24×2)와 같은 선. 2026-10-18 1152 → 880(design-rules 16절, 사용자 「3안」) */
   --prose-max: 680px; /* 약관·안내·자주 묻는 질문 본문, 페이지 머리 설명 한 줄(16px 기준 약 42자) */
   --col-profile: 880px; /* 크리에이터 공개 프로필 한 기둥 */
   --col-list: 880px; /* 로그인 후 목록형·홈 */
@@ -176,7 +177,7 @@
   --dur-fade: 150ms;
   --dur-fade-out: 100ms;
   --delay-fade: 100ms;
-  --pub-max: 1200px; /* 로그인 전 상단 바·본문·푸터 글의 바깥 폭(양옆 24 → 글 1152) */
+  --pub-max: calc(var(--col-list) + 2 * var(--gutter)); /* 로그인 전 상단 바·본문·푸터 글의 바깥 폭(양옆 여백 → 글 880 = 로그인 후 목록형 폭) */
   --nav-gap: 32px;
   /* 로고 글자 「팬꾹」 전용 — 티머니 둥근바람은 라이선스상 로고(BI/CI)에 쓸 수 없다 */
   --font-logo: "Pretendard Variable", Pretendard, sans-serif;

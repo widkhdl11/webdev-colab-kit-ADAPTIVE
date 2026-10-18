@@ -80,6 +80,13 @@ vi.mock("@/entities/order/api/fan-gift-rows", async (orig) => {
 });
 vi.mock("@/entities/creator/api/creator-reads", async (orig) => ({ ...(await orig<object>()), readCreatorCards: vi.fn(async () => []) }));
 vi.mock("@/entities/fan/api/read-fan-profile", () => ({ readFanProfile: vi.fn(async () => null) }));
+vi.mock("@/entities/revgift/api/revgift-reads", async (orig) => ({ ...(await orig<object>()), readReceivedRevgifts: vi.fn(async () => []) }));
+vi.mock("@/entities/payment/api/read-tier-prices", async (orig) => {
+  const price = (priceKrw: number) => ({ priceKrw, revgiftPriceKrw: priceKrw, returnShippingKrw: 0 });
+  return { ...(await orig<object>()), readPublicPrices: vi.fn(async () => ({ small: price(6900), medium: price(8900), large: price(10900) })) };
+});
+// 홈 칸 ② 광고 배너 공개 읽기(banners) — 이 시험의 대상이 아니라 빈 목록으로 둔다
+vi.mock("@/entities/banner/api/read-banners", () => ({ readPublicBannersOrNull: vi.fn(async () => []) }));
 vi.mock("@/entities/notice/api/notice-reads", async (orig) => ({ ...(await orig<object>()), readNotices: vi.fn(async () => []) }));
 vi.mock("@/shared/api/supabase/detached", () => ({ readPublicStorageBase: () => "http://storage.test" }));
 vi.mock("@/entities/parcel/api/box-reads", () => ({ readMyGiftBoxes: vi.fn(async () => []) }));
@@ -88,9 +95,9 @@ vi.mock("@/entities/payment/api/read-my-gift-payment", () => ({ readMyGiftPaymen
 vi.mock("@/entities/gift-reply/api/gift-reply-reads", async (orig) => ({ ...(await orig<object>()), readMyGiftReplies: vi.fn(async () => []) }));
 vi.mock("@/entities/order/api/my-gift-memo", async (orig) => ({ ...(await orig<object>()), readMyGiftMemo: vi.fn(async () => null) }));
 
-import ActionsRoute from "@/app/me/actions/page";
-import GiftRoute from "@/app/gifts/[orderNo]/page";
-import HomeRoute from "@/app/home/page";
+import ActionsRoute from "@/app/(site)/me/actions/page";
+import GiftRoute from "@/app/(site)/gifts/[orderNo]/page";
+import HomeRoute from "@/app/(site)/home/page";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -131,15 +138,17 @@ async function draw(page: Promise<React.ReactNode>) {
   act(() => root.render(<>{tree}</>));
   const badge = host.querySelector('a[href="/me/actions"] .badge')?.textContent ?? null;
   const line = host.querySelector('[data-testid="action-line"]')?.textContent ?? null;
-  return { badge, line };
+  // 홈은 한 줄 대신 바로가기 「처리할 일」 칸의 작은 글(design-rules 16절)
+  const tile = [...host.querySelectorAll('ul[aria-label="내 바로가기"] a')].find((a) => a.getAttribute("href") === "/me/actions")?.textContent ?? null;
+  return { badge, line, tile };
 }
 
 describe("INV-J2: 실제 라우트 — 한 화면의 숫자는 한 번 읽은 결과의 줄 수", () => {
-  it("INV-J2: 홈(/home) — 처리할 일은 한 번 읽고, 사이드바 뱃지 3 · 홈 한 줄 「처리할 일 3건」", async () => {
+  it("INV-J2: 홈(/home) — 처리할 일은 한 번 읽고, 사이드바 뱃지 3 · 홈 바로가기 「처리할 일」 칸 3건", async () => {
     const r = await draw(HomeRoute());
     expect(reads.calls).toBe(1);
     expect(r.badge).toBe("3");
-    expect(r.line).toContain("처리할 일 3건");
+    expect(r.tile).toBe("처리할 일3건");
   });
 
   it("INV-J2: 처리할 일(/me/actions) — 한 번 읽고, 사이드바 뱃지 3 · 제목 숫자 3 · 카드 3", async () => {
@@ -157,7 +166,7 @@ describe("INV-J2: 실제 라우트 — 한 화면의 숫자는 한 번 읽은 �
     expect(r.line).toContain("처리할 일 2건");
   });
 
-  it("INV-J2 (실패경로): 0건이면 세 라우트 모두 뱃지·한 줄이 없다", async () => {
+  it("INV-J2 (실패경로): 0건이면 세 라우트 모두 뱃지·한 줄이 없고, 홈 칸은 0건", async () => {
     reads.rows = [];
     const routes = [() => HomeRoute(), () => ActionsRoute(), () => GiftRoute({ params: Promise.resolve({ orderNo: ORDER }), searchParams: Promise.resolve({}) })];
     for (const route of routes) {
@@ -166,6 +175,7 @@ describe("INV-J2: 실제 라우트 — 한 화면의 숫자는 한 번 읽은 �
       expect(reads.calls).toBe(1);
       expect(r.badge).toBeNull();
       expect(r.line).toBeNull();
+      expect(r.tile).toBe(route === routes[0] ? "처리할 일0건" : null);
     }
     expect(host.querySelector('[data-testid="action-line"]')).toBeNull();
   });

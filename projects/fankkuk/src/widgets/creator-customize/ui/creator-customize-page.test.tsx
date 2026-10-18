@@ -1,4 +1,5 @@
 import { act } from "react";
+import type { ThemeColor } from "@/entities/creator/model/creator-color";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NO_COLORS } from "@/entities/creator/model/creator-color";
@@ -116,11 +117,13 @@ describe("미리보기", () => {
     expect(preview.querySelector(`img[src*="bg-"]`)).toBeNull();
   });
 
-  it("INV-E13: 퍼스널 컬러가 있으면 미리보기 띠·사진 테두리가 공개 페이지처럼 그 색, 없거나 꼴이 틀리면 기본 모양", async () => {
-    await render({ colors: { personal: "#F9A8D4", fan: null } });
+  it("INV-E13: 테마 색이 있으면 미리보기 띠·사진 테두리가 공개 페이지처럼 그 색, 없거나 8색 밖이면 기본 모양", async () => {
+    await render({ colors: { personal: "#F6DFF0" } });
     const card = host.querySelector<HTMLElement>("[data-creator-colors]")!;
-    expect(card.style.getPropertyValue("--personal")).toBe("#F9A8D4");
-    await render({ colors: { personal: "red;", fan: null } });
+    expect(card.style.getPropertyValue("--personal")).toBe("#F6DFF0");
+    await render({ colors: { personal: "#F9A8D4" as ThemeColor } });
+    expect(host.querySelector<HTMLElement>("[data-creator-colors]")!.style.getPropertyValue("--personal")).toBe("");
+    await render({ colors: { personal: "red;" as ThemeColor } });
     expect(host.querySelector<HTMLElement>("[data-creator-colors]")!.style.getPropertyValue("--personal")).toBe("");
   });
 

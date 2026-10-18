@@ -13,7 +13,7 @@ export type CreatorSettingsView = {
   customTag: string;
   /** 팬을 부르는 이름(없으면 "") — 링크 페이지 감사 문장에 들어간다(추가분 4-1). */
   fanName: string;
-  /** 퍼스널 컬러·팬컬러(creator-link INV-E13) — 없으면 null(기본 모양). */
+  /** 테마 색(creator-link INV-E13) — 없으면 null(기본 모양). */
   colors: CreatorColors;
   /** 알림 두 칸 — 팬과 같다. 승인 요청은 두 칸이 꺼져도 간다(notifications INV-N6). */
   notify: { kakao: boolean; email: boolean };

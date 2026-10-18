@@ -36,6 +36,8 @@ export const ADMIN_MENU: readonly AdminMenuGroup[] = [
   {
     name: "관리",
     items: [
+      // banners INV-Y1: 운영자만 올리고 고치고 내린다
+      { href: "/admin/banners", label: "광고 배너" },
       { href: "/admin/prohibited", label: "보낼 수 없는 물품" },
       // address-protection INV-P7(D12): 거부된 시도·대표·직원 구분은 운영자만 보는 내부 기록
       { href: "/admin/access-log", label: "주소 열람 기록" },

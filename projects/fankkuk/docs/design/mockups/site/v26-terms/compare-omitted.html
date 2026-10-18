@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v26 약관 — 뺀 두 가지 비교</title>
+<!-- 2026-10-18: 구현 때 뺀 4조 단계 칩 줄 · 9조 금액 색 꼬리표를 「지금 / 시안 그대로 / 고쳐서 넣기」로 비교. 값은 tokens.css 와 같다 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+@font-face{font-family:"Tmoney Round Wind";src:url("../../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2");font-weight:800}
+:root{--ink:#1F2937;--g600:#4B5563;--g500:#6B7280;--g200:#E5E7EB;--g100:#F3F4F6;--g50:#F9FAFB;--sky50:#E0F2FE;--tint:#F0F8FF;--ok:#276749;--okSoft:#EAF5EE;--no:#B42318;--noSoft:#FEECE9}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:16px/1.6 "Pretendard Variable",Pretendard,sans-serif;word-break:keep-all}
+.wrap{max-width:1200px;margin:0 auto;padding:40px 24px 96px}
+h1,h2,h3,p{margin:0}
+.round{font-family:"Tmoney Round Wind","Pretendard Variable",sans-serif;font-weight:800}
+.intro{max-width:760px;display:flex;flex-direction:column;gap:8px;margin-bottom:48px}
+.intro p{color:var(--g600)}
+.topic{display:flex;flex-direction:column;gap:16px;margin-bottom:64px}
+.topic>p{color:var(--g600);max-width:760px}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:start}
+.col{display:flex;flex-direction:column;gap:12px;padding:24px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--g200)}
+.col.pick{box-shadow:inset 0 0 0 2px var(--ink)}
+.lab{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.lab .tag{padding:2px 12px;border-radius:999px;background:var(--g100);color:var(--g600)}
+.col.pick .lab .tag{background:var(--ink);color:#fff}
+.why{font-size:14px;color:var(--g600)}
+.why b{color:var(--no);font-weight:600}
+.why .good{color:var(--ok);font-weight:600}
+hr{border:0;border-top:1px dashed var(--g200);margin:4px 0}
+/* 화면 조각 */
+.prose{display:flex;flex-direction:column;gap:12px;line-height:1.75;font-size:15px}
+.dots{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+.dots li{position:relative;padding-left:16px}
+.dots li::before{content:"";position:absolute;left:4px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--g500)}
+.flow{border-radius:16px;background:var(--g50);padding:16px;display:flex;flex-direction:column;gap:12px}
+.flow p.t{font-size:14px;font-weight:600;color:var(--g600)}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px}
+.chips span.c{padding:2px 12px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px var(--g200)}
+.chips span.c.on{background:var(--sky50);box-shadow:none}
+.chips span.c.side{background:#fff;box-shadow:inset 0 0 0 1px var(--g200);border-style:dashed}
+.chips i{font-style:normal;color:var(--g500)}
+.sub{font-size:13px;color:var(--g500)}
+.mark{outline:2px solid var(--no);outline-offset:2px;border-radius:999px}
+.box{border-radius:16px;box-shadow:inset 0 0 0 1px var(--g200);overflow:hidden;font-size:15px}
+.row{padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.row+.row{border-top:1px solid var(--g200)}
+.row h3{font-size:15px;font-weight:600}
+.kv{display:grid;grid-template-columns:minmax(0,110px) minmax(0,1fr);gap:4px 12px;line-height:1.55}
+.kv dt{color:var(--g600)}
+.kv dd{margin:0}
+.pill{display:inline-block;padding:0 8px;border-radius:8px;font-weight:600}
+.pill.ok{background:var(--okSoft);color:var(--ok)}
+.pill.no{background:var(--noSoft);color:var(--no)}
+@media (max-width:1023px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:767px){.wrap{padding:24px 16px 64px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="intro">
+<h1 class="round" style="font-size:32px;line-height:1.25">약관 시안에서 뺀 두 가지</h1>
+<p>시안을 화면에 옮길 때 두 군데를 빼 두었어요. 각각 「지금 화면」 · 「시안 그대로」 · 「고쳐서 넣기」를 나란히 놓았어요. 굵은 테두리 칸이 추천이에요.</p>
+</div>
+
+<!-- ① 4조 진행 단계 칩 -->
+<section class="topic">
+<h2 class="round" style="font-size:24px">① 제4조 「서비스의 내용」 — 진행 단계 칩 줄</h2>
+<p>선물이 어느 단계를 거치는지를 동그란 칩으로 한 줄에 보여 주는 칸이에요. 바로 아래 점 목록 첫 줄이 같은 내용을 글로 적고 있어요.</p>
+<div class="cols">
+
+<div class="col">
+<p class="lab"><span class="tag">지금 화면</span>칩 없이 글만</p>
+<div class="prose">
+<ul class="dots">
+<li>선물의 진행 상황은 등록 → 입고 → 검수 → 출고 → 배송중 → 수령의 6단계로 표시합니다. 크리에이터의 승인은 검수와 출고 사이에 따로 표시합니다.</li>
+<li>회사는 팬에게 크리에이터의 주소와 … 알리지 않습니다.</li>
+</ul>
+</div>
+<hr>
+<p class="why">단계를 한눈에 보기는 어렵지만, 틀린 정보는 없어요.</p>
+</div>
+
+<div class="col">
+<p class="lab"><span class="tag">시안 그대로</span></p>
+<div class="prose">
+<div class="flow">
+<p class="t">진행 상황은 <span class="mark">6단계</span>로 보여요</p>
+<p class="chips">
+<span class="c">등록</span><i>›</i><span class="c">입고</span><i>›</i><span class="c">검수</span><i>›</i><span class="c on mark">승인 확인</span><i>›</i><span class="c">출고</span><i>›</i><span class="c">배송중</span><i>›</i><span class="c">수령</span>
+</p>
+</div>
+<ul class="dots">
+<li>선물의 진행 상황은 등록 → 입고 → 검수 → 출고 → 배송중 → 수령의 6단계로 표시합니다. …</li>
+</ul>
+</div>
+<hr>
+<p class="why"><b>제목은 6단계인데 칩은 일곱 개</b>예요(빨간 테두리). 「승인 확인」만 하늘색이라 지금 그 단계에 있는 것처럼 보여요. 약관은 문구가 곧 약속이라 숫자가 어긋나면 안 돼요.</p>
+</div>
+
+<div class="col pick">
+<p class="lab"><span class="tag">추천 · 고쳐서 넣기</span></p>
+<div class="prose">
+<div class="flow">
+<p class="t">진행 상황 6단계</p>
+<p class="chips">
+<span class="c">등록</span><i>›</i><span class="c">입고</span><i>›</i><span class="c">검수</span><i>›</i><span class="c">출고</span><i>›</i><span class="c">배송중</span><i>›</i><span class="c">수령</span>
+</p>
+<p class="sub">크리에이터의 승인은 검수와 출고 사이에 따로 표시합니다.</p>
+</div>
+<ul class="dots">
+<li>선물의 진행 상황은 등록 → 입고 → 검수 → 출고 → 배송중 → 수령의 6단계로 표시합니다. …</li>
+</ul>
+</div>
+<hr>
+<p class="why"><span class="good">칩 여섯 개 = 6단계</span>로 글과 맞추고, 승인은 칩 대신 아래 한 줄로 따로 적어요. 제목은 문장 대신 이름표(「진행 상황 6단계」)로 — 약관 안 문장은 「~합니다」로 써야 해서요. 하늘색으로 칠한 칩은 없어요.</p>
+</div>
+
+</div>
+</section>
+
+<!-- ② 9조 금액 색 꼬리표 -->
+<section class="topic">
+<h2 class="round" style="font-size:24px">② 제9조 「거절·자동 반려와 환불」 — 환불 금액 색 꼬리표</h2>
+<p>경우별 환불 금액 줄에서 「전액」은 초록, 「없음」은 빨강 칸으로 칠해 눈에 띄게 하는 거예요. 아래는 여덟 줄 중 다섯 줄만 옮겼어요.</p>
+<div class="cols">
+
+<div class="col">
+<p class="lab"><span class="tag">지금 화면</span>색 없이 글만</p>
+<div class="box">
+<div class="row"><h3>사무실 도착 전 거절·자동 반려</h3><dl class="kv"><dt>환불 금액</dt><dd>결제 금액 전액</dd></dl></div>
+<div class="row"><h3>사무실 도착 후 거절·자동 반려</h3><dl class="kv"><dt>환불 금액</dt><dd>상자 금액에서 반송 택배비를 공제한 금액</dd></dl></div>
+<div class="row"><h3>검수 불합격에 따른 반송</h3><dl class="kv"><dt>환불 금액</dt><dd>검수비와 반송 택배비를 공제하므로 환불 금액이 없습니다</dd></dl></div>
+<div class="row"><h3>차액 미결제에 따른 반송</h3><dl class="kv"><dt>환불 금액</dt><dd>검수 불합격과 같이 환불 금액이 없습니다</dd></dl></div>
+<div class="row"><h3>출고 후</h3><dl class="kv"><dt>환불 금액</dt><dd>없음</dd></dl></div>
+</div>
+<hr>
+<p class="why">모든 줄이 같은 모양이에요. 전액·없음을 찾으려면 글을 읽어야 해요.</p>
+</div>
+
+<div class="col">
+<p class="lab"><span class="tag">시안 그대로</span></p>
+<div class="box">
+<div class="row"><h3>사무실 도착 전 거절·자동 반려</h3><dl class="kv"><dt>환불 금액</dt><dd><span class="pill ok">결제 금액 전액</span></dd></dl></div>
+<div class="row"><h3>사무실 도착 후 거절·자동 반려</h3><dl class="kv"><dt>환불 금액</dt><dd>상자 금액에서 반송 택배비를 공제한 금액</dd></dl></div>
+<div class="row"><h3>검수 불합격에 따른 반송</h3><dl class="kv"><dt>환불 금액</dt><dd><span class="pill no">환불 금액 없음</span> 검수비와 반송 택배비를 공제합니다</dd></dl></div>
+<div class="row"><h3>차액 미결제에 따른 반송</h3><dl class="kv"><dt>환불 금액</dt><dd><span class="mark">검수 불합격과 같이 환불 금액이 없습니다</span></dd></dl></div>
+<div class="row"><h3>출고 후</h3><dl class="kv"><dt>환불 금액</dt><dd><span class="mark">없음</span></dd></dl></div>
+</div>
+<hr>
+<p class="why">「없음」이 세 줄인데 <b>한 줄만 빨강</b>이에요(빨간 테두리가 칠하지 않은 줄). 칠한 줄만 더 나쁜 경우처럼 보여요.</p>
+</div>
+
+<div class="col pick">
+<p class="lab"><span class="tag">추천 · 고쳐서 넣기</span></p>
+<div class="box">
+<div class="row"><h3>사무실 도착 전 거절·자동 반려</h3><dl class="kv"><dt>환불 금액</dt><dd><span class="pill ok">결제 금액 전액</span></dd></dl></div>
+<div class="row"><h3>사무실 도착 후 거절·자동 반려</h3><dl class="kv"><dt>환불 금액</dt><dd>상자 금액에서 반송 택배비를 공제한 금액</dd></dl></div>
+<div class="row"><h3>검수 불합격에 따른 반송</h3><dl class="kv"><dt>환불 금액</dt><dd><span class="pill no">없음</span> 검수비와 반송 택배비를 공제합니다</dd></dl></div>
+<div class="row"><h3>차액 미결제에 따른 반송</h3><dl class="kv"><dt>환불 금액</dt><dd><span class="pill no">없음</span> 검수 불합격에 따른 반송과 같이 환불 금액이 없습니다</dd></dl></div>
+<div class="row"><h3>출고 후</h3><dl class="kv"><dt>환불 금액</dt><dd><span class="pill no">없음</span></dd></dl></div>
+</div>
+<hr>
+<p class="why"><span class="good">전액인 줄은 모두 초록, 없음인 줄은 모두 빨강</span>으로 같은 규칙을 지켜요. 일부만 돌려받는 줄(가운데)은 칠하지 않아요. 같은 기준이 「취소·환불 규정」 표에도 들어가요.</p>
+</div>
+
+</div>
+</section>
+
+</div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: deployed
-basis: 5cddd80adff3
+basis: c7356c8c58a0
 ---
 
 # 배포 기록 — fankkuk
@@ -40,3 +40,26 @@ basis: 5cddd80adff3
 
 - DB 변경 없음(b89af2db 뒤 supabase 폴더 변경 0).
 - 앱: main f1e2ab5d push(커밋 23개 — 고객센터 연락처, 디자인 토큰 적용, 크리에이터 카드 v24 → C안, 토큰 감사 4절 나머지) → Vercel 세 프로젝트 빌드 success. 시험 주소에서 / · /creators · /login · /refund 200, 로그인 전 /me·/creator/settings 는 로그인으로 307.
+
+## 2026-10-18 — 약관 세 글 v26 화면 · 함수 지역 서울
+
+- DB 변경 없음.
+- 앱: main 1660efde push → Vercel 빌드 success. 응답 머리 `x-vercel-id` 가 `icn1::iad1` → `icn1::icn1`(서버 함수가 서울에서 돈다). 첫 응답 시간(로그인 없이, 각 3회) — / 1.06 → 0.44초 · /creators 1.07 → 0.20~0.44초 · /terms 0.98 → 0.20~0.27초 · /privacy 0.17초 · /login 0.36 → 0.14~0.19초.
+- /terms 에 「먼저 세 가지만 알아 두세요」·왼쪽 목차·요금 5,900 · 7,900 · 9,900원, /refund 200.
+
+## 2026-10-18 새벽 — 약관 4조 칩·환불 꼬리표 · 페이지 이동 로딩 화면 · 폴더 (site) 정리
+
+- DB 변경 없음. 앱: main eb7ca1ba push → Vercel 세 프로젝트 빌드 success.
+- 시험 주소(curl, 로그인 전): / · /creators · /login · /terms · /faq · /password/reset · /guide/fan 200, 모두 icn1::icn1 · /admin/creators 404 · /me/following·/creator/actions·/gifts 는 200 + 본문의 로그인 이동(NEXT_REDIRECT /login, meta refresh) — 로딩 화면이 생겨 응답을 먼저 보내는 방식, 브라우저에서 /me/following → /login 확인 · /creator/account 는 /login?next=/creator/account.
+- Playwright 링크 이동(로그인 전, 상단 바 링크): 뼈대 3~5ms, 내용 306~313ms(/terms 490ms) — 서버 응답은 125~195ms(/terms 472ms). 뼈대를 띄우면 React 가 내용으로 바꾸기까지 최소 약 300ms 를 채운다.
+
+## 2026-10-18 새벽 (2) — 링크에 마우스 올리면 미리 받기
+
+- DB 변경 없음. 앱: main 10729256 push → Vercel 세 프로젝트 빌드 success.
+- Playwright(시험 주소, 로그인 전, 상단 바 링크): 마우스 안 올림 → 뼈대 뜸 · 내용 317ms. 올리고 250ms(한 번은 150ms) 뒤 누름 → 12번 중 11번 뼈대 없이 내용 3~22ms, 1번(/faq 첫 회)은 뼈대 · 307ms(미리 받기가 그 안에 안 끝난 것으로 보임). 일부는 30초 안에 같은 페이지를 다시 연 경우라 미리 받은 화면을 다시 썼다.
+
+## 2026-10-18 오후 — 홈 칸 맞춤 v27 · 로그인 전 880 폭 · 광고 배너
+
+- 운영 DB: 적용 전 `migration list` 로 빠진 것이 20261018000001·000002 둘뿐임을 확인. `supabase db push` 로 두 개 적용(개인정보 구역 접촉 0, 삭제 구문은 배너 지우기 함수 안뿐). 적용 뒤 `public.banners` 0줄 · RLS 켜짐 · 저장소 `banner-images` 공개.
+- 앱: main 17c37a7d push(커밋 10개) → Vercel 세 프로젝트 빌드 success.
+- 시험 주소(로그인 전): / · /creators · /login · /terms · /refund · /faq · /signup 200, 「Application error」 없음. Playwright 1440 폭에서 첫 화면 칸 여섯 개 모두 880px, 가로 스크롤 없음, 콘솔 오류 0. 390 폭 가로 스크롤 없음. /admin/banners 는 404. 배너가 0개라 배너 자리는 비어 있다(운영자 계정이 아직 없음).

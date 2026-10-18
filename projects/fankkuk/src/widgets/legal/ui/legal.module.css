@@ -1,5 +1,5 @@
 /* 이용약관·개인정보처리방침 공용 — 시안 docs/design/mockups/site/v18/legal.html · v18-pub.css 「약관」. 카드·격자·긴 글·점 목록은 공통 클래스(base.css)
-   본문은 로그인 전 1152 선. 상단 바 아래 40, 구간 사이 48, 바닥글까지 96(휴대폰 64) */
+   본문은 로그인 전 880 선. 상단 바 아래 40, 구간 사이 48, 바닥글까지 96(휴대폰 64) */
 .page { padding: var(--space-10) 0 var(--section-gap); }
 .sec { margin-top: var(--space-12); }
 
@@ -40,8 +40,6 @@
 /* 세 줄 요약 — 사실 카드 위 */
 .summary { margin-bottom: var(--space-6); }
 .summary ul { margin-top: var(--space-2); }
-.past { margin-bottom: var(--space-6); border: 1px solid var(--gray-200); }
-.versions { margin-top: var(--space-2); }
 /* 신고·문의 양식 카드 — 폼 한 기둥(design-rules 정렬: 폼은 가운데 한 기둥 560~720) */
 .formCard { max-width: 640px; margin-inline: auto; }
 

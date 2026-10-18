@@ -46,6 +46,9 @@ const nextConfig: NextConfig = {
     // 프록시(src/proxy.ts)가 있으면 Next 가 요청 본문을 이 크기까지만 담아 라우트로 넘긴다(기본 10MB — 넘는 부분은 오류 없이 잘린다).
     // 사진 올리기 라우트의 본문 상한(10MB 사진 + 양식 머리줄)과 맞춘다 — 기본값이면 10MB 가까운 정상 사진이 잘려 거부된다(creator-link S9).
     proxyClientMaxBodySize: PHOTO_BODY_LIMIT,
+    // 통째로 미리 받은 화면(링크에 마우스를 올렸을 때, shared/ui/intent-prefetch)을 다시 쓰는 시간 — 기본 5분이면 선물 상태·처리할 일 숫자가
+    // 몇 분 전 값으로 보일 수 있어 30초로 줄인다(사용자 결정 2026-10-18). 요청마다 새로 그리는 페이지의 기본값(dynamic 0초)은 그대로 둔다.
+    staleTimes: { static: 30 },
   },
 };
 

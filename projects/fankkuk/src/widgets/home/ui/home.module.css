@@ -16,28 +16,11 @@
 .pane .secHead { margin-bottom: var(--space-4); }
 .foot { display: flex; justify-content: center; margin-top: var(--space-6); }
 
-/* 팬 홈 프로필 구간 — 시안 v21-addendum3/fan-21.css .pf · .pf-banner · .pf-body · .pf-top · .pf-av · .pf-actions · .pf-link · .pf-bio.
-   값은 시안 :root(--banner-h 160 · --pf-av 96 · --pf-ring 4, 768 이하 112 · 80). 카드 안쪽 여백은 걷고 띠를 끝까지 채운다 */
-.pf { --banner-h: 64px; --pf-av: 96px; --pf-ring: 4px; padding: 0; overflow: hidden; }
-.pfBanner { display: block; width: 100%; height: var(--banner-h); background: var(--primary-50); }
-.pfBanner img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.pfBody { display: grid; gap: var(--space-4); padding: 0 var(--space-6) var(--space-6); }
-.pfTop { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-top: calc(var(--pf-av) / -2); }
-.pfAv { display: grid; place-items: center; flex: none; width: var(--pf-av); height: var(--pf-av); border-radius: var(--r-pill); border: var(--pf-ring) solid var(--white); background: var(--primary-50); color: var(--ink); font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1; overflow: hidden; }
-.pfAv img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.nameRow { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
-.nameRow > h1 { flex: 1 1 auto; min-width: 0; }
-.pfActions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+/* 크리에이터 홈 「계정 설정」 같은 글자 링크 — 시안 v21-addendum3 .pf-link */
 .pfLink { display: inline-flex; align-items: center; min-height: 44px; font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-.pfBio { margin: var(--space-2) 0 0; color: var(--gray-600); overflow-wrap: anywhere; }
-@media (max-width: 768px) {
-  .pf { --pf-av: 80px; }
-}
 
-/* 팬 홈 — 시안 v21-addendum3/fan-21.css .pf-name · .sec-t · .rows · .row · .row-av · .sec-foot-l. 구간은 위아래로만 쌓는다(0000절) */
-.homeName { margin: 0; font-size: var(--fs-page); line-height: 1.3; }
+/* 한 줄 목록 — 시안 v21-addendum3/fan-21.css .sec-t · .rows · .row · .row-av · .sec-foot-l. 팬 홈(front-slots)·크리에이터 홈이 같이 쓴다 */
 .secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
-.secMeta { margin-left: var(--space-1); font-family: var(--font); font-size: var(--fs-caption); font-weight: 400; line-height: inherit; vertical-align: baseline; color: var(--gray-600); }
 .secBody { margin-top: var(--space-4); }
 .secFoot { margin: var(--space-4) 0 0; }
 .rows { margin-bottom: 0; padding: 0; list-style: none; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
@@ -56,23 +39,6 @@
 .rv { flex: none; font-weight: var(--fw-btn); text-align: right; font-variant-numeric: tabular-nums; }
 .rv small { margin-left: 2px; font-size: var(--fs-caption); font-weight: 400; color: var(--gray-600); }
 
-/* 「이렇게 도착해요」 접힘 줄 — 시안 v21-addendum3/fan-21.css .fold · .steps4 · .dismiss */
-.fold { border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
-.fold > summary { display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-3) var(--space-4); border-radius: var(--r-card); font-weight: var(--fw-btn); list-style: none; cursor: pointer; }
-.fold > summary::-webkit-details-marker { display: none; }
-.fold > summary:hover { background: var(--gray-50); }
-.foldIco, .foldChev { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.foldMeta { font-size: var(--fs-caption); font-weight: 400; color: var(--gray-600); }
-.foldChev { margin-left: auto; transition: transform var(--dur-fade) ease; }
-.fold[open] > summary .foldChev { transform: rotate(180deg); }
-.foldBody { display: grid; gap: var(--space-4); padding: var(--space-2) var(--space-4) var(--space-6); }
-.steps4 { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
-.steps4 li { display: flex; align-items: flex-start; gap: var(--space-4); }
-.steps4 b { display: block; }
-.steps4 p { margin: 0; color: var(--gray-600); }
-.stepN { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: var(--r-pill); background: var(--primary-50); font-weight: var(--fw-btn); line-height: 1; }
-.dismiss { justify-self: start; }
-@media (prefers-reduced-motion: reduce) { .foldChev { transition: none; } }
 
 /* 공지 — 위 두 목록과 같은 카드 묶음(v23 감사표 3절). 줄마다 제목 왼쪽 · 날짜 오른쪽 */
 .notices .secHead { margin-bottom: var(--space-4); }

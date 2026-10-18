@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Notice, NoticeBlock } from "@/entities/notice/model/notice";
 import s from "./notices.module.css";
 
-// 공지사항. 시안: docs/design/mockups/site/v18/notices.html — 로그인 전 1152 선, 페이지 머리(제목 24 왼쪽) + 접기 목록
+// 공지사항. 시안: docs/design/mockups/site/v18/notices.html — 로그인 전 880 선, 페이지 머리(제목 24 왼쪽) + 접기 목록
 // 접기 목록(.acc) 한 줄에 하나, 눌러서 펼친다(<details> — 스크립트 없이 열고 닫힌다). 쪽 넘김은 ?page=N 링크.
 
 type Props = { notices: readonly Notice[]; page: number; pageCount: number };

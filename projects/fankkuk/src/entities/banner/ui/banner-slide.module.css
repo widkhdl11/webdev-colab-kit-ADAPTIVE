@@ -1,0 +1,74 @@
+/* 광고 배너 한 장 — 시안 docs/design/mockups/site/v27-home-airy/compose.js 의 bannerCss(.tb-card·.tb-txt·.tb-tag·.tb-top·.tb-sub·.tb-go·.tb-img).
+   크기·간격·반경은 design-rules 00000절 단계로 맞췄다(시안 30·17·15·12 글자 → 24·16·14·14, 안쪽 40·56 → 40·48, 사이 20 → 24).
+   바탕은 --tone(파스텔 8색 중 하나)에서 흰색 쪽으로 옅어지는 판(시안의 옅은 그라데이션). 767 이하(시안 640 이하)는 작은 장. */
+.card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  min-height: 240px;
+  padding: var(--space-10) var(--space-12);
+  border-radius: var(--r-panel);
+  background: linear-gradient(120deg, var(--tone) 0%, color-mix(in srgb, var(--tone) 45%, var(--white)) 100%);
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+}
+.txt { min-width: 0; max-width: 60%; }
+.tag {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: var(--r-tag);
+  background: var(--white);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  font-weight: var(--fw-bold);
+  color: var(--sub);
+}
+.title {
+  margin: 0;
+  font-family: var(--font-round);
+  font-size: var(--fs-page);
+  line-height: 1.3;
+  font-weight: var(--fw-title);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.sub { margin: var(--space-2) 0 0; font-size: var(--fs-body); line-height: 1.5; color: var(--sub); overflow-wrap: anywhere; }
+.go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 40px;
+  margin-top: var(--space-4);
+  padding: 0 var(--space-4);
+  border-radius: var(--r-pill);
+  background: var(--white);
+  font-size: var(--fs-small);
+  font-weight: var(--fw-bold);
+  color: var(--ink);
+  text-decoration: none;
+}
+.go:hover { background: var(--gray-50); }
+.go:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.img { flex: none; width: 180px; height: 180px; max-width: 40%; object-fit: contain; }
+
+@media (max-width: 767px) {
+  .card { gap: var(--space-2); min-height: 200px; padding: var(--space-6) var(--space-4); }
+  .txt { max-width: 64%; }
+  .title { font-size: var(--fs-card); }
+  .sub { font-size: var(--fs-small); }
+  .go { margin-top: var(--space-3); }
+  .img { width: 104px; height: 104px; }
+}
+
+/* 운영자 화면 미리보기 — 시안 admin-banners-pc 의 작은 띠: 그림 44 왼쪽, 꼬리표는 제목 줄 안 */
+.compact { flex-direction: row-reverse; justify-content: flex-end; gap: var(--space-3); min-height: 68px; padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); box-shadow: none; }
+.compact .txt { max-width: none; flex: 1; }
+.compact .tag { margin: 0 var(--space-2) 0 0; float: left; }
+.compact .title { font-family: var(--font); font-size: var(--fs-body); line-height: 1.6; }
+.compact .sub { margin-top: 2px; font-size: var(--fs-small); }
+.compact .img { width: 44px; height: 44px; }
+/* 그림을 아직 고르지 않은 미리보기 — 같은 자리 빈 칸(안내 글 없음) */
+.imgEmpty { display: block; flex: none; border-radius: var(--r-tag); background: var(--gray-100); }

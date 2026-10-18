@@ -2,16 +2,17 @@ import { z } from "zod";
 import { charCount } from "@/shared/lib/validation/char-count";
 import { HIDDEN_CHAR } from "@/shared/lib/validation/hidden-char";
 import { FAN_NAME_MAX } from "@/entities/creator/model/fan-name";
+import { isThemeColor } from "@/entities/creator/model/creator-color";
 
 /**
- * 크리에이터 색 한 칸(creator-link INV-E13) — 빈 문자열이면 기본 모양으로 되돌리기, 아니면 # 뒤 16진수 여섯 자리(대소문자 무관)를 대문자로.
- * 그 밖의 꼴(이름 색·짧은 값·스타일 문장)은 거부한다. DB 함수와 DB 제약이 같은 꼴을 다시 검사한다.
+ * 테마 색(저장 칸 이름은 퍼스널 컬러, creator-link INV-E13) — 빈 문자열이면 기본 모양으로 되돌리기, 아니면 파스텔 8색 가운데 하나(대소문자 무관)를 대문자로.
+ * 8색 밖의 값(남색 같은 진한 색·이름 색·짧은 값·스타일 문장)은 거부한다. DB 함수와 DB 제약이 같은 8색 목록으로 다시 검사한다.
  */
-const colorInput = z
+const themeColorInput = z
   .string()
   .trim()
-  .refine((s) => s === "" || /^#[0-9A-Fa-f]{6}$/.test(s), "색은 #RRGGBB 꼴(예: #1E3A8A)로 적어 주세요.")
-  .transform((s) => s.toUpperCase());
+  .transform((s) => s.toUpperCase())
+  .refine((s) => s === "" || isThemeColor(s), "테마 색은 보기의 8색 가운데 하나를 골라 주세요.");
 
 // 크리에이터 설정 입력 경계 — 앱 서버가 먼저 검사한다(my-account INV-A9·A11). DB 함수가 같은 규칙으로 다시 검사한다.
 // 본문에서 정해진 칸만 꺼낸다. 크리에이터 ID·채널·본인 확인·계정 ID 칸은 있어도 읽지 않는다.
@@ -38,7 +39,7 @@ export const INTRO_MAX = 40;
 /** 팬을 부르는 이름 — 선택, 10자, 줄바꿈 없음(추가분 4-1). 금칙어·연락처 꼴은 DB 가 한 줄 소개와 같은 필터로 다시 본다. */
 export { FAN_NAME_MAX };
 
-// 여섯 칸 모두 없어도 된다 — 없는 칸은 DB 가 지금 값 그대로 둔다. 화면은 자기가 고치는 칸만 보낸다
+// 다섯 칸 모두 없어도 된다 — 없는 칸은 DB 가 지금 값 그대로 둔다. 화면은 자기가 고치는 칸만 보낸다
 // (「내 팬꾹 꾸미기」 = 공개 이름·한 줄 소개·팬을 부르는 이름, 「주소와 설정」 = 찾기 노출). 보낸 칸 가운데 하나라도 틀리면 아무 칸도 바꾸지 않는다(INV-A9).
 export const profileInputSchema = z.object({
   name: z
@@ -61,9 +62,8 @@ export const profileInputSchema = z.object({
     .refine((s) => charCount(s) <= FAN_NAME_MAX, `팬을 부르는 이름은 ${FAN_NAME_MAX}자까지 적을 수 있어요.`)
     .refine((s) => !HIDDEN_CHAR.test(s) && !/[\u2028\u2029]/.test(s), "팬을 부르는 이름에 줄바꿈이나 보이지 않는 글자는 쓸 수 없어요.")
     .optional(),
-  // 퍼스널 컬러·팬컬러(INV-E13) — 보내지 않으면 그대로, 빈 값이면 기본 모양. 글자색 칸은 없다(INV-E14 — 그때 계산)
-  personalColor: colorInput.optional(),
-  fanColor: colorInput.optional(),
+  // 테마 색(INV-E13) — 보내지 않으면 그대로, 빈 값이면 기본 모양. 팬컬러·글자색 칸은 없다 — 본문에 있어도 읽지 않는다(INV-E13·E14)
+  personalColor: themeColorInput.optional(),
 });
 
 export type ProfileInput = z.infer<typeof profileInputSchema>;

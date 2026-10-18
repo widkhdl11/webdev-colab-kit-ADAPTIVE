@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import type { HeaderGiftState } from "@/entities/order/ui/fan-stage-copy";
 import { CREATOR_HOME, FAN_HOME } from "@/entities/session/model/home-path";
 import { LogoMark } from "@/shared/ui/logo";
 import { CREATOR_APP_MENU, FAN_APP_MENU } from "../model/app-menu";
+import { useLastHeader, useRememberHeader } from "../model/header-memory";
 import { Icon } from "./app-icons";
 import { AppSidebar } from "./app-sidebar";
 
@@ -117,7 +119,20 @@ function GuestTopBar({ current }: { current?: string }) {
   );
 }
 
+/** 각 페이지가 그리는 상단 바. 그린 값을 기억해 두어 페이지를 옮기는 동안 로딩 화면(RememberedSiteHeader)이 같은 바를 보여 준다. */
 export function SiteHeader(props: SiteHeaderProps) {
+  useRememberHeader(props);
+  return <SiteHeaderView {...props} />;
+}
+
+/** 로딩 화면용 — 마지막으로 그린 상단 바를 그대로, 메뉴 표시만 지금 가는 주소로. 기억이 없으면(처음 들어온 직후) 그리지 않는다. */
+export function RememberedSiteHeader() {
+  const last = useLastHeader();
+  const pathname = usePathname();
+  return last ? <SiteHeaderView {...last} current={pathname} /> : null;
+}
+
+function SiteHeaderView(props: SiteHeaderProps) {
   if (props.role === "guest") return <GuestTopBar current={props.current} />;
   if (props.role === "fan") {
     return (

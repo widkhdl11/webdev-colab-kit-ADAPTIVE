@@ -1,45 +1,73 @@
-/* 크리에이터 카드(creator-card-head.tsx · creator-card-tags.tsx) — 시안 docs/design/mockups/site/v25-card-align/index.html 「C안 — 가운데 정렬」
-   (.a2 · .a3 · .c 규칙). 머리 칸은 카드(줄 사이 12)와 같은 간격의 세로 줄이고, 카드를 덮는 이름 링크·모서리 버튼은 카드(position: relative)를 기준으로 놓인다 —
-   그래서 머리 칸은 컨테이너·position 을 갖지 않는다. */
-.head { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+/* 크리에이터 카드(creator-card-head.tsx · creator-card-tags.tsx) — 시안 docs/design/mockups/site/v28-card-redesign/index.html(design-rules 17절).
+   카드(감싸는 li)는 안쪽 여백 24(--card-pad) · 줄 사이 8 · position: relative · overflow: hidden. 머리 칸은 카드와 같은 간격의 세로 줄이고,
+   카드를 덮는 이름 링크·하단 버튼은 카드를 기준으로 놓인다 — 그래서 머리 칸은 position 을 갖지 않는다. */
+/* 카드 겉 틀(li) — 찾기·팔로우·홈이 같이 쓴다(creatorCardClass). 안쪽 24(--card-pad) · 반경 16 · 줄 사이 8. 카드 전체가 프로필 링크(이름 링크가 덮는다).
+   테두리는 배너 사진 위에 그리는 층 — 안쪽 그림자로 그리면 사진이 덮어 hover 가 위쪽에서 안 보인다. 클릭은 통과(pointer-events: none) */
+.card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); cursor: pointer; }
+.card::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow 0.15s; }
+.card:hover::before, .card:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
+.card:has(.name a:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.card :global(.ctags) { margin: 0; }
 
-/* 배너 2:1 — 사진 비중을 카드의 절반 가까이로(사용자 2026-10-17). 1200×480 방송 배너는 양옆이 10%씩 잘린다(공개 프로필 머리는 2.5:1 그대로 전체가 보인다) — 사진이 없으면 퍼스널 컬러 30% 면, 그것도 없으면 크리에이터마다 정해진 파스텔(--pastel) */
-.cover { position: relative; overflow: hidden; aspect-ratio: 2 / 1; margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) 0; background: var(--pastel, var(--primary-50)); }
-.ringed .cover { background: color-mix(in srgb, var(--personal) 30%, var(--white)); }
+.head { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
 
-/* 배너 오른쪽 위 모서리 버튼 — 위·오른쪽 8 · 높이 28 · 흰 바탕 + 회색 1px + 옅은 그림자. 누름 칸은 투명 여백으로 44(위아래 8 · 양옆 4).
-   z-index 2 = 카드를 덮는 이름 링크(z-index 1) 위. 직계 자식 버튼만 작게 한다 — 같은 칸에 붙는 팔로우 취소 확인 창(<dialog>) 안 버튼은 원래 크기 */
-.act { position: absolute; top: var(--space-2); right: var(--space-2); z-index: 2; display: flex; }
-.act > :global(.btn) { position: relative; height: 28px; min-height: 28px; padding: 0 var(--space-3); font-size: var(--fs-small); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow-float); }
-.act > :global(.btn)::after { content: ""; position: absolute; inset: calc(var(--space-2) * -1) calc(var(--space-1) * -1); }
-.act > :global(.tag) { min-height: 28px; }
+/* 배너 2:1 · cover — 사진이 없으면 테마 색 면 그대로(파스텔 8색, 섞지 않는다), 그것도 없으면 크리에이터마다 정해진 파스텔(--pastel) */
+.cover { position: relative; overflow: hidden; aspect-ratio: 2 / 1; margin: calc(var(--card-pad) * -1) calc(var(--card-pad) * -1) 0; background: var(--pastel, var(--primary-50)); }
+.ringed .cover { background: var(--personal); }
 
-/* 얼굴 56, 배너에 28 걸침, 가운데 — 칸 높이 28(얼굴 아래 절반) */
-.faceRow { display: flex; justify-content: center; height: 28px; margin-top: -6px; }
-.photo:global(.face) { position: relative; flex: none; width: 56px; height: 56px; margin-top: -28px; box-shadow: 0 0 0 3px var(--white); }
+/* 사진 64(배너에 32 걸침, 왼쪽 — 카드 안쪽 여백 24 선) + 오른쪽에 이름 한 줄 · 그 아래 뱃지 한 줄(2026-10-18 「A로」 — 한 줄에 두면 긴 이름이 뱃지를 밀어낸다) */
+.who { display: flex; align-items: flex-start; gap: var(--space-2); min-width: 0; }
+.photo:global(.face) { position: relative; flex: none; width: 64px; height: 64px; margin-top: -32px; box-shadow: 0 0 0 3px var(--white); }
 .ringed .photo:global(.face) { box-shadow: 0 0 0 3px var(--personal), 0 0 0 6px var(--white); }
+.id { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; min-width: 0; }
 
-/* 이름 한 줄(높이 28) — 넘치면 말줄임, 전체 이름은 title */
-.name { display: flex; justify-content: center; align-items: center; height: 28px; margin: 0; overflow: hidden; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; text-align: center; }
-.name a { min-width: 0; max-width: 100%; overflow: hidden; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+/* 이름(16 · 600, 한 줄 말줄임 — 전체 이름은 title). 이름 칸이 뱃지와 폭을 나누지 않는다 */
+.name { height: 24px; margin: 0; overflow: hidden; font-size: var(--fs-body); font-weight: var(--fw-h3); line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
+.name > a, .name > span { color: inherit; text-decoration: none; }
 .name a:hover { text-decoration: underline; text-underline-offset: 4px; }
-/* 이름 줄은 말줄임 때문에 넘침을 자른다 — 포커스 테두리는 링크 안쪽으로 그려 잘리지 않게 */
-/* 이름 링크가 카드 전체를 덮으므로 포커스 테두리는 카드(li)에 그린다 — 찾기·팔로우 화면의 .card:has / .fc:has. 이름 칸은 overflow 로 잘리므로 여기선 끈다 */
+/* 이름 링크가 카드 전체를 덮으므로 포커스 테두리는 카드(li)에 그린다 — 찾기·팔로우·홈 화면의 .card:has. 이름 칸은 overflow 로 잘리므로 여기선 끈다 */
 .name a:focus-visible { outline: none; }
-/* 카드 전체가 프로필 링크 — 이름 링크가 카드(position: relative)를 덮는다. z-index 1 = 칩 줄(position: relative)·얼굴보다 위라 어디를 눌러도 링크로 간다(모서리 버튼 .act 는 2) */
+/* 카드 전체가 프로필 링크 — 이름 링크가 카드(position: relative)를 덮는다. z-index 1 = 칩 줄(position: relative)·사진보다 위(하단 버튼 줄 .acts 는 2) */
 .name a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
 
-/* 팬덤 뱃지 줄(높이 22, 이름과 4 사이) — 뱃지가 없어도 빈칸으로 남는다 */
-.badgeRow { display: flex; justify-content: center; align-items: center; min-width: 0; height: 22px; margin: -2px 0 0; }
-/* 카드 안 뱃지만 최소 폭 44(시안 .a2 .fn2) — 이름이 길어 말줄임돼도 마크와 글자 한두 자는 남는다. 다른 곳의 뱃지는 그대로 */
-.badgeRow > [data-fandom-badge] { min-width: 44px; }
+/* 팬덤 뱃지 줄(높이 22) — 뱃지가 없어도 빈칸으로 남는다. 뱃지는 이 줄 폭 안에서만, 넘치면 잘린다(팬덤 이름은 최대 10자라 보통 다 보인다) */
+.badgeRow { display: flex; align-items: center; height: 22px; margin: 0; min-width: 0; }
+.badgeRow > [data-fandom-badge] { min-width: 0; max-width: 100%; overflow: hidden; }
 
-/* 「채널 이름 · 소개」 한 줄(높이 21) — 비어도 자리는 남는다 */
-.line { height: 21px; margin: 0; overflow: hidden; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+/* 「채널 이름 · 소개」 최대 두 줄(14 회색, 줄 높이 21 × 2 = 42) — 넘치면 둘째 줄 끝에서 말줄임. 비어도 두 줄 자리는 남아 카드 높이가 같다.
+   2026-10-18 사용자 「평균 승인 시간 공간을 뺐으니 한마디 설명 공간을 한두줄 더」 — 세 줄은 짧은 소개 카드가 비어 보여 두 줄로. 끊을 곳 없는 긴 글자도 줄을 바꾼다 */
+.line { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; height: calc(var(--fs-small) * var(--lh-caption) * 2); margin: 0; overflow: hidden; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); overflow-wrap: anywhere; }
 
-/* 플랫폼 칩 한 줄(높이 22, 칩 사이 6 — creator-card-tags 가 이 gap 을 읽어 잰다) — 넘치는 칩은 「+N」. 공통 .ctags 를 이기도록 클래스를 두 번 쓴다.
-   safe center = 넘치면 왼쪽부터(재기 전 모든 칩이 그려질 때 양쪽이 잘리지 않게). 지원하지 않는 브라우저는 앞 줄의 center */
-.tags.tags { position: relative; display: flex; flex-wrap: nowrap; justify-content: center; justify-content: safe center; gap: 6px; height: 22px; margin: 0; overflow: hidden; }
+/* 칩 줄 — 소개 줄과 12(카드 줄 사이 8 + 4). 칩이 카드 폭을 다 쓰고 넘치면 +N(2026-10-18 「팔로우」를 아래 버튼 줄로 내렸다) */
+.foot { display: flex; align-items: center; min-height: 22px; margin-top: var(--space-1); min-width: 0; }
+.foot > .tags.tags { flex: 1 1 auto; min-width: 0; }
+
+/* 아래 색 띠 — 카드 맨 아래, 배너처럼 카드 안쪽 여백만큼 바깥으로 나가 좌·우·아래 가장자리에 붙는다(카드 반경·overflow 로 잘림).
+   흰 몸통(사진·이름·소개·칩)과 띠 사이 16(카드 줄 사이 8 + 8). 띠 안쪽 위아래 12 · 좌우 24(--card-pad — 몸통 글자 선과 맞춤).
+   바탕 = 배너 면과 같은 색(--act-bg: 테마 색 또는 크리에이터 ID 파스텔). z-index 2 = 카드를 덮는 이름 링크(z-index 1) 위 — 눌러도 카드로 이동하지 않는다.
+   2026-10-18 사용자 「하얀부분이 몸통이고 위랑 아래랑 세트인 느낌」「두 버튼의 크기를 다르게」.
+   줄 바꿈(wrap)은 저장 실패 알림 한 줄(FollowButton, 폭 100%)이 버튼 아래로 내려가게 하려는 것 — 버튼 둘은 「선물 보내기」가 줄어들어 한 줄에 남는다 */
+.acts { position: relative; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: calc(44px + var(--space-3) * 2); margin: var(--space-2) calc(var(--card-pad) * -1) calc(var(--card-pad) * -1); padding: var(--space-3) var(--card-pad); background: var(--act-bg, var(--primary-50)); }
+/* 띠 버튼 공통 — 높이 44(= 누름 칸), 반경 12, 글자 #111827(--badge-ink) 14, 아이콘 16 + 사이 8(글자는 넘치면 말줄임 — .btnText).
+   data-card-btn 이 붙은 직계 자식만 바꾼다 — 같은 칸에 붙는 팔로우 취소 확인 창(<dialog>)·저장 실패 알림은 그대로.
+   .acts 를 두 번 써서 사이트 공통 버튼(base.css 의 .btn--line.btn--sm 테두리·면)보다 한 단계 세게 — 실린 순서에 따라 덮이지 않게 */
+.acts.acts > [data-card-btn] { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-2); min-width: 0; height: 44px; min-height: 44px; overflow: hidden; border-radius: var(--r-btn); color: var(--badge-ink); font-size: var(--fs-small); line-height: 1.25; white-space: nowrap; }
+.acts.acts > [data-card-btn] > svg { flex: none; }
+.btnText { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* 주(「팔로우」 혼자일 때 · 「선물 보내기」) — 흰 면 · 600 · 남은 폭 전부 */
+.acts.acts > [data-card-btn="main"] { flex: 1 1 0; padding: 0 var(--space-3); background: var(--white); box-shadow: none; font-weight: var(--fw-btn); }
+.acts.acts > [data-card-btn="main"]:is(:hover, :active) { background: color-mix(in srgb, var(--white) 92%, var(--gray-900)); }
+/* 저장하는 동안 — 흐리게, 누름은 FollowButton 이 막는다(초점은 받을 수 있게 disabled 가 아니라 aria-disabled) */
+.acts.acts > [data-card-btn][aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+/* 보조(「팔로우 취소」) — 늘 아이콘만 44 정사각(글자는 화면 낭독기용, 마우스를 올리면 title — 2026-10-18 「로그인 후 팔로우 취소는 아이콘만」).
+   흰 반투명 면 + 테두리(띠 색 + #1F2937 22%, 뱃지 테두리와 같은 방식) */
+.acts.acts > [data-card-btn="sub"] { flex: none; width: 44px; padding: 0; background: color-mix(in srgb, var(--white) 40%, transparent); box-shadow: inset 0 0 0 1px var(--act-line, var(--gray-200)); }
+.acts.acts > [data-card-btn="sub"]:is(:hover, :active) { background: color-mix(in srgb, var(--white) 75%, transparent); }
+/* 본인 카드 — 띠는 그대로(높이 같게), 버튼 대신 「내 페이지」 태그. 누를 것이 아니라 누름이 아래 카드 링크로 간다 */
+.mine { pointer-events: none; }
+
+/* 플랫폼 칩 한 줄(높이 22, 칩 사이 6 — creator-card-tags 가 이 gap 을 읽어 잰다), 왼쪽 정렬 — 넘치는 칩은 「+N」. 공통 .ctags 를 이기도록 클래스를 두 번 쓴다 */
+.tags.tags { position: relative; display: flex; flex-wrap: nowrap; justify-content: flex-start; gap: 6px; height: 22px; margin: 0; overflow: hidden; }
 /* 카드 안 칩만 작게 — 높이 22 · 글자 12 · 로고 14(공개 프로필 등 다른 곳의 칩은 그대로 26 · 14 · 18) */
 .tags.tags :global(.ctag) { flex: none; max-width: none; min-height: 22px; height: 22px; padding: 0 var(--space-2) 0 3px; gap: var(--space-1); font-size: var(--fs-badge); line-height: 1; }
 .tags.tags :global(.ctag)[data-plain] { padding: 0 var(--space-2); }

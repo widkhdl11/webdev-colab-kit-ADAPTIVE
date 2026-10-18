@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CreatorCard } from "./creator-card";
-import { newestSearchable } from "./newest-creators";
+import { newestFirst } from "./newest-creators";
 
 const card = (id: string): CreatorCard => ({
   id,
@@ -17,19 +17,18 @@ const card = (id: string): CreatorCard => ({
   photoPath: null,
 });
 
-describe("newestSearchable", () => {
+describe("newestFirst", () => {
   it("최근에 들어온 크리에이터가 앞에 온다", () => {
-    const all = [card("a"), card("b"), card("c")];
-    expect(newestSearchable(all, all).map((c) => c.id)).toEqual(["c", "b", "a"]);
+    expect(newestFirst([card("a"), card("b"), card("c")], 4).map((c) => c.id)).toEqual(["c", "b", "a"]);
   });
 
-  it("찾기에 나오지 않는 크리에이터는 뺀다", () => {
-    const all = [card("a"), card("b"), card("c")];
-    expect(newestSearchable(all, [card("a"), card("c")]).map((c) => c.id)).toEqual(["c", "a"]);
+  it("앞 limit 명만 — 가장 오래된 사람이 빠진다", () => {
+    expect(newestFirst([card("a"), card("b"), card("c"), card("d"), card("e")], 4).map((c) => c.id)).toEqual(["e", "d", "c", "b"]);
   });
 
-  it("순서는 찾기 목록이 아니라 전체 목록(들어온 순서)을 따른다", () => {
-    const all = [card("a"), card("b"), card("c")];
-    expect(newestSearchable(all, [card("c"), card("a"), card("b")]).map((c) => c.id)).toEqual(["c", "b", "a"]);
+  it("받은 목록을 바꾸지 않는다", () => {
+    const list = [card("a"), card("b")];
+    newestFirst(list, 4);
+    expect(list.map((c) => c.id)).toEqual(["a", "b"]);
   });
 });

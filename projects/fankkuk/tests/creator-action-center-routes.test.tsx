@@ -67,9 +67,9 @@ vi.mock("@/widgets/creator-gift-progress/api/read-gift-progress", async () => {
   return { readMyGiftProgress: vi.fn(async () => parseGiftProgressRows(rows)) };
 });
 
-import CreatorActionsRoute from "@/app/creator/actions/page";
-import CreatorHomeRoute from "@/app/creator/page";
-import CreatorProgressRoute from "@/app/creator/progress/page";
+import CreatorActionsRoute from "@/app/(site)/creator/actions/page";
+import CreatorHomeRoute from "@/app/(site)/creator/page";
+import CreatorProgressRoute from "@/app/(site)/creator/progress/page";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.showModal) {

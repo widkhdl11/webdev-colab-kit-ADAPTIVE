@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   matchesCreatorQuery,
   type CreatorCard,
@@ -16,8 +16,7 @@ import {
   NO_CARD_LOOK,
   type CardLook,
 } from "@/entities/creator/model/card-look";
-import { CreatorCardHead, CreatorCardLine } from "@/entities/creator/ui/creator-card-head";
-import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
+import { CreatorCardActions, CreatorCardFoot, CreatorCardHead, CreatorCardLine, CreatorCardMineRow, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
 import {
   hasTagIcon,
   TagChipBody,
@@ -30,11 +29,11 @@ import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-n
 import s from "./creator-search.module.css";
 
 // 크리에이터 찾기. 시안: docs/design/mockups/site/v18/creators.html (design-rules 00절) · 태그 아이콘·색 v9-pages/tags-b.html (카드 d46)
-// 위에서 아래로: 페이지 머리(제목 24 왼쪽·설명·본인 확인 줄) → 왼쪽부터 꽉 찬 검색창 → 태그 칩 → 「전체 N명」 → 카드 격자(쓸 수 있는 폭 1152 → 4열 · 880 → 3열 · 640 이상 2열 · 그 아래 1열).
-// 본문 틀: 로그인 후는 목록형 기본 폭(.page-pane 880 — 2026-10-16 사용자 「꼭 넓은 너비가 필요한 페이지가 아니다」), 로그인 전은 상단 바와 같은 1152 선(.pub-inner) — 로그인 전 상단 바 아래에서 넓은 틀이 상단 바 선을 벗어나지 않게.
-// 카드는 크리에이터가 꾸민 대로 — entities/creator/ui/creator-card-head·creator-card-tags(시안 v25-card-align C안, DECISIONS 2026-10-17 카드 d103: 배너 2.5:1 ·
-// 가운데 정렬 · 배너 모서리 팔로우 · 「채널 이름 · 소개」 한 줄 + 칩 한 줄, 승인 시간·「선물 보내기」 없음). 팔로우한 크리에이터 화면과 같은 카드다.
-// 광고 배너 자리는 다음 기능 작업이라 두지 않는다.
+// 위에서 아래로: 광고 배너(0장이면 없음) → 페이지 머리(제목 24 왼쪽·설명·본인 확인 줄) → 왼쪽부터 꽉 찬 검색창 → 태그 칩 → 「전체 N명」 → 카드 격자(880 기둥 → 화면 1024 이상 3열 · 640 이상 2열 · 그 아래 1열).
+// 본문 틀: 로그인 후는 목록형 기본 폭(.page-pane 880 — 2026-10-16 사용자 「꼭 넓은 너비가 필요한 페이지가 아니다」), 로그인 전은 상단 바와 같은 880 선(.pub-inner — 2026-10-18 1152 → 880) — 로그인 전 상단 바 아래에서 넓은 틀이 상단 바 선을 벗어나지 않게.
+// 카드는 크리에이터가 꾸민 대로 — entities/creator/ui/creator-card-head·creator-card-tags(시안 v28-card-redesign, design-rules 17절: 배너 2:1 ·
+// 사진 왼쪽 + 이름·팬덤 뱃지 한 줄 · 「채널 이름 · 소개」 한 줄 · 칩 한 줄 · 하단 줄에 평균 승인 시간과 팔로우). 팔로우한 크리에이터·홈과 같은 카드다.
+// 광고 배너는 본문 맨 위(2026-10-18 사용자 「위치는 제일 상단에」 — 시안 v18 의 태그 칩 아래 자리에서 옮김) — 라우트가 넘김 부품을 넣는다(banners INV-Y7·Y8, 0장이면 없음).
 // 검색창에 치는 대로 목록이 걸러진다(시안 site.js 의 실시간 검색).
 // 태그 칩(creator-tags INV-T4)은 숨기지 않은 선택지 가운데 이 목록의 크리에이터 1명 이상이 가진 것만, 선택지 순서. 칩 하나를 고르면
 // 그 태그를 가진 크리에이터만 — 검색어와 함께 걸린다. 칩은 한 번에 하나(여러 개 고르는 검색은 비범위).
@@ -68,12 +67,15 @@ export function CreatorSearchPage({
   tagOptions,
   followMode,
   ownCreatorId = null,
+  banner = null,
 }: {
   creators: readonly CreatorCard[];
   looks?: Readonly<Record<string, CardLook>>;
   tagOptions: readonly TagOption[];
   followMode: FollowMode;
   ownCreatorId?: string | null;
+  /** 광고 배너 칸 — 보일 배너가 없으면 null */
+  banner?: ReactNode;
 }) {
   const [query, setQuery] = useState("");
   const [tag, setTag] = useState("");
@@ -97,6 +99,8 @@ export function CreatorSearchPage({
 
   return (
     <main id="main" className={frame}>
+      {/* 광고 배너는 맨 위(2026-10-18 사용자 「위치는 제일 상단에」) */}
+      {banner}
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title" id="find-title">
@@ -173,7 +177,7 @@ export function CreatorSearchPage({
             const own = c.id === ownCreatorId;
             const look = looks[c.id] ?? NO_CARD_LOOK;
             return (
-              <li key={c.id} className={s.card} hidden={!shown.has(c.id)}>
+              <li key={c.id} className={creatorCardClass} hidden={!shown.has(c.id)}>
                 <CreatorCardHead
                   creatorId={c.id}
                   name={c.name}
@@ -181,22 +185,23 @@ export function CreatorSearchPage({
                   look={look}
                   colors={c.colors}
                   faceTone={c.faceTone}
-                  action={
-                    own ? (
-                      <span className="tag">내 페이지</span>
-                    ) : (
-                      <FollowButton
-                        creatorId={c.id}
-                        creatorName={c.name}
-                        initialFollowing={c.following}
-                        variant="row"
-                        mode={followMode}
-                      />
-                    )
-                  }
                 />
                 <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-                <CreatorCardTags tags={c.tags} />
+                <CreatorCardFoot tags={c.tags} />
+                {/* 본인은 버튼 줄 자리에 「내 페이지」 태그, 운영자(hidden)는 줄 없음 — 운영자 화면은 모든 카드에 줄이 없어 높이가 같다 */}
+                {own ? (
+                  <CreatorCardMineRow creatorId={c.id} colors={c.colors} />
+                ) : followMode === "hidden" ? null : (
+                  <CreatorCardActions creatorId={c.id} colors={c.colors}>
+                    <FollowButton
+                      creatorId={c.id}
+                      creatorName={c.name}
+                      initialFollowing={c.following}
+                      variant="card"
+                      mode={followMode}
+                    />
+                  </CreatorCardActions>
+                )}
               </li>
             );
           })}

@@ -1,23 +1,11 @@
 /* 팔로우한 크리에이터 — 시안 docs/design/mockups/site/v18/my-following.html (v18-app.css .fgrid · .fcard · .fc-*). 빈 화면은 전역 .empty */
-/* 카드 격자·카드 틀 — 크리에이터 찾기와 같다(시안 v24-creator-card guest/proposal.css, v25-card-align C안도 같은 틀). 쓸 수 있는 폭 880 → 3열, 640 이상 2열, 그 아래 1열 · 사이 24(767 이하 16) */
-.results { container-type: inline-size; }
-.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+/* 카드 격자·카드 틀 — 크리에이터 찾기와 같다(시안 v28-card-redesign, design-rules 17절 A안). 결과 칸(.results) 폭 기준 3열 · 2열 · 1열 · 사이 24(1열 16) */
+.results { min-width: 0; container-type: inline-size; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
 /* 2열 이상은 모든 줄을 가장 큰 카드 높이로 — 줄마다 높이가 달라 보이지 않게 */
-@container (min-width: 640px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; } }
-@container (min-width: 860px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@container (min-width: 1100px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-/* 카드 — 안쪽 24 · 반경 16 · 줄 사이 12. 카드 전체가 프로필 링크(이름 링크가 덮는다), 올리면 테두리가 진해진다.
-   머리·「채널 이름 · 소개」 한 줄은 entities/creator/ui/creator-card-head */
-.fc { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: var(--space-6) var(--space-6) var(--space-4); border-radius: var(--r-card); background: var(--white); cursor: pointer; }
-/* 테두리는 배너 사진 위에 그리는 층 — 카드 안쪽 그림자로 그리면 사진이 덮어 hover 가 위쪽에서 안 보인다. 클릭은 통과(pointer-events: none) */
-.fc::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow 0.15s; }
-.fc:hover::before, .fc:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
-.fc:has(a:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
-.fc :global(.ctags) { margin: 0; }
+/* 열 수는 화면 폭이 아니라 카드가 놓이는 칸 폭으로(컨테이너 쿼리) — 카드가 210 이상인 만큼 최대 3열.
+   444 = 210×2 + 사이 24, 678 = 210×3 + 24×2. 로그인 뒤 왼쪽 메뉴로 좁아진 칸(1024 에서 약 700)도 3열(카드 약 217)
+   — 2026-10-18 하한 260 으로 2열이 됐다가 사용자 「원래 3열이었는데 2열로 바뀐 걸 말한 거야」로 210 */
+@container (min-width: 444px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: var(--space-6); } }
+@container (min-width: 678px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .empty p { max-width: 480px; }
-/* 끊기 실패 알림 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다(빈 칸은 공통 .err:empty) */
-.msg { margin-bottom: var(--space-6); }
-
-@media (max-width: 767px) {
-  .grid { gap: var(--space-4); }
-}

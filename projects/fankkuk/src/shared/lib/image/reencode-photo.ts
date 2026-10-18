@@ -11,16 +11,19 @@ export type Reencode = { kind: "square"; side: number } | { kind: "fit"; longSid
 
 export type ReencodeResult = { ok: true; webp: Buffer } | { ok: false; problem: PhotoProblem };
 
-const ACCEPTED = new Set(["jpeg", "png", "webp"]);
+/** 받는 파일 — 크기 상한과 열어 본 형식(sharp 의 format 이름). 기본은 사진 상한(10MB · jpeg·png·webp). */
+export type ReencodeAccept = { maxBytes: number; formats: readonly string[] };
 
-export async function reencodePhoto(bytes: Uint8Array, size: Reencode): Promise<ReencodeResult> {
+const PHOTO_ACCEPT_FORMATS: ReencodeAccept = { maxBytes: PHOTO_MAX_BYTES, formats: ["jpeg", "png", "webp"] };
+
+export async function reencodePhoto(bytes: Uint8Array, size: Reencode, accept: ReencodeAccept = PHOTO_ACCEPT_FORMATS): Promise<ReencodeResult> {
   if (bytes.byteLength === 0) return { ok: false, problem: "empty" };
-  if (bytes.byteLength > PHOTO_MAX_BYTES) return { ok: false, problem: "too_large_file" };
+  if (bytes.byteLength > accept.maxBytes) return { ok: false, problem: "too_large_file" };
   try {
     const opts = { limitInputPixels: PHOTO_MAX_PIXELS, failOn: "error" as const };
     // 확장자·브라우저가 붙인 종류는 믿지 않는다 — 내용을 열어 본 형식으로만 판단한다
     const meta = await sharp(bytes, opts).metadata();
-    if (!meta.format || !ACCEPTED.has(meta.format)) return { ok: false, problem: "not_supported" };
+    if (!meta.format || !accept.formats.includes(meta.format)) return { ok: false, problem: "not_supported" };
     if (!meta.width || !meta.height || meta.width * meta.height > PHOTO_MAX_PIXELS) return { ok: false, problem: "too_many_pixels" };
     const turned = sharp(bytes, opts).rotate(); // 사진 정보의 방향 값대로 돌린 뒤(그 값은 결과에 남지 않는다)
     const sized =

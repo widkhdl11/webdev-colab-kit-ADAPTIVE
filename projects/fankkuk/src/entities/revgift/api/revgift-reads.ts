@@ -17,6 +17,16 @@ export async function readReceivedRevgifts(client: SupabaseClient): Promise<Rece
   return parseReceivedRows(data);
 }
 
+/** 홈 바로가기 숫자용 — 못 읽으면 null(숫자 하나 때문에 홈 전체가 실패하지 않게). */
+export async function readReceivedRevgiftsOrNull(client: SupabaseClient): Promise<ReceivedRevgift[] | null> {
+  try {
+    return await readReceivedRevgifts(client);
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : "받은 역조공을 읽지 못했다");
+    return null;
+  }
+}
+
 /** 받기 화면용 — 로그인한 팬이 받는 몫 하나. 남의 몫·없는 번호는 null. */
 export async function readReceivedRevgift(client: SupabaseClient, orderNo: string): Promise<ReceivedRevgift | null> {
   const { data, error } = await client.rpc("my_received_revgift", { p_order_no: orderNo });
