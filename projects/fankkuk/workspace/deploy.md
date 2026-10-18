@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: deployed
-basis: 31234ed2ed88
+basis: c7356c8c58a0
 ---
 
 # 배포 기록 — fankkuk
@@ -57,3 +57,9 @@ basis: 31234ed2ed88
 
 - DB 변경 없음. 앱: main 10729256 push → Vercel 세 프로젝트 빌드 success.
 - Playwright(시험 주소, 로그인 전, 상단 바 링크): 마우스 안 올림 → 뼈대 뜸 · 내용 317ms. 올리고 250ms(한 번은 150ms) 뒤 누름 → 12번 중 11번 뼈대 없이 내용 3~22ms, 1번(/faq 첫 회)은 뼈대 · 307ms(미리 받기가 그 안에 안 끝난 것으로 보임). 일부는 30초 안에 같은 페이지를 다시 연 경우라 미리 받은 화면을 다시 썼다.
+
+## 2026-10-18 오후 — 홈 칸 맞춤 v27 · 로그인 전 880 폭 · 광고 배너
+
+- 운영 DB: 적용 전 `migration list` 로 빠진 것이 20261018000001·000002 둘뿐임을 확인. `supabase db push` 로 두 개 적용(개인정보 구역 접촉 0, 삭제 구문은 배너 지우기 함수 안뿐). 적용 뒤 `public.banners` 0줄 · RLS 켜짐 · 저장소 `banner-images` 공개.
+- 앱: main 17c37a7d push(커밋 10개) → Vercel 세 프로젝트 빌드 success.
+- 시험 주소(로그인 전): / · /creators · /login · /terms · /refund · /faq · /signup 200, 「Application error」 없음. Playwright 1440 폭에서 첫 화면 칸 여섯 개 모두 880px, 가로 스크롤 없음, 콘솔 오류 0. 390 폭 가로 스크롤 없음. /admin/banners 는 404. 배너가 0개라 배너 자리는 비어 있다(운영자 계정이 아직 없음).
