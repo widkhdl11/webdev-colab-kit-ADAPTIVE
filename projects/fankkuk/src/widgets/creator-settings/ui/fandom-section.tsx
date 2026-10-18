@@ -6,7 +6,6 @@ import { THEME_COLORS, type CreatorColors, type ThemeColor } from "@/entities/cr
 import { creatorSymbolUrl } from "@/entities/creator/model/link-images";
 import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
 import { CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
-import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
 import { deleteCreatorImage, sendCreatorImage } from "@/features/creator-photo/api/send-creator-image";
 import { ImageField } from "@/features/creator-photo/ui/image-field";
 import { sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
@@ -204,10 +203,9 @@ export function FandomSection(p: FandomSectionProps) {
               faceTone={p.card.faceTone}
             />
             <CreatorCardLine channelTitle={p.card.channelTitle} intro={p.card.intro} />
-            <CreatorCardTags tags={p.card.tags} />
             {/* 버튼은 모양만 — 누를 수 없다(미리보기) */}
             <CreatorCardFoot
-              approvalMinutes={p.card.approvalMinutes}
+              tags={p.card.tags}
               action={
                 <span className="btn btn--sm btn--line" aria-hidden="true">
                   팔로우

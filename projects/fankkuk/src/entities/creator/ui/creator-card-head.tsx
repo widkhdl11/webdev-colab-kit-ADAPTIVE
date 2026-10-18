@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import type { CardLook } from "../model/card-look";
 import { creatorColorVars, hasThemeVars, type CreatorColors } from "../model/creator-color";
-import { approvalTimeText } from "./approval-time-text";
+import { CreatorCardTags } from "./creator-card-tags";
 import { CreatorCoverArt, coverPastelVar } from "./creator-cover-art";
 import { CreatorPhoto } from "./creator-photo";
 import { FandomBadge } from "./fandom-badge";
@@ -13,8 +13,8 @@ import s from "./creator-card-head.module.css";
 // 위에서 아래로(줄 사이 8): 배너 2:1(배경사진, 없으면 테마 색 면 그대로 또는 파스텔 + 오른쪽 흐린 고양이)
 // → 사진 64(배너에 32 걸침, 왼쪽) + 오른쪽에 이름(600·한 줄 말줄임) 한 줄, 그 아래 팬덤 뱃지 한 줄(CreatorCardHead)
 //   — 한 줄에 나란히 두면 긴 이름이 뱃지를 「하..」까지 밀어내서 두 줄로 나눴다(2026-10-18 사용자 「A로」)
-// → 「채널 이름 · 소개」 한 줄(CreatorCardLine) → 플랫폼 칩 한 줄(CreatorCardTags)
-// → 하단 줄(CreatorCardFoot): 왼쪽 평균 승인 시간 · 오른쪽 버튼(팔로우·팔로우 중·내 페이지), 칩 줄과 12 띄움.
+// → 「채널 이름 · 소개」 한 줄(CreatorCardLine)
+// → 하단 줄(CreatorCardFoot): 왼쪽 플랫폼 칩(넘치면 +N) · 오른쪽 버튼(팔로우·팔로우 중·내 페이지). 평균 승인 시간은 카드에 없다(2026-10-18).
 // 줄마다 자리가 고정이다 — 소개·칩이 없어도 빈칸으로 남아 카드 높이가 같다.
 // 테마 색(INV-E13)은 배너 면·사진 테두리·팬덤 뱃지에만.
 // 카드 전체가 프로필 링크다 — 이름 링크가 카드 전체를 덮고(감싸는 카드는 position: relative), 버튼은 그 위에 올라 누름이 퍼지지 않는다.
@@ -77,11 +77,13 @@ export function CreatorCardLine({ channelTitle, intro }: { channelTitle: string;
   return <p className={s.line}>{text}</p>;
 }
 
-/** 하단 줄 — 왼쪽 평균 승인 시간(찾기·선물 보내기와 같은 문구), 오른쪽 버튼(팔로우·팔로우 중·내 페이지). 버튼이 없으면 승인 시간만. */
-export function CreatorCardFoot({ approvalMinutes, action }: { approvalMinutes: number | null; action?: ReactNode }) {
+/** 하단 줄 — 왼쪽 플랫폼 칩(넘치면 「+N」), 오른쪽 버튼(팔로우·팔로우 중·내 페이지). 버튼이 없으면 칩이 줄 전체를 쓴다.
+ *  2026-10-18 사용자 「평균 승인 시간을 없애고 조금 재조정」 — 승인 시간 줄을 빼고 칩 줄에 버튼을 올렸다. 이름 옆이 아니라 칩 옆인 것은
+ *  칩 줄에 넘침 처리(+N)가 있어서다 — 이름·뱃지 줄은 길이가 변하는 것 둘을 나란히 두지 않는다(ui-layers 「레이아웃 안정성」). */
+export function CreatorCardFoot({ tags, action }: { tags: readonly string[]; action?: ReactNode }) {
   return (
     <div className={s.foot} data-card-foot="">
-      <span className={s.appr}>{approvalTimeText(approvalMinutes)}</span>
+      <CreatorCardTags tags={tags} />
       {action ? <div className={s.act}>{action}</div> : null}
     </div>
   );

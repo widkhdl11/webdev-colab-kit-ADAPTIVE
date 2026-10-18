@@ -10,7 +10,6 @@ import {
   type CardLook,
 } from "@/entities/creator/model/card-look";
 import { CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
-import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
 import { saveFollow } from "@/features/creator-follow/api/save-follow";
 import { FOLLOWING_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import { useUnfollowConfirm } from "@/features/creator-follow/ui/unfollow-dialog";
@@ -86,9 +85,8 @@ export function MyFollowingPanel({
                   faceTone={c.faceTone}
                 />
                 <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-                <CreatorCardTags tags={c.tags} />
                 <CreatorCardFoot
-                  approvalMinutes={c.approvalMinutes}
+                  tags={c.tags}
                   action={
                     <button
                       className="btn btn--sm btn--line"

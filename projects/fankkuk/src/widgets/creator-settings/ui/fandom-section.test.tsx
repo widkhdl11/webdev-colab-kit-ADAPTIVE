@@ -138,12 +138,15 @@ describe("INV-E13: 테마 색은 8색 견본 + 「선택 안 함」, 저장은 �
 });
 
 describe("카드 미리보기 — 찾기 화면 카드 그대로(design-rules 17절)", () => {
-  it("INV-E13: 채널 이름·소개 · 칩 · 실제 평균 승인 시간 · 누를 수 없는 「팔로우」 모양, 링크 없음", async () => {
+  it("INV-E13: 채널 이름·소개 · 칩과 같은 줄의 누를 수 없는 「팔로우」 모양(평균 승인 시간 없음), 링크 없음", async () => {
     await render();
     const card = host.querySelector<HTMLElement>("[data-card-preview]")!;
     expect(card.textContent).toContain("하루의 놀이터 · 게임 방송을 해요.");
     expect(card.textContent).toContain("치지직");
-    expect(card.querySelector("[data-card-foot]")?.textContent).toBe(`${approvalTimeText(180)}팔로우`);
+    const foot = card.querySelector("[data-card-foot]");
+    expect(foot?.textContent).toContain("치지직");
+    expect(foot?.textContent?.endsWith("팔로우")).toBe(true);
+    expect(card.textContent).not.toContain(approvalTimeText(180));
     expect(card.querySelector("a, button")).toBeNull();
   });
 

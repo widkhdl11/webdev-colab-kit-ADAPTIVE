@@ -17,7 +17,6 @@ import {
   type CardLook,
 } from "@/entities/creator/model/card-look";
 import { CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
-import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
 import {
   hasTagIcon,
   TagChipBody,
@@ -188,9 +187,8 @@ export function CreatorSearchPage({
                   faceTone={c.faceTone}
                 />
                 <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-                <CreatorCardTags tags={c.tags} />
                 <CreatorCardFoot
-                  approvalMinutes={c.approvalMinutes}
+                  tags={c.tags}
                   action={
                     own ? (
                       <span className="tag">내 페이지</span>

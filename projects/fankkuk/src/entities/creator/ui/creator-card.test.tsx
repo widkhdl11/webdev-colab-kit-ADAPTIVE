@@ -4,7 +4,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NO_CARD_LOOK } from "../model/card-look";
 import type { ThemeColor } from "../model/creator-color";
-import { approvalTimeText } from "./approval-time-text";
 import { CreatorCardFoot, CreatorCardHead, CreatorCardLine } from "./creator-card-head";
 import { CreatorCardTags, fitChipCount } from "./creator-card-tags";
 
@@ -93,14 +92,17 @@ describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름 줄·뱃지 줄,
     expect(host.querySelector<HTMLElement>("[data-card-cover]")?.style.getPropertyValue("--pastel")).toMatch(/^#[0-9A-F]{6}$/);
   });
 
-  it("하단 줄 — 왼쪽 평균 승인 시간(찾기와 같은 문구), 오른쪽 버튼. 버튼이 없으면 승인 시간만", () => {
-    const foot = dom(renderToStaticMarkup(<CreatorCardFoot approvalMinutes={180} action={<button type="button">팔로우</button>} />));
+  it("하단 줄 — 왼쪽 칩 줄, 오른쪽 버튼. 평균 승인 시간은 카드에 없다. 버튼이 없으면 칩 줄만", () => {
+    const foot = dom(renderToStaticMarkup(<CreatorCardFoot tags={["치지직", "유튜브"]} action={<button type="button">팔로우</button>} />));
     const row = foot.querySelector("[data-card-foot]")!;
-    expect(row.children[0]?.textContent).toBe(approvalTimeText(180));
+    expect(row.childElementCount).toBe(2);
+    expect(row.children[0]?.textContent).toContain("치지직");
+    expect(row.children[0]?.querySelector("button")).toBeNull();
     expect(row.children[1]?.querySelector("button")?.textContent).toBe("팔로우");
-    const bare = dom(renderToStaticMarkup(<CreatorCardFoot approvalMinutes={null} />)).querySelector("[data-card-foot]")!;
+    expect(row.textContent).not.toContain("승인");
+    const bare = dom(renderToStaticMarkup(<CreatorCardFoot tags={["치지직"]} />)).querySelector("[data-card-foot]")!;
     expect(bare.childElementCount).toBe(1);
-    expect(bare.textContent).toBe("아직 승인 기록이 없어요");
+    expect(bare.textContent).toContain("치지직");
   });
 
   it("「채널 이름 · 소개」가 둘 다 없어도 줄은 남는다", () => {

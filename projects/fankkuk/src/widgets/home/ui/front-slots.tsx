@@ -4,7 +4,6 @@ import { NO_CARD_LOOK, type CardLook } from "@/entities/creator/model/card-look"
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
 import { CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
-import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { FAN_STEP_LABEL, fanBadge } from "@/entities/order/ui/fan-stage-copy";
@@ -236,8 +235,7 @@ export function CreatorCardsSlot({
                 faceTone={c.faceTone}
               />
               <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-              <CreatorCardTags tags={c.tags} />
-              <CreatorCardFoot approvalMinutes={c.approvalMinutes} action={action?.(c)} />
+              <CreatorCardFoot tags={c.tags} action={action?.(c)} />
             </li>
           ))}
         </ul>
