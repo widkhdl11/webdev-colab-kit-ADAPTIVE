@@ -51,8 +51,9 @@ export function HomePage({ nickname, gifts, following, looks, faceToneByName, no
   return (
     <main id="main" className="page-pane">
       <div className={s.root}>
-        <SearchSlot eyebrow={nickname ? `${nickname}님` : undefined} tiles={memberTiles({ gifts, actionCount, receivedCount })} tilesLabel="내 바로가기" />
+        {/* 광고 배너는 맨 위(2026-10-18 사용자 「위치는 제일 상단에」) */}
         {banner}
+        <SearchSlot eyebrow={nickname ? `${nickname}님` : undefined} tiles={memberTiles({ gifts, actionCount, receivedCount })} tilesLabel="내 바로가기" />
         <GiftsSlot gifts={gifts} faceToneByName={faceToneByName} />
         <CreatorCardsSlot
           id="follow"

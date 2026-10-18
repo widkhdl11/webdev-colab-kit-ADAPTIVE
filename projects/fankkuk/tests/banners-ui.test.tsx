@@ -128,33 +128,33 @@ const PROFILE = {
   symbolUrl: null,
 };
 
-/** 다섯 자리 — 각 화면에 배너 칸을 넣어 그린다. at: 그 화면에서 배너 칸 바로 앞·뒤에 와야 하는 것 */
+/** 다섯 자리 — 각 화면에 배너 칸을 넣어 그린다. before: 배너 칸이 본문 맨 위(앞에 아무것도 없음)이고 바로 뒤에 그 화면의 첫 구역이 오는지
+ *  (2026-10-18 사용자 「위치는 제일 상단에」 — design-rules 16절) */
+const first = (slot: Element) => slot.previousElementSibling === null;
 const PLACES: { name: string; render: (slot: React.ReactNode) => React.ReactNode; before: (slot: Element) => boolean }[] = [
   {
-    name: "로그인 전 첫 화면 칸 ②",
+    name: "로그인 전 첫 화면 맨 위",
     render: (slot) => <LandingPage prices={PRICES} newest={[]} looks={{}} notices={[]} banner={slot} />,
-    before: (slot) => slot.previousElementSibling?.getAttribute("aria-labelledby") === "hero-title" && slot.nextElementSibling?.id === "how",
+    before: (slot) => first(slot) && slot.nextElementSibling?.getAttribute("aria-labelledby") === "hero-title",
   },
   {
-    name: "팬 홈 칸 ②",
+    name: "팬 홈 맨 위",
     render: (slot) => (
       <HomePage nickname="별빛" gifts={[]} following={[]} looks={{}} faceToneByName={{}} notices={[]} prices={PRICES} actionCount={0} receivedCount={0} banner={slot} />
     ),
-    before: (slot) => slot.previousElementSibling?.getAttribute("aria-labelledby") === "hero-title",
+    before: (slot) => first(slot) && slot.nextElementSibling?.getAttribute("aria-labelledby") === "hero-title",
   },
   {
-    name: "크리에이터 홈(바로가기 아래·공지 위)",
+    name: "크리에이터 홈 맨 위",
     render: (slot) => (
       <CreatorHomePage profile={PROFILE} accountHref="/creator/account" notices={[]} actionCount={0} accessLog={[]} ongoingCount={0} sentGifts={[]} banner={slot} />
     ),
-    before: (slot) =>
-      slot.previousElementSibling?.getAttribute("aria-labelledby") === "sc-t" && slot.nextElementSibling?.getAttribute("aria-labelledby") === "notice-title",
+    before: (slot) => first(slot) && slot.nextElementSibling?.querySelector("h1")?.textContent === PROFILE.name,
   },
   {
-    name: "크리에이터 찾기(태그 칩 아래·목록 위)",
+    name: "크리에이터 찾기 맨 위",
     render: (slot) => <CreatorSearchPage creators={[]} tagOptions={[]} followMode="login" banner={slot} />,
-    before: (slot) =>
-      slot.previousElementSibling?.getAttribute("aria-label") === "태그로 걸러 보기" && slot.nextElementSibling?.getAttribute("aria-label") === "검색 결과",
+    before: (slot) => first(slot) && slot.nextElementSibling?.classList.contains("page-head") === true,
   },
 ];
 

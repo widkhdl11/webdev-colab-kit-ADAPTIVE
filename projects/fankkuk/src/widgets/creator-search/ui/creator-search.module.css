@@ -46,5 +46,5 @@
   .grid { gap: var(--space-4); }
 }
 
-/* 광고 배너 칸(태그 칩 아래·목록 위, 시안 v18/creators.html 의 .ad-slot) — 칩과 사이 24 */
-.chips + [data-banner-slot] { margin-top: var(--space-6); }
+/* 광고 배너 칸은 본문 맨 위(2026-10-18 사용자 「위치는 제일 상단에」) — 아래 페이지 머리와 사이 40 */
+[data-banner-slot] + :global(.page-head) { margin-top: var(--space-10); }

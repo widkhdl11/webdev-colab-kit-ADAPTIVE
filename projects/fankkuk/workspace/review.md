@@ -1,11 +1,19 @@
 ---
 project: fankkuk
 status: passed
-basis: eb7642dba079
-reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
+basis: c7356c8c58a0
+reviewers: [security-reviewer, ui-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-18, 광고 배너)
+# 리뷰 사인오프 — fankkuk (2026-10-18, 광고 배너를 맨 위로)
+
+덮는 변경: 752b927a 뒤 — 사용자 「위치는 제일 상단에」. 첫 화면·팬 홈·크리에이터 홈·크리에이터 찾기에서 배너 칸을 본문 첫 줄로(JSX 순서 · 크리에이터 찾기 CSS 한 줄 · 주석 · design-rules 16절 · DECISIONS · 자리 시험). code-reviewer·test-auditor 는 뺐다 — 로직 변경이 없고 시험 변경은 자리 단언 하나라 본체가 변이로 확인했다.
+
+- 실행 근거: `npm test` 2248 통과 · `tsc` 0 · copy:lint 0 · 자리 시험 변이 둘(크리에이터 홈 배너를 공지 앞으로 / 프로필 머리 뒤로) → 각각 1 실패 · Playwright 1440·390 네 화면 배너가 main 첫 요소·가로 넘침 0(팬·크리에이터 실제 로그인).
+- ui: 중 1(design-rules 374줄·CSS 주석에 옛 자리 남음) · 낮음 2(주석 순서, 크리에이터 홈 자리 시험 약함) → 모두 고침. 참고: 건너뛰기 링크 뒤 첫 초점이 배너 단추(문서 기준 없음).
+- security: 지적 없음 — 라우트 diff 는 주석 두 줄뿐(git diff 로 확인).
+
+## 이전 사인오프 (2026-10-18, 광고 배너)
 
 덮는 변경: c5634b02(스펙 banners.md 승인) 뒤 — 1be90556 광고 배너(마이그레이션 20261018000001 표 둘·공개 읽기·운영자 함수·공개 저장소 banner-images, 그림 저장 경로, 운영자 화면 /admin/banners, 넘김 칸 다섯 자리: 첫 화면·팬 홈·크리에이터 홈·크리에이터 찾기·운영자 미리보기) · f04b6a1d 리뷰 19건 반영(마이그레이션 20261018000002 글·그림 한 번에 고치기). 두 마이그레이션은 로컬 DB 에만 적용.
 

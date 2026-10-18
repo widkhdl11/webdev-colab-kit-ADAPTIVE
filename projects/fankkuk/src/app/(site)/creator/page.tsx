@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 // 공개 이름·소개·팬덤 이름·두 색(my_creator_settings, creator-link INV-E13)·프로필 사진(my_creator_link)·배경사진·심볼(my_creator_look). 본인 확인 전에도 나온다.
 // 크리에이터 처리할 일(my_creator_action_items — 사이드바 숫자와 바로가기 「처리할 일」이 같은 결과, action-center INV-J6)·진행 중인 선물 수(선물 현황과 같은 읽기 my_gift_progress — 머리 「진행 중 N건」과 같은 값, action-center INV-J9)·열람 기록(my_access_log)·공지(list_notices)·
 // 내가 보낸 선물(my_gifts — 로그인한 사람이 보낸 주문)은 DB. 모두 인자 없이 로그인 토큰의 사람 것만 돌려준다.
-// 광고 배너는 공개 읽기 한 번 — 바로가기 아래·공지 위(design-rules 16절 ②), 못 읽으면 칸만 없다(banners INV-Y8).
+// 광고 배너는 공개 읽기 한 번 — 본문 맨 위(design-rules 16절 ②), 못 읽으면 칸만 없다(banners INV-Y8).
 // 팬은 팬 메인으로, 로그인하지 않았으면 로그인으로 보낸다.
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
