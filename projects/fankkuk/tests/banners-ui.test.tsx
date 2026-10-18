@@ -129,13 +129,16 @@ const PROFILE = {
 };
 
 /** 다섯 자리 — 각 화면에 배너 칸을 넣어 그린다. before: 배너 칸이 본문 맨 위(앞에 아무것도 없음)이고 바로 뒤에 그 화면의 첫 구역이 오는지
- *  (2026-10-18 사용자 「위치는 제일 상단에」 — design-rules 16절) */
+ *  (2026-10-18 사용자 「위치는 제일 상단에」 — design-rules 16절). 로그인 전 첫 화면만 첫 화면 띠 바로 아래(같은 날 「추천대로」, 시안 v29-landing-fix) */
 const first = (slot: Element) => slot.previousElementSibling === null;
 const PLACES: { name: string; render: (slot: React.ReactNode) => React.ReactNode; before: (slot: Element) => boolean }[] = [
   {
-    name: "로그인 전 첫 화면 맨 위",
+    name: "로그인 전 첫 화면 띠 아래",
     render: (slot) => <LandingPage prices={PRICES} newest={[]} looks={{}} notices={[]} banner={slot} />,
-    before: (slot) => first(slot) && slot.nextElementSibling?.getAttribute("aria-labelledby") === "hero-title",
+    before: (slot) =>
+      first(slot) &&
+      slot.parentElement?.previousElementSibling?.getAttribute("aria-labelledby") === "hero-title" &&
+      slot.nextElementSibling?.getAttribute("aria-label") === "바로가기",
   },
   {
     name: "팬 홈 맨 위",

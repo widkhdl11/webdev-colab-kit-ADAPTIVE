@@ -38,7 +38,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader role="guest" current="/" />
-      <LandingPage prices={prices} newest={newest} looks={toCardLooks(newest, looks, storageBase)} notices={notices} banner={bannerSlot(banners)} />
+      <LandingPage prices={prices} newest={newest} looks={toCardLooks(newest, looks, storageBase)} notices={notices} banner={bannerSlot(banners, "column")} />
       <SiteFooter />
     </>
   );

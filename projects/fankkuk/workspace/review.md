@@ -1,11 +1,22 @@
 ---
 project: fankkuk
 status: passed
-basis: d9be1a742103
-reviewers: [security-reviewer, codex-code-review, codex-ui-review]
+basis: 2689fa528b0d
+reviewers: [ui-reviewer, security-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-18 밤, 사이트 재진단 반영)
+# 리뷰 사인오프 — fankkuk (2026-10-19 새벽, 로그인 전 첫 화면 다듬기 v29-landing-fix)
+
+덮는 변경: ec9cc319 뒤 — 로그인 전 첫 화면(`/`)의 띠·흰 바로가기·4단계 줄·약속 띠·요금 한 장·배너 위치(design-rules 19절, DECISIONS 「로그인 전 첫 화면 다듬기」). 팬 홈은 부품 기본값 그대로.
+닿은 표면: 시각만(새 시각 방향 → 시안 승인 「추천대로」). 도메인 로직·데이터 모델·인가 변경 없음 → code-reviewer 는 뺐다(읽을 로직 변경이 없다). security-reviewer 는 프로젝트에 위험 표면이 있어 사인오프 조건이라 이번 diff 로 돌렸다.
+
+- ui-reviewer: 4건 — 약속 띠 카드 테두리+그림자(18절 위반, 중) → 테두리만 / 첫 화면 띠~배너 56 → 칸을 8 당겨 48(초점 여유 8 은 유지) / 그림 크기에 간격 토큰 → --icon·--icon-wrap / 버튼 고정 height → min-height 만. 팬 홈의 같은 테두리+그림자는 범위 밖이라 BACKLOG.
+- security-reviewer: 결함 없음 — 로그인 시 /home 이동이 읽기보다 먼저, 배너 공개 읽기·0장 처리 그대로, fit 은 CSS 클래스만 고름.
+- 실행 근거: `npx vitest run` 286 파일 2267 통과 · `tsc --noEmit` 0 · copy:lint 금지어 0 · 배너 자리 시험(banners-ui INV-Y7 S7) 변이 「배너를 다시 맨 위로」 1 실패 → 되돌려 32 통과 · Playwright 1440·1024·768·390: 가로 넘침 0 · 대비 4.5 미달 0 · 깨진 그림 0 · 콘솔 오류 0, 위반을 심은 사본(흐린 글자 #ccc · 2000px 칸)은 대비 1.61 · 넘침 575 로 둘 다 잡힘 · 첫 화면 띠~배너 장 48 실측.
+
+---
+
+# 이전 사인오프 — fankkuk (2026-10-18 밤, 사이트 재진단 반영)
 
 덮는 변경: 63c2e596 뒤 — 사용자 붙여 넣은 재디자인 요청 3단계, 시안 v29 승인(DECISIONS 「사이트 재진단 반영」, design-rules 18절).
 토큰(알약 태그·아이콘 8·작은 버튼 44·움직임·휴대폰 구간 48) · 공통 부품(버튼 ease-out·누름 98%, 누를 수 있는 카드 hover, 카드 테두리만, 창 24, 누름 칸 44) · 랜딩 ③ 32·휴대폰 4단계 목록 · 프로필 로그인 후 880·아래 판 뺌·자기 페이지 안내 머리로 · 크리에이터 머리 사진 층 · 선물 현황 간격 · 로그인 판 위 96 · 없는 페이지·오류 화면(새 widget status-page).

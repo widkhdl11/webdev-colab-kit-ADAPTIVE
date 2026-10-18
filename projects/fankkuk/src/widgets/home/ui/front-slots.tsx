@@ -15,7 +15,7 @@ import { statusTagClass } from "@/shared/ui/status-tone";
 import s from "./front.module.css";
 import h from "./home.module.css";
 
-// 홈 칸(design-rules 16절, 시안 docs/design/mockups/site/v27-home-airy/). 로그인 전 첫 화면과 로그인 후 팬 홈이 같은 칸 순서를 쓰고,
+// 홈 칸(design-rules 16절, 시안 docs/design/mockups/site/v27-home-airy/ · 로그인 전 모양은 v29-landing-fix/). 로그인 전 첫 화면과 로그인 후 팬 홈이 같은 칸 순서를 쓰고,
 // 로그인 후에 바뀌는 칸만 「-2」 부품으로 바꾼다 — 두 화면이 같은 부품을 써야 순서와 모양이 어긋나지 않는다.
 // ② 광고 배너는 스펙 승인 뒤에 만든다(DECISIONS 2026-10-18) — 그때까지 칸을 두지 않는다.
 // 약속 문장은 shared/config/site-copy 의 고정 문구를 그대로 읽는다. 요금 숫자는 결제와 같은 DB 요금표(라우트가 읽어 넘긴다).
@@ -42,7 +42,34 @@ function SearchGlyph() {
   );
 }
 
-/** ① 크리에이터 검색 판 — eyebrow 가 있으면 제목 위 머리말(①-2 「OO님」) */
+function HeroSearch() {
+  return (
+    <form className="search" role="search" action="/creators">
+      <label className="sr-only" htmlFor="hero-q">
+        크리에이터 검색
+      </label>
+      <input id="hero-q" type="search" name="q" placeholder="나의 크리에이터를 찾아보세요" autoComplete="off" />
+      <button className="search-go" type="submit" aria-label="크리에이터 찾기">
+        <SearchGlyph />
+      </button>
+    </form>
+  );
+}
+
+function HeroActions() {
+  return (
+    <div className="hero-actions">
+      <Link className="btn" href="/gifts/new">
+        지금 바로 선물 보내러 가기
+      </Link>
+      <Link className="btn btn--line" href="/creators">
+        나의 크리에이터 찾으러 가기
+      </Link>
+    </div>
+  );
+}
+
+/** ① 크리에이터 검색 판(팬 홈) — eyebrow 가 있으면 제목 위 머리말(①-2 「OO님」) */
 export function SearchSlot({ eyebrow, tiles, tilesLabel }: { eyebrow?: string; tiles: readonly FrontTile[]; tilesLabel: string }) {
   return (
     <section className={`hero ${s.hero}`} aria-labelledby="hero-title">
@@ -51,24 +78,9 @@ export function SearchSlot({ eyebrow, tiles, tilesLabel }: { eyebrow?: string; t
         <h1 className="t-hero" id="hero-title">
           나의 크리에이터를 찾아요
         </h1>
-        <form className="search" role="search" action="/creators">
-          <label className="sr-only" htmlFor="hero-q">
-            크리에이터 검색
-          </label>
-          <input id="hero-q" type="search" name="q" placeholder="나의 크리에이터를 찾아보세요" autoComplete="off" />
-          <button className="search-go" type="submit" aria-label="크리에이터 찾기">
-            <SearchGlyph />
-          </button>
-        </form>
+        <HeroSearch />
       </div>
-      <div className="hero-actions">
-        <Link className="btn" href="/gifts/new">
-          지금 바로 선물 보내러 가기
-        </Link>
-        <Link className="btn btn--line" href="/creators">
-          나의 크리에이터 찾으러 가기
-        </Link>
-      </div>
+      <HeroActions />
       <ul className={s.tiles} aria-label={tilesLabel}>
         {tiles.map((t) => (
           <li key={t.label}>
@@ -84,6 +96,42 @@ export function SearchSlot({ eyebrow, tiles, tilesLabel }: { eyebrow?: string; t
   );
 }
 
+/** ① 로그인 전 첫 화면 — 화면 끝까지 칠한 그라데이션 띠 안에 880 기둥. 왼쪽 머리말·제목·검색·버튼, 오른쪽 마스코트(767 이하는 위) */
+export function HeroBand() {
+  return (
+    <section className={s.heroBand} aria-labelledby="hero-title">
+      <div className={`${s.col} ${s.heroIn}`}>
+        <div className={s.heroCopy}>
+          <p className="t-lead">크리에이터에게 선물을 보낼 때</p>
+          <h1 className="t-hero" id="hero-title">
+            나의 크리에이터를 찾아요
+          </h1>
+          <HeroSearch />
+          <HeroActions />
+        </div>
+        <img className={s.heroArt} src="/images/mascot-box.png" width={280} height={280} alt="" aria-hidden="true" />
+      </div>
+    </section>
+  );
+}
+
+/** ① 로그인 전 바로가기 넷 — 흰 바탕 경계 카드, 그림 48 이 글 위(920 이하 두 장씩) */
+export function GuestTiles({ tiles, label }: { tiles: readonly FrontTile[]; label: string }) {
+  return (
+    <ul className={s.flatTiles} aria-label={label}>
+      {tiles.map((t) => (
+        <li key={t.label}>
+          <Link className={`card ${s.flatTile}`} href={t.href}>
+            <img src={`/img/${t.icon}.png`} width={48} height={48} alt="" aria-hidden="true" />
+            <span className={s.flatLabel}>{t.label}</span>
+            <span className={s.caption}>{t.note}</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 const STEPS = [
   { icon: "icon-gift", num: "1. 등록", title: "선물을 등록해요", body: "결제하면 팬꾹 주소가 바로 나와요. 승인 전에도 먼저 보낼 수 있어요." },
   { icon: "icon-approve", num: "2. 승인", title: "크리에이터가 승인해요", body: PROMISE.approval },
@@ -91,27 +139,27 @@ const STEPS = [
   { icon: "icon-truck", num: "4. 배송", title: "팬꾹이 대신 보내요", body: "승인과 검수를 모두 통과한 선물만 출고합니다." },
 ] as const;
 
-/** ③ 사이트 소개 — 하늘 판 안에 제목·설명·4단계 카드·상태 흐름. 장식 그림 둘은 767 이하에서 숨긴다 */
+/** ③ 사이트 소개(로그인 전만) — 흰 바탕, 왼쪽 머리 + 2×2 줄(그림 64 · 번호 · 제목 · 설명, 767 이하 한 줄에 하나) + 상태 흐름.
+ *  머리말 「크리에이터에게 선물을 보낼 때」는 첫 화면으로 옮겼다(시안 v29-landing-fix) */
 export function IntroSlot() {
   const stepLabels = Object.values(FAN_STEP_LABEL);
   return (
-    <section className={`hero ${s.hero} ${s.intro}`} id="how" aria-labelledby="how-title">
-      <img className={`${s.deco} ${s.decoL}`} src="/img/icon-gift.png" width={160} height={160} alt="" aria-hidden="true" />
-      <img className={`${s.deco} ${s.decoR}`} src="/img/icon-truck.png" width={160} height={160} alt="" aria-hidden="true" />
-      <div className={s.heroText}>
-        <p className="t-lead">크리에이터에게 선물을 보낼 때</p>
-        <h2 className="t-title" id="how-title">
-          안전하게 선물을 나눠봐요
+    <section className={s.intro} id="how" aria-labelledby="how-title">
+      <div className={s.head}>
+        <h2 id="how-title">
+          안전하게 <span className="accent">선물을 나눠봐요</span>
         </h2>
-        <p className={s.introLine}>{PROMISE.approval}</p>
+        <p className="t-lead">{PROMISE.approval}</p>
       </div>
-      <ol className={s.steps}>
+      <ol className={s.stepRows}>
         {STEPS.map((st) => (
-          <li key={st.num} className={`card ${s.stepCard}`}>
-            <img src={`/img/${st.icon}.png`} width={56} height={56} alt="" aria-hidden="true" />
-            <p className={s.num}>{st.num}</p>
-            <h3>{st.title}</h3>
-            <p className={s.muted}>{st.body}</p>
+          <li key={st.num} className={s.stepRow}>
+            <img src={`/img/${st.icon}.png`} width={64} height={64} alt="" aria-hidden="true" />
+            <div>
+              <p className={s.stepNum}>{st.num}</p>
+              <h3>{st.title}</h3>
+              <p className={s.muted}>{st.body}</p>
+            </div>
           </li>
         ))}
       </ol>
@@ -289,10 +337,11 @@ const LOG_EXAMPLE = [
   { at: "10월 9일 18:20", order: "주문 FK-2377" },
 ] as const;
 
-/** ⑤ 약속 — 옅은 하늘 둥근 판. withSignup = 「크리에이터로 가입하기」 버튼(⑤-2 는 뺀다) */
-export function PromiseSlot({ withSignup }: { withSignup: boolean }) {
-  return (
-    <section className={`${s.block} ${s.promise}`} id="promise" aria-labelledby="promise-title">
+/** ⑤ 약속 — 옅은 하늘 둥근 판. withSignup = 「크리에이터로 가입하기」 버튼(⑤-2 는 뺀다).
+ *  band = 로그인 전 — 둥근 판 대신 화면 끝까지 칠한 띠, 안은 880 기둥, 약속 카드는 아이콘 왼쪽 · 글 오른쪽 */
+export function PromiseSlot({ withSignup, band = false }: { withSignup: boolean; band?: boolean }) {
+  const body = (
+    <>
       <div className={s.head}>
         <h2 id="promise-title">
           이제 확인하고 <span className="accent">선물을 받으세요</span>
@@ -319,12 +368,21 @@ export function PromiseSlot({ withSignup }: { withSignup: boolean }) {
       </figure>
       <div className={s.grid2}>
         {PROMISES.map((p) => (
-          <div key={p.title} className={`card ${s.promiseCard}`}>
+          <div key={p.title} className={`card ${band ? s.promiseRow : s.promiseCard}`}>
             <span className={s.iconWrap}>
               <LineIcon name={p.icon} />
             </span>
-            <h3>{p.title}</h3>
-            <p className={s.muted}>{p.body}</p>
+            {band ? (
+              <div>
+                <h3>{p.title}</h3>
+                <p className={s.muted}>{p.body}</p>
+              </div>
+            ) : (
+              <>
+                <h3>{p.title}</h3>
+                <p className={s.muted}>{p.body}</p>
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -335,12 +393,22 @@ export function PromiseSlot({ withSignup }: { withSignup: boolean }) {
           </Link>
         </div>
       ) : null}
+    </>
+  );
+  return band ? (
+    <section className={s.promiseBand} id="promise" aria-labelledby="promise-title">
+      <div className={s.col}>{body}</div>
+    </section>
+  ) : (
+    <section className={`${s.block} ${s.promise}`} id="promise" aria-labelledby="promise-title">
+      {body}
     </section>
   );
 }
 
-/** ⑥ 요금 — 결제와 같은 DB 요금표, 구간 기준은 size-tier */
-export function PriceSlot({ prices }: { prices: PublicPriceTable }) {
+/** ⑥ 요금 — 결제와 같은 DB 요금표, 구간 기준은 size-tier.
+ *  joined = 로그인 전 — 카드 셋 대신 경계 카드 한 장을 세 칸으로(칸 사이 세로 1px 선, 767 이하 위아래로) */
+export function PriceSlot({ prices, joined = false }: { prices: PublicPriceTable; joined?: boolean }) {
   return (
     <section className={s.block} id="price" aria-labelledby="price-title">
       <div className={s.head}>
@@ -349,9 +417,9 @@ export function PriceSlot({ prices }: { prices: PublicPriceTable }) {
         </h2>
         <p className="t-lead">배송비를 포함한 금액이에요. 크기와 무게 중 큰 쪽으로 정해져요.</p>
       </div>
-      <div className={s.grid3}>
+      <div className={joined ? s.priceJoined : s.grid3}>
         {PRICED_TIERS.map((tier) => (
-          <article key={tier} className={`card ${s.priceCard}`}>
+          <article key={tier} className={joined ? s.priceTier : `card ${s.priceCard}`}>
             <span className="tag">{PARCEL_TIER_GUIDE[tier].name}</span>
             <p className={s.amount}>
               {prices[tier].priceKrw.toLocaleString("ko-KR")}
