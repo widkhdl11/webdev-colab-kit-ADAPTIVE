@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
-import { parseColorField, type CreatorColors } from "@/entities/creator/model/creator-color";
+import { useState, type CSSProperties } from "react";
+import { THEME_COLORS, type CreatorColors, type ThemeColor } from "@/entities/creator/model/creator-color";
 import { creatorSymbolUrl } from "@/entities/creator/model/link-images";
 import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
-import { COVER_PASTELS } from "@/entities/creator/lib/cover-pastel";
-import { CreatorHead } from "@/entities/creator/ui/creator-head";
+import { CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
+import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
 import { deleteCreatorImage, sendCreatorImage } from "@/features/creator-photo/api/send-creator-image";
 import { ImageField } from "@/features/creator-photo/ui/image-field";
 import { sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
@@ -14,16 +14,25 @@ import { clipChars, FAN_NAME_MAX, oneLine } from "@/features/creator-settings-sa
 import { charCount } from "@/shared/lib/validation/char-count";
 import s from "./fandom-section.module.css";
 
-// 상세 설정 · 팬덤 (design-rules 12절, 시안 docs/design/mockups/site/v21-addendum3/cre-detail-settings.html). 단계 순서로 위에서 아래:
-// 팬덤 이름 → 팬마크 → 팬컬러 → 퍼스널 컬러 → 미리보기(바로 아래) → 되돌리기·저장.
-// - 팬덤 이름·두 색은 「저장」으로 한 번에 보낸다(/api/creator/profile — my-account INV-A9 경로, 크리에이터 ID 는 보내지 않는다). 보내는 칸은 이 셋뿐이다.
-//   색은 빈 칸이면 기본 모양으로 되돌리고, 꼴이 틀리면 보내지 않는다(서버·DB 가 다시 본다 — creator-link INV-E13).
+// 상세 설정 · 팬덤 (design-rules 12절 · 17절, 시안 v21-addendum3/cre-detail-settings.html · v28-card-redesign/settings.html). 단계 순서로 위에서 아래:
+// 팬덤 이름 → 팬마크 → 테마 색 → 미리보기(바로 아래 — 폭 720 그대로, DECISIONS 2026-10-18) → 되돌리기·저장.
+// - 팬덤 이름·테마 색은 「저장」으로 한 번에 보낸다(/api/creator/profile — my-account INV-A9 경로, 크리에이터 ID 는 보내지 않는다).
+//   테마 색은 파스텔 8색 원형 견본 가운데 하나 또는 「선택 안 함」(기본 모양)뿐이다(creator-link INV-E13 — 서버·DB 가 같은 8색으로 다시 본다).
+//   팬컬러는 고르지 않는다 — 보내지도 않는다(INV-E13).
 // - 팬마크 = 팬덤 심볼(INV-E9·E12). 권리 확인 체크를 해야 고를 수 있고 체크는 요청에도 실린다 — 시안에는 체크가 없지만 스펙(INV-E12)대로 둔다.
-// - 팬덤 뱃지 글자는 진한 회색 고정 — 면이 팬컬러를 옅게 섞은 색이라 어느 팬컬러에서도 읽힌다(DECISIONS 2026-10-17 카드 C안).
+// - 팬덤 뱃지는 테마 색으로 그린다: 면 = 테마 색, 테두리 = 테마 색 + #1F2937 22%, 글자 #111827 고정(INV-E14).
 
-const FAN_SWATCHES = ["#C4B5FD", "#FFF59D", "#89CFF0", "#F9A8D4", "#86EFAC", "#FDBA74", "#1E3A8A", "#9D174D"] as const;
-// 퍼스널 컬러 추천 색 = 사진 없는 배너의 파스텔 8색(시안 v24-creator-card csettings, DECISIONS d101) — 입력 위에 둔다
-const PERSONAL_SWATCHES = COVER_PASTELS;
+/** 견본 이름(화면 낭독기용) — THEME_COLORS 순서 그대로 */
+const THEME_NAMES: Readonly<Record<ThemeColor, string>> = {
+  "#FDE2E4": "분홍",
+  "#FFE5CC": "살구",
+  "#FFF1B8": "노랑",
+  "#DFF5D8": "연두",
+  "#D3F0EC": "민트",
+  "#DCEBFF": "하늘",
+  "#E6E0FF": "보라",
+  "#F6DFF0": "연분홍",
+};
 
 const LOGIN = "/login?next=/creator/settings";
 
@@ -37,157 +46,70 @@ export type FandomSectionProps = {
   symbolUrl: string | null;
   /** 공개 저장소 주소 — 올린 뒤 새 심볼 경로로 주소를 만든다 */
   photoBase: string;
+  /** 카드 미리보기 값 — 찾기 화면 카드와 같다. creatorId 로 테마 색이 없을 때의 파스텔도 실제 카드와 같게 */
+  card: { creatorId: string; channelTitle: string; intro: string; tags: readonly string[]; approvalMinutes: number | null; faceTone: string };
 };
 
-/** 안내 상자 아이콘(시안 #i-info) */
-function InfoIcon() {
-  return (
-    <svg className={s.noteIco} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4" />
-      <path d="M12 8h.01" />
-    </svg>
-  );
-}
-
-function ColorStep({
-  step,
-  id,
-  title,
-  hint,
-  value,
-  onChange,
-  swatches,
-  swatchesFirst = false,
-  invalid,
-  errorId,
-  inputRef,
-  children,
-}: {
-  step: number;
-  id: string;
-  title: string;
-  hint: string;
-  value: string;
-  onChange: (v: string) => void;
-  swatches: readonly string[];
-  /** 추천 색 줄을 입력 위에(퍼스널 컬러) */
-  swatchesFirst?: boolean;
-  invalid: boolean;
-  /** 틀렸을 때 이어 읽을 오류 문구 id */
-  errorId: string;
-  inputRef: RefObject<HTMLInputElement | null>;
-  children?: ReactNode;
-}) {
-  const parsed = parseColorField(value);
-  const color = parsed.ok ? parsed.value : null;
-  const swatchRow = (
-    <div className={`${s.swatches} ${swatchesFirst ? s.swatchesFirst : ""}`} role="group" aria-label={`${title} 추천 색`}>
-      {swatches.map((c) => (
-        <button
-          key={c}
-          type="button"
-          style={{ "--sw": c } as CSSProperties}
-          aria-label={`${title} ${c}`}
-          aria-pressed={color === c}
-          onClick={() => onChange(c)}
-        />
-      ))}
-    </div>
-  );
+/** 테마 색 고르기 — 원형 견본 8개 + 「선택 안 함」(시안 v28 settings.html .sws). 한 무리의 라디오라 화살표로 옮겨 다닌다. */
+function ThemeStep({ step, value, onChange }: { step: number; value: ThemeColor | null; onChange: (v: ThemeColor | null) => void }) {
   return (
     <div className={s.card}>
       <div className={s.step}>
         <i aria-hidden="true">{step}</i>
-        <span className={s.label} id={`${id}-l`}>
-          {title}
+        <span className={s.label} id="fd-theme-l">
+          테마 색
         </span>
       </div>
-      <p className={s.hint} id={`${id}-h`}>
-        {hint}
+      <p className={s.hint} id="fd-theme-h">
+        배경 사진이 없을 때 카드 바탕과 팬덤 뱃지에 쓰여요. 사이트의 버튼과 글자는 그대로예요.
       </p>
-      {swatchesFirst ? swatchRow : null}
-      <div className={s.fieldRow}>
-        <input
-          className={s.picker}
-          type="color"
-          value={(color ?? "#FFFFFF").toLowerCase()}
-          aria-label={`${title} 색상 고르기`}
-          onChange={(e) => onChange(e.currentTarget.value.toUpperCase())}
-        />
-        <label className="sr-only" htmlFor={`${id}-hex`}>
-          {title} 직접 입력 #RRGGBB
+      <div className={s.sws} role="radiogroup" aria-labelledby="fd-theme-l" aria-describedby="fd-theme-h">
+        {THEME_COLORS.map((c) => (
+          <label key={c} className={s.sw}>
+            <input type="radio" name="fd-theme" value={c} checked={value === c} onChange={() => onChange(c)} />
+            <span style={{ "--sw": c } as CSSProperties} aria-hidden="true" />
+            <span className="sr-only">테마 색 {THEME_NAMES[c]}</span>
+          </label>
+        ))}
+        <label className={s.swNone}>
+          <input type="radio" name="fd-theme" value="" checked={value === null} onChange={() => onChange(null)} />
+          <span>선택 안 함</span>
         </label>
-        <input
-          className={`field ${s.hex}`}
-          id={`${id}-hex`}
-          ref={inputRef}
-          type="text"
-          value={value}
-          maxLength={7}
-          placeholder="#RRGGBB"
-          autoComplete="off"
-          spellCheck={false}
-          aria-invalid={invalid ? true : undefined}
-          aria-describedby={invalid ? `${id}-h ${errorId}` : `${id}-h`}
-          onChange={(e) => onChange(e.currentTarget.value)}
-        />
       </div>
-      {swatchesFirst ? null : swatchRow}
-      {children}
     </div>
   );
 }
 
 export function FandomSection(p: FandomSectionProps) {
   const router = useRouter();
-  const [saved, setSaved] = useState({ fanName: p.fanName, fan: p.colors.fan ?? "", personal: p.colors.personal ?? "" });
+  const [saved, setSaved] = useState<{ fanName: string; theme: ThemeColor | null }>({ fanName: p.fanName, theme: p.colors.personal });
   const [fanName, setFanName] = useState(saved.fanName);
-  const [fan, setFan] = useState(saved.fan);
-  const [personal, setPersonal] = useState(saved.personal);
+  const [theme, setTheme] = useState(saved.theme);
   const [symbolUrl, setSymbolUrl] = useState(p.symbolUrl);
   const [rights, setRights] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [bad, setBad] = useState<{ fan: boolean; personal: boolean }>({ fan: false, personal: false });
-  const fanRef = useRef<HTMLInputElement>(null);
-  const personalRef = useRef<HTMLInputElement>(null);
 
-  const fanParsed = parseColorField(fan);
-  const personalParsed = parseColorField(personal);
-  const colors: CreatorColors = { fan: fanParsed.ok ? fanParsed.value : null, personal: personalParsed.ok ? personalParsed.value : null };
   const name = fanName.trim();
 
   const save = async () => {
     if (saving) return;
     setMsg(null);
-    const nextBad = { fan: !fanParsed.ok, personal: !personalParsed.ok };
-    setBad(nextBad);
-    if (nextBad.fan || nextBad.personal) {
-      setMsg({ ok: false, text: "색은 #RRGGBB 꼴(예: #1E3A8A)로 적어 주세요." });
-      // 화면 위에서 먼저 나오는 틀린 칸으로 — 팬컬러(3단계)가 퍼스널 컬러(4단계)보다 위
-      (nextBad.fan ? fanRef : personalRef).current?.focus();
-      return;
-    }
     setSaving(true);
-    const r = await sendCreatorProfile({ fanName: name, fanColor: colors.fan ?? "", personalColor: colors.personal ?? "" });
+    const r = await sendCreatorProfile({ fanName: name, personalColor: theme ?? "" });
     setSaving(false);
     if (r.kind === "login") return router.push(LOGIN);
     if (r.kind === "failed") return setMsg({ ok: false, text: r.message });
-    const next = { fanName: name, fan: colors.fan ?? "", personal: colors.personal ?? "" };
+    const next = { fanName: name, theme };
     setSaved(next);
     setFanName(next.fanName);
-    setFan(next.fan);
-    setPersonal(next.personal);
     setMsg({ ok: true, text: "저장했어요." });
     router.refresh();
   };
 
   const revert = () => {
     setFanName(saved.fanName);
-    setFan(saved.fan);
-    setPersonal(saved.personal);
-    setBad({ fan: false, personal: false });
+    setTheme(saved.theme);
     setMsg(null);
   };
 
@@ -255,48 +177,7 @@ export function FandomSection(p: FandomSectionProps) {
         </label>
       </div>
 
-      <ColorStep
-        step={3}
-        id="fd-fan"
-        title="팬컬러"
-        hint="팬덤 뱃지의 바탕색이에요."
-        value={fan}
-        onChange={(v) => {
-          setFan(v);
-          setBad((b) => ({ ...b, fan: false }));
-        }}
-        swatches={FAN_SWATCHES}
-        invalid={bad.fan}
-        errorId="fd-msg"
-        inputRef={fanRef}
-      />
-
-      <ColorStep
-        step={4}
-        id="fd-per"
-        title="퍼스널 컬러"
-        hint="내 페이지 맨 위 띠와 프로필 사진 테두리에 쓰여요."
-        value={personal}
-        onChange={(v) => {
-          setPersonal(v);
-          setBad((b) => ({ ...b, personal: false }));
-        }}
-        swatches={PERSONAL_SWATCHES}
-        swatchesFirst
-        invalid={bad.personal}
-        errorId="fd-msg"
-        inputRef={personalRef}
-      >
-        <div className={s.note} role="note">
-          <InfoIcon />
-          <div className={s.noteBody}>
-            <p>
-              <b>팬컬러와 퍼스널 컬러는 달라도 돼요.</b>
-            </p>
-            <p className="t-meta">팬컬러는 팬덤 뱃지에만, 퍼스널 컬러는 내 페이지의 띠와 사진 테두리에만 쓰여요. 사이트의 버튼과 글자는 그대로예요.</p>
-          </div>
-        </div>
-      </ColorStep>
+      <ThemeStep step={3} value={theme} onChange={setTheme} />
 
       <div className={`${s.card} ${s.pv}`} aria-labelledby="pv-t" role="group">
         <h3 className={s.pvT} id="pv-t">
@@ -306,24 +187,34 @@ export function FandomSection(p: FandomSectionProps) {
           <div className={s.pvBox}>
             <p className={s.pvCap}>팬덤 뱃지</p>
             <div className={s.pvBadges}>
-              <FandomBadge name={name} symbolUrl={symbolUrl} fanColor={colors.fan} size="large" />
-              <FandomBadge name={name} symbolUrl={symbolUrl} fanColor={colors.fan} />
+              <FandomBadge name={name} symbolUrl={symbolUrl} themeColor={theme} size="large" />
+              <FandomBadge name={name} symbolUrl={symbolUrl} themeColor={theme} />
             </div>
           </div>
         ) : null}
         <div className={s.pvBox}>
-          <p className={s.pvCap}>크리에이터 페이지 머리 (배경 띠 · 사진 테두리)</p>
-          <CreatorHead
-            compact
-            label="크리에이터 페이지 머리 미리보기"
-            name={p.publicName}
-            photoUrl={p.photoUrl}
-            initial={p.initial}
-            backgroundUrl={p.backgroundUrl}
-            colors={colors}
-            fanName={name}
-            symbolUrl={symbolUrl}
-          />
+          <p className={s.pvCap}>카드 미리보기</p>
+          <div className={creatorCardClass} role="group" aria-label="크리에이터 카드 미리보기" data-card-preview="">
+            <CreatorCardHead
+              creatorId={p.card.creatorId}
+              name={p.publicName}
+              href={null}
+              look={{ photoUrl: p.photoUrl, backgroundUrl: p.backgroundUrl, symbolUrl, fanName: name || null }}
+              colors={{ personal: theme }}
+              faceTone={p.card.faceTone}
+            />
+            <CreatorCardLine channelTitle={p.card.channelTitle} intro={p.card.intro} />
+            <CreatorCardTags tags={p.card.tags} />
+            {/* 버튼은 모양만 — 누를 수 없다(미리보기) */}
+            <CreatorCardFoot
+              approvalMinutes={p.card.approvalMinutes}
+              action={
+                <span className="btn btn--sm btn--line" aria-hidden="true">
+                  팔로우
+                </span>
+              }
+            />
+          </div>
         </div>
       </div>
 

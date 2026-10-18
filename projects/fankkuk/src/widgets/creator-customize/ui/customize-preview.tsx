@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import { creatorColorOrNull, creatorColorVars } from "@/entities/creator/model/creator-color";
+import { creatorColorVars, hasThemeVars, type ThemeColor } from "@/entities/creator/model/creator-color";
 import type { PreviewPick } from "@/entities/creator/model/link-images";
 import { CheckIcon } from "@/entities/creator/ui/check-icon";
 import s from "./creator-customize.module.css";
@@ -21,8 +21,8 @@ export type PreviewValues = {
   backgroundUrl: string | null;
   symbolUrl: string | null;
   pick: PreviewPick;
-  /** 퍼스널 컬러(없으면 null) — 띠 면과 사진 테두리. 공개 페이지(creator-profile-page)와 같은 계산 */
-  personalColor: string | null;
+  /** 테마 색(없으면 null) — 띠 면과 사진 테두리. 공개 페이지(creator-profile-page)와 같은 계산 */
+  personalColor: ThemeColor | null;
 };
 
 function Avatar({ url, initial, className }: { url: string | null; initial: string; className: string }) {
@@ -31,6 +31,7 @@ function Avatar({ url, initial, className }: { url: string | null; initial: stri
 
 export function CustomizePreview({ v }: { v: PreviewValues }) {
   const [open, setOpen] = useState(true);
+  const colorVars = creatorColorVars({ personal: v.personalColor });
   return (
     <aside className={`${s.side} ${open ? "" : s.closed}`} aria-label="내 링크 페이지 미리보기">
       <div className={s.pvLabel}>
@@ -41,8 +42,8 @@ export function CustomizePreview({ v }: { v: PreviewValues }) {
       </div>
       <div className={s.pvBody} id="cz-body">
         <div
-          className={`card ${s.pvCard} ${creatorColorOrNull(v.personalColor) !== null ? s.ringed : ""}`}
-          style={creatorColorVars({ personal: v.personalColor, fan: null }) as CSSProperties}
+          className={`card ${s.pvCard} ${hasThemeVars(colorVars) ? s.ringed : ""}`}
+          style={colorVars as CSSProperties}
           role="group"
           aria-label="링크 페이지"
           data-creator-colors=""

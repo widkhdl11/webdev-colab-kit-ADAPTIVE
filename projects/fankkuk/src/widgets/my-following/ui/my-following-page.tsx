@@ -9,7 +9,7 @@ import {
   NO_CARD_LOOK,
   type CardLook,
 } from "@/entities/creator/model/card-look";
-import { CreatorCardHead, CreatorCardLine } from "@/entities/creator/ui/creator-card-head";
+import { CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
 import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
 import { saveFollow } from "@/features/creator-follow/api/save-follow";
 import { FOLLOWING_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
@@ -76,7 +76,7 @@ export function MyFollowingPanel({
           {list.map((c) => {
             const look = looks[c.id] ?? NO_CARD_LOOK;
             return (
-              <li key={c.id} className={s.fc}>
+              <li key={c.id} className={creatorCardClass}>
                 <CreatorCardHead
                   creatorId={c.id}
                   name={c.name}
@@ -84,6 +84,11 @@ export function MyFollowingPanel({
                   look={look}
                   colors={c.colors}
                   faceTone={c.faceTone}
+                />
+                <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
+                <CreatorCardTags tags={c.tags} />
+                <CreatorCardFoot
+                  approvalMinutes={c.approvalMinutes}
                   action={
                     <button
                       className="btn btn--sm btn--line"
@@ -97,8 +102,6 @@ export function MyFollowingPanel({
                     </button>
                   }
                 />
-                <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-                <CreatorCardTags tags={c.tags} />
               </li>
             );
           })}

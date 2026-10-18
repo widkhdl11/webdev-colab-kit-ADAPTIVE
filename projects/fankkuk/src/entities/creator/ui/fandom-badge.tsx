@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
-import { creatorColorOrNull, creatorColorVars } from "../model/creator-color";
+import { creatorColorVars, hasThemeVars, type ThemeColor } from "../model/creator-color";
 import s from "./creator-head.module.css";
 
-// 팬덤 뱃지 — 팬덤 이름 + 팬마크(팬덤 심볼). 설정한 팬컬러는 1px 테두리, 면은 팬컬러 28% + 흰색, 글자는 #111827 고정(creator-link INV-E14,
-// DECISIONS 2026-10-17 카드 d103, 시안 docs/design/mockups/site/v25-card-align C안 .fn2). 팬컬러는 여전히 뱃지에만 쓰인다(INV-E13).
-// 팬컬러가 없거나 꼴이 틀리면 사이트 기본 모양(옅은 면 + 회색 테두리). 색은 creatorColorVars 가 꼴을 한 번 더 본 뒤에만 스타일에 들어간다.
+// 팬덤 뱃지 — 팬덤 이름 + 팬마크(팬덤 심볼). 크리에이터의 테마 색으로 그린다(creator-link INV-E13·E14, design-rules 17절, 시안 v28-card-redesign .fn):
+// 면 = 테마 색 그대로, 테두리 1px = 테마 색과 #1F2937 22% 섞은 색, 글자 #111827 고정.
+// 테마 색이 없거나 8색 밖이면 사이트 기본 모양(옅은 면 + 회색 테두리). 색은 creatorColorVars 가 8색인지 한 번 더 본 뒤에만 스타일에 들어간다.
 // 크기(색 모양은 셋 다 같다):
 // - small(기본) = 크리에이터 카드·상세 설정 미리보기의 작은 뱃지 — 높이 22 · 글자 12 · 마크 14
 // - medium = 공개 프로필 머리·크리에이터 머리(큰 이름 옆) — 높이 28 · 글자 14 · 마크 20
@@ -17,19 +17,20 @@ const SIZE_CLASS: Record<FandomBadgeSize, string> = { small: "", medium: s.fbMd,
 export function FandomBadge({
   name,
   symbolUrl,
-  fanColor,
+  themeColor,
   size = "small",
 }: {
   name: string;
   /** 팬덤 심볼 공개 주소 — 없으면 마크 칸 없이 이름만 */
   symbolUrl: string | null;
-  fanColor: string | null;
+  /** 크리에이터의 테마 색(저장 칸 이름 퍼스널 컬러) — 없으면 기본 뱃지 */
+  themeColor: ThemeColor | null;
   size?: FandomBadgeSize;
 }) {
-  const vars = creatorColorVars({ personal: null, fan: fanColor });
-  const tinted = creatorColorOrNull(fanColor) !== null;
+  const vars = creatorColorVars({ personal: themeColor });
+  const tinted = hasThemeVars(vars);
   return (
-    <span className={`${s.fb} ${tinted ? s.fbFan : ""} ${SIZE_CLASS[size]}`} style={vars as CSSProperties} data-fandom-badge="">
+    <span className={`${s.fb} ${tinted ? s.fbTheme : ""} ${SIZE_CLASS[size]}`} style={vars as CSSProperties} data-fandom-badge="">
       {symbolUrl ? (
         <span className={s.fbMark} aria-hidden="true">
           <img src={symbolUrl} alt="" width={512} height={512} />

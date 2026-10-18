@@ -26,7 +26,7 @@ import { PROMISE, NO_ADDRESS_ASK } from "@/shared/config/site-copy";
 import s from "./creator-settings.module.css";
 
 // 크리에이터 상세 설정 (design-rules 12절, 시안 docs/design/mockups/site/v21-addendum3/cre-detail-settings.html, 입력형 720 — 00절 「본문 틀」).
-// 위에서 아래: 팬덤(팬덤 이름·팬마크·팬컬러·퍼스널 컬러·미리보기 — fandom-section) → 주소와 설정(접힌 칸: 받는 주소·받기 설정·차단한 팬·선물 링크·감사 답장)
+// 위에서 아래: 팬덤(팬덤 이름·팬마크·테마 색·미리보기 — fandom-section) → 주소와 설정(접힌 칸: 받는 주소·받기 설정·차단한 팬·선물 링크·감사 답장)
 // 본인 확인·알림·계정 보안은 크리에이터 계정 설정(/creator/account, widgets/creator-account)으로 옮겼다(2026-10-16).
 // 사이드바 「주소 관리」 줄은 없어졌고(12절) 받는 주소는 이 화면의 접힌 칸이다. 옛 주소(/creator/settings#address · #blocked …)로 오면
 // 그 칸을 감싼 접힌 칸을 펼친다 — 주소 끝 #이름이 가리키는 요소의 바깥 접힌 칸을 연다.
@@ -89,7 +89,7 @@ export function CreatorSettingsPage({
   replySettings,
 }: {
   settings: CreatorSettingsView;
-  /** 팬덤 구간 — 팬덤 이름·두 색·미리보기 머리에 쓰는 사진 주소(로그인한 크리에이터 본인 것) */
+  /** 팬덤 구간 — 팬덤 이름·테마 색·카드 미리보기에 쓰는 사진 주소(로그인한 크리에이터 본인 것) */
   fandom: FandomSectionProps;
   /** 답장 모음 보이기·X 계정·태그 허용 — 로그인한 크리에이터 본인 것(gift-reply INV-G8) */
   replySettings: ReplySettings;

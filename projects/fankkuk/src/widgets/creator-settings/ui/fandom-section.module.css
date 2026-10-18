@@ -1,4 +1,4 @@
-/* 상세 설정 · 팬덤 — 시안 docs/design/mockups/site/v21-addendum3/cre-21.css 「폼」·「미리보기」(.fcard2 · .step · .field-row · .picker · .hex · .swatches · .note · .pv*).
+/* 상세 설정 · 팬덤 — 시안 docs/design/mockups/site/v21-addendum3/cre-21.css 「폼」·「미리보기」(.fcard2 · .step · .pv*) · v28-card-redesign/settings.html(.sws · .sw).
    값은 시안 :root(--sw-s 36) 와 tokens.css 변수. 폭은 틀(MyShell form 720)이 정한다. */
 .sec { display: grid; gap: var(--space-6); scroll-margin-top: var(--space-6); }
 .secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
@@ -9,24 +9,22 @@
 .step i { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--r-pill); background: var(--primary-50); font-style: normal; font-weight: var(--fw-btn); font-size: var(--fs-caption); }
 .label { font-weight: var(--fw-btn); }
 .count { margin-left: auto; color: var(--gray-600); font-size: var(--fs-caption); font-variant-numeric: tabular-nums; }
-.fieldRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.picker { flex: none; width: 56px; height: 48px; padding: 4px; border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--field-line); border: 0; cursor: pointer; }
-.picker:focus-visible, .swatches button:focus-visible, .chk input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.fieldRow .hex { flex: none; width: 160px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
-.hex[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--danger); }
-.swatches { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-/* 입력 위에 놓인 추천 색 줄(퍼스널 컬러) — 시안 v24-creator-card csettings/proposal.css .v24-swrow */
-.swatchesFirst { margin: 0 0 var(--space-3); }
-.swatches button { width: 36px; height: 36px; padding: 0; border-radius: var(--r-pill); background: var(--sw); box-shadow: inset 0 0 0 1px var(--field-line); border: 0; cursor: pointer; }
-.swatches button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--ink); }
 .markBox { display: grid; flex: none; place-items: center; overflow: hidden; width: 64px; height: 64px; border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
 .markBox img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* 테마 색 견본 — 누름 칸 44 안에 원 36(시안 v28 settings.html .sw). 고른 것은 진한 테두리 + 체크, 「선택 안 함」은 글자 알약 */
+.sws { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.sw { position: relative; display: block; width: 44px; height: 44px; cursor: pointer; }
+.sw input, .swNone input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.sw span:nth-of-type(1) { position: absolute; inset: 4px; border-radius: var(--r-pill); background: var(--sw); box-shadow: inset 0 0 0 1px var(--gray-500); pointer-events: none; }
+.sw input:checked + span { box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--gray-900); }
+.sw input:checked + span::after { content: ""; position: absolute; left: 12px; top: 8px; width: 7px; height: 13px; border: solid var(--gray-900); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.sw input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 4px; }
+.swNone { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); font-size: var(--fs-small); font-weight: var(--fw-nav); cursor: pointer; }
+.swNone:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--gray-900); }
+.swNone:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.chk input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .chk { display: flex; gap: var(--space-2); align-items: flex-start; cursor: pointer; }
 .chk input { flex: none; width: 20px; height: 20px; margin-top: 2px; accent-color: var(--brand-line); }
-.note { display: flex; gap: var(--space-4); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--tint); box-shadow: inset 0 0 0 1px var(--gray-200); }
-.noteIco { flex: none; width: 20px; height: 20px; margin-top: 2px; }
-.noteBody { display: grid; gap: var(--space-2); min-width: 0; }
-.note p { margin: 0; }
 
 /* 미리보기 — 오른쪽이 아니라 바로 아래 */
 .pv { gap: var(--space-4); }
@@ -34,12 +32,14 @@
 .pvBox { display: grid; gap: var(--space-4); padding: var(--space-6); border-radius: var(--r-card); background: var(--white); border: 1px dashed var(--gray-500); }
 .pvCap { margin: 0; color: var(--gray-600); font-size: var(--fs-caption); }
 .pvBadges { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+/* 카드 미리보기 — 찾기 화면 카드 틀 그대로(creatorCardClass), 폭은 찾기 3열 카드쯤(320). 하단 버튼은 모양만이라 누름을 받지 않는다 */
+.pvBox > [data-card-preview] { width: 100%; max-width: 320px; cursor: default; }
+.pvBox > [data-card-preview] [data-card-foot] :global(.btn) { pointer-events: none; }
 .msg:empty { display: none; }
 .btnEnd { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 
 @media (max-width: 768px) {
   .card { padding: var(--space-6) var(--space-4); }
-  .fieldRow .hex { flex: 1 1 100%; width: 100%; }
   .pvBox { padding: var(--space-4); }
   .btnEnd :global(.btn) { flex: 1; }
 }

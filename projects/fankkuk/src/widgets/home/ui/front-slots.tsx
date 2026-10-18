@@ -3,7 +3,7 @@ import { Fragment, type ReactNode } from "react";
 import { NO_CARD_LOOK, type CardLook } from "@/entities/creator/model/card-look";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
-import { CreatorCardHead, CreatorCardLine } from "@/entities/creator/ui/creator-card-head";
+import { CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
 import { CreatorCardTags } from "@/entities/creator/ui/creator-card-tags";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
@@ -197,8 +197,8 @@ export function GiftsSlot({ gifts, faceToneByName }: { gifts: readonly FanGiftVi
   );
 }
 
-/** ④·④-2 카드 넷 — 크리에이터 찾기와 같은 카드. action = 배너 모서리 버튼(④ 는 없음, ④-2 는 「팔로우 중」) */
-export const CARD_ROW_MAX = 4;
+/** ④·④-2 카드 셋 — 크리에이터 찾기와 같은 카드(design-rules 17절). action = 하단 줄 오른쪽 버튼(④ 는 없음 — 승인 시간만, ④-2 는 「팔로우 중」) */
+export const CARD_ROW_MAX = 3;
 
 export function CreatorCardsSlot({
   id,
@@ -226,7 +226,7 @@ export function CreatorCardsSlot({
       ) : (
         <ul className={s.cardRow} aria-label={title}>
           {creators.slice(0, CARD_ROW_MAX).map((c) => (
-            <li key={c.id} className={s.card}>
+            <li key={c.id} className={creatorCardClass}>
               <CreatorCardHead
                 creatorId={c.id}
                 name={c.name}
@@ -234,10 +234,10 @@ export function CreatorCardsSlot({
                 look={looks[c.id] ?? NO_CARD_LOOK}
                 colors={c.colors}
                 faceTone={c.faceTone}
-                action={action?.(c)}
               />
               <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
               <CreatorCardTags tags={c.tags} />
+              <CreatorCardFoot approvalMinutes={c.approvalMinutes} action={action?.(c)} />
             </li>
           ))}
         </ul>

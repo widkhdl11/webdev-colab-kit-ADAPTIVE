@@ -4,14 +4,13 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { CreatorTag, CreatorTagMore } from "./creator-tag";
 import s from "./creator-card-head.module.css";
 
-// 크리에이터 카드의 플랫폼 칩 한 줄 — 넘치는 칩은 「+N」 하나로 바꾼다(시안 v25-card-align C안, DECISIONS 2026-10-17 카드 d103).
+// 크리에이터 카드의 플랫폼 칩 한 줄 — 넘치는 칩은 「+N」 하나로 바꾼다(시안 v28-card-redesign, design-rules 17절).
 // 칩 폭은 글자·로고마다 달라 서버에서 정할 수 없어, 그린 뒤 줄 폭을 재서 앞에서부터 들어가는 만큼만 보인다.
 // 재는 일은 줄 안의 보이지 않는 사본(모든 칩 + 「+N」)으로 한다 — 보이는 칩 수를 바꿔도 잰 값이 흔들리지 않는다.
 // 칩 사이 간격은 줄의 CSS(column-gap)에서 읽는다 — CSS 와 값이 갈라지지 않게.
 // 줄 폭·글꼴이 바뀌면(ResizeObserver) 다시 잰다. 가려진 칩 이름은 화면 낭독기에는 그대로 읽히고, 「+N」은 읽지 않는다.
 // 첫 칩 하나도 들어가지 않으면 「+N」만 남기지 않고 첫 칩을 말줄임으로 줄여 보인다(나머지가 있으면 그 뒤에 「+N」).
-// 재기 전(서버 렌더·ResizeObserver 없는 환경)에는 모든 칩을 그린다 — 줄이 넘치면 가운데가 아니라 왼쪽부터 놓여(justify-content: safe center)
-// 칩이 양쪽으로 잘려 보이지 않는다.
+// 재기 전(서버 렌더·ResizeObserver 없는 환경)에는 모든 칩을 그린다 — 줄은 왼쪽부터 놓여(design-rules 17절) 넘치면 오른쪽만 잘린다.
 
 export type ChipFit = {
   /** 보이는 칩 수 */

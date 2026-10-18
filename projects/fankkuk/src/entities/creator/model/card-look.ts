@@ -2,7 +2,7 @@ import type { CreatorCard } from "./creator-card";
 import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl } from "./link-images";
 
 // 크리에이터 카드에 싣는 꾸민 모양(2026-10-16 사용자 「각자 꾸밀 수 있게」) — 크리에이터 찾기·팔로우한 크리에이터 카드가 같이 쓴다.
-// 공개 페이지 머리와 같은 값: 프로필 사진·배경사진·팬덤 심볼 공개 주소와 팬덤 이름. 색(퍼스널·팬)은 카드(CreatorCard.colors)에 이미 있다.
+// 공개 페이지 머리와 같은 값: 프로필 사진·배경사진·팬덤 심볼 공개 주소와 팬덤 이름. 테마 색은 카드(CreatorCard.colors)에 이미 있다.
 
 /** 저장소 경로 꼴로 거른 꾸밈 칸(읽기 함수가 돌려준다). */
 export type CreatorLookPaths = { bgPath: string | null; symbolPath: string | null; fanName: string | null };

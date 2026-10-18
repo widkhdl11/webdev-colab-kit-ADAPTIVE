@@ -17,7 +17,7 @@ import { ChannelLinkIcon } from "@/entities/creator/ui/channel-badge-icon";
 import { CheckIcon } from "@/entities/creator/ui/check-icon";
 import { channelBadgeTitle, type ChannelBadge } from "@/entities/creator/model/channel-badge";
 import { thanksLine } from "@/entities/creator/model/fan-name";
-import { creatorColorOrNull, creatorColorVars } from "@/entities/creator/model/creator-color";
+import { creatorColorVars, hasThemeVars } from "@/entities/creator/model/creator-color";
 import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
 import type { PublicCreatorLook } from "@/entities/creator/model/link-images";
 import type { ProhibitedItem } from "@/entities/parcel/model/prohibited-item";
@@ -31,11 +31,10 @@ import s from "./creator-profile.module.css";
 // 선물 링크 페이지 = 크리에이터 페이지 (creator-link). 시안: docs/design/mockups/site/v18/link.html(로그인 전) · creator.html(로그인 후) (design-rules 00절)
 // 로그인 전·후 모두 880 한 기둥(design-rules 00000절, 시안 v23-tokens/profile) — 머리 카드·정보 카드·접는 안내·마지막 선물 보내기 판·비슷한 크리에이터가 같은 선.
 // 어느 쪽인지는 followMode(로그인 안 함 = "login")로 가른다 — 보이는 정보·순서는 같다.
-// 위에서 아래로: 프로필 배경사진(없으면 퍼스널 컬러 면, 프로필 사진이 아래 가장자리에 걸침)·사진·이름·채널 아이콘·링크 주소·칩 줄(채널 확인·태그)·한 줄 소개·감사 문장·주 버튼 → 정보 카드 2열
+// 위에서 아래로: 프로필 배경사진(없으면 테마 색 면, 프로필 사진이 아래 가장자리에 걸침)·사진·이름·채널 아이콘·링크 주소·칩 줄(채널 확인·태그)·한 줄 소개·감사 문장·주 버튼 → 정보 카드 2열
 // (받는 상태 → 받기 어려운 품목(있을 때만) → 기념일 D-day(30일 안일 때만) → 평균 승인 → 배송비 → 이번 달 N명(0이면 숨김))
 // → 감사 답장 모음(F-5 — 양쪽이 동의하고 받았어요 3일이 지난 답장만, 없으면 숨김, 2열) → 접는 안내 → 마지막 선물 보내기 판 → 비슷한 크리에이터.
-// 팬덤 색(design-rules 12절, 시안 v21-addendum3/cre-public-page.html, creator-link INV-E13·E14): 퍼스널 컬러는 맨 위 띠(배경사진이 없을 때 보이는 면)와 프로필 사진 테두리에만,
-// 팬컬러는 공개 이름 옆 팬덤 뱃지 면에만. 버튼·링크·글자는 사이트 색 그대로. 색은 creatorColorVars 가 꼴을 본 뒤에만 스타일 변수로 들어간다.
+// 팬덤 색(design-rules 12절·17절, creator-link INV-E13·E14): 테마 색은 머리 배너·사진 테두리·공개 이름 옆 팬덤 뱃지에만(creator-link INV-E13). 버튼·링크·글자는 사이트 색 그대로. 색은 creatorColorVars 가 8색인지 본 뒤에만 스타일 변수로 들어간다.
 // 팬덤 이름이 있으면 팬덤 심볼은 뱃지의 마크로 들어가고, 이름이 없을 때만 감사 문장 위에 따로 보인다.
 // 공개 화면이라 크리에이터 공개 이름·링크용 아이디·사진·소개·켠 항목·정해진 문구·집계 숫자·요금만 그린다(INV-E7). 주소 열람 건수는 없다(INV-E11).
 // 문구 한계(design-rules 6절): 주소 약속은 shared/config/site-copy 의 고정 문구를 읽고, "절대 유출되지 않는다"는 쓰지 않는다.
@@ -145,9 +144,9 @@ export function CreatorProfilePage({
   const needNote = followMode === "save" ? `${NEEDS_FOLLOW_TO_SEND} ${FOLLOW_NICKNAME_NOTICE_SHORT}` : NEEDS_FOLLOW_TO_SEND;
   const guest = followMode === "login";
   const wrap = guest ? "pub-inner" : undefined;
-  // 머리에는 퍼스널 컬러만 — 팬컬러는 뱃지가 스스로 붙인다(뱃지 면에만)
-  const colorVars = creatorColorVars({ personal: creator.colors?.personal ?? null, fan: null });
-  const ringed = creatorColorOrNull(creator.colors?.personal) !== null;
+  // 머리 배너·사진 테두리에 테마 색 — 뱃지는 같은 테마 색을 스스로 붙인다
+  const colorVars = creatorColorVars({ personal: creator.colors?.personal ?? null });
+  const ringed = hasThemeVars(colorVars);
   const sendRow =
     send === "open" || send === "needs_follow" ? (
       <div className={s.act}>
@@ -160,7 +159,7 @@ export function CreatorProfilePage({
       <section className={s.pfSec} aria-labelledby="creator-name">
         <div className={wrap}>
           <div className={`${s.pf} ${ringed ? s.ringed : ""}`} style={colorVars as CSSProperties} data-creator-colors="">
-            {/* 프로필 배경사진 칸 2.5:1 — 없으면 퍼스널 컬러 30% 면 또는 파스텔 + 흐린 고양이(DECISIONS d101·d102). 꾸밈이라 읽지 않는다. 프로필 사진이 아래 가장자리에 걸친다 */}
+            {/* 프로필 배경사진 칸 2.5:1 — 없으면 테마 색 면(그대로) 또는 파스텔 + 흐린 고양이(DECISIONS d101·d102). 꾸밈이라 읽지 않는다. 프로필 사진이 아래 가장자리에 걸친다 */}
             <div className={s.cover} style={coverPastelVar(creator.id)} aria-hidden="true">
               <CreatorCoverArt imageUrl={backgroundUrl} lazy={false} />
             </div>
@@ -170,7 +169,7 @@ export function CreatorProfilePage({
                 <h1 className={s.name} id="creator-name">
                   {creator.name}
                 </h1>
-                {fanName ? <FandomBadge name={fanName} symbolUrl={symbolUrl} fanColor={creator.colors?.fan ?? null} size="medium" /> : null}
+                {fanName ? <FandomBadge name={fanName} symbolUrl={symbolUrl} themeColor={creator.colors?.personal ?? null} size="medium" /> : null}
               </div>
               {/* 추가분 4-3: 닉네임 아래 확인된 채널 아이콘 하나 — 새 탭으로 열리고, 올리면 「@핸들 · 날짜 확인」 */}
               {channel ? (

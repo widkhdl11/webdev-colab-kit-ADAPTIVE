@@ -1,3 +1,4 @@
+import { THEME_COLORS } from "@/entities/creator/model/creator-color";
 import { describe, expect, it } from "vitest";
 import { saveCreatorNotify, saveCreatorProfile } from "./save-creator-settings";
 
@@ -155,47 +156,61 @@ describe("팬을 부르는 이름 저장 (추가분 4-1)", () => {
   });
 });
 
-describe("크리에이터 색 저장 (creator-link INV-E13·E14, my-account INV-A9)", () => {
-  it("INV-E13 S12: 퍼스널 컬러 #1e3a8a·팬컬러 #FFF59D 는 대문자 #RRGGBB 로 DB 함수에 넘긴다", async () => {
+describe("테마 색 저장 (creator-link INV-E13·E14, my-account INV-A9)", () => {
+  it("INV-E13 S12: 테마 색 #dcebff 는 대문자 #DCEBFF 로 DB 함수에 넘긴다(앞뒤 공백은 뺀다)", async () => {
     const f = fakeClient();
-    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { personalColor: "#1e3a8a", fanColor: " #FFF59D " })).toEqual({ ok: true });
-    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_personal_color: "#1E3A8A", p_fan_color: "#FFF59D" } }]);
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { personalColor: " #dcebff " })).toEqual({ ok: true });
+    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_personal_color: "#DCEBFF" } }]);
   });
 
-  it("INV-E13 S12: 빈 값은 기본 모양으로 되돌리기(빈 문자열), 보내지 않은 색 칸은 넘기지 않는다(팬덤 이름만 저장)", async () => {
+  it("INV-E13 S12: 8색 모두 통과 · 빈 값은 기본 모양으로 되돌리기(빈 문자열) · 보내지 않으면 넘기지 않는다(팬덤 이름만 저장)", async () => {
+    for (const c of THEME_COLORS) {
+      const f = fakeClient();
+      expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { personalColor: c }), c).toEqual({ ok: true });
+      expect(f.calls, c).toEqual([{ fn: "update_my_creator_profile", args: { p_personal_color: c } }]);
+    }
     const f = fakeClient();
-    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { personalColor: "", fanColor: "" })).toEqual({ ok: true });
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { personalColor: "" })).toEqual({ ok: true });
     expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { fanName: "달빛지기" })).toEqual({ ok: true });
     expect(f.calls).toEqual([
-      { fn: "update_my_creator_profile", args: { p_personal_color: "", p_fan_color: "" } },
+      { fn: "update_my_creator_profile", args: { p_personal_color: "" } },
       { fn: "update_my_creator_profile", args: { p_fan_name: "달빛지기" } },
     ]);
   });
 
-  it("INV-E13 S12b (실패경로): red·#12345·스타일 문장·# 없는 값·숫자 → 400, DB 를 부르지 않는다(같이 보낸 다른 칸도 안 바뀐다)", async () => {
-    for (const bad of ["red", "#12345", "#123456; background:url(x)", "1E3A8A", "#1E3A8A0", "#GGGGGG", 0x1e3a8a, null]) {
-      for (const key of ["personalColor", "fanColor"] as const) {
-        const f = fakeClient();
-        const r = await saveCreatorProfile({ client: f.client, viewer: HARU }, { fanName: "달빛지기", [key]: bad });
-        expect(r, `${key}=${String(bad)}`).toMatchObject({ ok: false, status: 400 });
-        expect(f.calls).toEqual([]);
-      }
+  it("INV-E13 S12b (실패경로): 8색 밖(#1E3A8A·#FFFFFF)·red·#12345·스타일 문장·# 없는 값·숫자 → 400, DB 를 부르지 않는다(같이 보낸 다른 칸도 안 바뀐다)", async () => {
+    for (const bad of ["#1E3A8A", "#FFFFFF", "#DCEBFE", "red", "#12345", "#DCEBFF; background:url(x)", "DCEBFF", "#DCEBFF0", 0xdcebff, null]) {
+      const f = fakeClient();
+      const r = await saveCreatorProfile({ client: f.client, viewer: HARU }, { fanName: "달빛지기", personalColor: bad });
+      expect(r, String(bad)).toMatchObject({ ok: false, status: 400 });
+      expect(f.calls).toEqual([]);
     }
+  });
+
+  it("INV-E13 S12c: 본문에 팬컬러를 넣어도 받지도 넘기지도 않는다 — 팬컬러는 바뀌지 않는다", async () => {
+    const f = fakeClient();
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { fanColor: "#FFF59D", p_fan_color: "#FFF59D" })).toEqual({ ok: true });
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { personalColor: "#DCEBFF", fanColor: "#1E3A8A" })).toEqual({ ok: true });
+    expect(f.calls).toEqual([
+      { fn: "update_my_creator_profile", args: {} },
+      { fn: "update_my_creator_profile", args: { p_personal_color: "#DCEBFF" } },
+    ]);
   });
 
   it("INV-E13 S12b (실패경로): 본문의 크리에이터 ID 는 넘기지 않는다 · 팬·로그인 안 함은 DB 를 부르지 않는다", async () => {
     const f = fakeClient();
-    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { personalColor: "#1E3A8A", creatorId: "momo", p_creator_id: "momo" })).toEqual({ ok: true });
-    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_personal_color: "#1E3A8A" } }]);
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { personalColor: "#DCEBFF", creatorId: "momo", p_creator_id: "momo" })).toEqual({ ok: true });
+    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_personal_color: "#DCEBFF" } }]);
     const fan = fakeClient();
-    expect(await saveCreatorProfile({ client: fan.client, viewer: { userId: "fan", role: "fan" } }, { personalColor: "#1E3A8A" })).toMatchObject({ ok: false, status: 403 });
-    expect(await saveCreatorProfile({ client: fan.client, viewer: null }, { personalColor: "#1E3A8A" })).toMatchObject({ ok: false, status: 401 });
+    expect(await saveCreatorProfile({ client: fan.client, viewer: { userId: "fan", role: "fan" } }, { personalColor: "#DCEBFF" })).toMatchObject({ ok: false, status: 403 });
+    expect(await saveCreatorProfile({ client: fan.client, viewer: null }, { personalColor: "#DCEBFF" })).toMatchObject({ ok: false, status: 401 });
     expect(fan.calls).toEqual([]);
   });
 
-  it("INV-E14 S13b: 경계 색 #777777 은 거부 없이 넘기고, 본문의 글자색(#FF0000)은 쓰지 않는다", async () => {
+  it("INV-E14 S13b: 본문의 글자색(#FF0000)은 쓰지 않는다 — 테마 색만 넘긴다", async () => {
     const f = fakeClient();
-    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { fanColor: "#777777", textColor: "#FF0000", onFan: "#FF0000" })).toEqual({ ok: true });
-    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_fan_color: "#777777" } }]);
+    expect(await saveCreatorProfile({ client: f.client, viewer: HARU }, { personalColor: "#FFF1B8", textColor: "#FF0000", onPersonal: "#FF0000" })).toEqual({ ok: true });
+    expect(f.calls).toEqual([{ fn: "update_my_creator_profile", args: { p_personal_color: "#FFF1B8" } }]);
   });
 });
+

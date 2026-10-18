@@ -33,7 +33,7 @@ const base: CreatorProfileEditProps = {
   name: "하루",
   intro: "느긋한 방송",
   fanName: "달빛지기",
-  colors: { personal: "#1E3A8A", fan: "#FFF59D" },
+  colors: { personal: "#DCEBFF" },
   photoPath: null,
   bgPath: null,
   symbolUrl: null,
@@ -64,9 +64,9 @@ describe("프로필 수정 — 저장은 예전 두 경로 그대로 (INV-A9)", 
     expect(host.querySelector("#pe-msg")?.textContent).toBe("저장했어요.");
   });
 
-  it("INV-E13: 위 머리 미리보기에 퍼스널 컬러(띠·테두리)와 팬덤 뱃지(팬컬러)가 보인다", async () => {
+  it("INV-E13: 위 머리 미리보기에 테마 색(띠·테두리)과 팬덤 뱃지(테마 색 면)가 보인다", async () => {
     await render();
-    expect(host.querySelector<HTMLElement>("[data-creator-head]")?.style.getPropertyValue("--personal")).toBe("#1E3A8A");
-    expect(host.querySelector<HTMLElement>("[data-fandom-badge]")?.style.getPropertyValue("--fan")).toBe("#FFF59D");
+    expect(host.querySelector<HTMLElement>("[data-creator-head]")?.style.getPropertyValue("--personal")).toBe("#DCEBFF");
+    expect(host.querySelector<HTMLElement>("[data-fandom-badge]")?.style.getPropertyValue("--personal")).toBe("#DCEBFF");
   });
 });

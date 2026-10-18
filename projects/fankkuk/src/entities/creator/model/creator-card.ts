@@ -22,7 +22,7 @@ export type CreatorCard = {
   handle: string | null;
   /** 프로필 사진 저장소 경로 — 없으면 null(INV-E9). */
   photoPath: string | null;
-  /** 퍼스널 컬러·팬컬러(creator-link INV-E13) — 공개 값. 없으면 기본 모양. */
+  /** 테마 색(creator-link INV-E13) — 공개 값. 없으면 기본 모양. */
   colors?: CreatorColors;
 };
 

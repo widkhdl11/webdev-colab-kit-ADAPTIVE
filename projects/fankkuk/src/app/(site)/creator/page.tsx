@@ -4,6 +4,7 @@ import { readMyAccessLog } from "@/entities/address/api/access-log-rows";
 import { readMyCreatorLink, readMyCreatorLook } from "@/entities/creator/api/creator-link-reads";
 import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-settings";
 import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl, nameInitial } from "@/entities/creator/model/link-images";
+import { NO_COLORS } from "@/entities/creator/model/creator-color";
 import { readNotices } from "@/entities/notice/api/notice-reads";
 import { readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
@@ -21,7 +22,7 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 export const dynamic = "force-dynamic";
 
 // 크리에이터 메인 — 로그인한 크리에이터의 첫 화면(시안 v21-addendum3/cre-home.html). 맨 앞 프로필 구간은 본인 읽기 —
-// 공개 이름·소개·팬덤 이름·두 색(my_creator_settings, creator-link INV-E13)·프로필 사진(my_creator_link)·배경사진·심볼(my_creator_look). 본인 확인 전에도 나온다.
+// 공개 이름·소개·팬덤 이름·테마 색(my_creator_settings, creator-link INV-E13)·프로필 사진(my_creator_link)·배경사진·심볼(my_creator_look). 본인 확인 전에도 나온다.
 // 크리에이터 처리할 일(my_creator_action_items — 사이드바 숫자와 바로가기 「처리할 일」이 같은 결과, action-center INV-J6)·진행 중인 선물 수(선물 현황과 같은 읽기 my_gift_progress — 머리 「진행 중 N건」과 같은 값, action-center INV-J9)·열람 기록(my_access_log)·공지(list_notices)·
 // 내가 보낸 선물(my_gifts — 로그인한 사람이 보낸 주문)은 DB. 모두 인자 없이 로그인 토큰의 사람 것만 돌려준다.
 // 광고 배너는 공개 읽기 한 번 — 본문 맨 위(design-rules 16절 ②), 못 읽으면 칸만 없다(banners INV-Y8).
@@ -58,7 +59,7 @@ export default async function Page() {
           photoUrl: creatorPhotoUrl(photoBase, link?.photoPath ?? null),
           initial: nameInitial(publicName) || "?",
           backgroundUrl: creatorBackgroundUrl(photoBase, look?.bgPath ?? null),
-          colors: settings?.colors ?? { personal: null, fan: null },
+          colors: settings?.colors ?? NO_COLORS,
           fanName: settings?.fanName ?? "",
           symbolUrl: creatorSymbolUrl(photoBase, look?.symbolPath ?? null),
         }}
