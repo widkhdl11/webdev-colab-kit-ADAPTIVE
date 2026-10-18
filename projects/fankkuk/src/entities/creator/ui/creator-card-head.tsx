@@ -13,7 +13,7 @@ import s from "./creator-card-head.module.css";
 // 위에서 아래로(줄 사이 8): 배너 2:1(배경사진, 없으면 테마 색 면 그대로 또는 파스텔 + 오른쪽 흐린 고양이)
 // → 사진 64(배너에 32 걸침, 왼쪽) + 오른쪽에 이름(600·한 줄 말줄임) 한 줄, 그 아래 팬덤 뱃지 한 줄(CreatorCardHead)
 //   — 한 줄에 나란히 두면 긴 이름이 뱃지를 「하..」까지 밀어내서 두 줄로 나눴다(2026-10-18 사용자 「A로」)
-// → 「채널 이름 · 소개」 한 줄(CreatorCardLine)
+// → 「채널 이름 · 소개」 최대 두 줄(CreatorCardLine)
 // → 하단 줄(CreatorCardFoot): 왼쪽 플랫폼 칩(넘치면 +N) · 오른쪽 버튼(팔로우·팔로우 중·내 페이지). 평균 승인 시간은 카드에 없다(2026-10-18).
 // 줄마다 자리가 고정이다 — 소개·칩이 없어도 빈칸으로 남아 카드 높이가 같다.
 // 테마 색(INV-E13)은 배너 면·사진 테두리·팬덤 뱃지에만.
@@ -71,7 +71,9 @@ export function CreatorCardHead({
   );
 }
 
-/** 「채널 이름 · 소개」 한 줄 — 넘치면 말줄임. 둘 다 없어도 줄 자리는 남는다(카드 높이를 같게). */
+/** 「채널 이름 · 소개」 최대 두 줄 — 넘치면 둘째 줄 끝에서 말줄임. 전체 소개는 카드를 눌러 가는 크리에이터 페이지에서 본다
+ *  (카드 전체를 덮는 이름 링크 때문에 이 줄의 title 은 뜨지 않는다 — 글자는 다 들어 있어 화면 낭독기는 전체를 읽는다).
+ *  둘 다 없어도 두 줄 자리는 남는다(카드 높이를 같게). */
 export function CreatorCardLine({ channelTitle, intro }: { channelTitle: string; intro: string }) {
   const text = [channelTitle.trim(), intro.trim()].filter(Boolean).join(" · ");
   return <p className={s.line}>{text}</p>;

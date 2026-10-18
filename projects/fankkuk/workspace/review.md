@@ -1,7 +1,7 @@
 ---
 project: fankkuk
 status: passed
-basis: 685c080d9519
+basis: 38e11015055b
 reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 ---
 
@@ -18,3 +18,4 @@ reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
 - 실행 근거: `npm test` 284 파일 2252 통과 · `tsc` 0 · copy:lint 0 · `creator-settings-db` 통합 35 통과 · 변이: DB 8색 검사 끔 → S12b 실패, 마이그레이션 비우기 뺌 → S12c 실패, --badge-ink 흰색 → S13 실패 · Playwright /creators 1440(3열·24)·390(1열·16) 콘솔 에러 0·가로 넘침 0, 설정 테마 색 칸(시험 계정 하루, 개발 서버).
 - 추가(사용자 「A로」): 이름·뱃지를 한 줄 → 이름 줄 아래 뱃지 줄. ui-reviewer 지적 없음. 실행 근거: `npm test` 2252 통과 · tsc 0 · 자리 시험을 두 줄 구조로 고쳐 옛 한 줄 구조에서 1 실패 확인 · Playwright 이름 19자·팬덤 10자 넣어 1440·1024·390 에서 뱃지 전부 보임(뱃지 폭 133), 카드 높이 324 로 같음.
 - 추가(사용자 「평균 승인 시간을 없애고 조금 재조정」): 승인 시간 뺌, 「팔로우」를 칩 줄 오른쪽으로. ui-reviewer 지적 없음(브라우저 확인 요청 1 → 아래). 실행 근거: `npm test` 2252 통과 · tsc 0 · copy:lint 0 · Playwright 이름 19자·팬덤 10자 1440·1024·390 가로 넘침 0·칩·버튼 겹침 0·카드 294, 카드 폭 170 으로 좁힘 → 칩 「유튜브 +1」·버튼 그대로, 버튼 글자 「팔로우 중」으로 바꿔 277·170·343 폭 겹침 0.
+- 추가(사용자 「한마디 설명 공간을 한두줄 더」): 소개 최대 두 줄. ui-reviewer 2건 — 소개 줄 title 이 카드 덮는 링크에 가려 안 뜸 → title 지우고 「전체 소개는 크리에이터 페이지」를 design-rules 17절에 / 옛 카드 줄(design-rules 30줄) 「소개 한 줄」 → 고침. 실행 근거: `npm test` 2252 통과 · tsc 0 · Playwright 로컬 DB 모모 태그 5개(직접 입력 18자, 확인 뒤 되돌림) → 1024 「SOOP +4」·390 「SOOP 치지직 유튜브 +2」 버튼 겹침 0 · 이름 19자·팬덤 10자·소개 최대 길이 1440·1024·390 소개 높이 42·카드 높이 같음(315/347)·가로 넘침 0.

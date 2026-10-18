@@ -34,8 +34,9 @@
 .badgeRow { display: flex; align-items: center; height: 22px; margin: 0; min-width: 0; }
 .badgeRow > [data-fandom-badge] { min-width: 0; max-width: 100%; overflow: hidden; }
 
-/* 「채널 이름 · 소개」 한 줄(14 회색, 높이 21) — 비어도 자리는 남는다 */
-.line { height: 21px; margin: 0; overflow: hidden; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); text-overflow: ellipsis; white-space: nowrap; }
+/* 「채널 이름 · 소개」 최대 두 줄(14 회색, 줄 높이 21 × 2 = 42) — 넘치면 둘째 줄 끝에서 말줄임. 비어도 두 줄 자리는 남아 카드 높이가 같다.
+   2026-10-18 사용자 「평균 승인 시간 공간을 뺐으니 한마디 설명 공간을 한두줄 더」 — 세 줄은 짧은 소개 카드가 비어 보여 두 줄로. 끊을 곳 없는 긴 글자도 줄을 바꾼다 */
+.line { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; height: calc(var(--fs-small) * var(--lh-caption) * 2); margin: 0; overflow: hidden; font-size: var(--fs-small); line-height: var(--lh-caption); color: var(--gray-600); overflow-wrap: anywhere; }
 
 /* 하단 줄 — 소개 줄과 12(카드 줄 사이 8 + 4). 왼쪽 칩 줄(남은 폭을 다 쓰고 넘치면 +N), 오른쪽 버튼(줄지 않음), 사이 12 */
 .foot { display: flex; align-items: center; gap: var(--space-3); min-height: 32px; margin-top: var(--space-1); }
