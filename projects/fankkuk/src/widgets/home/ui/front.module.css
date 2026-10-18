@@ -130,7 +130,15 @@
 }
 /* ③ 단계 카드 — 767 이하는 한 줄에 한 장(두 장씩이면 판 안 카드가 좁아 「크리에이터가」가 낱말 중간에서 끊긴다. 시안 slots-mobile 도 끊겨 있었다) */
 @media (max-width: 767px) {
-  .steps { grid-template-columns: minmax(0, 1fr); }
+  .steps { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+  /* 휴대폰은 그림 왼쪽 · 글 오른쪽 한 줄 목록(2026-10-18 재진단, 시안 v29 4번) — PC 카드를 세로로 쌓으면 4단계만 약 1,400px */
+  .stepCard { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: var(--space-4); row-gap: var(--space-1); align-items: start; }
+  .steps > .stepCard:global(.card) { padding: var(--space-4); }
+  .stepCard img { grid-row: 1 / span 3; width: 40px; height: 40px; }
+  .stepCard > * { margin: 0; }
+  .num + h3 { margin-top: 0; }
+  .stepCard h3 { font-size: var(--fs-body); }
+  .stepCard .muted { font-size: var(--fs-small); }
   /* 바로가기 두 장씩 — 사이 12 · 안쪽 16 으로 글자 칸을 95 → 117(「크리에이터」 약 96 이 한 줄에) */
   .tiles { gap: var(--space-3); }
   .tile:global(.card) { padding: var(--space-4); }

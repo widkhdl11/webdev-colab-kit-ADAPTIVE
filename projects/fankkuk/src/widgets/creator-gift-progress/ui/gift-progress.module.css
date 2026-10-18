@@ -1,12 +1,12 @@
 /* 크리에이터 선물 현황 (design-rules 13절, 시안 v21-addendum3/cre-progress.html — 처리할 일 D안의 판·줄 모양 + 오른쪽 단계 막대).
    본문 틀은 목록형 880(00절) — 라우트가 MyShell(list)로 감싼다. 판 머리는 옅은 바탕 + 검은 숫자 동그라미 + 오른쪽 「~ 전체」 링크. */
 .root { display: grid; gap: var(--space-8); }
-.root.root > section, .root.root > header { margin: 0; }
+.root.root.root > section, .root.root.root > header { margin: 0; } /* 전역 「구간 다음 구간 위 48」(base.css) 이 격자 간격 32 와 겹쳐 80 이 되던 것을 막는다 — 셋을 겹쳐 그 규칙보다 앞서게 */
 .panel { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--r-card); overflow: hidden; }
 .panelH { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-6); border-bottom: 1px solid var(--gray-200); background: var(--gray-50); }
 .panelH h2 { font-size: var(--fs-body); line-height: 1.5; font-weight: var(--fw-h3); }
 .cnt { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-size: var(--fs-caption); font-weight: var(--fw-btn); }
-.more { margin-left: auto; font-size: var(--fs-caption); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.more { display: inline-flex; align-items: center; min-height: 44px; margin-block: calc((44px - 1.5em) / -2); /* 누름 칸 44 — 칸 머리 높이는 그대로 */ margin-left: auto; font-size: var(--fs-caption); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .subH { display: flex; align-items: center; gap: var(--space-2); margin: 0; padding: var(--space-2) var(--space-6); background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-100); font-size: var(--fs-caption); font-weight: var(--fw-btn); }
 .panelH + div > .subH { border-top: 0; }

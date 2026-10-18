@@ -6,6 +6,13 @@
 .card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); cursor: pointer; }
 .card::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow 0.15s; }
 .card:hover::before, .card:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
+/* 카드 전체가 누르는 자리 — 마우스를 올리면 위로 2px + 그림자, 누르면 98%(2026-10-18 재진단). 손가락 기기는 떠오르지 않는다 */
+.card { transition: transform var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
+.card:has(.name a[href]):hover { transform: translateY(-2px); box-shadow: var(--lift-hover); } /* 누를 수 있는 카드만 — 설정 화면 미리보기(링크 없음)는 뜨지 않는다 */
+.card:has(.name a[href]):focus-within { box-shadow: var(--lift-hover); }
+@media (hover: none) { .card:hover { transform: none; } }
+/* 누름은 손가락 기기에서도 — hover 규칙보다 뒤에 둔다. 안의 버튼(팔로우·선물 보내기)을 누를 때는 카드가 움직이지 않는다 */
+.card:has(.name a[href]):active:not(:has(button:active, [data-card-btn]:active)) { transform: scale(0.98); transition-duration: var(--dur-press); }
 .card:has(.name a:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 .card :global(.ctags) { margin: 0; }
 

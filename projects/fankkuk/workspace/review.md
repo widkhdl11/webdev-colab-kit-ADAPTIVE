@@ -1,9 +1,22 @@
 ---
 project: fankkuk
 status: passed
-basis: f7c93c32e9d6
-reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
+basis: d9be1a742103
+reviewers: [security-reviewer, codex-code-review, codex-ui-review]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-18 밤, 사이트 재진단 반영)
+
+덮는 변경: 63c2e596 뒤 — 사용자 붙여 넣은 재디자인 요청 3단계, 시안 v29 승인(DECISIONS 「사이트 재진단 반영」, design-rules 18절).
+토큰(알약 태그·아이콘 8·작은 버튼 44·움직임·휴대폰 구간 48) · 공통 부품(버튼 ease-out·누름 98%, 누를 수 있는 카드 hover, 카드 테두리만, 창 24, 누름 칸 44) · 랜딩 ③ 32·휴대폰 4단계 목록 · 프로필 로그인 후 880·아래 판 뺌·자기 페이지 안내 머리로 · 크리에이터 머리 사진 층 · 선물 현황 간격 · 로그인 판 위 96 · 없는 페이지·오류 화면(새 widget status-page).
+닿은 표면: 시각 · 화면 구조 로직(프로필) · 세션 읽기(404 상단 바) → 코드·화면·보안. 데이터 모델·결제·권한 판단 변경 없음.
+리뷰어 사정: code-reviewer 에이전트가 주간 한도로 멈춰(사용자 「codex 도 사용」) 코드·화면 리뷰는 codex exec(읽기 전용)로 돌렸다.
+
+- codex 코드 리뷰: 3건 — 404 가 상단 바 읽기 실패에 같이 터짐(높음) → try/catch + 로그인 전 상단 바 / 「다시 시도」 reset → retry(이 버전 문서) / 자기 페이지 안내가 아래 판과 함께 사라짐 → 머리 자리로. 모두 고침.
+- codex 화면 리뷰: 4건 — 스위치 켜면 background 축약이 clip 을 되돌림 → background-color / 손가락 기기 누름 98% 사라짐 → 누름 규칙을 hover 뒤로 / 카드 누름 150 → 100ms / 설정 미리보기 카드도 뜸 → 링크 있는 카드만. 모두 고침.
+- security-reviewer: 결함 없음. 낮음 1 — 404 catch 가 Next 내부 예외까지 삼킴 → unstable_rethrow + 서버 로그.
+- 실행 근거: `npx vitest run` 286 파일 2267 통과 · tsc 0 · copy:lint 0 · 새 시험 tests/profile-single-send-ui.test.tsx — 변이 「자기 페이지 안내를 머리에서 뺌」 1 실패, 「로그인 후에도 아래 판」 2 실패, 되돌려 3 통과 · Playwright 43화면+없는 주소 × 1440·390 = 88장 다시 재기: 대비 미달 0·가로 넘침 0·서버 오류 0, 휴대폰 44 미만 누름 칸(문장 속 링크·라벨 줄 안 체크박스 빼고) 0, 랜딩 휴대폰 7,712 → 7,286, 프로필 880·#send-h 없음, 선물 현황 간격 32, 찾기 카드 hover translateY −2·설정 미리보기 none, 스위치 칠한 면 48×28, /a/b/c/d 404 · 통합 시험은 돌리지 않았다 — DB·서버 함수·쓰기 경로 변경이 없다(CSS·화면 구조만).
+
 
 # 리뷰 사인오프 — fankkuk (2026-10-18, 크리에이터 카드 v28 · 테마 색)
 

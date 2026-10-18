@@ -2,6 +2,8 @@
    creator.html(로그인 후, v18-fan.css .pf·.info·.quote·.cta·.other). 카드·태그·접기 목록은 공통 클래스 */
 .pub { padding-bottom: var(--section-gap); }
 .app { padding-bottom: var(--section-gap); }
+/* 로그인 후도 로그인 전과 같은 880 한 기둥(tokens --col-profile, DECISIONS 2026-10-18 재진단) — 가운데 틀 1200 을 좁힌다 */
+.app:global(.page-centered) { max-width: calc(var(--col-profile) + 2 * var(--gutter)); }
 .sec { margin-top: var(--space-12); }
 .head:global(.sec-head) { margin-bottom: var(--space-6); }
 .head :global(h2) { font-size: var(--fs-page); line-height: 1.3; }
@@ -87,7 +89,6 @@
 
 /* ---------- 마지막 선물 보내기 ---------- */
 /* 로그인 후 — 옅은 빨강 둥근 상자 */
-.cta { text-align: center; }
 /* 로그인 전 — 880 기둥 안 옅은 하늘 큰 판(반경 24, 제목 24) + 오른쪽 아래 장식 둘(1120 이하 숨김) */
 .sheet { margin-top: var(--section-gap); }
 .sheetIn { position: relative; overflow: hidden; padding: var(--panel-pad); border-radius: var(--r-panel); background: var(--primary-50); }

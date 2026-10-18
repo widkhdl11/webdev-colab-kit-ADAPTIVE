@@ -100,7 +100,7 @@ export function IntroSlot() {
       <img className={`${s.deco} ${s.decoR}`} src="/img/icon-truck.png" width={160} height={160} alt="" aria-hidden="true" />
       <div className={s.heroText}>
         <p className="t-lead">크리에이터에게 선물을 보낼 때</p>
-        <h2 className="t-hero" id="how-title">
+        <h2 className="t-title" id="how-title">
           안전하게 선물을 나눠봐요
         </h2>
         <p className={s.introLine}>{PROMISE.approval}</p>

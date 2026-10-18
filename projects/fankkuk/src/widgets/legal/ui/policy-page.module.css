@@ -5,7 +5,7 @@
 
 /* 세 글 탭 — 지금 글은 짙은 면 */
 .tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.tab { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 var(--space-4); border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font-size: var(--fs-small); font-weight: 500; text-decoration: none; }
+.tab { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--gray-900); font-size: var(--fs-small); font-weight: 500; text-decoration: none; }
 .tab:hover { background: var(--gray-50); }
 .tab[aria-current="page"] { background: var(--gray-900); box-shadow: none; color: var(--white); font-weight: var(--fw-btn); }
 .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -40,7 +40,7 @@
 .tocH { margin: 0; padding: 0 var(--space-3); color: var(--gray-500); font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); }
 .tocGroup { display: flex; flex-direction: column; gap: 2px; }
 .tocGroupT { margin: 0; padding: 4px var(--space-3); font-size: var(--fs-small); font-weight: var(--fw-btn); }
-.tocLink { display: block; padding: var(--space-2) var(--space-3); border-radius: var(--r-tag); color: var(--gray-600); font-size: var(--fs-small); line-height: 1.5; text-decoration: none; }
+.tocLink { display: block; padding: var(--space-2) var(--space-3); border-radius: var(--r-btn); color: var(--gray-600); font-size: var(--fs-small); line-height: 1.5; text-decoration: none; }
 .tocLink:hover { background: var(--gray-100); color: var(--gray-900); }
 .tocLink[aria-current] { background: var(--primary-50); color: var(--gray-900); font-weight: var(--fw-btn); }
 .tocLink:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }

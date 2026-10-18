@@ -148,7 +148,7 @@ export function CreatorProfilePage({
   const colorVars = creatorColorVars({ personal: creator.colors?.personal ?? null });
   const ringed = hasThemeVars(colorVars);
   const sendRow =
-    send === "open" || send === "needs_follow" ? (
+    send === "open" || send === "needs_follow" || send === "self" ? (
       <div className={s.act}>
         <SendButton shown={send} creator={creator} followMode={followMode} />
       </div>
@@ -343,26 +343,25 @@ export function CreatorProfilePage({
         </div>
       </section>
 
-      {/* 마지막 선물 보내기 판 — 비슷한 크리에이터가 없으면 이 판이 마지막이라 아래 여백을 둔다 */}
-      <section className={guest ? s.sheet : s.sec} aria-labelledby="send-h">
-        <div className={wrap}>
-          <div className={guest ? s.sheetIn : `panel ${s.cta}`}>
-            {guest ? (
-              <>
-                <img className={`${s.pdeco} ${s.pdecoL}`} src="/img/icon-gift.png" width={96} height={96} alt="" aria-hidden="true" />
-                <img className={`${s.pdeco} ${s.pdecoR}`} src="/img/icon-truck.png" width={96} height={96} alt="" aria-hidden="true" />
-              </>
-            ) : null}
-            <div className="center-in">
-              <h2 id="send-h">
-                <span className="accent">선물 보내기</span>
-              </h2>
-              {restingText ? <p className="t-lead t-desc">{restingText}</p> : null}
-              <SendButton shown={send} creator={creator} followMode={followMode} />
+      {/* 마지막 선물 보내기 판 — 로그인 전에만. 로그인 후에는 머리의 버튼 하나로 둔다(같은 버튼이 두 번이면 주 동작이 둘로 보인다, DECISIONS 2026-10-18 재진단).
+          쉬는 중 안내는 위 「받는 상태」 칸에 이미 있다 */}
+      {guest ? (
+        <section className={s.sheet} aria-labelledby="send-h">
+          <div className={wrap}>
+            <div className={s.sheetIn}>
+              <img className={`${s.pdeco} ${s.pdecoL}`} src="/img/icon-gift.png" width={96} height={96} alt="" aria-hidden="true" />
+              <img className={`${s.pdeco} ${s.pdecoR}`} src="/img/icon-truck.png" width={96} height={96} alt="" aria-hidden="true" />
+              <div className="center-in">
+                <h2 id="send-h">
+                  <span className="accent">선물 보내기</span>
+                </h2>
+                {restingText ? <p className="t-lead t-desc">{restingText}</p> : null}
+                <SendButton shown={send} creator={creator} followMode={followMode} />
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {others.length > 0 ? (
         <section className={s.sec} aria-labelledby="similar-title">

@@ -776,3 +776,23 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
 .head-row:where(:not(.admin-area *)) { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
 .head-row > :first-child:where(:not(.admin-area *)) { flex: 1 1 auto; min-width: 0; margin: 0; }
 .more-link:where(:not(.admin-area *)) { flex: none; display: inline-flex; align-items: center; min-height: 44px; /* 누름 칸 44 */ font-size: var(--fs-body); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+
+/* 2026-10-18 재진단(DECISIONS 「사이트 재진단 반영」, 시안 v29) — 반응·누름 칸·페이지 제목 자간 */
+/* 버튼: 색은 0.15초에 걸쳐, 누르면 98% */
+.btn:where(:not(.admin-area *)) { transition: background-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out), transform var(--dur-press) var(--ease-out); }
+.btn:where(:not(.admin-area *)):active:not(:disabled, [aria-disabled="true"]) { transform: scale(0.98); }
+/* 카드·판은 평소 1px 테두리 하나(그림자 없음). 누를 수 있는 카드만 마우스를 올리면 위로 2px + 그림자, 누르면 98% */
+:is(.card, .part, .empty):where(:not(.admin-area *)) { box-shadow: var(--hair); }
+:is(a.card, .ccard):where(:not(.admin-area *)) { transition: transform var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
+:is(a.card, .ccard):where(:not(.admin-area *)):hover { transform: translateY(-2px); box-shadow: var(--hair), var(--lift-hover); }
+:is(a.card, .ccard):where(:not(.admin-area *)):focus-within { box-shadow: var(--hair), var(--lift-hover); }
+/* 페이지 제목도 제목 자간 */
+.page-head > :is(h1, h2):where(:not(.admin-area *)), .ph-title:where(:not(.admin-area *)) { letter-spacing: var(--ls-title); }
+/* 스위치: 모양(48×28)은 그대로, 누름 칸은 위아래로 넓혀 44 */
+.sw:where(:not(.admin-area *))::after { content: ""; position: absolute; inset: -8px 0; }
+@media (hover: none) {
+  /* 손가락 기기에서는 hover 가 눌린 뒤 남으므로 떠오르지 않는다 */
+  :is(a.card, .ccard):where(:not(.admin-area *)):hover { transform: none; }
+}
+/* 누름은 손가락 기기에서도 — 위 hover 규칙보다 뒤에 둔다 */
+:is(a.card, .ccard):where(:not(.admin-area *)):active { transform: scale(0.98); transition-duration: var(--dur-press); }

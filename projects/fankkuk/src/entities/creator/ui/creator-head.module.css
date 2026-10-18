@@ -7,7 +7,7 @@
 .tinted .band { background: var(--personal); }
 .body { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-6); padding: 0 var(--pf-pad) var(--space-6); }
 .withAct { grid-template-columns: auto minmax(0, 1fr) auto; }
-.av { grid-row: 1 / span 2; align-self: start; display: grid; place-items: center; width: var(--av); height: var(--av); margin-top: calc(var(--av) / -2); border-radius: var(--r-pill); border: var(--av-ring) solid var(--personal, var(--white)); box-shadow: 0 0 0 var(--av-ring) var(--white); background: var(--gray-100); color: var(--ink); font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1; overflow: hidden; }
+.av { position: relative; z-index: 1; /* 배너 칸(.band, position: relative)이 뒤에 그려져 사진 위쪽을 덮던 것을 막는다 */ grid-row: 1 / span 2; align-self: start; display: grid; place-items: center; width: var(--av); height: var(--av); margin-top: calc(var(--av) / -2); border-radius: var(--r-pill); border: var(--av-ring) solid var(--personal, var(--white)); box-shadow: 0 0 0 var(--av-ring) var(--white); background: var(--gray-100); color: var(--ink); font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1; overflow: hidden; }
 .av img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .id { grid-column: 2; min-width: 0; padding-top: var(--space-4); }
 .line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
@@ -36,7 +36,7 @@ span.name { font-weight: var(--fw-bold); }
 /* 큰 뱃지(상세 설정 미리보기) — 크기는 예전 그대로 40 · 마크 30 · 글자 16, 색 모양만 위와 같다 */
 .fbLg { --badge-h2: 40px; --mark-s: 30px; gap: var(--space-2); padding: 0 var(--space-4); font-size: var(--fs-body); }
 .fbLg:has(.fbMark) { padding-left: 4px; }
-.fbLg .fbMark { border-radius: var(--r-tag); }
+.fbLg .fbMark { border-radius: var(--r-icon); }
 
 @media (max-width: 768px) {
   .pf:not(.compact) { --band-h: 112px; --av: 80px; --pf-pad: 16px; }
