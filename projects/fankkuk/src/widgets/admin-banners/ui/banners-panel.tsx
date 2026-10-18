@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BANNER_STATE_LABEL, type AdminBanner, type BannerState } from "@/entities/banner/model/banner";
 import { postBannerOrder } from "@/features/admin-banner-edit/api/banner-client";
 import { BannerForm, type BannerDraft } from "@/features/admin-banner-edit/ui/banner-form";
@@ -19,17 +19,27 @@ const STATE_CLASS: Record<BannerState, string> = { live: `${a.tag} ${a.tagBrand}
 /** 2026-10-14 → 10-14 */
 const monthDay = (date: string) => date.slice(5);
 
+/**
+ * 미리보기 바탕 색 자리 — 공개 화면은 보이는 중인 배너만 표 순서대로 보여 주므로(같은 정렬) 그 안에서 몇 번째인지로 정한다.
+ * 예정·끝남 배너와 새 배너는 지금 공개 화면에 없다 — 보이는 중 배너 뒤(맨 끝)에 붙는 자리로 본다(시작하는 날 실제 자리는 그때의 목록이 정한다).
+ */
+function publicIndexOf(banners: readonly AdminBanner[], id: string | null): number {
+  const live = banners.filter((b) => b.state === "live");
+  const at = id === null ? -1 : live.findIndex((b) => b.id === id);
+  return at === -1 ? live.length : at;
+}
+
 export function BannersPanel({ banners, imageUrls }: { banners: readonly AdminBanner[]; imageUrls: Readonly<Record<string, string>> }) {
   const router = useRouter();
-  const [editing, setEditing] = useState<{ draft: BannerDraft; index: number } | null>(null);
+  const [editing, setEditing] = useState<BannerDraft | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
 
-  function startEditing(b: AdminBanner, index: number) {
-    setEditing({
-      draft: { id: b.id, title: b.title, description: b.description, link: b.link, isAd: b.isAd, startsOn: b.startsOn, endsOn: b.endsOn, imageUrl: imageUrls[b.id] ?? null },
-      index,
-    });
+  // 순서를 바꾸면 새 목록이 올 때까지 순서 단추를 막아 둔다 — 낡은 표 순서로 한 번 더 누르지 않게
+  useEffect(() => setMoving(false), [banners]);
+
+  function startEditing(b: AdminBanner) {
+    setEditing({ id: b.id, title: b.title, description: b.description, link: b.link, isAd: b.isAd, startsOn: b.startsOn, endsOn: b.endsOn, imageUrl: imageUrls[b.id] ?? null });
     setNotice(null);
     requestAnimationFrame(() => document.getElementById("banner-title")?.focus());
   }
@@ -42,13 +52,13 @@ export function BannersPanel({ banners, imageUrls }: { banners: readonly AdminBa
     setMoving(true);
     setNotice(null);
     const outcome = await postBannerOrder(ids);
-    setMoving(false);
+    if (outcome.kind !== "ok") setMoving(false); // 성공이면 새 목록이 올 때 풀린다
     setNotice(outcome.kind === "ok" ? "순서를 바꿨어요." : outcome.message);
     router.refresh();
   }
 
   return (
-    <>
+    <div className={p.panel}>
       <div className={a.pageHead}>
         <div>
           <h1>광고 배너</h1>
@@ -56,7 +66,7 @@ export function BannersPanel({ banners, imageUrls }: { banners: readonly AdminBa
         </div>
       </div>
 
-      <div className={a.split}>
+      <div className={`${a.split} ${p.split}`}>
         <div className={`${a.tblWrap} ${p.fit}`}>
           <table className={`${a.tbl} ${p.tbl}`}>
             <caption className="sr-only">광고 배너 목록</caption>
@@ -129,9 +139,9 @@ export function BannersPanel({ banners, imageUrls }: { banners: readonly AdminBa
                       <button
                         type="button"
                         className={`${a.btn} ${a.btnSm} ${a.btnLine}`}
-                        onClick={() => startEditing(b, i)}
+                        onClick={() => startEditing(b)}
                         aria-label={`「${b.title}」 고치기`}
-                        aria-pressed={editing?.draft.id === b.id}
+                        aria-pressed={editing?.id === b.id}
                       >
                         고치기
                       </button>
@@ -143,14 +153,14 @@ export function BannersPanel({ banners, imageUrls }: { banners: readonly AdminBa
           </table>
         </div>
 
-        <section className={`${a.card} ${a.sideCard}`} aria-labelledby="h-banner-form">
+        <section className={`${a.card} ${a.sideCard} ${p.side}`} aria-labelledby="h-banner-form">
           <div className={a.sectionH}>
             <h2 id="h-banner-form">{editing ? "배너 고치기" : "배너 올리기"}</h2>
           </div>
           <BannerForm
-            key={editing?.draft.id ?? "new"}
-            editing={editing?.draft ?? null}
-            previewIndex={editing?.index ?? banners.length}
+            key={editing?.id ?? "new"}
+            editing={editing}
+            previewIndex={publicIndexOf(banners, editing?.id ?? null)}
             onStopEditing={() => setEditing(null)}
             onSubmitStart={() => setNotice(null)}
             onSaved={setNotice}
@@ -160,6 +170,6 @@ export function BannersPanel({ banners, imageUrls }: { banners: readonly AdminBa
           </p>
         </section>
       </div>
-    </>
+    </div>
   );
 }

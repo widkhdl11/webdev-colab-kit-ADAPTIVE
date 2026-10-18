@@ -64,9 +64,11 @@
 }
 
 /* 운영자 화면 미리보기 — 시안 admin-banners-pc 의 작은 띠: 그림 44 왼쪽, 꼬리표는 제목 줄 안 */
-.compact { flex-direction: row-reverse; justify-content: flex-end; gap: var(--space-3); min-height: 0; padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); box-shadow: none; }
+.compact { flex-direction: row-reverse; justify-content: flex-end; gap: var(--space-3); min-height: 68px; padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); box-shadow: none; }
 .compact .txt { max-width: none; flex: 1; }
 .compact .tag { margin: 0 var(--space-2) 0 0; float: left; }
 .compact .title { font-family: var(--font); font-size: var(--fs-body); line-height: 1.6; }
 .compact .sub { margin-top: 2px; font-size: var(--fs-small); }
 .compact .img { width: 44px; height: 44px; }
+/* 그림을 아직 고르지 않은 미리보기 — 같은 자리 빈 칸(안내 글 없음) */
+.imgEmpty { display: block; flex: none; border-radius: var(--r-tag); background: var(--gray-100); }

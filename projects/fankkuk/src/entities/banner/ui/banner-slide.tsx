@@ -13,8 +13,10 @@ import s from "./banner-slide.module.css";
 type Props = {
   banner: BannerView;
   tone: string;
-  /** 운영자 화면 미리보기 — 작은 띠, 꼬리표는 제목 줄 안, 링크 없음 */
+  /** 운영자 화면 미리보기 — 작은 띠, 꼬리표는 제목 줄 안, 링크 없음. 그림이 없으면 그 자리에 빈 칸 */
   compact?: boolean;
+  /** 넘김 칸의 장식 복사본 — 같은 모양이지만 id·링크가 없다(「보러 가기」는 글자만) */
+  decorative?: boolean;
 };
 
 function GoLink({ banner, titleId }: { banner: BannerView; titleId: string }) {
@@ -42,8 +44,8 @@ function GoLink({ banner, titleId }: { banner: BannerView; titleId: string }) {
   return null;
 }
 
-export function BannerSlide({ banner, tone, compact = false }: Props) {
-  const titleId = `banner-title-${banner.id}${compact ? "-preview" : ""}`;
+export function BannerSlide({ banner, tone, compact = false, decorative = false }: Props) {
+  const titleId = decorative ? undefined : `banner-title-${banner.id}${compact ? "-preview" : ""}`;
   return (
     <div className={`${s.card} ${compact ? s.compact : ""}`} style={{ "--tone": tone } as CSSProperties} data-banner-card="">
       <div className={s.txt}>
@@ -56,9 +58,19 @@ export function BannerSlide({ banner, tone, compact = false }: Props) {
           {banner.title}
         </p>
         {banner.description ? <p className={s.sub}>{banner.description}</p> : null}
-        {compact ? null : <GoLink banner={banner} titleId={titleId} />}
+        {compact ? null : decorative ? (
+          <span className={s.go}>
+            보러 가기 <span aria-hidden="true">›</span>
+          </span>
+        ) : (
+          <GoLink banner={banner} titleId={titleId!} />
+        )}
       </div>
-      {banner.imageUrl ? <img className={s.img} src={banner.imageUrl} alt="" width={180} height={180} /> : null}
+      {banner.imageUrl ? (
+        <img className={s.img} src={banner.imageUrl} alt="" width={180} height={180} />
+      ) : compact ? (
+        <span className={`${s.img} ${s.imgEmpty}`} aria-hidden="true" data-banner-image-empty="" />
+      ) : null}
     </div>
   );
 }

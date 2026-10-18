@@ -36,10 +36,10 @@ async function createByRpc(who: string, f: Fields): Promise<{ id: string | null;
 }
 
 /** DB 소유자로 바로 넣는다 — 날짜·순서·만든 때를 정해 둘 때. */
-function insertDirect(f: { title: string; starts: string; ends: string | null; order?: number; createdAt?: string; isAd?: boolean }): string {
+function insertDirect(f: { title: string; starts: string; ends: string | null; order?: number; createdAt?: string; isAd?: boolean; id?: string }): string {
   return psql(
-    `insert into public.banners (title, link, is_ad, starts_on, ends_on, sort_order, image_path, created_at, created_by, updated_by)
-     values (${q(f.title)}, '/about', ${f.isAd ?? false}, '${f.starts}', ${f.ends ? `'${f.ends}'` : "null"}, ${f.order ?? 0}, ${q(fakePath())},
+    `insert into public.banners (id, title, link, is_ad, starts_on, ends_on, sort_order, image_path, created_at, created_by, updated_by)
+     values (${f.id ? `'${f.id}'` : "gen_random_uuid()"}, ${q(f.title)}, '/about', ${f.isAd ?? false}, '${f.starts}', ${f.ends ? `'${f.ends}'` : "null"}, ${f.order ?? 0}, ${q(fakePath())},
        ${f.createdAt ? `'${f.createdAt}'` : "now()"}, '${STAFF_ID}', '${STAFF_ID}') returning id`,
   ).split("\n")[0]!;
 }
@@ -146,6 +146,8 @@ describe("운영자만 바꾼다 (INV-Y1)", () => {
     expect(del.error !== null || (del.data ?? []).length === 0).toBe(true);
     expect(titleOf(id)).toBe(`${P}표`);
     expect(countTest()).toBe(1);
+    expect(psql("select count(*) from pg_policies where schemaname = 'public' and tablename = 'banners'")).toBe("0");
+    expect(psql("select relrowsecurity from pg_class where oid = 'public.banners'::regclass")).toBe("t");
   });
 
   it("INV-Y1 (실패경로): 운영자 확인 없이 그림 저장 경로를 부름(팬) → 404, 올린 파일을 열지도 않고 저장소에 아무것도 생기지 않는다", async () => {
@@ -199,6 +201,9 @@ describe("지금 보이는 배너만 (INV-Y2)", () => {
     expect(mine.map((r) => r.title)).toEqual([`${P}오늘`]);
     expect(Object.keys(mine[0]!).sort()).toEqual(["description", "id", "image_path", "is_ad", "link", "title"]);
     expect(mine[0]!.is_ad).toBe(true);
+    // 공개 함수는 지금 시각을 안쪽 함수(한국 날짜로 거름)에 그대로 넘긴다 — 둘의 결과가 같아야 한다
+    expect(psql("select (select coalesce(array_agg(id), '{}') from public.list_banners()) = (select coalesce(array_agg(id), '{}') from public.list_banners_at(now()))")).toBe("t");
+    expect(psql("select pg_get_functiondef('public.list_banners()'::regprocedure) like '%list_banners_at(now())%'")).toBe("t");
     const ops = (await (await signedInClient("fankkuk_admin")).rpc("admin_banners")).data as { title: string; state: string }[];
     expect(ops.filter((r) => r.title.startsWith(P)).map((r) => `${r.title}=${r.state}`).sort()).toEqual([`${P}내일=scheduled`, `${P}어제=ended`, `${P}오늘=live`]);
   });
@@ -207,11 +212,17 @@ describe("지금 보이는 배너만 (INV-Y2)", () => {
     insertDirect({ title: `${P}예정`, starts: "2099-01-01", ends: null });
     insertDirect({ title: `${P}보임`, starts: "2026-01-01", ends: null });
     for (const c of [anonClient(), await signedInClient("byeolbit_fan")]) {
+      // 빈 결과는 권한 거부(42501)로 온다 — 표 이름이 틀리거나 다른 오류면 이 시험이 잡는다
       const r = await c.from("banners").select("*");
-      expect(r.data ?? []).toEqual([]);
+      expect(r.error?.code).toBe("42501");
+      expect(r.data).toBeNull();
       const log = await c.from("banner_changes").select("*");
-      expect(log.data ?? []).toEqual([]);
+      expect(log.error?.code).toBe("42501");
     }
+    expect(psql("select count(*) from pg_policies where schemaname = 'public' and tablename in ('banners', 'banner_changes')")).toBe("0");
+    expect(psql("select string_agg(relname || '=' || relrowsecurity, ',' order by relname) from pg_class where relnamespace = 'public'::regnamespace and relname in ('banners', 'banner_changes')")).toBe(
+      "banner_changes=true,banners=true",
+    );
   });
 
   it("INV-Y2 (S2d, 실패경로): 끝 날짜가 시작보다 앞서는 배너 → 함수도 DB 제약도 거부. 같은 날은 된다", async () => {
@@ -338,9 +349,48 @@ describe("배너 그림 (INV-Y4·Y5)", () => {
     expect(psql(`select string_agg(title, ',' order by title) from public.banners where title like '${P}%'`)).toBe(`${P}5MB아래,${P}그대로`);
   });
 
+  it("INV-Y4 (실패경로): 고칠 때 그림 올리기가 실패하면 글도 그대로다(반쯤 저장 없음)", async () => {
+    const deps = await opsDeps();
+    const id = (await createByRpc("fankkuk_staff", { title: `${P}반쯤` })).id!;
+    const before = psql(`select title || '|' || image_path from public.banners where id = '${id}'`);
+    const real = deps.storage;
+    const failing = {
+      from: (bucket: string) => ({ ...real.from(bucket), upload: async () => ({ data: null, error: new Error("올리기 실패(시험)") }) }),
+    } as unknown as typeof real;
+    await expect(saveBanner({ ...deps, storage: failing }, input({ id, title: `${P}반쯤 고침` }), blob(await photoWithGps()))).rejects.toThrow();
+    expect(psql(`select title || '|' || image_path from public.banners where id = '${id}'`)).toBe(before);
+  });
+
+  it("INV-Y4 (실패경로): 없는 배너를 그림과 함께 고침 → 404, 올린 파일은 남지 않는다", async () => {
+    const before = (await storedNames()).sort();
+    const r = await saveBanner(await opsDeps(), input({ id: "22222222-2222-4222-8222-222222222222", title: `${P}없음` }), blob(await photoWithGps()));
+    expect(r.status).toBe(404);
+    expect((await storedNames()).sort()).toEqual(before);
+  });
+
   it("INV-Y4: 새 배너는 그림이 있어야 한다 — 그림 없이 만들기 → 400", async () => {
     expect((await saveBanner(await opsDeps(), input({ title: `${P}그림없음` }), null)).status).toBe(400);
     expect(countTest()).toBe(0);
+  });
+});
+
+describe("서버 저장 경로의 검사 (INV-Y3·Y6·Y2)", () => {
+  it.each([
+    ["INV-Y3 나쁜 링크", { link: "javascript:alert(1)" }, "link"],
+    ["INV-Y3 // 다른 곳", { link: "//evil.com" }, "link"],
+    ["INV-Y6 제목 31자", { title: `${P}${"가".repeat(28)}` }, "title"],
+    ["INV-Y6 제목 공백만", { title: "   " }, "title"],
+    ["INV-Y6 설명 41자", { description: "나".repeat(41) }, "description"],
+    ["INV-Y2 (S2d) 거꾸로 된 기간", { startsOn: "2026-10-20", endsOn: "2026-10-19" }, "endsOn"],
+    ["INV-Y2 없는 날짜(2월 30일)", { startsOn: "2026-02-30" }, "startsOn"],
+    ["INV-Y2 없는 끝 날짜(13월)", { endsOn: "2026-13-01" }, "endsOn"],
+  ] as const)("%s → 400·그 칸, 그림을 올리지 않고 DB 도 그대로", async (_label, over, field) => {
+    const before = (await storedNames()).sort();
+    const r = await saveBanner(await opsDeps(), input({ title: `${P}검사`, ...over }), blob(await photoWithGps()));
+    expect(r.status).toBe(400);
+    expect(r.body.field).toBe(field);
+    expect(countTest()).toBe(0);
+    expect((await storedNames()).sort()).toEqual(before);
   });
 });
 
@@ -415,8 +465,9 @@ describe("글자 수 (INV-Y6)", () => {
 describe("보이는 순서 (INV-Y8)", () => {
   it("INV-Y8 (S8): 순서 값 2·1·1(먼저 만든 것이 셋째) → 셋째 → 둘째 → 첫째", () => {
     insertDirect({ title: `${P}첫째`, starts: "2026-01-01", ends: null, order: 2, createdAt: "2026-10-03T00:00:00+09:00" });
-    insertDirect({ title: `${P}둘째`, starts: "2026-01-01", ends: null, order: 1, createdAt: "2026-10-02T00:00:00+09:00" });
-    insertDirect({ title: `${P}셋째`, starts: "2026-01-01", ends: null, order: 1, createdAt: "2026-10-01T00:00:00+09:00" });
+    // 순서 값이 같은 둘은 id 가 거꾸로다(먼저 만든 셋째가 사전순으로 뒤) — 만든 때를 보지 않고 id 로만 줄 세우면 틀린다
+    insertDirect({ title: `${P}둘째`, starts: "2026-01-01", ends: null, order: 1, createdAt: "2026-10-02T00:00:00+09:00", id: "11111111-1111-4111-8111-111111111111" });
+    insertDirect({ title: `${P}셋째`, starts: "2026-01-01", ends: null, order: 1, createdAt: "2026-10-01T00:00:00+09:00", id: "ffffffff-ffff-4fff-bfff-ffffffffffff" });
     expect(psql(`select string_agg(title, '|') from public.list_banners_at(now()) where title like '${P}%'`)).toBe(`${P}셋째|${P}둘째|${P}첫째`);
   });
 
@@ -432,9 +483,13 @@ describe("보이는 순서 (INV-Y8)", () => {
 
 describe("기록 (INV-Y10)", () => {
   it("INV-Y10 (S10): 운영자 A 가 만들고 B 가 내림 → 기록 두 줄(A 만듦 · B 내림)과 시각", async () => {
+    const before = psql("select clock_timestamp()");
     const id = (await createByRpc("fankkuk_staff", { title: `${P}기록` })).id!;
     expect((await (await signedInClient("fankkuk_admin")).rpc("admin_remove_banner", { p_id: id })).error).toBeNull();
-    const rows = psql(`select acted_by || '=' || action || '=' || (at is not null) from public.banner_changes where banner_id = '${id}' order by id`);
+    const after = psql("select clock_timestamp()");
+    const rows = psql(
+      `select acted_by || '=' || action || '=' || (at between '${before}'::timestamptz and '${after}'::timestamptz) from public.banner_changes where banner_id = '${id}' order by id`,
+    );
     expect(rows.split("\n")).toEqual([`${STAFF_ID}=create=true`, `${OWNER_ID}=remove=true`]);
   });
 

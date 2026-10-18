@@ -5,11 +5,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const nav = vi.hoisted(() => ({ refresh: vi.fn(), push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => nav, usePathname: () => "/" }));
 vi.mock("@/shared/api/supabase/server", () => ({ createRequestSupabase: vi.fn() }));
+// 운영자 표의 순서 바꾸기 — 브라우저 요청 대신 응답을 시험이 정한다
+const api = vi.hoisted(() => ({ order: vi.fn() }));
+vi.mock("@/features/admin-banner-edit/api/banner-client", async (orig) => ({ ...(await orig<object>()), postBannerOrder: api.order }));
 
 import type { BannerView } from "@/entities/banner/model/banner";
 import { BannerSlide } from "@/entities/banner/ui/banner-slide";
 import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 import { BannerForm } from "@/features/admin-banner-edit/ui/banner-form";
+import type { AdminBanner } from "@/entities/banner/model/banner";
+import { BannersPanel } from "@/widgets/admin-banners/ui/banners-panel";
 import { BANNER_INTERVAL_MS, BannerCarousel } from "@/widgets/banner-carousel/ui/banner-carousel";
 import { bannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
 import { CreatorSearchPage } from "@/widgets/creator-search/ui/creator-search-page";
@@ -247,12 +252,12 @@ describe("넘김 (INV-Y9)", () => {
     draw(<BannerCarousel banners={two()} />);
     const region = host.querySelector<HTMLElement>('[aria-roledescription="carousel"]')!;
     act(() => {
-      region.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+      region.dispatchEvent(new PointerEvent("pointerover", { bubbles: true, pointerType: "mouse" }));
     });
     act(() => vi.advanceTimersByTime(BANNER_INTERVAL_MS * 3));
     expect(currentTitle()).toBe("첫째 배너");
     act(() => {
-      region.dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: document.body }));
+      region.dispatchEvent(new PointerEvent("pointerout", { bubbles: true, pointerType: "mouse", relatedTarget: document.body }));
     });
     // 초점이 안에 있는 동안
     act(() => goLink(host.querySelector('[data-banner-current="true"]')!)!.focus());
@@ -289,5 +294,127 @@ describe("넘김 (INV-Y9)", () => {
     expect(tones[0]).toBe("#FDE2E4");
     expect(tones[7]).toBe("#F6DFF0");
     expect(tones[8]).toBe("#FDE2E4");
+  });
+});
+
+describe("리뷰 반영 — 넘김 칸 (INV-Y8·Y9)", () => {
+  const make = (n: number) => Array.from({ length: n }, (_, i) => banner({ id: `${i + 1}0000000-0000-4000-8000-000000000000`, title: `배너 ${i + 1}` }));
+  const offsetOfTitle = (title: string) =>
+    [...host.querySelectorAll<HTMLElement>("[data-banner-current]")].find((el) => el.querySelector("[data-banner-title]")?.textContent === title)?.style.getPropertyValue("--d");
+
+  it("INV-Y9 (실패경로): 휴대폰에서 손가락으로 한 번 누른 것(마우스가 아닌 포인터)은 넘김을 멈추지 않는다", () => {
+    vi.useFakeTimers();
+    draw(<BannerCarousel banners={make(2)} />);
+    const region = host.querySelector<HTMLElement>('[aria-roledescription="carousel"]')!;
+    act(() => {
+      region.dispatchEvent(new PointerEvent("pointerover", { bubbles: true, pointerType: "touch" }));
+    });
+    act(() => vi.advanceTimersByTime(BANNER_INTERVAL_MS + 100));
+    expect(currentTitle()).toBe("배너 2");
+  });
+
+  it("INV-Y9: 저절로 넘어가는 동안 장 묶음은 읽기 프로그램에 알리지 않고(off), 멈추면 알린다(polite)", () => {
+    draw(<BannerCarousel banners={make(2)} />);
+    const track = () => host.querySelector("[data-banner-track]")!;
+    expect(track().getAttribute("aria-live")).toBe("off");
+    act(() => host.querySelector<HTMLButtonElement>("button[data-banner-pause]")!.click());
+    expect(track().getAttribute("aria-live")).toBe("polite");
+  });
+
+  it("INV-Y8: 장 수가 줄면(5장 중 다섯째 → 3장) 보이는 장과 가운데 자리가 같은 장이다", () => {
+    draw(<BannerCarousel banners={make(5)} />);
+    act(() => host.querySelector<HTMLButtonElement>('button[aria-label="5번 배너"]')!.click());
+    draw(<BannerCarousel banners={make(3)} />);
+    const all = [...host.querySelectorAll<HTMLElement>("[data-banner-current]")];
+    const current = all.filter((el) => el.dataset.bannerCurrent === "true");
+    expect(current).toHaveLength(1);
+    expect(current[0]!.style.getPropertyValue("--d")).toBe("0");
+    expect(host.querySelector('button[aria-current="true"]')?.getAttribute("aria-label")).toBe(`${all.indexOf(current[0]!) + 1}번 배너`);
+  });
+
+  it("두 장: 반대쪽 장식 복사본은 링크·id 가 없고 읽기에서 빠진다", () => {
+    draw(<BannerCarousel banners={make(2)} />);
+    const mirror = host.querySelector<HTMLElement>("[data-banner-mirror]")!;
+    expect(mirror).not.toBeNull();
+    expect(mirror.getAttribute("aria-hidden")).toBe("true");
+    expect(mirror.querySelector("a")).toBeNull();
+    expect(mirror.querySelector("[id]")).toBeNull();
+    const ids = [...host.querySelectorAll("[id]")].map((el) => el.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("두 장: 「다음」은 세 장 이상처럼 오른쪽에서 들어오고, 「이전」은 왼쪽에서 들어온다", async () => {
+    draw(<BannerCarousel banners={make(2)} />);
+    expect(offsetOfTitle("배너 2")).toBe("1");
+    act(() => host.querySelector<HTMLButtonElement>('button[aria-label="다음 배너"]')!.click());
+    expect(currentTitle()).toBe("배너 2");
+    expect(offsetOfTitle("배너 1")).toBe("-1"); // 나간 장은 왼쪽으로
+    // 「이전」을 누르면 들어올 장이 먼저 왼쪽(-1)에 서고, 다음 그림 때 가운데로
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>('button[aria-label="이전 배너"]')!.click();
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(currentTitle()).toBe("배너 1");
+    expect(offsetOfTitle("배너 2")).toBe("1"); // 나간 장은 오른쪽으로
+  });
+});
+
+describe("리뷰 반영 — 운영자 화면 (INV-Y6·Y7·Y8)", () => {
+  const admin = (over: Partial<AdminBanner>): AdminBanner => ({
+    id: "a1111111-1111-4111-8111-111111111111",
+    title: "가",
+    description: "",
+    link: "/about",
+    isAd: false,
+    imagePath: "b-0123456789abcdef0123456789abcdef.webp",
+    sortOrder: 1,
+    startsOn: "2026-10-01",
+    endsOn: null,
+    state: "live",
+    ...over,
+  });
+
+  it("INV-Y6: 제목 글자 수 표시는 DB 와 같은 방식 — 가족 이모지 하나(👨‍👩‍👧)는 5글자", () => {
+    draw(<BannerForm editing={null} onStopEditing={() => {}} onSubmitStart={() => {}} onSaved={() => {}} />);
+    const input = host.querySelector<HTMLInputElement>("#banner-title")!;
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    act(() => {
+      setValue.call(input, "👨‍👩‍👧");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(host.querySelector("#banner-title-count")?.textContent).toBe("5 / 30");
+  });
+
+  it("미리보기: 그림이 없으면 같은 자리에 빈 칸(안내 글 없음)", () => {
+    draw(<BannerForm editing={null} onStopEditing={() => {}} onSubmitStart={() => {}} onSaved={() => {}} />);
+    const preview = host.querySelector("[data-banner-preview]")!;
+    expect(preview.querySelector("[data-banner-image-empty]")).not.toBeNull();
+    expect(preview.querySelector("img")).toBeNull();
+    expect(preview.textContent).toBe("");
+  });
+
+  it("INV-Y8: 미리보기 바탕은 공개 화면 순서(보이는 중끼리)로 — 앞에 끝난 배너가 있어도 첫 장 색", () => {
+    const ended = admin({ id: "e1111111-1111-4111-8111-111111111111", title: "끝난 배너", state: "ended" });
+    const live = admin({ id: "b2222222-2222-4222-8222-222222222222", title: "보이는 배너", state: "live" });
+    draw(<BannersPanel banners={[ended, live]} imageUrls={{}} />);
+    act(() => host.querySelector<HTMLButtonElement>('button[aria-label="「보이는 배너」 고치기"]')!.click());
+    const card = host.querySelector<HTMLElement>("[data-banner-preview] [data-banner-card]")!;
+    expect(card.style.getPropertyValue("--tone")).toBe("#FDE2E4");
+  });
+
+  it("순서 바꾸기: 성공해도 새 목록이 올 때까지 순서 단추를 막아 둔다", async () => {
+    api.order.mockResolvedValue({ kind: "ok", body: {} });
+    const a = admin({ id: "a1111111-1111-4111-8111-111111111111", title: "가" });
+    const b = admin({ id: "b2222222-2222-4222-8222-222222222222", title: "나" });
+    draw(<BannersPanel banners={[a, b]} imageUrls={{}} />);
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>('button[aria-label="「나」 위로 옮기기"]')!.click();
+    });
+    expect(api.order).toHaveBeenCalledTimes(1);
+    expect(host.querySelector('button[aria-label="「가」 아래로 옮기기"]')?.getAttribute("aria-disabled")).toBe("true");
+    // 새 목록(바뀐 순서)이 오면 풀린다
+    draw(<BannersPanel banners={[b, a]} imageUrls={{}} />);
+    expect(host.querySelector('button[aria-label="「나」 아래로 옮기기"]')?.getAttribute("aria-disabled")).toBe("false");
   });
 });

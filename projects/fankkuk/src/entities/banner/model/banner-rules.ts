@@ -21,6 +21,15 @@ const EDGE_BLANK = new RegExp(`^[${BLANK}]|[${BLANK}]$`, "u");
 
 export type BannerLinkKind = "internal" | "external";
 
+/** 시작·끝 날짜 — YYYY-MM-DD 이고 달력에 있는 날(2026-02-30·13월은 아니다). DB 날짜 형식과 같은 꼴 */
+export function isBannerDate(value: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!m) return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const date = new Date(Date.UTC(y, mo - 1, d));
+  return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d;
+}
+
 /** INV-Y3: 저장할 수 있는 링크면 그 갈래(팬꾹 안 → 같은 탭, 바깥 → 새 탭), 아니면 null. */
 export function bannerLinkKind(link: string): BannerLinkKind | null {
   if (charCount(link) > LINK_MAX) return null;

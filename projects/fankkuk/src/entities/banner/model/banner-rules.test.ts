@@ -20,9 +20,11 @@ describe("누르면 가는 곳 (INV-Y3)", () => {
 });
 
 describe("글자 수 (INV-Y6)", () => {
-  it("INV-Y6 (S6): 제목 30자·설명 40자 → 됨, 이모지는 한 글자로 센다", () => {
+  it("INV-Y6 (S6): 제목 30자·설명 40자 → 됨. 글자 수는 DB 와 같은 방식 — 이모지 😀 는 1글자, 합친 가족 이모지 👨‍👩‍👧 는 5글자", () => {
     expect(bannerTextOk("가".repeat(30), "나".repeat(40))).toBe(true);
     expect(bannerTextOk("😀".repeat(30), "")).toBe(true);
+    expect(bannerTextOk(`${"가".repeat(25)}👨‍👩‍👧`, "")).toBe(true);
+    expect(bannerTextOk(`${"가".repeat(26)}👨‍👩‍👧`, "")).toBe(false);
   });
 
   it("INV-Y6 (S6b, 실패경로): 제목 빈칸·공백만·31자, 설명 41자, 앞뒤 공백·줄바꿈 → 안 됨", () => {

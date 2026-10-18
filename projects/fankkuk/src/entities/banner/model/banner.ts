@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { PASTEL_TONES, type PastelTone } from "@/shared/config/pastel-tones";
-import { bannerLinkKind } from "./banner-rules";
+import { bannerLinkKind, isBannerDate } from "./banner-rules";
 
-export { BANNER_DESCRIPTION_MAX, BANNER_TITLE_MAX, bannerLinkKind, bannerTextOk, type BannerLinkKind } from "./banner-rules";
+export { BANNER_DESCRIPTION_MAX, BANNER_TITLE_MAX, bannerLinkKind, bannerTextOk, isBannerDate, type BannerLinkKind } from "./banner-rules";
 
 // 광고 배너 (docs/specs/banners.md). 공개 읽기(list_banners)·운영자 목록(admin_banners)의 줄을 경계에서 검사해 화면 값으로 바꾼다.
 // 줄 하나라도 꼴이 다르면(규칙 밖 링크·서버가 정하지 않은 그림 경로 포함) 목록 전체를 null 로 본다 — 부르는 쪽이 칸을 그리지 않는다.
@@ -25,8 +25,6 @@ export type AdminBanner = PublicBanner & { sortOrder: number; startsOn: string; 
 /** 화면이 그리는 배너 한 장 — 그림은 공개 저장소 주소(미리보기에서는 고른 파일 주소, 없으면 null) */
 export type BannerView = { id: string; title: string; description: string; link: string; isAd: boolean; imageUrl: string | null };
 
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
-
 const publicRow = z
   .object({
     id: z.string().uuid(),
@@ -47,8 +45,8 @@ const adminRow = z
     is_ad: z.boolean(),
     image_path: z.string().regex(BANNER_IMAGE_PATH),
     sort_order: z.number().int(),
-    starts_on: z.string().regex(DATE),
-    ends_on: z.string().regex(DATE).nullable(),
+    starts_on: z.string().refine(isBannerDate),
+    ends_on: z.string().refine(isBannerDate).nullable(),
     state: z.enum(["live", "scheduled", "ended"]),
   })
   .transform(

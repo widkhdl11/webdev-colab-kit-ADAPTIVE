@@ -1,3 +1,11 @@
+/* 두 단(표 + 양식)은 본문 칸 폭으로 가른다 — 화면 폭이 넓어도 사이드바를 펼치면 본문이 좁다(1024 화면 ≈ 720).
+   본문 칸 1100 미만이면 양식을 표 아래로 내려 표가 칸을 다 쓴다(실측, 사이드바 펼침: 1024·1280 화면은 한 단 — 제목 칸 186·348 · 1440 두 단(시안) 145 · 1600 두 단 270, 모두 가로 넘침 없음). */
+.panel { container-type: inline-size; }
+@container (max-width: 1099px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; }
+}
+
 /* 운영자 「광고 배너」 표 — 시안 v27-home-airy/admin-banners-pc. 칸 폭 안에 맞춘다(가로 스크롤 없음): 열 폭을 고정하고 제목만 늘고 준다. */
 .fit { overflow-x: visible; }
 .tbl { width: 100%; table-layout: fixed; }
@@ -15,4 +23,4 @@
 .move { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--r-tag); background: none; color: var(--sub); font: inherit; cursor: pointer; }
 .move:hover { background: var(--surface-hover); color: var(--ink); }
 .move[aria-disabled="true"] { color: var(--faint); cursor: default; background: none; }
-.move:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.move:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

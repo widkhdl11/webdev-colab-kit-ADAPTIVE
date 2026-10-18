@@ -16,6 +16,7 @@ import { BANNER_MESSAGES } from "./banner-messages";
 // - INV-Y3·Y6: 링크·글자 수를 여기서 먼저 보고(entities 의 같은 검사), DB 제약이 저장 경계에서 다시 본다.
 // - INV-Y4: 그림은 열어 보고(PNG·JPG, 5MB) 사진 정보를 지운 뒤 긴 변 512 로 다시 그려 WebP 로만 저장한다. 이름은 서버가 정한다 —
 //   b- + 짐작할 수 없는 32자(crypto 난수). 그림 검사는 DB 를 바꾸기 전에 끝낸다 — 거부되면 배너는 그대로다.
+//   고칠 때 그림을 바꾸면 새 그림을 먼저 올린 뒤 글·그림을 DB 함수 하나(admin_edit_banner_with_image)로 함께 바꾼다.
 //   그림을 바꾸면 옛 파일을, 내리면 그 파일을 지운다. 지우기가 실패하면 기록만 남긴다(이름을 짐작할 수 없어 열리지 않는다).
 
 export type BannerDeps = { session: Pick<SupabaseClient, "rpc">; storage: Pick<SupabaseClient["storage"], "from"> };
@@ -100,17 +101,19 @@ export async function saveBanner(deps: BannerDeps, input: unknown, image: Blob |
     return { status: 200, body: { ok: true, id: typeof data === "string" ? data : null } };
   }
 
-  const saved = await deps.session.rpc("admin_save_banner", { p_id: v.id, ...fields, p_image_path: null });
-  if (saved.error) return pgErrorReply(saved.error.code, BANNER_MESSAGES);
-  if (webp) {
-    const path = await upload(deps, webp);
-    const swapped = await deps.session.rpc("admin_set_banner_image", { p_id: v.id, p_image_path: path });
-    if (swapped.error) {
-      await removeFiles(deps, [path]);
-      return pgErrorReply(swapped.error.code, BANNER_MESSAGES);
-    }
-    if (typeof swapped.data === "string") await removeFiles(deps, [swapped.data]);
+  if (!webp) {
+    const saved = await deps.session.rpc("admin_save_banner", { p_id: v.id, ...fields, p_image_path: null });
+    if (saved.error) return pgErrorReply(saved.error.code, BANNER_MESSAGES);
+    return { status: 200, body: { ok: true, id: v.id } };
   }
+  // 그림을 먼저 올리고, 글·그림을 DB 함수 하나로 한 번에 바꾼다 — 어디서 실패해도 반쯤 저장된 배너가 남지 않는다
+  const path = await upload(deps, webp);
+  const swapped = await deps.session.rpc("admin_edit_banner_with_image", { p_id: v.id, ...fields, p_image_path: path });
+  if (swapped.error) {
+    await removeFiles(deps, [path]);
+    return pgErrorReply(swapped.error.code, BANNER_MESSAGES);
+  }
+  if (typeof swapped.data === "string") await removeFiles(deps, [swapped.data]);
   return { status: 200, body: { ok: true, id: v.id } };
 }
 
