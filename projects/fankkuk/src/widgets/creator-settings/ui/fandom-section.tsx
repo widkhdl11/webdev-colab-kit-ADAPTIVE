@@ -5,7 +5,7 @@ import { useState, type CSSProperties } from "react";
 import { THEME_COLORS, type CreatorColors, type ThemeColor } from "@/entities/creator/model/creator-color";
 import { creatorSymbolUrl } from "@/entities/creator/model/link-images";
 import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
-import { CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
+import { CardButtonLabel, CreatorCardActions, CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
 import { deleteCreatorImage, sendCreatorImage } from "@/features/creator-photo/api/send-creator-image";
 import { ImageField } from "@/features/creator-photo/ui/image-field";
 import { sendCreatorProfile } from "@/features/creator-settings-save/api/send-creator-settings";
@@ -203,15 +203,13 @@ export function FandomSection(p: FandomSectionProps) {
               faceTone={p.card.faceTone}
             />
             <CreatorCardLine channelTitle={p.card.channelTitle} intro={p.card.intro} />
-            {/* 버튼은 모양만 — 누를 수 없다(미리보기) */}
-            <CreatorCardFoot
-              tags={p.card.tags}
-              action={
-                <span className="btn btn--sm btn--line" aria-hidden="true">
-                  팔로우
-                </span>
-              }
-            />
+            <CreatorCardFoot tags={p.card.tags} />
+            {/* 처음 보는 팬에게 보이는 모양 — 「팔로우」 하나(누를 수 없는 모양) */}
+            <CreatorCardActions creatorId={p.card.creatorId} colors={{ personal: theme }}>
+              <span className="btn btn--sm btn--line" aria-hidden="true" data-card-btn="main">
+                <CardButtonLabel icon="heart-plus">팔로우</CardButtonLabel>
+              </span>
+            </CreatorCardActions>
           </div>
         </div>
       </div>

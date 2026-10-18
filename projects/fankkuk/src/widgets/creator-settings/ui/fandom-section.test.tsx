@@ -138,14 +138,23 @@ describe("INV-E13: 테마 색은 8색 견본 + 「선택 안 함」, 저장은 �
 });
 
 describe("카드 미리보기 — 찾기 화면 카드 그대로(design-rules 17절)", () => {
-  it("INV-E13: 채널 이름·소개 · 칩과 같은 줄의 누를 수 없는 「팔로우」 모양(평균 승인 시간 없음), 링크 없음", async () => {
+  it("INV-E13: 채널 이름·소개 · 아래 띠에 누를 수 없는 「팔로우」 모양(평균 승인 시간 없음), 링크 없음", async () => {
     await render();
     const card = host.querySelector<HTMLElement>("[data-card-preview]")!;
     expect(card.textContent).toContain("하루의 놀이터 · 게임 방송을 해요.");
     expect(card.textContent).toContain("치지직");
     const foot = card.querySelector("[data-card-foot]");
     expect(foot?.textContent).toContain("치지직");
-    expect(foot?.textContent?.endsWith("팔로우")).toBe(true);
+    expect(foot?.textContent).not.toContain("팔로우");
+    const acts = foot?.nextElementSibling as HTMLElement | null;
+    expect(acts?.hasAttribute("data-card-actions")).toBe(true);
+    // 아래 띠가 카드 마지막 자식 — 위 배너와 세트
+    expect(card.lastElementChild).toBe(acts);
+    expect(acts?.hasAttribute("data-card-band")).toBe(true);
+    // 처음 보는 팬에게 보이는 모양 — 「팔로우」 하나(하트 더하기 아이콘)
+    expect(Array.from(acts?.children ?? []).map((el) => el.textContent)).toEqual(["팔로우"]);
+    expect(acts?.querySelector("svg[data-icon='heart-plus']")).not.toBeNull();
+    expect(acts?.style.getPropertyValue("--act-bg")).toBe(coverPastel(ID));
     expect(card.textContent).not.toContain(approvalTimeText(180));
     expect(card.querySelector("a, button")).toBeNull();
   });

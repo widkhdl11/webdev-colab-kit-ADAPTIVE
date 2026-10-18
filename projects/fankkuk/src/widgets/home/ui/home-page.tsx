@@ -62,7 +62,7 @@ export function HomePage({ nickname, gifts, following, looks, faceToneByName, no
           more={{ href: "/me/following", label: "팔로우한 크리에이터 모두 보기" }}
           creators={following}
           looks={looks}
-          action={(c) => <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing variant="row" mode="save" />}
+          action={(c) => <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing variant="card" mode="save" />}
           empty={
             <>
               <p className="t-meta">아직 팔로우한 크리에이터가 없어요.</p>

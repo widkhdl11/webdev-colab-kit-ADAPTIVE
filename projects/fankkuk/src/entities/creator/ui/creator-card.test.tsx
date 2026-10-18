@@ -3,8 +3,9 @@ import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NO_CARD_LOOK } from "../model/card-look";
-import type { ThemeColor } from "../model/creator-color";
-import { CreatorCardFoot, CreatorCardHead, CreatorCardLine } from "./creator-card-head";
+import { badgeBorderOf, type ThemeColor } from "../model/creator-color";
+import { coverPastel } from "../lib/cover-pastel";
+import { CreatorCardActions, CreatorCardFoot, CreatorCardHead, CreatorCardLine, CreatorCardMineRow } from "./creator-card-head";
 import { CreatorCardTags, fitChipCount } from "./creator-card-tags";
 
 // 크리에이터 카드 v28(design-rules 17절, DECISIONS 2026-10-18) — 값이 없어도 줄 자리가 남고, 넘치는 칩은 「+N」.
@@ -92,17 +93,56 @@ describe("크리에이터 카드 v28 — 사진 왼쪽 + 이름 줄·뱃지 줄,
     expect(host.querySelector<HTMLElement>("[data-card-cover]")?.style.getPropertyValue("--pastel")).toMatch(/^#[0-9A-F]{6}$/);
   });
 
-  it("하단 줄 — 왼쪽 칩 줄, 오른쪽 버튼. 평균 승인 시간은 카드에 없다. 버튼이 없으면 칩 줄만", () => {
-    const foot = dom(renderToStaticMarkup(<CreatorCardFoot tags={["치지직", "유튜브"]} action={<button type="button">팔로우</button>} />));
-    const row = foot.querySelector("[data-card-foot]")!;
-    expect(row.childElementCount).toBe(2);
-    expect(row.children[0]?.textContent).toContain("치지직");
-    expect(row.children[0]?.querySelector("button")).toBeNull();
-    expect(row.children[1]?.querySelector("button")?.textContent).toBe("팔로우");
+  it("칩 줄은 혼자 한 줄 — 버튼을 품지 않고 카드 폭을 다 쓴다. 평균 승인 시간은 카드에 없다", () => {
+    const row = dom(renderToStaticMarkup(<CreatorCardFoot tags={["치지직", "유튜브"]} />)).querySelector("[data-card-foot]")!;
+    expect(row.childElementCount).toBe(1);
+    expect(row.children[0]?.classList.contains("ctags")).toBe(true);
+    expect(row.textContent).toContain("치지직");
+    expect(row.querySelector("button, a")).toBeNull();
     expect(row.textContent).not.toContain("승인");
-    const bare = dom(renderToStaticMarkup(<CreatorCardFoot tags={["치지직"]} />)).querySelector("[data-card-foot]")!;
-    expect(bare.childElementCount).toBe(1);
-    expect(bare.textContent).toContain("치지직");
+  });
+
+  const ID = "00000000-0000-4000-b000-000000000001";
+  const actions = (personal: string | null) =>
+    dom(
+      renderToStaticMarkup(
+        <CreatorCardActions
+          creatorId={ID}
+          colors={{ personal: personal as ThemeColor | null }}
+        >
+          <a href="/gifts/new" data-card-btn="main">
+            선물 보내기
+          </a>
+          <button type="button" data-card-btn="sub">
+            팔로우 취소
+          </button>
+        </CreatorCardActions>,
+      ),
+    ).querySelector<HTMLElement>("[data-card-actions]")!;
+
+  it("아래 띠 — 받은 버튼을 순서대로 담는다", () => {
+    const row = actions(null);
+    expect(row.hasAttribute("data-card-band")).toBe(true);
+    expect(Array.from(row.children).map((el) => el.textContent)).toEqual(["선물 보내기", "팔로우 취소"]);
+  });
+
+  it("INV-E13: 아래 띠 바탕은 배너와 같은 색 — 테마 색이 있으면 그 색, 없으면 크리에이터 ID 파스텔 · 팔로우 테두리는 그 색 + #1F2937 22%", () => {
+    expect(actions("#DCEBFF").style.getPropertyValue("--act-bg")).toBe("#DCEBFF");
+    expect(actions("#DCEBFF").style.getPropertyValue("--act-line")).toBe(badgeBorderOf("#DCEBFF"));
+    expect(actions(null).style.getPropertyValue("--act-bg")).toBe(coverPastel(ID));
+    expect(actions(null).style.getPropertyValue("--act-line")).toBe(badgeBorderOf(coverPastel(ID)));
+    // 8색 밖 값은 그리지 않고 ID 파스텔로(배너와 같은 규칙)
+    const odd = actions("#1E3A8A");
+    expect(odd.outerHTML).not.toContain("#1E3A8A");
+    expect(odd.style.getPropertyValue("--act-bg")).toBe(coverPastel(ID));
+  });
+
+  it("본인 카드 — 아래 띠는 그대로(배너 색), 버튼 둘 대신 「내 페이지」 태그 하나", () => {
+    const row = dom(renderToStaticMarkup(<CreatorCardMineRow creatorId={ID} />)).querySelector("[data-card-actions]")!;
+    expect(row.childElementCount).toBe(1);
+    expect(row.textContent).toBe("내 페이지");
+    expect((row as HTMLElement).style.getPropertyValue("--act-bg")).toBe(coverPastel(ID));
+    expect(row.querySelector("a, button")).toBeNull();
   });
 
   it("「채널 이름 · 소개」가 둘 다 없어도 줄은 남는다", () => {

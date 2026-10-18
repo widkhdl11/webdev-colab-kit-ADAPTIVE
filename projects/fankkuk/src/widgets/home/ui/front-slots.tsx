@@ -3,7 +3,7 @@ import { Fragment, type ReactNode } from "react";
 import { NO_CARD_LOOK, type CardLook } from "@/entities/creator/model/card-look";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
-import { CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
+import { CreatorCardActions, CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import { FAN_STEP_LABEL, fanBadge } from "@/entities/order/ui/fan-stage-copy";
@@ -196,7 +196,7 @@ export function GiftsSlot({ gifts, faceToneByName }: { gifts: readonly FanGiftVi
   );
 }
 
-/** ④·④-2 카드 셋 — 크리에이터 찾기와 같은 카드(design-rules 17절). action = 하단 줄 오른쪽 버튼(④ 는 없음 — 승인 시간만, ④-2 는 「팔로우 중」) */
+/** ④·④-2 카드 셋 — 크리에이터 찾기와 같은 카드(design-rules 17절). action = 아래 띠에 놓을 버튼(④ 는 없음 — 띠 없음, ④-2 는 카드 띠 팔로우 — 팔로우 중이면 「선물 보내기」+「팔로우 취소」) */
 export const CARD_ROW_MAX = 3;
 
 export function CreatorCardsSlot({
@@ -235,7 +235,13 @@ export function CreatorCardsSlot({
                 faceTone={c.faceTone}
               />
               <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-              <CreatorCardFoot tags={c.tags} action={action?.(c)} />
+              <CreatorCardFoot tags={c.tags} />
+              {/* 팔로우 버튼을 주는 화면(로그인한 홈)만 버튼 줄 — 한 줄의 카드가 모두 같은 화면이라 높이가 같다 */}
+              {action ? (
+                <CreatorCardActions creatorId={c.id} colors={c.colors}>
+                  {action(c)}
+                </CreatorCardActions>
+              ) : null}
             </li>
           ))}
         </ul>

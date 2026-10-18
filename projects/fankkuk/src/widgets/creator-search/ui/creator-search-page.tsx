@@ -16,7 +16,7 @@ import {
   NO_CARD_LOOK,
   type CardLook,
 } from "@/entities/creator/model/card-look";
-import { CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
+import { CreatorCardActions, CreatorCardFoot, CreatorCardHead, CreatorCardLine, CreatorCardMineRow, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
 import {
   hasTagIcon,
   TagChipBody,
@@ -187,22 +187,21 @@ export function CreatorSearchPage({
                   faceTone={c.faceTone}
                 />
                 <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-                <CreatorCardFoot
-                  tags={c.tags}
-                  action={
-                    own ? (
-                      <span className="tag">내 페이지</span>
-                    ) : followMode === "hidden" ? null : (
-                      <FollowButton
-                        creatorId={c.id}
-                        creatorName={c.name}
-                        initialFollowing={c.following}
-                        variant="row"
-                        mode={followMode}
-                      />
-                    )
-                  }
-                />
+                <CreatorCardFoot tags={c.tags} />
+                {/* 본인은 버튼 줄 자리에 「내 페이지」 태그, 운영자(hidden)는 줄 없음 — 운영자 화면은 모든 카드에 줄이 없어 높이가 같다 */}
+                {own ? (
+                  <CreatorCardMineRow creatorId={c.id} colors={c.colors} />
+                ) : followMode === "hidden" ? null : (
+                  <CreatorCardActions creatorId={c.id} colors={c.colors}>
+                    <FollowButton
+                      creatorId={c.id}
+                      creatorName={c.name}
+                      initialFollowing={c.following}
+                      variant="card"
+                      mode={followMode}
+                    />
+                  </CreatorCardActions>
+                )}
               </li>
             );
           })}
