@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v29 랜딩 다듬기 시안 — 고친 화면</title>
+<!--
+  요청(2026-10-18): 「메인화면 바꿨는데 뭔가 부자연스러워.. 어색해 휑해보여. 뭐가 문제일까?」 → 진단 다섯 가지 → 「응 만들어줘」
+  기준: design-rules 000절(하늘색·고양이)·00000절(글자 여섯 단계·간격·반경)·16절(로그인 전 글 폭 880) + tokens.md. 색·문구·칸 순서의 뜻은 그대로.
+  고친 것:
+    1. 배경은 화면 끝까지(색 띠), 글은 880 그대로 — 양옆 빈 면을 없앤다. 광고 배너도 880 선에 맞춘다(양옆 엿보기 없음)
+    2. 하늘 판은 약속 구간 하나만 — 4단계·바로가기는 흰 바탕. 흰 구간과 색 구간이 번갈아 나온다
+    3. 판 안 카드 넷 → 4단계는 2×2 줄(그림 + 글), 요금은 카드 셋 대신 한 장을 셋으로 나눔 — 글이 두 글자씩 꺾이지 않는다
+    4. 구간 제목은 모두 왼쪽 한 선. 버튼만 가운데(약속 구간 「크리에이터로 가입하기」, 10-17 사용자 지시 그대로)
+    5. 첫 화면에 서비스 문장·검색·마스코트를 먼저, 광고 배너는 그 아래
+  문구: src/widgets/home/ui/front-slots.tsx 그대로. 첫 화면 위 한 줄(t-lead)만 소개 구간의 「크리에이터에게 선물을 보낼 때」를 옮겨 씀.
+  크리에이터 카드·광고 배너 값은 사용자가 보낸 지금 화면 스크린샷의 예시 값.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+@font-face{font-family:"Tmoney Round Wind";src:url("../../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Tmoney Round Wind";src:url("../../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2");font-weight:400;font-display:swap}
+:root{
+  --primary:#89cff0;--primary-50:#e0f2fe;--primary-700:#6bbfe6;--tint:#f0f8ff;
+  --grad-hero:linear-gradient(135deg,#d6eefc 0%,#eef0ff 100%);--grad-title:linear-gradient(90deg,#7dd3fc,#a5e1fa);
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-500:#6b7280;--gray-600:#4b5563;--gray-900:#1f2937;
+  --success:#276749;--success-soft:#eaf5ee;
+  --font:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Segoe UI","Malgun Gothic",sans-serif;
+  --font-round:"Tmoney Round Wind",var(--font);
+  --col:880px;--gutter:24px;--sec:96px;
+  --r-panel:24px;--r-card:16px;--r-btn:12px;--r-tag:8px;
+  --shadow:0 1px 3px #0000000f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--gray-900);font-family:var(--font);font-size:16px;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere}
+h1,h2,h3,p{margin:0}
+ul,ol{margin:0;padding:0;list-style:none}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--gray-900);outline-offset:2px}
+.in{max-width:calc(var(--col) + 2*var(--gutter));margin:0 auto;padding:0 var(--gutter)}
+.round{font-family:var(--font-round);font-weight:800;font-synthesis:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 24px;border-radius:var(--r-btn);background:var(--primary);color:var(--gray-900);font-weight:600;text-decoration:none;box-shadow:0 4px 12px #89cff066}
+.btn:hover{background:var(--primary-700)}
+.btn--line{background:#fff;box-shadow:inset 0 0 0 1px var(--gray-200)}
+.btn--line:hover{background:var(--gray-50)}
+.more{font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+/* 상단 바 — 선은 화면 끝까지, 글은 880 */
+.top{border-bottom:1px solid var(--gray-200);background:#fff}
+.top .in{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px}
+.logo{display:flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;font-size:20px}
+.logo img{width:32px;height:32px;border-radius:22%}
+.nav{display:flex;gap:24px;font-weight:500}
+.nav a,.auth a{text-decoration:none}
+.auth{display:flex;align-items:center;gap:12px;font-weight:600}
+.auth span{width:1px;height:14px;background:var(--gray-200)}
+.burger{display:none;width:44px;height:44px;border:0;background:none;border-radius:var(--r-btn);align-items:center;justify-content:center}
+
+/* ① 첫 화면 — 그라데이션 띠가 화면 끝까지 */
+.hero{background:var(--grad-hero)}
+.hero .in{display:flex;align-items:center;gap:32px;padding-top:64px;padding-bottom:64px}
+.heroText{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:16px}
+.eyebrow{font-weight:600;color:var(--gray-600)}
+.hero h1{font-size:48px;line-height:1.2;letter-spacing:-.02em}
+.search{display:flex;align-items:center;gap:8px;max-width:520px;margin-top:8px;padding:6px 6px 6px 20px;border-radius:9999px;background:#fff;box-shadow:inset 0 0 0 1px var(--gray-500),0 8px 24px #1f293714}
+.search input{flex:1;min-width:0;height:44px;border:0;outline:0;font:inherit;background:transparent}
+.search button{width:44px;height:44px;border:0;border-radius:50%;background:var(--primary);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+.heroArt{flex:0 0 280px;width:280px;height:280px;object-fit:contain;filter:drop-shadow(0 16px 24px #1f293714)}
+
+/* ② 광고 배너 — 880 선 안, 엿보기 없음 */
+.banner{margin-top:48px}
+.bnr{position:relative;display:flex;align-items:center;gap:24px;min-height:136px;padding:24px 32px;border-radius:var(--r-panel);background:linear-gradient(120deg,#fde2e4,#fff1f2);overflow:hidden}
+.bnr img{width:96px;height:96px;object-fit:contain;flex:none}
+.bnr .tag{display:inline-block;padding:0 8px;border-radius:var(--r-tag);background:#fff;font-size:14px;font-weight:600}
+.bnr h2{font-size:20px;line-height:1.4;margin-top:8px}
+.bnr p{font-size:14px;color:var(--gray-600)}
+.bnr .go{margin-left:auto;flex:none;min-height:40px;padding:0 16px;font-size:14px;background:#fff;box-shadow:inset 0 0 0 1px var(--gray-200)}
+.dots{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px}
+.dots i{width:8px;height:8px;border-radius:9999px;background:var(--gray-200)}
+.dots i.on{width:24px;background:var(--gray-900)}
+
+/* 바로가기 넷 — 흰 바탕, 그림 왼쪽 */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:48px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:12px;height:100%;padding:24px;border-radius:var(--r-card);text-decoration:none;box-shadow:inset 0 0 0 1px var(--gray-200)}
+.tile:hover{background:var(--gray-50)}
+.tile img{width:48px;height:48px;flex:none}
+.tiles li{min-width:0}
+.tile b{display:block;font-weight:600}
+.tile span{display:block;font-size:14px;color:var(--gray-600);line-height:1.5}
+
+/* 구간 머리 — 모두 왼쪽 */
+.sec{padding-top:var(--sec)}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:32px}
+.head h2{font-size:32px;line-height:1.25}
+.head p{margin-top:8px;color:var(--gray-600)}
+.hl{background:var(--grad-title) no-repeat 0 90%/100% .4em;padding-inline:2px}
+
+/* ③ 4단계 — 2×2 줄, 카드 없음 */
+.steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px 48px}
+.step{display:flex;gap:16px;align-items:flex-start}
+.step img{width:64px;height:64px;flex:none;padding:8px;border-radius:var(--r-card);background:var(--tint)}
+.step small{display:block;font-size:14px;font-weight:600;color:var(--gray-600)}
+.step h3{font-size:20px;line-height:1.4;margin:4px 0}
+.step p{color:var(--gray-600)}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:32px;padding-top:24px;border-top:1px solid var(--gray-200);font-size:14px;color:var(--gray-600)}
+.chip{display:inline-flex;align-items:center;min-height:28px;padding:0 12px;border-radius:9999px;background:var(--gray-100);color:var(--gray-900)}
+
+/* ④ 크리에이터 카드 — v28 모양 축약 */
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.ccard{display:flex;flex-direction:column;align-items:center;text-align:center;border-radius:var(--r-card);overflow:hidden;box-shadow:inset 0 0 0 1px var(--gray-200);text-decoration:none;padding-bottom:16px;background:#fff}
+.ccard:hover{box-shadow:inset 0 0 0 1px var(--gray-500)}
+.cover{position:relative;width:100%;aspect-ratio:2/1;overflow:hidden}
+.cover img{position:absolute;right:-6%;bottom:-18%;height:96%;opacity:.22}
+.face{width:56px;height:56px;margin-top:-28px;border-radius:50%;box-shadow:0 0 0 4px #fff;position:relative;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700}
+.ccard b{margin-top:8px;font-size:16px}
+.ccard span{font-size:14px;color:var(--gray-600);padding:0 16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pchips{display:flex;gap:6px;margin-top:8px}
+.pchips i{font-style:normal;font-size:12px;line-height:22px;padding:0 8px;border-radius:9999px;box-shadow:inset 0 0 0 1px var(--gray-200)}
+
+/* ⑤ 약속 — 하나뿐인 색 띠, 화면 끝까지 */
+.band{margin-top:var(--sec);padding:var(--sec) 0;background:var(--tint)}
+.mock{border-radius:var(--r-card);background:#fff;box-shadow:inset 0 0 0 1px var(--gray-200),var(--shadow);padding:24px}
+.mockBar{display:flex;justify-content:space-between;align-items:center;font-weight:600;margin-bottom:12px}
+.mockBar em{font-style:normal;font-size:14px;padding:0 10px;border-radius:9999px;background:var(--gray-100)}
+.mockRow{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;padding:12px 16px;border-radius:var(--r-btn);background:var(--gray-50)}
+.mockRow+.mockRow{margin-top:8px}
+.mockRow:first-of-type{background:var(--primary-50)}
+.mockRow span{color:var(--gray-600)}
+.promises{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:32px}
+.pr{display:flex;gap:16px;align-items:flex-start;padding:24px;border-radius:var(--r-card);background:#fff;box-shadow:inset 0 0 0 1px var(--primary-50),var(--shadow)}
+.pr i{width:44px;height:44px;flex:none;border-radius:50%;background:var(--primary-50);display:flex;align-items:center;justify-content:center}
+.pr svg{width:22px;height:22px;fill:none;stroke:var(--gray-900);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pr h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.pr p{font-size:14px;color:var(--gray-600);line-height:1.5}
+.foot{display:flex;justify-content:center;margin-top:48px}
+
+/* ⑥ 요금 — 카드 한 장을 셋으로 */
+.price{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-radius:var(--r-card);box-shadow:inset 0 0 0 1px var(--gray-200);overflow:hidden}
+.tier{padding:24px;display:flex;flex-direction:column;gap:8px}
+.tier+.tier{border-left:1px solid var(--gray-200)}
+.tier .t{align-self:flex-start;padding:0 10px;border-radius:var(--r-tag);background:var(--gray-100);font-size:14px;font-weight:600}
+.amt{font-size:32px;font-weight:700;line-height:1.25;font-variant-numeric:tabular-nums}
+.amt small{font-size:20px;font-weight:600;margin-left:4px}
+.inc{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--success)}
+.rule{font-size:14px;color:var(--gray-600)}
+.notes{margin-top:16px;font-size:14px;color:var(--gray-600);display:grid;gap:4px}
+.notes li::before{content:"· "}
+
+/* ⑦ 공지 */
+.nlist{border-radius:var(--r-card);box-shadow:inset 0 0 0 1px var(--gray-200);overflow:hidden}
+.nlist a{display:flex;justify-content:space-between;gap:16px;align-items:center;min-height:56px;padding:12px 24px;text-decoration:none}
+.nlist li+li a{border-top:1px solid var(--gray-200)}
+.nlist a:hover{background:var(--gray-50)}
+.nlist time{font-size:14px;color:var(--gray-600);flex:none}
+
+/* 푸터 */
+.footer{margin-top:var(--sec);padding:48px 0;background:var(--gray-50);font-size:14px;color:var(--gray-600)}
+.footer .in{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(2,minmax(0,1fr));gap:32px}
+.footer dl{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:16px 0 0}
+.footer dt{font-weight:600;color:var(--gray-900)}
+.footer dd{margin:0}
+.footer h4{margin:0 0 8px;font-size:14px;color:var(--gray-900)}
+.footer li{line-height:2}
+
+@media (max-width:920px){.nav{display:none}.burger{display:inline-flex}.auth{display:none}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:767px){
+  :root{--gutter:16px;--sec:64px}
+  .hero .in{flex-direction:column-reverse;align-items:stretch;gap:16px;padding-top:32px;padding-bottom:48px}
+  .heroArt{flex:none;width:160px;height:160px;align-self:center}
+  .hero h1{font-size:32px}
+  .actions .btn{flex:1 1 100%}
+  .bnr{padding:20px;gap:16px}.bnr img{width:64px;height:64px}.bnr .go{display:none}
+  .tiles{gap:12px}.tile{padding:16px}
+  .head h2{font-size:24px}
+  .head .more{display:none}
+  .steps,.promises{grid-template-columns:minmax(0,1fr);gap:24px}
+  .cards{grid-template-columns:minmax(0,1fr);gap:16px}
+  .price{grid-template-columns:minmax(0,1fr)}.tier+.tier{border-left:0;border-top:1px solid var(--gray-200)}
+  .footer .in{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="in">
+    <a class="logo" href="#"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+    <nav class="nav" aria-label="주 메뉴"><a href="#">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+    <div class="auth"><a href="#" style="color:var(--gray-600)">로그인</a><span aria-hidden="true"></span><a href="#">회원가입</a></div>
+    <button class="burger" type="button" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</header>
+
+<main>
+  <!-- ① 첫 화면 -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="in">
+      <div class="heroText">
+        <p class="eyebrow">크리에이터에게 선물을 보낼 때</p>
+        <h1 class="round" id="hero-title">나의 크리에이터를 찾아요</h1>
+        <form class="search" role="search">
+          <label for="q" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">크리에이터 검색</label>
+          <input id="q" type="search" placeholder="나의 크리에이터를 찾아보세요">
+          <button type="submit" aria-label="크리에이터 찾기"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="#1f2937" stroke-width="2.6"/><path d="m15.5 15.5 5 5" stroke="#1f2937" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+        </form>
+        <div class="actions">
+          <a class="btn" href="#">지금 바로 선물 보내러 가기</a>
+          <a class="btn btn--line" href="#">나의 크리에이터 찾으러 가기</a>
+        </div>
+      </div>
+      <img class="heroArt" src="../../../../../public/images/mascot-box.png" alt="" aria-hidden="true">
+    </div>
+  </section>
+
+  <div class="in">
+    <!-- ② 광고 배너 -->
+    <section class="banner" aria-label="광고">
+      <div class="bnr">
+        <img src="../../../../../public/img/icon-gift.png" alt="" aria-hidden="true">
+        <div>
+          <span class="tag">광고</span>
+          <h2>하루님 생일 주간</h2>
+          <p>10월 20일까지 선물 받아요.</p>
+        </div>
+        <a class="btn go" href="#">보러 가기 ›</a>
+      </div>
+      <div class="dots" aria-hidden="true"><i class="on"></i><i></i></div>
+    </section>
+
+    <!-- 바로가기 넷 -->
+    <ul class="tiles" aria-label="바로가기">
+      <li><a class="tile" href="#"><img src="../../../../../public/img/icon-gift.png" alt=""><div><b>선물 보내기</b><span>팬꾹 주소로 먼저 보내요</span></div></a></li>
+      <li><a class="tile" href="#"><img src="../../../../../public/img/icon-find.png" alt=""><div><b>크리에이터 찾기</b><span>본인 확인을 마친 크리에이터</span></div></a></li>
+      <li><a class="tile" href="#price"><img src="../../../../../public/img/icon-fee.png" alt=""><div><b>요금</b><span>검수 포함 6,900원부터</span></div></a></li>
+      <li><a class="tile" href="#"><img src="../../../../../public/img/icon-help.png" alt=""><div><b>자주 묻는 질문</b><span>처음이라면 여기부터</span></div></a></li>
+    </ul>
+
+    <!-- ③ 4단계 -->
+    <section class="sec" id="how" aria-labelledby="how-title">
+      <div class="head"><div>
+        <h2 class="round" id="how-title">안전하게 <span class="hl">선물을 나눠봐요</span></h2>
+        <p>크리에이터가 승인한 선물만 배송합니다.</p>
+      </div></div>
+      <ol class="steps">
+        <li class="step"><img src="../../../../../public/img/icon-gift.png" alt=""><div><small>1. 등록</small><h3>선물을 등록해요</h3><p>결제하면 팬꾹 주소가 바로 나와요. 승인 전에도 먼저 보낼 수 있어요.</p></div></li>
+        <li class="step"><img src="../../../../../public/img/icon-approve.png" alt=""><div><small>2. 승인</small><h3>크리에이터가 승인해요</h3><p>크리에이터가 승인한 선물만 배송합니다.</p></div></li>
+        <li class="step"><img src="../../../../../public/img/icon-inspect.png" alt=""><div><small>3. 검수</small><h3>모든 선물을 검수해요</h3><p>탐지기 반응이 있으면 개봉 검수합니다.</p></div></li>
+        <li class="step"><img src="../../../../../public/img/icon-truck.png" alt=""><div><small>4. 배송</small><h3>팬꾹이 대신 보내요</h3><p>승인과 검수를 모두 통과한 선물만 출고합니다.</p></div></li>
+      </ol>
+      <p class="flow"><span>상태 화면에서는</span><span class="chip">등록</span>›<span class="chip">입고</span>›<span class="chip">검수</span>›<span class="chip">출고</span>›<span class="chip">배송중</span>›<span class="chip">수령</span></p>
+    </section>
+
+    <!-- ④ 새로 들어온 크리에이터 -->
+    <section class="sec" aria-labelledby="new-title">
+      <div class="head">
+        <h2 class="round" id="new-title">새로 들어온 크리에이터</h2>
+        <a class="more" href="#">크리에이터 찾기</a>
+      </div>
+      <ul class="cards">
+        <li><a class="ccard" href="#"><div class="cover" style="background:#fde2e4"><img src="../../../../../public/images/mascot-basic.png" alt=""></div><div class="face" style="background:#fde2e4">해</div><b>해든</b><span>해든 방송 · 일상을 전해요.</span><div class="pchips"><i>치지직</i><i>스레드</i></div></a></li>
+        <li><a class="ccard" href="#"><div class="cover" style="background:#ffe5cc"><img src="../../../../../public/images/mascot-basic.png" alt=""></div><div class="face" style="background:#dff5d8">구</div><b>구름</b><span>구름 브이로그 · 하루하루를 기록해요.</span><div class="pchips"><i>유튜브</i><i>인스타그램</i><i>스레드</i></div></a></li>
+        <li><a class="ccard" href="#"><div class="cover" style="background:#e6e0ff"><img src="../../../../../public/images/mascot-basic.png" alt=""></div><div class="face" style="background:#ffe5cc">시</div><b>시월</b><span>시월 라이브 · 직접 연주해요.</span><div class="pchips"><i>SOOP</i><i>알플레이</i></div></a></li>
+      </ul>
+    </section>
+  </div>
+
+  <!-- ⑤ 약속 — 하나뿐인 색 띠 -->
+  <section class="band" aria-labelledby="promise-title">
+    <div class="in">
+      <div class="head"><div>
+        <h2 class="round" id="promise-title">이제 확인하고 <span class="hl">선물을 받으세요</span></h2>
+        <p>승인 전까지 주소는 노출되지 않습니다.</p>
+      </div></div>
+      <div class="mock" aria-label="주소 열람 기록 예시">
+        <div class="mockBar"><span>주소 열람 기록</span><em>예시</em></div>
+        <div class="mockRow"><b>10월 14일 14:02</b> 주문 FK-2410 <span>송장 출력으로 열림</span></div>
+        <div class="mockRow"><b>10월 12일 09:41</b> 주문 FK-2398 <span>송장 출력으로 열림</span></div>
+        <div class="mockRow"><b>10월 9일 18:20</b> 주문 FK-2377 <span>송장 출력으로 열림</span></div>
+      </div>
+      <ul class="promises">
+        <li class="pr"><i><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></i><div><h3>주소는 잠긴 채 보관합니다</h3><p>승인된 선물의 송장을 출력할 때만 열려요.</p></div></li>
+        <li class="pr"><i><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></i><div><h3>주소가 열린 기록은 모두 공개합니다</h3><p>언제, 어느 주문에서 열렸는지 크리에이터가 직접 볼 수 있어요.</p></div></li>
+        <li class="pr"><i><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></i><div><h3>모든 선물을 검수합니다</h3><p>탐지기 반응이 있으면 개봉 검수합니다.</p></div></li>
+        <li class="pr"><i><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-12 7l-5 1 1-4.5A8 8 0 1 1 21 12z"/></svg></i><div><h3>승인은 한 건씩, 카카오톡으로</h3><p>한꺼번에 승인하는 버튼은 없어요. 받지 않은 이유는 팬에게 알리지 않아요.</p></div></li>
+      </ul>
+      <div class="foot"><a class="btn" href="#">크리에이터로 가입하기</a></div>
+    </div>
+  </section>
+
+  <div class="in">
+    <!-- ⑥ 요금 -->
+    <section class="sec" id="price" aria-labelledby="price-title">
+      <div class="head"><div>
+        <h2 class="round" id="price-title">모든 요금에 <span class="hl">검수가</span> 포함됩니다</h2>
+        <p>배송비를 포함한 금액이에요. 크기와 무게 중 큰 쪽으로 정해져요.</p>
+      </div></div>
+      <div class="price">
+        <div class="tier"><span class="t">소형</span><p class="amt">6,900<small>원</small></p><p class="inc">✓ 검수 포함</p><p class="rule">세 변 합 100cm·5kg 이하</p></div>
+        <div class="tier"><span class="t">중형</span><p class="amt">8,900<small>원</small></p><p class="inc">✓ 검수 포함</p><p class="rule">세 변 합 100cm·10kg 이하</p></div>
+        <div class="tier"><span class="t">대형</span><p class="amt">10,900<small>원</small></p><p class="inc">✓ 검수 포함</p><p class="rule">세 변 합 160cm·20kg 이하</p></div>
+      </div>
+      <ul class="notes"><li>세 변 합 160cm나 20kg를 넘는 상자는 받지 않아요.</li><li>사무실에서 잰 크기가 더 크면, 차액은 따로 결제해요.</li></ul>
+    </section>
+
+    <!-- ⑦ 공지 -->
+    <section class="sec" aria-labelledby="notice-title">
+      <div class="head">
+        <h2 class="round" id="notice-title">공지사항</h2>
+        <a class="more" href="#">전체 보기</a>
+      </div>
+      <ul class="nlist">
+        <li><a href="#"><b style="font-weight:500">팬꾹 서비스 시작 안내</b><time>10.01</time></a></li>
+        <li><a href="#"><b style="font-weight:500">선물 보내기 전에 꼭 확인해 주세요 (크기·무게 기준)</b><time>10.01</time></a></li>
+        <li><a href="#"><b style="font-weight:500">요금 안내: 상자마다 배송비가 포함돼 있어요</b><time>09.30</time></a></li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="in">
+    <div>
+      <a class="logo" href="#" style="font-size:16px"><img src="../../../../../public/images/logo-mark.png" alt="" style="width:24px;height:24px">팬꾹</a>
+      <dl><dt>상호</dt><dd>팬꾹</dd><dt>대표자</dt><dd>[대표자]</dd><dt>사업자등록번호</dt><dd>[번호]</dd><dt>고객센터</dt><dd>[이메일 · 전화]</dd></dl>
+    </div>
+    <div><h4>이용 안내</h4><ul><li>이용약관</li><li><b>개인정보처리방침</b></li><li>환불 규정</li><li>고객센터</li></ul></div>
+    <div><h4>팬꾹 소개</h4><ul><li>팬 이용 안내</li><li>크리에이터 이용 안내</li><li>보안 안내</li><li>자주 묻는 질문</li></ul></div>
+  </div>
+</footer>
+</body>
+</html>
