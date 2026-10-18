@@ -160,4 +160,22 @@ describe("카드 띠 팔로우 — 누르면 그 자리에서 바뀐다", () => 
     await unfollowOnce();
     expect(onUnfollowed).toHaveBeenCalledTimes(1);
   });
+
+  it("(실패경로) 카드 띠에서 저장이 실패하면 화면에도 보이는 문구 한 줄 — 알림 칸은 하나(두 번 읽히지 않게), 버튼은 원래대로", async () => {
+    await act(async () => root.render(<FollowButton creatorId={ID} creatorName="모모" initialFollowing={false} variant="card" mode="save" />));
+    const regions = () => Array.from(host.querySelectorAll<HTMLElement>("[role='status'], [role='alert']"));
+    expect(regions().length).toBe(1);
+    expect(regions()[0]!.textContent).toBe("");
+    saveFollow.mockResolvedValueOnce("failed");
+    await act(async () => cardButtons(host)[0]!.click());
+    expect(regions().length).toBe(1);
+    const msg = regions()[0]!;
+    expect(msg.textContent).toBe("팔로우를 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.");
+    // 화면에 보이는 칸 — 화면 낭독기 전용(sr) 모양이 아니다
+    expect(msg.hasAttribute("data-card-notice")).toBe(true);
+    expect(cardButtons(host).map((b) => b.textContent)).toEqual(["팔로우"]);
+    // 다시 누르면 문구가 지워진다
+    await act(async () => cardButtons(host)[0]!.click());
+    expect(regions()[0]!.textContent).toBe("");
+  });
 });
