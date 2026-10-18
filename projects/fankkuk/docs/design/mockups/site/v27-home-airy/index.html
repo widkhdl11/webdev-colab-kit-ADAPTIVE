@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시안 v27 칸 맞춤</title>
+<style>
+  :root { --bg: #f4f6f8; --ink: #1d2330; --sub: #4b5563; --line: #d5dbe2; --card: #fff; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+  header { position: sticky; top: 0; background: var(--card); border-bottom: 1px solid var(--line); padding: 12px 20px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; z-index: 1; }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; }
+  button { border: 1px solid #c9d1db; background: #fff; border-radius: 8px; padding: 8px 12px; font-size: 14px; cursor: pointer; color: var(--ink); }
+  button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .note { padding: 12px 20px; font-size: 14px; line-height: 1.7; max-width: 1100px; margin: 0; }
+  figure { margin: 0 20px 40px; }
+  img { width: 100%; max-width: 1800px; border: 1px solid var(--line); }
+  img.mo { max-width: 820px; }
+  a { color: #0b6aa8; }
+  ul { margin: 0 20px 40px; line-height: 1.9; }
+</style>
+</head>
+<body>
+<header>
+  <h1>시안 v27 — 승인 2026-10-18</h1>
+  <button data-v="pc">PC 1440 · 로그인 전/후</button>
+  <button data-v="mo">휴대폰 390 · 로그인 전/후</button>
+  <button data-v="admin">관리자 · 광고 배너</button>
+</header>
+<p class="note" id="note"></p>
+<figure><img id="shot" alt=""></figure>
+<ul>
+  <li>이미 승인된 시안으로 함께 만드는 것: <a href="../v4/admin/index.html">관리자 대시보드</a> · <a href="../v4/admin/work-inbound.html">입고 「오늘 입고한 상자」</a> · <a href="../v18/send-loggedout.html">로그인 전 선물 보내기 예시 카드</a> · <a href="../v21-addendum3/fan-gift-status.html">선물 상세 「지금 → 다음」 줄 · 송장번호 접힌 칸</a></li>
+  <li>다시 찍기: 개발 서버(3000)를 켜고 Playwright 에서 compose.js(홈) · compose-admin.js(관리자, 운영자 로그인 상태 파일 필요)를 실행한다.</li>
+</ul>
+<script>
+  const views = {
+    pc: { src: 'slots-pc.jpg', cls: '', note: '왼쪽 로그인 전 · 오른쪽 로그인 후(본문 폭 둘 다 880, 상단 바·푸터도 880으로 맞춘다). 같은 칸 순서 1~7: ① 크리에이터 검색(로그인 전 바로가기 / ①-2 「OO님」 + 내 바로가기) ② 넓은 배너(가운데 한 장은 배너 칸의 56%, 양옆 이전·다음이 흐리게) ③ 사이트 소개 「안전하게 선물을 나눠봐요」 + 4단계(③-2 진행 중인 선물) ④ 크리에이터 카드(④-2 팔로우한 크리에이터) ⑤ 약속(⑤-2 「크리에이터로 가입하기」 버튼 뺌) ⑥ 요금 ⑦ 공지. 회색·주황 꼬리표는 시안 설명용이다.' },
+    mo: { src: 'slots-mobile.jpg', cls: 'mo', note: '휴대폰: 카드 줄(④)은 옆으로 넘기는 한 줄, 배너는 화면 폭에 양옆이 약 34px 보인다.' },
+    admin: { src: 'admin-banners-pc.jpg', cls: '', note: '관리자 「광고 배너」(왼쪽 메뉴 「관리」 묶음): 목록(순서 · 그림 · 제목 · 누르면 가는 곳 · 기간 · 상태) + 올리기 양식(그림 · 제목 30자 · 설명 40자 · 링크 · 크리에이터 광고면 「광고」 표시 · 시작/끝 · 미리보기). 표 가로 스크롤은 구현 때 없앤다.' },
+  };
+  function show(v) {
+    const d = views[v];
+    const img = document.getElementById('shot');
+    img.src = d.src; img.className = d.cls;
+    document.getElementById('note').textContent = d.note;
+    document.querySelectorAll('header button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  }
+  document.querySelectorAll('header button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
+  show('pc');
+</script>
+</body>
+</html>
