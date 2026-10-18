@@ -14,6 +14,7 @@ vi.mock("@/shared/api/supabase/server", () => ({ createRequestSupabase: vi.fn() 
 import { readActionItems } from "@/entities/action-item/api/read-action-items";
 import { actionItemsOfOrder, parseActionItems, type ActionItem } from "@/entities/action-item/model/action-items";
 import { parseFanGiftRows } from "@/entities/order/api/fan-gift-rows";
+import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 import { ActionCenterPage } from "@/widgets/action-center/ui/action-center-page";
 import { GiftStatusPage } from "@/widgets/gift-status/ui/gift-status-page";
 import { HomePage } from "@/widgets/home/ui/home-page";
@@ -127,7 +128,8 @@ const [view] = parseFanGiftRows(
   "사무실 주소",
 );
 
-const profile = { photoUrl: null, bgUrl: null, intro: "" };
+const tierPrice = (priceKrw: number) => ({ priceKrw, revgiftPriceKrw: priceKrw, returnShippingKrw: 0 });
+const PRICES: PublicPriceTable = { small: tierPrice(6900), medium: tierPrice(8900), large: tierPrice(10900) };
 
 /** 한 화면이 하는 그대로 — 한 번 읽어 사이드바와 본문에 함께 넘긴다 */
 async function counts(rows: readonly unknown[]) {
@@ -142,10 +144,11 @@ async function counts(rows: readonly unknown[]) {
   // 낭독기가 읽는 링크 이름 — aria-hidden 숫자를 뺀 글자
   const speech = badgeLink ? [...badgeLink.querySelectorAll("span:not([aria-hidden])")].map((e) => e.textContent).join("") : null;
 
-  act(() => root.render(<HomePage nickname="별빛" profile={profile} gifts={[]} following={[]} faceToneByName={{}} notices={[]} actionCount={items.length} />));
-  const homeLine = host.querySelector('[data-testid="action-line"]');
-  const homeText = homeLine?.textContent ?? null;
-  const homeHref = homeLine?.querySelector("a")?.getAttribute("href") ?? null;
+  // 홈은 바로가기 「처리할 일」 칸의 작은 글이 그 수다(design-rules 16절 — 예전 홈 한 줄을 대신한다)
+  act(() => root.render(<HomePage nickname="별빛" gifts={[]} following={[]} looks={{}} faceToneByName={{}} notices={[]} prices={PRICES} actionCount={items.length} receivedCount={0} />));
+  const homeTile = [...host.querySelectorAll('ul[aria-label="내 바로가기"] a')].find((a) => a.getAttribute("href") === "/me/actions");
+  const homeText = homeTile?.textContent ?? null;
+  const homeHref = homeTile?.getAttribute("href") ?? null;
 
   act(() => root.render(<ActionCenterPage items={items} clientKey="" now={NOW} address={{ accountId: "a1", status: null, sealingKeyPem: null }} />));
   const cardsN = host.querySelectorAll("section.action-card").length;
@@ -160,13 +163,13 @@ async function counts(rows: readonly unknown[]) {
 }
 
 describe("INV-J2: 숫자는 한 읽기 결과의 줄 수 — 사이드바·홈·페이지·선물 상세가 같은 수", () => {
-  it("INV-J2 S2: 카드 2 → 사이드바 뱃지 2 · 홈 「처리할 일 2건」 · 카드 2 · 제목 숫자 2, 읽기는 한 번", async () => {
+  it("INV-J2 S2: 카드 2 → 사이드바 뱃지 2 · 홈 「처리할 일」 칸 2건 · 카드 2 · 제목 숫자 2, 읽기는 한 번", async () => {
     const r = await counts([ROWS.difference, ROWS.missing]);
     expect(r.calls.filter((c) => c === "my_action_items")).toHaveLength(1);
     expect(r.badge).toBe("2");
     // 칸 이름을 두 번 읽지 않는다 — 「처리할 일, 2건」(시안 뱃지 aria-label="2건")
     expect(r.speech).toBe("처리할 일, 2건");
-    expect(r.homeText).toContain("처리할 일 2건");
+    expect(r.homeText).toBe("처리할 일2건");
     expect(r.homeHref).toBe("/me/actions");
     expect(r.cardsN).toBe(2);
     expect(r.titleCount).toBe("2");
@@ -179,16 +182,16 @@ describe("INV-J2: 숫자는 한 읽기 결과의 줄 수 — 사이드바·홈·
   it("INV-J2 S2: 종류가 섞인 카드 3 → 셋 다 3 · 선물 상세는 그 주문 것만 2", async () => {
     const r = await counts([ROWS.difference, ROWS.revgift, ROWS.missing]);
     expect(r.badge).toBe("3");
-    expect(r.homeText).toContain("처리할 일 3건");
+    expect(r.homeText).toBe("처리할 일3건");
     expect(r.cardsN).toBe(3);
     expect(r.titleCount).toBe("3");
     expect(r.detailText).toContain("처리할 일 2건");
   });
 
-  it("INV-J2 S2 (실패경로): 0건 → 뱃지 없음 · 홈 줄 없음 · 빈 상태 · 선물 상세 줄 없음", async () => {
+  it("INV-J2 S2 (실패경로): 0건 → 뱃지 없음 · 홈 칸 「0건」 · 빈 상태 · 선물 상세 줄 없음", async () => {
     const r = await counts([]);
     expect(r.badge).toBeNull();
-    expect(r.homeText).toBeNull();
+    expect(r.homeText).toBe("처리할 일0건");
     expect(r.cardsN).toBe(0);
     expect(r.empty?.querySelector("h2")?.textContent).toBe("지금 처리할 일이 없어요");
     expect(r.detailText).toBeNull();

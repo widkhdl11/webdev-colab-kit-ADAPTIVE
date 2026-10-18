@@ -1,11 +1,20 @@
 ---
 project: fankkuk
 status: passed
-basis: 31234ed2ed88
-reviewers: [security-reviewer, code-reviewer]
+basis: 064a09c6dedd
+reviewers: [security-reviewer, code-reviewer, ui-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-18, 링크에 마우스 올리면 미리 받기)
+# 리뷰 사인오프 — fankkuk (2026-10-18, 홈 칸 맞춤 v27 — ①③④⑤⑥⑦)
+
+덮는 변경: f03f4832 뒤 — design-rules 16절(시안 v27 승인). 첫 화면과 팬 홈이 같은 칸 부품(widgets/home/ui/front-slots, 옛 widgets/landing 을 옮김)을 쓴다. 팬 홈의 프로필 카드·처리할 일 한 줄·접힘 줄을 빼고 ①-2 바로가기 숫자로. 스펙 action-center INV-J2·S2 의 「홈 한 줄」 → 「홈 바로가기 처리할 일 칸」. ② 광고 배너(스펙 먼저)·상단 바와 푸터 880(사용자 답 대기)은 이번에 없다.
+
+- 실행 근거: `npm test` 280파일 2186개 통과 · `tsc` 오류 0 · `npm run build` 성공 · copy:lint 0 · 변이 — 처리할 일 칸 +1 → INV-J2 시험 3 실패, 받은 선물 수 0 고정 → 2 실패, 못 읽은 수를 0건으로 → 1 실패, 새 크리에이터 거꾸로 정렬 빼기 → 2 실패 · Playwright(개발 서버, 로컬 DB) 손님 / 와 별빛 /home 을 1440·390 으로: 칸 순서 시안과 같음, 가로 넘침 0, 콘솔 오류 0, 사이드바 숫자(보낸 선물 2·처리할 일 1) = 바로가기 숫자, 「모두 보기」 PC 제목 줄·휴대폰 목록 아래 하나씩.
+- code: high 1 — 받은 선물 읽기 실패가 홈 전체 500 → 실패하면 null 인 읽기로, 칸 숫자만 비움 · 중간 3 — 처리할 일 못 읽음이 「0건」으로 보임 → 비움 · widget 의 최저가 계산이 기존 lowestPriceKrw 와 중복 → 그것을 씀 · 목록 함수에 바깥 정렬 없음 → BACKLOG(마이그레이션 때) · 낮음 2 — 쓰이지 않게 된 newestSearchable → newestFirst 로 바꿔 첫 화면이 씀, 받은 선물 칸·정렬 시험 빈틈 → 시험 추가(위 변이).
+- ui: 높음 0 · 중간 1(1024 + 사이드바에서 카드 줄이 넘기는 줄) → 16절을 본문 칸 760 기준으로 고쳐 적음 · 낮음 4 → 「모두 보기」 Tab 순서(목록 뒤 링크를 폭에 따라 하나만), 선물 줄 aria-label 뺌, 64px → --space-16, 최저가 함수 이동 · 확인 1 — 휴대폰 시안은 「모두 보기」가 목록 위인데 00000절은 목록 아래 → 승인된 00000절을 따름.
+- security: 지적 없음 — 첫 화면 카드·꾸밈은 DB 함수 안에서 본인 확인·찾기 노출로 거름(INV-A10), 팬 홈 읽기는 모두 로그인 토큰 기준 my_* · 받은 선물은 개수만, 송장번호·주소는 화면에 닿지 않음.
+
+## 이전 사인오프 (2026-10-18, 링크에 마우스 올리면 미리 받기)
 
 덮는 변경: b35e003d 뒤 — 사용자 「추천대로」(DECISIONS 2026-10-18). shared/lib/navigation/prefetch-path(받을 주소 고르기) · shared/ui/intent-prefetch(문서 전체 pointerover·focusin → router.prefetch kind full, 같은 링크 1초 중복 방지) · 루트 레이아웃 · next.config staleTimes.static 30 · 로그인 뒤 이동을 페이지 새로 읽기로(widgets/login). ui-reviewer 는 뺐다 — 화면에 그리는 것이 없다.
 

@@ -254,3 +254,15 @@ Howlyn이 정하면 표와 금지어 목록을 고친다.
 | `DECLINED_PHRASE` | `src/entities/order/ui/fan-stage-copy.ts` | 「선물을 원하지 않아요」 | DECISIONS 2026-10-12 (2) D11 · decline-block INV-D5 |
 | `EXPIRED_TEXT` | `src/entities/order/ui/fan-stage-copy.ts` | 「기간이 지나 반려됐어요」 | DECISIONS 2026-10-12 (2) D11 · decline-block INV-D5 |
 | `APPROVAL_EXPIRED_MESSAGE` | `src/entities/order/config/approval-deadline.ts` | 「기간이 지나 자동으로 반려된 선물이에요.」 | DECISIONS 2026-10-10 C6 (카드 d59) · decline-block INV-D2 |
+
+## 12. 홈 칸 문구 (2026-10-18 시안 v27 승인 — design-rules 16절)
+
+보여주는 문구라 개념 표가 아니라 자리별로 적는다. 다른 화면에 옮겨 쓰지 않는다.
+
+| 자리 | 문구 |
+|---|---|
+| ① 첫 화면·팬 홈 제목 | 나의 크리에이터를 찾아요 |
+| ① 바로가기 작은 글 | 선물 보내기 「팬꾹 주소로 먼저 보내요」 · 크리에이터 찾기 「본인 확인을 마친 크리에이터」 · 요금 「검수 포함 N원부터」(N = DB 요금표의 가장 싼 구간) · 자주 묻는 질문 「처음이라면 여기부터」 |
+| ①-2 머리말 · 바로가기 작은 글 | 「OO님」 · 보낸 선물 「진행 중 N건」 · 처리할 일 「N건」 · 받은 선물 「N건」 |
+| ③ 사이트 소개 제목 | 안전하게 선물을 나눠봐요 |
+| ④ 구역 제목 | 새로 들어온 크리에이터 |

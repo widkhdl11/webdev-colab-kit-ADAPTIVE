@@ -1,12 +1,11 @@
 import type { CreatorCard } from "./creator-card";
 
-// 메인 「새로 들어온 크리에이터」의 순서와 대상.
+// 첫 화면 「새로 들어온 크리에이터」의 순서와 개수(design-rules 16절 ④).
 
 /**
- * all = 전체 목록(들어온 순서, list_creators), searchable = 찾기에 나오는 크리에이터(find_creators).
- * 찾기에 나오는 크리에이터만 남겨 최근에 들어온 순으로 돌려준다 — 찾기 노출을 끈 크리에이터는 메인에도 나오지 않는다.
+ * searchable = 크리에이터 찾기 목록(find_creators — 본인 확인됨 + 찾기 노출 켜짐, my-account INV-A10). 들어온 순서(오래된 것부터)로 온다.
+ * 최근에 들어온 순으로 앞 limit 명을 돌려준다.
  */
-export function newestSearchable(all: readonly CreatorCard[], searchable: readonly CreatorCard[]): CreatorCard[] {
-  const ids = new Set(searchable.map((c) => c.id));
-  return all.filter((c) => ids.has(c.id)).toReversed();
+export function newestFirst(searchable: readonly CreatorCard[], limit: number): CreatorCard[] {
+  return searchable.toReversed().slice(0, limit);
 }
