@@ -63,3 +63,9 @@ basis: c7356c8c58a0
 - 운영 DB: 적용 전 `migration list` 로 빠진 것이 20261018000001·000002 둘뿐임을 확인. `supabase db push` 로 두 개 적용(개인정보 구역 접촉 0, 삭제 구문은 배너 지우기 함수 안뿐). 적용 뒤 `public.banners` 0줄 · RLS 켜짐 · 저장소 `banner-images` 공개.
 - 앱: main 17c37a7d push(커밋 10개) → Vercel 세 프로젝트 빌드 success.
 - 시험 주소(로그인 전): / · /creators · /login · /terms · /refund · /faq · /signup 200, 「Application error」 없음. Playwright 1440 폭에서 첫 화면 칸 여섯 개 모두 880px, 가로 스크롤 없음, 콘솔 오류 0. 390 폭 가로 스크롤 없음. /admin/banners 는 404. 배너가 0개라 배너 자리는 비어 있다(운영자 계정이 아직 없음).
+
+## 2026-10-18 저녁 — 크리에이터 카드 v28 · 테마 색
+
+- 운영 DB: 적용 전 `migration list` 로 빠진 것이 20261018000003 하나뿐임을 확인. 적용 전 셈 — 크리에이터 1 · 테마 색 저장 0 · 비워질 값(8색 밖) 0. `supabase db push` 로 적용(개인정보 구역 접촉 0). 적용 뒤 제약 `creators_personal_color_palette` 있음.
+- 앱: main 57ce3c86 push(커밋 17개) → Vercel 세 프로젝트 빌드 success.
+- 시험 주소(로그인 전, 1440): / · /creators · /login · /faq · /terms 200, 「Application error」 없음, 가로 스크롤 없음, 콘솔 오류 0. /creators 390 폭 가로 스크롤 없음, 카드 1장(「팬꾹 데모」·유튜브 칩·팔로우).
