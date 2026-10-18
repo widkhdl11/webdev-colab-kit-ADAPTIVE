@@ -19,7 +19,7 @@ type Props = {
   nickname: string;
   /** 진행 중인 선물 전부(최신순). 목록에는 앞의 셋만 보인다. */
   gifts: readonly FanGiftView[];
-  /** 팔로우한 크리에이터(팔로우한 순서). 카드는 넷만 보인다. */
+  /** 팔로우한 크리에이터(팔로우한 순서). 한 줄에 앞의 열둘까지 두고 양옆 화살표로 넘긴다(나머지는 「모두 보기」). */
   following: readonly CreatorCard[];
   looks: Readonly<Record<string, CardLook>>;
   /** 크리에이터 이름 → 얼굴 자리표시 색. 선물 줄의 얼굴이 크리에이터 찾기와 같은 색이 되게. */
@@ -62,6 +62,7 @@ export function HomePage({ nickname, gifts, following, looks, faceToneByName, no
           more={{ href: "/me/following", label: "팔로우한 크리에이터 모두 보기" }}
           creators={following}
           looks={looks}
+          scroll
           action={(c) => <FollowButton creatorId={c.id} creatorName={c.name} initialFollowing variant="card" mode="save" />}
           empty={
             <>

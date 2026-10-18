@@ -136,6 +136,49 @@
   .cardRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* ④-2 넘기는 줄(2026-10-19 사용자 「양 옆으로 화살표로」) — 어느 폭이든 한 줄, 카드 폭은 위 격자와 같은 열 수(칸 678 이상 셋 · 444 이상 둘 · 그 아래 68%).
+   줄은 넘침을 자르므로 카드 초점 테두리 여유 8 은 위 .cardRow 그대로. 스크롤 막대는 숨기고(화살표·손가락·트랙패드로 넘김) 화살표는 줄 양옆 가운데에 반쯤 걸친다 */
+.scroller { position: relative; }
+/* 스크롤 막대는 화살표가 보이는 폭에서만 숨긴다 — 768 이하 좁은 창을 마우스로 쓰는 사람은 막대로 넘긴다(손가락 기기는 원래 막대가 저절로 숨는다) */
+@media (min-width: 769px) {
+  .cardRow.cardRowScroll { scrollbar-width: none; }
+  .cardRow.cardRowScroll::-webkit-scrollbar { display: none; }
+}
+@container (min-width: 444px) {
+  .cardRow.cardRowScroll { display: flex; gap: var(--space-6); margin: calc(var(--space-2) * -1); padding: var(--space-2); overflow-x: auto; }
+  .cardRow.cardRowScroll > li { flex: 0 0 calc((100% - var(--space-6)) / 2); }
+}
+@container (min-width: 678px) {
+  .cardRow.cardRowScroll > li { flex-basis: calc((100% - 2 * var(--space-6)) / 3); }
+}
+.rowArrow {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--btn-h-sm);
+  height: var(--btn-h-sm);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--field-line);
+  color: var(--ink);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+.rowArrow:hover { background: var(--gray-50); }
+.rowArrow:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; } /* 광고 배너 넘김 단추와 같게 */
+.rowArrow[hidden] { display: none; }
+.rowArrow svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rowPrev { left: calc(var(--btn-h-sm) / -2); }
+.rowNext { right: calc(var(--btn-h-sm) / -2); }
+/* 팬 홈은 768 이하에서 바깥 여백이 16 이라 줄 밖으로 22 나가는 화살표가 화면을 넘는다 — 그 폭부터 손가락·막대로 넘긴다 */
+@media (max-width: 768px) {
+  .rowArrow { display: none; }
+}
+
 /* ⑤ 약속 — 옅은 하늘 큰 판(반경 24 · 안쪽 48). 제목·모형·카드가 같은 왼쪽 선, 가입 버튼만 가운데(2026-10-17 사용자 지시) */
 .promise { padding: var(--space-12); border-radius: var(--r-panel); background: var(--tint); }
 .promise :global(.card) { box-shadow: inset 0 0 0 1px var(--primary-50), var(--shadow); }

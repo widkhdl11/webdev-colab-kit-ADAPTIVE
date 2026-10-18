@@ -12,6 +12,7 @@ import { lowestPriceKrw, PRICED_TIERS, type PublicPriceTable } from "@/entities/
 import { PROMISE } from "@/shared/config/site-copy";
 import { formatDate } from "@/shared/lib/format/datetime";
 import { statusTagClass } from "@/shared/ui/status-tone";
+import { CardRowScroller } from "./card-row-scroller";
 import s from "./front.module.css";
 import h from "./home.module.css";
 
@@ -246,7 +247,10 @@ export function GiftsSlot({ gifts, faceToneByName }: { gifts: readonly FanGiftVi
 
 /** ④·④-2 카드 셋 — 크리에이터 찾기와 같은 카드(design-rules 17절). action = 아래 띠에 놓을 버튼(④ 는 없음 — 띠 없음, ④-2 는 카드 띠 팔로우 — 팔로우 중이면 「선물 보내기」+「팔로우 취소」) */
 export const CARD_ROW_MAX = 3;
+/** ④-2 넘기는 줄에 놓는 최대 수 — 넘치면 「모두 보기」(2026-10-19 사용자 「양 옆으로 화살표로」) */
+export const SCROLL_ROW_MAX = 12;
 
+/** scroll = 한 줄로 두고 양옆 화살표로 넘긴다(④-2). 아니면 카드 셋(④) */
 export function CreatorCardsSlot({
   id,
   title,
@@ -256,6 +260,7 @@ export function CreatorCardsSlot({
   looks,
   action,
   empty,
+  scroll = false,
 }: {
   id: string;
   title: string;
@@ -265,33 +270,39 @@ export function CreatorCardsSlot({
   looks: Readonly<Record<string, CardLook>>;
   action?: (c: CreatorCard) => ReactNode;
   empty?: ReactNode;
+  scroll?: boolean;
 }) {
+  const cards = creators.slice(0, scroll ? SCROLL_ROW_MAX : CARD_ROW_MAX).map((c) => (
+    <li key={c.id} className={creatorCardClass}>
+      <CreatorCardHead
+        creatorId={c.id}
+        name={c.name}
+        href={creatorPagePath(c)}
+        look={looks[c.id] ?? NO_CARD_LOOK}
+        colors={c.colors}
+        faceTone={c.faceTone}
+      />
+      <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
+      <CreatorCardFoot tags={c.tags} />
+      {/* 팔로우 버튼을 주는 화면(로그인한 홈)만 버튼 줄 — 한 줄의 카드가 모두 같은 화면이라 높이가 같다 */}
+      {action ? (
+        <CreatorCardActions creatorId={c.id} colors={c.colors}>
+          {action(c)}
+        </CreatorCardActions>
+      ) : null}
+    </li>
+  ));
   return (
     <SlotSection id={id} title={title} meta={meta} more={creators.length > 0 ? more : undefined}>
       {creators.length === 0 ? (
         empty
+      ) : scroll ? (
+        <CardRowScroller id={`${id}-row`} label={title}>
+          {cards}
+        </CardRowScroller>
       ) : (
         <ul className={s.cardRow} aria-label={title}>
-          {creators.slice(0, CARD_ROW_MAX).map((c) => (
-            <li key={c.id} className={creatorCardClass}>
-              <CreatorCardHead
-                creatorId={c.id}
-                name={c.name}
-                href={creatorPagePath(c)}
-                look={looks[c.id] ?? NO_CARD_LOOK}
-                colors={c.colors}
-                faceTone={c.faceTone}
-              />
-              <CreatorCardLine channelTitle={c.channelTitle} intro={c.intro} />
-              <CreatorCardFoot tags={c.tags} />
-              {/* 팔로우 버튼을 주는 화면(로그인한 홈)만 버튼 줄 — 한 줄의 카드가 모두 같은 화면이라 높이가 같다 */}
-              {action ? (
-                <CreatorCardActions creatorId={c.id} colors={c.colors}>
-                  {action(c)}
-                </CreatorCardActions>
-              ) : null}
-            </li>
-          ))}
+          {cards}
         </ul>
       )}
     </SlotSection>

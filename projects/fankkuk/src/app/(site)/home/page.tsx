@@ -12,7 +12,7 @@ import { readReceivedRevgiftsOrNull } from "@/entities/revgift/api/revgift-reads
 import { CREATOR_HOME } from "@/entities/session/model/home-path";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { bannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
-import { CARD_ROW_MAX } from "@/widgets/home/ui/front-slots";
+import { SCROLL_ROW_MAX } from "@/widgets/home/ui/front-slots";
 import { HomePage } from "@/widgets/home/ui/home-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
@@ -41,7 +41,7 @@ export default async function Page() {
   ]);
   const gifts = all.filter((v) => fanGiftBucket(v) === "ongoing");
   const following = cards.filter((c) => c.following);
-  const shown = following.slice(0, CARD_ROW_MAX);
+  const shown = following.slice(0, SCROLL_ROW_MAX);
   // 카드 꾸밈은 보이는 카드만 읽는다 — 찾기 노출을 끈 크리에이터도 팔로우 카드에는 보여 id 로 읽는다(팔로우한 크리에이터 화면과 같다)
   const looks = shown.length > 0 ? toCardLooks(shown, await readCreatorLooks(supabase, shown.map((c) => c.id)), readPublicStorageBase()) : {};
   const faceToneByName = Object.fromEntries(cards.map((c) => [c.name, c.faceTone]));
