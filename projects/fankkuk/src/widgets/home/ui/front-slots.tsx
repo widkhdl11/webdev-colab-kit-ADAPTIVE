@@ -110,7 +110,7 @@ export function HeroBand() {
           <HeroSearch />
           <HeroActions />
         </div>
-        <img className={s.heroArt} src="/images/mascot-box.png" width={280} height={280} alt="" aria-hidden="true" />
+        <img className={s.heroArt} src="/images/home/creator-cat.webp" width={280} height={280} alt="" aria-hidden="true" fetchPriority="high" />
       </div>
     </section>
   );
@@ -123,7 +123,7 @@ export function GuestTiles({ tiles, label }: { tiles: readonly FrontTile[]; labe
       {tiles.map((t) => (
         <li key={t.label}>
           <Link className={`card ${s.flatTile}`} href={t.href}>
-            <img src={`/img/${t.icon}.png`} width={48} height={48} alt="" aria-hidden="true" />
+            <img src={`/images/home/${t.icon}.webp`} width={48} height={48} alt="" aria-hidden="true" loading="lazy" />
             <span className={s.flatLabel}>{t.label}</span>
             <span className={s.caption}>{t.note}</span>
           </Link>
@@ -155,7 +155,7 @@ export function IntroSlot() {
       <ol className={s.stepRows}>
         {STEPS.map((st) => (
           <li key={st.num} className={s.stepRow}>
-            <img src={`/img/${st.icon}.png`} width={64} height={64} alt="" aria-hidden="true" />
+            <img src={`/images/home/${st.icon}.webp`} width={64} height={64} alt="" aria-hidden="true" loading="lazy" />
             <div>
               <p className={s.stepNum}>{st.num}</p>
               <h3>{st.title}</h3>
@@ -380,9 +380,13 @@ export function PromiseSlot({ withSignup, band = false }: { withSignup: boolean;
       <div className={s.grid2}>
         {PROMISES.map((p) => (
           <div key={p.title} className={`card ${band ? s.promiseRow : s.promiseCard}`}>
-            <span className={s.iconWrap}>
-              <LineIcon name={p.icon} />
-            </span>
+            {band ? (
+              <img className={s.promiseArt} src={`/images/home/promise-${p.icon}.webp`} width={64} height={64} alt="" aria-hidden="true" loading="lazy" />
+            ) : (
+              <span className={s.iconWrap}>
+                <LineIcon name={p.icon} />
+              </span>
+            )}
             {band ? (
               <div>
                 <h3>{p.title}</h3>

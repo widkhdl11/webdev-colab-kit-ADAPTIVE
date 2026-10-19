@@ -61,10 +61,13 @@ export function CardRowScroller({ id, label, children }: { id: string; label: st
     };
   }, [measure]);
 
-  // 한 화면씩 — 보이는 폭만큼 옮기면 칸 맞춤(scroll-snap)이 카드 첫머리에 세운다
+  // 한 화면씩 — 양옆으로 넓힌 자리(안쪽 여백)를 뺀 카드 칸 폭만큼 옮기면 칸 맞춤(scroll-snap)이 카드 첫머리에 세운다
   const step = (dir: -1 | 1) => {
     const el = row.current;
-    if (el) el.scrollBy({ left: dir * el.clientWidth, behavior: "smooth" });
+    if (!el) return;
+    const cs = getComputedStyle(el);
+    const inner = el.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    el.scrollBy({ left: dir * inner, behavior: "smooth" });
   };
 
   return (
