@@ -5,11 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
-import { CreatorCardsSlot } from "@/widgets/home/ui/front-slots";
 import { HomePage } from "@/widgets/home/ui/home-page";
+import { LandingPage } from "@/widgets/home/ui/landing-page";
 
 // 팬 홈 ④-2 팔로우한 크리에이터 — 한 줄에 열둘까지 두고 양옆 화살표로 넘긴다(2026-10-19 사용자 「양 옆으로 화살표로 누를 수 있게」).
-// 로그인 전 ④ 새로 들어온 크리에이터는 카드 셋 그대로. 화살표는 넘길 곳이 있는 쪽만 보인다.
+// 로그인 전 ④ 새로 들어온 크리에이터도 같은 넘김을 쓴다. 화살표는 넘길 곳이 있는 쪽만 보인다.
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 // jsdom 에는 크기 관찰기가 없다 — 줄 폭은 시험이 직접 정하고 scroll 이벤트로 다시 재게 한다
@@ -138,9 +138,18 @@ describe("팔로우한 크리에이터 넘기는 줄", () => {
     expect(arrow("다음 크리에이터").hidden).toBe(true);
   });
 
-  it("넘기지 않는 줄(로그인 전 ④)은 카드 셋, 화살표 없음", () => {
-    act(() => root.render(<CreatorCardsSlot id="newest" title="새로 들어온 크리에이터" creators={many} looks={{}} />));
-    expect(host.querySelector('ul[aria-label="새로 들어온 크리에이터"]')!.children).toHaveLength(3);
-    expect(host.querySelector("button[aria-controls]")).toBeNull();
+  it("로그인 전 목록도 열둘까지 표시하고 화살표로 넘긴다", () => {
+    act(() => root.render(<LandingPage newest={many} looks={{}} prices={prices} notices={[]} />));
+    const row = host.querySelector<HTMLElement>("#newest-row")!;
+    expect(row.children).toHaveLength(12);
+    expect(row.children[11]!.textContent).toContain("크리12");
+    scrollRow(row, { client: 600, total: 2400, left: 0 });
+    expect(arrow("이전 크리에이터").hidden).toBe(true);
+    expect(arrow("다음 크리에이터").hidden).toBe(false);
+    expect(arrow("다음 크리에이터").getAttribute("aria-controls")).toBe("newest-row");
+    const scrollBy = vi.fn();
+    row.scrollBy = scrollBy as unknown as typeof row.scrollBy;
+    act(() => arrow("다음 크리에이터").click());
+    expect(scrollBy).toHaveBeenCalledWith({ left: 600, behavior: "smooth" });
   });
 });

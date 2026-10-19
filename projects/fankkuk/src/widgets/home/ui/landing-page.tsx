@@ -11,7 +11,7 @@ import s from "./front.module.css";
 
 type Props = {
   prices: PublicPriceTable;
-  /** 새로 들어온 크리에이터 — 최근에 들어온 순서, 라우트가 앞 넷을 넘긴다 */
+  /** 새로 들어온 크리에이터 — 최근에 들어온 순서로 최대 열둘을 넘겨 본다 */
   newest: readonly CreatorCard[];
   looks: Readonly<Record<string, CardLook>>;
   notices: readonly FrontNotice[];
@@ -27,7 +27,7 @@ export function LandingPage({ prices, newest, looks, notices, banner = null }: P
         {banner}
         <GuestTiles tiles={guestTiles(prices)} label="바로가기" />
         <IntroSlot />
-        {newest.length > 0 ? <CreatorCardsSlot id="newest" title="새로 들어온 크리에이터" more={{ href: "/creators", label: "크리에이터 찾기" }} creators={newest} looks={looks} /> : null}
+        {newest.length > 0 ? <CreatorCardsSlot id="newest" title="새로 들어온 크리에이터" more={{ href: "/creators", label: "크리에이터 찾기" }} creators={newest} looks={looks} scroll /> : null}
       </div>
       <PromiseSlot withSignup band />
       <div className={s.col}>
