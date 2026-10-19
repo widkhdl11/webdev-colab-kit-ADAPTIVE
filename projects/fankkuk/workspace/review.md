@@ -1,11 +1,23 @@
 ---
 project: fankkuk
 status: passed
-basis: d07a15de94a8
-reviewers: [ui-reviewer, code-reviewer, security-reviewer]
+basis: 464e31fb1489
+reviewers: [ui-reviewer, security-reviewer]
 ---
 
-# 리뷰 사인오프 — fankkuk (2026-10-19, 팬 홈 팔로우한 크리에이터 화살표 넘김)
+# 리뷰 사인오프 — fankkuk (2026-10-19, 로그인 전 크리에이터 슬라이드)
+
+로그인 전 새로 들어온 크리에이터를 최대 12명까지 기존 슬라이드로 표시한다. 1024px 미만은 가로 스크롤, 그 이상은 좌우 화살표다.
+
+- ui-reviewer: 좁은 PC 폭에서 16px 넘침을 발견하여 로그인 전 전용 여백·스크롤 규칙으로 해결. 재리뷰 통과.
+- security-reviewer: 공개 조회 조건과 반환 필드는 그대로이고 최대 표시 수만 변경됨. 보안 문제 없음.
+- code-reviewer 생략: 기존 스크롤 상태 구현을 그대로 사용, 도메인 로직·상태 관리 변경 없음. test-auditor 생략: 불변식 테스트 신설 없음.
+- 실행 근거: `npm run typecheck` 통과. `npx vitest run tests/follow-row-scroll-ui.test.tsx tests/banners-ui.test.tsx src/entities/creator/model/newest-creators.test.ts src/widgets/home/ui/home-page.test.ts` 46개 통과. `node gates/graph-stop.mjs` 종료 코드 0, implement·qa clean 확인. `git diff --check` 통과.
+- Playwright: 실제 비로그인 카드 12개, 다음 0→904·이전 904→0, 마지막 2712에서 다음 숨김. 390·725·768·769·800·1023·1024·1440px 페이지 가로 넘침 0. 1023px 화살표 숨김, 1024 이상 표시. 기존 카드 내용으로 확인했고 최대 길이 데이터 치환 검사는 이번에 다시 실행하지 않았다.
+
+---
+
+# 이전 리뷰 사인오프 — fankkuk (2026-10-19, 팬 홈 팔로우한 크리에이터 화살표 넘김)
 
 덮는 변경: fb3eea61 뒤 — 사용자 「양 옆으로 화살표로 누를 수 있게해줘 지금은 3명 밖에 안나온다」. 팬 홈 ④-2 한 줄 최대 12장 + 양옆 화살표(design-rules 16절 예외, DECISIONS 2026-10-19).
 닿은 표면: 시각(승인된 카드 줄 안의 반복 UI) · 화면 상태(스크롤 측정·초점 이동) → ui·code. 읽기 수 3 → 12 라 security 도 돌렸다.
