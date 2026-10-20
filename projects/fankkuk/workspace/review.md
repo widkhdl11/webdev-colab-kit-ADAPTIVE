@@ -1,8 +1,17 @@
 ---
 project: fankkuk
 status: passed
-basis: 9340f9fd3717
+basis: 92889a794fed
 reviewers: [ui-reviewer, security-reviewer]
+---
+
+# 리뷰 사인오프 — fankkuk (2026-10-20, 바로가기 보조 문구 간격)
+
+- 제목과 건수·설명 사이 간격이 0px이던 원인은 보조 문구의 -8px 위 여백이었다. 위 여백을 0으로 바꿔 공통 카드 간격 8px이 유지되게 했다.
+- ui-reviewer 통과. security-reviewer는 보안 영향 없음 확인. 도메인·테스트 변경이 없어 code-reviewer·test-auditor 생략.
+- 실행 근거: `npm run typecheck` 통과. `node gates/graph-stop.mjs` 종료 코드 0, implement·qa clean. Playwright 실제 세 역할 × 1440·390px에서 네 카드 모두 제목-보조 문구 8px, 가로 중앙 정렬, 가로 넘침 0 확인.
+- CSS 여백만 바뀌어 DB 통합과 개인정보 검사는 다시 실행하지 않았다. 직전 검사 결과는 아래 기록을 유지한다.
+
 ---
 
 # 리뷰 사인오프 — fankkuk (2026-10-20, 홈 바로가기 중앙 정렬)
