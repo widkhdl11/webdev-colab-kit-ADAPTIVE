@@ -1,8 +1,17 @@
 ---
 project: fankkuk
 status: passed
-basis: 00eacce59e53
-reviewers: [ui-reviewer, code-reviewer, security-reviewer, test-auditor]
+basis: 9340f9fd3717
+reviewers: [ui-reviewer, security-reviewer]
+---
+
+# 리뷰 사인오프 — fankkuk (2026-10-20, 홈 바로가기 중앙 정렬)
+
+- 세 홈이 공유하는 바로가기 카드의 align-items와 text-align을 center로 맞췄다. PC·모바일 배치 수와 역할별 내용은 그대로다.
+- ui-reviewer 통과. security-reviewer도 정렬만 바뀌어 입력·인증·인가·노출·URL 처리에 영향 없음 확인. 도메인 로직과 테스트 변경이 없어 code-reviewer·test-auditor 생략.
+- 실행 근거: `npm run typecheck` 통과, `node gates/graph-stop.mjs` 종료 코드 0·implement/qa clean. Playwright 실제 세 역할 × 1440·390px, 각 네 카드 align-items·text-align center, 자식 중심 오차 최대 0.006px, 가로 넘침 0.
+- 전체 DB 검사는 이번 CSS 수정으로 다시 실행하지 않았다. 직전 전체 결과와 보완 검증은 아래 기록을 유지한다.
+
 ---
 
 # 리뷰 사인오프 — fankkuk (2026-10-20, 세 역할 홈 공통 구성)
