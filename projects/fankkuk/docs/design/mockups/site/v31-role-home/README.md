@@ -2,7 +2,7 @@
 
 2026-10-20. 로그인 전·팬 로그인 후·크리에이터 로그인 후 화면을 나란히 비교하기 위한 정적 시안이다. 이름과 건수, 선물 목록은 예시이며 실제 로그인이나 데이터를 연결하지 않았다.
 
-미리보기: `http://localhost:3000/previews/role-home-unified-v31/index.html`
+미리보기: `http://localhost:3000/images/previews/role-home-unified-v31/index.html`
 
 - `guest.html`: 로그인 전
 - `fan.html`: 팬 로그인 후
