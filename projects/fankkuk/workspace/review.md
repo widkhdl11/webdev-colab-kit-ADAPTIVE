@@ -1,9 +1,25 @@
 ---
 project: fankkuk
 status: passed
-basis: 464e31fb1489
-reviewers: [ui-reviewer, security-reviewer]
+basis: 00eacce59e53
+reviewers: [ui-reviewer, code-reviewer, security-reviewer, test-auditor]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-20, 세 역할 홈 공통 구성)
+
+사용자가 승인한 v31 비교 시안을 로그인 전·팬·크리에이터 홈에 반영했다. 히어로 → 바로가기 네 개 → 소개·광고 배너 → 역할별 내용 → 공지 순서를 공유한다. 역할 판정과 업무 상태는 기존 서버 조회 결과를 사용한다.
+
+- ui-reviewer: 모바일에서 전역 스타일 때문에 버튼이 세로로 쌓이는 문제를 수정하고 재리뷰 통과.
+- code-reviewer: 공개 핸들이 없는 크리에이터의 페이지 링크가 빠지는 문제를 기존 공개 조회로 확인하도록 수정하고 재리뷰 통과.
+- security-reviewer: 서버의 본인 데이터 조회, 공개 페이지 확인, 문자열 표시를 검토하여 통과.
+- test-auditor: 실제 라우트의 진행 단계·공개 링크 검사가 부족하다는 지적을 반영해 조회 실패·공개 여부·기존 단계 매핑 검사를 보강하고 재감사 통과.
+- 실행 근거: `npm run typecheck`, `npm run copy:lint` 통과. `node gates/run-gates.mjs --quick` 1558개 파일 통과. 관련 7개 파일 79개 통과 후 추가 보강한 관련 3개 파일 24개 통과. `node gates/graph-stop.mjs` 종료 코드 0, implement·qa clean, basis 00eacce59e53 확인.
+- 실제 화면: 세 역할 × 1440·1024·768·390px에서 가로 넘침 0, 바로가기 네 개, 모바일 버튼 가로 배치, 런타임 오류 0. 팬·크리에이터 이름 20자에서도 넘침 0. 실제 빈 목록과 조회 실패 단위 검사 확인. 히어로 글자 대비 최저 PC 12.7:1·모바일 7.79:1.
+- 화면 캡처: `workspace/evidence/v31-home/`의 guest·fan·creator PC/모바일 이미지.
+- 전체 DB 통합 검사 `npm run test:integration`은 진행 중이다. 현재 기존 백로그의 주소 응답 문제 10건(creator-link-routes 5건·together-routes 5건)이 재현됐다. 이 항목은 화면 리뷰 통과와 별도로 최종 결과를 기록한다.
+
+---
+
 
 # 리뷰 사인오프 — fankkuk (2026-10-19, 로그인 전 크리에이터 슬라이드)
 
