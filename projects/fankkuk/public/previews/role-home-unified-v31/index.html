@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>세 가지 홈 비교 시안 · 팬꾹</title><link rel="stylesheet" href="styles.css"></head>
+<body class="review-body">
+<header class="review-toolbar"><div><h1>같은 팬꾹, 역할에 맞는 홈</h1><p>화면 구성을 비교하는 정적 시안입니다. 이름·건수·목록은 예시예요.</p></div><div class="review-modes" aria-label="화면 크기"><button type="button" data-width="1440" aria-pressed="true">PC 1440</button><button type="button" data-width="390" aria-pressed="false">모바일 390</button></div></header>
+<main class="comparison" id="comparison">
+<section><div class="compare-label"><strong>로그인 전</strong><a href="guest.html" target="_blank">크게 보기 ↗</a></div><div class="frame-box"><iframe title="로그인 전 홈 시안" data-page="guest.html"></iframe></div></section>
+<section><div class="compare-label"><strong>팬 로그인 후</strong><a href="fan.html" target="_blank">크게 보기 ↗</a></div><div class="frame-box"><iframe title="팬 로그인 후 홈 시안" data-page="fan.html"></iframe></div></section>
+<section><div class="compare-label"><strong>크리에이터 로그인 후</strong><a href="creator.html" target="_blank">크게 보기 ↗</a></div><div class="frame-box"><iframe title="크리에이터 로그인 후 홈 시안" data-page="creator.html"></iframe></div></section>
+</main>
+<p class="review-note">세 화면은 같은 비율로 줄였습니다. 로그인 전 상단바 때문에 본문이 64px 아래에서 시작하고, 로그인 후에는 240px 사이드바를 제외한 공간에 본문을 가운데 놓습니다. 히어로 → 바로가기 → 배너의 크기와 간격은 같습니다.</p>
+<script>
+document.querySelectorAll('iframe[data-page]').forEach(async frame=>{
+  const response=await fetch(frame.dataset.page);
+  if(!response.ok) throw new Error('시안 파일을 열지 못했어요.');
+  const html=await response.text();
+  const base=new URL('./',location.href).href;
+  frame.srcdoc=html.replace('<head>','<head><base href="'+base+'">');
+});
+let viewWidth=1440;
+const comparison=document.getElementById('comparison');
+function sizeFrames(){document.querySelectorAll('.frame-box').forEach(box=>{const frame=box.querySelector('iframe');const scale=box.clientWidth/viewWidth;frame.style.width=viewWidth+'px';frame.style.height='3000px';frame.style.transform=`scale(${scale})`;box.style.height=(3000*scale)+'px';});}
+document.querySelectorAll('[data-width]').forEach(button=>button.addEventListener('click',()=>{viewWidth=Number(button.dataset.width);comparison.classList.toggle('mobile',viewWidth===390);document.querySelectorAll('[data-width]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));sizeFrames();}));
+new ResizeObserver(sizeFrames).observe(comparison);
+sizeFrames();
+</script>
+</body></html>

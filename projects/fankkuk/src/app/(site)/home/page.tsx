@@ -11,7 +11,7 @@ import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { readReceivedRevgiftsOrNull } from "@/entities/revgift/api/revgift-reads";
 import { CREATOR_HOME } from "@/entities/session/model/home-path";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
-import { bannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
+import { memberBannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
 import { SCROLL_ROW_MAX } from "@/widgets/home/ui/front-slots";
 import { HomePage } from "@/widgets/home/ui/home-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
@@ -62,7 +62,7 @@ export default async function Page() {
         prices={prices}
         actionCount={actions?.length ?? null}
         receivedCount={received?.length ?? null}
-        banner={bannerSlot(banners)}
+        banner={memberBannerSlot(banners)}
       />
       <SiteFooter />
     </>

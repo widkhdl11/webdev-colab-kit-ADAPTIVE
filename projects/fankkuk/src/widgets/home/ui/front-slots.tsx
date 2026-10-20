@@ -21,6 +21,19 @@ import h from "./home.module.css";
 // ② 광고 배너는 스펙 승인 뒤에 만든다(DECISIONS 2026-10-18) — 그때까지 칸을 두지 않는다.
 // 약속 문장은 shared/config/site-copy 의 고정 문구를 그대로 읽는다. 요금 숫자는 결제와 같은 DB 요금표(라우트가 읽어 넘긴다).
 
+/** 로그인 전 소개 배너 — 사용자가 고른 버튼 없는 최종 이미지 한 장. */
+export function GuestIntroBanner() {
+  return (
+    <img
+      className={s.introBanner}
+      src="/images/banners/launch-01-introduction-no-button.png"
+      width={2172}
+      height={724}
+      alt="팬꾹. 팬의 마음을, 크리에이터에게. 승인한 선물을 검수해 전달해요."
+    />
+  );
+}
+
 /** ① 바로가기 한 칸. note = 그림 아래 작은 글 */
 export type FrontTile = { href: string; label: string; note: string; icon: string };
 
@@ -61,10 +74,10 @@ function HeroActions() {
   return (
     <div className="hero-actions">
       <Link className="btn" href="/gifts/new">
-        지금 바로 선물 보내러 가기
+        선물 보내기
       </Link>
       <Link className="btn btn--line" href="/creators">
-        나의 크리에이터 찾으러 가기
+        크리에이터 찾기
       </Link>
     </div>
   );
@@ -98,21 +111,35 @@ export function SearchSlot({ eyebrow, tiles, tilesLabel }: { eyebrow?: string; t
 }
 
 /** ① 로그인 전 첫 화면 — 화면 끝까지 칠한 그라데이션 띠 안에 880 기둥. 왼쪽 머리말·제목·검색·버튼, 오른쪽 마스코트(767 이하는 위) */
-export function HeroBand() {
+export function HeroBand({ title = "나의 크리에이터를 찾아요", eyebrow = "크리에이터에게 선물을 보낼 때", control, actions }: { title?: string; eyebrow?: string; control?: ReactNode; actions?: ReactNode }) {
   return (
     <section className={s.heroBand} aria-labelledby="hero-title">
       <div className={`${s.col} ${s.heroIn}`}>
         <div className={s.heroCopy}>
-          <p className="t-lead">크리에이터에게 선물을 보낼 때</p>
+          <p className="t-lead">{eyebrow}</p>
           <h1 className="t-hero" id="hero-title">
-            나의 크리에이터를 찾아요
+            {title}
           </h1>
-          <HeroSearch />
-          <HeroActions />
+          {control ?? <HeroSearch />}
+          {actions ?? <HeroActions />}
         </div>
         <img className={s.heroArt} src="/images/home/creator-cat.webp" width={280} height={280} alt="" aria-hidden="true" fetchPriority="high" />
       </div>
     </section>
+  );
+}
+
+/** 승인된 세 역할 홈의 공통 순서. 역할별 본문은 서버에서 그린 부품으로 받는다. */
+export function RoleHome({ hero, tiles, tilesLabel, banner, children }: { hero: ReactNode; tiles: readonly FrontTile[]; tilesLabel: string; banner: ReactNode; children: ReactNode }) {
+  return (
+    <main id="main" className={`${s.landing} ${s.roleHome}`}>
+      {hero}
+      <div className={`${s.col} ${s.colTop}`}>
+        <GuestTiles tiles={tiles} label={tilesLabel} />
+        {banner ? <div className={s.homeBanner}>{banner}</div> : null}
+        {children}
+      </div>
+    </main>
   );
 }
 
@@ -178,7 +205,7 @@ export function IntroSlot() {
 }
 
 /** 구역 머리 — 제목 왼쪽 + 「모두 보기」 링크 오른쪽(767 이하는 목록 아래 오른쪽) */
-function SlotSection({ id, title, meta, more, children }: { id: string; title: string; meta?: string; more?: { href: string; label: string }; children: ReactNode }) {
+export function SlotSection({ id, title, meta, more, children }: { id: string; title: string; meta?: string; more?: { href: string; label: string }; children: ReactNode }) {
   return (
     <section className={s.slot} aria-labelledby={`${id}-title`}>
       <div className={`head-row ${s.slotHead}`}>
@@ -421,6 +448,13 @@ export function PromiseSlot({ withSignup, band = false }: { withSignup: boolean;
   );
 }
 
+// 제공받은 상자 그림에서 각 크기의 영역만 표시한다. 원본 이미지 파일은 그대로 유지한다.
+const PARCEL_BOX_VIEW = {
+  small: "20 440 510 365",
+  medium: "560 300 535 515",
+  large: "1120 135 645 690",
+} as const;
+
 /** ⑥ 요금 — 결제와 같은 DB 요금표, 구간 기준은 size-tier.
  *  joined = 로그인 전 — 카드 셋 대신 경계 카드 한 장을 세 칸으로(칸 사이 세로 1px 선, 767 이하 위아래로) */
 export function PriceSlot({ prices, joined = false }: { prices: PublicPriceTable; joined?: boolean }) {
@@ -428,14 +462,19 @@ export function PriceSlot({ prices, joined = false }: { prices: PublicPriceTable
     <section className={s.block} id="price" aria-labelledby="price-title">
       <div className={s.head}>
         <h2 id="price-title">
-          모든 요금에 <span className="accent">검수가</span> 포함됩니다
+          배송 요금 안내
         </h2>
-        <p className="t-lead">배송비를 포함한 금액이에요. 크기와 무게 중 큰 쪽으로 정해져요.</p>
+        <p className="t-lead">박스 크기와 무게에 따라 선택해주세요.</p>
       </div>
       <div className={joined ? s.priceJoined : s.grid3}>
         {PRICED_TIERS.map((tier) => (
           <article key={tier} className={joined ? s.priceTier : `card ${s.priceCard}`}>
             <span className="tag">{PARCEL_TIER_GUIDE[tier].name}</span>
+            <div className={s.priceBoxArt}>
+              <svg className={s.priceBox} data-size={tier} viewBox={PARCEL_BOX_VIEW[tier]} width={144} height={136} aria-hidden="true" focusable="false">
+                <image href="/images/home/parcel-boxes.png" width={1774} height={887} />
+              </svg>
+            </div>
             <p className={s.amount}>
               {prices[tier].priceKrw.toLocaleString("ko-KR")}
               <span>원</span>

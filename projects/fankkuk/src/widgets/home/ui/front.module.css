@@ -30,11 +30,12 @@
   padding-bottom: var(--section-gap);
 }
 .col { width: 100%; min-width: 0; max-width: calc(var(--col-list) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
+.introBanner { display: block; width: 100%; max-width: 100%; height: auto; border-radius: var(--r-panel); }
 .col > * { min-width: 0; }
 .colTop { padding-top: var(--space-12); }
 
 /* ① 첫 화면 띠 — 왼쪽 글(머리말 → 제목 48 → 검색 → 버튼 둘), 오른쪽 마스코트 280 */
-.heroBand { background: var(--grad-hero); }
+.heroBand { background: url("/images/home/hero-bubbles.png") center / cover no-repeat, var(--grad-hero); }
 .heroIn { display: flex; align-items: center; gap: var(--space-8); padding-block: var(--space-16); }
 .heroCopy { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); text-align: left; }
 .heroCopy > :global(.t-lead) { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; color: var(--gray-600); }
@@ -238,6 +239,11 @@
 
 /* ⑥ 요금 */
 .priceCard { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.priceBoxArt { display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 136px; margin-block: var(--space-2); }
+.priceBox { display: block; max-width: 100%; overflow: hidden; }
+.priceBox[data-size="small"] { width: 104px; height: 76px; }
+.priceBox[data-size="medium"] { width: 128px; height: 124px; }
+.priceBox[data-size="large"] { width: 128px; height: 136px; }
 .amount { margin-top: var(--space-2); font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1.3; font-variant-numeric: tabular-nums; }
 .amount span { margin-left: var(--space-2); font-size: var(--fs-card); font-weight: var(--fw-btn); }
 .inc { display: flex; align-items: center; gap: var(--space-2); color: var(--brand-ink); font-weight: var(--fw-btn); }
@@ -268,6 +274,7 @@
   .tile:global(.card) { padding: var(--space-4); }
   /* 로그인 전 — 첫 화면은 마스코트 160 이 위, 4단계·약속·요금은 한 줄에 하나 */
   .landing { --hero-art: 160px; --cols-3: 1; --cols-2: 1; }
+  .heroBand { background-position: right center; }
   .heroIn { flex-direction: column-reverse; align-items: stretch; gap: var(--space-4); padding-block: var(--space-8) var(--space-12); }
   .heroArt { align-self: center; }
   .heroCopy { align-items: stretch; }
@@ -283,4 +290,50 @@
 @media (max-width: 767px) {
   .moreTop:global(.more-link) { display: none; }
   .moreBottom:global(.more-link) { display: block; width: fit-content; margin: var(--space-4) 0 0 auto; }
+}
+
+/* v31 승인: 세 역할 모두 같은 히어로·바로가기·배너를 사용한다. */
+.roleHome { container: home / inline-size; --hero-art: 240px; }
+.roleHome .heroIn { min-height: 408px; gap: var(--space-6); }
+.roleHome .heroCopy { gap: var(--space-2); }
+.roleHome .heroCopy > :global(.t-lead) { color: var(--ink); }
+.roleHome .heroCopy > h1 { overflow-wrap: anywhere; }
+.roleHome .heroCopy :global(.search) { height: 56px; border-radius: var(--r-btn); margin: var(--space-4) 0 0; }
+.roleHome .heroCopy :global(.hero-actions) { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+.roleHome .heroCopy :global(.hero-actions .btn) { font-size: var(--fs-small); }
+.roleHome .flatTiles { gap: var(--space-4); }
+.roleHome .flatTile:global(.card) { min-height: 180px; gap: var(--space-2); }
+.homeBanner { margin-top: var(--space-12); }
+.homeBanner > * { margin: 0; }
+.heroProfile { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); width: 100%; max-width: 520px; min-height: 56px; padding: var(--space-2) var(--space-3); margin-top: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-btn); background: var(--white); }
+.heroProfileName { min-width: 0; overflow-wrap: anywhere; font-weight: var(--fw-btn); }
+.heroAvatar { display: grid; place-items: center; flex: none; width: 40px; height: 40px; overflow: hidden; border-radius: var(--r-pill); background: var(--primary-50); font-weight: var(--fw-bold); }
+.heroAvatar img { width: 100%; height: 100%; object-fit: cover; }
+.summaryRows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--gray-200); }
+.summaryRows li + li { border-top: 1px solid var(--gray-200); }
+.summaryRow { display: flex; align-items: center; gap: var(--space-4); min-height: 88px; padding-block: var(--space-4); color: var(--ink); text-decoration: none; }
+.summaryText { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.summaryText strong { display: block; font-weight: var(--fw-btn); }
+.summaryText > span { display: block; margin-top: var(--space-1); color: var(--gray-600); font-size: var(--fs-small); }
+.summaryStatus { flex: none; max-width: 40%; font-size: var(--fs-small); text-align: right; overflow-wrap: anywhere; }
+@container home (width < 928px) {
+  .roleHome .heroIn { --hero-art: 184px; }
+  .roleHome .heroCopy > h1 { font-size: var(--fs-title); }
+}
+@container home (width < 960px) {
+  .roleHome .scroller { --edge: var(--space-2); }
+  .roleHome .rowArrow { display: none; }
+  .roleHome .cardRow.cardRowScroll { scrollbar-width: auto; }
+  .roleHome .cardRow.cardRowScroll::-webkit-scrollbar { display: block; }
+}
+@media (max-width: 767px) {
+  .roleHome { --hero-art: 136px; }
+  .roleHome .heroIn { position: relative; display: block; min-height: 544px; padding-top: 176px; padding-bottom: var(--space-12); }
+  .roleHome .heroArt { position: absolute; top: var(--space-6); right: var(--gutter); width: 136px; height: 136px; }
+  .roleHome .heroCopy > h1 { min-height: 90px; font-size: var(--fs-hero); }
+  .roleHome .heroCopy :global(.hero-actions) { flex-direction: row; flex-wrap: nowrap; }
+  .roleHome .heroCopy :global(.hero-actions .btn) { flex: 1; min-width: 0; padding-inline: var(--space-2); }
+  .roleHome .flatTiles { gap: var(--space-4); }
+  .roleHome .flatTile:global(.card) { min-height: 164px; }
+  .summaryRow { gap: var(--space-3); }
 }

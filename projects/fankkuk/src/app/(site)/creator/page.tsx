@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { readPublicBannersOrNull } from "@/entities/banner/api/read-banners";
 import { readMyAccessLog } from "@/entities/address/api/access-log-rows";
-import { readMyCreatorLink, readMyCreatorLook } from "@/entities/creator/api/creator-link-reads";
+import { readMyCreatorLink, readMyCreatorLook, resolveCreatorHandle } from "@/entities/creator/api/creator-link-reads";
+import { creatorPagePath } from "@/entities/creator/model/creator-handle";
+import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
 import { readMyCreatorSettings } from "@/entities/creator/api/my-creator-settings";
 import { creatorBackgroundUrl, creatorPhotoUrl, creatorSymbolUrl, nameInitial } from "@/entities/creator/model/link-images";
 import { NO_COLORS } from "@/entities/creator/model/creator-color";
@@ -11,9 +13,10 @@ import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { FAN_HOME } from "@/entities/session/model/home-path";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { readMyGiftProgress } from "@/widgets/creator-gift-progress/api/read-gift-progress";
-import { countProgress } from "@/widgets/creator-gift-progress/model/gift-progress";
-import { bannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
-import { CREATOR_HOME_LOG_ROWS, CreatorHomePage } from "@/widgets/home/ui/creator-home-page";
+import { countProgress, receivedStepOf, sentStepOf } from "@/widgets/creator-gift-progress/model/gift-progress";
+import { PROGRESS_STEP_LABEL } from "@/widgets/creator-gift-progress/ui/gift-progress-page";
+import { memberBannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
+import { CREATOR_HOME_LOG_ROWS, CreatorHomePage, type HomeProgressRow } from "@/widgets/home/ui/creator-home-page";
 import { ACCOUNT_HREF } from "@/widgets/site-header/model/app-menu";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { loadSession } from "@/widgets/site-header/api/session-header";
@@ -45,6 +48,17 @@ export default async function Page() {
   ]);
   // h1 은 공개 이름(design-rules 12절 「홈」). 크리에이터 줄이 없으면 닉네임.
   const publicName = settings?.publicName ?? viewer.nickname ?? "";
+  // 공개로 열리는 아이디인지 기존 공개 읽기로 확인한다. 확인 전·조회 실패면 내 페이지 버튼만 없다.
+  const publicCreator = link?.handle ? await resolveCreatorHandle(supabase, link.handle).catch(() => null) : null;
+  // 링크 아이디는 선택 사항이다. 미설정 계정도 기존 ID 주소의 공개 페이지를 쓴다(INV-E5).
+  const ownCreatorId = publicCreator ? null : await readOwnCreatorId(supabase).catch(() => null);
+  const publicCard = ownCreatorId ? await readCreatorCards(supabase, { onlyId: ownCreatorId, signedIn: false }).then((rows) => rows[0] ?? null).catch(() => null) : null;
+  const publicHref = publicCreator ? creatorPagePath({ id: publicCreator.creatorId, handle: publicCreator.handle }) : publicCard ? creatorPagePath(publicCard) : null;
+  // 같은 읽기의 순서·기존 단계 표시를 그대로 쓰며 홈에는 앞 세 줄만 보인다.
+  const progressRows: HomeProgressRow[] = progress ? [
+    ...progress.received.slice(0, 3).map((row) => ({ id: row.orderNo, title: `${row.nickname}님이 보내신 선물`, description: row.itemKind, status: PROGRESS_STEP_LABEL[receivedStepOf(row).key] })),
+    ...progress.sent.flatMap((group) => group.rows).slice(0, Math.max(0, 3 - progress.received.length)).map((row) => ({ id: row.shareId, title: `${row.nickname}님께 보낸 선물`, description: row.orderNo, status: PROGRESS_STEP_LABEL[sentStepOf(row).key] })),
+  ] : [];
   const notices = allNotices
     .toSorted((a, b) => b.date.localeCompare(a.date))
     .slice(0, 3)
@@ -64,12 +78,15 @@ export default async function Page() {
           symbolUrl: creatorSymbolUrl(photoBase, look?.symbolPath ?? null),
         }}
         accountHref={ACCOUNT_HREF.creator}
+        publicHref={publicHref}
         actionCount={actions?.length ?? null}
+        actions={actions}
         accessLog={accessLog}
         notices={notices}
         ongoingCount={progress ? countProgress(progress) : null}
+        progressRows={progressRows}
         sentGifts={sentGifts}
-        banner={bannerSlot(banners)}
+        banner={memberBannerSlot(banners)}
       />
       <SiteFooter />
     </>
