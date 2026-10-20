@@ -52,7 +52,7 @@
 .flatTile:global(.card) { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); height: 100%; padding: var(--space-6); text-align: center; text-decoration: none; color: var(--gray-900); }
 .flatTile img { width: var(--icon); height: var(--icon); flex: none; object-fit: contain; }
 .flatLabel { font-weight: var(--fw-btn); line-height: 1.5; }
-.flatLabel + .caption { margin-top: calc(var(--space-1) - var(--space-3)); }
+.flatLabel + .caption { margin-top: 0; }
 
 /* ③ 4단계 — 카드 없이 2×2 줄(그림 64 + 번호 · 제목 20 · 설명) */
 .stepRows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8) var(--space-12); margin: 0; padding: 0; list-style: none; }
