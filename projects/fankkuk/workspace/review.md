@@ -15,8 +15,9 @@ reviewers: [ui-reviewer, code-reviewer, security-reviewer, test-auditor]
 - test-auditor: 실제 라우트의 진행 단계·공개 링크 검사가 부족하다는 지적을 반영해 조회 실패·공개 여부·기존 단계 매핑 검사를 보강하고 재감사 통과.
 - 실행 근거: `npm run typecheck`, `npm run copy:lint` 통과. `node gates/run-gates.mjs --quick` 1558개 파일 통과. 관련 7개 파일 79개 통과 후 추가 보강한 관련 3개 파일 24개 통과. `node gates/graph-stop.mjs` 종료 코드 0, implement·qa clean, basis 00eacce59e53 확인.
 - 실제 화면: 세 역할 × 1440·1024·768·390px에서 가로 넘침 0, 바로가기 네 개, 모바일 버튼 가로 배치, 런타임 오류 0. 팬·크리에이터 이름 20자에서도 넘침 0. 실제 빈 목록과 조회 실패 단위 검사 확인. 히어로 글자 대비 최저 PC 12.7:1·모바일 7.79:1.
+- 배포 전 `npm run build` 성공. `npm run check:pii -- --app http://localhost:3000` 개인정보 노출 0건 통과(익명·팬·크리에이터·직원·대표, 개인정보 구역 함수 23개 확인).
 - 화면 캡처: `workspace/evidence/v31-home/`의 guest·fan·creator PC/모바일 이미지.
-- 전체 DB 통합 검사 `npm run test:integration`은 진행 중이다. 현재 기존 백로그의 주소 응답 문제 10건(creator-link-routes 5건·together-routes 5건)이 재현됐다. 이 항목은 화면 리뷰 통과와 별도로 최종 결과를 기록한다.
+- 전체 DB 통합 검사 `npm run test:integration`: 91개 파일, 2051개 중 2039개 통과·12개 실패(5378.35초). 기존 주소 응답 10건 외 시안 경로 예약어 누락 1건·시각 반올림 비교 1건을 발견했다. 시안을 기존 images 경로 아래로 이동하고 시각 비교를 같은 버림 기준으로 수정한 뒤, 관련 두 통합 파일 57개 모두 통과(144.93초). test-auditor 재감사 지적 없음. DB 함수·예약어 데이터 변경 없음.
 
 ---
 

@@ -31,7 +31,7 @@
   },
   "qa": {
     "status": "clean",
-    "hash": "4746c425a7db"
+    "hash": "3046f1613a0b"
   },
   "review": {
     "status": "clean",
