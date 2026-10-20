@@ -49,7 +49,7 @@
 .flatTiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-12) 0 0; padding: 0; list-style: none; }
 .colTop > .flatTiles:first-child { margin-top: 0; }
 .flatTiles > li { min-width: 0; }
-.flatTile:global(.card) { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); height: 100%; padding: var(--space-6); text-decoration: none; color: var(--gray-900); }
+.flatTile:global(.card) { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); height: 100%; padding: var(--space-6); text-align: center; text-decoration: none; color: var(--gray-900); }
 .flatTile img { width: var(--icon); height: var(--icon); flex: none; object-fit: contain; }
 .flatLabel { font-weight: var(--fw-btn); line-height: 1.5; }
 .flatLabel + .caption { margin-top: calc(var(--space-1) - var(--space-3)); }
