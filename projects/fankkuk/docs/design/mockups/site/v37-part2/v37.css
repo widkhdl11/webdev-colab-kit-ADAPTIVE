@@ -214,9 +214,15 @@
  .drow time{min-width:0;text-align:left}
 }
 
-/* 입체감 살짝(2026-10-21 사용자 「카드배경에 입체감 살짝만 줘」) — 21절·00절의 「카드는 테두리만, 그림자 없음」을 바꾸는 값이라 승인되면 design-rules 도 고친다.
-   흰 카드: 테두리 그대로 + 옅은 두 겹 그림자 / 하늘 판: 하늘빛이 도는 그림자 / 회색 보조 카드(#f7f7f8): 평평하게 둔다(덜 중요한 것은 낮춘다).
-   마우스를 올리면 기존 hover 값(0 8px 24px .08)으로 조금 더 뜬다. */
-.acard,.bcard,.gcard,.ccard,.dcard,.tile,.lnum,.qtot{box-shadow:0 1px 2px rgba(31,41,55,.04),0 4px 12px rgba(31,41,55,.05)}
-.acard:hover,.bcard:hover,.gcard:hover,.ccard:hover,.tile:hover{box-shadow:0 2px 4px rgba(31,41,55,.05),0 8px 24px rgba(31,41,55,.08)}
-.ahero,.bhero,.pfeat,.dhero,.rvcard{box-shadow:0 1px 2px rgba(31,41,55,.04),0 8px 24px rgba(137,207,240,.22)}
+/* 하늘 면에 효과(2026-10-21 사용자 「카드 배경중에 푸른색 계열로만 하니까 너무 심심해서 조금 효과를」).
+   단색 #f0f8ff 대신 세 겹: 오른쪽 위 흰 빛 + 왼쪽 아래 하늘빛 번짐 + #f0f8ff→#e0f2fe 비스듬한 그러데이션.
+   위 가장자리 흰 1px 반사선과 하늘빛 그림자로 살짝 떠 보이게. 색은 00절 하늘 계열(#f0f8ff·#e0f2fe·#89cff0)만 쓴다.
+   흰 카드·회색 보조 카드는 그대로(테두리만). 승인되면 design-rules 의 하늘 면 정의를 고친다. */
+.ahero,.bhero .dcol,.pfeat,.gcard.hi,.dhero,.rvcard{
+  background:
+    radial-gradient(120% 140% at 100% 0%,rgba(255,255,255,.9) 0%,rgba(255,255,255,0) 45%),
+    radial-gradient(80% 120% at 0% 100%,rgba(137,207,240,.28) 0%,rgba(137,207,240,0) 60%),
+    linear-gradient(135deg,#f0f8ff 0%,#e0f2fe 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 8px 24px rgba(137,207,240,.18)}
+.bhero{box-shadow:0 8px 24px rgba(137,207,240,.18)}
+.bhero .dcol{box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
