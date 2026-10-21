@@ -7,7 +7,7 @@
 
 ## 미결
 
-- [ ] **묶음 A(배송 문제·기한 정리 DB) 검증 마치기** (2026-10-21) — 관련 통합 시험 일괄 실행이 메모리 부족(WSL 4GB)으로 중단돼 나머지 약 39파일·전체 통합·변이를 못 돌림. 확인된 것: 새 3파일 36/36·office-workflow-db 96/96·check:pii·tsc·copy:lint·spec-coverage 0 · 되살릴 조건: 다음 세션 첫 일 — 몇 파일씩 나눠 돌리고 변이(한 상자 대기 하나·틀린 시도 셈·끝난 주문 후보 아님·720시간 경계·뒤 4자리 비공개)
+- [ ] **묶음 A(배송 문제·기한 정리 DB) 검증 마치기** (2026-10-21) — 관련 통합 시험 일괄 실행이 메모리 부족(WSL 4GB)으로 중단돼 나머지 약 39파일·전체 통합·변이를 못 돌림. 확인된 것: 새 3파일 36/36·office-workflow-db 96/96·check:pii·tsc·copy:lint·불변식마다 시험 있음 · 되살릴 조건: 다음 세션 첫 일 — 몇 파일씩 나눠 돌리고 변이(한 상자 대기 하나·틀린 시도 셈·끝난 주문 후보 아님·720시간 경계·뒤 4자리 비공개)
 - [ ] **수동 SQL 0023(전화번호 뒤 4자리) 사용자 적용** (2026-10-21) — 사람이 적용하는 개인정보 구역 파일. 적용: `bash /c/Users/PC/Desktop/dev/webdeb-colab-kit-ADAPTIVE/projects/fankkuk/supabase/manual/apply-0023.sh` · 확인: `npx vitest run --config vitest.integration.config.mts phone-last4-db`(적용 전 6/6 실패 확인됨) · 적용 전 DB 는 뒤 4자리가 들어오면 입고를 거부한다
 - [ ] **화면 묶음 B — 물품 보관소·배송문제 확인 화면** (2026-10-21) — 시안 v32(design-rules 20절) 승인됨, route 준비됨(`/api/storage`·`/api/admin/work/storage`·`/api/admin/work/shipping-issues`·`/api/gifts/not-sent`·입고 칸 추가). 「아직 보내지 않음」·「1:1 문의하기」는 알림 버튼이 하나라 선물 상세에 · 되살릴 조건: 사용자 전체 디자인 손보기(다른 세션)가 정해진 뒤 — 새 기준으로 만든다
 - [ ] **묶음 A 미룬 문서** (2026-10-21) — `src/widgets/legal/model/faq-doc.ts:48`·`guide-fan-doc.ts:185` 「7일 안에 주인을 찾지 못한 상자」 → 30일 · `terms-doc.ts` 기한 문장 점검 · office-workflow INV-W5 칸 목록에 「크기」 · 개인정보처리방침 뒤 4자리 항목(위 줄과 같이) · 되살릴 조건: 묶음 B 사인오프 전
