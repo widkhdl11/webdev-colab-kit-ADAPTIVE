@@ -49,6 +49,9 @@ export const ALLOWED = [
   { fn: "my_account", key: /^phone_masked$/, value: /^01[016789]-\*{4}-\d{4}$/ },
   // my-account INV-A4·A7: 내 정보 읽기는 본인의 확인된 이메일과 확인 대기 이메일을 돌려준다(로그인 토큰의 본인 줄만)
   { fn: "my_account", key: /^(email|pending_email)$/, value: /^[\w.+-]+@[\w-]+\.[\w.-]+$/ },
+  // inbound-address-code INV-C5·C12 ③ · admin-console INV-K8 (2026-10-21): 운영자 보류 목록·뒤 4자리 검색은 6자리 없이 온 상자의 원 송장 전화번호 뒤 4자리만(숫자 넷)
+  { fn: "admin_unmatched_parcels", key: /^phone_last4$/, value: /^[0-9]{4}$/ },
+  { fn: "admin_unmatched_by_phone_last4", key: /^phone_last4$/, value: /^[0-9]{4}$/ },
 ];
 
 // 로그인 키로 부를 수 있으면서 개인정보 구역에 닿는 함수 — 무엇을 돌려주는지 사람이 보고 올린 것만
@@ -86,7 +89,32 @@ export const PII_FUNCTIONS = {
   // 7일 자동 처리(office-workflow INV-W6·W13) — 받기를 고른 확인 대기 상자를 검수 완료로 넘길 때 office_sync 를 부른다. 돌려주는 것은 처리 건수(jsonb)
   office_run_expiry: "기한 자동 처리 → 몫 정리 경로, 돌려주는 것은 단계별 처리 건수",
   admin_move_held_share: "찾기로 이은 상자를 같은 크리에이터의 다른 팬별 선물로 옮김 → 몫 정리, 돌려주는 것은 결과 글자(moved)",
+  // 물품 보관소 입고 처리(inbound-address-code INV-C13) — 운영자 잇기와 같은 판정·입고 마무리(office_finish_held_receive → office_sync)로 닿는다
+  admin_accept_storage_claim: "물품 보관소 확인 요청의 입고 처리 → 몫 정리 경로, 돌려주는 것은 결과 글자(linked)",
 };
+
+// 사람이 적용하는 수동 SQL 이 들어간 DB 에서만 개인정보 구역에 닿는 함수. 표식 표가 있으면 위 목록처럼 허용하고,
+// 없으면 목록에 넣지 않는다 — 그때 닿으면 「목록에 없는 함수」로 잡히고, 안 닿으면 「목록이 낡았다」로 잡지 않는다(적용 전후 둘 다 엄격하게).
+export const PII_FUNCTIONS_AFTER_MANUAL = [
+  {
+    manual: "manual/0023_phone_last4",
+    marker: "pii.unmatched_phone_last4",
+    functions: {
+      admin_unmatched_parcels: "운영자 보류 목록 — 전화번호 뒤 4자리(숫자 넷)만 읽는다(위 허용 칸, inbound-address-code INV-C5)",
+      admin_unmatched_by_phone_last4: "운영자 뒤 4자리 검색 — 칸은 운영자 보류 목록과 같다(INV-C12 ③)",
+      // 입고·잇기·확인 처리는 이미 위 목록에 있다(몫 정리 경로) — 0023 뒤에는 뒤 4자리 저장·지우기로도 닿는다
+    },
+  },
+];
+
+/** 표식 표가 있는(수동 SQL 이 적용된) 묶음의 함수만 모은다. sql 은 piiTouchingFunctions 와 같은 꼴 */
+export function manualPiiFunctions(sql) {
+  const out = {};
+  for (const m of PII_FUNCTIONS_AFTER_MANUAL) {
+    if (sql(`select to_regclass('${m.marker}') is not null`).trim() === "t") Object.assign(out, m.functions);
+  }
+  return out;
+}
 
 // 메모 표를 참조해도 되는 함수 — 스펙 together INV-F8 의 셋(등록 때 저장 · 보낸 팬 본인의 선물 상세 · 보낸 팬 본인의 보낸 선물 목록).
 // 키는 「구역.이름(인자 모양)」이다 — 이름만 맞추면 같은 이름에 계정 ID 인자를 받는 판(my_gifts(p_fan_id uuid))을 더 만들어도 통과한다.
@@ -356,10 +384,11 @@ export function piiColumns(sql) {
     .sort();
 }
 
-export function structureProblems(touching, columns = []) {
+export function structureProblems(touching, columns = [], afterManual = {}) {
+  const allowedFns = { ...PII_FUNCTIONS, ...afterManual };
   const problems = columns.map((c) => `구조: public 표 칸 ${c} — 개인정보는 pii 구역에만 둔다`);
-  for (const name of touching) if (!(name in PII_FUNCTIONS)) problems.push(`구조: 로그인 키로 부를 수 있는 ${name} 가 개인정보 구역에 닿는다 — 무엇을 돌려주는지 보고 허용 목록에 올린다`);
-  for (const name of Object.keys(PII_FUNCTIONS)) if (!touching.includes(name)) problems.push(`구조: 허용 목록의 ${name} 는 이제 개인정보 구역에 닿지 않거나 로그인 키에 닫혔다 — 목록에서 뺀다`);
+  for (const name of touching) if (!(name in allowedFns)) problems.push(`구조: 로그인 키로 부를 수 있는 ${name} 가 개인정보 구역에 닿는다 — 무엇을 돌려주는지 보고 허용 목록에 올린다`);
+  for (const name of Object.keys(allowedFns)) if (!touching.includes(name)) problems.push(`구조: 허용 목록의 ${name} 는 이제 개인정보 구역에 닿지 않거나 로그인 키에 닫혔다 — 목록에서 뺀다`);
   return problems;
 }
 
@@ -452,7 +481,7 @@ export async function runPiiExposureCheck({ apiUrl, anonKey, logins, sql, appUrl
     const columns = piiColumns(sql);
     for (const r of roles) problems.push(...r.problems, ...r.findings);
     if (app) problems.push(...app.findings);
-    problems.push(...structureProblems(touching, columns));
+    problems.push(...structureProblems(touching, columns, manualPiiFunctions(sql)));
     problems.push(...memoStructureProblems(sql));
     problems.push(...memoResponseProblems(roles, memoCanary));
     return { roles, app, touching, problems };
