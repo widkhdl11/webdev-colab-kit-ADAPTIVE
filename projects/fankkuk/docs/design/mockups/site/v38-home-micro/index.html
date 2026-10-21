@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>홈 마이크로 디테일 · 팬꾹 v38 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+/* 값은 src/shared/ui/tokens.css · base.css · src/widgets/home/ui/front.module.css · home.module.css 에서 옮겼다(2026-10-22) */
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../../public/fonts/TmoneyRoundWindRegular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Tmoney Round Wind"; src: url("../../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+:root {
+  --primary: #89cff0; --primary-50: #e0f2fe; --primary-700: #6bbfe6; --tint: #f0f8ff; --tint-line: #bfe3f7;
+  --grad-hero: linear-gradient(135deg, #d6eefc 0%, #eef0ff 100%);
+  --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563; --gray-900: #1f2937;
+  --ink: var(--gray-900); --sub: var(--gray-600); --white: #fff; --field-line: var(--gray-500);
+  --warn-soft: #fff5db; --warn-ink: #805b16;
+  --face-1: #fbe3a8; --face-2: #dcd3f6; --face-3: #cfe3fa; --face-4: #fad2ba; --face-5: #c9ecdd; --face-6: #f7c8d4;
+  --font: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Segoe UI", "Malgun Gothic", sans-serif;
+  --font-round: "Tmoney Round Wind", var(--font);
+  --fw-bold: 700; --fw-btn: 600; --fw-title: 800; --fw-nav: 500;
+  --r-panel: 24px; --r-card: 16px; --r-btn: 12px; --r-pill: 9999px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --fs-hero: 48px; --fs-title: 32px; --fs-page: 24px; --fs-card: 20px; --fs-body: 16px; --fs-small: 14px; --fs-badge: 12px;
+  --ls-title: -0.02em; --gutter: 24px; --btn-h: 48px; --btn-h-sm: 44px;
+  --hair: inset 0 0 0 1px var(--gray-200); --shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  /* 23절 */
+  --ease-micro: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --card-fx: radial-gradient(90% 120% at 100% 0%, rgb(137 207 240 / 0.07) 0%, rgb(137 207 240 / 0) 55%), linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  --card-shadow: inset 0 1px 0 #ffffff, 0 1px 2px rgb(31 41 55 / 0.04), 0 4px 12px rgb(31 41 55 / 0.04);
+  --card-shadow-hover: inset 0 1px 0 #ffffff, 0 2px 4px rgb(31 41 55 / 0.05), 0 8px 24px rgb(31 41 55 / 0.08);
+  --btn-fill-fx: linear-gradient(180deg, #95d4f2 0%, #89cff0 100%);
+  --btn-fill-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 1px 2px rgb(31 41 55 / 0.06);
+  --btn-fill-shadow-hover: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 4px 12px rgb(137 207 240 / 0.45);
+  --btn-ghost-shadow: 0 1px 2px rgb(31 41 55 / 0.04); --btn-ghost-hover: #fafbfc;
+  --tag-sheen: inset 0 1px 0 rgb(255 255 255 / 0.6);
+  --surface-accent-fx: radial-gradient(120% 140% at 100% 0%, rgb(255 255 255 / 0.9) 0%, rgb(255 255 255 / 0) 45%), radial-gradient(80% 120% at 0% 100%, rgb(137 207 240 / 0.28) 0%, rgb(137 207 240 / 0) 60%), linear-gradient(135deg, #f0f8ff 0%, #e0f2fe 100%);
+}
+@media (max-width: 767px) { :root { --gutter: 16px; --fs-hero: 32px; --fs-title: 24px; } }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: #fff; color: var(--ink); font-family: var(--font); font-size: var(--fs-body); line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+h1, h2, h3, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+img { display: block; max-width: 100%; }
+a { color: inherit; }
+h1, h2, h3 { font-family: var(--font-round); font-weight: var(--fw-title); letter-spacing: var(--ls-title); text-wrap: balance; }
+::selection { background: var(--tint-line); }
+
+/* ── 시안 틀 ── */
+.page { max-width: 1440px; margin: 0 auto; padding: var(--space-12) var(--gutter) var(--space-16); }
+.page > h1 { font-size: var(--fs-page); line-height: 1.3; }
+.now { margin-top: var(--space-8); }
+.now h2, .demo-head h2 { font-size: var(--fs-card); line-height: 1.4; }
+.shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); margin-top: var(--space-4); }
+.shot { min-width: 0; }
+.shot p { margin-bottom: var(--space-2); font-size: var(--fs-small); font-weight: var(--fw-btn); color: var(--sub); }
+.shot-frame { height: 520px; overflow: auto; border-radius: var(--r-card); box-shadow: var(--hair), var(--card-shadow); background: #fff; }
+.shot-frame img { width: 100%; height: auto; }
+
+.demo { margin-top: var(--space-16); }
+.demo-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.num { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-pill); background: var(--primary); color: var(--ink); font-weight: var(--fw-bold); font-size: var(--fs-small); flex: none; }
+.pick { display: inline-flex; align-items: center; min-height: 28px; padding: 2px 12px; border-radius: var(--r-pill); font-size: var(--fs-small); font-weight: var(--fw-btn); box-shadow: var(--tag-sheen); }
+.pick--rec { background: var(--primary-50); color: var(--ink); }
+.pick--opt { background: var(--gray-100); color: var(--sub); }
+.try { margin-top: var(--space-2); color: var(--sub); }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); margin-top: var(--space-4); }
+.side { min-width: 0; }
+.side-label { margin-bottom: var(--space-2); font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
+.side--fx .side-label { color: var(--ink); }
+.stage { min-width: 0; padding: var(--space-6); border-radius: var(--r-panel); background: var(--gray-50); box-shadow: var(--hair); }
+.side--fx .stage { background: var(--tint); box-shadow: inset 0 0 0 1px var(--tint-line); }
+@media (max-width: 900px) {
+  .pair, .shots { grid-template-columns: minmax(0, 1fr); }
+  .shot-frame { height: 360px; }
+}
+@media (max-width: 767px) { .stage { padding: var(--space-4); } }
+
+/* ── 사이트 부품(base.css · front.module.css · home.module.css) ── */
+.card { min-width: 0; padding: 24px; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 24px; border: 0; border-radius: var(--r-btn); background: var(--primary); background-image: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); color: var(--ink); font: inherit; font-weight: var(--fw-btn); line-height: 1.5; text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: transform 0.15s var(--ease-micro), box-shadow 0.2s var(--ease-micro), background-color 0.2s var(--ease-micro); }
+.btn--line { background: var(--white); background-image: none; box-shadow: var(--hair), var(--btn-ghost-shadow); }
+.btn--sm { min-height: 44px; padding: 0 14px; font-size: var(--fs-small); }
+@media (hover: hover) {
+  .btn:not(.btn--line):hover { box-shadow: var(--btn-fill-shadow-hover); transform: translateY(-1px); }
+  .btn--line:hover { background: var(--btn-ghost-hover); box-shadow: inset 0 0 0 1px var(--gray-500), var(--btn-ghost-shadow); }
+}
+.btn:active { transform: scale(0.98); }
+.btn:focus-visible, a:focus-visible, button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.tag { display: inline-flex; align-items: center; min-height: 30px; padding: 4px 12px; border-radius: var(--r-pill); background: var(--gray-100); color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1; box-shadow: var(--tag-sheen); white-space: nowrap; }
+.tag--warn { background: var(--warn-soft); color: var(--warn-ink); }
+/* 누를 수 있는 카드 — 지금 사이트에도 있는 떠오름(23-2) */
+a.card, .ccard { transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro); }
+a.card:hover, .ccard:hover { box-shadow: var(--hair), var(--card-shadow-hover); }
+@media (hover: hover) { a.card:hover, .ccard:hover { transform: translateY(-2px); } }
+
+/* 1. 바로가기 */
+.flatTiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.flatTile.card { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); min-height: 180px; height: 100%; padding: var(--space-6) var(--space-3); text-align: center; text-decoration: none; color: var(--ink); }
+.flatTile img { width: 48px; height: 48px; flex: none; object-fit: contain; }
+.flatLabel { font-weight: var(--fw-btn); line-height: 1.5; }
+.caption { font-size: var(--fs-small); line-height: 1.5; color: var(--sub); }
+@media (max-width: 1180px) { .flatTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .flatTiles { gap: var(--space-3); } .flatTile.card { min-height: 164px; padding: var(--space-4); } }
+
+/* 2. 크리에이터 카드 줄 */
+.slotHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-4); }
+.slotHead h3 { font-size: var(--fs-card); line-height: 1.4; }
+.slotMeta { margin-left: var(--space-2); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; letter-spacing: 0; color: var(--sub); }
+.more-link { font-size: var(--fs-small); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.scroller { position: relative; margin-inline: 44px; }
+.cardRow { display: flex; gap: var(--space-6); margin: -8px; padding: 8px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 8px; scrollbar-width: none; scroll-behavior: smooth; }
+.cardRow::-webkit-scrollbar { display: none; }
+.cardRow > li { flex: 0 0 calc((100% - var(--space-6)) / 2); min-width: 0; scroll-snap-align: start; }
+.ccard { position: relative; display: flex; flex-direction: column; gap: var(--space-2); height: 100%; padding: 24px; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); overflow: hidden; }
+.cover { position: relative; aspect-ratio: 2 / 1; margin: -24px -24px 0; overflow: hidden; background: var(--pastel, var(--primary-50)); }
+.cover img.photo-bg { width: 100%; height: 100%; object-fit: cover; }
+.cover img.cat { position: absolute; width: 40%; aspect-ratio: 1; right: 6%; bottom: -8%; opacity: 0.22; }
+.cover img { transition: scale 0.4s var(--ease-micro); }
+.who { display: flex; align-items: flex-start; gap: var(--space-2); }
+.face { position: relative; flex: none; width: 64px; height: 64px; margin-top: -32px; border-radius: 50%; background: var(--primary-50); box-shadow: 0 0 0 3px #fff; overflow: hidden; }
+.face img, .face svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.id { flex: 1; min-width: 0; padding-top: 2px; }
+.name { font-weight: var(--fw-btn); line-height: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name a { text-decoration: none; }
+.fb { display: inline-flex; align-items: center; gap: 4px; height: 22px; margin-top: 4px; padding: 0 8px 0 3px; border-radius: var(--r-pill); background: var(--primary-50); box-shadow: var(--hair); font-size: var(--fs-badge); font-weight: var(--fw-btn); line-height: 1; }
+.fb img { width: 16px; height: 16px; border-radius: 3px; }
+.fb { white-space: nowrap; }
+/* 「팔로우」는 배너 오른쪽 위 모서리에 뜬 작은 버튼(시안 v25-card-align C안 · --shadow-float) */
+.acts { position: absolute; top: 12px; right: 12px; z-index: 1; }
+.acts .btn--line { background: rgb(255 255 255 / 0.92); box-shadow: 0 1px 3px rgb(0 0 0 / 0.15); }
+.acts .btn:not(.btn--line):not([aria-pressed="true"]) { box-shadow: 0 1px 3px rgb(0 0 0 / 0.15), inset 0 1px 0 rgb(255 255 255 / 0.45); }
+.followBtn[aria-pressed="true"] { box-shadow: 0 1px 3px rgb(0 0 0 / 0.15); }
+.line { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--fs-small); line-height: 1.5; color: var(--sub); min-height: 42px; }
+.ctags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.ctag { display: inline-flex; align-items: center; gap: 4px; min-height: 22px; padding: 0 8px 0 3px; border-radius: var(--r-pill); background: var(--f); color: var(--k); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08), 0 1px 3px rgb(0 0 0 / 0.06); font-size: var(--fs-badge); font-weight: var(--fw-bold); line-height: 1; letter-spacing: -0.01em; }
+.ctag img, .ctag svg { width: 16px; height: 16px; border-radius: 50%; }
+.rowArrow { --dot: 36px; position: absolute; top: 50%; z-index: 1; width: 40px; height: 44px; padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; transform: translateY(-50%); transition: scale 0.15s var(--ease-micro); }
+.rowArrow::before { content: ""; position: absolute; top: 4px; left: 2px; width: var(--dot); height: var(--dot); border-radius: var(--r-pill); background: #fff; box-shadow: inset 0 0 0 1px var(--field-line); }
+.rowArrow:hover::before { background: var(--gray-50); }
+.rowArrow svg { position: absolute; top: 13px; left: 11px; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rowArrow[hidden] { display: none; }
+.rowPrev { left: -44px; }
+.rowNext { right: -44px; }
+@media (max-width: 767px) {
+  .scroller { margin-inline: 0; }
+  .rowArrow { display: none; }
+  .cardRow > li { flex-basis: 88%; }
+  .ccard .btn--sm { padding: 0 10px; }
+}
+/* 바꾼 뒤 — 화살표 살짝 커짐 · 더 있는 쪽 끝만 흐려짐 · 배너 사진 1.03배 */
+.fx2 .cardRow { --ml: 0px; --mr: 0px; -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--ml), #000 calc(100% - var(--mr)), transparent 100%); mask-image: linear-gradient(to right, transparent 0, #000 var(--ml), #000 calc(100% - var(--mr)), transparent 100%); }
+.fx2 .cardRow[data-more-left] { --ml: 40px; }
+.fx2 .cardRow[data-more-right] { --mr: 40px; }
+@media (hover: hover) {
+  .fx2 .rowArrow:hover { scale: 1.08; }
+  .fx2 .ccard:hover .cover img { scale: 1.03; }
+}
+
+/* 3. 목록 줄 */
+.listStack { display: grid; gap: var(--space-6); }
+.rows { border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); overflow: hidden; }
+.rows > li + li { border-top: 1px solid var(--gray-200); }
+.row { position: relative; display: flex; align-items: center; gap: var(--space-4); min-height: 64px; padding: var(--space-3) var(--space-4); color: var(--ink); text-decoration: none; }
+.row:hover { background: var(--gray-50); }
+.faceSm { width: 40px; height: 40px; flex: none; }
+.w { flex: 1; min-width: 0; }
+.w b { display: block; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+.w span { display: block; font-size: var(--fs-small); line-height: 1.5; color: var(--sub); }
+.row.notice b { flex: 1; min-width: 0; font-weight: var(--fw-nav); }
+.t-meta { flex: none; font-size: var(--fs-small); color: var(--sub); }
+.chev { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--gray-600); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 767px) { .row { gap: var(--space-3); } .row .tag { display: none; } }
+/* 바꾼 뒤 — 왼쪽 하늘 막대 0→24, 꺾쇠 2px 오른쪽 */
+.fx3 .row::before { content: ""; position: absolute; left: 0; top: 50%; width: 3px; height: 0; border-radius: 0 3px 3px 0; background: var(--primary); transform: translateY(-50%); transition: height 0.2s var(--ease-micro); }
+.fx3 .chev { transition: transform 0.2s var(--ease-micro); }
+@media (hover: hover) {
+  .fx3 .row:hover::before { height: 24px; }
+  .fx3 .row:hover .chev { transform: translateX(2px); }
+}
+
+/* 4. 팔로우 버튼 */
+.followDemo { display: grid; grid-template-columns: minmax(0, 300px); justify-content: center; }
+.followBtn[aria-pressed="true"] { background: var(--white); background-image: none; box-shadow: var(--hair), var(--btn-ghost-shadow); }
+.followBtn .lbl { display: inline-block; }
+@keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.14); } 100% { transform: scale(1); } }
+.fx4 .followBtn .lbl.pop { animation: pop 0.2s var(--ease-micro); }
+
+/* 5. 첫 화면 히어로 그림 */
+.heroBand { border-radius: var(--r-card); overflow: hidden; background: url("../../../../../public/images/home/hero-bubbles.png") center / cover no-repeat, var(--grad-hero); }
+.heroIn { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-8) var(--space-6); }
+.heroCopy { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.t-lead { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; color: var(--gray-600); }
+.heroCopy h3 { font-size: var(--fs-title); line-height: 1.25; }
+.search { display: flex; align-items: center; gap: 12px; width: 100%; height: 56px; margin-top: var(--space-2); padding: 0 6px 0 20px; border-radius: var(--r-btn); background: #fff; box-shadow: inset 0 0 0 1px var(--gray-500); }
+.search span { flex: 1; min-width: 0; color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search i { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--primary); flex: none; }
+.search svg { width: 20px; height: 20px; }
+.heroArt { flex: 0 0 180px; width: 180px; height: 180px; object-fit: contain; }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.fx5 .heroArt { animation: float 6s ease-in-out infinite; }
+@media (max-width: 767px) {
+  .heroIn { flex-direction: column-reverse; align-items: stretch; padding: var(--space-6) var(--space-4); }
+  .heroArt { align-self: center; flex-basis: 136px; width: 136px; height: 136px; }
+}
+
+/* 6. 로그인 전 첫 화면 스크롤 */
+.scrollBox { height: 480px; overflow-y: auto; overscroll-behavior: contain; border-radius: var(--r-card); background: #fff; box-shadow: var(--hair), var(--card-shadow); }
+.scrollBox > * + * { margin-top: var(--space-12); }
+.scrollBox > :last-child { padding-bottom: var(--space-12); }
+.sbCol { padding-inline: var(--space-6); }
+.scrollBox .heroBand { border-radius: 0; }
+.sbHead { margin-bottom: var(--space-4); }
+.sbHead h3 { font-size: var(--fs-card); line-height: 1.4; }
+.sbHead p { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+.sbHead .accent { padding-inline: 2px; background: linear-gradient(90deg, #7dd3fc, #a5e1fa) no-repeat 0 90% / 100% 0.4em; }
+.stepRows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.stepRow { display: flex; align-items: flex-start; gap: var(--space-3); min-width: 0; }
+.stepRow > div { min-width: 0; }
+.stepRow img { flex: none; width: 56px; height: 56px; padding: var(--space-2); border-radius: var(--r-card); background: var(--tint); object-fit: contain; }
+.stepNum { font-size: var(--fs-small); font-weight: var(--fw-btn); color: var(--sub); }
+.stepRow h4 { margin: 2px 0; font-size: var(--fs-body); font-weight: var(--fw-btn); }
+.stepRow p.muted { font-size: var(--fs-small); line-height: 1.5; color: var(--sub); }
+.priceJoined { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); overflow: hidden; }
+.priceTier { padding: var(--space-4); min-width: 0; }
+.priceTier + .priceTier { border-left: 1px solid var(--gray-200); }
+.priceTier b { display: block; font-weight: var(--fw-btn); }
+.amount { font-size: var(--fs-card); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.scrollBox .flatTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.scrollBox .flatTile.card { min-height: 150px; }
+@media (max-width: 767px) {
+  .sbCol { padding-inline: var(--space-4); }
+  .stepRows, .priceJoined { grid-template-columns: minmax(0, 1fr); }
+  .priceTier + .priceTier { border-left: 0; border-top: 1px solid var(--gray-200); }
+}
+/* 바꾼 뒤 — 구획이 처음 보일 때 한 번만 16px 올라오며 나타남 */
+.fx6 .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.4s var(--ease-micro), transform 0.4s var(--ease-micro); }
+.fx6 .reveal.is-in { opacity: 1; transform: none; }
+
+/* 23-2 — 위 1~4 의 떠오름은 hover 기기에서만, 움직임 줄이기면 모두 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  a.card:hover, .ccard:hover, .btn:hover, .btn:active { transform: none !important; }
+  .fx1 .flatTile:hover img, .fx1 .flatTile:active img { transform: none !important; }
+  .fx2 .rowArrow:hover, .fx2 .ccard:hover .cover img { scale: none !important; }
+  .fx3 .row:hover .chev { transform: none !important; }
+  .fx6 .reveal { opacity: 1 !important; transform: none !important; }
+}
+/* 1. 바꾼 뒤 — 아이콘 그림만 2px 떠오르며 1.04배, 누르면 98% */
+.fx1 .flatTile img { transition: transform 0.25s var(--ease-micro); }
+@media (hover: hover) { .fx1 .flatTile:hover img { transform: translateY(-2px) scale(1.04); } }
+.fx1 .flatTile:active img { transform: scale(0.98); transition-duration: 0.15s; }
+@media (prefers-reduced-motion: reduce) { .fx1 .flatTile img { transform: none !important; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <h1>홈 마이크로 디테일 · v38</h1>
+
+  <section class="now" aria-labelledby="now-title">
+    <h2 id="now-title">지금 사이트 홈</h2>
+    <div class="shots">
+      <figure class="shot" style="margin:0">
+        <p>팬 홈 /home (로그인 후)</p>
+        <div class="shot-frame"><img src="now/home.png" alt="지금 팬 홈 화면 전체"></div>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <p>첫 화면 / (로그인 전)</p>
+        <div class="shot-frame"><img src="now/landing.png" alt="지금 로그인 전 첫 화면 전체"></div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 1 -->
+  <section class="demo" aria-labelledby="d1">
+    <div class="demo-head"><span class="num">1</span><h2 id="d1">바로가기 아이콘 칸</h2><span class="pick pick--rec">추천</span></div>
+    <p class="try">아이콘 칸 위에 마우스를 올리고, 눌러 보세요.</p>
+    <div class="pair">
+      <div class="side"><p class="side-label">지금</p><div class="stage" data-tiles></div></div>
+      <div class="side side--fx fx1"><p class="side-label">바꾼 뒤</p><div class="stage" data-tiles></div></div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="demo" aria-labelledby="d2">
+    <div class="demo-head"><span class="num">2</span><h2 id="d2">팔로우한 크리에이터 카드 줄</h2><span class="pick pick--rec">추천</span></div>
+    <p class="try">화살표에 마우스를 올리고 눌러 옆으로 넘겨 보세요. 카드 위에도 올려 보세요.</p>
+    <div class="pair">
+      <div class="side"><p class="side-label">지금</p><div class="stage" data-row></div></div>
+      <div class="side side--fx fx2"><p class="side-label">바꾼 뒤</p><div class="stage" data-row></div></div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="demo" aria-labelledby="d3">
+    <div class="demo-head"><span class="num">3</span><h2 id="d3">목록 줄(처리할 일·공지)</h2><span class="pick pick--rec">추천</span></div>
+    <p class="try">줄 위에 마우스를 올려 보세요.</p>
+    <div class="pair">
+      <div class="side"><p class="side-label">지금</p><div class="stage" data-list></div></div>
+      <div class="side side--fx fx3"><p class="side-label">바꾼 뒤</p><div class="stage" data-list></div></div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="demo" aria-labelledby="d4">
+    <div class="demo-head"><span class="num">4</span><h2 id="d4">「팔로우」 버튼</h2><span class="pick pick--rec">추천</span></div>
+    <p class="try">「팔로우」 버튼을 눌러 보세요. 한 번 더 누르면 돌아가요.</p>
+    <div class="pair">
+      <div class="side"><p class="side-label">지금</p><div class="stage" data-follow></div></div>
+      <div class="side side--fx fx4"><p class="side-label">바꾼 뒤</p><div class="stage" data-follow></div></div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="demo" aria-labelledby="d5">
+    <div class="demo-head"><span class="num">5</span><h2 id="d5">첫 화면 히어로 그림</h2><span class="pick pick--opt">선택 — 손대지 않아도 혼자 움직이는 것</span></div>
+    <p class="try">오른쪽 고양이 그림을 몇 초 지켜보세요.</p>
+    <div class="pair">
+      <div class="side"><p class="side-label">지금</p><div class="stage" data-hero></div></div>
+      <div class="side side--fx fx5"><p class="side-label">바꾼 뒤</p><div class="stage" data-hero></div></div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="demo" aria-labelledby="d6">
+    <div class="demo-head"><span class="num">6</span><h2 id="d6">로그인 전 첫 화면 스크롤</h2><span class="pick pick--opt">선택 — 손대지 않아도 혼자 움직이는 것</span></div>
+    <p class="try">상자 안에서 아래로 스크롤해 보세요.</p>
+    <div class="pair">
+      <div class="side"><p class="side-label">지금</p><div class="stage" data-landing></div></div>
+      <div class="side side--fx fx6"><p class="side-label">바꾼 뒤</p><div class="stage" data-landing></div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var P = "../../../../../public";
+  var chev = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+  function faceSvg(color, cls) {
+    return '<svg class="' + (cls || '') + '" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="var(' + color + ')"/><circle cx="17" cy="22" r="2.6" fill="var(--ink)"/><circle cx="31" cy="22" r="2.6" fill="var(--ink)"/><path d="M18 29c2.5 3.5 9.5 3.5 12 0" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round" fill="none"/><circle cx="12.5" cy="28" r="3" fill="#fff" opacity=".45"/><circle cx="35.5" cy="28" r="3" fill="#fff" opacity=".45"/></svg>';
+  }
+  var chzzk = '<span class="ctag" style="--f:#E6FFF5;--k:#006B47"><img src="' + P + '/brand/chzzk.png" alt="">치지직</span>';
+  var soop = '<span class="ctag" style="--f:#EAF2FF;--k:#1F4FA8"><img src="' + P + '/brand/soop.png" alt="">SOOP</span>';
+  var yt = '<span class="ctag" style="--f:#FFECEC;--k:#A1150F"><img src="' + P + '/brand/youtube.svg" alt="">유튜브</span>';
+  var creators = [
+    { name: "하루", line: "하루의 놀이터 · 게임 방송을 해요.", pastel: "#D3F0EC", photo: true, tags: chzzk },
+    { name: "모모", line: "모모네 거실 · 노래 방송을 해요.", pastel: "#DCEBFF", face: "--face-3", tags: soop },
+    { name: "새벽달", line: "새벽달 라디오 · 새벽에 이야기를 나눠요.", pastel: "#FFF1B8", face: "--face-5", tags: yt },
+    { name: "별이", line: "별이의 작업실 · 그림 그리는 방송을 해요.", pastel: "#DFF5D8", face: "--face-1", tags: chzzk },
+    { name: "솜사탕", line: "솜사탕 식탁 · 맛있는 걸 같이 먹어요.", pastel: "#FDE2E4", face: "--face-4", tags: soop },
+    { name: "도담", line: "도담 홈트 · 집에서 같이 운동해요.", pastel: "#FFE5CC", face: "--face-2", tags: yt }
+  ];
+  function card(c, followed) {
+    var cover = c.photo
+      ? '<img class="photo-bg" src="img/haru-cover.webp" alt="">'
+      : '<img class="cat" src="' + P + '/images/logo-mark-clear.png" alt="">';
+    var face = c.photo ? '<img src="img/haru-face.webp" alt="">' : faceSvg(c.face);
+    var badge = c.photo ? '<span class="fb"><img src="img/haru-mark.webp" alt="">하루별</span>' : '';
+    var on = followed ? 'true' : 'false';
+    var btn = '<button type="button" class="btn btn--sm followBtn' + '" aria-pressed="' + on + '"><span class="lbl">' + (followed ? '팔로우 중' : '팔로우') + '</span></button>';
+    return '<div class="ccard"><div class="cover" style="--pastel:' + c.pastel + '" aria-hidden="true">' + cover + '</div>' +
+      '<div class="who"><div class="face">' + face + '</div><div class="id"><p class="name"><a href="#" onclick="return false">' + c.name + '</a></p>' + badge + '</div><div class="acts">' + btn + '</div></div>' +
+      '<p class="line">' + c.line + '</p><p class="ctags">' + c.tags + '</p></div>';
+  }
+
+  // 1. 바로가기
+  var tiles = [
+    ["선물 보내기", "팬꾹 주소로 먼저 보내요", "icon-gift"], ["보낸 선물", "진행 중 3건", "icon-truck"],
+    ["지금 할 일", "1건", "icon-approve"], ["받은 선물", "2건", "icon-gift"]
+  ];
+  var tilesHtml = '<ul class="flatTiles">' + tiles.map(function (t) {
+    return '<li><a class="card flatTile" href="#" onclick="return false"><img src="' + P + '/images/home/' + t[2] + '.webp" alt="" width="48" height="48"><span class="flatLabel">' + t[0] + '</span><span class="caption">' + t[1] + '</span></a></li>';
+  }).join('') + '</ul>';
+  document.querySelectorAll('[data-tiles]').forEach(function (el) { el.innerHTML = tilesHtml; });
+
+  // 2. 카드 줄
+  var arrowPrev = '<button type="button" class="rowArrow rowPrev" aria-label="이전 크리에이터" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>';
+  var arrowNext = '<button type="button" class="rowArrow rowNext" aria-label="다음 크리에이터"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>';
+  var rowHtml = '<div class="slotHead"><h3>팔로우한 크리에이터<span class="slotMeta">6명</span></h3><a class="more-link" href="#" onclick="return false">모두 보기</a></div>' +
+    '<div class="scroller">' + arrowPrev + '<ul class="cardRow">' + creators.map(function (c) { return '<li>' + card(c, true) + '</li>'; }).join('') + '</ul>' + arrowNext + '</div>';
+  document.querySelectorAll('[data-row]').forEach(function (el) {
+    el.innerHTML = rowHtml;
+    var row = el.querySelector('.cardRow'), prev = el.querySelector('.rowPrev'), next = el.querySelector('.rowNext');
+    function sync() {
+      var max = row.scrollWidth - row.clientWidth;
+      var atStart = row.scrollLeft <= 2, atEnd = row.scrollLeft >= max - 2;
+      prev.hidden = atStart; next.hidden = atEnd;
+      row.toggleAttribute('data-more-left', !atStart);
+      row.toggleAttribute('data-more-right', !atEnd);
+    }
+    function step(dir) { var li = row.querySelector('li'); row.scrollBy({ left: dir * (li.getBoundingClientRect().width + 24) }); }
+    prev.addEventListener('click', function () { step(-1); });
+    next.addEventListener('click', function () { step(1); });
+    row.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    sync();
+  });
+
+  // 3. 목록 줄
+  var listHtml = '<div class="listStack"><div><div class="slotHead"><h3>처리할 일<span class="slotMeta">2건</span></h3></div><ul class="rows">' +
+    '<li><a class="row" href="#" onclick="return false">' + faceSvg('--face-6', 'faceSm') + '<span class="w"><b>하루님께</b><span>상자 1개 · 10월 20일 (화)에 보냈어요</span></span><span class="tag tag--warn">승인 대기</span>' + chev + '</a></li>' +
+    '<li><a class="row" href="#" onclick="return false">' + faceSvg('--face-3', 'faceSm') + '<span class="w"><b>모모님께</b><span>상자 2개 · 10월 18일 (토)에 보냈어요</span></span><span class="tag">검수 중</span>' + chev + '</a></li>' +
+    '</ul></div><div><div class="slotHead"><h3>공지사항</h3></div><ul class="rows">' +
+    '<li><a class="row notice" href="#" onclick="return false"><b>팬꾹 서비스 시작 안내</b><span class="t-meta">10.01</span>' + chev + '</a></li>' +
+    '<li><a class="row notice" href="#" onclick="return false"><b>선물 보내기 전에 꼭 확인해 주세요 (크기·무게 기준)</b><span class="t-meta">10.01</span>' + chev + '</a></li>' +
+    '</ul></div></div>';
+  document.querySelectorAll('[data-list]').forEach(function (el) { el.innerHTML = listHtml; });
+
+  // 4. 팔로우 버튼
+  document.querySelectorAll('[data-follow]').forEach(function (el) {
+    el.innerHTML = '<div class="followDemo">' + card(creators[0], false) + '</div>';
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.followBtn');
+    if (!b) return;
+    var on = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    var lbl = b.querySelector('.lbl');
+    lbl.textContent = on ? '팔로우 중' : '팔로우';
+    if (b.closest('.fx4')) { lbl.classList.remove('pop'); void lbl.offsetWidth; lbl.classList.add('pop'); }
+  });
+  document.addEventListener('animationend', function (e) { if (e.target.classList.contains('pop')) e.target.classList.remove('pop'); });
+
+  // 5. 히어로
+  var searchIc = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+  var heroHtml = '<div class="heroBand"><div class="heroIn"><div class="heroCopy"><p class="t-lead">크리에이터에게 선물을 보낼 때</p><h3>나의 크리에이터를 찾아요</h3>' +
+    '<div class="search"><span>나의 크리에이터를 찾아보세요</span><i>' + searchIc + '</i></div></div>' +
+    '<img class="heroArt" src="' + P + '/images/home/creator-cat.webp" alt="" width="180" height="180"></div></div>';
+  document.querySelectorAll('[data-hero]').forEach(function (el) { el.innerHTML = heroHtml; });
+
+  // 6. 로그인 전 스크롤
+  var steps = [
+    ["1. 등록", "선물을 등록해요", "결제하면 팬꾹 주소가 바로 나와요.", "icon-gift"],
+    ["2. 승인", "크리에이터가 승인해요", "크리에이터가 승인한 선물만 배송합니다.", "icon-approve"],
+    ["3. 검수", "모든 선물을 검수해요", "상자를 열어 하나씩 확인해요.", "icon-inspect"],
+    ["4. 배송", "팬꾹이 대신 보내요", "주소는 팬에게 보이지 않아요.", "icon-truck"]
+  ];
+  var landTiles = [["크리에이터 찾기", "icon-find"], ["선물 보내기", "icon-gift"], ["배송 요금", "icon-fee"], ["도움말", "icon-help"]];
+  var landingHtml = '<div class="scrollBox">' + heroHtml +
+    '<div class="sbCol reveal"><ul class="flatTiles">' + landTiles.map(function (t) { return '<li><a class="card flatTile" href="#" onclick="return false"><img src="' + P + '/images/home/' + t[1] + '.webp" alt=""><span class="flatLabel">' + t[0] + '</span></a></li>'; }).join('') + '</ul></div>' +
+    '<div class="sbCol reveal"><div class="sbHead"><h3><span class="accent">안전하게</span> 보내요</h3><p>크리에이터가 승인한 선물만 배송합니다.</p></div><ul class="stepRows">' +
+    steps.map(function (s) { return '<li class="stepRow"><img src="' + P + '/images/home/' + s[3] + '.webp" alt=""><div><p class="stepNum">' + s[0] + '</p><h4>' + s[1] + '</h4><p class="muted">' + s[2] + '</p></div></li>'; }).join('') + '</ul></div>' +
+    '<div class="sbCol reveal"><div class="sbHead"><h3>새로 들어온 크리에이터</h3></div><div class="scroller" style="margin-inline:0"><ul class="cardRow">' + creators.slice(1, 4).map(function (c) { return '<li>' + card(c, false) + '</li>'; }).join('') + '</ul></div></div>' +
+    '<div class="sbCol reveal"><div class="sbHead"><h3>배송 요금 안내</h3><p>박스 크기와 무게에 따라 선택해주세요.</p></div><div class="priceJoined">' +
+    '<div class="priceTier"><b>소형</b><span class="amount">6,900원</span></div><div class="priceTier"><b>중형</b><span class="amount">8,900원</span></div><div class="priceTier"><b>대형</b><span class="amount">11,900원</span></div></div></div>' +
+    '<div class="sbCol reveal"><div class="sbHead"><h3>공지사항</h3></div><ul class="rows"><li><a class="row notice" href="#" onclick="return false"><b>팬꾹 서비스 시작 안내</b><span class="t-meta">10.01</span></a></li><li><a class="row notice" href="#" onclick="return false"><b>요금 안내: 상자마다 배송비가 포함돼 있어요</b><span class="t-meta">09.30</span></a></li></ul></div>' +
+    '</div>';
+  document.querySelectorAll('[data-landing]').forEach(function (el) { el.innerHTML = landingHtml; });
+  var box = document.querySelector('.fx6 .scrollBox');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } });
+    }, { root: box, threshold: 0.15 });
+    box.querySelectorAll('.reveal').forEach(function (r) { io.observe(r); });
+  } else {
+    box.querySelectorAll('.reveal').forEach(function (r) { r.classList.add('is-in'); });
+  }
+})();
+</script>
+</body>
+</html>

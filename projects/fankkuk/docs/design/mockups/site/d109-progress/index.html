@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>선물 현황 승인 대기 비교</title>
+<style>
+body{margin:0;font-family:Pretendard,system-ui,sans-serif;background:#f9fafb;color:#1f2937}
+header{padding:32px 40px 8px}h1{font-size:28px;margin:0 0 8px}p{margin:4px 0;color:#4b5563;line-height:1.6}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:24px 40px 48px}
+.col{background:#fff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden}
+.col h2{font-size:18px;margin:0;padding:16px 20px;border-bottom:1px solid #e5e7eb}
+.col h2 small{display:block;font-size:14px;font-weight:500;color:#4b5563;margin-top:4px}
+.col.rec h2{background:#f0f8ff}
+.col img{display:block;width:100%;height:auto}
+iframe{display:block;width:1440px;height:1100px;border:0;transform:scale(.47);transform-origin:0 0}
+.frame{height:520px;overflow:hidden}
+@media(max-width:999px){.grid{grid-template-columns:1fr;padding:16px}header{padding:24px 16px 0}}
+</style></head><body>
+<header>
+<h1>선물 현황 — 승인 대기를 어떻게 보여 줄까</h1>
+<p>크리에이터 계정의 「선물 현황」 화면 맨 위, 팬이 보낸 선물 중 <b>승인을 기다리는 선물</b>을 보여 주는 방식입니다.</p>
+<p>왼쪽은 스펙 문장대로(선물마다 한 줄), 오른쪽은 승인한 v37 시안이자 지금 사이트 화면입니다. 숫자와 버튼이 보이는 조건은 둘 다 같습니다.</p>
+</header>
+<div class="grid">
+  <section class="col">
+    <h2>되돌리기 — 선물마다 한 줄<small>승인 대기 셋이 각각 한 줄씩, 줄마다 「처리할 일」 버튼이 붙음 (v37 이전 사이트 화면)</small></h2>
+    <img src="../v37-part2/now/progress-1440.png" alt="이전 선물 현황 화면: 승인 대기 선물이 줄마다 한 줄씩">
+  </section>
+  <section class="col rec">
+    <h2>추천 — 판 하나로 모음<small>「3건 승인 대기」를 크게, 보낸 팬 얼굴을 겹쳐서, 「지금 할 일」 버튼 하나 (지금 사이트)</small></h2>
+    <div class="frame"><iframe src="../v37-part2/progress.html" title="v37 선물 현황 시안"></iframe></div>
+  </section>
+</div>
+</body></html>
