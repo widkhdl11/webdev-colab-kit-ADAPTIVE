@@ -87,3 +87,12 @@
 .more { display: contents; }
 /* 칩 폭을 재는 보이지 않는 사본 — 자리를 차지하지 않는다 */
 .measure { position: absolute; top: 0; left: 0; display: flex; width: max-content; visibility: hidden; pointer-events: none; }
+
+/* 24절 — 누를 수 있는 카드에 마우스를 올리면 배너 사진(없으면 흐린 고양이)이 칸 안에서 1.03배(시안 v38-home-micro 2번). 마우스 기기에서만, 움직임 줄이기면 끈다 */
+.cover > img { transition: scale 0.4s var(--ease-micro); }
+@media (hover: hover) {
+  .card:has(.name a[href]):hover .cover > img { scale: 1.03; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cover > img { scale: none !important; }
+}

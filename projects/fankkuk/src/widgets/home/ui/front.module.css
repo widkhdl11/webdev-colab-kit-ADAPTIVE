@@ -143,28 +143,32 @@
    넓힌 자리에는 이웃 카드가 바깥쪽으로 흐려지며 보이고 화살표는 그 자리에 선다. 첫 카드는 다른 구간과 같은 왼쪽 선.
    --edge: 768 이하 8(카드 초점 테두리 여유만) · 769 이상 40(본문 칸 바깥 여백 안) · 본문 칸 안쪽이 기둥보다 48 넉넉하면(928 이상) 64.
    흐려지는 면은 카드에서 8 떨어진 곳까지만 — 초점 테두리(3 + 2)가 흐려지지 않는다 */
-.scroller { position: relative; --edge: var(--space-2); }
+.scroller { position: relative; --edge: var(--space-2); --fade: 40px; } /* 넓힌 자리가 없는 폭은 흐려지는 면이 카드 위에 40(시안 v38 2번) */
 /* 로그인 전 본문은 양옆 여백이 24px이라 좁은 창에서는 화살표 자리 40px이 부족하다. */
 @media (width < 1024px) {
-  .landing .scroller { --edge: var(--space-2); }
+  .landing .scroller { --edge: var(--space-2); --fade: 40px; }
   .landing .rowArrow { display: none; }
   .landing .cardRow.cardRowScroll { scrollbar-width: auto; }
   .landing .cardRow.cardRowScroll::-webkit-scrollbar { display: block; }
 }
 @media (min-width: 769px) {
-  .scroller { --edge: 40px; }
+  .scroller { --edge: 40px; --fade: calc(var(--edge) - var(--space-2)); }
 }
 @container pane (min-width: 928px) {
-  .scroller { --edge: 64px; }
+  .scroller { --edge: 64px; --fade: calc(var(--edge) - var(--space-2)); }
 }
 .scroller > .cardRow.cardRowScroll {
-  --fade: calc(var(--edge) - var(--space-2));
+  --fade-l: 0px;
+  --fade-r: 0px;
   margin: calc(-1 * var(--space-2)) calc(-1 * var(--edge));
   padding: var(--space-2) var(--edge);
   scroll-padding-inline: var(--edge);
-  -webkit-mask-image: linear-gradient(to right, transparent, var(--white) var(--fade), var(--white) calc(100% - var(--fade)), transparent);
-  mask-image: linear-gradient(to right, transparent, var(--white) var(--fade), var(--white) calc(100% - var(--fade)), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, var(--white) var(--fade-l), var(--white) calc(100% - var(--fade-r)), transparent);
+  mask-image: linear-gradient(to right, transparent, var(--white) var(--fade-l), var(--white) calc(100% - var(--fade-r)), transparent);
 }
+/* 24절 — 카드가 더 있는 쪽 끝만 흐려진다(처음엔 오른쪽만, 끝까지 가면 왼쪽만). 판정은 화살표와 같다(card-row-scroller 의 data-more-*) */
+.scroller > .cardRow.cardRowScroll[data-more-left] { --fade-l: var(--fade); }
+.scroller > .cardRow.cardRowScroll[data-more-right] { --fade-r: var(--fade); }
 /* 스크롤 막대는 화살표가 보이는 폭에서만 숨긴다 — 768 이하 좁은 창을 마우스로 쓰는 사람은 막대로 넘긴다(손가락 기기는 원래 막대가 저절로 숨는다) */
 @media (min-width: 769px) {
   .cardRow.cardRowScroll { scrollbar-width: none; }
@@ -321,7 +325,7 @@
   .roleHome .heroCopy > h1 { font-size: var(--fs-title); }
 }
 @container home (width < 960px) {
-  .roleHome .scroller { --edge: var(--space-2); }
+  .roleHome .scroller { --edge: var(--space-2); --fade: 40px; }
   .roleHome .rowArrow { display: none; }
   .roleHome .cardRow.cardRowScroll { scrollbar-width: auto; }
   .roleHome .cardRow.cardRowScroll::-webkit-scrollbar { display: block; }
@@ -336,4 +340,27 @@
   .roleHome .flatTiles { gap: var(--space-4); }
   .roleHome .flatTile:global(.card) { min-height: 164px; }
   .summaryRow { gap: var(--space-3); }
+}
+
+/* 24절 메인 화면 마이크로 디테일(2026-10-22 승인, 시안 v38-home-micro 1·2번 「바꾼 뒤」). 떠오름·확대는 마우스 기기에서만, 움직임 줄이기면 끈다. 키보드 포커스 표시는 그대로.
+   1) 바로가기 — 아이콘 그림만 2px 떠오르며 1.04배, 누르면 98%(칸 면 효과는 넣지 않는다) */
+.flatTile img, .tile img { transition: transform 0.25s var(--ease-micro); }
+@media (hover: hover) {
+  .flatTile:hover img, .tile:hover img { transform: translateY(-2px) scale(1.04); }
+}
+.flatTile:active img, .tile:active img { transform: scale(0.98); transition-duration: 0.15s; }
+/* 2) 카드 줄 화살표 — 마우스를 올리면 1.08배(위치를 잡는 transform 과 따로 scale 로) */
+.rowArrow { transition: scale 0.15s var(--ease-micro); }
+@media (hover: hover) {
+  .rowArrow:hover { scale: 1.08; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flatTile img, .tile img { transform: none !important; }
+  .rowArrow { scale: none !important; }
+}
+/* 3) 공지 줄 — 마우스를 올리면 왼쪽 하늘색 3px 막대가 0→24px(시안 v38-home-micro 3번, 꺾쇠는 새로 붙이지 않는다. 처리할 일 줄은 home.module.css) */
+.notices:global(.nlist) a { position: relative; }
+.notices:global(.nlist) a::before { content: ""; position: absolute; left: 0; top: 50%; width: 3px; height: 0; border-radius: 0 3px 3px 0; background: var(--primary); transform: translateY(-50%); transition: height 0.2s var(--ease-micro); pointer-events: none; }
+@media (hover: hover) {
+  .notices:global(.nlist) a:hover::before { height: 24px; }
 }

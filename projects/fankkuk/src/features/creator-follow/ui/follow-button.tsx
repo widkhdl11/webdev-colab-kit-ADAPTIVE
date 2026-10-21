@@ -54,6 +54,21 @@ export function FollowButton({
     (next === "gift" ? giftRef.current : followRef.current)?.focus();
   }, [following]);
 
+  // 상태가 바뀐 순간 글자가 0.2초 동안 1.14배까지 커졌다 돌아온다(design-rules 24절, 시안 v38-home-micro 4번) — 표시만, 처음 그릴 때는 튀지 않는다.
+  // 앞 값과 비교해서 고른다(개발 모드에서 효과가 두 번 돌아도 처음 그릴 때 튀지 않게). 카드 띠는 바뀐 뒤 보이는 주 버튼(팔로우 ↔ 선물 보내기)의 글자가 튄다
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const shownFollowing = useRef(following);
+  useEffect(() => {
+    if (shownFollowing.current === following) return;
+    shownFollowing.current = following;
+    const el = variant === "card" ? (following ? giftRef.current : followRef.current)?.querySelector("span") : labelRef.current;
+    if (!el) return;
+    el.classList.remove(s.pop);
+    void el.offsetWidth; // 같은 효과를 이어 다시 걸 때 처음부터 다시 돌게
+    el.classList.add(s.pop);
+    el.addEventListener("animationend", () => el.classList.remove(s.pop), { once: true });
+  }, [following, variant]);
+
   if (mode === "hidden") return null;
   if (mode === "login" && variant === "card") {
     return (
@@ -162,7 +177,9 @@ export function FollowButton({
     return (
       <>
         <button className="btn btn--line" type="button" onClick={onPress} disabled={saving}>
-          {following ? "팔로우 중" : "팔로우"}
+          <span ref={labelRef} className={s.lbl}>
+            {following ? "팔로우 중" : "팔로우"}
+          </span>
         </button>
         {notice}
         {unfollowConfirm.dialog}
@@ -180,7 +197,9 @@ export function FollowButton({
           onClick={onPress}
           disabled={saving}
         >
-          팔로우 중
+          <span ref={labelRef} className={s.lbl}>
+            팔로우 중
+          </span>
         </button>
       ) : (
         <button
@@ -190,7 +209,9 @@ export function FollowButton({
           onClick={onPress}
           disabled={saving}
         >
-          팔로우
+          <span ref={labelRef} className={s.lbl}>
+            팔로우
+          </span>
         </button>
       )}
       {notice}

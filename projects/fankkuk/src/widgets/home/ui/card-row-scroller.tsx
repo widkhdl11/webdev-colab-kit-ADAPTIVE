@@ -75,7 +75,15 @@ export function CardRowScroller({ id, label, children }: { id: string; label: st
       <button ref={prevBtn} type="button" className={`${s.rowArrow} ${s.rowPrev}`} aria-label="이전 크리에이터" aria-controls={id} hidden={!canPrev} onClick={() => step(-1)}>
         <Chevron dir="prev" />
       </button>
-      <ul ref={row} id={id} className={`${s.cardRow} ${s.cardRowScroll}`} aria-label={label}>
+      {/* 카드가 더 있는 쪽 끝만 흐려진다(design-rules 24절) — 화살표를 켜고 끄는 같은 판정을 data 속성으로 넘기고 모양은 CSS 가 정한다 */}
+      <ul
+        ref={row}
+        id={id}
+        className={`${s.cardRow} ${s.cardRowScroll}`}
+        aria-label={label}
+        data-more-left={canPrev ? "" : undefined}
+        data-more-right={canNext ? "" : undefined}
+      >
         {children}
       </ul>
       <button ref={nextBtn} type="button" className={`${s.rowArrow} ${s.rowNext}`} aria-label="다음 크리에이터" aria-controls={id} hidden={!canNext} onClick={() => step(1)}>

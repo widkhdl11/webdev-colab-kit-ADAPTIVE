@@ -57,3 +57,15 @@
   .stack > section > :is(ul, p) { order: 2; }
   .notices > :global(.head-row) > h2 { margin-bottom: var(--space-4); }
 }
+
+/* 24절 — 목록 줄(처리할 일·공지)에 마우스를 올리면 왼쪽 하늘색 3px 막대가 0→24px, 꺾쇠는 2px 오른쪽으로(시안 v38-home-micro 3번). 공지 줄은 꺾쇠 없이 막대만 */
+.row, .notices :global(.nlist) a { position: relative; }
+.row::before, .notices :global(.nlist) a::before { content: ""; position: absolute; left: 0; top: 50%; width: 3px; height: 0; border-radius: 0 3px 3px 0; background: var(--primary); transform: translateY(-50%); transition: height 0.2s var(--ease-micro); pointer-events: none; }
+.chev { transition: transform 0.2s var(--ease-micro); }
+@media (hover: hover) {
+  .row:hover::before, .notices :global(.nlist) a:hover::before { height: 24px; }
+  .row:hover .chev { transform: translateX(2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row:hover .chev { transform: none !important; }
+}

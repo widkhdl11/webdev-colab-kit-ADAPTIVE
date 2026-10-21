@@ -4,3 +4,8 @@
    비었을 때는 화면 낭독기 전용 모양으로 자리를 차지하지 않는다 — 떴을 때만 그 카드가 한 줄 높아진다(실패 순간이라 허용, design-rules 17절) */
 .cardNotice { flex: 0 0 100%; min-width: 0; margin: 0; color: var(--danger); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: var(--lh-caption); overflow-wrap: anywhere; }
 .cardNotice:empty { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* 「팔로우」↔「팔로우 중」이 바뀌는 순간 글자가 0.2초 동안 1.14배까지 커졌다 돌아온다(design-rules 24절, 시안 v38-home-micro 4번). 움직임 줄이기면 끈다 */
+.lbl { display: inline-block; }
+@keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.14); } 100% { transform: scale(1); } }
+.pop { animation: pop 0.2s var(--ease-micro); }
+@media (prefers-reduced-motion: reduce) { .pop { animation: none; } }
