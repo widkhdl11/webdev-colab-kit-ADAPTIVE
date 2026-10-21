@@ -35,7 +35,7 @@
 }
 
 /* 옅은 판 — 공개 화면 시안(v18-pub.css .card--soft)은 옅은 빨강. 전역 기본(회색)은 로그인 후 화면 값이다 */
-.page :global(.card--soft) { background: var(--primary-50); box-shadow: none; }
+.page :global(.card--soft) { background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
 
 /* 세 줄 요약 — 사실 카드 위 */
 .summary { margin-bottom: var(--space-6); }

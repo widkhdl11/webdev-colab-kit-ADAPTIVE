@@ -2,7 +2,7 @@
 
 .batch-h { font-size: var(--fs-card); line-height: 1.4; }
 /* 결제 끝 안내 — 아래 판과 붙지 않게 아래 간격 48 */
-.paid { margin-bottom: var(--space-12); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--primary-50); color: var(--brand-ink); } /* v18-cre.css .paid — 연한 하늘 바탕(--primary-50) + 진한 회색 글자(--brand-ink, 하늘색 글자는 쓰지 않는다 — design-rules 000절) */
+.paid { margin-bottom: var(--space-12); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--surface-accent-fx); color: var(--brand-ink); box-shadow: var(--surface-accent-shadow); } /* v18-cre.css .paid — 연한 하늘 바탕(--primary-50) + 진한 회색 글자(--brand-ink, 하늘색 글자는 쓰지 않는다 — design-rules 000절) */
 .lock { width: 56px; height: 56px; margin-bottom: var(--space-3); }
 .privacy-t { display: block; }
 .body-gap { margin-top: var(--space-2); }
@@ -10,7 +10,7 @@
 /* 묶음 — 제목 아래 상태 한 줄, 안내 판, 팬별 「지금 상태」 한 줄 목록(위아래), 그 아래 송장번호 접힌 칸 */
 .facts { margin-top: var(--space-1); }
 .guide { margin-top: var(--space-4); }
-.rows { margin: var(--space-4) 0 0; padding: 0; list-style: none; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
+.rows { margin: var(--space-4) 0 0; padding: 0; list-style: none; border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); overflow: hidden; }
 .rows > li + li { border-top: 1px solid var(--gray-200); }
 .row { display: flex; align-items: center; gap: var(--space-4); min-height: 64px; padding: var(--space-4) var(--space-6); }
 .av { width: 40px; height: 40px; flex: none; }
@@ -23,7 +23,7 @@
 .inv-tags { align-items: center; margin: 0; }
 
 /* 「송장번호 적기(선택)」 접힌 칸 — 시안 cre-21.css .fold · .fold-body · .inv-row(이름 96 · 칸) */
-.fold { margin-top: var(--space-4); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.fold { margin-top: var(--space-4); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); }
 .fold > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 48px; padding: 0 var(--space-6); border-radius: var(--r-btn); font-weight: var(--fw-btn); list-style: none; cursor: pointer; }
 .fold > summary::-webkit-details-marker { display: none; }
 .fold > summary:hover { background: var(--gray-50); }

@@ -1,6 +1,6 @@
 /* 결제창 카드 — 선물 보내기 입력 판과 같은 모양(v18 .part: 흰 판 + 1px 경계 + 반경 16), 입력 기둥(720)은 바깥 위젯이 정한다 */
 .section { padding-block: 0; }
-.card { display: flex; flex-direction: column; gap: 24px; max-width: 720px; margin-inline: auto; padding: var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair), var(--shadow); }
+.card { display: flex; flex-direction: column; gap: 24px; max-width: 720px; margin-inline: auto; padding: var(--space-6); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); }
 .title { margin: 0; font-size: var(--fs-card); line-height: 1.4; scroll-margin-top: 160px; }
 .title:focus { outline: none; }
 .title:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }

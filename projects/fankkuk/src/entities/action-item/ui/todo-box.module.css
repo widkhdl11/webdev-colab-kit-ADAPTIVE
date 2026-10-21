@@ -1,5 +1,5 @@
 /* 선물 상세 맨 위 「지금 할 일」 칸 — 시안 v34-part1/v34.css .tbox·.tbox.rv (design-rules 21절). 하늘 면 + 반경 24, 안쪽 24·32 */
-.box { position: relative; padding: var(--space-6) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--tint); scroll-margin-top: var(--space-6); }
+.box { position: relative; padding: var(--space-6) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); scroll-margin-top: var(--space-6); box-shadow: var(--surface-accent-shadow); }
 .eyebrow { font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
 .task { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-4) var(--space-8); align-items: center; margin-top: var(--space-2); }
 .task + .task { margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--tint-line); }

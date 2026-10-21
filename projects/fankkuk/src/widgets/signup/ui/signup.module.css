@@ -52,7 +52,7 @@
 .note { margin-top: var(--space-4); color: var(--gray-600); }
 
 /* 2단계 — 정보 입력 */
-.cr { display: grid; gap: 24px; padding: 24px; border-radius: var(--r-card); background: var(--primary-50); }
+.cr { display: grid; gap: 24px; padding: 24px; border-radius: var(--r-card); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
 .opt { font-weight: 400; }
 .terms { display: grid; gap: 4px; }
 .row { display: flex; align-items: center; gap: 12px; }

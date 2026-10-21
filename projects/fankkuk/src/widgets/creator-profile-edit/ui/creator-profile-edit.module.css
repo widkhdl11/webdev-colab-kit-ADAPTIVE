@@ -4,7 +4,7 @@
 .col > * { min-width: 0; }
 /* 전역의 「구간 + 구간 위 48」 을 걷는다 — 사이는 위 gap 하나로 */
 .col > section + section, .col > section + form { margin-top: 0; }
-.card { display: grid; gap: var(--space-4); padding: var(--space-6) var(--space-8); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.card { display: grid; gap: var(--space-4); padding: var(--space-6) var(--space-8); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); }
 .secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
 .fld { display: grid; gap: var(--space-2); }
 .fld :global(.label) { margin-bottom: 0; }

@@ -13,7 +13,7 @@
 .top > :global(#todo) { margin-top: var(--space-6); }
 
 /* 상태 판 — 하늘 면, 그림이 위로 반쯤 걸침 (시안 .dhero) */
-.dhero { position: relative; margin-top: var(--space-10); padding: var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--tint); }
+.dhero { position: relative; margin-top: var(--space-10); padding: var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
 .peek { position: absolute; top: -40px; right: var(--space-8); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
 .meta { padding-right: 112px; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
 .title.title { margin-top: var(--space-1); padding-right: 112px; font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
@@ -29,7 +29,12 @@
 .steps > li { min-width: 0; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
 .steps > li::before { content: ""; display: block; height: 8px; margin-bottom: var(--space-2); border-radius: var(--r-pill); background: var(--white); }
 .steps > li.done, .steps > li.stopped { color: var(--ink); }
-.steps > li.done::before { background: var(--primary); }
+.steps > li.done::before { background: var(--bar-fill-fx); transform-origin: left center; animation: bar-fill 0.5s var(--ease-micro) both; } /* 채운 칸 옅은 면 + 왼쪽부터 차례로 차오름(23-2) */
+.steps > li.done:nth-child(2)::before { animation-delay: 0.05s; }
+.steps > li.done:nth-child(3)::before { animation-delay: 0.1s; }
+.steps > li.done:nth-child(4)::before { animation-delay: 0.15s; }
+.steps > li.done:nth-child(5)::before { animation-delay: 0.2s; }
+.steps > li.done:nth-child(6)::before { animation-delay: 0.25s; }
 .steps > li.next { color: var(--ink); font-weight: var(--fw-bold); }
 .steps > li.next::before { box-shadow: inset 0 0 0 2px var(--primary); }
 /* 멈춘 단계(돌려보냄) — 빨강 대신 본문색 막대 */
@@ -40,12 +45,12 @@
 .dgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; margin-top: var(--space-6); }
 /* 카드끼리 위 여백 없음 — 전역 「구간 + 구간」 여백보다 앞서게 */
 .dgrid > .dcard.dcard { margin-top: 0; }
-.dcard { min-width: 0; padding: var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); }
-.dcard.muted { border-color: var(--surface-muted); background: var(--surface-muted); }
+.dcard { min-width: 0; padding: var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--card-shadow); }
+.dcard.muted { border-color: var(--surface-muted); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .cardTitle.cardTitle { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; }
 .cardTitle:focus { outline: none; }
 .muted .cardTitle { color: var(--sub); }
-.amount { margin-top: var(--space-2); font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); letter-spacing: -1px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.amount { margin-top: var(--space-2); font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); letter-spacing: var(--ls-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
 .duetag.duetag { display: inline-flex; margin-top: var(--space-2); white-space: normal; }
 .ok { margin-top: var(--space-4); }
 .ok :global(.tag) { gap: 6px; }
@@ -55,8 +60,10 @@
 .fold { margin-top: var(--space-4); border-top: 1px solid var(--gray-200); }
 .fold summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 44px; font-size: var(--fs-small); font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
 .fold summary::-webkit-details-marker { display: none; }
-.fold summary::after { content: "+"; flex: none; font-size: var(--fs-card); color: var(--sub); }
-.fold[open] summary::after { content: "–"; }
+/* 「+」가 열리면 45도 돌아 닫기 표시가 된다(글자를 바꾸지 않고 돌린다), 열린 내용은 4px 내려오며 나타남(design-rules 23-2) */
+.fold summary::after { content: "+"; display: inline-block; flex: none; font-size: var(--fs-card); color: var(--sub); transition: transform 0.25s var(--ease-micro); }
+.fold[open] summary::after { transform: rotate(45deg); }
+.fold[open] > :not(summary) { animation: fold-in 0.25s var(--ease-micro) both; }
 .fold summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .in { padding: var(--space-2) 0; }
 .in > * + * { margin-top: var(--space-3); }
@@ -95,7 +102,7 @@
 .memo-card { display: grid; gap: var(--space-4); }
 .memoName { font-size: var(--fs-small); color: var(--sub); }
 .memo-title.memo-title { margin-top: var(--space-1); font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
-.memo { display: grid; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--tint); }
+.memo { display: grid; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-sheen); }
 .memo-lab { display: flex; align-items: center; gap: var(--space-2); color: var(--sub); font-size: var(--fs-small); }
 .memo-lock { width: var(--icon-xs); height: var(--icon-xs); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .memo-body { white-space: pre-line; overflow-wrap: anywhere; }
@@ -111,3 +118,7 @@
   .steps { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3) var(--space-1); }
   .dgrid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* 움직임 — 모듈 안 이름이라 여기 따로 둔다(값은 base.css 23절과 같다). 「움직임 줄이기」에서는 base.css 가 모두 끈다 */
+@keyframes bar-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes fold-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }

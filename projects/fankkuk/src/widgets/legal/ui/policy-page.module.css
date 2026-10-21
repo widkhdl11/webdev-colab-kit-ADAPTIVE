@@ -20,10 +20,10 @@
 .facts > * + *::before { content: ""; display: inline-block; width: 1px; height: 12px; margin-right: var(--space-4); background: var(--gray-200); vertical-align: middle; }
 .facts a { color: var(--gray-900); font-weight: var(--fw-btn); }
 
-.past { margin: 0; padding: var(--space-4) var(--space-6); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.past { margin: 0; padding: var(--space-4) var(--space-6); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); background: var(--card-fx);}
 
 /* 「먼저 세 가지」 판 — 옅은 하늘 면, 하늘 동그라미 번호 */
-.summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-8); border-radius: var(--r-panel); background: var(--tint); }
+.summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-8); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
 .summaryT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
 .summaryList { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--col-list); margin: 0; padding: 0; list-style: none; counter-reset: sum; }
 .summaryList li { display: flex; gap: var(--space-3); align-items: flex-start; counter-increment: sum; }
@@ -46,7 +46,7 @@
 .tocLink:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 
 /* 글 자리가 976 보다 좁을 때(로그인 전 880 에서는 늘) — 왼쪽 목차 대신 글 위 접는 칸 */
-.tocTop { display: none; margin-bottom: var(--space-8); padding: var(--space-4); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200); }
+.tocTop { display: none; margin-bottom: var(--space-8); padding: var(--space-4); border-radius: var(--r-card); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); background: var(--card-fx);}
 .tocTop > summary { font-weight: var(--fw-btn); cursor: pointer; }
 .tocTopList { display: flex; flex-direction: column; gap: 2px; margin-top: var(--space-3); }
 
@@ -66,7 +66,7 @@
 .steps li::before { content: counter(st); position: absolute; top: 0; left: 0; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary-50); font-size: var(--fs-small); font-weight: var(--fw-bold); line-height: 1; }
 
 /* 단계 칩 한 줄 — 회색 면 안에 이름표 · 흰 칩(사이 › ) · 덧붙임 한 줄 */
-.stages { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--gray-50); }
+.stages { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .stagesT { color: var(--gray-600); font-size: var(--fs-small); font-weight: var(--fw-btn); }
 .chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--fs-small); line-height: 1.5; }
 .chips li { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
@@ -105,14 +105,14 @@
 
 /* 버전 기록 */
 .versions { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.version { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--gray-50); }
+.version { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
 .version a { color: var(--gray-900); font-weight: var(--fw-btn); }
 .nowTag { padding: 2px var(--space-3); border-radius: var(--r-tag); background: var(--primary-50); font-size: var(--fs-small); font-weight: var(--fw-btn); }
 .sub { color: var(--gray-600); }
 .note { margin: 0; color: var(--gray-500); font-size: var(--fs-small); }
 
 /* 맨 아래 문의 판 */
-.ask { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); margin-top: var(--space-4); padding: var(--space-8); border-radius: var(--r-panel); background: var(--tint); text-align: center; }
+.ask { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); margin-top: var(--space-4); padding: var(--space-8); border-radius: var(--r-panel); background: var(--surface-accent-fx); text-align: center; box-shadow: var(--surface-accent-shadow); }
 .ask p { margin: 0; }
 
 @container (max-width: 975px) {

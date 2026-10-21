@@ -1,7 +1,7 @@
 /* 크리에이터 프로필 머리·팬덤 뱃지 — 시안 docs/design/mockups/site/v21-addendum3/cre-21.css 「프로필 구간」·「팬덤 뱃지」·「미리보기」.
    값은 시안 :root(--band-h 168 · --av 104 · --av-ring 4 · --badge-h2 28 · --mark-s 20 · --pf-pad 32, 768 이하 112 · 80 · 16).
    --personal·--on-personal·--personal-line 은 creatorColorVars 가 8색인지 본 뒤에만 넣는다 — 없으면 아래 기본값(사이트 기본 모양). */
-.pf { --band-h: 168px; --av: 104px; --av-ring: 4px; --pf-pad: 32px; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
+.pf { --band-h: 168px; --av: 104px; --av-ring: 4px; --pf-pad: 32px; border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); overflow: hidden; }
 /* 띠 2.5:1(공개 프로필 머리와 같다 — 시안 v24-creator-card pubhead-alt). 사진이 없으면 테마 색 면(파스텔이라 섞지 않는다, design-rules 17절) + 흐린 고양이(creator-cover-art), 테마 색도 없으면 옅은 하늘 면 */
 .band { position: relative; display: block; overflow: hidden; aspect-ratio: 5 / 2; background: var(--primary-50); }
 .tinted .band { background: var(--personal); }

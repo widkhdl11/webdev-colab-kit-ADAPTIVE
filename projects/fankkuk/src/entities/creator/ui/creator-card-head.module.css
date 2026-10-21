@@ -3,13 +3,13 @@
    카드를 덮는 이름 링크·하단 버튼은 카드를 기준으로 놓인다 — 그래서 머리 칸은 position 을 갖지 않는다. */
 /* 카드 겉 틀(li) — 찾기·팔로우·홈이 같이 쓴다(creatorCardClass). 안쪽 24(--card-pad) · 반경 16 · 줄 사이 8. 카드 전체가 프로필 링크(이름 링크가 덮는다).
    테두리는 배너 사진 위에 그리는 층 — 안쪽 그림자로 그리면 사진이 덮어 hover 가 위쪽에서 안 보인다. 클릭은 통과(pointer-events: none) */
-.card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--white); cursor: pointer; }
+.card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--card-pad); border-radius: var(--r-card); background: var(--card-fx); cursor: pointer; box-shadow: var(--card-shadow); }
 .card::before { content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--gray-200); pointer-events: none; transition: box-shadow 0.15s; }
 .card:hover::before, .card:focus-within::before { box-shadow: inset 0 0 0 1px var(--gray-500); }
 /* 카드 전체가 누르는 자리 — 마우스를 올리면 위로 2px + 그림자, 누르면 98%(2026-10-18 재진단). 손가락 기기는 떠오르지 않는다 */
-.card { transition: transform var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
-.card:has(.name a[href]):hover { transform: translateY(-2px); box-shadow: var(--lift-hover); } /* 누를 수 있는 카드만 — 설정 화면 미리보기(링크 없음)는 뜨지 않는다 */
-.card:has(.name a[href]):focus-within { box-shadow: var(--lift-hover); }
+.card { transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro); }
+.card:has(.name a[href]):hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); } /* 누를 수 있는 카드만 — 설정 화면 미리보기(링크 없음)는 뜨지 않는다 */
+.card:has(.name a[href]):focus-within { box-shadow: var(--card-shadow-hover); }
 @media (hover: none) { .card:hover { transform: none; } }
 /* 누름은 손가락 기기에서도 — hover 규칙보다 뒤에 둔다. 안의 버튼(팔로우·선물 보내기)을 누를 때는 카드가 움직이지 않는다 */
 .card:has(.name a[href]):active:not(:has(button:active, [data-card-btn]:active)) { transform: scale(0.98); transition-duration: var(--dur-press); }

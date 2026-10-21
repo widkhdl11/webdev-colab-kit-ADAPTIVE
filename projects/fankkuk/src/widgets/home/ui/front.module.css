@@ -75,7 +75,7 @@
 .promiseRow .muted { font-size: var(--fs-small); line-height: var(--lh-caption); }
 
 /* ⑥ 요금 한 장 — 세 칸, 칸 사이 세로 1px 선 */
-.priceJoined { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
+.priceJoined { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); overflow: hidden; }
 .priceTier { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; padding: var(--space-6); }
 .priceTier + .priceTier { border-left: 1px solid var(--gray-200); }
 .priceTier .amount { margin-top: 0; }
@@ -219,8 +219,8 @@
 }
 
 /* ⑤ 약속 — 옅은 하늘 큰 판(반경 24 · 안쪽 48). 제목·모형·카드가 같은 왼쪽 선, 가입 버튼만 가운데(2026-10-17 사용자 지시) */
-.promise { padding: var(--space-12); border-radius: var(--r-panel); background: var(--tint); }
-.promise :global(.card) { box-shadow: inset 0 0 0 1px var(--primary-50), var(--shadow); }
+.promise { padding: var(--space-12); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+.promise :global(.card) { box-shadow: inset 0 0 0 1px var(--primary-50), var(--card-shadow); }
 .promiseCard { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
 .iconWrap { display: grid; place-items: center; width: var(--icon-wrap); height: var(--icon-wrap); border-radius: var(--r-pill); background: var(--primary-50); color: var(--brand-ink); }
 .iconWrap svg { width: var(--icon); height: var(--icon); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -231,7 +231,7 @@
 .mock * { pointer-events: none; }
 .mockBar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); font-weight: var(--fw-btn); color: var(--gray-900); }
 .mockTag { display: inline-flex; align-items: center; min-height: 32px; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-900); font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: var(--lh-caption); }
-.mockCard { display: grid; gap: var(--space-2); padding: var(--space-6); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow); }
+.mockCard { display: grid; gap: var(--space-2); padding: var(--space-6); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); }
 .mockRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--gray-50); }
 .mockRow:first-child { background: var(--primary-50); }
 .mockRow b { font-weight: var(--fw-btn); }
@@ -252,7 +252,7 @@
 .notes li::before { content: "· "; }
 
 /* ⑦ 공지 — 한 줄 목록 카드 묶음. 줄마다 제목 왼쪽 · 날짜 오른쪽 */
-.notices:global(.nlist) { border-top: 0; border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
+.notices:global(.nlist) { border-top: 0; border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); overflow: hidden; }
 .notices:global(.nlist) li + li { border-top: 1px solid var(--gray-200); }
 .notices:global(.nlist) a { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 64px; padding: var(--space-3) var(--space-4); border-radius: 0; box-shadow: none; }
 .notices:global(.nlist) b { min-width: 0; font-weight: var(--fw-nav); }

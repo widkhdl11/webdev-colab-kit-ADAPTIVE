@@ -2,8 +2,8 @@
    하늘 판 하나(보낸 크리에이터 머리 + 받을지 정하는 칸, 「받기」 뒤에는 같은 판 안 주소 확인) → 결과 판(.part, 전역) → 접은 칸 둘 */
 
 /* 판 — 할 일이 있을 때만 하늘 면, 그림이 위로 걸침 (시안 .rvcard) */
-.rvcard { position: relative; margin-top: var(--space-12); padding: var(--space-10) var(--space-8) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--tint); }
-.rvcard.calm { border-color: var(--gray-200); background: var(--white); }
+.rvcard { position: relative; margin-top: var(--space-12); padding: var(--space-10) var(--space-8) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+.rvcard.calm { border-color: var(--gray-200); background: var(--card-fx); box-shadow: var(--card-shadow); }
 .peek { position: absolute; top: -48px; right: var(--space-8); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
 .who { display: flex; align-items: center; gap: var(--space-4); padding-right: 96px; }
 .who > div { min-width: 0; }
@@ -44,8 +44,9 @@
 .fold { border-top: 1px solid var(--gray-200); }
 .fold > summary { display: flex; align-items: center; gap: var(--space-2); min-height: 48px; cursor: pointer; list-style: none; }
 .fold > summary::-webkit-details-marker { display: none; }
-.fold > summary::after { content: "+"; margin-left: auto; font-size: var(--fs-card); color: var(--sub); }
-.fold[open] > summary::after { content: "–"; }
+.fold > summary::after { content: "+"; display: inline-block; margin-left: auto; font-size: var(--fs-card); color: var(--sub); transition: transform 0.25s var(--ease-micro); }
+.fold[open] > summary::after { transform: rotate(45deg); } /* 「+」가 45도 돌아 닫기 표시(design-rules 23-2) */
+.fold[open] > :not(summary) { animation: fold-in 0.25s var(--ease-micro) both; }
 .fold > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .fold > summary small { font-size: var(--fs-small); color: var(--sub); }
 .foldTitle.foldTitle { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.6; }
@@ -67,3 +68,6 @@
   .choice { flex-direction: column; }
   .choice :global(.btn) { width: 100%; }
 }
+
+/* 움직임 — 모듈 안 이름이라 여기 따로 둔다(값은 base.css 23절과 같다). 「움직임 줄이기」에서는 base.css 가 모두 끈다 */
+@keyframes fold-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }

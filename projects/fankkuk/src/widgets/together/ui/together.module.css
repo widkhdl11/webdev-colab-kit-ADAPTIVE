@@ -20,11 +20,11 @@
 .nums dd { order: -1; margin: 0; font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
 
 /* 「나만 볼 수 있어요」 — 회색 면 한 줄 (시안 .mnote) */
-.mnote { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-6); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--surface-muted); font-size: var(--fs-small); color: var(--sub); }
+.mnote { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-6); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--muted-fx); font-size: var(--fs-small); color: var(--sub); box-shadow: var(--muted-shadow); }
 .mnote strong { color: var(--ink); }
 
 /* 다음 기념일 — 시안에 없는 칸(30일 안일 때만). 옅은 하늘 면 */
-.ann { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); margin-top: var(--space-12); padding: var(--card-pad); border-radius: var(--r-card); background: var(--primary-50); text-align: center; }
+.ann { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); margin-top: var(--space-12); padding: var(--card-pad); border-radius: var(--r-card); background: var(--surface-accent-fx); text-align: center; box-shadow: var(--surface-accent-shadow); }
 .ann h2 { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
 .ann :global(.t-lead) { font-size: var(--fs-lead); }
 .dd em { font-style: normal; }
@@ -39,7 +39,7 @@
 
 /* 사진 격자 — PC 3열 사이 16, 휴대폰 2열 사이 12 (시안 .album · .tile) */
 .album { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; margin: var(--space-4) 0 0; padding: 0; list-style: none; }
-.tile { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); }
+.tile { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--card-shadow); }
 .tile:hover { box-shadow: 0 2px 8px rgb(31 41 55 / 0.08); }
 .badges { position: absolute; top: var(--space-3); left: var(--space-3); right: var(--space-3); display: flex; flex-wrap: wrap; gap: var(--space-1); pointer-events: none; }
 .badges :global(.tag) { background: var(--white); white-space: nowrap; }

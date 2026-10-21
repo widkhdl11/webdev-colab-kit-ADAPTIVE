@@ -14,11 +14,15 @@
 
 /* 선물 카드 — 진행 정도와 상관없이 같은 카드, 880 안 2열 사이 16 (시안 .gcards·.gcard) */
 .gcards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
-.gcard { position: relative; display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; padding: var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); }
-.gcard:hover { box-shadow: 0 2px 8px rgb(31 41 55 / 0.08); }
+.gcard { position: relative; display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; padding: var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--card-shadow); }
+/* 마우스를 올리면 그림자가 조금 짙어지고 마우스 기기에서만 2px 떠오름(design-rules 23-1·23-2) */
+.gcard { transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro); }
+.gcard:hover { box-shadow: var(--card-shadow-hover); }
+.gcard.hi:hover { box-shadow: var(--surface-accent-sheen), var(--card-shadow-hover); }
+@media (hover: hover) { .gcard:hover { transform: translateY(-2px); } }
 .gcard:has(:global(.stretch):focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
 /* 할 일이 있는 카드만 하늘 면 */
-.gcard.hi { border-color: var(--tint-line); background: var(--tint); }
+.gcard.hi { border-color: var(--tint-line); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
 .top { display: flex; align-items: center; gap: var(--space-3); }
 .face.face { width: 32px; height: 32px; font-size: var(--fs-small); overflow: hidden; }
 .who { flex: 1; min-width: 0; font-size: var(--fs-body); font-weight: var(--fw-bold); overflow-wrap: anywhere; }
@@ -28,7 +32,12 @@
 /* 진행 막대 — 여섯 칸 높이 8, 사이 4. 하늘 카드 위 빈 칸은 흰색 (시안 .pbar) */
 .pbar { display: flex; gap: var(--space-1); }
 .pbar i { flex: 1; height: 8px; border-radius: var(--r-pill); background: var(--gray-200); }
-.pbar i.on { background: var(--primary); }
+.pbar i.on { background: var(--bar-fill-fx); transform-origin: left center; animation: bar-fill 0.5s var(--ease-micro) both; } /* 왼쪽부터 칸마다 0.05초 늦게 차오름(23-2) */
+.pbar i.on:nth-child(2) { animation-delay: 0.05s; }
+.pbar i.on:nth-child(3) { animation-delay: 0.1s; }
+.pbar i.on:nth-child(4) { animation-delay: 0.15s; }
+.pbar i.on:nth-child(5) { animation-delay: 0.2s; }
+.pbar i.on:nth-child(6) { animation-delay: 0.25s; }
 .hi .pbar i:not(.on) { background: var(--white); }
 .pfoot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1) var(--space-3); margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
 .pfoot b { color: var(--ink); font-weight: var(--fw-btn); }
@@ -40,3 +49,6 @@
   .gcards { grid-template-columns: minmax(0, 1fr); }
   .gcard { padding: var(--space-4); }
 }
+
+/* 움직임 — 모듈 안 이름이라 여기 따로 둔다(값은 base.css 23절과 같다). 「움직임 줄이기」에서는 base.css 가 모두 끈다 */
+@keyframes bar-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }

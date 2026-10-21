@@ -5,7 +5,7 @@
 .tabEmpty { margin-top: var(--space-6); }
 .past-note { margin-top: var(--space-6); }
 /* 빈 상태 — 고양이 그림이 위로 걸친 하늘 면 */
-.epanel { position: relative; display: flex; align-items: center; gap: var(--space-8); margin-top: var(--space-24); padding: var(--space-12) var(--space-8) var(--space-8); border-radius: var(--r-panel); background: var(--tint); }
+.epanel { position: relative; display: flex; align-items: center; gap: var(--space-8); margin-top: var(--space-24); padding: var(--space-12) var(--space-8) var(--space-8); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
 .epanel img { position: absolute; top: -64px; right: var(--space-12); width: 160px; height: 160px; object-fit: contain; pointer-events: none; }
 .epanel p { max-width: 480px; }
 @media (max-width: 767px) {

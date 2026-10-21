@@ -862,3 +862,61 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
   .lrow-side { order: 3; width: 100%; padding-left: var(--space-12); justify-content: flex-start; flex-wrap: wrap; }
   .lrow-chev { order: 2; }
 }
+
+/* ── 23절 카드 면 효과·마이크로 디테일 — 사이트 전체 (2026-10-21 승인, design-rules 23-1·23-2 · 시안 v37-part2/v37.css 맨 아래 세 블록).
+   이 묶음이 2절 「떠 있는 그림자는 주 버튼에만」과 18절 「카드·판은 테두리 1px 하나, 그림자와 같이 쓰지 않는다」를 대신한다.
+   높낮이: 강조 면(하늘) > 흰 카드 > 회색 보조 카드. 값은 tokens.css 23절 토큰. 입력창·표·사이드바·창(모달)·운영자 화면(.admin-area)은 그대로 둔다.
+   떠오름은 마우스 기기(hover: hover)에서만, 「움직임 줄이기」를 켜면 움직임을 모두 끈다. 키보드 포커스 표시는 손대지 않는다 ── */
+/* 1) 강조 면(하늘 판) — 테두리는 각자 그대로(--tint-line) */
+:is(.feat, .lrow--hi, .panel, .part--soft):where(:not(.admin-area *)) { background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }
+/* 2) 흰 카드 — 경계는 안쪽 1px(--hair)를 맨 위에 두고 그 아래 은은한 면·그림자 */
+:is(.card, .part, .ccard, .tile, .empty, .acc details):where(:not(.admin-area *, .card--soft, .part--soft)) { background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); }
+/* 3) 회색 보조 카드 — 그림자 없이 면과 위 반사선만 */
+:is(.card--soft, .quote):where(:not(.admin-area *)) { background: var(--muted-fx); box-shadow: var(--hair), var(--muted-shadow); }
+/* 4) 누를 수 있는 카드 — 마우스를 올리면 2px 떠오름(18절)과 그림자가 같이 부드럽게 */
+:is(a.card, .ccard, a.tile):where(:not(.admin-area *)) { transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro), background-color 0.2s var(--ease-micro); }
+:is(a.card, .ccard, a.tile):where(:not(.admin-area *)):is(:hover, :focus-within) { box-shadow: var(--hair), var(--card-shadow-hover); }
+@media (hover: hover) {
+  :is(a.card, .ccard, a.tile):where(:not(.admin-area *)):hover { transform: translateY(-2px); }
+}
+/* 5) 버튼 — 주 버튼: 위→아래 옅게 짙어지는 면 + 위 반사선, 마우스를 올리면 1px 뜨고 하늘빛 그림자. 보조(흰) 버튼: 옅은 그림자, 마우스를 올리면 테두리 조금 진하게. 누르면 98%(18절 그대로) */
+.btn:where(:not(.admin-area *)) { transition: transform 0.15s var(--ease-micro), box-shadow 0.2s var(--ease-micro), background-color 0.2s var(--ease-micro); }
+.btn:where(:not(.admin-area *, .btn--line, .btn--soft, .btn--text, .btn--kakao, :disabled, [disabled], [aria-disabled="true"])) { background-image: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow); }
+:is(.btn--line, .btn--soft):where(:not(.admin-area *, :disabled, [disabled], [aria-disabled="true"])) { box-shadow: inset 0 0 0 1px var(--gray-200), var(--btn-ghost-shadow); }
+@media (hover: hover) {
+  .btn:where(:not(.admin-area *, .btn--line, .btn--soft, .btn--text, .btn--kakao, :disabled, [disabled], [aria-disabled="true"])):hover { background-image: var(--btn-fill-fx); box-shadow: var(--btn-fill-shadow-hover); transform: translateY(-1px); }
+  :is(.btn--line, .btn--soft):where(:not(.admin-area *, :disabled, [disabled], [aria-disabled="true"])):hover { background: var(--btn-ghost-hover); box-shadow: inset 0 0 0 1px var(--btn-ghost-line-hover), var(--btn-ghost-shadow); }
+}
+.btn:where(:not(.admin-area *)):active:not(:disabled, [aria-disabled="true"]) { transform: scale(0.98); }
+/* 6) 촘촘한 줄 — 마우스를 올리면 왼쪽에 하늘색 3px 막대가 0→24px 로 자란다 */
+.lrow::before { content: ""; position: absolute; left: 0; top: 50%; width: 3px; height: 0; border-radius: 3px; background: var(--primary); transform: translateY(-50%); transition: height 0.2s var(--ease-micro); pointer-events: none; }
+@media (hover: hover) { .lrow:hover::before { height: 24px; } }
+.lrow { transition: background-color 0.2s var(--ease-micro); }
+/* 7) 진행 막대 — 채운 칸은 위→아래 옅은 면, 처음 열 때 왼쪽부터 차례로 차오른다(칸마다 0.05초 늦게, 0.5초) */
+:is(.dots span.on, .mini-steps i.on):where(:not(.admin-area *)) { background: var(--bar-fill-fx); transform-origin: left center; animation: bar-fill 0.5s var(--ease-micro) both; }
+:is(.dots span.on, .mini-steps i.on):nth-child(2) { animation-delay: 0.05s; }
+:is(.dots span.on, .mini-steps i.on):nth-child(3) { animation-delay: 0.1s; }
+:is(.dots span.on, .mini-steps i.on):nth-child(4) { animation-delay: 0.15s; }
+:is(.dots span.on, .mini-steps i.on):nth-child(5) { animation-delay: 0.2s; }
+:is(.dots span.on, .mini-steps i.on):nth-child(6) { animation-delay: 0.25s; }
+@keyframes bar-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* 8) 숫자 — 자릿수 폭 고정, 큰 숫자는 자간 −0.02em */
+:is(.num-big, .bignum, .ph-count, .tabs .n, time) { font-variant-numeric: tabular-nums; }
+:is(.num-big, .num-big--32):where(:not(.admin-area *)) { letter-spacing: var(--ls-title); }
+/* 9) 얼굴 — 안쪽 1px 옅은 윤곽, 겹친 얼굴은 마우스를 올린 하나가 2px 앞으로 */
+.face:where(:not(.admin-area *)) { box-shadow: var(--face-ring); }
+.avatar-stack .face { position: relative; transition: transform 0.2s var(--ease-micro); }
+@media (hover: hover) { .avatar-stack .face:hover { transform: translateY(-2px); z-index: 1; } }
+/* 10) 태그 — 위 반사선(테두리로 그리는 흰·거절 태그는 뺀다) */
+.tag:where(:not(.admin-area *, .tag--line, .tag--no)) { box-shadow: var(--tag-sheen); }
+/* 11) 접기 — 열린 내용은 4px 내려오며 나타난다(화살표는 각자 돈다) */
+.acc details[open] > :not(summary) { animation: fold-in 0.25s var(--ease-micro) both; }
+.acc summary svg { transition: transform 0.25s var(--ease-micro); }
+@keyframes fold-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+/* 12) 링크 밑줄은 3px 띄우고 1px 두께, 글자 선택 색 */
+a { text-underline-offset: 3px; text-decoration-thickness: 1px; }
+::selection { background: var(--selection); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  :is(a.card, .ccard, a.tile, .btn, .avatar-stack .face):hover { transform: none !important; }
+}
