@@ -96,7 +96,7 @@ const button = (scope: ParentNode, text: string) => [...scope.querySelectorAll("
 describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
   it("INV-J6: 제목 숫자·판 숫자는 읽기 결과의 줄 수 — 받은 선물 3 · 보낸 선물 1, 순서는 받은 그대로", () => {
     render(ALL);
-    expect(host.querySelector("h1")?.textContent).toBe("처리할 일4건");
+    expect(host.querySelector("h1")?.textContent).toBe("지금 할 일4건");
     const panels = [...host.querySelectorAll("section")].map((p) => `${p.querySelector("h2")?.textContent}:${p.querySelectorAll("[data-row]").length}:${p.querySelector(".sr-only")?.textContent}`);
     expect(panels).toEqual(["받은 선물:3:3건", "보낸 선물:1:1건"]);
     expect(rows().map((r) => r.querySelector("span[class]")?.nextElementSibling?.firstElementChild?.textContent)).toEqual([
@@ -180,8 +180,8 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
 
   it("INV-J6: 줄이 없으면 빈 상태 하나 — 판도 숫자도 없다", () => {
     render([]);
-    expect(host.querySelector("h1")?.textContent).toBe("처리할 일");
-    expect(host.textContent).toContain("지금 처리할 일이 없어요");
+    expect(host.querySelector("h1")?.textContent).toBe("지금 할 일");
+    expect(host.textContent).toContain("지금 할 일이 없어요");
     expect(rows()).toHaveLength(0);
   });
 });

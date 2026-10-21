@@ -77,12 +77,13 @@ describe("알림 본문 틀 (INV-N1)", () => {
 });
 
 describe("알림 링크 (INV-N9)", () => {
-  it("INV-N9 (S9c): 링크는 설정의 사이트 주소 + 고정 경로(+주문번호)뿐 — 물음표 뒤 값도 조각도 없다", () => {
+  it("INV-N9 (S9c): 링크는 설정의 사이트 주소 + 고정 경로(+주문번호)뿐 — 물음표 뒤 값이 없고, 조각은 「지금 할 일」 칸의 고정 조각 #todo 만(action-center INV-J13)", () => {
     const paths = new Map(SENDABLE.map((k) => [k, new URL(buildNotificationBody(inputFor(k)).link)]));
-    for (const [, url] of paths) {
+    const TODO_KINDS: readonly string[] = ["revgift_offer", "box_no_code"];
+    for (const [kind, url] of paths) {
       expect(url.origin).toBe(ORIGIN);
       expect(url.search).toBe("");
-      expect(url.hash).toBe("");
+      expect([kind, url.hash]).toEqual([kind, TODO_KINDS.includes(kind) ? "#todo" : ""]);
     }
     // 승인 요청·확인할 선물은 크리에이터 처리할 일(2026-10-16 — 「승인 대기」 메뉴가 없어짐, action-center INV-J5)
     expect(paths.get("approval_request")!.pathname).toBe("/creator/actions");
@@ -248,6 +249,8 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.subject).toBe("[팬꾹] 받는 주소 없이 보낸 상자가 있어요");
     expect(b.buttonLabel).toBe("받는 주소 없이 보냈어요");
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    // 선물 상세의 「지금 할 일」 칸(송장번호 입력 — action-center INV-J13)
+    expect(new URL(b.link).hash).toBe("#todo");
     const lines = b.text.split("\n");
     // 인사 · 문구 한 줄 · (빈 줄) · 링크 · (빈 줄) · 공통 꼬리말 · 꺼도 간다는 안내 — 주문번호 줄·도착일·기한 문장은 없다
     expect(lines.slice(0, 2)).toEqual(["하루님,", "받는 주소 없이 보낸 상자가 있어요."]);
@@ -355,9 +358,11 @@ describe("역조공 받기 알림 (INV-N20 · reverse-gift INV-R12)", () => {
     senderName,
   });
 
-  it("INV-N20 (S20): 본문은 보낸 크리에이터 이름과 그 몫 받기 화면 링크뿐 — 주문번호 줄·상자 크기·금액이 없다, 꺼도 간다", () => {
+  it("INV-N20 (S20): 본문은 보낸 크리에이터 이름과 그 몫 선물 상세 링크뿐 — 주문번호 줄·상자 크기·금액이 없다, 꺼도 간다", () => {
     const b = buildNotificationBody(offer(1));
-    expect(new URL(b.link).pathname).toBe("/me/revgifts/RG-7K3M90");
+    // 선물 상세 하나(action-center INV-J12)의 「지금 할 일」 칸이 펼쳐진 채(INV-J13 S13b)
+    expect(new URL(b.link).pathname).toBe("/gifts/RG-7K3M90");
+    expect(new URL(b.link).hash).toBe("#todo");
     expect(b.subject).toContain("모모");
     expect(b.text).toContain("모모님");
     expect(b.text).not.toContain("주문번호");

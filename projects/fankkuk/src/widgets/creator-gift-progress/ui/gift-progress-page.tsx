@@ -180,7 +180,7 @@ function Row({ tone, icon, title, sub, progress, actions }: { tone?: "alert" | "
 
 const goActions = (
   <Link className="btn" href={CREATOR_ACTION_CENTER_HREF}>
-    처리할 일
+    지금 할 일
   </Link>
 );
 

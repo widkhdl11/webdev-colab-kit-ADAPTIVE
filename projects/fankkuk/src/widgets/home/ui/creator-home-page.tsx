@@ -65,7 +65,7 @@ function SummaryRows({ rows, href }: { rows: readonly HomeProgressRow[]; href: s
 
 export function CreatorHomePage({ profile, publicHref = null, actionCount, actions, accessLog, notices, ongoingCount, progressRows = [], sentGifts, banner = null }: Props) {
   const tiles: FrontTile[] = [
-    { href: CREATOR_ACTION_CENTER_HREF, label: "처리할 일", note: countNote(actionCount), icon: "icon-approve" },
+    { href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일", note: countNote(actionCount), icon: "icon-approve" },
     { href: CREATOR_GIFT_PROGRESS_HREF, label: "선물 현황", note: ongoingCount === null ? "" : `진행 중 ${ongoingCount}건`, icon: "icon-gift" },
     { href: "/gifts", label: "내가 보낸 선물", note: `${sentGifts.length}개`, icon: "icon-truck" },
     { href: "/creator/log", label: "열람 기록", note: "내 정보 열람을 확인해요", icon: "icon-help" },
@@ -91,8 +91,8 @@ export function CreatorHomePage({ profile, publicHref = null, actionCount, actio
   );
   return (
     <RoleHome hero={<HeroBand title={`${profile.name}님, 반가워요`} eyebrow="팬들이 전한 마음을 확인해보세요" control={control} actions={heroActions} />} tiles={tiles} tilesLabel="내 바로가기" banner={banner}>
-      <SlotSection id="creator-actions" title="처리할 일" meta={countNote(actionCount)} more={{ href: CREATOR_ACTION_CENTER_HREF, label: "처리할 일 모두 보기" }}>
-        {actionRows.length > 0 ? <SummaryRows rows={actionRows} href={CREATOR_ACTION_CENTER_HREF} /> : <p className="t-meta">{actionCount === null ? "처리할 일을 불러오지 못했어요." : "지금 처리할 일이 없어요."}</p>}
+      <SlotSection id="creator-actions" title="지금 할 일" meta={countNote(actionCount)} more={{ href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일 모두 보기" }}>
+        {actionRows.length > 0 ? <SummaryRows rows={actionRows} href={CREATOR_ACTION_CENTER_HREF} /> : <p className="t-meta">{actionCount === null ? "지금 할 일을 불러오지 못했어요." : "지금 할 일이 없어요."}</p>}
       </SlotSection>
       <SlotSection id="creator-progress" title="진행 중인 선물" meta={countNote(ongoingCount)} more={{ href: CREATOR_GIFT_PROGRESS_HREF, label: "선물 현황 모두 보기" }}>
         {progressRows.length > 0 ? <SummaryRows rows={progressRows} href={CREATOR_GIFT_PROGRESS_HREF} /> : <p className="t-meta">{ongoingCount === null ? "선물 현황을 불러오지 못했어요." : "지금 진행 중인 선물이 없어요."}</p>}

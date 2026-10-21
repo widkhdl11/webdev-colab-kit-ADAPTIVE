@@ -306,7 +306,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">
-            처리할 일{items.length > 0 ? <span className="ph-count">{items.length}건</span> : null}
+            지금 할 일{items.length > 0 ? <span className="ph-count">{items.length}건</span> : null}
           </h1>
         </div>
       </header>
@@ -316,7 +316,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
           <span className={s.emptyIco} aria-hidden="true">
             <Ico name="check" />
           </span>
-          <h2 id="ca-empty">지금 처리할 일이 없어요</h2>
+          <h2 id="ca-empty">지금 할 일이 없어요</h2>
           <Link className="btn btn--line" href="/creator">
             홈으로
           </Link>

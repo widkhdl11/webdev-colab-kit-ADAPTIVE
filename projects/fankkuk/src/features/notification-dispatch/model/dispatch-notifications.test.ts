@@ -198,7 +198,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     expect(email.sent[0]!.text).not.toContain("haru@example.com"); // 받는 주소는 본문에 없다
   });
 
-  it("INV-N20: 역조공 받기 줄은 꺼낸 sender_name(DB 값)으로 보낸 크리에이터 이름을 넣고 몫 받기 화면으로 잇는다. 이름이 없는 줄은 보내지 않는다", async () => {
+  it("INV-N20: 역조공 받기 줄은 꺼낸 sender_name(DB 값)으로 보낸 크리에이터 이름을 넣고 그 몫의 선물 상세(#todo — action-center INV-J12·J13)로 잇는다. 이름이 없는 줄은 보내지 않는다", async () => {
     const email = channel();
     const { admin, calls } = fakeAdmin({
       rows: [
@@ -210,7 +210,7 @@ describe("보내는 일꾼 (INV-N5·N6·N7)", () => {
     await dispatchNotifications(deps(admin, { email, kakao: null }));
     expect(email.sent).toHaveLength(1);
     expect(email.sent[0]!.text).toContain("모모님");
-    expect(email.sent[0]!.text).toContain("/me/revgifts/RG-7K3M90");
+    expect(email.sent[0]!.text).toContain("/gifts/RG-7K3M90#todo");
     const nameless = finishes(calls).find((a) => (a as { p_id: string }).p_id === "nameless") as { p_outcome: string; p_error_code: string };
     expect(`${nameless.p_outcome}:${nameless.p_error_code}`).toBe("skipped:body_unavailable");
   });

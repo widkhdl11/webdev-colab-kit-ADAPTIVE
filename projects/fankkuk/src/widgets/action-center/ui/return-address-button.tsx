@@ -6,8 +6,9 @@ import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-s
 import { FanAddressForm } from "@/features/fan-address/ui/fan-address-form";
 import { ReturnAddressWindow, type ReturnTarget } from "@/features/return-address/ui/return-address-window";
 import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
+import { giftDetailHref } from "@/entities/action-item/model/action-items";
 
-// 팬 처리할 일의 「돌려받을 주소 확인」 카드 버튼(action-center INV-J1·J4, office-workflow INV-W15). 반송 주소 확인 창과
+// 선물 상세 「지금 할 일」 칸의 「돌려받을 주소 확인」 버튼(action-center INV-J1·J4·J13, office-workflow INV-W15). 반송 주소 확인 창과
 // 팬 받을 주소 입력 칸을 위젯이 잇는다(기능끼리는 서로 import 하지 않는다 — FSD). 확인은 기존 확인 처리를 그대로 부른다.
 
 /** 팬의 받을 주소 — 라우트가 읽어 넘긴다. 상태를 읽지 못했으면 status null, 봉인 공개키가 없으면 sealingKeyPem null */
@@ -42,7 +43,7 @@ export function ReturnAddressButton({ target, meta, address }: { target: ReturnT
                   onSaved={p.onSaved}
                   onCancel={p.onCancel}
                   receiveHint={false}
-                  onLoginExpired={() => router.push("/login?next=/me/actions")}
+                  onLoginExpired={() => router.push(`/login?next=${encodeURIComponent(giftDetailHref(target.orderNo))}`)}
                 />
               ) : null,
           }}

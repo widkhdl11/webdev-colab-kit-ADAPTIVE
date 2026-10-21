@@ -178,12 +178,15 @@ export function AppSidebar({ role, groups, current, homeHref, nickname, counts }
         <nav className="sb-nav" aria-label={`${roleLabel} 메뉴`}>
           {groups.map((g, gi) => {
             const gid = `sb-g${gi}`;
+            // 묶음 이름이 없으면(팬 메뉴 — 묶음 하나) 머리 줄 없이 칸만. 목록 이름은 바깥 nav 의 「팬 메뉴」가 맡는다
             return (
-              <div key={g.label}>
-                <p className="sb-group" id={gid}>
-                  <span className="sb-group-t">{g.label}</span>
-                </p>
-                <ul aria-labelledby={gid}>
+              <div key={`${gi}-${g.label}`} className={g.label ? undefined : "sb-plain"}>
+                {g.label ? (
+                  <p className="sb-group" id={gid}>
+                    <span className="sb-group-t">{g.label}</span>
+                  </p>
+                ) : null}
+                <ul aria-labelledby={g.label ? gid : undefined}>
                   {g.items.map((it) => {
                     const n = it.badge ? (counts[it.badge] ?? 0) : 0;
                     return (
@@ -204,7 +207,7 @@ export function AppSidebar({ role, groups, current, homeHref, nickname, counts }
                               <span className="badge" aria-hidden="true">
                                 {n}
                               </span>
-                              {/* 칸 이름과 뜻 사이를 끊어 읽게 쉼표 — 「처리할 일, 3건」 */}
+                              {/* 칸 이름과 뜻 사이를 끊어 읽게 쉼표 — 「지금 할 일, 3건」 */}
                               <span className="sr-only">{it.badge ? `, ${BADGE_SPEECH[it.badge](n)}` : null}</span>
                             </>
                           ) : null}

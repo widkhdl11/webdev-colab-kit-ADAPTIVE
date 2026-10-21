@@ -1,19 +1,16 @@
-/* 보낸 선물 — 시안 docs/design/mockups/site/v18/my-gifts.html (v18-app.css .tg · .dots · .gcard-top). 탭·진행 막대·태그는 base.css 공통 부품. 본문 틀은 라우트가 붙인다 */
+/* 보낸 선물 — 시안 docs/design/mockups/site/v34-part1/gifts.html (v34.css .grp·.grp-h). 줄·강조 줄·작은 진행 표시는 base.css 21절 공통(.lrows·.lrow--hi·.mini-steps), 탭·태그는 base.css 공통 부품 */
 
-/* 2열 카드 격자, 휴대폰 1열 — 마지막 카드도 왼쪽부터(가운데로 몰지 않는다) */
-.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
-@media (max-width: 767px) { .cards { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); } }
-
-/* 크리에이터별로 보기 — 소제목 20 + 「함께한 시간」으로 가는 카드 */
-.by { margin-bottom: var(--space-12); }
-.h.h { margin-bottom: var(--space-4); font-size: var(--fs-card); line-height: 1.4; }
-.tg { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-4); height: 100%; padding: var(--space-6); text-decoration: none; }
-.tg-text { display: grid; gap: 2px; min-width: 0; }
-.tg-text strong { overflow-wrap: anywhere; font-weight: var(--fw-btn); }
-.chev { width: var(--icon-xs); height: var(--icon-xs); fill: none; stroke: var(--gray-600); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-/* 받지 않은 선물 탭 위 안내 한 줄 */
-.note-line { margin-bottom: var(--space-6); color: var(--gray-600); }
-
-.meter { margin-top: var(--space-2); }
-.go { margin-top: auto; }
+/* 크리에이터별 묶음 — 묶음 머리 높이 56 이상, 아래 1px 선. 머리 전체가 함께한 시간으로 가는 링크 */
+.grp { margin-top: var(--space-8); }
+.head { position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--gray-200); border-radius: var(--r-btn) var(--r-btn) 0 0; }
+.head :global(.face) { width: 32px; height: 32px; font-size: var(--fs-small); }
+.head strong { font-size: var(--fs-card); line-height: 1.4; overflow-wrap: anywhere; }
+.head small { font-size: var(--fs-small); color: var(--sub); }
+.head :global(.lrow-chev) { margin-left: auto; }
+.linked:hover { background: var(--tint); }
+.linked:has(:global(.stretch):focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
+.grp :global(.lrows) { margin-top: var(--space-2); }
+.empty { margin-top: var(--space-8); }
+@media (max-width: 767px) {
+  .head { flex-wrap: wrap; }
+}

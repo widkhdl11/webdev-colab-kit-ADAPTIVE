@@ -129,8 +129,8 @@ describe("INV-J6: 실제 라우트 — 사이드바 숫자·홈 「처리할 일
     const r = await draw(CreatorHomeRoute());
     expect(reads.calls).toBe(1);
     expect(r.badge).toBe("3");
-    const row = [...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("처리할 일"));
-    expect(row?.textContent).toBe("처리할 일3건");
+    const row = [...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("지금 할 일"));
+    expect(row?.textContent).toBe("지금 할 일3건");
   });
 
   it("INV-J6 S6: 처리할 일 — 한 번 읽고, 사이드바 3 · 제목 「3건」 · 줄 3", async () => {
@@ -144,10 +144,10 @@ describe("INV-J6: 실제 라우트 — 사이드바 숫자·홈 「처리할 일
   it("INV-J6 S6 (실패경로): 0건이면 사이드바 숫자가 없고 홈은 「0건」, 처리할 일은 빈 상태", async () => {
     reads.rows = [];
     expect((await draw(CreatorHomeRoute())).badge).toBeNull();
-    expect([...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("처리할 일"))?.textContent).toBe("처리할 일0건");
+    expect([...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("지금 할 일"))?.textContent).toBe("지금 할 일0건");
     reads.calls = 0;
     expect((await draw(CreatorActionsRoute())).badge).toBeNull();
-    expect(host.textContent).toContain("지금 처리할 일이 없어요");
+    expect(host.textContent).toContain("지금 할 일이 없어요");
   });
 });
 
@@ -157,14 +157,14 @@ describe("INV-J6·J11: 선물 현황 라우트 — 「처리할 일」 버튼은
     expect(reads.calls).toBe(1);
     expect(r.badge).toBe("3");
     expect(host.querySelector("h1")?.textContent).toBe("선물 현황진행 중 3건");
-    const go = [...host.querySelectorAll("main li a")].filter((a) => a.textContent === "처리할 일");
+    const go = [...host.querySelectorAll("main li a")].filter((a) => a.textContent === "지금 할 일");
     expect(go.map((a) => a.closest("li")?.querySelector("[data-title]")?.textContent)).toEqual(["다온님의 선물", "모카님"]);
   });
 
   it("INV-J11 S11b (실패경로): 처리할 일 읽기가 비면 같은 현황에도 「처리할 일」 버튼이 없다", async () => {
     reads.rows = [];
     await draw(CreatorProgressRoute());
-    expect([...host.querySelectorAll("main li a")].filter((a) => a.textContent === "처리할 일")).toHaveLength(0);
+    expect([...host.querySelectorAll("main li a")].filter((a) => a.textContent === "지금 할 일")).toHaveLength(0);
     expect(host.querySelectorAll("main li [data-title]").length).toBe(3);
   });
 
@@ -173,7 +173,7 @@ describe("INV-J6·J11: 선물 현황 라우트 — 「처리할 일」 버튼은
     const row = [...host.querySelectorAll('ul[aria-label="내 바로가기"] a')].find((a) => a.textContent?.startsWith("선물 현황"));
     expect(row?.getAttribute("href")).toBe("/creator/progress");
     expect(row?.textContent).toBe("선물 현황진행 중 3건");
-    const actions = [...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("처리할 일"));
+    const actions = [...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("지금 할 일"));
     expect(actions?.getAttribute("href")).toBe("/creator/actions");
     const summary = host.querySelector('[aria-labelledby="creator-progress-title"]')!;
     expect(summary.querySelectorAll("li")).toHaveLength(3);

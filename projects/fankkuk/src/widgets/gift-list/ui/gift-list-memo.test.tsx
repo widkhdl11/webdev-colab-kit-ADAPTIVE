@@ -2,6 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseFanGiftRows } from "@/entities/order/api/fan-gift-rows";
+import { groupGiftsByCreator } from "../model/gift-groups";
 import { GiftListPage } from "./gift-list-page";
 
 // 보낸 선물 목록의 선물 이름(together INV-F7) — 시안 v21-addendum3/fan-home.html 의 「하루님께 · 생일 편지와 인형」 줄.
@@ -44,8 +45,8 @@ const row = {
 describe("together INV-F7: 보낸 선물 목록의 선물 이름", () => {
   it("INV-F7 S7: 선물 이름이 있으면 「하루님께 · 선물 이름」, 없으면 「하루님께」만", () => {
     const gifts = parseFanGiftRows([{ ...row, memo_title: "생일 편지와 인형" }, { ...row, order_no: "FC-W5N3U", memo_title: null }], "x");
-    act(() => root.render(<GiftListPage gifts={gifts} faceToneByName={{}} />));
-    const whos = [...host.querySelectorAll(".gcard .t-strong")].map((p) => p.textContent);
+    act(() => root.render(<GiftListPage groups={groupGiftsByCreator(gifts, [])} faceToneByName={{}} />));
+    const whos = [...host.querySelectorAll("[data-gift-row] .lrow-txt strong")].map((p) => p.textContent);
     expect(whos).toEqual(["하루님께 · 생일 편지와 인형", "하루님께"]);
   });
 });

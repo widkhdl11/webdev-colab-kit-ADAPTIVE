@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// 처리할 일 (action-center INV-J2) — 실제 라우트(홈·처리할 일·선물 상세·그 안의 헤더)를 불러, 한 화면의 숫자들이 같은 읽기 결과에서 나오는지 본다.
+// 지금 할 일 (action-center INV-J2·J13) — 실제 라우트(홈·지금 할 일·선물 상세·그 안의 헤더)를 불러, 한 화면의 숫자들이 같은 읽기 결과에서 나오는지 본다.
 // 연결을 시험 안에서 다시 짜지 않는다: 라우트가 처리할 일을 몇 번 읽는지, 그 결과를 헤더와 본문에 그대로 넘기는지가 대상이다.
 // 처리할 일 읽기만 가짜로 둔다 — 첫 읽기는 N 줄, 두 번째부터는 다른 수(N+5)를 준다. 라우트가 헤더에 결과를 안 넘겨 다시 읽거나,
 // 본문 숫자를 다른 데서 세면 숫자가 어긋나 잡힌다. 나머지 읽기(선물 목록·프로필 등)는 화면을 그릴 만큼만 채운다.
@@ -137,36 +137,38 @@ async function draw(page: Promise<React.ReactNode>) {
   const tree = await page;
   act(() => root.render(<>{tree}</>));
   const badge = host.querySelector('a[href="/me/actions"] .badge')?.textContent ?? null;
-  const line = host.querySelector('[data-testid="action-line"]')?.textContent ?? null;
-  // 홈은 한 줄 대신 바로가기 「처리할 일」 칸의 작은 글(design-rules 16절)
+  // 선물 상세는 맨 위 「지금 할 일」 칸의 줄 수(INV-J13 — 전에는 한 줄)
+  const box = host.querySelector("main #todo");
+  const line = box ? box.querySelectorAll("[data-kind]").length : null;
+  // 홈은 바로가기 「지금 할 일」 칸의 작은 글(design-rules 16절)
   const tile = [...host.querySelectorAll('ul[aria-label="내 바로가기"] a')].find((a) => a.getAttribute("href") === "/me/actions")?.textContent ?? null;
   return { badge, line, tile };
 }
 
 describe("INV-J2: 실제 라우트 — 한 화면의 숫자는 한 번 읽은 결과의 줄 수", () => {
-  it("INV-J2: 홈(/home) — 처리할 일은 한 번 읽고, 사이드바 뱃지 3 · 홈 바로가기 「처리할 일」 칸 3건", async () => {
+  it("INV-J2: 홈(/home) — 처리할 일은 한 번 읽고, 사이드바 뱃지 3 · 홈 바로가기 「지금 할 일」 칸 3건", async () => {
     const r = await draw(HomeRoute());
     expect(reads.calls).toBe(1);
     expect(r.badge).toBe("3");
-    expect(r.tile).toBe("처리할 일3건");
+    expect(r.tile).toBe("지금 할 일3건");
   });
 
-  it("INV-J2: 처리할 일(/me/actions) — 한 번 읽고, 사이드바 뱃지 3 · 제목 숫자 3 · 카드 3", async () => {
+  it("INV-J2: 지금 할 일(/me/actions) — 한 번 읽고, 사이드바 뱃지 3 · 제목 숫자 3 · 줄 3", async () => {
     const r = await draw(ActionsRoute());
     expect(reads.calls).toBe(1);
     expect(r.badge).toBe("3");
     expect(host.querySelector("h1 .ph-count")?.textContent).toBe("3");
-    expect(host.querySelectorAll("section.action-card")).toHaveLength(3);
+    expect(host.querySelectorAll("main [data-action-row]")).toHaveLength(3);
   });
 
-  it("INV-J2: 선물 상세(/gifts/[orderNo]) — 한 번 읽고, 사이드바 뱃지 3 · 맨 위 한 줄은 그 주문 카드 2", async () => {
+  it("INV-J2·J13: 선물 상세(/gifts/[orderNo]) — 한 번 읽고, 사이드바 뱃지 3 · 맨 위 「지금 할 일」 칸은 그 주문 줄 2", async () => {
     const r = await draw(GiftRoute({ params: Promise.resolve({ orderNo: ORDER }), searchParams: Promise.resolve({}) }));
     expect(reads.calls).toBe(1);
     expect(r.badge).toBe("3");
-    expect(r.line).toContain("처리할 일 2건");
+    expect(r.line).toBe(2);
   });
 
-  it("INV-J2 (실패경로): 0건이면 세 라우트 모두 뱃지·한 줄이 없고, 홈 칸은 0건", async () => {
+  it("INV-J2·J13 (실패경로): 0건이면 세 라우트 모두 뱃지·상세 칸이 없고, 홈 칸은 0건", async () => {
     reads.rows = [];
     const routes = [() => HomeRoute(), () => ActionsRoute(), () => GiftRoute({ params: Promise.resolve({ orderNo: ORDER }), searchParams: Promise.resolve({}) })];
     for (const route of routes) {
@@ -175,8 +177,8 @@ describe("INV-J2: 실제 라우트 — 한 화면의 숫자는 한 번 읽은 �
       expect(reads.calls).toBe(1);
       expect(r.badge).toBeNull();
       expect(r.line).toBeNull();
-      expect(r.tile).toBe(route === routes[0] ? "처리할 일0건" : null);
+      expect(r.tile).toBe(route === routes[0] ? "지금 할 일0건" : null);
     }
-    expect(host.querySelector('[data-testid="action-line"]')).toBeNull();
+    expect(host.querySelector("main #todo")).toBeNull();
   });
 });

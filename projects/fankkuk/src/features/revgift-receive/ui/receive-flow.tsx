@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 import type { AddressLabel } from "@/entities/address/model/address-label";
 import { addressOnFileText } from "@/entities/address/ui/address-on-file-text";
+import { TodoBox } from "@/entities/action-item/ui/todo-box";
 import type { ReceivedStage } from "@/entities/revgift/model/received-stage";
 import { settledStageCopy } from "@/entities/revgift/ui/received-status";
 import { FAN_HOME } from "@/entities/session/model/home-path";
@@ -20,6 +21,8 @@ import s from "./receive-flow.module.css";
 //   등록돼 있으면 「주소를 확인해 주세요」 — 이름표와 등록한 날만 보이고 주소는 보이지 않는다. 「이 주소로 받기」를 누르면 서버가 등록 주소를 이 선물에 복사한다.
 //   등록 전이면 「주소를 입력해 주세요」 — 그 자리에서 받을 주소를 등록한 뒤(이 브라우저에서 봉인한 값만 — INV-R5) 확인 판으로 넘어간다.
 // 주소 입력 칸은 위젯이 받을 주소 기능으로 조립해 넘긴다(기능끼리는 서로 import 하지 않는다 — FSD). 승인 창의 주소 단계와 같은 꼴이다.
+// 2026-10-21(action-center INV-J12·J13, 시안 v34-part1/revgift-detail.html): 받은 역조공 상세는 선물 상세 하나(`/gifts/RG-…`)이고, 받기·받지 않기·주소 입력은
+//   맨 위 「지금 할 일」 칸 안에서만 한다. 칸은 그 몫이 처리할 일 읽기 결과에 있을 때만(todo) — 이 화면이 따로 「받을 수 있는가」를 계산하지 않는다.
 
 /** 받기 판의 주소 칸 — 위젯이 넘긴다. */
 export type ReceiveAddressStep = {
@@ -44,6 +47,8 @@ export type ReceiveFlowProps = {
   /** 기다리는 중일 때만 쓴다 — 「10월 8일 오후 3:00까지 정해 주세요」 */
   deadlineText: string;
   address: ReceiveAddressStep;
+  /** 이 몫이 처리할 일 읽기 결과에 있다(action-center INV-J13) — 그때만 「지금 할 일」 칸(받기·받지 않기·주소 입력)이 보인다 */
+  todo: boolean;
   /** 받기 판들 아래에 붙는 칸(내 주소 열람 기록 — 위젯이 넣는다). */
   children?: ReactNode;
 };
@@ -209,72 +214,59 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
     );
   };
 
+  // 받을지 정하는 칸 — 처리할 일 읽기 결과에 이 몫이 있고 아직 정하지 않았을 때만(INV-J13)
+  const showTodo = waiting && props.todo;
+
   return (
     <>
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title" id="rv-title">
-            {creatorName}님이 선물을 보냈어요
+            {creatorName}님이 보낸 선물
           </h1>
         </div>
         <p className="ph-desc">내가 팔로우한 크리에이터가 보낸 선물이에요.</p>
       </header>
       <div className={`stack ${s.flow}`}>
-        <section className="part" aria-labelledby="rv-title">
-          <dl className="kv">
-            <div>
-              <dt>보낸 사람</dt>
-              <dd>{creatorName}님</dd>
-            </div>
-            <div>
-              <dt>상자 크기</dt>
-              <dd>
-                {tierName} 상자 <span className="t-meta">{tierRule}</span>
-              </dd>
-            </div>
-            <div>
-              <dt>상태</dt>
-              <dd>
-                {settled ? (
-                  <span className={statusTagClass(settled.tone)}>{settled.tag}</span>
+        {showTodo ? (
+          <TodoBox variant="revgift">
+            <div className={s.todoHead}>
+              <div>
+                {stepOpen ? (
+                  <h2 className={`${s.todoTitle} ${s.focusable}`} id="rv-step-title" ref={stepTitle} tabIndex={-1}>
+                    {addressHead(registered, editing)}
+                  </h2>
                 ) : (
-                  <>
-                    <span className={statusTagClass("warn")}>{daysLeftText}</span> <span className="t-meta">{deadlineText}</span>
-                  </>
+                  <h2 className={s.todoTitle}>받을지 정해 주세요</h2>
                 )}
-              </dd>
-            </div>
-          </dl>
-          {waiting && !stepOpen ? (
-            <>
-              {canReceive ? null : (
-                <p className={s.warn} role="status">
-                  {status === null ? "받을 주소를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요." : `${address.missingKeyText} 설정이 끝나면 다시 들어와 주세요.`}
-                </p>
-              )}
-              <div className={s.choice}>
-                {canReceive ? (
-                  <button className="btn" type="button" onClick={openStep}>
-                    받기
-                  </button>
-                ) : null}
-                <button className="btn btn--line" type="button" onClick={() => setSheetOpen(true)}>
-                  받지 않기
-                </button>
+                <p className={s.todoSub}>{deadlineText}</p>
               </div>
-              <div role="alert">{declineError ? <p className={`err ${s.alert}`}>{declineError}</p> : null}</div>
-              <p className={`t-meta ${s.once}`}>기한 안에 정하지 않으면 자동으로 받지 않음 처리돼요. 받기 전에는 주소를 입력하지 않아도 돼요.</p>
-            </>
-          ) : null}
-        </section>
-
-        {waiting && stepOpen ? (
-          <section className="part" aria-labelledby="rv-step-title">
-            <h2 className={`t-title ${s.focusable}`} id="rv-step-title" ref={stepTitle} tabIndex={-1}>
-              {addressHead(registered, editing)}
-            </h2>
-            {addressBody()}
-          </section>
+              <p className="num-big num-big--32">{daysLeftText}</p>
+            </div>
+            {stepOpen ? (
+              addressBody()
+            ) : (
+              <>
+                {canReceive ? null : (
+                  <p className={s.warn} role="status">
+                    {status === null ? "받을 주소를 읽지 못했어요. 새로 고침한 뒤 다시 해 주세요." : `${address.missingKeyText} 설정이 끝나면 다시 들어와 주세요.`}
+                  </p>
+                )}
+                <div className={s.choice}>
+                  {canReceive ? (
+                    <button className="btn" type="button" onClick={openStep}>
+                      받기
+                    </button>
+                  ) : null}
+                  <button className="btn btn--line" type="button" onClick={() => setSheetOpen(true)}>
+                    받지 않기
+                  </button>
+                </div>
+                <div role="alert">{declineError ? <p className={`err ${s.alert}`}>{declineError}</p> : null}</div>
+                <p className={`t-meta ${s.once}`}>기한 안에 정하지 않으면 자동으로 받지 않음 처리돼요. 받기 전에는 주소를 입력하지 않아도 돼요.</p>
+              </>
+            )}
+          </TodoBox>
         ) : null}
 
         {stage !== "waiting" ? (
@@ -321,6 +313,39 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
             </div>
           </section>
         ) : null}
+        <section className="part" aria-labelledby="rv-info-title">
+          <h2 className="t-title" id="rv-info-title">
+            선물 정보
+          </h2>
+          <dl className="kv">
+            <div>
+              <dt>보낸 사람</dt>
+              <dd>{creatorName}님</dd>
+            </div>
+            <div>
+              <dt>상자 크기</dt>
+              <dd>
+                {tierName} 상자 <span className="t-meta">{tierRule}</span>
+              </dd>
+            </div>
+            <div>
+              <dt>주문번호</dt>
+              <dd>{orderNo}</dd>
+            </div>
+            <div>
+              <dt>상태</dt>
+              <dd>
+                {settled ? (
+                  <span className={statusTagClass(settled.tone)}>{settled.tag}</span>
+                ) : (
+                  <>
+                    <span className={statusTagClass("warn")}>{daysLeftText}</span> <span className="t-meta">{deadlineText}</span>
+                  </>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </section>
         {props.children}
       </div>
 

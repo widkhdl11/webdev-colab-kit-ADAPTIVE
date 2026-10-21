@@ -1,6 +1,6 @@
 import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
 import {
   APPROVAL_LABEL,
@@ -14,7 +14,7 @@ import {
   showsSteps,
 } from "@/entities/order/ui/fan-stage-copy";
 import { boxTierName, fanBoxStateTag, hasArrived, isMissing, isWaybillEditable, type GiftBox } from "@/entities/parcel/model/box-rows";
-import { giftAddressCode, giftFinderBoxes, needsEarlySendAck } from "@/features/box-waybill/model/box-targets";
+import { finderBoxesBelowTodo, giftAddressCode, giftFinderBoxes, needsEarlySendAck } from "@/features/box-waybill/model/box-targets";
 import { EarlySendGate } from "@/features/box-waybill/ui/early-send-gate";
 import { canCancelGift } from "@/features/gift-cancel/model/cancellable";
 import { CancelGiftButton } from "@/features/gift-cancel/ui/cancel-gift-button";
@@ -24,14 +24,14 @@ import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
 import { ReceivingAddress } from "@/features/box-waybill/ui/receiving-address";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
 import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
-import { visibleDifferences, type GiftDifference } from "@/entities/payment/model/difference-rows";
+import { differencesBelowTodo, visibleDifferences, type GiftDifference } from "@/entities/payment/model/difference-rows";
 import type { GiftPayment } from "@/entities/payment/model/gift-payment";
 import type { FanBoxReply } from "@/entities/gift-reply/api/gift-reply-reads";
 import { FanBoxReplies } from "@/features/gift-reply/ui/fan-box-replies";
 import { DifferenceSection, type DifferenceNotice } from "./difference-section";
 import { PaymentSummary } from "./payment-summary";
 import { GiftMemoCard } from "./gift-memo-card";
-import { ActionLine } from "@/entities/action-item/ui/action-line";
+import { KeepShown } from "./keep-shown";
 import type { GiftMemo } from "@/entities/order/model/gift-memo";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./gift-status.module.css";
@@ -71,7 +71,8 @@ export function GiftStatusPage({
   replies = [],
   photoBase = "",
   memo = null,
-  actionCount = 0,
+  todo = null,
+  todoBoxIds = [],
 }: {
   view: FanGiftView;
   boxes: readonly GiftBox[];
@@ -84,8 +85,10 @@ export function GiftStatusPage({
   photoBase?: string;
   /** 나만 보는 메모(together INV-F7·F8) — my_gift_memo 가 보낸 사람 본인에게만 준다. 없으면 칸을 그리지 않는다. */
   memo?: GiftMemo | null;
-  /** 이 주문의 처리할 일 카드 수(action-center INV-J2) — 라우트가 처리할 일 읽기 결과에서 이 주문 줄만 센다. 0 이면 맨 위 한 줄이 없다. 팬 화면에서만 넘긴다. */
-  actionCount?: number;
+  /** 맨 위 「지금 할 일」 칸(action-center INV-J13) — 라우트가 처리할 일 읽기 결과를 이 주문으로 거른 줄로 그려 넘긴다. 줄이 없으면 null(칸 없음). 팬 화면에서만 넘긴다. */
+  todo?: ReactNode;
+  /** 맨 위 칸의 「도착이 늦어요」에 이미 있는 상자 — 아래 「받는 주소 없이 보냈어요」 고를 목록에서 뺀다(INV-J13). 라우트가 같은 읽기 결과에서 넘긴다 */
+  todoBoxIds?: readonly string[];
 }) {
   const progress = fanProgress(view);
   // 배지의 「N/6」은 지금 있는 단계 번호다 — 끝낸 단계 수(4)를 쓰면 아래 진행 줄의 현재 단계(5번 배송중)와 숫자가 어긋났다(2026-10-09 디자인 점검)
@@ -96,14 +99,19 @@ export function GiftStatusPage({
   // 찾기 대상·받는 주소 판정은 features/box-waybill/model/box-targets.ts (INV-C3·C4 ②)
   const finderBoxes = giftFinderBoxes(boxes, inProgress);
   const anyEditable = finderBoxes.length > 0;
+  // 아래 찾기 구간의 고를 상자 — 칸에 있는 상자는 칸에서만 찾는다(INV-J13). 남은 상자가 없으면(전부 칸에 있음) 첫 그림에서 구간을 숨긴다.
+  // 원래 찾기 대상이 없던 주문(다 찾음·입고됨)은 예전처럼 구간을 그린다 — 마지막 상자를 찾은 뒤 결과 안내가 남아야 한다
+  const belowFinder = finderBoxesBelowTodo(finderBoxes, todoBoxIds);
+  const showFinder = !(anyEditable && belowFinder.length === 0);
   const officeAddress = inProgress ? view.officeAddress : null;
   const earlySendAck = needsEarlySendAck(boxes, inProgress);
   // 「먼저 보내기」 전이면 위쪽도 승인 대기로 보인다 — 판정은 fan-stage-copy(view.earlySendPending, INV-S9)
   const badge = fanBadge(view);
   const headline = fanHeadline(view);
   const anyAddress = officeAddress !== null && boxes.some((b) => giftAddressCode(b, officeAddress, inProgress) !== null);
-  // 차액 줄은 고른 뒤의 길이로 섹션을 그릴지 정한다 — 끝난 주문에 낸 기록이 없으면 빈 섹션을 그리지 않는다
-  const shownDifferences = difference ? visibleDifferences(difference.differences, view.outcome === "in_progress") : [];
+  // 차액 줄은 고른 뒤의 길이로 섹션을 그릴지 정한다 — 끝난 주문에 낸 기록이 없으면 빈 섹션을 그리지 않는다.
+  // 결제가 필요한 줄은 맨 위 「지금 할 일」 칸에서만 결제한다(INV-J13) — 아래에는 확인 중·완료·닫힘 줄만. 결제창에서 돌아온 안내는 줄이 없어도 보인다
+  const shownDifferences = difference ? differencesBelowTodo(visibleDifferences(difference.differences, view.outcome === "in_progress")) : [];
   // 단계 막대와 상자별 상태는 같은 경우(진행 중·돌려보냄)에만 보인다
   const showsProgress = showsSteps(view);
   const cancelable = canCancelGift(boxes, inProgress);
@@ -117,8 +125,8 @@ export function GiftStatusPage({
           </svg>
           보낸 선물로
         </Link>
-        <div className="stack">
-          <ActionLine count={actionCount} place="gift" />
+        <div className="stack" data-detail-top="">
+          {todo}
           <section className={`card ${s.gtop}`} aria-labelledby="g-title">
             <img className={`asset ${s["g-art"]}`} src="/img/icon-truck.png" alt="" aria-hidden="true" width={56} height={56} />
             <p className="t-meta">
@@ -201,10 +209,8 @@ export function GiftStatusPage({
               </div>
             </section>
           ) : null}
-          {/* 차액 결제(payment INV-M11·M12·M13) — 차액 요청이 있는 주문에만. 진행 중이 아니면 낸 기록만 남는다 */}
-          {difference && shownDifferences.length > 0 ? (
-            <DifferenceSection orderNo={view.orderNo} differences={shownDifferences} clientKey={difference.clientKey} notice={difference.notice} />
-          ) : null}
+          {/* 차액 결제 기록(payment INV-M11·M12·M13) — 결제 버튼은 맨 위 칸에만(INV-J13). 진행 중이 아니면 낸 기록만 남는다 */}
+          {difference && (shownDifferences.length > 0 || difference.notice) ? <DifferenceSection differences={shownDifferences} notice={difference.notice} /> : null}
           {view.outcome === "returned" ? (
             <div className="part">
               <h2 className="t-title">돌려보내 드렸어요</h2>
@@ -295,18 +301,20 @@ export function GiftStatusPage({
           {/* 받는 주소 없이 보냈어요(inbound-address-code INV-C4 ②) — 진행 중 주문이면 늘 그린다. 마지막 상자를 찾아 고를 상자가 없어져도
               결과 안내가 남아 있게, 빈 목록은 칸 안에서 처리한다. 잇는 판정은 DB 가 한다 */}
           {showsProgress && inProgress && boxes.length > 0 ? (
+            <KeepShown key={view.orderNo} show={showFinder}>
             <div className="part">
               <h2 className="t-title">받는 주소 없이 보냈어요</h2>
               <p className="t-lead t-desc">
                 받는 주소 끝 6자리를 빼고 보낸 상자는 사무실에서 바로 찾지 못해요. 송장번호와 택배사가 맞으면 찾아요.
               </p>
               <div className={s.inner}>
-                <FindMyBox boxes={finderBoxes} />
+                <FindMyBox boxes={belowFinder} />
               </div>
               <p className="hint">
                 틀린 입력은 하루에 다섯 번까지예요. 사무실에는 도착 시각과 택배사만 남기고, 주소와 전화번호는 남기지 않아요.
               </p>
             </div>
+            </KeepShown>
           ) : null}
 
           <div className={`grid ${payment ? "cols-2" : "cols-1"}`}>

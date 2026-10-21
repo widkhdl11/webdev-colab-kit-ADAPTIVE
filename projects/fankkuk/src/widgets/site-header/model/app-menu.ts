@@ -5,7 +5,7 @@ import { CREATOR_ACCOUNT, CREATOR_HOME, CREATOR_PROFILE_EDIT, CREATOR_SETTINGS, 
 
 // 로그인 후 왼쪽 앱 사이드바 메뉴(design-rules 00절, 시안 docs/design/mockups/site/v18/home-fan.html·home-creator.html).
 // 크리에이터 메뉴의 묶음·하위 줄은 design-rules 11절(시안 docs/design/mockups/site/v19-sidebar/creator-a.html),
-// 팬 「내 활동」 묶음의 「처리할 일」은 12절(숫자 뱃지, 0 이면 없음 — action-center INV-J2). 「내 팬꾹」 묶음은 12절(꾸미기·프로필 수정·상세 설정 — 주소 관리는 상세 설정 안, 계정 설정은 아래 이름 메뉴. 시안 v21-addendum3/cre-*.html).
+// 팬 메뉴는 묶음 없이 한 줄(action-center 「팬 메뉴 재구성」 — 「지금 할 일」 숫자 뱃지, 0 이면 없음 — INV-J2). 「내 팬꾹」 묶음은 12절(꾸미기·프로필 수정·상세 설정 — 주소 관리는 상세 설정 안, 계정 설정은 아래 이름 메뉴. 시안 v21-addendum3/cre-*.html).
 // 아이콘 이름은 lucide 선 아이콘 이름 — 그림은 ui/app-icons.tsx 에 있다.
 
 export type AppIcon =
@@ -32,7 +32,7 @@ export type AppIcon =
 export type AppMenuSub = { label: string; href: string } | { label: string; soon: true };
 
 /**
- * badge: 이 칸 옆에 숫자를 붙일 자리. 숫자는 헤더가 넘긴다(actions = 처리할 일 읽기 결과의 줄 수, action-center INV-J2).
+ * badge: 이 칸 옆에 숫자를 붙일 자리. 숫자는 헤더가 넘긴다(actions = 처리할 일 읽기 결과의 줄 수 — 칸 이름 「지금 할 일」, action-center INV-J2).
  * also: 이 칸이 현재 칸으로 켜지는 다른 주소(한 칸이 탭으로 이은 두 화면을 맡을 때 — 「보낸 내역」).
  * sub: 늘 펼쳐 두는 하위 줄.
  */
@@ -48,29 +48,33 @@ export type AppBadge = "gifts" | "actions";
 
 /**
  * 숫자 뱃지의 뜻 — 낭독기용(숫자 자체는 aria-hidden). 링크 이름은 「칸 이름, 이 말」로 읽힌다.
- * 처리할 일은 칸 이름이 이미 뜻이라 수만 붙인다(시안 뱃지 aria-label="2건") — 「처리할 일 처리할 일 3건」이 되지 않게.
+ * 지금 할 일은 칸 이름이 이미 뜻이라 수만 붙인다(시안 뱃지 aria-label="3건") — 「지금 할 일 지금 할 일 3건」이 되지 않게.
  */
 export const BADGE_SPEECH: Readonly<Record<AppBadge, (n: number) => string>> = {
   gifts: (n) => `진행 중 ${n}건`,
   actions: (n) => `${n}건`,
 };
 
+/** label 이 빈 글자면 묶음 머리 없이 칸만 그린다(팬 메뉴) */
 export type AppMenuGroup = { label: string; items: readonly AppMenuItem[] };
 
-const BASIC: AppMenuGroup["items"] = [
-  { href: "/creators", label: "크리에이터 찾기", icon: "search" },
-  { href: "/gifts/new", label: "선물 보내기", icon: "gift" },
-];
-
+/**
+ * 팬 메뉴(action-center 「팬 메뉴 재구성」, design-rules 00절·21절, 시안 v34-part1) — 묶음 이름 없이 한 줄로.
+ * 홈 / 지금 할 일(숫자 뱃지 — 처리할 일 읽기 결과의 줄 수, INV-J2) / 크리에이터 찾기 / 선물 보내기 / 보낸 선물 / 받은 선물 / 팔로우한 크리에이터 / 문의.
+ * 「물품 보관소」는 그 화면(design-rules 20절)을 만들 때 받은 선물 다음에 들어간다.
+ * 묶음 이름이 빈 글자면 사이드바가 묶음 머리를 그리지 않는다(ui/app-sidebar.tsx).
+ */
 export const FAN_APP_MENU: readonly AppMenuGroup[] = [
-  { label: "기본", items: [{ href: FAN_HOME, label: "홈", icon: "house" }, ...BASIC] },
   {
-    label: "내 활동",
+    label: "",
     items: [
-      { href: "/me/following", label: "팔로우한 크리에이터", icon: "heart" },
-      { href: "/gifts", label: "보낸 선물", icon: "package", badge: "gifts" },
-      { href: ACTION_CENTER_HREF, label: "처리할 일", icon: "clipboard-list", badge: "actions" },
+      { href: FAN_HOME, label: "홈", icon: "house" },
+      { href: ACTION_CENTER_HREF, label: "지금 할 일", icon: "clipboard-list", badge: "actions" },
+      { href: "/creators", label: "크리에이터 찾기", icon: "search" },
+      { href: "/gifts/new", label: "선물 보내기", icon: "gift" },
+      { href: "/gifts", label: "보낸 선물", icon: "package" },
       { href: "/me/revgifts", label: "받은 선물", icon: "mail" },
+      { href: "/me/following", label: "팔로우한 크리에이터", icon: "heart" },
       { href: "/support", label: "문의", icon: "message-circle" },
     ],
   },
@@ -90,10 +94,10 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
     label: "기본",
     items: [
       { href: CREATOR_HOME, label: "홈", icon: "house" },
-      // 홈 → 선물 현황 → 처리할 일 → 크리에이터 찾기(design-rules 13절). 선물 현황은 읽기 전용 목록이라 숫자가 없다.
-      // 처리할 일 숫자는 크리에이터 처리할 일 읽기의 줄 수(action-center INV-J6)
+      // 홈 → 선물 현황 → 지금 할 일 → 크리에이터 찾기(design-rules 13절). 선물 현황은 읽기 전용 목록이라 숫자가 없다.
+      // 지금 할 일 숫자는 크리에이터 처리할 일 읽기의 줄 수(action-center INV-J6). 이름은 2026-10-21 팬 쪽과 같게 「지금 할 일」(카드 d104 ⑤)
       { href: CREATOR_GIFT_PROGRESS_HREF, label: "선물 현황", icon: "truck" },
-      { href: CREATOR_ACTION_CENTER_HREF, label: "처리할 일", icon: "clipboard-list", badge: "actions" },
+      { href: CREATOR_ACTION_CENTER_HREF, label: "지금 할 일", icon: "clipboard-list", badge: "actions" },
       { href: "/creators", label: "크리에이터 찾기", icon: "search" },
     ],
   },

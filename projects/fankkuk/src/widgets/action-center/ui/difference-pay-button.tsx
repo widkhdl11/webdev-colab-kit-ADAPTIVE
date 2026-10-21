@@ -5,7 +5,7 @@ import { useState } from "react";
 import { PaymentStep } from "@/features/checkout/ui/payment-step";
 import { postDifferencePrepare, type DifferenceCheckout } from "@/features/difference-pay/api/post-difference-client";
 
-// 상자 하나의 차액 결제 버튼 (payment INV-M11·M13, action-center INV-J4). 처리할 일 카드가 쓴다(선물 상세의 차액 구간은 widgets/gift-status/ui/difference-section.tsx).
+// 상자 하나의 차액 결제 버튼 (payment INV-M11·M13, action-center INV-J4). 선물 상세 「지금 할 일」 칸이 쓴다(INV-J13 — 아래 차액 구간은 widgets/gift-status/ui/difference-section.tsx).
 // 새 처리 길을 만들지 않는다 — 선물 상세의 「차액 결제하기」와 같은 차액 결제 준비(/api/gifts/difference)를 부르고,
 // 서버가 준 결제 번호·금액으로 같은 결제창(PaymentStep)을 띄운다. 금액은 서버가 정한 값만 쓴다. 결제가 끝나면 서버가 승인한 뒤 선물 상세로 돌려보낸다.
 

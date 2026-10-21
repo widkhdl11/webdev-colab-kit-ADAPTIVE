@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { formatMonthDayKo } from "@/shared/lib/format/datetime";
 
-// 처리할 일 카드 (action-center INV-J1·J2·J3). DB 읽기 함수 하나(my_action_items)의 줄을 그대로 카드로 쓴다 — 저장된 목록이 아니라
+// 지금 할 일 줄 (action-center INV-J1·J2·J3 — 2026-10-21 화면 이름 「처리할 일」 → 「지금 할 일」). DB 읽기 함수 하나(my_action_items)의 줄을 그대로 카드로 쓴다 — 저장된 목록이 아니라
 // 읽을 때마다 원천 상태에서 계산된 결과다. 사이드바 숫자·홈 한 줄·처리할 일 화면·선물 상세 맨 위 한 줄은 모두 이 배열 하나에서 나온다(J2).
 // 숫자는 배열 길이다 — 따로 세는 길을 만들지 않는다.
 
@@ -78,13 +78,30 @@ export function parseActionItems(data: unknown): ActionItem[] {
     });
 }
 
-/** 선물 상세 맨 위 한 줄 — 같은 읽기 결과에서 그 주문의 카드만 */
+/** 선물 상세 맨 위 「지금 할 일」 칸(action-center INV-J13) — 같은 읽기 결과에서 그 주문(역조공은 몫)의 줄만. 상세가 따로 계산하지 않는다 */
 export function actionItemsOfOrder(items: readonly ActionItem[], orderNo: string): ActionItem[] {
   return items.filter((it) => it.orderNo === orderNo);
 }
 
-/** 처리할 일 화면 주소 */
+/** 지금 할 일 화면 주소(2026-10-21 카드 d104 — 화면 이름 「지금 할 일」, 주소는 그대로) */
 export const ACTION_CENTER_HREF = "/me/actions";
+
+/** 선물 상세의 「지금 할 일」 칸 조각 이름 — 칸의 id 이자 링크의 고정 조각(action-center INV-J13, notifications INV-N9) */
+export const TODO_FRAGMENT = "todo";
+
+/**
+ * 선물 상세 주소(action-center INV-J12) — 팬 선물(FC-)도 받은 역조공 몫(RG-)도 `/gifts/{주문번호}` 하나다.
+ * todo = 지금 할 일 줄·알림에서 갈 때 — 고정 조각 `#todo` 만 붙인다(그 자체로는 아무것도 처리하지 않는다).
+ */
+export function giftDetailHref(orderNo: string, todo = false): string {
+  return `/gifts/${orderNo}${todo ? `#${TODO_FRAGMENT}` : ""}`;
+}
+
+/** 가장 급한 줄이 먼저 — 기한이 이른 순, 기한이 아직 없는 줄(검수 완료 스캔 전 차액)은 뒤. 같은 기한이면 읽은 순서 그대로 */
+export function byUrgency(items: readonly ActionItem[]): ActionItem[] {
+  const at = (it: ActionItem) => (it.dueAt ? Date.parse(it.dueAt) : Number.POSITIVE_INFINITY);
+  return [...items].sort((a, b) => at(a) - at(b));
+}
 
 /** 처분 예정 날짜 문장(office-workflow INV-W15, 용어집 dispose_due 행) — 기한은 반송 대기 + 30일, 날짜는 서울 날짜. 팬·크리에이터 처리할 일이 같이 쓴다 */
 export function disposeDueText(dueAt: string): string {

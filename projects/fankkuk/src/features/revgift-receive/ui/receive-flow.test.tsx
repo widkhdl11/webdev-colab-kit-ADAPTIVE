@@ -76,6 +76,7 @@ function render(status: MyFanAddressStatus | null, canEnter = true) {
         daysLeftText="5일 남음"
         deadlineText="10월 22일까지 정해 주세요"
         address={address}
+        todo
       />,
     ),
   );
@@ -179,6 +180,7 @@ describe("끝난 역조공의 결과 (office-workflow INV-W15)", () => {
           daysLeftText="5일 남음"
           deadlineText="10월 22일까지 정해 주세요"
           address={{ status: HOME, canEnter: true, missingKeyText: "", renderForm: () => null }}
+          todo={false}
         />,
       ),
     );
@@ -194,5 +196,39 @@ describe("끝난 역조공의 결과 (office-workflow INV-W15)", () => {
     renderSettled("returned");
     expect(host.querySelector("#rv-result-title")?.textContent).toBe("상자를 돌려보냈어요");
     expect(host.textContent).toContain("상자를 하루님에게 돌려보냈어요.");
+  });
+});
+
+describe("받기 칸은 「지금 할 일」 칸 안에만 (action-center INV-J13)", () => {
+  function renderWaiting(todo: boolean) {
+    act(() =>
+      root.render(
+        <ReceiveFlow
+          orderNo={ORDER_NO}
+          creatorName="하루"
+          tierName="소"
+          tierRule="가로·세로·높이 합 80cm 이하"
+          stage="waiting"
+          daysLeftText="5일 남음"
+          deadlineText="10월 22일까지 정해 주세요"
+          address={{ status: HOME, canEnter: true, missingKeyText: "", renderForm: () => null }}
+          todo={todo}
+        />,
+      ),
+    );
+  }
+
+  it("INV-J13: 처리할 일 읽기 결과에 있는 몫이면 받기·받지 않기가 #todo 칸 안에 있다", () => {
+    renderWaiting(true);
+    const box = host.querySelector("#todo");
+    expect(box?.textContent).toContain("지금 할 일");
+    expect([...(box?.querySelectorAll("button") ?? [])].map((b) => b.textContent)).toEqual(["받기", "받지 않기"]);
+  });
+
+  it("INV-J13 (실패경로): 읽기 결과에 없으면 기다리는 중이어도 칸도 받기 버튼도 없다 — 화면이 따로 계산하지 않는다", () => {
+    renderWaiting(false);
+    expect(host.querySelector("#todo")).toBeNull();
+    expect([...host.querySelectorAll("button")].map((b) => b.textContent)).not.toContain("받기");
+    expect(host.textContent).toContain("5일 남음");
   });
 });

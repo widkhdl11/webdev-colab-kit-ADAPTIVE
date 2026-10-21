@@ -41,7 +41,7 @@ export function memberTiles({ gifts, actionCount, receivedCount }: Pick<Props, "
   return [
     { href: "/gifts/new", label: "선물 보내기", note: "팬꾹 주소로 먼저 보내요", icon: "icon-gift" },
     { href: "/gifts", label: "보낸 선물", note: `진행 중 ${gifts.length}건`, icon: "icon-truck" },
-    { href: ACTION_CENTER_HREF, label: "처리할 일", note: countNote(actionCount), icon: "icon-approve" },
+    { href: ACTION_CENTER_HREF, label: "지금 할 일", note: countNote(actionCount), icon: "icon-approve" },
     { href: "/me/revgifts", label: "받은 선물", note: countNote(receivedCount), icon: "icon-gift" },
   ];
 }

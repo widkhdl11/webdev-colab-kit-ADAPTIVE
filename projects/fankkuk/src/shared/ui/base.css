@@ -796,3 +796,55 @@ section:not(.section) + section:not(.section):where(:not(.admin-area *, :is(.sta
 }
 /* 누름은 손가락 기기에서도 — 위 hover 규칙보다 뒤에 둔다 */
 :is(a.card, .ccard):where(:not(.admin-area *)):active { transform: scale(0.98); transition-duration: var(--dur-press); }
+
+/* ── 21절 강조 하나 + 나머지 촘촘하게 (2026-10-21 시안 docs/design/mockups/site/v34-part1/ — v33b.css·v34.css 값) ──
+   화면마다 가장 먼저 볼 것 하나만 하늘 면(.feat · .lrow--hi), 나머지는 테두리 없는 촘촘한 줄(.lrows > .lrow). 그림자는 쓰지 않는다. */
+.feat { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-4) var(--space-8); align-items: center; padding: var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--tint); }
+.feat-who { display: flex; gap: var(--space-4); align-items: center; min-width: 0; }
+.feat-who .face { width: 64px; height: 64px; overflow: hidden; border: 2px solid var(--tint-line); background: var(--white); font-size: var(--fs-card); }
+.feat-who .face img { width: 40px; height: 40px; object-fit: contain; }
+.feat-who > div { min-width: 0; }
+.feat-who strong { display: block; font-size: var(--fs-card); line-height: 1.4; overflow-wrap: anywhere; }
+.feat-who .meta { display: block; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+.feat-who .tag { margin-top: var(--space-2); }
+.feat-days { text-align: right; line-height: 1.2; }
+.feat-days .lab { display: block; margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+.feat > .btn { min-width: 96px; text-align: center; }
+.num-big { font-family: var(--font-round); font-size: var(--fs-hero); font-weight: var(--fw-title); letter-spacing: -1.5px; line-height: 1.2; color: var(--ink); }
+.num-big--32 { font-size: var(--fs-title); letter-spacing: -1px; }
+.num-big small { margin-left: var(--space-1); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; color: var(--sub); }
+.lrows { margin: 0; padding: 0; list-style: none; }
+.lrow { position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) var(--space-3); border-radius: var(--r-btn); }
+.lrow + .lrow { border-top: 1px solid var(--gray-200); border-radius: 0; }
+.lrow:hover { border-radius: var(--r-btn); background: var(--tint); }
+.lrow:has(.stretch:focus-visible) { outline: 3px solid var(--focus); outline-offset: -3px; }
+.lrow .face { width: 32px; height: 32px; font-size: var(--fs-small); overflow: hidden; }
+.lrow-txt { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.lrow-txt strong { font-weight: var(--fw-bold); }
+.lrow-txt .meta { margin-left: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.lrow-side { display: flex; flex: none; align-items: center; gap: var(--space-3); }
+.lrow-side .btn { position: relative; z-index: 1; }
+.lrow-chev { flex: none; width: var(--icon-xs); height: var(--icon-xs); fill: none; stroke: var(--sub); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lrow--hi { min-height: 72px; margin: var(--space-2) 0; border: 1px solid var(--tint-line); border-radius: var(--r-card); background: var(--tint); }
+.lrow--hi:hover { border-radius: var(--r-card); }
+.lrow--hi + .lrow { border-top: 0; }
+.lrow--hi .lrow-txt strong { font-size: var(--fs-card); }
+.stretch { color: inherit; text-decoration: none; }
+.stretch::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.stretch:focus-visible { outline: none; }
+.mini-steps { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.mini-steps .segs { display: inline-flex; gap: var(--space-1); }
+.mini-steps i { display: block; width: 12px; height: 4px; border-radius: var(--r-pill); background: var(--gray-200); }
+.mini-steps i.on { background: var(--primary); }
+@media (max-width: 767px) {
+  .feat { grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); padding: var(--space-6); }
+  .feat-who { grid-column: 1 / -1; }
+  .feat > .btn { grid-column: 1 / -1; width: 100%; }
+  .feat-days { text-align: left; }
+  .num-big { font-size: var(--fs-title); letter-spacing: -1px; }
+  .lrow { flex-wrap: wrap; gap: var(--space-3) var(--space-4); }
+  .lrow-txt { white-space: normal; }
+  .lrow-txt .meta { display: block; margin-left: 0; }
+  .lrow-side { order: 3; width: 100%; padding-left: var(--space-12); justify-content: flex-start; flex-wrap: wrap; }
+  .lrow-chev { order: 2; }
+}

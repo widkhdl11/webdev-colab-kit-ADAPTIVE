@@ -1,3 +1,4 @@
+import { giftDetailHref } from "@/entities/action-item/model/action-items";
 import { NOTIFICATION_POLICY, type NotificationAudience, type NotificationKind } from "@/entities/notification/model/delivery-policy";
 import { DECLINED_PHRASE, EXPIRED_TEXT } from "@/entities/order/ui/fan-stage-copy";
 import { CREATOR_ACTION_CENTER_HREF } from "@/entities/action-item/model/creator-action-items";
@@ -7,7 +8,7 @@ import { formatDeadline, formatMonthDayKo } from "@/shared/lib/format/datetime";
 // 알림 본문 틀 (notifications INV-N1·N9). 카카오 알림톡과 이메일이 같은 틀을 쓴다(INV-N7) — 카카오 템플릿도 이 문구로 심사받는다.
 // 본문은 잠금 화면·메일함·대행사 서버처럼 우리가 지킬 수 없는 곳에 남는다. 그래서 받는 칸을 아래 여섯으로 묶어
 // 품목·상대방·주소·연락처·운송장 번호가 섞일 자리를 만들지 않는다. 누가 무엇을 보냈는지는 링크를 열고 로그인한 뒤에만 보인다.
-// 링크는 설정의 사이트 주소 + 고정 경로(+주문번호)뿐이다. 요청 헤더로 만들지 않고, 링크 자체로는 아무것도 처리하지 않는다(INV-N9).
+// 링크는 설정의 사이트 주소 + 고정 경로(+주문번호, 할 일이면 고정 조각 #todo — action-center INV-J13)뿐이다. 요청 헤더로 만들지 않고, 링크 자체로는 아무것도 처리하지 않는다(INV-N9).
 
 // box_arrived: 상자 하나가 입고됐다고 그 주문의 주인(보낸 팬 · 역조공이면 보낸 크리에이터)에게 한 번(inbound-address-code INV-C8).
 //   본문에 받는 주소 6자리·사무실 주소를 넣지 않는다(INV-C2) — 이 틀에는 그 칸이 아예 없다.
@@ -221,24 +222,25 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         path: CREATOR_ACTION_CENTER_HREF,
       };
     case "revgift_offer": {
-      // 보낸 크리에이터 이름과 그 몫 받기 화면 링크뿐(INV-N20 · reverse-gift INV-R12) — 선물 내용·상자 크기·금액·주소·6자리 칸이 없다. 이름이 없으면 보내지 않는다
+      // 보낸 크리에이터 이름과 그 몫의 선물 상세 링크뿐(INV-N20 · reverse-gift INV-R12) — 선물 내용·상자 크기·금액·주소·6자리 칸이 없다. 이름이 없으면 보내지 않는다
+      // 링크는 「지금 할 일」 칸이 펼쳐진 상세(고정 조각 #todo — action-center INV-J12·J13, INV-N9). 여는 것만으로는 아무것도 처리하지 않는다
       const name = senderName?.trim();
       if (!name) throw new Error("역조공 받기 알림에 보낸 크리에이터 이름이 없다");
       return {
         subject: round === 1 ? `[팬꾹] ${name}님이 선물을 보냈어요` : `[팬꾹] ${name}님이 보낸 선물을 받을지 정해 주세요`,
         lines: [greet, round === 1 ? `${name}님이 선물을 보냈어요.` : `${name}님이 보낸 선물을 받을지 정해 주세요.`],
         buttonLabel: "선물 받기",
-        path: `/me/revgifts/${orderNo}`,
+        path: giftDetailHref(orderNo, true),
       };
     }
     case "box_no_code":
-      // 링크는 DB 가 고른 줄이 정한다(INV-N21, 카드 d96 ③): 팬 선물 주문이면 선물 상세(「받는 주소 없이 보냈어요」),
+      // 링크는 DB 가 고른 줄이 정한다(INV-N21, 카드 d96 ③): 팬 선물 주문이면 선물 상세의 「지금 할 일」 칸(#todo — 송장번호 입력, action-center INV-J13),
       // 역조공 몫(RG-)이면 보낸 역조공 화면(줄마다 「내 상자 찾기」). 몫 번호는 본문에 쓰지 않는다
       return {
         subject: "[팬꾹] 받는 주소 없이 보낸 상자가 있어요",
         lines: [greet, "받는 주소 없이 보낸 상자가 있어요."],
         buttonLabel: REVGIFT_ORDER_NO.test(orderNo) ? "내 상자 찾기" : "받는 주소 없이 보냈어요",
-        path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : `/gifts/${orderNo}`,
+        path: REVGIFT_ORDER_NO.test(orderNo) ? "/creator/revgifts" : giftDetailHref(orderNo, true),
       };
     case "difference_due":
       // 결제가 끝나야 송장이 나가고(payment INV-M12), 168시간 미납이면 반송 대상이다(INV-M13)

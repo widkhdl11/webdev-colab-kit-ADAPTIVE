@@ -1,194 +1,117 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { disposeDueText, type ActionItem } from "@/entities/action-item/model/action-items";
-import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
-import { DifferencePayButton } from "./difference-pay-button";
-import { ReturnAddressButton, type FanReturnAddress } from "./return-address-button";
-import { formatDeadline, seoulDaysUntil } from "@/shared/lib/format/datetime";
+import { byUrgency, giftDetailHref, type ActionItem } from "@/entities/action-item/model/action-items";
+import { formatMonthDayKo, seoulDaysUntil } from "@/shared/lib/format/datetime";
 import s from "./action-center.module.css";
 
-// 처리할 일 (action-center INV-J1·J2·J4, design-rules 12절, 시안 v21-addendum3/fan-action-center.html). 본문 틀은 목록형 880 — 라우트가 MyShell(list)로 감싼다.
-// 카드는 처리할 일 읽기 한 번의 결과 그대로 — 제목 옆 숫자는 그 줄 수이고 사이드바 숫자와 같은 결과다(J2). 0건이면 빈 상태.
-// 카드는 위아래 한 줄씩. 버튼은 새 처리 길을 만들지 않고 기존 처리를 그대로 부른다(J4):
-//   추가 결제 = 차액 결제 준비 → 결제창(선물 상세와 같은 길) · 도착이 늦어요 = 「받는 주소 없이 보냈어요」 찾기(그 상자 하나) · 선물 받기 = 기존 받기 화면
-//   · 돌려받을 주소 확인 = 반송 주소 확인 창(등록 주소 확인 / 바꾸기, 등록 전이면 입력 — office-workflow INV-W15).
-// 처리가 끝나면 다음 읽기에서 카드가 없다 — 카드는 누른 기록이 아니라 원천 상태로 사라진다.
+// 지금 할 일 (action-center INV-J1·J2·J4·J13, design-rules 21절, 시안 v34-part1/todo.html). 본문 틀은 목록형 880 — 라우트가 MyShell(list)로 감싼다.
+// 줄은 처리할 일 읽기 한 번의 결과 그대로 — 제목 옆 숫자는 그 줄 수이고 사이드바 숫자와 같은 결과다(J2). 0건이면 빈 상태.
+// 이 화면에는 처리 칸이 없다(J13): 가장 급한 줄 하나만 강조 칸(남은 날·그림·「바로 하기」), 나머지는 촘촘한 줄 + 작은 「바로 하기」.
+// 「바로 하기」는 그 선물 상세의 「지금 할 일」 칸(#todo)으로 간다 — 처리는 상세 칸에서 기존 처리 함수를 그대로 부른다(J4).
+// 처리가 끝나면 다음 읽기에서 줄이 없다 — 줄은 누른 기록이 아니라 원천 상태로 사라진다.
 
-/** now = 남은 날을 셀 기준 시각(라우트가 그린 때) · address = 반송 주소 확인 창의 받을 주소(라우트가 읽는다) */
-type Props = { items: readonly ActionItem[]; clientKey: string; now: string; address: FanReturnAddress };
+/** now = 남은 날을 셀 기준 시각(라우트가 그린 때) */
+type Props = { items: readonly ActionItem[]; now: string };
 
-const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
-
-function tierName(t: string): string {
-  return t in PARCEL_TIER_GUIDE ? PARCEL_TIER_GUIDE[t as keyof typeof PARCEL_TIER_GUIDE].name : t;
+/** 줄 하나의 글 — 일 이름 · 어느 선물인지 · 그림 · (있으면) 해야 할 일 태그 */
+function rowCopy(item: ActionItem): { title: string; meta: string; art: string; tag: string | null } {
+  if (item.kind === "difference") return { title: "추가 결제", meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-fee.webp", tag: null };
+  if (item.kind === "missing_box") {
+    return { title: "도착이 늦어요", meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-truck.webp", tag: "송장번호 입력" };
+  }
+  if (item.kind === "return_address") {
+    return { title: "돌려받을 주소 확인", meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-truck.webp", tag: null };
+  }
+  return { title: `${item.creatorName}님이 보낸 선물 받기`, meta: "받을지 정해 주세요", art: "/images/home/icon-gift.webp", tag: null };
 }
 
-const ICONS = {
-  card: (
-    <>
-      <rect width="20" height="14" x="2" y="5" rx="2" />
-      <path d="M2 10h20" />
-    </>
-  ),
-  truck: (
-    <>
-      <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
-      <path d="M15 18H9" />
-      <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
-      <circle cx="17" cy="18" r="2" />
-      <circle cx="7" cy="18" r="2" />
-    </>
-  ),
-  gift: (
-    <>
-      <path d="M12 7v14" />
-      <path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" />
-      <path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5" />
-      <rect x="3" y="7" width="18" height="4" rx="1" />
-    </>
-  ),
-  clock: (
-    <>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 6v6l4 2" />
-    </>
-  ),
-  check: (
-    <>
-      <circle cx="12" cy="12" r="10" />
-      <path d="m16 9-5.5 5.5L8 12" />
-    </>
-  ),
-} as const;
-
-function Svg({ name }: { name: keyof typeof ICONS }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      {ICONS[name]}
-    </svg>
-  );
+/** 남은 날(서울 날짜) — 기한 당일이면 0. 기한이 아직 없으면(검수 완료 스캔 전 차액) null */
+function daysLeft(item: ActionItem, now: string): number | null {
+  return item.dueAt ? Math.max(0, seoulDaysUntil(item.dueAt, now)) : null;
 }
 
-/** 기한 — 「10월 18일 오후 11시 59분까지 · 2일 남았어요」(시안). 남은 날은 서울 날짜로 세고, 기한 당일(0일)에는 붙이지 않는다 */
-function Due({ at, now }: { at: string; now: string }) {
-  const days = seoulDaysUntil(at, now);
-  return (
-    <p>
-      <span className={`${s.due} action-due`}>
-        <Svg name="clock" />
-        {formatDeadline(at)}까지{days > 0 ? ` · ${days}일 남았어요` : null}
-      </span>
-    </p>
-  );
-}
+const leftText = (days: number) => (days > 0 ? `${days}일 남음` : "오늘까지");
 
-function Card({ item, icon, title, meta, children }: { item: ActionItem; icon: keyof typeof ICONS; title: string; meta: string; children: ReactNode }) {
-  const id = `ac-${item.kind}-${item.orderNo}-${"boxSeq" in item ? item.boxSeq : "r"}`;
+function Featured({ item, now }: { item: ActionItem; now: string }) {
+  const c = rowCopy(item);
+  const days = daysLeft(item, now);
+  const id = `ac-feat-${item.kind}`;
   return (
-    <section className={`card action-card ${s.card}`} data-kind={item.kind} aria-labelledby={id}>
-      <div className={s.top}>
-        <span className={s.ico} aria-hidden="true">
-          <Svg name={icon} />
+    <article className={`feat ${s.feat}`} data-action-row="" data-kind={item.kind} aria-labelledby={id}>
+      <div className="feat-who">
+        <span className="face" aria-hidden="true">
+          <img src={c.art} alt="" width={40} height={40} />
         </span>
         <div>
-          <h2 id={id}>{title}</h2>
-          <p className={`t-meta ${s.meta}`}>{meta}</p>
+          <strong id={id}>{c.title}</strong>
+          <span className="meta">{c.meta}</span>
+          {c.tag ? <span className="tag tag--warn">{c.tag}</span> : null}
         </div>
       </div>
-      {children}
-    </section>
-  );
-}
-
-function ActionCard({ item, clientKey, now, address }: { item: ActionItem; clientKey: string; now: string; address: FanReturnAddress }) {
-  if (item.kind === "difference") {
-    const declared = tierName(item.declaredTier);
-    const measured = tierName(item.measuredTier);
-    return (
-      <Card item={item} icon="card" title="추가 결제" meta={`${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`}>
-        <p className={s.why}>
-          검수해 보니 실제 크기가 신고한 {declared}보다 커서 {measured} 요금이 필요해요. 차액만 결제하면 바로 이어서 보내 드려요.
-        </p>
-        <div className={s.payBox}>
-          <div className={s.payLine}>
-            <span>신고한 크기</span>
-            <b>{declared}</b>
-          </div>
-          <div className={s.payLine}>
-            <span>실제 크기</span>
-            <b>{measured}</b>
-          </div>
-          <div className={`${s.payLine} pay-total`}>
-            <span>결제할 차액</span>
-            <strong>{won(item.amountKrw)}</strong>
-          </div>
+      {days !== null && item.dueAt ? (
+        <div className="feat-days">
+          <p className="num-big">{days > 0 ? <>{days}일<small>남음</small></> : <>오늘<small>까지</small></>}</p>
+          <span className="lab">{formatMonthDayKo(item.dueAt)}까지</span>
         </div>
-        {/* 기한은 검수 완료 스캔 뒤에 생긴다(payment INV-M13) — 그 전이면 기한 줄을 그리지 않는다 */}
-        {item.dueAt ? <Due at={item.dueAt} now={now} /> : null}
-        <DifferencePayButton boxId={item.boxId} orderNo={item.orderNo} amountKrw={item.amountKrw} clientKey={clientKey} />
-      </Card>
-    );
-  }
-  if (item.kind === "missing_box") {
-    const tier = tierName(item.declaredTier);
-    return (
-      <Card item={item} icon="truck" title="도착이 늦어요" meta={`${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq} (${tier})`}>
-        <p className={s.why}>예상한 날짜가 지났는데 아직 도착하지 않았어요.</p>
-        <Due at={item.dueAt} now={now} />
-        <FindMyBox box={{ target: { kind: "box", id: item.boxId }, label: item.boxLabel, name: `${item.boxLabel} · ${tier} 상자` }} />
-      </Card>
-    );
-  }
-  // 반송 주소 확인(office-workflow INV-W15) — 용어집 return_address·dispose_due 행. 기한 = 반송 대기 + 30일(지나면 처분 대상)
-  if (item.kind === "return_address") {
-    const meta = `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`;
-    return (
-      <Card item={item} icon="truck" title="돌려받을 주소 확인" meta={meta}>
-        <p>
-          <span className={`${s.due} action-due`}>
-            <Svg name="clock" />
-            {disposeDueText(item.dueAt)}
-          </span>
-        </p>
-        <ReturnAddressButton target={{ orderNo: item.orderNo, boxSeq: item.boxSeq }} meta={meta} address={address} />
-      </Card>
-    );
-  }
-  return (
-    <Card item={item} icon="gift" title="선물 받기" meta={`${item.creatorName}님이 보낸 선물`}>
-      <Due at={item.dueAt} now={now} />
-      <Link className={`btn ${s.go}`} href={`/me/revgifts/${item.orderNo}`} aria-label={`${item.creatorName}님이 보낸 선물 받기`}>
-        받기
+      ) : (
+        <span />
+      )}
+      <Link className="btn" href={giftDetailHref(item.orderNo, true)} aria-label={`${c.title} 바로 하기 — ${c.meta}`}>
+        바로 하기
       </Link>
-    </Card>
+    </article>
   );
 }
 
-export function ActionCenterPage({ items, clientKey, now, address }: Props) {
+function Row({ item, now }: { item: ActionItem; now: string }) {
+  const c = rowCopy(item);
+  const days = daysLeft(item, now);
+  return (
+    <li className="lrow" data-action-row="" data-kind={item.kind}>
+      <span className="face" aria-hidden="true">
+        {item.creatorName.slice(0, 1)}
+      </span>
+      <p className="lrow-txt">
+        <strong>{c.title}</strong>
+        <span className="meta">{c.meta}</span>
+      </p>
+      <div className="lrow-side">
+        {days !== null ? <span className="tag tag--warn">{leftText(days)}</span> : null}
+        <Link className="btn btn--line btn--sm" href={giftDetailHref(item.orderNo, true)} aria-label={`${c.title} 바로 하기 — ${c.meta}`}>
+          바로 하기
+        </Link>
+      </div>
+    </li>
+  );
+}
+
+export function ActionCenterPage({ items, now }: Props) {
+  const [first, ...rest] = byUrgency(items);
   return (
     <>
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">
-            처리할 일{items.length > 0 ? <span className="ph-count">{items.length}</span> : null}
+            지금 할 일{items.length > 0 ? <span className="ph-count">{items.length}</span> : null}
           </h1>
         </div>
         <p className="ph-desc">끝내면 여기서 사라져요.</p>
       </header>
-      {items.length > 0 ? (
-        <div className="stack">
-          {items.map((it) => (
-            <ActionCard key={`${it.kind}-${it.orderNo}-${"boxId" in it ? it.boxId : ""}`} item={it} clientKey={clientKey} now={now} address={address} />
-          ))}
-        </div>
+      {first ? (
+        <>
+          <Featured item={first} now={now} />
+          {rest.length > 0 ? (
+            <ul className={`lrows ${s.rows}`}>
+              {rest.map((it) => (
+                <Row key={`${it.kind}-${it.orderNo}-${"boxId" in it ? it.boxId : ""}`} item={it} now={now} />
+              ))}
+            </ul>
+          ) : null}
+        </>
       ) : (
         <section className={`card ${s.empty}`} aria-labelledby="ac-empty" data-testid="action-empty">
-          <span className={s.emptyIco} aria-hidden="true">
-            <Svg name="check" />
-          </span>
-          <h2 id="ac-empty">지금 처리할 일이 없어요</h2>
-          <p>처리할 일이 생기면 여기에 알려 드릴게요.</p>
+          <img className={s.emptyArt} src="/images/home/icon-approve.webp" alt="" aria-hidden="true" width={72} height={72} />
+          <h2 id="ac-empty">지금 할 일이 없어요</h2>
+          <p>새로 생기면 여기에 알려 드릴게요.</p>
           <Link className="btn btn--line" href="/gifts">
             보낸 선물 보기
           </Link>

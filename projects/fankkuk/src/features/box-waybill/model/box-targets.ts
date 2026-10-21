@@ -23,6 +23,14 @@ export function giftFinderBoxes(boxes: readonly GiftBox[], inProgress: boolean):
     });
 }
 
+/**
+ * 선물 상세 아래 「받는 주소 없이 보냈어요」 구간의 고를 상자(action-center INV-J13) — 맨 위 「지금 할 일」 칸의 「도착이 늦어요」에
+ * 이미 있는 상자는 그 칸에서만 찾으므로 뺀다. 칸에 없는(결제 뒤 14일 전) 상자는 그대로 남는다.
+ */
+export function finderBoxesBelowTodo(boxes: readonly FinderBox[], todoBoxIds: readonly string[]): FinderBox[] {
+  return boxes.filter((b) => !todoBoxIds.includes(b.target.id));
+}
+
 /** 받는 주소 대신 「먼저 보내기」 안내를 그릴 때 — 진행 중 주문이고 DB 가 아직 누르지 않았다고 할 때(approval-signature INV-S9) */
 export function needsEarlySendAck(boxes: readonly GiftBox[], inProgress: boolean): boolean {
   return inProgress && boxes.some((b) => b.sendAckNeeded);

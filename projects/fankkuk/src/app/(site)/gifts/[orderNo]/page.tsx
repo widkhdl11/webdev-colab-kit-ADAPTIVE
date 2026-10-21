@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
 import { actionItemsOfOrder } from "@/entities/action-item/model/action-items";
+import { readMyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 import { readMyGiftReplies } from "@/entities/gift-reply/api/gift-reply-reads";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
 import { readMyGiftMemo } from "@/entities/order/api/my-gift-memo";
@@ -9,49 +11,79 @@ import { readMyGiftBoxes } from "@/entities/parcel/api/box-reads";
 import { readMyDifferences } from "@/entities/payment/api/read-my-differences";
 import { readMyGiftPayment } from "@/entities/payment/api/read-my-gift-payment";
 import { isOrderNo } from "@/entities/order/model/order-no";
+import { readMyRevgiftAccessLog, readReceivedRevgift } from "@/entities/revgift/api/revgift-reads";
+import { isRevgiftOrderNo } from "@/entities/revgift/model/revgift-order-no";
+import type { Viewer } from "@/entities/session/model/viewer";
 import { senderRoleAllowed } from "@/features/gift-register/model/sender-rule";
+import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
+import { GiftTodoBox } from "@/widgets/action-center/ui/gift-todo-box";
 import { GiftStatusPage } from "@/widgets/gift-status/ui/gift-status-page";
+import { RevgiftReceivePage } from "@/widgets/revgift-receive/ui/revgift-receive-page";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 
 export const dynamic = "force-dynamic";
 
-// 선물 하나 — 보낸 사람(팬·크리에이터)이 본다. 읽기 함수가 로그인한 사람이 보낸 주문만 돌려주므로 남의 주문번호는 없는 주소와 같다.
-// 헤더도 같은 목록을 쓰므로 목록을 한 번 읽어 둘 다에 넘긴다.
+// 선물 상세 하나 (action-center INV-J12) — 팬이 보낸 선물(FC-…)도, 팬이 받은 역조공 몫(RG-…)도 이 주소 하나다.
+// 주문번호 앞머리로 읽기 함수를 고르고, 누구 것인지는 두 읽기 함수가 각각 로그인 토큰으로 판정한다:
+//   FC = 로그인한 사람이 보낸 주문만 돌려주는 목록 읽기(my_gifts) · RG = 로그인한 팬이 받는 몫만 돌려주는 받은 역조공 읽기.
+// 그 밖(남의 것·없는 것·형식이 틀린 것·받는 팬이 아닌 계정이 연 RG)은 모두 같은 notFound — 있는지 없는지 드러나지 않는다.
+// 맨 위 「지금 할 일」 칸(INV-J13)은 처리할 일 읽기 결과를 이 주문으로 거른 줄로만 그린다. 한 번 읽어 사이드바 숫자와 함께 쓴다(INV-J2).
+// 처리할 일을 읽지 못하면 숫자와 칸이 함께 빠지고 상세는 그린다.
+
+type Session = { supabase: SupabaseClient; viewer: Viewer };
+
 const DIFFERENCE_NOTICES = ["paid", "failed", "in_progress", "closed"] as const;
 
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ orderNo: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const { orderNo } = await params;
-  const { difference: differenceParam } = await searchParams;
-  const { supabase, viewer } = await loadSession();
-  if (!viewer || !senderRoleAllowed(viewer.role)) redirect("/login");
+/** 받은 역조공 몫 — 받는 팬 본인만(읽기 함수가 판정). 크리에이터·운영자 계정에게는 팬 상세가 없다 */
+async function revgiftDetail({ supabase, viewer }: Session, orderNo: string) {
+  if (viewer.role !== "fan") notFound();
+  // 넷은 서로 기다릴 일이 없다 — 남의 몫이면 기록 읽기도 빈 목록이라 먼저 불러도 새는 것이 없다
+  const [item, accessLog, address, actions] = await Promise.all([
+    readReceivedRevgift(supabase, orderNo),
+    readMyRevgiftAccessLog(supabase, orderNo),
+    readMyFanAddressStatus(supabase).catch(() => null),
+    readActionItemsOrNull(supabase),
+  ]);
+  if (!item) notFound();
+  return (
+    <>
+      <SiteHeader {...await readSiteHeader(supabase, viewer, "/me/revgifts", undefined, actions)} />
+      <RevgiftReceivePage
+        item={item}
+        todo={actions !== null && actionItemsOfOrder(actions, item.orderNo).length > 0}
+        nowMs={Date.now()}
+        accountId={viewer.userId}
+        address={address}
+        sealingKeyPem={readSealingPublicKeyPem(process.env)}
+        accessLog={accessLog}
+      />
+      <SiteFooter />
+    </>
+  );
+}
+
+/** 보낸 선물 — 보낸 사람(팬·크리에이터) 본인만. 목록 읽기가 로그인한 사람이 보낸 주문만 돌려주므로 남의 주문번호는 없는 주소와 같다 */
+async function giftDetail({ supabase, viewer }: Session, orderNo: string, differenceParam: string | string[] | undefined) {
   const gifts = await readMyGiftViews(supabase);
-  const view = isOrderNo(orderNo) ? gifts.find((g) => g.orderNo === orderNo) : undefined;
+  const view = gifts.find((g) => g.orderNo === orderNo);
   if (!view) notFound();
-  // 셋은 서로 기다릴 필요가 없어 함께 읽는다.
-  // 상자별 원 송장번호·상태 — 읽기 함수가 로그인한 사람의 주문이 아니면 빈 목록을 준다. 출고 운송장은 오지 않는다.
-  // 상자별 차액 요청(payment INV-M11) — 읽기 함수가 로그인한 사람의 주문이 아니면 빈 목록을 준다
-  // 결제 금액(payment INV-M14) — 결제할 때 저장한 값. 읽기 함수가 로그인한 사람의 결제 완료 주문이 아니면 null 을 준다
-  // 출고된 상자별 받았어요·답장(gift-reply INV-G6) — 읽기 함수가 로그인한 사람이 보낸 주문이 아니면 빈 목록을 준다. 날짜만 온다
-  // 나만 보는 메모(together INV-F8) — 읽기 함수가 로그인한 사람이 보낸 주문이 아니면 null 을 준다
-  // 처리할 일(action-center INV-J2) — 팬만. 한 번 읽어 사이드바 숫자와 맨 위 한 줄(이 주문 줄만)에 함께 넘긴다. 크리에이터 쪽은 아직 만들지 않는다. 못 읽으면 둘 다 빼고 상세는 그린다
-  const [boxes, differences, payment, replies, memo, actions] = await Promise.all([
+  const fan = viewer.role === "fan";
+  // 서로 기다릴 필요가 없어 함께 읽는다. 상자·차액·결제·답장·메모 읽기는 모두 로그인한 사람의 주문이 아니면 빈 값을 준다.
+  // 처리할 일과 받을 주소 상태(반송 주소 확인 창 — 이름표·바꾼 날만, address-protection INV-P16)는 팬만
+  const [boxes, differences, payment, replies, memo, actions, addressStatus] = await Promise.all([
     readMyGiftBoxes(supabase, view.orderNo),
     readMyDifferences(supabase, view.orderNo),
     readMyGiftPayment(supabase, view.orderNo),
     readMyGiftReplies(supabase, view.orderNo),
     readMyGiftMemo(supabase, view.orderNo),
-    viewer.role === "fan" ? readActionItemsOrNull(supabase) : Promise.resolve(null),
+    fan ? readActionItemsOrNull(supabase) : Promise.resolve(null),
+    fan ? readMyFanAddressStatus(supabase).catch(() => null) : Promise.resolve(null),
   ]);
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   const notice = DIFFERENCE_NOTICES.find((n) => n === differenceParam) ?? null;
+  const todoItems = actions ? actionItemsOfOrder(actions, view.orderNo) : [];
   return (
     <>
       <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", gifts, actions)} />
@@ -63,9 +95,36 @@ export default async function Page({
         replies={replies}
         photoBase={readPublicStorageBase()}
         memo={memo}
-        actionCount={actions ? actionItemsOfOrder(actions, view.orderNo).length : 0}
+        // 칸의 「도착이 늦어요」에 있는 상자는 아래 찾기 구간에서 뺀다(INV-J13) — 같은 읽기 결과에서
+        todoBoxIds={todoItems.flatMap((it) => (it.kind === "missing_box" ? [it.boxId] : []))}
+        todo={
+          todoItems.length > 0 ? (
+            <GiftTodoBox
+              items={todoItems}
+              clientKey={clientKey}
+              now={new Date().toISOString()}
+              address={{ accountId: viewer.userId, status: addressStatus, sealingKeyPem: readSealingPublicKeyPem(process.env) }}
+            />
+          ) : null
+        }
       />
       <SiteFooter />
     </>
   );
+}
+
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ orderNo: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { orderNo } = await params;
+  const { difference } = await searchParams;
+  const { supabase, viewer } = await loadSession();
+  if (!viewer || !senderRoleAllowed(viewer.role)) redirect("/login");
+  if (isRevgiftOrderNo(orderNo)) return revgiftDetail({ supabase, viewer }, orderNo);
+  if (isOrderNo(orderNo)) return giftDetail({ supabase, viewer }, orderNo, difference);
+  notFound();
 }

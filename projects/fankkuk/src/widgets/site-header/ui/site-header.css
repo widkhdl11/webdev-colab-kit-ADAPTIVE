@@ -66,6 +66,8 @@ body:has(.sidebar) { --sb-cur: var(--sidebar-w); padding-left: var(--sb-cur); tr
 /* 메뉴 */
 .sb-nav { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 8px; }
 .sb-group { position: relative; display: flex; align-items: center; height: var(--group-h); margin: 8px 0 0; padding: 0 var(--nav-px); font-size: var(--fs-group); font-weight: var(--fw-btn); letter-spacing: 0.04em; line-height: 1; color: var(--gray-500); }
+/* 묶음 이름 없는 메뉴(팬 — action-center 「팬 메뉴 재구성」): 머리 줄 대신 위 여백만 */
+.sb-plain { padding-top: 8px; }
 .sb-group-t { overflow: hidden; white-space: nowrap; opacity: var(--lbl-op); transition: opacity var(--tr-dur) ease var(--tr-delay); }
 .sb-group::after { content: ""; position: absolute; top: 50%; left: 8px; right: 8px; height: 1px; background: var(--gray-200); opacity: var(--col-op); transition: opacity var(--tr-dur) ease var(--tr-delay); }
 .sb-nav ul { display: flex; flex-direction: column; gap: 2px; }

@@ -1,20 +1,6 @@
-/* 처리할 일(design-rules 12절, 시안 v21-addendum3/fan-action-center.html · fan-21.css .todo·.pay-box·.due·.empty-todo). 본문 틀은 목록형 880(00절). */
-.card { display: grid; gap: var(--space-4); padding: var(--space-6); }
-.top { display: flex; align-items: flex-start; gap: var(--space-4); }
-.ico { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--r-pill); background: var(--primary-50); }
-.ico svg, .due svg, .emptyIco svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.ico svg { width: 22px; height: 22px; }
-.top h2 { font-size: var(--fs-card); line-height: 1.4; }
-.meta { margin-top: var(--space-1); }
-.why { color: var(--gray-600); }
-.due { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); border-radius: var(--r-pill); background: var(--gray-100); font-size: var(--fs-caption); font-weight: var(--fw-btn); line-height: 1.2; }
-.due svg { width: 16px; height: 16px; flex: none; }
-.payBox { display: grid; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-card); background: var(--tint); border: 1px solid var(--gray-200); }
-.payLine { display: flex; justify-content: space-between; gap: var(--space-4); }
-.payLine b { font-weight: var(--fw-btn); }
-.payLine strong { font-size: var(--fs-card); line-height: 1.4; }
-.go { justify-self: start; }
+/* 지금 할 일(design-rules 21절, 시안 v34-part1/todo.html · v34.css .tfeat). 강조 칸·촘촘한 줄 모양은 base.css .feat·.lrows(21절 공통). 본문 틀은 목록형 880(00절). */
+.feat { margin-top: var(--space-8); }
+.rows { margin-top: var(--space-6); }
 .empty { display: grid; justify-items: center; gap: var(--space-4); padding: var(--space-12) var(--space-6); text-align: center; }
-.emptyIco { display: grid; place-items: center; width: 72px; height: 72px; border-radius: var(--r-pill); background: var(--primary-50); }
-.emptyIco svg { width: 36px; height: 36px; }
+.emptyArt { width: 72px; height: 72px; object-fit: contain; }
 .empty h2 { font-size: var(--fs-card); line-height: 1.4; }

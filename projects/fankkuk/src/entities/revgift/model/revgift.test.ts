@@ -91,7 +91,7 @@ describe("INV-R12: 팬 알림과 QR 에는 주소가 들어가지 않는다", ()
   it("INV-R12 S12: 알림에는 보낸 크리에이터 이름과 받기 링크만 있다", () => {
     expect(buildRevgiftNotice({ creatorName: "하루", orderNo: "RG-ABC123" })).toEqual({
       text: "하루님이 선물을 보냈어요. 받을지 정해 주세요.",
-      link: "/me/revgifts/RG-ABC123",
+      link: "/gifts/RG-ABC123#todo",
     });
   });
 

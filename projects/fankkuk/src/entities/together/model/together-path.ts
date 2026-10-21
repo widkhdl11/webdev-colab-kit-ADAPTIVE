@@ -5,8 +5,8 @@
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const HANDLE = /^[a-z0-9_]{3,20}$/;
 
-/** 「선물 내역」 전체 목록 주소 — 크리에이터가 한 명이어도 함께한 시간으로 넘기지 않는다. */
-export const ALL_GIFTS_PATH = "/gifts?view=all";
+/** 보낸 선물 목록 주소 — 함께한 시간 맨 위 「‹ 보낸 선물로」가 돌아가는 곳. 2026-10-21(action-center INV-J14)부터 크리에이터가 한 명이어도 넘기지 않아 물음표 값이 없다 */
+export const ALL_GIFTS_PATH = "/gifts";
 
 export function togetherPath(c: { id: string; handle: string | null }): string {
   return `/gifts/with/${c.handle ?? c.id}`;

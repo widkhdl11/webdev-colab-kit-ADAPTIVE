@@ -1,8 +1,14 @@
-/* 받은 선물(팬) — 시안 docs/design/mockups/site/v18/me-revgifts.html. 탭·카드·태그는 전역 클래스(.tabs·.card·.gcard) */
-/* 2열 카드 격자, 휴대폰 1열 — 마지막 카드도 왼쪽부터 */
-.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
-@media (max-width: 767px) { .cards { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); } }
-.note { margin-top: var(--space-4); }
-.urgent { color: var(--brand-ink); font-weight: var(--fw-btn); }
-.go { justify-self: start; }
+/* 받은 선물(팬) — 시안 docs/design/mockups/site/v34-part1/revgifts.html (v33b.css .rfeat·.epanel). 강조 칸·촘촘한 줄은 base.css 21절 공통(.feat·.lrows), 탭·태그는 전역 클래스 */
+.feat { margin-top: var(--space-12); }
+.feat + .feat { margin-top: var(--space-6); }
+.rows { margin-top: var(--space-6); }
+.tabEmpty { margin-top: var(--space-6); }
 .past-note { margin-top: var(--space-6); }
+/* 빈 상태 — 고양이 그림이 위로 걸친 하늘 면 */
+.epanel { position: relative; display: flex; align-items: center; gap: var(--space-8); margin-top: var(--space-24); padding: var(--space-12) var(--space-8) var(--space-8); border-radius: var(--r-panel); background: var(--tint); }
+.epanel img { position: absolute; top: -64px; right: var(--space-12); width: 160px; height: 160px; object-fit: contain; pointer-events: none; }
+.epanel p { max-width: 480px; }
+@media (max-width: 767px) {
+  .epanel { flex-direction: column; align-items: flex-start; padding: var(--space-16) var(--space-6) var(--space-6); }
+  .epanel img { top: -48px; right: var(--space-6); width: 128px; height: 128px; }
+}

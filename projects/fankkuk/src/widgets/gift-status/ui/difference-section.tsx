@@ -1,17 +1,11 @@
-"use client";
-
 import { statusTagClass } from "@/shared/ui/status-tone";
-import { useState } from "react";
 import type { GiftDifference } from "@/entities/payment/model/difference-rows";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
-import { PaymentStep } from "@/features/checkout/ui/payment-step";
-import { postDifferencePrepare, type DifferenceCheckout } from "@/features/difference-pay/api/post-difference-client";
-import { formatDateTime } from "@/shared/lib/format/datetime";
 import s from "./gift-status.module.css";
 
-// 차액 결제 (payment INV-M11·M12·M13). 도착한 상자를 재어 보니 구간이 더 크면 상자마다 차액을 따로 낸다.
-// 금액·기한은 서버가 정한 값만 보인다 — 「차액 결제하기」를 누르면 서버가 결제 번호와 금액을 준다(브라우저는 금액을 보내지 않는다).
-// 같은 화면 자리에 결제창(첫 결제와 같은 PaymentStep)이 뜨고, 결제가 끝나면 서버가 승인한 뒤 이 화면으로 돌려보낸다.
+// 차액 결제 기록 (payment INV-M11·M12·M13). 도착한 상자를 재어 보니 구간이 더 크면 상자마다 차액을 따로 낸다.
+// 2026-10-21(action-center INV-J13 — 처리는 맨 위 「지금 할 일」 칸에서만): 결제 버튼은 칸(widgets/action-center 의 차액 결제 버튼)에만 있다.
+// 이 구간은 결제 확인 중·결제 완료·기한 지남 줄과, 결제창에서 돌아왔을 때의 안내(?difference=…)만 보인다 — 줄은 라우트가 거른다(differencesBelowTodo).
 
 export type DifferenceNotice = "paid" | "failed" | "in_progress" | "closed" | null;
 
@@ -35,44 +29,9 @@ const STATE_TAG = {
   closed: { text: "기한 지남", className: statusTagClass("danger") },
 } as const;
 
-type Props = { orderNo: string; differences: readonly GiftDifference[]; clientKey: string; notice: DifferenceNotice };
+type Props = { differences: readonly GiftDifference[]; notice: DifferenceNotice };
 
-export function DifferenceSection({ orderNo, differences, clientKey, notice }: Props) {
-  const [checkout, setCheckout] = useState<DifferenceCheckout | null>(null);
-  const [busyBox, setBusyBox] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function start(boxId: string) {
-    if (busyBox) return;
-    setError(null);
-    setBusyBox(boxId);
-    const r = await postDifferencePrepare({ boxId });
-    setBusyBox(null);
-    if (r.ok) setCheckout(r.checkout);
-    else setError(r.message);
-  }
-
-  if (checkout) {
-    if (!clientKey) {
-      return (
-        <p className="part" role="alert">
-          지금은 결제를 받을 수 없어요. 잠시 뒤 다시 시도해 주세요.
-        </p>
-      );
-    }
-    return (
-      <PaymentStep
-        clientKey={clientKey}
-        pending={checkout}
-        route={{
-          orderName: `팬꾹 차액 ${checkout.orderNo}`,
-          successPath: "/api/checkout/difference/success",
-          failPath: `/gifts/${encodeURIComponent(orderNo)}?difference=failed`,
-        }}
-      />
-    );
-  }
-
+export function DifferenceSection({ differences, notice }: Props) {
   return (
     <div className="part">
       <h2 className="t-title">차액 결제</h2>
@@ -83,11 +42,6 @@ export function DifferenceSection({ orderNo, differences, clientKey, notice }: P
       {notice ? (
         <p className={s.more} role={notice === "failed" || notice === "closed" ? "alert" : "status"}>
           <strong>{NOTICE_TEXT[notice]}</strong>
-        </p>
-      ) : null}
-      {error ? (
-        <p className={s.more} role="alert">
-          <strong>{error}</strong>
         </p>
       ) : null}
       <div className={s.inner}>
@@ -103,15 +57,7 @@ export function DifferenceSection({ orderNo, differences, clientKey, notice }: P
               </div>
               <p className="t-meta">
                 보낼 때 고른 크기 {tierName(d.declaredTier)} → 재어 본 크기 {tierName(d.measuredTier)}
-                {d.state === "due" && d.dueAt ? ` · ${formatDateTime(d.dueAt)}까지` : null}
               </p>
-              {d.state === "due" ? (
-                <div>
-                  <button className="btn" type="button" onClick={() => void start(d.boxId)} aria-disabled={busyBox !== null} aria-busy={busyBox === d.boxId || undefined}>
-                    {busyBox === d.boxId ? "준비하는 중…" : `${won(d.amountKrw)} 차액 결제하기`}
-                  </button>
-                </div>
-              ) : null}
               {d.state === "closed" ? <p className="hint">기한이 지나 이 상자는 돌려보내 드려요.</p> : null}
             </div>
           );

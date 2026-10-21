@@ -16,13 +16,14 @@ import { actionItemsOfOrder, parseActionItems, type ActionItem } from "@/entitie
 import { parseFanGiftRows } from "@/entities/order/api/fan-gift-rows";
 import type { PublicPriceTable } from "@/entities/payment/model/price-table";
 import { ActionCenterPage } from "@/widgets/action-center/ui/action-center-page";
+import { GiftTodoBox } from "@/widgets/action-center/ui/gift-todo-box";
 import { GiftStatusPage } from "@/widgets/gift-status/ui/gift-status-page";
 import { HomePage } from "@/widgets/home/ui/home-page";
 import { readSiteHeader } from "@/widgets/site-header/api/session-header";
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
-// 처리할 일 (action-center INV-J2, design-rules 12절, 시안 v21-addendum3/fan-action-center.html·fan-home.html·fan-gift-status.html).
-// 사이드바 숫자·홈 한 줄·처리할 일 화면의 카드·선물 상세 맨 위 한 줄이 모두 같은 읽기(my_action_items) 한 번의 결과에서 나오는지 본다.
+// 지금 할 일 (action-center INV-J2·J13, design-rules 21절, 시안 v34-part1/todo.html·gift-detail.html — 2026-10-21 이름 「처리할 일」 → 「지금 할 일」).
+// 사이드바 숫자·홈 바로가기 칸·지금 할 일 화면의 줄·선물 상세 맨 위 「지금 할 일」 칸이 모두 같은 읽기(my_action_items) 한 번의 결과에서 나오는지 본다.
 // DB 는 이 시험의 대상이 아니라 가짜 client 로 줄을 준다 — 대상은 「한 결과를 화면 넷이 같은 수로 그리는가」다. 화면은 DOM 으로 본다.
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -150,51 +151,54 @@ async function counts(rows: readonly unknown[]) {
   const homeText = homeTile?.textContent ?? null;
   const homeHref = homeTile?.getAttribute("href") ?? null;
 
-  act(() => root.render(<ActionCenterPage items={items} clientKey="" now={NOW} address={{ accountId: "a1", status: null, sealingKeyPem: null }} />));
-  const cardsN = host.querySelectorAll("section.action-card").length;
+  act(() => root.render(<ActionCenterPage items={items} now={NOW} />));
+  const cardsN = host.querySelectorAll("[data-action-row]").length;
   const titleCount = host.querySelector("h1 .ph-count")?.textContent ?? null;
   const empty = host.querySelector('[data-testid="action-empty"]');
 
-  act(() => root.render(<GiftStatusPage view={view!} boxes={[]} memo={null} actionCount={actionItemsOfOrder(items, ORDER).length} />));
-  const detailLine = host.querySelector('[data-testid="action-line"]');
-  const detailFirst = host.querySelector("main")?.querySelector('[data-testid="action-line"]') === detailLine;
+  const mine = actionItemsOfOrder(items, ORDER);
+  const todo = mine.length > 0 ? <GiftTodoBox items={mine} clientKey="" now={NOW} address={{ accountId: "a1", status: null, sealingKeyPem: null }} /> : null;
+  act(() => root.render(<GiftStatusPage view={view!} boxes={[]} memo={null} todo={todo} />));
+  const box = host.querySelector("main #todo");
+  const detailTasks = box ? box.querySelectorAll("[data-kind]").length : null;
+  const detailFirst = host.querySelector("main [data-detail-top]")?.firstElementChild === box;
 
-  return { calls, badge, speech, homeText, homeHref, cardsN, titleCount, empty, detailText: detailLine?.textContent ?? null, detailFirst, items };
+  return { calls, badge, speech, homeText, homeHref, cardsN, titleCount, empty, detailTasks, detailFirst, items };
 }
 
-describe("INV-J2: 숫자는 한 읽기 결과의 줄 수 — 사이드바·홈·페이지·선물 상세가 같은 수", () => {
-  it("INV-J2 S2: 카드 2 → 사이드바 뱃지 2 · 홈 「처리할 일」 칸 2건 · 카드 2 · 제목 숫자 2, 읽기는 한 번", async () => {
+describe("INV-J2·J13: 숫자는 한 읽기 결과의 줄 수 — 사이드바·홈·페이지·선물 상세 칸이 같은 수", () => {
+  it("INV-J2 S2: 줄 2 → 사이드바 뱃지 2 · 홈 「지금 할 일」 칸 2건 · 줄 2 · 제목 숫자 2, 읽기는 한 번", async () => {
     const r = await counts([ROWS.difference, ROWS.missing]);
     expect(r.calls.filter((c) => c === "my_action_items")).toHaveLength(1);
     expect(r.badge).toBe("2");
-    // 칸 이름을 두 번 읽지 않는다 — 「처리할 일, 2건」(시안 뱃지 aria-label="2건")
-    expect(r.speech).toBe("처리할 일, 2건");
-    expect(r.homeText).toBe("처리할 일2건");
+    // 칸 이름을 두 번 읽지 않는다 — 「지금 할 일, 2건」(시안 뱃지 aria-label="3건" 꼴)
+    expect(r.speech).toBe("지금 할 일, 2건");
+    expect(r.homeText).toBe("지금 할 일2건");
     expect(r.homeHref).toBe("/me/actions");
     expect(r.cardsN).toBe(2);
     expect(r.titleCount).toBe("2");
     expect(r.empty).toBeNull();
-    // 선물 상세 맨 위 한 줄은 그 주문의 카드 수(둘 다 같은 주문)
-    expect(r.detailText).toContain("처리할 일 2건");
+    // 선물 상세 맨 위 「지금 할 일」 칸은 그 주문의 줄 모두(둘 다 같은 주문, INV-J13)
+    expect(r.detailTasks).toBe(2);
     expect(r.detailFirst).toBe(true);
   });
 
-  it("INV-J2 S2: 종류가 섞인 카드 3 → 셋 다 3 · 선물 상세는 그 주문 것만 2", async () => {
+  it("INV-J2·J13 S2: 종류가 섞인 줄 3 → 셋 다 3 · 선물 상세 칸은 그 주문 것만 2", async () => {
     const r = await counts([ROWS.difference, ROWS.revgift, ROWS.missing]);
     expect(r.badge).toBe("3");
-    expect(r.homeText).toBe("처리할 일3건");
+    expect(r.homeText).toBe("지금 할 일3건");
     expect(r.cardsN).toBe(3);
     expect(r.titleCount).toBe("3");
-    expect(r.detailText).toContain("처리할 일 2건");
+    expect(r.detailTasks).toBe(2);
   });
 
-  it("INV-J2 S2 (실패경로): 0건 → 뱃지 없음 · 홈 칸 「0건」 · 빈 상태 · 선물 상세 줄 없음", async () => {
+  it("INV-J2·J13 S2 (실패경로): 0건 → 뱃지 없음 · 홈 칸 「0건」 · 빈 상태 · 선물 상세 칸 없음", async () => {
     const r = await counts([]);
     expect(r.badge).toBeNull();
-    expect(r.homeText).toBe("처리할 일0건");
+    expect(r.homeText).toBe("지금 할 일0건");
     expect(r.cardsN).toBe(0);
-    expect(r.empty?.querySelector("h2")?.textContent).toBe("지금 처리할 일이 없어요");
-    expect(r.detailText).toBeNull();
+    expect(r.empty?.querySelector("h2")?.textContent).toBe("지금 할 일이 없어요");
+    expect(r.detailTasks).toBeNull();
   });
 
   it("INV-J2: 화면이 결과를 넘기지 않으면 헤더가 같은 읽기 함수를 스스로 한 번 부른다(따로 세는 함수가 없다)", async () => {
@@ -232,26 +236,23 @@ describe("INV-J2: 숫자는 한 읽기 결과의 줄 수 — 사이드바·홈·
   });
 });
 
-describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
+describe("INV-J1·J4·J13: 상세 「지금 할 일」 칸의 처리와 지금 할 일 줄", () => {
   const items: ActionItem[] = parseActionItems([ROWS.difference, ROWS.missing, ROWS.revgift]);
 
+  /** 상세 칸 — 그 주문(FC-W5N3T)의 줄만(라우트가 거르는 그대로) */
   function card(kind: string): Element {
-    act(() => root.render(<ActionCenterPage items={items} clientKey="" now={NOW} address={{ accountId: "a1", status: null, sealingKeyPem: null }} />));
-    const el = host.querySelector(`section.action-card[data-kind="${kind}"]`);
-    if (!el) throw new Error(`${kind} 카드가 없다`);
+    act(() => root.render(<GiftTodoBox items={actionItemsOfOrder(items, ORDER)} clientKey="" now={NOW} address={{ accountId: "a1", status: null, sealingKeyPem: null }} />));
+    const el = host.querySelector(`#todo [data-kind="${kind}"]`);
+    if (!el) throw new Error(`${kind} 줄이 없다`);
     return el;
   }
 
-  it("INV-J1: 추가 결제 — 신고한 크기·실제 크기·차액, 기한(서울 시간), 「2,000원 결제하기」 버튼", () => {
+  it("INV-J1·J13: 추가 결제 — 상자·기한(서울 날짜)·차액, 「2,000원 결제하기」 버튼(시안 gift-detail.html .tbox)", () => {
     const el = card("difference");
     expect(el.querySelector("h2")?.textContent).toBe("추가 결제");
-    expect(el.textContent).toContain("하루님께 보낸 선물 · 상자 2");
-    expect(el.textContent).toContain("소형");
-    expect(el.textContent).toContain("중형");
-    expect(el.querySelector(".pay-total")?.textContent).toContain("2,000원");
-    // 2026-10-18T14:59Z = 서울 10월 18일 오후 11시 59분
-    // 남은 날은 서울 날짜로 — 16일에 보면 18일 기한은 2일(시안 「· 2일 남았어요」)
-    expect(el.querySelector(".action-due")?.textContent).toBe("10월 18일 오후 11시 59분까지 · 2일 남았어요");
+    // 2026-10-18T14:59Z = 서울 10월 18일 — 16일에 보면 2일 남음
+    expect(el.querySelector("h2")?.nextElementSibling?.textContent).toBe("상자 2 · 10월 18일까지 · 2일 남음");
+    expect(el.querySelector(".num-big")?.textContent).toBe("2,000원");
     expect(el.querySelector("button")?.textContent).toBe("2,000원 결제하기");
   });
 
@@ -263,7 +264,7 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
     });
     expect(api.prepare).toHaveBeenCalledTimes(1);
     expect(api.prepare).toHaveBeenCalledWith({ boxId: ROWS.difference.box_id });
-    expect(host.querySelector('section[data-kind="difference"] [role="alert"]')?.textContent).toBe("차액을 낼 수 없는 상태예요.");
+    expect(host.querySelector('#todo [data-kind="difference"] [role="alert"]')?.textContent).toBe("차액을 낼 수 없는 상태예요.");
     expect(nav.refresh).toHaveBeenCalledTimes(1);
   });
 
@@ -290,7 +291,7 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
       "송장번호",
     ]);
     expect(form?.querySelector('input[name="initial"]')).toBeNull();
-    expect(el.querySelector(".action-due")?.textContent).toBe("11월 1일 오후 12시까지 · 16일 남았어요");
+    expect(el.querySelector("h2")?.nextElementSibling?.textContent).toBe("상자 1 (소형) · 11월 1일까지 · 16일 남음");
   });
 
   it("INV-J4: 찾기를 보내면 기존 찾기 경로(postFind)를 카드의 그 상자로 부른다", async () => {
@@ -310,13 +311,21 @@ describe("INV-J1·J4: 카드 세 종류의 내용과 버튼", () => {
     expect(api.find).toHaveBeenCalledWith({ kind: "box", id: ROWS.missing.box_id }, "123456789012", "cj");
   });
 
-  it("INV-J4: 역조공 받기 — 기존 받기 화면으로 가는 「받기」", () => {
-    const el = card("revgift");
-    expect(el.textContent).toContain("모모님이 보낸 선물");
-    const go = el.querySelector("a.btn");
-    expect(go?.getAttribute("href")).toBe("/me/revgifts/RG-T1ABCDE0");
-    expect(go?.textContent).toBe("받기");
-    expect(el.querySelector(".action-due")?.textContent).toBe("10월 20일 오후 12시까지 · 4일 남았어요");
+  it("INV-J13: 지금 할 일 줄 — 역조공 받기는 그 몫의 선물 상세 칸(#todo)으로 가는 「바로 하기」, 남은 날(서울 날짜)", () => {
+    act(() => root.render(<ActionCenterPage items={items} now={NOW} />));
+    const el = host.querySelector('[data-action-row][data-kind="revgift"]');
+    expect(el?.textContent).toContain("모모님이 보낸 선물 받기");
+    const go = el?.querySelector("a.btn");
+    expect(go?.getAttribute("href")).toBe("/gifts/RG-T1ABCDE0#todo");
+    expect(go?.textContent).toBe("바로 하기");
+    expect(el?.querySelector(".tag")?.textContent).toBe("4일 남음");
+  });
+
+  it("INV-J13: 가장 급한 줄(기한이 가장 이른 추가 결제) 하나만 강조 칸 — 나머지는 촘촘한 줄", () => {
+    act(() => root.render(<ActionCenterPage items={items} now={NOW} />));
+    const feat = host.querySelectorAll(".feat[data-action-row]");
+    expect([...feat].map((f) => f.getAttribute("data-kind"))).toEqual(["difference"]);
+    expect([...host.querySelectorAll("li[data-action-row]")].map((f) => f.getAttribute("data-kind"))).toEqual(["revgift", "missing_box"]);
   });
 
   it("INV-J1 (실패경로): 꼴이 다른 줄(종류가 넷째 것)이 오면 읽기 자체가 실패한다 — 일부만 버려 숫자와 목록이 달라지지 않게", () => {

@@ -161,21 +161,23 @@ describe("함께한 시간 화면 — 본인만 (INV-F1)", () => {
 });
 
 describe("「내 선물」 크리에이터별 묶음", () => {
-  it("크리에이터가 한 명이면 「내 선물」은 바로 그 함께한 시간으로, 「전체 보기」는 목록 그대로", async () => {
+  it("INV-J14 S14b: 크리에이터가 한 명이어도 보낸 선물은 넘기지 않고 묶음 하나 — 묶음 머리가 그 함께한 시간으로 간다(action-center INV-J14, 2026-10-21)", async () => {
     paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
-    expect(await redirectOf("/gifts", "fanA")).toEqual([307, `/gifts/with/${HANDLE}`]);
-    const list = visibleText(await html("/gifts?view=all", "fanA"));
-    expect(list).toContain("보낸 선물");
+    const res = await open("/gifts", "fanA");
+    expect(res.status).toBe(200);
+    const page = await res.text();
+    expect(visibleText(page)).toContain("보낸 선물");
+    expect(page).toContain(`href="/gifts/with/${HANDLE}"`);
   });
 
-  it("INV-F1 (실패경로): 본인 확인이 풀린 크리에이터는 링크 주소가 열리지 않으니 「내 선물」이 ID 주소로 보내고, 그 주소는 열린다", async () => {
+  it("INV-F1 (실패경로): 본인 확인이 풀린 크리에이터는 링크 주소가 열리지 않으니 묶음 머리가 ID 주소로 가고, 그 주소는 열린다", async () => {
     paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
     psql(`begin; set local session_replication_role = replica; update public.creators set identity_verified = false where id = '${A.creatorId}'; commit;`);
-    expect(await redirectOf("/gifts", "fanA")).toEqual([307, `/gifts/with/${A.creatorId}`]);
+    expect(await html("/gifts", "fanA")).toContain(`href="/gifts/with/${A.creatorId}"`);
     expect(visibleText(await html(`/gifts/with/${A.creatorId}`, "fanA"))).toContain(`${A.name}님과 함께한 시간`);
   });
 
-  it("크리에이터가 둘이면 목록 위에 크리에이터마다 함께한 시간으로 가는 줄이 있다", async () => {
+  it("INV-J14 S14: 크리에이터가 둘이면 크리에이터마다 묶음 머리가 함께한 시간으로 간다", async () => {
     paidOrder(fanA.userId, A.creatorId, "now() - interval '3 days'");
     paidOrder(fanA.userId, B.creatorId, "now() - interval '1 days'");
     const page = await html("/gifts", "fanA");

@@ -143,7 +143,7 @@ describe("INV-J9: 판 둘 — 받는 선물은 선물마다, 보내는 선물은
 describe("INV-J11·J10: 버튼은 필요한 줄에만", () => {
   it("INV-J11 S11: 「처리할 일」은 처리할 일 읽기에 있는 줄에만 — 승인 대기·늦은 몫에 있고, 오는 중·출고 줄에는 없다", () => {
     render();
-    const go = (li: Element) => [...li.querySelectorAll("a")].filter((a) => a.textContent === "처리할 일").map((a) => a.getAttribute("href"));
+    const go = (li: Element) => [...li.querySelectorAll("a")].filter((a) => a.textContent === "지금 할 일").map((a) => a.getAttribute("href"));
     expect(go(rowOf("하루님의 선물", "받는 선물"))).toEqual(["/creator/actions"]);
     expect(go(rowOf("모카님", "보내는 선물"))).toEqual(["/creator/actions"]);
     expect(go(rowOf("보리님의 선물", "받는 선물"))).toEqual([]);

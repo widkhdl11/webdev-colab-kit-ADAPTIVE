@@ -1,0 +1,19 @@
+/* 선물 상세 맨 위 「지금 할 일」 칸 — 시안 v34-part1/v34.css .tbox·.tbox.rv (design-rules 21절). 하늘 면 + 반경 24, 안쪽 24·32 */
+.box { position: relative; padding: var(--space-6) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--tint); scroll-margin-top: var(--space-6); }
+.eyebrow { font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
+.task { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-4) var(--space-8); align-items: center; margin-top: var(--space-1); }
+.task + .task { margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--tint-line); }
+.text { min-width: 0; }
+.text h2 { font-size: var(--fs-card); line-height: 1.4; overflow-wrap: anywhere; }
+.sub { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+.act :global(.btn) { min-width: 96px; }
+.wide { grid-column: 1 / -1; min-width: 0; }
+.wide :global(.input), .wide input, .wide select { background: var(--white); }
+.rv { margin-top: var(--space-12); padding: var(--space-10) var(--space-8) var(--space-8); }
+.peek { position: absolute; top: -40px; right: var(--space-8); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
+@media (max-width: 767px) {
+  .box { padding: var(--space-6); }
+  .task { grid-template-columns: minmax(0, 1fr); }
+  .act, .act :global(.btn) { width: 100%; }
+  .rv { padding: var(--space-8) var(--space-6) var(--space-6); }
+}

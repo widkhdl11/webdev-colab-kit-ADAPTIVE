@@ -26,3 +26,10 @@
 @media (max-width: 767px) {
   .choice { grid-template-columns: 1fr; }
 }
+/* 「지금 할 일」 칸 안 머리(action-center INV-J13, 시안 v34-part1/revgift-detail.html .tbox.rv .head) — 제목 20 · 기한 14 회색, 오른쪽 남은 날 */
+.todoHead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-4); margin-top: var(--space-1); }
+.todoTitle { font-size: var(--fs-card); line-height: 1.4; }
+.todoSub { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+@media (max-width: 767px) {
+  .todoHead { flex-direction: column; align-items: flex-start; }
+}

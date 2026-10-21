@@ -57,3 +57,11 @@ export function parseDifferenceRows(data: unknown): GiftDifference[] {
 export function visibleDifferences(rows: readonly GiftDifference[], inProgress: boolean): GiftDifference[] {
   return inProgress ? [...rows] : rows.filter((d) => d.state === "paid");
 }
+
+/**
+ * 선물 상세 아래 차액 구간의 줄(action-center INV-J13 — 처리는 맨 위 「지금 할 일」 칸에서만).
+ * 결제가 필요한 줄은 칸이 결제 버튼과 함께 보이므로 뺀다. 결제 확인 중·완료·닫힘 줄은 기록으로 남는다.
+ */
+export function differencesBelowTodo(rows: readonly GiftDifference[]): GiftDifference[] {
+  return rows.filter((d) => d.state !== "due");
+}
