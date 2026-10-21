@@ -55,6 +55,7 @@
   --background: #ffffff; /* 페이지 바탕 — 흰색 (2026-10-07 사용자 「배경을 하얗게」, 아이보리 #FFFAF7 에서) */
   --surface: var(--gray-50); /* 옅은 중립 면 — 아이콘 칸·비선택 탭·빈 목록·푸터 같은 일반 칸 (시안 v8) */
   --surface-hover: var(--gray-100); /* 일반 칸 마우스 올림 */
+  --surface-muted: #f7f7f8; /* 덜 중요한 카드 바탕(선물 상세 주문 정보·함께한 시간 안내 줄) — 시안 v35 푸터 회색, 위 --sub 글자 7.1:1 (design-rules 22절) */
   --surface-brand: var(--tint); /* 옅은 하늘 면 — 주소 보호·개인정보 안내, 금액·업무 요약에만 */
   --surface-selected: var(--primary-50); /* 선택된 탭·메뉴·항목 */
   --white: #ffffff; /* 카드·입력창·헤더 */

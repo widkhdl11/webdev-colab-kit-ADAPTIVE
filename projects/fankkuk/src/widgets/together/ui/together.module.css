@@ -1,32 +1,27 @@
-/* 함께한 시간 — 시안 docs/design/mockups/site/v34-part1/gifts-with.html · v33b.css「gifts-with」(design-rules 21절).
-   띠(.wband) + 얼굴 겹침(.whead, −40) + 세로 시간선(.vt), 첫 기록만 하늘 면(.first). 틀 880 (시안 .wrap 960 에서 좌우 안쪽 40 을 뺀 폭) */
+/* 함께한 시간 — 시안 docs/design/mockups/site/v35-part1/gifts-with-a.html · v35.css .mhead·.mnote·.month·.album·.tile (design-rules 22절 A안 사진 앨범).
+   틀 880 (시안 .wrap 960 에서 좌우 안쪽 40 을 뺀 폭) */
 .page { padding-bottom: var(--section-gap); }
 .col { max-width: 880px; margin-inline: auto; }
 
 .back { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--sub); font-size: var(--fs-small); font-weight: 400; text-decoration: none; }
 .back:hover { color: var(--ink); }
 
-/* 「나만 볼 수 있어요」 — 회색 선 한 줄 (시안 .lock) */
-/* 굵은 글과 설명이 늘 한 줄에 나란히 — 좁으면 각자 안에서 줄이 바뀐다 (시안 .lock) */
-.priv { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); font-size: var(--fs-small); color: var(--sub); }
-.priv strong { color: var(--ink); }
-
-/* 띠 — 함께한 선물·받은 답장 수, 오른쪽 정렬 (시안 .wband) */
-.wband { position: relative; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--space-8); min-height: 112px; margin: var(--space-6) 0 0; padding: var(--space-6) var(--space-8); border-radius: var(--r-panel); background: var(--primary-50); }
-.stat { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
-.stat dt { font-size: var(--fs-small); font-weight: var(--fw-btn); color: var(--ink); }
-/* 큰 숫자가 앞, 이름이 뒤(시안) — 읽는 순서는 이름 → 숫자 */
-.stat dd { order: -1; margin: 0; font-variant-numeric: tabular-nums; }
-.dot { font-size: var(--fs-page); color: var(--ink); }
-
-/* 얼굴이 띠 아래로 겹친 머리 (시안 .whead) */
-.whead { position: relative; display: flex; align-items: flex-end; gap: var(--space-6); margin: -40px 0 0 var(--space-8); }
-.photo.photo { flex: none; width: 96px; height: 96px; border: 4px solid var(--white); background: var(--primary-50); object-fit: cover; }
-.who { min-width: 0; padding-top: var(--space-2); }
+/* 머리 — 얼굴 64 · 이름 24 · 처음 선물한 날 14, 오른쪽 숫자 둘 (시안 .mhead) */
+.mhead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin-top: var(--space-4); }
+.photo.photo { flex: none; width: 64px; height: 64px; border: 2px solid var(--tint-line); background: var(--white); object-fit: cover; }
+.who { flex: 1; min-width: 0; }
 .title-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .name.name { min-width: 0; font-family: var(--font); font-size: var(--fs-page); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
 .since { font-size: var(--fs-small); color: var(--sub); }
-.ink { color: var(--ink); font-weight: var(--fw-btn); }
+.nums { display: flex; gap: var(--space-6); margin: 0 0 0 auto; }
+.nums > div { display: flex; flex-direction: column; text-align: right; }
+.nums dt { font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
+/* 큰 숫자가 위, 이름이 아래(시안) — 읽는 순서는 이름 → 숫자 */
+.nums dd { order: -1; margin: 0; font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
+
+/* 「나만 볼 수 있어요」 — 회색 면 한 줄 (시안 .mnote) */
+.mnote { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-6); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--surface-muted); font-size: var(--fs-small); color: var(--sub); }
+.mnote strong { color: var(--ink); }
 
 /* 다음 기념일 — 시안에 없는 칸(30일 안일 때만). 옅은 하늘 면 */
 .ann { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); margin-top: var(--space-12); padding: var(--card-pad); border-radius: var(--r-card); background: var(--primary-50); text-align: center; }
@@ -37,61 +32,29 @@
 .ann-btn { display: grid; justify-items: center; gap: var(--space-2); }
 .rest-msg { font-weight: var(--fw-btn); }
 
-/* 함께한 기록 — 제목 20 + 안내 14 (시안 .rec-h · .rec-note) */
-.tl { min-width: 0; }
-.recH.recH { margin-top: var(--space-12); font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
-.recNote { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
-.recLead { margin-top: var(--space-3); font-weight: var(--fw-bold); color: var(--ink); }
-/* 「내가 올린 사진 · 나만 볼 수 있어요」 한 줄 전체가 굵은 진한 글자 (시안 .rec-note .lead) */
-.only { font-weight: inherit; color: inherit; }
+/* 달 머리 — 「2026년 10월」 24 + 선물 수 14 (시안 .month) */
+.month { display: flex; align-items: baseline; gap: var(--space-3); margin-top: var(--space-12); }
+.month h2 { font-family: var(--font-round); font-size: var(--fs-page); letter-spacing: 0; line-height: 1.4; }
+.month small { font-size: var(--fs-small); color: var(--sub); }
 
-/* 세로 시간선 — 왼쪽 2px 선 + 기록마다 점 (시안 .vt) */
-.vt { margin: var(--space-6) 0 0 var(--space-2); padding: 0; list-style: none; border-left: 2px solid var(--tint-line); }
-.item { position: relative; padding: 0 0 var(--space-6) var(--space-8); }
-.item:last-child { padding-bottom: 0; }
-.item::before { content: ""; position: absolute; top: 4px; left: -9px; width: 16px; height: 16px; border: 4px solid var(--primary); border-radius: 50%; background: var(--white); }
-.when { display: block; font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.6; color: var(--sub); }
-
-/* 기록 한 줄 — 제목·꼬리표·몇 번째 / 오른쪽 상세 보기·사진 / 아래 지금 상황 (시안 .vt .rec) */
-.rec { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); margin-top: var(--space-1); padding: var(--space-2) 0; }
-.t { display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-width: 0; }
-.what.what { min-width: 0; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; overflow-wrap: anywhere; }
-.t :global(.tag) { white-space: nowrap; }
-.nth { font-size: var(--fs-small); color: var(--sub); }
-.act { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin-left: auto; min-width: 0; }
-.detail { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--brand-ink); font-size: var(--fs-small); font-weight: var(--fw-btn); text-decoration: none; }
+/* 사진 격자 — PC 3열 사이 16, 휴대폰 2열 사이 12 (시안 .album · .tile) */
+.album { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.tile { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); }
+.tile:hover { box-shadow: 0 2px 8px rgb(31 41 55 / 0.08); }
+.badges { position: absolute; top: var(--space-3); left: var(--space-3); right: var(--space-3); display: flex; flex-wrap: wrap; gap: var(--space-1); pointer-events: none; }
+.badges :global(.tag) { background: var(--white); white-space: nowrap; }
+.cap { padding: var(--space-3) var(--space-4) var(--space-4); }
+.cap time { display: block; font-size: var(--fs-small); color: var(--sub); }
+.what.what { margin-top: var(--space-1); overflow: hidden; font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; white-space: nowrap; text-overflow: ellipsis; }
+.row2 { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--space-2); margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.detail { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--ink); font-weight: var(--fw-btn); text-decoration: none; }
 .detail:hover { text-decoration: underline; }
-.s { display: flex; flex-basis: 100%; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); font-size: var(--fs-small); color: var(--sub); }
-.moment { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--brand-ink); font-weight: var(--fw-btn); }
-.boxes { display: grid; flex-basis: 100%; gap: var(--space-2); min-width: 0; }
-
-/* 첫 기록 — 하늘 면 하나, 그림이 위로 걸침 (시안 .vt .first) */
-.first { position: relative; margin-top: var(--space-2); padding: var(--space-6); border: 1px solid var(--tint-line); border-radius: var(--r-card); background: var(--tint); }
-.peek { position: absolute; top: -24px; right: var(--space-6); width: 64px; height: 64px; object-fit: contain; pointer-events: none; }
-.first .t { gap: var(--space-3); padding-right: 72px; }
-.first .what { font-size: var(--fs-card); line-height: 1.4; }
-/* 첫 기록 설명은 한 줄 글 — 「처음 보낸 선물이에요 · 사무실에서 출고했어요」 (시안 .vt .first .s) */
-.first .s { display: block; margin-top: var(--space-2); font-size: var(--fs-body); color: var(--ink); }
-.first .s > * + :not(:global(.mini-steps))::before { content: " · "; }
-.first .s :global(.mini-steps) { margin-left: var(--space-4); vertical-align: middle; }
-.first .boxes { margin-top: var(--space-4); }
-.foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-4); margin-top: var(--space-4); font-size: var(--fs-small); color: var(--sub); }
-.foot .act { margin-left: 0; }
-/* 첫 기록 아래 줄의 버튼은 줄 글자 크기 14 그대로 (시안 .vt .first .foot — 버튼이 글자 크기를 물려받는다) */
-.foot .act :global(.btn) { font-size: var(--fs-small); }
-
-/* 「이전 기록 N개 더 보기」 — 흰 면 + 회색 경계 버튼 모양(접기 칸 summary) */
-.fold { margin-top: var(--space-6); }
-.fold summary { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--btn-h); padding: 0 var(--space-6); border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); color: var(--ink); font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
-.fold summary::-webkit-details-marker { display: none; }
-.fold summary:hover { background: var(--gray-50); }
-.fold[open] summary svg { transform: rotate(180deg); }
-.vt + .vt, .fold + .vt { margin-top: var(--space-6); }
+.replies { display: grid; gap: var(--space-2); margin-top: var(--space-2); min-width: 0; }
 
 @media (max-width: 767px) {
-  .wband { justify-content: flex-start; gap: var(--space-4); min-height: 96px; padding: var(--space-4) var(--space-6); }
-  .whead { gap: var(--space-4); margin-left: var(--space-4); }
-  .photo.photo { width: 80px; height: 80px; }
-  .act { margin-left: 0; }
+  .nums { width: 100%; margin-left: 0; }
+  .nums > div { text-align: left; }
+  .album { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+  .cap { padding: var(--space-2) var(--space-3) var(--space-3); }
+  .what.what { font-size: var(--fs-small); }
 }
-

@@ -331,7 +331,7 @@ describe("INV-J13: 상세 맨 위 「지금 할 일」 칸은 처리할 일 읽�
     state.actions = [{ ...difference("FC-7K3M9"), kind: "missing_box", box_id: B1, box_label: "FC-7K3M9-1", box_seq: 1, measured_tier: null, amount_krw: null }];
     const r = await draw(detail("FC-7K3M9"));
     expect(r.todo?.querySelector("form")).not.toBeNull();
-    const below = [...host.querySelectorAll("main h2")].find((h) => h.textContent === "받는 주소 없이 보냈어요")?.closest("[data-sec]");
+    const below = [...host.querySelectorAll("main summary")].find((h) => h.textContent === "받는 주소 없이 보냈다면")?.closest("[data-sec]");
     expect(below?.querySelector("form")).not.toBeNull();
     expect(below?.textContent).not.toContain("FC-7K3M9-1");
   });
@@ -377,6 +377,8 @@ describe("INV-J14: 보낸 선물은 크리에이터별 묶음", () => {
       { ...HARU, giftCount: 3, replyCount: 0, orders: ["FC-HARU3", "FC-HARU2", "FC-HARU1"] },
       { ...MOMO, giftCount: 2, replyCount: 1, orders: ["FC-MOMO2", "FC-MOMO1"] },
     ];
+    // 모모 FC-MOMO2 에만 지금 할 일(추가 결제) 줄
+    state.actions = [difference("FC-MOMO2")];
     await draw(GiftsRoute());
     expect(nav.redirect).not.toHaveBeenCalledWith(expect.stringContaining("/gifts/with/"));
     const ing = panel(/^진행 중/);
@@ -391,9 +393,9 @@ describe("INV-J14: 보낸 선물은 크리에이터별 묶음", () => {
     expect(headLink?.textContent).toBe("하루님과 함께한 시간");
     // 묶음 안의 줄은 선물 상세로
     expect([...haru.querySelectorAll("[data-gift-row] a")].map((a) => a.getAttribute("href"))).toEqual(["/gifts/FC-HARU3", "/gifts/FC-HARU2"]);
-    // 가장 최근 움직인 줄 하나만 강조(하루 FC-HARU2 — 10월 15일 입고)
+    // 할 일이 있는 카드만 강조(design-rules 22절) — 사이드바 숫자와 같은 지금 할 일 읽기 결과의 주문(모모 FC-MOMO2)
     const hi = [...ing.querySelectorAll("[data-gift-row][data-hi]")];
-    expect(hi.map((r) => r.querySelector("a")?.getAttribute("href"))).toEqual(["/gifts/FC-HARU2"]);
+    expect(hi.map((r) => r.querySelector("a")?.getAttribute("href"))).toEqual(["/gifts/FC-MOMO2"]);
 
     // 함께한 시간 화면 — 같은 읽기(my_together)의 개인 기록 두 칸
     const data = await loadTogetherPage({ client: { rpc: vi.fn() }, viewer: FAN, creatorId: HARU.creatorId, photoBase: "" });

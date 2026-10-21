@@ -1,4 +1,4 @@
-/* 받은 역조공 하나 — 시안 docs/design/mockups/site/v34-part1/revgift-detail.html (좁은 틀 .wrap.narrow 800 에서 좌우 안쪽 40 을 뺀 720).
+/* 받은 역조공 하나 — 시안 docs/design/mockups/site/v35-part1/revgift-detail.html (좁은 틀 .wrap.narrow 800 에서 좌우 안쪽 40 을 뺀 720).
    바닥글까지 96(휴대폰 48). 판·표는 전역 클래스 */
 .page { padding-bottom: var(--section-gap); }
 .col { max-width: 720px; margin-inline: auto; }

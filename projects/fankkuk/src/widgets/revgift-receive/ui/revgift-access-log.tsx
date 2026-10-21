@@ -5,6 +5,7 @@ import { statusTagClass } from "@/shared/ui/status-tone";
 import s from "./revgift-access-log.module.css";
 
 // 받은 역조공 상세 — 내 주소 열람 기록(reverse-gift INV-R16). 연 줄·지운 줄이 한 줄씩 보인다.
+// 접은 칸 하나(시안 v35-part1/revgift-detail.html .rv-folds, design-rules 22절) — 머리에 연 횟수, 펼치면 안내·기록. 접혀 있어도 기록은 문서 안에 있다.
 // 거부된 시도와 대표·직원 구분은 운영자 내부 기록에만 있어 「누가」 칸이 없다(2026-10-12 문제집 D12).
 // 크리에이터 열람 기록 화면(widgets/access-log)과 같은 표·문구를 쓴다. 주소 값·운송장 번호는 이 화면에 오지 않는다.
 // 문구 한계(design-rules 6절): 주소는 「송장을 출력할 때만」 열린다고 쓰고 「절대 유출되지 않습니다」는 쓰지 않는다.
@@ -29,16 +30,20 @@ function Note({ e }: { e: FanAccessEntry }) {
 
 /**
  * entries 가 null 이면 기록을 읽지 못한 것 — 빈 목록(열린 적 없음)과 구분해 보여 준다.
- * finished: 더 출력할 일이 없는 몫(받지 않음·기한 지남·출고·반송·취소) — 「출력할 때마다 남는다」는 안내를 하지 않는다.
+ * finished: 더 출력할 일이 없는 몫(받지 않음·기한 지남·출고·반송·취소) — 빈 목록 안내가 「이 선물에서는」 으로 바뀐다.
  */
 export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanAccessEntry[] | null; finished: boolean }) {
   return (
-    <section className={s.sec} aria-labelledby="rv-log-title">
-      <h2 className={s.title} id="rv-log-title">
-        내 주소 열람 기록
-      </h2>
+    <details className={s.fold}>
+      <summary>
+        <h2 className={s.title} id="rv-log-title">
+          내 주소 열람 기록
+        </h2>
+        {entries === null ? null : <small>{entries.filter((e) => e.kind === "opened").length}번</small>}
+      </summary>
+      <div className={s.in}>
       <p className={s.lead}>
-        내 주소는 송장을 출력할 때만 열리고, 재출력을 합쳐 최대 {REVGIFT_MAX_DECRYPTS}번까지예요. 출고·반송·취소·처분이 되면 주소를 지워요. 열린 기록은 전부 여기에 보여요.
+        내 주소는 송장을 출력할 때만 열리고, 재출력을 합쳐 최대 {REVGIFT_MAX_DECRYPTS}번까지예요. 출고·반송·취소·처분이 되면 주소를 지워요.
       </p>
       {entries === null ? (
         <p className={s.empty} role="status">
@@ -46,7 +51,7 @@ export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanA
         </p>
       ) : entries.length === 0 ? (
         <p className={s.empty}>
-          {finished ? "이 선물에서는 주소가 열린 적이 없어요." : "아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요."}
+          {finished ? "이 선물에서는 주소가 열린 적이 없어요." : "아직 주소가 열린 적이 없어요."}
         </p>
       ) : (
         <>
@@ -90,6 +95,7 @@ export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanA
           </ul>
         </>
       )}
-    </section>
+      </div>
+    </details>
   );
 }

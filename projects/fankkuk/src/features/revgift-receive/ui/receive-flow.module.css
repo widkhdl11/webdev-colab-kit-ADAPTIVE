@@ -1,42 +1,69 @@
-/* 받은 역조공 받기 — 시안 docs/design/mockups/site/v34-part1/revgift-detail.html (design-rules 21절: 맨 위 받기 칸 + 아래 촘촘한 구간).
-   페이지 머리(.page-head)·결과 판(.part)·번호 단계(.flow)·버튼 묶음(.actions·.btnrow)은 전역 클래스 */
-/* 구간 쌓기 — 맨 위 칸·결과 판·선물 정보는 위 48, 열람 기록은 위 32 (시안 v34-part1/revgift-detail.html). 첫 칸은 페이지 머리 아래 여백을 그대로 쓴다 */
-.flow { display: block; }
-.flow > * + * { margin-top: var(--space-12); }
-/* 결과 판 안 제목은 페이지 제목(24)보다 작게 20, 설명은 본문 16 */
-.flow :global(.part .t-title) { font-size: var(--fs-card); line-height: 1.4; }
-/* 선물 정보 — 테두리 없는 촘촘한 구간(위 1px 선), 이름 왼쪽 14 회색 · 값 오른쪽 (시안 .dense-sec · .kv) */
-.dense { padding-top: var(--space-6); border-top: 1px solid var(--gray-200); }
-.denseTitle.denseTitle { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
-.kv { margin: var(--space-4) 0 0; }
-.kv > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); }
-.kv > div + div { margin-top: var(--space-3); }
-.kv dt { flex: none; font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
-.kv dd { min-width: 0; margin: 0; text-align: right; overflow-wrap: anywhere; }
-.kv dd :global(.t-meta) { font-weight: 400; }
-/* 받기·받지 않기 — 글자 폭 버튼 둘, 사이 12 (시안 .choice). 휴대폰은 세로로 폭 전체 */
+/* 받은 역조공 받기 — 시안 docs/design/mockups/site/v35-part1/revgift-detail.html · v35.css .rvcard·.rv-folds (design-rules 22절).
+   하늘 판 하나(보낸 크리에이터 머리 + 받을지 정하는 칸, 「받기」 뒤에는 같은 판 안 주소 확인) → 결과 판(.part, 전역) → 접은 칸 둘 */
+
+/* 판 — 할 일이 있을 때만 하늘 면, 그림이 위로 걸침 (시안 .rvcard) */
+.rvcard { position: relative; margin-top: var(--space-12); padding: var(--space-10) var(--space-8) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--tint); }
+.rvcard.calm { border-color: var(--gray-200); background: var(--white); }
+.peek { position: absolute; top: -48px; right: var(--space-8); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
+.who { display: flex; align-items: center; gap: var(--space-4); padding-right: 96px; }
+.who > div { min-width: 0; }
+.face.face { width: 56px; height: 56px; border: 2px solid var(--white); background: var(--face-6); font-size: var(--fs-card); }
+.name.name { font-family: var(--font); font-size: var(--fs-page); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
+.sub { font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+
+/* 받을지 정해 주세요 — 위 1px 하늘 선, 오른쪽 큰 남은 날 (시안 .ask) */
+.ask { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--space-4); margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--tint-line); }
+.askTitle.askTitle { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.askSub { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+.days.days { text-align: right; }
+/* 받기·받지 않기 — 글자 폭 버튼, 사이 12, 채운 버튼 최소 160 (시안 .choice) */
 .choice { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
 .choice :global(.btn) { min-width: 96px; }
-.once { margin-top: var(--space-4); }
-.warn { margin-top: var(--space-6); padding: var(--space-4); border-radius: var(--r-btn); background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); }
+.choice :global(.btn:not(.btn--line)) { min-width: 160px; }
+.once { margin-top: var(--space-4); font-size: var(--fs-small); color: var(--sub); }
+.warn { margin-top: var(--space-6); padding: var(--space-4); border-radius: var(--r-btn); background: var(--white); color: var(--gray-900); font-weight: var(--fw-btn); }
 .alert { margin-top: var(--space-4); }
 .desc { margin-top: var(--space-2); }
 .focusable:focus { outline: none; }
-/* 등록한 받을 주소 확인 — 크리에이터 승인 창의 주소 확인 판과 같은 모양(이름표·등록한 날·바꾸기) */
-.addr-on-file { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+
+/* 주소 확인 — 판 안 흰 상자 (시안 .rvcard .addr) */
+.addr { margin-top: var(--space-6); padding: var(--space-6); border: 1px solid var(--tint-line); border-radius: var(--r-card); background: var(--white); }
+.tagrow { margin-top: var(--space-3); font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+.addrNote { margin-top: var(--space-3); font-size: var(--fs-small); color: var(--sub); }
 .addr-saved { margin-top: var(--space-2); }
+
+/* 결과 판 — 판 아래 48 */
+.result.result { margin-top: var(--space-12); }
+.result :global(.t-title) { font-size: var(--fs-card); line-height: 1.4; }
 .next { --steps: 3; margin-top: var(--space-8); }
 .next :global(.t-strong) + p { margin-top: 4px; }
 .links { justify-content: center; margin-top: var(--space-8); }
+
+/* 접은 칸 — 선물 정보 · 내 주소 열람 기록 (시안 .rv-folds · v33.css .fold) */
+.folds { margin-top: var(--space-8); border-bottom: 1px solid var(--gray-200); }
+.fold { border-top: 1px solid var(--gray-200); }
+.fold > summary { display: flex; align-items: center; gap: var(--space-2); min-height: 48px; cursor: pointer; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after { content: "+"; margin-left: auto; font-size: var(--fs-card); color: var(--sub); }
+.fold[open] > summary::after { content: "–"; }
+.fold > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.fold > summary small { font-size: var(--fs-small); color: var(--sub); }
+.foldTitle.foldTitle { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.6; }
+.in { padding: var(--space-2) 0 var(--space-4); }
+.kv { margin: 0; font-size: var(--fs-small); }
+.kv > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); }
+.kv > div + div { margin-top: var(--space-2); }
+.kv dt { flex: none; font-weight: 400; color: var(--sub); }
+.kv dd { min-width: 0; margin: 0; text-align: right; overflow-wrap: anywhere; }
+.kv dd :global(.t-meta) { font-weight: 400; }
+
 .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-6); }
+
 @media (max-width: 767px) {
+  .rvcard { padding: var(--space-8) var(--space-6) var(--space-6); }
+  .peek { top: -32px; right: var(--space-6); width: 64px; height: 64px; }
+  .who { padding-right: var(--space-12); }
+  .days.days { text-align: left; }
   .choice { flex-direction: column; }
   .choice :global(.btn) { width: 100%; }
-}
-/* 「지금 할 일」 칸 안 머리(action-center INV-J13, 시안 v34-part1/revgift-detail.html .tbox.rv .head) — 제목 20 · 기한 14 회색, 오른쪽 남은 날 */
-.todoHead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-4); margin-top: var(--space-2); }
-.todoTitle { font-size: var(--fs-card); line-height: 1.4; letter-spacing: -0.6px; }
-.todoSub { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
-@media (max-width: 767px) {
-  .todoHead { flex-direction: column; align-items: flex-start; }
 }

@@ -1,21 +1,23 @@
-import { statusTagClass } from "@/shared/ui/status-tone";
+import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
-import { mostRecentlyMoved } from "@/entities/order/model/last-moved";
 import { giftDetailHref } from "@/entities/action-item/model/action-items";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
-import { fanBadge, fanGiftBucket, fanProgress } from "@/entities/order/ui/fan-stage-copy";
+import { FAN_STEP_LABEL, fanBadge, fanGiftBucket, fanProgress } from "@/entities/order/ui/fan-stage-copy";
+import { formatDate, formatMonthDayKo } from "@/shared/lib/format/datetime";
 import type { GiftGroup } from "../model/gift-groups";
 import { GiftTabs } from "./gift-tabs";
 import s from "./gift-list.module.css";
 
-// 보낸 선물 — 팬·크리에이터 모두 「보낸 선물」 (action-center INV-J14, design-rules 21절, 시안 v34-part1/gifts.html · v34.css .grp).
-// 크리에이터별 묶음: 묶음 머리(얼굴 + 「OO님과 함께한 시간」 + 선물·답장 수 + 꺾쇠) 전체가 함께한 시간으로 가는 링크, 그 아래 그 크리에이터에게 보낸 선물 줄.
+// 보낸 선물 — 팬·크리에이터 모두 「보낸 선물」 (action-center INV-J14, design-rules 22절, 시안 v35-part1/gifts.html · v35.css .gcard).
+// 크리에이터별 묶음: 묶음 머리(얼굴 + 「OO님과 함께한 시간」 + 선물·답장 수 + 꺾쇠) 전체가 함께한 시간으로 가는 링크, 그 아래 그 크리에이터에게 보낸 선물 카드.
 // 머리 숫자는 함께한 시간과 같은 읽기의 값이다(묶음은 model/gift-groups.ts) — 탭이 줄을 걸러도 숫자는 그대로다.
-// 탭은 「진행 중」·「완료」 둘 — 끝난 선물과 받지 않은 선물(거절·기한 지남)이 「완료」로 합쳐진다. 줄이 하나도 없는 묶음은 그 탭에서 보이지 않는다.
-// 탭마다 가장 최근 움직인 줄 하나만 강조 줄(하늘 면). 줄은 선물 상세(INV-J12)로 간다. 본문 틀 <main class="page-pane"> 은 라우트가 MyShell 로 붙인다.
+// 탭은 「진행 중」·「완료」 둘 — 끝난 선물과 받지 않은 선물(거절·기한 지남)이 「완료」로 합쳐진다. 카드가 하나도 없는 묶음은 그 탭에서 보이지 않는다.
+// 선물은 진행 정도와 상관없이 같은 카드(진행 막대 + n/6), 880 안 2열(휴대폰 1열). 할 일이 있는 카드만 하늘 면(22절) —
+// 지금 할 일 읽기 결과에 그 주문의 줄이 있거나 사무실로 보내야 하는 선물(「보내 주세요」). 카드는 선물 상세(INV-J12)로 간다.
+// 본문 틀 <main class="page-pane"> 은 라우트가 MyShell 로 붙인다.
 
 type Filter = (g: FanGiftView) => boolean;
 
@@ -30,27 +32,47 @@ function Chev() {
   );
 }
 
-function GiftRow({ gift, faceTone, hi }: { gift: FanGiftView; faceTone: string | undefined; hi: boolean }) {
-  const badge = fanBadge(gift);
+/** 카드 꼬리표 — 진행이 끝까지 간 선물은 「끝난 선물」(시안), 그 밖은 목록 꼬리표 그대로(거절·기한 지남은 따로 — decline-block INV-D5) */
+function cardBadge(gift: FanGiftView): { text: string; tone: StatusTone } {
+  if (gift.outcome === "in_progress" && fanGiftBucket(gift) === "ended") return { text: "끝난 선물", tone: "success" };
+  return fanBadge(gift);
+}
+
+/** 할 일이 있는 카드인가 — 처리할 일 읽기 결과의 주문이거나, 사무실로 보내 달라는 선물 */
+export function giftNeedsAction(gift: FanGiftView, todoOrderNos: ReadonlySet<string>): boolean {
+  return todoOrderNos.has(gift.orderNo) || fanBadge(gift).text === "보내 주세요";
+}
+
+function GiftCard({ gift, faceTone, hi }: { gift: FanGiftView; faceTone: string | undefined; hi: boolean }) {
+  const badge = cardBadge(gift);
   const progress = fanProgress(gift);
   const who = `${gift.creatorName}님께`;
+  const notAccepted = fanGiftBucket(gift) === "not_accepted";
+  const lastDone = [...gift.steps].reverse().find((st) => st.state === "done");
   return (
-    <li className={hi ? "lrow lrow--hi" : "lrow"} data-gift-row="" data-hi={hi ? "" : undefined}>
-      <CreatorFace tone={faceTone ?? "var(--face-1)"} />
-      <p className="lrow-txt">
-        {/* together INV-F7: 나만 보는 메모의 선물 이름 — 본인 목록(my_gifts)에만 온다 */}
-        <Link className="stretch" href={giftDetailHref(gift.orderNo)} aria-label={`${who} 보낸 선물 ${gift.orderNo} 상세`}>
-          <strong>{gift.memoTitle ? `${who} · ${gift.memoTitle}` : who}</strong>
-        </Link>
-        <span className="meta">
-          {gift.itemKind} · 상자 {gift.boxCount}개
-        </span>
-      </p>
-      <div className="lrow-side">
+    <li className={hi ? `${s.gcard} ${s.hi}` : s.gcard} data-gift-row="" data-hi={hi ? "" : undefined}>
+      <div className={s.top}>
+        <CreatorFace tone={faceTone ?? "var(--face-1)"} className={`face ${s.face}`} />
+        <strong className={s.who}>
+          <Link className="stretch" href={giftDetailHref(gift.orderNo)} aria-label={`${who} 보낸 선물 ${gift.orderNo} 상세`}>
+            {who}
+          </Link>
+        </strong>
         <span className={statusTagClass(badge.tone)}>{badge.text}</span>
-        {gift.outcome === "in_progress" ? (
+      </div>
+      <div>
+        {/* together INV-F7: 나만 보는 메모의 선물 이름 — 본인 목록(my_gifts)에만 온다. 없으면 고른 물품 종류 */}
+        <h3 className={s.name}>{gift.memoTitle ?? gift.itemKind}</h3>
+        <p className={s.what}>
+          {gift.memoTitle ? `${gift.itemKind} · ` : ""}상자 {gift.boxCount}개
+        </p>
+      </div>
+      {notAccepted ? (
+        <p className={s.stop}>받지 않은 선물이에요 · {formatMonthDayKo(gift.registeredAt)} 등록</p>
+      ) : (
+        <div>
           <span
-            className="mini-steps"
+            className={s.pbar}
             role="progressbar"
             aria-label={`${who} 보낸 선물 ${gift.orderNo} 진행 단계`}
             aria-valuemin={0}
@@ -58,23 +80,26 @@ function GiftRow({ gift, faceTone, hi }: { gift: FanGiftView; faceTone: string |
             aria-valuenow={progress.done}
             aria-valuetext={`${progress.total}단계 중 ${progress.done}단계 완료, ${badge.text}`}
           >
-            <span className="segs">
-              {gift.steps.map((st) => (
-                <i key={st.key} className={st.state === "done" ? "on" : undefined} />
-              ))}
-            </span>
-            <span aria-hidden="true">
-              {progress.done}/{progress.total}
-            </span>
+            {gift.steps.map((st) => (
+              <i key={st.key} className={st.state === "done" ? s.on : undefined} />
+            ))}
           </span>
-        ) : null}
-      </div>
-      <Chev />
+          <p className={s.pfoot}>
+            <span>
+              <b>
+                {progress.done}/{progress.total}
+              </b>
+              {lastDone ? ` · ${FAN_STEP_LABEL[lastDone.key]}` : null}
+            </span>
+            <span>{gift.outcome === "in_progress" && gift.expectedArrivalDate ? `${formatDate(gift.expectedArrivalDate)} 도착 예정` : `${formatMonthDayKo(gift.registeredAt)} 등록`}</span>
+          </p>
+        </div>
+      )}
     </li>
   );
 }
 
-function Group({ group, rows, hi, faceToneByName }: { group: GiftGroup; rows: readonly FanGiftView[]; hi: string | null; faceToneByName: Readonly<Record<string, string>> }) {
+function Group({ group, rows, todoOrderNos, faceToneByName }: { group: GiftGroup; rows: readonly FanGiftView[]; todoOrderNos: ReadonlySet<string>; faceToneByName: Readonly<Record<string, string>> }) {
   const t = group.together;
   return (
     <section className={s.grp} data-gift-group={group.creatorName} aria-label={`${group.creatorName}님 선물`}>
@@ -94,16 +119,19 @@ function Group({ group, rows, hi, faceToneByName }: { group: GiftGroup; rows: re
           <strong>{group.creatorName}님께 보낸 선물</strong>
         )}
       </div>
-      <ul className="lrows">
+      {/* v34: 21·22절 태그 모양(base.css) 범위 */}
+      <ul className={`${s.gcards} v34`}>
         {rows.map((g) => (
-          <GiftRow key={g.orderNo} gift={g} faceTone={faceToneByName[g.creatorName]} hi={g.orderNo === hi} />
+          <GiftCard key={g.orderNo} gift={g} faceTone={faceToneByName[g.creatorName]} hi={giftNeedsAction(g, todoOrderNos)} />
         ))}
       </ul>
     </section>
   );
 }
 
-function Panel({ groups, filter, empty, faceToneByName }: { groups: readonly GiftGroup[]; filter: Filter; empty: string; faceToneByName: Readonly<Record<string, string>> }) {
+type PanelProps = { groups: readonly GiftGroup[]; filter: Filter; empty: string; todoOrderNos: ReadonlySet<string>; faceToneByName: Readonly<Record<string, string>> };
+
+function Panel({ groups, filter, empty, todoOrderNos, faceToneByName }: PanelProps) {
   const shown = groups.map((g) => ({ group: g, rows: g.gifts.filter(filter) })).filter((x) => x.rows.length > 0);
   if (shown.length === 0) {
     return (
@@ -115,11 +143,10 @@ function Panel({ groups, filter, empty, faceToneByName }: { groups: readonly Gif
       </div>
     );
   }
-  const hi = mostRecentlyMoved(shown.flatMap((x) => x.rows));
   return (
     <>
       {shown.map((x) => (
-        <Group key={x.group.key} group={x.group} rows={x.rows} hi={hi} faceToneByName={faceToneByName} />
+        <Group key={x.group.key} group={x.group} rows={x.rows} todoOrderNos={todoOrderNos} faceToneByName={faceToneByName} />
       ))}
     </>
   );
@@ -130,7 +157,10 @@ export function GiftListPage({
   faceToneByName,
   title = "보낸 선물",
   tabs,
+  todoOrderNos = [],
 }: {
+  /** 지금 할 일 읽기 결과에 줄이 있는 주문번호 — 그 카드만 하늘 면(design-rules 22절). 라우트가 사이드바 숫자와 같은 읽기 결과에서 넘긴다 */
+  todoOrderNos?: readonly string[];
   /** 페이지 머리 바로 아래에 둘 화면 간 탭 — 크리에이터의 「보낸 내역」 두 화면(design-rules 11절). 머리는 늘 본문 맨 앞이다(00절) */
   tabs?: ReactNode;
   /** 크리에이터별 묶음(model/gift-groups.ts) */
@@ -143,6 +173,7 @@ export function GiftListPage({
   const all = groups.flatMap((g) => g.gifts);
   // 탭 기준은 fanGiftBucket 하나 — 메인 「진행 중인 선물」과 같은 수가 나온다
   const ongoingN = all.filter(ongoing).length;
+  const todo = new Set(todoOrderNos);
   return (
     <>
       <header className="page-head v34">
@@ -163,12 +194,12 @@ export function GiftListPage({
           {
             id: "ongoing",
             label: `진행 중 ${ongoingN}`,
-            panel: <Panel groups={groups} filter={ongoing} faceToneByName={faceToneByName} empty="지금 진행 중인 선물이 없어요." />,
+            panel: <Panel groups={groups} filter={ongoing} todoOrderNos={todo} faceToneByName={faceToneByName} empty="지금 진행 중인 선물이 없어요." />,
           },
           {
             id: "done",
             label: `완료 ${all.length - ongoingN}`,
-            panel: <Panel groups={groups} filter={done} faceToneByName={faceToneByName} empty="아직 완료된 선물이 없어요." />,
+            panel: <Panel groups={groups} filter={done} todoOrderNos={todo} faceToneByName={faceToneByName} empty="아직 완료된 선물이 없어요." />,
           },
         ]}
       />

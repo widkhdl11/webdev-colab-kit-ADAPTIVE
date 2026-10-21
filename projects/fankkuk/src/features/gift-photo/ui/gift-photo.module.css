@@ -17,3 +17,17 @@
 .compact .thumb { width: 64px; margin-top: 0; border-radius: var(--r-btn); }
 .compact .btns { margin-top: 0; }
 .compact .error { flex-basis: 100%; margin-top: 0; }
+/* 함께한 시간 사진 앨범 칸(tile) — 시안 v35-part1/gifts-with-a.html .tile .ph-photo (design-rules 22절). 정사각, 사진이 없으면 하늘 면 + 아래 점선 */
+.tile { display: flex; flex-direction: column; min-width: 0; }
+.tileImg { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; background: var(--gray-50); }
+.tileActs { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-2); padding: var(--space-2) var(--space-4) 0; }
+.tileActs :global(.btn) { padding-inline: 0; font-size: var(--fs-small); }
+.tileEmpty { display: grid; place-items: center; aspect-ratio: 1 / 1; border-bottom: 1px dashed var(--tint-line); background: var(--tint); }
+.tileInner { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-6); text-align: center; font-size: var(--fs-small); color: var(--sub); }
+.tileIcon { width: 64px; height: 64px; object-fit: contain; }
+.tile .error { padding: 0 var(--space-4); font-size: var(--fs-small); }
+@media (max-width: 767px) {
+  .tileIcon { display: none; }
+  /* 왼쪽 위 꼬리표 아래로 */
+  .tileInner { gap: var(--space-2); padding: var(--space-10) var(--space-3) var(--space-3); }
+}

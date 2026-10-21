@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { readActionItemsOrNull, readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { sentGiftTodoOf } from "@/entities/action-item/model/creator-action-items";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";
 import { creatorPhotoUrl } from "@/entities/creator/model/link-images";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
@@ -27,12 +29,20 @@ export default async function Page() {
   const togetherRead = readMyTogether(supabase).then((rows) =>
     Promise.all(rows.map(async (t) => ({ summary: t, orderNos: (await readMyTogetherGifts(supabase, t.creatorId)).map((g) => g.orderNo) }))),
   );
-  const [gifts, together, cards, header] = await Promise.all([
+  // 지금 할 일 읽기는 한 번 — 사이드바 숫자와 카드 하늘 면(할 일이 있는 카드, design-rules 22절)이 같은 결과를 쓴다(action-center INV-J2)
+  // 팬 = 팬 지금 할 일 줄의 주문, 크리에이터 = 보낸 선물 상세의 칸과 같은 거르기(sentGiftTodoOf)
+  const todoRead: Promise<{ header: readonly unknown[] | null; has: (orderNo: string) => boolean }> =
+    viewer.role === "fan"
+      ? readActionItemsOrNull(supabase).then((a) => ({ header: a, has: (no: string) => (a ?? []).some((it) => it.orderNo === no) }))
+      : readCreatorActionItemsOrNull(supabase).then((c) => ({ header: c, has: (no: string) => sentGiftTodoOf(c ?? [], no).length > 0 }));
+  const [gifts, together, cards, header, todo] = await Promise.all([
     giftsRead,
     togetherRead,
     readCreatorCards(supabase, { signedIn: true }),
-    giftsRead.then((g) => readSiteHeader(supabase, viewer, "/gifts", g)),
+    Promise.all([giftsRead, todoRead]).then(([g, t]) => readSiteHeader(supabase, viewer, "/gifts", g, t.header)),
+    todoRead,
   ]);
+  const todoOrderNos = gifts.filter((g) => todo.has(g.orderNo)).map((g) => g.orderNo);
   const faceToneByName = Object.fromEntries(cards.map((c) => [c.name, c.faceTone]));
   const photoBase = readPublicStorageBase();
   const groups = groupGiftsByCreator(
@@ -52,7 +62,7 @@ export default async function Page() {
       <SiteHeader {...header} />
       <MyShell width="list">
         {/* 크리에이터는 사이드바 「보낸 내역」 한 칸에서 팬에게 보낸 역조공과 이 화면을 탭으로 오간다(design-rules 11절) */}
-        <GiftListPage tabs={viewer.role === "creator" ? <SentTabs current="creators" /> : undefined} groups={groups} faceToneByName={faceToneByName} />
+        <GiftListPage tabs={viewer.role === "creator" ? <SentTabs current="creators" /> : undefined} groups={groups} faceToneByName={faceToneByName} todoOrderNos={todoOrderNos} />
       </MyShell>
       <SiteFooter />
     </>

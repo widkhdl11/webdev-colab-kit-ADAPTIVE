@@ -4,7 +4,7 @@ import { paymentLines, type GiftPayment } from "@/entities/payment/model/gift-pa
 import { formatDate } from "@/shared/lib/format/datetime";
 import s from "./gift-status.module.css";
 
-// 결제 내역 — 시안 docs/design/mockups/site/v34-part1/gift-detail.html 의 「주문 정보」 구간 안, 가는 선(.hr) 아래 「결제 내역」(상자 줄 · 합계).
+// 결제 내역 — 시안 docs/design/mockups/site/v35-part1/gift-detail.html 의 「결제」 카드 안(큰 금액 아래 상자 줄 · 검수 포함 · 결제한 날). 카드와 큰 금액은 부르는 쪽이 그린다.
 // 금액은 결제할 때 저장한 값만 보인다(payment INV-M14) — 지금 요금표로 다시 계산하지 않는다.
 // 차액은 상자별 차액 결제 줄(my_difference_payments)에서 결제를 마친 것만, 환불은 서버가 정한 금액과 상태 그대로.
 
@@ -16,10 +16,7 @@ export function PaymentSummary({ payment, differences }: Props) {
   const lines = paymentLines(payment.boxes);
   const paidDifferences = differences.filter((d) => d.state === "paid");
   return (
-    <section className={s.pay} aria-labelledby="pay-title">
-      <h2 className={s.secTitle} id="pay-title">
-        결제 내역
-      </h2>
+    <>
       <dl className={s.kv}>
         {lines.map((l) => (
           <div key={`${l.tier}-${l.unitKrw}-${l.missing}`}>
@@ -30,10 +27,6 @@ export function PaymentSummary({ payment, differences }: Props) {
             <dd>{won(l.unitKrw * l.count)}</dd>
           </div>
         ))}
-        <div className={s.total}>
-          <dt>합계</dt>
-          <dd>{won(payment.paidKrw)}</dd>
-        </div>
         {paidDifferences.map((d) => (
           <div key={d.boxId}>
             <dt>차액 · 상자 {d.boxSeq} · 결제 완료</dt>
@@ -49,7 +42,7 @@ export function PaymentSummary({ payment, differences }: Props) {
           </div>
         ))}
       </dl>
-      <p className={s["tag-line"]}>
+      <p className={s.ok}>
         <span className="tag">
           <svg width={16} height={16} viewBox="0 0 24 24" aria-hidden="true">
             <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -57,11 +50,11 @@ export function PaymentSummary({ payment, differences }: Props) {
           검수 포함
         </span>
       </p>
-      <p className={s.note}>
+      <p className={s.payNote}>
         {formatDate(payment.paidAt)}에 결제했어요.
         <br />
         도착한 상자를 재어 보니 구간이 더 크면, 차액만 따로 결제해요.
       </p>
-    </section>
+    </>
   );
 }

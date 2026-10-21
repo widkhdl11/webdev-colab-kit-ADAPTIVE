@@ -1,57 +1,65 @@
-/* 선물 하나 상세(보낸 선물) — 시안 docs/design/mockups/site/v34-part1/gift-detail.html · v33b.css「gift-detail 두 단」· v34.css (design-rules 21절).
-   맨 위 「지금 할 일」 칸(전체 폭) → 두 단(본문 + 오른쪽 288 요약 상자, 999 이하 한 단에 요약이 위).
-   본문 = 진행 카드(흰 판, 그림이 위로 걸침) 아래 테두리 없는 구간(위 1px 선). 강조 면은 요약 상자 하나 */
+/* 선물 하나 상세(보낸 선물) — 시안 docs/design/mockups/site/v35-part1/gift-detail.html · v35.css .dhero·.dsteps·.dgrid·.dcard (design-rules 22절).
+   맨 위 「지금 할 일」 칸(전체 폭) → 하늘 상태 판(지금 상태·도착 예정일 48·6단계) → 상자·결제·주문 정보 카드 셋(999 이하 두 칸, 767 이하 한 칸).
+   주문 정보는 덜 중요한 회색 카드. 메모·답장·차액 기록·안내는 그 아래 테두리 없는 구간(위 1px 선) */
 
 .page { padding-bottom: var(--section-gap); }
-/* 넓은 틀 — 시안 .wrap.wide 1120 에서 좌우 안쪽 40 을 뺀 1040 (본문 720 + 32 + 요약 288) */
+/* 넓은 틀 — 시안 .wrap.wide 1120 에서 좌우 안쪽 40 을 뺀 1040 */
 .col { max-width: 1040px; margin-inline: auto; }
 
 /* 돌아가기 — 회색 14 (시안 .back) */
 .back { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--sub); font-size: var(--fs-small); font-weight: 400; text-decoration: none; }
 .back:hover { color: var(--ink); }
 
-/* 맨 위 칸 아래 두 단 — 칸은 위 24, 두 단은 위 32 (시안 .tbox·.two) */
 .top > :global(#todo) { margin-top: var(--space-6); }
-.two, .one { margin-top: var(--space-8); }
-.two { display: grid; grid-template-columns: minmax(0, 1fr) 288px; grid-template-areas: "main side"; gap: var(--space-8); align-items: start; }
-.main { grid-area: main; min-width: 0; }
-.side { grid-area: side; position: sticky; top: var(--space-8); min-width: 0; }
 
-/* 오른쪽 요약 상자 — 하늘 면 하나 (시안 .sidebox) */
-.sidebox { padding: var(--space-6); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--tint); }
-.tot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
-.lab { font-size: var(--fs-small); color: var(--sub); }
-.tot b { font-size: var(--fs-page); font-weight: var(--fw-bold); line-height: 1.3; font-variant-numeric: tabular-nums; }
-.sidetag.sidetag.sidetag { margin-top: var(--space-3); background: var(--white); white-space: normal; }
-.pn { margin-top: var(--space-3); font-size: var(--fs-small); color: var(--sub); }
-
-/* 진행 카드 — 흰 판, 그림이 위로 반쯤 걸침 (시안 .hcard) */
-.hcard { position: relative; margin-top: var(--space-10); padding: var(--space-8); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--white); }
+/* 상태 판 — 하늘 면, 그림이 위로 반쯤 걸침 (시안 .dhero) */
+.dhero { position: relative; margin-top: var(--space-10); padding: var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--tint); }
 .peek { position: absolute; top: -40px; right: var(--space-8); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
 .meta { padding-right: 112px; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
-.title.title { margin-top: var(--space-2); font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); letter-spacing: var(--ls-title); line-height: 1.4; overflow-wrap: anywhere; }
-.lead { color: var(--sub); overflow-wrap: anywhere; }
-.stat { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin-top: var(--space-6); }
-.stat :global(.tag) { white-space: nowrap; }
-.headline { min-width: 0; font-size: var(--fs-card); font-weight: var(--fw-bold); line-height: 1.4; overflow-wrap: anywhere; }
+.title.title { margin-top: var(--space-1); padding-right: 112px; font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
+.what { font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+.now { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--space-4) var(--space-8); margin-top: var(--space-6); }
+.when { min-width: 0; }
+.when :global(.tag) { background: var(--white); white-space: nowrap; }
+.big.big { margin-top: var(--space-2); overflow-wrap: anywhere; }
+.msg { min-width: 0; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
 
-/* 가로 단계 막대 — 칸마다 막대 8 + 이름·날짜 (시안 .steps6). 단계 수만큼 같은 폭 */
-.steps { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-2); margin: var(--space-6) 0 0; padding: 0; list-style: none; }
+/* 6단계 — 칸마다 막대 8 + 이름·작은 글 (시안 .dsteps). 끝낸 단계 하늘, 다음 단계는 테두리만 */
+.steps { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-1); margin: var(--space-6) 0 0; padding: 0; list-style: none; }
 .steps > li { min-width: 0; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
-.steps > li::before { content: ""; display: block; height: 8px; margin-bottom: var(--space-2); border-radius: var(--r-pill); background: var(--gray-200); }
-.steps > li.done, .steps > li.on, .steps > li.stopped { color: var(--ink); }
-.steps > li.done::before, .steps > li.on::before { background: var(--primary); }
-.steps > li.on .stepName { font-weight: var(--fw-bold); }
+.steps > li::before { content: ""; display: block; height: 8px; margin-bottom: var(--space-2); border-radius: var(--r-pill); background: var(--white); }
+.steps > li.done, .steps > li.stopped { color: var(--ink); }
+.steps > li.done::before { background: var(--primary); }
+.steps > li.next { color: var(--ink); font-weight: var(--fw-bold); }
+.steps > li.next::before { box-shadow: inset 0 0 0 2px var(--primary); }
 /* 멈춘 단계(돌려보냄) — 빨강 대신 본문색 막대 */
 .steps > li.stopped::before { background: var(--gray-900); }
-.steps small { display: block; font-size: var(--fs-small); color: var(--sub); }
-.appr { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-4); font-size: var(--fs-small); color: var(--sub); }
-.appr :global(.tag) { gap: 6px; white-space: nowrap; }
+.steps small { display: block; font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
 
-/* 도착 예정일 — 진행 카드 끝 한 줄 (시안 v33.css .eta) */
-.eta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
-.etaLab.etaLab { font-family: var(--font); font-size: var(--fs-small); font-weight: 400; letter-spacing: 0; line-height: 1.5; color: var(--sub); }
-.etaVal { font-weight: var(--fw-bold); }
+/* 카드 셋 — 사이 16, 위 24, 높이는 내용대로 (시안 .dgrid · .dcard) */
+.dgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; margin-top: var(--space-6); }
+/* 카드끼리 위 여백 없음 — 전역 「구간 + 구간」 여백보다 앞서게 */
+.dgrid > .dcard.dcard { margin-top: 0; }
+.dcard { min-width: 0; padding: var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); }
+.dcard.muted { border-color: var(--surface-muted); background: var(--surface-muted); }
+.cardTitle.cardTitle { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; }
+.cardTitle:focus { outline: none; }
+.muted .cardTitle { color: var(--sub); }
+.amount { margin-top: var(--space-2); font-family: var(--font-round); font-size: var(--fs-title); font-weight: var(--fw-title); letter-spacing: -1px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.duetag.duetag { display: inline-flex; margin-top: var(--space-2); white-space: normal; }
+.ok { margin-top: var(--space-4); }
+.ok :global(.tag) { gap: 6px; }
+.payNote { margin-top: var(--space-3); font-size: var(--fs-small); color: var(--sub); }
+
+/* 접는 칸 — 송장번호 입력·받는 주소 없이 보냈다면 (시안 v33.css .fold + v35 .dcard .fold) */
+.fold { margin-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+.fold summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 44px; font-size: var(--fs-small); font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary::after { content: "+"; flex: none; font-size: var(--fs-card); color: var(--sub); }
+.fold[open] summary::after { content: "–"; }
+.fold summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.in { padding: var(--space-2) 0; }
+.in > * + * { margin-top: var(--space-3); }
 
 /* 테두리 없는 구간 — 위 1px 선 (시안 .flat-sec) */
 .sec, .memo-card { margin-top: var(--space-8); padding-top: var(--space-8); border-top: 1px solid var(--gray-200); }
@@ -63,27 +71,22 @@
 
 /* 상자 줄 — 이름·상태 한 줄, 그 아래 받는 주소·송장번호 (시안 .boxline). 상자 사이 1px 선 */
 .boxes { margin-top: var(--space-2); }
-.box { padding: var(--space-4) 0; }
+.box { padding: var(--space-3) 0; }
 .box + .box { border-top: 1px solid var(--gray-200); }
-.box:last-child { padding-bottom: 0; }
 .box > * + * { margin-top: var(--space-3); }
-.boxline { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
-.boxName.boxName { min-width: 0; font-family: var(--font); font-size: var(--fs-body); font-weight: 400; letter-spacing: 0; line-height: 1.6; overflow-wrap: anywhere; }
-.boxTier { color: var(--sub); }
+.boxline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.boxName.boxName { min-width: 0; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.6; overflow-wrap: anywhere; }
 .boxline :global(.tag) { flex: none; gap: 6px; white-space: nowrap; }
 .inv-fixed { margin-top: var(--space-3); }
 .no { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
 
-/* 이름·값 줄 — 이름 왼쪽(14 회색) 값 오른쪽 (시안 .kv · .flat-sec .kv) */
-.kv { margin: var(--space-4) 0 0; font-size: var(--fs-small); }
+/* 이름·값 줄 — 이름 왼쪽(14 회색) 값 오른쪽 (시안 .kv) */
+.kv { margin: var(--space-3) 0 0; font-size: var(--fs-small); }
 .kv > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); }
 .kv > div + div { margin-top: var(--space-2); }
 .kv dt { min-width: 0; font-weight: 400; color: var(--sub); overflow-wrap: anywhere; }
 .kv dd { min-width: 0; margin: 0; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
-.kv .total dt, .kv .total dd { font-size: var(--fs-body); font-weight: var(--fw-bold); color: var(--ink); }
-
-/* 결제 내역 — 주문 정보 구간 안, 가는 선 아래 (시안 .hr) */
-.pay { margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--gray-200); }
+.kv dd :global(.tag) { white-space: nowrap; }
 .tag-line { margin-top: var(--space-3); }
 .tag-line :global(.tag) { gap: 6px; }
 .cancel { margin-top: var(--space-6); }
@@ -98,16 +101,13 @@
 .memo-body { white-space: pre-line; overflow-wrap: anywhere; }
 
 @media (max-width: 999px) {
-  .two { grid-template-columns: minmax(0, 1fr); grid-template-areas: "side" "main"; }
-  .side { position: static; }
+  .dgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dgrid .muted { grid-column: 1 / -1; }
 }
 @media (max-width: 767px) {
-  .hcard { padding: var(--space-6); }
+  .dhero { padding: var(--space-6); }
   .peek { top: -32px; right: var(--space-6); width: 64px; height: 64px; }
-  .meta { padding-right: 72px; }
-  /* 휴대폰 — 단계는 세로 목록: 점 12 + 이름 · 날짜 (시안 v33.css 767 이하 .steps6) */
-  .steps { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .steps > li { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 var(--space-3); min-height: var(--btn-h-sm); }
-  .steps > li::before { flex: none; width: 12px; height: 12px; margin: 6px 0 0; }
-  .steps small { display: inline; }
+  .meta, .title.title { padding-right: var(--space-12); }
+  .steps { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3) var(--space-1); }
+  .dgrid { grid-template-columns: minmax(0, 1fr); }
 }

@@ -1,14 +1,22 @@
-/* 받은 역조공 상세 — 내 주소 열람 기록. 시안 docs/design/mockups/site/v34-part1/revgift-detail.html 의 아래 촘촘한 구간(.dense-sec, 위 32).
+/* 받은 역조공 상세 — 내 주소 열람 기록. 시안 docs/design/mockups/site/v35-part1/revgift-detail.html 의 접은 칸(.rv-folds .fold, design-rules 22절).
    표는 전역 .table-wrap·.table. 767px 이하는 표 대신 줄 목록(시간·결과가 한 줄, 비고가 아래) */
-.sec.sec.sec { margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--gray-200); }
-.title.title { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
-.lead { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
-.empty { margin-top: var(--space-4); font-size: var(--fs-small); color: var(--sub); }
-.log-table { margin-top: 24px; }
+.fold { border-top: 1px solid var(--gray-200); }
+.fold > summary { display: flex; align-items: center; gap: var(--space-2); min-height: 48px; cursor: pointer; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after { content: "+"; margin-left: auto; font-size: var(--fs-card); color: var(--sub); }
+.fold[open] > summary::after { content: "–"; }
+.fold > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.fold > summary small { font-size: var(--fs-small); color: var(--sub); }
+.title.title { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.6; }
+.in { padding: var(--space-2) 0 var(--space-4); }
+.lead { font-size: var(--fs-small); color: var(--sub); }
+.empty { margin-top: var(--space-3); font-size: var(--fs-small); color: var(--sub); }
+.log-table { margin-top: var(--space-4); }
 .nw { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.log-list { display: none; margin-top: 16px; border-top: 1px solid var(--gray-200); }
-.lrow { display: grid; gap: 4px; padding-block: 16px; border-bottom: 1px solid var(--gray-200); }
-.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.log-list { display: none; margin-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+.lrow { display: grid; gap: var(--space-1); padding-block: var(--space-4); border-bottom: 1px solid var(--gray-200); }
+.lrow:last-child { border-bottom: 0; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 
 @media (max-width: 767px) {
   .log-table { display: none; }

@@ -73,9 +73,11 @@ describe("INV-R16: 받은 역조공 상세의 「내 주소 열람 기록」", (
     expect(host.textContent).not.toContain("송장을 출력할 때마다");
   });
 
-  it("INV-R16: 진행 중인 몫의 빈 목록은 출력할 때마다 남는다고 안내한다", () => {
+  it("INV-R16: 진행 중인 몫의 빈 목록은 「아직」 열린 적이 없다고 안내한다 — 끝난 몫의 「이 선물에서는」 문장이 아니다(빈 상태 뒷문장은 design-rules 22절에서 뺐다)", () => {
     render([], false);
-    expect(host.textContent).toContain("송장을 출력할 때마다 여기에 남아요");
+    expect(host.textContent).toContain("아직 주소가 열린 적이 없어요.");
+    expect(host.textContent).not.toContain("이 선물에서는");
+    expect(host.querySelector("summary small")?.textContent).toBe("0번");
   });
 
   it("INV-R16 (실패경로): 기록을 읽지 못했으면(null) 빈 목록처럼 보이지 않고 읽지 못했다고 말한다", () => {

@@ -221,7 +221,7 @@ describe("받기 칸은 「지금 할 일」 칸 안에만 (action-center INV-J1
   it("INV-J13: 처리할 일 읽기 결과에 있는 몫이면 받기·받지 않기가 #todo 칸 안에 있다", () => {
     renderWaiting(true);
     const box = host.querySelector("#todo");
-    expect(box?.textContent).toContain("지금 할 일");
+    expect(box?.querySelector("h2")?.textContent).toBe("받을지 정해 주세요");
     expect([...(box?.querySelectorAll("button") ?? [])].map((b) => b.textContent)).toEqual(["받기", "받지 않기"]);
   });
 

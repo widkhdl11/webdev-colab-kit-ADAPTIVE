@@ -15,8 +15,8 @@ import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
 import { RevgiftAccessLog } from "./revgift-access-log";
 import s from "./revgift-receive.module.css";
 
-// 받은 역조공 하나(팬) — 선물 상세 `/gifts/RG-…`(action-center INV-J12). 시안: docs/design/mockups/site/v34-part1/revgift-detail.html (좁은 틀 800)
-// todo: 이 몫이 처리할 일 읽기 결과에 있다 — 그때만 맨 위 「지금 할 일」 칸에서 받기·받지 않기·주소 입력을 한다(INV-J13).
+// 받은 역조공 하나(팬) — 선물 상세 `/gifts/RG-…`(action-center INV-J12). 시안: docs/design/mockups/site/v35-part1/revgift-detail.html (좁은 틀 800, design-rules 22절)
+// todo: 이 몫이 처리할 일 읽기 결과에 있다 — 그때만 맨 위 칸(#todo)에서 받기·받지 않기·주소 입력을 한다(INV-J13).
 // 남은 날·기한 문구는 서버에서 한 번 계산해 넘긴다 — 브라우저 시계로 다시 계산하면 첫 화면과 글자가 달라질 수 있다.
 // accessLog: 이 몫의 내 주소 열람 기록(INV-R16). null 이면 읽지 못한 것 — 그 칸만 안내로 바뀐다.
 // 받기 판의 주소 칸은 받을 주소 기능(features/fan-address)의 입력 칸을 붙인다 — 받기 기능과 주소 기능은 서로 import 하지 않는다(FSD).
