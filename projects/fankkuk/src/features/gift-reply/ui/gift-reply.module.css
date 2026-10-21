@@ -1,20 +1,63 @@
 /* 받았어요 · 답장 — 시안 docs/design/mockups/addendum/creator-received.html · together.html(답장 카드) <style>.
    시안의 --surface-neutral 은 --surface, --focus-ring 은 --ink(공용 포커스 테두리), --secondary-foreground 는 --brand-ink 로 옮겼다. */
 
-/* ── 크리에이터: 받은 선물 — 시안 v11 creator-boxes.html. 카드 격자(.grid.cols-2 · .card.card-col · .who · .tags · .quote)·
-   답장 칸의 고르기(.opt)·입력(.field)·버튼 줄(.btn-row2)은 base.css 공통. 여기에는 코드에만 있는 것만 둔다 ── */
+/* ── 크리에이터: 받은 선물 — 시안 v37-part2/boxes.html (v37.css .side2·.bside·.bmonth·.bcards·.bcard·.rform·.drow, design-rules 23-3절).
+   흰 카드는 공통 .card, 큰 숫자는 공통 .num-big, 촘촘한 줄은 공통 .lrow, 답장 고르기(.opt)·입력(.field)은 base.css 공통 —
+   면 효과·움직임(23-1·23-2절)은 그 공통 부품이 준다. 여기에는 배치와 코드에만 있는 것만 둔다 ── */
+.side2 { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: var(--space-8); align-items: start; margin-top: var(--space-8); }
+.main { min-width: 0; }
+.who { overflow-wrap: anywhere; }
 .who:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; } /* 저장 뒤 포커스가 옮겨 오는 카드 제목 */
-.q { quotes: none; font-weight: var(--fw-bold); }
 .capped { margin-top: 16px; }
 
-/* 받았어요를 누르면 카드 안에서 열리는 답장 칸 */
-.form { padding: 24px; border-radius: var(--r-card); background: var(--surface-brand); }
-.form fieldset { min-width: 0; margin: 24px 0 0; padding: 0; border: 0; }
+/* 달 머리 — 24 둥근 글꼴 + 회색 개수 */
+.main > .month + .month { margin-top: var(--space-12); }
+.mhead { display: flex; align-items: baseline; gap: var(--space-3); }
+.mhead h2 { font-size: var(--fs-page); letter-spacing: 0; }
+.mhead small { font-size: var(--fs-small); color: var(--sub); }
+
+/* 가장 최근 달 — 같은 모양 카드 2열, 답장 칸이 열린 카드만 한 줄 전체 */
+.bcards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.bcard.bcard { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; padding: var(--space-6); }
+.bcard.open { grid-column: 1 / -1; }
+.btop { display: flex; align-items: center; gap: var(--space-3); }
+.btop > div { min-width: 0; }
+.btop strong { display: block; }
+.btop span { display: block; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+.bface.bface { width: 48px; height: 48px; }
+.quote { padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--surface-muted); font-size: var(--fs-small); overflow-wrap: anywhere; }
+.quote b { display: block; font-weight: var(--fw-btn); }
+.quote span { color: var(--sub); }
+.bfoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: auto; font-size: var(--fs-small); color: var(--sub); }
+.linkbtn { flex: none; min-height: 44px; padding: 0; border: 0; background: none; color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-btn); white-space: nowrap; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+
+/* 지난 달 — 촘촘한 줄, 답장 칸은 줄 아래로 */
+.drows { margin-top: var(--space-3); border-top: 1px solid var(--gray-200); }
+.ditem { border-bottom: 1px solid var(--gray-200); }
+.ditem > .form { margin: 0 var(--space-3) var(--space-4); }
+.dside { font-size: var(--fs-small); color: var(--sub); }
+
+/* 오른쪽 회색 칸 — 아직 답장 안 한 선물 수(INV-G10) */
+.bside { position: sticky; top: var(--space-8); margin-top: var(--space-12); padding: var(--space-10) var(--space-6) var(--space-6); border-radius: var(--r-panel); background: var(--surface-muted); }
+.bsideImg { position: absolute; right: var(--space-6); top: calc(var(--space-10) * -1); width: 80px; height: 80px; object-fit: contain; }
+.lab.lab { font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); letter-spacing: 0; line-height: 1.5; color: var(--sub); }
+.bside :global(.num-big) { margin-top: var(--space-1); }
+.bsideNote { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+
+/* 받았어요를 누르면 열리는 답장 칸 (시안 .rform) */
+.form { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+.form h3 { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; }
+.form fieldset { min-width: 0; margin: var(--space-3) 0 0; padding: 0; border: 0; }
 .form legend { padding: 0; }
-.line-field { margin-top: 24px; }
+.line-field { margin-top: var(--space-4); }
 .line-field label span { color: var(--sub); font-weight: 400; }
 .count { margin-top: 8px; text-align: right; }
-.form-btns { margin-top: 24px; }
+.fold { margin-top: var(--space-2); }
+.fold summary { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; font-size: var(--fs-small); font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary::after { content: "+"; flex: none; font-size: var(--fs-card); color: var(--sub); }
+.fold summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.form-btns { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
 /* 오류 문구 — 지금 화면들 방식(본문색 굵은 글자 + 「!」 원, creator-settings .error) */
 .error { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; color: var(--ink); font-weight: var(--fw-bold); }
 .error-mark { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink); font-size: var(--fs-body); font-weight: var(--fw-bold); line-height: 1; }
@@ -25,7 +68,7 @@
 .box-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
 .box-head h3 { font-size: var(--fs-card); }
 .wait { display: flex; align-items: flex-start; gap: 12px; margin-top: 12px; color: var(--sub); }
-.reply { margin-top: 12px; padding: var(--space-6); border-radius: var(--r-card); background: var(--surface-selected); }
+.reply { margin-top: 12px; padding: var(--space-6); border-radius: var(--r-card); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-sheen); }
 .reply-top { display: flex; align-items: center; gap: 12px; }
 .reply-top b { font-size: var(--fs-card); }
 .reply-top .d { margin-left: auto; color: var(--sub); }
@@ -38,14 +81,23 @@
 .check input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .check-hint { margin-left: 34px; color: var(--sub); }
 .reply-foot { display: flex; justify-content: flex-end; margin-top: 24px; }
-.share { margin-top: 16px; padding: 24px; border-radius: var(--r-card); background: var(--white); box-shadow: var(--hair); }
+.share { margin-top: 16px; padding: 24px; border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); }
 .share-sizes { display: flex; flex-wrap: wrap; gap: 12px; }
 .share-prev { display: block; width: 100%; max-width: 360px; height: auto; margin-top: var(--space-4); border-radius: var(--r-card); box-shadow: var(--hair); }
 .share-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .share-text { margin-top: 12px; color: var(--sub); }
 
+@media (max-width: 999px) {
+  .side2 { grid-template-columns: minmax(0, 1fr); }
+  .bside { position: relative; top: auto; margin-top: var(--space-10); }
+}
 @media (max-width: 767px) {
-  .form { padding: 24px 16px; }
+  .bcards { grid-template-columns: minmax(0, 1fr); }
+  .bcard.bcard { padding: var(--space-4); }
+  .bside { padding: var(--space-8) var(--space-6) var(--space-6); }
+  .bsideImg { width: 64px; height: 64px; top: calc(var(--space-8) * -1); }
+  .form-btns { flex-direction: column; }
+  .form-btns :global(.btn) { width: 100%; }
   .reply { padding: 24px; }
   .reply-foot :global(.btn) { width: 100%; }
   .share-btns :global(.btn) { flex: 1 1 100%; }

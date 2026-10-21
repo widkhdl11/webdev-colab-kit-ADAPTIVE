@@ -80,3 +80,26 @@ export function seoulDaysUntil(dueIso: string, nowIso: string): number {
   const day = (iso: string) => Date.parse(`${dayKey.format(new Date(iso))}T00:00:00Z`);
   return Math.round((day(dueIso) - day(nowIso)) / 86_400_000);
 }
+
+const yearMonth = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit" });
+const timeOnly = new Intl.DateTimeFormat("ko-KR", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
+
+/** 서울 달 "2026-10" — 달마다 묶는 목록의 열쇠. YYYY-MM-DD 도 받는다 */
+export function seoulYearMonth(isoOrDate: string): string {
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(isoOrDate) ? new Date(`${isoOrDate}T12:00:00+09:00`) : new Date(isoOrDate);
+  const parts = yearMonth.formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("year")}-${get("month")}`;
+}
+
+/** 달 묶음 머리 "10월" — 기준 달과 해가 다르면 "2025년 12월" */
+export function monthHeadKo(yearMonthKey: string, baseYearMonth: string): string {
+  const [y, m] = yearMonthKey.split("-");
+  const month = `${Number(m)}월`;
+  return y === baseYearMonth.split("-")[0] ? month : `${y}년 ${month}`;
+}
+
+/** "오후 2:02" (서울 시각) — 날짜로 묶은 표의 시각 칸 */
+export function formatTimeKo(iso: string): string {
+  return timeOnly.format(new Date(iso));
+}

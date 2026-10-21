@@ -94,12 +94,13 @@ const rows = () => [...host.querySelectorAll("[data-row]")];
 const button = (scope: ParentNode, text: string) => [...scope.querySelectorAll("button")].find((b) => b.textContent === text);
 
 describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
-  it("INV-J6: 제목 숫자·판 숫자는 읽기 결과의 줄 수 — 받은 선물 3 · 보낸 선물 1, 순서는 받은 그대로", () => {
+  it("INV-J6: 제목 숫자·구간 숫자는 읽기 결과의 줄 수 — 확인할 상자 2 · 승인 요청 판 1 · 보낸 선물 1, 순서는 받은 그대로", () => {
     render(ALL);
     expect(host.querySelector("h1")?.textContent).toBe("지금 할 일4건");
-    const panels = [...host.querySelectorAll("section")].map((p) => `${p.querySelector("h2")?.textContent}:${p.querySelectorAll("[data-row]").length}:${p.querySelector(".sr-only")?.textContent}`);
-    expect(panels).toEqual(["받은 선물:3:3건", "보낸 선물:1:1건"]);
-    expect(rows().map((r) => r.querySelector("span[class]")?.nextElementSibling?.firstElementChild?.textContent)).toEqual([
+    // v37 A안: 가장 급한 승인 요청은 하늘 판 하나(그 판이 곧 그 줄), 나머지 구간은 머리에 「N건」
+    const panels = [...host.querySelectorAll("section")].map((p) => `${p.querySelector("h2")?.textContent}:${p.hasAttribute("data-row") ? 1 : p.querySelectorAll("[data-row]").length}`);
+    expect(panels).toEqual(["받은 선물2건:2", "다온님이 선물을 보내려고 해요:1", "보낸 선물1건:1"]);
+    expect(rows().map((r) => r.querySelector("[data-title]")?.textContent)).toEqual([
       "별사탕님 선물에서 블루투스 기기가 나왔어요",
       "꿀단지님 선물에서 블루투스 기기가 나왔어요",
       "다온님이 선물을 보내려고 해요",
@@ -115,7 +116,8 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     expect(bt!.textContent).toContain("인형·쿠션 · 상자 2개 중 1번 · 추적 장치 아님");
     expect(ap!.textContent).toContain("승인 요청");
     expect(ap!.textContent).toContain("3일 남음");
-    expect(ap!.textContent).toContain("문구 · 상자 1개");
+    // 하늘 판은 물품·상자·전자기기를 세 칸으로(design-rules 23-3)
+    expect([...ap!.querySelectorAll("dt")].map((dt) => `${dt.textContent}=${dt.nextElementSibling?.textContent}`)).toEqual(["선물 종류=문구", "상자=1개", "전자기기·금속=없음"]);
   });
 
   it("INV-J7 (실패경로): 미확인 상자 줄은 상자가 있다고 말하지 않는다 — 「아직 안 왔어요 · 아직 도착하지 않은 상자」, 도착일·찾기 권유가 없다(카드 d96 ②)", () => {
@@ -178,6 +180,22 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
     expect(button(d, "선택 완료")).toBeDefined();
   });
 
+  it("INV-J8: 하늘 판의 「받지 않기」는 같은 승인 창을 받지 않기 확인부터 열고, 「승인하기」는 카카오톡 승인 고르기부터 연다", () => {
+    render(ALL);
+    const hero = rows()[2]!;
+    act(() => button(hero, "받지 않기")!.click());
+    let d = host.querySelector("dialog[open]")!;
+    expect(d.textContent).toContain("이 선물을 받지 않을까요?");
+    expect(button(d, "돌아가기")).toBeDefined();
+    act(() => button(d, "돌아가기")!.click());
+    expect(button(d, "카카오톡으로 승인")).toBeDefined();
+    act(() => d.querySelector<HTMLButtonElement>('button[aria-label="닫기"]')!.click());
+    act(() => button(hero, "승인하기")!.click());
+    d = host.querySelector("dialog[open]")!;
+    expect(d.textContent).not.toContain("이 선물을 받지 않을까요?");
+    expect(button(d, "카카오톡으로 승인")).toBeDefined();
+  });
+
   it("INV-J6: 줄이 없으면 빈 상태 하나 — 판도 숫자도 없다", () => {
     render([]);
     expect(host.querySelector("h1")?.textContent).toBe("지금 할 일");
@@ -187,12 +205,11 @@ describe("크리에이터 처리할 일 화면 (INV-J5·J6)", () => {
 });
 
 describe("리뷰 반영 — 판 숫자 낭독·찾기 창 오류", () => {
-  it("판 머리 숫자는 화면에만(aria-hidden) 보이고 낭독기에는 「N건」으로 읽힌다", () => {
+  it("구간 머리 숫자는 「N건」 글자로 제목 안에 보인다 — 낭독기도 같은 글자를 읽는다(v37: 검은 숫자 동그라미를 없앴다)", () => {
     render(ALL);
-    const head = [...host.querySelectorAll("section")][0]!.querySelector("h2")!.parentElement!;
-    const num = [...head.querySelectorAll("[aria-hidden=true]")].find((e) => e.textContent === "3");
-    expect(num).toBeDefined();
-    expect(head.querySelector(".sr-only")?.textContent).toBe("3건");
+    const h2 = [...host.querySelectorAll("section")][0]!.querySelector("h2")!;
+    expect(h2.querySelector("small")?.textContent).toBe("2건");
+    expect(h2.querySelector("[aria-hidden=true]")).toBeNull();
   });
 
   it("찾기 창에서 팬을 고르지 않고 보내면 오류가 라디오들에 이어지고(aria-describedby) 초점은 첫 라디오로", async () => {
@@ -252,7 +269,8 @@ describe("추적 장치 발견 줄 (action-center INV-J5·J8, office-workflow IN
     expect(first.textContent).toContain("새벽님 선물에서 추적 장치가 나왔어요");
     expect(first.textContent).toContain("추적 장치 발견");
     expect(first.textContent).not.toContain("위치 추적기");
-    expect(host.querySelector("section .sr-only")?.textContent).toBe("3건");
+    // 추적 장치 줄은 받은 선물 구간 숫자에 들어간다(승인 요청은 그 아래 하늘 판)
+    expect(host.querySelector("section h2 small")?.textContent).toBe("2건");
   });
 
   it("INV-W14: 창에서 「신고하기」를 고르면 고르기 함수에 report 를 보내고 「신고하기 선택」·취소 단계", async () => {
@@ -298,7 +316,7 @@ describe("보낸 선물의 반송 주소 줄 (action-center INV-J5, office-workf
       expect(r.textContent).toContain("돌려받을 주소 확인");
       expect(r.textContent).toContain("11월 16일까지 확인하지 않으면 상자를 처분해요");
     }
-    expect(host.querySelectorAll("section .sr-only")[0]?.textContent).toBe("3건");
+    expect(host.querySelector("section h2 small")?.textContent).toBe("3건");
   });
 
   it("INV-W15·J4: 역조공 줄의 확인은 주문번호만, 팬 선물 상자 줄은 상자 순번까지 보낸다", async () => {

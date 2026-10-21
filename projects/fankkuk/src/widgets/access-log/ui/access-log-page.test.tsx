@@ -38,14 +38,15 @@ describe("INV-P7: 크리에이터 열람 기록 화면", () => {
   it("INV-P7 (D12): 표 칸은 시각·주문번호·비고 셋 — 늘 「열림」인 결과 칸·배지와 「누가」 칸은 없고, 비고에 몇 번째 출력·출력 실패", () => {
     render(ENTRIES);
     expect([...host.querySelectorAll("thead th")].map((th) => th.textContent)).toEqual(["시각", "주문번호", "비고"]);
-    const rows = [...host.querySelectorAll("tbody tr")].map((tr) => [...tr.querySelectorAll("td")].slice(1).map((td) => td.textContent));
+    // 날짜 머리 줄(v37 — 날짜마다 묶음)을 뺀 기록 줄만
+    const rows = [...host.querySelectorAll("tbody tr:not([data-day])")].map((tr) => [...tr.querySelectorAll("td")].slice(1).map((td) => td.textContent));
     expect(rows).toEqual([
       ["FC-4T7NX", "재출력 2번째"],
       ["FC-4T7NX", "출력 실패"],
       ["FC-9QW2E", "첫 출력"],
     ]);
     // 어느 폭에서도 같은 표 하나(v11 — 좁은 화면 전용 목록은 없앴다). 줄마다 「열림」 배지 없이 비고만
-    const trs = [...host.querySelectorAll("tbody tr")];
+    const trs = [...host.querySelectorAll("tbody tr:not([data-day])")];
     expect(trs.length).toBe(3);
     for (const tr of trs) expect(tr.textContent).not.toContain("열림");
     expect(host.querySelectorAll("li").length).toBe(0);
@@ -55,8 +56,9 @@ describe("INV-P7: 크리에이터 열람 기록 화면", () => {
 
   it("INV-P7 (D12): 이번 달 숫자는 승인·주소 열림·재출력 셋 — 거부 숫자는 없다", () => {
     render(ENTRIES);
-    expect([...host.querySelectorAll("dt")].map((dt) => dt.textContent)).toEqual(["승인", "주소 열림", "재출력"]);
-    expect([...host.querySelectorAll("dd")].map((dd) => dd.textContent)).toEqual(["4건", "3번", "1번"]);
+    // v37: 주소 열림이 큰 숫자로 맨 앞, 승인·재출력은 옆 작은 숫자
+    expect([...host.querySelectorAll("dt")].map((dt) => dt.textContent)).toEqual(["주소 열림", "승인", "재출력"]);
+    expect([...host.querySelectorAll("dd")].map((dd) => dd.textContent)).toEqual(["3번", "4건", "1번"]);
   });
 
   it("INV-P7: 기록이 없으면 아직 열린 적이 없다는 안내, 표는 없다", () => {

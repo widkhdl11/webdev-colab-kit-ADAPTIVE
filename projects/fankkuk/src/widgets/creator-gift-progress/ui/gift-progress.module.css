@@ -1,45 +1,67 @@
-/* 크리에이터 선물 현황 (design-rules 13절, 시안 v21-addendum3/cre-progress.html — 처리할 일 D안의 판·줄 모양 + 오른쪽 단계 막대).
-   본문 틀은 목록형 880(00절) — 라우트가 MyShell(list)로 감싼다. 판 머리는 옅은 바탕 + 검은 숫자 동그라미 + 오른쪽 「~ 전체」 링크. */
-.root { display: grid; gap: var(--space-8); }
-.root.root.root > section, .root.root.root > header { margin: 0; } /* 전역 「구간 다음 구간 위 48」(base.css) 이 격자 간격 32 와 겹쳐 80 이 되던 것을 막는다 — 셋을 겹쳐 그 규칙보다 앞서게 */
-.panel { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--r-card); overflow: hidden; }
-.panelH { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-6); border-bottom: 1px solid var(--gray-200); background: var(--gray-50); }
-.panelH h2 { font-size: var(--fs-body); line-height: 1.5; font-weight: var(--fw-h3); }
-.cnt { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-size: var(--fs-caption); font-weight: var(--fw-btn); }
-.more { display: inline-flex; align-items: center; min-height: 44px; margin-block: calc((44px - 1.5em) / -2); /* 누름 칸 44 — 칸 머리 높이는 그대로 */ margin-left: auto; font-size: var(--fs-caption); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-.ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.subH { display: flex; align-items: center; gap: var(--space-2); margin: 0; padding: var(--space-2) var(--space-6); background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-100); font-size: var(--fs-caption); font-weight: var(--fw-btn); }
-.panelH + div > .subH { border-top: 0; }
-.subMeta { font-weight: var(--fw-body); }
-.tasks { list-style: none; margin: 0; padding: 0; }
-.tasks > li + li { border-top: 1px solid var(--gray-100); }
-.task { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 2px var(--space-3); align-items: center; min-height: 72px; padding: var(--space-3) var(--space-6); }
-.task:hover { background: var(--gray-50); }
-.alert { background: var(--alert-50); }
-.alert:hover { background: var(--alert-100); }
-.alert::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--alert-600); }
-.ti { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--r-btn-sm); background: var(--gray-100); color: var(--ink); }
-.alert .ti { background: var(--alert-200); color: var(--alert-900); }
-.appr .ti { background: var(--primary-50); }
-.tb { display: grid; gap: 0; min-width: 0; }
-.tt { font-size: var(--fs-body); line-height: 1.5; font-weight: var(--fw-btn); color: var(--ink); overflow-wrap: anywhere; }
-.sub { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; font-size: var(--fs-caption); line-height: 1.5; color: var(--gray-600); }
-.ta { display: flex; align-items: center; gap: var(--space-4); justify-self: end; }
-.ta :global(.btn) { min-width: 104px; height: 36px; min-height: 36px; padding: 0 var(--space-4); font-size: var(--fs-caption); justify-content: center; white-space: nowrap; }
-.prog { display: grid; justify-items: end; gap: 4px; min-width: 132px; }
-.bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; width: 100px; }
-.bar i { height: 6px; border-radius: var(--r-bar); background: var(--gray-200); }
-.bar i.on { background: var(--ink); }
-.pl { font-size: var(--fs-caption); line-height: 1.5; font-weight: var(--fw-btn); color: var(--ink); white-space: nowrap; }
-.plLate { color: var(--alert-800); }
-.none { margin: 0; padding: var(--space-4) var(--space-6); font-size: var(--fs-caption); color: var(--gray-600); }
+/* 크리에이터 선물 현황 (design-rules 23-3절, 시안 v37-part2/progress.html — v37.css .pfeat·.ghead·.mini.r, v35.css .gcards·.gcard·.pbar).
+   본문 틀은 목록형 880(00절) — 라우트가 MyShell(list)로 감싼다. 하늘 판은 공통 .feat, 흰 카드는 공통 .card, 촘촘한 줄은 공통 .lrow,
+   작은 막대는 공통 .mini-steps — 면 효과·움직임(23-1·23-2절)은 그 공통 부품이 준다. 여기에는 배치와 글자만 둔다. */
+.root { display: grid; grid-template-columns: minmax(0, 1fr); }
+.root.root.root > section, .root.root.root > header { margin: 0; } /* 전역 「구간 다음 구간 위 48」(base.css) 을 이 화면 간격으로 바꾼다 */
 
-@media (max-width: 768px) {
-  .panelH { padding: var(--space-3) var(--space-4); }
-  .subH { padding: var(--space-2) var(--space-4); }
-  .task { grid-template-columns: 36px minmax(0, 1fr); padding: var(--space-3) var(--space-4); }
-  .ta { grid-column: 2; justify-self: stretch; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); padding-top: var(--space-2); }
-  .prog { justify-items: start; min-width: 0; flex-basis: 100%; }
-  .ta :global(.btn) { flex: 1; height: 44px; min-height: 44px; }
-  .none { padding: var(--space-4); }
+/* 승인 대기 — 하늘 판 하나(건수 48 · 가운데 글 · 오른쪽 버튼), 오른쪽 위로 그림이 걸친다 (시안 .pfeat) */
+.root.root.root > .pfeat { position: relative; margin-top: var(--space-12); grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-4) var(--space-10); padding: var(--space-8) var(--space-10); }
+.peek { position: absolute; right: var(--space-10); top: calc(var(--space-10) * -1); width: 80px; height: 80px; object-fit: contain; pointer-events: none; }
+.lab { display: block; margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+.mid { min-width: 0; }
+.mid h2 { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.mid p { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+.soon { color: var(--alert-800); font-weight: var(--fw-btn); }
+.faces { display: flex; margin-top: var(--space-3); }
+.faces > :global(.face) { border: 3px solid var(--tint); box-sizing: content-box; }
+.faces > :global(.face) + :global(.face) { margin-left: calc(var(--space-4) * -1); }
+.pfeat > :global(.btn) { min-width: 160px; }
+
+/* 구간 머리 — 20 굵게 + 회색 건수, 오른쪽 「~ 전체 ›」 (시안 .secbar) */
+.root.root.root > .sec { margin-top: var(--space-12); }
+.secbar { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
+.secbar h2 { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.secbar h2 small { margin-left: var(--space-2); font-size: var(--fs-small); font-weight: 500; color: var(--sub); }
+.secbar a { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--fs-small); font-weight: var(--fw-btn); color: var(--ink); }
+
+/* 받는 선물 — 같은 모양 카드 2열 (시안 v35 .gcard, 5칸 막대) */
+.gcards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.gcard.gcard { position: relative; display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; padding: var(--space-6); }
+/* 처리할 일이 있는 카드만 하늘 면(22절 원칙) */
+.gcard.hi { border: 1px solid var(--tint-line); border-radius: var(--r-card); background: var(--tint); }
+.top { display: flex; align-items: center; gap: var(--space-3); }
+.top strong { min-width: 0; overflow-wrap: anywhere; }
+.name.name { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
+.what { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+.pbar { display: flex; gap: var(--space-1); }
+.pbar i { flex: 1; height: 8px; border-radius: var(--r-pill); background: var(--gray-200); }
+.pbar i:global(.on) { background: var(--primary); }
+.hi .pbar i:not(:global(.on)) { background: var(--white); }
+.pfoot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1) var(--space-3); margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.pfoot b { color: var(--ink); font-weight: var(--fw-btn); }
+.pfoot span[aria-hidden] { font-variant-numeric: tabular-nums; }
+.plLate.plLate { color: var(--alert-800); }
+.cardAct { display: flex; justify-content: flex-end; }
+
+/* 보내는 선물 — 보낸 날별 머리 + 촘촘한 줄 (시안 .ghead·.drow) */
+.ghead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-6); padding: 0 var(--space-3); font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
+.ghead span { font-weight: 500; }
+.rows { margin-top: var(--space-3); border-top: 1px solid var(--gray-200); }
+.row.row { border-bottom: 1px solid var(--gray-200); }
+.row.row + .row { border-top: 0; border-radius: 0; }
+.side { flex-wrap: wrap; justify-content: flex-end; }
+.mini.mini { min-width: 176px; justify-content: flex-end; }
+.mini b { color: var(--sub); font-weight: 400; }
+.mini b.plLate { font-weight: var(--fw-btn); }
+.none { margin: var(--space-3) 0 0; padding: var(--space-4) var(--space-3); font-size: var(--fs-small); color: var(--sub); }
+
+@media (max-width: 767px) {
+  .root.root.root > .pfeat { grid-template-columns: minmax(0, 1fr); padding: var(--space-8) var(--space-6) var(--space-6); }
+  .peek { right: var(--space-6); top: calc(var(--space-8) * -1); width: 64px; height: 64px; }
+  .pfeat > :global(.btn) { width: 100%; }
+  .gcards { grid-template-columns: minmax(0, 1fr); }
+  .gcard.gcard { padding: var(--space-4); }
+  .ghead { padding: 0 var(--space-2); }
+  .side.side { justify-content: flex-start; }
+  .mini.mini { min-width: 0; justify-content: flex-start; }
 }

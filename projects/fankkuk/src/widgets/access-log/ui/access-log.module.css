@@ -1,16 +1,46 @@
-/* 주소 열람 기록 화면 전용 — 시안 v18 creator-log.html(v18-cre.css .stat-grid). 머리(.page-head·.ph-*)·카드·표는 base.css 공통 */
+/* 주소 열람 기록 화면 전용 — 시안 v37-part2/log.html (v37.css .ltop·.lnum·.gcard2·.ltable, design-rules 23-3절). 본문 880(목록형).
+   흰 카드는 공통 .card, 큰 숫자는 공통 .num-big — 면 효과(23-1절)는 그 공통 부품이 준다. 여기에는 배치와 글자만 둔다. */
+.root > section, .root > div { margin: 0; }
 .strong { color: var(--ink); }
 
-/* 구간 머리 — v18 작은 제목 20 */
-.sh { font-size: var(--fs-card); line-height: 1.4; }
+/* 숫자 판(2) + 규칙 칸(1) */
+.top { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-4); align-items: stretch; margin-top: var(--space-12); }
+.num.num { position: relative; padding: var(--space-8); border-radius: var(--r-panel); }
+.peek { position: absolute; right: var(--space-8); top: calc(var(--space-10) * -1); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
+.month.month { margin: 0; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.5; color: var(--sub); }
+.nums { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-4) var(--space-10); align-items: end; margin: var(--space-4) 0 0; }
+/* 값이 위, 이름이 아래(시안) — 읽는 순서는 이름 → 값 그대로 */
+.main { display: flex; flex-direction: column-reverse; }
+.main dt { margin-top: var(--space-1); font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
+.main dd { margin: 0; }
+.subs { display: flex; gap: var(--space-8); padding-left: var(--space-10); border-left: 1px solid var(--gray-200); }
+.subs > div { display: flex; flex-direction: column-reverse; }
+.subs dt { font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
+.subs dd { margin: 0; font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
+.rule { display: flex; flex-direction: column; justify-content: center; padding: var(--space-6); border-radius: var(--r-card); background: var(--surface-muted); }
+.rule p { font-size: var(--fs-small); color: var(--sub); }
 
-/* 이번 달 숫자 — 시안 .stat-grid dd: 32 굵게, 단위는 20 보통 굵기 회색 */
-.nums { margin: 0; }
-.nums dt { font-weight: 400; }
-.num { margin: 8px 0 0; font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1.3; font-variant-numeric: tabular-nums; }
-.num small { margin-left: 8px; font-size: var(--fs-card); font-weight: 400; color: var(--gray-600); }
+/* 표 — 880 폭, 날짜마다 묶은 촘촘한 줄 */
+.root > .rec { margin-top: var(--space-12); }
+.sh { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.wrap { margin-top: var(--space-3); overflow-x: auto; }
+.wrap:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.table { width: 100%; border-collapse: collapse; font-size: var(--fs-small); }
+.table thead th { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--gray-200); text-align: left; font-weight: var(--fw-btn); color: var(--sub); }
+.table td { height: 48px; padding: var(--space-3); border-bottom: 1px solid var(--gray-200); font-size: var(--fs-body); }
+.table tbody tr:not(.day):hover td { background: var(--tint); }
+.day th { padding: var(--space-6) var(--space-3) var(--space-2); text-align: left; font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
+.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* 안내 판 위 그림 — 시안 72px, 아래 16px */
-.ico { width: 72px; height: 72px; margin-bottom: 16px; object-fit: contain; }
-
-.nw { font-variant-numeric: tabular-nums; }
+@media (max-width: 999px) {
+  .top { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+  .num.num { padding: var(--space-8) var(--space-6) var(--space-6); }
+  .peek { right: var(--space-6); top: calc(var(--space-8) * -1); width: 64px; height: 64px; }
+  .nums { grid-template-columns: minmax(0, 1fr); }
+  .subs { padding: var(--space-4) 0 0; border-left: 0; border-top: 1px solid var(--gray-200); }
+  .table th:nth-child(3), .table td:nth-child(3) { text-align: right; }
+  .table td { padding: var(--space-3) var(--space-2); font-size: var(--fs-small); }
+  .table thead th { padding: var(--space-2); }
+}

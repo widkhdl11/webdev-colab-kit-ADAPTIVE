@@ -24,6 +24,7 @@ export function ApprovalWindowWithAddress({
   onClose,
   address,
   sealingKeyPem,
+  start,
 }: {
   request: ApprovalRequestView;
   dueAt: string;
@@ -34,6 +35,8 @@ export function ApprovalWindowWithAddress({
   address: MyAddressStatus | null;
   /** 주소 봉인 공개키(PEM). 없으면 주소 입력 대신 안내만 보인다. */
   sealingKeyPem: string | null;
+  /** 창을 열 때의 단계 — 「받지 않기」로 열면 받지 않기 확인부터 */
+  start?: "ask" | "no";
 }) {
   const router = useRouter();
   const [status, setStatus] = useState(address);
@@ -124,5 +127,5 @@ export function ApprovalWindowWithAddress({
       setSavedMsg(null);
     },
   };
-  return <ApprovalWindow request={request} dueAt={dueAt} daysLeftText={daysLeftText} open={open} onClose={onClose} address={step} />;
+  return <ApprovalWindow request={request} dueAt={dueAt} daysLeftText={daysLeftText} open={open} onClose={onClose} address={step} start={start} />;
 }

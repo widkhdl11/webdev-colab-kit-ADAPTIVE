@@ -157,15 +157,18 @@ describe("INV-J6·J11: 선물 현황 라우트 — 「처리할 일」 버튼은
     expect(reads.calls).toBe(1);
     expect(r.badge).toBe("3");
     expect(host.querySelector("h1")?.textContent).toBe("선물 현황진행 중 3건");
-    const go = [...host.querySelectorAll("main li a")].filter((a) => a.textContent === "지금 할 일");
-    expect(go.map((a) => a.closest("li")?.querySelector("[data-title]")?.textContent)).toEqual(["다온님의 선물", "모카님"]);
+    // v37: 승인 대기(다온)는 하늘 판 하나로 모이고 그 판의 버튼, 보내는 선물은 줄의 버튼
+    const go = [...host.querySelectorAll("main a")].filter((a) => a.textContent === "지금 할 일" && a.closest("section[data-waiting], li"));
+    expect(go.map((a) => (a.closest("li") ? a.closest("li")?.querySelector("[data-title]")?.textContent : "승인 대기 판"))).toEqual(["승인 대기 판", "모카님"]);
   });
 
   it("INV-J11 S11b (실패경로): 처리할 일 읽기가 비면 같은 현황에도 「처리할 일」 버튼이 없다", async () => {
     reads.rows = [];
     await draw(CreatorProgressRoute());
-    expect([...host.querySelectorAll("main li a")].filter((a) => a.textContent === "지금 할 일")).toHaveLength(0);
-    expect(host.querySelectorAll("main li [data-title]").length).toBe(3);
+    expect([...host.querySelectorAll("main a")].filter((a) => a.textContent === "지금 할 일" && a.closest("section[data-waiting], li"))).toHaveLength(0);
+    // 승인 대기 1건은 판에, 나머지 둘은 카드·줄로 그대로 보인다
+    expect(host.querySelector("main section[data-waiting] .num-big")?.textContent).toBe("1건");
+    expect(host.querySelectorAll("main li [data-title]").length).toBe(2);
   });
 
   it("크리에이터 홈 「진행 중인 선물」 줄은 선물 현황으로 가고, 숫자는 선물 현황 머리와 같은 값·같은 단위(3건)", async () => {

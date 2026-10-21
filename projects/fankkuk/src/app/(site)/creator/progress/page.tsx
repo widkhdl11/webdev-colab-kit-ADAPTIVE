@@ -29,7 +29,7 @@ export default async function Page() {
     <>
       <SiteHeader {...header} />
       <MyShell width="list">
-        <GiftProgressPage progress={progress} items={items} candidates={candidates} />
+        <GiftProgressPage progress={progress} items={items} candidates={candidates} now={new Date().toISOString()} />
       </MyShell>
       <SiteFooter />
     </>

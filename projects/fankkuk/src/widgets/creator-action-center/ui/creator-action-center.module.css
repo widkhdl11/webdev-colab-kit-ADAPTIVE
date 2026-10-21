@@ -1,48 +1,67 @@
-/* 크리에이터 처리할 일 (design-rules 13절, 시안 v21-addendum3/cre-action-center-d.html 가안 · .panel·.task·.picked·.lnk-btn).
-   본문 틀은 목록형 880(00절) — 라우트가 MyShell(list)로 감싼다. 판 머리는 옅은 바탕 + 검은 숫자 동그라미, 줄은 두 줄 + 오른쪽 버튼 하나. */
-.root { display: grid; gap: var(--space-8); }
-/* 판 사이는 시안 stack-xl(32) 하나 — base.css 의 section + section 여백을 겹치지 않게 지운다 */
+/* 크리에이터 지금 할 일 (design-rules 23-3절 A안, 시안 v37-part2/actions-a.html · v37.css .ahero·.acards·.drow).
+   본문 틀은 목록형 880(00절) — 라우트가 MyShell(list)로 감싼다. 하늘 판은 공통 .feat, 흰 카드는 공통 .card, 촘촘한 줄은 공통 .lrow —
+   면 효과·움직임(23-1·23-2절)은 그 공통 부품이 준다. 여기에는 배치와 글자만 둔다. */
+.root { display: grid; grid-template-columns: minmax(0, 1fr); }
 .root.root > section, .root.root > header { margin: 0; }
-.panel { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--r-card); overflow: hidden; }
-.panelH { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-6); border-bottom: 1px solid var(--gray-200); background: var(--gray-50); }
-.panelH h2 { font-size: var(--fs-body); line-height: 1.5; font-weight: var(--fw-h3); }
-.cnt { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 var(--space-2); border-radius: var(--r-pill); background: var(--ink); color: var(--white); font-size: var(--fs-caption); font-weight: var(--fw-btn); }
-.ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.tasks { list-style: none; margin: 0; padding: 0; }
-.tasks > li + li { border-top: 1px solid var(--gray-100); }
-.task { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 2px var(--space-3); align-items: center; min-height: 72px; padding: var(--space-3) var(--space-6); }
-.task:hover { background: var(--gray-50); }
-.alert { background: var(--alert-50); }
-.alert:hover { background: var(--alert-100); }
-.alert::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--alert-600); }
-.ti { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--r-btn-sm); background: var(--gray-100); color: var(--ink); }
-.alert .ti { background: var(--alert-200); color: var(--alert-900); }
-.appr .ti { background: var(--primary-50); }
-.tb { display: grid; gap: 0; min-width: 0; }
-.tt { font-size: var(--fs-body); line-height: 1.5; font-weight: var(--fw-btn); color: var(--ink); overflow-wrap: anywhere; }
-.sub { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; font-size: var(--fs-caption); line-height: 1.5; color: var(--gray-600); }
-.k { font-weight: var(--fw-btn); color: var(--ink); }
-.alert .k, .alert .d { color: var(--alert-800); }
-.d { display: inline-flex; align-items: center; gap: 2px; }
-.d .ico { width: 14px; height: 14px; }
-.soon { color: var(--alert-800); font-weight: var(--fw-btn); }
-.sep::before { content: "·"; }
-.ta { display: flex; align-items: center; gap: var(--space-2); justify-self: end; }
-.ta :global(.btn) { min-width: 104px; height: 36px; min-height: 36px; padding: 0 var(--space-4); font-size: var(--fs-caption); justify-content: center; white-space: nowrap; }
-.picked { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); font-size: var(--fs-caption); font-weight: var(--fw-btn); white-space: nowrap; }
-.picked .ico { width: 14px; height: 14px; }
-.empty { display: grid; justify-items: center; gap: var(--space-4); padding: var(--space-12) var(--space-6); text-align: center; }
-.emptyIco { display: grid; place-items: center; width: 72px; height: 72px; border-radius: var(--r-pill); background: var(--primary-50); }
-.emptyIco .ico { width: 36px; height: 36px; }
-.empty h2 { font-size: var(--fs-card); line-height: 1.4; }
+
+/* 구간 머리 — 20 굵게 + 회색 건수 (시안 .secbar .h20) */
+.root.root > .sec { margin-top: var(--space-12); }
+.secH { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.secH small { margin-left: var(--space-2); font-size: var(--fs-small); font-weight: 500; color: var(--sub); }
+.rows { margin-top: var(--space-3); border-top: 1px solid var(--gray-200); }
+.row.row { border-bottom: 1px solid var(--gray-200); }
+.row.row + .row { border-top: 0; border-radius: 0; }
+.side :global(.btn) { min-width: 0; }
+.picked { display: inline-flex; align-items: center; padding: var(--space-1) var(--space-3); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); font-size: var(--fs-small); font-weight: var(--fw-btn); white-space: nowrap; }
+
+/* 가장 급한 승인 요청 — 하늘 판 하나(2:1), 오른쪽 위로 그림이 걸친다 (시안 .ahero) */
+.root.root > .hero { position: relative; margin-top: var(--space-12); display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-8); align-items: stretch; padding: var(--space-10); }
+.peek { position: absolute; right: var(--space-10); top: calc(var(--space-12) * -1); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
+.heroMain { min-width: 0; }
+.eyebrow { margin: 0; font-size: var(--fs-small); font-weight: var(--fw-bold); color: var(--sub); }
+.heroH { margin-top: var(--space-1); font-family: var(--font); font-size: var(--fs-page); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
+.who { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
+.who span { min-width: 0; font-size: var(--fs-small); color: var(--sub); }
+.whoFace.whoFace { flex: none; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-6) 0 0; padding: var(--space-4) 0 0; border-top: 1px solid var(--tint-line); }
+.facts dt { font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
+.facts dd { margin: var(--space-1) 0 0; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
+.acts { display: flex; gap: var(--space-3); margin-top: var(--space-8); }
+.acts :global(.btn) { min-width: 160px; }
+.due { display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-end; gap: var(--space-1); text-align: right; }
+.lab { font-size: var(--fs-small); color: var(--sub); }
+.dueBig.dueBig { color: var(--alert-800); }
+.dueBig.dueBig small { margin-left: 0; color: var(--alert-800); }
+
+/* 남은 승인 요청 — 같은 모양 카드 2열 (시안 .acards·.acard) */
+.acards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.acard.acard { position: relative; display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); }
+.atop { display: flex; align-items: center; gap: var(--space-3); }
+.atop > div { min-width: 0; }
+.atop strong { display: block; overflow-wrap: anywhere; }
+.atop span { display: block; font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
+.afoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: auto; padding-top: var(--space-4); border-top: 1px solid var(--gray-200); font-size: var(--fs-small); color: var(--sub); }
+
+/* 할 일이 없을 때 */
+.root.root > .empty { display: grid; justify-items: center; gap: var(--space-4); margin-top: var(--space-12); padding: var(--space-12) var(--space-6); text-align: center; }
+.emptyImg { width: 96px; height: 96px; object-fit: contain; }
+.empty h2 { font-family: var(--font); font-size: var(--fs-card); letter-spacing: 0; line-height: 1.4; }
 
 /* 승인 창 — 등록한 주소 확인 칸(이름표·등록한 날, INV-P16) */
 .addr-on-file { display: grid; gap: var(--space-2); }
 .addr-saved { margin-top: var(--space-2); }
 
-@media (max-width: 768px) {
-  .panelH { padding: var(--space-3) var(--space-4); }
-  .task { grid-template-columns: 36px minmax(0, 1fr); padding: var(--space-3) var(--space-4); }
-  .ta { grid-column: 2; justify-self: stretch; padding-top: var(--space-2); }
-  .ta :global(.btn) { flex: 1; height: 44px; min-height: 44px; }
+@media (max-width: 767px) {
+  .root.root > .hero { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); padding: var(--space-8) var(--space-6) var(--space-6); }
+  .peek { right: var(--space-6); top: calc(var(--space-8) * -1); width: 64px; height: 64px; }
+  .due { order: -1; align-items: flex-start; text-align: left; }
+  .heroH { font-size: var(--fs-card); }
+  .facts { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+  .facts > div { display: flex; justify-content: space-between; gap: var(--space-4); }
+  .facts dd { margin: 0; text-align: right; }
+  .acts { flex-direction: column-reverse; margin-top: var(--space-6); }
+  .acts :global(.btn) { width: 100%; }
+  .acards { grid-template-columns: minmax(0, 1fr); }
+  .acard.acard { padding: var(--space-4); }
+  .side.side { padding-left: 0; }
 }

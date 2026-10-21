@@ -3,6 +3,7 @@
 import { giftDetailHref } from "@/entities/action-item/model/action-items";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { priorHistoryLabel } from "@/entities/order/model/prior-history";
 import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
 import {
   daysLeftOf,
@@ -22,13 +23,15 @@ import type { SentBoxCandidate } from "@/features/box-waybill/ui/find-sent-box";
 import { FindSentBoxButton } from "@/features/box-waybill/ui/find-sent-box-button";
 import { BluetoothWindow, boxPlace, CancelChoiceButton, choiceText, signalThing } from "@/features/creator-check/ui/bluetooth-window";
 import { TrackerWindow, trackerChoiceText } from "@/features/creator-check/ui/tracker-window";
-import { formatMonthDayKo } from "@/shared/lib/format/datetime";
+import { formatDateTime, formatMonthDayKo, seoulDaysUntil } from "@/shared/lib/format/datetime";
+import { FaceAvatar } from "@/shared/ui/face-avatar";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { ApprovalWindowWithAddress } from "./approval-window-with-address";
 import { CreatorReturnAddressButton } from "./creator-return-address-button";
 import s from "./creator-action-center.module.css";
 
-// 크리에이터 처리할 일 (action-center INV-J5~J8, design-rules 13절, 시안 v21-addendum3/cre-action-center-d.html 가안 · 창은 cre-action-center-c.html).
+// 크리에이터 처리할 일 (action-center INV-J5~J8, design-rules 23-3절 A안, 시안 v37-part2/actions-a.html · 창은 v21-addendum3/cre-action-center-c.html).
+// 가장 급한 승인 요청 하나는 하늘 판(받지 않기·승인하기 — 둘 다 지금의 승인 창을 연다), 나머지 승인 요청은 카드 2열, 확인할 상자·보낸 선물 쪽 일은 촘촘한 줄.
 // 줄은 처리할 일 읽기 한 번의 결과 그대로 — 판·순서도 DB 가 정했다. 제목 옆 숫자·판 머리 숫자는 그 줄 수이고 사이드바 숫자와 같은 결과다(J6).
 // 버튼은 새 처리 길을 만들지 않고 정해진 처리를 부른다(J8): 추적 장치 = 신고하기·신고하지 않기 고르기와 취소(블루투스와 같은 고르기 함수, office-workflow INV-W14),
 // 블루투스 = 받기·거절 고르기와 취소, 승인 = 카카오톡 서명 승인·받지 않기, 반송 주소 = 반송 주소 확인 창(office-workflow INV-W15),
@@ -45,117 +48,40 @@ type Props = {
   sealingKeyPem: string | null;
 };
 
-const PATHS = {
-  alert: (
-    <>
-      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-      <path d="M12 9v4" />
-      <path d="M12 17h.01" />
-    </>
-  ),
-  inbox: (
-    <>
-      <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-    </>
-  ),
-  send: (
-    <>
-      <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
-      <path d="m21.854 2.147-10.94 10.939" />
-    </>
-  ),
-  search: (
-    <>
-      <path d="M12 22V12" />
-      <path d="M20.27 18.27 22 20" />
-      <path d="M21 10.498V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.729l7 4a2 2 0 0 0 2 .001l.98-.559" />
-      <path d="M3.29 7 12 12l8.71-5" />
-      <path d="m7.5 4.27 8.997 5.148" />
-      <circle cx="18.5" cy="16.5" r="2.5" />
-    </>
-  ),
-  card: (
-    <>
-      <rect width="20" height="14" x="2" y="5" rx="2" />
-      <path d="M2 10h20" />
-    </>
-  ),
-  truck: (
-    <>
-      <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
-      <path d="M15 18H9" />
-      <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
-      <circle cx="17" cy="18" r="2" />
-      <circle cx="7" cy="18" r="2" />
-    </>
-  ),
-  clock: (
-    <>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 6v6l4 2" />
-    </>
-  ),
-  check: (
-    <>
-      <circle cx="12" cy="12" r="10" />
-      <path d="m16 9-5.5 5.5L8 12" />
-    </>
-  ),
-} as const;
-
-function Ico({ name }: { name: keyof typeof PATHS }) {
-  return (
-    <svg className={s.ico} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      {PATHS[name]}
-    </svg>
-  );
-}
-
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
-/** 줄 아래 작은 글씨 — 「종류 · 남은 날 · 나머지」, 사이에 점 */
-function Sub({ kind, due, rest }: { kind: string; due?: { text: string; soon: boolean } | null; rest: readonly string[] }) {
-  const parts: ReactNode[] = [
-    <span key="k" className={s.k}>
-      {kind}
-    </span>,
-  ];
-  if (due) {
-    parts.push(
-      <span key="d" className={`${s.d} ${due.soon ? s.soon : ""}`}>
-        <Ico name="clock" />
-        {due.text}
-      </span>,
-    );
-  }
-  rest.forEach((r, i) => parts.push(<span key={`r${i}`}>{r}</span>));
+/** 줄 설명 — 「종류 · 남은 날 · 나머지」 */
+function metaOf(kind: string, due: { text: string } | null, rest: readonly string[]): string {
+  return [kind, ...(due ? [due.text] : []), ...rest].join(" · ");
+}
+
+/** 촘촘한 줄(시안 v37 .drow — 공통 .lrow). 얼굴 없는 줄: 제목 + 설명, 오른쪽 버튼 */
+function Row({ title, meta, action }: { title: string; meta: string; action: ReactNode }) {
   return (
-    <span className={s.sub}>
-      {parts.flatMap((p, i) => (i === 0 ? [p] : [<span key={`s${i}`} className={s.sep} aria-hidden="true" />, p]))}
-    </span>
+    <li className={`lrow ${s.row}`} data-row="">
+      <p className="lrow-txt">
+        <strong data-title="">{title}</strong>
+        <span className="meta">{meta}</span>
+      </p>
+      <div className={`lrow-side ${s.side}`}>{action}</div>
+    </li>
   );
 }
 
-function Row({ tone, icon, title, sub, action }: { tone?: "alert" | "appr"; icon: keyof typeof PATHS; title: string; sub: ReactNode; action: ReactNode }) {
+/** 남은 날 큰 숫자 — 「2일 남음」·「오늘까지」(서울 날짜, INV-J5) */
+function DueBig({ dueAt, now }: { dueAt: string; now: string }) {
+  const days = seoulDaysUntil(dueAt, now);
   return (
-    <li className={`${s.task} ${tone ? s[tone] : ""}`} data-row="">
-      <span className={s.ti} aria-hidden="true">
-        <Ico name={icon} />
-      </span>
-      <div className={s.tb}>
-        <span className={s.tt}>{title}</span>
-        {sub}
-      </div>
-      <div className={s.ta}>{action}</div>
-    </li>
+    <p className={`num-big ${s.dueBig}`}>
+      {days > 0 ? `${days}일` : "오늘"} <small>{days > 0 ? "남음" : "까지"}</small>
+    </p>
   );
 }
 
 type Open =
   | { kind: "tracker"; item: TrackerItem }
   | { kind: "bluetooth"; item: BluetoothItem }
-  | { kind: "approval"; item: ApprovalItem }
+  | { kind: "approval"; item: ApprovalItem; start: "ask" | "no" }
   | { kind: "missing_box"; item: Extract<SentGiftItem, { kind: "missing_box" }> }
   | null;
 
@@ -166,55 +92,28 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
   const close = () => setOpen(null);
   const { received, sent } = splitBoards(items);
 
-  function receivedRow(it: TrackerItem | BluetoothItem | ApprovalItem) {
+  const checks = received.filter((it): it is TrackerItem | BluetoothItem => it.kind !== "approval");
+  const approvals = received.filter((it): it is ApprovalItem => it.kind === "approval");
+  // 가장 급한 승인 요청 하나만 하늘 판(design-rules 23-3 A안) — 읽기가 기한이 짧은 순으로 준다(INV-J5), 나머지는 카드
+  const [top, ...restApprovals] = approvals;
+
+  function checkRow(it: TrackerItem | BluetoothItem) {
     const due = daysLeftOf(it.dueAt, now);
     if (it.kind === "tracker") {
       return (
         <Row
           key={keyOf(it)}
-          tone="alert"
-          icon="alert"
           title={`${it.nickname}님 선물에서 추적 장치가 나왔어요`}
-          sub={<Sub kind="추적 장치 발견" due={due} rest={[`${it.itemKind} · ${boxPlace(it)}`]} />}
+          meta={metaOf("추적 장치 발견", due, [`${it.itemKind} · ${boxPlace(it)}`])}
           action={
             it.choice ? (
               <>
-                <span className={s.picked}>
-                  <Ico name="check" />
-                  {trackerChoiceText(it.choice)}
-                </span>
+                <span className={s.picked}>{trackerChoiceText(it.choice)}</span>
                 <CancelChoiceButton item={it} label={trackerChoiceText(it.choice)} />
               </>
             ) : (
-              <button className="btn" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "tracker", item: it })}>
+              <button className="btn btn--sm btn--line" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "tracker", item: it })}>
                 신고할지 정하기
-              </button>
-            )
-          }
-        />
-      );
-    }
-    if (it.kind === "bluetooth") {
-      const title = `${it.nickname}님 선물에서 ${signalThing(it)}가 나왔어요`;
-      return (
-        <Row
-          key={keyOf(it)}
-          tone="alert"
-          icon="alert"
-          title={title}
-          sub={<Sub kind="블루투스 발견" due={due} rest={[`${it.itemKind} · ${boxPlace(it)} · 추적 장치 아님`]} />}
-          action={
-            it.choice ? (
-              <>
-                <span className={s.picked}>
-                  <Ico name="check" />
-                  {choiceText(it.choice)}
-                </span>
-                <CancelChoiceButton item={it} label={choiceText(it.choice)} />
-              </>
-            ) : (
-              <button className="btn" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "bluetooth", item: it })}>
-                받을지 정하기
               </button>
             )
           }
@@ -224,16 +123,42 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
     return (
       <Row
         key={keyOf(it)}
-        tone="appr"
-        icon="inbox"
-        title={`${it.nickname}님이 선물을 보내려고 해요`}
-        sub={<Sub kind="승인 요청" due={due} rest={[`${it.itemKind} · 상자 ${it.boxCount}개`]} />}
+        title={`${it.nickname}님 선물에서 ${signalThing(it)}가 나왔어요`}
+        meta={metaOf("블루투스 발견", due, [`${it.itemKind} · ${boxPlace(it)} · 추적 장치 아님`])}
         action={
-          <button className="btn" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "approval", item: it })}>
-            승인하기
-          </button>
+          it.choice ? (
+            <>
+              <span className={s.picked}>{choiceText(it.choice)}</span>
+              <CancelChoiceButton item={it} label={choiceText(it.choice)} />
+            </>
+          ) : (
+            <button className="btn btn--sm btn--line" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "bluetooth", item: it })}>
+              받을지 정하기
+            </button>
+          )
         }
       />
+    );
+  }
+
+  function approvalCard(it: ApprovalItem, i: number) {
+    const due = daysLeftOf(it.dueAt, now);
+    return (
+      <li key={keyOf(it)} className={`card ${s.acard}`} data-row="">
+        <div className={s.atop}>
+          <FaceAvatar index={i + 1} className="face face--sm" />
+          <div>
+            <strong data-title="">{`${it.nickname}님이 선물을 보내려고 해요`}</strong>
+            <span>{`${it.itemKind} · 상자 ${it.boxCount}개`}</span>
+          </div>
+        </div>
+        <div className={s.afoot}>
+          <span>{`${due.text} · ${formatMonthDayKo(it.dueAt)}까지`}</span>
+          <button className="btn btn--sm btn--line" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "approval", item: it, start: "ask" })}>
+            승인하기
+          </button>
+        </div>
+      </li>
     );
   }
 
@@ -244,9 +169,8 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       return (
         <Row
           key={keyOf(it)}
-          icon="truck"
           title={title}
-          sub={<Sub kind="돌려받을 주소 확인" rest={[disposeDueText(it.dueAt)]} />}
+          meta={metaOf("돌려받을 주소 확인", null, [disposeDueText(it.dueAt)])}
           action={<CreatorReturnAddressButton target={{ orderNo: it.orderNo, boxSeq: it.boxSeq }} meta={title} address={address} sealingKeyPem={sealingKeyPem} />}
         />
       );
@@ -255,12 +179,12 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       return (
         <Row
           key={keyOf(it)}
-          icon="search"
           title={`${it.nickname}님 상자가 아직 안 왔어요`}
           // 14일이면 받는 주소 없이 온 보류 상자는 이미 반송된 뒤라 찾기를 권하지 않는다 — 「아직 도착하지 않은 상자」로만(카드 d96 ②)
-          sub={<Sub kind="아직 도착하지 않은 상자" rest={[`${formatMonthDayKo(it.sentAt)} 보낸 역조공`]} />}
+          meta={metaOf("아직 도착하지 않은 상자", null, [`${formatMonthDayKo(it.sentAt)} 보낸 역조공`])}
           action={
             <FindSentBoxButton
+              className="btn btn--sm btn--line"
               candidates={candidates}
               shareId={it.shareId}
               meta={`${formatMonthDayKo(it.sentAt)} 보냄`}
@@ -276,11 +200,10 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       return (
         <Row
           key={keyOf(it)}
-          icon="card"
           title={`${it.creatorName}님께 보낼 선물`}
-          sub={<Sub kind="결제를 마치지 않은 선물" due={due} rest={[won(it.amountKrw)]} />}
+          meta={metaOf("결제를 마치지 않은 선물", due, [won(it.amountKrw)])}
           action={
-            <Link className="btn" href={giftDetailHref(it.orderNo, true)}>
+            <Link className="btn btn--sm btn--line" href={giftDetailHref(it.orderNo, true)}>
               결제하기
             </Link>
           }
@@ -292,11 +215,10 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       return (
         <Row
           key={keyOf(it)}
-          icon="card"
           title={title}
-          sub={<Sub kind="추가 결제" due={due} rest={[won(it.amountKrw)]} />}
+          meta={metaOf("추가 결제", due, [won(it.amountKrw)])}
           action={
-            <Link className="btn" href={`/gifts/${encodeURIComponent(it.orderNo)}`}>
+            <Link className="btn btn--sm btn--line" href={`/gifts/${encodeURIComponent(it.orderNo)}`}>
               추가 결제
             </Link>
           }
@@ -306,11 +228,10 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
     return (
       <Row
         key={keyOf(it)}
-        icon="truck"
         title={title}
-        sub={<Sub kind="아직 도착하지 않은 상자" due={due} rest={[tierName(it.declaredTier)]} />}
+        meta={metaOf("아직 도착하지 않은 상자", due, [tierName(it.declaredTier)])}
         action={
-          <button className="btn" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "missing_box", item: it })}>
+          <button className="btn btn--sm btn--line" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "missing_box", item: it })}>
             찾기
           </button>
         }
@@ -319,7 +240,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
   }
 
   return (
-    <div className={s.root}>
+    <div className={`v34 ${s.root}`}>
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">
@@ -330,9 +251,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
 
       {items.length === 0 ? (
         <section className={s.empty} aria-labelledby="ca-empty">
-          <span className={s.emptyIco} aria-hidden="true">
-            <Ico name="check" />
-          </span>
+          <img className={s.emptyImg} src="/images/home/icon-approve.webp" alt="" width={96} height={96} />
           <h2 id="ca-empty">지금 할 일이 없어요</h2>
           <Link className="btn btn--line" href="/creator">
             홈으로
@@ -340,35 +259,74 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
         </section>
       ) : null}
 
-      {received.length > 0 ? (
-        <section className={s.panel} aria-labelledby="ca-in">
-          <div className={s.panelH}>
-            <Ico name="inbox" />
-            <h2 id="ca-in">받은 선물</h2>
-            <span className={s.cnt} aria-hidden="true">
-              {received.length}
-            </span>
-            <span className="sr-only">{received.length}건</span>
+      {/* 받은 선물 판의 순서는 읽기가 정한다(INV-J5 — 추적 장치·블루투스 발견이 승인 요청보다 앞) */}
+      {checks.length > 0 ? (
+        <section className={s.sec} aria-labelledby="ca-in">
+          <h2 className={s.secH} id="ca-in">
+            받은 선물<small>{checks.length}건</small>
+          </h2>
+          <ul className={`lrows ${s.rows}`}>{checks.map(checkRow)}</ul>
+        </section>
+      ) : null}
+
+      {top ? (
+        <section className={`feat ${s.hero}`} aria-labelledby="ca-top" data-row="">
+          <img className={s.peek} src="/images/home/icon-approve.webp" alt="" width={96} height={96} />
+          <div className={s.heroMain}>
+            <p className={s.eyebrow}>승인 요청</p>
+            <h2 className={s.heroH} id="ca-top" data-title="">
+              {`${top.nickname}님이 선물을 보내려고 해요`}
+            </h2>
+            <div className={s.who}>
+              <FaceAvatar index={0} className={`face face--sm ${s.whoFace}`} />
+              <span>{`${formatDateTime(top.sentAt)} 요청 · ${priorHistoryLabel(top.priorHistory)}`}</span>
+            </div>
+            <dl className={s.facts}>
+              <div>
+                <dt>선물 종류</dt>
+                <dd>{top.itemKind}</dd>
+              </div>
+              <div>
+                <dt>상자</dt>
+                <dd>{top.boxCount}개</dd>
+              </div>
+              <div>
+                <dt>전자기기·금속</dt>
+                <dd>{top.hasElectronicsOrMetal ? "있음" : "없음"}</dd>
+              </div>
+            </dl>
+            <div className={s.acts}>
+              <button className="btn btn--line" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "approval", item: top, start: "no" })}>
+                받지 않기
+              </button>
+              <button className="btn" type="button" aria-haspopup="dialog" onClick={() => setOpen({ kind: "approval", item: top, start: "ask" })}>
+                승인하기
+              </button>
+            </div>
           </div>
-          <ul className={s.tasks} aria-label="받은 선물">
-            {received.map(receivedRow)}
-          </ul>
+          <div className={s.due}>
+            <span className={s.lab}>정할 때까지</span>
+            <DueBig dueAt={top.dueAt} now={now} />
+            <span className={s.lab}>{formatDateTime(top.dueAt)}까지</span>
+          </div>
+        </section>
+      ) : null}
+
+      {restApprovals.length > 0 ? (
+        <section className={s.sec} aria-labelledby="ca-more">
+          <h2 className={s.secH} id="ca-more">
+            남은 승인 요청<small>{restApprovals.length}건</small>
+          </h2>
+          <ul className={s.acards}>{restApprovals.map(approvalCard)}</ul>
         </section>
       ) : null}
 
       {sent.length > 0 ? (
-        <section className={s.panel} aria-labelledby="ca-out">
-          <div className={s.panelH}>
-            <Ico name="send" />
-            <h2 id="ca-out">보낸 선물</h2>
-            <span className={s.cnt} aria-hidden="true">
-              {sent.length}
-            </span>
-            <span className="sr-only">{sent.length}건</span>
-          </div>
-          <ul className={s.tasks} aria-label="보낸 선물">
-            {sent.map(sentRow)}
-          </ul>
+        <section className={s.sec} aria-labelledby="ca-out">
+          <h2 className={s.secH} id="ca-out">
+            보낸 선물<small>{sent.length}건</small>
+          </h2>
+          <ul className={`lrows ${s.rows}`}>{sent.map(sentRow)}</ul>
         </section>
       ) : null}
 
@@ -376,7 +334,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       {open?.kind === "bluetooth" ? <BluetoothWindow key={keyOf(open.item)} item={open.item} now={now} open onClose={close} /> : null}
       {open?.kind === "approval" ? (
         <ApprovalWindowWithAddress
-          key={keyOf(open.item)}
+          key={`${keyOf(open.item)}:${open.start}`}
           request={{
             requestId: open.item.requestId,
             orderNo: open.item.orderNo,
@@ -394,6 +352,7 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
           onClose={close}
           address={address}
           sealingKeyPem={sealingKeyPem}
+          start={open.start}
         />
       ) : null}
       {open?.kind === "missing_box" ? (

@@ -78,10 +78,13 @@ const CANDIDATES = [
 ];
 
 function render(rows: unknown[] = ROWS, items = ITEMS) {
-  act(() => root.render(<GiftProgressPage progress={parseGiftProgressRows(rows)} items={items} candidates={CANDIDATES} />));
+  act(() => root.render(<GiftProgressPage progress={parseGiftProgressRows(rows)} items={items} candidates={CANDIDATES} now="2026-10-16T03:00:00.000Z" />));
 }
+// 구간 머리는 「받는 선물2건」처럼 이름 + 건수 — 이름으로 찾는다
 const rowOf = (name: string, board: "받는 선물" | "보내는 선물") =>
-  [...host.querySelectorAll(`section[aria-labelledby] li`)].find((li) => li.closest("section")?.querySelector("h2")?.textContent === board && li.querySelector("[data-title]")?.textContent?.startsWith(name))!;
+  [...host.querySelectorAll(`section[aria-labelledby] li`)].find((li) => li.closest("section")?.querySelector("h2")?.textContent?.startsWith(board) && li.querySelector("[data-title]")?.textContent?.startsWith(name))!;
+// 승인 대기 하늘 판(v37 — 승인 대기 선물은 줄 대신 판 하나로 모은다)
+const waitingPanel = () => host.querySelector("section[data-waiting]");
 const buttonsIn = (li: Element) => [...li.querySelectorAll("a, button")].map((b) => b.textContent);
 const step = (li: Element) => ({
   sr: li.querySelector("[data-step]")?.previousElementSibling?.classList.contains("sr-only") ? li.querySelector("[data-step]")!.previousElementSibling!.textContent : null,
@@ -92,23 +95,25 @@ const step = (li: Element) => ({
 });
 
 describe("INV-J9: 판 둘 — 받는 선물은 선물마다, 보내는 선물은 보낸 날별 소제목 아래 팬마다, 줄마다 다섯 칸 막대와 단계 이름", () => {
-  it("INV-J9 S9: 제목 「진행 중 6건」, 받는 선물 3줄, 보내는 선물 소제목 둘(팬 2명·팬 1명)", () => {
+  it("INV-J9 S9: 제목 「진행 중 6건」, 승인 대기 판 1건 + 받는 선물 카드 2, 보내는 선물 소제목 둘(팬 2명·팬 1명)", () => {
     render();
     expect(host.querySelector("h1")?.textContent).toBe("선물 현황진행 중 6건");
     const heads = [...host.querySelectorAll("section h2")].map((h) => h.textContent);
-    expect(heads).toEqual(["받는 선물", "보내는 선물"]);
-    expect([...host.querySelectorAll("[data-subhead]")].map((p) => p.textContent)).toEqual(["10월 2일 오전 10:00 보낸 역조공 · 팬 2명", "10월 9일 오전 10:00 보낸 역조공 · 팬 1명"]);
+    expect(heads).toEqual(["승인을 기다리는 선물", "받는 선물2건", "보내는 선물3건"]);
+    expect(waitingPanel()?.querySelector(".num-big")?.textContent).toBe("1건");
+    expect(waitingPanel()?.textContent).toContain("가장 가까운 기한 6일 남음 · 하루님의 선물");
+    expect([...host.querySelectorAll("[data-subhead]")].map((p) => p.textContent)).toEqual(["10월 2일 오전 10:00 보낸 역조공팬 2명", "10월 9일 오전 10:00 보낸 역조공팬 1명"]);
     expect([...host.querySelectorAll("section ul")].slice(1).map((u) => u.getAttribute("aria-label"))).toEqual(["10월 2일 오전 10:00 보낸 역조공", "10월 9일 오전 10:00 보낸 역조공"]);
-    expect(rowOf("하루님의 선물", "받는 선물").querySelector("[data-sub]")?.textContent).toBe("인형·쿠션·상자 2개·10월 15일 요청");
-    expect(rowOf("보리님의 선물", "받는 선물").querySelector("[data-sub]")?.textContent).toBe("인형·쿠션·상자 1개·10월 13일 승인");
+    // 승인 대기 선물은 받는 선물 카드에 다시 나오지 않는다 — 판에만
+    expect(rowOf("하루님", "받는 선물")).toBeUndefined();
+    expect(rowOf("보리님", "받는 선물").querySelector("[data-sub]")?.textContent).toBe("상자 1개 · 10월 13일 승인");
     expect(rowOf("모카님", "보내는 선물").querySelector("[data-sub]")?.textContent).toBe("소형 상자");
   });
 
   it("INV-J9: 막대는 다섯 칸, 칠한 칸 수와 단계 이름은 같은 단계에서", () => {
     render();
-    expect(step(rowOf("하루님의 선물", "받는 선물"))).toEqual({ sr: "5단계 중 1단계, ", on: 1, all: 5, label: "승인 대기", late: true });
-    expect(step(rowOf("보리님의 선물", "받는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "사무실로 오는 중", late: false });
-    expect(step(rowOf("소라님의 선물", "받는 선물"))).toEqual({ sr: "5단계 중 4단계, ", on: 4, all: 5, label: "배송 중", late: false });
+    expect(step(rowOf("보리님", "받는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "사무실로 오는 중", late: false });
+    expect(step(rowOf("소라님", "받는 선물"))).toEqual({ sr: "5단계 중 4단계, ", on: 4, all: 5, label: "배송 중", late: false });
     expect(step(rowOf("모카님", "보내는 선물"))).toEqual({ sr: "5단계 중 2단계, ", on: 2, all: 5, label: "아직 도착하지 않았어요", late: true });
     expect(step(rowOf("하루님", "보내는 선물"))).toEqual({ sr: "5단계 중 4단계, ", on: 4, all: 5, label: "출고", late: false });
     expect(step(rowOf("꿀단지님", "보내는 선물"))).toEqual({ sr: "5단계 중 1단계, ", on: 1, all: 5, label: "수락 대기", late: false });
@@ -120,22 +125,24 @@ describe("INV-J9: 판 둘 — 받는 선물은 선물마다, 보내는 선물은
       { ...ROWS[4]!, sent_at: "2026-10-02T06:30:00Z" },
     ]);
     const heads = [...host.querySelectorAll("[data-subhead]")].map((p) => p.textContent);
-    expect(heads).toEqual(["10월 2일 오전 10:00 보낸 역조공 · 팬 1명", "10월 2일 오후 3:30 보낸 역조공 · 팬 1명"]);
+    expect(heads).toEqual(["10월 2일 오전 10:00 보낸 역조공팬 1명", "10월 2일 오후 3:30 보낸 역조공팬 1명"]);
   });
 
   it("화면 리뷰 U1: 막대 묶음에는 role·aria-label 이 없다 — 단계는 보이는 이름 앞 숨은 글자로 읽힌다", () => {
     render();
-    const prog = rowOf("보리님의 선물", "받는 선물").querySelector("[data-bar]")!.parentElement!;
+    const prog = rowOf("보리님", "받는 선물").querySelector("[data-bar]")!.parentElement!;
     expect([prog.getAttribute("role"), prog.getAttribute("aria-label")]).toEqual([null, null]);
-    expect(prog.textContent).toBe("5단계 중 2단계, 사무실로 오는 중");
+    // 카드 아래 「n/5」는 화면에만(숨은 글자가 이미 몇 단계인지 읽는다)
+    expect(prog.textContent).toBe("5단계 중 2단계, 사무실로 오는 중2/5");
+    expect(prog.querySelector("span[aria-hidden=true]:last-child")?.textContent).toBe("2/5");
   });
 
-  it("판 머리 오른쪽에 「받은 선물 전체」·「보낸 내역 전체」", () => {
+  it("구간 머리 오른쪽에 「받은 선물 전체 ›」·「보낸 내역 전체 ›」", () => {
     render();
-    const more = [...host.querySelectorAll("section a")].filter((a) => a.textContent?.endsWith("전체")).map((a) => [a.textContent, a.getAttribute("href")]);
+    const more = [...host.querySelectorAll("section a")].filter((a) => a.textContent?.endsWith("전체 ›")).map((a) => [a.textContent, a.getAttribute("href")]);
     expect(more).toEqual([
-      ["받은 선물 전체", "/creator/boxes"],
-      ["보낸 내역 전체", "/creator/revgifts"],
+      ["받은 선물 전체 ›", "/creator/boxes"],
+      ["보낸 내역 전체 ›", "/creator/revgifts"],
     ]);
   });
 });
@@ -144,16 +151,18 @@ describe("INV-J11·J10: 버튼은 필요한 줄에만", () => {
   it("INV-J11 S11: 「처리할 일」은 처리할 일 읽기에 있는 줄에만 — 승인 대기·늦은 몫에 있고, 오는 중·출고 줄에는 없다", () => {
     render();
     const go = (li: Element) => [...li.querySelectorAll("a")].filter((a) => a.textContent === "지금 할 일").map((a) => a.getAttribute("href"));
-    expect(go(rowOf("하루님의 선물", "받는 선물"))).toEqual(["/creator/actions"]);
+    // 승인 대기는 판 하나 — 그 판의 「지금 할 일」도 처리할 일 읽기에 그 주문이 있을 때만
+    expect(go(waitingPanel()!)).toEqual(["/creator/actions"]);
     expect(go(rowOf("모카님", "보내는 선물"))).toEqual(["/creator/actions"]);
-    expect(go(rowOf("보리님의 선물", "받는 선물"))).toEqual([]);
+    expect(go(rowOf("보리님", "받는 선물"))).toEqual([]);
     expect(go(rowOf("꿀단지님", "보내는 선물"))).toEqual([]);
   });
 
   it("INV-J11 S11b (실패경로): 처리할 일 읽기가 비면 같은 줄에도 「처리할 일」이 없고 승인 대기 이름은 강조하지 않는다", () => {
     render(ROWS, []);
-    expect(buttonsIn(rowOf("하루님의 선물", "받는 선물"))).toEqual([]);
-    expect(step(rowOf("하루님의 선물", "받는 선물")).late).toBe(false);
+    expect(buttonsIn(waitingPanel()!)).toEqual([]);
+    // 기한 줄도 처리할 일 읽기의 승인 요청에서만 — 읽기가 비면 없다
+    expect(waitingPanel()!.textContent).not.toContain("가장 가까운 기한");
     // 늦은 몫은 처리할 일에 없어도 늦음 강조(J11 — 늦음은 DB 늦음 칸에서)
     expect(step(rowOf("모카님", "보내는 선물")).late).toBe(true);
     expect(step(rowOf("꿀단지님", "보내는 선물")).late).toBe(false);
@@ -164,7 +173,7 @@ describe("INV-J11·J10: 버튼은 필요한 줄에만", () => {
     const track = (li: Element) => buttonsIn(li).filter((t) => t === "배송 조회").length;
     expect(track(rowOf("모카님", "보내는 선물"))).toBe(1);
     expect(track(rowOf("꿀단지님", "보내는 선물"))).toBe(0);
-    expect(track(rowOf("소라님의 선물", "받는 선물"))).toBe(0);
+    expect(track(rowOf("소라님", "받는 선물"))).toBe(0);
     expect([...host.querySelectorAll("button")].filter((b) => b.textContent === "배송 조회")).toHaveLength(1);
   });
 
@@ -174,7 +183,7 @@ describe("INV-J11·J10: 버튼은 필요한 줄에만", () => {
     expect(find(rowOf("모카님", "보내는 선물"))).toBe(1);
     expect(find(rowOf("꿀단지님", "보내는 선물"))).toBe(1);
     expect(find(rowOf("하루님", "보내는 선물"))).toBe(0);
-    expect(find(rowOf("하루님의 선물", "받는 선물"))).toBe(0);
+    expect(find(waitingPanel()!)).toBe(0);
   });
 
   it("INV-J10 (실패경로): 입고 전이 아닌데 후보에 있는 몫은 버튼이 없다 — 입고 전인데 후보에 없는 몫도 없다", () => {
@@ -187,6 +196,7 @@ describe("INV-J11·J10: 버튼은 필요한 줄에만", () => {
           ])}
           items={[]}
           candidates={CANDIDATES}
+          now="2026-10-16T03:00:00.000Z"
         />,
       ),
     );

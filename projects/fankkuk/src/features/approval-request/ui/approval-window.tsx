@@ -59,6 +59,7 @@ export function ApprovalWindow({
   open,
   onClose,
   address,
+  start = "ask",
 }: {
   request: ApprovalRequestView;
   /** 자동 반려 기한(결제 완료 + 168시간) — 처리할 일 읽기가 준 값 */
@@ -67,9 +68,11 @@ export function ApprovalWindow({
   open: boolean;
   onClose: () => void;
   address: ApprovalAddressStep;
+  /** 창을 열 때의 단계 — 처리할 일 강조 판의 「받지 않기」는 받지 않기 확인부터 연다(고르는 단계를 한 번 건너뛸 뿐, 확인·차단 고르기는 그대로) */
+  start?: "ask" | "no";
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("ask");
+  const [step, setStep] = useState<Step>(start);
   const [block, setBlock] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,10 +84,10 @@ export function ApprovalWindow({
 
   useEffect(() => {
     if (!open) return;
-    setStep("ask");
+    setStep(start);
     setBlock(false);
     setError(null);
-  }, [open]);
+  }, [open, start]);
   useEffect(() => {
     if (open) focusRef.current?.focus();
   }, [open, step]);

@@ -5,18 +5,32 @@ import {
   type AddressAccessEntry,
 } from "@/entities/address/model/access-log";
 import { PROMISE } from "@/shared/config/site-copy";
-import { formatDateTime } from "@/shared/lib/format/datetime";
+import { formatDate, formatTimeKo } from "@/shared/lib/format/datetime";
 import s from "./access-log.module.css";
 
 // 크리에이터 — 주소 열람 기록. 주소가 열린 줄이 전부 한 줄씩 보인다(INV-P7). 주소 값은 이 화면에 오지 않는다.
 // 거부된 시도와 대표·직원 구분은 운영자 내부 기록에만 있다(2026-10-12 문제집 D12) — 그래서 「누가」 칸도 없다.
 // 줄은 전부 주소가 열린 줄이라 「결과」 칸·「열림」 배지도 두지 않는다 — 비고 칸이 몇 번째 출력과 「출력 실패」(돌려받은 줄, INV-P15)를 보인다.
-// 시안: docs/design/mockups/site/v11/creator-log.html — 이번 달 숫자 카드 셋 + 안내 판, 그 아래 표(어느 폭에서도 표, 휴대폰은 마지막 칸만 줄바꿈)
+// 시안: docs/design/mockups/site/v37-part2/log.html (design-rules 23-3절) — 「주소 열림 N번」 판과 「최대 3번」 회색 칸을 2:1, 표는 880 폭에 날짜별로 묶은 촘촘한 줄.
 // 문구 한계(design-rules 6절): "승인 없이는 저희 시스템이 주소를 열지 않습니다"는 쓰고 "절대 유출되지 않습니다"는 쓰지 않는다.
 
 function Note({ e }: { e: AddressAccessEntry }) {
   const label = printLabelOf(e.printNo, e.released);
   return label.reprint ? <span className="tag">{label.text}</span> : <>{label.text}</>;
+}
+
+type Day = { day: string; entries: AddressAccessEntry[] };
+
+/** 최근 순 그대로 서울 날짜마다 묶는다 */
+function byDay(entries: readonly AddressAccessEntry[]): Day[] {
+  const out: Day[] = [];
+  for (const e of entries) {
+    const day = formatDate(e.at);
+    const last = out[out.length - 1];
+    if (last && last.day === day) last.entries.push(e);
+    else out.push({ day, entries: [e] });
+  }
+  return out;
 }
 
 export function AccessLogPage({
@@ -29,7 +43,7 @@ export function AccessLogPage({
   entries: readonly AddressAccessEntry[];
 }) {
   return (
-    <div className={s.root}>
+    <div className={`v34 ${s.root}`}>
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">
@@ -41,53 +55,49 @@ export function AccessLogPage({
         </p>
       </header>
 
-      <section aria-labelledby="sum-h">
-        <h2 className={`t-card ${s.sh}`} id="sum-h">
-          이번 달 ({monthLabel})
-        </h2>
-        <div className="stack">
-          <dl className={`grid cols-3 keep ${s.nums}`}>
-            <div className="card">
-              <dt className="t-meta">승인</dt>
-              <dd className={s.num}>
-                {summary.approvedCount}
-                <small>건</small>
-              </dd>
-            </div>
-            <div className="card">
-              <dt className="t-meta">주소 열림</dt>
-              <dd className={s.num}>
+      <div className={s.top}>
+        <section className={`card ${s.num}`} aria-labelledby="sum-h">
+          <img className={s.peek} src="/images/home/promise-lock.webp" alt="" width={96} height={96} />
+          <h2 className={s.month} id="sum-h">
+            이번 달 ({monthLabel})
+          </h2>
+          <dl className={s.nums}>
+            <div className={s.main}>
+              <dt>주소 열림</dt>
+              <dd className="num-big">
                 {summary.openedCount}
                 <small>번</small>
               </dd>
             </div>
-            <div className="card">
-              <dt className="t-meta">재출력</dt>
-              <dd className={s.num}>
-                {summary.reprintCount}
-                <small>번</small>
-              </dd>
+            <div className={s.subs}>
+              <div>
+                <dt>승인</dt>
+                <dd>{summary.approvedCount}건</dd>
+              </div>
+              <div>
+                <dt>재출력</dt>
+                <dd>{summary.reprintCount}번</dd>
+              </div>
             </div>
           </dl>
-          <div className="card card--soft">
-            <img className={s.ico} src="/img/icon-log.png" alt="" aria-hidden="true" width={72} height={72} />
-            <p>
-              주소는 선물 상자마다 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_BOX}번까지 열려요. 택배 기사가 상자를 가져가면 남은 횟수가 있어도 그 상자로는 더
-              열리지 않아요.
-            </p>
-          </div>
+        </section>
+        <div className={s.rule}>
+          <p>
+            주소는 선물 상자마다 첫 출력과 재출력을 합쳐 최대 {MAX_DECRYPTS_PER_BOX}번까지 열려요. 택배 기사가 상자를 가져가면 남은 횟수가 있어도 그 상자로는 더
+            열리지 않아요.
+          </p>
         </div>
-      </section>
+      </div>
 
-      <section aria-labelledby="rec-h">
-        <h2 className={`t-card ${s.sh}`} id="rec-h">
+      <section className={s.rec} aria-labelledby="rec-h">
+        <h2 className={s.sh} id="rec-h">
           열람 기록
         </h2>
         {entries.length === 0 ? (
           <p className="empty">아직 주소가 열린 적이 없어요. 송장을 출력할 때마다 여기에 남아요.</p>
         ) : (
-          <div className="table-wrap" tabIndex={0} role="region" aria-label="주소 열람 기록 표">
-            <table className="table">
+          <div className={s.wrap} tabIndex={0} role="region" aria-label="주소 열람 기록 표">
+            <table className={s.table}>
               <caption className="sr-only">주소 열람 기록. 최근 순</caption>
               <thead>
                 <tr>
@@ -96,17 +106,24 @@ export function AccessLogPage({
                   <th scope="col">비고</th>
                 </tr>
               </thead>
-              <tbody>
-                {entries.map((e, i) => (
-                  <tr key={`${i}-${e.orderNo}-${e.at}`}>
-                    <td className={s.nw}>{formatDateTime(e.at)}</td>
-                    <td className={s.nw}>{e.orderNo}</td>
-                    <td>
-                      <Note e={e} />
-                    </td>
+              {byDay(entries).map((g) => (
+                <tbody key={g.day}>
+                  <tr className={s.day} data-day="">
+                    <th scope="rowgroup" colSpan={3}>
+                      {g.day}
+                    </th>
                   </tr>
-                ))}
-              </tbody>
+                  {g.entries.map((e, i) => (
+                    <tr key={`${i}-${e.orderNo}-${e.at}`}>
+                      <td className={s.n}>{formatTimeKo(e.at)}</td>
+                      <td className={s.n}>{e.orderNo}</td>
+                      <td>
+                        <Note e={e} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              ))}
             </table>
           </div>
         )}

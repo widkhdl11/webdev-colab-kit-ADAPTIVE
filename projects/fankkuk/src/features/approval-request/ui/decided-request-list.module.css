@@ -1,0 +1,43 @@
+/* 승인 내역 — 시안 v37-part2/requests.html (v37.css .qtop·.qtot·.qgrid·.qmonth·.drow·.qfold, design-rules 23-3절).
+   흰 카드는 공통 .card, 큰 숫자는 공통 .num-big, 촘촘한 줄은 공통 .lrow — 면 효과·움직임(23-1·23-2절)은 그 공통 부품이 준다. */
+.root { scroll-margin-top: var(--space-6); }
+
+/* 맨 위 — 처리 수 판 + 오른쪽 288 결과별 숫자 칸 넷 */
+.top { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: var(--space-4); align-items: stretch; margin-top: var(--space-12); }
+.tot.tot { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 208px; padding: var(--space-8); border-radius: var(--r-panel); }
+.peek { position: absolute; right: var(--space-8); top: calc(var(--space-10) * -1); width: 96px; height: 96px; object-fit: contain; pointer-events: none; }
+.lab.lab { font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.5; color: var(--sub); }
+.line { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin: 0; }
+.grid > div { display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-card); background: var(--surface-muted); }
+.grid dt { font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
+.grid dd { margin: 0; font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
+.empty.empty { margin-top: var(--space-8); }
+
+/* 달마다 촘촘한 줄 — 결과 태그와 날짜는 줄 오른쪽 */
+.month { margin-top: var(--space-12); }
+.mhead { display: flex; align-items: baseline; gap: var(--space-3); }
+.mhead h3 { font-size: var(--fs-page); letter-spacing: 0; }
+.mhead small { font-size: var(--fs-small); color: var(--sub); }
+.rows { margin-top: var(--space-3); border-top: 1px solid var(--gray-200); }
+.row.row { border-bottom: 1px solid var(--gray-200); }
+.row.row + .row { border-top: 0; border-radius: 0; }
+.side time { min-width: 96px; font-size: var(--fs-small); color: var(--sub); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 결과 설명 — 맨 아래 접기 */
+.fold { margin-top: var(--space-8); border-bottom: 1px solid var(--gray-200); }
+.fold + .fold { margin-top: 0; }
+.fold summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 44px; font-size: var(--fs-small); font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary::after { content: "+"; flex: none; font-size: var(--fs-card); color: var(--sub); }
+.fold summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.fold p { padding-bottom: var(--space-4); font-size: var(--fs-small); color: var(--sub); }
+
+@media (max-width: 999px) {
+  .top { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+  .tot.tot { min-height: 0; padding: var(--space-8) var(--space-6) var(--space-6); }
+  .peek { right: var(--space-6); top: calc(var(--space-8) * -1); width: 64px; height: 64px; }
+  .side time { min-width: 0; text-align: left; }
+}
