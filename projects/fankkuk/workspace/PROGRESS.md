@@ -4,7 +4,7 @@
 
 - **오늘의 목표**: redesign-part1-20261021(전 페이지 디자인 정돈 파트 7개 — 상황판 https://claude.ai/artifact/2ob7kk3deyGdDydDemjsyV) · fan-menu-restructure(팬 메뉴 재구성) · 같은 날 다른 갈래 delivery-rules-20261021(배송 문제·묶음 A)
 - **완료**: d104 승인(팬 메뉴 재구성) — action-center approved(INV-J12~J14)·알림·함께한 시간·역조공·받는 주소 스펙·용어집·design-rules·DECISIONS 반영(cfe24355) · 결제 이어 하기 규칙 초안 → 카드 d105 · 1파트 시안 v34(새 구조, v33b 스타일, 실측 통과, 35b24dea) · 카드 기록 도구 --outside(ce075874) · 묶음 A 커밋 5개
-- **멈춘 지점**: 1파트 시안 v34 사용자 확인 대기(미리보기 http://localhost:4333/docs/design/mockups/site/v34-part1/index.html — ). 결제 이어 하기는 d105 답 전이라 payment 스펙에 안 넣음. 묶음 A 는 관련 통합 시험 약 39파일·변이가 남음
+- **멈춘 지점**: 1파트 시안 v34 사용자 확인 대기(미리보기 http://localhost:4333/docs/design/mockups/site/v34-part1/index.html — 서버는 레포 루트에서 node scripts/preview.mjs --dir projects/fankkuk 4333). 결제 이어 하기는 d105 답 전이라 payment 스펙에 안 넣음. 묶음 A 는 관련 통합 시험 약 39파일·변이가 남음
 - **다음 할 일**: v34 답을 받아 승인이면 design-rules 에 새 요소(지금 할 일 칸·크리에이터 묶음 머리·강조 줄 하나) 절을 쓰고 1파트 구현(사이드바 순서·지금 할 일·선물 상세 하나·옛 받은 선물 주소 넘기기)에 들어간다 — authz 표면이라 구현 뒤 보안 리뷰
 - **대기 중인 결정**: 카드 d105 결제 이어 하기 · 1파트 시안 v34 승인
 
