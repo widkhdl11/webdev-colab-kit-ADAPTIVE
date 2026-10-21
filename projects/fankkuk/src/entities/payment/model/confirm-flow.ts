@@ -42,7 +42,12 @@ export async function runConfirmFlow<R extends PendingPayment>(
   }
 
   // INV-M5: 승인 API 를 부를 권리는 한 요청만 얻는다.
-  if (!(await deps.claim(check.orderId))) return { ok: false, reason: "in_progress" };
+  if (!(await deps.claim(check.orderId))) {
+    // 확정 시작에 실패했는데 아직 결제 대기면 다른 요청이 잡은 것이 아니라 확정할 수 없는 결제다 —
+    // 팬 선물은 처음 결제 대기 + 24시간이 지났다(payment INV-M22 ④·M15, 닫기 처리가 돌기 전). 승인 API 를 부르지 않고 실패로 안내한다.
+    const now = await deps.find(check.orderId);
+    return { ok: false, reason: now?.status === "pending" ? "not_approved" : "in_progress" };
+  }
 
   let response: unknown;
   try {

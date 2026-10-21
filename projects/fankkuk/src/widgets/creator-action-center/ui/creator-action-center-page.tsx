@@ -1,5 +1,6 @@
 "use client";
 
+import { giftDetailHref } from "@/entities/action-item/model/action-items";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import type { MyAddressStatus } from "@/entities/address/api/my-address-status";
@@ -270,6 +271,22 @@ export function CreatorActionCenterPage({ items, now, candidates, address, seali
       );
     }
     const due = daysLeftOf(it.dueAt, now);
+    if (it.kind === "unpaid") {
+      // 결제를 마치지 않은 선물(payment INV-M22 ⑤) — 결제는 선물 상세 맨 위 칸의 「결제하기」에서만 시작된다(INV-J13). 이 줄은 그 칸을 펼친 상세로 간다
+      return (
+        <Row
+          key={keyOf(it)}
+          icon="card"
+          title={`${it.creatorName}님께 보낼 선물`}
+          sub={<Sub kind="결제를 마치지 않은 선물" due={due} rest={[won(it.amountKrw)]} />}
+          action={
+            <Link className="btn" href={giftDetailHref(it.orderNo, true)}>
+              결제하기
+            </Link>
+          }
+        />
+      );
+    }
     const title = `${it.creatorName}님께 보낸 선물 · 상자 ${it.boxSeq}`;
     if (it.kind === "difference") {
       return (

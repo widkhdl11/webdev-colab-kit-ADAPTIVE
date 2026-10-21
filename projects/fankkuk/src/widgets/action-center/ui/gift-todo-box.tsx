@@ -4,12 +4,13 @@ import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
 import { formatMonthDayKo, seoulDaysUntil } from "@/shared/lib/format/datetime";
 import { DifferencePayButton } from "./difference-pay-button";
+import { ResumePayButton } from "./resume-pay-button";
 import { ReturnAddressButton, type FanReturnAddress } from "./return-address-button";
 
 // 보낸 선물 상세 맨 위 「지금 할 일」 칸 (action-center INV-J13, design-rules 21절, 시안 v34-part1/gift-detail.html).
 // items 는 라우트가 처리할 일 읽기 결과를 이 주문으로 거른 줄이다 — 비면 칸을 그리지 않는다(상세가 따로 「할 일이 있는가」를 계산하지 않는다).
 // 지금 할 일 페이지의 카드에 있던 처리를 이 칸으로 옮겼다. 새 처리 길은 없다 — 기존 처리를 그대로 부른다(INV-J4):
-//   추가 결제 = 차액 결제 준비 → 결제창 · 도착이 늦어요 = 「받는 주소 없이 보냈어요」 찾기(그 상자 하나) · 돌려받을 주소 확인 = 반송 주소 확인 창.
+//   결제 미완료 = 결제 이어 하기(payment INV-M22) → 결제창 · 추가 결제 = 차액 결제 준비 → 결제창 · 도착이 늦어요 = 「받는 주소 없이 보냈어요」 찾기(그 상자 하나) · 돌려받을 주소 확인 = 반송 주소 확인 창.
 // 같은 주문의 일이 여럿이면 모두 칸 안에 줄로 쌓는다. 역조공 받기는 받은 역조공 상세가 칸을 그린다(features/revgift-receive).
 
 type Props = { items: readonly ActionItem[]; clientKey: string; now: string; address: FanReturnAddress };
@@ -63,6 +64,19 @@ function Task({ item, clientKey, now, address }: { item: ActionItem; clientKey: 
         title="돌려받을 주소 확인"
         sub={`상자 ${item.boxSeq} · ${disposeDueText(item.dueAt)}`}
         action={<ReturnAddressButton target={{ orderNo: item.orderNo, boxSeq: item.boxSeq }} meta={meta} address={address} />}
+      />
+    );
+  }
+  if (item.kind === "unpaid") {
+    return (
+      <TodoTask
+        kind={item.kind}
+        titleId={titleId}
+        title="결제를 마치지 않은 선물"
+        // 기한 = 처음 결제 대기 + 24시간 — 이어 하기로 늘어나지 않는다(payment INV-M22 ④)
+        sub={dueLine(item.dueAt, now)}
+        figure={<p className="num-big num-big--32">{won(item.amountKrw)}</p>}
+        action={<ResumePayButton orderNo={item.orderNo} clientKey={clientKey} />}
       />
     );
   }

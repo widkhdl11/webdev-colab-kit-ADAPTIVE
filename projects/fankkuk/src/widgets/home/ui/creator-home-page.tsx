@@ -43,7 +43,7 @@ type Props = {
 export const CREATOR_HOME_LOG_ROWS = 1;
 const ACTION_LABEL: Record<CreatorActionItem["kind"], string> = {
   approval: "승인 대기", bluetooth: "확인할 선물", tracker: "확인할 선물", unconfirmed: "내 상자 찾기",
-  difference: "추가 결제", missing_box: "내 상자 찾기", return_address: "반송 주소 확인",
+  difference: "추가 결제", missing_box: "내 상자 찾기", return_address: "반송 주소 확인", unpaid: "결제를 마치지 않은 선물",
 };
 const countNote = (n: number | null) => n === null ? "" : `${n}건`;
 

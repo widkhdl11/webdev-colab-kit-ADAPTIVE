@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
-import { actionItemsOfOrder } from "@/entities/action-item/model/action-items";
+import { readActionItemsOrNull, readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { actionItemsOfOrder, type ActionItem } from "@/entities/action-item/model/action-items";
+import { sentGiftTodoOf } from "@/entities/action-item/model/creator-action-items";
 import { readMyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 import { readMyGiftReplies } from "@/entities/gift-reply/api/gift-reply-reads";
 import { readMyGiftViews } from "@/entities/order/api/fan-gift-rows";
@@ -17,6 +18,8 @@ import type { Viewer } from "@/entities/session/model/viewer";
 import { senderRoleAllowed } from "@/features/gift-register/model/sender-rule";
 import { readSealingPublicKeyPem } from "@/shared/lib/envelope/sealing-key-config";
 import { GiftTodoBox } from "@/widgets/action-center/ui/gift-todo-box";
+import { UnpaidGiftPage } from "@/widgets/action-center/ui/unpaid-gift-page";
+import { MyShell } from "@/widgets/my-nav/ui/my-shell";
 import { GiftStatusPage } from "@/widgets/gift-status/ui/gift-status-page";
 import { RevgiftReceivePage } from "@/widgets/revgift-receive/ui/revgift-receive-page";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
@@ -64,11 +67,25 @@ async function revgiftDetail({ supabase, viewer }: Session, orderNo: string) {
   );
 }
 
+/**
+ * 보낸 선물 상세의 맨 위 칸과 사이드바 숫자가 함께 쓰는 지금 할 일 읽기 한 번(action-center INV-J2·J6·J13).
+ * 팬 = 팬 지금 할 일 읽기, 크리에이터 = 크리에이터 지금 할 일 읽기(보낸 팬 선물의 결제를 마치지 않은 선물만 칸이 된다 — payment INV-M22 ⑤).
+ * header 는 사이드바 숫자에 넘기는 그 결과 그대로다(못 읽으면 null — 숫자와 칸이 함께 빠진다).
+ */
+async function readDetailTodo(supabase: SupabaseClient, viewer: Viewer, orderNo: string): Promise<{ header: readonly unknown[] | null; items: ActionItem[] }> {
+  if (viewer.role === "fan") {
+    const actions = await readActionItemsOrNull(supabase);
+    return { header: actions, items: actions ? actionItemsOfOrder(actions, orderNo) : [] };
+  }
+  const created = await readCreatorActionItemsOrNull(supabase);
+  return { header: created, items: created ? sentGiftTodoOf(created, orderNo) : [] };
+}
+
 /** 보낸 선물 — 보낸 사람(팬·크리에이터) 본인만. 목록 읽기가 로그인한 사람이 보낸 주문만 돌려주므로 남의 주문번호는 없는 주소와 같다 */
 async function giftDetail({ supabase, viewer }: Session, orderNo: string, differenceParam: string | string[] | undefined) {
   const gifts = await readMyGiftViews(supabase);
   const view = gifts.find((g) => g.orderNo === orderNo);
-  if (!view) notFound();
+  if (!view) return unpaidDetail({ supabase, viewer }, orderNo, gifts);
   const fan = viewer.role === "fan";
   // 서로 기다릴 필요가 없어 함께 읽는다. 상자·차액·결제·답장·메모 읽기는 모두 로그인한 사람의 주문이 아니면 빈 값을 준다.
   // 처리할 일과 받을 주소 상태(반송 주소 확인 창 — 이름표·바꾼 날만, address-protection INV-P16)는 팬만
@@ -78,15 +95,15 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
     readMyGiftPayment(supabase, view.orderNo),
     readMyGiftReplies(supabase, view.orderNo),
     readMyGiftMemo(supabase, view.orderNo),
-    fan ? readActionItemsOrNull(supabase) : Promise.resolve(null),
+    readDetailTodo(supabase, viewer, view.orderNo),
     fan ? readMyFanAddressStatus(supabase).catch(() => null) : Promise.resolve(null),
   ]);
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   const notice = DIFFERENCE_NOTICES.find((n) => n === differenceParam) ?? null;
-  const todoItems = actions ? actionItemsOfOrder(actions, view.orderNo) : [];
+  const todoItems = actions.items;
   return (
     <>
-      <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", gifts, actions)} />
+      <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", gifts, actions.header)} />
       <GiftStatusPage
         view={view}
         boxes={boxes}
@@ -108,6 +125,35 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
           ) : null
         }
       />
+      <SiteFooter />
+    </>
+  );
+}
+
+/**
+ * 결제를 마치지 않은 선물(payment INV-M22 ⑤) — 보낸 선물 읽기에는 결제가 끝난 주문만 있다. 지금 할 일 읽기(팬·크리에이터 각자, 로그인 토큰의 계정이 보낸 주문만, INV-J3)가
+ * 이 주문의 「결제 미완료」 줄을 돌려줄 때만 연다 — 그 밖(남의 것·없는 것·닫힌 결제 대기)은 똑같이 notFound(INV-J12).
+ */
+async function unpaidDetail({ supabase, viewer }: Session, orderNo: string, gifts: Awaited<ReturnType<typeof readMyGiftViews>>) {
+  if (viewer.role !== "fan" && viewer.role !== "creator") notFound();
+  const actions = await readDetailTodo(supabase, viewer, orderNo);
+  const todoItems = actions.items;
+  const unpaid = todoItems.find((it) => it.kind === "unpaid");
+  if (!unpaid) notFound();
+  const addressStatus = viewer.role === "fan" ? await readMyFanAddressStatus(supabase).catch(() => null) : null;
+  return (
+    <>
+      <SiteHeader {...await readSiteHeader(supabase, viewer, "/gifts", gifts, actions.header)} />
+      <MyShell width="form">
+        <UnpaidGiftPage
+          items={todoItems}
+          creatorName={unpaid.creatorName}
+          orderNo={orderNo}
+          clientKey={process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? ""}
+          now={new Date().toISOString()}
+          address={{ accountId: viewer.userId, status: addressStatus, sealingKeyPem: readSealingPublicKeyPem(process.env) }}
+        />
+      </MyShell>
       <SiteFooter />
     </>
   );

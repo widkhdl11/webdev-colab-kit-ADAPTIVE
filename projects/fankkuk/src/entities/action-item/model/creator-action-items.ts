@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { seoulDaysUntil } from "@/shared/lib/format/datetime";
+import type { ActionItem } from "./action-items";
 
 // 크리에이터 처리할 일 (action-center INV-J5~J8). DB 읽기 함수 하나(my_creator_action_items)의 줄을 그대로 쓴다 — 저장된 목록이 아니라
 // 읽을 때마다 원천(확인 대기 상자·승인 요청·보낸 몫·보낸 팬 선물)에서 계산한 결과다. 사이드바 숫자·홈 한 줄·처리할 일 화면은
@@ -59,7 +60,9 @@ export type UnconfirmedItem = { kind: "unconfirmed"; orderNo: string; shareId: s
 /** 보낸 팬 선물 — 크리에이터 계정이 보낸 선물의 추가 결제·도착하지 않은 상자(팬 처리할 일과 같은 판정, INV-J3) */
 export type SentGiftItem =
   | { kind: "difference"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; measuredTier: string; amountKrw: number; dueAt: string; sentAt: string }
-  | { kind: "missing_box"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string; sentAt: string };
+  | { kind: "missing_box"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string; sentAt: string }
+  // 결제를 마치지 않은 선물(payment INV-M22 ⑤) — 크리에이터 계정이 보낸 결제 대기 주문 하나. 금액 = 처음 저장한 금액, 기한 = 처음 결제 대기 + 24시간, sentAt = 주문을 만든 때
+  | { kind: "unpaid"; orderNo: string; creatorName: string; amountKrw: number; dueAt: string; sentAt: string };
 
 /** 보낸 선물의 반송 주소 확인(office-workflow INV-W15, action-center INV-J5·J3) — 보낸 역조공 몫(shareId) 또는 보낸 팬 선물의 상자(boxId) 하나.
  *  nickname 은 몫이면 받는 팬, 팬 선물이면 받는 크리에이터. 기한 = 반송 대기 + 30일 */
@@ -106,7 +109,7 @@ const common = {
   prior_passed_count: count.nullable(),
   prior_returned_count: count.nullable(),
 };
-const rowShape = z.object({ ...common, kind: z.enum(["tracker", "bluetooth", "approval", "unconfirmed", "difference", "missing_box", "return_address"]), board: z.enum(["received", "sent"]) }).strict();
+const rowShape = z.object({ ...common, kind: z.enum(["tracker", "bluetooth", "approval", "unconfirmed", "difference", "missing_box", "return_address", "unpaid"]), board: z.enum(["received", "sent"]) }).strict();
 type Row = z.infer<typeof rowShape>;
 
 const need = <T>(v: T | null, what: string): T => {
@@ -183,6 +186,9 @@ export function parseCreatorActionItems(data: unknown): CreatorActionItem[] {
           sentAt: r.sent_at,
         };
       }
+      if (r.kind === "unpaid") {
+        return { kind: r.kind, orderNo: r.order_no, creatorName: r.nickname, amountKrw: need(r.amount_krw, "금액"), dueAt: need(r.due_at, "기한"), sentAt: r.sent_at };
+      }
       const box = {
         orderNo: r.order_no,
         boxId: need(r.box_id, "상자"),
@@ -218,4 +224,14 @@ export function splitBoards(items: readonly CreatorActionItem[]): {
 export function daysLeftOf(dueAt: string, now: string): { text: string; soon: boolean } {
   const days = seoulDaysUntil(dueAt, now);
   return { text: days > 0 ? `${days}일 남음` : "오늘까지", soon: days <= 3 };
+}
+
+/**
+ * 크리에이터 계정이 보낸 선물 상세의 맨 위 「지금 할 일」 칸(action-center INV-J13 · payment INV-M22 ⑤) — 크리에이터 지금 할 일 읽기 결과(사이드바 숫자와 같은 결과, INV-J6)에서
+ * 그 주문의 결제를 마치지 않은 선물 줄만 팬 칸과 같은 꼴로 옮긴다. 상세가 따로 「할 일이 있는가」를 계산하지 않는다.
+ */
+export function sentGiftTodoOf(items: readonly CreatorActionItem[], orderNo: string): ActionItem[] {
+  return items.flatMap((it): ActionItem[] =>
+    it.kind === "unpaid" && it.orderNo === orderNo ? [{ kind: "unpaid", orderNo: it.orderNo, creatorName: it.creatorName, amountKrw: it.amountKrw, dueAt: it.dueAt }] : [],
+  );
 }

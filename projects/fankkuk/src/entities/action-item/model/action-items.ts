@@ -22,7 +22,9 @@ export type ActionItem =
   | { kind: "missing_box"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string }
   | { kind: "revgift"; orderNo: string; creatorName: string; tier: string; dueAt: string }
   // 반송 주소 확인(office-workflow INV-W15) — 반송 대기 · 확인 전 상자 하나. 기한 = 반송 대기 + 30일(지나면 처분 대상).
-  | { kind: "return_address"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string };
+  | { kind: "return_address"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string }
+  // 결제 미완료(payment INV-M22, action-center INV-J1 표) — 결제 대기 주문 하나. 금액 = 처음 결제 대기에 저장한 금액, 기한 = 처음 결제 대기 + 24시간(INV-M15 가 닫는 때)
+  | { kind: "unpaid"; orderNo: string; creatorName: string; amountKrw: number; dueAt: string };
 
 const base = { order_no: z.string(), creator_name: z.string(), tier: z.string(), due_at: z.string() };
 
@@ -40,6 +42,8 @@ const rowShape = z.discriminatedUnion("kind", [
   z.object({ ...base, kind: z.literal("missing_box"), box_id: z.string().uuid(), box_label: z.string(), box_seq: z.number().int() }),
   z.object({ ...base, kind: z.literal("revgift") }),
   z.object({ ...base, kind: z.literal("return_address"), box_id: z.string().uuid(), box_label: z.string(), box_seq: z.number().int() }),
+  // 결제 미완료는 상자가 아니라 주문 하나의 줄이다 — 상자·구간 칸이 비어 있다
+  z.object({ ...base, kind: z.literal("unpaid"), tier: z.null(), amount_krw: z.number().int().positive() }),
 ]);
 
 /** 꼴이 다른 줄이 하나라도 있으면 예외 — 숫자와 목록이 서로 다른 줄 수를 말하지 않게 일부만 버리지 않는다. */
@@ -74,6 +78,7 @@ export function parseActionItems(data: unknown): ActionItem[] {
           dueAt: r.due_at,
         };
       }
+      if (r.kind === "unpaid") return { kind: r.kind, orderNo: r.order_no, creatorName: r.creator_name, amountKrw: r.amount_krw, dueAt: r.due_at };
       return { kind: r.kind, orderNo: r.order_no, creatorName: r.creator_name, tier: r.tier, dueAt: r.due_at };
     });
 }

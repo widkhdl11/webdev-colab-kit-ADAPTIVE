@@ -184,3 +184,21 @@ describe("보낸 선물의 반송 주소 줄 (action-center INV-J5·J3, office-w
     expect(() => parseCreatorActionItems([{ ...giftReturn, due_at: null }])).toThrow();
   });
 });
+
+describe("보낸 팬 선물의 결제를 마치지 않은 선물 (action-center INV-J5·J6 · payment INV-M22 ⑤)", () => {
+  const unpaid = { ...EMPTY, kind: "unpaid", board: "sent", order_no: "FC-U1", nickname: "모모", amount_krw: 6900, sent_at: "2026-10-21T01:00:00Z", due_at: "2026-10-22T01:00:00Z" };
+
+  it("INV-M22 ⑤ · INV-J5: 크리에이터 계정이 보낸 결제 대기 주문 — 보낸 선물 판, 금액·기한(처음 결제 대기 + 24시간)을 옮긴다", () => {
+    const items = parseCreatorActionItems([unpaid]);
+    expect(items).toEqual([
+      { kind: "unpaid", orderNo: "FC-U1", creatorName: "모모", amountKrw: 6900, dueAt: "2026-10-22T01:00:00.000Z", sentAt: "2026-10-21T01:00:00.000Z" },
+    ]);
+    expect(splitBoards(items).sent).toHaveLength(1);
+  });
+
+  it("INV-J6 (실패경로): 받은 선물 판의 결제 미완료 줄 · 금액이나 기한이 빈 줄은 전체를 거부한다", () => {
+    expect(() => parseCreatorActionItems([{ ...unpaid, board: "received" }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...unpaid, amount_krw: null }])).toThrow();
+    expect(() => parseCreatorActionItems([{ ...unpaid, due_at: null }])).toThrow();
+  });
+});

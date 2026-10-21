@@ -18,6 +18,7 @@ function rowCopy(item: ActionItem): { title: string; meta: string; art: string; 
   if (item.kind === "missing_box") {
     return { title: "도착이 늦어요", meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-truck.webp", tag: "송장번호 입력" };
   }
+  if (item.kind === "unpaid") return { title: "결제를 마치지 않은 선물", meta: `${item.creatorName}님께 보낼 선물`, art: "/images/home/icon-fee.webp", tag: null };
   if (item.kind === "return_address") {
     return { title: "돌려받을 주소 확인", meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-truck.webp", tag: null };
   }

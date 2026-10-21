@@ -46,3 +46,17 @@ describe("추가 결제 카드의 기한 (action-center INV-J1 · payment INV-M1
     expect(() => parseActionItems([{ ...returnRow, due_at: null }])).toThrow();
   });
 });
+
+describe("결제 미완료 줄 (action-center INV-J1 표 · payment INV-M22)", () => {
+  const unpaidRow = { ...base, kind: "unpaid", tier: null, box_id: null, box_label: null, box_seq: null, amount_krw: 6900, due_at: "2026-10-22T03:00:00Z" };
+
+  it("INV-J1 (결제 미완료): 주문 하나의 줄 — 처음 저장한 금액·기한(처음 결제 대기 + 24시간)을 옮긴다", () => {
+    expect(parseActionItems([unpaidRow])).toEqual([{ kind: "unpaid", orderNo: "FC-R1", creatorName: "하루", amountKrw: 6900, dueAt: "2026-10-22T03:00:00Z" }]);
+  });
+
+  it("INV-J1 (결제 미완료, 실패경로): 금액·기한이 없는 결제 미완료 줄이 하나라도 있으면 전체를 거부한다", () => {
+    expect(() => parseActionItems([{ ...unpaidRow, amount_krw: null }])).toThrow();
+    expect(() => parseActionItems([{ ...unpaidRow, amount_krw: 0 }])).toThrow();
+    expect(() => parseActionItems([{ ...unpaidRow, due_at: null }])).toThrow();
+  });
+});
