@@ -227,7 +227,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
         </div>
         <p className="ph-desc">내가 팔로우한 크리에이터가 보낸 선물이에요.</p>
       </header>
-      <div className={`stack ${s.flow}`}>
+      <div className={s.flow}>
         {showTodo ? (
           <TodoBox variant="revgift">
             <div className={s.todoHead}>
@@ -313,11 +313,11 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
             </div>
           </section>
         ) : null}
-        <section className="part" aria-labelledby="rv-info-title">
-          <h2 className="t-title" id="rv-info-title">
+        <section className={s.dense} aria-labelledby="rv-info-title">
+          <h2 className={s.denseTitle} id="rv-info-title">
             선물 정보
           </h2>
-          <dl className="kv">
+          <dl className={s.kv}>
             <div>
               <dt>보낸 사람</dt>
               <dd>{creatorName}님</dd>

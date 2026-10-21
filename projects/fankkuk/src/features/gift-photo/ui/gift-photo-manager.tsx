@@ -16,7 +16,24 @@ import s from "./gift-photo.module.css";
 
 export const GIFT_PHOTO_HINT = "상자·송장이 아니라 선물만 찍어 주세요. 촬영 위치 같은 사진 정보는 지우고 저장해요. 나만 볼 수 있어요.";
 
-export function GiftPhotoManager({ orderNo, version: initial, returnPath }: { orderNo: string; version: number | null; returnPath: string }) {
+/**
+ * compact: 「함께한 시간」 기록 줄 안에 버튼만 보이는 모양(시안 v34-part1/gifts-with.html — 「사진 올리기」 작은 버튼).
+ *   제목·안내 문장은 화면에서 숨기고(sr-only — 화면 읽기와 파일 칸 설명은 그대로) 목록 위에 한 번만 보인다. 사진이 있으면 작은 사진을 버튼 앞에 둔다.
+ * emphasis: 첫 선물 칸처럼 하늘 면 위에서는 채운 버튼으로.
+ */
+export function GiftPhotoManager({
+  orderNo,
+  version: initial,
+  returnPath,
+  compact = false,
+  emphasis = false,
+}: {
+  orderNo: string;
+  version: number | null;
+  returnPath: string;
+  compact?: boolean;
+  emphasis?: boolean;
+}) {
   const router = useRouter();
   const uid = useId();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -68,8 +85,8 @@ export function GiftPhotoManager({ orderNo, version: initial, returnPath }: { or
   };
 
   return (
-    <div className={s.photo} role="group" aria-labelledby={`${uid}-title`}>
-      <p className={s.title} id={`${uid}-title`}>
+    <div className={compact ? s.compact : s.photo} role="group" aria-labelledby={`${uid}-title`}>
+      <p className={compact ? "sr-only" : s.title} id={`${uid}-title`}>
         내가 올린 사진 <span className={s.only}>· 나만 볼 수 있어요</span>
       </p>
       {version ? (
@@ -87,7 +104,7 @@ export function GiftPhotoManager({ orderNo, version: initial, returnPath }: { or
           onClick={blockWhileBusy}
           onChange={(e) => void upload(e.currentTarget.files?.[0])}
         />
-        <label className={`btn btn--line btn--sm ${s.pick}`} htmlFor={inputId} aria-disabled={busy} onClick={blockWhileBusy}>
+        <label className={`btn ${emphasis ? "" : "btn--line "}btn--sm ${s.pick}`} htmlFor={inputId} aria-disabled={busy} onClick={blockWhileBusy}>
           {busy ? "저장하는 중…" : version ? "사진 바꾸기" : "사진 올리기"}
         </label>
         {version ? (
@@ -96,7 +113,7 @@ export function GiftPhotoManager({ orderNo, version: initial, returnPath }: { or
           </button>
         ) : null}
       </div>
-      <p className={s.hint} id={hintId}>
+      <p className={compact ? "sr-only" : s.hint} id={hintId}>
         {GIFT_PHOTO_HINT}
       </p>
       {error ? (

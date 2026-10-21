@@ -33,9 +33,9 @@ type Props = { differences: readonly GiftDifference[]; notice: DifferenceNotice 
 
 export function DifferenceSection({ differences, notice }: Props) {
   return (
-    <div className="part">
-      <h2 className="t-title">차액 결제</h2>
-      <p className="t-lead t-desc">
+    <div className={s.sec} data-sec="">
+      <h2 className={s.secTitle}>차액 결제</h2>
+      <p className={s.desc}>
         사무실에서 잰 상자가 고른 크기보다 커서 추가 결제가 필요해요. 결제를 마치면 바로 보내 드려요. 기한 안에 결제하지 않으면
         상자를 돌려보내고 배송비를 환불해 드려요.
       </p>
@@ -44,18 +44,18 @@ export function DifferenceSection({ differences, notice }: Props) {
           <strong>{NOTICE_TEXT[notice]}</strong>
         </p>
       ) : null}
-      <div className={s.inner}>
+      <div className={s.boxes}>
         {differences.map((d) => {
           const tag = STATE_TAG[d.state];
           return (
-            <div key={d.boxId} className={`card card--soft ${s.diff}`}>
-              <div className={s["box-head"]}>
-                <h3>
+            <div key={d.boxId} className={s.box}>
+              <div className={s.boxline}>
+                <h3 className={s.boxName}>
                   상자 {d.boxSeq} · {won(d.amountKrw)}
                 </h3>
                 <span className={tag.className}>{tag.text}</span>
               </div>
-              <p className="t-meta">
+              <p className={s.note}>
                 보낼 때 고른 크기 {tierName(d.declaredTier)} → 재어 본 크기 {tierName(d.measuredTier)}
               </p>
               {d.state === "closed" ? <p className="hint">기한이 지나 이 상자는 돌려보내 드려요.</p> : null}

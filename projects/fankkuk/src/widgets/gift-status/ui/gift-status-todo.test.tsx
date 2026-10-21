@@ -81,7 +81,7 @@ function render(p: { differences?: GiftDifference[]; notice?: "paid" | "failed" 
   );
 }
 
-const section = (title: string) => [...host.querySelectorAll("main h2")].find((h) => h.textContent === title)?.closest(".part") ?? null;
+const section = (title: string) => [...host.querySelectorAll("main h2")].find((h) => h.textContent === title)?.closest("[data-sec]") ?? null;
 
 describe("INV-J13: 차액 결제 버튼은 맨 위 칸에서만", () => {
   it("INV-J13 (실패경로): 결제가 필요한 줄은 아래 구간에서 결제할 수 없다 — 결제 완료 줄은 그대로 보인다", () => {

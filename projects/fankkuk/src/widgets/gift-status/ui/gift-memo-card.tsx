@@ -16,10 +16,10 @@ function Lock() {
 
 export function GiftMemoCard({ memo }: { memo: GiftMemo }) {
   return (
-    <section className={`card ${s["memo-card"]}`} aria-labelledby={memo.title !== null ? "gift-memo-title" : "gift-memo-label"}>
+    <section className={s["memo-card"]} aria-labelledby={memo.title !== null ? "gift-memo-title" : "gift-memo-label"}>
       {memo.title !== null ? (
         <div>
-          <p className="t-meta">선물 이름</p>
+          <p className={s.memoName}>선물 이름</p>
           <h2 className={s["memo-title"]} id="gift-memo-title">
             {memo.title}
           </h2>

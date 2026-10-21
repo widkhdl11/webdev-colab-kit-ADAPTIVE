@@ -33,11 +33,11 @@ function Note({ e }: { e: FanAccessEntry }) {
  */
 export function RevgiftAccessLog({ entries, finished }: { entries: readonly FanAccessEntry[] | null; finished: boolean }) {
   return (
-    <section className="part" aria-labelledby="rv-log-title">
-      <h2 className="t-title" id="rv-log-title">
+    <section className={s.sec} aria-labelledby="rv-log-title">
+      <h2 className={s.title} id="rv-log-title">
         내 주소 열람 기록
       </h2>
-      <p className={`t-lead t-desc ${s.lead}`}>
+      <p className={s.lead}>
         내 주소는 송장을 출력할 때만 열리고, 재출력을 합쳐 최대 {REVGIFT_MAX_DECRYPTS}번까지예요. 출고·반송·취소·처분이 되면 주소를 지워요. 열린 기록은 전부 여기에 보여요.
       </p>
       {entries === null ? (

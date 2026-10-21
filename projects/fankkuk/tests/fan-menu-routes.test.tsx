@@ -331,7 +331,7 @@ describe("INV-J13: 상세 맨 위 「지금 할 일」 칸은 처리할 일 읽�
     state.actions = [{ ...difference("FC-7K3M9"), kind: "missing_box", box_id: B1, box_label: "FC-7K3M9-1", box_seq: 1, measured_tier: null, amount_krw: null }];
     const r = await draw(detail("FC-7K3M9"));
     expect(r.todo?.querySelector("form")).not.toBeNull();
-    const below = [...host.querySelectorAll("main h2")].find((h) => h.textContent === "받는 주소 없이 보냈어요")?.closest(".part");
+    const below = [...host.querySelectorAll("main h2")].find((h) => h.textContent === "받는 주소 없이 보냈어요")?.closest("[data-sec]");
     expect(below?.querySelector("form")).not.toBeNull();
     expect(below?.textContent).not.toContain("FC-7K3M9-1");
   });

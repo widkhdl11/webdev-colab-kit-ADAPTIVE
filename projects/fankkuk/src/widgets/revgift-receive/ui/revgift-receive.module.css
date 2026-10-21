@@ -1,7 +1,7 @@
-/* 받은 역조공 하나 — 시안 docs/design/mockups/site/v18/revgift-receive.html · v18-pub.css 「이메일 확인 · 역조공 받기」.
-   가운데 틀 안 한 기둥 720, 바닥글까지 96(휴대폰 64). 판·쌓기·표는 전역 클래스 */
+/* 받은 역조공 하나 — 시안 docs/design/mockups/site/v34-part1/revgift-detail.html (좁은 틀 .wrap.narrow 800).
+   바닥글까지 96(휴대폰 48). 판·표는 전역 클래스 */
 .page { padding-bottom: var(--section-gap); }
-.col { max-width: 720px; margin-inline: auto; }
+.col { max-width: 800px; margin-inline: auto; }
 /* 돌아가기 「‹ 받은 선물로」 — 시안 v34-part1 .back: 회색 14 */
 .back { display: inline-flex; align-items: center; min-height: var(--touch); color: var(--gray-600); font-size: var(--fs-navitem); font-weight: var(--fw-nav); text-decoration: none; }
 .back:hover { color: var(--gray-900); }
