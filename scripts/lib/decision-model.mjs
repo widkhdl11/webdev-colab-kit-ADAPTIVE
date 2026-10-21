@@ -196,9 +196,15 @@ export function validateDecision(d, vocab = null) {
     if (d.answer !== null) errors.push("아직 대기인데 answer 가 채워져 있다");
     if (d.answered_at !== null) errors.push("아직 대기인데 answered_at 이 채워져 있다");
   }
+  // answer_outside: 사람이 선택지 밖으로 답했다는 표시(2026-10-21 — 「C안으로」를 사실대로 닫을 길이 없었다).
+  // 있으면 true 뿐이고, 답변된 카드에만 붙는다.
+  if (d.answer_outside !== undefined) {
+    if (d.answer_outside !== true) errors.push("answer_outside 는 true 만 쓴다(선택지 밖 답 표시)");
+    if (d.status !== "답변됨") errors.push("answer_outside 는 답변된 카드에만 붙는다");
+  }
   if (d.status === "답변됨") {
     if (typeof d.answer !== "string" || d.answer.trim() === "") errors.push("답변됨인데 answer 가 비었다");
-    else if (Array.isArray(d.answer_options) && !d.answer_options.includes(d.answer)) {
+    else if (Array.isArray(d.answer_options) && !d.answer_options.includes(d.answer) && d.answer_outside !== true) {
       errors.push(`answer 가 고를 수 있는 값이 아니다: ${d.answer}`);
     }
     if (!isIso(d.answered_at)) errors.push("답변됨인데 answered_at 이 ISO8601 이 아니다");

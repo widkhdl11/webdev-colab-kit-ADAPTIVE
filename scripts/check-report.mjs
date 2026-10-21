@@ -1617,6 +1617,13 @@ const rejects = (over, what) => validateDecision(card(over), VOCAB).some((e) => 
   check("34 프로브(고를 수 없는 답)", validateDecision(card({ status: "답변됨", answer: "나중에", answered_at: OK_CARD.asked_at }), VOCAB)
         .some((e) => e.includes("고를 수 있는 값이 아니다")),
     "고를 수 있는 값이 아닌 답은 거부한다", "엉뚱한 답이 통과했다");
+  // 사람이 선택지 밖으로 답한 것(2026-10-17 d103 「C안으로」)을 사실대로 닫는 길 — 표시가 있을 때만 받는다.
+  check("34 선택지 밖 답(표시 있음)", validateDecision(card({ status: "답변됨", answer: "C안으로", answered_at: OK_CARD.asked_at, answer_outside: true }), VOCAB).length === 0,
+    "선택지 밖 답은 answer_outside 표시와 함께면 받는다", "표시가 있는데도 선택지 밖 답이 거부됐다");
+  check("34 프로브(선택지 밖 표시가 true 가 아님)", rejects({ status: "답변됨", answer: "C안으로", answered_at: OK_CARD.asked_at, answer_outside: "yes" }, "answer_outside"),
+    "answer_outside 는 true 만 받는다", "true 가 아닌 표시가 통과했다");
+  check("34 프로브(대기 카드에 선택지 밖 표시)", rejects({ answer_outside: true }, "answer_outside"),
+    "답하지 않은 카드에는 선택지 밖 표시를 붙일 수 없다", "대기 카드의 표시가 통과했다");
 }
 
 // ── 35. 금지 표현 — 표에 적힌 말이 카드에 들어오면 거부 ────────────────────

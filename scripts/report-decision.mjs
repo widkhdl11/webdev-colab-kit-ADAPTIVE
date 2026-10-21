@@ -11,7 +11,8 @@
 //            --item: 이 카드가 막는 항목. 없으면 루프는 남은 항목 전부가 걸린 것으로 본다.
 //            --starts-loop: 첫 선택지를 고르면 자율 실행 루프를 띄우는 카드(설정 autostart 가 켜졌을 때만).
 //   본문만: --amend --id <열린 결정의 id> ( --detail-file <md 경로> | --detail "<본문>" )
-//   답변:  --answer "<사람이 고른 말>"
+//   답변:  --answer "<사람이 고른 말>" [--outside]
+//            --outside: 사람이 선택지에 없는 말로 답했을 때. 그 말을 그대로 기록하고 answer_outside 표시를 붙인다.
 //
 // 왜 하나뿐인가: 카드와 근거 본문은 **같은 턴에 쌍으로** 기록돼야 하고(한쪽만 있으면 화면의
 // 「자세히」가 빈칸이거나, 아무도 안 보는 본문만 남는다), 답변은 카드를 지우면서 이력에
@@ -122,7 +123,7 @@ export function amend(dir, id, detailBody) {
   return open;
 }
 
-export function answer(dir, answerText) {
+export function answer(dir, answerText, outside = false) {
   const p = paths(dir);
   const card = readJson(p.decision);
   if (!card) throw new Error("열린 결정이 없다.");
@@ -133,6 +134,7 @@ export function answer(dir, answerText) {
     status: "답변됨",
     answer: answerText,
     answered_at: new Date().toISOString(),
+    ...(outside ? { answer_outside: true } : {}),
   };
   const errors = validateDecision(closed, loadVocab(dir));
   if (errors.length) throw new Error(`답변 뒤의 카드가 규약을 어겼다:\n- ${errors.join("\n- ")}`);
@@ -174,7 +176,7 @@ if (isMain) {
 
   try {
     if (has("answer")) {
-      const closed = answer(dir, arg("answer"));
+      const closed = answer(dir, arg("answer"), has("outside"));
       console.log(`결정 닫힘: ${closed.id} — ${closed.answer}`);
       console.log(`대기 항목을 풀어야 한다: node scripts/report-note.mjs --project ${slug} --clear-blockers ...`);
       maybeStartLoop(slug, closed);
