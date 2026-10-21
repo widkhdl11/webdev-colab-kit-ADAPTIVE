@@ -1,16 +1,31 @@
-/* 보낸 선물 — 시안 docs/design/mockups/site/v35-part1/gifts.html (v35.css .gcard·.pbar, design-rules 22절). 탭·태그는 base.css 공통 부품 */
+/* 보낸 선물 — 시안 docs/design/mockups/site/v35-part1/gifts.html (v35.css .ccard·.gcard·.pbar, design-rules 22절). 탭·태그·작은 진행 막대(.mini-steps)는 base.css 공통 부품,
+   카드 면 효과·떠오름은 base.css 23절(.ccard)·tokens.css 23절 토큰 */
 
-/* 크리에이터별 묶음 — 묶음 머리 높이 56 이상, 아래 1px 선. 머리 전체가 함께한 시간으로 가는 링크 */
-/* 묶음 사이 40 — 전역 「구간 + 구간 48」보다 앞서게 클래스 셋 무게 */
-.grp.grp.grp { margin-top: var(--space-10); }
-.head { position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--gray-200); border-radius: var(--r-btn); }
-.head :global(.face) { width: 32px; height: 32px; font-size: var(--fs-small); }
-.head strong { font-size: var(--fs-card); line-height: 1.6; overflow-wrap: anywhere; }
-.head small { font-size: var(--fs-small); color: var(--sub); }
-.head :global(.lrow-chev) { margin-left: auto; }
-.linked:hover { background: var(--tint); }
-.linked:has(:global(.stretch):focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* 「크리에이터별로 보기」 — 머리 줄(제목 20 + 「N명」) 아래 16, 카드 3열 사이 16. 카드 전체가 함께한 시간으로 가는 링크 */
+.creators { margin-top: var(--space-10); }
+.secH { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
+.secTitle.secTitle { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.secH small { font-size: var(--fs-small); color: var(--sub); }
+.ccards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.ccard { position: relative; min-width: 0; padding: var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-card); }
+.ccard:has(:global(.stretch):focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
+.cwho { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.cface.cface { flex: none; width: 56px; height: 56px; font-size: var(--fs-card); overflow: hidden; }
+.cname { min-width: 0; }
+.cname strong { display: block; font-size: var(--fs-card); line-height: 1.4; overflow-wrap: anywhere; }
+.cname small { display: block; font-size: var(--fs-small); color: var(--sub); }
+.last { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
+.lab { font-size: var(--fs-small); color: var(--sub); }
+.line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: 28px; }
+.line :global(.tag) { white-space: nowrap; }
+.more { margin-top: auto; font-size: var(--fs-small); font-weight: var(--fw-btn); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+/* 선물 격자 — 카드 줄 아래 48 에 탭 */
+.giftTabs { margin-top: var(--space-12); }
 .empty { margin-top: var(--space-8); }
+/* 완료 탭의 「끝난 선물」·「받지 않은 선물」 머리 — 16 굵게 + 개수 14 (시안 .sub-h) */
+.subH.subH { margin-top: var(--space-8); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; }
+.subH small { margin-left: var(--space-2); font-size: var(--fs-small); font-weight: var(--fw-sub); color: var(--sub); }
 
 /* 선물 카드 — 진행 정도와 상관없이 같은 카드, 880 안 2열 사이 16 (시안 .gcards·.gcard) */
 .gcards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
@@ -45,7 +60,9 @@
 .stop { display: flex; align-items: center; min-height: 48px; padding-top: var(--space-4); border-top: 1px solid var(--gray-200); font-size: var(--fs-small); color: var(--sub); }
 
 @media (max-width: 767px) {
-  .head { flex-wrap: wrap; }
+  /* 휴대폰 — 크리에이터 카드 줄은 옆으로 넘긴다(카드 폭 78%, 카드 단위로 멈춤). 그림자가 잘리지 않게 위아래 4 */
+  .ccards { display: flex; gap: var(--space-3); margin-top: var(--space-3); padding: var(--space-1) 0; overflow-x: auto; scroll-snap-type: x mandatory; }
+  .ccard { flex: 0 0 78%; padding: var(--space-4); scroll-snap-align: start; }
   .gcards { grid-template-columns: minmax(0, 1fr); }
   .gcard { padding: var(--space-4); }
 }

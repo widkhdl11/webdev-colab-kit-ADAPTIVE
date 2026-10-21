@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // 실제 라우트(선물 상세 하나 · 옛 받은 선물 상세 주소 · 지금 할 일 · 보낸 선물)와 함께한 시간 읽기를 불러 DOM 으로 본다.
 // DB 는 대상이 아니라 읽기 함수만 가짜로 둔다 — 가짜 읽기는 DB 처럼 「로그인한 사람 것만」 돌려준다(남의 주문번호는 없는 것과 같다).
 // 대상: 상세가 주문번호 앞머리로 읽기를 고르고 소유 판정 결과를 그대로 따르는가(J12), 맨 위 「지금 할 일」 칸이 처리할 일 읽기 결과에서만 나오는가(J13),
-// 보낸 선물 묶음 숫자가 함께한 시간과 같은 읽기에서 나오는가(J14).
+// 보낸 선물 크리에이터 카드 숫자가 함께한 시간과 같은 읽기에서 나오는가(J14).
 
 const nav = vi.hoisted(() => ({
   redirect: vi.fn((to: string) => {
@@ -352,7 +352,7 @@ describe("INV-J13: 상세 맨 위 「지금 할 일」 칸은 처리할 일 읽�
   });
 });
 
-describe("INV-J14: 보낸 선물은 크리에이터별 묶음", () => {
+describe("INV-J14: 보낸 선물 — 위 크리에이터 카드 줄 + 아래 묶지 않은 선물 격자", () => {
   const HARU = { creatorId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "하루", handle: "haru" };
   const MOMO = { creatorId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", name: "모모", handle: "momo" };
 
@@ -362,10 +362,12 @@ describe("INV-J14: 보낸 선물은 크리에이터별 묶음", () => {
     act(() => (tab as HTMLButtonElement).click());
     return host.querySelector(`#${tab.getAttribute("aria-controls")}`)!;
   }
-  const groups = (p: Element) => [...p.querySelectorAll("[data-gift-group]")];
-  const head = (p: Element, name: string) => groups(p).find((g) => g.getAttribute("data-gift-group") === name);
+  // 크리에이터 카드 줄은 탭 패널 밖(탭과 상관없이 전부)
+  const creatorCards = () => [...host.querySelectorAll("main [data-creator-card]")];
+  const creatorCard = (name: string) => creatorCards().find((c) => c.getAttribute("data-creator-card") === name);
+  const rowHrefs = (p: Element) => [...p.querySelectorAll("[data-gift-row]")].map((r) => r.querySelector("a")?.getAttribute("href"));
 
-  it("INV-J14 S14: 하루 3개·모모 2개 → 묶음 둘, 하루 묶음 머리 「선물 3개」 = 하루 함께한 시간 「함께한 선물 3」, 머리는 함께한 시간으로", async () => {
+  it("INV-J14 S14: 하루 3개·모모 2개 → 크리에이터 카드 둘(하루 「선물 3개」 = 하루 함께한 시간 「함께한 선물 3」), 아래 선물 카드는 묶이지 않고 최근 순", async () => {
     state.gifts = [
       giftRow("FC-HARU3", "하루", { registered_at: "2026-10-12T02:00:00+00:00" }),
       giftRow("FC-HARU2", "하루", { registered_at: "2026-10-05T02:00:00+00:00", received_at: "2026-10-15T02:00:00+00:00" }),
@@ -381,21 +383,31 @@ describe("INV-J14: 보낸 선물은 크리에이터별 묶음", () => {
     state.actions = [difference("FC-MOMO2")];
     await draw(GiftsRoute());
     expect(nav.redirect).not.toHaveBeenCalledWith(expect.stringContaining("/gifts/with/"));
+    // 크리에이터 카드 — 함께한 시간 읽기 순서, 숫자는 함께한 시간 값 그대로(끝난·받지 않은 것 포함 3)
+    expect(creatorCards().map((c) => c.getAttribute("data-creator-card"))).toEqual(["하루", "모모"]);
+    const haru = creatorCard("하루")!;
+    expect(haru.querySelector("[data-creator-count]")?.textContent).toBe("선물 3개 · 답장 0통");
+    expect(creatorCard("모모")?.querySelector("[data-creator-count]")?.textContent).toBe("선물 2개 · 답장 1통");
+    // 최근 선물 상태 — 하루에게 가장 최근에 보낸 FC-HARU3 의 꼬리표(아래 격자의 그 카드와 같은 글자)
+    const lastTag = haru.querySelector("[data-creator-last] .tag")?.textContent;
+    expect(lastTag).toBeTruthy();
+    // 카드를 누르면 그 크리에이터의 함께한 시간
+    const cardLinks = haru.querySelectorAll("a");
+    expect(cardLinks).toHaveLength(1);
+    expect(cardLinks[0]?.getAttribute("href")).toBe("/gifts/with/haru");
+    // 카드는 탭 패널 밖
+    expect(haru.closest('[role="tabpanel"]')).toBeNull();
+
+    // 아래 격자 — 크리에이터로 묶지 않고 최근 순(하루·모모가 섞인다), 카드는 선물 상세로
     const ing = panel(/^진행 중/);
-    expect(groups(ing).map((g) => g.getAttribute("data-gift-group"))).toEqual(["하루", "모모"]);
-    const haru = head(ing, "하루")!;
-    // 진행 중 탭에는 하루 줄이 둘뿐이어도 머리 숫자는 함께한 시간과 같은 셈(끝난 것 포함 3)
-    expect(haru.querySelectorAll("[data-gift-row]")).toHaveLength(2);
-    expect(haru.querySelector("[data-group-count]")?.textContent).toBe("선물 3개 · 답장 0통");
-    expect(head(ing, "모모")?.querySelector("[data-group-count]")?.textContent).toBe("선물 2개 · 답장 1통");
-    const headLink = haru.querySelector("[data-group-head] a");
-    expect(headLink?.getAttribute("href")).toBe("/gifts/with/haru");
-    expect(headLink?.textContent).toBe("하루님과 함께한 시간");
-    // 묶음 안의 줄은 선물 상세로
-    expect([...haru.querySelectorAll("[data-gift-row] a")].map((a) => a.getAttribute("href"))).toEqual(["/gifts/FC-HARU3", "/gifts/FC-HARU2"]);
+    expect(ing.querySelectorAll("[data-gift-group]")).toHaveLength(0);
+    expect(rowHrefs(ing)).toEqual(["/gifts/FC-HARU3", "/gifts/FC-MOMO2", "/gifts/FC-HARU2", "/gifts/FC-MOMO1"]);
+    const haru3 = [...ing.querySelectorAll("[data-gift-row]")].find((r) => r.querySelector("a")?.getAttribute("href") === "/gifts/FC-HARU3");
+    expect(haru3?.querySelector(".tag")?.textContent).toBe(lastTag);
     // 할 일이 있는 카드만 강조(design-rules 22절) — 사이드바 숫자와 같은 지금 할 일 읽기 결과의 주문(모모 FC-MOMO2)
     const hi = [...ing.querySelectorAll("[data-gift-row][data-hi]")];
     expect(hi.map((r) => r.querySelector("a")?.getAttribute("href"))).toEqual(["/gifts/FC-MOMO2"]);
+    expect(rowHrefs(panel(/^완료/))).toEqual(["/gifts/FC-HARU1"]);
 
     // 함께한 시간 화면 — 같은 읽기(my_together)의 개인 기록 두 칸
     const data = await loadTogetherPage({ client: { rpc: vi.fn() }, viewer: FAN, creatorId: HARU.creatorId, photoBase: "" });
@@ -406,7 +418,14 @@ describe("INV-J14: 보낸 선물은 크리에이터별 묶음", () => {
     expect(host.querySelector("main a")?.getAttribute("href")).toBe("/gifts");
   });
 
-  it("INV-J14 S14b: 하루에게 보낸 것이 모두 끝나면 「진행 중」에 하루 묶음이 없고 「완료」에 있다 — 끝난 선물과 받지 않은 선물이 함께", async () => {
+  it("INV-J14 S14 (실패경로): 카드 숫자는 목록 줄 수가 아니라 함께한 시간 값 — 둘이 다르면 함께한 시간 값이 보인다", async () => {
+    state.gifts = [giftRow("FC-HARU1", "하루")];
+    state.together = [{ ...HARU, giftCount: 4, replyCount: 2, orders: ["FC-HARU1"] }];
+    await draw(GiftsRoute());
+    expect(creatorCard("하루")?.querySelector("[data-creator-count]")?.textContent).toBe("선물 4개 · 답장 2통");
+  });
+
+  it("INV-J14 S14b: 하루에게 보낸 것이 모두 끝나면 「진행 중」 격자에 하루 선물이 없지만 하루 크리에이터 카드는 있다 — 「완료」 격자에는 있다", async () => {
     state.gifts = [
       giftRow("FC-HARU2", "하루", { status: "expired", registered_at: "2026-10-05T02:00:00+00:00" }),
       giftRow("FC-HARU1", "하루", { status: "rejected", registered_at: "2026-10-01T02:00:00+00:00" }),
@@ -419,17 +438,20 @@ describe("INV-J14: 보낸 선물은 크리에이터별 묶음", () => {
     await draw(GiftsRoute());
     const tabs = [...host.querySelectorAll('main [role="tab"]')].map((t) => t.textContent);
     expect(tabs).toEqual(["진행 중 1", "완료 2"]);
-    expect(head(panel(/^진행 중/), "하루")).toBeUndefined();
-    const done = panel(/^완료/);
-    expect(head(done, "하루")?.querySelectorAll("[data-gift-row]")).toHaveLength(2);
-    expect(head(done, "모모")).toBeUndefined();
+    expect(rowHrefs(panel(/^진행 중/))).toEqual(["/gifts/FC-MOMO1"]);
+    expect(creatorCards().map((c) => c.getAttribute("data-creator-card"))).toEqual(["하루", "모모"]);
+    expect(creatorCard("하루")?.querySelector("[data-creator-count]")?.textContent).toBe("선물 2개 · 답장 0통");
+    expect(rowHrefs(panel(/^완료/))).toEqual(["/gifts/FC-HARU2", "/gifts/FC-HARU1"]);
+    // 탭을 바꿔도 크리에이터 카드 줄은 그대로
+    expect(creatorCards().map((c) => c.getAttribute("data-creator-card"))).toEqual(["하루", "모모"]);
   });
 
-  it("INV-J14 S14b: 선물한 크리에이터가 하루 한 명이어도 함께한 시간으로 넘기지 않고 묶음 하나가 보인다", async () => {
+  it("INV-J14 S14b: 선물한 크리에이터가 하루 한 명이어도 함께한 시간으로 넘기지 않고 크리에이터 카드 하나와 선물 격자가 보인다", async () => {
     state.gifts = [giftRow("FC-HARU1", "하루")];
     state.together = [{ ...HARU, giftCount: 1, replyCount: 0, orders: ["FC-HARU1"] }];
     await draw(GiftsRoute());
     expect(nav.redirect).not.toHaveBeenCalled();
-    expect(groups(panel(/^진행 중/)).map((g) => g.getAttribute("data-gift-group"))).toEqual(["하루"]);
+    expect(creatorCards().map((c) => c.getAttribute("data-creator-card"))).toEqual(["하루"]);
+    expect(rowHrefs(panel(/^진행 중/))).toEqual(["/gifts/FC-HARU1"]);
   });
 });

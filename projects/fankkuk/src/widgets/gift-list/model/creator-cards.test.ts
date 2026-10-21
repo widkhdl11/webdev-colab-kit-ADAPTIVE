@@ -1,17 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { parseFanGiftRows } from "@/entities/order/api/fan-gift-rows";
-import { groupGiftsByCreator, type TogetherOfCreator } from "./gift-groups";
+import { buildCreatorCards, recentFirst, type TogetherOfCreator } from "./creator-cards";
 
-// 보낸 선물 크리에이터별 묶음 (action-center INV-J14). 묶음 머리 숫자는 함께한 시간 읽기의 값 그대로 — 묶음 안 줄 수로 세지 않는다.
+// 보낸 선물 위 「크리에이터별로 보기」 카드 + 아래 묶지 않은 선물 격자 (action-center INV-J14).
+// 카드 숫자는 함께한 시간 읽기의 값 그대로 — 목록이 선물 수를 따로 세지 않는다.
 
-const row = (orderNo: string, creatorName: string, status = "registered") => ({
+const row = (orderNo: string, creatorName: string, registeredAt: string, status = "registered") => ({
   order_no: orderNo,
   creator_name: creatorName,
   item_kind: "인형·굿즈",
   box_count: 1,
   has_electronics_or_metal: false,
   status,
-  registered_at: "2026-10-12T02:00:00+00:00",
+  registered_at: registeredAt,
   approved_at: null,
   received_at: null,
   inspection_result: null,
@@ -33,32 +34,54 @@ const t = (creatorId: string, creatorName: string, giftCount: number, orderNos: 
   orderNos,
 });
 
-describe("INV-J14: 크리에이터별 묶음", () => {
-  it("INV-J14: 주문은 함께한 시간이 센 주문번호로 묶이고, 머리 숫자는 함께한 시간 값 그대로다 — 이름이 같은 다른 크리에이터와 섞이지 않는다", () => {
-    const gifts = parseFanGiftRows([row("FC-A1", "하루"), row("FC-B1", "하루"), row("FC-A2", "하루")], "x");
-    const groups = groupGiftsByCreator(gifts, [t("a", "하루", 7, ["FC-A1", "FC-A2"]), t("b", "하루", 1, ["FC-B1"])]);
-    expect(groups.map((g) => [g.key, g.gifts.map((x) => x.orderNo), g.together?.giftCount])).toEqual([
-      ["a", ["FC-A1", "FC-A2"], 7],
-      ["b", ["FC-B1"], 1],
+const D = (day: number) => `2026-10-${String(day).padStart(2, "0")}T02:00:00+00:00`;
+
+describe("INV-J14: 크리에이터 카드", () => {
+  it("INV-J14: 카드 숫자는 함께한 시간 값 그대로이고 최근 선물은 함께한 시간이 센 주문에서 고른다 — 이름이 같은 다른 크리에이터와 섞이지 않는다", () => {
+    // 같은 이름 「하루」 둘 — b 의 FC-B1 이 가장 최근이지만 a 카드의 최근 선물이 되면 안 된다
+    const gifts = parseFanGiftRows([row("FC-A2", "하루", D(1)), row("FC-B1", "하루", D(14)), row("FC-A1", "하루", D(12))], "x");
+    const cards = buildCreatorCards(gifts, [t("a", "하루", 7, ["FC-A1", "FC-A2"]), t("b", "하루", 1, ["FC-B1"])]);
+    expect(cards.map((c) => [c.key, c.giftCount, c.latest?.orderNo ?? null])).toEqual([
+      ["a", 7, "FC-A1"],
+      ["b", 1, "FC-B1"],
     ]);
   });
 
-  it("INV-J14: 함께한 시간에 세지 않는 주문(결제 취소)은 같은 크리에이터 묶음에 들어가고 머리 숫자는 함께한 시간 값 그대로다", () => {
-    const gifts = parseFanGiftRows([row("FC-A9", "하루", "canceled"), row("FC-A1", "하루")], "x");
-    const groups = groupGiftsByCreator(gifts, [t("a", "하루", 1, ["FC-A1"])]);
-    expect(groups.map((g) => [g.creatorName, g.gifts.map((x) => x.orderNo), g.together?.giftCount ?? null])).toEqual([
-      ["하루", ["FC-A9", "FC-A1"], 1],
+  it("INV-J14: 함께한 시간에 세지 않는 주문(결제 취소)은 같은 크리에이터 카드의 최근 선물이 될 수 있고, 카드 숫자는 함께한 시간 값 그대로다", () => {
+    const gifts = parseFanGiftRows([row("FC-A1", "하루", D(1)), row("FC-A9", "하루", D(9), "canceled")], "x");
+    const cards = buildCreatorCards(gifts, [t("a", "하루", 1, ["FC-A1"])]);
+    expect(cards.map((c) => [c.creatorName, c.giftCount, c.latest?.orderNo ?? null])).toEqual([["하루", 1, "FC-A9"]]);
+  });
+
+  it("INV-J14 (실패경로): 세지 않는 주문의 크리에이터를 이름으로 하나로 정할 수 없거나(같은 이름 둘) 센 주문이 없는 크리에이터는 카드를 만들지 않는다 — 숫자를 지어내지 않는다", () => {
+    const gifts = parseFanGiftRows(
+      [row("FC-A1", "하루", D(1)), row("FC-B1", "하루", D(2)), row("FC-X9", "하루", D(9), "canceled"), row("FC-M9", "모모", D(8), "canceled")],
+      "x",
+    );
+    const cards = buildCreatorCards(gifts, [t("a", "하루", 1, ["FC-A1"]), t("b", "하루", 1, ["FC-B1"])]);
+    expect(cards.map((c) => [c.key, c.giftCount, c.latest?.orderNo ?? null])).toEqual([
+      ["a", 1, "FC-A1"],
+      ["b", 1, "FC-B1"],
     ]);
   });
 
-  it("INV-J14 (실패경로): 세지 않는 주문의 크리에이터를 이름으로 하나로 정할 수 없거나(같은 이름 둘) 센 주문이 없으면 링크·숫자 없는 묶음으로 뒤에", () => {
-    const gifts = parseFanGiftRows([row("FC-X9", "하루", "canceled"), row("FC-M9", "모모", "canceled"), row("FC-A1", "하루"), row("FC-B1", "하루")], "x");
-    const groups = groupGiftsByCreator(gifts, [t("a", "하루", 1, ["FC-A1"]), t("b", "하루", 1, ["FC-B1"])]);
-    expect(groups.map((g) => [g.creatorName, g.gifts.map((x) => x.orderNo), g.together?.giftCount ?? null])).toEqual([
-      ["하루", ["FC-A1"], 1],
-      ["하루", ["FC-B1"], 1],
-      ["하루", ["FC-X9"], null],
-      ["모모", ["FC-M9"], null],
+  it("INV-J14: 카드 순서는 함께한 시간 읽기 순서 그대로, 선물이 목록에 없으면 최근 선물은 비어 있다", () => {
+    const cards = buildCreatorCards([], [t("m", "모모", 2, ["FC-M1", "FC-M2"]), t("h", "하루", 3, ["FC-H1"])]);
+    expect(cards.map((c) => [c.key, c.giftCount, c.latest])).toEqual([
+      ["m", 2, null],
+      ["h", 3, null],
     ]);
+  });
+});
+
+describe("INV-J14: 선물 격자", () => {
+  it("INV-J14: 크리에이터로 묶지 않고 최근 등록 순 — 등록 시각이 같으면 읽은 순서 그대로", () => {
+    const gifts = parseFanGiftRows(
+      [row("FC-H1", "하루", D(1)), row("FC-M2", "모모", D(10)), row("FC-H3", "하루", D(12)), row("FC-M1", "모모", D(2)), row("FC-H2", "하루", D(5)), row("FC-M3", "모모", D(5))],
+      "x",
+    );
+    expect(recentFirst(gifts).map((g) => g.orderNo)).toEqual(["FC-H3", "FC-M2", "FC-H2", "FC-M3", "FC-M1", "FC-H1"]);
+    // 입력은 그대로 둔다
+    expect(gifts[0]?.orderNo).toBe("FC-H1");
   });
 });
