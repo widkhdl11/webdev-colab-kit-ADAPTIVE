@@ -63,7 +63,7 @@ const APPROVAL_TEXT = { done: "승인됨", waiting: "승인 대기", todo: "출�
 
 const APPROVAL_TONE = { done: "success", waiting: "warn", todo: "plain" } as const satisfies Record<keyof typeof APPROVAL_TEXT, StatusTone>;
 
-type DifferenceProps = { differences: readonly GiftDifference[]; clientKey: string; notice: DifferenceNotice };
+type DifferenceProps = { differences: readonly GiftDifference[]; notice: DifferenceNotice };
 
 export function GiftStatusPage({
   view,
@@ -75,6 +75,7 @@ export function GiftStatusPage({
   memo = null,
   todo = null,
   todoBoxIds = [],
+  dueKrw = 0,
 }: {
   view: FanGiftView;
   boxes: readonly GiftBox[];
@@ -91,6 +92,8 @@ export function GiftStatusPage({
   todo?: ReactNode;
   /** 맨 위 칸의 「도착이 늦어요」에 이미 있는 상자 — 아래 「받는 주소 없이 보냈어요」 고를 목록에서 뺀다(INV-J13). 라우트가 같은 읽기 결과에서 넘긴다 */
   todoBoxIds?: readonly string[];
+  /** 오른쪽 요약 상자의 「추가 결제 N원」 꼬리표(시안 v34-part1 .sidebox .tag.warn) — 맨 위 칸의 추가 결제 줄 합(differenceDueKrw). 결제는 맨 위 칸에서만 한다(INV-J13). 0 이면 꼬리표 없음 */
+  dueKrw?: number;
 }) {
   const progress = fanProgress(view);
   // 배지의 「N/6」은 지금 있는 단계 번호다 — 끝낸 단계 수(4)를 쓰면 아래 진행 줄의 현재 단계(5번 배송중)와 숫자가 어긋났다(2026-10-09 디자인 점검)
@@ -118,8 +121,6 @@ export function GiftStatusPage({
   const showsProgress = showsSteps(view);
   const cancelable = canCancelGift(boxes, inProgress);
 
-  // 오른쪽 요약 상자의 「추가 결제 N원」 꼬리표(시안 v34-part1 .sidebox .tag.warn) — 아직 내지 않은 차액의 합. 결제는 맨 위 칸에서만 한다(INV-J13)
-  const dueKrw = (difference?.differences ?? []).filter((d) => d.state === "due").reduce((sum, d) => sum + d.amountKrw, 0);
 
   // 진행 단계 칸 아래 작은 글 — 지금 막 끝낸 단계는 「지금」, 다음 단계는 「다음 단계」, 나머지는 날짜(시안 v35 .dsteps)
   const lastDoneIdx = currentIdx > 0 ? currentIdx - 1 : -1;

@@ -67,7 +67,8 @@ export function CardRowScroller({ id, label, children }: { id: string; label: st
     if (!el) return;
     const cs = getComputedStyle(el);
     const inner = el.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
-    el.scrollBy({ left: dir * inner, behavior: "smooth" });
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollBy({ left: dir * inner, behavior: reduce ? "auto" : "smooth" });
   };
 
   return (

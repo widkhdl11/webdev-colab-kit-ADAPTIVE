@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCreatorActionItems, splitBoards } from "./creator-action-items";
+import { parseCreatorActionItems, sentGiftTodoOf, splitBoards, type CreatorActionItem } from "./creator-action-items";
 
 // 크리에이터 처리할 일 줄 꼴 (action-center INV-J5·J6·J7). DB 읽기 함수 한 번의 결과가 그대로 숫자·목록이 된다 —
 // 꼴이 다른 줄을 일부만 버리면 사이드바 숫자와 목록이 다른 수를 말하므로 하나라도 틀리면 전체를 거부한다.
@@ -200,5 +200,28 @@ describe("보낸 팬 선물의 결제를 마치지 않은 선물 (action-center 
     expect(() => parseCreatorActionItems([{ ...unpaid, board: "received" }])).toThrow();
     expect(() => parseCreatorActionItems([{ ...unpaid, amount_krw: null }])).toThrow();
     expect(() => parseCreatorActionItems([{ ...unpaid, due_at: null }])).toThrow();
+  });
+});
+
+describe("sentGiftTodoOf — 크리에이터 계정이 보낸 선물 상세 맨 위 칸 (action-center INV-J13)", () => {
+  const box = { boxLabel: "1번 상자", boxSeq: 1, creatorName: "모모", declaredTier: "소", sentAt: "2026-10-20T01:00:00.000Z" };
+  const items: CreatorActionItem[] = [
+    { kind: "unpaid", orderNo: "FC-A", creatorName: "모모", amountKrw: 6900, dueAt: "2026-10-22T01:00:00.000Z", sentAt: "2026-10-21T01:00:00.000Z" },
+    { kind: "difference", orderNo: "FC-A", boxId: "b1", ...box, measuredTier: "중", amountKrw: 3000, dueAt: "2026-10-27T01:00:00.000Z" },
+    { kind: "missing_box", orderNo: "FC-A", boxId: "b2", ...box, boxSeq: 2, dueAt: "2026-10-28T01:00:00.000Z" },
+    { kind: "difference", orderNo: "FC-B", boxId: "b3", ...box, measuredTier: "중", amountKrw: 3000, dueAt: "2026-10-27T01:00:00.000Z" },
+  ];
+
+  it("INV-J13: 같은 주문의 일이 여럿이면 모두 — 결제 대기·추가 결제·상자 찾기를 팬 칸과 같은 꼴로 옮긴다", () => {
+    expect(sentGiftTodoOf(items, "FC-A")).toEqual([
+      { kind: "unpaid", orderNo: "FC-A", creatorName: "모모", amountKrw: 6900, dueAt: "2026-10-22T01:00:00.000Z" },
+      { kind: "difference", orderNo: "FC-A", boxId: "b1", boxLabel: "1번 상자", boxSeq: 1, creatorName: "모모", declaredTier: "소", measuredTier: "중", amountKrw: 3000, dueAt: "2026-10-27T01:00:00.000Z" },
+      { kind: "missing_box", orderNo: "FC-A", boxId: "b2", boxLabel: "1번 상자", boxSeq: 2, creatorName: "모모", declaredTier: "소", dueAt: "2026-10-28T01:00:00.000Z" },
+    ]);
+  });
+
+  it("INV-J13 (실패경로): 다른 주문의 일은 옮기지 않고, 일이 없는 주문은 빈 칸", () => {
+    expect(sentGiftTodoOf(items, "FC-B").map((it) => it.orderNo)).toEqual(["FC-B"]);
+    expect(sentGiftTodoOf(items, "FC-C")).toEqual([]);
   });
 });

@@ -108,6 +108,11 @@ export function byUrgency(items: readonly ActionItem[]): ActionItem[] {
   return [...items].sort((a, b) => at(a) - at(b));
 }
 
+/** 선물 상세 요약 상자의 「추가 결제 N원」 — 맨 위 칸(INV-J13)에 뜨는 추가 결제 줄의 금액 합. 칸과 같은 줄에서 세므로 끝난 주문·반송 대기 상자의 차액은 들어가지 않는다 */
+export function differenceDueKrw(items: readonly ActionItem[]): number {
+  return items.reduce((sum, it) => (it.kind === "difference" ? sum + it.amountKrw : sum), 0);
+}
+
 /** 처분 예정 날짜 문장(office-workflow INV-W15, 용어집 dispose_due 행) — 기한은 반송 대기 + 30일, 날짜는 서울 날짜. 팬·크리에이터 처리할 일이 같이 쓴다 */
 export function disposeDueText(dueAt: string): string {
   return `${formatMonthDayKo(dueAt)}까지 확인하지 않으면 상자를 처분해요`;

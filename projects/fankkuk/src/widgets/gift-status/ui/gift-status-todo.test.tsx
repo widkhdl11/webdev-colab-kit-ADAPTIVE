@@ -74,7 +74,7 @@ function render(p: { differences?: GiftDifference[]; notice?: "paid" | "failed" 
         view={view!}
         boxes={p.boxes ?? []}
         memo={null}
-        difference={{ differences: p.differences ?? [], clientKey: "", notice: p.notice ?? null }}
+        difference={{ differences: p.differences ?? [], notice: p.notice ?? null }}
         todoBoxIds={p.todoBoxIds ?? []}
       />,
     ),

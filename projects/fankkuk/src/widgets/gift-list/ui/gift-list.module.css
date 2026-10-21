@@ -34,7 +34,7 @@
 .gcard { transition: transform 0.25s var(--ease-micro), box-shadow 0.25s var(--ease-micro); }
 .gcard:hover { box-shadow: var(--card-shadow-hover); }
 .gcard.hi:hover { box-shadow: var(--surface-accent-sheen), var(--card-shadow-hover); }
-@media (hover: hover) { .gcard:hover { transform: translateY(-2px); } }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) { .gcard:hover { transform: translateY(-2px); } }
 .gcard:has(:global(.stretch):focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
 /* 할 일이 있는 카드만 하늘 면 */
 .gcard.hi { border-color: var(--tint-line); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); }

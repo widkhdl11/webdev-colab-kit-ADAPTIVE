@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { disposeDueText, parseActionItems } from "./action-items";
+import { differenceDueKrw, disposeDueText, parseActionItems, type ActionItem } from "./action-items";
 
 // 팬 처리할 일 줄 꼴 (action-center INV-J1·J2). 반송 주소 확인 카드(office-workflow INV-W15) — 상자 하나가 카드 하나.
 
@@ -58,5 +58,20 @@ describe("결제 미완료 줄 (action-center INV-J1 표 · payment INV-M22)", (
     expect(() => parseActionItems([{ ...unpaidRow, amount_krw: null }])).toThrow();
     expect(() => parseActionItems([{ ...unpaidRow, amount_krw: 0 }])).toThrow();
     expect(() => parseActionItems([{ ...unpaidRow, due_at: null }])).toThrow();
+  });
+});
+
+describe("differenceDueKrw — 선물 상세 요약 상자의 「추가 결제 N원」 (action-center INV-J13)", () => {
+  const diff = (amountKrw: number): ActionItem => ({
+    kind: "difference", orderNo: "FC-A", boxId: `b${amountKrw}`, boxLabel: "1번 상자", boxSeq: 1, creatorName: "모모", declaredTier: "소", measuredTier: "중", amountKrw, dueAt: null,
+  });
+
+  it("INV-J13: 맨 위 칸에 뜨는 추가 결제 줄의 금액만 더한다", () => {
+    expect(differenceDueKrw([diff(3000), diff(4500)])).toBe(7500);
+  });
+
+  it("INV-J13 (실패경로): 결제 대기 금액은 추가 결제가 아니고, 칸에 줄이 없으면 0", () => {
+    expect(differenceDueKrw([{ kind: "unpaid", orderNo: "FC-A", creatorName: "모모", amountKrw: 6900, dueAt: "2026-10-22T01:00:00.000Z" }, diff(3000)])).toBe(3000);
+    expect(differenceDueKrw([])).toBe(0);
   });
 });

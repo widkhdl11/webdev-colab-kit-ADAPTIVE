@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readActionItemsOrNull, readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
-import { actionItemsOfOrder, type ActionItem } from "@/entities/action-item/model/action-items";
+import { actionItemsOfOrder, differenceDueKrw, type ActionItem } from "@/entities/action-item/model/action-items";
 import { sentGiftTodoOf } from "@/entities/action-item/model/creator-action-items";
 import { readMyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 import { readMyGiftReplies } from "@/entities/gift-reply/api/gift-reply-reads";
@@ -69,7 +69,7 @@ async function revgiftDetail({ supabase, viewer }: Session, orderNo: string) {
 
 /**
  * 보낸 선물 상세의 맨 위 칸과 사이드바 숫자가 함께 쓰는 지금 할 일 읽기 한 번(action-center INV-J2·J6·J13).
- * 팬 = 팬 지금 할 일 읽기, 크리에이터 = 크리에이터 지금 할 일 읽기(보낸 팬 선물의 결제를 마치지 않은 선물만 칸이 된다 — payment INV-M22 ⑤).
+ * 팬 = 팬 지금 할 일 읽기, 크리에이터 = 크리에이터 지금 할 일 읽기(보낸 팬 선물의 결제 대기·추가 결제·상자 찾기가 칸이 된다 — INV-J13 · payment INV-M22 ⑤).
  * header 는 사이드바 숫자에 넘기는 그 결과 그대로다(못 읽으면 null — 숫자와 칸이 함께 빠진다).
  */
 async function readDetailTodo(supabase: SupabaseClient, viewer: Viewer, orderNo: string): Promise<{ header: readonly unknown[] | null; items: ActionItem[] }> {
@@ -107,7 +107,8 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
       <GiftStatusPage
         view={view}
         boxes={boxes}
-        difference={{ differences, clientKey, notice }}
+        difference={{ differences, notice }}
+        dueKrw={differenceDueKrw(todoItems)}
         payment={payment}
         replies={replies}
         photoBase={readPublicStorageBase()}

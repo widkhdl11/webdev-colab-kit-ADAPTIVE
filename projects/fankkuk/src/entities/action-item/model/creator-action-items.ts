@@ -228,10 +228,16 @@ export function daysLeftOf(dueAt: string, now: string): { text: string; soon: bo
 
 /**
  * 크리에이터 계정이 보낸 선물 상세의 맨 위 「지금 할 일」 칸(action-center INV-J13 · payment INV-M22 ⑤) — 크리에이터 지금 할 일 읽기 결과(사이드바 숫자와 같은 결과, INV-J6)에서
- * 그 주문의 결제를 마치지 않은 선물 줄만 팬 칸과 같은 꼴로 옮긴다. 상세가 따로 「할 일이 있는가」를 계산하지 않는다.
+ * 그 주문의 보낸 선물 줄(결제 대기·추가 결제·상자 찾기)을 모두 팬 칸과 같은 꼴로 옮긴다 — 같은 주문의 일이 여럿이면 모두(INV-J13).
+ * 상세가 따로 「할 일이 있는가」를 계산하지 않는다. 팬 칸에 없는 sentAt 만 뗀다.
  */
 export function sentGiftTodoOf(items: readonly CreatorActionItem[], orderNo: string): ActionItem[] {
-  return items.flatMap((it): ActionItem[] =>
-    it.kind === "unpaid" && it.orderNo === orderNo ? [{ kind: "unpaid", orderNo: it.orderNo, creatorName: it.creatorName, amountKrw: it.amountKrw, dueAt: it.dueAt }] : [],
-  );
+  return items.flatMap((it): ActionItem[] => {
+    if (!("orderNo" in it) || it.orderNo !== orderNo) return [];
+    if (it.kind === "unpaid" || it.kind === "difference" || it.kind === "missing_box") {
+      const { sentAt: _sentAt, ...todo } = it;
+      return [todo];
+    }
+    return [];
+  });
 }

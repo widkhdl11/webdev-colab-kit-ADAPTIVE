@@ -40,7 +40,7 @@
 /* 사진 격자 — PC 3열 사이 16, 휴대폰 2열 사이 12 (시안 .album · .tile) */
 .album { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; margin: var(--space-4) 0 0; padding: 0; list-style: none; }
 .tile { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--card-fx); box-shadow: var(--card-shadow); }
-.tile:hover { box-shadow: 0 2px 8px rgb(31 41 55 / 0.08); }
+.tile:hover { box-shadow: var(--card-shadow-hover); }
 .badges { position: absolute; top: var(--space-3); left: var(--space-3); right: var(--space-3); display: flex; flex-wrap: wrap; gap: var(--space-1); pointer-events: none; }
 .badges :global(.tag) { background: var(--white); white-space: nowrap; }
 .cap { padding: var(--space-3) var(--space-4) var(--space-4); }
