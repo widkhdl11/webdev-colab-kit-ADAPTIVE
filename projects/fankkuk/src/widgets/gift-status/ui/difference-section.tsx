@@ -103,7 +103,7 @@ export function DifferenceSection({ orderNo, differences, clientKey, notice }: P
               </div>
               <p className="t-meta">
                 보낼 때 고른 크기 {tierName(d.declaredTier)} → 재어 본 크기 {tierName(d.measuredTier)}
-                {d.state === "due" ? ` · ${formatDateTime(d.dueAt)}까지` : null}
+                {d.state === "due" && d.dueAt ? ` · ${formatDateTime(d.dueAt)}까지` : null}
               </p>
               {d.state === "due" ? (
                 <div>

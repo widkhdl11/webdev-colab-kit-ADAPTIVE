@@ -19,6 +19,11 @@ describe("팬이 보는 차액 상태 (payment INV-M13)", () => {
     expect(() => parseDifferenceRows([{ ...row, amount_krw: 0 }])).toThrow();
     expect(() => parseDifferenceRows([{ ...row, status: "refunded" }])).toThrow();
   });
+
+  it("INV-M13 (2026-10-21): 기한은 그 상자의 검수 완료 스캔 + 168시간 — 스캔 전이면 기한이 비어 있고 아직 낼 수 있다", () => {
+    const row = { box_id: "00000000-0000-4000-a000-0000000000c1", box_seq: 1, declared_tier: "small", measured_tier: "medium", amount_krw: 2000, status: "pending", due_at: null, expired: false };
+    expect(parseDifferenceRows([row])[0]).toMatchObject({ dueAt: null, state: "due" });
+  });
 });
 
 describe("선물 상세에 보일 차액 줄 (payment INV-M11·M13)", () => {

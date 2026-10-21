@@ -13,7 +13,8 @@ import { formatDeadline, formatMonthDayKo } from "@/shared/lib/format/datetime";
 //   본문에 받는 주소 6자리·사무실 주소를 넣지 않는다(INV-C2) — 이 틀에는 그 칸이 아예 없다.
 // hold_fan: 상자를 보낸 팬에게 돌려보낼 때 「돌려보낼 상자」(INV-N13) — 추적기 반송(2026-10-12 D2), 크리에이터가 돌려보냄,
 //   크리에이터 확인 기한 지남(2026-10-12 (2) D3 ②)이 모두 이 종류·같은 본문이다. 무엇이 나왔는지·누가 돌려보냈는지 쓰는 칸이 없다.
-// box_missing: 결제 완료 + 14일에 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N15, 2026-10-08 카드 d50). 6자리·주소 칸이 없다.
+// box_missing: 결제 완료 + 7·14일에 아직 안 온 상자가 있으면 보낸 팬에게 때마다 한 번, 25일에 마감 안내 한 번(INV-N15, 2026-10-21 — 차례 1·2·3).
+//   6자리·주소 칸이 없다. 「아직 보내지 않음」·「1:1 문의하기」는 링크로 여는 선물 상세에 있다(본문 틀은 버튼 하나).
 // gift_pending_box: 받는 주소를 본 적이 있는 주문이 거절·반려될 때 아직 안 온 상자가 있으면 보낸 팬에게 한 번(INV-N17, 2026-10-10).
 //   거절·7일 반려·차단 거절 모두 같은 종류·같은 본문이다(INV-N2). 6자리·주소 칸이 없다.
 // gift_undelivered: 받는 주소를 본 적이 없는(상자가 하나도 오지 않은) 주문이 거절·반려될 때 보낸 팬에게 한 번(INV-N17 ②, 2026-10-12 문제집 D11).
@@ -170,13 +171,14 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         path: first ? "/gifts/new" : `/gifts/${orderNo}`,
       };
     }
-    case "box_missing":
-      // 30일(720시간)이 지나면 자동 처리가 그 상자를 닫는다(office-workflow INV-W10 · payment INV-M8)
+    case "box_missing": {
+      // 30일(720시간)이 지나면 자동 처리가 그 상자를 닫는다(office-workflow INV-W10 · payment INV-M8). 25일 차례(3)는 마감 안내
+      const first = round === 3 ? "5일 뒤 자동으로 취소되고 환불돼요" : "아직 선물이 팬꾹에 도착하지 않았어요";
       return {
-        subject: "[팬꾹] 아직 도착하지 않은 상자가 있어요",
+        subject: `[팬꾹] ${first}`,
         lines: [
           greet,
-          "아직 도착하지 않은 상자가 있어요.",
+          `${first}.`,
           "결제하고 30일이 지나도 도착하지 않으면 그 상자는 닫히고 그 상자 금액을 돌려드려요.",
           "상자가 하나도 도착하지 않았다면 선물이 취소되고 결제 금액을 모두 돌려드려요.",
           order,
@@ -184,15 +186,16 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         buttonLabel: "선물 보기",
         path: `/gifts/${orderNo}`,
       };
+    }
     case "gift_pending_box":
-      // 거절의 종류는 쓰지 않는다(INV-N2). 상자 금액 − 배송비를 먼저 돌려주고, 늦게 오면 반송, 168시간 안에 안 오면 배송비도(payment INV-M18)
+      // 거절의 종류는 쓰지 않는다(INV-N2). 상자 금액 − 배송비를 먼저 돌려주고, 늦게 오면 반송, 결제하고 30일 안에 안 오면 배송비도(payment INV-M18 ③, 2026-10-21)
       return {
         subject: "[팬꾹] 아직 도착하지 않은 상자가 있어요",
         lines: [
           greet,
           "아직 도착하지 않은 상자가 있어요.",
           "택배비를 뺀 금액을 먼저 돌려드려요.",
-          "이미 보내셨다면 도착하는 대로 돌려보내 드려요. 7일 안에 도착하지 않으면 택배비도 돌려드려요.",
+          "이미 보내셨다면 도착하는 대로 돌려보내 드려요. 결제하고 30일 안에 도착하지 않으면 택배비도 돌려드려요.",
           order,
         ],
         buttonLabel: "선물 보기",
@@ -280,6 +283,15 @@ function draftOf({ kind, round, nickname, orderNo, autoRejectAt, undeliveredReas
         };
       }
       if (!disposeDueAt) throw new Error("반송 주소 재알림에 처분 예정 시각이 없다");
+      // 7·14일(차례 1·2)은 같은 본문, 25일(차례 3)은 마감 안내(INV-N22, 2026-10-21)
+      if (round === 3) {
+        return {
+          subject: "[팬꾹] 5일 뒤 상자를 처분해요",
+          lines: [greet, "5일 뒤 상자를 처분해요.", `${formatMonthDayKo(disposeDueAt)}까지 확인하지 않으면 상자를 처분해요.`, order],
+          buttonLabel: "돌려받을 주소 확인하기",
+          path,
+        };
+      }
       return {
         subject: "[팬꾹] 돌려받을 주소를 아직 확인하지 않았어요",
         lines: [greet, "돌려받을 주소를 아직 확인하지 않았어요.", `${formatMonthDayKo(disposeDueAt)}까지 확인하지 않으면 상자를 처분해요.`, order],

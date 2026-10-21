@@ -118,19 +118,31 @@ describe("알림 링크 (INV-N9)", () => {
     for (const word of ["위치 추적기", "블루투스", "보관", "별빛", "보낸 분에게"]) expect([word, b.text.includes(word) || b.subject.includes(word)]).toEqual([word, false]);
   });
 
-  it("INV-N15 (S15): 도착하지 않은 상자 알림 — 선물 상세 링크, 30일이 지나면 닫히고 그 상자 금액을 돌려준다는 말뿐이다", () => {
+  it("INV-N15 (S15): 도착하지 않은 상자 알림(7·14일) — 선물 상세 링크, 「아직 선물이 팬꾹에 도착하지 않았어요」와 30일이 지나면 닫히고 그 상자 금액을 돌려준다는 말뿐이다", () => {
     const b = buildNotificationBody({
       ...inputFor("box_missing"),
       // @ts-expect-error 본문 틀에는 받는 주소 칸이 없다
       addressCode: "K7M3XA",
     });
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
-    expect(b.subject).toBe("[팬꾹] 아직 도착하지 않은 상자가 있어요");
-    expect(b.text).toContain("아직 도착하지 않은 상자가 있어요.");
+    expect(b.subject).toBe("[팬꾹] 아직 선물이 팬꾹에 도착하지 않았어요");
+    expect(b.text).toContain("아직 선물이 팬꾹에 도착하지 않았어요.");
+    expect(b.text).not.toContain("5일 뒤");
+    expect(buildNotificationBody(inputFor("box_missing", 2)).text).toBe(b.text);
     expect(b.text).toContain("결제하고 30일이 지나도 도착하지 않으면 그 상자는 닫히고 그 상자 금액을 돌려드려요.");
     expect(b.text).toContain("상자가 하나도 도착하지 않았다면 선물이 취소되고 결제 금액을 모두 돌려드려요.");
     expect(b.text).not.toContain("K7M3XA");
     expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
+  });
+
+  it("INV-N15 (S15): 25일 차례는 마감 안내 — 「5일 뒤 자동으로 취소되고 환불돼요」와 같은 두 문장·선물 상세 링크", () => {
+    const b = buildNotificationBody(inputFor("box_missing", 3));
+    expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
+    expect(b.subject).toBe("[팬꾹] 5일 뒤 자동으로 취소되고 환불돼요");
+    expect(b.text).toContain("5일 뒤 자동으로 취소되고 환불돼요.");
+    expect(b.text).toContain("결제하고 30일이 지나도 도착하지 않으면 그 상자는 닫히고 그 상자 금액을 돌려드려요.");
+    expect(b.text).toContain("상자가 하나도 도착하지 않았다면 선물이 취소되고 결제 금액을 모두 돌려드려요.");
+    expect(b.text).not.toContain("아직 선물이 팬꾹에 도착하지 않았어요.");
   });
 
   it("INV-N18 (S18): 차액 결제 요청 알림 — 선물 상세 링크, 추가 결제·결제 뒤 출고·7일 미납 반송이라는 말뿐이고 금액·크기는 없다", () => {
@@ -180,7 +192,9 @@ describe("알림 링크 (INV-N9)", () => {
     expect(b.subject).toBe("[팬꾹] 아직 도착하지 않은 상자가 있어요");
     expect(b.text).toContain("아직 도착하지 않은 상자가 있어요.");
     expect(b.text).toContain("택배비를 뺀 금액을 먼저 돌려드려요.");
-    expect(b.text).toContain("이미 보내셨다면 도착하는 대로 돌려보내 드려요. 7일 안에 도착하지 않으면 택배비도 돌려드려요.");
+    // 기한은 결제하고 30일(payment INV-M18 ③, 2026-10-21 기한 정리 — 그 전 「7일 안에」)
+    expect(b.text).toContain("이미 보내셨다면 도착하는 대로 돌려보내 드려요. 결제하고 30일 안에 도착하지 않으면 택배비도 돌려드려요.");
+    expect(b.text).not.toContain("7일");
     expect(b.text).not.toContain("1:1 문의");
     for (const word of ["거절", "반려", "차단", "K7M3XA"]) expect(b.text).not.toContain(word);
     expect(b.text).not.toMatch(/[3479ACDEFHJKMNPRTWXY]{6}/);
@@ -413,6 +427,25 @@ describe("반송 주소 알림 (INV-N22)", () => {
     expect(new URL(b.link).pathname).toBe("/gifts/FC-7K3M9");
     const first = buildNotificationBody({ ...inputFor("return_address"), disposeDueAt: "2026-11-16T03:00:00Z" });
     expect(first.text).not.toContain("11월 16일");
+  });
+
+  it("INV-N22 (S22): 7·14일 재알림은 같은 본문, 25일 차례는 「5일 뒤 상자를 처분해요」와 같은 날짜·링크", () => {
+    const first = buildNotificationBody(inputFor("return_address_reminder", 1));
+    expect(buildNotificationBody(inputFor("return_address_reminder", 2)).text).toBe(first.text);
+    const last = buildNotificationBody(inputFor("return_address_reminder", 3));
+    expect(last.subject).toBe("[팬꾹] 5일 뒤 상자를 처분해요");
+    expect(last.text).toContain("5일 뒤 상자를 처분해요.");
+    expect(last.text).toContain("11월 16일까지 확인하지 않으면 상자를 처분해요.");
+    expect(last.text).not.toContain("아직 확인하지 않았어요");
+    expect(new URL(last.link).pathname).toBe("/gifts/FC-7K3M9");
+  });
+
+  it("INV-N13·N18: 추적 장치 발견·확인할 선물·추가 결제의 재알림(차례 2)은 첫 알림과 같은 본문이다", () => {
+    for (const kind of ["hold", "creator_check", "difference_due"] as const) {
+      const one = buildNotificationBody(inputFor(kind, 1));
+      const two = buildNotificationBody(inputFor(kind, 2));
+      expect([kind, two.subject, two.text, two.link]).toEqual([kind, one.subject, one.text, one.link]);
+    }
   });
 
   it("INV-N22 (실패경로): 처분 예정 시각이 없는 재알림은 만들지 않는다 — 날짜 없는 재알림을 보내지 않는다", () => {

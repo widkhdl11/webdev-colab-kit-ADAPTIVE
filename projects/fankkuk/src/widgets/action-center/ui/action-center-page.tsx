@@ -124,7 +124,8 @@ function ActionCard({ item, clientKey, now, address }: { item: ActionItem; clien
             <strong>{won(item.amountKrw)}</strong>
           </div>
         </div>
-        <Due at={item.dueAt} now={now} />
+        {/* 기한은 검수 완료 스캔 뒤에 생긴다(payment INV-M13) — 그 전이면 기한 줄을 그리지 않는다 */}
+        {item.dueAt ? <Due at={item.dueAt} now={now} /> : null}
         <DifferencePayButton boxId={item.boxId} orderNo={item.orderNo} amountKrw={item.amountKrw} clientKey={clientKey} />
       </Card>
     );

@@ -16,7 +16,8 @@ export type ActionItem =
       declaredTier: string;
       measuredTier: string;
       amountKrw: number;
-      dueAt: string;
+      /** 기한 = 그 상자의 검수 완료 스캔 + 168시간(payment INV-M13, 2026-10-21). 스캔 전(실측만 있음)이면 null */
+      dueAt: string | null;
     }
   | { kind: "missing_box"; orderNo: string; boxId: string; boxLabel: string; boxSeq: number; creatorName: string; declaredTier: string; dueAt: string }
   | { kind: "revgift"; orderNo: string; creatorName: string; tier: string; dueAt: string }
@@ -34,6 +35,7 @@ const rowShape = z.discriminatedUnion("kind", [
     box_seq: z.number().int(),
     measured_tier: z.string(),
     amount_krw: z.number().int().positive(),
+    due_at: z.string().nullable(),
   }),
   z.object({ ...base, kind: z.literal("missing_box"), box_id: z.string().uuid(), box_label: z.string(), box_seq: z.number().int() }),
   z.object({ ...base, kind: z.literal("revgift") }),

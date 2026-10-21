@@ -25,3 +25,24 @@ describe("처분 예정 날짜 문장 (office-workflow INV-W15, 용어집 dispos
     expect(disposeDueText("2026-11-15T15:30:00.000Z")).toBe("11월 16일까지 확인하지 않으면 상자를 처분해요");
   });
 });
+
+describe("추가 결제 카드의 기한 (action-center INV-J1 · payment INV-M13, 2026-10-21)", () => {
+  const diffRow = {
+    ...base,
+    kind: "difference",
+    box_id: "55555555-5555-4555-8555-555555555555",
+    box_label: "FC-R1",
+    box_seq: 1,
+    measured_tier: "medium",
+    amount_krw: 2000,
+  };
+
+  it("INV-J1·M13: 기한은 검수 완료 스캔 + 168시간 — 스캔 전(실측만 있음)이면 기한이 비어 있는 카드", () => {
+    expect(parseActionItems([{ ...diffRow, due_at: null }])[0]).toMatchObject({ kind: "difference", dueAt: null });
+    expect(parseActionItems([{ ...diffRow, due_at: "2026-11-01T00:00:00Z" }])[0]).toMatchObject({ dueAt: "2026-11-01T00:00:00Z" });
+  });
+
+  it("INV-J1 (실패경로): 기한이 비어 있어도 되는 것은 추가 결제뿐 — 다른 카드의 빈 기한은 거부한다", () => {
+    expect(() => parseActionItems([{ ...returnRow, due_at: null }])).toThrow();
+  });
+});

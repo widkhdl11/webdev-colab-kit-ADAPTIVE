@@ -635,12 +635,12 @@ describe("7일 자동 처리 (INV-W6)", () => {
     }
   });
 
-  it("INV-W6: 매칭 안 된 미확인 입고는 도착 168시간 뒤 기한 지남, 그 뒤에는 팬이 찾아도 안 이어진다", async () => {
+  it("INV-W6: 매칭 안 된 미확인 입고는 도착 720시간(30일, 2026-10-21 — 그 전 168시간) 뒤 기한 지남, 그 뒤에는 팬이 찾아도 안 이어진다", async () => {
     const g = await paidGift();
     const no = waybill();
     const staff = await signedInClient("fankkuk_staff");
     await scanInbound(staff, no, { ...HOLD_DETAILS, shelf: "T-F1" });
-    psql(`update public.office_unmatched set arrived_at = now() - interval '168 hours' where waybill_no = '${no}'`);
+    psql(`update public.office_unmatched set arrived_at = now() - interval '720 hours' where waybill_no = '${no}'`);
     const fan = await signedInClient("byeolbit_fan");
     const found = await fan.rpc("find_held_parcel", { p_box_id: g.boxIds[0], p_share_id: null, p_waybill: no, p_carrier: "cj" });
     expect(found.data).toBe("not_found");
@@ -649,7 +649,7 @@ describe("7일 자동 처리 (INV-W6)", () => {
     expect(psql(`select expired_at is not null from public.office_unmatched where waybill_no = '${no}'`)).toBe("t");
   });
 
-  it("INV-W6: 차액 요청 뒤 168시간 미납이면 그 상자는 반송 대기(payment INV-M13), 167시간이면 그대로", async () => {
+  it("INV-W6: 차액이 검수 완료 스캔 뒤 168시간 미납이면 그 상자는 반송 대기(payment INV-M13, 2026-10-21 — 시계는 검수 완료 스캔), 167시간이면 그대로", async () => {
     const g = await paidGift();
     const no = waybill();
     await fanSetsWaybill(g.boxIds[0], no);
@@ -661,9 +661,10 @@ describe("7일 자동 처리 (INV-W6)", () => {
     psql(
       `insert into public.payments (order_id, kind, box_id, toss_order_id, amount_krw, goods_krw, service_fee_krw, inspection_fee_krw, shipping_fee_krw, status, created_at) values ('${g.orderId}', 'difference', '${g.boxIds[0]}', '${toss}', 2000, 0, 500, 0, 1500, 'pending', now() - interval '167 hours')`,
     );
+    psql(`begin; set local session_replication_role = replica; update public.office_parcels set inspected_at = now() - interval '167 hours' where qr_code = '${qr}'; commit;`);
     await staff.rpc("office_run_expiry");
     expect(parcelState(qr)).toBe("inspected");
-    psql(`update public.payments set created_at = now() - interval '168 hours' where toss_order_id = '${toss}'`);
+    psql(`begin; set local session_replication_role = replica; update public.office_parcels set inspected_at = now() - interval '168 hours' where qr_code = '${qr}'; commit;`);
     await staff.rpc("office_run_expiry");
     expect(parcelState(qr)).toBe("return_waiting");
   });
@@ -1111,7 +1112,9 @@ describe("개인정보 없음 (INV-W7)", () => {
     for (const fn of ["admin_office_parcels", "admin_unmatched_parcels"]) {
       const rows = (await staff.rpc(fn)).data as Record<string, unknown>[];
       expect(rows.length).toBeGreaterThan(0);
-      for (const k of Object.keys(rows[0])) expect(k).not.toMatch(/^(name|real_?name|full_?name)$|phone|address|email|zip/);
+      // 예외는 6자리 없이 온 상자의 전화번호 뒤 4자리 칸 하나(INV-W7·inbound-address-code INV-C5, 2026-10-21) — 값은 숫자 넷뿐이다
+      for (const k of Object.keys(rows[0])) if (k !== "phone_last4") expect(k).not.toMatch(/^(name|real_?name|full_?name)$|phone|address|email|zip/);
+      for (const r of rows) expect(r.phone_last4 === undefined || r.phone_last4 === null || /^[0-9]{4}$/.test(String(r.phone_last4))).toBe(true);
       for (const r of rows) for (const v of Object.values(r)) expect(String(v)).not.toMatch(PHONE_IN_TEXT);
     }
   });
@@ -1123,8 +1126,10 @@ describe("개인정보 없음 (INV-W7)", () => {
     // 택배사·보류 사유·붙어 온 6자리 줄·도용 의심 표시는 inbound-address-code(INV-C5·C9)가 더한 대조용 칸이다 — 사람 칸이 아니다.
     // returned_by 는 「반송으로 넘기기」를 누른 운영자(recorded_by 와 같은 작업자 칸)다.
     // nickname_profile_id 는 송장 「보내는 분」이 닉네임과 맞은 계정(INV-W5·W7, 카드 d94) — 이름 글자는 남기지 않는다.
+    // look(포장 모양 한 줄)·tier(크기)는 물품 보관소 칸(INV-C13, 2026-10-21) — 사람 칸이 아니다.
+    // 원 송장 전화번호 뒤 4자리(INV-C5·W7 의 예외)는 이 표가 아니라 pii 구역(manual/0023)에 둔다.
     expect(cols.split(",")).toEqual([
-      "arrived_at", "carrier", "code_id", "expired_at", "id", "matched_at", "matched_parcel_id", "nickname_profile_id", "reason", "recorded_by", "returned_by", "shelf", "suspected_theft", "waybill_no",
+      "arrived_at", "carrier", "code_id", "expired_at", "id", "look", "matched_at", "matched_parcel_id", "nickname_profile_id", "reason", "recorded_by", "returned_by", "shelf", "suspected_theft", "tier", "waybill_no",
     ]);
   });
 

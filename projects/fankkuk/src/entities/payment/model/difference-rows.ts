@@ -10,7 +10,8 @@ export type GiftDifference = {
   declaredTier: string;
   measuredTier: string;
   amountKrw: number;
-  dueAt: string;
+  /** 기한 = 그 상자의 검수 완료 스캔 + 168시간(INV-M13, 2026-10-21). 스캔 전이면 null — 아직 낼 수 있고 기한은 없다 */
+  dueAt: string | null;
   state: GiftDifferenceState;
 };
 
@@ -21,7 +22,7 @@ const rowShape = z.object({
   measured_tier: z.string(),
   amount_krw: z.number().int().positive(),
   status: z.enum(["pending", "confirming", "done", "failed"]),
-  due_at: z.string(),
+  due_at: z.string().nullable(),
   expired: z.boolean(),
 });
 
