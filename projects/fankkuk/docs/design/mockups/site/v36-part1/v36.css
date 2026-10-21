@@ -1,0 +1,221 @@
+/* v36 1파트 — ../v34-part1/ 의 styles.css · v33.css · v33b.css · v34.css, ../v35-part1/v35.css 위에 차이만 덧붙인다.
+   값은 00000절 그대로: 글자 48·32·24·20·16·14(뱃지 12) / 간격 4·8·12·16·24·32·40·48·64·96 / 반경 24·16·12·알약 / 그림자는 hover 때만.
+   색은 000절 그대로(#1f2937 · #4b5563 · #e5e7eb · #f0f8ff · #e0f2fe · #bfe3f7 · #89cff0) + v35 가 더한 #f7f7f8.
+   겹침은 21절 범위(음수 간격 −16~−48) 안에서만, 뜻이 있는 곳에만 썼다.
+   00절 밖에서 새로 더한 값: 없음.
+   - 비대칭 칸은 새 값이 아니라 00절의 「두 단 = 주 내용 + 오른쪽 288, 간격 32」와 비율 2:1·1:2 로만 만들었다.
+   - 사진 비율은 v35 의 1:1·4:3 만 쓴다. */
+
+/* ── 공통 ─────────────────────────────────────────── */
+.sec-t{display:flex;align-items:baseline;gap:8px;margin-top:48px}
+.sec-t h2{font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0}
+.sec-t small{font-size:14px;color:#4b5563}
+.sec-t.s16 h2{font-size:16px}
+.sec-t.s16{margin-top:40px}
+.lift{position:relative;background:#fff;border:1px solid #bfe3f7;border-radius:16px;padding:24px}
+.gbox{background:#f7f7f8;border-radius:16px;padding:16px 24px}
+.dense-kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px;margin:12px 0 0;font-size:14px}
+.dense-kv div{min-width:0}
+.dense-kv dt{color:#4b5563}
+.dense-kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+
+/* ── 지금 할 일: 급한 일 하나(2) + 기한 카드(1) ───────── */
+.tlead{position:relative;margin-top:64px;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:32px;background:#f0f8ff;border:1px solid #bfe3f7;border-radius:24px;padding:40px}
+.tlead .main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.tlead .who{display:flex;align-items:center;gap:16px}
+.tlead .who .face{width:64px;height:64px;font-size:20px;background:#fff;border:2px solid #bfe3f7}
+.tlead h2{font-family:inherit;font-size:24px;font-weight:700;letter-spacing:0}
+.tlead .sub{font-size:14px;color:#4b5563}
+.tlead .go{margin-top:auto;display:flex;gap:12px;flex-wrap:wrap}
+.tlead .go .btn{min-width:160px}
+.tlead .clock{margin-top:-64px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;padding:32px 24px 24px}
+.tlead .clock .lab{font-size:14px;color:#4b5563;align-self:flex-start}
+.tlead .clock .big{margin-top:4px}
+.tlead .clock img{position:absolute;right:16px;top:-40px;width:80px;height:80px;object-fit:contain;pointer-events:none}
+.tcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+.tcard{position:relative;border:1px solid #e5e7eb;border-radius:16px;background:#fff;padding:24px;display:flex;flex-direction:column;gap:12px}
+.tcard:hover{box-shadow:0 2px 8px rgba(31,41,55,.08)}
+.tcard .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tcard strong{font-size:16px}
+.tcard .sub{font-size:14px;color:#4b5563}
+.tcard .btn{align-self:flex-start;margin-top:4px}
+
+/* ── 보낸 선물: 목록(주) + 크리에이터 칸(288) ─────────── */
+.sg{display:grid;grid-template-columns:minmax(0,1fr) 288px;gap:32px;align-items:start;margin-top:32px}
+.sg>.main{min-width:0}
+.sg>.side{position:sticky;top:32px}
+.sg .tabs{margin-top:0}
+.cside{background:#f7f7f8;border-radius:16px;padding:16px}
+.cside h2{font-family:inherit;font-size:16px;font-weight:700;letter-spacing:0;padding:0 8px}
+.cside h2 small{font-size:14px;font-weight:500;color:#4b5563;margin-left:8px}
+.cside ul{margin-top:8px}
+.crow{position:relative;display:flex;align-items:center;gap:12px;min-height:56px;padding:8px;border-radius:12px}
+.crow+.crow{border-top:1px solid #e5e7eb}
+.crow:hover{background:#fff}
+.crow:focus-within{outline:3px solid #1f2937;outline-offset:-3px}
+.crow .t{flex:1;min-width:0}
+.crow strong{display:block;font-size:16px}
+.crow small{display:block;font-size:14px;color:#4b5563}
+.crow .stretch::after{content:"";position:absolute;inset:0;border-radius:12px}
+.crow .stretch:focus-visible{outline:none}
+.gcard.lead{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 32px;padding:32px;margin-top:24px}
+.gcard.lead .top,.gcard.lead .body,.gcard.lead .prog{grid-column:1}
+.gcard.lead h3{font-size:24px}
+.gcard.lead .step{grid-column:2;grid-row:1/4;align-self:end;display:flex;flex-direction:column;align-items:flex-end;line-height:1.2}
+.gcard.lead .step .lab{display:block;font-size:14px;color:#4b5563;margin-top:4px}
+.gcard.lead .peek{position:absolute;right:32px;top:-48px;width:96px;height:96px;object-fit:contain;pointer-events:none}
+.gcard.lead .top{padding-right:112px}
+.sg .gcards{margin-top:16px}
+.sg .tabs+.gcards{margin-top:0}
+
+/* ── 선물 상세: 상태 판 + 올린 결제 카드 ──────────────── */
+.dh{position:relative;margin-top:24px;background:#f0f8ff;border:1px solid #bfe3f7;border-radius:24px;padding:40px 40px 48px;display:grid;grid-template-columns:minmax(0,1fr) 288px;gap:32px}
+.dh .l{min-width:0}
+.dh .meta{font-size:14px;color:#4b5563}
+.dh h1{font-family:inherit;font-size:24px;font-weight:700;letter-spacing:0;margin-top:4px}
+.dh .what{font-size:14px;color:#4b5563}
+.dh .when{margin-top:32px}
+.dh .when .tag{background:#fff}
+.dh .when .big{margin-top:8px}
+.dh .r{position:relative;display:flex;flex-direction:column;justify-content:center}
+.dh .r img{max-width:none;position:absolute;right:0;top:-88px;width:128px;height:128px;object-fit:contain;pointer-events:none}
+.dh .r .msg{font-size:16px;font-weight:600}
+.dh .dsteps{margin-top:32px}
+.db{display:grid;grid-template-columns:minmax(0,1fr) 288px;gap:32px;align-items:start;margin-top:16px;padding:0 40px}
+.db>.main{min-width:0;display:flex;flex-direction:column;gap:16px;margin-top:8px}
+.db>.side{margin-top:-48px}
+.db .dcard{padding:24px}
+.db .side .amount{font-family:Round,sans-serif;font-weight:800;font-size:32px;letter-spacing:-1px;line-height:1.2;margin-top:8px}
+.db .side h2{font-family:inherit;font-size:16px;font-weight:700;letter-spacing:0}
+.db .side .kv{font-size:14px}
+.db .side .kv dd{font-size:14px}
+.db .side .pn{font-size:14px;color:#4b5563;margin-top:12px}
+.db .side .ok{margin-top:12px}
+.db .side .cancel{margin-top:16px}
+.db .gbox h2{font-family:inherit;font-size:14px;font-weight:700;letter-spacing:0;color:#4b5563}
+.db .gbox .pn{font-size:14px;color:#4b5563;margin-top:12px}
+
+/* ── 받은 역조공 상세: 선물 그림(1) + 결정(2) ──────────── */
+.rv6{position:relative;margin-top:64px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:32px;background:#f0f8ff;border:1px solid #bfe3f7;border-radius:24px;padding:32px 40px 40px}
+.rv6 .art{margin-top:-48px;align-self:start;aspect-ratio:1/1;display:grid;place-items:center;background:#fff;border:1px solid #bfe3f7;border-radius:16px}
+.rv6 .art img{width:64%;height:64%;object-fit:contain}
+.rv6 .r{min-width:0}
+.rv6 .who{display:flex;align-items:center;gap:12px}
+.rv6 .who .face{width:40px;height:40px;font-size:16px;border:2px solid #fff}
+.rv6 h1{font-family:inherit;font-size:24px;font-weight:700;letter-spacing:0}
+.rv6 .meta{font-size:14px;color:#4b5563;margin-top:4px}
+.rv6 .ask{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:24px;padding-top:24px;border-top:1px solid #bfe3f7}
+.rv6 .ask h2{font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0}
+.rv6 .ask p{font-size:14px;color:#4b5563;margin-top:4px}
+.rv6 .ask .big.n32{font-size:32px;color:#1f2937;margin-top:0}
+.rv6 .choice{margin-top:24px}
+.rv6 .choice .btn.fill{min-width:160px}
+.rv6 .once{font-size:14px;color:#4b5563;margin-top:16px}
+.rv6 .addr{margin-top:24px}
+.rv6 .addr h2{font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0}
+.rv6 .addr .tagrow{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.rv6 .addr p{font-size:14px;color:#4b5563;margin-top:12px}
+.rv6-folds{margin:32px 0 0 calc((100% - 32px)/3 + 32px);border-bottom:1px solid #e5e7eb}
+.rv6-folds .fold summary{font-size:16px}
+.rv6-folds .fold summary small{font-size:14px;font-weight:500;color:#4b5563;margin-left:8px;margin-right:auto}
+.rv6-folds .fold .in p{font-size:14px;color:#4b5563}
+
+/* ── 받은 선물: 결정할 선물(2) + 받는 중 카드(1) ────────── */
+.rg{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;margin-top:48px;align-items:stretch}
+.rlead{position:relative;background:#f0f8ff;border:1px solid #bfe3f7;border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:16px}
+.rlead .peek{position:absolute;right:24px;top:-48px;width:96px;height:96px;object-fit:contain;pointer-events:none}
+.rlead .who{display:flex;align-items:center;gap:16px;padding-right:96px}
+.rlead .who .face{width:56px;height:56px;font-size:20px;background:#fff;border:2px solid #bfe3f7}
+.rlead .who strong{display:block;font-size:20px}
+.rlead .who div span{display:block;font-size:14px;color:#4b5563}
+.rlead .foot{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:auto;padding-top:16px;border-top:1px solid #bfe3f7}
+.rlead .foot .lab{display:block;font-size:14px;color:#4b5563;margin-top:4px}
+.rlead .foot .btn{min-width:128px}
+.rlead .tag{align-self:flex-start}
+.rcol{display:flex;flex-direction:column;gap:16px}
+.rcard{position:relative;border:1px solid #e5e7eb;border-radius:16px;background:#fff;padding:24px;display:flex;flex-direction:column;gap:12px}
+.rcard:hover{box-shadow:0 2px 8px rgba(31,41,55,.08)}
+.rcard:focus-within{outline:3px solid #1f2937;outline-offset:3px}
+.rcard .who{display:flex;align-items:center;gap:12px}
+.rcard strong{font-size:16px}
+.rcard .sub{font-size:14px;color:#4b5563}
+.rcard .stretch::after{content:"";position:absolute;inset:0;border-radius:16px}
+.rcard .stretch:focus-visible{outline:none}
+.rcard .tag{align-self:flex-start}
+
+/* ── 함께한 시간: 띠 + 얼굴 겹침 + 달마다 사진 격자 ──────── */
+.wb{position:relative;margin-top:16px;background:#f0f8ff;border:1px solid #bfe3f7;border-radius:24px;padding:32px 40px 48px;display:flex;justify-content:flex-end;align-items:flex-end;gap:40px;min-height:160px}
+.wb .days{text-align:right;line-height:1.2}
+.wb .days .lab{display:block;font-size:14px;color:#4b5563;margin-top:8px}
+.wh{position:relative;display:flex;align-items:flex-end;gap:24px;margin:-48px 0 0 40px;flex-wrap:wrap}
+.wh .face{width:96px;height:96px;border:4px solid #fff;background:#e0f2fe;flex:none}
+.wh .face img{object-fit:contain}
+.wh h1{font-family:inherit;font-size:24px;font-weight:700;letter-spacing:0}
+.wh p{font-size:14px;color:#4b5563}
+.wb .nums{display:flex;gap:24px;padding-bottom:8px}
+.wb .nums div{text-align:right}
+.wb .nums b{display:block;font-size:20px;font-weight:700;line-height:1.4}
+.wb .nums span{font-size:14px;color:#4b5563}
+.wnote{display:flex;gap:4px 16px;flex-wrap:wrap;margin-top:32px;padding:8px 16px;border-radius:12px;background:#f7f7f8;font-size:14px;color:#4b5563}
+.wnote strong{color:#1f2937}
+.tile.feat2{grid-column:span 2;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.tile.feat2 .ph-photo{aspect-ratio:auto;height:100%;min-height:240px}
+.tile.feat2 .cap{padding:24px;display:flex;flex-direction:column;justify-content:flex-end}
+.tile.feat2 .cap strong{white-space:normal;font-size:20px;line-height:1.4}
+.tile.feat2 .cap .row2{margin-top:16px}
+
+@media(max-width:999px){
+ .sg{grid-template-columns:minmax(0,1fr)}
+ .sg>.side{position:static;order:-1}
+ .dh{grid-template-columns:minmax(0,1fr)}
+ .dh .r{position:absolute;right:40px;top:0}
+ .dh .r .msg{display:none}
+ .dh .r img{top:-48px;width:96px;height:96px}
+ .db{grid-template-columns:minmax(0,1fr);padding:0}
+ .db>.side{margin-top:0;order:-1}
+}
+@media(max-width:767px){
+ .tlead{grid-template-columns:1fr;padding:24px;gap:24px;margin-top:64px}
+ .tlead .clock{order:-1;margin-top:-48px}
+ .tlead .go .btn{width:100%}
+ .tcards{grid-template-columns:1fr}
+ .tcard{padding:16px}
+ .cside{padding:8px}
+ .cside ul{display:flex;overflow-x:auto;gap:8px;scroll-snap-type:x mandatory;padding-bottom:4px}
+ .crow{flex:0 0 auto;min-width:200px;background:#fff;scroll-snap-align:start}
+ .crow+.crow{border-top:0}
+ .gcard.lead{grid-template-columns:1fr;padding:24px;margin-top:48px}
+ .gcard.lead .step{grid-column:1;grid-row:auto;text-align:left}
+ .gcard.lead .peek{width:64px;height:64px;right:24px;top:-32px}
+ .gcard.lead .top{padding-right:72px}
+ .gcard.lead h3{font-size:20px}
+ .dh{padding:24px 24px 32px}
+ .dh .r{right:24px}
+ .dh .r img{width:64px;height:64px;top:-32px}
+ .dh h1,.dh .meta{padding-right:72px}
+ .dh .dsteps{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 4px}
+ .dense-kv{gap:8px 16px}
+ .gbox{padding:16px}
+ .rv6{grid-template-columns:1fr;padding:24px;gap:24px;margin-top:48px}
+ .rv6 .art{width:128px;margin:-56px auto 0}
+ .rv6 .choice .btn{width:100%}
+ .rv6-folds{margin-left:0}
+ .rg{grid-template-columns:1fr;gap:16px}
+ .rlead{padding:24px}
+ .rlead .peek{width:64px;height:64px;right:16px;top:-32px}
+ .rlead .who{padding-right:72px}
+ .rlead .foot .btn{width:100%}
+ .rcard{padding:16px}
+ .epanel{padding-top:96px}
+ .wb{padding:24px 24px 48px;min-height:128px;justify-content:flex-start}
+ .wb .days{text-align:left}
+ .wh{margin-left:16px;gap:16px}
+ .wh .face{width:80px;height:80px}
+ .wb{flex-direction:column;align-items:flex-start;gap:16px;padding-bottom:64px}
+ .wb .days{order:-1}
+ .wb .nums div{text-align:left}
+ .tile.feat2{grid-template-columns:1fr}
+ .tile.feat2 .ph-photo{aspect-ratio:4/3;height:auto;min-height:0}
+ .tile.feat2 .cap{padding:12px}
+ .tile.feat2 .cap strong{font-size:16px}
+}

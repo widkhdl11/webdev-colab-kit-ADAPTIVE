@@ -1,0 +1,199 @@
+/* v35 1파트 — ../v34-part1/ 의 styles.css · v33.css · v33b.css · v34.css 위에 차이만 덧붙인다.
+   값은 00000절 그대로: 글자 48·32·24·20·16·14(뱃지 12) / 간격 4·8·12·16·24·32·40·48·64·96 / 반경 24·16·12·알약 / 그림자는 hover 때만.
+   색은 000절 그대로(#1f2937 · #4b5563 · #e5e7eb · #f0f8ff · #e0f2fe · #bfe3f7 · #89cff0) + 00000절 파스텔 8색.
+   00절 밖에서 더한 값 두 가지:
+   1) 부차 정보 카드 바탕 #f7f7f8 — styles.css 푸터 바탕과 같은 회색(새 색은 아님, 카드 바탕으로 쓰는 것이 처음). 그 위 #4b5563 글자 대비 7.1:1.
+   2) 사진 칸 비율 1:1(앨범 A)·4:3(일기장 B) — 사진 비율은 00000절에 정한 값이 없어 업계에서 흔한 두 비율을 썼다.
+   사진 자리 그림은 예시다(실제는 팬이 올린 선물 사진 한 장 — 주문당 한 장). */
+
+/* ── 보낸 선물: 크리에이터 카드 · 선물 카드 ───────────────── */
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-top:40px}
+.sec-h small{font-size:14px;color:#4b5563}
+.ccards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.ccard{position:relative;border:1px solid #e5e7eb;border-radius:16px;background:#fff;padding:24px;display:flex;flex-direction:column;gap:16px}
+.ccard:hover{background:#f0f8ff;box-shadow:0 2px 8px rgba(31,41,55,.08)}
+.ccard:focus-within{outline:3px solid #1f2937;outline-offset:3px}
+.ccard .who{display:flex;align-items:center;gap:12px;min-width:0}
+.ccard .face{width:56px;height:56px;font-size:20px}
+.ccard .who strong{display:block;font-size:20px;line-height:1.4}
+.ccard .who small{display:block;font-size:14px;color:#4b5563}
+.ccard .stretch::after{content:"";position:absolute;inset:0;border-radius:16px}
+.ccard .stretch:focus-visible{outline:none}
+.ccard .last{border-top:1px solid #e5e7eb;padding-top:16px;display:flex;flex-direction:column;gap:8px}
+.ccard .last .lab{font-size:14px;color:#4b5563}
+.ccard .last .line{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:28px}
+.ccard .more{margin-top:auto;font-size:14px;font-weight:600;color:#1f2937}
+.face.c1{background:#fde2e4}.face.c2{background:#dcebff}.face.c3{background:#e6e0ff}
+
+.gcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+.gcard{position:relative;border:1px solid #e5e7eb;border-radius:16px;background:#fff;padding:24px;display:flex;flex-direction:column;gap:16px}
+.gcard:hover{box-shadow:0 2px 8px rgba(31,41,55,.08)}
+.gcard:focus-within{outline:3px solid #1f2937;outline-offset:3px}
+.gcard.hi{background:#f0f8ff;border-color:#bfe3f7}
+.gcard .top{display:flex;align-items:center;gap:12px}
+.gcard .top strong{flex:1;min-width:0;font-size:16px}
+.gcard .stretch::after{content:"";position:absolute;inset:0;border-radius:16px}
+.gcard .stretch:focus-visible{outline:none}
+.gcard h3{font-family:inherit;font-size:20px;font-weight:700;line-height:1.4}
+.gcard h3+p{font-size:14px;color:#4b5563;margin-top:4px}
+.pbar{display:flex;gap:4px}
+.pbar i{flex:1;height:8px;border-radius:999px;background:#e5e7eb}
+.pbar i.on{background:#89cff0}
+.gcard.hi .pbar i:not(.on){background:#fff}
+.gcard .pfoot{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:#4b5563;margin-top:8px}
+.gcard .pfoot b{color:#1f2937;font-weight:600}
+.gcard .stop{min-height:48px;display:flex;align-items:center;font-size:14px;color:#4b5563;border-top:1px solid #e5e7eb;padding-top:16px}
+.sub-h{font-size:16px;font-weight:700;margin-top:32px}
+.sub-h small{font-size:14px;font-weight:500;color:#4b5563;margin-left:8px}
+
+/* ── 선물 상세: 상태 판 + 카드 격자 ───────────────────────── */
+.dhero{position:relative;margin-top:40px;background:#f0f8ff;border:1px solid #bfe3f7;border-radius:24px;padding:32px}
+.dhero .peek{position:absolute;right:32px;top:-40px;width:96px;height:96px;object-fit:contain;pointer-events:none}
+.dhero .meta{font-size:14px;color:#4b5563}
+.dhero h1{font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0;margin-top:4px}
+.dhero .what{font-size:14px;color:#4b5563}
+.dhero .now{display:flex;align-items:flex-end;justify-content:space-between;gap:16px 32px;flex-wrap:wrap;margin-top:24px}
+.dhero .now .tag{background:#fff}
+.dhero .now .when .lab{display:block;font-size:14px;color:#4b5563;margin-top:8px}
+.dhero .now .msg{font-size:16px;font-weight:600}
+.dsteps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin:24px 0 0;padding:0;list-style:none}
+.dsteps li{font-size:14px;color:#4b5563}
+.dsteps li::before{content:"";display:block;height:8px;border-radius:999px;background:#fff;margin-bottom:8px}
+.dsteps li.done::before{background:#89cff0}
+.dsteps li.done{color:#1f2937}
+.dsteps li.next{color:#1f2937;font-weight:700}
+.dsteps li.next::before{background:#fff;box-shadow:inset 0 0 0 2px #89cff0}
+.dsteps li small{display:block;font-size:14px;font-weight:500;color:#4b5563}
+.dgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:24px;align-items:start}
+.dcard{border:1px solid #e5e7eb;border-radius:16px;background:#fff;padding:24px}
+.dcard h2{font-family:inherit;font-size:16px;font-weight:700;letter-spacing:0}
+.dcard .boxline{margin-top:12px}
+.dcard .boxline span:first-child{font-weight:600}
+.dcard .amount{font-family:Round,sans-serif;font-weight:800;font-size:32px;letter-spacing:-1px;line-height:1.2;margin-top:8px}
+.dcard .kv{font-size:14px}
+.dcard .kv dd{font-size:14px}
+.dcard .kv div+div{margin-top:8px}
+.dcard .pay-note{margin-top:12px}
+.dcard .fold{margin-top:16px}
+.dcard .fold summary{font-size:14px;min-height:44px}
+.dcard .fold .in>*+*{margin-top:12px}
+.dcard .fold .input{min-height:44px}
+.dcard .cancel{margin-top:24px}
+.dcard.muted{background:#f7f7f8;border-color:#f7f7f8}
+.dcard.muted h2{color:#4b5563}
+.dcard .ok{display:inline-flex;align-items:center;gap:8px;margin-top:16px}
+
+/* ── 받은 역조공 상세: 결정 칸 하나 ───────────────────────── */
+.rvcard{position:relative;margin-top:48px;background:#f0f8ff;border:1px solid #bfe3f7;border-radius:24px;padding:40px 32px 32px}
+.rvcard .peek{position:absolute;right:32px;top:-48px;width:96px;height:96px;object-fit:contain;pointer-events:none}
+.rvcard .who{display:flex;align-items:center;gap:16px;padding-right:96px}
+.rvcard .face{width:56px;height:56px;font-size:20px;border:2px solid #fff}
+.rvcard .who h1{font-family:inherit;font-size:24px;font-weight:700;letter-spacing:0}
+.rvcard .who p{font-size:14px;color:#4b5563}
+.rvcard .ask{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:32px;padding-top:24px;border-top:1px solid #bfe3f7}
+.rvcard .ask h2{font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0}
+.rvcard .ask p{font-size:14px;color:#4b5563;margin-top:4px}
+.rvcard .ask .big{text-align:right;font-size:48px;margin-top:0;color:#1f2937}
+.rvcard .choice{margin-top:24px}
+.rvcard .choice .btn.fill{min-width:160px}
+.rvcard .once{font-size:14px;color:#4b5563;margin-top:16px}
+.rvcard .addr{margin-top:24px;background:#fff;border:1px solid #bfe3f7;border-radius:16px;padding:24px}
+.rvcard .addr h2{font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0}
+.rvcard .addr .tagrow{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.rvcard .addr p{font-size:14px;color:#4b5563;margin-top:12px}
+.rv-folds{margin-top:32px;border-bottom:1px solid #e5e7eb}
+.rv-folds .fold summary{font-size:16px}
+.rv-folds .fold summary small{font-size:14px;font-weight:500;color:#4b5563;margin-left:8px;margin-right:auto}
+.rv-folds .fold .in p{font-size:14px;color:#4b5563}
+
+/* ── 함께한 시간 공통 머리 ─────────────────────────────── */
+.mhead{display:flex;align-items:center;gap:16px;margin-top:16px;flex-wrap:wrap}
+.mhead .face{width:64px;height:64px;background:#fff;border:2px solid #bfe3f7}
+.mhead .face img{object-fit:contain}
+.mhead h1{font-family:inherit;font-size:24px;font-weight:700;letter-spacing:0}
+.mhead p{font-size:14px;color:#4b5563}
+.mhead .nums{margin-left:auto;display:flex;gap:24px}
+.mhead .nums div{text-align:right}
+.mhead .nums b{display:block;font-family:Round,sans-serif;font-weight:800;font-size:24px;line-height:1.2}
+.mhead .nums span{font-size:14px;color:#4b5563}
+.mnote{display:flex;gap:8px 16px;flex-wrap:wrap;margin-top:24px;padding:12px 16px;border-radius:12px;background:#f7f7f8;font-size:14px;color:#4b5563}
+.mnote strong{color:#1f2937}
+.month{display:flex;align-items:baseline;gap:12px;margin-top:48px}
+.month h2{font-family:Round,sans-serif;font-size:24px;letter-spacing:0}
+.month small{font-size:14px;color:#4b5563}
+/* 사진 자리(예시) — 파스텔 바탕 + 그림 */
+.ph-photo{position:relative;display:grid;place-items:center;overflow:hidden}
+.ph-photo img{width:56%;height:56%;object-fit:contain}
+.ph-photo.p1{background:#fde2e4}.ph-photo.p2{background:#fff1b8}.ph-photo.p3{background:#d3f0ec}.ph-photo.p4{background:#e6e0ff}
+
+/* A — 사진 격자 앨범 */
+.album{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.tile{position:relative;border-radius:16px;overflow:hidden;background:#fff;border:1px solid #e5e7eb;display:flex;flex-direction:column}
+.tile:hover{box-shadow:0 2px 8px rgba(31,41,55,.08)}
+.tile .ph-photo{aspect-ratio:1/1}
+.tile .cap{padding:12px 16px 16px}
+.tile .cap time{display:block;font-size:14px;color:#4b5563}
+.tile .cap strong{display:block;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .cap .row2{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:14px;color:#4b5563}
+.tile .cap .row2 a{font-weight:600;color:#1f2937;min-height:44px;display:inline-flex;align-items:center}
+.tile .badge{position:absolute;left:12px;top:12px;background:#fff}
+.tile.nopic .ph-photo{background:#f0f8ff;border-bottom:1px dashed #bfe3f7}
+.tile.nopic .ph-photo .inner{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px;text-align:center}
+.tile.nopic .ph-photo img{width:64px;height:64px}
+.tile.nopic .ph-photo span{font-size:14px;color:#4b5563}
+
+/* B — 큰 사진이 이어지는 일기장 */
+.diary{max-width:640px}
+.diary .month{margin-top:64px;padding-bottom:12px;border-bottom:1px solid #e5e7eb}
+.diary .month h2{font-size:32px;letter-spacing:-1px}
+.entry{margin-top:32px;display:grid;grid-template-columns:64px minmax(0,1fr);gap:16px}
+.entry .day{text-align:center;line-height:1.2}
+.entry .day b{display:block;font-family:Round,sans-serif;font-weight:800;font-size:32px;letter-spacing:-1px}
+.entry .day span{font-size:14px;color:#4b5563}
+.page-card{border-radius:24px;overflow:hidden;background:#fff;border:1px solid #e5e7eb}
+.page-card .ph-photo{aspect-ratio:4/3}
+.page-card .body{padding:24px}
+.page-card .nth{font-size:14px;color:#4b5563}
+.page-card h3{font-family:inherit;font-size:20px;font-weight:700;margin-top:4px}
+.page-card .s{font-size:14px;color:#4b5563;margin-top:8px}
+.page-card .acts{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;flex-wrap:wrap}
+.page-card.text{background:#f0f8ff;border-color:#bfe3f7}
+.page-card.text .body{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}
+.page-card.text .body>img{width:64px;height:64px;object-fit:contain}
+.page-card.text .acts{grid-column:1/-1;margin-top:0}
+.page-card.first .tag{background:#fff}
+
+@media(max-width:999px){
+ .dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dgrid .muted{grid-column:1/-1}
+}
+@media(max-width:767px){
+ .ccards{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:4px 0;margin:12px 0 0}
+ .ccard{flex:0 0 78%;scroll-snap-align:start;padding:16px}
+ .gcards{grid-template-columns:1fr}
+ .gcard{padding:16px}
+ .dhero{padding:24px}
+ .dhero .peek{width:64px;height:64px;right:24px;top:-32px}
+ .dhero h1,.dhero .meta{padding-right:48px}
+ .dsteps{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 4px}
+ .dgrid{grid-template-columns:1fr}
+ .rvcard{padding:32px 24px 24px}
+ .rvcard .peek{width:64px;height:64px;right:24px;top:-32px}
+ .rvcard .who{padding-right:48px}
+ .rvcard .ask .big{text-align:left}
+ .rvcard .choice .btn{width:100%}
+ .mhead .nums{margin-left:0;width:100%}
+ .mhead .nums div{text-align:left}
+ .album{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ .tile .cap{padding:8px 12px 12px}
+ .tile.nopic .ph-photo img{display:none}
+ .tile.nopic .ph-photo .inner{padding:12px;gap:8px}
+ .tile .cap strong{font-size:14px}
+ .tile .cap .row2{flex-wrap:wrap;gap:0 8px}
+ .entry{grid-template-columns:1fr;gap:8px}
+ .entry .day{display:flex;align-items:baseline;gap:8px;text-align:left}
+ .entry .day b{font-size:24px;letter-spacing:0}
+ .page-card .body{padding:16px}
+ .page-card.text .body{grid-template-columns:1fr}
+ .page-card.text .body>img{display:none}
+}

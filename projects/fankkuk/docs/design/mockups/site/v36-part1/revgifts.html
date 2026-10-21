@@ -1,0 +1,28 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>받은 선물 · 팬꾹 v36 시안</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="../v34-part1/v33.css"><link rel="stylesheet" href="../v34-part1/v33b.css"><link rel="stylesheet" href="../v34-part1/v34.css"><link rel="stylesheet" href="../v35-part1/v35.css"><link rel="stylesheet" href="v36.css"></head>
+<!-- v36 1파트 — 받은 선물: 받을지 정할 선물(2) + 받는 중 카드 기둥(1). 완료 탭은 촘촘한 줄. 값은 ../v34-part1/ · ../v35-part1/ CSS 위에 v36.css 차이만. 이름·번호·날짜·사진은 예시. -->
+<body class="member" id="top"><aside class="sidebar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><nav aria-label="주 메뉴"><a href="#"><span class="nav-glyph" aria-hidden="true">⌂</span>홈</a><a href="#"><span class="nav-glyph" aria-hidden="true">☑</span>지금 할 일<span class="nav-count" aria-label="4건">4</span></a><a href="#"><span class="nav-glyph" aria-hidden="true">⌕</span>크리에이터 찾기</a><a href="#"><span class="nav-glyph" aria-hidden="true">◇</span>선물 보내기</a><a href="#"><span class="nav-glyph" aria-hidden="true">□</span>보낸 선물</a><a href="#" class="active" aria-current="page"><span class="nav-glyph" aria-hidden="true">↗</span>받은 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">♡</span>팔로우한 크리에이터</a><a href="#"><span class="nav-glyph" aria-hidden="true">?</span>문의</a></nav><div class="account"><span class="avatar">별</span><div><strong>별빛님</strong><small>팬 · 계정 설정</small></div></div></aside><div class="page"><header class="mobile-bar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><button type="button" aria-label="메뉴 열기">☰</button></header><main><div class="wrap ">
+
+<header class="ph"><h1>받은 선물</h1></header>
+<p class="ph-desc">내가 팔로우한 크리에이터가 나에게 보낸 선물이에요.</p>
+<div data-tabs>
+<nav class="tabs" aria-label="선물 상태"><a href="#" data-tab="ing" aria-current="page">받는 중 2</a><a href="#" data-tab="done">완료 1</a></nav>
+<div data-panel="ing"><div class="rg">
+<article class="rlead"><img class="peek" src="../../../../../public/images/home/creator-cat.webp" alt="">
+  <div class="who"><span class="face c1" aria-hidden="true">하</span><div><strong>하루님이 보낸 선물</strong><span>소형 상자 · 주문번호 RG-VIEW1</span></div></div>
+  <span class="tag warn">받을지 정해 주세요</span>
+  <div class="foot"><div><p class="big n48">5일<small>남음</small></p><span class="lab">10월 26일까지</span></div><a class="btn fill" href="revgift-detail.html#todo">바로 하기</a></div>
+</article>
+<div class="rcol">
+<article class="rcard"><div class="who"><span class="face sm c2" aria-hidden="true">모</span><a class="stretch" href="revgift-detail.html"><strong>모모님이 보낸 선물</strong></a></div><p class="sub">소형 상자 · 주문번호 RG-9C2M7T</p><span class="tag">출고됨</span><p class="sub">배송이 시작됐어요 · 주소는 지워졌어요</p></article>
+</div>
+</div></div>
+<div data-panel="done" hidden>
+<ul class="rows flat" style="margin-top:24px">
+<li class="lrow slim dense"><span class="face sm c3" aria-hidden="true">새</span><div class="txt"><a class="stretch" href="revgift-detail.html"><strong>새벽달님이 보낸 선물</strong></a><span>소형 상자 · 주문번호 RG-1B7D3Q</span></div><div class="side"><span class="tag success">도착 완료</span></div><span class="chev" aria-hidden="true">›</span></li>
+</ul></div></div>
+<p class="demo-h">시안용 구분 · 빈 상태</p>
+<div class="epanel"><img src="../../../../../public/images/home/creator-cat.webp" alt=""><p>아직 받은 선물이 없어요.<br>크리에이터가 선물을 보내면 여기에 나와요.</p></div>
+<script>
+document.querySelectorAll('[data-tabs]').forEach(g=>{const tabs=g.querySelectorAll('[data-tab]');const show=k=>{tabs.forEach(x=>{if(x.dataset.tab===k)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current');});g.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==k);};tabs.forEach(t=>t.addEventListener('click',e=>{e.preventDefault();show(t.dataset.tab);}));if(location.hash==='#done')show('done');});
+</script>
+</div></main></div></body></html>
