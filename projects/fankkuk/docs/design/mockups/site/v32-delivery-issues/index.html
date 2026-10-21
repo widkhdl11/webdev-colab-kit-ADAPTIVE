@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>물품 보관소·배송문제 확인 비교 시안 · 팬꾹</title><link rel="stylesheet" href="styles.css">
+<style>.comparison.two{grid-template-columns:repeat(2,minmax(0,1fr))}.comparison.two.mobile{grid-template-columns:repeat(auto-fill,390px);justify-content:center}.group-title{margin:24px 24px 0;font-size:20px;font-family:inherit;font-weight:700}.admin-note{margin:8px 24px 0;font-size:14px;color:#4b5563}</style></head>
+<body class="review-body">
+<header class="review-toolbar"><div><h1>물품 보관소와 배송문제 확인</h1><p>화면 구성을 비교하는 정적 시안입니다. 이름·번호·날짜는 예시예요.</p></div><div class="review-modes" aria-label="화면 크기"><button type="button" data-width="1440" aria-pressed="true">PC 1440</button><button type="button" data-width="390" aria-pressed="false">모바일 390</button></div></header>
+<h2 class="group-title">회원 화면</h2>
+<main class="comparison two" id="member">
+<section><div class="compare-label"><strong>물품 보관소</strong><a href="storage.html" target="_blank">크게 보기 ↗</a></div><div class="frame-box"><iframe title="물품 보관소 시안" data-page="storage.html" data-h="1300" data-hm="1500"></iframe></div></section>
+<section><div class="compare-label"><strong>내 물품 확인 창 (입력 · 맞았을 때 · 틀렸을 때)</strong><a href="storage-claim.html" target="_blank">크게 보기 ↗</a></div><div class="frame-box"><iframe title="내 물품 확인 창 시안" data-page="storage-claim.html" data-h="1000" data-hm="2450"></iframe></div></section>
+</main>
+<h2 class="group-title">운영자 화면 (PC 전용)</h2>
+<p class="admin-note">운영자 화면은 사무실 PC에서 쓰므로 모바일 전환에서도 PC 폭으로 보여 드려요.</p>
+<main class="comparison two" id="admin">
+<section><div class="compare-label"><strong>물품 보관소 · 보관 중</strong><a href="admin-storage.html" target="_blank">크게 보기 ↗</a></div><div class="frame-box"><iframe title="운영자 물품 보관소 보관 중 시안" data-page="admin-storage.html" data-h="760"></iframe></div></section>
+<section><div class="compare-label"><strong>물품 보관소 · 확인 요청</strong><a href="admin-storage.html#requests" target="_blank">크게 보기 ↗</a></div><div class="frame-box"><iframe title="운영자 물품 보관소 확인 요청 시안" data-page="admin-storage.html" data-inject="window.__tab='requests'" data-h="760"></iframe></div></section>
+<section><div class="compare-label"><strong>배송문제 확인</strong><a href="admin-delivery-issues.html" target="_blank">크게 보기 ↗</a></div><div class="frame-box"><iframe title="운영자 배송문제 확인 시안" data-page="admin-delivery-issues.html" data-h="760"></iframe></div></section>
+</main>
+<script>
+document.querySelectorAll('iframe[data-page]').forEach(async frame=>{
+  const response=await fetch(frame.dataset.page);
+  if(!response.ok) throw new Error('시안 파일을 열지 못했어요.');
+  const html=await response.text();
+  const base=new URL('./',location.href).href;
+  const inject=frame.dataset.inject?'<script>'+frame.dataset.inject+'<\/script>':'';
+  frame.srcdoc=html.replace('<head>','<head><base href="'+base+'">'+inject);
+});
+let viewWidth=1440;
+const member=document.getElementById('member');
+function sizeFrames(){document.querySelectorAll('.frame-box').forEach(box=>{const isAdmin=box.closest('#admin');const w=isAdmin?1440:viewWidth;const frame=box.querySelector('iframe');const hh=(viewWidth===390&&frame.dataset.hm)?frame.dataset.hm:frame.dataset.h;const scale=box.clientWidth/w;frame.style.width=w+'px';frame.style.height=hh+'px';frame.style.transform='scale('+scale+')';box.style.height=(hh*scale)+'px';});}
+document.querySelectorAll('[data-width]').forEach(button=>button.addEventListener('click',()=>{viewWidth=Number(button.dataset.width);member.classList.toggle('mobile',viewWidth===390);document.querySelectorAll('[data-width]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));sizeFrames();}));
+new ResizeObserver(sizeFrames).observe(document.body);
+sizeFrames();
+</script>
+</body></html>
