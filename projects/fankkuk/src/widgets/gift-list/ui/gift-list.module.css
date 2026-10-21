@@ -1,15 +1,15 @@
 /* 보낸 선물 — 시안 docs/design/mockups/site/v34-part1/gifts.html (v34.css .grp·.grp-h). 줄·강조 줄·작은 진행 표시는 base.css 21절 공통(.lrows·.lrow--hi·.mini-steps), 탭·태그는 base.css 공통 부품 */
 
 /* 크리에이터별 묶음 — 묶음 머리 높이 56 이상, 아래 1px 선. 머리 전체가 함께한 시간으로 가는 링크 */
-.grp { margin-top: var(--space-8); }
-.head { position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--gray-200); border-radius: var(--r-btn) var(--r-btn) 0 0; }
+/* 묶음 사이 32 — 전역 「구간 + 구간 48」보다 앞서게 클래스 셋 무게 */
+.grp.grp.grp { margin-top: var(--space-8); }
+.head { position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--gray-200); border-radius: var(--r-btn); }
 .head :global(.face) { width: 32px; height: 32px; font-size: var(--fs-small); }
-.head strong { font-size: var(--fs-card); line-height: 1.4; overflow-wrap: anywhere; }
+.head strong { font-size: var(--fs-card); line-height: 1.6; overflow-wrap: anywhere; }
 .head small { font-size: var(--fs-small); color: var(--sub); }
 .head :global(.lrow-chev) { margin-left: auto; }
 .linked:hover { background: var(--tint); }
 .linked:has(:global(.stretch):focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
-.grp :global(.lrows) { margin-top: var(--space-2); }
 .empty { margin-top: var(--space-8); }
 @media (max-width: 767px) {
   .head { flex-wrap: wrap; }

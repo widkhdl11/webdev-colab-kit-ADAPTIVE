@@ -1,13 +1,14 @@
 /* 함께한 시간 — 시안 docs/design/mockups/site/v34-part1/gifts-with.html · v33b.css「gifts-with」(design-rules 21절).
-   띠(.wband) + 얼굴 겹침(.whead, −40) + 세로 시간선(.vt), 첫 기록만 하늘 면(.first). 틀 960 (시안 .wrap) */
+   띠(.wband) + 얼굴 겹침(.whead, −40) + 세로 시간선(.vt), 첫 기록만 하늘 면(.first). 틀 880 (시안 .wrap 960 에서 좌우 안쪽 40 을 뺀 폭) */
 .page { padding-bottom: var(--section-gap); }
-.col { max-width: 960px; margin-inline: auto; }
+.col { max-width: 880px; margin-inline: auto; }
 
-.back { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--sub); font-size: var(--fs-small); font-weight: var(--fw-nav); text-decoration: none; }
+.back { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); color: var(--sub); font-size: var(--fs-small); font-weight: 400; text-decoration: none; }
 .back:hover { color: var(--ink); }
 
 /* 「나만 볼 수 있어요」 — 회색 선 한 줄 (시안 .lock) */
-.priv { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); margin-top: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); font-size: var(--fs-small); color: var(--sub); }
+/* 굵은 글과 설명이 늘 한 줄에 나란히 — 좁으면 각자 안에서 줄이 바뀐다 (시안 .lock) */
+.priv { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); font-size: var(--fs-small); color: var(--sub); }
 .priv strong { color: var(--ink); }
 
 /* 띠 — 함께한 선물·받은 답장 수, 오른쪽 정렬 (시안 .wband) */
@@ -41,7 +42,8 @@
 .recH.recH { margin-top: var(--space-12); font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
 .recNote { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
 .recLead { margin-top: var(--space-3); font-weight: var(--fw-bold); color: var(--ink); }
-.only { font-weight: 400; color: var(--sub); }
+/* 「내가 올린 사진 · 나만 볼 수 있어요」 한 줄 전체가 굵은 진한 글자 (시안 .rec-note .lead) */
+.only { font-weight: inherit; color: inherit; }
 
 /* 세로 시간선 — 왼쪽 2px 선 + 기록마다 점 (시안 .vt) */
 .vt { margin: var(--space-6) 0 0 var(--space-2); padding: 0; list-style: none; border-left: 2px solid var(--tint-line); }
@@ -68,10 +70,15 @@
 .peek { position: absolute; top: -24px; right: var(--space-6); width: 64px; height: 64px; object-fit: contain; pointer-events: none; }
 .first .t { gap: var(--space-3); padding-right: 72px; }
 .first .what { font-size: var(--fs-card); line-height: 1.4; }
-.first .s { margin-top: var(--space-2); font-size: var(--fs-body); color: var(--ink); }
+/* 첫 기록 설명은 한 줄 글 — 「처음 보낸 선물이에요 · 사무실에서 출고했어요」 (시안 .vt .first .s) */
+.first .s { display: block; margin-top: var(--space-2); font-size: var(--fs-body); color: var(--ink); }
+.first .s > * + :not(:global(.mini-steps))::before { content: " · "; }
+.first .s :global(.mini-steps) { margin-left: var(--space-4); vertical-align: middle; }
 .first .boxes { margin-top: var(--space-4); }
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-4); margin-top: var(--space-4); font-size: var(--fs-small); color: var(--sub); }
 .foot .act { margin-left: 0; }
+/* 첫 기록 아래 줄의 버튼은 줄 글자 크기 14 그대로 (시안 .vt .first .foot — 버튼이 글자 크기를 물려받는다) */
+.foot .act :global(.btn) { font-size: var(--fs-small); }
 
 /* 「이전 기록 N개 더 보기」 — 흰 면 + 회색 경계 버튼 모양(접기 칸 summary) */
 .fold { margin-top: var(--space-6); }
@@ -88,7 +95,3 @@
   .act { margin-left: 0; }
 }
 
-@media (max-width: 767px) {
-  /* 휴대폰 — 제목 줄이 상세 보기·사진 버튼에 밀려 좁아지지 않게 한 줄을 다 쓴다 */
-  .rec > .t { flex-basis: 100%; }
-}

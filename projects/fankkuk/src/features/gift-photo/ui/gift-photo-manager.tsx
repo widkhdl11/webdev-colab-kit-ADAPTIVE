@@ -16,6 +16,17 @@ import s from "./gift-photo.module.css";
 
 export const GIFT_PHOTO_HINT = "상자·송장이 아니라 선물만 찍어 주세요. 촬영 위치 같은 사진 정보는 지우고 저장해요. 나만 볼 수 있어요.";
 
+/** 사진 안내를 문장마다 한 줄로(시안 v34-part1/gifts-with.html .rec-note). 글은 GIFT_PHOTO_HINT 그대로 */
+export function GiftPhotoHintLines() {
+  return (
+    <>
+      {GIFT_PHOTO_HINT.split(/(?<=\.)\s+/).map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+    </>
+  );
+}
+
 /**
  * compact: 「함께한 시간」 기록 줄 안에 버튼만 보이는 모양(시안 v34-part1/gifts-with.html — 「사진 올리기」 작은 버튼).
  *   제목·안내 문장은 화면에서 숨기고(sr-only — 화면 읽기와 파일 칸 설명은 그대로) 목록 위에 한 번만 보인다. 사진이 있으면 작은 사진을 버튼 앞에 둔다.

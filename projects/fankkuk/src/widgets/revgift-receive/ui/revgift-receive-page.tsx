@@ -44,7 +44,7 @@ export function RevgiftReceivePage({
   const tierRule = PARCEL_TIER_GUIDE[item.tier].rule;
   const stage = receivedStage(item, nowMs);
   return (
-    <main id="main" className={`page-centered ${s.page}`}>
+    <main id="main" className={`page-centered v34 ${s.page}`}>
       <div>
         <div className={s.col}>
           <Link className={s.back} href="/me/revgifts">

@@ -54,6 +54,18 @@ export type ReceiveFlowProps = {
 };
 
 /** 주소 판 머리 — 등록 전이면 입력, 바꾸는 중이면 새 주소, 등록돼 있으면 확인(승인 창과 같은 말) */
+/** 「5일 남음」 → 큰 숫자 「5일」 + 작은 「남음」(시안 .big small). 띄어쓰기가 없으면 그대로 */
+function splitDays(text: string): ReactNode {
+  const at = text.lastIndexOf(" ");
+  if (at < 0) return text;
+  return (
+    <>
+      {text.slice(0, at)}
+      <small>{text.slice(at + 1)}</small>
+    </>
+  );
+}
+
 function addressHead(registered: boolean, editing: boolean): string {
   if (!registered) return "주소를 입력해 주세요";
   return editing ? "새 주소를 입력해 주세요" : "주소를 확인해 주세요";
@@ -241,7 +253,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
                 )}
                 <p className={s.todoSub}>{deadlineText}</p>
               </div>
-              <p className="num-big num-big--32">{daysLeftText}</p>
+              <p className="num-big num-big--32">{splitDays(daysLeftText)}</p>
             </div>
             {stepOpen ? (
               addressBody()
@@ -325,13 +337,15 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
             <div>
               <dt>상자 크기</dt>
               <dd>
-                {tierName} 상자 <span className="t-meta">{tierRule}</span>
+                {tierName} 상자 · {tierRule}
               </dd>
             </div>
             <div>
               <dt>주문번호</dt>
               <dd>{orderNo}</dd>
             </div>
+            {/* 받기 칸이 위에 있으면 같은 남은 날·기한을 다시 적지 않는다(시안 revgift-detail.html 선물 정보는 세 줄) */}
+            {showTodo ? null : (
             <div>
               <dt>상태</dt>
               <dd>
@@ -344,6 +358,7 @@ export function ReceiveFlow(props: ReceiveFlowProps) {
                 )}
               </dd>
             </div>
+            )}
           </dl>
         </section>
         {props.children}

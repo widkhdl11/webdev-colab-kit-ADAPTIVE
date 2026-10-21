@@ -122,7 +122,7 @@ export function GiftStatusPage({
   const dueKrw = (difference?.differences ?? []).filter((d) => d.state === "due").reduce((sum, d) => sum + d.amountKrw, 0);
 
   return (
-    <main id="main" className={`page-centered ${s.page}`}>
+    <main id="main" className={`page-centered v34 ${s.page}`}>
       <div className={s.col}>
         <Link className={s.back} href="/gifts">
           ‹ 보낸 선물로

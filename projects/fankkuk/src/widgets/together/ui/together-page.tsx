@@ -7,7 +7,7 @@ import { ALL_GIFTS_PATH } from "@/entities/together/model/together-path";
 import { FOLLOW_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
 import { FollowThenSend } from "@/features/creator-follow/ui/follow-then-send";
 import { FanBoxReplies } from "@/features/gift-reply/ui/fan-box-replies";
-import { GIFT_PHOTO_HINT, GiftPhotoManager } from "@/features/gift-photo/ui/gift-photo-manager";
+import { GiftPhotoHintLines, GiftPhotoManager } from "@/features/gift-photo/ui/gift-photo-manager";
 import { statusTagClass } from "@/shared/ui/status-tone";
 import type { TogetherCard, TogetherPageProps } from "../api/load-together";
 import { OlderRecords } from "./older-records";
@@ -177,7 +177,7 @@ export function TogetherPage(props: TogetherPageProps) {
   const { summary, anniversary, recent, older, first } = props;
   const name = summary.creatorName;
   return (
-    <main id="main" className={`page-centered ${s.page}`}>
+    <main id="main" className={`page-centered v34 ${s.page}`}>
       <div className={s.col}>
         <Link className={s.back} href={ALL_GIFTS_PATH}>
           ‹ 보낸 선물로
@@ -241,7 +241,7 @@ export function TogetherPage(props: TogetherPageProps) {
             <p className={s.recLead}>
               내가 올린 사진 <span className={s.only}>· 나만 볼 수 있어요</span>
             </p>
-            <p>{GIFT_PHOTO_HINT}</p>
+            <GiftPhotoHintLines />
           </div>
           {recent.length > 0 ? (
             <ol className={s.vt} aria-label="시간순 기록">

@@ -20,7 +20,7 @@ export function GiftTabs({ tabs }: { tabs: readonly GiftTab[] }) {
 
   return (
     <>
-      <div className="tabs" role="tablist" aria-label="보낸 선물 분류">
+      <div className="tabs tabs--line" role="tablist" aria-label="보낸 선물 분류">
         {tabs.map((t, i) => (
           <button
             key={t.id}

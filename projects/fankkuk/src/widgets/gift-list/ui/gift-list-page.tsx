@@ -145,13 +145,13 @@ export function GiftListPage({
   const ongoingN = all.filter(ongoing).length;
   return (
     <>
-      <header className="page-head">
+      <header className="page-head v34">
         <div className="ph-row">
           <h1 className="ph-title">
             {title}
             <span className="ph-count">{all.length}</span>
           </h1>
-          <Link className="btn btn--sm" href="/gifts/new">
+          <Link className="btn" href="/gifts/new">
             선물 보내기
           </Link>
         </div>

@@ -14,9 +14,9 @@
 .kv dt { flex: none; font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
 .kv dd { min-width: 0; margin: 0; text-align: right; overflow-wrap: anywhere; }
 .kv dd :global(.t-meta) { font-weight: 400; }
-.choice { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-6); }
-.choice :global(.btn) { width: 100%; }
-.choice > :only-child { grid-column: 1 / -1; }
+/* 받기·받지 않기 — 글자 폭 버튼 둘, 사이 12 (시안 .choice). 휴대폰은 세로로 폭 전체 */
+.choice { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
+.choice :global(.btn) { min-width: 96px; }
 .once { margin-top: var(--space-4); }
 .warn { margin-top: var(--space-6); padding: var(--space-4); border-radius: var(--r-btn); background: var(--gray-100); color: var(--gray-900); font-weight: var(--fw-btn); }
 .alert { margin-top: var(--space-4); }
@@ -30,11 +30,12 @@
 .links { justify-content: center; margin-top: var(--space-8); }
 .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-6); }
 @media (max-width: 767px) {
-  .choice { grid-template-columns: 1fr; }
+  .choice { flex-direction: column; }
+  .choice :global(.btn) { width: 100%; }
 }
 /* 「지금 할 일」 칸 안 머리(action-center INV-J13, 시안 v34-part1/revgift-detail.html .tbox.rv .head) — 제목 20 · 기한 14 회색, 오른쪽 남은 날 */
-.todoHead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-4); margin-top: var(--space-1); }
-.todoTitle { font-size: var(--fs-card); line-height: 1.4; }
+.todoHead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-4); margin-top: var(--space-2); }
+.todoTitle { font-size: var(--fs-card); line-height: 1.4; letter-spacing: -0.6px; }
 .todoSub { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
 @media (max-width: 767px) {
   .todoHead { flex-direction: column; align-items: flex-start; }
