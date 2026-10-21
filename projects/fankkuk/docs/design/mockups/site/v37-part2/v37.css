@@ -241,3 +241,60 @@
 .gcard2,.bside,.qgrid div,.dcard.muted{
   background:linear-gradient(180deg,#f9f9fa 0%,#f4f5f7 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+
+/* 마이크로 디테일(2026-10-21 사용자 「마이크로 디테일 적용해줘봐」). 값은 짧게(0.15~0.6초), 움직임은 2px 이하.
+   마우스로 쓰는 기기에서만 떠오르고, 「움직임 줄이기」를 켠 사람에게는 움직임을 모두 끈다. 키보드 포커스 표시(3px 진한 테두리)는 손대지 않는다. */
+:root{--ease:cubic-bezier(.2,.8,.2,1)}
+::selection{background:#bfe3f7;color:#1f2937}
+
+/* 1) 버튼: 누를 때 살짝 눌림, 주 버튼은 위쪽 반사선 + 아래로 아주 옅게 짙어지는 면 */
+.btn{transition:transform .15s var(--ease),box-shadow .2s var(--ease),background-color .2s var(--ease),border-color .2s var(--ease)}
+.btn:active{transform:scale(.98)}
+.btn.fill{background:linear-gradient(180deg,#95d4f2 0%,#89cff0 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 2px rgba(31,41,55,.06)}
+.btn.ghost{box-shadow:0 1px 2px rgba(31,41,55,.04)}
+@media (hover:hover){
+  .btn.fill:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 12px rgba(137,207,240,.45);transform:translateY(-1px)}
+  .btn.ghost:hover{border-color:#6b7280;background:#fafbfc}
+  .btn:active{transform:scale(.98)}
+}
+
+/* 2) 카드: 마우스를 올리면 2px 떠오름(21절 hover 값), 그림자도 같이 부드럽게 */
+.acard,.bcard,.gcard,.ccard,.tile,.drow{transition:transform .25s var(--ease),box-shadow .25s var(--ease),background-color .2s var(--ease)}
+@media (hover:hover){
+  .acard:hover,.bcard:hover,.gcard:hover,.ccard:hover,.tile:hover{transform:translateY(-2px)}
+}
+
+/* 3) 촘촘한 줄: 마우스를 올리면 왼쪽에 하늘색 짧은 막대가 자라난다 */
+.drow::before{content:"";position:absolute;left:0;top:50%;width:3px;height:0;border-radius:3px;background:#89cff0;transform:translateY(-50%);transition:height .2s var(--ease)}
+@media (hover:hover){.drow:hover::before{height:24px}}
+
+/* 4) 진행 막대: 채운 칸은 아주 옅은 위→아래 면, 처음 열 때 왼쪽부터 차례로 차오른다 */
+.pbar i.on{background:linear-gradient(180deg,#9ad6f3 0%,#7cc6ea 100%);transform-origin:left center;animation:pfill .5s var(--ease) both}
+.pbar i.on:nth-child(2){animation-delay:.05s}.pbar i.on:nth-child(3){animation-delay:.1s}.pbar i.on:nth-child(4){animation-delay:.15s}.pbar i.on:nth-child(5){animation-delay:.2s}.pbar i.on:nth-child(6){animation-delay:.25s}
+@keyframes pfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* 5) 큰 숫자: 자릿수 폭을 맞춰 숫자가 바뀌어도 흔들리지 않게, 글자 사이 살짝 좁게 */
+.big,.n48,.nav-count,.count,time{font-variant-numeric:tabular-nums}
+.big,.n48{letter-spacing:-.02em}
+
+/* 6) 얼굴: 아주 옅은 안쪽 테두리로 흰 바탕에서도 윤곽이 보이게, 겹친 얼굴은 마우스를 올리면 하나가 앞으로 */
+.face{box-shadow:inset 0 0 0 1px rgba(31,41,55,.06)}
+.faces .face{position:relative;transition:transform .2s var(--ease)}
+@media (hover:hover){.faces .face:hover{transform:translateY(-2px);z-index:1}}
+
+/* 7) 태그: 위쪽 반사선 한 줄 */
+.tag{box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+
+/* 8) 접기: 「+」가 열리면 45도 돌아 닫기 표시가 된다(글자를 바꾸지 않고 돌린다), 열린 내용은 살짝 내려오며 나타난다 */
+.fold summary::after{content:"+";display:inline-block;transition:transform .25s var(--ease)}
+.fold[open] summary::after{content:"+";transform:rotate(45deg)}
+.fold[open] > :not(summary){animation:fin .25s var(--ease) both}
+@keyframes fin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+/* 9) 링크 밑줄: 글자에서 살짝 떨어뜨리고 두께를 얇게 */
+a{text-underline-offset:3px;text-decoration-thickness:1px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .acard:hover,.bcard:hover,.gcard:hover,.ccard:hover,.tile:hover,.btn.fill:hover,.faces .face:hover{transform:none}
+}
