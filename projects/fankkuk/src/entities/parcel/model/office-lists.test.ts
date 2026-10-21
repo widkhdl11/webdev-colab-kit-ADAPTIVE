@@ -30,6 +30,11 @@ const UNMATCHED = {
   state: "waiting",
   deadline_at: "2026-10-10T01:00:00+00:00",
   share_movable: false,
+  look: "하늘색 종이 상자",
+  tier: "small",
+  phone_last4: "5678",
+  auto_return_at: "2026-11-02T01:00:00+00:00",
+  in_storage: false,
 };
 
 const HELD_PARCEL = {
@@ -46,6 +51,11 @@ const HELD_PARCEL = {
   state: "on_hold",
   deadline_at: null,
   share_movable: false,
+  look: null,
+  tier: null,
+  phone_last4: null,
+  auto_return_at: "2026-11-02T02:00:00+00:00",
+  in_storage: false,
 };
 
 const DUE = {
@@ -86,8 +96,19 @@ describe("보류 상자 읽기 (office-workflow INV-W5·W6·W7, inbound-address-
         state: "waiting",
         deadlineAt: UNMATCHED.deadline_at,
         shareMovable: false,
+        look: "하늘색 종이 상자",
+        tier: "small",
+        phoneLast4: "5678",
+        autoReturnAt: UNMATCHED.auto_return_at,
+        inStorage: false,
       },
     ]);
+  });
+
+  it("INV-W7·C5 (실패경로): 뒤 4자리 칸에 숫자 넷이 아닌 값(전체 번호·하이픈)이 오면 목록 전체를 읽지 않는다", () => {
+    expect(unmatchedFromRows([{ ...UNMATCHED, phone_last4: "010-1234-5678" }])).toBeNull();
+    expect(unmatchedFromRows([{ ...UNMATCHED, phone_last4: "56a8" }])).toBeNull();
+    expect(unmatchedFromRows([{ ...UNMATCHED, phone_last4: null }])?.[0]?.phoneLast4).toBeNull();
   });
 
   it("INV-C8·C9: 출고를 멈춘 묶인 상자(「제가 보낸 게 아니에요」 등)도 같은 목록 — 보낸 사람·선반·기한 없이", () => {
@@ -123,18 +144,20 @@ describe("보류 상자 읽기 (office-workflow INV-W5·W6·W7, inbound-address-
   it("INV-C12: 주인 주문으로 입고 버튼은 6자리 없이(또는 없는 6자리로) 온 대기 중 미확인 입고에만, 도착 + 168시간 전까지", () => {
     const now = "2026-10-08T00:00:00Z";
     const left = "2026-10-08T00:00:01Z";
-    expect(canLinkHeld({ source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: left }, now)).toBe(true);
-    expect(canLinkHeld({ source: "unmatched", state: "waiting", reason: "unknown_code", deadlineAt: left }, now)).toBe(true);
+    expect(canLinkHeld({ nickname: null, source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: left }, now)).toBe(true);
+    expect(canLinkHeld({ nickname: null, source: "unmatched", state: "waiting", reason: "unknown_code", deadlineAt: left }, now)).toBe(true);
     // 기한 정각부터는 반송 대상(INV-C6) — DB 도 168시간이 지난 상자는 잇지 않는다
-    expect(canLinkHeld({ source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: now }, now)).toBe(false);
+    expect(canLinkHeld({ nickname: null, source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: now }, now)).toBe(false);
     for (const reason of ["void_code", "used_code", "code_dispute", "barcode_bound", "waybill_dispute"] as const) {
-      expect([reason, canLinkHeld({ source: "unmatched", state: "waiting", reason, deadlineAt: left }, now)]).toEqual([reason, false]);
+      expect([reason, canLinkHeld({ nickname: null, source: "unmatched", state: "waiting", reason, deadlineAt: left }, now)]).toEqual([reason, false]);
     }
     for (const state of ["matched", "expired"] as const) {
-      expect([state, canLinkHeld({ source: "unmatched", state, reason: "no_code", deadlineAt: left }, now)]).toEqual([state, false]);
+      expect([state, canLinkHeld({ nickname: null, source: "unmatched", state, reason: "no_code", deadlineAt: left }, now)]).toEqual([state, false]);
     }
-    expect(canLinkHeld({ source: "parcel", state: "on_hold", reason: "not_mine", deadlineAt: left }, now)).toBe(false);
-    expect(canLinkHeld({ source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: null }, now)).toBe(false);
+    expect(canLinkHeld({ nickname: null, source: "parcel", state: "on_hold", reason: "not_mine", deadlineAt: left }, now)).toBe(false);
+    expect(canLinkHeld({ nickname: null, source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: null }, now)).toBe(false);
+    // INV-C4 ②-가 (S4h, 2026-10-21): 닉네임이 맞은 상자는 운영자가 잇지 않는다 — 그 회원이 두 값을 넣어야 이어진다(DB 도 거부한다)
+    expect(canLinkHeld({ nickname: "별빛", source: "unmatched", state: "waiting", reason: "no_code", deadlineAt: left }, now)).toBe(false);
   });
 
   it("INV-C9 (S9b·S9c): 주문에 묶인 보류 상자 — 「아니에요」·떼어 낸 상자는 바로, 분쟁은 기한(보류 + 168시간)이 지나야, 넘긴 상자는 아니다", () => {

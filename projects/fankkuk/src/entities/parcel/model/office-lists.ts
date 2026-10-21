@@ -59,10 +59,20 @@ export type UnmatchedParcel = {
   reason: HoldReason;
   suspectedTheft: boolean;
   state: UnmatchedState;
-  /** 미확인 입고만 — 도착 + 168시간 */
+  /** 미확인 입고 = 자동 반송 시각(도착 + 720시간, 2026-10-21) · 주문에 묶인 보류 상자 = 운영자가 넘길 수 있는 시각(분쟁은 보류 + 168시간) */
   deadlineAt: string | null;
   /** 운영자 몫 옮기기(inbound-address-code INV-C11)를 받는 줄인가 — 찾기로 이은 6자리 없는 역조공 상자, 검수 완료 전. DB 가 정한 값 */
   shareMovable: boolean;
+  /** 물품 보관소에 보일 포장 모양 한 줄(INV-C13) — 미확인 입고만 */
+  look: string | null;
+  /** 직원이 본 크기 구간(INV-C13) — 미확인 입고만 */
+  tier: OfficeTier | null;
+  /** 원 송장 전화번호 뒤 4자리(INV-C5·C12 ③) — 6자리 없이 온 상자만, 저장 칸은 manual/0023. 이어지거나 반송 대상이 되면 비어 있다 */
+  phoneLast4: string | null;
+  /** 자동 반송 시각 — 미확인 입고는 도착 + 30일, 주문에 묶인 보류 상자는 도착 + 30일(분쟁은 보류 + 7일보다 앞서지 않음, INV-C9) */
+  autoReturnAt: string | null;
+  /** 회원 물품 보관소에 보이는 줄인가(INV-C13) — DB 가 정한 값 */
+  inStorage: boolean;
 };
 
 const unmatchedRow = z.object({
@@ -80,6 +90,12 @@ const unmatchedRow = z.object({
   state: z.enum(UNMATCHED_STATES),
   deadline_at: z.string().nullable(),
   share_movable: z.boolean(),
+  look: z.string().nullable(),
+  tier: z.enum(PARCEL_TIERS).nullable(),
+  // 뒤 4자리 칸 — 숫자 넷이 아닌 값(전체 번호 등)이 섞이면 목록 전체를 읽지 않는다(INV-W7)
+  phone_last4: z.string().regex(/^[0-9]{4}$/).nullable(),
+  auto_return_at: z.string().nullable(),
+  in_storage: z.boolean(),
 });
 
 export function unmatchedFromRows(rows: unknown): UnmatchedParcel[] | null {
@@ -99,6 +115,11 @@ export function unmatchedFromRows(rows: unknown): UnmatchedParcel[] | null {
     state: r.state,
     deadlineAt: r.deadline_at,
     shareMovable: r.share_movable,
+    look: r.look,
+    tier: r.tier,
+    phoneLast4: r.phone_last4,
+    autoReturnAt: r.auto_return_at,
+    inStorage: r.in_storage,
   }));
 }
 
@@ -123,11 +144,13 @@ export function canReturnHeld(row: Pick<UnmatchedParcel, "source" | "state" | "r
 export const HELD_WITHOUT_CODE_REASONS: readonly HoldReason[] = ["no_code", "unknown_code"];
 
 /**
- * 「주인 주문으로 입고」(운영자 잇기, inbound-address-code INV-C12)를 그릴 줄. 6자리 없이 온 대기 중 미확인 입고이고 도착 + 168시간 전.
+ * 「주인 주문으로 입고」(운영자 잇기, inbound-address-code INV-C12)를 그릴 줄. 6자리 없이 온 대기 중 미확인 입고이고 도착 + 720시간 전.
+ * 닉네임이 맞은 상자는 그리지 않는다 — 그 회원이 두 값을 넣어야 이어진다(INV-C4 ②-가 S4h, 2026-10-21).
  * 여기는 버튼을 그릴지만 정한다 — 운영자인지·후보 상자인지·잠금 뒤 상태는 DB 가 다시 판정한다.
  */
-export function canLinkHeld(row: Pick<UnmatchedParcel, "source" | "state" | "reason" | "deadlineAt">, now: string): boolean {
+export function canLinkHeld(row: Pick<UnmatchedParcel, "source" | "state" | "reason" | "deadlineAt" | "nickname">, now: string): boolean {
   if (row.source !== "unmatched" || row.state !== "waiting" || !HELD_WITHOUT_CODE_REASONS.includes(row.reason)) return false;
+  if (row.nickname !== null) return false;
   return row.deadlineAt !== null && Date.parse(now) < Date.parse(row.deadlineAt);
 }
 
@@ -188,7 +211,7 @@ export function ratePercent(part: number, whole: number): number | null {
   return Math.round((part / whole) * 1000) / 10;
 }
 
-/** INV-W6: 기한(도착 + 168시간)까지 남은 날 — 올림. 지났으면 0. */
+/** INV-W6: 기한(미확인 입고는 도착 + 720시간)까지 남은 날 — 올림. 지났으면 0. */
 export function daysLeft(deadlineIso: string, now: Date): number {
   const ms = Date.parse(deadlineIso) - now.getTime();
   return ms <= 0 ? 0 : Math.ceil(ms / DAY_MS);

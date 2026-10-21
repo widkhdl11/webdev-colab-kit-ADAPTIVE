@@ -4,7 +4,7 @@ import { parseAddressCode } from "@/entities/parcel/model/address-code";
 import { CARRIERS } from "@/entities/parcel/model/carrier";
 import { HOLD_REASONS } from "@/entities/parcel/model/office-lists";
 import { officeErrorReply } from "@/entities/parcel/model/office-error";
-import { parcelDetailFromData } from "@/entities/parcel/model/office-parcel";
+import { PARCEL_TIERS, parcelDetailFromData } from "@/entities/parcel/model/office-parcel";
 import { qrCode, QR_PATTERN, waybillNo } from "@/entities/parcel/model/scan-code";
 import { readAdminAccess } from "@/entities/session/api/read-admin-access";
 import { MESSAGE_NOT_FOUND } from "@/shared/lib/http/pg-error-reply";
@@ -20,17 +20,24 @@ import { charCount } from "@/shared/lib/validation/char-count";
 // - label: 라벨 QR 스캔 → 부착 확인(이 작업자가 직전에 출력한 라벨이어야 한다 — DB 가 본다)
 // 상태를 고르거나 주문번호를 넣는 칸은 없다(INV-W1·C4) — strict 라 그런 칸이 오면 400.
 // 운영자가 아니면 404. 최종 판정(6자리 상태·바코드 묶임·작업자별 대기 라벨)은 DB 입고 함수가 행 잠금 뒤 한다.
+// 보류로 넣을 때 직원이 물품 보관소용 포장 모양 한 줄(40자까지)·크기와, 원 송장에 전화번호가 있으면 그 뒤 4자리(숫자 넷만)를 함께 적을 수 있다
+//   (inbound-address-code INV-C5·C13, 2026-10-21). 뒤 4자리는 DB 가 6자리 없이 온 상자에만 적고, 저장 칸은 manual/0023(사람이 적용) — 적용 전에는 DB 가 거부한다(0A000).
 // 측정: 6자리를 넣은 입력마다 받아들였는지·거부했는지를 따로 남긴다(office_log_code_input — 값은 남기지 않는다).
 //   기록이 실패해도 입고 결과는 그대로 돌려준다(측정용이다).
 
 export const SHELF_MAX = 20;
 /** 송장 「보내는 분」 이름 최대 글자 수 — DB 입고 함수와 같은 경계 */
 export const SENDER_NAME_MAX = 40;
+/** 포장 모양 한 줄 최대 글자 수 — DB 보류 줄 칸과 같은 경계(INV-C13) */
+export const LOOK_MAX = 40;
 
 const MESSAGE_SCAN = "스캔한 값의 형식이 맞지 않아요. 다시 스캔해 주세요.";
 const MESSAGE_DETAILS = `택배사를 고르고, 송장의 보내는 분 이름은 ${SENDER_NAME_MAX}자까지, 보관 선반 번호는 1~${SHELF_MAX}자로 적어 주세요.`;
 export const MESSAGE_CODE_FORMAT = "받는 주소 끝 6자리에 쓰지 않는 글자가 있어요. 상자에 적힌 주소를 다시 보고 입력해 주세요.";
 export const MESSAGE_CODE_CHECK = "받는 주소 끝 6자리가 맞지 않아요. 한 글자씩 다시 확인해 입력해 주세요.";
+export const MESSAGE_LOOK = `포장 모양은 ${LOOK_MAX}자까지 적어 주세요.`;
+export const MESSAGE_PHONE_LAST4 = "전화번호 뒤 4자리는 숫자 4개로 적어 주세요.";
+export const MESSAGE_PHONE_LAST4_UNAVAILABLE = "전화번호 뒤 4자리는 아직 저장할 수 없어요. 칸을 비우고 다시 해 주세요.";
 const FAILED = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
 
 const optionalText = z
@@ -47,6 +54,13 @@ const inboundShape = z
     carrier: z.enum(CARRIERS).optional(),
     senderName: optionalText,
     shelf: optionalText,
+    look: z
+      .string()
+      .max(80)
+      .transform((s) => s.trim())
+      .optional(),
+    tier: z.enum(PARCEL_TIERS).optional(),
+    phoneLast4: z.string().max(20).optional(),
   })
   .strict();
 const labelShape = z.object({ kind: z.literal("label"), qr: qrCode }).strict();
@@ -102,6 +116,11 @@ export async function scanInbound(client: Rpc, body: unknown): Promise<JsonReply
   const senderName = input.senderName ?? "";
   const shelf = input.shelf ?? "";
   if (charCount(senderName) > SENDER_NAME_MAX || charCount(shelf) > SHELF_MAX) return { status: 400, body: { message: MESSAGE_DETAILS } };
+  const look = input.look ?? "";
+  if (charCount(look) > LOOK_MAX) return { status: 400, body: { message: MESSAGE_LOOK } };
+  // INV-C5: 숫자 넷이 아니면(전체 번호·하이픈·글자 섞임) DB 를 부르지 않는다 — DB 도 같은 검사를 한다(22023)
+  const phoneLast4 = input.phoneLast4?.trim() ?? "";
+  if (phoneLast4 !== "" && !/^[0-9]{4}$/.test(phoneLast4)) return { status: 400, body: { message: MESSAGE_PHONE_LAST4 } };
 
   const { data, error } = await client.rpc("office_scan_inbound", {
     p_barcode: input.barcode,
@@ -109,11 +128,15 @@ export async function scanInbound(client: Rpc, body: unknown): Promise<JsonReply
     p_carrier: input.carrier ?? null,
     p_sender_name: senderName === "" ? null : senderName,
     p_shelf: shelf === "" ? null : shelf,
+    p_look: look === "" ? null : look,
+    p_tier: input.tier ?? null,
+    p_phone_last4: phoneLast4 === "" ? null : phoneLast4,
   });
   if (error?.code === "P0046") {
     await logCodeInput(client, "check");
     return codeReject("code_check");
   }
+  if (error?.code === "0A000") return { status: 409, body: { message: MESSAGE_PHONE_LAST4_UNAVAILABLE } };
   if (error) return officeErrorReply(error.code, { limit: MESSAGE_SCAN, failed: FAILED });
   const result = scanResult.safeParse(data);
   if (!result.success) return { status: 500, body: { message: FAILED } };

@@ -12,8 +12,8 @@ import type { JsonReply } from "@/shared/lib/http/private-json";
 // 주문번호는 받지 않는다 — 상자는 후보 읽기(그 닉네임 계정의 입고 전 상자)에서 고른다(INV-C9 「주문번호로 잇는 함수는 없다」).
 // 운영자가 아니면 404. 후보인지·닉네임이 맞은 다른 계정의 상자인지·같은 송장번호 분쟁인지·기한이 지났는지는 DB 가 상자 줄부터 잠근 뒤 판정한다(INV-W12).
 
-export const MESSAGE_NOT_CANDIDATE = "그 팬의 결제가 끝났고 아직 도착 전인 상자가 아니에요. 상자를 다시 골라 주세요.";
-export const MESSAGE_LINK_CLOSED = "이미 입고됐거나 반송 대기가 됐거나, 7일이 지난 상자예요.";
+export const MESSAGE_NOT_CANDIDATE = "그 팬의 결제가 끝났고 아직 도착 전인 상자가 아니거나, 닉네임이 맞아 그 팬이 직접 찾을 상자예요.";
+export const MESSAGE_LINK_CLOSED = "이미 입고됐거나 반송 대기가 됐거나, 30일이 지난 상자예요.";
 export const MESSAGE_WAYBILL_DISPUTE = "같은 송장번호가 다른 상자에 등록돼 있어요. 분쟁 상자라 여기서 처리하지 않아요.";
 export const MESSAGE_NO_NICKNAME = "그 닉네임의 계정이 없어요.";
 const MESSAGE_LINK_INPUT = "닉네임과 상자를 고르고, 송장번호·내용물 확인을 표시해 주세요.";

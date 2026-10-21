@@ -114,6 +114,8 @@ export function deleteTestOrders(): void {
       `delete from public.decrypt_log where order_id in (${ids});`,
       // 사무실 작업 기록(검수·파쇄·라벨)은 추가만 되는 표라 같은 자리에서 지운다(INV-W4·W8)
       ...officeRowsDelete(`select id from public.boxes where order_id in (${ids})`, "box_id"),
+      // 물품 보관소 확인 요청(INV-C13)이 고른 시험 상자 — 상자 작업 줄이 없는 상자도 있다. 표가 있을 때만
+      `do $$ begin if to_regclass('public.office_storage_claims') is not null then delete from public.office_storage_claims where box_id in (select id from public.boxes where order_id in (${ids})); end if; end $$;`,
       // 승인 서명도 추가만 되는 표다(approval-signature INV-S12)
       `delete from public.approval_signatures where request_id in (select request_id from public.approval_requests where order_id in (${ids}));`,
       "set local session_replication_role = origin;",
@@ -162,6 +164,11 @@ export function officeRowsDelete(unitIds: string, column: "box_id" | "share_id")
     `do $$ begin if to_regclass('public.office_held_links') is not null then delete from public.office_held_links where parcel_id in (${parcels}); end if; end $$;`,
     // 코드 없이 온 상자 알림 줄(notifications INV-N21)은 보류 줄을 가리킨다 — replica 에서는 연쇄 삭제가 꺼지므로 먼저 지운다
     `delete from public.notification_outbox where unmatched_id in (select id from public.office_unmatched where matched_parcel_id in (${parcels}));`,
+    // 물품 보관소 확인 요청·포장 모양 수정 기록(inbound-address-code INV-C13) — 이어진 보류 줄과 그 상자를 고른 요청. 표가 있을 때만
+    `do $$ begin if to_regclass('public.office_storage_claims') is not null then delete from public.office_storage_claims where unmatched_id in (select id from public.office_unmatched where matched_parcel_id in (${parcels})) or box_id in (select box_id from public.office_parcels where id in (${parcels})); end if; end $$;`,
+    `do $$ begin if to_regclass('public.office_unmatched_look_edits') is not null then delete from public.office_unmatched_look_edits where unmatched_id in (select id from public.office_unmatched where matched_parcel_id in (${parcels})); end if; end $$;`,
+    // 전화번호 뒤 4자리(pii, manual/0023) — replica 에서는 연쇄 삭제가 꺼지므로 먼저. 표가 있을 때만
+    `do $$ begin if to_regclass('pii.unmatched_phone_last4') is not null then delete from pii.unmatched_phone_last4 where unmatched_id in (select id from public.office_unmatched where matched_parcel_id in (${parcels})); end if; end $$;`,
     `delete from public.office_unmatched where matched_parcel_id in (${parcels});`,
     // 상자별 받는 주소(inbound-address-code): 「제가 보낸 게 아니에요」 기록(추가만)·상자 도착 알림 줄(역조공은 주문 줄이 없다)
     `delete from public.office_not_mine_reports where parcel_id in (${parcels});`,

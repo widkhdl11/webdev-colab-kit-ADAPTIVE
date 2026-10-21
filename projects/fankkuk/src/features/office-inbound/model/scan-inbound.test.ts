@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { spyConsole } from "@/shared/lib/testing/console-spy";
 import { addressCodeCheckChar } from "@/entities/parcel/model/address-code";
-import { MESSAGE_CODE_CHECK, MESSAGE_CODE_FORMAT, scanInbound } from "./scan-inbound";
+import { MESSAGE_CODE_CHECK, MESSAGE_CODE_FORMAT, MESSAGE_LOOK, MESSAGE_PHONE_LAST4, MESSAGE_PHONE_LAST4_UNAVAILABLE, scanInbound } from "./scan-inbound";
 
 const DETAIL = {
   qr: "Q-000123",
@@ -54,7 +54,7 @@ describe("입고 스캔 — 원 송장 바코드 + 받는 주소 6자리 (office
     expect(reply.body).toMatchObject({ result: "received", qr: "Q-000123", orderNo: "FC-261003-0041", parcel: { senderNickname: "별빛", tier: "small" } });
     expect(calls[0]).toEqual({
       fn: "office_scan_inbound",
-      args: { p_barcode: BARCODE, p_code: CODE, p_carrier: null, p_sender_name: null, p_shelf: null },
+      args: { p_barcode: BARCODE, p_code: CODE, p_carrier: null, p_sender_name: null, p_shelf: null, p_look: null, p_tier: null, p_phone_last4: null },
     });
     // 측정: 받아들인 입력 한 건(값은 남기지 않는다)
     expect(calls).toContainEqual({ fn: "office_log_code_input", args: { p_outcome: "accepted" } });
@@ -88,14 +88,14 @@ describe("입고 스캔 — 원 송장 바코드 + 받는 주소 6자리 (office
   it("INV-C5: 6자리 없는 상자는 빈칸으로 넘긴다 — 대조용 값이 없으면 DB 가 need_details(바뀐 것 없음), 입력 기록은 남기지 않는다", async () => {
     const { calls, client } = fakeClient({ office_scan_inbound: { data: { result: "need_details", qr: null, order_no: null, reason: "no_code" }, error: null } });
     expect(await scanInbound(client, scan({ code: "" }))).toEqual({ status: 200, body: { result: "need_details", reason: "no_code" } });
-    expect(calls).toEqual([{ fn: "office_scan_inbound", args: { p_barcode: BARCODE, p_code: null, p_carrier: null, p_sender_name: null, p_shelf: null } }]);
+    expect(calls).toEqual([{ fn: "office_scan_inbound", args: { p_barcode: BARCODE, p_code: null, p_carrier: null, p_sender_name: null, p_shelf: null, p_look: null, p_tier: null, p_phone_last4: null } }]);
   });
 
   it("INV-C5·W7: 보류로 넣을 때 택배사·송장 「보내는 분」 이름·선반 번호만 넘긴다(앞뒤 공백 뗌) → hold + 사유 + 닉네임 일치면 그 닉네임", async () => {
     const { calls, client } = fakeClient({ office_scan_inbound: { data: { result: "hold", qr: null, order_no: null, reason: "no_code", nickname: "별빛" }, error: null } });
     const reply = await scanInbound(client, scan({ code: "", carrier: "cj", senderName: " 별빛 ", shelf: " A-03 " }));
     expect(reply).toEqual({ status: 200, body: { result: "hold", reason: "no_code", nickname: "별빛" } });
-    expect(calls).toEqual([{ fn: "office_scan_inbound", args: { p_barcode: BARCODE, p_code: null, p_carrier: "cj", p_sender_name: "별빛", p_shelf: "A-03" } }]);
+    expect(calls).toEqual([{ fn: "office_scan_inbound", args: { p_barcode: BARCODE, p_code: null, p_carrier: "cj", p_sender_name: "별빛", p_shelf: "A-03", p_look: null, p_tier: null, p_phone_last4: null } }]);
   });
 
   it("INV-C5: 닉네임과 맞지 않으면 hold 의 nickname 은 null — 「닉네임 없음」", async () => {
@@ -229,5 +229,41 @@ describe("입고 스캔 — 6자리는 서버 로그에 남지 않는다 (inboun
     } finally {
       spy.restore();
     }
+  });
+});
+
+describe("입고 스캔 — 물품 보관소 포장 모양·크기와 전화번호 뒤 4자리 (inbound-address-code INV-C5·C13)", () => {
+  const HOLD = { office_scan_inbound: { data: { result: "hold", qr: null, order_no: null, reason: "no_code", nickname: null }, error: null } };
+
+  it("INV-C13·C5: 포장 모양(앞뒤 공백 뗌)·크기·뒤 4자리를 그대로 넘긴다", async () => {
+    const { calls, client } = fakeClient(HOLD);
+    const reply = await scanInbound(client, scan({ code: "", carrier: "cj", senderName: "김보관", shelf: "A-03", look: " 하늘색 종이 상자, 리본 ", tier: "medium", phoneLast4: "5678" }));
+    expect(reply.status).toBe(200);
+    expect(calls).toEqual([
+      {
+        fn: "office_scan_inbound",
+        args: { p_barcode: BARCODE, p_code: null, p_carrier: "cj", p_sender_name: "김보관", p_shelf: "A-03", p_look: "하늘색 종이 상자, 리본", p_tier: "medium", p_phone_last4: "5678" },
+      },
+    ]);
+  });
+
+  it("INV-C5 (S5f, 실패경로): 뒤 4자리가 숫자 넷이 아니면(전체 번호·글자 섞임·다섯 자리) DB 를 부르지 않고 400", async () => {
+    for (const bad of ["010-1234-5678", "56a8", "56789", "567"]) {
+      const { calls, client } = fakeClient(HOLD);
+      expect([bad, await scanInbound(client, scan({ code: "", phoneLast4: bad }))]).toEqual([bad, { status: 400, body: { message: MESSAGE_PHONE_LAST4 } }]);
+      expect(calls).toEqual([]);
+    }
+  });
+
+  it("INV-C13 (실패경로): 포장 모양이 40자를 넘으면 400 · 크기가 구간 값이 아니면 400 — DB 를 부르지 않는다", async () => {
+    const { calls, client } = fakeClient(HOLD);
+    expect(await scanInbound(client, scan({ code: "", look: "가".repeat(41) }))).toEqual({ status: 400, body: { message: MESSAGE_LOOK } });
+    expect((await scanInbound(client, scan({ code: "", tier: "huge" }))).status).toBe(400);
+    expect(calls).toEqual([]);
+  });
+
+  it("INV-C5: 저장 칸이 아직 없는 DB(manual/0023 적용 전 — 0A000)면 409 와 「칸을 비우고 다시」 안내", async () => {
+    const { client } = fakeClient({ office_scan_inbound: { error: { code: "0A000" } } });
+    expect(await scanInbound(client, scan({ code: "", phoneLast4: "5678" }))).toEqual({ status: 409, body: { message: MESSAGE_PHONE_LAST4_UNAVAILABLE } });
   });
 });
