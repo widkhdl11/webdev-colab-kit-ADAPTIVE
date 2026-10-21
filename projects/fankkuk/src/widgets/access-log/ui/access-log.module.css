@@ -17,7 +17,7 @@
 .subs > div { display: flex; flex-direction: column-reverse; }
 .subs dt { font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
 .subs dd { margin: 0; font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
-.rule { display: flex; flex-direction: column; justify-content: center; padding: var(--space-6); border-radius: var(--r-card); background: var(--surface-muted); }
+.rule { display: flex; flex-direction: column; justify-content: center; padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); } /* 회색 보조 카드(23-1) */
 .rule p { font-size: var(--fs-small); color: var(--sub); }
 
 /* 표 — 880 폭, 날짜마다 묶은 촘촘한 줄 */

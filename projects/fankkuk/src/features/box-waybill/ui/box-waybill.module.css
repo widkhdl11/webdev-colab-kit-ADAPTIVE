@@ -39,7 +39,7 @@
 }
 
 /* 이 선물의 받는 주소(inbound-address-code INV-C2) — 상자마다 한 칸. 끝 6자리는 눌러야 보인다. 모양은 선물 상세의 「보내실 주소」 칸과 같다 */
-.addr { margin-top: 16px; padding: 24px 24px; border-radius: var(--r-card); background: var(--surface-brand); } /* v11 선물 상세: 옅은 코랄 판(card--soft) */
+.addr { margin-top: 16px; padding: 24px 24px; border-radius: var(--r-card); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-sheen); } /* 하늘 면 효과(23-1) — 카드 안에 놓이는 칸이라 바깥 그림자 없이 위 반사선만(선물 답장 .reply 와 같은 방식) */
 .addr-title { font-size: var(--fs-card); font-weight: var(--fw-bold); }
 .addr dl { display: grid; gap: 12px; margin-top: 12px; }
 .addr dl div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; }

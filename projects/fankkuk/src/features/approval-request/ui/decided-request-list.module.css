@@ -9,7 +9,7 @@
 .lab.lab { font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.5; color: var(--sub); }
 .line { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin: 0; }
-.grid > div { display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-card); background: var(--surface-muted); }
+.grid > div { display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); } /* 회색 보조 카드(23-1) */
 .grid dt { font-size: var(--fs-small); font-weight: 400; color: var(--sub); }
 .grid dd { margin: 0; font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); line-height: 1.2; font-variant-numeric: tabular-nums; }
 .empty.empty { margin-top: var(--space-8); }
@@ -31,6 +31,9 @@
 .fold summary::-webkit-details-marker { display: none; }
 .fold summary::after { content: "+"; flex: none; font-size: var(--fs-card); color: var(--sub); }
 .fold summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.fold summary::after { transition: transform 0.25s var(--ease-micro); }
+.fold[open] > summary::after { transform: rotate(45deg); } /* 「+」가 45도 돌아 닫기 표시(design-rules 23-2) */
+.fold[open] > :not(summary) { animation: fold-in 0.25s var(--ease-micro) both; }
 .fold p { padding-bottom: var(--space-4); font-size: var(--fs-small); color: var(--sub); }
 
 @media (max-width: 999px) {
@@ -41,3 +44,5 @@
   .peek { right: var(--space-6); top: calc(var(--space-8) * -1); width: 64px; height: 64px; }
   .side time { min-width: 0; text-align: left; }
 }
+/* 모듈 안에서는 움직임 이름이 따로 잡혀 공통(base.css)의 fold-in 을 못 쓴다 — 같은 값으로 여기 둔다. 「움직임 줄이기」는 base.css 가 끈다 */
+@keyframes fold-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }

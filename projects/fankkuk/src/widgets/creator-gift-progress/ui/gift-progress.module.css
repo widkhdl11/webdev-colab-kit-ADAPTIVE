@@ -28,14 +28,18 @@
 .gcards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
 .gcard.gcard { position: relative; display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; padding: var(--space-6); }
 /* 처리할 일이 있는 카드만 하늘 면(22절 원칙) */
-.gcard.hi { border: 1px solid var(--tint-line); border-radius: var(--r-card); background: var(--tint); }
+.gcard.hi { border: 1px solid var(--tint-line); border-radius: var(--r-card); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); } /* 강조 면 효과(23-1) */
 .top { display: flex; align-items: center; gap: var(--space-3); }
 .top strong { min-width: 0; overflow-wrap: anywhere; }
 .name.name { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; overflow-wrap: anywhere; }
 .what { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); overflow-wrap: anywhere; }
 .pbar { display: flex; gap: var(--space-1); }
 .pbar i { flex: 1; height: 8px; border-radius: var(--r-pill); background: var(--gray-200); }
-.pbar i:global(.on) { background: var(--primary); }
+.pbar i:global(.on) { background: var(--bar-fill-fx); transform-origin: left center; animation: bar-fill 0.5s var(--ease-micro) both; } /* 왼쪽부터 칸마다 0.05초 늦게 차오름(23-2) */
+.pbar i:global(.on):nth-child(2) { animation-delay: 0.05s; }
+.pbar i:global(.on):nth-child(3) { animation-delay: 0.1s; }
+.pbar i:global(.on):nth-child(4) { animation-delay: 0.15s; }
+.pbar i:global(.on):nth-child(5) { animation-delay: 0.2s; }
 .hi .pbar i:not(:global(.on)) { background: var(--white); }
 .pfoot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1) var(--space-3); margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
 .pfoot b { color: var(--ink); font-weight: var(--fw-btn); }
@@ -65,3 +69,5 @@
   .side.side { justify-content: flex-start; }
   .mini.mini { min-width: 0; justify-content: flex-start; }
 }
+/* 모듈 안에서는 움직임 이름이 따로 잡혀 공통(base.css)의 bar-fill 을 못 쓴다 — 같은 값으로 여기 둔다. 「움직임 줄이기」는 base.css 가 끈다 */
+@keyframes bar-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
