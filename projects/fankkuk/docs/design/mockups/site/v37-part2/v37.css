@@ -226,3 +226,18 @@
   box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 8px 24px rgba(137,207,240,.18)}
 .bhero{box-shadow:0 8px 24px rgba(137,207,240,.18)}
 .bhero .dcol{box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+
+/* 흰·회색 카드에도 은은한 효과(2026-10-21 사용자 「다른 카드들에도 은은하게 효과를… 눈에 확 띄진 않지만 묘하게 심심하다는 느낌은 느껴지지 않게」).
+   흰 카드: 오른쪽 위에 아주 옅은 하늘빛 + 위→아래로 흰색이 #fbfcfe 로 살짝 가라앉음, 위 가장자리 흰 반사선, 옅은 두 겹 그림자. 마우스를 올리면 조금 더 뜬다.
+   회색 보조 카드: 그림자 없이(하늘·흰 카드보다 낮게) 위→아래 #f9f9fa→#f4f5f7 와 위 반사선만.
+   하늘 면 > 흰 카드 > 회색 카드 순서의 높낮이는 그대로다. */
+.acard,.bcard,.gcard:not(.hi),.ccard,.dcard:not(.muted),.tile,.lnum,.qtot{
+  background:
+    radial-gradient(90% 120% at 100% 0%,rgba(137,207,240,.07) 0%,rgba(137,207,240,0) 55%),
+    linear-gradient(180deg,#fff 0%,#fbfcfe 100%);
+  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(31,41,55,.04),0 4px 12px rgba(31,41,55,.04)}
+.acard:hover,.bcard:hover,.gcard:not(.hi):hover,.ccard:hover,.tile:hover{
+  box-shadow:inset 0 1px 0 #fff,0 2px 4px rgba(31,41,55,.05),0 8px 24px rgba(31,41,55,.08)}
+.gcard2,.bside,.qgrid div,.dcard.muted{
+  background:linear-gradient(180deg,#f9f9fa 0%,#f4f5f7 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
