@@ -16,7 +16,7 @@ export type FaqItem = {
   a: string;
   /** 분류 칩 이름(원칙 ②) */
   tags?: readonly string[];
-  /** 「자주 찾음」 배지(원칙 ③) */
+  /** 「주요」 배지(원칙 ③) */
   frequent?: true;
 };
 

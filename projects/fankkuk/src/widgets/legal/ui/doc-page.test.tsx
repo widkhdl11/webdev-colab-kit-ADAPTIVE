@@ -74,10 +74,10 @@ const click = (el: Element | null | undefined) => act(() => (el as HTMLElement).
 const visibleArticles = () => qa("article").filter((a) => !a.hidden).map((a) => a.id);
 
 describe("선택 칸이 없는 글은 지금처럼 그린다", () => {
-  it("칩 줄 · 「자주 찾음」 · 최종 수정일 · 요약 링크 없이, 조와 요약 문장은 전부", () => {
+  it("칩 줄 · 「주요」 · 최종 수정일 · 요약 링크 없이, 조와 요약 문장은 전부", () => {
     render(<DocPage doc={base} variant="policy" />);
     expect(q('[role="group"][aria-label="분류"]')).toBeNull();
-    expect(host.textContent).not.toContain("자주 찾음");
+    expect(host.textContent).not.toContain("주요");
     expect(host.textContent).not.toContain("최종 수정일");
     expect(qa("ol li").filter((li) => li.textContent?.startsWith("요약")).map((li) => [li.textContent, li.querySelector("a")])).toEqual([
       ["요약 하나", null],
@@ -185,7 +185,7 @@ describe("요약 링크(C7)", () => {
 });
 
 describe("목차 줄(D1 ② · C2 · C3)", () => {
-  it("지금 조 이름 + 「목차 열기」, 펼치면 전체 조 · 지금 조 강조 · 「자주 찾음」, Esc 로 닫히고 초점은 단추로", () => {
+  it("지금 조 이름 + 「목차 열기」, 펼치면 전체 조 · 지금 조 강조 · 「주요」, Esc 로 닫히고 초점은 단추로", () => {
     // 화면 위쪽 1/3 안에 머리가 들어온 조는 둘째(환불)까지 — 그 마지막이 「지금 조」
     const tops: Record<string, number> = { intro: -400, refund: 100, words: 900, fee: 1800 };
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
@@ -201,7 +201,7 @@ describe("목차 줄(D1 ② · C2 · C3)", () => {
     expect(qa('nav[aria-label="목차"] a').map((a) => a.getAttribute("href"))).toEqual(["#intro", "#refund", "#words", "#fee"]);
     expect(panel.querySelector("p")?.textContent).toBe("앞 묶음");
     expect(panel.querySelector("[aria-current]")?.getAttribute("href")).toBe("#refund");
-    expect(qa('nav[aria-label="목차"] a').filter((a) => a.textContent?.includes("자주 찾음")).map((a) => a.getAttribute("href"))).toEqual(["#refund"]);
+    expect(qa('nav[aria-label="목차"] a').filter((a) => a.textContent?.includes("주요")).map((a) => a.getAttribute("href"))).toEqual(["#refund"]);
     panel.querySelector<HTMLElement>("a")!.focus();
     act(() => {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
@@ -220,10 +220,10 @@ describe("목차 줄(D1 ② · C2 · C3)", () => {
   });
 });
 
-describe("「자주 찾음」(C6) · 주소 복사(C8)", () => {
+describe("「주요」(C6) · 주소 복사(C8)", () => {
   it("frequent 조 제목 옆에 배지", () => {
     render(<DocPage doc={tagged} variant="policy" />);
-    expect(qa("article").filter((a) => a.querySelector("h2")?.parentElement?.textContent?.includes("자주 찾음")).map((a) => a.id)).toEqual(["refund"]);
+    expect(qa("article").filter((a) => a.querySelector("h2")?.parentElement?.textContent?.includes("주요")).map((a) => a.id)).toEqual(["refund"]);
   });
 
   it("복사 단추는 지금 주소(검색어 포함)#조id 를 복사하고 「복사됨」을 2초 보인다", async () => {
@@ -323,7 +323,7 @@ describe("자주 묻는 질문(C4 · C5 · C8)", () => {
   });
 
 
-  it("위에 붙는 목차 줄(C1) — 지금 질문 · 펼치면 전체 질문 · 자주 찾음, 고르면 그 질문이 펼쳐진 채로 간다", () => {
+  it("위에 붙는 목차 줄(C1) — 지금 질문 · 펼치면 전체 질문 · 주요, 고르면 그 질문이 펼쳐진 채로 간다", () => {
     window.history.replaceState(null, "", "/faq");
     const tops: Record<string, number> = { fee: -100, decline: 900 };
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
@@ -336,7 +336,7 @@ describe("자주 묻는 질문(C4 · C5 · C8)", () => {
     click(btn);
     const links = qa('nav[aria-label="목차"] a');
     expect(links.map((a) => a.getAttribute("href"))).toEqual(["#fee", "#decline"]);
-    expect(links.filter((a) => a.textContent?.includes("자주 찾음")).map((a) => a.getAttribute("href"))).toEqual(["#decline"]);
+    expect(links.filter((a) => a.textContent?.includes("주요")).map((a) => a.getAttribute("href"))).toEqual(["#decline"]);
     expect(q('nav[aria-label="목차"] [aria-current]')?.getAttribute("href")).toBe("#fee");
     click(q('nav[aria-label="목차"] a[href="#decline"]'));
     expect(q<HTMLDetailsElement>("#decline details")?.open).toBe(true);

@@ -42,7 +42,7 @@ export function DocTabRow({ tabs }: { tabs: DocTabs }) {
 }
 
 export function FrequentBadge() {
-  return <span className={s.badge}>자주 찾음</span>;
+  return <span className={s.badge}>주요</span>;
 }
 
 /** 쉬운 말 요약 판 — 줄마다 갈 조가 있으면 그 조로 가는 링크(원칙 ④). 문장은 그대로 */

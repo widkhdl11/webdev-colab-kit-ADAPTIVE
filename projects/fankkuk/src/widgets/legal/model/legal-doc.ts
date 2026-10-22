@@ -36,7 +36,7 @@ export type LegalSection = {
   blocks: readonly LegalBlock[];
   /** 분류 칩 이름(문서형 원칙 ②) — 없으면 칩을 고를 때 이 조는 접힌다. 문서에 tags 가 하나도 없으면 칩 줄을 그리지 않는다 */
   tags?: readonly string[];
-  /** 「자주 찾음」 배지(원칙 ③) — 조 제목 옆과 목차 줄 */
+  /** 「주요」 배지(원칙 ③) — 조 제목 옆과 목차 줄 */
   frequent?: true;
 };
 
