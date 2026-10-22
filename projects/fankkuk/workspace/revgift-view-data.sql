@@ -41,5 +41,7 @@ commit;
 -- delete from public.inbound_codes where share_id in (select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_view_rg_%');
 -- delete from public.notification_outbox where share_id in (select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_view_rg_%');
 -- delete from public.revgift_address_events where share_id in (select s.id from public.revgift_shares s join public.revgift_sends d on d.id = s.send_id where d.toss_order_id like 'pay_view_rg_%');
+-- -- 외래키를 끈 채(replica) 묶음만 지우면 몫 줄이 주인 없이 남아 다음 넣기와 통합 시험(RG-VIEW1)을 깨뜨린다(2026-10-22) — 몫부터 지운다
+-- delete from public.revgift_shares where send_id in (select id from public.revgift_sends where toss_order_id like 'pay_view_rg_%');
 -- delete from public.revgift_sends where toss_order_id like 'pay_view_rg_%';
 -- commit;

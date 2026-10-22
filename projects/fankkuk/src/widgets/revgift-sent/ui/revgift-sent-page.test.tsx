@@ -80,7 +80,7 @@ describe("보낸 역조공 화면 — 「내 상자 찾기」는 선물 현황�
 
   it("화면 리뷰 U6: 사무실에 온 상자는 용어집 4절 라벨 「도착 완료」 — 「입고됨」이라 쓰지 않는다", () => {
     render();
-    const fold = host.querySelector("details")!;
+    const fold = [...host.querySelectorAll("details")].find((d) => d.querySelector(":scope > summary")?.textContent === "송장번호 적기 (선택)")!;
     expect(fold.textContent).toContain("도착 완료");
     expect(host.textContent).not.toContain("입고됨");
   });
@@ -90,7 +90,39 @@ describe("보낸 역조공 화면 — 「내 상자 찾기」는 선물 현황�
     const tags = [...host.querySelectorAll("ul[aria-label$=\"팬별 지금 상태\"] > li")].map((li) => li.querySelector("[class*=tag]")?.textContent);
     expect(tags).toEqual(["수락 대기", "수락 대기"]);
     expect(host.textContent).toContain("팬 2명 · 수락 대기 2명");
-    expect([...host.querySelectorAll("aside dt")].map((d) => d.textContent)).toEqual(["보낸 묶음", "보낸 선물", "수락", "수락 대기", "받지 않음"]);
+    // 맨 위 상태 띠(design-rules 25절 — 오른쪽 요약 칸을 대신한다): 라벨 세 개와 몫마다 한 칸
+    const strip = host.querySelector("[role=img]")!;
+    expect(strip.getAttribute("aria-label")).toBe("수락 0개, 수락 대기 2개, 받지 않음 0개");
+    expect(strip.children).toHaveLength(2);
+    expect(host.querySelector("aside")).toBeNull();
     expect(host.textContent).not.toContain("기다리는 중");
+  });
+
+  it("v39(design-rules 25절): 상태 띠 칸은 몫의 상태 그대로 — 묶음마다 최근 묶음만 펼친다", () => {
+    const OLD = "2026-10-01T01:00:00.000Z";
+    act(() =>
+      root.render(
+        <RevgiftSentPage
+          rows={[
+            { ...row("RG-B0", "별", "accepted"), sentAt: OLD },
+            row("RG-A0", "모카", "waiting"),
+            row("RG-A1", "라온", "not_received"),
+          ]}
+          boxes={[]}
+          paid={false}
+          officeAddress="사무실 주소"
+        />,
+      ),
+    );
+    const strip = host.querySelector("[role=img]")!;
+    expect(strip.getAttribute("aria-label")).toBe("수락 1개, 수락 대기 1개, 받지 않음 1개");
+    // 칸 순서 = 묶음(최근 먼저) 안 몫 순서. 같은 상태 칸끼리는 같은 class, 다른 상태끼리는 다른 class
+    const cls = [...strip.children].map((c) => c.className);
+    expect(cls).toHaveLength(3);
+    expect(new Set(cls).size).toBe(3);
+    const batches = [...host.querySelectorAll("details")].filter((d) => d.querySelector(":scope > summary h2"));
+    expect(batches.map((d) => d.open)).toEqual([true, false]);
+    expect(batches[0]!.querySelector("h2")!.textContent).not.toBe(batches[1]!.querySelector("h2")!.textContent);
+    expect(host.textContent).not.toContain("역조공 보내기");
   });
 });

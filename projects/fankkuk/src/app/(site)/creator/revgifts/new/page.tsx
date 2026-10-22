@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { readPublicPrices } from "@/entities/payment/api/read-tier-prices";
 import { readRevgiftFollowers } from "@/entities/revgift/api/revgift-reads";
@@ -7,6 +8,8 @@ import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-h
 import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = { title: "팬에게 보내기 — 팬꾹" };
 
 const PAYMENT_NOTICE: Record<string, string> = {
   failed: "결제를 마치지 못해 역조공이 보내지지 않았어요. 받을 팬을 다시 골라 주세요.",

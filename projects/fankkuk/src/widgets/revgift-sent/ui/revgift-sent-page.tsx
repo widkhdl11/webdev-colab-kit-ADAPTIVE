@@ -1,9 +1,8 @@
 import { statusTagClass } from "@/shared/ui/status-tone";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { isMissing, isWaybillEditable, type ShareBox } from "@/entities/parcel/model/box-rows";
 import type { SentRevgift } from "@/entities/revgift/model/revgift-rows";
-import { countBatchStates, summarizeSent, toSentBatches, type SentSummary } from "@/entities/revgift/model/sent-batches";
+import { countBatchStates, summarizeSent, toSentBatches, type SentBatch, type SentSummary } from "@/entities/revgift/model/sent-batches";
 import { sentStateTag } from "@/entities/revgift/ui/received-status";
 import { shareAddressCode } from "@/features/box-waybill/model/box-targets";
 import { ReceivingAddress } from "@/features/box-waybill/ui/receiving-address";
@@ -12,21 +11,18 @@ import { formatDateTime } from "@/shared/lib/format/datetime";
 import { FaceAvatar } from "@/shared/ui/face-avatar";
 import s from "./revgift-sent.module.css";
 
-// 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v21-addendum3/cre-revgift-sent.html(design-rules 12절 「진행 상태」) —
-// 묶음마다 팬별 「지금 상태」 한 줄 목록(위아래, 0000절). 한 줄에 보이는 것은 팬 닉네임·주문번호·상태 배지(셋 중 하나)뿐이다 —
-// 팬 로그인 아이디도 싣지 않는다(reverse-gift INV-R8). 팬마다 따로 보는 화면이 없어 줄은 링크가 아니다.
-// 송장번호는 묶음 아래 「송장번호 적기(선택)」 접힌 칸에 팬마다 한 줄(시안 .fold·.inv-row). 배송 조회를 보고 싶을 때만 넣는 선택 칸이다
-// (inbound-address-code INV-C7). 입고 전엔 넣고 고치고, 도착하면 「도착 완료」로 잠긴다(design-rules 8-1).
-// 받는 주소는 그 팬 줄 바로 아래 — 보낼 상자가 남았을 때만 생긴다(필요할 때만, 0000절).
-// 묶음 나누기와 상태 세기는 entities/revgift/model/sent-batches.ts — 여기서는 문구만 조립한다.
+// 보낸 역조공(크리에이터). 시안: docs/design/mockups/site/v39-part3/revgifts-sent.html · v39.css (design-rules 25절, 22·23절).
+// 880 한 단. 맨 위 보낸 선물 수(48)와 상태 띠 — 팬 한 명(몫 하나)이 한 칸, 칸 모양은 그 몫의 상태(sentStateTag 와 같은 판정 결과 x.state).
+// 아래 묶음 카드는 모두 같은 모양 — 가장 최근 묶음만 펼치고 나머지는 접힌 한 줄(details).
+// 묶음 안: 받는 주소 안내(묶음마다 한 번) · 팬별 「지금 상태」 한 줄 목록 · 「송장번호 적기(선택)」 접힌 칸.
+// 한 줄에 보이는 것은 팬 닉네임·주문번호·상태 배지(셋 중 하나)뿐이다 — 팬 로그인 아이디도 싣지 않는다(reverse-gift INV-R8). 줄은 링크가 아니다.
+// 송장번호는 배송 조회를 보고 싶을 때만 넣는 선택 칸이다(inbound-address-code INV-C7). 입고 전엔 넣고 고치고, 도착하면 「도착 완료」로 잠긴다(design-rules 8-1).
 // 받는 주소(INV-R14, inbound-address-code INV-C2·C3): 팬(몫)마다 사무실 주소 + 그 몫의 6자리. 묶음에 officeAddress 가 있을 때
 // (결제가 끝났고 보낼 상자가 남은 묶음) + my_share_boxes 가 그 몫의 6자리를 줄 때(보낸 크리에이터 본인 · 유효할 때)만 그린다.
 // 6자리 빠진 기본 사무실 주소는 그리지 않는다. 팬의 받기를 기다리지 않는다 — 받기는 출고 전에만 있으면 된다.
-// 받는 주소 없이 보낸 상자의 「내 상자 찾기」는 선물 현황 「보내는 선물」의 입고 전 줄에 있다
-// (action-center INV-J10 — 「선물 현황 화면이 생기기 전에는 보낸 역조공 화면」이었고, 선물 현황이 생겨 옮겼다).
-// 두 단(design-rules 00절 「본문 틀」, 시안 v22-width/cre-revgift-sent-ab.html): 주 내용 880 + 오른쪽 요약 칸 288, 간격 32.
-// 본문 영역 1000 이상에서 두 단·칸은 스크롤을 따라오고, 좁으면 한 단에 칸이 위. 칸에는 이 화면에 이미 있는 값만 —
-// 몫 목록을 센 숫자(summarizeSent), 머리에서 옮긴 「역조공 보내기」, 아래 「알아 두세요」에 있던 송장번호 안내 한 줄.
+// 받는 주소 없이 보낸 상자의 「내 상자 찾기」는 선물 현황 「보내는 선물」의 입고 전 줄에 있다(action-center INV-J10).
+// 묶음 나누기와 상태 세기는 entities/revgift/model/sent-batches.ts — 여기서는 문구와 칸만 조립한다.
+// v39 에서 뺀 것(25절): 페이지 설명 문장, 오른쪽 요약 칸(숫자는 상태 띠가 맡는다), 「역조공 보내기」 버튼(사이드바에 있다), 송장 안내 한 줄.
 
 function Check() {
   return (
@@ -92,23 +88,20 @@ function ShareWaybill({ box, fanNickname }: { box: ShareBox; fanNickname: string
   );
 }
 
-/** 묶음 아래 「송장번호 적기(선택)」 — 평소엔 접혀 있다(design-rules 0000절·12절). 칸에 넣을 팬이 없으면 그리지 않는다 */
+/** 묶음 아래 「송장번호 적기(선택)」 — 평소엔 접혀 있다(시안 .invfold). 칸에 넣을 팬이 없으면 그리지 않는다 */
 function WaybillFold({ views }: { views: readonly ShareView[] }) {
   const items = views.flatMap(({ x, waybillBox }) => (waybillBox ? [{ x, box: waybillBox }] : []));
   if (items.length === 0) return null;
   return (
-    <details className={s.fold}>
-      <summary>
-        송장번호 적기 (선택)
-        <svg className={s.foldChev} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </summary>
-      <div className={s.foldBody}>
-        <p className="t-meta">상자가 사무실에 도착하기 전까지만 고칠 수 있고, 도착하면 「도착 완료」로 바뀌고 잠겨요.</p>
+    <details className={`${s.fold} ${s.invFold}`}>
+      <summary>송장번호 적기 (선택)</summary>
+      <div className={s.in}>
+        <p className={s.hint}>상자가 사무실에 도착하기 전까지만 고칠 수 있고, 도착하면 「도착 완료」로 바뀌고 잠겨요.</p>
         {items.map(({ x, box }) => (
           <div key={x.orderNo} className={s.invRow}>
-            <p className={s.invName}>{x.fanNickname}님</p>
+            <p className={s.invName} title={`${x.fanNickname}님`}>
+              {x.fanNickname}님
+            </p>
             <ShareWaybill box={box} fanNickname={x.fanNickname} />
           </div>
         ))}
@@ -127,50 +120,113 @@ function batchSummary(shares: readonly SentRevgift[]): string {
 
 const STATE_ORDER: readonly SentRevgift["state"][] = ["accepted", "waiting", "not_received"];
 
-function SummarySide({ summary }: { summary: SentSummary }) {
+/** 상태 띠 칸 모양 — 수락=채움 · 수락 대기=하늘 테두리 · 받지 않음=회색(design-rules 25절). 상태는 몫의 판정 결과(x.state) 그대로 */
+const CELL: Record<SentRevgift["state"], string | undefined> = { accepted: s.cellOk, waiting: s.cellWait, not_received: s.cellNo };
+
+/** 묶음 접힌 줄에 겹쳐 보이는 얼굴 수 — 팬이 많은 묶음에서 줄이 넘치지 않게 앞의 몇 명만(인원은 바로 옆 「팬 N명」이 알린다) */
+const MAX_FACES = 5;
+
+/** 맨 위 「보낸 선물」 수와 상태 띠(시안 .sband) — 화면에 있는 몫 목록만 센다(summarizeSent) */
+function SentBand({ batches, summary }: { batches: readonly SentBatch[]; summary: SentSummary }) {
+  const label = STATE_ORDER.map((st) => `${sentStateTag(st).tag} ${summary.states[st]}개`).join(", ");
   return (
-    <aside className={s.side} aria-label="보낸 역조공 요약">
-      <div className={`card ${s.sideCard}`}>
-        <h2 className="t-card">요약</h2>
-        {/* 보낸 것이 없으면 0 줄을 늘어놓지 않는다 — 빈 상태는 본문이 알린다 */}
-        {summary.shares === 0 ? null : (
-          <dl className={s.sum}>
-            <div>
-              <dt>보낸 묶음</dt>
-              <dd>{summary.batches}묶음</dd>
-            </div>
-            <div>
-              <dt>보낸 선물</dt>
-              <dd>{summary.shares}개</dd>
-            </div>
-            {STATE_ORDER.map((st) => (
-              <div key={st}>
-                <dt>{sentStateTag(st).tag}</dt>
-                <dd>{summary.states[st]}개</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-        <Link className="btn" href="/creator/revgifts/new">
-          역조공 보내기
-        </Link>
+    <div className={s.band}>
+      <div>
+        <span className={s.lab}>보낸 선물</span>
+        <p className="num-big">
+          {summary.shares}
+          <small>개</small>
+        </p>
+        <p className={s.sub}>{summary.batches}묶음</p>
       </div>
-      <p className={`t-meta ${s.sideNote}`}>송장번호는 배송 조회를 보고 싶을 때만 넣어요.</p>
-    </aside>
+      <div>
+        <div className={s.strip} role="img" aria-label={label}>
+          {batches.flatMap((b) => b.shares.map((x) => <i key={x.orderNo} className={CELL[x.state]} />))}
+        </div>
+        <p className={s.legend}>
+          {STATE_ORDER.map((st) => (
+            <span key={st}>
+              <i className={CELL[st]} />
+              {sentStateTag(st).tag} <b>{summary.states[st]}개</b>
+            </span>
+          ))}
+        </p>
+      </div>
+    </div>
   );
 }
 
 function AddressGuide({ headId }: { headId: string }) {
   return (
-    <div className={`card card--soft ${s.guide}`} role="group" aria-labelledby={headId}>
-      <p className="t-card" id={headId}>
+    <div className={s.guide} role="group" aria-labelledby={headId}>
+      <p className={s.guideT} id={headId}>
         팬마다 받는 주소가 달라요
       </p>
-      <p className={s["body-gap"]}>
+      <p>
         팬 한 명마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소를 끝 6자리까지 그대로 써서 보내 주세요. 팬이 받기를 누를 때까지 기다리지 않고 보내셔도 돼요. 받지 않은 팬의
         상자는 돌려보내고 그 상자 요금은 환불돼요.
       </p>
     </div>
+  );
+}
+
+function Batch({ b, bi, boxByOrder }: { b: SentBatch; bi: number; boxByOrder: ReadonlyMap<string, ShareBox> }) {
+  const views = toShareViews(b.shares, boxByOrder, b.officeAddress);
+  const when = formatDateTime(b.sentAt);
+  return (
+    // 최근 묶음(맨 앞)만 펼친다 — 나머지는 접힌 한 줄
+    <details className={s.batch} open={bi === 0}>
+      <summary>
+        <div className={s.bHead}>
+          <h2 className={s.bTitle} id={`rv-batch-${bi}`}>
+            {when} 보낸 역조공
+          </h2>
+          <p className={s.facts}>
+            {/* 한 번 보낸 것 안에서는 같은 팬이 두 번 없다(DB 유일 send_id·fan_id) — 묶음 줄은 「팬 N명」이 맞다 */}
+            팬 {b.shares.length}명 · {batchSummary(b.shares)}
+          </p>
+        </div>
+        <span className={s.faces} aria-hidden="true">
+          {b.shares.slice(0, MAX_FACES).map((x, i) => (
+            <FaceAvatar key={x.orderNo} index={i} className={s.face} />
+          ))}
+        </span>
+        <svg className={s.chev} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </summary>
+      <div className={s.bbody}>
+        {b.officeAddress && views.some((v) => v.addressCode) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
+        <ul className={s.rows} aria-label={`${when} 묶음 팬별 지금 상태`}>
+          {views.map(({ x, addressCode }, i) => {
+            const tag = sentStateTag(x.state);
+            return (
+              <li key={x.orderNo} className={s.srow}>
+                <div className={s.line}>
+                  <FaceAvatar index={i} className={s.av} />
+                  <div className={s.nm}>
+                    <p className={s.name} title={`${x.fanNickname}님`}>
+                      {x.fanNickname}님
+                    </p>
+                    <p className={s.orderNo}>주문번호 {x.orderNo}</p>
+                  </div>
+                  <span className={statusTagClass(tag.tone)}>
+                    {tag.tone === "success" ? <Check /> : null}
+                    {tag.tag}
+                  </span>
+                </div>
+                {b.officeAddress && addressCode ? (
+                  <div className={s.addr}>
+                    <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+        <WaybillFold views={views} />
+      </div>
+    </details>
   );
 }
 
@@ -191,87 +247,51 @@ export function RevgiftSentPage({
   const batches = toSentBatches(rows, officeAddress);
   const boxByOrder = new Map(boxes.map((b) => [b.orderNo, b]));
   return (
-    <div className={s.split}>
-      <div className={s.mainc}>
-        <header className="page-head">
-          <div className="ph-row">
-            <h1 className="ph-title">
-              보낸 역조공<span className="ph-count">{batches.length}</span>
-            </h1>
-          </div>
-          <p className="ph-desc">팬에게 보낸 선물을 한 번에 보낸 묶음별로 모아 봤어요.</p>
-        </header>
-        {tabs}
-        {paid ? (
-          <p className={s.paid} role="status">
+    <div className={s.page}>
+      <header className="page-head">
+        <div className="ph-row">
+          <h1 className="ph-title">
+            보낸 역조공<span className="ph-count">{batches.length}</span>
+          </h1>
+        </div>
+      </header>
+      {tabs}
+      {paid ? (
+        <div className={s.paid} role="status">
+          <img className={s.peek} src="/images/home/icon-truck.webp" alt="" aria-hidden="true" width={80} height={80} />
+          <p>
             <strong>결제가 끝났어요.</strong> 팬마다 상자를 따로 포장하고, 아래 팬마다 나온 받는 주소로 보내 주세요.
           </p>
-        ) : null}
-        {/* 이름 없는 section — 화면 읽기 랜드마크가 되지 않고, 구간 사이 간격(64·휴대폰 48)만 공통 규칙을 따른다 */}
-        <section className="card card--soft">
-          <img className={`asset ${s.lock}`} src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={56} height={56} />
-          <p>
-            <strong className={`t-card ${s["privacy-t"]}`}>팬의 주소와 실명은 보이지 않아요.</strong>
-            <span className={`${s["privacy-t"]} ${s["body-gap"]}`}>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span>
-          </p>
+        </div>
+      ) : null}
+      {batches.length > 0 ? <SentBand batches={batches} summary={summarizeSent(rows)} /> : null}
+      <div className={s.privacy}>
+        <img src="/img/icon-address-lock.png" alt="" aria-hidden="true" width={40} height={40} />
+        <p>
+          <strong>팬의 주소와 실명은 보이지 않아요.</strong>
+          <span>팬이 직접 입력하고, 팬꾹만 송장을 뽑을 때 열어요.</span>
+        </p>
+      </div>
+      {batches.length === 0 ? (
+        <section className={s.sempty}>
+          <img src="/images/home/icon-gift.webp" alt="" aria-hidden="true" width={96} height={96} />
+          <h2 className={s.semptyT}>아직 보낸 역조공이 없어요</h2>
+          <p>나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
         </section>
-        {batches.length === 0 ? (
-          <section className="empty">
-            <h2 className="t-card">아직 보낸 역조공이 없어요</h2>
-            <p className="t-meta">나를 팔로우한 팬을 골라 선물을 보낼 수 있어요.</p>
-          </section>
-        ) : (
-          batches.map((b, bi) => {
-            const views = toShareViews(b.shares, boxByOrder, b.officeAddress);
-            return (
-            <section key={b.sentAt} aria-labelledby={`rv-batch-${bi}`}>
-              <h2 className={`t-card ${s["batch-h"]}`} id={`rv-batch-${bi}`}>
-                {formatDateTime(b.sentAt)} 보낸 역조공
-              </h2>
-              <p className={`t-meta ${s.facts}`}>
-                {/* 한 번 보낸 것 안에서는 같은 팬이 두 번 없다(DB 유일 send_id·fan_id) — 묶음 줄은 「팬 N명」이 맞다 */}
-                팬 {b.shares.length}명 · {batchSummary(b.shares)}
-              </p>
-              {b.officeAddress && views.some((v) => v.addressCode) ? <AddressGuide headId={`rv-addr-${bi}`} /> : null}
-              <ul className={s.rows} aria-label={`${formatDateTime(b.sentAt)} 묶음 팬별 지금 상태`}>
-                {views.map(({ x, addressCode }, i) => {
-                  const tag = sentStateTag(x.state);
-                  return (
-                    <li key={x.orderNo}>
-                      <div className={s.row}>
-                        <FaceAvatar index={i} className={s.av} />
-                        <div className={s.rt}>
-                          <p className={s.name}>{x.fanNickname}님</p>
-                          <p className={`t-meta ${s["order-no"]}`}>주문번호 {x.orderNo}</p>
-                        </div>
-                        <span className={statusTagClass(tag.tone)}>{tag.tag}</span>
-                      </div>
-                      {b.officeAddress && addressCode ? (
-                        <div className={s.rowMore}>
-                          <ReceivingAddress officeAddress={b.officeAddress} code={addressCode} boxName={`${x.fanNickname}님 상자`} multiple={b.shares.length > 1} />
-                        </div>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-              <WaybillFold views={views} />
-            </section>
-            );
-          })
-        )}
-        <section className="card">
-          <strong className="t-card">알아 두세요</strong>
-          <ul className={s.notes}>
+      ) : (
+        batches.map((b, bi) => <Batch key={b.sentAt} b={b} bi={bi} boxByOrder={boxByOrder} />)
+      )}
+      <details className={`${s.fold} ${s.knows}`}>
+        <summary>알아 두세요</summary>
+        <div className={s.in}>
+          <ul>
             <li>「받지 않음」은 팬이 받지 않기를 누른 경우와 7일이 지난 경우를 구분하지 않아요.</li>
             <li>받지 않은 상자는 보낸 사무실 쪽에서 돌려보내고, 그 상자 요금만 환불돼요.</li>
             <li>한 팬이 받지 않아도 같은 묶음의 다른 팬 선물은 그대로 가요.</li>
             <li>상자를 더 보내려면 새로 보내기를 해 주세요. 상자마다 받는 주소가 달라요.</li>
           </ul>
-        </section>
-      </div>
-      {/* 칸은 글 순서상 주 내용 뒤(제목이 먼저 읽히게), 보이는 자리는 CSS grid-area 가 정한다 */}
-      <SummarySide summary={summarizeSent(rows)} />
+        </div>
+      </details>
     </div>
   );
 }

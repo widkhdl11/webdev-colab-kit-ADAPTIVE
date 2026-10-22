@@ -1,44 +1,95 @@
-/* 역조공 보내기 입력 — 시안 v18 creator-revgift-new.html(v18-cre.css). 좌우 분할 없이 세로 한 줄.
-   카드·고르기(.opt)·진행 순서(.flow)·오류(.err)·빈 상태는 base.css 공통 부품 */
+/* 팬에게 보내기 입력 — 시안 docs/design/mockups/site/v39-part3/revgifts-new-a.html · v39.css 「역조공 보내기 A」(.fgrid·.fcard·.sz·.howcard·.nsteps·.tray) (design-rules 25절).
+   팬 카드 3열 격자(999 이하 2열, 767 이하 1열) → 회색 안내 칸 → 화면 아래에 붙는 하늘 결제 띠.
+   고르기 카드는 면 효과를 넣지 않는다(23-1 제외 목록). 결제 띠는 강조 면(23-1). 하늘 면 위 글자는 --on-brand, 회색 글자는 --sub. */
 
-.sub { margin-top: 4px; }
-.notice { margin-top: 16px; }
-.count { margin-top: 24px; font-size: var(--fs-body); line-height: 1.6; }
-.fans { margin-top: 16px; }
-.note { margin-top: 16px; }
+/* 받을 팬 고르기 머리 (시안 .t20 · .flead · .maxline) */
+.secH { font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; }
+.lead { margin-top: var(--space-1); color: var(--sub); }
+.notice { margin-top: var(--space-4); }
+.maxline { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
 
-/* 팬 카드 — 체크된 카드 = 선택 면(design-rules 「체크된 항목」) */
-.fan { display: flex; flex-direction: column; gap: 16px; padding: 24px; }
-.fan.on { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); } /* v18-cre.css .fan.on — 1px 빨강 경계 */
-.pick { display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 48px; cursor: pointer; }
-.pick input { flex-shrink: 0; width: 24px; height: 24px; margin: 0; accent-color: var(--brand-line); }
-.pick input[aria-disabled="true"] { cursor: not-allowed; opacity: .5; }
-.pick:has(input[aria-disabled="true"]) { cursor: not-allowed; color: var(--sub); }
-.pick:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
-.pick input:focus-visible { outline: none; }
-.nick { min-width: 0; overflow-wrap: anywhere; }
-.sizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+/* 팬 카드 격자 (시안 .fgrid · .fcard) */
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); align-items: start; margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.fan { position: relative; min-width: 0; padding: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-card); background: var(--white); }
+.fan.on { border-color: var(--brand-line); background: var(--tint); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.fan.locked { background: var(--surface-muted); color: var(--sub); }
+.pick { display: grid; grid-template-columns: 24px 40px minmax(0, 1fr); gap: var(--space-3); align-items: center; min-height: 44px; cursor: pointer; }
+.pick input { width: 24px; height: 24px; margin: 0; accent-color: var(--brand-line); }
+.pick input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.locked .pick { cursor: not-allowed; }
+.locked .pick input { cursor: not-allowed; }
+.face.face { width: 40px; height: 40px; }
+/* 닉네임(최대 20자) — 한 줄 말줄임, 전체는 title */
+.nick { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: var(--fw-btn); }
 
-/* 이렇게 진행돼요 — 세 단계를 위→아래 한 줄씩(v18-cre.css .flow): 번호 원(옅은 빨강) 옆에 제목·설명, 잇는 선 없음 */
-.steps { --steps: 1; gap: 24px; }
-ol.steps > li { display: flex; align-items: flex-start; gap: 16px; text-align: left; }
-ol.steps > li:not(:last-child)::after { content: none; }
-.steps > li > :global(.n) { flex: none; width: 32px; height: 32px; margin: 0; background: var(--primary-50); color: var(--brand-ink); box-shadow: none; }
-.step { display: block; }
-.step + p { margin-top: 8px; color: var(--gray-600); }
+/* 상자 크기 세 칸 (시안 .sizes · .sz) — 라디오가 칸 전체를 덮고, 고른 칸은 하늘 면 */
+.sizeSet { margin-top: var(--space-3); }
+.sizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); }
+.sz { position: relative; display: block; min-width: 0; min-height: 44px; padding: var(--space-2) var(--space-1); border: 1px solid var(--gray-400); border-radius: var(--r-btn); background: var(--white); color: var(--ink); text-align: center; font-size: var(--fs-small); line-height: 1.3; cursor: pointer; }
+.sz input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.sz b { display: block; font-weight: var(--fw-btn); }
+.sz span { display: block; color: var(--sub); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.sz:has(input:checked) { border-color: var(--primary); background: var(--primary); color: var(--on-brand); }
+.sz:has(input:checked) span { color: var(--on-brand); }
+.sz:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
 
-/* 결제 금액 */
-.pay { margin-top: 48px; padding: 32px; }
-.inc { margin-top: 4px; }
-.lines { display: grid; gap: 8px; margin-top: 16px; }
-.line { display: flex; justify-content: space-between; gap: 16px; }
+/* 팔로워가 없을 때 (시안 .statuscard) */
+.none { margin-top: var(--space-4); padding: var(--space-12) var(--space-6); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); color: var(--sub); text-align: center; }
+
+/* 이렇게 진행돼요 + 안내 — 회색 칸 하나 (시안 .gnote.howcard · .nsteps) */
+.how { margin-top: var(--space-8); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.howH { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; color: var(--ink); }
+.how p { font-size: var(--fs-small); color: var(--sub); }
+.how > p + p { margin-top: var(--space-2); }
+.steps { display: grid; gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.steps > li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--space-3); align-items: start; }
+.steps > li > div { min-width: 0; }
+.nb { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-bold); }
+.steps strong { display: block; font-size: var(--fs-body); color: var(--ink); overflow-wrap: anywhere; }
+.steps p { margin-top: 0; overflow-wrap: anywhere; }
+.rule { margin: var(--space-4) 0; border: 0; border-top: 1px solid var(--gray-200); }
+
+/* 결제 띠 — 화면 아래에 붙어 따라온다(sticky). 받을 팬 수 | 결제 금액 | 동의·결제 (시안 .tray) */
+.tray { position: sticky; bottom: var(--space-6); z-index: 2; display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 320px); gap: var(--space-4) var(--space-10); align-items: center; margin-top: var(--space-8); padding: var(--space-6) var(--space-8); border: 1px solid var(--tint-line); border-radius: var(--r-panel); background: var(--surface-accent-fx); box-shadow: var(--surface-accent-shadow); color: var(--on-brand); }
+.cnt { min-width: 0; }
+.lab { display: block; font-size: var(--fs-small); font-weight: var(--fw-btn); color: var(--sub); }
+.num.num { display: block; color: var(--on-brand); white-space: nowrap; }
+.num small { color: var(--sub); }
+.faces { display: flex; align-items: center; min-height: 40px; margin-top: var(--space-2); }
+.mini.mini { width: 32px; height: 32px; margin-left: 0; font-size: var(--fs-small); }
+.mini.mini + .mini { margin-left: calc(var(--space-3) * -1); }
+.moreFace.moreFace { background: var(--white); color: var(--on-brand); }
+.mid { min-width: 0; }
+.payH { font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.6; color: var(--sub); }
+.lines { margin-top: var(--space-2); }
+.ln { display: flex; justify-content: space-between; gap: var(--space-4); padding: var(--space-1) 0; font-size: var(--fs-small); }
 .amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.total { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); align-items: baseline; }
-.big { font-size: var(--fs-title); line-height: 1.3; font-weight: var(--fw-bold); white-space: nowrap; } /* 시안 .total strong — 휴대폰 24 */
-.pay-btn { margin-top: 24px; }
-.after { margin-top: 12px; }
+.tot { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); margin-top: var(--space-1); padding-top: var(--space-2); border-top: 1px solid var(--tint-line); }
+.tot > span { font-weight: var(--fw-bold); }
+.tot strong { font-family: var(--font-round); font-size: var(--fs-page); font-weight: var(--fw-title); letter-spacing: 0; line-height: 1.2; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tot strong small { margin-left: 2px; font-family: var(--font); font-size: var(--fs-small); font-weight: var(--fw-btn); }
+.inc { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+.rt { min-width: 0; }
 
+/* 결제 전 동의 — 공통 동의 칸(entities/payment PaymentConsent)을 띠 안 모양으로 (시안 .consent2 · .check2 · .hint2) */
+.consent :global(.check) { display: flex; align-items: flex-start; gap: var(--space-3); min-height: 44px; padding: 0; cursor: pointer; }
+.consent :global(.check) input { flex: none; width: 24px; height: 24px; margin: 0; accent-color: var(--brand-line); }
+.consent :global(.check) input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.consent :global(.hint) { margin-top: 0; padding-left: 36px; font-size: var(--fs-small); color: var(--sub); }
+.consent :global(.hint) a { color: var(--on-brand); text-decoration: underline; }
+
+/* 오류 한 줄 — 빨강 면 + 「!」 동그라미 (시안 .errline) */
+.errline { display: flex; gap: var(--space-2); align-items: flex-start; margin-top: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--r-btn); background: var(--danger-soft); color: var(--danger); font-size: var(--fs-small); font-weight: var(--fw-bold); overflow-wrap: anywhere; }
+.errline i { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: var(--r-pill); box-shadow: inset 0 0 0 2px var(--danger); font-size: var(--fs-badge); font-style: normal; line-height: 1; }
+.payBtn.payBtn { margin-top: var(--space-2); }
+.after { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+
+@media (max-width: 999px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* 한 줄로 쌓이면 띠가 길어져 팬 카드를 가린다 — 이 폭부터는 붙지 않고 제자리에 둔다(시안 그대로) */
+  .tray { position: static; grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 767px) {
-  .sizes { grid-template-columns: 1fr; }
-  .big { font-size: var(--fs-title); }
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .tray { padding: var(--space-6); }
 }

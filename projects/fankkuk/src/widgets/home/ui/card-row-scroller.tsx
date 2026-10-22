@@ -67,7 +67,8 @@ export function CardRowScroller({ id, label, children }: { id: string; label: st
     if (!el) return;
     const cs = getComputedStyle(el);
     const inner = el.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // 움직임 줄이기면 바로 옮긴다(23-2). matchMedia 가 없는 환경(시험의 jsdom)은 부드럽게 그대로
+    const reduce = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     el.scrollBy({ left: dir * inner, behavior: reduce ? "auto" : "smooth" });
   };
 

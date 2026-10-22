@@ -55,7 +55,8 @@ function click(el: HTMLElement) {
 
 const pickedCount = () => host.querySelector("#rv-fans-title")?.textContent;
 const totalText = () => [...host.querySelectorAll("p")].find((p) => p.textContent?.startsWith("합계"))?.querySelector("strong")?.textContent;
-const payButton = () => [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "결제하기");
+// 결제 버튼은 「합계 + 결제하기」(시안 v39) — 금액 부분까지 보도록 버튼 글자 전체를 따로 본다
+const payButton = () => [...host.querySelectorAll("button")].find((b) => b.textContent?.trim().endsWith("결제하기"));
 
 describe("역조공 받을 팬 고르기 (INV-R2·R3)", () => {
   it("한 번에 고를 수 있는 팬은 10명이다", () => {
@@ -93,10 +94,12 @@ describe("역조공 받을 팬 고르기 (INV-R2·R3)", () => {
     click(box("팬1"));
     expect(pickedCount()).toBe("받을 팬 1명");
     expect(totalText()).toBe("5,400원");
+    expect(payButton()?.textContent?.trim()).toBe("5,400원 결제하기");
     expect(payButton()?.disabled).toBe(false);
     click(box("팬1"));
     expect(pickedCount()).toBe("받을 팬 0명");
     expect(totalText()).toBe("0원");
+    expect(payButton()?.textContent?.trim()).toBe("0원 결제하기");
     expect(payButton()?.disabled).toBe(true);
   });
 

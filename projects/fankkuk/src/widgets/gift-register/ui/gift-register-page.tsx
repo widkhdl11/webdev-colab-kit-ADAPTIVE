@@ -20,7 +20,7 @@ import {
 } from "@/features/gift-register/ui/register-form";
 import s from "./gift-register-page.module.css";
 
-// 선물 보내기 본문(팬·크리에이터). 시안: docs/design/mockups/site/v18/send.html · send-loggedout.html (4단계, 가운데 틀 안 입력 기둥 720 — design-rules 00절)
+// 선물 보내기 본문(팬·크리에이터). 시안: docs/design/mockups/site/v39-part3/gifts-new-b.html (design-rules 25절 B안 — 맨 위 하늘 단계 판 + 흰 입력 판 한 기둥 720). 로그인 전·팔로우 없음·쉬는 중은 흰 상태 카드
 // 4단계에서 「결제하기」를 누르면 서버에 등록되고(결제 대기), 같은 자리에 결제창이 뜬다.
 // 헤더·푸터는 라우트(app)가 붙인다 — 위젯끼리 import 하지 않게.
 // 선물 사진(선택)을 골랐으면 등록 직후 그 주문에 올린 뒤 결제창을 연다(together INV-F2 — 서버가 열어 보고 사진 정보를 지워 저장한다).
@@ -80,54 +80,42 @@ export function GiftRegisterPage({
   return (
     <main id="main" className="page-centered">
       <div className={s.col}>
-        <header className="page-head">
+        <header className={`page-head ${s.head}`}>
           <h1 className="ph-title">선물 보내기</h1>
-          <p className="ph-desc">
-            {registered
-              ? `주문번호 ${registered.orderNo} — 결제하면 등록이 끝나요.`
-              : "누구에게, 무엇을, 몇 상자 보낼지 알려 주세요."}
-          </p>
-          {!registered ? (
-            <p className={`t-meta ${s["top-meta"]}`}>
-              팔로우한 크리에이터에게만 선물을 보낼 수 있어요.
-            </p>
-          ) : null}
+          {registered ? (
+            <p className="ph-desc">{`주문번호 ${registered.orderNo} — 결제하면 등록이 끝나요.`}</p>
+          ) : (
+            <p className={s["top-meta"]}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p>
+          )}
           {ownerLine ? (
             <p className={s.owner}>
               <span className={s["owner-mark"]} aria-hidden="true">
                 <CheckIcon size={14} />
               </span>
-              {ownerLine}
+              <span className={s["owner-text"]}>{ownerLine}</span>
             </p>
           ) : null}
         </header>
         {followFirst && !registered ? (
-          <div>
-            <div
-              className={`card card--soft ${s["follow-first"]}`}
-              role="status"
-            >
-              <p>
-                <strong>{followFirst.name}님</strong>을 팔로우하면 바로 선물을
-                보낼 수 있어요.
-                <br />
-                <span className="t-meta">{FOLLOW_NICKNAME_NOTICE}</span>
-              </p>
-              <FollowThenSend
-                creatorId={followFirst.id}
-                creatorName={followFirst.name}
-                signedIn={signedIn}
-                className="btn btn--sm"
-              />
-            </div>
+          <div className={s["follow-first"]} role="status">
+            <p className={s["follow-text"]}>
+              <strong>{followFirst.name}님</strong>을 팔로우하면 바로 선물을 보낼 수 있어요.
+              <span>{FOLLOW_NICKNAME_NOTICE}</span>
+            </p>
+            <FollowThenSend
+              creatorId={followFirst.id}
+              creatorName={followFirst.name}
+              signedIn={signedIn}
+              className="btn btn--sm"
+            />
           </div>
         ) : null}
         {creators.length === 0 && !registered ? (
           <div>
-            <div className="empty">
+            <div className={s.status}>
               <img
-                className="asset"
-                src="/img/icon-gift.png"
+                className={s.art}
+                src="/images/home/icon-gift.webp"
                 alt=""
                 aria-hidden="true"
                 width={96}
@@ -135,8 +123,8 @@ export function GiftRegisterPage({
               />
               {signedIn ? (
                 <>
-                  <h2 className="t-card">아직 팔로우한 크리에이터가 없어요</h2>
-                  <p className="t-meta">
+                  <h2>아직 팔로우한 크리에이터가 없어요</h2>
+                  <p>
                     선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 좋아하는
                     크리에이터를 찾아 팔로우해 보세요.
                   </p>
@@ -146,8 +134,8 @@ export function GiftRegisterPage({
                 </>
               ) : (
                 <>
-                  <h2 className="t-card">로그인하고 선물을 보내 주세요</h2>
-                  <p className="t-meta">
+                  <h2>로그인하고 선물을 보내 주세요</h2>
+                  <p>
                     선물은 팔로우한 크리에이터에게만 보낼 수 있어요. 로그인하면
                     팔로우한 크리에이터가 여기에 나와요.
                   </p>
@@ -175,16 +163,16 @@ export function GiftRegisterPage({
           )
         ) : blockedNotice && preselected ? (
           <div>
-            <div className="empty" role="status">
+            <div className={s.status} role="status">
               <img
-                className="asset"
-                src="/img/icon-gift.png"
+                className={s.art}
+                src="/images/home/icon-gift.webp"
                 alt=""
                 aria-hidden="true"
                 width={96}
                 height={96}
               />
-              <h2 className="t-card">{preselected.name}님</h2>
+              <h2>{preselected.name}님</h2>
               <p>{blockedNotice}</p>
               {creators.length > 1 ? (
                 <button

@@ -342,9 +342,17 @@ export function RegisterForm({
       </p>
     ) : null;
 
+  // 맨 위 하늘 단계 판의 제목·설명 — 단계마다 하나씩 두고 지금 단계만 보인다(포커스·낭독은 제목 h-1~h-4 그대로)
+  const stepText: Record<StepNo, readonly [string, string]> = {
+    1: ["누구에게 보낼까요?", "팔로우한 크리에이터 중에서 골라요."],
+    2: ["어떤 선물인가요?", "크리에이터가 승인할 때 이 내용을 봐요. 검수에서 추적 장치와 구분하는 데도 써요."],
+    3: ["상자는 몇 개인가요?", `상자마다 배송비가 포함돼 있어요. 모두 합쳐 ${MAX_BOX_COUNT}개까지 한 번에 보낼 수 있어요.`],
+    4: ["확인하고 결제해요", "맞는지 한 번 더 봐 주세요. 틀린 곳은 「고치기」로 돌아갈 수 있어요."],
+  };
+
   const heading = (n: StepNo, text: string) => (
     <h2
-      className={`t-title ${f.h}`}
+      className={f.h}
       id={`h-${n}`}
       tabIndex={-1}
       ref={(el) => {
@@ -356,15 +364,14 @@ export function RegisterForm({
   );
 
   const fix = (n: StepNo, label: string) => (
-    <button className="btn btn--text btn--sm" type="button" aria-label={`${label} 고치기`} onClick={() => go(n)}>
+    <button className={f.fix} type="button" aria-label={`${label} 고치기`} onClick={() => go(n)}>
       고치기
     </button>
   );
 
-
-  // 이전·다음(결제하기) 버튼 묶음 — 1~3단계는 입력 판 안, 4단계는 판들 아래(시안 v11 send.html)
+  // 이전·다음(결제하기) 버튼 묶음 — 흰 입력 판 맨 아래 오른쪽(시안 v39 gifts-new-b .actions2)
   const actions = (
-    <div className="actions">
+    <div className={f.actions}>
       {step > 1 ? (
         <button className="btn btn--line" type="button" onClick={() => go((step - 1) as StepNo)}>
           이전
@@ -405,41 +412,46 @@ export function RegisterForm({
 
   return (
     <div className={f.root}>
-      <nav className={f["steps-wrap"]} aria-label="선물 보내기 단계" ref={stepsWrap}>
-        <p className={f["step-count"]}>
-          {step} / 4 <span className={f["step-count-unit"]}>단계</span>
-        </p>
-        <ol className={`flow flow--mini ${f.flow}`}>
-          {STEP_NOS.map((n) => {
-            const isDone = n !== step && n < reached; // 지나온 단계만 완료 — 아직 넘지 않은 마지막 단계는 숫자 그대로
-            return (
-              <li key={n} className={n === step ? "on" : isDone ? "done" : undefined}>
-                <button
-                  className={`${f.st} ${isDone ? f["is-done"] : ""}`}
-                  type="button"
-                  disabled={n > reached}
-                  aria-current={n === step ? "step" : undefined}
-                  onClick={() => go(n)}
-                >
-                  <span className="n" aria-hidden="true">
-                    {isDone ? "✓" : n}
-                  </span>
-                  <span className={`t-strong ${f.lbl}`}>{STEP_LABEL[n]}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
+      {/* 맨 위 하늘 단계 판 — 단계 숫자(48) / 4 단계 · 이번 단계 제목 · 네 칸 진행 막대 (design-rules 25절, 시안 v39 .fhero) */}
+      <section className={f.hero} aria-labelledby={`h-${step}`} ref={stepsWrap}>
+        <img className={f.peek} src="/images/home/icon-gift.webp" alt="" aria-hidden="true" width={96} height={96} />
+        <div className={f["hero-row"]}>
+          <p className={`num-big ${f.count}`}>
+            {step}
+            <small>/ 4 단계</small>
+          </p>
+          <div className={f["hero-text"]}>
+            {STEP_NOS.map((n) => (
+              <div key={n} hidden={step !== n}>
+                {heading(n, stepText[n][0])}
+                <p className={f.lead}>{stepText[n][1]}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <nav aria-label="선물 보내기 단계">
+          <ol className={f.fsteps}>
+            {STEP_NOS.map((n) => {
+              const isDone = n !== step && n < reached; // 지나온 단계만 완료 — 아직 넘지 않은 마지막 단계는 숫자 그대로
+              return (
+                <li key={n} className={n === step ? f.on : isDone ? f.done : undefined}>
+                  <button type="button" disabled={n > reached} aria-current={n === step ? "step" : undefined} onClick={() => go(n)}>
+                    <span className={f.n} aria-hidden="true">
+                      {isDone ? "✓" : n}
+                    </span>
+                    {STEP_LABEL[n]}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+      </section>
 
-      <form className={step < 4 ? "part" : undefined} onSubmit={onSubmit} noValidate aria-label="선물 보내기 입력">
+      <form className={f.panel} onSubmit={onSubmit} noValidate aria-label="선물 보내기 입력">
         {/* 1 크리에이터 */}
         <fieldset className={f.step} hidden={step !== 1} aria-describedby={errors.creatorId ? "creator-error" : undefined}>
           <legend className="sr-only">받는 크리에이터</legend>
-          <div className="step-h">
-            {heading(1, "누구에게 보낼까요?")}
-            <p className="t-lead t-desc">팔로우한 크리에이터 중에서 골라요.</p>
-          </div>
           <label className="sr-only" htmlFor="pick-q">
             크리에이터 검색
           </label>
@@ -457,56 +469,57 @@ export function RegisterForm({
             }}
           />
           <div className={f["pick-head"]}>
-            <span className="t-strong">팔로우한 크리에이터</span>
-            <p className="t-meta" role="status" aria-live="polite">
+            <strong>팔로우한 크리에이터</strong>
+            <p role="status" aria-live="polite">
               {query.trim() ? `검색 결과 ${matches.length}명` : `전체 ${creators.length}명`}
             </p>
           </div>
-          {/* 걸러진 줄은 지우지 않고 숨긴다 — 고른 값이 그대로 남게 */}
-          <ul className={f["pick-grid"]}>
-            {creators.map((c) => (
-              <li key={c.id} hidden={!visible.includes(c)}>
-                <label className={`card ${f.pick}`}>
-                  <input
-                    className="sr-only"
-                    type="radio"
-                    value={c.id}
-                    {...register("creatorId", { onChange: (e: { target: { value: string } }) => onCreatorChange?.(e.target.value) })}
-                  />
-                  <CreatorFace tone={c.faceTone ?? "var(--face-1)"} className={f["pick-face"]} />
-                  <span className={f["pick-text"]}>
-                    <strong>{c.name}</strong>
-                    {/* 태그는 다른 화면과 같은 태그 부품(아이콘·플랫폼 색, design-rules 5절) */}
-                    {(c.tags ?? []).length > 0 ? (
-                      <span className={f["pick-tags"]}>
-                        {(c.tags ?? []).map((t) => (
-                          <CreatorTag key={t} name={t} />
-                        ))}
+          {/* 걸러진 줄은 지우지 않고 숨긴다 — 고른 값이 그대로 남게. 한 줄에 한 사람(시안 .plist.one) */}
+          <ul className={f["pick-list"]}>
+            {creators.map((c) => {
+              const resting = restingNotice(c.receiving?.resumeOn ?? null, today);
+              const meta = [c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : (resting ?? approvalTimeText(c.approvalMinutes))]
+                .filter(Boolean)
+                .join(" · ");
+              // 쉬는 중·이사 중 크리에이터 카드는 회색 바탕으로 낮춘다(design-rules 25절) — 고르는 것은 막지 않는다(「다음」이 안내한다)
+              const stopped = c.moving === true || resting !== null;
+              return (
+                <li key={c.id} hidden={!visible.includes(c)}>
+                  <label className={`${f.pick} ${stopped ? f.stop : ""}`}>
+                    <input
+                      className="sr-only"
+                      type="radio"
+                      value={c.id}
+                      {...register("creatorId", { onChange: (e: { target: { value: string } }) => onCreatorChange?.(e.target.value) })}
+                    />
+                    <CreatorFace tone={c.faceTone ?? "var(--face-1)"} className={f["pick-face"]} />
+                    <span className={f["pick-text"]}>
+                      <strong title={c.name}>{c.name}</strong>
+                      {/* 태그는 다른 화면과 같은 태그 부품(아이콘·플랫폼 색, design-rules 5절) */}
+                      {(c.tags ?? []).length > 0 ? (
+                        <span className={f["pick-tags"]}>
+                          {(c.tags ?? []).map((t) => (
+                            <CreatorTag key={t} name={t} />
+                          ))}
+                        </span>
+                      ) : null}
+                      <span className={f["pick-meta"]} title={meta}>
+                        {meta}
                       </span>
-                    ) : null}
-                    <span className="t-meta">
-                      {[
-                        c.channelTitle ?? c.platform,
-                        c.moving
-                          ? "채널 이사 중 · 지금은 선물을 받지 않아요"
-                          : (restingNotice(c.receiving?.resumeOn ?? null, today) ?? approvalTimeText(c.approvalMinutes)),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
                     </span>
-                  </span>
-                  {/* 고른 카드의 오른쪽 체크 — 시안 v18 send.html .pick-ok (모양만, 고른 상태는 라디오가 알린다) */}
-                  <span className={f["pick-ok"]} aria-hidden="true">
-                    <svg width="14" height="14" viewBox="0 0 24 24">
-                      <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                </label>
-              </li>
-            ))}
+                    {/* 고른 카드의 오른쪽 체크 — 모양만, 고른 상태는 라디오가 알린다 */}
+                    <span className={f["pick-ok"]} aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24">
+                        <path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
           </ul>
           {!searching && creators.length > VISIBLE_PICKS ? (
-            <div className="sec-foot center">
+            <div className={f["more-row"]}>
               {hiddenCount > 0 ? (
                 <button className="btn btn--line btn--sm" type="button" onClick={() => setPickLimit((n) => n + PICKS_STEP)}>
                   {Math.min(PICKS_STEP, hiddenCount)}명 더 보기 <span className={f["more-left"]}>(남은 {hiddenCount}명)</span>
@@ -529,18 +542,13 @@ export function RegisterForm({
         {/* 2 선물 */}
         <fieldset className={f.step} hidden={step !== 2}>
           <legend className="sr-only">선물 종류와 전자기기·금속 제품 신고</legend>
-          <div className="step-h">
-            {heading(2, "어떤 선물인가요?")}
-            <p className="t-lead t-desc">크리에이터가 승인할 때 이 내용을 봐요. 검수에서 추적 장치와 구분하는 데도 써요.</p>
-          </div>
           {/* hard-items INV-H1: 물품 종류는 고정 목록에서 고른다. 냉장·냉동·음식·액체는 목록에 없다. 기타만 직접 적는다 */}
           <div
-            className="field-block"
             role="radiogroup"
             aria-labelledby="category-q"
             aria-describedby={["category-hint", errors.itemCategory ? "category-error" : "", hardOverlap ? "hard-note" : ""].filter(Boolean).join(" ")}
           >
-            <p className="label" id="category-q">
+            <p className={f.lb} id="category-q">
               선물 종류
             </p>
             <div className={f.opts}>
@@ -554,14 +562,14 @@ export function RegisterForm({
                   },
                 });
                 return (
-                  <label key={c} className="opt">
+                  <label key={c} className={f.opt}>
                     <input type="radio" value={c} {...field} />
                     {ITEM_CATEGORY_LABEL[c]}
                   </label>
                 );
               })}
             </div>
-            <p className="hint" id="category-hint">
+            <p className={f.hint} id="category-hint">
               음식·음료·냉장·냉동이 필요한 것과 액체는 받지 않아요.
             </p>
             {err("category-error", errors.itemCategory?.message)}
@@ -580,7 +588,7 @@ export function RegisterForm({
                 </p>
               ) : (
                 <div
-                  className={`card card--soft ${f.note}`}
+                  className={f.hardnote}
                   id="hard-note"
                   role="status"
                   tabIndex={-1}
@@ -588,19 +596,19 @@ export function RegisterForm({
                     hardNote.current = el;
                   }}
                 >
-                  <p className="t-strong">{hardOverlap.message}</p>
+                  <strong>{hardOverlap.message}</strong>
                   <p>그대로 보내도 돼요. 받을지는 크리에이터가 승인할 때 정해요.</p>
                 </div>
               )
             ) : null}
           </div>
           {itemCategory === "other" ? (
-            <div className="field-block">
+            <div className={f.block}>
               <div className={f["field-head"]}>
                 <label className="label" htmlFor="itemOther">
                   어떤 선물인가요? ({ITEM_OTHER_MAX}자까지)
                 </label>
-                <span className={`t-meta ${f["char-count"]}`} id="itemOther-count" aria-live="polite" data-over={charCount(itemOther) > ITEM_OTHER_MAX ? "true" : undefined}>
+                <span className={f["char-count"]} id="itemOther-count" aria-live="polite" data-over={charCount(itemOther) > ITEM_OTHER_MAX ? "true" : undefined}>
                   {charCount(itemOther)} / {ITEM_OTHER_MAX}자
                 </span>
               </div>
@@ -620,24 +628,24 @@ export function RegisterForm({
             </div>
           ) : null}
           <div
-            className="field-block"
+            className={f.block}
             role="radiogroup"
             aria-labelledby="metal-q"
             aria-describedby={errors.electronicsOrMetal ? "metal-hint metal-error" : "metal-hint"}
           >
-            <p className="label" id="metal-q">
+            <p className={f.lb} id="metal-q">
               전자기기나 금속 제품이 들어 있나요?
             </p>
             <div className={f.opts}>
-              <label className="opt">
+              <label className={f.opt}>
                 <input type="radio" value="yes" {...register("electronicsOrMetal")} />네, 있어요
               </label>
-              <label className="opt">
+              <label className={f.opt}>
                 <input type="radio" value="no" disabled={metalForced} {...register("electronicsOrMetal")} />
                 아니요, 없어요
               </label>
             </div>
-            <p className="hint" id="metal-hint">
+            <p className={f.hint} id="metal-hint">
               {metalForced
                 ? "전자기기를 골라서 「있어요」로 정해졌어요. 신고한 상자는 검수에 시간이 조금 더 걸릴 수 있어요."
                 : "검수할 때 참고해요. 신고한 상자는 검수에 시간이 조금 더 걸릴 수 있어요."}
@@ -645,24 +653,24 @@ export function RegisterForm({
             {err("metal-error", errors.electronicsOrMetal?.message)}
           </div>
           {anniversaryMark ? (
-            <div className="field-block">
-              <label className="check">
+            <div className={f.block}>
+              <label className={f.check}>
                 <input
                   type="checkbox"
                   checked={markAnniversary}
                   onChange={(e) => setMarkedFor(e.currentTarget.checked ? creatorId : null)}
                   aria-describedby="mark-hint"
                 />
-                「{anniversaryMark} 선물」로 표시해서 보내기
+                <span>「{anniversaryMark} 선물」로 표시해서 보내기</span>
               </label>
-              <p className="hint" id="mark-hint">
+              <p className={f.hint} id="mark-hint">
                 {picked?.name}님의 「{anniversaryMark}」까지 7일이 남지 않았어요. 고르면 크리에이터가 승인할 때 이 표시가 보여요.
               </p>
             </div>
           ) : null}
           {/* together INV-F2: 선물 사진(선택) — 「함께한 시간」에서 나만 본다. 파일 칸은 좁은 폭에서 넘치지 않게 숨기고 라벨을 버튼 모양으로(크리에이터 설정 「사진 고르기」 방식) */}
-          <div className="field-block" role="group" aria-labelledby="photo-q">
-            <p className="label" id="photo-q">
+          <div className={f.block} role="group" aria-labelledby="photo-q">
+            <p className={f.lb} id="photo-q">
               선물 사진 <span className={f["photo-opt"]}>(선택)</span>
             </p>
             <div className={f["photo-row"]}>
@@ -679,20 +687,20 @@ export function RegisterForm({
                 {photo ? "다른 사진 고르기" : "사진 고르기"}
               </label>
               {photo ? (
-                <button className="btn btn--text btn--sm" type="button" onClick={clearPhoto}>
+                <button className="btn btn--line btn--sm" type="button" onClick={clearPhoto}>
                   사진 빼기
                 </button>
               ) : null}
             </div>
-            <p className={`t-meta ${f["photo-name"]}`} id="photo-name">
+            <p className={`${f.hint} ${f["photo-name"]}`} id="photo-name">
               {photo ? `고른 사진: ${photo.name}` : "고른 사진이 없어요."}
             </p>
-            <p className="hint" id="photo-hint">
+            <p className={f.hint} id="photo-hint">
               상자·송장이 아니라 선물만 찍어 주세요. jpg·png·webp, 10MB 까지. 촬영 위치 같은 사진 정보는 지우고 저장하고, 크리에이터에게도 보이지 않아요 — 「함께한 시간」에서 나만 봐요.
             </p>
             {err("photo-error", photoError ?? undefined)}
           </div>
-          {/* together INV-F7: 나만 보는 메모(선물 이름·내용, 둘 다 선택) — 보낸 팬만 본다. 위 「기타」 물품 이름(크리에이터에게 보인다)과 다른 덩어리 (시안 v21-addendum3/fan-gift-register-step.html) */}
+          {/* together INV-F7: 나만 보는 메모(선물 이름·내용, 둘 다 선택) — 보낸 팬만 본다. 위 「기타」 물품 이름(크리에이터에게 보인다)과 다른 덩어리. 회색 보조 판(시안 v39 .memo) */}
           <section className={f.memo} aria-labelledby="memo-h">
             <div>
               <h3 className={f["memo-h"]} id="memo-h">
@@ -702,14 +710,14 @@ export function RegisterForm({
                 </svg>
                 나만 보는 메모 <span className={f["photo-opt"]}>(선택)</span>
               </h3>
-              <p className="hint">나만 볼 수 있는 메모예요. 나중에 보낸 선물에서 다시 볼 수 있어요.</p>
+              <p className={f.hint}>나만 볼 수 있는 메모예요. 나중에 보낸 선물에서 다시 볼 수 있어요.</p>
             </div>
-            <div className="field-block">
+            <div>
               <div className={f["field-head"]}>
                 <label className="label" htmlFor="memoTitle">
                   선물 이름
                 </label>
-                <span className={`t-meta ${f["char-count"]}`} id="memoTitle-count" aria-live="polite" data-over={charCount(memoTitle) > MEMO_TITLE_MAX ? "true" : undefined}>
+                <span className={f["char-count"]} id="memoTitle-count" aria-live="polite" data-over={charCount(memoTitle) > MEMO_TITLE_MAX ? "true" : undefined}>
                   {charCount(memoTitle)} / {MEMO_TITLE_MAX}자
                 </span>
               </div>
@@ -725,12 +733,12 @@ export function RegisterForm({
               />
               {err("memoTitle-error", errors.memoTitle?.message)}
             </div>
-            <div className="field-block">
+            <div>
               <div className={f["field-head"]}>
                 <label className="label" htmlFor="memoBody">
                   내용
                 </label>
-                <span className={`t-meta ${f["char-count"]}`} id="memoBody-count" aria-live="polite" data-over={charCount(memoBody) > MEMO_BODY_MAX ? "true" : undefined}>
+                <span className={f["char-count"]} id="memoBody-count" aria-live="polite" data-over={charCount(memoBody) > MEMO_BODY_MAX ? "true" : undefined}>
                   {charCount(memoBody)} / {MEMO_BODY_MAX}자
                 </span>
               </div>
@@ -749,22 +757,17 @@ export function RegisterForm({
           </section>
         </fieldset>
 
-        {/* 3 상자 */}
+        {/* 3 상자 — 상자 칸 셋(휴대폰은 한 줄씩) + 회색 안내 하나. 「소형은 …이하예요」 세 줄은 상자 칸에 같은 값이 있어 뺐다(design-rules 25절) */}
         <section className={f.step} hidden={step !== 3} aria-labelledby="h-3">
-          <div className="step-h">
-            {heading(3, "상자는 몇 개인가요?")}
-            <p className="t-lead t-desc">상자마다 배송비가 포함돼 있어요. 모두 합쳐 {MAX_BOX_COUNT}개까지 한 번에 보낼 수 있어요.</p>
-          </div>
-          <div className={f.counters}>
+          <div className={f.qtiles}>
             {PRICED_TIERS.map((tier) => {
               const guide = PARCEL_TIER_GUIDE[tier];
               return (
-                <div key={tier} className={f.counter}>
-                  <div>
-                    <p className="t-card">{guide.name} 상자</p>
-                    <p className="t-meta">
-                      {guide.rule} · {won(prices[tier].priceKrw)}
-                    </p>
+                <div key={tier} className={`${f.qtile} ${summary.counts[tier] === 0 ? f.zero : ""}`}>
+                  <div className={f["qtile-text"]}>
+                    <p className={f.qn}>{guide.name} 상자</p>
+                    <p className={f.qm}>{guide.rule}</p>
+                    <p className={f.qm}>{won(prices[tier].priceKrw)}</p>
                   </div>
                   <div className={f.qty} role="group" aria-label={`${guide.name} 상자 수`}>
                     <button
@@ -792,82 +795,99 @@ export function RegisterForm({
             })}
           </div>
           {err("box-error", boxError)}
-          <div className={`card card--soft ${f.note}`}>
-            <h3 className="t-card">구간은 이렇게 정해져요</h3>
-            <ul className="notes">
-              {PRICED_TIERS.map((tier) => (
-                <li key={tier}>
-                  {PARCEL_TIER_GUIDE[tier].name}은 {PARCEL_TIER_GUIDE[tier].rule}예요.
-                </li>
-              ))}
+          <div className={`${f.gnote} ${f["gnote-first"]}`}>
+            <h3>상자 크기는 이렇게 정해져요</h3>
+            <ul>
               <li>크기와 무게 중 큰 쪽으로 정해져요. {OVERSIZE_RULE}는 받지 않아요.</li>
-              <li>도착해서 재 보니 신고보다 큰 구간이면 차액을 따로 요청드려요. 차액을 내셔야 출고돼요.</li>
+              <li>도착해서 재 보니 신고보다 큰 상자 크기면 차액을 따로 요청드려요. 차액을 내셔야 출고돼요.</li>
               <li>재 보니 더 작아도 차액은 돌려드리지 않아요.</li>
             </ul>
           </div>
         </section>
 
-        {/* 4 확인하고 결제 — 확인 판 · 금액 판 · 안내 두 장(시안 v11 send.html 4단계) */}
-        <div className="stack" hidden={step !== 4}>
-          <section className="part" aria-labelledby="h-4">
-            <div className={f["confirm-h"]}>
-              {heading(4, "확인하고 결제해요")}
-              <p className="t-lead t-desc">맞는지 한 번 더 봐 주세요. 틀린 곳은 「고치기」로 돌아갈 수 있어요.</p>
+        {/* 4 확인하고 결제 — 확인 줄 · 회색 안내 하나(돌려보내는 경우 + 승인 시간) · 하늘 결제 칸(시안 v39 gifts-new-b 4단계) */}
+        <section className={f.step} hidden={step !== 4} aria-labelledby="h-4">
+          <dl className={f.sums}>
+            <div className={f["sum-row"]}>
+              <dt>받는 크리에이터</dt>
+              <dd>{picked ? `${picked.name}님` : "아직 안 골랐어요"}</dd>
+              {fix(1, "받는 크리에이터")}
             </div>
-            <dl className={f.sums}>
+            <div className={f["sum-row"]}>
+              <dt>선물 종류</dt>
+              <dd>{itemText || "아직 안 골랐어요"}</dd>
+              {fix(2, "선물 종류")}
+            </div>
+            <div className={f["sum-row"]}>
+              <dt>전자기기·금속 제품</dt>
+              <dd>{metalText}</dd>
+              {fix(2, "전자기기·금속 제품 신고")}
+            </div>
+            <div className={f["sum-row"]}>
+              <dt>상자</dt>
+              <dd>{boxesText}</dd>
+              {fix(3, "상자 수")}
+            </div>
+            {photo ? (
               <div className={f["sum-row"]}>
-                <dt>받는 크리에이터</dt>
-                <dd>{picked ? `${picked.name}님` : "아직 안 골랐어요"}</dd>
-                {fix(1, "받는 크리에이터")}
+                <dt>선물 사진</dt>
+                <dd className={f["photo-name"]}>{photo.name}</dd>
+                {fix(2, "선물 사진")}
               </div>
+            ) : null}
+            {anniversaryMark && markAnniversary ? (
               <div className={f["sum-row"]}>
-                <dt>선물 종류</dt>
-                <dd>{itemText || "아직 안 골랐어요"}</dd>
-                {fix(2, "선물 종류")}
+                <dt>표시</dt>
+                <dd>「{anniversaryMark} 선물」</dd>
+                {fix(2, "기념일 표시")}
               </div>
-              <div className={f["sum-row"]}>
-                <dt>전자기기·금속 제품</dt>
-                <dd>{metalText}</dd>
-                {fix(2, "전자기기·금속 제품 신고")}
-              </div>
-              <div className={f["sum-row"]}>
-                <dt>상자</dt>
-                <dd>{boxesText}</dd>
-                {fix(3, "상자 수")}
-              </div>
-              {photo ? (
-                <div className={f["sum-row"]}>
-                  <dt>선물 사진</dt>
-                  <dd className={f["photo-name"]}>{photo.name}</dd>
-                  {fix(2, "선물 사진")}
-                </div>
-              ) : null}
-              {anniversaryMark && markAnniversary ? (
-                <div className={f["sum-row"]}>
-                  <dt>표시</dt>
-                  <dd>「{anniversaryMark} 선물」</dd>
-                  {fix(2, "기념일 표시")}
-                </div>
-              ) : null}
-            </dl>
-          </section>
+            ) : null}
+          </dl>
+          {/* 승인을 기다리지 않고 보내는 대신 거절되면 반송비를 뺀다 — 결제 전에 반드시 보이게 조건 없이 둔다(2026-10-02 사용자 결정). 두 카드를 회색 칸 하나로(25절) */}
+          <div className={f.gnote} role="note" aria-labelledby="return-notice-title">
+            <h3 id="return-notice-title">이럴 때는 돌려보내 드려요</h3>
+            <p>{RETURN_ON_REJECT_NOTICE}</p>
+            <p>{RETURN_ON_INSPECTION_NOTICE}</p>
+            {picked ? (
+              <>
+                <hr />
+                <h3>
+                  {picked.approvalMinutes === null
+                    ? `${picked.name}님은 아직 승인 기록이 없어요`
+                    : `${picked.name}님은 보통 ${formatDuration(picked.approvalMinutes)} 안에 승인해요`}
+                </h3>
+                <p>
+                  크리에이터가 승인하면 팬꾹 주소가 바로 보여요. 기다리지 않고 「먼저 보내기」로 미리 보낼 수도 있어요. {PROMISE.approval}
+                </p>
+              </>
+            ) : null}
+          </div>
           {/* 요금은 배송비를 포함한 한 금액(사용자 결정 d7) — 서비스료·배송비 나눔은 기록에만 있다 */}
-          <div className="part">
-            <div className="lines">
+          <div className={f.paybox} aria-label="결제 금액">
+            <div className={f.lines}>
               {summary.lines.map((l) => (
-                <div key={l.tier}>
+                <div key={l.tier} className={f.ln}>
                   <span>
                     {PARCEL_TIER_GUIDE[l.tier].name} 상자 {l.count}개{" "}
-                    <span className="t-meta">
+                    <small>
                       {won(l.unitKrw)} × {l.count}
-                    </span>
+                    </small>
                   </span>
-                  <span className="amt">{won(l.subtotalKrw)}</span>
+                  <span>{won(l.subtotalKrw)}</span>
                 </div>
               ))}
-              <div className="total">
-                <span className="t-strong">합계</span>
-                <span className="amt">{totalText}</span>
+              <div className={f.tot}>
+                <span className={f["tot-label"]}>합계</span>
+                <b>
+                  {summary.totalKrw !== null ? (
+                    <>
+                      {summary.totalKrw.toLocaleString("ko-KR")}
+                      <small>원</small>
+                    </>
+                  ) : (
+                    totalText
+                  )}
+                </b>
               </div>
             </div>
             <p className={f["tag-line"]}>
@@ -878,53 +898,31 @@ export function RegisterForm({
                 검수 포함
               </span>
             </p>
-            <p className={`t-meta ${f["pay-note"]}`}>배송비가 포함된 금액이에요. 선물이 사무실에 도착하기 전에 거절되면 전액 돌려드려요.</p>
-          </div>
-          <div className="grid cols-2">
-            {/* 승인을 기다리지 않고 보내는 대신 거절되면 반송비를 뺀다 — 결제 전에 반드시 보이게 조건 없이 둔다(2026-10-02 사용자 결정) */}
-            <div className="card card--soft" role="note" aria-labelledby="return-notice-title">
-              <h3 className="t-card" id="return-notice-title">
-                이럴 때는 돌려보내 드려요
-              </h3>
-              <p>{RETURN_ON_REJECT_NOTICE}</p>
-              <p className={f.more}>{RETURN_ON_INSPECTION_NOTICE}</p>
-            </div>
-            {picked ? (
-              <div className="card card--soft">
-                <h3 className="t-card">
-                  {picked.approvalMinutes === null
-                    ? `${picked.name}님은 아직 승인 기록이 없어요`
-                    : `${picked.name}님은 보통 ${formatDuration(picked.approvalMinutes)} 안에 승인해요`}
-                </h3>
-                <p>
-                  크리에이터가 승인하면 팬꾹 주소가 바로 보여요. 기다리지 않고 「먼저 보내기」로 미리 보낼 수도 있어요. {PROMISE.approval}
-                </p>
+            <p className={f["pay-note"]}>배송비가 포함된 금액이에요. 선물이 사무실에 도착하기 전에 거절되면 전액 돌려드려요.</p>
+            {step === 4 ? (
+              <div className={f.consent}>
+                <PaymentConsent
+                  id="pay-consent"
+                  checked={consented}
+                  invalid={consentMissing}
+                  errorId="pay-consent-error"
+                  onChange={(v) => {
+                    setConsented(v);
+                    if (v) setConsentMissing(false);
+                  }}
+                />
+                <div role="alert">
+                  {consentMissing ? (
+                    <p className={f.error} id="pay-consent-error">
+                      {PAYMENT_CONSENT_MISSING}
+                    </p>
+                  ) : null}
+                </div>
               </div>
             ) : null}
           </div>
-        </div>
+        </section>
 
-        {step === 4 ? (
-          <>
-            <PaymentConsent
-              id="pay-consent"
-              checked={consented}
-              invalid={consentMissing}
-              errorId="pay-consent-error"
-              onChange={(v) => {
-                setConsented(v);
-                if (v) setConsentMissing(false);
-              }}
-            />
-            <div role="alert">
-              {consentMissing ? (
-                <p className={f.error} id="pay-consent-error">
-                  {PAYMENT_CONSENT_MISSING}
-                </p>
-              ) : null}
-            </div>
-          </>
-        ) : null}
         {alerts}
         {actions}
       </form>

@@ -1,3 +1,6 @@
-/* 역조공 보내기 — 시안 v18 creator-revgift-new.html(v18-cre.css .form-col). 입력형: 가운데 틀 안 기둥 720 */
-.col { max-width: 720px; margin-inline: auto; }
-
+/* 팬에게 보내기 — 시안 docs/design/mockups/site/v39-part3/revgifts-new-a.html (design-rules 25절 A안).
+   넓은 틀: 시안 .wrap.wide 1120 에서 좌우 안쪽 40 을 뺀 1040. 아래 여백은 붙어 따라오는 결제 띠가 마지막 내용을 가리지 않게 구간 간격만큼 */
+.page { padding-bottom: var(--section-gap); }
+.col { max-width: 1040px; margin-inline: auto; }
+/* 제목 → 첫 구간 32 (시안 section margin-top 32) */
+.head.head { margin-bottom: var(--space-8); }

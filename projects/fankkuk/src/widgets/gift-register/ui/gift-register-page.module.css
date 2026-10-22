@@ -1,14 +1,23 @@
-/* 선물 보내기 바깥 틀 — 시안 docs/design/mockups/site/v18/send.html. 본문 폼은 features/gift-register/ui/register-form */
-/* 입력 기둥 720 — 가운데 틀(.page-centered) 안 가운데 (시안 .col--form) */
-.col { max-width: 720px; margin-inline: auto; }
-.top-meta.top-meta { margin-top: var(--space-2); font-size: var(--fs-caption); line-height: var(--lh-caption); }
-/* 빈 상태 — 시안 send-loggedout .empty: 그림 80 · 설명은 회색 본문 크기 */
-.col :global(.empty) :global(.asset) { width: 80px; height: 80px; object-fit: contain; }
-.col :global(.empty) :global(.t-meta) { font-size: var(--fs-body); line-height: 1.6; }
-/* 미리 고르고 왔는데 아직 팔로우하지 않은 크리에이터 — 안내라서 옅은 코랄 판 */
-.follow-first { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; padding: 24px; background: var(--muted-fx); box-shadow: var(--hair), var(--muted-shadow); }
+/* 선물 보내기 바깥 틀 — 시안 docs/design/mockups/site/v39-part3/gifts-new-b.html · v39.css (design-rules 25절 B안). 본문 폼은 features/gift-register/ui/register-form */
+/* 입력 기둥 720 — 가운데 틀(.page-centered) 안 가운데 (시안 .wrap.narrow 800 에서 좌우 안쪽 40 을 뺀 폭) */
+.col { max-width: 720px; margin-inline: auto; min-width: 0; }
+/* 머리 — 제목 24 아래 바로 하늘 단계 판이 온다(전역 .page-head 아래 여백 대신 판의 위 여백 32) */
+.head.head { margin-bottom: 0; }
+/* 페이지 설명 문장은 뺐다(25절). 남는 한 줄은 회색 14 (시안 .ph-meta) */
+.top-meta { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--sub); }
+/* 맨 위 한 줄 — 미리 고른 크리에이터의 채널 주인이 확인된 페이지라는 사실(추가분 4-4). 하늘 동그라미 20 안 체크 (시안 .owner) */
+.owner { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--fs-small); color: var(--ink); }
+.owner-mark { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--ink); }
+.owner-text { min-width: 0; overflow-wrap: anywhere; }
+/* 미리 고르고 왔는데 아직 팔로우하지 않은 크리에이터 — 안내라서 회색 보조 판 (시안 .followfirst) */
+.follow-first { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4) var(--space-6); margin-top: var(--space-8); padding: var(--space-6); border-radius: var(--r-card); background: var(--muted-fx); box-shadow: var(--muted-shadow); }
+.follow-text { flex: 1 1 320px; min-width: 0; overflow-wrap: anywhere; }
+.follow-text span { display: block; margin-top: var(--space-1); font-size: var(--fs-small); color: var(--sub); }
+/* 로그인 전·팔로우 없음·쉬는 중 — 흰 상태 카드, 그림 96 (시안 .statuscard) */
+.status { margin-top: var(--space-8); padding: var(--space-16) var(--space-6) var(--space-10); border: 1px solid var(--gray-200); border-radius: var(--r-panel); background: var(--card-fx); box-shadow: var(--card-shadow); text-align: center; overflow-wrap: anywhere; }
+.art { display: block; width: 96px; height: 96px; margin-inline: auto; object-fit: contain; }
+.status h2 { margin-top: var(--space-4); font-family: var(--font); font-size: var(--fs-card); font-weight: var(--fw-bold); letter-spacing: 0; line-height: 1.4; color: var(--ink); }
+.status p { margin-top: var(--space-2); color: var(--sub); }
+.status :global(.btn) { margin-top: var(--space-6); }
 /* 선물 사진을 올리지 못했을 때 결제창 위 한 줄 — 결제는 그대로 진행한다 */
-.photo-note { margin-bottom: 16px; font-weight: var(--fw-bold); }
-/* 맨 위 한 줄 — 미리 고른 크리에이터의 채널 주인이 확인된 페이지라는 사실(추가분 4-4). 체크는 「채널 소유 확인」 뱃지와 같은 성공 색 */
-.owner { display: flex; align-items: center; gap: 8px; margin-top: var(--space-2); font-weight: var(--fw-bold); }
-.owner-mark { display: inline-grid; place-items: center; flex: 0 0 auto; width: 22px; height: 22px; border-radius: var(--r-pill); background: var(--success-soft); color: var(--success); }
+.photo-note { margin: var(--space-8) 0 var(--space-4); font-weight: var(--fw-bold); }
