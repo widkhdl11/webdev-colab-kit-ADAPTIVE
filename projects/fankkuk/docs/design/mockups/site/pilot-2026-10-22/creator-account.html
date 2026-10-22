@@ -1,0 +1,47 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>계정 설정(크리에이터) · 팬꾹 정돈 시범 시안</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="../v34-part1/v33.css"><link rel="stylesheet" href="../v34-part1/v33b.css"><link rel="stylesheet" href="../v34-part1/v34.css"><link rel="stylesheet" href="../v35-part1/v35.css"><link rel="stylesheet" href="../v37-part2/v37.css"><link rel="stylesheet" href="../v39-part3/v39.css"><link rel="stylesheet" href="pilot.css"></head>
+<!-- 정돈 4파트 나머지 2026-10-22 — /creator/account. 제안: redesign-2026-10-22-pilot.md 9절. 계정 설정(팬, 27절)과 같은 배치: 880 기둥 12열 4+8, 카드 없음. 묶음 보안 → 알림, 그 아래 상세 설정 안내 줄, 구분선 뒤 회원 탈퇴. 개인정보 카드(탈퇴 하나뿐)는 없어진다. 스위치는 누르는 즉시 저장(저장 버튼 없음) — 결과 문구는 알림 묶음 안 끝. 문구는 creator-account-page.tsx 그대로. 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. -->
+<body class="member" id="top"><aside class="sidebar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><nav aria-label="주 메뉴"><a href="#"><span class="nav-glyph" aria-hidden="true">⌂</span>홈</a><a href="#"><span class="nav-glyph" aria-hidden="true">☑</span>지금 할 일<span class="nav-count" aria-label="2건">2</span></a><a href="#"><span class="nav-glyph" aria-hidden="true">↗</span>받은 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">◇</span>팬에게 보내기</a><a href="#"><span class="nav-glyph" aria-hidden="true">♡</span>팔로우한 크리에이터</a><a href="#"><span class="nav-glyph" aria-hidden="true">⚙</span>상세 설정</a><a href="#"><span class="nav-glyph" aria-hidden="true">?</span>문의</a></nav><div class="account"><span class="avatar">하</span><div><strong>하루님</strong><small>크리에이터 · 계정 설정</small></div></div></aside><div class="page"><header class="mobile-bar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><button type="button" aria-label="메뉴 열기">☰</button></header><main id="main"><div class="wrap me-wrap">
+<div class="mockbar" role="group" aria-label="시안 보기 전환"><b>시안 보기</b><span class="mb-grp">채널 본인 확인 <button type="button" data-c="on" aria-pressed="true">확인됨</button><button type="button" data-c="off" aria-pressed="false">확인 전</button></span><span class="mb-grp"><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></span></div>
+
+<header class="me-head"><div><h1 class="p-title" tabindex="-1">계정 설정</h1><p class="p-desc">로그인과 내 정보, 알림을 관리해요.</p></div></header>
+
+<section class="me-grp mkp" aria-labelledby="g1"><i class="mk tl" aria-hidden="true">1</i>
+ <div class="me-nm"><h2 id="g1">보안</h2></div>
+ <ul class="me-rows">
+  <li class="me-row"><div class="me-txt"><span class="me-k">비밀번호</span></div><div class="me-act"><button class="p-btn" type="button">바꾸기</button></div></li>
+  <li class="me-row"><div class="me-txt"><span class="me-k">휴대폰 번호</span><span class="me-v">010-****-9999</span></div><div class="me-act"><button class="p-btn" type="button">바꾸기</button></div></li>
+  <li class="me-row mkp"><i class="mk tl" style="left:-8px;top:-4px" aria-hidden="true">2</i><div class="me-txt"><span class="me-k">채널 본인 확인</span><span class="me-v" id="chT">치지직 채널 「하루의 놀이터」 확인됨 · 10월 2일</span></div><div class="me-act"><button class="p-btn" type="button" id="chB">다시 확인</button></div></li>
+ </ul>
+</section>
+
+<section class="me-grp mkp" aria-labelledby="g2"><i class="mk tl" aria-hidden="true">1</i>
+ <div class="me-nm"><h2 id="g2">알림</h2></div>
+ <ul class="me-rows">
+  <li class="me-row sw mkp"><i class="mk tl" style="left:-8px;top:8px" aria-hidden="true">3</i><button type="button" class="me-sw" role="switch" aria-checked="true"><span class="me-txt"><span class="me-k">카카오 알림톡으로 받기</span><span class="me-s">그 밖의 소식을 카카오톡으로 받아요.</span></span><span class="me-trk" aria-hidden="true"></span></button></li>
+  <li class="me-row sw"><button type="button" class="me-sw" role="switch" aria-checked="true"><span class="me-txt"><span class="me-k">이메일로 받기</span><span class="me-s">같은 소식을 확인된 이메일로 받아요.</span></span><span class="me-trk" aria-hidden="true"></span></button></li>
+  <li class="me-must mkp"><i class="mk tl" style="left:-8px;top:8px" aria-hidden="true">4</i><p class="me-mt">끌 수 없는 알림</p><p class="me-ml">승인 요청, 추적 장치 발견, 확인할 선물, 돌려받을 주소 확인 — 선물을 진행하는 데 필요하거나 돈·상자가 걸린 일이라 꺼 두어도 가요. 승인 요청은 놓치면 7일 뒤 자동으로 반려돼요.</p></li>
+  <li class="ca-msg"><p class="st-msg" role="status" id="msg"></p></li>
+ </ul>
+</section>
+
+<p class="ca-more mkp"><i class="mk tl" aria-hidden="true">5</i>받는 주소 · 차단한 팬 · 받기 설정은 <a href="#">상세 설정</a>에 있어요.</p>
+
+<div class="me-quit mkp"><i class="mk tl" aria-hidden="true">6</i>
+ <div class="me-txt"><span class="me-k">회원 탈퇴</span><span class="me-s">계정과 프로필을 삭제해요</span></div>
+ <button class="p-btn danger" type="button">탈퇴하기</button>
+</div>
+</div></main></div>
+<script>
+const body=document.body;
+function setMk(on){body.classList.toggle('show-mk',on);document.getElementById('mkBtn').setAttribute('aria-pressed',String(on));}
+document.getElementById('mkBtn').addEventListener('click',()=>setMk(!body.classList.contains('show-mk')));
+addEventListener('message',e=>{if(e.data&&typeof e.data.mk==='boolean')setMk(e.data.mk);});
+document.querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
+ const on=b.dataset.c==='on';
+ document.querySelectorAll('[data-c]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+ document.getElementById('chT').textContent=on?'치지직 채널 「하루의 놀이터」 확인됨 · 10월 2일':'확인 전';
+ document.getElementById('chB').textContent=on?'다시 확인':'확인하기';
+}));
+document.querySelectorAll('.me-sw').forEach(s=>s.addEventListener('click',()=>{s.setAttribute('aria-checked',String(s.getAttribute('aria-checked')!=='true'));document.getElementById('msg').textContent='알림 설정을 저장했어요.';}));
+</script>
+</body></html>

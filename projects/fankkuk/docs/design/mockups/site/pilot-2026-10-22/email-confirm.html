@@ -1,0 +1,24 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>이메일 확인 · 팬꾹 정돈 시범 시안</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="../v34-part1/v33.css"><link rel="stylesheet" href="../v34-part1/v33b.css"><link rel="stylesheet" href="../v34-part1/v34.css"><link rel="stylesheet" href="../v35-part1/v35.css"><link rel="stylesheet" href="../v37-part2/v37.css"><link rel="stylesheet" href="../v39-part3/v39.css"><link rel="stylesheet" href="pilot.css"></head>
+<!-- 정돈 4파트 나머지 2026-10-22 — /me/email/confirm. 제안: redesign-2026-10-22-pilot.md 8절. 제목은 h1 하나(팬은 h1 이 없고 크리에이터는 두 번 나오던 것). 한 문장짜리 판(720 상자)을 빼고 880 기둥 왼쪽에 문장·버튼만. 결과는 같은 자리에서 바뀐다. 문구는 confirm-email-panel.tsx·confirm-email.ts 그대로. 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. -->
+<body class="member" id="top"><aside class="sidebar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><nav aria-label="주 메뉴"><a href="#"><span class="nav-glyph" aria-hidden="true">⌂</span>홈</a><a href="#"><span class="nav-glyph" aria-hidden="true">☑</span>지금 할 일<span class="nav-count" aria-label="2건">2</span></a><a href="#"><span class="nav-glyph" aria-hidden="true">⌕</span>크리에이터 찾기</a><a href="#"><span class="nav-glyph" aria-hidden="true">◇</span>선물 보내기</a><a href="#"><span class="nav-glyph" aria-hidden="true">□</span>보낸 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">↗</span>받은 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">♡</span>팔로우한 크리에이터</a><a href="#"><span class="nav-glyph" aria-hidden="true">?</span>문의</a></nav><div class="account"><span class="avatar">별</span><div><strong>별빛님</strong><small>팬 · 계정 설정</small></div></div></aside><div class="page"><header class="mobile-bar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><button type="button" aria-label="메뉴 열기">☰</button></header><main id="main"><div class="wrap me-wrap">
+<div class="mockbar" role="group" aria-label="시안 보기 전환"><b>시안 보기</b><span class="mb-grp"><button type="button" data-s="before" aria-pressed="true">누르기 전</button><button type="button" data-s="ok" aria-pressed="false">확인됨</button><button type="button" data-s="bad" aria-pressed="false">쓸 수 없는 링크</button></span><span class="mb-grp"><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></span></div>
+
+<h1 class="p-title mkp" tabindex="-1">이메일 확인<i class="mk tr" aria-hidden="true">1</i></h1>
+<div class="ec mkp" id="ec"><i class="mk tl" aria-hidden="true">2</i></div>
+</div></main></div>
+<script>
+const body=document.body;
+function setMk(on){body.classList.toggle('show-mk',on);document.getElementById('mkBtn').setAttribute('aria-pressed',String(on));}
+document.getElementById('mkBtn').addEventListener('click',()=>setMk(!body.classList.contains('show-mk')));
+addEventListener('message',e=>{if(e.data&&typeof e.data.mk==='boolean')setMk(e.data.mk);});
+const mk='<i class="mk tl" aria-hidden="true">2</i>';
+const views={
+ before:'<p class="ec-t">버튼을 누르면 확인 메일을 받은 주소가 내 계정의 이메일이 돼요.</p><div class="ec-a"><button class="p-btn fill lg" type="button">이 주소 확인하기</button></div>',
+ ok:'<p class="ec-t ec-ok" role="status"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>이메일 주소(byeolbit.fan@example.com)를 확인했어요.</p><div class="ec-a"><a class="p-btn lg" href="#">내 팬꾹으로 가기</a></div>',
+ bad:'<p class="ec-t">버튼을 누르면 확인 메일을 받은 주소가 내 계정의 이메일이 돼요.</p><p class="ec-err" role="alert">쓸 수 없는 링크예요. 내 팬꾹의 개인정보에서 이메일을 다시 저장하면 새 확인 메일이 가요.</p><div class="ec-a"><a class="p-btn lg" href="#">내 팬꾹으로 가기</a></div>'
+};
+function show(s){document.getElementById('ec').innerHTML=mk+views[s];document.querySelectorAll('[data-s]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.s===s)));}
+document.querySelectorAll('[data-s]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.s)));
+show('before');
+</script>
+</body></html>

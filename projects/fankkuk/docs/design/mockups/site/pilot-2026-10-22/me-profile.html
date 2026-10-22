@@ -1,0 +1,45 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>프로필 수정(팬) · 팬꾹 정돈 시범 시안</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="../v34-part1/v33.css"><link rel="stylesheet" href="../v34-part1/v33b.css"><link rel="stylesheet" href="../v34-part1/v34.css"><link rel="stylesheet" href="../v35-part1/v35.css"><link rel="stylesheet" href="../v37-part2/v37.css"><link rel="stylesheet" href="../v39-part3/v39.css"><link rel="stylesheet" href="pilot.css"></head>
+<!-- 정돈 4파트 나머지 2026-10-22 — /me/profile (프로필 수정, 팬). 제안: redesign-2026-10-22-pilot.md 7절. 계정 설정(팬)과 같은 언어: 880 기둥 12열 4+8 묶음 둘(사진 · 소개), 카드 없음, 묶음 사이 구분선. 저장 줄은 소개 묶음 바로 아래 오른쪽 [취소][저장하기]. 문구는 지금 화면 그대로. 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. -->
+<body class="member" id="top"><aside class="sidebar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><nav aria-label="주 메뉴"><a href="#"><span class="nav-glyph" aria-hidden="true">⌂</span>홈</a><a href="#"><span class="nav-glyph" aria-hidden="true">☑</span>지금 할 일<span class="nav-count" aria-label="2건">2</span></a><a href="#"><span class="nav-glyph" aria-hidden="true">⌕</span>크리에이터 찾기</a><a href="#"><span class="nav-glyph" aria-hidden="true">◇</span>선물 보내기</a><a href="#"><span class="nav-glyph" aria-hidden="true">□</span>보낸 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">↗</span>받은 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">♡</span>팔로우한 크리에이터</a><a href="#"><span class="nav-glyph" aria-hidden="true">?</span>문의</a></nav><div class="account"><span class="avatar">별</span><div><strong>별빛님</strong><small>팬 · 계정 설정</small></div></div></aside><div class="page"><header class="mobile-bar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><button type="button" aria-label="메뉴 열기">☰</button></header><main id="main"><div class="wrap me-wrap">
+<div class="mockbar" role="group" aria-label="시안 보기 전환"><b>시안 보기</b><span class="mb-grp">배경 사진 <button type="button" data-bg="off" aria-pressed="true">없음</button><button type="button" data-bg="on" aria-pressed="false">있음</button></span><span class="mb-grp"><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></span></div>
+
+<header class="me-head"><div><h1 class="p-title" tabindex="-1">프로필 수정</h1><p class="p-desc">사진과 소개를 바꾸고 닉네임도 여기서 고쳐요.</p></div></header>
+
+<section class="me-grp mkp" aria-labelledby="g1"><i class="mk tl" aria-hidden="true">1</i>
+ <div class="me-nm"><h2 id="g1">사진</h2></div>
+ <ul class="me-rows">
+  <li class="me-row pf-ph"><div class="pf-av" aria-hidden="true">별</div><div class="me-txt"><span class="me-k">프로필 사진</span><span class="me-s">사진이 없으면 닉네임 첫 글자가 보여요. JPG·PNG·WebP, 10MB까지.</span></div><div class="me-act"><button class="p-btn" type="button">사진 올리기</button></div></li>
+  <li class="me-row col mkp"><i class="mk tl" style="left:-8px;top:8px" aria-hidden="true">2</i><div class="pf-bghead"><span class="me-k">배경 사진</span><span class="me-act" id="bgA"><button class="p-btn" type="button">사진 올리기</button></span></div><div class="pf-bg" id="bg"><span>배경 사진이 없어요</span></div><p class="me-s">가로로 긴 사진이 잘 어울려요. 없으면 기본 하늘색 띠가 나와요.</p></li>
+ </ul>
+</section>
+
+<section class="me-grp mkp" aria-labelledby="g2"><i class="mk tl" aria-hidden="true">1</i>
+ <div class="me-nm"><h2 id="g2">소개</h2></div>
+ <ul class="me-rows">
+  <li class="me-row col"><div class="pf-lab"><label class="me-k" for="nk">닉네임</label><span class="me-s" id="nkc">2/12</span></div><input class="me-input" id="nk" value="별빛" maxlength="12" aria-describedby="nk-h nkc"><p class="me-s" id="nk-h">1~12자</p></li>
+  <li class="me-row col"><div class="pf-lab"><label class="me-k" for="bio">자기소개</label><span class="me-s" id="bc">0/100</span></div><textarea class="me-input pf-ta" id="bio" maxlength="100" aria-describedby="bio-h bc"></textarea><p class="me-s" id="bio-h">짧게 나를 소개해 주세요. 100자까지 쓸 수 있어요.</p></li>
+ </ul>
+</section>
+
+<div class="me-end mkp"><i class="mk tl" aria-hidden="true">3</i>
+ <p class="st-msg" role="status" id="msg"></p>
+ <div class="me-btns"><button class="p-btn" type="button">취소</button><button class="p-btn fill" type="button" id="save">저장하기</button></div>
+</div>
+</div></main></div>
+<script>
+const body=document.body;
+function setMk(on){body.classList.toggle('show-mk',on);document.getElementById('mkBtn').setAttribute('aria-pressed',String(on));}
+document.getElementById('mkBtn').addEventListener('click',()=>setMk(!body.classList.contains('show-mk')));
+addEventListener('message',e=>{if(e.data&&typeof e.data.mk==='boolean')setMk(e.data.mk);});
+document.querySelectorAll('[data-bg]').forEach(b=>b.addEventListener('click',()=>{
+ const on=b.dataset.bg==='on';
+ document.querySelectorAll('[data-bg]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+ const bg=document.getElementById('bg');bg.classList.toggle('has',on);bg.innerHTML=on?'':'<span>배경 사진이 없어요</span>';
+ document.getElementById('bgA').innerHTML=on?'<button class="p-btn" type="button">사진 바꾸기</button><button class="p-btn" type="button">지우기</button>':'<button class="p-btn" type="button">사진 올리기</button>';
+}));
+const nk=document.getElementById('nk'),bio=document.getElementById('bio');
+nk.addEventListener('input',()=>document.getElementById('nkc').textContent=nk.value.length+'/12');
+bio.addEventListener('input',()=>document.getElementById('bc').textContent=bio.value.length+'/100');
+document.getElementById('save').addEventListener('click',()=>document.getElementById('msg').textContent='저장했어요.');
+</script>
+</body></html>

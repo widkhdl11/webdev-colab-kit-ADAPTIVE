@@ -1,0 +1,78 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>프로필 수정(크리에이터) · 팬꾹 정돈 시범 시안</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="../v34-part1/v33.css"><link rel="stylesheet" href="../v34-part1/v33b.css"><link rel="stylesheet" href="../v34-part1/v34.css"><link rel="stylesheet" href="../v35-part1/v35.css"><link rel="stylesheet" href="../v37-part2/v37.css"><link rel="stylesheet" href="../v39-part3/v39.css"><link rel="stylesheet" href="pilot.css"></head>
+<!-- 정돈 4파트 나머지 2026-10-22 — /creator/profile. 제안: redesign-2026-10-22-pilot.md 10절. 상세 설정(27절)과 같은 1200 안 12열 7+5. 왼쪽 「사진」 판(고르는 즉시 저장) → 「소개」 판(공개 이름·한 줄 소개·태그·찾기 노출, 끝에 결과 안내와 [취소][저장]). 오른쪽 미리보기(맨 위에 있던 머리, CreatorHead) — 입력하는 대로 바뀌고 스크롤을 따라온다. 태그 아이콘은 지금 화면 그대로(시안은 글자만). 문구는 creator-profile-edit-page.tsx 그대로. 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. -->
+<body class="member" id="top"><aside class="sidebar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><nav aria-label="주 메뉴"><a href="#"><span class="nav-glyph" aria-hidden="true">⌂</span>홈</a><a href="#"><span class="nav-glyph" aria-hidden="true">☑</span>지금 할 일<span class="nav-count" aria-label="2건">2</span></a><a href="#"><span class="nav-glyph" aria-hidden="true">↗</span>받은 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">◇</span>팬에게 보내기</a><a href="#"><span class="nav-glyph" aria-hidden="true">♡</span>팔로우한 크리에이터</a><a href="#"><span class="nav-glyph" aria-hidden="true">⚙</span>상세 설정</a><a href="#"><span class="nav-glyph" aria-hidden="true">?</span>문의</a></nav><div class="account"><span class="avatar">하</span><div><strong>하루님</strong><small>크리에이터 · 계정 설정</small></div></div></aside><div class="page"><header class="mobile-bar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><button type="button" aria-label="메뉴 열기">☰</button></header><main id="main"><div class="wrap st-wrap">
+<div class="mockbar" role="group" aria-label="시안 보기 전환"><b>시안 보기</b><span class="mb-grp"><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></span><span>공개 이름·한 줄 소개를 고쳐 보세요. 오른쪽 미리보기가 바뀌어요.</span></div>
+
+<header class="p-head" style="margin-bottom:0"><h1 class="p-title" tabindex="-1">프로필 수정</h1><p class="p-desc">팬에게 보이는 내 프로필이에요. 미리보기 모양이 그대로 보여요.</p></header>
+
+<div class="st-grid">
+ <div class="cp-col">
+  <section class="st-form mkp" aria-labelledby="ph-t"><i class="mk tl" aria-hidden="true">2</i>
+   <div class="st-sub">
+    <h2 class="cp-h" id="ph-t">사진</h2>
+    <h3>배경 사진</h3>
+    <div class="st-mark"><button class="p-btn" type="button">배경 사진 바꾸기</button><button class="p-btn" type="button">배경을 테마 색으로 되돌리기</button></div>
+    <p class="st-hint">배경 사진은 가로로 긴 사진이 잘 어울려요(JPG·PNG·WebP). 올리면 위치 정보 같은 숨은 정보는 지워져요. 사진이 없으면 테마 색이 보여요.</p>
+    <p class="st-hint">권장 크기 1200×600px</p>
+   </div>
+   <div class="st-sub cp-last">
+    <h3>프로필 사진</h3>
+    <div class="st-mark"><button class="p-btn" type="button">프로필 사진 바꾸기</button><button class="p-btn" type="button">사진 지우기</button></div>
+   </div>
+  </section>
+
+  <section class="st-form cp-gap mkp" aria-labelledby="in-t"><i class="mk tl" aria-hidden="true">3</i>
+   <div class="st-sub">
+    <h2 class="cp-h" id="in-t">소개</h2>
+    <h3><label for="nm">공개 이름</label></h3>
+    <input class="st-input" id="nm" value="하루" aria-describedby="nm-h">
+    <p class="st-hint" id="nm-h">팬에게 보이는 이름이에요.</p>
+   </div>
+   <div class="st-sub">
+    <h3><label for="bio">한 줄 소개 <span class="ct">(40자까지)</span></label><span class="ct" id="bc">10/40</span></h3>
+    <textarea class="st-input cp-ta" id="bio" maxlength="40">게임 방송을 해요.</textarea>
+   </div>
+   <div class="st-sub">
+    <h3 id="tg-l">태그</h3>
+    <div class="cp-tags" role="group" aria-labelledby="tg-l" aria-describedby="tg-h">
+     <button type="button" class="cp-tag" aria-pressed="false">SOOP</button><button type="button" class="cp-tag" aria-pressed="true">치지직</button><button type="button" class="cp-tag" aria-pressed="false">유튜브</button><button type="button" class="cp-tag" aria-pressed="false">알플레이</button><button type="button" class="cp-tag" aria-pressed="false">인스타그램</button><button type="button" class="cp-tag" aria-pressed="false">X</button><button type="button" class="cp-tag" aria-pressed="false">스레드</button><button type="button" class="cp-tag" aria-pressed="false">틱톡</button><button type="button" class="cp-tag" aria-pressed="true">버추얼</button>
+    </div>
+    <label class="cp-sub-l" for="tg-in">직접 입력 (목록에 없을 때 한 개)</label>
+    <input class="st-input" id="tg-in" placeholder="예: 팝콘TV">
+    <p class="st-hint" id="tg-h">활동하는 곳과 방송 종류를 골라 주세요. 고른 것과 직접 입력을 합쳐 1~5개(지금 2개), 직접 입력은 20자까지예요. 직접 입력한 태그는 고른 태그 뒤에 보여요. 욕설·연락처·주소는 쓸 수 없어요.</p>
+   </div>
+   <div class="st-sub cp-last mkp"><i class="mk tl" aria-hidden="true">4</i>
+    <button type="button" class="me-sw" role="switch" aria-checked="true"><span class="me-txt"><span class="me-k">크리에이터 찾기에 보이기</span></span><span class="me-trk" aria-hidden="true"></span></button>
+   </div>
+   <div class="st-end mkp"><i class="mk tl" aria-hidden="true">3</i>
+    <p class="st-msg" role="status" id="msg"></p>
+    <div class="st-btns"><button class="p-btn" type="button">취소</button><button class="p-btn fill" type="button" id="save">저장</button></div>
+   </div>
+  </section>
+ </div>
+
+ <aside class="st-pv cp-pv mkp" aria-label="미리보기"><i class="mk tl" aria-hidden="true">1</i>
+  <h3>미리보기</h3>
+  <div class="cp-head" role="group" aria-label="프로필 머리 미리보기">
+   <div class="cp-cover"><img src="../../../../../public/images/mascot-gift.png" alt=""></div>
+   <div class="cp-bd"><div class="cp-av"><img src="../../../../../public/img/icon-gift.png" alt=""></div>
+    <p class="cp-name"><span id="pvN">하루</span> <span class="fd-b sm"><img src="../../../../../public/img/icon-approve.png" alt=""><span>하루별</span></span></p>
+    <p class="cp-intro" id="pvB">게임 방송을 해요.</p>
+   </div>
+  </div>
+ </aside>
+</div>
+</div></main></div>
+<script>
+const body=document.body;
+function setMk(on){body.classList.toggle('show-mk',on);document.getElementById('mkBtn').setAttribute('aria-pressed',String(on));}
+document.getElementById('mkBtn').addEventListener('click',()=>setMk(!body.classList.contains('show-mk')));
+addEventListener('message',e=>{if(e.data&&typeof e.data.mk==='boolean')setMk(e.data.mk);});
+const nm=document.getElementById('nm'),bio=document.getElementById('bio');
+nm.addEventListener('input',()=>document.getElementById('pvN').textContent=nm.value||'하루');
+bio.addEventListener('input',()=>{document.getElementById('pvB').textContent=bio.value;document.getElementById('bc').textContent=bio.value.length+'/40';});
+document.querySelectorAll('.cp-tag').forEach(t=>t.addEventListener('click',()=>t.setAttribute('aria-pressed',String(t.getAttribute('aria-pressed')!=='true'))));
+document.querySelectorAll('.me-sw').forEach(s=>s.addEventListener('click',()=>s.setAttribute('aria-checked',String(s.getAttribute('aria-checked')!=='true'))));
+document.getElementById('save').addEventListener('click',()=>document.getElementById('msg').textContent='저장했어요.');
+</script>
+</body></html>
