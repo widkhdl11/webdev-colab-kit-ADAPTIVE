@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v32 크리에이터 홈 — 레이아웃 변주·디테일 마감</title>
+<!--
+  진단 C-7. 시선 흐름 F. 기준점: 처리할 일의 큰 카드(히어로 아래 첫 시선).
+  ① 히어로·② 바로가기 — 10-20 세 홈 공통 구성 그대로(비눗방울·바로가기 넷 가운데 정렬)
+  ③ 처리할 일   흰 · 12 큰 카드(가장 급한 하나, 노랑 면) + 6/6 작은 둘 — A-2
+  ④ 진행 중인 선물 8 + 최근 열람 기록 4 — 같은 줄 목록 두 구간을 한 줄에 나란히(A-1), 크림 띠
+  ⑤ 공지  폭 680 (A-7)
+  사이드바: 지금 메뉴 그대로(app-menu.ts), 바탕만 B-1 그라데이션.
+  작은 즐거움: 없음.
+  문구: creator-home-page.tsx · app-menu.ts 그대로. 이름·건수·주문번호·시각은 예시 값.
+-->
+<link rel="stylesheet" href="v32.css">
+<style>
+body{display:flex}
+.sb{position:sticky;top:0;flex:0 0 240px;height:100vh;overflow-y:auto;padding:16px 12px;background:var(--bg-tint);box-shadow:inset -1px 0 0 var(--line-white)}
+.sb .logo{padding:8px 8px 16px}
+.sb h3{margin:16px 8px 4px;font-size:var(--fs-small);font-weight:600;color:var(--gray-600)}
+.sb a{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px;border-radius:10px;font-size:var(--fs-small);font-weight:500;color:var(--gray-900);transition:background-color var(--t) ease-out}
+.sb a:hover{background:rgb(255 255 255 / .7)}
+.sb a:active{background:#fff}
+.sb a[aria-current]{background:#fff;font-weight:700;box-shadow:inset 0 0 0 1px var(--line-white)}
+.sb .badge{margin-left:auto;min-width:22px;height:22px;padding:0 6px;border-radius:var(--r-pill);background:var(--gray-900);color:#fff;font-size:var(--fs-badge);display:inline-flex;align-items:center;justify-content:center}
+.main{flex:1;min-width:0}
+.hero{min-height:408px;padding:48px 0 104px;background:#eaf6fd url("../../../../../public/images/home/hero-bubbles.png") right center/cover no-repeat}
+.hero .g12{align-items:center}
+.pchip{display:inline-flex;align-items:center;gap:10px;margin-top:20px;padding:6px 16px 6px 6px;border-radius:var(--r-pill);background:#fff;box-shadow:var(--sh-1)}
+.pchip span{width:40px;height:40px;border-radius:50%;background:#fde2e4;display:flex;align-items:center;justify-content:center;font-weight:700}
+.acts{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.cat{width:100%;max-width:220px;margin-left:auto}
+.tiles{margin-top:-56px;position:relative}
+.tile{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;height:100%}
+.tile img{width:56px;height:56px;margin-bottom:4px}
+.urgent{display:flex;align-items:center;gap:20px;padding:24px;background:linear-gradient(180deg,#fff8e6 0%,#fff1cc 100%);box-shadow:inset 0 0 0 1px #f2dfae}
+.urgent .ic{flex:none;width:56px;height:56px;border-radius:var(--r-card);background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px #f2dfae}
+.urgent .ic img{width:40px;height:40px}
+.urgent .t{flex:1;min-width:0}
+.small{display:flex;align-items:center;gap:12px;padding:16px 20px}
+.small .t{flex:1;min-width:0}
+.rows li a{display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 4px;box-shadow:0 1px 0 var(--line);transition:padding var(--t) ease-out}
+.rows li a:hover{padding-left:8px}
+.rows li a:active{background:rgb(255 255 255 / .6)}
+.rows .t{flex:1;min-width:0}
+.rows .t strong{display:block}
+.rows .t span{display:block;font-size:var(--fs-small);color:var(--gray-600)}
+.panel{padding:24px;height:100%}
+.log{display:flex;flex-direction:column;gap:12px}
+.log .lk{padding:16px;border-radius:var(--r-btn);background:var(--primary-50)}
+.nl a{display:flex;justify-content:space-between;gap:16px;align-items:center;min-height:56px;padding:12px 4px;box-shadow:0 1px 0 var(--line-white);transition:padding var(--t) ease-out}
+.nl a:hover{padding-left:8px}
+.nl time{flex:none;font-size:var(--fs-small);color:var(--gray-500)}
+@media (max-width:1023px){.sb{display:none}}
+@media (max-width:767px){.hero{min-height:auto;padding:24px 0 96px}.hero .art{order:-1}.cat{max-width:140px;margin:0 auto}.acts .btn{flex:1 1 100%}.urgent{flex-wrap:wrap}.urgent .btn{flex:1 1 100%}}
+</style>
+</head>
+<body>
+<aside class="sb" aria-label="크리에이터 메뉴">
+  <a class="logo" href="#" style="font-weight:700;min-height:auto;padding:8px"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+  <h3>기본</h3>
+  <a href="#" aria-current="page">홈</a><a href="#">선물 현황</a><a href="#">처리할 일<span class="badge">3</span></a><a href="#">크리에이터 찾기</a>
+  <h3>받기</h3>
+  <a href="#">승인 내역</a><a href="#">받은 선물</a><a href="#">열람 기록</a>
+  <h3>보내기</h3>
+  <a href="#">팬에게 보내기</a><a href="#">다른 크리에이터에게 선물</a><a href="#">보낸 내역</a>
+  <h3>내 팬꾹</h3>
+  <a href="#">꾸미기</a><a href="#">프로필 수정</a>
+</aside>
+
+<div class="main">
+<main>
+<section class="hero" aria-labelledby="h1">
+  <div class="in g12">
+    <div class="s7">
+      <p class="eyebrow" style="color:var(--gray-600)">팬들이 전한 마음을 확인해보세요</p>
+      <h1 class="round t-hero" id="h1" style="margin-top:12px">해든님, 반가워요</h1>
+      <div class="pchip"><span>해</span><b>해든</b><span class="tag" style="width:auto;height:auto;background:var(--primary-50)">내 프로필</span></div>
+      <div class="acts"><a class="btn" href="profile.html">내 페이지 보기</a><a class="btn line" href="#">프로필 수정</a></div>
+    </div>
+    <div class="s5 art"><img class="cat" src="../../../../../public/images/home/creator-cat.webp" alt=""></div>
+  </div>
+</section>
+
+<div class="in">
+  <ul class="g12 tiles" aria-label="내 바로가기">
+    <li class="s3 m6"><a class="card float pad tile" href="#"><img src="../../../../../public/images/home/icon-approve.webp" alt=""><b>처리할 일</b><span class="t-small sub">3건</span></a></li>
+    <li class="s3 m6"><a class="card float pad tile" href="#"><img src="../../../../../public/images/home/icon-gift.webp" alt=""><b>선물 현황</b><span class="t-small sub">진행 중 5건</span></a></li>
+    <li class="s3 m6"><a class="card float pad tile" href="#"><img src="../../../../../public/images/home/icon-truck.webp" alt=""><b>내가 보낸 선물</b><span class="t-small sub">2개</span></a></li>
+    <li class="s3 m6"><a class="card float pad tile" href="#"><img src="../../../../../public/images/home/icon-help.webp" alt=""><b>열람 기록</b><span class="t-small sub">내 정보 열람을 확인해요</span></a></li>
+  </ul>
+
+  <section class="band plain" style="padding-bottom:var(--sec)" aria-labelledby="todo">
+    <div class="rowhead"><h2 class="round t-title" id="todo">처리할 일</h2><a class="link" href="#">처리할 일 모두 보기 <span class="ar" aria-hidden="true">›</span></a></div>
+    <div class="g12">
+      <a class="card urgent s12" href="#"><span class="ic"><img src="../../../../../public/images/home/icon-approve.webp" alt=""></span><span class="t"><span class="tag wait">승인 대기</span><b style="display:block;font-size:var(--fs-card);margin-top:6px">별사탕님</b><span class="t-small sub">[남은 기간]</span></span><span aria-hidden="true" style="font-size:var(--fs-card)">›</span></a>
+      <a class="card small s6" href="#"><span class="tag">확인할 선물</span><span class="t"><b>구름빵님</b></span><span aria-hidden="true">›</span></a>
+      <a class="card small s6" href="#"><span class="tag">추가 결제</span><span class="t"><b>하루님</b></span><span aria-hidden="true">›</span></a>
+    </div>
+  </section>
+</div>
+
+<section class="band cream" aria-label="진행 중인 선물과 최근 열람 기록">
+  <div class="in g12">
+    <div class="s8">
+      <div class="rowhead" style="margin-bottom:8px"><h2 class="round t-page">진행 중인 선물</h2><a class="link" href="#">선물 현황 모두 보기 <span class="ar" aria-hidden="true">›</span></a></div>
+      <ul class="rows">
+        <li><a href="#"><span class="t"><strong>별사탕님</strong><span>상자 2개</span></span><span class="tag sky">검수</span><span aria-hidden="true">›</span></a></li>
+        <li><a href="#"><span class="t"><strong>구름빵님</strong><span>상자 1개</span></span><span class="tag sky">입고</span><span aria-hidden="true">›</span></a></li>
+        <li><a href="#"><span class="t"><strong>하루님</strong><span>상자 1개</span></span><span class="tag ok">배송중</span><span aria-hidden="true">›</span></a></li>
+      </ul>
+    </div>
+    <div class="s4">
+      <div class="card float panel log">
+        <h2 class="round t-card">최근 열람 기록</h2>
+        <div class="lk"><b>내 배송 정보가 열렸어요</b><p class="t-small sub">주문 FK-2410 · 10월 14일 14:02</p></div>
+        <a class="link" href="#">열람 기록 모두 보기 <span class="ar" aria-hidden="true">›</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band plain" aria-labelledby="nt">
+  <div class="in text">
+    <div class="rowhead" style="margin-bottom:8px"><h2 class="round t-page" id="nt">공지사항</h2><a class="link" href="#">전체 보기 <span class="ar" aria-hidden="true">›</span></a></div>
+    <ul class="nl">
+      <li><a href="#"><span>팬꾹 서비스 시작 안내</span><time>10.01</time></a></li>
+      <li><a href="#"><span>선물 보내기 전에 꼭 확인해 주세요 (크기·무게 기준)</span><time>10.01</time></a></li>
+    </ul>
+  </div>
+</section>
+</main>
+<footer class="footer"><div class="in g12">
+  <div class="s6"><a class="logo" href="#" style="font-size:16px"><img src="../../../../../public/images/logo-mark.png" alt="" style="width:24px;height:24px">팬꾹</a></div>
+  <div class="s3 m6"><h4>이용 안내</h4><ul><li><a href="#">이용약관</a></li><li><a href="#"><b>개인정보처리방침</b></a></li></ul></div>
+  <div class="s3 m6"><h4>팬꾹 소개</h4><ul><li><a href="#">크리에이터 이용 안내</a></li><li><a href="#">자주 묻는 질문</a></li></ul></div>
+</div></footer>
+</div>
+</body>
+</html>

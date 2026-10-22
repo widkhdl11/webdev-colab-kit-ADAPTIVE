@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v32 랜딩 — 레이아웃 변주·디테일 마감</title>
+<!--
+  바탕: 지금 승인 구성(design-rules 2026-10-20 「세 역할 홈 공통 구성」 · 10-19 그림·요금·비눗방울)을 그대로 두고 원칙 A·B 만 얹었다.
+  시선 흐름: Z(제목 → 고양이 → 검색·버튼 → 바로가기). 기준점: 첫 화면 고양이 하나.
+  구간과 구조(같은 구조가 이어지지 않게 — A-1):
+    ① 첫 화면     비눗방울 그림 바탕 · 7/5 · 글 왼쪽, 고양이 오른쪽
+    ② 바로가기    ①의 아래 가장자리에 56 겹침(A-5, 이 화면 한 곳) · 3/3/3/3, 그림·글 가운데(10-20 규칙)
+    ③ 소개 배너   12 한 장(원본 비율)
+    ④ 이용 방법   크림 띠 · 4/8 (제목이 왼쪽에 남고 단계를 오른쪽으로 읽음)
+    ⑤ 새 크리에이터 흰 · 8 + 4 (큰 카드 하나 + 작은 줄 셋, A-2)
+    ⑥ 배송 요금 안내 하늘 띠 · 한 장을 4/4/4
+    ⑦ 공지        폭 680 으로 줄어듦(A-7 폭 변화)
+  작은 즐거움(B-5): 고양이에 마우스를 올리면 2px 떠오름. 하나뿐.
+  문구: front-slots.tsx · design-rules 10-19 그대로. 크리에이터 이름·소개는 지금 화면의 예시 값.
+-->
+<link rel="stylesheet" href="v32.css">
+<style>
+.hero{position:relative;min-height:408px;padding:56px 0 112px;background:#eaf6fd url("../../../../../public/images/home/hero-bubbles.png") right center/cover no-repeat}
+.hero .g12{align-items:center}
+.hero form{display:flex;align-items:center;gap:8px;max-width:480px;margin-top:24px;padding:6px 6px 6px 20px;border-radius:var(--r-pill);background:#fff;box-shadow:inset 0 0 0 1px var(--gray-500),var(--sh-1);transition:box-shadow var(--t) ease-out}
+.hero form:focus-within{box-shadow:inset 0 0 0 2px var(--gray-900),0 0 0 4px rgb(137 207 240 / .35)}
+.hero input{flex:1;min-width:0;height:44px;border:0;outline:0;background:transparent;font:inherit}
+.hero form button{width:44px;height:44px;border:0;border-radius:50%;background:var(--primary);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background-color var(--t) ease-out}
+.hero form button:hover{background:var(--primary-700)}
+.acts{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.cat{width:100%;max-width:240px;margin-left:auto;transition:transform 200ms ease-out}
+.cat:hover{transform:translateY(-2px)}
+.tiles{margin-top:-56px;position:relative}
+.tile{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;height:100%}
+.tile img{width:64px;height:64px;margin-bottom:4px}
+.tile b{font-weight:700}
+.intro{margin-top:24px;border-radius:var(--r-panel);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+.intro img{width:100%;height:auto}
+.steps{display:flex;flex-direction:column;gap:4px}
+.step{display:flex;gap:16px;align-items:flex-start;padding:16px;border-radius:var(--r-card);transition:background-color var(--t) ease-out}
+.step:hover{background:rgb(255 255 255 / .7)}
+.step img{flex:none;width:64px;height:64px;padding:8px;border-radius:var(--r-card);background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+.step small{font-size:var(--fs-small);font-weight:600;color:var(--gray-600)}
+.sticky{position:sticky;top:96px}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:16px 16px 0;font-size:var(--fs-small);color:var(--gray-600)}
+.flow .tag{background:#fff;box-shadow:inset 0 0 0 1px var(--line);color:var(--gray-900);min-height:28px;font-size:var(--fs-small)}
+.big .face{width:72px;height:72px;margin-top:-36px;font-size:24px}
+.big b{font-size:var(--fs-card)}
+.mini{display:flex;gap:12px;align-items:center;padding:12px}
+.mini .ph{flex:none;width:96px;aspect-ratio:2/1;border-radius:var(--r-btn);position:relative;overflow:hidden}
+.mini .ph img{position:absolute;right:-6px;bottom:-12px;height:120%;opacity:.3}
+.mini .fc{flex:none;width:40px;height:40px;margin-left:-36px;margin-top:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-small);box-shadow:0 0 0 3px #fff;position:relative}
+.mini .t{min-width:0}
+.mini .t b{display:block}
+.mini .t span{display:block;font-size:var(--fs-small);color:var(--gray-600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(3,minmax(0,1fr));gap:16px}
+.side .mini{height:100%}
+.tier .tag{align-self:flex-start}
+.price{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:hidden}
+.tier{padding:24px;display:flex;flex-direction:column;gap:8px;transition:background-color var(--t) ease-out}
+.tier:hover{background:var(--gray-50)}
+.tier + .tier{box-shadow:-1px 0 0 var(--line)}
+.box{height:120px;display:flex;align-items:flex-end}
+.box img{width:auto}
+.box.s img{height:76px}.box.m img{height:100px}.box.l img{height:118px}
+.big .cover img{height:78%;bottom:-14%}
+.amt{font-size:var(--fs-title);font-weight:700;line-height:1.25;font-variant-numeric:tabular-nums}
+.amt small{font-size:var(--fs-card);margin-left:4px}
+.nl a{display:flex;justify-content:space-between;gap:16px;align-items:center;min-height:56px;padding:12px 4px;box-shadow:0 1px 0 var(--line);transition:padding var(--t) ease-out}
+.nl a:hover{padding-left:8px}
+.nl a:active{background:var(--gray-50)}
+.nl time{flex:none;font-size:var(--fs-small);color:var(--gray-500)}
+@media (max-width:767px){
+  .hero{min-height:544px;padding:24px 0 96px;background-position:right top}
+  .hero .art{order:-1}
+  .cat{max-width:160px;margin:0 auto}
+  .acts .btn{flex:1 1 100%}
+  .tile{padding:16px}
+  .sticky{position:static}
+  .price{grid-template-columns:minmax(0,1fr)}
+  .tier + .tier{box-shadow:0 -1px 0 var(--line)}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <a class="logo" href="#"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+  <nav class="nav" aria-label="주 메뉴"><a href="creators.html">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+  <div class="auth"><a href="#" class="sub">로그인</a><a href="#">회원가입</a></div>
+  <button class="burger" type="button" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+</div></header>
+
+<main>
+<section class="hero" aria-labelledby="h1">
+  <div class="in g12">
+    <div class="s7">
+      <p class="eyebrow" style="color:var(--gray-600)">크리에이터에게 선물을 보낼 때</p>
+      <h1 class="round t-hero" id="h1" style="margin-top:12px">나의 크리에이터를<br>찾아요</h1>
+      <form role="search"><label class="sr" for="q">크리에이터 검색</label><input id="q" type="search" placeholder="나의 크리에이터를 찾아보세요"><button type="submit" aria-label="크리에이터 찾기"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg></button></form>
+      <div class="acts"><a class="btn" href="#">지금 바로 선물 보내러 가기</a><a class="btn line" href="creators.html">나의 크리에이터 찾으러 가기</a></div>
+    </div>
+    <div class="s5 art"><img class="cat" src="../../../../../public/images/home/creator-cat.webp" alt=""></div>
+  </div>
+</section>
+
+<div class="in">
+  <ul class="g12 tiles" aria-label="바로가기">
+    <li class="s3 m6"><a class="card float pad tile" href="#"><img src="../../../../../public/images/home/icon-gift.webp" alt=""><b>선물 보내기</b><span class="t-small sub">팬꾹 주소로 먼저 보내요</span></a></li>
+    <li class="s3 m6"><a class="card float pad tile" href="creators.html"><img src="../../../../../public/images/home/icon-find.webp" alt=""><b>크리에이터 찾기</b><span class="t-small sub">본인 확인을 마친 크리에이터</span></a></li>
+    <li class="s3 m6"><a class="card float pad tile" href="#price"><img src="../../../../../public/images/home/icon-fee.webp" alt=""><b>요금</b><span class="t-small sub">검수 포함 6,900원부터</span></a></li>
+    <li class="s3 m6"><a class="card float pad tile" href="#"><img src="../../../../../public/images/home/icon-help.webp" alt=""><b>자주 묻는 질문</b><span class="t-small sub">처음이라면 여기부터</span></a></li>
+  </ul>
+  <figure class="intro"><img src="../../../../../public/images/banners/launch-01-introduction-no-button.png" alt="팬꾹 소개 배너"></figure>
+</div>
+
+<section class="band cream" style="margin-top:var(--sec)" aria-labelledby="how">
+  <div class="in g12">
+    <div class="s4"><div class="sticky">
+      <p class="eyebrow">이용 방법</p>
+      <h2 class="round t-title" id="how" style="margin-top:8px">안전하게<br><span class="hl">선물을 나눠봐요</span></h2>
+      <p class="sub" style="margin-top:12px">크리에이터가 승인한 선물만 배송합니다.</p>
+    </div></div>
+    <div class="s8">
+      <ol class="steps">
+        <li class="step"><img src="../../../../../public/images/home/icon-gift.webp" alt=""><div><small>1. 등록</small><h3 class="t-card">선물을 등록해요</h3><p class="sub">결제하면 팬꾹 주소가 바로 나와요. 승인 전에도 먼저 보낼 수 있어요.</p></div></li>
+        <li class="step"><img src="../../../../../public/images/home/icon-approve.webp" alt=""><div><small>2. 승인</small><h3 class="t-card">크리에이터가 승인해요</h3><p class="sub">크리에이터가 승인한 선물만 배송합니다.</p></div></li>
+        <li class="step"><img src="../../../../../public/images/home/icon-inspect.webp" alt=""><div><small>3. 검수</small><h3 class="t-card">모든 선물을 검수해요</h3><p class="sub">탐지기 반응이 있으면 개봉 검수합니다.</p></div></li>
+        <li class="step"><img src="../../../../../public/images/home/icon-truck.webp" alt=""><div><small>4. 배송</small><h3 class="t-card">팬꾹이 대신 보내요</h3><p class="sub">승인과 검수를 모두 통과한 선물만 출고합니다.</p></div></li>
+      </ol>
+      <p class="flow">상태 화면에서는 <span class="tag">등록</span>›<span class="tag">입고</span>›<span class="tag">검수</span>›<span class="tag">출고</span>›<span class="tag">배송중</span>›<span class="tag">수령</span></p>
+    </div>
+  </div>
+</section>
+
+<section class="band plain" aria-labelledby="new">
+  <div class="in">
+    <div class="rowhead"><h2 class="round t-title" id="new">새로 들어온 크리에이터</h2><a class="link" href="creators.html">크리에이터 찾기 <span class="ar" aria-hidden="true">›</span></a></div>
+    <div class="g12">
+      <a class="card cc big s8" href="profile.html">
+        <div class="cover" style="background:linear-gradient(180deg,#fde2e4,#fbd5d9)"><img src="../../../../../public/images/mascot-basic.png" alt=""><span class="follow">팔로우</span></div>
+        <span class="face" style="background:#fde2e4">해</span><b>해든</b>
+        <span class="fan" style="background:#fde2e4">해든이네</span>
+        <span class="d">해든 방송 · 일상을 전해요.</span>
+        <span class="pch"><i>치지직</i><i>스레드</i></span>
+      </a>
+      <div class="s4 side">
+        <a class="card mini" href="profile.html"><span class="ph" style="background:linear-gradient(180deg,#ffe5cc,#fddabb)"><img src="../../../../../public/images/mascot-basic.png" alt=""></span><span class="fc" style="background:#dff5d8">구</span><span class="t"><b>구름</b><span>구름 브이로그 · 하루하루를 기록해요.</span></span></a>
+        <a class="card mini" href="profile.html"><span class="ph" style="background:linear-gradient(180deg,#e6e0ff,#dbd3fb)"><img src="../../../../../public/images/mascot-basic.png" alt=""></span><span class="fc" style="background:#ffe5cc">시</span><span class="t"><b>시월</b><span>시월 라이브 · 직접 연주해요.</span></span></a>
+        <a class="card mini" href="profile.html"><span class="ph" style="background:linear-gradient(180deg,#dcebff,#cfe2fc)"><img src="../../../../../public/images/mascot-basic.png" alt=""></span><span class="fc" style="background:#fff1b8">별</span><span class="t"><b>별빛</b><span>별빛 노래방 · 매일 밤 노래해요.</span></span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band tint" id="price" aria-labelledby="pr">
+  <div class="in">
+    <div class="head"><h2 class="round t-title" id="pr">배송 요금 안내</h2><p class="sub">박스 크기와 무게에 따라 선택해주세요.</p></div>
+    <div class="card float price">
+      <div class="tier"><div class="box s" aria-hidden="true"><img src="img/box-s.png" alt=""></div><span class="tag">소형</span><p class="amt">6,900<small>원</small></p><p class="t-small" style="color:var(--success);font-weight:600">✓ 검수 포함</p><p class="t-small sub">세 변 합 100cm·5kg 이하</p></div>
+      <div class="tier"><div class="box m" aria-hidden="true"><img src="img/box-m.png" alt=""></div><span class="tag">중형</span><p class="amt">8,900<small>원</small></p><p class="t-small" style="color:var(--success);font-weight:600">✓ 검수 포함</p><p class="t-small sub">세 변 합 100cm·10kg 이하</p></div>
+      <div class="tier"><div class="box l" aria-hidden="true"><img src="img/box-l.png" alt=""></div><span class="tag">대형</span><p class="amt">10,900<small>원</small></p><p class="t-small" style="color:var(--success);font-weight:600">✓ 검수 포함</p><p class="t-small sub">세 변 합 160cm·20kg 이하</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band plain" aria-labelledby="nt">
+  <div class="in text">
+    <div class="rowhead" style="margin-bottom:8px"><h2 class="round t-page" id="nt">공지사항</h2><a class="link" href="#">전체 보기 <span class="ar" aria-hidden="true">›</span></a></div>
+    <ul class="nl">
+      <li><a href="#"><span>팬꾹 서비스 시작 안내</span><time>10.01</time></a></li>
+      <li><a href="#"><span>선물 보내기 전에 꼭 확인해 주세요 (크기·무게 기준)</span><time>10.01</time></a></li>
+      <li><a href="#"><span>요금 안내: 상자마다 배송비가 포함돼 있어요</span><time>09.30</time></a></li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<footer class="footer"><div class="in g12">
+  <div class="s6"><a class="logo" href="#" style="font-size:16px"><img src="../../../../../public/images/logo-mark.png" alt="" style="width:24px;height:24px">팬꾹</a><dl><dt>상호</dt><dd>팬꾹</dd><dt>대표자</dt><dd>[대표자]</dd><dt>사업자등록번호</dt><dd>[번호]</dd></dl></div>
+  <div class="s3 m6"><h4>이용 안내</h4><ul><li><a href="#">이용약관</a></li><li><a href="#"><b>개인정보처리방침</b></a></li><li><a href="#">환불 규정</a></li><li><a href="#">고객센터</a></li></ul></div>
+  <div class="s3 m6"><h4>팬꾹 소개</h4><ul><li><a href="#">팬 이용 안내</a></li><li><a href="#">크리에이터 이용 안내</a></li><li><a href="#">보안 안내</a></li><li><a href="#">자주 묻는 질문</a></li></ul></div>
+</div></footer>
+</body>
+</html>

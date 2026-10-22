@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v32 크리에이터 찾기 — 레이아웃 변주·디테일 마감</title>
+<!--
+  진단 C-2. 시선 흐름 F. 기준점: 크림 띠 위 큰 검색창.
+  ① 머리   크림 띠 · 12 · 제목 32 + 검색 + 태그 칩
+  ② 새로 들어온 둘(검색어가 없을 때만) · 6 + 6 큰 카드 — A-2 강조
+  ③ 결과   흰 · 4/4/4(3열) 카드 v28 모양 그대로(DECISIONS 10-18)
+  ④ 상태 화면 확인용 — 결과 없음 · 불러오는 중(시안 확인용 구간, 실제 화면에는 한 번에 하나만 나온다)
+  전환: 크림 → 흰(바탕 교대) → 1px 선(상태 확인용)
+  작은 즐거움: 없음(크리에이터 카드 자체 반응만) — 한 화면 한 개 규칙에서 이 화면은 0 개.
+-->
+<link rel="stylesheet" href="v32.css">
+<style>
+.mast{padding:48px 0 40px}
+.search{display:flex;align-items:center;gap:8px;margin-top:24px;padding:8px 8px 8px 24px;border-radius:var(--r-pill);background:#fff;box-shadow:inset 0 0 0 1px var(--gray-500),var(--sh-1);transition:box-shadow var(--t) ease-out}
+.search:focus-within{box-shadow:inset 0 0 0 2px var(--gray-900),0 0 0 4px rgb(137 207 240 / .35)}
+.search input{flex:1;min-width:0;height:48px;border:0;outline:0;background:transparent;font:inherit;font-size:var(--fs-body)}
+.search button{width:48px;height:48px;border:0;border-radius:50%;background:var(--primary);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background-color var(--t) ease-out}
+.search button:hover{background:var(--primary-700)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chips .chip{min-height:44px}
+.chip:active{background:var(--gray-100)}
+.chip i{width:18px;height:18px;border-radius:5px;display:inline-block}
+.res{padding:40px 0 var(--sec)}
+.feat .cover{aspect-ratio:2/1}
+.feat .face{width:64px;height:64px;margin-top:-32px}
+.feat b{font-size:var(--fs-card)}
+.count{display:flex;align-items:center;justify-content:space-between;margin:48px 0 16px}
+.st{padding:48px 0 var(--sec);box-shadow:inset 0 1px 0 var(--line-white)}
+.st .g12 > div{display:flex;flex-direction:column}
+.st h2{margin-bottom:16px}
+@media (max-width:767px){.mast{padding:32px 0 24px}.search input{font-size:16px}.chips{flex-wrap:nowrap;overflow-x:auto;margin-inline:calc(var(--gutter)*-1);padding-inline:var(--gutter)}.chips .chip{flex:none}}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <a class="logo" href="landing.html"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+  <nav class="nav" aria-label="주 메뉴"><a href="creators.html" aria-current="page">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+  <div class="auth"><a href="#" class="sub">로그인</a><a href="#">회원가입</a></div>
+  <button class="burger" type="button" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+</div></header>
+
+<main>
+<section class="band cream mast" aria-labelledby="t">
+  <div class="in">
+    <h1 class="round t-title" id="t">나의 크리에이터를 찾아요</h1>
+    <p class="sub" style="margin-top:8px">이름이나 채널 이름을 입력하면 아래 목록이 바로 걸러져요.</p><p class="t-small sub" style="margin-top:4px">✓ 활동 채널 본인 확인을 마친 크리에이터만 보여요.</p>
+    <form class="search" role="search"><label class="sr" for="q">크리에이터 이름 또는 채널 이름</label><input id="q" type="search" placeholder="예: 하루, 치지직, 새벽달 라디오"><button type="submit" aria-label="찾기"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg></button></form>
+    <div class="chips" role="group" aria-label="태그로 걸러 보기">
+      <button class="chip" type="button" aria-pressed="true">전체</button>
+      <button class="chip" type="button" aria-pressed="false"><i style="background:#ff0000"></i>유튜브</button>
+      <button class="chip" type="button" aria-pressed="false"><i style="background:#00c73c"></i>치지직</button>
+      <button class="chip" type="button" aria-pressed="false"><i style="background:#5ac8fa"></i>SOOP</button>
+      <button class="chip" type="button" aria-pressed="false"><i style="background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af)"></i>인스타그램</button>
+      <button class="chip" type="button" aria-pressed="false"><i style="background:#000"></i>틱톡</button>
+      <button class="chip" type="button" aria-pressed="false">버추얼</button>
+    </div>
+  </div>
+</section>
+
+<section class="band plain res" aria-label="찾기 결과">
+  <div class="in">
+    <h2 class="round t-page">새로 들어온 크리에이터</h2>
+    <div class="g12" style="margin-top:16px">
+      <a class="card cc feat s6" href="profile.html"><div class="cover" style="background:linear-gradient(180deg,#fde2e4,#fbd5d9)"><img src="../../../../../public/images/mascot-basic.png" alt=""><span class="follow">팔로우</span></div><span class="face" style="background:#fde2e4">해</span><b>해든</b><span class="fan" style="background:#fde2e4">해든이네</span><span class="d">해든 방송 · 일상을 전해요.</span><span class="pch"><i>치지직</i><i>스레드</i></span></a>
+      <a class="card cc feat s6" href="profile.html"><div class="cover" style="background:linear-gradient(180deg,#d3f0ec,#c1e9e3)"><img src="../../../../../public/images/mascot-basic.png" alt=""><span class="follow">팔로우</span></div><span class="face" style="background:#dceBff">바</span><b>바다</b><span class="fan" style="background:#d3f0ec">바다숲</span><span class="d">바다 그림 · 그림 그리는 밤.</span><span class="pch"><i>유튜브</i><i>X</i></span></a>
+    </div>
+
+    <div class="count"><p><b>전체 12명</b></p></div>
+    <ul class="g12">
+      <li class="s4 m6"><a class="card cc" href="profile.html"><div class="cover" style="background:linear-gradient(180deg,#ffe5cc,#fddabb)"><img src="../../../../../public/images/mascot-basic.png" alt=""><span class="follow">팔로우</span></div><span class="face" style="background:#dff5d8">구</span><b>구름</b><span class="fan" style="background:#ffe5cc">구름단</span><span class="d">구름 브이로그 · 하루하루를 기록해요.</span><span class="pch"><i>유튜브</i><i>인스타그램</i></span></a></li>
+      <li class="s4 m6"><a class="card cc" href="profile.html"><div class="cover" style="background:linear-gradient(180deg,#e6e0ff,#dbd3fb)"><img src="../../../../../public/images/mascot-basic.png" alt=""><span class="follow">팔로우</span></div><span class="face" style="background:#ffe5cc">시</span><b>시월</b><span class="fan" style="background:#e6e0ff">시월이</span><span class="d">시월 라이브 · 직접 연주해요.</span><span class="pch"><i>SOOP</i><i>알플레이</i></span></a></li>
+      <li class="s4 m6"><a class="card cc" href="profile.html"><div class="cover" style="background:linear-gradient(180deg,#dcebff,#cfe2fc)"><img src="../../../../../public/images/mascot-basic.png" alt=""><span class="follow">팔로우</span></div><span class="face" style="background:#fff1b8">별</span><b>별빛</b><span class="fan" style="background:#dcebff">별빛단</span><span class="d">별빛 노래방 · 매일 밤 노래해요.</span><span class="pch"><i>치지직</i></span></a></li>
+      <li class="s4 m6"><a class="card cc" href="profile.html"><div class="cover" style="background:linear-gradient(180deg,#fff1b8,#fbe79c)"><img src="../../../../../public/images/mascot-basic.png" alt=""><span class="follow">팔로우</span></div><span class="face" style="background:#f6dff0">달</span><b>달콤</b><span class="fan" style="background:#fff1b8">달콤이들</span><span class="d">달콤 쿠킹 · 오늘의 디저트.</span><span class="pch"><i>유튜브</i><i>틱톡</i></span></a></li>
+      <li class="s4 m6"><a class="card cc" href="profile.html"><div class="cover" style="background:linear-gradient(180deg,#dff5d8,#cdeec3)"><img src="../../../../../public/images/mascot-basic.png" alt=""><span class="follow">팔로우</span></div><span class="face" style="background:#d3f0ec">숲</span><b>숲속</b><span class="fan" style="background:#dff5d8">숲지기</span><span class="d">숲속 게임 · 느긋한 게임 방송.</span><span class="pch"><i>SOOP</i></span></a></li>
+      <li class="s4 m6"><a class="card cc" href="profile.html"><div class="cover" style="background:linear-gradient(180deg,#f6dff0,#efcfe6)"><img src="../../../../../public/images/mascot-basic.png" alt=""><span class="follow">팔로우</span></div><span class="face" style="background:#e6e0ff">모</span><b>모모</b><span class="fan" style="background:#f6dff0">모모네</span><span class="d">모모 버추얼 · 노래하고 수다 떨어요.</span><span class="pch"><i>유튜브</i><i>치지직</i></span></a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="st" aria-labelledby="stt">
+  <div class="in">
+    <h2 class="round t-page" id="stt">상태 화면 <span class="tag" style="vertical-align:middle">시안 확인용</span></h2>
+    <div class="g12">
+      <div class="s6"><p class="eyebrow" style="margin-bottom:8px">검색 결과가 없을 때</p><div class="card state"><img src="../../../../../public/images/mascot-basic.png" alt=""><b>찾는 크리에이터가 아직 없어요</b><p class="t-small sub">이름 철자를 다시 확인해 보세요. 본인 확인을 마치지 않은 크리에이터는 검색되지 않아요.</p><a class="btn line sm" href="#">크리에이터를 초대하고 싶어요</a></div></div>
+      <div class="s6"><p class="eyebrow" style="margin-bottom:8px">불러오는 중 — 실제 3열 배치를 닮은 뼈대</p><div class="g12" style="--gap:12px" aria-hidden="true"><div class="s6 skel" style="aspect-ratio:1/1"></div><div class="s6 skel" style="aspect-ratio:1/1"></div></div><p class="sr" role="status">불러오는 중</p></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer"><div class="in g12">
+  <div class="s6"><a class="logo" href="#" style="font-size:16px"><img src="../../../../../public/images/logo-mark.png" alt="" style="width:24px;height:24px">팬꾹</a><dl><dt>상호</dt><dd>팬꾹</dd><dt>대표자</dt><dd>[대표자]</dd></dl></div>
+  <div class="s3 m6"><h4>이용 안내</h4><ul><li><a href="#">이용약관</a></li><li><a href="#"><b>개인정보처리방침</b></a></li><li><a href="#">환불 규정</a></li></ul></div>
+  <div class="s3 m6"><h4>팬꾹 소개</h4><ul><li><a href="#">팬 이용 안내</a></li><li><a href="#">크리에이터 이용 안내</a></li><li><a href="#">자주 묻는 질문</a></li></ul></div>
+</div></footer>
+</body>
+</html>

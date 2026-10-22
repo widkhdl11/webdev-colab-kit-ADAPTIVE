@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v32 레이아웃 변주·디테일 마감 시안</title>
+<link rel="stylesheet" href="v32.css">
+<style>
+.page{max-width:1040px;margin:0 auto;padding:48px 24px 96px}
+.list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:32px}
+.list a.card{display:flex;flex-direction:column;gap:8px;padding:24px}
+.list b{font-size:var(--fs-card)}
+.list p{font-size:var(--fs-small);color:var(--gray-600)}
+.docs{margin-top:48px;padding:24px;border-radius:var(--r-card);background:var(--bg-cream);box-shadow:inset 0 0 0 1px var(--line-cream)}
+.docs li{margin-top:8px}
+code{font-size:13px;padding:1px 6px;border-radius:6px;background:#fff;box-shadow:inset 0 0 0 1px var(--line-cream)}
+@media (max-width:767px){.list{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="page">
+  <p class="eyebrow">2026-10-22 · 승인 전 시안</p>
+  <h1 class="round t-title" style="margin-top:8px">v32 레이아웃 변주·디테일 마감</h1>
+  <p class="sub" style="margin-top:12px;max-width:42em">지금 승인된 구성(10-20 세 역할 홈, 10-19 그림·요금, 카드 v28)은 그대로 두고, 요청의 원칙 A(레이아웃 변주)와 B(디테일 마감)만 얹었습니다. 문구는 지금 화면 그대로이고, 이름·건수·날짜는 예시 값입니다.</p>
+  <div class="list">
+    <a class="card" href="landing.html"><b>1. 랜딩</b><p>Z 흐름 · 기준점 첫 화면 고양이 · 바로가기 겹침 · 크림 띠 이용 방법(4/8) · 크리에이터 8+4 · 하늘 띠 요금 · 공지 680</p></a>
+    <a class="card" href="creators.html"><b>2. 크리에이터 찾기</b><p>F 흐름 · 기준점 크림 띠 위 큰 검색창 · 새로 들어온 둘 6+6 · 결과 3열 · 결과 없음·불러오는 중 화면</p></a>
+    <a class="card" href="profile.html"><b>3. 크리에이터 페이지</b><p>F 흐름 · 기준점 배경사진 · 얼굴 겹침 · 숫자 칸 4/4/4 · 크림 띠 답장 8+4 · 안내 680 · 마지막 판 선 버튼</p></a>
+    <a class="card" href="creator-home.html"><b>4. 크리에이터 홈</b><p>F 흐름 · 기준점 가장 급한 처리할 일 · 진행 중 8 + 열람 4 를 한 줄에 · 공지 680</p></a>
+  </div>
+  <div class="docs">
+    <b>함께 읽을 문서</b>
+    <ul>
+      <li><code>docs/design/tokens.md</code> 00절 — 이번 요청 대조(배경 그라데이션·저대비 테두리·그림자·12열 그리드)</li>
+      <li><code>docs/design/redesign-2026-10-22-audit.md</code> — 진단 목록(A 공통 부품 14 · B 화면별) · 레이아웃 제안(C) · 애매했던 것(D)</li>
+      <li><code>shots/</code> — 네 화면 × 1440·390 스크린샷</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

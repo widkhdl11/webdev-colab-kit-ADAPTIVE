@@ -1,0 +1,156 @@
+/* v32 레이아웃 변주·디테일 마감 시안 공통 CSS (2026-10-22 요청)
+   값의 정본: docs/design/tokens.md 00절(승인 전) + 0~5절(승인값). 이 파일 밖에서 값을 손으로 적지 않는다. */
+@font-face{font-family:"Tmoney Round Wind";src:url("../../../../../public/fonts/TmoneyRoundWindExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Pretendard";src:url("../v31-role-home/Pretendard-Medium.woff") format("woff");font-weight:500;font-display:swap}
+@font-face{font-family:"Pretendard";src:url("../v31-role-home/Pretendard-SemiBold.woff") format("woff");font-weight:600;font-display:swap}
+@font-face{font-family:"Pretendard";src:url("../v31-role-home/Pretendard-Bold.woff") format("woff");font-weight:700 800;font-display:swap}
+
+:root{
+  /* 색 — 지금 승인값 그대로 */
+  --primary:#89cff0;--primary-700:#6bbfe6;--primary-50:#e0f2fe;--tint:#f0f8ff;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-500:#6b7280;--gray-600:#4b5563;--gray-900:#1f2937;
+  --success:#276749;--success-soft:#eaf5ee;--warn-ink:#805b16;--warn-soft:#fff5db;
+  /* 00-1 배경 그라데이션(같은 색 안, 밝기 차 3~4%) */
+  --bg-white:linear-gradient(180deg,#ffffff 0%,#f2f8fc 100%);
+  --bg-cream:linear-gradient(180deg,#fffcf7 0%,#fbf4e7 100%);
+  --bg-tint:linear-gradient(180deg,#f0f8ff 0%,#e3f1fd 100%);
+  /* 00-2 저대비 테두리 */
+  --line-white:#dee3e8;--line-cream:#e6ddce;--line:var(--line-white);
+  /* 00-3 그림자 */
+  --sh-1:0 1px 2px rgb(31 41 55 / .04),0 8px 24px rgb(31 41 55 / .05);
+  --sh-2:0 8px 24px rgb(31 41 55 / .08);
+  /* 승인값 */
+  --fs-hero:48px;--fs-title:32px;--fs-page:24px;--fs-card:20px;--fs-body:16px;--fs-small:14px;--fs-badge:12px;
+  --r-panel:24px;--r-card:16px;--r-btn:12px;--r-pill:9999px;
+  --col:880px;--col-text:680px;--gutter:24px;--gap:24px;--sec:96px;
+  --ease:cubic-bezier(.2,.7,.2,1);--t:150ms;
+  --font:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --round:"Tmoney Round Wind",var(--font);
+}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--gray-900);font-family:var(--font);font-size:var(--fs-body);font-weight:500;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere}
+h1,h2,h3,p,figure{margin:0}
+ul,ol{margin:0;padding:0;list-style:none}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+:focus-visible{outline:2px solid var(--gray-900);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* 12열 그리드(00-4) */
+.in{max-width:calc(var(--col) + 2*var(--gutter));margin:0 auto;padding:0 var(--gutter)}
+.in.text{max-width:calc(var(--col-text) + 2*var(--gutter))}
+.in.wide{max-width:calc(1200px + 2*var(--gutter))}
+.g12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--gap)}
+.g12 > *{min-width:0}
+.s3{grid-column:span 3}.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}.s7{grid-column:span 7}.s8{grid-column:span 8}.s12{grid-column:span 12}
+
+/* 바탕 띠(00-1) — 화면 끝까지, 글은 기둥 */
+.band{padding:var(--sec) 0}
+.band.white{background:var(--bg-white)}
+.band.cream{background:var(--bg-cream);--line:var(--line-cream);--faint:var(--gray-600)}
+.band.tint{background:var(--bg-tint)}
+.band.plain{background:#fff}
+.band.tight{padding-top:0}
+
+/* 글자 */
+.round{font-family:var(--round);font-weight:800;font-synthesis:none;letter-spacing:-.02em}
+.t-hero{font-size:var(--fs-hero);line-height:1.2}
+.t-title{font-size:var(--fs-title);line-height:1.25}
+.t-page{font-size:var(--fs-page);line-height:1.3}
+.t-card{font-size:var(--fs-card);line-height:1.4;font-weight:700}
+.t-small{font-size:var(--fs-small);line-height:1.5}
+.sub{color:var(--gray-600)}
+.faint{color:var(--faint,var(--gray-500))}
+.eyebrow{font-size:var(--fs-small);font-weight:600;color:var(--faint,var(--gray-500))}
+.hl{background:linear-gradient(90deg,#7dd3fc,#a5e1fa) no-repeat 0 90%/100% .4em;padding-inline:2px}
+.head{margin-bottom:48px}
+.head > * + *{margin-top:8px}
+.rowhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:32px}
+
+/* 버튼 — 면 색 전환 150ms, 누름 .98 (0-1 결정) */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:var(--r-btn);background:var(--primary);color:var(--gray-900);font:inherit;font-weight:600;cursor:pointer;transition:background-color var(--t) ease-out,transform 100ms ease-out,box-shadow var(--t) ease-out}
+.btn:hover{background:var(--primary-700)}
+.btn:active{transform:scale(.98)}
+.btn.line{background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+.btn.line:hover{background:var(--gray-50)}
+.btn.sm{min-height:44px;padding:0 16px;font-size:var(--fs-small)}
+.link{display:inline-flex;align-items:center;gap:4px;min-height:44px;font-size:var(--fs-small);font-weight:600;color:var(--gray-600);transition:color var(--t) ease-out}
+.link:hover{color:var(--gray-900)}
+.link .ar{transition:transform var(--t) ease-out}
+.link:hover .ar{transform:translateX(2px)}
+
+/* 카드 — 평소 1px 선, 누를 수 있으면 올림 때 2px + sh-2 */
+.card{position:relative;border-radius:var(--r-card);background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+.card.float{box-shadow:inset 0 0 0 1px var(--line),var(--sh-1)}
+:where(a.card,button.card){display:block}
+a.card,button.card{transition:transform var(--t) ease-out,box-shadow var(--t) ease-out}
+a.card:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px var(--line),var(--sh-2)}
+a.card:active{transform:scale(.98)}
+.pad{padding:24px}
+
+/* 칩·태그 */
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:var(--r-pill);background:#fff;box-shadow:inset 0 0 0 1px var(--line);font-size:var(--fs-small);font-weight:600;color:var(--gray-600);cursor:pointer;transition:background-color var(--t) ease-out,color var(--t) ease-out}
+.chip:hover{color:var(--gray-900);background:var(--gray-50)}
+.chip[aria-pressed="true"]{background:var(--gray-900);color:#fff;box-shadow:none}
+.tag{display:inline-flex;align-items:center;min-height:24px;padding:0 10px;border-radius:var(--r-pill);font-size:var(--fs-badge);font-weight:600;background:var(--gray-100);color:var(--gray-600)}
+.tag.ok{background:var(--success-soft);color:var(--success)}
+.tag.wait{background:var(--warn-soft);color:var(--warn-ink)}
+.tag.sky{background:var(--primary-50);color:var(--gray-900)}
+
+/* 상단 바(로그인 전) */
+.top{position:sticky;top:0;z-index:10;background:rgb(255 255 255 / .86);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 1px 0 var(--line-white)}
+.top .in{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:var(--fs-card)}
+.logo img{width:32px;height:32px;border-radius:22%}
+.nav{display:flex;gap:4px}
+.nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:8px;color:var(--gray-600);transition:color var(--t) ease-out,background-color var(--t) ease-out}
+.nav a:hover{color:var(--gray-900);background:var(--gray-50)}
+.nav a[aria-current]{color:var(--gray-900);font-weight:700}
+.auth{display:flex;align-items:center;gap:4px;font-weight:600}
+.auth a{display:inline-flex;align-items:center;min-height:44px;padding:0 8px}
+.burger{display:none;width:44px;height:44px;border:0;background:none;border-radius:var(--r-btn);align-items:center;justify-content:center}
+
+/* 크리에이터 카드(v28 모양 — 결정 유지) */
+.cc{overflow:hidden;text-align:center;padding-bottom:16px}
+.cc .cover{position:relative;aspect-ratio:2/1;overflow:hidden}
+.cc .cover img{position:absolute;right:-4%;bottom:-22%;height:100%;opacity:.28}
+.cc .face{width:56px;height:56px;margin:-28px auto 0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;box-shadow:0 0 0 4px #fff;position:relative}
+.cc b{display:block;margin-top:8px}
+.cc .fan{display:inline-flex;align-items:center;gap:4px;margin-top:4px;padding:0 8px;min-height:22px;border-radius:var(--r-pill);font-size:var(--fs-badge);font-weight:600}
+.cc .d{display:block;margin-top:6px;padding:0 16px;font-size:var(--fs-small);color:var(--gray-600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc .pch{display:flex;justify-content:center;gap:6px;margin-top:6px}
+.cc .pch i{font-style:normal;font-size:var(--fs-badge);line-height:22px;padding:0 8px;border-radius:var(--r-pill);box-shadow:inset 0 0 0 1px var(--line);color:var(--gray-600)}
+.follow{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;min-height:28px;padding:0 12px;border-radius:var(--r-pill);background:#fff;font-size:var(--fs-small);font-weight:600;box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgb(31 41 55 / .06);transition:background-color var(--t) ease-out}
+.follow:hover{background:var(--gray-50)}
+.follow::after{content:"";position:absolute;inset:-8px}
+
+/* 상태 화면 묶음(빈 결과·로딩·오류) */
+.state{display:flex;flex-direction:column;align-items:center;gap:12px;padding:48px 24px;text-align:center}
+.state img{width:120px;height:120px;object-fit:contain}
+.skel{border-radius:var(--r-card);background:linear-gradient(90deg,var(--gray-100) 0%,var(--gray-50) 50%,var(--gray-100) 100%);background-size:200% 100%;animation:sk 1.4s ease-in-out infinite}
+@keyframes sk{to{background-position:-200% 0}}
+
+/* 작은 즐거움 — 한 화면 하나 */
+@supports (animation-timeline: view()){
+  .reveal{animation:rise linear both;animation-timeline:view();animation-range:entry 0% entry 30%}
+}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none !important;transition:none !important}}
+
+/* 푸터 */
+.footer{padding:48px 0;background:var(--gray-50);box-shadow:inset 0 1px 0 var(--line-white);font-size:var(--fs-small);color:var(--gray-600)}
+.footer .g12 > div h4{margin:0 0 8px;color:var(--gray-900);font-size:var(--fs-small)}
+.footer a{display:inline-flex;align-items:center;min-height:32px;transition:color var(--t) ease-out}
+.footer a:hover{color:var(--gray-900)}
+.footer dl{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:12px 0 0}
+.footer dt{font-weight:600;color:var(--gray-900)}
+.footer dd{margin:0}
+
+@media (max-width:920px){.nav,.auth{display:none}.burger{display:inline-flex}}
+@media (max-width:767px){
+  :root{--gutter:16px;--gap:16px;--sec:48px;--fs-hero:32px;--fs-title:24px}
+  .g12 > *{grid-column:span 12}
+  .m6{grid-column:span 6 !important}
+  .head{margin-bottom:32px}
+  .footer a{min-height:44px}
+}

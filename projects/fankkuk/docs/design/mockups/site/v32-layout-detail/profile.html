@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v32 크리에이터 페이지 — 레이아웃 변주·디테일 마감</title>
+<!--
+  진단 C-3. 시선 흐름 F. 기준점: 배경사진(2.5:1, DECISIONS 10-17).
+  ① 머리     흰 · 12 · 사진 + 얼굴 96 이 사진 아래 가장자리에 걸침(이 화면의 겹침 한 곳)
+  ② 받는 상태와 요금  흰 · 4/4/4 숫자 칸(같은 무게 셋이지만 큰 글자는 칸 안 값 하나뿐)
+  ③ 감사 답장 모음  크림 띠 · 8 + 4(가장 최근 하나 크게 + 나머지 작게) — A-2
+  ④ 보내기 전 안내  흰 · 폭 680 으로 줄어듦(A-7), 접는 목록
+  ⑤ 이런 크리에이터도 있어요  1px 선 · 4/4/4
+  ⑥ 선물 보내기(로그인 전에만 — 지금 코드 그대로) 하늘 띠 · 가운데 · 버튼은 선 버튼(채운 주 버튼은 머리 하나)
+  작은 즐거움: 없음.
+  문구: creator-profile-page.tsx · reply.ts(REPLY_PHRASE_TEXT) · site-copy(PROMISE) 그대로. 이름·숫자·날짜·팬 닉네임은 예시 값.
+-->
+<link rel="stylesheet" href="v32.css">
+<style>
+.headcard{margin-top:24px;overflow:hidden;text-align:center;padding-bottom:32px}
+.headcard .cover{position:relative;aspect-ratio:5/2;background:linear-gradient(180deg,#fde2e4,#fbd5d9)}
+.headcard .cover img{position:absolute;right:4%;bottom:-16%;height:96%;opacity:.3}
+.headcard .face{width:96px;height:96px;margin:-48px auto 0;border-radius:50%;background:#fde2e4;box-shadow:0 0 0 6px #fff,0 0 0 8px #f5b8c0;display:flex;align-items:center;justify-content:center;font-size:var(--fs-title);font-weight:700;position:relative}
+.headcard h1{margin-top:12px}
+.headcard .fan{display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:0 10px;min-height:26px;border-radius:var(--r-pill);background:#fde2e4;font-size:var(--fs-small);font-weight:600}
+.headcard .pch{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:16px}
+.headcard .pch i{font-style:normal;display:inline-flex;align-items:center;min-height:26px;padding:0 12px;border-radius:var(--r-pill);box-shadow:inset 0 0 0 1px var(--line);font-size:var(--fs-small);color:var(--gray-600)}
+.headcard .acts{display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap}
+.info{padding:24px;display:flex;flex-direction:column;gap:8px;height:100%}
+.info svg{width:24px;height:24px;fill:none;stroke:var(--gray-900);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.info h3{font-size:var(--fs-small);font-weight:600;color:var(--gray-600)}
+.info .big{font-size:var(--fs-card);font-weight:700;line-height:1.4}
+.info.ok{background:var(--success-soft);box-shadow:none}
+.quote{padding:24px;display:flex;flex-direction:column;gap:12px;height:100%}
+.quote q{quotes:"“" "”";font-weight:600;line-height:1.5}
+.quote.big q{font-family:var(--round);font-weight:800;font-size:var(--fs-page);line-height:1.4}
+.quote.big{padding:32px;justify-content:space-between}
+.qs{display:flex;flex-direction:column;gap:var(--gap)}
+.acc details{box-shadow:0 1px 0 var(--line)}
+.acc summary{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;padding:12px 4px;cursor:pointer;list-style:none;font-weight:700;transition:padding var(--t) ease-out}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary:hover{padding-left:8px}
+.acc summary svg{transition:transform var(--t) ease-out}
+.acc details[open] summary svg{transform:rotate(180deg)}
+.acc .ans{padding:0 4px 20px;color:var(--gray-600)}
+.acc ol{padding-left:20px;list-style:decimal;display:grid;gap:6px}
+.sim{padding:48px 0 var(--sec);box-shadow:inset 0 1px 0 var(--line-white)}
+.sim a.card{display:flex;align-items:center;gap:12px;padding:16px}
+.sim .fc{flex:none;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.sim small{display:block;font-size:var(--fs-small);color:var(--gray-600)}
+.sheet{text-align:center}
+@media (max-width:767px){.headcard .face{width:72px;height:72px;margin-top:-36px;font-size:var(--fs-page)}.headcard .acts .btn{flex:1 1 100%}.quote.big q{font-size:var(--fs-card)}}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <a class="logo" href="landing.html"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a>
+  <nav class="nav" aria-label="주 메뉴"><a href="creators.html">크리에이터 찾기</a><a href="#">선물 보내기</a><a href="#">공지사항</a><a href="#">팬꾹 소개</a><a href="#">고객센터</a></nav>
+  <div class="auth"><a href="#" class="sub">로그인</a><a href="#">회원가입</a></div>
+  <button class="burger" type="button" aria-label="메뉴 열기"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+</div></header>
+
+<main>
+<section class="band plain" style="padding-top:0;padding-bottom:48px" aria-labelledby="nm">
+  <div class="in">
+    <div class="card headcard">
+      <div class="cover"><img src="../../../../../public/images/mascot-basic.png" alt=""></div>
+      <div class="face" aria-hidden="true">해</div>
+      <h1 class="round t-title" id="nm">해든</h1>
+      <span class="fan">해든이네</span>
+      <p class="sub" style="margin-top:12px">해든 방송 · 일상을 전해요.</p>
+      <div class="pch"><i>치지직</i><i>스레드</i></div>
+      <div class="acts"><a class="btn" href="#">팔로우하고 선물 보내기</a></div>
+    </div>
+  </div>
+</section>
+
+<section class="band plain" style="padding-top:0" aria-labelledby="state-h">
+  <div class="in">
+    <h2 class="sr" id="state-h">받는 상태와 요금</h2>
+    <div class="g12">
+      <div class="s4"><div class="card info ok"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg><h3>받는 상태</h3><p class="big">지금 선물을 받고 있어요</p></div></div>
+      <div class="s4"><div class="card info"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><h3>평균 승인 시간 (최근 30일)</h3><p class="big">18시간</p></div></div>
+      <div class="s4"><div class="card info"><svg viewBox="0 0 24 24"><path d="M4 7l3 10 3-7 2 7 2-7 3 7 3-10M3 11h18"/></svg><h3>상자마다 배송비 포함</h3><p class="big">6,900원부터</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="band cream" aria-labelledby="replies-h">
+  <div class="in">
+    <div class="head"><h2 class="round t-title" id="replies-h">감사 답장 모음</h2><p class="sub">해든님이 팬에게 남긴 답장 중, 팬이 공개를 허락한 것만 보여요. 최신순이에요.</p></div>
+    <div class="g12">
+      <div class="s8"><div class="card float quote big"><q>정성이 느껴져서 감동이에요. 편지까지 고마워요</q><p class="t-small sub">별사탕님에게 · 2026.10.20</p></div></div>
+      <div class="s4 qs">
+        <div class="card quote"><q>잘 받았어요, 고마워요</q><p class="t-small sub">익명의 팬에게 · 2026.10.17</p></div>
+        <div class="card quote"><q>잘 쓸게요</q><p class="t-small sub">구름빵님에게 · 2026.10.12</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band plain" aria-label="보내기 전 안내">
+  <div class="in text acc">
+    <details><summary>받기 어려운 품목<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="ans">[크리에이터가 정한 받기 어려운 품목]</div></details>
+    <details><summary>보낼 수 없는 것<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="ans">[운영자가 정한 보낼 수 없는 물품 목록]</div></details>
+    <details open><summary>상자는 이렇게 확인해요<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="ans"><ol><li>모든 선물은 팬꾹에서 검수한 뒤 보냅니다.</li><li>탐지기 반응이 있으면 개봉 검수합니다.</li><li>승인 전까지 주소는 노출되지 않습니다. 크리에이터 주소는 팬에게 공개되지 않습니다.</li></ol></div></details>
+  </div>
+</section>
+
+<section class="sim" aria-labelledby="similar-title">
+  <div class="in">
+    <h2 class="round t-page" id="similar-title" style="margin-bottom:24px">이런 크리에이터도 있어요</h2>
+    <ul class="g12">
+      <li class="s4"><a class="card" href="#"><span class="fc" style="background:#dff5d8">구</span><span><b>구름</b><small>구름 브이로그</small></span></a></li>
+      <li class="s4"><a class="card" href="#"><span class="fc" style="background:#ffe5cc">시</span><span><b>시월</b><small>시월 라이브</small></span></a></li>
+      <li class="s4"><a class="card" href="#"><span class="fc" style="background:#fff1b8">별</span><span><b>별빛</b><small>별빛 노래방</small></span></a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="band tint sheet" aria-labelledby="send-h">
+  <div class="in">
+    <h2 class="round t-title" id="send-h">선물 보내기</h2>
+    <div style="margin-top:24px"><a class="btn line" href="#">팔로우하고 선물 보내기</a></div>
+  </div>
+</section>
+</main>
+
+<footer class="footer"><div class="in g12">
+  <div class="s6"><a class="logo" href="#" style="font-size:16px"><img src="../../../../../public/images/logo-mark.png" alt="" style="width:24px;height:24px">팬꾹</a><dl><dt>상호</dt><dd>팬꾹</dd><dt>대표자</dt><dd>[대표자]</dd></dl></div>
+  <div class="s3 m6"><h4>이용 안내</h4><ul><li><a href="#">이용약관</a></li><li><a href="#"><b>개인정보처리방침</b></a></li><li><a href="#">환불 규정</a></li></ul></div>
+  <div class="s3 m6"><h4>팬꾹 소개</h4><ul><li><a href="#">팬 이용 안내</a></li><li><a href="#">크리에이터 이용 안내</a></li><li><a href="#">자주 묻는 질문</a></li></ul></div>
+</div></footer>
+</body>
+</html>
