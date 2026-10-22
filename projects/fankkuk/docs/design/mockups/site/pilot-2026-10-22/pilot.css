@@ -258,3 +258,8 @@ body.show-mk .mk{display:flex}
 .st-pv.cp-pv,.st-pv.cz-pv{border:0;background:none;padding:0}
 .cp-ta{font:inherit}
 .st-sub.cp-last{padding-bottom:8px}
+/* 꾸미기 v2(2026-10-22 사용자 「카드 미리보기가 너무 많다」 → 프로필 카드 뺌, 880 4+8) */
+.cz-body{padding-top:4px}
+.cz-body .cz-opts{margin-top:12px}
+.cz-share{max-width:360px}
+.cz-cap{margin-top:16px}
