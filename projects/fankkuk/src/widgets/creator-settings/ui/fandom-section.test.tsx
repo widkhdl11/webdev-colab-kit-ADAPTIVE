@@ -138,6 +138,16 @@ describe("INV-E13: 테마 색은 8색 견본 + 「선택 안 함」, 저장은 �
 });
 
 describe("카드 미리보기 — 찾기 화면 카드 그대로(design-rules 17절)", () => {
+  it("미리보기는 카드 하나 — 팬덤 뱃지는 카드 안에 하나뿐, 따로 뱃지 상자를 두지 않는다(2026-10-22 사용자 「카드 3개라 투머치」)", async () => {
+    await render();
+    const aside = host.querySelector<HTMLElement>("aside[aria-labelledby='pv-t']")!;
+    const badges = aside.querySelectorAll("[data-fandom-badge]");
+    expect(badges.length).toBe(1);
+    expect(aside.querySelector("[data-card-preview]")?.contains(badges[0])).toBe(true);
+    // 제목 다음이 곧바로 카드 — 카드를 감싸는 상자가 없다
+    expect(aside.querySelector("#pv-t")?.nextElementSibling?.hasAttribute("data-card-preview")).toBe(true);
+  });
+
   it("INV-E13: 채널 이름·소개 · 아래 띠에 누를 수 없는 「팔로우」 모양(평균 승인 시간 없음), 링크 없음", async () => {
     await render();
     const card = host.querySelector<HTMLElement>("[data-card-preview]")!;

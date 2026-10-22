@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useState, type CSSProperties } from "react";
 import { THEME_COLORS, type CreatorColors, type ThemeColor } from "@/entities/creator/model/creator-color";
 import { creatorSymbolUrl } from "@/entities/creator/model/link-images";
-import { FandomBadge } from "@/entities/creator/ui/fandom-badge";
 import { CardButtonLabel, CreatorCardActions, CreatorCardFoot, CreatorCardHead, CreatorCardLine, creatorCardClass } from "@/entities/creator/ui/creator-card-head";
 import { deleteCreatorImage, sendCreatorImage } from "@/features/creator-photo/api/send-creator-image";
 import { ImageField } from "@/features/creator-photo/ui/image-field";
@@ -187,22 +186,11 @@ export function FandomSection(p: FandomSectionProps) {
           </div>
         </div>
 
-        {/* 오른쪽 5열 — 미리보기(스크롤하면 따라온다). 1100 이하는 입력 위로, 휴대폰은 카드만 가로형으로 작게 */}
+        {/* 오른쪽 5열 — 미리보기는 실제 크리에이터 카드 하나(스크롤하면 따라온다). 팬덤 뱃지는 카드 안에 있다 — 따로 뱃지 상자를 두지 않는다(2026-10-22 사용자 「카드 3개라 투머치」). 1100 이하는 입력 위로, 휴대폰은 카드를 가로형으로 작게 */}
         <aside className={s.pv} aria-labelledby="pv-t">
           <h3 className={s.pvT} id="pv-t">
             미리보기
           </h3>
-          {name ? (
-            <div className={`${s.pvBox} ${s.pvBadgeBox}`}>
-              <p className={s.pvCap}>팬덤 뱃지</p>
-              <div className={s.pvBadges}>
-                <FandomBadge name={name} symbolUrl={symbolUrl} themeColor={theme} size="large" />
-                <FandomBadge name={name} symbolUrl={symbolUrl} themeColor={theme} />
-              </div>
-            </div>
-          ) : null}
-          <div className={s.pvBox}>
-            <p className={s.pvCap}>카드 미리보기</p>
             <div className={creatorCardClass} role="group" aria-label="크리에이터 카드 미리보기" data-card-preview="">
               <CreatorCardHead
                 creatorId={p.card.creatorId}
@@ -221,7 +209,6 @@ export function FandomSection(p: FandomSectionProps) {
                 </span>
               </CreatorCardActions>
             </div>
-          </div>
         </aside>
       </div>
     </section>
