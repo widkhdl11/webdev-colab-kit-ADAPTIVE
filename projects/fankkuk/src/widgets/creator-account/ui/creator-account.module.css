@@ -1,4 +1,4 @@
-/* 크리에이터 계정 설정 — 시안 docs/design/mockups/site/v21-addendum3/cre-account-settings.html. 카드 언어는 팬 계정 설정(widgets/my-info/ui/my-info.module.css)과 같다.
+/* 크리에이터 계정 설정 — 시안 docs/design/mockups/site/v21-addendum3/cre-account-settings.html. 카드 언어(팬 계정 설정은 2026-10-22 정돈 시범에서 카드 없는 4+8 묶음으로 바뀌었다 — design-rules 27절. 이 화면은 4파트 확장 때 맞춘다).
    폭은 틀(MyShell form 720)이 정한다. 카드 사이 32, 카드 안 줄 사이 24, 줄 사이 가는 선. */
 .col { display: grid; gap: var(--space-8); min-width: 0; }
 .col > * { min-width: 0; }

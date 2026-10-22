@@ -17,14 +17,16 @@ import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel"
 import { ADDRESS_KEY_MISSING_TEXT } from "@/shared/ui/sealed-address-form";
 import s from "./my-info.module.css";
 
-// 팬 계정 설정(design-rules 12절, 시안 docs/design/mockups/site/v21-addendum3/fan-account-settings.html, 입력형 720 — 00절 「본문 틀」).
-// 보안(비밀번호·휴대폰) · 개인정보(아이디·이메일·회원 탈퇴) · 알림 세 카드. 지금 있는 기능만 옮겨 담았다:
+// 팬 계정 설정(design-rules 27절 「계정 설정(팬)」, 2026-10-22 카드 d114 · 시안 docs/design/mockups/site/pilot-2026-10-22/me.html).
+// 카드 없이 880 기둥 안 12열 4 + 8 묶음 넷 — 왼쪽 구간 이름, 오른쪽 줄(버튼은 줄 오른쪽). 순서는
+// 보안 → 받을 주소 → 개인정보(아이디·이메일) → 알림 → 저장 줄 → 회원 탈퇴. 저장하기가 보내는 이메일·알림을 저장 줄 바로 위에 둔다.
+// 지금 있는 기능만 옮겨 담았다:
 // - 비밀번호 변경(session-login INV-L12)·번호 바꾸기(카카오 재인증, signup INV-U12)는 「바꾸기」를 눌러야 그 줄 아래에 칸이 펼쳐진다. 두 칸은 저장하기와 따로 서버에 보낸다.
 // - 이메일·알림 둘은 아래 「저장하기」로 보낸다(/api/me). 이메일은 바로 바뀌지 않고 확인 메일의 링크를 눌러야 바뀐다(my-account INV-A7).
 //   닉네임은 프로필 수정 화면에서 고친다 — 여기서는 지금 값을 그대로 실어 보낸다(내 정보 저장이 닉네임 칸을 같이 받는다).
 // - 회원 탈퇴는 다른 줄처럼 「탈퇴하기」를 눌러야 펼쳐진다. 탈퇴 기능이 아직 없어 펼친 안에는 고객센터로 가는 링크만 둔다.
-//   시안의 「마지막으로 바꾼 날」은 저장된 값이 없어 두지 않는다.
 // - 알림 스위치 설명은 시안의 스위치별 문구 그대로다. 시안에 없는 안내 문구는 두지 않는다(2026-10-16 사용자 — 문구 남발 금지).
+//   「아이디는 바꿀 수 없어요 …」 문장은 머리 설명·「프로필 수정」 버튼과 겹쳐 뺐다(카드 d114).
 // 「되돌리기」는 폼 기본 동작(reset)으로 처음 값에 돌아가고, 알림 스위치도 처음 값으로 돌린다.
 // - 받을 주소(address-protection INV-P17, 2026-10-17 카드 d100): 크리에이터 설정의 받는 주소와 같은 흐름 — 주소는 다시 보이지 않고 이름표와 등록한 날만.
 //   「등록하기/바꾸기」를 누르면 그 줄 아래에 입력 칸이 펼쳐지고, 저장은 아래 저장하기와 따로 서버에 보낸다(이 브라우저에서 봉인한 값만).
@@ -33,15 +35,16 @@ import s from "./my-info.module.css";
 type Notice = { tone: "ok" | "error"; text: string } | null;
 type Reveal = "phone" | "password" | "leave" | "address" | "address-delete";
 
+// 줄 전체가 누르는 칸(높이 64) — 스위치 버튼 안에 이름·설명을 넣고, 이름은 지금처럼 aria-labelledby 로 붙인다
 function Switch({ id, title, desc, on, onChange }: { id: string; title: string; desc: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className={s.swRow}>
-      <div className={s.swT} id={`${id}-l`}>
-        <b>{title}</b>
-        <span>{desc}</span>
-      </div>
-      <button className="sw" type="button" role="switch" aria-checked={on} aria-labelledby={`${id}-l`} onClick={() => onChange(!on)}>
-        <span />
+    <div className={s.item}>
+      <button className={s.swBtn} type="button" role="switch" aria-checked={on} aria-labelledby={`${id}-l`} onClick={() => onChange(!on)}>
+        <span className={s.txt} id={`${id}-l`}>
+          <span className={s.k}>{title}</span>
+          <span className={s.sub}>{desc}</span>
+        </span>
+        <span className={s.trk} aria-hidden="true" />
       </button>
     </div>
   );
@@ -116,7 +119,7 @@ export function MyInfoPanel({
   const addressRegistered = addressOnFile?.registered ?? false;
 
   return (
-    <div className={s.col}>
+    <div className={s.wrap}>
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title" id={f("h")}>
@@ -129,58 +132,144 @@ export function MyInfoPanel({
         <p className="ph-desc">로그인·받을 주소·알림에 관한 설정이에요. 닉네임은 프로필 수정에서 바꿔요.</p>
       </header>
 
-      <section className={`card ${s.setCard}`} aria-labelledby={f("sec1")}>
-        <h2 className={s.secT} id={f("sec1")}>
+      <section className={s.grp} aria-labelledby={f("sec1")} data-me-group="security">
+        <h2 className={s.nm} id={f("sec1")}>
           보안
         </h2>
-        <div className={s.reveal}>
-          <div className={s.revealHead}>
-            <p className={s.kvMain}>
-              <span className={s.meta}>비밀번호</span>
-            </p>
-            <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "password"} aria-controls={f("pw-panel")} onClick={() => toggle("password")}>
-              바꾸기
-            </button>
-          </div>
-          {open === "password" && (
-            <div className={s.panel}>
-              <PasswordChangePanel id={f("pw-panel")} onLoginExpired={toLogin} />
+        <div className={s.rows}>
+          <div className={s.item}>
+            <div className={s.row}>
+              <p className={s.txt}>
+                <span className={s.k}>비밀번호</span>
+              </p>
+              <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "password"} aria-controls={f("pw-panel")} onClick={() => toggle("password")}>
+                바꾸기
+              </button>
             </div>
-          )}
-        </div>
-        <div className={s.reveal}>
-          <div className={s.revealHead}>
-            <p className={s.kvMain}>
-              <span className={s.meta} id={f("tel-l")}>
-                휴대폰 번호
-              </span>
-              <b>{account.phoneMasked ?? "등록된 번호가 없어요"}</b>
-            </p>
-            <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "phone"} aria-controls={f("tel-panel")} onClick={() => toggle("phone")}>
-              바꾸기
-            </button>
+            {open === "password" && (
+              <div className={s.panel}>
+                <PasswordChangePanel id={f("pw-panel")} onLoginExpired={toLogin} />
+              </div>
+            )}
           </div>
-          {open === "phone" && (
-            <div className={s.panel}>
-              <PhoneChangePanel id={f("tel-panel")} onLoginExpired={toLogin} onChanged={() => router.refresh()} />
+          <div className={s.item}>
+            <div className={s.row}>
+              <p className={s.txt}>
+                <span className={s.k} id={f("tel-l")}>
+                  휴대폰 번호
+                </span>
+                <span className={s.v}>{account.phoneMasked ?? "등록된 번호가 없어요"}</span>
+              </p>
+              <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "phone"} aria-controls={f("tel-panel")} onClick={() => toggle("phone")}>
+                바꾸기
+              </button>
             </div>
-          )}
+            {open === "phone" && (
+              <div className={s.panel}>
+                <PhoneChangePanel id={f("tel-panel")} onLoginExpired={toLogin} onChanged={() => router.refresh()} />
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      <section className={`card ${s.setCard}`} aria-labelledby={f("sec2")}>
-        <h2 className={s.secT} id={f("sec2")}>
+      <section className={s.grp} aria-labelledby={f("sec-addr")} data-me-group="address">
+        <h2 className={s.nm} id={f("sec-addr")}>
+          받을 주소
+        </h2>
+        <div className={s.rows}>
+          <div className={s.item}>
+            <div className={s.row}>
+              <p className={s.txt}>
+                <span className={s.v} data-address-on-file="">
+                  {addressOnFile === null ? "받을 주소를 읽지 못했어요" : addressRegistered ? addressOnFileText(addressOnFile) : "등록한 주소가 없어요"}
+                </span>
+              </p>
+              {addressOnFile !== null ? (
+                <div className={s.act}>
+                  <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "address"} aria-controls={f("addr-panel")} onClick={() => toggle("address")}>
+                    {addressRegistered ? "바꾸기" : "등록하기"}
+                  </button>
+                  {addressRegistered ? (
+                    <button
+                      className="btn btn--line btn--sm"
+                      type="button"
+                      aria-expanded={open === "address-delete"}
+                      aria-controls={f("addr-del-panel")}
+                      onClick={() => toggle("address-delete")}
+                    >
+                      지우기
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+            {open === "address" && (
+              <div className={s.panel} id={f("addr-panel")}>
+                {sealingKeyPem ? (
+                  <FanAddressForm
+                    accountId={accountId}
+                    sealingKeyPem={sealingKeyPem}
+                    initialLabel={addressOnFile?.label ?? null}
+                    autoFocusFirst
+                    onSaved={(label) => {
+                      // 서버에 저장된 뒤에만 바뀐다 — 「등록한 날」은 다음에 화면을 열면 서버에 저장된 시각으로 바뀐다
+                      setAddressMsg({ tone: "ok", text: addressRegistered ? "받을 주소를 바꿨어요." : "받을 주소를 등록했어요." });
+                      setAddressOnFile({ registered: true, label, updatedAt: new Date().toISOString() });
+                      setOpen(null);
+                      router.refresh();
+                    }}
+                    onCancel={() => setOpen(null)}
+                    onLoginExpired={toLogin}
+                  />
+                ) : (
+                  <p className="err" role="status">
+                    {ADDRESS_KEY_MISSING_TEXT}
+                  </p>
+                )}
+              </div>
+            )}
+            {open === "address-delete" && (
+              <div className={s.panel} id={f("addr-del-panel")}>
+                <p className={s.sub}>이미 받기를 누른 선물은 그때 등록한 주소로 가요.</p>
+                <div className={`btnrow ${s.panelBtns}`}>
+                  <button className="btn btn--line btn--sm" type="button" onClick={() => setOpen(null)}>
+                    돌아가기
+                  </button>
+                  <button
+                    className={`btn btn--sm ${s.danger}`}
+                    type="button"
+                    aria-disabled={addressBusy || undefined}
+                    aria-busy={addressBusy || undefined}
+                    onClick={() => void deleteAddress()}
+                  >
+                    {addressBusy ? "지우는 중…" : "주소 지우기"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <p className={`${addressMsg?.tone === "error" ? "err" : "okmsg"} ${s.msg}`} role="status">
+            {addressMsg?.text ?? ""}
+          </p>
+        </div>
+      </section>
+
+      <section className={s.grp} aria-labelledby={f("sec2")} data-me-group="personal">
+        <h2 className={s.nm} id={f("sec2")}>
           개인정보
         </h2>
         {/* 저장 뒤 서버 값이 바뀌면 입력칸을 새로 그려 처음 값을 서버 값에 맞춘다 — 안 그러면 방금 적은 새 주소가 칸에 남아
             다음 저장이 같은 주소를 또 보낸다(2026-10-02 code-reviewer). */}
-        <div className={s.fields} key={`${account.email ?? ""}|${account.pendingEmail ?? ""}`}>
-          <dl className={s.kv}>
-            <dt>아이디</dt>
-            <dd>{account.loginId}</dd>
-          </dl>
-          <div>
-            <label className="label" htmlFor={f("mail")}>
+        <div className={s.rows} key={`${account.email ?? ""}|${account.pendingEmail ?? ""}`}>
+          <div className={s.item}>
+            <dl className={`${s.row} ${s.txt}`}>
+              <dt className={s.k}>아이디</dt>
+              <dd className={s.v}>{account.loginId}</dd>
+            </dl>
+          </div>
+          <div className={`${s.item} ${s.fieldRow}`}>
+            <label className={s.k} htmlFor={f("mail")}>
               이메일
             </label>
             <input
@@ -195,140 +284,37 @@ export function MyInfoPanel({
               autoComplete="email"
               aria-describedby={f("mail-h")}
             />
-            <p className={s.help} id={f("mail-h")}>
+            <p className={s.sub} id={f("mail-h")}>
               {account.pendingEmail
                 ? `새 주소(${account.pendingEmail})로 확인 메일을 보냈어요. 메일의 링크를 누르면 그 주소로 바뀌어요.`
                 : "바꾸면 새 주소로 확인 메일이 가요. 링크를 눌러야 바뀌어요."}
             </p>
           </div>
         </div>
-        <p className={s.help}>
-          아이디는 바꿀 수 없어요. 닉네임은{" "}
-          <Link className={s.inlineLink} href={FAN_PROFILE_EDIT}>
-            프로필 수정
-          </Link>
-          에서 바꿀 수 있어요.
-        </p>
-        <div className={s.reveal}>
-          <div className={s.revealHead}>
-            <p className={s.kvMain}>
-              <span className={s.meta}>회원 탈퇴</span>
-              <b>계정과 프로필을 삭제해요</b>
-            </p>
-            <button className={`btn btn--sm ${s.danger}`} type="button" aria-expanded={open === "leave"} aria-controls={f("leave-panel")} onClick={() => toggle("leave")}>
-              탈퇴하기
-            </button>
-          </div>
-          {open === "leave" && (
-            <div className={s.panel} id={f("leave-panel")}>
-              <Link className="btn btn--line btn--sm" href="/support">
-                탈퇴 문의
-              </Link>
-            </div>
-          )}
-        </div>
       </section>
 
-      <section className={`card ${s.setCard}`} aria-labelledby={f("sec-addr")}>
-        <h2 className={s.secT} id={f("sec-addr")}>
-          받을 주소
-        </h2>
-        <div className={s.reveal}>
-          <div className={s.revealHead}>
-            <p className={s.kvMain}>
-              <b data-address-on-file="">
-                {addressOnFile === null ? "받을 주소를 읽지 못했어요" : addressRegistered ? addressOnFileText(addressOnFile) : "등록한 주소가 없어요"}
-              </b>
-            </p>
-            {addressOnFile !== null ? (
-              <div className="btnrow">
-                <button className="btn btn--line btn--sm" type="button" aria-expanded={open === "address"} aria-controls={f("addr-panel")} onClick={() => toggle("address")}>
-                  {addressRegistered ? "바꾸기" : "등록하기"}
-                </button>
-                {addressRegistered ? (
-                  <button
-                    className="btn btn--line btn--sm"
-                    type="button"
-                    aria-expanded={open === "address-delete"}
-                    aria-controls={f("addr-del-panel")}
-                    onClick={() => toggle("address-delete")}
-                  >
-                    지우기
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-          {open === "address" && (
-            <div className={s.panel} id={f("addr-panel")}>
-              {sealingKeyPem ? (
-                <FanAddressForm
-                  accountId={accountId}
-                  sealingKeyPem={sealingKeyPem}
-                  initialLabel={addressOnFile?.label ?? null}
-                  autoFocusFirst
-                  onSaved={(label) => {
-                    // 서버에 저장된 뒤에만 바뀐다 — 「등록한 날」은 다음에 화면을 열면 서버에 저장된 시각으로 바뀐다
-                    setAddressMsg({ tone: "ok", text: addressRegistered ? "받을 주소를 바꿨어요." : "받을 주소를 등록했어요." });
-                    setAddressOnFile({ registered: true, label, updatedAt: new Date().toISOString() });
-                    setOpen(null);
-                    router.refresh();
-                  }}
-                  onCancel={() => setOpen(null)}
-                  onLoginExpired={toLogin}
-                />
-              ) : (
-                <p className="err" role="status">
-                  {ADDRESS_KEY_MISSING_TEXT}
-                </p>
-              )}
-            </div>
-          )}
-          {open === "address-delete" && (
-            <div className={s.panel} id={f("addr-del-panel")}>
-              <p className={s.help}>이미 받기를 누른 선물은 그때 등록한 주소로 가요.</p>
-              <div className={`btnrow ${s.panelBtns}`}>
-                <button className="btn btn--line btn--sm" type="button" onClick={() => setOpen(null)}>
-                  돌아가기
-                </button>
-                <button
-                  className={`btn btn--sm ${s.danger}`}
-                  type="button"
-                  aria-disabled={addressBusy || undefined}
-                  aria-busy={addressBusy || undefined}
-                  onClick={() => void deleteAddress()}
-                >
-                  {addressBusy ? "지우는 중…" : "주소 지우기"}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-        <p className={`${addressMsg?.tone === "error" ? "err" : "okmsg"} ${s.msg}`} role="status">
-          {addressMsg?.text ?? ""}
-        </p>
-      </section>
-
-      <section className={`card ${s.setCard}`} aria-labelledby={f("sec3")}>
-        <h2 className={s.secT} id={f("sec3")}>
+      <section className={s.grp} aria-labelledby={f("sec3")} data-me-group="notify">
+        <h2 className={s.nm} id={f("sec3")}>
           알림
         </h2>
-        <Switch id={f("n1")} title="카카오 알림톡으로 받기" desc="승인·배송처럼 선물 소식을 카카오톡으로 받아요." on={kakao} onChange={setKakao} />
-        <Switch id={f("n2")} title="이메일로 받기" desc="영수증과 안내 메일을 받아요." on={mail} onChange={setMail} />
-        {/* 꼭 가는 알림은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) */}
-        <MustDeliverNotice audience="fan" id={f("noti-must")} className={`t-meta ${s.must}`} titleClassName={s["must-t"]} />
+        <div className={s.rows}>
+          <Switch id={f("n1")} title="카카오 알림톡으로 받기" desc="승인·배송처럼 선물 소식을 카카오톡으로 받아요." on={kakao} onChange={setKakao} />
+          <Switch id={f("n2")} title="이메일로 받기" desc="영수증과 안내 메일을 받아요." on={mail} onChange={setMail} />
+          {/* 꼭 가는 알림은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) — 접지 않고 늘 보인다(my-account INV-A11) */}
+          <MustDeliverNotice audience="fan" id={f("noti-must")} className={s.must} titleClassName={s.mustT} bodyClassName={s.mustL} />
+        </div>
       </section>
 
-      {/* 알림 칸은 늘 두고 글자만 바꾼다 — 칸이 새로 생기면 화면 읽기 프로그램이 읽지 않는 경우가 있다. */}
-      <form className={s.col} id={f("form")} onSubmit={onSubmit} aria-labelledby={f("h")}>
-      <p className={`err ${s.msg}`} role="alert">
-        {notice?.tone === "error" ? notice.text : ""}
-      </p>
-      <p className={`okmsg ${s.msg}`} role="status">
-        {notice?.tone === "ok" ? notice.text : ""}
-      </p>
-      <div className={s["save-bar"]}>
-        <div className="btnrow">
+      {/* 저장 줄 — 저장하기가 보내는 이메일·알림 바로 아래. 767 이하에서는 화면 아래에 붙는다.
+          알림 칸은 늘 두고 글자만 바꾼다 — 칸이 새로 생기면 화면 읽기 프로그램이 읽지 않는 경우가 있다. */}
+      <form className={s.end} id={f("form")} onSubmit={onSubmit} aria-labelledby={f("h")} data-me-save="">
+        <p className={`err ${s.msg}`} role="alert">
+          {notice?.tone === "error" ? notice.text : ""}
+        </p>
+        <p className={`okmsg ${s.msg}`} role="status">
+          {notice?.tone === "ok" ? notice.text : ""}
+        </p>
+        <div className={`btnrow ${s.btns}`}>
           <button
             className="btn btn--text"
             type="reset"
@@ -344,8 +330,26 @@ export function MyInfoPanel({
             {saving ? "저장하는 중" : "저장하기"}
           </button>
         </div>
-      </div>
       </form>
+
+      <div className={s.quit} data-me-group="leave">
+        <div className={s.row}>
+          <p className={s.txt}>
+            <span className={s.k}>회원 탈퇴</span>
+            <span className={s.sub}>계정과 프로필을 삭제해요</span>
+          </p>
+          <button className={`btn btn--sm ${s.danger}`} type="button" aria-expanded={open === "leave"} aria-controls={f("leave-panel")} onClick={() => toggle("leave")}>
+            탈퇴하기
+          </button>
+        </div>
+        {open === "leave" && (
+          <div className={s.panel} id={f("leave-panel")}>
+            <Link className="btn btn--line btn--sm" href="/support">
+              탈퇴 문의
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

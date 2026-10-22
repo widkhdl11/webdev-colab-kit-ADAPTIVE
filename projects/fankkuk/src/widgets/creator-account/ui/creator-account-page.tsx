@@ -25,7 +25,7 @@ import { formatDate } from "@/shared/lib/format/datetime";
 import s from "./creator-account.module.css";
 
 // 크리에이터 계정 설정(시안 docs/design/mockups/site/v21-addendum3/cre-account-settings.html, 입력형 720 — design-rules 00절 「본문 틀」).
-// 2026-10-16 사용자 「만들어봐」 — 상세 설정 아래 접힌 「계정」 칸(본인 확인·알림·계정 보안)을 이 화면으로 옮겼다. 모양은 팬 계정 설정(widgets/my-info)과 같은 카드 언어.
+// 2026-10-16 사용자 「만들어봐」 — 상세 설정 아래 접힌 「계정」 칸(본인 확인·알림·계정 보안)을 이 화면으로 옮겼다. 모양은 카드 언어(팬 계정 설정은 10-22 시범에서 4+8 묶음으로 바뀌었다 — 이 화면은 4파트 확장 때 맞춘다).
 // 보안(비밀번호·휴대폰 번호·채널 본인 확인) · 개인정보(회원 탈퇴) · 알림 세 카드. 지금 있는 기능만 옮겨 담았다:
 // - 비밀번호 변경(session-login INV-L12)·번호 바꾸기(카카오 재인증, signup INV-U12)·채널 본인 확인(creator-verification)은 버튼을 눌러야 그 줄 아래에 칸이 펼쳐진다.
 // - 시안의 이메일·이름 바꾸기, 알림 종류별 스위치 넷은 크리에이터에게 지금 없는 기능이라 두지 않는다 — 알림은 카카오·이메일 두 칸(my-account INV-A11),

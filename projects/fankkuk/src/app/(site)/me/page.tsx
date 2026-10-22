@@ -26,7 +26,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell width="form">
+      <MyShell width="list">
         <MyInfoPanel account={account} accountId={viewer.userId} address={address} sealingKeyPem={readSealingPublicKeyPem(process.env)} />
       </MyShell>
       <SiteFooter />

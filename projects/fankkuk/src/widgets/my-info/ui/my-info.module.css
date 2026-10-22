@@ -1,44 +1,58 @@
-/* 팬 계정 설정 — 시안 docs/design/mockups/site/v21-addendum3/fan-account-settings.html (fan-21.css 「설정 카드」 .set-card · .sec-t · .kv · .reveal · .sw-row).
-   폭은 틀(MyShell form 720)이 정한다. 카드 사이 32, 카드 안 줄 사이 24, 줄 사이 가는 선. */
-.col { display: grid; gap: var(--space-8); min-width: 0; }
-.col > * { min-width: 0; }
-/* 전역의 「구간 + 구간 위 48」 을 걷는다 — 사이는 위 gap 하나로 */
-.col > section:not(.section) + section:not(.section), .form > section:not(.section) + section:not(.section) { margin-top: 0; }
-.setCard { display: grid; gap: var(--space-6); }
-.secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
-.meta { display: block; color: var(--gray-600); font-size: var(--fs-caption); }
-.kvMain { margin: 0; min-width: 0; }
-.kvMain b { display: block; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
-.help { margin: 0; color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
-.revealHead + .help { margin-top: var(--space-2); }
-.reveal + .reveal, .fields + .help + .reveal { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
-.revealHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
-.panel { margin-top: var(--space-4); }
-.fields { display: grid; gap: var(--space-4); }
-/* 바꿀 수 없는 줄(아이디) — 같은 카드의 입력 줄처럼 라벨 위 · 값 아래(라벨은 이메일 라벨과 같은 16 / 600) */
-.kv { display: grid; gap: var(--space-2); margin: 0; }
-.kv dt { font-weight: var(--fw-btn); }
-.kv dd { margin: 0; overflow-wrap: anywhere; }
-.fields :global(.label) { margin-bottom: var(--space-2); }
-.fields :global(.field) + .help { margin-top: var(--space-2); }
-.inlineLink { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+/* 팬 계정 설정 — 시안 docs/design/mockups/site/pilot-2026-10-22/me.html, 값의 정본은 같은 폴더 pilot.css 「계정 설정(팬)」(.me-*).
+   폭은 틀(MyShell list 880)이 정하고, 안에서 카드 없이 12열 4 + 8 묶음(--grid-gap). 줄·묶음 사이는 낮은 대비 1px 실선(--line-on-white). */
+.wrap { min-width: 0; }
+
+/* 묶음 — 왼쪽 구간 이름(20 / 800) 4열, 오른쪽 줄 8열. 묶음 사이 구분선 + 위아래 48 */
+.grp { display: grid; grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr)); column-gap: var(--grid-gap); align-items: start; }
+.grp + .grp { margin-top: var(--space-12); padding-top: var(--space-12); border-top: 1px solid var(--line-on-white); }
+.nm { grid-column: span 4; min-width: 0; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
+.rows { grid-column: span 8; min-width: 0; }
+
+/* 줄 — 최소 높이 64, 버튼은 줄 오른쪽. 줄 사이 1px */
+.item { min-width: 0; }
+.item + .item { border-top: 1px solid var(--line-on-white); }
+.row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); min-height: 64px; margin: 0; padding: var(--space-2) 0; }
+.txt { display: flex; flex: 1 1 160px; flex-direction: column; align-items: flex-start; /* .row 와 함께 쓰면 세로 쌓기에서 center 가 가로 가운데로 작동한다 */ gap: 2px; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.k { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
+.v { margin: 0; font-size: var(--fs-body); font-weight: 400; line-height: 1.5; }
+.sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); }
+.act { display: flex; flex: none; flex-wrap: wrap; gap: var(--space-2); }
+.panel { padding-bottom: var(--space-4); }
+.panelBtns { margin-top: var(--space-4); }
+
+/* 입력 줄(이메일) — 이름 위 · 칸 · 보조 글 아래 */
+.fieldRow { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4) 0; }
+.fieldRow :global(.field) { width: 100%; }
+
+/* 알림 스위치 — 줄 전체가 누르는 칸(64). 막대는 공통 .sw 와 같은 크기·색 */
+.swBtn { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); width: 100%; min-height: 64px; padding: var(--space-2) 0; border: 0; border-radius: var(--r-btn); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.swBtn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.trk { position: relative; flex: none; width: 48px; height: 28px; border-radius: var(--r-pill); background: var(--gray-500); }
+.trk::after { content: ""; position: absolute; left: 4px; top: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--white); transition: transform .15s; }
+.swBtn[aria-checked="true"] .trk { background: var(--primary); }
+.swBtn[aria-checked="true"] .trk::after { transform: translateX(20px); }
+@media (prefers-reduced-motion: reduce) { .trk::after { transition: none; } }
+
+/* 끌 수 없는 알림 — 접지 않고 늘 보인다(my-account INV-A11). 제목 줄 14 / 600 + 목록 문장 14 / 400 */
+.must { margin: 0; padding-top: var(--space-4); border-top: 1px solid var(--line-on-white); }
+.mustT { display: block; color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+.mustL { display: block; margin-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: 1.6; }
+
+/* 저장 줄 — 결과 안내(늘 두고 글자가 있을 때만 판이 보인다, 공통 .err:empty·.okmsg:empty) + 되돌리기·저장하기 */
+.end { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); margin-top: var(--space-6); }
+.msg { margin: 0; }
+.btns { display: flex; gap: var(--space-2); }
+
+/* 회원 탈퇴 — 저장 줄 뒤, 구분선 아래 */
+.quit { margin-top: var(--space-12); padding-top: var(--space-6); border-top: 1px solid var(--line-on-white); }
 .danger { background: var(--white); color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
 .danger:hover { background: var(--gray-50); }
 
-/* 알림 스위치 줄 — 공통 .sw(base.css), 줄 모양은 시안 .sw-row */
-.swRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
-.swT { min-width: 0; }
-.swT b { display: block; }
-.swT span { display: block; margin-top: var(--space-1); color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
-.swRow + .swRow { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
-.must { margin: 0; }
-.must-t { color: var(--gray-900); }
-
-/* 저장 결과 줄 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다(빈 칸은 공통 .err:empty·.okmsg:empty) */
-.msg { margin: 0; }
-.save-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-4); padding-top: var(--space-6); border-top: 1px solid var(--gray-200); }
+/* 휴대폰 — 한 기둥, 저장 줄은 화면 아래에 붙는다(틀 안쪽 여백 16 만큼 밖으로) */
 @media (max-width: 767px) {
-  .save-bar :global(.btnrow) { width: 100%; }
-  .save-bar :global(.btnrow .btn) { flex: 1; }
+  .grp { display: block; }
+  .grp + .grp { margin-top: var(--space-8); padding-top: var(--space-8); }
+  .rows { margin-top: var(--space-4); }
+  .end { position: sticky; bottom: 0; z-index: 4; align-items: stretch; margin: var(--space-6) calc(-1 * var(--space-4)) 0; padding: var(--space-3) var(--space-4); border-top: 1px solid var(--line-on-white); background: var(--white); }
+  .btns :global(.btn) { flex: 1; }
 }
-.panelBtns { margin-top: var(--space-4); }
