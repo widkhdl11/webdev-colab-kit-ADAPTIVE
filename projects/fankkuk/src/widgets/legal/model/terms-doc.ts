@@ -56,6 +56,12 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
               ["팬꾹", "팬이 크리에이터에게 보내는 선물을 회사 사무실에서 받아 검수한 후, 크리에이터의 주소를 팬에게 알리지 않고 크리에이터에게 다시 발송하는 선물 배송대행 서비스를 말합니다."],
               ["회원", "팬꾹에 가입한 팬과 크리에이터를 말합니다."],
               ["선물", "팬이 크리에이터 1명에게 보내기 위해 등록한 1건을 말합니다. 선물마다 주문번호(예: FC-7K3M9)가 부여됩니다."],
+            ],
+          },
+          // 정의 일곱 줄을 상자 둘로 — 휴대폰에서 한 상자가 900 을 넘었다(969, 차이 목록 P2). 글과 순서는 그대로
+          {
+            kind: "defs",
+            items: [
               ["상자", "선물을 나누어 보내는 단위를 말합니다. 선물 1건은 여러 상자로 나누어 보낼 수 있으며, 요금·입고·검수·송장은 상자별로 처리합니다."],
               ["사무실", "회사가 상자를 받아 검수하고 다시 발송하는 장소를 말합니다. 사무실 주소는 결제를 완료한 팬에게만 안내합니다."],
               ["승인", "크리에이터가 카카오톡 인증서로 전자서명하여 선물 1건을 받겠다는 의사를 표시하는 것을 말합니다."],
@@ -214,6 +220,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
             ],
           },
           { kind: "text", text: "환불 금액은 선물의 상태에 따라 정해지며, 담당자가 금액을 개별적으로 정하지 않습니다." },
+          // 경우 여덟 줄을 상자 셋으로 나눈다 — 한 상자가 한 화면(900)을 넘지 않게(document-pages 기준 8, 차이 목록 P1). 글과 순서는 그대로
           {
             kind: "rows",
             rows: [
@@ -239,6 +246,11 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
                   ["7일 이내에 도착하지 않은 경우", "남겨 둔 반송 택배비까지 환불"],
                 ],
               },
+            ],
+          },
+          {
+            kind: "rows",
+            rows: [
               {
                 title: "검수 불합격에 따른 반송",
                 fields: [
@@ -254,6 +266,11 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
                   ["같은 선물의 다른 상자", "그대로 진행"],
                 ],
               },
+            ],
+          },
+          {
+            kind: "rows",
+            rows: [
               {
                 title: "크리에이터 사정에 의한 취소",
                 fields: [
