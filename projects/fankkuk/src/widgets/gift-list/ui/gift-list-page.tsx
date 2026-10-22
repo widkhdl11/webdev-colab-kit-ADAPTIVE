@@ -33,14 +33,12 @@ function cardBadge(gift: FanGiftView): { text: string; tone: StatusTone } {
   return fanBadge(gift);
 }
 
-/** 할 일 한 줄의 제목 — 지금 할 일 목록 줄과 같은 상수(FAN_TODO_TITLE). 받은 역조공 줄은 보낸 선물 목록에 오지 않는다 */
-const TODO_TITLE = FAN_TODO_TITLE;
 
 function TodoLine({ item }: { item: ActionItem }) {
   if (item.kind === "revgift") return null;
   return (
     <p className={s.todoline} data-todo-line="">
-      <span>{TODO_TITLE[item.kind]}</span>
+      <span>{FAN_TODO_TITLE[item.kind]}</span>
       {item.dueAt ? <span>{formatMonthDayKo(item.dueAt)}까지</span> : null}
     </p>
   );
@@ -113,8 +111,8 @@ function UnpaidCard({ item, faceTone }: { item: UnpaidItem; faceTone: string | u
       <div className={s.top}>
         <CreatorFace tone={faceTone ?? "var(--face-1)"} className={`face ${s.face}`} />
         <strong className={s.who}>
-          {/* 카드가 여럿이면 링크 이름이 같아지지 않게 — 받는 크리에이터와 주문번호를 붙인다(옆 GiftCard 와 같은 꼴, ui-reviewer 지적 6) */}
-          <Link className="stretch" href={giftDetailHref(item.orderNo, true)} aria-label={`${item.creatorName}님께 보낼 선물 ${item.orderNo} 결제하기`}>
+          {/* 카드가 여럿이면 링크 이름이 같아지지 않게 — 보이는 글자로 시작하고 받는 크리에이터와 주문번호를 붙인다(옆 GiftCard 와 같은 꼴, ui-reviewer 지적 6·재리뷰) */}
+          <Link className="stretch" href={giftDetailHref(item.orderNo, true)} aria-label={`${FAN_TODO_TITLE.unpaid} · ${item.creatorName}님께 보낼 선물 ${item.orderNo}`}>
             {FAN_TODO_TITLE.unpaid}
           </Link>
         </strong>

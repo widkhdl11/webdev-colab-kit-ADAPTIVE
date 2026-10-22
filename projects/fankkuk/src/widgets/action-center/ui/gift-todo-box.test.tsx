@@ -265,8 +265,13 @@ describe("접근성: 처리가 끝나 칸이 사라지면 포커스는 상자 �
     const title = boxTitle();
     sendReturnConfirm.mockResolvedValue({ kind: "ok" });
     render([RETURN]);
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-kind="return_address"] button')?.click());
+    // 사용자처럼 「확인하기」에 포커스를 둔 채 누른다 — 창은 닫힐 때 포커스를 그 버튼으로 돌려놓는다(bottom-sheet).
+    // 그 버튼은 새로 읽으면 사라지므로 최종 자리는 상자 칸 제목이어야 한다(ui 재리뷰 2026-10-22)
+    const opener = host.querySelector<HTMLButtonElement>('[data-kind="return_address"] button');
+    opener?.focus();
+    await act(async () => opener?.click());
     const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent === "확인") as HTMLButtonElement | undefined;
+    ok?.focus();
     await act(async () => ok?.click());
     expect(document.activeElement).toBe(title);
     title.remove();

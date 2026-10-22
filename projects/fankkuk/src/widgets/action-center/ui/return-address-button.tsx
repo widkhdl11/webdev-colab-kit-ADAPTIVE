@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { MyFanAddressStatus } from "@/entities/address/api/my-fan-address-status";
 import { FanAddressForm } from "@/features/fan-address/ui/fan-address-form";
 import { ReturnAddressWindow, type ReturnTarget } from "@/features/return-address/ui/return-address-window";
@@ -20,7 +20,15 @@ export function ReturnAddressButton({ target, meta, address, focusAfterId }: { t
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
   const { accountId, sealingKeyPem } = address;
+  // 확인이 끝나면 창이 닫힌 뒤에 포커스를 옮긴다. 창이 열린 동안은 바깥이 비활성이라 focus() 가 먹지 않고,
+  // 창은 닫힐 때 포커스를 「확인하기」로 돌려놓는데 그 버튼은 새로 읽으면 사라진다 — 이 effect 는 창의 정리보다 늦게 돈다(ui 재리뷰 2026-10-22)
+  useEffect(() => {
+    if (open || !confirmed) return;
+    if (focusAfterId) document.getElementById(focusAfterId)?.focus();
+    setConfirmed(false);
+  }, [open, confirmed, focusAfterId]);
   return (
     <>
       <button className="btn" type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>
@@ -33,7 +41,7 @@ export function ReturnAddressButton({ target, meta, address, focusAfterId }: { t
           open
           onClose={() => setOpen(false)}
           onConfirmed={() => {
-            if (focusAfterId) document.getElementById(focusAfterId)?.focus();
+            setConfirmed(true);
             router.replace(`${pathname}?address=confirmed`, { scroll: false });
           }}
           address={{
