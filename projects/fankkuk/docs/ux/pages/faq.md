@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 자주 묻는 질문 UX 명세 — `/faq`
 

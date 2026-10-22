@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 이용약관 UX 명세 — `/terms`
 

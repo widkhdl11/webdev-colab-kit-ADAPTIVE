@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 개인정보처리방침 UX 명세 — `/privacy`
 

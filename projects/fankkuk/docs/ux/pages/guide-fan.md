@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 팬 이용 안내 UX 명세 — `/guide/fan`
 

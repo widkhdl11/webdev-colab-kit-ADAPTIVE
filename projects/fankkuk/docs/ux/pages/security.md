@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 보안 안내 UX 명세 — `/security`
 

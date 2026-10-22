@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 분쟁 처리 안내 UX 명세 — `/dispute`
 

@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 크리에이터 이용 안내 UX 명세 — `/guide/creator`
 

@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 요금 안내 UX 명세 — `/pricing`
 

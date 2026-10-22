@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 취소·환불 규정 UX 명세 — `/refund`
 

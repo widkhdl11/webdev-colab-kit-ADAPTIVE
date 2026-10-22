@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 # 검수 기준 UX 명세 — `/inspection`
 
