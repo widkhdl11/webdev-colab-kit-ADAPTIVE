@@ -78,8 +78,12 @@ export function CreatorCardHead({
  *  (카드 전체를 덮는 이름 링크 때문에 이 줄의 title 은 뜨지 않는다 — 글자는 다 들어 있어 화면 낭독기는 전체를 읽는다).
  *  둘 다 없어도 두 줄 자리는 남는다(카드 높이를 같게). */
 export function CreatorCardLine({ channelTitle, intro }: { channelTitle: string; intro: string }) {
-  const text = [channelTitle.trim(), intro.trim()].filter(Boolean).join(" · ");
-  return <p className={s.line}>{text}</p>;
+  return <p className={s.line}>{creatorLineText(channelTitle, intro)}</p>;
+}
+
+/** 「채널 이름 · 소개」 글자 — 카드와 팔로우 목록 줄이 같은 규칙으로 만든다. 둘 다 없으면 빈 글자 */
+export function creatorLineText(channelTitle: string, intro: string): string {
+  return [channelTitle.trim(), intro.trim()].filter(Boolean).join(" · ");
 }
 
 /** 칩 줄 — 플랫폼 칩이 카드 폭을 다 쓰고, 넘치면 「+N」. 칩이 없어도 줄 자리는 남는다.

@@ -19,7 +19,7 @@
 .sw input, .swNone input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .sw span:nth-of-type(1) { position: absolute; inset: 4px; border-radius: var(--r-pill); background: var(--sw); box-shadow: inset 0 0 0 1px var(--gray-500); pointer-events: none; }
 .sw input:checked + span { box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--gray-900); }
-.sw input:checked + span::after { content: ""; position: absolute; left: 12px; top: 8px; width: 7px; height: 13px; border: solid var(--gray-900); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.sw input:checked + span::after { content: ""; position: absolute; left: 12px; top: 8px; width: 8px; height: 14px; border: solid var(--gray-900); border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .sw input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 4px; }
 .swNone { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-4); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-500); font-size: var(--fs-small); font-weight: 400; cursor: pointer; }
 .swNone:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--gray-900); }
@@ -30,7 +30,7 @@
 
 /* 판 끝 — 저장 결과 안내(role=status) 한 줄 자리 + 되돌리기·저장 */
 .end { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-6) var(--space-6); }
-.msg { min-height: calc(var(--fs-small) * var(--lh-caption)); margin: 0; }
+.msg { min-height: 22px; margin: 0; } /* 비어 있어도 한 줄 자리(14 × 1.5 = 21 → 짝수 22) */
 .btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 
 /* 오른쪽 미리보기 — 흰 띠 바탕, 스크롤하면 따라온다 */
@@ -40,7 +40,7 @@
 .pvCap { margin: 0; color: var(--sub); font-size: var(--fs-caption); }
 .pvBadges { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 /* 카드 미리보기 — 찾기 화면 카드 틀 그대로(creatorCardClass), 폭은 찾기 3열 카드쯤(320). 하단 버튼은 모양만이라 누름을 받지 않는다 */
-.pvBox > [data-card-preview] { width: 100%; max-width: 320px; cursor: default; }
+.pvBox > [data-card-preview] { width: 100%; max-width: 300px; cursor: default; }
 .pvBox > [data-card-preview] [data-card-foot] :global(.btn) { pointer-events: none; }
 
 /* 1100 이하 — 미리보기가 입력 위로(따라오지 않음) */

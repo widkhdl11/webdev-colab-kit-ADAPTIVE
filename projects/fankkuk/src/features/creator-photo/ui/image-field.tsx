@@ -11,6 +11,9 @@ import s from "./image-field.module.css";
 
 export type ImageSendResult = { kind: "ok"; path: string | null } | { kind: "login" } | { kind: "failed"; message: string };
 
+/** 칸 이름 — 직접 그리거나(label), 바깥에 같은 이름의 제목이 이미 보이면 그 제목의 id(labelledBy)로 읽힌다(같은 이름을 두 번 읽지 않게). 둘 중 하나만 */
+type ImageFieldName = { label: string; labelledBy?: never } | { label?: never; labelledBy: string };
+
 export function ImageField({
   id,
   label,
@@ -30,9 +33,7 @@ export function ImageField({
   removedText,
 }: {
   id: string;
-  label: string;
-  /** 바깥에 같은 이름의 제목이 이미 보이면 그 제목의 id — 칸 이름을 따로 그리지 않고 그 제목으로 읽힌다(같은 이름을 두 번 읽지 않게) */
-  labelledBy?: string;
+} & ImageFieldName & {
   /** 지금 사진 보기 — 화면 위 미리보기가 이미 보여 주면 없다 */
   view?: ReactNode;
   hasImage: boolean;

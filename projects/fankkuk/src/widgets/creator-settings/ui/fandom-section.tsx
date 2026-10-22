@@ -145,7 +145,6 @@ export function FandomSection(p: FandomSectionProps) {
             </h3>
             <ImageField
               id="fd-sym"
-              label="팬마크"
               labelledBy="fd-sym-h"
               view={
                 <span className={s.markBox} aria-hidden="true">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { creatorPagePath } from "@/entities/creator/model/creator-handle";
 import { useRef, useState } from "react";
 import type { CreatorCard } from "@/entities/creator/model/creator-card";
+import { creatorLineText } from "@/entities/creator/ui/creator-card-head";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
 import { CreatorTag } from "@/entities/creator/ui/creator-tag";
 import { FOLLOWING_NICKNAME_NOTICE } from "@/features/creator-follow/model/follow-notice";
@@ -17,10 +18,6 @@ import s from "./my-following.module.css";
 // 「팔로우 취소」는 확인 창을 거쳐 저장하고, 저장되면(onUnfollowed) 줄을 목록에서 빼고 초점을 제목으로 옮긴다.
 // 저장 실패 알림·로그인 이동은 FollowButton 한 곳에서 한다(찾기·홈과 같다). 다 빼면 빈 화면 안내가 왼쪽 칸에 나온다.
 
-/** 줄의 둘째 줄 — 크리에이터 카드와 같은 「채널 이름 · 소개」. 넘치면 한 줄 말줄임(전체는 title·크리에이터 페이지). */
-function introLine(c: CreatorCard): string {
-  return [c.channelTitle.trim(), c.intro.trim()].filter(Boolean).join(" · ");
-}
 
 export function MyFollowingPanel({
   creators,
@@ -52,7 +49,8 @@ export function MyFollowingPanel({
           {list.length > 0 ? (
             <ul className={s.rows}>
               {list.map((c) => {
-                const intro = introLine(c);
+                // 둘째 줄 — 크리에이터 카드와 같은 「채널 이름 · 소개」. 넘치면 한 줄 말줄임 — 이름 링크가 이 칸을 덮어 title 은 뜨지 않으니 전체는 크리에이터 페이지에서(design-rules 27절)
+                const intro = creatorLineText(c.channelTitle, c.intro);
                 return (
                   <li key={c.id} className={s.row}>
                     <CreatorPhoto photoUrl={photos[c.id] ?? null} tone={c.faceTone} className={`face face--sm ${s.face}`} />
@@ -63,7 +61,7 @@ export function MyFollowingPanel({
                         </Link>
                         {c.platform ? <CreatorTag name={c.platform} /> : null}
                       </p>
-                      <p className={s.intro} title={intro || undefined}>
+                      <p className={s.intro}>
                         {intro}
                       </p>
                     </div>

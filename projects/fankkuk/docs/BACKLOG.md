@@ -7,6 +7,7 @@
 
 ## 미결
 
+- [ ] **상세 설정 코드에 받기만 하고 안 쓰는 값 셋** (2026-10-22, 4파트 시범 code 리뷰 low — 시범 전부터 있던 것) — `src/widgets/creator-settings/ui/fandom-section.tsx` 의 `initial`·`card.approvalMinutes`(넘기는 쪽 `src/app/(site)/creator/settings/page.tsx`), `creator-settings-page.tsx` 의 `settings`. 타입과 넘기는 쪽에서 함께 지운다. 같은 김에 `link-section.tsx` 13~14줄 주석(「/creator/customize 로 옮겼다」 — 코드는 프로필 수정으로 연결)을 실제에 맞춘다.
 - [ ] **선물 보내기 4단계 「배송비가 포함된 금액이에요.」를 「배송비와 검수비가 포함된 금액이에요.」로** (2026-10-22, UX 시범 진단 D-5) — 바로 위 「검수 포함」 태그를 설명하는 말이 없다(`src/features/gift-register/ui/register-form.tsx` 4단계 결제 칸, 용어집 inspection_fee 「검수비」). 진단이 「기존 문구 유지」와 부딪혀 사람이 볼 것으로 남김, 추천은 바꿈 · 되살릴 조건: 사용자가 「바꿔」라고 하거나 다음 문구 정리 때
 - [ ] **선물 상세 상자 칸 머리 안내가 상자 1개·승인된 주문에도 보인다** (2026-10-22, UX 시범 화면 확인) — 「상자마다 받는 주소가 달라요. … 승인은 출고 전까지만 나면 돼요.」가 받는 주소가 하나라도 보이면 늘 나온다(`src/widgets/gift-status/ui/gift-status-page.tsx` `anyAddress`). 「상자마다」는 상자 둘 이상일 때만, 「승인은 출고 전까지만」은 승인 전에만 맞는 말이다(B-5 와 같은 꼴). 10-17 부터 있던 문구라 시범 진단 20건 밖 · 되살릴 조건: 다음 선물 상세 손볼 때(4파트 정돈 또는 문구 정리)
 - [ ] **거절·기한 지남 안내 첫 문단(「받는 주소가 보이기 전에 끝났다면 …」)을 상황에 맞게 가르기** (2026-10-22, UX 정돈 시범 B-6) — 끝난 주문에서 받는 주소가 보였는지(승인·먼저 보내기 기록)를 팬 읽기 함수가 주지 않아 지금은 늘 보인다. 둘째·셋째 문단은 상자 상태로 갈랐다(`src/widgets/gift-status/ui/gift-status-page.tsx` 「이 선물은 보내지 마세요」) · 되살릴 조건: my_gifts 에 그 칸을 더하는 DB 작업 때
