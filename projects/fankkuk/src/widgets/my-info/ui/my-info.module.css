@@ -15,7 +15,7 @@
 .txt { display: flex; flex: 1 1 160px; flex-direction: column; align-items: flex-start; /* .row 와 함께 쓰면 세로 쌓기에서 center 가 가로 가운데로 작동한다 */ gap: 2px; min-width: 0; margin: 0; overflow-wrap: anywhere; }
 .k { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
 .v { margin: 0; font-size: var(--fs-body); font-weight: 400; line-height: 1.5; }
-.sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); }
+.sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); overflow-wrap: anywhere; } /* 새 이메일 주소(최대 254자)가 그대로 들어간다 */
 .act { display: flex; flex: none; flex-wrap: wrap; gap: var(--space-2); }
 .panel { padding-bottom: var(--space-4); }
 .panelBtns { margin-top: var(--space-4); }
@@ -24,11 +24,11 @@
 .fieldRow { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4) 0; }
 .fieldRow :global(.field) { width: 100%; }
 
-/* 알림 스위치 — 줄 전체가 누르는 칸(64). 막대는 공통 .sw 와 같은 크기·색 */
+/* 알림 스위치 — 줄 전체가 누르는 칸(64). 막대는 시안 pilot .me-trk 값 */
 .swBtn { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); width: 100%; min-height: 64px; padding: var(--space-2) 0; border: 0; border-radius: var(--r-btn); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .swBtn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.trk { position: relative; flex: none; width: 48px; height: 28px; border-radius: var(--r-pill); background: var(--gray-500); }
-.trk::after { content: ""; position: absolute; left: 4px; top: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--white); transition: transform .15s; }
+.trk { position: relative; flex: none; width: 52px; height: 32px; border: 1px solid var(--sub); border-radius: var(--r-pill); background: var(--gray-200); transition: background .15s; } /* 시안 pilot .me-trk — 테두리·짙은 동그라미로 켜짐을 흰 바탕에서 알아보게(옅은 하늘 막대 + 흰 동그라미는 1.75:1) */
+.trk::after { content: ""; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); transition: transform .15s; } /* 3 = 테두리 안 30 에서 24 를 가운데로(보정) */
 .swBtn[aria-checked="true"] .trk { background: var(--primary); }
 .swBtn[aria-checked="true"] .trk::after { transform: translateX(20px); }
 @media (prefers-reduced-motion: reduce) { .trk::after { transition: none; } }
@@ -40,7 +40,8 @@
 
 /* 저장 줄 — 결과 안내(늘 두고 글자가 있을 때만 판이 보인다, 공통 .err:empty·.okmsg:empty) + 되돌리기·저장하기 */
 .end { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); margin-top: var(--space-6); }
-.msg { margin: 0; }
+.msg { max-width: 100%; margin: 0; overflow-wrap: anywhere; }
+.msg:not(:empty) { margin-top: var(--space-2); } /* 받을 주소 결과 안내가 생기면 위 줄에 붙지 않게 */
 .btns { display: flex; gap: var(--space-2); }
 
 /* 회원 탈퇴 — 저장 줄 뒤, 구분선 아래 */

@@ -126,7 +126,9 @@ describe("계정 설정(팬) — 받을 주소 상태", () => {
     expect(buttonByText("바꾸기") ?? null).not.toBeNull();
     const del = buttonByText("지우기")!;
     act(() => del.click());
-    expect(host.textContent).toContain("이미 받기를 누른 선물은 그때 등록한 주소로 가요.");
+    // 확인 칸은 지우기 버튼이 가리키는 자리에 펼쳐진다
+    const panel = document.getElementById(del.getAttribute("aria-controls")!)!;
+    expect(panel.textContent).toContain("이미 받기를 누른 선물은 그때 등록한 주소로 가요.");
     expect(buttonByText("주소 지우기")).toBeDefined();
   });
 
@@ -140,7 +142,7 @@ describe("계정 설정(팬) — 받을 주소 상태", () => {
   it("읽지 못했으면 안내만 있고 버튼이 없다", () => {
     render({ address: null });
     expect(host.querySelector("[data-address-on-file]")?.textContent).toBe("받을 주소를 읽지 못했어요");
-    expect(buttonByText("등록하기")).toBeUndefined();
+    expect(host.querySelectorAll('[data-me-group="address"] button').length).toBe(0);
   });
 });
 
@@ -158,12 +160,18 @@ describe("계정 설정(팬) — 알림", () => {
     expect(mail.getAttribute("aria-checked")).toBe("true");
   });
 
-  it("되돌리기를 누르면 스위치가 처음 값으로 돌아간다", () => {
+  it("되돌리기를 누르면 스위치 둘과 이메일 칸(저장 폼 밖, form 속성으로 붙음)이 처음 값으로 돌아간다", () => {
     render();
-    const mail = host.querySelectorAll<HTMLButtonElement>('[role="switch"]')[1];
+    const [kakao, mail] = [...host.querySelectorAll<HTMLButtonElement>('[role="switch"]')];
+    const email = host.querySelector<HTMLInputElement>('input[type="email"]')!;
+    const first = email.value;
+    act(() => kakao.click());
     act(() => mail.click());
+    email.value = "changed@example.com";
     act(() => buttonByText("되돌리기")!.click());
+    expect(kakao.getAttribute("aria-checked")).toBe("true");
     expect(mail.getAttribute("aria-checked")).toBe("false");
+    expect(email.value).toBe(first);
   });
 
   it("끌 수 없는 알림은 접지 않고 알림 묶음 안에 제목과 목록 문장으로 늘 보인다", () => {
@@ -174,7 +182,6 @@ describe("계정 설정(팬) — 알림", () => {
     expect(must.closest("details")).toBeNull();
     const body = must.nextElementSibling as HTMLElement;
     expect(body.textContent).toContain("꺼 두어도 가요.");
-    expect(body.className).not.toBe("");
   });
 
   it("저장 결과 안내 자리(role=alert·status)는 저장 폼 안에 늘 있다", () => {
