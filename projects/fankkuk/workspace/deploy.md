@@ -1,10 +1,29 @@
 ---
 project: fankkuk
 status: deployed
-basis: c7356c8c58a0
+basis: 9340f9fd3717
 ---
 
 # 배포 기록 — fankkuk
+
+## 2026-10-20 — 홈 바로가기 중앙 정렬
+
+- 앞선 배포에 이어 main 880d16b4 push, 시험 사이트 Vercel 성공 확인. DB·환경 변경 없음.
+- 세 역할이 공유하는 바로가기 카드의 그림·제목·설명을 가로 중앙 정렬했다.
+- 배포 전 실제 세 역할 × PC 1440·모바일 390px, 각 네 카드 중앙 정렬·가로 넘침 0 확인. typecheck·필수 검사 통과, UI·보안 리뷰 통과.
+- 배포 후 시험 사이트 / 응답 200. 1440·390px 각 네 카드 align-items·text-align center, 가로 넘침 0 확인. 운영 계정 로그인 검사는 하지 않았다.
+- 직전 배포에서 통과한 개인정보 검사와 전체 DB 검사 결과는 유지하며 CSS 정렬만 바뀌어 다시 실행하지 않았다.
+
+
+## 2026-10-20 — 세 역할 홈 공통 구성·배너·배송 요금
+
+- 사용자 「그럼 배포해줘」. 운영 DB 변경 없음(직전 원격 main 대비 supabase 변경 0).
+- main 5558ad51 push. 시험 사이트 Vercel 배포 성공 확인.
+- 배포 전 `npm run build` 성공, 개인정보 검사 `npm run check:pii -- --app http://localhost:3000` 실명·주소·전화번호·이메일 꼴 0건 통과.
+- 전체 DB 통합 2051개 중 2039개 통과·12개 실패. 기존 주소 응답 10건은 사용자에게 설명한 상태로 유지. 추가 2건은 시안 경로 이동·시각 시험 기준 일치로 정리하고 관련 두 통합 파일 57개 통과. 실제 DB 함수 변경 없음.
+- 실제 시험 사이트 https://webdev-colab-kit-adaptive-xqne.vercel.app/: /·/creators·/login 200, 히어로·요금 제목·설명 표시. 비눗방울·박스·소개 배너 이미지 모두 200. 1440·390px 가로 넘침 없음, 깨진 이미지·런타임 오류 0. 모바일 히어로 544px.
+- 로그인 후 팬·크리에이터 홈은 배포 전 로컬 실제 계정과 화면·라우트 시험으로 확인했다. 운영 계정으로 로그인 검사는 하지 않았다.
+
 
 ## 2026-10-16 밤 (시험 사이트)
 
@@ -63,3 +82,9 @@ basis: c7356c8c58a0
 - 운영 DB: 적용 전 `migration list` 로 빠진 것이 20261018000001·000002 둘뿐임을 확인. `supabase db push` 로 두 개 적용(개인정보 구역 접촉 0, 삭제 구문은 배너 지우기 함수 안뿐). 적용 뒤 `public.banners` 0줄 · RLS 켜짐 · 저장소 `banner-images` 공개.
 - 앱: main 17c37a7d push(커밋 10개) → Vercel 세 프로젝트 빌드 success.
 - 시험 주소(로그인 전): / · /creators · /login · /terms · /refund · /faq · /signup 200, 「Application error」 없음. Playwright 1440 폭에서 첫 화면 칸 여섯 개 모두 880px, 가로 스크롤 없음, 콘솔 오류 0. 390 폭 가로 스크롤 없음. /admin/banners 는 404. 배너가 0개라 배너 자리는 비어 있다(운영자 계정이 아직 없음).
+
+## 2026-10-18 저녁 — 크리에이터 카드 v28 · 테마 색
+
+- 운영 DB: 적용 전 `migration list` 로 빠진 것이 20261018000003 하나뿐임을 확인. 적용 전 셈 — 크리에이터 1 · 테마 색 저장 0 · 비워질 값(8색 밖) 0. `supabase db push` 로 적용(개인정보 구역 접촉 0). 적용 뒤 제약 `creators_personal_color_palette` 있음.
+- 앱: main 57ce3c86 push(커밋 17개) → Vercel 세 프로젝트 빌드 success.
+- 시험 주소(로그인 전, 1440): / · /creators · /login · /faq · /terms 200, 「Application error」 없음, 가로 스크롤 없음, 콘솔 오류 0. /creators 390 폭 가로 스크롤 없음, 카드 1장(「팬꾹 데모」·유튜브 칩·팔로우).

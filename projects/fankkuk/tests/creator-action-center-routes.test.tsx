@@ -44,7 +44,9 @@ vi.mock("@/entities/creator/api/creator-link-reads", async (orig) => ({
   ...(await orig<object>()),
   readMyCreatorLink: vi.fn(async () => null),
   readMyCreatorLook: vi.fn(async () => null),
+  resolveCreatorHandle: vi.fn(async () => null),
 }));
+vi.mock("@/entities/creator/api/creator-reads", async (orig) => ({ ...(await orig<object>()), readOwnCreatorId: vi.fn(async () => null), readCreatorCards: vi.fn(async () => []) }));
 vi.mock("@/entities/creator/api/my-creator-settings", async (orig) => ({ ...(await orig<object>()), readMyCreatorSettings: vi.fn(async () => null) }));
 vi.mock("@/entities/notice/api/notice-reads", async (orig) => ({ ...(await orig<object>()), readNotices: vi.fn(async () => []) }));
 vi.mock("@/entities/order/api/fan-gift-rows", async (orig) => ({ ...(await orig<object>()), readMyGiftViews: vi.fn(async () => []) }));
@@ -70,6 +72,9 @@ vi.mock("@/widgets/creator-gift-progress/api/read-gift-progress", async () => {
 import CreatorActionsRoute from "@/app/(site)/creator/actions/page";
 import CreatorHomeRoute from "@/app/(site)/creator/page";
 import CreatorProgressRoute from "@/app/(site)/creator/progress/page";
+import { readMyCreatorLink, resolveCreatorHandle } from "@/entities/creator/api/creator-link-reads";
+import { readCreatorCards, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
+import { readMyGiftProgress } from "@/widgets/creator-gift-progress/api/read-gift-progress";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.showModal) {
@@ -165,11 +170,48 @@ describe("INV-J6·J11: 선물 현황 라우트 — 「처리할 일」 버튼은
 
   it("크리에이터 홈 「진행 중인 선물」 줄은 선물 현황으로 가고, 숫자는 선물 현황 머리와 같은 값·같은 단위(3건)", async () => {
     await draw(CreatorHomeRoute());
-    const row = [...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("진행 중인 선물"));
+    const row = [...host.querySelectorAll('ul[aria-label="내 바로가기"] a')].find((a) => a.textContent?.startsWith("선물 현황"));
     expect(row?.getAttribute("href")).toBe("/creator/progress");
-    expect(row?.textContent).toBe("진행 중인 선물3건");
+    expect(row?.textContent).toBe("선물 현황진행 중 3건");
     const actions = [...host.querySelectorAll("main a")].find((a) => a.textContent?.startsWith("처리할 일"));
     expect(actions?.getAttribute("href")).toBe("/creator/actions");
+    const summary = host.querySelector('[aria-labelledby="creator-progress-title"]')!;
+    expect(summary.querySelectorAll("li")).toHaveLength(3);
+    expect(summary.textContent).toContain("다온님이 보내신 선물");
+    expect(summary.textContent).toContain("승인 대기");
+    expect(summary.textContent).toContain("보리님이 보내신 선물");
+    expect(summary.textContent).toContain("사무실로 오는 중");
+    expect(summary.textContent).toContain("모카님께 보낸 선물");
+    expect(summary.textContent).toContain("아직 도착하지 않았어요");
+    expect([...summary.querySelectorAll("li a")].every((a) => a.getAttribute("href") === "/creator/progress")).toBe(true);
+  });
+
+  it("선물 현황 읽기 실패는 실제 홈 본문에도 실패 안내로 표시하고 건수를 비운다", async () => {
+    vi.mocked(readMyGiftProgress).mockRejectedValueOnce(new Error("read failed"));
+    await draw(CreatorHomeRoute());
+    expect(host.querySelector('[aria-labelledby="creator-progress-title"]')!.textContent).toContain("불러오지 못했어요");
+    const tile = [...host.querySelectorAll('ul[aria-label="내 바로가기"] a')].find((a) => a.getAttribute("href") === "/creator/progress");
+    expect(tile?.textContent).toBe("선물 현황");
+  });
+
+  it("INV-E5: 공개 아이디가 있으면 실제 홈의 내 페이지 버튼은 그 주소로 간다", async () => {
+    vi.mocked(readMyCreatorLink).mockResolvedValueOnce({ handle: "haru", lockedDays: 0, photoPath: null });
+    vi.mocked(resolveCreatorHandle).mockResolvedValueOnce({ creatorId: "00000000-0000-4000-b000-000000000001", handle: "haru" });
+    await draw(CreatorHomeRoute());
+    expect([...host.querySelectorAll("main a")].find((a) => a.textContent === "내 페이지 보기")?.getAttribute("href")).toBe("/haru");
+  });
+
+  it("INV-E5: 아이디가 없어도 공개 카드가 있으면 기존 ID 주소로 가고, 공개 카드가 없으면 숨긴다", async () => {
+    const id = "00000000-0000-4000-b000-000000000001";
+    vi.mocked(readOwnCreatorId).mockResolvedValueOnce(id);
+    vi.mocked(readCreatorCards).mockResolvedValueOnce([{ id, name: "하루", platform: "치지직", tags: [], channelTitle: "하루", intro: "", alias: "", approvalMinutes: null, faceTone: "var(--face-1)", following: false, handle: null, photoPath: null }]);
+    await draw(CreatorHomeRoute());
+    expect([...host.querySelectorAll("main a")].find((a) => a.textContent === "내 페이지 보기")?.getAttribute("href")).toBe(`/creators/${id}`);
+    expect(readCreatorCards).toHaveBeenCalledWith(expect.anything(), { onlyId: id, signedIn: false });
+    vi.mocked(readOwnCreatorId).mockResolvedValueOnce(id);
+    vi.mocked(readCreatorCards).mockResolvedValueOnce([]);
+    await draw(CreatorHomeRoute());
+    expect([...host.querySelectorAll("main a")].find((a) => a.textContent === "내 페이지 보기")).toBeUndefined();
   });
 });
 

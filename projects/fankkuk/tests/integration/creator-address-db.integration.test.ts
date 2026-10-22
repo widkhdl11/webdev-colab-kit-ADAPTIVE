@@ -171,7 +171,7 @@ describe("INV-P16: 본인 확인에 보이는 것은 등록 여부·이름표·�
     expect(rows).toHaveLength(1);
     expect(Object.keys(rows[0]!).sort()).toEqual(["creator_id", "label", "registered", "updated_at"]);
     expect(rows[0]).toMatchObject({ creator_id: CREATOR_ID, registered: true, label: "studio" });
-    const storedAt = psql(`select extract(epoch from updated_at)::bigint from pii.creator_addresses where creator_id = '${CREATOR_ID}'`);
+    const storedAt = psql(`select floor(extract(epoch from updated_at))::bigint from pii.creator_addresses where creator_id = '${CREATOR_ID}'`);
     expect(Math.floor(new Date(String(rows[0]!.updated_at)).getTime() / 1000)).toBe(Number(storedAt));
     expect(JSON.stringify(rows)).not.toContain(String(envelope.ciphertext));
   });

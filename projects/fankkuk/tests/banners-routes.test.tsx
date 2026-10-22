@@ -94,7 +94,6 @@ const ROW = {
 };
 
 const ROUTES = [
-  { name: "로그인 전 첫 화면 /", viewer: null, route: () => LandingRoute() },
   { name: "팬 홈 /home", viewer: FAN, route: () => HomeRoute() },
   { name: "크리에이터 홈 /creator", viewer: CREATOR, route: () => CreatorHomeRoute() },
   { name: "크리에이터 찾기 /creators", viewer: null, route: () => CreatorsRoute() },
@@ -120,6 +119,13 @@ async function draw(page: Promise<React.ReactNode>) {
 }
 
 describe("INV-Y7·Y8: 실제 라우트 넷 — 공개 읽기 한 번, 칸 ②", () => {
+  it("로그인 전 첫 화면은 사용자가 고른 소개 이미지만 표시하며 광고 목록은 읽지 않는다", async () => {
+    db.viewer = null;
+    await draw(LandingRoute());
+    expect(db.calls.filter((c) => c === "list_banners")).toHaveLength(0);
+    expect(host.querySelector('img[src="/images/banners/launch-01-introduction-no-button.png"]')).not.toBeNull();
+    expect(host.querySelector("[data-banner-tag]")).toBeNull();
+  });
   it.each(ROUTES)("INV-Y7 (S7): $name — 공개 읽기를 한 번 부르고, 켠 배너는 제목 앞 「광고」·그림은 공개 저장소 주소", async ({ viewer, route }) => {
     db.viewer = viewer;
     await draw(route());
@@ -128,7 +134,7 @@ describe("INV-Y7·Y8: 실제 라우트 넷 — 공개 읽기 한 번, 칸 ②", 
     const title = host.querySelector("[data-banner-title]")!;
     expect(title.textContent).toBe("하루님 생일 주간");
     expect(title.previousElementSibling?.textContent).toBe("광고");
-    expect(host.querySelector<HTMLImageElement>("[data-banner-slot] img")?.getAttribute("src")).toBe(
+    expect(title.closest("[data-banner-card]")?.querySelector<HTMLImageElement>("img")?.getAttribute("src")).toBe(
       "http://storage.test/storage/v1/object/public/banner-images/b-0123456789abcdef0123456789abcdef.webp",
     );
   });
@@ -138,7 +144,8 @@ describe("INV-Y7·Y8: 실제 라우트 넷 — 공개 읽기 한 번, 칸 ②", 
     db.banners = { data: [], error: null };
     await draw(route());
     expect(host.querySelector("main")).not.toBeNull();
-    expect(host.querySelector("[data-banner-slot]")).toBeNull();
+    expect(host.querySelector("[data-banner-title]")).toBeNull();
+    expect(host.querySelectorAll("[data-banner-card]")).toHaveLength(viewer ? 1 : 0);
   });
 
   it.each(ROUTES)("INV-Y8 (실패경로): $name — 배너 읽기가 실패하거나 꼴이 달라도 페이지는 뜨고 칸만 없다", async ({ viewer, route }) => {
@@ -147,7 +154,8 @@ describe("INV-Y7·Y8: 실제 라우트 넷 — 공개 읽기 한 번, 칸 ②", 
       db.banners = result;
       await draw(route());
       expect(host.querySelector("main")).not.toBeNull();
-      expect(host.querySelector("[data-banner-slot]")).toBeNull();
+      expect(host.querySelector("[data-banner-title]")).toBeNull();
+      expect(host.querySelectorAll("[data-banner-card]")).toHaveLength(viewer ? 1 : 0);
     }
   });
 });

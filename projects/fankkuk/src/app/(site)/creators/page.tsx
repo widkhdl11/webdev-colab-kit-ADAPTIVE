@@ -8,7 +8,7 @@ import { toCardLooks } from "@/entities/creator/model/card-look";
 import { readPublicStorageBase } from "@/shared/api/supabase/detached";
 import { readTagOptions } from "@/entities/creator/api/creator-tag-reads";
 import { followModeOf } from "@/features/creator-follow/model/follow-mode";
-import { bannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
+import { bannerSlot, memberBannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
 import { CreatorSearchPage } from "@/widgets/creator-search/ui/creator-search-page";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import {
@@ -52,7 +52,7 @@ export default async function Page() {
         tagOptions={tagOptions}
         followMode={followModeOf(viewer)}
         ownCreatorId={ownCreatorId}
-        banner={bannerSlot(banners)}
+        banner={viewer ? memberBannerSlot(banners) : bannerSlot(banners)}
       />
       <SiteFooter />
     </>

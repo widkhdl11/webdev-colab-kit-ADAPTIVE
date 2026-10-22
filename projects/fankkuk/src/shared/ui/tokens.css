@@ -113,7 +113,8 @@
   --r-box: 16px; /* 안내 상자·드롭다운 */
   --r-btn: 12px; /* 버튼·입력창·카드 안 줄 */
   --r-btn-sm: var(--r-btn); /* 옛 이름 — 10 을 뺐다 */
-  --r-tag: 8px; /* 상태 태그·칩 */
+  --r-tag: var(--r-pill); /* 상태 태그·칩·작은 표시 — 알약 모양. 반경 셈(한 화면 큰 판 24·카드 16·버튼 12 세 단계)에서 알약·원은 뺀다(DECISIONS 2026-10-18 재진단) */
+  --r-icon: 8px; /* 작은 아이콘 그림(채널 아이콘 20·팬마크) 모서리 — 그림 모양이라 반경 셈에서 뺀다 */
   --r-bar: 3px; /* 진행 막대 칸(높이 6)의 둥근 끝 — design-rules 13절 선물 현황 */
   --r-mark: 3px; /* 작은 팬덤 뱃지(높이 22) 안 팬마크 14 의 모서리 — 시안 v25-card-align */
   --r-pill: 9999px;
@@ -177,11 +178,15 @@
   --dur-fade: 150ms;
   --dur-fade-out: 100ms;
   --delay-fade: 100ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* 마우스 올림·누름 반응 */
+  --dur-hover: 150ms;
+  --dur-press: 100ms;
+  --lift-hover: 0 8px 24px rgb(0 0 0 / 0.08); /* 누를 수 있는 카드에 마우스를 올렸을 때만 */
   --pub-max: calc(var(--col-list) + 2 * var(--gutter)); /* 로그인 전 상단 바·본문·푸터 글의 바깥 폭(양옆 여백 → 글 880 = 로그인 후 목록형 폭) */
   --nav-gap: 32px;
   /* 로고 글자 「팬꾹」 전용 — 티머니 둥근바람은 라이선스상 로고(BI/CI)에 쓸 수 없다 */
   --font-logo: "Pretendard Variable", Pretendard, sans-serif;
-  --ls-title: -0.02em; /* 음수 자간은 첫 화면·구간 제목에만, 이 값 하나 */
+  --ls-title: -0.02em; /* 음수 자간은 제목(첫 화면·구간·페이지 제목)에만, 이 값 하나 */
   /* v18 구간 사이 96(휴대폰 64) — 시안 tokens.css --section-gap. 옛 이름 --sec-pad 도 이 값을 가리킨다(v11 의 88~144 를 대신한다) */
   --section-gap: 96px;
   --sec-pad: var(--section-gap);
@@ -191,7 +196,7 @@
   --panel-pad: 32px; /* 큰 판 안쪽(휴대폰 24) */
   --card-gap: 24px; /* 카드 격자 간격(휴대폰 16) */
   --btn-h: 48px;
-  --btn-h-sm: 36px;
+  --btn-h-sm: 44px; /* 2026-10-18 재진단 36 → 44(누름 칸 44) */
   --touch: 48px;
   --hero-pad-top: 64px; /* 첫 화면 판 안쪽 위 여백 96 → 64 (v23 감사표 1절) */
   --hero-max: 680px; /* 첫 화면 글·검색창 폭 */
@@ -208,14 +213,14 @@
   :root { --nav-gap: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  :root { --dur-w: 0s; --dur-fade: 0s; --dur-fade-out: 0s; --delay-fade: 0s; }
+  :root { --dur-w: 0s; --dur-fade: 0s; --dur-fade-out: 0s; --delay-fade: 0s; --dur-hover: 0s; --dur-press: 0s; }
 }
 @media (max-width: 767px) {
   :root {
     --gutter: 16px;
     --fs-hero: 32px;
     --fs-title: 24px;
-    --section-gap: 64px;
+    --section-gap: 48px; /* 2026-10-18 재진단 64 → 48 */
     --card-pad: 24px;
     --panel-pad: 24px;
     --card-gap: 16px;

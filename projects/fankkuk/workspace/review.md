@@ -1,9 +1,94 @@
 ---
 project: fankkuk
 status: passed
-basis: f7c93c32e9d6
-reviewers: [security-reviewer, code-reviewer, ui-reviewer, test-auditor]
+basis: 92889a794fed
+reviewers: [ui-reviewer, security-reviewer]
 ---
+
+# 리뷰 사인오프 — fankkuk (2026-10-20, 바로가기 보조 문구 간격)
+
+- 제목과 건수·설명 사이 간격이 0px이던 원인은 보조 문구의 -8px 위 여백이었다. 위 여백을 0으로 바꿔 공통 카드 간격 8px이 유지되게 했다.
+- ui-reviewer 통과. security-reviewer는 보안 영향 없음 확인. 도메인·테스트 변경이 없어 code-reviewer·test-auditor 생략.
+- 실행 근거: `npm run typecheck` 통과. `node gates/graph-stop.mjs` 종료 코드 0, implement·qa clean. Playwright 실제 세 역할 × 1440·390px에서 네 카드 모두 제목-보조 문구 8px, 가로 중앙 정렬, 가로 넘침 0 확인.
+- CSS 여백만 바뀌어 DB 통합과 개인정보 검사는 다시 실행하지 않았다. 직전 검사 결과는 아래 기록을 유지한다.
+
+---
+
+# 리뷰 사인오프 — fankkuk (2026-10-20, 홈 바로가기 중앙 정렬)
+
+- 세 홈이 공유하는 바로가기 카드의 align-items와 text-align을 center로 맞췄다. PC·모바일 배치 수와 역할별 내용은 그대로다.
+- ui-reviewer 통과. security-reviewer도 정렬만 바뀌어 입력·인증·인가·노출·URL 처리에 영향 없음 확인. 도메인 로직과 테스트 변경이 없어 code-reviewer·test-auditor 생략.
+- 실행 근거: `npm run typecheck` 통과, `node gates/graph-stop.mjs` 종료 코드 0·implement/qa clean. Playwright 실제 세 역할 × 1440·390px, 각 네 카드 align-items·text-align center, 자식 중심 오차 최대 0.006px, 가로 넘침 0.
+- 전체 DB 검사는 이번 CSS 수정으로 다시 실행하지 않았다. 직전 전체 결과와 보완 검증은 아래 기록을 유지한다.
+
+---
+
+# 리뷰 사인오프 — fankkuk (2026-10-20, 세 역할 홈 공통 구성)
+
+사용자가 승인한 v31 비교 시안을 로그인 전·팬·크리에이터 홈에 반영했다. 히어로 → 바로가기 네 개 → 소개·광고 배너 → 역할별 내용 → 공지 순서를 공유한다. 역할 판정과 업무 상태는 기존 서버 조회 결과를 사용한다.
+
+- ui-reviewer: 모바일에서 전역 스타일 때문에 버튼이 세로로 쌓이는 문제를 수정하고 재리뷰 통과.
+- code-reviewer: 공개 핸들이 없는 크리에이터의 페이지 링크가 빠지는 문제를 기존 공개 조회로 확인하도록 수정하고 재리뷰 통과.
+- security-reviewer: 서버의 본인 데이터 조회, 공개 페이지 확인, 문자열 표시를 검토하여 통과.
+- test-auditor: 실제 라우트의 진행 단계·공개 링크 검사가 부족하다는 지적을 반영해 조회 실패·공개 여부·기존 단계 매핑 검사를 보강하고 재감사 통과.
+- 실행 근거: `npm run typecheck`, `npm run copy:lint` 통과. `node gates/run-gates.mjs --quick` 1558개 파일 통과. 관련 7개 파일 79개 통과 후 추가 보강한 관련 3개 파일 24개 통과. `node gates/graph-stop.mjs` 종료 코드 0, implement·qa clean, basis 00eacce59e53 확인.
+- 실제 화면: 세 역할 × 1440·1024·768·390px에서 가로 넘침 0, 바로가기 네 개, 모바일 버튼 가로 배치, 런타임 오류 0. 팬·크리에이터 이름 20자에서도 넘침 0. 실제 빈 목록과 조회 실패 단위 검사 확인. 히어로 글자 대비 최저 PC 12.7:1·모바일 7.79:1.
+- 배포 전 `npm run build` 성공. `npm run check:pii -- --app http://localhost:3000` 개인정보 노출 0건 통과(익명·팬·크리에이터·직원·대표, 개인정보 구역 함수 23개 확인).
+- 화면 캡처: `workspace/evidence/v31-home/`의 guest·fan·creator PC/모바일 이미지.
+- 전체 DB 통합 검사 `npm run test:integration`: 91개 파일, 2051개 중 2039개 통과·12개 실패(5378.35초). 기존 주소 응답 10건 외 시안 경로 예약어 누락 1건·시각 반올림 비교 1건을 발견했다. 시안을 기존 images 경로 아래로 이동하고 시각 비교를 같은 버림 기준으로 수정한 뒤, 관련 두 통합 파일 57개 모두 통과(144.93초). test-auditor 재감사 지적 없음. DB 함수·예약어 데이터 변경 없음.
+
+---
+
+
+# 리뷰 사인오프 — fankkuk (2026-10-19, 로그인 전 크리에이터 슬라이드)
+
+로그인 전 새로 들어온 크리에이터를 최대 12명까지 기존 슬라이드로 표시한다. 1024px 미만은 가로 스크롤, 그 이상은 좌우 화살표다.
+
+- ui-reviewer: 좁은 PC 폭에서 16px 넘침을 발견하여 로그인 전 전용 여백·스크롤 규칙으로 해결. 재리뷰 통과.
+- security-reviewer: 공개 조회 조건과 반환 필드는 그대로이고 최대 표시 수만 변경됨. 보안 문제 없음.
+- code-reviewer 생략: 기존 스크롤 상태 구현을 그대로 사용, 도메인 로직·상태 관리 변경 없음. test-auditor 생략: 불변식 테스트 신설 없음.
+- 실행 근거: `npm run typecheck` 통과. `npx vitest run tests/follow-row-scroll-ui.test.tsx tests/banners-ui.test.tsx src/entities/creator/model/newest-creators.test.ts src/widgets/home/ui/home-page.test.ts` 46개 통과. `node gates/graph-stop.mjs` 종료 코드 0, implement·qa clean 확인. `git diff --check` 통과.
+- Playwright: 실제 비로그인 카드 12개, 다음 0→904·이전 904→0, 마지막 2712에서 다음 숨김. 390·725·768·769·800·1023·1024·1440px 페이지 가로 넘침 0. 1023px 화살표 숨김, 1024 이상 표시. 기존 카드 내용으로 확인했고 최대 길이 데이터 치환 검사는 이번에 다시 실행하지 않았다.
+
+---
+
+# 이전 리뷰 사인오프 — fankkuk (2026-10-19, 팬 홈 팔로우한 크리에이터 화살표 넘김)
+
+덮는 변경: fb3eea61 뒤 — 사용자 「양 옆으로 화살표로 누를 수 있게해줘 지금은 3명 밖에 안나온다」. 팬 홈 ④-2 한 줄 최대 12장 + 양옆 화살표(design-rules 16절 예외, DECISIONS 2026-10-19).
+닿은 표면: 시각(승인된 카드 줄 안의 반복 UI) · 화면 상태(스크롤 측정·초점 이동) → ui·code. 읽기 수 3 → 12 라 security 도 돌렸다.
+
+- ui-reviewer: 5건 — 16·17절에 예외 기록 / 767 이하 막대도 화살표도 없음 → 막대는 화살표가 보이는 폭에서만 숨김 / 초점 3px·아이콘 18 을 배너 단추와 같게 / 768 에서 화살표가 화면을 넘을 수 있음 → 실측 6px 넘침 확인, 화살표를 768 이하에서 숨김 / 누름 효과는 배너 단추에도 없어 그대로.
+- code-reviewer: 3건 — 팔로우 취소로 카드가 빠지면 화살표를 다시 안 잼 → 카드 수가 바뀌면 다시 잼 / 초점 옮기기·「이전」 클릭 시험 없음 → 시험 셋 추가.
+- security-reviewer: 결함 없음 — 읽는 id 는 서버가 세션으로 읽은 팔로우 카드에서만, 새 인가 경로 없음.
+- 실행 근거: `npx vitest run` 287 파일 2275 통과 · tsc 0 · copy:lint 0 · 새 시험 tests/follow-row-scroll-ui.test.tsx 8개, 변이 여섯(최대 3 · 다음 숨김 제거 · 거리 고정 · 끝에서 초점 옮김 제거 · 이전이 오른쪽으로 · 카드 수 바뀌어도 안 잼) 모두 빨간불 · Playwright(byeolbit_fan, 팔로우 6): 1440·1024 「다음」 → 4~6번째 카드, 화살표 처음 다음만 · 끝 이전만, 키보드로 끝까지 가면 초점이 반대 화살표, 390·768·769·1024·1440 가로 넘침 0 · 콘솔 오류 0, 768 이하 화살표 없음·막대 보임.
+
+---
+
+# 이전 사인오프 — fankkuk (2026-10-19 새벽, 로그인 전 첫 화면 다듬기 v29-landing-fix)
+
+## 2026-10-19 새벽, 로그인 전 첫 화면 다듬기 v29-landing-fix
+
+덮는 변경: ec9cc319 뒤 — 로그인 전 첫 화면(`/`)의 띠·흰 바로가기·4단계 줄·약속 띠·요금 한 장·배너 위치(design-rules 19절, DECISIONS 「로그인 전 첫 화면 다듬기」). 팬 홈은 부품 기본값 그대로.
+닿은 표면: 시각만(새 시각 방향 → 시안 승인 「추천대로」). 도메인 로직·데이터 모델·인가 변경 없음 → code-reviewer 는 뺐다(읽을 로직 변경이 없다). security-reviewer 는 프로젝트에 위험 표면이 있어 사인오프 조건이라 이번 diff 로 돌렸다.
+
+- ui-reviewer: 4건 — 약속 띠 카드 테두리+그림자(18절 위반, 중) → 테두리만 / 첫 화면 띠~배너 56 → 칸을 8 당겨 48(초점 여유 8 은 유지) / 그림 크기에 간격 토큰 → --icon·--icon-wrap / 버튼 고정 height → min-height 만. 팬 홈의 같은 테두리+그림자는 범위 밖이라 BACKLOG.
+- security-reviewer: 결함 없음 — 로그인 시 /home 이동이 읽기보다 먼저, 배너 공개 읽기·0장 처리 그대로, fit 은 CSS 클래스만 고름.
+- 실행 근거: `npx vitest run` 286 파일 2267 통과 · `tsc --noEmit` 0 · copy:lint 금지어 0 · 배너 자리 시험(banners-ui INV-Y7 S7) 변이 「배너를 다시 맨 위로」 1 실패 → 되돌려 32 통과 · Playwright 1440·1024·768·390: 가로 넘침 0 · 대비 4.5 미달 0 · 깨진 그림 0 · 콘솔 오류 0, 위반을 심은 사본(흐린 글자 #ccc · 2000px 칸)은 대비 1.61 · 넘침 575 로 둘 다 잡힘 · 첫 화면 띠~배너 장 48 실측.
+
+---
+
+# 이전 사인오프 — fankkuk (2026-10-18 밤, 사이트 재진단 반영)
+
+덮는 변경: 63c2e596 뒤 — 사용자 붙여 넣은 재디자인 요청 3단계, 시안 v29 승인(DECISIONS 「사이트 재진단 반영」, design-rules 18절).
+토큰(알약 태그·아이콘 8·작은 버튼 44·움직임·휴대폰 구간 48) · 공통 부품(버튼 ease-out·누름 98%, 누를 수 있는 카드 hover, 카드 테두리만, 창 24, 누름 칸 44) · 랜딩 ③ 32·휴대폰 4단계 목록 · 프로필 로그인 후 880·아래 판 뺌·자기 페이지 안내 머리로 · 크리에이터 머리 사진 층 · 선물 현황 간격 · 로그인 판 위 96 · 없는 페이지·오류 화면(새 widget status-page).
+닿은 표면: 시각 · 화면 구조 로직(프로필) · 세션 읽기(404 상단 바) → 코드·화면·보안. 데이터 모델·결제·권한 판단 변경 없음.
+리뷰어 사정: code-reviewer 에이전트가 주간 한도로 멈춰(사용자 「codex 도 사용」) 코드·화면 리뷰는 codex exec(읽기 전용)로 돌렸다.
+
+- codex 코드 리뷰: 3건 — 404 가 상단 바 읽기 실패에 같이 터짐(높음) → try/catch + 로그인 전 상단 바 / 「다시 시도」 reset → retry(이 버전 문서) / 자기 페이지 안내가 아래 판과 함께 사라짐 → 머리 자리로. 모두 고침.
+- codex 화면 리뷰: 4건 — 스위치 켜면 background 축약이 clip 을 되돌림 → background-color / 손가락 기기 누름 98% 사라짐 → 누름 규칙을 hover 뒤로 / 카드 누름 150 → 100ms / 설정 미리보기 카드도 뜸 → 링크 있는 카드만. 모두 고침.
+- security-reviewer: 결함 없음. 낮음 1 — 404 catch 가 Next 내부 예외까지 삼킴 → unstable_rethrow + 서버 로그.
+- 실행 근거: `npx vitest run` 286 파일 2267 통과 · tsc 0 · copy:lint 0 · 새 시험 tests/profile-single-send-ui.test.tsx — 변이 「자기 페이지 안내를 머리에서 뺌」 1 실패, 「로그인 후에도 아래 판」 2 실패, 되돌려 3 통과 · Playwright 43화면+없는 주소 × 1440·390 = 88장 다시 재기: 대비 미달 0·가로 넘침 0·서버 오류 0, 휴대폰 44 미만 누름 칸(문장 속 링크·라벨 줄 안 체크박스 빼고) 0, 랜딩 휴대폰 7,712 → 7,286, 프로필 880·#send-h 없음, 선물 현황 간격 32, 찾기 카드 hover translateY −2·설정 미리보기 none, 스위치 칠한 면 48×28, /a/b/c/d 404 · 통합 시험은 돌리지 않았다 — DB·서버 함수·쓰기 경로 변경이 없다(CSS·화면 구조만).
+
 
 # 리뷰 사인오프 — fankkuk (2026-10-18, 크리에이터 카드 v28 · 테마 색)
 

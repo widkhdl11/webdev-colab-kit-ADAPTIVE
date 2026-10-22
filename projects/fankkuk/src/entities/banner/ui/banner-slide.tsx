@@ -46,6 +46,14 @@ function GoLink({ banner, titleId }: { banner: BannerView; titleId: string }) {
 
 export function BannerSlide({ banner, tone, compact = false, decorative = false }: Props) {
   const titleId = decorative ? undefined : `banner-title-${banner.id}${compact ? "-preview" : ""}`;
+  // 글자가 이미 들어 있는 사이트 소개는 전체 이미지만 표시한다. 광고 표시·운영자 미리보기는 기존 경로를 따른다.
+  if (banner.imageOnly && banner.imageUrl && !banner.isAd && !compact) {
+    return (
+      <div className={s.imageCard} data-banner-card="">
+        <img className={s.fullImage} src={banner.imageUrl} width={2172} height={724} alt={decorative ? "" : `${banner.title} ${banner.description}`} />
+      </div>
+    );
+  }
   return (
     <div className={`${s.card} ${compact ? s.compact : ""}`} style={{ "--tone": tone } as CSSProperties} data-banner-card="">
       <div className={s.txt}>

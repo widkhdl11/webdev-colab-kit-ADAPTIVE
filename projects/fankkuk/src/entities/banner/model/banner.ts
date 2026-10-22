@@ -22,8 +22,8 @@ export type PublicBanner = { id: string; title: string; description: string; lin
 
 export type AdminBanner = PublicBanner & { sortOrder: number; startsOn: string; endsOn: string | null; state: BannerState };
 
-/** 화면이 그리는 배너 한 장 — 그림은 공개 저장소 주소(미리보기에서는 고른 파일 주소, 없으면 null) */
-export type BannerView = { id: string; title: string; description: string; link: string; isAd: boolean; imageUrl: string | null };
+/** 화면이 그리는 배너 한 장. imageOnly는 코드에서 추가한 사이트 소개용 표시 옵션이며 DB 입력으로 받지 않는다. */
+export type BannerView = { id: string; title: string; description: string; link: string; isAd: boolean; imageUrl: string | null; imageOnly?: boolean };
 
 const publicRow = z
   .object({

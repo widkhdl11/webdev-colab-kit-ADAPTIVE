@@ -1,10 +1,8 @@
 /* 홈 칸(design-rules 16절, 시안 docs/design/mockups/site/v27-home-airy/) — 로그인 전 첫 화면과 로그인 후 팬 홈이 같이 쓴다.
+   로그인 전 첫 화면만의 모양(띠·흰 바로가기·4단계 줄·약속 띠·요금 한 장)은 19절, 시안 v29-landing-fix — 아래 .landing 묶음.
    판·단계·약속·요금·화면 모형은 옛 랜딩(시안 v18/landing.html · v18.css · v20 C안) 모양 그대로 옮겼다. 화면 전용 크기는 여기 변수로만 둔다.
    본문 폭은 두 화면 모두 880(--col-list). 구간 사이는 칸 사이 48 + 구간 위 96(휴대폰 64) */
 .root {
-  --deco: 160px;
-  --deco-top: 48px;
-  --deco-edge: 0px;
   --icon-wrap: 64px;
   --icon: 48px;
   --mock-ic: 20px;
@@ -17,8 +15,76 @@
   gap: var(--space-12);
 }
 .root > * { min-width: 0; }
-/* 로그인 전 첫 화면 — 가운데 틀을 880 기둥으로(로그인 후 홈과 같은 폭) */
-.guest:global(.page-centered) { max-width: calc(var(--col-list) + 2 * var(--gutter)); }
+
+/* 로그인 전 첫 화면(시안 v29-landing-fix) — 배경 띠(①·⑤)는 화면 끝까지, 글은 880 기둥(로그인 후 홈과 같은 폭).
+   구간 사이는 --section-gap(PC 96 · 767 이하 48), 배너·바로가기 사이는 48 */
+.landing {
+  --icon-wrap: 64px;
+  --icon: 48px;
+  --mock-ic: 20px;
+  --cols-3: 3;
+  --cols-2: 2;
+  --hero-art: 280px;
+  --hero-search: 520px;
+  --pr-icon-wrap: 44px;
+  padding-bottom: var(--section-gap);
+}
+.col { width: 100%; min-width: 0; max-width: calc(var(--col-list) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
+.introBanner { display: block; width: 100%; max-width: 100%; height: auto; border-radius: var(--r-panel); }
+.col > * { min-width: 0; }
+.colTop { padding-top: var(--space-12); }
+
+/* ① 첫 화면 띠 — 왼쪽 글(머리말 → 제목 48 → 검색 → 버튼 둘), 오른쪽 마스코트 280 */
+.heroBand { background: url("/images/home/hero-bubbles.png") center / cover no-repeat, var(--grad-hero); }
+.heroIn { display: flex; align-items: center; gap: var(--space-8); padding-block: var(--space-16); }
+.heroCopy { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); text-align: left; }
+.heroCopy > :global(.t-lead) { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; color: var(--gray-600); }
+.heroCopy > :global(.t-hero) { margin: 0; }
+.heroCopy :global(.search) { max-width: var(--hero-search); margin: var(--space-2) 0 0; }
+.heroCopy :global(.hero-actions) { justify-content: flex-start; margin-top: var(--space-2); }
+.heroCopy :global(.hero-actions .btn) { min-height: var(--btn-h); }
+.heroArt { flex: 0 0 var(--hero-art); width: var(--hero-art); height: var(--hero-art); object-fit: contain; }
+
+/* 바로가기 넷 — 흰 바탕 경계 카드, 그림 48 이 글 위 */
+.flatTiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-12) 0 0; padding: 0; list-style: none; }
+.colTop > .flatTiles:first-child { margin-top: 0; }
+.flatTiles > li { min-width: 0; }
+.flatTile:global(.card) { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); height: 100%; padding: var(--space-6); text-align: center; text-decoration: none; color: var(--gray-900); }
+.flatTile img { width: var(--icon); height: var(--icon); flex: none; object-fit: contain; }
+.flatLabel { font-weight: var(--fw-btn); line-height: 1.5; }
+.flatLabel + .caption { margin-top: 0; }
+
+/* ③ 4단계 — 카드 없이 2×2 줄(그림 64 + 번호 · 제목 20 · 설명) */
+.stepRows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8) var(--space-12); margin: 0; padding: 0; list-style: none; }
+.stepRow { display: flex; align-items: flex-start; gap: var(--space-4); min-width: 0; }
+.stepRow > div { min-width: 0; }
+.stepRow img { flex: none; width: var(--icon-wrap); height: var(--icon-wrap); padding: var(--space-2); border-radius: var(--r-card); background: var(--tint); object-fit: contain; }
+.stepNum { margin: 0; font-size: var(--fs-small); line-height: var(--lh-caption); font-weight: var(--fw-btn); color: var(--gray-600); }
+.stepRow h3 { margin: var(--space-1) 0; }
+
+/* ⑤ 약속 띠 — 하나뿐인 색 띠, 화면 끝까지. 약속 카드는 아이콘 44 왼쪽 · 글 오른쪽 */
+.promiseBand { margin-top: var(--section-gap); padding-block: var(--section-gap); background: var(--tint); }
+.promiseBand :global(.card) { padding: var(--space-6); box-shadow: inset 0 0 0 1px var(--primary-50); } /* 테두리만(18절) */
+.promiseBand .mock { margin-bottom: var(--space-8); }
+.promiseRow { display: flex; align-items: flex-start; gap: var(--space-4); }
+.promiseRow > div { min-width: 0; }
+.promiseArt { flex: none; width: var(--icon-wrap); height: var(--icon-wrap); object-fit: contain; }
+.promiseRow .iconWrap { flex: none; width: var(--pr-icon-wrap); height: var(--pr-icon-wrap); }
+.promiseRow .iconWrap svg { width: var(--icon-xs); height: var(--icon-xs); }
+.promiseRow h3 { margin: 0 0 var(--space-1); font-family: var(--font); font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
+.promiseRow .muted { font-size: var(--fs-small); line-height: var(--lh-caption); }
+
+/* ⑥ 요금 한 장 — 세 칸, 칸 사이 세로 1px 선 */
+.priceJoined { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: var(--r-card); background: var(--white); box-shadow: inset 0 0 0 1px var(--gray-200); overflow: hidden; }
+.priceTier { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; padding: var(--space-6); }
+.priceTier + .priceTier { border-left: 1px solid var(--gray-200); }
+.priceTier .amount { margin-top: 0; }
+
+/* 로그인 전 구간 사이 — 공용 「section + section 은 위 48」(base.css)보다 앞서야 해서 선택자를 셋으로 둔다 */
+.landing .col > :is(.intro, .block, .slot) { margin-top: var(--section-gap); }
+
+/* 로그인 전 구간 머리 — 모두 왼쪽 한 선, 제목 아래 32 */
+.landing .head, .landing .slotHead { margin-bottom: var(--space-8); }
 
 /* ①·③ 하늘 그라데이션 둥근 판(시안 v20 C안). 안쪽 카드는 반투명 흰색 */
 .hero.hero { position: relative; padding: var(--hero-pad-top) var(--hero-px) var(--space-16); border-radius: var(--r-panel); background: var(--grad-hero); overflow-x: clip; }
@@ -35,14 +101,8 @@
 .tileLabel { margin-top: var(--space-2); font-family: var(--font-round); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
 .caption { font-size: var(--fs-caption); line-height: var(--lh-caption); color: var(--gray-600); }
 
-/* ③ 사이트 소개 — 제목 좌우에 3D 장식 둘(767 이하 숨김), 설명 아래 4단계 카드와 상태 흐름 */
+/* ③ 사이트 소개(로그인 전만) — 흰 바탕, 머리 아래 4단계 줄(위 .stepRows)과 상태 흐름 */
 .intro { margin-top: var(--section-gap); }
-.introLine { margin-top: var(--space-4); color: var(--gray-600); }
-.deco { position: absolute; top: var(--deco-top); width: var(--deco); height: var(--deco); object-fit: contain; pointer-events: none; }
-.decoL { left: var(--deco-edge); transform: rotate(-12deg); }
-.decoR { right: var(--deco-edge); transform: rotate(10deg); }
-.steps { display: grid; grid-template-columns: repeat(var(--cols-4), minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-10) 0 0; padding: 0; list-style: none; text-align: left; }
-.steps > :global(.card) { background: var(--glass); }
 
 /* 구간 공통 — 왼쪽 정렬 머리(제목 32 + 설명) */
 .block, .slot { margin-top: var(--section-gap); }
@@ -60,12 +120,8 @@
 .slotHead h2 { margin: 0; }
 .slotMeta { margin-left: var(--space-2); font-family: var(--font); font-size: var(--fs-body); font-weight: 400; color: var(--gray-600); }
 
-/* 단계 카드 — 그림 아래 16 · 번호 → 제목 8 */
-.stepCard { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
-.stepCard img { width: var(--art-step); height: var(--art-step); object-fit: contain; }
-.num + h3 { margin-top: calc(var(--space-2) - var(--space-4)); }
-.num { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-btn); color: var(--brand-ink); }
-.stepsLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-6); font-size: var(--fs-caption); color: var(--gray-600); }
+/* 상태 흐름 줄 — 4단계 아래 32, 위 1px 선 */
+.stepsLine { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--gray-200); font-size: var(--fs-caption); color: var(--gray-600); }
 
 /* ④·④-2 카드 줄 — 크리에이터 찾기와 같은 카드 틀(design-rules 17절). 본문 칸 678 이상 3열 · 444 이상 2열(카드 210 이상),
    찾기 격자와 같은 기준(DECISIONS 2026-10-18). 그 아래는 옆으로 넘기는 한 줄(카드 68%, 한 장씩 멈춤).
@@ -80,6 +136,86 @@
 }
 @container (min-width: 678px) {
   .cardRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ④-2 넘기는 줄(2026-10-19 사용자 「양 옆으로 화살표로」) — 어느 폭이든 한 줄, 카드 폭은 위 격자와 같은 열 수(칸 678 이상 셋 · 444 이상 둘 · 그 아래 68%).
+   화살표가 카드에 겹치지 않게(사용자 「상단 배너처럼 필요한만큼 폭을 넓히거나 효과를 줘」) 769 이상은 줄을 본문 기둥보다 양옆으로 --edge 만큼 넓힌다.
+   넓힌 자리에는 이웃 카드가 바깥쪽으로 흐려지며 보이고 화살표는 그 자리에 선다. 첫 카드는 다른 구간과 같은 왼쪽 선.
+   --edge: 768 이하 8(카드 초점 테두리 여유만) · 769 이상 40(본문 칸 바깥 여백 안) · 본문 칸 안쪽이 기둥보다 48 넉넉하면(928 이상) 64.
+   흐려지는 면은 카드에서 8 떨어진 곳까지만 — 초점 테두리(3 + 2)가 흐려지지 않는다 */
+.scroller { position: relative; --edge: var(--space-2); }
+/* 로그인 전 본문은 양옆 여백이 24px이라 좁은 창에서는 화살표 자리 40px이 부족하다. */
+@media (width < 1024px) {
+  .landing .scroller { --edge: var(--space-2); }
+  .landing .rowArrow { display: none; }
+  .landing .cardRow.cardRowScroll { scrollbar-width: auto; }
+  .landing .cardRow.cardRowScroll::-webkit-scrollbar { display: block; }
+}
+@media (min-width: 769px) {
+  .scroller { --edge: 40px; }
+}
+@container pane (min-width: 928px) {
+  .scroller { --edge: 64px; }
+}
+.scroller > .cardRow.cardRowScroll {
+  --fade: calc(var(--edge) - var(--space-2));
+  margin: calc(-1 * var(--space-2)) calc(-1 * var(--edge));
+  padding: var(--space-2) var(--edge);
+  scroll-padding-inline: var(--edge);
+  -webkit-mask-image: linear-gradient(to right, transparent, var(--white) var(--fade), var(--white) calc(100% - var(--fade)), transparent);
+  mask-image: linear-gradient(to right, transparent, var(--white) var(--fade), var(--white) calc(100% - var(--fade)), transparent);
+}
+/* 스크롤 막대는 화살표가 보이는 폭에서만 숨긴다 — 768 이하 좁은 창을 마우스로 쓰는 사람은 막대로 넘긴다(손가락 기기는 원래 막대가 저절로 숨는다) */
+@media (min-width: 769px) {
+  .cardRow.cardRowScroll { scrollbar-width: none; }
+  .cardRow.cardRowScroll::-webkit-scrollbar { display: none; }
+}
+@container (min-width: 444px) {
+  .cardRow.cardRowScroll { display: flex; gap: var(--space-6); overflow-x: auto; }
+  .cardRow.cardRowScroll > li { flex: 0 0 calc((100% - var(--space-6)) / 2); }
+}
+@container (min-width: 678px) {
+  .cardRow.cardRowScroll > li { flex-basis: calc((100% - 2 * var(--space-6)) / 3); }
+}
+/* 화살표 — 누르는 칸은 44, 보이는 동그라미(--dot)는 넓힌 자리에 맞춘다.
+   자리 40: 누르는 칸을 그 자리 안에(가로 40 × 세로 44 — 카드를 덮지 않게 가로만 자리 폭), 동그라미 36 을 양쪽 2 띄워 그리고 초점 테두리는 동그라미 안쪽(화면 끝에서 잘리지 않고 카드에 닿지 않음).
+   자리 64: 동그라미 44 를 자리 가운데(카드와 10 떨어짐) — 광고 배너 넘김 단추와 같은 크기 */
+.rowArrow {
+  --dot: 36px;
+  --dot-gap: 2px;
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: min(var(--btn-h-sm), var(--edge));
+  height: var(--btn-h-sm);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+.rowArrow::before { content: ""; position: absolute; top: calc((var(--btn-h-sm) - var(--dot)) / 2); width: var(--dot); height: var(--dot); border-radius: var(--r-pill); background: var(--white); box-shadow: inset 0 0 0 1px var(--field-line); }
+.rowArrow:hover::before { background: var(--gray-50); }
+.rowArrow:focus-visible { outline: none; }
+.rowArrow:focus-visible::before { outline: 3px solid var(--focus); outline-offset: -3px; } /* 색·굵기는 광고 배너 넘김 단추와 같게, 자리 40 에서는 안쪽 */
+.rowArrow[hidden] { display: none; }
+.rowArrow svg { position: absolute; top: calc((var(--btn-h-sm) - 18px) / 2); width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rowPrev { left: calc(-1 * var(--edge)); }
+.rowNext { right: calc(-1 * var(--edge)); }
+.rowPrev::before { left: var(--dot-gap); }
+.rowNext::before { right: var(--dot-gap); }
+.rowPrev svg { left: calc(var(--dot-gap) + (var(--dot) - 18px) / 2); }
+.rowNext svg { right: calc(var(--dot-gap) + (var(--dot) - 18px) / 2); }
+@container pane (min-width: 928px) {
+  .rowArrow { --dot: var(--btn-h-sm); --dot-gap: 0px; }
+  .rowArrow:focus-visible::before { outline-offset: 2px; }
+  .rowPrev { left: calc((var(--edge) + var(--btn-h-sm)) / -2); }
+  .rowNext { right: calc((var(--edge) + var(--btn-h-sm)) / -2); }
+}
+/* 팬 홈은 768 이하에서 바깥 여백이 16 이라 넓힐 자리가 없다 — 그 폭부터 화살표 없이 손가락·막대로 넘긴다 */
+@media (max-width: 768px) {
+  .rowArrow { display: none; }
 }
 
 /* ⑤ 약속 — 옅은 하늘 큰 판(반경 24 · 안쪽 48). 제목·모형·카드가 같은 왼쪽 선, 가입 버튼만 가운데(2026-10-17 사용자 지시) */
@@ -103,6 +239,11 @@
 
 /* ⑥ 요금 */
 .priceCard { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.priceBoxArt { display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 136px; margin-block: var(--space-2); }
+.priceBox { display: block; max-width: 100%; overflow: hidden; }
+.priceBox[data-size="small"] { width: 104px; height: 76px; }
+.priceBox[data-size="medium"] { width: 128px; height: 124px; }
+.priceBox[data-size="large"] { width: 128px; height: 136px; }
 .amount { margin-top: var(--space-2); font-size: var(--fs-title); font-weight: var(--fw-bold); line-height: 1.3; font-variant-numeric: tabular-nums; }
 .amount span { margin-left: var(--space-2); font-size: var(--fs-card); font-weight: var(--fw-btn); }
 .inc { display: flex; align-items: center; gap: var(--space-2); color: var(--brand-ink); font-weight: var(--fw-btn); }
@@ -118,26 +259,81 @@
 .notices:global(.nlist) :global(.t-meta) { flex-shrink: 0; }
 
 @media (max-width: 1024px) {
-  .root { --cols-4: 2; --deco: 88px; --deco-top: 32px; --deco-edge: 16px; }
+  .root { --cols-4: 2; }
 }
-/* 글자 칸 바깥 여백이 장식보다 좁아지는 폭에선 장식을 숨긴다 */
 @media (max-width: 920px) {
-  .deco { display: none; }
+  .flatTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 768px) {
   .root { --cols-3: 1; --cols-2: 1; --hero-px: var(--space-4); padding-top: var(--space-4); }
   .promise { padding: var(--space-12) var(--space-6); }
 }
-/* ③ 단계 카드 — 767 이하는 한 줄에 한 장(두 장씩이면 판 안 카드가 좁아 「크리에이터가」가 낱말 중간에서 끊긴다. 시안 slots-mobile 도 끊겨 있었다) */
 @media (max-width: 767px) {
-  .steps { grid-template-columns: minmax(0, 1fr); }
   /* 바로가기 두 장씩 — 사이 12 · 안쪽 16 으로 글자 칸을 95 → 117(「크리에이터」 약 96 이 한 줄에) */
   .tiles { gap: var(--space-3); }
   .tile:global(.card) { padding: var(--space-4); }
+  /* 로그인 전 — 첫 화면은 마스코트 160 이 위, 4단계·약속·요금은 한 줄에 하나 */
+  .landing { --hero-art: 160px; --cols-3: 1; --cols-2: 1; }
+  .heroBand { background-position: right center; }
+  .heroIn { flex-direction: column-reverse; align-items: stretch; gap: var(--space-4); padding-block: var(--space-8) var(--space-12); }
+  .heroArt { align-self: center; }
+  .heroCopy { align-items: stretch; }
+  .heroCopy :global(.search) { max-width: none; }
+  .flatTiles { gap: var(--space-3); }
+  .flatTile:global(.card) { padding: var(--space-4); }
+  .stepRows { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+  .priceJoined { grid-template-columns: minmax(0, 1fr); }
+  .priceTier + .priceTier { border-left: 0; border-top: 1px solid var(--gray-200); }
 }
 /* 좁은 폭 — 「모두 보기」가 제목 줄에 안 들어가므로 목록 아래 오른쪽(목록 뒤에 둔 두 번째 링크)으로 바꾼다 */
 .moreBottom:global(.more-link) { display: none; }
 @media (max-width: 767px) {
   .moreTop:global(.more-link) { display: none; }
   .moreBottom:global(.more-link) { display: block; width: fit-content; margin: var(--space-4) 0 0 auto; }
+}
+
+/* v31 승인: 세 역할 모두 같은 히어로·바로가기·배너를 사용한다. */
+.roleHome { container: home / inline-size; --hero-art: 240px; }
+.roleHome .heroIn { min-height: 408px; gap: var(--space-6); }
+.roleHome .heroCopy { gap: var(--space-2); }
+.roleHome .heroCopy > :global(.t-lead) { color: var(--ink); }
+.roleHome .heroCopy > h1 { overflow-wrap: anywhere; }
+.roleHome .heroCopy :global(.search) { height: 56px; border-radius: var(--r-btn); margin: var(--space-4) 0 0; }
+.roleHome .heroCopy :global(.hero-actions) { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+.roleHome .heroCopy :global(.hero-actions .btn) { font-size: var(--fs-small); }
+.roleHome .flatTiles { gap: var(--space-4); }
+.roleHome .flatTile:global(.card) { min-height: 180px; gap: var(--space-2); }
+.homeBanner { margin-top: var(--space-12); }
+.homeBanner > * { margin: 0; }
+.heroProfile { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); width: 100%; max-width: 520px; min-height: 56px; padding: var(--space-2) var(--space-3); margin-top: var(--space-4); border: 1px solid var(--gray-200); border-radius: var(--r-btn); background: var(--white); }
+.heroProfileName { min-width: 0; overflow-wrap: anywhere; font-weight: var(--fw-btn); }
+.heroAvatar { display: grid; place-items: center; flex: none; width: 40px; height: 40px; overflow: hidden; border-radius: var(--r-pill); background: var(--primary-50); font-weight: var(--fw-bold); }
+.heroAvatar img { width: 100%; height: 100%; object-fit: cover; }
+.summaryRows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--gray-200); }
+.summaryRows li + li { border-top: 1px solid var(--gray-200); }
+.summaryRow { display: flex; align-items: center; gap: var(--space-4); min-height: 88px; padding-block: var(--space-4); color: var(--ink); text-decoration: none; }
+.summaryText { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.summaryText strong { display: block; font-weight: var(--fw-btn); }
+.summaryText > span { display: block; margin-top: var(--space-1); color: var(--gray-600); font-size: var(--fs-small); }
+.summaryStatus { flex: none; max-width: 40%; font-size: var(--fs-small); text-align: right; overflow-wrap: anywhere; }
+@container home (width < 928px) {
+  .roleHome .heroIn { --hero-art: 184px; }
+  .roleHome .heroCopy > h1 { font-size: var(--fs-title); }
+}
+@container home (width < 960px) {
+  .roleHome .scroller { --edge: var(--space-2); }
+  .roleHome .rowArrow { display: none; }
+  .roleHome .cardRow.cardRowScroll { scrollbar-width: auto; }
+  .roleHome .cardRow.cardRowScroll::-webkit-scrollbar { display: block; }
+}
+@media (max-width: 767px) {
+  .roleHome { --hero-art: 136px; }
+  .roleHome .heroIn { position: relative; display: block; min-height: 544px; padding-top: 176px; padding-bottom: var(--space-12); }
+  .roleHome .heroArt { position: absolute; top: var(--space-6); right: var(--gutter); width: 136px; height: 136px; }
+  .roleHome .heroCopy > h1 { min-height: 90px; font-size: var(--fs-hero); }
+  .roleHome .heroCopy :global(.hero-actions) { flex-direction: row; flex-wrap: nowrap; }
+  .roleHome .heroCopy :global(.hero-actions .btn) { flex: 1; min-width: 0; padding-inline: var(--space-2); }
+  .roleHome .flatTiles { gap: var(--space-4); }
+  .roleHome .flatTile:global(.card) { min-height: 164px; }
+  .summaryRow { gap: var(--space-3); }
 }

@@ -1,7 +1,7 @@
 /* 로그인 — 시안 docs/design/mockups/site/v18/login.html · v18-pub.css 「로그인 · 가입 · 새 비밀번호」.
    가운데 카드 480(양옆 여백 포함 528). 상단 바 아래 88(본문 위 40 + 구간 위 48), 아래 바닥글까지 96(휴대폰 64).
    카드·머리·폼·확인칸·오류(.err)·아래 줄(.foot-line)은 전역 클래스 */
-.page { padding: calc(var(--space-10) + var(--space-12)) 0 var(--section-gap); }
+.page { padding: var(--space-24) 0 var(--section-gap); } /* 위 96(간격 단계, 2026-10-18 재진단 — 88 이던 것) */
 :global(.auth).box { max-width: calc(var(--col-auth) + 2 * var(--gutter)); }
 .box :global(.head) { margin-bottom: var(--space-8); }
 .box :global(.head .t-lead) { margin-top: var(--space-2); font-size: var(--fs-lead); font-weight: var(--fw-sub); line-height: 1.5; }

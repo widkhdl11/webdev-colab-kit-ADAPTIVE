@@ -37,7 +37,7 @@ type Props = {
 };
 
 // 단계 이름 — 용어집 4절 표기(출고·배송 중·반송·검수). 「사무실로 오는 중」은 용어집에 행이 없어 시안 표기를 임시로 쓴다.
-const STEP_LABEL: Record<ProgressStepKey, string> = {
+export const PROGRESS_STEP_LABEL: Record<ProgressStepKey, string> = {
   approval_waiting: "승인 대기",
   to_office: "사무실로 오는 중",
   inspecting: "검수 중",
@@ -142,7 +142,7 @@ function Sub({ parts }: { parts: readonly string[] }) {
 }
 
 function Progress({ step, alert }: { step: ProgressStep; alert: boolean }) {
-  const label = STEP_LABEL[step.key];
+  const label = PROGRESS_STEP_LABEL[step.key];
   return (
     <div className={s.prog}>
       <span className={s.bar} aria-hidden="true" data-bar="">

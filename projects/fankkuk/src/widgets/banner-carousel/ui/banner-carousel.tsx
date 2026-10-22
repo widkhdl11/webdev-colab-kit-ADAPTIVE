@@ -38,7 +38,8 @@ function Icon({ d }: { d: string }) {
   );
 }
 
-export function BannerCarousel({ banners }: { banners: readonly BannerView[] }) {
+/** fit = "column" — 본문 기둥 폭 그대로, 양옆 이전·다음 장을 보이지 않는다(로그인 전 첫 화면, 시안 v29-landing-fix) */
+export function BannerCarousel({ banners, fit = "wide" }: { banners: readonly BannerView[]; fit?: "wide" | "column" }) {
   const n = banners.length;
   const [current, setCurrent] = useState(0);
   /** 두 장일 때 다른 장이 선 쪽 — 평소 +1(오른쪽) */
@@ -125,7 +126,7 @@ export function BannerCarousel({ banners }: { banners: readonly BannerView[] }) 
   const isMouse = (e: PointerEvent<HTMLElement>) => e.pointerType === "mouse";
 
   return (
-    <div className={s.slot} data-banner-slot="">
+    <div className={fit === "column" ? `${s.slot} ${s.column}` : s.slot} data-banner-slot="">
       <section
         className={s.wide}
         aria-roledescription="carousel"

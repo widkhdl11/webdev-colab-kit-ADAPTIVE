@@ -17,9 +17,9 @@
 
 /* 스위치 — 상세 설정의 알림 스위치와 같은 모양(48×28 · 손잡이 20) */
 .txt { display: grid; gap: 4px; cursor: pointer; }
-.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 48px; height: 28px; margin: 0; border-radius: var(--r-pill); background: var(--gray-500); cursor: pointer; transition: background 0.15s; }
+.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 48px; height: 28px; box-sizing: content-box; margin: -8px; border: 8px solid transparent; background-clip: padding-box; border-radius: var(--r-pill); background-color: var(--gray-500); cursor: pointer; /* 투명 테두리 8 로 누름 칸 64×44, 보이는 모양은 48×28 그대로(2026-10-18 재진단) */ transition: background 0.15s; }
 .switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--white); transition: transform 0.15s; }
-.switch:checked { background: var(--brand); }
+.switch:checked { background-color: var(--brand); } /* background 축약은 background-clip 을 되돌려 투명 테두리까지 칠한다 — 색만 바꾼다 */
 .switch:checked::after { transform: translateX(20px); }
 .switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 

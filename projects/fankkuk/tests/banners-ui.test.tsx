@@ -16,7 +16,7 @@ import { BannerForm } from "@/features/admin-banner-edit/ui/banner-form";
 import type { AdminBanner } from "@/entities/banner/model/banner";
 import { BannersPanel } from "@/widgets/admin-banners/ui/banners-panel";
 import { BANNER_INTERVAL_MS, BannerCarousel } from "@/widgets/banner-carousel/ui/banner-carousel";
-import { bannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
+import { bannerSlot, memberBannerSlot } from "@/widgets/banner-carousel/ui/banner-slot";
 import { CreatorSearchPage } from "@/widgets/creator-search/ui/creator-search-page";
 import { CreatorHomePage } from "@/widgets/home/ui/creator-home-page";
 import { HomePage } from "@/widgets/home/ui/home-page";
@@ -69,6 +69,30 @@ const banner = (over: Partial<BannerView> = {}): BannerView => ({
 const draw = (node: React.ReactNode) => act(() => root.render(<>{node}</>));
 const goLink = (scope: ParentNode = host) => scope.querySelector<HTMLAnchorElement>("a[data-banner-go]");
 const titles = () => [...host.querySelectorAll<HTMLElement>("[data-banner-title]")];
+
+describe("로그인 후 소개 배너", () => {
+  it("소개 이미지 다음에 기존 배너를 유지하며 다음 버튼으로 이동한다", () => {
+    draw(memberBannerSlot([banner({ isAd: true })]));
+    const first = host.querySelector('[data-banner-current="true"]')!;
+    expect(first.querySelector("img")?.getAttribute("src")).toBe("/images/banners/launch-01-introduction-no-button.png");
+    expect(first.querySelector("img")?.getAttribute("alt")).toContain("팬의 마음을");
+    expect(first.querySelector("a")).toBeNull();
+    act(() => host.querySelector<HTMLButtonElement>('button[aria-label="다음 배너"]')!.click());
+    const next = host.querySelector('[data-banner-current="true"]')!;
+    expect(next.querySelector("[data-banner-title]")?.textContent).toBe("하루님 생일 주간");
+    expect(next.querySelector("[data-banner-tag]")?.textContent).toBe("광고");
+    expect(next.querySelector("a")?.getAttribute("href")).toBe("/about");
+  });
+
+  it("운영자 배너가 없거나 읽기 실패여도 소개 한 장은 표시하며 넘김 버튼은 없다", () => {
+    for (const rows of [[], null]) {
+      draw(memberBannerSlot(rows));
+      expect(host.querySelectorAll("[data-banner-card]")).toHaveLength(1);
+      expect(host.querySelector("img")?.getAttribute("src")).toContain("introduction-no-button");
+      expect(host.querySelector('button[aria-label="다음 배너"]')).toBeNull();
+    }
+  });
+});
 /** 지금 보이는 장의 제목 */
 const currentTitle = () => host.querySelector('[data-banner-current="true"] [data-banner-title]')?.textContent ?? null;
 
@@ -129,27 +153,28 @@ const PROFILE = {
 };
 
 /** 다섯 자리 — 각 화면에 배너 칸을 넣어 그린다. before: 배너 칸이 본문 맨 위(앞에 아무것도 없음)이고 바로 뒤에 그 화면의 첫 구역이 오는지
- *  (2026-10-18 사용자 「위치는 제일 상단에」 — design-rules 16절) */
+ *  (2026-10-18 사용자 「위치는 제일 상단에」 — design-rules 16절). 로그인 전 첫 화면만 첫 화면 띠 바로 아래(같은 날 「추천대로」, 시안 v29-landing-fix) */
 const first = (slot: Element) => slot.previousElementSibling === null;
+const afterHomeTiles = (slot: Element) => slot.parentElement?.previousElementSibling?.tagName === "UL" && slot.parentElement?.parentElement?.previousElementSibling?.getAttribute("aria-labelledby") === "hero-title";
 const PLACES: { name: string; render: (slot: React.ReactNode) => React.ReactNode; before: (slot: Element) => boolean }[] = [
   {
-    name: "로그인 전 첫 화면 맨 위",
+    name: "로그인 전 바로가기 아래",
     render: (slot) => <LandingPage prices={PRICES} newest={[]} looks={{}} notices={[]} banner={slot} />,
-    before: (slot) => first(slot) && slot.nextElementSibling?.getAttribute("aria-labelledby") === "hero-title",
+    before: afterHomeTiles,
   },
   {
-    name: "팬 홈 맨 위",
+    name: "팬 홈 바로가기 아래",
     render: (slot) => (
       <HomePage nickname="별빛" gifts={[]} following={[]} looks={{}} faceToneByName={{}} notices={[]} prices={PRICES} actionCount={0} receivedCount={0} banner={slot} />
     ),
-    before: (slot) => first(slot) && slot.nextElementSibling?.getAttribute("aria-labelledby") === "hero-title",
+    before: afterHomeTiles,
   },
   {
-    name: "크리에이터 홈 맨 위",
+    name: "크리에이터 홈 바로가기 아래",
     render: (slot) => (
       <CreatorHomePage profile={PROFILE} accountHref="/creator/account" notices={[]} actionCount={0} accessLog={[]} ongoingCount={0} sentGifts={[]} banner={slot} />
     ),
-    before: (slot) => first(slot) && slot.nextElementSibling?.querySelector("h1")?.textContent === PROFILE.name,
+    before: afterHomeTiles,
   },
   {
     name: "크리에이터 찾기 맨 위",

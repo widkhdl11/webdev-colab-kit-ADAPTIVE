@@ -7,7 +7,7 @@
 .set :global(.fs) > :global(.label) { margin-bottom: 12px; }
 /* 구간 바로가기 — 시안 .jump(글자 링크 한 줄) */
 .jump { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); margin-top: var(--space-6); font-weight: var(--fw-btn); }
-.jump a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.jump a { display: inline-flex; align-items: center; min-height: 44px; /* 누름 칸 44 */ color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .page { display: grid; gap: var(--space-12); margin-top: var(--space-8); min-width: 0; }
 .page > * { min-width: 0; }
 .page > section + section { margin-top: 0; }
@@ -41,9 +41,9 @@
 /* 스위치 — 입력은 체크박스(role=switch) 그대로, 모양은 v18 공통 .sw(base.css 16절)와 같게: 48×28 · 손잡이 20 */
 .txt { display: grid; gap: 4px; }
 label.txt { cursor: pointer; }
-.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 48px; height: 28px; margin: 0; border-radius: var(--r-pill); background: var(--gray-500); cursor: pointer; transition: background .15s; }
+.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 48px; height: 28px; box-sizing: content-box; margin: -8px; border: 8px solid transparent; background-clip: padding-box; border-radius: var(--r-pill); background-color: var(--gray-500); cursor: pointer; /* 투명 테두리 8 로 누름 칸 64×44, 보이는 모양은 48×28 그대로(2026-10-18 재진단) */ transition: background .15s; }
 .switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--white); transition: transform .15s; }
-.switch:checked { background: var(--brand); }
+.switch:checked { background-color: var(--brand); } /* background 축약은 background-clip 을 되돌려 투명 테두리까지 칠한다 — 색만 바꾼다 */
 .switch:checked::after { transform: translateX(20px); }
 .switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .switch:disabled { cursor: not-allowed; opacity: .5; }

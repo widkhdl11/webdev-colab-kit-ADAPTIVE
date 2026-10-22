@@ -12,4 +12,9 @@
 /* 개인정보처리방침은 다른 링크와 구별되게 굵게(개인정보 보호법 안내서의 업계 관행) */
 .footer-links .footer-strong { font-weight: var(--fw-bold); color: var(--gray-900); }
 .footer-copy { margin-top: 32px; font-size: var(--fs-caption); }
-@media (max-width: 767px) { .footer-grid { grid-template-columns: 1fr; } }
+@media (max-width: 767px) {
+  .footer-grid { grid-template-columns: 1fr; }
+  /* 휴대폰 누름 칸 44 — 링크 사이 간격 대신 줄 높이로(전체 길이는 거의 그대로, 2026-10-18 재진단) */
+  .footer-links { gap: 0; }
+  .footer-links a { display: flex; align-items: center; min-height: 44px; }
+}

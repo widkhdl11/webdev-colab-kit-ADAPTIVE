@@ -53,8 +53,8 @@
 .btn {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px; /* 누름 칸 44(2026-10-18 재진단, 이전 40) */
+  height: 44px;
   padding: 0;
   border: 0;
   border-radius: var(--r-pill);
@@ -67,9 +67,9 @@
 .btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .dots { display: flex; align-items: center; }
 /* 누르는 칸은 24 — 보이는 점은 8(지금 장은 24 길이) */
-.dot { display: grid; place-items: center; min-width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; }
+.dot { display: grid; place-items: center; min-width: 44px; height: 44px; /* 점 모양은 그대로, 누름 칸 44(2026-10-18 재진단) */ padding: 0; border: 0; background: none; cursor: pointer; }
 .dot::before { content: ""; width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--gray-500); }
-.dot[aria-current="true"] { min-width: 32px; }
+.dot[aria-current="true"] { min-width: 44px; }
 .dot[aria-current="true"]::before { width: 24px; background: var(--ink); }
 .btn:focus-visible, .dot:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
@@ -85,3 +85,9 @@
 @media (max-width: 767px) {
   .step { display: none; }
 }
+
+/* 본문 기둥 폭 그대로(로그인 전 첫 화면, 시안 v29-landing-fix) — 판이 양옆으로 나가지 않고 가운데 장이 칸 전체. 옆 장은 칸 밖이라 잘려 안 보인다 */
+.column .wide { width: 100%; margin-inline: 0; }
+.column .track { grid-template-columns: 100%; }
+/* 줄 위 8(초점 테두리 여유)만큼 칸을 당겨 첫 화면 띠와 배너 장 사이를 48 그대로(19절) */
+.column { margin-top: calc(var(--space-2) * -1); }
