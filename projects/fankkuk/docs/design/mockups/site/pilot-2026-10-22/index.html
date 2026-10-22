@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>정돈 시범 — 지금 / 바꾼 뒤</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="../v34-part1/v33.css"><style>.now-box img{width:100%;display:block}.now-box{background:#fff;border:1px solid #d1d5db;border-radius:12px;overflow:hidden}.cmp-head ol{margin:8px 0 0;padding-left:24px;font-size:14px;color:#4b5563}.cmp-head li+li{margin-top:2px}.mk-toggle{border:1px solid #9ca3af;background:#fff;border-radius:12px;padding:8px 16px;min-height:44px}.mk-toggle[aria-pressed=true]{background:#b42318;color:#fff;border-color:#b42318}</style></head>
+<body class="review-body">
+<header class="review-toolbar"><div><h1>정돈 시범 — 지금 / 바꾼 뒤</h1><p>왼쪽이 지금 사이트 캡처, 오른쪽이 바꾼 시안이에요. 시안 위 회색 막대로 인원·테마 색을 바꿔 볼 수 있어요. 이름·소개는 예시예요. 스크롤을 따라오는 칸은 「크게 보기」에서 확인하세요.</p></div><div class="review-modes" aria-label="화면 설정"><button type="button" data-width="1440" aria-pressed="true">PC 1440</button><button type="button" data-width="390" aria-pressed="false">모바일 390</button><button type="button" class="mk-toggle" id="mk" aria-pressed="true">바뀐 곳 번호 표시</button></div></header>
+
+<div class="cmp-head"><h2>팔로우한 크리에이터 /me/following</h2><ol>
+<li>① 같은 카드 3열(카드 하나 365 높이) → 줄 목록(줄 하나 72). 4명이면 카드 하나만 남던 빈칸이 없어짐</li>
+<li>② 제목 옆 작은 회색 「4」(16) → 오른쪽 크림 판의 큰 숫자 「4명」(48). 스크롤해도 따라옴</li>
+<li>③ 머리 오른쪽의 「크리에이터 더 찾기」 → 숫자 판 안으로</li>
+<li>④ 카드 아래 띠의 「선물 보내기」·팔로우 취소 → 줄 오른쪽 끝(취소 아이콘 누르는 곳 44)</li>
+<li>⑤ 카드 안 글자 크기 4종(20·16·14·12) → 이름 16 · 소개 14 · 채널 칩 12 세 가지</li></ol></div>
+<div class="cmp-row" data-row><section><p class="tagline">지금 사이트 (4명)</p><div class="now-box"><img data-now="following-list" src="now/following-list-1440.png" alt="팔로우한 크리에이터 지금 사이트 화면 4명"></div></section><section><p class="tagline">바꾼 뒤 · <a href="following.html" target="_blank">크게 보기 ↗</a></p><div class="frame-box"><iframe title="팔로우한 크리에이터 바꾼 시안" data-page="following.html" data-h="640" data-hm="860"></iframe></div></section></div>
+
+<div class="cmp-head" style="margin-top:48px"><h2>크리에이터 상세 설정 /creator/settings</h2><ol>
+<li>① 입력 카드 셋 아래에 있던 미리보기 → 입력 오른쪽 5열로. 테마 색을 고르면 바로 옆에서 바뀌고 스크롤을 따라옴</li>
+<li>② 팬덤 이름·팬마크·테마 색의 번호 동그라미(1·2·3)와 카드 셋 → 한 판 안에 소제목 셋(왼쪽 7열)</li>
+<li>③ 되돌리기·저장이 미리보기 아래(약 1,000px 아래) → 입력 끝에 바로. 390 에서는 화면 아래에 붙는 띠</li>
+<li>④ 「주소와 설정」 접기 다섯: 720 → 880 폭으로 줄이고 위에 구분선. 「팬덤」은 1200 폭</li>
+<li>⑤ 미리보기 점선 상자 → 1px 실선 · 「프로필 수정」 링크 높이 17 → 44</li></ol></div>
+<div class="cmp-row" data-row><section><p class="tagline">지금 사이트</p><div class="now-box"><img data-now="settings" src="now/settings-1440.png" alt="상세 설정 지금 사이트 화면"></div></section><section><p class="tagline">바꾼 뒤 · <a href="settings.html" target="_blank">크게 보기 ↗</a></p><div class="frame-box"><iframe title="상세 설정 바꾼 시안" data-page="settings.html" data-h="1660" data-hm="1930"></iframe></div></section></div>
+<script>
+let mkOn=true;
+function sendMk(){document.querySelectorAll('iframe').forEach(f=>{try{f.contentWindow.postMessage({mk:mkOn},'*');}catch(e){}});}
+document.querySelectorAll('iframe[data-page]').forEach(frame=>{frame.addEventListener('load',sendMk);frame.src=frame.dataset.page;});
+document.getElementById('mk').addEventListener('click',e=>{mkOn=!mkOn;e.currentTarget.setAttribute('aria-pressed',String(mkOn));sendMk();});
+let viewWidth=1440;
+function sizeFrames(){
+  document.querySelectorAll('[data-row]').forEach(r=>r.classList.toggle('mobile',viewWidth===390));
+  document.querySelectorAll('img[data-now]').forEach(i=>{i.src='now/'+i.dataset.now+'-'+viewWidth+'.png';});
+  document.querySelectorAll('.frame-box').forEach(box=>{const frame=box.querySelector('iframe');const hh=(viewWidth===390)?frame.dataset.hm:frame.dataset.h;const scale=box.clientWidth/viewWidth;frame.style.width=viewWidth+'px';frame.style.height=hh+'px';frame.style.transform='scale('+scale+')';box.style.height=(hh*scale)+'px';});
+}
+document.querySelectorAll('[data-width]').forEach(b=>b.addEventListener('click',()=>{viewWidth=Number(b.dataset.width);document.querySelectorAll('[data-width]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));sizeFrames();}));
+new ResizeObserver(sizeFrames).observe(document.body);
+sizeFrames();
+</script>
+</body></html>

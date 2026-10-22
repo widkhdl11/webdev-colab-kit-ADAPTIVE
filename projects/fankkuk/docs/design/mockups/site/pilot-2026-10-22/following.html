@@ -1,0 +1,37 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>팔로우한 크리에이터 · 팬꾹 정돈 시범 시안</title><link rel="stylesheet" href="../v34-part1/styles.css"><link rel="stylesheet" href="../v34-part1/v33.css"><link rel="stylesheet" href="../v34-part1/v33b.css"><link rel="stylesheet" href="../v34-part1/v34.css"><link rel="stylesheet" href="../v35-part1/v35.css"><link rel="stylesheet" href="../v37-part2/v37.css"><link rel="stylesheet" href="../v39-part3/v39.css"><link rel="stylesheet" href="pilot.css"></head>
+<!-- 정돈 시범 2026-10-22 — /me/following. 제안: redesign-2026-10-22-pilot.md 1절 「레이아웃 제안」. 880 기둥 12열 8+4. 왼쪽 촘촘한 줄(72), 오른쪽 숫자 판(크림 띠, 스크롤 따라옴). 문구는 지금 화면 그대로(FOLLOWING_NICKNAME_NOTICE · 「선물 보내기」 · 「팔로우 취소」 · 「크리에이터 더 찾기」 · 빈 상태 문구). 회색 막대(.mockbar)와 빨간 번호(.mk)는 시안 전용. 이름·소개는 예시. -->
+<body class="member" id="top"><aside class="sidebar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><nav aria-label="주 메뉴"><a href="#"><span class="nav-glyph" aria-hidden="true">⌂</span>홈</a><a href="#"><span class="nav-glyph" aria-hidden="true">☑</span>지금 할 일<span class="nav-count" aria-label="2건">2</span></a><a href="#"><span class="nav-glyph" aria-hidden="true">⌕</span>크리에이터 찾기</a><a href="#"><span class="nav-glyph" aria-hidden="true">◇</span>선물 보내기</a><a href="#"><span class="nav-glyph" aria-hidden="true">□</span>보낸 선물</a><a href="#"><span class="nav-glyph" aria-hidden="true">↗</span>받은 선물</a><a href="#" class="active" aria-current="page"><span class="nav-glyph" aria-hidden="true">♡</span>팔로우한 크리에이터</a><a href="#"><span class="nav-glyph" aria-hidden="true">?</span>문의</a></nav><div class="account"><span class="avatar">하</span><div><strong>하루님</strong><small>크리에이터 · 계정 설정</small></div></div></aside><div class="page"><header class="mobile-bar"><a class="logo" href="#top"><img src="../../../../../public/images/logo-mark.png" alt="">팬꾹</a><button type="button" aria-label="메뉴 열기">☰</button></header><main id="main"><div class="wrap fl-wrap">
+<div class="mockbar" role="group" aria-label="시안 보기 전환"><b>시안 보기</b><span class="mb-grp">팔로우 <button type="button" data-n="4" aria-pressed="true">4명</button><button type="button" data-n="12" aria-pressed="false">12명</button><button type="button" data-n="0" aria-pressed="false">0명</button></span><span class="mb-grp"><button type="button" id="mkBtn" aria-pressed="false">바뀐 곳 번호 표시</button></span></div>
+
+<header class="p-head"><h1 class="p-title mkp" tabindex="-1">팔로우한 크리에이터</h1><p class="p-desc">팔로우한 크리에이터는 내 닉네임을 볼 수 있어요.</p></header>
+
+<div class="fl-grid">
+ <div class="fl-list mkp" id="list"><i class="mk tl" aria-hidden="true">1</i></div>
+ <aside class="fl-side" aria-label="팔로우 요약"><div class="fl-panel mkp"><i class="mk tl" aria-hidden="true">2</i>
+  <div class="t"><div class="lab">팔로우</div><div class="fl-num"><span id="num">4</span><small>명</small></div></div>
+  <span class="mkp"><i class="mk tr" aria-hidden="true">3</i><a class="p-btn fill lg" href="#">크리에이터 더 찾기</a></span>
+  <img class="fl-cat" src="../../../../../public/images/mascot-basic.png" alt="" aria-hidden="true">
+ </div></aside>
+</div>
+</div></main></div>
+<script>
+const P=[["하루","하루의 놀이 · 게임 방송을 해요.","치지직","#e6e0ff"],["별빛","별 보는 밤, 잔잔한 라디오 방송이에요.","YouTube","#fff1b8"],["도담","그림 그리며 수다 떠는 방송이에요.","치지직","#d3f0ec"],["모찌","고양이 둘과 함께하는 일상 방송이에요.","YouTube","#fde2e4"],["서리","새벽에 켜는 음악 방송이에요.","SOOP","#dcebff"],["다온","요리와 홈카페를 보여 드려요.","YouTube","#ffe5cc"],["해랑","레트로 게임을 끝까지 깨요.","치지직","#dff5d8"],["루나","뜨개질과 수다 방송이에요.","YouTube","#f6dff0"],["보리","운동 루틴을 같이 해요.","SOOP","#e6e0ff"],["이든","코딩 공부를 함께하는 방송이에요.","치지직","#d3f0ec"],["나래","여행 사진과 이야기를 나눠요.","YouTube","#fff1b8"],["오름","보드게임 방송을 해요.","치지직","#fde2e4"]];
+let n=4;
+const X='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/><path d="m4 4 16 16"/></svg>';
+function render(){
+ document.getElementById('num').textContent=n;
+ const l=document.getElementById('list');
+ const mk=l.querySelector('.mk');
+ if(n===0){l.innerHTML='<div class="fl-empty"><img src="../../../../../public/img/illust-empty-follow.png" alt="" aria-hidden="true"><h2>아직 팔로우한 크리에이터가 없어요</h2><p>좋아하는 크리에이터를 팔로우하면 여기에 모아 두고, 바로 선물을 보낼 수 있어요.</p><a class="p-btn fill lg" href="#">나의 크리에이터 찾으러 가기</a></div>';}
+ else{
+  l.innerHTML='<ul class="fl-rows">'+P.slice(0,n).map((c,i)=>'<li class="fl-row"><span class="p-av" style="background:'+c[3]+'" aria-hidden="true">'+c[0][0]+'</span><div class="fl-who"><div class="fl-name mkp">'+(i===0?'<i class="mk tl" style="left:-30px;top:-2px" aria-hidden="true">5</i>':'')+'<a href="#">'+c[0]+'</a><span class="p-chip">'+c[2]+'</span></div><div class="fl-intro">'+c[1]+'</div></div><div class="fl-act mkp">'+(i===0?'<i class="mk tl" style="left:-10px;top:-10px" aria-hidden="true">4</i>':'')+'<a class="p-btn" href="#">선물 보내기</a><button class="fl-x" type="button" aria-label="'+c[0]+' 팔로우 취소" title="팔로우 취소">'+X+'</button></div></li>').join('')+'</ul>';
+ }
+ const m=document.createElement('i');m.className='mk tl';m.setAttribute('aria-hidden','true');m.textContent='1';l.prepend(m);
+}
+document.querySelectorAll('[data-n]').forEach(b=>b.addEventListener('click',()=>{n=Number(b.dataset.n);document.querySelectorAll('[data-n]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));render();}));
+function setMk(on){document.body.classList.toggle('show-mk',on);document.getElementById('mkBtn').setAttribute('aria-pressed',String(on));}
+document.getElementById('mkBtn').addEventListener('click',()=>setMk(!document.body.classList.contains('show-mk')));
+addEventListener('message',e=>{if(e.data&&typeof e.data.mk==='boolean')setMk(e.data.mk);});
+render();
+</script>
+</body></html>
