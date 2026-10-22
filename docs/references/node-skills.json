@@ -32,6 +32,11 @@
       "contract": "pending: 계약 테스트 규약"
     },
     {
+      "node": "design/page-designer",
+      "skill": "page-brief",
+      "contract": "none: 산출물이 사람이 승인하는 문서이고 기계가 읽지 않는다 — 게이트 승격은 harness-backlog 「ux-spec 게이트 승격」"
+    },
+    {
       "node": "implement",
       "skill": "scaffold",
       "contract": "pending: 계약 테스트 규약"

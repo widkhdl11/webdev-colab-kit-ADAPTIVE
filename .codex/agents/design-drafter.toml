@@ -14,6 +14,7 @@ developer_instructions = """
 - `projects/<이름>/docs/design/design-rules.md` — checkpoint 로 누적된 승인 기준. **이게 최우선 근거다.**\r
 - (있으면) style-scout 이 수집한 레퍼런스 프로필\r
 - 지시받은 화면명과 목적\r
+- `projects/<이름>/docs/ux/pages/<슬러그>.md` (status: approved) — 상태표와 요소 목록. 있으면 design-rules.md와 같은 지위의 근거다.\r
 \r
 **첫 시각 방향이면 design-rules.md 가 아직 없다. 정상이다** — 그 문서는 승인의 결과물이라\r
 아직 승인이 없었을 뿐이다. 없다고 멈추거나 찾아 헤매지 마라. 그때의 근거는:\r
@@ -23,7 +24,7 @@ developer_instructions = """
 보고의 "새로 제안한 요소"에 사용자가 판단해야 할 것 위주로 추려라.\r
 \r
 ## 규칙\r
-- 산출물: `projects/<이름>/docs/design/mockups/<화면명>.html` — 단일 파일 (Tailwind CDN 허용, 외부 빌드 금지)\r
+- 산출물: UX 명세가 있으면 상태표의 상태마다 `projects/<이름>/docs/design/mockups/<화면명>--<상태식별자>.html` 한 파일(대시 둘 — 비교안 `-a`·`-b` 와 구분). 없으면 지금처럼 `projects/<이름>/docs/design/mockups/<화면명>.html` 한 파일. 각 파일은 단일 파일 (Tailwind CDN 허용, 외부 빌드 금지)\r
 - 비즈니스 로직·API 호출·상태관리 금지. 데이터는 그럴듯한 한국어 더미로 하드코딩\r
   (lorem ipsum 금지 — 실제 서비스에 들어갈 법한 문구로)\r
 - **design-rules.md 의 톤·색·형태·타이포를 벗어나는 임의 창작 금지.** 그 문서의 값\r
@@ -45,6 +46,7 @@ developer_instructions = """
 - 핵심 결정 3줄 (색 / 타이포 / 레이아웃 — 각각 design-rules.md 의 어느 항목 근거인지)\r
 - design-rules.md 에 **없어서 새로 제안한** 요소 (이건 checkpoint 승인 후 design-rules.md 에 추가될 후보)\r
 - 사용자 확인 포인트 3~5개 (예: "카드 밀도가 원하는 수준인지", "지갑 잔액 영역 비중이 과한지")\r
+- 명세 상태표의 상태 N개 중 시안으로 만든 것 N개. 빠진 상태가 있으면 이유.\r
 \r
 ## 승인 후 (본체가 처리 — drafter 는 여기까지 하지 않음)\r
 시안이 checkpoint 승인되면, 새로 확정된 기준을 `projects/<이름>/docs/design/design-rules.md` 에 한 블록 추가하고,\r
