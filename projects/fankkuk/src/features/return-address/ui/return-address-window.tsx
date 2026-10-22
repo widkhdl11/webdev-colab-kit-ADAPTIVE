@@ -12,6 +12,7 @@ import { sendReturnConfirm, type ReturnRefusal } from "../api/send-return-confir
 // 등록 주소가 있으면 이름표와 바꾼 날만 보이고(주소 글자는 다시 보이지 않는다) 「바꾸기」로 새로 등록하거나 그대로 「확인」.
 // 등록 전이면 「주소를 입력해 주세요」로 그 자리에서 등록한 뒤 확인한다 — 확인 없이 진행되는 길은 없다.
 // 「확인」은 기존 확인 처리(/api/me/return-address)를 그대로 부르고, 끝나면 창을 닫고 다시 읽는다 — 카드·줄은 상자 상태로 사라진다(J4).
+// 다시 읽는 방법은 부르는 쪽이 정할 수 있다(onConfirmed) — 선물 상세 칸은 확인했다는 한 줄을 보이려고 쿼리를 붙여 다시 읽는다(2026-10-22 d113 진단 C-3).
 // 주소 입력 칸은 위젯이 넘긴다 — 팬은 받을 주소 등록, 크리에이터는 크리에이터 주소 등록(기능끼리는 서로 import 하지 않는다 — FSD).
 // 글자는 용어집 return_address 행: 창 제목 「돌려받을 주소 확인」, 버튼 「확인」「바꾸기」.
 
@@ -42,6 +43,7 @@ export function ReturnAddressWindow({
   address,
   open,
   onClose,
+  onConfirmed,
 }: {
   target: ReturnTarget;
   /** 제목 아래 한 줄 — 어느 선물의 상자인지 */
@@ -49,6 +51,8 @@ export function ReturnAddressWindow({
   address: ReturnAddressStep;
   open: boolean;
   onClose: () => void;
+  /** 확인이 끝난 뒤 다시 읽기 — 주지 않으면 지금 화면을 그대로 다시 읽는다(router.refresh) */
+  onConfirmed?: () => void;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState(address.status);
@@ -81,7 +85,8 @@ export function ReturnAddressWindow({
     const r = await sendReturnConfirm(target.boxSeq === null ? { orderNo: target.orderNo } : { orderNo: target.orderNo, boxSeq: target.boxSeq });
     setBusy(false);
     if (r.kind === "ok") {
-      router.refresh();
+      if (onConfirmed) onConfirmed();
+      else router.refresh();
       onClose();
       return;
     }

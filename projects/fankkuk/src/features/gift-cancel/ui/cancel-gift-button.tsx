@@ -8,6 +8,7 @@ import s from "./gift-cancel.module.css";
 
 // 팬의 입고 전 취소 (payment INV-M16). 그릴지는 부르는 쪽이 model/cancellable 로 정한다 — 최종 판정은 DB.
 // 누르면 바로 취소하지 않고 한 번 묻는다 — 취소는 되돌릴 수 없다. 성공하면 화면을 다시 읽어 취소된 상태로 그린다.
+// 정상 경로(주소 복사·보내기)와 같은 버튼 모양이 아니라 글자 링크 모양 — 사용자가 스스로 여는 예외 길이라 눈에 띄지 않게(UX 정돈 시범 B-4). 확인 단계는 그대로.
 // addressShown: 받는 주소가 보인 뒤(승인·「먼저 보내기」)면 상자가 이미 오고 있을 수 있어 택배비를 뺀 금액을 먼저 돌려준다(payment INV-M16·M18).
 
 export function CancelGiftButton({ orderNo, addressShown }: { orderNo: string; addressShown: boolean }) {
@@ -54,7 +55,7 @@ export function CancelGiftButton({ orderNo, addressShown }: { orderNo: string; a
         <button
           ref={triggerRef}
           type="button"
-          className="btn btn--line btn--sm"
+          className={s.textlink}
           onClick={() => {
             setAsking(true);
             requestAnimationFrame(() => askRef.current?.focus());

@@ -1,3 +1,5 @@
+import { readActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import { unpaidResumeHref } from "@/entities/action-item/model/action-items";
 import { readCreatorCards, readMyFollowIds, readOwnCreatorId } from "@/entities/creator/api/creator-reads";
 import { readMyRecentRecipientIds } from "@/entities/order/api/recent-recipients";
 import { readMovingCreatorIds } from "@/entities/creator/api/creator-verification-reads";
@@ -28,8 +30,10 @@ const PAYMENT_NOTICE: Record<string, string> = {
 // 채널 이사 중(creator-verification INV-V12)인 크리에이터에는 표시를 붙인다(moving_creator_ids).
 // 쉬는 중·기념일(creator_receiving)과 내 한도 판정(my_gift_limit_reached, 로그인한 나만)도 붙인다 — creator-receiving INV-B2·B6·B9.
 // 로그인하지 않았어도 화면은 보인다 — 팔로우한 사람이 없으니 로그인 안내가 나온다(INV-L3).
+// 결제창에서 실패하고 돌아오면(?payment=failed&order=주문번호) 오류 줄 아래 「결제하기 ›」(2026-10-22 d113 D-3). 쿼리의 주문번호는 믿지 않는다 —
+// 로그인한 사람의 지금 할 일 읽기(action-center INV-J3, 내가 보낸 주문만)에 그 주문의 결제 미완료 줄이 있을 때만 링크를 그린다. 남의 주문번호면 아무것도 보이지 않는다.
 export default async function Page({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
-  const { creator, payment } = await searchParams;
+  const { creator, payment, order } = await searchParams;
   const { supabase, viewer } = await loadSession();
   const creatorSender = viewer?.role === "creator";
   const preselectedId = typeof creator === "string" ? creator : null;
@@ -70,6 +74,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
       : undefined;
   const followFirst = pickedCard ? { id: pickedCard.id, name: pickedCard.name, platform: pickedCard.platform } : null;
   const notice = typeof payment === "string" ? PAYMENT_NOTICE[payment] : undefined;
+  const resumeHref = payment === "failed" && signedIn && typeof order === "string" ? unpaidResumeHref(await readActionItemsOrNull(supabase), order) : null;
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   if (!clientKey) console.warn("NEXT_PUBLIC_TOSS_CLIENT_KEY 가 없어 결제창을 열 수 없다");
   return (
@@ -81,6 +86,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
         initialCreatorId={initialCreatorId}
         clientKey={clientKey}
         notice={notice}
+        resumeHref={resumeHref}
         signedIn={signedIn}
         followFirst={followFirst}
         today={kstToday(new Date())}

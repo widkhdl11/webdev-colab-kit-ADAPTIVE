@@ -419,7 +419,8 @@ describe("INV-D5: 팬에게는 직접 거절과 차단 거절이 같은 값(거�
     const boxes = await fan.rpc("my_gift_boxes", { p_order_no: orderNos[2] });
     // 받는 주소 6자리 칸(inbound-address-code INV-C2)은 거절된 주문에서는 비어 있다(INV-C3) — 거절 이유·차단 칸은 여전히 없다.
     // reported_not_mine 은 그 팬 자신이 「제가 보낸 게 아니에요」를 눌렀는지다(INV-C8).
-    expect(Object.keys(boxes.data[0]).sort()).toEqual(["address_code", "box_id", "label", "reported_not_mine", "send_ack_needed", "state", "tier", "waybill_no"]);
+    // not_sent_at 은 그 팬 자신이 「아직 보내지 않음」을 누른 시각이다(2026-10-22 d113, office-workflow INV-W10).
+    expect(Object.keys(boxes.data[0]).sort()).toEqual(["address_code", "box_id", "label", "not_sent_at", "reported_not_mine", "send_ack_needed", "state", "tier", "waybill_no"]);
     expect(boxes.data[0].address_code).toBeNull();
   });
 });

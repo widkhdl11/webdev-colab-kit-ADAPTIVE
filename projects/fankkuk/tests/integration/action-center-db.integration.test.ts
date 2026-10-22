@@ -123,6 +123,29 @@ describe("INV-J1: 카드는 세 종류, 상자(몫) 하나에 하나, 보이는 
     expect((await read("byeolbit_fan")).find((r) => r.order_no === g.orderNo)?.box_label).toBe(`${g.orderNo}-2`);
   });
 
+  it("INV-J1 S1e: 「아직 보내지 않음」을 누르면 그 주문의 도착하지 않은 상자 줄이 모두 없다 — 기한(결제 + 720시간)은 그대로, 다른 주문의 줄은 남는다", async () => {
+    const g = await waitingGift(2, 15 * 24);
+    const other = await waitingGift(1, 15 * 24);
+    expect(await cards("byeolbit_fan", [g.orderNo, other.orderNo])).toEqual([
+      `missing_box:${g.orderNo}:1`,
+      `missing_box:${g.orderNo}:2`,
+      `missing_box:${other.orderNo}:1`,
+    ].sort()); // cards() 는 글자 순 — 주문번호가 무작위라 기대값도 같은 순으로
+    const due = psql(`select to_json(registered_at + interval '720 hours')#>>'{}' from public.orders where id = '${g.orderId}'`);
+    const r = await (await signedInClient("byeolbit_fan")).rpc("mark_gift_not_sent", { p_order_no: g.orderNo });
+    expect(r.error).toBeNull();
+    expect(await cards("byeolbit_fan", [g.orderNo, other.orderNo])).toEqual([`missing_box:${other.orderNo}:1`]);
+    // 기한은 바뀌지 않는다(office-workflow INV-W10) — 결제 완료 시각이 그대로라 30일 닫기도 그대로 돈다
+    expect(psql(`select to_json(registered_at + interval '720 hours')#>>'{}' from public.orders where id = '${g.orderId}'`)).toBe(due);
+  });
+
+  it("INV-J1 S1e (실패경로): 남의 주문에 「아직 보내지 않음」 → 거부, 그 주인의 줄은 그대로 남는다", async () => {
+    const g = await waitingGift(1, 15 * 24);
+    const r = await (await signedInClient("daltokki_fan")).rpc("mark_gift_not_sent", { p_order_no: g.orderNo });
+    expect(r.error?.code).toBe("P0002");
+    expect(await cards("byeolbit_fan", [g.orderNo])).toEqual([`missing_box:${g.orderNo}:1`]);
+  });
+
   it("INV-J1 S1 (경계): 추가 결제는 요청 + 168시간 전까지 — 167시간 59분이면 있고 168시간이면 없다(차액 결제 준비도 그때부터 거부)", async () => {
     const d = await differenceOrder();
     backdateDifference(d.orderId, 167, 59);

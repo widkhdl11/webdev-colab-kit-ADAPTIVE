@@ -2,8 +2,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const nav = vi.hoisted(() => ({ refresh: vi.fn(), push: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => nav }));
+const nav = vi.hoisted(() => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => nav, useSearchParams: () => new URLSearchParams(), usePathname: () => "/gifts" }));
 // 카드 버튼이 부르는 기존 처리 경로(INV-J4) — 브라우저 요청 대신 무엇을 무엇으로 불렀는지 본다
 const api = vi.hoisted(() => ({ prepare: vi.fn(), find: vi.fn() }));
 vi.mock("@/features/difference-pay/api/post-difference-client", () => ({ postDifferencePrepare: api.prepare }));
@@ -326,6 +326,15 @@ describe("INV-J1·J4·J13: 상세 「지금 할 일」 칸의 처리와 지금 �
     const feat = host.querySelectorAll(".feat[data-action-row]");
     expect([...feat].map((f) => f.getAttribute("data-kind"))).toEqual(["difference"]);
     expect([...host.querySelectorAll("li[data-action-row]")].map((f) => f.getAttribute("data-kind"))).toEqual(["revgift", "missing_box"]);
+  });
+
+  it("C-1 (d113): 도착하지 않은 상자가 강조 칸이어도 태그 「송장번호 입력」이 없다 — 「아직 보내지 않음」을 누를 팬에게는 송장번호가 없다", () => {
+    const missingOnly = items.filter((it) => it.kind === "missing_box");
+    act(() => root.render(<ActionCenterPage items={missingOnly} now={NOW} />));
+    const feat = host.querySelector('.feat[data-action-row][data-kind="missing_box"]');
+    expect(feat?.querySelector("strong")?.textContent).toBe("도착이 늦어요");
+    expect(feat?.querySelector(".tag")).toBeNull();
+    expect(host.textContent).not.toContain("송장번호 입력");
   });
 
   it("INV-J1 (실패경로): 꼴이 다른 줄(종류가 넷째 것)이 오면 읽기 자체가 실패한다 — 일부만 버려 숫자와 목록이 달라지지 않게", () => {

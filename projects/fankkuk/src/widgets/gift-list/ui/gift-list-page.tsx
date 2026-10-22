@@ -2,7 +2,7 @@ import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
-import { giftDetailHref } from "@/entities/action-item/model/action-items";
+import { byUrgency, giftDetailHref, type ActionItem } from "@/entities/action-item/model/action-items";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
 import { FAN_STEP_LABEL, fanBadge, fanGiftBucket, fanProgress } from "@/entities/order/ui/fan-stage-copy";
@@ -16,7 +16,9 @@ import s from "./gift-list.module.css";
 // 카드 숫자는 함께한 시간과 같은 읽기의 값이다(model/creator-cards.ts). 이 줄은 탭과 상관없이 전부 보인다. 휴대폰은 옆으로 넘긴다.
 // 아래는 크리에이터로 묶지 않은 선물 카드 격자(최근 등록 순). 탭은 「진행 중」·「완료」 둘이고 이 격자만 거른다 —
 // 완료 탭은 「끝난 선물」·「받지 않은 선물」(거절·기한 지남) 두 덩어리(시안). 카드는 진행 정도와 상관없이 같은 카드(진행 막대 + n/6), 880 안 2열(휴대폰 1열).
-// 할 일이 있는 카드만 하늘 면(22절) — 지금 할 일 읽기 결과에 그 주문의 줄이 있거나 사무실로 보내야 하는 선물(「보내 주세요」). 카드는 선물 상세(INV-J12)로 간다.
+// 할 일이 있는 카드만 하늘 면(22절) — 지금 할 일 읽기 결과에 그 주문의 줄이 있을 때만(UX 시범 A-2 — 「보내 주세요」는 배지로만, 사이드바 숫자와 같은 수).
+// 하늘 면 카드에는 그 줄의 제목·기한 한 줄을 붙이고 상세의 「지금 할 일」 칸(#todo)으로 바로 간다(A-1). 그 밖의 카드는 선물 상세(INV-J12)로 간다.
+// 「진행 중」 탭 맨 위에는 결제를 마치지 않은 선물 카드 — 같은 읽기 결과의 결제 미완료 줄로만 그린다(INV-J14, A-3).
 // 카드 면 효과·떠오름은 공통(base.css 23절 .ccard)과 토큰(tokens.css 23절)을 쓴다. 본문 틀 <main class="page-pane"> 은 라우트가 MyShell 로 붙인다.
 
 type Filter = (g: FanGiftView) => boolean;
@@ -31,23 +33,37 @@ function cardBadge(gift: FanGiftView): { text: string; tone: StatusTone } {
   return fanBadge(gift);
 }
 
-/** 할 일이 있는 카드인가 — 처리할 일 읽기 결과의 주문이거나, 사무실로 보내 달라는 선물 */
-export function giftNeedsAction(gift: FanGiftView, todoOrderNos: ReadonlySet<string>): boolean {
-  return todoOrderNos.has(gift.orderNo) || fanBadge(gift).text === "보내 주세요";
+/** 할 일 한 줄의 제목 — 지금 할 일 목록 줄과 같은 글자(action-center-page rowCopy). 받은 역조공 줄은 보낸 선물 목록에 오지 않는다 */
+const TODO_TITLE: Record<Exclude<ActionItem["kind"], "revgift">, string> = {
+  difference: "추가 결제",
+  missing_box: "도착이 늦어요",
+  return_address: "돌려받을 주소 확인",
+  unpaid: "결제를 마치지 않은 선물",
+};
+
+function TodoLine({ item }: { item: ActionItem }) {
+  if (item.kind === "revgift") return null;
+  return (
+    <p className={s.todoline} data-todo-line="">
+      <span>{TODO_TITLE[item.kind]}</span>
+      {item.dueAt ? <span>{formatMonthDayKo(item.dueAt)}까지</span> : null}
+    </p>
+  );
 }
 
-function GiftCard({ gift, faceTone, hi }: { gift: FanGiftView; faceTone: string | undefined; hi: boolean }) {
+function GiftCard({ gift, faceTone, todo }: { gift: FanGiftView; faceTone: string | undefined; todo: ActionItem | undefined }) {
   const badge = cardBadge(gift);
   const progress = fanProgress(gift);
   const who = `${gift.creatorName}님께`;
   const notAccepted = fanGiftBucket(gift) === "not_accepted";
   const lastDone = [...gift.steps].reverse().find((st) => st.state === "done");
+  const hi = todo !== undefined;
   return (
     <li className={hi ? `${s.gcard} ${s.hi}` : s.gcard} data-gift-row="" data-hi={hi ? "" : undefined}>
       <div className={s.top}>
         <CreatorFace tone={faceTone ?? "var(--face-1)"} className={`face ${s.face}`} />
         <strong className={s.who}>
-          <Link className="stretch" href={giftDetailHref(gift.orderNo)} aria-label={`${who} 보낸 선물 ${gift.orderNo} 상세`}>
+          <Link className="stretch" href={giftDetailHref(gift.orderNo, hi)} aria-label={`${who} 보낸 선물 ${gift.orderNo} 상세`}>
             {who}
           </Link>
         </strong>
@@ -88,6 +104,32 @@ function GiftCard({ gift, faceTone, hi }: { gift: FanGiftView; faceTone: string 
           </p>
         </div>
       )}
+      {todo ? <TodoLine item={todo} /> : null}
+    </li>
+  );
+}
+
+type UnpaidItem = Extract<ActionItem, { kind: "unpaid" }>;
+
+/** 결제를 마치지 않은 선물(INV-J14, payment INV-M22) — 보낸 선물 읽기에 없는 결제 대기 주문. 지금 할 일 줄 하나가 카드 하나, 상세의 칸(#todo)으로 간다 */
+function UnpaidCard({ item, faceTone }: { item: UnpaidItem; faceTone: string | undefined }) {
+  return (
+    <li className={`${s.gcard} ${s.hi}`} data-unpaid-row="">
+      <div className={s.top}>
+        <CreatorFace tone={faceTone ?? "var(--face-1)"} className={`face ${s.face}`} />
+        <strong className={s.who}>
+          <Link className="stretch" href={giftDetailHref(item.orderNo, true)}>
+            결제를 마치지 않은 선물
+          </Link>
+        </strong>
+      </div>
+      <div>
+        <p className={s.uWhat}>{item.creatorName}님께 보낼 선물</p>
+        <p className={s.uDue}>{formatMonthDayKo(item.dueAt)}까지</p>
+      </div>
+      <span className={s.linkarr} aria-hidden="true">
+        결제하기 ›
+      </span>
     </li>
   );
 }
@@ -169,13 +211,19 @@ function Creators({ creators, faceToneByName }: { creators: readonly CreatorCard
   );
 }
 
-type GridProps = { rows: readonly FanGiftView[]; todoOrderNos: ReadonlySet<string>; faceToneByName: Readonly<Record<string, string>> };
+type GridProps = { rows: readonly FanGiftView[]; todos: readonly ActionItem[]; faceToneByName: Readonly<Record<string, string>> };
 
-function Grid({ rows, todoOrderNos, faceToneByName }: GridProps) {
+/** 그 주문의 지금 할 일 줄 중 가장 급한 것 — 없으면 할 일이 없는 카드 */
+const firstTodoOf = (todos: readonly ActionItem[], orderNo: string): ActionItem | undefined => byUrgency(todos.filter((it) => it.orderNo === orderNo))[0];
+
+function Grid({ rows, todos, faceToneByName, unpaid = [] }: GridProps & { unpaid?: readonly UnpaidItem[] }) {
   return (
     <ul className={`${s.gcards} v34`}>
+      {unpaid.map((u) => (
+        <UnpaidCard key={u.orderNo} item={u} faceTone={faceToneByName[u.creatorName]} />
+      ))}
       {rows.map((g) => (
-        <GiftCard key={g.orderNo} gift={g} faceTone={faceToneByName[g.creatorName]} hi={giftNeedsAction(g, todoOrderNos)} />
+        <GiftCard key={g.orderNo} gift={g} faceTone={faceToneByName[g.creatorName]} todo={firstTodoOf(todos, g.orderNo)} />
       ))}
     </ul>
   );
@@ -194,9 +242,13 @@ function Empty({ text }: { text: string }) {
 
 type PanelProps = Omit<GridProps, "rows"> & { gifts: readonly FanGiftView[] };
 
+/** 지금 할 일 읽기 결과의 결제 미완료 줄 — 「진행 중」 탭 맨 위 카드(INV-J14) */
+const unpaidOf = (todos: readonly ActionItem[]) => todos.filter((it): it is UnpaidItem => it.kind === "unpaid");
+
 function OngoingPanel({ gifts, ...rest }: PanelProps) {
   const rows = gifts.filter(ongoing);
-  return rows.length === 0 ? <Empty text="지금 진행 중인 선물이 없어요." /> : <Grid rows={rows} {...rest} />;
+  const unpaid = unpaidOf(rest.todos);
+  return rows.length + unpaid.length === 0 ? <Empty text="지금 진행 중인 선물이 없어요." /> : <Grid rows={rows} unpaid={unpaid} {...rest} />;
 }
 
 /** 완료 탭 — 끝난 선물과 받지 않은 선물을 따로 모은다(시안). 둘 다 같은 카드, 각각 최근 등록 순 */
@@ -227,10 +279,10 @@ export function GiftListPage({
   faceToneByName,
   title = "보낸 선물",
   tabs,
-  todoOrderNos = [],
+  todos = [],
 }: {
-  /** 지금 할 일 읽기 결과에 줄이 있는 주문번호 — 그 카드만 하늘 면(design-rules 22절). 라우트가 사이드바 숫자와 같은 읽기 결과에서 넘긴다 */
-  todoOrderNos?: readonly string[];
+  /** 보낸 선물의 지금 할 일 줄 — 줄이 있는 카드만 하늘 면 + 할 일 한 줄(design-rules 22절), 결제 미완료 줄은 「진행 중」 맨 위 카드(INV-J14). 라우트가 사이드바 숫자와 같은 읽기 결과에서 넘긴다 */
+  todos?: readonly ActionItem[];
   /** 페이지 머리 바로 아래에 둘 화면 간 탭 — 크리에이터의 「보낸 내역」 두 화면(design-rules 11절). 머리는 늘 본문 맨 앞이다(00절) */
   tabs?: ReactNode;
   /** 크리에이터별로 보기 카드(model/creator-cards.ts) — 숫자는 함께한 시간 읽기의 값 */
@@ -244,15 +296,17 @@ export function GiftListPage({
 }) {
   const all = recentFirst(gifts);
   // 탭 기준은 fanGiftBucket 하나 — 메인 「진행 중인 선물」과 같은 수가 나온다
-  const ongoingN = all.filter(ongoing).length;
-  const panelProps = { gifts: all, todoOrderNos: new Set(todoOrderNos), faceToneByName };
+  // 결제를 마치지 않은 선물 카드도 「진행 중」에 보이므로 머리 숫자와 탭 숫자에 넣는다(시안 ux-pilot gifts-2-after)
+  const unpaidN = unpaidOf(todos).length;
+  const ongoingN = all.filter(ongoing).length + unpaidN;
+  const panelProps = { gifts: all, todos, faceToneByName };
   return (
     <>
       <header className="page-head v34">
         <div className="ph-row">
           <h1 className="ph-title">
             {title}
-            <span className="ph-count">{all.length}</span>
+            <span className="ph-count">{all.length + unpaidN}</span>
           </h1>
           <Link className="btn" href="/gifts/new">
             선물 보내기
@@ -266,7 +320,7 @@ export function GiftListPage({
         <GiftTabs
           tabs={[
             { id: "ongoing", label: `진행 중 ${ongoingN}`, panel: <OngoingPanel {...panelProps} /> },
-            { id: "done", label: `완료 ${all.length - ongoingN}`, panel: <DonePanel {...panelProps} /> },
+            { id: "done", label: `완료 ${all.length + unpaidN - ongoingN}`, panel: <DonePanel {...panelProps} /> },
           ]}
         />
       </div>

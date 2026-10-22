@@ -80,6 +80,26 @@ describe("INV-W10 「아직 보내지 않음」 — 기록만, 기한은 그대�
     expect(psql(`select count(*) from public.orders where id in ('${g.orderId}', '${done.orderId}', '${declined.orderId}') and fan_not_sent_at is not null`)).toBe("0");
   });
 
+  it("INV-W10 (S10f): 팬 상자 읽기에 누른 시각이 실린다 — 아직 입고 전 상자에만, 도착한 상자·누르기 전에는 비어 있다", async () => {
+    const g = await approvedGift(2);
+    const boxes = async () => {
+      const r = await (await signedInClient("byeolbit_fan")).rpc("my_gift_boxes", { p_order_no: g.orderNo });
+      if (r.error) throw new Error(`my_gift_boxes 실패: ${r.error.code}`);
+      return r.data as { box_id: string; not_sent_at: string | null }[];
+    };
+    expect((await boxes()).map((b) => b.not_sent_at)).toEqual([null, null]);
+    const op = await staff();
+    const s = await scanInbound(op, waybill(), { code: codeOf({ boxId: g.boxIds[0]! }) });
+    expect((await op.rpc("office_confirm_label", { p_qr: (s.data as { qr: string }).qr })).error).toBeNull();
+    const r = await markNotSent("byeolbit_fan", g.orderNo);
+    expect(r.error).toBeNull();
+    const rows = await boxes();
+    expect(rows.find((b) => b.box_id === g.boxIds[0])?.not_sent_at).toBeNull();
+    expect(Date.parse(rows.find((b) => b.box_id === g.boxIds[1])?.not_sent_at ?? "")).toBe(Date.parse(r.data as string));
+    // 남의 주문번호로 읽으면 빈 목록 — 누른 시각도 새지 않는다
+    expect((await (await signedInClient("daltokki_fan")).rpc("my_gift_boxes", { p_order_no: g.orderNo })).data).toEqual([]);
+  });
+
   it("INV-W10 (실패경로): 「아직 보내지 않음」 기록은 사람이 직접 고칠 수 없다 — 앱 키로는 주문 줄에 쓸 수 없다", async () => {
     const g = await approvedGift(1);
     const fan = await signedInClient("byeolbit_fan");

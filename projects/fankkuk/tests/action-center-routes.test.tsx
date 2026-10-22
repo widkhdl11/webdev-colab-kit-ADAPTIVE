@@ -20,6 +20,7 @@ vi.mock("next/navigation", () => ({
   notFound: nav.notFound,
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
   usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(),
 }));
 vi.mock("@/shared/api/supabase/server", () => ({ createRequestSupabase: vi.fn() }));
 

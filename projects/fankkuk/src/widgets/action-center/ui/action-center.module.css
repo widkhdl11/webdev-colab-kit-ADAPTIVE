@@ -4,3 +4,10 @@
 .empty { display: grid; justify-items: center; gap: var(--space-4); padding: var(--space-12) var(--space-6); text-align: center; }
 .emptyArt { width: 72px; height: 72px; object-fit: contain; }
 .empty h2 { font-size: var(--fs-card); line-height: 1.4; }
+/* 선물 상세 「지금 할 일」 칸 — 도착이 늦어요의 두 번째 갈래(시안 ux-pilot-2026-10-22 detail-3-after .todo-alt): 찾기 양식 아래 가는 선 + 「아직 보내지 않음」 · 텍스트 링크 「1:1 문의하기」 */
+.alt { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--tint-line); }
+.alt :global(.err) { flex-basis: 100%; }
+.textlink { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--fs-small); color: var(--sub); text-decoration: underline; text-underline-offset: 4px; }
+.textlink:hover { color: var(--ink); }
+/* 처리에서 돌아온 직후 칸 위 한 줄(진단 C-2·C-3) */
+.notice { margin-bottom: var(--space-4); }

@@ -1,5 +1,9 @@
 /* 팬의 입고 전 취소 (payment INV-M16) — 묻는 칸은 「제가 보낸 게 아니에요」(box-waybill) 와 같은 모양 */
 .cancel { margin-top: 16px; }
+/* 「취소하기」 — 글자 링크 모양의 버튼(UX 시범 B-4, 시안 ux-pilot .textlink): 누름 칸 44, 회색 14 밑줄 */
+.textlink { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); padding: 0; border: 0; background: none; font: inherit; font-size: var(--fs-small); color: var(--sub); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.textlink:hover { color: var(--ink); }
+.textlink:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 /* 주문 정보 카드가 --surface 라 같은 바탕이면 경계가 사라진다 — 흰 바탕 + 헤어라인 */
 .ask { padding: 16px 24px; border-radius: var(--r-box); background: var(--card-fx); box-shadow: var(--hair), var(--card-shadow); }
 .ask p { color: var(--ink); }

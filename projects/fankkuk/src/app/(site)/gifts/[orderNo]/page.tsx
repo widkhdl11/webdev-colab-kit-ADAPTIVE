@@ -82,7 +82,7 @@ async function readDetailTodo(supabase: SupabaseClient, viewer: Viewer, orderNo:
 }
 
 /** 보낸 선물 — 보낸 사람(팬·크리에이터) 본인만. 목록 읽기가 로그인한 사람이 보낸 주문만 돌려주므로 남의 주문번호는 없는 주소와 같다 */
-async function giftDetail({ supabase, viewer }: Session, orderNo: string, differenceParam: string | string[] | undefined) {
+async function giftDetail({ supabase, viewer }: Session, orderNo: string, differenceParam: string | string[] | undefined, paid: boolean) {
   const gifts = await readMyGiftViews(supabase);
   const view = gifts.find((g) => g.orderNo === orderNo);
   if (!view) return unpaidDetail({ supabase, viewer }, orderNo, gifts);
@@ -109,6 +109,8 @@ async function giftDetail({ supabase, viewer }: Session, orderNo: string, differ
         boxes={boxes}
         difference={{ differences, notice }}
         dueKrw={differenceDueKrw(todoItems)}
+        // 결제를 마치고 돌아온 직후 — 결제 성공 뒤 서버가 `?paid=1` 로 보낸다(api/checkout/success). 안내 줄 하나만 바뀐다(UX 시범 B-1)
+        paid={paid}
         payment={payment}
         replies={replies}
         photoBase={readPublicStorageBase()}
@@ -168,10 +170,10 @@ export default async function Page({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { orderNo } = await params;
-  const { difference } = await searchParams;
+  const { difference, paid } = await searchParams;
   const { supabase, viewer } = await loadSession();
   if (!viewer || !senderRoleAllowed(viewer.role)) redirect("/login");
   if (isRevgiftOrderNo(orderNo)) return revgiftDetail({ supabase, viewer }, orderNo);
-  if (isOrderNo(orderNo)) return giftDetail({ supabase, viewer }, orderNo, difference);
+  if (isOrderNo(orderNo)) return giftDetail({ supabase, viewer }, orderNo, difference, paid === "1");
   notFound();
 }

@@ -66,3 +66,44 @@ describe("GiftRegisterPage — 맨 위 「채널 주인이 확인된 페이지�
     expect(header()?.textContent).not.toContain("채널 주인이 확인된 페이지예요");
   });
 });
+
+const TOP_LINE = "팔로우한 크리에이터에게만 선물을 보낼 수 있어요.";
+const FAILED = "결제를 마치지 못해 선물이 등록되지 않았어요. 다시 시도해 주세요.";
+
+describe("d113 D-4: 머리 아래 「팔로우한 크리에이터에게만 …」 줄은 팔로우 0명·로그인 전에서만", () => {
+  it("D-4: 고를 크리에이터가 있으면 머리 아래 줄이 없다(1단계 설명이 같은 말을 한다)", () => {
+    render("");
+    expect(header()?.textContent).not.toContain(TOP_LINE);
+  });
+
+  it("D-4 (실패경로): 팔로우 0명·로그인 전이면 머리 아래 줄이 있다", () => {
+    act(() => root.render(<GiftRegisterPage creators={[]} prices={PRICES} clientKey="" today={TODAY} />));
+    expect(header()?.textContent).toContain(TOP_LINE);
+    act(() => root.render(<GiftRegisterPage creators={[]} prices={PRICES} clientKey="" today={TODAY} signedIn={false} />));
+    expect(header()?.textContent).toContain(TOP_LINE);
+  });
+});
+
+describe("d113 D-3: 결제 실패로 돌아온 화면 — 오류 줄 아래 「결제하기 ›」", () => {
+  const renderFailed = (resumeHref: string | null) =>
+    act(() =>
+      root.render(<GiftRegisterPage creators={[HARU, DAL]} prices={PRICES} clientKey="" today={TODAY} notice={FAILED} resumeHref={resumeHref} />),
+    );
+
+  it("D-3: 이어서 결제할 주문이 있으면 오류 줄 바로 아래에 그 선물 상세 칸으로 가는 링크 — 오류 줄은 1단계 위에 있다", () => {
+    renderFailed("/gifts/FC-U8P2K#todo");
+    const alert = [...host.querySelectorAll('[role="alert"]')].find((el) => el.textContent?.includes(FAILED));
+    expect(alert).toBeDefined();
+    const link = [...host.querySelectorAll("a")].find((a) => a.textContent === "결제하기 ›");
+    expect(link?.getAttribute("href")).toBe("/gifts/FC-U8P2K#todo");
+    expect(alert?.nextElementSibling?.contains(link!)).toBe(true);
+    // 오류 줄은 크리에이터 검색 칸보다 앞
+    expect(alert?.compareDocumentPosition(host.querySelector("#pick-q")!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("D-3 (실패경로): 라우트가 주소를 넘기지 않으면(남의 주문·결제가 끝난 주문) 오류 줄만 있고 링크는 없다", () => {
+    renderFailed(null);
+    expect([...host.querySelectorAll('[role="alert"]')].some((el) => el.textContent?.includes(FAILED))).toBe(true);
+    expect([...host.querySelectorAll("a")].some((a) => a.textContent === "결제하기 ›")).toBe(false);
+  });
+});

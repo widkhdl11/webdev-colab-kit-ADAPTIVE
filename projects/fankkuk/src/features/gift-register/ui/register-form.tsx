@@ -13,7 +13,7 @@ import { OVERSIZE_RULE, PARCEL_TIER_GUIDE, RETURN_ON_INSPECTION_NOTICE } from "@
 import { PRICE_CHANGED_MESSAGE, PRICED_TIERS, type PricedTier, type PublicPriceTable } from "@/entities/payment/model/price-table";
 import { formatDuration } from "@/shared/lib/format/datetime";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
-import { anniversaryInWeek, restingNotice, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
+import { anniversaryInWeek, limitReachedMessage, restingNotice, type CalendarDate, type CreatorReceiving } from "@/entities/creator/model/receiving";
 import { hardItemOverlap, type HardItems } from "@/entities/gift-item/model/hard-items";
 import { forcesMetalReport, isItemCategory, ITEM_CATEGORIES, ITEM_CATEGORY_LABEL, ITEM_OTHER_MAX, type ItemCategory } from "@/entities/gift-item/model/item-category";
 import { charCount } from "@/shared/lib/validation/char-count";
@@ -60,6 +60,12 @@ const STEP_FIELDS: Record<Exclude<StepNo, 4>, (keyof RegisterFormValues)[]> = {
 };
 
 
+/** 지금 보낼 수 없는 크리에이터인가 — 채널 이사 중(INV-V12)·쉬는 중(creator-receiving INV-B2)·내 이번 달 한도(INV-B6). 1단계 카드가 회색이 되고 고를 수 없다(d113 D-2) */
+function creatorStopped(c: CreatorOption | undefined, today: CalendarDate): boolean {
+  if (!c) return false;
+  return c.moving === true || restingNotice(c.receiving?.resumeOn ?? null, today) !== null || c.limitReached === true;
+}
+
 /** 등록이 끝나 결제창으로 넘길 값. 금액은 서버가 계산한 것이다. */
 export type RegisteredGift = { orderId: string; orderNo: string; amountKrw: number };
 
@@ -76,6 +82,7 @@ export function RegisterForm({
   prices,
   initialCreatorId = "",
   notice,
+  resumeHref = null,
   onRegistered,
   onCreatorChange,
   today,
@@ -87,6 +94,8 @@ export function RegisterForm({
   initialCreatorId?: string;
   /** 결제창에서 돌아온 실패 안내 */
   notice?: string;
+  /** 결제창에서 실패하고 돌아왔는데 이어서 결제할 내 주문이 있으면 그 선물 상세 칸 주소(라우트가 지금 할 일 읽기로 확인해 넘긴다, d113 D-3) */
+  resumeHref?: string | null;
   /** 등록이 끝나면 — 고른 선물 사진(선택)도 같이 넘긴다. 사진은 받는 쪽이 등록된 주문에 올린다(together INV-F2) */
   onRegistered: (gift: RegisteredGift, photo: File | null) => void | Promise<void>;
   /** 1단계에서 크리에이터를 바꿔 고르면 — 고른 크리에이터 ID 를 알린다(선물 보내기 맨 위 한 줄이 미리 고른 사람일 때만 보이게) */
@@ -113,6 +122,8 @@ export function RegisterForm({
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const photoRef = useRef<HTMLInputElement>(null);
+  // d113 D-1: 2단계의 선택 칸(선물 사진·나만 보는 메모)은 글자 한 줄로 접어 둔다 — 누르면 펼친다. 메모에 오류가 있으면 열린다
+  const [optOpen, setOptOpen] = useState(false);
   // metrics INV-Q5: 받기 어려운 품목 안내가 처음 뜬 품목 — 크리에이터마다 하나. 바꾸고 결제하면 「바꿨다」로 센다(DB 가 그때의 설정과 다시 맞춰 본다)
   const [noticed, setNoticed] = useState<{ creatorId: string; category: ItemCategory } | null>(null);
 
@@ -144,7 +155,8 @@ export function RegisterForm({
     resolver: zodResolver(registerFormSchema),
     // 전자기기 신고는 기본값이 없다 — 팬이 직접 골라야 한다
     // 물품 종류도 기본값이 없다 — 팬이 목록에서 직접 고른다(hard-items INV-H1)
-    defaultValues: { creatorId: initialCreatorId, itemOther: "", smallCount: "1", mediumCount: "0", largeCount: "0", memoTitle: "", memoBody: "" },
+    // 지금 보낼 수 없는 크리에이터(D-2 — 고를 수 없는 카드)가 미리 골라져 오면 비워 둔다
+    defaultValues: { creatorId: creatorStopped(creators.find((c) => c.id === initialCreatorId), today) ? "" : initialCreatorId, itemOther: "", smallCount: "1", mediumCount: "0", largeCount: "0", memoTitle: "", memoBody: "" },
   });
   const creatorId = useWatch({ control, name: "creatorId" });
   const watchedCategory = useWatch({ control, name: "itemCategory" });
@@ -402,13 +414,26 @@ export function RegisterForm({
           ) : null}
         </p>
       ) : null}
-      {notice && noticeShown ? (
+    </>
+  );
+
+  // 결제창에서 돌아온 안내 — 폼 맨 위(시안 ux-pilot-2026-10-22 send-3-after). 이어서 결제할 내 주문이 있으면 바로 아래 「결제하기 ›」(d113 D-3).
+  // 오류 줄 글자는 그대로 둔다 — 아래 빈 폼은 새로 등록하려는 사람용이다
+  const paymentNotice =
+    notice && noticeShown ? (
+      <div className={f.notice}>
         <p className={f.error} role="alert">
           {notice}
         </p>
-      ) : null}
-    </>
-  );
+        {resumeHref ? (
+          <p>
+            <Link className="link-arrow" href={resumeHref}>
+              결제하기 ›
+            </Link>
+          </p>
+        ) : null}
+      </div>
+    ) : null;
 
   return (
     <div className={f.root}>
@@ -449,6 +474,7 @@ export function RegisterForm({
       </section>
 
       <form className={f.panel} onSubmit={onSubmit} noValidate aria-label="선물 보내기 입력">
+        {paymentNotice}
         {/* 1 크리에이터 */}
         <fieldset className={f.step} hidden={step !== 1} aria-describedby={errors.creatorId ? "creator-error" : undefined}>
           <legend className="sr-only">받는 크리에이터</legend>
@@ -478,17 +504,23 @@ export function RegisterForm({
           <ul className={f["pick-list"]}>
             {creators.map((c) => {
               const resting = restingNotice(c.receiving?.resumeOn ?? null, today);
-              const meta = [c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : (resting ?? approvalTimeText(c.approvalMinutes))]
-                .filter(Boolean)
-                .join(" · ");
-              // 쉬는 중·이사 중 크리에이터 카드는 회색 바탕으로 낮춘다(design-rules 25절) — 고르는 것은 막지 않는다(「다음」이 안내한다)
-              const stopped = c.moving === true || resting !== null;
+              // 이번 달 한도에 닿은 크리에이터는 둘째 줄 전체가 한도 안내다(시안 ux-pilot-2026-10-22 send-2-after)
+              const meta =
+                !c.moving && resting === null && c.limitReached
+                  ? limitReachedMessage(today)
+                  : [c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : (resting ?? approvalTimeText(c.approvalMinutes))]
+                      .filter(Boolean)
+                      .join(" · ");
+              // 지금 보낼 수 없는 크리에이터(이사 중·쉬는 중·이번 달 한도)는 회색 카드 + 이유 한 줄, 고를 수 없다(design-rules 25절 — 2026-10-22 d113 D-2).
+              // 등록은 DB 가 다시 막는다 — 화면을 연 뒤 상태가 바뀌어도 「다음」·결제 직전 판정(creatorBlock)이 안내한다
+              const stopped = creatorStopped(c, today);
               return (
                 <li key={c.id} hidden={!visible.includes(c)}>
                   <label className={`${f.pick} ${stopped ? f.stop : ""}`}>
                     <input
                       className="sr-only"
                       type="radio"
+                      disabled={stopped}
                       value={c.id}
                       {...register("creatorId", { onChange: (e: { target: { value: string } }) => onCreatorChange?.(e.target.value) })}
                     />
@@ -668,6 +700,14 @@ export function RegisterForm({
               </p>
             </div>
           ) : null}
+          {/* d113 D-1: 선택 칸 둘(선물 사진·나만 보는 메모)은 글자 한 줄로 접어 둔다 — 기본 화면에는 필수 두 칸만. 4단계 확인 줄은 그대로(고른 것만 보인다) */}
+          <details
+            className={f.optfold}
+            data-optional-fold=""
+            open={optOpen || errors.memoTitle !== undefined || errors.memoBody !== undefined}
+            onToggle={(e) => setOptOpen(e.currentTarget.open)}
+          >
+            <summary>선물 사진·나만 보는 메모 (선택)</summary>
           {/* together INV-F2: 선물 사진(선택) — 「함께한 시간」에서 나만 본다. 파일 칸은 좁은 폭에서 넘치지 않게 숨기고 라벨을 버튼 모양으로(크리에이터 설정 「사진 고르기」 방식) */}
           <div className={f.block} role="group" aria-labelledby="photo-q">
             <p className={f.lb} id="photo-q">
@@ -755,6 +795,7 @@ export function RegisterForm({
               {err("memoBody-error", errors.memoBody?.message)}
             </div>
           </section>
+          </details>
         </fieldset>
 
         {/* 3 상자 — 상자 칸 셋(휴대폰은 한 줄씩) + 회색 안내 하나. 「소형은 …이하예요」 세 줄은 상자 칸에 같은 값이 있어 뺐다(design-rules 25절) */}

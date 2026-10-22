@@ -25,6 +25,7 @@ vi.mock("next/navigation", () => ({
   notFound: nav.notFound,
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
   usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(),
 }));
 vi.mock("@/shared/api/supabase/server", () => ({ createRequestSupabase: vi.fn() }));
 
@@ -401,12 +402,13 @@ describe("INV-J14: 보낸 선물 — 위 크리에이터 카드 줄 + 아래 묶
     // 아래 격자 — 크리에이터로 묶지 않고 최근 순(하루·모모가 섞인다), 카드는 선물 상세로
     const ing = panel(/^진행 중/);
     expect(ing.querySelectorAll("[data-gift-group]")).toHaveLength(0);
-    expect(rowHrefs(ing)).toEqual(["/gifts/FC-HARU3", "/gifts/FC-MOMO2", "/gifts/FC-HARU2", "/gifts/FC-MOMO1"]);
+    // 할 일이 있는 카드만 칸(#todo)으로 바로 간다(진단 A-1)
+    expect(rowHrefs(ing)).toEqual(["/gifts/FC-HARU3", "/gifts/FC-MOMO2#todo", "/gifts/FC-HARU2", "/gifts/FC-MOMO1"]);
     const haru3 = [...ing.querySelectorAll("[data-gift-row]")].find((r) => r.querySelector("a")?.getAttribute("href") === "/gifts/FC-HARU3");
     expect(haru3?.querySelector(".tag")?.textContent).toBe(lastTag);
     // 할 일이 있는 카드만 강조(design-rules 22절) — 사이드바 숫자와 같은 지금 할 일 읽기 결과의 주문(모모 FC-MOMO2)
     const hi = [...ing.querySelectorAll("[data-gift-row][data-hi]")];
-    expect(hi.map((r) => r.querySelector("a")?.getAttribute("href"))).toEqual(["/gifts/FC-MOMO2"]);
+    expect(hi.map((r) => r.querySelector("a")?.getAttribute("href"))).toEqual(["/gifts/FC-MOMO2#todo"]);
     expect(rowHrefs(panel(/^완료/))).toEqual(["/gifts/FC-HARU1"]);
 
     // 함께한 시간 화면 — 같은 읽기(my_together)의 개인 기록 두 칸
@@ -453,5 +455,105 @@ describe("INV-J14: 보낸 선물 — 위 크리에이터 카드 줄 + 아래 묶
     expect(nav.redirect).not.toHaveBeenCalled();
     expect(creatorCards().map((c) => c.getAttribute("data-creator-card"))).toEqual(["하루"]);
     expect(rowHrefs(panel(/^진행 중/))).toEqual(["/gifts/FC-HARU1"]);
+  });
+  it("INV-J14 S14c: 결제를 마치지 않은 선물은 「진행 중」 맨 위 카드 한 장 — 지금 할 일 읽기의 결제 미완료 줄로 그리고 칸(#todo)으로 간다", async () => {
+    state.gifts = [giftRow("FC-HARU1", "하루")];
+    state.together = [{ ...HARU, giftCount: 1, replyCount: 0, orders: ["FC-HARU1"] }];
+    state.actions = [{ kind: "unpaid", order_no: "FC-U8P2K", box_id: null, box_label: null, box_seq: null, creator_name: "하루", tier: null, measured_tier: null, amount_krw: 5900, due_at: "2026-10-23T05:00:00+00:00" }];
+    await draw(GiftsRoute());
+    const ing = panel(/^진행 중/);
+    const first = ing.querySelectorAll("li")[0]!;
+    expect(first.hasAttribute("data-unpaid-row")).toBe(true);
+    expect(first.querySelector("a")?.textContent).toBe("결제를 마치지 않은 선물");
+    expect(first.querySelector("a")?.getAttribute("href")).toBe("/gifts/FC-U8P2K#todo");
+    expect(first.textContent).toContain("하루님께 보낼 선물");
+    expect(first.textContent).toContain("10월 23일까지");
+    expect(first.textContent).toContain("결제하기 ›");
+    // 격자는 결제가 끝난 주문 그대로 — 결제 대기 주문은 선물 카드로 그리지 않는다
+    expect(rowHrefs(ing)).toEqual(["/gifts/FC-HARU1"]);
+    expect(ing.querySelectorAll("[data-unpaid-row]")).toHaveLength(1);
+  });
+
+  it("INV-J14 S14c (실패경로): 결제 미완료 줄이 없으면 카드도 없다 — 다른 종류의 줄은 결제하기 카드가 되지 않는다", async () => {
+    state.gifts = [giftRow("FC-HARU1", "하루")];
+    state.together = [{ ...HARU, giftCount: 1, replyCount: 0, orders: ["FC-HARU1"] }];
+    state.actions = [difference("FC-HARU1")];
+    await draw(GiftsRoute());
+    const ing = panel(/^진행 중/);
+    expect(ing.querySelectorAll("[data-unpaid-row]")).toHaveLength(0);
+    expect(ing.textContent).not.toContain("결제를 마치지 않은 선물");
+  });
+
+  it("INV-J14 S14c: 진행 중인 결제된 선물이 없어도 결제 미완료 카드는 빈 안내 대신 보인다", async () => {
+    state.actions = [{ kind: "unpaid", order_no: "FC-U8P2K", box_id: null, box_label: null, box_seq: null, creator_name: "하루", tier: null, measured_tier: null, amount_krw: 5900, due_at: "2026-10-23T05:00:00+00:00" }];
+    await draw(GiftsRoute());
+    const ing = panel(/^진행 중/);
+    expect(ing.querySelectorAll("[data-unpaid-row]")).toHaveLength(1);
+    expect(ing.textContent).not.toContain("지금 진행 중인 선물이 없어요.");
+  });
+});
+
+describe("보낸 선물 카드의 하늘 면 — 지금 할 일 줄이 있는 카드에만(진단 A-1·A-2, INV-J2)", () => {
+  function ongoingPanel(): Element {
+    const tab = [...host.querySelectorAll('main [role="tab"]')].find((t) => /^진행 중/.test(t.textContent ?? ""))!;
+    act(() => (tab as HTMLButtonElement).click());
+    return host.querySelector(`#${tab.getAttribute("aria-controls")}`)!;
+  }
+  const row = (p: Element, no: string) => [...p.querySelectorAll("[data-gift-row]")].find((r) => r.querySelector("a")?.getAttribute("href")?.startsWith(`/gifts/${no}`));
+
+  it("A-2 (실패경로): 「보내 주세요」 카드라도 지금 할 일 줄이 없으면 하늘 면이 아니다 — 사이드바 숫자와 하늘 면 수가 같다", async () => {
+    state.gifts = [giftRow("FC-SEND1", "하루", { approved_at: "2026-10-01T05:00:00+00:00" }), giftRow("FC-R2D8Q", "하루", { registered_at: "2026-09-30T02:00:00+00:00" })];
+    state.actions = [difference("FC-R2D8Q")];
+    const r = await draw(GiftsRoute());
+    const p = ongoingPanel();
+    const send = row(p, "FC-SEND1")!;
+    expect(send.querySelector(".tag")?.textContent).toBe("보내 주세요");
+    expect(send.hasAttribute("data-hi")).toBe(false);
+    expect(send.querySelector("a")?.getAttribute("href")).toBe("/gifts/FC-SEND1");
+    expect(send.querySelector("[data-todo-line]")).toBeNull();
+    expect(String(p.querySelectorAll("[data-gift-row][data-hi]").length)).toBe(r.badge);
+  });
+
+  it("A-1: 하늘 면 카드에는 지금 할 일 줄의 제목과 기한이 한 줄로 붙는다", async () => {
+    state.gifts = [giftRow("FC-R2D8Q", "하루")];
+    state.actions = [difference("FC-R2D8Q")];
+    await draw(GiftsRoute());
+    const card = row(ongoingPanel(), "FC-R2D8Q")!;
+    expect(card.hasAttribute("data-hi")).toBe(true);
+    const line = card.querySelector("[data-todo-line]");
+    expect([...(line?.children ?? [])].map((c) => c.textContent)).toEqual(["추가 결제", "10월 30일까지"]);
+  });
+
+  it("A-1: 한 주문에 줄이 여럿이면 기한이 가장 이른 줄을 붙이고, 기한이 없는 줄은 제목만", async () => {
+    state.gifts = [giftRow("FC-7K3M9", "하루"), giftRow("FC-R2D8Q", "하루", { registered_at: "2026-09-30T02:00:00+00:00" })];
+    state.actions = [
+      difference("FC-7K3M9"),
+      { ...difference("FC-7K3M9"), kind: "missing_box", box_id: "22222222-2222-4222-8222-222222222222", measured_tier: null, amount_krw: null, due_at: "2026-10-27T14:59:00+00:00" },
+      { ...difference("FC-R2D8Q"), due_at: null },
+    ];
+    await draw(GiftsRoute());
+    const p = ongoingPanel();
+    const lineOf = (no: string) => [...(row(p, no)?.querySelector("[data-todo-line]")?.children ?? [])].map((c) => c.textContent);
+    expect(lineOf("FC-7K3M9")).toEqual(["도착이 늦어요", "10월 27일까지"]);
+    expect(lineOf("FC-R2D8Q")).toEqual(["추가 결제"]);
+  });
+});
+
+describe("보낸 선물 상세 — 결제 직후 안내(진단 B-1)", () => {
+  beforeEach(() => {
+    state.gifts = [giftRow("FC-7K3M9", "하루")];
+  });
+  const paidLine = () => host.querySelector("main [data-paid-line]");
+
+  it("B-1: 결제 성공 뒤 돌아온 주소(?paid=1)로 열면 상태 판 위에 「결제가 끝났어요.」", async () => {
+    await draw(GiftRoute({ params: Promise.resolve({ orderNo: "FC-7K3M9" }), searchParams: Promise.resolve({ paid: "1" }) }));
+    expect(paidLine()?.textContent).toMatch(/^결제가 끝났어요\./);
+  });
+
+  it("B-1 (실패경로): 물음표 값 없이 다시 열면 안내 줄이 없다", async () => {
+    await draw(detail("FC-7K3M9"));
+    expect(paidLine()).toBeNull();
+    await draw(GiftRoute({ params: Promise.resolve({ orderNo: "FC-7K3M9" }), searchParams: Promise.resolve({ paid: "0" }) }));
+    expect(paidLine()).toBeNull();
   });
 });

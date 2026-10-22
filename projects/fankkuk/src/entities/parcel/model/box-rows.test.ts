@@ -3,14 +3,14 @@ import { boxTierName, fanBoxStateTag, hasArrived, isMissing, isWaybillEditable, 
 
 const EXTRA = { address_code: null, reported_not_mine: false } as const;
 // 팬 선물 상자 줄에만 있는 칸 — 「먼저 보내기」 전인가(approval-signature INV-S9)
-const GIFT_EXTRA = { ...EXTRA, send_ack_needed: false } as const;
+const GIFT_EXTRA = { ...EXTRA, send_ack_needed: false, not_sent_at: null } as const;
 
 const BOX = "3f1c2b7a-9d4e-4c1a-8b2f-0a1b2c3d4e5f";
 
 describe("상자 줄 경계 — 팬 선물 상자(my_gift_boxes)", () => {
   it("정해진 칸을 화면용 이름으로 바꾼다", () => {
-    expect(parseGiftBoxRows([{ box_id: BOX, label: "FC-7K3M9-1", tier: "small", waybill_no: null, state: "awaiting", address_code: "K7M3XA", reported_not_mine: false, send_ack_needed: false }])).toEqual([
-      { boxId: BOX, label: "FC-7K3M9-1", tier: "small", waybillNo: null, state: "awaiting", addressCode: "K7M3XA", sendAckNeeded: false },
+    expect(parseGiftBoxRows([{ box_id: BOX, label: "FC-7K3M9-1", tier: "small", waybill_no: null, state: "awaiting", address_code: "K7M3XA", reported_not_mine: false, send_ack_needed: false, not_sent_at: null }])).toEqual([
+      { boxId: BOX, label: "FC-7K3M9-1", tier: "small", waybillNo: null, state: "awaiting", addressCode: "K7M3XA", sendAckNeeded: false, notSentAt: null },
     ]);
   });
 
@@ -72,6 +72,13 @@ describe("송장번호를 고칠 수 있는 때 — 입고 전까지만", () => 
     const row = { box_id: BOX, label: "FC-7K3M9-1", tier: "small", waybill_no: null, state: "no_waybill", ...GIFT_EXTRA, send_ack_needed: true };
     expect(parseGiftBoxRows([row])[0]!.sendAckNeeded).toBe(true);
     const { send_ack_needed: _drop, ...without } = row;
+    expect(() => parseGiftBoxRows([without])).toThrow();
+  });
+
+  it("INV-W10: 「아직 보내지 않음」을 누른 시각을 받는다 — 칸이 빠지면 목록을 버린다", () => {
+    const row = { box_id: BOX, label: "FC-7K3M9-1", tier: "small", waybill_no: null, state: "awaiting", ...GIFT_EXTRA, not_sent_at: "2026-10-22T03:00:00+00:00" };
+    expect(parseGiftBoxRows([row])[0]!.notSentAt).toBe("2026-10-22T03:00:00+00:00");
+    const { not_sent_at: _drop, ...without } = row;
     expect(() => parseGiftBoxRows([without])).toThrow();
   });
 

@@ -102,6 +102,17 @@ export function giftDetailHref(orderNo: string, todo = false): string {
   return `/gifts/${orderNo}${todo ? `#${TODO_FRAGMENT}` : ""}`;
 }
 
+/**
+ * 결제창에서 실패하고 선물 보내기로 돌아왔을 때의 「결제하기 ›」 주소(2026-10-22 d113 진단 D-3, payment INV-M22 ⑤).
+ * 쿼리로 온 주문번호는 믿지 않는다 — 로그인한 사람의 지금 할 일 읽기 결과(INV-J3)에 그 주문의 결제 미완료 줄이 있을 때만 주소를 준다.
+ * 남의 주문번호·결제가 끝난 주문·형식이 틀린 값·읽기 실패(null)는 모두 null — 링크를 그리지 않는다. 주소는 줄의 주문번호로 만든다.
+ */
+export function unpaidResumeHref(items: readonly ActionItem[] | null, orderParam: unknown): string | null {
+  if (items === null || typeof orderParam !== "string") return null;
+  const line = items.find((it) => it.kind === "unpaid" && it.orderNo === orderParam);
+  return line ? giftDetailHref(line.orderNo, true) : null;
+}
+
 /** 가장 급한 줄이 먼저 — 기한이 이른 순, 기한이 아직 없는 줄(검수 완료 스캔 전 차액)은 뒤. 같은 기한이면 읽은 순서 그대로 */
 export function byUrgency(items: readonly ActionItem[]): ActionItem[] {
   const at = (it: ActionItem) => (it.dueAt ? Date.parse(it.dueAt) : Number.POSITIVE_INFINITY);

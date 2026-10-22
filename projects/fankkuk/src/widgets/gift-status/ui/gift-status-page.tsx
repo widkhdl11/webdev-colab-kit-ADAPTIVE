@@ -23,7 +23,7 @@ import { formatWaybill } from "@/entities/parcel/model/waybill-no";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
 import { ReceivingAddress } from "@/features/box-waybill/ui/receiving-address";
 import { WaybillEditor } from "@/features/box-waybill/ui/waybill-editor";
-import { formatDate, formatDateTime } from "@/shared/lib/format/datetime";
+import { formatDate, formatDateTime, formatMonthDayKo } from "@/shared/lib/format/datetime";
 import { differencesBelowTodo, visibleDifferences, type GiftDifference } from "@/entities/payment/model/difference-rows";
 import type { GiftPayment } from "@/entities/payment/model/gift-payment";
 import type { FanBoxReply } from "@/entities/gift-reply/api/gift-reply-reads";
@@ -36,7 +36,10 @@ import type { GiftMemo } from "@/entities/order/model/gift-memo";
 import { PROMISE } from "@/shared/config/site-copy";
 import s from "./gift-status.module.css";
 
-// 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v35-part1/gift-detail.html (design-rules 22절 — 맨 위 「지금 할 일」 칸 → 하늘 상태 판 → 상자·결제·주문 정보 카드 셋, 999 이하 두 칸·767 이하 한 칸). 시안은 한 상태의 예시, 칸이 나오는 조건은 아래 그대로
+// 팬 — 선물 하나의 상태. 시안: docs/design/mockups/site/v35-part1/gift-detail.html (design-rules 22절 — 맨 위 「지금 할 일」 칸 → 하늘 상태 판 → 상자·결제·주문 정보 카드). 시안은 한 상태의 예시, 칸이 나오는 조건은 아래 그대로
+// 배치·보이는 조건은 UX 정돈 시범(2026-10-22 승인, docs/ux/diagnosis-2026-10-22-pilot.md B-1~B-9, 시안 ux-pilot-2026-10-22/gift-detail.html):
+//   상자 칸 8 + 오른쪽 한 열(결제 위·주문 정보 아래), 999 이하 상자 칸 아래 둘 나란히, 767 이하 한 줄씩.
+//   송장번호 칸·「받는 주소 없이 보냈다면」은 받는 주소가 보인 뒤에만(먼저 보내기 전에는 「먼저 보내기」 안내만), 맨 아래 「1:1 문의하기」는 늘.
 // 문의하지 않아도 지금 어디까지 왔는지 알 수 있게(성공 기준 3).
 // 크리에이터에게 보내는 송장번호는 이 화면에 오지 않는다 — toFanView·my_gift_boxes 가 걸러서 넘긴다.
 // 메모·답장·차액 기록·안내는 카드 셋 아래 테두리 없는 구간들(위 1px 선). 헤더·푸터는 라우트가 붙인다.
@@ -76,6 +79,7 @@ export function GiftStatusPage({
   todo = null,
   todoBoxIds = [],
   dueKrw = 0,
+  paid = false,
 }: {
   view: FanGiftView;
   boxes: readonly GiftBox[];
@@ -94,6 +98,8 @@ export function GiftStatusPage({
   todoBoxIds?: readonly string[];
   /** 오른쪽 요약 상자의 「추가 결제 N원」 꼬리표(시안 v34-part1 .sidebox .tag.warn) — 맨 위 칸의 추가 결제 줄 합(differenceDueKrw). 결제는 맨 위 칸에서만 한다(INV-J13). 0 이면 꼬리표 없음 */
   dueKrw?: number;
+  /** 결제를 마치고 돌아온 직후(`?paid=1`) — 상태 판 위 안내 줄(UX 시범 B-1). 라우트가 주소의 물음표 값으로 넘긴다 */
+  paid?: boolean;
 }) {
   const progress = fanProgress(view);
   // 배지의 「N/6」은 지금 있는 단계 번호다 — 끝낸 단계 수(4)를 쓰면 아래 진행 줄의 현재 단계(5번 배송중)와 숫자가 어긋났다(2026-10-09 디자인 점검)
@@ -103,13 +109,13 @@ export function GiftStatusPage({
   const inProgress = view.outcome === "in_progress";
   // 찾기 대상·받는 주소 판정은 features/box-waybill/model/box-targets.ts (INV-C3·C4 ②)
   const finderBoxes = giftFinderBoxes(boxes, inProgress);
-  const anyEditable = finderBoxes.length > 0;
-  // 아래 찾기 구간의 고를 상자 — 칸에 있는 상자는 칸에서만 찾는다(INV-J13). 남은 상자가 없으면(전부 칸에 있음) 첫 그림에서 구간을 숨긴다.
-  // 원래 찾기 대상이 없던 주문(다 찾음·입고됨)은 예전처럼 구간을 그린다 — 마지막 상자를 찾은 뒤 결과 안내가 남아야 한다
+  // 아래 찾기 구간의 고를 상자 — 칸에 있는 상자는 칸에서만 찾는다(INV-J13)
   const belowFinder = finderBoxesBelowTodo(finderBoxes, todoBoxIds);
-  const showFinder = !(anyEditable && belowFinder.length === 0);
   const officeAddress = inProgress ? view.officeAddress : null;
   const earlySendAck = needsEarlySendAck(boxes, inProgress);
+  // 찾기 구간 — 받는 주소가 보인 뒤(승인됐거나 먼저 보내기 누름)이고 여기서 고를 입고 전 상자가 있을 때만(UX 시범 B-3).
+  // 처음 그림에서 보인 구간은 마지막 상자를 찾은 뒤에도 결과 안내 자리로 남는다(KeepShown)
+  const showFinder = !earlySendAck && belowFinder.length > 0;
   // 「먼저 보내기」 전이면 위쪽도 승인 대기로 보인다 — 판정은 fan-stage-copy(view.earlySendPending, INV-S9)
   const badge = fanBadge(view);
   const headline = fanHeadline(view);
@@ -120,7 +126,9 @@ export function GiftStatusPage({
   // 단계 막대와 상자별 상태는 같은 경우(진행 중·돌려보냄)에만 보인다
   const showsProgress = showsSteps(view);
   const cancelable = canCancelGift(boxes, inProgress);
-
+  // 거절·기한 지남 안내(B-6) — 도착한 상자가 있을 때 · 아직 도착하지 않은 상자가 있을 때의 문단만. 첫 문단은 끝난 주문에서 받는 주소가 보였는지 알 수 없어 늘 보인다(BACKLOG)
+  const anyArrived = boxes.some((b) => hasArrived(b.state));
+  const anyNotYet = boxes.some((b) => isWaybillEditable(b.state));
 
   // 진행 단계 칸 아래 작은 글 — 지금 막 끝낸 단계는 「지금」, 다음 단계는 「다음 단계」, 나머지는 날짜(시안 v35 .dsteps)
   const lastDoneIdx = currentIdx > 0 ? currentIdx - 1 : -1;
@@ -141,6 +149,12 @@ export function GiftStatusPage({
         {/* 맨 위 「지금 할 일」 칸은 상태 판 위 전체 폭 */}
         <div className={s.top} data-detail-top="">
           {todo}
+          {/* 결제 직후 안내(B-1) — 다음에 할 일 한 구절: 먼저 보내기 전이면 「먼저 보내기」, 받는 주소가 보이면 그 주소 */}
+          {paid ? (
+            <p className={s.paidline} role="status" data-paid-line="">
+              {earlySendAck ? "결제가 끝났어요. 먼저 보내려면 아래 「먼저 보내기」를 눌러 주세요." : anyAddress ? "결제가 끝났어요. 아래 받는 주소로 상자를 보내 주세요." : "결제가 끝났어요."}
+            </p>
+          ) : null}
           {/* 맨 위 하늘 판 — 지금 상태 · 도착 예정일 · 6단계 진행(시안 v35-part1/gift-detail.html .dhero, design-rules 22절) */}
           <section className={s.dhero} aria-labelledby="g-title">
             <img className={s.peek} src="/images/home/icon-truck.webp" alt="" aria-hidden="true" width={96} height={96} />
@@ -198,16 +212,19 @@ export function GiftStatusPage({
             <h2 className={s.secTitle}>이 선물은 보내지 마세요</h2>
             {/* 거절·자동 반려 모두 같은 안내 — 거절인지 기간 지남인지는 위 한 줄이 말한다(decline-block INV-D5). 상자마다 돌려준다(payment INV-M8·M18, 2026-10-10 늦게 오는 상자) */}
             <p className={s.desc}>받는 주소가 보이기 전에 끝났다면 결제 금액을 모두 돌려드려요.</p>
-            <p className={s.more}>사무실에 도착한 상자는 보낸 주소로 돌려보내 드리고, 그 상자의 반송 택배비를 뺀 금액을 돌려드려요.</p>
-            <p className={s.more}>
-              아직 도착하지 않은 상자는 택배비를 뺀 금액을 먼저 돌려드려요. 이미 보내셨다면 도착하는 대로 돌려보내 드리고, 7일 안에 도착하지 않으면
-              택배비도 돌려드려요.
-            </p>
+            {anyArrived ? <p className={s.more}>사무실에 도착한 상자는 보낸 주소로 돌려보내 드리고, 그 상자의 반송 택배비를 뺀 금액을 돌려드려요.</p> : null}
+            {anyNotYet ? (
+              <p className={s.more}>
+                아직 도착하지 않은 상자는 택배비를 뺀 금액을 먼저 돌려드려요. 이미 보내셨다면 도착하는 대로 돌려보내 드리고, 7일 안에 도착하지 않으면
+                택배비도 돌려드려요.
+              </p>
+            ) : null}
           </div>
         ) : null}
 
-        {/* 상자 · 결제 · 주문 정보 카드 셋(시안 .dgrid). 주문 정보는 덜 중요한 회색 카드 */}
-        <div className={s.dgrid}>
+        {/* 상자 칸 8 + 오른쪽 한 열(결제 위 · 주문 정보 아래 — 시안 ux-pilot .dgrid.split·.dside). 주문 정보는 덜 중요한 회색 카드.
+            상자 칸이 없는 주문(끝남·상자 없음)은 오른쪽 열만 — 두 카드를 나란히 */}
+        <div className={showsProgress && boxes.length > 0 ? `${s.dgrid} ${s.split}` : s.dgrid}>
           {showsProgress && boxes.length > 0 ? (
             <section className={s.dcard} aria-labelledby="box-status-title">
               {/* 「먼저 보내기」를 누르면 안내 칸이 사라진다 — 포커스는 그대로 남는 이 제목으로 옮긴다 */}
@@ -239,6 +256,9 @@ export function GiftStatusPage({
                           </span>
                         ) : isMissing(b.state) ? (
                           <span className={statusTagClass("warn")}>도착하지 않음</span>
+                        ) : b.notSentAt ? (
+                          // 「아직 보내지 않음」을 누른 상자 — 지금 할 일 줄은 없어지고 누른 날만 여기 남는다(UX 시범 C-1, office-workflow INV-W10)
+                          <span className="tag">아직 보내지 않음 · {formatMonthDayKo(b.notSentAt)}</span>
                         ) : (
                           <span className="tag">아직 도착 전</span>
                         )}
@@ -249,8 +269,9 @@ export function GiftStatusPage({
                       {officeAddress && addressCode ? (
                         <ReceivingAddress officeAddress={officeAddress} code={addressCode} boxName={b.label} multiple={boxes.length > 1} />
                       ) : null}
-                      {isWaybillEditable(b.state) && inProgress ? (
-                        // 송장번호 입력은 접어 둔다(시안 v35 .fold) — 배송 조회를 보고 싶을 때만 넣는 선택 칸(INV-C7)
+                      {isWaybillEditable(b.state) && inProgress && !b.sendAckNeeded ? (
+                        // 송장번호 입력은 접어 둔다(시안 v35 .fold) — 배송 조회를 보고 싶을 때만 넣는 선택 칸(INV-C7).
+                        // 그 상자에 받는 주소가 보인 뒤에만 — 먼저 보내기 전에는 보낼 주소가 없다(UX 시범 B-2)
                         <details className={s.fold}>
                           <summary>이 상자를 보낸 택배 송장번호</summary>
                           <div className={s.in}>
@@ -278,8 +299,8 @@ export function GiftStatusPage({
                   );
                 })}
               </div>
-              {/* 받는 주소 없이 보냈다면(inbound-address-code INV-C4 ②) — 진행 중 주문이면 늘 그린다(접어 둔다). 마지막 상자를 찾아 고를 상자가 없어져도
-                  결과 안내가 남아 있게, 빈 목록은 칸 안에서 처리한다. 잇는 판정은 DB 가 한다 */}
+              {/* 받는 주소 없이 보냈다면(inbound-address-code INV-C4 ②) — 진행 중 + 받는 주소가 보인 뒤 + 고를 입고 전 상자가 있을 때(접어 둔다, B-3).
+                  마지막 상자를 찾아 고를 상자가 없어져도 결과 안내가 남아 있게, 빈 목록은 칸 안에서 처리한다. 잇는 판정은 DB 가 한다 */}
               {inProgress ? (
                 <KeepShown key={view.orderNo} show={showFinder}>
                   <details className={s.fold} data-sec="" data-finder="">
@@ -295,77 +316,64 @@ export function GiftStatusPage({
             </section>
           ) : null}
 
-          {payment ? (
-            <section className={s.dcard} aria-labelledby="pay-title">
-              <h2 className={s.cardTitle} id="pay-title">
-                결제
+          <div className={s.dside} data-detail-side="">
+            {payment ? (
+              <section className={s.dcard} aria-labelledby="pay-title">
+                <h2 className={s.cardTitle} id="pay-title">
+                  결제
+                </h2>
+                <p className={s.amount}>{won(payment.paidKrw)}</p>
+                {/* 아직 내지 않은 차액의 합 — 결제는 맨 위 칸에서만 한다(INV-J13) */}
+                {dueKrw > 0 ? <span className={`${statusTagClass("warn")} ${s.duetag}`}>추가 결제 {won(dueKrw)}</span> : null}
+                <PaymentSummary payment={payment} differences={difference?.differences ?? []} />
+                {cancelable ? (
+                  <div className={s.cancel}>
+                    <CancelGiftButton orderNo={view.orderNo} addressShown={!view.earlySendPending} />
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
+            <section className={`${s.dcard} ${s.muted}`} aria-labelledby="info-title">
+              <h2 className={s.cardTitle} id="info-title">
+                주문 정보
               </h2>
-              <p className={s.amount}>{won(payment.paidKrw)}</p>
-              {/* 아직 내지 않은 차액의 합 — 결제는 맨 위 칸에서만 한다(INV-J13) */}
-              {dueKrw > 0 ? <span className={`${statusTagClass("warn")} ${s.duetag}`}>추가 결제 {won(dueKrw)}</span> : null}
-              <PaymentSummary payment={payment} differences={difference?.differences ?? []} />
-              {cancelable ? (
+              {/* 주문번호·크리에이터·선물·상자 수는 위 상태 판에 있다 — 여기는 상태 판에 없는 두 줄만(UX 시범 B-9) */}
+              <dl className={s.kv}>
+                <div>
+                  <dt>등록</dt>
+                  <dd>{formatDateTime(view.registeredAt)}</dd>
+                </div>
+                {/* 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 주문 정보 안 한 줄(design-rules 22절) */}
+                {view.outcome === "in_progress" ? (
+                  <div>
+                    <dt>{APPROVAL_LABEL}</dt>
+                    <dd>
+                      {view.approval.state === "done" && view.approval.at ? (
+                        formatDate(view.approval.at)
+                      ) : (
+                        <span className={statusTagClass(APPROVAL_TONE[view.approval.state])}>{APPROVAL_TEXT[view.approval.state]}</span>
+                      )}
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+              {payment ? null : (
+                <p className={s["tag-line"]}>
+                  <span className="tag">
+                    <Check size={16} />
+                    검수 포함
+                  </span>
+                </p>
+              )}
+              {hasShipped(view) ? <p className={s.note}>{PROMISE.addressFan} 그래서 크리에이터에게 가는 송장번호도 알려 드리지 않아요.</p> : null}
+              {!payment && cancelable ? (
                 <div className={s.cancel}>
                   <CancelGiftButton orderNo={view.orderNo} addressShown={!view.earlySendPending} />
                 </div>
               ) : null}
             </section>
-          ) : null}
-
-          <section className={`${s.dcard} ${s.muted}`} aria-labelledby="info-title">
-            <h2 className={s.cardTitle} id="info-title">
-              주문 정보
-            </h2>
-            <dl className={s.kv}>
-              <div>
-                <dt>주문번호</dt>
-                <dd>{view.orderNo}</dd>
-              </div>
-              <div>
-                <dt>받는 크리에이터</dt>
-                <dd>{view.creatorName}</dd>
-              </div>
-              <div>
-                <dt>선물</dt>
-                <dd>{view.itemKind}</dd>
-              </div>
-              <div>
-                <dt>상자</dt>
-                <dd>{view.boxCount}개</dd>
-              </div>
-              <div>
-                <dt>등록</dt>
-                <dd>{formatDateTime(view.registeredAt)}</dd>
-              </div>
-              {/* 크리에이터 승인은 줄 세운 단계가 아니라 출고의 조건이다 — 주문 정보 안 한 줄(design-rules 22절) */}
-              {view.outcome === "in_progress" ? (
-                <div>
-                  <dt>{APPROVAL_LABEL}</dt>
-                  <dd>
-                    {view.approval.state === "done" && view.approval.at ? (
-                      formatDate(view.approval.at)
-                    ) : (
-                      <span className={statusTagClass(APPROVAL_TONE[view.approval.state])}>{APPROVAL_TEXT[view.approval.state]}</span>
-                    )}
-                  </dd>
-                </div>
-              ) : null}
-            </dl>
-            {payment ? null : (
-              <p className={s["tag-line"]}>
-                <span className="tag">
-                  <Check size={16} />
-                  검수 포함
-                </span>
-              </p>
-            )}
-            {hasShipped(view) ? <p className={s.note}>{PROMISE.addressFan} 그래서 크리에이터에게 가는 송장번호도 알려 드리지 않아요.</p> : null}
-            {!payment && cancelable ? (
-              <div className={s.cancel}>
-                <CancelGiftButton orderNo={view.orderNo} addressShown={!view.earlySendPending} />
-              </div>
-            ) : null}
-          </section>
+          </div>
         </div>
 
         {memo ? <GiftMemoCard memo={memo} /> : null}
@@ -390,9 +398,17 @@ export function GiftStatusPage({
           <div className={s.sec} data-sec="">
             <h2 className={s.secTitle}>보내기 전에 알아 두세요</h2>
             <p className={s.desc}>상자를 더 보내려면 새로 등록해 주세요. 상자마다 받는 주소가 달라요.</p>
-            <p className={s.more}>{RETURN_ON_REJECT_NOTICE}</p>
+            {/* 거절·7일 반송 안내는 승인 전에만(B-5) — 이미 승인된 선물에는 해당하지 않는다 */}
+            {view.approval.state !== "done" ? <p className={s.more}>{RETURN_ON_REJECT_NOTICE}</p> : null}
           </div>
         ) : null}
+
+        {/* 문제를 알릴 입구(B-7) — 모든 상태에서 맨 아래 같은 자리. 잘못 이어진 상자 등은 1:1 문의로 처리한다 */}
+        <p className={s.bottomlink}>
+          <Link className={s.textlink} href="/support">
+            1:1 문의하기
+          </Link>
+        </p>
       </div>
     </main>
   );

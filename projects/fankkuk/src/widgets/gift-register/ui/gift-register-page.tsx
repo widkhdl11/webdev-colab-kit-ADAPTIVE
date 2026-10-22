@@ -32,6 +32,7 @@ export function GiftRegisterPage({
   initialCreatorId,
   clientKey,
   notice,
+  resumeHref = null,
   signedIn = true,
   followFirst = null,
   today,
@@ -43,6 +44,8 @@ export function GiftRegisterPage({
   /** 토스 결제창 공개 키. 없으면 결제창 대신 안내만 보인다. */
   clientKey: string;
   notice?: string;
+  /** 결제 실패로 돌아왔을 때 이어서 결제할 내 주문의 선물 상세 칸 주소 — 라우트가 지금 할 일 읽기로 확인해 넘긴다(d113 D-3). 없으면 null */
+  resumeHref?: string | null;
   /** 로그인했는가 — 아니면 팔로우한 사람이 없으니 로그인 안내를 보여 준다. */
   signedIn?: boolean;
   /** 크리에이터 페이지에서 미리 고르고 왔는데 아직 팔로우하지 않은 사람 — 「팔로우하고 선물 보내기」를 따로 보여 준다(INV-L9). */
@@ -84,9 +87,10 @@ export function GiftRegisterPage({
           <h1 className="ph-title">선물 보내기</h1>
           {registered ? (
             <p className="ph-desc">{`주문번호 ${registered.orderNo} — 결제하면 등록이 끝나요.`}</p>
-          ) : (
+          ) : creators.length === 0 ? (
+            // 팔로우 0명·로그인 전에서만(d113 D-4) — 고를 사람이 있으면 1단계 설명 「팔로우한 크리에이터 중에서 골라요.」가 같은 말을 한다
             <p className={s["top-meta"]}>팔로우한 크리에이터에게만 선물을 보낼 수 있어요.</p>
-          )}
+          ) : null}
           {ownerLine ? (
             <p className={s.owner}>
               <span className={s["owner-mark"]} aria-hidden="true">
@@ -201,6 +205,7 @@ export function GiftRegisterPage({
             prices={prices}
             initialCreatorId={pickOther ? "" : initialCreatorId}
             notice={notice}
+            resumeHref={resumeHref}
             onRegistered={onRegistered}
             onCreatorChange={setPickedId}
             today={today}

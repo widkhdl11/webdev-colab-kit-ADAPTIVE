@@ -1,16 +1,22 @@
 import { disposeDueText, type ActionItem } from "@/entities/action-item/model/action-items";
 import { TodoBox, TodoTask } from "@/entities/action-item/ui/todo-box";
 import { PARCEL_TIER_GUIDE } from "@/entities/parcel/model/size-tier";
+import { Suspense } from "react";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
+import { NotSentButton } from "@/features/gift-not-sent/ui/not-sent-button";
 import { formatMonthDayKo, seoulDaysUntil } from "@/shared/lib/format/datetime";
 import { DifferencePayButton } from "./difference-pay-button";
+import { QueryNotice, RESUME_FAILED_TEXT, RETURN_CONFIRMED_TEXT } from "./query-notice";
 import { ResumePayButton } from "./resume-pay-button";
 import { ReturnAddressButton, type FanReturnAddress } from "./return-address-button";
+import s from "./action-center.module.css";
 
 // 보낸 선물 상세 맨 위 「지금 할 일」 칸 (action-center INV-J13, design-rules 21절, 시안 v34-part1/gift-detail.html).
 // items 는 라우트가 처리할 일 읽기 결과를 이 주문으로 거른 줄이다 — 비면 칸을 그리지 않는다(상세가 따로 「할 일이 있는가」를 계산하지 않는다).
 // 지금 할 일 페이지의 카드에 있던 처리를 이 칸으로 옮겼다. 새 처리 길은 없다 — 기존 처리를 그대로 부른다(INV-J4):
 //   결제 미완료 = 결제 이어 하기(payment INV-M22) → 결제창 · 추가 결제 = 차액 결제 준비 → 결제창 · 도착이 늦어요 = 「받는 주소 없이 보냈어요」 찾기(그 상자 하나) · 돌려받을 주소 확인 = 반송 주소 확인 창.
+// 도착이 늦어요는 두 갈래다(2026-10-22 d113 진단 C-1): 보냈으면 찾기 양식, 아직 안 보냈으면 「아직 보내지 않음」(기존 기록 처리, office-workflow INV-W10) — 그 아래 텍스트 링크 「1:1 문의하기」.
+// 결제 이어 하기가 실패로 돌아왔거나(?payment=failed) 돌려받을 주소 확인이 끝나 다시 읽었으면(?address=confirmed) 칸 위에 한 줄(진단 C-2·C-3).
 // 같은 주문의 일이 여럿이면 모두 칸 안에 줄로 쌓는다. 역조공 받기는 받은 역조공 상세가 칸을 그린다(features/revgift-receive).
 
 type Props = { items: readonly ActionItem[]; clientKey: string; now: string; address: FanReturnAddress };
@@ -51,7 +57,17 @@ function Task({ item, clientKey, now, address }: { item: ActionItem; clientKey: 
         title="도착이 늦어요"
         sub={`상자 ${item.boxSeq} (${tier}) · ${dueLine(item.dueAt, now)}`}
         wide
-        action={<FindMyBox box={{ target: { kind: "box", id: item.boxId }, label: item.boxLabel, name: `${item.boxLabel} · ${tier} 상자` }} />}
+        action={
+          <>
+            <FindMyBox box={{ target: { kind: "box", id: item.boxId }, label: item.boxLabel, name: `${item.boxLabel} · ${tier} 상자` }} />
+            <div className={s.alt}>
+              <NotSentButton orderNo={item.orderNo} />
+              <a className={s.textlink} href="/support">
+                1:1 문의하기
+              </a>
+            </div>
+          </>
+        }
       />
     );
   }
@@ -86,11 +102,18 @@ function Task({ item, clientKey, now, address }: { item: ActionItem; clientKey: 
 
 export function GiftTodoBox({ items, clientKey, now, address }: Props) {
   if (items.length === 0) return null;
+  const unpaid = items.some((it) => it.kind === "unpaid");
   return (
-    <TodoBox>
-      {items.map((it) => (
-        <Task key={`${it.kind}-${"boxId" in it ? it.boxId : it.orderNo}`} item={it} clientKey={clientKey} now={now} address={address} />
-      ))}
-    </TodoBox>
+    <>
+      <Suspense fallback={null}>
+        {unpaid ? <QueryNotice name="payment" value="failed" text={RESUME_FAILED_TEXT} tone="alert" className={`err ${s.notice}`} /> : null}
+        <QueryNotice name="address" value="confirmed" text={RETURN_CONFIRMED_TEXT} tone="status" className={`okmsg ${s.notice}`} />
+      </Suspense>
+      <TodoBox>
+        {items.map((it) => (
+          <Task key={`${it.kind}-${"boxId" in it ? it.boxId : it.orderNo}`} item={it} clientKey={clientKey} now={now} address={address} />
+        ))}
+      </TodoBox>
+    </>
   );
 }

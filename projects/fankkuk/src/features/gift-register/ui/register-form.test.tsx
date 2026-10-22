@@ -126,15 +126,15 @@ describe("결제 직전에 다시 본다 — 4단계까지 간 뒤 크리에이�
     expect(host.querySelector("#hard-note")?.textContent).toContain("다른 선물을 골라 주세요.");
   });
 
-  it("INV-B2 (실패경로): 쉬는 중인 크리에이터로 바꾸면 제출하지 않고 1단계로 돌아가 안내한다", async () => {
+  it("INV-B2 (실패경로): 쉬는 중인 크리에이터는 4단계에서 돌아가도 고를 수 없다 — 눌러도 고른 사람이 그대로이고 결제는 원래 고른 사람으로 간다(d113 D-2)", async () => {
     await toPayWith("stationery");
     await click(stepButton("크리에이터"));
     await click(radio(NARU));
+    expect(radio(NARU)?.checked).toBe(false);
+    expect(radio(MOMO)?.checked).toBe(true);
     await click(stepButton("결제"));
     await agreeAndPay();
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(visibleStep()).toEqual([1]);
-    expect(host.querySelector("#creator-error")?.textContent).toContain("잠시 선물 받기를 쉬고 있어요");
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({ creatorId: MOMO });
   });
 
   it("막힘이 없으면 결제하기가 서버에 보낸다(위 두 시험이 아무것도 안 보내서 통과한 것이 아님을 확인)", async () => {
@@ -142,6 +142,86 @@ describe("결제 직전에 다시 본다 — 4단계까지 간 뒤 크리에이�
     await agreeAndPay();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({ creatorId: MOMO, itemCategory: "stationery" });
+  });
+});
+
+describe("d113 D-2: 지금 보낼 수 없는 크리에이터(이사 중·쉬는 중·이번 달 한도)는 회색 카드 + 이유 한 줄, 고를 수 없다", () => {
+  const LIMIT = "00000000-0000-4000-b000-000000000004";
+  const MOVE = "00000000-0000-4000-b000-000000000005";
+  const list: CreatorOption[] = [
+    { id: MOMO, name: "모모", platform: "치지직", approvalMinutes: 60 },
+    { id: LIMIT, name: "하루", platform: "SOOP", channelTitle: "하루 일기장", approvalMinutes: 120, limitReached: true },
+    { id: NARU, name: "나루", platform: "치지직", approvalMinutes: 60, receiving: { resumeOn: "2026-10-20", birthday: null, anniversaries: [] } },
+    { id: MOVE, name: "모아", platform: "치지직", channelTitle: "모아의 방", approvalMinutes: 60, moving: true },
+  ];
+  const card = (id: string) => radio(id)?.closest("label");
+  async function show(initial = "") {
+    act(() => root.render(<RegisterForm creators={list} prices={prices} initialCreatorId={initial} onRegistered={() => {}} today={today} />));
+    await settle();
+  }
+
+  it("D-2: 한도에 닿은 크리에이터 — 둘째 줄이 한도 안내(다음 달 1일), 라디오가 비활성, 이사 중·쉬는 중과 같은 회색 카드", async () => {
+    await show();
+    expect(card(LIMIT)?.textContent).toContain("이번 달은 이미 마음을 충분히 보내셨어요. 11월 1일부터 다시 보낼 수 있어요");
+    expect(radio(LIMIT)?.disabled).toBe(true);
+    expect(radio(NARU)?.disabled).toBe(true);
+    expect(radio(MOVE)?.disabled).toBe(true);
+    expect(card(MOVE)?.textContent).toContain("모아의 방 · 채널 이사 중 · 지금은 선물을 받지 않아요");
+    expect(card(MOVE)?.className).not.toBe(card(MOMO)?.className);
+    expect(card(LIMIT)?.className).toBe(card(MOVE)?.className);
+    expect(card(NARU)?.className).toBe(card(MOVE)?.className);
+  });
+
+  it("D-2 (실패경로): 보낼 수 있는 크리에이터는 회색이 아니고 고를 수 있다 — 누르면 고른 값이 된다", async () => {
+    await show();
+    expect(radio(MOMO)?.disabled).toBe(false);
+    expect(card(MOMO)?.className).not.toBe(card(MOVE)?.className);
+    await click(radio(MOMO));
+    expect(radio(MOMO)?.checked).toBe(true);
+    await click(radio(LIMIT));
+    expect(radio(LIMIT)?.checked).toBe(false);
+    expect(radio(MOMO)?.checked).toBe(true);
+  });
+
+  it("D-2 (실패경로): 고를 수 없는 크리에이터가 미리 골라져 오면 고른 값이 비어 있고 「다음」은 고르라는 안내", async () => {
+    await show(MOVE);
+    expect(radio(MOVE)?.checked).toBe(false);
+    await click(button("다음"));
+    expect(visibleStep()).toEqual([1]);
+  });
+});
+
+describe("d113 D-1: 2단계의 선물 사진·나만 보는 메모는 글자 한 줄로 접혀 있다", () => {
+  it("D-1: 접힌 줄 「선물 사진·나만 보는 메모 (선택)」 — 처음엔 닫혀 있고 사진·메모 칸이 그 안에 있다, 누르면 펼친다", async () => {
+    await render("notice", MOMO);
+    await toStep2("doll");
+    const fold = host.querySelector<HTMLDetailsElement>("details[data-optional-fold]");
+    expect(fold?.querySelector("summary")?.textContent).toBe("선물 사진·나만 보는 메모 (선택)");
+    expect(fold?.open).toBe(false);
+    expect(fold?.contains(host.querySelector("#gift-photo"))).toBe(true);
+    expect(fold?.contains(host.querySelector("#memoTitle"))).toBe(true);
+    // 필수 두 칸은 접힌 줄 밖
+    expect(fold?.contains(radio("doll"))).toBe(false);
+    expect(fold?.contains(radio("no"))).toBe(false);
+    await click(fold?.querySelector("summary"));
+    expect(fold?.open).toBe(true);
+  });
+
+  it("D-1 (실패경로): 메모에 오류가 있으면 접힌 줄이 열려 그 칸이 보인다", async () => {
+    await render("notice", MOMO);
+    await toStep2("doll");
+    const fold = host.querySelector<HTMLDetailsElement>("details[data-optional-fold]");
+    await click(fold?.querySelector("summary"));
+    const t = host.querySelector<HTMLInputElement>("#memoTitle")!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(t, "가".repeat(21));
+      t.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await click(fold?.querySelector("summary"));
+    expect(fold?.open).toBe(false);
+    await click(button("다음"));
+    expect(visibleStep()).toEqual([2]);
+    expect(fold?.open).toBe(true);
   });
 });
 

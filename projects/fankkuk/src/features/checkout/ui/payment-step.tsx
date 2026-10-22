@@ -70,7 +70,13 @@ export function PaymentStep({ clientKey, pending, route }: { clientKey: string; 
     if (!ready || !widgetsRef.current) return;
     setError(null);
     try {
-      const to = route ?? { orderName: `팬꾹 선물 전달 ${pending.orderNo}`, successPath: "/api/checkout/success", failPath: "/gifts/new?payment=failed" };
+      // 실패하면 선물 보내기로 돌아오며 주문번호를 붙인다 — 그 화면이 「결제하기 ›」로 이어서 결제할 길을 준다(2026-10-22 d113 D-3).
+      // 주문번호는 링크를 그릴지 고르는 데만 쓰고, 그 주문이 로그인한 사람의 결제 미완료인지는 라우트가 지금 할 일 읽기로 다시 확인한다. 결제 대조·승인(INV-M2·M3)과 상관없다
+      const to = route ?? {
+        orderName: `팬꾹 선물 전달 ${pending.orderNo}`,
+        successPath: "/api/checkout/success",
+        failPath: `/gifts/new?payment=failed&order=${encodeURIComponent(pending.orderNo)}`,
+      };
       await widgetsRef.current.requestPayment({
         orderId: pending.orderId,
         orderName: to.orderName,

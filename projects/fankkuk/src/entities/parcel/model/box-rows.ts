@@ -80,6 +80,8 @@ const giftBoxRow = z
     // 「제가 보낸 게 아니에요」를 누른 적이 있는가 — 팬·크리에이터 버튼은 없앴고(2026-10-17 사용자 결정) DB 가 아직 보내는 칸이라 받기만 한다
     reported_not_mine: z.boolean(),
     send_ack_needed: z.boolean(),
+    // 「아직 보내지 않음」을 누른 시각(office-workflow INV-W10, 2026-10-22 d113) — DB 가 아직 입고 전·닫히지 않은 상자에만 싣는다
+    not_sent_at: z.string().nullable(),
   })
   .strict();
 
@@ -93,6 +95,11 @@ export type GiftBox = {
   addressCode: string | null;
   /** 승인 전 주문인데 「먼저 보내기」를 아직 누르지 않았다 — 받는 주소 대신 안내와 버튼을 그린다(approval-signature INV-S9) */
   sendAckNeeded: boolean;
+  /**
+   * 보낸 사람이 「아직 보내지 않음」을 누른 시각(office-workflow INV-W10) — 아직 입고 전 상자에만 있다. 선물 상세 상자 칸의 「아직 보내지 않음 · ○월 ○일」.
+   * 읽기 결과에는 늘 있다(없으면 null). 선택 칸인 것은 이 칸을 모르는 화면 시험의 상자 값을 그대로 두기 위해서다.
+   */
+  notSentAt?: string | null;
 };
 
 export function parseGiftBoxRows(data: unknown): GiftBox[] {
@@ -107,6 +114,7 @@ export function parseGiftBoxRows(data: unknown): GiftBox[] {
       state: r.state,
       addressCode: r.address_code,
       sendAckNeeded: r.send_ack_needed,
+      notSentAt: r.not_sent_at,
     }));
 }
 

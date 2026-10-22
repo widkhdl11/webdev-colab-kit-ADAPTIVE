@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { readActionItemsOrNull, readCreatorActionItemsOrNull } from "@/entities/action-item/api/read-action-items";
+import type { ActionItem } from "@/entities/action-item/model/action-items";
 import { sentGiftTodoOf } from "@/entities/action-item/model/creator-action-items";
 import { readCreatorCards } from "@/entities/creator/api/creator-reads";
 import { creatorPhotoUrl } from "@/entities/creator/model/link-images";
@@ -29,12 +30,12 @@ export default async function Page() {
   const togetherRead = readMyTogether(supabase).then((rows) =>
     Promise.all(rows.map(async (t) => ({ summary: t, orderNos: (await readMyTogetherGifts(supabase, t.creatorId)).map((g) => g.orderNo) }))),
   );
-  // 지금 할 일 읽기는 한 번 — 사이드바 숫자와 카드 하늘 면(할 일이 있는 카드, design-rules 22절)이 같은 결과를 쓴다(action-center INV-J2)
-  // 팬 = 팬 지금 할 일 줄의 주문, 크리에이터 = 보낸 선물 상세의 칸과 같은 거르기(sentGiftTodoOf)
-  const todoRead: Promise<{ header: readonly unknown[] | null; has: (orderNo: string) => boolean }> =
+  // 지금 할 일 읽기는 한 번 — 사이드바 숫자와 카드 하늘 면·할 일 한 줄(design-rules 22절)·결제를 마치지 않은 선물 카드(INV-J14)가 같은 결과를 쓴다(action-center INV-J2)
+  // 팬 = 팬 지금 할 일 줄(받은 역조공 줄은 보낸 선물이 아니라 뺀다), 크리에이터 = 보낸 선물 상세의 칸과 같은 거르기(sentGiftTodoOf)
+  const todoRead: Promise<{ header: readonly unknown[] | null; items: ActionItem[] }> =
     viewer.role === "fan"
-      ? readActionItemsOrNull(supabase).then((a) => ({ header: a, has: (no: string) => (a ?? []).some((it) => it.orderNo === no) }))
-      : readCreatorActionItemsOrNull(supabase).then((c) => ({ header: c, has: (no: string) => sentGiftTodoOf(c ?? [], no).length > 0 }));
+      ? readActionItemsOrNull(supabase).then((a) => ({ header: a, items: (a ?? []).filter((it) => it.kind !== "revgift") }))
+      : readCreatorActionItemsOrNull(supabase).then((c) => ({ header: c, items: [...new Set((c ?? []).map((it) => it.orderNo))].flatMap((no) => sentGiftTodoOf(c ?? [], no)) }));
   const [gifts, together, cards, header, todo] = await Promise.all([
     giftsRead,
     togetherRead,
@@ -42,7 +43,6 @@ export default async function Page() {
     Promise.all([giftsRead, todoRead]).then(([g, t]) => readSiteHeader(supabase, viewer, "/gifts", g, t.header)),
     todoRead,
   ]);
-  const todoOrderNos = gifts.filter((g) => todo.has(g.orderNo)).map((g) => g.orderNo);
   const faceToneByName = Object.fromEntries(cards.map((c) => [c.name, c.faceTone]));
   const photoBase = readPublicStorageBase();
   const creators = buildCreatorCards(
@@ -62,7 +62,7 @@ export default async function Page() {
       <SiteHeader {...header} />
       <MyShell width="list">
         {/* 크리에이터는 사이드바 「보낸 내역」 한 칸에서 팬에게 보낸 역조공과 이 화면을 탭으로 오간다(design-rules 11절) */}
-        <GiftListPage tabs={viewer.role === "creator" ? <SentTabs current="creators" /> : undefined} creators={creators} gifts={gifts} faceToneByName={faceToneByName} todoOrderNos={todoOrderNos} />
+        <GiftListPage tabs={viewer.role === "creator" ? <SentTabs current="creators" /> : undefined} creators={creators} gifts={gifts} faceToneByName={faceToneByName} todos={todo.items} />
       </MyShell>
       <SiteFooter />
     </>

@@ -189,3 +189,16 @@ section.step.step { margin-top: 0; }
   .fsteps .done button::before { animation: none; }
   .pick { transition: none; }
 }
+/* 2단계 선택 칸 접기(2026-10-22 d113 D-1, 시안 ux-pilot-2026-10-22 send-1-after .fold.optfold) — 필수 칸 아래 가는 선 + 글자 한 줄, 「+」가 45도 돌아 닫기 표시(design-rules 23-2) */
+.optfold { margin-top: var(--space-8); border-top: 1px solid var(--gray-200); }
+.optfold > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 48px; font-weight: var(--fw-btn); cursor: pointer; list-style: none; }
+.optfold > summary::-webkit-details-marker { display: none; }
+.optfold > summary::after { content: "+"; flex: none; font-size: var(--fs-card); color: var(--sub); transition: transform 0.25s var(--ease-micro); }
+.optfold[open] > summary::after { transform: rotate(45deg); }
+.optfold > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.optfold[open] > :not(summary) { animation: fold-in 0.25s var(--ease-micro) both; }
+.optfold > .block:first-of-type { margin-top: var(--space-2); }
+/* 결제창에서 돌아온 안내 — 폼 맨 위, 오류 줄 + 바로 아래 「결제하기 ›」(d113 D-3, 시안 send-3-after .errline·.resume) */
+.notice { margin-bottom: var(--space-6); }
+.notice > .error { margin-top: 0; }
+.notice > p + p { margin-top: var(--space-1); }

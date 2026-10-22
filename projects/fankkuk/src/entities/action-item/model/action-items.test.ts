@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { differenceDueKrw, disposeDueText, parseActionItems, type ActionItem } from "./action-items";
+import { differenceDueKrw, disposeDueText, parseActionItems, unpaidResumeHref, type ActionItem } from "./action-items";
 
 // 팬 처리할 일 줄 꼴 (action-center INV-J1·J2). 반송 주소 확인 카드(office-workflow INV-W15) — 상자 하나가 카드 하나.
 
@@ -75,3 +75,22 @@ describe("differenceDueKrw — 선물 상세 요약 상자의 「추가 결제 N
     expect(differenceDueKrw([])).toBe(0);
   });
 });
+
+describe("payment INV-M22 ⑤ · d113 D-3: 결제 실패로 돌아온 선물 보내기의 「결제하기 ›」 — 내 결제 미완료 줄이 있는 주문만", () => {
+  const unpaid: ActionItem = { kind: "unpaid", orderNo: "FC-U8P2K", creatorName: "하루", amountKrw: 6900, dueAt: "2026-10-23T03:00:00.000Z" };
+  const missing: ActionItem = { kind: "missing_box", orderNo: "FC-7K3M9", boxId: "22222222-2222-4222-8222-222222222222", boxLabel: "FC-7K3M9", boxSeq: 1, creatorName: "하루", declaredTier: "small", dueAt: "2026-11-21T03:00:00.000Z" };
+
+  it("D-3: 쿼리의 주문번호가 내 지금 할 일의 결제 미완료 줄에 있으면 그 선물 상세 칸 주소", () => {
+    expect(unpaidResumeHref([missing, unpaid], "FC-U8P2K")).toBe("/gifts/FC-U8P2K#todo");
+  });
+
+  it("D-3 (실패경로): 남의 주문번호(내 줄에 없음)·결제 미완료가 아닌 내 주문·형식이 틀린 값·여러 값·읽기 실패면 없다", () => {
+    expect(unpaidResumeHref([unpaid], "FC-OTHER1")).toBeNull();
+    expect(unpaidResumeHref([missing, unpaid], "FC-7K3M9")).toBeNull();
+    expect(unpaidResumeHref([unpaid], "/evil")).toBeNull();
+    expect(unpaidResumeHref([unpaid], ["FC-U8P2K", "FC-U8P2K"])).toBeNull();
+    expect(unpaidResumeHref([unpaid], undefined)).toBeNull();
+    expect(unpaidResumeHref(null, "FC-U8P2K")).toBeNull();
+  });
+});
+
