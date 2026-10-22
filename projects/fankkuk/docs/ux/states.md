@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # 상태 정의 — UX 정돈 시범 (2026-10-22)

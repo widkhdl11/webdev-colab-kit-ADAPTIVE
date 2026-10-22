@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 ---
 
 # UX 정돈 시범 진단 — 보낸 선물 · 지금 할 일 · 선물 보내기 (2026-10-22)

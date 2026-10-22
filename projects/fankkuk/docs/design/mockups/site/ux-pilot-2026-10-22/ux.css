@@ -65,3 +65,8 @@ body.show-mk .mk{display:flex}
 .ux-pick{margin-top:40px;padding:24px;border:1px solid #d1d5db;border-radius:16px;background:#fff}
 .ux-pick h2{font-size:20px}.ux-pick ol,.ux-pick ul{margin:12px 0 0;padding-left:24px}.ux-pick li+li{margin-top:8px}
 @media(max-width:767px){.ux-cards{grid-template-columns:1fr}.findgrid{grid-template-columns:1fr}.addr dl div{grid-template-columns:1fr;gap:0}}
+/* 상세 — 상자 칸 8열 + 결제·주문 정보 4열에 쌓기 (사용자 10-22 「상자 칸이 좁고, 결제·주문 정보가 한 칸씩 차지할 필요 없다」) */
+.dgrid.split{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.dside{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media(max-width:999px){.dgrid.split{grid-template-columns:1fr}.dside{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.dgrid.split .dside .muted{grid-column:auto}}
+@media(max-width:767px){.dside{grid-template-columns:1fr}}
