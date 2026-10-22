@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useId, useRef, useState, type MouseEvent, type Ref } from "react";
 import { markParts } from "../model/doc-nav";
 import s from "./doc-page.module.css";
 
@@ -100,6 +100,7 @@ export function DocSearch({
   count,
   unit,
   onStep,
+  inputRef,
 }: {
   query: string;
   onQuery: (q: string) => void;
@@ -107,6 +108,8 @@ export function DocSearch({
   /** 「조」·「질문」 — 찾은 개수 문장의 단위 */
   unit: string;
   onStep: (dir: 1 | -1) => void;
+  /** 목차 줄의 「찾기」가 초점을 옮길 자리 */
+  inputRef?: Ref<HTMLInputElement>;
 }) {
   const id = useId();
   const searching = query.trim().length > 0;
@@ -129,6 +132,7 @@ export function DocSearch({
             <path d="m13.5 13.5 3.5 3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
           <input
+            ref={inputRef}
             id={id}
             className={s.searchInput}
             type="search"
@@ -156,10 +160,28 @@ export function DocSearch({
   );
 }
 
+/** 목차 줄의 「찾기」 — 검색칸을 화면에 들이고 초점. 움직임 줄이기면 base.css 가 스크롤을 바로 옮긴다 */
+export function focusSearch(input: HTMLInputElement | null) {
+  if (!input) return;
+  input.scrollIntoView?.({ block: "center" });
+  input.focus({ preventScroll: true });
+}
+
 /** 분류 칩 — 「전체」 기본, 고르면 그 분류만 남긴다(원칙 ② · 기준 4). 분류가 없는 글은 부르는 쪽이 그리지 않는다 */
-export function DocChips({ tags, active, onPick }: { tags: readonly string[]; active: string | null; onPick: (tag: string | null) => void }) {
+export function DocChips({
+  tags,
+  active,
+  onPick,
+  label = "분류",
+}: {
+  tags: readonly string[];
+  active: string | null;
+  onPick: (tag: string | null) => void;
+  /** 같은 칩 줄이 펼친 목차 안에 하나 더 있을 때 낭독기가 구분하는 이름 */
+  label?: string;
+}) {
   return (
-    <div className={s.chipRow} role="group" aria-label="분류">
+    <div className={s.chipRow} role="group" aria-label={label}>
       {[null, ...tags].map((t) => (
         <button key={t ?? ""} type="button" className={s.filterChip} aria-pressed={active === t} onClick={() => onPick(t)}>
           {t ?? "전체"}

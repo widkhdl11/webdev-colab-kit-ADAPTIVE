@@ -269,6 +269,33 @@ describe("안내 글 탭 · 최종 수정일(C9)", () => {
   });
 });
 
+
+describe("글 가운데서도 수단 둘(원칙 ①) — 목차 줄의 「찾기」 · 펼친 목차의 칩", () => {
+  it("「찾기」(누를 칸이 있는 단추)는 검색칸으로 초점을 옮긴다", () => {
+    render(<DocPage doc={base} variant="policy" />);
+    const find = byText(".flow button, button", "찾기");
+    expect(find?.closest("[class*=bar]")).not.toBeNull();
+    click(find);
+    expect(document.activeElement).toBe(q('input[type="search"]'));
+  });
+
+  it("칩이 있는 글은 펼친 목차 맨 위에 칩 줄 — 거기서 고르면 본문이 걸러진다", () => {
+    render(<DocPage doc={tagged} variant="policy" />);
+    click(q("button[aria-expanded]"));
+    const panel = q('nav[aria-label="목차"]')!;
+    expect(panel.firstElementChild?.getAttribute("aria-label")).toBe("목차 분류");
+    click(byText('[aria-label="목차 분류"] button', "환불"));
+    expect(visibleArticles()).toEqual(["refund"]);
+    expect(byText('[aria-label="목차 분류"] button', "환불")?.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("칩이 없는 글은 펼친 목차에 칩 줄이 없다", () => {
+    render(<DocPage doc={base} variant="policy" />);
+    click(q("button[aria-expanded]"));
+    expect(q('[aria-label="목차 분류"]')).toBeNull();
+  });
+});
+
 describe("자주 묻는 질문(C4 · C5 · C8)", () => {
   const faq: FaqDoc = {
     summary: ["요약 하나", "요약 둘", "요약 셋"],
@@ -293,6 +320,28 @@ describe("자주 묻는 질문(C4 · C5 · C8)", () => {
     click(byText("button", "다음"));
     expect(q<HTMLDetailsElement>("#decline details")?.open).toBe(true);
     expect(qa("#decline mark").map((m) => m.textContent)).toEqual(["반송택배비"]);
+  });
+
+
+  it("위에 붙는 목차 줄(C1) — 지금 질문 · 펼치면 전체 질문 · 자주 찾음, 고르면 그 질문이 펼쳐진 채로 간다", () => {
+    window.history.replaceState(null, "", "/faq");
+    const tops: Record<string, number> = { fee: -100, decline: 900 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+      return { top: tops[this.id] ?? 0 } as DOMRect;
+    });
+    render(<FaqPage {...faq} />);
+    const btn = q<HTMLButtonElement>("button[aria-expanded]")!;
+    expect(btn.parentElement?.querySelector("p")?.textContent).toBe("요금은 얼마인가요?");
+    expect(byText("button", "찾기")).toBeDefined();
+    click(btn);
+    const links = qa('nav[aria-label="목차"] a');
+    expect(links.map((a) => a.getAttribute("href"))).toEqual(["#fee", "#decline"]);
+    expect(links.filter((a) => a.textContent?.includes("자주 찾음")).map((a) => a.getAttribute("href"))).toEqual(["#decline"]);
+    expect(q('nav[aria-label="목차"] [aria-current]')?.getAttribute("href")).toBe("#fee");
+    click(q('nav[aria-label="목차"] a[href="#decline"]'));
+    expect(q<HTMLDetailsElement>("#decline details")?.open).toBe(true);
+    expect(document.activeElement).toBe(q("#decline summary"));
+    expect(window.location.hash).toBe("#decline");
   });
 
   it("칩으로 거르고, 질문마다 주소 복사 단추", () => {

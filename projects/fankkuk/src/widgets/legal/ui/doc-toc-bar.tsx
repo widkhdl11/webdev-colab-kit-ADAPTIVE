@@ -2,12 +2,13 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { TocGroup } from "../model/doc-nav";
-import { FrequentBadge } from "./doc-parts";
+import { DocChips, FrequentBadge } from "./doc-parts";
 import s from "./doc-page.module.css";
 
 // 화면 위에 붙는 목차 줄(D1 ② — 왼쪽 따라오는 목차 대신, 모든 폭에서 같은 모양). 높이 44.
 // 「지금 읽는 조 이름」 + 「목차 열기」. 펼치면 전체 조 · 지금 조 강조(aria-current) · 「자주 찾음」 · 약관의 주제 묶음 제목.
 // 칩으로 가린 조는 흐리게 남고, 누르면 「전체」로 돌아가 그 조를 보인다. Esc · 바깥 누름으로 닫히고 초점은 「목차 열기」로.
+// 글 가운데서도 수단이 둘 이상이게(원칙 ①) 「찾기」 단추(검색칸으로 옮겨 초점) · 펼친 목록 맨 위 분류 칩을 둔다 — 줄 높이 44 는 그대로.
 
 type Props = {
   groups: readonly TocGroup[];
@@ -15,9 +16,13 @@ type Props = {
   hidden: ReadonlySet<string>;
   frequent: ReadonlySet<string>;
   onGo: (id: string) => void;
+  /** 「찾기」 — 검색칸으로 옮겨 초점을 준다 */
+  onFind: () => void;
+  /** 분류 칩 — 분류가 있는 글만. 펼친 목록 맨 위에 같은 칩 줄 */
+  chips?: { tags: readonly string[]; active: string | null; onPick: (tag: string | null) => void };
 };
 
-export function DocTocBar({ groups, current, hidden, frequent, onGo }: Props) {
+export function DocTocBar({ groups, current, hidden, frequent, onGo, onFind, chips }: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -68,6 +73,13 @@ export function DocTocBar({ groups, current, hidden, frequent, onGo }: Props) {
         <p className={s.barNow} title={now.label}>
           {now.label}
         </p>
+        <button type="button" className={s.barBtn} onClick={onFind}>
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
+            <path d="m13.5 13.5 3.5 3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          찾기
+        </button>
         <button
           ref={btnRef}
           type="button"
@@ -77,12 +89,13 @@ export function DocTocBar({ groups, current, hidden, frequent, onGo }: Props) {
           onClick={() => setOpen((v) => !v)}
         >
           {open ? "목차 닫기" : "목차 열기"}
-          <svg viewBox="0 0 20 20" aria-hidden="true">
+          <svg className={s.chev} viewBox="0 0 20 20" aria-hidden="true">
             <path d="m4 7.5 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       </div>
       <nav ref={panelRef} id={panelId} className={s.panel} aria-label="목차" hidden={!open}>
+        {chips && chips.tags.length > 0 ? <DocChips label="목차 분류" tags={chips.tags} active={chips.active} onPick={chips.onPick} /> : null}
         {groups.map((g, gi) => (
           <div key={g.title ?? `rest-${gi}`} className={s.tocGroup}>
             {g.title ? <p className={s.tocGroupT}>{g.title}</p> : null}

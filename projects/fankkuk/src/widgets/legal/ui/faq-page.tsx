@@ -1,9 +1,23 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { chipTags, formatUpdated, summaryTargets, type NavItem } from "../model/doc-nav";
+import { useCallback, useMemo, useRef } from "react";
+import {
+  chipTags,
+  formatUpdated,
+  summaryTargets,
+  type NavItem,
+} from "../model/doc-nav";
 import type { FaqDoc } from "../model/faq-doc";
-import { CopyAnchor, DocChips, DocSearch, DocSummary, FrequentBadge, Marked } from "./doc-parts";
+import {
+  CopyAnchor,
+  DocChips,
+  DocSearch,
+  DocSummary,
+  FrequentBadge,
+  Marked,
+  focusSearch,
+} from "./doc-parts";
+import { DocTocBar } from "./doc-toc-bar";
 import { useDocNav } from "./use-doc-nav";
 import d from "./doc-page.module.css";
 
@@ -17,14 +31,41 @@ function openDetails(el: HTMLElement) {
   if (details) details.open = true;
 }
 
-export function FaqPage({ summary, items, summaryLinks, tagOrder, updated }: FaqDoc) {
+export function FaqPage({
+  summary,
+  items,
+  summaryLinks,
+  tagOrder,
+  updated,
+}: FaqDoc) {
   const navItems = useMemo<NavItem[]>(
-    () => items.map((f) => ({ id: f.id, title: f.q, text: `${f.q}\n${f.a}`, tags: f.tags ?? [], frequent: f.frequent === true })),
+    () =>
+      items.map((f) => ({
+        id: f.id,
+        title: f.q,
+        text: `${f.q}\n${f.a}`,
+        tags: f.tags ?? [],
+        frequent: f.frequent === true,
+      })),
     [items],
   );
   const reveal = useCallback(openDetails, []);
   const nav = useDocNav(navItems, reveal);
-  const tags = useMemo(() => chipTags(navItems, tagOrder), [navItems, tagOrder]);
+  const tags = useMemo(
+    () => chipTags(navItems, tagOrder),
+    [navItems, tagOrder],
+  );
+  const groups = useMemo(
+    () => [
+      { title: null, items: items.map((f) => ({ id: f.id, label: f.q })) },
+    ],
+    [items],
+  );
+  const frequent = useMemo(
+    () => new Set(items.filter((f) => f.frequent).map((f) => f.id)),
+    [items],
+  );
+  const searchRef = useRef<HTMLInputElement>(null);
   const targets = summaryTargets(
     summary,
     summaryLinks,
@@ -43,52 +84,84 @@ export function FaqPage({ summary, items, summaryLinks, tagOrder, updated }: Faq
           </div>
           {updated ? (
             <p className={d.updated}>
-              최종 수정일 <time dateTime={updated}>{formatUpdated(updated)}</time>
+              최종 수정일{" "}
+              <time dateTime={updated}>{formatUpdated(updated)}</time>
             </p>
           ) : null}
-          <DocSummary heading="먼저 알아 두세요" lines={summary} targets={targets} onGo={(id) => nav.goTo(id, { push: true })} />
+          <DocSummary
+            heading="먼저 알아 두세요"
+            lines={summary}
+            targets={targets}
+            onGo={(id) => nav.goTo(id, { push: true })}
+          />
         </div>
       </section>
 
       <section className={d.body} aria-label="질문 목록">
         <div className="pub-inner">
           <div className={d.tools}>
-            <DocSearch query={nav.query} onQuery={nav.setQuery} count={nav.matches.length} unit="질문" onStep={nav.step} />
-            {tags.length > 0 ? <DocChips tags={tags} active={nav.tag} onPick={nav.setTag} /> : null}
+            <DocSearch
+              query={nav.query}
+              onQuery={nav.setQuery}
+              count={nav.matches.length}
+              unit="질문"
+              onStep={nav.step}
+              inputRef={searchRef}
+            />
+            {tags.length > 0 ? (
+              <DocChips tags={tags} active={nav.tag} onPick={nav.setTag} />
+            ) : null}
           </div>
-          <div className="acc">
-            {items.map((f) => (
-              <div key={f.id} id={f.id} className={d.faqItem} hidden={nav.hidden.has(f.id)}>
-                <details>
-                  <summary>
-                    <span className="q">
-                      <b>
-                        <Marked text={f.q} words={nav.words} />
-                      </b>
-                      {f.frequent ? <FrequentBadge /> : null}
-                    </span>
-                    <svg viewBox="0 0 20 20" aria-hidden="true">
-                      <path
-                        d="m4 7.5 6 6 6-6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </summary>
-                  <div className="ans">
-                    <p>
-                      <Marked text={f.a} words={nav.words} />
-                    </p>
-                  </div>
-                </details>
-                <span className={d.faqCopy}>
-                  <CopyAnchor id={f.id} title={f.q} />
-                </span>
-              </div>
-            ))}
+          {/* 질문 목록 묶음 하나에 위에 붙는 목차 줄(C1) — 목차에서 고른 질문은 펼친 채로 간다 */}
+          <div className={d.flow}>
+            <DocTocBar
+              groups={groups}
+              current={nav.current}
+              hidden={nav.hidden}
+              frequent={frequent}
+              onGo={(id) => nav.goTo(id, { focus: true, push: true })}
+              onFind={() => focusSearch(searchRef.current)}
+              chips={{ tags, active: nav.tag, onPick: nav.setTag }}
+            />
+            <div className="acc">
+              {items.map((f) => (
+                <div
+                  key={f.id}
+                  id={f.id}
+                  className={d.faqItem}
+                  hidden={nav.hidden.has(f.id)}
+                >
+                  <details>
+                    <summary data-doc-heading="">
+                      <span className="q">
+                        <b>
+                          <Marked text={f.q} words={nav.words} />
+                        </b>
+                        {f.frequent ? <FrequentBadge /> : null}
+                      </span>
+                      <svg viewBox="0 0 20 20" aria-hidden="true">
+                        <path
+                          d="m4 7.5 6 6 6-6"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </summary>
+                    <div className="ans">
+                      <p>
+                        <Marked text={f.a} words={nav.words} />
+                      </p>
+                    </div>
+                  </details>
+                  <span className={d.faqCopy}>
+                    <CopyAnchor id={f.id} title={f.q} />
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

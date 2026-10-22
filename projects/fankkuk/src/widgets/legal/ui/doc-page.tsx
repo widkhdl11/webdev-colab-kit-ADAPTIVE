@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useRef, type ReactNode } from "react";
 import { chipTags, formatUpdated, sectionItems, summaryTargets, tocGroupsOf } from "../model/doc-nav";
 import type { LegalDoc } from "../model/legal-doc";
 import { DocBlock } from "./doc-blocks";
-import { CopyAnchor, DocChips, DocSearch, DocSummary, DocTabRow, FrequentBadge, Marked, type DocTabs } from "./doc-parts";
+import { CopyAnchor, DocChips, DocSearch, DocSummary, DocTabRow, FrequentBadge, Marked, focusSearch, type DocTabs } from "./doc-parts";
 import { DocTocBar } from "./doc-toc-bar";
 import { useDocNav } from "./use-doc-nav";
 import s from "./doc-page.module.css";
@@ -49,6 +49,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
     items.map((i) => i.id),
   );
   const guide = variant === "guide";
+  const searchRef = useRef<HTMLInputElement>(null);
 
   return (
     <main id="main" className={`${s.page}${guide ? ` ${s.guide}` : ""}`}>
@@ -81,7 +82,7 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
       <section className={s.body} aria-label={`${doc.title} 본문`}>
         <div className="pub-inner">
           <div className={s.tools}>
-            <DocSearch query={nav.query} onQuery={nav.setQuery} count={nav.matches.length} unit="조" onStep={nav.step} />
+            <DocSearch query={nav.query} onQuery={nav.setQuery} count={nav.matches.length} unit="조" onStep={nav.step} inputRef={searchRef} />
             {tags.length > 0 ? <DocChips tags={tags} active={nav.tag} onPick={nav.setTag} /> : null}
           </div>
           <div className={s.flow}>
@@ -91,6 +92,8 @@ export function DocPage({ doc, variant, tabs, meta, notice, figure, after, ask =
               hidden={nav.hidden}
               frequent={frequent}
               onGo={(id) => nav.goTo(id, { focus: true, push: true })}
+              onFind={() => focusSearch(searchRef.current)}
+              chips={{ tags, active: nav.tag, onPick: nav.setTag }}
             />
             <div className={s.main}>
               {doc.sections.map((sec) => {

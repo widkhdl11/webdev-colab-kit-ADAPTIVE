@@ -69,8 +69,9 @@
 .barBtn { flex: none; display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-3); border: 0; border-radius: var(--r-btn); background: none; color: var(--gray-900); font: inherit; font-size: var(--fs-small); font-weight: var(--fw-btn); cursor: pointer; }
 .barBtn:hover { background: var(--surface); }
 .barBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-.barBtn svg { width: 20px; height: 20px; transition: transform var(--dur-hover) var(--ease-micro); }
-.barBtn[aria-expanded="true"] svg { transform: rotate(180deg); }
+.barBtn svg { flex: none; width: 20px; height: 20px; }
+.barBtn .chev { transition: transform var(--dur-hover) var(--ease-micro); }
+.barBtn[aria-expanded="true"] .chev { transform: rotate(180deg); }
 /* 펼친 목록 — 화면 높이 안에서 스크롤(C10) */
 .panel { position: absolute; top: 100%; right: 0; left: 0; display: flex; flex-direction: column; gap: var(--space-3); max-height: calc(100dvh - var(--doc-top) - var(--bar-h) - 16px); padding: var(--space-3); overflow-y: auto; overscroll-behavior: contain; border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); box-shadow: var(--hair), var(--float); }
 .panel[hidden] { display: none; }
@@ -161,7 +162,7 @@
 
 /* 자주 묻는 질문 — 질문 줄 오른쪽(화살표 왼쪽)에 주소 복사. 접기 모양은 base.css .acc 그대로 */
 .faqItem { position: relative; }
-:global(.acc) > .faqItem[id] { scroll-margin-top: calc(var(--doc-top) + 24px); }
+:global(.acc) > .faqItem[id] { scroll-margin-top: calc(var(--doc-top) + var(--bar-h) + 24px); }
 .faqItem[hidden] { display: none; }
 .faqItem :global(summary .q) { padding-right: 44px; }
 .faqItem .badge { margin-top: var(--space-1); }
@@ -179,5 +180,5 @@
   .faqCopy { right: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .barBtn svg, .copyBtn { transition: none; }
+  .barBtn .chev, .copyBtn { transition: none; }
 }
