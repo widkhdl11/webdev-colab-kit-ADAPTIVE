@@ -14,7 +14,7 @@
 .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); min-height: 64px; margin: 0; padding: var(--space-2) 0; }
 .txt { display: flex; flex: 1 1 160px; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; margin: 0; overflow-wrap: anywhere; }
 .k { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
-.sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+.sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); overflow-wrap: anywhere; }
 .act { display: flex; flex: none; flex-wrap: wrap; gap: var(--space-2); }
 
 /* 세로 줄(배경 사진·닉네임·자기소개) — 이름 줄(이름 + 버튼 또는 글자 수) · 내용 · 안내 */
@@ -33,7 +33,8 @@
 .bad { color: var(--danger); font-weight: var(--fw-btn); }
 
 /* 사진 — 프로필 사진은 얼굴 64 · 이름 · 안내 · 버튼 한 줄, 배경 사진은 이름 줄 아래 그림 160(휴대폰 96) */
-.photoRow { flex-wrap: nowrap; }
+/* 한 줄 고정은 넓을 때만 — 사이드바 옆 8열이 좁은 1200 미만에서 사진이 있으면 버튼 둘(바꾸기·지우기)이 안내 글을 70 안팎까지 눌렀다(ui 리뷰 2026-10-22). 좁으면 안내 글이 160 아래로 줄기 전에 버튼이 다음 줄로 */
+@media (min-width: 1200px) { .photoRow { flex-wrap: nowrap; } }
 .pick { cursor: pointer; }
 /* 파일 칸은 숨겨 두고 라벨이 버튼 노릇을 한다 — 키보드 초점은 라벨에 그린다(creator-settings 와 같은 값) */
 .file:focus-visible + .pick { outline: 2px solid var(--focus); outline-offset: 2px; }

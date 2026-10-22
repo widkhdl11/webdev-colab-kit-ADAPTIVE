@@ -1,5 +1,5 @@
 /* 상세 설정 · 팬덤 — 시안 docs/design/mockups/site/pilot-2026-10-22/settings.html, 값의 정본은 같은 폴더 pilot.css 「상세 설정」(.st-* · .fd-b · .cc).
-   폭은 틀(MyShell broad 1200)이 정하고, 안에서 12열 7 + 5(--grid-gap). 테두리는 낮은 대비 1px 실선(--line-on-white). */
+   폭은 틀(MyShell broad 1200)이 정하고, 안에서 입력 + 미리보기 300(--grid-gap). 테두리는 낮은 대비 1px 실선(--line-on-white). */
 .sec { display: grid; gap: var(--space-6); scroll-margin-top: var(--space-6); }
 .secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
 /* 미리보기 칸은 카드 폭(300 — 찾기 화면 카드와 같은 크기)에 맞추고 남는 폭은 입력 판이 쓴다. 7+5 로 나누면 카드 오른쪽에 146 이 비었다(2026-10-22 사용자 「미리보기 카드랑 내용 크기가 안맞는다」) */
@@ -37,15 +37,14 @@
 /* 오른쪽 미리보기 — 판·상자 없이 제목 아래 카드 하나(카드 안에 카드를 겹치지 않는다), 스크롤하면 따라온다 */
 .pv { position: sticky; top: var(--space-6); display: grid; align-content: start; gap: var(--space-3); min-width: 0; }
 .pvT { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
-/* 카드 미리보기 — 찾기 화면 카드 틀 그대로(creatorCardClass), 폭은 찾기 3열 카드쯤(320). 하단 버튼은 모양만이라 누름을 받지 않는다 */
+/* 카드 미리보기 — 찾기 화면 카드 틀 그대로(creatorCardClass), 폭은 찾기 화면 카드와 같은 300 — 칸 폭과 같다. 하단 버튼은 모양만이라 누름을 받지 않는다 */
 .pv > [data-card-preview] { width: 100%; max-width: 300px; cursor: default; }
 .pv > [data-card-preview] [data-card-foot] :global(.btn) { pointer-events: none; }
 
 /* 1100 이하 — 미리보기가 입력 위로(따라오지 않음) */
 @media (max-width: 1100px) {
   .grid { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-4); }
-  .form { grid-column: 1 / -1; }
-  .pv { grid-column: 1 / -1; position: static; order: -1; }
+  .pv { position: static; order: -1; }
 }
 
 /* 휴대폰 — 미리보기는 카드만 작게 가로형(배너 96 · 이름·뱃지·소개), 저장 줄은 화면 아래에 붙는다 */

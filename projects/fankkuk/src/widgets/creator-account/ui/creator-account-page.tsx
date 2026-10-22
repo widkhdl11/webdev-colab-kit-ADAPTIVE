@@ -64,9 +64,8 @@ function Switch({
         aria-labelledby={`${id}-l`}
         aria-describedby={describedBy}
         aria-disabled={busy}
-        onClick={() => {
-          if (!busy) onChange(!on);
-        }}
+        // 저장 중 다시 누르기는 저장 함수 맨 앞에서 한 번만 막는다 — 여기서도 막으면 두 장치가 겹쳐 어느 쪽도 시험이 붙들지 못했다
+        onClick={() => onChange(!on)}
       >
         <span className={s.txt} id={`${id}-l`}>
           <span className={s.k}>{title}</span>

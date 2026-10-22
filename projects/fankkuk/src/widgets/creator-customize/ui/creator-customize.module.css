@@ -9,7 +9,7 @@
 .nm { grid-column: span 4; min-width: 0; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
 .rows { grid-column: span 8; min-width: 0; padding-top: var(--space-1); } /* 시안 .cz-body — 설명 첫 줄을 구간 이름 글줄에 맞춤 */
 .k { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
-.sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+.sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); overflow-wrap: anywhere; }
 
 /* 미리보기 이미지 고르기 — 라디오 둘(시안 .cz-opts·.cz-opt) */
 .picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
@@ -35,7 +35,7 @@
 
 /* 공지 이미지 받기 — 못 받을 때 안내 한 줄(시안 .cz-lock), 「설정」은 글 속 링크 · 누를 높이 44 */
 .lock { margin: var(--space-3) 0 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.6; }
-.lock a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; }
+.lock a, .pickHint a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; }
 
 /* 세 크기 줄 — 썸네일 · 이름과 크기 · 버튼 줄 오른쪽 끝(시안 .cz-sizes) */
 .sizes { margin: var(--space-3) 0 0; padding: 0; list-style: none; }

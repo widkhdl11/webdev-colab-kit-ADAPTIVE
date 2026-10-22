@@ -17,6 +17,7 @@ vi.mock("@/widgets/site-footer/ui/site-footer", () => ({ SiteFooter: () => null 
 vi.mock("@/features/email-confirm/api/confirm-email-client", () => ({ postEmailConfirm: vi.fn() }));
 
 import Page from "@/app/(site)/me/email/confirm/page";
+import { postEmailConfirm } from "@/features/email-confirm/api/confirm-email-client";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -80,5 +81,34 @@ describe("이메일 확인 — 화면마다 제목 h1 하나", () => {
     const h1 = host.querySelector("h1") as HTMLElement;
     const btn = host.querySelector("button") as HTMLButtonElement;
     expect(h1.compareDocumentPosition(btn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
+describe("이메일 확인 — 결과가 나오면 포커스가 다음 링크로", () => {
+  const click = async () => {
+    const btn = host.querySelector("button") as HTMLButtonElement;
+    await act(async () => {
+      btn.click();
+      await Promise.resolve();
+    });
+  };
+
+  it("확인됨: 결과 문장이 나오고 포커스가 「내 팬꾹으로 가기」로 간다", async () => {
+    vi.mocked(postEmailConfirm).mockResolvedValue({ kind: "ok", email: "fan@example.com" });
+    await renderAs({ role: "fan", userId: "u1" });
+    await click();
+    const next = [...host.querySelectorAll("a")].find((a) => a.textContent?.trim() === "내 팬꾹으로 가기")!;
+    expect(next).toBeDefined();
+    expect(document.activeElement).toBe(next);
+    expect(host.textContent).toContain("이메일 주소(fan@example.com)를 확인했어요.");
+  });
+
+  it("실패: 알림이 나오고 포커스가 「내 팬꾹으로 가기」로 간다", async () => {
+    vi.mocked(postEmailConfirm).mockResolvedValue({ kind: "failed", message: "쓸 수 없는 링크예요." });
+    await renderAs({ role: "creator", userId: "u2" });
+    await click();
+    const next = [...host.querySelectorAll("a")].find((a) => a.textContent?.trim() === "내 팬꾹으로 가기")!;
+    expect(document.activeElement).toBe(next);
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain("쓸 수 없는 링크예요.");
   });
 });

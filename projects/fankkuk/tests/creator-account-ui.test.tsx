@@ -59,8 +59,12 @@ describe("계정 설정(크리에이터) — 묶음 순서", () => {
   it("보안 묶음 줄은 비밀번호 → 휴대폰 번호 → 채널 본인 확인", () => {
     render();
     const security = host.querySelectorAll("section")[0];
-    expect(security.textContent).toMatch(/비밀번호[\s\S]*휴대폰 번호[\s\S]*채널 본인 확인/);
-    expect(security.textContent).toContain("010-****-9999");
+    // 줄 묶음의 직접 자식(줄)을 하나씩 — 사이에 다른 줄이 끼면 길이·순서가 깨진다
+    const rows = [...security.querySelector("h2")!.nextElementSibling!.children] as HTMLElement[];
+    const keys = ["비밀번호", "휴대폰 번호", "채널 본인 확인"];
+    expect(rows).toHaveLength(keys.length);
+    rows.forEach((row, i) => expect(row.textContent!.startsWith(keys[i])).toBe(true));
+    expect(rows[1].textContent).toContain("010-****-9999");
   });
 
   it("페이지 자식 순서: 머리 → 보안 → 알림 → 상세 설정 안내 줄 → 회원 탈퇴(맨 끝)", () => {
@@ -136,6 +140,21 @@ describe("계정 설정(크리에이터) — 알림", () => {
     const notify = host.querySelectorAll("section")[1];
     const alert = notify.querySelector('[role="alert"]')!;
     expect(alert.textContent).toBe("저장하지 못했어요.");
+  });
+
+  it("저장하는 동안에는 다른 스위치를 눌러도 다시 보내지 않고 값도 바뀌지 않는다", async () => {
+    let finish: (v: { kind: "ok" }) => void = () => {};
+    sendNotify.mockReturnValue(new Promise((res) => { finish = res; }));
+    render();
+    const [kakao, mail] = switches();
+    act(() => kakao.click());
+    expect(sendNotify).toHaveBeenCalledTimes(1);
+    expect(mail.getAttribute("aria-disabled")).toBe("true");
+    act(() => mail.click());
+    expect(sendNotify).toHaveBeenCalledTimes(1);
+    expect(mail.getAttribute("aria-checked")).toBe("false");
+    await act(async () => { finish({ kind: "ok" }); await Promise.resolve(); });
+    expect(mail.getAttribute("aria-disabled")).toBe("false");
   });
 
   it("끌 수 없는 알림은 알림 묶음 안에 제목 줄과 목록 문장으로 늘 보이고, 결과 안내 자리는 묶음 끝에 있다", () => {
