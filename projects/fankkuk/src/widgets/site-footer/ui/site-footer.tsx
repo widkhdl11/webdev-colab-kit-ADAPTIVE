@@ -16,6 +16,7 @@ const POLICY_LINKS: ReadonlyArray<readonly [string, string]> = [
 
 const GUIDE_LINKS: ReadonlyArray<readonly [string, string]> = [
   ["/about", "팬꾹 소개"],
+  ["/pricing", "요금 안내"],
   ["/guide/fan", "팬 이용 안내"],
   ["/guide/creator", "크리에이터 이용 안내"],
   ["/security", "보안 안내"],

@@ -6,6 +6,7 @@ import { guideCreatorDoc } from "./guide-creator-doc";
 import { guideFanDoc } from "./guide-fan-doc";
 import { INSPECTION_DOC } from "./inspection-doc";
 import { openItems, type LegalDoc } from "./legal-doc";
+import { pricingDoc } from "./pricing-doc";
 import { privacyDoc } from "./privacy-doc";
 import { refundDoc } from "./refund-doc";
 import { SECURITY_DOC, SECURITY_FLOW } from "./security-doc";
@@ -27,6 +28,7 @@ const docs: Readonly<Record<string, LegalDoc>> = {
   security: SECURITY_DOC,
   guideFan: guideFanDoc(prices),
   guideCreator: guideCreatorDoc(prices),
+  pricing: pricingDoc(prices),
 };
 
 const text = (doc: LegalDoc) => JSON.stringify(doc);
@@ -53,6 +55,15 @@ describe("안내·법정 페이지 공통", () => {
     expect(text(docs.guideFan!)).toContain("12,333원");
     expect(text(docs.guideCreator!)).toContain("9,333원");
     expect(JSON.stringify(faqDoc(prices))).toContain("8,222원");
+  });
+
+  it("요금 안내 표는 구간마다 선물·역조공 요금을 넘겨받은 요금표에서 그린다", () => {
+    const table = docs.pricing!.sections.flatMap((s) => s.blocks).find((b) => b.kind === "prices");
+    expect(table && table.kind === "prices" ? table.rows.map((r) => [r.name, ...r.amounts]) : null).toEqual([
+      [expect.any(String), "6,111원", "5,111원"],
+      [expect.any(String), "8,222원", "7,222원"],
+      [expect.any(String), "12,333원", "9,333원"],
+    ]);
   });
 
   it("배상 한도는 설정값에서 읽는다", () => {
