@@ -21,7 +21,7 @@ import { MEMO_BODY_MAX, MEMO_TITLE_MAX } from "@/entities/order/model/gift-memo"
 import { PAYMENT_CONSENT_MISSING, PaymentConsent } from "@/entities/payment/ui/payment-consent";
 import { PHOTO_ACCEPT } from "@/shared/lib/image/photo-limits";
 import { photoPickProblem } from "@/shared/lib/image/photo-pick";
-import { receivingNotice } from "../model/receiving-notice";
+import { creatorBlockNotice, stopReason } from "../model/receiving-notice";
 import { summarizeBoxes } from "../model/box-summary";
 import { movingNotice } from "../model/sender-rule";
 import { MAX_BOX_COUNT, registerFormSchema, type RegisterFormOutput, type RegisterFormValues } from "../model/register-input";
@@ -59,12 +59,6 @@ const STEP_FIELDS: Record<Exclude<StepNo, 4>, (keyof RegisterFormValues)[]> = {
   3: ["smallCount", "mediumCount", "largeCount"],
 };
 
-
-/** 지금 보낼 수 없는 크리에이터인가 — 채널 이사 중(INV-V12)·쉬는 중(creator-receiving INV-B2)·내 이번 달 한도(INV-B6). 1단계 카드가 회색이 되고 고를 수 없다(d113 D-2) */
-function creatorStopped(c: CreatorOption | undefined, today: CalendarDate): boolean {
-  if (!c) return false;
-  return c.moving === true || restingNotice(c.receiving?.resumeOn ?? null, today) !== null || c.limitReached === true;
-}
 
 /** 등록이 끝나 결제창으로 넘길 값. 금액은 서버가 계산한 것이다. */
 export type RegisteredGift = { orderId: string; orderNo: string; amountKrw: number };
@@ -156,7 +150,7 @@ export function RegisterForm({
     // 전자기기 신고는 기본값이 없다 — 팬이 직접 골라야 한다
     // 물품 종류도 기본값이 없다 — 팬이 목록에서 직접 고른다(hard-items INV-H1)
     // 지금 보낼 수 없는 크리에이터(D-2 — 고를 수 없는 카드)가 미리 골라져 오면 비워 둔다
-    defaultValues: { creatorId: creatorStopped(creators.find((c) => c.id === initialCreatorId), today) ? "" : initialCreatorId, itemOther: "", smallCount: "1", mediumCount: "0", largeCount: "0", memoTitle: "", memoBody: "" },
+    defaultValues: { creatorId: stopReason(creators.find((c) => c.id === initialCreatorId), today) !== null ? "" : initialCreatorId, itemOther: "", smallCount: "1", mediumCount: "0", largeCount: "0", memoTitle: "", memoBody: "" },
   });
   const creatorId = useWatch({ control, name: "creatorId" });
   const watchedCategory = useWatch({ control, name: "itemCategory" });
@@ -199,8 +193,7 @@ export function RegisterForm({
    * INV-V12 채널 이사 중 → creator-receiving INV-B2·B6 쉬는 중·내 한도 순. 등록은 DB 가 다시 막는다.
    */
   const creatorBlock = (): string | null => {
-    const c = creators.find((x) => x.id === getValues("creatorId"));
-    return movingNotice(c) ?? receivingNotice(c, today);
+    return creatorBlockNotice(creators.find((x) => x.id === getValues("creatorId")), today);
   };
 
   // 지난 단계로 돌아가 칸을 비운 뒤 결제로 건너뛴 경우 — 오류가 있는 첫 단계로 보낸다
@@ -503,17 +496,18 @@ export function RegisterForm({
           {/* 걸러진 줄은 지우지 않고 숨긴다 — 고른 값이 그대로 남게. 한 줄에 한 사람(시안 .plist.one) */}
           <ul className={f["pick-list"]}>
             {creators.map((c) => {
-              const resting = restingNotice(c.receiving?.resumeOn ?? null, today);
-              // 이번 달 한도에 닿은 크리에이터는 둘째 줄 전체가 한도 안내다(시안 ux-pilot-2026-10-22 send-2-after)
-              const meta =
-                !c.moving && resting === null && c.limitReached
-                  ? limitReachedMessage(today)
-                  : [c.channelTitle ?? c.platform, c.moving ? "채널 이사 중 · 지금은 선물을 받지 않아요" : (resting ?? approvalTimeText(c.approvalMinutes))]
-                      .filter(Boolean)
-                      .join(" · ");
               // 지금 보낼 수 없는 크리에이터(이사 중·쉬는 중·이번 달 한도)는 회색 카드 + 이유 한 줄, 고를 수 없다(design-rules 25절 — 2026-10-22 d113 D-2).
-              // 등록은 DB 가 다시 막는다 — 화면을 연 뒤 상태가 바뀌어도 「다음」·결제 직전 판정(creatorBlock)이 안내한다
-              const stopped = creatorStopped(c, today);
+              // 판정은 model 의 stopReason 하나 — 「다음」·결제 직전 판정(creatorBlockNotice)과 같은 순서다. 등록은 DB 가 다시 막는다
+              const reason = stopReason(c, today);
+              const stopped = reason !== null;
+              // 이번 달 한도에 닿은 크리에이터는 둘째 줄 전체가 한도 안내다(시안 ux-pilot-2026-10-22 send-2-after)
+              const second =
+                reason === "moving"
+                  ? "채널 이사 중 · 지금은 선물을 받지 않아요"
+                  : reason === "resting"
+                    ? restingNotice(c.receiving?.resumeOn ?? null, today)
+                    : approvalTimeText(c.approvalMinutes);
+              const meta = reason === "limit" ? limitReachedMessage(today) : [c.channelTitle ?? c.platform, second].filter(Boolean).join(" · ");
               return (
                 <li key={c.id} hidden={!visible.includes(c)}>
                   <label className={`${f.pick} ${stopped ? f.stop : ""}`}>

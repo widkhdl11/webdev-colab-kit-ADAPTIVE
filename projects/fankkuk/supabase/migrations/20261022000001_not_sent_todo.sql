@@ -120,8 +120,9 @@ AS $function$
               then (select c.code from public.inbound_codes c where c.box_id = b.id and c.state = 'valid') end,
          exists (select 1 from public.office_not_mine_reports r where r.parcel_id = p.id),
          o.approved_at is null and o.fan_send_ack_at is null and o.status in ('registered', 'received', 'labeled', 'inspected'),
-         -- 「아직 보내지 않음」을 누른 시각(office-workflow INV-W10) — 아직 입고 전·닫히지 않은 상자에만. 도착한 상자에는 붙이지 않는다
-         case when b.missing_at is null and (p.state is null or p.state = 'awaiting') then o.fan_not_sent_at end
+         -- 「아직 보내지 않음」을 누른 시각(office-workflow INV-W10) — 아직 입고 전·닫히지 않은 상자에만. 도착한 상자에는 붙이지 않는다.
+         -- 누른 뒤 그 상자에 송장번호를 넣었으면 보낸 상자라 붙이지 않는다(2026-10-22 리뷰)
+         case when b.missing_at is null and (p.state is null or p.state = 'awaiting') and p.tracking_no is null then o.fan_not_sent_at end
   from public.orders o
   join public.boxes b on b.order_id = o.id
   left join public.office_parcels p on p.box_id = b.id

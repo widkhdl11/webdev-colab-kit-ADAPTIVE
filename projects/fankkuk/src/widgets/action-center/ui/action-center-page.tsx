@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { byUrgency, giftDetailHref, type ActionItem } from "@/entities/action-item/model/action-items";
+import { byUrgency, FAN_TODO_TITLE, giftDetailHref, type ActionItem } from "@/entities/action-item/model/action-items";
 import { formatMonthDayKo, seoulDaysUntil } from "@/shared/lib/format/datetime";
 import s from "./action-center.module.css";
 
@@ -17,10 +17,10 @@ type Props = { items: readonly ActionItem[]; now: string };
  * 도착이 늦어요에 붙던 태그 「송장번호 입력」은 뺐다 — 아직 보내지 않은 팬에게는 맞지 않는 말이다(2026-10-22 d113 진단 C-1). 처리 갈래는 상세 칸이 보여 준다.
  */
 function rowCopy(item: ActionItem): { title: string; meta: string; art: string } {
-  if (item.kind === "difference") return { title: "추가 결제", meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-fee.webp" };
-  if (item.kind === "missing_box") return { title: "도착이 늦어요", meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-truck.webp" };
-  if (item.kind === "unpaid") return { title: "결제를 마치지 않은 선물", meta: `${item.creatorName}님께 보낼 선물`, art: "/images/home/icon-fee.webp" };
-  if (item.kind === "return_address") return { title: "돌려받을 주소 확인", meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-truck.webp" };
+  if (item.kind === "difference") return { title: FAN_TODO_TITLE.difference, meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-fee.webp" };
+  if (item.kind === "missing_box") return { title: FAN_TODO_TITLE.missing_box, meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-truck.webp" };
+  if (item.kind === "unpaid") return { title: FAN_TODO_TITLE.unpaid, meta: `${item.creatorName}님께 보낼 선물`, art: "/images/home/icon-fee.webp" };
+  if (item.kind === "return_address") return { title: FAN_TODO_TITLE.return_address, meta: `${item.creatorName}님께 보낸 선물 · 상자 ${item.boxSeq}`, art: "/images/home/icon-truck.webp" };
   return { title: `${item.creatorName}님이 보낸 선물 받기`, meta: "받을지 정해 주세요", art: "/images/home/icon-gift.webp" };
 }
 

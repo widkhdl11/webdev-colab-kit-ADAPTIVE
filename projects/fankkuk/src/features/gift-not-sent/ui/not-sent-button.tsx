@@ -10,7 +10,8 @@ import { sendNotSent } from "../api/send-not-sent";
 
 const FAILED_TEXT = "처리하지 못했어요. 잠시 뒤 다시 해 주세요.";
 
-export function NotSentButton({ orderNo, className = "btn btn--line" }: { orderNo: string; className?: string }) {
+/** focusAfterId: 끝나서 이 칸이 사라지면 포커스를 옮길, 새로 읽어도 남는 요소(tabIndex -1)의 id — 없으면 포커스가 페이지 맨 앞으로 떨어진다 */
+export function NotSentButton({ orderNo, focusAfterId, className = "btn btn--line" }: { orderNo: string; focusAfterId?: string; className?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +23,7 @@ export function NotSentButton({ orderNo, className = "btn btn--line" }: { orderN
     const r = await sendNotSent({ orderNo });
     setBusy(false);
     if (r.kind === "ok") {
+      if (focusAfterId) document.getElementById(focusAfterId)?.focus();
       router.refresh();
       return;
     }

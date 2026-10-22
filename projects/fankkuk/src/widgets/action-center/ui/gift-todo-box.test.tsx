@@ -126,15 +126,6 @@ describe("INV-J1·J13·W15: 상세 「지금 할 일」 칸 — 반송 주소 �
     expect(replace).toHaveBeenCalledWith("/gifts/FC-7K3M9?address=confirmed", { scroll: false });
   });
 
-  it("C-3: ?address=confirmed 로 열린 칸 위에 「돌려받을 주소를 확인했어요.」 한 줄 — 쿼리가 없으면 없다", () => {
-    render([RETURN]);
-    expect(host.textContent).not.toContain("돌려받을 주소를 확인했어요.");
-    act(() => root.unmount());
-    root = createRoot(host);
-    query = "address=confirmed";
-    render([RETURN]);
-    expect(host.querySelector('[role="status"]')?.textContent).toBe("돌려받을 주소를 확인했어요.");
-  });
 });
 
 const MISSING: ActionItem = {
@@ -235,5 +226,49 @@ describe("INV-J13·M11: 칸의 차액 결제가 결제창까지 이어진다(아
         route: { orderName: "팬꾹 차액 FC-7K3M9", successPath: "/api/checkout/difference/success", failPath: "/gifts/FC-7K3M9?difference=failed" },
       }),
     );
+  });
+});
+
+describe("접근성: 처리가 끝나 칸이 사라지면 포커스는 상자 칸 제목으로(ui-reviewer 2026-10-22 지적 2)", () => {
+  // 선물 상세의 상자 칸 제목 — 새로 읽어도 남는 요소(「먼저 보내기」와 같은 자리)
+  function boxTitle(): HTMLElement {
+    const h = document.createElement("h2");
+    h.id = "box-status-title";
+    h.tabIndex = -1;
+    document.body.appendChild(h);
+    return h;
+  }
+
+  it("C-1: 「아직 보내지 않음」이 끝나면 포커스가 상자 칸 제목으로 간다", async () => {
+    const title = boxTitle();
+    sendNotSent.mockResolvedValue({ kind: "ok" });
+    render([MISSING]);
+    const btn = [...host.querySelectorAll<HTMLButtonElement>("#todo button")].find((b) => b.textContent === "아직 보내지 않음");
+    btn?.focus();
+    await act(async () => btn?.click());
+    expect(document.activeElement).toBe(title);
+    title.remove();
+  });
+
+  it("C-1 (실패경로): 거부되면 포커스를 옮기지 않는다 — 칸과 안내가 그 자리에 남는다", async () => {
+    const title = boxTitle();
+    sendNotSent.mockResolvedValue({ kind: "refused", message: "지금은 남길 수 없는 선물이에요. 새로고침해 주세요." });
+    render([MISSING]);
+    const btn = [...host.querySelectorAll<HTMLButtonElement>("#todo button")].find((b) => b.textContent === "아직 보내지 않음");
+    btn?.focus();
+    await act(async () => btn?.click());
+    expect(document.activeElement).not.toBe(title);
+    title.remove();
+  });
+
+  it("C-3: 돌려받을 주소 확인이 끝나면 포커스가 상자 칸 제목으로 간다", async () => {
+    const title = boxTitle();
+    sendReturnConfirm.mockResolvedValue({ kind: "ok" });
+    render([RETURN]);
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-kind="return_address"] button')?.click());
+    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent === "확인") as HTMLButtonElement | undefined;
+    await act(async () => ok?.click());
+    expect(document.activeElement).toBe(title);
+    title.remove();
   });
 });

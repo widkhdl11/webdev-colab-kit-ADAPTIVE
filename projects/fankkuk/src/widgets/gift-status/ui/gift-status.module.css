@@ -110,6 +110,7 @@
 .bottomlink { margin-top: var(--space-8); }
 .textlink { display: inline-flex; align-items: center; min-height: var(--btn-h-sm); font-size: var(--fs-small); color: var(--sub); text-decoration: underline; text-underline-offset: 4px; }
 .textlink:hover { color: var(--ink); }
+.textlink:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* 나만 보는 메모(together INV-F7) — 같은 구간 언어로: 선물 이름 위, 내용은 연한 면 + 자물쇠 */
 .memo-card { display: grid; gap: var(--space-4); }

@@ -18,6 +18,7 @@ import { finderBoxesBelowTodo, giftAddressCode, giftFinderBoxes, needsEarlySendA
 import { EarlySendGate } from "@/features/box-waybill/ui/early-send-gate";
 import { canCancelGift } from "@/features/gift-cancel/model/cancellable";
 import { CancelGiftButton } from "@/features/gift-cancel/ui/cancel-gift-button";
+import { ReturnConfirmedNotice } from "@/features/return-address/ui/return-confirmed-notice";
 import { RETURN_ON_INSPECTION_NOTICE } from "@/entities/parcel/model/size-tier";
 import { formatWaybill } from "@/entities/parcel/model/waybill-no";
 import { FindMyBox } from "@/features/box-waybill/ui/find-my-box";
@@ -148,10 +149,13 @@ export function GiftStatusPage({
         </Link>
         {/* 맨 위 「지금 할 일」 칸은 상태 판 위 전체 폭 */}
         <div className={s.top} data-detail-top="">
+          {/* 돌려받을 주소 확인 뒤 한 줄(C-3) — 확인하면 그 할 일 줄이 사라져 칸이 없을 수 있으니 칸 밖에 */}
+          <ReturnConfirmedNotice className={`okmsg ${s.paidline}`} />
           {todo}
           {/* 결제 직후 안내(B-1) — 다음에 할 일 한 구절: 먼저 보내기 전이면 「먼저 보내기」, 받는 주소가 보이면 그 주소 */}
           {paid ? (
-            <p className={s.paidline} role="status" data-paid-line="">
+            // 처음 그릴 때부터 있는 글이라 role="status" 를 두지 않는다 — status 는 바뀔 때만 읽힌다(ui-reviewer 2026-10-22 지적 6)
+            <p className={s.paidline} data-paid-line="">
               {earlySendAck ? "결제가 끝났어요. 먼저 보내려면 아래 「먼저 보내기」를 눌러 주세요." : anyAddress ? "결제가 끝났어요. 아래 받는 주소로 상자를 보내 주세요." : "결제가 끝났어요."}
             </p>
           ) : null}

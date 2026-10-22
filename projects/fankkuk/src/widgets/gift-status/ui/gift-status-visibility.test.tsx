@@ -2,8 +2,12 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// 돌아온 주소의 쿼리(?address=confirmed 등) — 시험마다 바꾼다
+let query = "";
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => "/gifts/FC-7K3M9",
+  useSearchParams: () => new URLSearchParams(query),
 }));
 
 import { parseFanGiftRows } from "@/entities/order/api/fan-gift-rows";
@@ -30,6 +34,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  query = "";
   act(() => root.unmount());
   host.remove();
 });
@@ -157,7 +162,7 @@ describe("B-1: 결제 직후 안내", () => {
       boxes: [box({ addressCode: null, sendAckNeeded: true })],
     });
     expect(
-      host.querySelector('main [role="status"][data-paid-line]')?.textContent,
+      host.querySelector('main [data-paid-line]')?.textContent,
     ).toBe(
       "결제가 끝났어요. 먼저 보내려면 아래 「먼저 보내기」를 눌러 주세요.",
     );
@@ -332,5 +337,22 @@ describe("C-1: 「아직 보내지 않음」을 누른 상자는 상자 줄에 �
     expect(boxLine(`${ORDER}-1`)?.textContent).toContain("아직 보내지 않음 · 10월 22일");
     expect(boxLine(`${ORDER}-2`)?.textContent).toContain("아직 도착 전");
     expect(boxLine(`${ORDER}-2`)?.textContent).not.toContain("아직 보내지 않음");
+  });
+});
+
+describe("C-3: 돌려받을 주소 확인 뒤 안내는 할 일 칸이 없어져도 보인다", () => {
+  // 확인하면 그 할 일 줄이 원천 상태로 사라진다 — 그 주문의 마지막 할 일이면 칸이 통째로 없다(ui-reviewer 2026-10-22 지적 1).
+  it("C-3: ?address=confirmed 로 열린 상세는 할 일 칸이 없어도 맨 위에 「돌려받을 주소를 확인했어요.」", () => {
+    query = "address=confirmed";
+    render();
+    const line = [...host.querySelectorAll("main [role=status]")].find((p) => p.textContent === "돌려받을 주소를 확인했어요.");
+    expect(line).toBeDefined();
+    // 상태 판(하늘 판)보다 위
+    expect(line!.compareDocumentPosition(host.querySelector("#g-title")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("C-3 (실패경로): 쿼리가 없으면 안내가 없다", () => {
+    render();
+    expect(host.querySelector("main")?.textContent).not.toContain("돌려받을 주소를 확인했어요.");
   });
 });

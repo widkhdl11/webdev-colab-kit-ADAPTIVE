@@ -96,6 +96,10 @@ describe("INV-W10 「아직 보내지 않음」 — 기록만, 기한은 그대�
     const rows = await boxes();
     expect(rows.find((b) => b.box_id === g.boxIds[0])?.not_sent_at).toBeNull();
     expect(Date.parse(rows.find((b) => b.box_id === g.boxIds[1])?.not_sent_at ?? "")).toBe(Date.parse(r.data as string));
+    // 누른 뒤 그 상자에 송장번호를 넣었으면 보낸 상자다 — 「아직 보내지 않음」을 싣지 않는다(code-reviewer 2026-10-22 지적 2 ②)
+    const w = await (await signedInClient("byeolbit_fan")).rpc("set_box_waybill", { p_box_id: g.boxIds[1], p_waybill: waybill() });
+    expect(w.error).toBeNull();
+    expect((await boxes()).find((b) => b.box_id === g.boxIds[1])?.not_sent_at).toBeNull();
     // 남의 주문번호로 읽으면 빈 목록 — 누른 시각도 새지 않는다
     expect((await (await signedInClient("daltokki_fan")).rpc("my_gift_boxes", { p_order_no: g.orderNo })).data).toEqual([]);
   });

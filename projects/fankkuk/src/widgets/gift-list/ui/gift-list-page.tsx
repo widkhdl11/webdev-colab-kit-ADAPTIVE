@@ -2,7 +2,7 @@ import { statusTagClass, type StatusTone } from "@/shared/ui/status-tone";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { FanGiftView } from "@/entities/order/model/fan-view";
-import { byUrgency, giftDetailHref, type ActionItem } from "@/entities/action-item/model/action-items";
+import { actionItemsOfOrder, byUrgency, FAN_TODO_TITLE, giftDetailHref, type ActionItem } from "@/entities/action-item/model/action-items";
 import { CreatorFace } from "@/entities/creator/ui/creator-face";
 import { CreatorPhoto } from "@/entities/creator/ui/creator-photo";
 import { FAN_STEP_LABEL, fanBadge, fanGiftBucket, fanProgress } from "@/entities/order/ui/fan-stage-copy";
@@ -33,13 +33,8 @@ function cardBadge(gift: FanGiftView): { text: string; tone: StatusTone } {
   return fanBadge(gift);
 }
 
-/** 할 일 한 줄의 제목 — 지금 할 일 목록 줄과 같은 글자(action-center-page rowCopy). 받은 역조공 줄은 보낸 선물 목록에 오지 않는다 */
-const TODO_TITLE: Record<Exclude<ActionItem["kind"], "revgift">, string> = {
-  difference: "추가 결제",
-  missing_box: "도착이 늦어요",
-  return_address: "돌려받을 주소 확인",
-  unpaid: "결제를 마치지 않은 선물",
-};
+/** 할 일 한 줄의 제목 — 지금 할 일 목록 줄과 같은 상수(FAN_TODO_TITLE). 받은 역조공 줄은 보낸 선물 목록에 오지 않는다 */
+const TODO_TITLE = FAN_TODO_TITLE;
 
 function TodoLine({ item }: { item: ActionItem }) {
   if (item.kind === "revgift") return null;
@@ -118,8 +113,9 @@ function UnpaidCard({ item, faceTone }: { item: UnpaidItem; faceTone: string | u
       <div className={s.top}>
         <CreatorFace tone={faceTone ?? "var(--face-1)"} className={`face ${s.face}`} />
         <strong className={s.who}>
-          <Link className="stretch" href={giftDetailHref(item.orderNo, true)}>
-            결제를 마치지 않은 선물
+          {/* 카드가 여럿이면 링크 이름이 같아지지 않게 — 받는 크리에이터와 주문번호를 붙인다(옆 GiftCard 와 같은 꼴, ui-reviewer 지적 6) */}
+          <Link className="stretch" href={giftDetailHref(item.orderNo, true)} aria-label={`${item.creatorName}님께 보낼 선물 ${item.orderNo} 결제하기`}>
+            {FAN_TODO_TITLE.unpaid}
           </Link>
         </strong>
       </div>
@@ -214,7 +210,7 @@ function Creators({ creators, faceToneByName }: { creators: readonly CreatorCard
 type GridProps = { rows: readonly FanGiftView[]; todos: readonly ActionItem[]; faceToneByName: Readonly<Record<string, string>> };
 
 /** 그 주문의 지금 할 일 줄 중 가장 급한 것 — 없으면 할 일이 없는 카드 */
-const firstTodoOf = (todos: readonly ActionItem[], orderNo: string): ActionItem | undefined => byUrgency(todos.filter((it) => it.orderNo === orderNo))[0];
+const firstTodoOf = (todos: readonly ActionItem[], orderNo: string): ActionItem | undefined => byUrgency(actionItemsOfOrder(todos, orderNo))[0];
 
 function Grid({ rows, todos, faceToneByName, unpaid = [] }: GridProps & { unpaid?: readonly UnpaidItem[] }) {
   return (

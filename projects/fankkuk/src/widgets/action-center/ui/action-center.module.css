@@ -9,5 +9,6 @@
 .alt :global(.err) { flex-basis: 100%; }
 .textlink { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--fs-small); color: var(--sub); text-decoration: underline; text-underline-offset: 4px; }
 .textlink:hover { color: var(--ink); }
+.textlink:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 /* 처리에서 돌아온 직후 칸 위 한 줄(진단 C-2·C-3) */
 .notice { margin-bottom: var(--space-4); }
