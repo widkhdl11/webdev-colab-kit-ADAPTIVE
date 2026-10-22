@@ -20,6 +20,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
   return {
     title: "이용약관",
     lead: "팬꾹을 쓰기 전에 알아 두셔야 할 약속을 모았어요. 선물이 어떻게 오가고, 돈은 언제 얼마를 받고 돌려드리는지 적었습니다.",
+    summaryLinks: ["service", "refund", "prohibited"],
     summary: [
       "팬꾹은 팬의 선물을 사무실에서 받아 검수한 뒤, 크리에이터가 승인한 선물만 크리에이터에게 보냅니다.",
       "요금은 상자마다 크기·무게 구간으로 받으며, 거절·반송·취소 때 돌려드리는 금액은 선물의 상태에 따라 정해집니다.",
@@ -79,6 +80,8 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "service",
+        tags: ["선물·배송"],
+        frequent: true,
         title: "제4조 서비스의 내용",
         blocks: [
           { kind: "text", text: "팬이 크리에이터에게 선물을 보내는 절차는 다음과 같습니다." },
@@ -112,6 +115,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "account",
+        tags: ["계정·개인정보"],
         title: "제5조 회원가입과 계정 관리",
         blocks: [
           {
@@ -130,6 +134,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "creator",
+        tags: ["크리에이터"],
         title: "제6조 크리에이터 본인 확인",
         blocks: [
           { kind: "text", text: "크리에이터는 활동 채널의 소유자임을 확인받아야 크리에이터 찾기에 표시되고 선물을 받을 수 있습니다." },
@@ -147,6 +152,8 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "fee",
+        tags: ["환불·취소"],
+        frequent: true,
         title: "제7조 이용요금과 결제",
         blocks: [
           {
@@ -175,6 +182,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "measure",
+        tags: ["환불·취소"],
         title: "제8조 입고 후 실측과 차액 결제",
         blocks: [
           {
@@ -190,6 +198,8 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "refund",
+        tags: ["환불·취소"],
+        frequent: true,
         title: "제9조 거절·자동 반려와 환불",
         blocks: [
           {
@@ -268,6 +278,8 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "inspection",
+        tags: ["금지 물품", "선물·배송"],
+        frequent: true,
         title: "제10조 검수와 보낼 수 없는 물품",
         blocks: [
           {
@@ -290,6 +302,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "block",
+        tags: ["크리에이터"],
         title: "제11조 차단",
         blocks: [
           {
@@ -306,6 +319,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "revgift",
+        tags: ["크리에이터", "선물·배송"],
         title: "제12조 역조공",
         blocks: [
           {
@@ -323,6 +337,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "unmatched",
+        tags: ["선물·배송"],
         title: "제13조 주문을 확인할 수 없는 상자",
         blocks: [
           {
@@ -338,6 +353,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "alert",
+        tags: ["계정·개인정보"],
         title: "제14조 회원에 대한 통지",
         blocks: [
           {
@@ -353,6 +369,7 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "address",
+        tags: ["크리에이터", "계정·개인정보"],
         title: "제15조 크리에이터 주소 보호와 열람 기록",
         blocks: [
           {
@@ -369,6 +386,8 @@ export function termsDoc(prices: PublicPriceTable, cap: number = SITE_INFO.compe
       },
       {
         id: "prohibited",
+        tags: ["계정·개인정보"],
+        frequent: true,
         title: "제16조 회원의 금지 행위",
         blocks: [
           { kind: "text", text: "회원은 다음 각 호의 행위를 하여서는 안 됩니다." },

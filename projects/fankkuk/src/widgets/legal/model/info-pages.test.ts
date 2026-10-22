@@ -66,6 +66,17 @@ describe("안내·법정 페이지 공통", () => {
     ]);
   });
 
+  it("이용약관 분류·주요·요약 링크는 확정한 표대로다(2026-10-23) — 요약 줄은 있는 조를 가리킨다", () => {
+    const t = docs.terms!;
+    const ids = t.sections.map((s) => s.id);
+    expect(t.summaryLinks).toEqual(["service", "refund", "prohibited"]);
+    for (const id of t.summaryLinks ?? []) expect(ids).toContain(id);
+    const allowed = ["선물·배송", "계정·개인정보", "크리에이터", "환불·취소", "금지 물품"];
+    for (const s of t.sections) for (const tag of s.tags ?? []) expect([s.id, allowed.includes(tag)]).toEqual([s.id, true]);
+    expect(t.sections.filter((s) => s.frequent).map((s) => s.id)).toEqual(["service", "fee", "refund", "inspection", "prohibited"]);
+    expect(t.sections.filter((s) => s.tags?.includes("크리에이터")).map((s) => s.id)).toEqual(["creator", "block", "revgift", "address"]);
+  });
+
   it("배상 한도는 설정값에서 읽는다", () => {
     expect(text(termsDoc(prices, 123_000))).toContain("123,000원");
     expect(text(disputeDoc({ ...SITE_INFO, compensationCapKrw: 77_000 }))).toContain("77,000원");
