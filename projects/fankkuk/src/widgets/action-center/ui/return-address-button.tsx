@@ -15,8 +15,8 @@ import { giftDetailHref } from "@/entities/action-item/model/action-items";
 /** 팬의 받을 주소 — 라우트가 읽어 넘긴다. 상태를 읽지 못했으면 status null, 봉인 공개키가 없으면 sealingKeyPem null */
 export type FanReturnAddress = { accountId: string; status: MyFanAddressStatus | null; sealingKeyPem: string | null };
 
-/** focusAfterId: 확인이 끝나 칸이 사라지면 포커스를 옮길, 새로 읽어도 남는 요소(tabIndex -1)의 id */
-export function ReturnAddressButton({ target, meta, address, focusAfterId }: { target: ReturnTarget; meta: string; address: FanReturnAddress; focusAfterId?: string }) {
+/** focusAfterIds: 확인이 끝나 칸이 사라지면 포커스를 옮길, 새로 읽어도 남는 요소(tabIndex -1)의 id 후보 — 앞에서부터 그려져 있는 첫 요소로 */
+export function ReturnAddressButton({ target, meta, address, focusAfterIds = [] }: { target: ReturnTarget; meta: string; address: FanReturnAddress; focusAfterIds?: readonly string[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -26,9 +26,9 @@ export function ReturnAddressButton({ target, meta, address, focusAfterId }: { t
   // 창은 닫힐 때 포커스를 「확인하기」로 돌려놓는데 그 버튼은 새로 읽으면 사라진다 — 이 effect 는 창의 정리보다 늦게 돈다(ui 재리뷰 2026-10-22)
   useEffect(() => {
     if (open || !confirmed) return;
-    if (focusAfterId) document.getElementById(focusAfterId)?.focus();
+    focusAfterIds.map((id) => document.getElementById(id)).find((el) => el !== null)?.focus();
     setConfirmed(false);
-  }, [open, confirmed, focusAfterId]);
+  }, [open, confirmed, focusAfterIds]);
   return (
     <>
       <button className="btn" type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>

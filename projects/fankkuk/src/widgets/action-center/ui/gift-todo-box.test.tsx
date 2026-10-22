@@ -276,4 +276,57 @@ describe("접근성: 처리가 끝나 칸이 사라지면 포커스는 상자 �
     expect(document.activeElement).toBe(title);
     title.remove();
   });
+
+  // 앞 시험이 실패해 제목을 못 치워도 다음 시험에 남지 않게
+  afterEach(() => document.querySelectorAll("#box-status-title, #g-title").forEach((el) => el.remove()));
+
+  // 거절·기한 지남 주문은 상자 칸이 그려지지 않는다(showsSteps) — 그때는 늘 있는 페이지 제목으로(ui 재리뷰 2026-10-22 둘째)
+  function pageTitle(): HTMLElement {
+    const h = document.createElement("h1");
+    h.id = "g-title";
+    h.tabIndex = -1;
+    document.body.appendChild(h);
+    return h;
+  }
+
+  it("C-3: 상자 칸 제목이 없는 주문(거절·기한 지남)이면 주소 확인 뒤 포커스가 페이지 제목으로 간다", async () => {
+    const title = pageTitle();
+    sendReturnConfirm.mockResolvedValue({ kind: "ok" });
+    render([RETURN]);
+    const opener = host.querySelector<HTMLButtonElement>('[data-kind="return_address"] button');
+    opener?.focus();
+    await act(async () => opener?.click());
+    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent === "확인") as HTMLButtonElement | undefined;
+    ok?.focus();
+    await act(async () => ok?.click());
+    expect(document.activeElement).toBe(title);
+    title.remove();
+  });
+
+  it("C-3: 두 제목이 다 있으면 상자 칸 제목이 먼저다", async () => {
+    const page = pageTitle();
+    const box = boxTitle();
+    sendReturnConfirm.mockResolvedValue({ kind: "ok" });
+    render([RETURN]);
+    const opener = host.querySelector<HTMLButtonElement>('[data-kind="return_address"] button');
+    opener?.focus();
+    await act(async () => opener?.click());
+    const ok = [...document.querySelectorAll("dialog button")].find((b) => b.textContent === "확인") as HTMLButtonElement | undefined;
+    ok?.focus();
+    await act(async () => ok?.click());
+    expect(document.activeElement).toBe(box);
+    page.remove();
+    box.remove();
+  });
+
+  it("C-1: 상자 칸 제목이 없으면 「아직 보내지 않음」 뒤 포커스가 페이지 제목으로 간다", async () => {
+    const title = pageTitle();
+    sendNotSent.mockResolvedValue({ kind: "ok" });
+    render([MISSING]);
+    const btn = [...host.querySelectorAll<HTMLButtonElement>("#todo button")].find((b) => b.textContent === "아직 보내지 않음");
+    btn?.focus();
+    await act(async () => btn?.click());
+    expect(document.activeElement).toBe(title);
+    title.remove();
+  });
 });

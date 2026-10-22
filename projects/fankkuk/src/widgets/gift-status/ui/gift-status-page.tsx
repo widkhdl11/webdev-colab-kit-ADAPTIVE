@@ -165,7 +165,7 @@ export function GiftStatusPage({
             <p className={s.meta}>
               주문번호 {view.orderNo} · 등록 {formatDate(view.registeredAt)}
             </p>
-            <h1 className={s.title} id="g-title">
+            <h1 className={s.title} id="g-title" tabIndex={-1}>
               {view.creatorName}님께 보내는 선물
             </h1>
             <p className={s.what}>

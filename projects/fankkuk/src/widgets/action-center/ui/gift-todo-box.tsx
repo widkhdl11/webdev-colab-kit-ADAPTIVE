@@ -24,8 +24,9 @@ type Props = { items: readonly ActionItem[]; clientKey: string; now: string; add
 
 export const RESUME_FAILED_TEXT = "결제를 마치지 못했어요. 다시 결제해 주세요.";
 
-// 처리가 끝나 칸이 사라지면 포커스를 옮길 자리 — 선물 상세 상자 칸 제목(「먼저 보내기」와 같은 자리, gift-status-page 의 tabIndex -1 제목)
-const BOX_TITLE_ID = "box-status-title";
+// 처리가 끝나 칸이 사라지면 포커스를 옮길 자리 — 선물 상세 상자 칸 제목(「먼저 보내기」와 같은 자리, gift-status-page 의 tabIndex -1 제목).
+// 상자 칸은 진행 중·돌려보냄 주문에만 그려진다 — 거절·기한 지남이면 늘 있는 페이지 제목으로(ui 재리뷰 2026-10-22)
+const FOCUS_AFTER_IDS = ["box-status-title", "g-title"] as const;
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
@@ -67,7 +68,7 @@ function Task({ item, clientKey, now, address }: { item: ActionItem; clientKey: 
           <>
             <FindMyBox box={{ target: { kind: "box", id: item.boxId }, label: item.boxLabel, name: `${item.boxLabel} · ${tier} 상자` }} />
             <div className={s.alt}>
-              <NotSentButton orderNo={item.orderNo} focusAfterId={BOX_TITLE_ID} />
+              <NotSentButton orderNo={item.orderNo} focusAfterIds={FOCUS_AFTER_IDS} />
               <a className={s.textlink} href="/support">
                 1:1 문의하기
               </a>
@@ -85,7 +86,7 @@ function Task({ item, clientKey, now, address }: { item: ActionItem; clientKey: 
         titleId={titleId}
         title="돌려받을 주소 확인"
         sub={`상자 ${item.boxSeq} · ${disposeDueText(item.dueAt)}`}
-        action={<ReturnAddressButton target={{ orderNo: item.orderNo, boxSeq: item.boxSeq }} meta={meta} address={address} focusAfterId={BOX_TITLE_ID} />}
+        action={<ReturnAddressButton target={{ orderNo: item.orderNo, boxSeq: item.boxSeq }} meta={meta} address={address} focusAfterIds={FOCUS_AFTER_IDS} />}
       />
     );
   }
