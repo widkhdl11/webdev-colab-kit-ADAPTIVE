@@ -119,6 +119,8 @@ export const CREATOR_APP_MENU: readonly AppMenuGroup[] = [
         sub: [{ label: "몇 명에게", href: "/creator/revgifts/new#count" }, { label: "합포장", soon: true }],
       },
       { href: "/gifts/new", label: "다른 크리에이터에게 선물", icon: "gift" },
+      // 크리에이터끼리 선물은 둘 중 한쪽이 팔로우해야 보낸다(creators_follow_either_way) — 팔로우 목록은 팬과 같은 화면(2026-10-22 사용자)
+      { href: "/me/following", label: "팔로우한 크리에이터", icon: "heart" },
       { href: CREATOR_SENT_HREFS.fans, label: "보낸 내역", icon: "history", also: [CREATOR_SENT_HREFS.creators] },
     ],
   },

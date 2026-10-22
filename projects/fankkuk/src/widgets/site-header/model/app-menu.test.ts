@@ -11,7 +11,7 @@ describe("크리에이터 메뉴 — 묶음", () => {
     expect(CREATOR_APP_MENU.map((g) => g.label)).toEqual(["기본", "받기", "보내기", "내 팬꾹"]);
     expect(labels("기본")).toEqual(["홈", "선물 현황", "지금 할 일", "크리에이터 찾기"]);
     expect(labels("받기")).toEqual(["승인 내역", "받은 선물", "열람 기록"]);
-    expect(labels("보내기")).toEqual(["팬에게 보내기", "다른 크리에이터에게 선물", "보낸 내역"]);
+    expect(labels("보내기")).toEqual(["팬에게 보내기", "다른 크리에이터에게 선물", "팔로우한 크리에이터", "보낸 내역"]);
     expect(labels("내 팬꾹")).toEqual(["꾸미기", "프로필 수정", "상세 설정"]);
   });
 
@@ -35,6 +35,8 @@ describe("크리에이터 메뉴 — 묶음", () => {
     const all = CREATOR_APP_MENU.flatMap((g) => g.items);
     expect(all.filter((i) => i.badge).map((i) => [i.label, i.href, i.badge])).toEqual([["지금 할 일", "/creator/actions", "actions"]]);
     expect(currentMenuItem(CREATOR_APP_MENU, "/creator/actions")?.label).toBe("지금 할 일");
+    // 크리에이터도 다른 크리에이터를 팔로우한다(follow-mode — 운영자·자기 자신만 숨김). 팔로우 목록은 팬과 같은 화면
+    expect(currentMenuItem(CREATOR_APP_MENU, "/me/following")?.label).toBe("팔로우한 크리에이터");
   });
 
   it("프로필 수정·상세 설정 화면에서 그 칸이 켜진다", () => {
