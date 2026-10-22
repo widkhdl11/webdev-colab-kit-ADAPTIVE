@@ -155,6 +155,8 @@ status: approved
 | `projects/<이름>/docs/DECISIONS.md` | 결정의 이유·이력. **기계가 읽지 않는다** |
 | `projects/<이름>/docs/BACKLOG.md` | 미룬 제품 작업. 미결 건수만 센다(`- [ ]` 개수) |
 | `projects/<이름>/docs/policy/<rule-id>.md` | 이 프로젝트에서 승격된 결정 규칙(7절). 하위 폴더는 보지 않는다(비재귀) |
+| `projects/<이름>/docs/ux/pages/<슬러그>.md` | UX 명세. frontmatter `status`. **기계가 아직 읽지 않는다** |
+| `projects/<이름>/docs/ux/{principles,states,<유형>-pages}.md` | UX 기준 문서. **기계가 읽지 않는다** |
 
 킷 레벨 규칙은 `docs/references/policy/<rule-id>.md` 에 있고 같은 형식을 쓴다. 둘 다
 `README.md` 는 규칙이 아니다 — 파일명이 `README` 인 것은 규칙 목록에서 뺀다.
@@ -173,6 +175,7 @@ status: approved
   접었다 — 산문 속 파싱은 frontmatter 파싱보다 오독 표면이 넓어서, 형식을 등재해도
   숨은 스키마가 된다. 상태의 원본은 frontmatter 에 둔다)
 - `tech-stack.md` · `design/INTERVIEW*.md` · `docs/design/refs/` 는 아무도 읽지 않는다.
+- `docs/ux/` 는 리뷰어와 스킬이 읽고 게이트는 읽지 않는다. 게이트 승격은 harness-backlog.md.
 - 노드 해시에 들어가는 것은 각 노드의 산출물 경로뿐이다. `DECISIONS.md` 와 `BACKLOG.md` 는
   어느 노드의 산출물도 아니라 바뀌어도 재작업이 안 잡힌다.
 - `projects/<이름>/report/` 는 `docs/` 가 아니다. 진행 대시보드가 읽고 쓰는 과정 기록이고,
@@ -385,3 +388,7 @@ last_applied: <cycle-id, 쉼표로 나열 · 비워도 된다>
 - 2026-09-14. 8절(노드↔스킬 바인딩) 등재. 등재 이력은 9절로 밀렸다.
   형식 정본은 이 절이고, 판정은 `scripts/check-report.mjs` 가 한다 — 스킬이 생겼는데 바인딩에
   안 올라온 것, 바인딩이 없는 노드·스킬을 가리키는 것을 각각 다른 각도로 본다.
+
+- 2026-10-22. 4절에 `docs/ux/pages/<슬러그>.md`(UX 명세)와 `docs/ux/` 기준 문서 두 줄을 등재하고
+  5절에 「게이트는 읽지 않는다」를 적었다. 사람이 승인하고 리뷰어(ux-reviewer)와 스킬(page-brief)이
+  읽는 문서다 — 게이트로 올리는 판단은 harness-backlog 「ux-spec 게이트 승격」이 트리거와 함께 들고 있다.

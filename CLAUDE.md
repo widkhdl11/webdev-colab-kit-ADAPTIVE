@@ -146,8 +146,9 @@ Phase별·파일별로 정리한 보고서는 **내가 한 일의 구조**지 �
 |---|---|---|
 | 인증·세션·결제·권한·시크릿 | 구현 전 spec(불변식) + security-reviewer | 틀리면 되돌릴 수 없다. **이 하한선은 risk-surface 게이트가 기계로 강제한다** |
 | 동시성·시변/파생 상태 | 구현 전 spec | 사고가 나중에, 조용히 난다 — 테스트로 잡으려면 불변식이 먼저 있어야 한다 |
+| 새 화면·새 흐름·상태(노출 조건)·입력 구조 변경 | page-brief → UX 명세 승인 → (아래 두 행 중 해당하는 것) → 구현 → ux-reviewer | 무엇이 언제 보이는지는 시안이 정하지 않는다. 시안은 상태 하나만 담는다 — 정하지 않으면 모든 요소가 항상 보이는 화면이 나온다 |
 | 새 시각 방향 | design-interview → 시안 → checkpoint | 시각은 말로 합의되지 않고, 크게 만든 뒤 뒤집으면 비싸다 |
-| 승인된 방향의 반복 UI | 바로 구현 + ui-reviewer | design-rules가 이미 기준이다. 다시 물으면 같은 답이 나온다 |
+| 승인된 방향의 반복 UI | 바로 구현 + ui-reviewer (상태·노출이 바뀌면 ux-reviewer 먼저) | design-rules가 이미 기준이다. 다시 물으면 같은 답이 나온다 |
 | 도메인 로직·상태 관리 | code-reviewer | 게이트는 문법을 보고 이건 의미를 본다 |
 | 데이터 모델(엔티티·필드) | modeling-checklist 훑기, 걸리는 게 있으면 spec | 잘못 잡은 모델은 마이그레이션으로만 고쳐진다 |
 | 카피·이미지·토큰 조정 | 자동 게이트만 | 되돌리는 비용이 거의 0이다 |
@@ -165,6 +166,7 @@ Phase별·파일별로 정리한 보고서는 **내가 한 일의 구조**지 �
 ## 필요할 때만 읽는 문서 (라우팅)
 
 - UI/페이지 작업 시작 전: projects/<이름>/docs/design/design-rules.md (checkpoint로 승인된 기준)
+- 새 화면·흐름·상태 변경 시작 전: `.claude/rules/ux-spec.md` — 브리프·명세 먼저(page-brief 스킬이 진입점). 기준 문서는 `projects/<이름>/docs/ux/`.
 - 새 시각 방향(첫 화면·새 레이아웃) 시작 전: .claude/rules/design-drafting.md — 시안 먼저 절차(design-interview 스킬이 진입점).
   **새 시각 방향은 언제나 보류로 올린다** — 스스로 결정하지 않고, 리포트의 「디자인 방향 빈칸」도 아니다.
   빈칸은 승인된 방향 안에서 그 문서가 다루지 않은 세부만이다
@@ -199,7 +201,8 @@ review가 dirty인 동안 `deploy`는 차단된다.
 
 리뷰어는 개수가 아니라 **닿은 표면**으로 정한다. 닿지 않은 표면의 리뷰어는 읽을 것이 없어
 지적도 못 하므로 파견하지 않는다. 어느 리뷰어를 왜 뺐는지는 한 줄로 알린다(뺀 판단도 보고 대상이다).
-→ 표면별 리뷰어 넷과 `reviewers:` 규약: docs/references/review-signoff.md
+화면 diff 에 둘 다 붙으면 ux-reviewer 를 ui-reviewer 보다 먼저 돌린다 — 없어질 요소의 시각 기준을 재지 않게.
+→ 표면별 리뷰어와 `reviewers:` 규약: docs/references/review-signoff.md
 
 ## 검증 실패 시 (qa 테스트·리뷰어 지적)
 
