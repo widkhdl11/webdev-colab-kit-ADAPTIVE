@@ -13,7 +13,7 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
 
-// 크리에이터 프로필 수정 (design-rules 12절, 입력형 720). 로그인한 크리에이터 본인 것만 읽는다 —
+// 크리에이터 프로필 수정 (design-rules 27절, 입력 + 미리보기 1200). 로그인한 크리에이터 본인 것만 읽는다 —
 // 공개 이름·소개·찾기 노출·태그·팬덤 이름·두 색(my_creator_settings), 프로필 사진(my_creator_link), 배경사진·심볼(my_creator_look).
 // 태그 선택지는 고를 수 있는 것(숨기지 않은 것)만 — creator-tags INV-T3.
 export default async function Page() {
@@ -33,7 +33,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell width="form">
+      <MyShell width="broad">
         <CreatorProfileEditPage
           name={settings.publicName}
           intro={settings.intro}

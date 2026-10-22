@@ -70,3 +70,72 @@ describe("프로필 수정 — 저장은 예전 두 경로 그대로 (INV-A9)", 
     expect(host.querySelector<HTMLElement>("[data-fandom-badge]")?.style.getPropertyValue("--personal")).toBe("#DCEBFF");
   });
 });
+
+describe("프로필 수정 — 배치 (design-rules 27절 「4파트 나머지」, 시안 pilot-2026-10-22/creator-profile.html)", () => {
+  it("미리보기는 입력 판들 뒤의 aside 안, 「미리보기」 제목 아래 프로필 머리 하나", async () => {
+    await render();
+    const aside = host.querySelector("aside");
+    expect(aside).not.toBeNull();
+    expect(aside!.querySelector("h2, h3")?.textContent?.trim()).toBe("미리보기");
+    expect(aside!.querySelectorAll("[data-creator-head]")).toHaveLength(1);
+    expect(host.querySelectorAll("[data-creator-head]")).toHaveLength(1);
+    const form = host.querySelector("form")!;
+    // 문서 순서상 입력(소개 판)이 미리보기보다 앞
+    expect(form.compareDocumentPosition(aside!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(aside!.contains(form)).toBe(false);
+  });
+
+  it("「사진」 판과 「소개」 판이 나뉜다 — 사진 칸은 저장 form 밖, 이름·소개·태그·스위치는 form 안", async () => {
+    await render();
+    const photo = [...host.querySelectorAll("section")].find((el) => el.querySelector("h2")?.textContent?.trim() === "사진")!;
+    expect(photo).toBeTruthy();
+    const form = host.querySelector("form")!;
+    expect(form.contains(photo)).toBe(false);
+    expect(photo.contains(form)).toBe(false);
+    expect(photo.textContent).toContain("배경 사진 바꾸기");
+    expect(photo.textContent).toContain("프로필 사진 바꾸기");
+    expect(form.querySelector("h2")?.textContent?.trim()).toBe("소개");
+    for (const id of ["pe-name", "pe-bio", "pe-find"]) expect(form.querySelector(`#${id}`)).not.toBeNull();
+    expect(form.textContent).not.toContain("배경 사진 바꾸기");
+  });
+
+  it("결과 안내(role=status)와 [취소][저장]은 소개 판 안 맨 끝", async () => {
+    await render();
+    const form = host.querySelector("form")!;
+    const end = form.lastElementChild!;
+    expect(end.querySelector("[role=status]#pe-msg")).not.toBeNull();
+    const labels = [...end.querySelectorAll("a, button")].map((el) => el.textContent?.trim());
+    expect(labels).toEqual(["취소", "저장"]);
+  });
+
+  it("찾기 노출 스위치는 줄 전체가 누르는 칸 — 글자를 눌러도 켜지고, 저장에 실린다", async () => {
+    await render();
+    const sw = host.querySelector<HTMLInputElement>("#pe-find")!;
+    expect(sw.getAttribute("role")).toBe("switch");
+    const row = sw.closest("label");
+    expect(row).not.toBeNull();
+    expect(row!.textContent).toContain("크리에이터 찾기에 보이기");
+    expect(sw.checked).toBe(false);
+    act(() => row!.querySelector<HTMLElement>("strong, span")!.click());
+    expect(sw.checked).toBe(true);
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    const save = [...host.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === "저장")!;
+    await act(async () => {
+      save.click();
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(JSON.parse(String((fetchMock.mock.calls[0]![1] as RequestInit).body)).searchable).toBe(true);
+  });
+
+  it("머리 설명은 「미리보기 모양이 그대로 보여요」, 미리보기는 입력하는 대로 바뀐다", async () => {
+    await render();
+    expect(host.querySelector("header p")?.textContent).toBe("팬에게 보이는 내 프로필이에요. 미리보기 모양이 그대로 보여요.");
+    const input = host.querySelector<HTMLInputElement>("#pe-name")!;
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    act(() => {
+      setValue.call(input, "새이름");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(host.querySelector("aside [data-creator-head]")?.textContent).toContain("새이름");
+  });
+});

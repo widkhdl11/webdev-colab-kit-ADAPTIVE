@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ConfirmEmailPanel } from "@/features/email-confirm/ui/confirm-email-panel";
+import { ConfirmEmailPanel, ConfirmEmailSignInNotice } from "@/features/email-confirm/ui/confirm-email-panel";
 import { MyShell } from "@/widgets/my-nav/ui/my-shell";
 import { SiteFooter } from "@/widgets/site-footer/ui/site-footer";
 import { loadSession, readSiteHeader } from "@/widgets/site-header/api/session-header";
@@ -21,38 +20,17 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
   return (
     <>
       <SiteHeader {...header} />
-      {viewer?.role === "fan" ? (
-        <MyShell width="form">
+      {viewer ? (
+        // 로그인한 계정은 역할과 상관없이 다른 설정 화면과 같은 880 틀(왼쪽 시작선). 제목 h1 은 패널이 하나만 그린다.
+        // 링크의 계정과 맞는지는 서버가 가린다
+        <MyShell width="list">
           <ConfirmEmailPanel token={token} />
         </MyShell>
-      ) : viewer ? (
-        // 팬이 아닌 계정(크리에이터)에는 팬 메뉴 틀을 씌우지 않는다 — 링크의 계정과 맞는지는 서버가 가린다
-        <main id="main" className="page-centered">
-          <div>
-            <div className="col">
-              <div className="page-head">
-                <h1 className="ph-title">이메일 확인</h1>
-              </div>
-              <ConfirmEmailPanel token={token} />
-            </div>
-          </div>
-        </main>
       ) : (
         <main id="main" className="page-centered">
           <div>
             <div className="col">
-              <div className="page-head">
-                <h1 className="ph-title">이메일 확인</h1>
-              </div>
-              <div className="part center">
-                <p>
-                  메일을 받은 계정으로{" "}
-                  <Link className="t-strong" href="/login">
-                    로그인
-                  </Link>
-                  한 뒤, 메일의 링크를 다시 눌러 주세요.
-                </p>
-              </div>
+              <ConfirmEmailSignInNotice loginHref="/login" />
             </div>
           </div>
         </main>

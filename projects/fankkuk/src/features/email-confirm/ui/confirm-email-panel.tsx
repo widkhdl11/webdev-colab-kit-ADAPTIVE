@@ -5,11 +5,17 @@ import { useEffect, useRef, useState } from "react";
 import { postEmailConfirm } from "../api/confirm-email-client";
 import s from "./confirm-email.module.css";
 
-// 확인 메일 링크로 연 화면. 시안: docs/design/mockups/site/v18/email-confirm.html (페이지 머리 + 판 한 장, 가운데 기둥 720, 판 안은 왼쪽 정렬). 버튼을 눌러야 바뀐다 — 링크를 여는 것만으로는 아무것도 바뀌지 않는다(메일 검사기가 미리 열어도 안전하게).
+// 확인 메일 링크로 연 화면. 시안: docs/design/mockups/site/pilot-2026-10-22/email-confirm.html(.ec-*, design-rules 27절 「4파트 나머지 다섯 화면」, 카드 d115).
+// 상자 없이 제목(h1) 하나 + 문장(폭 560) + 버튼. 제목은 이 패널이 그린다 — 역할마다 화면에 h1 이 하나만 있게(라우트는 제목을 따로 그리지 않는다).
+// 버튼을 눌러야 바뀐다 — 링크를 여는 것만으로는 아무것도 바뀌지 않는다(메일 검사기가 미리 열어도 안전하게).
 // 알림 칸 둘은 늘 두고 글자만 바꾼다(새로 생긴 칸은 화면 읽기 프로그램이 읽지 않는 경우가 있다).
 // 결과가 나오면 버튼이 링크로 바뀌므로 포커스를 그 링크로 옮긴다 — 안 옮기면 포커스가 페이지 처음으로 떨어진다.
 
 type State = { kind: "ready" } | { kind: "sending" } | { kind: "done"; email: string } | { kind: "failed"; message: string };
+
+function Title() {
+  return <h1 className="ph-title">이메일 확인</h1>;
+}
 
 export function ConfirmEmailPanel({ token }: { token: string }) {
   const [state, setState] = useState<State>({ kind: "ready" });
@@ -28,17 +34,11 @@ export function ConfirmEmailPanel({ token }: { token: string }) {
   };
 
   return (
-    <>
-      <header className={`page-head ${s.narrow}`}>
-        <div className="ph-row">
-          <h2 className="ph-title" id="confirm-email-h">
-            이메일 확인
-          </h2>
-        </div>
-      </header>
-      <section className={`part ${state.kind === "done" ? "part--soft" : ""} ${s.narrow}`} aria-labelledby="confirm-email-h">
-        {state.kind !== "done" && <p className="t-lead">버튼을 누르면 확인 메일을 받은 주소가 내 계정의 이메일이 돼요.</p>}
-        <p className={`t-lead ${s.ok}`} role="status">
+    <div className={s.wrap} data-email-confirm="">
+      <Title />
+      <div className={s.body}>
+        {state.kind !== "done" && <p className={s.text}>버튼을 누르면 확인 메일을 받은 주소가 내 계정의 이메일이 돼요.</p>}
+        <p className={`${s.text} ${s.ok}`} role="status">
           {state.kind === "done" ? (
             <>
               <svg width="24" height="24" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
@@ -65,7 +65,25 @@ export function ConfirmEmailPanel({ token }: { token: string }) {
             </button>
           )}
         </div>
-      </section>
-    </>
+      </div>
+    </div>
+  );
+}
+
+// 로그인하지 않고 링크를 연 경우 — 같은 자리(제목 아래 문장)에 로그인 안내만 둔다
+export function ConfirmEmailSignInNotice({ loginHref }: { loginHref: string }) {
+  return (
+    <div className={s.wrap} data-email-confirm="">
+      <Title />
+      <div className={s.body}>
+        <p className={s.text}>
+          메일을 받은 계정으로{" "}
+          <Link className="t-strong" href={loginHref}>
+            로그인
+          </Link>
+          한 뒤, 메일의 링크를 다시 눌러 주세요.
+        </p>
+      </div>
+    </div>
   );
 }

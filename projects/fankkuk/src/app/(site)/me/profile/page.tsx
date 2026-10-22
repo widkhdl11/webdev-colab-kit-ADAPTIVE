@@ -10,7 +10,7 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
 
-// 팬 프로필 수정(my-account INV-A12~A14, design-rules 12절). 입력형 720(00절 「본문 틀」). 팬만 — 크리에이터는 크리에이터 화면으로, 로그인 안 했으면 로그인으로.
+// 팬 프로필 수정(my-account INV-A12~A14, design-rules 27절). 계정 설정(팬)과 같은 880 묶음 틀(카드 d115). 팬만 — 크리에이터는 크리에이터 화면으로, 로그인 안 했으면 로그인으로.
 // 프로필 네 칸은 공개 읽기(fan_profile)로 읽는다. 소개·닉네임은 /api/me/profile 한 경로로 저장한다.
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
@@ -21,7 +21,7 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell width="form">
+      <MyShell width="list">
         <FanProfileEditPage
           nickname={profile.nickname}
           intro={profile.intro}

@@ -1,79 +1,60 @@
-/* 내 팬꾹 꾸미기 — 시안 docs/design/mockups/addendum/customize/customize-b.html(디자인 기준 10절). 공통 부품(.card·.field·.btn·.tag·.t-meta·.err)은 base.css */
-
+/* 내 팬꾹 꾸미기 — 시안 docs/design/mockups/site/pilot-2026-10-22/customize.html, 값의 정본은 같은 폴더 pilot.css 「계정 설정(팬)」(.me-*)·「꾸미기」(.cz-*).
+   폭은 틀(MyShell list 880)이 정하고, 안에서 카드 없이 12열 4 + 8 묶음(my-info.module.css 와 같은 언어). 묶음 사이는 낮은 대비 1px 실선(--line-on-white).
+   공통 부품(.btn·.err)은 base.css */
 .root { min-width: 0; }
-.cz { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: var(--space-8); align-items: start; margin-top: var(--space-8); }
-.edit { display: grid; gap: var(--space-8); min-width: 0; }
-.set { display: grid; gap: var(--space-4); }
 
-/* 결과 줄 */
-.msg:empty { display: none; }
-.avatar { display: grid; flex: none; place-items: center; overflow: hidden; width: 88px; height: 88px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--brand-ink); font-size: var(--fs-title); font-weight: var(--fw-btn); }
-.avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* 묶음 — 왼쪽 구간 이름(20 / 800) 4열, 오른쪽 내용 8열. 묶음 사이 구분선 + 위아래 48 */
+.grp { display: grid; grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr)); column-gap: var(--grid-gap); align-items: start; }
+.grp + .grp { margin-top: var(--space-12); padding-top: var(--space-12); border-top: 1px solid var(--line-on-white); }
+.nm { grid-column: span 4; min-width: 0; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
+.rows { grid-column: span 8; min-width: 0; padding-top: var(--space-1); } /* 시안 .cz-body — 설명 첫 줄을 구간 이름 글줄에 맞춤 */
+.k { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
+.sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
 
-/* 미리보기 이미지 고르기 */
-.picks { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
-.pickOpt { display: flex; gap: var(--space-2); align-items: center; padding: var(--space-4); border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--gray-200); cursor: pointer; }
-.pickOpt:has(input:checked) { background: var(--primary-50); box-shadow: inset 0 0 0 1px var(--brand-line); }
+/* 미리보기 이미지 고르기 — 라디오 둘(시안 .cz-opts·.cz-opt) */
+.picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+.pickOpt { display: flex; gap: var(--space-3); align-items: center; min-height: 56px; padding: var(--space-2) var(--space-4); border: 1px solid var(--line-on-white); border-radius: var(--r-btn); font-weight: var(--fw-btn); cursor: pointer; }
+.pickOpt:has(input:checked) { border-color: var(--ink); background: var(--tint); }
 .pickOpt:has(input:disabled) { background: var(--gray-50); color: var(--gray-600); cursor: not-allowed; }
 .pickOpt:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
-.pickOpt input { flex: none; width: 20px; height: 20px; accent-color: var(--brand-line); }
-.pickHint { display: block; font-size: var(--fs-caption); color: var(--gray-600); }
+.pickOpt input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--brand-line); }
+.pickHint { display: block; font-size: var(--fs-small); font-weight: 400; color: var(--gray-600); }
 
-/* 공지 이미지 세 크기 */
-.sizes { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
-.sizes li { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); border-radius: var(--r-btn); box-shadow: inset 0 0 0 1px var(--gray-200); }
-.szThumb { display: grid; flex: none; place-items: center; width: 80px; height: 80px; }
-.szText { display: grid; flex: 1; min-width: 0; }
-.szText b { font-weight: var(--fw-btn); }
-.szBtns { flex: none; }
-.mini { position: relative; display: block; overflow: hidden; border-radius: var(--r-btn); background: var(--white); box-shadow: inset 0 0 0 1px var(--brand-line); }
-.mini b { position: absolute; display: block; }
-.mBg { left: 0; right: 0; top: 0; height: 40%; background: var(--primary-50); }
-.mAv { left: 50%; top: 30%; width: 22%; aspect-ratio: 1; transform: translateX(-50%); border-radius: var(--r-pill); background: var(--face-6); box-shadow: 0 0 0 2px var(--white); }
-.mL1 { left: 30%; right: 30%; top: 60%; height: 4px; border-radius: var(--r-pill); background: var(--gray-900); }
-.mL2 { left: 22%; right: 22%; top: 70%; height: 2px; border-radius: var(--r-pill); background: var(--gray-400); }
-.mFt { left: 34%; right: 34%; bottom: 8%; height: 2px; border-radius: var(--r-pill); background: var(--gray-400); }
+/* 결과 줄 — 늘 자리를 둔다(글자가 생겨도 아래가 밀리지 않게, 시안 .st-msg min-height 22) */
+.msg { min-height: 22px; margin: var(--space-2) 0 0; overflow-wrap: anywhere; }
 
-/* 미리보기 (링크 페이지 축소) */
-.side { position: sticky; top: var(--space-8); display: grid; gap: var(--space-4); min-width: 0; }
-.pvLabel { display: flex; justify-content: space-between; align-items: center; }
-.toggle { display: none; }
-.pvBody { display: grid; gap: var(--space-4); }
-.pvCard { --pv-x: 24px; --pv-y: 32px; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--pv-y) var(--pv-x); text-align: center; }
-.pvBg { align-self: stretch; overflow: hidden; height: 112px; margin: calc(var(--pv-y) * -1) calc(var(--pv-x) * -1) 0; border-radius: var(--r-card) var(--r-card) 0 0; background: var(--personal, var(--primary-50)); }
-.pvBg img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.pvAvatar { width: 72px; height: 72px; margin-top: -36px; font-size: var(--fs-card); box-shadow: 0 0 0 4px var(--white); }
-/* 테마 색이 있으면 띠 면과 사진 테두리가 그 색 — 공개 페이지(creator-profile.module.css .ringed)와 같은 모양 */
-.ringed .pvAvatar { box-shadow: 0 0 0 4px var(--personal), 0 0 0 8px var(--white); }
-.pvName { margin: 0; font-size: var(--fs-card); overflow-wrap: anywhere; }
-.pvIntro { margin: 0; color: var(--gray-600); overflow-wrap: anywhere; }
-.pvTag svg { margin-right: 4px; }
-.pvSym { width: 56px; height: 56px; border-radius: var(--r-btn); object-fit: cover; box-shadow: inset 0 0 0 1px var(--gray-200); }
-.pvThanks { margin: 0; font-weight: var(--fw-btn); color: var(--brand-ink); }
-.pvBtn { width: 100%; margin-top: var(--space-2); pointer-events: none; }
-.og { margin-top: var(--space-2); padding: 0; overflow: hidden; }
-.ogImg { display: grid; place-items: center; aspect-ratio: 1200 / 630; background: var(--primary-50); }
-.ogAvatar { width: 96px; height: 96px; box-shadow: 0 0 0 6px var(--white); }
-.ogSym { width: 96px; height: 96px; border-radius: var(--r-btn); object-fit: cover; box-shadow: 0 0 0 6px var(--white); }
-.ogMeta { padding: var(--space-4); box-shadow: inset 0 1px 0 var(--gray-200); }
-.ogMeta p { margin: 0; }
-.ogTitle { font-weight: var(--fw-btn); }
+/* 링크 공유 카드 — 라디오 바로 아래, 폭 최대 360(시안 .cz-cap·.cz-share) */
+.share { margin-top: var(--space-4); }
+.cap { margin: 0 0 var(--space-2); color: var(--sub); font-size: var(--fs-small); line-height: 1.5; }
+.shCard { max-width: 360px; overflow: hidden; border: 1px solid var(--line-on-white); border-radius: var(--r-btn); background: var(--white); }
+.shImg { display: grid; place-items: center; height: 120px; background: var(--primary-50); }
+.shAvatar { display: grid; place-items: center; overflow: hidden; width: 72px; height: 72px; border-radius: var(--r-pill); background: var(--white); box-shadow: 0 0 0 8px var(--white); color: var(--brand-ink); font-size: var(--fs-card); font-weight: var(--fw-btn); }
+.shAvatar img, .shSym { display: block; width: 72px; height: 72px; object-fit: cover; }
+.shSym { border-radius: var(--r-btn); box-shadow: 0 0 0 8px var(--white); }
+.shTitle { margin: 0; padding: var(--space-3) var(--space-4); font-size: var(--fs-small); font-weight: var(--fw-btn); overflow-wrap: anywhere; }
 
-/* 두 단 기준은 화면 폭이 아니라 본문 영역 폭(design-rules 00절 「편집 + 미리보기 화면」) — 틀(.page-pane)이 container 다.
-   편집 칸이 648 이상(720 안팎) 나와야 두 단: 648 + 간격 32 + 미리보기 400 = 1080. 1440 화면 + 펼친 사이드바의 본문 영역(약 1104, 편집 칸 672)은 두 단,
-   1024 화면(본문 영역 약 690)은 위아래.
-   그보다 좁으면 위아래, 미리보기가 편집 칸 위에 붙어 따라오고 접힌다 */
-@container (max-width: 1079.98px) {
-  .cz { grid-template-columns: minmax(0, 1fr); }
-  .side { order: -1; top: 0; z-index: 5; max-height: 62vh; overflow: auto; padding: var(--space-2) 0 var(--space-4); background: var(--white); box-shadow: inset 0 -1px 0 var(--gray-200); }
-  .pvCard { --pv-x: 16px; --pv-y: 16px; }
-  .toggle { display: inline-flex; }
-  .closed .pvBody { display: none; }
-}
+/* 공지 이미지 받기 — 못 받을 때 안내 한 줄(시안 .cz-lock), 「설정」은 글 속 링크 · 누를 높이 44 */
+.lock { margin: var(--space-3) 0 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.6; }
+.lock a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; }
+
+/* 세 크기 줄 — 썸네일 · 이름과 크기 · 버튼 줄 오른쪽 끝(시안 .cz-sizes) */
+.sizes { margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.sizes li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); min-height: 72px; padding: var(--space-2) 0; }
+.sizes li + li { border-top: 1px solid var(--line-on-white); }
+.szThumb { display: grid; flex: none; place-items: center; width: 48px; height: 48px; }
+.mini { display: block; border: 1px solid var(--line-on-white); border-radius: var(--r-mark); background: var(--primary-50); }
+.szText { display: flex; flex: 1 1 160px; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.szBtns { display: flex; flex: none; gap: var(--space-2); }
+
+/* 휴대폰 — 한 기둥, 라디오 한 줄에 하나, 공유 카드 그림 72, 버튼은 줄 아래 꽉 차게 */
 @media (max-width: 767px) {
-  .side { top: var(--topbar-h); }
-  .picks { grid-template-columns: 1fr; }
-  .sizes li { flex-wrap: wrap; }
+  .grp { display: block; }
+  .grp + .grp { margin-top: var(--space-8); padding-top: var(--space-8); }
+  .rows { margin-top: var(--space-4); }
+  .picks { grid-template-columns: minmax(0, 1fr); }
+  .shImg { height: 72px; }
+  .shAvatar, .shAvatar img, .shSym { width: 48px; height: 48px; }
+  .shAvatar, .shSym { box-shadow: 0 0 0 4px var(--white); }
   .szBtns { width: 100%; }
   .szBtns > :global(.btn) { flex: 1; }
 }

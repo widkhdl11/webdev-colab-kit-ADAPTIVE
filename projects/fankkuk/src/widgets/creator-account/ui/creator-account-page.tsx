@@ -24,9 +24,10 @@ import { PhoneChangePanel } from "@/features/phone-change/ui/phone-change-panel"
 import { formatDate } from "@/shared/lib/format/datetime";
 import s from "./creator-account.module.css";
 
-// 크리에이터 계정 설정(시안 docs/design/mockups/site/v21-addendum3/cre-account-settings.html, 입력형 720 — design-rules 00절 「본문 틀」).
-// 2026-10-16 사용자 「만들어봐」 — 상세 설정 아래 접힌 「계정」 칸(본인 확인·알림·계정 보안)을 이 화면으로 옮겼다. 모양은 카드 언어(팬 계정 설정은 10-22 시범에서 4+8 묶음으로 바뀌었다 — 이 화면은 4파트 확장 때 맞춘다).
-// 보안(비밀번호·휴대폰 번호·채널 본인 확인) · 개인정보(회원 탈퇴) · 알림 세 카드. 지금 있는 기능만 옮겨 담았다:
+// 크리에이터 계정 설정(design-rules 27절 「4파트 나머지 다섯 화면」, 2026-10-22 카드 d115 · 시안 docs/design/mockups/site/pilot-2026-10-22/creator-account.html).
+// 2026-10-16 사용자 「만들어봐」 — 상세 설정 아래 접힌 「계정」 칸(본인 확인·알림·계정 보안)을 이 화면으로 옮겼다.
+// 배치는 계정 설정(팬)과 같다: 카드 없이 880 기둥 안 12열 4 + 8 묶음 둘 — 보안(비밀번호·휴대폰 번호·채널 본인 확인) → 알림
+// → 「상세 설정」 안내 줄 → 구분선 → 회원 탈퇴(맨 끝). 탈퇴 하나뿐이던 「개인정보」 카드는 없어졌다. 지금 있는 기능만 옮겨 담았다:
 // - 비밀번호 변경(session-login INV-L12)·번호 바꾸기(카카오 재인증, signup INV-U12)·채널 본인 확인(creator-verification)은 버튼을 눌러야 그 줄 아래에 칸이 펼쳐진다.
 // - 시안의 이메일·이름 바꾸기, 알림 종류별 스위치 넷은 크리에이터에게 지금 없는 기능이라 두지 않는다 — 알림은 카카오·이메일 두 칸(my-account INV-A11),
 //   승인 요청처럼 꼭 가는 알림은 끄는 스위치 없이 「끌 수 없는 알림」으로 알린다(notifications INV-N6). 스위치는 누르는 즉시 저장하고, 실패하면 되돌린다.
@@ -35,6 +36,7 @@ import s from "./creator-account.module.css";
 type Open = "password" | "phone" | "verify" | "leave" | null;
 type Msg = { ok: boolean; text: string } | null;
 
+// 줄 전체가 누르는 칸(높이 64) — 이름·설명·막대가 한 스위치 버튼 안에 있다(계정 설정(팬) my-info-page 의 Switch 와 같은 모양)
 function Switch({
   id,
   title,
@@ -53,13 +55,9 @@ function Switch({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className={s.swRow}>
-      <div className={s.swT} id={`${id}-l`}>
-        <b>{title}</b>
-        <span>{desc}</span>
-      </div>
+    <div className={s.item}>
       <button
-        className="sw"
+        className={s.swBtn}
         type="button"
         role="switch"
         aria-checked={on}
@@ -70,7 +68,11 @@ function Switch({
           if (!busy) onChange(!on);
         }}
       >
-        <span />
+        <span className={s.txt} id={`${id}-l`}>
+          <span className={s.k}>{title}</span>
+          <span className={s.sub}>{desc}</span>
+        </span>
+        <span className={s.trk} aria-hidden="true" />
       </button>
     </div>
   );
@@ -134,7 +136,7 @@ export function CreatorAccountPage({
   };
 
   return (
-    <div className={s.col}>
+    <div className={s.wrap}>
       <header className="page-head">
         <div className="ph-row">
           <h1 className="ph-title">계정 설정</h1>
@@ -142,166 +144,157 @@ export function CreatorAccountPage({
         <p className="ph-desc">로그인과 내 정보, 알림을 관리해요.</p>
       </header>
 
-      <section className={`card ${s.setCard}`} aria-labelledby={f("sec1")}>
-        <h2 className={s.secT} id={f("sec1")}>
+      <section className={s.grp} aria-labelledby={f("sec1")} data-ca-group="security">
+        <h2 className={s.nm} id={f("sec1")}>
           보안
         </h2>
-        <div className={s.reveal}>
-          <div className={s.revealHead}>
-            <p className={s.kvMain}>
-              <span className={s.meta}>비밀번호</span>
-            </p>
-            <button
-              className="btn btn--line btn--sm"
-              type="button"
-              aria-expanded={open === "password"}
-              aria-controls={f("pw-panel")}
-              onClick={() => toggle("password")}
-            >
-              바꾸기
-            </button>
-          </div>
-          {open === "password" && (
-            <div className={s.panel}>
-              <PasswordChangePanel
-                id={f("pw-panel")}
-                onLoginExpired={toLogin}
-              />
+        <div className={s.rows}>
+          <div className={s.item}>
+            <div className={s.row}>
+              <p className={s.txt}>
+                <span className={s.k}>비밀번호</span>
+              </p>
+              <button
+                className="btn btn--line btn--sm"
+                type="button"
+                aria-expanded={open === "password"}
+                aria-controls={f("pw-panel")}
+                onClick={() => toggle("password")}
+              >
+                바꾸기
+              </button>
             </div>
-          )}
-        </div>
-        <div className={s.reveal}>
-          <div className={s.revealHead}>
-            <p className={s.kvMain}>
-              <span className={s.meta}>휴대폰 번호</span>
-              <b>{phoneMasked ?? "등록된 번호가 없어요"}</b>
-            </p>
-            <button
-              className="btn btn--line btn--sm"
-              type="button"
-              aria-expanded={open === "phone"}
-              aria-controls={f("tel-panel")}
-              onClick={() => toggle("phone")}
-            >
-              바꾸기
-            </button>
+            {open === "password" && (
+              <div className={s.panel}>
+                <PasswordChangePanel id={f("pw-panel")} onLoginExpired={toLogin} />
+              </div>
+            )}
           </div>
-          {open === "phone" && (
-            <div className={s.panel}>
-              <PhoneChangePanel
-                id={f("tel-panel")}
-                onLoginExpired={toLogin}
-                onChanged={() => router.refresh()}
-              />
+          <div className={s.item}>
+            <div className={s.row}>
+              <p className={s.txt}>
+                <span className={s.k}>휴대폰 번호</span>
+                <span className={s.v}>{phoneMasked ?? "등록된 번호가 없어요"}</span>
+              </p>
+              <button
+                className="btn btn--line btn--sm"
+                type="button"
+                aria-expanded={open === "phone"}
+                aria-controls={f("tel-panel")}
+                onClick={() => toggle("phone")}
+              >
+                바꾸기
+              </button>
             </div>
-          )}
-        </div>
-        <div className={s.reveal} id="verify">
-          <div className={s.revealHead}>
-            <p className={s.kvMain}>
-              <span className={s.meta}>채널 본인 확인</span>
-              <b>{verifyMeta(verification.state)}</b>
-            </p>
-            <button
-              className="btn btn--line btn--sm"
-              type="button"
-              aria-expanded={open === "verify"}
-              aria-controls={f("verify-panel")}
-              onClick={() => toggle("verify")}
-            >
-              {verification.state.verified ? "다시 확인" : "확인하기"}
-            </button>
+            {open === "phone" && (
+              <div className={s.panel}>
+                <PhoneChangePanel id={f("tel-panel")} onLoginExpired={toLogin} onChanged={() => router.refresh()} />
+              </div>
+            )}
           </div>
-          {open === "verify" && (
-            <div className={s.panel} id={f("verify-panel")}>
-              <VerificationPanel
-                state={verification.state}
-                rows={verification.rows}
-                apiPlatforms={verification.apiPlatforms}
-              />
+          <div className={s.item} id="verify">
+            <div className={s.row}>
+              <p className={s.txt}>
+                <span className={s.k}>채널 본인 확인</span>
+                <span className={s.v}>{verifyMeta(verification.state)}</span>
+              </p>
+              <button
+                className="btn btn--line btn--sm"
+                type="button"
+                aria-expanded={open === "verify"}
+                aria-controls={f("verify-panel")}
+                onClick={() => toggle("verify")}
+              >
+                {verification.state.verified ? "다시 확인" : "확인하기"}
+              </button>
             </div>
-          )}
+            {open === "verify" && (
+              <div className={s.panel} id={f("verify-panel")}>
+                <VerificationPanel state={verification.state} rows={verification.rows} apiPlatforms={verification.apiPlatforms} />
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      <section className={`card ${s.setCard}`} aria-labelledby={f("sec2")}>
-        <h2 className={s.secT} id={f("sec2")}>
-          개인정보
-        </h2>
-        <div className={s.reveal}>
-          <div className={s.revealHead}>
-            <p className={s.kvMain}>
-              <span className={s.meta}>회원 탈퇴</span>
-              <b>계정과 프로필을 삭제해요</b>
-            </p>
-            <button
-              className={`btn btn--sm ${s.danger}`}
-              type="button"
-              aria-expanded={open === "leave"}
-              aria-controls={f("leave-panel")}
-              onClick={() => toggle("leave")}
-            >
-              탈퇴하기
-            </button>
-          </div>
-          {open === "leave" && (
-            <div className={s.panel} id={f("leave-panel")}>
-              <Link className="btn btn--line btn--sm" href="/support">
-                탈퇴 문의
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className={`card ${s.setCard}`} aria-labelledby={f("sec3")}>
-        <h2 className={s.secT} id={f("sec3")}>
+      <section className={s.grp} aria-labelledby={f("sec2")} data-ca-group="notify">
+        <h2 className={s.nm} id={f("sec2")}>
           알림
         </h2>
-        {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7). 스위치보다 먼저 읽히게 위에 둔다 */}
-        <MustDeliverNotice
-          audience="creator"
-          id={f("must")}
-          className={`t-meta ${s.must}`}
-          titleClassName={s.mustT}
-          extra={`승인 요청은 놓치면 ${APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려돼요.`}
-        />
-        {/* 스위치 이름은 팬 계정 설정과 같다(design-rules 12절 「계정 설정」) */}
-        <Switch
-          id={f("n1")}
-          title="카카오 알림톡으로 받기"
-          desc="그 밖의 소식을 카카오톡으로 받아요."
-          on={alarm.kakao}
-          busy={saving}
-          describedBy={f("must")}
-          onChange={(v) => void toggleNotify("kakao", v)}
-        />
-        <Switch
-          id={f("n2")}
-          title="이메일로 받기"
-          desc="같은 소식을 확인된 이메일로 받아요."
-          on={alarm.email}
-          busy={saving}
-          describedBy={f("must")}
-          onChange={(v) => void toggleNotify("email", v)}
-        />
+        <div className={s.rows}>
+          {/* 스위치 이름은 팬 계정 설정과 같다(design-rules 12절 「계정 설정」) */}
+          <Switch
+            id={f("n1")}
+            title="카카오 알림톡으로 받기"
+            desc="그 밖의 소식을 카카오톡으로 받아요."
+            on={alarm.kakao}
+            busy={saving}
+            describedBy={f("must")}
+            onChange={(v) => void toggleNotify("kakao", v)}
+          />
+          <Switch
+            id={f("n2")}
+            title="이메일로 받기"
+            desc="같은 소식을 확인된 이메일로 받아요."
+            on={alarm.email}
+            busy={saving}
+            describedBy={f("must")}
+            onChange={(v) => void toggleNotify("email", v)}
+          />
+          {/* 꼭 가는 알림(승인 요청·돌려보내는 선물 등)은 두 칸을 꺼도 간다(notifications INV-N6 표, 2026-10-12 문제집 D7) — 접지 않고 늘 보인다(my-account INV-A11) */}
+          <MustDeliverNotice
+            audience="creator"
+            id={f("must")}
+            className={s.must}
+            titleClassName={s.mustT}
+            bodyClassName={s.mustL}
+            extra={`승인 요청은 놓치면 ${APPROVAL_DEADLINE_DAYS}일 뒤 자동으로 반려돼요.`}
+          />
+          {/* 저장 결과 — 바뀐 스위치 가까이, 알림 묶음 끝. 실패는 alert, 성공은 status 두 줄(팬 계정 설정과 같다).
+              늘 두고 글자만 바꾼다(빈 칸은 공통 .err:empty·.okmsg:empty) */}
+          <div className={s.msgs} data-ca-msg="">
+            <p className={`err ${s.msg}`} role="alert">
+              {msg && !msg.ok ? msg.text : ""}
+            </p>
+            <p className={`okmsg ${s.msg}`} role="status">
+              {msg?.ok ? msg.text : ""}
+            </p>
+          </div>
+        </div>
       </section>
 
-      {/* 저장 결과 — 팬 계정 설정과 같이 실패는 alert, 성공은 status 두 줄. 늘 두고 글자만 바꾼다(빈 칸은 공통 .err:empty·.okmsg:empty) */}
-      <p className={`err ${s.msg}`} role="alert">
-        {msg && !msg.ok ? msg.text : ""}
-      </p>
-      <p className={`okmsg ${s.msg}`} role="status">
-        {msg?.ok ? msg.text : ""}
-      </p>
-
-      <p className={s.note} role="note">
+      <p className={s.more} role="note">
         받는 주소 · 차단한 팬 · 받기 설정은{" "}
-        <Link className={s.inlineLink} href={`${CREATOR_SETTINGS}#more`}>
+        <Link className={s.moreLink} href={`${CREATOR_SETTINGS}#more`}>
           상세 설정
         </Link>
         에 있어요.
       </p>
+
+      <div className={s.quit} data-ca-group="leave">
+        <div className={s.row}>
+          <p className={s.txt}>
+            <span className={s.k}>회원 탈퇴</span>
+            <span className={s.sub}>계정과 프로필을 삭제해요</span>
+          </p>
+          <button
+            className={`btn btn--sm ${s.danger}`}
+            type="button"
+            aria-expanded={open === "leave"}
+            aria-controls={f("leave-panel")}
+            onClick={() => toggle("leave")}
+          >
+            탈퇴하기
+          </button>
+        </div>
+        {open === "leave" && (
+          <div className={s.panel} id={f("leave-panel")}>
+            <Link className="btn btn--line btn--sm" href="/support">
+              탈퇴 문의
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

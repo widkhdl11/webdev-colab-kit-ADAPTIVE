@@ -15,9 +15,9 @@ import { SiteHeader } from "@/widgets/site-header/ui/site-header";
 
 export const dynamic = "force-dynamic";
 
-// 내 팬꾹 꾸미기 (디자인 기준 10절, 스펙 creator-link). 로그인한 크리에이터 본인 것만 읽는다 —
-// 공개 이름·소개·팬을 부르는 이름·찾기 노출(my_creator_settings), 링크용 아이디·프로필 사진(my_creator_link),
-// 배경사진·심볼·미리보기 고르기(my_creator_look), 본인 확인 여부(my_creator_verification_state), 크리에이터 ID(공지 이미지 주소).
+// 내 팬꾹 꾸미기 (design-rules 27절, 스펙 creator-link). 틀은 목록형 880(4 + 8 묶음). 로그인한 크리에이터 본인 것만 읽는다 —
+// 공개 이름(my_creator_settings — 공유 카드 제목), 링크용 아이디·프로필 사진(my_creator_link),
+// 심볼·미리보기 고르기(my_creator_look), 본인 확인 여부(my_creator_verification_state), 크리에이터 ID(공지 이미지 주소).
 export default async function Page() {
   const { supabase, viewer } = await loadSession();
   if (viewer?.role === "fan") redirect(FAN_HOME);
@@ -35,17 +35,14 @@ export default async function Page() {
   return (
     <>
       <SiteHeader {...header} />
-      <MyShell width="broad">
+      <MyShell width="list">
         <CreatorCustomizePage
           creatorId={creatorId}
           verified={state.verified}
           handle={link.handle}
           name={settings.publicName}
-          intro={settings.intro}
-          fanName={settings.fanName}
           photoPath={link.photoPath}
           look={look}
-          colors={settings.colors}
           photoBase={readPublicStorageBase()}
           siteOrigin={requestOrigin(await headers())}
         />

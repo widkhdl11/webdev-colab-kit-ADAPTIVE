@@ -1,7 +1,10 @@
-/* 이메일 확인 — 시안 docs/design/mockups/site/v18/email-confirm.html · v18-pub.css(.col 720 · .ok). 머리·판·알림은 전역 클래스.
-   알림 칸(.ok·.err)은 늘 두고 글자만 바꾼다 — 빈 칸이 간격·판을 차지하지 않는 것은 공통 .err:empty 가 정한다 */
-.narrow { max-width: 720px; margin-inline: auto; }
-.ok { display: flex; align-items: center; gap: var(--space-4); }
+/* 이메일 확인 — 시안 docs/design/mockups/site/pilot-2026-10-22/email-confirm.html · pilot.css(.ec-*). 상자 없이 제목 아래 문장(폭 560)과 버튼.
+   폭은 틀(MyShell list 880)이 정하고 왼쪽 정렬 — 다른 설정 화면과 같은 시작선.
+   알림 칸(.ok·.err)은 늘 두고 글자만 바꾼다 — 빈 칸이 간격을 차지하지 않는 것은 공통 .err:empty 가 정하고, 빈 .ok 는 높이가 0 이다 */
+.wrap { min-width: 0; }
+.body { max-width: 560px; margin-top: var(--space-6); }
+.text { margin: 0; color: var(--ink); font-size: var(--fs-body); line-height: 1.6; overflow-wrap: anywhere; } /* 이메일 주소(최대 254자)가 그대로 들어간다 */
+.ok { display: flex; align-items: flex-start; gap: var(--space-2); }
 .ok svg { flex: none; color: var(--brand-ink); }
-.msg { margin-top: var(--space-4); }
+.msg { margin-top: var(--space-3); }
 .actions { margin-top: var(--space-6); }

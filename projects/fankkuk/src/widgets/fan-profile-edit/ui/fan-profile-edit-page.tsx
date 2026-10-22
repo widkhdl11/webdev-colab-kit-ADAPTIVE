@@ -13,7 +13,8 @@ import { photoPickProblem } from "@/shared/lib/image/photo-pick";
 import { charCount } from "@/shared/lib/validation/char-count";
 import s from "./fan-profile-edit.module.css";
 
-// 팬 프로필 수정 (design-rules 12절, 시안 docs/design/mockups/site/v21-addendum3/fan-profile-edit.html, 입력형 720 — 00절 「본문 틀」).
+// 팬 프로필 수정 (design-rules 27절 「4파트 나머지 다섯 화면」, 카드 d115 · 시안 docs/design/mockups/site/pilot-2026-10-22/me-profile.html, 값은 pilot.css .me-*·.pf-*).
+// 계정 설정(팬)과 같은 880 안 12열 4 + 8 묶음 둘 — 「사진」(즉시 저장) → 「소개」(닉네임·자기소개) → 저장 줄 [취소][저장하기]. 카드 없음.
 // 스펙 my-account INV-A12~A14:
 // - 사진·배경 사진은 고르는 즉시 서버로 보낸다(/api/me/profile/image/…). 서버가 열어 보고 사진 정보를 지운 뒤 다시 그린다 — 화면은 보내기만 한다.
 // - 자기소개·닉네임은 「저장하기」로 /api/me/profile 에 한 번에 보낸다 — 한 처리라 둘 다 되거나 둘 다 안 된다(INV-A12).
@@ -95,50 +96,76 @@ function PhotoField({
 
   const bad = msg !== null && !msg.ok;
 
-  return (
-    <section className={s.sec} aria-labelledby={`${id}-t`}>
-      <h2 className="label" id={`${id}-t`}>
-        {title}
-      </h2>
-      <div className={kind === "photo" ? s.photo : s.photoWide}>
+  // 버튼 묶음 — 프로필 사진은 줄 오른쪽, 배경 사진은 이름 줄 오른쪽(시안 pilot .me-act)
+  const actions = (
+    <div className={s.act}>
+      {/* 이름 = 칸 이름 + 버튼 글자(「프로필 사진 사진 올리기」) — 두 파일 칸의 이름이 같지 않게 */}
+      <input
+        className={`sr-only ${s.file}`}
+        id={`${id}-f`}
+        ref={fileRef}
+        type="file"
+        accept={PHOTO_ACCEPT}
+        disabled={busy}
+        aria-labelledby={`${id}-t ${id}-l`}
+        aria-describedby={`${id}-h ${id}-e ${id}-m`}
+        aria-invalid={bad ? true : undefined}
+        onChange={(e) => void picked(e.currentTarget.files?.[0])}
+      />
+      <label className={`btn btn--line btn--sm ${s.pick}`} id={`${id}-l`} htmlFor={`${id}-f`} aria-disabled={busy}>
+        {busy ? "저장하는 중…" : hasImage ? "사진 바꾸기" : "사진 올리기"}
+      </label>
+      {hasImage ? (
+        <button className={`btn btn--sm ${s.danger}`} type="button" aria-disabled={busy} onClick={() => void removeNow()}>
+          지우기
+        </button>
+      ) : null}
+    </div>
+  );
+  const name = (
+    <span className={s.k} id={`${id}-t`}>
+      {title}
+    </span>
+  );
+  const helpLine = (
+    <p className={s.sub} id={`${id}-h`}>
+      {help}
+    </p>
+  );
+  // 알림 칸은 늘 두고 글자만 바꾼다 — 오류는 alert, 끝남은 status
+  const notes = (
+    <>
+      <p className={`${s.msg} ${s.bad}`} role="alert" id={`${id}-e`}>
+        {bad ? msg.text : ""}
+      </p>
+      <p className={s.msg} role="status" id={`${id}-m`}>
+        {msg?.ok ? msg.text : ""}
+      </p>
+    </>
+  );
+
+  return kind === "photo" ? (
+    <div className={s.item} data-pf-row={kind}>
+      <div className={`${s.row} ${s.photoRow}`}>
         {view}
-        <div>
-          <div className={s.btns}>
-            {/* 이름 = 칸 제목 + 버튼 글자(「프로필 사진 사진 올리기」) — 두 파일 칸의 이름이 같지 않게 */}
-            <input
-              className={`sr-only ${s.file}`}
-              id={`${id}-f`}
-              ref={fileRef}
-              type="file"
-              accept={PHOTO_ACCEPT}
-              disabled={busy}
-              aria-labelledby={`${id}-t ${id}-l`}
-              aria-describedby={`${id}-h ${id}-e ${id}-m`}
-              aria-invalid={bad ? true : undefined}
-              onChange={(e) => void picked(e.currentTarget.files?.[0])}
-            />
-            <label className={`btn btn--line btn--sm ${s.pick}`} id={`${id}-l`} htmlFor={`${id}-f`} aria-disabled={busy}>
-              {busy ? "저장하는 중…" : hasImage ? "사진 바꾸기" : "사진 올리기"}
-            </label>
-            {hasImage ? (
-              <button className={`btn btn--sm ${s.danger}`} type="button" aria-disabled={busy} onClick={() => void removeNow()}>
-                지우기
-              </button>
-            ) : null}
-          </div>
-          <p className={s.help} id={`${id}-h`}>
-            {help}
-          </p>
-          {/* 알림 칸은 늘 두고 글자만 바꾼다 — 오류는 alert, 끝남은 status */}
-          <p className={`${s.msg} ${s.bad}`} role="alert" id={`${id}-e`}>
-            {bad ? msg.text : ""}
-          </p>
-          <p className={s.msg} role="status" id={`${id}-m`}>
-            {msg?.ok ? msg.text : ""}
-          </p>
+        <div className={s.txt}>
+          {name}
+          {helpLine}
         </div>
+        {actions}
       </div>
-    </section>
+      {notes}
+    </div>
+  ) : (
+    <div className={`${s.item} ${s.colRow}`} data-pf-row={kind}>
+      <div className={s.lab}>
+        {name}
+        {actions}
+      </div>
+      {view}
+      {helpLine}
+      {notes}
+    </div>
   );
 }
 
@@ -197,115 +224,135 @@ export function FanProfileEditPage(p: FanProfileEditProps) {
   };
 
   return (
-    <div className={s.col}>
+    <div className={s.wrap}>
       <header className="page-head">
-        <h1 className="ph-title">프로필 수정</h1>
+        <h1 className="ph-title" id={`${id}-h1`}>
+          프로필 수정
+        </h1>
         <p className="ph-desc">사진과 소개를 바꾸고 닉네임도 여기서 고쳐요.</p>
       </header>
 
-      <PhotoField
-        kind="photo"
-        title="프로필 사진"
-        view={
-          <span className={s.avatar} aria-hidden="true">
-            {photoUrl ? <img src={photoUrl} alt="" width={512} height={512} /> : initial}
-          </span>
-        }
-        hasImage={photoPath !== null}
-        help="사진이 없으면 닉네임 첫 글자가 보여요. JPG·PNG·WebP, 10MB까지."
-        onSaved={setPhotoPath}
-        onLogin={toLogin}
-      />
-      <PhotoField
-        kind="background"
-        title="배경 사진"
-        view={
-          <span className={s.banner} aria-hidden="true">
-            {bgUrl ? <img src={bgUrl} alt="" width={1280} height={427} /> : <span className={s.bannerEmpty}>배경 사진이 없어요</span>}
-          </span>
-        }
-        hasImage={bgPath !== null}
-        help="가로로 긴 사진이 잘 어울려요. 없으면 기본 하늘색 띠가 나와요."
-        onSaved={setBgPath}
-        onLogin={toLogin}
-      />
-
-      <form className={s.form} onSubmit={onSubmit} noValidate>
-        <section className={s.sec}>
-          <div className={s.fHead}>
-            <label className="label" htmlFor={`${id}-nick`}>
-              닉네임
-            </label>
-            <span className={s.count} aria-hidden="true">
-              {charCount(nickname.trim())}/{NICKNAME_MAX}
-            </span>
-          </div>
-          <input
-            className="field"
-            id={`${id}-nick`}
-            type="text"
-            value={nickname}
-            maxLength={NICKNAME_MAX}
-            autoComplete="nickname"
-            aria-invalid={nickErr ? true : undefined}
-            aria-describedby={nickErr ? `${id}-nick-h ${id}-nick-e` : `${id}-nick-h`}
-            onChange={(e) => {
-              setNickname(e.currentTarget.value);
-              setNickErr(null);
-            }}
+      <section className={s.grp} aria-labelledby={`${id}-g1`} data-pf-group="photo">
+        <h2 className={s.nm} id={`${id}-g1`}>
+          사진
+        </h2>
+        <div className={s.rows}>
+          <PhotoField
+            kind="photo"
+            title="프로필 사진"
+            view={
+              <span className={s.avatar} aria-hidden="true">
+                {photoUrl ? <img src={photoUrl} alt="" width={512} height={512} /> : initial}
+              </span>
+            }
+            hasImage={photoPath !== null}
+            help="사진이 없으면 닉네임 첫 글자가 보여요. JPG·PNG·WebP, 10MB까지."
+            onSaved={setPhotoPath}
+            onLogin={toLogin}
           />
-          {nickErr ? (
-            <p className={`${s.help} ${s.bad}`} id={`${id}-nick-e`} role="alert">
-              {nickErr}
-            </p>
-          ) : null}
-          <p className={s.help} id={`${id}-nick-h`}>
-            1~{NICKNAME_MAX}자
-          </p>
-        </section>
-
-        <section className={s.sec}>
-          <div className={s.fHead}>
-            <label className="label" htmlFor={`${id}-bio`}>
-              자기소개
-            </label>
-            <span className={s.count} aria-hidden="true">
-              {charCount(intro.trim())}/{FAN_INTRO_MAX}
-            </span>
-          </div>
-          <textarea
-            className={`field ${s.bio}`}
-            id={`${id}-bio`}
-            rows={4}
-            value={intro}
-            aria-invalid={introErr ? true : undefined}
-            aria-describedby={introErr ? `${id}-bio-h ${id}-bio-e` : `${id}-bio-h`}
-            onChange={(e) => {
-              // 한 줄 칸 — 붙여 넣은 줄바꿈은 띄어쓰기로
-              setIntro(e.currentTarget.value.replace(/[\r\n\u2028\u2029]+/g, " "));
-              setIntroErr(null);
-            }}
+          <PhotoField
+            kind="background"
+            title="배경 사진"
+            view={
+              <span className={s.banner} aria-hidden="true">
+                {bgUrl ? <img src={bgUrl} alt="" width={1280} height={427} /> : <span className={s.bannerEmpty}>배경 사진이 없어요</span>}
+              </span>
+            }
+            hasImage={bgPath !== null}
+            help="가로로 긴 사진이 잘 어울려요. 없으면 기본 하늘색 띠가 나와요."
+            onSaved={setBgPath}
+            onLogin={toLogin}
           />
-          {introErr ? (
-            <p className={`${s.help} ${s.bad}`} id={`${id}-bio-e`} role="alert">
-              {introErr}
-            </p>
-          ) : null}
-          <p className={s.help} id={`${id}-bio-h`}>
-            짧게 나를 소개해 주세요. {FAN_INTRO_MAX}자까지 쓸 수 있어요.
-          </p>
-        </section>
+        </div>
+      </section>
 
+      {/* 소개 두 칸은 아래 저장 줄의 폼에 form 속성으로 붙는다 — 묶음(section)끼리 형제로 두어 구분선·간격을 계정 설정과 같게 */}
+      <section className={s.grp} aria-labelledby={`${id}-g2`} data-pf-group="intro">
+        <h2 className={s.nm} id={`${id}-g2`}>
+          소개
+        </h2>
+        <div className={s.rows}>
+          <div className={`${s.item} ${s.colRow}`}>
+            <div className={s.lab}>
+              <label className={s.k} htmlFor={`${id}-nick`}>
+                닉네임
+              </label>
+              <span className={s.count} aria-hidden="true">
+                {charCount(nickname.trim())}/{NICKNAME_MAX}
+              </span>
+            </div>
+            <input
+              className="field"
+              id={`${id}-nick`}
+              form={`${id}-form`}
+              type="text"
+              value={nickname}
+              maxLength={NICKNAME_MAX}
+              autoComplete="nickname"
+              aria-invalid={nickErr ? true : undefined}
+              aria-describedby={nickErr ? `${id}-nick-h ${id}-nick-e` : `${id}-nick-h`}
+              onChange={(e) => {
+                setNickname(e.currentTarget.value);
+                setNickErr(null);
+              }}
+            />
+            {nickErr ? (
+              <p className={`${s.sub} ${s.bad}`} id={`${id}-nick-e`} role="alert">
+                {nickErr}
+              </p>
+            ) : null}
+            <p className={s.sub} id={`${id}-nick-h`}>
+              1~{NICKNAME_MAX}자
+            </p>
+          </div>
+
+          <div className={`${s.item} ${s.colRow}`}>
+            <div className={s.lab}>
+              <label className={s.k} htmlFor={`${id}-bio`}>
+                자기소개
+              </label>
+              <span className={s.count} aria-hidden="true">
+                {charCount(intro.trim())}/{FAN_INTRO_MAX}
+              </span>
+            </div>
+            <textarea
+              className={`field ${s.bio}`}
+              id={`${id}-bio`}
+              form={`${id}-form`}
+              rows={4}
+              value={intro}
+              aria-invalid={introErr ? true : undefined}
+              aria-describedby={introErr ? `${id}-bio-h ${id}-bio-e` : `${id}-bio-h`}
+              onChange={(e) => {
+                // 한 줄 칸 — 붙여 넣은 줄바꿈은 띄어쓰기로
+                setIntro(e.currentTarget.value.replace(/[\r\n\u2028\u2029]+/g, " "));
+                setIntroErr(null);
+              }}
+            />
+            {introErr ? (
+              <p className={`${s.sub} ${s.bad}`} id={`${id}-bio-e`} role="alert">
+                {introErr}
+              </p>
+            ) : null}
+            <p className={s.sub} id={`${id}-bio-h`}>
+              짧게 나를 소개해 주세요. {FAN_INTRO_MAX}자까지 쓸 수 있어요.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 저장 줄 — 저장하기가 보내는 소개 묶음 바로 아래(사진은 고르는 즉시 저장). 767 이하에서는 화면 아래에 붙는다 */}
+      <form className={s.end} id={`${id}-form`} onSubmit={onSubmit} aria-labelledby={`${id}-h1`} noValidate data-pf-save="">
         <p className={`${s.msg} ${notice && !notice.ok ? s.bad : ""}`} role="status">
           {notice?.text}
         </p>
-        <div className={s.actions}>
-          <button className="btn" type="submit" aria-disabled={saving} aria-busy={saving}>
-            {saving ? "저장하는 중…" : "저장하기"}
-          </button>
+        <div className={s.btns}>
           <Link className="btn btn--line" href="/home">
             취소
           </Link>
+          <button className="btn" type="submit" aria-disabled={saving} aria-busy={saving}>
+            {saving ? "저장하는 중…" : "저장하기"}
+          </button>
         </div>
       </form>
     </div>

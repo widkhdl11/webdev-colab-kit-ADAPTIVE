@@ -1,8 +1,6 @@
 import { act } from "react";
-import type { ThemeColor } from "@/entities/creator/model/creator-color";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { NO_COLORS } from "@/entities/creator/model/creator-color";
 import { NO_LOOK } from "@/entities/creator/model/link-images";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
@@ -37,11 +35,8 @@ const base: CreatorCustomizeProps = {
   verified: true,
   handle: "haru",
   name: "하루",
-  intro: "느긋한 방송",
-  fanName: "",
   photoPath: null,
   look: NO_LOOK,
-  colors: NO_COLORS,
   photoBase: "http://photo.test",
   siteOrigin: "http://app.test",
 };
@@ -108,23 +103,53 @@ describe("INV-E10: 공지 이미지 받기", () => {
   });
 });
 
-describe("미리보기", () => {
-  it("INV-E7: 저장된 이름·팬덤 이름이 미리보기에 보인다 — 배경사진이 없으면 그림 없이 단색 칸", async () => {
-    await render({ fanName: "꿀벌단" });
-    const preview = host.querySelector("aside")!;
-    expect(preview.textContent).toContain("꿀벌단 여러분의 마음 늘 감사해요");
-    expect(preview.textContent).toContain("fankkuk.kr/haru");
-    expect(preview.querySelector(`img[src*="bg-"]`)).toBeNull();
+describe("배치 (design-rules 27절 「4파트 나머지 다섯 화면」 다섯째, 시안 pilot-2026-10-22/customize.html)", () => {
+  it("2026-10-22: 프로필 카드 미리보기·접기 버튼이 없다 — 이 화면에서 바꿀 입력이 없어서 뺐다", async () => {
+    await render({ look: { bgPath: `${ID}/bg-1.webp`, symbolPath: `${ID}/sym-1.webp`, previewPick: "photo" } });
+    expect(host.querySelector("aside")).toBeNull();
+    expect(host.querySelector("[data-creator-colors]")).toBeNull();
+    expect(host.querySelector(`img[src*="bg-"]`)).toBeNull();
+    expect([...host.querySelectorAll("button")].some((b) => b.textContent === "접기" || b.textContent === "펴기")).toBe(false);
+    // 프로필 카드 안 모양만인 「선물 보내기」 버튼도 없다
+    expect([...host.querySelectorAll("span, button, a")].some((x) => x.textContent === "선물 보내기")).toBe(false);
   });
 
-  it("INV-E13: 테마 색이 있으면 미리보기 띠·사진 테두리가 공개 페이지처럼 그 색, 없거나 8색 밖이면 기본 모양", async () => {
-    await render({ colors: { personal: "#F6DFF0" } });
-    const card = host.querySelector<HTMLElement>("[data-creator-colors]")!;
-    expect(card.style.getPropertyValue("--personal")).toBe("#F6DFF0");
-    await render({ colors: { personal: "#F9A8D4" as ThemeColor } });
-    expect(host.querySelector<HTMLElement>("[data-creator-colors]")!.style.getPropertyValue("--personal")).toBe("");
-    await render({ colors: { personal: "red;" as ThemeColor } });
-    expect(host.querySelector<HTMLElement>("[data-creator-colors]")!.style.getPropertyValue("--personal")).toBe("");
+  it("2026-10-22: 공유 카드는 「링크 미리보기 이미지」 묶음 안, 라디오와 결과 줄 바로 뒤에 있다", async () => {
+    await render();
+    const group = host.querySelector("section[aria-labelledby='h-og']")!;
+    const radios = group.querySelector("[role='radiogroup']")!;
+    const msg = group.querySelector("#cz-pick-msg")!;
+    const cap = [...group.querySelectorAll("p")].find((x) => x.textContent === "링크를 공유하면 이렇게 보여요");
+    expect(cap).toBeDefined();
+    expect(radios.compareDocumentPosition(msg) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(msg.compareDocumentPosition(cap!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(group.querySelector("[data-share-card]")?.textContent).toContain("하루 · 팬꾹");
+  });
+
+  it("2026-10-22: 공유 카드 그림은 고른 쪽 — 팬덤 심볼을 고르면 심볼 그림", async () => {
+    await render({ photoPath: `${ID}/photo-1.webp`, look: { bgPath: null, symbolPath: `${ID}/sym-1.webp`, previewPick: "symbol" } });
+    const img = host.querySelector<HTMLImageElement>("[data-share-card] img")!;
+    expect(img.getAttribute("src")).toContain("sym-1");
+  });
+
+  it("2026-10-22: 머리 설명은 한 문장 — 「바꾸는 즉시 미리보기에서…」는 없다", async () => {
+    await render();
+    expect(host.querySelector(".ph-desc")?.textContent).toBe("팬이 보게 될 내 선물 링크 페이지를 직접 다듬어요.");
+  });
+
+  it("2026-10-22: 공지 이미지를 받을 수 없으면 안내 속 「설정」이 상세 설정의 선물 링크 칸으로 가는 링크", async () => {
+    await render({ handle: null });
+    const a = [...host.querySelectorAll<HTMLAnchorElement>("a")].find((x) => x.textContent === "「설정」");
+    expect(a?.getAttribute("href")).toBe("/creator/settings#link");
+    expect(a?.closest("p")?.textContent).toBe("본인 확인을 마치고 「설정」에서 링크 주소를 정하면 받을 수 있어요.");
+  });
+
+  it("2026-10-22: 받을 수 있으면 세 크기 줄 — 이름·크기·내려받기·링크 복사", async () => {
+    await render();
+    const rows = [...host.querySelectorAll("section[aria-labelledby='h-notice'] li")];
+    expect(rows.map((r) => r.querySelector("[data-size-title]")?.textContent)).toEqual(["정사각", "세로 (스토리용)", "가로"]);
+    expect(rows.map((r) => r.querySelector("[data-size-px]")?.textContent)).toEqual(["1080 × 1080", "1080 × 1920", "1200 × 675"]);
+    for (const r of rows) expect([...r.querySelectorAll("a, button")].map((x) => x.textContent)).toEqual(["내려받기", "링크 복사"]);
   });
 
   it("2026-10-16 옮김: 이 화면에는 사진·이름·소개·팬덤 이름·심볼 편집 칸이 없다(프로필 수정·상세 설정으로)", async () => {

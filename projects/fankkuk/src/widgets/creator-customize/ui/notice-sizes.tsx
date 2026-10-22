@@ -1,9 +1,11 @@
 import { NOTICE_SIZES, noticeImagePath, type NoticeSize } from "@/entities/creator/model/link-images";
+import { CREATOR_SETTINGS } from "@/entities/session/model/home-path";
 import { CopyButton } from "@/shared/ui/copy-button";
 import s from "./creator-customize.module.css";
 
-// 공지 이미지 받기 — 정사각·스토리 세로·가로 세 크기(creator-link INV-E10, 디자인 기준 10절). 크기마다 내려받기와 이미지 주소 복사.
-// 공지 이미지는 링크용 아이디가 있고 본인 확인을 마쳤을 때만 만든다 — 아니면 까닭만 보인다(INV-E5·E10).
+// 공지 이미지 받기 — 정사각·스토리 세로·가로 세 크기(creator-link INV-E10, design-rules 27절 · 시안 pilot-2026-10-22/customize.html .cz-sizes).
+// 크기마다 한 줄: 썸네일 · 이름과 크기 · 줄 오른쪽 끝 「내려받기」「링크 복사」(767 이하는 버튼이 줄 아래 꽉 차게).
+// 공지 이미지는 링크용 아이디가 있고 본인 확인을 마쳤을 때만 만든다 — 아니면 안내 한 줄, 그 속 「설정」은 상세 설정의 선물 링크 칸(링크 주소를 정하는 곳)으로 간다(INV-E5·E10).
 
 const ROWS: readonly { size: NoticeSize; title: string }[] = [
   { size: "square", title: "정사각" },
@@ -11,25 +13,27 @@ const ROWS: readonly { size: NoticeSize; title: string }[] = [
   { size: "wide", title: "가로" },
 ];
 
-/** 썸네일 칸(80) 안에 비율대로 그린 작은 판 — 배경 띠·사진·글줄 자리만 */
+/** 상세 설정에서 링크 주소를 정하는 칸 — 접힌 「선물 링크」 안이고, 상세 설정이 주소 끝 #link 를 보고 펼친다 */
+const LINK_SETTING = `${CREATOR_SETTINGS}#link`;
+
+/** 썸네일 칸(48) 안에 비율대로 그린 작은 판 */
 function Thumb({ size }: { size: NoticeSize }) {
   const { width, height } = NOTICE_SIZES[size];
-  const k = 80 / Math.max(width, height);
+  const k = 46 / Math.max(width, height);
   return (
     <span className={s.szThumb} aria-hidden="true">
-      <i className={s.mini} style={{ width: Math.round(width * k), height: Math.round(height * k) }}>
-        <b className={s.mBg} />
-        <b className={s.mAv} />
-        <b className={s.mL1} />
-        <b className={s.mL2} />
-        <b className={s.mFt} />
-      </i>
+      <i className={s.mini} style={{ width: Math.round(width * k), height: Math.round(height * k) }} />
     </span>
   );
 }
 
 export function NoticeSizes({ creatorId, ready, siteOrigin }: { creatorId: string; ready: boolean; siteOrigin: string }) {
-  if (!ready) return <p className="t-meta">본인 확인을 마치고 「설정」에서 링크 주소를 정하면 받을 수 있어요.</p>;
+  if (!ready)
+    return (
+      <p className={s.lock}>
+        본인 확인을 마치고 <a href={LINK_SETTING}>「설정」</a>에서 링크 주소를 정하면 받을 수 있어요.
+      </p>
+    );
   return (
     <ul className={s.sizes}>
       {ROWS.map(({ size, title }) => {
@@ -39,12 +43,14 @@ export function NoticeSizes({ creatorId, ready, siteOrigin }: { creatorId: strin
           <li key={size}>
             <Thumb size={size} />
             <span className={s.szText}>
-              <b>{title}</b>
-              <span className="t-meta">
+              <span className={s.k} data-size-title="">
+                {title}
+              </span>
+              <span className={s.sub} data-size-px="">
                 {width} × {height}
               </span>
             </span>
-            <div className={`btn-stack ${s.szBtns}`}>
+            <span className={s.szBtns}>
               <a className="btn btn--line btn--sm" href={noticeImagePath(creatorId, size, { download: true })} download={`fankkuk-notice-${size}.png`} aria-label={`${title} 공지 이미지 내려받기`}>
                 내려받기
               </a>
@@ -56,7 +62,7 @@ export function NoticeSizes({ creatorId, ready, siteOrigin }: { creatorId: strin
                 copiedMessage={`「${title}」 이미지 링크를 복사했어요.`}
                 failedMessage="복사가 막혀 있어요. 내려받기로 받아 주세요."
               />
-            </div>
+            </span>
           </li>
         );
       })}

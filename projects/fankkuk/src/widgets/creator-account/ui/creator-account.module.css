@@ -1,30 +1,55 @@
-/* 크리에이터 계정 설정 — 시안 docs/design/mockups/site/v21-addendum3/cre-account-settings.html. 카드 언어(팬 계정 설정은 2026-10-22 정돈 시범에서 카드 없는 4+8 묶음으로 바뀌었다 — design-rules 27절. 이 화면은 4파트 확장 때 맞춘다).
-   폭은 틀(MyShell form 720)이 정한다. 카드 사이 32, 카드 안 줄 사이 24, 줄 사이 가는 선. */
-.col { display: grid; gap: var(--space-8); min-width: 0; }
-.col > * { min-width: 0; }
-/* 전역의 「구간 + 구간 위 48」 을 걷는다 — 사이는 위 gap 하나로 */
-.col > section:not(.section) + section:not(.section) { margin-top: 0; }
-.setCard { display: grid; gap: var(--space-6); }
-.secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
-.meta { display: block; color: var(--gray-600); font-size: var(--fs-caption); }
-.kvMain { margin: 0; min-width: 0; }
-.kvMain b { display: block; font-weight: var(--fw-btn); overflow-wrap: anywhere; }
-.reveal + .reveal { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
-.revealHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
-.panel { margin-top: var(--space-4); min-width: 0; }
+/* 크리에이터 계정 설정 — 시안 docs/design/mockups/site/pilot-2026-10-22/creator-account.html, 값의 정본은 같은 폴더 pilot.css 「계정 설정(팬)」(.me-*)·「계정 설정(크리에이터)」(.ca-*).
+   계정 설정(팬)과 같은 언어라 묶음·줄·스위치·끌 수 없는 알림·탈퇴 값은 src/widgets/my-info/ui/my-info.module.css 에서 옮겨 왔다(공용 모듈이 아직 없다 — 두 곳을 같이 고친다).
+   폭은 틀(MyShell list 880)이 정하고, 안에서 카드 없이 12열 4 + 8 묶음(--grid-gap). 줄·묶음 사이는 낮은 대비 1px 실선(--line-on-white). */
+.wrap { min-width: 0; }
+
+/* 묶음 — 왼쪽 구간 이름(20 / 800) 4열, 오른쪽 줄 8열. 묶음 사이 구분선 + 위아래 48 (my-info .grp) */
+.grp { display: grid; grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr)); column-gap: var(--grid-gap); align-items: start; }
+.grp + .grp { margin-top: var(--space-12); padding-top: var(--space-12); border-top: 1px solid var(--line-on-white); }
+.nm { grid-column: span 4; min-width: 0; margin: 0; font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.4; }
+.rows { grid-column: span 8; min-width: 0; }
+
+/* 줄 — 최소 높이 64, 버튼은 줄 오른쪽. 줄 사이 1px. 펼쳐지는 칸은 그 줄 아래(.panel) (my-info .item·.row) */
+.item { min-width: 0; }
+.item + .item { border-top: 1px solid var(--line-on-white); }
+.row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); min-height: 64px; margin: 0; padding: var(--space-2) 0; }
+.txt { display: flex; flex: 1 1 160px; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; margin: 0; overflow-wrap: anywhere; } /* 채널 이름이 길 수 있다 */
+.k { font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.5; }
+.v { margin: 0; font-size: var(--fs-body); font-weight: 400; line-height: 1.5; }
+.sub { margin: 0; color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-caption); overflow-wrap: anywhere; }
+.panel { min-width: 0; padding-bottom: var(--space-4); }
+
+/* 알림 스위치 — 줄 전체가 누르는 칸(64). 막대는 시안 pilot .me-trk 값 (my-info .swBtn·.trk) */
+.swBtn { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); width: 100%; min-height: 64px; padding: var(--space-2) 0; border: 0; border-radius: var(--r-btn); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.swBtn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.swBtn[aria-disabled="true"] { cursor: progress; } /* 저장하는 동안 — 누름은 막고(onClick) 모양은 그대로 */
+.trk { position: relative; flex: none; width: 52px; height: 32px; border: 1px solid var(--sub); border-radius: var(--r-pill); background: var(--gray-200); transition: background .15s; }
+.trk::after { content: ""; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); transition: transform .15s; } /* 3 = 테두리 안 30 에서 24 를 가운데로(보정) */
+.swBtn[aria-checked="true"] .trk { background: var(--primary); }
+.swBtn[aria-checked="true"] .trk::after { transform: translateX(20px); }
+@media (prefers-reduced-motion: reduce) { .trk::after { transition: none; } }
+
+/* 끌 수 없는 알림 — 접지 않고 늘 보인다(my-account INV-A11). 제목 줄 14 / 600 + 목록 문장 14 / 400 (my-info .must) */
+.must { margin: 0; padding-top: var(--space-4); border-top: 1px solid var(--line-on-white); }
+.mustT { display: block; color: var(--ink); font-size: var(--fs-small); font-weight: var(--fw-btn); line-height: 1.5; }
+.mustL { display: block; margin-top: var(--space-1); color: var(--sub); font-size: var(--fs-small); font-weight: 400; line-height: 1.6; }
+
+/* 저장 결과 — 알림 묶음 끝(pilot .ca-msg 위 8). 늘 두고 글자가 있을 때만 판이 보인다(공통 .err:empty·.okmsg:empty) */
+.msgs { padding-top: var(--space-2); }
+.msg { max-width: 100%; margin: 0; overflow-wrap: anywhere; }
+
+/* 상세 설정 안내 줄 — pilot .ca-more. 링크는 누를 칸이라 높이 44 */
+.more { margin: var(--space-12) 0 0; color: var(--sub); font-size: var(--fs-small); line-height: 1.6; }
+.moreLink { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); font-weight: var(--fw-btn); text-decoration: underline; text-underline-offset: 4px; }
+
+/* 회원 탈퇴 — 맨 끝, 구분선 아래 (my-info .quit, 안내 줄 바로 뒤는 pilot .ca-more+.me-quit 위 24) */
+.quit { margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--line-on-white); }
 .danger { background: var(--white); color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
 .danger:hover { background: var(--gray-50); }
 
-/* 알림 스위치 줄 — 공통 .sw(base.css), 줄 모양은 시안 .sw-row */
-.swRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
-.swT { min-width: 0; }
-.swT b { display: block; }
-.swT span { display: block; margin-top: var(--space-1); color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
-.swRow + .swRow { padding-top: var(--space-4); border-top: 1px solid var(--gray-200); }
-.must { margin: 0; }
-.mustT { color: var(--gray-900); }
-/* 저장 결과 줄 — 늘 두고(라이브 영역) 글자가 있을 때만 판이 보인다(빈 칸은 공통 .err:empty·.okmsg:empty) */
-.msg { margin: 0; }
-
-.note { margin: 0; color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
-.inlineLink { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+/* 휴대폰 — 한 기둥 */
+@media (max-width: 767px) {
+  .grp { display: block; }
+  .grp + .grp { margin-top: var(--space-8); padding-top: var(--space-8); }
+  .rows { margin-top: var(--space-4); }
+}

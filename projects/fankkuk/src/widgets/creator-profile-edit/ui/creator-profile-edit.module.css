@@ -1,29 +1,55 @@
-/* 크리에이터 프로필 수정 — 시안 docs/design/mockups/site/v21-addendum3/cre-profile-edit.html (cre-21.css .fcard2 · .count · .btn-end · textarea.field).
-   폭은 틀(MyShell form 720)이 정한다. 머리 미리보기는 entities/creator/ui/creator-head 가 그린다. */
-.col { display: grid; gap: var(--space-8); min-width: 0; }
+/* 크리에이터 프로필 수정 — 시안 docs/design/mockups/site/pilot-2026-10-22/creator-profile.html, 값의 정본은 같은 폴더 pilot.css 「상세 설정」(.st-*)·「프로필 수정(크리에이터)」(.cp-*).
+   틀(MyShell broad 1200) 안에서 상세 설정 「팬덤」(widgets/creator-settings/ui/fandom-section.module.css)과 같은 입력 + 미리보기.
+   머리 미리보기는 entities/creator/ui/creator-head 가 그린다 — 여기는 바깥 배치만. */
+.col { display: grid; gap: var(--space-6); min-width: 0; }
 .col > * { min-width: 0; }
-/* 전역의 「구간 + 구간 위 48」 을 걷는다 — 사이는 위 gap 하나로 */
-.col > section + section, .col > section + form { margin-top: 0; }
-.card { display: grid; gap: var(--space-4); padding: var(--space-6) var(--space-8); border-radius: var(--r-card); background: var(--card-fx); box-shadow: inset 0 0 0 1px var(--gray-200), var(--card-shadow); }
-.secT { margin: 0; font-size: var(--fs-card); line-height: 1.4; }
-.fld { display: grid; gap: var(--space-2); }
-.fld :global(.label) { margin-bottom: 0; }
-.hint { margin: 0; color: var(--gray-600); font-size: var(--fs-caption); line-height: var(--lh-caption); }
-.optn { color: var(--gray-600); font-size: var(--fs-caption); font-weight: 400; }
-.bio { height: auto; min-height: 96px; padding: var(--space-4); resize: vertical; line-height: 1.6; }
-.count { text-align: right; color: var(--gray-600); font-size: var(--fs-caption); font-variant-numeric: tabular-nums; }
-.msg:empty { display: none; }
-.btnEnd { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 
+/* 미리보기 칸은 고정 폭 400 — 머리(블록)가 칸을 꽉 채운다. 남는 폭은 입력 판이 쓴다(상세 설정은 카드 폭 300 이라 300, 머리는 사진 104 옆에 이름·뱃지가 놓여 300 이면 이름 칸이 108 로 좁아진다) */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 400px; column-gap: var(--grid-gap); align-items: start; }
+.main { display: grid; gap: var(--space-6); min-width: 0; }
+
+/* 판 — 소제목 칸을 가는 줄로 나눈다(상세 설정과 같은 모양) */
+.form { min-width: 0; margin: 0; border: 1px solid var(--line-on-white); border-radius: var(--r-card); background: var(--white); }
+.sub { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-6); border-bottom: 1px solid var(--line-on-white); }
+.last { border-bottom: 0; }
+.secT { margin: 0 0 var(--space-2); font-size: var(--fs-card); line-height: 1.4; }
+.subT { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
+.subT label, label.subT { cursor: pointer; }
+.count { color: var(--sub); font-size: var(--fs-small); font-weight: 400; font-variant-numeric: tabular-nums; }
+.hint { margin: 0; color: var(--sub); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.bio { height: auto; min-height: 88px; padding: var(--space-3) var(--space-4); resize: vertical; line-height: 1.6; }
+
+/* 찾기 노출 — 줄 전체가 누르는 칸(라벨이 스위치를 감싼다, 높이 44 이상) */
+.swRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 44px; cursor: pointer; }
 /* 스위치 — 상세 설정의 알림 스위치와 같은 모양(48×28 · 손잡이 20) */
-.txt { display: grid; gap: 4px; cursor: pointer; }
-.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 48px; height: 28px; box-sizing: content-box; margin: -8px; border: 8px solid transparent; background-clip: padding-box; border-radius: var(--r-pill); background-color: var(--gray-500); cursor: pointer; /* 투명 테두리 8 로 누름 칸 64×44, 보이는 모양은 48×28 그대로(2026-10-18 재진단) */ transition: background 0.15s; }
+.switch { appearance: none; -webkit-appearance: none; position: relative; flex-shrink: 0; width: 48px; height: 28px; margin: 0; border-radius: var(--r-pill); background-color: var(--gray-500); cursor: pointer; transition: background 0.15s; }
 .switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--white); transition: transform 0.15s; }
-.switch:checked { background-color: var(--brand); } /* background 축약은 background-clip 을 되돌려 투명 테두리까지 칠한다 — 색만 바꾼다 */
+.switch:checked { background-color: var(--brand); }
 .switch:checked::after { transform: translateX(20px); }
 .switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
-@media (max-width: 768px) {
-  .card { padding: var(--space-6) var(--space-4); }
-  .btnEnd :global(.btn) { flex: 1; }
+/* 판 끝 — 저장 결과 안내(role=status) 한 줄 자리 + 취소·저장 */
+.end { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-6) var(--space-6); }
+.msg { min-height: 22px; margin: 0; } /* 비어 있어도 한 줄 자리 — 글이 들어올 때 버튼이 밀리지 않게 */
+.btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+
+/* 오른쪽 미리보기 — 판·상자 없이 제목 아래 머리 하나, 스크롤하면 따라온다 */
+.pv { position: sticky; top: var(--space-6); display: grid; align-content: start; gap: var(--space-4); min-width: 0; }
+.pvT { margin: 0; font-size: var(--fs-body); font-weight: var(--fw-btn); line-height: 1.4; }
+
+/* 1100 이하 — 미리보기가 입력 위로(따라오지 않음) */
+@media (max-width: 1100px) {
+  .grid { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-4); }
+  .pv { position: static; order: -1; }
+}
+
+/* 휴대폰 — 미리보기 머리를 작게(띠 72 · 사진 56, 시안 .cp-cover · .cp-av), 저장 줄은 화면 아래에 붙는다.
+   머리 안 값은 머리가 열어 둔 변수(--av · --pf-pad)와 data-band 로만 바꾼다 */
+@media (max-width: 767px) {
+  .pv { gap: var(--space-2); }
+  .pv > section[data-creator-head] { --av: 56px; --pf-pad: 16px; }
+  .pv > section[data-creator-head] [data-band] { aspect-ratio: auto; height: 72px; }
+  .sub { padding: var(--space-4); }
+  .end { position: sticky; bottom: 0; z-index: 4; padding: var(--space-3) var(--space-4); border-top: 1px solid var(--line-on-white); border-radius: 0 0 var(--r-card) var(--r-card); background: var(--white); }
+  .btns :global(.btn) { flex: 1; }
 }
